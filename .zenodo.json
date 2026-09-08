@@ -1,0 +1,48 @@
+{
+  "title": "The Mass Gap of Pure SU(N) Gauge Theory as a Finite-Aperture Effect",
+  "description": "Pure SU(N) Yang-Mills has a mass gap because the vacuum is read through a finite aperture, which band-limits: the gap is the entropy margin Delta = kappa_0 - mu > 0 below the counting floor kappa_0 = (1/4) ln 3. This repository holds the paper, the Lean 4 / Mathlib verification, and the Entroptics analysis code.",
+  "upload_type": "software",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "creators": [
+    {
+      "name": "Sessford, Ikailo John",
+      "affiliation": "Ikailo Inc.",
+      "orcid": "0009-0002-0150-4027"
+    }
+  ],
+  "keywords": [
+    "Yang-Mills",
+    "mass gap",
+    "lattice gauge theory",
+    "confinement",
+    "entropy",
+    "aperture",
+    "formal verification",
+    "Lean 4"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Agience/entroptics-mass-gap",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.5281/zenodo.21273400",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.22650079",
+      "relation": "isSupplementedBy",
+      "resource_type": "dataset",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "https://agience.ai",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

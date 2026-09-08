@@ -1,0 +1,63 @@
+# The consistency suite, on every push and pull request.
+#
+# These tests are what hold the paper, the artifacts, the release metadata and the ensemble store to
+# each other: that PAPER.md quotes the numbers its artifacts actually carry, that every committed
+# artifact has exactly one owner that still exists, that the DOIs and the author records agree
+# across the five files that state them, and that the release documentation does not name files the
+# deposit lacks. They only protect anything if something runs them.
+#
+# The ensemble store is a separate multi-gigabyte data release and is not on a runner, so the ten
+# tests that read it skip here and say so. The remaining ~172 are filesystem, git and text facts and
+# run in full -- which is the majority of what these gates are for.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suite:
+    name: paper, artifacts and release metadata agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the pinned reader and test tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r research/requirements.txt
+
+      - name: Report what will and will not be checked
+        run: |
+          echo "The ensemble store is not attached on a runner, so store-backed tests skip."
+          echo "CONFIGS is deliberately unset: store_path then refuses rather than guessing a path."
+
+      - name: Run the suite
+        working-directory: research/code
+        run: python -m pytest -q -rs
+
+      # A skip is how a store-backed test reports "not checkable here", and that is fine -- but a
+      # run where EVERYTHING skipped would be a green tick over nothing, which is the failure mode
+      # this step exists for. The floor is well under the ~172 that currently run, so it catches a
+      # collapse without breaking on ordinary additions.
+      - name: Refuse a vacuously green run
+        working-directory: research/code
+        run: |
+          passed=$(python -m pytest -q 2>/dev/null | tail -1 | grep -oE '^[0-9]+ passed' | grep -oE '^[0-9]+' || echo 0)
+          echo "tests that actually ran: $passed"
+          if [ "${passed:-0}" -lt 120 ]; then
+            echo "::error::only $passed tests passed; expected at least 120 without the store."
+            exit 1
+          fi

@@ -1,0 +1,150 @@
+declaration,axioms,n_axioms
+MassGap.Capacity.existence_and_gap_of_junction,Classical.choice Quot.sound propext,3
+MassGap.Capacity.hread_of_junction,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.Hcell2_clears_floor,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.Tdelta_posSemidef,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.cell_general_gap,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.chain_sq_expand,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.combine_Tsum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.commuting_proj_mul_posSemidef,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.coupled_gap_of_coupling_bound,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.coupling_form_add,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.coupling_form_lower,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.diag_form_margin,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.eq21_lhs,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.eq23_form_of_psd,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.eq23_of_terms,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.fiber_empty,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.fiber_sum_neg,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.fiber_sum_pos,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gap_of_operator_sq_ge,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gap_uniform_of_cell,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gap_uniform_of_cell_intensive,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gm_alpha_beta,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gm_eq23_c1,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gm_gap_c1,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gm_gap_of_eq23,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.hnn_c1,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.hterm_of_nonneg_psd,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.interacting_cell_gap,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.isHermitian_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.knabe_gap_demo,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.knabe_gap_of_window_identities,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.operator_sq_ge_of_gap,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.product_margin_le_cell_ceiling,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.product_subvacuum_le,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.product_volume_gap,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.product_volume_gap_concrete,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.psd_form_nonneg,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.psd_nonneg_smul_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.regroup_by_fiber,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.weighted_window_sq_regrouped,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.weighted_window_sq_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.weighted_window_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.window_sq_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.ym_volume_gap_cell_grounded,Classical.choice Quot.sound propext,3
+MassGap.CentreDominance.string_tension_eq_centre,Classical.choice Quot.sound propext,3
+MassGap.CompactGauge.expect_invariant_haar,Classical.choice Quot.sound propext,3
+MassGap.FreeField.muInf_lt_floor,Classical.choice Quot.sound propext,3
+MassGap.LatticeGauge.Symmetry.expect_invariant,Classical.choice Quot.sound propext,3
+MassGap.Reconstruction.concreteGapped,Classical.choice Quot.sound propext,3
+MassGap.Reconstruction.gapped_of_aperture_margin,Classical.choice Quot.sound propext,3
+MassGap.Reconstruction.gapped_of_positive_decay,Classical.choice Quot.sound propext,3
+MassGap.Reconstruction.multiModeGapped,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_balanced_four,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_char_norm,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_coeff_zero,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_diag_sq_half,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_fourth_moment_diag_bounds,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_fourth_moment_unbalanced,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_frobenius_sum,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_re_trace_zero,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_second_moment,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_second_moment_offdiag,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_shared_link,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_third_moment,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_trace_mul_zero,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_trace_zero,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_transfer,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_transfer_annihilates,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_two_fund,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_two_link_trace_zero,Classical.choice Quot.sound propext,3
+MassGap.SUN.haar_su2_two_point,Classical.choice Quot.sound propext,3
+MassGap.SUN.isCompact_coe,Classical.choice Quot.sound propext,3
+MassGap.SUN.su2_conj_01,Classical.choice Quot.sound propext,3
+MassGap.SUN.su2_star_eq,Classical.choice Quot.sound propext,3
+MassGap.SUN.su2_trace_real,Classical.choice Quot.sound propext,3
+MassGap.SUN.su_expect_invariant,Classical.choice Quot.sound propext,3
+MassGap.SUN.transferOp_idem,Classical.choice Quot.sound propext,3
+MassGap.SUN.transferOp_pow,Classical.choice Quot.sound propext,3
+MassGap.SUN.transferOp_pow_annihilates,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.existence_and_gap_of_floor_count,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.floor_count_gap_demo,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.floor_count_injection,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.junction_of_floor_count,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.junction_of_physical_count,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.selfSourcingJunction_of_physical_count,Classical.choice Quot.sound propext,3
+MassGap.VortexCount.three_pow_le_card_of_embeds,Classical.choice Quot.sound propext,3
+MassGap.WilsonAction.measurable_wilsonDensity,Classical.choice Quot.sound propext,3
+MassGap.WilsonAction.wilsonDensity_conj,Classical.choice Quot.sound propext,3
+MassGap.WilsonAction.wilsonDensity_le_two,Classical.choice Quot.sound propext,3
+MassGap.WilsonAction.wilsonDensity_nonneg,Classical.choice Quot.sound propext,3
+MassGap.WilsonAction.wilsonDensity_one,Classical.choice Quot.sound propext,3
+MassGap.WilsonGauge.ym_continuum_gauge,Classical.choice Quot.sound propext,3
+MassGap.WilsonGauge.ym_existence_and_gap_gauge,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.WilsonGauge.ym_existence_and_gap_gauge_wilson,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.WilsonLattice.measurable_wilsonHol,Classical.choice Quot.sound propext,3
+MassGap.WilsonLattice.wilsonHol_conj,Quot.sound propext,2
+MassGap.WilsonLattice.wilsonSymmetry,Classical.choice Quot.sound propext,3
+MassGap.WilsonLattice.wilson_expect_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.blockInt_not_disjoint,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.block_integral_factor,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.coords_indep,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.coords_indep_SU,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.expect_plaqObs_factor,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.expect_plaqObs_factor_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.expect_plaqObs_mem,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.hbd2,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.hbd3,Quot.sound propext,2
+MassGap.WilsonReal.measurable_bd2_hol,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.plaqObs_gauge_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.plaqObs_indep,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysInt_gauge_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysInt_partition_pos,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysInt_shared_link_two_point,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_expect_abs_le,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_expect_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_gauge_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_mul_boltz_integrable,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysReal_partition_factor,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.sysRing_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonAction_gauge_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_expect_abs_le,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_expect_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_expect_mono,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_expect_one,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_expect_plaqObs_mem,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_gauge_invariant,Classical.choice Quot.sound propext,3
+MassGap.WilsonReal.wilsonSystem_partition_pos,Classical.choice Quot.sound propext,3
+MassGap.cubeConfig_injective,Classical.choice Quot.sound propext,3
+MassGap.directed_surface_count,Classical.choice Quot.sound propext,3
+MassGap.gap_uniform_in_volume_of_intensive,Classical.choice Quot.sound propext,3
+MassGap.interior_confinement_of_analytic_grid,Classical.choice Quot.sound propext wilson_reflection_positive,4
+MassGap.ym_crossover_confinement_of_grid,Classical.choice Quot.sound propext wilson_reflection_positive,4
+MassGap.ym_existence_and_gap,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_existence_and_gap_model,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_gap_uniform_in_volume,Classical.choice Quot.sound propext,3
+MassGap.ym_mass_gap,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_mass_gap_aperture,Classical.choice Quot.sound propext wilson_reflection_positive,4
+MassGap.ym_mass_gap_certified,Classical.choice Quot.sound propext wilson_reflection_positive,4
+MassGap.ym_mass_gap_grid_certified,Classical.choice Quot.sound propext wilson_reflection_positive,4
+MassGap.ym_mass_gap_of_junction,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_mass_gap_of_witness,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_mass_gap_rate,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_mass_gap_spectral,Classical.choice Quot.sound propext,3
+MassGap.ym_mass_gap_spectral_bar,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_mass_gap_wilson,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_reconstructed_gap,Classical.choice Quot.sound propext,3
+MassGap.ym_spectral_gap,Classical.choice Quot.sound d2_le_bound propext wilson_reflection_positive ym_asymfree ym_character,7
+MassGap.ym_wightman,Classical.choice Quot.sound WightmanTheory d2_le_bound os_reconstruction propext wilson_reflection_positive ym_asymfree ym_character,9

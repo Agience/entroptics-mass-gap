@@ -1,0 +1,3 @@
+group,beta,dims,plane,K_signal,K_signal_err,n
+su2,2.3,8x8x8x16,8x8,0.0756,0.0026,128
+su2,2.3,16x16x16x32,16x16,0.6698,0.0034,96

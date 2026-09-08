@@ -17,6 +17,7 @@ Writes 8_3_dat_nobump.csv and 8_3_fig_nobump.png here.
 from __future__ import annotations
 
 import argparse
+import multiprocessing as mp
 import os
 import sys
 
@@ -25,26 +26,38 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(_HERE, "..", "code")))
 
-import entroptics
-import generator
+import entroptics_adapter as entroptics
+import lattice_generator as generator
 import table
 import plot
 
 DAT = os.path.join(_HERE, "8_3_dat_nobump.csv")
 FIG = os.path.join(_HERE, "8_3_fig_nobump.png")
 BETA_C = 1.01
-COLS = ["group", "beta", "dims", "confinement", "confinement_err", "temporal_dominance", "n"]
+COLS = ["group", "beta", "dims", "confinement", "confinement_err", "temporal_attenuation", "n"]
 STYLE = {"u1": ("#b03030", "compact U(1) (foil): deconfines"),
          "su2": ("#1f4e8c", "SU(2): stays confined (no-bump)")}
 
 
-def measure(group, beta, dims, *, seed, therm, gap, n):
-    cfgs = list(generator.stream(dims, beta, group=group, seed=seed, therm=therm, gap=gap, n=n))
-    ks = np.array([entroptics.aperture(c).screen().K_signal for c in cfgs], float)
+def measure(group, beta, dims, *, seed, therm, gap, n, device=None):
+    if device:                                             # batched-GPU generation, then CPU reads
+        fb = generator.config_batch(dims, beta, group=group, seed=seed, therm=therm, n=n, device=device)
+        fb = fb.detach().cpu().numpy()                     # small per-plane SVD reads are faster on CPU
+        cfgs = [fb[i] for i in range(fb.shape[0])]
+    else:
+        cfgs = list(generator.stream(dims, beta, group=group, seed=seed, therm=therm, gap=gap, n=n))
+    ks = np.array([entroptics.confinement(c) for c in cfgs], float)
     r = entroptics.run(cfgs)
     return dict(group=group, beta=round(beta, 2), dims="x".join(map(str, dims)),
                 confinement=float(ks.mean()), confinement_err=float(ks.std() / np.sqrt(len(ks))),
-                temporal_dominance=r.temporal_dominance, n=len(cfgs))
+                temporal_attenuation=r.temporal_attenuation, n=len(cfgs))
+
+
+def _measure_star(item):
+    """Top-level (picklable) wrapper so a multiprocessing Pool can fan the per-(group,beta)
+    chains across cores. Each item is one independent thermalised chain (its own seed)."""
+    group, beta, dims, seed, therm, gap, n, device = item
+    return measure(group, beta, dims, seed=seed, therm=therm, gap=gap, n=n, device=device)
 
 
 def main():
@@ -52,6 +65,8 @@ def main():
     ap.add_argument("--mode", choices=["quick", "full"], default="quick")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--n", type=int, default=None)
+    ap.add_argument("--jobs", type=int, default=1, help="parallel worker processes over (group,beta)")
+    ap.add_argument("--device", default=None, help="torch device for batched-GPU generation, e.g. cuda")
     args = ap.parse_args()
 
     if args.mode == "quick":
@@ -63,15 +78,19 @@ def main():
         betas = [round(b, 2) for b in np.arange(0.0, 5.01, 0.25)]
         n = args.n or 18
 
-    print(f"lattice {dims}  therm={therm}  n={n}  gap={gap}")
-    rows = []
-    for group in ("u1", "su2"):
-        print(f"-- {group} --")
-        for i, beta in enumerate(betas):
-            r = measure(group, beta, dims, seed=args.seed + i, therm=therm, gap=gap, n=n)
-            print(f"  {group:>3} beta={beta:5.2f}  confinement={r['confinement']:6.3f} "
-                  f"+/- {r['confinement_err']:.1e}")
-            rows.append(r)
+    print(f"lattice {dims}  therm={therm}  n={n}  gap={gap}  jobs={args.jobs}  device={args.device}")
+    items = [(group, beta, dims, args.seed + i, therm, gap, n, args.device)
+             for group in ("u1", "su2") for i, beta in enumerate(betas)]
+    if args.device:                                        # GPU: serial over (group,beta), each a batched call
+        rows = [_measure_star(it) for it in items]
+    elif args.jobs > 1:                                    # CPU: multiprocess over (group,beta)
+        with mp.Pool(args.jobs) as pool:
+            rows = pool.map(_measure_star, items)
+    else:
+        rows = [_measure_star(it) for it in items]
+    for r in rows:
+        print(f"  {r['group']:>3} beta={r['beta']:5.2f}  confinement={r['confinement']:6.3f} "
+              f"+/- {r['confinement_err']:.1e}")
 
     table.write(DAT, rows, COLS)
 

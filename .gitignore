@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -123,3 +123,15 @@ dmypy.json
 .pyre/
 
 .lake/
+*.err
+
+# Derived Monte-Carlo ensembles cached by the physics tests (research/code/tests/ensemble_cache.py).
+# Regenerated on demand; the cache key fingerprints lattice_generator.py, so it cannot go stale.
+.ensemble-cache/
+
+# Machine-local configuration: where the lattice ensemble store lives on THIS machine.
+# The store is a separate multi-gigabyte data release with its own DOI, not part of this repo.
+# Copy research.local.env.example -> research.local.env and set CONFIGS. Never committed: it
+# names one machine's filesystem, which is the thing a published research repo must not carry.
+research.local.env
+staged.json

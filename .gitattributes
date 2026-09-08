@@ -1,0 +1,22 @@
+# Committed data artifacts are text, normalised to LF in the repository.
+#
+# The section scripts write their CSVs through Python's `csv` module, whose lineterminator is CRLF
+# on every platform, while some artifacts were committed LF -- so the tree held 11 CRLF files and 6
+# LF ones by nothing more than which writer touched each one last, and a regeneration rewrote every
+# line of a file whose numbers had not moved. That is the diff an audit most needs to be able to
+# trust, so the convention is enforced here, once, for every writer rather than in each script.
+*.csv text eol=lf
+
+# Keep the rest of the text tree normalised on the same terms.
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.lean  text eol=lf
+*.json  text eol=lf
+*.cff   text eol=lf
+*.yml   text eol=lf
+
+# Figures and archives are binary -- never touch them.
+*.png   binary
+*.tar   binary
+*.gz    binary

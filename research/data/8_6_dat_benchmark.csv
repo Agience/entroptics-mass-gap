@@ -1,0 +1,9 @@
+panel,quantity,entroptics,established,uncertainty,reference
+A,free-scalar gap m=0.2,0.1819,0.1997,-,exact E0=arccosh(1+m^2/2)
+A,free-scalar gap m=0.35,0.3267,0.3482,-,exact E0=arccosh(1+m^2/2)
+A,free-scalar gap m=0.5,0.4706,0.4949,-,exact E0=arccosh(1+m^2/2)
+A,free-scalar gap m=0.7,0.6597,0.6864,-,exact E0=arccosh(1+m^2/2)
+A,free-scalar gap m=0.9,0.8486,0.8721,-,exact E0=arccosh(1+m^2/2)
+A,free-scalar gap m=1.1,1.0488,1.0510,-,exact E0=arccosh(1+m^2/2)
+B,U(1) transition beta_c,K_signal rise through beta_c,1.011,-,"compact U(1) Wilson-action transition, 4D lattice (e.g. Arnold-Lippert-Neuhaus-Schiller)"
+C,SU(N) confinement (no-bump),K_signal flat at all beta,confined at all beta,-,"pure SU(N) confines at every coupling; compact U(1) deconfines (Greensite, Prog.Part.Nucl.Phys. 51 (2003) 1)"

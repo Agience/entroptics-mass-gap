@@ -1,0 +1,497 @@
+# ==================================================================================================
+# publish.yml -- archiving this work, which is TWO records, not one.
+# ==================================================================================================
+#
+# There are two artifacts and they cannot be published the same way:
+#
+#   (1) THE SOFTWARE / PAPER RECORD -- this repository. Small, in git, already carrying
+#       `.zenodo.json` and `CITATION.cff`. Zenodo's own GitHub integration archives it from a
+#       release tag; nothing here needs to upload it. What this workflow adds is the readiness
+#       GATE that runs before the tag is cut, because once Zenodo publishes, the DOI is permanent
+#       and the metadata that went with it is what the world cites.
+#
+#   (2) THE DATA RECORD -- "Entroptics lattice gauge-theory action-density ensembles
+#       (U(1), SU(2), SU(3))". CC-BY-4.0, its own DOI, its own CITATION and .zenodo.json, which
+#       live INSIDE the store rather than in this repository. It is roughly 25 GB of tarballs on
+#       an operator's local disk. It is not in git, it is not on a runner, and it never will be.
+#
+# Two records, two mechanisms, one gate in common: nothing is published that has not been verified
+# byte-for-byte against the checksum lists the store already ships.
+#
+# --------------------------------------------------------------------------------------------------
+# DECISION 1 -- what actually gets uploaded, and why it is not everything
+# --------------------------------------------------------------------------------------------------
+#
+# Measured, from the store as it stands:
+#
+#     whole store directory                        49,397,704,379 B   (~49.4 GB)
+#       the six configs_* collection directories   24,698,665,344 B   (~24.70 GB)
+#       the seven configs_*.tar tarballs           24,698,941,440 B   (~24.70 GB)
+#     largest single file, configs_links_su2.tar   11,274,321,920 B   (~11.27 GB)
+#
+# The ~49 GB figure is the DISK footprint, and it double-counts: the tarballs are the collections.
+# The publishable payload is one of the two halves, not their sum.
+#
+# Zenodo's default is a 50 GB quota per record (and a cap on the number of files). So:
+#
+#   * Uploading the tarballs AND the loose shards would be ~49.4 GB against a 50 GB quota: it
+#     would technically fit and leave no headroom whatsoever, and every future version of the
+#     record would be in the same position. That is not a plan, it is a coin toss.
+#
+#   * THE DECISION: publish THE SEVEN TARBALLS, not the loose shards -- ~24.70 GB, about half the
+#     default quota. The tarballs are the canonical distribution form; the per-shard `SHA256SUMS`
+#     inside the release still covers every one of the 259 loose files once a downloader unpacks
+#     them, so nothing about verifiability is lost by not uploading both forms of the same bytes.
+#
+#     "Not everything" means the shards. It does NOT mean the store's own README, LICENSE.txt,
+#     CITATION.cff, .zenodo.json, GENERATION.md, manifest.csv, SHA256SUMS, SHA256SUMS.tarballs and
+#     reader: those go up WITH the tarballs, and at ~0.09 MB against 24.70 GB there is nothing to
+#     trade off. They are in neither checksum list and inside none of the tarballs -- which hold
+#     only `configs_<campaign>/*.npy` -- so they are staged explicitly. Without them the record is
+#     seven opaque 1-11 GB blobs with no reader, no seed map, no manifest and no licence.
+#
+#   * The 11.27 GB `configs_links_su2.tar` is the real risk, not the total. It is fine against a
+#     50 GB quota, but it is far past what Zenodo's browser uploader can be trusted with, which is
+#     why the upload job below goes through the REST API, one file at a time, with a checksum
+#     confirmed from the server's own response for each.
+#
+#   * IF the quota or that single file is refused -- FALLBACK, and it is a split, never a
+#     truncation. Two data records, cross-linked `hasPart` / `isPartOf`:
+#
+#         D1  "reduced collections"    betasweep + densebeta + ladder + paper83 + phase1
+#                                       7,368,028,160 B  (~7.37 GB, 5 files)
+#         D2  "raw SU(2) link ensembles"  configs_links_su2 + configs_links_su2_lscan
+#                                      17,330,913,280 B  (~17.33 GB, 2 files)
+#
+#     Set `record_split: split` on the dispatch to stage them separately. What is NOT acceptable,
+#     and what this workflow refuses to do, is to quietly drop the big tarball and publish the
+#     rest under a record whose description still claims 259 shards: `verify` below fails when the
+#     staged set and the checksum list disagree, precisely so that a silent truncation cannot
+#     reach a DOI.
+#
+#   * A quota increase can be requested from Zenodo support before publishing. If it is granted,
+#     nothing here changes -- `record_split: single` is already the default and already fits.
+#
+# --------------------------------------------------------------------------------------------------
+# DECISION 2 -- where the data half runs, and the honest limits of that
+# --------------------------------------------------------------------------------------------------
+#
+# The data cannot be uploaded from a GitHub-hosted runner. It is ~25 GB that exists only on the
+# operator's machine: it is not in this repository, a hosted runner cannot reach the operator's
+# disk, and a hosted runner does not have the free space to stage it even if it could.
+#
+# The two honest options were (a) a documented manual procedure with a checksum gate the workflow
+# can run, and (b) a `workflow_dispatch` job on a SELF-HOSTED runner with the store mounted.
+#
+#   THE DECISION: (b), a self-hosted runner -- because under (a) the "checksum gate the workflow
+#   can run" is a fiction. The workflow has no bytes to check. It could only re-read the checksum
+#   list against itself, which verifies nothing, and the actual verification would sit in a README
+#   step that an operator performs, or believes they performed. The gate has to run where the data
+#   is, so the runner goes where the data is.
+#
+#   The gate is `research/code/zenodo_deposit.py`, which the jobs below shell out to. It is one
+#   committed, reviewable program rather than a prose procedure, so an operator with the store on a
+#   local disk runs exactly what CI runs and gets the same refusals:
+#
+#       python research/code/zenodo_deposit.py verify
+#       python research/code/zenodo_deposit.py upload --api sandbox
+#
+#   That is the normal path: registering a self-hosted runner solely to let GitHub read a local
+#   directory buys nothing over running the same script on that machine. The runner is supported
+#   for an operator who wants the dispatch, the protected `zenodo` environment and the
+#   staged-manifest artifact; it is not a prerequisite for publishing the data record.
+#
+#   BE CLEAR ABOUT WHAT THIS IS NOT: it is not automatic.
+#     - `data-verify` and `data-stage` run ONLY on a self-hosted runner labelled `lattice-store`
+#       with the store mounted. If no such runner is registered, they do not run. They are not
+#       skipped-as-in-passed; the workflow reports that the data half did not happen.
+#     - Nothing here PUBLISHES the data record. The upload job creates or updates a Zenodo DRAFT
+#       deposition and stops there. Publishing mints a permanent DOI and fixes the public record
+#       date -- the store's own `.zenodo.json` notes say as much -- and that is a deliberate human
+#       action taken in the Zenodo UI after reading the draft. A workflow should not be able to
+#       make an irreversible public claim on a `workflow_dispatch` misfire.
+#     - The store's own metadata is the record's metadata. `data-verify` reads the CITATION and
+#       `.zenodo.json` from INSIDE the store, checks they are present and parse, and reports the
+#       unresolved `10.5281/zenodo.XXXXXXX` placeholder they carry as work the operator owes after
+#       publishing. It cannot refuse on that placeholder before the fact -- the DOI does not exist
+#       until the record is published -- and it does not invent one to fill the hole.
+#
+# --------------------------------------------------------------------------------------------------
+# DECISION 3 -- checksums are the gate
+# --------------------------------------------------------------------------------------------------
+#
+# The store ships `SHA256SUMS` (259 loose shards) and `SHA256SUMS.tarballs` (7 tarballs). Every
+# path to publication goes through `data-verify`, which recomputes SHA-256 over the staged files
+# and compares, and fails on: a mismatch, a file in the list that is not on disk, or a file on
+# disk that is not in the list. It also cross-checks the tarball members against the per-shard
+# list, so a tarball that verifies as a blob but is missing shards inside it still fails.
+#
+# There is no `continue-on-error`, no `|| true`, and no "warn and proceed" anywhere in that job.
+# An unverified byte is not published.
+#
+# --------------------------------------------------------------------------------------------------
+# DECISION 4 -- the two records must point at each other
+# --------------------------------------------------------------------------------------------------
+#
+# The data record already carries `isDerivedFrom` -> the Entroptics software record
+# (concept DOI 10.5281/zenodo.21273400). The reverse link does not exist yet, because the data DOI does
+# not exist yet. `readiness` below checks for it and FAILS when it is missing, rather than letting
+# a software record be minted that never mentions the data every empirical claim in it rests on.
+#
+# Order of operations, therefore:
+#   1. run this workflow with `mode: verify` on the self-hosted runner -- prove the bytes;
+#   2. run with `mode: stage` -- draft deposition, files uploaded, remote checksums confirmed;
+#   3. publish the DATA record by hand in the Zenodo UI; note the minted DOI;
+#   4. write that DOI into the store's CITATION / `.zenodo.json`, and into this repository's
+#      `.zenodo.json` `related_identifiers` (see OPERATOR PLACEHOLDERS);
+#   5. `readiness` now passes; cut the GitHub release, which is what Zenodo's GitHub integration
+#      archives as the software record.
+#
+# --------------------------------------------------------------------------------------------------
+# OPERATOR PLACEHOLDERS -- every one of these must be filled in by a human. None is invented here.
+# --------------------------------------------------------------------------------------------------
+#
+#   <REPO_ID>                 GitHub numeric repository id, in the DOI badge in README.md.
+#                             Pre-existing; left as found. Zenodo shows it once the repo is
+#                             enabled for archiving.
+#   <DATA_RECORD_DOI>         DOI of the published data record. Does not exist until step 3 above.
+#                             Goes into this repo's `.zenodo.json` related_identifiers, and into
+#                             the store's own CITATION in place of its `10.5281/zenodo.XXXXXXX`.
+#   secrets.ZENODO_TOKEN      Zenodo personal access token, scopes deposit:write (+ deposit:actions
+#                             only if you ever automate publish, which this workflow does not).
+#   vars.ZENODO_API           https://zenodo.org/api  or  https://sandbox.zenodo.org/api .
+#                             Rehearse on sandbox first; a 25 GB mistake is expensive both ways.
+#   vars.ZENODO_DEPOSITION_ID Existing draft/concept deposition to update. Leave unset to create a
+#                             new draft.
+#   runner label              A self-hosted runner labelled `lattice-store`, with the store mounted
+#                             and CONFIGS set (see research.local.env.example at the repo root).
+#   environment `zenodo`      A GitHub deployment environment with a required reviewer, so a human
+#                             approves before ~25 GB moves. Create it in repository settings; a
+#                             run against an environment that does not exist is unprotected.
+#
+# --------------------------------------------------------------------------------------------------
+
+name: publish
+
+on:
+  # The software half. Zenodo's GitHub integration is what actually archives the tag; this run is
+  # the gate that says whether the metadata going with it is complete.
+  release:
+    types: [published]
+
+  # The data half. Manual, on purpose: it moves ~25 GB and it touches a public archive.
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "verify = checksums only (safe, read-only). stage = verify, then upload to a Zenodo DRAFT (never publishes)."
+        type: choice
+        options: [verify, stage]
+        default: verify
+      record_split:
+        description: "single = one record: 7 tarballs (~24.70 GB) plus the store's README, licence, generation notes, manifest and reader. split = two records (reduced ~7.37 GB / raw links ~17.33 GB) if the quota is refused."
+        type: choice
+        options: [single, split]
+        default: single
+      part:
+        description: "With record_split=split, which half to stage: reduced or links. Ignored for single."
+        type: choice
+        options: [reduced, links]
+        default: reduced
+
+permissions:
+  contents: read
+
+env:
+  # Zenodo's documented default per-record allowance. Kept here as data so the accounting step can
+  # state the margin rather than assert that everything is fine.
+  ZENODO_RECORD_QUOTA_BYTES: "53687091200"   # 50 GB
+
+jobs:
+
+  # ================================================================================================
+  # readiness -- the software record's gate. Hosted runner: it only reads files that are in git.
+  # ================================================================================================
+  readiness:
+    name: software record is ready to mint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install YAML reader
+        run: python -m pip install --quiet pyyaml
+
+      - name: Metadata parses, and says what it must
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, sys
+
+          repo = pathlib.Path(".")
+          problems = []
+
+          # --- .zenodo.json: valid JSON, and it names the data record ---------------------------
+          z = json.loads((repo / ".zenodo.json").read_text(encoding="utf-8"))
+          for key in ("title", "description", "upload_type", "license", "creators"):
+              if not z.get(key):
+                  problems.append(f".zenodo.json is missing {key!r}")
+
+          rel = z.get("related_identifiers", [])
+          # The empirical half of this paper is measured on the data release. A software record
+          # that does not point at it leaves a reader who wants to check the reads with nothing to
+          # go on but prose. See DECISION 4 at the top of this file.
+          #
+          # The test is `resource_type == "dataset"`, not a regex over the identifier text: the
+          # record already cites another Zenodo record (the Entroptics software release), so
+          # "contains a Zenodo identifier" would pass on the wrong one. The data record's own
+          # metadata uses resource_type the same way for its isDerivedFrom link back here.
+          data_links = [r for r in rel if str(r.get("resource_type", "")).lower() == "dataset"]
+          unresolved = [r for r in data_links
+                        if "<" in str(r.get("identifier", "")) or "XXXX" in str(r.get("identifier", ""))]
+          if unresolved:
+              problems.append(
+                  f".zenodo.json's data-record link is still a placeholder ({unresolved}). Publish "
+                  "the data record first, then write the minted DOI in -- do not invent one.")
+          elif not data_links:
+              problems.append(
+                  ".zenodo.json related_identifiers does not reference the data record. Every "
+                  "empirical result here is read from 'Entroptics lattice gauge-theory "
+                  "action-density ensembles (U(1), SU(2), SU(3))', which is archived separately "
+                  "with its own DOI. Add an entry with resource_type 'dataset' and relation "
+                  "'references' (or 'isSupplementedBy') once that record is published. Do not "
+                  "invent a DOI -- mint the data record first (see the ordering at the top of "
+                  "this workflow).")
+
+          # --- CITATION.cff: valid YAML, and agrees with .zenodo.json on the title ---------------
+          import yaml
+          c = yaml.safe_load((repo / "CITATION.cff").read_text(encoding="utf-8"))
+          if c.get("title") != z.get("title"):
+              problems.append(
+                  f"CITATION.cff title {c.get('title')!r} != .zenodo.json title {z.get('title')!r}; "
+                  "the two records a reader can cite would disagree about what this is")
+
+          # --- README DOI badge -------------------------------------------------------------------
+          readme = (repo / "README.md").read_text(encoding="utf-8")
+          if "<REPO_ID>" in readme:
+              problems.append(
+                  "README.md's DOI badge still has the <REPO_ID> placeholder. It resolves to a "
+                  "broken image and a dead link on the published record -- fill in the GitHub "
+                  "numeric repository id that Zenodo shows once archiving is enabled.")
+
+          # --- the repository's own public identity ------------------------------------------------
+          # NOT auto-corrected, and not guessed. Which remote is the public face of this work is
+          # the owner's call, not a workflow's, so this is surfaced so that it gets DECIDED -- it
+          # is never silently rewritten, and (below) a disagreement with the repository the run is
+          # happening in is a warning, not a failure.
+          homes = {str(r.get("identifier", "")) for r in rel if "github.com" in str(r.get("identifier", ""))}
+          homes |= {str(c.get("repository-code", "")), str(c.get("url", ""))}
+          homes = {h for h in homes if h}
+          if len({h.rstrip("/").lower() for h in homes}) > 1:
+              problems.append(
+                  "CITATION.cff and .zenodo.json name different GitHub homes for this repository "
+                  f"({sorted(homes)}). Decide which one the published record should cite and make "
+                  "them agree.")
+
+          # The metadata may name a DIFFERENT repository from the one being released. That happens
+          # when a project has more than one remote (a private working repo and a public org repo)
+          # and the metadata was written against the first one. A published record whose
+          # repository-code points somewhere a reader cannot reach is a real problem -- but which
+          # one is "the" home is a decision, so this WARNS and leaves it alone.
+          here = os.environ.get("GITHUB_REPOSITORY", "")
+          if here and homes and not any(here.lower() in h.lower() for h in homes):
+              msg = (f"the metadata names {sorted(homes)} as this work's home, but this release is "
+                     f"being cut from {here}. Decide which repository the published record should "
+                     f"cite -- a reader following repository-code must land somewhere reachable.")
+              print(f"::warning title=repository identity::{msg}")
+              print("")
+              print(f"NOTICE: {msg}")
+              print("")
+
+          if problems:
+              print("NOT READY to mint the software record:\n")
+              for p in problems:
+                  print(f"  * {p}\n")
+              sys.exit(1)
+          print("software record metadata is complete and self-consistent")
+          PY
+
+  # ================================================================================================
+  # data-verify -- the checksum gate. Self-hosted, because the bytes are only ever there.
+  # ================================================================================================
+  data-verify:
+    name: data checksums verify against the shipped lists
+    if: github.event_name == 'workflow_dispatch'
+    # If no runner carries this label, this job does not run -- and the data half of the release
+    # has NOT happened. That is the honest cost of the choice in DECISION 2; it is not a pass.
+    runs-on: [self-hosted, lattice-store]
+    outputs:
+      root: ${{ steps.store.outputs.root }}
+      staged_bytes: ${{ steps.verify.outputs.staged_bytes }}
+      staged_files: ${{ steps.verify.outputs.staged_files }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate the store
+        id: store
+        shell: bash
+        run: |
+          # The runner says where the store is by exactly the mechanism the research code uses --
+          # the CONFIGS environment variable, or the git-ignored local config file at the repo
+          # root -- through the same resolver. One rule, so the runner and a researcher's laptop
+          # cannot disagree about which bytes are "the store". It exits non-zero, with the full
+          # actionable message, when neither is set.
+          root="$(python research/code/store_path.py)"
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "store root: $root"
+
+      - name: The store carries its own record metadata
+        shell: bash
+        env:
+          STORE_ROOT: ${{ steps.store.outputs.root }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, sys
+
+          root = pathlib.Path(os.environ["STORE_ROOT"])
+          missing = [n for n in ("CITATION.cff", ".zenodo.json", "LICENSE.txt", "GENERATION.md",
+                                 "SHA256SUMS", "SHA256SUMS.tarballs", "manifest.csv")
+                     if not (root / n).exists()]
+          if missing:
+              sys.exit(f"REFUSING: the store is missing its own release metadata: {missing}. The "
+                       f"data record is published FROM the store, not from this repository, so "
+                       f"these files are part of the deposit and not optional.")
+
+          z = json.loads((root / ".zenodo.json").read_text(encoding="utf-8"))
+          print(f"data record title : {z.get('title')}")
+          print(f"upload_type       : {z.get('upload_type')}")
+          print(f"license           : {z.get('license')}")
+          print(f"access_right      : {z.get('access_right')}")
+          rel = [r.get("identifier") for r in z.get("related_identifiers", [])]
+          print(f"related           : {rel}")
+          if not rel:
+              sys.exit("REFUSING: the data record names no related identifiers. It must at least "
+                       "carry isDerivedFrom -> the Entroptics software record.")
+
+          # The store's CITATION carries `10.5281/zenodo.XXXXXXX` until the record is published.
+          # That is correct at this point in the process -- the DOI does not exist yet -- so it is
+          # reported as the operator's next action, not treated as a failure. It becomes a failure
+          # on the SOFTWARE side (see `readiness`), which runs after the data record exists.
+          cff = (root / "CITATION.cff").read_text(encoding="utf-8")
+          if "zenodo.XXXXXXX" in cff or "XXXXXXX" in cff:
+              print("")
+              print("NOTE: the store's CITATION still has the DOI placeholder. After you publish")
+              print("the draft by hand, write the minted DOI into the store's CITATION and")
+              print(".zenodo.json, and into this repository's .zenodo.json related_identifiers.")
+          PY
+
+      # Delegates to research/code/zenodo_deposit.py -- see the note on the upload step below.
+      - name: Verify SHA256SUMS and stage the upload set
+        id: verify
+        shell: bash
+        env:
+          CONFIGS: ${{ steps.store.outputs.root }}
+          RECORD_SPLIT: ${{ inputs.record_split }}
+          PART: ${{ inputs.part }}
+        run: |
+          split="single"
+          if [ "${RECORD_SPLIT}" = "split" ]; then split="${PART}"; fi
+          python research/code/zenodo_deposit.py verify --split "$split"
+
+          python - <<'PY'
+          import json, os, pathlib
+          staged = json.loads(pathlib.Path("staged.json").read_text(encoding="utf-8"))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"staged_bytes={sum(e['bytes'] for e in staged)}\n")
+              fh.write(f"staged_files={len(staged)}\n")
+          PY
+
+      - name: Keep the staging record
+        uses: actions/upload-artifact@v4
+        with:
+          name: staged-manifest
+          path: staged.json
+          if-no-files-found: error
+
+  # ================================================================================================
+  # data-stage -- upload to a Zenodo DRAFT. Never publishes; see DECISION 2.
+  # ================================================================================================
+  data-stage:
+    name: upload verified tarballs to a Zenodo draft
+    needs: data-verify
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'stage'
+    runs-on: [self-hosted, lattice-store]
+    environment: zenodo          # a protected environment, so a human approves the 25 GB push
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: staged-manifest
+
+      - name: Refuse without a token
+        shell: bash
+        env:
+          ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+        run: |
+          if [ -z "${ZENODO_TOKEN}" ]; then
+            echo "secrets.ZENODO_TOKEN is not set. Create a Zenodo personal access token with"
+            echo "scope deposit:write and add it as a repository secret. Rehearse against"
+            echo "sandbox.zenodo.org first by setting vars.ZENODO_API."
+            exit 1
+          fi
+
+      # The verify-and-upload procedure lives in research/code/zenodo_deposit.py, not here. An
+      # operator with the store on a local disk runs exactly the same code by hand -- which is the
+      # normal path, since registering a CI runner purely to read a local directory buys nothing --
+      # and a second inline copy would be a copy, free to drift from the one people actually use.
+      - name: Upload, then confirm the archive's own checksum for every file
+        shell: bash
+        env:
+          ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+          ZENODO_API: ${{ vars.ZENODO_API }}
+          ZENODO_DEPOSITION_ID: ${{ vars.ZENODO_DEPOSITION_ID }}
+          CONFIGS: ${{ needs.data-verify.outputs.root }}
+          RECORD_SPLIT: ${{ inputs.record_split }}
+          PART: ${{ inputs.part }}
+        run: |
+          split="single"
+          if [ "${RECORD_SPLIT}" = "split" ]; then split="${PART}"; fi
+
+          # Sandbox unless vars.ZENODO_API names the production host, so an unset variable
+          # rehearses rather than deposits.
+          api="sandbox"
+          case "${ZENODO_API}" in *"//zenodo.org"*) api="production" ;; esac
+
+          args=(upload --split "$split" --api "$api" --set-metadata)
+          if [ -n "${ZENODO_DEPOSITION_ID}" ]; then
+            args+=(--deposition "${ZENODO_DEPOSITION_ID}")
+          fi
+          python research/code/zenodo_deposit.py "${args[@]}"
+
+  # ================================================================================================
+  # A run of the data half that produced nothing should say so out loud.
+  # ================================================================================================
+  data-half-report:
+    name: did the data half actually happen
+    if: always() && github.event_name == 'workflow_dispatch'
+    needs: [data-verify, data-stage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report
+        shell: bash
+        run: |
+          verify="${{ needs.data-verify.result }}"
+          stage="${{ needs.data-stage.result }}"
+          echo "data-verify: $verify"
+          echo "data-stage:  $stage"
+          if [ "$verify" = "skipped" ]; then
+            echo ""
+            echo "The data half did NOT run. The most likely reason is that no self-hosted runner"
+            echo "labelled 'lattice-store' with the store mounted is registered. Nothing was"
+            echo "verified and nothing was uploaded -- do not read this run as a green light."
+            exit 1
+          fi

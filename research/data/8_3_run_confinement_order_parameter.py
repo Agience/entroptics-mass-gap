@@ -1,24 +1,28 @@
 """
-8_3_run_confinement_order_parameter.py -- PAPER Sec 8.3: run (data + figure).
+8_3_run_confinement_order_parameter.py -- PAPER Sec 8.3: the compact-U(1) crossing table (data only).
 
-Generate compact-U(1) configs, read each through the single Aperture front door,
-and write both the data table (8_3_dat_*.csv) and the figure (8_3_fig_*.png) here.
+Reads K_signal = entroptics.confinement(field) on the FROZEN store configs,
+against the PINNED confined-vacuum null (su2 b0.50, [E] Def 8.2), plane-averaged over intact
+spatial planes. This is the SAME data, pin, and read as the no-bump sweep (8_3_regen_from_store.py),
+so the U(1) crossing table AGREES with the no-bump figure by construction and is reproducible from
+the released dataset -- not a fresh Monte-Carlo draw.
 
-The read is one call on the raw config field:
+Why the store, not fresh generation: right at the deconfinement transition (beta ~ beta_c ~ 1.01)
+K_signal is thermalisation-dependent (critical slowing down -- the photon mode orders slowly, so K
+keeps rising with Monte-Carlo time and does not converge at fixed sweeps). The frozen store configs
+(compact U(1), L8, heatbath therm 50) are the reproducible ground truth the paper cites; a fresh draw
+at a different thermalisation would not reproduce them. Reading the store pins the value to the
+released data.
 
-    K_signal = entroptics.aperture(field).screen().K_signal
+The pin is MANDATORY: the wrapper thresholds every K_signal against the calibrated confined-vacuum
+floor, never the i.i.d.-Gaussian mp edge (PAPER Sec 8.1); an unpinned read raises.
 
-the SVD modes standing above the Marchenko-Pastur noise floor of the whitened
-screen. Structureless noise in the confined phase (K_signal ~ 0); a coherent
-long-range mode resolves in the Coulomb phase (K_signal rises across beta_c).
-Entroptics read only; no classic diagnostic is stored or plotted.
-
-    python 8_3_run_confinement_order_parameter.py --mode quick   # small U(1)
-    python 8_3_run_confinement_order_parameter.py --mode full    # 8^3x16
+    CONFIGS=/path/to/entroptics-lattice python 8_3_run_confinement_order_parameter.py
+(or set CONFIGS once for the machine in the git-ignored local config file at the repository root)
 """
 from __future__ import annotations
 
-import argparse
+import glob
 import os
 import sys
 
@@ -27,59 +31,77 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))          # research/data
 sys.path.insert(0, os.path.normpath(os.path.join(_HERE, "..", "code")))
 
-import entroptics                      # the read (Aperture front door)
-import generator                       # the config
-import table                           # generic CSV writer
-import plot                            # generic figure
+import entroptics_adapter as W                   # the read (Aperture front door) + null pin
+import store_path                        # the ONE place the ensemble store is located
+import table                             # generic CSV writer
 
+# Store root from ``store_path``: the CONFIGS environment variable, then the git-ignored local
+# config file at the repository root, then a refusal. There is deliberately no default: a literal
+# path names one machine, and everywhere else it makes the sweep find nothing and still exit 0. Unconfigured resolves to None/[] rather than raising, so
+# importing this file still works with no data release present; the refusal below is where it
+# becomes loud, and ``store_path.hint()`` says which of the two cases it is.
+ROOT = store_path.store_root(required=False)
+HOPS = store_path.collections("configs_paper83", "configs_phase1", "configs_links_su2_density")
 DAT = os.path.join(_HERE, "8_3_dat_confinement_order_parameter.csv")
-FIG = os.path.join(_HERE, "8_3_fig_confinement_order_parameter.png")
-BETA_C = 1.01
 COLS = ["beta", "dims", "K_signal", "K_signal_err", "phase", "n"]
+BETA_C = 1.011                                              # compact U(1) deconfinement
+# The store's U(1) L8 crossing grid -- fine (0.05) through the transition, coarser in the wings.
+U1_BETAS = [0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00, 1.05, 1.10,
+            1.20, 1.30, 1.40, 1.50, 1.60, 1.70]
 
 
-def measure(beta, dims, *, seed, therm, meas, gap):
-    Ks = [entroptics.aperture(f).screen().K_signal
-          for f in generator.stream(dims, beta, seed=seed, therm=therm, gap=gap, n=meas)]
-    Ks = np.asarray(Ks, float)
-    n = max(1, len(Ks))
-    return dict(beta=beta, dims="x".join(map(str, dims)),
-                K_signal=float(Ks.mean()), K_signal_err=float(Ks.std() / np.sqrt(n)),
-                phase="confined" if beta < BETA_C else "Coulomb", n=len(Ks))
+def load(group, L, beta, ncap=128):
+    for h in HOPS:
+        fs = sorted(glob.glob(f"{h}/{group}_L{L}_b{beta:.2f}.s*.npy"))
+        if fs:
+            return np.asarray(np.concatenate([np.load(f) for f in fs], 0)[:ncap], dtype=np.float64)
+    return None
+
+
+def pin():
+    ref = []
+    for L in (8, 12, 16):
+        a = load("su2", L, 0.50, ncap=48)
+        if a is not None:
+            ref += list(a)
+    if not ref:
+        raise SystemExit(f"no su2 b0.50 reference under {ROOT or '<no store configured>'}\n"
+                         f"{store_path.hint()}")
+    W.pin_reference(ref)
+    return len(ref)
 
 
 def main():
-    ap = argparse.ArgumentParser(description="PAPER Sec 8.3 (compact U(1)): data + figure.")
-    ap.add_argument("--mode", choices=["quick", "full"], default="quick")
-    ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--meas", type=int, default=None)
-    ap.add_argument("--therm", type=int, default=None)
-    args = ap.parse_args()
-
-    if args.mode == "quick":
-        dims, therm, meas, gap = (6, 6, 6, 6), args.therm or 120, args.meas or 8, 4
-        betas = [0.80, 1.20]
-    else:
-        dims, therm, meas, gap = (8, 8, 8, 16), args.therm or 250, args.meas or 40, 5
-        betas = [0.80, 0.95, 1.05, 1.20]
-
-    print(f"lattice {dims}  therm={therm}  meas={meas}  gap={gap}")
-    print(f"{'beta':>6} {'K_signal':>9} {'+/-':>8}   phase")
+    n = pin()
+    print(f"pinned confined-vacuum null: {n} su2 b0.50 configs")
+    print(f"{'beta':>6} {'K_signal':>9} {'+/-':>8}   phase   n")
     rows = []
-    for i, beta in enumerate(betas):
-        r = measure(beta, dims, seed=args.seed + i, therm=therm, meas=meas, gap=gap)
-        print(f"{beta:6.2f} {r['K_signal']:9.3f} {r['K_signal_err']:8.1e}   {r['phase']}")
-        rows.append(r)
+    for beta in U1_BETAS:
+        arr = load("u1", 8, beta)
+        if arr is None:
+            print(f"{beta:6.2f}   (missing in store, skipped)")
+            continue
+        ks = np.array([float(W.confinement(arr[i], -1)) for i in range(arr.shape[0])], float)
+        m = float(ks.mean())
+        rows.append(dict(beta=round(beta, 2), dims="8x8x8x16",
+                         K_signal=round(m, 4),
+                         K_signal_err=round(float(ks.std() / np.sqrt(len(ks))), 4),
+                         phase="confined" if beta < BETA_C else "Coulomb", n=int(len(ks))))
+        print(f"{beta:6.2f} {m:9.4f} {rows[-1]['K_signal_err']:8.4f}   "
+              f"{rows[-1]['phase']:>8} {rows[-1]['n']}")
+
+    # Refuse BEFORE writing. These read the frozen store and simply skip any coupling
+    # they cannot find, so a store that is incomplete (or pointed at the wrong root)
+    # produced a HEADER-only csv over the committed artifact and still exited 0 --
+    # reporting success for a table with nothing in it.
+    if len(rows) < 16:
+        raise SystemExit(
+            f"8_3_run_confinement_order_parameter: read {len(rows)} of 16 couplings for the compact-U(1) crossing table"
+            f" under {HOPS}. Refusing to overwrite the committed artifact with a partial"
+            f" table.\n{store_path.hint()}")
 
     table.write(DAT, rows, COLS)
-    plot.line(FIG, [r["beta"] for r in rows],
-              [{"y": [r["K_signal"] for r in rows], "yerr": [r["K_signal_err"] for r in rows],
-                "label": r"$K_{\mathrm{signal}}$  (entroptics read)"}],
-              xlabel=r"$\beta$", ylabel=r"resolved modes  $K_{\mathrm{signal}}$",
-              title=r"Sec 8.3: compact U(1) -- resolved modes rise across deconfinement",
-              vline=BETA_C, vline_label=r"$\beta_c\approx1.01$",
-              vspan=(min(betas) - 0.05, BETA_C))
-    print("wrote", DAT, "and", FIG)
+    print("wrote", DAT)
 
 
 if __name__ == "__main__":

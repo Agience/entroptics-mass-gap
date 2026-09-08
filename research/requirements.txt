@@ -1,0 +1,7 @@
+# Pinned dependencies for reproducible mass-gap reads, tests, and figures.
+entroptics==0.2.1
+
+# Runtime + tooling.
+numpy>=1.24
+matplotlib>=3.6      # figure regeneration (research/data/regen_all.py --phase figures)
+pytest>=7            # research/code/tests

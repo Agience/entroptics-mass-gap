@@ -29,9 +29,9 @@ references:
       - given-names: Ikailo John
         family-names: Sessford
         affiliation: Ikailo Inc.
-    version: v0.2.1
-    doi: "10.5281/zenodo.22243130"
-    url: "https://zenodo.org/records/22243130"
+    version: v0.2.2
+    doi: "10.5281/zenodo.22664390"
+    url: "https://zenodo.org/records/22664390"
     repository-code: "https://github.com/Agience/entroptics"
     license: Apache-2.0
     date-released: "2026-08-18"

@@ -1399,7 +1399,7 @@ deconfinement transition, $\beta=0.4$–$2.5$. Generation is deterministic in $(
 every field regenerates from the seed manifest. The release ships a data card, the per-campaign generation record and
 seed map, a NumPy reader, a manifest generator, `manifest.csv` (per-shard SHA-256), and `SHA256SUMS` (all 216 shards verified: the 180 density shards and the 36
 raw-link shards, 16.14 GB, of `configs_links_su2`). Dataset: CC-BY-4.0, on Zenodo, DOI [10.5281/zenodo.22650079](https://doi.org/10.5281/zenodo.22650079) (the record and its metadata are public, the files access-by-request), derived from the Entroptics software release [E]
-(Zenodo `10.5281/zenodo.22243130`). Every figure and certificate in §8–§9 regenerates from the frozen ensembles by the named
+(Zenodo `10.5281/zenodo.22664390`). Every figure and certificate in §8–§9 regenerates from the frozen ensembles by the named
 script.
 
 ---
@@ -1425,7 +1425,7 @@ carried by citation.
 ## References
 
 - **[E]** J. Sessford, *Entroptics: reading a signal as a finite optical aperture at its own entropy-matched
-  resolution*, software v0.2.1, Zenodo (2026), DOI: [10.5281/zenodo.22243130](https://doi.org/10.5281/zenodo.22243130);
+  resolution*, software v0.2.2, Zenodo (2026), DOI: [10.5281/zenodo.22664390](https://doi.org/10.5281/zenodo.22664390);
   source: https://github.com/Agience/entroptics.
 - **[D]** J. Sessford, *Entroptics lattice gauge-theory action-density ensembles ($U(1)$, $SU(2)$, $SU(3)$)*,
   Zenodo dataset, v0.1.0, CC-BY-4.0 (2026), DOI: [10.5281/zenodo.22650079](https://doi.org/10.5281/zenodo.22650079), 216 shards, 11{,}356 configurations.

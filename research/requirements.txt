@@ -1,5 +1,5 @@
 # Pinned dependencies for reproducible mass-gap reads, tests, and figures.
-entroptics==0.2.1
+entroptics==0.2.2
 
 # Runtime + tooling.
 numpy>=1.24

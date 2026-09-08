@@ -65,12 +65,20 @@ _REQUIREMENTS = Path(__file__).resolve().parent.parent / "requirements.txt"
 
 
 def _pinned_version() -> str:
-    """The ``entroptics==X.Y.Z`` pin from research/requirements.txt -- the single source."""
+    """The entroptics floor from research/requirements.txt -- the single source.
+
+    Accepts ``==`` or ``>=``. What this number is used for below is a MINIMUM on the call surface,
+    so both spellings answer the same question: the version at or above which the reader has the
+    entry points this adapter calls. The requirement was written ``==`` while the check was ``>=``,
+    and reading only ``==`` meant relaxing the requirement raised "no pin found" at import -- the
+    adapter refusing to load because the file it reads had been made less strict.
+    """
     for line in _REQUIREMENTS.read_text(encoding="utf-8").splitlines():
         stmt = line.split("#", 1)[0].strip()
-        if stmt.startswith("entroptics=="):
-            return stmt[len("entroptics=="):].strip()
-    raise ImportError(f"no 'entroptics==' pin found in {_REQUIREMENTS}")
+        for op in ("==", ">="):
+            if stmt.startswith("entroptics" + op):
+                return stmt[len("entroptics" + op):].strip()
+    raise ImportError(f"no 'entroptics==' or 'entroptics>=' requirement found in {_REQUIREMENTS}")
 
 
 def _version_tuple(v: str) -> tuple:

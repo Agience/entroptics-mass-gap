@@ -5,3 +5,4 @@ entroptics==0.2.2
 numpy>=1.24
 matplotlib>=3.6      # figure regeneration (research/data/regen_all.py --phase figures)
 pytest>=7            # research/code/tests
+scipy>=1.10          # research/code/tests/test_generator_physics.py (scipy.stats)

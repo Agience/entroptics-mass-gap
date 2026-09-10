@@ -1528,3 +1528,237 @@ def test_centre_dominance_artifact_carries_what_the_lean_hypothesis_needs():
     assert not off, (
         f"sigma_Z/sigma is not order unity in the scaling window: {off}. Centre dominance says the "
         f"centre carries the string tension; a ratio outside a factor of two says it does not.")
+
+
+def test_free_field_constants_match_the_certificate():
+    """Sec 8.6's weak end, re-derived from 8_6_dat_free_field_muinf.csv.
+
+    Every constant the weak end quotes -- mu_inf(8), the 1/L^2 law, M_2, and the two exactness
+    checks -- reached the paper as prose and as a Lean docstring, with nothing computing them. They
+    are a deterministic Wick contraction, so they are checkable exactly; this pins them to the
+    certificate that now produces them.
+
+    The two exactness checks are compared as bounds rather than as values: they are floating-point
+    residuals, so the claim is "at most this", and a run that returns a smaller residual should not
+    fail the paper.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = {int(r["L"]): r for r in _artifact("8_6_dat_free_field_muinf.csv")}
+    assert 8 in rows and 32 in rows, "the free-field table does not cover the L the paper quotes"
+
+    mu8 = float(rows[8]["mu_inf"])
+    assert text.count(f"$\\mu_\\infty(8)={mu8:.4f}") >= 2, \
+        f"the paper states mu_inf(8)={mu8:.4f} fewer than twice; the abstract, Sec 8.6, Sec 9 and " \
+        f"the Sec 13 ledger all carry it"
+    assert f"At $L=8$, $\\mu_\\infty={mu8:.4f}$" in text, \
+        f"Sec 8.6 does not state the L=8 free-field tension as {mu8:.4f}"
+
+    # the 1/L^2 law, at the two ends of the table the ledger row quotes
+    for L, where in ((8, "at $L=8$"), (32, "by $L=32$")):
+        v = float(rows[L]["mu_inf_L2"])
+        assert f"${v:.2f}$ {where}" in text or f"{v:.2f}$ {where}" in text, \
+            f"the Sec 13 ledger does not state mu_inf(L)L^2 = {v:.2f} {where}"
+
+    m2 = float(rows[8]["M2"])
+    assert f"$M_2={m2:.3f}$" in text, f"the paper does not state the free-field M_2 as {m2:.3f}"
+    twopi2 = 2 * math.pi ** 2 * m2
+    assert f"$2\\pi^2M_2={twopi2:.2f}$" in text, \
+        f"the paper does not state 2 pi^2 M_2 as {twopi2:.2f}, which is what M_2={m2:.3f} gives"
+
+    # mu_inf falls: the tension vanishes into the continuum, which is what the weak end asserts
+    seq = [float(rows[L]["mu_inf"]) for L in sorted(rows)]
+    assert all(a > b for a, b in zip(seq, seq[1:])), \
+        f"mu_inf(L) is not decreasing in L: {seq}; the weak end says the tension vanishes"
+
+    # the two exactness checks, as upper bounds
+    for col, stated, what in (("axis_spread", 4e-17, "the lattice-axis spread"),
+                              ("doublet_split", 3e-16, "the lambda_2 doublet split")):
+        worst = max(float(r[col]) for r in rows.values())
+        assert worst <= stated, \
+            f"{what} is {worst:.2e} in the artifact, above the {stated:.0e} the paper states"
+    assert "$4\\times10^{-17}$" in text and "$3\\times10^{-16}$" in text, \
+        "Sec 8.6 no longer states the two exactness bounds this test checks"
+
+
+def test_free_field_comparison_quotes_released_ensembles_only():
+    """Sec 8.6's weak-end comparison names ensembles the release ships, and quotes their values.
+
+    The sentence this replaces claimed SU(2) to beta=48 and SU(3) to beta=8 -- neither is in the
+    release, so no reader could reproduce either, and no check could see it because nothing tied the
+    prose to an ensemble list. This ties it to both: every coupling quoted is one the comparison
+    artifact read, and the artifact's own extremes are what the prose states.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = _artifact("8_6_dat_free_field_measured.csv")
+    assert rows, "the free-field comparison artifact is empty"
+
+    # every quoted endpoint is a row of the artifact, at the value the artifact carries
+    def at(group, L, beta):
+        hit = [r for r in rows if r["group"] == group and int(r["L"]) == L
+               and abs(float(r["beta"]) - beta) < 1e-9]
+        assert hit, f"the comparison artifact has no {group} L={L} beta={beta} row"
+        return float(hit[0]["mu"])
+
+    for group, L, beta in (("su2", 8, 0.50), ("su2", 8, 2.30)):
+        v = at(group, L, beta)
+        assert f"${v:.3f}$" in text, \
+            f"Sec 8.6 does not quote the {group} L={L} beta={beta} reading as {v:.3f}"
+
+    # the SU(3) L=8 band the prose gives must contain every SU(3) L=8 row in the quoted range
+    su3 = [float(r["mu"]) for r in rows
+           if r["group"] == "su3" and int(r["L"]) == 8 and float(r["beta"]) >= 6.0]
+    assert su3, "the comparison artifact carries no SU(3) L=8 rows at beta >= 6.0"
+    assert f"${min(su3):.3f}$–${max(su3):.3f}$" in text, \
+        f"Sec 8.6 does not state the SU(3) L=8 band as {min(su3):.3f}-{max(su3):.3f}"
+
+    # the floor claim: the largest reading anywhere, and its margin
+    biggest = max(rows, key=lambda r: float(r["mu"]))
+    mu, kappa0 = float(biggest["mu"]), 0.25 * math.log(3.0)
+    assert f"${mu:.3f}$, $SU({biggest['group'][-1]})$ $L={biggest['L']}$" in text, \
+        f"Sec 8.6 does not name {biggest['group']} L={biggest['L']} beta={biggest['beta']} " \
+        f"as the largest reading, at {mu:.3f}"
+    assert f"factor ${kappa0 / mu:.2f}$" in text, \
+        f"Sec 8.6 does not state the margin below the floor as a factor {kappa0 / mu:.2f}"
+
+    # no coupling outside the release
+    for r in rows:
+        assert float(r["beta"]) <= 7.0, f"the comparison reads beta={r['beta']}, outside the release"
+
+
+def test_the_abstract_states_the_plateau_the_lscan_measured():
+    """The abstract's m_hi plateau is the artifact's mean over the window it names.
+
+    `test_lscan_plateau_claim_matches_artifact` locates statements by the literal "mean $\\approx" /
+    "plateau $\\approx", and the abstract writes "plateaus at $\\approx", so the abstract sat outside
+    every check while carrying a value 0.03 away from the artifact. This reaches it by the wording
+    the abstract actually uses.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = _artifact("8_7_dat_mhi_lscan.csv")
+    band = [float(r["m_hi"]) for r in rows if 12 <= int(r["L"]) <= 28]
+    mean = sum(band) / len(band)
+    hits = re.findall(r"plateaus at \$" + re.escape(BS + "approx") + r"(\d\.\d\d)", text)
+    assert hits, "no statement of the form 'plateaus at $\\approx0.xx' remains to check"
+    for got in hits:
+        assert abs(float(got) - mean) < 5e-3, \
+            f"the paper states the plateau as {got}, but 8_7_dat_mhi_lscan.csv gives {mean:.3f} " \
+            f"over L=12-28"
+
+
+def test_every_stated_d2_peak_is_the_measured_peak():
+    """Every place the paper names the crossover second-moment PEAK states the measured one.
+
+    The peak is quoted in the Figure 10 caption and in the Sec 13 ledger, and was checked only in
+    the caption -- by the literal "peaks at", which the ledger does not use. The ledger carried
+    0.158 and Sec 9 carried 0.16 against a measured 0.109, all three agreeing with nothing.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    peak = max(float(r["d2"]) for r in _artifact("9_1_dat_d2_bound.csv"))
+    hits = [(m.group(1), text[:m.start()].count(chr(10)) + 1)
+            for m in re.finditer(r"peaks? (?:at )?\$(?:" + re.escape(BS + "approx")
+                                 + r")?(\d\.\d+)\$", text)]
+    assert len(hits) >= 2, \
+        f"the d^2 peak is stated in {len(hits)} places; the paper carries it in the Figure 10 " \
+        f"caption and the Sec 13 ledger, so this pattern is not finding them"
+    bad = [(v, ln) for v, ln in hits if abs(float(v) - peak) > 5e-4]
+    assert not bad, \
+        f"the measured peak is {peak:.3f}, but PAPER.md states " \
+        + ", ".join(f"{v} at line {ln}" for v, ln in bad)
+
+
+def test_every_u1_coulomb_margin_is_the_artifact_s():
+    """Every statement of the U(1) Coulomb aperture margin is the pair 9_2 carries.
+
+    Sec 12 derives this range and Secs 8.5 and 13 restate it; the two restatements carried
+    0.38-0.41, which is no row of the artifact, while Sec 12's own text depended on the real pair
+    bracketing a confined SU(2) reading. Checked at every occurrence rather than by presence.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = _artifact("9_2_dat_margin_aperture.csv")
+    coulomb = sorted(float(r["m_hi"]) for r in rows if "Coulomb" in r["phase"])
+    assert len(coulomb) >= 2, "the margin artifact carries fewer than two Coulomb rows"
+    stated = f"{coulomb[0]:.3f}$" + chr(0x2013) + f"${coulomb[-1]:.3f}$"
+    assert text.count(stated) >= 3, (
+        f"the U(1) Coulomb margin {stated} is stated {text.count(stated)} times; Secs 8.5, 12 and "
+        f"13 all carry it, so one of them has drifted off the artifact")
+
+
+def test_cross_axis_agreement_is_the_probe_s():
+    """Sec 8.6's cross-axis figures are P4a's, at the precision they are written.
+
+    The paper stated 0.00% on the controlled isotropic input and inferred from it that a 0.29%
+    spread seen on configurations was the field's own. The probe stores phi_T and phi_F, and they
+    disagree by 0.64%: the inference ran the wrong way, and the 0.29% had no artifact at all. This
+    recomputes the disagreement from the stored pair.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    hit = [r for r in _artifact("8_6_dat_probe.csv") if r["probe"] == "P4a_crossaxis"]
+    assert hit, "the probe artifact carries no P4a cross-axis row"
+    pt, pf = float(hit[0]["y"]), float(hit[0]["a_axis"])
+    disagreement = abs(pt - pf) / (0.5 * (pt + pf)) * 100
+    assert f"${disagreement:.2f}" + BS + "%$ in $" + BS + "varphi$" in text, \
+        f"Sec 8.6 does not state the phi cross-axis disagreement as {disagreement:.2f}%"
+    assert "$0.29" + BS + "%$" not in text, \
+        "the 0.29% cross-axis spread is back; no artifact in the repository produces it"
+
+
+def test_the_correlator_positive_range_is_the_artifact_s():
+    """Sec 8.7 states the lag out to which the 0^{++} correlator is positive, and it is the real one.
+
+    "Positive and decaying" was stated unqualified and carries the reflection-positivity argument on
+    the data, but the correlator crosses zero in the noise tail at every smearing. The lag where it
+    first goes negative is a property of the artifact, so the prose can state it and be checked.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = _artifact("8_7_dat_transfer_gap.csv")
+    last_positive = None
+    for s in sorted({r["smearing"] for r in rows}, key=int):
+        series = sorted(((int(r["tau"]), float(r["C_over_C0"])) for r in rows
+                         if r["smearing"] == s))
+        first_neg = next((t for t, c in series if c < 0), None)
+        assert first_neg is not None, \
+            f"smearing {s} no longer crosses zero; the qualification this checks is now wrong"
+        last_positive = first_neg - 1 if last_positive is None else min(last_positive, first_neg - 1)
+    assert text.count(f"$" + BS + "tau=" + str(last_positive) + "$") >= 2, (
+        f"the correlator is positive out to tau={last_positive} at every smearing; Sec 8.7 and the "
+        f"Figure 7 caption should both say so, and one of them does not")
+
+
+def test_the_aperture_ceiling_margin_matches_the_artifact():
+    """Sec 9's lead margin -- the uppers at delta=1e-30 against the aperture ceiling -- from the CSV.
+
+    The paper leads its margin claim with the ceiling the read actually requires (B_16 ~ 3.52)
+    rather than the tighter pinned B=1, and quotes `largest 3.099` for it. That number was stated
+    with nothing behind it: the certificate script reported only the delta=1e-6 column, so the
+    figure could not be regenerated from any artifact and an edit to it would have passed silently.
+    A deliberately wrong value was injected here and the suite did not object, which is why the
+    certificate now carries `ceiling_upper_delta_1e-30` and this check exists.
+
+    The delta is read from the column name, so re-running the certificate at a different one moves
+    this test WITH the artifact rather than against it.
+    """
+    text = PAPER.read_text(encoding="utf-8")
+    rows = _artifact("9_1_dat_d2_certified.csv")
+    col = next((c for c in rows[0] if c.startswith("ceiling_upper_delta_")), None)
+    assert col, "the certificate carries no ceiling_upper_delta_* column"
+    delta_exp = col.rsplit("_", 1)[1]                       # e.g. 1e-30
+    uppers = [float(r[col]) for r in rows]
+
+    # the ceiling itself, as the paper states it
+    ceiling = float(re.search(r"B_\{16\}=([\d.]+)", text).group(1))
+    over = [(r["beta"], u) for r, u in zip(rows, uppers) if u >= ceiling]
+    assert not over, f"couplings whose {delta_exp} upper reaches the ceiling {ceiling}: {over}"
+
+    # the paper must quote THIS delta beside THIS largest upper
+    _, exponent = delta_exp.split("e")
+    # BS + "delta" is a LITERAL backslash-delta in the paper; in a regex `BS + "d"` is the digit
+    # class, so the prefix is escaped rather than pasted in raw. That mistake made this check fail
+    # against a paper that did state the number.
+    prefix = re.escape(BS + "delta=10^{" + exponent + "}$ (largest $")
+    stated = re.search(prefix + r"([\d.]+)" + re.escape("$)"), text)
+    assert stated, (
+        f"Sec 9 no longer states a `largest` upper beside delta=10^{{{exponent}}}; the artifact "
+        f"carries the {delta_exp} column, so the paper should quote it")
+    assert abs(float(stated.group(1)) - max(uppers)) < TOL, (
+        f"the paper says the largest {delta_exp} upper is {stated.group(1)}; the artifact's is "
+        f"{max(uppers):.4f}")

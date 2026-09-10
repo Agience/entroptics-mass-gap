@@ -43,6 +43,10 @@ BOUND = 1.0            # proof bound B (< aperture ceiling 3.52)
 # not B, and 1e-30 still clears the ceiling. The looser 99% and 99.9% columns are kept because the
 # artifact is cheaper to read than to regenerate.
 DELTA = 1e-6           # 99.9999% per coupling
+# The paper's lead margin: the uppers still clear the APERTURE CEILING (not the tighter pinned B)
+# at this delta. Carried as its own column so Sec 9's `largest 3.099` is pinned to the artifact --
+# it was stated in the paper with nothing regenerating or checking it.
+DELTA_CEIL = 1e-30
 CEIL = 3.52           # aperture ceiling for N = 16
 BCYM = 0.767
 
@@ -61,7 +65,7 @@ def load_beta(b):
 eb, d2_upper = CG.eb, CG.d2_upper
 
 
-B, N, C, U99, U999, U6 = [], [], [], [], [], []
+B, N, C, U99, U999, U6, U30 = [], [], [], [], [], [], []
 for b in BETAS:
     a = load_beta(b)
     if a is None:
@@ -69,7 +73,7 @@ for b in BETAS:
     P = CG.per_config_profiles(a); n = a.shape[0]
     B.append(b); N.append(n); C.append(CG.d2_from_profiles(P))
     U99.append(d2_upper(P, 0.01)); U999.append(d2_upper(P, 0.001))
-    U6.append(d2_upper(P, DELTA))
+    U6.append(d2_upper(P, DELTA)); U30.append(d2_upper(P, DELTA_CEIL))
 
 if not B:
     raise SystemExit(
@@ -79,22 +83,25 @@ if not B:
         f" which is how this failure went unnoticed."
         f"\n{store_path.hint()}")
 
-B, C, U99, U999, U6 = map(np.array, (B, C, U99, U999, U6))
+B, C, U99, U999, U6, U30 = map(np.array, (B, C, U99, U999, U6, U30))
 
 # ---- CSV ----
 with open(os.path.join(HERE, "9_1_dat_d2_certified.csv"), "w", newline="") as f:
     w = csv.writer(f)
     w.writerow(["beta", "nconfigs", "d2_central", "eb_upper_99", "eb_upper_99.9",
-                "eb_upper_99.9999", f"certified_below_{BOUND:.1f}"])
-    for b, n, c, u9, u99, u6 in zip(B, N, C, U99, U999, U6):
+                "eb_upper_99.9999", f"certified_below_{BOUND:.1f}",
+                f"ceiling_upper_delta_{DELTA_CEIL:.0e}"])
+    for b, n, c, u9, u99, u6, u30 in zip(B, N, C, U99, U999, U6, U30):
         w.writerow([f"{b:.2f}", n, f"{c:.5f}", f"{u9:.4f}", f"{u99:.4f}", f"{u6:.4f}",
-                    "yes" if u6 < BOUND else "NO"])
+                    "yes" if u6 < BOUND else "NO", f"{u30:.4f}"])
 
 allpass = bool((U6 < BOUND).all())
 print("max certified upper = %.3f at delta=%.0e  (proof bound B=%.1f, aperture ceiling %.2f)"
       % (U6.max(), DELTA, BOUND, CEIL))
 print("ALL %d beta certified <= %.1f at %.4f%% per beta: %s   joint over grid ~ %.6f" %
       (len(B), BOUND, 100 * (1 - DELTA), allpass, (1 - DELTA) ** len(B)))
+print("max upper at delta=%.0e = %.4f at beta=%.2f  (aperture ceiling %.2f, all clear: %s)"
+      % (DELTA_CEIL, U30.max(), B[int(U30.argmax())], CEIL, bool((U30 < CEIL).all())))
 
 # ---- figure (log-y: measured, certified caps, proof bound, aperture ceiling all visible) ----
 plt.rcParams.update({"font.size": 11, "font.family": "DejaVu Sans", "axes.linewidth": 0.8})

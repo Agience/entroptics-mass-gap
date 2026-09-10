@@ -31,9 +31,10 @@ Review, feedback and fixes are welcome.
 At **every physical coupling $\beta \ge 0$**, pure $SU(N)$ has a positive mass gap, non-triviality (the area law),
 and Euclidean $SO(4)$ invariance. The gap is bounded below by the entropy margin, $\Delta(\beta) \ge \kappa_0 - \mu(\beta) > 0$:
 the centre-vortex tension $\mu$ stays below the counting floor $\kappa_0 = \tfrac14\ln 3$ at every coupling, and
-$\|C(\tau)\| \le M\,e^{-\Delta\tau}$. The result rests on four named classical inputs — the strong-coupling character
-bound (Osterwalder–Seiler), asymptotic freedom, reflection positivity of the Wilson ensemble, and one confinement
-read, a finite correlation length $\langle d^2\rangle \le 1$. Conditioned on the confinement read, the whole result
+$\|C(\tau)\| \le M\,e^{-\Delta\tau}$. The result rests on four named inputs, of which three are classical results the development cites rather than
+re-derives — the strong-coupling character bound (Osterwalder–Seiler), asymptotic freedom, and reflection
+positivity of the Wilson ensemble. The fourth, a finite correlation length $\langle d^2\rangle \le 1$, is not a
+cited theorem: it is discharged by measurement rather than by proof. Conditioned on the confinement read, the whole result
 follows with reflection positivity as the only structural input.
 
 The confinement read is measured on lattice ensembles and certified at **99.9999%** per coupling (a rigorous empirical-Bernstein
@@ -71,9 +72,12 @@ lake exe cache get      # fetch the prebuilt Mathlib olean cache (no full Mathli
 lake build              # builds MassGap.* against the cache — sorry-free
 ```
 
-Check the axiom footprint yourself:
+Check the axiom footprint yourself. Put this in a file under `research/lean` and run it with
+`lake env lean <file>`; the single import brings every theorem below into scope:
 
 ```lean
+import MassGap
+
 #print axioms MassGap.ym_mass_gap
 -- propext, Classical.choice, Quot.sound
 -- + ym_character, ym_asymfree, wilson_reflection_positive, d2_le_bound   (the four named inputs)
@@ -89,6 +93,9 @@ Check the axiom footprint yourself:
 
 #print axioms MassGap.CellEnclosure.ym_volume_gap_cell_grounded
 -- the three foundational only  (the volume-uniform gap; radius from the machine-checked single cell)
+
+#print axioms MassGap.WilsonGauge.ym_continuum_gauge
+-- the three foundational only  (the OS0-OS3 continuum measure on the genuine SU(N) Haar measure)
 ```
 
 ## Data
@@ -118,3 +125,10 @@ data-availability details. The lattice ensembles are a separate data release wit
 Security issues: email **connect@agience.ai** rather than opening a public issue.
 
 Licensed under Apache-2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+
+## Declaration of generative AI use
+
+The author used Anthropic's Claude Opus (versions 4.8 and 5) in the preparation of this work. Its
+contribution was to write code, and to generate and validate content. The ideas, the construction
+and the claims are the author's. No other generative AI tool was used. The author reviewed and
+edited all output and takes full responsibility for the content of this publication.

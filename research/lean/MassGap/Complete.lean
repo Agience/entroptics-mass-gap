@@ -54,7 +54,7 @@ read identification) are THEOREMS, not axioms. The read is concrete (`Moment.Rea
 
 The one physics input is the confinement read — `d2_le_bound` (flagship) or the discriminating
 `ym_aperture_margin` (spectral). Its ends are cited theorems; its crossover interior is the `SU(N)`
-confinement content, read deterministically with margin (`⟨d²⟩ ∈ [0.014, 0.16] ≪ 1`; `m_hi < 3^{-1/4}`). It is
+confinement content, read deterministically with margin (see `d2_le_bound` for the figures). It is
 the forward-side terminus of a one-way construction that runs from the finite aperture out to the cited
 classical results it meets. See PAPER §12, *the direction of the construction*.
 -/
@@ -72,7 +72,7 @@ identification) is a **derivation** (`readYM_is_wilson := rfl`), and the sole re
 /-- The correlation dimension of the entropy-matched read (number of resolved lags, `L`). **Pinned to the
 physical read aperture `L = 16`** (the SU(2) `L16` configs the certificate reads, `certify/ym_crossover_confinement_of_grid.py`).
 Fixing it to a concrete value lets the finite-aperture premise `ym_finite_aperture` be a THEOREM (`norm_num`),
-not an axiom — the aperture condition holds for every `N ≥ 4`, so any physical lattice qualifies; the
+not an axiom — the aperture condition holds for every `N ≥ 9`, so any physical lattice qualifies; the
 `L`-independence (that it does not dilute as `L → ∞`) is the SEPARATE `gap_uniform_in_volume_of_intensive`. -/
 def nCorrYM : ℕ := 16
 
@@ -213,7 +213,7 @@ correlation length): `⟨d²⟩(β) ≤ 1` uniformly for `β ≥ βcYM`. The `1/
 (`Moment.Read.tension_lt_floor_of_lag_moment`): the θ-moment factors as `⟨θ²⟩ = (2π/(L+1))² ⟨d²⟩`, so the fixed
 bound `B = 1` puts `μ` under the floor at every large `L` (margin `∝ L²`, a theorem), and `1` sits `3.52×`
 under the aperture threshold `B₁₆ ≈ 3.52` (`ym_finite_aperture`). This is confinement (finite `ξ` / SU(N)
-no-bulk-transition): measured `⟨d²⟩ ∈ [0.014, 0.16] ≪ 1` across the crossover, with the free-field
+no-bulk-transition): measured well under `1` across the crossover (figures at `d2_le_bound`), with the free-field
 weak-coupling limit `⟨d²⟩ → ~0.12` (`FreeField`). The bound is CONSISTENT (`0 ≤ ⟨d²⟩ ≤ 1`) and holds on the
 whole half-line `β ≥ βcYM`. It is the spatial correlation moment — distinct from the energy susceptibility
 `χ_v` (Shannon/specific-heat), the Rényi relation of PAPER §8.4.
@@ -228,10 +228,12 @@ The closed-form envelope and its Lipschitz regularity are available, where wante
 the values of the ensemble measure `wilsonCorr`, is a uniform bound on the whitened lag second moment across
 the crossover onset `β ≥ βcYM`: `⟨d²⟩(β) ≤ 1`. Below `βcYM` the strong-coupling character bound
 (`ym_character`) already gives `μ<κ₀`, so nothing is asserted there. This is the finite-correlation-length /
-SU(N) no-bulk-transition input, read on the ensemble — a reflection-positivity / character-domination bound on
-the opaque Wilson measure, the same cited-classic standing as `ym_character`, and the confinement statement
-itself (measured `⟨d²⟩ ∈ [0.014, 0.16] ≪ 1`, peak `0.158` at `β≈2.5`; rigorously certified `⟨d²⟩ ≤ 1` at
-`99.9%` per β, empirical-Bernstein on the topped-up SU(2) L16 grid, `data/9_1_run_d2_certify.py`). It is
+SU(N) no-bulk-transition input, read on the ensemble. Unlike `ym_character` and `ym_asymfree`, which are cited
+theorems, this one is DISCHARGED BY MEASUREMENT, not by proof: measured `⟨d²⟩ ∈ [0.014, 0.109] ≪ 1`, peak
+`0.109` at `β=2.30`, with an empirical-Bernstein upper bound below `1` at every β on the topped-up SU(2) L16
+grid — `0.908` worst-case at `δ=10⁻⁶` (`data/9_1_run_d2_certify.py`). THIS DOCSTRING IS THE CANONICAL
+STATEMENT of the input, its measurement and its status; elsewhere, cross-reference it rather than restating
+the figures. It is
 CONSISTENT (`0 ≤ ⟨d²⟩ ≤ 1`) and, unlike the old parabola envelope, holds on the whole half-line `β ≥ βcYM`.
 The value `1` need only sit under the aperture ceiling `3.52` (a `3.5×` margin); the tighter `1/5` would need
 `~4000` configs/β to certify rigorously, so `1` is the certified bound. -/
@@ -241,7 +243,7 @@ axiom d2_le_bound : ∀ β : ℝ, βcYM ≤ β → (∑ d, pcorrYM β d * (d : �
 aperture condition `(2π/(N+1))² · B / 2 < 1 − 3^{-1/4}` is a statement purely about the finite aperture
 `N = nCorrYM = 16`: a concrete numeric inequality, discharged by `norm_num` from `π < 3.15` (upper-bounds the
 `(2π/17)²` factor) and `3^{-1/4} ≤ 4/5` (from `(5/4)⁴ = 625/256 ≤ 3`, lower-bounds the floor gap `≥ 1/5`).
-LHS `= (2π/17)²/2 ≈ 0.068 < 1/5 ≤ 1 − 3^{-1/4}`. It holds for every `N ≥ 4`, so pinning to the physical `L16`
+LHS `= (2π/17)²/2 ≈ 0.068 < 1/5 ≤ 1 − 3^{-1/4}`. It holds for every `N ≥ 9`, so pinning to the physical `L16`
 aperture is not special-casing; the `L`-independence is the SEPARATE `Certify.gap_uniform_in_volume_of_intensive`. -/
 theorem ym_finite_aperture :
     (2 * Real.pi / (nCorrYM + 1)) ^ 2 * 1 / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) := by

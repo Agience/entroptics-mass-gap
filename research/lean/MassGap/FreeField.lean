@@ -16,8 +16,9 @@ lattice:
 
     μ∞(L) ≈ 2.1 / L²  →  0        (so λ₁/λ₂ = e^{μ∞} → 1),    and    μ∞(8) = 0.0326 < κ₀ = 0.2747,
 
-with the three spatial axes byte-identical (spread `2·10⁻¹⁶`) and `λ₂` a degenerate doublet -- the exact
-`SO(4)` multiplet (A2). SU(2) and SU(3) lattice data land on the same `μ∞` (`N`-independent).
+with the lattice axes identical to `4·10⁻¹⁷` and `λ₂` a degenerate doublet to `3·10⁻¹⁶` -- the exact
+`SO(4)` multiplet (A2). The table is produced by `code/certify/free_field_muinf.py`; on the released
+SU(2) and SU(3) ensembles the same functional tracks `μ∞` to within a factor 1.5 (`N`-independent).
 
 This module proves, with NO axiom:
 * **finite-`L` confinement** -- the gap tension is sub-floor once the top-two ratio is below

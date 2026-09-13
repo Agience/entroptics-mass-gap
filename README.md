@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/entroptics?logo=pypi&logoColor=white&label=entroptics)](https://pypi.org/project/entroptics/)
 [![Verified](https://img.shields.io/badge/verified-Lean%204%20%2F%20Mathlib-4B0082)](research/lean)
+[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](research/PAPER.pdf)
 [![DOI](https://zenodo.org/badge/1342269699.svg)](https://zenodo.org/badge/latestdoi/1342269699)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Agience-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Agience)
 
@@ -38,7 +39,7 @@ cited theorem: it is discharged by measurement rather than by proof. Conditioned
 follows with reflection positivity as the only structural input.
 
 The confinement read is measured on lattice ensembles and certified at **99.9999%** per coupling (a rigorous empirical-Bernstein
-bound). The paper (`research/PAPER.md`) develops the theorem and the method; the reads run through the Entroptics
+bound). The paper ([`research/PAPER.pdf`](research/PAPER.pdf)) develops the theorem and the method; the reads run through the Entroptics
 reader (`research/code/`); the Lean 4 / Mathlib development (`research/lean/`) is the verification — `sorry`-free, on
 the three foundational axioms plus the named inputs.
 
@@ -55,7 +56,8 @@ paper (§13).
 
 | path | what |
 |---|---|
-| [`research/PAPER.md`](research/PAPER.md) | the paper |
+| [`research/PAPER.pdf`](research/PAPER.pdf) | the paper, typeset |
+| [`research/PAPER.md`](research/PAPER.md) | the same text in markdown |
 | [`research/lean/`](research/lean) | the Lean 4 / Mathlib development (`MassGap.*`), `sorry`-free |
 | [`research/data/`](research/data) | analysis and figure scripts that read the frozen ensembles, and `regen_all.py`, which drives them |
 | [`research/code/`](research/code) | the Entroptics wrapper + certification code |

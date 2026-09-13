@@ -100,11 +100,14 @@ ax.set_xlim(6.5, Lmax + 1.5)
 ax.set_ylim(0, 1.0)
 ax.set_xticks(sorted(int(x) for x in L))
 ax.legend(fontsize=8.5, frameon=False, loc='lower right')
-fig.text(0.5, 0.012,
-         r"Reflection positivity gives $\rho'(n)=\rho'(1)^n$: one cut $\rho'(1)<1$ carries the gap to every volume; "
+# two lines: the one-line form is wider than the canvas and clips at both edges
+fig.text(0.5, 0.030,
+         r"Reflection positivity gives $\rho'(n)=\rho'(1)^n$: one cut $\rho'(1)<1$ carries the gap to every volume;",
+         fontsize=7.4, color='0.35', ha='center')
+fig.text(0.5, 0.008,
          r"for $12\leq L\leq 28$ the magnitude holds a plateau far below the ceiling — the intensive margin.",
          fontsize=7.4, color='0.35', ha='center')
-fig.tight_layout(rect=[0, 0.045, 1, 1])
+fig.tight_layout(rect=[0, 0.070, 1, 1])
 out = os.path.join(here, '8_7_fig_mhi_lscan.png')
 fig.savefig(out, dpi=150)
 print('wrote', out, '| L =', list(int(x) for x in L), '| m_hi =', [round(float(x), 3) for x in mhi],

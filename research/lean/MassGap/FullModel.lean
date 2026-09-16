@@ -38,6 +38,49 @@ structure FullModel where
   /-- The finite-spacing Osterwalder–Schrader data across spacings (for the continuum measure). -/
   measure : LatticeYMFamily
 
+/-- **MASS GAP WITH A RATE, AND THE CONTINUUM MEASURE, FROM ONE MODEL.**
+
+`existence_and_gap_of_model` pairs a decay-to-zero with the OS limit. This pairs the RATE with it, so
+the two halves of the problem are stated together at the strength each is proved at:
+
+* **the gap** -- `Δ = κ₀ - μ β > 0` and `‖C(τ)‖ ≤ (∑‖P_k‖)·e^{-Δτ}`, geometric decay at a rate that
+  is the margin between the proved entropy floor and the measured tension;
+* **the measure** -- a tight subsequential limit `q` satisfying OS0 (temperedness), OS1 (Euclidean
+  invariance), OS2 (reflection positivity) and OS3 (permutation symmetry).
+
+No axiom beyond the foundational three: A1, A2 and the `LatticeYMFamily` fields are the structure's
+DATA, supplied by whoever builds the model, not assumptions of this theorem.
+
+WHAT REMAINS BETWEEN THIS AND THE PROBLEM'S STATEMENT, named here because a capstone that hid them
+would be worse than no capstone:
+
+1. `Δ` is a rate at ONE spacing. The problem wants one gap for the continuum theory. The bound becomes
+   spacing-independent when the aperture is held at fixed physical extent
+   (`ZeroMode.gap_phys_of_fixed_screen`: `Δ_phys ≥ κ/L`, the spacing cancels), but that composition is
+   not performed here because it needs the family indexed by spacing, which `FullModel` is not.
+2. `LatticeYM.hread` -- that the active mode magnitudes clear the free-energy margin -- is the
+   structure's hypothesis. `Apriori.hread_of_dominant` reduces it to the DOMINANT magnitude and
+   `Apriori.margin_of_dominant_rate` shows it is exactly `Δ_measured ≥ κ₀ - μ`: an empirical statement
+   about the read, checkable against the ensembles, and cited rather than derived.
+3. OS4 (clustering) is the gap itself (`Forgetting.bridge_forward`); the Osterwalder-Schrader
+   reconstruction of `q` into a Wightman theory is a classical result, entered as a named axiom.
+
+DERIVED: nothing is introduced. Every constant belongs to the model. -/
+theorem mass_gap_rate_and_continuum (M : FullModel) (β : ℝ) :
+    (0 < M.gap.κ₀ - M.gap.μ β ∧
+      ∀ τ : ℕ, ‖∑ k ∈ M.gap.s β, M.gap.P β k * (M.gap.m β k) ^ τ‖
+        ≤ (∑ k ∈ M.gap.s β, ‖M.gap.P β k‖)
+            * Real.exp (-(M.gap.κ₀ - M.gap.μ β)) ^ τ) ∧
+      (∃ (q : M.measure.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
+        (∀ j, Tendsto (fun k => M.measure.Q j (φ k)) atTop (nhds (q j))) ∧
+        (∀ j, |q j| ≤ (⌈M.measure.c⌉₊ : ℝ) * M.measure.B) ∧
+        (∀ j, 0 ≤ q j) ∧
+        (∀ g j, q (M.measure.actE g j) = q j) ∧
+        (∀ σ j, q (M.measure.actP σ j) = q j)) :=
+  ⟨mass_gap_rate_of_model M.gap M.h1 β, continuum_of_family M.measure⟩
+
+#print axioms mass_gap_rate_and_continuum
+
 /-- **The full result for a model: mass gap AND OS-satisfying continuum measure.** From a `FullModel`:
 * **Mass gap** (`mass_gap_of_model`, Step 1) — the autocorrelation forgets `C(τ)→0` at every coupling,
   non-triviality `μ − κ < 0`, and Euclidean `SO(4)` invariance;

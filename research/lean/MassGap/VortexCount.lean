@@ -9,7 +9,7 @@ import MassGap.Capacity
 (`κ₀−μ ≤ c`) from a hypothesis `hZ : vortexTerm μ n ≤ Z n` with `vortexTerm μ n = 3ⁿ·e^{−μ(4n+2)}`. But
 the PROVED Floor count is `directed_surface_count : #{directed cube surfaces} = 3ᵏ` at area
 `A = 4(k+1)+2 = 4k+6` — i.e. `3^{n−1}` at area `4n+2`, a factor of 3 below `vortexTerm`'s `3ⁿ`. So `hZ`
-with the loose `vortexTerm` is NOT honestly dischargeable from the count; forcing it would overclaim.
+with the loose `vortexTerm` is NOT dischargeable from the count; forcing it would overclaim.
 
 This module closes the entropy-bound half **at the exact Floor constant**: a physical vortex weight `Z`
 that dominates the counted weight `3ᵏ·e^{−μ(4k+6)}` (the `directed_surface_count` surfaces, each of area
@@ -114,7 +114,7 @@ theorem floorTerm_le_weighted {μ : ℝ} {M : ℕ → ℕ} (hM : ∀ k, 3 ^ k �
   exact_mod_cast hM k
 
 /-- **`3ᵏ ≤ (physical count)` from the machine-checked directed count.** If the `3ᵏ` directed cube-paths
-(`Fin k → Fin 3`) embed injectively into the physical vortex-surface set `V` (the honest content of
+(`Fin k → Fin 3`) embed injectively into the physical vortex-surface set `V` (what is actually being assumed by
 "directed surfaces are a sub-family of all closed vortex surfaces"), then the physical count `#V ≥ 3ᵏ` —
 so the domination hypothesis `hM` above is exactly `directed_surface_count` carried into the physical
 ensemble. -/
@@ -157,7 +157,7 @@ theorem selfSourcingJunction_of_physical_count {μ c : ℝ} {M : ℕ → ℕ}
 /-- **The junction in the transparent entropy-density form.** The cited input `hdual` is exactly "the
 vortex free-energy density is at most the tension plus the contraction rate":
 `(log M k)/(4k+6) ≤ μ + c`. Given that (and the sub-family count `hM`), the self-sourcing junction
-`κ₀−μ ≤ c` holds — since `κ₀ = lim (k·log3)/(4k+6) ≤ lim (log M k)/(4k+6) ≤ μ + c`. This is the honest
+`κ₀−μ ≤ c` holds — since `κ₀ = lim (k·log3)/(4k+6) ≤ lim (log M k)/(4k+6) ≤ μ + c`. This is the
 statement of the cited condensation–contraction scale-duality (Tomboulis–Yaffe / Chatterjee): the counted
 vortex entropy density is bounded by the physical contraction rate. -/
 theorem junction_of_entropy_density {μ c : ℝ} {M : ℕ → ℕ}

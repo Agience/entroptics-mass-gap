@@ -223,7 +223,7 @@ theorem sysReal_expect_nonneg (β : ℝ) (O : sysReal.Config → ℝ) (hO : ∀ 
   unfold System.corrNum
   exact integral_nonneg (fun U => mul_nonneg (hO U) (sysReal_boltz_pos β U).le)
 
-/-- **Monotonicity: `⟨O⟩ ≤ ⟨O'⟩` for `O ≤ O'`** (with the honest integrability hypotheses). The Gibbs
+/-- **Monotonicity: `⟨O⟩ ≤ ⟨O'⟩` for `O ≤ O'`** (with the integrability hypotheses stated, not assumed away). The Gibbs
 expectation is monotone: `Z > 0` and the Boltzmann weight is nonnegative. -/
 theorem sysReal_expect_mono (β : ℝ) (O O' : sysReal.Config → ℝ)
     (hint : Integrable (fun U => O U * sysReal.boltz β U) (sysReal.vol (probHaar G2)))
@@ -245,7 +245,7 @@ theorem sysReal_expect_smul (β c : ℝ) (O : sysReal.Config → ℝ) :
       = (fun U => c * (O U * sysReal.boltz β U)) := by funext U; ring
   rw [h, integral_const_mul, mul_div_assoc]
 
-/-- **Additivity: `⟨O+O'⟩ = ⟨O⟩ + ⟨O'⟩`** (with the honest integrability hypotheses). Together with
+/-- **Additivity: `⟨O+O'⟩ = ⟨O⟩ + ⟨O'⟩`** (with the integrability hypotheses stated, not assumed away). Together with
 `sysReal_expect_smul` this makes `⟨·⟩` linear; with `_one`/`_nonneg` it is a positive normalized linear
 functional — a genuine *state* on the observables. -/
 theorem sysReal_expect_add (β : ℝ) (O O' : sysReal.Config → ℝ)
@@ -914,7 +914,7 @@ def blockIntB : Finset (Fin 7) := {3, 4, 5, 6}
 theorem sysInt_shares_link : (3 : Fin 7) ∈ blockIntA ∧ (3 : Fin 7) ∈ blockIntB := by decide
 
 /-- **The interacting blocks are NOT disjoint** (they share link 3), so the coordinate-independence
-argument (`coords_indep`, which required `Disjoint`) does not apply — the honest boundary where nontrivial
+argument (`coords_indep`, which required `Disjoint`) does not apply — the boundary where nontrivial
 clustering becomes possible. -/
 theorem blockInt_not_disjoint : ¬ Disjoint blockIntA blockIntB := by decide
 

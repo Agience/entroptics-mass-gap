@@ -43,8 +43,8 @@ theorem h0_mem : h0mat ∈ Matrix.specialUnitaryGroup (Fin 2) ℂ := by
   · ext i j
     fin_cases i <;> fin_cases j <;>
       simp [h0mat, Matrix.mul_apply, Fin.sum_univ_two, Matrix.star_eq_conjTranspose,
-        Matrix.conjTranspose_apply, Complex.star_def, Matrix.one_apply, Complex.ext_iff]
-  · simp [h0mat, Matrix.det_fin_two, Complex.ext_iff]
+        Matrix.conjTranspose_apply]
+  · simp [h0mat, Matrix.det_fin_two]
 
 /-- `h0 = diag(i,-i)` as an element of `SU(2)`. -/
 noncomputable def h0 : SU 2 := ⟨h0mat, h0_mem⟩
@@ -100,7 +100,7 @@ theorem haar_su2_trace_zero :
   have hsum : (fun g : SU 2 => Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ))
       = (fun g : SU 2 => ∑ i, (g : Matrix (Fin 2) (Fin 2) ℂ) i i) := by
     funext g; rw [Matrix.trace]; rfl
-  rw [hsum, integral_finset_sum _ (fun i _ => entry_integrable i i)]
+  rw [hsum, integral_finsetSum _ (fun i _ => entry_integrable i i)]
   simp [haar_su2_coeff_zero]
 
 /-- The fundamental character is integrable. -/
@@ -109,7 +109,7 @@ theorem trace_integrable :
   have hsum : (fun g : SU 2 => Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ))
       = (fun g : SU 2 => ∑ i, (g : Matrix (Fin 2) (Fin 2) ℂ) i i) := by
     funext g; rw [Matrix.trace]; rfl
-  rw [hsum]; exact integrable_finset_sum _ (fun i _ => entry_integrable i i)
+  rw [hsum]; exact integrable_finsetSum _ (fun i _ => entry_integrable i i)
 
 /-- **`∫_{SU(2)} Re tr(U) dHaar = 0`** — the real part of the fundamental character averages to zero
 (`Re` commutes with the integral). So a single-variable Wilson density Haar-averages to the free value:
@@ -133,11 +133,11 @@ theorem haar_su2_trace_mul_zero (X : Matrix (Fin 2) (Fin 2) ℂ) :
     funext g
     rw [Matrix.trace]
     simp only [Matrix.diag_apply, Matrix.mul_apply]
-  rw [hexp, integral_finset_sum _
-    (fun a _ => integrable_finset_sum _ (fun b _ => (entry_integrable a b).mul_const _))]
+  rw [hexp, integral_finsetSum _
+    (fun a _ => integrable_finsetSum _ (fun b _ => (entry_integrable a b).mul_const _))]
   apply Finset.sum_eq_zero
   intro a _
-  rw [integral_finset_sum _ (fun b _ => (entry_integrable a b).mul_const _)]
+  rw [integral_finsetSum _ (fun b _ => (entry_integrable a b).mul_const _)]
   apply Finset.sum_eq_zero
   intro b _
   rw [integral_mul_const, haar_su2_coeff_zero, zero_mul]
@@ -283,8 +283,8 @@ theorem w_mem : wmat ∈ Matrix.specialUnitaryGroup (Fin 2) ℂ := by
   · ext i j
     fin_cases i <;> fin_cases j <;>
       simp [wmat, Matrix.mul_apply, Fin.sum_univ_two, Matrix.star_eq_conjTranspose,
-        Matrix.conjTranspose_apply, Complex.star_def, Matrix.one_apply, Complex.ext_iff]
-  · simp [wmat, Matrix.det_fin_two, Complex.ext_iff]
+        Matrix.conjTranspose_apply]
+  · simp [wmat, Matrix.det_fin_two]
 
 /-- `w = [[0,1],[-1,0]]` as an element of `SU(2)`. -/
 noncomputable def w : SU 2 := ⟨wmat, w_mem⟩
@@ -390,9 +390,9 @@ theorem haar_su2_diag_sq_half :
       + (∫ g : SU 2, (g : Matrix (Fin 2) (Fin 2) ℂ) 1 1
         * (starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) 1 1) ∂(probHaar (SU 2))) = 2 := by
     have h := haar_su2_frobenius_sum
-    rw [integral_finset_sum _
-      (fun i _ => integrable_finset_sum _ (fun j _ => entry_sq_integrable i j))] at h
-    simp_rw [integral_finset_sum _ (fun j _ => entry_sq_integrable _ j)] at h
+    rw [integral_finsetSum _
+      (fun i _ => integrable_finsetSum _ (fun j _ => entry_sq_integrable i j))] at h
+    simp_rw [integral_finsetSum _ (fun j _ => entry_sq_integrable _ j)] at h
     rw [Fin.sum_univ_two, Fin.sum_univ_two, Fin.sum_univ_two] at h
     linear_combination h
   linear_combination (1/4 : ℂ) * hsum - (1/2 : ℂ) * ha01 - (1/4 : ℂ) * ha10 - (1/4 : ℂ) * ha11
@@ -499,19 +499,19 @@ theorem haar_su2_char_norm :
     rw [Fin.sum_univ_two, Fin.sum_univ_two, Fin.sum_univ_two, Matrix.trace_fin_two, map_add]
     ring
   simp_rw [hexp]
-  rw [integral_finset_sum _
-    (fun i _ => integrable_finset_sum _ (fun j _ => entry_prod_integrable i i j j))]
-  simp_rw [integral_finset_sum _ (fun j _ => entry_prod_integrable _ _ j j)]
+  rw [integral_finsetSum _
+    (fun i _ => integrable_finsetSum _ (fun j _ => entry_prod_integrable i i j j))]
+  simp_rw [integral_finsetSum _ (fun j _ => entry_prod_integrable _ _ j j)]
   rw [Fin.sum_univ_two, Fin.sum_univ_two, Fin.sum_univ_two]
   rw [haar_su2_diag_sq_half, haar_su2_diag_sq_half_11,
       offdiag_h0 0 0 1 1 (by
         have : h0mat 0 0 * (starRingEnd ℂ) (h0mat 1 1) = -1 := by
-          simp [h0mat, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
+          simp [h0mat, Matrix.cons_val_zero, Matrix.cons_val_one, 
             Complex.conj_I, Complex.I_mul_I]
         rw [this]; norm_num),
       offdiag_h0 1 1 0 0 (by
         have : h0mat 1 1 * (starRingEnd ℂ) (h0mat 0 0) = -1 := by
-          simp [h0mat, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
+          simp [h0mat, Matrix.cons_val_zero, Matrix.cons_val_one, 
             Complex.conj_I, Complex.I_mul_I]
         rw [this]; norm_num)]
   norm_num
@@ -643,7 +643,7 @@ theorem haar_su2_two_point (A B : Matrix (Fin 2) (Fin 2) ℂ) :
       Matrix.star_eq_conjTranspose, Matrix.conjTranspose_apply, starRingEnd_apply]
     ring
   simp_rw [key]
-  rw [integral_finset_sum _
+  rw [integral_finsetSum _
     (fun x _ => (entry_prod_integrable x.1.1 x.1.2 x.2.1 x.2.2).mul_const _)]
   simp_rw [integral_mul_const, haar_su2_second_moment]
   simp only [Fintype.sum_prod_type, Fin.sum_univ_two]
@@ -694,7 +694,7 @@ theorem haar_su2_transfer (X : Matrix (Fin 2) (Fin 2) ℂ) (i j : Fin 2) :
       Matrix.star_eq_conjTranspose, Matrix.conjTranspose_apply, starRingEnd_apply]
     ring
   simp_rw [hexp]
-  rw [integral_finset_sum _
+  rw [integral_finsetSum _
     (fun ab _ => (entry_prod_integrable ab.2 j ab.1 i).const_mul (X ab.1 ab.2))]
   simp_rw [integral_const_mul, haar_su2_second_moment]
   clear hexp
@@ -758,8 +758,8 @@ theorem haar_su2_third_moment (i j k l m n : Fin 2) :
           integral_const_mul _ _
   have hφ : h0mat i i * h0mat k k * (starRingEnd ℂ) (h0mat m m) ≠ 1 := by
     fin_cases i <;> fin_cases k <;> fin_cases m <;>
-      simp only [h0mat, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-        Complex.conj_I, map_neg, Complex.I_mul_I] <;> norm_num [Complex.ext_iff]
+      simp only [h0mat, 
+        Complex.conj_I] <;> norm_num [Complex.ext_iff]
   have hz : (1 - h0mat i i * h0mat k k * (starRingEnd ℂ) (h0mat m m))
       * (∫ g : SU 2, (g : Matrix (Fin 2) (Fin 2) ℂ) i j * (g : Matrix (Fin 2) (Fin 2) ℂ) k l
         * (starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) m n) ∂(probHaar (SU 2))) = 0 := by
@@ -894,7 +894,7 @@ theorem haar_su2_two_fund (a b c d : Fin 2) :
           = (g : Matrix (Fin 2) (Fin 2) ℂ) a b
             * (starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) 1 1) by rw [su2_conj_11])),
       haar_su2_second_moment a b 1 1]
-    fin_cases a <;> fin_cases b <;> simp [eps] <;> norm_num
+    fin_cases a <;> fin_cases b <;> simp [eps]
   · show ∫ g : SU 2, (g : Matrix (Fin 2) (Fin 2) ℂ) a b * (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1
         ∂(probHaar (SU 2)) = (1 / 2 : ℂ) * (eps a 0 * eps b 1)
     rw [integral_congr_ae (Filter.Eventually.of_forall (fun g : SU 2 =>
@@ -904,7 +904,7 @@ theorem haar_su2_two_fund (a b c d : Fin 2) :
           rw [show (g : Matrix (Fin 2) (Fin 2) ℂ) 0 1
             = -(starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) 1 0) by rw [su2_conj_10]; ring]; ring)),
       integral_neg, haar_su2_second_moment a b 1 0]
-    fin_cases a <;> fin_cases b <;> simp [eps] <;> norm_num
+    fin_cases a <;> fin_cases b <;> simp [eps]
   · show ∫ g : SU 2, (g : Matrix (Fin 2) (Fin 2) ℂ) a b * (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0
         ∂(probHaar (SU 2)) = (1 / 2 : ℂ) * (eps a 1 * eps b 0)
     rw [integral_congr_ae (Filter.Eventually.of_forall (fun g : SU 2 =>
@@ -914,7 +914,7 @@ theorem haar_su2_two_fund (a b c d : Fin 2) :
           rw [show (g : Matrix (Fin 2) (Fin 2) ℂ) 1 0
             = -(starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) 0 1) by rw [su2_conj_01]; ring]; ring)),
       integral_neg, haar_su2_second_moment a b 0 1]
-    fin_cases a <;> fin_cases b <;> simp [eps] <;> norm_num
+    fin_cases a <;> fin_cases b <;> simp [eps]
   · show ∫ g : SU 2, (g : Matrix (Fin 2) (Fin 2) ℂ) a b * (g : Matrix (Fin 2) (Fin 2) ℂ) 1 1
         ∂(probHaar (SU 2)) = (1 / 2 : ℂ) * (eps a 1 * eps b 1)
     rw [integral_congr_ae (Filter.Eventually.of_forall (fun g : SU 2 =>
@@ -922,7 +922,7 @@ theorem haar_su2_two_fund (a b c d : Fin 2) :
           = (g : Matrix (Fin 2) (Fin 2) ℂ) a b
             * (starRingEnd ℂ) ((g : Matrix (Fin 2) (Fin 2) ℂ) 0 0) by rw [su2_conj_00])),
       haar_su2_second_moment a b 0 0]
-    fin_cases a <;> fin_cases b <;> simp [eps] <;> norm_num
+    fin_cases a <;> fin_cases b <;> simp [eps]
 
 /-- **For SU(2), `tr g` is real: `conj(tr g) = tr g`.** From pseudoreality `conj(g₀₀)=g₁₁`, `conj(g₁₁)=g₀₀`.
 So `Re tr g = tr g`, and the Wilson density is `φ_W(g) = 1 - ½ tr g` — the `O(β²)` transfer term collapses to
@@ -977,7 +977,7 @@ by pseudoreality, real ≥0). LOWER: Cauchy–Schwarz `∫f² ≥ (∫f)² = 1/4
 `f²≤f` since `0≤f≤1`, so `∫f² ≤ ∫f = ½`. Bounds the `O(β²)` connected-eigenvalue coefficient
 `A+B = 2A-½ ∈ [0,½]` non-negative BY PROOF. The **exact** `A = 1/3` is NOT reachable by this method (all
 4th-order relations from unitarity/`det` are identically satisfied); it needs SU(2) Weyl integration / spin-1
-Schur orthogonality (Peter–Weyl, not in Mathlib). This is the honest maximum invariant-projection yields on
+Schur orthogonality (Peter–Weyl, not in Mathlib). This is the maximum invariant-projection yields on
 the 4th moment. -/
 theorem haar_su2_fourth_moment_diag_bounds :
     1 / 4 ≤ ∫ g : SU 2, f00 g ^ 2 ∂(probHaar (SU 2))

@@ -19,7 +19,7 @@ correlations from two real facts:
   (`action_invariant`, from the `Symmetry.compat` datum — a checkable combinatorial property of a
   real lattice, *not* a physics axiom and *not* a `rfl` dodge on the correlation).
 
-The payoff, `expect_invariant : ⟨O ∘ reindex⟩ = ⟨O⟩`, is the honest form of `os_euc`/`os_perm`.
+The payoff, `expect_invariant : ⟨O ∘ reindex⟩ = ⟨O⟩`, is `os_euc`/`os_perm` DERIVED rather than asserted.
 
 Deliberately abstract over the gauge group: the derivation needs only a measurable space with a
 probability measure and a symmetry that permutes links/plaquettes compatibly. Instantiating `G` at
@@ -105,7 +105,7 @@ end System
 /-- A geometric symmetry of a lattice gauge system: a permutation of the links together with the
 induced permutation of the plaquettes, **compatible** with the holonomy — relabelling the links by
 `onLink` sends the holonomy of a plaquette `p` to the holonomy of the permuted plaquette `onPlaq p`.
-This is the honest content of "the symmetry permutes plaquettes": a finite, checkable combinatorial
+This is what "the symmetry permutes plaquettes" amounts to: a finite, checkable combinatorial
 property of a real lattice, carrying no physics axiom and no `rfl` on the correlation. -/
 structure Symmetry (sys : System G) where
   onLink : Equiv.Perm sys.Link
@@ -171,7 +171,7 @@ theorem corrNum_invariant (sys : System G) (μ : Measure G) [IsProbabilityMeasur
         hmp.integral_comp' (fun U => O U * sys.boltz β U)
 
 /-- **The Gibbs expectation is invariant under the symmetry** — `⟨O ∘ reindex⟩ = ⟨O⟩`. This is the
-honest, DERIVED form of the Osterwalder–Schrader invariances `os_euc` / `os_perm`: not a `rfl`
+DERIVED form of the Osterwalder–Schrader invariances `os_euc` / `os_perm`: not a `rfl`
 through an inert label, but a consequence of Haar-invariance of the measure and plaquette-permutation
 invariance of the action. -/
 theorem expect_invariant (sys : System G) (μ : Measure G) [IsProbabilityMeasure μ]

@@ -77,6 +77,51 @@ theorem ir_count_spacing_indep {c : ℝ} (N : ℕ) :
   rw [Finset.mem_filter] at hn
   rw [Finset.mem_range]
   exact_mod_cast lt_of_lt_of_le hn.2 (Nat.le_ceil c)
+/-- **From a COUNT of resolved modes to the INDEX form `os_gap` consumes** -- the converse of
+`resolvedDim_le_of_gap`, and the direction a bound derived from the read travels in.
+
+`resolvedDim_le_of_gap` goes from "every supra-edge mode is infrared" to "few modes are resolved".
+A bound obtained from the correlation itself arrives the other way round: it caps the NUMBER of
+resolved modes (`ZeroMode.resolved_count_le_of_subset` caps it by the tension) and says nothing
+about indices. The two are the same statement only when the spectrum is ORDERED, which is the one
+hypothesis here: `hsorted` says a later mode is never larger than an earlier one, as an eigenvalue
+list sorted descending is.
+
+Given that, a supra-edge mode at index `n` forces every index below it to be supra-edge too, so
+`n+1` modes are resolved and the count bounds the index.
+
+DERIVED: the `1` is the successor -- index `n` means `n+1` modes at or before it. Nothing chosen. -/
+theorem index_lt_of_sorted_count {ev : ℕ → ℝ} {edge c : ℝ} (N : ℕ)
+    (hsorted : ∀ m n : ℕ, m ≤ n → ev n ≤ ev m)
+    (hcount : ((resolvedDim (Finset.range N) ev edge : ℕ) : ℝ) ≤ c) :
+    ∀ n ∈ Finset.range N, edge < ev n → (n : ℝ) < c := by
+  intro n hn hedge
+  -- every index at or below `n` is also above the edge, by the ordering
+  have hsub : Finset.range (n + 1) ⊆ (Finset.range N).filter (fun m => edge < ev m) := by
+    intro m hm
+    rw [Finset.mem_range] at hm
+    rw [Finset.mem_range] at hn
+    refine Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), ?_⟩
+    exact lt_of_lt_of_le hedge (hsorted m n (by omega))
+  have hcard : n + 1 ≤ resolvedDim (Finset.range N) ev edge := by
+    have := Finset.card_le_card hsub
+    simpa [resolvedDim, Finset.card_range] using this
+  have : ((n : ℝ) + 1) ≤ ((resolvedDim (Finset.range N) ev edge : ℕ) : ℝ) := by
+    exact_mod_cast hcard
+  linarith [this, hcount]
+
+#print axioms index_lt_of_sorted_count
+
+/-- The same, uniformly over a family of spacings -- the exact shape of
+`LatticeYMFamily.os_gap`. -/
+theorem os_gap_of_sorted_count {ev : ℕ → ℕ → ℝ} {edge c : ℝ} (Na : ℕ → ℕ)
+    (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
+    (hcount : ∀ a, ((resolvedDim (Finset.range (Na a)) (ev a) edge : ℕ) : ℝ) ≤ c) :
+    ∀ a, ∀ n ∈ Finset.range (Na a), edge < ev a n → (n : ℝ) < c :=
+  fun a => index_lt_of_sorted_count (Na a) (hsorted a) (hcount a)
+
+#print axioms os_gap_of_sorted_count
+
 
 /-- **Resolved dimension bounded by the gap's infrared cutoff.** If the gap keeps every supra-edge mode in
 the infrared — `edge < ev n → (n:ℝ) < c`, the resolved content below the physical cutoff `c` — then the
@@ -263,6 +308,53 @@ structure LatticeYMFamily where
   /-- **Permutation symmetry** at every spacing (bosonic Euclidean fields). -/
   os_perm : ∀ σ j a, Q (actP σ j) a = Q j a
 
+/-- **A family built from a COUNTED spectrum rather than an assumed infrared bound.**
+
+`LatticeYMFamily.os_gap` asks that every supra-edge mode sit below a spacing-independent index
+cutoff. Supplying that directly means asserting where the resolved modes are. This constructor asks
+instead for the two things a read actually produces:
+
+* `hsorted` -- the spectrum is ordered (an eigenvalue list sorted descending);
+* `hcount`  -- at most `c` modes clear the noise edge, at every spacing.
+
+and derives `os_gap` from them through `os_gap_of_sorted_count`. The point is where `hcount` can come
+from: `ZeroMode.resolved_count_le_of_subset` bounds exactly that count by the measured TENSION, so a
+family assembled this way has its infrared input sourced from the correlation rather than asserted
+about it.
+
+Everything else is passed through unchanged -- reflection positivity, the aperture bound, and the two
+invariances are properties of the reflected form `Q` and are not touched by how the spectrum is
+counted.
+
+DERIVED: no literal in this definition decides anything. The `0` is the nonnegativity of the
+per-mode bound `B`, carried through from the caller unchanged. -/
+noncomputable def familyOfSortedCount
+    (J : Type) [Countable J] (G : Type) (actE : G → J → J) (P : Type) (actP : P → J → J)
+    (Na : ℕ → ℕ) (ev : ℕ → ℕ → ℝ) (Q : J → ℕ → ℝ) (edge c B : ℝ) (hB : 0 ≤ B)
+    (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
+    (hcount : ∀ a, ((resolvedDim (Finset.range (Na a)) (ev a) edge : ℕ) : ℝ) ≤ c)
+    (os_rp : ∀ j a, 0 ≤ Q j a)
+    (os_form : ∀ j a, Q j a ≤ (resolvedDim (Finset.range (Na a)) (ev a) edge : ℝ) * B)
+    (os_euc : ∀ g j a, Q (actE g j) a = Q j a)
+    (os_perm : ∀ σ j a, Q (actP σ j) a = Q j a) : LatticeYMFamily where
+  J := J
+  G := G
+  actE := actE
+  P := P
+  actP := actP
+  Na := Na
+  ev := ev
+  Q := Q
+  edge := edge
+  c := c
+  B := B
+  hB := hB
+  os_rp := os_rp
+  os_gap := os_gap_of_sorted_count Na hsorted hcount
+  os_form := os_form
+  os_euc := os_euc
+  os_perm := os_perm
+
 /-- **The continuum limit of a lattice Yang–Mills family (Step 2 for the model).** Every `LatticeYMFamily`
 has a tight continuum limit satisfying OS0–OS3 jointly: a subsequence `φ` and a limit `q` with joint
 convergence, the temperedness bound (OS0), reflection positivity (OS2), Euclidean invariance (OS1), and
@@ -279,5 +371,34 @@ theorem continuum_of_family (F : LatticeYMFamily) :
       (∀ σ j, q (F.actP σ j) = q j) :=
   haveI := F.countable
   continuum_limit_of_gap F.Na F.actE F.actP F.os_gap F.os_rp F.hB F.os_form F.os_euc F.os_perm
+
+/-- **The continuum limit, from a counted spectrum.**
+
+`continuum_of_family` on `familyOfSortedCount`: given an ordered spectrum, a bound on how many of its
+modes clear the noise edge, and the reflected form's own properties, there is a tight subsequential
+limit satisfying OS0–OS3. No axiom beyond the foundational three.
+
+This is the shape the measurement chain delivers. The count bound is the one quantity that was
+previously asserted as an infrared cutoff and is now derivable from the tension. -/
+theorem continuum_of_sorted_count
+    (J : Type) [Countable J] (G : Type) (actE : G → J → J) (P : Type) (actP : P → J → J)
+    (Na : ℕ → ℕ) (ev : ℕ → ℕ → ℝ) (Q : J → ℕ → ℝ) (edge c B : ℝ) (hB : 0 ≤ B)
+    (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
+    (hcount : ∀ a, ((resolvedDim (Finset.range (Na a)) (ev a) edge : ℕ) : ℝ) ≤ c)
+    (os_rp : ∀ j a, 0 ≤ Q j a)
+    (os_form : ∀ j a, Q j a ≤ (resolvedDim (Finset.range (Na a)) (ev a) edge : ℝ) * B)
+    (os_euc : ∀ g j a, Q (actE g j) a = Q j a)
+    (os_perm : ∀ σ j a, Q (actP σ j) a = Q j a) :
+    ∃ (q : J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
+      (∀ j, Tendsto (fun k => Q j (φ k)) atTop (nhds (q j))) ∧
+      (∀ j, |q j| ≤ (⌈c⌉₊ : ℝ) * B) ∧
+      (∀ j, 0 ≤ q j) ∧
+      (∀ g j, q (actE g j) = q j) ∧
+      (∀ σ j, q (actP σ j) = q j) :=
+  continuum_of_family (familyOfSortedCount J G actE P actP Na ev Q edge c B hB
+    hsorted hcount os_rp os_form os_euc os_perm)
+
+#print axioms continuum_of_sorted_count
+
 
 end MassGap.Measure

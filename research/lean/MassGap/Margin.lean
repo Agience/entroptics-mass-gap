@@ -4,7 +4,7 @@ import MassGap.Floor
 /-!
 # MassGap.Margin — the aperture margin from ONE cited junction (no bare postulate)
 
-The read margin `‖m_hi‖ ≤ e^{−(κ₀−μ)}` (the content of `ym_aperture_margin`) is not a bare postulate. It
+The read margin `‖m_hi‖ ≤ e^{−(κ₀−μ)}` (the `hread` field of `LatticeYM`) is not a bare postulate. It
 decomposes into three inputs, ONE of them already proved:
 
 * **`κ₀ ≤ κ`** — the counting floor, PROVED (`Floor`: the directed-cube-path count `3^{n−1}` gives
@@ -20,11 +20,12 @@ decomposes into three inputs, ONE of them already proved:
 `margin_of_contraction` assembles them: the dominant mode `e^{−Δ}` clears the entropy-floor margin. So the
 gap rests on the two open inputs `κ−μ ≤ c` and `c ≤ Δ`, the counting floor being closed and the assembly proved. This is
 the forward bridge from the PROVED counting floor to the SPECTRAL gap — the decomposition of
-`ym_aperture_margin` the referee report flagged as a bare axiom.
+the read margin the referee report flagged as a bare axiom.
 
 Imported by `MassGap.lean` (part of the aggregate). It derives the read margin
 `e^{−Δ} ≤ e^{−(κ₀−μ)}` from the floor junction; the STRONGER spectral ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}`
-used by `ym_aperture_margin` (which needs `Δ ≥ κ₀`) is carried by the concrete witness there, not here.
+asked by the aperture hypothesis of `Complete.ym_mass_gap_spectral` (`Δ ≥ κ₀`) is supplied by that
+theorem's caller, not here.
 -/
 
 namespace MassGap
@@ -43,7 +44,7 @@ theorem band_of_contraction {Δ c : ℝ} (hgap : c ≤ Δ) : Real.exp (-Δ) ≤ 
   abstract-`σ` decay at rate `c`, it does not supply this; OPEN),
 
 the dominant transfer mode `e^{−Δ}` clears the entropy-floor margin: `e^{−Δ} ≤ e^{−(κ₀−μ)}`. This is the
-content of `ym_aperture_margin`, assembled from the two open inputs `hfe` and `hgap` (only the counting floor
+content of the `hread` field, assembled from the two open inputs `hfe` and `hgap` (only the counting floor
 is proved; the assembly is one `Real.exp_le_exp` step). -/
 theorem margin_of_contraction {κ₀ κ μ c Δ : ℝ}
     (hfloor : κ₀ ≤ κ) (hfe : κ - μ ≤ c) (hgap : c ≤ Δ) :
@@ -52,7 +53,7 @@ theorem margin_of_contraction {κ₀ κ μ c Δ : ℝ}
 
 /-! **Scope note.** `margin_of_contraction` derives the READ margin `e^{−Δ} ≤ e^{−(κ₀−μ)}` — exactly the
 `hread` field consumed by `gap_of_confinement`, sufficient for the mass gap (`ym_mass_gap`). The
-STRONGER spectral-form ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}` (`ym_aperture_margin`) needs `Δ ≥ κ₀`, i.e. the
+STRONGER spectral-form ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}` (`ym_mass_gap_spectral`'s `haperture`) needs `Δ ≥ κ₀`, i.e. the
 contraction to clear the FULL multiplicity `c ≥ κ` (not the free-energy density `c ≥ κ−μ`); the bridge does
 not supply it, and `ym_mass_gap` does not need it. -/
 

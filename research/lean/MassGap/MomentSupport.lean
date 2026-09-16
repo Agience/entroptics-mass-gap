@@ -55,7 +55,7 @@ theorem le_of_positive_weight_decay {ι : Type*} (s : Finset ι) (w lam : ι →
 
 /-- **Assembling `hsp` (interface).** `le_of_positive_weight_decay` gives the spectral bound *as seen by the
 observable* `v`: every excited eigenvalue with `⟨v,e_k⟩ ≠ 0` is `≤ ρ = e^{-Δ}`. To lift "seen by `v`" to a
-statement about `T` itself (`spectrum ⊆ {1} ∪ [ε, e^{-Δ}]`, the `ym_reconstructed_gap` input) the honest
+statement about `T` itself (`spectrum ⊆ {1} ∪ [ε, e^{-Δ}]`, the `ym_reconstructed_gap` input) the
 assembly needs three companion facts (independently reviewed):
 * **R1 (cyclicity/totality — load-bearing).** The decay bound holds for a family `{v_a}` total in `Ω^⊥`
   (equivalently every excited `e_k` has nonzero overlap with some `v_a`). This closes the zero-overlap hole — a

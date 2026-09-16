@@ -12,7 +12,7 @@ closed.
 
 Each a priori is in turn reduced, by machine-checked lemmas, to one input. **A1**: its two coupling ends
 rest on the Osterwalder-Seiler character bound and asymptotic freedom; its crossover interior reduces to
-the finite correlation length `d2_le_bound` (`⟨d²⟩ ≤ 1`, `Complete.lean`, via `ym_crossover_confinement`),
+one aperture-independent bound on the substrate's lag moment (`Complete.confinement_of_bounded_substrate`),
 and its uniform-in-`a` continuum to refinement-invariance. (The `χ_v ≥ 0` disorder response is a
 *different*, convex Rényi-1 object — PAPER §8.4 — off the interior route.) **A2** reduces to the Nyquist-Shannon sampling isometry: its discrete point
 group and spatial rotations are proved outright, and its continuum axis-role `SO(4)` reduces, through the
@@ -98,7 +98,7 @@ theorem existence_and_gap_from_apriori
 `existence_and_gap_from_apriori` discharges the requirements from `A1` and `A2`. The sections below discharge each
 a priori down to one established input, as machine-checked lemmas. **A1** reduces to a finite correlation
 length: its strong- and weak-coupling ends are proved (below), its crossover interior reduces to
-`d2_le_bound` (`⟨d²⟩ ≤ 1`, `Complete.lean`), and its uniform-in-`a` continuum to refinement-invariance.
+one aperture-independent bound on the lag moment, and its uniform-in-`a` continuum to refinement-invariance.
 **A2** reduces to the Nyquist-Shannon sampling isometry: its discrete point group is
 proved (below) and its spatial and continuum rotations reduce, through the correlation Gram, to that
 isometry. Both remaining inputs are established results. The named parts:
@@ -136,7 +136,7 @@ theorem apriori_A1_strong {μ : ℝ → ℝ} {r κ₀ β βc : ℝ} (hr : 0 < r)
 `apriori_A1_strong` closes `μ < κ₀` for `β < β_⋆`. The weak-coupling end closes from asymptotic freedom:
 the running is one-signed (`Running.lean`), so the tension in lattice units vanishes, `μ β → 0`, and a
 vanishing tension is eventually below the positive floor (`apriori_A1_weak`). The interior range is closed
-by the finite correlation length `d2_le_bound` (`Complete.ym_crossover_confinement`).
+by an aperture-independent bound on the lag moment (`Complete.confinement_of_bounded_substrate`).
 
 The confinement input `hread` (`‖m k‖ ≤ e^{-(κ₀-μ)}`) is not an independent assumption: it is a bound on
 the DMD dominant magnitude the aperture returns. `rates().dominant` is `Δ = -log r` with `r` the dominant

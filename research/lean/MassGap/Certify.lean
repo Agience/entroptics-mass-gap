@@ -80,8 +80,8 @@ assembles the whole machine-checked chain onto a **single explicit hypothesis**,
 the read `μ < κ₀`. It is the input this conditional theorem takes: given that read,
 the gap follows at every coupling, and `#print axioms` returns the standard three. The hypothesis itself,
 `∀ β, μ β < κ₀` (A1), is reduced elsewhere to its two coupling ends (`apriori_A1_strong`,
-`apriori_A1_weak`) and, across the crossover, to the finite correlation length `d2_le_bound`
-(`Complete.ym_crossover_confinement`). -/
+`apriori_A1_weak`) and, across the crossover, to an aperture-independent bound on the substrate's
+lag moment (`Complete.confinement_of_bounded_substrate`). -/
 
 /-- **The gap from the confinement read (conditional main theorem).** Let `μ : ℝ → ℝ` be the
 aperture's tension read across the coupling, `s β`/`m β`/`P β` the finite mode set, magnitudes, and
@@ -137,7 +137,7 @@ tension vanishing at weak coupling (`μ β → 0`, asymptotic freedom, `Running.
 `ε < κ₀` the tension stays below the floor by `ε` for all large `β`: `∀ᶠ β, μ β ≤ κ₀ - ε`. So into the
 continuum (`β → ∞`, `a → 0`) the margin does not close; taking `ε ↑ κ₀` it approaches the FULL floor.
 This is the weak-coupling / continuum tail of `UniformConfinement`, proved; the intermediate crossover is
-the finite correlation length `d2_le_bound` (`Complete.ym_crossover_confinement`). The input `μ → 0` is the
+an aperture-independent bound on the lag moment (`Complete.confinement_of_bounded_substrate`). The input `μ → 0` is the
 asymptotic-freedom scaling (physical tension a finite RG-invariant scale, lattice tension `a²Λ² → 0`). -/
 theorem weak_uniform_margin {μ : ℝ → ℝ} {κ₀ ε : ℝ} (hε : ε < κ₀)
     (hlim : Filter.Tendsto μ Filter.atTop (nhds 0)) :
@@ -213,9 +213,9 @@ theorem gap_of_contrast_criterion {ι : Type*} (s : Finset ι) (P m : ι → ℂ
 
 /-! ## Closing the crossover interior by a finite grid + a modulus of continuity (C-1 as a finite certificate)
 
-`d2_le_bound` asserts the whitened correlation second moment `⟨d²⟩(β)` is uniformly bounded across
-the crossover. It is used ONLY on the **compact interior** `[a,b]` of A1 (the ends are `ym_character` /
-`ym_asymfree`). On a compact interval a **finite grid** of deterministic reads plus a **Lipschitz** bound (a
+The substrate hypothesis asserts the whitened correlation second moment `⟨d²⟩` is bounded
+independently of the aperture. On a compact coupling interval a **finite grid** of deterministic reads
+plus a **Lipschitz** bound (a
 modulus of continuity) discharges the `∀β` bound by the elementary argument below — turning the axiom into a
 finite deterministic certificate, the same status as the runtime margin certificate. The one measured input is
 the Lipschitz constant `L`: that the read varies smoothly between grid points. Its physical content is sharp — a
@@ -229,7 +229,7 @@ fitted polynomial retained only as a descriptive smoothness overlay (measured `|
 /-- **Finite grid + Lipschitz ⟹ uniform bound on a compact interval.** If `f` is `L`-Lipschitz on `[a,b]`
 (`L ≥ 0`) and every point of `[a,b]` lies within `δ` of a point where `f ≤ B - L·δ`, then `f ≤ B` on all of
 `[a,b]`. A `∀x` bound from a finite check: verify `f` on a `δ`-net with the margin `L·δ` absorbed. This is the
-deterministic-certificate core that discharges the interior half of `d2_le_bound` — the `∀β` becomes
+deterministic-certificate core that supplies the substrate bound on an interval — the `∀β` becomes
 a finite grid (`hcover` on a net) plus the measured modulus of continuity (`hlip`). -/
 theorem le_of_lipschitz_grid {f : ℝ → ℝ} {a b B L δ : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ x ∈ Set.Icc a b, ∀ y ∈ Set.Icc a b, |f x - f y| ≤ L * |x - y|)
@@ -244,7 +244,7 @@ theorem le_of_lipschitz_grid {f : ℝ → ℝ} {a b B L δ : ℝ} (hL : 0 ≤ L)
 
 /-! ## The uniform-in-volume (thermodynamic, F → ∞) aperture certificate
 
-The fixed-volume certificate above closes the crossover interior at ONE aperture (`nCorrYM`). The
+The fixed-volume certificate above closes the crossover interior at one aperture. The
 uniform-in-volume companion asks the aperture margin does not dilute as the volume `F = L^d` grows — the
 `UniformSpectralMargin` input of `Aperture.gap_uniform_in_F`. Its deterministic content is that the dominant
 mode magnitude `μ₁(F) = m_hi` is bounded by ONE **intensive** `r < 1` at every `F`. The entropy-matched read

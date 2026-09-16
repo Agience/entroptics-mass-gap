@@ -215,9 +215,9 @@ lemma pivotSeq_hrecD_sum {n : ℕ} (d : Fin (n+1) → ℝ) (s lam : ℝ)
         multSeq d s lam k * (pivotSeq d s lam k * multSeq d s lam k) else 0)
         = multSeq d s lam i'.succ * (pivotSeq d s lam i'.succ * multSeq d s lam i'.succ) := by
       rw [Finset.sum_eq_single i'.succ]
-      · rw [if_pos]; simp [Fin.val_succ, Fin.coe_castSucc]
+      · rw [if_pos]; simp [Fin.val_succ]
       · intro k _ hk; rw [if_neg]; intro hc; apply hk
-        apply Fin.ext; simp only [Fin.val_succ, Fin.coe_castSucc] at hc ⊢; omega
+        apply Fin.ext; simp only [Fin.val_succ, Fin.val_castSucc] at hc ⊢; omega
       · intro h; exact absurd (Finset.mem_univ _) h
     rw [hsum]
     have hrec := pivotSeq_recurD d s lam i' (hnz i'.succ)

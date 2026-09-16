@@ -41,7 +41,7 @@ def wilsonSystem [Fintype L] [Fintype P]
 
 /-- **A boundary-relabelling symmetry.** Link/plaquette permutations `σL, σP` that map boundary words
 compatibly (`hbd`: the boundary of the permuted plaquette is the `σL`-relabelled boundary word) yield a
-genuine `Symmetry` of the Wilson system. `compat` is a `List.map`/`prod` reindexing — the honest content
+genuine `Symmetry` of the Wilson system. `compat` is a `List.map`/`prod` reindexing — the whole content
 of "a lattice rotation permutes plaquettes with matching holonomy." -/
 def wilsonSymmetry [Fintype L] [Fintype P]
     (bd : P → List (L × Bool)) (φ : G → ℝ)
@@ -93,7 +93,7 @@ theorem wilsonHol_conj (bd : P → List (L × Bool)) (g : G) (p : P) (U : L → 
   apply List.map_congr_left
   intro lo _
   simp only [Function.comp_apply]
-  cases h : lo.2 <;> simp [h, mul_inv_rev, mul_assoc]
+  cases h : lo.2 <;> simp [mul_inv_rev, mul_assoc]
 
 /-! ### Measurability of the holonomy -/
 

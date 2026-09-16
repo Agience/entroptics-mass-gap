@@ -35,7 +35,7 @@ theorem HcellR_isHermitian (jmax : ℕ) (lam : ℚ) : (HcellR jmax lam).IsHermit
 /-- The `(0,0)` diagonal entry of `Hcell` is `0` (the `j = 0` state has zero Casimir). -/
 theorem HcellR_zero_zero (jmax : ℕ) (lam : ℚ) :
     HcellR jmax lam ⟨0, Nat.succ_pos _⟩ ⟨0, Nat.succ_pos _⟩ = 0 := by
-  simp only [HcellR, Matrix.map_apply, Hcell, Matrix.of_apply, if_pos rfl]
+  simp only [HcellR, Matrix.map_apply, Hcell, Matrix.of_apply]
   norm_num
 
 /-- **The single-cell ground energy is `≤ 0`.** Some eigenvalue of `Hcell` is nonpositive: were all positive,
@@ -44,7 +44,7 @@ positivity `PosDef` demands. -/
 theorem cell_exists_eigenvalue_le_zero (jmax : ℕ) (lam : ℚ) :
     ∃ i, (HcellR_isHermitian jmax lam).eigenvalues i ≤ 0 := by
   by_contra h
-  push_neg at h
+  push Not at h
   have hpd : (HcellR jmax lam).PosDef :=
     (Matrix.IsHermitian.posDef_iff_eigenvalues_pos (HcellR_isHermitian jmax lam)).mpr h
   have hne : (Finsupp.single (⟨0, Nat.succ_pos _⟩ : Fin (dim jmax)) (1 : ℝ)) ≠ 0 :=
@@ -103,10 +103,29 @@ theorem gap_ge_of_mode_contraction {N : ℕ} {T : Matrix (Fin N) (Fin N) ℝ} (h
 
 /-- **`c ≤ Δ` from a uniform contraction on the mean-zero sector — discharges `Margin.hgap` by PROOF.**
 If `T` contracts every vector orthogonal to the vacuum `v_{j₀}` at rate `c` (`⟨f,Tf⟩ ≤ e^{−c}⟨f,f⟩`), then
-the transfer gap `Δ` (from the slowest excited eigenvalue `e^{−Δ}` at `i ≠ j₀`) satisfies `c ≤ Δ`. So the
-Margin input `hgap : c ≤ Δ` is NOT an independent open assumption: it follows from the mean-zero uniform
-contraction that `ReachFreeze` supplies (the slowest excited eigenvector is itself mean-zero). The one
-genuinely-open step-2 input is `hfe : κ−μ ≤ c` (the vortex free-energy identification). Foundation-only. -/
+the transfer gap `Δ` (from the slowest excited eigenvalue `e^{−Δ}` at `i ≠ j₀`) satisfies `c ≤ Δ`.
+
+WHAT THIS IS AND IS NOT. It REDUCES `Margin.hgap : c ≤ Δ` to a uniform contraction on the mean-zero
+sector. It does NOT discharge it: **nothing in this development supplies that contraction.**
+`ReachFreeze.gap_from_contraction` takes `hstep : ∀ n, σ (n+1) ≤ (1−c)·σ n` on an ABSTRACT SCALAR
+sequence `σ : ℕ → ℝ` and concludes that sequence decays; it never mentions `T`, and a scalar
+recurrence cannot produce a quadratic-form bound on a matrix. `Capacity.hread_of_junction` says the
+same thing from the other side, and is right to: "`hgap` and `hfe` are BOTH hypotheses".
+
+AND IT IS NOT A REDUCTION IN CONTENT. The proof below applies the hypothesis at exactly one vector,
+`v_i`, and `gap_ge_of_mode_contraction` then rewrites the Rayleigh quotient there to `eigenvalues i`
+and the norm to `1`. The hypothesis becomes `e^{−Δ} ≤ e^{−c}`, which IS `c ≤ Δ` by monotonicity of
+`exp`. At the vector used, hypothesis and conclusion are the same statement.
+
+What the theorem does buy is a change of SHAPE: the obligation is restated as a bound on a quadratic
+form over ALL `f` orthogonal to the vacuum, which is how a spectral gap is actually established — by
+a variational estimate — rather than as a claim about one eigenvalue. That is the useful direction,
+and this is where such an estimate plugs in. It is not progress on the content.
+
+So the open step-2 inputs are `hfe : κ−μ ≤ c` AND `hgap`, and `Complete.ym_mass_gap_*` still takes
+both. What would close `hgap` is a variational proof that the Wilson transfer matrix contracts
+uniformly at rate `c` on the complement of its vacuum — a statement about that matrix, not an
+abstract one. Foundation-only. -/
 theorem gap_ge_of_uniform_contraction {N : ℕ} {T : Matrix (Fin N) (Fin N) ℝ} (hT : T.IsHermitian)
     {Δ c : ℝ} {i j₀ : Fin N} (hij : i ≠ j₀) (hΔ : hT.eigenvalues i = Real.exp (-Δ))
     (hcontr : ∀ f : Fin N → ℝ, ⇑(hT.eigenvectorBasis j₀) ⬝ᵥ f = 0 →
@@ -227,7 +246,7 @@ theorem eigenvalues_gap_of_codim1_form {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ
     {i₀ : Fin N} (hi₀ : hA.eigenvalues i₀ ≤ 0) {i : Fin N} (hi : i ≠ i₀) :
     hA.eigenvalues i₀ + μ ≤ hA.eigenvalues i := by
   by_contra h
-  push_neg at h
+  push Not at h
   have hcard := atMostOne_eigenvalue_lt hA W hW hpos
   set S := Finset.univ.filter (fun k => hA.eigenvalues k < μ) with hS
   have hi0mem : i₀ ∈ S := by
@@ -243,7 +262,7 @@ ground-energy bound to any Hamiltonian with a zero-Casimir vacuum state.) -/
 theorem exists_eigenvalue_le_zero_of_diag {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} (hA : A.IsHermitian)
     (k : Fin N) (hk : A k k = 0) : ∃ i, hA.eigenvalues i ≤ 0 := by
   by_contra h
-  push_neg at h
+  push Not at h
   have hpd : A.PosDef := (Matrix.IsHermitian.posDef_iff_eigenvalues_pos hA).mpr h
   have hne : (Finsupp.single k (1 : ℝ)) ≠ 0 := (Finsupp.single_ne_zero).mpr one_ne_zero
   have hq := hpd.2 hne
@@ -262,7 +281,7 @@ theorem exists_eigenvalue_le_of_form {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} 
     {r : ℝ} {ψ : Fin N → ℝ} (hψ : ψ ≠ 0) (hle : ψ ⬝ᵥ (A *ᵥ ψ) ≤ r * (ψ ⬝ᵥ ψ)) :
     ∃ i, hA.eigenvalues i ≤ r := by
   by_contra h
-  push_neg at h
+  push Not at h
   set D : Matrix (Fin N) (Fin N) ℝ := diagonal (RCLike.ofReal ∘ hA.eigenvalues) with hD
   have hDr : D - r • 1 = diagonal (fun i => hA.eigenvalues i - r) := by
     rw [hD]; ext i j
@@ -382,7 +401,7 @@ theorem gap_of_ldl_one_neg_pivot_rel {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} 
   have hcard := atMostOne_eigenvalue_lt hA (ldlKer L m) (ldlKer_corank L m) hform
   have hi0lt : hA.eigenvalues i₀ < t := by linarith
   by_contra h
-  push_neg at h
+  push Not at h
   have hilt : hA.eigenvalues i < t := by linarith
   set S := Finset.univ.filter (fun k => hA.eigenvalues k < t) with hS
   have hi0mem : i₀ ∈ S := by
@@ -547,7 +566,7 @@ completing-the-square pivot certificate `(p,e)`, discharging all the abstract en
 lemma HcellR_sub_diag (jmax : ℕ) (lam : ℚ) (s : ℝ) (i : Fin (dim jmax)) :
     (HcellR jmax lam - s • 1) i i = (i.val * (i.val + 2)) / 4 - s := by
   have hHii : HcellR jmax lam i i = (i.val * (i.val + 2)) / 4 := by
-    simp only [HcellR, Matrix.map_apply, Hcell, Matrix.of_apply, if_pos rfl]; push_cast; ring
+    simp only [HcellR, Matrix.map_apply, Hcell, Matrix.of_apply]; push_cast; ring
   rw [Matrix.sub_apply, hHii, Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul, mul_one]
 
 lemma HcellR_sub_super (jmax : ℕ) (lam : ℚ) (s : ℝ) (i j : Fin (dim jmax)) (h : j.val = i.val + 1) :
@@ -599,6 +618,50 @@ theorem HcellR_gap_of_certificate (jmax : ℕ) (lam : ℚ) (μ : ℝ) (hμ : 0 <
       (fun i j hij h1 h2 => HcellR_sub_far jmax lam μ i j hij h1 h2)
       hrecD hrecO
   exact gap_of_ldl_one_neg_pivot (HcellR_isHermitian jmax lam) hμ (Lbi e) p m hp hrec hi₀ hi
+
+/-- **Physical cell gap from a pivot certificate, RELATIVE route.** The counterpart of
+`HcellR_gap_of_certificate` for the regime where BOTH lowest eigenvalues fall below the floor and the
+absolute statement is false.
+
+Two inputs instead of one, which is exactly the difference between the routes:
+
+* a completing-the-square certificate `(p,e)` at the Sturm shift `t`, with all pivots nonneg except at
+  one index -- giving `E_1 ≥ t` by `atMostOne_eigenvalue_lt`. NOTE `t` carries NO sign condition: at
+  strong coupling the isolating shift is negative, which is the whole reason this route exists;
+* a trial vector `v` whose Rayleigh quotient puts the ground state at or below `t - μ`
+  (`exists_eigenvalue_le_of_form`).
+
+Together they give the gap `μ` without either bounding `E_0` below or `E_1` above -- which is what a
+mass gap asserts and what the absolute route cannot supply once two eigenvalues are under the floor.
+
+DERIVED: the numerals are the Casimir diagonal `i(i+2)/4` and the off-diagonal `-lam`, as in the
+absolute route; `0 < μ` is the arity of "there is a gap at all". -/
+theorem HcellR_gap_of_certificate_rel (jmax : ℕ) (lam : ℚ) (t μ : ℝ) (hμ : 0 < μ)
+    (p e : Fin (dim jmax) → ℝ) (m : Fin (dim jmax))
+    (hp : ∀ k, k ≠ m → 0 ≤ p k)
+    (hrecD : ∀ i : Fin (dim jmax),
+      (i.val * (i.val + 2) : ℝ) / 4 - t = p i + ∑ k, if k.val = i.val + 1 then e k * (p k * e k) else 0)
+    (hrecO : ∀ i j : Fin (dim jmax), j.val = i.val + 1 → -(lam : ℝ) = e j * p j)
+    -- `v` is EXPLICIT: it is determined only by `hray`, which elaborates after `hv`, so an
+    -- implicit binder leaves `v` a metavariable while `hv` is being proved and no `simp` can
+    -- see the vector it is about.
+    (v : Fin (dim jmax) → ℝ) (hv : v ≠ 0)
+    (hray : v ⬝ᵥ (HcellR jmax lam *ᵥ v) ≤ (t - μ) * (v ⬝ᵥ v)) :
+    ∃ i₀, (HcellR_isHermitian jmax lam).eigenvalues i₀ ≤ t - μ ∧
+      ∀ i, i ≠ i₀ → (HcellR_isHermitian jmax lam).eigenvalues i₀ + μ
+        ≤ (HcellR_isHermitian jmax lam).eigenvalues i := by
+  obtain ⟨i₀, hi₀⟩ := exists_eigenvalue_le_of_form (HcellR_isHermitian jmax lam) hv hray
+  refine ⟨i₀, hi₀, fun i hi => ?_⟩
+  have hrec : HcellR jmax lam - t • 1 = (Lbi e)ᵀ * Matrix.diagonal p * (Lbi e) :=
+    tridiag_ldl_of_recurrence (fun i => (i.val * (i.val + 2) : ℝ) / 4 - t) (fun _ => -(lam : ℝ)) p e _
+      (fun i => HcellR_sub_diag jmax lam t i)
+      (fun i j h => HcellR_sub_super jmax lam t i j h)
+      (fun i j h => HcellR_sub_sub jmax lam t i j h)
+      (fun i j hij h1 h2 => HcellR_sub_far jmax lam t i j hij h1 h2)
+      hrecD hrecO
+  exact gap_of_ldl_one_neg_pivot_rel (HcellR_isHermitian jmax lam) hμ (Lbi e) p m hp hrec hi₀ hi
+
+#print axioms HcellR_gap_of_certificate_rel
 
 open Matrix in
 /-- **Parametric reconstruction of the physical cell for general `jmax`.** Given that the backward
@@ -666,7 +729,7 @@ theorem hcellR_gap_demo_param :
       rw [pivotSeq_last]; norm_num [Fin.last]
   obtain ⟨h0, h1, h2⟩ := pval
   refine HcellR_gap_parametric 1 1 (1/2) (by norm_num) 1 ?_ ?_
-  · intro i; fin_cases i <;> simp_all <;> norm_num
+  · intro i; fin_cases i <;> simp_all
   · intro k hk; fin_cases k <;> simp_all <;> norm_num
 
 /-- **Concrete physical-cell gap via the certificate (non-vacuousness of `HcellR_gap_of_certificate`).**
@@ -682,8 +745,8 @@ theorem hcellR_gap_demo :
         ∑ k, if k.val = i.val + 1 then ![(0:ℝ), 12/5, -2/3] k *
           (![19/10, -5/12, 3/2] k * ![(0:ℝ), 12/5, -2/3] k) else 0 := by
     intro i; fin_cases i <;>
-      simp only [dim, Fin.sum_univ_three, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.head_cons, Matrix.cons_val, Fin.val_zero, Fin.val_one, Fin.val_two] <;> norm_num
+      simp only [Fin.sum_univ_three, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.cons_val, Fin.val_zero, Fin.val_one, Fin.val_two] <;> norm_num
   refine HcellR_gap_of_certificate 1 1 (1/2) (by norm_num)
     ![19/10, -5/12, 3/2] ![0, 12/5, -2/3] 1 ?_ hD ?_
   · intro k hk; fin_cases k <;> simp_all <;> norm_num
@@ -778,7 +841,7 @@ theorem Hcell2_form_on_line (lam : ℝ) (x : Fin 2 → ℝ)
     rw [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one]
   have hk : κ₀YM ≤ 3 / 4 := le_trans κ₀YM_le_half (by norm_num)
   simp only [dotProduct, Matrix.mulVec, Fin.sum_univ_two, hx0, hx1, Hcell2,
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.of_apply]
+    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply]
   nlinarith [sq_nonneg c, hk]
 
 /-- **The two-state cell has a spectral gap `≥ κ₀`, for every coupling `λ`.** There is a ground index `i₀`
@@ -897,8 +960,42 @@ theorem Hcell3_clears_floor (lam : ℝ) (hlam : lam ^ 2 ≤ (3 / 4 - κ₀YM) * 
 /-! ### The volume-uniform gap from the single-cell ceiling
 
 `gap_uniform_in_volume_of_intensive` (`Certify`) gives the F-uniform gap from `∀F, m_hi(F) ≤ r`, `r < 1`.
-`Hcell2_clears_floor` supplies the value `r = 3^{−1/4} = e^{−κ₀}`. The intensive input `m_hi(F) ≤ 3^{−1/4}` is the
-measured continuum read (`data/8_7_dat_mhi_lscan.csv`). -/
+`Hcell2_clears_floor` supplies the value `r = 3^{−1/4} = e^{−κ₀}`.
+
+HOW FAR THE WINDOW CONSTRAINS THE INTENSIVE INPUT. Fitting the GROWING model `m_hi = aL + b` -- the one
+that would eventually break the ceiling -- gives a slope `+0.0023 ± 0.0105`, only `0.2σ` from zero, so no
+growth is seen. But three points carry no leverage: the slope/intercept correlation is `−0.984`, and the
+prediction band (full covariance, NOT a slope excursion at fixed intercept, which double-counts) reaches
+`3^{−1/4}` at `L ≈ 210` centrally, `L ≈ 51` at `+1σ`, `L ≈ 35` at `+2σ` -- against a largest measured
+volume of `L = 20`. So the data constrain the intensive bound only to about `L ≈ 35–50`; past that it is
+unconstrained rather than merely undecided. Extending it needs raw LINK ensembles beyond `L = 20` at
+`β = 2.30`: the released links stop there, and the `L = 24–32` data are action-density fields, which
+§8.7b supersedes for this purpose. A generation run, not a new argument -- and a costed one: measured
+on this host, SU(2) heatbath link generation runs `3.3 s` per config-sweep at `L = 12` and `16.1 s` at
+`L = 16`, so the released recipe (`therm = 300`, 64 configs) is `≈ 300–400` CPU-hours at `L = 24` and
+worse beyond. It is a GPU job.
+
+Nor can the existing window be tightened: `L = 8, 12, 20` hold exactly the 256 link configurations the
+correlator already consumes, and while `L = 16` holds 512, raising that one alone would break the
+uniform-statistics requirement the volume comparison depends on (varying the count with the volume
+manufactures a trend -- it produced two false results in this program's history). The released data is
+therefore fully used, and the intensive bound is where it is until larger link ensembles exist.
+
+WHY THE OTHER ROUTE IS CLOSED RATHER THAN OPEN. The tension cannot supply this bound at all. `μ < κ₀` at
+aperture `N` forces `(N+1)(1−λ) ≳ C = 2π·a⋆ = 10.9887497`, with `a⋆` the root of
+`a²·coth(aπ/2) = 3^{−1/4}(a²+1)`, so it certifies only `Δ ≳ 11/(N+1)`, which VANISHES as the volume
+grows -- a derived cap, so no amount of data fixes it (`ZeroMode.correlation_gap_of_tension`,
+`code/certify/aperture_cap_of_floor.py`). Of the two routes to a volume-uniform gap, the intensive input is
+the one still open to measurement.
+
+The intensive input `m_hi(F) ≤ 3^{−1/4}` is OPEN, and the read usually cited for it does not carry it.
+`data/8_7_dat_mhi_lscan.csv` is the ACTION-DENSITY read, which PAPER §8.7b supersedes: against the
+reflection-positivity variational bound it overshoots by `4.45σ` at `β=2.50` on the same configurations,
+and its `Δ/(aΛ_lat)` moves by a factor `3.09` across `β=2.00–2.50` where a constant is required — §8.7b's
+verdict is that it reports an operator-overlap ratio, not a gap. The trustworthy variational read exists
+only where raw links do (`L ≤ 20`): three usable points at `11–17%` error, over which constant, `1/L` and
+linear-in-`L` all fit equally well (`χ²/dof` = 0.04, 0.03, 0.045), so that window has no power to decide
+intensivity either. Nothing below should be read as the physical `∀F` bound being measured. -/
 
 /-- The single-cell entropy-floor ceiling `3^{-1/4} = e^{-κ₀}` is strictly below one. -/
 theorem cell_ceiling_lt_one : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 := by
@@ -944,8 +1041,16 @@ theorem Hcell2_read_margin (lam : ℝ) {μ : ℝ} (hμ : 0 ≤ μ) :
 `Mixing.gap_of_maximal_correlation` (S1): reflection positivity makes the Euclidean-time transfer operator
 self-adjoint, so `ρ'(n) = ρ'(1)^n`, and a single `ρ'(1) < 1` sends the correlator to zero over every separation
 and every volume. `Hcell2_gap` supplies `ρ'(1) = e^{−Δ_cell} < 1` (`cell_lt_one`); `gap_uniform_of_cell` composes
-them. The intensive input `m_hi(F) = ρ'(1)(F) ≤ 3^{−1/4}` is the measured continuum read
-(`data/8_7_dat_mhi_lscan.csv`). -/
+them.
+
+The intensive input `m_hi(F) ≤ 3^{−1/4}` is OPEN, and the read usually cited for it does not carry it.
+`data/8_7_dat_mhi_lscan.csv` is the ACTION-DENSITY read, which PAPER §8.7b supersedes: against the
+reflection-positivity variational bound it overshoots by `4.45σ` at `β=2.50` on the same configurations,
+and its `Δ/(aΛ_lat)` moves by a factor `3.09` across `β=2.00–2.50` where a constant is required — §8.7b's
+verdict is that it reports an operator-overlap ratio, not a gap. The trustworthy variational read exists
+only where raw links do (`L ≤ 20`): three usable points at `11–17%` error, over which constant, `1/L` and
+linear-in-`L` all fit equally well (`χ²/dof` = 0.04, 0.03, 0.045), so that window has no power to decide
+intensivity either. Nothing below should be read as the physical `∀F` bound being measured. -/
 
 /-- **The volume-uniform gap from the single-cell magnitude (S1 wired to `Hcell2`).** For a reach-freeze excess
 `σ` with `σ n ≤ σ 0 · ρ'(1)^n` at the machine-checked cell value `ρ'(1) = e^{−Δ_cell} < 1` (`Hcell2_gap` ⇒
@@ -958,22 +1063,29 @@ theorem gap_uniform_of_cell {σ : ℕ → ℝ} {lam : ℝ} {i₀ i : Fin 2}
     Filter.Tendsto σ Filter.atTop (nhds 0) :=
   gap_of_maximal_correlation (Real.exp_nonneg _) (cell_lt_one hgap) hσnn hsub
 
-/-- **Capstone: the SU(N) witness volume-uniform gap, radius grounded in the machine-checked single cell.**
-Instantiates `gap_uniform_of_cell_intensive` on the concrete YM transfer modes: the dominant magnitude
-`mHiYM = 1/5` clears the single-plaquette ceiling `3^{−1/4}` that `Hcell2_clears_floor` proves machine-checked, so
-a single rate `κ > 0` makes every volume's witness correlator forget — the U2 reduction, in one statement, on the
-actual modes, with the radius supplied by the machine-checked cell. Foundational axioms only. The physical
-intensivity `m_hi(F) ≤ 3^{−1/4}` is the measured input (see `data/8_7_dat_mhi_lscan.csv`). -/
-theorem ym_volume_gap_cell_grounded (β : ℝ) :
-    ∃ κ : ℝ, 0 < κ ∧ ∀ F : ℕ,
-      Filter.Tendsto (fun τ => ‖∑ k, PModeYM β k * (mModeYM β k) ^ τ‖) Filter.atTop (nhds 0) := by
-  have hpos : (0 : ℝ) ≤ mHiYM := by unfold mHiYM; norm_num
-  have hceil : mHiYM ≤ (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
-    have h := ym_aperture_margin 0 le_rfl (0 : Fin (nModeYM + 1))
-    rwa [mModeYM, Complex.norm_of_nonneg hpos] at h
-  exact gap_uniform_of_cell_intensive (fun _ => Finset.univ) (fun _ => PModeYM β)
-    (fun _ => mModeYM β) (fun _ => mHiYM) (fun _ => hceil)
-    (fun _ k _ => by rw [mModeYM]; exact le_of_eq (Complex.norm_of_nonneg hpos))
+/-- **Non-vacuity of the cell-radius volume bar, at EVERY magnitude the ceiling admits.**
+
+For any family size `n` and any strictly positive magnitude `x` at or below the single-plaquette
+ceiling `3^{-1/4}` (`Hcell2_clears_floor`), the constant family at `x` satisfies
+`gap_uniform_of_cell_intensive`'s hypotheses, so one rate `κ > 0` serves every `F`.
+
+NO VALUE IS CHOSEN. The magnitude and the family size are both universally quantified, and the only
+constraint is the ceiling, which is derived (`3^{-1/4} = e^{-κ₀}`, `κ₀` counted off directed cube
+paths in `Floor.lean`).
+
+READ IT AS ARITHMETIC. A constant family is the same number at every volume index `F`; quantifying a
+constant over `F` is not a volume-uniformity result. Nothing here reads the `SU(N)` ensemble, and the
+operators differ: `Hcell2` is the two-state truncation of the single-plaquette Kogut–Susskind
+Hamiltonian at `V = 1`, not the finite-volume Wilson transfer operator. The physical statement
+(**U-a**, `∀ F, m_hi(F) ≤ 3^{-1/4}` for the ensemble read) is OPEN. -/
+theorem cell_volume_bar_nonvacuous (n : ℕ) (x : ℝ) (hx0 : 0 < x)
+    (hx : x ≤ (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
+    ∃ κ : ℝ, 0 < κ ∧ ∀ _F : ℕ,
+      Filter.Tendsto
+        (fun τ => ‖∑ _k : Fin (n + 1), (1 : ℂ) * ((x : ℂ)) ^ τ‖) Filter.atTop (nhds 0) :=
+  gap_uniform_of_cell_intensive (fun _ => (Finset.univ : Finset (Fin (n + 1))))
+    (fun _ _ => (1 : ℂ)) (fun _ _ => ((x : ℂ))) (fun _ => x) (fun _ => hx)
+    (fun _ k _ => le_of_eq (Complex.norm_of_nonneg hx0.le))
 
 /-! ### The intensive margin is EXACT for a product of cells (steps 1+2, product model)
 
@@ -1012,8 +1124,8 @@ placeholder witness).** A mode family whose every active mode `μ F k` (for `k �
 `∏ᵢ (fac F k i)` of per-cell magnitudes in `[0,1]` with at least one cell excited
 (`fac F k j ≤ 3^{−1/4}`, the machine-checked single-cell ceiling `Hcell2_clears_floor`) has dominant
 magnitude `≤ 3^{−1/4}` UNIFORMLY in the volume `F` (`product_subvacuum_le`), so one rate `κ > 0` makes every
-volume's connected correlator forget. Unlike `ym_volume_gap_cell_grounded` (constant witness
-`mModeYM ≡ 1/5`), the magnitude here is the actual product-of-cells spectrum and the intensive input of
+volume's connected correlator forget. Unlike `witness_volume_gap_cell_nonvacuous` (constant witness
+`mWitnessYM ≡ 1/5`), the magnitude here is the actual product-of-cells spectrum and the intensive input of
 `gap_uniform_of_cell_intensive` is PROVED, not measured/placeholder. Foundational axioms only. This is the
 DECOUPLED transfer; the physical coupled-cell correction is the residual (steps 1+2 / step 3). -/
 theorem product_volume_gap {ι : Type*} {ncell : ℕ → ℕ}
@@ -1043,7 +1155,7 @@ theorem ceilFac_mem (F : ℕ) (i : Fin (F + 1)) : 0 ≤ ceilFac F i ∧ ceilFac 
 /-- **`product_volume_gap` is non-vacuous — a concrete constructed product model.** The `F`-cell product where
 one cell sits at the machine-checked single-cell ceiling `3^{−1/4}` and the rest at the vacuum `1` — the
 extremal product of `diag(1, 3^{−1/4})` cells — has a volume-uniform gap, uniform in the cell count `F`.
-A genuine constructed spectrum (not the `mModeYM ≡ 1/5` placeholder), foundational axioms only. -/
+A genuine constructed spectrum (not the `mWitnessYM ≡ 1/5` constant witness), foundational axioms only. -/
 theorem product_volume_gap_concrete :
     ∃ κ : ℝ, 0 < κ ∧ ∀ F : ℕ, Filter.Tendsto
       (fun τ => ‖∑ _ : Unit, (1 : ℂ) * (((∏ i, ceilFac F i : ℝ)) : ℂ) ^ τ‖) Filter.atTop (nhds 0) :=
@@ -1227,7 +1339,7 @@ lemma adjM_row_sum_le {n : ℕ} (i : Fin n) : ∑ j, adjM n i j ≤ 2 := by
       ≤ (if i.val + 1 = j.val then (1:ℝ) else 0) + (if j.val + 1 = i.val then 1 else 0) := by
     intro j; simp only [adjM, Matrix.of_apply]
     by_cases hh1 : i.val + 1 = j.val <;> by_cases hh2 : j.val + 1 = i.val <;>
-      simp [hh1, hh2] <;> norm_num
+      simp [hh1, hh2]
   calc ∑ j, adjM n i j
       ≤ ∑ j, ((if i.val + 1 = j.val then (1:ℝ) else 0) + (if j.val + 1 = i.val then 1 else 0)) :=
         Finset.sum_le_sum (fun j _ => hle j)
@@ -1342,7 +1454,7 @@ theorem gap_on_interval_rel {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℝ) {t μ :
   have hcard := atMostOne_eigenvalue_lt hH W hW (form_ge_convex A B W hAf hBf hs0 hs1)
   have hi0lt : hH.eigenvalues i₀ < t := by linarith
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   have hilt : hH.eigenvalues i < t := by linarith
   set S := Finset.univ.filter (fun k => hH.eigenvalues k < t) with hS
   have hi0mem : i₀ ∈ S := by
@@ -1389,7 +1501,7 @@ theorem HcellRr_gap_on_interval_rel (jmax : ℕ) (a b : ℝ) {t : ℝ}
   have hcard := atMostOne_eigenvalue_lt (HcellRr_isHermitian jmax ((1 - s) * a + s * b)) W hW hform
   have hkpos := κ₀YM_pos
   have hi0lt : (HcellRr_isHermitian jmax ((1 - s) * a + s * b)).eigenvalues i₀ < t := by linarith
-  by_contra hcon; push_neg at hcon
+  by_contra hcon; push Not at hcon
   have hilt : (HcellRr_isHermitian jmax ((1 - s) * a + s * b)).eigenvalues i < t := by linarith
   set S := Finset.univ.filter
     (fun k => (HcellRr_isHermitian jmax ((1 - s) * a + s * b)).eigenvalues k < t) with hS
@@ -1465,19 +1577,19 @@ private noncomputable def HbTile : Matrix (Fin 5) (Fin 5) ℝ :=
 
 private theorem bridgeTile_a : HcellRr 2 (14/5) = HaTile := by
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [HcellRr, adjM, HaTile, Matrix.sub_apply, Matrix.smul_apply, Matrix.of_apply,
+    simp [HcellRr, adjM, HaTile, Matrix.sub_apply, Matrix.of_apply,
       Matrix.diagonal_apply] <;> norm_num
 private theorem bridgeTile_b : HcellRr 2 (16/5) = HbTile := by
   ext i j; fin_cases i <;> fin_cases j <;>
-    simp [HcellRr, adjM, HbTile, Matrix.sub_apply, Matrix.smul_apply, Matrix.of_apply,
+    simp [HcellRr, adjM, HbTile, Matrix.sub_apply, Matrix.of_apply,
       Matrix.diagonal_apply] <;> norm_num
 
 private theorem hCBTile : CtTile * BtTile = 1 := by
   ext i j
   simp only [CtTile, BtTile, Matrix.mul_apply, Fin.sum_univ_five, Matrix.of_apply, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
+    Matrix.cons_val_zero, Matrix.cons_val_one, 
     Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val, Fin.isValue]
-  fin_cases i <;> fin_cases j <;> simp only [Matrix.one_apply, Fin.reduceEq, reduceIte] <;> norm_num
+  fin_cases i <;> fin_cases j <;> simp only [Matrix.one_apply, reduceIte] <;> norm_num
 
 private theorem psdTile_a :
     (BtTileᵀ * (HaTile - (-2 : ℝ) • (1 : Matrix (Fin 5) (Fin 5) ℝ)) * BtTile).PosSemidef := by
@@ -1489,7 +1601,7 @@ private theorem psdTile_a :
     simp only [HaTile, BtTile, Matrix.mul_apply, Matrix.transpose_apply, Fin.sum_univ_five,
       Fin.sum_univ_four, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, Matrix.one_apply,
       Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val', Matrix.cons_val_fin_one,
+      Matrix.empty_val', Matrix.cons_val_fin_one,
       Matrix.cons_val, Matrix.diagonal_apply, Fin.isValue]
     fin_cases i <;> fin_cases j <;> simp only [Fin.reduceEq, reduceIte] <;> norm_num
 
@@ -1503,7 +1615,7 @@ private theorem psdTile_b :
     simp only [HbTile, BtTile, Matrix.mul_apply, Matrix.transpose_apply, Fin.sum_univ_five,
       Fin.sum_univ_four, Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul, Matrix.one_apply,
       Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val', Matrix.cons_val_fin_one,
+      Matrix.empty_val', Matrix.cons_val_fin_one,
       Matrix.cons_val, Matrix.diagonal_apply, Fin.isValue]
     fin_cases i <;> fin_cases j <;> simp only [Fin.reduceEq, reduceIte] <;> norm_num
 
@@ -1511,7 +1623,7 @@ private theorem rayTile_a :
     (![3/4, 1, 3/4, 1/4, 0] : Fin 5 → ℝ) ⬝ᵥ (HaTile *ᵥ ![3/4, 1, 3/4, 1/4, 0])
       ≤ (-2 - κ₀YM) * ((![3/4, 1, 3/4, 1/4, 0] : Fin 5 → ℝ) ⬝ᵥ ![3/4, 1, 3/4, 1/4, 0]) := by
   simp only [HaTile, dotProduct, Matrix.mulVec, Fin.sum_univ_five, Matrix.of_apply, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
+    Matrix.cons_val_zero, Matrix.cons_val_one, 
     Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val, Fin.isValue]
   nlinarith [κ₀YM_le_half, κ₀YM_pos]
 
@@ -1519,7 +1631,7 @@ private theorem rayTile_b :
     (![3/4, 1, 3/4, 1/4, 0] : Fin 5 → ℝ) ⬝ᵥ (HbTile *ᵥ ![3/4, 1, 3/4, 1/4, 0])
       ≤ (-2 - κ₀YM) * ((![3/4, 1, 3/4, 1/4, 0] : Fin 5 → ℝ) ⬝ᵥ ![3/4, 1, 3/4, 1/4, 0]) := by
   simp only [HbTile, dotProduct, Matrix.mulVec, Fin.sum_univ_five, Matrix.of_apply, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
+    Matrix.cons_val_zero, Matrix.cons_val_one, 
     Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val, Fin.isValue]
   nlinarith [κ₀YM_le_half, κ₀YM_pos]
 
@@ -1533,7 +1645,7 @@ theorem hcellRr_rel_tile_demo {s : ℝ} (hs0 : 0 ≤ s) (hs1 : s ≤ 1) :
         ≤ (HcellRr_isHermitian 2 ((1 - s) * (14/5) + s * (16/5))).eigenvalues i := by
   have hψ0 : (![3/4, 1, 3/4, 1/4, 0] : Fin (dim 2) → ℝ) ≠ 0 := by
     intro hc; have h1 := congrFun hc 1
-    simp [Matrix.cons_val_one, Matrix.head_cons] at h1
+    simp [Matrix.cons_val_one] at h1
   refine HcellRr_gap_on_interval_rel 2 (14/5) (16/5) (LinearMap.range (Matrix.mulVecLin BtTile))
     (range_corank_of_leftInv BtTile CtTile hCBTile (by norm_num)) ?_ ?_ ![3/4, 1, 3/4, 1/4, 0] hψ0
     (by rw [bridgeTile_a]; exact rayTile_a) (by rw [bridgeTile_b]; exact rayTile_b) hs0 hs1
@@ -1633,7 +1745,7 @@ open Matrix in
 `∑ₐ Wₐ = (n−1)·H` and `∑ₐ Wₐ² = (n−2)·H² + H`, and each window's operator inequality `Wₐ² ⪰ ε Wₐ` (from
 `operator_sq_ge_of_gap`), summing over windows and collapsing both sides yields
 `((n−1)ε − 1)(x·Hx) ≤ (n−2)(Hx·Hx)`; dividing by `n−2 > 0` + `gap_of_operator_sq_ge` gives bulk gap
-`((n−1)ε−1)/(n−2)`. **Scope (honest):** `hsum1` always holds (each site in `n−1` windows). `hsum2` as written
+`((n−1)ε−1)/(n−2)`. **Scope, stated in full:** `hsum1` always holds (each site in `n−1` windows). `hsum2` as written
 holds only when NON-ADJACENT terms annihilate (`hⱼhₖ = 0` for `|j−k| ≥ 2`) — the idealized / blocked case; a
 `m=2` check gives `∑ₐWₐ² = 2H + ∑_{|j−k|=1}hⱼhₖ` vs `H²+H = 2H + ∑_{j≠k}hⱼhₖ`, equal iff `∑_{|j−k|≥2}hⱼhₖ = 0`.
 For a GENERIC nearest-neighbour frustration-free chain the true identity is `∑ₐWₐ² = ∑ᵢⱼ(n−1−|i−j|)₊ hᵢhⱼ`, and
@@ -1671,7 +1783,7 @@ theorem knabe_gap_of_window_identities {N : ℕ} {ι : Type*} [Fintype ι]
 /-! ### The CORRECT Knabe window identities on the periodic chain (`ZMod L`), foundational
 
 These are the true combinatorial identities (no non-adjacent-vanishing assumption). `window_sum` is `hsum1`
-(always holds). `window_sq_sum` is the honest `hsum2` in `Tδ` form: `∑ₐWₐ² = ∑ᵣ∑ₛ ∑_b h_b h_{b+(s−r)}`
+(always holds). `window_sq_sum` is `hsum2` written out in `Tδ` form: `∑ₐWₐ² = ∑ᵣ∑ₛ ∑_b h_b h_{b+(s−r)}`
 (`= ∑_δ (m−|δ|)₊ Tδ`). The remaining passage `Tδ`-sum `⟹ H²⪰γH` is the Knabe/Gosset–Mozgunov operator
 Cauchy–Schwarz step (the genuine research core), NOT covered here. -/
 
@@ -2179,7 +2291,31 @@ bound `λ ≥ (m−1)⁻¹·γ'·m − (m−1)⁻¹`. Assembles `gm_eq23_c1` (th
 `eq23_form_of_psd` (form inequality at `ψ`) → `gm_gap_of_eq23` (gap), with `hsum=∑ₖBₖ=m•H`
 (`weighted_window_sum`). This is the ENTIRE abstract Knabe/GM finite-size criterion, machine-checked and
 axiom-free; the three physical inputs (`hpsd`, `ψ`, `hlem4`) are the sole remaining binding to the actual
-Kogut–Susskind/Wilson bond projectors. -/
+Kogut–Susskind/Wilson bond projectors.
+
+WHAT THAT BINDING WOULD COST, AND WHY IT MAY NOT BE PAYABLE FOR `SU(N)`. Every hypothesis above is about
+a FRUSTRATION-FREE chain of PROJECTORS (`h b * h b = h b`), i.e. a Hamiltonian whose ground state minimises
+each local term simultaneously. That is a strong structural condition, not a normalisation, and the
+Kogut–Susskind Hamiltonian `H = (g²/2)∑E² − (1/g²)∑ Re tr U_plaq` does not obviously meet it: the electric
+and magnetic terms do not commute, so their ground states compete and the sum is frustrated at finite
+coupling. Two regimes bracket the issue and they fall on opposite sides:
+
+  * STRONG coupling (`g → ∞`): the magnetic term drops and `H ≈ ∑E²`, a sum of commuting nonnegative terms
+    with a simultaneous zero ground state -- frustration-free, and Knabe/GM would bind. But that is the
+    regime in which confinement is already classical (Osterwalder–Seiler, Wilson's strong-coupling
+    expansion), so the criterion would reprove a known result.
+  * WEAK coupling (`g → 0`), which is where the CONTINUUM limit lives: the magnetic term is not a
+    perturbation of a commuting family, and no frustration-free projector form is known. Finite gauge
+    groups are the instructive contrast -- `Z₂` gauge theory IS frustration-free in its toric-code form
+    (`−∑A_v − ∑B_p`, all commuting), which is exactly why gaps are provable there and why that proof does
+    not transfer to `SU(N)`.
+
+So this capstone should not be read as "the volume-uniform gap is one instantiation away". The abstract
+criterion is done and axiom-free; the binding needs a frustration-free projector presentation of the
+physical transfer, which is plausible only in the regime where the answer is already known and is not
+available where it is wanted. This is an assessment of the physics, not a theorem -- if a frustration-free
+presentation of the `SU(N)` transfer at finite coupling exists, it would close the thermodynamic limit and
+the machinery here is ready for it. -/
 theorem gm_gap_c1 {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (hproj : ∀ b, h b * h b = h b)
     (m : ℕ) (hm2 : 2 ≤ m) (hmL : 2 * m ≤ L)
@@ -2380,6 +2516,6 @@ theorem cell_general_gap (jmax : ℕ) (lam : ℝ) (hlam0 : 0 ≤ lam) (hlam : 2 
 #print axioms Hcell2_clears_floor
 #print axioms gap_uniform_of_cell_intensive
 #print axioms gap_uniform_of_cell
-#print axioms ym_volume_gap_cell_grounded
+#print axioms cell_volume_bar_nonvacuous
 
 end MassGap.CellEnclosure

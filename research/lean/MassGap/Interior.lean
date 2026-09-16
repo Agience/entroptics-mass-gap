@@ -1,87 +1,57 @@
 import MassGap.Complete
 
 /-!
-# MassGap.Interior — the crossover interior from finite-volume analyticity (no `d2_le_bound`)
+# MassGap.Interior — a substrate bound on a compact coupling interval, from a finite grid
 
-A1's interior arm — `μYM β < κ₀` on a compact `[a,b]` with `βcYM ≤ a` — reduces to a **β-derivative bound**
-on the whitened second moment `⟨d²⟩` (finite-volume analyticity) plus a **finite deterministic grid** of
-reads, through the already-proved aperture scaling `Moment.Read.tension_lt_floor_of_lag_moment` and the grid
-lemma `Certify.le_of_lipschitz_grid`. It does NOT use the `d2_le_bound` axiom.
+`Complete.confinement_of_substrate_bound` turns one aperture-independent bound on the lag second
+moment `⟨d²⟩` into confinement at every large enough aperture. This module supplies such a bound on a
+compact interval `[a,b]` from finitely many deterministic reads plus a Lipschitz constant, via
+`Certify.le_of_lipschitz_grid`.
 
-The derivative bound is the finite-volume statistical-mechanics fact
-`|d⟨d²⟩/dβ| = |Cov_β(⟨d²⟩, S)| ≤ ¼·range(⟨d²⟩)·range(S) = (L/2)²·N_p/2` — the connected correlator of two
-bounded observables at finite volume (an established fact, not the `d2_le_bound` axiom). Notes in
-`certify/apriori_A1.py`.
+The Lipschitz constant is the finite-volume statistical-mechanics fact
+`|d⟨d²⟩/dβ| = |Cov_β(⟨d²⟩, S)|`, which `WilsonAnalytic` proves and bounds: `cov_bound_extensive` gives
+the assumption-free `O(#Plaq)`, and `cov_bound_local` / `cov_bound_summable` give a volume-independent
+one under clustering.
 
-After this file, the sole open input of A1-uniform is the intensive margin **U-a** (notes §5.2):
-`limsup_L μ(β,L) < κ₀`, consumed by `Certify.gap_uniform_in_volume_of_intensive`.
-
-Imported by the `MassGap` aggregate (`MassGap.lean`).
+Nothing here fixes a bound, an aperture, or a grid spacing: `B`, `N`, `L` and `δ` are all parameters,
+and the conclusion is stated for whatever the caller measures.
 -/
 
 namespace MassGap
 
 open Set
 
-/-- The whitened lag second moment as a function of β, `⟨d²⟩(β) = ∑_d p_d(β)·d²`. -/
-noncomputable def d2 (β : ℝ) : ℝ := ∑ d, pcorrYM β d * (d : ℝ) ^ 2
+/-- The substrate's lag second moment through an aperture of size `N`, as a function of the coupling.
+This is `Complete.d2At`, named here because the grid argument treats it as a function of `β`. -/
+noncomputable def d2 (N : ℕ) (β : ℝ) : ℝ := d2At N β
 
-/-- **Derivative bound ⟹ Lipschitz (finite-volume analyticity).** If `⟨d²⟩` has β-derivative bounded by `L`
-on `[a,b]`, it is `L`-Lipschitz there. The derivative bound is the finite-volume fact
-`|d⟨d²⟩/dβ| = |Cov_β(⟨d²⟩,S)| ≤ ¼·range(⟨d²⟩)·range(S)`.
-
-API RISK: `Convex.norm_image_sub_le_of_norm_deriv_le` (exact name / argument order / result orientation).
-If it differs: use `Convex.lipschitzOnWith_of_nnnorm_deriv_le` then `LipschitzOnWith.dist_le_mul` + `Real.dist_eq`. -/
-theorem d2_lipschitz_of_deriv_bound {a b L : ℝ}
-    (hdiff : ∀ x ∈ Icc a b, DifferentiableAt ℝ d2 x)
-    (hbnd : ∀ x ∈ Icc a b, ‖deriv d2 x‖ ≤ L) :
-    ∀ x ∈ Icc a b, ∀ y ∈ Icc a b, |d2 x - d2 y| ≤ L * |x - y| := by
+/-- **Derivative bound ⟹ Lipschitz (finite-volume analyticity).** If `⟨d²⟩` has β-derivative bounded
+by `L` on `[a,b]`, it is `L`-Lipschitz there. `WilsonAnalytic.wilsonSystem_expect_hasDerivAt` proves
+the derivative exists and equals `−Cov_β(·, S)`; `cov_bound_local` bounds it without the volume. -/
+theorem d2_lipschitz_of_deriv_bound {N : ℕ} {a b L : ℝ}
+    (hdiff : ∀ x ∈ Icc a b, DifferentiableAt ℝ (d2 N) x)
+    (hbnd : ∀ x ∈ Icc a b, ‖deriv (d2 N) x‖ ≤ L) :
+    ∀ x ∈ Icc a b, ∀ y ∈ Icc a b, |d2 N x - d2 N y| ≤ L * |x - y| := by
   intro x hx y hy
   have h := (convex_Icc a b).norm_image_sub_le_of_norm_deriv_le hdiff hbnd hx hy
   rw [Real.norm_eq_abs, Real.norm_eq_abs] at h
-  calc |d2 x - d2 y| = |d2 y - d2 x| := abs_sub_comm _ _
+  calc |d2 N x - d2 N y| = |d2 N y - d2 N x| := abs_sub_comm _ _
     _ ≤ L * |y - x| := h
     _ = L * |x - y| := by rw [abs_sub_comm y x]
 
-/-- **Interior confinement from finite-volume analyticity + a finite grid — no `d2_le_bound`.** On a compact
-`[a,b]`: a β-derivative bound `L` on `⟨d²⟩` (finite-volume analyticity) together with a `δ`-grid of
-deterministic reads certifying `⟨d²⟩(γ) ≤ 1 − L·δ` give `μYM β < κ₀` throughout — an established external fact
-(finite-volume analyticity ⇒ the derivative bound) plus a finite deterministic grid, not the `d2_le_bound`
-axiom.
+/-- **A substrate bound on a compact interval, from a finite grid.** A Lipschitz constant `L` on
+`⟨d²⟩` together with a `δ`-grid of deterministic reads each clearing `B − L·δ` gives `⟨d²⟩ ≤ B`
+throughout `[a,b]`.
 
-API RISK: `(readYM β).tension_lt_floor_of_lag_moment` must accept `hb` after `unfold d2` (defeq to
-`∑ d, pcorrYM β d * d²`); this is the exact call in `Complete.ym_crossover_confinement`. -/
-theorem interior_confinement_of_analytic_grid {a b L δ : ℝ} (hL : 0 ≤ L)
-    (hdiff : ∀ x ∈ Icc a b, DifferentiableAt ℝ d2 x)
-    (hbnd : ∀ x ∈ Icc a b, ‖deriv d2 x‖ ≤ L)
-    (hcover : ∀ β ∈ Icc a b, ∃ γ ∈ Icc a b, |β - γ| ≤ δ ∧ d2 γ ≤ 1 - L * δ) :
-    ∀ β ∈ Icc a b, μYM β < κ₀YM := by
-  intro β hβ
-  have hlip := d2_lipschitz_of_deriv_bound hdiff hbnd
-  have hb : d2 β ≤ 1 := le_of_lipschitz_grid hL hlip hcover β hβ
-  unfold d2 at hb
-  unfold μYM κ₀YM
-  exact (readYM β).tension_lt_floor_of_lag_moment hb ym_finite_aperture
+`B`, `L`, `δ` and the aperture `N` are all the caller's: nothing is fixed here. Supplying this at
+every `N` with one `B` is exactly the hypothesis of `Complete.confinement_of_bounded_substrate`. -/
+theorem d2_le_of_analytic_grid {N : ℕ} {a b B L δ : ℝ} (hL : 0 ≤ L)
+    (hdiff : ∀ x ∈ Icc a b, DifferentiableAt ℝ (d2 N) x)
+    (hbnd : ∀ x ∈ Icc a b, ‖deriv (d2 N) x‖ ≤ L)
+    (hcover : ∀ β ∈ Icc a b, ∃ γ ∈ Icc a b, |β - γ| ≤ δ ∧ d2 N γ ≤ B - L * δ) :
+    ∀ β ∈ Icc a b, d2 N β ≤ B :=
+  le_of_lipschitz_grid hL (d2_lipschitz_of_deriv_bound hdiff hbnd) hcover
 
-#print axioms interior_confinement_of_analytic_grid
--- Expected: the three foundational + `wilson_reflection_positive` (via `readYM`), and NOT `d2_le_bound`.
-
-/-! ## The sole open core, as a named target (U-a)
-
-After `interior_confinement_of_analytic_grid` closes the fixed-volume interior and the two ends are cited
-(`ym_character`, `ym_asymfree`), the whole of A1-uniform reduces to ONE intensive inequality:
-
-> **U-a.** `∃ r < 1, ∀ F, m_hi(F) ≤ r` — the dominant transfer magnitude stays below one uniformly in the
-> volume `F = L^d` (equivalently `limsup_L μ(·,L) < κ₀`, a margin that does not dilute as `a → 0`).
-
-It is the single hypothesis `hbound` of `Certify.gap_uniform_in_volume_of_intensive`, which then yields the
-uniform-in-volume gap. `κ₀ = ¼log3` is per-area and `L`-independent (`Floor`, proved); U-a is the intensive
-self-sourcing contraction `c > 0` (notes §5.2).
-
-**The radius is now grounded.** `CellSpectrum.gap_uniform_of_cell_intensive` pins the U-a radius `r` to the
-machine-checked single-cell ceiling `3^{-1/4} = e^{-κ₀}` — the value `Hcell2_clears_floor` proves the single
-plaquette clears at every coupling. So the remaining input sharpens from "some `r < 1`" to the intensivity bound
-`∀ F, m_hi(F) ≤ 3^{-1/4}` (adding volume does not raise the dominant magnitude above the single plaquette), and
-everything downstream — the F-uniform gap — follows by machine check, foundational axioms only. -/
+#print axioms d2_le_of_analytic_grid
 
 end MassGap

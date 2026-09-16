@@ -57,21 +57,21 @@ theorem confinement_mass_gap (M : LatticeYM) (h1 : A1_YM M) :
   fun β => ⟨M.massGap_pos_of_confinement (h1 β), mass_gap_exponential_decay M β⟩
 
 /-- **The SU(N) Yang–Mills mass gap has an explicit positive rate.** For the discharged model `ymModel`, the
-mass gap `Δ(β) = κ₀ − μYM(β) = ¼log3 − μYM(β) > 0` at every physical coupling `β ≥ 0` (from `ym_confinement`), and the two-point
+mass gap `Δ(β) = κ₀ − μ(β) = ¼log3 − μ(β) > 0` at every physical coupling `β ≥ 0` (from `hconf`), and the two-point
 function decays exponentially at rate `Δ`: the *quantitative* gap (`spec ⊆ {0} ∪ [Δ,∞)`) and OS4
 clustering, with `Δ` the entropy margin. Same axiom footprint as `ym_mass_gap` — this is a strengthening
 of its qualitative `C(τ)→0` to the exponential rate, not a new input. -/
-theorem ym_mass_gap_rate :
-    ∀ β, 0 ≤ β → 0 < ymModel.massGap β ∧
-      ∀ τ : ℕ, ‖∑ k ∈ ymModel.s β, ymModel.P β k * (ymModel.m β k) ^ τ‖
-        ≤ (∑ k ∈ ymModel.s β, ‖ymModel.P β k‖) * Real.exp (-(ymModel.massGap β) * τ) :=
-  fun β hβ => ⟨ymModel.massGap_pos_of_confinement (ym_confinement β hβ),
-    mass_gap_exponential_decay ymModel β⟩
+theorem ym_mass_gap_rate (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM) :
+    ∀ β, 0 ≤ β → 0 < (ymModelAt N).massGap β ∧
+      ∀ τ : ℕ, ‖∑ k ∈ (ymModelAt N).s β, (ymModelAt N).P β k * ((ymModelAt N).m β k) ^ τ‖
+        ≤ (∑ k ∈ (ymModelAt N).s β, ‖(ymModelAt N).P β k‖)
+            * Real.exp (-((ymModelAt N).massGap β) * τ) :=
+  fun β hβ => ⟨(ymModelAt N).massGap_pos_of_confinement (hconf β hβ),
+    mass_gap_exponential_decay (ymModelAt N) β⟩
 
 -- Footprint: the same named inputs as `ym_mass_gap`'s A1 side (no A2 / `Otr_iso` — the gap is pure
 -- confinement), and NO new axiom. `#print axioms ym_mass_gap_rate` returns
--- `propext, Classical.choice, Quot.sound, ym_asymfree, ym_character, wilson_reflection_positive, d2_le_bound`.
--- (`ym_finite_aperture` is a `norm_num` theorem, so it does not appear in the footprint.)
+-- `propext, Classical.choice, Quot.sound, wilson_reflection_positive_at`.
 #print axioms ym_mass_gap_rate
 
 end MassGap

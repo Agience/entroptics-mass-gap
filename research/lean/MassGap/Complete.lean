@@ -81,23 +81,36 @@ of reading-A (the translation-invariant, whitened action-density correlation ove
 deterministic entroptics reduction of §2-§3, bit-for-bit validated in `certify/gap_of_maximal_correlation.py`). It is named
 abstractly (`opaque`) — the raw upstream data of the read — and its one load-bearing property, reflection
 positivity, is the NAMED axiom `wilson_reflection_positive` below, tracked explicitly in `#print axioms`. -/
-opaque wilsonCorr : ℝ → (Fin (nCorrYM + 1) → ℝ)
+opaque wilsonCorrAt : (N : ℕ) → ℝ → (Fin (N + 1) → ℝ)
+
+/-- The correlation at the pinned physical aperture — the `nCorrYM` instance of `wilsonCorrAt`. The
+aperture is a VALUE OF A VARIABLE, not a property of the theory, so the ensemble data carries it. -/
+noncomputable def wilsonCorr : ℝ → (Fin (nCorrYM + 1) → ℝ) := wilsonCorrAt nCorrYM
 
 /-- **Reflection positivity of the Wilson ensemble — CITED** (K. Osterwalder, E. Seiler, *Gauge field
 theories on a lattice*, Ann. Phys. **110** (1978) 440). The whitened :F²: correlation is nonnegative at every
 lag — the transfer-matrix spectral form `ρ(d) = Σ_n w_n e^{-E_n d}`, `w_n ≥ 0` — with positive total mass.
 This is the SOLE physical input reading-A needs from the ensemble, a NAMED axiom that `#print axioms` reports.
 With reading-A concrete (below) the model identification `readYM_is_wilson` is a `rfl` theorem, and RP — an
-established, cited theorem — is the read-side physical input. -/
-axiom wilson_reflection_positive :
-    ∀ β, (∀ d, 0 ≤ wilsonCorr β d) ∧ 0 < ∑ d, wilsonCorr β d
+established, cited theorem — is the read-side physical input.
+
+It is stated AT EVERY APERTURE, because that is what the cited result says: reflection positivity of the
+Wilson measure is a property of the ensemble, not of the window a reader chooses. Stating it only at
+`nCorrYM` would have made the pinned window part of the physical input. -/
+axiom wilson_reflection_positive_at :
+    ∀ (N : ℕ) (β : ℝ), (∀ d, 0 ≤ wilsonCorrAt N β d) ∧ 0 < ∑ d, wilsonCorrAt N β d
+
+/-- Reflection positivity at the pinned aperture — the `nCorrYM` instance, a THEOREM. -/
+theorem wilson_reflection_positive :
+    ∀ β, (∀ d, 0 ≤ wilsonCorr β d) ∧ 0 < ∑ d, wilsonCorr β d :=
+  wilson_reflection_positive_at nCorrYM
 
 /-- **Reading-A — the CONCRETE read.** It packages a whitened, reflection-positive
 correlation into the entropy-matched `Moment.Read`, from which the tension `μ`, the probability vector `p`,
 and the angles `θ` are all DERIVED (`Moment.Read`). This is the final min-entropy stage of reading-A as an
 explicit Lean function — a computation, not a postulate. -/
-noncomputable def readA (ρ : Fin (nCorrYM + 1) → ℝ)
-    (h : (∀ d, 0 ≤ ρ d) ∧ 0 < ∑ d, ρ d) : Moment.Read nCorrYM :=
+noncomputable def readA {N : ℕ} (ρ : Fin (N + 1) → ℝ)
+    (h : (∀ d, 0 ≤ ρ d) ∧ 0 < ∑ d, ρ d) : Moment.Read N :=
   { ρ := ρ, hρ := h.1, hpos := h.2 }
 
 /-- **Reading-A of the physical Wilson ensemble** — reading-A applied to the Wilson correlation (§2-§3). -/
@@ -106,6 +119,55 @@ noncomputable def readingA_wilson (β : ℝ) : Moment.Read nCorrYM :=
 /-- **The read used throughout the proof** — DEFINED to be reading-A of the Wilson ensemble. -/
 noncomputable def readYM (β : ℝ) : Moment.Read nCorrYM :=
   readA (wilsonCorr β) (wilson_reflection_positive β)
+
+/-! ### The aperture as a VARIABLE
+
+Everything above fixes the aperture at `nCorrYM`. That is a value of a variable, not a property of
+the theory, and the whole content of the entropy-matched read is that the margin opens as the window
+widens relative to the substrate — a statement that cannot even be written when the window is frozen.
+The definitions below carry the aperture, and the pinned ones are recovered as the `nCorrYM` instance
+(`readYM_is_readYMAt`, `μYM_is_μYMAt`, both `rfl`). -/
+
+/-- Reading-A at an ARBITRARY aperture. -/
+noncomputable def readYMAt (N : ℕ) (β : ℝ) : Moment.Read N :=
+  readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)
+
+/-- The centre-vortex tension read through an aperture of size `N`. `μYM` is its `nCorrYM` instance. -/
+noncomputable def μYMAt (N : ℕ) (β : ℝ) : ℝ := (readYMAt N β).tension
+
+/-- The substrate's second moment about the CIRCLE distance, read through an aperture of size `N`.
+Under the aperture reading this is the SUBSTRATE's quantity: the window contributes the separate
+factor `(2π/(N+1))²` (`Moment.Read.thetaMoment_eq`), and the content of clustering is that this one
+does not grow with `N`. -/
+-- DERIVED: `Fin (N+1)` is the lag arity; the exponent 2 is the definition of a SECOND moment; and
+-- the distance is `Moment.circLag`, the separation ON THE CIRCLE, because that is the only distance
+-- the read can see. `cos` is even and 2π-periodic, so `cos (θ d)` depends on the lag only through
+-- `min d (N+1-d)` (`Moment.Read.cos_theta_circ`).
+--
+-- WHY THIS IS NOT COSMETIC. Using the raw index `d` makes the moment UNBOUNDABLE. On a periodic
+-- extent of `N+1` sites the correlation obeys ρ(N) = ρ(-1) = ρ(1), so the far half of the lag
+-- range is the near half reflected; weighting it by `d²` rather than by the true distance makes the
+-- moment grow like `N²` even when the correlation length is FIXED. For ρ(d) = e^{-dist/1.5}:
+--
+--     extent      8      16      32      64     128
+--     raw       14.5    68.9     307    1305    5384     -- no bound exists, gapped or not
+--     circle    1.97    3.03    3.28    3.28    3.28     -- saturates, which is what a gap means
+--
+-- So `∃ B, ∀ N, moment ≤ B` is FALSE for every physical correlation when the raw index is used, and
+-- a theorem taking it as a hypothesis is vacuous.
+noncomputable def d2At (N : ℕ) (β : ℝ) : ℝ :=
+  ∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2
+
+/-- **The input, with the aperture divided out.** The substrate moment per unit squared aperture —
+the quantity that decides confinement once the window factor `(2π/(N+1))²` has cancelled against it.
+A bounded `d2At` is the special case `c = 0` in the limit; a bounded `substrateRatio` is the weakest
+hypothesis the aperture argument can consume. -/
+noncomputable def substrateRatio (N : ℕ) (β : ℝ) : ℝ := d2At N β / ((N : ℝ) + 1) ^ 2
+
+/-- The read's own cosine average at aperture `N` — the single measured scalar confinement is
+equivalent to, by `confinement_at_iff_cosAvg`. -/
+noncomputable def cosAvgYMAt (N : ℕ) (β : ℝ) : ℝ :=
+  ∑ d, (readYMAt N β).p d * Real.cos ((readYMAt N β).θ d)
 
 /-- **C-3 — THE MODEL IDENTIFICATION, a THEOREM (`rfl`).** The read the proof reasons about *is* reading-A
 of the physical SU(N) Wilson ensemble — definitionally, since both are `readA (wilsonCorr β) _`. With reading-A
@@ -142,6 +204,143 @@ noncomputable def κ₀YM : ℝ := 1 / 4 * Real.log 3
 theorem κ₀YM_pos : 0 < κ₀YM := by
   have h3 : (0 : ℝ) < Real.log 3 := Real.log_pos (by norm_num)
   unfold κ₀YM; linarith
+
+/-! ### Confinement through a variable aperture
+
+One route, in one direction: a bound on the SUBSTRATE (its second moment about the circle distance,
+or that moment per unit squared aperture) puts the tension below the entropy floor. Every statement
+below is an instance or a limit of that one implication; none of them supplies a number. -/
+
+/-- The pinned read is the `nCorrYM` instance of the aperture-general one. -/
+theorem readYM_is_readYMAt : readYM = readYMAt nCorrYM := rfl
+
+/-- The pinned tension is the `nCorrYM` instance of the aperture-general one. -/
+theorem μYM_is_μYMAt : μYM = μYMAt nCorrYM := rfl
+
+/-- **Confinement at one aperture, from the read's own cosine average.** Definitional: `tension` IS
+`-log ⟨cos θ⟩_p`. It is stated because it is the form ONE measured scalar certifies. -/
+theorem confinement_at_of_cosAvg {N : ℕ} {β : ℝ}
+    (hc : (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgYMAt N β) : μYMAt N β < κ₀YM :=
+  (readYMAt N β).tension_lt_floor_of_cosAvg hc
+
+/-- **And the converse**, so the two are known to be the same statement rather than one implying the
+other. The positivity hypothesis is the one a nonpositive average cannot supply a logarithm for. -/
+theorem confinement_at_iff_cosAvg {N : ℕ} {β : ℝ} (hpos : 0 < cosAvgYMAt N β) :
+    μYMAt N β < κ₀YM ↔ (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgYMAt N β :=
+  ⟨fun h => (readYMAt N β).cosAvg_gt_of_tension_lt_floor hpos h, confinement_at_of_cosAvg⟩
+
+/-- The ratio bound and the growth bound are the same hypothesis. Stated so neither form can drift
+into looking like extra strength. -/
+theorem substrateRatio_le_iff {N : ℕ} {β c : ℝ} :
+    substrateRatio N β ≤ c ↔ d2At N β ≤ c * ((N : ℝ) + 1) ^ 2 := by
+  have hN : (0 : ℝ) < ((N : ℝ) + 1) ^ 2 := by positivity
+  rw [substrateRatio, div_le_iff₀ hN]
+
+/-- **Confinement at one aperture and one coupling, from the substrate ratio.** The aperture cancels
+exactly: `(2π/(N+1))² · c·(N+1)² / 2 = (2π)²·c/2`, so the hypothesis on `c` carries NO aperture and
+the conclusion holds at every `N` for which the ratio bound does. -/
+theorem confinement_at_of_ratio {c : ℝ}
+    (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    {N : ℕ} {β : ℝ} (h : substrateRatio N β ≤ c) :
+    μYMAt N β < κ₀YM := by
+  refine (readYMAt N β).tension_lt_floor_of_circ_moment (substrateRatio_le_iff.mp h) ?_
+  have hpos : (0 : ℝ) < (N : ℝ) + 1 := by positivity
+  have hcancel : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * (c * ((N : ℝ) + 1) ^ 2) / 2
+      = (2 * Real.pi) ^ 2 * c / 2 := by
+    field_simp
+  rw [hcancel]
+  exact hc
+
+/-- The same at a FIXED coupling, for every large enough aperture. -/
+theorem confinement_at_coupling_of_ratio {c : ℝ}
+    (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) (β : ℝ)
+    (h : ∀ᶠ N : ℕ in Filter.atTop, substrateRatio N β ≤ c) :
+    ∀ᶠ N : ℕ in Filter.atTop, μYMAt N β < κ₀YM := by
+  filter_upwards [h] with N hN
+  exact confinement_at_of_ratio hc hN
+
+/-- **Confinement from a moment allowed to GROW with the aperture.** The substrate moment need not be
+bounded — it may grow like `c·(N+1)²` — provided the constant `c` clears the floor gap. This is the
+weakest hypothesis the aperture argument consumes, and it is weaker than a bounded moment. -/
+theorem confinement_of_growth_bound {c : ℝ}
+    (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (h : ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, d2At N β ≤ c * ((N : ℝ) + 1) ^ 2) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  filter_upwards [h] with N hN β
+  exact confinement_at_of_ratio hc (substrateRatio_le_iff.mpr (hN β))
+
+/-- The same, stated in the ratio. -/
+theorem confinement_of_growth_ratio {c : ℝ}
+    (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (h : ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, substrateRatio N β ≤ c) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  filter_upwards [h] with N hN β
+  exact confinement_at_of_ratio hc (hN β)
+
+/-- **CONFINEMENT AT EVERY LARGE ENOUGH APERTURE, FROM ONE SUBSTRATE BOUND.**
+
+    (∃ B, ∀ N β, d2At N β ≤ B)  ⟹  ∀ᶠ N, ∀ β, μYMAt N β < κ₀YM
+
+No number appears in the statement or the proof. `B` is existentially supplied by the substrate and
+never named; the aperture is universally quantified and no threshold on it is given — `∀ᶠ N in atTop`
+says only that one exists, and it is determined from `B` alone by
+`Moment.aperture_factor_tendsto_zero`. `κ₀YM = ¼log3` is derived in `Floor`, per-area, with no
+aperture in it.
+
+WHAT THE HYPOTHESIS IS. The lag moment is bounded INDEPENDENTLY OF THE WINDOW. A gapped substrate
+gives such a bound; a gapless one is bounded only by the window itself and so has none. That is why
+the moment is taken about the CIRCLE distance (see `d2At`): about the raw index no physical
+correlation is bounded, and the hypothesis would be vacuous. -/
+theorem confinement_of_substrate_bound {B : ℝ} (hB : ∀ N β, d2At N β ≤ B) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  have hev : ∀ᶠ N : ℕ in Filter.atTop,
+      (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
+    (Moment.aperture_factor_tendsto_zero B).eventually_lt_const Moment.floor_rhs_pos
+  filter_upwards [hev] with N hN β
+  exact (readYMAt N β).tension_lt_floor_of_circ_moment (hB N β) hN
+
+/-- The same, with the bound existentially quantified: the hypothesis is that the substrate HAS an
+aperture-independent moment, with no value supplied for it anywhere. -/
+theorem confinement_of_bounded_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  obtain ⟨B, hB⟩ := h
+  exact confinement_of_substrate_bound hB
+
+/-- **The converse, at one aperture.** A tension below the floor FORCES the substrate ratio under a
+ceiling derived from the floor alone. Having both directions means the aperture condition and the
+bounded substrate ratio are the same statement, not one sufficient for the other. -/
+theorem substrateRatio_lt_of_tension_lt_floor {N : ℕ} {β : ℝ} (hpos : 0 < cosAvgYMAt N β)
+    (h : μYMAt N β < κ₀YM) :
+    substrateRatio N β < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8 :=
+  (readYMAt N β).substrate_lt_of_tension_lt_floor hpos h
+
+/-- The entropy surplus read through an aperture of size `N`. -/
+noncomputable def ΔYMAt (N : ℕ) (β : ℝ) : ℝ := κ₀YM - μYMAt N β
+
+/-- **The margin opens to the WHOLE floor as the window widens.** Under one aperture-independent
+substrate bound the tension vanishes, so the surplus `Δ = κ₀ − μ` tends to `κ₀` itself. This is the
+statement the frozen window cannot express, and it is the content of the entropy-matched read: the
+gap is not a residue left over after a subtraction, it is the entire floor in the limit. -/
+theorem margin_tendsto_floor {B : ℝ} (hB : ∀ N β, d2At N β ≤ B) (β : ℝ) :
+    Filter.Tendsto (fun N => ΔYMAt N β) Filter.atTop (nhds κ₀YM) := by
+  have h : Filter.Tendsto (fun N => μYMAt N β) Filter.atTop (nhds 0) :=
+    Moment.tension_tendsto_zero_of_bounded_circ_moment B (fun N => readYMAt N β)
+      (fun N => hB N β)
+  simpa [ΔYMAt] using tendsto_const_nhds.sub h
+
+-- The whole confinement route, footprinted. Every one of these carries the foundational three plus
+-- `wilson_reflection_positive_at` and nothing else: no number, no threshold, no chosen aperture.
+#print axioms confinement_at_of_cosAvg
+#print axioms confinement_at_iff_cosAvg
+#print axioms substrateRatio_le_iff
+#print axioms confinement_at_of_ratio
+#print axioms confinement_at_coupling_of_ratio
+#print axioms confinement_of_growth_bound
+#print axioms confinement_of_growth_ratio
+#print axioms confinement_of_substrate_bound
+#print axioms confinement_of_bounded_substrate
+#print axioms substrateRatio_lt_of_tension_lt_floor
+#print axioms margin_tendsto_floor
 
 /-- The strong-coupling threshold coupling, **defined** as where the linear character bound meets the
 floor: `β_c = κ₀ / (2 r)`, so `2 β_c r = κ₀` holds by construction, not by assumption. -/
@@ -210,7 +409,8 @@ theorem ym_tension_is_moment : ∀ β,
 
 The interior input is a bound on the correlation's **lag second moment** `⟨d²⟩ = ∑_d p_d d²` (a squared
 correlation length): `⟨d²⟩(β) ≤ 1` uniformly for `β ≥ βcYM`. The `1/L²` **aperture scaling is proven**
-(`Moment.Read.tension_lt_floor_of_lag_moment`): the θ-moment factors as `⟨θ²⟩ = (2π/(L+1))² ⟨d²⟩`, so the fixed
+(`Moment.Read.tension_lt_floor_of_circ_moment`, reached from a raw-index bound by
+`circ_moment_le_lag_moment`): the θ-moment factors as `⟨θ²⟩ = (2π/(L+1))² ⟨d²⟩`, so the fixed
 bound `B = 1` puts `μ` under the floor at every large `L` (margin `∝ L²`, a theorem), and `1` sits `3.52×`
 under the aperture threshold `B₁₆ ≈ 3.52` (`ym_finite_aperture`). This is confinement (finite `ξ` / SU(N)
 no-bulk-transition): measured well under `1` across the crossover (figures at `d2_le_bound`), with the free-field
@@ -219,7 +419,8 @@ whole half-line `β ≥ βcYM`. It is the spatial correlation moment — distinc
 `χ_v` (Shannon/specific-heat), the Rényi relation of PAPER §8.4.
 
 The bound is the uniform constant `1`: a flat `0 ≤ ⟨d²⟩ ≤ 1`, consistent with the provable `⟨d²⟩ ≥ 0`
-(`pcorr_nonneg` + `sq_nonneg`), is exactly what `tension_lt_floor_of_lag_moment` consumes (any `B < 3.52`, the
+(`pcorr_nonneg` + `sq_nonneg`), is exactly what `tension_lt_floor_of_circ_moment` consumes, through
+`circ_moment_le_lag_moment` (any `B < 3.52`, the
 aperture ceiling at `N=16`, suffices), and `1` is the rigorously certified value (`99.9%` empirical-Bernstein).
 The closed-form envelope and its Lipschitz regularity are available, where wanted, from the grid route
 `ym_crossover_confinement_of_grid` (a measured modulus of continuity). -/
@@ -267,6 +468,19 @@ theorem ym_finite_aperture :
   rw [hN]
   nlinarith [hpi, hpi0, h45, sq_nonneg Real.pi]
 
+/-- **The circle moment is under the raw lag moment**, so a bound read off the raw index — which is
+what the grid certificates measure — still feeds the circle-moment route. The inequality is
+`min d (N+1−d) ≤ d` weighted by a probability vector; it is one-directional, and that direction is
+the one a certificate needs. The converse fails, which is exactly why `d2At` is stated about the
+circle: a raw bound is STRONGER, and no physical correlation satisfies it at every aperture. -/
+theorem circ_moment_le_lag_moment {N : ℕ} (R : Moment.Read N) :
+    ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 ≤ ∑ d, R.p d * (d : ℝ) ^ 2 := by
+  refine Finset.sum_le_sum (fun d _ => ?_)
+  have hle : ((Moment.circLag d : ℕ) : ℝ) ≤ ((d : ℕ) : ℝ) := by
+    exact_mod_cast min_le_left (d : ℕ) (N + 1 - (d : ℕ))
+  have h0 : (0 : ℝ) ≤ ((Moment.circLag d : ℕ) : ℝ) := Nat.cast_nonneg _
+  exact mul_le_mul_of_nonneg_left (by nlinarith) (R.p_nonneg d)
+
 -- A1's interior confinement `ym_crossover_confinement` (a THEOREM on any compact interval, DERIVED from the
 -- uniform second-moment bound `d2_le_bound`) is defined below; `ym_crossover_confinement_of_grid`
 -- (the general finite-grid tool) remains available as the deterministic-read alternative.
@@ -292,12 +506,14 @@ theorem ym_crossover_confinement_of_grid {a b B L δ : ℝ} (hL : 0 ≤ L)
   have hbound : ∑ d, pcorrYM β d * (d : ℝ) ^ 2 ≤ B :=
     le_of_lipschitz_grid hL hlip hcover β hβ
   unfold μYM κ₀YM
-  exact (readYM β).tension_lt_floor_of_lag_moment hbound haperture
+  exact (readYM β).tension_lt_floor_of_circ_moment
+    (le_trans (circ_moment_le_lag_moment (readYM β)) hbound) haperture
 
 /-- **A1's interior confinement — a THEOREM from the uniform second-moment bound.** On any compact `[a,b]` with
 `βcYM ≤ a` (the crossover onset — below `βcYM` the character bound covers, so the interior starts here),
 `μYM β < κ₀`. Proof: `⟨d²⟩(β) ≤ 1` (the uniform bound `d2_le_bound`, asserted on `β ≥ βcYM`), and with the
-finite-aperture premise `ym_finite_aperture` the proved aperture scaling `tension_lt_floor_of_lag_moment` puts
+finite-aperture premise `ym_finite_aperture` the proved aperture scaling
+`tension_lt_floor_of_circ_moment` (reached by `circ_moment_le_lag_moment`) puts
 the tension under the floor. No measured Lipschitz, no `δ`-net; the bound is asserted only on `β ≥ βcYM`. This
 is A1's interior input (`ym_confinement` instantiates it at the crossover `[βcYM, ·]`). The general grid certificate
 `ym_crossover_confinement_of_grid` remains available (it replaces `d2_le_bound` by a finite grid + a measured
@@ -308,7 +524,8 @@ theorem ym_crossover_confinement (a b : ℝ) (hlo : βcYM ≤ a) :
   have hβc : βcYM ≤ β := le_trans hlo hβ.1
   have hbound : (∑ d, pcorrYM β d * (d : ℝ) ^ 2) ≤ 1 := d2_le_bound β hβc
   unfold μYM κ₀YM
-  exact (readYM β).tension_lt_floor_of_lag_moment hbound ym_finite_aperture
+  exact (readYM β).tension_lt_floor_of_circ_moment
+    (le_trans (circ_moment_le_lag_moment (readYM β)) hbound) ym_finite_aperture
 
 /-! ## A2's data and the cited Nyquist-Shannon sampling isometry -/
 
@@ -405,6 +622,73 @@ theorem ym_A2 : A2_YM ymModel := by
     rw [← Matrix.mul_assoc, Matrix.mul_assoc Fbase (Otr d) ((Otr d)ᵀ),
       mul_eq_one_comm.mp (Otr_iso d), Matrix.mul_one]
 
+/-! ## The model at a VARIABLE aperture, and the gap from the substrate alone -/
+
+/-- The lattice Yang–Mills witness read through an aperture of size `N`. `ymModel` is its `nCorrYM`
+instance (`ymModel_is_ymModelAt`, `rfl`). -/
+noncomputable def ymModelAt (N : ℕ) : LatticeYM where
+  Idx := Unit
+  Dir := DYM
+  s := fun _ => (Finset.univ : Finset Unit)
+  P := fun _ _ => 1
+  m := fun β _ => ((Real.exp (-(κ₀YM - μYMAt N β)) : ℝ) : ℂ)
+  μ := μYMAt N
+  R := fun d => freadYM ((Fym d)ᵀ * Fym d).charpoly
+  κ₀ := κ₀YM
+  κ := κ₀YM
+  hfloor := le_refl _
+  hread := by
+    intro β _ _
+    have h : ‖((Real.exp (-(κ₀YM - μYMAt N β)) : ℝ) : ℂ)‖ = Real.exp (-(κ₀YM - μYMAt N β)) := by
+      rw [Complex.norm_real, Real.norm_of_nonneg (Real.exp_pos _).le]
+    exact le_of_eq h
+
+/-- The pinned model is the `nCorrYM` instance of the aperture-general one. -/
+theorem ymModel_is_ymModelAt : ymModel = ymModelAt nCorrYM := rfl
+
+/-- Isotropy holds at every aperture — `R` does not depend on it. -/
+theorem ym_A2_at (N : ℕ) : A2_YM (ymModelAt N) := ym_A2
+
+/-- **THE MASS GAP FROM ONE SUBSTRATE HYPOTHESIS, AT EVERY LARGE ENOUGH APERTURE.**
+
+From `∃ B, ∀ N β, d2At N β ≤ B` alone — an aperture-independent bound on the substrate's moment about
+the circle distance, with no value supplied — the full result (gap, non-triviality, `SO(4)`) holds for
+`ymModelAt N` at every large enough `N`, at EVERY coupling, with no restriction to `β ≥ 0` and no
+coupling-by-coupling case split.
+
+WHAT IT REPLACES. The three-arm route (`ym_character` strong end, `d2_le_bound` interior,
+`ym_asymfree` weak end) reaches `∀ β, μ < κ₀` from three separate inputs at a FROZEN aperture. This
+reaches it from one input at a VARIABLE aperture. The three arms remain in the file as the
+independently-cited decomposition; they are not what this rests on. -/
+theorem ym_mass_gap_of_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) :
+    ∀ᶠ N : ℕ in Filter.atTop,
+      (∀ β, Filter.Tendsto
+          (fun τ => ‖∑ k ∈ (ymModelAt N).s β,
+            (ymModelAt N).P β k * ((ymModelAt N).m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+        (∀ β, (ymModelAt N).μ β - (ymModelAt N).κ < 0) ∧
+        (∀ d d', (ymModelAt N).R d = (ymModelAt N).R d') := by
+  filter_upwards [confinement_of_bounded_substrate h] with N hN
+  exact mass_gap_of_model (ymModelAt N) hN (ym_A2_at N)
+
+#print axioms ym_mass_gap_of_substrate
+
+/-- **The same, from the WEAKER growth hypothesis.** The substrate moment is allowed to grow with the
+aperture, `substrateRatio ≤ c`, provided `c` clears the floor gap — so a bounded moment is the
+special case, not the requirement. -/
+theorem ym_mass_gap_of_ratio {c : ℝ}
+    (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (h : ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, substrateRatio N β ≤ c) :
+    ∀ᶠ N : ℕ in Filter.atTop,
+      (∀ β, Filter.Tendsto
+          (fun τ => ‖∑ k ∈ (ymModelAt N).s β,
+            (ymModelAt N).P β k * ((ymModelAt N).m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+        (∀ β, (ymModelAt N).μ β - (ymModelAt N).κ < 0) ∧
+        (∀ d d', (ymModelAt N).R d = (ymModelAt N).R d') := by
+  filter_upwards [confinement_of_growth_ratio hc h] with N hN
+  exact mass_gap_of_model (ymModelAt N) hN (ym_A2_at N)
+
+#print axioms ym_mass_gap_of_ratio
+
 /-! ## The mass gap, with no open hypothesis -/
 
 /-- **Yang-Mills mass gap (result) from named inputs.** For the lattice Yang-Mills witness `ymModel`, at
@@ -434,7 +718,7 @@ theorem ym_mass_gap :
 -- The axiom footprint: the standard three plus the named inputs. A1's interior is the THEOREM
 -- `ym_crossover_confinement`, resting on the uniform second-moment bound `d2_le_bound` (`⟨d²⟩ ≤ 1`) + the
 -- finite-lattice premise `ym_finite_aperture` (a theorem) — the read identification and the `1/L²` aperture
--- scaling are proven (`Moment.Read.tension_lt_floor_of_moment` / `tension_lt_floor_of_lag_moment`). `Otr_iso`
+-- scaling are proven (`Moment.Read.tension_lt_floor_of_moment` / `tension_lt_floor_of_circ_moment`). `Otr_iso`
 -- is the THEOREM `Otr_iso` (the O(4) membership of the Nyquist transport `OtrO`), and C-3 is the THEOREM
 -- `readYM_is_wilson := rfl` (reading-A is the concrete `readA`, and `readYM = readingA_wilson` by
 -- construction), so neither is in the footprint. The footprint shows `wilson_reflection_positive` — reflection
@@ -707,6 +991,16 @@ theorem ym_mass_gap_spectral_bar :
     fun β hβ => confines_of_tension_lt_floor (le_refl κ₀YM) (ym_confinement β hβ), ym_A2⟩
 
 #print axioms ym_mass_gap_spectral_bar
+
+/-- **The spectral bar is not a statement about nothing.** The correlator whose decay
+`ym_mass_gap_spectral_bar` asserts is NONZERO where the decay starts, so `C(τ) → 0` is a decay rather
+than the trivial limit of a constantly-zero sum. Worth stating because a mode family with zero
+weights would satisfy every decay bound in this file for free. -/
+theorem spectral_bar_nonvacuous (β : ℝ) :
+    ‖∑ k, PModeYM β k * (mModeYM β k) ^ (0 : ℕ)‖ ≠ 0 := by
+  simp [PModeYM, nModeYM]
+
+#print axioms spectral_bar_nonvacuous
 
 /-- **The reconstructed Yang–Mills Hamiltonian has mass gap `κ₀` — the finite-aperture margin wired to
 reconstruction.** For the Euclidean-time transfer operator `T` (self-adjoint) whose spectrum meets the

@@ -419,6 +419,120 @@ theorem haar_prod_factor_of_split (bd : Pq → List (Lk × Bool)) (A B : Finset 
 
 #print axioms haar_prod_factor_of_split
 
+/-! ### Order one, and why the cumulant machinery is not needed
+
+The obstacle at order `k` looked like cumulants, and Mathlib has none. The cumulant structure is an
+artefact of the RATIO `⟨·⟩ = N/Z`, and the ratio can be cleared. Writing `N(O,β) = ∫O e^{−βS}` and
+`Z(β) = ∫e^{−βS}`,
+
+    ρ_conn = [ N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) ] / Z²,      Z(0) = 1 ≠ 0,
+
+so `ρ_conn` vanishes to order `d` at `β = 0` exactly when its NUMERATOR does — and the numerator is a
+difference of products of integrals, with no division in it. Its coefficients are
+
+    [βᵏ] = (−1)ᵏ ∑_{i+j=k} 1/(i!j!) [ ∫φ₀φ_d Sⁱ · ∫Sʲ − ∫φ₀Sⁱ · ∫φ_d Sʲ ],
+
+a polynomial identity in Haar moments whose engine is `haar_prod_factor_of_split`.
+
+Order one is below. Its proof is four applications of that lemma and `ring`, and the two cases — the
+extra plaquette joining either side of the split — cancel by the same mechanism. That is the pattern
+the general order follows. -/
+
+/-- **ORDER ONE CANCELS.** The `k = 1` coefficient of the connected correlation's numerator vanishes
+whenever the three plaquettes admit a link-disjoint split with `p₀` and `p_d` on opposite sides — that
+is, whenever the single available plaquette `q` fails to bridge them.
+
+Both cases collapse for the same reason. With `q` on `p₀`'s side the first two terms are equal and the
+last two are equal; with `q` on `p_d`'s side the pairing is the mirror image. Neither case needs to
+know anything about `q` beyond which side of the split it lies on, which is exactly the content of
+"fewer than `d` plaquettes cannot bridge a separation of `d`" at `d = 2`. -/
+theorem order_one_cancels (bd : Pq → List (Lk × Bool)) (p₀ pd q : Pq)
+    (hq0 : q ≠ p₀) (hqd : q ≠ pd) (h0d : p₀ ≠ pd)
+    (S T : Finset Lk) (hST : Disjoint S T)
+    (h0 : ∀ l ∈ (bd p₀).map Prod.fst, l ∈ S)
+    (hd : ∀ l ∈ (bd pd).map Prod.fst, l ∈ T)
+    (hq : (∀ l ∈ (bd q).map Prod.fst, l ∈ S) ∨ (∀ l ∈ (bd q).map Prod.fst, l ∈ T)) :
+    (∫ U, (wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd pd U)
+          * wilsonPlaqObs (N := Nc) bd q U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      - (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd q U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, wilsonPlaqObs (N := Nc) bd pd U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      + (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd pd U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, wilsonPlaqObs (N := Nc) bd q U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      - (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, wilsonPlaqObs (N := Nc) bd pd U * wilsonPlaqObs (N := Nc) bd q U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) = 0 := by
+  classical
+  -- the split with `p₀` alone against `p_d` alone, used in both cases
+  have hsplit0d := haar_prod_factor_of_split (Nc := Nc) bd {p₀} {pd} S T hST
+    (by simpa using h0) (by simpa using hd)
+  simp only [Finset.prod_singleton] at hsplit0d
+  rcases hq with hqS | hqT
+  · -- `q` joins `p₀`'s side
+    have hA := haar_prod_factor_of_split (Nc := Nc) bd {p₀, q} {pd} S T hST
+      (by
+        intro p hp l hl
+        rcases Finset.mem_insert.mp hp with rfl | hp'
+        · exact h0 l hl
+        · rw [Finset.mem_singleton] at hp'; subst hp'; exact hqS l hl)
+      (by simpa using hd)
+    have hB := haar_prod_factor_of_split (Nc := Nc) bd {q} {pd} S T hST
+      (by simpa using hqS) (by simpa using hd)
+    have hC := haar_prod_factor_of_split (Nc := Nc) bd {p₀} {pd} S T hST
+      (by simpa using h0) (by simpa using hd)
+    simp only [Finset.prod_pair hq0.symm, Finset.prod_singleton] at hA
+    simp only [Finset.prod_singleton] at hB hC
+    -- the `p_d`-side integral of `φ_d · φ_q` factorises the other way
+    have hD := haar_prod_factor_of_split (Nc := Nc) bd {q} {pd} S T hST
+      (by simpa using hqS) (by simpa using hd)
+    simp only [Finset.prod_singleton] at hD
+    have hDcomm : (∫ U, wilsonPlaqObs (N := Nc) bd pd U * wilsonPlaqObs (N := Nc) bd q U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        = (∫ U, wilsonPlaqObs (N := Nc) bd q U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+          * (∫ U, wilsonPlaqObs (N := Nc) bd pd U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+      rw [← hD]; exact integral_congr_ae (Filter.Eventually.of_forall (fun U => by ring))
+    have hAcomm : (∫ U, (wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd pd U)
+          * wilsonPlaqObs (N := Nc) bd q U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        = (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd q U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+          * (∫ U, wilsonPlaqObs (N := Nc) bd pd U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+      rw [← hA]; exact integral_congr_ae (Filter.Eventually.of_forall (fun U => by ring))
+    rw [hAcomm, hC, hDcomm]
+    ring
+  · -- `q` joins `p_d`'s side — the mirror image
+    have hA := haar_prod_factor_of_split (Nc := Nc) bd {p₀} {pd, q} S T hST
+      (by simpa using h0)
+      (by
+        intro p hp l hl
+        rcases Finset.mem_insert.mp hp with rfl | hp'
+        · exact hd l hl
+        · rw [Finset.mem_singleton] at hp'; subst hp'; exact hqT l hl)
+    have hB := haar_prod_factor_of_split (Nc := Nc) bd {p₀} {q} S T hST
+      (by simpa using h0) (by simpa using hqT)
+    simp only [Finset.prod_singleton, Finset.prod_pair hqd.symm] at hA
+    simp only [Finset.prod_singleton] at hB
+    have hAcomm : (∫ U, (wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd pd U)
+          * wilsonPlaqObs (N := Nc) bd q U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        = (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+          * (∫ U, wilsonPlaqObs (N := Nc) bd pd U * wilsonPlaqObs (N := Nc) bd q U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+      rw [← hA]; exact integral_congr_ae (Filter.Eventually.of_forall (fun U => by ring))
+    rw [hAcomm, hB, hsplit0d]
+    ring
+
+#print axioms order_one_cancels
+
 end ZeroCoupling
 
 end MassGap.StrongCoupling

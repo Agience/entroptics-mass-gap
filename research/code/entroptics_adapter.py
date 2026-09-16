@@ -280,8 +280,13 @@ def _plane_mean(f: np.ndarray, ta: int, read: Callable) -> float:
     return float(over_planes(f, pa, read=read, reduce="mean"))
 
 
-_APERTURE_WINDOW = 128   # Aperture's default window minimum: a plane with <= this many rows is
-                         # never window-truncated, so read_batch(full plane) == Aperture(p).projection().
+# DERIVED: read from the library rather than mirrored. This was a hard-coded 128 duplicating
+# `entroptics.aperture.MIN_WINDOW`; a copy of an upstream value desyncs silently the moment
+# upstream changes it, and the branch it guards decides whether a plane is read whole or
+# per-plane. Importing by name makes a restructure fail loudly instead.
+from entroptics.aperture import MIN_WINDOW as _APERTURE_WINDOW  # noqa: E402
+# A plane with <= MIN_WINDOW rows is never window-truncated, so
+# read_batch(full plane) == Aperture(p).projection().
 
 
 def _plane_mean_batched(f, ta, *, batched_read, pick, orig) -> float:
@@ -412,12 +417,25 @@ class Reads:
     N-D fields (last axis = time); every property is a direct library read on raw
     data, each through the reduction that preserves its structure (see module docstring)."""
 
-    def __init__(self, configs: Iterable[np.ndarray], *, time_axis: int = -1) -> None:
+    def __init__(self, configs: Iterable[np.ndarray], *, time_axis: int = -1,
+                 null=None) -> None:
         self._cfgs: list = [_asfloat(c) for c in configs]
         if not self._cfgs:
             raise ValueError("run() needs at least one configuration")
         self._ta: int = time_axis
         self._dyn = None
+        # The floor for THIS read. With `null=None` the global pinned reference is used, so
+        # nothing that pins today changes behaviour; supplying one gives a caller a floor scoped
+        # to a single read, which `Reads` previously offered no channel for.
+        #
+        # A floor derived from the ensemble under test -- permuting its sites to destroy the
+        # structure being measured -- was tried here and is NOT a substitute for the pinned
+        # reference. It is self-normalising: it adapts to each ensemble's own distribution, which
+        # cancels exactly the difference K_signal exists to detect. Measured, it collapsed the
+        # U(1) phase separation from 7.4x to 1.2x. The pinned reference is a DETECTION null, an
+        # absolute floor from a physical reference state, and that is what makes deconfinement
+        # read as modes standing above the confined vacuum.
+        self._null = null
 
     # ---- internals ----
     def _spliced(self):
@@ -500,7 +518,11 @@ class Reads:
     def confinement(self) -> float:
         """K_signal: resolved spatial modes above the pinned reference-null floor, read on each
         intact spatial plane and averaged over planes and configurations."""
-        return float(np.mean([confinement(f, self._ta) for f in self._cfgs]))
+        # The instance's own floor is threaded through: the module-level `confinement` already
+        # takes `null=`, so without this the read fell back to the global pin regardless of what
+        # the caller supplied -- which made a derived floor silently unusable for K_signal, the
+        # one read the phase verdict is decided on.
+        return float(np.mean([confinement(f, self._ta, null=self._null) for f in self._cfgs]))
 
     def _spectral_mean(self, attr: str) -> float:
         """Plane- and ensemble-mean of one feature-correlation-spectrum field (any
@@ -511,7 +533,7 @@ class Reads:
         then averaged over configs.  Floor = the PINNED reference null (never mp); raises if
         nothing is pinned.  The one place the correlation eigenspectrum is formed, shared by
         ``contrast`` / ``resolved_modes`` / ``attenuation`` / ``top_share`` / ``dispersion``."""
-        prov = _provider_or_raise(None)
+        prov = _provider_or_raise(self._null)
         return float(np.mean([_plane_mean_batched(
             f, self._ta,
             batched_read=lambda planes: spectral_batch(planes, null=prov),
@@ -563,7 +585,7 @@ class Reads:
         ``fields.slabs``, no flatten). Confinement mu < kappa_0 is certified when
         ``attenuation_hi < kappa_0 = (1/4)ln3`` (the caller does the kappa_0 comparison). The
         pooling is the ensemble-level Aperture bound: the band shrinks as the ensemble grows."""
-        prov = _provider_or_raise(None)
+        prov = _provider_or_raise(self._null)
         acc = None
         for f in self._cfgs:
             for p in _spatial_planes(f, self._ta):
@@ -585,6 +607,10 @@ class Reads:
             resolved_lo=int(k.resolved_lo), resolved_hi=int(k.resolved_hi),
             band=float(band), n_samples=int(acc.T), n_features=int(acc.F))
 
+    # CHOSEN, AND IT IS THE CALLER'S TO SET: `delta` is the confidence level of the
+    # empirical-Bernstein interval, not a cut on any measurement. The default is the
+    # conventional 95%; every caller may pass its own, and no committed artifact producer calls
+    # this -- it is read-API surface, exercised only by the test suite.
     def k_signal_certificate(self, delta: float = 0.05) -> KSignalCertificate:
         """Concentration-certified ensemble mean of the confinement order parameter K_signal
         ([E, Def 8.2]), the read that discriminates the phase. The per-config plane-averaged
@@ -639,7 +665,7 @@ class Reads:
         ordered/decay fields from the time-pooled projection, the feature/spectral/
         concentration fields plane-averaged over intact spatial planes, and the two
         cross-axis areas (etendue, space-bandwidth) plus shape_factor recomposed."""
-        prov = _provider_or_raise(None)
+        prov = _provider_or_raise(self._null)
         ordered = Aperture(_ordered(f, self._ta), null=prov).optics()
         planes = [Aperture(pl, null=prov).optics() for pl in _spatial_planes(f, self._ta)]
 

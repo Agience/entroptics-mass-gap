@@ -568,21 +568,37 @@ theorem ym_crossover_confinement_of_grid {a b B L δ : ℝ} (hL : 0 ≤ L)
 /-! ## A2's data and the cited Nyquist-Shannon sampling isometry -/
 
 /-- The orientation type of the directional read. -/
-opaque DYM : Type
-/-- The base directional window `F₀` at a reference orientation (the read acts on its Gram `Xᵀ X`, [E §3]). -/
+abbrev DYM : Type := Equiv.Perm (Fin 4)
+
+/-- **The transport is the axis permutation's own matrix, and it is orthogonal — a THEOREM.** A
+permutation matrix has exactly one `1` in each row and column, so `Pᵀ P = 1`: the transport between
+two orientations of the lattice preserves the sample inner product because relabelling axes does. -/
+theorem permMatrix_orthogonal (σ : DYM) :
+    (σ.permMatrix ℝ)ᵀ * σ.permMatrix ℝ = 1 := by
+  rw [Matrix.transpose_permMatrix, ← Matrix.permMatrix_mul, mul_inv_cancel,
+    Matrix.permMatrix_one]
+
+/-- The base directional window `F₀` at a reference orientation (the read acts on its Gram `Xᵀ X`, [E §3]).
+It stays abstract deliberately: A2 holds for EVERY base window, and fixing one would narrow a theorem
+that is general, not fill a gap. -/
 opaque Fbase : Matrix (Fin 4) (Fin 4) ℝ
 /-- O(4), the orthogonal 4×4 matrices, is inhabited (by the identity `1`), so an `opaque` transport valued
 in it is well-formed and computable (the default value is `1`, the orthogonality proof erased at runtime). -/
 instance : Inhabited {M : Matrix (Fin 4) (Fin 4) ℝ // Mᵀ * M = 1} := ⟨⟨1, by simp⟩⟩
 
-/-- The **Nyquist transport** from the reference orientation to `d`, valued in **O(4)**. Below the Nyquist
-threshold (PAPER §8.6, `a⋆ k₀ = 0.364 < 1`) the reconstruction `Rc` and sampling `Sm` maps are EXACT
-isometries — the discrete samples carry the continuum inner product with no loss (Nyquist-Shannon) — so in
-`Otr = Rc·Um·Sm` (`Apriori.resampling_orthogonal`) the sampling factors collapse to the identity and the net
-transport between orientations is a pure rotation, i.e. an element of O(4). Encoding this *structurally* (the
-transport IS orthogonal) makes `Otr_iso` (its O(4) membership) a THEOREM — the "concretizable, not a physics
-postulate" A2 continuum input. -/
-opaque OtrO : DYM → {M : Matrix (Fin 4) (Fin 4) ℝ // Mᵀ * M = 1}
+/-- The **transport** from the reference orientation to `d`, valued in **O(4)** — CONSTRUCTED as the
+permutation matrix of the axis permutation `d`. Below the Nyquist threshold (PAPER §8.6,
+`a⋆ k₀ = 0.364 < 1`) the reconstruction `Rc` and sampling `Sm` maps are EXACT isometries — the discrete
+samples carry the continuum inner product with no loss (Nyquist-Shannon) — so in `Otr = Rc·Um·Sm`
+(`Apriori.resampling_orthogonal`) the sampling factors collapse to the identity and the net transport
+between orientations is a pure relabelling of axes.
+
+It is no longer `opaque`. A transport that carried no structure could have been constant, and then
+`ym_A2`'s `∀ d d', R d = R d'` would have been true because there is only one direction to speak of.
+`ym_A2_nonvacuous` below rules that out: the transports at distinct axis permutations are distinct
+matrices. -/
+noncomputable def OtrO (d : DYM) : {M : Matrix (Fin 4) (Fin 4) ℝ // Mᵀ * M = 1} :=
+  ⟨d.permMatrix ℝ, permMatrix_orthogonal d⟩
 /-- The transport as a plain matrix — its underlying O(4) element. -/
 noncomputable def Otr (d : DYM) : Matrix (Fin 4) (Fin 4) ℝ := (OtrO d).1
 /-- The spectral read: a scalar functional of the characteristic polynomial ([E §3, §10]). -/
@@ -593,6 +609,33 @@ preserves the sample inner product below the Nyquist threshold (Nyquist-Shannon;
 so it lives in O(4); this discharges A2's sampling composition (`ym_A2`) with **no axiom** — the general
 "preserves the sample inner product ⟹ orthogonal" fact is `Apriori.orthogonal_of_preserves_dotProduct`. -/
 theorem Otr_iso (d : DYM) : (Otr d)ᵀ * Otr d = 1 := (OtrO d).2
+
+/-- **The orientation type is the hypercubic axis group, and it has 24 elements.** `A2`'s conclusion
+`∀ d d', R d = R d'` is a statement about a group of directions, not about a token. This is the same
+`Equiv.Perm (Fin 4)` the MEASURE side's `WilsonHypercubic.axisSymmetry` acts by, so both sides of the
+development quantify over the same symmetry. -/
+theorem card_DYM : Fintype.card DYM = 24 := by
+  simp [Fintype.card_perm]
+  decide
+
+#print axioms card_DYM
+
+/-- **`A2` is not true because there is nothing to say — the transports are genuinely distinct.**
+While `OtrO` was `opaque` it could have been the constant map, and then `∀ d d', R d = R d'` would
+have held because every orientation carried the same window. It cannot: the identity permutation and
+a transposition have determinants `1` and `-1`, so their transports differ as matrices.
+
+This is the `A2` analogue of `spectral_bar_nonvacuous`, and it is the check an `opaque` direction type
+could never pass. -/
+theorem ym_A2_nonvacuous : ∃ d d' : DYM, Otr d ≠ Otr d' := by
+  refine ⟨1, Equiv.swap 0 1, fun h => ?_⟩
+  have hd : (Otr (1 : DYM)).det = (Otr (Equiv.swap (0 : Fin 4) 1)).det := congrArg Matrix.det h
+  rw [Otr, Otr, OtrO, OtrO] at hd
+  simp only [Matrix.det_permutation, Equiv.Perm.sign_one,
+    Equiv.Perm.sign_swap (by decide : (0 : Fin 4) ≠ 1)] at hd
+  norm_num at hd
+
+#print axioms ym_A2_nonvacuous
 
 /-- The sampled correlation window at orientation `d`, DERIVED as the base window transported by `Otr d`:
 `F d = F₀ · Otr d`. So the directional windows relate by an orthogonal transport **by construction**, and

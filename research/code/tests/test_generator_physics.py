@@ -44,7 +44,7 @@ NP = D * (D - 1) // 2                 # 6 planes on a 4D lattice
 
 def plaquette_per_config(dims, beta, *, group, n, therm, seed, method="heatbath"):
     """Return the length-``n`` array of per-config mean plaquettes <P>_i from ``n`` INDEPENDENT chains
-    (``config_batch`` runs independent batched chains, each its own RNG stream), giving an honest i.i.d.
+    (``config_batch`` runs independent batched chains, each its own RNG stream), giving a genuinely i.i.d.
     error bar.  <P>_i = 1 - mean_x phi_i(x)/NP.
 
     Cached on disk (``ensemble_cache``): the generator is seeded, so these numbers are the same on

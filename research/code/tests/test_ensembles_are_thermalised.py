@@ -21,10 +21,6 @@ import store_path
 
 ARTIFACT = Path(__file__).resolve().parents[2] / "data" / "store_dat_thermalisation.csv"
 
-#: Above this, an ensemble is not a sample of the distribution it claims to be.
-TOLERANCE_SIGMA = 3.0
-
-
 def rows():
     if not ARTIFACT.exists():
         pytest.skip(f"{ARTIFACT.name} not present")

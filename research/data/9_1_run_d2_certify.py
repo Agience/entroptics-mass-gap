@@ -6,10 +6,18 @@ companion produces a DEDUCTIVE-PROBABILITY bound: an empirical-Bernstein (Maurer
 confidence bound on each lag of the profile, union-bounded over the 9 lags (delta' = delta/9), propagated
 through the read functional at its monotone worst-case corner (rho_d = hi_d, rho_0 = lo_0).
 
-The proof only needs <d^2> <= B for ANY B under the aperture ceiling
-    B < 2 (1 - 3^{-1/4}) / (2 pi/(N+1))^2 = 3.52   (N = 16),
-so we pin the proof bound at B = 1.0 (well under 3.52, a 3.5x aperture margin) and certify that every beta's
-rigorous upper bound at DELTA (below) sits under it -- on the topped-up SU(2) L16 grid (all crossover beta n>=120).
+The moment route closes the gap for ANY B under the aperture ceiling
+
+    B < 2 (1 - 3^{-1/4}) / (2 pi/(N+1))^2,
+
+which on a periodic extent of L=16 sites -- lag arity N+1 = L, so N = 15 -- is 3.11. This reports the
+certified upper against THAT ceiling, derived in `ym_crossover_confinement_of_grid` and imported here.
+
+NO PROOF BOUND IS PINNED. A bound pinned under the ceiling was retired with the ceiling that
+justified it, and the confinement claim no longer passes through any B at all: the
+companion `ym_confinement_of_cos_average` certifies the read's cosine average directly, which is
+EQUIVALENT to mu < kappa0 (`Complete.confinement_at_iff_cosAvg`) rather than sufficient for it. This
+script's remaining job is the substrate quantity itself, reported against its derived ceiling.
 
 Emits 9_1_dat_d2_certified.csv and 9_1_fig_d2_certified.png.
 """
@@ -34,20 +42,20 @@ BASE = store_path.store_root(required=False)
 HOPS = (["configs_densebeta", "configs_phase1", "configs_betasweep", "configs_ladder"]
         if BASE else [])
 BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
-BOUND = 1.0            # proof bound B (< aperture ceiling 3.52)
 
 # The confidence the certificate is REPORTED at. This is a choice, not a limit of the data: the
 # empirical-Bernstein bound enters only through log(2/delta'), so asking for more confidence widens
-# the upper rather than invalidating it. Measured over a sweep, 1e-6 is the smallest delta whose
-# uppers all still clear the pinned B=1.0 (max upper 0.908); 1e-9 clears the aperture ceiling but
-# not B, and 1e-30 still clears the ceiling. The looser 99% and 99.9% columns are kept because the
-# artifact is cheaper to read than to regenerate.
+# the upper rather than invalidating it. The columns span six orders of magnitude in delta so the
+# reader can see how the certified quantity degrades as the demand tightens, rather than being shown
+# one delta chosen after the fact.
 DELTA = 1e-6           # 99.9999% per coupling
-# The paper's lead margin: the uppers still clear the APERTURE CEILING (not the tighter pinned B)
-# at this delta. Carried as its own column so Sec 9's `largest 3.099` is pinned to the artifact --
-# it was stated in the paper with nothing regenerating or checking it.
+# The tightest confidence reported, carried as its own column so the paper's figure for it is read
+# from the artifact rather than restated.
 DELTA_CEIL = 1e-30
-CEIL = 3.52           # aperture ceiling for N = 16
+# DERIVED, and imported rather than restated: `CG.B16` is
+# (1 - 3^{-1/4}) * 2 (N+1)^2 / (2 pi)^2 with N+1 the LAG ARITY = the periodic extent L. This was a
+# literal, so the file carrying the correction and the file carrying the value could disagree.
+CEIL = CG.B16
 BCYM = 0.767
 
 
@@ -89,19 +97,19 @@ B, C, U99, U999, U6, U30 = map(np.array, (B, C, U99, U999, U6, U30))
 with open(os.path.join(HERE, "9_1_dat_d2_certified.csv"), "w", newline="") as f:
     w = csv.writer(f)
     w.writerow(["beta", "nconfigs", "d2_central", "eb_upper_99", "eb_upper_99.9",
-                "eb_upper_99.9999", f"certified_below_{BOUND:.1f}",
+                "eb_upper_99.9999", f"under_ceiling_{CEIL:.2f}",
                 f"ceiling_upper_delta_{DELTA_CEIL:.0e}"])
     for b, n, c, u9, u99, u6, u30 in zip(B, N, C, U99, U999, U6, U30):
         w.writerow([f"{b:.2f}", n, f"{c:.5f}", f"{u9:.4f}", f"{u99:.4f}", f"{u6:.4f}",
-                    "yes" if u6 < BOUND else "NO", f"{u30:.4f}"])
+                    "yes" if u6 < CEIL else "NO", f"{u30:.4f}"])
 
-allpass = bool((U6 < BOUND).all())
-print("max certified upper = %.3f at delta=%.0e  (proof bound B=%.1f, aperture ceiling %.2f)"
-      % (U6.max(), DELTA, BOUND, CEIL))
-print("ALL %d beta certified <= %.1f at %.4f%% per beta: %s   joint over grid ~ %.6f" %
-      (len(B), BOUND, 100 * (1 - DELTA), allpass, (1 - DELTA) ** len(B)))
-print("max upper at delta=%.0e = %.4f at beta=%.2f  (aperture ceiling %.2f, all clear: %s)"
-      % (DELTA_CEIL, U30.max(), B[int(U30.argmax())], CEIL, bool((U30 < CEIL).all())))
+allpass = bool((U6 < CEIL).all())
+print("aperture ceiling (DERIVED, lag arity N+1 = L = %d) = %.4f" % (CG.L, CEIL))
+print("max certified upper = %.4f at delta=%.0e" % (U6.max(), DELTA))
+print("ALL %d beta certified under the ceiling at %.4f%% per beta: %s   joint over grid ~ %.6f" %
+      (len(B), 100 * (1 - DELTA), allpass, (1 - DELTA) ** len(B)))
+print("max upper at delta=%.0e = %.4f at beta=%.2f  (under the ceiling: %s)"
+      % (DELTA_CEIL, U30.max(), B[int(U30.argmax())], bool((U30 < CEIL).all())))
 
 # ---- figure (log-y: measured, certified caps, proof bound, aperture ceiling all visible) ----
 plt.rcParams.update({"font.size": 11, "font.family": "DejaVu Sans", "axes.linewidth": 0.8})
@@ -110,10 +118,8 @@ ACC, DATA, BND, MUT = "#2b6cb0", "#1a202c", "#c53030", "#718096"
 ax.set_yscale("log")
 ax.axhspan(CEIL, 6, color=BND, alpha=0.06, zorder=0)
 ax.axhline(CEIL, color=MUT, lw=1.3, ls=":", zorder=2)
-ax.text(2.68, CEIL * 1.04, r"aperture ceiling $3.52$ (any $B$ below closes the gap)",
+ax.text(2.68, CEIL * 1.04, rf"aperture ceiling ${CEIL:.2f}$ (any $B$ below closes the gap)",
         color=MUT, fontsize=8.8, va="bottom", ha="right")
-ax.axhline(BOUND, color=BND, lw=1.7, ls="--", zorder=2)
-ax.text(2.68, BOUND * 1.05, f"proof bound $B={BOUND:.1f}$  (certified ${100 * (1 - DELTA):.4f}\\%$)", color=BND, fontsize=10, va="bottom", ha="right")
 # measured -> certified span
 for x, c, u in zip(B, C, U6):
     ax.plot([x, x], [c, u], color=ACC, lw=1.0, alpha=0.5, zorder=1)

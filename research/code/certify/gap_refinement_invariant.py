@@ -37,10 +37,24 @@ HOP = os.environ.get("HOP") or store_path.collection("configs_betasweep", requir
 HOP0 = os.environ.get("HOP0") or store_path.collection("configs_phase1", required=False)   # the balanced dataset (for the existing beta points)
 NCAP = 256
 
+# Every collection, not two. This reader pooled `configs_betasweep` + `configs_phase1` only, which
+# hold no compact-U(1) ensemble at all -- so every u1 row came back absent, the sweep refused to write
+# a partial table, and this certificate has never produced its artifact. Its whole purpose is the u1
+# negative control ("Delta = 0 across the WHOLE Coulomb phase"), so the control had never been run.
+# `gap_of_margin.py`'s loader states the rule this now follows: pooling across every hop is what makes
+# a coupling's ensemble depend on what the store holds rather than on the order of a hop list.
+# HOP/HOP0 come FIRST but no longer exclusively: EXTRA_HOPS is appended, so a caller pinning
+# HOP/HOP0 at a private store must blank EXTRA_HOPS too or the real store is pooled in as well.
+# That is a widened input surface, and the smoke tests pin it.
+EXTRA_HOPS = store_path.collections("configs_paper83", "configs_ladder", "configs_densebeta",
+                                    "configs_links_su2_density")
+
 
 def load(group, L, beta):
     fs = []
-    for h in (HOP, HOP0):
+    for h in (HOP, HOP0, *EXTRA_HOPS):
+        if not h:
+            continue
         fs += sorted(glob.glob(f"{h}/{group}_L{L}_b{beta:.2f}.s*.npy"))
     if not fs:
         return None
@@ -69,12 +83,50 @@ def resolution_length(cfgs):
 OUT_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                        "data", "9_6_dat_gap_refinement.csv")
 
+# L=8 is in the u1 row because that is the ONLY volume the released data holds compact U(1) at; the
+# row asked for (12, 16) and therefore resolved nothing. su2 carries L=8 alongside so the control is
+# read against the non-abelian case at MATCHED volume rather than across volumes.
 SWEEP = {
-    "su2": ([2.00, 2.20, 2.30, 2.40, 2.60], (12, 16)),
+    "su2": ([0.50, 1.00, 1.60, 2.00, 2.20, 2.30, 2.40, 2.60], (8, 12, 16)),
     "su3": ([5.70, 6.00, 6.30], (12,)),
-    "u1":  ([0.90, 0.95, 1.10, 1.30, 1.70, 2.50], (12, 16)),
+    "u1":  ([0.40, 0.60, 0.80, 0.90, 0.95, 1.00, 1.05, 1.10, 1.20, 1.30, 1.50, 1.70, 2.50],
+            (8, 12, 16)),
 }
 BC = {"su2": None, "su3": None, "u1": 1.01}      # u1 deconfinement β_c
+
+
+def _separation(hi, lo):
+    """Does the read ORDER two labelled groups? AUROC against the exact label-permutation null.
+
+    AUROC is the probability that a randomly drawn `hi` row exceeds a randomly drawn `lo` row, ties
+    counted as a half. Under the null that the labels carry no information, every assignment of the
+    observed values to groups of the same sizes is equally likely, and with the group sizes a beta
+    sweep provides those assignments can be ENUMERATED rather than sampled -- so the p-value is exact
+    and no Monte-Carlo seed enters.
+
+    Nothing is thresholded: the pair (AUROC, p) is the evidence, and what counts as separation is the
+    reader's to set. That is the same contract the library's `mode_significance` keeps, and it is why
+    this replaced a chosen cut rather than a differently-chosen one.
+    """
+    import itertools
+
+    def auroc(a, b):
+        if not a or not b:
+            return float("nan")
+        return sum(1.0 if x > y else 0.5 if x == y else 0.0 for x in a for y in b) / (len(a) * len(b))
+
+    obs = auroc(hi, lo)
+    allv = list(hi) + list(lo)
+    k = len(hi)
+    combos = list(itertools.combinations(range(len(allv)), k))
+    ge = 0
+    for c in combos:
+        s = set(c)
+        a = [allv[i] for i in c]
+        b = [allv[i] for i in range(len(allv)) if i not in s]
+        if auroc(a, b) >= obs:
+            ge += 1
+    return obs, ge / len(combos), len(combos)
 
 
 def main() -> int:
@@ -109,6 +161,10 @@ def main() -> int:
                 elif Δ == 0:
                     tag = "gapless"
                 else:
+                    # CHOSEN, AND IT LABELS EVERY ROW. 0.5 splits 'GAP' from 'weak' in the printed table and the
+                    # artifact's `read` column. Nothing derives it. Measured Delta on the released ensembles spans
+                    # 0.28-4.25, so the label flips inside the measured range. The derived alternative is the row's
+                    # own jackknife error: resolved iff Delta exceeds it.
                     tag = "GAP" if Δ > 0.5 else "weak"
                 print(f"{group:>4} {beta:>5.2f} {L:>3} {arr.shape[0]:>4} | {Δ:>7.4f} {adelta:>8.4f} {tag:>10}")
                 rows.append(dict(group=group, beta="%.2f" % beta, L=L, nconfigs=int(arr.shape[0]),
@@ -139,10 +195,26 @@ def main() -> int:
             coul = [d for b, d in row if b > BC["u1"] and d == d]
             conf = [d for b, d in row if b < BC["u1"] and d == d]
             if coul:
-                print(f"     Coulomb (β>β_c={BC['u1']}): Δ = {[round(d,2) for d in coul]}  "
-                      f"-> {'ALL ~0 (gaplessness confirmed across the phase)' if max(coul) < 0.3 else 'NOT all 0 (check)'}")
+                print(f"     Coulomb (β>β_c={BC['u1']}): Δ = {[round(d,2) for d in coul]}")
             if conf:
                 print(f"     confined (β<β_c):          Δ = {[round(d,2) for d in conf]}")
+            if coul and conf:
+                # DERIVED, AND IT REPLACES A CHOSEN VERDICT. This used to read
+                # `max(coul) < 0.3 -> 'gaplessness confirmed across the phase'`: a cut nothing
+                # derived, deciding the negative control's answer. The replacement is the one the
+                # question actually asks -- whether the read SEPARATES the two phases of the same
+                # sweep -- measured against the sweep's own labels.
+                #
+                # The statistic is the AUROC (the probability a confined row exceeds a Coulomb row;
+                # 1.0 perfect separation, 0.5 none) and the null is EXACT: every way of assigning the
+                # observed Deltas to the two phases, enumerated, no Monte-Carlo and no threshold. The
+                # p-value is reported and no verdict is printed from it -- the reader supplies the
+                # level, exactly as `mode_significance` does for the resolved-mode count.
+                auc, p, ncomb = _separation(conf, coul)
+                print(f"     separation of the phases: AUROC = {auc:.3f}, "
+                      f"exact p = {p:.3f} over {ncomb} label assignments")
+                print("       (AUROC 0.5 = the read does not order the phases; the level is the "
+                      "reader's, no cut is applied here)")
         else:
             finite = [d for b, d in row if d == d]
             if finite:

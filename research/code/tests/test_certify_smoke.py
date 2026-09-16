@@ -276,7 +276,7 @@ def test_interior_mixing_grid_refuses_a_partial_store(tmp_path):
     assert not out.exists(), "a partial interior grid was written despite the refusal"
 
 
-def test_the_footprint_harness_clears_only_the_projects_own_build(tmp_path):
+def test_the_footprint_harness_clears_only_the_projects_own_build(tmp_path, monkeypatch):
     """`lean_axiom_footprints` targets MassGap's build products and never a dependency's.
 
     It has to clear something before building: `#print axioms` is emitted while a module elaborates,
@@ -285,7 +285,7 @@ def test_the_footprint_harness_clears_only_the_projects_own_build(tmp_path):
     builds a fake tree -- project outputs, a same-prefixed decoy under .lake/packages, and an
     unrelated library -- and checks what the harness would remove.
     """
-    mod = _load("lean_axiom_footprints.py")
+    import lean_build as LB
 
     lean = tmp_path / "lean"
     proj = lean / ".lake" / "build" / "lib" / "lean"
@@ -300,17 +300,16 @@ def test_the_footprint_harness_clears_only_the_projects_own_build(tmp_path):
     (pkg / "MassGapLookalike.olean").write_text("x")    # same prefix, must be untouched
     (pkg / "Mathlib.olean").write_text("x")
 
-    mod.LEAN = str(lean)
-    targets = [Path(t) for t in mod.project_build_outputs()]
-    names = sorted(t.name for t in targets)
-    assert names == ["MassGap", "MassGap.ilean", "MassGap.olean", "MassGap.trace"], names
-    assert all(".lake" + __import__("os").sep + "packages" not in str(t) for t in targets), \
-        "a dependency's build was targeted"
+    # The LIVE clear: `lean_build.clear_project_build` is what the footprint certificate calls.
+    # Forced to its local branch, because the remote branch would clear a real build host.
+    monkeypatch.setattr(LB, "LEAN", str(lean))
+    monkeypatch.setattr(LB, "target", lambda: None)
 
-    mod.clear_project_build(dry_run=True)
+    names = sorted(LB.clear_project_build(dry_run=True))
+    assert names == ["MassGap", "MassGap.ilean", "MassGap.olean", "MassGap.trace"], names
     assert (proj / "MassGap.olean").exists(), "dry run removed something"
 
-    mod.clear_project_build()
+    LB.clear_project_build()
     assert not (proj / "MassGap").exists() and not (proj / "MassGap.olean").exists()
     assert (proj / "Unrelated.olean").exists(), "an unrelated library's build was removed"
     assert (pkg / "MassGapLookalike.olean").exists(), "a package's build was removed"
@@ -381,6 +380,10 @@ def test_gap_refinement_invariant_writes_its_beta_sweep(tmp_path):
     empty = tmp_path / "empty_hop"
     empty.mkdir()
     out = tmp_path / "refinement.csv"
+    # EXTRA_HOPS was added so the u1 ensembles (which live outside configs_betasweep/phase1) are
+    # reachable at all; it resolves against the REAL store at import, so a test pinning HOP/HOP0 at
+    # a synthetic store must blank it or the two get concatenated at different time extents.
+    mod.EXTRA_HOPS = []
     mod.HOP, mod.HOP0, mod.OUT_CSV = str(store), str(empty), str(out)
     mod.SWEEP = {"su2": ([2.00, 2.30], (8,)), "u1": ([0.90, 2.50], (8,))}
     mod.main()
@@ -405,6 +408,10 @@ def test_gap_refinement_invariant_refuses_a_partial_sweep(tmp_path):
     empty = tmp_path / "empty_hop"
     empty.mkdir()
     out = tmp_path / "unused.csv"
+    # EXTRA_HOPS was added so the u1 ensembles (which live outside configs_betasweep/phase1) are
+    # reachable at all; it resolves against the REAL store at import, so a test pinning HOP/HOP0 at
+    # a synthetic store must blank it or the two get concatenated at different time extents.
+    mod.EXTRA_HOPS = []
     mod.HOP, mod.HOP0, mod.OUT_CSV = str(store), str(empty), str(out)
     mod.SWEEP = {"su2": ([2.00, 2.30], (8,))}
     with pytest.raises(SystemExit) as e:

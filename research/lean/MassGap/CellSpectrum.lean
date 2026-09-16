@@ -306,6 +306,71 @@ theorem exists_eigenvalue_le_of_form {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} 
   rw [hquad] at hq
   linarith
 
+/-! ### The coupled-cell step, abstract half
+
+`product_volume_gap` below proves the volume-uniform gap for the DECOUPLED (product-of-cells)
+transfer and names the physical coupled-cell correction as the residual. This is the abstract half of
+that step.
+
+It uses neither Weyl's inequality — absent from Mathlib — nor any ordering of the eigenvalues, which
+Mathlib's `IsHermitian.eigenvalues` does not provide. Both halves of a certificate transport through
+a perturbation directly, and the two spectral lemmas above are already generic in the matrix. So the
+CERTIFICATE moves and the eigenvalues never have to be compared one by one. That is the same device
+`CellPerturb` uses to move a rational anchor's certificate onto a ball of real couplings. -/
+
+/-- **A certified gap survives a bounded perturbation of the quadratic form.**
+
+Given a certificate for `A` — a trial vector `ψ` putting one eigenvalue at or below `t − μ`, and a
+codimension-`≤ 1` subspace `W` on which the form is at least `t` — together with a bound `δ` on how
+far `B`'s quadratic form can sit from `A`'s, the SAME certificate gives `B` a gap of at least `μ − 2δ`.
+
+The `2` is one `δ` per side, derived and not chosen: the trial vector's bound loses `δ` upward, the
+subspace bound loses `δ` downward, and the gap is their difference. It is the accounting behind
+`CellPerturb`'s `LIPSCHITZ = 4` (two per eigenvalue at form-Lipschitz constant `2`), with the
+constant left as the caller's `δ` rather than specialised to a change of coupling.
+
+WHAT THIS IS AND IS NOT. It REDUCES "the coupled transfer is gapped" to A BOUND ON THE COUPLING:
+`∀ v, |⟨v,(T_coup − T_prod)v⟩| ≤ δ⟨v,v⟩`, with `2δ` strictly below the product's gap. It does NOT
+supply that bound, and nothing in this development does — that bound IS the coupled-cell residual.
+What it buys is a change of SHAPE: the residual becomes a single quadratic-form norm, which is the
+kind of quantity a certificate can carry and a measurement can bound, rather than a statement about a
+spectrum. That is the useful direction, and it is not progress on the content. -/
+theorem gap_of_form_perturbation {N : ℕ} {A B : Matrix (Fin N) (Fin N) ℝ} (hB : B.IsHermitian)
+    {δ t μ : ℝ} (hδμ : 2 * δ < μ)
+    (hδ : ∀ v : Fin N → ℝ, |v ⬝ᵥ (B *ᵥ v) - v ⬝ᵥ (A *ᵥ v)| ≤ δ * (v ⬝ᵥ v))
+    (W : Submodule ℝ (Fin N → ℝ)) (hW : N ≤ Module.finrank ℝ W + 1)
+    (hker : ∀ x ∈ W, t * (x ⬝ᵥ x) ≤ x ⬝ᵥ (A *ᵥ x))
+    (ψ : Fin N → ℝ) (hψ : ψ ≠ 0) (hray : ψ ⬝ᵥ (A *ᵥ ψ) ≤ (t - μ) * (ψ ⬝ᵥ ψ)) :
+    ∃ i₀, ∀ i, i ≠ i₀ → hB.eigenvalues i₀ + (μ - 2 * δ) ≤ hB.eigenvalues i := by
+  have hψψ : 0 ≤ ψ ⬝ᵥ ψ := Finset.sum_nonneg (fun i _ => mul_self_nonneg (ψ i))
+  -- the trial vector, transported: it loses one `δ` upward
+  have hrayB : ψ ⬝ᵥ (B *ᵥ ψ) ≤ (t - μ + δ) * (ψ ⬝ᵥ ψ) := by
+    have h1 := (abs_le.mp (hδ ψ)).2
+    nlinarith
+  obtain ⟨i₀, hi₀⟩ := exists_eigenvalue_le_of_form hB hψ hrayB
+  refine ⟨i₀, fun i hi => ?_⟩
+  -- the codimension-1 form bound, transported: it loses one `δ` downward
+  have hkerB : ∀ x ∈ W, (t - δ) * (x ⬝ᵥ x) ≤ x ⬝ᵥ (B *ᵥ x) := by
+    intro x hx
+    have hxx : 0 ≤ x ⬝ᵥ x := Finset.sum_nonneg (fun k _ => mul_self_nonneg (x k))
+    have h0 := hker x hx
+    have h1 := (abs_le.mp (hδ x)).1
+    nlinarith
+  have hcard := atMostOne_eigenvalue_lt hB W hW hkerB
+  have hi0lt : hB.eigenvalues i₀ < t - δ := by linarith
+  by_contra h
+  push Not at h
+  have hilt : hB.eigenvalues i < t - δ := by linarith
+  set S := Finset.univ.filter (fun k => hB.eigenvalues k < t - δ) with hS
+  have hi0mem : i₀ ∈ S := by
+    rw [hS]; simp only [Finset.mem_filter, Finset.mem_univ, true_and]; exact hi0lt
+  have himem : i ∈ S := by
+    rw [hS]; simp only [Finset.mem_filter, Finset.mem_univ, true_and]; exact hilt
+  have h2 : 1 < S.card := Finset.one_lt_card.mpr ⟨i, himem, i₀, hi0mem, hi⟩
+  omega
+
+#print axioms gap_of_form_perturbation
+
 /-! ### The Sturm / LDLᵀ inertia engine for the eigenvalue enclosure
 
 The `E₁` (second-eigenvalue) half of the exact-rational cell enclosure (`small_volume_enclosure.py`):

@@ -1,0 +1,12 @@
+# Scripts that build a physics read by hand and predate `test_entroptics_is_load_bearing`.
+# Dated 2026-09-14. This records DEBT, not permission: each line is a read that should come
+# from the library. It may only shrink.
+#
+# The four scripts that provoked the guard are NOT here -- they were deleted, because the
+# direction they served was itself the drift.
+
+research/code/certify/free_field_muinf.py|a lag loop built from np.roll
+research/code/certify/small_volume_enclosure.py|a direct eigvalsh of a correlation
+research/code/certify/ym_crossover_confinement_of_grid.py|a lag loop built from np.roll
+research/data/8_8_run_string_tension.py|a lag loop built from np.roll
+research/data/9_1_run_d2_su3.py|a lag loop built from np.roll

@@ -12,7 +12,11 @@ These are filesystem and text facts, so no Lean build is required and the tests 
 """
 from __future__ import annotations
 
+import ast
+import csv
 import re
+import sys
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -20,11 +24,21 @@ import pytest
 REPO = Path(__file__).resolve().parents[3]
 PAPER = REPO / "research" / "PAPER.md"
 LEAN = REPO / "research" / "lean"
+DATA = REPO / "research" / "data"
 
 #: Backticked names in the paper that are not Lean declarations: python identifiers, dtypes, store
 #: directories, Lean keywords, and axioms supplied by Lean core rather than by this development.
 NOT_LEAN = {
     "sorry", "propext", "float32", "configs_links_su2", "mp",
+    # Lean TACTICS, not declarations. The paper names the tactic that discharges a step (§7 calls
+    # `ym_finite_aperture` "a theorem (`norm_num`)"), and a tactic has no `theorem`/`def` line to
+    # resolve to, so the resolver below would report it forever.
+    "norm_num", "positivity", "linarith", "nlinarith", "decide", "simp", "rfl",
+    # HYPOTHESIS BINDERS, not declarations. The paper names the hypothesis a theorem takes
+    # ("asking instead for `hfe` and `hgap`"), and a binder has no `theorem`/`def` line to
+    # resolve to. `hfe` passed only because a python variable happens to share the name,
+    # which is the accident this list exists to replace with a decision.
+    "hfe", "hgap", "hdom", "hconf", "hread", "hmom", "hscale",
 }
 
 
@@ -76,15 +90,122 @@ def test_cited_lean_declarations_resolve():
     text = _paper()
     cited = set(re.findall(r"`([a-z_][a-z0-9_]{3,})`", text)) - NOT_LEAN
     lean_src = "\n".join(p.read_text(encoding="utf-8") for p in _lean_files())
-    py_src = "\n".join(p.read_text(encoding="utf-8", errors="replace")
-                       for p in (REPO / "research").rglob("*.py") if ".lake" not in p.parts)
-    unresolved = []
-    for name in sorted(cited):
-        pat = re.compile(rf"(^|\s)(axiom|theorem|lemma|def|abbrev|structure|class)\s+{re.escape(name)}\b"
-                         rf"|^\s+{re.escape(name)}\s*:", re.M)
-        if pat.search(lean_src) or pat.search(py_src) or f"{name}.py" in text or name in py_src:
+
+    # Python names are collected as DEFINITIONS, by parsing, rather than by searching the source
+    # text. `name in py_src` accepted any occurrence anywhere -- including inside a comment or a
+    # docstring. That is not a hypothetical looseness: a retired declaration stayed "resolvable"
+    # purely because two test docstrings mentioned it while EXPLAINING that it had been retired, so
+    # the prose describing a removal kept the guard from noticing the citation the removal orphaned.
+    py_defs = set()
+    for p in (REPO / "research").rglob("*.py"):
+        if ".lake" in p.parts:
             continue
-        unresolved.append(name)
+        py_defs.add(p.stem)
+        try:
+            tree = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                py_defs.add(node.name)
+            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                py_defs.add(node.id)
+
+    # A third thing the paper legitimately cites in backticks: a LABEL inside a committed artifact,
+    # such as the `test` column value naming one family of rows. Those are not declarations in any
+    # language, so resolving them against Lean and Python alone reported a real citation as dangling.
+    # They are collected as whole CELL VALUES -- never as substrings of a cell -- so a label that
+    # merely resembles part of some number or path still fails to resolve, and a renamed row family
+    # still breaks the citation the way it should.
+    data_labels = set()
+    for csv_path in (REPO / "research" / "data").glob("*.csv"):
+        try:
+            with csv_path.open(newline="", encoding="utf-8") as fh:
+                for row in csv.reader(fh):
+                    for cell in row:
+                        cell = cell.strip()
+                        if cell and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", cell):
+                            data_labels.add(cell)
+        except OSError:
+            continue
+
+    def _declared(src, name):
+        return re.search(
+            rf"(^|\s)(axiom|theorem|lemma|def|abbrev|structure|class|instance)\s+{re.escape(name)}\b"
+            rf"|^\s+{re.escape(name)}\s*:", src, re.M)
+
+    # A fourth thing the paper legitimately cites: a MATHLIB declaration. The development rests on
+    # Mathlib results by name (`geom_sum_eq`), and a citation to one is exactly as checkable as a
+    # citation to our own -- the declaration either is in Mathlib or it is not. It is consulted only
+    # for names that failed to resolve locally, so the cost is paid per dangling candidate rather than
+    # per citation, and a Mathlib RENAME across a version bump shows up here as a failure rather than
+    # as prose pointing at something gone.
+    #
+    # WHERE MATHLIB IS. Two places, and the test must not care which. A local checkout vendors it
+    # under `research/.lake`; a machine that builds Lean remotely has it only on the builder. Looking
+    # in one place made a local build tree load-bearing for a paper check, and deleting that tree
+    # turned a live citation into a reported defect -- which is a wrong answer, not a stricter one.
+    # When NEITHER is reachable the Mathlib names are skipped rather than failed: a citation that
+    # cannot be checked here is not a citation that is wrong.
+    mathlib = REPO / "research" / ".lake" / "packages" / "mathlib" / "Mathlib"
+
+    def _in_mathlib_local(name):
+        for path in mathlib.rglob("*.lean"):
+            try:
+                if name in (src := path.read_text(encoding="utf-8", errors="replace")) \
+                        and _declared(src, name):
+                    return True
+            except OSError:
+                continue
+        return False
+
+    def _mathlib_remote():
+        """The configured Lean builder's Mathlib, or None. Same tree `lake build` compiles against."""
+        try:
+            sys.path.insert(0, str(REPO / "research" / "code"))
+            import lean_build
+            if not lean_build._cfg("LEAN_BUILD_HOST"):
+                return None
+            root = lean_build._cfg("LEAN_BUILD_DIR", "massgap-lean").rstrip("/")
+            probe = f"test -d $HOME/{root}/.lake/packages/mathlib/Mathlib && echo yes"
+            r = subprocess.run(lean_build._ssh_argv() + [probe],
+                               capture_output=True, text=True, timeout=60)
+            return f"$HOME/{root}/.lake/packages/mathlib/Mathlib" if "yes" in r.stdout else None
+        except Exception:
+            return None
+
+    def _in_mathlib_remote(path, names):
+        """Which of `names` Mathlib declares, in ONE remote pass rather than one per name."""
+        if not names:
+            return set()
+        # The same declaration forms `_declared` accepts, as one alternation for ripgrep/grep.
+        kinds = "axiom|theorem|lemma|def|abbrev|structure|class|instance"
+        alt = "|".join(re.escape(n) for n in names)
+        cmd = (f"grep -rhoE '(^|[[:space:]])({kinds})[[:space:]]+({alt})([^A-Za-z0-9_]|$)' "
+               f"{path} 2>/dev/null | grep -oE '({alt})' | sort -u")
+        try:
+            import lean_build
+            r = subprocess.run(lean_build._ssh_argv() + [cmd],
+                               capture_output=True, text=True, timeout=600)
+            return {ln.strip() for ln in r.stdout.split(chr(10)) if ln.strip()}
+        except Exception:
+            return set()
+
+    candidates = [name for name in sorted(cited)
+                  if not (_declared(lean_src, name) or name in py_defs
+                          or f"{name}.py" in text or name in data_labels)]
+
+    if mathlib.is_dir():
+        unresolved = [n for n in candidates if not _in_mathlib_local(n)]
+    elif (remote := _mathlib_remote()):
+        found = _in_mathlib_remote(remote, candidates)
+        unresolved = [n for n in candidates if n not in found]
+    elif candidates:
+        pytest.skip(f"no Mathlib reachable (no vendored .lake, no configured Lean builder); "
+                    f"cannot check {len(candidates)} possible Mathlib citation(s): {candidates}")
+    else:
+        unresolved = []
+
     assert not unresolved, f"PAPER.md cites names that resolve nowhere: {unresolved}"
 
 
@@ -95,15 +216,19 @@ def test_cited_lean_declarations_resolve():
 # (row 1372 alone lists fifteen LDL/Sturm lemmas), and no rule over the prose separates "the paper
 # claims a footprint for this" from "the paper cites this as a step" without flagging both.
 FOOTPRINT_CLAIMS = {
-    "ym_mass_gap_certified":            "Sec 13: footprint = three foundational + the named axioms",
-    "ym_mass_gap_grid_certified":       "Sec 13: 'carries that same footprint, no d2_le_bound'",
-    "ym_mass_gap_spectral":             "Sec 13: 'the three foundational axioms only'",
-    "ym_crossover_confinement_of_grid": "Sec 13: 'footprint three foundational + wilson_reflection_positive'",
-    "ym_existence_and_gap":             "Sec 13 ledger: 'footprint = the four named axioms'",
-    "ym_wightman":                      "Sec 13 ledger: 'adds the OS->Wightman reconstruction (six in total)'",
+    "ym_mass_gap_of_substrate":         "Sec 13: footprint = three foundational + reflection positivity",
+    "confinement_of_bounded_substrate": "Sec 13: the substrate bound gives confinement at every "
+                                        "large enough aperture",
+    "margin_tendsto_floor":             "Sec 13: the margin tends to the whole floor kappa_0",
+    "tension_tendsto_zero_of_bounded_circ_moment":
+                                        "Sec 13: the tension VANISHES as the window opens",
+    "ym_mass_gap_spectral":             "Sec 13: three foundational + reflection positivity; the "
+                                        "aperture margin is an explicit hypothesis, not a discharged witness",
+    "ym_existence_and_gap_of_junction": "Sec 13 ledger: gap side conditional on the two residuals",
+    "ym_wightman_of":                   "Sec 13 ledger: 'adds the OS->Wightman reconstruction (six in total)'",
     "gap_uniform_of_cell":              "Sec 13 ledger: 'proved (foundation-only)'",
     "gap_uniform_of_cell_intensive":    "Sec 13 ledger: 'proved (foundation-only)'",
-    "ym_volume_gap_cell_grounded":      "Sec 13 ledger: 'proved (foundation-only)'",
+    "cell_volume_bar_nonvacuous": "Sec 13 ledger: 'proved (foundation-only)'",
     "Hcell2_clears_floor":              "Sec 13 ledger: 'the machine-checked cell ceiling'",
     "muInf_lt_floor":                   "Sec 13 ledger: 'proved (muInf_lt_floor)'; cited in the footprint paragraph",
 }
@@ -129,7 +254,7 @@ def test_every_claimed_footprint_is_printed():
     """Each theorem the paper states a footprint for carries a `#print axioms`.
 
     Four of these did not. Sec 13 states the volume row as "proved (foundation-only)" for
-    `gap_uniform_of_cell`, `gap_uniform_of_cell_intensive` and `ym_volume_gap_cell_grounded`, and
+    `gap_uniform_of_cell`, `gap_uniform_of_cell_intensive` and `cell_volume_bar_nonvacuous`, and
     calls `Hcell2_clears_floor` the machine-checked cell ceiling, while none of the four printed its
     footprint -- the neighbouring rows' claims were machine-checked and these were not. FreeField.lean
     had no `#print axioms` at all, though Sec 13 lists `muInf_lt_floor` as proved and cites it by name
@@ -168,26 +293,26 @@ FOUNDATIONAL = {"propext", "Classical.choice", "Quot.sound"}
 
 # What Sec 13 says each footprint IS, beyond the three foundational axioms. Quoted from the paper:
 #   ym_mass_gap_certified            "`#print axioms` returning the three foundational axioms
-#                                     **plus `wilson_reflection_positive` alone**"
-#   ym_crossover_confinement_of_grid "footprint three foundational + `wilson_reflection_positive`"
+#                                     **plus `wilson_reflection_positive_at` alone**"
+#   ym_crossover_confinement_of_grid "footprint three foundational + `wilson_reflection_positive_at`"
 #   ym_mass_gap_grid_certified       "carries that same footprint, no `d2_le_bound`"
 #   ym_existence_and_gap             "carries the four named axioms"
 #   ym_wightman                      "adds the OS->Wightman reconstruction ..., six in total"
-#   ym_mass_gap_spectral             "the three foundational axioms only"
+#   ym_mass_gap_spectral             three foundational + the four named (inherited via ym_confinement);
+#                                    the aperture margin is an explicit hypothesis, not a discharged witness
 #   the volume row                   "proved (foundation-only)"
 NAMED_FOOTPRINTS = {
-    "ym_mass_gap_certified":            {"wilson_reflection_positive"},
-    "ym_crossover_confinement_of_grid": {"wilson_reflection_positive"},
-    "ym_mass_gap_grid_certified":       {"wilson_reflection_positive"},
-    "ym_existence_and_gap":             {"wilson_reflection_positive", "ym_character",
-                                         "ym_asymfree", "d2_le_bound"},
-    "ym_wightman":                      {"wilson_reflection_positive", "ym_character",
-                                         "ym_asymfree", "d2_le_bound",
+    "ym_mass_gap_of_substrate":         {"wilson_reflection_positive_at"},
+    "confinement_of_bounded_substrate": {"wilson_reflection_positive_at"},
+    "margin_tendsto_floor":             {"wilson_reflection_positive_at"},
+    "tension_tendsto_zero_of_bounded_circ_moment": set(),
+    "ym_existence_and_gap_of_junction": {"wilson_reflection_positive_at"},
+    "ym_wightman_of":                   {"wilson_reflection_positive_at",
                                          "os_reconstruction", "WightmanTheory"},
-    "ym_mass_gap_spectral":             set(),
+    "ym_mass_gap_spectral":             {"wilson_reflection_positive_at"},
     "gap_uniform_of_cell":              set(),
     "gap_uniform_of_cell_intensive":    set(),
-    "ym_volume_gap_cell_grounded":      set(),
+    "cell_volume_bar_nonvacuous": set(),
 }
 
 
@@ -237,23 +362,53 @@ def test_printed_footprints_are_the_ones_the_paper_states():
     assert not problems, "Sec 13's footprint table disagrees with the build:\n  " + "\n  ".join(problems)
 
 
-def test_the_grid_route_really_drops_d2_le_bound():
-    """Sec 13's specific claim that the grid-routed flagship carries no `d2_le_bound`.
+RETIRED_AXIOMS = {"d2_le_bound", "ym_character", "ym_asymfree"}
 
-    This is the one that matters for the open items: `d2_le_bound` is a statistical bound, and the
-    grid route is what the paper offers as the deterministic replacement. Checked on its own so the
-    failure names it rather than appearing as one line in a table diff.
+
+def test_no_declaration_depends_on_a_retired_axiom():
+    """The three retired axioms stay retired.
+
+    `d2_le_bound` asserted the lag second moment is below a CHOSEN bound (`B = 1`) over a CHOSEN lag
+    range, at a CHOSEN aperture, and its companion `ym_finite_aperture` was a `norm_num` check on
+    those same numbers. `ym_character` and `ym_asymfree` were the two cited ends of a coupling
+    interval that only needed ending because the aperture was frozen. All three were one route to
+    `hconf`, and `Complete.confinement_of_bounded_substrate` reaches it from a single substrate
+    statement with no number in it.
+
+    Nothing stops a future edit reintroducing one, and the footprint table would absorb it quietly
+    among 185 rows. This names them.
     """
     art = REPO / "research" / "data" / "13_dat_axiom_footprints.csv"
     if not art.exists():
         pytest.skip("13_dat_axiom_footprints.csv not regenerated yet")
     import csv
     with art.open(encoding="utf-8", newline="") as fh:
-        rows = {r["declaration"].split(".")[-1]: r["axioms"] for r in csv.DictReader(fh)}
-    for decl in ("ym_mass_gap_grid_certified", "ym_crossover_confinement_of_grid"):
-        assert decl in rows, f"the build printed no footprint for {decl}"
-        assert "d2_le_bound" not in rows[decl], \
-            f"{decl} depends on d2_le_bound; Sec 13 says the grid route carries 'no d2_le_bound'"
+        rows = list(csv.DictReader(fh))
+    assert len(rows) >= 100, (
+        f"only {len(rows)} footprints in the artifact; the scan would pass vacuously")
+    offenders = {}
+    for r in rows:
+        bad = RETIRED_AXIOMS & {a.split(".")[-1] for a in r["axioms"].split()}
+        if bad:
+            offenders[r["declaration"]] = sorted(bad)
+    assert not offenders, (
+        "declarations depend on retired axioms: "
+        + "; ".join(f"{k} -> {v}" for k, v in sorted(offenders.items())))
+
+
+def test_the_retired_axioms_are_not_declared_anywhere_in_lean():
+    """The same guard at the source, so a retired axiom cannot reappear unused-but-present."""
+    root = REPO / "research" / "lean" / "MassGap"
+    files = sorted(root.glob("*.lean"))
+    assert len(files) >= 20, "the Lean scan is looking in the wrong place"
+    import re
+    found = {}
+    for p in files:
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            m = re.match(r"\s*axiom\s+([A-Za-z_][A-Za-z0-9_']*)", line)
+            if m and m.group(1) in RETIRED_AXIOMS:
+                found[f"{p.name}:{i}"] = m.group(1)
+    assert not found, f"retired axioms redeclared: {found}"
 
 
 def test_the_free_field_plateau_the_paper_quotes_is_the_one_lean_proves():
@@ -299,47 +454,32 @@ def test_the_free_field_plateau_the_paper_quotes_is_the_one_lean_proves():
             "to a theorem that does not state it")
 
 
-def test_the_pinned_witness_value_is_the_one_lean_defines():
-    """Sec 13's `mHiYM = 1/5` is the rational Lean actually defines, and the step it claims holds.
+def test_no_pinned_witness_magnitude_remains():
+    """The non-vacuity witnesses quantify their magnitude instead of naming one.
 
-    `ym_mass_gap_spectral` is the flagship the paper says carries the three foundational axioms ONLY,
-    and the reason it does is that its witness modes are pinned to a rational rather than a measured
-    value: the Lean step is `1/5 <= 3^(-1/4)`. If that rational were edited in Complete.lean the
-    paper would go on quoting the old one, and the claim that the footprint is foundation-only would
-    be attached to a different number than the one proved.
-
-    Both the value and the inequality are checked: a rational that no longer clears the ceiling would
-    make the citation meaningless even if the paper and Lean still agreed on the digits.
+    They used to exhibit a single number (`mHiYM = 1/5`) and a single family size (`nWitnessYM = 2`),
+    both chosen. A witness has to be an instance, but it does not have to be a PARTICULAR instance:
+    `spectral_bar_nonvacuous` and `cell_volume_bar_nonvacuous` now take any magnitude strictly
+    positive and at or below the derived ceiling `3^(-1/4) = e^(-kappa_0)`, and any family size. This
+    fails if a pinned magnitude comes back.
     """
+    root = REPO / "research" / "lean" / "MassGap"
+    files = sorted(root.glob("*.lean"))
+    assert len(files) >= 20, "the Lean scan is looking in the wrong place"
     import re
-    from fractions import Fraction
+    banned = ("mHiYM", "nWitnessYM", "mWitnessYM", "PWitnessYM")
+    found = {}
+    for p in files:
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            m = re.match(r"\s*(?:noncomputable\s+)?def\s+([A-Za-z_][A-Za-z0-9_']*)", line)
+            if m and m.group(1) in banned:
+                found[f"{p.name}:{i}"] = m.group(1)
+    assert not found, f"a pinned witness magnitude was reintroduced: {found}"
 
-    lean = (REPO / "research" / "lean" / "MassGap" / "Complete.lean").read_text(encoding="utf-8")
-    m = re.search(r"def\s+mHiYM\s*:\s*(?:ℝ|Real)\s*:=\s*([0-9]+)\s*/\s*([0-9]+)", lean)
-    assert m, "mHiYM is no longer defined as a rational literal in Complete.lean; update this test"
-    defined = Fraction(int(m.group(1)), int(m.group(2)))
-
-    ceiling = 3.0 ** -0.25
-    assert float(defined) <= ceiling, (
-        f"mHiYM = {defined} does not clear the aperture ceiling 3^(-1/4) = {ceiling:.4f}; "
-        "the Lean step the paper cites would not hold")
-
-    text = PAPER.read_text(encoding="utf-8")
-    BS = chr(92)
-    # Scoped to the passage that names mHiYM. Searching the whole paper for the rational would be
-    # nearly vacuous: kappa_0 is written \tfrac14\ln3, so 1/4 is already present and a Lean
-    # definition that drifted to 1/4 would still be "found".
-    where = text.find("mHiYM")
-    assert where != -1, "the paper no longer cites mHiYM; update this test"
-    window = text[max(0, where - 400):where + 400]
-    quoted = set()
-    for mm in re.finditer(re.escape(BS + "tfrac") + r"(?:\{(\d+)\}\{(\d+)\}|(\d)(\d))", window):
-        a, b, c, d = mm.groups()
-        quoted.add(Fraction(int(a), int(b)) if a else Fraction(int(c), int(d)))
-    assert quoted, "the passage naming mHiYM states no rational; update this test"
-    assert defined in quoted, (
-        f"Complete.lean defines mHiYM = {defined}, but the passage citing it states "
-        f"{sorted(str(q) for q in quoted)} -- the paper is not quoting the pinned value")
+    # And the replacements must still be there, quantified.
+    text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
+    for name in ("spectral_bar_nonvacuous", "cell_volume_bar_nonvacuous"):
+        assert f"theorem {name}" in text, f"{name} is gone; the bar has no non-vacuity witness"
 
 
 def test_the_development_is_sorry_free():
@@ -369,26 +509,163 @@ def test_the_development_is_sorry_free():
                            + "\n  ".join(offenders))
 
 
-def test_the_asymptotic_freedom_axiom_and_the_floor_theorem_pin_the_same_value():
-    """`ym_asymfree` converges to the value `muInf_lt_floor` proves is below the floor.
 
-    Sec 13 tells this as one story: the axiom gives the convergence mu_YM -> 0.0326, and the
-    below-floor half is the theorem. That only holds together if both carry the SAME constant --
-    an axiom converging to one value while the theorem clears a different one would leave the
-    weak end unproved with nothing in the tree objecting, since neither file mentions the other.
+def test_every_aperture_ceiling_is_derived_from_the_lag_arity():
+    """The <d^2> ceiling comes from `N + 1` = the number of lags, which is the periodic extent.
+
+    `Moment.Read N` indexes lags by `Fin (N + 1)` and sets `theta_d = 2 pi d / (N + 1)`, so a
+    periodic extent of `L` sites -- lags `d = 0..L-1` -- has `N + 1 = L`. Two scripts independently
+    wrote `(L + 1) ** 2` instead, i.e. the arity of a lattice one site LARGER than the one measured.
+    That inflated the ceiling by ((L+1)/L)^2 = 1.13 on L=16, and the inflation made the certificate
+    easier to pass every time.
+
+    An off-by-one that appears twice in separate files is not a slip, so this asserts the form rather
+    than a value: any ceiling written with an extent other than the lag arity fails here, at any L.
     """
-    import re
+    bad = []
+    for p in sorted((REPO / "research").rglob("*.py")):
+        if "test_" in p.name:
+            continue
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
+            code = line.split("#")[0]
+            if "APERTURE_RHS" not in code and "1.0 - 3.0 ** (-0.25)" not in code:
+                continue
+            # the ceiling is the only APERTURE_RHS use that squares an extent
+            m = re.search(r"\(\s*(\w+)\s*([+-])\s*(\d+)\s*\)\s*\*\*\s*2", code)
+            if m:
+                bad.append(f"{p.relative_to(REPO)}:{i}: extent written as "
+                           f"({m.group(1)} {m.group(2)} {m.group(3)})**2, but the lag arity is "
+                           f"{m.group(1)} -- `Fin (N+1)` over a periodic extent of {m.group(1)} sites")
+    assert not bad, ("an aperture ceiling is derived from the wrong lag arity:\n  "
+                     + "\n  ".join(bad))
 
-    lean_dir = REPO / "research" / "lean" / "MassGap"
-    complete = (lean_dir / "Complete.lean").read_text(encoding="utf-8")
-    freefield = (lean_dir / "FreeField.lean").read_text(encoding="utf-8")
 
-    a = re.search(r"axiom\s+ym_asymfree\s*:.*?nhds\s*\(\s*([0-9.]+)\s*:", complete, re.S)
-    assert a, "ym_asymfree no longer states a literal limit; update this test"
-    t = re.search(r"theorem\s+muInf_lt_floor\s*:\s*\(\s*([0-9.]+)\s*:", freefield)
-    assert t, "muInf_lt_floor no longer states a literal bound; update this test"
+#: Words the paper uses for small counts, so a claim may be written either way.
+COUNT_WORDS = {'no': 0, 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+               'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
 
-    limit, proved = float(a.group(1)), float(t.group(1))
-    assert abs(limit - proved) < 1e-9, (
-        f"ym_asymfree converges to {limit} but muInf_lt_floor proves {proved} is below the floor; "
-        "Sec 13 presents these as the same value, so the weak end is not established")
+#: The axioms Lean supplies itself. Everything else is an input this development chose.
+FOUNDATIONAL = {'propext', 'Classical.choice', 'Quot.sound'}
+
+
+def test_every_stated_named_axiom_count_matches_the_build():
+    """A "<count> named axiom(s)" claim beside a declaration equals what the build prints.
+
+    The paper states footprints in prose, as a count of NAMED axioms -- those beyond the three
+    Lean supplies. Two sibling tests read the same artifact but check different things: that a
+    cited declaration carries a `#print axioms`, and that no retired axiom is declared. Neither
+    compares the paper's stated footprint to the printed one, so a claim of four named axioms
+    stood beside a declaration the build gives one, in two places.
+
+    The footprint is the claim that separates proved from assumed, so a wrong one misreports the
+    result's strength. This checks it in both directions: a paper understating its inputs and a
+    paper overstating them both fail.
+
+    Only claims whose declaration resolves in the artifact are checked; a count beside a name
+    the build does not print is left to the sibling test that catches unprintable citations.
+    """
+    art = REPO / 'research' / 'data' / '13_dat_axiom_footprints.csv'
+    if not art.exists():
+        pytest.skip('13_dat_axiom_footprints.csv not regenerated yet')
+    import csv
+    named = {}
+    with art.open(encoding='utf-8', newline='') as fh:
+        for row in csv.DictReader(fh):
+            axioms = set(row['axioms'].split())
+            short = row['declaration'].split('.')[-1]
+            named[short] = axioms - FOUNDATIONAL
+    # DERIVED: the artifact must cover every declaration the Lean sources ASK to print, so the
+    # sufficiency bar is that count rather than a round number. A short artifact -- a warm build
+    # replays no info messages -- would otherwise let this pass while checking almost nothing.
+    asked = sum(len(re.findall(r'^\s*#print axioms\s', p.read_text(encoding='utf-8', errors='replace'),
+                               re.M))
+                for p in _lean_files())
+    assert len(named) >= asked, (
+        f'the footprint artifact carries {len(named)} declarations but the Lean sources ask to '
+        f'print {asked}; regenerate it from a cold build')
+
+    text = _paper()
+    flat = ' '.join(text.split())
+    # a count of named axioms, and the declarations backticked in the run-up to it
+    claim = re.compile(r'(?:the same )?([A-Za-z]+|\d+) named axiom')
+    checked, bad = 0, []
+    for m in claim.finditer(flat):
+        tok = m.group(1).lower()
+        want = COUNT_WORDS.get(tok)
+        if want is None:
+            if not tok.isdigit():
+                continue
+            want = int(tok)
+        window = flat[max(0, m.start() - 320):m.start()]
+        cands = [n for n in re.findall(r'`([A-Za-z_][A-Za-z0-9_.]*)`', window)
+                 if n.split('.')[-1] in named]
+        if not cands:
+            continue
+        # the nearest preceding declaration is the one the claim is about
+        decl = cands[-1].split('.')[-1]
+        checked += 1
+        got = len(named[decl])
+        if got != want:
+            bad.append(f'the paper says {decl} carries {want} named axiom(s); the build prints '
+                       f'{got} ({sorted(named[decl]) or "none"})')
+    assert checked, ('no stated named-axiom count could be tied to a declaration; the phrasing '
+                     'may have changed and this test would pass vacuously')
+    assert not bad, ('a stated axiom footprint disagrees with the build:' + chr(10) + '  '
+                     + (chr(10) + '  ').join(bad))
+
+
+def test_zero_mode_route_named_in_paper_exists_in_lean():
+    """Every theorem the second route names must actually exist in the tree.
+
+    Matched on WORD BOUNDARIES, not substrings. A first attempt used `name in paper`, and renaming a
+    cited theorem to `wilson_correlation_gap_THAT_DOES_NOT_EXIST` still passed -- the original is a
+    prefix of the corruption. A guard that cannot fail the case it was written for is worse than
+    none, because it reports a confidence it has not earned.
+    """
+    paper = PAPER.read_text(encoding="utf-8")
+    lean = chr(10).join(
+        p.read_text(encoding="utf-8") for p in sorted((LEAN / "MassGap").glob("*.lean")))
+    for name in ("zero_mode_lt_of_tension", "no_zero_mode_of_tension_lt_floor",
+                 "wilson_correlation_gap", "bd3_link_not_private",
+                 "chain_hypotheses_satisfiable"):
+        assert re.search(re.escape(name) + r"(?![A-Za-z0-9_])", paper), \
+            f"the paper no longer names {name} (or names a corrupted variant of it)"
+        assert re.search(r"theorem\s+" + re.escape(name) + r"(?![A-Za-z0-9_])", lean), \
+            f"PAPER.md names `{name}` but no `theorem {name}` exists in lean/MassGap/"
+
+
+def test_zero_mode_bound_numbers_match_the_artifact():
+    """The quantitative bound the paper quotes is the one the certificate computes.
+
+    The quoted values are READ OUT OF THE PAPER rather than restated here, and compared at the
+    half-ulp of however many decimals the paper writes -- so this guard carries no tolerance of its
+    own and cannot drift from the prose it checks.
+    """
+    import csv
+    p = DATA / "9_9_dat_zero_mode_bound.csv"
+    if not p.exists():
+        pytest.skip("9_9_dat_zero_mode_bound.csv not present")
+    rows = list(csv.DictReader(p.open()))
+    paper = PAPER.read_text(encoding="utf-8")
+
+    def ulp(written):
+        # DERIVED: the half-ulp of the precision the PAPER chose to write, so the comparison is as
+        # tight as the prose is and no tolerance is introduced here.
+        dp = len(written.split(".")[1]) if "." in written else 0
+        return 0.5 * 10.0 ** (-dp)
+
+    m = re.search(r"puts the gapless weight under \$([0-9.]+)\$", paper)
+    assert m, "the paper no longer states the gapless-weight bound"
+    big = max(rows, key=lambda r: int(r["L"]))
+    assert abs(float(big["bound_on_c"]) - float(m.group(1))) <= ulp(m.group(1)), \
+        f"paper states {m.group(1)}; artifact gives {big['bound_on_c']} at L={big['L']}"
+
+    m2 = re.search(r"flat to \$?([0-9.]+)\\%", paper)
+    if m2:
+        gs = [float(r["sum_g"]) for r in rows]
+        spread = 100.0 * (max(gs) / min(gs) - 1.0)
+        assert abs(spread - float(m2.group(1))) <= ulp(m2.group(1)), \
+            f"paper states sum g flat to {m2.group(1)}%; artifact gives {spread:.2f}%"
+
+    assert all(r["theorem_respected"] == "1" for r in rows), \
+        "the artifact records a volume where the measurement contradicts the theorem"

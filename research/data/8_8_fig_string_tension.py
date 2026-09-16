@@ -79,7 +79,7 @@ def main():
     axA.set_title("A. the $T$-systematic, shown (hollow / off-scale = not resolved at $3\\sigma$)")
     # Scale to the RESOLVED points. The rejected T is an order of magnitude noisier (T=4 carries
     # +/-0.038 on 0.062); letting it set the range hides the structure the panel exists to show.
-    # It stays plotted and runs off the axis, which is the honest picture of "not resolved".
+    # It stays plotted and runs off the axis, which is what "not resolved" looks like.
     if keep:
         axA.set_ylim(min(y - e for y, e in keep) * 0.88, max(y + e for y, e in keep) * 1.30)
     axA.legend(fontsize=8, frameon=False)

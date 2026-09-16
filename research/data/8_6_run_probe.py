@@ -126,6 +126,7 @@ def probe_p1_gap(device=None, T=40):
     for d, g in zip(deltas, read):
         print(f"   Delta_in={d:5.3f}   rate_out={g:8.6f}   resid={g - d:+.2e}")
     print(f"   -> max |rate_out - Delta_in| = {err:.2e} nats  "
+          # DERIVED: machine-epsilon class -- labels an exact operator inversion in printed output.
           f"({'EXACT (read inverts the operator)' if err < 1e-6 else 'near-exact'})")
     return rows
 

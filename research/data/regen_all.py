@@ -105,9 +105,50 @@ OWNERS = [
     # Certifications print a verdict; none of them writes a committed artifact. The string tension
     # did, so it moved to research/data as 8_8_run_string_tension.py -- a measurement that emits
     # tables belongs with the other 8_x producers, not among the verdict printers.
+    # Re-reads 8_7_dat_gap_correlator.csv and 8_8_dat_string_tension.csv and asks Sec 8.7b's two
+    # questions at FIXED (operator, smearing, tau) -- taking no minimum, so no admissibility
+    # tolerance exists to choose. Pure post-processing of committed tables: seconds, no ensembles.
+    (["9_8_dat_fixed_selection.csv"],            "fixed_selection_of_scaling.py",          CERT, "certify", "cpu"),
+    # Evaluates `ZeroMode.zero_mode_lt_of_tension` on the ensemble: the machine-checked theorem
+    # turns one measured aperture into a ceiling on the gapless weight, and the antipodal lag
+    # measures that weight independently. REFUSES if the two ever contradict.
+    (["9_9_dat_zero_mode_bound.csv"],            "zero_mode_bound_of_measurement.py",      CERT, "certify", "bigmem"),
+    # How large a gap the aperture criterion can certify at aperture n, derived from kappa_0 and the
+    # circle geometry alone -- no ensemble is read. The cosine average of a single transfer mode is
+    # geometric, hence exact in closed form, and the certified rate is capped at C/n with
+    # C = 10.9887. The cap is on the APERTURE and not on the box: `ScreenedGap.gap_bound_box_
+    # independent` carries the box as a parameter and never uses it, so this is not a no-go for the
+    # thermodynamic limit. Seconds, arbitrary precision.
+    (["9_10_dat_aperture_cap.csv"],              "aperture_cap_of_floor.py",               CERT, "certify", "cpu"),
+    # The measurement that cap leaves open: does the read still deliver a gap when a FIXED window
+    # looks into an ever-larger system? Reads configs_box_su2_b2.40 -- one beta, one T, four boxes --
+    # and compares the box-to-box variation of Delta against its within-box reseeding spread. On the
+    # action density it returns NO VERDICT rather than a number: the correlation length is the
+    # gluelump scale, about one lattice spacing, so the read sits at its own Nyquist limit. The
+    # series it needs is a smeared operator, which the generator now supports (--smear).
+    (["9_12_dat_gap_of_box.csv"],                "gap_of_box_at_fixed_aperture.py",        CERT, "certify", "bigmem"),
+    # The same question through the OPERATOR read, which is the one that can answer it. The
+    # aperture splice forms an L^3 x L^3 covariance against a fixed sample count, so growing
+    # the box degrades its estimator and the series cannot separate box from conditioning.
+    # The zero-momentum operator's moment pencil has dimension = ORDER, flat in L, and a
+    # bigger box makes O(t) quieter rather than noisier. Reads smeared operator shards.
+    (["9_13_dat_gap_of_box_operator.csv"],       "gap_of_box_operator.py",                 CERT, "certify", "cpu"),
+    # The exact-rational pivot certificate for the SU(2) cell across the crossover coupling range,
+    # and the generator of `lean/MassGap/CellPivot.lean` (--emit-lean). One computation feeds
+    # both, which is why the artifact and the Lean statement cannot disagree. Pure arithmetic:
+    # no store, no GPU, no measurement.
+    (["9_14_dat_cell_pivot_certificate.csv"],    "cell_pivot_certificate.py",              CERT, "certify", "cpu"),
     ([],                                         "interval_enclosure.py",                  CERT, "certify", "cpu"),
     ([],                                         "small_volume_enclosure.py",              CERT, "certify", "cpu"),
     ([],                                         "beta_star_enclosure.py",                 CERT, "certify", "cpu"),
+    # Writes BOTH 8_6 free-field tables. It was absent from this list while both files were
+    # committed, so nothing recorded how to regenerate either -- exactly what
+    # test_every_committed_artifact_has_exactly_one_owner exists to catch. `cpu`: the exact half is
+    # Wick contraction on an L^4 torus, no Monte Carlo and no RNG. The measured half reads the
+    # ensemble store when it is configured and skips with a message when it is not, so the row runs
+    # either way; the paper's weak-end constants come from the exact half.
+    (["8_6_dat_free_field_muinf.csv", "8_6_dat_free_field_measured.csv"],
+                                                 "free_field_muinf.py",                    CERT, "certify", "cpu"),
     # gap_of_margin and gap_of_maximal_correlation were SIGKILLed (rc=-9, cgroup oom_kill) at the
     # cpu2h envelope of 8 GB; they are Koopman-splice readers like the two below, so they are bigmem.
     # gap_of_margin.py now writes data/9_2_dat_margin_aperture.csv (the table it has always printed;
@@ -130,6 +171,9 @@ OWNERS = [
     # Writes data/9_5_dat_apriori_a1.csv (the A1 conjunction table: Delta(L) per ensemble, and
     # mu / contrast / K_signal at L=16). Add it to this row once the first copy is committed.
     ([],                                         "apriori_A1.py",                          CERT, "certify", "bigmem"),
+    # that WilsonAnalytic.wilson_le_uniform_of_clustering_total consumes: the Lean interior needs
+    # ONE K covering every volume and coupling, and this measures whether the data offers one.
+    # Add it to this row once the first generated copy is committed.
     # Writes data/9_7_dat_centre_dominance.csv (Inputs 3 and 4: rho'_coset(1) and sigma_Z/sigma
     # per beta). Add it to this row once the first generated copy is committed.
     (["9_7_dat_centre_dominance.csv"],           "string_tension_eq_centre.py",            CERT, "certify", "gpu"),    # Reads the archived L=16 SU(2) links (configs_links_su2, dataset [D]); it does not generate its
@@ -217,7 +261,7 @@ def _run_with_peak(cmd, cwd, env, stdout, timeout):
     absent the peak is None and the job still runs; a missing measurement is reported as missing
     rather than as zero.
 
-    This is what keeps NEED_GB and NEED_GB_JOB honest: a class figure nobody has re-measured drifts
+    This is what keeps NEED_GB and NEED_GB_JOB current: a class figure nobody has re-measured drifts
     away from what the jobs in it actually do, in whichever direction happens to be wrong.
     """
     proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=stdout,
@@ -555,6 +599,7 @@ def main() -> int:
         except MemoryError:
             rc = 137
         out = logf.read_text(encoding="utf-8", errors="replace") if logf.exists() else ""
+        # DERIVED: 124 is the shell's timeout(1) exit status, not a threshold.
         err = ("timed out after %ds (cost class %s)" % (BUDGET[cost], cost) if rc == 124 else
                "the host ran out of memory" if rc in (137, -9) else "")
         ran += 1

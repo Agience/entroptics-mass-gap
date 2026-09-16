@@ -1,0 +1,354 @@
+# Undeclared deciding numeric literals, recorded 2026-09-13.
+# A record of DEBT, not a rule about which values are acceptable. The guard fails on
+# anything NOT listed here; every line below is a literal nobody has declared DERIVED or
+# CHOSEN. Shrinking this file is the work. No value is exempt by virtue of being a value --
+# the guard makes no judgement about what is 'structural'.
+# Format: <path>|<what>|<source line>
+# SCOPE WIDENED 2026-09-14: the scan now covers EVERY .py under research/, not three hand-picked
+# directories. The entries added on that date are pre-existing literals in files the guard had
+# never opened -- library code and test verdicts -- not new violations. The count may only shrink
+# from here.
+# SCOPE WIDENED AGAIN 2026-09-14: the scan now also reports NAMED constants (a module- or
+# class-level binding of a numeric literal). A threshold hoisted out of its comparison -- the
+# ordinary way to write one -- was previously invisible: `CUT = 0.37` then `x > CUT` flagged
+# nothing. Entries added on that date are pre-existing named constants, not new violations.
+
+research/code/aperture_reads.py|compared against 5|if a.ndim != 5:
+research/code/certify/aperture_channel_control.py|named constant LS = 8,12,16|LS = [8, 12, 16]
+research/code/certify/aperture_channel_control.py|named constant NTS = 4,8|NTS = [4, 8]
+research/code/certify/aperture_channel_control.py|named constant SEEDS = 101,202,303|SEEDS = [101, 202, 303]
+research/code/certify/apriori_A1.py|compared against 0|Delta=float(Δ), xi=(1.0 / Δ if Δ > 0 else float("inf")),
+research/code/certify/apriori_A1.py|compared against 0|f"{(1.0/Δ if Δ>0 else float('inf')):>6.2f} {'':>4} | "
+research/code/certify/apriori_A1.py|compared against 0|f"{(1.0/Δ if Δ>0 else float('inf')):>6.2f} {'':>4} |"
+research/code/certify/apriori_A1.py|named constant ENSEMBLES = 0.5,2.3,6.0,2.5|ENSEMBLES = [("su2", 0.50, "confined (strong)"), ("su2", 2.30, "confined (scalin
+research/code/certify/apriori_A1.py|named constant LREAD = 16|LREAD = 16                                    # the reference L for the μ / K_si
+research/code/certify/apriori_A1.py|named constant LS = 8,12,16,24,32|LS = (8, 12, 16, 24, 32)
+research/code/certify/apriori_A1.py|named constant NCAP = 256|NCAP = 256
+research/code/certify/beta_star_enclosure.py|M=30|def B_bounds
+research/code/certify/beta_star_enclosure.py|M=30|def besselI_bounds
+research/code/certify/beta_star_enclosure.py|M=30|def ratio_bounds
+research/code/certify/beta_star_enclosure.py|M=40|def kappa0_bounds
+research/code/certify/beta_star_enclosure.py|M=40|def ln3_bounds
+research/code/certify/beta_star_enclosure.py|compared against 1|assert q < 1
+research/code/certify/free_field_muinf.py|named constant LS = 4,6,8,10,12,16...|LS = (4, 6, 8, 10, 12, 16, 20, 24, 32)
+research/code/certify/free_field_muinf.py|named constant MEASURED = 8,0.5,0.8,1.0,1.2,1.4...|MEASURED = (("su2", 8, [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2
+research/code/certify/free_field_muinf.py|named constant NCAP = 256|NCAP = 256
+research/code/certify/free_field_muinf.py|named constant PAIRS = 0,1,0,2,0,3...|PAIRS = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+research/code/certify/gap_of_margin.py|compared against 0|if coul and fin(coul) == 0 and fin(conf) == len(conf):
+research/code/certify/gap_of_margin.py|compared against 0|m_hi = math.exp(-delta) if delta > 0 else 1.0
+research/code/certify/gap_of_margin.py|named constant ENSEMBLES = 0.5,16,2.3,16,2.3,24...|ENSEMBLES = [
+research/code/certify/gap_of_margin.py|ncap=128|def load
+research/code/certify/gap_of_maximal_correlation.py|compared against 2|if len(su2K) < 2 or len(u1K) < 2:
+research/code/certify/gap_of_maximal_correlation.py|n=48|def test_free_scalar_sweep
+research/code/certify/gap_of_maximal_correlation.py|n=64|def test_planted_gap
+research/code/certify/gap_of_maximal_correlation.py|ncap=192|def test_phase_separation
+research/code/certify/gap_refinement_invariant.py|compared against 0.5|f"-> {'resolved-finite throughout' if min(finite) > 0.5 else 'some unresolved (c
+research/code/certify/gap_refinement_invariant.py|compared against 0|elif Δ == 0:
+research/code/certify/gap_refinement_invariant.py|named constant NCAP = 256|NCAP = 256
+research/code/certify/interior_mixing_of_analytic_grid.py|compared against 0|"%.6f" % (-math.log(y) if y > 0 else float("inf"))])
+research/code/certify/interior_mixing_of_analytic_grid.py|compared against 0|dlt = -math.log(pt) if pt > 0 else float("inf")
+research/code/certify/interior_mixing_of_analytic_grid.py|compared against 0|return math.exp(-d) if d > 0 else 1.0
+research/code/certify/interior_mixing_of_analytic_grid.py|compared against 4|if len(xs) < 4:
+research/code/certify/lean_axiom_footprints.py|compared against 0|axiom_free = sum(1 for r_ in rows if r_["n_axioms"] == 0)
+research/code/certify/lean_axiom_footprints.py|compared against 0|if r.returncode != 0:
+research/code/certify/polyakov_su2_aperture.py|named constant BETAS = 2.1,2.6|BETAS = ((2.10, "CONFINED"), (2.60, "DECONFINED"))
+research/code/certify/polyakov_su2_aperture.py|named constant NT = 4|NT = 4
+research/code/certify/polyakov_su2_aperture.py|named constant SEEDS = 11,22,33,44|SEEDS = [11, 22, 33, 44]
+research/code/certify/small_volume_enclosure.py|compared against 0|c = 1 if t < 0 else 0
+research/code/certify/small_volume_enclosure.py|compared against 0|if t < 0:
+research/code/certify/small_volume_enclosure.py|compared against 0|if t == 0:
+research/code/certify/small_volume_enclosure.py|jmax=30|def certified_gap
+research/code/certify/small_volume_enclosure.py|jmax=60|def float_gap
+research/code/certify/string_tension_eq_centre.py|compared against 0|ratio = sz / sf if sf > 0 else float("nan")
+research/code/certify/string_tension_eq_centre.py|compared against 0|return math.exp(-d) if d > 0 else 1.0
+research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|+ (f"  ({B16/umax:.0f}x margin)" if umax > 0 else ""))
+research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|if lo0 <= 0:
+research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|return float(sum(p[d] * d * d for d in range(MAXLAG + 1)) / s) if s > 0 else 0.0
+research/code/certify/ym_crossover_confinement_of_grid.py|compared against 4|if len(xs) < 4:
+research/code/certify/ym_crossover_confinement_of_grid.py|named constant L = 16|L = 16
+research/code/certify/ym_crossover_confinement_of_grid.py|ncap=256|def load
+research/code/entroptics_adapter.py|compared against 0.0|if not (0.0 < forgetting <= 1.0):
+research/code/entroptics_adapter.py|compared against 0.0|if p <= 0.0:
+research/code/entroptics_adapter.py|compared against 0|out["shape_factor"] = (out["a_delta"] / out["phi_F"]) if out["phi_F"] > 0 else f
+research/code/entroptics_adapter.py|compared against 1.0|if not (0.0 < forgetting <= 1.0):
+research/code/entroptics_adapter.py|compared against 1.0|if p >= 1.0:
+research/code/entroptics_adapter.py|compared against 1.0|return (self._M2 / (self._n - 1.0)) ** 0.5 if self._n > 1.0 else float("inf")
+research/code/entroptics_adapter.py|compared against 2|if n < 2:
+research/code/entroptics_adapter.py|compared against 2|if p.ndim != 2 or int(p.shape[1]) < 2:
+research/code/entroptics_adapter.py|compared against 2|if p.ndim == 2 and int(p.shape[1]) >= 2:
+research/code/entroptics_adapter.py|compared against 2|if self._n < 2:
+research/code/entroptics_adapter.py|compared against 2|planes = [p for p in planes if p.ndim == 2 and int(p.shape[1]) >= 2]
+research/code/entroptics_adapter.py|compared against 2|return (spatial[0], spatial[1]) if len(spatial) >= 2 else None
+research/code/entroptics_adapter.py|compared against 3|if acc is None or acc.T < 3:
+research/code/lattice_generator.py|beta=1.0|def config
+research/code/lattice_generator.py|beta=1.0|def config_batch
+research/code/lattice_generator.py|beta=1.0|def gauge_field
+research/code/lattice_generator.py|beta=1.0|def stream
+research/code/lattice_generator.py|compared against 0.0|return b.where(q0 >= 0.0, b.ones(q0.shape), -1.0 * b.ones(q0.shape))
+research/code/lattice_generator.py|compared against 0.0|s = b.sqrt(b.where(perp > 0.0, perp, perp * 0.0))
+research/code/lattice_generator.py|compared against 0|return [g % 2 == 0, g % 2 == 1]
+research/code/lattice_generator.py|compared against 0|return [idx % 2 == 0, idx % 2 == 1]
+research/code/lattice_generator.py|compared against 0|return float(-np.log(ratio)) if ratio > 0 else float("nan")
+research/code/lattice_generator.py|compared against 1e-08|cr_val = b.where(cr_b > 1e-8,
+research/code/lattice_generator.py|compared against 1e-08|safe = b.where(cr_b > 1e-8, cr_b, cr_b * 0.0 + 1.0)
+research/code/lattice_generator.py|compared against 1|return [g % 2 == 0, g % 2 == 1]
+research/code/lattice_generator.py|compared against 1|return [idx % 2 == 0, idx % 2 == 1]
+research/code/lattice_generator.py|compared against 2|if N < 2:
+research/code/lattice_generator.py|m=0.5|def free_scalar
+research/code/lattice_generator.py|n_or=4|def _sun_hb_sweep
+research/code/lattice_generator.py|named constant D = 4|D = 4  # spacetime dimensions
+research/code/lattice_generator.py|named constant _A0_ITMAX = 10000|_A0_ITMAX = 10_000   # not a cap on the answer -- a runaway guard that RAISES, s
+research/code/lattice_generator.py|named constant _KP_MIN = 2.0|_KP_MIN = 2.0        # betak at/above which Kennedy-Pendleton is the efficient p
+research/code/lattice_scales.py|N=2|def a_lambda
+research/code/store_path.py|compared against 2|if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+research/code/tests/test_certifications_still_certify.py|compared against 0|assert r.returncode == 0, f"{script} exited {r.returncode}:\n{r.stdout[-3000:]}\
+research/code/tests/test_certify_smoke.py|L=8|def _synth_store
+research/code/tests/test_certify_smoke.py|T=10|def _synth_store
+research/code/tests/test_certify_smoke.py|compared against 0|assert all(float(r["a_delta"]) >= 0 for r in rows), "a negative resolution lengt
+research/code/tests/test_certify_smoke.py|compared against 0|assert r.returncode == 0, (
+research/code/tests/test_certify_smoke.py|compared against 0|if 0 < rho < 1:
+research/code/tests/test_certify_smoke.py|compared against 1|if 0 < rho < 1:
+research/code/tests/test_certify_smoke.py|compared against 3|got = load(*(("su2", 16, 9.99)[:nargs] if nargs == 3 else (9.99,)))
+research/code/tests/test_certify_smoke.py|compared against 4|assert load_su2([str(a), str(b)], 6, 2.30, 4).shape[0] == 4, "ncap must still ca
+research/code/tests/test_certify_smoke.py|compared against 6|assert len(GUARDED) >= 6, f"only {len(GUARDED)} guarded certifications found: {G
+research/code/tests/test_certify_smoke.py|compared against 8|assert got is not None and got.shape[0] == 8, (
+research/code/tests/test_certify_smoke.py|compared against 8|assert load_su2([str(b), str(a)], 6, 2.30, 10_000).shape[0] == 8, "pooling must
+research/code/tests/test_certify_smoke.py|n=6|def _synth_store
+research/code/tests/test_certify_smoke.py|seed=21|def _synth_store
+research/code/tests/test_generator.py|compared against 1e-08|assert abs(phi1 - phi0) < 1e-8, \
+research/code/tests/test_generator.py|compared against 3|assert len(cfgs) == 3
+research/code/tests/test_generator_physics.py|compared against 0.0001|assert pv > 1e-4, f'betak={betak}: KS D={D:.5f} p={pv:.2e} vs the exact heat-bat
+research/code/tests/test_generator_physics.py|compared against 0.04|assert Dks < 0.04, f"SU(2) beta=0 q0 KS statistic {Dks:.4f} vs Haar (crit@1% ~ 0
+research/code/tests/test_generator_physics.py|compared against 0.04|assert Dks < 0.04, f'beta=0 heat-bath q0 KS {Dks:.4f} vs Haar'
+research/code/tests/test_generator_physics.py|compared against 0.0|assert (a0 == 0.0).sum() == 0, f'betak={betak}: {(a0 == 0.0).sum()} sites carry
+research/code/tests/test_generator_physics.py|compared against 0.0|assert (t == 0.0).sum() == 0                                  # no forced-equato
+research/code/tests/test_generator_physics.py|compared against 0|assert (a0 == 0.0).sum() == 0, f'betak={betak}: {(a0 == 0.0).sum()} sites carry
+research/code/tests/test_generator_physics.py|compared against 0|assert (t == 0.0).sum() == 0                                  # no forced-equato
+research/code/tests/test_generator_physics.py|compared against 1.0|assert np.all(np.isfinite(a0)) and np.all(np.abs(a0) <= 1.0)
+research/code/tests/test_generator_physics.py|compared against 1e-10|assert np.abs(UUd - np.eye(3)).max() < 1e-10                            # U U^da
+research/code/tests/test_generator_physics.py|compared against 1e-10|assert np.abs(np.linalg.det(U) - 1.0).max() < 1e-10                     # det =
+research/code/tests/test_generator_physics.py|compared against 1e-12|assert np.abs(UUd - np.eye(2)).max() < 1e-12                            # U U^da
+research/code/tests/test_generator_physics.py|compared against 1e-12|assert np.abs(np.abs(np.exp(1j * th)) - 1.0).max() < 1e-12              # |z| =
+research/code/tests/test_generator_physics.py|compared against 1e-12|assert np.abs(np.linalg.det(U) - 1.0).max() < 1e-12                     # det =
+research/code/tests/test_generator_physics.py|compared against 1e-12|assert np.abs(np.linalg.norm(q, axis=-1) - 1.0).max() < 1e-12          # |q| = 1
+research/code/tests/test_helpers.py|compared against 0|assert path.exists() and path.stat().st_size > 0
+research/code/tests/test_no_undeclared_constants.py|compared against 0|ctx = lines[ln - 1].strip() if 0 < ln <= len(lines) else ""
+research/code/tests/test_no_undeclared_constants.py|compared against 0|if 0 <= i < len(lines) and marks(lines[i]):
+research/code/tests/test_no_undeclared_constants.py|compared against 0|while 0 <= i < len(lines) and lines[i].lstrip().startswith("#"):
+research/code/tests/test_no_undeclared_constants.py|compared against 20|assert len(scripts) >= 20, (
+research/code/tests/test_no_undeclared_constants.py|compared against 6|shown = ",".join(str(v) for v in vals[:6]) + ("..." if len(vals) > 6 else "")
+research/code/tests/test_no_undeclared_lean_constants.py|compared against 0|if j >= 0:
+research/code/tests/test_no_undeclared_lean_constants.py|compared against 0|opened = depth > 0 or ln.lstrip().startswith(("/--", "/-!", "/-"))
+research/code/tests/test_no_undeclared_lean_constants.py|compared against 0|while j >= 0 and (lines[j].lstrip().startswith("--") or lines[j].strip() == ""
+research/code/tests/test_no_undeclared_lean_constants.py|compared against 0|while j >= 0 and not lines[j].lstrip().startswith("/-"):
+research/code/tests/test_no_undeclared_lean_constants.py|compared against 20|assert len(files) >= 20, (
+research/code/tests/test_paper_matches_artifacts.py|N=2|def _a_lambda
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.0005|assert abs(stated - math.sqrt(s)) < 5e-4, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.0005|bad = [(v, ln) for v, ln in hits if abs(float(v) - peak) > 5e-4]
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.0006|assert abs(stated_err - float(r["lambda1_err"])) < 6e-4, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.005|assert abs(float(got) - mean) < 5e-3, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.005|assert abs(float(m.group(1)) - mean) < 5e-3,             f"PAPER.md line {line}
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.005|assert abs(got[0] - lo) < 5e-3 and abs(got[1] - hi) < 5e-3,             f"PAPER.
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.005|assert abs(quoted[0] - round(art[key], 2)) < 5e-3, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.01|assert hi - max(vals) < 0.01, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.01|assert hi_q - max(central) < 0.01, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.05|assert abs(float(m.group(1)) - joint) < 0.05, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.05|assert quoted_x and abs(quoted_x[0] - excess) < 0.05, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.06|assert abs(pull - float(stated.group(1))) < 0.06, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.0|bad = [(r["beta"], r["rho1_coset"]) for r in rows if not 0.0 <= float(r["rho1_co
+research/code/tests/test_paper_matches_artifacts.py|compared against 0.5|if not 0.5 <= float(r["Z_over_full"]) <= 2.0]
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert float(r["a2sigma_syst"]) > 0, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert len(pos) % 2 == 0, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert r.returncode == 0, f"{script} failed:\n{r.stdout[-2000:]}\n{r.stderr[-200
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert s > 0, f"beta={r['beta']}: a2sigma_potential is not positive"
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|cand = [c for c in cand if c[0] == c[0] and c[1] == c[1] and c[0] > 0 and c[1] /
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|first_neg = next((t for t, c in series if c < 0), None)
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|if line[i] == "|" and (i == 0 or line[i - 1] != BS):
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|if r.returncode != 0:
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|if v <= 0 or e <= 0 or e / v > REL_TOL:
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|opening = (k % 2 == 0)
+research/code/tests/test_paper_matches_artifacts.py|compared against 0|pos = [i for i in range(len(text)) if text[i] == D and (i == 0 or text[i - 1] !=
+research/code/tests/test_paper_matches_artifacts.py|compared against 1.0|assert abs(ratio - float(s_)) < 1.0, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 1.0|bad = [(r["beta"], r["rho1_coset"]) for r in rows if not 0.0 <= float(r["rho1_co
+research/code/tests/test_paper_matches_artifacts.py|compared against 1.0|straddles = len({ratio(r) >= 1.0 for r in coul_rows}) > 1
+research/code/tests/test_paper_matches_artifacts.py|compared against 12|band = [float(r["m_hi"]) for r in rows if 12 <= int(r["L"]) <= 28]
+research/code/tests/test_paper_matches_artifacts.py|compared against 12|window = sorted(L for L in var if 12 <= L <= 20 and L in fwd)
+research/code/tests/test_paper_matches_artifacts.py|compared against 1e-09|and abs(float(r["beta"]) - beta) < 1e-9]
+research/code/tests/test_paper_matches_artifacts.py|compared against 1e-09|hit = [r for r in rows if r["group"] == group and abs(float(r["beta"]) - beta) <
+research/code/tests/test_paper_matches_artifacts.py|compared against 1e-09|if abs(float(r["beta"]) - 2.30) > 1e-9 or not r["m_eff"] or not r["m_eff_err"]:
+research/code/tests/test_paper_matches_artifacts.py|compared against 1e-09|if int(r["L"]) == L and abs(float(r["beta"]) - beta) < 1e-9
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert int(r["t_read"]) >= 1, f"beta={r['beta']}: t_read is not a time extent"
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert len(groups) == 1 and len(betas) == 1, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert len(hit) == 1, f"expected exactly one {group} b{beta} L{L} row, got {len(
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert len(ten_n) == 1, f"the string-tension table spans several ensemble sizes:
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert n == 1, (f"{marker!r} occurs {n} times in PAPER.md; a passage anchor must
+research/code/tests/test_paper_matches_artifacts.py|compared against 1|straddles = len({ratio(r) >= 1.0 for r in coul_rows}) > 1
+research/code/tests/test_paper_matches_artifacts.py|compared against 2.0|if not 0.5 <= float(r["Z_over_full"]) <= 2.0]
+research/code/tests/test_paper_matches_artifacts.py|compared against 2.0|window = [r for r in resolved if float(r["beta"]) >= 2.0]
+research/code/tests/test_paper_matches_artifacts.py|compared against 20|window = sorted(L for L in var if 12 <= L <= 20 and L in fwd)
+research/code/tests/test_paper_matches_artifacts.py|compared against 28|band = [float(r["m_hi"]) for r in rows if 12 <= int(r["L"]) <= 28]
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert checked >= 2, f"only {checked} multi-panel figures were checked"
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(coulomb) >= 2, "the margin artifact carries fewer than two Coulomb ro
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(hits) >= 2, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(quoted) == 2, f"L={L}: expected value and error, parsed {quoted}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(rows) >= 2, "the plane-scale artifact needs at least two plane sizes"
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(stated) >= 2, f"the joint confidence is stated in {len(stated)} place
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(used) >= 2, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(window) >= 2, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert seen >= 2, f"expected at least two couplings, matched {seen}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert text.count(f"$" + BS + "tau=" + str(last_positive) + "$") >= 2, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert text.count(f"$\\mu_\\infty(8)={mu8:.4f}") >= 2, \
+research/code/tests/test_paper_matches_artifacts.py|compared against 2|if len(drawn) < 2:
+research/code/tests/test_paper_matches_artifacts.py|compared against 32|assert 8 in rows and 32 in rows, "the free-field table does not cover the L the
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert checked >= 3, f"only {checked} coupling rows were checked; the table carr
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert len(means) >= 3,         f"the plateau mean is stated in {len(means)} pla
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert len(sig) == 3, f"beta={beta}: expected value/stat/syst, parsed {sig}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert len(sites) >= 3, f"expected the calibration approach to be stated in 3 pl
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert n >= 3, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 3|assert text.count(stated) >= 3, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 4|assert len(band) >= 4, "the L=12-28 window is not populated in the artifact"
+research/code/tests/test_paper_matches_artifacts.py|compared against 4|assert len(by[g]) >= 4, f"{g} has too few couplings to differentiate"
+research/code/tests/test_paper_matches_artifacts.py|compared against 4|assert len(hits) >= 4, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 4|assert seen >= 4, f"expected four volumes in the table, matched {seen}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 5e-05|assert abs(float(row["a2sigma_err"]) - float(tmax["err"])) < 5e-5, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 5e-05|assert abs(float(row["a2sigma_potential"]) - float(tmax["value"])) < 5e-5, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 5|assert found >= 5,         f"the m_hi plateau range is restated in {found} place
+research/code/tests/test_paper_matches_artifacts.py|compared against 5|assert n >= 5, f"the bore scaling is stated {n} times; it carries the gap's scal
+research/code/tests/test_paper_matches_artifacts.py|compared against 5|if len(cells) < 5:
+research/code/tests/test_paper_matches_artifacts.py|compared against 6.0|if r["group"] == "su3" and int(r["L"]) == 8 and float(r["beta"]) >= 6.0]
+research/code/tests/test_paper_matches_artifacts.py|compared against 6|assert len(checked) >= 6, (
+research/code/tests/test_paper_matches_artifacts.py|compared against 6|assert seen >= 6, f"expected at least six rows, matched {seen}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 7.0|assert float(r["beta"]) <= 7.0, f"the comparison reads beta={r['beta']}, outside
+research/code/tests/test_paper_matches_artifacts.py|compared against 8|assert 8 in rows and 32 in rows, "the free-field table does not cover the L the
+research/code/tests/test_paper_matches_artifacts.py|compared against 8|assert seen >= 8, f"expected at least eight lambda_1 entries, matched {seen}"
+research/code/tests/test_paper_matches_artifacts.py|compared against 8|if r["group"] == "su3" and int(r["L"]) == 8 and float(r["beta"]) >= 6.0]
+research/code/tests/test_paper_matches_artifacts.py|minimum=2|def assert_every_statement
+research/code/tests/test_paper_matches_artifacts.py|named constant TOL = 0.0005|TOL = 5e-4                      # the paper quotes 3-4 decimals
+research/code/tests/test_paper_matches_artifacts.py|tol=0.25|def _variational
+research/code/tests/test_paper_matches_lean.py|compared against 100|assert len(rows) >= 100, (
+research/code/tests/test_paper_matches_lean.py|compared against 10|assert len(FOOTPRINT_CLAIMS) >= 10, (
+research/code/tests/test_paper_matches_lean.py|compared against 20|assert len(files) >= 20, "the Lean scan is looking in the wrong place"
+research/code/tests/test_paper_matches_lean.py|compared against 3|assert len(quoted) >= 3,         f"found {len(quoted)} mu_infinity values in the
+research/code/tests/test_paper_matches_lean.py|compared against 5e-05|assert abs(float(q) - proved) < 5e-5, (
+research/code/tests/test_provenance.py|compared against 0.05|assert abs(float(head.group(4)) - gb) < 0.05, (
+research/code/tests/test_provenance.py|compared against 0|if not isinstance(v, (int, float)) or v <= 0}
+research/code/tests/test_provenance.py|compared against 0|if r.returncode != 0:
+research/code/tests/test_provenance.py|compared against 0|stale = r.returncode == 0
+research/code/tests/test_provenance.py|compared against 120000000|sample = [r for r in per_coll.values() if int(r["bytes"]) < 120_000_000]
+research/code/tests/test_provenance.py|compared against 1|dupes = {name: sorted(files) for (name, _), files in seen.items() if len(files)
+research/code/tests/test_provenance.py|compared against 1|duplicated = {a: n for a, n in owned.items() if n > 1}
+research/code/tests/test_provenance.py|compared against 2.3|tower = sorted({int(r["L"]) for r in dens if r["group"] == "su2" and float(r["be
+research/code/tests/test_provenance.py|compared against 2|assert len(re.findall(re.escape(doi), text)) >= 2, (
+research/code/tests/test_provenance.py|compared against 2|if len(body) >= 2:
+research/code/tests/test_reads.py|compared against 0.0|assert 0.0 < c.delta < 1.0
+research/code/tests/test_reads.py|compared against 0.0|assert 0.0 <= t.certified <= 1.0
+research/code/tests/test_reads.py|compared against 0.0|assert c.band > 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert c.std >= 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert np.isfinite(o.a_delta) and o.a_delta >= 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert np.isfinite(r.attenuation) and r.attenuation >= 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert np.isfinite(r.dispersion) and r.dispersion >= 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert np.isfinite(r.resolved_modes) and r.resolved_modes >= 0.0
+research/code/tests/test_reads.py|compared against 0.0|assert np.isfinite(r.top_share) and 0.0 <= r.top_share <= 1.0
+research/code/tests/test_reads.py|compared against 0.0|assert r.confinement >= 0.0             # floor read -> needs a pinned reference
+research/code/tests/test_reads.py|compared against 0|assert c.n_samples > 0 and c.n_features >= 2
+research/code/tests/test_reads.py|compared against 1.0|assert 0.0 < c.delta < 1.0
+research/code/tests/test_reads.py|compared against 1.0|assert 0.0 <= t.certified <= 1.0
+research/code/tests/test_reads.py|compared against 1.0|assert np.isfinite(r.top_share) and 0.0 <= r.top_share <= 1.0
+research/code/tests/test_reads.py|compared against 1|assert c.n == 1 and c.lo == c.mean == c.hi
+research/code/tests/test_reads.py|compared against 2|assert c.n_samples > 0 and c.n_features >= 2
+research/code/zenodo_deposit.py|compared against 3|if attempt == 3:
+research/code/zenodo_deposit.py|compared against 5|if chunk and (now - self.last > 5 or self.sent == self.total):
+research/data/8_3_regen_from_store.py|compared against 29|if len(rows) < 29:
+research/data/8_3_regen_from_store.py|named constant BETA_C = 1.01|BETA_C = 1.01       # U(1) deconfinement (sharp)
+research/data/8_3_regen_from_store.py|named constant BETA_X_SU2 = 2.2|BETA_X_SU2 = 2.2    # SU(2) bulk crossover (broad; NO deconfinement -- K stays f
+research/data/8_3_regen_from_store.py|named constant SU2 = 0.5,0.6,0.8,1.0,1.2,1.4...|SU2 = [0.50, 0.60, 0.80, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.30, 2.40, 2
+research/data/8_3_regen_from_store.py|named constant U1 = 0.4,0.5,0.6,0.7,0.8,0.9...|U1 = [0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00, 1.05, 1.10, 1.20, 1.30, 1.
+research/data/8_3_regen_from_store.py|ncap=128|def load
+research/data/8_3_regen_su3_from_store.py|compared against 9|if len(rows) < 9:
+research/data/8_3_regen_su3_from_store.py|named constant BETAS = 5.0,5.25,5.5,5.75,6.0,6.25...|BETAS = [5.00, 5.25, 5.50, 5.75, 6.00, 6.25, 6.50, 6.75, 7.00]
+research/data/8_3_regen_su3_from_store.py|ncap=128|def load
+research/data/8_3_run_confinement_order_parameter.py|compared against 16|if len(rows) < 16:
+research/data/8_3_run_confinement_order_parameter.py|named constant BETA_C = 1.011|BETA_C = 1.011                                              # compact U(1) decon
+research/data/8_3_run_confinement_order_parameter.py|named constant U1_BETAS = 0.4,0.5,0.6,0.7,0.8,0.9...|U1_BETAS = [0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00, 1.05, 1.10,
+research/data/8_3_run_confinement_order_parameter.py|ncap=128|def load
+research/data/8_3_run_ksignal_planescale.py|ncap=128|def load
+research/data/8_3_run_nobump.py|compared against 1|elif args.jobs > 1:                                    # CPU: multiprocess over
+research/data/8_3_run_nobump.py|named constant BETA_C = 1.01|BETA_C = 1.01
+research/data/8_3_run_nobump_refnull.py|named constant BETA_C = 1.01|BETA_C = 1.01
+research/data/8_3_run_nobump_refnull.py|named constant LAT = 8,8,8,16|LAT = (8, 8, 8, 16)
+research/data/8_4_regen_from_store.py|compared against 2|if len(got) < 2:
+research/data/8_4_regen_from_store.py|named constant BETA_C = 1.01|BETA_C = 1.01       # U(1) deconfinement (sharp)
+research/data/8_4_regen_from_store.py|named constant BETA_X_SU2 = 2.2|BETA_X_SU2 = 2.2    # SU(2) bulk crossover (broad; no deconfinement)
+research/data/8_4_regen_from_store.py|named constant SU2 = 0.5,0.6,0.8,1.0,1.2,1.4...|SU2 = [0.50, 0.60, 0.80, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.30, 2.40, 2
+research/data/8_4_regen_from_store.py|named constant U1 = 0.4,0.5,0.6,0.7,0.8,0.9...|U1 = [0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00, 1.05, 1.10, 1.20, 1.30, 1.
+research/data/8_4_regen_from_store.py|ncap=128|def load
+research/data/8_4_run_disorder_response.py|named constant BETA_C = 1.01|BETA_C = 1.01
+research/data/8_6_fig_probe.py|compared against 1e-10|thr = next((ppw[i] for i in range(len(ppw)) if var[i] <= 1e-10), None)
+research/data/8_6_fig_probe.py|named constant EPS = 2.220446049250313e-16|EPS = 2.220446049250313e-16                     # IEEE-754 double machine epsilo
+research/data/8_6_run_benchmark.py|named constant BETA_C = 1.011|BETA_C = 1.011
+research/data/8_6_run_probe.py|F=192|def probe_p4_isotropy
+research/data/8_6_run_probe.py|F=32|def _snr_field
+research/data/8_6_run_probe.py|F=48|def _corr_field
+research/data/8_6_run_probe.py|T=192|def probe_p4_isotropy
+research/data/8_6_run_probe.py|T=193|def _snr_field
+research/data/8_6_run_probe.py|T=40|def probe_p1_gap
+research/data/8_6_run_probe.py|T=768|def _corr_field
+research/data/8_6_run_probe.py|compared against 0|m = (x > 0) & (y > 0)
+research/data/8_6_run_probe.py|compared against 0|return float(p), float(math.exp(b)), (1.0 - ss / tot if tot > 0 else 1.0)
+research/data/8_6_run_probe.py|compared against 1e-10|if _aniso(k0, mid) < 1e-10: lo = mid
+research/data/8_6_run_probe.py|nang=128|def _ring_field
+research/data/8_7_fig_gap_correlator.py|compared against 0|cand = [c for c in cand if c[0] == c[0] and c[1] == c[1] and c[0] > 0
+research/data/8_7_fig_gap_correlator.py|compared against 0|if v == v and e == e and v > 0 and e / v <= REL_TOL:
+research/data/8_7_fig_gap_correlator.py|compared against 0|keep = [(a, b_, c) for a, b_, c in zip(x, y, e) if b_ > 0]
+research/data/8_7_fig_gap_correlator.py|compared against 1e-09|Ls = sorted({int(r["L"]) for r in rows if abs(float(r["beta"]) - VB) < 1e-9})
+research/data/8_7_fig_gap_correlator.py|compared against 1e-09|if int(r["L"]) == L and abs(float(r["beta"]) - VB) < 1e-9
+research/data/8_7_fig_gap_correlator.py|compared against 2|if len(body) >= 2:
+research/data/8_7_fig_gap_correlator.py|compared against 2|if len(pts) < 2:
+research/data/8_7_fig_mhi_lscan.py|beta=2.3|def variational_lscan
+research/data/8_7_fig_mhi_lscan.py|compared against 0|if v <= 0 or e <= 0 or e / v > cut:
+research/data/8_7_fig_mhi_lscan.py|compared against 1e-09|if abs(float(r['beta']) - beta) > 1e-9 or not r['m_eff'] or not r['m_eff_err']:
+research/data/8_7_fig_transfer_gap.py|compared against 1|rows = [r for r in corr if int(r['smearing']) == s and int(r['tau']) >= 1]
+research/data/8_7_fig_transfer_gap.py|named constant YMAX = 1.28|YMAX = 1.28
+research/data/8_7_run_gap_correlator.py|compared against 0|qc = qc if ns == 0 else G.ape_smear(qc, ns, alpha=ALPHA, device=DEVICE)
+research/data/8_7_run_gap_correlator.py|compared against 0|return float(np.log(c[_t] / c[_t + 1])) if c[_t] > 0 and c[_t + 1] > 0 else floa
+research/data/8_7_run_gap_correlator.py|compared against 1e-09|pairs = [(L, b) for L, b in pairs if any(abs(b - float(x)) < 1e-9 for x in only_
+research/data/8_7_run_gap_correlator.py|named constant ALPHA = 0.5|ALPHA = 0.5
+research/data/8_7_run_gap_correlator.py|named constant M0_OVER_SQRT_SIGMA = 3.59|M0_OVER_SQRT_SIGMA = 3.59                          # Lucini-Teper-Wenger 2004, S
+research/data/8_7_run_gap_correlator.py|named constant SPATIAL = 0,1,2|SPATIAL = (0, 1, 2)
+research/data/8_7_run_mhi_lscan.py|compared against 1|print(f"  L={L:>2} n={n:>3}  Delta={D:.4f}+/-{D_se:.4f}  m_hi={mhi:.4f}  (<1: {m
+research/data/8_7_run_mhi_lscan.py|named constant BETA = 2.3|BETA = 2.30
+research/data/8_7_run_mhi_lscan.py|named constant LS = 8,12,16,20,24,28...|LS = (8, 12, 16, 20, 24, 28, 32)
+research/data/8_7_run_mhi_multicoupling.py|named constant BETAS = 2.0,2.3,2.5|BETAS = (2.00, 2.30, 2.50)
+research/data/8_7_run_mhi_multicoupling.py|named constant LS = 8,12,16|LS = (8, 12, 16)
+research/data/8_7_run_transfer_gap.py|compared against 0|am = -math.log(l1) if 0 < l1 < 1 else float('nan')
+research/data/8_7_run_transfer_gap.py|compared against 1|am = -math.log(l1) if 0 < l1 < 1 else float('nan')
+research/data/8_7_run_transfer_gap.py|named constant ALPHA = 0.5|ALPHA = 0.5
+research/data/8_7_run_transfer_gap.py|named constant MOMENT_ORDERS = 2,3,4|MOMENT_ORDERS = (2, 3, 4)      # pencil orders read from the correlator
+research/data/8_7_run_transfer_gap.py|named constant SMEARS = 8,16,24,32|SMEARS = (8, 16, 24, 32)
+research/data/8_7_run_transfer_gap.py|named constant SPATIAL = 0,1,2|SPATIAL = (0, 1, 2)
+research/data/8_8_fig_string_tension.py|compared against 2|if len(xs) >= 2:
+research/data/8_8_run_string_tension.py|compared against 0|if np.isfinite(chis[R]) and np.isfinite(errs[R]) and errs[R] > 0
+research/data/8_8_run_string_tension.py|compared against 0|if np.isfinite(sig[t]) and err[t] > 0 and sig[t] / err[t] >= NSIG_RESOLVED)
+research/data/8_8_run_string_tension.py|compared against 0|return float(-np.log(num / den)) if num > 0 and den > 0 else float("nan")
+research/data/8_8_run_string_tension.py|compared against 0|sq = float(np.sqrt(s)) if s > 0 else float("nan")
+research/data/8_8_run_string_tension.py|compared against 1|syst = float(max(abs(sig[T] - s) for T in window)) if len(window) > 1 else 0.0
+research/data/8_8_run_string_tension.py|compared against 3|if len(used) < 3:
+research/data/8_8_run_string_tension.py|named constant ALPHA = 0.5|ALPHA = 0.5                                                           # APE weig
+research/data/8_8_run_string_tension.py|named constant DIMS = 8,8,8,16|DIMS = (8, 8, 8, 16)                                                  # generate
+research/data/8_8_run_string_tension.py|named constant NSIG_RESOLVED = 3.0|NSIG_RESOLVED = 3.0        # a sigma(T) not separated from zero by this many sig
+research/data/9_1_run_d2_bound.py|named constant BETAS = 0.5,0.8,1.0,1.2,1.4,1.6...|BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
+research/data/9_1_run_d2_certify.py|named constant BCYM = 0.767|BCYM = 0.767
+research/data/9_1_run_d2_certify.py|named constant BETAS = 0.5,0.8,1.0,1.2,1.4,1.6...|BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
+research/data/9_1_run_d2_certify.py|named constant BOUND = 1.0|BOUND = 1.0            # proof bound B (< aperture ceiling 3.52)
+research/data/9_1_run_d2_certify.py|named constant CEIL = 3.52|CEIL = 3.52           # aperture ceiling for N = 16
+research/data/9_1_run_d2_certify.py|named constant DELTA = 1e-06|DELTA = 1e-6           # 99.9999% per coupling
+research/data/9_1_run_d2_certify.py|named constant DELTA_CEIL = 1e-30|DELTA_CEIL = 1e-30
+research/data/9_1_run_d2_su3.py|compared against 0|return float(sum(p[d] * d * d for d in range(maxlag + 1)) / s) if s > 0 else 0.0
+research/data/9_1_run_d2_su3.py|named constant SERIES = 6,5.0,5.25,5.5,5.75,6.0...|SERIES = [(6, [5.00, 5.25, 5.50, 5.75, 6.00, 6.25, 6.50, 6.75, 7.00]),
+research/data/9_1_run_d2_su3.py|ncap=128|def load
+research/data/regen_all.py|compared against 0|if head.returncode != 0:
+research/data/regen_all.py|compared against 0|if q > 0:
+research/data/regen_all.py|named constant RESERVE_GB = 6.0|RESERVE_GB = 6.0
+research/data/store_run_thermalisation.py|compared against 0|verdict = "under_thermalised" if off > 0 else "below_equilibrium"
+research/data/store_run_thermalisation.py|compared against 5|if a.ndim == 5:
+research/data/store_run_thermalisation.py|compared against 7|elif a.ndim == 7:

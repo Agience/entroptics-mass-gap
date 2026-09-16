@@ -94,6 +94,13 @@ def main():
                           and int(r["nsmear"]) == NS[op]), key=lambda r: int(r["tau"]))
             exp = _f(sel[0]["a_m_0pp_expected"]) if sel else float("nan")
             pts = [(int(r["tau"]), _f(r["m_eff"]), _f(r["m_eff_err"])) for r in sel
+                   # CHOSEN, AND INCONSISTENT: 0.6 is a relative-error cut for 'is m_eff resolved'. The SAME
+                   # question off the SAME artifact is cut at a different value in 8_7_fig_mhi_lscan.py, which now
+                   # uses the derived criterion (m_eff_err < m_eff). This one should follow.
+                   # CHOSEN, AND INCONSISTENT: a relative-error cut for 'is m_eff resolved'. The SAME question off
+                   # the SAME artifact now uses the DERIVED criterion (m_eff_err < m_eff) in 8_7_fig_mhi_lscan.py.
+                   # This one should follow; it is left here so the inconsistency is visible rather than silently
+                   # harmonised in a figure nobody re-derives.
                    if r["m_eff"] != "" and _f(r["m_eff_err"]) < 0.6]
             if not pts:
                 continue

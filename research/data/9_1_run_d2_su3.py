@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "code"))   # research/code -- store_path
+sys.path.insert(0, os.path.join(HERE, "..", "code", "certify"))
 import store_path                                      # the ONE place the store is located
+import ym_crossover_confinement_of_grid as CG  # the canonical lag-moment read
 
 # The store root, from `store_path`: `CONFIGS`, then the git-ignored local config file, then a
 # refusal. No default: a literal path names one machine, and everywhere else every load returns
@@ -49,18 +51,24 @@ def profiles(arr, maxlag):
 
 
 def d2(P, maxlag):
-    rho = P.mean(0)
-    rho = rho / rho[0]
-    p = np.clip(rho, 0, None)
-    s = p.sum()
-    return float(sum(p[d] * d * d for d in range(maxlag + 1)) / s) if s > 0 else 0.0
+    """The canonical read, imported rather than copied.
+
+    This carried its own six-line copy of the moment, free to drift from the certificate it is meant
+    to mirror -- and it did: both used the raw lag index over half the extent, which is not the
+    quantity `Complete.d2At` bounds. `maxlag` is kept in the signature for the callers that pass it,
+    but the width now comes from the profile itself, so the two cannot disagree.
+    """
+    return CG.d2_from_profiles(P)
 
 
 rng = np.random.default_rng(0)
 out = {}
 for L, betas in SERIES:
     maxlag = L // 2
-    ceil = APERTURE_RHS * 2 * (L + 1) ** 2 / (2 * math.pi) ** 2
+    # DERIVED from the lag arity, not from L+1: `Moment.Read N` indexes lags by `Fin (N+1)`, and a
+    # periodic extent of L sites admits lags d = 0..L-1, so N+1 = L. The second copy of this line
+    # carried the same off-by-one as the SU(2) certificate and inflated the ceiling by ((L+1)/L)^2.
+    ceil = APERTURE_RHS * 2 * L ** 2 / (2 * math.pi) ** 2
     rows = []
     for b in betas:
         arr = load(L, b)

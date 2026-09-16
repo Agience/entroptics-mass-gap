@@ -103,12 +103,12 @@ def action_0pp(b, q):
     return d.sum(axis=(1, 2, 3))
 
 
-def cbar(O, nlag):
-    """C(tau)/C(0) from a set of per-configuration O(t). The vacuum is the ENSEMBLE mean, not a
-    per-configuration time mean, matching 8_7_run_transfer_gap."""
-    d = O - O.mean()
-    c = np.array([np.mean(d * np.roll(d, -t, axis=1)) for t in range(nlag + 1)])
-    return c / c[0]
+# C(tau)/C(0) from per-configuration O(t), vacuum = the ENSEMBLE mean. The implementation is
+# `lattice_generator.connected_correlator`: this and 8_7_run_transfer_gap both stated it, and the
+# correlator is the object every gap in this program is read from, so a change to the vacuum
+# convention in one copy would have left the other reading a different quantity while both still
+# produced plausible numbers.
+cbar = G.connected_correlator
 
 
 def correlator(O, nlag):

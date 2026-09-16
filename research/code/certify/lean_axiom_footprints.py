@@ -27,54 +27,21 @@ from __future__ import annotations
 import csv
 import os
 import re
-import shutil
 import subprocess
+
 import sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean")
+
+sys.path.insert(0, os.path.dirname(_HERE))          # research/code, for the build wrapper
+import lean_build as LB                             # noqa: E402  (needs the path above first)
 OUT_CSV = os.path.join(REPO, "research", "data", "13_dat_axiom_footprints.csv")
 
 # 'name' depends on axioms: [a, b, c]   |   'name' does not depend on any axioms
 _DEPENDS = re.compile(r"'([^']+)' depends on axioms: \[([^\]]*)\]")
 _CLEAN = re.compile(r"'([^']+)' does not depend on any axioms")
-
-
-def project_build_outputs():
-    """MassGap's own build products, and nothing else.
-
-    `#print axioms` output is an info message emitted while a module ELABORATES. A warm .lake
-    replays nothing for modules it does not rebuild, so a second `lake build` produces an empty
-    table -- which is why this exists. Clearing the project's own outputs makes MassGap re-elaborate
-    while Mathlib stays cached; `lake build --no-cache` would rebuild Mathlib too, for hours.
-
-    Returns paths under .lake/build/lib/lean named MassGap*. Anything under .lake/packages is a
-    dependency's build and is never returned, so a bad glob cannot cost a Mathlib rebuild.
-    """
-    root = os.path.join(LEAN, ".lake", "build", "lib", "lean")
-    if not os.path.isdir(root):
-        return []
-    out = []
-    for name in sorted(os.listdir(root)):
-        if not name.startswith("MassGap"):
-            continue
-        path = os.path.join(root, name)
-        real = os.path.realpath(path)
-        assert os.path.join(".lake", "packages") not in real, real
-        assert real.startswith(os.path.realpath(os.path.join(LEAN, ".lake", "build"))), real
-        out.append(path)
-    return out
-
-
-def clear_project_build(dry_run=False):
-    """Remove MassGap's build products so the next build re-elaborates and replays its info messages."""
-    targets = project_build_outputs()
-    for t in targets:
-        print("  clearing %s" % os.path.relpath(t, LEAN))
-        if not dry_run:
-            shutil.rmtree(t) if os.path.isdir(t) else os.remove(t)
-    return targets
 
 
 def parse(text: str) -> dict[str, list[str]]:
@@ -109,11 +76,26 @@ def requested() -> set[str]:
 
 
 def build_here() -> str:
-    """Re-elaborate MassGap locally and return the build output."""
-    cleared = clear_project_build()
+    """Re-elaborate MassGap where builds belong, and return the build output.
+
+    "Here" is whatever `lean_build` resolves to: local by default, or a configured build host. The
+    footprint table is a property of the SOURCES, not of the machine that compiled them, so a build
+    host changes how long this takes and nothing else -- and the sources are pushed before the build,
+    so a remote host cannot report footprints for a tree other than this one.
+    """
+    print(LB.describe())
+    orphans = LB.sources_only_on_remote()
+    if orphans:
+        # A remote build compiles what is THERE. A source that exists only on the build host is
+        # still elaborated, so its declarations would enter this artifact while nothing in this
+        # repository defines them -- a footprint for a theorem the paper cannot cite.
+        raise SystemExit(
+            f"REFUSED: the build host carries {len(orphans)} Lean source(s) this tree does not: "
+            f"{', '.join(orphans)}. They would be compiled into the footprint table while nothing "
+            f"here defines them. Remove them there, or add them here, then re-run.")
+    cleared = LB.clear_project_build()
     print(f"cleared {len(cleared)} project build product(s); Mathlib's cache is untouched. Building...")
-    r = subprocess.run(["lake", "build"], cwd=LEAN, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace")
+    r = LB.build()
     blob = (r.stdout or "") + "\n" + (r.stderr or "")
     if r.returncode != 0:
         sys.stderr.write(blob[-4000:])

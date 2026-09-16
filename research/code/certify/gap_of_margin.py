@@ -8,17 +8,30 @@ It answers two questions the paper's A1 rests on, with data:
      leading feature mode sits below the pinned confined-vacuum floor) in BOTH the gapped and gapless
      phases -- so C-1 is a locality property of the dimension-4 operator, NOT the confinement discriminator.
 
-  2. The LOAD-BEARING finite-aperture certificate:  the temporal forgetting margin `m_hi = e^{-Delta}` (the
-     cosh `mass_gap` Delta) below `3^{-1/4}`.  This IS confinement, and it tracks the phase directly:
+  2. The finite-aperture read:  the temporal forgetting margin `m_hi = e^{-Delta}` (the cosh `mass_gap`
+     Delta) below `3^{-1/4} = 0.7598`.
 
-        "Why does U(1) fail?"  -- NOT a code/setup artifact.  The SAME U(1) reading pipeline reads a
-        FINITE aperture in the confined phase (beta < beta_c ~ 1.01, m_hi ~ 0.14) and an INFINITE one in
-        the Coulomb phase (m_hi ~ 1).  A setup artifact would read white in both phases; it does not.
-        SU(N) is confining at every beta, so it reads finite aperture throughout.
+        THE U(1) NEGATIVE CONTROL DOES NOT SEPARATE THE PHASES, and this table is the evidence.
+        Compact U(1) above `beta_c ~ 1.01` is the Coulomb phase -- a massless photon, no gap -- so it
+        is the case this read must refuse if the read is a confinement discriminator. It does not
+        refuse it: the committed rows are `m_hi = 0.172` at `beta = 1.70` and `0.647` at `beta = 2.50`,
+        both FINITE, against `0.166` for U(1) confined at `beta = 0.90`. Confined SU(2) at `L = 24`
+        reads `0.342`, which sits BETWEEN the two Coulomb rows, so the read does not even order the
+        phases across groups.
+
+        Column 1 fails the same control, and more sharply: `mu` is measured as exactly `0.0` in EVERY
+        row, U(1)-Coulomb included. Since the gap the argument delivers is `Delta >= kappa0 - mu`,
+        at `mu = 0` it would return `Delta >= kappa0 = 0.275` for a theory whose gap is zero.
+
+        So NEITHER column is sufficient for a mass gap on the evidence here. What the table supports
+        is the weaker statement that the SU(N) read satisfies the aperture condition -- not that
+        satisfying it implies a gap. PAPER Sec 12 states both facts; this docstring previously
+        asserted the opposite of the second and has been corrected to the table.
 
 Both certificates feed `lean/MassGap/Certify.lean` (`gap_of_margin_certified`) and, taken as the runtime
 read `hconf`, discharge every Entroptics-specific axiom in `lean/MassGap/Complete.lean`
-(`yang_mills_mass_gap_certified`: footprint = the three foundational + the cited `wilson_reflection_positive`).
+(`yang_mills_mass_gap_certified`: footprint = the three foundational + the cited `wilson_reflection_positive`)
+-- a reduction that is only as strong as `hconf`, which the control above says is not a gap criterion.
 
 Deterministic (no RNG in the reads).  Light: seconds on CPU -- these are reads, not Monte-Carlo generation.
 Point the loader at the config store with  CONFIGS=/path/to/entroptics-lattice  python gap_of_margin.py,
@@ -146,7 +159,7 @@ def main():
     print(f"pinned confined-vacuum null: {nref} su2 b0.50 planes")
     print(f"kappa0 = 1/4 ln3 = {KAPPA0:.4f}    C-1: mu<kappa0  <=>  contrast < 3^(1/4) = {CRIT:.4f}")
     print(f"finite-aperture margin threshold  m_hi = e^-Delta < 3^(-1/4) = {THR_M:.4f}\n")
-    print(f"{'group':>4} {'beta':>5} {'L':>3} {'n':>4} {'phase':>20} | "
+    print(f"{'group':>4} {'beta':>5} {'L':>3} {'n':>4} {'ratio':>6} {'regime':>10} {'phase':>20} | "
           f"{'mu(C-1)':>8} {'contr':>6} {'mu<k0':>6} | {'Delta':>6} {'m_hi':>6} {'aperture':>9}")
     rows = []          # the measured table -- the verdict below is derived from THIS
     for group, beta, L, phase in ENSEMBLES:
@@ -154,6 +167,19 @@ def main():
         if arr is None:
             print(f"  {group} b{beta} L{L}: (absent)")
             continue
+        # The DMD SAMPLING RATIO, reported because m_hi is not comparable across it. The propagator
+        # is truncated to the resolved signal rank while n_pairs < 2F and keeps the full numerical
+        # rank once n_pairs >= 2F, so the two sides are different estimators. Measured at U(1), L=8,
+        # beta=2.50: m_hi = 0.197 at n=48 (ratio 0.70) against 0.712 at n=96 (ratio 1.41) -- a factor
+        # of 3.6 from the configuration count alone, at fixed group, volume and coupling. A
+        # comparison drawn across the boundary compares estimators, not theories.
+        ncfg, T = int(arr.shape[0]), int(arr.shape[-1])
+        F = int(np.prod(arr.shape[1:-1]))
+        ratio = ncfg * (T - 1) / (2.0 * F)
+        # DERIVED: 1.0 is not a threshold -- it is the library's own branch point. entroptics
+        # dynamics._reduce truncates the propagator exactly when n_pairs < 2*F, so `ratio < 1`
+        # names which side of that branch the row was computed on. Read from the code, not chosen.
+        regime = "truncated" if ratio < 1.0 else "full-rank"
         r = W.run(list(arr), time_axis=-1)
         mu = float(r.attenuation)          # feature-side tension mu = log(contrast) (C-1)
         contrast = float(r.contrast)       # leading feature-mode coherence vs the pinned floor
@@ -161,11 +187,24 @@ def main():
         m_hi = math.exp(-delta) if delta > 0 else 1.0
         c1 = "PASS" if mu < KAPPA0 else "FAIL"
         aperture = "finite" if m_hi < THR_M else "INFINITE"
-        print(f"{group:>4} {beta:>5.2f} {L:>3} {arr.shape[0]:>4} {phase:>20} | "
+        print(f"{group:>4} {beta:>5.2f} {L:>3} {ncfg:>4} {ratio:>6.2f} {regime:>10} {phase:>20} | "
               f"{mu:>8.4f} {contrast:>6.3f} {c1:>6} | {delta:>6.3f} {m_hi:>6.3f} {aperture:>9}")
-        rows.append(dict(group=group, beta=beta, L=L, ncfg=int(arr.shape[0]), phase=phase,
+        rows.append(dict(group=group, beta=beta, L=L, ncfg=ncfg, ratio=ratio, regime=regime,
+                         phase=phase,
                          mu=mu, contrast=contrast, c1=c1, delta=delta, m_hi=m_hi,
                          aperture=aperture))
+
+    # Straddle guard. Any within-group m_hi comparison that spans the truncation boundary is
+    # comparing estimators; say so on the run rather than leaving it to be inferred from `ncfg`.
+    for g in sorted({r['group'] for r in rows}):
+        regs = {r['regime'] for r in rows if r['group'] == g}
+        # DERIVED: more than one distinct regime among a group's rows means they straddle the branch.
+        # The comparison is between the number of regimes observed and one; no level is supplied.
+        if len(regs) > 1:
+            print(f"\n!! {g}: rows span BOTH sampling regimes "
+                  f"({', '.join('%s b%.2f n=%d ratio=%.2f %s' % (r['group'], r['beta'], r['ncfg'], r['ratio'], r['regime']) for r in rows if r['group'] == g)}).")
+            print("   m_hi is NOT comparable across that boundary -- re-read at matched ratio before")
+            print("   drawing any phase conclusion from these rows.")
     # The verdict is derived from the rows above, so it reports what this run measured rather than
     # what the read is expected to show.
     n_pass = sum(1 for r in rows if r['c1'] == 'PASS')

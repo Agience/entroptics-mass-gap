@@ -44,12 +44,23 @@ reader (`research/code/`); the Lean 4 / Mathlib development (`research/lean/`) i
 the three foundational axioms plus the named inputs.
 
 **Existence and the gap, on a constructed object.** Beyond the gap, the finite-spacing Osterwalder–Schrader data is
-instantiated for a constructed $SU(N)$ Wilson realisation (`ym_wilson`): `ym_existence_and_gap` delivers the mass gap
-and an OS0–OS3-satisfying continuum measure on $\mathbb{R}^4$, and `ym_wightman` the reconstructed Wightman quantum
-field theory. `ym_existence_and_gap` is a Lean/Mathlib **reduction** to the **four named cited results** above,
-`sorry`-free; `ym_wightman` adds the Osterwalder–Schrader → Wightman reconstruction (two more, six in total). It
-*consumes* those results rather than re-deriving them, and the $SU(N)$ ensemble enters through the entropy-matched
-reads and the cited §2–§3 modelling identification. The exact axiom footprint of every theorem is stated in the
+instantiated for a constructed $SU(N)$ Wilson realisation (`ym_wilson`). Read the two sides at their real strengths,
+which are not the same:
+
+* **Gap side** — `ym_existence_and_gap_of_junction` states it over an *arbitrary* mode family, gated on the two named
+  open residuals (`hfe`, `hgap`). `ym_existence_and_gap` is its collapsed instance at the definitional single mode
+  $m := e^{-(\kappa_0-\mu)}$, whose decay conjunct is therefore arithmetic; it witnesses that the hypotheses are
+  satisfiable and is not evidence about the Wilson transfer operator.
+* **Measure side** — what `Measure.continuum_of_family` proves is a bounded, nonnegative, invariance-preserving
+  **subsequential pointwise limit** $q : J \to \mathbb{R}$ over a countable index set, by a diagonal
+  Bolzano–Weierstrass argument. It is not a measure, not on $\mathbb{R}^4$, and not OS0–OS4: there is no Schwinger
+  function, no reflection positivity of the limit as a quadratic form, no clustering and no regularity. Its
+  invariance is inherited because it was built in — `ymFamily.os_euc` is `rfl`, since `QYM` reads only a label the
+  $\mathrm{Perm}(\mathbb{F}_4)$ actions leave fixed. `ymFamily` is a minimal interface witness.
+
+`ym_wightman` adds the Osterwalder–Schrader → Wightman reconstruction (two more axioms, six in total) on top of that
+limit. The development *consumes* the cited results rather than re-deriving them, and the $SU(N)$ ensemble enters
+through the entropy-matched reads and the cited §2–§3 modelling identification. The exact axiom footprint of every theorem is stated in the
 paper (§13).
 
 ## Layout
@@ -93,17 +104,33 @@ import MassGap
 #print axioms MassGap.ym_wightman
 -- + os_reconstruction, WightmanTheory  (the reconstructed Wightman quantum field theory)
 
-#print axioms MassGap.CellEnclosure.ym_volume_gap_cell_grounded
--- the three foundational only  (the volume-uniform gap; radius from the machine-checked single cell)
+#print axioms MassGap.ym_mass_gap_spectral
+-- the three foundational + the four named inputs  (the gap over an ARBITRARY mode family, gated on the
+-- finite-aperture margin as an EXPLICIT hypothesis: the physics is that hypothesis, not the footprint)
+
+#print axioms MassGap.WitnessVacuity.const_witness_conclusion_is_arithmetic
+-- the three foundational only  (and the module imports Mathlib ALONE: it reproduces, with no part of this
+-- development in scope, the conclusion reached by instantiating the spectral bar at the constant witness
+-- m ≡ 1/5 — so that instantiation is arithmetic, whatever its own footprint reads)
 
 #print axioms MassGap.WilsonGauge.ym_continuum_gauge
--- the three foundational only  (the OS0-OS3 continuum measure on the genuine SU(N) Haar measure)
+-- the three foundational only  (the continuum LIMIT OBJECT — the same bounded, invariance-preserving
+-- subsequential pointwise limit as above, but on a family whose Euclidean/permutation invariances are
+-- DERIVED from Haar via Symmetry.expect_invariant rather than holding by `rfl`. That derivation is the
+-- real content here; the limit object itself is still not a measure on R^4)
+
+#print axioms MassGap.WilsonRead.sum_wilsonCorrReal_pos
+-- the three foundational only  (the entropy-matched read of a GENUINE SU(2) Wilson Gibbs measure —
+-- 8 links, 2 real ordered-loop plaquettes, real Wilson action, Haar — is UNCONDITIONAL: both of
+-- Moment.Read's obligations are theorems. Nonnegativity replaces what wilson_reflection_positive
+-- asserts for the opaque ensemble; positive total mass follows from the Z2 centre of SU(2). Every
+-- declaration in MassGap/WilsonRead.lean carries these three axioms and nothing else)
 ```
 
 ## Data
 
 The empirical reads run on frozen Monte-Carlo action-density ensembles for compact U(1), SU(2), and SU(3)
-— **77 ensembles across 216 shards, 11,356 configurations, 21.97 GB** — on Zenodo under **CC-BY-4.0**, regenerable from the seed
+— **81 ensembles across 265 shards, 22,972 configurations, 22.27 GiB** — on Zenodo under **CC-BY-4.0**, regenerable from the seed
 manifest. Every figure and certificate in §8–§9 regenerates from them by the named script in `research/data/`.
 
 The ensembles are a **separate multi-gigabyte data release**, *Entroptics lattice gauge-theory action-density

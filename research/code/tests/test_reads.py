@@ -19,10 +19,22 @@ def test_run_requires_at_least_one_config():
 
 def test_mass_gap_recovers_free_scalar_gap(free_configs):
     """The forward operator read (dominant Koopman/DMD mode rate -log|mu_1|) recovers the exact
-    free-scalar gap E0 = arccosh(1 + m^2/2)."""
+    free-scalar gap E0 = arccosh(1 + m^2/2), to within the read's own reproducibility.
+
+    DERIVED TOLERANCE. This asserted `rel=0.15` -- a chosen 15%. The tolerance now comes from the
+    measurement: split the same configurations into independent seed blocks, read the gap on each,
+    and require the distance from the exact value to be no larger than the distance the read moves
+    when only the sample changes. Both sides are measured here; nothing is supplied. If the read were
+    biased away from E0 by more than its own sampling scatter, that is a defect, and this is the
+    statement of it that does not need a number.
+    """
     mg = entroptics.run(free_configs).mass_gap
     e0 = math.acosh(1 + 0.6 ** 2 / 2)
-    assert mg == pytest.approx(e0, rel=0.15)
+    blocks = [entroptics.run(free_configs[i::3]).mass_gap for i in range(3)]
+    spread = max(blocks) - min(blocks)
+    assert abs(mg - e0) <= spread, (
+        f"gap {mg:.4f} sits {abs(mg - e0):.4f} from the exact {e0:.4f}, further than the "
+        f"{spread:.4f} the read itself moves across independent seed blocks")
 
 
 def test_mass_gap_recovers_gap_across_Lt_and_is_deterministic():
@@ -30,14 +42,22 @@ def test_mass_gap_recovers_gap_across_Lt_and_is_deterministic():
     Lt, and is DETERMINISTIC in the operator eigenvalues: a repeated read of the same configs is
     bit-identical."""
     e0 = math.acosh(1 + 0.5 ** 2 / 2)
-    gaps = []
+    gaps, per_Lt_configs = [], []
     for Lt in (16, 32, 64):
         cfgs = [generator.free_scalar((8, 8, Lt), 0.5, seed=s) for s in range(48)]
         g = entroptics.run(cfgs).mass_gap
         assert entroptics.run(cfgs).mass_gap == g          # deterministic (bit-identical repeat)
         gaps.append(g)
-    gaps = np.array(gaps)
-    assert np.all(np.abs(gaps / e0 - 1.0) < 0.20)          # every Lt within statistics of the true gap
+        per_Lt_configs.append(cfgs)
+    # DERIVED: the tolerance is the read's own reproducibility across independent seed blocks of the
+    # SAME configurations, not a supplied fraction. The comment on the old `< 0.20` claimed "within
+    # statistics" while the number was hand-set; this measures the statistics it was claiming.
+    for Lt, g, cfgs in zip((16, 32, 64), gaps, per_Lt_configs):
+        blocks = [entroptics.run(cfgs[i::3]).mass_gap for i in range(3)]
+        spread = max(blocks) - min(blocks)
+        assert abs(g - e0) <= spread, (
+            f"at Lt={Lt} the gap {g:.4f} sits {abs(g - e0):.4f} from the exact {e0:.4f}, further "
+            f"than the {spread:.4f} the read moves across independent seed blocks")
 
 
 def test_a_delta_tracks_mass_on_free_scalar():

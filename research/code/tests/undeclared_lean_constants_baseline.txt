@@ -1,0 +1,106 @@
+# Undeclared numeric literals in Lean DEFINITIONS and AXIOMS, as of 2026-09-13.
+#
+# This is a record of DEBT, not a rule about which values are acceptable. Every line is a
+# declaration whose statement carries a numeric literal with no DERIVED:/CHOSEN: note saying what
+# derives it or what choosing it costs. The guard fails on anything NEW; this file may only shrink.
+#
+# The ones that matter most, and why (see the test's module docstring):
+#
+# To retire a line: put DERIVED: or CHOSEN: in that declaration's doc comment, then delete the line.
+
+research/lean/MassGap/Aperture.lean|def UniformSpectralMargin uses 0
+research/lean/MassGap/Apriori.lean|def A2 uses 4
+research/lean/MassGap/Apriori.lean|def ContinuumRotationCongruence uses 0,1
+research/lean/MassGap/Bessel.lean|def besselI uses 2
+research/lean/MassGap/Bessel.lean|def besselTerm uses 2
+research/lean/MassGap/CellEnclosure.lean|abbrev dim uses 0,1,2
+research/lean/MassGap/CellEnclosure.lean|def Hcell uses 0,1,2,4
+research/lean/MassGap/CellEnclosure.lean|def Lbi uses 0,1
+research/lean/MassGap/CellEnclosure.lean|def multSeq uses 1
+research/lean/MassGap/CellEnclosure.lean|def pivotSeq uses 1,2
+research/lean/MassGap/CellSpectrum.lean|def BtTile uses 0,1,14,16,2,3,4,5
+research/lean/MassGap/CellSpectrum.lean|def CtTile uses 0,1,4,5
+research/lean/MassGap/CellSpectrum.lean|def HaTile uses 0,14,15,2,3,4,5,6
+research/lean/MassGap/CellSpectrum.lean|def HbTile uses 0,15,16,2,3,4,5,6
+research/lean/MassGap/CellSpectrum.lean|def Hcell2 uses 0,2,3,4
+research/lean/MassGap/CellSpectrum.lean|def Hcell3 uses 0,1,2,3,4
+research/lean/MassGap/CellSpectrum.lean|def HcellRr uses 1,2,4
+research/lean/MassGap/CellSpectrum.lean|def W0 uses 0,1
+research/lean/MassGap/CellSpectrum.lean|def adjM uses 0,1
+research/lean/MassGap/CellSpectrum.lean|def ceilFac uses 0,1,3,4
+research/lean/MassGap/CellSpectrum.lean|def cellDiag uses 1,2,4
+research/lean/MassGap/CellSpectrum.lean|def cellOff uses 0,1,2
+research/lean/MassGap/CellSpectrum.lean|def ldlKer uses 0,1
+research/lean/MassGap/CellSpectrum.lean|def proj0 uses 0
+research/lean/MassGap/Certify.lean|def UniformConfinement uses 0
+research/lean/MassGap/CompactGauge.lean|instance isMulRightInvariant_probHaar uses 1
+research/lean/MassGap/Complete.lean|def Otr uses 4
+research/lean/MassGap/Complete.lean|def κ₀YM uses 1,3,4
+research/lean/MassGap/Complete.lean|instance : uses 1,4
+research/lean/MassGap/Condensation.lean|def vortexTerm uses 1,2,3,4,7.1
+research/lean/MassGap/Floor.lean|def cubeConfig uses 1,3
+research/lean/MassGap/Floor.lean|def cubePos uses 3
+research/lean/MassGap/Forgetting.lean|def Forgets uses 0,1,2
+research/lean/MassGap/FullModel.lean|axiom WightmanTheory uses 0
+research/lean/MassGap/FullModel.lean|axiom os_reconstruction uses 0,1973,1975,1987,281,31,42,75,83
+research/lean/MassGap/FullModel.lean|def WilsonParams.irCutoff uses 2
+research/lean/MassGap/GapOfDecay.lean|def multiModeGapped uses 0,1,2,3,4,8
+research/lean/MassGap/GappedExample.lean|def Tc uses 1,2,3,4
+research/lean/MassGap/GappedExample.lean|def concreteGapped uses 0,1,2,3,4
+research/lean/MassGap/GappedExample.lean|def gapped_of_aperture_margin uses 0,1,3,4
+research/lean/MassGap/GappedExample.lean|def κ0 uses 0,1,3,4
+research/lean/MassGap/GappedTheory.lean|def reconstruct_gapped uses 0,1
+research/lean/MassGap/HaarMoments.lean|def eps uses 0,1,2
+research/lean/MassGap/HaarMoments.lean|def f00 uses 0,2
+research/lean/MassGap/HaarMoments.lean|def h0 uses 2
+research/lean/MassGap/HaarMoments.lean|def h0mat uses 0,1,2
+research/lean/MassGap/HaarMoments.lean|def transferOp uses 1,2
+research/lean/MassGap/HaarMoments.lean|def w uses 0,1,2
+research/lean/MassGap/HaarMoments.lean|def wmat uses 0,1,2
+research/lean/MassGap/InteractingTwoPoint.lean|def envC0 uses 0,1,2,3,7
+research/lean/MassGap/InteractingTwoPoint.lean|def envC1 uses 1,4,5,6,7
+research/lean/MassGap/Model.lean|def A2_YM uses 4
+research/lean/MassGap/Moment.lean|def p uses 1
+research/lean/MassGap/Moment.lean|def tension uses 0,2
+research/lean/MassGap/Moment.lean|def θ uses 1,2
+research/lean/MassGap/Moment.lean|instance (N uses 0,1
+research/lean/MassGap/Reconstruction.lean|def hamiltonian uses 0,1
+research/lean/MassGap/SUN.lean|instance : uses 1
+research/lean/MassGap/VortexCount.lean|def floorTerm uses 1,2,3,4,6
+research/lean/MassGap/WilsonAction.lean|def wilsonDensity uses 1
+research/lean/MassGap/WilsonGauge.lean|def NaG uses 1
+research/lean/MassGap/WilsonGauge.lean|def actEG uses 4
+research/lean/MassGap/WilsonGauge.lean|def actPG uses 4
+research/lean/MassGap/WilsonInstance.lean|abbrev JYM uses 4
+research/lean/MassGap/WilsonInstance.lean|def NaYM uses 0,1
+research/lean/MassGap/WilsonInstance.lean|def QYM uses 0,1
+research/lean/MassGap/WilsonInstance.lean|def actEYM uses 4
+research/lean/MassGap/WilsonInstance.lean|def actPYM uses 4
+research/lean/MassGap/WilsonInstance.lean|def evYM uses 0,1
+research/lean/MassGap/WilsonInstance.lean|def gapModelOf uses 1978,2003
+research/lean/MassGap/WilsonInstance.lean|def ymFamily uses 0,1,4
+research/lean/MassGap/WilsonRead.lean|def linkTranslate uses 8
+research/lean/MassGap/WilsonRead.lean|def linkTranslateEquiv uses 8
+research/lean/MassGap/WilsonRead.lean|def wilsonCorrReal uses 0,2
+research/lean/MassGap/WilsonRead.lean|def wilsonReadReal uses 0,1
+research/lean/MassGap/WilsonRead.lean|def zCentre uses 1,2
+research/lean/MassGap/WilsonReal.lean|abbrev G2 uses 2
+research/lean/MassGap/WilsonReal.lean|def bd2 uses 0,1,2,3,4,5,6,7,8
+research/lean/MassGap/WilsonReal.lean|def bd3 uses 0,1,10,11,12,2,3,4,5,6,7,8,9
+research/lean/MassGap/WilsonReal.lean|def bdInt uses 0,1,2,3,4,5,6,7
+research/lean/MassGap/WilsonReal.lean|def blockA uses 0,1,2,3,8
+research/lean/MassGap/WilsonReal.lean|def blockB uses 1,4,5,6,7,8
+research/lean/MassGap/WilsonReal.lean|def blockIntA uses 0,1,2,3,7
+research/lean/MassGap/WilsonReal.lean|def blockIntB uses 3,4,5,6,7
+research/lean/MassGap/WilsonReal.lean|def extendA uses 1
+research/lean/MassGap/WilsonReal.lean|def extendB uses 1
+research/lean/MassGap/WilsonReal.lean|def plaqObs uses 2
+research/lean/MassGap/WilsonReal.lean|def symReal uses 2
+research/lean/MassGap/WilsonReal.lean|def symRing uses 3
+research/lean/MassGap/WilsonReal.lean|def sysInt uses 2,3
+research/lean/MassGap/WilsonReal.lean|def sysReal uses 2
+research/lean/MassGap/WilsonReal.lean|def sysRing uses 2,3
+research/lean/MassGap/WilsonReal.lean|def σL2 uses 4,8
+research/lean/MassGap/WilsonReal.lean|def σL3 uses 12,4
+research/lean/MassGap/WilsonReal.lean|def σP2 uses 0,1,2
+research/lean/MassGap/WilsonReal.lean|def σP3 uses 1,3

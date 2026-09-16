@@ -112,7 +112,7 @@ def main() -> int:
                     row = (f"{group:>4} {beta:>5.2f} {L:>3} {arr.shape[0]:>4} | {Δ:>7.4f} "
                            f"{(1.0/Δ if Δ>0 else float('inf')):>6.2f} {'':>4} | "
                            f"{mu:>6.3f} {KAPPA0-mu:>6.3f} {con:>6.3f} {below:>5} {ks:>6.3f}")
-                    verdict[(group, beta)] = (mu, con, Δ, ks)
+                    verdict[(group, beta)] = (mu, con, Δ, ks, float(r.resolved_modes))
                     rows[-1].update(mu=float(mu), kappa0_minus_mu=float(KAPPA0 - mu),
                                     contrast=float(con), mu_below_kappa0=below, K_signal=float(ks))
                 except Exception as e:
@@ -121,17 +121,29 @@ def main() -> int:
         # gap L-scaling summary line
         if gaps:
             gl = [round(gaps[L], 3) for L in LS if L in gaps]
-            print(f"     └ Δ(L) = {gl}  ({'finite ξ, L-stable' if min(gaps.values())>0.3 else 'Δ→0 (gapless)'})")
+            # DERIVED: the line reports the SPREAD of Delta across apertures and passes no verdict.
+            # A gap that is a property of the theory does not move with the window; one that is a
+            # resolution artefact falls as the window widens. The ratio shows which, and naming a
+            # value of it that counts as "stable" would just be a new chosen number.
+            gmin, gmax = min(gaps.values()), max(gaps.values())
+            # DERIVED: zero is where a ratio stops existing, not a threshold on one.
+            spread = (gmax / gmin) if gmin > 0 else float("inf")
+            print(f"     └ Δ(L) = {gl}   max/min = {spread:.2f}")
 
     print("\n" + "=" * 74)
     print("A1 CONJUNCTION verdict (μ<κ₀  AND  finite gap Δ>0):")
-    for (group, beta), (mu, con, Δ, ks) in verdict.items():
+    for (group, beta), (mu, con, Δ, ks, res) in verdict.items():
         half1 = con < CRIT                                    # μ<κ₀
-        half2 = Δ > 0.3                                       # finite aperture (resolved gap)
+        # DERIVED: the finite-aperture half is the READ'S OWN resolved/unresolved verdict, not a
+        # magnitude compared against a number chosen here. `resolved_modes` counts the modes standing
+        # above the read's own noise floor, so `>= 1` says the gap belongs to a mode the instrument
+        # actually resolves. The `1` is arity -- a gap must be the gap OF something -- not a
+        # threshold: no value of `Δ` passes or fails by being large or small.
+        half2 = res >= 1.0                                    # the gap mode is resolved
         if half1 and half2:
-            v = f"CONFINED + GAPPED  (μ<κ₀ ✓  Δ={Δ:.2f}>0 ✓)"
+            v = f"CONFINED + GAPPED  (μ<κ₀ ✓  Δ={Δ:.2f}, {res:.0f} resolved ✓)"
         elif half1 and not half2:
-            v = f"COULOMB FOIL       (μ<κ₀ ✓  Δ={Δ:.2f}=0 ✗ finite-aperture half)"
+            v = f"COULOMB FOIL       (μ<κ₀ ✓  no resolved mode ✗ finite-aperture half)"
         else:
             v = f"(μ<κ₀ {'✓' if half1 else '✗'}  Δ={Δ:.2f})"
         print(f"  {group} β={beta:.2f}:  {v}   [K_signal={ks:.3f}]")

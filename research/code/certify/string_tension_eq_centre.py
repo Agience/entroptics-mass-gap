@@ -56,11 +56,50 @@ def rho1(field):
     return math.exp(-d) if d > 0 else 1.0
 
 
+#: DERIVED: a SAMPLE COUNT, not a cut. It sets how well each tension's own spread is estimated; no
+#: verdict turns on its value, because the verdict compares a tension against that spread.
+BLOCKS = int(os.environ.get("BLOCKS", "4"))
+
+
+def sigma_blocks(links, project, group="su2"):
+    """The Creutz tension, read from `BLOCKS` disjoint slices of the ensemble.
+
+    The configuration axis carries independent batched chains, so contiguous slices are independent
+    reads of the same physics rather than resamples of one. Returns (mean, spread) with the spread the
+    block-to-block range -- how far the tension moves for no physical reason.
+    """
+    n = links.shape[0]
+    per = n // BLOCKS
+    # DERIVED: 2 is where a spread exists at all -- one block has nothing to vary against.
+    if per < 2 or BLOCKS < 2:
+        s = G.creutz_sigma(links, RT, RT, group=group, project=project, device=DEV)
+        return float(s), float("inf")
+    vals = [float(G.creutz_sigma(links[b * per:(b + 1) * per], RT, RT,
+                                 group=group, project=project, device=DEV))
+            for b in range(BLOCKS)]
+    vals = [v for v in vals if v == v]                       # a diverged block reads nan
+    # DERIVED: 2 is where a spread exists at all -- fewer than two surviving blocks have no
+    # range to span, so there is nothing to judge the tension against.
+    if len(vals) < 2:
+        return float("nan"), float("inf")
+    return float(np.mean(vals)), float(max(vals) - min(vals))
+
+
+def resolved(mean, spread):
+    """Is the tension distinguishable from zero by its own reproducibility?
+
+    DERIVED: the comparison is `mean > spread` -- a measured value against a measured spread. A
+    tension smaller than the range its own blocks span is not a tension this ensemble resolved, and
+    dividing by it manufactures a ratio out of noise (beta = 1.40 gave 6.51 that way).
+    """
+    return mean == mean and spread == spread and mean > spread
+
+
 def main():
     print(f"SU(2) L={L} N={N} therm={THERM} {METHOD} dev={DEV} MCG={MCG_ITERS} chi({RT},{RT}); "
           f"rho1 thr: gap<1, margin<{THR_MARGIN:.4f}", flush=True)
-    print(f"{'beta':>5} | {'r1_coset':>9} | {'sig_full':>8} {'sig_Z':>7} {'Z/full':>7} | {'sec':>5}",
-          flush=True)
+    print(f"{'beta':>5} | {'r1_coset':>9} | {'sig_full':>8}   {'spread':<7} {'sig_Z':>7} "
+          f"{'Z/full':>7} {'state':>10} | {'sec':>5}", flush=True)
     rows = []
     for b in BETAS:
         t0 = time.time()
@@ -68,13 +107,19 @@ def main():
         px = G.action_density(links, group="su2", project="coset", device=DEV)
         rx = rho1(px)                                                                    # Input 3: rho'_coset(1)
         Lg = G.maximal_centre_gauge(links, group="su2", iters=MCG_ITERS, device=DEV)     # Read 4: gauge-fix
-        sf = G.creutz_sigma(links, RT, RT, group="su2", project="full", device=DEV)      # gauge-invariant
-        sz = G.creutz_sigma(Lg, RT, RT, group="su2", project="centre", device=DEV)       # Z2 after MCG
-        ratio = sz / sf if sf > 0 else float("nan")
-        print(f"{b:>5.2f} | {rx:>9.4f} | {sf:>8.4f} {sz:>7.4f} {ratio:>7.3f} | {time.time()-t0:>5.0f}",
+        sf, sf_spread = sigma_blocks(links, "full")                                     # gauge-invariant
+        sz, sz_spread = sigma_blocks(Lg, "centre")                                      # Z2 after MCG
+        # The ratio is reported only when the DENOMINATOR is resolved. A positive-but-unresolved
+        # tension is what produced the 6.51 this guard exists to refuse.
+        ok = resolved(sf, sf_spread)
+        ratio = (sz / sf) if ok else float("nan")
+        print(f"{b:>5.2f} | {rx:>9.4f} | {sf:>8.4f}+-{sf_spread:<7.4f} {sz:>7.4f} "
+              f"{ratio:>7.3f} {'resolved' if ok else 'UNRESOLVED':>10} | {time.time()-t0:>5.0f}",
               flush=True)
         rows.append(dict(beta="%.2f" % b, nconfigs=int(N), L=int(L), rho1_coset="%.6f" % rx,
-                         sigma_full="%.6f" % sf, sigma_Z="%.6f" % sz,
+                         sigma_full="%.6f" % sf, sigma_full_spread="%.6f" % sf_spread,
+                         sigma_Z="%.6f" % sz, sigma_Z_spread="%.6f" % sz_spread,
+                         sigma_resolved=("yes" if ok else "no"),
                          Z_over_full=("" if ratio != ratio else "%.6f" % ratio)))
 
     # Every beta is generated here rather than loaded, so a short table means a coupling failed
@@ -84,26 +129,64 @@ def main():
         raise SystemExit("read %d of %d couplings: refusing to write a partial centre-dominance table"
                          % (len(rows), len(BETAS)))
 
-    # A row survives the check above even when its ratio did not resolve: `sigma_full <= 0` leaves
-    # Z_over_full empty, and at strong coupling that is the normal outcome -- a chi(R,R) Creutz ratio
-    # needs Wilson loops the ensemble can actually resolve, and W ~ (beta/4)^area is beneath the noise
-    # at small beta. So the table can come out full-length with its load-bearing column blank, which
-    # reads as a complete certificate and is not one: sigma_Z/sigma is the whole claim.
-    resolved = [r for r in rows if r["Z_over_full"] != ""]
+    # A row survives the check above even when its ratio did not resolve: an UNRESOLVED denominator
+    # leaves Z_over_full empty, and at strong coupling that is the normal outcome -- a chi(R,R) Creutz
+    # ratio needs Wilson loops the ensemble can actually resolve, and W ~ (beta/4)^area is beneath the
+    # noise at small beta, the more so as RT grows. So the table can come out full-length with its
+    # load-bearing column blank, which reads as a complete certificate and is not one: sigma_Z/sigma
+    # is the whole claim.
+    #
+    # "Unresolved" is now measured rather than inferred from a sign. The previous guard asked only
+    # `sigma_full > 0`, which passed a positive-but-unresolved tension at beta = 1.40 and divided by
+    # it, reporting sigma_Z/sigma = 6.51 -- a ratio manufactured from noise. The guard is now the
+    # tension against its own block-to-block spread.
+    # NAMED `resolved_rows`, not `resolved`. Binding `resolved` here would make the name local to
+    # this whole function and turn the `resolved(sf, sf_spread)` call ABOVE into an UnboundLocalError
+    # -- which is exactly what happened: the guard could never run, and the failure only appears when
+    # the first coupling reaches it, so the module imports and the suite passes.
+    resolved_rows = [r for r in rows if r["Z_over_full"] != ""]
     print("  centre-dominance ratio resolved at %d of %d couplings: %s"
-          % (len(resolved), len(rows), ", ".join(r["beta"] for r in resolved) or "none"), flush=True)
-    if not resolved:
+          % (len(resolved_rows), len(rows),
+             ", ".join(r["beta"] for r in resolved_rows) or "none"), flush=True)
+    if not resolved_rows:
         raise SystemExit(
-            "no coupling resolved sigma_Z/sigma (every sigma_full <= 0 or nan): refusing to write a\n"
+            "no coupling resolved sigma_Z/sigma (no sigma_full exceeded its own block spread):\n"
+            "  refusing to write a\n"
             "  centre-dominance table that carries no centre-dominance measurement. The Creutz ratio\n"
             "  needs loops this ensemble resolves -- raise N (configs) or THERM, or scan couplings\n"
             "  where W(R,R) sits above the noise.")
+    # RT IS A COLUMN, and it has to be. `RT` is the Creutz loop size, it is the ONLY thing that
+    # differs between the RT=2 and RT=3 scans, and both write this filename. Without it the artifact
+    # cannot say which loop produced a row -- and the two scans disagree sharply at the ends of the
+    # range (chi(2,2) falls with beta, chi(3,3) rises), so a reader who cannot tell them apart reads
+    # a contradiction. It was in the printed header and not in the file, which is the worst place for
+    # it: visible while the run is on screen and gone by the time anyone reads the data.
+    for r in rows:
+        r["rt"] = RT
+    # MERGED, not overwritten, keyed by (rt, beta): the two loop sizes are two measurements of the
+    # same quantity and belong in one table, which is what makes them comparable at the couplings
+    # where both resolve. A plain "w" here silently discarded whichever scan finished first.
+    merged = {}
+    if os.path.exists(OUT_CSV):
+        with open(OUT_CSV, newline="", encoding="utf-8") as fh:
+            for old_row in csv.DictReader(fh):
+                # rows written before `rt` existed are RT=3: that was the default, and the RT=2 scan
+                # is newer than this column.
+                old_row.setdefault("rt", "3")
+                if not old_row.get("rt"):
+                    old_row["rt"] = "3"
+                merged[(str(old_row["rt"]), str(old_row["beta"]))] = old_row
+    for r in rows:
+        merged[(str(r["rt"]), str(r["beta"]))] = r
+    out = sorted(merged.values(), key=lambda r: (int(r["rt"]), float(r["beta"])))
     with open(OUT_CSV, "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=["beta", "nconfigs", "L", "rho1_coset", "sigma_full",
-                                           "sigma_Z", "Z_over_full"])
+        w = csv.DictWriter(fh, fieldnames=["rt", "beta", "nconfigs", "L", "rho1_coset", "sigma_full",
+                                           "sigma_full_spread", "sigma_Z", "sigma_Z_spread",
+                                           "sigma_resolved", "Z_over_full"])
         w.writeheader()
-        w.writerows(rows)
-    print("wrote %s (%d couplings)" % (OUT_CSV, len(rows)))
+        w.writerows(out)
+    print("wrote %s (%d couplings this run, %d rows total across %d loop size(s))"
+          % (OUT_CSV, len(rows), len(out), len({r["rt"] for r in out})))
 
 
 if __name__ == "__main__":

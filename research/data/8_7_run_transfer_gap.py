@@ -73,10 +73,9 @@ def operator_Ot(b, q):
     return O.detach().cpu().numpy() if hasattr(O, 'detach') else np.asarray(O)
 
 
-def connected_C(O, nlag):
-    d = O - O.mean()                                   # ensemble vacuum-mean (NOT per-config time-mean)
-    c = np.array([np.mean(d * np.roll(d, -tau, axis=1)) for tau in range(nlag + 1)])
-    return c / c[0]
+# Ensemble vacuum-mean (NOT a per-config time-mean). One implementation, in the generator, shared
+# with 8_7_run_gap_correlator.
+connected_C = G.connected_correlator
 
 
 # The transfer-spectrum read (reflection-positive moment pencil) and its jackknife error are the viewer's

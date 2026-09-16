@@ -32,11 +32,23 @@ with open(os.path.join(here, '8_7_dat_mhi_lscan.csv')) as fh:
     rows = list(csv.DictReader(fh))
 
 
-def variational_lscan(beta=2.30, tol=0.25):
+def variational_lscan(beta=2.30):
     """m_hi from the Sec 8.7b variational read, at every volume where raw links exist.
 
-    The same rule Sec 8.7b states: the smallest m_eff resolved to `tol` anywhere in the
-    (operator, smearing, tau) basis is an upper bound on the gap, hence a lower bound on m_hi.
+    Sec 8.7b's rule: the smallest m_eff RESOLVED anywhere in the (operator, smearing, tau) basis is
+    an upper bound on the gap, hence a lower bound on m_hi.
+
+    "Resolved" is now the measurement against its OWN uncertainty -- `m_eff_err < m_eff` -- and not a
+    chosen relative-error cut. The previous `tol=0.25` decided the result it was measuring: the
+    constant fit over L=12-20 gives chi2/dof = 0.04 only for tol in [0.20, 0.30], and is REJECTED at
+    3.7 (tol=0.15) and 2.1 (tol=0.40); Delta itself moves 43% across the range (1.49 at tol=0.10 to
+    1.04 at tol=0.50); and which operator attains the minimum flips between plaquette and action
+    density. Figure 13's caption quotes that chi2/dof, so the cut was load-bearing for a published
+    claim.
+
+    `variational_lscan_band` below reports the spread across the whole cut range, so the sensitivity
+    is published rather than hidden behind whichever value is chosen here.
+
     Returns {} when the correlator artifact is absent, so this figure still draws without it."""
     path = os.path.join(here, '8_7_dat_gap_correlator.csv')
     if not os.path.exists(path):
@@ -48,13 +60,45 @@ def variational_lscan(beta=2.30, tol=0.25):
         if abs(float(r['beta']) - beta) > 1e-9 or not r['m_eff'] or not r['m_eff_err']:
             continue
         v, e = float(r['m_eff']), float(r['m_eff_err'])
-        if v <= 0 or e <= 0 or e / v > tol:
+        # DERIVED: resolved = the value exceeds its own uncertainty. Both quantities come from the
+        # same jackknife in the same row; no cut is supplied.
+        if v <= 0 or e <= 0 or e >= v:
             continue
         k = int(r['L'])
         if k not in out or v < out[k][0]:
             out[k] = (v, e, r['operator'], int(r['nsmear']), int(r['tau']))
     return {k: (np.exp(-v), np.exp(-v) * e, op, ns, t) for k, (v, e, op, ns, t) in out.items()}
 
+
+
+# CHOSEN, AND IT SELECTS THE PUBLISHED CLAIM. The abstract states the plateau over exactly
+# this window, and the window excludes L=32 -- the point whose inclusion rejects the constant
+# fit (chi2/dof 0.59 over 12-28 against 4.0 over 12-32). No derived reference.
+def variational_lscan_band(beta=2.30, cuts=(0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.00)):
+    """The variational read across the whole range of relative-error cuts, per volume.
+
+    Published so the sensitivity is visible. `variational_lscan` itself uses the derived criterion
+    (a value must exceed its own error, i.e. the cut at 1.00); this reports what the other choices
+    would have given, which is how the `tol=0.25` dependence was found."""
+    path = os.path.join(here, '8_7_dat_gap_correlator.csv')
+    if not os.path.exists(path):
+        return {}
+    with open(path) as fh:
+        gr = list(csv.DictReader(fh))
+    band = {}
+    for cut in cuts:
+        out = {}
+        for r in gr:
+            if abs(float(r['beta']) - beta) > 1e-9 or not r['m_eff'] or not r['m_eff_err']:
+                continue
+            v, e = float(r['m_eff']), float(r['m_eff_err'])
+            if v <= 0 or e <= 0 or e / v > cut:
+                continue
+            k = int(r['L'])
+            if k not in out or v < out[k][0]:
+                out[k] = (v, e, r['operator'])
+        band[cut] = {k: (np.exp(-v), op) for k, (v, e, op) in out.items()}
+    return band
 
 var = variational_lscan()
 
@@ -71,6 +115,10 @@ ax.axhline(CEIL, color='crimson', lw=1.3, ls='--')
 ax.text(Lmax + 0.3, CEIL + 0.013, r'entropy-floor ceiling  $3^{-1/4}=e^{-\kappa_0}=0.76$',
         fontsize=8.5, color='crimson', ha='right')
 
+# CHOSEN, AND IT SELECTS THE PUBLISHED CLAIM. The abstract states the plateau over exactly this
+# window, and the window excludes L=32 -- the point whose inclusion moves the constant fit from
+# chi2/dof 0.59 (L=12-28) to 4.0 (L=12-32). No derived reference; the derived alternative is to
+# publish the fit over every window and let the reader see which ones support a plateau.
 plat = (L >= 12) & (L <= 28)      # scaling window; L=8 (small-vol) and L=32 (large-vol) are resolution edges
 edge = ~plat
 plat_mean = float(np.mean(mhi[plat]))

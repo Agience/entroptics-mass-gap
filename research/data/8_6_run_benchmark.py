@@ -68,16 +68,30 @@ def _load(name, cols):
 
 
 def free_scalar_gap():
-    """Panel A: the forward operator gap read vs the exact gap E0 across the mass range (generated here)."""
-    masses = [0.20, 0.35, 0.50, 0.70, 0.90, 1.10]
+    """Panel A: the free-scalar calibration, READ FROM the artifact that measures it.
+
+    WHY NOT RECOMPUTED HERE. It used to be. Two scripts computed the same measurement from the same
+    seeds and the suite had to assert that they agreed value for value -- a correspondence that can
+    only ever be maintained by hand, and that silently states the same number twice as if it were
+    two. The calibration belongs to 8_5_run_gap_calibration.py; this panel summarises it. Reading
+    the artifact makes the agreement structural instead of asserted, and carries across the part
+    the recomputation dropped: the reseeding spread, which is the only uncertainty either script
+    measures.
+
+    Returns (m, E0, read, spread) per mass, in the artifact's order.
+    """
+    path = os.path.join(_HERE, "8_5_dat_gap_calibration.csv")
     rows = []
-    print("Panel A -- free-scalar gap (read vs exact E0):")
-    for m in masses:
-        cfgs = [generator.free_scalar((8, 8, 64), m, seed=s) for s in range(40)]  # match 8_5 (n=40)
-        read = float(entroptics.run(cfgs).mass_gap)
-        e0 = math.acosh(1 + m * m / 2)
-        rows.append((m, e0, read))
-        print(f"  m={m:4.2f}  E0={e0:.4f}  read={read:.4f}  ({100 * (1 - abs(read - e0) / e0):.0f}%)")
+    print("Panel A -- free-scalar gap (from 8_5_dat_gap_calibration.csv):")
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            m, e0 = float(r["m"]), float(r["E0"])
+            read, spread = float(r["mass_gap"]), float(r["spread"])
+            rows.append((m, e0, read, spread))
+            print(f"  m={m:4.2f}  E0={e0:.4f}  read={read:.4f}  spread={spread:.4f} "
+                  f"({100 * spread / e0:.1f}% of E0)")
+    if not rows:
+        raise SystemExit(f"{path} carries no rows; run 8_5_run_gap_calibration.py --mode full first")
     return rows
 
 
@@ -99,12 +113,16 @@ def main():
 
     # -- A: free-scalar gap, Entroptics read vs exact E0 --------------------------------
     m = np.array([r[0] for r in fs]); e0 = np.array([r[1] for r in fs]); rd = np.array([r[2] for r in fs])
+    sp = np.array([r[3] for r in fs])
     mm = np.linspace(m.min() * 0.9, m.max() * 1.05, 200)
     aA.plot(mm, np.arccosh(1 + mm * mm / 2), color="#555", lw=1.8, label=r"Exact: $E_0=\mathrm{arccosh}(1+m^2/2)$")
-    aA.plot(m, rd, "o", color=ENT, ms=8, label=r"Entroptics: dominant DMD-rate read")
-    for mi, e, r in zip(m, e0, rd):
-        aA.annotate(f"{100 * (1 - abs(r - e) / e):.0f}%", (mi, r), textcoords="offset points",
-                    xytext=(6, -4), fontsize=8, color=ENT)
+    # DERIVED: the bar is the reseeding spread the calibration measured, drawn half either side of
+    # the block mean so the bar's full extent is the spread itself. Nothing is scaled or chosen.
+    aA.errorbar(m, rd, yerr=sp / 2, fmt="o", color=ENT, ms=8, capsize=3,
+                label=r"Entroptics: dominant DMD-rate read (bars: reseeding spread)")
+    for mi, e, s in zip(m, e0, sp):
+        aA.annotate(f"±{50 * s / e:.0f}%", (mi, e), textcoords="offset points",
+                    xytext=(6, -12), fontsize=8, color=ENT)
     aA.set_xlabel(r"free-scalar mass $m$ (lattice units)"); aA.set_ylabel(r"mass gap")
     aA.set_title(r"A  free-scalar gap: read vs exact $E_0$  ($8^2\times64$)")
     aA.legend(fontsize=9, loc="upper left")
@@ -162,8 +180,10 @@ def main():
     with open(DAT, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["panel", "quantity", "entroptics", "established", "uncertainty", "reference"])
-        for mi, e0i, rdi in fs:
-            w.writerow(["A", f"free-scalar gap m={mi}", f"{rdi:.4f}", f"{e0i:.4f}", "-",
+        for mi, e0i, rdi, spi in fs:
+            # The uncertainty column is the calibration's own reseeding spread -- the reason this
+            # panel reads the artifact rather than recomputing it.
+            w.writerow(["A", f"free-scalar gap m={mi}", f"{rdi:.4f}", f"{e0i:.4f}", f"{spi:.4f}",
                         "exact E0=arccosh(1+m^2/2)"])
         w.writerow(["B", "U(1) transition beta_c", "K_signal rise through beta_c",
                     f"{BETA_C}", "-", BETA_C_SRC])

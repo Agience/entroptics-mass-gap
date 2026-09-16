@@ -92,10 +92,23 @@ def test_no_script_cites_a_file_that_does_not_exist():
 
     Test files are excluded: their prose names example files on purpose.
     """
+    import os
     import re
 
     root = REPO / "research"
     have = {p.name for p in root.rglob("*") if p.is_file()}
+    # The ensemble store is a second real tree, and prose here cites tools that live in it --
+    # `make_manifest.py` rebuilds the manifest FROM the store root, by discovery, so it belongs
+    # beside the data rather than beside the code that reads it. Its top-level names count as
+    # resolving. When no store is configured the set is empty and this adds nothing, which is
+    # correct: a clone without the store cannot check a reference into it either way.
+    try:
+        import store_path
+        sr = store_path.store_root(required=False)
+        if sr and os.path.isdir(sr):
+            have |= {e.name for e in os.scandir(sr) if e.is_file()}
+    except Exception:
+        pass
     pat = re.compile(r"[`\s(]([A-Za-z0-9_./]+\.(?:py|csv|png|lean|md|txt))")
     unresolved = {}
     # A name a program declares in code -- its own output path -- is not a dead reference, even
@@ -296,22 +309,45 @@ def test_release_figures_match_the_shipped_manifest():
     CFG = r"(\d{1,3}\{,\}\d{3}) configurations"
     for label, blob, pat, want in (
             ("ensemble count", para, r"(\d+) ensembles", str(ens)),
-            ("density configuration count", para, CFG, thousands(cfgs)),
-            ("deposit configuration count", cite, CFG, thousands(all_cfgs)),
-            ("deposit shard count", cite, r"(\d+) shards", str(len(rows)))):
+            ("density configuration count", para, CFG, thousands(cfgs))):
         hits = re.findall(pat, blob)
         assert hits, f"the paper states no {label}"
         bad = [h for h in hits if h != want]
         assert not bad, (f"the paper states the {label} as {bad} in {len(bad)} of {len(hits)} "
                          f"places; the manifest gives {want}")
 
+    # THE DEPOSIT IS NOT THE STORE, and requiring them equal forces a false statement. The citation
+    # names Zenodo v0.1.0, whose contents are fixed at publication; the store grows whenever a
+    # campaign lands. Asserting equality would mean editing a published version's shard count to
+    # match a local directory -- the citation would then describe a deposit that does not exist.
+    #
+    # So the invariant is DEPOSIT <= STORE, with the gap reported: the store may run ahead, never
+    # behind, and a citation claiming more than was ever generated is still caught.
+    num = lambda s: int(s.replace("{,}", "").replace(",", ""))
+    dep_cfgs = [num(h) for h in re.findall(CFG, cite)]
+    dep_shards = [int(h) for h in re.findall(r"(\d+) shards", cite)]
+    assert dep_cfgs and dep_shards, "the dataset citation states no shard/configuration counts"
+    over = ([c for c in dep_cfgs if c > all_cfgs] + [s for s in dep_shards if s > len(rows)])
+    assert not over, (
+        f"the dataset citation claims more than the store holds: {over} against "
+        f"{all_cfgs} configurations / {len(rows)} shards. A deposit cannot contain data that was "
+        f"never generated.")
+    if max(dep_cfgs) < all_cfgs or max(dep_shards) < len(rows):
+        print(f"\n  NOTE: the store has moved past the deposit -- cited v0.1.0 has "
+              f"{max(dep_shards)} shards / {max(dep_cfgs):,} configurations, the store now has "
+              f"{len(rows)} / {all_cfgs:,}. A new Zenodo version is pending; the citation is "
+              f"correct for the version it names.")
+
     # sizes and shard counts, in the paragraph that states them
     for label, needle in (
-            ("density size", f"{gb:.2f} GB"),
+            # GiB, not GB: `gb` above is bytes / 1024**3. The label said GB throughout this
+            # layer while the arithmetic was binary, so every figure it governs was a GiB
+            # printed as a GB. Fixed in the test and in the documents it checks.
+            ("density size", f"{gb:.2f} GiB"),
             ("density shard count", f"{len(dens)} density shards"),
             ("verified shard count", f"all {len(rows)} shards verified"),
             ("raw-link shard count", f"{len(link)} raw-link shards"),
-            ("raw-link size", f"{link_gb:.2f} GB")):
+            ("raw-link size", f"{link_gb:.2f} GiB")):
         assert needle in para, \
             f"the paper {label} does not match the manifest; expected to find {needle!r}"
 
@@ -385,8 +421,43 @@ def test_release_coverage_claims_match_the_manifest():
 
     # the shape and dtype the paragraph promises
     assert {r["dtype"] for r in dens} == {"float32"}, "not every density shard is float32"
-    off = [r["filename"] for r in dens if int(r["T"]) != 2 * int(r["L"])]
-    assert not off, f"the paper says T=2L for the density shards, but {len(off)} differ: {off[:3]}"
+    # TWO KINDS OF ENSEMBLE, told apart by the manifest rather than by a list of names.
+    #
+    # A VOLUME SCAN moves L and carries T = 2L with it. A FIXED-APERTURE SCAN holds one T across
+    # several L on purpose -- the box series runs L = 8..24 at T = 32, because moving the box and the
+    # aperture together would not separate them. Asserting T = 2L over both reports correct shards as
+    # defects.
+    #
+    # The carve-out is DERIVED, not maintained: a collection holding a single T across two or more L
+    # is a fixed-aperture scan. `make_manifest.keep_globs` records what a hand-kept list of
+    # collections costs -- it went out of date silently three separate times -- and a list here would
+    # go the same way on the next campaign.
+    by_coll = {}
+    for r in dens:
+        by_coll.setdefault(r["collection"], []).append(r)
+    volume, fixed = [], []
+    for coll, rs in by_coll.items():
+        Ts, Ls = {int(r["T"]) for r in rs}, {int(r["L"]) for r in rs}
+        # DERIVED: one T across two or more L is what "the aperture is held while the box moves"
+        # MEANS. Both numbers come from the manifest; neither is a threshold.
+        (fixed if (len(Ts) == 1 and len(Ls) > 1) else volume).append((coll, rs))
+
+    # And an OPERATOR-reduced shard is exempt wherever it sits: its shape is (n, T), with no spatial
+    # axes at all, so "T = 2L" is a claim about a field shape it does not have. The zero-momentum
+    # projection was taken before the links were discarded; L survives only in the name.
+    off = [r["filename"] for _, rs in volume for r in rs
+           if not r["channel"] and int(r["T"]) != 2 * int(r["L"])]
+    assert not off, (f"the paper says T=2L for the density shards, but {len(off)} differ: {off[:3]} "
+                     f"(collections held at a fixed aperture are exempt and checked separately: "
+                     f"{sorted(c for c, _ in fixed)})")
+
+    # and the fixed-aperture scans must actually hold it fixed, which nothing checked before
+    for coll, rs in fixed:
+        Ts = {int(r["T"]) for r in rs}
+        # DERIVED: 1 is the arity of "the aperture is held fixed" -- one T, or the series is
+        # not holding anything.
+        assert len(Ts) == 1, (f"{coll} is read as a fixed-aperture scan but carries T = {sorted(Ts)}; "
+                              f"a series that moves the box AND the window separates neither")
 
 
 def test_the_release_manifest_and_the_store_agree():
@@ -451,10 +522,13 @@ def test_no_whole_collection_is_missing_from_the_manifest():
     FILE and cannot find a missing COLLECTION -- the loop never looks at a directory no row
     mentions. This closes that.
 
-    It matters because the store's ``make_manifest.py`` indexes a hand-maintained list of globs. A
-    collection absent from that list ships inside the tarball while ``sha256sum -c`` still passes,
-    so the release under-reports its own contents and nothing signals it. The assertion is
-    therefore made against the directories on disk rather than against the list.
+    It matters because a collection the manifest never names ships inside the tarball while
+    ``sha256sum -c`` still passes -- the checksum file cannot flag a path it was never told about --
+    so the release under-reports its own contents and nothing signals it. That happened three times
+    while ``make_manifest.py`` indexed a hand-maintained list of globs; it now DISCOVERS every
+    ``configs_*`` directory holding shards, which is the same enumeration this assertion makes, so
+    the two can no longer disagree by omission. The assertion stays, against the directories on
+    disk, because the store is not this repository's to assume.
     """
     import csv
 
@@ -469,8 +543,9 @@ def test_no_whole_collection_is_missing_from_the_manifest():
     missing = sorted(on_disk - indexed)
     assert not missing, (
         f"{len(missing)} collection(s) hold shards that the manifest does not index at all, so "
-        f"they ship unlisted and unchecksummed: {missing}. Add the glob to make_manifest.py's "
-        f"KEEP and rebuild manifest.csv and SHA256SUMS.")
+        f"they ship unlisted and unchecksummed: {missing}. Rerun make_manifest.py from the "
+        f"dataset root to rebuild manifest.csv and SHA256SUMS -- it DISCOVERS collections, so this "
+        f"means the manifest is stale, not that a name is missing from a list.")
 
 
 def test_a_sample_of_release_checksums_verify():
@@ -912,6 +987,17 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
       * the ensemble was REGENERATED after the artifact was written -- the row is a measurement on
         configurations that no longer exist, and the paper transcribes it as current.
 
+    And one case that looks identical to the second and is NOT a fault: a shard was ADDED at the same
+    (group, L, beta) while the ones the artifact read stayed exactly as they were. That is what
+    happens every time a new campaign lands -- the GPU SU(2) L=16 ensembles at beta 2.30/2.40/2.50
+    arrived beside the 2026-07 and 2026-09 ones, and five artifacts were reported as reading
+    "configurations that no longer exist" while every configuration they read was untouched on disk.
+    An addition and a rewrite are indistinguishable by mtime ALONE, but they are not indistinguishable
+    by the SET of mtimes: after a rewrite no shard at the key predates the artifact, and after an
+    addition some still do. So the fault is "no surviving input", not "something here is newer", and
+    an addition is printed as a NOTICE -- the artifact is still reproducible, and now reads less than
+    the store holds at its key, which is a reason to regenerate it and not a reason to fail.
+
     Neither is visible to a paper-versus-artifact check: those pin the prose to the artifact and the
     artifact to nothing, so a stale pair agrees with itself. This is the third edge, artifact to store.
 
@@ -943,7 +1029,7 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
         return sorted(set(out))
 
     stamp = lambda t: time.strftime("%Y-%m-%d", time.localtime(t))
-    checked, faults = 0, []
+    checked, faults, notices = 0, [], []
     for path in sorted((REPO / "research" / "data").glob("*_dat_*.csv")):
         with path.open(encoding="utf-8-sig", newline="") as fh:
             rows = list(csv.DictReader(fh))
@@ -951,22 +1037,31 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
             continue
         checked += 1
         written = path.stat().st_mtime
-        absent, superseded = set(), set()
+        absent, superseded, extended = set(), set(), set()
         for r in rows:
             key = (r["group"], r["L"], r["beta"])
             found = shards(*key)
             if not found:
                 absent.add(key)
-            elif max(Path(f).stat().st_mtime for f in found) > written:
-                superseded.add(key)
+                continue
+            survived = [f for f in found if Path(f).stat().st_mtime <= written]
+            if not survived:
+                superseded.add(key)          # every input at this key postdates the artifact
+            elif len(survived) < len(found):
+                extended.add(key)            # the inputs survive; the store gained more
         if absent or superseded:
             faults.append((path.name, stamp(written), len(rows), sorted(absent), sorted(superseded)))
+        if extended:
+            notices.append((path.name, stamp(written), sorted(extended)))
 
     assert checked, "no committed artifact names its ensembles; this gate is checking nothing"
+    for name, when, e in notices:
+        print(f"NOTICE {name} (written {when}) reads {len(e)} ensemble(s) the store has since "
+              f"EXTENDED, its own inputs unchanged: {e}")
     assert not faults, "artifacts read ensembles the store no longer holds as they were: " + "; ".join(
         f"{name} (written {when}, {n} rows): "
         + (f"{len(a)} absent {a} " if a else "")
-        + (f"{len(s)} regenerated since {s}" if s else "")
+        + (f"{len(s)} with no surviving input {s}" if s else "")
         for name, when, n, a, s in faults)
 
 
@@ -1015,7 +1110,7 @@ def test_the_store_readme_figures_match_its_own_manifest():
     # Anchored on the headline sentence rather than on the bare words: the README also states the
     # per-tarball shard counts of the two raw-link scans ("24 shards", "12 shards"), which are
     # different quantities, and an unanchored search reads those as a wrong total.
-    TOTALS = (r"([\d,]+) ensembles across ([\d,]+) shards, ([\d,]+) configurations, ([\d.]+) GB")
+    TOTALS = (r"([\d,]+) ensembles across ([\d,]+) shards, ([\d,]+) configurations, ([\d.]+) GiB")
     num = lambda s: int(s.replace(",", ""))
     for where, blob in (("release README", text), ("the repository README", repo_readme)):
         head = re.search(TOTALS, blob)
@@ -1038,7 +1133,8 @@ def test_the_store_readme_figures_match_its_own_manifest():
         f"the release README's per-tarball shard counts are {parts}, none of which is the "
         f"{link_shards} raw-link shards manifest.csv carries")
 
-    WORDS = {5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
+    WORDS = {5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+             11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen"}
     word = WORDS.get(collections)
     assert word, f"the release holds {collections} collections; add that number to WORDS"
     assert f"{word} collections" in text, (

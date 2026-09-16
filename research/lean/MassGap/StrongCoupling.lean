@@ -1,5 +1,7 @@
 import Mathlib
 import MassGap.Moment
+import MassGap.WilsonBridge
+import MassGap.ReflectionPositivity
 
 /-!
 # MassGap.StrongCoupling — geometric clustering at small coupling
@@ -162,6 +164,67 @@ theorem read_decay_of_correlation_decay {N : ℕ} (R : Moment.Read N) {C q m : �
 
 #print axioms read_decay_of_correlation_decay
 
+/-! ### The TAYLOR route — a more tractable shape for the same obligation
+
+The chain sum above is one way to reach geometric decay and it is the expensive one: proving
+`ChainBound` means running a polymer expansion and showing the volume cancels. There is a second
+route to the SAME conclusion which asks for something local instead.
+
+`WilsonAnalytic` proves the Gibbs expectation is analytic in `β` at finite volume, by
+differentiation under the integral against a constant dominating function (the action is bounded in
+`[0,4]`). At `β = 0` the measure is product Haar and two plaquettes sharing no link are INDEPENDENT
+(`WilsonReal.block_integral_factor`), so the connected correlation is exactly `0` there. The same
+argument applies order by order: the `k`-th Taylor coefficient activates `k` plaquette corrections,
+and `k < d` of them cannot link two plaquettes at separation `d` — every such configuration
+factorises and cancels in the connected part.
+
+So the obligation becomes **`ρ_conn(d)` vanishes to order `d` in `β`**, which is a statement about
+finitely many derivatives at a single point rather than about a sum over all polymers. A function
+vanishing to that order with Cauchy-bounded coefficients decays geometrically, at rate `β/R` with `R`
+the radius of analyticity — which is the lemma below.
+
+Both routes need the same fact (unlinked configurations factorise). They differ in what has to be
+controlled: the chain route needs a bound on a sum over all connected chains at once, the Taylor
+route needs a coefficient bound on a disc. Mathlib supplies Cauchy estimates; it supplies no polymer
+combinatorics. -/
+
+/-- **A series supported on orders `≥ d`, with Cauchy-bounded coefficients, decays geometrically.**
+
+If `|a_k| ≤ M/Rᵏ` — the Cauchy estimate for a function analytic and bounded by `M` on a disc of
+radius `R` — and the series carries no term below order `d`, then its sum at `x < R` is at most
+`M(x/R)ᵈ/(1 − x/R)`.
+
+This is the analytic half of the Taylor route, and it is where `d` becomes an exponent. The rate is
+`x/R`: the coupling measured against the radius of analyticity, with no lattice and no volume in it.
+
+DERIVED: `(1 − x/R)⁻¹` is the geometric series' own value; `x/R` is forced by the Cauchy estimate.
+Nothing is chosen. -/
+theorem decay_of_tail_series {a : ℕ → ℝ} {M R x : ℝ} (d : ℕ)
+    (hM : 0 ≤ M) (hR : 0 < R) (hx0 : 0 ≤ x) (hxR : x < R)
+    (hcoef : ∀ n : ℕ, |a (d + n)| ≤ M / R ^ (d + n)) :
+    |∑' n : ℕ, a (d + n) * x ^ (d + n)| ≤ M * (x / R) ^ d / (1 - x / R) := by
+  have hq0 : 0 ≤ x / R := div_nonneg hx0 hR.le
+  have hq1 : x / R < 1 := (div_lt_one hR).mpr hxR
+  -- each term is under the geometric one
+  have hterm : ∀ n : ℕ, ‖a (d + n) * x ^ (d + n)‖ ≤ M * (x / R) ^ (d + n) := by
+    intro n
+    have hRpow : (0 : ℝ) < R ^ (d + n) := pow_pos hR _
+    have hxpow : (0 : ℝ) ≤ x ^ (d + n) := pow_nonneg hx0 _
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hxpow]
+    calc |a (d + n)| * x ^ (d + n) ≤ M / R ^ (d + n) * x ^ (d + n) :=
+          mul_le_mul_of_nonneg_right (hcoef n) hxpow
+      _ = M * (x / R) ^ (d + n) := by rw [div_pow]; ring
+  -- the dominating series sums, and to the claimed value
+  have hgeom : HasSum (fun n : ℕ => M * (x / R) ^ (d + n))
+      (M * (x / R) ^ d * (1 - x / R)⁻¹) := by
+    have hbase := (hasSum_geometric_of_lt_one hq0 hq1).mul_left (M * (x / R) ^ d)
+    refine hbase.congr_fun ?_
+    intro n; rw [pow_add]; ring
+  refine le_trans (tsum_of_norm_bounded hgeom hterm) (le_of_eq ?_)
+  field_simp
+
+#print axioms decay_of_tail_series
+
 /-! ### The combinatorial obligation, stated
 
 Everything above is proved. What follows names the one thing that is not, so it cannot be mistaken
@@ -194,5 +257,110 @@ theorem clustering_of_chainBound {ρconn : ℕ → ℝ} {K β : ℝ}
   decay_of_chain_bound (chain_rate_nonneg hK.le hβ0) (chain_rate_lt_one hK hβ0 hβ) h
 
 #print axioms clustering_of_chainBound
+
+/-! ### Discharging the obligation at order zero
+
+The `k = 0` coefficient of the Taylor route: at `β = 0` the Gibbs measure IS product Haar, so two
+plaquettes drawing on disjoint link sets are independent and the CONNECTED correlation is exactly
+zero. Proved below for an arbitrary geometry, with the disjointness carried as the hypothesis it is.
+
+WHY THIS IS NOT THE FREE-FIELD TRAP. `WilsonBridge` warns that a flagship whose non-vacuity comes
+from a free case is worthless, and it is right. This is a different use: `β = 0` here is the FIRST of
+`d` vanishing Taylor coefficients in a bound at `β > 0`, not a claim about the theory at `β = 0`. The
+base case of an induction is not a result about the base case. -/
+
+section ZeroCoupling
+
+open MeasureTheory MassGap.WilsonReal MassGap.WilsonLattice MassGap.WilsonAction
+open MassGap.CompactGauge
+
+variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq]
+
+open scoped Classical in
+/-- Extend a tuple on `S` to a full link configuration, with the identity outside `S`. The value
+outside is immaterial: every use is guarded by a support hypothesis. -/
+noncomputable def extendOn (S : Finset Lk) (v : S → MassGap.SUN.SU Nc) : Lk → MassGap.SUN.SU Nc :=
+  fun i => if h : i ∈ S then v ⟨i, h⟩ else 1
+
+/-- The plaquette observable read as a function of `S`'s links alone. -/
+noncomputable def plaqOn (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk)
+    (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  wilsonPlaqObs (N := Nc) bd p (extendOn (Lk := Lk) (Nc := Nc) S v)
+
+/-- **The restriction is faithful**: on any configuration, reading only `S` gives the same value,
+provided `S` contains the plaquette's boundary links. This is `hol_congr_on_support` — a holonomy
+reads only the links its own word names — and it is what makes `plaqOn` an observable of `S`. -/
+theorem plaqOn_eq (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk)
+    (hsupp : ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    plaqOn (Nc := Nc) bd p S (fun i : S => U i.val) = wilsonPlaqObs (N := Nc) bd p U := by
+  unfold plaqOn wilsonPlaqObs
+  congr 1
+  refine MassGap.ReflectionPositivity.hol_congr_on_support bd p _ U (fun l hl => ?_)
+  have hmem : l ∈ S := hsupp l hl
+  simp only [extendOn, dif_pos hmem]
+
+/-- `plaqOn` is measurable — the extension is a coordinatewise projection-or-constant. -/
+theorem measurable_plaqOn (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk) :
+    Measurable (plaqOn (Nc := Nc) bd p S) := by
+  refine (measurable_wilsonPlaqObs bd p).comp ?_
+  classical
+  refine measurable_pi_lambda _ (fun i => ?_)
+  by_cases h : i ∈ S
+  · simp only [extendOn, dif_pos h]; exact measurable_pi_apply (⟨i, h⟩ : S)
+  · simp only [extendOn, dif_neg h]; exact measurable_const
+
+/-- **CLUSTERING AT ZERO COUPLING, at any geometry.** If two plaquettes draw their boundary words
+from disjoint link sets then their CONNECTED correlation vanishes identically at `β = 0`.
+
+At zero coupling the Boltzmann weight is `1`, so the state is product Haar
+(`wilsonSystem_expect_at_zero`) and observables reading disjoint blocks are independent
+(`WilsonReal.block_integral_factor`). The unconnected correlation is then exactly the product of the
+two marginals, which is what the connected correlation subtracts.
+
+This is the `k = 0` coefficient of the strong-coupling expansion, and it is the only one that costs
+nothing: at order `k` one must show that `k` activated plaquettes cannot link two at separation `d`
+when `k < d`, which is the combinatorial heart and is not proved here. -/
+theorem wilsonCorrConn_at_zero_of_disjoint (bd : Pq → List (Lk × Bool)) (p₀ p : Pq)
+    (S T : Finset Lk) (hST : Disjoint S T)
+    (h0 : ∀ l ∈ (bd p₀).map Prod.fst, l ∈ S)
+    (h1 : ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ 0 p = 0 := by
+  classical
+  have hfac := block_integral_factor (N := Nc) S T hST
+    (plaqOn (Nc := Nc) bd p₀ S) (plaqOn (Nc := Nc) bd p T)
+    (measurable_plaqOn bd p₀ S) (measurable_plaqOn bd p T)
+  -- rewrite both sides of the factorisation into the full-configuration observables
+  have hprod : ∀ U : Lk → MassGap.SUN.SU Nc,
+      plaqOn (Nc := Nc) bd p₀ S (fun i : S => U i.val)
+        * plaqOn (Nc := Nc) bd p T (fun i : T => U i.val)
+      = wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U := by
+    intro U; rw [plaqOn_eq bd p₀ S h0 U, plaqOn_eq bd p T h1 U]
+  simp only [hprod] at hfac
+  simp only [plaqOn_eq bd p₀ S h0, plaqOn_eq bd p T h1] at hfac
+  unfold MassGap.WilsonBridge.wilsonCorrConn MassGap.WilsonBridge.wilsonCorr
+  rw [wilsonSystem_expect_at_zero, wilsonSystem_expect_at_zero, wilsonSystem_expect_at_zero]
+  show (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U
+      ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))))
+    - (∫ U, wilsonPlaqObs (N := Nc) bd p₀ U
+        ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))))
+      * (∫ U, wilsonPlaqObs (N := Nc) bd p U
+        ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc)))) = 0
+  rw [show ((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc)))
+      = Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)) from rfl]
+  -- the same equation, stated at the `Config` binder so `rw` matches it syntactically
+  have hfac' : (∫ U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config,
+        wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = (∫ U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config,
+          wilsonPlaqObs (N := Nc) bd p₀ U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config,
+          wilsonPlaqObs (N := Nc) bd p U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := hfac
+  exact sub_eq_zero_of_eq hfac'
+
+#print axioms wilsonCorrConn_at_zero_of_disjoint
+
+end ZeroCoupling
 
 end MassGap.StrongCoupling

@@ -375,6 +375,92 @@ theorem confinement_of_bounded_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β �
   obtain ⟨B, hB⟩ := h
   exact confinement_of_substrate_bound hB
 
+/-- **CONFINEMENT FROM ONE DECAY RATE.**
+
+    (∀ N β d, p d ≤ C·r^{circLag d})  with  r < 1   ⟹   ∀ᶠ N, ∀ β, μYMAt N β < κ₀YM
+
+The hypothesis is a RATE, not a family of aperture-indexed bounds, and this is the form in which the
+statement is worth making. The aperture-uniformity that `confinement_of_substrate_bound` demands is
+discharged by `Moment.circ_moment_le_of_geometric`: the bound it produces,
+`2C·∑' k, k²rᵏ`, is a convergent series with no `N` in it, so the window may be anything.
+
+WHY THIS IS THE RIGHT SHAPE. Under reflection positivity the connected correlation has the
+transfer-matrix form `ρ(d) = ∑ₙ wₙλₙᵈ` with `wₙ ≥ 0`, and if the transfer operator has a gap `Δ` then
+every excited `λₙ ≤ e^{−Δ}`, so `ZeroMode.exists_exponential_decay` delivers exactly this hypothesis
+with `r = e^{−Δ}`. The decay is in the CIRCLE distance rather than the raw lag because the correlation
+on a periodic extent satisfies `ρ(d) = ρ(N+1−d)`.
+
+So this reduces confinement to the standard statement — the transfer operator has a gap — with no
+aperture in it anywhere, and with the entroptics apparatus carrying none of the uniformity. -/
+theorem confinement_of_geometric_decay {C r : ℝ} (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
+      (readYMAt N β).p d ≤ C * r ^ (Moment.circLag d)) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  refine confinement_of_substrate_bound (B := 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k) ?_
+  intro N β
+  exact Moment.circ_moment_le_of_geometric (readYMAt N β) hC hr0 hr1 (hdecay N β)
+
+#print axioms confinement_of_geometric_decay
+
+/-- **CONFINEMENT FROM THE RATE A TRANSFER OPERATOR GIVES.**
+
+The same statement with the decay in the RAW lag, which is the form reflection positivity produces: a
+`τ`-th power of the transfer operator is a `τ`-th power of each eigenvalue, so
+`ρ(d) = ∑ₙ wₙλₙᵈ ≤ (∑ₙwₙ)·rᵈ` with `r` the largest excited eigenvalue
+(`ZeroMode.le_geometric_of_lt_one`, `ZeroMode.exists_exponential_decay`).
+
+`Moment.circ_decay_of_lag_decay` converts to the circle distance the aperture argument consumes. The
+two forms are NOT interchangeable — the conversion runs one way, because `r < 1` makes the smaller
+exponent the weaker bound — and stating both is what keeps the halves from being joined by a word. -/
+theorem confinement_of_lag_decay {C r : ℝ} (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
+      (readYMAt N β).p d ≤ C * r ^ (d : ℕ)) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM :=
+  confinement_of_geometric_decay hC hr0 hr1
+    (fun N β => Moment.circ_decay_of_lag_decay (readYMAt N β) hC hr0 hr1.le (hdecay N β))
+
+#print axioms confinement_of_lag_decay
+
+/-- **CONFINEMENT FROM A POSITIVE-WEIGHT SPECTRAL REPRESENTATION — the hypothesis in the form the
+physics supplies it.**
+
+If the read's weights have the transfer form `p d = ∑ₖ wₖ λₖᵈ` with `wₖ ≥ 0`, every `λₖ ≤ r < 1`, and
+total weight bounded by `C` uniformly in the aperture and the coupling, then confinement holds at
+every large enough aperture and every coupling.
+
+THIS IS EXACTLY WHAT REFLECTION POSITIVITY DELIVERS. Osterwalder–Seiler gives the self-adjoint
+transfer operator and the NONNEGATIVITY of the weights `wₖ = |⟨v,eₖ⟩|²` — that is the whole content of
+`wₖ ≥ 0`, and it is why RP is cited rather than assumed away. A spectral gap `Δ` is precisely
+`λₖ ≤ e^{−Δ} < 1` on the excited modes, so `r = e^{−Δ}`.
+
+Everything from here to the mass gap is proved: the geometric bound
+(`ZeroMode.le_geometric_of_lt_one`), the conversion to the circle distance
+(`Moment.circ_decay_of_lag_decay`), the aperture-uniform moment bound
+(`Moment.circ_moment_le_of_geometric`), the entropy-floor comparison, and the model assembly. The
+footprint is the foundational three plus `wilson_reflection_positive_at`.
+
+What it does NOT do is supply the gap `Δ`. That is the one remaining input, and it is the same input
+`hgap` asks for from the other side — so the two open residuals of this development are one residual,
+stated once. -/
+theorem confinement_of_spectral_form {ι : Type*} [DecidableEq ι] {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (s : ℕ → ℝ → Finset ι) (w lam : ℕ → ℝ → ι → ℝ)
+    (hw : ∀ N β, ∀ k ∈ s N β, 0 ≤ w N β k)
+    (hlam0 : ∀ N β, ∀ k ∈ s N β, 0 ≤ lam N β k)
+    (hlamr : ∀ N β, ∀ k ∈ s N β, lam N β k ≤ r)
+    (hwsum : ∀ N β, ∑ k ∈ s N β, w N β k ≤ C)
+    (hrep : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
+      (readYMAt N β).p d = ∑ k ∈ s N β, w N β k * lam N β k ^ (d : ℕ)) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  refine confinement_of_lag_decay hC hr0 hr1 ?_
+  intro N β d
+  rw [hrep N β d]
+  refine le_trans (ZeroMode.le_geometric_of_lt_one (s N β) (w N β) (lam N β) r
+    (hw N β) (hlam0 N β) (hlamr N β) (d : ℕ)) ?_
+  exact mul_le_mul_of_nonneg_right (hwsum N β) (pow_nonneg hr0 _)
+
+#print axioms confinement_of_spectral_form
+
 /-- **The converse, at one aperture.** A tension below the floor FORCES the substrate ratio under a
 ceiling derived from the floor alone. Having both directions means the aperture condition and the
 bounded substrate ratio are the same statement, not one sufficient for the other. -/
@@ -757,6 +843,58 @@ theorem ym_mass_gap_of_ratio {c : ℝ}
   exact mass_gap_of_model (ymModelAt N) hN (ym_A2_at N)
 
 #print axioms ym_mass_gap_of_ratio
+
+/-- **THE MASS GAP FROM ONE DECAY RATE — the flagship in its shortest form.**
+
+Gap, non-triviality and `SO(4)` for `ymModelAt N` at every large enough aperture and EVERY coupling,
+from a single hypothesis: the read's weights decay geometrically in the circle distance at some rate
+`r < 1`. No aperture, no threshold, no measured constant, and no value for `r` named anywhere.
+
+This is the whole reduction in one line. Under reflection positivity `ρ(d) = ∑ₙ wₙλₙᵈ` with `wₙ ≥ 0`,
+so the hypothesis IS "the transfer operator has a gap" (`ZeroMode.exists_exponential_decay` supplies
+it from `λₙ < 1` on a finite mode set, with `r` the largest excited eigenvalue). Everything between
+that and the gap — the aperture-uniform moment bound, the entropy floor comparison, the model
+assembly — is proved here and carries the foundational three plus reflection positivity alone. -/
+theorem ym_mass_gap_of_decay {C r : ℝ} (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
+      (readYMAt N β).p d ≤ C * r ^ (Moment.circLag d)) :
+    ∀ᶠ N : ℕ in Filter.atTop,
+      (∀ β, Filter.Tendsto
+          (fun τ => ‖∑ k ∈ (ymModelAt N).s β,
+            (ymModelAt N).P β k * ((ymModelAt N).m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+        (∀ β, (ymModelAt N).μ β - (ymModelAt N).κ < 0) ∧
+        (∀ d d', (ymModelAt N).R d = (ymModelAt N).R d') := by
+  filter_upwards [confinement_of_geometric_decay hC hr0 hr1 hdecay] with N hN
+  exact mass_gap_of_model (ymModelAt N) hN (ym_A2_at N)
+
+#print axioms ym_mass_gap_of_decay
+
+/-- **THE MASS GAP FROM A TRANSFER GAP — the statement to quote.**
+
+Gap, non-triviality and `SO(4)` at every large enough aperture and every coupling, from the single
+hypothesis that the read's correlation decays geometrically in the lag at some rate `r < 1`.
+
+Under reflection positivity that hypothesis IS "the transfer operator has a spectral gap", with
+`r = e^{−Δ}`: the correlation is `∑ₙ wₙλₙᵈ` with `wₙ ≥ 0`, and a gap is exactly `λₙ ≤ e^{−Δ} < 1` on
+the excited modes. No aperture appears in it, no threshold, no measured constant, and no value for `r`
+is named anywhere in the statement or the proof.
+
+So the whole reduction — aperture-uniform moment bound, entropy-floor comparison, model assembly —
+sits between a transfer gap and the mass gap, and carries the foundational three plus reflection
+positivity alone. What it does NOT do is supply the transfer gap. -/
+theorem ym_mass_gap_of_lag_decay {C r : ℝ} (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
+      (readYMAt N β).p d ≤ C * r ^ (d : ℕ)) :
+    ∀ᶠ N : ℕ in Filter.atTop,
+      (∀ β, Filter.Tendsto
+          (fun τ => ‖∑ k ∈ (ymModelAt N).s β,
+            (ymModelAt N).P β k * ((ymModelAt N).m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+        (∀ β, (ymModelAt N).μ β - (ymModelAt N).κ < 0) ∧
+        (∀ d d', (ymModelAt N).R d = (ymModelAt N).R d') := by
+  filter_upwards [confinement_of_lag_decay hC hr0 hr1 hdecay] with N hN
+  exact mass_gap_of_model (ymModelAt N) hN (ym_A2_at N)
+
+#print axioms ym_mass_gap_of_lag_decay
 
 /-! ## The mass gap, with no open hypothesis -/
 

@@ -458,4 +458,128 @@ theorem tension_tendsto_zero_of_bounded_circ_moment (B : ℝ) (R : (N : ℕ) →
 
 #print axioms tension_tendsto_zero_of_bounded_circ_moment
 
+/-! ### From a decay RATE to an aperture-independent moment
+
+`tension_tendsto_zero_of_bounded_circ_moment` and `Complete.confinement_of_bounded_substrate` both
+consume ONE bound holding at EVERY aperture, and that uniformity is their whole content: a moment
+bound proved at a single `N` says nothing, because the moment may grow with the window — about the
+raw lag index it always does.
+
+The two theorems below convert a DECAY RATE into that uniform bound. The aperture then appears only
+as the range of a sum, and the bound is the whole series, so it cannot depend on where the sum stops.
+This is what "a finite correlation length" has to mean for the aperture argument to apply. -/
+
+/-- **The circle distance is at most 2-to-1.** `circLag d = min d (N+1−d)` takes each value at no more
+than two lags — one from each way round the circle — so a sum over lags is at most twice the
+corresponding sum over distances.
+
+DERIVED: the `2` is that multiplicity and nothing else; `N + 2` is the range `circLag` lands in,
+since `min d (N+1−d) ≤ N+1`. -/
+theorem sum_circLag_le_two_mul {N : ℕ} (g : ℕ → ℝ) (hg : ∀ k, 0 ≤ g k) :
+    ∑ d : Fin (N + 1), g (circLag d) ≤ 2 * ∑ k ∈ Finset.range (N + 2), g k := by
+  classical
+  have hmaps : ∀ d ∈ (Finset.univ : Finset (Fin (N + 1))), circLag d ∈ Finset.range (N + 2) := by
+    intro d _
+    have hd : (d : ℕ) < N + 1 := d.isLt
+    simp only [Finset.mem_range, circLag]
+    omega
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps, Finset.mul_sum]
+  refine Finset.sum_le_sum (fun k _ => ?_)
+  set S := (Finset.univ : Finset (Fin (N + 1))).filter (fun d => circLag d = k) with hS
+  have hval : ∀ d ∈ S, g (circLag d) = g k := by
+    intro d hd
+    rw [hS, Finset.mem_filter] at hd
+    rw [hd.2]
+  rw [Finset.sum_congr rfl hval, Finset.sum_const, nsmul_eq_mul]
+  -- the fibre carries at most two lags: `circLag d = k` forces `d = k` or `d = N+1-k`
+  have hmem : ∀ d ∈ S, (d : ℕ) = k ∨ (d : ℕ) = N + 1 - k := by
+    intro d hd
+    rw [hS, Finset.mem_filter] at hd
+    have hd1 : (d : ℕ) < N + 1 := d.isLt
+    have := hd.2
+    rw [circLag] at this
+    omega
+  have hcard : S.card ≤ 2 := by
+    by_contra hc
+    push Not at hc
+    obtain ⟨a, b, c, ha, hb, hc', hab, hac, hbc⟩ := Finset.two_lt_card_iff.mp hc
+    have ha' := hmem a ha
+    have hb' := hmem b hb
+    have hc'' := hmem c hc'
+    have hfab : (a : ℕ) ≠ (b : ℕ) := fun h => hab (Fin.ext h)
+    have hfac : (a : ℕ) ≠ (c : ℕ) := fun h => hac (Fin.ext h)
+    have hfbc : (b : ℕ) ≠ (c : ℕ) := fun h => hbc (Fin.ext h)
+    omega
+  have h2 : (S.card : ℝ) ≤ 2 := by exact_mod_cast hcard
+  exact mul_le_mul_of_nonneg_right h2 (hg k)
+
+/-- **A geometric bound on the weights caps the circle moment, UNIFORMLY IN THE APERTURE.**
+
+If the read's weights decay geometrically in the CIRCLE distance, `p d ≤ C r^{circLag d}` with
+`r < 1`, then the circle second moment is at most `2C · ∑' k, k² rᵏ` — a constant with no `N` in it.
+
+This is the bridge the aperture argument needs: it turns "the substrate has a finite correlation
+length", which is a statement about a RATE, into the single aperture-independent bound `B` that
+`Complete.confinement_of_bounded_substrate` takes as its hypothesis. The series converges for every
+`r < 1` (`summable_pow_mul_geometric_of_norm_lt_one`), so no condition beyond `r < 1` is needed and no
+threshold on the aperture is introduced.
+
+DERIVED: the `2` is the circle distance's multiplicity (`sum_circLag_le_two_mul`); the exponent `2` is
+the second moment's own; `C` and `r` are the caller's. Nothing here is chosen. -/
+theorem circ_moment_le_of_geometric {N : ℕ} (R : Read N) {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ d, R.p d ≤ C * r ^ (circLag d)) :
+    ∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by
+  classical
+  have hrnorm : ‖r‖ < 1 := by rw [Real.norm_eq_abs, abs_of_nonneg hr0]; exact hr1
+  have hsum : Summable (fun k : ℕ => (k : ℝ) ^ 2 * r ^ k) :=
+    summable_pow_mul_geometric_of_norm_lt_one 2 hrnorm
+  have hterm : ∀ k : ℕ, 0 ≤ (k : ℝ) ^ 2 * r ^ k := fun k => by positivity
+  -- termwise: the weight is under its geometric bound, and the square is nonnegative
+  have hstep : ∀ d : Fin (N + 1),
+      R.p d * (circLag d : ℝ) ^ 2 ≤ C * ((circLag d : ℝ) ^ 2 * r ^ (circLag d)) := by
+    intro d
+    have hsq : (0 : ℝ) ≤ (circLag d : ℝ) ^ 2 := by positivity
+    have := mul_le_mul_of_nonneg_right (hdecay d) hsq
+    calc R.p d * (circLag d : ℝ) ^ 2 ≤ C * r ^ (circLag d) * (circLag d : ℝ) ^ 2 := this
+      _ = C * ((circLag d : ℝ) ^ 2 * r ^ (circLag d)) := by ring
+  refine le_trans (Finset.sum_le_sum (fun d _ => hstep d)) ?_
+  rw [← Finset.mul_sum]
+  -- the lag sum is at most twice the distance sum, which is at most the whole series
+  have hfib := sum_circLag_le_two_mul (N := N) (fun k => (k : ℝ) ^ 2 * r ^ k) hterm
+  have hpart : ∑ k ∈ Finset.range (N + 2), (k : ℝ) ^ 2 * r ^ k
+      ≤ ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k :=
+    hsum.sum_le_tsum _ (fun k _ => hterm k)
+  calc C * ∑ d : Fin (N + 1), (circLag d : ℝ) ^ 2 * r ^ (circLag d)
+      ≤ C * (2 * ∑ k ∈ Finset.range (N + 2), (k : ℝ) ^ 2 * r ^ k) :=
+        mul_le_mul_of_nonneg_left hfib hC
+    _ ≤ C * (2 * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k) := by
+        refine mul_le_mul_of_nonneg_left ?_ hC
+        exact mul_le_mul_of_nonneg_left hpart (by norm_num)
+    _ = 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by ring
+
+/-- **Decay in the raw lag is decay in the circle distance.** The circle distance never exceeds the
+raw index, so a geometric bound in the index is already a geometric bound in the distance — the
+inequality runs this way and not the other, because `r < 1` makes the smaller exponent the weaker
+bound.
+
+This is the connector the spectral route needs. Reflection positivity's transfer form
+`ρ(d) = ∑ₙ wₙλₙᵈ` decays in the RAW lag `d` — that is what a power of the transfer operator gives —
+while the aperture argument consumes decay in the CIRCLE distance. Without this the two halves do not
+meet, and the mismatch is invisible because both are called "exponential decay".
+
+DERIVED: nothing numeric. `circLag d ≤ d` is `min_le_left`. -/
+theorem circ_decay_of_lag_decay {N : ℕ} (R : Read N) {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r ≤ 1)
+    (hdecay : ∀ d : Fin (N + 1), R.p d ≤ C * r ^ (d : ℕ)) :
+    ∀ d : Fin (N + 1), R.p d ≤ C * r ^ (circLag d) := by
+  intro d
+  refine (hdecay d).trans ?_
+  refine mul_le_mul_of_nonneg_left ?_ hC
+  exact pow_le_pow_of_le_one hr0 hr1 (min_le_left _ _)
+
+#print axioms sum_circLag_le_two_mul
+#print axioms circ_moment_le_of_geometric
+#print axioms circ_decay_of_lag_decay
+
 end MassGap.Moment

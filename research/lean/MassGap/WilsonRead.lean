@@ -6,7 +6,7 @@ import MassGap.Moment
 
 Everywhere else in this development the read's input is `Complete.wilsonCorr`, an `opaque` function whose
 one load-bearing property — nonnegativity at every lag — is the NAMED AXIOM
-`Complete.wilson_reflection_positive`. The review's §4 asks for the identification of the read with the
+`Complete.wilson_reflection_positive_at`. The review's §4 asks for the identification of the read with the
 actual Wilson theory to stop being a modelling statement. This file does that at the one volume where it is
 currently reachable, and derives what was assumed.
 
@@ -20,7 +20,7 @@ Haar measure. No `opaque`, no ensemble stand-in.
 * **Nonnegativity is a THEOREM, not the RP axiom.** `wilsonCorrReal β d = ⟨φ_p · φ_q⟩_β` is the Gibbs
   average of a product of two nonnegative quantities (`WilsonAction.wilsonDensity_nonneg`), and the Gibbs
   state is positive (`WilsonReal.sysReal_expect_nonneg`). So `Moment.Read`'s `hρ` is discharged by
-  computation. For this system, `wilson_reflection_positive` is not needed and does not appear.
+  computation. For this system, `wilson_reflection_positive_at` is not needed and does not appear.
 * **Positivity of the total mass is a THEOREM too.** `Moment.Read` also needs `0 < Σ_d ρ_d`, and
   `sum_wilsonCorrReal_pos` proves it at every coupling. So `wilsonReadReal β` is UNCONDITIONAL: a
   `Moment.Read` built from a genuine Wilson Gibbs measure with no hypothesis and no axiom beyond the
@@ -53,7 +53,7 @@ real Wilson measure: the entropy-matched read is applied to a genuine Wilson Gib
 property the read needs of it is proved rather than assumed.
 
 Footprint: the three foundational axioms only, for every declaration in this file. In particular
-NOT `wilson_reflection_positive`, and no hypothesis on the read itself.
+NOT `wilson_reflection_positive_at`, and no hypothesis on the read itself.
 -/
 
 namespace MassGap.WilsonRead
@@ -74,7 +74,7 @@ noncomputable def wilsonCorrReal (β : ℝ) (d : Fin 2) : ℝ :=
 
 /-- **The correlation is nonnegative — a THEOREM.** The integrand is a product of two nonnegative
 densities and the Gibbs state is positive, so no reflection-positivity input is required. This is what
-`Complete.wilson_reflection_positive` asserts for the opaque ensemble; here it is proved. -/
+`Complete.wilson_reflection_positive_at` asserts for the opaque ensemble; here it is proved. -/
 theorem wilsonCorrReal_nonneg (β : ℝ) (d : Fin 2) : 0 ≤ wilsonCorrReal β d :=
   sysReal_expect_nonneg β _ (fun U => mul_nonneg (plaqObs_nonneg 0 U) (plaqObs_nonneg d U))
 
@@ -445,7 +445,7 @@ So `hB` and `hscale` cannot both hold here. This is the `1/L²` aperture scaling
 because it is the correct general statement over this read; it is NOT evidence about `sysReal`, and no
 instantiation of it on `sysReal` should be quoted.
 
-Footprint: the three foundational axioms. NOT `wilson_reflection_positive`. -/
+Footprint: the three foundational axioms. NOT `wilson_reflection_positive_at`. -/
 -- DERIVED: at `N = 1` the circle distance IS the raw lag -- `min 1 (2-1) = 1` -- so switching this
 -- to `tension_lt_floor_of_circ_moment` changes the statement not at all. The raw-lag route it used
 -- to take was retired because its hypothesis is unsatisfiable for a periodic correlation at large

@@ -35,7 +35,7 @@ abbrev JYM : Type := Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ
 
 /-- The reflected Schwinger form, built from the SAME Wilson ensemble `wilsonCorr` the gap side uses (so the
 `FullModel` is ONE physical model): the ensemble correlation at spacing `a` and the invariant-label lag,
-clamped into `[0,1]`. Nonnegative by reflection positivity (`wilson_reflection_positive`); depends on `j` only
+clamped into `[0,1]`. Nonnegative by reflection positivity (`wilson_reflection_positive_at`); depends on `j` only
 through the Euclidean-invariant label `j.2.2`. (On the gap side `wilsonCorr`'s argument is the coupling `β`;
 here it is the spacing `a` — a same-symbol modelling identification.) -/
 noncomputable def QYM (N : ℕ) (j : JYM) (a : ℕ) : ℝ :=

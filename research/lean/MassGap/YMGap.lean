@@ -10,7 +10,7 @@ takes confinement `μYMAt N β < κ₀YM` as the hypothesis `hconf`, hence the e
 `e^{-ΔYMAt N β}`, with reflection-positive weight `1` — through `gapped_of_positive_decay` **derives** the spectral
 support bound and reconstructs a `GappedQuantumTheory` whose mass gap is exactly `ΔYMAt N β`.
 
-Unlike `ym_mass_gap` (which delivers only `C(τ)→0`), this produces the the relevant object:
+Unlike the flagship (which delivers only `C(τ)→0`), this produces the relevant object:
 `spectrum(H) ⊆ {0} ∪ [ΔYMAt N β, ∞)` for the reconstructed Hamiltonian `H = -log T` — the spectral gap DERIVED from
 the decay via `MomentSupport.le_of_positive_weight_decay`, not assumed. Foundational axioms + the reduction's own
 (the read's footprint).

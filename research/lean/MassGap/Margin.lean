@@ -52,9 +52,9 @@ theorem margin_of_contraction {κ₀ κ μ c Δ : ℝ}
   Real.exp_le_exp.mpr (by linarith)
 
 /-! **Scope note.** `margin_of_contraction` derives the READ margin `e^{−Δ} ≤ e^{−(κ₀−μ)}` — exactly the
-`hread` field consumed by `gap_of_confinement`, sufficient for the mass gap (`ym_mass_gap`). The
+`hread` field consumed by `gap_of_confinement`, sufficient for the mass gap. The
 STRONGER spectral-form ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}` (`ym_mass_gap_spectral`'s `haperture`) needs `Δ ≥ κ₀`, i.e. the
 contraction to clear the FULL multiplicity `c ≥ κ` (not the free-energy density `c ≥ κ−μ`); the bridge does
-not supply it, and `ym_mass_gap` does not need it. -/
+not supply it, and the flagship does not need it. -/
 
 end MassGap

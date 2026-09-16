@@ -59,7 +59,7 @@ theorem confinement_mass_gap (M : LatticeYM) (h1 : A1_YM M) :
 /-- **The SU(N) Yang–Mills mass gap has an explicit positive rate.** For the discharged model `ymModel`, the
 mass gap `Δ(β) = κ₀ − μ(β) = ¼log3 − μ(β) > 0` at every physical coupling `β ≥ 0` (from `hconf`), and the two-point
 function decays exponentially at rate `Δ`: the *quantitative* gap (`spec ⊆ {0} ∪ [Δ,∞)`) and OS4
-clustering, with `Δ` the entropy margin. Same axiom footprint as `ym_mass_gap` — this is a strengthening
+clustering, with `Δ` the entropy margin. Same axiom footprint as the flagship — this is a strengthening
 of its qualitative `C(τ)→0` to the exponential rate, not a new input. -/
 theorem ym_mass_gap_rate (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM) :
     ∀ β, 0 ≤ β → 0 < (ymModelAt N).massGap β ∧
@@ -69,7 +69,7 @@ theorem ym_mass_gap_rate (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < �
   fun β hβ => ⟨(ymModelAt N).massGap_pos_of_confinement (hconf β hβ),
     mass_gap_exponential_decay (ymModelAt N) β⟩
 
--- Footprint: the same named inputs as `ym_mass_gap`'s A1 side (no A2 / `Otr_iso` — the gap is pure
+-- Footprint: the same named input as the flagship's A1 side (no A2 / `Otr_iso` — the gap is pure
 -- confinement), and NO new axiom. `#print axioms ym_mass_gap_rate` returns
 -- `propext, Classical.choice, Quot.sound, wilson_reflection_positive_at`.
 #print axioms ym_mass_gap_rate

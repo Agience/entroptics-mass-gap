@@ -24,8 +24,8 @@ actual transfer gap. This module composes the pieces into `hread_of_junction`, w
 modes `m` and a free magnitude — removing the flagship witness's definitional discharge `m := e^{-(κ₀-μ)}`, so
 the object is arbitrary modes, not the answer written in. This module IS now imported by the aggregate
 `MassGap.lean` (2026-07-13), so `existence_and_gap_of_junction` is machine-checked (foundation-only). The
-flagship `ym_mass_gap` still uses the definitional witness; routing IT through this junction — and
-discharging the two residuals — is the open step.
+flagship `ym_mass_gap_of_substrate` reaches the gap from the substrate hypothesis; routing the
+ARBITRARY-mode form through this junction — and discharging the two residuals — is the open step.
 
 **To make the proof stand fully on its own:** discharge `κ₀ − μ ≤ c` and `c ≤ Δ` deterministically (the duality
 between the counted condensate growth rate, `Condensation`, and a contraction rate `c` tied to the actual gap,

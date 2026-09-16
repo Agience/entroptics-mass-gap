@@ -361,6 +361,64 @@ theorem wilsonCorrConn_at_zero_of_disjoint (bd : Pq → List (Lk × Bool)) (p₀
 
 #print axioms wilsonCorrConn_at_zero_of_disjoint
 
+/-! ### The engine every order needs: factorisation across a link-disjoint SPLIT
+
+At order `k` the Taylor coefficient of `⟨φ₀ φ_d⟩_β` at `β = 0` is a Haar moment of
+`φ₀ · φ_d · Sᵏ`, and `S = ∑_p φ_p` expands it over `k`-tuples of plaquettes. A tuple contributes to
+the CONNECTED correlation only if it links `p₀` to `p_d`; otherwise the whole product splits into two
+groups drawing on disjoint links, the Haar expectation factorises, and the connected subtraction
+removes it.
+
+`block_integral_factor` is stated for two observables. What the expansion needs is the same fact for
+two GROUPS of plaquettes, which is below: bundle each group into a single observable of its own
+links, and the two-block lemma applies unchanged. This is the step used once per order, and it is
+where `k < d` will do its work — a group of `k` plaquettes cannot bridge a separation of `d`. -/
+
+/-- A finite product of plaquette observables, read as a function of `S`'s links alone. -/
+noncomputable def prodOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
+    (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  ∏ p ∈ A, plaqOn (Nc := Nc) bd p S v
+
+/-- The bundled product is faithful on any configuration, given a support hypothesis for every
+plaquette in the group. -/
+theorem prodOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
+    (hsupp : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    prodOn (Nc := Nc) bd A S (fun i : S => U i.val)
+      = ∏ p ∈ A, wilsonPlaqObs (N := Nc) bd p U := by
+  unfold prodOn
+  exact Finset.prod_congr rfl (fun p hp => plaqOn_eq bd p S (hsupp p hp) U)
+
+/-- The bundled product is measurable — a finite product of measurable factors. -/
+theorem measurable_prodOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk) :
+    Measurable (prodOn (Nc := Nc) bd A S) :=
+  Finset.measurable_prod _ (fun p _ => measurable_plaqOn bd p S)
+
+/-- **HAAR FACTORISES ACROSS A LINK-DISJOINT SPLIT OF TWO GROUPS.** If every plaquette of `A` draws
+its boundary word from `S`, every plaquette of `B` from `T`, and `S` and `T` are disjoint, then the
+Haar expectation of the whole product is the product of the two group expectations.
+
+This is `block_integral_factor` with each group bundled into one observable, and it is the fact that
+makes an unlinked configuration contribute nothing to a connected correlation — at EVERY order of the
+strong-coupling expansion, not just the zeroth. -/
+theorem haar_prod_factor_of_split (bd : Pq → List (Lk × Bool)) (A B : Finset Pq)
+    (S T : Finset Lk) (hST : Disjoint S T)
+    (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hB : ∀ p ∈ B, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    (∫ U, (∏ p ∈ A, wilsonPlaqObs (N := Nc) bd p U) * (∏ p ∈ B, wilsonPlaqObs (N := Nc) bd p U)
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = (∫ U, (∏ p ∈ A, wilsonPlaqObs (N := Nc) bd p U)
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, (∏ p ∈ B, wilsonPlaqObs (N := Nc) bd p U)
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+  classical
+  have hfac := block_integral_factor (N := Nc) S T hST
+    (prodOn (Nc := Nc) bd A S) (prodOn (Nc := Nc) bd B T)
+    (measurable_prodOn bd A S) (measurable_prodOn bd B T)
+  simp only [prodOn_eq bd A S hA, prodOn_eq bd B T hB] at hfac
+  exact hfac
+
+#print axioms haar_prod_factor_of_split
+
 end ZeroCoupling
 
 end MassGap.StrongCoupling

@@ -55,7 +55,7 @@ its sample.
 
 The condition is arity rather than a cut: a `d x d` covariance needs at least `d` samples to be
 determined at all. `L^3 > n*T` is that statement, and the fix is to scale `n` with `L^3` -- which
-makes the campaign cost grow as the volume, and is the price of asking this question honestly.
+makes the campaign cost grow as the volume, and is the price of asking this question properly.
 
 AND THE FIX IS NOT THE COUPLING. The obvious move is a larger beta -- a finer lattice, a longer
 correlation length in lattice units. Measured on the store's own SU(2) L=16, T=32 density ensembles

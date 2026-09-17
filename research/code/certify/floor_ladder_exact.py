@@ -1,4 +1,4 @@
-"""The entropy floor, certified by EXACT RATIONAL arithmetic: kappa_0 >= 0.455484.
+"""The entropy floor, certified by EXACT RATIONAL arithmetic: kappa_0 >= 0.455483.
 
 WHAT THIS CERTIFIES, and it is the same kappa_0 the Lean tree uses.
 `Floor.lean` proves kappa_0 >= (1/4) log 3 = 0.274653 by counting DIRECTED CUBE-PATHS -- three

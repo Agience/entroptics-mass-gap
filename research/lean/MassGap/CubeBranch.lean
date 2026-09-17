@@ -58,7 +58,7 @@ written this raises the COUNTED floor and does not yet replace `CubeConnected`'s
 `VortexFamily`.
 
 **WHAT IT DOES NOT REACH.** The front-capped transfer-matrix certificate
-(`certify/floor_ladder_exact.py`) puts the true floor at `κ₀ ≥ 0.455484`, and an exactly-solvable
+(`certify/floor_ladder_exact.py`) puts the true floor at `κ₀ ≥ 0.455483`, and an exactly-solvable
 ceiling on the same tree family — free ternary trees, `w = (1+x⁴w)³`, critical at `x⁴ = 4/27` — is
 `(3log 3 − 2log 2)/4 = 0.477386`. So `0.2997358` is a fifth of the way from the path floor to what
 the ladder already certifies numerically, and the remaining distance is a COUNTING problem: directed

@@ -86,11 +86,17 @@ class Model:
             t = Fr(1)
             for p in D:
                 t *= self.phi(ci, p)
+                # DERIVED: 0 is the absorbing element of the product; an exact-rational zero
+                # means the term is zero and no further factor can change it.
                 if t == 0:
                     break
+            # DERIVED: 0 as above -- skip the weight loop entirely when the observable product
+            # has already vanished. Exact rational arithmetic, so this is equality, not a cut.
             if t != 0:
                 for p in E:
                     t *= self.w(ci, p)
+                    # DERIVED: 0 is the absorbing element of the product. Once a factor vanishes
+                    # the whole weight does, so the loop stops; not a tolerance.
                     if t == 0:
                         break
             tot += t
@@ -117,6 +123,8 @@ class Model:
 
     # ------------------------------------------------------------ combinatorics
     def touch(self, p, q):
+        # DERIVED: 0 is the empty intersection. Two plaquettes TOUCH exactly when they share at
+        # least one link, so the test is non-emptiness of the shared-link set, not a cutoff.
         return len(self.bd[p] & self.bd[q]) > 0
 
     def degree(self):

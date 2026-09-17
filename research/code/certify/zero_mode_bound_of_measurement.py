@@ -119,7 +119,7 @@ def read_profile(P, n):
     #
     # Both are reported. The bound itself is unaffected -- `G` is formed from the unclipped profile
     # and the hypothesis `μ < κ₀` holds by a factor of ~80 either way -- so the certificate's
-    # conclusion does not rest on the choice. What rests on it is honesty about a precondition the
+    # conclusion does not rest on the choice. What rests on it is candour about a precondition the
     # data satisfies only up to noise.
     p = np.clip(full, 0.0, None)
     tot = p.sum()

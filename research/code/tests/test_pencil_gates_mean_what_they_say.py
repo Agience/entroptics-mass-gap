@@ -91,7 +91,7 @@ def test_noise_is_rejected_by_the_NYQUIST_gate_not_the_pencils(ar):
 
     The first version of this test asserted that `pencil_rate` declines white noise. It does not, and
     it should not: white noise DOES decay -- essentially instantly -- and the pencil reports that
-    honestly. Measured, it returns rates of 1.4 to 3.5, i.e. correlation lengths of 0.29 to 0.70
+    correctly. Measured, it returns rates of 1.4 to 3.5, i.e. correlation lengths of 0.29 to 0.70
     lattice spacings. The pencil's gates are about whether a single mode is isolated, not about
     whether the mode is physically meaningful.
 

@@ -235,9 +235,27 @@ def test_committed_pdf_is_not_older_than_the_paper():
                            cwd=REPO, capture_output=True, text=True)
         return r.stdout.strip()
 
+    def is_tracked(path):
+        """Present in HEAD right now -- NOT merely mentioned somewhere in history.
+
+        `git log -- <path>` answers for a DELETED file too: it returns the commit that removed it.
+        So testing `last_commit(...)` for emptiness does not detect a file that is gone, and this
+        guard spent its time comparing a deletion commit against the paper's and reporting a file
+        that does not exist as a stale one. `research/PAPER.pdf` was deleted in `ea74447`.
+        """
+        r = subprocess.run(["git", "cat-file", "-e", f"HEAD:{path}"], cwd=REPO,
+                           capture_output=True, text=True)
+        # DERIVED: 0 is the POSIX success code, which is what `git cat-file -e` returns when the
+        # object exists. Not a threshold and nothing to tune -- the only alternative reading would
+        # be to parse stderr, which is less stable than the exit status.
+        return r.returncode == 0
+
+    if not is_tracked("research/PAPER.pdf") or not is_tracked("research/PAPER.md"):
+        pytest.skip("PAPER.md or PAPER.pdf is not tracked in HEAD")
+
     md, pdf = last_commit("research/PAPER.md"), last_commit("research/PAPER.pdf")
     if not md or not pdf:
-        pytest.skip("PAPER.md or PAPER.pdf is not tracked")
+        pytest.skip("PAPER.md or PAPER.pdf has no commit history")
     if md == pdf:
         return                                        # rebuilt in the same commit
 

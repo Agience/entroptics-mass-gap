@@ -10,28 +10,39 @@ and `ymModel` instantiates it at `Idx := Unit`, `P := 1`, `m := e^{−(κ₀−�
 to its own bound. `Apriori.hread_of_dominant` is `le_trans` and supplies no link to the ensemble.
 Giving the modes a definition is what would make that hypothesis a statement about Yang–Mills.
 
-**THE FIRST ATTEMPT AT THAT WAS REFUTED, AND THE REFUTATION IS THEOREM `flat_of_aperiodic` BELOW.**
-An earlier version of this file used the half-line shape `ρ(d) = ∑ₙ wₙ λₙ^d`. On the lattice this
-development actually builds, that is not merely unproved — it is FALSE, and `flat_of_aperiodic` is
-the machine-checked reason, kept here so the shape is not re-introduced:
+**WHY THE HALF-LINE SHAPE WAS ABANDONED, AND EXACTLY HOW FAR THE ARGUMENT GOES.**
+An earlier version of this file used the half-line shape `ρ(d) = ∑ₙ wₙ λₙ^d`. The argument against it
+is `flat_of_aperiodic` below, and it is CONDITIONAL — two of its three premises are facts about this
+tree, the third is not proved anywhere and is stated here as the assumption it is:
 
-* `WilsonHypercubic.Site d n = Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a fully
-  PERIODIC torus of extent `n`;
-* `Complete.wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` with `lag : Fin (N+1)`, so the lag index
-  runs the WHOLE period, not a half-line;
-* `wilsonCorrConn` is symmetric in its two plaquettes, and with translation invariance on the torus
-  that gives `ρ(d) = ρ(n−d)` — which `ZeroMode` already states ("symmetric under `d ↦ n − d` by
-  construction") and `Moment.circLag`/`clag n d = min d (n−d)` already uses everywhere.
+* PROVED: `WilsonHypercubic.Site d n = Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
+  fully PERIODIC torus of extent `n`.
+* PROVED: `Complete.wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` with `lag : Fin (N+1)`, so the
+  lag index runs the WHOLE period, not a half-line.
+* **NOT PROVED: `ρ(d) = ρ(n−d)`.** No theorem in the tree asserts it of `wilsonCorrAt`, `corrClay`,
+  `corrHyper` or `wilsonCorrConn`, and there is no translation-invariance theorem for the correlation.
+  It is what one expects of a translation-invariant correlation of two plaquettes on a torus, and
+  `Moment.circLag`/`clag n d = min d (n−d)` is built as if it held, but `ZeroMode`'s "symmetric under
+  `d ↦ n − d` by construction" is a statement about `clag` — the LAG FUNCTION, where it is arithmetic
+  — and NOT about `ρ`. An earlier version of this docstring cited it as though it were about `ρ`.
 
-A half-line form forces `ρ` ANTITONE; antitone together with `ρ(1) = ρ(n−1)` forces `ρ` FLAT from lag
-one onward — zero connected decay. For an interacting theory that is false. The shape was wrong, not
-the idea.
+GIVEN that symmetry, a half-line form forces `ρ` ANTITONE, and antitone together with `ρ(1) = ρ(n−1)`
+forces `ρ` FLAT from lag one onward. Two further limits on what that shows, both real:
+`flat_of_aperiodic` assumes `1 ≤ d`, so `ρ(0)` is unconstrained and a half-line form with a contact
+term at lag zero and a flat tail survives it; and "a flat correlator is false for an interacting
+theory" is physics, not a theorem here — nothing in the tree evaluates `wilsonCorrAt` at any lag, and
+the RP axiom (`0 ≤ ρ d`, `0 < ∑ ρ`) is satisfied by a constant positive `ρ`.
+
+So the accurate statement is: **on this lattice the half-line shape is unattractive and, under the
+expected symmetry, degenerate — it is not machine-checked false.** The periodic shape below is used
+because it is the one a transfer matrix on a circle actually produces, not because its rival has been
+refuted.
 
 **THE RIGHT SHAPE IS THE PERIODIC ONE**, `ρ(d) = ∑ₙ wₙ (λₙ^d + λₙ^{n−d})`, which is what a transfer
 matrix on a circle of extent `n` gives: `Tr(A T^d A T^{n−d})/Tr(T^n)`. It is symmetric under
 `d ↦ n−d` by construction, nonnegative, and NOT antitone — it turns around at `n/2`.
 
-**AND THE CLUSTERING STATEMENT CHANGES WITH IT, which is the honest part.** A periodic correlator
+**AND THE CLUSTERING STATEMENT CHANGES WITH IT, which is the cost.** A periodic correlator
 does NOT tend to zero at large lag; it comes back up. What the gap buys on a torus is decay out to
 HALF the period (`periodic_decay_le`). Clustering in the true sense needs `n → ∞`, and that is the
 infinite-volume obligation, not something this file can supply.

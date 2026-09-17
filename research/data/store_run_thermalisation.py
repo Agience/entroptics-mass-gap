@@ -253,7 +253,7 @@ def equilibrium(group, L, T, beta):
     HOW THE BRACKET IS REPORTED. The value is the MIDPOINT of the two tails and the uncertainty
     carries the half-gap between them, added in quadrature with the tails' own errors. So a bracket
     that has not closed widens the error rather than being averaged away, and an ensemble is
-    classified against an interval that is honestly as wide as the two chains disagree. When the
+    classified against an interval that is exactly as wide as the two chains disagree. When the
     bracket does close the half-gap is small and this reduces to the old behaviour.
 
     The third value is USABLE, not "converged" -- see the note at the return. The fourth is the

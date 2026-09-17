@@ -1815,7 +1815,9 @@ holds only when NON-ADJACENT terms annihilate (`hⱼhₖ = 0` for `|j−k| ≥ 2
 `m=2` check gives `∑ₐWₐ² = 2H + ∑_{|j−k|=1}hⱼhₖ` vs `H²+H = 2H + ∑_{j≠k}hⱼhₖ`, equal iff `∑_{|j−k|≥2}hⱼhₖ = 0`.
 For a GENERIC nearest-neighbour frustration-free chain the true identity is `∑ₐWₐ² = ∑ᵢⱼ(n−1−|i−j|)₊ hᵢhⱼ`, and
 the passage to `H²⪰γH` needs the operator Cauchy–Schwarz weighted-sum inequality (Knabe 1988 / Gosset–Mozgunov
-2016) — the genuine remaining core, NOT a counting identity. This lemma is the exact assembly for the special
+2016). That step is NOT still open: `gm_eq23_c1`, `gm_gap_of_eq23`, `gm_gap_c1` and `Tdelta_posSemidef`
+below prove it, and `LocalGap.knabe_chain_gap_of_local_spectrum` supplies `gm_gap_c1`'s remaining bare
+hypothesis `hlem4` from the window's own spectrum. This lemma is the exact assembly for the special
 case and the correct skeleton for the general one. Foundational (`propext, Classical.choice, Quot.sound`). -/
 theorem knabe_gap_of_window_identities {N : ℕ} {ι : Type*} [Fintype ι]
     {H : Matrix (Fin N) (Fin N) ℝ} (hHsymm : H.IsHermitian)
@@ -1850,7 +1852,11 @@ theorem knabe_gap_of_window_identities {N : ℕ} {ι : Type*} [Fintype ι]
 These are the true combinatorial identities (no non-adjacent-vanishing assumption). `window_sum` is `hsum1`
 (always holds). `window_sq_sum` is `hsum2` written out in `Tδ` form: `∑ₐWₐ² = ∑ᵣ∑ₛ ∑_b h_b h_{b+(s−r)}`
 (`= ∑_δ (m−|δ|)₊ Tδ`). The remaining passage `Tδ`-sum `⟹ H²⪰γH` is the Knabe/Gosset–Mozgunov operator
-Cauchy–Schwarz step (the genuine research core), NOT covered here. -/
+Cauchy–Schwarz step, and it IS covered — `gm_eq23_c1` further down this file proves the eq.-23 operator
+inequality from `hpsd` alone, `gm_gap_of_eq23` and `gm_gap_c1` assemble it, and `Tdelta_posSemidef`
+discharges `hpsd` for commuting projectors. What `gm_gap_c1` still takes as a bare hypothesis is the
+per-window bound `hlem4`; `LocalGap.knabe_chain_gap_of_local_spectrum` supplies that from the window's
+own spectrum. -/
 
 /-- Shift-invariance of a full cyclic sum: `∑ₐ h(a+c) = ∑ₐ h a`. -/
 theorem cyc_shift_sum {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ) (c : ZMod L) :

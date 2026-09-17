@@ -370,8 +370,17 @@ threshold itself (`Sharp.cos_avg_ge_tangent` with `A = arccos(3^{−1/4})`), whe
 gives `arccos(3^{−1/4})²/(2π)² ≈ 0.0126877` — about 4.3% more room, and SHARP: equality holds for the
 point mass at `θ = A`, so no argument taking only the second moment can do better.
 
-That matters not for the size — the measured ratio clears either threshold by more than thirty times
-— but because it removes the last quantity in the chain that was chosen rather than derived. After
+That matters not for the size — but NOT because the measured margin is large. **It is not, and an
+earlier version of this docstring said "more than thirty times", which is false.** Against
+`data/9_3_dat_substrate_of_aperture.csv`, the ratio `d2_circle / L²` clears the threshold by 30× in only
+**16 of 43 rows**, and the thinnest margin is **1.98×** (SU(3), β = 5.50, L = 6); at L = 8 the SU(2)
+crossover rows sit near 4.7×. The margin is aperture-dependent BY CONSTRUCTION — the ratio divides the
+moment by `L²` — so no single multiple can be correct for the table, and quoting one was the error.
+(Note also that the read is SPATIAL: `per_config_profiles` rolls axes 1–3 with period `L`, so the
+aperture here is `L`, not `T`.)
+
+What the sharpening does matter for is that it removes the last quantity in the chain that was chosen
+rather than derived. After
 this the criterion's constant is the one the entropy floor and the aperture determine between them,
 and there is no approximation left in it to tighten. -/
 theorem confinement_at_of_substrate_sharp {N : ℕ} {β : ℝ}
@@ -522,7 +531,9 @@ discharged by `Moment.circ_moment_le_of_geometric`: the bound it produces,
 `2C·∑' k, k²rᵏ`, is a convergent series with no `N` in it, so the window may be anything.
 
 WHY THIS IS THE RIGHT SHAPE. Under reflection positivity the connected correlation has the
-transfer-matrix form `ρ(d) = ∑ₙ wₙλₙᵈ` with `wₙ ≥ 0`, and if the transfer operator has a gap `Δ` then
+transfer-matrix form `ρ(d) = ∑ₙ wₙλₙᵈ` with `wₙ ≥ 0` — the HALF-LINE shape, which on this
+periodic lattice is degenerate under the expected `ρ(d) = ρ(n−d)` symmetry (`Spectral.flat_of_aperiodic`);
+`Spectral.PeriodicSpectralForm` is the shape a transfer matrix on a circle gives — and if the transfer operator has a gap `Δ` then
 every excited `λₙ ≤ e^{−Δ}`, so `ZeroMode.exists_exponential_decay` delivers exactly this hypothesis
 with `r = e^{−Δ}`. The decay is in the CIRCLE distance rather than the raw lag because the correlation
 on a periodic extent satisfies `ρ(d) = ρ(N+1−d)`.
@@ -576,9 +587,19 @@ Everything from here to the mass gap is proved: the geometric bound
 (`Moment.circ_moment_le_of_geometric`), the entropy-floor comparison, and the model assembly. The
 footprint is the foundational three plus `wilson_reflection_positive_at`.
 
-What it does NOT do is supply the gap `Δ`. That is the one remaining input, and it is the same input
-`hgap` asks for from the other side — so the two open residuals of this development are one residual,
-stated once. -/
+What it does NOT do is supply the gap `Δ`.
+
+**AND THE TWO RESIDUALS ARE NOT ONE RESIDUAL — this docstring said they were, and that is FALSE.**
+`Substrate.bounded_moment_does_not_give_geometric_decay` exhibits a family of reads (contact weight
+`1` plus a far atom of weight `(k+1)⁻³` at the antipode) whose circle moment is `1/(k+1) ≤ 1` at every
+aperture — so it satisfies `confinement_of_bounded_substrate`'s hypothesis with `B = 1` — while NO
+geometric `C·rᵈ` bounds it, because no geometric sequence stays above a polynomially faint tail.
+**A geometric decay rate is strictly stronger than the bounded moment the flagship actually needs.**
+
+The practical consequence, and it matters for anyone planning work here: do NOT route a discharge of
+`ym_mass_gap_of_substrate` through a decay rate. That asks for more than the flagship needs, and the
+extra is exactly what asymptotic freedom denies — `m(β)·a → 0` as `β → ∞`, so no single `r < 1` is
+uniform in `β`. The bounded moment is a Cesàro statement and survives that; a rate does not. -/
 theorem confinement_of_spectral_form {ι : Type*} [DecidableEq ι] {C r : ℝ}
     (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
     (s : ℕ → ℝ → Finset ι) (w lam : ℕ → ℝ → ι → ℝ)
@@ -606,10 +627,14 @@ theory, so the theorem is vacuous:
 
 * `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a periodic
   torus with `n = N+1`, and `wilsonCorrAt N β`'s lag index `Fin (N+1)` spans the WHOLE period;
-* `wilsonCorrConn` is symmetric in its two plaquettes, so `ρ(d) = ρ(n−d)` — the symmetry `ZeroMode`
-  records and `Moment.circLag` is built on;
-* `Spectral.flat_of_aperiodic` then proves a half-line shape plus that symmetry forces `ρ` FLAT from
-  lag one. Zero connected decay.
+* ASSUMED, not proved: `ρ(d) = ρ(n−d)`. No theorem in the tree asserts it of `wilsonCorrAt`,
+  `corrClay`, `corrHyper` or `wilsonCorrConn`, and there is no translation-invariance theorem for the
+  correlation. `Moment.circLag` is BUILT as if it held; `ZeroMode`'s "symmetric under `d ↦ n − d`"
+  is about `clag`, the LAG FUNCTION, where it is arithmetic — not about `ρ`;
+* GIVEN that, `Spectral.flat_of_aperiodic` proves a half-line shape forces `ρ` FLAT from lag one. It
+  assumes `1 ≤ d`, so `ρ(0)` is unconstrained and a contact term at lag zero survives it. And that a
+  flat correlator is wrong for an interacting theory is physics, not a theorem here — nothing in the
+  tree evaluates `wilsonCorrAt` at any lag, and the RP axiom is satisfied by a constant positive `ρ`.
 
 `Spectral.PeriodicSpectralForm` carries the shape a transfer matrix on a circle actually gives,
 `ρ(d) = ∑ w (λ^d + λ^{n−d})`, and `Spectral.periodic_decay_le_circLag` turns a gap on its spectrum into
@@ -2133,23 +2158,41 @@ the two fields `LatticeYM` deliberately keeps apart: `κ₀`, a PROVED LOWER BOU
 entropy density. That collapse freezes the development at the value of the FIRST family anyone
 counted, and it is not the density:
 
-* `¼ log 3 = 0.2746531` — directed cube-paths (`Floor.directed_paths_card` + `CubeArea.boundary_card_eq`);
-* `(11 log 3 + log 10)/48 = 0.2997358` — branched cube-trees (`CubeBranch.branch_floor_ten`), PROVED
-  strictly larger, and itself the `d = 10` case of a bound parameterised in `d`;
-* `0.455484` — front-capped void-excluded animals, exact-rational Collatz–Wielandt
-  (`certify/floor_ladder_exact.py`), certified outside Lean;
+* `¼ log 3 = 0.2746531` — directed cube-paths. **The only one of these that is a proved lower bound on
+  the vortex family the development actually counts** (`Floor.directed_paths_card` +
+  `CubeArea.boundary_card_eq`, carried to `Plaq 4 n` by `VortexFamily.three_pow_le_vortexCount`).
+* `(11 log 3 + log 10)/48 = 0.2997358` — branched cube-trees (`CubeBranch.branch_floor_ten`). **This is
+  NOT yet a bound on the same object, and `branch_floor_gt_pinned` is a bare inequality between two
+  real numbers.** `vortexFamily` requires `IsClosedSurface` AND `IsConnectedSurface` AND membership in
+  `Plaq 4 n`; `CubeBranch.branched_surfaces_count_and_area` produces `Finset (Finset Face)` with
+  `Face = Fin 3 × Cube`, the 3-D cube-boundary type. Two obligations stand between them: connectedness
+  of the branched boundary (disclosed in `CubeBranch`), and the 4-D embedding, for which
+  `plaqSurface`/`plaqSurface_closed`/`plaqSurface_connected` are all written against a PATH
+  `s : Fin k → Fin 3` and none is stated for a general `Finset Cube`.
+* `0.455483` — front-capped void-excluded animals, exact-rational Collatz–Wielandt
+  (`certify/floor_ladder_exact.py`). Certified outside Lean, and about the animal family, not about
+  `vortexFamily`.
 * the surface connective constant puts the true limsup near `0.83`.
 
-So `κ₀` is a SEQUENCE OF IMPROVING LOWER BOUNDS on one limit, not a constant of the theory — the
-counting derives it, and every richer family derives it better. Pinning it at the weakest known value
-is exactly the thing the development forbids elsewhere.
+So the counting DERIVES `κ₀` rather than fixing it, and the last three entries are where a better
+derivation would come from — but only the first is today a proved lower bound on the counted family.
+Anything below reads the others as improvements is reading ahead of the tree.
 
-The theorems below take the floor as a PARAMETER. Improving the count then improves the conclusion
-with no edit to the chain, and nothing downstream carries a chosen number. -/
+The theorems below take the floor as a PARAMETER, so that when one of those obligations is discharged
+the conclusion follows with no edit to the chain. **What they do NOT do is change anything today: they
+are leaves.** 51 of the 127 statements in this file still mention `κ₀YM` by name, including every
+flagship, and nothing consumes `ym_mass_gap_at_floor`. -/
 
 /-- **THE GAP AT ANY PROVED FLOOR.** `κ₀` is a parameter, not `¼ log 3`: confinement below it and mode
-decay at its own margin give clustering and non-triviality. The tighter the floor a counting argument
-proves, the stronger BOTH hypotheses' content and the conclusion — and nothing here is pinned. -/
+decay at its own margin give clustering and non-triviality.
+
+Direction, stated once and correctly: raising `κ₀` WEAKENS `hconf : μYM β < κ₀` (it asserts less) and
+STRENGTHENS `hdecay` (the modes must clear a bigger margin). The conclusion's first conjunct is the
+same `Prop` for every `κ₀ > μ`, since `gap_of_confinement` needs only `‖m‖ < 1`; the second is `hconf`
+restated. So a larger floor buys a weaker confinement hypothesis, not a visibly stronger conclusion.
+
+This is `Aperture.gap_of_confinement` applied at `ymModel.s β`/`ymModel.P β` — that lemma was already
+parameterised in `κ₀`, so what is added here is the instantiation, not the un-pinning. -/
 theorem ym_mass_gap_at_floor (κ₀ : ℝ)
     (hconf : ∀ β, 0 ≤ β → μYM β < κ₀)
     (m : ℝ → Unit → ℂ)
@@ -2161,7 +2204,12 @@ theorem ym_mass_gap_at_floor (κ₀ : ℝ)
   refine ⟨fun β hβ => ?_, fun β hβ => by have := hconf β hβ; linarith⟩
   exact gap_of_confinement (ymModel.s β) (ymModel.P β) (m β) κ₀ (μYM β) (hconf β hβ) (hdecay β hβ)
 
-/-- **THE PINNED FLAGSHIP IS THE `κ₀ = ¼ log 3` INSTANCE**, so nothing is lost by parameterising. -/
+/-- **THE `κ₀ = ¼ log 3` INSTANCE.** The parameterised theorem specialises back to the pinned value.
+
+It does NOT recover `ym_mass_gap_of_decay_at_floor`, which concludes a THREE-way conjunction ending
+`∀ d d', ymModel.R d = ymModel.R d'` — the SO(4) isotropy half. This concludes two conjuncts; the
+isotropy one is dropped, because `gap_of_confinement` does not supply it. So parameterising costs that
+conjunct, and a caller who needs isotropy must still use the pinned flagship. -/
 theorem ym_mass_gap_at_floor_is_the_pinned_one
     (hconf : ∀ β, 0 ≤ β → μYM β < κ₀YM)
     (m : ℝ → Unit → ℂ)
@@ -2172,10 +2220,15 @@ theorem ym_mass_gap_at_floor_is_the_pinned_one
       (∀ β, 0 ≤ β → μYM β - κ₀YM < 0) :=
   ym_mass_gap_at_floor κ₀YM hconf m hdecay
 
-/-- **AND AT THE BRANCHED FLOOR, WHICH IS STRICTLY LARGER.** `CubeBranch.branch_floor_ten` proves
-`¼ log 3 < (11 log 3 + log 10)/48`, so this instance has a strictly weaker confinement hypothesis than
-the pinned one and delivers a strictly larger margin. The floor moved because the COUNT improved;
-no constant was edited. -/
+/-- **THE INSTANCE AT THE BRANCHED NUMBER.** `CubeBranch.branch_floor_ten` proves
+`¼ log 3 < (11 log 3 + log 10)/48`, so this instance has a strictly WEAKER confinement hypothesis than
+the pinned one — `μYM β <` a larger number asserts less.
+
+**It is not yet an improvement to the floor**, because that number is not yet a proved lower bound on
+the counted family: see the list above `ym_mass_gap_at_floor`. `CubeBranch` counts branched cube-trees
+in the 3-D `Face = Fin 3 × Cube` type, while `vortexFamily` lives in `Plaq 4 n` and demands
+connectedness as well. This theorem is here so the chain is ready when those two obligations are
+discharged, not because they have been. -/
 theorem ym_mass_gap_at_branch_floor
     (hconf : ∀ β, 0 ≤ β → μYM β < (11 * Real.log 3 + Real.log 10) / 48)
     (m : ℝ → Unit → ℂ)
@@ -2186,8 +2239,9 @@ theorem ym_mass_gap_at_branch_floor
       (∀ β, 0 ≤ β → μYM β - (11 * Real.log 3 + Real.log 10) / 48 < 0) :=
   ym_mass_gap_at_floor _ hconf m hdecay
 
-/-- **THE BRANCHED FLOOR IS STRICTLY ABOVE THE PINNED ONE**, named here so the improvement is visible
-where the flagship is rather than only in `CubeBranch`. -/
+/-- **A BARE INEQUALITY BETWEEN TWO REAL NUMBERS**, named here so the arithmetic is visible where the
+flagship is. It says `¼ log 3 < (11 log 3 + log 10)/48` and nothing more — in particular it does NOT
+say that the second bounds the same surface count the first does. -/
 theorem branch_floor_gt_pinned : κ₀YM < (11 * Real.log 3 + Real.log 10) / 48 :=
   CubeBranch.branch_floor_ten
 
@@ -2227,10 +2281,11 @@ that could be false. -/
 The shape is `ρ(d) = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` with `n = N+1`, NOT the half-line `∑ w λ^d`. That is
 forced: `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
 periodic torus; `wilsonCorrAt N β = corrClay (N+1) β` with the lag running the WHOLE period; and
-`wilsonCorrConn` is symmetric in its two plaquettes, so `ρ(d) = ρ(n−d)`. `Spectral.flat_of_aperiodic`
-proves that a half-line shape plus that symmetry forces `ρ` FLAT from lag one — zero connected decay,
-which an interacting theory does not have. `ZeroMode` already records the symmetry and
-`Moment.circLag` already uses it.
+and `ρ(d) = ρ(n−d)` is ASSUMED — no theorem in the tree proves it of the correlation, and `ZeroMode`'s
+`d ↦ n − d` symmetry is about `clag`, the lag function, not about `ρ`. GIVEN it,
+`Spectral.flat_of_aperiodic` forces a half-line `ρ` FLAT from lag one. `Moment.circLag` is built as if
+the symmetry held, so the periodic shape is the consistent choice; it is not a refutation of the
+half-line one.
 
 DERIVED: every numeral here is fixed by the lattice, none is chosen. The period `N+1` is forced by
 `WilsonHypercubic.Site = Fin d → Fin n` with `shift` adding in `Fin n`, so it is the aperture's own

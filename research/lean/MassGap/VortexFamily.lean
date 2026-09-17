@@ -230,7 +230,7 @@ theorem mem_edgesOf_faceToPlaq [NeZero n] (f : Face) (e : Link 4 n) :
 
 The correspondence above sends 3-D edges forward. Closedness needs it BACKWARDS: given a link of the
 physical lattice, the faces of the surface carrying it must be exactly the 3-D faces carrying one 3-D
-edge. That is where the periodic box bites into the argument — `siteOf` reduces modulo `n`, so it is
+edge. That is where the periodic box cuts into the argument — `siteOf` reduces modulo `n`, so it is
 injective only on corners below `n`, and the corners of a face's EDGES reach one step further than
 the face's own corner. Hence `k + 2 < n` here where the area count needed only `k + 1 < n`. -/
 

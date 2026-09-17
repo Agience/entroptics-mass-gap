@@ -90,26 +90,11 @@ if __name__ == "__main__":
     klo, khi = kappa0_bounds()
     print(f"kappa_0 = (1/4) ln 3   certified in [{_f(klo):.12f}, {_f(khi):.12f}]")
 
-    lo_beta, hi_beta = Q(749, 1000), Q(750, 1000)
-    Blo_lo, Blo_hi = B_bounds(lo_beta)
-    Bhi_lo, Bhi_hi = B_bounds(hi_beta)
-    print(f"B(0.749) certified <= {_f(Blo_hi):.12f}   (kappa_0 lower {_f(klo):.12f})")
-    print(f"B(0.750) certified >= {_f(Bhi_lo):.12f}   (kappa_0 upper {_f(khi):.12f})")
-
-    assert Blo_hi < klo, "B(0.749) < kappa_0 not certified"
-    assert Bhi_lo > khi, "B(0.750) > kappa_0 not certified"
-    print("CERTIFIED: B(0.749) < kappa_0 < B(0.750)  =>  beta_star in (0.749, 0.750)")
-
-    # certified r over the bracket (r increasing: r_lo at 0.749, r_hi at 0.750)
-    rlo749, _ = ratio_bounds(lo_beta)
-    _, rhi750 = ratio_bounds(hi_beta)
+    assert klo >= Q(2746, 10000) and khi <= Q(2747, 10000), "kappa_0 bracket not certified"
+    print("CERTIFIED: kappa_0 in [0.2746, 0.2747]")
     print()
-    print("Lean `beta_star_enclosure` hypotheses (certified rationals):")
-    print(f"  r(beta_star)  in [{_f(rlo749):.6f}, {_f(rhi750):.6f}]  (use rlo=0.182, rhi=0.184)")
-    print(f"  kappa_0       in [{_f(klo):.6f}, {_f(khi):.6f}]  (use klo=0.2746, khi=0.2747)")
-    encl_lo = Q(2746, 10000) / (2 * Q(184, 1000))
-    encl_hi = Q(2747, 10000) / (2 * Q(182, 1000))
-    print(f"  => beta_star in [{_f(encl_lo):.6f}, {_f(encl_hi):.6f}]  (machine-checked in Lean)")
-    assert Q(182, 1000) <= rlo749 and rhi750 <= Q(184, 1000)
-    assert klo >= Q(2746, 10000) and khi <= Q(2747, 10000)
-    print("CERTIFIED: the round rational hypotheses used in Lean bound the true values.")
+    print("NOTE: the strong-coupling threshold beta_star is no longer certified here. It is a")
+    print("      THEOREM: Bessel.ratio_le_quarter gives I2/I1 <= x/4 termwise, so the character")
+    print("      bound is beta^2/2 and sits below the floor exactly when beta^2 < (1/2) ln 3.")
+    print("      This module remains the rational-enclosure toolkit its other callers use")
+    print("      (kappa0_bounds, ln3_bounds, besselI_bounds, ratio_bounds, B_bounds).")

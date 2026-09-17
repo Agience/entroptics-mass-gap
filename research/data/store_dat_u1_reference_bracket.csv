@@ -1,0 +1,5 @@
+group,L,T,beta,start,sweeps,n_chains,tail_blocks,tail_mean,tail_sem,acceptance,stored_mean,verdict
+u1,8,16,1.6,hot,20000,8,5,1.04661,0.001377,0.5125,1.042685,bracket_open_stored_inside
+u1,8,16,1.6,cold,20000,8,17,1.04151,0.00077,0.5125,1.042685,bracket_open_stored_inside
+u1,8,16,2.5,hot,20000,8,236,0.641366,0.000202,0.4204,0.638194,bracket_open_stored_inside
+u1,8,16,2.5,cold,20000,8,3,0.634066,0.001213,0.42,0.638194,bracket_open_stored_inside

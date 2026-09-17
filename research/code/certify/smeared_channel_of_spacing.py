@@ -2,7 +2,7 @@
 
 THE QUESTION. Three independent reads now say the :F^2: action-density channel is soft: `mu < kappa0`
 holds in both U(1) phases, the contrast sits near 1.04 in both, and the lag moment is contact-scale
--- rms separation 0.37-0.43 SITES, falling with the lattice spacing rather than holding. So the
+-- rms separation 0.38-0.41 SITES, falling with the lattice spacing rather than holding. So the
 substrate hypothesis is satisfied for a UV reason, not a gap reason.
 
 The Lean is explicit that this is the caller's problem, not the theorem's: "Which correlation
@@ -43,6 +43,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 
 import store_path
+import aperture_ceiling            # the ceiling, derived in ONE place
 import ym_crossover_confinement_of_grid as CG
 import lattice_generator as _lg  # the ONE quaternion algebra in the tree
 import entroptics_adapter as W   # the wrapper: resampling is the library's, not a local copy
@@ -206,8 +207,8 @@ def main() -> None:
                              f"matched pair is the only one the store holds, so the test cannot run.")
         fields[(L, beta)] = q
 
-    # DERIVED: the growth condition solved for c, the same ceiling the aperture scan uses.
-    c_max = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
+    # DERIVED in `aperture_ceiling`, the same ceiling the aperture scan uses, and SHARP.
+    c_max = aperture_ceiling.C_MAX
     # DERIVED, and in the right variable. A length fixed in FERMIS is 1/a sites, so the moment
     # scales as (a_coarse/a_fine)^2. The volume ratio (L_fine/L_coarse)^2 equals that only when the
     # volumes match exactly: 1.80 vs 1.78 on the matched pair, but 3.15 vs 4.00 on the second, where

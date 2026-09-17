@@ -32,7 +32,19 @@ Review, feedback and fixes are welcome.
 At **every physical coupling $\beta \ge 0$**, pure $SU(N)$ has a positive mass gap, non-triviality (the area law),
 and Euclidean $SO(4)$ invariance. The gap is bounded below by the entropy margin, $\Delta(\beta) \ge \kappa_0 - \mu(\beta) > 0$:
 the centre-vortex tension $\mu$ stays below the counting floor $\kappa_0 = \tfrac14\ln 3$ at every coupling, and
-$\|C(\tau)\| \le M\,e^{-\Delta\tau}$. The result rests on four named inputs, of which three are classical results the development cites rather than
+$\|C(\tau)\| \le M\,e^{-\Delta\tau}$.
+
+**The floor takes no input.** Both of $\kappa_0$'s factors are theorems, not constants written down:
+the $\ln 3$ is the branching of a directed cube-path (`Floor.directed_paths_card`) and the $\tfrac14$
+is the reciprocal area per step — `CubeArea.boundary_card_eq`, that the surface bounding a $k$-step
+path has exactly $4k+6$ faces — with `VortexCount.kappa0_is_the_surface_entropy_density` assembling
+the two into $\log(\#\text{surfaces})/\text{area}\to\tfrac14\ln3$. Those surfaces are also closed
+(`CubeClosed.edge_parity`, $\partial\partial=0$ over $Z_2$ at every interior edge), all pass through
+one fixed face, and distinct paths bound distinct ones. Since pure Yang–Mills carries no dimensionful
+parameter, a fitted constant anywhere below the gap would be a smuggled scale; $\kappa_0$ being a
+counting number is what makes the transmutation legitimate, and it is now counted rather than quoted.
+
+The result rests on four named inputs, of which three are classical results the development cites rather than
 re-derives — the strong-coupling character bound (Osterwalder–Seiler), asymptotic freedom, and reflection
 positivity of the Wilson ensemble. The fourth, a finite correlation length $\langle d^2\rangle \le 1$, is not a
 cited theorem: it is discharged by measurement rather than by proof. Conditioned on the confinement read, the whole result

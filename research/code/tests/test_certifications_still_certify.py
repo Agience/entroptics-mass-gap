@@ -38,15 +38,19 @@ def _run(script: str) -> str:
     return r.stdout
 
 
-def test_beta_star_enclosure_certifies_the_quoted_interval():
-    """The strong-coupling threshold is certified, and it is the interval the paper quotes."""
+def test_kappa0_bracket_is_still_certified():
+    """The rational-enclosure toolkit still certifies the kappa_0 bracket its callers use.
+
+    It no longer certifies the strong-coupling threshold: that is now the THEOREM
+    `Bessel.strong_coupling_below_threshold` (`beta^2 < (1/2) ln 3`), derived from the termwise
+    `ratio_le_quarter` with no numeric input. The module survives because `kappa0_bounds`,
+    `ln3_bounds`, `ratio_bounds` and `B_bounds` have other callers.
+    """
     out = _run("beta_star_enclosure.py")
-    assert "CERTIFIED" in out, f"beta_star_enclosure did not certify:\n{out[-1500:]}"
-    assert "beta_star in (0.749, 0.750)" in out, \
-        f"the certified interval is not (0.749, 0.750):\n{out[-1500:]}"
-    text = PAPER.read_text(encoding="utf-8")
-    assert "(0.749,0.750)" in text.replace(" ", ""), \
-        "the paper does not quote the interval this certification establishes"
+    assert "CERTIFIED: kappa_0 in [0.2746, 0.2747]" in out, \
+        f"the kappa_0 bracket is no longer certified:\n{out[-1500:]}"
+    assert "beta_star in (0.749, 0.750)" not in out, \
+        f"the retired beta_star certification came back:\n{out[-1500:]}"
 
 
 def test_small_volume_enclosure_certifies_the_quoted_gap():

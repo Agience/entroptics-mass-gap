@@ -35,19 +35,20 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # research/code
 from aperture_reads import load_su2   # one copy of the su2 shard loader
 import store_path                    # the ONE place the ensemble store is located
+from aperture_ceiling import APERTURE_RHS, d2_ceiling   # the ceiling, derived in ONE place
 
 KAPPA0 = 0.25 * math.log(3.0)
-APERTURE_RHS = 1.0 - 3.0 ** (-0.25)
 L = 16
-# The <d^2> ceiling the aperture condition implies, DERIVED: the moment route needs
-# (2 pi/(N+1))^2 * B / 2 < 1 - 3^{-1/4}, so B < (1 - 3^{-1/4}) * 2 (N+1)^2 / (2 pi)^2.
+# The <d^2> ceiling the aperture condition implies. DERIVED in `aperture_ceiling`, which is where it
+# is written and the only place it is: B < C_MAX (N+1)^2 with C_MAX = arccos(3^{-1/4})^2/(2 pi)^2,
+# the SHARP constant of `Complete.confinement_at_of_substrate_sharp`.
 #
 # `N + 1` is the LAG ARITY -- `Moment.Read N` indexes lags by `Fin (N + 1)` and sets
 # theta_d = 2 pi d / (N + 1). A periodic extent of L sites admits lags d = 0..L-1, so N + 1 = L and
 # N = L - 1. This read `(L + 1)^2`, i.e. N + 1 = L + 1, which is the arity of a lattice one site
-# larger than the one measured. That inflated the ceiling by ((L+1)/L)^2 = 1.13 -- 3.52 where the
-# extent gives 3.11 -- and every unit of that inflation made the certificate EASIER to pass.
-B16 = APERTURE_RHS * 2 * L ** 2 / (2 * math.pi) ** 2
+# larger than the one measured. That inflated the ceiling by ((L+1)/L)^2 = 1.13 -- 3.67 where the
+# extent gives 3.25 -- and every unit of that inflation made the certificate EASIER to pass.
+B16 = d2_ceiling(L)
 MAXLAG = L // 2
 # Store root from ``store_path``: CONFIGS, then the git-ignored local config file, then a refusal
 # -- no machine path in this file. Empty rather than raising when unconfigured, because the smoke

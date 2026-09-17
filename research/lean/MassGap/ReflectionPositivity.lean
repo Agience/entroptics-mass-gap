@@ -27,7 +27,7 @@ reflection plane — does not factorise on its own; Osterwalder–Seiler expand 
 convergent sum of products, each term of the paired form, and conclude by summing nonnegatives. The
 expansion is the theorem. The pairing-is-a-square step, which is what the expansion is FOR, is below.
 
-WHY THIS DISTINCTION IS WORTH DRAWING. `entroptics-sign-problem` makes the same separation in a
+WHY THIS DISTINCTION IS WORTH DRAWING. `entroptics-positivity` makes the same separation in a
 different setting and finds it decisive there. It has two routes to its pairing identity: a
 similarity `S K S⁻¹ = −K`, which leaves the weights REAL and does carry positivity, and an
 ANTI-similarity `S K S⁻¹ = −conj(K)`, which restores the identity on an odd cycle and leaves a phase

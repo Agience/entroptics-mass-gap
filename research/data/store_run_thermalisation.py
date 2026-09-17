@@ -72,9 +72,9 @@ import store_path                                                          # noq
 import table                                                               # noqa: E402
 
 DAT = os.path.join(_HERE, "store_dat_thermalisation.csv")
-COLS = ["group", "L", "T", "beta", "collection", "field", "n_configs", "stored_mean", "stored_sem",
-        "equilibrium_mean", "equilibrium_sem", "offset", "sigma", "verdict",
-        "eq_method", "eq_sweeps", "eq_n"]
+COLS = ["group", "L", "T", "beta", "collection", "field", "test", "reference", "bracket_half_gap", "n_configs",
+        "stored_mean", "stored_sem", "equilibrium_mean", "equilibrium_sem", "offset", "sigma",
+        "verdict", "eq_method", "eq_sweeps", "eq_n"]
 
 # The device decision is `lattice_generator.resolve_device`, one copy shared with
 # `string_tension_eq_centre` and `8_7_run_transfer_gap`: an unset request PROBES for CUDA and
@@ -145,10 +145,29 @@ def stored_means(root):
     acc = collections.defaultdict(list)
     for path in sorted(glob.glob(os.path.join(root, "configs_*", "*.npy"))):
         coll = os.path.basename(os.path.dirname(path))
-        m = re.match(r"(u1|su2|su3)_L(\d+)_b([0-9.]+)\.s(\d+)\.npy$", os.path.basename(path))
+        # The OPERATOR-REDUCED shards carry a channel and a smearing level between the coupling and
+        # the shard index -- `su2_L12_b2.40.plaquette.ape16.s000.npy` -- which the original pattern,
+        # expecting `.s000` directly after the coupling, did not admit. It matched none of the 42
+        # such shards across `configs_b25_su2`, `configs_boxsm_su2`, `configs_pilot_su2` and
+        # `configs_smear_su2_L12`, and dropped every one through the `continue` below WITHOUT SAYING
+        # SO -- which is exactly the failure the shape branch further down warns about, one branch
+        # earlier and unguarded. Eleven ensembles shipped with no thermalisation measurement.
+        #
+        # The middle segments are CAPTURED, not discarded: `ape16` and `ape32` are different
+        # operators, and averaging them into one mean would make the drift test meaningless.
+        m = re.match(r"(u1|su2|su3)_L(\d+)_b([0-9.]+)((?:\.[A-Za-z][A-Za-z0-9_]*)*)\.s(\d+)\.npy$",
+                     os.path.basename(path))
         if not m:
+            # A name that matches nothing is SKIPPED, and a silent skip here is how an ensemble ends
+            # up shipping with no thermalisation measurement while the suite stays green. Say which,
+            # and say it where it is read.
+            print(f"  SKIP (name matches no known layout) {coll}/{os.path.basename(path)}",
+                  flush=True)
             continue
         group, L, beta = m.group(1), int(m.group(2)), float(m.group(3))
+        # DERIVED: the middle segments, in file order, are the operator's identity. Empty for a plain
+        # density or link shard, which is what "the whole ensemble" means for those.
+        operator = m.group(4).lstrip(".") if m.group(4) else ""
         key = _shard_key(root, path)
         entry = cache.get(key)
         if entry is not None:
@@ -167,6 +186,19 @@ def stored_means(root):
             # the time mean of `O(t)`, which `_per_config_mean` already computes -- it flattens
             # everything after the configuration axis, and for `(n, T)` that is the time axis.
             if a.ndim == 2:
+                # An OPERATOR-REDUCED shard `(n, T)` is a smeared-plaquette amplitude history, not
+                # the action density, and this file's verdict is an ABSOLUTE comparison against an
+                # action-density equilibrium reference. Measured: `configs_boxsm_su2` L=8 T=32
+                # beta=2.40 has per-configuration mean 1534.4 against a reference of 2.2159, i.e.
+                # 57726 sigma "under-thermalised" -- which says only that the two are different
+                # observables.
+                #
+                # So these shards do NOT go through the level comparison. They go through the DRIFT
+                # test instead (`drift_sigma` below), which asks the thermalisation question without
+                # a reference at all: does the first half of the chain sit where the second half
+                # does? That is weaker evidence than the level test -- a chain stuck in the wrong
+                # place does not drift -- and the artifact says which test produced each verdict so
+                # the two are never read as the same claim.
                 T, field, per = a.shape[-1], "operator", _per_config_mean(a)
             # DERIVED: 5 axes is the density field `(n, L, L, L, T)`, as above.
             elif a.ndim == 5:
@@ -199,20 +231,70 @@ def stored_means(root):
 
 
 def equilibrium(group, L, T, beta):
-    """(mean, sem, converged) from a chain run to a flat tail.
+    """(mean, sem, usable, bracket half-gap) BRACKETED between a hot start and a cold one.
 
-    The tail is extended backwards while each added measurement stays within 2 sigma of the
-    running mean, so a chain that is still drifting cannot contribute a value.
+    WHY BOTH, and it is not caution. A hot (random) configuration relaxes toward equilibrium FROM
+    ABOVE and a cold (ordered) one FROM BELOW, so a reference measured from one start is biased in a
+    known direction by an amount that nothing about that single chain reveals -- its tail looks flat
+    either way. This function ran only `_*_init`, which is hot, for the whole life of the artifact,
+    while the test that consumes it described the value as "bracketed from both a hot and a cold
+    start". It was not.
+
+    WHAT THAT COST, measured rather than supposed. Across the level-tested ensembles the offsets
+    `stored - reference` are balanced for the heat-bath groups (SU(2) 27 of 58 negative, SU(3) 7 of
+    16) and one-sided for U(1) at large beta: 8 of 8 negative for `beta >= 1.4`, sign test
+    `p = 0.0039`. The mechanism is in `_ops("u1")`, which returns a Metropolis proposal width of 1.0
+    radians at EVERY beta: acceptance falls as beta rises (0.512 at 1.6, 0.420 at 2.5), the chain
+    decorrelates more slowly, and the hot start is still descending when the tail goes flat. One
+    ensemble carried enough configurations to resolve it alone and read 8.5 sigma BELOW its
+    reference -- a direction no relaxing chain can produce, which is what identified the reference
+    rather than the data as the suspect.
+
+    HOW THE BRACKET IS REPORTED. The value is the MIDPOINT of the two tails and the uncertainty
+    carries the half-gap between them, added in quadrature with the tails' own errors. So a bracket
+    that has not closed widens the error rather than being averaged away, and an ensemble is
+    classified against an interval that is honestly as wide as the two chains disagree. When the
+    bracket does close the half-gap is small and this reduces to the old behaviour.
+
+    The third value is USABLE, not "converged" -- see the note at the return. The fourth is the
+    half-gap, carried separately so a wide bracket is visible rather than buried in the error.
 
     SU(N) uses heat-bath; U(1) has only Metropolis, which reaches the same distribution over a
     longer chain, so it gets `EQ_SWEEPS_U1` sweeps rather than `EQ_SWEEPS`.
+    """
+    hot_m, hot_s, hot_ok = _one_start(group, L, T, beta, "hot")
+    cold_m, cold_s, cold_ok = _one_start(group, L, T, beta, "cold")
+    mid = 0.5 * (hot_m + cold_m)
+    half = 0.5 * abs(hot_m - cold_m)
+    sem = float(np.sqrt((0.5 * (hot_s + cold_s)) ** 2 + half ** 2))
+    # USABLE, and `converged` is no longer the right word for the flag a bracket produces. The
+    # single-chain rule was "this tail is flat over at least 3 blocks, so the value can be trusted" --
+    # with one chain the tail length is the ONLY evidence, and a short one means you cannot tell
+    # whether it is still moving, so the value has to be discarded. A bracket tells you directly, and
+    # measures it: the gap between the two starts. Keeping the old rule made adding a cold chain turn
+    # a usable reference into an unusable one -- strictly more information, strictly less use -- which
+    # is how it read at `u1|8|16|0.6` and `0.7`. So the value is usable whenever both chains produced
+    # a tail estimate, and the disagreement goes where disagreement belongs, into the uncertainty.
+    #
+    # `half` is returned so it is not buried inside `sem`: a wide bracket makes every ensemble agree
+    # with the reference, which is the correct reading of a weak measurement and is exactly the thing
+    # a reader must be able to SEE rather than infer.
+    return mid, sem, True, half
+
+
+def _one_start(group, L, T, beta, start):
+    """(mean, sem, tail_found) for one chain from `start`, which is `"hot"` or `"cold"`.
+
+    The tail is extended backwards while each added measurement stays within 2 sigma of the
+    running mean, so a chain that is still drifting cannot contribute a value.
     """
     method = "metropolis" if group == "u1" else "heatbath"
     sweeps = EQ_SWEEPS_U1 if group == "u1" else EQ_SWEEPS
     init, sweep, action, dstep = G._ops(group, method)
     dims = (L, L, L, T)
     b = G._Backend(DEVICE).seed(0)
-    link = init(b, dims, G._batch_tuple(EQ_N))
+    link = (init(b, dims, G._batch_tuple(EQ_N)) if start == "hot"
+            else G.cold_init(b, group, dims, G._batch_tuple(EQ_N)))
     trace = []
     for s in range(1, sweeps + 1):
         sweep(b, link, dims, beta, dstep)
@@ -234,6 +316,45 @@ def equilibrium(group, L, T, beta):
     sem = float(np.mean(sems[-use:]) / np.sqrt(use))
     # CHOSEN: minimum independent blocks for a standard error to mean anything.
     return mu, sem, use >= 3
+
+
+def drift_sigma(v: np.ndarray) -> tuple[float, float, float, float]:
+    """`(first-half mean, second-half mean, offset, |z|)` for a chain against ITSELF.
+
+    WHAT THIS ANSWERS, and it is not the same question the level test answers. An operator-reduced
+    shard is a smeared-plaquette amplitude history; the equilibrium reference this file computes is
+    an action density, a different observable, so their LEVELS cannot be compared -- doing so reads
+    `configs_boxsm_su2` L=8 beta=2.40 as 57726 sigma off, which says only that the two are different
+    quantities. What CAN be asked without a reference is whether the chain is still moving: split it
+    in half in configuration order and compare the halves by their own standard errors.
+
+    WHAT IT CANNOT SEE, stated where the statistic is: a chain that equilibrated to the WRONG place
+    -- trapped in a metastable state, or generated at the wrong coupling -- does not drift, and this
+    returns a small `z` for it. A drift verdict is evidence that the sampling had settled by the time
+    the shipped configurations were written, and nothing more. The artifact's `test` column carries
+    which test produced each verdict so that the two are never summed into one count.
+
+    DERIVED: the split is at the halfway point because the shipped configurations carry no time
+    stamp, only their order, and the halves are the largest two blocks that order supports. No
+    burn-in fraction is chosen: with the shards already stripped of their burn-in by the generator,
+    any interior cut would be a second, unstated one.
+    """
+    n = v.size
+    half = n // 2
+    # DERIVED: `2` is the minimum a standard error can be computed from -- `std(ddof=1)` of one
+    # value is undefined -- so a chain with fewer than two configurations per half cannot be asked
+    # whether its halves agree. It is the arity of a variance, not a threshold on chain length.
+    if half < 2:
+        return float("nan"), float("nan"), float("nan"), float("nan")
+    a, b = v[:half], v[n - half:]
+    ma, mb = float(a.mean()), float(b.mean())
+    sa = float(a.std(ddof=1) / np.sqrt(half))
+    sb = float(b.std(ddof=1) / np.sqrt(half))
+    den = math.sqrt(sa ** 2 + sb ** 2)
+    off = mb - ma
+    # DERIVED: `0` is the degenerate denominator. Two halves with no spread at all disagree
+    # infinitely in units of their own error, which is what `inf` says; it is not a tolerance.
+    return ma, mb, off, (abs(off) / den if den > 0 else float("inf"))
 
 
 def tolerance_sigma(n_ensembles: int) -> float:
@@ -280,7 +401,9 @@ def previous_references():
                     or int(r.get("eq_n", -1)) != EQ_N):
                 continue
             out[(group, int(r["L"]), int(r["T"]), float(r["beta"]))] = (
-                float(r["equilibrium_mean"]), float(r["equilibrium_sem"]), True)
+                float(r["equilibrium_mean"]), float(r["equilibrium_sem"]), True,
+                r.get("reference", "hot_only"),
+                float(r["bracket_half_gap"]) if r.get("bracket_half_gap") else float("nan"))
     return out
 
 
@@ -320,8 +443,11 @@ def run_references(keys_path, out_path):
             continue
         t0 = time.time()
         print(f"  chain {name} ...", flush=True)
-        mu, sem, conv = equilibrium(k["group"], k["L"], k["T"], k["beta"])
-        out[name] = [mu, sem, bool(conv)]
+        mu, sem, conv, half = equilibrium(k["group"], k["L"], k["T"], k["beta"])
+        # The fourth element is HOW this was measured, not decoration: `equilibrium` brackets a hot
+        # and a cold start, and a file that did not say so would load as `hot_only` (the default for
+        # any legacy file) and be recorded in the artifact as the weaker kind of reference.
+        out[name] = [mu, sem, bool(conv), "bracketed", half]
         # WRITTEN AFTER EVERY CHAIN, not at the end. A run that writes only on completion cannot be
         # observed, cannot be resumed, and discards everything if it is interrupted -- which is
         # exactly what made the previous seven-hour pass impossible to reason about.
@@ -333,12 +459,29 @@ def run_references(keys_path, out_path):
 
 
 def load_references(path):
-    """Phase 3's input: references computed elsewhere, keyed as `previous_references` keys them."""
+    """Phase 3's input: references computed elsewhere, keyed as `previous_references` keys them.
+
+    A value is `[mean, sem, converged]` or `[mean, sem, converged, kind]`. `kind` says HOW the
+    reference was measured — `"bracketed"` for the hot/cold pair `equilibrium` now produces,
+    `"hot_only"` for anything written before that, which is every legacy file. It is carried into the
+    artifact's `reference` column rather than discarded, because the two are not the same evidence: a
+    hot-only reference is biased in a known direction by an amount no single chain reveals (§ the
+    `equilibrium` docstring), and a run that merges the two without saying which is which would
+    report a mixture as if it were one measurement.
+    """
     raw = json.load(open(path, encoding="utf-8"))
     out = {}
-    for name, (mu, sem, conv) in raw.items():
+    for name, v in raw.items():
+        mu, sem, conv = v[0], v[1], v[2]
+        # DERIVED: `3` and `4` are POSITIONS in the record, not magnitudes -- a legacy file stops
+        # at three elements, and what is absent is what its absence means.
+        kind = v[3] if len(v) > 3 else "hot_only"
+        # DERIVED: `4` is the half-gap's POSITION in the record, as `3` above is the kind's. A file
+        # written before the bracket existed is shorter, and `nan` is what "this reference had no
+        # bracket" means -- not a bracket of width zero, which would be a claim.
+        half = float(v[4]) if len(v) > 4 else float("nan")
         g, L, T, b = name.split("|")
-        out[(g, int(L), int(T), float(b))] = (float(mu), float(sem), bool(conv))
+        out[(g, int(L), int(T), float(b))] = (float(mu), float(sem), bool(conv), str(kind), half)
     return out
 
 
@@ -383,16 +526,55 @@ def main():
     rows = []
     # DERIVED: the tolerance is the expected largest |z| across the ensembles being classified,
     # so it widens as the store grows rather than staying at a number picked once.
-    tol = tolerance_sigma(len(acc))
-    print(f"tolerance: sqrt(2 ln {len(acc)}) = {tol:.3f} sigma", flush=True)
+    # DERIVED: the multiple-comparison penalty counts the TESTS, not the ensembles. A level test
+    # produces one standardised offset per ensemble; a drift test produces one per SHARD, because
+    # each shard is its own chain and the worst of them decides the verdict. Counting ensembles here
+    # would understate the number of draws the maximum is taken over, which is the one thing this
+    # tolerance exists to correct for.
+    n_tests = sum(len(chunks) if field == "operator" else 1
+                  for (_, _, _, _, _, field), chunks in acc.items())
+    tol = tolerance_sigma(n_tests)
+    print(f"tolerance: sqrt(2 ln {n_tests}) = {tol:.3f} sigma "
+          f"({len(acc)} ensembles, {n_tests} tests)", flush=True)
     for (group, L, T, beta, coll, field), chunks in sorted(acc.items()):
         v = np.concatenate(chunks)
         mean = float(v.mean())
         sem = float(v.std(ddof=1) / np.sqrt(v.size))
+        if field == "operator":
+            # A smeared-plaquette amplitude has no action-density reference to be level-compared
+            # against, so it is asked the drift question instead.
+            #
+            # PER SHARD, NOT PER KEY, and that distinction is the whole measurement. These
+            # collections ship SEVERAL SMEARING LEVELS under one `(group, L, T, beta, collection)`
+            # -- `ape16`, `ape24`, `ape32` -- and the accumulator key does not carry the smearing.
+            # Concatenating them and splitting the result in half compares one smearing level
+            # against another: measured, that reads `configs_b25_su2` as "drifting" at 25.8 sigma at
+            # EVERY L, the same number four times over, because it is the amplitude step between
+            # levels and not a property of any chain. A shard IS a chain; each is tested on its own
+            # and the WORST is reported, so one moving chain cannot hide behind the others.
+            zs = [drift_sigma(np.asarray(c)) for c in chunks]
+            finite = [z for z in zs if math.isfinite(z[3])]
+            if not finite:
+                ma = mb = off = sigma = float("nan")
+                verdict = "drift_untestable"
+            else:
+                ma, mb, off, sigma = max(finite, key=lambda z: z[3])
+                verdict = "no_drift" if sigma < tol else "drifting"
+            rows.append(dict(group=group, L=L, T=T, beta=beta, collection=coll, field=field,
+                             test="halves_drift", reference="none", bracket_half_gap="",
+                             n_configs=int(v.size),
+                             stored_mean=round(mean, 6), stored_sem=round(sem, 6),
+                             equilibrium_mean=round(ma, 6), equilibrium_sem=round(mb, 6),
+                             offset=round(off, 6), sigma=round(float(sigma), 1), verdict=verdict,
+                             eq_method="none", eq_sweeps=0, eq_n=0))
+            print(f"  {group:>3} L={L:>2} T={T:>2} b={beta:<5} {coll:<20} halves {ma:.5f} vs "
+                  f"{mb:.5f} ({sigma:.1f} sigma) {verdict}", flush=True)
+            continue
         if (group, L, T, beta) not in eq_cache:
             print(f"  equilibrium {group} L={L} T={T} beta={beta} ...", flush=True)
-            eq_cache[(group, L, T, beta)] = equilibrium(group, L, T, beta)
-        eqm, eqsem, converged = eq_cache[(group, L, T, beta)]
+            m, s, u, h = equilibrium(group, L, T, beta)
+            eq_cache[(group, L, T, beta)] = (m, s, u, "bracketed", h)
+        eqm, eqsem, converged, refkind, refhalf = eq_cache[(group, L, T, beta)]
         off = mean - eqm
         sigma = abs(off) / np.sqrt(sem ** 2 + eqsem ** 2)
         if not converged:
@@ -402,6 +584,8 @@ def main():
         else:
             verdict = "under_thermalised" if off > 0 else "below_equilibrium"
         rows.append(dict(group=group, L=L, T=T, beta=beta, collection=coll, field=field,
+                         test="level_vs_reference", reference=refkind,
+                         bracket_half_gap=("" if refhalf != refhalf else round(refhalf, 6)),
                          n_configs=int(v.size), stored_mean=round(mean, 6),
                          stored_sem=round(sem, 6), equilibrium_mean=round(eqm, 6),
                          equilibrium_sem=round(eqsem, 6), offset=round(off, 6),

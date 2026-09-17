@@ -39,6 +39,10 @@ NOT_LEAN = {
     # resolve to. `hfe` passed only because a python variable happens to share the name,
     # which is the accident this list exists to replace with a decision.
     "hfe", "hgap", "hdom", "hconf", "hread", "hmom", "hscale",
+    # `hdual` is the scale-duality hypothesis of `VortexCount.junction_of_floor_count` and
+    # `junction_of_physical_count` — a binder in both, named in the paper's comparison of the two
+    # gap routes for the same reason `hfe` and `hgap` are named there.
+    "hdual",
 }
 
 
@@ -521,23 +525,70 @@ def test_every_aperture_ceiling_is_derived_from_the_lag_arity():
 
     An off-by-one that appears twice in separate files is not a slip, so this asserts the form rather
     than a value: any ceiling written with an extent other than the lag arity fails here, at any L.
+
+    The derivation now lives in `certify/aperture_ceiling.py` and the scripts call `d2_ceiling`, so
+    the trigger list covers both spellings -- the old inline constants AND the helper. Dropping the
+    old names from the trigger without adding the new ones would leave this test matching nothing,
+    which reads exactly like passing.
     """
+    TRIGGERS = ("APERTURE_RHS", "APERTURE_ARC", "C_MAX", "d2_ceiling",
+                "1.0 - 3.0 ** (-0.25)", "3.0 ** -0.25")
     bad = []
     for p in sorted((REPO / "research").rglob("*.py")):
         if "test_" in p.name:
             continue
         for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
             code = line.split("#")[0]
-            if "APERTURE_RHS" not in code and "1.0 - 3.0 ** (-0.25)" not in code:
+            if not any(t in code for t in TRIGGERS):
                 continue
-            # the ceiling is the only APERTURE_RHS use that squares an extent
+            # the ceiling is the only such use that squares an extent
             m = re.search(r"\(\s*(\w+)\s*([+-])\s*(\d+)\s*\)\s*\*\*\s*2", code)
             if m:
                 bad.append(f"{p.relative_to(REPO)}:{i}: extent written as "
                            f"({m.group(1)} {m.group(2)} {m.group(3)})**2, but the lag arity is "
                            f"{m.group(1)} -- `Fin (N+1)` over a periodic extent of {m.group(1)} sites")
-    assert not bad, ("an aperture ceiling is derived from the wrong lag arity:\n  "
-                     + "\n  ".join(bad))
+            # and the same off-by-one can now be written as an argument
+            m = re.search(r"d2_ceiling\(\s*(\w+)\s*([+-])\s*(\d+)", code)
+            if m:
+                bad.append(f"{p.relative_to(REPO)}:{i}: d2_ceiling passed "
+                           f"({m.group(1)} {m.group(2)} {m.group(3)}), but the lag arity is "
+                           f"{m.group(1)} -- the extent, not one more than it")
+    assert bad == [], ("an aperture ceiling is derived from the wrong lag arity:\n  "
+                       + "\n  ".join(bad))
+    assert len(TRIGGERS) and any(
+        any(t in p.read_text(encoding="utf-8", errors="replace") for t in TRIGGERS)
+        for p in (REPO / "research").rglob("*.py") if "test_" not in p.name), (
+        "no file in the tree mentions the aperture ceiling at all, so this test just checked "
+        "nothing -- the trigger list has gone stale against the code")
+
+
+def test_the_aperture_ceiling_is_written_in_exactly_one_place():
+    """The ceiling formula appears once, in `certify/aperture_ceiling.py`, and nowhere else.
+
+    Nine files used to carry their own copy. Copies are how the off-by-one the sibling test catches
+    reached two files at once, and how a sharpening reaches some call sites and not others -- the
+    tree then quotes two different ceilings for the same quantity and nothing fails.
+
+    Test files are exempt on purpose: `test_paper_matches_artifacts` derives the ceiling itself,
+    because a test that imported the pipeline's constant would agree with it by construction and
+    could not catch the pipeline drifting from the paper.
+    """
+    carriers = []
+    for p in sorted((REPO / "research").rglob("*.py")):
+        if "test_" in p.name:
+            continue
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
+            code = line.split("#")[0]
+            if "math.acos(" in code:
+                carriers.append(f"{p.relative_to(REPO).as_posix()}:{i}")
+    # DERIVED: 1 is the arity of "one place". The whole point of this test is that the ceiling has a
+    # single derivation site, so the count it compares against is the claim itself, not a threshold.
+    assert len(carriers) == 1, (
+        "the aperture ceiling should be derived in exactly one file "
+        "(research/code/certify/aperture_ceiling.py), but it is written at:\n  "
+        + "\n  ".join(carriers or ["nowhere -- the derivation has gone missing"]))
+    assert carriers[0].startswith("research/code/certify/aperture_ceiling.py"), (
+        f"the ceiling is derived in {carriers[0]}, not in certify/aperture_ceiling.py")
 
 
 #: Words the paper uses for small counts, so a claim may be written either way.

@@ -1555,24 +1555,31 @@ def test_stated_ensemble_sizes_match_their_artifacts():
                            "the d2 read n >= bound", minimum=2)
 
 
-def test_every_beta_star_interval_is_the_certified_one():
-    """The strong-coupling threshold is stated with one interval throughout.
+def test_the_strong_coupling_threshold_is_stated_as_the_derived_inequality():
+    """The strong-coupling threshold is the derived one, and the retired interval stays retired.
 
-    `beta_star_enclosure.py` brackets it directly -- B(0.749) < kappa_0 < B(0.750) -- and the paper
-    states that in five places. A sixth form, kappa_0/(2r) evaluated over the conservative r
-    bracket, is looser: its upper end sits above 0.750 and so contradicts the bound the same script
-    certifies. The tighter bracket is the one the argument uses, and the margin to beta_KP is
-    measured from it.
+    It used to be a certified interval, `beta_star in (0.749, 0.750)`, from exact-rational Bessel
+    and log series. It is now the THEOREM `Bessel.strong_coupling_below_threshold`:
+    `ratio_le_quarter` bounds `I_2/I_1` by `x/4` termwise, so the character bound is `beta^2/2` and
+    sits below the floor exactly when `beta^2 < (1/2) ln 3`. That carries no numeral, so this gate
+    checks two things -- that the paper states the derived inequality, and that no certified
+    interval for the threshold has come back.
     """
     flat = " ".join(PAPER.read_text(encoding="utf-8").split())
     BS = chr(92)
+
+    # the derived inequality is stated
+    derived = re.escape(BS + "beta^2<" + BS + "tfrac12" + BS + "ln3")
+    assert re.search(derived, flat.replace(" ", "")), (
+        "the paper no longer states the derived threshold beta^2 < (1/2) ln 3; if the statement "
+        "moved, point this gate at its new form rather than deleting it")
+
+    # and no interval for beta_star survives anywhere
     pat = re.escape(BS + "beta_" + BS + "star") + r".{0,26}?in.?[\[(](\d\.\d+),\s*(\d\.\d+)[\])]"
     hits = [(m.group(1), m.group(2)) for m in re.finditer(pat, flat)]
-    assert hits, "the paper no longer states beta_star as an interval; the check would be vacuous"
-    for lo, hi in hits:
-        assert (lo, hi) == ("0.749", "0.750"), (
-            f"the paper states beta_star in ({lo}, {hi}); beta_star_enclosure.py certifies "
-            "(0.749, 0.750), and a looser interval whose upper end exceeds 0.750 contradicts it")
+    assert not hits, (
+        f"the paper states beta_star as a certified interval {hits}; that route is retired in "
+        "favour of the derived beta^2 < (1/2) ln 3, and two thresholds is two paths")
 
 
 def test_string_tension_pulls_are_computed_from_the_table():
@@ -2143,10 +2150,14 @@ def test_substrate_aperture_claims_match_the_artifact():
 def test_growth_coefficient_claims_match_the_artifact():
     """Sec 9's growth-condition margins, recomputed from 9_3_dat_substrate_of_aperture.csv.
 
-    The proof takes `d2At <= c (N+1)^2` with `(2 pi)^2 c / 2 < 1 - 3^{-1/4}`, not a bounded moment, so
-    the operative quantity is the coefficient the DATA requires -- `c = d2 / (N+1)^2` -- against the
-    ceiling's. Both are derived here rather than matched as text: `c_max` from the floor, and each
+    The proof takes `d2At <= c (N+1)^2` with `c < arccos(3^{-1/4})^2/(2 pi)^2`, not a bounded moment,
+    so the operative quantity is the coefficient the DATA requires -- `c = d2 / (N+1)^2` -- against
+    the ceiling's. Both are derived here rather than matched as text: `c_max` from the floor, and each
     row's `c` from the artifact.
+
+    The ceiling is written out HERE rather than imported from `certify/aperture_ceiling`, on purpose.
+    Importing it would make this test agree with the pipeline by construction; the point is to derive
+    it independently and check the PAPER against that, so a drift in either is visible.
 
     The binding constraint is checked as a MAXIMUM over apertures, not as the last row. A single `c`
     has to cover every aperture, and because a flat moment makes `c` fall like 1/L^2 the largest is
@@ -2155,13 +2166,14 @@ def test_growth_coefficient_claims_match_the_artifact():
     """
     text = PAPER.read_text(encoding="utf-8")
     rows = _artifact("9_3_dat_substrate_of_aperture.csv")
-    # DERIVED: the growth condition solved for c; the lag arity N+1 is the periodic extent L.
-    c_max = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
+    # DERIVED: the SHARP ceiling (tangent at the threshold, not at the origin); the lag arity
+    # N+1 is the periodic extent L.
+    c_max = math.acos(3.0 ** -0.25) ** 2 / (2 * math.pi) ** 2
     # DERIVED: the same zero-tension sign test the artifact's own signal column uses.
     sig = [r for r in rows if float(r["mu"]) > 0]
     assert sig, "no row in the artifact carries a tension to read"
 
-    m = re.search(re.escape("c_{" + BS + "max}=(1-3^{-1/4})") + r"[^=]*=([\d.]+)", text)
+    m = re.search(re.escape("c_{" + BS + "max}=" + BS + "arccos(3^{-1/4})^2") + r"[^=]*=([\d.]+)", text)
     assert m, "the paper no longer states the ceiling coefficient"
     assert abs(float(m.group(1)) - c_max) < 10.0 ** -len(m.group(1).split(".")[1]), (
         f"the paper states c_max = {m.group(1)}, but the floor gives {c_max:.6f}")
@@ -2250,8 +2262,9 @@ def test_every_aperture_table_cell_matches_the_artifact():
     lead = max(by, key=lambda k: len(by[k]))
     scan = {r['L']: r for r in by[lead]}
 
-    # DERIVED: the growth condition solved for c; the lag arity N+1 is the periodic extent L.
-    c_max = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
+    # DERIVED: the SHARP ceiling (tangent at the threshold, not at the origin); the lag arity
+    # N+1 is the periodic extent L.
+    c_max = math.acos(3.0 ** -0.25) ** 2 / (2 * math.pi) ** 2
 
     def sci(v):
         mant, exp = ('%.2e' % v).split('e')
@@ -2927,48 +2940,56 @@ def test_aperture_cap_constants_match_the_artifact():
     from the artifact is not a failure while a paper quoting a different number is.
 
     Both constants are checked, and that is the point of the test rather than a completeness habit.
-    They are `10.9887` (the circle, `lam^circLag d`, which is what the criterion reads) and `11.1759`
-    (the half-line, `lam^d`, which is a different object). They differ by less than the distance from
-    any simulated aperture to its own limit, so a finite table does not separate them and prose that
-    attached the half-line formula to circle numbers would read as correct. Binding each to its own
-    artifact row is what makes them distinguishable here.
+    They are `10.9887` (the FOLDED shape `lam^circLag d`, which is what the criterion reads) and
+    `11.1759` (the UNFOLDED shape `lam^d`, which is a different object). Both live on the same
+    circle -- the fold in `rho`, not the geometry, is what separates them. They differ by less than
+    the distance from any simulated aperture to its own limit, so a finite table does not separate
+    them and prose that attached one formula to the other's numbers would read as correct. Binding
+    each to its own artifact row is what makes them distinguishable here.
     """
     art = _artifact("9_10_dat_aperture_cap.csv")
     if not art:
         pytest.skip("9_10 is absent")
     by = {r["quantity"]: r for r in art if r["quantity"] in
-          {"limit_circle", "limit_halfline", "a_star", "C_times_hbarc_GeV_fm"}}
-    for need in ("limit_circle", "limit_halfline", "a_star"):
+          {"limit_circle", "limit_unfolded", "a_star", "C_times_hbarc_GeV_fm",
+           "massless_cos_average"}}
+    for need in ("limit_circle", "limit_unfolded", "a_star", "massless_cos_average"):
         assert need in by, f"9_10 no longer carries a `{need}` row"
     text = PAPER.read_text(encoding="utf-8")
 
     circle = float(by["limit_circle"]["n_times_rate"])
-    halfline = float(by["limit_halfline"]["n_times_rate"])
+    halfline = float(by["limit_unfolded"]["n_times_rate"])
     astar = float(by["a_star"]["n_times_rate"])
 
     # The two must actually be distinct, or this guard compares a number with itself. Stated as an
-    # ORDERING, not a separation: the circle's antipodal reflection contributes coth(a*pi/2) > 1,
-    # which strictly lowers the requirement, so `circle < halfline` always -- and no magnitude is
-    # being tolerated. A chosen minimum separation here would be a threshold hiding the data under it.
+    # ORDERING, not a separation: the minimum-image fold contributes coth(a*pi/2) > 1, which
+    # strictly lowers the requirement, so `folded < unfolded` always -- and no magnitude is being
+    # tolerated. A chosen minimum separation here would be a threshold hiding the data under it.
     assert circle < halfline, (
-        f"the circle constant {circle:.7f} is not below the half-line one {halfline:.7f}; the coth "
+        f"the folded constant {circle:.7f} is not below the unfolded one {halfline:.7f}; the coth "
         "factor that separates them has gone the wrong way")
 
-    for label, value in (("C (circle)", circle), ("C' (half-line)", halfline),
-                         ("a_star", astar)):
+    # `massless_cos_average` joined this list on 2026-09-17. The paper quoted it -- the reading a free
+    # massless box mode gives, which is what makes the cap non-vacuous -- while it existed only in the
+    # script's stdout. A figure printed and not written is checkable by reading the code that produced
+    # it and in no other way, which is how a number drifts away from the thing it describes.
+    massless = float(by["massless_cos_average"]["n_times_rate"])
+    assert massless < float(by["limit_circle"]["n_times_rate"]), "sanity: these are different scales"
+    for label, value in (("C (folded)", circle), ("C' (unfolded)", halfline),
+                         ("a_star", astar), ("massless <cos>", massless)):
         quoted = re.findall(rf"{re.escape(f'{value:.4f}')[:6]}\d*", text)
         near = [q for q in quoted if abs(float(q) - value) <= _half_ulp(q)]
         assert near, (
             f"PAPER.md does not quote {label} = {value:.7f} as the artifact computes it; "
             f"numbers found with that prefix: {quoted}")
 
-    # and the paper must attach each to the RIGHT object: the circle constant is the one the
-    # criterion carries, so it is the one stated as the cap.
+    # and the paper must attach each to the RIGHT object: the folded constant is the one the
+    # criterion carries, and it is the smaller of the two, so it is the one stated as the cap.
     cap_claim = re.search(r"C=2\\pi a_\\star.{0,400}", text, re.S)
     assert cap_claim, "Sec 12 no longer states the cap as C = 2*pi*a_star"
     assert f"{circle:.7f}" in cap_claim.group(0), \
-        (f"the cap passage does not carry the circle constant {circle:.7f}; if it carries "
-         f"{halfline:.7f} instead, the half-line object has been substituted for this one")
+        (f"the cap passage does not carry the folded constant {circle:.7f}; if it carries "
+         f"{halfline:.7f} instead, the unfolded shape has been substituted for this one")
 
     # The physical restatement must use the FINITE-aperture constant, not the ceiling. `C` is the
     # n -> infinity limit and `n*Delta` approaches it from below, so quoting `C*hbarc` at L=16 states
@@ -2990,18 +3011,21 @@ def test_aperture_cap_constants_match_the_artifact():
         f"is the ceiling {ceiling}, it is being quoted as if it were certified at a finite volume.")
 
 
-def test_the_half_line_cap_is_never_quoted_as_this_one():
-    """`2*pi*sqrt(T/(1-T))` may appear only where it is named as the HALF-LINE constant.
+def test_the_unfolded_cap_is_never_quoted_as_this_one():
+    """`2*pi*sqrt(T/(1-T))` may appear only where it is named as the UNFOLDED-shape constant.
 
-    The criterion reads `rho(d) = lam^circLag d` on a circle; the half-line constant belongs to
-    `lam^d` on an open chain. They agree to better than two percent, which is closer than any
-    simulated aperture is to its own limit, so a passage that attaches the half-line formula to
-    circle numbers reads as correct and survives review. It did, in three files at once.
+    The criterion reads `rho(d) = lam^circLag d`; `11.1760` belongs to the unfolded `rho(d) =
+    lam^d`, equivalently to the periodic `cosh` correlator and to the free-field structure-factor
+    inversion. Both live on the same circle -- what separates them is the minimum-image FOLD in
+    `rho`, which contributes `coth(a pi/2) > 1` -- so naming either one after a geometry is what
+    made them confusable in the first place. They agree to better than two percent, closer than any
+    simulated aperture is to its own limit, so a passage that attaches one formula to the other's
+    numbers reads as correct and survives review. It did, in three files at once.
 
     The distinction cannot be maintained by remembering it, so it is maintained here: any file
-    carrying the half-line value must also say `half-line` (or `halfline`) within the same
-    paragraph. Naming it is always allowed -- the constant is real and worth contrasting; leaving it
-    unlabelled next to this development's numbers is not.
+    carrying `11.1760` must also say `unfolded` (or `lam^d`, or `cosh`) within the same paragraph.
+    Naming it is always allowed -- the constant is real and worth contrasting; leaving it unlabelled
+    next to this development's numbers is not.
     """
     root = REPO / "research"
     digits = "11.17597"
@@ -3022,13 +3046,13 @@ def test_the_half_line_cap_is_never_quoted_as_this_one():
             if not (has_digits or has_formula):
                 continue
             low = para.lower()
-            if "half-line" in low or "halfline" in low or "half line" in low:
+            if any(tag in low for tag in ("unfolded", "lam^d", "λ^d", "cosh")):
                 continue
             offenders.append(f"{path.relative_to(REPO)}: {para.strip()[:110]}")
 
     assert not offenders, (
-        "the half-line cap constant appears without being named as such -- it is not the constant "
-        "this criterion carries (10.98875):\n  " + "\n  ".join(offenders))
+        "the unfolded-shape cap constant appears without being named as such -- it is not the "
+        "constant this criterion carries (10.98875):\n  " + "\n  ".join(offenders))
 
 
 def test_the_criterion_separates_a_glueball_from_a_massless_field():

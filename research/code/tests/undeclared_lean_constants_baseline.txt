@@ -35,7 +35,6 @@ research/lean/MassGap/CellSpectrum.lean|def proj0 uses 0
 research/lean/MassGap/Certify.lean|def UniformConfinement uses 0
 research/lean/MassGap/CompactGauge.lean|instance isMulRightInvariant_probHaar uses 1
 research/lean/MassGap/Complete.lean|def Otr uses 4
-research/lean/MassGap/Complete.lean|def κ₀YM uses 1,3,4
 research/lean/MassGap/Complete.lean|instance : uses 1,4
 research/lean/MassGap/Condensation.lean|def vortexTerm uses 1,2,3,4,7.1
 research/lean/MassGap/Floor.lean|def cubeConfig uses 1,3
@@ -66,7 +65,6 @@ research/lean/MassGap/Moment.lean|def θ uses 1,2
 research/lean/MassGap/Moment.lean|instance (N uses 0,1
 research/lean/MassGap/Reconstruction.lean|def hamiltonian uses 0,1
 research/lean/MassGap/SUN.lean|instance : uses 1
-research/lean/MassGap/VortexCount.lean|def floorTerm uses 1,2,3,4,6
 research/lean/MassGap/WilsonAction.lean|def wilsonDensity uses 1
 research/lean/MassGap/WilsonGauge.lean|def NaG uses 1
 research/lean/MassGap/WilsonGauge.lean|def actEG uses 4

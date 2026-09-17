@@ -69,7 +69,12 @@ def requested() -> set[str]:
             continue
         with open(os.path.join(src, fn), encoding="utf-8", errors="replace") as fh:
             for line in fh:
-                m = re.match(r"\s*#print axioms\s+([A-Za-z_][A-Za-z0-9_.']*)", line)
+                # Lean identifiers are UNICODE. An ASCII-only class silently truncates a name at its
+                # first non-ASCII character -- `exp_κ₀YM` was read as `exp_`, which then matched
+                # nothing in the build output and made a complete table look like a partial one.
+                # The shortfall guard refused to write, correctly, for a reason that was not the real
+                # one. Anything that is not whitespace is part of the name.
+                m = re.match(r"\s*#print axioms\s+(\S+)", line)
                 if m:
                     want.add(m.group(1).split(".")[-1])
     return want

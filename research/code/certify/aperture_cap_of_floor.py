@@ -37,7 +37,7 @@ antipodal fold, the second for this exact summand, giving
 
     sum_{d < 2m} lam^circLag(d) cos(2 pi d / 2m) = 1 - lam^m + 2 sum_{1<=d<m} lam^d cos(2 pi d / 2m).
 
-The `- lam^m` there is the antipodal term the half-line constant has no counterpart for, so the step
+The `- lam^m` there is the antipodal term the unfolded shape has no counterpart for, so the step
 that distinguishes `10.9887` from `11.1760` is proved and not merely computed. What remains here is
 assembling the ratio, its monotonicity, and the solve for the critical `lam`.
 
@@ -74,12 +74,32 @@ nothing like a transfer mode. The statement here is about the spectral object. B
 the distance between them is the distance between what the criterion means and what the current
 measurement can deliver.
 
-A NEIGHBOURING CONSTANT IS NOT THIS ONE. `2 pi sqrt(T/(1-T)) = 11.176` with `T = 3^{-1/4}` is the
-ceiling for `rho(d) = lam^d` on the HALF-LINE. That is a different object: on the circle the antipodal
-reflection contributes the `coth(a pi/2) > 1` factor, which lowers the requirement to `10.9887`. The
-two are within `0.19` of each other, closer than any simulated aperture is to its own limit, so they
-cannot be told apart from small `n`. Both are computed below and the difference reported. The periodic
-read this program performs takes the circle constant; the half-line one belongs to an open chain.
+A NEIGHBOURING CONSTANT IS NOT THIS ONE, AND THE DIFFERENCE IS THE SHAPE, NOT THE GEOMETRY.
+`2 pi sqrt(T/(1-T)) = 11.1760` with `T = 3^{-1/4}` is the ceiling for the UNFOLDED shape
+`rho(d) = lam^d`. It is not an open-chain constant: put `lam^d` on this same circle, with the same
+`theta_d = 2 pi d / n`, and the limit is still `11.1760`, because the wrap-around term is subleading.
+What separates the two constants is the MINIMUM-IMAGE FOLD in `rho`, nothing else:
+
+    rho(d) = lam^d                     unfolded   ->  C' = 2 pi sqrt(T/(1-T))  = 11.1759763
+    rho(d) = lam^d + lam^(n-d)         cosh       ->  C' (same limit; differs only at finite n)
+    rho(d) = lam^min(d, n-d)           folded     ->  C  = 2 pi a*             = 10.9887497
+
+The fold puts `lam^(n-d) > lam^d` at large `d`, adding weight far from the origin, which is exactly
+the `coth(a pi / 2) > 1` factor and lowers the requirement. Measured below at `n = 8..2048`: the
+unfolded and cosh sequences both climb past `10.9887` toward `11.1760` while the folded one converges
+to `10.9887`. The apples-to-apples ordering `folded < cosh` -- the same wrapped correlator with and
+without the fold -- holds at EVERY aperture. Folded against UNFOLDED crosses over near `n = 256`,
+because the unfolded shape has no wrap-around weight at all, which costs it more at small `n` than
+the fold gains; that pair is ordered only in the limit.
+
+WHICH ONE A GIVEN READ TAKES follows from the shape of its `rho` and not from a preference. The
+periodic transfer matrix gives `cosh`, which is why lattice correlators are fit with it, and the
+lattice free field's structure factor `S(k) = 1/(m^2 + khat^2)` is that same object in momentum
+space -- so the structure-factor inversion `m = khat_1 / sqrt(e^mu - 1)` of `Complete.m2At` is EXACT
+for a single-mass periodic correlator and carries `C' = 11.1760`. This script's `rho(d) =
+lam^circLag d` is the folded transfer mode, and carries `C = 10.9887`. `C < C'`, so the folded
+constant is the CONSERVATIVE one: a criterion stated with `C` certifies the smaller rate, which is
+why the cap below is quoted with it. Both are computed and the difference reported.
 """
 from __future__ import annotations
 
@@ -152,6 +172,43 @@ def _critical(n: int) -> mp.mpf:
     return (lo + hi) / 2
 
 
+def _avg_unfolded(n: int, lam: mp.mpf) -> mp.mpf:
+    """`<cos>` for the UNFOLDED shape `rho(d) = lam^d` on the SAME circle and the same angles.
+
+    Closed form: the wrapped geometric sum is `(1 - lam^n) / (1 - lam e^{ik})` and `e^{ikn} = 1`, so
+    the `(1 - lam^n)` factor cancels between numerator and denominator.
+    """
+    c = mp.cos(2 * mp.pi / n)
+    return (1 - lam) * (1 - lam * c) / (1 - 2 * lam * c + lam * lam)
+
+
+def _avg_cosh(n: int, lam: mp.mpf) -> mp.mpf:
+    """`<cos>` for the periodic TRANSFER-MATRIX shape `rho(d) = lam^d + lam^(n-d)`.
+
+    This is what a lattice correlator on a periodic box actually is, and the momentum-space form of
+    the same object is the free-field `S(k) = 1/(m^2 + khat^2)` that `Complete.m2At` inverts. Under
+    `d -> n - d` the cosine is unchanged, so the second term re-sums to the first shifted by one
+    endpoint: `sum = 2 S - 1 + lam^n` for both numerator and denominator.
+    """
+    c = mp.cos(2 * mp.pi / n)
+    ln = lam ** n
+    s_num = (1 - ln) * (1 - lam * c) / (1 - 2 * lam * c + lam * lam)
+    s_den = (1 - ln) / (1 - lam)
+    return (2 * s_num - 1 + ln) / (2 * s_den - 1 + ln)
+
+
+def _critical_of(n: int, avg) -> mp.mpf:
+    """The `1 - lam` saturating the criterion for any of the shapes above."""
+    lo, hi = mp.mpf(0), mp.mpf(1)
+    for _ in range(220):
+        mid = (lo + hi) / 2
+        if avg(n, 1 - mid) < TARGET:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def _limit_avg(a: mp.mpf) -> mp.mpf:
     """`<cos>` in the scaling limit `n -> inf` at fixed `a = n (1 - lam) / (2 pi)`.
 
@@ -191,11 +248,73 @@ def main() -> int:
     # (3) the limit, from the transcendental equation alone
     a_star = mp.findroot(lambda a: _limit_avg(a) - TARGET, mp.mpf("1.5"))
     c_circle = 2 * mp.pi * a_star
-    c_halfline = 2 * mp.pi * mp.sqrt(TARGET / (1 - TARGET))
+    c_unfolded = 2 * mp.pi * mp.sqrt(TARGET / (1 - TARGET))
     resid = _limit_avg(a_star) - TARGET
     if abs(resid) > mp.mpf(10) ** (-40):
         print(f"REFUSED: a* does not solve its own equation (residual {mp.nstr(resid, 6)})")
         return 1
+
+    # (3b) WHAT SEPARATES THE TWO CONSTANTS, measured rather than asserted. All three shapes are put
+    # on the SAME circle with the SAME angles, so geometry is held fixed and only `rho` varies. If
+    # the difference were open-chain-vs-circle, the unfolded shape would not reach `C'` here. It
+    # does, and the folded one is below both at every aperture, which is what makes `C` the
+    # conservative choice. The script refuses if either ordering or either limit fails.
+    print("\n  shape comparison, one circle, three rho (n(1-lam_crit)):")
+    print(f"  {'n':>6} {'unfolded':>14} {'cosh':>14} {'folded':>14}")
+    shape_rows = []
+    for n in (8, 32, 128, 512, 2048):
+        cu = n * _critical_of(n, _avg_unfolded)
+        cc = n * _critical_of(n, _avg_cosh)
+        cf = n * _critical_of(n, _avg_closed)
+        shape_rows.append((n, cu, cc, cf))
+        print(f"  {n:>6} {mp.nstr(cu, 9):>14} {mp.nstr(cc, 9):>14} {mp.nstr(cf, 9):>14}")
+        # The apples-to-apples pair is folded vs cosh: same wrapped correlator, one folded by
+        # minimum image and one not. That ordering must hold at EVERY aperture. Folded vs unfolded
+        # is not required to, and does not: the unfolded shape is missing the wrap-around weight
+        # entirely, which at small `n` costs it more than the fold gains, so the two cross over
+        # near n = 256. Their LIMITS are what the constants are, and those are checked below.
+        if not cf < cc:
+            print(f"REFUSED: the folded shape is not below the cosh one at n={n}; the coth factor "
+                  "that makes `C` the conservative constant has gone the wrong way")
+            return 1
+        if not (cu < c_unfolded and cc < c_unfolded and cf < c_circle):
+            print(f"REFUSED: a finite-aperture value overshoots its own limit at n={n}")
+            return 1
+    # and the unfolded sequence must be converging to C', not to C -- the whole point. `c_circle`
+    # is the folded limit, so the unfolded and cosh sequences PASSING it is what shows they are
+    # bound for a different one; the folded sequence must still be below it.
+    _, cu_last, cc_last, cf_last = shape_rows[-1]
+    if not cf_last < c_circle < cu_last:
+        print("REFUSED: the folded sequence and its own limit are not ordered against the "
+              "unfolded one; the two constants would not be separated by the measurement")
+        return 1
+    if not (cu_last > c_circle and cc_last > c_circle):
+        print("REFUSED: the unfolded and cosh shapes have not passed the folded limit by n=2048; "
+              "they would not be distinguishable from it, and the naming of the two constants "
+              "would rest on nothing measured")
+        return 1
+    for n, cu, cc, cf in shape_rows:
+        rows.append({
+            "quantity": f"shape_unfolded_n{n}",
+            "aperture": str(n),
+            "one_minus_lambda_crit": mp.nstr(cu / n, 12),
+            "n_times_rate": mp.nstr(cu, 12),
+            "deficit_from_limit": mp.nstr(c_unfolded - cu, 6),
+        })
+        rows.append({
+            "quantity": f"shape_cosh_n{n}",
+            "aperture": str(n),
+            "one_minus_lambda_crit": mp.nstr(cc / n, 12),
+            "n_times_rate": mp.nstr(cc, 12),
+            "deficit_from_limit": mp.nstr(c_unfolded - cc, 6),
+        })
+        rows.append({
+            "quantity": f"shape_folded_n{n}",
+            "aperture": str(n),
+            "one_minus_lambda_crit": mp.nstr(cf / n, 12),
+            "n_times_rate": mp.nstr(cf, 12),
+            "deficit_from_limit": mp.nstr(c_circle - cf, 6),
+        })
 
     # (4) the finite-aperture sequence, and its approach to that limit.
     #
@@ -262,11 +381,11 @@ def main() -> int:
         "deficit_from_limit": "0",
     })
     rows.append({
-        "quantity": "limit_halfline",
+        "quantity": "limit_unfolded",
         "aperture": "",
         "one_minus_lambda_crit": "",
-        "n_times_rate": mp.nstr(c_halfline, 12),
-        "deficit_from_limit": mp.nstr(c_halfline - c_circle, 6),
+        "n_times_rate": mp.nstr(c_unfolded, 12),
+        "deficit_from_limit": mp.nstr(c_unfolded - c_circle, 6),
     })
     rows.append({
         "quantity": "entropy_floor_exp_minus_kappa0",
@@ -285,9 +404,9 @@ def main() -> int:
 
     print(f"\na*                     = {mp.nstr(a_star, 12)}   "
           f"(root of a^2 coth(a pi/2) = 3^(-1/4)(a^2+1))")
-    print(f"C  (circle, circLag)   = {mp.nstr(c_circle, 12)}   <- the cap this criterion carries")
-    print(f"C' (half-line, lam^d)  = {mp.nstr(c_halfline, 12)}   <- a DIFFERENT object; not this one")
-    print(f"difference             = {mp.nstr(c_halfline - c_circle, 6)}")
+    print(f"C  (folded, lam^circLag) = {mp.nstr(c_circle, 12)}   <- the cap this criterion carries")
+    print(f"C' (unfolded, lam^d)     = {mp.nstr(c_unfolded, 12)}   <- a DIFFERENT SHAPE; not this one")
+    print(f"difference               = {mp.nstr(c_unfolded - c_circle, 6)}")
     print(f"\nso mu < kappa_0 at aperture n certifies at most  Delta ~ {mp.nstr(c_circle, 6)} / n,")
     print("which vanishes as the aperture widens: a finite-volume gap, not a thermodynamic one.")
 
@@ -337,6 +456,16 @@ def main() -> int:
         if v >= TARGET:
             print(f"REFUSED: the massless box mode clears the floor at n={n}")
             return 1
+    # The paper quotes this value, so it is written to the artifact rather than left in stdout. A
+    # figure that exists only in a print statement is checkable by reading the code that produced it
+    # and in no other way, which is how a number drifts from the thing it describes.
+    rows.append({
+        "quantity": "massless_cos_average",
+        "aperture": "",
+        "one_minus_lambda_crit": "",
+        "n_times_rate": mp.nstr(massless, 10),
+        "deficit_from_limit": mp.nstr(TARGET - massless, 6),
+    })
     print(f"\nmassless box mode (a=1): <cos> = {mp.nstr(massless, 8)} < {mp.nstr(TARGET, 8)} "
           f"= 3^(-1/4), so it FAILS the criterion")
     print(f"the criterion therefore certifies a rate a* = {mp.nstr(a_star, 9)} times the massless "

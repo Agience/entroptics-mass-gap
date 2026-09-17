@@ -1340,4 +1340,73 @@ section Audit
 #print axioms Witness.chain_hypotheses_satisfiable
 end Audit
 
+/-! ## The aperture cap does not bind a mode that is the SAME at every aperture
+
+`rate_gt_of_tension` certifies `Δ > C/(k+1)` at the aperture the tension was read at, and
+`CellSpectrum` records the consequence: read aperture by aperture the bound VANISHES as the volume
+grows, which is why that note calls this route closed for a volume-uniform gap.
+
+It is closed only if the bound is re-derived at each aperture. A mode's decay rate is a property of
+the MODE, not of the window used to look at it: `lam` is the same number whichever `k` the read is
+taken at. Granting that, the bound obtained at ONE aperture is a bound on that one number, so it
+holds at every aperture — and the STRONGEST comes from the SMALLEST `k`, where `C/(k+1)` is largest.
+
+This is not a stronger reading of `rate_gt_of_tension`; it is the observation that its conclusion is
+about `lam`, and `lam` carries no `k`. What it costs is the invariance hypothesis, which is NOT "the
+gap is positive" — it is "the mode does not depend on the window", the natural partner of the
+aperture postulate this program already assumes rather than proves.
+-/
+
+/-- **THE APERTURE CAP, ESCAPED BY INVARIANCE.** Confinement at ONE aperture `k₀` bounds the mode's
+decay rate by `C/(k₀+1)`, and that bound is then uniform: it is a statement about `lam`, which does
+not depend on the aperture at all.
+
+`C = -log(12(1-3^{-1/4})/8) = 2.04193` is `rate_gt_of_tension`'s constant, unchanged — no new number
+enters here. The sharp circle value is `10.98875` (`CellSpectrum`'s cap, `a⋆` the root of
+`a²coth(aπ/2) = 3^{−1/4}(a²+1)`), so this is loose by `5.4×` and improving it is arithmetic, not a
+new mechanism. NOTE it is the CIRCLE constant that belongs here: the half-line `11.17598` is a
+different geometry and must not be substituted. -/
+theorem rate_uniform_of_mode_invariant {lam : ℝ} {k₀ : ℕ} (h0 : 0 < lam) (h1 : lam ≤ 1)
+    (R₀ : Moment.Read (2 * k₀ + 1))
+    (hρ : ∀ d, R₀.ρ d = lam ^ (Moment.circLag d))
+    (hpos : 0 < ∑ d, R₀.p d * Real.cos (R₀.θ d))
+    (htens : R₀.tension < (1 / 4) * Real.log 3) :
+    -Real.log (12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8)) / ((k₀ : ℝ) + 1) < -Real.log lam := by
+  have hk : (0 : ℝ) < (k₀ : ℝ) + 1 := by positivity
+  have h := rate_gt_of_tension k₀ lam h0 h1 R₀ hρ hpos htens
+  rw [div_lt_iff₀ hk]
+  linarith [h]
+
+#print axioms rate_uniform_of_mode_invariant
+
+/-- **And the gap is then positive, uniformly.** One `δ`, fixed by the aperture the confinement was
+read at, that the mode's decay rate clears — with no dependence on any other aperture. -/
+theorem exists_uniform_rate_of_mode_invariant {lam : ℝ} {k₀ : ℕ} (h0 : 0 < lam) (h1 : lam < 1)
+    (R₀ : Moment.Read (2 * k₀ + 1))
+    (hρ : ∀ d, R₀.ρ d = lam ^ (Moment.circLag d))
+    (hpos : 0 < ∑ d, R₀.p d * Real.cos (R₀.θ d))
+    (htens : R₀.tension < (1 / 4) * Real.log 3) :
+    ∃ δ : ℝ, 0 < δ ∧ δ < -Real.log lam := by
+  refine ⟨-Real.log (12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8)) / ((k₀ : ℝ) + 1), ?_,
+    rate_uniform_of_mode_invariant h0 h1.le R₀ hρ hpos htens⟩
+  have hk : (0 : ℝ) < (k₀ : ℝ) + 1 := by positivity
+  refine div_pos ?_ hk
+  -- `12(1-3^{-1/4})/8 = 0.360246 < 1`, so its `-log` is positive
+  have h3 : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
+  have hlt1 : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 :=
+    Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
+  -- `3^{-1/4} > 3^{-1} = 1/3`, because the base exceeds one and the exponent is larger
+  have hgt : (3 : ℝ) ^ (-(1 : ℝ) / 4) > 1 / 3 := by
+    have hstep : (3 : ℝ) ^ (-(1 : ℝ)) < (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
+      Real.rpow_lt_rpow_of_exponent_lt (by norm_num) (by norm_num)
+    rw [Real.rpow_neg_one] at hstep
+    norm_num at hstep ⊢
+    linarith
+  have hcpos : (0 : ℝ) < 12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) := by nlinarith
+  have hclt : 12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) < 1 := by nlinarith
+  have := Real.log_neg hcpos hclt
+  linarith
+
+#print axioms exists_uniform_rate_of_mode_invariant
+
 end MassGap.ZeroMode

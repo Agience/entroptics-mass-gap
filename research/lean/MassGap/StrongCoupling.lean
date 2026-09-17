@@ -240,7 +240,12 @@ the connected subtraction do the volume factors cancel and leave a sum over chai
 Nothing in this file establishes that, and no bound proved here implies it.
 
 For the four-dimensional periodic lattice the constant `K` is a property of the geometry alone —
-how many plaquettes meet a given one — so it carries no coupling and no volume. -/
+how many plaquettes meet a given one — so it carries no coupling and no volume.
+
+DERIVED: `2` is the exponent of `boltz_factor_bound`'s `e^{2|β|} − 1`, which is the per-plaquette
+Boltzmann factor over `φ ∈ [0,2]` — the range of the plaquette action, not a chosen scale. `1` is
+subtracted because the connected correction is what remains after the product measure, and it is the
+same `1` as in `chain_rate_lt_one`. `K` is supplied by the caller and never given a value here. -/
 def ChainBound (ρconn : ℕ → ℝ) (K β : ℝ) : Prop :=
   ∀ d : ℕ, |ρconn d| ≤ ∑' n : ℕ, (K * (Real.exp (2 * β) - 1)) ^ (d + n)
 
@@ -272,13 +277,17 @@ base case of an induction is not a result about the base case. -/
 section ZeroCoupling
 
 open MeasureTheory MassGap.WilsonReal MassGap.WilsonLattice MassGap.WilsonAction
-open MassGap.CompactGauge
+open MassGap.CompactGauge MassGap.LatticeGauge
 
-variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq]
+variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [DecidableEq Pq]
 
 open scoped Classical in
 /-- Extend a tuple on `S` to a full link configuration, with the identity outside `S`. The value
-outside is immaterial: every use is guarded by a support hypothesis. -/
+outside is immaterial: every use is guarded by a support hypothesis.
+
+DERIVED: `1` is the group identity of `SU(Nc)`, the only canonical element available to fill links
+outside `S`. It is not a magnitude, and nothing depends on it — `wilsonCorrConn_eq_zero_of_split`
+and its callers each carry the support hypothesis that makes the choice immaterial. -/
 noncomputable def extendOn (S : Finset Lk) (v : S → MassGap.SUN.SU Nc) : Lk → MassGap.SUN.SU Nc :=
   fun i => if h : i ∈ S then v ⟨i, h⟩ else 1
 
@@ -532,6 +541,385 @@ theorem order_one_cancels (bd : Pq → List (Lk × Bool)) (p₀ pd q : Pq)
     ring
 
 #print axioms order_one_cancels
+
+/-! ### Connected means connected — at EVERY coupling, not order by order
+
+Working the general order turned up a stronger statement than order-by-order vanishing, and a simpler
+one. Suppose the plaquette set splits as `A ⊎ Aᶜ` with `A`'s links inside `S`, `Aᶜ`'s inside `T`, and
+`S`, `T` disjoint — `p₀ ∈ A`, `p_d ∈ Aᶜ`. Then the action splits, `S = S_A + S_{Aᶜ}`, each half a
+function of its own links, so the Boltzmann weight factorises and every integral does:
+
+    N(φ₀φ_d) = N_A(φ₀)·N_B(φ_d)     Z      = Z_A·Z_B
+    N(φ₀)    = N_A(φ₀)·Z_B          N(φ_d) = Z_A·N_B(φ_d)
+
+and therefore
+
+    D = N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) = N_A(φ₀)N_B(φ_d)Z_A Z_B − N_A(φ₀)Z_B Z_A N_B(φ_d) = 0
+
+**identically in `β`**, not merely to order `d`. The `β = 0` result above is the special case where
+the split is free; this is the statement for every coupling.
+
+WHAT IT IS AND IS NOT. It says the connected correlation vanishes when the two plaquettes sit in
+non-interacting halves — "connected means connected", exactly. It does NOT apply to a real lattice,
+which is connected and admits no such split; that is precisely why the expansion exists. Its value is
+that it is the statement each TERM of the expansion needs, with the activated plaquettes in place of
+the whole set, and it fixes the shape of the general argument: the term vanishes when its activated
+set fails to bridge, and that failure is a split. -/
+
+/-- The half-action carried by `A`, read on `S`'s links alone. -/
+noncomputable def actOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
+    (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  ∑ p ∈ A, wilsonDensity (N := Nc) (wilsonHol bd p (extendOn (Lk := Lk) (Nc := Nc) S v))
+
+/-- The half-action is faithful on any configuration, given a support hypothesis for the group. -/
+theorem actOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
+    (hsupp : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    actOn (Nc := Nc) bd A S (fun i : S => U i.val)
+      = ∑ p ∈ A, wilsonDensity (N := Nc) (wilsonHol bd p U) := by
+  unfold actOn
+  exact Finset.sum_congr rfl (fun p hp => by
+    rw [MassGap.ReflectionPositivity.hol_congr_on_support bd p _ U (fun l hl => by
+      have hmem : l ∈ S := hsupp p hp l hl
+      simp only [extendOn, dif_pos hmem])])
+
+/-- A plaquette product times its half's Boltzmann factor — the observable each of the four integrals
+in `D` restricts to on one side of the split. -/
+noncomputable def wtOn (bd : Pq → List (Lk × Bool)) (E : Finset Pq) (A : Finset Pq)
+    (S : Finset Lk) (β : ℝ) (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  prodOn (Nc := Nc) bd E S v * Real.exp (-β * actOn (Nc := Nc) bd A S v)
+
+theorem wtOn_eq (bd : Pq → List (Lk × Bool)) (E A : Finset Pq) (S : Finset Lk) (β : ℝ)
+    (hE : ∀ p ∈ E, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    wtOn (Nc := Nc) bd E A S β (fun i : S => U i.val)
+      = (∏ p ∈ E, wilsonPlaqObs (N := Nc) bd p U)
+        * Real.exp (-β * ∑ p ∈ A, wilsonDensity (N := Nc) (wilsonHol bd p U)) := by
+  unfold wtOn
+  rw [prodOn_eq bd E S hE U, actOn_eq bd A S hA U]
+
+theorem measurable_wtOn (bd : Pq → List (Lk × Bool)) (E A : Finset Pq) (S : Finset Lk) (β : ℝ) :
+    Measurable (wtOn (Nc := Nc) bd E A S β) := by
+  refine (measurable_prodOn bd E S).mul ?_
+  refine (Real.measurable_exp.comp ?_)
+  refine (measurable_const.mul ?_)
+  exact Finset.measurable_sum _ (fun p _ =>
+    measurable_wilsonDensity.comp ((measurable_wilsonHol bd p).comp
+      (by
+        classical
+        refine measurable_pi_lambda _ (fun i => ?_)
+        by_cases h : i ∈ S
+        · simp only [extendOn, dif_pos h]; exact measurable_pi_apply (⟨i, h⟩ : S)
+        · simp only [extendOn, dif_neg h]; exact measurable_const)))
+
+#print axioms actOn_eq
+#print axioms wtOn_eq
+
+/-- **CONNECTED MEANS CONNECTED — the connected correlation vanishes across a link-disjoint split, at
+EVERY coupling.**
+
+If the plaquettes split as `A ⊎ Aᶜ` with `A` drawing only on `S`, `Aᶜ` only on `T`, `S` and `T`
+disjoint, and `p₀ ∈ A`, `p_d ∈ Aᶜ`, then `ρ_conn(p₀, p_d) = 0` for every `β`.
+
+The action splits into two halves, each a function of its own links, so the Boltzmann weight
+factorises and all four integrals do:
+
+    N(φ₀φ_d) = a·b,  Z = c·d,  N(φ₀) = a·d,  N(φ_d) = c·b
+
+whence `N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) = abcd − adcb = 0`. Nothing is expanded and no coupling is small:
+two non-interacting halves have no connected correlation, and this says exactly that.
+
+WHY IT MATTERS AND WHAT IT DOES NOT DO. A real lattice is connected and admits no such split, so this
+does not apply to it directly — which is why the expansion exists at all. What it fixes is the SHAPE
+of the general order: an expansion term vanishes when its activated plaquettes fail to bridge `p₀` to
+`p_d`, and failing to bridge IS a split of this kind. The order-`k` statement is this theorem applied
+to the activated set rather than to the whole lattice. -/
+theorem wilsonCorrConn_eq_zero_of_split (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
+    (A : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
+    (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hB : ∀ p ∈ Aᶜ, ∀ l ∈ (bd p).map Prod.fst, l ∈ T)
+    (h0 : p₀ ∈ A) (hd : pd ∈ Aᶜ) (β : ℝ) :
+    MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ β pd = 0 := by
+  classical
+  set vol := Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)) with hvol
+  -- the action splits into the two halves, each a function of its own links
+  have hact : ∀ U : Lk → MassGap.SUN.SU Nc,
+      (wilsonSystem bd (wilsonDensity (N := Nc))).action U
+        = (∑ p ∈ A, wilsonDensity (N := Nc) (wilsonHol bd p U))
+          + ∑ p ∈ Aᶜ, wilsonDensity (N := Nc) (wilsonHol bd p U) := by
+    intro U
+    show (∑ p, wilsonDensity (N := Nc) (wilsonHol bd p U)) = _
+    rw [← Finset.sum_add_sum_compl A]
+  -- the four factorisations, one per integral in the connected combination
+  have hsplit : ∀ (E F : Finset Pq),
+      (∀ p ∈ E, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) →
+      (∀ p ∈ F, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) →
+      (∫ U, ((∏ p ∈ E, wilsonPlaqObs (N := Nc) bd p U)
+              * (∏ p ∈ F, wilsonPlaqObs (N := Nc) bd p U))
+            * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol)
+        = (∫ U, wtOn (Nc := Nc) bd E A S β (fun i : S => U i.val) ∂vol)
+          * (∫ U, wtOn (Nc := Nc) bd F Aᶜ T β (fun i : T => U i.val) ∂vol) := by
+    intro E F hE hF
+    have hfac := block_integral_factor (N := Nc) S T hST
+      (wtOn (Nc := Nc) bd E A S β) (wtOn (Nc := Nc) bd F Aᶜ T β)
+      (measurable_wtOn bd E A S β) (measurable_wtOn bd F Aᶜ T β)
+    rw [← hfac]
+    refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+    dsimp only
+    rw [wtOn_eq bd E A S β hE hA U, wtOn_eq bd F Aᶜ T β hF hB U]
+    unfold System.boltz
+    rw [hact U, mul_add, neg_mul, neg_mul, Real.exp_add]
+    ring
+  -- name the four halves
+  have hN2 := hsplit {p₀} {pd} (by simpa using hA p₀ h0) (by simpa using hB pd hd)
+  have hZ := hsplit ∅ ∅ (by simp) (by simp)
+  have hN0 := hsplit {p₀} ∅ (by simpa using hA p₀ h0) (by simp)
+  have hNd := hsplit ∅ {pd} (by simp) (by simpa using hB pd hd)
+  simp only [Finset.prod_singleton, Finset.prod_empty, one_mul, mul_one] at hN2 hZ hN0 hNd
+  -- assemble
+  unfold MassGap.WilsonBridge.wilsonCorrConn MassGap.WilsonBridge.wilsonCorr
+  unfold System.expect System.corrNum System.partition
+  show ((∫ U, (wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd pd U)
+        * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol)
+      / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol))
+    - ((∫ U, wilsonPlaqObs (N := Nc) bd p₀ U
+          * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol)
+        / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol))
+      * ((∫ U, wilsonPlaqObs (N := Nc) bd pd U
+          * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol)
+        / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U ∂vol)) = 0
+  rw [hN2, hZ, hN0, hNd]
+  set a := ∫ U, wtOn (Nc := Nc) bd {p₀} A S β (fun i : S => U i.val) ∂vol with ha
+  set b := ∫ U, wtOn (Nc := Nc) bd {pd} Aᶜ T β (fun i : T => U i.val) ∂vol with hb
+  set c := ∫ U, wtOn (Nc := Nc) bd (∅ : Finset Pq) A S β (fun i : S => U i.val) ∂vol with hc
+  set e := ∫ U, wtOn (Nc := Nc) bd (∅ : Finset Pq) Aᶜ T β (fun i : T => U i.val) ∂vol with he
+  rcases eq_or_ne (c * e) 0 with hz | hz
+  · rw [hz]; simp
+  · field_simp
+    ring
+
+#print axioms wilsonCorrConn_eq_zero_of_split
+
+/-! ### The expansion is EXACT and FINITE — no series, no convergence
+
+The strong-coupling expansion is usually presented as a power series in `β` whose convergence is the
+hard part. On a FINITE lattice it is neither: it is an algebraic identity. Writing
+`w_p = e^{−βφ_p} − 1`,
+
+    e^{−βS} = ∏_p e^{−βφ_p} = ∏_p (1 + w_p) = ∑_{E ⊆ P} ∏_{p∈E} w_p
+
+by `Finset.prod_add` — a finite sum over SUBSETS of plaquettes, exact at every `β`, with nothing to
+converge. This is what removes the analytic difficulty from the combinatorial one: there is no
+radius, no remainder, and no Taylor coefficient to bound. What is left is which subsets contribute.
+
+Each factor obeys `|w_p| ≤ e^{2|β|} − 1` (`boltz_factor_bound`), so a subset of size `n` contributes
+at most `(e^{2|β|}−1)ⁿ`, and a subset whose plaquettes fail to bridge `p₀` to `p_d` contributes
+NOTHING, by `wilsonCorrConn_eq_zero_of_split` applied to that subset's own split. Both halves of the
+chain bound are then in hand, and what remains is counting the bridging subsets. -/
+
+/-- **THE BOLTZMANN WEIGHT EXPANDS OVER SUBSETS, EXACTLY.** A finite identity at every coupling, not
+a truncated series: `e^{−βS} = ∑_{E ⊆ P} ∏_{p∈E} (e^{−βφ_p} − 1)`.
+
+DERIVED: the `1` split off each factor is `e^{−βφ_p} = (e^{−βφ_p} − 1) + 1`, and the sum over subsets
+is `Finset.prod_add`. Nothing is approximated and no coupling is assumed small. -/
+theorem boltz_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (U : Lk → MassGap.SUN.SU Nc) :
+    (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+      = ∑ E ∈ (Finset.univ : Finset Pq).powerset,
+          ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1) := by
+  classical
+  have hexp : (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+      = ∏ p : Pq, Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) := by
+    unfold System.boltz
+    show Real.exp (-β * ∑ p, wilsonDensity (N := Nc) (wilsonHol bd p U)) = _
+    rw [Finset.mul_sum, ← Real.exp_sum]
+    exact congrArg Real.exp (Finset.sum_congr rfl (fun p _ => by ring))
+  rw [hexp]
+  -- split each factor as `w_p + 1`, by congruence rather than rewriting (which would loop)
+  have hone : ∏ p : Pq, Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U)))
+      = ∏ p : Pq, ((Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1) + 1) :=
+    Finset.prod_congr rfl (fun p _ => by ring)
+  rw [hone, Finset.prod_add]
+  exact Finset.sum_congr rfl (fun E _ => by simp)
+
+#print axioms boltz_eq_subset_sum
+
+/-- **A subset's weight is bounded by the per-plaquette weight to its size.** With
+`boltz_factor_bound` per factor, a subset of `n` plaquettes contributes at most `(e^{2|β|}−1)ⁿ` — the
+`qⁿ` the chain bound sums.
+
+DERIVED: nothing beyond `boltz_factor_bound` and `Finset.prod_le_prod`; the exponent is the subset's
+cardinality. -/
+theorem subset_weight_bound (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (U : Lk → MassGap.SUN.SU Nc) (E : Finset Pq) :
+    |∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1)|
+      ≤ (Real.exp (2 * |β|) - 1) ^ E.card := by
+  classical
+  rw [Finset.abs_prod]
+  calc ∏ p ∈ E, |Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1|
+      ≤ ∏ _p ∈ E, (Real.exp (2 * |β|) - 1) := by
+        refine Finset.prod_le_prod (fun p _ => abs_nonneg _) (fun p _ => ?_)
+        exact boltz_factor_bound (wilsonDensity_nonneg hN _) (wilsonDensity_le_two hN _)
+    _ = (Real.exp (2 * |β|) - 1) ^ E.card := by rw [Finset.prod_const]
+
+#print axioms subset_weight_bound
+
+/-- **THE NUMERATOR EXPANDS OVER SUBSETS, EXACTLY.** `boltz_eq_subset_sum` moved inside the integral:
+since the sum is FINITE, linearity applies with no convergence condition — only integrability of each
+term, which is carried as a hypothesis rather than assumed away.
+
+This is what makes a term-by-term analysis possible at all: every Gibbs numerator is a finite sum of
+Haar integrals, one per subset of activated plaquettes, exact at every coupling. -/
+theorem corrNum_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O : (Lk → MassGap.SUN.SU Nc) → ℝ)
+    (hint : ∀ E ∈ (Finset.univ : Finset Pq).powerset,
+      Integrable (fun U => O U * ∏ p ∈ E,
+          (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+        (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) :
+    (∫ U, O U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E ∈ (Finset.univ : Finset Pq).powerset,
+          ∫ U, O U * (∏ p ∈ E,
+              (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) := by
+  classical
+  have hfun : (fun U => O U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U)
+      = fun U => ∑ E ∈ (Finset.univ : Finset Pq).powerset,
+          O U * ∏ p ∈ E,
+            (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1) := by
+    funext U
+    rw [boltz_eq_subset_sum bd β U, Finset.mul_sum]
+  rw [hfun]
+  exact integral_finsetSum _ hint
+
+#print axioms corrNum_eq_subset_sum
+
+/-! ### Plaquette connectivity — the combinatorial side of the split
+
+Every route to the chain bound needs the same structure and the tree has it nowhere: when do two
+plaquettes interact, and what does it mean for a set of them to separate `p₀` from `p_d`. Two
+plaquettes interact exactly when they SHARE A LINK — that is the only way the Haar measure couples
+them, which is the content of `haar_prod_factor_of_split`.
+
+The theorems above take two explicit link sets `S`, `T` and a disjointness hypothesis. That is the
+right analytic interface and the wrong combinatorial one: what a counting argument produces is a SET
+OF PLAQUETTES closed under touching, not a pair of link sets. The bridge is below, and after it the
+vanishing theorem can be stated in purely combinatorial terms. -/
+
+/-- The links a plaquette's boundary word names. -/
+def linkSupp (bd : Pq → List (Lk × Bool)) (p : Pq) : Finset Lk :=
+  ((bd p).map Prod.fst).toFinset
+
+/-- Two plaquettes TOUCH when they share a link — the only way the Haar measure couples them. -/
+def Touch (bd : Pq → List (Lk × Bool)) (p q : Pq) : Prop :=
+  ∃ l ∈ linkSupp bd p, l ∈ linkSupp bd q
+
+/-- A plaquette's own links lie in the union over any set containing it. -/
+theorem supp_subset_biUnion (bd : Pq → List (Lk × Bool)) (A : Finset Pq) :
+    ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ A.biUnion (linkSupp bd) := by
+  intro p hp l hl
+  exact Finset.mem_biUnion.mpr ⟨p, hp, by simpa [linkSupp] using hl⟩
+
+/-- **A set closed under touching has links disjoint from its complement's.** This is the bridge from
+the combinatorial condition a counting argument produces to the analytic hypothesis the vanishing
+theorem consumes: no plaquette inside touches one outside, so the two link unions cannot meet. -/
+theorem split_links_disjoint (bd : Pq → List (Lk × Bool)) (A : Finset Pq)
+    (hclosed : ∀ p ∈ A, ∀ q, q ∉ A → ¬ Touch bd p q) :
+    Disjoint (A.biUnion (linkSupp bd)) (Aᶜ.biUnion (linkSupp bd)) := by
+  classical
+  rw [Finset.disjoint_left]
+  intro l hl hl'
+  obtain ⟨p, hp, hlp⟩ := Finset.mem_biUnion.mp hl
+  obtain ⟨q, hq, hlq⟩ := Finset.mem_biUnion.mp hl'
+  exact hclosed p hp q (Finset.mem_compl.mp hq) ⟨l, hlp, hlq⟩
+
+/-- **CONNECTED MEANS CONNECTED, COMBINATORIALLY.** If some set of plaquettes containing `p₀` is
+closed under touching and excludes `p_d`, the connected correlation vanishes at every coupling.
+
+This is `wilsonCorrConn_eq_zero_of_split` with the link bookkeeping discharged: the hypothesis is now
+a statement about the plaquette graph alone — "`p₀`'s side is closed and `p_d` is not in it" — which
+is what a connectivity or counting argument actually delivers. No link sets appear in it. -/
+theorem wilsonCorrConn_eq_zero_of_touch_closed (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
+    (A : Finset Pq) (hclosed : ∀ p ∈ A, ∀ q, q ∉ A → ¬ Touch bd p q)
+    (h0 : p₀ ∈ A) (hd : pd ∉ A) (β : ℝ) :
+    MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ β pd = 0 := by
+  classical
+  exact wilsonCorrConn_eq_zero_of_split bd p₀ pd A
+    (A.biUnion (linkSupp bd)) (Aᶜ.biUnion (linkSupp bd))
+    (split_links_disjoint bd A hclosed)
+    (supp_subset_biUnion bd A) (supp_subset_biUnion bd Aᶜ)
+    h0 (Finset.mem_compl.mpr hd) β
+
+#print axioms split_links_disjoint
+#print axioms wilsonCorrConn_eq_zero_of_touch_closed
+
+/-! ### The polymer structure — weights multiply across components
+
+A polymer model is exactly a weight that MULTIPLIES over connected components, and that is what
+`haar_prod_factor_of_split` says once one notices that the Boltzmann correction `w_p = e^{−βφ_p} − 1`
+reads only `p`'s own links, just as `φ_p` does. So for any per-plaquette function `f`,
+
+    ∫ ∏_{p ∈ E₁ ⊎ E₂} f(φ_p)  =  (∫ ∏_{E₁} f(φ_p)) · (∫ ∏_{E₂} f(φ_p))
+
+whenever `E₁` and `E₂` are link-disjoint. Setting `f = id` recovers the plaquette observables; setting
+`f x = e^{−βx} − 1` gives the activated-subset weights `ζ(E) = ∫W_E` of the expansion. With
+`ζ` multiplicative over components, `Z = ∑_E ζ(E)` IS a polymer partition function — which is the
+object Mayer's theorem is about.
+
+This is the entry point, not the theorem: Mayer says `log Z` is a sum over CONNECTED clusters, and
+that is what supplies the `Kⁿ` count. Multiplicativity is its hypothesis. -/
+
+/-- A per-plaquette function of the plaquette's own energy, over a group, read on `S`'s links. -/
+noncomputable def locOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
+    (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  ∏ p ∈ E, f (wilsonDensity (N := Nc) (wilsonHol bd p (extendOn (Lk := Lk) (Nc := Nc) S v)))
+
+theorem locOn_eq (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
+    (hsupp : ∀ p ∈ E, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    locOn (Nc := Nc) bd f E S (fun i : S => U i.val)
+      = ∏ p ∈ E, f (wilsonDensity (N := Nc) (wilsonHol bd p U)) := by
+  unfold locOn
+  refine Finset.prod_congr rfl (fun p hp => ?_)
+  rw [MassGap.ReflectionPositivity.hol_congr_on_support bd p _ U (fun l hl => by
+    have hmem : l ∈ S := hsupp p hp l hl
+    simp only [extendOn, dif_pos hmem])]
+
+theorem measurable_locOn (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
+    (E : Finset Pq) (S : Finset Lk) :
+    Measurable (locOn (Nc := Nc) bd f E S) := by
+  classical
+  refine Finset.measurable_prod _ (fun p _ => hf.comp ?_)
+  exact measurable_wilsonDensity.comp ((measurable_wilsonHol bd p).comp
+    (by
+      refine measurable_pi_lambda _ (fun i => ?_)
+      by_cases h : i ∈ S
+      · simp only [extendOn, dif_pos h]; exact measurable_pi_apply (⟨i, h⟩ : S)
+      · simp only [extendOn, dif_neg h]; exact measurable_const))
+
+/-- **THE POLYMER WEIGHT IS MULTIPLICATIVE ACROSS A LINK-DISJOINT SPLIT.** For any per-plaquette
+function `f` — in particular `f x = e^{−βx} − 1`, the activated-subset weight — the Haar integral of
+a product over two link-disjoint groups factorises.
+
+This is the hypothesis of a polymer model, and it is what makes `Z = ∑_E ζ(E)` with `ζ` multiplicative
+over components. Mayer's theorem takes it from here; nothing below supplies Mayer. -/
+theorem weight_mult_of_split (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
+    (A B : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
+    (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hB : ∀ p ∈ B, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    (∫ U, (∏ p ∈ A, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+          * (∏ p ∈ B, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = (∫ U, (∏ p ∈ A, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, (∏ p ∈ B, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+  classical
+  have hfac := block_integral_factor (N := Nc) S T hST
+    (locOn (Nc := Nc) bd f A S) (locOn (Nc := Nc) bd f B T)
+    (measurable_locOn bd hf A S) (measurable_locOn bd hf B T)
+  simp only [locOn_eq bd f A S hA, locOn_eq bd f B T hB] at hfac
+  exact hfac
+
+#print axioms weight_mult_of_split
 
 end ZeroCoupling
 

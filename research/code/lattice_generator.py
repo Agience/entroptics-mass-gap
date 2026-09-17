@@ -886,6 +886,38 @@ def _ops(group: str, method: str = "metropolis"):
     raise ValueError(f"unknown group '{group}' (use 'u1', 'su2', 'su3', 'su4', ...)")
 
 
+def cold_init(b, group: str, dims, batch):
+    """The ORDERED start: every link the group identity.
+
+    The dual of the `_*_init` functions above, which are all RANDOM (hot). It exists because a
+    thermalisation reference measured from one start is not a bracket: a hot configuration relaxes
+    toward equilibrium from above and a cold one from below, so running only the first gives an
+    estimate biased in a known direction, by an amount no property of that single chain reveals.
+    Measured for `U(1)` at `beta = 1.6` and `2.5`: the two starts are still 3.2 and 5.9 sigma apart
+    after 20000 sweeps, and the shipped ensembles sit inside the interval between them
+    (`data/store_check_u1_reference_bracket.py`).
+
+    DERIVED: the identity is the group's own, not a small number -- `0` for the `U(1)` angle,
+    `(1,0,0,0)` for the `SU(2)` unit quaternion, `I` for `SU(N)`. The action is minimised there by
+    definition, so a chain leaving it approaches equilibrium strictly from below.
+    """
+    if group == "u1":
+        return b.zeros((*batch, *dims, D))
+    if group == "su2":
+        q = b.zeros((*batch, *dims, D, 4))
+        q[..., 0] = 1.0
+        return q
+    if group.startswith("su") and group[2:].isdigit():
+        N = int(group[2:])
+        if N < 2:
+            raise ValueError(f"N must be >= 2; got '{group}'")
+        U = b.zeros((*batch, *dims, D, N, N), cplx=True)
+        for i in range(N):
+            U[..., i, i] = 1.0
+        return U
+    raise ValueError(f"unknown group '{group}' (use 'u1', 'su2', 'su3', 'su4', ...)")
+
+
 def _batch_tuple(batch):
     return () if not batch else (int(batch),)
 

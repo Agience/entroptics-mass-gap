@@ -41,10 +41,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import store_path
 import ym_confinement_of_cos_average as COS
 import ym_crossover_confinement_of_grid as CG
+from aperture_ceiling import C_MAX   # the ceiling, derived in ONE place, and SHARP
 
 KAPPA0 = 0.25 * math.log(3.0)
-# DERIVED: the growth condition solved for c; the lag arity N+1 is the periodic extent L.
-C_MAX = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
 BASE = store_path.store_root(required=False)
 
 

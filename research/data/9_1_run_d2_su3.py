@@ -23,7 +23,7 @@ import ym_crossover_confinement_of_grid as CG  # the canonical lag-moment read
 # empty artifact.
 BASE = store_path.store_root(required=False)
 HOPS = ["configs_paper83", "configs_phase1"] if BASE else []
-APERTURE_RHS = 1.0 - 3.0 ** (-0.25)   # 1 - 3^{-1/4}
+from aperture_ceiling import d2_ceiling   # the ceiling, derived in ONE place, and SHARP
 
 # SU(3) L6 has the full sweep 5.0..7.0; L8 has the crossover cluster 5.5..6.0.
 SERIES = [(6, [5.00, 5.25, 5.50, 5.75, 6.00, 6.25, 6.50, 6.75, 7.00]),
@@ -68,7 +68,7 @@ for L, betas in SERIES:
     # DERIVED from the lag arity, not from L+1: `Moment.Read N` indexes lags by `Fin (N+1)`, and a
     # periodic extent of L sites admits lags d = 0..L-1, so N+1 = L. The second copy of this line
     # carried the same off-by-one as the SU(2) certificate and inflated the ceiling by ((L+1)/L)^2.
-    ceil = APERTURE_RHS * 2 * L ** 2 / (2 * math.pi) ** 2
+    ceil = d2_ceiling(L)
     rows = []
     for b in betas:
         arr = load(L, b)

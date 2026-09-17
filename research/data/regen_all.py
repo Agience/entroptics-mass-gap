@@ -24,6 +24,8 @@ Resource classes
             F = 13824, about 1.4 GiB per array with three live at once. Reducing the config count
             does NOT help -- F is fixed by the lattice size, not by how many configs are read.
 ``gpu``     wants CUDA to be practical. Runs on CPU, slowly.
+``build``   not a measurement at all: it elaborates the Lean tree on the build host. Its cost is the
+            build's, not this machine's, and it is the one class here that cannot be timed locally.
 
 Classes are set from MEASUREMENT, not from reading the code: every one of them has been corrected
 at least once by a job being killed or timed out. When a job dies for want of a resource, move it
@@ -196,6 +198,30 @@ OWNERS = [
     # `therm` records the sweeps a campaign ran; the sweeps required grow with beta and volume, so
     # adequacy is established per ensemble by this measurement.
     (["store_dat_thermalisation.csv"],           "store_run_thermalisation.py",            DATA, "data",    "gpu"),
+    # Whether the equilibrium reference BRACKETS the value it is compared against: the same chain
+    # from a hot start and from a cold one. `gpu` because it is four 20000-sweep U(1) chains and
+    # touches no store -- it generates its own configurations, like the reference it audits.
+    (["store_dat_u1_reference_bracket.csv"],     "store_check_u1_reference_bracket.py",    DATA, "data",    "gpu"),
+    # --- seven artifacts that had no owner until 2026-09-16 -------------------------------------
+    # Each producer was established by reading which script WRITES the file, not which mentions it:
+    # `junction_residuals_of_measurement.py` READS 8_7_dat_gap_su3 and 9_3_dat_substrate_of_aperture
+    # and writes neither, which is why a grep for the filename names the wrong owner twice.
+    #
+    # Every class below is MEASURED, per this module's own rule, with threads capped and one run at a
+    # time. Reading the ensemble store does NOT by itself imply a long job, and that is the
+    # distinction these rows record: `8_7_run_gap_su3` (122 s) and `ym_confinement_of_cos_average`
+    # (101 s) both read the store and are still `cpu`, because the first resolves to 5 SU(3) points at
+    # L = 6, 8, 12 and the second to L=16 profiles with no dense operator. Only
+    # `ym_substrate_bound_of_aperture` is `cpu2h`: it scans every aperture the store holds at every
+    # coupling, and exceeded ten minutes even after its shard-header lookup was memoised.
+    # The two CSV-only jobs are 2.93 s and 0.26 s.
+    (["8_7_dat_gap_su3.csv"],                    "8_7_run_gap_su3.py",                     DATA, "data",    "cpu"),
+    (["9_2_dat_confinement_cos.csv"],            "ym_confinement_of_cos_average.py",       CERT, "certify", "cpu"),
+    (["9_3_dat_substrate_of_aperture.csv"],      "ym_substrate_bound_of_aperture.py",      CERT, "certify", "cpu2h"),
+    (["9_3_fig_substrate_of_aperture.png"],      "9_3_fig_substrate_of_aperture.py",       DATA, "figures", "cpu"),
+    (["9_5_dat_u1_discriminator.csv"],           "u1_discriminator_of_read.py",            CERT, "certify", "cpu"),
+    (["9_6_dat_junction_residuals.csv"],         "junction_residuals_of_measurement.py",   CERT, "certify", "cpu"),
+    (["9_7_dat_smeared_channel.csv"],            "smeared_channel_of_spacing.py",          CERT, "certify", "cpu"),
 ]
 
 # `build` is a Lean/Mathlib compile, not a read: it needs the toolchain and a warm .lake, and it

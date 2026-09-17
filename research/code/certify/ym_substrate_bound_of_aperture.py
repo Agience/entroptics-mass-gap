@@ -34,11 +34,13 @@ for the larger ones rather than a fit through them. No threshold, no window, no 
 from __future__ import annotations
 
 import csv
+import functools
 import glob
 import math
 import os
 import re
 import sys
+from fractions import Fraction
 
 import numpy as np
 
@@ -46,6 +48,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import store_path
+import aperture_ceiling as AC        # the ceiling, derived in ONE place
 import ym_confinement_of_cos_average as COS
 import ym_crossover_confinement_of_grid as CG
 
@@ -53,13 +56,40 @@ KAPPA0 = 0.25 * math.log(3.0)
 BASE = store_path.store_root(required=False)
 
 
+@functools.lru_cache(maxsize=None)
+def _shape(path):
+    """The shard's array shape, read from the `.npy` header and remembered.
+
+    `mmap_mode` reads the header and not the data, but `main` asks for every coupling's volumes
+    twice -- once to find the couplings with more than one aperture, once to scan them -- and the
+    store holds thousands of shards, so without this the headers are re-read for every beta.
+    """
+    try:
+        return tuple(np.load(path, mmap_mode="r").shape)
+    except Exception:
+        return None
+
+
 def volumes(group, beta):
-    """Every aperture the store holds for this group and coupling, with its shards."""
+    """Every GEOMETRY the store holds for this group and coupling, with its shards.
+
+    Keyed by `(L, T)` -- the spatial extent AND the temporal one -- because the filename carries
+    only `L`. Two collections can therefore write the same name for different lattices: the store
+    holds `su2_L8_b2.40` at both `(8,8,8,16)` and `(8,8,8,32)`. Pooling those concatenates two
+    geometries into one ensemble, which numpy refuses outright when the shapes differ and which
+    would be WRONG rather than merely noisy if they ever agreed by accident.
+
+    Keying by the full geometry is a property of the data, not a list of collection names: shards
+    that describe the same lattice pool, shards that do not are separate ensembles. The rank guard
+    below is the same idea one axis up.
+    """
     out = {}
     if not BASE:
         return out
     for d in sorted(os.listdir(BASE)):
         p = os.path.join(BASE, d)
+        # (the per-shard geometry is read through `_shape`, which memoises: `main` asks for the
+        #  volumes of every coupling twice, and the store holds thousands of shards)
         # The raw-link collection carries the SAME filenames at rank 7 -- (n,L,L,L,T,dir,group)
         # rather than the rank-5 density plane this reads. Concatenating those would read a
         # different data product without saying so, which is what `aperture_reads.load_su2`
@@ -68,8 +98,19 @@ def volumes(group, beta):
             continue
         for f in glob.glob(f"{p}/{group}_L*_b{beta:.2f}.s*.npy"):
             m = re.match(rf"{group}_L(\d+)_b", os.path.basename(f))
-            if m:
-                out.setdefault(int(m.group(1)), []).append(f)
+            if not m:
+                continue
+            shp = _shape(f)
+            # Unreadable shards are not silently dropped into some other geometry's pool; the
+            # concatenate below would have raised on them anyway, and louder.
+            #
+            # DERIVED: 5 is the RANK of the density plane this reads -- (n, L, L, L, T): one
+            # configuration axis, the three spatial extents, and the temporal one. It is the shape
+            # `per_config_profiles` consumes (it rolls over axes 1..3 and averages over 1..4), not a
+            # size. The rank-7 link collection is excluded by name above for the same reason.
+            if shp is None or len(shp) != 5:
+                continue
+            out.setdefault((int(m.group(1)), int(shp[4])), []).append(f)
     return out
 
 
@@ -105,7 +146,7 @@ def d2_raw(P):
 # cap set too low surfaces as a wider error bar rather than as a wrong number.
 def scan(group, beta, ncap=256):
     rows = []
-    for L, files in sorted(volumes(group, beta).items()):
+    for (L, T), files in sorted(volumes(group, beta).items()):
         arr = np.asarray(np.concatenate([np.load(f) for f in sorted(files)], 0)[:ncap],
                          dtype=np.float64)
         # DERIVED: two is where a sample variance exists at all, so it is the arity of the
@@ -122,7 +163,7 @@ def scan(group, beta, ncap=256):
         rng = np.random.default_rng(0)
         boot = np.array([CG.d2_from_profiles(P[rng.integers(0, n, n)]) for _ in range(200)])
         rows.append({
-            "L": L, "n": n,
+            "L": L, "T": T, "n": n,
             "d2_circle": CG.d2_from_profiles(P),
             "d2_sigma": float(boot.std()),
             "d2_raw": d2_raw(P),
@@ -135,13 +176,14 @@ def scan(group, beta, ncap=256):
     return rows
 
 
-def report(group, beta, rows):
+def report(group, beta, rows, aspect=None):
     # DERIVED: two is the arity of a comparison. One aperture cannot say whether a quantity
     # depends on the aperture, which is the only question here.
     if len(rows) < 2:
-        print(f"{group} beta={beta:.2f}: only {len(rows)} aperture(s) -- no scan possible")
+        print(f"{group} beta={beta:.2f} T/L={aspect}: only {len(rows)} aperture(s) "
+              f"-- no scan possible")
         return None
-    print(f"\n=== {group.upper()} beta={beta:.2f} : {len(rows)} apertures ===")
+    print(f"\n=== {group.upper()} beta={beta:.2f} T/L={aspect} : {len(rows)} apertures ===")
     print(f"{'L':>4} {'n':>5} {'d2 circle':>19} {'d2 raw':>10} {'mu':>10} "
           f"{'mu*L^2':>9} {'signal':>7} {'confined':>9}")
     L0, mu0 = rows[0]["L"], rows[0]["mu"]
@@ -233,18 +275,29 @@ def main() -> None:
     allrows = []
     for group, b in targets:
         rows = scan(group, b)
-        if report(group, b, rows):
-            for r in rows:
-                allrows.append(dict(r, group=group, beta=b))
+        # DERIVED: a series is the apertures at ONE aspect ratio T/L. "Does <d^2> depend on the
+        # aperture" is only a question if the lattice's other extent moves with it -- the store's
+        # convention is T = 2L everywhere, and a collection holding a FIXED T across several L is a
+        # different family of lattices, not more points on this one. Splitting here is what stops
+        # the two being averaged into a single trend line.
+        #
+        # Fraction, not float, so that 32/12 and 8/3 are the same key.
+        fams = {}
+        for r in rows:
+            fams.setdefault(Fraction(r["T"], r["L"]), []).append(r)
+        for asp, frows in sorted(fams.items()):
+            if report(group, b, frows, asp):
+                for r in frows:
+                    allrows.append(dict(r, group=group, beta=b))
 
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                        "data", "9_3_dat_substrate_of_aperture.csv")
     with open(out, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["group", "beta", "L", "nconfigs", "d2_circle", "d2_sigma", "d2_raw", "cos_avg", "mu",
+        w.writerow(["group", "beta", "L", "T", "nconfigs", "d2_circle", "d2_sigma", "d2_raw", "cos_avg", "mu",
                     "mu_upper_delta_1e-30", "confined_1e-30", "kappa0"])
         for r in allrows:
-            w.writerow([r["group"], f"{r['beta']:.2f}", r["L"], r["n"], f"{r['d2_circle']:.5f}", f"{r['d2_sigma']:.5f}",
+            w.writerow([r["group"], f"{r['beta']:.2f}", r["L"], r["T"], r["n"], f"{r['d2_circle']:.5f}", f"{r['d2_sigma']:.5f}",
                         f"{r['d2_raw']:.5f}", f"{r['cos_avg']:.6f}", f"{r['mu']:.6f}",
                         f"{r['mu_upper_1e-30']:.6f}",
                         "yes" if r["mu_upper_1e-30"] < KAPPA0 else "NO", f"{KAPPA0:.6f}"])
@@ -272,23 +325,22 @@ def main() -> None:
         print(f"  apertures measured: L = {sorted({r['L'] for r in sig})}")
         # The ceiling grows like L^2 while the moment does not, so the aperture condition gets
         # EASIER at larger N -- which is the structure `confinement_of_substrate_bound` uses.
-        rhs = 1.0 - 3.0 ** -0.25
         for L in sorted({min(r["L"] for r in sig), max(r["L"] for r in sig)}):
-            ceil = rhs * 2 * L ** 2 / (2 * math.pi) ** 2
+            ceil = AC.d2_ceiling(L)
             print(f"    at L={L:>3} the derived ceiling is {ceil:>7.3f} -- {ceil / Bmax:.1f}x that moment")
 
     # ---- the WEAKER hypothesis the proof actually takes ----
     #
     # `Complete.confinement_of_growth_bound` does not ask for a bounded moment. It asks for
     #
-    #     d2At N b <= c * (N+1)^2     with     (2 pi)^2 c / 2 < 1 - 3^{-1/4}
+    #     d2At N b <= c * (N+1)^2     with     c < C_MAX
     #
     # because the aperture condition's own ceiling grows like (N+1)^2. So the quantity to report is
     # the coefficient the DATA requires, c = d2 / (N+1)^2, against the ceiling's.
     #
-    # DERIVED: c_max is that inequality solved for c. The lag arity N+1 is the periodic extent L.
+    # DERIVED in `aperture_ceiling`, and SHARP. The lag arity N+1 is the periodic extent L.
     if sig:
-        c_max = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
+        c_max = AC.C_MAX
         print(f"\n  THE WEAKER CONDITION: d2At <= c(N+1)^2 with c < c_max = {c_max:.6f}")
         by_L = {}
         for r in sig:

@@ -19,6 +19,7 @@ The apertures and couplings are whatever the artifact holds.
 import csv
 import math
 import os
+import sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -28,8 +29,8 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 DAT = os.path.join(HERE, "9_3_dat_substrate_of_aperture.csv")
 
-# DERIVED: the growth condition (2pi)^2 c/2 < 1 - 3^{-1/4}, solved for c.
-C_MAX = (1.0 - 3.0 ** -0.25) * 2 / (2 * math.pi) ** 2
+sys.path.insert(0, os.path.join(HERE, "..", "code", "certify"))
+from aperture_ceiling import C_MAX   # the ceiling, derived in ONE place, and SHARP
 
 if not os.path.exists(DAT):
     raise SystemExit(f"9_3_fig_substrate_of_aperture: {os.path.basename(DAT)} is not present. Run\n"

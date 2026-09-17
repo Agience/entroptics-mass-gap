@@ -22,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "code"))            # research/code -- store_path
 sys.path.insert(0, os.path.join(HERE, "..", "code", "certify"))
 import store_path                              # the ONE place the ensemble store is located
+import su2_l16_scan                            # the ONE place this scan's population is named
 import ym_crossover_confinement_of_grid as CG  # canonical direct-lag read
 
 # The store root, from `store_path`: `CONFIGS`, then the git-ignored local config file, then a
@@ -31,18 +32,15 @@ import ym_crossover_confinement_of_grid as CG  # canonical direct-lag read
 # the same bug for anyone who did not set the override. An empty read is a refusal now (below),
 # and with nothing configured HOPS is empty so that refusal is what fires.
 BASE = store_path.store_root(required=False)
-HOPS = (["configs_densebeta", "configs_phase1", "configs_betasweep", "configs_ladder"]
-        if BASE else [])
+# The population and the loader are `su2_l16_scan`'s, not this file's. They were this file's, and its
+# sibling had its own copy: the two agreed until `configs_gpu_su2_L16` was added to one of them, and
+# then quoted 0.15808 and 0.15915 for the same number at beta=2.40. Named once, read once.
+HOPS = su2_l16_scan.collections()
 BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
-NCAP, NBOOT, BOUND, BCYM = 256, 500, 1.0, 0.767   # BOUND = 1 (d2_le_bound); BCYM ~= beta_star
+NBOOT, BOUND, BCYM = 500, 1.0, 0.767   # BOUND = 1 (d2_le_bound); BCYM ~= beta_star
 rng = np.random.default_rng(20260709)
 
-
-def load_beta(b):
-    fs = []
-    for d in HOPS:
-        fs += glob.glob(f"{BASE}/{d}/su2_L16_b{b:.2f}.s*.npy")
-    return np.concatenate([np.load(f) for f in fs], 0)[:NCAP] if fs else None
+load_beta = su2_l16_scan.load_beta
 
 
 B, M, S, N = [], [], [], []

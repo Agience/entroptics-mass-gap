@@ -1022,9 +1022,17 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
     store = Path(store_path.store_root())
 
     def shards(group, L, beta):
-        """Every shard for one ensemble, across collections; the filename carries beta to 2 places."""
+        """Every shard for one ensemble, across collections; the filename carries beta to 2 places.
+
+        The `*` between beta and the seed is NOT decoration. An operator-reduced shard carries what
+        it is between the two: `su2_L8_b2.50.plaquette.ape16.s000.npy`. Matching only `b2.50.s*`
+        finds no file for such an ensemble and reports it ABSENT -- which is what happened on
+        2026-09-17, the moment the thermalisation artifact began carrying rows for the eleven
+        operator-reduced collections. They were on disk the whole time; the pattern could not see
+        them. The same naming cost `store_run_thermalisation.py` a regex, one branch earlier.
+        """
         out = []
-        for pat in (f"{group}_L{L}_b{float(beta):.2f}.s*.npy", f"{group}_L{L}_b{beta}.s*.npy"):
+        for pat in (f"{group}_L{L}_b{float(beta):.2f}*.npy", f"{group}_L{L}_b{beta}*.npy"):
             out += glob.glob(str(store / "configs_*" / pat))
         return sorted(set(out))
 

@@ -76,7 +76,13 @@ def test_a_matching_row_is_offered(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "DAT", str(art))
     refs = mod.previous_references()
     assert KEY in refs, f"a row with this module's own settings was not offered: {refs}"
-    assert refs[KEY] == (2.19, 0.002, True)
+    # The fourth element is HOW the reference was measured and the fifth is the bracket's half-gap.
+    # A row written before the hot/cold bracket existed carries neither column: `hot_only` is what
+    # its absence means -- a statement about the data, not a filler -- and the half-gap is NaN
+    # because a single chain has no bracket, which is not the same as a bracket of width zero.
+    mu, sem, usable, kind, half = refs[KEY]
+    assert (mu, sem, usable, kind) == (2.19, 0.002, True, "hot_only")
+    assert half != half, f"a hot-only row should carry no bracket width, got {half}"
 
 
 @pytest.mark.parametrize("field,value", [

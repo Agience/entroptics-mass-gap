@@ -105,9 +105,11 @@ isometry. Both remaining inputs are established results. The named parts:
 
 * **A1, strong-coupling side.** The character / cluster expansion of the Wilson action bounds the
   aperture tension linearly, `μ β ≤ 2 β r` with `r` the leading character ratio `I₂(β)/I₁(β)`
-  (Osterwalder-Seiler). Below the threshold coupling `β_c = κ₀ / (2 r)` this bound sits under the
-  counting floor, so `μ β < κ₀`: confinement on the strong-coupling side, as an inequality
-  (`apriori_A1_strong`). The weak end (`apriori_A1_weak`) and the crossover interior (reflection
+  (Osterwalder-Seiler) — the one input still cited on this side. Below the threshold coupling
+  `β_c = κ₀ / (2 r)` this bound sits under the counting floor, so `μ β < κ₀`: confinement on the
+  strong-coupling side, as an inequality (`apriori_A1_strong`). The THRESHOLD itself is derived, not
+  certified: `Bessel.ratio_le_quarter` gives `r(β) ≤ β/4` termwise, so the range is exactly
+  `β² < ½ log 3` (`Bessel.strong_coupling_below_threshold`). The weak end (`apriori_A1_weak`) and the crossover interior (reflection
   positivity, `Certify.lean`) close the range `β ≥ β_⋆`.
 * **A2, hypercubic side.** A read that is a symmetric functional of the per-axis reads is invariant
   under the hypercubic axis-permutation group (`read_hypercubic_invariant`, `A2_hypercubic_holds`):
@@ -175,38 +177,27 @@ theorem margin_of_dominant_rate {κ₀ μ r : ℝ} (hr : 0 < r) :
     calc r = Real.exp (Real.log r) := (Real.exp_log hr).symm
       _ ≤ Real.exp (-(κ₀ - μ)) := Real.exp_le_exp.mpr hlog
 
-/-! ### T3a: certifying the strong-coupling threshold `β⋆`
+/-! ### T3a: the strong-coupling threshold
 
 `apriori_A1_strong` uses the threshold `β⋆` with `2 β⋆ r = κ₀`, i.e. `β⋆ = κ₀/(2r)`, where `r = I₂/I₁`
-is the leading character ratio and `κ₀ = ¼ log 3`. The ratio and the floor are certified to rational
-intervals by `research/code/certify/beta_star_enclosure.py` (exact-rational Bessel and log series with proven geometric
-tail bounds): `r(β⋆) ∈ [0.182, 0.184]`, `κ₀ ∈ [0.2746, 0.2747]`, and the bracket `B(0.749) < κ₀ <
-B(0.750)`. The lemma below machine-checks the enclosure arithmetic that turns those certified bounds into
-an interval for `β⋆`. -/
+is the leading character ratio and `κ₀ = ¼ log 3`.
 
-/-- **Certified threshold enclosure (interval arithmetic).** With the leading character ratio `r` in
-`[rlo, rhi]` (`0 < rlo`) and the floor `κ₀` in `[klo, khi]` (`0 ≤ klo`), the strong-coupling threshold
-`β⋆ = κ₀/(2r)` (`apriori_A1_strong`) is enclosed: `κ₀/(2r) ∈ [klo/(2 rhi), khi/(2 rlo)]`. The interval
-bounds are the certified numerics of `research/code/certify/beta_star_enclosure.py`; the enclosure is checked here. -/
-theorem beta_star_enclosure {r κ₀ rlo rhi klo khi : ℝ}
-    (hrlo : 0 < rlo) (hr : rlo ≤ r) (hr' : r ≤ rhi)
-    (hk : klo ≤ κ₀) (hk' : κ₀ ≤ khi) (hklo0 : 0 ≤ klo) :
-    klo / (2 * rhi) ≤ κ₀ / (2 * r) ∧ κ₀ / (2 * r) ≤ khi / (2 * rlo) := by
-  have hr0 : 0 < r := lt_of_lt_of_le hrlo hr
-  have hrhi0 : 0 < rhi := lt_of_lt_of_le hr0 hr'
-  have hκ0 : 0 ≤ κ₀ := le_trans hklo0 hk
-  have hkhi0 : 0 ≤ khi := le_trans hκ0 hk'
-  exact ⟨by gcongr, by gcongr⟩
+**THE THRESHOLD IS A THEOREM, and the route through it carries no numeral.**
+`Bessel.strong_coupling_below_threshold` gives `μ β < κ₀` for every `β` with
 
-/-- **The certified enclosure, instantiated** (`research/code/certify/beta_star_enclosure.py`): with the certified
-rational bounds `r(β⋆) ∈ [0.182, 0.184]` and `κ₀ ∈ [0.2746, 0.2747]`, the strong-coupling threshold is
-`β⋆ ∈ [0.746, 0.755]`, machine-checked. -/
-example {r κ₀ : ℝ}
-    (hr : (182 : ℝ) / 1000 ≤ r) (hr' : r ≤ 184 / 1000)
-    (hk : (2746 : ℝ) / 10000 ≤ κ₀) (hk' : κ₀ ≤ 2747 / 10000) :
-    (746 : ℝ) / 1000 ≤ κ₀ / (2 * r) ∧ κ₀ / (2 * r) ≤ 755 / 1000 := by
-  obtain ⟨lo, hi⟩ := beta_star_enclosure (by norm_num) hr hr' hk hk' (by norm_num)
-  exact ⟨le_trans (by norm_num) lo, le_trans hi (by norm_num)⟩
+    β² < ½ log 3
+
+and nothing else — no interval, no certificate, no fitted constant. It rests on
+`Bessel.ratio_le_quarter` (`r(x) ≤ x/4`), which is termwise and elementary: the `I₂` and `I₁` terms
+differ by one factor of `x/2` upstairs and one factor of `k+2 ≥ 2` downstairs. Substituting it into
+`2 β r(β)` gives `β²/2`, below `¼ log 3` exactly when `β² < ½ log 3`. The bound is tight as `β → 0`,
+which is the regime it is used in.
+
+The bound is tight as `β → 0`, which is the regime it is used in, and it is the only route here:
+the exact-rational Bessel/log certificate that used to supply `β⋆ ∈ [0.746, 0.755]` is retired, along
+with the interval-arithmetic lemma that consumed it. It reached about 1.1% more coupling and cost a
+numeral and a certificate to do it; the crossover argument has to cover everything above the
+threshold either way, so the range was not load-bearing. -/
 
 /-- **A2, hypercubic side: a symmetric read is axis-permutation invariant.** A read `R` that depends
 only on the MULTISET of the per-axis reads `a : Fin d → ℝ` (a spectral / symmetric functional) is

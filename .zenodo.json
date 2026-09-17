@@ -3,7 +3,7 @@
   "description": "Pure SU(N) Yang-Mills has a mass gap because the vacuum is read through a finite aperture, which band-limits: the gap is the entropy margin Delta = kappa_0 - mu > 0 below the counting floor kappa_0 = (1/4) ln 3. This repository holds the paper, the Lean 4 / Mathlib verification, and the Entroptics analysis code.",
   "upload_type": "software",
   "license": "Apache-2.0",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "creators": [
     {
       "name": "Sessford, Ikailo John",
@@ -44,5 +44,6 @@
       "relation": "isSupplementTo",
       "scheme": "url"
     }
-  ]
+  ],
+  "publication_date": "2026-09-17"
 }

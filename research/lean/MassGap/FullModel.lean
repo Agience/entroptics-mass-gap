@@ -102,6 +102,11 @@ theorem existence_and_gap_of_model (M : FullModel) :
         (∀ σ j, q (M.measure.actP σ j) = q j)) :=
   ⟨mass_gap_of_model M.gap M.h1 M.h2, continuum_of_family M.measure⟩
 
+-- The docstring above has asserted this theorem's footprint since it was written, but the command was
+-- only ever QUOTED in that prose and never issued, so the claim was never checked by anything. It is
+-- issued here, which is also what puts the declaration into `data/13_dat_axiom_footprints.csv`.
+#print axioms existence_and_gap_of_model
+
 /-! ### The §2–§3 modelling identification, as a typed obligation
 
 `existence_and_gap_of_model` needs a `FullModel`. The remaining physical input is the identification that the `SU(N)` Wilson

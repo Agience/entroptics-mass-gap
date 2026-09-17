@@ -142,6 +142,7 @@ OWNERS = [
     (["9_14_dat_cell_pivot_certificate.csv"],    "cell_pivot_certificate.py",              CERT, "certify", "cpu"),
     ([],                                         "interval_enclosure.py",                  CERT, "certify", "cpu"),
     ([],                                         "small_volume_enclosure.py",              CERT, "certify", "cpu"),
+    (["7_dat_floor_ladder_exact.csv"],           "floor_ladder_exact.py",                  CERT, "certify", "cpu"),
     ([],                                         "beta_star_enclosure.py",                 CERT, "certify", "cpu"),
     # Writes BOTH 8_6 free-field tables. It was absent from this list while both files were
     # committed, so nothing recorded how to regenerate either -- exactly what

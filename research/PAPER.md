@@ -581,10 +581,18 @@ the floor exactly when $\beta^2<\tfrac12\ln3$, i.e. $\beta<0.74115\ldots$. That 
 and the floor's own $\ln3$, with no numeral, no certificate and nothing to regenerate. At weak coupling asymptotic freedom makes the
 vortex tension a physical scale, $a^2\mu\sim(a\Lambda)^2\to0$, far below the floor; this limit is **computed** (§8.6):
 the free-field tension is $\mu_\infty(L)\approx2.1/L^2\to0$ with $\mu_\infty(8)=0.0326<\kappa_0$, $N$-independent. The
-two groups differ by the *sign of the running*: for $SU(N)$, $a^2\mu\sim\Lambda^2$ shrinks and stays below
-$\kappa_0$; for compact $U(1)$, the monopole action $a^2\mu\sim\beta$ grows, crosses $\kappa_0$ at a finite
-$\beta_c$, and deconfines. The tension stays sub-floor and monotone across the crossover
-(the **no-bump**), which is $a_{\mathrm{IR}}=0$ in disorder-operator form.
+two groups differ by the *sign of the running*: for $SU(N)$, $a^2\mu\sim\Lambda^2$ shrinks; for compact
+$U(1)$, the monopole action $a^2\mu\sim\beta$ grows. **That difference of sign is not a crossing of the
+floor, and $\mu<\kappa_0$ is not what distinguishes the two phases** — §8.6 measures the same functional
+on 20 compact-$U(1)$ couplings spanning $\beta_c\approx1.011$ and finds that *no coupling crosses the
+floor*, the largest tension anywhere being $0.0854$ against $\kappa_0=0.2747$
+([9_5_dat_u1_discriminator.csv](data/9_5_dat_u1_discriminator.csv)). The read locates $\beta_c$ to about
+$1\%$ by where $\mu$ peaks, but its magnitude never approaches the floor. What separates the phases is the
+geometric discriminator of §5 and $K_{\mathrm{signal}}$ (§8.3), not this inequality. $\mu$ does have a
+clear interior maximum on the $U(1)$ foil — that is what locates $\beta_c$ — rising to $0.0854$ at
+$\beta=1.00$ and falling back to $\approx0.036$ by $\beta=1.5$; what it never does is approach
+$\kappa_0$, clearing it by a factor of $3.2$ at its own peak. The **no-bump** is the separate statement
+of §8.3 about $K_{\mathrm{signal}}$ on $SU(N)$, not about this tension.
 
 **8.3 The confinement order parameter, measured.** The resolved-mode count $K_{\mathrm{signal}}$ is low in the
 confined phase (the action-density field is structureless within the noise sea) and rises across the $U(1)$
@@ -1026,8 +1034,11 @@ correlation singular value, equivalently $1$ minus an attenuation gap). **Bradle
 susceptibility. The *direction* of the certificate matters: the spectral attenuation $\alpha$ is a **coherence** read,
 the leading temporal mode's contrast, highest in the *gapless* phase, so $\alpha_{\mathrm{lo}}>0$ certifies coherence.
 The confinement read is the vortex tension below the floor, $\mu<\kappa_0$: from the configurations, the
-monopole density collapses at $\beta_c$ (§8.2) and the analytic tension crosses $\kappa_0=\tfrac14\ln3$ there, so
-$\mu<\kappa_0$ (disorder wins, $\rho'(1)<1$, gap) below and $\mu>\kappa_0$ (Coulomb) above. The gap value follows from
+monopole density collapses at $\beta_c$ (§8.2). **The tension does NOT cross $\kappa_0$ there** — §8.6 measures
+20 compact-$U(1)$ couplings spanning $\beta_c\approx1.011$ and finds the largest tension anywhere is $0.0854$
+against $\kappa_0=0.2747$, so $\mu<\kappa_0$ holds on BOTH sides
+([9_5_dat_u1_discriminator.csv](data/9_5_dat_u1_discriminator.csv)). The phases are separated by the geometric
+discriminator of §5 and $K_{\mathrm{signal}}$ (§8.3), not by this inequality. The gap value follows from
 confinement through the bore $\Delta\propto\sqrt\sigma$ (§6); the entropy-matched DMD/Koopman rate is that gap
 instrument, calibrated on the free scalar (§8.5).
 

@@ -48,6 +48,17 @@ FIELD_BUILDERS = {
     # not a correlation, so no read choice is reintroduced: which distance, which
     # normalisation and which window all still come from the one read.
     "smeared_channel_of_spacing.py": "builds the smeared operator; reads it with the shared functional",
+    # Diagonalises a matrix this repo WRITES DOWN, not a field it measures. The cell Hamiltonian is
+    # `diagonal(Casimir) - lambda * adjacency` and the coupling matrix is the path-graph adjacency;
+    # both are defined by the theory, so there is no distance, no normalisation, no window and no
+    # floor to choose and nothing the library could supply. The float spectrum is used for exactly
+    # two things, and in both the point is that it is INDEPENDENT of the certificate: to pick a trial
+    # DIRECTION which is then rounded to the rationals and whose Rayleigh quotient is re-evaluated
+    # exactly, and to serve as the reference value in the negative control that checks the certified
+    # bound never exceeds the true one. Reading either through the shared functional would remove the
+    # independence that makes the control a control.
+    "cell_gap_budget.py": "diagonalises the defined cell Hamiltonian as the control for an exact-rational certificate",
+    "cell_chain_coupling.py": "diagonalises the defined chain Hamiltonian as the control for the extensivity measurement",
 }
 
 

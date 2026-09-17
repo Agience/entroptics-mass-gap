@@ -1,4 +1,5 @@
 import Mathlib
+import MassGap.CubeBranch
 import MassGap.Spectral
 import MassGap.Apriori
 import MassGap.Certify
@@ -596,6 +597,62 @@ theorem confinement_of_spectral_form {ι : Type*} [DecidableEq ι] {C r : ℝ}
   exact mul_le_mul_of_nonneg_right (hwsum N β) (pow_nonneg hr0 _)
 
 #print axioms confinement_of_spectral_form
+
+/-! ### The half-line spectral form is REFUTED on this lattice, and the periodic one replaces it
+
+`confinement_of_spectral_form` just above takes `hrep : (readYMAt N β).p d = ∑ w λ^d` — the HALF-LINE
+shape. On this lattice that hypothesis is not merely unproved, it is unsatisfiable for an interacting
+theory, so the theorem is vacuous:
+
+* `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a periodic
+  torus with `n = N+1`, and `wilsonCorrAt N β`'s lag index `Fin (N+1)` spans the WHOLE period;
+* `wilsonCorrConn` is symmetric in its two plaquettes, so `ρ(d) = ρ(n−d)` — the symmetry `ZeroMode`
+  records and `Moment.circLag` is built on;
+* `Spectral.flat_of_aperiodic` then proves a half-line shape plus that symmetry forces `ρ` FLAT from
+  lag one. Zero connected decay.
+
+`Spectral.PeriodicSpectralForm` carries the shape a transfer matrix on a circle actually gives,
+`ρ(d) = ∑ w (λ^d + λ^{n−d})`, and `Spectral.periodic_decay_le_circLag` turns a gap on its spectrum into
+decay at `Moment.circLag` — which is exactly what `confinement_of_geometric_decay` consumes. -/
+
+/-- **A GAP ON THE TRANSFER SPECTRUM IMPLIES CONFINEMENT.**
+
+Given the periodic spectral form for the Wilson correlation at every aperture, with every `λ` below a
+common `r < 1`, and the weights controlled relative to the total mass, the tension sits below the
+floor eventually in the aperture.
+
+**THE GAP IS ON CONTRIBUTING MODES ONLY, and that is not a technicality.** `Transfer.one_le_of_eigenvalues_le`
+proves that a bound on EVERY transfer eigenvalue forces that bound ≥ 1: the vacuum sits at eigenvalue
+exactly one with weight `‖Ω‖²`, so `1 = ∑ wᵢλᵢ ≤ r∑wᵢ = r`. No positivity and no gap are used — only
+normalisation. So a gap hypothesis quantified over the whole spectrum is FALSE, not merely unproved.
+It is satisfiable exactly on the modes that CONTRIBUTE, and the connected correlator is precisely the
+case where the vacuum weight vanishes: the disconnected part IS the vacuum contribution.
+
+**WHAT THIS ESTABLISHES, and it is the point: `hdecay` and `hconf` are NOT independent.** The
+development's two remaining hypotheses have been treated as separate obligations. A spectral gap
+(`hdecay`'s content) delivers confinement (`hconf`'s content) through the substrate moment, so the
+second is downstream of the first. What it does NOT do is supply either — the form and the gap are
+both still assumed here. It removes one of the two as an independent target. -/
+theorem confinement_of_periodic_spectral_form {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (S : ∀ (N : ℕ) (β : ℝ), Spectral.PeriodicSpectralForm (N + 1) (wilsonCorrAt N β))
+    (hlamr : ∀ (N : ℕ) (β : ℝ) (k : (S N β).Idx), (S N β).w k ≠ 0 → (S N β).lam k ≤ r)
+    (hCbound : ∀ (N : ℕ) (β : ℝ),
+      2 * (∑ k, (S N β).w k) ≤ C * (∑ d, wilsonCorrAt N β d)) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
+  refine confinement_of_geometric_decay hC hr0 hr1 ?_
+  intro N β d
+  have hpos : 0 < ∑ d', wilsonCorrAt N β d' := (wilson_reflection_positive_at N β).2
+  have hrho := Spectral.periodic_decay_le_circLag (S N β) (hlamr N β) hr0 d
+  show wilsonCorrAt N β d / (∑ d', wilsonCorrAt N β d') ≤ C * r ^ (Moment.circLag d)
+  rw [div_le_iff₀ hpos]
+  calc wilsonCorrAt N β d
+      ≤ 2 * (∑ k, (S N β).w k) * r ^ (Moment.circLag d) := hrho
+    _ ≤ (C * (∑ d', wilsonCorrAt N β d')) * r ^ (Moment.circLag d) :=
+        mul_le_mul_of_nonneg_right (hCbound N β) (pow_nonneg hr0 _)
+    _ = C * r ^ (Moment.circLag d) * (∑ d', wilsonCorrAt N β d') := by ring
+
+#print axioms confinement_of_periodic_spectral_form
 
 /-- **THE SURPLUS BOUND, WITH NOTHING CHOSEN.**
 
@@ -2069,6 +2126,76 @@ theorem decay_at_floor_of_junction (m : ℝ → Unit → ℂ) (Δ c : ℝ → �
 #print axioms ym_mass_gap_of_decay_at_floor
 #print axioms decay_at_floor_of_junction
 
+/-! ## The floor is DERIVED, not fixed — the flagship over ANY proved floor
+
+`κ₀YM := ¼ log 3` is a LITERAL, and `ymModel` sets `κ := κ₀YM` with `hfloor := le_refl _`, collapsing
+the two fields `LatticeYM` deliberately keeps apart: `κ₀`, a PROVED LOWER BOUND, and `κ`, the true
+entropy density. That collapse freezes the development at the value of the FIRST family anyone
+counted, and it is not the density:
+
+* `¼ log 3 = 0.2746531` — directed cube-paths (`Floor.directed_paths_card` + `CubeArea.boundary_card_eq`);
+* `(11 log 3 + log 10)/48 = 0.2997358` — branched cube-trees (`CubeBranch.branch_floor_ten`), PROVED
+  strictly larger, and itself the `d = 10` case of a bound parameterised in `d`;
+* `0.455484` — front-capped void-excluded animals, exact-rational Collatz–Wielandt
+  (`certify/floor_ladder_exact.py`), certified outside Lean;
+* the surface connective constant puts the true limsup near `0.83`.
+
+So `κ₀` is a SEQUENCE OF IMPROVING LOWER BOUNDS on one limit, not a constant of the theory — the
+counting derives it, and every richer family derives it better. Pinning it at the weakest known value
+is exactly the thing the development forbids elsewhere.
+
+The theorems below take the floor as a PARAMETER. Improving the count then improves the conclusion
+with no edit to the chain, and nothing downstream carries a chosen number. -/
+
+/-- **THE GAP AT ANY PROVED FLOOR.** `κ₀` is a parameter, not `¼ log 3`: confinement below it and mode
+decay at its own margin give clustering and non-triviality. The tighter the floor a counting argument
+proves, the stronger BOTH hypotheses' content and the conclusion — and nothing here is pinned. -/
+theorem ym_mass_gap_at_floor (κ₀ : ℝ)
+    (hconf : ∀ β, 0 ≤ β → μYM β < κ₀)
+    (m : ℝ → Unit → ℂ)
+    (hdecay : ∀ β, 0 ≤ β → ∀ k ∈ ymModel.s β,
+      ‖m β k‖ ≤ Real.exp (-(κ₀ - μYM β))) :
+    (∀ β, 0 ≤ β → Filter.Tendsto
+        (fun τ => ‖∑ k ∈ ymModel.s β, ymModel.P β k * (m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+      (∀ β, 0 ≤ β → μYM β - κ₀ < 0) := by
+  refine ⟨fun β hβ => ?_, fun β hβ => by have := hconf β hβ; linarith⟩
+  exact gap_of_confinement (ymModel.s β) (ymModel.P β) (m β) κ₀ (μYM β) (hconf β hβ) (hdecay β hβ)
+
+/-- **THE PINNED FLAGSHIP IS THE `κ₀ = ¼ log 3` INSTANCE**, so nothing is lost by parameterising. -/
+theorem ym_mass_gap_at_floor_is_the_pinned_one
+    (hconf : ∀ β, 0 ≤ β → μYM β < κ₀YM)
+    (m : ℝ → Unit → ℂ)
+    (hdecay : ∀ β, 0 ≤ β → ∀ k ∈ ymModel.s β,
+      ‖m β k‖ ≤ Real.exp (-(κ₀YM - μYM β))) :
+    (∀ β, 0 ≤ β → Filter.Tendsto
+        (fun τ => ‖∑ k ∈ ymModel.s β, ymModel.P β k * (m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+      (∀ β, 0 ≤ β → μYM β - κ₀YM < 0) :=
+  ym_mass_gap_at_floor κ₀YM hconf m hdecay
+
+/-- **AND AT THE BRANCHED FLOOR, WHICH IS STRICTLY LARGER.** `CubeBranch.branch_floor_ten` proves
+`¼ log 3 < (11 log 3 + log 10)/48`, so this instance has a strictly weaker confinement hypothesis than
+the pinned one and delivers a strictly larger margin. The floor moved because the COUNT improved;
+no constant was edited. -/
+theorem ym_mass_gap_at_branch_floor
+    (hconf : ∀ β, 0 ≤ β → μYM β < (11 * Real.log 3 + Real.log 10) / 48)
+    (m : ℝ → Unit → ℂ)
+    (hdecay : ∀ β, 0 ≤ β → ∀ k ∈ ymModel.s β,
+      ‖m β k‖ ≤ Real.exp (-((11 * Real.log 3 + Real.log 10) / 48 - μYM β))) :
+    (∀ β, 0 ≤ β → Filter.Tendsto
+        (fun τ => ‖∑ k ∈ ymModel.s β, ymModel.P β k * (m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧
+      (∀ β, 0 ≤ β → μYM β - (11 * Real.log 3 + Real.log 10) / 48 < 0) :=
+  ym_mass_gap_at_floor _ hconf m hdecay
+
+/-- **THE BRANCHED FLOOR IS STRICTLY ABOVE THE PINNED ONE**, named here so the improvement is visible
+where the flagship is rather than only in `CubeBranch`. -/
+theorem branch_floor_gt_pinned : κ₀YM < (11 * Real.log 3 + Real.log 10) / 48 :=
+  CubeBranch.branch_floor_ten
+
+#print axioms ym_mass_gap_at_floor
+#print axioms ym_mass_gap_at_floor_is_the_pinned_one
+#print axioms ym_mass_gap_at_branch_floor
+#print axioms branch_floor_gt_pinned
+
 /-! ## The gap for the WILSON CORRELATION, not for a free family
 
 `ym_mass_gap_of_decay_at_floor` quantifies over an arbitrary `m : ℝ → Unit → ℂ`, and `ymModel`
@@ -2077,47 +2204,77 @@ conclusion is that a single complex number of modulus below one has powers tendi
 hypothesis is about a parameter with no proved link to the ensemble. Nothing downstream of
 `Apriori.hread_of_dominant` supplies that link — that lemma is `le_trans`.
 
-The statements below are the same gap said about the Wilson correlation. `Spectral.SpectralForm N
-(wilsonCorrAt N β)` is the transfer-matrix decomposition `ρ(d) = ∑ₙ wₙ λₙ^d` with `wₙ ≥ 0` — exactly
-what the `wilson_reflection_positive_at` docstring gives as its REASON, and exactly what that axiom
-does not assert. With it, `P` and `m` are not supplied: they ARE `w` and `λ`, the correlator IS
+The statements below are the same gap said about the Wilson correlation.
+`Spectral.PeriodicSpectralForm (N+1) (wilsonCorrAt N β)` is the transfer-matrix decomposition on a
+CIRCLE, `ρ(d) = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` with `wₖ ≥ 0` — the nonnegativity being exactly what the
+`wilson_reflection_positive_at` docstring gives as its REASON, and exactly what that axiom does not
+assert. With it, `P` and `m` are not supplied: they ARE `w` and `λ`, the correlator IS
 `wilsonCorrAt N β` at every resolved lag, and the decay hypothesis IS "every transfer energy clears
 `κ₀ − μ`".
+
+The half-line shape `∑ w λ^d` is NOT the one available here and is not merely unproved: this lattice
+is a periodic torus, `ρ` is symmetric under `d ↦ n−d`, and `Spectral.flat_of_aperiodic` proves that a
+half-line shape plus that symmetry forces `ρ` flat from lag one. Any statement resting on it would be
+vacuous for an interacting theory.
 
 **This proves nothing new about Yang-Mills.** It relocates the open obligation from a bound on a free
 family to a property of a defined one, which is the difference between a reduction and a statement
 that could be false. -/
 
 /-- **THE OPEN OBLIGATION, NAMED ON THE ACTUAL ENSEMBLE.** That the Wilson correlation at aperture
-`N` and coupling `β` admits a transfer-matrix spectral decomposition with nonnegative weights. This is
-reflection positivity's real content; `wilson_reflection_positive_at` asserts only its shadow
-(`0 ≤ ρ d`, `0 < ∑ ρ`). -/
-def WilsonSpectral (N : ℕ) (β : ℝ) : Prop :=
-  Nonempty (Spectral.SpectralForm N (wilsonCorrAt N β))
+`N` and coupling `β` admits a PERIODIC transfer-matrix decomposition with nonnegative weights.
 
-/-- **THE CORRELATOR IS THE WILSON CORRELATION.** Given the decomposition, the object the gap
-theorems are about equals the ensemble's own correlation at every lag the aperture resolves. -/
+The shape is `ρ(d) = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` with `n = N+1`, NOT the half-line `∑ w λ^d`. That is
+forced: `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
+periodic torus; `wilsonCorrAt N β = corrClay (N+1) β` with the lag running the WHOLE period; and
+`wilsonCorrConn` is symmetric in its two plaquettes, so `ρ(d) = ρ(n−d)`. `Spectral.flat_of_aperiodic`
+proves that a half-line shape plus that symmetry forces `ρ` FLAT from lag one — zero connected decay,
+which an interacting theory does not have. `ZeroMode` already records the symmetry and
+`Moment.circLag` already uses it.
+
+DERIVED: every numeral here is fixed by the lattice, none is chosen. The period `N+1` is forced by
+`WilsonHypercubic.Site = Fin d → Fin n` with `shift` adding in `Fin n`, so it is the aperture's own
+circumference and not a window anyone picked. `w ≥ 0` is reflection positivity's content, and
+`λ ∈ [0,1]` is `0 ≤ T ≤ 1` — the lower end from positivity, the upper from contractivity of a
+probability measure's transfer operator, which is a normalisation and NOT a gap. The gap is separate.
+
+**This is ASSUMED, not derived, and no empirical consistency claim is attached to it.** The measured
+correlator cannot adjudicate it: the ensemble's bin count leaves fewer degrees of freedom than the
+error model such a test needs has parameters, and the mid-range lags carry no signal. The arithmetic
+of that verdict lives with the read, in `code/8_7_run_gap_correlator.py`, not here. -/
+def WilsonSpectral (N : ℕ) (β : ℝ) : Prop :=
+  Nonempty (Spectral.PeriodicSpectralForm (N + 1) (wilsonCorrAt N β))
+
+/-- **THE CORRELATOR IS THE WILSON CORRELATION.** Given the decomposition, the periodic spectral sum
+equals the ensemble's own correlation at every lag the period resolves. -/
 theorem wilson_sum_eq_corr {N : ℕ} {β : ℝ}
-    (S : Spectral.SpectralForm N (wilsonCorrAt N β)) (d : Fin (N + 1)) :
-    ∑ n, S.w n * (S.lam n) ^ (d : ℕ) = wilsonCorrAt N β d :=
+    (S : Spectral.PeriodicSpectralForm (N + 1) (wilsonCorrAt N β)) (d : Fin (N + 1)) :
+    ∑ k, S.w k * ((S.lam k) ^ (d : ℕ) + (S.lam k) ^ ((N + 1) - (d : ℕ)))
+      = wilsonCorrAt N β d :=
   Spectral.sum_eq_rho S d
 
-/-- **THE MASS GAP FOR THE WILSON CORRELATION.** Confinement at the aperture (`μYMAt N β < κ₀YM`)
-together with the transfer gap (`every λₙ ≤ e^{−(κ₀−μ)}`, i.e. every transfer energy at least the
-counted free-energy density) gives clustering OF THAT CORRELATION.
+/-- **DECAY OF THE WILSON CORRELATION OUT TO HALF THE PERIOD, from a gap on the transfer spectrum.**
 
-Both hypotheses are now statements about defined objects: `μYMAt` is built from `wilsonCorrAt` through
-`readYMAt`, and `S.lam` is the ensemble's own transfer spectrum. Neither is a free parameter. -/
-theorem ym_clustering_of_transfer_gap {N : ℕ} {β : ℝ}
-    (S : Spectral.SpectralForm N (wilsonCorrAt N β))
-    (hconf : μYMAt N β < κ₀YM)
-    (hgap : ∀ n, S.lam n ≤ Real.exp (-(κ₀YM - μYMAt N β))) :
-    Filter.Tendsto
-      (fun τ => ‖∑ n, ((S.w n : ℂ)) * ((S.lam n : ℂ)) ^ τ‖) Filter.atTop (nhds 0) :=
-  Spectral.clustering_of_spectral S hconf hgap
+This is what a gap buys on a torus, and all it buys. Past `n/2` the periodic correlation turns back
+up, so no bound of this shape holds there and no periodic correlator tends to zero. Clustering in the
+true sense is the `n → ∞` statement — the infinite-volume obligation — and this theorem does not
+supply it and must not be read as supplying it.
+
+**THE GAP IS ON CONTRIBUTING MODES ONLY, and that is forced.** `Transfer.one_le_of_eigenvalues_le`
+proves a bound on EVERY transfer eigenvalue forces that bound ≥ 1, because the vacuum sits at
+eigenvalue exactly one with weight `‖Ω‖²`. So `∀ k, λ k ≤ e^{−(κ₀−μ)}` with a positive margin is
+FALSE, not merely unproved. It is satisfiable on the modes that carry weight, and the CONNECTED
+correlator is exactly the case where the vacuum weight vanishes — the disconnected part IS the
+vacuum contribution. -/
+theorem ym_wilson_decay_to_half_period {N : ℕ} {β : ℝ}
+    (S : Spectral.PeriodicSpectralForm (N + 1) (wilsonCorrAt N β))
+    (hgap : ∀ k, S.w k ≠ 0 → S.lam k ≤ Real.exp (-(κ₀YM - μYMAt N β)))
+    (d : Fin (N + 1)) (hhalf : 2 * (d : ℕ) ≤ N + 1) :
+    wilsonCorrAt N β d ≤ 2 * (∑ k, S.w k) * Real.exp (-(κ₀YM - μYMAt N β)) ^ (d : ℕ) :=
+  Spectral.periodic_decay_le S hgap (Real.exp_pos _).le d hhalf
 
 #print axioms wilson_sum_eq_corr
-#print axioms ym_clustering_of_transfer_gap
+#print axioms ym_wilson_decay_to_half_period
 
 /-- **The mass gap from the RUNTIME CONFINEMENT READ — every Entroptics-specific axiom discharged.** The full
 result for `ymModel` (gap + non-triviality + `SO(4)`) from a SINGLE explicit hypothesis `hconf`: the

@@ -2468,6 +2468,33 @@ below $0.78$, against $1.000$); the exact ratio is not. Recorded as the `matched
 **The identification, measured.** The flagship `ym_mass_gap_of_ratio` reaches its conclusion through
 a model whose mass is DEFINED as $e^{-(\kappa_0-\mu)}$, so its correlator decays exactly when
 $\mu<\kappa_0$: that link restates its own hypothesis and carries no physics on its own.
+
+**What repairs that link is now proved, at the Clay aperture.** `Complete.WilsonSpectral N \beta` is
+`Nonempty (Spectral.PeriodicSpectralForm (N{+}1)\ (\mathtt{wilsonCorrAt}\ N\ \beta))` — that the measured
+correlation admits a periodic transfer decomposition $\rho(d)=\sum_k w_k(\lambda_k^{d}+\lambda_k^{n-d})$ with
+$w_k\ge0$ and $0\le\lambda_k\le1$. It had no producer above $\beta=0$ and its own docstring recorded it as
+assumed. `SlabQuadratic.wilsonSpectral` now proves it at $N=3$ for every $\beta\ge0$, foundational axioms
+only, and `Complete.wilson_sum_eq_corr` then makes the spectral sum equal the ensemble's own correlation
+at every lag the period resolves — which is what turns a statement about a model's modes into a statement
+about the $SU(3)$ Wilson correlation.
+
+The route is two reflection-positivity instances and no operator. `SpectralFour.four_iff` characterises
+representability at extent four exactly: the triple is representable iff $\rho(3)=\rho(1)$, $0\le\rho(0)$,
+$0\le\rho(2)$, $\rho(2)\le\rho(1)$ and $2\rho(1)^2\le\rho(2)^2+\rho(0)\rho(2)$ — the convex cone on the curve
+$\lambda\mapsto(1+\lambda^4,\ \lambda+\lambda^3,\ 2\lambda^2)$, whose hull is that arc plus the chord. Two of the
+four conjuncts were already proved of the Wilson triple. The order relation $\rho(2)\le\rho(1)$ is not an
+estimate but a LINK-reflection positivity instance read at the two-term half-space observable $G=F_1-F_2$,
+for which $\langle\theta G\cdot G\rangle=2(\rho(1)-\rho(2))$ — an identity, so the inequality IS that positivity
+(`LagOneDominates.pairReflPositive_iff`). Its content is $\lambda_i\lambda_j\ge0$ on every weighted pair, via
+$\lambda_i\lambda_j^3+\lambda_i^3\lambda_j-2\lambda_i^2\lambda_j^2=\lambda_i\lambda_j(\lambda_i-\lambda_j)^2$: positivity of the
+SPECTRUM, which link reflection supplies and site reflection does not. The quadratic is Cauchy–Schwarz on
+the slab reflection form at the site reflection $s\mapsto-s$, and holds at every real $\beta$.
+
+**Its scope, stated with it.** `WilsonSpectral` carries no mode count and no rate: `SpectralFour.fourRepresentable_const`
+proves the constant triple representable, where $\rho(2)/\rho(0)=1$. No theorem in the tree takes it as a
+hypothesis, so it closes a named residue and supplies the family the resolved-mode count needs as input,
+rather than feeding a derivation. The ratio obligation of §9 is untouched by it.
+
 `ym_mass_gap_of_junction` removes the definitional witness, quantifying over an ARBITRARY mode family
 and asking instead for `hfe` ($\kappa_0-\mu\le c$, reduced above) and `hgap` ($c\le\Delta$). What
 those jointly imply is a single statement in measured quantities — the margin lower-bounds the

@@ -203,6 +203,43 @@ def build(args=("build",), timeout=7200, push=True):
     return subprocess.run(_ssh_argv() + [cmd], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
 
 
+# CHOSEN: 120 seconds. It bounds an `ls` and an `rm` over a few dozen paths -- network latency and
+# nothing else, orders of magnitude of headroom over the round trip and far below `build`'s own 7200.
+# It decides only how long a hung ssh is waited on, never a result.
+def prune_remote_sources(dry_run=False, timeout=120):
+    """Delete the Lean sources that exist on the remote checkout and not here.
+
+    `sources_only_on_remote` reports that divergence and deliberately does not act on it, because a
+    build wrapper should not remove a file from someone else's machine SILENTLY. This is the
+    non-silent version: it is opt-in, it names every file before touching it, and it removes nothing
+    else -- the remote command is built from the reported basenames, each under `MassGap/`, and the
+    list is recomputed here rather than passed in.
+
+    Without this the divergence it detects has no sanctioned repair, which leaves hand-rolled ssh as
+    the only way to fix a probe file left behind. That is worse.
+
+    Returns the list of names removed (or that would be removed, under `dry_run`).
+    """
+    extra = sources_only_on_remote()
+    if not extra or target() is None:
+        return []
+    for name in extra:
+        # A basename with a separator in it would escape `MassGap/`; there is no reason for one and
+        # refusing is cheaper than reasoning about it.
+        if "/" in name or "\\" in name or name in (".", ".."):
+            raise SystemExit(f"refusing to prune a name that is not a bare basename: {name!r}")
+    if dry_run:
+        return extra
+    quoted = " ".join(f"MassGap/{n}" for n in extra)
+    r = subprocess.run(_ssh_argv() + [_remote_prelude() + f"rm -f -- {quoted}"],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       timeout=timeout)
+    # DERIVED: zero is the POSIX convention for success, not a threshold.
+    if r.returncode != 0:
+        raise SystemExit(f"pruning remote sources failed: {r.stderr[:400]}")
+    return extra
+
+
 def describe():
     """One line naming where a build would run, for a script to print before it starts one."""
     t = target()
@@ -216,6 +253,14 @@ if __name__ == "__main__":
     if extra:
         print(f"sources present ONLY on the remote ({len(extra)}): {', '.join(extra)}")
         print("these will be compiled by a remote build though nothing here defines them.")
+    if sys.argv[1:2] == ["--prune-remote-dry-run"]:
+        names = prune_remote_sources(dry_run=True)
+        print(f"a prune would remove {len(names)} remote source(s): {', '.join(names) or '(none)'}")
+        raise SystemExit(0)
+    if sys.argv[1:2] == ["--prune-remote"]:
+        names = prune_remote_sources()
+        print(f"pruned {len(names)} remote source(s): {', '.join(names) or '(none)'}")
+        raise SystemExit(0)
     if sys.argv[1:2] == ["--clear-dry-run"]:
         names = clear_project_build(dry_run=True)
         print(f"a clear would remove {len(names)} product(s): {', '.join(names) or '(none)'}")

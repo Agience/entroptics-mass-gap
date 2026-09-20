@@ -4,6 +4,8 @@ import MassGap.GNSHilbert
 import MassGap.LatticeTranslNoGo
 import MassGap.LagTwoSix
 import MassGap.CompactBeta
+import MassGap.WeakArm
+import MassGap.LagTwoEight
 
 /-!
 # MassGap.ClayAssembly — the remaining distance to the Clay statement, as a type
@@ -195,13 +197,21 @@ Asymptotic scaling is the missing input to C2's spacing limit and to C8. The nai
 `FlagshipScope.flagship_for_bogus` exhibits for the flagship and `WightmanData.trivialOSData`
 exhibits for the OS side, committed a third time.
 
-**What the real statement needs, and why it is not yet expressible here.** `a(β)` has to be tied to
-the theory: the physical mass `m_phys = m_lat(β)/a(β)` must converge to a finite nonzero limit as
-`β → ∞`, which is what makes the limit a CONTINUUM limit rather than a relabelling. That needs a
-correlation length in lattice units as a function of the coupling, and this tree has no such object —
-`Running.lean` carries `11N/3` and `34N²/3`, is imported by the root, and is consumed by nothing.
-`Complete.ym_physical_gap_uniform` and its siblings take the spacing `L` as a PARAMETER and never
-relate it to `β`.
+**What the real statement needs, and where it now lives.** `a(β)` has to be tied to the theory: the
+physical mass `m_phys = m_lat(β)/a(β)` must converge to a finite nonzero limit as `β → ∞`, which is
+what makes the limit a CONTINUUM limit rather than a relabelling. **`MassGap.AsymptoticScaling`
+writes that**, and it is downstream of this file, which is why the field is still not here.
+
+It also shows the obvious repair fails: `free_spacing_scaling_is_also_vacuous` proves that leaving
+the spacing EXISTENTIAL is discharged by taking `a := m_lat`, ratio identically `1`. The spacing has
+to be PINNED, and `Running`'s `b₀ = 11N/3` and `b₁ = 34N²/3` pin it — `aRun` is built from them and
+is the first thing to consume that file. `mLatAt` supplies the lattice mass, with the warning that
+`Real.log 0 = 0` makes its value at zero coupling a junk `0`.
+
+What remains genuinely open is the JOINT limit: `fixed_extent_pins_the_spacing` shows a lattice mass
+bounded away from zero forbids a vanishing spacing, so scaling cannot be stated at fixed extent
+either. `Complete.ym_physical_gap_uniform` and its siblings take the spacing `L` as a PARAMETER and
+never relate it to `β`.
 
 So C2's remaining half is not formalisation debt with a statement waiting to be proved. **The
 statement itself is absent**, and writing it is the first step, not the last.
@@ -469,11 +479,16 @@ Solving `coreRate 64 b = 1` gives `b = 2.936e−5`. So the PROVED arm covers `[0
 
 **And the theorem below says where not to look for it.** -/
 
-/-- **NO UNIFORM CONSTANT DOMINATES A QUARTIC, so the FLAT PROFILE REFUTES `LawAbove`.**
+/-- **THE FLAT PROFILE REFUTES `LawAbove`.**
 
 `LawAbove` asks for ONE `C`, at EVERY aperture. On the flat profile `ρ ≡ 1` the requirement
 `ρ(d) ≤ C·ρ(0)/circLag(d)⁴` reads `1 ≤ C/circLag(d)⁴`, i.e. `C ≥ circLag(d)⁴` — and at extent `2m`
 the middle lag has `circLag = m`, so `C` would have to exceed `m⁴` at every `m`. No real number does.
+
+**THE ARITHMETIC IS NOT NEW AND IS NOT RE-PROVED HERE.** `WeakArm.exists_lag_halving` already gives,
+for every `C` and every cut, a lag `k` past the cut with `C/k⁴ < 1/2`, by the same ceiling
+construction. This theorem is that lemma applied at the flat profile, and the only thing it adds is
+the SENTENCE BELOW — which is about what the tree proves elsewhere, not about arithmetic.
 
 **What that rules out, and it is a whole class of attacks.**
 `FreeFieldLagTwo.flat_profile_meets_every_uniform_fact` proves `ρ ≡ 1` satisfies EVERY
@@ -486,34 +501,98 @@ the conclusion is false on a profile all of them admit.
 B5, which is no coincidence — `LawAbove` implies B5 through the substrate, so it inherits B5's
 obstructions and adds the aperture-uniformity of `C` on top.
 
+**AND THE OBVIOUS `β`-DEPENDENT ROUTE IS CIRCULAR.** `WeakArm.no_uniform_quartic_constant_of_vanishing_rate`
+settles what a geometric envelope `ρ(d)/ρ(0) ≤ e^{−M·d}` would have to supply: its rate must be
+bounded away from ZERO **uniformly in the coupling AND the aperture**, because a rate positive at each
+coupling separately is defeated lag by lag. Its docstring names that as exactly what `[b, ∞)` lacks.
+A rate bounded away from zero uniformly in coupling and aperture IS the mass gap, so reaching
+`LawAbove` through an envelope assumes the conclusion — the same circle
+`DiffractionNoGo` §1 found in the aperture route.
+
+This does NOT close `LawAbove`: the theorem constrains the ENVELOPE route only, and nothing here says
+the law must come that way. What it does is leave the live question sharp — whether `LawAbove` is
+reachable without an envelope — rather than leaving "clustering" to do unexamined work.
+
 DERIVED: the exponent `4` is `LawAbove`'s own, and `NonnegArm`'s docstring derives it as the integer
 above the convergence threshold `3` for `∑ k²·C/k^s`, with `ShareEnvelope.cubic_contact_relative_gives_no_bound`
 proving `3` itself false. `1` is the lag cut excluding the contact term. Nothing here is chosen. -/
 theorem flat_profile_admits_no_uniform_quartic_constant :
     ¬ ∃ C : ℝ, 0 ≤ C ∧ ∀ m : ℕ, 1 ≤ m → (1 : ℝ) ≤ C / ((m : ℝ)) ^ 4 := by
-  rintro ⟨C, hC0, h⟩
-  -- one aperture past `C` is enough, because `m⁴ ≥ m` at `m ≥ 1`
-  refine absurd (h (⌈C⌉₊ + 1) (by omega)) ?_
-  set x : ℝ := ((⌈C⌉₊ + 1 : ℕ) : ℝ) with hxdef
-  have h1x : (1 : ℝ) ≤ x := by
-    rw [hxdef]
-    exact_mod_cast (by omega : (1 : ℕ) ≤ ⌈C⌉₊ + 1)
-  have hCx : C < x := by
-    have hceil := Nat.le_ceil C
-    rw [hxdef]
-    push_cast
-    linarith
-  -- `x⁴ ≥ 2x² − 1` from `(x²−1)² ≥ 0`, and `2x² − x − 1 = (2x+1)(x−1) ≥ 0`
-  have hpow : x ≤ x ^ 4 := by
-    nlinarith [sq_nonneg (x ^ 2 - 1),
-      mul_nonneg (by linarith : (0 : ℝ) ≤ 2 * x + 1) (by linarith : (0 : ℝ) ≤ x - 1)]
-  have hpos : (0 : ℝ) < x ^ 4 := by positivity
-  rw [not_le, div_lt_iff₀ hpos]
+  rintro ⟨C, _, h⟩
+  -- The arithmetic is `WeakArm.exists_lag_halving`, at the level `1/2` it is already stated with.
+  -- Re-proving it here would have been a second copy of the same ceiling construction.
+  obtain ⟨k, _, hk1, hhalf⟩ := MassGap.WeakArm.exists_lag_halving C 1
+  have := h k hk1
   linarith
 
 #print axioms flat_profile_admits_no_uniform_quartic_constant
 
-/-! ## 7. The guards — why no field is dischargeable by a witness with nothing in it -/
+/-! ## 7. THE STRONG ARM HAS AN ABSOLUTE CEILING, and it is nowhere near the physics
+
+`LagTwoBound.exists_cut_lag_two_ratio` and its extent-eight twin
+`LagTwoEight.exists_cut_lag_two_ratio_eight` both run under `StrongCoupling.coreRate (16·4) β < 1`,
+and the cut they produce is `2.936e−5`. The natural hope is that a sharper cluster expansion — a
+smaller touch degree `K`, a better prefactor — pushes that up far enough to meet the weak arm.
+
+**It cannot, and the reason has nothing to do with `K`.** `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}`
+carries the per-plaquette activity `e^{2β}−1` as a FACTOR, and the other two factors are at least one
+at every `K` and every `β ≥ 0`. So `coreRate K β < 1` forces `4(e^{2β}−1) < 1` on its own, and that is
+a bound on `β` with no `K` in it at all. -/
+
+/-- **NO CHOICE OF TOUCH DEGREE LETS THE STRONG ARM PAST `β = 0.12`.**
+
+At every `K` and every `β ≥ 0`, `coreRate K β < 1` forces `β < 0.12`. The measured peak of the
+observable this programme is about sits at `β = 2.8`, a factor above `23` away, so the strong-coupling
+arm does not reach the physical region and no improvement to the expansion's constants will take it
+there. `CLAY-GOAL`'s prose puts the ceiling at `ln 2 / 2 = 0.347` for a hypothetical expansion needing
+activity below one; `coreRate`'s own `4(K+1)²` makes the real ceiling tighter still.
+
+**What this does NOT say.** It bounds `coreRate`, hence every route that runs under
+`coreRate K β < 1` — which is both strong arms in this tree. It says nothing about a DIFFERENT
+strong-coupling estimate not of this form, and it is not an impossibility proof for the middle
+interval; it locates the middle interval's lower end.
+
+DERIVED: `0.12` is a round rational ABOVE the true ceiling `log(5/4)/2 = 0.111572`, chosen so the
+bound is loose in the safe direction — a tighter numeral would strengthen the theorem and is not
+needed, since the claim is about the gap to `2.8`. `4`, `2` and the `+1` are `coreRate`'s own
+constants; `1.12` and `1.2544 = 1.12²` come from `Real.add_one_le_exp` at `0.12` and nothing else. -/
+theorem coreRate_lt_one_forces_small_beta {K : ℕ} {β : ℝ} (hβ : 0 ≤ β)
+    (h : MassGap.StrongCoupling.coreRate K β < 1) : β < 0.12 := by
+  by_contra hcon
+  push_neg at hcon
+  have h12 : (1.12 : ℝ) ≤ Real.exp 0.12 := by
+    have := Real.add_one_le_exp (0.12 : ℝ); linarith
+  have hsplit : Real.exp (2 * 0.12) = Real.exp 0.12 * Real.exp 0.12 := by
+    rw [← Real.exp_add]; ring_nf
+  have hexp024 : (1.2544 : ℝ) ≤ Real.exp (2 * 0.12) := by
+    rw [hsplit]; nlinarith [h12, Real.exp_pos (0.12 : ℝ)]
+  have hmono : Real.exp (2 * 0.12) ≤ Real.exp (2 * β) :=
+    Real.exp_le_exp.mpr (by linarith)
+  have hE : (1.2544 : ℝ) ≤ Real.exp (2 * β) := le_trans hexp024 hmono
+  have hK1 : (1 : ℝ) ≤ ((K : ℝ) + 1) := by
+    have : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+    linarith
+  have hK : (1 : ℝ) ≤ ((K : ℝ) + 1) ^ 2 := by nlinarith [hK1]
+  have hEK : (1 : ℝ) ≤ Real.exp (4 * β * (K : ℝ)) := by
+    refine Real.one_le_exp ?_
+    have : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+    nlinarith [hβ]
+  unfold MassGap.StrongCoupling.coreRate at h
+  -- three chained products; `nlinarith` will not find them, so each is supplied
+  have hactnn : (0 : ℝ) ≤ Real.exp (2 * β) - 1 := by linarith
+  have hKm1 : (0 : ℝ) ≤ ((K : ℝ) + 1) ^ 2 - 1 := by linarith
+  have hb1 : (Real.exp (2 * β) - 1) ≤ ((K : ℝ) + 1) ^ 2 * (Real.exp (2 * β) - 1) := by
+    nlinarith [mul_nonneg hKm1 hactnn]
+  have hX : (0 : ℝ) ≤ 4 * ((K : ℝ) + 1) ^ 2 * (Real.exp (2 * β) - 1) := by
+    nlinarith [hb1, hactnn]
+  have hb2 : 4 * ((K : ℝ) + 1) ^ 2 * (Real.exp (2 * β) - 1)
+      ≤ 4 * ((K : ℝ) + 1) ^ 2 * (Real.exp (2 * β) - 1) * Real.exp (4 * β * (K : ℝ)) :=
+    le_mul_of_one_le_right hX hEK
+  linarith [h, hb1, hb2, hE]
+
+#print axioms coreRate_lt_one_forces_small_beta
+
+/-! ## 8. The guards — why no field is dischargeable by a witness with nothing in it -/
 
 /-- **`I2` IS NOT MET BY THE UNCONDITIONAL BOUND, and that is a theorem rather than a remark.**
 `CompactBeta.clay_covariance_constant_not_aperture_uniform` exhibits, for every candidate constant, an

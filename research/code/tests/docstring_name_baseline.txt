@@ -1,0 +1,21 @@
+# Doc-comment references naming a declaration their cited module does not contain.
+# DEBT, and it may only SHRINK: fix a reference and delete its line. Adding a line is how a
+# new miscitation gets in, so a growing file is the thing to object to in review.
+# Generated once from the tree the guard was written against; not regenerated automatically.
+CellPivot.lean CellEnclosure.HcellR_gap_of_certificate
+Fluctuation.lean Complete.d2_le_govern
+FreeFieldLagTwo.lean LagTwoBound.LagTwoRatio
+InfiniteVolume.lean StrongCoupling.coreRate_exceeds
+Mixing.lean Interior.interior_confinement_of_analytic_grid
+PowerTail.lean WilsonBridge.clayPlaq
+SlabKernelOperator.lean Transfer.PositiveTransfer
+SliceTransfer.lean ActionSplit.join3
+VolumeRate.lean CellEnclosure.Hcell2_clears_floor
+VolumeRate.lean CellEnclosure.ceilFac
+VolumeRate.lean CellEnclosure.cell_volume_bar_nonvacuous
+VolumeRate.lean CellEnclosure.gap_uniform_of_cell_intensive
+VolumeRate.lean CellEnclosure.product_subvacuum_le
+VolumeRate.lean CellEnclosure.product_volume_gap
+VortexCount.lean Condensation.junction_of_scale_duality
+WightmanData.lean Reconstruction.GappedQuantumTheory
+WilsonAnalytic.lean Interior.interior_confinement_of_analytic_grid

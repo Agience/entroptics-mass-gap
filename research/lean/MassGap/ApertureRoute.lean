@@ -65,8 +65,37 @@ absolute moment and demands a proportionally smaller ratio, and the criterion is
 extent.
 
 What choosing the extent DOES buy is the quantifier: the bar has to be met at ONE extent instead of at
-all of them simultaneously. That is the whole of the weakening, and it is worth stating exactly,
-because the intuition that a bigger aperture is easier is wrong here.
+all of them simultaneously.
+
+**⚠ AND THAT IS NOT THE WHOLE OF THE WEAKENING — the cancellation above is a TAUTOLOGY, not a fact
+about the correlation.** `substrateRatio` is DEFINED as `d2At/(N+1)²`, so substituting
+`d2At = substrateRatio·(N+1)²` cannot fail; what it cannot do is tell you which of the two is stable
+as the aperture grows. The paragraph above silently reads `substrateRatio` as the stable one. If
+instead `d2At` is the stable one, the ceiling `substrateThreshold·(N+1)²` grows while the moment does
+not, and **a bigger aperture IS easier** — which is exactly
+`Complete.confinement_of_bounded_substrate`: from `∃ B, ∀ N β, d2At N β ≤ B` it concludes confinement
+for all LARGE ENOUGH `N`. That theorem would be pointless if the criterion really were the same at
+every extent.
+
+**`Moment.lean` postulates that `⟨d²⟩` is the substrate-intrinsic one**, and says so in prose rather
+than as an `axiom` precisely so it can be rejected. **The tree's own SU(3) aperture scan
+(`research/data/9_1_dat_d2_su3.csv`) bears on it, and refutes the other reading.** At the two
+couplings measured at both extents:
+
+    β = 5.50:  d2(L=6) = 0.23023 ± 0.02138,  d2(L=8) = 0.23089 ± 0.01545
+    β = 6.00:  d2(L=6) = 0.13835 ± 0.01765,  d2(L=8) = 0.14936 ± 0.00974
+
+Ratio-stability predicts `d2(L=8) = d2(L=6)·64/36`, i.e. `0.40930` and `0.24596`. **The central values
+are a factor `1.78` away from that and agree with each other instead** — to `0.3%` at `β = 5.50`. The
+quoted errors make that `11.5σ` and `9.9σ`, but the refutation does not rest on them: within-run
+errors in this effort have been out by `13×` and `40×`, and a factor of `1.78` in a CENTRAL value
+survives any plausible inflation.
+
+**So the sentence to strike is "a bigger aperture is easier is wrong here."** It is right here,
+under `Moment.lean`'s postulate, and the data does not refute that postulate — `d2` flat across the
+two extents sits at `0.03σ` and `0.55σ`. Two matched couplings is a thin test and the standing rule
+is that data may REFUTE a derived reading and never establish one; what it has done is refute one of
+the two readings, leaving the other standing rather than proved.
 
 **The bar, at every extent.** The unconditional bound is `substrateRatio ≤ 1/4`
 (`Substrate.substrateRatio_le_quarter`, attained by `antipodeRead`, so it is the best constant the

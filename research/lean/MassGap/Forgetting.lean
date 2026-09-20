@@ -23,6 +23,27 @@ mean of `‖C‖²` equals the squared weight carried by the unit-circle modes, 
 persistent mode carries weight. It is the read-level characterisation of forgetting, supplied by the
 companion instrument [E]. The gap uses only the forward direction proved here (`margin ⟹ C → 0`), so the
 converse is not an input to the reduction.
+
+## ⚠ THE CONVERSE IS THE LEAD, AND IT IS ALGEBRA RATHER THAN MEASUREMENT
+
+`Λ` is the WEAKEST face — a Cesàro average, not a pointwise bound at every coupling — and the
+converse would make it sufficient for the margin, hence for exponential decay, hence for the gap.
+
+**And the converse is a finite-dimensional algebraic fact, not a read.** Expanding
+`‖C τ‖² = ∑_{k,l} P k · conj(P l) · (μ k · conj(μ l))^τ` and taking the Cesàro mean kills every term
+whose ratio is not `1`, because `(1/N)∑_{τ<N} z^τ = (1/N)(z^N − 1)/(z − 1) → 0` for `z ≠ 1` with
+`‖z‖ ≤ 1`. With `‖μ‖ ≤ 1` throughout, `μ k · conj(μ l) = 1` forces both onto the unit circle and
+equal, so the limit is `∑_ζ ‖∑_{k : μ k = ζ} P k‖²` over the distinct unit-circle values — a sum of
+squares, zero exactly when no unit-circle value carries net weight.
+
+**So `Λ ⟹ margin` is PROVABLE HERE**, and it is currently deferred to the instrument only because
+nothing needed it. Proving it would change what B5 costs: a Cesàro-averaged statement in place of
+`∀ β ≥ 0` pointwise, which is a weaker thing to have to establish.
+
+**This module is imported by NOTHING and `Forgets` is used nowhere outside it.** That is the same
+orphan state `Running.lean` was in before `AsymptoticScaling` consumed it, and it is why the lead had
+gone unnoticed: the file states the weakest sufficient condition in the tree and nothing points at
+it.
 -/
 
 open Filter Topology

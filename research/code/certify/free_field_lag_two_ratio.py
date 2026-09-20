@@ -264,8 +264,15 @@ def sweep() -> None:
         ratio = (d2 / d0) ** 2
         if n in (4, 6):
             exact = float((field_strength_corr(n, 2) / field_strength_corr(n, 0)) ** 2)
-        # CHOSEN: as above -- exact rational against its float image.
-        assert abs(exact - ratio) < 1e-12, (n, exact, ratio)
+            # CHOSEN: as above -- exact rational against its float image.
+            #
+            # THE ASSERTION BELONGS INSIDE THIS BRANCH, and it was outside. `exact` is only computed
+            # at n = 4 and n = 6, so at n = 8 the check compared THIS extent's float against the
+            # PREVIOUS extent's exact rational -- 0.000493017 against 0.000513509 -- and the script
+            # died there. The n = 8, 10, 12 rows never printed, which is exactly the part of the
+            # sweep that is not otherwise checked. The closing line already says only the first two
+            # rows are checked against the exact branch; the code now agrees with it.
+            assert abs(exact - ratio) < 1e-12, (n, exact, ratio)
         th, note = thresholds[n]
         margin = th / ratio
         e = (margin - 1) / (margin + 1)

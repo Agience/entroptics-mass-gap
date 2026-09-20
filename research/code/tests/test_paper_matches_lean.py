@@ -306,6 +306,36 @@ FOUNDATIONAL = {"propext", "Classical.choice", "Quot.sound"}
 #                                    the aperture margin is an explicit hypothesis, not a discharged witness
 #   the volume row                   "proved (foundation-only)"
 NAMED_FOOTPRINTS = {
+    # The v0.2.2 headline: the gap side with NO named axiom. Sec 13 prints these two footprints in a
+    # code block and says "no named axiom on either side". The count-matching sibling test binds a
+    # stated count to the nearest backticked declaration, and both of those sentences carry no
+    # backticked name, so they came back unbound and were silently skipped -- the release's central
+    # claim was pinned by nothing. An EMPTY set here is the assertion that matters: if either ever
+    # picks up an axiom, this fails.
+    "existence_and_gap_of_substrate_even": set(),
+    "mass_gap_rate_and_continuum_even":    set(),
+    # The bridge from the original hypothesis to the even-aperture one is NOT axiom-free -- it is
+    # stated in terms of `d2At` and so reports the axiom. Pinned so the paper cannot quietly start
+    # describing it as part of the clean chain.
+    "substrate_even_of_substrate":      {"wilson_reflection_positive_at"},
+    # THE STRONG-COUPLING ARM, UNCONDITIONAL. `contact_relative_unconditional` is the contact-relative
+    # quartic law on a derived coupling interval with NOTHING carried, and `contactFloor_holds` is the
+    # aperture-uniform contact floor that discharged its one hypothesis. An empty set is the whole
+    # claim: if either ever picks up a named axiom, the release's strongest statement has quietly
+    # weakened and this fails.
+    "contactFloor_holds":               set(),
+    "contact_relative_unconditional":   set(),
+    "wilsonCorrConn_self_ge_haar":      set(),
+    "exists_haar_floor":                set(),
+    "corrClay_zero_at_zero_eq":         set(),
+    # The circle symmetry, which discharged an assumption `Moment.circLag` -- and therefore the whole
+    # substrate reading -- had been built on. It must stay hypothesis-free and axiom-free.
+    "corrHyper_neg":                    set(),
+    "wilsonCorrAt_circLag_congr":       set(),
+    # Log-convexity: the only coupling-free ratio inequality in the tree. Its value is that it holds
+    # at EVERY real coupling with no positivity hypothesis, so an axiom appearing here would mean the
+    # coupling-freedom had been lost.
+    "corrClay_log_convex":              set(),
     "ym_mass_gap_of_substrate":         {"wilson_reflection_positive_at"},
     "confinement_of_bounded_substrate": {"wilson_reflection_positive_at"},
     "margin_tendsto_floor":             {"wilson_reflection_positive_at"},
@@ -628,12 +658,23 @@ def test_every_stated_named_axiom_count_matches_the_build():
     # DERIVED: the artifact must cover every declaration the Lean sources ASK to print, so the
     # sufficiency bar is that count rather than a round number. A short artifact -- a warm build
     # replays no info messages -- would otherwise let this pass while checking almost nothing.
-    asked = sum(len(re.findall(r'^\s*#print axioms\s', p.read_text(encoding='utf-8', errors='replace'),
-                               re.M))
-                for p in _lean_files())
-    assert len(named) >= asked, (
+    #
+    # Counted as DISTINCT declarations, not as `#print axioms` LINES, because that is what the
+    # artifact holds one row of. A module may legitimately re-print a declaration that already
+    # prints in the module that defines it -- EvenAperture does, to put the flagship's footprint
+    # beside its own -- and a line count reads those six re-prints as six absent rows. Keyed on
+    # the short name, the same key `named` uses, so the two sides count the same thing.
+    asked = {m.group(1).split('.')[-1]
+             for p in _lean_files()
+             for m in re.finditer(r'^\s*#print axioms\s+(\S+)',
+                                  p.read_text(encoding='utf-8', errors='replace'), re.M)}
+    assert len(named) >= len(asked), (
         f'the footprint artifact carries {len(named)} declarations but the Lean sources ask to '
-        f'print {asked}; regenerate it from a cold build')
+        f'print {len(asked)}; regenerate it from a cold build')
+    absent = sorted(asked - set(named))
+    assert not absent, (
+        'the Lean sources ask to print declarations the footprint artifact has no row for, so the '
+        'artifact is stale: ' + ', '.join(absent[:10]))
 
     text = _paper()
     flat = ' '.join(text.split())

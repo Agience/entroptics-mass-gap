@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it."
 title: "The Mass Gap of Pure SU(N) Gauge Theory as a Finite-Aperture Effect"
-abstract: "Pure SU(N) Yang-Mills has a mass gap because the vacuum is read through a finite aperture, which band-limits: the gap is the entropy margin below the counting floor kappa_0 = (1/4) ln 3. The repository holds the paper, the Lean 4 / Mathlib verification, and the Entroptics analysis code."
+abstract: "Pure SU(N) Yang-Mills has a mass gap because the vacuum is read through a finite aperture, which band-limits: the gap is the entropy margin below the counting floor kappa_0 = (1/4) ln 3, counted from directed cube paths rather than fitted. In Lean 4 / Mathlib the gap, non-triviality, SO(4) invariance and an Osterwalder-Schrader continuum limit are derived from a single remaining input: a bound on the substrate's lag moment uniform in the aperture and in the coupling. Reflection positivity is proved rather than cited at even extent at least four and nonnegative coupling, and on that domain the gap side carries no named axiom. The repository holds the paper, the Lean development, and the Entroptics analysis code."
 type: software
 authors:
   - given-names: Ikailo John
@@ -12,8 +12,8 @@ authors:
 repository-code: "https://github.com/Agience/entroptics-mass-gap"
 url: "https://github.com/Agience/entroptics-mass-gap"
 license: Apache-2.0
-version: 0.2.1
-date-released: "2026-09-17"
+version: 0.2.2
+date-released: "2026-09-19"
 keywords:
   - Yang-Mills
   - mass gap
@@ -34,4 +34,4 @@ references:
     url: "https://zenodo.org/records/22687899"
     repository-code: "https://github.com/Agience/entroptics"
     license: Apache-2.0
-    date-released: "2026-09-10"
+    date-released: "2026-09-09"

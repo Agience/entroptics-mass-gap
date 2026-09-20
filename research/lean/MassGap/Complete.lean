@@ -1,5 +1,6 @@
 import Mathlib
 import MassGap.CubeBranch
+import MassGap.OddLagSplit
 import MassGap.Spectral
 import MassGap.Apriori
 import MassGap.Certify
@@ -141,9 +142,50 @@ Wilson measure is a property of the ensemble, not of the window a reader chooses
 DERIVED: the only numeral in the STATEMENT is the `0` of `0 ≤ ρ d` and `0 < Σ ρ`, which is
 nonnegativity and positive total mass — the content of the cited result, not a magnitude. The
 `110`, `1978` and `440` above are the journal citation.
+
+**WHAT REMAINS CITED IS NOW STRICTLY SMALLER THAN THIS STATEMENT.**
+`wilson_reflection_positive_at_even` below PROVES this axiom's body — the same conjunction, at the same
+`wilsonCorrAt` — whenever the extent is EVEN and at least `4` and the coupling is nonnegative, with no
+hypothesis about the measure and nothing assumed. The axiom cannot be deleted because it quantifies over
+EVERY aperture and EVERY real `β`; what it is still standing in for is the complement of that domain:
+odd extents, extent two, and negative coupling.
+
+The coupling restriction is not a gap in the argument — it is the sign of the coupling.
+`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` proves an IFF on two explicit `SU(3)` elements: the
+Wilson cross kernel is positive-semidefinite exactly when the coupling is nonnegative. At `β < 0` the object
+the odd-lag argument is about is itself negative on this group, so no method removes it. The even lags never
+needed it (`ActionSplit.plaqReflPositive_of_even_lag` carries no `β` hypothesis) because that argument is a
+conditional square against a positive Boltzmann weight; the odd lags do.
+
+The extent restriction is also load-bearing and was checked by breaking it: at `m = 1` levels `1` and `m`
+coincide, so two distinct straddling plaquettes share a half-link while having different plane links and the
+group action cannot be defined coordinatewise (`OddLagSplit.negctl_plane_assignment_collides_at_m_one`).
 -/
 axiom wilson_reflection_positive_at :
     ∀ (N : ℕ) (β : ℝ), (∀ d, 0 ≤ wilsonCorrAt N β d) ∧ 0 < ∑ d, wilsonCorrAt N β d
+
+/-- **THE AXIOM'S BODY, PROVED, at even extent `≥ 4` and nonnegative coupling.**
+
+`wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` by definition, so this is the same conjunction the
+axiom above asserts, on the stated domain, with `#print axioms` reporting the three foundational axioms
+and nothing else. It is a proof, not a reduction: `OddLagSplit.corrClay_reflection_positive`'s entire
+hypothesis list is the extent parity, `2 ≤ m`, and `0 ≤ β`.
+
+The chain behind it: the action splits across a link-reflection plane into a positive half, its mirror and
+a straddling remainder (`OddLagSplit.oplaq_side`, `sum_oplaq_split`); the mirror's contribution is the
+positive half's at the reflected configuration (`sum_oplqMinus_eq_plus_refl`); the product Haar factors over
+the three blocks with the integrand free to couple them (`integral_three_block`, via `sumPiEquivProdPi` and
+one index equivalence); the mirror's variables transport onto the positive half (`measurePreserving_mirrorT`,
+`reflConf_joinO_mirror`); the two fixed planes' opposite handedness is reconciled by inverting the plane
+variables under the integral (`mixedAct_invAt_mul`, `invLink_measurePreserving`); and the straddling factor
+is then one cross form of two block-diagonal words, which the Wilson kernel's positive-semidefiniteness
+accepts (`CrossingIntegration.wilson_crossing_pairing_nonneg`). No representation theory enters anywhere. -/
+theorem wilson_reflection_positive_at_even (N m : ℕ) (hm : N + 1 = 2 * m) (hm2 : 2 ≤ m)
+    {β : ℝ} (hβ : 0 ≤ β) :
+    (∀ d, 0 ≤ wilsonCorrAt N β d) ∧ 0 < ∑ d, wilsonCorrAt N β d :=
+  MassGap.OddLagSplit.corrClay_reflection_positive N m hm hm2 hβ
+
+#print axioms wilson_reflection_positive_at_even
 
 /-- Reflection positivity at the pinned aperture — the `nCorrYM` instance, a THEOREM. -/
 theorem wilson_reflection_positive :
@@ -532,7 +574,8 @@ discharged by `Moment.circ_moment_le_of_geometric`: the bound it produces,
 
 WHY THIS IS THE RIGHT SHAPE. Under reflection positivity the connected correlation has the
 transfer-matrix form `ρ(d) = ∑ₙ wₙλₙᵈ` with `wₙ ≥ 0` — the HALF-LINE shape, which on this
-periodic lattice is degenerate under the expected `ρ(d) = ρ(n−d)` symmetry (`Spectral.flat_of_aperiodic`);
+periodic lattice is degenerate under the PROVED `ρ(d) = ρ(n−d)` symmetry
+(`MomentShape.wilsonCorrAt_neg`, feeding `Spectral.flat_of_aperiodic`);
 `Spectral.PeriodicSpectralForm` is the shape a transfer matrix on a circle gives — and if the transfer operator has a gap `Δ` then
 every excited `λₙ ≤ e^{−Δ}`, so `ZeroMode.exists_exponential_decay` delivers exactly this hypothesis
 with `r = e^{−Δ}`. The decay is in the CIRCLE distance rather than the raw lag because the correlation
@@ -627,11 +670,16 @@ theory, so the theorem is vacuous:
 
 * `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a periodic
   torus with `n = N+1`, and `wilsonCorrAt N β`'s lag index `Fin (N+1)` spans the WHOLE period;
-* ASSUMED, not proved: `ρ(d) = ρ(n−d)`. No theorem in the tree asserts it of `wilsonCorrAt`,
-  `corrClay`, `corrHyper` or `wilsonCorrConn`, and there is no translation-invariance theorem for the
-  correlation. `Moment.circLag` is BUILT as if it held; `ZeroMode`'s "symmetric under `d ↦ n − d`"
-  is about `clag`, the LAG FUNCTION, where it is arithmetic — not about `ρ`;
-* GIVEN that, `Spectral.flat_of_aperiodic` proves a half-line shape forces `ρ` FLAT from lag one. It
+* PROVED: `ρ(d) = ρ(n−d)`, by `MomentShape.corrHyper_neg` and its corollaries `corrClay_neg` and
+  `wilsonCorrAt_neg`, at EVERY extent and EVERY real coupling with no hypothesis. The useful form is
+  `MomentShape.wilsonCorrAt_circLag_congr`: the correlation reads the lag ONLY through
+  `Moment.circLag`. `Moment.circLag` was BUILT as if this held, and it now holds. The route is
+  `LogConvex.EW_plaqE_pair_shift` (translation invariance of the two-plaquette expectation, itself
+  derived FROM the reflection) at `P = 0`, plus the lag-independence of the one-point term
+  (`ReflectPositive.EW_plaqE_lag`). Note `ZeroMode`'s "symmetric under `d ↦ n − d`" is a DIFFERENT
+  statement — it is about `clag`, the LAG FUNCTION, where it is arithmetic, not about `ρ`;
+* Because that is now PROVED rather than assumed, `Spectral.flat_of_aperiodic` forces a half-line
+  shape to make `ρ` FLAT from lag one UNCONDITIONALLY. It
   assumes `1 ≤ d`, so `ρ(0)` is unconstrained and a contact term at lag zero survives it. And that a
   flat correlator is wrong for an interacting theory is physics, not a theorem here — nothing in the
   tree evaluates `wilsonCorrAt` at any lag, and the RP axiom is satisfied by a constant positive `ρ`.
@@ -2281,11 +2329,14 @@ that could be false. -/
 The shape is `ρ(d) = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` with `n = N+1`, NOT the half-line `∑ w λ^d`. That is
 forced: `WilsonHypercubic.Site` is `Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
 periodic torus; `wilsonCorrAt N β = corrClay (N+1) β` with the lag running the WHOLE period; and
-and `ρ(d) = ρ(n−d)` is ASSUMED — no theorem in the tree proves it of the correlation, and `ZeroMode`'s
-`d ↦ n − d` symmetry is about `clag`, the lag function, not about `ρ`. GIVEN it,
-`Spectral.flat_of_aperiodic` forces a half-line `ρ` FLAT from lag one. `Moment.circLag` is built as if
-the symmetry held, so the periodic shape is the consistent choice; it is not a refutation of the
-half-line one.
+and `ρ(d) = ρ(n−d)` is PROVED, by `MomentShape.corrHyper_neg` / `wilsonCorrAt_neg`, at every extent
+and every real coupling with no hypothesis — so `Moment.circLag`, which was built as if the symmetry
+held, is reading the correlation correctly rather than by construction
+(`MomentShape.wilsonCorrAt_circLag_congr`). `ZeroMode`'s `d ↦ n − d` symmetry is a different
+statement: it is about `clag`, the lag function, not about `ρ`. With the symmetry PROVED,
+`Spectral.flat_of_aperiodic` forces a half-line `ρ` FLAT from lag one unconditionally, so the periodic
+shape is the consistent choice; it is still not a refutation of the half-line one, because that lemma
+assumes `1 ≤ d` and leaves a contact term at lag zero free.
 
 DERIVED: every numeral here is fixed by the lattice, none is chosen. The period `N+1` is forced by
 `WilsonHypercubic.Site = Fin d → Fin n` with `shift` adding in `Fin n`, so it is the aperture's own

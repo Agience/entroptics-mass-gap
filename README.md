@@ -39,28 +39,43 @@ the $\ln 3$ is the branching of a directed cube-path (`Floor.directed_paths_card
 is the reciprocal area per step — `CubeArea.boundary_card_eq`, that the surface bounding a $k$-step
 path has exactly $4k+6$ faces — with `VortexCount.kappa0_is_the_surface_entropy_density` assembling
 the two into $\log(\#\text{surfaces})/\text{area}\to\tfrac14\ln3$. Those surfaces are also closed
-(`CubeClosed.edge_parity`, $\partial\partial=0$ over $Z_2$ at every interior edge), all pass through
+(`CubeClosed.edge_parity_all`, $\partial\partial=0$ over $Z_2$ at every interior edge), all pass through
 one fixed face, and distinct paths bound distinct ones. Since pure Yang–Mills carries no dimensionful
 parameter, a fitted constant anywhere below the gap would be a smuggled scale; $\kappa_0$ being a
 counting number is what makes the transmutation legitimate, and it is now counted rather than quoted.
 
-The result rests on four named inputs, of which three are classical results the development cites rather than
-re-derives — the strong-coupling character bound (Osterwalder–Seiler), asymptotic freedom, and reflection
-positivity of the Wilson ensemble. The fourth, a finite correlation length $\langle d^2\rangle \le 1$, is not a
-cited theorem: it is discharged by measurement rather than by proof. Conditioned on the confinement read, the whole result
-follows with reflection positivity as the only structural input.
+**What the build actually carries.** The development declares exactly **three** named axioms beyond Lean's
+three foundational ones, and the count is machine-generated rather than asserted
+([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv), 1349 printed declarations,
+1247 of them foundational-only):
+
+| named axiom | declarations carrying it | status |
+|---|---|---|
+| `wilson_reflection_positive_at` | 102 | **proved** at even lattice extent $\ge4$ and $\beta\ge0$ (`OddLagSplit.corrClay_reflection_positive`); cited to Osterwalder–Seiler only outside that domain |
+| `os_reconstruction` | 1 | cited (Osterwalder–Schrader reconstruction) |
+| `WightmanTheory` | 1 | cited |
+
+The strong-coupling character bound and asymptotic freedom are consumed as *hypotheses of theorems*, not
+as axioms. Separately, one input is neither proved nor cited: the substrate hypothesis. It has been reduced twice.
+First to a contact-relative power law on the plaquette correlation, which `ContactFloor.contact_relative_unconditional`
+then proves OUTRIGHT on a derived strong-coupling interval, carrying nothing. Second, and further: the flagship
+consumes that hypothesis only through `Classical.choose`, to pick ONE aperture and discard the rest, so the
+aperture quantifier drops entirely (`ApertureRoute.flagship_of_confinement_at_an_aperture`). The open problem is
+therefore confinement at a **single finite extent** — `∃ a : EvenAp, ∀ β, 3^{-1/4} < ⟨cos θ⟩`, stated on the
+cosine average rather than the tension because `Real.log` is even and the tension form admits a read with no
+decay at all. That is the thesis of the title, and it is stated as open.
 
 The confinement read is measured on lattice ensembles and certified at **99.9999%** per coupling (a rigorous empirical-Bernstein
 bound). The paper ([`research/PAPER.pdf`](research/PAPER.pdf)) develops the theorem and the method; the reads run through the Entroptics
-reader (`research/code/`); the Lean 4 / Mathlib development (`research/lean/`) is the verification — `sorry`-free, on
-the three foundational axioms plus the named inputs.
+reader (`research/code/`); the Lean 4 / Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
 **Existence and the gap, on a constructed object.** Beyond the gap, the finite-spacing Osterwalder–Schrader data is
-instantiated for a constructed $SU(N)$ Wilson realisation (`ym_wilson`). Read the two sides at their real strengths,
+instantiated for a constructed $SU(N)$ Wilson realisation (`WilsonGauge.ym_wilson_gauge`). Read the two sides at their real strengths,
 which are not the same:
 
 * **Gap side** — `ym_existence_and_gap_of_junction` states it over an *arbitrary* mode family, gated on the two named
-  open residuals (`hfe`, `hgap`). `ym_existence_and_gap` is its collapsed instance at the definitional single mode
+  open residuals (`hfe`, `hgap`). `WilsonGauge.ym_existence_and_gap_gauge_wilson` is its instance on the
+  constructed realisation, and `ZeroMode.Witness.chain_hypotheses_satisfiable` is the collapsed one at the definitional single mode
   $m := e^{-(\kappa_0-\mu)}$, whose decay conjunct is therefore arithmetic; it witnesses that the hypotheses are
   satisfiable and is not evidence about the Wilson transfer operator.
 * **Measure side** — what `Measure.continuum_of_family` proves is a bounded, nonnegative, invariance-preserving
@@ -70,7 +85,7 @@ which are not the same:
   invariance is inherited because it was built in — `ymFamily.os_euc` is `rfl`, since `QYM` reads only a label the
   $\mathrm{Perm}(\mathbb{F}_4)$ actions leave fixed. `ymFamily` is a minimal interface witness.
 
-`ym_wightman` adds the Osterwalder–Schrader → Wightman reconstruction (two more axioms, six in total) on top of that
+`ym_wightman_of` adds the Osterwalder–Schrader → Wightman reconstruction (two more axioms, six in total) on top of that
 limit. The development *consumes* the cited results rather than re-deriving them, and the $SU(N)$ ensemble enters
 through the entropy-matched reads and the cited §2–§3 modelling identification. The exact axiom footprint of every theorem is stated in the
 paper (§13).
@@ -103,22 +118,30 @@ Check the axiom footprint yourself. Put this in a file under `research/lean` and
 ```lean
 import MassGap
 
-#print axioms MassGap.ym_mass_gap
--- propext, Classical.choice, Quot.sound
--- + ym_character, ym_asymfree, wilson_reflection_positive, d2_le_bound   (the four named inputs)
+#print axioms MassGap.EvenAperture.existence_and_gap_of_substrate_even
+-- propext, Classical.choice, Quot.sound  -- and NOTHING else.
+-- The gap side with no named axiom at all: reflection positivity is PROVED here, at even lattice
+-- extent >= 4 and beta >= 0, rather than cited. This is the strongest statement in the development.
+
+#print axioms MassGap.ym_mass_gap_of_substrate
+-- the three foundational + wilson_reflection_positive_at  (the same conclusion on the unrestricted
+-- aperture and the total coupling field, where the certificate is still cited)
 
 #print axioms MassGap.ym_mass_gap_certified
--- the three foundational + wilson_reflection_positive only  (conditioned on the confinement read)
+-- the three foundational + wilson_reflection_positive_at  (conditioned on the confinement read)
 
-#print axioms MassGap.ym_existence_and_gap
--- the three foundational + the four named inputs  (existence and the gap, for a constructed SU(N) realisation)
+#print axioms MassGap.WilsonGauge.ym_existence_and_gap_gauge_wilson
+-- the three foundational + wilson_reflection_positive_at  (existence and the gap, for the constructed
+-- SU(N) Wilson realisation ym_wilson_gauge)
 
-#print axioms MassGap.ym_wightman
--- + os_reconstruction, WightmanTheory  (the reconstructed Wightman quantum field theory)
+#print axioms MassGap.ym_wightman_of
+-- + os_reconstruction, WightmanTheory  (the reconstructed Wightman quantum field theory -- the only
+-- declaration in the tree carrying all three named axioms)
 
 #print axioms MassGap.ym_mass_gap_spectral
--- the three foundational + the four named inputs  (the gap over an ARBITRARY mode family, gated on the
--- finite-aperture margin as an EXPLICIT hypothesis: the physics is that hypothesis, not the footprint)
+-- the three foundational + wilson_reflection_positive_at  (the gap over an ARBITRARY mode family,
+-- gated on the finite-aperture margin as an EXPLICIT hypothesis: the physics is that hypothesis,
+-- not the footprint)
 
 #print axioms MassGap.WitnessVacuity.const_witness_conclusion_is_arithmetic
 -- the three foundational only  (and the module imports Mathlib ALONE: it reproduces, with no part of this

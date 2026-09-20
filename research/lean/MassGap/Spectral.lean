@@ -12,31 +12,43 @@ Giving the modes a definition is what would make that hypothesis a statement abo
 
 **WHY THE HALF-LINE SHAPE WAS ABANDONED, AND EXACTLY HOW FAR THE ARGUMENT GOES.**
 An earlier version of this file used the half-line shape `ρ(d) = ∑ₙ wₙ λₙ^d`. The argument against it
-is `flat_of_aperiodic` below, and it is CONDITIONAL — two of its three premises are facts about this
-tree, the third is not proved anywhere and is stated here as the assumption it is:
+is `flat_of_aperiodic` below, and ALL THREE of its premises are now facts about this tree:
 
 * PROVED: `WilsonHypercubic.Site d n = Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
   fully PERIODIC torus of extent `n`.
 * PROVED: `Complete.wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` with `lag : Fin (N+1)`, so the
   lag index runs the WHOLE period, not a half-line.
-* **NOT PROVED: `ρ(d) = ρ(n−d)`.** No theorem in the tree asserts it of `wilsonCorrAt`, `corrClay`,
-  `corrHyper` or `wilsonCorrConn`, and there is no translation-invariance theorem for the correlation.
-  It is what one expects of a translation-invariant correlation of two plaquettes on a torus, and
-  `Moment.circLag`/`clag n d = min d (n−d)` is built as if it held, but `ZeroMode`'s "symmetric under
-  `d ↦ n − d` by construction" is a statement about `clag` — the LAG FUNCTION, where it is arithmetic
-  — and NOT about `ρ`. An earlier version of this docstring cited it as though it were about `ρ`.
+* **PROVED: `ρ(d) = ρ(n−d)`**, by `MomentShape.corrHyper_neg` and its corollaries `corrClay_neg` /
+  `wilsonCorrAt_neg`, of the genuine `wilsonCorrAt`, at every extent and every real coupling with no
+  hypothesis. It comes from `LogConvex.EW_plaqE_pair_shift` — translation invariance of the
+  two-plaquette expectation, itself derived FROM the reflection — at `P = 0`, plus the
+  lag-independence of the one-point term (`ReflectPositive.EW_plaqE_lag`). So `Moment.circLag`, built
+  as if the symmetry held, reads the correlation correctly rather than by construction
+  (`MomentShape.wilsonCorrAt_circLag_congr`).
+  BEWARE THE NEIGHBOURING STATEMENT: `ZeroMode`'s "symmetric under `d ↦ n − d` by construction" is
+  about `clag`, the LAG FUNCTION, where it is arithmetic — NOT about `ρ`. Earlier versions of this
+  docstring, and of `rho_symm`'s, cited it as though it were about `ρ`. It is not, and the two must
+  not be conflated.
 
-GIVEN that symmetry, a half-line form forces `ρ` ANTITONE, and antitone together with `ρ(1) = ρ(n−1)`
+Because the symmetry is now free, `flat_of_aperiodic`'s `hsym` is DISCHARGEABLE for the Wilson
+correlation at `m := N`: `(-1 : Fin (N+1)).val = N`, so `wilsonCorrAt_neg N β 1` gives `ρ(N) = ρ(1)`
+outright. A half-line form for `wilsonCorrAt` therefore forces `ρ` FLAT from lag one
+UNCONDITIONALLY, where this file previously could only say so under an assumption.
+
+Given that symmetry, a half-line form forces `ρ` ANTITONE, and antitone together with `ρ(1) = ρ(n−1)`
 forces `ρ` FLAT from lag one onward. Two further limits on what that shows, both real:
 `flat_of_aperiodic` assumes `1 ≤ d`, so `ρ(0)` is unconstrained and a half-line form with a contact
 term at lag zero and a flat tail survives it; and "a flat correlator is false for an interacting
 theory" is physics, not a theorem here — nothing in the tree evaluates `wilsonCorrAt` at any lag, and
 the RP axiom (`0 ≤ ρ d`, `0 < ∑ ρ`) is satisfied by a constant positive `ρ`.
 
-So the accurate statement is: **on this lattice the half-line shape is unattractive and, under the
-expected symmetry, degenerate — it is not machine-checked false.** The periodic shape below is used
-because it is the one a transfer matrix on a circle actually produces, not because its rival has been
-refuted.
+So the accurate statement is: **on this lattice the half-line shape is UNCONDITIONALLY degenerate —
+and still not machine-checked false.** Degenerate is now free, the symmetry having become a theorem.
+False it is not: `flat_of_aperiodic` assumes `1 ≤ d`, so a contact term at lag zero over a flat tail
+survives it, and nothing in the tree proves `wilsonCorrAt` is non-constant — `Substrate.flatRead` is
+a legal `Moment.Read` and `Substrate.flatSpectral` gives it a periodic form. The periodic shape below
+is used because it is the one a transfer matrix on a circle actually produces, and because the
+correlation's proved symmetry matches it; not because its rival has been refuted.
 
 **THE RIGHT SHAPE IS THE PERIODIC ONE**, `ρ(d) = ∑ₙ wₙ (λₙ^d + λₙ^{n−d})`, which is what a transfer
 matrix on a circle of extent `n` gives: `Tr(A T^d A T^{n−d})/Tr(T^n)`. It is symmetric under
@@ -155,8 +167,18 @@ theorem periodic_decay_le (S : PeriodicSpectralForm n ρ) {r : ℝ}
 #print axioms periodic_decay_le
 
 /-- **THE PERIODIC FORM IS SYMMETRIC UNDER `d ↦ n − d`**, straight from its own shape — the two terms
-swap. This is the symmetry `ZeroMode` records for the Wilson correlation and `Moment.circLag` is
-built on, so a form of this shape is compatible with it where a half-line form is not. -/
+swap.
+
+The Wilson correlation has that same symmetry as a THEOREM, `MomentShape.corrHyper_neg` and its
+corollaries `corrClay_neg` / `wilsonCorrAt_neg`, at every extent and every real coupling with no
+hypothesis — so a form of this shape is compatible with the correlation where a half-line form is
+not, and `Moment.circLag` reads the correlation correctly rather than by construction
+(`MomentShape.wilsonCorrAt_circLag_congr`).
+
+NOT `ZeroMode`, which this docstring previously cited. `ZeroMode.sum_range_antipodal_fold` takes
+`hsym` on an ARBITRARY `F` and says so in its own docstring ("a reindexing, not a fact about cosines
+or about `λ`"); its instantiations in this tree are the LAG FUNCTION (`sum_clag_sq`) and a stipulated
+model profile. It records nothing about the Wilson correlation. -/
 theorem rho_symm (S : PeriodicSpectralForm n ρ) (d e : Fin n)
     (hde : (e : ℕ) = n - (d : ℕ)) (hdn : (d : ℕ) ≤ n) : ρ e = ρ d := by
   rw [← sum_eq_rho S e, ← sum_eq_rho S d, hde]

@@ -63,6 +63,30 @@ of the two fixed planes and exhibit it as `g · F · g'⁻¹ · F̄⁻¹`, the W
 transverse link against another with the plane links absorbed as a gauge. `hsRe_cross_word` is that
 statement in `hsRe` form, which is what `CrossingIntegration` consumes.
 
+## Parts E to K — the discharge
+
+Parts E to G do the measure theory: `integral_three_block` factors the product Haar over
+`oblkR ⊔ oblkS ⊔ oblkT` as an iterated integral with the integrand still coupling all three,
+`integral_oblk_mirror` transports the mirror's variables onto the positive half so both inner
+integrals run over the same block, and `plane_group_haar`, `planeAct_measurePreserving`,
+`measurable_uncurry_planeAct` and `abs_coord_le_one_of_entries` supply every instance the crossing
+integration asks for. Part H chooses the plane: every odd lag is `a + a + 1` for some `a`, and one of
+the two choices puts the base plaquette inside the positive half
+(`exists_odd_lag_plane_in_half`).
+
+Parts I to K identify the integrand. `oplqCross` indexes the blocks directly — both orientations of
+every geometric plaquette, both fixed planes — and after inverting the gauge on the upper plane alone
+every block reads `hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))` (`re_tr_hol_cross`). `crossWord` is the
+direct sum of those, `planeA`/`planeB` run the assignment backwards from a half-link to its
+plaquette's plane links, and `sum_re_tr_oplqCross` is the whole straddling factor as ONE cross form.
+
+`corrClay_reflection_positive` is the conclusion: the body of
+`Complete.wilson_reflection_positive_at` at aperture `Nap`, with no hypothesis about the lattice
+left. It carries `2 ≤ m` — extent at least four, because the backward plane assignment collides at
+extent two (`negctl_plane_assignment_collides_at_m_one`) — and `0 ≤ β`, because the Wilson cross
+kernel is positive-semidefinite exactly there
+(`negctl_odd_discharge_needs_nonneg_coupling`).
+
 Foundational footprint only (`#print axioms` at the end).
 Build: `python code/lean_build.py build MassGap.OddLagSplit`.
 -/
@@ -2120,45 +2144,41 @@ theorem actCrossO_eq_trace_sum (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N
 
 end ActionSplitOdd
 
-/-! ## WHAT REMAINS
+/-! ## HOW IT CLOSES
 
 `boltz_eq_paired_cross` and `actCrossO_eq_trace_sum` put the integrand of
-`CharacterExpansion.plaqReflPositive_of_pairing_nonneg` into exactly the form
-`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes, POINTWISE. What is not done is the
-change of variables that turns the single integral over configurations into the iterated integral the
-crossing theorem is stated over:
+`CharacterExpansion.plaqReflPositive_of_pairing_nonneg` into the form
+`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes, POINTWISE. Parts E to K below turn
+that pointwise identity into the inequality:
 
-1. **Factor the product Haar over the three blocks.** `cvol (Link d n) μ` has to become
-   `cvol (oblkR) μ ⊗ cvol (oblkS) μ ⊗ cvol (oblkT) μ` as an iterated integral with the integrand
-   coupling all three. Mathlib's `measurePreserving_piEquivPiSubtypeProd` splits a product measure in
-   two along a decidable predicate; this needs it twice, with the inner split living on a subtype of
-   a subtype. `ActionSplit.block_factor` does not apply — it is for a product of two INDEPENDENT
-   factors, and here the straddling factor couples all three blocks.
+1. **The measure.** `integral_oblk_three_block` factors the product Haar over the three blocks — not
+   as a product of integrals, which the straddling factor forbids, but as an ITERATED integral whose
+   integrand couples all three. `integral_oblk_mirror` then transports the mirror's variables onto
+   `oblkS`, so the two inner integrals run over the same block against the same measure.
 
-2. **Transport the mirror's variables to the positive half.** `reflLink` is a bijection
-   `oblkT → oblkS` (`oblkS_maps_oblkT` and the reflection's involutivity), and `reflConf` daggers the
-   axis links among them, so `U|T ↦ (ΘU)|S` is a relabelling composed with a per-coordinate
-   inversion — measure-preserving by the same two facts `invLink_measurePreserving` uses. After it,
-   both arguments of the pairing are integrals over `cvol (oblkS) μ`, which is what the crossing
-   theorem requires.
+2. **The family.** `oplqCross` indexes the blocks itself. Both orientations of every geometric
+   plaquette appear and both contribute the same number (`re_tr_hol_swap`), so the direct sum simply
+   carries each block twice; no bijection or fibre count is needed.
 
-3. **Assemble the instances.** `Γ := oblkR → SU 3` needs `MeasurableMul` and an
-   `IsMulRightInvariant` product measure; `Ω := oblkS → SU 3` needs the gauge action to be
-   measure-preserving (bi-invariance of Haar, one coordinate at a time); and `X` needs its
-   coordinate bound, which is `SUN.unitary_entry_norm_le_one` on the nonzero blocks and `0` on the
-   rest.
+3. **One handedness.** Inverting the gauge on the UPPER plane alone — `invLink_measurePreserving`'s
+   substitution, performed under the integral by `integral_odd_eq_oddIntegrand` — makes both planes
+   read the same shape (`re_tr_hol_cross`).
 
-4. **Apply it.** With 1–3, `wilson_crossing_pairing_nonneg` fires at `β' = β / N ≥ 0`, giving
-   `PlaqReflPositive` at every odd lag through `plaqReflPositive_of_integral`, and
-   `corrClay_rp_of_odd_lags` then discharges `Complete.wilson_reflection_positive_at` at every even
-   extent.
+4. **The action.** `planeARaw` and `planeBRaw` run the assignment backwards, from a half-link to the
+   plane links of the plaquette that owns it, which is what makes the plane gauge a coordinatewise
+   action on `oblkS → SU N` rather than a family indexed by blocks. This step and no other needs
+   `2 ≤ m`: at extent two the level one step above the lower plane IS the upper plane, one half-link
+   is owned by two plaquettes with different plane links, and no such assignment exists
+   (`negctl_plane_assignment_collides_at_m_one`).
 
-Sizing, stated because it was asked for: step 1 alone is the largest single piece in this development
-outside `ActionSplit`, because the index sets are `Finset` subtypes rather than the whole link type
-and every rewrite carries the coercion. Steps 1–3 together are comparable to `ActionSplit`'s two
-thousand lines, and plausibly larger. What is NOT left is any mathematics of the kind the axiom was
-standing in for: the geometry, the algebra, the handedness and the reduction are all discharged
-above. -/
+5. **The observable.** `aHalf` is `aObs` as a function of `oblkS` alone — `aObs_local` with
+   `transverse_plaq_links_in_oblkS` — measurable and bounded, which is what `wilson_crossing_pairing_nonneg`'s
+   `a` must be.
+
+`odd_crossing_integral_nonneg` is the result, at `β' = β / N`, and `corrClay_reflection_positive`
+composes it with Part H's plane choice. The `0 ≤ β` it carries is the sign of the coupling, not a
+limitation of the method: `negctl_odd_discharge_needs_nonneg_coupling` shows the cross kernel is
+nonnegative exactly there. -/
 
 section AuditI
 #print axioms actPlusO_local
@@ -2169,7 +2189,7 @@ section AuditI
 end AuditI
 
 
-/-! ## The composition — what is left of the axiom at even extent
+/-! ## The composition — the axiom at even extent
 
 `ReflectPositive.corrClay_rp_of` takes two inputs: `PlaqReflPositive` at EVERY lag, and strict
 positivity at lag zero. The second is `PlaqVariance.corrClay_zero_pos`, which holds for every extent
@@ -2177,17 +2197,17 @@ and every coupling. Of the first, `ActionSplit.plaqReflPositive_of_even_lag` sup
 whenever the extent is even.
 
 So at even extent the whole of `Complete.wilson_reflection_positive_at` reduces to one hypothesis:
-`PlaqReflPositive` at the ODD lags. `corrClay_rp_of_odd_lags` is that reduction, and it is the
-statement this file exists to sharpen — everything else on the reduction side is discharged.
+`PlaqReflPositive` at the ODD lags. `corrClay_rp_of_odd_lags` is that reduction.
+`plaqReflPositive_odd_of_crossing` reduces that hypothesis in turn to a single integral,
+`corrClay_rp_of_crossing` composes the two with the plane-choice glue of Part H, and
+`odd_crossing_integral_nonneg` proves the integral nonnegative. `corrClay_reflection_positive` is the
+composite, and it takes no hypothesis about the lattice at all.
 
-What `corrClay_rp_of_odd_lags` does NOT do is discharge that hypothesis. Parts B, C and D supply the
-geometry and the algebra the discharge needs; what is still absent is the MEASURE-THEORETIC step —
-factoring the product Haar measure over `oblkS ⊔ oblkT ⊔ oblkR`, identifying the mirror's variables
-with the reflected half's, and feeding the result to
-`CrossingIntegration.wilson_crossing_pairing_nonneg`. `ActionSplit`'s `halfIntegral`,
-`pairing_eq_weighted_square` and `pairing_nonneg_of_local` are the even-lag versions of exactly that
-step, and they assume the fixed block is NOT acted on — which at a link reflection is false
-(`ActionSplit.reflConf_inverts_fixed_axis_link`). -/
+`ActionSplit`'s `halfIntegral`, `pairing_eq_weighted_square` and `pairing_nonneg_of_local` are the
+even-lag versions of the measure-theoretic step, and they assume the fixed block is NOT acted on —
+which at a link reflection is false (`ActionSplit.reflConf_inverts_fixed_axis_link`). Parts E and F
+replace them: the three-block factorisation does not require the plane to be inert, because the plane
+variable is integrated LAST rather than conditioned on. -/
 
 section Assembly
 
@@ -2368,5 +2388,2076 @@ section AuditA
 #print axioms negctl_sum_identity_positive
 #print axioms negctl_parity_needs_even_extent
 end AuditA
+
+/-! ## Part E — the product measure over THREE blocks, as an iterated integral
+
+`ActionSplit.block_factor` turns an integral over two DISJOINT blocks into a PRODUCT of two
+integrals, and that is exactly what the straddling factor forbids here: it reads `oblkS`, `oblkT` and
+`oblkR` at once, so no factor of the integrand is a function of one block alone
+(`no_half_function_for_straddling_sum` is that statement). What is needed instead is a
+REPARAMETRISATION — the same integral, written as an ITERATED integral over the three blocks'
+variables, with the integrand still coupling all three.
+
+Mathlib splits a product measure two ways: along a decidable predicate
+(`measurePreserving_piEquivPiSubtypeProd`, whose second application lands on a subtype of a subtype)
+or along a SUM index type (`measurePreserving_sumPiEquivProdPi`). The sum form is the one to use.
+`blockEquiv3` presents the index type as `R ⊕ (S ⊕ T)`, so two applications of the sum split give the
+three factors with no subtype of a subtype anywhere: each block appears as its own `Finset`
+coercion, which is the type the rest of the file already speaks.
+
+`join3` is the inverse reparametrisation — the configuration assembled from its three block
+restrictions — and `integral_three_block` is the iterated-integral identity. Nothing here is specific
+to the lattice; `integral_oblk_three_block` is the instance at the link-reflection blocks. -/
+
+section ThreeBlock
+
+variable {ι : Type} [Fintype ι] [DecidableEq ι]
+variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+
+/-- **The index type, presented as the disjoint union of three blocks.**
+
+The only inputs are pairwise disjointness and covering; nothing about what the blocks mean. The
+coercion `↥R ⊕ (↥S ⊕ ↥T) ≃ ι` is what lets `measurePreserving_sumPiEquivProdPi` be applied twice, and
+it is why the three factors come out as `↥R → Ω`, `↥S → Ω` and `↥T → Ω` rather than as nested
+subtypes.
+
+DERIVED: no numeral. -/
+def blockEquiv3 (R S T : Finset ι) (hRS : Disjoint R S) (hRT : Disjoint R T)
+    (hST : Disjoint S T) (hU : ∀ i : ι, i ∈ R ∨ i ∈ S ∨ i ∈ T) :
+    (↥R ⊕ (↥S ⊕ ↥T)) ≃ ι where
+  toFun := Sum.elim (fun j => (j : ι)) (Sum.elim (fun j => (j : ι)) (fun j => (j : ι)))
+  invFun := fun i =>
+    if h : i ∈ R then Sum.inl ⟨i, h⟩
+    else if h2 : i ∈ S then Sum.inr (Sum.inl ⟨i, h2⟩)
+    else Sum.inr (Sum.inr ⟨i, ((hU i).resolve_left h).resolve_left h2⟩)
+  left_inv := by
+    rintro (⟨i, hi⟩ | ⟨i, hi⟩ | ⟨i, hi⟩)
+    · simp [hi]
+    · have hR : i ∉ R := fun hc => (Finset.disjoint_left.mp hRS) hc hi
+      simp [hi, hR]
+    · have hR : i ∉ R := fun hc => (Finset.disjoint_left.mp hRT) hc hi
+      have hS : i ∉ S := fun hc => (Finset.disjoint_left.mp hST) hc hi
+      simp [hR, hS]
+  right_inv := by
+    intro i
+    by_cases h : i ∈ R
+    · simp [h]
+    · by_cases h2 : i ∈ S
+      · simp [h, h2]
+      · simp [h, h2]
+
+/-- **The configuration assembled from its three block restrictions.** This is the change of
+variables `integral_three_block` performs; `join3_mem_R`, `join3_mem_S` and `join3_mem_T` say it
+reads each block's own variable and nothing else.
+
+DERIVED: no numeral. -/
+def join3 (R S T : Finset ι) (hRS : Disjoint R S) (hRT : Disjoint R T)
+    (hST : Disjoint S T) (hU : ∀ i : ι, i ∈ R ∨ i ∈ S ∨ i ∈ T)
+    (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω) : ι → Ω :=
+  fun i => Sum.elim g (Sum.elim x y) ((blockEquiv3 R S T hRS hRT hST hU).symm i)
+
+variable (R S T : Finset ι) (hRS : Disjoint R S) (hRT : Disjoint R T) (hST : Disjoint S T)
+  (hU : ∀ i : ι, i ∈ R ∨ i ∈ S ∨ i ∈ T)
+
+theorem join3_mem_R (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω) {i : ι} (hi : i ∈ R) :
+    join3 R S T hRS hRT hST hU g x y i = g ⟨i, hi⟩ := by
+  show Sum.elim g (Sum.elim x y)
+      (if h : i ∈ R then Sum.inl ⟨i, h⟩
+       else if h2 : i ∈ S then Sum.inr (Sum.inl ⟨i, h2⟩)
+       else Sum.inr (Sum.inr ⟨i, _⟩)) = g ⟨i, hi⟩
+  rw [dif_pos hi]
+  rfl
+
+theorem join3_mem_S (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω) {i : ι} (hi : i ∈ S) :
+    join3 R S T hRS hRT hST hU g x y i = x ⟨i, hi⟩ := by
+  have hR : i ∉ R := fun hc => (Finset.disjoint_left.mp hRS) hc hi
+  show Sum.elim g (Sum.elim x y)
+      (if h : i ∈ R then Sum.inl ⟨i, h⟩
+       else if h2 : i ∈ S then Sum.inr (Sum.inl ⟨i, h2⟩)
+       else Sum.inr (Sum.inr ⟨i, _⟩)) = x ⟨i, hi⟩
+  rw [dif_neg hR, dif_pos hi]
+  rfl
+
+theorem join3_mem_T (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω) {i : ι} (hi : i ∈ T) :
+    join3 R S T hRS hRT hST hU g x y i = y ⟨i, hi⟩ := by
+  have hR : i ∉ R := fun hc => (Finset.disjoint_left.mp hRT) hc hi
+  have hS : i ∉ S := fun hc => (Finset.disjoint_left.mp hST) hc hi
+  show Sum.elim g (Sum.elim x y)
+      (if h : i ∈ R then Sum.inl ⟨i, h⟩
+       else if h2 : i ∈ S then Sum.inr (Sum.inl ⟨i, h2⟩)
+       else Sum.inr (Sum.inr ⟨i, _⟩)) = y ⟨i, hi⟩
+  rw [dif_neg hR, dif_neg hS]
+  rfl
+
+/-- **NEGATIVE CONTROL — the reparametrisation drops and duplicates nothing.** Joining a
+configuration's own three restrictions returns that configuration. A partition that overlapped, or
+that failed to cover, would fail exactly here, and the failure would be silent inside an integral:
+the change of variables would still typecheck and would integrate the wrong function.
+
+DERIVED: no numeral. -/
+theorem join3_restrict (U : ι → Ω) :
+    join3 R S T hRS hRT hST hU (fun j : ↥R => U (j : ι)) (fun j : ↥S => U (j : ι))
+        (fun j : ↥T => U (j : ι)) = U := by
+  funext i
+  rcases hU i with hi | hi | hi
+  · rw [join3_mem_R R S T hRS hRT hST hU _ _ _ hi]
+  · rw [join3_mem_S R S T hRS hRT hST hU _ _ _ hi]
+  · rw [join3_mem_T R S T hRS hRT hST hU _ _ _ hi]
+
+/-- **THE PRODUCT HAAR MEASURE, FACTORED OVER THREE BLOCKS.**
+
+The assembly map carries `(cvol R μ) ⊗ ((cvol S μ) ⊗ (cvol T μ))` to `cvol ι μ`. Two applications of
+`measurePreserving_sumPiEquivProdPi` supply the two splits and `measurePreserving_piCongrLeft`
+supplies the relabelling; the composite is `join3` on the nose.
+
+DERIVED: no numeral. -/
+theorem measurePreserving_join3 :
+    MeasurePreserving
+      (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+        join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2)
+      ((cvol ↥R μ).prod ((cvol ↥S μ).prod (cvol ↥T μ))) (cvol ι μ) := by
+  set e := blockEquiv3 R S T hRS hRT hST hU with he
+  -- split the inner pair off the sum `↥S ⊕ ↥T`
+  have hA : MeasurePreserving
+      (MeasurableEquiv.sumPiEquivProdPi (fun _ : (↥S ⊕ ↥T) => Ω))
+      (cvol (↥S ⊕ ↥T) μ) ((cvol ↥S μ).prod (cvol ↥T μ)) :=
+    measurePreserving_sumPiEquivProdPi (fun _ : (↥S ⊕ ↥T) => μ)
+  have hB : MeasurePreserving
+      (Prod.map (id : (↥R → Ω) → (↥R → Ω))
+        (MeasurableEquiv.sumPiEquivProdPi (fun _ : (↥S ⊕ ↥T) => Ω)).symm)
+      ((cvol ↥R μ).prod ((cvol ↥S μ).prod (cvol ↥T μ)))
+      ((cvol ↥R μ).prod (cvol (↥S ⊕ ↥T) μ)) :=
+    (MeasurePreserving.id _).prod (hA.symm _)
+  -- split the outer pair off the sum `↥R ⊕ (↥S ⊕ ↥T)`
+  have hC : MeasurePreserving
+      (MeasurableEquiv.sumPiEquivProdPi (fun _ : (↥R ⊕ (↥S ⊕ ↥T)) => Ω)).symm
+      ((cvol ↥R μ).prod (cvol (↥S ⊕ ↥T) μ)) (cvol (↥R ⊕ (↥S ⊕ ↥T)) μ) :=
+    (measurePreserving_sumPiEquivProdPi (fun _ : (↥R ⊕ (↥S ⊕ ↥T)) => μ)).symm _
+  -- and relabel the sum as the index type
+  have hD : MeasurePreserving (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e)
+      (cvol (↥R ⊕ (↥S ⊕ ↥T)) μ) (cvol ι μ) := by
+    simpa using measurePreserving_piCongrLeft (μ := fun _ : ι => μ) e
+  have hcomp := hD.comp (hC.comp hB)
+  -- the composite IS `join3`
+  have hps : ∀ (W : ι → Ω) (k : ↥R ⊕ (↥S ⊕ ↥T)),
+      (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e).symm W k = W (e k) := fun _ _ => rfl
+  have hkey : ∀ (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω),
+      (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e) (Sum.elim g (Sum.elim x y))
+        = join3 R S T hRS hRT hST hU g x y := by
+    intro g x y
+    have hsym : (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e).symm
+        (join3 R S T hRS hRT hST hU g x y) = Sum.elim g (Sum.elim x y) := by
+      funext k
+      rw [hps]
+      rcases k with ⟨i, hi⟩ | ⟨i, hi⟩ | ⟨i, hi⟩
+      · exact join3_mem_R R S T hRS hRT hST hU g x y hi
+      · exact join3_mem_S R S T hRS hRT hST hU g x y hi
+      · exact join3_mem_T R S T hRS hRT hST hU g x y hi
+    rw [← hsym]
+    exact (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e).apply_symm_apply _
+  have hfun : ((MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e)
+        ∘ ((MeasurableEquiv.sumPiEquivProdPi (fun _ : (↥R ⊕ (↥S ⊕ ↥T)) => Ω)).symm
+          ∘ Prod.map (id : (↥R → Ω) → (↥R → Ω))
+            (MeasurableEquiv.sumPiEquivProdPi (fun _ : (↥S ⊕ ↥T) => Ω)).symm))
+      = fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+          join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2 := by
+    funext p
+    obtain ⟨g, x, y⟩ := p
+    exact hkey g x y
+  rwa [hfun] at hcomp
+
+/-- **THE ITERATED INTEGRAL OVER THE THREE BLOCKS.**
+
+One integral over configurations, rewritten as three nested integrals over the blocks' own variables,
+with the integrand free to couple all three — which is what distinguishes this from
+`ActionSplit.block_factor`, where the integrand must factor and the answer is a product of numbers.
+
+The only hypotheses are measurability and a bound, which a Boltzmann weight times a bounded
+observable has; on a probability measure they give integrability
+(`ActionSplit.integrable_of_bounded`).
+
+DERIVED: no numeral. -/
+theorem integral_three_block (F : (ι → Ω) → ℝ) (hFm : Measurable F) {C : ℝ}
+    (hC : ∀ U, |F U| ≤ C) :
+    (∫ U, F U ∂(cvol ι μ))
+      = ∫ g, (∫ x, (∫ y, F (join3 R S T hRS hRT hST hU g x y) ∂(cvol ↥T μ))
+          ∂(cvol ↥S μ)) ∂(cvol ↥R μ) := by
+  have hmp := measurePreserving_join3 μ R S T hRS hRT hST hU
+  have hjm : Measurable (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+      F (join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2)) := hFm.comp hmp.measurable
+  rw [← integral_comp_of_mp hmp hFm,
+    integral_prod _ (integrable_of_bounded _ hjm (fun z => hC _))]
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun g => ?_))
+  have hgm : Measurable (fun q : (↥S → Ω) × (↥T → Ω) =>
+      F (join3 R S T hRS hRT hST hU g q.1 q.2)) := hjm.comp measurable_prodMk_left
+  exact integral_prod _ (integrable_of_bounded _ hgm (fun z => hC _))
+
+end ThreeBlock
+
+/-! ### The three blocks of a link reflection, and the instances the plane group needs -/
+
+section ThreeBlockLattice
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+/-- **The three blocks cover the links** — `oblk_union_univ` read pointwise, which is the form
+`blockEquiv3` takes. -/
+theorem oblk_cover (l : Link d n) :
+    l ∈ oblkR τ a m ∨ l ∈ oblkS τ a m ∨ l ∈ oblkT τ a m := by
+  have h : l ∈ oblkS τ a m ∪ oblkT τ a m ∪ oblkR τ a m := by
+    rw [oblk_union_univ]; exact Finset.mem_univ l
+  rcases Finset.mem_union.mp h with h1 | h2
+  · rcases Finset.mem_union.mp h1 with hS | hT
+    · exact Or.inr (Or.inl hS)
+    · exact Or.inr (Or.inr hT)
+  · exact Or.inl h2
+
+/-- The configuration assembled from its plane, positive-half and mirror variables. -/
+noncomputable def joinO (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N) :
+    Link d n → MassGap.SUN.SU N :=
+  join3 (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+    (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+    (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x y
+
+/-- **THE PRODUCT HAAR OVER THE LINK-REFLECTION BLOCKS, AS AN ITERATED INTEGRAL.**
+
+`integral_three_block` at the blocks of Part B: the plane `oblkR` outermost — which is where the
+crossing integration needs it, since `wilson_crossing_pairing_nonneg` integrates the plane links
+LAST — then the positive half, then the mirror.
+
+DERIVED: no numeral. -/
+theorem integral_oblk_three_block (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hFm : Measurable F)
+    {C : ℝ} (hC : ∀ U, |F U| ≤ C) :
+    (∫ U, F U ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))))
+      = ∫ g, (∫ x, (∫ y, F (joinO τ a m g x y)
+            ∂(cvol ↥(oblkT τ a m) (probHaar (MassGap.SUN.SU N))))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        ∂(cvol ↥(oblkR τ a m) (probHaar (MassGap.SUN.SU N))) :=
+  integral_three_block (probHaar (MassGap.SUN.SU N)) (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+    (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+    (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) F hFm hC
+
+end ThreeBlockLattice
+
+section PlaneGroup
+
+/-- **THE PLANE GROUP CARRIES WHAT THE CROSSING INTEGRATION ASKS OF IT.**
+
+`wilson_crossing_pairing_nonneg` takes `Γ` a measurable group and `lam` a right-invariant probability
+measure on it. With `Γ = oblkR → SU N` and `lam` the product Haar, all three are already available:
+the product of measurable multiplications is measurable, the product of probability measures is one,
+and the product of right-invariant measures is right-invariant — the last because
+`CompactGauge.isMulRightInvariant_probHaar` supplies unimodularity coordinate by coordinate.
+
+DERIVED: no numeral. -/
+theorem plane_group_haar {κ : Type} [Fintype κ] (Nc : ℕ) :
+    MeasurableMul (κ → MassGap.SUN.SU Nc)
+      ∧ IsProbabilityMeasure (cvol κ (probHaar (MassGap.SUN.SU Nc)))
+      ∧ (cvol κ (probHaar (MassGap.SUN.SU Nc))).IsMulRightInvariant :=
+  ⟨inferInstance, inferInstance, inferInstance⟩
+
+end PlaneGroup
+
+section ThreeBlockLattice2
+
+variable {d n : ℕ} [NeZero n]
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+
+/-- **NEGATIVE CONTROL — the plane block is not empty, so the outer integral is not a formality.**
+At even extent the fixed set contains the axis link at level `0` through the site `a`, so `Γ` is a
+nontrivial group and `lam` is not a point mass. A reduction that quietly integrated over an empty
+plane would prove nothing about the odd lag.
+
+DERIVED: `0` is the lower plane's level, which is where the witness link sits. -/
+theorem oblkR_nonempty : ((τ, Function.update (fun _ => a) τ a) : Link d n) ∈ oblkR τ a m := by
+  rw [mem_oblkR]
+  refine ⟨rfl, Or.inl ?_⟩
+  show lv a ((Function.update (fun _ => a) τ a : Site d n) τ) = 0
+  rw [Function.update_self]
+  simp [lv]
+
+end ThreeBlockLattice2
+
+/-! ## Part F — the mirror's variables, transported to the positive half
+
+After Part E the innermost integral runs over `oblkT → SU N`, and the crossing integration wants BOTH
+inner integrals to run over the SAME half with the SAME measure. The transport is the reflection
+itself: `reflLink` is a bijection `oblkT ≃ oblkS` (`oblkT_maps_oblkS` with `oblkS_maps_oblkT` as its
+inverse) and `reflConf` daggers exactly the axis links among them, so the map is a RELABELLING
+composed with a per-coordinate inversion — measure-preserving by the same two facts
+`invLink_measurePreserving` uses, one of them for a different reason: here the relabelling is between
+two DIFFERENT index types, which `ActionSplit.twist_measurePreserving` (a permutation of one index
+set) does not cover. `measurePreserving_relabel_twist` is the two-type form.
+
+`reflConf_joinO_mirror` is the payoff: with the mirror's variable written as `mirrorT y`, the
+REFLECTED configuration restricted to the positive half is `y` itself. So the two factors of the
+pairing become the same function of two independent `oblkS`-variables, which is the shape
+`CrossingIntegration.wilson_crossing_pairing_nonneg` reads. -/
+
+section Relabel
+
+variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+
+/-- **A relabelling BETWEEN TWO INDEX TYPES, twisted coordinatewise, preserves the product measure.**
+
+`ActionSplit.twist_measurePreserving` is this with the two index types equal, which is what a
+reflection of the whole link set is. The mirror transport is not a permutation of one index set: it
+carries `oblkT` onto `oblkS`, two different `Finset` coercions, so the two-type form is what it
+needs.
+
+DERIVED: no numeral. -/
+theorem measurePreserving_relabel_twist {κ κ' : Type} [Fintype κ] [Fintype κ']
+    (e : κ ≃ κ') (σ : κ → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ) :
+    MeasurePreserving (fun (V : κ' → Ω) (i : κ) => σ i (V (e i))) (cvol κ' μ) (cvol κ μ) := by
+  have hrel : MeasurePreserving (fun (V : κ' → Ω) (i : κ) => V (e i)) (cvol κ' μ) (cvol κ μ) := by
+    have h : MeasurePreserving (MeasurableEquiv.piCongrLeft (fun _ : κ' => Ω) e)
+        (cvol κ μ) (cvol κ' μ) := by
+      simpa using measurePreserving_piCongrLeft (μ := fun _ : κ' => μ) e
+    exact h.symm _
+  have hco : MeasurePreserving (fun (W : κ → Ω) (i : κ) => σ i (W i)) (cvol κ μ) (cvol κ μ) := by
+    refine ⟨measurable_pi_lambda _ (fun i => (hσ i).measurable.comp (measurable_pi_apply i)), ?_⟩
+    show Measure.map (fun (W : κ → Ω) (i : κ) => σ i (W i)) (cvol κ μ) = cvol κ μ
+    rw [Measure.pi_map_pi (fun i => (hσ i).aemeasurable)]
+    exact congrArg Measure.pi (funext fun i => (hσ i).map_eq)
+  exact hco.comp hrel
+
+end Relabel
+
+section Mirror2
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+/-- **The reflection carries the mirror onto the positive half** — the converse of
+`oblkS_maps_oblkT`, and what makes `reflLink` a bijection between the two blocks. An axis level
+`j > m` goes to `n − j`, strictly between `0` and `m`; a transverse level `0` goes to `1` and a
+transverse level `j > m` to `n − j + 1`, which is at most `m` because `n − m = m`. -/
+theorem oblkT_maps_oblkS (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l ∈ oblkT τ a m) :
+    reflLink τ (a + a + 1) l ∈ oblkS τ a m := by
+  have hn : 0 < n := NeZero.pos n
+  have hjn : lv a (l.2 τ) < n := lv_lt a (l.2 τ)
+  have hdir : (reflLink τ (a + a + 1) l).1 = l.1 := rfl
+  have hcancel : (a + a + 1 : Fin n) - 1 = a + a := by simp
+  rw [mem_oblkT] at hl
+  rw [mem_oblkS, hdir]
+  by_cases h : l.1 = τ
+  · rw [if_pos h] at hl ⊢
+    have hgt : m < lv a (l.2 τ) := hl
+    have hinner : (n - lv a (l.2 τ)) % n = n - lv a (l.2 τ) := Nat.mod_eq_of_lt (by omega)
+    have himg : (reflLink τ (a + a + 1) l).2 τ = (a + a) - l.2 τ := by
+      rw [reflLink_coord_axis _ h, hcancel]
+    rw [himg, lv_refl_site, hinner]
+    omega
+  · rw [if_neg h] at hl ⊢
+    have himg : (reflLink τ (a + a + 1) l).2 τ = ((a + a) - l.2 τ) + 1 := by
+      rw [reflLink_coord_transverse _ h]
+      abel
+    rw [himg, lv_add_one, lv_refl_site]
+    rcases hl with h0 | hgt
+    · have hs : ((n - lv a (l.2 τ)) % n + 1) % n = 1 := by
+        rw [h0, Nat.sub_zero, Nat.mod_self, Nat.zero_add, Nat.mod_eq_of_lt (by omega)]
+      rw [hs]; omega
+    · have hinner : (n - lv a (l.2 τ)) % n = n - lv a (l.2 τ) := Nat.mod_eq_of_lt (by omega)
+      have hs : ((n - lv a (l.2 τ)) % n + 1) % n = n - lv a (l.2 τ) + 1 := by
+        rw [hinner, Nat.mod_eq_of_lt (by omega)]
+      rw [hs]; omega
+
+/-- **The reflection as a BIJECTION of the two halves.** Its inverse is itself
+(`reflLink_involutive`); the two membership lemmas are what make it typecheck in both directions.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2m` and `0 < m` — the geometry of an even extent
+with a nonempty half, not a choice; `1` is the link reflection's one-step offset in the reflection
+constant `a + a + 1`, which is what makes `2x = c` unsolvable and `2x = c − 1` solvable. -/
+def mirrorEquivTS (hm : n = 2 * m) (hm0 : 0 < m) :
+    ↥(oblkT τ a m) ≃ ↥(oblkS τ a m) where
+  toFun := fun l => ⟨reflLink τ (a + a + 1) (l : Link d n), oblkT_maps_oblkS τ a m hm hm0 l.2⟩
+  invFun := fun l => ⟨reflLink τ (a + a + 1) (l : Link d n), oblkS_maps_oblkT τ a m hm hm0 l.2⟩
+  left_inv := fun l => Subtype.ext (reflLink_involutive τ (a + a + 1) (l : Link d n))
+  right_inv := fun l => Subtype.ext (reflLink_involutive τ (a + a + 1) (l : Link d n))
+
+/-- **The mirror's variable, written as a variable of the positive half.** The relabelling is
+`mirrorEquivTS` and the twist is the dagger the reflection puts on axis links — the same `σ`
+`Reflect.reflConf` carries, restricted to the mirror block.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2m` and `0 < m`; `1` is the link reflection's
+one-step offset in `a + a + 1`. All three are the geometry, not choices. -/
+noncomputable def mirrorT (hm : n = 2 * m) (hm0 : 0 < m)
+    (y : ↥(oblkS τ a m) → MassGap.SUN.SU N) : ↥(oblkT τ a m) → MassGap.SUN.SU N :=
+  fun l => if (l : Link d n).1 = τ then (y (mirrorEquivTS τ a m hm hm0 l))⁻¹
+    else y (mirrorEquivTS τ a m hm hm0 l)
+
+/-- **THE TRANSPORT IS MEASURE-PRESERVING.** Relabelling by a bijection of index sets and inverting
+on some coordinates; Haar is inversion-invariant (`Reflect.isInvInvariant_probHaar`), so every
+coordinate map preserves the factor.
+
+DERIVED: no numeral. -/
+theorem measurePreserving_mirrorT (hm : n = 2 * m) (hm0 : 0 < m) :
+    MeasurePreserving (mirrorT (N := N) τ a m hm hm0)
+      (cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N)))
+      (cvol ↥(oblkT τ a m) (probHaar (MassGap.SUN.SU N))) := by
+  have hσ : ∀ l : ↥(oblkT τ a m), MeasurePreserving
+      (fun u : MassGap.SUN.SU N => if (l : Link d n).1 = τ then u⁻¹ else u)
+      (probHaar (MassGap.SUN.SU N)) (probHaar (MassGap.SUN.SU N)) := by
+    intro l
+    by_cases h : (l : Link d n).1 = τ
+    · simpa [h] using Measure.measurePreserving_inv (probHaar (MassGap.SUN.SU N))
+    · have hid : (fun u : MassGap.SUN.SU N => if (l : Link d n).1 = τ then u⁻¹ else u) = id := by
+        funext u; simp [h]
+      rw [hid]
+      exact MeasurePreserving.id _
+  exact measurePreserving_relabel_twist (probHaar (MassGap.SUN.SU N))
+    (mirrorEquivTS τ a m hm hm0)
+    (fun l u => if (l : Link d n).1 = τ then u⁻¹ else u) hσ
+
+/-- **THE REFLECTED CONFIGURATION, RESTRICTED TO THE POSITIVE HALF, IS THE TRANSPORTED VARIABLE.**
+
+With the mirror's block filled by `mirrorT y`, the reflection of the assembled configuration reads
+`y` on `oblkS` — the dagger applied twice on an axis link is the identity, and on a transverse link
+there is no dagger at all. This is what makes the pairing two evaluations of ONE function of the
+half, at two independent variables.
+
+DERIVED: no numeral. -/
+theorem reflConf_joinO_mirror (hm : n = 2 * m) (hm0 : 0 < m)
+    (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N)
+    {l : Link d n} (hl : l ∈ oblkS τ a m) :
+    reflConf τ (a + a + 1) (joinO τ a m g x (mirrorT τ a m hm hm0 y)) l = y ⟨l, hl⟩ := by
+  have hT : reflLink τ (a + a + 1) l ∈ oblkT τ a m := oblkS_maps_oblkT τ a m hm hm0 hl
+  have hdir : (reflLink τ (a + a + 1) l).1 = l.1 := rfl
+  have hinv : (mirrorEquivTS τ a m hm hm0) ⟨reflLink τ (a + a + 1) l, hT⟩ = ⟨l, hl⟩ :=
+    Subtype.ext (reflLink_involutive τ (a + a + 1) l)
+  have hjoin : joinO τ a m g x (mirrorT τ a m hm hm0 y) (reflLink τ (a + a + 1) l)
+      = mirrorT τ a m hm hm0 y ⟨reflLink τ (a + a + 1) l, hT⟩ :=
+    join3_mem_T (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+      (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+      (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x _ hT
+  have hmir : mirrorT τ a m hm hm0 y ⟨reflLink τ (a + a + 1) l, hT⟩
+      = if l.1 = τ then (y ⟨l, hl⟩)⁻¹ else y ⟨l, hl⟩ := by
+    show (if (reflLink τ (a + a + 1) l).1 = τ
+        then (y ((mirrorEquivTS τ a m hm hm0) ⟨reflLink τ (a + a + 1) l, hT⟩))⁻¹
+        else y ((mirrorEquivTS τ a m hm hm0) ⟨reflLink τ (a + a + 1) l, hT⟩))
+      = if l.1 = τ then (y ⟨l, hl⟩)⁻¹ else y ⟨l, hl⟩
+    rw [hdir, hinv]
+  show (if l.1 = τ
+      then (joinO τ a m g x (mirrorT τ a m hm hm0 y) (reflLink τ (a + a + 1) l))⁻¹
+      else joinO τ a m g x (mirrorT τ a m hm hm0 y) (reflLink τ (a + a + 1) l)) = y ⟨l, hl⟩
+  rw [hjoin, hmir]
+  by_cases h : l.1 = τ
+  · rw [if_pos h, if_pos h, inv_inv]
+  · rw [if_neg h, if_neg h]
+
+/-- **NEGATIVE CONTROL — the transport is not the identity relabelling.** On an AXIS link of the
+mirror the transported variable is the INVERSE of the half's, and that dagger is the whole difference
+between a link reflection and a site reflection: `ActionSplit`'s even-lag weld assumes the shared
+block is NOT acted on, and here it is. A transport that dropped the inversion would be the map that
+case uses, and it would be the wrong map.
+
+DERIVED: no numeral. -/
+theorem negctl_mirrorT_daggers_axis (hm : n = 2 * m) (hm0 : 0 < m)
+    (y : ↥(oblkS τ a m) → MassGap.SUN.SU N) (l : ↥(oblkT τ a m)) (hax : (l : Link d n).1 = τ) :
+    mirrorT τ a m hm hm0 y l = (y (mirrorEquivTS τ a m hm hm0 l))⁻¹ := by
+  show (if (l : Link d n).1 = τ then (y (mirrorEquivTS τ a m hm hm0 l))⁻¹
+      else y (mirrorEquivTS τ a m hm hm0 l)) = _
+  rw [if_pos hax]
+
+end Mirror2
+
+/-! ### The iterated integral with both halves on the SAME block -/
+
+section MirrorIntegral
+
+variable {ι : Type} [Fintype ι] [DecidableEq ι] {Ω : Type} [MeasurableSpace Ω]
+
+/-- The assembly map is measurable in all three block variables at once. -/
+theorem measurable_join3 (R S T : Finset ι) (hRS : Disjoint R S) (hRT : Disjoint R T)
+    (hST : Disjoint S T) (hU : ∀ i : ι, i ∈ R ∨ i ∈ S ∨ i ∈ T) :
+    Measurable (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+      join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2) := by
+  refine measurable_pi_lambda _ (fun i => ?_)
+  rcases hU i with hi | hi | hi
+  · have h : (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+        join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2 i) = fun p => p.1 ⟨i, hi⟩ :=
+      funext (fun p => join3_mem_R R S T hRS hRT hST hU p.1 p.2.1 p.2.2 hi)
+    rw [h]
+    exact (measurable_pi_apply _).comp measurable_fst
+  · have h : (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+        join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2 i) = fun p => p.2.1 ⟨i, hi⟩ :=
+      funext (fun p => join3_mem_S R S T hRS hRT hST hU p.1 p.2.1 p.2.2 hi)
+    rw [h]
+    exact (measurable_pi_apply _).comp (measurable_fst.comp measurable_snd)
+  · have h : (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
+        join3 R S T hRS hRT hST hU p.1 p.2.1 p.2.2 i) = fun p => p.2.2 ⟨i, hi⟩ :=
+      funext (fun p => join3_mem_T R S T hRS hRT hST hU p.1 p.2.1 p.2.2 hi)
+    rw [h]
+    exact (measurable_pi_apply _).comp (measurable_snd.comp measurable_snd)
+
+end MirrorIntegral
+
+section MirrorIntegralLattice
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+theorem measurable_joinO_right (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    Measurable (fun y : ↥(oblkT τ a m) → MassGap.SUN.SU N => joinO τ a m g x y) :=
+  (measurable_join3 (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+      (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+      (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m)).comp
+    (measurable_const.prodMk (measurable_const.prodMk measurable_id))
+
+/-- **THE ITERATED INTEGRAL, WITH BOTH HALVES ON `oblkS`.**
+
+Part E's three blocks with the mirror's variable transported: the plane outermost, then TWO
+independent copies of the positive half's variable against the SAME measure. That is exactly the
+`∫ lam ∫ nu ∫ nu` of `CrossingIntegration.wilson_crossing_pairing_nonneg`, and it is the last change
+of variables that inequality needs before the integrand identification.
+
+DERIVED: no numeral. -/
+theorem integral_oblk_mirror (hm : n = 2 * m) (hm0 : 0 < m)
+    (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hFm : Measurable F) {C : ℝ}
+    (hC : ∀ U, |F U| ≤ C) :
+    (∫ U, F U ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))))
+      = ∫ g, (∫ x, (∫ y, F (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+            ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        ∂(cvol ↥(oblkR τ a m) (probHaar (MassGap.SUN.SU N))) := by
+  rw [integral_oblk_three_block τ a m F hFm hC]
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun g => ?_))
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun x => ?_))
+  exact (integral_comp_of_mp (measurePreserving_mirrorT τ a m hm hm0)
+    (hFm.comp (measurable_joinO_right τ a m g x))).symm
+
+end MirrorIntegralLattice
+
+/-! ## Part G — the instances the crossing integration asks for
+
+`plane_group_haar` already supplies `Γ`'s three. The remaining two are the action on the half and the
+word's coordinate bound, and both are settled here in the form the theorem takes:
+
+* `planeAct_measurePreserving` — the plane gauge acts on the half measure-preservingly, coordinate by
+  coordinate, by bi-invariance of Haar (`CompactGauge.isMulRightInvariant_probHaar` is the right half
+  of it); `measurable_uncurry_planeAct` is the joint measurability `hactm` asks for, and
+  `planeAct_mul` above is `hmul`.
+* `abs_coord_le_one_of_entries` with `entry_blockDiagonal_fin_norm_le_one` — every coordinate of the
+  block-diagonal word is either a unitary entry (`SUN.unitary_entry_norm_le_one`) or `0`. -/
+
+section GaugeActionMeasure
+
+variable {ι κ : Type} [Fintype ι] [DecidableEq ι] {N : ℕ}
+
+/-- **THE PLANE GAUGE ACTION PRESERVES THE HALF'S PRODUCT HAAR.** Each coordinate is
+`u ↦ g_A · u · g_B⁻¹`, a left translation composed with a right translation, and probability Haar on
+a compact group is invariant under both (`CompactGauge.isMulRightInvariant_probHaar` for the second).
+
+DERIVED: no numeral. -/
+theorem planeAct_measurePreserving (A B : ι → κ) (g : κ → MassGap.SUN.SU N) :
+    MeasurePreserving (planeAct A B g)
+      (cvol ι (probHaar (MassGap.SUN.SU N))) (cvol ι (probHaar (MassGap.SUN.SU N))) := by
+  have hσ : ∀ i : ι, MeasurePreserving
+      (fun u : MassGap.SUN.SU N => g (A i) * u * (g (B i))⁻¹)
+      (probHaar (MassGap.SUN.SU N)) (probHaar (MassGap.SUN.SU N)) := by
+    intro i
+    have h := (measurePreserving_mul_left (probHaar (MassGap.SUN.SU N)) (g (A i))).comp
+      (measurePreserving_mul_right (probHaar (MassGap.SUN.SU N)) (g (B i))⁻¹)
+    convert h using 1
+    funext u
+    simp [Function.comp, mul_assoc]
+  have hmp := twist_measurePreserving (ι := ι) (probHaar (MassGap.SUN.SU N))
+    (1 : Equiv.Perm ι) (fun i u => g (A i) * u * (g (B i))⁻¹) hσ
+  have hfun : twist (1 : Equiv.Perm ι)
+      (fun i (u : MassGap.SUN.SU N) => g (A i) * u * (g (B i))⁻¹) = planeAct A B g := by
+    funext u i
+    show g (A ((1 : Equiv.Perm ι) i)) * u ((1 : Equiv.Perm ι) i)
+        * (g (B ((1 : Equiv.Perm ι) i)))⁻¹ = g (A i) * u i * (g (B i))⁻¹
+    simp
+  rwa [hfun] at hmp
+
+end GaugeActionMeasure
+
+section GaugeActionMeasurable
+
+variable {ι κ : Type} {N : ℕ}
+
+/-- **THE ACTION IS JOINTLY MEASURABLE** — `hactm`. Multiplication and inversion are measurable on
+`SU(N)` (`SUN` supplies `MeasurableMul₂` and `MeasurableInv`), and the action reads three
+coordinates.
+
+DERIVED: no numeral. -/
+theorem measurable_uncurry_planeAct (A B : ι → κ) :
+    Measurable (Function.uncurry
+      (fun (g : κ → MassGap.SUN.SU N) (u : ι → MassGap.SUN.SU N) => planeAct A B g u)) := by
+  refine measurable_pi_lambda _ (fun i => ?_)
+  show Measurable (fun p : (κ → MassGap.SUN.SU N) × (ι → MassGap.SUN.SU N) =>
+    p.1 (A i) * p.2 i * (p.1 (B i))⁻¹)
+  exact (((measurable_pi_apply (A i)).comp measurable_fst).mul
+      ((measurable_pi_apply i).comp measurable_snd)).mul
+    (((measurable_pi_apply (B i)).comp measurable_fst).inv)
+
+end GaugeActionMeasurable
+
+section WordBound
+
+/-- **A matrix whose entries have norm at most one has every real coordinate bounded by one** — the
+form `wilson_crossing_pairing_nonneg`'s `hXb` takes. A coordinate is a real or imaginary part, and
+both are bounded by the modulus.
+
+DERIVED: `1` is the bound a unitary entry carries (`SUN.unitary_entry_norm_le_one`), not a chosen
+cut. -/
+theorem abs_coord_le_one_of_entries {Nc : ℕ} {A : Matrix (Fin Nc) (Fin Nc) ℂ}
+    (h : ∀ i j, ‖A i j‖ ≤ 1) (p : Coord Nc) : |coord p A| ≤ 1 := by
+  unfold coord
+  split
+  · exact (Complex.abs_re_le_norm _).trans (h _ _)
+  · exact (Complex.abs_im_le_norm _).trans (h _ _)
+
+/-- **Every entry of a block-diagonal of `SU(N)` matrices, relabelled to a `Fin`, has norm at most
+one** — it is a unitary entry on the diagonal blocks and `0` off them.
+
+DERIVED: `1` is the unitary entry bound; `0` is the off-block entry. -/
+theorem entry_blockDiagonal_fin_norm_le_one {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
+    (W : K → MassGap.SUN.SU N) (p q : Fin (Fintype.card (Fin N × K))) :
+    ‖((Matrix.blockDiagonal (fun k => ((W k : MassGap.SUN.SU N)
+        : Matrix (Fin N) (Fin N) ℂ))).submatrix
+        (Fintype.equivFin (Fin N × K)).symm (Fintype.equivFin (Fin N × K)).symm) p q‖ ≤ 1 := by
+  show ‖Matrix.blockDiagonal (fun k => ((W k : MassGap.SUN.SU N)
+      : Matrix (Fin N) (Fin N) ℂ))
+        ((Fintype.equivFin (Fin N × K)).symm p) ((Fintype.equivFin (Fin N × K)).symm q)‖ ≤ 1
+  rw [Matrix.blockDiagonal_apply]
+  set k := ((Fintype.equivFin (Fin N × K)).symm p).2 with hkdef
+  by_cases hk : k = ((Fintype.equivFin (Fin N × K)).symm q).2
+  · rw [if_pos hk]
+    have hu : ((W k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
+        ∈ Matrix.unitaryGroup (Fin N) ℂ :=
+      (Matrix.mem_specialUnitaryGroup_iff.mp (W k).2).1
+    exact MassGap.SUN.unitary_entry_norm_le_one N hu _ _
+  · rw [if_neg hk]
+    simp
+
+end WordBound
+
+/-! ## Part H — the glue: which plane an odd lag gets, and where it puts the base plaquette
+
+`corrClay_rp_of_odd_lags` asks for `PlaqReflPositive` at a lag `lag`, and
+`plaqReflPositive_odd_of_crossing` supplies it at a lag of the form `a + a + 1`. Two facts are needed
+to join them and neither was stated:
+
+* every odd lag at even extent IS of that form (`ActionSplit.even_sub_one_of_odd` and
+  `ActionSplit.exists_fixed_site` together), and
+* the plane can be CHOSEN so that the base plaquette lies in the positive half — the odd-lag
+  analogue of `ActionSplit.exists_half_below`, and sharper than it, because a link reflection needs
+  `0 < lv ≤ m` rather than `lv < m`: the transverse family sits one step above the axis family.
+
+`exists_odd_lag_plane_in_half` is both at once. The two solutions of `2x = lag − 1` differ by `m`
+(`ActionSplit.lv_other_half`), so one of them always lands the site in `(0, m]`: a site at level `0`
+goes to level `m`, and a site above `m` drops by `m`. -/
+
+section OddPlane
+
+variable {d n : ℕ} [NeZero n] (m : ℕ)
+
+/-- **EVERY ODD LAG AT EVEN EXTENT HAS A PLANE, AND THE PLANE CAN BE CHOSEN TO PUT A GIVEN SITE IN
+THE POSITIVE HALF.**
+
+`a + a + 1 = c` says the reflection is the link reflection Part B is about; `0 < lv a p ≤ m` says the
+site `p` sits at a transverse level of `oblkS`. Both solutions of `2x = c − 1` are available and they
+differ by `m`, which is exactly the offset that moves a level out of `{0} ∪ (m, n)` into `(0, m]`.
+
+DERIVED: `1` is the link reflection's one-step offset — the whole difference from a site reflection;
+`m` is the half-extent, a parameter. -/
+theorem exists_odd_lag_plane_in_half (hn : Even n) (hm : n = 2 * m) (hm0 : 0 < m)
+    {c : Fin n} (hc : ¬ Even c.val) (p : Fin n) :
+    ∃ a : Fin n, a + a + 1 = c ∧ 0 < lv a p ∧ lv a p ≤ m := by
+  have h2 : 2 ≤ n := by omega
+  obtain ⟨a0, ha0⟩ := exists_fixed_site (even_sub_one_of_odd hn h2 hc)
+  have hcc : ((c - 1) + 1 : Fin n) = c := by simp
+  have hj := lv_lt a0 p
+  by_cases h : 0 < lv a0 p ∧ lv a0 p ≤ m
+  · exact ⟨a0, by rw [ha0, hcc], h.1, h.2⟩
+  · have hmm : fcast n m + fcast n m = 0 := by
+      rw [fcast_add]
+      have hs : m + m = n := by omega
+      rw [hs, fcast_self]
+    have hcase : lv a0 p = 0 ∨ m < lv a0 p := by omega
+    have hlvo : lv (a0 + fcast n m) p = (lv a0 p + m) % n := lv_other_half m hm a0 p
+    have hres : 0 < lv (a0 + fcast n m) p ∧ lv (a0 + fcast n m) p ≤ m := by
+      rcases hcase with h0 | hgt
+      · rw [hlvo, h0, Nat.zero_add, Nat.mod_eq_of_lt (by omega)]
+        omega
+      · have hmod : (lv a0 p + m) % n = lv a0 p + m - n := by
+          rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
+        rw [hlvo, hmod]
+        omega
+    refine ⟨a0 + fcast n m, ?_, hres.1, hres.2⟩
+    calc (a0 + fcast n m) + (a0 + fcast n m) + 1
+        = ((a0 + a0) + (fcast n m + fcast n m)) + 1 := by abel
+      _ = c := by rw [hmm, add_zero, ha0, hcc]
+
+variable (τ : Fin d) (a : Fin n)
+
+/-- **A plaquette with NEITHER direction along the axis, based inside the positive half, reads the
+positive half alone.** Its four links all sit at the base site's level, because a transverse step
+does not move the axis coordinate — which is why `0 < lv ≤ m` is enough and no `< m` is needed.
+
+This is the locality hypothesis `aObs_local` takes, at the base plaquette
+`WilsonBridge.corrClay` reads. -/
+theorem transverse_plaq_links_in_oblkS (hm : n = 2 * m) (hm0 : 0 < m) {q₀ : Plaq d n}
+    (h1 : q₀.1.1 ≠ τ) (h2 : q₀.1.2 ≠ τ) (hlv : 0 < lv a (q₀.2 τ)) (hle : lv a (q₀.2 τ) ≤ m) :
+    ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m :=
+  oplaq_links_plus τ a m hm hm0 ((mem_oplqPlus τ a m q₀).mpr
+    ⟨fun hc => h1 hc.1, hlv, hle, fun hc => absurd hc (fun hd => hd.elim h1 h2)⟩)
+
+end OddPlane
+
+/-! ### The whole reduction, in one statement -/
+
+section Collapse
+
+open MassGap.ReflectPositive
+
+/-- **THE AXIOM AT EVEN EXTENT, REDUCED TO ONE INEQUALITY PER PLANE.**
+
+`corrClay_rp_of_odd_lags` left `PlaqReflPositive` at the odd lags as a hypothesis. This consumes
+instead the CROSSING INTEGRAL at each plane, with the locality of the base plaquette SUPPLIED rather
+than assumed — so the caller's obligation is exactly the object
+`CrossingIntegration.wilson_crossing_pairing_nonneg` proves in the abstract, and nothing else about
+the lattice remains between the two.
+
+What is still not here is the identification of that integrand with the crossing theorem's: Part E
+factors the measure, Part F transports the mirror, Part G supplies the instances, and what remains is
+to exhibit the straddling factor as `exp (β' · hsRe (X (act g x)) (X y))` for the block-diagonal word
+`X` of Parts C and D. `integral_oblk_mirror` is the change of variables that identification is
+performed in.
+
+DERIVED: `3` is the gauge group's rank, `4` the dimension, `(0, 1)` the base plaquette's plane and
+`2` the lag axis — all of them `WilsonBridge.corrClay`'s own choices, not this file's. -/
+theorem corrClay_rp_of_crossing (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
+    (hcross : ∀ a : Fin (Nap + 1),
+      (∀ l ∈ (bd ((((0 : Fin 4), (1 : Fin 4)),
+          (fun _ => 0 : Site 4 (Nap + 1))) : Plaq 4 (Nap + 1))).map Prod.fst,
+        l ∈ oblkS (2 : Fin 4) a m) →
+      ∀ aC : ℝ, 0 ≤ ∫ U,
+        aObs (N := 3) (2 : Fin 4) a m
+            ((((0 : Fin 4), (1 : Fin 4)), (fun _ => 0 : Site 4 (Nap + 1))) : Plaq 4 (Nap + 1))
+            β aC U
+          * aObs (2 : Fin 4) a m
+              ((((0 : Fin 4), (1 : Fin 4)), (fun _ => 0 : Site 4 (Nap + 1))) : Plaq 4 (Nap + 1))
+              β aC (reflConf (2 : Fin 4) (a + a + 1) U)
+          * Real.exp (-β * actCrossO (2 : Fin 4) a m U)
+        ∂(cvol (Link 4 (Nap + 1)) (probHaar (MassGap.SUN.SU 3)))) :
+    (∀ lag, 0 ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β lag)
+      ∧ 0 < ∑ lag, MassGap.WilsonBridge.corrClay (Nap + 1) β lag := by
+  refine corrClay_rp_of_odd_lags Nap m hm hm0 β (fun lag hodd => ?_)
+  have hn : Even (Nap + 1) := ⟨m, by omega⟩
+  obtain ⟨a, ha, hlv0, hlvm⟩ :=
+    exists_odd_lag_plane_in_half m hn hm hm0 hodd (0 : Fin (Nap + 1))
+  have hloc : ∀ l ∈ (bd ((((0 : Fin 4), (1 : Fin 4)),
+      (fun _ => 0 : Site 4 (Nap + 1))) : Plaq 4 (Nap + 1))).map Prod.fst,
+      l ∈ oblkS (2 : Fin 4) a m :=
+    transverse_plaq_links_in_oblkS m (2 : Fin 4) a hm hm0
+      (by decide : (0 : Fin 4) ≠ (2 : Fin 4)) (by decide : (1 : Fin 4) ≠ (2 : Fin 4))
+      hlv0 hlvm
+  have hRP := plaqReflPositive_odd_of_crossing (N := 3) (2 : Fin 4) a m
+    (by norm_num) hm hm0 β _ (hcross a hloc)
+  rwa [ha] at hRP
+
+end Collapse
+
+/-! ## Part I — the straddling family, block by block
+
+The blocks of the direct sum are indexed by `oplqCross` ITSELF, not by a reduced family. That is the
+cheap way to do it: `oplqCross` carries both orientations of every geometric plaquette, and summing
+over it double-counts each one — but the double count is harmless, because the two orientations
+contribute the SAME `Re tr` (`re_tr_hol_swap`: their words are inverse) and the direct sum simply
+carries the block twice. No bijection, no fibre counting, no factor to track.
+
+Each `q ∈ oplqCross` reads four links in fixed roles: `aLinkOf` and `bLinkOf` are its two fixed axis
+links (the plane gauge), `sLinkOf` is the link the POSITIVE half owns and `tLinkOf` the one the mirror
+owns. Which of the two transverse links is which depends on the plane — at level `0` the positive
+half owns the far one, at level `m` the near one — and that is the same swap the handedness
+reconciliation is about. After inverting the plane variables on the UPPER plane alone (`uplane`,
+licensed by `invLink_measurePreserving`) both planes read one shape:
+
+    Re tr (word) = hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))
+
+`re_tr_hol_cross` is that identity, uniformly over `oplqCross`.
+
+`planeARaw` and `planeBRaw` run the assignment BACKWARDS — from a half-link to the plane links of the
+plaquette that owns it — which is what makes the gauge a genuine action on `oblkS → SU N` rather
+than a family indexed by blocks. **That inverse assignment needs `2 ≤ m`**, and it is the only place
+the restriction is used: at `m = 1` the level-`1` and level-`m` families coincide, one half-link is
+owned by two different plaquettes with different plane links, and no coordinatewise action exists.
+`negctl_plane_assignment_collides_at_m_one` exhibits the collision. -/
+
+section Family
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+/-- **A site is at level zero exactly when it IS the plane's base site.**
+
+DERIVED: `0` is the level of `a` itself, which is what `lv` measures from. -/
+theorem lv_eq_zero_iff (a p : Fin n) : lv a p = 0 ↔ p = a := by
+  constructor
+  · intro h
+    have hp := eq_add_lv a p
+    rw [h, fcast_zero, add_zero] at hp
+    exact hp
+  · intro h
+    subst h
+    simp [lv]
+
+/-- One step BACK along the axis — the inverse of `WilsonHypercubic.shift` in the axis direction.
+
+DERIVED: `1` is one lattice step, the same `1` as in `shift`. -/
+def backSite (τ : Fin d) (x : Site d n) : Site d n := Function.update x τ (x τ - 1)
+
+theorem backSite_shift (τ : Fin d) (x : Site d n) : backSite τ (shift τ x) = x := by
+  funext k
+  show (Function.update (shift τ x) τ ((shift τ x) τ - 1)) k = x k
+  by_cases h : k = τ
+  · rw [h, Function.update_self]
+    have hs : (shift τ x) τ = x τ + 1 := by
+      show (Function.update x τ (x τ + 1)) τ = x τ + 1
+      rw [Function.update_self]
+    rw [hs]
+    abel
+  · rw [Function.update_of_ne h]
+    show (Function.update x τ (x τ + 1)) k = x k
+    rw [Function.update_of_ne h]
+
+/-- **The transverse direction of a straddling plaquette** — the one that is not the axis.
+
+DERIVED: no numeral; the projections are structure fields. -/
+def cDir (τ : Fin d) (q : Plaq d n) : Fin d := if q.1.1 = τ then q.1.2 else q.1.1
+
+theorem cDir_left (ν : Fin d) (x : Site d n) : cDir τ (((τ, ν), x) : Plaq d n) = ν := by
+  show (if τ = τ then ν else τ) = ν
+  rw [if_pos rfl]
+
+theorem cDir_right {ν : Fin d} (hν : ν ≠ τ) (x : Site d n) :
+    cDir τ (((ν, τ), x) : Plaq d n) = ν := by
+  show (if ν = τ then τ else ν) = ν
+  rw [if_neg hν]
+
+theorem cDir_ne {q : Plaq d n} (hq : q ∈ oplqCross τ a m) : cDir τ q ≠ τ := by
+  obtain ⟨hdeg, hax, -⟩ := (mem_oplqCross τ a m q).mp hq
+  show (if q.1.1 = τ then q.1.2 else q.1.1) ≠ τ
+  by_cases h : q.1.1 = τ
+  · rw [if_pos h]
+    exact fun hc => hdeg ⟨h, hc⟩
+  · rw [if_neg h]
+    exact h
+
+/-- **The upper plane** — the fixed axis links at level `m`. Inverting the gauge variable on THESE
+links and nowhere else is what puts the two planes into one handedness
+(`cross_word_uniform_on_plane` against `cross_word_uniform_off_plane`).
+
+DERIVED: `m` is the upper plane's level, a parameter of the geometry, not a chosen cut. -/
+def uplane (τ : Fin d) (a : Fin n) (m : ℕ) : Finset (Link d n) :=
+  (oblkR τ a m).filter (fun l => lv a (l.2 τ) = m)
+
+theorem mem_uplane (l : Link d n) :
+    l ∈ uplane τ a m ↔ (l ∈ oblkR τ a m ∧ lv a (l.2 τ) = m) := by
+  rw [uplane, Finset.mem_filter]
+
+/-- The link of the POSITIVE half that a straddling plaquette owns: the far transverse link at the
+lower plane, the near one at the upper.
+
+DERIVED: `0` is the lower plane's level and `m` the upper one's; both are the geometry. -/
+def sLinkOf (τ : Fin d) (a : Fin n) (q : Plaq d n) : Link d n :=
+  if lv a (q.2 τ) = 0 then (cDir τ q, shift τ q.2) else (cDir τ q, q.2)
+
+/-- The link of the MIRROR that a straddling plaquette owns — the other transverse one.
+
+DERIVED: `0` is the lower plane's level. -/
+def tLinkOf (τ : Fin d) (a : Fin n) (q : Plaq d n) : Link d n :=
+  if lv a (q.2 τ) = 0 then (cDir τ q, q.2) else (cDir τ q, shift τ q.2)
+
+/-- The plaquette's first fixed axis link.
+
+DERIVED: no numeral. -/
+def aLinkOf (τ : Fin d) (q : Plaq d n) : Link d n := (τ, q.2)
+
+/-- The plaquette's second fixed axis link — one transverse step along.
+
+DERIVED: no numeral. -/
+def bLinkOf (τ : Fin d) (q : Plaq d n) : Link d n := (τ, shift (cDir τ q) q.2)
+
+theorem aLinkOf_mem {q : Plaq d n} (hq : q ∈ oplqCross τ a m) : aLinkOf τ q ∈ oblkR τ a m := by
+  rw [mem_oblkR]
+  exact ⟨rfl, ((mem_oplqCross τ a m q).mp hq).2.2⟩
+
+theorem bLinkOf_mem {q : Plaq d n} (hq : q ∈ oplqCross τ a m) : bLinkOf τ q ∈ oblkR τ a m := by
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  rw [mem_oblkR]
+  refine ⟨rfl, ?_⟩
+  show lv a ((shift (cDir τ q) q.2) τ) = 0 ∨ lv a ((shift (cDir τ q) q.2) τ) = m
+  rw [lv_shift_of_ne hν]
+  exact ((mem_oplqCross τ a m q).mp hq).2.2
+
+theorem sLinkOf_mem (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n} (hq : q ∈ oplqCross τ a m) :
+    sLinkOf τ a q ∈ oblkS τ a m := by
+  have hn : 0 < n := NeZero.pos n
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  have hlev := ((mem_oplqCross τ a m q).mp hq).2.2
+  show (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n)
+      else (cDir τ q, q.2)) ∈ oblkS τ a m
+  by_cases h0 : lv a (q.2 τ) = 0
+  · rw [if_pos h0, mem_oblkS, if_neg hν]
+    show 0 < lv a ((shift τ q.2) τ) ∧ lv a ((shift τ q.2) τ) ≤ m
+    rw [lv_shift_axis, h0, Nat.zero_add, Nat.mod_eq_of_lt (by omega)]
+    omega
+  · have hmm : lv a (q.2 τ) = m := hlev.resolve_left h0
+    rw [if_neg h0, mem_oblkS, if_neg hν]
+    show 0 < lv a (q.2 τ) ∧ lv a (q.2 τ) ≤ m
+    omega
+
+theorem tLinkOf_mem (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n} (hq : q ∈ oplqCross τ a m) :
+    tLinkOf τ a q ∈ oblkT τ a m := by
+  have hn : 0 < n := NeZero.pos n
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  have hlev := ((mem_oplqCross τ a m q).mp hq).2.2
+  show (if lv a (q.2 τ) = 0 then ((cDir τ q, q.2) : Link d n)
+      else (cDir τ q, shift τ q.2)) ∈ oblkT τ a m
+  by_cases h0 : lv a (q.2 τ) = 0
+  · rw [if_pos h0, mem_oblkT, if_neg hν]
+    exact Or.inl h0
+  · have hmm : lv a (q.2 τ) = m := hlev.resolve_left h0
+    rw [if_neg h0, mem_oblkT, if_neg hν]
+    show lv a ((shift τ q.2) τ) = 0 ∨ m < lv a ((shift τ q.2) τ)
+    rw [lv_shift_axis, hmm]
+    rcases Nat.lt_or_ge (m + 1) n with hlt | hge
+    · exact Or.inr (by rw [Nat.mod_eq_of_lt hlt]; omega)
+    · have he : m + 1 = n := by omega
+      exact Or.inl (by rw [he, Nat.mod_self])
+
+/-- **THE MIRROR TRANSPORT MATCHES THE BLOCKS.** The reflection carries a straddling plaquette's
+MIRROR link to its own POSITIVE-half link — at the lower plane because the base site is `a` itself,
+at the upper because `m + m = n` makes the half-extent its own negative. So the second argument of
+the cross form is the SAME word evaluated at the transported variable, which is what
+`wilson_crossing_pairing_nonneg` reads.
+
+DERIVED: no numeral beyond the geometry's own `a + a + 1`. -/
+theorem reflLink_tLinkOf (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
+    (hq : q ∈ oplqCross τ a m) :
+    reflLink τ (a + a + 1) (tLinkOf τ a q) = sLinkOf τ a q := by
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  have hlev := ((mem_oplqCross τ a m q).mp hq).2.2
+  have hcancel : (a + a + 1 : Fin n) - 1 = a + a := by simp
+  show reflLink τ (a + a + 1)
+      (if lv a (q.2 τ) = 0 then ((cDir τ q, q.2) : Link d n) else (cDir τ q, shift τ q.2))
+    = (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n) else (cDir τ q, q.2))
+  by_cases h0 : lv a (q.2 τ) = 0
+  · rw [if_pos h0, if_pos h0]
+    have hz : q.2 τ = a := (lv_eq_zero_iff a (q.2 τ)).mp h0
+    show ((cDir τ q, if cDir τ q = τ then reflSite τ ((a + a + 1) - 1) q.2
+        else reflSite τ (a + a + 1) q.2) : Link d n) = (cDir τ q, shift τ q.2)
+    rw [if_neg hν]
+    refine congrArg (fun z => ((cDir τ q, z) : Link d n)) ?_
+    funext j
+    by_cases hj : j = τ
+    · rw [hj]
+      have hsh : (shift τ q.2) τ = a + 1 := by
+        show (Function.update q.2 τ (q.2 τ + 1)) τ = a + 1
+        rw [Function.update_self, hz]
+      rw [reflSite_axis, hsh, hz]
+      abel
+    · have hsh : (shift τ q.2) j = q.2 j := by
+        show (Function.update q.2 τ (q.2 τ + 1)) j = q.2 j
+        rw [Function.update_of_ne hj]
+      rw [reflSite_of_ne hj, hsh]
+  · have hmm : lv a (q.2 τ) = m := hlev.resolve_left h0
+    rw [if_neg h0, if_neg h0]
+    have hmz : fcast n m + fcast n m = 0 := by
+      rw [fcast_add]
+      have hs : m + m = n := by omega
+      rw [hs, fcast_self]
+    have hz : q.2 τ = a + fcast n m := by
+      have hp := eq_add_lv a (q.2 τ)
+      rwa [hmm] at hp
+    show ((cDir τ q, if cDir τ q = τ then reflSite τ ((a + a + 1) - 1) (shift τ q.2)
+        else reflSite τ (a + a + 1) (shift τ q.2)) : Link d n) = (cDir τ q, q.2)
+    rw [if_neg hν, reflSite_shift_axis, hcancel]
+    refine congrArg (fun z => ((cDir τ q, z) : Link d n)) ?_
+    funext j
+    by_cases hj : j = τ
+    · rw [hj]
+      have hneg : -(fcast n m) = fcast n m := (eq_neg_of_add_eq_zero_right hmz).symm
+      rw [reflSite_axis, hz]
+      calc a + a - (a + fcast n m) = a + (-(fcast n m)) := by abel
+        _ = a + fcast n m := by rw [hneg]
+    · rw [reflSite_of_ne hj]
+
+/-! ### One `Re tr` per block, in one handedness -/
+
+/-- **The two orientations of a straddling plaquette contribute the same `Re tr`.** Their boundary
+words are inverse to each other and `re_trace_inv` does not see inversion. This is why indexing the
+blocks by `oplqCross` itself — orientations and all — costs nothing: the direct sum carries each
+geometric plaquette twice and each copy carries the same number.
+
+DERIVED: no numeral. -/
+theorem re_tr_hol_swap (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
+    (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) (((ν, τ), x) : Plaq d n) U
+        : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
+      = (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) U
+        : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re := by
+  rw [cross_word_left, cross_word_right]
+  have hinv : ((U (ν, x) * U (τ, shift ν x) * (U (ν, shift τ x))⁻¹) * (U (τ, x))⁻¹
+        : MassGap.SUN.SU N)
+      = (((U (τ, x) * U (ν, shift τ x) * (U (τ, shift ν x))⁻¹) * (U (ν, x))⁻¹)⁻¹) := by group
+  rw [hinv, re_trace_inv]
+
+/-- **Every straddling plaquette reads the same as its canonical orientation**, the one with the axis
+first. -/
+theorem re_tr_hol_canon {q : Plaq d n} (hq : q ∈ oplqCross τ a m)
+    (U : Link d n → MassGap.SUN.SU N) :
+    (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q U : MassGap.SUN.SU N)
+        : Matrix (Fin N) (Fin N) ℂ)).re
+      = (Matrix.trace ((wilsonHol (bd (d := d) (n := n))
+          (((τ, cDir τ q), q.2) : Plaq d n) U : MassGap.SUN.SU N)
+        : Matrix (Fin N) (Fin N) ℂ)).re := by
+  obtain ⟨⟨μ, ν⟩, x⟩ := q
+  obtain ⟨hdeg, hax, -⟩ := (mem_oplqCross τ a m _).mp hq
+  have hdeg' : ¬ (μ = τ ∧ ν = τ) := hdeg
+  rcases hax with hμ | hν
+  · have hμ' : μ = τ := hμ
+    have hcd : cDir τ (((μ, ν), x) : Plaq d n) = ν := by
+      show (if μ = τ then ν else μ) = ν
+      rw [if_pos hμ']
+    rw [hcd, hμ']
+  · have hν' : ν = τ := hν
+    have hμne : μ ≠ τ := fun hc => hdeg' ⟨hc, hν'⟩
+    have hcd : cDir τ (((μ, ν), x) : Plaq d n) = μ := by
+      show (if μ = τ then ν else μ) = μ
+      rw [if_neg hμne]
+    rw [hcd, hν']
+    exact re_tr_hol_swap τ μ x U
+
+/-- **THE STRADDLING WORD, AT THE CANONICAL ORIENTATION, IN ONE HANDEDNESS.**
+
+With the gauge variables of the UPPER plane inverted and nowhere else, both fixed planes read
+
+    hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))
+
+— `cross_word_uniform_off_plane` at the lower plane, `cross_word_uniform_on_plane` at the upper. The
+two transverse links exchange roles between the planes, and `sLinkOf`/`tLinkOf` carry that exchange.
+
+DERIVED: `0` is the lower plane's level and `m` the upper one's. -/
+theorem re_tr_hol_cross_explicit (hm : n = 2 * m) (hm0 : 0 < m) {ν : Fin d} (hν : ν ≠ τ)
+    {x : Site d n} (hlev : lv a (x τ) = 0 ∨ lv a (x τ) = m)
+    (U : Link d n → MassGap.SUN.SU N) :
+    (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) U
+        : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
+      = hsRe (((invLink (uplane τ a m) U (τ, x)
+              * U (if lv a (x τ) = 0 then ((ν, shift τ x) : Link d n) else (ν, x))
+              * (invLink (uplane τ a m) U (τ, shift ν x))⁻¹ : MassGap.SUN.SU N))
+            : Matrix (Fin N) (Fin N) ℂ)
+          ((U (if lv a (x τ) = 0 then ((ν, x) : Link d n) else (ν, shift τ x))
+            : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) := by
+  have hlvtr : lv a ((shift ν x) τ) = lv a (x τ) := lv_shift_of_ne hν a x
+  by_cases h0 : lv a (x τ) = 0
+  · have hA : ((τ, x) : Link d n) ∉ uplane τ a m := by
+      rw [mem_uplane]
+      rintro ⟨-, h⟩
+      have h' : lv a (x τ) = m := h
+      omega
+    have hB : ((τ, shift ν x) : Link d n) ∉ uplane τ a m := by
+      rw [mem_uplane]
+      rintro ⟨-, h⟩
+      have h' : lv a ((shift ν x) τ) = m := h
+      rw [hlvtr] at h'
+      omega
+    rw [if_pos h0, if_pos h0]
+    exact cross_word_uniform_off_plane τ ν x (uplane τ a m) hA hB U
+  · have hmm : lv a (x τ) = m := hlev.resolve_left h0
+    have hA : ((τ, x) : Link d n) ∈ uplane τ a m := by
+      rw [mem_uplane, mem_oblkR]
+      exact ⟨⟨rfl, Or.inr hmm⟩, hmm⟩
+    have hB : ((τ, shift ν x) : Link d n) ∈ uplane τ a m := by
+      have h' : lv a ((shift ν x) τ) = m := by rw [hlvtr]; exact hmm
+      rw [mem_uplane, mem_oblkR]
+      exact ⟨⟨rfl, Or.inr h'⟩, h'⟩
+    rw [if_neg h0, if_neg h0]
+    exact cross_word_uniform_on_plane τ ν x (uplane τ a m) hA hB U
+
+/-- **ONE FORMULA FOR EVERY BLOCK.** The straddling plaquette's contribution, in the roles
+`aLinkOf`, `bLinkOf`, `sLinkOf`, `tLinkOf` — orientation and plane both absorbed.
+
+DERIVED: no numeral. -/
+theorem re_tr_hol_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
+    (hq : q ∈ oplqCross τ a m) (U : Link d n → MassGap.SUN.SU N) :
+    (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q U : MassGap.SUN.SU N)
+        : Matrix (Fin N) (Fin N) ℂ)).re
+      = hsRe (((invLink (uplane τ a m) U (aLinkOf τ q) * U (sLinkOf τ a q)
+            * (invLink (uplane τ a m) U (bLinkOf τ q))⁻¹ : MassGap.SUN.SU N))
+            : Matrix (Fin N) (Fin N) ℂ)
+          ((U (tLinkOf τ a q) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) := by
+  rw [re_tr_hol_canon τ a m hq U]
+  exact re_tr_hol_cross_explicit τ a m hm hm0 (cDir_ne τ a m hq)
+    ((mem_oplqCross τ a m q).mp hq).2.2 U
+
+/-! ### The assignment run BACKWARDS — and where `2 ≤ m` is needed -/
+
+/-- The default plane link — the axis link at level `0` through the plane's own base site. A half-link
+that is the positive-half link of no straddling plaquette is assigned this, and the gauge then acts on
+it by conjugation; the word does not read it, so the value is immaterial and only its membership
+matters.
+
+DERIVED: `a` is the plane's base site, the caller's; no numeral is chosen. -/
+def dfltPlane (τ : Fin d) (a : Fin n) : Link d n := (τ, fun _ => a)
+
+theorem dfltPlane_mem : dfltPlane τ a ∈ oblkR τ a m := by
+  rw [mem_oblkR]
+  refine ⟨rfl, Or.inl ?_⟩
+  show lv a ((fun _ => a : Site d n) τ) = 0
+  simp [lv]
+
+/-- **A level-one site is one step above the plane.** -/
+theorem lv_sub_one_of_lv_one {a p : Fin n} (h : lv a p = 1) : lv a (p - 1) = 0 := by
+  have hb := lv_add_one a (p - 1)
+  rw [sub_add_cancel, h] at hb
+  have hj : lv a (p - 1) < n := lv_lt a (p - 1)
+  rcases Nat.lt_or_ge (lv a (p - 1) + 1) n with hlt | hge
+  · rw [Nat.mod_eq_of_lt hlt] at hb; omega
+  · have he : lv a (p - 1) + 1 = n := by omega
+    rw [he, Nat.mod_self] at hb
+    omega
+
+/-- **The first plane link of the straddling plaquette that owns a given half-link.**
+
+Run backwards from the link: a transverse link at level `1` is the far link of a plaquette based at
+the LOWER plane, one at level `m` is the near link of a plaquette based at the UPPER plane. Those two
+cases are disjoint exactly when `1 ≠ m`, which is `2 ≤ m`; at `m = 1` one link is owned by two
+plaquettes with different plane links and no assignment exists
+(`negctl_plane_assignment_collides_at_m_one`).
+
+DERIVED: `1` is the level one step above the lower plane — a lattice step, not a cut; `m` is the
+upper plane's level, a parameter. -/
+def planeARaw (τ : Fin d) (a : Fin n) (m : ℕ) (l : Link d n) : Link d n :=
+  if l.1 = τ then dfltPlane τ a
+  else if lv a (l.2 τ) = 1 then (τ, backSite τ l.2)
+  else if lv a (l.2 τ) = m then (τ, l.2)
+  else dfltPlane τ a
+
+/-- The second plane link of the same plaquette — one transverse step along.
+
+DERIVED: `1` and `m` are the two straddling levels, as in `planeARaw`. -/
+def planeBRaw (τ : Fin d) (a : Fin n) (m : ℕ) (l : Link d n) : Link d n :=
+  if l.1 = τ then dfltPlane τ a
+  else if lv a (l.2 τ) = 1 then (τ, shift l.1 (backSite τ l.2))
+  else if lv a (l.2 τ) = m then (τ, shift l.1 l.2)
+  else dfltPlane τ a
+
+theorem planeARaw_mem (l : Link d n) : planeARaw τ a m l ∈ oblkR τ a m := by
+  show (if l.1 = τ then dfltPlane τ a
+    else if lv a (l.2 τ) = 1 then ((τ, backSite τ l.2) : Link d n)
+    else if lv a (l.2 τ) = m then (τ, l.2)
+    else dfltPlane τ a) ∈ oblkR τ a m
+  by_cases h1 : l.1 = τ
+  · rw [if_pos h1]
+    exact dfltPlane_mem τ a m
+  · rw [if_neg h1]
+    by_cases h2 : lv a (l.2 τ) = 1
+    · rw [if_pos h2, mem_oblkR]
+      refine ⟨rfl, Or.inl ?_⟩
+      show lv a ((backSite τ l.2) τ) = 0
+      have hb : (backSite τ l.2) τ = l.2 τ - 1 := by
+        show (Function.update l.2 τ (l.2 τ - 1)) τ = l.2 τ - 1
+        rw [Function.update_self]
+      rw [hb]
+      exact lv_sub_one_of_lv_one h2
+    · rw [if_neg h2]
+      by_cases h3 : lv a (l.2 τ) = m
+      · rw [if_pos h3, mem_oblkR]
+        exact ⟨rfl, Or.inr h3⟩
+      · rw [if_neg h3]
+        exact dfltPlane_mem τ a m
+
+theorem planeBRaw_mem (l : Link d n) : planeBRaw τ a m l ∈ oblkR τ a m := by
+  show (if l.1 = τ then dfltPlane τ a
+    else if lv a (l.2 τ) = 1 then ((τ, shift l.1 (backSite τ l.2)) : Link d n)
+    else if lv a (l.2 τ) = m then (τ, shift l.1 l.2)
+    else dfltPlane τ a) ∈ oblkR τ a m
+  by_cases h1 : l.1 = τ
+  · rw [if_pos h1]
+    exact dfltPlane_mem τ a m
+  · rw [if_neg h1]
+    by_cases h2 : lv a (l.2 τ) = 1
+    · rw [if_pos h2, mem_oblkR]
+      refine ⟨rfl, Or.inl ?_⟩
+      show lv a ((shift l.1 (backSite τ l.2)) τ) = 0
+      rw [lv_shift_of_ne h1]
+      have hb : (backSite τ l.2) τ = l.2 τ - 1 := by
+        show (Function.update l.2 τ (l.2 τ - 1)) τ = l.2 τ - 1
+        rw [Function.update_self]
+      rw [hb]
+      exact lv_sub_one_of_lv_one h2
+    · rw [if_neg h2]
+      by_cases h3 : lv a (l.2 τ) = m
+      · rw [if_pos h3, mem_oblkR]
+        refine ⟨rfl, Or.inr ?_⟩
+        show lv a ((shift l.1 l.2) τ) = m
+        rw [lv_shift_of_ne h1]
+        exact h3
+      · rw [if_neg h3]
+        exact dfltPlane_mem τ a m
+
+/-- **THE BACKWARD ASSIGNMENT RECOVERS THE BLOCK'S OWN PLANE LINK** — and this is the one statement
+in the development that needs `2 ≤ m`, i.e. extent at least four. At `m = 1` the two straddling
+families sit at the same level and the assignment is not well defined. -/
+theorem planeARaw_sLinkOf (hm : n = 2 * m) (hm2 : 2 ≤ m) {q : Plaq d n}
+    (hq : q ∈ oplqCross τ a m) : planeARaw τ a m (sLinkOf τ a q) = aLinkOf τ q := by
+  have hn : 0 < n := NeZero.pos n
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  have hlev := ((mem_oplqCross τ a m q).mp hq).2.2
+  by_cases h0 : lv a (q.2 τ) = 0
+  · have hsL : sLinkOf τ a q = ((cDir τ q, shift τ q.2) : Link d n) := by
+      show (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n)
+        else (cDir τ q, q.2)) = (cDir τ q, shift τ q.2)
+      rw [if_pos h0]
+    have hlv1 : lv a ((shift τ q.2) τ) = 1 := by
+      rw [lv_shift_axis, h0, Nat.zero_add, Nat.mod_eq_of_lt (by omega)]
+    rw [hsL]
+    show (if (cDir τ q) = τ then dfltPlane τ a
+      else if lv a ((shift τ q.2) τ) = 1 then ((τ, backSite τ (shift τ q.2)) : Link d n)
+      else if lv a ((shift τ q.2) τ) = m then (τ, shift τ q.2)
+      else dfltPlane τ a) = aLinkOf τ q
+    rw [if_neg hν, if_pos hlv1, backSite_shift]
+    rfl
+  · have hmm : lv a (q.2 τ) = m := hlev.resolve_left h0
+    have hsL : sLinkOf τ a q = ((cDir τ q, q.2) : Link d n) := by
+      show (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n)
+        else (cDir τ q, q.2)) = (cDir τ q, q.2)
+      rw [if_neg h0]
+    have hne1 : lv a (q.2 τ) ≠ 1 := by omega
+    rw [hsL]
+    show (if (cDir τ q) = τ then dfltPlane τ a
+      else if lv a (q.2 τ) = 1 then ((τ, backSite τ q.2) : Link d n)
+      else if lv a (q.2 τ) = m then (τ, q.2)
+      else dfltPlane τ a) = aLinkOf τ q
+    rw [if_neg hν, if_neg hne1, if_pos hmm]
+    rfl
+
+theorem planeBRaw_sLinkOf (hm : n = 2 * m) (hm2 : 2 ≤ m) {q : Plaq d n}
+    (hq : q ∈ oplqCross τ a m) : planeBRaw τ a m (sLinkOf τ a q) = bLinkOf τ q := by
+  have hn : 0 < n := NeZero.pos n
+  have hν : cDir τ q ≠ τ := cDir_ne τ a m hq
+  have hlev := ((mem_oplqCross τ a m q).mp hq).2.2
+  by_cases h0 : lv a (q.2 τ) = 0
+  · have hsL : sLinkOf τ a q = ((cDir τ q, shift τ q.2) : Link d n) := by
+      show (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n)
+        else (cDir τ q, q.2)) = (cDir τ q, shift τ q.2)
+      rw [if_pos h0]
+    have hlv1 : lv a ((shift τ q.2) τ) = 1 := by
+      rw [lv_shift_axis, h0, Nat.zero_add, Nat.mod_eq_of_lt (by omega)]
+    rw [hsL]
+    show (if (cDir τ q) = τ then dfltPlane τ a
+      else if lv a ((shift τ q.2) τ) = 1
+        then ((τ, shift (cDir τ q) (backSite τ (shift τ q.2))) : Link d n)
+      else if lv a ((shift τ q.2) τ) = m then (τ, shift (cDir τ q) (shift τ q.2))
+      else dfltPlane τ a) = bLinkOf τ q
+    rw [if_neg hν, if_pos hlv1, backSite_shift]
+    rfl
+  · have hmm : lv a (q.2 τ) = m := hlev.resolve_left h0
+    have hsL : sLinkOf τ a q = ((cDir τ q, q.2) : Link d n) := by
+      show (if lv a (q.2 τ) = 0 then ((cDir τ q, shift τ q.2) : Link d n)
+        else (cDir τ q, q.2)) = (cDir τ q, q.2)
+      rw [if_neg h0]
+    have hne1 : lv a (q.2 τ) ≠ 1 := by omega
+    rw [hsL]
+    show (if (cDir τ q) = τ then dfltPlane τ a
+      else if lv a (q.2 τ) = 1 then ((τ, shift (cDir τ q) (backSite τ q.2)) : Link d n)
+      else if lv a (q.2 τ) = m then (τ, shift (cDir τ q) q.2)
+      else dfltPlane τ a) = bLinkOf τ q
+    rw [if_neg hν, if_neg hne1, if_pos hmm]
+    rfl
+
+end Family
+
+section FamilyControl
+
+/-- **NEGATIVE CONTROL — THE BACKWARD ASSIGNMENT COLLIDES AT `m = 1`, AND THE RESTRICTION TO
+`2 ≤ m` IS NOT DECORATION.**
+
+At extent `2` the level one step above the lower plane IS the upper plane, so a single transverse
+link of the positive half is the half-link of TWO different straddling plaquettes — and their plane
+links differ, so no map from half-links to plane links can serve both. The gauge is then not a
+coordinatewise action of the plane group on the half, and `planeAct` cannot be used.
+
+Exhibited at `d = 2`, extent `2`, axis `0`, plane base `0`, `m = 1`: the plaquettes based at the site
+`(0, 0)` and at the site `(1, 0)` share the positive-half link `(1, (1, 0))` and read different
+plane links.
+
+DERIVED: `2` is the smallest even extent and `1` its half; `0` and `1` are two distinct directions
+and the two sites they separate. All are the smallest instance of the collision, not a tuning. -/
+theorem negctl_plane_assignment_collides_at_m_one :
+    ∃ q₁ q₂ : Plaq 2 2,
+      q₁ ∈ oplqCross (0 : Fin 2) (0 : Fin 2) 1
+        ∧ q₂ ∈ oplqCross (0 : Fin 2) (0 : Fin 2) 1
+        ∧ sLinkOf (0 : Fin 2) (0 : Fin 2) q₁ = sLinkOf (0 : Fin 2) (0 : Fin 2) q₂
+        ∧ aLinkOf (0 : Fin 2) q₁ ≠ aLinkOf (0 : Fin 2) q₂ := by
+  refine ⟨(((0 : Fin 2), (1 : Fin 2)), (fun _ => 0 : Site 2 2)),
+    (((0 : Fin 2), (1 : Fin 2)),
+      (Function.update (fun _ => 0) (0 : Fin 2) 1 : Site 2 2)), ?_, ?_, ?_, ?_⟩
+  · rw [mem_oplqCross]; decide
+  · rw [mem_oplqCross]; decide
+  · decide
+  · decide
+
+end FamilyControl
+
+/-! ## Part J — the word, and the straddling sum as ONE cross form
+
+`crossWord` is the block-diagonal of the positive half's straddling links, indexed by `oplqCross`
+itself. `planeA` and `planeB` are the backward assignment of Part I, so the plane group acts on the
+half by `planeAct` and `crossWord` is invariant under it (`hsRe_crossWord_planeAct`, which is
+`hsRe_dsum_conj` pointed at this family).
+
+`sum_re_tr_oplqCross` is the payoff: the whole straddling sum, at the configuration assembled from
+the three block variables AND with the upper plane's gauge inverted, is
+
+    hsRe (crossWord (planeAct planeA planeB g x)) (crossWord y)
+
+— one cross form, one word, two independent half-variables and the plane group acting on one of them.
+That is the integrand of `CrossingIntegration.wilson_crossing_pairing_nonneg` and nothing else. -/
+
+section Word
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+/-- The first plane link of the plaquette owning a half-link, as an element of the plane block.
+
+DERIVED: no numeral; the membership is `planeARaw_mem`. -/
+def planeA (l : ↥(oblkS τ a m)) : ↥(oblkR τ a m) :=
+  ⟨planeARaw τ a m (l : Link d n), planeARaw_mem τ a m _⟩
+
+/-- The second one.
+
+DERIVED: no numeral. -/
+def planeB (l : ↥(oblkS τ a m)) : ↥(oblkR τ a m) :=
+  ⟨planeBRaw τ a m (l : Link d n), planeBRaw_mem τ a m _⟩
+
+/-- A block's own half-link, as an index of the positive half.
+
+DERIVED: no numeral. -/
+def sIdx (hm : n = 2 * m) (hm0 : 0 < m) (k : ↥(oplqCross τ a m)) : ↥(oblkS τ a m) :=
+  ⟨sLinkOf τ a (k : Plaq d n), sLinkOf_mem τ a m hm hm0 k.2⟩
+
+/-- **THE WORD THE CROSSING INTEGRATION READS.** The direct sum, over the straddling plaquettes, of
+the positive half's link at each — relabelled to a `Fin` because that is the type
+`wilson_crossing_pairing_nonneg` takes.
+
+DERIVED: no numeral; the size is `Fintype.card (Fin N × oplqCross)`, a count. -/
+noncomputable def crossWord (hm : n = 2 * m) (hm0 : 0 < m)
+    (u : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    Matrix (Fin (Fintype.card (Fin N × ↥(oplqCross τ a m))))
+      (Fin (Fintype.card (Fin N × ↥(oplqCross τ a m)))) ℂ :=
+  (Matrix.blockDiagonal (fun k : ↥(oplqCross τ a m) =>
+      ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))).submatrix
+    (Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm
+    (Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm
+
+theorem hsRe_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
+    (u v : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    hsRe (crossWord τ a m hm hm0 u) (crossWord τ a m hm hm0 v)
+      = ∑ k : ↥(oplqCross τ a m),
+          hsRe ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
+            ((v (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) :=
+  hsRe_blockDiagonal_fin _ _
+
+/-- **THE WORD DOES NOT SEE THE PLANE GAUGE** — `hXinv`. Each block is conjugated by its own pair of
+plane links and `hsRe_conj` absorbs them one block at a time; this is `hsRe_dsum_conj` pointed at the
+lattice's own family.
+
+DERIVED: no numeral. -/
+theorem hsRe_crossWord_planeAct (hm : n = 2 * m) (hm0 : 0 < m)
+    (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (u v : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    hsRe (crossWord τ a m hm hm0 (planeAct (planeA τ a m) (planeB τ a m) g u))
+        (crossWord τ a m hm hm0 (planeAct (planeA τ a m) (planeB τ a m) g v))
+      = hsRe (crossWord τ a m hm hm0 u) (crossWord τ a m hm hm0 v) := by
+  rw [hsRe_crossWord, hsRe_crossWord]
+  exact Finset.sum_congr rfl (fun k _ => hsRe_conj _ _ _ _)
+
+/-- **EVERY COORDINATE OF THE WORD IS BOUNDED BY ONE** — `hXb`. -/
+theorem abs_coord_crossWord_le_one (hm : n = 2 * m) (hm0 : 0 < m)
+    (p : Coord (Fintype.card (Fin N × ↥(oplqCross τ a m))))
+    (u : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    |coord p (crossWord τ a m hm hm0 u)| ≤ 1 :=
+  abs_coord_le_one_of_entries
+    (fun i j => entry_blockDiagonal_fin_norm_le_one
+      (fun k => u (sIdx τ a m hm hm0 k)) i j) p
+
+/-! ### The straddling sum, block by block -/
+
+theorem invLink_invLink (R : Finset (Link d n)) (U : Link d n → MassGap.SUN.SU N) :
+    invLink R (invLink R U) = U := by
+  funext l
+  show (if l ∈ R then (invLink R U l)⁻¹ else invLink R U l) = U l
+  by_cases h : l ∈ R
+  · rw [if_pos h]
+    show ((if l ∈ R then (U l)⁻¹ else U l))⁻¹ = U l
+    rw [if_pos h, inv_inv]
+  · rw [if_neg h]
+    show (if l ∈ R then (U l)⁻¹ else U l) = U l
+    rw [if_neg h]
+
+theorem invLink_of_not_mem (R : Finset (Link d n)) (U : Link d n → MassGap.SUN.SU N)
+    {l : Link d n} (hl : l ∉ R) : invLink R U l = U l := by
+  show (if l ∈ R then (U l)⁻¹ else U l) = U l
+  rw [if_neg hl]
+
+/-- The three block restrictions of `joinO`, in the form the word identity needs. -/
+theorem joinO_mem_R (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N)
+    {l : Link d n} (hl : l ∈ oblkR τ a m) : joinO τ a m g x y l = g ⟨l, hl⟩ :=
+  join3_mem_R (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+    (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+    (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x y hl
+
+theorem joinO_mem_S (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N)
+    {l : Link d n} (hl : l ∈ oblkS τ a m) : joinO τ a m g x y l = x ⟨l, hl⟩ :=
+  join3_mem_S (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+    (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+    (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x y hl
+
+theorem joinO_mem_T (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N)
+    {l : Link d n} (hl : l ∈ oblkT τ a m) : joinO τ a m g x y l = y ⟨l, hl⟩ :=
+  join3_mem_T (oblkR τ a m) (oblkS τ a m) (oblkT τ a m)
+    (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
+    (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x y hl
+
+theorem tLinkOf_dir {q : Plaq d n} : (tLinkOf τ a q).1 = cDir τ q := by
+  show (if lv a (q.2 τ) = 0 then ((cDir τ q, q.2) : Link d n)
+    else (cDir τ q, shift τ q.2)).1 = cDir τ q
+  by_cases h0 : lv a (q.2 τ) = 0
+  · rw [if_pos h0]
+  · rw [if_neg h0]
+
+/-- **ONE BLOCK'S CONTRIBUTION, IN THE CROSSING INTEGRATION'S VARIABLES.**
+
+At the configuration assembled from the three block variables, with the upper plane's gauge inverted,
+a straddling plaquette reads the cross form of the gauge-acted positive-half variable against the
+mirror's — and the mirror's, transported, IS the second half-variable.
+
+DERIVED: no numeral. -/
+theorem re_tr_hol_block (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
+    (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N)
+    (k : ↥(oplqCross τ a m)) :
+    (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) (k : Plaq d n)
+        (invLink (uplane τ a m) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+        : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
+      = hsRe (((planeAct (planeA τ a m) (planeB τ a m) g x (sIdx τ a m hm hm0 k)
+            : MassGap.SUN.SU N)) : Matrix (Fin N) (Fin N) ℂ)
+          ((y (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) := by
+  have hq : (k : Plaq d n) ∈ oplqCross τ a m := k.2
+  have hν : cDir τ (k : Plaq d n) ≠ τ := cDir_ne τ a m hq
+  have haR : aLinkOf τ (k : Plaq d n) ∈ oblkR τ a m := aLinkOf_mem τ a m hq
+  have hbR : bLinkOf τ (k : Plaq d n) ∈ oblkR τ a m := bLinkOf_mem τ a m hq
+  have hsS : sLinkOf τ a (k : Plaq d n) ∈ oblkS τ a m := sLinkOf_mem τ a m hm hm0 hq
+  have htT : tLinkOf τ a (k : Plaq d n) ∈ oblkT τ a m := tLinkOf_mem τ a m hm hm0 hq
+  have hup : ∀ l : Link d n, l ∈ uplane τ a m → l ∈ oblkR τ a m :=
+    fun l h => ((mem_uplane τ a m l).mp h).1
+  have hsNot : sLinkOf τ a (k : Plaq d n) ∉ uplane τ a m := fun hc =>
+    (Finset.disjoint_left.mp (oblkS_disjoint_oblkR τ a m)) hsS (hup _ hc)
+  have htNot : tLinkOf τ a (k : Plaq d n) ∉ uplane τ a m := fun hc =>
+    (Finset.disjoint_left.mp (oblkT_disjoint_oblkR τ a m)) htT (hup _ hc)
+  rw [re_tr_hol_cross τ a m hm hm0 hq, invLink_invLink,
+    invLink_of_not_mem _ _ hsNot, invLink_of_not_mem _ _ htNot,
+    joinO_mem_R τ a m g x _ haR, joinO_mem_R τ a m g x _ hbR,
+    joinO_mem_S τ a m g x _ hsS, joinO_mem_T τ a m g x _ htT]
+  have hmirT : mirrorT τ a m hm hm0 y ⟨tLinkOf τ a (k : Plaq d n), htT⟩
+      = y (sIdx τ a m hm hm0 k) := by
+    have hne : (tLinkOf τ a (k : Plaq d n)).1 ≠ τ := by
+      rw [tLinkOf_dir]; exact hν
+    have heq : (mirrorEquivTS τ a m hm hm0) ⟨tLinkOf τ a (k : Plaq d n), htT⟩
+        = sIdx τ a m hm hm0 k :=
+      Subtype.ext (reflLink_tLinkOf τ a m hm hm0 hq)
+    show (if (tLinkOf τ a (k : Plaq d n)).1 = τ
+        then (y ((mirrorEquivTS τ a m hm hm0) ⟨tLinkOf τ a (k : Plaq d n), htT⟩))⁻¹
+        else y ((mirrorEquivTS τ a m hm hm0) ⟨tLinkOf τ a (k : Plaq d n), htT⟩))
+      = y (sIdx τ a m hm hm0 k)
+    rw [if_neg hne, heq]
+  have hpa : (⟨aLinkOf τ (k : Plaq d n), haR⟩ : ↥(oblkR τ a m))
+      = planeA τ a m (sIdx τ a m hm hm0 k) :=
+    Subtype.ext (planeARaw_sLinkOf τ a m hm hm2 hq).symm
+  have hpb : (⟨bLinkOf τ (k : Plaq d n), hbR⟩ : ↥(oblkR τ a m))
+      = planeB τ a m (sIdx τ a m hm hm0 k) :=
+    Subtype.ext (planeBRaw_sLinkOf τ a m hm hm2 hq).symm
+  rw [hmirT, hpa, hpb]
+  rfl
+
+/-- **THE WHOLE STRADDLING SUM IS ONE CROSS FORM.**
+
+`oplqCross` indexes the blocks directly, so the sum over the Finset is the sum over the block index,
+and `hsRe_crossWord` folds it into a single `hsRe`. Both orientations of every geometric plaquette
+appear and both carry the same number; the direct sum simply has the block twice.
+
+DERIVED: no numeral. -/
+theorem sum_re_tr_oplqCross (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
+    (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    (∑ q ∈ oplqCross τ a m, (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q
+        (invLink (uplane τ a m) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+        : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re)
+      = hsRe (crossWord τ a m hm hm0 (planeAct (planeA τ a m) (planeB τ a m) g x))
+          (crossWord τ a m hm hm0 y) := by
+  rw [← Finset.sum_coe_sort (oplqCross τ a m)
+    (fun q => (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q
+      (invLink (uplane τ a m) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+      : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re), hsRe_crossWord]
+  exact Finset.sum_congr rfl (fun k _ => re_tr_hol_block τ a m hm hm0 hm2 g x y k)
+
+end Word
+
+/-! ## Part K — the observable as a function of the half, and the odd-lag inequality
+
+`aObs` reads the whole configuration; `aHalf` is the same thing as a function of `oblkS` alone, which
+is the `a : Ω → ℝ` the crossing integration takes. `aObs_local` with
+`transverse_plaq_links_in_oblkS` is what makes the two agree.
+
+`odd_crossing_integral_nonneg` is the discharge: the odd-lag pairing integral is nonnegative. It
+carries two hypotheses beyond the geometry of Part B, and both are real:
+
+* `2 ≤ m` — extent at least four, because the backward plane assignment collides at `m = 1`
+  (`negctl_plane_assignment_collides_at_m_one`); and
+* `0 ≤ β` — because the Wilson cross kernel `exp(β' · hsRe)` is positive-semidefinite only for
+  `β' ≥ 0`, which `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows cannot be dropped.
+  This is physics, not bookkeeping: at negative coupling the weight is not reflection positive at a
+  link reflection. -/
+
+section Observable
+
+variable {d n : ℕ} [NeZero n] {N : ℕ}
+variable (τ : Fin d) (a : Fin n) (m : ℕ)
+
+/-- Extend a half-configuration to the whole lattice by the identity. The extension's values off the
+positive half are immaterial: `aObs` reads `oblkS` alone once the base plaquette does.
+
+DERIVED: `1` is the group identity, which is what a link no one reads carries. -/
+noncomputable def extendS (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    Link d n → MassGap.SUN.SU N :=
+  fun l => if h : l ∈ oblkS τ a m then x ⟨l, h⟩ else 1
+
+theorem extendS_mem (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) {l : Link d n}
+    (hl : l ∈ oblkS τ a m) : extendS τ a m x l = x ⟨l, hl⟩ := by
+  show (if h : l ∈ oblkS τ a m then x ⟨l, h⟩ else 1) = x ⟨l, hl⟩
+  rw [dif_pos hl]
+
+theorem measurable_extendS : Measurable (extendS (N := N) τ a m) := by
+  refine measurable_pi_lambda _ (fun l => ?_)
+  by_cases h : l ∈ oblkS τ a m
+  · have he : (fun x : ↥(oblkS τ a m) → MassGap.SUN.SU N => extendS τ a m x l)
+        = fun x => x ⟨l, h⟩ := funext (fun x => extendS_mem τ a m x h)
+    rw [he]
+    exact measurable_pi_apply _
+  · have he : (fun x : ↥(oblkS τ a m) → MassGap.SUN.SU N => extendS τ a m x l)
+        = fun _ => (1 : MassGap.SUN.SU N) := by
+      funext x
+      show (if h' : l ∈ oblkS τ a m then x ⟨l, h'⟩ else 1) = 1
+      rw [dif_neg h]
+    rw [he]
+    exact measurable_const
+
+/-- **The observable, as a function of the positive half alone** — the crossing integration's `a`.
+
+DERIVED: no numeral. -/
+noncomputable def aHalf (q₀ : Plaq d n) (β aC : ℝ)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) : ℝ :=
+  aObs (N := N) τ a m q₀ β aC (extendS τ a m x)
+
+theorem measurable_aObs (q₀ : Plaq d n) (β aC : ℝ) :
+    Measurable (aObs (N := N) τ a m q₀ β aC) := by
+  show Measurable (fun U : Link d n → MassGap.SUN.SU N =>
+    (MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC)
+      * Real.exp (-β * actPlusO τ a m U))
+  exact ((measurable_density_hol q₀).sub measurable_const).mul
+    ((measurable_const.mul (measurable_actSum (oplqPlus τ a m))).exp)
+
+theorem measurable_aHalf (q₀ : Plaq d n) (β aC : ℝ) :
+    Measurable (aHalf (N := N) τ a m q₀ β aC) :=
+  (measurable_aObs τ a m q₀ β aC).comp (measurable_extendS τ a m)
+
+/-- **The observable is bounded** — `hab`. The plaquette energy lies in `[0, 2]` and the half's
+Boltzmann factor is bounded by the exponential of the half's own cardinality.
+
+DERIVED: `2` is the range of `WilsonAction.wilsonDensity`, computed there, and the card is a count. -/
+theorem abs_aObs_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
+    (U : Link d n → MassGap.SUN.SU N) :
+    |aObs (N := N) τ a m q₀ β aC U|
+      ≤ (2 + |aC|) * Real.exp (|β| * (2 * (oplqPlus τ a m).card)) := by
+  show |(MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC)
+      * Real.exp (-β * actPlusO τ a m U)| ≤ _
+  rw [abs_mul]
+  have hD0 : 0 ≤ MassGap.WilsonAction.wilsonDensity
+      (wilsonHol (bd (d := d) (n := n)) q₀ U) :=
+    MassGap.WilsonAction.wilsonDensity_nonneg hN _
+  have hD2 : MassGap.WilsonAction.wilsonDensity
+      (wilsonHol (bd (d := d) (n := n)) q₀ U) ≤ 2 :=
+    MassGap.WilsonAction.wilsonDensity_le_two hN _
+  have hfirst : |MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC|
+      ≤ 2 + |aC| := by
+    rw [abs_le]
+    constructor
+    · have := neg_abs_le aC
+      have := le_abs_self aC
+      linarith
+    · have := neg_abs_le aC
+      have := le_abs_self aC
+      linarith
+  have hsecond : |Real.exp (-β * actPlusO (N := N) τ a m U)|
+      ≤ Real.exp (|β| * (2 * (oplqPlus τ a m).card)) := by
+    rw [abs_of_nonneg (Real.exp_nonneg _)]
+    refine Real.exp_le_exp.mpr ?_
+    have hA : |actPlusO (N := N) τ a m U| ≤ 2 * (oplqPlus τ a m).card :=
+      abs_actSum_le hN _ U
+    calc -β * actPlusO (N := N) τ a m U ≤ |(-β) * actPlusO (N := N) τ a m U| := le_abs_self _
+      _ = |β| * |actPlusO (N := N) τ a m U| := by rw [abs_mul, abs_neg]
+      _ ≤ |β| * (2 * (oplqPlus τ a m).card) := mul_le_mul_of_nonneg_left hA (abs_nonneg β)
+  exact mul_le_mul hfirst hsecond (abs_nonneg _) (by positivity)
+
+theorem abs_aHalf_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
+    (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    |aHalf (N := N) τ a m q₀ β aC x|
+      ≤ (2 + |aC|) * Real.exp (|β| * (2 * (oplqPlus τ a m).card)) :=
+  abs_aObs_le τ a m hN q₀ β aC _
+
+/-- **The straddling factor is bounded.**
+
+DERIVED: `2` is the range of `WilsonAction.wilsonDensity`; the card is a count. -/
+theorem abs_exp_actCrossO_le (hN : N ≠ 0) (β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
+    |Real.exp (-β * actCrossO (N := N) τ a m U)|
+      ≤ Real.exp (|β| * (2 * (oplqCross τ a m).card)) := by
+  rw [abs_of_nonneg (Real.exp_nonneg _)]
+  refine Real.exp_le_exp.mpr ?_
+  have hA : |actCrossO (N := N) τ a m U| ≤ 2 * (oplqCross τ a m).card := abs_actSum_le hN _ U
+  calc -β * actCrossO (N := N) τ a m U ≤ |(-β) * actCrossO (N := N) τ a m U| := le_abs_self _
+    _ = |β| * |actCrossO (N := N) τ a m U| := by rw [abs_mul, abs_neg]
+    _ ≤ |β| * (2 * (oplqCross τ a m).card) := mul_le_mul_of_nonneg_left hA (abs_nonneg β)
+
+/-! ### Coordinate measurability of the word -/
+
+theorem continuous_su_entry {Nc : ℕ} (i j : Fin Nc) :
+    Continuous (fun s : MassGap.SUN.SU Nc => ((s : Matrix (Fin Nc) (Fin Nc) ℂ)) i j) :=
+  continuous_subtype_val.matrix_elem i j
+
+theorem measurable_coord_of_entries {γ : Type} [MeasurableSpace γ] {Nc : ℕ}
+    (M : γ → Matrix (Fin Nc) (Fin Nc) ℂ)
+    (h : ∀ i j, Measurable (fun v => M v i j)) (p : Coord Nc) :
+    Measurable (fun v => coord p (M v)) := by
+  by_cases hb : p.2.2 = true
+  · have he : (fun v => coord p (M v)) = fun v => (M v p.1 p.2.1).re := by
+      funext v
+      show (if p.2.2 = true then (M v p.1 p.2.1).re else (M v p.1 p.2.1).im) = _
+      rw [if_pos hb]
+    rw [he]
+    exact Complex.measurable_re.comp (h _ _)
+  · have he : (fun v => coord p (M v)) = fun v => (M v p.1 p.2.1).im := by
+      funext v
+      show (if p.2.2 = true then (M v p.1 p.2.1).re else (M v p.1 p.2.1).im) = _
+      rw [if_neg hb]
+    rw [he]
+    exact Complex.measurable_im.comp (h _ _)
+
+theorem measurable_entry_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
+    (i j : Fin (Fintype.card (Fin N × ↥(oplqCross τ a m)))) :
+    Measurable (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N =>
+      crossWord τ a m hm hm0 u i j) := by
+  by_cases hk : ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).2
+      = ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j).2
+  · have he : (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N => crossWord τ a m hm hm0 u i j)
+        = fun u => ((u (sIdx τ a m hm hm0
+              ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).2)
+            : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
+            ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).1
+            ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j).1 := by
+      funext u
+      show Matrix.blockDiagonal (fun k : ↥(oplqCross τ a m) =>
+          ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
+          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i)
+          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j) = _
+      rw [Matrix.blockDiagonal_apply, if_pos hk]
+    rw [he]
+    exact (continuous_su_entry _ _).measurable.comp (measurable_pi_apply _)
+  · have he : (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N => crossWord τ a m hm hm0 u i j)
+        = fun _ => (0 : ℂ) := by
+      funext u
+      show Matrix.blockDiagonal (fun k : ↥(oplqCross τ a m) =>
+          ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
+          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i)
+          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j) = _
+      rw [Matrix.blockDiagonal_apply, if_neg hk]
+    rw [he]
+    exact measurable_const
+
+theorem measurable_coord_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
+    (p : Coord (Fintype.card (Fin N × ↥(oplqCross τ a m)))) :
+    Measurable (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N =>
+      coord p (crossWord τ a m hm hm0 u)) :=
+  measurable_coord_of_entries _ (measurable_entry_crossWord τ a m hm hm0) p
+
+/-! ### The integrand, with the upper plane's gauge inverted -/
+
+/-- The odd-lag integrand, with the upper plane's gauge variables inverted inside the straddling
+factor. The substitution is `invLink_measurePreserving`'s and leaves the two observables alone,
+because they read `oblkS` and its mirror, neither of which meets the plane.
+
+DERIVED: no numeral. -/
+noncomputable def oddIntegrand (q₀ : Plaq d n) (β aC : ℝ)
+    (U : Link d n → MassGap.SUN.SU N) : ℝ :=
+  aObs τ a m q₀ β aC U * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U)
+    * Real.exp (-β * actCrossO τ a m (invLink (uplane τ a m) U))
+
+theorem measurable_oddIntegrand (q₀ : Plaq d n) (β aC : ℝ) :
+    Measurable (oddIntegrand (N := N) τ a m q₀ β aC) :=
+  ((measurable_aObs τ a m q₀ β aC).mul
+      ((measurable_aObs τ a m q₀ β aC).comp
+        (reflConf_measurePreserving (N := N) τ (a + a + 1)).measurable)).mul
+    ((measurable_const.mul ((measurable_actSum (oplqCross τ a m)).comp
+      (invLink_measurePreserving (N := N) (uplane τ a m)).measurable)).exp)
+
+theorem abs_oddIntegrand_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
+    (U : Link d n → MassGap.SUN.SU N) :
+    |oddIntegrand (N := N) τ a m q₀ β aC U|
+      ≤ ((2 + |aC|) * Real.exp (|β| * (2 * (oplqPlus τ a m).card)))
+        * ((2 + |aC|) * Real.exp (|β| * (2 * (oplqPlus τ a m).card)))
+        * Real.exp (|β| * (2 * (oplqCross τ a m).card)) := by
+  show |aObs τ a m q₀ β aC U * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U)
+      * Real.exp (-β * actCrossO τ a m (invLink (uplane τ a m) U))| ≤ _
+  rw [abs_mul, abs_mul]
+  refine mul_le_mul (mul_le_mul (abs_aObs_le τ a m hN q₀ β aC U)
+    (abs_aObs_le τ a m hN q₀ β aC _) (abs_nonneg _) (by positivity))
+    (abs_exp_actCrossO_le τ a m hN β _) (abs_nonneg _) (by positivity)
+
+/-- **The substitution on the upper plane leaves the two observables alone.** Both read the positive
+half or its mirror, and the plane meets neither. -/
+theorem integral_odd_eq_oddIntegrand (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
+    (q₀ : Plaq d n) (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (β aC : ℝ) :
+    (∫ U, aObs (N := N) τ a m q₀ β aC U
+        * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U)
+        * Real.exp (-β * actCrossO τ a m U)
+        ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))))
+      = ∫ U, oddIntegrand (N := N) τ a m q₀ β aC U
+        ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))) := by
+  have hFm : Measurable (fun U : Link d n → MassGap.SUN.SU N =>
+      aObs (N := N) τ a m q₀ β aC U * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U)
+        * Real.exp (-β * actCrossO τ a m U)) :=
+    ((measurable_aObs τ a m q₀ β aC).mul
+        ((measurable_aObs τ a m q₀ β aC).comp
+          (reflConf_measurePreserving (N := N) τ (a + a + 1)).measurable)).mul
+      ((measurable_const.mul (measurable_actSum (oplqCross τ a m))).exp)
+  rw [← integral_comp_of_mp (invLink_measurePreserving (N := N) (uplane τ a m)) hFm]
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  -- the plane meets neither the positive half nor its mirror
+  have hoff : ∀ l : Link d n, l ∈ oblkS τ a m →
+      invLink (uplane τ a m) U l = U l := by
+    intro l hl
+    refine invLink_of_not_mem _ _ (fun hc => ?_)
+    exact (Finset.disjoint_left.mp (oblkS_disjoint_oblkR τ a m)) hl
+      ((mem_uplane τ a m l).mp hc).1
+  have hoffT : ∀ l : Link d n, l ∈ oblkT τ a m →
+      invLink (uplane τ a m) U l = U l := by
+    intro l hl
+    refine invLink_of_not_mem _ _ (fun hc => ?_)
+    exact (Finset.disjoint_left.mp (oblkT_disjoint_oblkR τ a m)) hl
+      ((mem_uplane τ a m l).mp hc).1
+  have h1 : aObs (N := N) τ a m q₀ β aC (invLink (uplane τ a m) U)
+      = aObs τ a m q₀ β aC U :=
+    aObs_local τ a m hm hm0 q₀ hq₀ β aC _ _ hoff
+  have h2 : aObs (N := N) τ a m q₀ β aC
+      (reflConf τ (a + a + 1) (invLink (uplane τ a m) U))
+      = aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U) := by
+    refine aObs_local τ a m hm hm0 q₀ hq₀ β aC _ _ (fun l hl => ?_)
+    have hT : reflLink τ (a + a + 1) l ∈ oblkT τ a m := oblkS_maps_oblkT τ a m hm hm0 hl
+    show (if l.1 = τ then (invLink (uplane τ a m) U (reflLink τ (a + a + 1) l))⁻¹
+        else invLink (uplane τ a m) U (reflLink τ (a + a + 1) l))
+      = (if l.1 = τ then (U (reflLink τ (a + a + 1) l))⁻¹
+        else U (reflLink τ (a + a + 1) l))
+    rw [hoffT _ hT]
+  show aObs τ a m q₀ β aC (invLink (uplane τ a m) U)
+      * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) (invLink (uplane τ a m) U))
+      * Real.exp (-β * actCrossO τ a m (invLink (uplane τ a m) U)) = _
+  rw [h1, h2]
+  rfl
+
+/-- **THE INTEGRAND, IN THE CROSSING INTEGRATION'S VARIABLES.** -/
+theorem oddIntegrand_join (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
+    (q₀ : Plaq d n) (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (β aC : ℝ)
+    (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
+    oddIntegrand (N := N) τ a m q₀ β aC (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+      = Real.exp (-β * ((oplqCross τ a m).card : ℝ))
+        * (aHalf τ a m q₀ β aC x * aHalf τ a m q₀ β aC y
+          * Real.exp ((β / (N : ℝ))
+            * hsRe (crossWord τ a m hm hm0 (planeAct (planeA τ a m) (planeB τ a m) g x))
+                (crossWord τ a m hm hm0 y))) := by
+  have h1 : aObs (N := N) τ a m q₀ β aC (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+      = aHalf τ a m q₀ β aC x :=
+    aObs_local τ a m hm hm0 q₀ hq₀ β aC _ _
+      (fun l hl => by rw [joinO_mem_S τ a m g x _ hl, extendS_mem τ a m x hl])
+  have h2 : aObs (N := N) τ a m q₀ β aC
+      (reflConf τ (a + a + 1) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+      = aHalf τ a m q₀ β aC y :=
+    aObs_local τ a m hm hm0 q₀ hq₀ β aC _ _
+      (fun l hl => by
+        rw [reflConf_joinO_mirror τ a m hm hm0 g x y hl, extendS_mem τ a m y hl])
+  have h3 : actCrossO (N := N) τ a m
+      (invLink (uplane τ a m) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+      = ((oplqCross τ a m).card : ℝ)
+        - (1 / (N : ℝ)) * hsRe (crossWord τ a m hm hm0
+            (planeAct (planeA τ a m) (planeB τ a m) g x)) (crossWord τ a m hm hm0 y) := by
+    rw [actCrossO_eq_trace_sum τ a m hN, sum_re_tr_oplqCross τ a m hm hm0 hm2 g x y]
+  show aObs τ a m q₀ β aC (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+      * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))
+      * Real.exp (-β * actCrossO τ a m
+          (invLink (uplane τ a m) (joinO τ a m g x (mirrorT τ a m hm hm0 y)))) = _
+  rw [h1, h2, h3]
+  have hexp : Real.exp (-β * (((oplqCross τ a m).card : ℝ)
+        - (1 / (N : ℝ)) * hsRe (crossWord τ a m hm hm0
+            (planeAct (planeA τ a m) (planeB τ a m) g x)) (crossWord τ a m hm hm0 y)))
+      = Real.exp (-β * ((oplqCross τ a m).card : ℝ))
+        * Real.exp ((β / (N : ℝ)) * hsRe (crossWord τ a m hm hm0
+            (planeAct (planeA τ a m) (planeB τ a m) g x)) (crossWord τ a m hm hm0 y)) := by
+    rw [← Real.exp_add]
+    congr 1
+    ring
+  rw [hexp]
+  ring
+
+/-- **THE ODD-LAG PAIRING INTEGRAL IS NONNEGATIVE.**
+
+This is the hypothesis `plaqReflPositive_odd_of_crossing` and `corrClay_rp_of_crossing` consume,
+discharged: the product Haar factored over the three blocks (Part E), the mirror transported to the
+positive half (Part F), the instances (Part G), the family and its word (Parts I and J), and
+`CrossingIntegration.wilson_crossing_pairing_nonneg` applied at `β' = β / N`.
+
+Two hypotheses are carried and neither is bookkeeping: `2 ≤ m`, because the backward plane assignment
+collides at `m = 1`; and `0 ≤ β`, because the Wilson cross kernel is positive-semidefinite only
+there.
+
+DERIVED: `2` is the smallest half-extent at which the plane assignment is single-valued; `0` is the
+sign of the coupling the kernel needs and the sign asserted. -/
+theorem odd_crossing_integral_nonneg (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
+    {β : ℝ} (hβ : 0 ≤ β) (q₀ : Plaq d n)
+    (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (aC : ℝ) :
+    0 ≤ ∫ U, aObs (N := N) τ a m q₀ β aC U
+        * aObs τ a m q₀ β aC (reflConf τ (a + a + 1) U)
+        * Real.exp (-β * actCrossO τ a m U)
+        ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))) := by
+  rw [integral_odd_eq_oddIntegrand τ a m hN hm hm0 q₀ hq₀ β aC,
+    integral_oblk_mirror τ a m hm hm0 _ (measurable_oddIntegrand τ a m q₀ β aC)
+      (abs_oddIntegrand_le τ a m hN q₀ β aC)]
+  have hstep : (∫ g, (∫ x, (∫ y, oddIntegrand (N := N) τ a m q₀ β aC
+            (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+      ∂(cvol ↥(oblkR τ a m) (probHaar (MassGap.SUN.SU N))))
+      = Real.exp (-β * ((oplqCross τ a m).card : ℝ))
+        * ∫ g, (∫ x, (∫ y, aHalf τ a m q₀ β aC x * aHalf τ a m q₀ β aC y
+              * Real.exp ((β / (N : ℝ))
+                * hsRe (crossWord τ a m hm hm0
+                    (planeAct (planeA τ a m) (planeB τ a m) g x))
+                  (crossWord τ a m hm hm0 y))
+            ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        ∂(cvol ↥(oblkR τ a m) (probHaar (MassGap.SUN.SU N))) := by
+    have hy : ∀ (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
+        (x : ↥(oblkS τ a m) → MassGap.SUN.SU N),
+        (∫ y, oddIntegrand (N := N) τ a m q₀ β aC
+            (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        = Real.exp (-β * ((oplqCross τ a m).card : ℝ))
+          * ∫ y, (aHalf τ a m q₀ β aC x * aHalf τ a m q₀ β aC y
+              * Real.exp ((β / (N : ℝ))
+                * hsRe (crossWord τ a m hm hm0
+                    (planeAct (planeA τ a m) (planeB τ a m) g x))
+                  (crossWord τ a m hm hm0 y)))
+            ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))) := by
+      intro g x
+      rw [← integral_const_mul]
+      exact integral_congr_ae (Filter.Eventually.of_forall
+        (fun y => oddIntegrand_join τ a m hN hm hm0 hm2 q₀ hq₀ β aC g x y))
+    have hx : ∀ g : ↥(oblkR τ a m) → MassGap.SUN.SU N,
+        (∫ x, (∫ y, oddIntegrand (N := N) τ a m q₀ β aC
+              (joinO τ a m g x (mirrorT τ a m hm hm0 y))
+            ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+          ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+        = Real.exp (-β * ((oplqCross τ a m).card : ℝ))
+          * ∫ x, (∫ y, (aHalf τ a m q₀ β aC x * aHalf τ a m q₀ β aC y
+                * Real.exp ((β / (N : ℝ))
+                  * hsRe (crossWord τ a m hm hm0
+                      (planeAct (planeA τ a m) (planeB τ a m) g x))
+                    (crossWord τ a m hm hm0 y)))
+              ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))))
+            ∂(cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N))) := by
+      intro g
+      rw [← integral_const_mul]
+      exact integral_congr_ae (Filter.Eventually.of_forall (fun x => hy g x))
+    rw [← integral_const_mul]
+    exact integral_congr_ae (Filter.Eventually.of_forall (fun g => hx g))
+  rw [hstep]
+  refine mul_nonneg (Real.exp_nonneg _) ?_
+  refine wilson_crossing_pairing_nonneg
+    (cvol ↥(oblkR τ a m) (probHaar (MassGap.SUN.SU N)))
+    (cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N)))
+    (measurable_uncurry_planeAct (planeA τ a m) (planeB τ a m))
+    (fun g => planeAct_measurePreserving (planeA τ a m) (planeB τ a m) g)
+    (fun g h u => planeAct_mul (planeA τ a m) (planeB τ a m) g h u)
+    (crossWord τ a m hm hm0)
+    (measurable_coord_crossWord τ a m hm hm0)
+    (fun p v => abs_coord_crossWord_le_one τ a m hm hm0 p v)
+    (fun g u v => hsRe_crossWord_planeAct τ a m hm hm0 g u v)
+    (measurable_aHalf τ a m q₀ β aC) (by positivity)
+    (fun x => abs_aHalf_le τ a m hN q₀ β aC x) ?_
+  positivity
+
+end Observable
+
+/-! ## THE AXIOM AT EVEN EXTENT — discharged, at extent at least four and nonnegative coupling
+
+`corrClay_rp_of_crossing` reduced the axiom's conclusion to one inequality per plane, with the base
+plaquette's locality supplied. `odd_crossing_integral_nonneg` proves that inequality. Composing them
+leaves NO hypothesis about the lattice: what remains are the two conditions named in
+`odd_crossing_integral_nonneg`'s own statement, and both are properties of the case rather than gaps
+in the argument.
+
+* `2 ≤ m`, i.e. extent `Nap + 1 ≥ 4`. At extent `2` the two straddling families read the same
+  transverse links (`negctl_plane_assignment_collides_at_m_one`) and the plane gauge is not a
+  coordinatewise action. `ActionSplit.exists_even_extent_aperture` picks the aperture from a cofinal
+  set, so extents of at least four are exactly as available as extents of at least two.
+* `0 ≤ β`. `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the Wilson cross kernel's
+  quadratic form on two explicit `SU(3)` elements and finds it nonnegative IF AND ONLY IF `β ≥ 0`.
+  At negative coupling the weight is not reflection positive at a link reflection; this is the sign of
+  the coupling, not a limitation of the method.
+
+`Complete.wilson_reflection_positive_at` quantifies over EVERY real `β`, so the composite below does
+not cover its statement at negative coupling. It covers it at `0 ≤ β`, which is where the theory
+lives. -/
+
+section Discharge
+
+open MassGap.ReflectPositive
+
+/-- **THE ODD LAGS, DISCHARGED.** `PlaqReflPositive` at a link-reflection plane, with no hypothesis
+left but the geometry, the extent bound and the sign of the coupling.
+
+DERIVED: no numeral beyond `odd_crossing_integral_nonneg`'s own. -/
+theorem plaqReflPositive_odd {d n : ℕ} [NeZero n] {N : ℕ} (τ : Fin d) (a : Fin n) (m : ℕ)
+    (hN : N ≠ 0) (hm : n = 2 * m) (hm2 : 2 ≤ m) {β : ℝ} (hβ : 0 ≤ β) (q₀ : Plaq d n)
+    (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) :
+    PlaqReflPositive N τ (a + a + 1) β q₀ :=
+  plaqReflPositive_odd_of_crossing τ a m hN hm (by omega) β q₀
+    (fun aC => odd_crossing_integral_nonneg τ a m hN hm (by omega) hm2 hβ q₀ hq₀ aC)
+
+/-- **THE CLAY CORRELATION IS REFLECTION POSITIVE AT EVERY EVEN EXTENT OF AT LEAST FOUR, FOR EVERY
+NONNEGATIVE COUPLING.**
+
+This is the body of `Complete.wilson_reflection_positive_at` at aperture `Nap`
+(`Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition), with NO
+hypothesis about the lattice remaining. Every input is proved: the even lags by
+`ActionSplit.plaqReflPositive_of_even_lag`, lag zero by `PlaqVariance.corrClay_zero_pos`, and the odd
+lags by `plaqReflPositive_odd` — which is the crossing integration applied to the three-block
+factorisation of Part E, the mirror transport of Part F and the word of Part J.
+
+DERIVED: `3` is the gauge group's rank and `4` the dimension, both `WilsonBridge.corrClay`'s own; `2`
+is the half-extent bound the plane assignment needs and `0` the sign of the coupling the cross kernel
+needs. -/
+theorem corrClay_reflection_positive (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm2 : 2 ≤ m)
+    {β : ℝ} (hβ : 0 ≤ β) :
+    (∀ lag, 0 ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β lag)
+      ∧ 0 < ∑ lag, MassGap.WilsonBridge.corrClay (Nap + 1) β lag :=
+  corrClay_rp_of_crossing Nap m hm (by omega) β
+    (fun a hloc aC =>
+      odd_crossing_integral_nonneg (2 : Fin 4) a m (by norm_num) hm (by omega) hm2 hβ _ hloc aC)
+
+/-- **NEGATIVE CONTROL — the sign of the coupling cannot be dropped.**
+
+`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` evaluates the Wilson cross kernel's quadratic
+form on two explicit `SU(3)` elements — the identity and `diag(1, −1, −1)` — and the value is
+nonnegative exactly when `β ≥ 0`. That kernel is the one `odd_crossing_integral_nonneg` integrates,
+so `0 ≤ β` there is carrying weight: at negative coupling the object the whole odd-lag argument is
+about is itself negative on the group the development is built at.
+
+DERIVED: no numeral of this file's; the elements and the value are `CharacterExpansion`'s. -/
+theorem negctl_odd_discharge_needs_nonneg_coupling (β : ℝ) :
+    0 ≤ (∑ i, ∑ j, MassGap.CharacterExpansion.NegControl.zc i
+        * MassGap.CharacterExpansion.NegControl.zc j
+        * Real.exp (β * hsRe (MassGap.CharacterExpansion.NegControl.cA i)
+            (MassGap.CharacterExpansion.NegControl.cA j))) ↔ 0 ≤ β :=
+  MassGap.CharacterExpansion.NegControl.su3_kernel_nonneg_iff β
+
+/-- **NON-VACUITY — the extent bound is met, at the smallest extent that meets it.** Reflection
+positivity of the Clay correlation, unconditionally, at extent four and any nonnegative coupling. A
+bound no extent satisfied would make `corrClay_reflection_positive` an empty quantification; this is
+the witness that it is not.
+
+DERIVED: `3` is the aperture whose extent `3 + 1` is the smallest even extent with `2 ≤ m`, and `2`
+is that half. Both are read off the bound, not chosen. -/
+theorem corrClay_reflection_positive_at_extent_four {β : ℝ} (hβ : 0 ≤ β) :
+    (∀ lag, 0 ≤ MassGap.WilsonBridge.corrClay (3 + 1) β lag)
+      ∧ 0 < ∑ lag, MassGap.WilsonBridge.corrClay (3 + 1) β lag :=
+  corrClay_reflection_positive 3 2 (by norm_num) (by norm_num) hβ
+
+end Discharge
+
+section AuditN
+#print axioms re_tr_hol_swap
+#print axioms re_tr_hol_cross
+#print axioms planeARaw_sLinkOf
+#print axioms planeBRaw_sLinkOf
+#print axioms negctl_plane_assignment_collides_at_m_one
+#print axioms reflLink_tLinkOf
+#print axioms hsRe_crossWord_planeAct
+#print axioms abs_coord_crossWord_le_one
+#print axioms re_tr_hol_block
+#print axioms sum_re_tr_oplqCross
+#print axioms measurable_coord_crossWord
+#print axioms abs_aObs_le
+#print axioms integral_odd_eq_oddIntegrand
+#print axioms oddIntegrand_join
+#print axioms odd_crossing_integral_nonneg
+#print axioms plaqReflPositive_odd
+#print axioms corrClay_reflection_positive
+#print axioms negctl_odd_discharge_needs_nonneg_coupling
+#print axioms corrClay_reflection_positive_at_extent_four
+end AuditN
+
+section AuditM
+#print axioms exists_odd_lag_plane_in_half
+#print axioms transverse_plaq_links_in_oblkS
+#print axioms corrClay_rp_of_crossing
+end AuditM
+
+section AuditL
+#print axioms measurePreserving_relabel_twist
+#print axioms oblkT_maps_oblkS
+#print axioms mirrorEquivTS
+#print axioms measurePreserving_mirrorT
+#print axioms reflConf_joinO_mirror
+#print axioms negctl_mirrorT_daggers_axis
+#print axioms measurable_join3
+#print axioms integral_oblk_mirror
+#print axioms planeAct_measurePreserving
+#print axioms measurable_uncurry_planeAct
+#print axioms abs_coord_le_one_of_entries
+#print axioms entry_blockDiagonal_fin_norm_le_one
+end AuditL
+
+section AuditK
+#print axioms blockEquiv3
+#print axioms join3_mem_R
+#print axioms join3_mem_S
+#print axioms join3_mem_T
+#print axioms join3_restrict
+#print axioms measurePreserving_join3
+#print axioms integral_three_block
+#print axioms oblk_cover
+#print axioms integral_oblk_three_block
+#print axioms plane_group_haar
+#print axioms oblkR_nonempty
+end AuditK
 
 end MassGap.OddLagSplit

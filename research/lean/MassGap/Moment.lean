@@ -29,7 +29,10 @@ needs no assumption. What this program ASSUMES is how to READ its two factors:
 
 IT MUST BE THE CIRCLE DISTANCE. `thetaMoment_eq` gives the same factorisation with the RAW lag index,
 `⟨θ²⟩ = (2π/(N+1))²⟨d²⟩`, and that version is useless. On a periodic extent the correlation obeys
-`ρ(N) = ρ(−1) = ρ(1)`, so weighting the far half of the lag range by `d²` makes the moment grow like
+`ρ(N) = ρ(−1) = ρ(1)` — asserted here as a fact about periodicity when this was written, and now a
+THEOREM of the genuine correlation, `MomentShape.wilsonCorrAt_neg` (every extent, every real
+coupling, no hypothesis), with `MomentShape.wilsonCorrAt_circLag_congr` saying the correlation reads
+the lag ONLY through `circLag`. So weighting the far half of the lag range by `d²` makes the moment grow like
 `N²` even when the correlation length is FIXED — for `ρ(d) = e^{−dist/1.5}` the raw moment runs
 14.5, 68.9, 307, 1305, 5384 across extents 8 to 128, while the circle moment settles at 3.28. A
 hypothesis bounding the raw moment is satisfiable by no physical correlation at all, gapped or not.

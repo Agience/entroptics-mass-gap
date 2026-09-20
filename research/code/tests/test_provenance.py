@@ -1289,3 +1289,78 @@ def test_the_release_ships_every_file_its_own_documentation_names():
         "the release ships documentation naming files the deposit does not carry: "
         + "; ".join(f"{n} (named in {', '.join(d)}) exists in the store but is not in COMPANIONS"
                     for n, d in sorted(missing.items())))
+
+
+def test_release_metadata_files_agree_on_version_and_date():
+    """`.zenodo.json` and `CITATION.cff` state one version and one release date, not two.
+
+    The publish workflow compares these two files on TITLE and repository home, and on nothing else.
+    So the two fields that actually label the release -- what version it is and when it came out --
+    agreed only because a person kept them in step by hand. They did not, twice: v0.2.0 was minted
+    with `version: 0.1.0` because the bump was made in one file, and at 0.2.2 the pair was found one
+    release behind with mismatched dates.
+
+    A wrong version here is not cosmetic. Zenodo puts it on the record, and the record is what a
+    citation resolves to, so a reader is told they are reading a release that was never cut.
+    """
+    import json
+    import re
+
+    zen = json.loads((REPO / ".zenodo.json").read_text(encoding="utf-8"))
+    cff = (REPO / "CITATION.cff").read_text(encoding="utf-8")
+
+    # The TOP-LEVEL keys only. CITATION.cff carries a `references:` block whose entries have their
+    # own indented `version:`/`date-released:` for OTHER software, and matching those instead of the
+    # file's own is how this check would silently compare the wrong release.
+    m_ver = re.search(r"^version:\s*\"?([^\"\s]+)\"?\s*$", cff, re.M)
+    m_date = re.search(r"^date-released:\s*\"?([0-9]{4}-[0-9]{2}-[0-9]{2})\"?\s*$", cff, re.M)
+    assert m_ver, "CITATION.cff has no top-level `version:`"
+    assert m_date, "CITATION.cff has no top-level `date-released:`"
+
+    assert zen.get("version") == m_ver.group(1), (
+        ".zenodo.json says version %r; CITATION.cff says %r"
+        % (zen.get("version"), m_ver.group(1)))
+    assert zen.get("publication_date") == m_date.group(1), (
+        ".zenodo.json publication_date is %r; CITATION.cff date-released is %r"
+        % (zen.get("publication_date"), m_date.group(1)))
+
+
+def test_zenodo_related_dois_are_version_dois_not_concept_dois():
+    """A DOI this release REFERENCES pins a version; a concept DOI does not.
+
+    Zenodo mints two DOIs per deposit: a concept DOI that always resolves to the newest version, and
+    a version DOI fixed to one release. `.zenodo.json` referenced the Entroptics CONCEPT DOI while
+    `CITATION.cff` and the paper both pinned the version DOI, so the same citation said two different
+    things and the `.zenodo.json` half would drift to whatever Entroptics released next -- away from
+    the release this paper's numbers were produced against.
+
+    The owning repository labels its own DOIs, so this asks IT rather than hard-coding either number
+    here: a referenced DOI must not be one some CITATION.cff calls a concept DOI.
+    """
+    import json
+    import re
+
+    zen = json.loads((REPO / ".zenodo.json").read_text(encoding="utf-8"))
+    referenced = {r["identifier"] for r in zen.get("related_identifiers", [])
+                  if r.get("scheme") == "doi" and r.get("relation") == "references"}
+    if not referenced:
+        pytest.skip("no referenced DOIs in .zenodo.json")
+
+    concept = {}
+    for cff in (REPO.parent / "entroptics" / "CITATION.cff", REPO / "CITATION.cff"):
+        if not cff.exists():
+            continue
+        lines = cff.read_text(encoding="utf-8").splitlines()
+        for i, line in enumerate(lines):
+            m = re.search(r"value:\s*\"?(10\.5281/zenodo\.\d+)", line)
+            if not m:
+                continue
+            # the description sits on the following line in a cff identifiers block
+            nxt = lines[i + 1] if i + 1 < len(lines) else ""
+            if "concept doi" in nxt.lower():
+                concept[m.group(1)] = str(cff)
+
+    bad = sorted(referenced & set(concept))
+    assert not bad, (
+        ".zenodo.json references a CONCEPT DOI, which follows the latest release and unpins the "
+        "citation: " + ", ".join("%s (labelled a concept DOI by %s)" % (d, concept[d]) for d in bad))

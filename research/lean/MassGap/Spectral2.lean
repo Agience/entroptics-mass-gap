@@ -34,12 +34,32 @@ has it. The content of the open obligation is `WilsonSpectral N β` at `β > 0`,
 moves it.
 
 It is also not a transfer-operator construction. `Transfer.periodicSpectralForm_of_transfer` is the
-route that would produce these forms from an operator, and it consumes a `Transfer.TransferData`,
-which needs a time-translation endomorphism of the observable module and a finite-dimensional GNS
-space — neither of which exists in the tree. This witness is built by evaluating the correlation,
-not by diagonalising anything.
+route that would produce these forms from an operator; this witness is built by evaluating the
+correlation, not by diagonalising anything. What separates the two routes is neither of the two
+things it is easy to name:
 
-Foundational footprint only (`#print axioms` at the end).
+* The time translation EXISTS. `WilsonTransfer.shiftObs` is the `ℝ`-linear endomorphism of the Wilson
+  observables, `WilsonTransfer.reflForm_shiftObs_symm` is `TransferData.T_symm` for the genuine Gibbs
+  reflection form, and `OSPositivity.wilsonSlabTransfer` assembles a full `Transfer.TransferData` on
+  the slab algebra from exactly two named premises, `SlabShiftStable` and `SlabShiftContractive`.
+* Finite dimension of the GNS space is not a missing lemma. `SliceTrace` records — in prose, not as a
+  formalised theorem — that a slab configuration is a point of a compact group of positive dimension,
+  so the operator acts on `L²` of a continuum. `PeriodicRayleigh.periodic_decay_of_rayleigh` reaches
+  `periodic_decay_of_transfer`'s conclusion without it, from a Rayleigh bound; the spectral FORM
+  itself still needs it, because `PeriodicSpectralForm.hrep` is an exact finite expansion and a
+  Rayleigh bound is an inequality.
+
+What is left between the two routes is `SlabShiftStable`, and it is worse than open:
+`PeriodicRayleigh.const_of_slabShiftStable` proves that at `2 ≤ m` it makes every slab observable
+CONSTANT, so the operator it unlocks is the identity. Past it,
+`HalfLineTransfer.no_rate_of_shift_transfer`: the lattice shift has order `n`, so no per-step factor
+below one is available on a lattice periodic in `τ`, on any module.
+
+Axiom footprint (`#print axioms` after each declaration). `contactForm`,
+`wilsonSpectral_at_zero_coupling` and `contactForm_weight_pos` are foundational-only.
+`wilson_decay_at_zero_coupling` additionally carries `wilson_reflection_positive_at`, inherited from
+`Complete.ym_wilson_decay_to_half_period`, which is the open reflection-positivity axiom and not
+anything this file assumes.
 Build: `python research/code/lean_build.py build MassGap.Spectral2`.
 -/
 

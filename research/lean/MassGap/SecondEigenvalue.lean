@@ -141,14 +141,21 @@ Cauchy–Schwarz on the correlator, because self-adjointness turns `⟪x, T²x�
 
 ## What stands between this and B5, named exactly
 
-1. **There is no `TransferData` over the Wilson measure, and the reason is NOT reflection
-   positivity.** `Complete.wilson_reflection_positive_at` is an axiom, but
+1. **The `TransferData` over the Wilson measure rests on two premises, and reflection positivity is
+   not one of them.** `Complete.wilson_reflection_positive_at` is an axiom, but
    `Complete.wilson_reflection_positive_at_even` PROVES its body at even extent `N + 1 = 2m`,
    `2 ≤ m`, `0 ≤ β` — and §3 lives at `N = 3`, so `N + 1 = 4 = 2·2`, exactly that domain.
-   `ConfinesZero` already calls it there. The blocker is the one `Spectral2` names:
-   `Transfer.TransferData` needs a time-translation ENDOMORPHISM of the observable module, and
-   `Transfer`'s spectral section needs a finite-dimensional GNS space, and neither exists in the
-   tree. §1 removes the finite-dimensionality requirement; the endomorphism it does not.
+   `ConfinesZero` already calls it there. `OSPositivity.wilsonSlabTransfer` builds a full
+   `Transfer.TransferData` on the slab algebra, with the foundational axioms only, from exactly
+   `SlabShiftStable` and `SlabShiftContractive`; the time translation itself is
+   `WilsonTransfer.shiftObs` and `T_symm` is `WilsonTransfer.reflForm_shiftObs_symm`. What blocks
+   `SlabShiftStable` is `WilsonTransfer.shift_not_stable_on_slab`, and
+   `PeriodicRayleigh.const_of_slabShiftStable` sharpens that to: granting the premise makes every
+   slab observable constant at `2 ≤ m`, so the operator it unlocks is the identity. §1 removes the
+   finite-dimensionality requirement from every
+   BOUND in `Transfer`'s Part 6 — `PeriodicRayleigh.periodic_decay_of_rayleigh` and
+   `PeriodicRayleigh.one_le_of_rayleigh_le` are those two without it — and removes it from nothing
+   that produces a `Spectral.PeriodicSpectralForm`, whose `hrep` is an exact finite expansion.
 2. **`SliceTrace`'s `K_t` is not `SliceTransfer.transferKernel`.** `SliceTrace.partition_eq_cycleIntegral`
    gives `Z` as a cyclic integral of `K_t`, but `K_t` reads the axis links of its own slab (removing
    them is a change of variables in temporal gauge, a hypothesis in `SliceTransfer` and discharged

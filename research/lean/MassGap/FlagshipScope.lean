@@ -1,0 +1,153 @@
+import MassGap.ApertureRoute
+
+/-!
+# MassGap.FlagshipScope — ADVERSARIAL SCRATCH MODULE (not imported by `MassGap.lean`)
+
+Machine checks for an adversarial audit of
+`ApertureRoute.flagship_of_confinement_at_an_aperture`. Nothing here is part of the development;
+it exists to test whether that theorem's conclusion is a statement about the SU(3) Wilson
+correlation. Delete freely.
+-/
+
+namespace MassGap.FlagshipScope
+
+open Filter
+open MassGap.EvenAperture
+open MassGap.ApertureRoute
+
+/-! ## 1. The measure half of `FlagshipAt` uses no hypothesis
+
+The proof term below is `ym_continuum_tension`, which is an UNCONDITIONAL theorem proved in
+`WilsonModel.lean`. `hc` appears in the statement only because the statement is spelled through
+`wilsonOfConfinement hc`; it contributes nothing to the proof. -/
+theorem flagship_measure_half_needs_no_hypothesis (hc : ConfinesAtAnAperture) :
+    ∃ (q : (wilsonOfConfinement hc).model.measure.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
+      (∀ j, Tendsto (fun k => (wilsonOfConfinement hc).model.measure.Q j (φ k))
+              atTop (nhds (q j))) ∧
+      (∀ j, |q j| ≤ (⌈(wilsonOfConfinement hc).model.measure.c⌉₊ : ℝ)
+              * (wilsonOfConfinement hc).model.measure.B) ∧
+      (∀ j, 0 ≤ q j) ∧
+      (∀ g j, q ((wilsonOfConfinement hc).model.measure.actE g j) = q j) ∧
+      (∀ σ j, q ((wilsonOfConfinement hc).model.measure.actP σ j) = q j) :=
+  MassGap.WilsonModel.ym_continuum_tension
+
+#print axioms flagship_measure_half_needs_no_hypothesis
+
+/-! ## 2. The `SO(4)` clause does not depend on the aperture -/
+
+/-- The `R` field is literally the same closed term at every aperture. -/
+theorem R_is_the_same_term_at_every_aperture (a a' : EvenAp) :
+    (ymModelEven a).R = (ymModelEven a').R := rfl
+
+#print axioms R_is_the_same_term_at_every_aperture
+
+/-- And the clause itself holds at every aperture with no hypothesis. -/
+theorem so4_clause_unconditional (a : EvenAp) :
+    ∀ d d', (ymModelEven a).R d = (ymModelEven a).R d' := A2_even a
+
+#print axioms so4_clause_unconditional
+
+/-! ## 3. The "correlation" the gap clause is about is a manufactured geometric sequence -/
+
+/-- `∑_k P_k m_k^τ` for `ymModelEven` is exactly `exp(-(κ₀ - μ))^τ`. There is one mode, its weight
+is `1`, and its magnitude is DEFINED as its own bound. -/
+theorem gap_summand_is_manufactured (a : EvenAp) (β : ℝ) (τ : ℕ) :
+    ∑ k ∈ (ymModelEven a).s β, (ymModelEven a).P β k * ((ymModelEven a).m β k) ^ τ
+      = ((Real.exp (-(MassGap.κ₀YM - μEven a β)) : ℝ) : ℂ) ^ τ := by
+  show ∑ _k : Unit, (1 : ℂ) * ((Real.exp (-(MassGap.κ₀YM - μEven a β)) : ℝ) : ℂ) ^ τ = _
+  simp
+
+#print axioms gap_summand_is_manufactured
+
+/-! ## 4. THE VACUITY WITNESS
+
+A `LatticeYM` with `ymModelEven`'s exact shape and the tension set to `0`. There is no read, no
+correlation, no gauge group and no lattice anywhere in it.
+
+CHOSEN: the tension `μ ≡ 0`. It is chosen to be the WORST case for the conclusion, not a convenient
+one — zero tension is the NON-confining reading, so every clause the flagship delivers here it
+delivers for a theory with no confinement at all. Any other constant below `κ₀YM` would witness the
+same thing; `0` is picked because it is the value a reader can check against `κ₀YM_pos` in one step.
+
+DERIVED: the remaining literals are the shape of `ymModelEven` (`Complete.lean:2007`,
+`EvenAperture.lean:256`) transcribed rather than invented. `P := 1` is its unit weight; `R := 0` is
+a constant direction profile, which is all the `R d = R d'` clause reads; `Idx := Unit` is its
+one-mode index. The `4` the gate sees is inside `κ₀YM = ¼log3`, carried in by name and counted off
+directed cube paths in `Floor.lean`. No numeral here is a level anything is compared against. -/
+noncomputable def bogusYM : MassGap.LatticeYM where
+  Idx := Unit
+  Dir := Unit
+  s := fun _ => (Finset.univ : Finset Unit)
+  P := fun _ _ => 1
+  m := fun _ _ => ((Real.exp (-(MassGap.κ₀YM - 0)) : ℝ) : ℂ)
+  μ := fun _ => 0
+  R := fun _ => 0
+  κ₀ := MassGap.κ₀YM
+  κ := MassGap.κ₀YM
+  hfloor := le_refl _
+  hread := by
+    intro β _ _
+    rw [Complex.norm_real, Real.norm_of_nonneg (Real.exp_pos _).le]
+
+theorem bogus_A1 : MassGap.A1_YM bogusYM := fun _ => MassGap.κ₀YM_pos
+
+theorem bogus_A2 : MassGap.A2_YM bogusYM := fun _ _ => rfl
+
+/-- The measure side is `ymFamilyTension` verbatim — the same closed term the real construction
+uses, because the measure side takes no hypothesis. -/
+noncomputable def bogusFull : MassGap.FullModel where
+  gap := bogusYM
+  h1 := bogus_A1
+  h2 := bogus_A2
+  measure := MassGap.WilsonModel.ymFamilyTension
+
+/-- And `paramsTension` verbatim, so the "SU(3)" label (`params.N = 3`) survives unchanged.
+
+DERIVED: the `3` is not this declaration's. It is `WilsonModel.paramsTension`'s own `N`, reused
+without modification, and that is the POINT of the witness rather than an incidental choice — the
+rank record that says "SU(3)" survives intact on an object with no gauge group, which is what shows
+the label is carried by `params` and never read by the conclusion. -/
+noncomputable def bogusWilson : MassGap.WilsonRealization where
+  params := MassGap.WilsonModel.paramsTension
+  model := bogusFull
+  hc := MassGap.WilsonModel.paramsTension_irCutoff.symm
+
+/-- **THE WHOLE FLAGSHIP CONCLUSION, FOR AN OBJECT WITH NO GAUGE CONTENT.**
+
+Mass gap, non-triviality (`μ - κ < 0`), `SO(4)` invariance and the OS0-OS3 continuum measure, for
+a model whose tension is the constant `0`. -/
+theorem flagship_for_bogus :
+    ((∀ β, Tendsto (fun τ : ℕ => ‖∑ k ∈ bogusWilson.model.gap.s β,
+          bogusWilson.model.gap.P β k * (bogusWilson.model.gap.m β k) ^ τ‖) atTop (nhds 0)) ∧
+        (∀ β, bogusWilson.model.gap.μ β - bogusWilson.model.gap.κ < 0) ∧
+        (∀ d d', bogusWilson.model.gap.R d = bogusWilson.model.gap.R d')) ∧
+      (∃ (q : bogusWilson.model.measure.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
+        (∀ j, Tendsto (fun k => bogusWilson.model.measure.Q j (φ k)) atTop (nhds (q j))) ∧
+        (∀ j, |q j| ≤ (⌈bogusWilson.model.measure.c⌉₊ : ℝ) * bogusWilson.model.measure.B) ∧
+        (∀ j, 0 ≤ q j) ∧
+        (∀ g j, q (bogusWilson.model.measure.actE g j) = q j) ∧
+        (∀ σ j, q (bogusWilson.model.measure.actP σ j) = q j)) :=
+  MassGap.existence_and_gap_of_wilson bogusWilson
+
+#print axioms flagship_for_bogus
+
+/-! ## 5. The OS measure's `Q` ignores its test configuration entirely
+
+So OS1 (Euclidean invariance) and OS3 (permutation symmetry) of `ymFamilyTension` hold because the
+reflected form is constant in `j`, not because the measure is invariant in any nontrivial sense. -/
+theorem Q_is_constant_in_the_test_configuration
+    (j j' : MassGap.WilsonModel.ymFamilyTension.J) (a : ℕ) :
+    MassGap.WilsonModel.ymFamilyTension.Q j a
+      = MassGap.WilsonModel.ymFamilyTension.Q j' a := by
+  show MassGap.WilsonGauge.QG j a = MassGap.WilsonGauge.QG j' a
+  rw [MassGap.WilsonGauge.QG_eq, MassGap.WilsonGauge.QG_eq]
+
+#print axioms Q_is_constant_in_the_test_configuration
+
+/-- The family's spectrum `ev` is the fabricated constant read `wOne`, at every spacing index. -/
+theorem ev_is_wOne (a n : ℕ) :
+    MassGap.WilsonModel.ymFamilyTension.ev a n = MassGap.WilsonModel.wOne n := rfl
+
+#print axioms ev_is_wOne
+
+end MassGap.FlagshipScope

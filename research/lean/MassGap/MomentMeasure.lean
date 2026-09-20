@@ -25,13 +25,16 @@ The classical bounded Hamburger construction, with every step taken from Mathlib
 2. `sform` — the sesquilinear form `⟨p, q⟩ = Λ_s(p⋆ q)`, with `p⋆` the coefficientwise conjugate.
 3. `re_sform_self_nonneg` — positive semidefiniteness of `⟨·,·⟩ = ⟨·,·⟩_0`. This is
    `Schwinger.limit_hankel_psd` applied twice, to the real and to the imaginary parts of the
-   coefficient family; the cross terms cancel because `L (i+j)` is symmetric under `i ↔ j`.
+   coefficient family. The complex cross terms never appear: `L` is real, so
+   `re (conj cᵢ · cⱼ · L) = (re cᵢ · re cⱼ + im cᵢ · im cⱼ) · L` term by term, and the two halves are
+   real Hankel forms of exactly the kind `limit_hankel_psd` accepts.
 4. `Pre D` — `ℂ[X]` carrying that form as a SEMI-inner product, so no quotient by the null space is
    needed: `PreInnerProductSpace.Core` asks only for semidefiniteness, and `UniformSpace.Completion`
    Hausdorffifies and completes in one step.
 5. `opX` — multiplication by `X`, extended to the completion. Its norm is at most `R`, and that is
-   exactly `Schwinger.shiftForm_one_le`: the shifted Hankel bound says multiplication by `X` is a
-   bounded operator, which bare positive semidefiniteness never gives.
+   exactly `Schwinger.shift_two_le` (`shiftForm_one_le` with the shifts written out): the shifted
+   Hankel bound says multiplication by `X` is a bounded operator, which bare positive
+   semidefiniteness never gives.
 6. `isSelfAdjoint_opX`, `spectrum_opX_subset` — self-adjointness is immediate from the definition of
    the form, and `spectrum.subset_closedBall_norm_mul` puts the real spectrum inside `[−R, R]`.
 7. The continuous functional calculus and Riesz–Markov–Kakutani turn the vector state
@@ -60,8 +63,9 @@ geometric bound enters only through `shift`, which `Schwinger.shift_two_le` deri
 
 /-- **The hypothesis of the bounded Hamburger moment problem**, as a record.
 
-`psd` is `Schwinger.limit_hankel_psd`; `shift` is `Schwinger.shift_two_le`. The record is in `Type 1`
-because `psd` quantifies over the index type. -/
+`psd` is `Schwinger.limit_hankel_psd`; `shift` is `Schwinger.shift_two_le`. Nothing else about the
+sequence is carried: not the contact floor, not summability, not the geometric bound (which enters
+only through `shift`, the form in which `Schwinger` derives it). -/
 structure MomentData where
   /-- The moment sequence: one real number per lag. -/
   L : ℕ → ℝ
@@ -246,9 +250,10 @@ theorem sform_eq_double_sum (s N : ℕ) (p : ℂ[X]) (hN : p.natDegree < N) :
   refine Finset.sum_congr rfl (fun j _ => ?_)
   rw [sform_monomial]
 
-/-- **The real part of the diagonal form splits into two real Hankel forms.** The cross terms cancel
-because `L (i+j)` does not see the order of `i` and `j`; what is left is the real-part family and
-the imaginary-part family, each a real coefficient family of the kind `limit_hankel_psd` accepts. -/
+/-- **The real part of the diagonal form splits into two real Hankel forms.** Term by term, and
+because `L` is real, `re (conj cᵢ · cⱼ · L) = (re cᵢ · re cⱼ + im cᵢ · im cⱼ) · L`: no cancellation
+is needed, the imaginary part is simply never read. What is left is the real-part family and the
+imaginary-part family, each a real coefficient family of the kind `limit_hankel_psd` accepts. -/
 theorem re_sform_self (s N : ℕ) (p : ℂ[X]) (hN : p.natDegree < N) :
     (sform D s p p).re
       = (∑ i ∈ range N, ∑ j ∈ range N, (p.coeff i).re * (p.coeff j).re * D.L (i + j + s))
@@ -314,7 +319,12 @@ def toPoly (D : MomentData) (p : Pre D) : ℂ[X] := p
 
 /-- **The semi-inner product.** Hermitian by `sform_conj_symm`, semidefinite by
 `re_sform_self_nonneg`, sesquilinear by construction. Definiteness is NOT claimed and is not needed:
-the completion quotients the null vectors out. -/
+the completion quotients the null vectors out.
+
+DERIVED: `0` is the SHIFT index into the moment sequence, not a value. `sform D s p q` is
+`lam D s (p* · q)`, which sums `D.L (k + s)`, so `s = 0` is the unshifted form — the moments
+themselves, which is what an inner product on polynomials has to be. A nonzero shift is the
+Stieltjes form, a different object used for a different positivity; nothing here is tuned. -/
 @[reducible] def core (D : MomentData) : PreInnerProductSpace.Core ℂ (Pre D) where
   inner p q := sform D 0 (toPoly D p) (toPoly D q)
   conj_inner_symm p q := sform_conj_symm D 0 (toPoly D p) (toPoly D q)
@@ -433,7 +443,12 @@ Composing it with the vector state at the vacuum gives a POSITIVE linear functio
 continuous functions on the spectrum, and positivity is the only thing that needs proving: a
 nonnegative `f` is `g·g` for `g = √f`, whose image is self-adjoint, so the value is `‖g(A)1‖²`. -/
 
-/-- **The vacuum**: the constant polynomial `1`, as a vector of the Hilbert space. -/
+/-- **The vacuum**: the constant polynomial `1`, as a vector of the Hilbert space.
+
+DERIVED: `1` is the unit of the ring `ℂ[X]`, not a normalisation applied to anything. It is the
+cyclic vector the construction is built around: `opX_pow_vac` says `A^k` sends it to the class of
+`X^k`, and `inner_vac_opX_pow` says its moments ARE the sequence `D.L`. Any other choice would not
+represent the moment sequence at all. -/
 def vac (D : MomentData) : H D := ((ofPoly D 1 : Pre D) : H D)
 
 /-- **`A^k` applied to the vacuum is the class of `X^k`.** -/
@@ -451,7 +466,11 @@ theorem inner_vac_opX_pow (k : ℕ) :
     Polynomial.X_pow_eq_monomial k, lam_monomial, one_mul, Nat.add_zero]
 
 /-- **The vector state** `f ↦ ⟨1, f(A) 1⟩`, as a real linear functional on the continuous functions
-on the spectrum. -/
+on the spectrum.
+
+DERIVED: the definition below carries no numeral at all; the `1`s are in the formula in this note,
+and each of them is `vac D` written the way the moment problem writes it — the constant polynomial,
+declared at `vac`. The state is the vector state at that vector and nothing is scaled by hand. -/
 def state (D : MomentData) : C(spectrum ℝ (opX D), ℝ) →ₗ[ℝ] ℝ where
   toFun f := (inner ℂ (vac D) (cfcHom (isSelfAdjoint_opX D) f (vac D))).re
   map_add' f g := by
@@ -459,7 +478,7 @@ def state (D : MomentData) : C(spectrum ℝ (opX D), ℝ) →ₗ[ℝ] ℝ where
   map_smul' r f := by
     have h1 : cfcHom (isSelfAdjoint_opX D) (r • f)
         = r • cfcHom (isSelfAdjoint_opX D) f := map_smul _ _ _
-    simp only [h1, ContinuousLinearMap.smul_apply', RingHom.id_apply, smul_eq_mul]
+    simp only [h1, smul_apply, RingHom.id_apply, smul_eq_mul]
     rw [← IsScalarTower.algebraMap_smul ℂ r, inner_smul_right]
     simp [Complex.mul_re]
 
@@ -493,7 +512,11 @@ theorem state_nonneg (f : C(spectrum ℝ (opX D), ℝ)) (hf : ∀ x, 0 ≤ f x) 
 
 /-- **The positive linear functional** on the compactly supported continuous functions on the
 spectrum — the input Riesz–Markov–Kakutani asks for. Every continuous function on the spectrum is
-compactly supported, because the spectrum is compact. -/
+compactly supported, because the spectrum is compact.
+
+DERIVED: the only numeral is the `0` of `ℝ` in the monotonicity obligation — `0 ≤ state D (g − f)`,
+the additive identity of the ordered field and the definition of "nonnegative", discharged by
+`state_nonneg`. Nothing about the functional is set by a number. -/
 def stateCc (D : MomentData) : C_c(spectrum ℝ (opX D), ℝ) →ₚ[ℝ] ℝ where
   toFun f := state D f.toContinuousMap
   map_add' f g := by
@@ -569,6 +592,18 @@ theorem exists_representing_measure (D : MomentData) :
       (∀ k : ℕ, ∫ x, x ^ k ∂μ = D.L k) ∧ μ ((Set.Icc (-D.R) D.R)ᶜ) = 0 :=
   ⟨rieszMeasure D, integral_pow_rieszMeasure D, rieszMeasure_compl_Icc D⟩
 
+/-- **THE MEASURE IS FINITE.** The spectrum is compact, so the Riesz measure on it is finite, and a
+pushforward does not create mass. -/
+instance instIsFiniteMeasure : MeasureTheory.IsFiniteMeasure (rieszMeasure D) := by
+  haveI h : MeasureTheory.IsFiniteMeasure (spectralMeasure D) :=
+    (inferInstance : MeasureTheory.IsFiniteMeasure (RealRMK.rieszMeasure (stateCc D)))
+  exact MeasureTheory.Measure.isFiniteMeasure_map (spectralMeasure D) Subtype.val
+
+/-- **THE TOTAL MASS IS THE CONTACT TERM.** `μ(ℝ) = L 0`, the `k = 0` moment. -/
+theorem rieszMeasure_univ : (rieszMeasure D).real Set.univ = D.L 0 := by
+  have h := integral_pow_rieszMeasure D 0
+  simpa using h
+
 /-- **THE MEASURE IS NOT THE ZERO MEASURE** when the contact term is positive: its total mass is
 `L 0`. This is the `k = 0` case of `integral_pow_rieszMeasure`, recorded because it is what makes the
 construction non-vacuous at every coupling `Schwinger`'s contact floor covers. -/
@@ -580,9 +615,10 @@ theorem rieszMeasure_ne_zero (h : 0 < D.L 0) : rieszMeasure D ≠ 0 := by
 
 /-! ## Part 7 — the infinite-volume two-point function, as a measure
 
-`Schwinger.exists_infinite_volume_bounded_moment_data` supplies exactly the two fields of
-`MomentData` at every rate the geometric clustering allows. Feeding it in turns `L` from a sequence
-of numbers into the moments of a measure.
+`Schwinger.exists_infinite_volume_bounded_moment_data` supplies the two hypothesis fields of
+`MomentData` — full Hankel positivity and the shifted Hankel bound — at every rate the geometric
+clustering allows. Feeding them in turns `L` from a sequence of numbers into the moments of a
+measure.
 
 What this is NOT: the measure's variable is the spectral parameter of ONE lag direction. It is not a
 measure on `ℝ⁴`, not a measure on a space of distributions, and not an Osterwalder–Schrader
@@ -592,8 +628,8 @@ measure. -/
 
 On the derived coupling interval `[0,b)`, at every rate `R` the clustering allows, the limit `L` of
 the Clay correlation along the even-extent apertures is `∫ x^k dμ` for a positive measure `μ` on `ℝ`
-that gives no mass outside `[−R, R]`. The contact floor is carried through unchanged, so `μ` is not
-the zero measure at any `β` in the interval.
+that gives no mass outside `[−R, R]`. The contact floor makes `L 0` strictly positive, and `L 0` is
+the total mass (`rieszMeasure_univ`), so `μ ≠ 0` at every `β` the interval covers.
 
 DERIVED: `2·φ j + 1`, `128` and `16·4` are `Schwinger`'s; nothing here is chosen. -/
 theorem exists_infinite_volume_representing_measure :
@@ -607,15 +643,17 @@ theorem exists_infinite_volume_representing_measure :
               Filter.atTop (nhds (L k))) ∧
             Real.exp (-(128 * β)) * δ₀ ≤ L 0 ∧
             (∀ k : ℕ, ∫ x, x ^ k ∂μ = L k) ∧
-            μ ((Set.Icc (-R) R)ᶜ) = 0 := by
+            μ ((Set.Icc (-R) R)ᶜ) = 0 ∧ μ ≠ 0 := by
   obtain ⟨b, hb, δ₀, hδ₀, hmain⟩ :=
     MassGap.Schwinger.exists_infinite_volume_bounded_moment_data
   refine ⟨b, hb, δ₀, hδ₀, fun β hβ0 hβb R hrateR hR0 hR1 => ?_⟩
   obtain ⟨-, L, φ, hφ, htend, hfloor, hpsd, hrest⟩ := hmain β hβ0 hβb
   obtain ⟨-, hshift, -⟩ := hrest R hrateR hR0 hR1
-  refine ⟨L, φ, rieszMeasure ⟨L, R, hR0, hpsd, hshift⟩, hφ, htend, hfloor,
+  have hL0 : 0 < L 0 := lt_of_lt_of_le (by positivity) hfloor
+  exact ⟨L, φ, rieszMeasure ⟨L, R, hR0, hpsd, hshift⟩, hφ, htend, hfloor,
     integral_pow_rieszMeasure ⟨L, R, hR0, hpsd, hshift⟩,
-    rieszMeasure_compl_Icc ⟨L, R, hR0, hpsd, hshift⟩⟩
+    rieszMeasure_compl_Icc ⟨L, R, hR0, hpsd, hshift⟩,
+    rieszMeasure_ne_zero ⟨L, R, hR0, hpsd, hshift⟩ hL0⟩
 
 end
 
@@ -697,6 +735,8 @@ inherits whatever `Schwinger.exists_infinite_volume_bounded_moment_data` carries
 #print axioms rieszMeasure
 #print axioms rieszMeasure_compl_Icc
 #print axioms integral_pow_rieszMeasure
+#print axioms instIsFiniteMeasure
+#print axioms rieszMeasure_univ
 #print axioms rieszMeasure_ne_zero
 #print axioms exists_representing_measure
 #print axioms exists_infinite_volume_representing_measure

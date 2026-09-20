@@ -150,7 +150,11 @@ def intraPlaq (τ : Fin d) (t : Fin n) : Finset (Plaq d n) :=
   Finset.univ.filter (fun q => ¬ IsTemporal τ q ∧ q.2 τ = t)
 
 /-- The **temporal plaquettes of the slab from `t` to `t+1`**: one direction is `τ`, base site at
-time `t`. -/
+time `t`.
+
+DERIVED: the definition below filters on `q.2 τ = t` and carries no numeral; the `1` is in the prose
+above, and it is one time step — the slab between neighbouring slices, which is what a temporal
+plaquette spans. It is an index step, not a spacing. -/
 def interPlaq (τ : Fin d) (t : Fin n) : Finset (Plaq d n) :=
   Finset.univ.filter (fun q => IsTemporal τ q ∧ q.2 τ = t)
 
@@ -250,8 +254,12 @@ theorem intra_links_mem [NeZero n] {τ : Fin d} {t : Fin n} {q : Plaq d n}
   simp only [bd, List.mem_cons, List.not_mem_nil, or_false] at hlo
   rcases hlo with rfl | rfl | rfl | rfl
   · exact mem_sliceLinks.mpr ⟨hμ, ht⟩
-  · exact mem_sliceLinks.mpr ⟨hν, by rw [shift_apply_of_ne (Ne.symm hμ)]; exact ht⟩
-  · exact mem_sliceLinks.mpr ⟨hμ, by rw [shift_apply_of_ne (Ne.symm hν)]; exact ht⟩
+  · refine mem_sliceLinks.mpr ⟨hν, ?_⟩
+    show shift q.1.1 q.2 τ = t
+    rw [shift_apply_of_ne (Ne.symm hμ)]; exact ht
+  · refine mem_sliceLinks.mpr ⟨hμ, ?_⟩
+    show shift q.1.2 q.2 τ = t
+    rw [shift_apply_of_ne (Ne.symm hν)]; exact ht
   · exact mem_sliceLinks.mpr ⟨hν, ht⟩
 
 /-- **A NON-DEGENERATE TEMPORAL PLAQUETTE READS EXACTLY TWO SLICES AND THE AXIS LINKS BETWEEN
@@ -274,8 +282,10 @@ theorem inter_links_mem [NeZero n] {τ : Fin d} {t : Fin n} {q : Plaq d n}
     rcases hlo with rfl | rfl | rfl | rfl
     · exact Finset.mem_union_right _ (mem_axisLinks.mpr ⟨hfst, ht⟩)
     · refine Finset.mem_union_left _ (Finset.mem_union_right _ (mem_sliceLinks.mpr ⟨hν, ?_⟩))
+      show shift q.1.1 q.2 τ = t + 1
       rw [hfst, shift_apply_self, ht]
     · refine Finset.mem_union_right _ (mem_axisLinks.mpr ⟨hfst, ?_⟩)
+      show shift q.1.2 q.2 τ = t
       rw [shift_apply_of_ne (Ne.symm hν)]; exact ht
     · exact Finset.mem_union_left _ (Finset.mem_union_left _ (mem_sliceLinks.mpr ⟨hν, ht⟩))
   · -- the second direction is `τ`; the first is spatial
@@ -283,8 +293,10 @@ theorem inter_links_mem [NeZero n] {τ : Fin d} {t : Fin n} {q : Plaq d n}
     rcases hlo with rfl | rfl | rfl | rfl
     · exact Finset.mem_union_left _ (Finset.mem_union_left _ (mem_sliceLinks.mpr ⟨hμ, ht⟩))
     · refine Finset.mem_union_right _ (mem_axisLinks.mpr ⟨hsnd, ?_⟩)
+      show shift q.1.1 q.2 τ = t
       rw [shift_apply_of_ne (Ne.symm hμ)]; exact ht
     · refine Finset.mem_union_left _ (Finset.mem_union_right _ (mem_sliceLinks.mpr ⟨hμ, ?_⟩))
+      show shift q.1.2 q.2 τ = t + 1
       rw [hsnd, shift_apply_self, ht]
     · exact Finset.mem_union_right _ (mem_axisLinks.mpr ⟨hsnd, ht⟩)
 
@@ -327,9 +339,12 @@ theorem exists_nondeg_interPlaq {τ μ : Fin d} (hμ : μ ≠ τ) (x : Site d n)
 geometry rather than imposing a shape on it. -/
 theorem intraPlaq_eq_empty_of_dim_one (τ : Fin 1) (t : Fin n) :
     intraPlaq (d := 1) (n := n) τ t = ∅ := by
-  refine Finset.eq_empty_of_forall_not_mem (fun q hq => ?_)
-  have hT : IsTemporal τ q := Or.inl (Subsingleton.elim q.1.1 τ)
-  exact (mem_intraPlaq.mp hq).1 hT
+  ext q
+  constructor
+  · intro hq
+    exact absurd (Or.inl (Subsingleton.elim q.1.1 τ) : IsTemporal τ q) (mem_intraPlaq.mp hq).1
+  · intro hq
+    exact absurd hq (Finset.notMem_empty q)
 
 end Geometry
 
@@ -383,7 +398,11 @@ noncomputable def intraSliceAction [NeZero n] (τ : Fin d) (t : Fin n)
 
 /-- The **inter-slice action of the slab from `t` to `t+1`**: the Wilson energy of the plaquettes
 with one direction along `τ` and base site at time `t`. By `inter_links_mem` its non-degenerate part
-reads only slices `t` and `t+1` and the axis links between them. -/
+reads only slices `t` and `t+1` and the axis links between them.
+
+DERIVED: the definition below carries no numeral — it sums the Wilson density over `interPlaq τ t`.
+The `1`s are in the prose above and are the same single time step as in `interPlaq`: the next slice,
+an index step rather than a spacing or a scale. -/
 noncomputable def interSliceAction [NeZero n] (τ : Fin d) (t : Fin n)
     (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ interPlaq τ t, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
@@ -571,8 +590,9 @@ spatial links of the cross form between the link's value on one slice and on the
 noncomputable def sliceForm (V W : ι → MassGap.SUN.SU N) : ℝ :=
   ∑ l : ι, hsRe ((V l : Matrix (Fin N) (Fin N) ℂ)) ((W l : Matrix (Fin N) (Fin N) ℂ))
 
+omit [DecidableEq ι] in
 theorem sliceForm_comm (V W : ι → MassGap.SUN.SU N) : sliceForm V W = sliceForm W V :=
-  Finset.sum_congr rfl (fun l _ => hsRe_comm _ _)
+  Finset.sum_congr rfl (fun _ _ => hsRe_comm _ _)
 
 /-- **THE SLICE-TO-SLICE TRANSFER KERNEL.**
 
@@ -590,6 +610,7 @@ noncomputable def transferKernel (b : ℝ) (s : (ι → MassGap.SUN.SU N) → �
     (V W : ι → MassGap.SUN.SU N) : ℝ :=
   Real.exp (-(s V) / 2) * Real.exp (b * sliceForm V W) * Real.exp (-(s W) / 2)
 
+omit [DecidableEq ι] in
 /-- **THE KERNEL IS SYMMETRIC** — `T(V,W) = T(W,V)`. The cross form is symmetric and the diagonal
 factor is split evenly. This is self-adjointness of the operator, before any spectral theory. -/
 theorem transferKernel_symm (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
@@ -599,6 +620,7 @@ theorem transferKernel_symm (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
   rw [sliceForm_comm]
   ring
 
+omit [DecidableEq ι] in
 /-- **THE KERNEL IS POINTWISE STRICTLY POSITIVE** — a product of exponentials. Distinct from
 positive-semidefiniteness, which is the next theorem. -/
 theorem transferKernel_pos (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
@@ -667,13 +689,19 @@ theorem transferKernel_selfAdjoint_psd {b : ℝ} (hb : 0 ≤ b) (s : (ι → Mas
     (∀ V W : ι → MassGap.SUN.SU N, transferKernel b s V W = transferKernel b s W V)
       ∧ (∀ (m : ℕ) (V : Fin m → (ι → MassGap.SUN.SU N)) (z : Fin m → ℝ),
           0 ≤ ∑ i, ∑ j, z i * z j * transferKernel b s (V i) (V j)) :=
-  ⟨transferKernel_symm b s, fun m V z => transferKernel_psd hb s V z⟩
+  ⟨transferKernel_symm b s, fun _ V z => transferKernel_psd hb s V z⟩
 
 end Kernel
 
 /-! ## Axiom footprints -/
 
 #print axioms sum_by_fibre
+#print axioms IsTemporal
+#print axioms decidableIsTemporal
+#print axioms sliceLinks
+#print axioms axisLinks
+#print axioms intraPlaq
+#print axioms interPlaq
 #print axioms mem_sliceLinks
 #print axioms mem_axisLinks
 #print axioms mem_intraPlaq

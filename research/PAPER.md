@@ -65,8 +65,14 @@ realisation** whose
 Osterwalder–Schrader data family is instantiated: the mass gap and the OS continuum measure carry **one** named
 axiom, reflection positivity (`ym_mass_gap_of_junction`), and the reconstructed Wightman theory adds **two** more,
 `os_reconstruction` and `WightmanTheory` — `ym_wightman_of` is the only declaration in the development carrying all
-three. The tree declares three named axioms in total, and `existence_and_gap_of_model` and
-`mass_gap_rate_and_continuum` carry none of them. That OS measure is
+three. The tree declares four such axioms in total, and `existence_and_gap_of_model` and
+`mass_gap_rate_and_continuum` carry none of them. The fourth, `os_reconstruction_wightman`, is
+declared in `WightmanData.lean` and is consumed by nothing: it restates the reconstruction against a
+bilinear Euclidean form and a Hilbert-space-valued conclusion, so that it cannot be discharged from a
+one-point index the way the cited one can. That discharge is machine-checked —
+`wightmanTheory_of_nothing` closes every hypothesis of the cited reconstruction at `q ≡ 0`, and
+`wightman_of_model_is_the_trivial_proof` shows by `rfl` that `wightman_of_model` is that same term,
+so the reconstruction as currently stated conveys nothing about the model that feeds it. That OS measure is
 built on a genuine four-dimensional periodic $SU(3)$ Wilson lattice — the Clay problem's dimension and group,
 $4n^4$ links and $16n^4$ plaquettes, the ordered-loop holonomy and the Wilson action density — with its Euclidean
 and permutation invariances DERIVED, from Haar-invariance composed with the lattice's own axis symmetry; and its
@@ -563,7 +569,9 @@ the two produced each verdict so the counts are never merged.
 
 **8.1 The screen construction.** The gauge configuration is a 4D field; the confinement read lives on its **2D
 spatial correlation**, so the reduction to the screen keeps each spatial plane intact. The local gauge-invariant
-action density $\phi(x)=\sum_p(1-\tfrac1N\operatorname{Re}\operatorname{tr}U_p)$ on an $L^3\times L_t$ lattice is read
+action density
+$\phi(x)=\sum_{\mu<\nu}(1-\tfrac1N\operatorname{Re}\operatorname{tr}U_{\mu\nu}(x))$
+on an $L^3\times L_t$ lattice is read
 plane-by-plane: each $L\times L$ spatial plane is whitened, its resolved-mode count $K_{\mathrm{signal}}$ is taken,
 and the result is averaged over planes. This geometry-preserving reduction reproduces the confinement order
 parameter; a flattening of the spatial volume into one feature axis destroys the per-plane correlation and inverts
@@ -573,6 +581,27 @@ sets the disorder floor, calibrated per cut point at the read's own granularity.
 coherent mode standing above that floor. The reference null is analytic and $O(1)$
 ($\mathrm{center}+z(\text{far})\,\mathrm{scale}$), carrying the disorder scale of the theory, not a substrate-fitted
 constant.
+
+**The coupling convention, stated once.** Every $\beta$ quoted in this paper and carried in the
+released ensembles is the **standard Wilson coupling**, $S=\beta\sum_x\phi(x)$ with the plane sum
+above running over $\mu<\nu$ — six planes per site in four dimensions — and, for $SU(N)$,
+$\beta=2N/g^2$. That is
+the normalisation of every source a number here is read against: the strong-coupling character
+expansions (Montvay–Münster; Creutz 1980), the two-loop lattice $\beta$-function used for
+$a\Lambda_{\mathrm{lat}}$ (`lattice_scales.py`), the Osterwalder–Seiler tension bound of §8.2, the
+compact-$U(1)$ critical coupling $\beta_c\approx1.011$, and the established string tensions of §8.8.
+The generator is held to it directly at both coupling ends — the leading plaquette $\beta/2$, $\beta/4$
+and $\beta/18$ for $U(1)$, $SU(2)$ and $SU(3)$, and the one-loop slope $\beta\langle1-P\rangle\to(N^2{-}1)/4$
+(`tests/test_generator_physics.py`). The Lean development indexes a plaquette by an
+**ordered** pair of directions (§12), so its sum runs over $(\mu,\nu)$ and $(\nu,\mu)$ alike; the two
+orderings traverse the same loop in opposite senses, so their holonomies are mutual inverses and
+their $\operatorname{Re}\operatorname{tr}$ is equal, and every plane is therefore counted twice
+(`PlaqCount.plaq_ordered_double_counts`). Its coupling is consequently
+$\beta_{\mathrm{Lean}}=\beta/2$: the Lean Boltzmann weight at $\beta_{\mathrm{Lean}}$ **is** the
+standard Wilson weight at $2\beta_{\mathrm{Lean}}$ (`PlaqCount.boltz_eq_std`). No number moves —
+every formal statement is quantified over the coupling or takes an interval of it as a hypothesis,
+and $\beta\mapsto2\beta$ is a bijection of $[0,\infty)$ fixing $0$ — but the factor is stated here
+rather than left to be inferred from the plaquette type.
 
 **8.2 The two coupling ends.** The action side $\mu<\kappa_0$ holds at both ends. At strong coupling the convergent
 cluster expansion gives the tension bound $\mu\le2\beta I_2/I_1$ directly (Osterwalder–Seiler; the closed-form
@@ -2023,7 +2052,11 @@ direction ($\mathrm{Site}=\mathrm{Fin}\,d\to\mathrm{Fin}\,n$), a link a (directi
 plaquette an ORDERED PAIR of directions together with a site -- the pair rather than a normal, because
 a plane in $d$ dimensions needs two directions and only in $d=3$ does one suffice. Degenerate pairs
 $\mu=\nu$ are carried in the type rather than excluded, and cost nothing: the boundary word retraces
-itself, so the holonomy is the identity and the Wilson density vanishes (`bd_diag_hol_one`). The
+itself, so the holonomy is the identity and the Wilson density vanishes (`bd_diag_hol_one`). Carrying
+the pair ordered means both $(\mu,\nu)$ and $(\nu,\mu)$ are in the type and both are summed, so this
+action counts every plane twice — the two orderings have inverse holonomies and hence the same
+$\operatorname{Re}\operatorname{tr}$ (`PlaqCount.plaq_ordered_double_counts`) — and the coupling
+carried here is accordingly half the standard Wilson one (§8.1, `PlaqCount.boltz_eq_std`). The
 boundary word is the elementary Wilson loop
 $U_\mu(x)\,U_\nu(x{+}\hat\mu)\,U_\mu(x{+}\hat\nu)^{-1}U_\nu(x)^{-1}$, and it is the only place the
 geometry enters.

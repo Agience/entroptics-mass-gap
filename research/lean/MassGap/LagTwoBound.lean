@@ -16,7 +16,7 @@ what the tree's own quantities do to it.
 ## What is proved here
 
 * `lagTwoThreshold` — the derived number `((1 − c)/(1 + c))²`, with `c = 3^{−1/4}` read off
-  `Floor.κ₀YM`. `lagTwoThreshold_gt` / `lagTwoThreshold_lt` bracket it between `0.018623` and
+  `Complete.κ₀YM` (`Complete.lean:324`); `Floor.lean` carries the same value only unnamed, inside `floor_pos`. `lagTwoThreshold_gt` / `lagTwoThreshold_lt` bracket it between `0.018623` and
   `0.018625`; the bracket REPORTS a derived quantity and is not a chosen magnitude. The chain is
   `floor_pow_four` (`c⁴ = 1/3`, `rpow` algebra alone) → `floor_sq_bounds` → `floor_bounds`.
 
@@ -113,7 +113,25 @@ theorem floor_bounds :
 /-- **THE THRESHOLD ON THE LAG-TWO RATIO.** `ρ(2)/ρ(0)` strictly below this number is exactly what
 log-convexity carries into `ConfinesZero.confines_extent_four_of_lag_two_small`: the quadratic
 `(1+c)t² + 2ct − (1−c)` has discriminant `4` identically, so its positive root is `(1−c)/(1+c)` and
-the criterion's own threshold on `t² = ρ(2)/ρ(0)` is that root squared. Nothing is chosen. -/
+the criterion's own threshold on `t² = ρ(2)/ρ(0)` is that root squared. Nothing is chosen.
+
+DERIVED, digit by digit, because this is the one number in the file that decides anything.
+
+* `3` and `4` together are the floor `c = 3^{−1/4}`, which is `e^{−κ₀}` for the entropy floor
+  `κ₀ = ¼ log 3` (`Reconstruction.exp_neg_κ0` is that identity — the file is `GappedExample.lean`, whose namespace is `MassGap.Reconstruction`). Both come from the directed-path
+  count in `Floor.lean`: the number of directed cube paths is `3^k`, which is where the `3` is, and
+  the per-area normalisation `((n−1) log 3)/(4n+2)` converges to `(1/4) log 3`, which is where the
+  `4` is. Neither is fitted and neither is read off data; they are counted.
+* The two `1`s are the `1 − c` and `1 + c` of that quadratic — the coefficients the log-convexity
+  identity `((1−c)ρ₀ − (1+c)ρ₂)² − 4c²ρ₀ρ₂ = ((1−c)²ρ₀ − (1+c)²ρ₂)(ρ₀ − ρ₂)` produces, not a
+  normalisation anyone imposed.
+* `2` is the square. The criterion is a bound on `t = √(ρ(2)/ρ(0))`, so the bound on the RATIO is
+  the positive root squared; the same `2` is the lag index in `ρ(2)`.
+* `0` is the lag index in `ρ(0)`, the contact value the ratio is normalised by.
+
+The threshold is therefore exact rather than a cut: `lagTwoThreshold_gt` and `lagTwoThreshold_lt`
+bracket it between `0.018623` and `0.018625` for a reader, but the decision is made by the closed
+form above, and the bracketing rationals decide nothing. -/
 noncomputable def lagTwoThreshold : ℝ :=
   ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / (1 + (3 : ℝ) ^ (-(1 : ℝ) / 4))) ^ 2
 

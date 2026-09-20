@@ -39,6 +39,11 @@ other side `reconstructed_space_nontrivial`, `reconstructed_vacuum_energy_zero` 
 `reconstructed_ham_not_injective` read facts back OUT of the conclusion, which an opaque `Prop` cannot
 supply.
 
+**And the limit of that claim, also checked.** `trivialOSData` and `trivialWightmanQFT` are one-dimensional
+witnesses with no physics in them: `OSData` and `WightmanQFT` are both inhabited. So the restatement refuses
+the subsingleton discharge and nothing stronger, and `wightmanQFTData_nonempty` is the check a DATA-valued
+axiom needs — its target type is not empty, so it cannot on its own prove `False`.
+
 Not imported by `MassGap.lean`; build it by name.
 -/
 
@@ -84,7 +89,11 @@ theorem wightman_of_model_is_the_trivial_proof (M : FullModel) :
 
 Euclidean spacetime, and the test functions the field operators are smeared with. -/
 
-/-- Euclidean spacetime `ℝ⁴`. -/
+/-- Euclidean spacetime `ℝ⁴`.
+
+DERIVED: `4` is the dimension of spacetime — the Clay problem's own, the same `d` the lattice side
+is instantiated at (`bd (d := 4)` in `AreaLaw`). It is the number of coordinates, not a cutoff or a
+resolution; `EuclideanSpace ℝ (Fin 4)` is all of `ℝ⁴`. -/
 abbrev E4 : Type := EuclideanSpace ℝ (Fin 4)
 
 /-- Real Schwartz test functions on `ℝ⁴` — the index set of the smeared field operators. -/
@@ -175,6 +184,38 @@ theorem osData_test_not_subsingleton (D : OSData) : ¬ Subsingleton D.Test := by
   rw [h.allEq f 0] at hf
   simp at hf
 
+/-- **`OSData` IS inhabited, by a one-dimensional form with no physics in it.** `Test := ℝ`, `θ = id`,
+`S f g = f·g`, translations acting trivially. This is the limit of what the structure refuses: it rules out
+the subsingleton instantiation that discharges `os_reconstruction` (`osData_test_nontrivial`), and it does
+not rule out a finite-dimensional toy.
+
+Recorded so the claim made about the restatement stays the claim that is checked. What `OSData` buys over
+`os_reconstruction`'s hypotheses is that reflection positivity is a condition on a bilinear form and that
+the form is nonzero — not that only a Yang–Mills theory satisfies it.
+
+DERIVED: neither digit describes a theory; both are the structure's own obligations read at
+`Test := ℝ`. `0` is the zero of `ℝ` in the reflection-positivity field `os2`, where `0 ≤ f * f` is
+`mul_self_nonneg`. `1` is the unit of `ℝ` supplied as the witness in `os_nontriv`, which asks for SOME
+test function with `S (θ f) f ≠ 0` — the REFLECTED form, not `S f f`. Here `θ` is the identity and
+`S f g = f * g`, so the obligation collapses to `1 * 1 ≠ 0` and any nonzero real would serve; the
+unit is the one at hand. Nothing is tuned, because the point of this definition is that it has
+no physics in it. -/
+noncomputable def trivialOSData : OSData where
+  Test := ℝ
+  theta := ContinuousLinearMap.id ℝ ℝ
+  theta_invol := fun _ => rfl
+  S := ContinuousLinearMap.mul ℝ ℝ
+  transl := fun _ => ContinuousLinearMap.id ℝ ℝ
+  transl_zero := fun _ => rfl
+  transl_add := fun _ _ _ => rfl
+  os1 := fun _ f g => by show f * g = f * g; rfl
+  os2 := fun f => by show (0 : ℝ) ≤ f * f; exact mul_self_nonneg f
+  os3 := fun f g => by show f * g = g * f; exact mul_comm f g
+  os_nontriv := ⟨1, by show (1 : ℝ) * 1 ≠ 0; norm_num⟩
+
+/-- `OSData` has an inhabitant, so the restated reconstruction axiom's hypothesis is satisfiable. -/
+theorem osData_nonempty : Nonempty OSData := ⟨trivialOSData⟩
+
 /-- **Gårding–Wightman data on a fixed Hilbert space `H`**, at the fidelity Mathlib v4.31 supports, in the
 shape `Reconstruction.GappedQuantumTheory` uses for the operator-theoretic side: a quantum theory as DATA.
 
@@ -251,6 +292,54 @@ instance instInnerProductSpaceWightmanSpace (Q : WightmanQFTData) :
 /-- The state space is complete. -/
 instance instCompleteSpaceWightmanSpace (Q : WightmanQFTData) : CompleteSpace Q.Space := Q.complete
 
+/-- **`WightmanQFT` is inhabited**, by the one-dimensional theory on `ℂ`: vacuum `1`, trivial translation
+representation, zero Hamiltonian, fields all zero on the whole space.
+
+Two things follow, and they pull in opposite directions. (i) The target type of
+`os_reconstruction_wightman` is not empty, so that axiom cannot on its own prove `False` — the check a
+DATA-valued axiom needs and a `Prop`-valued one does not. (ii) Satisfying `WightmanQFT` is not by itself
+evidence of a Yang–Mills theory: the structure carries a vacuum, a positive Hamiltonian and a dense field
+domain, and this witness has all three with nothing in them.
+
+DERIVED: both digits are the units of `ℂ`, not physical quantities. `1` is the multiplicative unit
+serving as the vacuum, and it is forced rather than picked: `vac_norm` demands a UNIT vector, and in
+`ℂ` the unit is a unit vector. `0` is the additive identity, used three times for the same reason —
+the Hamiltonian is the zero operator, so `ham_vac` and `ham_spectrum_nonneg` hold with the spectrum
+`{0}`, and the fields are the zero operator. That is the content of the witness: it is the theory
+with nothing in it, so every number in it is an identity element. -/
+noncomputable def trivialWightmanQFT : WightmanQFT ℂ where
+  vac := 1
+  vac_norm := by simp
+  U := fun _ => LinearIsometryEquiv.refl ℂ ℂ
+  U_zero := by simp
+  U_add := by simp
+  U_vac := by simp
+  ham := 0
+  ham_selfAdjoint := by simp [IsSelfAdjoint]
+  ham_vac := by simp
+  ham_spectrum_nonneg := by
+    intro z hz
+    have hz0 : z = 0 := by
+      by_contra h
+      refine spectrum.mem_iff.mp hz ?_
+      simpa using (isUnit_iff_ne_zero.mpr h).map (algebraMap ℂ (ℂ →L[ℂ] ℂ))
+    simp [hz0]
+  dom := ⊤
+  dom_dense := by simp
+  vac_mem_dom := by simp
+  field := fun _ => 0
+  field_add := by simp
+
+/-- The bundled form of `trivialWightmanQFT`. -/
+noncomputable def trivialWightmanQFTData : WightmanQFTData where
+  Space := ℂ
+  qft := trivialWightmanQFT
+
+/-- **The restated axiom's target type is inhabited.** So `os_reconstruction_wightman` is an assumption
+about which Euclidean data yields which quantum theory, not a way of asserting a proposition that has no
+model. -/
+theorem wightmanQFTData_nonempty : Nonempty WightmanQFTData := ⟨trivialWightmanQFTData⟩
+
 /-! ## Part 3 — the reconstruction, restated -/
 
 /-- **Osterwalder–Schrader reconstruction, restated between the two structures (NEW NAMED AXIOM).**
@@ -270,7 +359,13 @@ changes against `FullModel.os_reconstruction` is the statement, in both directio
 It is not dischargeable from nothing: producing a term of this type requires producing a Hilbert space with
 a unit vector, a translation representation fixing it, and a self-adjoint operator annihilating it whose
 spectrum lies in the closed right half-plane — and `reconstructed_space_nontrivial` shows that space cannot
-be the zero space. The trivial instantiation that closes `os_reconstruction` supplies none of it. -/
+be the zero space. The trivial instantiation that closes `os_reconstruction` supplies none of it.
+
+DERIVED: bibliographic. The statement `(D : OSData) : WightmanQFTData` contains no numeral at all.
+Every digit in this doc comment — `31`, `1973`, `83`, `42`, `1975`, `281`, `1987` — is part of the
+citation at the top: volume, year and first page of the two Osterwalder–Schrader papers, and the
+year of the Glimm–Jaffe edition. They are not constants, nothing is decided by them, and they are
+left in ordinary citation form because a reader needs to be able to follow them to the papers. -/
 axiom os_reconstruction_wightman (D : OSData) : WightmanQFTData
 
 /-- The vacuum of a reconstructed theory is a nonzero vector — it is a unit vector by `vac_norm`. -/
@@ -311,6 +406,11 @@ theorem os_reconstruction_wightman_is_not_vacuous (D : OSData) :
 #print axioms wightmanTheory_of_anything
 #print axioms wightman_of_model_is_the_trivial_proof
 #print axioms OSData
+#print axioms trivialOSData
+#print axioms osData_nonempty
+#print axioms trivialWightmanQFT
+#print axioms trivialWightmanQFTData
+#print axioms wightmanQFTData_nonempty
 #print axioms osData_bounded
 #print axioms osData_S_ne_zero
 #print axioms osData_test_nontrivial

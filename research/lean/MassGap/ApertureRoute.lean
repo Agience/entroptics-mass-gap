@@ -139,9 +139,12 @@ and it is equally true here.
 
 So the finite mode count is structural in the model rather than proved of the ensemble, and the open
 statement that would make it a fact about Yang–Mills is `Complete.WilsonSpectral` — that
-`wilsonCorrAt N β` admits a periodic transfer decomposition with nonnegative weights. That is a
-`def ... : Prop`, nothing in the tree produces one, and its own docstring says it is assumed. Neither
-`Aperture.lean` nor this file changes that.
+`wilsonCorrAt N β` admits a periodic transfer decomposition with nonnegative weights. **At the Clay
+extent that is now PROVED**: `SlabQuadratic.wilsonSpectral (hβ : 0 ≤ β) : WilsonSpectral 3 β`,
+foundational-only, from link- and site-reflection positivity through `SpectralFour.four_iff`. It
+supplies the DECOMPOSITION, not a mode count and not a rate — `SpectralFour.fourRepresentable_const`
+shows the constant triple is representable, so the property carries no gap. Neither `Aperture.lean`
+nor this file supplies the finite mode count, which remains structural in the model.
 
 ## Provenance
 

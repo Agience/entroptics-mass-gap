@@ -143,10 +143,13 @@ The count analogue. Read eigenvalues `lamhat` differ from the true `lam` by at m
 the noise edge is a fixed function of the shape. Then the count of TRUE eigenvalues above the edge is
 enclosed by the two read-side counts, `K_lo ≤ K_true ≤ K_hi`.
 
-**IT COUNTS A SUPPLIED FAMILY.** Both `lam` and `lamhat` are arguments. Nothing in the mass-gap tree
-supplies an eigenvalue family for `wilsonCorrAt` — that is exactly what `Complete.WilsonSpectral`
-would provide and does not — so this bounds the cardinality of a mode set only once such a set
-exists. It cannot be used to derive one. -/
+**IT COUNTS A SUPPLIED FAMILY.** Both `lam` and `lamhat` are arguments, so this bounds the
+cardinality of a mode set only once such a set exists; it cannot be used to derive one. The family
+itself is what `Complete.WilsonSpectral` provides, and at the Clay extent that is now proved —
+`SlabQuadratic.wilsonSpectral (hβ : 0 ≤ β)` gives a `Spectral.PeriodicSpectralForm 4 (wilsonCorrAt 3 β)`,
+whose `Idx`, `w` and `lam` are exactly such a family. What it does not give is a COUNT: the form's
+index is whatever the construction supplies, and `SpectralFour` shows two modes always suffice at
+this extent. -/
 theorem resolved_count_certified {ι : Type*} (s : Finset ι) (lam lamhat : ι → ℝ) (ε edge : ℝ)
     (hband : ∀ k ∈ s, |lamhat k - lam k| ≤ ε) :
     (s.filter (fun k => edge < lamhat k - ε)).card ≤ (s.filter (fun k => edge < lam k)).card ∧

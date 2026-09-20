@@ -67,8 +67,10 @@ both witnesses are positive-definite as functions on `ℤ₄` — strictly more 
 spectrum, not an estimate on a correlation.
 
 `WilsonFourRepresentable β` names exactly that residue, and `wilsonSpectral_of_representable` is the
-conditional: it is the only hypothesis `WilsonSpectral 3 β` still needs at this extent. It is
-introduced here as an OPEN statement, not discharged. What would produce it:
+conditional: it is the only hypothesis `WilsonSpectral 3 β` needs at this extent. **IT IS NOW
+DISCHARGED**, at every `0 ≤ β`, by `LinkGram.wilson_lag_two_le_lag_one` and
+`SlabQuadratic.wilson_quadratic`, and `SlabQuadratic.wilsonSpectral` is the composite. What produces
+it — and the answer is reflection positivity, exactly as the analysis below predicts:
 
 * `ρ(2) ≤ ρ(1)` is antitonicity of the correlation across ONE lag step, from an even lag to the odd
   lag below it. The tree's two antitonicity results are both the wrong shape for it as well as
@@ -537,10 +539,13 @@ theorem circle_psd_not_sufficient :
 symmetry is PROVED (`MomentShape.wilsonCorrAt_neg`). So this Prop is the WHOLE residue, and it is a
 semialgebraic condition on `(ρ(0), ρ(1), ρ(2))` rather than a statement about an operator.
 
-**This is OPEN.** `TailRatio.triple_wilsonCorrAt` proves `TripleFacts` of this triple at every
-`0 ≤ β`, and `tripleFacts_not_ordered` / `tripleFacts_not_quadratic` show `TripleFacts` does not
-imply it. Nothing here asserts it is false of the Wilson correlation; it says the tree's proved facts
-do not decide it, and names the two inequalities that would.
+**THIS IS PROVED**, at every `0 ≤ β`, by `LinkGram.wilson_lag_two_le_lag_one` and
+`SlabQuadratic.wilson_quadratic`. The analysis in this file is what stood: `TailRatio.triple_wilsonCorrAt`
+proves `TripleFacts` at every `0 ≤ β` and `tripleFacts_not_ordered` / `tripleFacts_not_quadratic`
+show `TripleFacts` does NOT imply either inequality — which is precisely why the proof could not come
+from shape and had to come from reflection positivity. `ordered_is_what_nonneg_lam_buys` named the
+content correctly too: the order relation is `λ ≥ 0`, and LINK-reflection positivity is what supplies
+it, where site-reflection positivity does not.
 
 DERIVED: `3` is the Clay aperture, `0`, `1`, `2` the lag indices its extent-four period resolves. -/
 def WilsonFourRepresentable (β : ℝ) : Prop :=

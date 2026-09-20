@@ -564,16 +564,17 @@ theorem wilson_lag_three (β : ℝ) :
 
 /-- **`WilsonSpectral 3 β` FROM THE NAMED RESIDUE, AND FROM NOTHING ELSE.**
 
-The hypothesis is `WilsonFourRepresentable β`, introduced in this file as OPEN. It is not derived
-from the tree's proved facts and must not be read as discharged — `tripleFacts_not_ordered` and
-`tripleFacts_not_quadratic` are in this file precisely to make that unavailable.
+The hypothesis is `WilsonFourRepresentable β`. **It is now DISCHARGED**, at every `0 ≤ β`, by
+`LinkGram.wilson_lag_two_le_lag_one` and `SlabQuadratic.wilson_quadratic`. What `tripleFacts_not_ordered`
+and `tripleFacts_not_quadratic` establish is unchanged and was never about that: they show the
+SHAPE facts do not imply it, which is why the proof had to come from reflection positivity.
 
 What this does settle is the SHAPE of the remaining obligation. The route to the form needs no
 operator, no GNS space and no `FiniteDimensional` hypothesis — which is the point, since
 `Transfer.periodicSpectralForm_of_transfer` requires one and `SliceTrace` records that a slab
 configuration is a point of a compact group of positive dimension. What is left is three real
-numbers and the TWO OF `FourRepresentable`'s FOUR conjuncts the tree does not prove — `ρ(2) ≤ ρ(1)`
-and `2ρ(1)² ≤ ρ(2)² + ρ(0)·ρ(2)`. The other two, `0 ≤ ρ(0)` and `0 ≤ ρ(2)`, are already proved
+numbers and the two of `FourRepresentable`'s four conjuncts SHAPE does not give — `ρ(2) ≤ ρ(1)`
+and `2ρ(1)² ≤ ρ(2)² + ρ(0)·ρ(2)` — both of which reflection positivity now supplies. The other two, `0 ≤ ρ(0)` and `0 ≤ ρ(2)`, are already proved
 (`PlaqVariance.corrClay_zero_pos` and `ReflectionStrong.corrClay_nonneg_even_lag`, through
 `TailRatio.triple_wilsonCorrAt`). By `fourRepresentable_of_pairs` the two that remain are exactly
 what a finite transfer matrix would supply, so the obligation is not weakened by the route — it is

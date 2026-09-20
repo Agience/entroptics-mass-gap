@@ -84,9 +84,10 @@ Then:
   premise set is upward-closed in the very quantity B5 needs bounded above.
 * `no_lag_two_bound_from_triple` — consequently, for EVERY real `K` there is a conforming triple with
   `K·ρ(0) < ρ(2)`. Not "no constant below the threshold": no constant at all.
-* `no_strict_lag_bound_with_contact` — and adding the contact bound `ρ(2) ≤ ρ(0)`, which is NOT
-  available at this extent (`WeakArm.corrClay_le_at_zero` carries `3 ≤ m`, extent six), still admits
-  no factor below one. The constant profile is the witness, as in
+* `no_strict_lag_bound_with_contact` — and adding the contact bound `ρ(2) ≤ ρ(0)` — which IS now
+  available at this extent, since `SlabQuadratic.wilsonSpectral` gives `ρ(2) ≤ ρ(1) ≤ ρ(0)` at every `β ≥ 0`
+  through `SpectralFour.fourRepresentable_le`, where `WeakArm.corrClay_le_at_zero` could not (`3 ≤ m`)
+  — still admits no factor below one, so having it changes nothing here. The constant profile is the witness, as in
   `WeakArm.no_strict_lag_bound_from_shape`.
 
 `triple_amgm` records that the remaining shape fact at this extent, `2ρ(1) ≤ ρ(0) + ρ(2)` — the
@@ -97,8 +98,11 @@ THE SCOPE OF THE NO-GO IS THE PREMISE SET, exactly as `WeakArm.no_strict_lag_bou
 `MomentShape.Shape` and `ShapeNoGo`'s is its own. Nothing here says `ρ(2) ≤ K·ρ(0)` is false of the
 Wilson correlation; what is proved is that reflection positivity, log-convexity, the uniform bound
 and contact positivity do not decide it, in either direction, at this extent. A route to the tail
-must consume something those four do not contain — and by the argument above, something that is not
-a positivity of the reflection form, since every such positivity is monotone the wrong way.
+must consume something those four do not contain. It need not avoid reflection positivity —
+`LinkGram.wilson_lag_two_le_lag_one` IS such a positivity and it does bound `ρ(2)` from above —
+but it must reach past the extent-four Gram, which cannot give a factor under one: under the link
+reflection the Gram on `span{F₁, F₂}` is `[[ρ(1), ρ(2)], [ρ(2), ρ(1)]]`, and its positivity is exactly
+`ρ(1) ≥ |ρ(2)|`.
 
 ## Where the tail stands after this file
 

@@ -30,7 +30,7 @@ It is the FREE point. `λ = 0` is a pure contact term with no transfer dynamics,
 carries no gap and no coupling dependence. What it settles is that `WilsonSpectral` is a satisfiable
 property of the real correlation rather than an empty one, and — the other way round — that holding
 `WilsonSpectral` at a coupling is on its own worth nothing: a correlation with no structure at all
-has it. The content of the open obligation is `WilsonSpectral N β` at `β > 0`, and nothing here
+has it. The content of the obligation is `WilsonSpectral N β` at `β > 0`, which at the Clay aperture `N = 3` is now PROVED (`SlabQuadratic.wilsonSpectral`) and at other apertures remains open, and nothing here
 moves it.
 
 It is also not a transfer-operator construction. `Transfer.periodicSpectralForm_of_transfer` is the

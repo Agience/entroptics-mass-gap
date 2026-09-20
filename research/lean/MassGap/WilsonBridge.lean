@@ -225,8 +225,13 @@ noncomputable def chainCorrConn (Nc N : ℕ) (β : ℝ) (d : Fin (N + 1)) : ℝ 
 `(0,p)` and `(1,p)`, which appear in NO other plaquette. A link occurring in exactly one plaquette
 can be integrated out first, and left-translation by it carries that plaquette's holonomy through
 Haar — so the holonomy is Haar-distributed and INDEPENDENT of every other plaquette, whatever the
-shared links do. Measured on the ladder by Monte-Carlo at `β = 0, 2, 6`, the connected correlation
+shared links do. Measured on the ladder by Monte-Carlo at `β = 0, 2, 6` **at SU(2)**, the connected correlation
 is a contact term: `C(0) = 0.26 / 0.18 / 0.027` against `|C(d)| ≲ 0.01` (noise) for every `d ≥ 1`.
+THE GROUP IS LOAD-BEARING IN THAT ROW AND WAS MISSING: at `β = 0` the contact value is the
+group's Haar variance of `wilsonDensity`, which is `1/4 = 0.25` at SU(2) and `1/18 = 0.0556` at
+SU(3). So `0.26` is the SU(2) reading; read as SU(3) it would contradict
+`ContactFloor.corrClay_zero_at_zero_eq` by a factor of `4.7`. The qualitative point — a contact
+term with no separated correlation — is the same at either rank.
 
 A contact correlation satisfies the aperture condition trivially (`⟨d²⟩ = 0`), so a flagship
 instantiated on the ladder is non-vacuous and WORTHLESS — free-field non-vacuity, the defect

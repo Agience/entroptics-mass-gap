@@ -2469,6 +2469,23 @@ below $0.78$, against $1.000$); the exact ratio is not. Recorded as the `matched
 a model whose mass is DEFINED as $e^{-(\kappa_0-\mu)}$, so its correlator decays exactly when
 $\mu<\kappa_0$: that link restates its own hypothesis and carries no physics on its own.
 
+`ym_mass_gap_of_junction` removes the definitional witness, quantifying over an ARBITRARY mode family
+and asking instead for `hfe` ($\kappa_0-\mu\le c$, reduced above) and `hgap` ($c\le\Delta$). What
+those jointly imply is a single statement in measured quantities — the margin lower-bounds the
+transfer gap:
+
+$$\Delta\ \ge\ \kappa_0-\mu.$$
+
+Both sides are measured here and had not been held against each other: $\Delta$ is the variational
+transfer gap of §8.7b, read from the gap correlator with no model of the potential, and $\mu$ is the
+tension the formal chain consumes. Neither artifact was produced with this comparison in mind.
+[9_6_dat_junction_residuals.csv](data/9_6_dat_junction_residuals.csv) holds them against each other
+at every coupling where both resolve, **on both gauge groups**: **all eight resolved points satisfy
+$\Delta-2\sigma\ge\kappa_0-\mu$** — six $SU(2)$ and two $SU(3)$ — the tightest by a factor $2.7$
+at the measurement's own lower error bar. Five further points are excluded because their gaps do not
+resolve, by the resolution rule §8.7b already states rather than by choice; the worst of them reads
+$\Delta=0.171\pm0.851$, an error five times its value.
+
 **What repairs that link is now proved, at the Clay aperture.** `Complete.WilsonSpectral N \beta` is
 `Nonempty (Spectral.PeriodicSpectralForm (N{+}1)\ (\mathtt{wilsonCorrAt}\ N\ \beta))` — that the measured
 correlation admits a periodic transfer decomposition $\rho(d)=\sum_k w_k(\lambda_k^{d}+\lambda_k^{n-d})$ with
@@ -2494,23 +2511,6 @@ the slab reflection form at the site reflection $s\mapsto-s$, and holds at every
 proves the constant triple representable, where $\rho(2)/\rho(0)=1$. No theorem in the tree takes it as a
 hypothesis, so it closes a named residue and supplies the family the resolved-mode count needs as input,
 rather than feeding a derivation. The ratio obligation of §9 is untouched by it.
-
-`ym_mass_gap_of_junction` removes the definitional witness, quantifying over an ARBITRARY mode family
-and asking instead for `hfe` ($\kappa_0-\mu\le c$, reduced above) and `hgap` ($c\le\Delta$). What
-those jointly imply is a single statement in measured quantities — the margin lower-bounds the
-transfer gap:
-
-$$\Delta\ \ge\ \kappa_0-\mu.$$
-
-Both sides are measured here and had not been held against each other: $\Delta$ is the variational
-transfer gap of §8.7b, read from the gap correlator with no model of the potential, and $\mu$ is the
-tension the formal chain consumes. Neither artifact was produced with this comparison in mind.
-[9_6_dat_junction_residuals.csv](data/9_6_dat_junction_residuals.csv) holds them against each other
-at every coupling where both resolve, **on both gauge groups**: **all eight resolved points satisfy
-$\Delta-2\sigma\ge\kappa_0-\mu$** — six $SU(2)$ and two $SU(3)$ — the tightest by a factor $2.7$
-at the measurement's own lower error bar. Five further points are excluded because their gaps do not
-resolve, by the resolution rule §8.7b already states rather than by choice; the worst of them reads
-$\Delta=0.171\pm0.851$, an error five times its value.
 
 That the composite holds on $SU(3)$ as well as $SU(2)$ is what makes it evidence about the argument
 rather than about one theory: nothing in a one-group result separates the two.

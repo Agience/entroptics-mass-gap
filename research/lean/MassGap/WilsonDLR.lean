@@ -51,9 +51,13 @@ nor that the result is independent of the frozen boundary configuration `ω₀`.
 `DLRLimit.not_isPointMass_of_uniform_variance` rules out a point mass only when handed a variance
 floor uniform in the volume, and no such floor exists in this tree.
 
-The DLR equation delivered is tested against CONTINUOUS observables. `GibbsSpec.IsGibbsMeasure` asks
-for it against every bounded MEASURABLE observable; that strengthening needs a density argument this
-file does not carry, so `IsGibbsMeasure` is not claimed.
+The DLR equation delivered HERE is tested against CONTINUOUS observables, so `IsGibbsMeasure` is not
+claimed in this file. `GibbsSpec.IsGibbsMeasure` asks for the equation against every bounded
+MEASURABLE observable, and `MassGap.WilsonGibbs` carries it there: not by approximating an
+observable — the kernel is bounded by the sup norm, not the `L¹(P)` norm, so an `L¹` approximation
+does not pass under it — but by exhibiting the kernel applied to `P` as a measure and using that two
+finite Borel measures agreeing on continuous observables are equal.
+`MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure` is the result.
 
 DERIVED: `4` is the problem's dimension, `2` the proved upper bound on the Wilson density (`WilsonAction.wilsonDensity_le_two`; nothing shows it attained or least, and at `SU(3)` the true supremum of `1 − Re tr g / 3` is `3/2`), `1` the normalisation of
 a probability state. No constant is chosen here and none is fitted.

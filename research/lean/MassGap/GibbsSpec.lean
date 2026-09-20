@@ -64,7 +64,16 @@ open MassGap.LatticeGauge MassGap.WilsonLattice
 
 /-! ## Part 0 — the infinite-lattice skeleton
 
-Duplicated from the shared skeleton so this file stands alone; identical names and types. -/
+Duplicated from the shared skeleton so this file stands alone; identical names and types.
+`MassGap.InfiniteLattice` exports the same four declarations with the same bodies, and all of them
+are `abbrev`s, so the two copies are reducibly defeq and interchangeable wherever both are in scope
+— `MassGap.WilsonGibbs` states this file's conclusions against `DLRLimit`'s measure on exactly that
+footing, and `WilsonGibbs.ibd_eq` records that the boundary words agree too (`rfl`).
+
+The one pair that is NOT interchangeable by unfolding is `plaqsIn`: this file's filters
+`boundaryPlaqs Λ` by a `List.all` over `ilinks`, `InfiniteLattice`'s filters a site-image candidate
+set by `linksOf q ⊆ Λ`, and the two are equal only extensionally.
+`MassGap.WilsonGibbs.gibbsSpec_plaqsIn_eq` is that equality, proved once. -/
 
 /-- A site of the infinite four-dimensional lattice: one integer coordinate per direction.
 

@@ -1861,6 +1861,31 @@ MassGap.WilsonGauge.ym_existence_and_gap_gauge_wilson,Classical.choice Quot.soun
 MassGap.WilsonGauge.ym_mass_gap_rate_gauge,Classical.choice Quot.sound propext wilson_reflection_positive_at,4
 MassGap.WilsonGauge.ym_mass_gap_rate_pos,Classical.choice Quot.sound propext wilson_reflection_positive_at,4
 MassGap.WilsonGauge.ym_wilson_gauge_su3_rank,Classical.choice Quot.sound propext wilson_reflection_positive_at,4
+MassGap.WilsonGibbs.dens,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.dlr_bounded_measurable,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.escale,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.escale_nonneg,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.existsGibbsMeasure_of_density,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.exists_isGibbsMeasure_of_density,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.exp_neg_escale_le_part,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.exp_neg_escale_le_wt,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.gibbsSpec_plaqsIn_eq,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.hasOuterApproxClosed_IConf,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.ibd_eq,,0
+MassGap.WilsonGibbs.integral_specMeasure,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.integral_wt_div_part,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.isProbabilityMeasure_specMeasure,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.measurable_dens,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.mem_linksOf_iff,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.pseudoMetrizable_IConf,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.ratioBound,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.specMeasure,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.specMeasure_eq_self,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.specMeasure_univ_toReal,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.wilson_dlr_bounded_measurable,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.wt_div_part_le,Classical.choice Quot.sound propext,3
+MassGap.WilsonGibbs.wt_div_part_nonneg,Classical.choice Quot.sound propext,3
 MassGap.WilsonHypercubic.bd_axis,Classical.choice Quot.sound propext,3
 MassGap.WilsonHypercubic.bd_diag_hol_one,Classical.choice Quot.sound propext,3
 MassGap.WilsonHypercubic.card_link,Classical.choice Quot.sound propext,3

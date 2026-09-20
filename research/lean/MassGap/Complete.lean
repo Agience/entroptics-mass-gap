@@ -60,7 +60,7 @@ substrate — a statement that cannot be written when the window is frozen.
 * `ym_mass_gap_grid_certified` — the alternative interior: a finite grid plus a measured modulus of
   continuity, taking the two ends as hypotheses.
 
-`Otr_iso` (A2 isometry), `readYM_is_wilson` (C-3 identification, `rfl`), `wilson_reflection_positive`,
+`Otr_iso` (A2 isometry), `readYM_is_wilson` (C-3 identification, `rfl`), `wilson_reflection_positive_at_even`,
 `ym_finite_aperture`, `rArgYM_pos`, `ym_ratio_pos` and `ym_tension_is_moment` are THEOREMS, not axioms.
 The read is concrete (`Moment.Read`): `μYM`, `pcorrYM`, `thetaYM` are all derived from one nonnegative
 correlation `readYM β : Read nCorrYM`.
@@ -187,11 +187,6 @@ theorem wilson_reflection_positive_at_even (N m : ℕ) (hm : N + 1 = 2 * m) (hm2
 
 #print axioms wilson_reflection_positive_at_even
 
-/-- Reflection positivity at the pinned aperture — the `nCorrYM` instance, a THEOREM. -/
-theorem wilson_reflection_positive :
-    ∀ β, (∀ d, 0 ≤ wilsonCorr β d) ∧ 0 < ∑ d, wilsonCorr β d :=
-  wilson_reflection_positive_at nCorrYM
-
 /-- **Reading-A — the CONCRETE read.** It packages a whitened, reflection-positive
 correlation into the entropy-matched `Moment.Read`, from which the tension `μ`, the probability vector `p`,
 and the angles `θ` are all DERIVED (`Moment.Read`). This is the final min-entropy stage of reading-A as an
@@ -200,28 +195,33 @@ noncomputable def readA {N : ℕ} (ρ : Fin (N + 1) → ℝ)
     (h : (∀ d, 0 ≤ ρ d) ∧ 0 < ∑ d, ρ d) : Moment.Read N :=
   { ρ := ρ, hρ := h.1, hpos := h.2 }
 
-/-- **Reading-A of the physical Wilson ensemble** — reading-A applied to the Wilson correlation (§2-§3).
-
-DERIVED: `§2`–`§3` is a cross-reference to the paper, not a value. This definition introduces no
-number of its own.
--/
-noncomputable def readingA_wilson (β : ℝ) : Moment.Read nCorrYM :=
-  readA (wilsonCorr β) (wilson_reflection_positive β)
-/-- **The read used throughout the proof** — DEFINED to be reading-A of the Wilson ensemble. -/
-noncomputable def readYM (β : ℝ) : Moment.Read nCorrYM :=
-  readA (wilsonCorr β) (wilson_reflection_positive β)
-
 /-! ### The aperture as a VARIABLE
 
-Everything above fixes the aperture at `nCorrYM`. That is a value of a variable, not a property of
-the theory, and the whole content of the entropy-matched read is that the margin opens as the window
-widens relative to the substrate — a statement that cannot even be written when the window is frozen.
-The definitions below carry the aperture, and the pinned ones are recovered as the `nCorrYM` instance
-(`readYM_is_readYMAt`, `μYM_is_μYMAt`, both `rfl`). -/
+The aperture is a value of a variable, not a property of the theory, and the whole content of the
+entropy-matched read is that the margin opens as the window widens relative to the substrate — a
+statement that cannot even be written when the window is frozen. So the read is DEFINED at a variable
+aperture and the pinned objects are its `nCorrYM` instance (`readYM_is_readYMAt`, `μYM_is_μYMAt`,
+both `rfl`).
+
+That ordering is also what makes the axiom's entry point a single point. `readYMAt` is the ONLY
+declaration in the development that applies `wilson_reflection_positive_at`; everything that reports
+the axiom reports it through this one `def`. -/
 
 /-- Reading-A at an ARBITRARY aperture. -/
 noncomputable def readYMAt (N : ℕ) (β : ℝ) : Moment.Read N :=
   readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)
+
+/-- **Reading-A of the physical Wilson ensemble** — reading-A applied to the Wilson correlation (§2-§3),
+at the pinned aperture. It is the `nCorrYM` instance of `readYMAt` and nothing else, so the axiom is
+applied at exactly ONE place in the development — `readYMAt`'s definition, immediately above — and the
+pinned read is not a second route to it.
+
+DERIVED: `§2`–`§3` is a cross-reference to the paper, not a value. This definition introduces no
+number of its own.
+-/
+noncomputable def readingA_wilson (β : ℝ) : Moment.Read nCorrYM := readYMAt nCorrYM β
+/-- **The read used throughout the proof** — DEFINED to be reading-A of the Wilson ensemble. -/
+noncomputable def readYM (β : ℝ) : Moment.Read nCorrYM := readYMAt nCorrYM β
 
 /-- The centre-vortex tension read through an aperture of size `N`. `μYM` is its `nCorrYM` instance. -/
 noncomputable def μYMAt (N : ℕ) (β : ℝ) : ℝ := (readYMAt N β).tension
@@ -715,7 +715,14 @@ theorem confinement_of_periodic_spectral_form {C r : ℝ}
     ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
   refine confinement_of_geometric_decay hC hr0 hr1 ?_
   intro N β d
-  have hpos : 0 < ∑ d', wilsonCorrAt N β d' := (wilson_reflection_positive_at N β).2
+  -- The total mass is positive WITHOUT the reflection-positivity axiom: the hypothesis `S` already
+  -- carries nonnegative transfer weights, so `Spectral.rho_nonneg` gives every lag, and
+  -- `PlaqVariance.corrClay_zero_pos` — the plaquette-energy variance, foundational-only — gives the
+  -- lag-zero term strictly. DERIVED: the index `0` is the lag the variance sits at; no value.
+  have hnn : ∀ d' : Fin (N + 1), 0 ≤ wilsonCorrAt N β d' := fun d' => Spectral.rho_nonneg (S N β) d'
+  have h0 : 0 < wilsonCorrAt N β 0 := PlaqVariance.corrClay_zero_pos N β
+  have hpos : 0 < ∑ d', wilsonCorrAt N β d' :=
+    ReflectPositive.sum_pos_of_head_pos _ hnn h0
   have hrho := Spectral.periodic_decay_le_circLag (S N β) (hlamr N β) hr0 d
   show wilsonCorrAt N β d / (∑ d', wilsonCorrAt N β d') ≤ C * r ^ (Moment.circLag d)
   rw [div_le_iff₀ hpos]

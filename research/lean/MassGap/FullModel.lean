@@ -14,8 +14,11 @@ delivers both parts of the existence-and-gap problem at once.
 
 Everything here is machine-checked modulo its cited inputs: for the gap, A1 and A2 (`Complete.lean` discharges
 them to the four named standard results); for the measure, reflection positivity, the confinement gap, and A2
-invariance at finite spacing (the `LatticeYMFamily` fields), with the Osterwalder–Schrader reconstruction of
-the tight limit into a Wightman theory the classical cited step. `existence_and_gap_of_model` itself uses no axiom beyond
+invariance at finite spacing (the `LatticeYMFamily` fields). The Osterwalder–Schrader reconstruction of the
+tight limit into a Wightman theory is the classical cited step; it is stated in `MassGap.WightmanData`, over a
+bilinear Schwinger form on a normed test space, and nothing in this file composes with it — `continuum_of_family`
+produces `q : J → ℝ`, a value per test configuration on a bare countable index set, which is not that form.
+`existence_and_gap_of_model` itself uses no axiom beyond
 the standard three — it is the composition; the physics enters through the two structures' fields.
 -/
 
@@ -62,8 +65,11 @@ would be worse than no capstone:
    structure's hypothesis. `Apriori.hread_of_dominant` reduces it to the DOMINANT magnitude and
    `Apriori.margin_of_dominant_rate` shows it is exactly `Δ_measured ≥ κ₀ - μ`: an empirical statement
    about the read, checkable against the ensembles, and cited rather than derived.
-3. OS4 (clustering) is the gap itself (`Forgetting.bridge_forward`); the Osterwalder-Schrader
-   reconstruction of `q` into a Wightman theory is a classical result, entered as a named axiom.
+3. OS4 (clustering) is the gap itself (`Forgetting.bridge_forward`). The Osterwalder-Schrader
+   reconstruction into a Wightman theory is a classical result, entered as the named axiom
+   `WightmanData.os_reconstruction_wightman`. It is NOT applied to `q`: that axiom consumes an
+   `OSData` — a continuous bilinear form on a normed test space, with a reflection — and `q` is a
+   real-valued function on an index set with no structure.
 
 DERIVED: nothing is introduced. Every constant belongs to the model. -/
 theorem mass_gap_rate_and_continuum (M : FullModel) (β : ℝ) :
@@ -90,7 +96,9 @@ theorem mass_gap_rate_and_continuum (M : FullModel) (β : ℝ) :
 Both machine-checked modulo their cited inputs. `#print axioms existence_and_gap_of_model` returns the three foundational axioms
 only: `existence_and_gap_of_model` is the composition, and A1/A2 (for the gap) and the `LatticeYMFamily` fields (for the
 measure) enter as the structures' data, not as axioms of this theorem. OS4 clustering is the gap
-(`Forgetting.bridge_forward`); the Osterwalder–Schrader reconstruction of `q` into a Wightman theory is cited. -/
+(`Forgetting.bridge_forward`). The Osterwalder–Schrader reconstruction into a Wightman theory is cited, as
+`WightmanData.os_reconstruction_wightman`; it consumes a bilinear form on a normed test space, so it is not
+composed with `q`, which is a function on a bare index set. -/
 theorem existence_and_gap_of_model (M : FullModel) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ M.gap.s β, M.gap.P β k * (M.gap.m β k) ^ τ‖) atTop (nhds 0)) ∧
         (∀ β, M.gap.μ β - M.gap.κ < 0) ∧ (∀ d d', M.gap.R d = M.gap.R d')) ∧
@@ -149,9 +157,9 @@ structure WilsonRealization where
 
 /-- **The existence-and-gap problem for an SU(N) Wilson realisation.** Given the §2–§3 identification (a
 `WilsonRealization`), the SU(N) Wilson theory has BOTH the mass gap (`C(τ)→0`, non-triviality, `SO(4)`) and the
-OS0–OS3-satisfying continuum measure — `existence_and_gap_of_model` applied to the realisation's `FullModel`. The sole remaining
-inputs are that identification (cited) and the Osterwalder–Schrader reconstruction of the tight limit into a
-Wightman theory (cited). No axiom beyond the standard three. -/
+OS0–OS3-satisfying continuum measure — `existence_and_gap_of_model` applied to the realisation's `FullModel`. The sole
+remaining input is that identification (cited). The Osterwalder–Schrader reconstruction of the tight limit into a
+Wightman theory is NOT an input to this theorem and is not claimed by it. No axiom beyond the standard three. -/
 theorem existence_and_gap_of_wilson (W : WilsonRealization) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ W.model.gap.s β,
           W.model.gap.P β k * (W.model.gap.m β k) ^ τ‖) atTop (nhds 0)) ∧
@@ -163,44 +171,5 @@ theorem existence_and_gap_of_wilson (W : WilsonRealization) :
         (∀ g j, q (W.model.measure.actE g j) = q j) ∧
         (∀ σ j, q (W.model.measure.actP σ j) = q j)) :=
   existence_and_gap_of_model W.model
-
-/-! ### The link: entroptics fits into the classical axioms
-
-Entroptics produces Euclidean Schwinger data satisfying the Osterwalder–Schrader / Wightman axioms; those axioms
-and the reconstruction theorem are classical results, entered as NAMED AXIOMS, and the cited reconstruction
-carries the data to a quantum field theory. `continuum_of_family` already does
-that: its limit `q` satisfies OS0 (bound), OS1 (Euclidean), OS2 (RP), OS3 (symmetry), with OS4 (clustering) from
-the gap. `wightman_of_model` plugs it in — the point where our equation fits into theirs. -/
-
-/-- The proposition that a Wightman quantum field theory on ℝ⁴ exists (Hilbert space, `H ≥ 0`, unique vacuum).
-The classical reconstruction that produces it is CITED (`os_reconstruction`). -/
-axiom WightmanTheory : Prop
-
-/-- **Osterwalder–Schrader → Wightman reconstruction (CITED, named axiom).** K. Osterwalder, R. Schrader,
-Commun. Math. Phys. **31** (1973) 83 and **42** (1975) 281 (the latter adds the linear growth condition that
-repairs the reconstruction); textbook form: J. Glimm, A. Jaffe, *Quantum Physics: A Functional Integral Point
-of View*, 2nd ed. (Springer 1987). Euclidean Schwinger data `q` satisfying OS0–OS3 — with OS4 (clustering)
-supplied by the mass gap — reconstructs a Wightman quantum field theory on ℝ⁴ (Hilbert space, `H ≥ 0`, unique
-vacuum). This is the classical Osterwalder–Schrader theorem, cited; entroptics supplies its Euclidean hypotheses.
-SEMANTICS: `q j` is the **reflected Schwinger form** `⟨θφⱼ, φⱼ⟩` for test
-configuration `j` (a dense set of smeared field arrangements; `Measure.LatticeYMFamily.Q`), NOT a Schwinger
-point-value. So `hOS2 : ∀j, 0 ≤ q j` **is** reflection positivity — the reflected quadratic form is
-nonnegative on the dense test set (full Gram positive-semidefiniteness when `J` is closed under
-combinations, which smeared arrangements provide). `hOS0 : ∃C ∀j |q j|≤C` is the uniform temperedness bound
-the tightness consumes (weaker than OS-II's linear growth, but the analytic content used). The OS⟹Wightman
-step is the classical theorem (OS 1973/75, Glimm–Jaffe 1987), entered as the named axiom. -/
-axiom os_reconstruction {J G Pm : Type} (q : J → ℝ) (actE : G → J → J) (actP : Pm → J → J)
-    (hOS0 : ∃ C : ℝ, ∀ j, |q j| ≤ C) (hOS1 : ∀ g j, q (actE g j) = q j)
-    (hOS2 : ∀ j, 0 ≤ q j) (hOS3 : ∀ σ j, q (actP σ j) = q j) : WightmanTheory
-
-/-- **Entroptics fits into the classical axioms: our construction reconstructs a Wightman QFT.** From a
-`FullModel`, `continuum_of_family` gives a limit `q` satisfying OS0–OS3, so the cited `os_reconstruction` axiom
-yields a Wightman theory — while the same model carries the mass gap (`existence_and_gap_of_model`). This is THE LINK: the
-entropy-matched limit *is* an OS-satisfying Euclidean Schwinger family, and the classical reconstruction (cited)
-takes it to the quantum theory. Everything on the entroptics side is machine-checked; the only inputs past the
-foundational axioms are the named, cited `WightmanTheory` / `os_reconstruction`. -/
-theorem wightman_of_model (M : FullModel) : WightmanTheory := by
-  obtain ⟨q, _, _, _, hOS0, hOS2, hOS1, hOS3⟩ := continuum_of_family M.measure
-  exact os_reconstruction q M.measure.actE M.measure.actP ⟨_, hOS0⟩ hOS1 hOS2 hOS3
 
 end MassGap

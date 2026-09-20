@@ -88,13 +88,24 @@ DERIVED: `p̂²` is a sum of four values from `{0,1,3,4}`, so its nonzero values
 `720720` is their least common multiple. `clearDen6_exact` checks it. -/
 def clearDen6 : ℕ := 720720
 
-/-- `p̂² = ∑_μ p̂_μ²` at the momentum `(a, b, c, e)`. -/
+/-- `p̂² = ∑_μ p̂_μ²` at the momentum `(a, b, c, e)`.
+
+DERIVED: the `6` is `Fin 6`, the extent of the torus, so `a b c e` are momentum INDICES. There are
+four of them because the problem is four-dimensional. -/
 def momSq6 (a b c e : Fin 6) : ℕ := hatSq6 a + hatSq6 b + hatSq6 c + hatSq6 e
 
-/-- The plaquette-plane numerator `p̂₀² + p̂₁²`. -/
+/-- The plaquette-plane numerator `p̂₀² + p̂₁²`.
+
+DERIVED: the `6` is `Fin 6`, the extent, so `a` and `b` are momentum indices — two of them because a
+plaquette spans a PLANE, the plane `0, 1` that `WilsonBridge.corrClay` fixes. -/
 def planeNum6 (a b : Fin 6) : ℕ := hatSq6 a + hatSq6 b
 
-/-- One momentum's contribution to `2·V·720720·D(d)`. -/
+/-- One momentum's contribution to `2·V·720720·D(d)`.
+
+DERIVED: the `6` is `Fin 6`, the extent, so `d a b c e` are indices; the `720720` is `clearDen6`, the
+lcm derived there; the `2` is the doubling `lagPhase6` carries to stay integral, lag-independent and
+therefore cancelling; and the `0` is a GUARD on the zero momentum rather than a value, with
+`zero_momentum_term_vanishes6` proving the other branch would return `0` there anyway. -/
 def fsTerm6 (d a b c e : Fin 6) : ℤ :=
   if momSq6 a b c e = 0 then 0
   else lagPhase6 c d * (planeNum6 a b * (clearDen6 / momSq6 a b c e) : ℕ)
@@ -130,7 +141,10 @@ theorem fsCorr6_fold : fsCorr6 4 = fsCorr6 2 ∧ fsCorr6 5 = fsCorr6 1 := by
 
 /-! ## 2. The ratio -/
 
-/-- **THE FREE-FIELD LAG-TWO RATIO AT EXTENT SIX**, `(D(2)/D(0))²`. -/
+/-- **THE FREE-FIELD LAG-TWO RATIO AT EXTENT SIX**, `(D(2)/D(0))²`.
+
+DERIVED: `2` and `0` are LAGS — the lag the claim is about and the contact lag it is normalised
+against — and the outer `2` is Wick's square. The values are `fsCorr6`'s, decided above. -/
 def freeRatioSix : ℚ := ((fsCorr6 2 : ℚ) / (fsCorr6 0 : ℚ)) ^ 2
 
 /-- `freeRatioSix = (5875/259259)² = 34515625/67215229081 = 0.000513509…` — `3.26×` below the
@@ -168,13 +182,23 @@ assert `ρ(2) > 0`, which nothing in this tree supports; only `ρ(0) > 0` is ass
 
 OPEN. Nothing in this tree proves it, this file does not, and no measurement may be substituted for
 it. And, as at extent four, the implication it feeds is an elimination of `R`, not a derivation:
-what this file contributes is the exact constant and the size of the room around it. -/
+what this file contributes is the exact constant and the size of the room around it.
+
+DERIVED: no numeral is a magnitude. `5` is the APERTURE — `wilsonCorrAt 5` is the extent-six torus
+(`5 + 1 = 6`) — and `6` is that extent, as `Fin 6`, the lags the upper bound ranges over. `0` is the
+contact lag on the lower bound and the floor `0 < R` puts on the scale; the `1`s and the `2` are the
+band `(1 ± ε)` and Wick's square. `ε`, `B` and `R` are all variables, which is what makes this a
+hypothesis rather than a fitted statement. -/
 def EffectiveGaussianLagTwoSix (ε : ℝ) : Prop :=
   ∃ B : ℝ, ∀ β : ℝ, B ≤ β → ∃ R : ℝ, 0 < R ∧
     (∀ d : Fin 6, MassGap.wilsonCorrAt 5 β d ≤ (1 + ε) * (R * ((fsCorr6 d : ℝ)) ^ 2)) ∧
     (1 - ε) * (R * ((fsCorr6 0 : ℝ)) ^ 2) ≤ MassGap.wilsonCorrAt 5 β 0
 
-/-- **THE CONSTANT THE HYPOTHESIS DELIVERS AT EXTENT SIX.** -/
+/-- **THE CONSTANT THE HYPOTHESIS DELIVERS AT EXTENT SIX.**
+
+DERIVED: the `1`s are the band `(1 ± ε)` `EffectiveGaussianLagTwoSix` states, so the first factor is
+that hypothesis's own width and not a number this definition picks. The `2` and `0` are the two LAGS,
+and the outer `2` is Wick's square; the value is `freeRatioSix`, decided above. -/
 noncomputable def lagTwoConstantSix (ε : ℝ) : ℝ :=
   ((1 + ε) / (1 - ε)) * ((fsCorr6 2 : ℝ) / (fsCorr6 0 : ℝ)) ^ 2
 
@@ -241,7 +265,11 @@ theorem effective_lag_two_bound_six {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (
 
 /-! ## 4. What is still missing, named -/
 
-/-- **THE SECOND OPEN PIECE AT EXTENT SIX — the middle interval.** -/
+/-- **THE SECOND OPEN PIECE AT EXTENT SIX — the middle interval.**
+
+DERIVED: `5` is the APERTURE — `wilsonCorrAt 5` is the extent-six torus (`5 + 1 = 6`) — and `2` and
+`0` are the LAGS the ratio relates. The `0` in `0 ≤ β` is the bottom of the coupling range, where the
+half-line the weak arm does not reach begins; `K` and `B` are variables, not numbers. -/
 def MiddleIntervalLagTwoSix (K B : ℝ) : Prop :=
   ∀ β : ℝ, 0 ≤ β → β ≤ B → MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0
 

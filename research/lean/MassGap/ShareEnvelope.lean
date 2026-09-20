@@ -1211,7 +1211,10 @@ theorem substrate_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
   have hk1 : 1 ≤ Moment.circLag d := by omega
   have hk : (1 : ℝ) ≤ (Moment.circLag d : ℝ) := by exact_mod_cast hk1
   have hpos : (0 : ℝ) < (Moment.circLag d : ℝ) := by linarith
-  have h0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.wilson_reflection_positive_at N β).1 0
+  -- Only the LAG-ZERO value is needed, and that is the plaquette-energy variance
+  -- (`PlaqVariance.corrClay_zero_pos`, foundational-only), not reflection positivity.
+  -- DERIVED: the index `0` is the lag the variance sits at; no value.
+  have h0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.PlaqVariance.corrClay_zero_pos N β).le
   have hCρ : 0 ≤ C * MassGap.wilsonCorrAt N β 0 := mul_nonneg hC h0
   have h2 : (1 : ℝ) ≤ (Moment.circLag d : ℝ) ^ 2 := by nlinarith [hk]
   have h4 : (1 : ℝ) ≤ (Moment.circLag d : ℝ) ^ 4 := by nlinarith [h2]

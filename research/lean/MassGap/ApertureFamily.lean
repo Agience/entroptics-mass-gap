@@ -28,9 +28,11 @@ construction fixes one extent before quantifying over the coupling. That placeme
 * `Model.LatticeYM.R`, and therefore `A2_YM`, contains NO aperture at all. `EvenAperture.A2_even`'s
   proof body never mentions its own argument: it is `MassGap.A2_continuum_of_congruence` on
   `freadYM ∘ Gram ∘ Fym`, which is the same term at every extent.
-* `FullModel.measure` is a `LatticeYMFamily` FIELD, given the closed term `WilsonModel.ymFamilyTension`
-  in every construction in the tree, and `Measure.continuum_of_family` takes the family as DATA and no
-  hypothesis. The continuum half never saw the aperture.
+* `FullModel.measure` is a `LatticeYMFamily` FIELD, given a CLOSED TERM in every construction in the
+  tree — `OSFamily.osFamilyTension ApertureRoute.βFlag` here and in `ApertureRoute`,
+  `WilsonModel.ymFamilyTension` in the older `EvenAperture` and `WilsonModel` constructions — and
+  `Measure.continuum_of_family` takes the family as DATA and no hypothesis. The continuum half never
+  saw the aperture.
 * `LatticeYM.hfloor` is `le_refl _`, independent of everything. `LatticeYM.hread` does mention the
   tension — it is `‖m β k‖ ≤ exp(-(κ₀ − μ β))` — but at `ymModelEven`'s field values `m` is that
   exponential cast to `ℂ`, so the proof is `Complex.norm_real` and `le_of_eq`: aperture-blind in
@@ -215,24 +217,31 @@ theorem A2_family (hc : ConfinesAtEachCoupling) : MassGap.A2_YM (ymModelFamily h
 #print axioms A2_family
 
 /-- **A FULL MODEL FROM CONFINEMENT AT EACH COUPLING.** `ApertureRoute.fullModelOfConfinement` with
-the per-coupling aperture. The measure field is the same closed term.
+the per-coupling aperture. The measure field is the same closed term it carries —
+`OSFamily.osFamilyTension ApertureRoute.βFlag`, the unclamped connected `SU(3)` correlation whose
+sequence index is the lattice EXTENT; `ApertureRoute`'s module docstring states what that clause means
+and what it still lacks.
 
-DERIVED: no numeral; every constant belongs to the pieces assembled. -/
+DERIVED: no numeral; every constant belongs to the pieces assembled, and `βFlag` carries its own
+note. -/
 noncomputable def fullModelOfEachCoupling (hc : ConfinesAtEachCoupling) : MassGap.FullModel where
   gap := ymModelFamily hc
   h1 := A1_family hc
   h2 := A2_family hc
-  measure := MassGap.WilsonModel.ymFamilyTension
+  measure := MassGap.OSFamily.osFamilyTension MassGap.ApertureRoute.βFlag
 
 #print axioms fullModelOfEachCoupling
 
-/-- **The measure side is untouched, by `rfl`.** The same object `ApertureRoute` and `EvenAperture`
-use. The swap is confined to the gap side; the continuum half is not restricted, weakened or
-re-derived. -/
-theorem measure_is_ymFamilyTension (hc : ConfinesAtEachCoupling) :
-    (fullModelOfEachCoupling hc).measure = MassGap.WilsonModel.ymFamilyTension := rfl
+/-- **The measure side takes no hypothesis, by `rfl`.** The same closed term `ApertureRoute` uses. The
+swap in the GAP-side hypothesis does not reach this field, which is the claim; the field itself is not
+`WilsonModel.ymFamilyTension` any more — both this file and `ApertureRoute` now carry
+`OSFamily.osFamilyTension`, and `ApertureRoute`'s module docstring states what that clause means and
+what it still lacks. -/
+theorem measure_is_osFamilyTension (hc : ConfinesAtEachCoupling) :
+    (fullModelOfEachCoupling hc).measure
+      = MassGap.OSFamily.osFamilyTension MassGap.ApertureRoute.βFlag := rfl
 
-#print axioms measure_is_ymFamilyTension
+#print axioms measure_is_osFamilyTension
 
 /-- **AN `SU(3)` WILSON REALISATION FROM CONFINEMENT AT EACH COUPLING.**
 `ApertureRoute.wilsonOfConfinement`'s transcription. `WilsonModel.paramsTension` is reused unchanged:
@@ -467,7 +476,7 @@ section Audit
 #print axioms A1_family
 #print axioms A2_family
 #print axioms fullModelOfEachCoupling
-#print axioms measure_is_ymFamilyTension
+#print axioms measure_is_osFamilyTension
 #print axioms wilsonOfEachCoupling
 #print axioms FlagshipAtEach
 #print axioms flagship_of_confinement_at_each_coupling

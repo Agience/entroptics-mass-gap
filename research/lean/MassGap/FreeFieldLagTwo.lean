@@ -131,15 +131,26 @@ numbers from `2` to `16`, and `1680` is their least common multiple. `clearDen_e
 divides every one of them, so this is a fact about the value set rather than a choice. -/
 def clearDen : ℕ := 1680
 
-/-- `p̂² = ∑_μ p̂_μ²` at the momentum `(a, b, c, e)`. -/
+/-- `p̂² = ∑_μ p̂_μ²` at the momentum `(a, b, c, e)`.
+
+DERIVED: the `4` is `Fin 4`, the extent of the torus, so `a b c e` are momentum INDICES. There are
+four of them because the problem is four-dimensional, and the sum runs over all of them because that
+is what `∑_μ` means. -/
 def momSq (a b c e : Fin 4) : ℕ := hatSq a + hatSq b + hatSq c + hatSq e
 
 /-- The plaquette-plane numerator `p̂₀² + p̂₁²` — the transverse contraction of the field-strength
-vertex with the Feynman-gauge propagator. -/
+vertex with the Feynman-gauge propagator.
+
+DERIVED: the `4` is `Fin 4`, the extent, so `a` and `b` are momentum indices. Two of them because a
+plaquette spans a PLANE, and `WilsonBridge.corrClay` fixes that plane to be `0, 1`. -/
 def planeNum (a b : Fin 4) : ℕ := hatSq a + hatSq b
 
 /-- One momentum's contribution to `V·1680·D(d)`. The `k = 0` momentum is sent to `0`; it would be
-`0` anyway (`zero_momentum_term_vanishes`). -/
+`0` anyway (`zero_momentum_term_vanishes`).
+
+DERIVED: the `4` is `Fin 4`, the extent, so `d a b c e` are indices. The `1680` is `clearDen`, the
+lcm derived there, and the `0` is a GUARD on the zero momentum, not a value — it selects the branch,
+and `zero_momentum_term_vanishes` proves the other branch would return `0` there in any case. -/
 def fsTerm (d a b c e : Fin 4) : ℤ :=
   if momSq a b c e = 0 then 0
   else lagPhase c d * (planeNum a b * (clearDen / momSq a b c e) : ℕ)
@@ -187,7 +198,11 @@ By Wick, the connected plaquette correlation of a Gaussian fluctuation field is 
 the lag. `sq_ratio_of_square_law` is that cancellation, and it is all the Wick step contributes to a
 RATIO. -/
 
-/-- **THE FREE-FIELD LAG-TWO RATIO**, `(D(2)/D(0))²`, as a rational. -/
+/-- **THE FREE-FIELD LAG-TWO RATIO**, `(D(2)/D(0))²`, as a rational.
+
+DERIVED: `2` and `0` are LAGS, not magnitudes — the lag the claim is about and the contact lag it is
+normalised against, exactly the pair `LagTwoBound.LagTwoRatio` relates. The outer `2` is the square
+Wick's theorem puts on the propagator. The value is `fsCorr`'s, decided above. -/
 def freeRatio : ℚ := ((fsCorr 2 : ℚ) / (fsCorr 0 : ℚ)) ^ 2
 
 /-- `freeRatio = (73/1785)² = 5329/3186225 = 0.00167251…`.
@@ -407,7 +422,12 @@ exactly one interval is unaccounted for. -/
 
 /-- **THE SECOND OPEN PIECE — the middle interval.** The same lag-two bound on `[0, B]`, which is
 what `LagTwoBound.exists_cut_lag_two_ratio` supplies from the strong side but only out to a derived
-cut. Naming it makes the remaining obligation exactly two propositions rather than a gap in prose. -/
+cut. Naming it makes the remaining obligation exactly two propositions rather than a gap in prose.
+
+DERIVED: no numeral here is a magnitude. `3` is the APERTURE — `wilsonCorrAt 3` is the extent-four
+torus (`3 + 1 = 4`) this file's propagator data is computed on. `2` and `0` are the LAGS the ratio
+relates. The `0` in `0 ≤ β` is the bottom of the coupling range, which is where the half-line the
+weak arm does not reach begins; `B` is a variable and is deliberately not a number. -/
 def MiddleIntervalLagTwo (K B : ℝ) : Prop :=
   ∀ β : ℝ, 0 ≤ β → β ≤ B → MassGap.wilsonCorrAt 3 β 2 ≤ K * MassGap.wilsonCorrAt 3 β 0
 
@@ -444,15 +464,22 @@ FLAT PROFILE, WHICH HAS RATIO EXACTLY ONE.**
 
 The list is everything currently available at extent four that holds at every `β ≥ 0`:
 nonnegativity and positive total mass (`Complete.wilson_reflection_positive_at_even`), circle
-symmetry, log-convexity (`LogConvex.corrClay_log_convex`), contact dominance `ρ(2) ≤ ρ(0)`, and
-`LinkGram.wilson_lag_two_le_lag_one`'s `ρ(2) ≤ ρ(1)` — which is a genuinely DYNAMICAL input, proved
-from link-reflection positivity rather than from the shape cone, and is the strongest coupling-uniform
-fact in the tree.
+symmetry, log-convexity (`LogConvex.corrClay_log_convex`), contact dominance `ρ(2) ≤ ρ(0)`,
+`LinkGram.wilson_lag_two_le_lag_one`'s `ρ(2) ≤ ρ(1)`, and `SlabQuadratic.wilson_quadratic`'s
+`2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)`. The last two are genuinely DYNAMICAL inputs, proved from reflection
+positivity rather than from the shape cone, and the quadratic is INDEPENDENT of the rest —
+`SpectralFour.missing_inequalities_independent` — so it has to be carried explicitly rather than
+inferred.
 
-`ρ ≡ 1` meets all six and defeats every `K < 1`. So no combination of them — and no crude argument
-built only from them, however the pieces are assembled — yields any constant below one, let alone one
-below `lagTwoThreshold ≈ 0.0186`. This sharpens `TailRatio.no_strict_lag_bound_with_contact`, whose
-premise set stops before `LinkGram`'s bound, by adding the one fact that was not in it.
+`ρ ≡ 1` meets all seven, the quadratic with EQUALITY at `2 ≤ 2`, and defeats every `K < 1`. So no
+combination of them — and no crude argument built only from them, however the pieces are assembled —
+yields any constant below one, let alone one below `lagTwoThreshold ≈ 0.0186`. This sharpens
+`TailRatio.no_strict_lag_bound_with_contact`, whose premise set stops before `LinkGram`'s bound, by
+adding the two facts that were not in it.
+
+That the quadratic is met with equality rather than slack is the reason this theorem survived the
+quadratic landing after it was written: a profile meeting the binding constraint exactly is the
+hardest case for a completeness claim, not the easiest.
 
 **WHAT THAT MEANS FOR THE MARGIN.** The room between the free-field value and the threshold is a
 factor of eleven, and it is entirely room for a REMAINDER. The leading term is not optional: the
@@ -468,8 +495,9 @@ theorem flat_profile_meets_every_uniform_fact :
       r 1 ^ 2 ≤ r 0 * r 2 ∧
       r 2 ≤ r 0 ∧
       r 2 ≤ r 1 ∧
+      2 * r 1 ^ 2 ≤ r 2 ^ 2 + r 0 * r 2 ∧
       ∀ K : ℝ, K < 1 → ¬ (r 2 ≤ K * r 0) := by
-  refine ⟨fun _ => 1, fun _ => zero_le_one, ?_, rfl, by norm_num, le_rfl, le_rfl, ?_⟩
+  refine ⟨fun _ => 1, fun _ => zero_le_one, ?_, rfl, by norm_num, le_rfl, le_rfl, by norm_num, ?_⟩
   · simp [Fin.sum_univ_four]
   · intro K hK h
     simp only [mul_one] at h

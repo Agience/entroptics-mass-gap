@@ -76,7 +76,11 @@ open MassGap.SUN MassGap.CompactGauge MassGap.WilsonAction
 DERIVED: `3` is the rank of `SU(3)`; the cube root exists because `det(ω·1) = ω^3` on a `3 × 3`
 matrix, so it is the rank that selects the order of the root. -/
 
-/-- A primitive cube root of unity. -/
+/-- A primitive cube root of unity.
+
+DERIVED: both numerals come from the gauge group. The `3` is the rank of `SU(3)` and fixes the ORDER
+of the root, because `det(ω·1) = ω³` on a `3 × 3` matrix; the `2` is the `2π` of one full turn, which
+that order divides. At rank `N` the same expression reads `exp(2πi/N)`, so neither is chosen here. -/
 noncomputable def om : ℂ := Complex.exp (2 * Real.pi * Complex.I / 3)
 
 theorem om_primitive : IsPrimitiveRoot om 3 := Complex.isPrimitiveRoot_exp 3 (by norm_num)
@@ -109,10 +113,17 @@ theorem om_sq_mul_conj : om ^ 2 * (starRingEnd ℂ) (om ^ 2) = 1 := by
 
 /-! ### Three explicit elements of `SU(3)` -/
 
-/-- The diagonal separator `diag(1, ω, ω²)`. -/
+/-- The diagonal separator `diag(1, ω, ω²)`.
+
+DERIVED: the entries are the three successive powers `ω⁰, ω¹, ω²` of the cube root, one per row, and
+the `3` is `Fin 3`, the rank. Exponents and an index type, not magnitudes: the determinant is
+`ω^(0+1+2) = ω³ = 1`, which is exactly what puts the element in `SU(3)`. -/
 noncomputable def dvec : Fin 3 → ℂ := ![1, om, om ^ 2]
 
-/-- The central element `ω·1`. -/
+/-- The central element `ω·1`.
+
+DERIVED: the `3` is `Fin 3`, the rank — an index type. The `1` is the identity matrix `ω` scales;
+`ω·1` is the centre at whatever rank, so there is nothing here to choose. -/
 noncomputable def zvec : Fin 3 → ℂ := ![om, om, om]
 
 theorem dvec_zero : dvec 0 = 1 := by simp [dvec]
@@ -155,7 +166,11 @@ theorem zvec_mem : Matrix.diagonal zvec ∈ Matrix.specialUnitaryGroup (Fin 3) �
 
 /-- The three-cycle permutation matrix. It is in `SU(3)` because a three-cycle is EVEN — the
 corresponding transposition matrix of `SU(2)` has determinant `−1` and needs a sign, which is why
-`HaarMoments.wmat` carries one and this does not. -/
+`HaarMoments.wmat` carries one and this does not.
+
+DERIVED: the `0`s and `1`s are the incidence pattern of a permutation — absent and present — and the
+`3` is the rank, an index type. The pattern is the three-cycle `1 ↦ 2 ↦ 3 ↦ 1` written out; no entry
+is a magnitude and none is chosen. -/
 noncomputable def pmat : Matrix (Fin 3) (Fin 3) ℂ := !![0, 0, 1; 1, 0, 0; 0, 1, 0]
 
 theorem pmat_mem : pmat ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
@@ -167,13 +182,22 @@ theorem pmat_mem : pmat ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
         Matrix.conjTranspose_apply]
   · simp [pmat, Matrix.det_fin_three]
 
-/-- `diag(1, ω, ω²)` as an element of `SU(3)`. -/
+/-- `diag(1, ω, ω²)` as an element of `SU(3)`.
+
+DERIVED: the `3` is the rank in the type `SU 3`, and the `1` is the first entry of `dvec`, already
+derived there. This declaration adds no number of its own — it pairs that matrix with its membership
+proof. -/
 noncomputable def Dg : SU 3 := ⟨Matrix.diagonal dvec, dvec_mem⟩
 
-/-- `ω·1` as an element of `SU(3)` — the centre. -/
+/-- `ω·1` as an element of `SU(3)` — the centre.
+
+DERIVED: as `Dg` — the `3` is the rank in `SU 3` and the `1` is the identity `ω` scales, both from
+`zvec`. This pairs that matrix with its membership proof. -/
 noncomputable def Zg : SU 3 := ⟨Matrix.diagonal zvec, zvec_mem⟩
 
-/-- The three-cycle as an element of `SU(3)`. -/
+/-- The three-cycle as an element of `SU(3)`.
+
+DERIVED: the `3` is the rank in the type `SU 3`; `pmat` carries the pattern. -/
 noncomputable def Pg : SU 3 := ⟨pmat, pmat_mem⟩
 
 /-! ### How the three elements act -/
@@ -261,7 +285,10 @@ theorem integrableR {f : SU 3 → ℝ} (hc : Continuous f) (C : ℝ) (hb : ∀ g
   haveI := isProbabilityMeasure_probHaar (SU 3)
   exact (integrable_const C).mono' hc.aestronglyMeasurable (Filter.Eventually.of_forall hb)
 
-/-- The fundamental character, as a function on `SU(3)`. -/
+/-- The fundamental character, as a function on `SU(3)`.
+
+DERIVED: every `3` is the rank — the group in `SU 3` and its matrix index type `Fin 3`. The trace
+sums the diagonal of whatever matrix it is given and takes no parameter of its own. -/
 noncomputable def chi (g : SU 3) : ℂ := Matrix.trace (g : Matrix (Fin 3) (Fin 3) ℂ)
 
 theorem chi_eq (g : SU 3) :
@@ -362,7 +389,11 @@ theorem haar_chi_sq_zero : ∫ g : SU 3, chi g ^ 2 ∂(probHaar (SU 3)) = 0 := b
 
 /-! ### The second moment `∫ |χ|² = 1` -/
 
-/-- The nine numbers `∫ |U_{ij}|²`. -/
+/-- The nine numbers `∫ |U_{ij}|²`.
+
+DERIVED: every `3` is the rank — `SU 3` and the matrix index type `Fin 3`, so `i` and `j` are matrix
+INDICES rather than magnitudes, and "nine" is `3 × 3` of them. The `2` of `|·|²` is the second moment
+being defined. -/
 noncomputable def msq (i j : Fin 3) : ℂ :=
   ∫ g : SU 3, (g : Matrix (Fin 3) (Fin 3) ℂ) i j
     * (starRingEnd ℂ) ((g : Matrix (Fin 3) (Fin 3) ℂ) i j) ∂(probHaar (SU 3))

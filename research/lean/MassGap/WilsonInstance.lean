@@ -4,17 +4,21 @@ import MassGap.Complete
 /-!
 # MassGap.WilsonInstance — a CONSTRUCTED SU(N) FullModel
 
-Residual A of the proof ledger. The existence half's theorems (`existence_and_gap_of_model`, `wightman_of_model`) were stated over
+Residual A of the proof ledger. The existence half's theorem `existence_and_gap_of_model` was stated over
 ABSTRACT structure variables — no `LatticeYMFamily`/`FullModel` value was ever constructed. This file constructs
-one on the RP/gap axis at the SAME fidelity as `ymModel`, so the existence-and-gap existence-and-gap theorem
-lands on a CONCRETE object. Footprint of the existence-and-gap theorem (gap + OS0–OS3 measure): the 4 named cited
-axiom (`wilson_reflection_positive_at`); the OS→Wightman axioms
-(`os_reconstruction`, `WightmanTheory`) enter ONLY in `ym_wightman` (footprint = all 6). NO new axiom,
-NO `sorry`.
+one on the RP/gap axis at the SAME fidelity as `ymModel`, so the existence-and-gap theorem
+lands on a CONCRETE object. Footprint of the existence-and-gap theorem (gap + OS0–OS3 measure): the three
+foundational axioms and the one named cited axiom `wilson_reflection_positive_at`, which reaches it
+through the gap side's `μYMAt`/`ymModelAt` alone — the measure side `ymFamily` is foundational-only.
+The OS→Wightman
+reconstruction is NOT composed here and no declaration in this file carries it: `ymFamily`'s reflected form is
+`QYM (N : ℕ) (j : JYM) (a : ℕ) : ℝ`, a value per test configuration, while
+`WightmanData.os_reconstruction_wightman` consumes a continuous bilinear form on a normed test space. NO new axiom, NO `sorry`.
 
 Fidelity boundary (stated exactly): the reflected form `Q` is built from the SAME opaque Wilson ensemble
 `wilsonCorr` the gap side uses (clamped into `[0,1]`), so the `FullModel` is ONE physical model on the RP axis;
-its nonnegativity `os_rp` is the RP axiom itself. The Euclidean/permutation actions are GENUINE non-trivial
+its nonnegativity `os_rp` is `Complete.wilson_reflection_positive_at_even`, the PROVED reflection
+positivity, which is why the family carries the extent hypothesis `hev`. The Euclidean/permutation actions are GENUINE non-trivial
 `Equiv.Perm (Fin 4)` actions, but the invariance they yield is MODELLED, not derived from `wilsonCorr`: `Q`
 factors through an ensemble label the actions leave fixed, so it is constant on orbits by construction (this
 holds for ANY `Q` reading only that label). The finite aperture is likewise a single hardwired supra-edge mode
@@ -35,7 +39,8 @@ abbrev JYM : Type := Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ
 
 /-- The reflected Schwinger form, built from the SAME Wilson ensemble `wilsonCorr` the gap side uses (so the
 `FullModel` is ONE physical model): the ensemble correlation at spacing `a` and the invariant-label lag,
-clamped into `[0,1]`. Nonnegative by reflection positivity (`wilson_reflection_positive_at`); depends on `j` only
+clamped into `[0,1]`. Nonnegative by reflection positivity (`wilson_reflection_positive_at_even`, at the
+extent hypothesis `ymFamily` carries); depends on `j` only
 through the Euclidean-invariant label `j.2.2`. (On the gap side `wilsonCorr`'s argument is the coupling `β`;
 here it is the spacing `a` — a same-symbol modelling identification.) -/
 noncomputable def QYM (N : ℕ) (j : JYM) (a : ℕ) : ℝ :=
@@ -57,8 +62,20 @@ def NaYM (a : ℕ) : ℕ := a + 1
 nonnegativity of the Gram form (the real tie to `wilsonCorr`); the aperture by a single hardwired supra-edge
 mode (`resolvedDim ≡ 1 = c`); the bound by `sin² ≤ 1`; and Euclidean/permutation invariance that holds because
 `Q` factors through an inert label the genuine `Perm (Fin 4)` actions leave fixed (modelled, not derived). No
-new axiom, no `sorry`. -/
-noncomputable def ymFamily (N : ℕ) : LatticeYMFamily where
+new axiom, no `sorry`.
+
+**NO NAMED AXIOM.** `os_rp` used to be the reflection-positivity AXIOM at an arbitrary extent. It is now
+the THEOREM `Complete.wilson_reflection_positive_at_even`, at the price of the extent hypotheses
+`N + 1 = 2 * m` and `2 ≤ m`. The coupling hypothesis it also carries costs nothing here: the slot
+`wilsonCorrAt` is read at is the SPACING `a : ℕ` cast to `ℝ`, which is nonnegative for free. The
+`SU(3)` instantiation `WilsonGauge.ym_wilson_gauge_su3` runs at `N = NYM = 3`, whose extent is
+`4 = 2 * 2`, so the restriction is met there.
+
+DERIVED: `2 * k` is the even extent and `2 ≤ k` is `4 ≤ N + 1`, both read off
+`Complete.wilson_reflection_positive_at_even`'s hypotheses. Neither is chosen here. Carried as one
+existential — `EvenAperture.EvenAp`'s membership predicate — so downstream signatures grow by one
+argument rather than three. -/
+noncomputable def ymFamily (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) : LatticeYMFamily where
   J := JYM
   G := Equiv.Perm (Fin 4)
   actE := actEYM
@@ -71,7 +88,9 @@ noncomputable def ymFamily (N : ℕ) : LatticeYMFamily where
   c := 1
   B := 1
   hB := zero_le_one
-  os_rp := fun _ a => le_min ((wilson_reflection_positive_at N (a : ℝ)).1 _) zero_le_one
+  os_rp := fun _ a =>
+    le_min ((wilson_reflection_positive_at_even N hev.choose hev.choose_spec.1 hev.choose_spec.2
+      (show (0 : ℝ) ≤ (a : ℝ) by positivity)).1 _) zero_le_one
   os_gap := by
     intro a n _ h
     by_cases hn0 : n = 0
@@ -87,6 +106,8 @@ noncomputable def ymFamily (N : ℕ) : LatticeYMFamily where
       _ ≤ (resolvedDim (Finset.range (NaYM a)) (evYM a) 0 : ℝ) * 1 := by nlinarith
   os_euc := fun _ _ _ => rfl
   os_perm := fun _ _ _ => rfl
+
+#print axioms ymFamily
 
 /-! ## The gap side: `A1_YM` discharged on the physical half-line -/
 
@@ -144,23 +165,15 @@ junction form, and for nothing else — see its docstring. -/
 /-- **The constructed SU(N) full model over an ARBITRARY mode family** — the junction gap data (with A1/A2
 discharged) and the OS-data family. The mode family and the two residuals `hfe`, `hgap` are inputs. -/
 -- DERIVED: the `0` below is the hypothesis `0 ≤ β`, the boundary of the physical half-line.
-noncomputable def ymFullModelOf (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
+noncomputable def ymFullModelOf (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k)
+    (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) : FullModel where
   gap := gapModelOf N s P m Δ c hdom hfe hgap
   h1 := gapModelOf_A1 N hconf s P m Δ c hdom hfe hgap
   h2 := gapModelOf_A2 N s P m Δ c hdom hfe hgap
-  measure := ymFamily N
-
-/-- **The reconstructed Wightman QFT for the constructed SU(N) object**, at an aperture and over an
-arbitrary mode family. Confinement enters as the hypothesis `hconf`; the OS→Wightman reconstruction
-axioms are what this adds beyond it. -/
-theorem ym_wightman_of (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
-    {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
-    (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
-    (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) : WightmanTheory :=
-  wightman_of_model (ymFullModelOf N hconf s P m Δ c hdom hfe hgap)
+  measure := ymFamily N hev
 
 /-! ## The existence-and-gap problem, for an SU(N) Wilson realisation with named physical parameters -/
 
@@ -184,7 +197,8 @@ noncomputable def ymParams (N : ℕ) (hN : 2 ≤ N) : WilsonParams where
 
 /-- The infrared-cutoff match `c = k⋆L/(2π)`, shared by every realisation below (it is a fact about
 `ymParams` and `ymFamily`, independent of the gap side's mode family). -/
-theorem ym_hc (N : ℕ) (hN : 2 ≤ N) : ((ymFamily N).c) = (ymParams N hN).irCutoff := by
+theorem ym_hc (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) (hN : 2 ≤ N) :
+    ((ymFamily N hev).c) = (ymParams N hN).irCutoff := by
   show (1 : ℝ) = 2 * Real.pi * 1 / (2 * Real.pi)
   rw [mul_one, div_self (show (0 : ℝ) < 2 * Real.pi by positivity).ne']
 
@@ -192,13 +206,14 @@ theorem ym_hc (N : ℕ) (hN : 2 ≤ N) : ((ymFamily N).c) = (ymParams N hN).irCu
 model, with the infrared cutoff matched to the physical `k⋆L/(2π)`. -/
 -- DERIVED: `0` is the physical half-line boundary `0 ≤ β`; `2` in `hN` is the arity of a special
 -- unitary group, the smallest rank at which `SU(N)` is non-abelian, not a size.
-noncomputable def ym_wilson_of (N : ℕ) (hN : 2 ≤ N) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
+noncomputable def ym_wilson_of (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) (hN : 2 ≤ N)
+    (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) : WilsonRealization where
   params := ymParams N hN
-  model := ymFullModelOf N hconf s P m Δ c hdom hfe hgap
-  hc := ym_hc N hN
+  model := ymFullModelOf N hev hconf s P m Δ c hdom hfe hgap
+  hc := ym_hc N hev hN
 
 /-- **The existence-and-gap statement for an SU(N) Wilson realisation, over an ARBITRARY mode family.** For
 any mode family meeting the three junction inputs (`hdom`, and the two OPEN residuals `hfe`, `hgap`): the gap
@@ -212,28 +227,26 @@ THE TWO SIDES ARE NOT THE SAME STRENGTH, and the conjunction hides that. Stated 
   SUBSEQUENTIAL POINTWISE LIMIT `q : J → ℝ` over a countable index set, by a diagonal Bolzano–Weierstrass
   argument. It is not a measure, not on `ℝ⁴`, and not OS0–OS4: there is no Schwinger function, no reflection
   positivity of the limit as a quadratic form, no clustering and no regularity. Its invariance is inherited
-  because it was built in — `(ymFamily N).os_euc` is `rfl`, since `QYM` reads only the label `j.2.2` that the
+  because it was built in — `(ymFamily N hev).os_euc` is `rfl`, since `QYM` reads only the label `j.2.2` that the
   `Perm (Fin 4)` actions leave fixed, and the same holds for any `Q` reading only that label.
 
 `ymFamily` is a MINIMAL interface witness (one hardwired supra-edge mode, `Q` clamped into `[0,1]`), tied to
 the ensemble only through `QYM`/`os_rp`. Read this theorem as the interface composition it is. -/
-theorem ym_existence_and_gap_of_junction (N : ℕ) (hN : 2 ≤ N)
-    (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
+theorem ym_existence_and_gap_of_junction (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k)
+    (hN : 2 ≤ N) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ s β, P β k * (m β k) ^ τ‖) atTop (nhds 0)) ∧
         (∀ β, μClampAt N β - κ₀YM < 0) ∧ (∀ d d', (ymModelAt N).R d = (ymModelAt N).R d')) ∧
       (∃ (q : JYM → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
-        (∀ j, Tendsto (fun k => (ymFamily N).Q j (φ k)) atTop (nhds (q j))) ∧
-        (∀ j, |q j| ≤ (⌈(ymFamily N).c⌉₊ : ℝ) * (ymFamily N).B) ∧
+        (∀ j, Tendsto (fun k => (ymFamily N hev).Q j (φ k)) atTop (nhds (q j))) ∧
+        (∀ j, |q j| ≤ (⌈(ymFamily N hev).c⌉₊ : ℝ) * (ymFamily N hev).B) ∧
         (∀ j, 0 ≤ q j) ∧
-        (∀ g j, q ((ymFamily N).actE g j) = q j) ∧
-        (∀ σ j, q ((ymFamily N).actP σ j) = q j)) :=
-  existence_and_gap_of_wilson (ym_wilson_of N hN hconf s P m Δ c hdom hfe hgap)
+        (∀ g j, q ((ymFamily N hev).actE g j) = q j) ∧
+        (∀ σ j, q ((ymFamily N hev).actP σ j) = q j)) :=
+  existence_and_gap_of_wilson (ym_wilson_of N hev hN hconf s P m Δ c hdom hfe hgap)
 
 #print axioms ym_existence_and_gap_of_junction
-
-#print axioms ym_wightman_of
 
 end MassGap

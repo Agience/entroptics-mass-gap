@@ -26,7 +26,7 @@ energy, and the mass gap — a standalone operator-theoretic core, for a given g
 
 The Minkowski continuation of the Schwinger functions to the Wightman functions (tube domains /
 Bargmann–Hall–Wightman, Poincaré covariance) is the classical Osterwalder–Schrader theorem, cited as the
-named axiom `os_reconstruction`.
+named axiom `WightmanData.os_reconstruction_wightman`.
 
 Foundational axioms only.
 -/
@@ -177,7 +177,7 @@ theorem hamiltonian_mass_gap (T : A) {ε Δ : ℝ} (hT : IsSelfAdjoint T) (hε :
 `Δ`: no spectrum in `(0, Δ)`. This is the operator-theoretic output of OS reconstruction — a Hilbert-space
 Hamiltonian with a vacuum and a positive mass gap — assembled from the CFC lemmas above, foundational axioms
 only. The Minkowski continuation to the Wightman functions is the classical Osterwalder–Schrader theorem
-(`os_reconstruction`). -/
+(`WightmanData.os_reconstruction_wightman`). -/
 theorem reconstruct_qm_core [PartialOrder A] [StarOrderedRing A] (T : A) {ε Δ : ℝ}
     (hT : IsSelfAdjoint T) (hε : 0 < ε) (hΔ : 0 < Δ) (h1 : (1 : ℝ) ∈ spectrum ℝ T)
     (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) :

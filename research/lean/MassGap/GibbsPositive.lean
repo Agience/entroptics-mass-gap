@@ -299,9 +299,9 @@ reflected form is NOT `QG`: `(ymFamily N).Q` is `QYM N` — the clamp of `wilson
 to the positivity of that correlation at one lag, and no further. At `j.2.2 = 0` the lag is `0` and
 the hypothesis is `0 < WilsonBridge.corrClay (N+1) a 0`, the plaquette-energy variance.
 
-Stated about `QYM` rather than about `(ymFamily N).Q`, which it equals by definition: the family
-OBJECT is built with `wilson_reflection_positive_at` in its `os_rp` field, so any statement that
-names `ymFamily` carries that axiom whatever its proof does. -/
+Stated about `QYM` rather than about `(ymFamily N).Q`, which it equals by definition: `ymFamily`
+carries the even-extent hypothesis its `os_rp` field needs, and this statement needs no such
+hypothesis — it is about the correlation at one lag, at any extent. -/
 theorem QYM_pos_of (N a : ℕ) (j : MassGap.JYM)
     (hd : 0 < MassGap.wilsonCorrAt N (a : ℝ)
             ⟨j.2.2 % (N + 1), Nat.mod_lt _ (Nat.succ_pos N)⟩) :

@@ -74,7 +74,6 @@ research/lean/MassGap/WilsonInstance.lean|def actEYM uses 4
 research/lean/MassGap/WilsonInstance.lean|def actPYM uses 4
 research/lean/MassGap/WilsonInstance.lean|def evYM uses 0,1
 research/lean/MassGap/WilsonInstance.lean|def gapModelOf uses 1978,2003
-research/lean/MassGap/WilsonInstance.lean|def ymFamily uses 0,1,4
 research/lean/MassGap/WilsonRead.lean|def linkTranslate uses 8
 research/lean/MassGap/WilsonRead.lean|def linkTranslateEquiv uses 8
 research/lean/MassGap/WilsonRead.lean|def wilsonCorrReal uses 0,2

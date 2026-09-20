@@ -3,6 +3,7 @@ import MassGap.Measure
 import MassGap.WilsonHypercubic
 import MassGap.ReflectionStrong
 import MassGap.InfiniteVolume
+import MassGap.WilsonModel
 
 /-!
 # MassGap.OSFamily — the OS data family on the genuine Gibbs correlation, at arbitrary extent
@@ -63,7 +64,7 @@ difference is the object being transported, and that the removal now has to surv
 A clamp-free family at arbitrary extent is still not OS0–OS3. What remains open is not hidden by any
 definition here:
 
-* **OS3 is positive semidefiniteness over the half-space algebra, not one nonnegative number.**
+* **OS2 is positive semidefiniteness over the half-space algebra, not one nonnegative number.**
   `os_rp` asks only `0 ≤ Q j a`. A Gram statement does exist in the tree — the real-valued
   `ReflectionStrong.wilson_expect_gram_nonneg` on `LogConvex.localObs`, and the complex sesquilinear
   `OSPositivity.wilson_osC_diag_re_nonneg` / `wilson_osC_gram_re_nonneg` on `localObsC` (a DIFFERENT
@@ -91,10 +92,9 @@ definition here:
   correlation is not, so no such theorem is available here at a general lag. At lag zero it is —
   `PlaqVariance.corrClay_zero_pos` — and lag zero is reachable (`lagOf a 0 = 0`), so the family is
   not the identically-zero one; but that is a remark, not a theorem in this file.
-* **This file is not in the root import list.** `MassGap.lean` does not import `MassGap.OSFamily`, so
-  a whole-tree `lake build` is SILENT about it. It must be built by name, as below.
-
-Build: `python research/code/lean_build.py build MassGap.OSFamily`.
+Build: `python research/code/lean_build.py build MassGap.OSFamily`, or the whole tree with
+`… build MassGap` — `MassGap.lean` imports this module, and `MassGap.ApertureRoute` imports it too,
+because the flagship's measure field is `osFamilyTension` (see the last section of this file).
 -/
 
 namespace MassGap.OSFamily
@@ -600,6 +600,169 @@ theorem osFamily_Q_eq (β : ℝ) (j : JOS) (a : ℕ) :
     (osFamily β).Q j a = MassGap.WilsonBridge.corrClay (extent a) β (lagOf a j.2.2) :=
   Qos_eq β j a
 
+/-! ### The family the flagship can carry: this measure, with the tension's own infrared input
+
+`osFamily` above is unconditional at the placeholder spectrum `evUnit`, and its infrared cutoff `c`
+is the `1` that placeholder's count returns. The flagship cannot carry that cutoff. A
+`WilsonRealization` (in `MassGap.FullModel`) requires `model.measure.c = params.irCutoff`, and
+`WilsonModel.paramsTension` does not hardwire its cutoff: it reads it off the witness read's measured
+tension (`WilsonModel.paramsTension_irCutoff : paramsTension.irCutoff = cW`). So the family the
+flagship can carry is `osFamilyCounted` at the tension's own edge and count.
+
+NOTHING ON THE MEASURE SIDE CHANGES between the two. `os_rp`, `os_form`, `os_euc` and `os_perm` are
+`Qos_nonneg`, `Qos_abs_le_four`, `Qos_actE` and `Qos_actP` either way — the connected `SU(3)` Wilson
+correlation at extent `2a+2`, unclamped. What changes is only the spectrum `os_gap` is derived from,
+and it becomes `WilsonModel.wOne`: the same spectrum `WilsonModel.ymFamilyTension` uses, counted by
+the same theorem (`WilsonModel.count_le_of_tension_uniform`), now over the extent-`(2a+2)` lattice's
+own plaquette count `Nmodes` instead of over `WilsonGauge.NaG a = a + 1`.
+
+What that does NOT do is make `os_gap` a statement about `SU(3)`. It is a fact about `wOne`, exactly
+as it is in `ymFamilyTension`, and `wOne` is the witness read's fabricated single-mode spectrum. The
+repair in this file is to the MEASURE side; the spectrum side is carried across unchanged so that the
+substitution moves one thing. -/
+
+/-- **`hcount` from the tension, at the lattice's own mode count.**
+
+`WilsonModel.hcountW` is this same statement at `WilsonGauge.NaG`.
+`WilsonModel.count_le_of_tension_uniform` is already general in `Na` — all it needs of the index set
+is a bound on the weight sum, and `WilsonModel.sum_wOne` supplies that at any positive count — so the
+identical tension bound holds at `Nmodes`, whose positivity is `Nmodes_pos`.
+
+AND THAT MOVE BUYS NOTHING, which is worth saying because the two index sets look like a difference.
+`count_le_of_tension_uniform`'s right-hand side contains no `Na` at all, and
+`WilsonModel.resolvedDim_wOne` returns `1` at EVERY positive count, so `Nmodes` and `WilsonGauge.NaG`
+give the identical family. `Nmodes` is the truthful definition — it is the lattice's own plaquette
+count rather than a counter — and it is INERT in the family's content until a measured spectrum
+replaces `wOne`. What makes the index the geometry is `extent` inside `Qos`, not `Na`.
+
+DERIVED: no literal of this declaration's. `W := 1` is the witness read's total weight
+(`WilsonModel.sum_wOne`), and every numeral inside the bound is `WilsonModel.cW`'s own. -/
+theorem hcount_wOne (a : ℕ) :
+    ((resolvedDim (Finset.range (Nmodes a)) ((fun _ => MassGap.WilsonModel.wOne) a)
+        MassGap.WilsonModel.edgeW : ℕ) : ℝ) ≤ MassGap.WilsonModel.cW :=
+  MassGap.WilsonModel.count_le_of_tension_uniform
+    (k := MassGap.WilsonModel.kW) (Na := Nmodes) (w := MassGap.WilsonModel.wOne)
+    (lam := MassGap.WilsonModel.lamConst MassGap.WilsonModel.rW) MassGap.WilsonModel.readW
+    (fun a d => MassGap.WilsonModel.geoRead_is_sum MassGap.WilsonModel.rW
+      MassGap.WilsonModel.rW_nonneg MassGap.WilsonModel.kW (Nmodes a) (Nmodes_pos a) d)
+    MassGap.WilsonModel.wOne_nonneg (fun _ => MassGap.WilsonModel.rW_nonneg)
+    (fun _ => MassGap.WilsonModel.rW_lt_one.le)
+    (lam0 := MassGap.WilsonModel.rW) MassGap.WilsonModel.rW_pos
+    MassGap.WilsonModel.rW_lt_one.le (fun _ => le_refl _)
+    (edge := MassGap.WilsonModel.edgeW) MassGap.WilsonModel.edgeW_pos
+    (W := 1) (fun a => le_of_eq (MassGap.WilsonModel.sum_wOne (Nmodes a) (Nmodes_pos a)))
+    MassGap.WilsonModel.readW_cos_pos MassGap.WilsonModel.readW_tension_lt_floor a
+
+/-- At least one mode clears the witness edge at every index, so `os_form` is not vacuous.
+
+DERIVED: `1` is the count `WilsonModel.resolvedDim_wOne` returns, not a threshold. -/
+theorem hres_wOne (a : ℕ) :
+    1 ≤ resolvedDim (Finset.range (Nmodes a)) ((fun _ => MassGap.WilsonModel.wOne) a)
+      MassGap.WilsonModel.edgeW := by
+  rw [MassGap.WilsonModel.resolvedDim_wOne (Nmodes a) (Nmodes_pos a) MassGap.WilsonModel.edgeW
+    MassGap.WilsonModel.edgeW_pos MassGap.WilsonModel.edgeW_lt_one]
+
+/-- **THE FAMILY THE FLAGSHIP CARRIES: the unclamped, arbitrary-extent `SU(3)` measure with the
+tension-derived infrared cutoff.**
+
+`osFamilyCounted` at the witness read's spectrum, edge and count. Its `c` is `WilsonModel.cW`
+(`osFamilyTension_c`), which is what lets it stand where `WilsonModel.ymFamilyTension` stood in a
+`WilsonRealization` without touching `WilsonModel.paramsTension`.
+
+DERIVED: no literal of this declaration's; `edgeW`, `cW` and `wOne` carry their notes in
+`WilsonModel`. -/
+noncomputable def osFamilyTension (β : ℝ) : LatticeYMFamily :=
+  osFamilyCounted β (fun _ => MassGap.WilsonModel.wOne) MassGap.WilsonModel.edgeW
+    MassGap.WilsonModel.cW MassGap.WilsonModel.wOne_sorted hcount_wOne hres_wOne
+
+/-- **The cutoff is the tension's**, so `WilsonRealization.hc` discharges against
+`WilsonModel.paramsTension` unchanged.
+
+DERIVED: no literal. -/
+theorem osFamilyTension_c (β : ℝ) : (osFamilyTension β).c = MassGap.WilsonModel.cW := rfl
+
+/-- The per-mode bound is the proved correlation bound, not a clamp's range.
+
+DERIVED: `4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant. -/
+theorem osFamilyTension_B (β : ℝ) : (osFamilyTension β).B = 4 := rfl
+
+/-- **The index is the extent and the coupling is the parameter**, on the flagship's family too.
+
+DERIVED: no literal. -/
+theorem osFamilyTension_Q_eq (β : ℝ) (j : JOS) (a : ℕ) :
+    (osFamilyTension β).Q j a = MassGap.WilsonBridge.corrClay (extent a) β (lagOf a j.2.2) :=
+  Qos_eq β j a
+
+/-- **The OS0–OS3 continuum limit of the flagship's family, at EVERY real coupling.**
+
+This is the theorem that makes the coupling the flagship's model field is instantiated at inert: the
+conclusion holds for every `β`, so no value of it is load-bearing in anything concluded.
+
+DERIVED: no literal. -/
+theorem os_continuum_tension (β : ℝ) :
+    ∃ (q : (osFamilyTension β).J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
+      (∀ j, Tendsto (fun k => (osFamilyTension β).Q j (φ k)) atTop (nhds (q j))) ∧
+      (∀ j, |q j| ≤ (⌈(osFamilyTension β).c⌉₊ : ℝ) * (osFamilyTension β).B) ∧
+      (∀ j, 0 ≤ q j) ∧
+      (∀ g j, q ((osFamilyTension β).actE g j) = q j) ∧
+      (∀ σ j, q ((osFamilyTension β).actP σ j) = q j) :=
+  continuum_of_family (osFamilyTension β)
+
+/-! ### What the substitution does NOT repair, at the declaration level
+
+Two statements that the shape of `LatticeYMFamily` invites a reader to assume, proved here in the
+direction they actually go. -/
+
+/-- **The reflected form reads the test configuration ONLY through the lag label.**
+
+`Qos_eq`'s right-hand side mentions `j.2.2` and neither `j.1` nor `j.2.1`, so two test configurations
+agreeing on the lag give the same number whatever their group components are.
+
+WHY THIS MATTERS. `actEOS` multiplies `j.1` and `actPOS` multiplies `j.2.1`; NEITHER touches `j.2.2`.
+So `os_euc` and `os_perm` hold for the same reason they hold of `WilsonGauge.QG`: the group acts on
+components the reflected form is independent of. The repair in this file is to the reflected form, not
+to the group actions, and `Qos_actE` / `Qos_actP` are no stronger a statement than `QG_eq`'s
+corollaries were. The difference from `QG` is that `Qos` is not constant in `j` outright — it varies
+with the lag — but the lag is exactly the component the OS1 and OS3 clauses never move.
+
+DERIVED: no literal. -/
+theorem Qos_depends_only_on_the_lag (β : ℝ) (j j' : JOS) (a : ℕ) (h : j.2.2 = j'.2.2) :
+    Qos β j a = Qos β j' a := by
+  rw [Qos_eq, Qos_eq, h]
+
+/-- **The lag label `0` names the zero separation**, so lag zero is reachable.
+
+DERIVED: `0` is the label and the separation it names; `2 * 0 % extent a = 0` is arithmetic. -/
+theorem lagOf_zero (a : ℕ) : lagOf a 0 = 0 := by
+  apply Fin.ext
+  simp [lagOf]
+
+/-- **The family is not the identically-zero one — the non-degeneracy that survives the repair.**
+
+`GibbsPositive.ymFamilyGauge_Q_pos` proves `0 < Q` at EVERY test configuration for the clamped family,
+because a one-point plaquette expectation is strictly positive. NO SUCH THEOREM IS AVAILABLE HERE, and
+that is a genuine regression rather than an oversight: a connected correlation at a general lag has no
+reason to be strictly positive, and nothing in this tree proves it is.
+
+What is available is the lag-zero corner, and it is enough to rule out the vacuous family: at lag zero
+the connected correlation IS the plaquette-energy variance, strictly positive at every real coupling
+(`PlaqVariance.corrClay_zero_pos`), and lag zero is reachable (`lagOf_zero`). So `Qos` is not
+identically zero — which is what `GibbsPositive`'s module docstring says the positivity was guarding
+against — but the guard is now at one lag instead of at all of them.
+
+DERIVED: `2 * a + 1` is `extent`'s aperture, `extent a = (2a+1) + 1`; the `0`s are the lag label, the
+separation it names, and positivity itself. -/
+theorem Qos_pos_at_lag_zero (β : ℝ) (j : JOS) (a : ℕ) (hj : j.2.2 = 0) : 0 < Qos β j a := by
+  rw [Qos_eq, hj, lagOf_zero]
+  exact MassGap.PlaqVariance.corrClay_zero_pos (2 * a + 1) β
+
+/-- The same, on the family the flagship carries.
+
+DERIVED: no literal of this declaration's. -/
+theorem osFamilyTension_pos_at_lag_zero (β : ℝ) (j : JOS) (a : ℕ) (hj : j.2.2 = 0) :
+    0 < (osFamilyTension β).Q j a :=
+  Qos_pos_at_lag_zero β j a hj
+
 section Audit
 #print axioms ext_strictMono
 #print axioms connT_eq
@@ -625,6 +788,17 @@ section Audit
 #print axioms osFamily_Na
 #print axioms osFamily_B
 #print axioms osFamily_Q_eq
+#print axioms hcount_wOne
+#print axioms hres_wOne
+#print axioms osFamilyTension
+#print axioms osFamilyTension_c
+#print axioms osFamilyTension_B
+#print axioms osFamilyTension_Q_eq
+#print axioms os_continuum_tension
+#print axioms Qos_depends_only_on_the_lag
+#print axioms lagOf_zero
+#print axioms Qos_pos_at_lag_zero
+#print axioms osFamilyTension_pos_at_lag_zero
 end Audit
 
 end MassGap.OSFamily

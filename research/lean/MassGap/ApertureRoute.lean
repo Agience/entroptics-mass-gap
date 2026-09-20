@@ -1,4 +1,5 @@
 import MassGap.NonnegArm
+import MassGap.OSFamily
 
 /-!
 # MassGap.ApertureRoute — the flagship from confinement at ONE aperture
@@ -146,6 +147,123 @@ supplies the DECOMPOSITION, not a mode count and not a rate — `SpectralFour.fo
 shows the constant triple is representable, so the property carries no gap. Neither `Aperture.lean`
 nor this file supplies the finite mode count, which remains structural in the model.
 
+## THE FLAGSHIP'S SECOND CLAUSE — A VOLUME LIMIT, NOT A CONTINUUM LIMIT
+
+`fullModelOfConfinement`'s `measure` field is `OSFamily.osFamilyTension βFlag`, not
+`WilsonModel.ymFamilyTension`. That one field is the whole content of the flagship's second clause,
+so what it says — and what it still does not say — is written out here rather than left to the field
+name.
+
+**WHAT IT WAS.** `ymFamilyTension`'s reflected form is `WilsonGauge.QG`, which is
+
+    min (max (sysYM.expect (probHaar G3) (a : ℝ) (O0 ∘ reindex …)) 0) 1
+
+with `sysYM = WilsonHypercubic.sysWilson 3 4 nYM` and `WilsonGauge.nYM = 2`. Three consequences, each
+readable off the declaration: the sequence index `a` reaches the object ONLY through `expect`'s
+coupling slot, so the sequence was a sequence in the COUPLING; the lattice is the same `2⁴ = 16` sites
+at every `a`, so neither the spacing nor the volume ever moved; and the value is clamped into `[0,1]`,
+so the temperedness the limit is extracted by was definitional rather than a property of the measure.
+`WilsonGauge.QG_eq` further proves `QG j a` does not depend on `j` at all.
+
+**WHAT IT IS.** `OSFamily.osFamilyTension_Q_eq` states the new reflected form exactly:
+
+    (osFamilyTension β).Q j a = WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)
+
+with `OSFamily.extent a = 2a + 2` and `OSFamily.ext_strictMono`. The index is the EXTENT of a
+four-dimensional periodic `SU(3)` lattice; the coupling is held fixed at `β` across the whole
+sequence; and there is no clamp, because the value IS the connected Wilson plaquette correlation.
+`0 ≤ q j` descends from `ReflectionStrong.corrClay_nonneg_even_lag`, a reflection-positivity theorem
+at every real coupling on the even lags, and the bound's `B = 4` from
+`InfiniteVolume.wilsonCorrConn_abs_le_four`, whose only hypothesis is `3 ≠ 0` and whose constant
+carries no extent — which is what a sequence over extents needs. The infrared cutoff is unchanged:
+`OSFamily.osFamilyTension_c` is `WilsonModel.cW`, so `WilsonModel.paramsTension` is reused verbatim
+and `WilsonRealization.hc` discharges as before.
+
+**SO THE CLAUSE NOW READS:** along a subsequence of extents `2φ(k) + 2 → ∞`, the connected `SU(3)`
+Wilson plaquette correlation at FIXED coupling `βFlag` and fixed even separation converges; the limit
+is nonnegative, bounded, and invariant under the two group actions.
+
+### WHAT IT IS STILL NOT — read this before calling the clause a continuum limit
+
+**IT IS NOT A CONTINUUM LIMIT, AND NEITHER WAS THE OLD ONE.** Nothing in the family sends the lattice
+SPACING to zero. `β` is fixed at `βFlag` for the whole sequence, no asymptotic-scaling relation
+`a(β)` appears anywhere in this tree, and the only thing the index moves is the periodic extent. This
+is the INFINITE-VOLUME limit at fixed bare coupling — `InfiniteVolume.lean` uses exactly this object
+and calls it that. Stated at the strength each actually has: the old clause was a limit in the
+COUPLING at fixed volume, the new one is a limit in the VOLUME at fixed coupling, and neither is a
+limit in the spacing. What the substitution buys is that the new sequence is a sequence of the genuine
+correlation over a diverging volume; what it does not buy is the third limit.
+
+**IT IS SUBSEQUENTIAL, AND IT IS A LIMIT OF NUMBERS.** `Measure.continuum_of_family` is
+Bolzano–Weierstrass on a countable product: it extracts a subsequence `φ` and a pointwise limit
+`q : J → ℝ`. There is no uniqueness, no measure on `ℝ⁴`, and no reconstruction — `q` is a real-valued
+function on an index set, not a Schwinger function. Unchanged by the substitution.
+
+**OS1 AND OS3 ARE STILL EMPTY, FOR THE SAME REASON AS BEFORE.** `OSFamily.actEOS` multiplies `j.1`
+and `actPOS` multiplies `j.2.1`; NEITHER touches `j.2.2`, and
+`OSFamily.Qos_depends_only_on_the_lag` proves the reflected form reads `j` through `j.2.2` alone. So
+the Euclidean and permutation groups act on components the form is independent of, exactly as they do
+for `QG`. `Qos` is not constant in `j` — it varies with the lag — but the lag is the one component
+these two clauses never move. The repair is to the reflected form, not to the invariances.
+
+**THE BOUND IS DOMINATED BY A CONSTANT WITH NO GAUGE CONTENT, AND IT IS FAR LOOSER THAN THE ONE IN
+HAND.** The clause is `|q j| ≤ ⌈c⌉₊ · B`. Only `B = 4` comes from
+`wilsonCorrConn_abs_le_four`; the factor `⌈cW⌉₊` comes from `OSFamily.hcount_wOne`, which counts the
+FABRICATED single-mode spectrum `WilsonModel.wOne` against the FABRICATED circle read
+`WilsonModel.readW` at the `Classical.choose`n aperture `WilsonModel.kW` — nothing in it is about
+`SU(3)`, and `kW` is bounded above by nothing in this tree, so `⌈cW⌉₊` is not a nameable number.
+Meanwhile `OSFamily.Qos_abs_le_four` already proves the sharp `|Q j a| ≤ 4` at every member of the
+family. The published clause is therefore weaker than what the measure supports, and the excess is
+carried entirely by the spectrum side. Note also that `B` went from `1` to `4`
+(`WilsonModel.family_B` against `OSFamily.osFamilyTension_B`), so on that factor alone the clause is
+four times looser than the one `EvenAperture` and `WilsonModel` publish; the `1` was the clamp's own
+range, which is why it was smaller.
+
+**`os_gap` IS NOT A STATEMENT ABOUT `SU(3)`.** `Measure.familyOfSortedCount` derives it from
+`hsorted` and `hcount`, both facts about `wOne`. The `SU(3)` lattice contributes only `0 < Nmodes a`.
+Unchanged from `ymFamilyTension`, and named here because the field sits beside three that ARE about
+the measure.
+
+**NON-DEGENERACY IS WEAKER THAN BEFORE — the one thing the substitution costs.**
+`GibbsPositive.ymFamilyGauge_Q_pos` proves `0 < Q` at EVERY test configuration for the clamped family,
+because a one-point plaquette expectation is strictly positive; a connected correlation at a general
+lag is not, and no analogue is available. No consumer of `FullModel.measure` requires `0 < Q` —
+`LatticeYMFamily` has no such field and `existence_and_gap_of_wilson` never asks for one — so nothing
+breaks, but the family is no longer known to be positive everywhere. What is known is
+`OSFamily.Qos_pos_at_lag_zero`: at lag zero the correlation is the plaquette-energy variance, strictly
+positive at every real coupling (`PlaqVariance.corrClay_zero_pos`), so the family is not the
+identically-zero one — which is what `GibbsPositive`'s positivity was guarding against.
+
+**OS2 AND OS4 ARE ABSENT.** `q` carries OS0, the single-number nonnegativity that stands in for OS2,
+and the two empty invariance clauses. It does not carry OS2 as positive semidefiniteness over the
+half-space algebra — `Measure.LatticeYMFamily` has no field that could hold it, and the tree's Gram
+statements (`OSPositivity`, `ReflectionStrong.wilson_expect_gram_nonneg`) are at finite volume on the
+slab and are not composed with this family — and it does not carry OS4 clustering.
+
+### WHY COMPACTNESS IS PERMITTED, AND WHAT THE FOOTNOTE ACTUALLY SAYS
+
+Jaffe and Witten's problem description (`Quantum Yang–Mills Theory`, Clay Mathematics Institute
+Millennium Prize problem statement, footnote 2) is explicit that this method is not on its own enough:
+
+    "one cannot establish the existence of the limit by a weak compactness argument, unless one also
+    uses other techniques to establish properties of the limit (such as the existence of a mass gap
+    and the axioms)."
+
+So a compactness-extracted limit is a legitimate ROUTE, provided the gap and the axioms are
+established OF THE LIMIT. That is the standard the eventual construction has to meet, and it is
+recorded here so the next reader does not read `continuum_of_family`'s Bolzano–Weierstrass as a defect
+in itself.
+
+READ THE SCOPE BEFORE LEANING ON IT, because the footnote is about a bigger object than this one. The
+limit JW are discussing is the continuum quantum field theory; `q` is a pointwise limit of bounded
+real sequences on an index set. The footnote therefore neither permits nor forbids anything about `q`
+as such — what it does is name the two conditions (`the gap of the limit`, `the axioms of the limit`)
+that any such extraction eventually has to be paired with. Measured against those: the flagship's
+first clause establishes a gap of `ymModelEven`'s constructed one-mode spectrum, NOT of `q`, and the
+two are nowhere composed — `FullModel`'s own docstring records that `Δ` is a rate at one spacing —
+and of the axioms, the bullets above say which `q` carries and which it does not. The footnote's
+proviso is NOT discharged here.
+
 ## Provenance
 
 Every declaration below is `EvenAperture`'s, transcribed against `ConfinesAtAnAperture` in place of
@@ -260,26 +378,91 @@ theorem confines_iff_pos_and_tension_lt_floor (a : EvenAp) (β : ℝ) :
 `apertureEven h`. `ymModelEven` and `A2_even` are reused verbatim — neither ever mentioned the
 substrate bound. -/
 
+/-- **The coupling the flagship's measure family is read at.**
+
+`OSFamily.osFamilyTension` holds ONE coupling fixed across the sequence of extents — that is the third
+of its three repairs, that the index is the geometry and never `expect`'s coupling slot — and a
+`FullModel` carries a single `LatticeYMFamily` with no coupling quantifier, so a value has to be
+named.
+
+CHOSEN: `1` decides nothing that is concluded. Every clause of the family is proved at EVERY real
+coupling — `OSFamily.Qos_nonneg`, `Qos_abs_le_four`, `Qos_actE` and `Qos_actP` are each `∀ β` — and
+`OSFamily.os_continuum_tension` states this file's entire continuum clause at an arbitrary `β`, so
+nothing below depends on the value. What it does fix is WHICH coupling's correlation the limit `q` is
+a limit of, and the one value the tree can rule out on a theorem is `0`:
+`PowerTail.corrClay_at_zero_coupling` proves the connected correlation VANISHES at every nonzero lag
+at `β = 0`, so at that value `q` would be the zero function except at lag zero. `1` is a value at
+which no such collapse is proved; it is NOT claimed to be physically distinguished, and in particular
+it is deep in the strong-coupling region rather than near the couplings a continuum study would use.
+Nothing here depends on that, because nothing here depends on the value. -/
+noncomputable def βFlag : ℝ := 1
+
+#print axioms βFlag
+
 /-- **A FULL MODEL FROM CONFINEMENT AT ONE APERTURE.** `EvenAperture.fullModelEven` with the
 confinement witness supplying the aperture directly instead of the substrate bound supplying it
-through `exists_confining_even_aperture`.
+through `exists_confining_even_aperture`, and with `OSFamily.osFamilyTension βFlag` on the measure
+side in place of `WilsonModel.ymFamilyTension`. The module docstring sets out what that second change
+does to the continuum clause; the short form is that the sequence index becomes the lattice EXTENT
+instead of the coupling, the volume diverges, and the clamp is gone.
 
-DERIVED: no numeral; every constant belongs to the pieces assembled. -/
+DERIVED: no numeral of this declaration's; `βFlag` carries its own note and every other constant
+belongs to the pieces assembled. -/
 noncomputable def fullModelOfConfinement (hc : ConfinesAtAnAperture) : MassGap.FullModel where
   gap := ymModelEven (apertureOf hc)
   h1 := apertureOf_confines hc
   h2 := A2_even (apertureOf hc)
-  measure := MassGap.WilsonModel.ymFamilyTension
+  measure := MassGap.OSFamily.osFamilyTension βFlag
 
 #print axioms fullModelOfConfinement
 
-/-- **The measure side is untouched.** `fullModelOfConfinement`'s family is `ymFamilyTension` itself,
-by `rfl` — the same object `EvenAperture.fullModelEven` and `WilsonModel.fullModelOfSubstrate` use.
-Weakening the gap-side hypothesis does not restrict, weaken or re-derive the continuum half. -/
-theorem measure_is_ymFamilyTension (hc : ConfinesAtAnAperture) :
-    (fullModelOfConfinement hc).measure = MassGap.WilsonModel.ymFamilyTension := rfl
+/-- **The measure side takes no hypothesis**, as before: `fullModelOfConfinement`'s family is the
+closed term `OSFamily.osFamilyTension βFlag`, by `rfl`. Weakening the gap-side hypothesis does not
+restrict, weaken or re-derive the continuum half — `hc` does not reach this field. -/
+theorem measure_is_osFamilyTension (hc : ConfinesAtAnAperture) :
+    (fullModelOfConfinement hc).measure = MassGap.OSFamily.osFamilyTension βFlag := rfl
 
-#print axioms measure_is_ymFamilyTension
+#print axioms measure_is_osFamilyTension
+
+/-- **WHAT THE FLAGSHIP'S LIMIT IS TAKEN OF, at the declaration level.** The reflected form the
+continuum clause converges is `WilsonBridge.corrClay` — the connected `SU(3)` Wilson plaquette
+correlation on the four-dimensional periodic lattice — at extent `2a + 2` and coupling `βFlag`. No
+clamp, and the index is the geometry.
+
+DERIVED: no numeral of this declaration's; `OSFamily.extent` and `OSFamily.lagOf` carry their own. -/
+theorem measure_Q_eq (hc : ConfinesAtAnAperture) (j : MassGap.OSFamily.JOS) (a : ℕ) :
+    (fullModelOfConfinement hc).measure.Q j a
+      = MassGap.WilsonBridge.corrClay (MassGap.OSFamily.extent a) βFlag
+          (MassGap.OSFamily.lagOf a j.2.2) :=
+  MassGap.OSFamily.osFamilyTension_Q_eq βFlag j a
+
+#print axioms measure_Q_eq
+
+/-- **The volume genuinely diverges along the flagship's sequence.** The family's mode count is the
+extent-`(2a+2)` lattice's own plaquette count, and it tends to infinity.
+
+READ THIS FOR WHAT IT IS. `Na` is INERT in the family's content — `WilsonModel.resolvedDim_wOne`
+returns `1` at every positive count and `count_le_of_tension_uniform`'s bound contains no `Na`, so
+substituting `WilsonGauge.NaG a = a + 1` here would give the identical family. What makes `a → ∞` the
+infinite-volume limit is `OSFamily.extent` inside the reflected form (`measure_Q_eq`), not this field.
+This theorem says the field is now the lattice's honest cardinality rather than a counter; it is not
+evidence that the sequence is a volume sequence, and `measure_Q_eq` is.
+
+DERIVED: no numeral of this declaration's. -/
+theorem measure_Na_tendsto (hc : ConfinesAtAnAperture) :
+    Tendsto (fun a : ℕ => (((fullModelOfConfinement hc).measure.Na a : ℕ) : ℝ)) atTop atTop :=
+  MassGap.OSFamily.Nmodes_tendsto_volume
+
+#print axioms measure_Na_tendsto
+
+/-- **The cutoff `WilsonRealization.hc` matches against is still the tension's.** `paramsTension` is
+reused unchanged below because this is `rfl`.
+
+DERIVED: no numeral; `WilsonModel.cW` carries its own. -/
+theorem measure_c (hc : ConfinesAtAnAperture) :
+    (fullModelOfConfinement hc).measure.c = MassGap.WilsonModel.cW := rfl
+
+#print axioms measure_c
 
 /-- **AN `SU(3)` WILSON REALISATION FROM CONFINEMENT AT ONE APERTURE.**
 `EvenAperture.wilsonEven`'s transcription. `WilsonModel.paramsTension` is reused unchanged: it reads
@@ -303,9 +486,15 @@ noncomputable def wilsonOfConfinement (hc : ConfinesAtAnAperture) : MassGap.Wils
 non-triviality (`μ − κ < 0`), `SO(4)` invariance (`R` direction-independent), and the tight
 OS0–OS3 continuum limit.
 
-Stated in the shape `NonnegArm.Flagship` uses — clause for clause the same conclusion, about this
-file's realisation instead of `wilsonEven h` — so the conclusion can be named once and the theorem
+Stated in the SHAPE `NonnegArm.Flagship` uses, so the conclusion can be named once and the theorem
 below is faithful by type-checking rather than by assertion.
+
+IT IS NO LONGER THE SAME CONCLUSION, and saying so would now be false. `NonnegArm.Flagship h` is
+about `wilsonEven h`, whose measure is still `WilsonModel.ymFamilyTension`
+(`NonnegArm.measure_is_ymFamilyTension`, by `rfl`). The four measure-half clauses here quantify over a
+different `J`, a different `Q`, a different `B` (`4` against `WilsonModel.family_B`'s `1`) and a
+different sequence (extents against couplings). The gap-half clauses are unchanged. See the module
+docstring's second section for what the difference is.
 
 DERIVED: no magnitude appears anywhere in this statement. Every `0` is a sign or a limit point:
 `nhds 0` is the assertion that the correlation TENDS TO zero, which is the mass gap itself and not a
@@ -426,6 +615,13 @@ over `3^{−1/4} < cosAvgEven a β` rather than over `μEven a β < κ₀YM` —
 witness by `Classical.choose` from a different proposition, and the two constructions need not pick
 the same extent. Nothing is weakened by this: both are the flagship, each at its own chosen aperture.
 It is the witness that differs, not the conclusion's content.
+
+AND THERE IS NOW A SECOND, LARGER REASON, so this paragraph is not the whole account. The measure
+field of `fullModelOfConfinement` is `OSFamily.osFamilyTension βFlag` while `NonnegArm.wilsonEven`'s
+is still `WilsonModel.ymFamilyTension`, so the two propositions differ in the measure half's `J`, `Q`,
+`B` and sequence — not only in which aperture `Classical.choose` picked. The earlier sentence "it is
+the witness that differs, not the conclusion's content" was true before that change and is not true
+now.
 
 The substantive recovery therefore stands as `flagship_of_substrate_even_via_aperture` above — from
 the substrate bound, the full flagship — and it is a theorem rather than an identity. What is NOT
@@ -579,7 +775,10 @@ section Audit
 #print axioms apertureOf
 #print axioms apertureOf_confines
 #print axioms fullModelOfConfinement
-#print axioms measure_is_ymFamilyTension
+#print axioms measure_is_osFamilyTension
+#print axioms measure_Q_eq
+#print axioms measure_Na_tendsto
+#print axioms measure_c
 #print axioms wilsonOfConfinement
 #print axioms FlagshipAt
 #print axioms flagship_of_confinement_at_an_aperture

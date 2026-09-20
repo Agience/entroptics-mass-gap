@@ -392,11 +392,12 @@ def test_printed_footprints_are_the_ones_the_paper_states():
     assert not problems, "Sec 13's footprint table disagrees with the build:\n  " + "\n  ".join(problems)
 
 
-RETIRED_AXIOMS = {"d2_le_bound", "ym_character", "ym_asymfree"}
+RETIRED_AXIOMS = {"d2_le_bound", "ym_character", "ym_asymfree",
+                  "WightmanTheory", "os_reconstruction"}
 
 
 def test_no_declaration_depends_on_a_retired_axiom():
-    """The three retired axioms stay retired.
+    """The five retired axioms stay retired.
 
     `d2_le_bound` asserted the lag second moment is below a CHOSEN bound (`B = 1`) over a CHOSEN lag
     range, at a CHOSEN aperture, and its companion `ym_finite_aperture` was a `norm_num` check on
@@ -405,8 +406,16 @@ def test_no_declaration_depends_on_a_retired_axiom():
     `hconf`, and `Complete.confinement_of_bounded_substrate` reaches it from a single substrate
     statement with no number in it.
 
+    `FullModel.WightmanTheory` was an opaque `Prop` and `FullModel.os_reconstruction` produced it
+    from Euclidean data. Both were discharged by `rfl` from a `Unit` witness, so granting them
+    conveyed nothing, and they were deleted rather than documented. The surviving reconstruction is
+    `WightmanData.os_reconstruction_wightman`, which is stated against real DATA -- an `OSData` with a
+    continuous bilinear form on a normed test space -- and is the one the Clay statement itself names
+    as a route. It is NOT retired and must not be: matching here is on the exact axiom name, so
+    `os_reconstruction_wightman` is not caught by the `os_reconstruction` entry.
+
     Nothing stops a future edit reintroducing one, and the footprint table would absorb it quietly
-    among 185 rows. This names them.
+    among thousands of rows. This names them.
     """
     art = REPO / "research" / "data" / "13_dat_axiom_footprints.csv"
     if not art.exists():
@@ -685,12 +694,19 @@ def test_every_stated_named_axiom_count_matches_the_build():
                 continue
             want = int(tok)
         window = flat[max(0, m.start() - 320):m.start()]
-        cands = [n for n in re.findall(r'`([A-Za-z_][A-Za-z0-9_.]*)`', window)
-                 if n.split('.')[-1] in named]
+        cands = [c for c in re.finditer(r'`([A-Za-z_][A-Za-z0-9_.]*)`', window)
+                 if c.group(1).split('.')[-1] in named]
         if not cands:
             continue
-        # the nearest preceding declaration is the one the claim is about
-        decl = cands[-1].split('.')[-1]
+        # The nearest preceding declaration is the one the claim is about -- but only if the claim
+        # is in the SAME SENTENCE as it. "…`mass_gap_rate_and_continuum` carry none. The tree
+        # declares two named axioms in total." is a statement about the TREE, and attributing its
+        # `two` to the declaration before it read a global count as a per-declaration footprint and
+        # failed the test against a paper that was right. A sentence boundary between the name and
+        # the count means the count is not about that name.
+        if '. ' in window[cands[-1].end():]:
+            continue
+        decl = cands[-1].group(1).split('.')[-1]
         checked += 1
         got = len(named[decl])
         if got != want:

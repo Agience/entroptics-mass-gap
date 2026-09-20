@@ -17,9 +17,11 @@ open MassGap.ApertureRoute
 
 /-! ## 1. The measure half of `FlagshipAt` uses no hypothesis
 
-The proof term below is `ym_continuum_tension`, which is an UNCONDITIONAL theorem proved in
-`WilsonModel.lean`. `hc` appears in the statement only because the statement is spelled through
-`wilsonOfConfinement hc`; it contributes nothing to the proof. -/
+The proof term below is `OSFamily.os_continuum_tension`, which is an UNCONDITIONAL theorem proved in
+`OSFamily.lean` at an arbitrary coupling. `hc` appears in the statement only because the statement is
+spelled through `wilsonOfConfinement hc`; it contributes nothing to the proof. The observation is
+unchanged by the measure field moving from `WilsonModel.ymFamilyTension` to
+`OSFamily.osFamilyTension βFlag`: it was never the family that carried the hypothesis. -/
 theorem flagship_measure_half_needs_no_hypothesis (hc : ConfinesAtAnAperture) :
     ∃ (q : (wilsonOfConfinement hc).model.measure.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => (wilsonOfConfinement hc).model.measure.Q j (φ k))
@@ -29,7 +31,7 @@ theorem flagship_measure_half_needs_no_hypothesis (hc : ConfinesAtAnAperture) :
       (∀ j, 0 ≤ q j) ∧
       (∀ g j, q ((wilsonOfConfinement hc).model.measure.actE g j) = q j) ∧
       (∀ σ j, q ((wilsonOfConfinement hc).model.measure.actP σ j) = q j) :=
-  MassGap.WilsonModel.ym_continuum_tension
+  MassGap.OSFamily.os_continuum_tension MassGap.ApertureRoute.βFlag
 
 #print axioms flagship_measure_half_needs_no_hypothesis
 
@@ -93,13 +95,19 @@ theorem bogus_A1 : MassGap.A1_YM bogusYM := fun _ => MassGap.κ₀YM_pos
 
 theorem bogus_A2 : MassGap.A2_YM bogusYM := fun _ _ => rfl
 
-/-- The measure side is `ymFamilyTension` verbatim — the same closed term the real construction
-uses, because the measure side takes no hypothesis. -/
+/-- The measure side is `OSFamily.osFamilyTension βFlag` verbatim — the same closed term the real
+construction uses, because the measure side takes no hypothesis. That is the point of the witness: the
+measure half is now the unclamped connected `SU(3)` correlation over a diverging volume, and the
+flagship's conclusion STILL attaches to a gap side with no gauge content, because the two halves are
+never composed.
+
+DERIVED: the `3` is `MassGap.NYM`, the Clay gauge group `SU(3)`, reaching the statement through
+`OSFamily.osFamilyTension`'s type rather than being chosen here. No level and no threshold. -/
 noncomputable def bogusFull : MassGap.FullModel where
   gap := bogusYM
   h1 := bogus_A1
   h2 := bogus_A2
-  measure := MassGap.WilsonModel.ymFamilyTension
+  measure := MassGap.OSFamily.osFamilyTension MassGap.ApertureRoute.βFlag
 
 /-- And `paramsTension` verbatim, so the "SU(3)" label (`params.N = 3`) survives unchanged.
 
@@ -131,10 +139,19 @@ theorem flagship_for_bogus :
 
 #print axioms flagship_for_bogus
 
-/-! ## 5. The OS measure's `Q` ignores its test configuration entirely
+/-! ## 5. `ymFamilyTension`'s `Q` ignores its test configuration entirely
 
 So OS1 (Euclidean invariance) and OS3 (permutation symmetry) of `ymFamilyTension` hold because the
-reflected form is constant in `j`, not because the measure is invariant in any nontrivial sense. -/
+reflected form is constant in `j`, not because the measure is invariant in any nontrivial sense.
+
+THE FINDING SURVIVES THE MEASURE SWAP, and the second theorem below is the check. The flagship's
+measure is now `OSFamily.osFamilyTension βFlag`, whose reflected form is
+`WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)` — which reads the test configuration through
+`j.2.2` ALONE. `OSFamily.actEOS` multiplies `j.1` and `actPOS` multiplies `j.2.1`, and neither touches
+`j.2.2`. So both group actions still move only components the reflected form is independent of, and
+OS1 and OS3 still hold for that reason rather than because the measure is invariant in any nontrivial
+sense. The new family is not constant in `j` — it varies with the lag — but the lag is exactly the
+component these two clauses never move. -/
 theorem Q_is_constant_in_the_test_configuration
     (j j' : MassGap.WilsonModel.ymFamilyTension.J) (a : ℕ) :
     MassGap.WilsonModel.ymFamilyTension.Q j a
@@ -143,6 +160,31 @@ theorem Q_is_constant_in_the_test_configuration
   rw [MassGap.WilsonGauge.QG_eq, MassGap.WilsonGauge.QG_eq]
 
 #print axioms Q_is_constant_in_the_test_configuration
+
+/-- **AND THE FLAGSHIP'S MEASURE HAS THE SAME PROPERTY, on the components the actions move.** Two
+test configurations agreeing on the lag give the same reflected form whatever their Euclidean and
+permutation components are — and `actE`/`actP` change nothing but those components. So `os_euc` and
+`os_perm` of `osFamilyTension` are as empty as `ymFamilyTension`'s.
+
+DERIVED: no numeral. -/
+theorem osFamilyTension_Q_constant_on_the_acted_components (β : ℝ)
+    (j j' : MassGap.OSFamily.JOS) (a : ℕ) (h : j.2.2 = j'.2.2) :
+    (MassGap.OSFamily.osFamilyTension β).Q j a
+      = (MassGap.OSFamily.osFamilyTension β).Q j' a :=
+  MassGap.OSFamily.Qos_depends_only_on_the_lag β j j' a h
+
+#print axioms osFamilyTension_Q_constant_on_the_acted_components
+
+/-- **What the swap DOES change on the `j` side, stated so it is not mistaken for more.** The lag
+label reaches the correlation's SEPARATION, and the lag map is not constant. That is not a refutation
+of the finding above — the actions never move the lag — and it does not show two correlations DIFFER,
+which would be a statement about the `SU(3)` Gibbs measure that nothing here proves.
+
+DERIVED: `1` is any index (`OSFamily.extent 1 = 4`); `0` and `1` are the two labels compared. -/
+theorem osFamilyTension_lag_is_not_constant :
+    MassGap.OSFamily.lagOf 1 0 ≠ MassGap.OSFamily.lagOf 1 1 := by decide
+
+#print axioms osFamilyTension_lag_is_not_constant
 
 /-- The family's spectrum `ev` is the fabricated constant read `wOne`, at every spacing index. -/
 theorem ev_is_wOne (a n : ℕ) :

@@ -40,6 +40,7 @@ gap quantity it carries in PAPER Sec 3):
 from __future__ import annotations
 
 import importlib
+import inspect
 import math
 import os
 import sys
@@ -111,6 +112,23 @@ concentration_band = _lib.concentration_band              # Vershynin sample ban
 hankel_spectrum = _lib.hankel_spectrum    # reflection-positive MOMENT PENCIL: transfer spectrum of a corr. sequence
 jackknife = _lib.jackknife                # generic delete-one(-bin) jackknife SE for reads w/o a closed-form interval
 HankelSpectrum = _lib.HankelSpectrum      # the pencil result: .evals/.isolation/.psd/.leading/.rate
+_reads = _lib.reads                   # the correlation reads, reached through `decay` below
+
+#: WHICH COPY answered, which is the question a version string does not settle: a working tree and
+#: an installed wheel have reported the same string here, and this tree has been caught testing one
+#: while reading the other. Surfaced so a run can print its own provenance instead of asserting it.
+LIBRARY_FILE = _lib.__file__
+LIBRARY_VERSION = _lib.__version__
+
+#: The keyword names `reads.decay` actually accepts, read off the loaded function rather than
+#: inferred from `LIBRARY_VERSION`. `decay` below tests membership; see its docstring.
+_DECAY_KEYWORDS = frozenset(inspect.signature(_reads.decay).parameters)
+
+#: `decay`'s `disconnected` has THREE states -- omitted, `None`, and a level -- which mean three
+#: different things, so this wrapper's default has to be distinguishable from `None` as well. Its
+#: own sentinel rather than the library's: reaching for `reads._DISCONNECTED_UNSET` would tie the
+#: adapter to a name the library never published.
+_DISCONNECTED_UNSET = object()
 
 import numpy as np                                     # noqa: E402``
 
@@ -692,6 +710,42 @@ def aperture(field: np.ndarray, time_axis: int = -1):
     state vector. For SPATIAL / feature reads (K_signal, contrast, phi_F) use
     confinement() / run(), which keep each spatial plane intact. Low-level; prefer run()."""
     return Aperture(_ordered(field, time_axis))
+
+
+def decay(record, mask=None, *, periodic: bool = False, disconnected=_DISCONNECTED_UNSET):
+    """The ordered-axis autocorrelation `C(tau)` of a 2-D record -- `entroptics.reads.decay`.
+
+    `record` is `(T, F)`: `T` the ORDERED axis, `F` exchangeable feature channels. The profile
+    returned is `sum_f C_f`, a SUM over channels and not a mean, so a caller who wants the
+    per-channel average divides by the channel count. That is the library's convention and this
+    wrapper does not change it.
+
+    `periodic=True` reads the ordered axis as a RING: the lag is taken modulo `T`, every lag is
+    averaged over all `T` pairs, and `C(tau) == C(T - tau)` holds exactly rather than to within
+    round-off. It is the read for an axis that really closes -- a lattice on a torus -- and the
+    wrong one for a window cut out of a longer record, where it wraps the far end onto the near
+    end. It REFUSES a record with a fully missing row, which would shorten the ring in silence.
+
+    `disconnected` says WHOSE level is removed before the pairs are formed, and its three states
+    differ: omitted removes the record's own per-channel mean; `None` removes nothing, for a caller
+    that subtracts an ensemble disconnected term itself; a scalar or one value per live channel
+    removes that.
+
+    WHY THE SIGNATURE IS CHECKED HERE. `periodic` and `disconnected` landed in the library after
+    the version in `research/requirements.txt` was cut, so no version string separates a copy that
+    has them from one that does not -- and this tree has read `src/` while testing a wheel. The
+    capability is therefore read off the loaded function, and a copy without it is refused by PATH,
+    which is the thing that actually differs."""
+    missing = sorted({"periodic", "disconnected"} - _DECAY_KEYWORDS)
+    if missing:
+        raise ImportError(
+            f"reads.decay in the entroptics loaded from {LIBRARY_FILE} (reporting version "
+            f"{LIBRARY_VERSION}) has no {', '.join(missing)}. The version string does not separate "
+            "the copies; check which one is first on sys.path.")
+    # Omitted and `None` are different instructions, so the argument is forwarded only when the
+    # caller gave one -- passing `None` through unconditionally would silence the library's default.
+    extra = {} if disconnected is _DISCONNECTED_UNSET else {"disconnected": disconnected}
+    return _reads.decay(record, mask, periodic=periodic, **extra)
 
 
 def confinement(field: np.ndarray, time_axis: int = -1, *, null=None, seed: int = 0) -> float:

@@ -84,8 +84,12 @@ def _root():
 def plaquette_0pp(b, q):
     """The Sec 8.7 operator: sum of spatial-plaquette real traces per time slice."""
     O = None
+    # NOT A READ: the loops are over the three spatial PLANES, not over separations. The `roll` calls
+    # inside them are the neighbour shifts of the plaquette holonomy -- `U_j(x + i)`, `U_i(x + j)` --
+    # so what is built is the operator O(t), which is the INPUT to a correlator and not a correlator.
+    # The lag structure is `lattice_generator.connected_correlator`, one plane-loop level out.
     for i in SPATIAL:
-        for j in SPATIAL:
+        for j in SPATIAL:    # NOT A READ: the second plane index of the same plaquette shift
             if j <= i:
                 continue
             Ui, Uj = q[..., i, :], q[..., j, :]

@@ -110,6 +110,11 @@ def _spatial_staple(q, mu, nd=4):
     """
     A = np.zeros(q.shape[:-2] + (4,), dtype=q.dtype)
     qmu = q[..., mu, :]
+    # NOT A READ: the loop is over the spatial DIRECTIONS nu, not over separations, and the `roll`
+    # calls inside it are the neighbour shifts a staple is made of -- the forward and backward
+    # three-link paths around the link at `mu`. This builds the smeared field; the lag profile of it
+    # is `CG.per_config_profiles` and the moment is `CG.d2_from_profiles`, the same functional the
+    # Lean consumes, so which distance, which normalisation and which window are all decided there.
     for nu in range(3):                       # spatial directions only
         if nu == mu:
             continue
@@ -158,8 +163,12 @@ def plaquette_density(q, nd=4):
     """
     tot = np.zeros(q.shape[:-2], dtype=np.float64)
     npl = 0
+    # NOT A READ: the loops are over the three spatial PLANES, not over separations. The `roll` calls
+    # inside them are the neighbour shifts of the plaquette holonomy -- `U_nu(x + mu)`, `U_mu(x + nu)`
+    # -- and what they return is the per-site operator the profile is then read from by
+    # `CG.per_config_profiles`. Nothing about the read is decided here.
     for mu in range(3):
-        for nu in range(mu + 1, 3):
+        for nu in range(mu + 1, 3):    # NOT A READ: the second plane index of the same shift
             axmu, axnu = mu - nd - 1, nu - nd - 1
             qmu, qnu = q[..., mu, :], q[..., nu, :]
             P = _qmul(_qmul(qmu, np.roll(qnu, -1, axis=axmu)),

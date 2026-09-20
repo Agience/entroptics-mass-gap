@@ -129,7 +129,6 @@ class _Backend:
 
     def qr(self, Z): return self.t.linalg.qr(Z) if self.torch else np.linalg.qr(Z)
     def det(self, Q): return self.t.linalg.det(Q) if self.torch else np.linalg.det(Q)
-    def eigh(self, M): return self.t.linalg.eigh(M) if self.torch else np.linalg.eigh(M)
 
     def zeros(self, shape, cplx=False):
         if self.torch:
@@ -195,7 +194,7 @@ def _u1_init(b, dims, batch):
 def _u1_staple(b, U, mu):
     S = b.zeros_like(U[..., 0])
     Umu = U[..., mu]
-    for nu in range(D):
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS and the rolls are the neighbour shifts theta(x+mu), theta(x+nu)
         if nu == mu:
             continue
         Unu = U[..., nu]
@@ -220,8 +219,8 @@ def _u1_sweep(b, theta, sdims, beta, step):
 
 def _u1_action(b, theta):
     phi = b.zeros(theta.shape[:-1])
-    for mu in range(D):
-        for nu in range(mu + 1, D):
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+        for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             P = (theta[..., mu] + b.roll(theta[..., nu], -1, _sax(mu, 0))
                  - b.roll(theta[..., mu], -1, _sax(nu, 0)) - theta[..., nu])
             phi = phi + (1.0 - b.cos(P))
@@ -259,7 +258,7 @@ def _su2_init(b, dims, batch):
 def _su2_staple(b, q, mu):
     A = b.zeros((*q.shape[:-2], 4))
     qmu = q[..., mu, :]
-    for nu in range(D):
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS; the rolls are the forward and backward neighbour shifts of the links
         if nu == mu:
             continue
         qnu = q[..., nu, :]
@@ -403,8 +402,8 @@ def _su2_hb_sweep(b, q, sdims, beta, step, n_or=None):
 
 def _su2_action(b, q):
     phi = b.zeros(q.shape[:-2])
-    for mu in range(D):
-        for nu in range(mu + 1, D):
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+        for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             Up = _qmul(b, _qmul(b, _qmul(b, q[..., mu, :], b.roll(q[..., nu, :], -1, _sax(mu, 1))),
                                 _qconj(b, b.roll(q[..., mu, :], -1, _sax(nu, 1)))), _qconj(b, q[..., nu, :]))
             phi = phi + (1.0 - Up[..., 0])                  # 1 - (1/2) Re tr U_p
@@ -423,8 +422,8 @@ def _su2_action_centre(b, q):
     z_p = -1). The rolls carry no quaternion axis (tr=0), as for the U(1) phase field."""
     z = _su2_sign(b, q)                                     # (..., D)  +-1 per link
     phi = b.zeros(q.shape[:-2])
-    for mu in range(D):
-        for nu in range(mu + 1, D):
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls shift the link SIGNS to the sites that close the Z2 plaquette
+        for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same Z2 plaquette
             zp = (z[..., mu] * b.roll(z[..., nu], -1, _sax(mu, 0))
                   * b.roll(z[..., mu], -1, _sax(nu, 0)) * z[..., nu])
             phi = phi + (1.0 - zp)
@@ -444,7 +443,7 @@ def _su2_line(b, q, mu, R):
     P(x) = U_mu(x) U_mu(x+mu) ... U_mu(x+(R-1)mu), as a quaternion field."""
     P = q[..., mu, :]
     sh = P
-    for _ in range(1, R):
+    for _ in range(1, R):  # NOT A READ: the roll advances one site ALONG the line; the product is a parallel transport
         sh = b.roll(sh, -1, _sax(mu, 1))
         P = _qmul(b, P, sh)
     return P
@@ -464,6 +463,18 @@ def _su2_wilson(b, q, R, T, planes="all"):
     else:
         raise ValueError(f"unknown planes='{planes}' (all | rt)")
     tot, cnt = 0.0, 0
+    # NOT A READ: and the reason is NOT that `R` and `T` are neighbour shifts -- they are
+    # separations, and `W(R,T)` is a two-point function. It is that the Wilson loop is DEFINED, not
+    # estimated: the ordered group product of the links round one closed rectangle, gauge-invariant
+    # by construction. There is no distance to choose (the rectangle is the lattice's), no
+    # normalisation beyond `(1/N) Re tr`, no window and no floor -- so nothing here is a read choice
+    # the library exists to remove, and no Entroptics read produces a holonomy. The same argument
+    # `cell_gap_budget.py` is exempted by: this repo WRITES the object down.
+    #
+    # What is read OFF these loops is a different question, and `creutz_sigma` below takes the ratio
+    # that gives `sigma`. `research/data/8_8_run_string_tension.py` carries the same construction and
+    # sits in `hand_rolled_reads_baseline.txt` as debt; that entry is about its own lag loop, not
+    # about the holonomy, and this waiver does not discharge it.
     for mu, nu in pairs:
         bottom = _su2_line(b, q, mu, R)                # mu edge at x
         left = _su2_line(b, q, nu, T)                  # nu edge at x
@@ -479,15 +490,18 @@ def _su2_wilson_centre(b, q, R, T):
     of the boundary signs (Z2, so the reverse edges carry the same sign)."""
     z = _su2_sign(b, q)                                    # (..., D)  +-1 per link
     tot, cnt = 0.0, 0
+    # NOT A READ: `R` and `T` are separations, as in `_su2_wilson`, and the waiver rests on the same
+    # ground: the centre-projected loop is the DEFINED product of the boundary link signs round one
+    # closed rectangle. No distance, normalisation, window or floor is chosen here.
     for mu in range(D):
-        for nu in range(D):
+        for nu in range(D):  # NOT A READ: the second plane index of the same defined Z2 loop
             if nu == mu:
                 continue
             bottom, sh = z[..., mu], z[..., mu]
-            for _ in range(1, R):
+            for _ in range(1, R):  # NOT A READ: the roll advances one site along the mu edge being multiplied out; R is an edge LENGTH, not a lag
                 sh = b.roll(sh, -1, _sax(mu, 0)); bottom = bottom * sh
             left, sh = z[..., nu], z[..., nu]
-            for _ in range(1, T):
+            for _ in range(1, T):  # NOT A READ: the roll advances one site along the nu edge being multiplied out; T is an edge LENGTH, not a lag
                 sh = b.roll(sh, -1, _sax(nu, 0)); left = left * sh
             right = b.roll(left, -R, _sax(mu, 0))
             top = b.roll(bottom, -T, _sax(nu, 0))
@@ -501,7 +515,7 @@ def _su2_spatial_staple(b, q, mu):
     nu contribute, so the time direction is left untouched and the transfer matrix is unchanged."""
     A = b.zeros((*q.shape[:-2], 4))
     qmu = q[..., mu, :]
-    for nu in range(D - 1):
+    for nu in range(D - 1):  # NOT A READ: the loop is over the SPATIAL staple orientations of the smearing kernel; the rolls are neighbour shifts
         if nu == mu:
             continue
         qnu = q[..., nu, :]
@@ -521,7 +535,7 @@ def _u1_spatial_staple(b, theta, mu):
     U = b.expi(theta)
     S = b.zeros_like(U[..., 0])
     Umu = U[..., mu]
-    for nu in range(D - 1):
+    for nu in range(D - 1):  # NOT A READ: the loop is over the SPATIAL staple orientations of the smearing kernel; the rolls are neighbour shifts
         if nu == mu:
             continue
         Unu = U[..., nu]
@@ -641,9 +655,79 @@ def connected_correlator(O, nlag):
     bodies in two files, and the correlator is the object every gap in this program is read from -- a
     change to the vacuum convention in one of them would have silently left the other reading a
     different quantity while both still produced plausible numbers.
+
+    THE LAG PROFILE IS THE LIBRARY'S: `entroptics_adapter.decay(..., periodic=True)`. Everything this
+    function states is therefore a convention, not an implementation, and each one is forced:
+
+      * `O.T` because `decay` wants the ORDERED axis first. `O` is `(nconf, T)` with time on axis 1,
+        so the configurations are the exchangeable feature channels of one ordered process.
+      * `periodic=True` because the lattice time axis CLOSES. The lag is taken modulo `T`, every lag
+        is averaged over all `T` pairs, and `C(tau) == C(T - tau)` holds exactly -- no taper and no
+        `1/(T - tau)`. On a torus that equality is a property of the target, not an estimate.
+      * `/ nconf` because `decay` returns `sum_f C_f`, a SUM over channels. The ensemble mean over
+        configurations is this function's return value, so the channel count is divided out.
+      * `disconnected=level`, the ENSEMBLE mean, because that is the vacuum named above. Omitting it
+        would take the library's default, each channel's OWN mean, which is the per-configuration
+        time mean this function exists not to subtract, and `c / c[0]` does not put that choice back.
+        Write the record as `O[t,f] = u[t,f] + m_f` with `u` carrying each channel's own mean
+        removed, so `sum_t u[t,f] = 0`. Against the ensemble level the two cross terms are
+        `delta_f sum_t u[t,f]` and `delta_f sum_t u[t+tau,f]`, and BOTH are that same full sum --
+        the second one only because the read is PERIODIC, which is what makes the wrapped sum run
+        over every `t`. So they vanish and
+
+            C_ensemble(tau) = C_per_channel(tau) + K,   K = var_f(mean_t O),
+
+        a constant added at every lag INCLUDING lag 0. `(C + K) / (C(0) + K)` is a different
+        profile, not a rescaled one; on a record whose configurations carry their own offsets `K`
+        dominates and the normalised profile is pulled toward 1, and on a short record the two
+        disagree in SIGN. `tests/test_connected_correlator.py` measures both statements.
+
+    On the LINEAR read the second cross term runs over `T - tau` terms rather than `T`, does not
+    vanish, and `K` is not constant -- so the two conventions above are joined, and changing
+    `periodic` would invalidate the level argument rather than merely widen the profile.
+
+    `nlag` may exceed `T - 1`; the profile is indexed modulo its own length, which is the same
+    aliasing a periodic read has. A record whose deviation from `level` is at the arithmetic's own
+    resolution -- a constant history -- yields an all-zero profile and therefore `nan` after the
+    normalisation, rather than the round-off it would otherwise be divided by.
+
+    AN INPUT THAT IS NOT AN ENSEMBLE RAISES, rather than returning a number. Each of these produced
+    a plausible-looking array before it produced an answer, and the arrays are the dangerous part:
+
+      * a NaN or an infinity anywhere. A gauge ensemble that produced one is broken, and an
+        all-`nan` correlator is indistinguishable downstream from a correlator that decayed into
+        noise -- `lag_budget` reads it as zero usable lags, `pencil_rate` as an invalid pencil.
+      * an empty time axis or an empty ensemble. `T = 0` in particular has no lags to average, and
+        the profile it would otherwise produce is all ones: PERFECT correlation at every lag, the
+        strongest possible claim, read off no data at all.
+      * a complex record. Every caller here hands over a real zero-momentum operator history, and
+        the level of a complex one would go through `float()`, which discards the imaginary part of
+        the vacuum behind a warning a test run may well be filtering out.
     """
-    d = O - O.mean()
-    c = np.array([np.mean(d * np.roll(d, -tau, axis=1)) for tau in range(nlag + 1)])
+    # The read layer is imported HERE rather than at module scope: this module generates
+    # configurations, and callers that only generate (`gpu_bench`, `8_8_run_string_tension`,
+    # `store_check_u1_reference_bracket`, the generator tests) would otherwise be made to load the
+    # reader. An `ast` walk still sees the import, which is what the load-bearing gate reads.
+    from entroptics_adapter import decay as _decay
+    O = np.asarray(O)
+    # DERIVED: the RANK of the documented argument. `(nconf, T)` is two axes, so on anything else
+    # the axis handed to the read as the ordered one would not be time. Not a magnitude.
+    if O.ndim != 2:
+        raise ValueError(f"connected_correlator wants operator histories of shape (nconf, T); "
+                         f"got shape {O.shape}")
+    nconf, T = int(O.shape[0]), int(O.shape[1])
+    # DERIVED: emptiness. Zero is where an axis has no entries at all, not a smallest useful size.
+    if nconf == 0 or T == 0:
+        raise ValueError(f"connected_correlator was given an empty ensemble, shape {O.shape}. "
+                         f"With no time axis the profile it would return is all ones -- perfect "
+                         f"correlation at every lag, read off no data.")
+    if np.iscomplexobj(O):
+        raise ValueError("connected_correlator wants a real operator history; the ensemble level "
+                         "of a complex record cannot be carried through `float()` without "
+                         "discarding its imaginary part.")
+    level = float(O.mean())                                 # the ensemble vacuum
+    prof = np.asarray(_decay(O.T, periodic=True, disconnected=level)) / nconf
+    c = prof[np.arange(nlag + 1) % prof.shape[0]]
     return c / c[0]
 
 
@@ -669,8 +753,8 @@ def plaquette_0pp_Ot(link, *, device=None, spatial=(0, 1, 2)):
     b = _Backend(device)
     q = link
     O = None
-    for i in spatial:
-        for j in spatial:
+    for i in spatial:  # NOT A READ: the loops are over the three spatial PLANES and the rolls are the plaquette shifts U_j(x+i), U_i(x+j); what is built is the operator O(t), the INPUT to connected_correlator
+        for j in spatial:  # NOT A READ: the second plane index of the same plaquette shift
             if j <= i:
                 continue
             Ui, Uj = q[..., i, :], q[..., j, :]
@@ -714,10 +798,10 @@ def _su2_mcg(b, q, sdims, iters):
     q = b.clone(q)
     qid = b.const([1.0, 0.0, 0.0, 0.0])
     full = tuple(q.shape[:-2])
-    for _ in range(int(iters)):
-        for mask in b.parity(sdims):
+    for _ in range(int(iters)):  # NOT A READ: gauge FIXING: the rolls are U_mu(x-mu) in the local quadratic form and g(x+mu) in the gauge transform of each link
+        for mask in b.parity(sdims):  # NOT A READ: the checkerboard parity of the same gauge-fixing sweep
             M = b.zeros((*full, 4, 4))
-            for mu in range(D):
+            for mu in range(D):  # NOT A READ: the loop is over DIRECTIONS; the roll is the backward neighbour U_mu(x-mu) entering the local quadratic form
                 cf = _qconj(b, q[..., mu, :])                     # conj(U_mu(x))
                 bk = b.roll(q[..., mu, :], 1, _sax(mu, 1))        # U_mu(x-mu)
                 M = M + cf[..., :, None] * cf[..., None, :]
@@ -728,7 +812,7 @@ def _su2_mcg(b, q, sdims, iters):
                 v = v / (b.norm(v, -1, True) + 1e-30)
             g = v                                                 # (*full, 4) unit quaternion
             g = b.where(mask[..., None], g, qid)                  # update this parity only
-            for mu in range(D):
+            for mu in range(D):  # NOT A READ: the loop is over DIRECTIONS; the roll is g(x+mu) in the gauge transform of each link
                 q[..., mu, :] = _qmul(b, g, q[..., mu, :])                                   # left: g(x)
                 q[..., mu, :] = _qmul(b, q[..., mu, :], _qconj(b, b.roll(g, -1, _sax(mu, 1))))  # right: g(x+mu)^dag
     return q
@@ -763,7 +847,7 @@ def _sun_init(b, dims, batch, N):
 def _sun_staple(b, U, mu):
     A = b.zeros_like(U[..., mu, :, :])
     Umu = U[..., mu, :, :]
-    for nu in range(D):
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS; the rolls are the forward and backward neighbour shifts of the links
         if nu == mu:
             continue
         Unu = U[..., nu, :, :]
@@ -852,8 +936,8 @@ def _sun_hb_sweep(b, U, sdims, N, beta, step, n_or=4):
 
 def _sun_action(b, U, N):
     phi = b.zeros(U.shape[:-3])
-    for mu in range(D):
-        for nu in range(mu + 1, D):
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+        for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             Up = (U[..., mu, :, :] @ b.roll(U[..., nu, :, :], -1, _sax(mu, 2))
                   @ _dag(b, b.roll(U[..., mu, :, :], -1, _sax(nu, 2))) @ _dag(b, U[..., nu, :, :]))
             phi = phi + (1.0 - b.real(b.trace(Up)) / N)

@@ -229,7 +229,6 @@ FOOTPRINT_CLAIMS = {
     "ym_mass_gap_spectral":             "Sec 13: three foundational + reflection positivity; the "
                                         "aperture margin is an explicit hypothesis, not a discharged witness",
     "ym_existence_and_gap_of_junction": "Sec 13 ledger: gap side conditional on the two residuals",
-    "ym_wightman_of":                   "Sec 13 ledger: 'adds the OS->Wightman reconstruction (six in total)'",
     "gap_uniform_of_cell":              "Sec 13 ledger: 'proved (foundation-only)'",
     "gap_uniform_of_cell_intensive":    "Sec 13 ledger: 'proved (foundation-only)'",
     "cell_volume_bar_nonvacuous": "Sec 13 ledger: 'proved (foundation-only)'",
@@ -301,7 +300,6 @@ FOUNDATIONAL = {"propext", "Classical.choice", "Quot.sound"}
 #   ym_crossover_confinement_of_grid "footprint three foundational + `wilson_reflection_positive_at`"
 #   ym_mass_gap_grid_certified       "carries that same footprint, no `d2_le_bound`"
 #   ym_existence_and_gap             "carries the four named axioms"
-#   ym_wightman                      "adds the OS->Wightman reconstruction ..., six in total"
 #   ym_mass_gap_spectral             three foundational + the four named (inherited via ym_confinement);
 #                                    the aperture margin is an explicit hypothesis, not a discharged witness
 #   the volume row                   "proved (foundation-only)"
@@ -341,8 +339,6 @@ NAMED_FOOTPRINTS = {
     "margin_tendsto_floor":             {"wilson_reflection_positive_at"},
     "tension_tendsto_zero_of_bounded_circ_moment": set(),
     "ym_existence_and_gap_of_junction": {"wilson_reflection_positive_at"},
-    "ym_wightman_of":                   {"wilson_reflection_positive_at",
-                                         "os_reconstruction", "WightmanTheory"},
     "ym_mass_gap_spectral":             {"wilson_reflection_positive_at"},
     "gap_uniform_of_cell":              set(),
     "gap_uniform_of_cell_intensive":    set(),

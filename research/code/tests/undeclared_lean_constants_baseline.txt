@@ -40,8 +40,6 @@ research/lean/MassGap/Condensation.lean|def vortexTerm uses 1,2,3,4,7.1
 research/lean/MassGap/Floor.lean|def cubeConfig uses 1,3
 research/lean/MassGap/Floor.lean|def cubePos uses 3
 research/lean/MassGap/Forgetting.lean|def Forgets uses 0,1,2
-research/lean/MassGap/FullModel.lean|axiom WightmanTheory uses 0
-research/lean/MassGap/FullModel.lean|axiom os_reconstruction uses 0,1973,1975,1987,281,31,42,75,83
 research/lean/MassGap/FullModel.lean|def WilsonParams.irCutoff uses 2
 research/lean/MassGap/GapOfDecay.lean|def multiModeGapped uses 0,1,2,3,4,8
 research/lean/MassGap/GappedExample.lean|def Tc uses 1,2,3,4

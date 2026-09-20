@@ -44,7 +44,7 @@ one fixed face, and distinct paths bound distinct ones. Since pure Yang–Mills 
 parameter, a fitted constant anywhere below the gap would be a smuggled scale; $\kappa_0$ being a
 counting number is what makes the transmutation legitimate, and it is now counted rather than quoted.
 
-**What the build actually carries.** The development declares exactly **three** named axioms beyond Lean's
+**What the build actually carries.** The development declares exactly **two** named axioms beyond Lean's
 three foundational ones, and the count is machine-generated rather than asserted
 ([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv), 1349 printed declarations,
 1247 of them foundational-only):
@@ -52,8 +52,7 @@ three foundational ones, and the count is machine-generated rather than asserted
 | named axiom | declarations carrying it | status |
 |---|---|---|
 | `wilson_reflection_positive_at` | 102 | **proved** at even lattice extent $\ge4$ and $\beta\ge0$ (`OddLagSplit.corrClay_reflection_positive`); cited to Osterwalder–Seiler only outside that domain |
-| `os_reconstruction` | 1 | cited (Osterwalder–Schrader reconstruction) |
-| `WightmanTheory` | 1 | cited |
+| `os_reconstruction_wightman` | 3 | cited (Osterwalder–Schrader reconstruction), stated from `OSData` — a continuous bilinear Schwinger form on a normed test space — to `WightmanQFTData` |
 
 The strong-coupling character bound and asymptotic freedom are consumed as *hypotheses of theorems*, not
 as axioms. Separately, one input is neither proved nor cited: the substrate hypothesis. It has been reduced twice.
@@ -85,8 +84,11 @@ which are not the same:
   invariance is inherited because it was built in — `ymFamily.os_euc` is `rfl`, since `QYM` reads only a label the
   $\mathrm{Perm}(\mathbb{F}_4)$ actions leave fixed. `ymFamily` is a minimal interface witness.
 
-`ym_wightman_of` adds the Osterwalder–Schrader → Wightman reconstruction (two more axioms, six in total) on top of that
-limit. The development *consumes* the cited results rather than re-deriving them, and the $SU(N)$ ensemble enters
+The Osterwalder–Schrader → Wightman reconstruction is NOT composed with that limit. It is stated in
+`WightmanData` as `os_reconstruction_wightman`, from `OSData` to `WightmanQFTData`. `OSData` asks for a
+continuous bilinear Schwinger form on a NORMED test space, with a reflection and an $\mathbb{R}^4$
+translation action; the limit $q$ is a real-valued function on a bare index set, which supplies none of
+those. The development *consumes* the cited results rather than re-deriving them, and the $SU(N)$ ensemble enters
 through the entropy-matched reads and the cited §2–§3 modelling identification. The exact axiom footprint of every theorem is stated in the
 paper (§13).
 
@@ -134,9 +136,9 @@ import MassGap
 -- the three foundational + wilson_reflection_positive_at  (existence and the gap, for the constructed
 -- SU(N) Wilson realisation ym_wilson_gauge)
 
-#print axioms MassGap.ym_wightman_of
--- + os_reconstruction, WightmanTheory  (the reconstructed Wightman quantum field theory -- the only
--- declaration in the tree carrying all three named axioms)
+#print axioms MassGap.WightmanData.reconstructed_vacuum_energy_zero
+-- the three foundational + os_reconstruction_wightman  (a fact read back OUT of the reconstruction's
+-- conclusion: the reconstructed Hamiltonian annihilates the vacuum)
 
 #print axioms MassGap.ym_mass_gap_spectral
 -- the three foundational + wilson_reflection_positive_at  (the gap over an ARBITRARY mode family,

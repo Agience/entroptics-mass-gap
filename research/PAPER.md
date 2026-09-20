@@ -63,16 +63,16 @@ continuum limit follows from the finite-spacing Osterwalder–Schrader data thro
 four-dimensional measure and the OS→Wightman reconstruction — both established on a **constructed $SU(N)$
 realisation** whose
 Osterwalder–Schrader data family is instantiated: the mass gap and the OS continuum measure carry **one** named
-axiom, reflection positivity (`ym_mass_gap_of_junction`), and the reconstructed Wightman theory adds **two** more,
-`os_reconstruction` and `WightmanTheory` — `ym_wightman_of` is the only declaration in the development carrying all
-three. The tree declares four such axioms in total, and `existence_and_gap_of_model` and
-`mass_gap_rate_and_continuum` carry none of them. The fourth, `os_reconstruction_wightman`, is
-declared in `WightmanData.lean` and is consumed by nothing: it restates the reconstruction against a
-bilinear Euclidean form and a Hilbert-space-valued conclusion, so that it cannot be discharged from a
-one-point index the way the cited one can. That discharge is machine-checked —
-`wightmanTheory_of_nothing` closes every hypothesis of the cited reconstruction at `q ≡ 0`, and
-`wightman_of_model_is_the_trivial_proof` shows by `rfl` that `wightman_of_model` is that same term,
-so the reconstruction as currently stated conveys nothing about the model that feeds it. That OS measure is
+axiom, reflection positivity (`ym_mass_gap_of_junction`), and `existence_and_gap_of_model` and
+`mass_gap_rate_and_continuum` carry none. **The tree declares two named axioms in total.** The
+second is `os_reconstruction_wightman`, in `WightmanData.lean`: it states the Osterwalder–Schrader
+reconstruction against a bilinear Euclidean form with a Hilbert-space-valued conclusion, and the
+Clay problem names [35] as a route and calls the Euclidean and Lorentzian schemes equivalent, so
+citing it is what the problem asks for rather than a gap. It is not yet composed with anything —
+producing an `OSData` needs a time translation that is an endomorphism of the slab algebra, and the
+shift carries a transverse link out of the module. An earlier formulation of the reconstruction
+against an opaque `Prop` has been retired: it was discharged by `rfl` from a `Unit` witness, so
+granting it conveyed nothing, and it is deleted rather than documented. That OS measure is
 built on a genuine four-dimensional periodic $SU(3)$ Wilson lattice — the Clay problem's dimension and group,
 $4n^4$ links and $16n^4$ plaquettes, the ordered-loop holonomy and the Wilson action density — with its Euclidean
 and permutation invariances DERIVED, from Haar-invariance composed with the lattice's own axis symmetry; and its
@@ -1958,10 +1958,9 @@ and $R(d)=R(d')$ (Euclidean $SO(4)$), carrying no A1/A2 hypothesis. **Both resul
 now hold for a constructed $SU(N)$ object.** A constructed $SU(N)$ realisation (`ym_wilson_of`) instantiates the
 finite-spacing Osterwalder–Schrader data family, its reflected forms built from the same `wilsonCorr` as the gap
 side (so `os_rp` is the reflection-positivity axiom and the two are one physical model), with its Euclidean and permutation clauses holding STRUCTURALLY rather than by an invariance of the measure: `QYM` reads `j` only through the label `j.2.2`, while `actEYM` and `actPYM` move `j.1` and `j.2.1`, so `os_euc` and `os_perm` close by `rfl` over actions on components the form never reads. The invariance that is DERIVED is `ymFamilyGauge`'s, where `WilsonGauge.QG_eq` obtains it from `Symmetry.expect_invariant` on an $SU(3)$ Haar expectation. `ym_existence_and_gap_of_junction` then delivers the mass gap AND the OS0–OS3 continuum
-measure, and `ym_wightman_of` the reconstructed Wightman theory, on that constructed realisation.
+measure, on that constructed realisation.
 `ym_existence_and_gap_of_junction` (gap and OS0–OS3 measure together) carries the one named axiom
-(`wilson_reflection_positive_at`); `ym_wightman_of` adds the
-OS→Wightman reconstruction (`os_reconstruction`, `WightmanTheory`), six in total — no new axiom, no `sorry`. The quantitative strengthening
+(`wilson_reflection_positive_at`). No new axiom, no `sorry`. The quantitative strengthening
 $\|C(\tau)\|\le M\,e^{-\Delta\tau}$ with $\Delta=\kappa_0-\mu>0$ is a separate certified theorem carrying the same
 footprint. The spectral form `ym_mass_gap_spectral` builds the correlator from the witness
 transfer modes $m_k$, each carrying the certified bound, and gives $\|\sum_k P_k m_k^{\tau}\|\to0$ from the
@@ -2556,8 +2555,8 @@ vacuum $\lambda=1$ eigenspace and the cyclic-vector overlap, the companion input
 **The axiom footprint.** Beyond the three foundational axioms (`propext`, `Classical.choice`,
 `Quot.sound`), the development names ONE input that carries physics: reflection positivity of the
 Wilson ensemble at every aperture (`wilson_reflection_positive_at`, Osterwalder–Seiler). Reconstruction
-adds the two cited Osterwalder–Schrader $\to$ Wightman axioms (`WightmanTheory`, `os_reconstruction`)
-where it is used, and nowhere else. Across every declaration that prints a footprint, no other axiom
+rests on the one cited Osterwalder–Schrader $\to$ Wightman axiom
+(`os_reconstruction_wightman`), which is stated but not yet composed with the construction. Across every declaration that prints a footprint, no other axiom
 appears.
 
 The aperture is a variable of the theory rather than a value. The window of $N+1$ lags contributes the
@@ -2620,7 +2619,7 @@ assumption and an open question.
 | $\Delta=\kappa_0-\mu\Rightarrow\|C(\tau)\|\le M e^{-\Delta\tau}$ (§6, §12) | `GapRate.lean` | proved |
 | RP survives the continuum limit (§11) | `Existence.lean` | proved |
 | continuum measure tight from the gap; OS0–OS3 survive the joint limit (§11) | `Existence.lean`, `Measure.lean` | proved; the OS-data family (`LatticeYMFamily`: `os_rp`, `os_gap`, `os_euc`, `os_perm`) is now **instantiated for $SU(N)$** (`ymFamily`), its reflected forms built from the same `wilsonCorr` as the gap side (`os_rp` = the RP axiom), with `os_euc`/`os_perm` STRUCTURAL for `ymFamily` — `QYM` reads only `j.2.2` while the two actions move `j.1` and `j.2.1`, so both close by `rfl` — and DERIVED for `ymFamilyGauge` via `QG_eq` from `Symmetry.expect_invariant` |
-| existence and the gap for one model: gap AND OS continuum measure (§11–12) | `ym_existence_and_gap_of_junction`, `ym_wightman_of` | proved for a **constructed $SU(N)$ instance** (`ym_wilson_of`): `ym_existence_and_gap_of_junction` delivers both **conditionally on its two residuals, which are open**: `hfe` ($\kappa_0-\mu\le c$) and `hgap` ($c\le\Delta$), named as open in §13 and not discharged anywhere (footprint = three foundational + the one named axiom `wilson_reflection_positive_at`), `ym_wightman_of` adds the OS→Wightman reconstruction (six in total), no new axiom, no `sorry`; both built on one `wilsonCorr` model, the §2–§3 physical identification cited |
+| existence and the gap for one model: gap AND OS continuum measure (§11–12) | `ym_existence_and_gap_of_junction` | proved for a **constructed $SU(N)$ instance** (`ym_wilson_of`): `ym_existence_and_gap_of_junction` delivers both **conditionally on its two residuals, which are open**: `hfe` ($\kappa_0-\mu\le c$) and `hgap` ($c\le\Delta$), named as open in §13 and not discharged anywhere (footprint = three foundational + the one named axiom `wilson_reflection_positive_at`), no new axiom, no `sorry`; both built on one `wilsonCorr` model, the §2–§3 physical identification cited |
 | the constructed gauge measure: OS Euclidean/permutation invariances **derived from $SU(N)$ Haar-invariance** (not modelled), on a genuine ordered-loop Wilson holonomy and the Wilson action density (§11–12) | `LatticeGauge.lean`, `CompactGauge.lean`, `SUN.lean`, `WilsonGauge.lean`, `WilsonAction.lean`, `WilsonLattice.lean`, `WilsonReal.lean` | proved (foundational): `Symmetry.expect_invariant` (Haar-invariance $\circ$ plaquette-permutation); the $SU(N)$ compact/topological-group/Borel instances (`SUN`, closed $+$ bounded $\Rightarrow$ compact); `WilsonGauge.ym_continuum_gauge` (OS0–OS3 continuum measure on genuine $SU(3)$ Haar over the **four-dimensional** periodic Wilson lattice `WilsonHypercubic.sysWilson 3 4 n` — the Clay problem's group and dimension — with the Euclidean/permutation invariance supplied by the lattice's own axis symmetry `axisSymmetry`, derived from `shift_axis`/`bd_axis`; three foundational axioms only); `WilsonGauge.ym_existence_and_gap_gauge` (gap $+$ measure, the same one named axiom `wilson_reflection_positive_at`, on the gap side; measure side axiom-free); non-vacuous by `WilsonReal.sysReal_invariant` (concrete $SU(2)$ two-plaquette system, plaquette-swap symmetry) |
 | the gauge system on a genuine $d$-dimensional periodic hypercubic lattice, with the axis symmetry derived (§11–12) | `WilsonHypercubic.lean` | proved (foundational): `sysWilson` is the ordered-loop Wilson system on $\mathrm{Site}=\mathrm{Fin}\,d\to\mathrm{Fin}\,n$, links $(\mu,x)$ and plaquettes $((\mu,\nu),x)$, with $d\cdot n^{d}$ links and $d^{2}n^{d}$ plaquettes machine-checked (`card_link`, `card_plaq`: $16{,}384$ and $65{,}536$ at $d{=}4,n{=}8$) and the action density the genuine Wilson density, not the zero function (`sysWilson_phi`), so $\beta$ moves the measure; degenerate planes $\mu{=}\nu$ contribute the identity holonomy and need no exclusion (`bd_diag_hol_one`); the discrete Euclidean invariance is DERIVED from the geometry --- an axis permutation commutes with the unit shift (`shift_axis`), hence transports the boundary word (`bd_axis`), hence is a `Symmetry` of the system (`axisSymmetry`), which is exactly the `os_euc`/`os_perm` datum. $d$, $n$, $N$ are arguments: $d{=}4$, $N{=}3$ is an instantiation, not a separate construction. What remains is transporting the finite-aperture read onto it |
 | the OS-measure's infrared datum DERIVED from the tension rather than asserted, on the 4-D $SU(3)$ measure (§11–12) | `WilsonGauge.lean`, `Measure.lean`, `ZeroMode.lean` | proved (foundational): `WilsonGauge.ym_continuum_gauge_counted` builds the family through `Measure.familyOfSortedCount`, which takes an ORDERED spectrum and a bound on its resolved count in place of `os_gap` and derives `os_gap` from them (`os_gap_of_sorted_count`); the count is the quantity `ZeroMode.resolved_count_le_of_subset` obtains from the measured tension. The reflected form, and hence `os_rp`/`os_euc`/`os_perm`, is the same genuine $SU(3)$ Gibbs expectation as `ym_continuum_gauge`. Two hypotheses are named, not hidden: at most $c$ modes clear the edge (the tension's), and at least one does (arity -- the clamp $Q\le1$ needs something to be bounded by, and a theory with a vacuum resolves it) |

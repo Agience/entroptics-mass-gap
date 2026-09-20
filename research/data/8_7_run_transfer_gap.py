@@ -26,8 +26,9 @@ SMEARS = (8, 16, 24, 32)
 MOMENT_ORDERS = (2, 3, 4)      # pencil orders read from the correlator
 # The reflection-positive pencil at order n is (n+1)x(n+1): H0 needs c_0..c_2n and the shifted H1
 # needs c_1..c_(2n+1), so 2n+2 correlator values are required and NLAG is derived as 2n+1 from the
-# highest order requested. connected_C computes each lag independently and normalises by c[0], so
-# raising NLAG leaves every lower lag, and every lower moment order, exactly where it was.
+# highest order requested. connected_C reads the whole periodic profile and slices `NLAG + 1` lags
+# out of it, so raising NLAG leaves every lower lag, and every lower moment order, exactly where it
+# was: NLAG selects how far to look and changes nothing about what is looked at.
 NLAG, NBIN = 2 * max(MOMENT_ORDERS) + 1, 32
 
 if NLAG + 1 < 2 * max(MOMENT_ORDERS) + 2:      # checked HERE, not after the ensemble is loaded
@@ -61,8 +62,13 @@ ROOT = _LINKS if os.path.isdir(_LINKS) else _ROOT
 
 def operator_Ot(b, q):
     O = None
+    # NOT A READ: the loops are over the three spatial PLANES, not over separations. The `roll` calls
+    # inside them are the neighbour shifts of the plaquette holonomy -- `U_j(x + i)`, `U_i(x + j)` --
+    # and they build the zero-momentum operator O(t). Every read taken of it is the library's: the
+    # correlator through `connected_C`, the transfer spectrum through `W.hankel_spectrum`, the error
+    # through `W.jackknife`.
     for i in SPATIAL:
-        for j in SPATIAL:
+        for j in SPATIAL:    # NOT A READ: the second plane index of the same plaquette shift
             if j <= i:
                 continue
             Ui, Uj = q[..., i, :], q[..., j, :]
@@ -103,7 +109,7 @@ def main():
     for ns in SMEARS:
         O = operator_Ot(b, G.ape_smear(q0, ns, alpha=ALPHA, device=DEV))
         C = connected_C(O, NLAG)
-        Nc = O.shape[0]; d = O - O.mean(); bins = np.array_split(np.arange(Nc), NBIN)
+        Nc = O.shape[0]; bins = np.array_split(np.arange(Nc), NBIN)
         jkC = np.array([connected_C(O[np.setdiff1d(np.arange(Nc), bn)], NLAG) for bn in bins])
         errC = np.sqrt((NBIN - 1) * np.mean((jkC - jkC.mean(0)) ** 2, axis=0))
         for tau in range(NLAG + 1):

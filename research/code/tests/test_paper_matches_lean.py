@@ -450,6 +450,76 @@ def test_the_retired_axioms_are_not_declared_anywhere_in_lean():
     assert not found, f"retired axioms redeclared: {found}"
 
 
+#: A verbatim `#print axioms` line quoted in the paper, e.g.
+#:   'EvenAperture.existence_and_gap_of_substrate_even'  depends on axioms: [propext, ...]
+#: The paper quotes MACHINE OUTPUT here rather than describing it in prose, which reads as stronger
+#: evidence than a prose claim -- so it needs to be checked at least as tightly.
+_QUOTED_FOOTPRINT = re.compile(
+    r"'([A-Za-z_][A-Za-z0-9_.']*)'\s+depends on axioms:\s*\[([^\]]*)\]")
+
+
+def test_quoted_footprint_blocks_match_the_artifact():
+    """A `#print axioms` line quoted VERBATIM in the paper must be what the build prints.
+
+    WHY THIS EXISTS. The paper contains transcribed machine output. Every other footprint claim in
+    the document is prose and is checked by the siblings above; these two lines are the only ones
+    that LOOK like evidence rather than assertion, and nothing compared them to anything. A quoted
+    output block that drifts is worse than a stale sentence: a reader takes it for a transcript.
+
+    Matching is on the NAMED axioms as a set. The three foundational ones are compared too, since a
+    quoted transcript that omitted one would be a wrong transcript. Order inside the brackets is not
+    significant and is not required to match -- `#print axioms` does not promise an order, and
+    pinning one would fail on a Mathlib bump for no reason.
+
+    A declaration the artifact does not carry is skipped rather than failed: the sibling
+    `test_cited_lean_declarations_resolve` owns that check, and duplicating it here would report one
+    defect twice.
+    """
+    art = REPO / 'research' / 'data' / '13_dat_axiom_footprints.csv'
+    if not art.exists():
+        pytest.skip('13_dat_axiom_footprints.csv not regenerated yet')
+    import csv
+    printed = {}
+    with art.open(encoding='utf-8', newline='') as fh:
+        for row in csv.DictReader(fh):
+            printed[row['declaration'].split('.')[-1]] = set(row['axioms'].split())
+
+    quoted = list(_QUOTED_FOOTPRINT.finditer(_paper()))
+    assert quoted, (
+        'no quoted `depends on axioms` block found in PAPER.md; the pattern is looking in the wrong '
+        'place and this check would pass vacuously')
+
+    bad = []
+    for m in quoted:
+        short = m.group(1).split('.')[-1]
+        want = {a.strip() for a in m.group(2).split(',') if a.strip()}
+        got = printed.get(short)
+        if got is None:
+            continue
+        if want != got:
+            bad.append(
+                f"  '{m.group(1)}' quoted as {sorted(want)} but the build prints {sorted(got)}")
+    if bad:
+        pytest.fail(
+            'A `#print axioms` line quoted verbatim in PAPER.md is not what the build prints.\n'
+            'This is transcribed machine output, so a reader reads it as a transcript. Re-quote it '
+            'from a current build or delete the block.\n' + '\n'.join(bad))
+
+
+def test_the_quoted_footprint_gate_can_actually_fail():
+    """PROOF the pattern matches its own example and would notice a wrong transcript."""
+    sample = ("'EvenAperture.existence_and_gap_of_substrate_even'  depends on axioms: "
+              "[propext, Classical.choice, Quot.sound]")
+    m = _QUOTED_FOOTPRINT.search(sample)
+    assert m is not None, 'the quoted-footprint pattern did not match its own example'
+    assert m.group(1).endswith('existence_and_gap_of_substrate_even')
+    want = {a.strip() for a in m.group(2).split(',')}
+    assert want == {'propext', 'Classical.choice', 'Quot.sound'}
+    # and a transcript carrying a named axiom is a DIFFERENT set, so the comparison separates them
+    assert want != want | {'wilson_reflection_positive_at'}, (
+        'adding a named axiom did not change the set, so the check could not see it')
+
+
 def test_the_free_field_plateau_the_paper_quotes_is_the_one_lean_proves():
     """The weak-coupling plateau value is a literal inside a Lean theorem; the paper repeats it six times.
 

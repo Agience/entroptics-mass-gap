@@ -1,0 +1,120 @@
+import Mathlib
+import MassGap.Reconstruction
+
+/-!
+# MassGap.TransferInvertibility — the spectral hypothesis asks the transfer operator to be INVERTIBLE
+
+## ⛔ What `reconstruct_qm_core` actually requires
+
+`Reconstruction.reconstruct_qm_core` takes
+
+    hε  : 0 < ε
+    hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))
+
+and its own first step (`hpos`) reads off that every spectral value is strictly positive. The
+consequence nobody wrote down is that this puts `0` OUTSIDE the spectrum, which in a unital algebra
+is exactly the statement that **`T` is a unit** — `isUnit_of_spectral_hypothesis` below.
+
+`ClayAssembly` records that `-log T` "needs `0 ∉ spectrum T` rather than injectivity", as a
+requirement still to be met. The point of this module is that for the object the Clay problem is
+about the requirement is **not merely unmet — it is unmeetable**, and so the shape of what is open
+in Chain B is different from what the tree says it is.
+
+## ⛔ Why that is an obstruction and not a to-do
+
+A compact operator on an infinite-dimensional space is never invertible — `1 = T ∘ T⁻¹` would be
+compact, and Riesz forbids a compact identity. Both premises are the standard description of the
+Euclidean transfer operator of a lattice gauge theory with compact structure group: `T = e^{-H}` has
+energies unbounded above, so its spectrum accumulates at `0`; and `T` acts on `L²` of the gauge field
+on one time slice — infinite-dimensional — through a continuous kernel on a compact manifold, hence
+is trace class and a fortiori compact.
+
+**⚠ NONE OF THAT PARAGRAPH IS FORMALISED, HERE OR ANYWHERE IN THIS TREE.** It is cited, not proved,
+and this module claims only the implication below that would turn it into an obstruction:
+`isUnit_of_spectral_hypothesis`. The gap between the two is the work, and naming it is the point of
+the module.
+
+## What this does and does not close
+
+It does NOT refute the mass gap, and it does not say `reconstruct_qm_core` is wrong — that theorem
+is correct, and `GappedExample` instantiates it. What it says is that the hypothesis is satisfied by
+operators with a LARGEST energy `-log ε`, and that reaching the Clay conclusion through it therefore
+needs either a different endpoint, stated for an unbounded `H` on a dense domain, or a route that
+restricts to a spectral subspace on which `T` is bounded below.
+
+`hamiltonian_spectrum_le_of_spectral_hypothesis` is the same fact from the energy side: under the
+hypothesis the reconstructed `H` has no spectrum above `-log ε`.
+-/
+
+namespace MassGap.TransferInvertibility
+
+open MassGap.Reconstruction
+
+section Abstract
+
+variable {A : Type*} [CStarAlgebra A]
+
+/-- **THE HYPOTHESIS KEEPS `0` OUT OF THE SPECTRUM.** Either a spectral value is `1`, or it is at
+least `ε > 0`; neither is `0`.
+
+DERIVED: `0` and `1` are the spectral values the two branches name, not levels chosen here. -/
+theorem zero_not_mem_spectrum (T : A) {ε Δ : ℝ} (hε : 0 < ε)
+    (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) :
+    (0 : ℝ) ∉ spectrum ℝ T := by
+  intro h0
+  rcases hsp h0 with h | h
+  · rw [Set.mem_singleton_iff] at h
+    exact absurd h (by norm_num)
+  · exact absurd h.1 (by linarith)
+
+/-- **⛔ SO THE HYPOTHESIS SAYS THE TRANSFER OPERATOR IS INVERTIBLE.** In a unital algebra
+`0 ∈ spectrum 𝕜 a ↔ ¬ IsUnit a`, so keeping `0` out is exactly invertibility.
+
+This is the content of `reconstruct_qm_core`'s `hε`, made explicit. It is a strong hypothesis about
+the operator and not a normalisation.
+
+DERIVED: no numeral of its own. -/
+theorem isUnit_of_spectral_hypothesis (T : A) {ε Δ : ℝ} (hε : 0 < ε)
+    (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) :
+    IsUnit T := by
+  by_contra h
+  apply zero_not_mem_spectrum T hε hsp
+  rw [spectrum.mem_iff, map_zero, zero_sub]
+  intro hu
+  exact h (by simpa using hu.neg)
+
+/-- **AND THE RECONSTRUCTED HAMILTONIAN HAS A LARGEST ENERGY.** Every spectral value of `T` is at
+least `ε`, so every energy `-log x` is at most `-log ε`.
+
+Stated on the spectrum of `T` rather than through the functional calculus, which is the same fact
+one step earlier and needs no spectral-mapping lemma: the energies the hypothesis admits are exactly
+`-log` of the admitted spectral values, and those are bounded.
+
+**THE `max` IS NOT SLACK.** `ε` is not required to be below `1`: if `Real.exp (-Δ) < ε` the interval
+is EMPTY and the hypothesis reads `spectrum T ⊆ {1}`, where the only energy is `-log 1 = 0` while
+`-log ε` is negative. So `-log ε` alone is not an upper bound, and the vacuum is the reason.
+
+DERIVED: `1` is the vacuum's spectral value, whose energy is `-log 1 = 0`; `ε` is the caller's
+floor; the `0` in the `max` is that vacuum energy. No magnitude is chosen here. -/
+theorem energies_bounded_of_spectral_hypothesis (T : A) {ε Δ : ℝ} (hε : 0 < ε)
+    (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) :
+    ∀ x ∈ spectrum ℝ T, -Real.log x ≤ max 0 (-Real.log ε) := by
+  intro x hx
+  rcases hsp hx with h | h
+  · rw [Set.mem_singleton_iff] at h
+    subst h
+    simp
+  · have hlog : Real.log ε ≤ Real.log x := Real.log_le_log hε h.1
+    exact le_max_of_le_right (by linarith)
+
+end Abstract
+
+/-! ## Footprints -/
+
+section Audit
+#print axioms zero_not_mem_spectrum
+#print axioms isUnit_of_spectral_hypothesis
+#print axioms energies_bounded_of_spectral_hypothesis
+end Audit
+
+end MassGap.TransferInvertibility

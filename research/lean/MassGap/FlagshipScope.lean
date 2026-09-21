@@ -1,12 +1,35 @@
 import MassGap.ApertureRoute
 
 /-!
-# MassGap.FlagshipScope — ADVERSARIAL SCRATCH MODULE (not imported by `MassGap.lean`)
+# MassGap.FlagshipScope — WHAT THE FLAGSHIP DOES AND DOES NOT SAY
 
-Machine checks for an adversarial audit of
-`ApertureRoute.flagship_of_confinement_at_an_aperture`. Nothing here is part of the development;
-it exists to test whether that theorem's conclusion is a statement about the SU(3) Wilson
-correlation. Delete freely.
+Machine checks bounding the scope of `ApertureRoute.flagship_of_confinement_at_an_aperture`.
+
+**This module is part of the development and `MassGap.lean` imports it.** Its findings are the
+correct reading of every flagship theorem in the tree, so they are in the build, where `#print axioms`
+covers them and they cannot rot silently while the theorems they qualify keep compiling.
+
+## ⭐ The findings: `FlagshipAt` reduces to `μ < κ₀` and carries nothing else
+
+* `gap_summand_is_manufactured` — the gap clause's sum **is** `exp(−(κ₀ − μ))^τ`. One mode, weight
+  `1`, magnitude DEFINED as its own bound. It is not a statement that the Wilson correlation decays.
+* `flagship_for_bogus` — the WHOLE conclusion holds for a model whose tension is the constant `0`,
+  with no gauge group, lattice, read or correlation anywhere in it.
+* `flagship_measure_half_needs_no_hypothesis` — the OS0–OS3 half never reads `hc`.
+* `so4_clause_unconditional` — the `SO(4)` clause holds at every aperture, unconditionally.
+* `Q_is_constant_in_the_test_configuration`, `osFamilyTension_Q_constant_on_the_acted_components`
+  — OS1 and OS3 hold because both group actions move only components the reflected form ignores.
+
+## ⚠ What that means for the route
+
+The weight of Chain A sits ENTIRELY in `ApertureRoute.ConfinesAtAnAperture`. Closing
+`LagTwoSix.LagTwoRatioSix` — the one open inequality of `ClayAssembly.ClayRemaining.I1_lagTwo` —
+would deliver `3^(-1/4) < cosAvgEven a β` and **nothing beyond it**, and
+`ClayConditional.flagship_of_clayRemaining` is to be read against these findings and not instead of
+them.
+
+The mass gap of the Clay statement is Chain B's conclusion — `OpTBridge.reconstruct_from_opT`, a
+self-adjoint `H = −log T` with spectrum in `{1} ∪ [ε, e^{−Δ}]` — not this one.
 -/
 
 namespace MassGap.FlagshipScope

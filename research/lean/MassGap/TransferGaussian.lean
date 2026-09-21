@@ -1843,8 +1843,16 @@ positivity of `e^{-s/2}` kills `z`.
 ⚠ **What that does NOT give is `-log T`.** `ClayAssembly`'s note on `TransferMovesSomething` states
 the distinction and it holds here: the logarithm needs `0 ∉ spectrum T`, which on an
 infinite-dimensional space is STRICTLY stronger than `ker T = 0`. An injective operator whose inverse
-is unbounded has `0` in its spectrum. So this closes the obstacle it names and no more; the two that
-remain for C1 are `0 ∉ spectrum T` and the carrier on `ymH`.
+is unbounded has `0` in its spectrum.
+
+**But `-log T` is NOT an unbuilt thing in this tree.** `Reconstruction.hamiltonian` IS
+`cfc (fun x => -Real.log x) T`, and `Reconstruction.reconstruct_qm_core` proves — foundational axioms
+only — that from `1 ∈ spectrum T` and `spectrum T ⊆ {1} ∪ [ε, e^{−Δ}]` with `0 < ε` it is
+self-adjoint, nonnegative, has its vacuum at `0` and satisfies `spectrum H ⊆ {0} ∪ [Δ, ∞)`. The
+spectral hypothesis is supplied by DECAY, through `MomentSupport.le_of_positive_weight_decay`.
+
+So `0 ∉ spectrum T` is a HYPOTHESIS OF AN EXISTING THEOREM rather than a further construction, and
+what remains for C1 is the CARRIER: a `T` on `ymH` satisfying it.
 -/
 
 /-- The function the expansion actually runs on: `z` with the kernel's diagonal factor absorbed.

@@ -155,6 +155,11 @@ import lattice_generator as LG                                           # noqa:
 
 #: DERIVED: the extent is `N+1` for `wilsonCorrAt N`, and row B5 is at `N = 3`. Four directions
 #: because the Clay problem is four-dimensional; `corrClay` fixes `d := 4`.
+#:
+#: `--extent` rebinds this and `DIMS` before anything runs. Extent four remains the default so
+#: every existing invocation returns what it returned before; extent SIX is the one
+#: `ClayAssembly.ClayRemaining.I1_lagTwo` and `LagTwoSix.LagTwoRatioSix` are actually stated at, and
+#: no Monte Carlo has ever been run there.
 EXTENT = 4
 DIMS = (EXTENT,) * 4
 GROUP = "su3"
@@ -171,6 +176,20 @@ TOL_IDENTITY = 1e-10
 #: DERIVED: the threshold `LagTwoBound.lagTwoThreshold_gt` puts the bound above. Not a tuning knob:
 #: it is the number the hypothesis is stated against.
 K_CLAIM = 0.018623
+
+#: DERIVED: the extent-six threshold is `LagTwoSix.lagTwoThresholdSix = vSix^2 = 0.03379588...`,
+#: a closed form, and `lagTwoThresholdSix_gt` machine-checks `0.0337 <` it.
+#:
+#: ROUNDED AWAY FROM THE CLAIM THIS FILE CAN MAKE. The only verdict a measurement is allowed to
+#: reach here is REFUTATION -- `ratio > threshold` at every admissible `K` -- so the threshold is
+#: rounded UP, to `0.03380 > 0.03379588...`. That makes refutation strictly HARDER to declare. The
+#: Lean bound `0.0337` is rounded DOWN and would make it easier, which is why it is not used.
+K_CLAIM_SIX = 0.03380
+
+#: DERIVED: the threshold each extent's obligation is stated against, keyed by extent. Nothing is
+#: interpolated: an extent absent from this table has no Lean threshold behind it and the probe
+#: refuses rather than inventing one.
+K_BY_EXTENT = {4: K_CLAIM, 6: K_CLAIM_SIX}
 
 #: DERIVED: the six unordered planes of a four-dimensional lattice.
 PLANES = [(mu, nu) for mu in range(4) for nu in range(mu + 1, 4)]
@@ -337,7 +356,13 @@ def scan(betas, *, runs, chains, snaps, gap, therm):
         # is undefined, and `r2se == r2se` is the NaN test `_stats` returns when a single run leaves
         # the across-run spread unestimable. Neither excludes any measurement.
         sigma_from_k = float((r2m - K_CLAIM) / r2se) if (r2se == r2se and r2se > 0) else None
+        # DERIVED: a refutation needs the measured ratio ABOVE the threshold by more than the
+        # across-run spread can explain. `3` standard errors is the width demanded before the word
+        # is used; it is a GUARD on the verdict and makes refutation harder, never easier, and no
+        # measured number depends on it.
+        refutes = bool(r2se == r2se and r2se > 0 and (r2m - 3.0 * r2se) > K_CLAIM)
         row = {
+            "extent": EXTENT, "K_claim": K_CLAIM, "refutes_at_3se": refutes,
             "beta_gen": float(beta), "beta_lean": float(beta) / 2.0,
             "runs": runs, "chains": chains, "snaps": snaps, "gap": gap, "therm": therm,
             "plaq_mean": float(np.mean([p["plaq_mean"] for p in pts])),
@@ -358,6 +383,7 @@ def scan(betas, *, runs, chains, snaps, gap, therm):
 
 
 def main():
+    global EXTENT, DIMS, K_CLAIM
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", default="scan", choices=("scan", "therm", "bench"))
     ap.add_argument("--betas", default="0,1,2,4,6,8,12,20,40,80")
@@ -366,15 +392,32 @@ def main():
     ap.add_argument("--snaps", type=int, default=16)
     ap.add_argument("--gap", type=int, default=4)
     ap.add_argument("--therm", type=int, default=300)
+    ap.add_argument("--extent", type=int, default=EXTENT,
+                    help="periodic extent in all four directions (4 or 6)")
+    ap.add_argument("--out", default=None,
+                    help="write the scan rows here as JSON; without it nothing is persisted")
     a = ap.parse_args()
     betas = [float(x) for x in a.betas.split(",")]
+
+    if a.extent not in K_BY_EXTENT:
+        raise SystemExit(f"extent {a.extent} has no Lean threshold behind it; "
+                         f"known extents are {sorted(K_BY_EXTENT)}")
+    # DERIVED: the generator's heat-bath checkerboard requires an even extent
+    # (`lattice_generator._require_even_for_heatbath`); `2` is that parity and not a size.
+    if a.extent % 2 != 0:
+        raise SystemExit("the heat-bath checkerboard requires an even extent")
+    EXTENT = int(a.extent)
+    DIMS = (EXTENT,) * 4
+    K_CLAIM = K_BY_EXTENT[EXTENT]
 
     # Which library answered, not which version claims to have. A working tree and an installed
     # wheel have reported the same version string, and only one of them has the read this file
     # calls, so the path is printed with every run and travels with the output.
     print(json.dumps({"reader": {"entroptics": EA.LIBRARY_FILE,
                                  "version": EA.LIBRARY_VERSION,
-                                 "python": sys.executable}}), flush=True)
+                                 "python": sys.executable},
+                      "lattice": {"extent": EXTENT, "dims": list(DIMS), "group": GROUP,
+                                  "K_claim": K_CLAIM}}), flush=True)
 
     if a.mode == "bench":
         t0 = time.time()
@@ -401,6 +444,14 @@ def main():
 
     rows = scan(betas, runs=a.runs, chains=a.chains, snaps=a.snaps, gap=a.gap, therm=a.therm)
     print(json.dumps({"scan": rows}))
+    if a.out:
+        payload = {"extent": EXTENT, "dims": list(DIMS), "group": GROUP, "nc": NC,
+                   "K_claim": K_CLAIM, "lean_channel": list(CHANNELS[LEAN_CHANNEL][0]),
+                   "reader": EA.LIBRARY_FILE, "reader_version": EA.LIBRARY_VERSION,
+                   "rows": rows}
+        with open(a.out, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=1, sort_keys=True)
+        print(json.dumps({"wrote": a.out, "rows": len(rows)}), flush=True)
     return 0
 
 

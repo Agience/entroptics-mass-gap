@@ -20,6 +20,20 @@ the tree that the tree can answer:
   1. "X is consumed by nothing" / "nothing imports X" / "X is imported by nothing" -- the named
      module must have no importer.
   2. "in N modules" -- N must be the current module count.
+  3. "the Clay flagship" / "reaches the flagship" -- the same file must also name `FlagshipScope`
+     or `flagship_for_bogus`.
+
+THE THIRD ONE, and why it is a claim rather than a mention. `FlagshipScope.flagship_for_bogus`
+proves the ENTIRE flagship conclusion -- gap, non-triviality, SO(4), OS0-OS3 -- for an object with no
+read, no correlation, no gauge group and no lattice in it, whose tension is the constant zero; and
+`gap_summand_is_manufactured` shows the gap clause's correlation is a one-mode sequence whose
+magnitude is DEFINED as its own bound. So "reaches the Clay flagship" names a conditional that a
+content-free object satisfies. What carries content is `ConfinesAtAnAperture`, the step before it.
+
+A file may say either thing. What it may not do is say the first without the second, because a
+reader who meets only the first will read a packaging step as a result. `FlagshipScope` is an
+unimported scratch module its own header invites deletion of, so the qualification cannot be left to
+someone happening to open it.
 
 Prose that merely MENTIONS a module is not a claim and is not checked. There is no attempt to parse
 English; the two patterns are matched literally, and anything outside them is out of scope by
@@ -55,6 +69,14 @@ _UNIMPORTED_REV = re.compile(
 )
 #: A self-referential module count.
 _MODULE_COUNT = re.compile(r"\b(\d+)\s+modules\b")
+
+#: A flagship CLAIM, as opposed to a mention of the word. Both spellings the tree and the
+#: planning documents actually use.
+_FLAGSHIP_CLAIM = re.compile(r"(?:the Clay flagship|reach(?:es|ing)? the (?:Clay )?flagship)",
+                             re.IGNORECASE)
+
+#: What discharges it: naming the audit, in either of the two ways it is referred to.
+_FLAGSHIP_SCOPE = re.compile(r"FlagshipScope|flagship_for_bogus")
 
 
 def _lean_files():
@@ -131,6 +153,26 @@ def test_module_counts_in_prose_are_current():
             + "\n".join(bad))
 
 
+def test_flagship_claims_carry_their_scope():
+    """A file claiming the Clay flagship must also name what the flagship is worth."""
+    bad = []
+    for p in _scanned():
+        text = p.read_text(encoding="utf-8")
+        if _FLAGSHIP_SCOPE.search(text):
+            continue
+        for m in _FLAGSHIP_CLAIM.finditer(text):
+            line = text[: m.start()].count("\n") + 1
+            bad.append(f"  {p.name}:{line} claims `{m.group(0)}` and never names FlagshipScope")
+    if bad:
+        pytest.fail(
+            "A flagship claim stands without what the flagship is worth.\n"
+            "`FlagshipScope.flagship_for_bogus` proves the whole flagship conclusion for an object "
+            "with no read, no correlation, no gauge group and no lattice in it, so the claim names a "
+            "conditional a content-free object satisfies. Name `FlagshipScope` in the same file, or "
+            "make the claim about `ConfinesAtAnAperture`, which is the step that carries content.\n"
+            + "\n".join(bad))
+
+
 def test_the_gate_can_actually_fail(tmp_path):
     """PROOF the guard is not vacuous: both checks fire on planted text.
 
@@ -152,3 +194,14 @@ def test_the_gate_can_actually_fail(tmp_path):
     m = _MODULE_COUNT.search(f"the terms do not occur in {bogus} modules")
     assert m is not None, "the module-count pattern did not match its own example"
     assert int(m.group(1)) != len(known), "the planted count was not actually wrong"
+
+    # The flagship check, both halves: the claim must match and the discharge must not.
+    claim = "this reduction reaches the Clay flagship."
+    assert _FLAGSHIP_CLAIM.search(claim) is not None, \
+        "the flagship-claim pattern did not match its own example"
+    assert _FLAGSHIP_SCOPE.search(claim) is None, \
+        "the planted claim was already discharged, so it would not have fired"
+    # and a file that names the audit is NOT flagged, so the check is not a blanket ban
+    discharged = claim + " See `FlagshipScope.flagship_for_bogus` for what that is worth."
+    assert _FLAGSHIP_SCOPE.search(discharged) is not None, \
+        "naming the audit failed to discharge the claim, so the guard would be unsatisfiable"

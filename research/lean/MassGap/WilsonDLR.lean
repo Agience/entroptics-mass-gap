@@ -49,7 +49,18 @@ Uniqueness, translation invariance, and non-degeneracy. The limit is subsequenti
 an ultrafilter refining `atTop` on `Finset ILink`, and nothing here shows the net itself converges,
 nor that the result is independent of the frozen boundary configuration `ω₀`.
 `DLRLimit.not_isPointMass_of_uniform_variance` rules out a point mass only when handed a variance
-floor uniform in the volume, and no such floor exists in this tree.
+floor uniform in the volume.
+
+**Such a floor DOES exist**: `InfiniteVolume.exists_uniform_contact_floor` fixes one `δ₀ > 0` BEFORE
+the aperture with `exp(−128β)·δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
+`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette VARIANCE.
+`ClayNontriviality.clay_nontriviality_of_wilson_variance` composes it with the non-degeneracy
+theorem.
+
+**What is genuinely missing is the BRIDGE between the two volume indexings.** The floor is stated for
+`wilsonCorrAt N β 0` on `WilsonHypercubic.bd (d := 4) (n := N+1)` — a finite PERIODIC lattice indexed
+by an aperture. `specState` is indexed by a `Finset ILink` of `ℤ⁴` with a FROZEN boundary. Relating a
+variance in one indexing to a variance in the other is the open step, and it is not a rewriting.
 
 The DLR equation delivered HERE is tested against CONTINUOUS observables, so `IsGibbsMeasure` is not
 claimed in this file. `GibbsSpec.IsGibbsMeasure` asks for the equation against every bounded

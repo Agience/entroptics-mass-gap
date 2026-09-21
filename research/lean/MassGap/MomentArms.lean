@@ -439,4 +439,221 @@ theorem flagship_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
 
 #print axioms flagship_of_share_envelope
 
+
+/-! ## 5. Only the TAIL is constrained, and a concrete envelope that meets it
+
+§4 asks for the envelope at every `m`. It does not need to.
+`ContactDominance.circ_moment_le_of_tail_envelope` assumes it only from a cut `m₀` upward and pays
+`m₀²` for the near block, which `farShare ≤ 1` caps on its own. **An envelope is always a statement
+about large lags, and the cut may be chosen after the fact** — the near block costs a constant, and a
+constant is all the substrate bound ever wanted.
+
+That lemma is stated for an arbitrary `Moment.Read`, so it ports to `readEven` the same way §4 did.
+
+## The exponent is not a choice
+
+`ContactDominance`'s header derives it: `(2m+1)` is `(m+1)² − m²`, the second moment's own layer
+weight, so a power envelope `C(m+1)^{-s}` has weighted total `∑ (2m+1)C(m+1)^{-s}`, convergent
+exactly when `s > 2`. At `s = 2` it is the harmonic series — and `square_share_is_not_enough` shows
+`s = 2` is not merely out of reach but FALSE, exhibiting reads whose far share stays under
+`(4/3)(m+1)^{-2}` at every aperture and whose moments exceed every bound.
+
+So `s = 3` is the first integer exponent that works, and `flagship_of_cubic_tail_share` runs it: one
+constant `C`, one cut `m₀`, one aperture floor `N₀`, and the Clay flagship — foundational-only.
+-/
+
+/-- **THE SUBSTRATE BOUND FROM A TAIL ENVELOPE, at even apertures.** Strictly weaker than
+`substrate_even_of_share_envelope`: nothing is asked below the cut. -/
+theorem substrate_even_of_tail_envelope (m₀ : ℕ) (a : ℕ → ℝ)
+    (ha0 : ∀ m, 0 ≤ a m)
+    (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp) (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ a m) :
+    ∃ B : ℝ, ∀ (p : MassGap.EvenAperture.EvenAp) (β : ℝ),
+      MassGap.EvenAperture.d2Even p β ≤ B :=
+  ⟨(m₀ : ℝ) ^ 2 + ∑' m : ℕ, (2 * (m : ℝ) + 1) * a m, fun p β =>
+    MassGap.ContactDominance.circ_moment_le_of_tail_envelope
+      (MassGap.EvenAperture.readEven p β) m₀ a ha0 (ha p β) hs⟩
+
+#print axioms substrate_even_of_tail_envelope
+
+/-- **AND ASKED ONLY AT LARGE APERTURES** — §3's weakening, on the tail envelope. -/
+theorem large_aperture_bound_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
+    (ha0 : ∀ m, 0 ≤ a m)
+    (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ a m) :
+    ∃ B : ℝ, ∃ N₁ : ℕ, ∀ (p : MassGap.EvenAperture.EvenAp), N₁ ≤ p.1 → ∀ (β : ℝ),
+      MassGap.EvenAperture.d2Even p β ≤ B :=
+  ⟨(m₀ : ℝ) ^ 2 + ∑' m : ℕ, (2 * (m : ℝ) + 1) * a m, N₀, fun p hp β =>
+    MassGap.ContactDominance.circ_moment_le_of_tail_envelope
+      (MassGap.EvenAperture.readEven p β) m₀ a ha0 (ha p hp β) hs⟩
+
+#print axioms large_aperture_bound_of_tail_envelope
+
+/-- **CONFINEMENT AT AN APERTURE, FROM A TAIL ENVELOPE AT LARGE APERTURES.** -/
+theorem confines_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
+    (ha0 : ∀ m, 0 ≤ a m)
+    (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ a m) :
+    MassGap.ApertureRoute.ConfinesAtAnAperture :=
+  confines_of_large_aperture_bound (large_aperture_bound_of_tail_envelope m₀ a ha0 hs ha)
+
+#print axioms confines_of_tail_envelope
+
+/-- **AND THE CLAY FLAGSHIP.** -/
+theorem flagship_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
+    (ha0 : ∀ m, 0 ≤ a m)
+    (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ a m) :
+    MassGap.ApertureRoute.FlagshipAt (confines_of_tail_envelope m₀ a ha0 hs ha) :=
+  MassGap.ApertureRoute.flagship_of_confinement_at_an_aperture _
+
+#print axioms flagship_of_tail_envelope
+
+/-! ### The cubic instance -/
+
+/-- The cubic envelope's layer-weighted total converges, because `2m+1 ≤ 2(m+1)` turns the cube into
+a square and the squares sum.
+
+DERIVED: `3` is the first integer exponent above the derived threshold `2`; `2` itself is the
+harmonic series and is proved FALSE by `ContactDominance.square_share_is_not_enough`. -/
+theorem summable_cubic_weight {C : ℝ} (hC : 0 ≤ C) :
+    Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (C / ((m : ℝ) + 1) ^ 3)) := by
+  have hnn : ∀ m : ℕ, (0 : ℝ) ≤ C / ((m : ℝ) + 1) ^ 3 :=
+    fun m => div_nonneg hC (by positivity)
+  refine Summable.of_nonneg_of_le
+    (fun m => mul_nonneg (by positivity) (hnn m)) (fun m => ?_)
+    ((MassGap.ContactDominance.summable_inv_succ_sq).mul_left (2 * C))
+  have hne : ((m : ℝ) + 1) ≠ 0 := by positivity
+  have hle : (2 * (m : ℝ) + 1) ≤ 2 * ((m : ℝ) + 1) := by linarith
+  calc (2 * (m : ℝ) + 1) * (C / ((m : ℝ) + 1) ^ 3)
+      ≤ (2 * ((m : ℝ) + 1)) * (C / ((m : ℝ) + 1) ^ 3) :=
+        mul_le_mul_of_nonneg_right hle (hnn m)
+    _ = 2 * C * (1 / ((m : ℝ) + 1) ^ 2) := by
+        field_simp
+
+#print axioms summable_cubic_weight
+
+/-- **THE WEAKEST CONCRETE FORM IN THIS FILE.**
+
+One constant `C`, one cut `m₀`, one aperture floor `N₀`: if the far share is at most
+`C/(m+1)³` beyond the cut, at every coupling, from that aperture onwards, then the Clay flagship
+holds — and the whole chain is `{propext, Classical.choice, Quot.sound}`.
+
+Everything else is discharged: the negative half-line by §2, small extents by §3, small lags by §5.
+
+DERIVED: `3` is `summable_cubic_weight`'s, which is the first integer above the derived threshold. -/
+theorem flagship_of_cubic_tail_share {N₀ m₀ : ℕ} {C : ℝ} (hC : 0 ≤ C)
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m
+        ≤ C / ((m : ℝ) + 1) ^ 3) :
+    MassGap.ApertureRoute.FlagshipAt
+      (confines_of_tail_envelope (N₀ := N₀) m₀ (fun m => C / ((m : ℝ) + 1) ^ 3)
+        (fun m => div_nonneg hC (by positivity)) (summable_cubic_weight hC) ha) :=
+  MassGap.ApertureRoute.flagship_of_confinement_at_an_aperture _
+
+#print axioms flagship_of_cubic_tail_share
+
+
+/-! ## 6. Exponential decay reaches the flagship
+
+§5's envelope is a power, `C(m+1)^{-s}` with `s > 2`. **A mass gap gives something much stronger — a
+GEOMETRIC far share** — and that is the form every other statement of the gap in this workspace takes:
+
+* `entroptics-infer/lean/Infer/Horizon.lean` assumes `z n ≤ M * r ^ n` with `r < 1` and says in so
+  many words that this is "the reading of Yang–Mills in `entroptics-mass-gap`, where the mass gap
+  *is* `‖C(τ)‖ ≤ M e^{−Δτ}` with `Δ > 0`", with `r = e^{−Δ}`.
+* `Forgetting.forgets_of_margin` consumes exactly a margin `r < 1` on the modes.
+* `CertifiedGap.ratio_lt_one_of_certified` produces exactly such an `r` from a numerical band.
+
+So the geometric case deserves its own statement rather than being reached by checking that a
+geometric sequence happens to be dominated by a cubic. `summable_geometric_weight` is the one new
+fact, and `summable_pow_mul_geometric_of_norm_lt_one` supplies it: `(2m+1)r^m` splits into `m r^m`
+and `r^m`, both summable below one.
+
+**What this completes.** The chain now runs
+
+    margin r < 1  ⟹  geometric far share  ⟹  d2Even bounded  ⟹  ConfinesAtAnAperture  ⟹  FlagshipAt
+
+end to end, foundational-only, with the negative half-line discharged, small extents never consulted
+and small lags never consulted. Every step is a theorem; what remains outside it is the measurement
+that the far share really is geometric.
+-/
+
+/-- **A GEOMETRIC ENVELOPE HAS A CONVERGENT LAYER-WEIGHTED TOTAL.** `(2m+1)r^m` is `2·m r^m` plus
+`r^m`, and `summable_pow_mul_geometric_of_norm_lt_one` gives both below one.
+
+DERIVED: the `2` and `1` are the layer weight `(m+1)² − m²`, not chosen constants; `r` is the
+caller's decay factor. -/
+theorem summable_geometric_weight {C r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
+    Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (C * r ^ m)) := by
+  have hnorm : ‖r‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg hr0]
+    exact hr1
+  have h1 : Summable (fun m : ℕ => (m : ℝ) ^ 1 * r ^ m) :=
+    summable_pow_mul_geometric_of_norm_lt_one 1 hnorm
+  have h0 : Summable (fun m : ℕ => (m : ℝ) ^ 0 * r ^ m) :=
+    summable_pow_mul_geometric_of_norm_lt_one 0 hnorm
+  refine ((h1.mul_left (2 * C)).add (h0.mul_left C)).congr (fun m => ?_)
+  ring
+
+#print axioms summable_geometric_weight
+
+/-- **CONFINEMENT FROM A GEOMETRIC FAR SHARE.** The mass gap's own shape — `C·r^m` with `r < 1` —
+beyond a cut, from some aperture onwards. -/
+theorem confines_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ C * r ^ m) :
+    MassGap.ApertureRoute.ConfinesAtAnAperture :=
+  confines_of_tail_envelope (N₀ := N₀) m₀ (fun m => C * r ^ m)
+    (fun m => mul_nonneg hC (pow_nonneg hr0 m)) (summable_geometric_weight hr0 hr1) ha
+
+#print axioms confines_of_geometric_far_share
+
+/-- **AND THE CLAY FLAGSHIP FROM EXPONENTIAL DECAY.**
+
+`‖C(τ)‖ ≤ M e^{−Δτ}` with `Δ > 0`, written as `r = e^{−Δ} < 1` on the far share, delivers
+`ApertureRoute.FlagshipAt` — foundational-only, with the negative half-line discharged, small extents
+never consulted and small lags never consulted.
+
+**This is the statement that joins the instrument to the proof.** A margin is what
+`Forgetting.forgets_iff_margin` characterises, what `CertifiedGap.ratio_lt_one_of_certified` produces
+from a numerical band, and what `entroptics.Dynamics.rates` measures as `α_k = −log|μ_k| > 0`. -/
+theorem flagship_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
+    (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
+      MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m ≤ C * r ^ m) :
+    MassGap.ApertureRoute.FlagshipAt (confines_of_geometric_far_share hC hr0 hr1 ha) :=
+  MassGap.ApertureRoute.flagship_of_confinement_at_an_aperture _
+
+#print axioms flagship_of_geometric_far_share
+
+
+/-! ## ⚠ WHAT `FlagshipAt` IS WORTH, AND IT IS LESS THAN ITS NAME
+
+Every `flagship_of_…` in this file ends at `ApertureRoute.flagship_of_confinement_at_an_aperture`, and
+`MassGap.FlagshipScope` — the tree's own adversarial audit, deliberately not imported — shows what
+that endpoint does and does not say:
+
+* **`flagship_for_bogus`** proves the WHOLE flagship conclusion — mass gap, non-triviality
+  (`μ − κ < 0`), `SO(4)`, and the OS0–OS3 continuum measure — for `bogusWilson`, an object with **no
+  read, no correlation, no gauge group and no lattice in it**, whose tension is the constant `0`.
+* **`gap_summand_is_manufactured`**: the "correlation" the gap clause is about is
+  `exp(−(κ₀ − μ))^τ` — one mode, weight `1`, and **its magnitude DEFINED as its own bound**.
+* **`flagship_measure_half_needs_no_hypothesis`**: the measure half takes no hypothesis at all.
+* **`Q_is_constant_in_the_test_configuration`**: OS1 and OS3 hold because the reflected form is
+  independent of the components those actions move.
+
+**So "reaches the Clay flagship" is not the claim it sounds like.** What carries content in these
+chains is the step BEFORE it — `ApertureRoute.ConfinesAtAnAperture`, which is a statement about
+`cosAvgEven` of `readEven`, hence about the genuine `wilsonCorrAt` at an even aperture. The
+`FlagshipAt` corollaries add the manufactured clauses and nothing else.
+
+Each `confines_of_…` here is therefore the theorem; each `flagship_of_…` is its packaging, kept
+because the packaging is what the assembly consumes, and labelled so it is not mistaken for more.
+-/
 end MassGap.MomentArms

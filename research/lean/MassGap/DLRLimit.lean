@@ -364,9 +364,13 @@ The zero functional is excluded for free: `ν 1 = 1` is a field of `State`, so i
 by construction and is not evidence of anything else. A POINT MASS is not excluded, and cannot be
 without more input, because a limit of point masses is a point mass. What suffices is a uniform
 second-moment gap — one observable whose variance is bounded below along the family, uniformly in the
-volume — and everything below is CONDITIONAL on being handed one. Nothing in this tree supplies it:
-`corrNum_plaqObs_pos` bounds a correlation below at a fixed finite volume, which is neither a
-variance nor uniform in the volume. -/
+volume — and everything below is CONDITIONAL on being handed one. Such a floor IS supplied:
+`InfiniteVolume.exists_uniform_contact_floor` fixes one `δ₀ > 0` BEFORE the aperture with
+`exp(−128β)·δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
+`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette VARIANCE, so it is both a
+variance and uniform in the volume. `ClayNontriviality.clay_nontriviality_of_wilson_variance`
+composes it with the theorem below. What remains open is the BRIDGE between the aperture indexing
+that floor is stated in and the `Finset ILink` indexing used here. -/
 
 /-- **A state is a point mass** when it is evaluation at a single configuration. -/
 def IsPointMass (ν : State X) : Prop := ∃ x : X, ∀ f : C(X, ℝ), ν f = f x

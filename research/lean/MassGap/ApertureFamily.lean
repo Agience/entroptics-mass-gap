@@ -86,6 +86,18 @@ Sections 4 and 6 are new: `forall_exists_aperture_does_not_give_exists_forall` a
 `uniform_gap_of_uniformSurplus` have no antecedent in either file, and the first introduces the
 numerals `2n+3`, `n+2` and `a.1 + 1`, all forced by `EvenAp`'s own `N + 1 = 2m ∧ 2 ≤ m` and derived at
 that declaration. `#print axioms` after every declaration.
+## ⚠ WHAT THE FLAGSHIP IS WORTH
+
+`MassGap.FlagshipScope` — the tree's own adversarial audit, deliberately not imported — measures
+`ApertureRoute.flagship_of_confinement_at_an_aperture`. `flagship_for_bogus` proves the WHOLE
+conclusion (gap, non-triviality, `SO(4)`, OS0–OS3) for an object with **no read, no correlation, no
+gauge group and no lattice in it**, tension the constant `0`; and `gap_summand_is_manufactured` shows
+the gap clause's "correlation" is a one-mode sequence whose magnitude is DEFINED as its own bound.
+
+**So the content sits at `ConfinesAtAnAperture`** — a statement about `cosAvgEven` of `readEven`,
+hence about the genuine `wilsonCorrAt` at an even aperture ≥ 4 — and the `FlagshipAt` step is
+packaging. Every `flagship_…` below should be read that way.
+
 -/
 
 namespace MassGap.ApertureFamily

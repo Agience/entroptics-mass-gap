@@ -10,7 +10,18 @@ on `ymH` that is not the identity — and notes that the Hamiltonian itself want
 > `-log T` needs `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary and not
 > sufficient.
 
-That is right about `-log T`. **This file is about not needing `-log T`.**
+That is right about `-log T`, and it is worth being exact about what follows from it.
+
+**`-log T` is already built in this tree.** `Reconstruction.hamiltonian` is
+`cfc (fun x => -Real.log x) T`, and `Reconstruction.reconstruct_qm_core` gives the whole
+operator-theoretic output — self-adjoint, `H ≥ 0`, vacuum at `0`, `spectrum H ⊆ {0} ∪ [Δ, ∞)` — from
+`spectrum T ⊆ {1} ∪ [ε, e^{−Δ}]` with `0 < ε`, on foundational axioms alone. That spectral
+hypothesis comes from DECAY via `MomentSupport.le_of_positive_weight_decay`.
+
+**So this file is not a workaround for a missing construction.** What it adds is a route that reaches
+exponential CLUSTERING — the physical content — without passing through the spectral theorem at all,
+which is useful because `TransferData` is a bilinear form rather than a Hilbert-space operator and has
+no functional calculus to call.
 
 ## What the mass gap actually says about correlations
 

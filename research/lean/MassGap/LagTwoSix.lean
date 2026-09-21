@@ -398,6 +398,120 @@ theorem confines_of_lagTwoRatioSix (h : LagTwoRatioSix) : ApertureRoute.Confines
   exact ⟨MassGap.ConfinesZero.ap6, fun β =>
     confines_extent_six_of_lag_two_ratio hK (hb (max β 0) (le_max_right β 0))⟩
 
+/-! ## The strong-coupling cut at extent six
+
+`LagTwoBound.exists_cut_lag_two_ratio` proves the lag-two bound on `[0, b]` for EVERY `K > 0` at
+extent four, and `LagTwoEight.exists_cut_lag_two_ratio_eight` does the same at extent eight. **Extent
+six had no such theorem**, and extent six is the extent `LagTwoRatioSix` and
+`ClayAssembly.ClayRemaining.I1_lagTwo` are stated at — so the `[0, b]` half of the obligation the
+Clay assembly actually names was the one half nobody had written down.
+
+The proof is extent-generic: `PlaqVariance.corrClay_zero_pos`, `ContactFloor.corrClay_zero_ge` and
+`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` are stated at every `N`, and the only
+extent-sensitive step is `circLag (2 : Fin 6) = 2`, which `decide` settles. It is therefore the
+extent-eight proof with the extent changed, and nothing else.
+
+**⚠ This does not close the lag-two obligation.** `LagTwoRatioSix` asks for the bound at EVERY
+`β ≥ 0` with a single `K < lagTwoThresholdSix`; this gives every `K > 0` on a cut interval `[0, b]`
+whose `b` depends on `K` and shrinks as `K` does. The open part is `β > b`, exactly as at the other
+two extents.
+-/
+
+theorem circLag_two_six : Moment.circLag (2 : Fin (5 + 1)) = 2 := by decide
+
+/-- **THE STRONG-COUPLING CUT AT EXTENT SIX.** For EVERY `K > 0` there is an interval `[0, b]` on
+which the extent-six lag-two ratio is under `K`.
+
+The transcription of `LagTwoBound.exists_cut_lag_two_ratio` at `N = 5`. The numerator is
+`corrClay_abs_le_coreConst_mul_rate_pow` at `k = 1`, admissible because `circLag 2 = 2` at extent
+six as at extent four — that is `circLag_two_six` above; the denominator is `ContactFloor.corrClay_zero_ge`'s
+`e^{−128β}·ρ(0)|₀ ≤ ρ(0)`. No numeral is named for `b`, and none could be: `ρ(0)|₀` enters through
+`PlaqVariance.corrClay_zero_pos`, which is non-constructive.
+
+DERIVED: `16 * 4` is `StrongCoupling`'s touch degree at `dim = 4`, `128 = 2·64` is
+`ContactFloor.corrClay_zero_ge`'s own exponent, `1` is the power `k` admitted by `circLag 2 = 2`, and
+`2`, `0` are lag indices. Nothing is chosen. -/
+theorem exists_cut_lag_two_ratio_six (K : ℝ) (hK : 0 < K) :
+    ∃ b : ℝ, 0 < b ∧ ∀ β : ℝ, 0 ≤ β → β ≤ b →
+      MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0 := by
+  obtain ⟨b₀, hb₀, hr₀⟩ := MassGap.StrongArm.exists_strong_arm_cut
+  set A : ℝ := MassGap.StrongCoupling.coreConst (16 * 4) b₀ with hAdef
+  have hA128 : (128 : ℝ) ≤ A := by
+    rw [hAdef]; exact MassGap.LagTwoBound.le_coreConst (16 * 4) hb₀.le hr₀
+  have hA0 : 0 < A := by linarith
+  set D : ℝ := MassGap.WilsonBridge.corrClay (5 + 1) 0 0 with hDdef
+  have hD0 : 0 < D := by rw [hDdef]; exact MassGap.PlaqVariance.corrClay_zero_pos 5 0
+  have hcont : Continuous
+      (fun β : ℝ => A * (MassGap.StrongCoupling.coreRate (16 * 4) β * Real.exp (128 * β))) := by
+    have h1 : Continuous (fun β : ℝ => Real.exp (128 * β)) :=
+      Real.continuous_exp.comp (continuous_const.mul continuous_id)
+    exact continuous_const.mul ((MassGap.StrongCoupling.continuous_coreRate (16 * 4)).mul h1)
+  have hzero : A * (MassGap.StrongCoupling.coreRate (16 * 4) 0 * Real.exp (128 * 0)) < K * D := by
+    rw [MassGap.StrongCoupling.coreRate_at_zero]
+    have hz : A * (0 * Real.exp (128 * 0)) = 0 := by ring
+    rw [hz]
+    exact mul_pos hK hD0
+  have hev : ∀ᶠ x in nhds (0 : ℝ),
+      A * (MassGap.StrongCoupling.coreRate (16 * 4) x * Real.exp (128 * x)) < K * D :=
+    hcont.continuousAt.eventually_lt_const hzero
+  rw [Metric.eventually_nhds_iff] at hev
+  obtain ⟨ε, hε, hball⟩ := hev
+  refine ⟨min b₀ (ε / 2), lt_min hb₀ (by linarith), ?_⟩
+  intro β hβ0 hβb
+  have hβb₀ : β ≤ b₀ := le_trans hβb (min_le_left _ _)
+  have hβε : β < ε := lt_of_le_of_lt (le_trans hβb (min_le_right _ _)) (by linarith)
+  have hf : A * (MassGap.StrongCoupling.coreRate (16 * 4) β * Real.exp (128 * β)) < K * D := by
+    refine hball ?_
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg hβ0]
+    exact hβε
+  have hrβ : MassGap.StrongCoupling.coreRate (16 * 4) β
+      ≤ MassGap.StrongCoupling.coreRate (16 * 4) b₀ :=
+    MassGap.StrongArm.coreRate_mono_beta (16 * 4) hβ0 hβb₀
+  have hrβ1 : MassGap.StrongCoupling.coreRate (16 * 4) β < 1 := lt_of_le_of_lt hrβ hr₀
+  have hrnn : (0 : ℝ) ≤ MassGap.StrongCoupling.coreRate (16 * 4) β :=
+    MassGap.StrongCoupling.coreRate_nonneg (16 * 4) hβ0
+  have hAβ : MassGap.StrongCoupling.coreConst (16 * 4) β ≤ A := by
+    rw [hAdef]; exact MassGap.StrongArm.coreConst_mono_beta (16 * 4) hβ0 hβb₀ hr₀
+  have hbnd := MassGap.StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow 5 hβ0 hrβ1
+    (2 : Fin (5 + 1)) 1 (by rw [circLag_two_six]; norm_num)
+  have hstep : MassGap.wilsonCorrAt 5 β 2 ≤ A * MassGap.StrongCoupling.coreRate (16 * 4) β := by
+    rw [MassGap.StrongArm.wilsonCorrAt_eq_corrClay]
+    calc MassGap.WilsonBridge.corrClay (5 + 1) β 2
+        ≤ |MassGap.WilsonBridge.corrClay (5 + 1) β 2| := le_abs_self _
+      _ ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
+            * MassGap.StrongCoupling.coreRate (16 * 4) β ^ 1 := hbnd
+      _ = MassGap.StrongCoupling.coreConst (16 * 4) β
+            * MassGap.StrongCoupling.coreRate (16 * 4) β := by ring
+      _ ≤ A * MassGap.StrongCoupling.coreRate (16 * 4) β := mul_le_mul_of_nonneg_right hAβ hrnn
+  have hfloor : Real.exp (-(128 * β)) * D ≤ MassGap.wilsonCorrAt 5 β 0 := by
+    rw [MassGap.StrongArm.wilsonCorrAt_eq_corrClay, hDdef]
+    exact MassGap.ContactFloor.corrClay_zero_ge 5 hβ0
+  have hcancel : Real.exp (128 * β) * Real.exp (-(128 * β)) = 1 := by
+    rw [← Real.exp_add]; simp
+  have hkey : A * MassGap.StrongCoupling.coreRate (16 * 4) β
+      ≤ K * (Real.exp (-(128 * β)) * D) := by
+    have hmul : (A * (MassGap.StrongCoupling.coreRate (16 * 4) β * Real.exp (128 * β)))
+          * Real.exp (-(128 * β))
+        ≤ (K * D) * Real.exp (-(128 * β)) :=
+      mul_le_mul_of_nonneg_right hf.le (Real.exp_pos _).le
+    have hlhs : (A * (MassGap.StrongCoupling.coreRate (16 * 4) β * Real.exp (128 * β)))
+          * Real.exp (-(128 * β))
+        = A * MassGap.StrongCoupling.coreRate (16 * 4) β := by
+      calc (A * (MassGap.StrongCoupling.coreRate (16 * 4) β * Real.exp (128 * β)))
+              * Real.exp (-(128 * β))
+          = A * MassGap.StrongCoupling.coreRate (16 * 4) β
+              * (Real.exp (128 * β) * Real.exp (-(128 * β))) := by ring
+        _ = A * MassGap.StrongCoupling.coreRate (16 * 4) β := by rw [hcancel, mul_one]
+    have hrhs : (K * D) * Real.exp (-(128 * β)) = K * (Real.exp (-(128 * β)) * D) := by ring
+    linarith [hmul, hlhs.symm.le, hlhs.le, hrhs.le, hrhs.symm.le]
+  calc MassGap.wilsonCorrAt 5 β 2
+      ≤ A * MassGap.StrongCoupling.coreRate (16 * 4) β := hstep
+    _ ≤ K * (Real.exp (-(128 * β)) * D) := hkey
+    _ ≤ K * MassGap.wilsonCorrAt 5 β 0 := mul_le_mul_of_nonneg_left hfloor hK.le
+
+#print axioms circLag_two_six
+#print axioms exists_cut_lag_two_ratio_six
+
 /-- **A CONSTANT ADMISSIBLE AT EXTENT FOUR IS ADMISSIBLE AT EXTENT SIX.** The direction check on
 `lagTwoThreshold_lt_lagTwoThresholdSix`: the relief cannot be pointing the wrong way, because the
 extent-four admissible set is contained in the extent-six one. -/

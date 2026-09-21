@@ -78,24 +78,29 @@ for all LARGE ENOUGH `N`. That theorem would be pointless if the criterion reall
 every extent.
 
 **`Moment.lean` postulates that `⟨d²⟩` is the substrate-intrinsic one**, and says so in prose rather
-than as an `axiom` precisely so it can be rejected. **The tree's own SU(3) aperture scan
-(`research/data/9_1_dat_d2_su3.csv`) bears on it, and refutes the other reading.** At the two
-couplings measured at both extents:
+than as an `axiom` precisely so it can be rejected. The tree's own SU(3) aperture scan
+(`research/data/9_1_dat_d2_su3.csv`) measures it at the two couplings available at both extents:
 
-    β = 5.50:  d2(L=6) = 0.23023 ± 0.02138,  d2(L=8) = 0.23089 ± 0.01545
-    β = 6.00:  d2(L=6) = 0.13835 ± 0.01765,  d2(L=8) = 0.14936 ± 0.00974
+    β = 5.50:  d2(L=6) = 0.23023 ± 0.02138,  d2(L=8) = 0.23089 ± 0.01545   (agree to 0.3%)
+    β = 6.00:  d2(L=6) = 0.13835 ± 0.01765,  d2(L=8) = 0.14936 ± 0.00974   (0.55σ)
 
-Ratio-stability predicts `d2(L=8) = d2(L=6)·64/36`, i.e. `0.40930` and `0.24596`. **The central values
-are a factor `1.78` away from that and agree with each other instead** — to `0.3%` at `β = 5.50`. The
-quoted errors make that `11.5σ` and `9.9σ`, but the refutation does not rest on them: within-run
-errors in this effort have been out by `13×` and `40×`, and a factor of `1.78` in a CENTRAL value
-survives any plausible inflation.
+**At fixed coupling the moment is flat in the aperture**, so `substrateRatio = d2/(N+1)²` FALLS like
+`(N+1)^{-2}` and a bigger aperture is easier IN FACT. That is what
+`Complete.confinement_of_bounded_substrate` exploits, and it is why that theorem — confinement for all
+LARGE ENOUGH `N` — is not vacuous.
 
-**So the sentence to strike is "a bigger aperture is easier is wrong here."** It is right here,
-under `Moment.lean`'s postulate, and the data does not refute that postulate — `d2` flat across the
-two extents sits at `0.03σ` and `0.55σ`. Two matched couplings is a thin test and the standing rule
-is that data may REFUTE a derived reading and never establish one; what it has done is refute one of
-the two readings, leaving the other standing rather than proved.
+⚠ **AN EARLIER VERSION OF THIS NOTE CLAIMED THE DATA REFUTES THE RATIO READING AT `11.5σ`. IT DOES
+NOT, AND THE CLAIM IS WITHDRAWN.** The ratio form is an UPPER BOUND — `Complete.confinement_of_growth_bound`
+is explicit that the moment "may grow like `c·(N+1)²`", and is "the weakest hypothesis the aperture
+argument consumes". A FLAT moment satisfies that bound comfortably; it does not contradict it. The
+`11.5σ` was computed against `d2(L=8) = d2(L=6)·64/36` read as a PREDICTION OF EQUALITY, which the
+hypothesis never makes.
+
+**And the ratio form is the weaker one for a reason the fixed-coupling data cannot see.** `PAPER.md`
+§13: *"Measured in lattice units a correlation length diverges as the spacing goes to zero, so a
+hypothesis demanding a strictly bounded lattice moment would ask for more than a continuum limit
+supplies."* The growth the ratio form allows is for the CONTINUUM limit, where `β` and `L` move
+together — not for the fixed-`β` aperture scan measured above.
 
 **The bar, at every extent.** The unconditional bound is `substrateRatio ≤ 1/4`
 (`Substrate.substrateRatio_le_quarter`, attained by `antipodeRead`, so it is the best constant the

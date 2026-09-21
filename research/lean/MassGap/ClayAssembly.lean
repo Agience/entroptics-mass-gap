@@ -21,8 +21,8 @@ already proves, is the Clay statement; there is no term of it, and each field na
 is not enough: `flagship_for_bogus` discharges the ENTIRE flagship conjunction for `bogusYM`, whose
 tension is the constant zero and which contains no read, no correlation, no lattice and no gauge
 group. A conditional whose conclusion a fabricated object satisfies measures nothing. So every field
-below is stated against `wilsonCorrAt` / `GNSHilbert.ymH` / the Wilson Gibbs measure by name, and
-`remaining_is_not_vacuous` records the guards that make each one bite.
+below is stated against `wilsonCorrAt` / `GNSHilbert.ymH` / the Wilson Gibbs measure by name, which
+is what keeps a fabricated witness out: `bogusYM` has no `wilsonCorrAt` in it to satisfy `I1` with.
 
 ## The four open inputs, and they are NOT independent
 
@@ -187,6 +187,61 @@ structure ClayRemaining where
 
 #print axioms ClayRemaining
 #print axioms TransferMovesSomething
+
+/-! ## ⭐ The consumer
+
+`ClayRemaining` typed what is open and nothing took it anywhere, so that these are the remaining
+inputs was prose beside a structure. The arrow below is the check.
+-/
+
+/-- **`I1_lagTwo` IS `LagTwoSix.LagTwoRatioSix`**, carrying a `0 < K` conjunct the ratio route never
+reads.
+
+DERIVED: `5` is the aperture index of extent six (`N + 1 = 6`); `2` and `0` are lag indices. -/
+theorem lagTwoRatioSix_of_clayRemaining (R : ClayRemaining) :
+    MassGap.LagTwoSix.LagTwoRatioSix := by
+  obtain ⟨K, _hK0, hKlt, hbound⟩ := R.I1_lagTwo
+  exact ⟨K, hKlt, hbound⟩
+
+#print axioms lagTwoRatioSix_of_clayRemaining
+
+/-- **⭐ THE REMAINING INPUT REACHES THE TREE'S FINISH LINE — AND ONE FIELD DOES IT.**
+
+`ApertureRoute.FlagshipAt` is a pure function of `ApertureRoute.ConfinesAtAnAperture`, and
+`LagTwoSix.confines_of_lagTwoRatioSix` takes the extent-six lag-two ratio straight to it. So this
+destructures `I1_lagTwo` alone. **`I2_clustering` still has no consumer anywhere in the tree**, and
+this does not give it one: `I2` is a ROUTE to `I1` rather than a second requirement for THIS
+conclusion, and § above records that its stated form is not the bound the moment weights need.
+
+**⚠ IT CARRIES THE NAMED AXIOM, AND SO DOES THE THEOREM ABOVE IT.** `#print axioms` reports
+`Complete.wilson_reflection_positive_at` on both, inherited from `ClayRemaining` itself — the
+structure's `I2_clustering` field is stated on `Complete.d2At` at EVERY aperture, and `d2At` at
+general `N` routes through the axiom, as § *The footprint* above records.
+
+So this is **not** a path to the flagship that avoids the axiom, even though the extent-six reduction
+it runs through — `LagTwoSix.confines_extent_six_of_lag_two_ratio` — is itself foundational-only,
+spending the PROVED `Complete.wilson_reflection_positive_at_even 5 3`. The axiom enters through the
+STRUCTURE, not through the route: a caller who has `LagTwoSix.LagTwoRatioSix` in hand and uses
+`confines_of_lagTwoRatioSix` directly reaches the same conclusion without it.
+
+**⚠ AND THE CONCLUSION IS SMALLER THAN ITS NAME.** `FlagshipScope` proves `FlagshipAt` reduces to
+`μ < κ₀` and nothing else: `gap_summand_is_manufactured` shows the gap clause's sum IS
+`exp(−(κ₀ − μ))^τ`, one mode whose magnitude is defined as its own bound, and
+`flagship_for_bogus` discharges the whole conjunction for an object with no gauge content. In
+particular the clauses NAMED non-triviality and continuum measure inside `FlagshipAt` are **not**
+Clay's C4 and C2 — no row of the Clay table is a consequence of `I1`.
+
+**⚠ And `I1_lagTwo` is open.** `LagTwoSix.exists_cut_lag_two_ratio_six` gives the bound on a cut
+`[0, b]` for every `K > 0`; `I1` asks a single `K < lagTwoThresholdSix` at every `β ≥ 0`. The open
+part is `β > b`.
+
+DERIVED: no numeral of its own. -/
+theorem flagship_of_clayRemaining (R : ClayRemaining) :
+    MassGap.ApertureRoute.FlagshipAt
+      (MassGap.LagTwoSix.confines_of_lagTwoRatioSix (lagTwoRatioSix_of_clayRemaining R)) :=
+  MassGap.ApertureRoute.flagship_of_confinement_at_an_aperture _
+
+#print axioms flagship_of_clayRemaining
 
 /-- **`I3` IS NOT A FIELD, BECAUSE THE OBVIOUS STATEMENT OF IT IS VACUOUS — and here is the proof.**
 

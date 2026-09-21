@@ -91,8 +91,10 @@ It does not finish the construction, and the missing piece is structural rather 
 `TransferData` needs `T : A →ₗ[ℝ] A`, a time translation that is an ENDOMORPHISM of the algebra. One
 lattice step along `τ` sends a transverse link at level `m` — which is in `blkR`, inside the algebra
 — to level `m + 1`, which is in `blkT` and outside it. So the one-step shift does not map
-`localObs (blkS τ a m) (blkR τ a m)` into itself, and `T_symm`, `T_contract` and `T_vac` cannot even
-be stated on this module. That is point 2 above: a slab of width `m` is not a half-line, and a
+`localObs (blkS τ a m) (blkR τ a m)` into itself, and all three of `T_symm`, `T_contract` and `T_vac` ARE
+stated on exactly this module — `OSPositivity.shiftSlab` and `OSPositivity.wilsonSlabTransfer` do
+so, with `T_symm` and `T_vac` PROVED and only `SlabShiftContractive` carried — at the price of the
+premise `SlabShiftStable`, which is what the shift's failure to be an endomorphism costs. That is point 2 above: a slab of width `m` is not a half-line, and a
 transfer operator wants a half-line.
 
 Foundational footprint only (`#print axioms` at the end).

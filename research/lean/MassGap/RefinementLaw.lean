@@ -53,7 +53,7 @@ whole of the refinement law can be proved of the ACTUAL reconstructed dynamics, 
 
 ## The remaining physical input, named exactly
 
-**No transfer operator is constructed from the Wilson measure anywhere in this tree.**
+**A transfer operator IS constructed from the Wilson measure**: `OSPositivity.wilsonSlabTransfer` produces a `Transfer.TransferData` on the slab algebra, with `T_symm` (`WilsonTransfer.reflForm_shiftObs_symm`) and `T_vac` PROVED and only two premises carried, `SlabShiftStable` and `SlabShiftContractive`. What follows is about the REFINEMENT law, not about the existence of an operator.
 `Transfer.TransferData` (`Transfer.lean:445`) is the structure that would carry one — the `ReflForm`
 parent plus a step map `T`, a vacuum, `T_symm`, `T_contract`, `T_vac` and `vac_norm` — and no
 declaration produces a term of it. Every occurrence outside `Transfer.lean` CONSUMES one as a
@@ -81,9 +81,11 @@ STRUCTURAL, not merely unproved. `T` must be an endomorphism of
 transverse links strictly between them, and `blkT` everything transverse with `m < lv`. One step
 along `τ` carries a transverse link at level `m` to level `m + 1`, which is in `blkT` and in neither
 of the other two. The reflection's "half-space" on a periodic lattice is a SLAB of width `m` capped
-by the mirror plane, and a transfer operator wants a half-line. No shift operator on the observable
-module exists in the tree — `WilsonHypercubic.shift` and `AreaLaw.shiftN` act on SITES, not on
-`localObs` — so this is a reading of the definitions and not yet a Lean theorem either way.
+by the mirror plane, and a transfer operator wants a half-line. A shift operator on the observable module DOES
+exist: `WilsonTransfer.shiftObs` is a linear endomorphism of the observables, and
+`OSPositivity.shiftSlab` restricts it to `localObs (blkS τ a m) (blkR τ a m)` on the premise
+`OSPositivity.SlabShiftStable`. What is a reading of the definitions rather than a Lean theorem is
+only that the shift fails to be an endomorphism WITHOUT that premise.
 
 What this file therefore needs, stated as a request rather than built here:
 

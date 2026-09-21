@@ -22,17 +22,34 @@ in Chain B is different from what the tree says it is.
 
 ## ⛔ Why that is an obstruction and not a to-do
 
-A compact operator on an infinite-dimensional space is never invertible — `1 = T ∘ T⁻¹` would be
-compact, and Riesz forbids a compact identity. Both premises are the standard description of the
-Euclidean transfer operator of a lattice gauge theory with compact structure group: `T = e^{-H}` has
-energies unbounded above, so its spectrum accumulates at `0`; and `T` acts on `L²` of the gauge field
-on one time slice — infinite-dimensional — through a continuous kernel on a compact manifold, hence
-is trace class and a fortiori compact.
+The structure is sharper than "not invertible", and it is standard.
 
-**⚠ NONE OF THAT PARAGRAPH IS FORMALISED, HERE OR ANYWHERE IN THIS TREE.** It is cited, not proved,
-and this module claims only the implication below that would turn it into an obstruction:
-`isUnit_of_spectral_hypothesis`. The gap between the two is the work, and naming it is the point of
-the module.
+* **`T` is self-adjoint and STRICTLY positive** — M. Lüscher, *Construction of a selfadjoint,
+  strictly positive transfer matrix for Euclidean lattice gauge theories*, Comm. Math. Phys. **54**
+  (1977) 283. Strict positivity says `0` is not an EIGENVALUE, which is what makes `-log T` a
+  well-defined self-adjoint operator at all. Reflection positivity and the positive self-adjoint
+  transfer matrix: K. Osterwalder and E. Seiler, Ann. Phys. **110** (1978) 440; the monograph is
+  E. Seiler, *Gauge Theories as a Problem of Constructive Quantum Field Theory and Statistical
+  Mechanics*, Lect. Notes in Physics **159**, Springer (1982).
+* **But `0` is in the SPECTRUM.** On a finite spatial lattice with a CONTINUOUS compact group the
+  physical space is the gauge-invariant part of `L²(G^E)`, which is infinite-dimensional, and `T`
+  has a smooth kernel on a compact manifold, hence is trace class. Its eigenvalues accumulate at `0`,
+  so `0` lies in the spectrum as approximate point spectrum.
+
+So `T` is **injective with dense range and an unbounded inverse** — not boundedly invertible — and
+`H = -log T` is unbounded above, as the Kogut–Susskind electric energy `∑ E²` independently forces.
+`isUnit_of_spectral_hypothesis` asks for exactly the property `T` lacks.
+
+**⚠ THE PARAGRAPH ABOVE IS CITED, NOT FORMALISED — here or anywhere in this tree.** A reference is
+not a proof, and this module claims only the implication it proves. The gap between the two is the
+work, and naming it is the point of the module.
+
+**⛔ AND THE EXCEPTION IS INSTRUCTIVE.** For a FINITE gauge group on a finite lattice the physical
+space is finite-dimensional and `T` IS invertible, so the obstruction comes from the CONTINUITY of
+the group, not from the lattice. That is the same place the physics divides: 4-D theories with
+finite abelian gauge groups are known not to confine at large coupling (Guth 1980;
+Fröhlich–Spencer, Comm. Math. Phys. **83** (1982) 411; Kotecký–Shlosman 1982), so an argument that
+is blind to the group would be proving something false there.
 
 ## What this does and does not close
 
@@ -42,7 +59,7 @@ operators with a LARGEST energy `-log ε`, and that reaching the Clay conclusion
 needs either a different endpoint, stated for an unbounded `H` on a dense domain, or a route that
 restricts to a spectral subspace on which `T` is bounded below.
 
-`hamiltonian_spectrum_le_of_spectral_hypothesis` is the same fact from the energy side: under the
+`energies_bounded_of_spectral_hypothesis` is the same fact from the energy side: under the
 hypothesis the reconstructed `H` has no spectrum above `-log ε`.
 -/
 

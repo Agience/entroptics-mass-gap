@@ -7,8 +7,14 @@ import MassGap.Certify
 A1 reduces to the junction `κ − μ ≤ c`, equivalently `ρ'(1) < 1` (Dobrushin–Shlosman complete analyticity;
 notes §8–§9). Reflection positivity makes the Euclidean-time transfer operator self-adjoint (reversible), so
 the single-cut maximal correlation equals the dominant sub-vacuum eigenvalue, `ρ'(1) = m_hi`, and
-`ρ'(n) = ρ'(1)^n` **exactly**: one cut controls every separation and every volume, so `ρ'(1) < 1` gives the
-uniform-in-volume gap for free — no separate intensive-margin companion.
+`ρ'(n) = ρ'(1)^n` **exactly**: one cut controls every SEPARATION.
+
+**⛔ IT DOES NOT CONTROL THE VOLUME.** `ρ'(n) = ρ'(1)^n` is a statement about `n` time-cuts, and
+`gap_of_maximal_correlation` below is a statement about ONE sequence `σ : ℕ → ℝ` dominated by a
+geometric one. No volume index occurs in it, or anywhere in this module. Carrying `ρ'(1)` from one
+volume to another is a SEPARATE statement — the intensive bound `∀ F, m_hi(F) ≤ r`, which
+`Certify.gap_uniform_in_volume_of_intensive` takes as a premise and nothing in the tree supplies.
+Reflection positivity buys the time direction; the spatial direction is untouched by it.
 
 This module implements the two Lean pieces of the resolution plan (§9):
 * **S1** — `ρ'(1) < 1 ⇒ the correlator forgets` (`gap_of_maximal_correlation`);

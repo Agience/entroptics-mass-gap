@@ -6,7 +6,7 @@ import MassGap.CubeArea
 /-!
 # MassGap.VortexCount — the count-injection at the Floor-EXACT constant (dynamical face, brick 3 / B)
 
-`Condensation.junction_of_scale_duality` closes the entropy-bound half of the self-sourcing junction
+`Capacity.junction_of_scale_duality` closes the entropy-bound half of the self-sourcing junction
 (`κ₀−μ ≤ c`) from a hypothesis `hZ : vortexTerm μ n ≤ Z n` with `vortexTerm μ n = 3ⁿ·e^{−μ(4n+2)}`. But
 the PROVED Floor count is `directed_surface_count : #{directed cube surfaces} = 3ᵏ` at area
 `A = 4(k+1)+2 = 4k+6` — i.e. `3^{n−1}` at area `4n+2`, a factor of 3 below `vortexTerm`'s `3ⁿ`. So `hZ`

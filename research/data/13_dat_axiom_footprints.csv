@@ -947,6 +947,13 @@ MassGap.FreeFieldLagTwoSix.lagPhase6,propext,1
 MassGap.FreeFieldLagTwoSix.lagTwoConstantSix,Classical.choice Quot.sound propext,3
 MassGap.FreeFieldLagTwoSix.lagTwoConstantSix_lt_threshold,Classical.choice Quot.sound propext,3
 MassGap.FreeFieldLagTwoSix.zero_momentum_term_vanishes6,propext,1
+MassGap.GNSCompare.coe_ofPair_eq_zero_iff,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.inner_coe_ofPair,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.intertwines,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.norm_coe_ofPair,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.opT_coe_ofPair,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.toH,Classical.choice Quot.sound propext,3
+MassGap.GNSCompare.toH_vac,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.H,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.Omega,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.Omega_ne_zero,Classical.choice Quot.sound propext,3
@@ -985,6 +992,21 @@ MassGap.GNSHilbert.ymOmega_ne_zero,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.ymOmega_norm,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.ym_inner_eq_osPairing,Classical.choice Quot.sound propext,3
 MassGap.GNSHilbert.ym_target_discharged_trivially,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.bound_is_free_of_one_le,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.clustering_opT,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.clustering_opT_general,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.forgets_at_one_rate,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.inner_vacPre_im,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.inner_vacPre_re,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.inner_vacPre_self,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.norm_cT_le_of_orth,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.norm_opT_le_of_orth,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.norm_opT_pow_le,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.opT_pow_Omega,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.orth_components,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.orth_invariant_opT,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.tendsto_zero_of_intensive_radius,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.vacPre,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.card_circLag_fiber_le_two,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.confines_of_countable_spectral,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.confines_of_geometric_profile,Classical.choice Quot.sound propext,3

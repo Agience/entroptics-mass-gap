@@ -55,9 +55,10 @@ whole of the refinement law can be proved of the ACTUAL reconstructed dynamics, 
 
 **A transfer operator IS constructed from the Wilson measure**: `OSPositivity.wilsonSlabTransfer` produces a `Transfer.TransferData` on the slab algebra, with `T_symm` (`WilsonTransfer.reflForm_shiftObs_symm`) and `T_vac` PROVED and only two premises carried, `SlabShiftStable` and `SlabShiftContractive`. What follows is about the REFINEMENT law, not about the existence of an operator.
 `Transfer.TransferData` (`Transfer.lean:445`) is the structure that would carry one — the `ReflForm`
-parent plus a step map `T`, a vacuum, `T_symm`, `T_contract`, `T_vac` and `vac_norm` — and no
-declaration produces a term of it. Every occurrence outside `Transfer.lean` CONSUMES one as a
-hypothesis: `VolumeRate.rp_sub_geometric` (`VolumeRate.lean:380`) and `rp_gap_of_one_cut` (`:395`)
+parent plus a step map `T`, a vacuum, `T_symm`, `T_contract`, `T_vac` and `vac_norm` — and it has
+producers: `OSPositivity.wilsonSlabTransfer` above, and `WilsonState.wilsonTransferData` on the
+infinite-volume half-space algebra, the latter given three facts about the state that are supplied
+nowhere. Most other occurrences CONSUME one as a hypothesis: `VolumeRate.rp_sub_geometric` (`VolumeRate.lean:380`) and `rp_gap_of_one_cut` (`:395`)
 derive the geometric decay law on the vacuum-orthogonal subspace from a GIVEN `D : TransferData A`.
 
 **Which `ReflForm` to build it on, and why not the other one.** Two are built from the Wilson

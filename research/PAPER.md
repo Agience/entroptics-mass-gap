@@ -82,7 +82,7 @@ asserted about the spectrum. Both carry the three foundational axioms and nothin
 on every compact interval by finite-volume analyticity and a finite grid; its interval-arithmetic enclosure is
 certified in exact rationals at all couplings, with the Lean port of that certificate covering the truncated
 cells at every coupling and the strong-coupling window in general. The architecture is a reduction to an external law — asymptotic freedom
-above the entropy floor, an established theorem — with the gap bounded below by the entropy surplus, $\Delta\ge\kappa_0-\mu>0$, certified for the finite-aperture witness. Reflection positivity makes the transfer operator self-adjoint, giving $\rho'(n)=\rho'(1)^n$, so a single-cut magnitude $\rho'(1)<1$ carries the gap uniform in volume; the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$), and the forward read $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ plateaus at $\approx0.33<3^{-1/4}$ across the scaling window $L=12$–$28$.
+above the entropy floor, an established theorem — with the gap bounded below by the entropy surplus, $\Delta\ge\kappa_0-\mu>0$, certified for the finite-aperture witness. Reflection positivity makes the transfer operator self-adjoint, giving $\rho'(n)=\rho'(1)^n$, so a single-cut magnitude $\rho'(1)<1$ carries the gap uniform in SEPARATION; the single-plaquette gap $\ge\kappa_0$ gives $\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$ at $V{=}1$. The carry to infinite VOLUME is a separate statement, $\forall F,\ m_{\mathrm{hi}}(F)\le3^{-1/4}$, and it is supplied here by measurement rather than proof: the forward read $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ plateaus at $\approx0.33<3^{-1/4}$ across the scaling window $L=12$–$28$.
 The read layer that turns a configuration into these quantities is developed in the companion paper [E].
 
 ---
@@ -1452,8 +1452,10 @@ $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ is $0.31$–$0.37$ across the scaling window $L
 
 The finite-aperture condition is a theorem. Reflection positivity makes the Euclidean-time transfer operator
 self-adjoint, giving $\rho'(n)=\rho'(1)^n$: a single-cut magnitude $\rho'(1)<1$ carries the gap uniform in volume
-(machine-checked, §13). The single-plaquette gap $\ge\kappa_0$ gives
-$\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}=e^{-\kappa_0}$ at $V{=}1$. The forward
+(machine-checked, §13) — uniform in SEPARATION, which is what
+$\rho'(n)=\rho'(1)^n$ states. The single-plaquette gap $\ge\kappa_0$ gives
+$\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}=e^{-\kappa_0}$ at $V{=}1$; carrying that value to volume $F$
+is the open intensive bound, not a consequence of reflection positivity. The forward
 read $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ plateaus at $0.31$–$0.37$ across the scaling window $L=12$–$28$ (mean $\approx0.33$); the $L=8$ ($0.79\pm1.08$, unresolved) and $L=32$ ($0.41\pm0.02$) endpoints lie outside the window and are excluded from the plateau (Figure 14).
 
 The value at each $L$ is read on the action density, whose operator dependence §8.7b measures. The

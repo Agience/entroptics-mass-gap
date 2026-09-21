@@ -28,10 +28,18 @@ operator form. Nothing here proves either, and nothing in the tree does. What ch
 gap: C1's remainder was "there is no bridge at all"; it is now "the bridge is there and the spectral
 input is open", which is the same obligation the rest of the development already names.
 
-**And it says nothing about which `D`.** The only `TransferData` instances the tree carries are
-`GNSHilbert.trivialTransfer` (whose `T` is the identity) and the slab ones, whose surviving premise
-`SlabShiftStable` forces the identity too. At the identity the spectrum is `{1}` and `hsp` fails for
-every `ε`, `Δ` — correctly, since a trivial operator has no gap.
+**And it says nothing about which `D`.** The instances the tree carries are
+`GNSHilbert.trivialTransfer` (whose `T` is the identity), the slab ones, whose surviving premise
+`SlabShiftStable` forces the identity too, and `WilsonState.wilsonTransferData`, which is the
+infinite-volume one and rests on three facts about the state that nothing supplies. At the identity
+the spectrum is `{1}` and `hsp` fails for every `ε`, `Δ` — correctly, since a trivial operator has
+no gap.
+
+**⛔ AND `hsp` IS NOT A HYPOTHESIS THE PHYSICAL OPERATOR CAN MEET.**
+`TransferInvertibility.isUnit_of_spectral_hypothesis` shows `0 < ε` with this `hsp` is exactly
+`IsUnit T`, so this endpoint asks the transfer operator to be invertible.
+`GapToOperator.norm_opT_le_of_orth` is the alternative: the same decay conclusion from
+`TransferGap.GapAt`, with no spectrum, no logarithm and no invertibility.
 -/
 
 namespace MassGap.OpTBridge

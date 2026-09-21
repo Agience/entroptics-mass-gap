@@ -54,7 +54,7 @@ As at extent four, the bound starts at `B`. `MiddleIntervalLagTwoSix` names the 
 `confines_of_arms_six` assembles the two through `LagTwoSix.confines_of_lagTwoRatioSix`.
 
 Foundational footprint on every declaration (`#print axioms`, §5).
-The module is NOT in the library root's import list.
+The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python research/code/lean_build.py build MassGap.FreeFieldLagTwoSix`.
 Numerals produced and cross-checked by `research/code/certify/free_field_lag_two_ratio.py`.
 -/

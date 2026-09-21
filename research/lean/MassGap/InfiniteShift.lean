@@ -70,6 +70,31 @@ variable {G : Type} [TopologicalSpace G]
 DERIVED: no numeral of its own — the step is `InfiniteLattice.ishift`'s. -/
 def ishiftLink (μ : Fin 4) (l : ILink) : ILink := (l.1, ishift μ l.2)
 
+/-- Shifts in any two directions commute — they touch one coordinate each, and when it is the same
+coordinate they both add one to it.
+
+DERIVED: the `1`s are `ishift`'s lattice step; `4` is the dimension. -/
+theorem ishift_comm (μ ν : Fin 4) (x : ISite) :
+    ishift μ (ishift ν x) = ishift ν (ishift μ x) := by
+  by_cases h : μ = ν
+  · subst h; rfl
+  · funext j
+    by_cases hμ : j = μ
+    · subst hμ
+      simp [ishift, Function.update_apply, h, Ne.symm h]
+    · by_cases hν : j = ν
+      · subst hν
+        simp [ishift, Function.update_apply, h, Ne.symm h, hμ]
+      · simp [ishift, Function.update_apply, hμ, hν]
+
+#print axioms ishift_comm
+
+/-- **TRANSLATE A PLAQUETTE** — same plane, base site moved. Unlike the reflection, the plane is NOT
+transposed: a translation does not reverse the loop.
+
+DERIVED: no numeral of its own — the step is `ishift`'s; `4` is the dimension. -/
+def ishiftPlaq (μ : Fin 4) (q : IPlaq) : IPlaq := (q.1, ishift μ q.2)
+
 /-- **TRANSLATE A CONFIGURATION** by pulling back along the link shift.
 
 DERIVED: `4` is the spacetime dimension, the same constant `InfiniteLattice.ISite` and `ILink` are
@@ -83,10 +108,29 @@ def ishiftObs (μ : Fin 4) (F : IConf G → ℝ) : IConf G → ℝ := fun U => F
 
 /-! ## 2. The shift moves every site, and keeps moving -/
 
+/-- **⭐ THE SHIFTED HOLONOMY IS EQUAL, NOT MERELY CONJUGATE.**
+
+This is the contrast with `LatticeReflection.ihol_ireflConf` and it is the reason the two symmetries
+cost different things. The MIRROR reverses the loop, so the mirrored boundary word is a cyclic
+rotation of the image word and a rotated ordered product is a CONJUGATED one — which is why the
+reflection needs `φ` to be a class function. A TRANSLATION reverses nothing: the word is the same
+word at a moved base, so the holonomy is equal on the nose and NO hypothesis on `φ` is needed.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem wilsonHol_ishiftPlaq {G : Type} [Group G] (μ : Fin 4) (q : IPlaq) (U : IConf G) :
+    MassGap.WilsonLattice.wilsonHol ibd (ishiftPlaq μ q) U
+      = MassGap.WilsonLattice.wilsonHol ibd q (ishiftConf μ U) := by
+  rw [wilsonHol_ibd, wilsonHol_ibd]
+  simp only [ishiftPlaq, ishiftConf, ishiftLink]
+  rw [ishift_comm μ q.1.1 q.2, ishift_comm μ q.1.2 q.2]
+
+#print axioms wilsonHol_ishiftPlaq
+
 /-- **`k` STEPS ADD `k` TO THE COORDINATE.** This is the whole of why the infinite lattice differs
 from the torus: on `Fin n` the coordinate wraps, on `ℤ` it does not.
 
 DERIVED: no numeral. The `1` inside `ishift` is one lattice step. -/
+
 theorem ishift_iterate (μ : Fin 4) (k : ℕ) (x : ISite) :
     ((ishift μ)^[k] x) μ = x μ + k := by
   induction k with

@@ -45,7 +45,13 @@ named statement which it does NOT prove — see "What is open" below, which is t
     ∃ δ > 0, ∀ N, ∀ β ∈ [0, b],  δ ≤ wilsonCorrAt N β 0
 
 — one positive lower bound on the CONTACT value, uniform in the APERTURE. This file does not prove
-it and no part of the development proves it.
+it. **IT IS PROVED**, in `MassGap.ContactFloor`: `contactFloor_holds b : ContactFloor b` at
+every real `b`, foundational only, with `contact_relative_unconditional` carrying nothing. The floor
+is `e^{−128b}·δ₀`, and the section below says where the aperture leaves.
+
+**⛔ WHAT REMAINS OPEN IS THE COUPLING RANGE, NOT THE FLOOR.** `b` is existential and comes from
+`exists_strong_arm_cut`, whose only lever is `coreRate (16·4) b < 1`; `coreRate_exceeds` proves that
+condition FAILS at large `β`. So this arm is closed on `[0, b]` and the crux is `β > b`.
 
 `PlaqVariance.corrClay_zero_pos` gives `0 < corrClay (N+1) β 0` at every aperture and every coupling,
 but it gives no number: its proof runs through `Continuous.ae_eq_iff_eq` against an

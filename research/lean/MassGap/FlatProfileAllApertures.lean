@@ -1,5 +1,6 @@
 import Mathlib
 import MassGap.ConfinesEight
+import MassGap.Spectral
 
 /-!
 # MassGap.FlatProfileAllApertures — no choice of aperture rescues the shape-facts route
@@ -209,5 +210,75 @@ theorem flat_profile_margin_is_aperture_independent (a : EvenAp) :
   ring
 
 #print axioms flat_profile_margin_is_aperture_independent
+
+/-! ## ⭐ And it satisfies the HANKEL condition, which is the strongest shape input the tree has -/
+
+/-- **⭐ THE CONSTANT PROFILE IS HANKEL POSITIVE SEMIDEFINITE**, at every extent and every family of
+levels, with no hypothesis at all.
+
+`Hankel.corrClay_hankel_psd` proves `0 ≤ ∑ᵢⱼ cᵢcⱼ ρ(eᵢ+eⱼ)` for the Wilson correlation at EVERY even
+extent and every real coupling — strictly stronger than the `2 × 2` Cauchy–Schwarz
+`ρ(j)² ≤ ρ(0)ρ(2j)` this file's other theorems quantify over. It was the one shape input that might
+have separated the flat profile from the genuine correlation.
+
+It does not. On `ρ ≡ 1` the form is `∑ᵢⱼ cᵢcⱼ = (∑ c)²`, a square, for every coefficient family.
+
+**So the shape route is closed against its strongest available premise.** No set of shape facts the
+tree proves — nonnegativity, circle symmetry, log-convexity, the slab quadratic, or full Hankel
+positivity — distinguishes the constant profile, whose lag ratio is `1` and whose cosine average is
+`0` at every even aperture (`flat_cosAvg_eq_zero`). With
+`WeakArm.no_strict_lag_bound_from_shape` that settles it: no factor below one is derivable from
+shape, at any lag, any extent, or any premise set of this kind. The distance to
+`lagTwoThresholdSix` is entirely dynamics.
+
+DERIVED: the `1` is the constant profile's value and the `2` is the square; neither is a level. -/
+theorem flat_profile_hankel_psd {ι : Type*} [Fintype ι] (c : ι → ℝ) :
+    0 ≤ ∑ i, ∑ j, c i * c j * (1 : ℝ) := by
+  have h : ∑ i, ∑ j, c i * c j * (1 : ℝ) = (∑ i, c i) * (∑ j, c j) := by
+    simp only [mul_one]
+    rw [Finset.sum_mul_sum]
+  rw [h]
+  exact mul_self_nonneg _
+
+#print axioms flat_profile_hankel_psd
+
+/-! ## ⭐ And it is a spectral form, so representability separates nothing either -/
+
+/-- **⭐ THE CONSTANT PROFILE IS PERIODIC-SPECTRALLY REPRESENTABLE**, at every extent, by ONE mode at
+`λ = 1` with weight `½`.
+
+`w · (λ^d + λ^{n-d}) = ½(1 + 1) = 1` at every lag, and `λ = 1` satisfies `PeriodicSpectralForm`'s
+`hlam1 : λ ≤ 1` on the nose.
+
+**So spectral representability is not what the spectral route buys.** `Complete.WilsonSpectral N β`
+is `Nonempty (PeriodicSpectralForm (N+1) (wilsonCorrAt N β))`, and the flat profile has one — with lag
+ratio `1` and cosine average `0` at every even aperture (`flat_cosAvg_eq_zero`). The whole content of
+`SpectralBound.SpectralAt β Λ` is therefore the BOUND `|λ| ≤ Λ < 1` on the decay factors, which is
+dynamics, and which `SpectralBound`'s own header records is established nowhere in this tree.
+
+Together with `flat_profile_hankel_psd` this closes both sides: neither the strongest shape premise
+the tree proves nor spectral representability distinguishes the constant profile from the genuine
+correlation.
+
+DERIVED: `1` is the constant profile's value and the mode's decay factor; `½` is forced by
+`w(λ^d + λ^{n-d}) = 1` at `λ = 1`. Nothing is chosen. -/
+noncomputable def flatSpectralForm (n : ℕ) :
+    MassGap.Spectral.PeriodicSpectralForm n (fun _ => (1 : ℝ)) where
+  Idx := Unit
+  w := fun _ => (1 : ℝ) / 2
+  lam := fun _ => (1 : ℝ)
+  hw := fun _ => by norm_num
+  hlam0 := fun _ => by norm_num
+  hlam1 := fun _ => le_rfl
+  hrep := fun d => by simp only [one_pow, Finset.sum_const, Finset.card_univ]; norm_num
+
+#print axioms flatSpectralForm
+
+/-- The same as an existence statement, in the shape `Complete.WilsonSpectral` is stated in. -/
+theorem flat_profile_is_spectral (n : ℕ) :
+    Nonempty (MassGap.Spectral.PeriodicSpectralForm n (fun _ => (1 : ℝ))) :=
+  ⟨flatSpectralForm n⟩
+
+#print axioms flat_profile_is_spectral
 
 end MassGap.FlatProfileAllApertures

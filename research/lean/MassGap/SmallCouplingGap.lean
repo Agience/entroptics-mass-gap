@@ -4,8 +4,9 @@ import MassGap.TransferGaussian
 /-!
 # MassGap.SmallCouplingGap — a gap that is DERIVED rather than assumed, and how far it reaches
 
-`TransferGap.GapAt` is a hypothesis. This file pays for it in one regime, and then measures how wide
-that regime is — because a sufficient condition nobody can meet is worth nothing, and the only way to
+`TransferGap.GapAt` is a hypothesis, and **⛔ THIS FILE DOES NOT DISCHARGE IT.** No declaration here
+concludes `GapAt`; the name occurs in this header and nowhere else in the file. What the file does is
+exhibit the MECHANISM on a different carrier and then measure how wide its regime is — because a sufficient condition nobody can meet is worth nothing, and the only way to
 find out is to evaluate the constant.
 
 ## The mechanism
@@ -46,8 +47,15 @@ looks like it should work — a kernel close to one, a contraction on the comple
 computing the constant is what shows it does not. `CLAY-GOAL`'s standing rule: an existential
 constant is not a number until it is evaluated.
 
-**What it does establish** is that `TransferGap.GapAt` is not vacuous as a hypothesis: something
-satisfies the contraction it asks for, at a coupling this file names.
+**⛔ WHAT IT DOES NOT ESTABLISH**, stated plainly because the file is easy to over-read: it does not
+show `TransferGap.GapAt` is satisfiable. The strongest result below, `integral_sq_contracts`, reads
+`(∫ V, (∫ W, K V W * f W ∂μ)^2 ∂μ) ≤ δ^2 * ∫ x, f x^2 ∂μ` — an L² statement about an integral kernel
+on a probability space, which is NOT a `Transfer.TransferData` and has no bridge to one anywhere in
+the tree. `RatioGap` says the same from the other side: nothing there concludes `TransferGap.GapAt`,
+and neither does this file.
+
+What it DOES establish is that the contraction shape is met by a concrete kernel at a named coupling,
+which is evidence about the mechanism and not about the hypothesis.
 -/
 
 namespace MassGap.SmallCouplingGap

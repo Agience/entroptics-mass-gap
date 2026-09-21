@@ -129,7 +129,7 @@ doc comments, quoted from `LagTwoBound.lagTwoThreshold_gt` and `lagTwoThreshold_
 in a statement or a proof, and neither decides anything — the closed form does.
 
 Foundational footprint only (`#print axioms` on every declaration, in the audit section).
-The module is not in the library root's import list, so no repository-wide sweep covers it.
+The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python code/lean_build.py build MassGap.TailRatio`.
 -/
 

@@ -25,8 +25,9 @@
 
 ## Abstract
 
-Pure $SU(N)$ gauge theory has a mass gap because a local observer reads the vacuum's gauge-invariant content
-through a boundary of finite information capacity: a finite aperture, which band-limits. A finite aperture has a
+This paper derives the mass gap of pure $SU(N)$ gauge theory from a single fact about observation: a local
+observer reads the vacuum's gauge-invariant content through a boundary of finite information capacity — a finite
+aperture, which band-limits. A finite aperture has a
 diffraction limit, and the limit cannot host the infinitely-extended massless mode a gapless theory requires, so the
 screen's predictive excess decays at a positive rate: the smallest quantum. The scale is an entropy floor
 $\kappa_0=\tfrac14\ln3\approx0.275$, a lower bound on the centre-vortex disorder ensemble's closed-surface entropy
@@ -57,7 +58,7 @@ each configuration's own Shannon entropy with no external scale. The confinement
 $K_{\mathrm{signal}}$, the resolved-mode count above the confined-vacuum reference null, stays low across the
 coupling range for $SU(2)$ and $SU(3)$ and rises sharply across the compact $U(1)$ transition; the phase separation
 is certified at $95\%$. Given A1 and A2, the mass gap, non-triviality, and the read-level form of $SO(4)$ follow as a single reduction,
-its inputs the classical results it names: the three foundational axioms, reflection positivity (now PROVED at even extent $\ge4$ and nonnegative coupling, §11.1b, and cited only outside that domain — on that domain the gap side carries **no named axiom at all**, `EvenAperture.existence_and_gap_of_substrate_even` — an axiom-footprint claim, not a strength claim about the conclusion, whose scope is set out in §13 and machine-checked in `FlagshipScope`), the two cited
+its inputs the classical results it names: the three foundational axioms, reflection positivity (now PROVED at even extent $\ge4$ and nonnegative coupling on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, on the observables of a fixed finite region, §11.1c, and cited only outside those domains — on that domain the gap side carries **no named axiom at all**, `EvenAperture.existence_and_gap_of_substrate_even` — an axiom-footprint claim, not a strength claim about the conclusion, whose scope is set out in §13 and machine-checked in `FlagshipScope`), the two cited
 coupling ends, and the crossover correlation length. Finite-spacing existence holds at every spacing; the
 continuum limit follows from the finite-spacing Osterwalder–Schrader data through the cited constructive
 four-dimensional measure and the OS→Wightman reconstruction — both established on a **constructed $SU(N)$
@@ -1096,7 +1097,7 @@ propositions:
 - **A2 (isotropy).** The continuum entropy-matched read is direction-independent, $R(d)=R(d')$: no residual lattice
   anisotropy. It delivers the read-level form of Euclidean $SO(4)$.
 
-Given A1 and A2, mass gap, non-triviality, and $SO(4)$ follow; reflection positivity (proved at even extent $\ge4$ and $\beta\ge0$, §11.1b; Osterwalder–Seiler outside that domain), the
+Given A1 and A2, mass gap, non-triviality, and $SO(4)$ follow; reflection positivity (proved at even extent $\ge4$ and $\beta\ge0$ on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, §11.1c; Osterwalder–Seiler outside those domains), the
 continuum identity ($\Delta$ homogeneous of degree one), and short distance (asymptotic freedom) are established
 separately. A1 and A2 reduce to named inputs, so the mass gap, non-triviality, and $SO(4)$ are a single
 theorem carrying no A1/A2 hypothesis: beyond the three foundational axioms its inputs are the cited ends (the
@@ -1590,6 +1591,56 @@ the gauge with *opposite* handedness — $F\mapsto gFh^{-1}$ at one and $F\mapst
 which on a non-abelian group are not one action. Inverting the plane variables under the integral
 reconciles them.
 
+**Theorem 11.1c (Reflection positivity passes to a limit state on $\mathbb{Z}^4$ — PROVED, not
+cited).** For the $SU(N)$ Wilson measure on the infinite lattice $\mathbb{Z}^4$ with free boundary
+conditions, take any family of boxes each stable under the link reflection and each containing a
+fixed finite region $R_0$ lying at or above the reflection plane. Then along an ultrafilter refining
+any given filter, the free-boundary states of those boxes converge to a state $\nu$, and $\nu$ is
+reflection positive on the observables local to $R_0$. In the formal development this is
+`ReflectionHalfSpace.reflPositive_limit_exists`; `reflection_facts_of_limit` adds reflection
+*invariance* of the same state along the same ultrafilter, given a reflection-symmetric boundary
+condition.
+
+This is a different object from 11.1b rather than a strengthening of it. 11.1b is the periodic torus
+at even extent; 11.1c is the infinite lattice, where the reflection is a genuine Osterwalder–Seiler
+time reflection and the state is a limit rather than a finite integral.
+
+The argument is the Osterwalder–Seiler split carried out on $\mathbb{Z}^4$. The plaquettes of a
+reflection-stable box fall into three groups — those in the reflection plane, those above it and
+those below — and the three partition the box, so the action splits as
+$A = A_0 + A_+ + A_-$. The reflection carries the positive group onto the negative one bijectively,
+which gives $A_+(\Theta U) = A_-(U)$ and hence the factorisation
+$e^{-\beta A(U)} = W(U)\cdot h(U)\cdot h(\Theta U)$: a weight reading only the shared block, times an
+observable times its own reflection. That is exactly the shape a reflection-positivity argument
+consumes, and the pairing is then nonnegative.
+
+**The pivot is that the mirrored holonomy is CONJUGATE to the image plaquette's, never equal.** The
+mirror reverses the loop, so the mirrored boundary word is a cyclic rotation of the image word and a
+rotated ordered product is a conjugated one. This is the exact point at which a reflection stops being
+a lattice symmetry in the ordinary sense — a bare permutation of links cannot carry it — and it costs
+nothing only because the Wilson density is a class function. A translation, by contrast, reverses
+nothing and its holonomy is equal on the nose
+(`InfiniteShift.wilsonHol_ishiftPlaq`), which is why translation invariance of the action needs no
+such hypothesis.
+
+**The scope, stated with the claim, because each restriction is real.** The boundary conditions are
+FREE — not a convenience: the specification kernel at an arbitrary boundary condition has no reason
+to be reflection positive, because plaquettes straddling the edge of the box read outside it and
+belong to neither half of the reflection. The limit is subsequential, along an ultrafilter refining a
+given filter, which is compactness rather than an assumption, since the states on a compact
+configuration space form a weak-$*$ compact set.
+
+**The box family carries no exhaustion condition**, so this is a statement about a limit rather than
+about infinite volume as such: it specialises to the infinite-volume reading when the boxes exhaust
+$\mathbb{Z}^4$, and a constant family satisfies the hypotheses too. **And the algebra is the
+observables local to the FIXED region $R_0$, not the half-space algebra** — the directed union over
+all finite supports in the positive half is a strictly larger object, and this method does not reach
+it, because the locality hypothesis is required at every box rather than eventually. Reflection
+invariance additionally requires the boundary condition itself to be reflection symmetric; the
+identity configuration is. **Translation invariance of the limit state is not established** and does
+not follow from the reflection: the finite-volume state is shift *covariant*, not shift invariant,
+because the box breaks the symmetry.
+
 **Both restrictions are load-bearing, and neither is a gap in the argument.** Nonnegativity of the
 coupling is the *sign* of the coupling: the Wilson cross kernel is positive-semidefinite exactly when
 $\beta\ge0$, an equivalence exhibited on two explicit $SU(3)$ elements, so at $\beta<0$ the object the
@@ -1783,7 +1834,22 @@ as data from the transfer operator, and exhibited by the concrete finite-apertur
 $\operatorname{diag}(1,3^{-1/4})$ whose spectrum — and hence the gap $\kappa_0$ — is computed. Any transfer
 operator meeting the finite-aperture margin $\operatorname{spec}\subseteq\{1\}\cup[\varepsilon,3^{-1/4}]$, the
 $SU(N)$ read $m_{\mathrm{hi}}\le3^{-1/4}$, reconstructs to such a theory with gap $\kappa_0$, carrying the
-finite-aperture read end-to-end. The Minkowski
+finite-aperture read end-to-end.
+
+**Which operators that margin admits.** The requirement $\varepsilon>0$ is not a normalisation: keeping
+$0$ out of the spectrum is exactly invertibility of $T$, and a compact operator on an
+infinite-dimensional space is never invertible. Both steps are machine-checked on the foundational
+axioms (`TransferInvertibility.isUnit_of_spectral_hypothesis`,
+`not_isUnit_of_isCompactOperator`, composed in `spectral_hypothesis_fails_for_compact`). The
+Euclidean transfer operator of a lattice gauge theory with a continuous compact structure group acts
+on an infinite-dimensional slice space through a continuous kernel on a compact manifold, hence is
+trace class and a fortiori compact — Lüscher (CMP **54** (1977) 283), Osterwalder–Seiler (Ann. Phys.
+**110** (1978) 440) — so it does **not** meet this margin at any $\varepsilon>0$. That identification is
+cited and not formalised; the implication it feeds is. Accordingly the witness exhibited above,
+$\operatorname{diag}(1,3^{-1/4})$, is finite-dimensional, and the reconstruction in this form should
+be read as a statement about operators with a largest energy $-\log\varepsilon$. The form that carries
+no such restriction is the contraction form, $\|T^n x\|\le r^n\|x\|$ on the vacuum's complement, which
+needs no spectrum, no logarithm of an operator and no invertibility. The Minkowski
 continuation of the Schwinger functions to the Wightman functions
 (tube domains / Bargmann–Hall–Wightman) is the classical Osterwalder–Schrader theorem, entered as a named axiom.
 
@@ -1915,8 +1981,8 @@ $\beta\ge0$ (§11.1b), and cited to Osterwalder–Seiler only outside that domai
 negative coupling) — and the strong-coupling character bound (Osterwalder–Seiler), the asymptotic-freedom plateau $\mu_\infty<\kappa_0$
 (Gross–Wilczek–Politzer, the below-floor value proved by Wick), and the finite interior correlation length
 $\langle d^2\rangle\le1$ (a finite-sample statistical certificate at 99.9999%, not an enclosure). The single-plaquette aperture margin $\Delta\ge\kappa_0$ is a
-deterministic certificate; its spatial-volume carry to $V\to\infty$ is the forward step the intensive read
-supplies (§8.5).
+deterministic certificate; its spatial-volume carry to $V\to\infty$ is the open intensive bound, which
+the forward read of §8.5 is evidence for and does not close (§8.7b sets out what that read reports).
 
 **The gap side, with no named axiom at all.** Reflection positivity was the last named axiom the gap
 half carried, and it entered at exactly one place: the read's *certificate*. `wilsonCorrAt`, the

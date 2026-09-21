@@ -486,6 +486,32 @@ theorem positiveTransfer_of_T_eq_id (hT : ∀ x : A, D.T x = x) : PositiveTransf
   rw [hT x]
   exact D.form_nonneg x
 
+#print axioms positiveTransfer_of_T_eq_id
+
+/-- **⭐ AND FROM A SQUARE ROOT OF THE STEP, WHICH IS WHERE THE PHYSICS PUTS IT.** If the transfer
+step factors through the form — `form x (T x) = form (S x) (S x)` for a LINEAR `S` — then
+`PositiveTransfer` is immediate from `form_nonneg`, which is reflection positivity and is already
+proved.
+
+**This is what makes positivity structural rather than an extra assumption.** A transfer operator is
+positive because it is a half-step composed with its adjoint; the obligation is then to exhibit the
+half-step, not to assume an inequality. The tree names the same content on the `L²` slab carrier as
+`SlabTransferAdjoint.SlabGramVia` — a `FiniteGram` condition on the kernel, whose sufficient half is
+proved and which is reported OPEN there.
+
+**⚠ Linearity of `S` is load-bearing.** With an arbitrary function the equation could be solved
+pointwise wherever the form takes the required value, and the statement would restate positivity
+rather than reduce it.
+
+DERIVED: the `0` of `0 ≤ …` is positivity itself; no magnitude. -/
+theorem positiveTransfer_of_gram (S : A →ₗ[ℝ] A)
+    (hS : ∀ x : A, D.form x (D.T x) = D.form (S x) (S x)) : PositiveTransfer D := by
+  intro x
+  rw [hS x]
+  exact D.form_nonneg (S x)
+
+#print axioms positiveTransfer_of_gram
+
 end Operator
 
 end Abstract

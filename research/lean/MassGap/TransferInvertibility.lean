@@ -40,9 +40,15 @@ So `T` is **injective with dense range and an unbounded inverse** — not bounde
 `H = -log T` is unbounded above, as the Kogut–Susskind electric energy `∑ E²` independently forces.
 `isUnit_of_spectral_hypothesis` asks for exactly the property `T` lacks.
 
-**⚠ THE PARAGRAPH ABOVE IS CITED, NOT FORMALISED — here or anywhere in this tree.** A reference is
-not a proof, and this module claims only the implication it proves. The gap between the two is the
-work, and naming it is the point of the module.
+**⭐ AND THE RIESZ HALF IS NOW PROVED.** § 2 below: `not_isUnit_of_isCompactOperator` — a compact
+operator on an infinite-dimensional space is never invertible, since `1 = T ∘ T⁻¹` would be compact.
+`spectral_hypothesis_fails_for_compact` composes it with `isUnit_of_spectral_hypothesis`: for such an
+operator the spectral hypothesis holds at NO `ε > 0` and no `Δ`. Foundational axioms only.
+
+**⚠ WHAT REMAINS CITED IS THE IDENTIFICATION**, and only that: that the physical transfer operator
+IS compact and its slice space infinite-dimensional. That is the Lüscher / Osterwalder–Seiler
+description above, and it is formalised nowhere in this tree. The implication it feeds is no longer a
+citation; the premise still is.
 
 **⛔ AND THE EXCEPTION IS INSTRUCTIVE.** For a FINITE gauge group on a finite lattice the physical
 space is finite-dimensional and `T` IS invertible, so the obstruction comes from the CONTINUITY of
@@ -69,7 +75,10 @@ open MassGap.Reconstruction
 
 section Abstract
 
-variable {A : Type*} [CStarAlgebra A]
+-- The spectral lemmas below need only a ring with an `ℝ`-algebra structure: `spectrum.mem_iff` and
+-- `IsUnit.neg` are the whole of what they use. Stating them here rather than at `CStarAlgebra` is
+-- what lets them reach `E →L[ℂ] E` in § 2, where the obstruction lives.
+variable {A : Type*} [Ring A] [Algebra ℝ A]
 
 /-- **THE HYPOTHESIS KEEPS `0` OUT OF THE SPECTRUM.** Either a spectral value is `1`, or it is at
 least `ε > 0`; neither is `0`.
@@ -125,6 +134,74 @@ theorem energies_bounded_of_spectral_hypothesis (T : A) {ε Δ : ℝ} (hε : 0 <
     exact le_max_of_le_right (by linarith)
 
 end Abstract
+
+/-! ## 2. ⭐ The obstruction, proved -/
+
+section Compact
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+
+/-- A compact operator precomposed with a bounded one is compact: push the compact set forward
+through the preimage of the witnessing neighbourhood.
+
+DERIVED: no numeral. -/
+theorem isCompactOperator_comp (T S : E →L[ℂ] E) (hc : IsCompactOperator T) :
+    IsCompactOperator (T ∘L S) := by
+  rw [isCompactOperator_iff_exists_mem_nhds_isCompact_closure_image] at hc ⊢
+  obtain ⟨V, hV, hK⟩ := hc
+  refine ⟨S ⁻¹' V, ?_, ?_⟩
+  · have hS : Filter.Tendsto S (nhds 0) (nhds 0) := by
+      simpa using (S.continuous.tendsto 0)
+    exact hS hV
+  · refine IsCompact.of_isClosed_subset hK isClosed_closure (closure_mono ?_)
+    rintro _ ⟨w, hw, rfl⟩
+    exact ⟨S w, hw, rfl⟩
+
+#print axioms isCompactOperator_comp
+
+/-- **⭐ A COMPACT OPERATOR ON AN INFINITE-DIMENSIONAL SPACE IS NOT INVERTIBLE.** If `T` had an
+inverse then `1 = T ∘ T⁻¹` would be compact, and `FiniteDimensional.of_isCompactOperator_id` — Riesz
+— forbids that.
+
+**This is the half of the obstruction that is now a THEOREM** rather than a citation.
+
+DERIVED: the `1` is the identity of the operator algebra. -/
+theorem not_isUnit_of_isCompactOperator (T : E →L[ℂ] E) (hc : IsCompactOperator T)
+    (hinf : ¬ FiniteDimensional ℂ E) : ¬ IsUnit T := by
+  intro hu
+  obtain ⟨u, rfl⟩ := hu
+  have h1 : IsCompactOperator ((u : E →L[ℂ] E) ∘L (↑u⁻¹ : E →L[ℂ] E)) :=
+    isCompactOperator_comp _ _ hc
+  have he : (u : E →L[ℂ] E) ∘L (↑u⁻¹ : E →L[ℂ] E) = 1 := by
+    rw [← ContinuousLinearMap.mul_def]
+    exact u.mul_inv
+  rw [he, ContinuousLinearMap.one_def] at h1
+  exact hinf (FiniteDimensional.of_isCompactOperator_id h1)
+
+#print axioms not_isUnit_of_isCompactOperator
+
+/-- **⭐⛔ SO THE SPECTRAL HYPOTHESIS IS UNSATISFIABLE FOR A COMPACT OPERATOR IN INFINITE DIMENSIONS.**
+
+`reconstruct_qm_core`'s `hsp` with `0 < ε` forces `IsUnit T` (`isUnit_of_spectral_hypothesis`), and a
+compact operator on an infinite-dimensional space is not a unit. **No `ε`, no `Δ`, no operator of that
+kind.**
+
+What remains cited is only which OBJECTS satisfy the two premises. The Euclidean transfer operator of
+a lattice gauge theory with a continuous compact structure group acts on an infinite-dimensional
+slice space through a continuous kernel on a compact manifold, hence is trace class and a fortiori
+compact — Lüscher, Osterwalder–Seiler and Seiler, as § 1 records. **That identification is still not
+formalised**; the implication it feeds now is.
+
+DERIVED: `0` and `1` are the spectral values the hypothesis names; `ε`, `Δ` are the caller's. -/
+theorem spectral_hypothesis_fails_for_compact (T : E →L[ℂ] E)
+    (hc : IsCompactOperator T) (hinf : ¬ FiniteDimensional ℂ E) {ε Δ : ℝ} (hε : 0 < ε) :
+    ¬ (spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) := by
+  intro hsp
+  exact not_isUnit_of_isCompactOperator T hc hinf (isUnit_of_spectral_hypothesis T hε hsp)
+
+#print axioms spectral_hypothesis_fails_for_compact
+
+end Compact
 
 /-! ## Footprints -/
 

@@ -104,7 +104,7 @@ It also does not carry the spectral decomposition across. `SlabQuadratic.wilsonS
 is available to any route that bounds the lag-two ratio directly.
 
 Foundational footprint only (`#print axioms` on every declaration, in the audit section).
-The module is not in the library root's import list.
+The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python research/code/lean_build.py build MassGap.LagTwoSix`.
 -/
 

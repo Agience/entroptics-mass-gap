@@ -1368,21 +1368,45 @@ theorem free_field_end_is_tighter :
 Monotonicity failed because the profile re-concentrates above the crossover (§12). But the data that
 refutes it points at a different hypothesis, and this one it does not refute.
 
-**The measured minimum sits ABOVE the free-field value.** `9_2_dat_confinement_cos.csv` bottoms at
-`0.9863` at `β = 2.30`, and `freeRefSix_avg_eq` computes the free-field limit exactly as
-`0.9802347`. The minimum is `0.0061` ABOVE the limit — about six times the estimator's own noise,
-which the `1.0014` at the smallest coupling puts at `~10⁻³`. So across every coupling it measures,
-the cosine average never goes below its own asymptote.
+**⛔ THERE IS NO EMPIRICAL GROUND FOR THIS HYPOTHESIS, AND THE COMPARISON THAT LOOKED LIKE ONE IS
+CROSS-EXTENT AND CROSS-CHANNEL.**
+
+`9_2_dat_confinement_cos.csv` bottoms at `0.9863` at `β = 2.30`. That file is **SU(2) at L = 16** —
+`ym_crossover_confinement_of_grid.py` hard-codes `L = 16` and `ym_confinement_of_cos_average.py`
+takes `L = CG.L` — and it is the ALL-COMPONENT whitened density read. `freeRefSix_avg_eq`'s
+`0.9802347` is the **extent-SIX, SINGLE-CHANNEL** free-field value of `corrClay`. Setting one against
+the other is two mismatches at once, and this tree already names the error class:
+`free_field_lag_two_ratio.py` warns that reading one extent's free-field number against another
+extent's obligation is "reading one lattice's number against another lattice's obligation".
+
+**Matched at each row's own extent the sign reverses.** Against `8_6_dat_free_field_muinf.csv`'s
+`λ₁/λ₀` at the row's own `L`, 23 of the 43 rows of `9_3_dat_substrate_of_aperture.csv` have the
+measured cosine average BELOW its own extent's free-field value — the `L = 16` minimum by `0.0052`,
+the same magnitude as the claimed `0.0061` and the opposite sign, and every `SU(3)` row is below.
+`8_6_dat_free_field_measured.csv`'s own `mu_over_muinf` column exceeds `1` in 20 of 28 rows, and
+`PAPER.md` §8.6 reports the same thing correctly.
+
+**This does NOT refute the hypothesis below**, because the measured read is a different object from
+`cosAvgEven ap6` — all-component whitened density on `L³×2L`, not single-channel `corrClay` on `L⁴`.
+No `SU(3)` `L⁴`-symmetric ensemble exists in the store, so the matching measurement has never been
+taken. What it removes is the reason to believe it, and it shows the analogous statement for the
+multi-channel read is false on real data.
 
 **That is the hypothesis to name:** the free-field limit is the infimum over the whole half-line, not
 merely the endpoint. It implies B5 immediately, because the limit clears the floor by `0.2204`
 (`freeRefSix_clears_floor`) — no grid, no modulus, no interior values.
 
 **And unlike monotonicity it is not refuted.** Monotonicity said the curve may never turn; this says
-only that it may never sink below where it ends. The measured turn at `β ≈ 2.3` violates the first
-and is consistent with the second. Per the standing rule, that consistency is NOT evidence — data may
-refute and never establish — but the distinction between "refuted" and "not refuted" decides which
-hypothesis is worth an attack, and this is the one.
+only that it may never sink below where it ends, and no measurement of the RIGHT object exists either
+way. Per the standing rule that consistency would not be evidence in any case — data may refute and
+never establish — but the distinction between "refuted" and "not refuted" decides which hypothesis is
+worth an attack.
+
+**⛔ THE CHEAPEST REFUTING QUERY IS NOT YET RUNNABLE, and that is the state to know.** It needs
+`cosAvgEven` measured on a single-channel `SU(3)` `L⁴` ensemble at extent six. The store
+(`d:\data\entroptics-lattice`) holds `SU(3)` only as `L³×2L`; the one script that generates the right
+geometry is `lag_two_ratio_refutation_probe.py`, which builds `6⁴` configurations itself. Extending it
+to report `cosAvgEven` would decide this hypothesis directly.
 
 DERIVED: the numerator and denominator are `freeRefSix_avg_eq`'s, carried unchanged; no new numeral.
 -/

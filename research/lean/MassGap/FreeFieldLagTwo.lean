@@ -95,7 +95,7 @@ Foundational footprint on EVERY declaration, the assembly corollary included (`#
 a subset of `propext`, `Classical.choice`, `Quot.sound`, with no cited axiom anywhere. The purely
 computational declarations print `propext` alone.
 
-The module is NOT in the library root's import list.
+The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python research/code/lean_build.py build MassGap.FreeFieldLagTwo`.
 Numerals produced and cross-checked by `research/code/certify/free_field_lag_two_ratio.py`.
 -/

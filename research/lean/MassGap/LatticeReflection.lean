@@ -134,6 +134,122 @@ theorem ireflLink_involutive (τ : Fin 4) (c : ℤ) :
 
 #print axioms ireflLink_involutive
 
+/-! ## 2′. Plaquettes, where the mirror reverses the loop -/
+
+/-- A reflection commutes with a shift TRANSVERSE to its axis — they touch different coordinates.
+
+DERIVED: `4` is the dimension. -/
+theorem ireflSite_ishift_of_ne {τ ν : Fin 4} (h : ν ≠ τ) (c : ℤ) (x : ISite) :
+    ireflSite τ c (ishift ν x) = ishift ν (ireflSite τ c x) := by
+  funext j
+  by_cases hj : j = τ
+  · subst hj
+    simp [ireflSite, ishift, Function.update_of_ne (Ne.symm h)]
+  · by_cases hν : j = ν
+    · subst hν
+      simp [ireflSite, ishift, Function.update_of_ne hj]
+    · simp [ireflSite, ishift, Function.update_of_ne hj, Function.update_of_ne hν]
+
+#print axioms ireflSite_ishift_of_ne
+
+/-- A reflection ABSORBS a shift along its own axis, by moving the mirror one step. On `ℤ` this is
+subtraction; the torus counterpart `Reflect.reflSite_shift_axis` has to wrap.
+
+DERIVED: the `1` is the lattice step, as in `ishift`; `4` is the dimension. -/
+theorem ireflSite_ishift_axis (τ : Fin 4) (c : ℤ) (x : ISite) :
+    ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x := by
+  funext j
+  by_cases hj : j = τ
+  · subst hj
+    simp only [ireflSite, ishift, Function.update_self]
+    abel
+  · simp [ireflSite, ishift, Function.update_of_ne hj]
+
+#print axioms ireflSite_ishift_axis
+
+/-- And the same identity read the other way, which is the direction the holonomy argument rewrites
+in.
+
+DERIVED: the `1` is the lattice step; `4` is the dimension. -/
+theorem ishift_ireflSite_axis (τ : Fin 4) (c : ℤ) (x : ISite) :
+    ishift τ (ireflSite τ (c - 1) x) = ireflSite τ c x := by
+  funext j
+  by_cases hj : j = τ
+  · subst hj
+    simp only [ireflSite, ishift, Function.update_self]
+    abel
+  · simp [ireflSite, ishift, Function.update_of_ne hj]
+
+#print axioms ishift_ireflSite_axis
+
+/-- Reflecting twice about the SAME mirror is the identity — `ireflSite_involutive` in rewrite form.
+
+DERIVED: `4` is the dimension. -/
+theorem ireflSite_ireflSite (τ : Fin 4) (c : ℤ) (x : ISite) :
+    ireflSite τ c (ireflSite τ c x) = x := ireflSite_involutive τ c x
+
+#print axioms ireflSite_ireflSite
+
+/-- **Reflecting twice about mirrors ONE APART shifts by one.** This is the arithmetic behind the
+whole `c` / `c - 1` distinction: a `τ`-link reflects about `c - 1` because it occupies a segment
+rather than a point, and composing the two mirrors is what turns that offset into a lattice step.
+
+DERIVED: the `1`s are the mirror offset and the lattice step, the same one; `4` is the dimension. -/
+theorem ireflSite_ireflSite_pred (τ : Fin 4) (c : ℤ) (x : ISite) :
+    ireflSite τ c (ireflSite τ (c - 1) x) = ishift τ x := by
+  funext j
+  by_cases hj : j = τ
+  · subst hj
+    simp only [ireflSite, ishift, Function.update_self]
+    abel
+  · simp [ireflSite, ishift, Function.update_of_ne hj]
+
+#print axioms ireflSite_ireflSite_pred
+
+/-- **Reflection of a plaquette on `ℤ⁴`.** A plaquette whose plane misses the axis keeps its plane
+and moves its corner; one whose plane CONTAINS the axis has its loop traversed the other way round by
+the mirror, and `InfiniteLattice.ibd` writes a reversed loop by swapping the two spanning directions
+— so the image plane is the transposed pair, based at the shifted corner.
+
+DERIVED: the `1` is the link-length offset of `ireflLink`, for the same reason; `4` is the
+dimension. -/
+def ireflPlaq (τ : Fin 4) (c : ℤ) (q : IPlaq) : IPlaq :=
+  if q.1.1 = τ then ((q.1.2, τ), ireflSite τ (c - 1) q.2)
+  else if q.1.2 = τ then ((τ, q.1.1), ireflSite τ (c - 1) q.2)
+  else ((q.1.1, q.1.2), ireflSite τ c q.2)
+
+/-- Reflecting twice is the identity — the transposition of the plane undoes itself.
+
+DERIVED: the `1` is `ireflPlaq`'s own offset; `4` is the dimension. -/
+theorem ireflPlaq_involutive (τ : Fin 4) (c : ℤ) :
+    Function.Involutive (ireflPlaq τ c) := by
+  intro q
+  obtain ⟨⟨μ, ν⟩, x⟩ := q
+  by_cases hμ : μ = τ
+  · subst hμ
+    by_cases hν : ν = μ
+    · subst hν
+      simp [ireflPlaq, ireflSite_involutive ν (c - 1) x]
+    · simp [ireflPlaq, hν, ireflSite_involutive μ (c - 1) x]
+  · by_cases hν : ν = τ
+    · subst hν
+      simp [ireflPlaq, hμ, ireflSite_involutive ν (c - 1) x]
+    · simp [ireflPlaq, hμ, hν, ireflSite_involutive τ c x]
+
+#print axioms ireflPlaq_involutive
+
+/-- The reflection of plaquettes as a permutation — what carries a sum over plaquettes to a sum over
+their images.
+
+DERIVED: `4` is the dimension. -/
+def ireflPlaqPerm (τ : Fin 4) (c : ℤ) : Equiv.Perm IPlaq :=
+  (ireflPlaq_involutive τ c).toPerm _
+
+@[simp] theorem ireflPlaqPerm_apply (τ : Fin 4) (c : ℤ) (q : IPlaq) :
+    ireflPlaqPerm τ c q = ireflPlaq τ c q := rfl
+
+#print axioms ireflPlaqPerm
+
 /-! ## 3. Configurations, and the dagger -/
 
 section Conf
@@ -188,6 +304,62 @@ def ireflConfCM (τ : Fin 4) (c : ℤ) : C(IConf G, IConf G) :=
   ⟨ireflConf τ c, continuous_ireflConf τ c⟩
 
 end Conf
+
+/-! ## 3′. The mirrored holonomy is CONJUGATE, never equal -/
+
+section Conjugacy
+
+open MassGap.WilsonLattice
+
+variable {G : Type} [Group G]
+
+/-- **⭐ THE MIRRORED HOLONOMY IS CONJUGATE TO THE IMAGE PLAQUETTE'S.** The `ℤ⁴` counterpart of
+`Reflect.hol_reflConf`, and the pivot of the whole Osterwalder–Seiler construction.
+
+Not equal: the mirrored boundary word is a cyclic rotation of the image word, and a rotated ordered
+product is a conjugated one. Equality holds only for plaquettes transverse to the reflection, where
+the rotation is trivial — those are the two `g = 1` branches below.
+
+This is the exact point at which a reflection stops being a `LatticeGauge.Symmetry`: `Symmetry.onLink`
+is a bare permutation of links and cannot carry the dagger. It costs nothing downstream because the
+Wilson density is a class function (`WilsonAction.wilsonDensity_conj`), which is what lets the
+reflected half-action equal the other half-action term by term.
+
+DERIVED: the `1`s are `ireflLink`'s link length and the group identity; `4` is the dimension. -/
+theorem ihol_ireflConf (τ : Fin 4) (c : ℤ) (q : IPlaq) (U : IConf G) :
+    ∃ g : G, wilsonHol ibd q (ireflConf τ c U)
+      = g * wilsonHol ibd (ireflPlaq τ c q) U * g⁻¹ := by
+  obtain ⟨⟨μ, ν⟩, x⟩ := q
+  by_cases hμ : μ = τ
+  · subst hμ
+    by_cases hν : ν = μ
+    · -- both directions are the axis: a degenerate plaquette, holonomy `1` on either side
+      subst hν
+      refine ⟨1, ?_⟩
+      rw [wilsonHol_ibd, wilsonHol_ibd]
+      simp only [ireflPlaq, ireflConf, ireflLink, if_true]
+      group
+    · refine ⟨(U (μ, ireflSite μ (c - 1) x))⁻¹, ?_⟩
+      rw [wilsonHol_ibd, wilsonHol_ibd]
+      simp only [ireflPlaq, ireflConf, ireflLink, hν, if_false, if_true,
+        ireflSite_ishift_of_ne hν, ireflSite_ishift_axis, ← ishift_ireflSite_axis μ c x]
+      group
+  · by_cases hν : ν = τ
+    · subst hν
+      refine ⟨(U (ν, ireflSite ν (c - 1) x))⁻¹, ?_⟩
+      rw [wilsonHol_ibd, wilsonHol_ibd]
+      simp only [ireflPlaq, ireflConf, ireflLink, hμ, if_false, if_true,
+        ireflSite_ishift_of_ne hμ, ireflSite_ishift_axis, ← ishift_ireflSite_axis ν c x]
+      group
+    · refine ⟨1, ?_⟩
+      rw [wilsonHol_ibd, wilsonHol_ibd]
+      simp only [ireflPlaq, ireflConf, ireflLink, hμ, hν, if_false,
+        ireflSite_ishift_of_ne hμ, ireflSite_ishift_of_ne hν]
+      group
+
+#print axioms ihol_ireflConf
+
+end Conjugacy
 
 /-! ## 4. Observables, and the `Reflection` -/
 

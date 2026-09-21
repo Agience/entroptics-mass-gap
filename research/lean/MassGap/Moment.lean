@@ -113,8 +113,26 @@ probability vector `p = ρ/Σρ`, the angles `θ_d = 2π d /(N+1)`, and the min-
 THEOREMS; the only inputs are `ρ ≥ 0` (reflection positivity) and the bounded moment (finite
 correlation length / no bulk transition). -/
 
-/-- A concrete entropy-matched read: a whitened, translation-invariant correlation `ρ ≥ 0` over the lag
-index, with positive total mass. Everything the gap uses (`p`, `θ`, the tension `μ`) is derived from it. -/
+/-- A correlation over the lag index: `ρ ≥ 0` with positive total mass, and nothing else.
+Everything the gap uses (`p`, `θ`, the tension `μ`) is derived from it.
+
+**⛔ THE TWO FIELDS ARE THE WHOLE CONTENT, and it is worth saying what they are NOT.** They do not
+carry entropy-matching, whitening or translation invariance. Whitening, in the certificate path, is
+the single scalar division `ρ/ρ(0)`, which cancels identically out of `p = ρ / ∑ρ` and therefore
+constrains nothing. Translation invariance is proved separately OF the concrete correlator
+(`MomentShape.wilsonCorrAt_neg`), not assumed here. And the instrument's entropy-matched resolution
+folds the FEATURE axis while leaving the ordered/lag axis at native resolution, so it imposes nothing
+on a lag distribution — `p` is a normalised measured autocorrelation, not a maximum-entropy
+distribution and not an exponential family.
+
+**⛔ AND CARRYING MORE WOULD NOT HELP, which is the real reason to leave it thin.** `readA` is a
+transparent wrapper — `ShareEnvelope.readYMAt_rho` is `rfl` — so any proof may unfold to `corrClay`
+and use anything provable of the Wilson measure. `ShapeNoGo` does exactly that: it proves the five
+strongest β-uniform facts OF `wilsonCorrAt` and then proves them insufficient, because the FLAT
+PROFILE satisfies every one with equality. That is not a hole in this abstraction. In the spectral
+form `ρ(d) = ∑ w_n e^{-E_n d}` the flat profile IS the `E_0 = 0` term, so any β-uniform constraint
+strong enough to exclude it is already the mass gap (`ZeroMode`). The obligation is genuinely
+dynamical: how `wilsonCorrAt N β` moves with `β`. -/
 structure Read (N : ℕ) where
   ρ : Fin (N + 1) → ℝ
   hρ : ∀ d, 0 ≤ ρ d

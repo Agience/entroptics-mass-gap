@@ -1591,15 +1591,35 @@ the gauge with *opposite* handedness — $F\mapsto gFh^{-1}$ at one and $F\mapst
 which on a non-abelian group are not one action. Inverting the plane variables under the integral
 reconciles them.
 
-**Theorem 11.1c (Reflection positivity passes to a limit state on $\mathbb{Z}^4$ — PROVED, not
-cited).** For the $SU(N)$ Wilson measure on the infinite lattice $\mathbb{Z}^4$ with free boundary
-conditions, take any family of boxes each stable under the link reflection and each containing a
-fixed finite region $R_0$ lying at or above the reflection plane. Then along an ultrafilter refining
-any given filter, the free-boundary states of those boxes converge to a state $\nu$, and $\nu$ is
-reflection positive on the observables local to $R_0$. In the formal development this is
-`ReflectionHalfSpace.reflPositive_limit_exists`; `reflection_facts_of_limit` adds reflection
-*invariance* of the same state along the same ultrafilter, given a reflection-symmetric boundary
-condition.
+**Theorem 11.1c (Reflection positivity of an infinite-volume state on the half-space algebra —
+PROVED, not cited).** Fix $N\neq 0$, a direction $\tau$, a plane $p$ and a coupling $\beta$. For the
+$SU(N)$ Wilson measure on $\mathbb{Z}^4$ with free boundary conditions, there is an ultrafilter
+refining $\mathrm{atTop}$ along which the free-boundary states of the symmetrised cubes
+$\mathrm{symCube}\,\tau\,(2p)\,n$ converge to a state $\nu$, and $\nu$ is reflection positive on the
+whole half-space algebra $\mathrm{halfSpaceAlg}\,\tau\,p$ for the reflection at constant $2p$. In the
+formal development this is `ReflectionHalfSpace.wilson_reflPositive_limit_exists`.
+
+Three things distinguish this from the weaker statement it replaces. The algebra is the **directed
+union** over all finite supports in the positive half, not one fixed finite region: no single volume
+contains every member's support, so the usual uniform hypothesis is unsatisfiable by an exhausting
+family, and what is used instead is a hypothesis that holds *eventually and one observable at a time*
+(`InfiniteReflection.reflPositive_of_eventually_pointwise`), with the fixed region chosen per
+observable. The box family is **constructed**, not assumed — `symCube_refl_stable` and
+`symCube_exhausts` discharge reflection-stability and exhaustion — so the theorem is not conditional
+on such a family existing. And $\varphi$ is the **Wilson density itself**, its four required
+properties supplied by `WilsonAction`, rather than an abstract class that also contains $\varphi=0$.
+
+Two caveats are part of the statement. The limit is **subsequential**, along an ultrafilter refining
+$\mathrm{atTop}$, as everywhere in this development: it is compactness, not an existence proof for
+the thermodynamic limit. And the carrier is non-trivial only when the group is: at $SU(0)$ and
+$SU(1)$ the group is a point and every observable is constant, so the statement is true and empty
+there. `ReflectionHalfSpace.halfSpaceAlg_has_nonconstant` rules that out at $SU(3)$ by exhibiting a
+one-link observable that separates the identity from $\mathrm{diag}(1,-1,-1)$ through
+$\mathrm{Re}\,\mathrm{tr}$.
+
+Reflection *invariance* of the same state, along the same ultrafilter and given a reflection-symmetric
+boundary condition, is `reflection_facts_on_halfSpaceAlg`; the all-identity configuration is symmetric
+about every mirror at once.
 
 This is a different object from 11.1b rather than a strengthening of it. 11.1b is the periodic torus
 at even extent; 11.1c is the infinite lattice, where the reflection is a genuine Osterwalder–Seiler

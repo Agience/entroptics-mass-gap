@@ -261,6 +261,81 @@ theorem shift_moves_halfLinkObs (τ : Fin 4) (l : ILink)
 
 #print axioms shift_moves_halfLinkObs
 
+/-- One shift of a one-link observable is the one-link observable one link along — the step the
+induction below needs before its hypothesis can fire.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ishiftObsCM_halfLinkObs (τ : Fin 4) (l : ILink) (f : C(G, ℝ)) :
+    ishiftObsCM τ (halfLinkObs l f) = halfLinkObs (ishiftLink τ l) f := by
+  ext U
+  rfl
+
+#print axioms ishiftObsCM_halfLinkObs
+
+/-- **`k` SHIFTS OF A ONE-LINK OBSERVABLE IS THE ONE-LINK OBSERVABLE `k` LINKS ALONG.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ishiftObsCM_iterate_halfLinkObs (τ : Fin 4) (k : ℕ) (l : ILink) (f : C(G, ℝ)) :
+    (ishiftObsCM τ)^[k] (halfLinkObs l f) = halfLinkObs ((ishiftLink τ)^[k] l) f := by
+  induction k generalizing l with
+  | zero => simp
+  | succ i ih =>
+      rw [Function.iterate_succ_apply, ishiftObsCM_halfLinkObs, ih,
+        Function.iterate_succ_apply]
+
+#print axioms ishiftObsCM_iterate_halfLinkObs
+
+/-- **AND EVERY POSITIVE NUMBER OF SHIFTS MOVES IT.** `shift_moves_halfLinkObs` is the case `k = 1`.
+
+DERIVED: the `0` is the excluded step count; `g₀`, `g₁` and `f` are the caller's separating data. -/
+theorem shift_iterate_moves_halfLinkObs (τ : Fin 4) {k : ℕ} (hk : 0 < k) (l : ILink)
+    {f : C(G, ℝ)} {g₀ g₁ : G} (hf : f g₀ ≠ f g₁) :
+    (ishiftObsCM τ)^[k] (halfLinkObs l f) ≠ halfLinkObs l f := by
+  classical
+  rw [ishiftObsCM_iterate_halfLinkObs]
+  intro h
+  have hmoved : (ishiftLink τ)^[k] l ≠ l := ishiftLink_iterate_ne τ hk l
+  have hval := congrFun (congrArg (fun F : C(IConf G, ℝ) => (F : IConf G → ℝ)) h)
+    (fun j : ILink => if j = l then g₁ else g₀)
+  simp only [halfLinkObs, ContinuousMap.comp_apply, ContinuousMap.coe_mk,
+    if_neg hmoved, if_pos rfl] at hval
+  exact hf hval
+
+#print axioms shift_iterate_moves_halfLinkObs
+
+/-- **⭐⭐ THE SHIFT HAS INFINITE ORDER ON THE HALF-SPACE ALGEBRA — SO THE FINITE-ORDER NO-GO DOES
+NOT REACH `ℤ⁴`.**
+
+`ClayAssembly.finite_order_contraction_is_isometry` proves that a `TransferData` whose `T` satisfies
+`T^n = id` for some `n ≥ 1` is a form-isometry, hence carries no decay, and that is the standing
+reason "`I4` cannot come from the lattice". Its hypothesis is supplied on the PERIODIC lattice by
+`HalfLineTransfer.shiftObs_pow_period`.
+
+**On `ℤ⁴` there is no such `n`**, and this exhibits the witness inside the half-space algebra rather
+than merely somewhere in the quasi-local one — which has to be checked separately, because a
+submodule could in principle contain only observables the shift fixes.
+
+**⛔ THIS DOES NOT PROVE `TransferMovesSomething`.** Motion in the ALGEBRA is not motion in the GNS
+QUOTIENT: `opT [F] = [F]` whenever `T F - F` lies in the null space of the form. What it does is
+remove the no-go, so the question is open rather than closed.
+
+**⛔ AND IT NEEDS A SEPARATING FUNCTION**, which is a real hypothesis: at `SU 0` and `SU 1` the group
+is a singleton and none exists. `CrossingIntegration.trace_gNeg` supplies one at `SU(3)`, where
+`Re tr` separates `gNeg` from the identity. **⛔ `halfSpaceAlg_has_nonconstant` DOES NOT** — it
+separates two CONFIGURATIONS by an observable, where this needs a function on the GROUP
+separating two group elements.
+
+DERIVED: the `0` is the excluded step count; `g₀`, `g₁` and `f` are the caller's separating data;
+`4` is the dimension. -/
+theorem shift_no_finite_order_on_halfSpaceAlg (τ : Fin 4) (p : ℤ)
+    {f : C(G, ℝ)} {g₀ g₁ : G} (hf : f g₀ ≠ f g₁) {k : ℕ} (hk : 0 < k) :
+    ∃ F ∈ halfSpaceAlg (G := G) τ p, (ishiftObsCM τ)^[k] F ≠ F := by
+  refine ⟨halfLinkObs ((0 : Fin 4), fun _ => p) f,
+    halfLinkObs_mem τ p (le_refl p) f, ?_⟩
+  exact shift_iterate_moves_halfLinkObs τ hk _ hf
+
+#print axioms shift_no_finite_order_on_halfSpaceAlg
+
 end Alg
 
 end MassGap.HalfSpaceAlgebra

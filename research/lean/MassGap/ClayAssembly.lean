@@ -141,8 +141,15 @@ on the genuine Wilson slab algebra with no premise at all, discharging every cla
 space, unit vacuum, positive self-adjoint contraction with `TΩ = Ω`" — and a sixth conjunct saying
 `T` is the IDENTITY. `shiftSlab_eq_id` proves the lattice shift is the identity on `SlabShiftStable`'s
 own premise, and `HalfLineTransfer.shiftObs_pow_period` proves the shift has finite order, so a
-finite-order contraction is an isometry and carries no decay. Every operator the tree can currently
-produce fails this predicate, which is exactly why it is the open item.
+finite-order contraction is an isometry and carries no decay. Every operator on a PERIODIC carrier
+fails this predicate provably.
+
+**⛔ ON `ℤ⁴` IT IS UNDECIDED RATHER THAN FALSE.**
+`ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves `T ≠ 1` on the half-space
+algebra, so neither `shiftSlab_eq_id` nor `shiftObs_pow_period` applies there and the predicate is
+not refuted. Nor is it proved: motion in the ALGEBRA is not motion in the QUOTIENT, and
+`transferMovesSomething_of_seminorm_ne_zero` below says exactly what is missing — that the form
+does not annihilate one difference `T z - z`. Nothing in the tree decides that.
 
 `-log T` needs `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary and not
 sufficient; it is stated as the first thing that is missing, not as the whole of C1's remainder.
@@ -154,6 +161,68 @@ through anything this file decides. -/
 def TransferMovesSomething {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) : Prop :=
   ∃ x : MassGap.GNSHilbert.H D.toReflForm, MassGap.GNSHilbert.opT D x ≠ x
+
+/-- **⭐⭐ WHAT IS LEFT OF `TransferMovesSomething`, ONCE `T ≠ 1` IS KNOWN.**
+
+The predicate holds as soon as the form does not annihilate a single difference `T z - z`. `H` is the
+SEPARATED completion, so `[w] = 0` exactly when the seminorm of `w` is zero — that is what separation
+means — and `opT [z] = [z]` is therefore `‖cT z - z‖ = 0`.
+
+**⛔ IT CLOSES NOTHING; IT LOCATES THE GAP.** `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id`
+proves the shift is not the identity on the half-space ALGEBRA, and that is strictly weaker than this:
+motion in the algebra is not motion in the quotient. What stands between them is one statement about
+the reflection form at one element, and nothing in the tree decides it in either direction.
+
+DERIVED: the `0` is the seminorm value that separation quotients away. -/
+theorem transferMovesSomething_of_seminorm_ne_zero {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : Transfer.TransferData A) (z : MassGap.GNSHilbert.Pre D.toReflForm)
+    (h : ‖MassGap.GNSHilbert.cT D z - z‖ ≠ 0) :
+    TransferMovesSomething D := by
+  refine ⟨(z : MassGap.GNSHilbert.H D.toReflForm), fun hc => h ?_⟩
+  have h0 : ((MassGap.GNSHilbert.cT D z - z : MassGap.GNSHilbert.Pre D.toReflForm)
+      : MassGap.GNSHilbert.H D.toReflForm) = 0 := by
+    rw [UniformSpace.Completion.coe_sub]
+    rw [← MassGap.GNSHilbert.cTL_apply, ← MassGap.GNSHilbert.opT_coe, hc, sub_self]
+  rw [← UniformSpace.Completion.norm_coe
+    (MassGap.GNSHilbert.cT D z - z : MassGap.GNSHilbert.Pre D.toReflForm), h0, norm_zero]
+
+#print axioms transferMovesSomething_of_seminorm_ne_zero
+
+/-- **⭐⭐⭐ AND THE SAME THING AS PHYSICS: ONE TWO-POINT FUNCTION THAT CHANGES IN ONE TIME STEP.**
+
+If `opT` fixes a class it fixes every pairing against that class, so a single pair `z`, `w` whose
+Gibbs pairing differs between `T z` and `z` already gives `TransferMovesSomething`. Taking `w = z`
+reads: the lag-one two-point function at `z` differs from the lag-zero one.
+
+**⛔ THIS IS WHAT IS LEFT OF `I4` ON `ℤ⁴`, AND IT IS ABOUT THE STATE.**
+`ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` gives `T ≠ 1` on the half-space algebra;
+that is about the MAP. This is about the FORM, and the two differ because `H` is the separated
+completion. What is not known is whether the Wilson state has a half-space observable whose
+correlation moves at all under one time step — if it has none, every correlation is lag-independent
+and there is no decay to measure, which is the degenerate case the tree keeps naming.
+
+No inequality and no positivity is used: only that `opT` is linear and the inner product on `H` reads
+the Gibbs pairing (`GNSHilbert.inner_coe`).
+
+DERIVED: no numeral. -/
+theorem transferMovesSomething_of_pairing_ne {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : Transfer.TransferData A) (z w : MassGap.GNSHilbert.Pre D.toReflForm)
+    (h : MassGap.OSPositivity.cform D.toReflForm.toPreForm
+          ((MassGap.GNSHilbert.cT D z : MassGap.GNSHilbert.Pre D.toReflForm) : A × A)
+          ((w : MassGap.GNSHilbert.Pre D.toReflForm) : A × A)
+        ≠ MassGap.OSPositivity.cform D.toReflForm.toPreForm
+          ((z : MassGap.GNSHilbert.Pre D.toReflForm) : A × A)
+          ((w : MassGap.GNSHilbert.Pre D.toReflForm) : A × A)) :
+    TransferMovesSomething D := by
+  refine ⟨(z : MassGap.GNSHilbert.H D.toReflForm), fun hc => h ?_⟩
+  rw [MassGap.GNSHilbert.opT_coe, MassGap.GNSHilbert.cTL_apply] at hc
+  have hinner := congrArg
+    (fun x : MassGap.GNSHilbert.H D.toReflForm =>
+      inner ℂ x ((w : MassGap.GNSHilbert.H D.toReflForm))) hc
+  rw [MassGap.GNSHilbert.inner_coe, MassGap.GNSHilbert.inner_coe] at hinner
+  exact hinner
+
+#print axioms transferMovesSomething_of_pairing_ne
 
 /-! ## 3. The remaining distance -/
 
@@ -280,16 +349,28 @@ theorem scaling_as_stated_is_vacuous :
 
 #print axioms scaling_as_stated_is_vacuous
 
-/-! ## 4. `I4` is not reachable from ANY finite-order map, not merely from the shift
+/-! ## 4. `I4` is not reachable from ANY finite-order map — and which lattices that rules out
 
-`GNSHilbert`'s statement of the open item is "a transfer operator that is not the finite-order
-shift". The theorems below sharpen that from a remark about one map to a property of every map of
+`GNSHilbert` no longer states the open item as "a transfer operator that is not the finite-order
+shift" — `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` settles that — and states it
+instead as the three unproved facts about the state. The theorems below are about the other
+half: they sharpen finite order from a remark about one map to a property of every map of
 finite order: on a `TransferData`, finite order plus contractivity forces the form to be PRESERVED,
-so such a `T` is an isometry and carries no decay at all. Since
-`HalfLineTransfer.shiftObs_pow_period` gives `(shiftObs τ)ⁿ = id` with no hypothesis on the module,
-the coupling or the reflection, EVERY operator assembled from lattice translations on a periodic
-lattice falls under this. `I4` therefore needs an operator that is not built from lattice
-translations at all — a strictly stronger requirement than avoiding one particular map. -/
+so such a `T` is an isometry and carries no decay at all.
+
+**⛔ THE REACH IS THE PERIODIC LATTICE, AND ONLY THAT.** The hypothesis is supplied by
+`HalfLineTransfer.shiftObs_pow_period`, which gives `(shiftObs τ)ⁿ = id` on the PERIODIC lattice with
+no hypothesis on the module, the coupling or the reflection. So every operator assembled from lattice
+translations on a periodic lattice falls under this.
+
+**On `ℤ⁴` the hypothesis is FALSE**, so nothing here applies:
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits, for every positive `k`, a member
+of `halfSpaceAlg` that the `k`-fold shift moves, given a separating function on the GROUP
+(`CrossingIntegration.trace_gNeg` supplies one at `SU(3)`; `halfSpaceAlg_has_nonconstant`
+separates CONFIGURATIONS and does not discharge this hypothesis). `I4` is therefore OPEN
+on the infinite lattice, not closed, and what stands in the way there is a different thing: motion in
+the ALGEBRA is not motion in the GNS QUOTIENT, because `opT [F] = [F]` whenever `T F - F` lies in the
+null space of the form. -/
 
 /-- **The form along the orbit is ANTITONE.** `T_contract` says one step cannot expand the form;
 iterating gives the whole sequence. This is the only place contractivity is used. -/
@@ -306,12 +387,17 @@ If `Tⁿ = id` for some `n ≥ 1`, then `form (T x) (T x) = form x x` at EVERY `
 squeeze and nothing else: the form along the orbit is antitone, and the order sends step `n` back to
 step `0`, so every value between them is equal — in particular the value at step one.
 
-**This is why `I4` cannot come from the lattice.** `HalfLineTransfer.shiftObs_pow_period` proves
-`(shiftObs τ)ⁿ = id` on EVERY observable of the periodic lattice, with no hypothesis on the module,
-the coupling or the reflection. So any `TransferData` whose `T` is assembled from lattice
-translations has an isometric `T`, hence an `opT` that preserves norms and admits no contraction
-factor below one anywhere — not merely on the vacuum complement.
+**This is why `I4` cannot come from a PERIODIC lattice.** `HalfLineTransfer.shiftObs_pow_period`
+proves `(shiftObs τ)ⁿ = id` on EVERY observable of the periodic lattice, with no hypothesis on the
+module, the coupling or the reflection. So any `TransferData` whose `T` is assembled from
+translations of a periodic lattice has an isometric `T`, hence an `opT` that preserves norms and
+admits no contraction factor below one anywhere — not merely on the vacuum complement.
 `GNSHilbert.shiftSlab_eq_id` is the extreme case of this at the slab, where the order is one.
+
+**⛔ IT SAYS NOTHING ABOUT `ℤ⁴`, WHERE THE HYPOTHESIS FAILS.**
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` proves the `ℤ⁴` shift has no finite order on
+the half-space algebra, so this theorem is inapplicable there and does not close `I4` for the
+infinite-volume construction.
 
 DERIVED: no numeral is chosen. `0` and `1` are the orbit steps the squeeze compares and `n` is the
 caller's order. -/

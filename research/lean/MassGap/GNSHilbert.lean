@@ -78,12 +78,45 @@ contractivity, which bounds `|λ|` and says nothing about the sign of `λ`, and 
 what an oscillating correlator looks like. It is reflection positivity about a HALF-INTEGER time
 plane, exactly as `Transfer`'s header says.
 
-**But it is not what is missing at Yang–Mills, and the file does not pretend otherwise.**
+**On a carrier where the translation is trivial it is a theorem for a cheap reason.**
 `positiveTransfer_of_T_eq_id` proves it outright whenever `T = 1`, from `form_nonneg`; Part 6 shows
-the tree's only Wilson `TransferData` has `T = 1` on its own premise, and Part 7 exhibits an
-unconditional one that does. So on every Wilson instance the tree currently has, `PositiveTransfer`
-is a THEOREM. It becomes open again the moment a translation that moves something exists, and not
-before. The missing object is that translation, not this hypothesis.
+the slab `TransferData` has `T = 1` on its own premise, and Part 7 exhibits an unconditional one that
+does.
+
+**⛔ THAT IS NO LONGER THE WHOLE STORY, BECAUSE A CARRIER ON WHICH `T` IS NOT THE IDENTITY NOW
+EXISTS.** `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves it: for every positive
+`k`, `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits a member of `halfSpaceAlg`
+that `k` shifts move, and at `k = 1` that carries through `TransferAssembly.restrictT` to the
+assembled `T`. So `positiveTransfer_of_T_eq_id` does not reach
+`WilsonTransferReduction.transferData_of_state_facts`, and `PositiveTransfer` there is a real
+condition rather than a formality.
+
+**⛔ THE ALGEBRA IS WHAT EXISTS; THE `TransferData` IS NOT AN OBJECT THE TREE HAS.**
+`transferData_of_state_facts` is a `def` parameterised by three unproved facts about a state, and
+`WilsonState` says twice that nothing is shown to satisfy any of them. What follows is about that
+`def` applied to hypotheses, not about an object in hand.
+
+**⛔ AND MOTION IN THE ALGEBRA IS NOT MOTION IN THE GNS QUOTIENT.** `opT [F] = [F]` whenever
+`T F - F` lies in the null space of the form, and nothing shows otherwise for this carrier. Part 6's
+trap is stated at `opT`, not at `T`, and `shift_no_finite_order_on_halfSpaceAlg` carries the same
+caveat. `T ≠ 1` does not give `TransferMovesSomething`.
+
+**⛔ AND IT NEEDS A SEPARATING FUNCTION ON THE GROUP**, which is a real hypothesis: `SU 0` and `SU 1`
+are singletons and none exists. `CrossingIntegration.trace_gNeg` supplies one at `SU(3)`. Nothing in
+the tree composes that with `halfSpaceAlg_has_nonconstant`, which separates CONFIGURATIONS rather
+than group elements and does not discharge this.
+
+**AND `PositiveTransfer` IS DISCHARGED THERE, BY A DIFFERENT ROUTE.**
+`WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` makes it EQUIVALENT to reflection
+positivity at the ODD constant `2p - 1` on the same algebra — the link reflection, whose mirror cuts
+`τ`-links in half — and `ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit`
+supplies that side, from `N ≠ 0`, `0 ≤ β`, two filters refining `atTop`, and the two cube families
+converging along them to ONE state, at the all-identity boundary condition. That is SUFFICIENT and
+is not known to be necessary: the only equivalence in the chain is with odd reflection positivity,
+so another route to that would discharge `PositiveTransfer` without any limit. **`0 ≤ β` is not
+bookkeeping**: `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel is
+not positive-semidefinite below zero. **And `N ≠ 0` does not exclude `N = 1`**, where `SU 1` is a
+singleton, `halfSpaceAlg` is the constants and the whole statement is empty.
 
 A HAMILTONIAN IS NOT CONSTRUCTED. `-log T` is not built and no nonnegative-spectrum generator is
 claimed. Positivity and injectivity of `T` are both insufficient: what `Reconstruction.hamiltonian`
@@ -475,10 +508,15 @@ theorem re_inner_opT_nonneg (h : PositiveTransfer D) (x : H D.toReflForm) :
 /-- **AND `PositiveTransfer` IS A THEOREM WHENEVER `T` IS THE IDENTITY** — it is then `form_nonneg`,
 which is reflection positivity and already proved.
 
-This is why the hypothesis is open only for a NON-TRIVIAL translation. Part 6 shows the tree's one
-Wilson `TransferData` has `T = 1` on its own premise, and Part 7 exhibits an unconditional one that
-does; `PositiveTransfer` is discharged for both by this theorem. What it is open FOR is a transfer
-operator that moves something, and there is not one to be open about yet.
+This is why the hypothesis is a real condition only for a NON-TRIVIAL translation. Part 6 shows the
+slab `TransferData` has `T = 1` on its own premise, and Part 7 exhibits an unconditional one that
+does; `PositiveTransfer` is discharged for both by this theorem.
+
+**⛔ IT DOES NOT COVER THE HALF-SPACE CARRIER.** `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id`
+proves `T ≠ 1` there, at a separating function on the group, so this proof is unavailable.
+`PositiveTransfer` is discharged there instead by
+`ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit`, through the equivalence
+`WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive`.
 
 DERIVED: the `0` of `0 ≤ …` is positivity itself. -/
 theorem positiveTransfer_of_T_eq_id (hT : ∀ x : A, D.T x = x) : PositiveTransfer D := by

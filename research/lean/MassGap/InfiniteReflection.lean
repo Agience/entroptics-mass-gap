@@ -142,7 +142,7 @@ theorem reflection_positivity_fails_off_the_half_space (R : Reflection X) (ν : 
 
 /-! ## 3. ⭐ Both conditions transport to the limit -/
 
-/-- **⭐ REFLECTION POSITIVITY PASSES TO THE LIMIT STATE.**
+/-- **⭐⭐ REFLECTION POSITIVITY PASSES TO THE LIMIT STATE, ONE OBSERVABLE AT A TIME.**
 
 `DLRLimit.le_of_eventually_le` at `c = 0` and the observable `θf · f`, once per `f` in the submodule.
 Positivity is a closed condition and limits preserve closed conditions; there is nothing else in it.
@@ -151,8 +151,30 @@ Positivity is a closed condition and limits preserve closed conditions; there is
 positivity at finite volume — at Wilson, `Complete.wilson_reflection_positive_at` — supplies it for
 the limit, with no second axiom and no hypothesis on the filter beyond `NeBot`.
 
-The submodule `A` is held FIXED across the volumes, which is what makes the statement usable: a
-half-space algebra that grew with the volume would not have a limit to transport to.
+**⛔ THE HYPOTHESIS IS POINTWISE IN `f`, AND THAT IS WHAT REACHES A DIRECTED UNION.** The uniform
+form `∀ᶠ i, ∀ f ∈ A` is `reflPositive_of_tendsto` below, and it is the special case, because this
+proof specialises at `f` immediately and never uses uniformity over `f`.
+`HalfSpaceAlgebra.halfSpaceAlg` is the union over ALL finite supports inside the half-space, so no
+single volume contains every member's support and the uniform hypothesis is unsatisfiable by an
+exhausting family — which is why the union looked unreachable. Each member separately carries a
+FIXED finite support and therefore sits inside every large enough box.
+
+The submodule `A` is held FIXED across the volumes either way: a half-space algebra that GREW with
+the volume would not have a limit to transport to.
+
+DERIVED: the `0` is the sign being transported. -/
+theorem reflPositive_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (R : Reflection X) (A : Submodule ℝ C(X, ℝ))
+    (h : ∀ f ∈ A, ∀ᶠ i in l, 0 ≤ μ i (R.θ f * f)) :
+    ReflPositiveOn R A ν :=
+  fun f hf => le_of_eventually_le htend (R.θ f * f) 0 (h f hf)
+
+#print axioms reflPositive_of_eventually_pointwise
+
+/-- **⭐ THE UNIFORM FORM**, which is what a family of volumes each positive on all of `A` supplies.
+It factors through the pointwise lemma by `Filter.Eventually.mono`, so the two are one fact.
 
 DERIVED: the `0` is the sign being transported. -/
 theorem reflPositive_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
@@ -161,9 +183,111 @@ theorem reflPositive_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
     (R : Reflection X) (A : Submodule ℝ C(X, ℝ))
     (h : ∀ᶠ i in l, ReflPositiveOn R A (μ i)) :
     ReflPositiveOn R A ν :=
-  fun f hf => le_of_eventually_le htend (R.θ f * f) 0 (h.mono fun _ hi => hi f hf)
+  reflPositive_of_eventually_pointwise htend R A (fun f hf => h.mono fun _ hi => hi f hf)
 
 #print axioms reflPositive_of_tendsto
+
+/-- **⭐⭐⭐ A PAIRING INEQUALITY PASSES TO THE LIMIT STATE.**
+
+Both sides are the state evaluated at a fixed observable, so both converge; a `≤` holding eventually
+is a `≤` in the limit. Nothing here is deep — the point is which obligation it moves.
+
+**⛔ THIS FORM IS UNUSABLE FOR THE GAP AND THE VARIANT BELOW IS THE ONE TO USE.**
+`WilsonTransferReduction.gapAt_iff_pairing` restricts its inequality to the `F` whose pairing with
+the vacuum VANISHES, and that restriction is not decoration: at `F = 1` both sides collapse to `1`
+and `r²`, so an unrestricted hypothesis of this shape entails `1 ≤ r²` and
+`TransferGap.gapAt_of_one_le_sq` then makes the conclusion free. Quantifying over all of `A` throws
+away the whole content.
+
+The hypothesis is pointwise in `F` for the same reason it is in
+`reflPositive_of_eventually_pointwise`: a directed union has no single volume containing every
+member's support, so a uniform hypothesis would be unsatisfiable by an exhausting family.
+
+DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+theorem pairing_le_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (R S : Reflection X) (A : Submodule ℝ C(X, ℝ)) (r : ℝ)
+    (h : ∀ F ∈ A, ∀ᶠ i in l, μ i (S.θ F * F) ≤ r ^ 2 * μ i (R.θ F * F)) :
+    ∀ F ∈ A, ν (S.θ F * F) ≤ r ^ 2 * ν (R.θ F * F) := by
+  intro F hF
+  exact le_of_tendsto_of_tendsto (htend (S.θ F * F))
+    ((htend (R.θ F * F)).const_mul (r ^ 2)) (h F hF)
+
+#print axioms pairing_le_of_eventually_pointwise
+
+/-- **⭐ THE SAME, ON A SUBSET OF THE ALGEBRA.** The side condition `P` rides along untouched, which
+is what lets a caller keep the vacuum-orthogonality restriction that makes the statement non-empty.
+
+DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+theorem pairing_le_of_eventually_pointwise_on {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (R S : Reflection X) (A : Submodule ℝ C(X, ℝ)) (P : C(X, ℝ) → Prop) (r : ℝ)
+    (h : ∀ F ∈ A, P F → ∀ᶠ i in l, μ i (S.θ F * F) ≤ r ^ 2 * μ i (R.θ F * F)) :
+    ∀ F ∈ A, P F → ν (S.θ F * F) ≤ r ^ 2 * ν (R.θ F * F) := by
+  intro F hF hP
+  exact le_of_tendsto_of_tendsto (htend (S.θ F * F))
+    ((htend (R.θ F * F)).const_mul (r ^ 2)) (h F hF hP)
+
+#print axioms pairing_le_of_eventually_pointwise_on
+
+/-- **⭐⭐ THE VACUUM-SUBTRACTED PAIRING IS THE CONNECTED CORRELATOR.**
+
+    ν (θ (F - ν F • 1) · (F - ν F • 1)) = ν (θ F · F) - ν F · ν (θ F)
+
+An identity, per state, with no limit in it. Expanding the product leaves `- c·νF + c²` with
+`c = ν F`, and those cancel.
+
+**⛔ THIS IS WHY THE SUBTRACTED STATEMENT HAS NO SIDE CONDITION.** The right-hand side is the
+connected two-point function; at `F = 1` it is `1 - 1 · 1 = 0`, so the collapse that makes an
+unsubtracted decay hypothesis contradictory simply does not arise.
+
+DERIVED: no numeral is chosen; the `1` is the unit observable. -/
+theorem state_pairing_subtracted (ν : State X) (R : Reflection X) (F : C(X, ℝ)) :
+    ν (R.θ (F - ν F • (1 : C(X, ℝ))) * (F - ν F • (1 : C(X, ℝ))))
+      = ν (R.θ F * F) - ν F * ν (R.θ F) := by
+  have hθ : R.θ (F - ν F • (1 : C(X, ℝ))) = R.θ F - ν F • (1 : C(X, ℝ)) := by
+    rw [map_sub, map_smul, R.θ_one]
+  rw [hθ]
+  have hexp : (R.θ F - ν F • (1 : C(X, ℝ))) * (F - ν F • (1 : C(X, ℝ)))
+      = R.θ F * F - ν F • R.θ F - ν F • F + (ν F * ν F) • (1 : C(X, ℝ)) := by
+    ext x
+    simp only [ContinuousMap.sub_apply, ContinuousMap.add_apply, ContinuousMap.mul_apply,
+      ContinuousMap.smul_apply, ContinuousMap.one_apply, smul_eq_mul]
+    ring
+  rw [hexp, ν.map_add, ν.map_sub, ν.map_sub, ν.map_smul, ν.map_smul, ν.map_smul, ν.one']
+  ring
+
+#print axioms state_pairing_subtracted
+
+/-- **⭐⭐⭐ AND SO THE HYPOTHESIS NEED NOT MENTION THE LIMIT STATE AT ALL.**
+
+Each volume subtracts ITS OWN mean. Both sides are then continuous functions of three convergent
+evaluations, so a `≤` holding eventually is a `≤` between the limits — and by
+`state_pairing_subtracted` those limits are the limit state's subtracted pairings.
+
+**⛔ SO THE OBLIGATION IS PURELY FINITE-VOLUME.** No `ν` appears in `h`. That is what the previous
+form could not do: its side condition selected observables by a property of the limit state.
+
+DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+theorem connected_pairing_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (R S : Reflection X) (A : Submodule ℝ C(X, ℝ)) (r : ℝ)
+    (h : ∀ F ∈ A, ∀ᶠ i in l,
+      μ i (S.θ F * F) - μ i F * μ i (S.θ F)
+        ≤ r ^ 2 * (μ i (R.θ F * F) - μ i F * μ i (R.θ F))) :
+    ∀ F ∈ A,
+      ν (S.θ (F - ν F • (1 : C(X, ℝ))) * (F - ν F • (1 : C(X, ℝ))))
+        ≤ r ^ 2 * ν (R.θ (F - ν F • (1 : C(X, ℝ))) * (F - ν F • (1 : C(X, ℝ)))) := by
+  intro F hF
+  rw [state_pairing_subtracted, state_pairing_subtracted]
+  refine le_of_tendsto_of_tendsto ?_ ?_ (h F hF)
+  · exact (htend _).sub ((htend _).mul (htend _))
+  · exact ((htend _).sub ((htend _).mul (htend _))).const_mul _
+
+#print axioms connected_pairing_le_of_eventually
 
 /-- **AND SO DOES INVARIANCE.** An equality rather than an inequality, so uniqueness of limits does
 the work in place of `ge_of_tendsto`.

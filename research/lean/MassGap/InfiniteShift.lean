@@ -155,6 +155,19 @@ theorem ishift_iterate_ne (μ : Fin 4) {k : ℕ} (hk : 0 < k) (x : ISite) :
 
 #print axioms MassGap.InfiniteShift.ishift_iterate_ne
 
+/-- **`k` STEPS ON A LINK MOVE ITS BASE AND NOTHING ELSE.** This was a `have` inside
+`ishiftLink_iterate_ne`; it is exported because the box obstruction needs the coordinate.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ishiftLink_iterate (μ : Fin 4) (k : ℕ) (l : ILink) :
+    (ishiftLink μ)^[k] l = (l.1, (ishift μ)^[k] l.2) := by
+  induction k with
+  | zero => simp
+  | succ i ih =>
+      rw [Function.iterate_succ_apply', ih, ishiftLink, Function.iterate_succ_apply']
+
+#print axioms MassGap.InfiniteShift.ishiftLink_iterate
+
 /-- The link shift inherits it. -/
 theorem ishiftLink_iterate_ne (μ : Fin 4) {k : ℕ} (hk : 0 < k) (l : ILink) :
     (ishiftLink μ)^[k] l ≠ l := by

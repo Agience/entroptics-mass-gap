@@ -4063,36 +4063,62 @@ theorem measurable_coord_of_entries {γ : Type} [MeasurableSpace γ] {Nc : ℕ}
     rw [he]
     exact Complex.measurable_im.comp (h _ _)
 
-theorem measurable_entry_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
-    (i j : Fin (Fintype.card (Fin N × ↥(oplqCross τ a m)))) :
-    Measurable (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N =>
-      crossWord τ a m hm hm0 u i j) := by
-  by_cases hk : ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).2
-      = ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j).2
-  · have he : (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N => crossWord τ a m hm hm0 u i j)
-        = fun u => ((u (sIdx τ a m hm hm0
-              ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).2)
-            : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
-            ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i).1
-            ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j).1 := by
-      funext u
-      show Matrix.blockDiagonal (fun k : ↥(oplqCross τ a m) =>
-          ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
-          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i)
-          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j) = _
+/-- **EVERY ENTRY OF A BLOCK-DIAGONAL OF `SU(N)` MATRICES IS MEASURABLE IN THE FAMILY** — it is one
+unitary entry on the diagonal blocks and the constant `0` off them.
+
+Stated on the abstract family, like `entry_blockDiagonal_fin_norm_le_one` beside it, because the
+argument never looks at what indexes the blocks.
+
+DERIVED: `0` is the off-block entry; the size is `Fintype.card (Fin N × K)`, a count. -/
+theorem measurable_entry_blockDiagonal_fin {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
+    {γ : Type} [MeasurableSpace γ] (W : γ → K → MassGap.SUN.SU N)
+    (hW : ∀ k, Measurable (fun v => W v k))
+    (i j : Fin (Fintype.card (Fin N × K))) :
+    Measurable (fun v : γ =>
+      ((Matrix.blockDiagonal (fun k : K =>
+          ((W v k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))).submatrix
+        (Fintype.equivFin (Fin N × K)).symm (Fintype.equivFin (Fin N × K)).symm) i j) := by
+  by_cases hk : ((Fintype.equivFin (Fin N × K)).symm i).2
+      = ((Fintype.equivFin (Fin N × K)).symm j).2
+  · have he : (fun v : γ =>
+        ((Matrix.blockDiagonal (fun k : K =>
+            ((W v k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))).submatrix
+          (Fintype.equivFin (Fin N × K)).symm (Fintype.equivFin (Fin N × K)).symm) i j)
+        = fun v => ((W v ((Fintype.equivFin (Fin N × K)).symm i).2 : MassGap.SUN.SU N)
+            : Matrix (Fin N) (Fin N) ℂ)
+            ((Fintype.equivFin (Fin N × K)).symm i).1
+            ((Fintype.equivFin (Fin N × K)).symm j).1 := by
+      funext v
+      show Matrix.blockDiagonal (fun k : K =>
+          ((W v k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
+          ((Fintype.equivFin (Fin N × K)).symm i)
+          ((Fintype.equivFin (Fin N × K)).symm j) = _
       rw [Matrix.blockDiagonal_apply, if_pos hk]
     rw [he]
-    exact (continuous_su_entry _ _).measurable.comp (measurable_pi_apply _)
-  · have he : (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N => crossWord τ a m hm hm0 u i j)
+    exact (continuous_su_entry _ _).measurable.comp (hW _)
+  · have he : (fun v : γ =>
+        ((Matrix.blockDiagonal (fun k : K =>
+            ((W v k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))).submatrix
+          (Fintype.equivFin (Fin N × K)).symm (Fintype.equivFin (Fin N × K)).symm) i j)
         = fun _ => (0 : ℂ) := by
-      funext u
-      show Matrix.blockDiagonal (fun k : ↥(oplqCross τ a m) =>
-          ((u (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
-          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm i)
-          ((Fintype.equivFin (Fin N × ↥(oplqCross τ a m))).symm j) = _
+      funext v
+      show Matrix.blockDiagonal (fun k : K =>
+          ((W v k : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ))
+          ((Fintype.equivFin (Fin N × K)).symm i)
+          ((Fintype.equivFin (Fin N × K)).symm j) = _
       rw [Matrix.blockDiagonal_apply, if_neg hk]
     rw [he]
     exact measurable_const
+
+#print axioms measurable_entry_blockDiagonal_fin
+
+theorem measurable_entry_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
+    (i j : Fin (Fintype.card (Fin N × ↥(oplqCross τ a m)))) :
+    Measurable (fun u : ↥(oblkS τ a m) → MassGap.SUN.SU N =>
+      crossWord τ a m hm hm0 u i j) :=
+  measurable_entry_blockDiagonal_fin
+    (fun (u : ↥(oblkS τ a m) → MassGap.SUN.SU N) (k : ↥(oplqCross τ a m)) =>
+      u (sIdx τ a m hm hm0 k)) (fun _ => measurable_pi_apply _) i j
 
 theorem measurable_coord_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
     (p : Coord (Fintype.card (Fin N × ↥(oplqCross τ a m)))) :

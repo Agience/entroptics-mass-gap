@@ -29,11 +29,22 @@ integrable; the four `State` fields are then `integral_add`, `integral_smul`, `i
 has no missing link of type.
 
 **Does not close:** `transferData_of_state_facts` still needs its three hypotheses, and
-`wilsonStateAt` is not shown to satisfy ANY of them:
+`wilsonStateAt` is not shown to satisfy ANY of them.
 
-    IsReflectionInvariant (latticeReflection τ c) ν
-    ReflPositiveOn (latticeReflection τ c) (halfSpaceAlg τ c) ν
+⛔ A DIFFERENT state does satisfy two of them: the limit state of
+`ReflectionHalfSpace.wilson_reflPositive_limit_exists` carries `ReflPositiveOn`, and
+`reflection_facts_on_halfSpaceAlg` carries `IsReflectionInvariant` beside it. That state is a limit
+of free-boundary states along an ultrafilter, not `wilsonStateAt`, so it does not discharge anything
+here — but it means the list below is outstanding for THIS state, not for every state.
+
+    IsReflectionInvariant (latticeReflection τ (2 * p)) ν
+    ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg τ p) ν
     ∀ f, ν (ishiftObsL τ f) = ν f
+
+⛔ The constant is `2 * p` where the algebra's plane is `p`, and not `c` with `c`:
+`ReflectionHalfSpace`'s header shows that at `c ≠ 2p` the two half-spaces are not mirror images about
+a common plane, so the `c`-with-`c` form asks for positivity of a pairing that is not the reflection
+pairing.
 
 and `reconstruct_from_opT` still needs the two spectral hypotheses, which are the mass gap.
 

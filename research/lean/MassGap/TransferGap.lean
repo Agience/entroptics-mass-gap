@@ -79,6 +79,23 @@ def GapAt (D : Transfer.TransferData A) (r : ℝ) : Prop :=
 
 #print axioms GapAt
 
+/-- **⛔ AND AT `1 ≤ r²` IT IS FREE.** `T_contract` and `form_nonneg` give it for EVERY
+`TransferData`, with no hypothesis at all.
+
+Stated so that no statement downstream has to hedge about it: a `GapAt D r` carrying no `r < 1` says
+nothing, and any reduction whose hypothesis forces `1 ≤ r²` has reduced nothing. Both mistakes are
+easy to make, because the `r²` hides the sign and the contraction bound is already in the structure.
+
+DERIVED: the `1` is the threshold above which the statement is empty; the `2` is `GapAt`'s own
+exponent. -/
+theorem gapAt_of_one_le_sq {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : Transfer.TransferData A) {r : ℝ} (hr : 1 ≤ r ^ 2) : GapAt D r := by
+  intro x _
+  calc D.form (D.T x) (D.T x) ≤ D.form x x := D.T_contract x
+    _ ≤ r ^ 2 * D.form x x := le_mul_of_one_le_left (D.form_nonneg x) hr
+
+#print axioms gapAt_of_one_le_sq
+
 /-! ## 2. The complement is invariant, and the contraction iterates -/
 
 /-- **THE VACUUM'S ORTHOGONAL COMPLEMENT IS `T`-INVARIANT.** Two fields and nothing else:

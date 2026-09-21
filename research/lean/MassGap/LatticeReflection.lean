@@ -121,6 +121,30 @@ DERIVED: `4` is the dimension. -/
 @[simp] theorem ireflLink_fst (τ : Fin 4) (c : ℤ) (l : ILink) :
     (ireflLink τ c l).1 = l.1 := rfl
 
+/-- **THE AXIS BRANCH, AS A LINK.** A `τ`-link reflects about `c - 1`, because the link occupies the
+segment `[x, x+e_τ]` and the mirror must send that segment to itself.
+
+`ireflSite_axis` gives the `τ` coordinate of this; nothing gave the whole site, so a caller needing
+the base itself had to reopen the case split.
+
+DERIVED: the `1` is the length of a link in lattice steps, exactly `ireflLink`'s own; `4` is the
+dimension. -/
+theorem ireflLink_eq_axis (τ : Fin 4) (c : ℤ) {l : ILink} (h : l.1 = τ) :
+    ireflLink τ c l = (l.1, ireflSite τ (c - 1) l.2) := by
+  simp only [ireflLink, if_pos h]
+
+#print axioms ireflLink_eq_axis
+
+/-- **AND THE TRANSVERSE BRANCH.** Every other link reflects about `c` itself — it lies in a plane the
+mirror does not shorten.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ireflLink_eq_transverse (τ : Fin 4) (c : ℤ) {l : ILink} (h : l.1 ≠ τ) :
+    ireflLink τ c l = (l.1, ireflSite τ c l.2) := by
+  simp only [ireflLink, if_neg h]
+
+#print axioms ireflLink_eq_transverse
+
 /-- **IT IS AN INVOLUTION**, hence a bijection of the link set.
 
 DERIVED: the `1` is `ireflLink`'s link length; `4` is the dimension. -/
@@ -281,6 +305,40 @@ theorem ireflConf_involutive (τ : Fin 4) (c : ℤ) :
   · simp only [ireflConf, ireflLink_fst, if_neg h, ireflLink_involutive τ c l]
 
 #print axioms ireflConf_involutive
+
+/-- **A `τ`-LINK FIXED BY THE REFLECTION IS INVERTED BY THE TWIST.** `ireflConf` daggers exactly the
+`τ`-links, so on a link the reflection leaves alone the configuration is sent to its inverse.
+
+**⛔ THIS IS WHAT SEPARATES THE EVEN AND ODD SPLITS.** At an EVEN constant no `τ`-link is fixed
+(`ReflectionHalfSpace.no_tau_link_fixed`), so the shared block carries no dagger and the Gibbs weight
+factors into an observable times its own reflection — the pairing is a SQUARE. At an ODD constant the
+fixed links are exactly the `τ`-links straddling the mirror
+(`ReflectionHalfSpace.odd_tau_fixed_iff`), the twist inverts them, and the pairing becomes an
+integral against a kernel. That is why the odd case needs `0 ≤ β` and
+`CrossingIntegration.wilson_crossing_pairing_nonneg`, and the even case needs neither.
+
+The `ℤ⁴` counterpart of `ActionSplit.reflConf_inverts_fixed_axis_link`.
+
+DERIVED: no numeral; `4` is the dimension. -/
+theorem ireflConf_inverts_fixed_axis_link (τ : Fin 4) (c : ℤ) {l : ILink}
+    (hl : l.1 = τ) (hfix : ireflLink τ c l = l) (U : IConf G) :
+    ireflConf τ c U l = (U l)⁻¹ := by
+  show (if l.1 = τ then (U (ireflLink τ c l))⁻¹ else U (ireflLink τ c l)) = (U l)⁻¹
+  rw [if_pos hl, hfix]
+
+#print axioms ireflConf_inverts_fixed_axis_link
+
+/-- **AND A NON-`τ` LINK IS NOT.** The other half of the case split, so a caller never has to unfold
+`ireflConf` to know which branch it is in.
+
+DERIVED: no numeral; `4` is the dimension. -/
+theorem ireflConf_fixes_fixed_transverse_link (τ : Fin 4) (c : ℤ) {l : ILink}
+    (hl : l.1 ≠ τ) (hfix : ireflLink τ c l = l) (U : IConf G) :
+    ireflConf τ c U l = U l := by
+  show (if l.1 = τ then (U (ireflLink τ c l))⁻¹ else U (ireflLink τ c l)) = U l
+  rw [if_neg hl, hfix]
+
+#print axioms ireflConf_fixes_fixed_transverse_link
 
 /-- Continuous: each output coordinate is an input coordinate, inverted or not, and inversion is
 continuous.

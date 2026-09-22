@@ -106,7 +106,7 @@ def ReflPositiveOn (R : Reflection X) (A : Submodule ℝ C(X, ℝ)) (ν : State 
 
 /-- **THE STATE DOES NOT SEE THE REFLECTION.** Needed for symmetry of the form, and true of any state
 built from a reflection-symmetric measure. Asserted on all observables, where — unlike positivity —
-it is the honest statement.
+it is the correct statement.
 
 DERIVED: no numeral. -/
 def IsReflectionInvariant (R : Reflection X) (ν : State X) : Prop :=
@@ -139,6 +139,29 @@ theorem reflection_positivity_fails_off_the_half_space (R : Reflection X) (ν : 
   linarith
 
 #print axioms reflection_positivity_fails_off_the_half_space
+
+/-- **⭐ REFLECTION DISTRIBUTES OVER A PRODUCT OF BLOCKS.**
+
+`θ_mul` and `θ_one` are structure FIELDS, so `θ` is a monoid hom for the product on `C(X, ℝ)`;
+this is that fact at a `Finset.prod`.
+
+**Why it is wanted.** A chessboard estimate does not factorise an arbitrary observable on a
+symmetric region as `A · θA` — that is a special form a general observable does not have. It works
+with a PRODUCT OVER BLOCKS, and one Schwarz step replaces the product by quantities over DOUBLED
+regions in which each block carries either `F i` or its reflection. So what the argument needs is
+that `θ` distributes over the product, which is this.
+
+DERIVED: no numeral. -/
+theorem Reflection.theta_prod (R : Reflection X) {ι : Type*} (s : Finset ι)
+    (F : ι → C(X, ℝ)) : R.θ (∏ i ∈ s, F i) = ∏ i ∈ s, R.θ (F i) := by
+  classical
+  refine Finset.induction_on s ?_ ?_
+  · simpa using R.θ_one
+  · intro a s' ha ih
+    rw [Finset.prod_insert ha, R.θ_mul, ih, Finset.prod_insert ha]
+
+#print axioms Reflection.theta_prod
+
 
 /-! ## 3. ⭐ Both conditions transport to the limit -/
 

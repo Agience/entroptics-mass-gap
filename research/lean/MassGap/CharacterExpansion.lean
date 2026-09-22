@@ -52,7 +52,7 @@ halves — the first statement in this development that allows any coupling acro
 
 ## The negative control
 
-`NegControl.su3_kernel_nonneg_iff` computes the quadratic form on two honest `SU(3)` elements — the
+`NegControl.su3_kernel_nonneg_iff` computes the quadratic form on two genuine `SU(3)` elements — the
 identity and `diag(1, −1, −1)`, both shown to lie in `specialUnitaryGroup` — and finds it equal to
 `2 (e^{3β} − e^{−β})`, which is nonnegative IF AND ONLY IF `β ≥ 0`. So the nonnegativity is a
 property of the sign of the Wilson coupling and not of the machinery: at negative coupling the same
@@ -294,7 +294,7 @@ theorem wilson_kernel_nonneg {N : ℕ} {β : ℝ} (hβ : 0 ≤ β) {m : ℕ}
 
 The machinery above would produce the same shape for any weight of the form `exp (β · ⟨A, B⟩)`. What
 makes the conclusion a property of the `SU(3)` WILSON weight rather than of the machinery is the sign
-of `β`. Computed on two honest `SU(3)` elements, the quadratic form is nonnegative IF AND ONLY IF
+of `β`. Computed on two genuine `SU(3)` elements, the quadratic form is nonnegative IF AND ONLY IF
 `β ≥ 0`: at negative coupling the same weight, the same group and the same observable give a strictly
 negative value. -/
 
@@ -429,7 +429,7 @@ The twisted form of `ReflectionPositivity.pairing_with_reflection_nonneg`. `S` a
 and `θ` carries `S` into `T`, so the two factors read disjoint coordinates and the integral
 factorises; the twist is measure-preserving coordinatewise, so the two factors are equal.
 
-DERIVED: no numeric content. -/
+DERIVED: the `2` is the square the identity asserts. -/
 theorem twisted_pairing_eq_sq
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (hσ : ∀ i, MeasurePreserving (σ i) μ μ) (hθST : ∀ i ∈ S, θ i ∈ T)

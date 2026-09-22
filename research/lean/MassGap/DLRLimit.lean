@@ -55,7 +55,7 @@ Two formulations were available in Mathlib v4.31.
   smaller volume have a limit state consistent for EVERY volume.
 * `exists_infinite_volume_gibbs_state` — the same statement with the index specialised to
   `Finset ILink` and the space to `IConf G`. This is the infinite-volume object.
-* `gibbsMeasure` — the limit state as an honest `MeasureTheory.Measure`, a probability measure whose
+* `gibbsMeasure` — the limit state as a genuine `MeasureTheory.Measure`, a probability measure whose
   integral against every continuous observable is the state's value.
 * `exists_infinite_volume_gibbs_measure` — the same at `IConf G`. This spends the countability of
   `ILink`: the Borel structure of the product topology and the product σ-algebra coincide only over a
@@ -72,8 +72,8 @@ kernel. The limit is subsequential in the same sense `InfiniteVolume` is: an ult
 Non-degeneracy beyond normalisation. `ν 1 = 1` is a field of `State` and is re-exported in the
 conclusions below for readability, not as evidence: it rules out the ZERO functional and nothing
 else. Ruling out a POINT MASS is strictly stronger and is proved here only CONDITIONALLY, on a
-variance floor `c ≤ μ_Λ(f₀²) − μ_Λ(f₀)²` holding uniformly in the volume. No such floor exists in
-this tree: `GibbsPositive.corrNum_plaqObs_pos` bounds a finite-volume correlation below at a FIXED
+variance floor `c ≤ μ_Λ(f₀²) − μ_Λ(f₀)²` holding uniformly in the volume. ⛔ THIS PARAGRAPH IS STALE — `InfiniteVolume.exists_uniform_contact_floor` supplies such a floor, as this file's own Part 6 prose records. What follows was written before it and is kept only for the distinction it draws:
+ `GibbsPositive.corrNum_plaqObs_pos` bounds a finite-volume correlation below at a FIXED
 volume, with no statement that the bound survives the volume growing, and a variance is not a
 correlation. Supplying it is open work, and until it is supplied the infinite-volume state here is
 not known to be spread out.
@@ -236,6 +236,216 @@ theorem State.mem_Icc (ν : State X) (f : C(X, ℝ)) : ν f ∈ Set.Icc (-‖f�
 
 #print axioms State.mem_Icc
 
+
+/-- **A STATE IS 1-LIPSCHITZ.** `|ν f - ν g| = |ν (f - g)| ≤ ‖f - g‖`, which is `State.map_sub`
+followed by `State.abs_le_norm`.
+
+DERIVED: the `1` is the Lipschitz constant, and it is forced — a state is unital and positive, so
+it cannot expand the sup norm. -/
+theorem State.abs_sub_le (ν : State X) (f g : C(X, ℝ)) : |ν f - ν g| ≤ ‖f - g‖ := by
+  rw [← ν.map_sub]
+  exact ν.abs_le_norm (f - g)
+
+#print axioms State.abs_sub_le
+
+/-- **So it is continuous as a function of the observable.**
+
+DERIVED: no numeral. -/
+theorem State.continuous (ν : State X) : Continuous (fun f : C(X, ℝ) => ν f) := by
+  refine Metric.continuous_iff.mpr (fun f ε hε => ⟨ε, hε, fun g hg => ?_⟩)
+  have h := ν.abs_sub_le g f
+  rw [Real.dist_eq]
+  have hgf : ‖g - f‖ < ε := by rwa [dist_eq_norm] at hg
+  exact lt_of_le_of_lt h hgf
+
+#print axioms State.continuous
+
+/-- **⭐⭐ AND TWO STATES AGREEING ON A DENSE SET ARE EQUAL.**
+
+This is the half of DLR uniqueness that does not depend on the model. Uniqueness splits in two:
+a DLR state is pinned on LOCAL observables by the specification, and a state is determined by its
+values on a dense set. The first is Wilson-specific; **this is the second, and it is general**.
+
+The local observables are a subalgebra (`InfiniteLattice.quasiLocalAlg`); that they are DENSE is a
+Stone–Weierstrass statement and is not proved in this tree.
+
+DERIVED: no numeral. -/
+theorem State.eq_of_eqOn_dense {ν₁ ν₂ : State X} {s : Set C(X, ℝ)} (hs : Dense s)
+    (h : ∀ f ∈ s, ν₁ f = ν₂ f) : ∀ f : C(X, ℝ), ν₁ f = ν₂ f := by
+  have := Continuous.ext_on hs ν₁.continuous ν₂.continuous h
+  exact fun f => congrFun this f
+
+#print axioms State.eq_of_eqOn_dense
+
+/-- **⭐ A STATE IS DETERMINED BY A POINT-SEPARATING SUBALGEBRA.**
+
+The density hypothesis of `State.eq_of_eqOn_dense` is replaced by the one a model can check: that
+the subalgebra tells points apart. Stone–Weierstrass
+(`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints`) turns separation into
+density on a compact space, and a state is continuous, so agreement propagates from the subalgebra
+to everything.
+
+DERIVED: no numeral. -/
+theorem State.eq_of_eqOn_subalgebra {ν₁ ν₂ : State X} (A : Subalgebra ℝ C(X, ℝ))
+    (hsep : A.SeparatesPoints) (h : ∀ f ∈ A, ν₁ f = ν₂ f) : ∀ f : C(X, ℝ), ν₁ f = ν₂ f := by
+  have htop : A.topologicalClosure = ⊤ :=
+    ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints A hsep
+  have hdense : Dense (A : Set C(X, ℝ)) := by
+    rw [dense_iff_closure_eq, ← Subalgebra.topologicalClosure_coe, htop]
+    simp
+  exact State.eq_of_eqOn_dense hdense h
+
+#print axioms State.eq_of_eqOn_subalgebra
+
+/-- **A STATE FORCES ITS SPACE TO BE INHABITED.** On an empty space the constant-one observable IS
+the zero observable, so `ν 1 = 1` and `ν 0 = 0` collide. Anything that needs a base configuration
+can take one from the state itself.
+
+DERIVED: the `1` and `0` are the two values a state takes on the unit and the zero observable,
+`State.map_one` and `State.map_zero`. -/
+theorem State.nonempty (ν : State X) : Nonempty X := by
+  by_contra h
+  rw [not_nonempty_iff] at h
+  have hzero : (1 : C(X, ℝ)) = 0 := by
+    ext x
+    exact (IsEmpty.false x).elim
+  have hone := ν.map_one
+  rw [hzero, ν.map_zero] at hone
+  exact zero_ne_one hone
+
+#print axioms State.nonempty
+
+/-- **A STATE IS ITS FUNCTIONAL.** The other four fields are Props, so they are equal by proof
+irrelevance once the functionals are. This is what `tendsto_of_unique_dlr` needs: it asks for
+equality of STATES, and a uniqueness argument delivers agreement at every observable.
+
+DERIVED: no numeral. -/
+theorem State.eq_of_apply_eq {ν₁ ν₂ : State X} (h : ∀ f : C(X, ℝ), ν₁ f = ν₂ f) : ν₁ = ν₂ := by
+  obtain ⟨t₁, _, _, _, _⟩ := ν₁
+  obtain ⟨t₂, _, _, _, _⟩ := ν₂
+  have ht : t₁ = t₂ := funext (fun f => h f)
+  subst ht
+  rfl
+
+#print axioms State.eq_of_apply_eq
+
+
+
+section LocalObservables
+
+variable {G : Type} [TopologicalSpace G] [CompactSpace G]
+
+/-- A BUNDLED continuous observable is LOCAL on `S` when it does not move as the links outside `S`
+move. The unbundled twin is `InfiniteLattice.IsLocalOn`; the only difference is that continuity is
+carried by the bundling here rather than by a conjunct.
+
+DERIVED: no numeral. -/
+def IsLocalOnC (S : Finset ILink) (F : C(IConf G, ℝ)) : Prop :=
+  ∀ U V : IConf G, (∀ l ∈ S, U l = V l) → F U = F V
+
+#print axioms IsLocalOnC
+
+/-- **THE LOCAL OBSERVABLES AS A SUBALGEBRA OF `C(IConf G, ℝ)`.** A product of two observables
+reading disjoint finite link sets reads their union, which is again finite; that is the whole
+closure argument, and it is the same one `InfiniteLattice.quasiLocalAlg` makes one coercion away.
+
+DERIVED: no numeral. -/
+def localObsAlg (G : Type) [TopologicalSpace G] [CompactSpace G] :
+    Subalgebra ℝ C(IConf G, ℝ) where
+  carrier := {F | ∃ S : Finset ILink, IsLocalOnC S F}
+  mul_mem' := by
+    rintro F H ⟨S, hF⟩ ⟨T, hH⟩
+    refine ⟨S ∪ T, fun U V h => ?_⟩
+    simp only [ContinuousMap.mul_apply]
+    rw [hF U V (fun l hl => h l (Finset.mem_union_left _ hl)),
+        hH U V (fun l hl => h l (Finset.mem_union_right _ hl))]
+  add_mem' := by
+    rintro F H ⟨S, hF⟩ ⟨T, hH⟩
+    refine ⟨S ∪ T, fun U V h => ?_⟩
+    simp only [ContinuousMap.add_apply]
+    rw [hF U V (fun l hl => h l (Finset.mem_union_left _ hl)),
+        hH U V (fun l hl => h l (Finset.mem_union_right _ hl))]
+  one_mem' := ⟨∅, fun _ _ _ => rfl⟩
+  zero_mem' := ⟨∅, fun _ _ _ => rfl⟩
+  algebraMap_mem' := fun _ => ⟨∅, fun _ _ _ => rfl⟩
+
+#print axioms localObsAlg
+
+/-- Membership in `localObsAlg` is exactly locality on SOME finite link set. Mirrors
+`InfiniteLattice.mem_quasiLocalAlg`, one coercion away.
+
+DERIVED: no numeral. -/
+theorem mem_localObsAlg {F : C(IConf G, ℝ)} :
+    F ∈ localObsAlg G ↔ ∃ S : Finset ILink, IsLocalOnC S F := Iff.rfl
+
+#print axioms mem_localObsAlg
+
+
+/-- **THE LOCAL OBSERVABLES SEPARATE CONFIGURATIONS**, as soon as the gauge group's continuous
+functions separate its elements. Two configurations that differ do so at some LINK, and a function
+of that one link is local on the singleton `{l}` — so the separating observable is as local as an
+observable can be.
+
+DERIVED: no numeral. -/
+theorem localObsAlg_separatesPoints
+    (hG : ∀ a b : G, a ≠ b → ∃ g : C(G, ℝ), g a ≠ g b) :
+    (localObsAlg G).SeparatesPoints := by
+  intro U V hUV
+  have hex : ∃ l : ILink, U l ≠ V l := by
+    by_contra hcon
+    push_neg at hcon
+    exact hUV (funext hcon)
+  obtain ⟨l, hl⟩ := hex
+  obtain ⟨g, hg⟩ := hG (U l) (V l) hl
+  have hcont : Continuous (fun W : IConf G => g (W l)) := g.continuous.comp (continuous_apply l)
+  refine ⟨(⟨fun W : IConf G => g (W l), hcont⟩ : C(IConf G, ℝ)), ⟨_, ⟨{l}, ?_⟩, rfl⟩, hg⟩
+  intro A B h
+  simp only [ContinuousMap.coe_mk]
+  rw [h l (Finset.mem_singleton_self l)]
+
+#print axioms localObsAlg_separatesPoints
+
+/-- **AND A COMPACT HAUSDORFF GROUP DISCHARGES THAT HYPOTHESIS**, by Urysohn. Two distinct points
+of a compact Hausdorff space are two disjoint closed singletons, and
+`exists_continuous_zero_one_of_isClosed` produces a continuous real function vanishing on one and
+equal to one on the other.
+
+DERIVED: the `0` and `1` are the two values Urysohn's lemma produces, not a threshold; any two
+distinct reals would do and Mathlib's statement fixes these. -/
+theorem continuousMap_separatesPoints_of_t2 (G : Type) [TopologicalSpace G] [CompactSpace G]
+    [T2Space G] (a b : G) (hab : a ≠ b) : ∃ g : C(G, ℝ), g a ≠ g b := by
+  obtain ⟨g, hga, hgb, -⟩ :=
+    exists_continuous_zero_one_of_isClosed (isClosed_singleton (x := a))
+      (isClosed_singleton (x := b)) (Set.disjoint_singleton.mpr hab)
+  have h0 : g a = 0 := hga rfl
+  have h1 : g b = 1 := hgb rfl
+  refine ⟨g, ?_⟩
+  rw [h0, h1]
+  norm_num
+
+#print axioms continuousMap_separatesPoints_of_t2
+
+/-- **⭐⭐ TWO STATES AGREEING ON THE LOCAL OBSERVABLES ARE EQUAL.**
+
+Obligation II's general half, carrying NO density hypothesis and NO separation hypothesis: on a
+compact Hausdorff gauge group both are discharged above. What remains of II is exactly the
+Wilson-specific half — that the specification pins a DLR state on the LOCAL observables. Once that
+lands, this theorem takes it to equality of states, and `tendsto_of_unique_dlr` takes uniqueness to
+the infinite-volume limit.
+
+DERIVED: no numeral. -/
+theorem State.eq_of_eqOn_localObs {G : Type} [TopologicalSpace G] [CompactSpace G] [T2Space G]
+    {ν₁ ν₂ : State (IConf G)} (h : ∀ F ∈ localObsAlg G, ν₁ F = ν₂ F) :
+    ∀ F : C(IConf G, ℝ), ν₁ F = ν₂ F :=
+  State.eq_of_eqOn_subalgebra _
+    (localObsAlg_separatesPoints (fun a b hab => continuousMap_separatesPoints_of_t2 G a b hab)) h
+
+#print axioms State.eq_of_eqOn_localObs
+
+end LocalObservables
+
+
+
 /-! ## Part 2 — the limit
 
 The ultrafilter-plus-compactness move of `InfiniteVolume.exists_filter_tendsto_all_lags`, one level
@@ -327,6 +537,53 @@ theorem isDLR_of_tendsto {ι κ : Type*} {l : Filter ι} [l.NeBot] {γ : κ → 
   exact tendsto_nhds_unique ((htend (γ k f)).congr' (hev k f)) (htend f)
 
 #print axioms isDLR_of_tendsto
+
+
+/-- **⭐⭐⭐ UNIQUENESS OF THE DLR STATE UPGRADES COMPACTNESS TO CONVERGENCE.**
+
+Compactness gives a limit along SOME ultrafilter; `ReflectionHalfSpace`'s `htend` needs one along
+`atTop`. This is the step between them, and it is the classical one: if the DLR state is unique,
+every ultrafilter limit is the same state, and a filter converges exactly when every refining
+ultrafilter does.
+
+**THIS IS WHAT `mixCube_ultrafilter_sees_one_parity` POINTS AT.** That theorem shows an ultrafilter
+sees only one parity class of the interleaved family, and its docstring says the two parity limits
+would agree if the DLR state were unique. This supplies that implication.
+
+`hev` is the finite-volume DLR consistency, holding eventually along `l` — the same hypothesis
+`isDLR_of_tendsto` takes. `huniq` is the uniqueness itself, and it is the real content. At coupling
+ZERO `WilsonDLR.dlr_unique_at_zero_eq` proves it for the Wilson specification, the kernel
+there not seeing the boundary at all; at general coupling it is open.
+
+DERIVED: no numeral. -/
+theorem tendsto_of_unique_dlr {ι κ : Type*} {l : Filter ι} [l.NeBot]
+    {γ : κ → C(X, ℝ) → C(X, ℝ)} (μ : ι → State X) (ν : State X)
+    (hev : ∀ (k : κ) (f : C(X, ℝ)),
+      (fun i => μ i (γ k f)) =ᶠ[l] (fun i => μ i f))
+    (huniq : ∀ ν' : State X, IsDLR γ ν' → ν' = ν) :
+    ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)) := by
+  intro f
+  rw [Filter.tendsto_iff_ultrafilter]
+  intro u hu
+  haveI : (u : Filter ι).NeBot := u.neBot'
+  obtain ⟨u', ν', hle, htend'⟩ := exists_limit_state (X := X) (u : Filter ι) μ
+  -- an ultrafilter below an ultrafilter is that ultrafilter
+  have hueq : (u' : Filter ι) = (u : Filter ι) := u.unique hle
+  have htendu : ∀ g : C(X, ℝ), Tendsto (fun i => μ i g) (u : Filter ι) (𝓝 (ν' g)) := by
+    intro g
+    have := htend' g
+    rwa [hueq] at this
+  have hevu : ∀ (k : κ) (g : C(X, ℝ)),
+      (fun i => μ i (γ k g)) =ᶠ[(u : Filter ι)] (fun i => μ i g) := by
+    intro k g
+    exact (hev k g).filter_mono hu
+  have hdlr : IsDLR γ ν' := isDLR_of_tendsto (l := (u : Filter ι)) μ ν' htendu hevu
+  have : ν' = ν := huniq ν' hdlr
+  rw [← this]
+  exact htendu f
+
+#print axioms tendsto_of_unique_dlr
+
 
 /-- **THE INFINITE-VOLUME STATE, abstractly.** A directed family of finite-volume states, each
 consistent with the specification at every SMALLER index, has a limit state consistent at EVERY
@@ -551,7 +808,7 @@ theorem exists_infinite_volume_gibbs_state (G : Type) [TopologicalSpace G] [Comp
 #print axioms exists_infinite_volume_gibbs_state
 
 /-- **The same statement with the non-degeneracy attached.** A uniform variance floor at ONE
-observable, holding along the ultrafilter, gives an infinite-volume DLR state that is normalised and
+observable, holding AT EVERY FINITE VOLUME (the eventual form is `not_isPointMass_of_uniform_variance`'s), gives an infinite-volume DLR state that is normalised and
 provably not a point mass. This is the form Clay row A6 needs: an infinite-volume object that is not
 the vacuous witness. -/
 theorem exists_infinite_volume_gibbs_state_nondegenerate (G : Type) [TopologicalSpace G]

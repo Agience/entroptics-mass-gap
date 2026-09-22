@@ -244,7 +244,7 @@ theorem gram_quadform_pow_eq_sum_sq {P : Type*} [Fintype P] {X : Type*} (φ : P 
 nonnegative partial sums.
 
 The hypothesis `0 ≤ β` cannot be dropped: `CharacterExpansion.NegControl.su3_kernel_nonneg_iff`
-computes the form on two honest `SU(3)` elements and it is nonnegative IF AND ONLY IF `β ≥ 0`.
+computes the form on two genuine `SU(3)` elements and it is nonnegative IF AND ONLY IF `β ≥ 0`.
 
 DERIVED: the only numeral is the `0` of `0 ≤ …`, which IS positive semidefiniteness. -/
 theorem gram_exp_kernel_nonneg {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ)

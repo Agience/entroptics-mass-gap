@@ -159,7 +159,12 @@ def cmd_check(args: list[str]) -> int:
             cited = sorted(cited_literals(doc or ""), key=int)
             print(f"{path.name}:{line_of(path, m.start())}  {m.group(2)}")
             print(f"    statement literals: {', '.join(present) or '(none)'}")
-            print(f"    note cites        : {', '.join(cited) or '(no DERIVED/CHOSEN note)'}")
+            has_note = doc is not None and NOTE.search(doc) is not None
+            if not has_note:
+                shown = "(no DERIVED/CHOSEN note)"
+            else:
+                shown = ", ".join(cited) or "(a note, citing no numeral)"
+            print(f"    note cites        : {shown}")
     if not found:
         print("no such declaration")
     return 0

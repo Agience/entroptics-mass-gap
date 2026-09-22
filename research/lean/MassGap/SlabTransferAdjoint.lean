@@ -6,7 +6,7 @@ import MassGap.SlabKernelOperator
 
 `SlabKernelOperator` built `slabTransfer`, a bounded map `L²(slab t+1) →L[ℝ] L²(slab t)`, and closed
 with four explicit refusals: not self-adjoint, not operator-positive, no spectrum, no Hamiltonian.
-This file takes each of those in turn on the `L²` route alone, and the honest one-line summary is:
+This file takes each of those in turn on the `L²` route alone, and the one-line summary is:
 it makes the first two into sharp, checkable conditions on the KERNEL, and proves that one specific
 tool proposed for the last two cannot supply them.
 

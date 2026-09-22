@@ -369,6 +369,24 @@ theorem IsLocalOn.mono {S T : Finset ILink} {F : IConf G → ℝ} (h : S ⊆ T) 
 
 #print axioms MassGap.InfiniteLattice.IsLocalOn.mono
 
+/-- **⭐ A PRODUCT OF LOCAL OBSERVABLES IS LOCAL, ON THE UNION OF THEIR SUPPORTS.**
+
+Until this, `IsLocalOn` carried exactly one theorem (`mono`) and nothing said a product stays local
+— so "a product of local observables over a region", which is what a chessboard estimate bounds,
+was not expressible at all.
+
+DERIVED: no numeral. -/
+theorem IsLocalOn.mul {S T : Finset ILink} {F G : IConf G → ℝ}
+    (hF : IsLocalOn S F) (hG : IsLocalOn T G) : IsLocalOn (S ∪ T) (F * G) := by
+  classical
+  intro U V h
+  show F U * G U = F V * G V
+  rw [hF U V (fun l hl => h l (Finset.mem_union_left _ hl)),
+    hG U V (fun l hl => h l (Finset.mem_union_right _ hl))]
+
+#print axioms MassGap.InfiniteLattice.IsLocalOn.mul
+
+
 /-- The restriction of a configuration to a volume. -/
 def restrict (S : Finset ILink) (U : IConf G) : {l : ILink // l ∈ S} → G := fun l => U l.1
 

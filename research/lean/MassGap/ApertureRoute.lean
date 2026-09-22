@@ -479,7 +479,7 @@ READ THIS FOR WHAT IT IS. `Na` is INERT in the family's content — `WilsonModel
 returns `1` at every positive count and `count_le_of_tension_uniform`'s bound contains no `Na`, so
 substituting `WilsonGauge.NaG a = a + 1` here would give the identical family. What makes `a → ∞` the
 infinite-volume limit is `OSFamily.extent` inside the reflected form (`measure_Q_eq`), not this field.
-This theorem says the field is now the lattice's honest cardinality rather than a counter; it is not
+This theorem says the field is now the lattice's actual cardinality rather than a counter; it is not
 evidence that the sequence is a volume sequence, and `measure_Q_eq` is.
 
 DERIVED: no numeral of this declaration's. -/
@@ -558,7 +558,7 @@ def FlagshipAt (hc : ConfinesAtAnAperture) : Prop :=
 /-- **THE FLAGSHIP FROM CONFINEMENT AT ONE APERTURE.**
 
 Existence, the mass gap, non-triviality, `SO(4)` invariance and the continuum measure, from
-`∃ a : EvenAp, ∀ β, μEven a β < κ₀YM` alone. No moment bound, and no quantifier over apertures.
+`ConfinesAtAnAperture` — the GUARDED `∃ a : EvenAp, ∀ β, 3^{−1/4} < cosAvgEven a β` — alone. Not the unguarded tension spelling `∀ β, μEven a β < κ₀YM`, which is strictly weaker and which this file proves is satisfiable with no decay at all. No moment bound, and no quantifier over apertures.
 
 The proof term is `existence_and_gap_of_wilson` applied to this file's realisation and nothing else,
 which is how the statement is known to be the flagship rather than asserted to be. -/

@@ -411,4 +411,79 @@ theorem exists_infinite_volume_gapped_limit :
 
 #print axioms exists_infinite_volume_gapped_limit
 
+/-- **⭐⭐⭐ CONFINEMENT AT EVERY LARGE APERTURE, AT A FIXED STRONG COUPLING.**
+
+At any `β > 0` whose core rate clears one, the entroptics tension sits below the entropy floor,
+`μ < κ₀`, for every large enough aperture. Nothing is measured and nothing is assumed: the bound
+comes from the cluster expansion, and the read carries it.
+
+**THE CHAIN, AND WHY IT CLOSES ONLY HERE.** `StrongCoupling.read_p_le_of_corrClay` bounds the read's
+weights by `C·r^{circLag d}` but its `C` carries `1/m` for a hypothesised `m ≤ ∑ρ`, per-aperture;
+`ContactFloor.read_p_le_aperture_uniform` replaces that `m` by the contact floor, which is ONE number
+at every aperture. Then `Moment.circ_moment_le_of_geometric` turns geometric weights into a bounded
+circle moment `2C·∑' k²rᵏ` — a convergent series with NO aperture in it — and
+`Moment.aperture_factor_tendsto_zero` says the `(2π/(N+1))²` window drives any fixed bound under the
+floor gap eventually. `Read.tension_lt_floor_of_circ_moment` closes it.
+
+`InfiniteVolume` is the only module that imports both `Complete` (which owns `readYMAt` and `d2At`)
+and `ContactFloor` (which owns the floor), which is why the composition lives here rather than in
+either.
+
+**⛔ THE COUPLING IS FIXED, AND THAT IS THE LIMITATION.** `coreConst` and `coreRate` both depend on
+`β`, and `coreRate (16·4) β < 1` holds only on a neighbourhood of zero
+(`StrongCoupling.core_rate_lt_one_of_small_hypercubic`), with `coreRate → ∞` as `β` grows. So this
+does NOT give `Complete.confinement_of_geometric_decay`, which quantifies over EVERY `β` with one
+`C` and one `r`. What is uniform here is the APERTURE, not the coupling — and the aperture is the
+one this programme is about.
+
+DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited and not chosen. The
+`2` and the `1` in the moment bound are `circ_moment_le_of_geometric`'s own. The `0` in `0 < β` is
+strict because `coreRate` vanishes at zero and the weight bound divides by it. -/
+theorem confinement_at_strong_coupling {β : ℝ} (hβ : 0 < β)
+    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1) :
+    ∀ᶠ N : ℕ in Filter.atTop, MassGap.μYMAt N β < MassGap.κ₀YM := by
+  classical
+  obtain ⟨δ, hδ, hbound⟩ := MassGap.ContactFloor.read_p_le_aperture_uniform β
+  set r : ℝ := MassGap.StrongCoupling.coreRate (16 * 4) β with hrdef
+  have hr0 : 0 ≤ r := MassGap.StrongCoupling.coreRate_nonneg _ hβ.le
+  -- the rate is a product of strictly positive factors at `β > 0`, exactly as
+  -- `read_p_le_of_corrClay` establishes it internally
+  have hq : (0 : ℝ) < Real.exp (2 * β) - 1 := by
+    have h1 : Real.exp 0 < Real.exp (2 * β) := Real.exp_lt_exp.mpr (by linarith)
+    rw [Real.exp_zero] at h1; linarith
+  have hrpos : 0 < r := by
+    rw [hrdef]
+    unfold MassGap.StrongCoupling.coreRate
+    exact mul_pos (mul_pos (by positivity) hq) (Real.exp_pos _)
+  have hconst : 0 ≤ MassGap.StrongCoupling.coreConst (16 * 4) β := by
+    unfold MassGap.StrongCoupling.coreConst
+    refine div_nonneg (le_trans zero_le_one
+      (MassGap.StrongCoupling.one_le_corePrefactor _ hβ.le)) ?_
+    rw [← hrdef]
+    linarith
+  set C : ℝ := MassGap.StrongCoupling.coreConst (16 * 4) β / (r * δ) + 1 with hCdef
+  have hC : 0 ≤ C := by
+    rw [hCdef]
+    have : 0 ≤ MassGap.StrongCoupling.coreConst (16 * 4) β / (r * δ) :=
+      div_nonneg hconst (mul_nonneg hr0 hδ.le)
+    linarith
+  -- the read's weights decay, with `C` and `r` free of the aperture
+  have hdecay : ∀ (N : ℕ) (d : Fin (N + 1)), (MassGap.readYMAt N β).p d ≤ C * r ^ (Moment.circLag d) := by
+    intro N d
+    exact hbound N (MassGap.readYMAt N β) β
+      (fun d' => MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β d') hβ le_rfl hr d
+  -- hence a bounded circle moment, with no aperture in the bound
+  set B : ℝ := 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k with hBdef
+  have hmom : ∀ N : ℕ, MassGap.d2At N β ≤ B := by
+    intro N
+    exact Moment.circ_moment_le_of_geometric (MassGap.readYMAt N β) hC hr0 hr (hdecay N)
+  -- and the aperture window drives it under the floor gap
+  have hev : ∀ᶠ N : ℕ in Filter.atTop,
+      (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
+    (Moment.aperture_factor_tendsto_zero B).eventually_lt_const Moment.floor_rhs_pos
+  filter_upwards [hev] with N hN
+  exact (MassGap.readYMAt N β).tension_lt_floor_of_circ_moment (hmom N) hN
+
+#print axioms confinement_at_strong_coupling
+
 end MassGap.InfiniteVolume

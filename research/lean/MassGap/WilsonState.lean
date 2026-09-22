@@ -2,6 +2,7 @@ import Mathlib
 import MassGap.WilsonDLR
 import MassGap.WilsonTransferReduction
 import MassGap.HalfSpaceAlgebra
+import MassGap.ReflectionHalfSpace
 
 /-!
 # MassGap.WilsonState — the infinite-volume Wilson measure, as a `State`
@@ -165,5 +166,228 @@ noncomputable def wilsonTransferData {N : ℕ} (τ : Fin 4) (c : ℤ)
   MassGap.WilsonTransferReduction.transferData_of_state_facts τ c (stateOfMeasure P) hinv hpos hnu
 
 #print axioms wilsonTransferData
+
+/-! ## ⭐ The subtracted pairing vanishes at zero coupling
+
+`WilsonTransferReduction.gapAt_iff_subtracted_pairing` reads `GapAt D r` as an inequality between two pairings,
+the left one reflected about `2p-2` and the right about `2p`. At coupling ZERO the left one is
+exactly zero for every half-space observable, because the reflection carries its support two full
+steps clear of itself and the state factorises across the gap.
+
+**Reflection invariance is not used.** The factorisation gives `ν(θG) · ν(G)`, and it is `ν(G)` that
+vanishes — `G` is the observable with its own mean subtracted. Which of the two factors is the mean
+matters, and it is the unreflected one. -/
+
+/-- **⭐⭐ AT ZERO COUPLING THE SUBTRACTED PAIRING IS EXACTLY ZERO.**
+
+This is the numerator of the gap inequality, at this coupling, for every observable of the
+half-space algebra. Together with nonnegativity of the denominator it is `GapAt D 0`: at zero
+coupling there is no dynamics, so the gap is not merely positive but infinite.
+
+DERIVED: the `0` is the coupling; the `2` in `hφ2` is the proved upper end of the plaquette
+density's range, as at `specCM`; `2 * p - 2` is the reflection constant
+`gapAt_iff_subtracted_pairing` puts on the left of the gap inequality; the `1` is the unit
+observable, carrying the mean that is subtracted; `4` is the dimension. -/
+theorem refl_pairing_at_zero_eq_zero {G : Type} [Group G] [TopologicalSpace G]
+    [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+    [SecondCountableTopology G] {φ : G → ℝ}
+    (hφc : Continuous φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
+    {ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf G)}
+    (hν : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 0 μ) ν)
+    (τ : Fin 4) (p : ℤ) {F : C(MassGap.InfiniteLattice.IConf G, ℝ)}
+    (hF : F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg τ p) :
+    ν (MassGap.LatticeReflection.ireflObs τ (2 * p - 2) (F - (ν F) • 1) * (F - (ν F) • 1)) = 0 := by
+  classical
+  obtain ⟨S, hSsub, hFloc⟩ := hF
+  set c : ℝ := ν F with hc
+  set Gsub : C(MassGap.InfiniteLattice.IConf G, ℝ) := F - c • 1 with hGsub
+  -- the subtracted observable is local on the same support
+  have hGloc : MassGap.InfiniteLattice.IsLocalOn S (⇑Gsub) := by
+    intro U V h
+    show F U - c * 1 = F V - c * 1
+    rw [hFloc U V h]
+  -- its reflection is local on the reflected support, which misses S
+  have hRloc := MassGap.HalfSpaceAlgebra.isLocalOn_ireflObs τ (2 * p - 2) hGloc
+  have hdisj := MassGap.HalfSpaceAlgebra.disjoint_image_ireflLink_posHalf τ p hSsub
+  -- the mean of the subtracted observable is zero
+  have hmean : ν Gsub = 0 := by
+    have hsub := ν.map_sub F (c • 1)
+    rw [← hGsub] at hsub
+    rw [hsub, ν.map_smul, ν.map_one, mul_one, hc, sub_self]
+  rw [MassGap.WilsonDLR.dlr_mul_at_zero hφc hφ0 hφ2 μ hν hdisj hRloc hGloc, hmean, mul_zero]
+
+#print axioms refl_pairing_at_zero_eq_zero
+
+/-- **⭐⭐⭐ AT ZERO COUPLING THE WILSON TRANSFER OPERATOR HAS `GapAt D 0`.**
+
+`gapAt_iff_subtracted_pairing` at `r = 0` asks for `ν(θ_{2p-2} G · G) ≤ 0` with `G` the
+mean-subtracted observable, and `refl_pairing_at_zero_eq_zero` computes that pairing to be exactly
+`0`. So the gap condition holds at `r = 0`: no dynamics, and therefore not merely a positive gap but
+an infinite one.
+
+**THE `TransferData` IS THE GENUINE ONE**, `transferData_of_state_facts` at the Wilson
+specification's own DLR state — not `TransferGap.diagTransfer`, which witnesses only that `GapAt`
+is satisfiable by something.
+
+**⚠ WHAT THIS STILL TAKES.** `hinv`, `hpos` and `hnu` are hypotheses here, exactly as in
+`wilsonTransferData`, because `transferData_of_state_facts` cannot build `D` without them. So the
+statement of obligation I at this coupling is sharp: **there is no analysis left between here and
+the gap, only those three facts.** `hpos` is the hard one — it is reflection positivity at `2p`,
+where the two supports MEET on the reflection plane, so the factorisation that proves the `2p-2`
+pairing does not reach it.
+
+DERIVED: the `0` in `specCM … 0 μ` is the coupling and the `0` in `GapAt … 0` is the gap ratio,
+which is forced rather than chosen — the pairing it is compared against is zero. The `2` in `hφ2` is
+the proved upper end of the plaquette density's range, as at `specCM`; `2 * p` is the reflection
+constant of the half-space at `p`; `4` is the dimension. -/
+theorem gapAt_zero_at_zero_coupling {G : Type} [Group G] [TopologicalSpace G]
+    [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+    [SecondCountableTopology G] {φ : G → ℝ} (hφc : Continuous φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
+    {ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf G)}
+    (hν : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 0 μ) ν)
+    (τ : Fin 4) (p : ℤ)
+    (hinv : MassGap.InfiniteReflection.IsReflectionInvariant
+      (MassGap.LatticeReflection.latticeReflection τ (2 * p)) ν)
+    (hpos : MassGap.InfiniteReflection.ReflPositiveOn
+      (MassGap.LatticeReflection.latticeReflection τ (2 * p))
+      (MassGap.HalfSpaceAlgebra.halfSpaceAlg τ p) ν)
+    (hnu : ∀ f, ν (MassGap.ReflectionShift.ishiftObsL τ f) = ν f) :
+    MassGap.TransferGap.GapAt
+      (MassGap.WilsonTransferReduction.transferData_of_state_facts τ p ν hinv hpos hnu) 0 := by
+  rw [MassGap.WilsonTransferReduction.gapAt_iff_subtracted_pairing τ p ν hinv hpos hnu 0]
+  intro F hF
+  rw [refl_pairing_at_zero_eq_zero hφc hφ0 hφ2 μ hν τ p hF]
+  simp
+
+#print axioms gapAt_zero_at_zero_coupling
+
+
+/-! ## ⭐ `hnu`, discharged at zero coupling
+
+The shift is a bijection of the links, and `WilsonDLR.dlr_permCM_at_zero` says the zero-coupling
+state is invariant under every one of those. So the third of
+`transferData_of_state_facts`'s state facts is a theorem at this coupling rather than a hypothesis.
+
+**The two `iunshift`s.** `GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in
+isolated namespaces — `ReflectionHalfSpace.gibbs_iunshift_eq` proves them `rfl`-equal, and a lemma
+about one is inert on the other. The two inverse laws below come from the two namespaces
+deliberately. -/
+
+/-- **THE SHIFT, AS A BIJECTION OF THE LINKS.** `ishiftLink` forward, `iunshiftLink` back.
+
+DERIVED: `4` is the spacetime dimension. -/
+def shiftLinkEquiv (τ : Fin 4) :
+    MassGap.InfiniteLattice.ILink ≃ MassGap.InfiniteLattice.ILink where
+  toFun := MassGap.InfiniteShift.ishiftLink τ
+  invFun := MassGap.ReflectionShift.iunshiftLink τ
+  left_inv l := by
+    obtain ⟨m, x⟩ := l
+    have h : MassGap.ReflectionShift.iunshift τ (MassGap.InfiniteLattice.ishift τ x) = x :=
+      MassGap.GibbsSpec.iunshift_ishift τ x
+    simp [MassGap.InfiniteShift.ishiftLink, MassGap.ReflectionShift.iunshiftLink, h]
+  right_inv l := MassGap.ReflectionShift.ishiftLink_iunshiftLink τ l
+
+#print axioms shiftLinkEquiv
+
+/-- **⭐⭐ `hnu` AT ZERO COUPLING.** The DLR state is unmoved by the time shift, because it is
+unmoved by every relabelling of the links.
+
+DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
+as at `specCM`; `4` is the dimension. -/
+theorem hnu_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
+    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (μ : Measure G) [IsProbabilityMeasure μ]
+    {ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf G)}
+    (hν : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 0 μ) ν) (τ : Fin 4) :
+    ∀ f : C(MassGap.InfiniteLattice.IConf G, ℝ),
+      ν (MassGap.ReflectionShift.ishiftObsL τ f) = ν f := by
+  intro f
+  have hcm : MassGap.ReflectionShift.ishiftObsL τ f
+      = MassGap.WilsonDLR.permCM (shiftLinkEquiv τ) f := by
+    ext U
+    rfl
+  rw [hcm]
+  exact MassGap.WilsonDLR.dlr_permCM_at_zero hφc hφ0 hφ2 μ (shiftLinkEquiv τ) hν f
+
+#print axioms hnu_at_zero
+
+/-! ## ⭐ `hinv`, discharged at zero coupling
+
+`ireflConf` relabels the links and INVERTS the group element on the `τ`-links. The relabelling is
+`ReflectionHalfSpace.ireflPerm`, which already packages `ireflLink_involutive` as a permutation; the
+inversion is a coordinatewise measure-preserving map as soon as the single-link measure is
+inversion-invariant. So `WilsonDLR.dlr_twistCM_at_zero` applies, and the second of
+`transferData_of_state_facts`'s state facts is a theorem at this coupling.
+
+`Reflect.isInvInvariant_probHaar` is an instance, so at the Wilson measure the hypothesis
+`[μ.IsInvInvariant]` discharges itself. -/
+
+/-- **THE REFLECTION'S COORDINATE MAPS**: inversion on the `τ`-links, the identity elsewhere.
+
+DERIVED: `4` is the spacetime dimension. -/
+def ireflSigma {G : Type} [Group G] [MeasurableSpace G] [MeasurableInv G] (τ : Fin 4)
+    (l : MassGap.InfiniteLattice.ILink) : G ≃ᵐ G :=
+  if l.1 = τ then MeasurableEquiv.inv G else MeasurableEquiv.refl G
+
+#print axioms ireflSigma
+
+/-- **THE LATTICE REFLECTION IS A TWISTED RELABELLING.** Case split on the direction; each branch is
+`ireflConf`'s own.
+
+DERIVED: `4` is the spacetime dimension. -/
+theorem ireflConf_eq_twistConf {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    [CompactSpace G] [MeasurableSpace G] [MeasurableInv G] (τ : Fin 4) (c : ℤ)
+    (U : MassGap.InfiniteLattice.IConf G) :
+    MassGap.LatticeReflection.ireflConf τ c U
+      = MassGap.WilsonDLR.twistConf (MassGap.ReflectionHalfSpace.ireflPerm τ c)
+          (ireflSigma τ) U := by
+  funext l
+  by_cases h : l.1 = τ
+  · simp [MassGap.LatticeReflection.ireflConf, MassGap.WilsonDLR.twistConf, ireflSigma, h]
+  · simp [MassGap.LatticeReflection.ireflConf, MassGap.WilsonDLR.twistConf, ireflSigma, h]
+
+#print axioms ireflConf_eq_twistConf
+
+/-- **⭐⭐ `hinv` AT ZERO COUPLING.** The DLR state does not see the lattice reflection.
+
+DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
+as at `specCM`; `4` is the dimension. -/
+theorem hinv_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
+    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (μ : Measure G) [IsProbabilityMeasure μ] [μ.IsInvInvariant]
+    {ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf G)}
+    (hν : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 0 μ) ν) (τ : Fin 4)
+    (c : ℤ) :
+    MassGap.InfiniteReflection.IsReflectionInvariant
+      (MassGap.LatticeReflection.latticeReflection τ c) ν := by
+  have hσc : ∀ l, Continuous (ireflSigma (G := G) τ l) := by
+    intro l
+    by_cases h : l.1 = τ
+    · simpa [ireflSigma, h] using (continuous_inv (G := G))
+    · simp only [ireflSigma, if_neg h]
+      exact continuous_id
+  have hσ : ∀ l, MeasurePreserving (ireflSigma (G := G) τ l) μ μ := by
+    intro l
+    by_cases h : l.1 = τ
+    · simpa [ireflSigma, h] using Measure.measurePreserving_inv μ
+    · simp only [ireflSigma, if_neg h]
+      exact MeasurePreserving.id μ
+  intro f
+  have hcm : MassGap.LatticeReflection.ireflObs τ c f
+      = MassGap.WilsonDLR.twistCM (MassGap.ReflectionHalfSpace.ireflPerm τ c)
+          (ireflSigma τ) hσc f := by
+    ext U
+    show f (MassGap.LatticeReflection.ireflConf τ c U)
+      = f (MassGap.WilsonDLR.twistConf _ _ U)
+    rw [ireflConf_eq_twistConf]
+  show ν (MassGap.LatticeReflection.ireflObs τ c f) = ν f
+  rw [hcm]
+  exact MassGap.WilsonDLR.dlr_twistCM_at_zero hφc hφ0 hφ2 μ _ _ hσc hσ hν f
+
+#print axioms hinv_at_zero
 
 end MassGap.WilsonState

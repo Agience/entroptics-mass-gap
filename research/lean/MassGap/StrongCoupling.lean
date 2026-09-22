@@ -941,6 +941,94 @@ theorem measurable_mixOn (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf :
     (D E : Finset Pq) (S : Finset Lk) : Measurable (mixOn (Nc := Nc) bd f D E S) :=
   (measurable_prodOn bd D S).mul (measurable_locOn bd hf E S)
 
+/-- **THE SAME BUNDLE AT AN ARBITRARY OBSERVABLE.** `mixOn` is `prodOn` (a plaquette product) times
+`locOn` (the weights). This is ANY restricted observable times the same weights.
+
+`mixObs_prodOn` below checks that `mixOn` is its plaquette instance, so this generalises rather than
+forks.
+
+DERIVED: no numeral. -/
+noncomputable def mixObs (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
+    (O : (S → MassGap.SUN.SU Nc) → ℝ) (v : S → MassGap.SUN.SU Nc) : ℝ :=
+  O v * locOn (Nc := Nc) bd f E S v
+
+/-- **`mixOn` IS THE PLAQUETTE INSTANCE**, definitionally. The alignment check.
+
+DERIVED: no numeral. -/
+theorem mixObs_prodOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (D E : Finset Pq) (S : Finset Lk) :
+    mixObs (Nc := Nc) bd f E S (prodOn (Nc := Nc) bd D S) = mixOn (Nc := Nc) bd f D E S := rfl
+
+#print axioms mixObs_prodOn
+
+/-- **What it reads on a configuration** — the observable at the restriction, times the weights of
+the plaquettes that draw their links from `S`.
+
+DERIVED: no numeral. -/
+theorem mixObs_eq (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
+    (O : (S → MassGap.SUN.SU Nc) → ℝ)
+    (hE : ∀ p ∈ E, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
+    mixObs (Nc := Nc) bd f E S O (fun i : S => U i.val)
+      = O (fun i : S => U i.val)
+        * ∏ p ∈ E, f (wilsonDensity (N := Nc) (wilsonHol bd p U)) := by
+  unfold mixObs
+  rw [locOn_eq bd f E S hE U]
+
+/-- **Measurable when the observable is.**
+
+DERIVED: no numeral. -/
+theorem measurable_mixObs (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
+    (E : Finset Pq) (S : Finset Lk) {O : (S → MassGap.SUN.SU Nc) → ℝ} (hO : Measurable O) :
+    Measurable (mixObs (Nc := Nc) bd f E S O) :=
+  hO.mul (measurable_locOn bd hf E S)
+
+#print axioms measurable_mixObs
+
+/-- **⭐⭐⭐ THE EXPANSION'S FACTORISATION STEP, AT ARBITRARY OBSERVABLES.**
+
+`haar_mix_factor` with the two plaquette products replaced by two arbitrary measurable observables,
+each reading only its own side of the link split. Same proof, same lemma underneath.
+
+**THIS IS WHY THE OBSERVABLE CLASS WAS NEVER THE OBSTRUCTION.**
+`WilsonReal.block_integral_factor` — *"General disjoint-support factorization: any two observables
+that read only disjoint link-blocks `S`, `T` have a factorizing product-Haar integral"* — is already
+general, with `φ` and `ψ` arbitrary and measurable. The plaquette product enters ONE LEVEL UP, in
+`mixOn`, and from there is baked into `zw`. What the split actually needs from an observable is
+LOCALITY ON A LINK SET, and nothing else.
+
+That matters because `ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` quantifies over
+every `F ∈ HalfSpaceAlgebra.halfSpaceAlg τ p` — any continuous observable local on a finite link
+set — while every decay theorem in this file is stated at a plaquette or a finite product of them.
+This removes that difference at the base. **It does not by itself carry it upward**: `zw`,
+`pairTerm`, `pairTermF` and the resummation are all still defined through plaquette products, and
+each would have to be restated against `mixObs` to consume this.
+
+DERIVED: no numeral. -/
+theorem haar_obs_mix_factor (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
+    (E₁ E₂ : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
+    {O₁ : (S → MassGap.SUN.SU Nc) → ℝ} {O₂ : (T → MassGap.SUN.SU Nc) → ℝ}
+    (hO₁ : Measurable O₁) (hO₂ : Measurable O₂)
+    (hE₁ : ∀ p ∈ E₁, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hE₂ : ∀ p ∈ E₂, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    (∫ U, (O₁ (fun i : S => U i.val)
+            * ∏ p ∈ E₁, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+          * (O₂ (fun i : T => U i.val)
+            * ∏ p ∈ E₂, f (wilsonDensity (N := Nc) (wilsonHol bd p U)))
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = (∫ U, O₁ (fun i : S => U i.val)
+            * ∏ p ∈ E₁, f (wilsonDensity (N := Nc) (wilsonHol bd p U))
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        * (∫ U, O₂ (fun i : T => U i.val)
+            * ∏ p ∈ E₂, f (wilsonDensity (N := Nc) (wilsonHol bd p U))
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) := by
+  classical
+  have hfac := block_integral_factor (N := Nc) S T hST
+    (mixObs (Nc := Nc) bd f E₁ S O₁) (mixObs (Nc := Nc) bd f E₂ T O₂)
+    (measurable_mixObs bd hf E₁ S hO₁) (measurable_mixObs bd hf E₂ T hO₂)
+  simp only [mixObs_eq bd f E₁ S O₁ hE₁, mixObs_eq bd f E₂ T O₂ hE₂] at hfac
+  exact hfac
+
+#print axioms haar_obs_mix_factor
+
 /-- **HAAR FACTORISES ACROSS A LINK-DISJOINT SPLIT, OBSERVABLES AND WEIGHTS TOGETHER.** The common
 generalisation of `haar_prod_factor_of_split` (observables only) and `weight_mult_of_split` (weights
 only): a term of the subset expansion carries both, and both must cross the split at once. -/
@@ -999,6 +1087,160 @@ theorem zw_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (D D₁ D₂ E E₁ 
   ring
 
 #print axioms zw_split
+
+/-- **THE SUBSET-EXPANSION TERM AT AN ARBITRARY OBSERVABLE.** `zw` is the case where the observable
+is a plaquette product (`zwObs_eq_zw`).
+
+DERIVED: no numeral. -/
+noncomputable def zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) {S : Finset Lk}
+    (O : (S → MassGap.SUN.SU Nc) → ℝ) (E : Finset Pq) : ℝ :=
+  ∫ U, O (fun i : S => U i.val)
+      * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
+    ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
+
+/-- **`zw` IS THE PLAQUETTE INSTANCE**, given that `D`'s plaquettes draw their links from `S`.
+
+DERIVED: no numeral. -/
+theorem zwObs_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) (S : Finset Lk)
+    (hD : ∀ p ∈ D, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) :
+    zwObs (Nc := Nc) bd β (prodOn (Nc := Nc) bd D S) E = zw (Nc := Nc) bd β D E := by
+  unfold zwObs zw
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  -- `simp only`, not `rw`: `integral_congr_ae` leaves both sides as beta-redexes.
+  simp only [prodOn_eq bd D S hD U]
+
+#print axioms zwObs_eq_zw
+
+/-- **⭐⭐⭐ THE SPLIT, AT ARBITRARY OBSERVABLES.**
+
+`zw_split` — "the one computational step the exchange uses, applied eight times" — with the
+plaquette products replaced by two arbitrary measurable observables reading opposite sides of a
+link-disjoint split. The activated plaquettes divide the same way, and the term is the product of
+the two half-terms.
+
+**THIS IS THE SHAPE `hfin` WANTS.** `gapAt_of_finite_volume_connected` is about `θF` against `F`:
+one observable in the negative half, one in the positive, automatically on disjoint link sets. A
+PAIR OF OBSERVABLES ON DISJOINT LINK SETS is what that needs — and it is also all the expansion's
+factorisation ever consumed. Plaquette finsets were never the natural index; they were `zw`'s.
+
+DERIVED: no numeral. -/
+theorem zwObs_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : Finset Pq)
+    (S T : Finset Lk) (hST : Disjoint S T)
+    {O₁ : (S → MassGap.SUN.SU Nc) → ℝ} {O₂ : (T → MassGap.SUN.SU Nc) → ℝ}
+    (hO₁ : Measurable O₁) (hO₂ : Measurable O₂)
+    (hEu : E = E₁ ∪ E₂) (hEd : Disjoint E₁ E₂)
+    (hE₁ : ∀ p ∈ E₁, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hE₂ : ∀ p ∈ E₂, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    (∫ U, (O₁ (fun i : S => U i.val) * O₂ (fun i : T => U i.val))
+        * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
+      ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = zwObs (Nc := Nc) bd β O₁ E₁ * zwObs (Nc := Nc) bd β O₂ E₂ := by
+  classical
+  subst hEu
+  -- unfold the two half-terms to integrals before matching the factorisation
+  unfold zwObs
+  rw [← haar_obs_mix_factor (Nc := Nc) bd (measurable_wfun β) E₁ E₂ S T hST hO₁ hO₂ hE₁ hE₂]
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  simp only [Finset.prod_union hEd]
+  ring
+
+#print axioms zwObs_split
+
+/-- **AN OBSERVABLE READS ONLY THE LINKS OF `S`.** Locality as a PREDICATE on an ordinary
+observable, rather than as a restricted type.
+
+`zwObs` types its observable on the restriction, which is what `block_integral_factor` consumes but
+is awkward to compose: the combined observable of a pair would live on `S ∪ T` and every step would
+carry a coercion. With locality as a hypothesis, a product of two observables is just a product.
+
+DERIVED: no numeral. -/
+def LocalOnLinks (S : Finset Lk) (O : (Lk → MassGap.SUN.SU Nc) → ℝ) : Prop :=
+  ∃ Ô : (S → MassGap.SUN.SU Nc) → ℝ, Measurable Ô ∧
+    ∀ U : Lk → MassGap.SUN.SU Nc, O U = Ô (fun i : S => U i.val)
+
+/-- **A PLAQUETTE PRODUCT IS LOCAL ON ANY LINK SET ITS PLAQUETTES DRAW FROM.** The witness is
+`prodOn`, which is exactly that product typed on the restriction.
+
+DERIVED: no numeral. -/
+theorem localOnLinks_prod (bd : Pq → List (Lk × Bool)) (D : Finset Pq) (S : Finset Lk)
+    (hD : ∀ p ∈ D, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) :
+    LocalOnLinks (Nc := Nc) S (fun U => ∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U) :=
+  ⟨prodOn (Nc := Nc) bd D S, measurable_prodOn bd D S,
+    fun U => (prodOn_eq bd D S hD U).symm⟩
+
+#print axioms localOnLinks_prod
+
+/-- **THE SUBSET-EXPANSION TERM AT AN ORDINARY OBSERVABLE.** No locality in the type; it enters as a
+hypothesis where the split needs it.
+
+DERIVED: no numeral. -/
+noncomputable def zwFull (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O : (Lk → MassGap.SUN.SU Nc) → ℝ) (E : Finset Pq) : ℝ :=
+  ∫ U, O U * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
+    ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
+
+/-- **It is `zwObs` at the witness.**
+
+DERIVED: no numeral. -/
+theorem zwFull_eq_zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset Pq) (S : Finset Lk)
+    {O : (Lk → MassGap.SUN.SU Nc) → ℝ} {Ô : (S → MassGap.SUN.SU Nc) → ℝ}
+    (hO : ∀ U : Lk → MassGap.SUN.SU Nc, O U = Ô (fun i : S => U i.val)) :
+    zwFull (Nc := Nc) bd β O E = zwObs (Nc := Nc) bd β Ô E := by
+  unfold zwFull zwObs
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  simp only [hO U]
+
+#print axioms zwFull_eq_zwObs
+
+/-- **⭐⭐⭐ THE SPLIT, AT ORDINARY OBSERVABLES.**
+
+`zwObs_split` with locality carried as a hypothesis instead of a type, so the two observables
+multiply without a coercion. This is the form `pairTerm`'s four terms want:
+`(O₁·O₂, q.1)`, `(1, q.2)`, `(O₁, q.1)`, `(O₂, q.2)` are four `zwFull`s and nothing else.
+
+DERIVED: no numeral. -/
+theorem zwFull_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : Finset Pq)
+    (S T : Finset Lk) (hST : Disjoint S T)
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ}
+    (h₁ : LocalOnLinks (Nc := Nc) S O₁) (h₂ : LocalOnLinks (Nc := Nc) T O₂)
+    (hEu : E = E₁ ∪ E₂) (hEd : Disjoint E₁ E₂)
+    (hE₁ : ∀ p ∈ E₁, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hE₂ : ∀ p ∈ E₂, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    zwFull (Nc := Nc) bd β (fun U => O₁ U * O₂ U) E
+      = zwFull (Nc := Nc) bd β O₁ E₁ * zwFull (Nc := Nc) bd β O₂ E₂ := by
+  classical
+  obtain ⟨Ô₁, hm₁, he₁⟩ := h₁
+  obtain ⟨Ô₂, hm₂, he₂⟩ := h₂
+  rw [zwFull_eq_zwObs bd β E₁ S he₁, zwFull_eq_zwObs bd β E₂ T he₂,
+    ← zwObs_split (Nc := Nc) bd β E E₁ E₂ S T hST hm₁ hm₂ hEu hEd hE₁ hE₂]
+  unfold zwFull
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  simp only [he₁ U, he₂ U]
+
+#print axioms zwFull_split
+
+/-- **A PLAQUETTE PRODUCT'S TERM IS `zw`'s.**
+
+DERIVED: no numeral. -/
+theorem zwFull_prod_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) :
+    zwFull (Nc := Nc) bd β (fun U => ∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U) E
+      = zw (Nc := Nc) bd β D E := rfl
+
+#print axioms zwFull_prod_eq_zw
+
+/-- **THE CONSTANT OBSERVABLE'S TERM IS `zw` AT THE EMPTY SUPPORT.** `∏ over ∅` is `1`.
+
+DERIVED: the `1` is the empty product, and the `∅` is the observable support it comes from. -/
+theorem zwFull_one_eq_zw_empty (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset Pq) :
+    zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E = zw (Nc := Nc) bd β ∅ E := by
+  unfold zwFull zw
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  simp only [Finset.prod_empty]
+
+#print axioms zwFull_one_eq_zw_empty
+
+
+
 
 /-- The summand of the connected numerator's double sum, at the pair `q = (E, F)` of activated
 subsets: `ζ_{p₀p_d}(E)·ζ_∅(F) − ζ_{p₀}(E)·ζ_{p_d}(F)`. -/
@@ -1110,6 +1352,342 @@ theorem pairTerm_add_exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hn
 
 #print axioms pairTerm_add_exchange
 
+/-- **⭐⭐ THE EXCHANGE, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
+
+`pairTerm_add_exchange` with `{p₀, pd}` replaced by `Ao ∪ Bo`, `{p₀}` by `Ao` and `{pd}` by `Bo`.
+`zw_split` is already general in the observable finsets, so the eight factorisations are unchanged;
+what the singletons carried becomes `Ao ⊆ A`, `Disjoint Bo A` and `Disjoint Ao Bo`.
+
+DERIVED: the `0` is the value the exchange cancels to. -/
+theorem zw_add_exchange_of_finsets (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    (hod : Disjoint Ao Bo) (β : ℝ) (E F A : Finset Pq)
+    (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A,
+      ¬ Touch bd p r)
+    (h0 : Ao ⊆ A) (hd : Disjoint Bo A) :
+    (zw (Nc := Nc) bd β (Ao ∪ Bo) E * zw (Nc := Nc) bd β ∅ F
+        - zw (Nc := Nc) bd β Ao E * zw (Nc := Nc) bd β Bo F)
+      + (zw (Nc := Nc) bd β (Ao ∪ Bo) ((E ∩ A) ∪ (F \ A))
+            * zw (Nc := Nc) bd β ∅ ((F ∩ A) ∪ (E \ A))
+          - zw (Nc := Nc) bd β Ao ((E ∩ A) ∪ (F \ A))
+            * zw (Nc := Nc) bd β Bo ((F ∩ A) ∪ (E \ A))) = 0 := by
+  classical
+  set V : Finset Pq := E ∪ F ∪ (Ao ∪ Bo) with hV
+  set S : Finset Lk := (V ∩ A).biUnion (linkSupp bd) with hS
+  set T : Finset Lk := (V \ A).biUnion (linkSupp bd) with hT
+  have hST : Disjoint S T := by
+    rw [hS, hT, Finset.disjoint_left]
+    intro l hl hl'
+    obtain ⟨p, hp, hlp⟩ := Finset.mem_biUnion.mp hl
+    obtain ⟨r, hr, hlr⟩ := Finset.mem_biUnion.mp hl'
+    exact hclosed p hp r hr ⟨l, hlp, hlr⟩
+  have hinS : ∀ W : Finset Pq, W ⊆ V ∩ A →
+      ∀ p ∈ W, ∀ l ∈ (bd p).map Prod.fst, l ∈ S := by
+    intro W hW p hp l hl
+    rw [hS]; exact supp_subset_biUnion bd (V ∩ A) p (hW hp) l hl
+  have hinT : ∀ W : Finset Pq, W ⊆ V \ A →
+      ∀ p ∈ W, ∀ l ∈ (bd p).map Prod.fst, l ∈ T := by
+    intro W hW p hp l hl
+    rw [hT]; exact supp_subset_biUnion bd (V \ A) p (hW hp) l hl
+  have hEV : E ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hFV : F ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hAoV : Ao ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hBoV : Bo ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hsubIn : ∀ W : Finset Pq, W ⊆ V → (W ∩ A) ⊆ V ∩ A := by
+    intro W hW x hx
+    rw [Finset.mem_inter] at hx ⊢
+    exact ⟨hW hx.1, hx.2⟩
+  have hsubOut : ∀ W : Finset Pq, W ⊆ V → (W \ A) ⊆ V \ A := by
+    intro W hW x hx
+    rw [Finset.mem_sdiff] at hx ⊢
+    exact ⟨hW hx.1, hx.2⟩
+  have g0 : Ao ⊆ V ∩ A := fun x hx => Finset.mem_inter.mpr ⟨hAoV hx, h0 hx⟩
+  have gd : Bo ⊆ V \ A := fun x hx =>
+    Finset.mem_sdiff.mpr ⟨hBoV hx, Finset.disjoint_left.mp hd hx⟩
+  have gEA := hsubIn E hEV
+  have gFA := hsubIn F hFV
+  have gEc := hsubOut E hEV
+  have gFc := hsubOut F hFV
+  have gEm : (∅ : Finset Pq) ⊆ V ∩ A := Finset.empty_subset _
+  have gEn : (∅ : Finset Pq) ⊆ V \ A := Finset.empty_subset _
+  have hIO : ∀ X Y : Finset Pq, Disjoint (X ∩ A) (Y \ A) := by
+    intro X Y
+    rw [Finset.disjoint_left]
+    intro x hx hx'
+    exact (Finset.mem_sdiff.mp hx').2 (Finset.mem_inter.mp hx).2
+  have hEu : E = (E ∩ A) ∪ (E \ A) := by
+    ext x; by_cases hx : x ∈ A <;> simp [hx]
+  have hFu : F = (F ∩ A) ∪ (F \ A) := by
+    ext x; by_cases hx : x ∈ A <;> simp [hx]
+  have hDu : Ao ∪ Bo = Ao ∪ Bo := rfl
+  have hD0 : Ao = Ao ∪ ∅ := (Finset.union_empty _).symm
+  have hDd : Bo = ∅ ∪ Bo := (Finset.empty_union _).symm
+  have hDz : (∅ : Finset Pq) = ∅ ∪ ∅ := (Finset.union_empty _).symm
+  have e1 := zw_split (Nc := Nc) bd β (Ao ∪ Bo) Ao Bo E (E ∩ A) (E \ A) S T hST hDu hEu
+    hod (hIO E E) (hinS _ g0) (hinS _ gEA) (hinT _ gd) (hinT _ gEc)
+  have e2 := zw_split (Nc := Nc) bd β ∅ ∅ ∅ F (F ∩ A) (F \ A) S T hST hDz hFu
+    (by simp) (hIO F F) (hinS _ gEm) (hinS _ gFA) (hinT _ gEn) (hinT _ gFc)
+  have e3 := zw_split (Nc := Nc) bd β Ao Ao ∅ E (E ∩ A) (E \ A) S T hST hD0 hEu
+    (by simp) (hIO E E) (hinS _ g0) (hinS _ gEA) (hinT _ gEn) (hinT _ gEc)
+  have e4 := zw_split (Nc := Nc) bd β Bo ∅ Bo F (F ∩ A) (F \ A) S T hST hDd hFu
+    (by simp) (hIO F F) (hinS _ gEm) (hinS _ gFA) (hinT _ gd) (hinT _ gFc)
+  have e5 := zw_split (Nc := Nc) bd β (Ao ∪ Bo) Ao Bo ((E ∩ A) ∪ (F \ A)) (E ∩ A) (F \ A)
+    S T hST hDu rfl hod (hIO E F) (hinS _ g0) (hinS _ gEA) (hinT _ gd) (hinT _ gFc)
+  have e6 := zw_split (Nc := Nc) bd β ∅ ∅ ∅ ((F ∩ A) ∪ (E \ A)) (F ∩ A) (E \ A)
+    S T hST hDz rfl (by simp) (hIO F E) (hinS _ gEm) (hinS _ gFA) (hinT _ gEn) (hinT _ gEc)
+  have e7 := zw_split (Nc := Nc) bd β Ao Ao ∅ ((E ∩ A) ∪ (F \ A)) (E ∩ A) (F \ A)
+    S T hST hD0 rfl (by simp) (hIO E F) (hinS _ g0) (hinS _ gEA) (hinT _ gEn) (hinT _ gFc)
+  have e8 := zw_split (Nc := Nc) bd β Bo ∅ Bo ((F ∩ A) ∪ (E \ A)) (F ∩ A) (E \ A)
+    S T hST hDd rfl (by simp) (hIO F E) (hinS _ gEm) (hinS _ gFA) (hinT _ gd) (hinT _ gEc)
+  rw [e1, e2, e3, e4, e5, e6, e7, e8]
+  ring
+
+#print axioms zw_add_exchange_of_finsets
+
+/-- **The expansion's summand, for observables on finsets of plaquettes.** `pairTerm` with
+`{p₀, pd}` replaced by `Ao ∪ Bo`, `{p₀}` by `Ao` and `{pd}` by `Bo`.
+
+DERIVED: no numeral. -/
+noncomputable def pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
+    (q : Finset Pq × Finset Pq) : ℝ :=
+  zw (Nc := Nc) bd β (Ao ∪ Bo) q.1 * zw (Nc := Nc) bd β ∅ q.2
+    - zw (Nc := Nc) bd β Ao q.1 * zw (Nc := Nc) bd β Bo q.2
+
+/-- **The pair form of `zw_add_exchange_of_finsets`** — the shape the involution consumes.
+
+DERIVED: the `0` is the value the involution cancels to. -/
+theorem pairTermF_add_pairFlip (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    (hod : Disjoint Ao Bo) (β : ℝ) (E F A : Finset Pq)
+    (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A,
+      ¬ Touch bd p r)
+    (h0 : Ao ⊆ A) (hd : Disjoint Bo A) :
+    pairTermF (Nc := Nc) bd Ao Bo β (E, F)
+      + pairTermF (Nc := Nc) bd Ao Bo β (pairFlip A (E, F)) = 0 := by
+  simp only [pairTermF, pairFlip]
+  exact zw_add_exchange_of_finsets bd Ao Bo hod β E F A hclosed h0 hd
+
+#print axioms pairTermF_add_pairFlip
+
+/-- **The summand splits into core times outside**, for finset supports.
+
+`pairTerm_eq_core_mul_outside` with the two anchors replaced by their finsets; `p₀ ∈ A` and `pd ∈ A`
+become `Ao ∪ Bo ⊆ A`.
+
+DERIVED: no numeral. -/
+theorem pairTermF_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
+    (E F A : Finset Pq)
+    (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A,
+      ¬ Touch bd p r)
+    (hobs : Ao ∪ Bo ⊆ A) :
+    pairTermF (Nc := Nc) bd Ao Bo β (E, F)
+      = pairTermF (Nc := Nc) bd Ao Bo β (E ∩ A, F ∩ A)
+        * (zw (Nc := Nc) bd β ∅ (E \ A) * zw (Nc := Nc) bd β ∅ (F \ A)) := by
+  classical
+  set V : Finset Pq := E ∪ F ∪ (Ao ∪ Bo) with hV
+  set S : Finset Lk := (V ∩ A).biUnion (linkSupp bd) with hS
+  set T : Finset Lk := (V \ A).biUnion (linkSupp bd) with hT
+  have hST : Disjoint S T := by
+    rw [hS, hT, Finset.disjoint_left]
+    intro l hl hl'
+    obtain ⟨p, hp, hlp⟩ := Finset.mem_biUnion.mp hl
+    obtain ⟨r, hr, hlr⟩ := Finset.mem_biUnion.mp hl'
+    exact hclosed p hp r hr ⟨l, hlp, hlr⟩
+  have hinS : ∀ W : Finset Pq, W ⊆ V ∩ A →
+      ∀ p ∈ W, ∀ l ∈ (bd p).map Prod.fst, l ∈ S := by
+    intro W hW p hp l hl
+    rw [hS]; exact supp_subset_biUnion bd (V ∩ A) p (hW hp) l hl
+  have hinT : ∀ W : Finset Pq, W ⊆ V \ A →
+      ∀ p ∈ W, ∀ l ∈ (bd p).map Prod.fst, l ∈ T := by
+    intro W hW p hp l hl
+    rw [hT]; exact supp_subset_biUnion bd (V \ A) p (hW hp) l hl
+  have hEV : E ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hFV : F ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hObsV : Ao ∪ Bo ⊆ V := by rw [hV]; intro x hx; simp [hx]
+  have hsubIn : ∀ W : Finset Pq, W ⊆ V → (W ∩ A) ⊆ V ∩ A := by
+    intro W hW x hx
+    rw [Finset.mem_inter] at hx ⊢
+    exact ⟨hW hx.1, hx.2⟩
+  have hsubOut : ∀ W : Finset Pq, W ⊆ V → (W \ A) ⊆ V \ A := by
+    intro W hW x hx
+    rw [Finset.mem_sdiff] at hx ⊢
+    exact ⟨hW hx.1, hx.2⟩
+  have gcore : Ao ∪ Bo ⊆ V ∩ A := fun x hx => Finset.mem_inter.mpr ⟨hObsV hx, hobs hx⟩
+  have g0 : Ao ⊆ V ∩ A := fun x hx => gcore (Finset.mem_union_left _ hx)
+  have gd : Bo ⊆ V ∩ A := fun x hx => gcore (Finset.mem_union_right _ hx)
+  have gEA := hsubIn E hEV
+  have gFA := hsubIn F hFV
+  have gEc := hsubOut E hEV
+  have gFc := hsubOut F hFV
+  have gEm : (∅ : Finset Pq) ⊆ V ∩ A := Finset.empty_subset _
+  have gEn : (∅ : Finset Pq) ⊆ V \ A := Finset.empty_subset _
+  have hIO : ∀ X Y : Finset Pq, Disjoint (X ∩ A) (Y \ A) := by
+    intro X Y
+    rw [Finset.disjoint_left]
+    intro x hx hx'
+    exact (Finset.mem_sdiff.mp hx').2 (Finset.mem_inter.mp hx).2
+  have hEu : E = (E ∩ A) ∪ (E \ A) := by
+    ext x; by_cases hx : x ∈ A <;> simp [hx]
+  have hFu : F = (F ∩ A) ∪ (F \ A) := by
+    ext x; by_cases hx : x ∈ A <;> simp [hx]
+  have hDr : ∀ W : Finset Pq, W = W ∪ ∅ := fun W => (Finset.union_empty W).symm
+  have e1 := zw_split (Nc := Nc) bd β (Ao ∪ Bo) (Ao ∪ Bo) ∅ E (E ∩ A) (E \ A) S T hST
+    (hDr _) hEu (by simp) (hIO E E) (hinS _ gcore) (hinS _ gEA) (hinT _ gEn) (hinT _ gEc)
+  have e2 := zw_split (Nc := Nc) bd β ∅ ∅ ∅ F (F ∩ A) (F \ A) S T hST
+    (hDr _) hFu (by simp) (hIO F F) (hinS _ gEm) (hinS _ gFA) (hinT _ gEn) (hinT _ gFc)
+  have e3 := zw_split (Nc := Nc) bd β Ao Ao ∅ E (E ∩ A) (E \ A) S T hST
+    (hDr _) hEu (by simp) (hIO E E) (hinS _ g0) (hinS _ gEA) (hinT _ gEn) (hinT _ gEc)
+  have e4 := zw_split (Nc := Nc) bd β Bo Bo ∅ F (F ∩ A) (F \ A) S T hST
+    (hDr _) hFu (by simp) (hIO F F) (hinS _ gd) (hinS _ gFA) (hinT _ gEn) (hinT _ gFc)
+  simp only [pairTermF]
+  rw [e1, e2, e3, e4]
+  ring
+
+#print axioms pairTermF_eq_core_mul_outside
+
+/-- **THE CONNECTED NUMERATOR'S SUMMAND, AT TWO ARBITRARY OBSERVABLES.**
+
+`pairTermF`'s four terms with the two plaquette products replaced by two ordinary observables:
+the joint term against the disconnected one. `pairTermObs_eq_pairTermF` checks it reduces.
+
+DERIVED: no numeral. -/
+noncomputable def pairTermObs (bd : Pq → List (Lk × Bool))
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (β : ℝ)
+    (q : Finset Pq × Finset Pq) : ℝ :=
+  zwFull (Nc := Nc) bd β (fun U => O₁ U * O₂ U) q.1 * zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) q.2
+    - zwFull (Nc := Nc) bd β O₁ q.1 * zwFull (Nc := Nc) bd β O₂ q.2
+
+/-- **⭐ THE ALIGNMENT: AT PLAQUETTE PRODUCTS IT IS `pairTermF`.**
+
+`hod` is what turns `∏ Ao · ∏ Bo` into `∏ (Ao ∪ Bo)`, and it is the same disjointness
+`pairTermF_add_pairFlip` already carries. So the generalisation reduces exactly, and the `…F`
+family is the plaquette case of the observable one rather than a fork.
+
+DERIVED: no numeral. -/
+theorem pairTermObs_eq_pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    (hod : Disjoint Ao Bo) (β : ℝ) (q : Finset Pq × Finset Pq) :
+    pairTermObs (Nc := Nc) bd
+        (fun U => ∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+        (fun U => ∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U) β q
+      = pairTermF (Nc := Nc) bd Ao Bo β q := by
+  classical
+  unfold pairTermObs pairTermF
+  rw [zwFull_one_eq_zw_empty bd β q.2, zwFull_prod_eq_zw bd β Ao q.1,
+    zwFull_prod_eq_zw bd β Bo q.2]
+  congr 1
+  congr 1
+  unfold zwFull zw
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  simp only [Finset.prod_union hod]
+
+#print axioms pairTermObs_eq_pairTermF
+
+/-- **The term depends on the observable only through its values.**
+
+DERIVED: no numeral. -/
+theorem zwFull_congr (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O O' : (Lk → MassGap.SUN.SU Nc) → ℝ} (h : ∀ U, O U = O' U) (E : Finset Pq) :
+    zwFull (Nc := Nc) bd β O E = zwFull (Nc := Nc) bd β O' E := by
+  unfold zwFull
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+  -- `simp only`, not `rw`: `integral_congr_ae` leaves both sides as beta-redexes.
+  simp only [h U]
+
+#print axioms zwFull_congr
+
+/-- **The constant observable is local on every link set** — it reads none of them.
+
+DERIVED: the `1` is the constant's value. -/
+theorem localOnLinks_one (S : Finset Lk) :
+    LocalOnLinks (Nc := Nc) S (fun _ => (1 : ℝ)) :=
+  ⟨fun _ => (1 : ℝ), measurable_const, fun _ => rfl⟩
+
+#print axioms localOnLinks_one
+
+/-- **⭐⭐⭐ THE VOLUME CANCELLATION'S INVOLUTION, AT TWO ARBITRARY OBSERVABLES.**
+
+`zw_add_exchange_of_finsets` with the two plaquette products replaced by two observables, each
+reading only its own side of a link-disjoint split. A pair and its flip across `A` sum to ZERO —
+exactly, with no estimate.
+
+**THE ONE DESIGN CHANGE, AND WHY.** The original builds its two link-blocks INSIDE the proof, as the
+links of `V ∩ A` and `V \ A` for `V = E ∪ F ∪ (Ao ∪ Bo)`, and derives their disjointness from
+`hclosed`. That works because there the observable IS plaquettes, so its links are among `V`'s. An
+arbitrary observable's support is not, so `S` and `T` become PARAMETERS and the caller supplies
+`hST` together with the two locality facts. In the plaquette case the caller can build them exactly
+as the original does; in the half-space case `S` and `T` are the two halves, which are disjoint by
+geometry rather than by an estimate.
+
+The algebra is unchanged: eight splits, then `a·c·(b·d − e·f) + a·c·(f·e − d·b) = 0`.
+
+DERIVED: the `0` is the whole content and is EXACT, not a bound — the pair and its flip cancel term
+by term after the eight splits, and `ring` closes it. Nothing is estimated and no numeral is chosen.
+(The constant observable standing where the plaquette proof has `zw` at the empty support is why
+`zwFull_one_eq_zw_empty` exists; that constant does not appear in this statement.) -/
+theorem zwFull_add_exchange (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (E F A : Finset Pq) (S T : Finset Lk)
+    (hST : Disjoint S T)
+    (h₁ : LocalOnLinks (Nc := Nc) S O₁) (h₂ : LocalOnLinks (Nc := Nc) T O₂)
+    (hinS : ∀ p ∈ (E ∪ F) ∩ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
+    (hinT : ∀ p ∈ (E ∪ F) \ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ T) :
+    pairTermObs (Nc := Nc) bd O₁ O₂ β (E, F)
+      + pairTermObs (Nc := Nc) bd O₁ O₂ β (pairFlip A (E, F)) = 0 := by
+  classical
+  -- the four plaquette groups and where their links live
+  have hEA : ∀ p ∈ E ∩ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S := by
+    intro p hp
+    rw [Finset.mem_inter] at hp
+    exact hinS p (Finset.mem_inter.mpr ⟨Finset.mem_union_left _ hp.1, hp.2⟩)
+  have hFA : ∀ p ∈ F ∩ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S := by
+    intro p hp
+    rw [Finset.mem_inter] at hp
+    exact hinS p (Finset.mem_inter.mpr ⟨Finset.mem_union_right _ hp.1, hp.2⟩)
+  have hEc : ∀ p ∈ E \ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ T := by
+    intro p hp
+    rw [Finset.mem_sdiff] at hp
+    exact hinT p (Finset.mem_sdiff.mpr ⟨Finset.mem_union_left _ hp.1, hp.2⟩)
+  have hFc : ∀ p ∈ F \ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ T := by
+    intro p hp
+    rw [Finset.mem_sdiff] at hp
+    exact hinT p (Finset.mem_sdiff.mpr ⟨Finset.mem_union_right _ hp.1, hp.2⟩)
+  have hIO : ∀ X Y : Finset Pq, Disjoint (X ∩ A) (Y \ A) := by
+    intro X Y
+    rw [Finset.disjoint_left]
+    intro x hx hx'
+    exact (Finset.mem_sdiff.mp hx').2 (Finset.mem_inter.mp hx).2
+  have hEu : E = (E ∩ A) ∪ (E \ A) := by ext x; by_cases hx : x ∈ A <;> simp [hx]
+  have hFu : F = (F ∩ A) ∪ (F \ A) := by ext x; by_cases hx : x ∈ A <;> simp [hx]
+  -- the eight splits, in the same order as the plaquette proof
+  have e1 := zwFull_split (Nc := Nc) bd β E (E ∩ A) (E \ A) S T hST h₁ h₂ hEu (hIO E E) hEA hEc
+  have e2' := zwFull_split (Nc := Nc) bd β F (F ∩ A) (F \ A) S T hST (localOnLinks_one (Nc := Nc) S) (localOnLinks_one (Nc := Nc) T) hFu
+    (hIO F F) hFA hFc
+  have e3' := zwFull_split (Nc := Nc) bd β E (E ∩ A) (E \ A) S T hST h₁ (localOnLinks_one (Nc := Nc) T) hEu
+    (hIO E E) hEA hEc
+  have e4' := zwFull_split (Nc := Nc) bd β F (F ∩ A) (F \ A) S T hST (localOnLinks_one (Nc := Nc) S) h₂ hFu
+    (hIO F F) hFA hFc
+  have e5 := zwFull_split (Nc := Nc) bd β ((E ∩ A) ∪ (F \ A)) (E ∩ A) (F \ A) S T hST h₁ h₂
+    rfl (hIO E F) hEA hFc
+  have e6' := zwFull_split (Nc := Nc) bd β ((F ∩ A) ∪ (E \ A)) (F ∩ A) (E \ A) S T hST
+    (localOnLinks_one (Nc := Nc) S) (localOnLinks_one (Nc := Nc) T) rfl (hIO F E) hFA hEc
+  have e7' := zwFull_split (Nc := Nc) bd β ((E ∩ A) ∪ (F \ A)) (E ∩ A) (F \ A) S T hST h₁
+    (localOnLinks_one (Nc := Nc) T) rfl (hIO E F) hEA hFc
+  have e8' := zwFull_split (Nc := Nc) bd β ((F ∩ A) ∪ (E \ A)) (F ∩ A) (E \ A) S T hST
+    (localOnLinks_one (Nc := Nc) S) h₂ rfl (hIO F E) hFA hEc
+  -- the constant-observable products collapse
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => one_mul (1 : ℝ)) F] at e2'
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => mul_one (O₁ U)) E] at e3'
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => one_mul (O₂ U)) F] at e4'
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => one_mul (1 : ℝ)) ((F ∩ A) ∪ (E \ A))] at e6'
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => mul_one (O₁ U)) ((E ∩ A) ∪ (F \ A))] at e7'
+  rw [zwFull_congr (Nc := Nc) bd β (fun U => one_mul (O₂ U)) ((F ∩ A) ∪ (E \ A))] at e8'
+  unfold pairTermObs pairFlip
+  simp only
+  rw [e1, e2', e3', e4', e5, e6', e7', e8']
+  ring
+
+#print axioms zwFull_add_exchange
+
+
+
+
 /-- The pair form of `pairTerm_add_exchange` — the shape the involution consumes. -/
 theorem pairTerm_add_pairFlip (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ)
     (E F A : Finset Pq)
@@ -1163,6 +1741,406 @@ theorem compOf_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
 #print axioms compOf_closed
 
 open scoped Classical in
+/-- **THE UNION OF THE COMPONENTS THAT MEET `A`** — and `compOf` is the case `A = {a}`
+(`compsMeet_singleton`).
+
+**⭐ THIS IS THE SEPARATOR THE FINSET INVOLUTION NEEDS, AND THE ANCHOR'S COMPONENT IS NOT.**
+`pairTermF_add_pairFlip` wants a touch-closed `S` with `Ao ⊆ S` and `Disjoint Bo S`. When `Ao` is a
+single plaquette the anchor's own component is such an `S`; when `Ao` is a finset spanning several
+components it is not, because it holds the anchor and misses the rest of `Ao`. This set contains ALL
+of `A` that lies in `V` (`subset_compsMeet`), is touch-closed in `V` (`compsMeet_closed`), is
+contained in every touch-closed superset of `A` (`compsMeet_minimal`), and misses `B` EXACTLY when no
+component of `V` meets both (`disjoint_compsMeet_iff`).
+
+DERIVED: no numeral. -/
+noncomputable def compsMeet (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (A : Finset Pq) :
+    Finset Pq :=
+  V.filter (fun p => ∃ a ∈ A, Reach bd V a p)
+
+open scoped Classical in
+/-- **Membership, unfolded.**
+
+DERIVED: no numeral. -/
+theorem mem_compsMeet {bd : Pq → List (Lk × Bool)} {V A : Finset Pq} {p : Pq} :
+    p ∈ compsMeet bd V A ↔ p ∈ V ∧ ∃ a ∈ A, Reach bd V a p := by
+  unfold compsMeet; exact Finset.mem_filter
+
+#print axioms mem_compsMeet
+
+open scoped Classical in
+/-- **It lives inside `V`.**
+
+DERIVED: no numeral. -/
+theorem compsMeet_subset (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
+    compsMeet bd V A ⊆ V :=
+  Finset.filter_subset _ _
+
+#print axioms compsMeet_subset
+
+open scoped Classical in
+/-- **AND IT CONTAINS ALL OF `A` THAT LIES IN `V`** — by reflexivity of reach, one witness each.
+This is the clause `compOf` cannot give for a multi-plaquette `A`.
+
+DERIVED: no numeral. -/
+theorem subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
+    A ∩ V ⊆ compsMeet bd V A := by
+  intro a ha
+  rw [Finset.mem_inter] at ha
+  exact mem_compsMeet.mpr ⟨ha.2, a, ha.1, Relation.ReflTransGen.refl⟩
+
+#print axioms subset_compsMeet
+
+open scoped Classical in
+/-- **IT IS TOUCH-CLOSED IN `V`** — the shape `pairTermF_add_pairFlip` consumes, produced rather than
+assumed. Same one-step argument as `compOf_closed`: a touch out of the set would extend the chain
+from whichever `a ∈ A` reached `p`, putting the far end back in the set.
+
+DERIVED: no numeral. -/
+theorem compsMeet_closed (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
+    ∀ p ∈ V ∩ compsMeet bd V A, ∀ r ∈ V \ compsMeet bd V A, ¬ Touch bd p r := by
+  intro p hp r hr ht
+  rw [Finset.mem_inter] at hp
+  rw [Finset.mem_sdiff] at hr
+  obtain ⟨a, haA, hap⟩ := (mem_compsMeet.mp hp.2).2
+  exact hr.2 (mem_compsMeet.mpr ⟨hr.1, a, haA, hap.tail ⟨hp.1, hr.1, ht⟩⟩)
+
+#print axioms compsMeet_closed
+
+open scoped Classical in
+/-- **⭐ AND IT IS THE SMALLEST SUCH SET** — every touch-closed `S ⊆ V` containing `A ∩ V` contains
+it. Induct along the chain: the first vertex is in `A ∩ V`, and a chain step out of `S` would be a
+touch from `V ∩ S` to `V \ S`, which closure forbids.
+
+This is the converse `disjoint_compsMeet_iff` needs to mean what it says. Without it, "a separator
+exists exactly when this one works" is prose; with it, a touch-closed `S ⊇ A ∩ V` missing `B` forces
+this set to miss `B` too, so no OTHER choice of separator can succeed where this one fails.
+
+DERIVED: no numeral. -/
+theorem compsMeet_minimal (bd : Pq → List (Lk × Bool)) (V A S : Finset Pq)
+    (hclosed : ∀ p ∈ V ∩ S, ∀ r ∈ V \ S, ¬ Touch bd p r)
+    (hA : A ∩ V ⊆ S) :
+    compsMeet bd V A ⊆ S := by
+  intro x hx
+  obtain ⟨hxV, a, haA, hreach⟩ := mem_compsMeet.mp hx
+  have key : ∀ y, Relation.ReflTransGen
+      (fun u v => u ∈ V ∧ v ∈ V ∧ Touch bd u v) a y → y ∈ V → y ∈ S := by
+    intro y hy
+    induction hy with
+    | refl => intro haV; exact hA (Finset.mem_inter.mpr ⟨haA, haV⟩)
+    | @tail b c _hab hstep ih =>
+        intro _
+        obtain ⟨hbV, hcV, ht⟩ := hstep
+        by_contra hcS
+        exact hclosed b (Finset.mem_inter.mpr ⟨hbV, ih hbV⟩) c
+          (Finset.mem_sdiff.mpr ⟨hcV, hcS⟩) ht
+  exact key x hreach hxV
+
+#print axioms compsMeet_minimal
+
+open scoped Classical in
+/-- **`compOf` IS THE SINGLETON CASE.** So every lemma stated against the anchor's component is the
+`A = {a}` instance of one stated against this set, and generalising costs no theorem.
+
+DERIVED: no numeral. -/
+theorem compsMeet_singleton (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
+    compsMeet bd V {a} = compOf bd V a := by
+  ext p
+  rw [mem_compsMeet, mem_compOf]
+  constructor
+  · rintro ⟨hpV, a', ha', hr⟩
+    rw [Finset.mem_singleton] at ha'
+    subst ha'
+    exact ⟨hpV, hr⟩
+  · rintro ⟨hpV, hr⟩
+    exact ⟨hpV, a, Finset.mem_singleton_self a, hr⟩
+
+#print axioms compsMeet_singleton
+
+open scoped Classical in
+/-- **AND THE ANCHOR'S COMPONENT SITS INSIDE IT** whenever the anchor belongs to `A`. The swap only
+ever ENLARGES the separator, which is why it cannot lose a pair the old filter kept.
+
+DERIVED: no numeral. -/
+theorem compOf_subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) {a : Pq}
+    (ha : a ∈ A) : compOf bd V a ⊆ compsMeet bd V A := by
+  intro p hp
+  obtain ⟨hpV, hreach⟩ := mem_compOf.mp hp
+  exact mem_compsMeet.mpr ⟨hpV, a, ha, hreach⟩
+
+#print axioms compOf_subset_compsMeet
+
+open scoped Classical in
+/-- **⭐ THE SEPARATOR CRITERION.**
+
+The set misses `B` exactly when no plaquette of `B` is touch-reachable inside `V` from any plaquette
+of `A` — equivalently, exactly when no component of `V` meets both. So
+`Disjoint B (compsMeet bd V A)` IS the complement of "some component meets both", and with
+`compsMeet_minimal` a touch-closed separator containing `A ∩ V` and missing `B` exists precisely when
+this set is one.
+
+That is the identity the anchor's component cannot supply, and it is what makes the involution's
+vanishing set and its complement fit together for a multi-plaquette support.
+
+**⛔ IT DOES NOT BY ITSELF CLOSE THE FINSET ROUTE.** See `bridging_sum_eq_core_sumF` — widening the
+complement to "some component meets both" admits pairs whose support is split across components, and
+those are exactly the pairs `IsCorePairF` cannot normalise. The counting side needs its own
+multi-component statement before this criterion can be spent.
+
+DERIVED: no numeral. -/
+theorem disjoint_compsMeet_iff (bd : Pq → List (Lk × Bool)) (V A B : Finset Pq)
+    (hB : B ⊆ V) :
+    Disjoint B (compsMeet bd V A) ↔ ∀ b ∈ B, ∀ a ∈ A, ¬ Reach bd V a b := by
+  constructor
+  · intro hd b hb a ha hr
+    exact (Finset.disjoint_left.mp hd hb) (mem_compsMeet.mpr ⟨hB hb, a, ha, hr⟩)
+  · intro h
+    rw [Finset.disjoint_left]
+    intro b hb hmem
+    obtain ⟨a, ha, hr⟩ := (mem_compsMeet.mp hmem).2
+    exact h b hb a ha hr
+
+#print axioms disjoint_compsMeet_iff
+
+open scoped Classical in
+/-- **⭐ WHEN `A` IS TOUCH-CONNECTED IN `V`, THE SEPARATOR COLLAPSES TO THE ANCHOR'S COMPONENT.**
+
+`compsMeet bd V A` was introduced because `compOf bd V a` holds the anchor and misses the rest of a
+multi-plaquette `A`. If every plaquette of `A` is reachable from `a` inside `V`, that gap closes:
+anything reached from any `a' ∈ A` is reached from `a` by composing the two chains, so the union of
+the components meeting `A` IS the one component containing `a`.
+
+DERIVED: no numeral. -/
+theorem compsMeet_eq_compOf_of_connected (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) {a : Pq}
+    (ha : a ∈ A) (hconn : ∀ p ∈ A, Reach bd V a p) :
+    compsMeet bd V A = compOf bd V a := by
+  refine Finset.Subset.antisymm ?_ (compOf_subset_compsMeet bd V A ha)
+  intro x hx
+  obtain ⟨hxV, a', ha', hr⟩ := mem_compsMeet.mp hx
+  exact mem_compOf.mpr ⟨hxV, (hconn a' ha').trans hr⟩
+
+#print axioms compsMeet_eq_compOf_of_connected
+
+open scoped Classical in
+/-- **THE PLAQUETTES OF `V` WHOSE OWN LINKS MEET `S`.**
+
+The seed a separator for an ARBITRARY observable is grown from. `nonbridging_sum_eq_zeroF` flips
+across the component of an ANCHOR PLAQUETTE, and an arbitrary observable has none — but it has a
+link support, and these are the plaquettes that touch it.
+
+DERIVED: no numeral. -/
+noncomputable def plaqsMeetingLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
+    Finset Pq :=
+  V.filter (fun p => ∃ l ∈ linkSupp bd p, l ∈ S)
+
+open scoped Classical in
+/-- **Membership, unfolded.**
+
+DERIVED: no numeral. -/
+theorem mem_plaqsMeetingLinks {bd : Pq → List (Lk × Bool)} {V : Finset Pq} {S : Finset Lk}
+    {p : Pq} :
+    p ∈ plaqsMeetingLinks bd V S ↔ p ∈ V ∧ ∃ l ∈ linkSupp bd p, l ∈ S := by
+  unfold plaqsMeetingLinks; exact Finset.mem_filter
+
+#print axioms mem_plaqsMeetingLinks
+
+open scoped Classical in
+/-- **⭐ THE SEPARATOR OF A LINK SUPPORT**: the seed, closed under touching.
+
+`compsMeet` does the closing, so this is the whole construction. It is the object that plays the
+anchor component's role when the observable is not a plaquette product, and it specialises: at the
+link support of a single plaquette's boundary the seed contains that plaquette, so the separator
+contains its component.
+
+DERIVED: no numeral. -/
+noncomputable def sepOfLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
+    Finset Pq :=
+  compsMeet bd V (plaqsMeetingLinks bd V S)
+
+open scoped Classical in
+/-- **It is touch-closed in `V`** — `compsMeet_closed` at the seed.
+
+DERIVED: no numeral. -/
+theorem sepOfLinks_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
+    ∀ p ∈ V ∩ sepOfLinks bd V S, ∀ r ∈ V \ sepOfLinks bd V S, ¬ Touch bd p r :=
+  compsMeet_closed bd V (plaqsMeetingLinks bd V S)
+
+#print axioms sepOfLinks_closed
+
+open scoped Classical in
+/-- **And it lives inside `V`.**
+
+DERIVED: no numeral. -/
+theorem sepOfLinks_subset (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
+    sepOfLinks bd V S ⊆ V :=
+  compsMeet_subset bd V (plaqsMeetingLinks bd V S)
+
+#print axioms sepOfLinks_subset
+
+open scoped Classical in
+/-- **⭐⭐ EVERY PLAQUETTE OF `V` OUTSIDE THE SEPARATOR MISSES `S` ENTIRELY.**
+
+This is what makes the construction work. The separator is grown from exactly the plaquettes whose
+links meet `S`, so anything left outside cannot touch `S` at all — which is how the observable's own
+support ends up on one side of the link split with nothing of the other side's plaquettes reaching
+it.
+
+DERIVED: no numeral. -/
+theorem no_link_of_not_mem_sepOfLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk)
+    {p : Pq} (hp : p ∈ V) (hnot : p ∉ sepOfLinks bd V S) :
+    ∀ l ∈ linkSupp bd p, l ∉ S := by
+  intro l hl hlS
+  refine hnot ?_
+  refine subset_compsMeet bd V (plaqsMeetingLinks bd V S) ?_
+  rw [Finset.mem_inter]
+  exact ⟨mem_plaqsMeetingLinks.mpr ⟨hp, l, hl, hlS⟩, hp⟩
+
+#print axioms no_link_of_not_mem_sepOfLinks
+
+open scoped Classical in
+/-- **ONE SIDE'S LINK BLOCK**: an observable's own support, together with the links of the
+plaquettes on that side.
+
+This is what `zwFull_add_exchange` wants for `S` and `T` — the observable has to read only its own
+side, and so do that side's activated plaquettes.
+
+DERIVED: no numeral. -/
+noncomputable def linkBlock (bd : Pq → List (Lk × Bool)) (W : Finset Pq) (S : Finset Lk) :
+    Finset Lk :=
+  S ∪ W.biUnion (linkSupp bd)
+
+open scoped Classical in
+/-- **Membership, unfolded.**
+
+DERIVED: no numeral. -/
+theorem mem_linkBlock {bd : Pq → List (Lk × Bool)} {W : Finset Pq} {S : Finset Lk} {l : Lk} :
+    l ∈ linkBlock bd W S ↔ l ∈ S ∨ ∃ p ∈ W, l ∈ linkSupp bd p := by
+  unfold linkBlock
+  rw [Finset.mem_union, Finset.mem_biUnion]
+
+#print axioms mem_linkBlock
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE TWO BLOCKS ARE DISJOINT EXACTLY WHEN NOTHING BRIDGES.**
+
+Four ways a link could sit in both, and three of them are already impossible:
+
+* in both observables' supports — excluded by `hab`, which says the two observables read disjoint
+  link sets. For `hfin` this is geometry: they live in opposite half-spaces.
+* in the first observable's support and on a plaquette OUTSIDE the separator — excluded by
+  `no_link_of_not_mem_sepOfLinks`, since the separator was grown from exactly those plaquettes.
+* on plaquettes on both sides — excluded by `sepOfLinks_closed`, because two plaquettes sharing a
+  link TOUCH, and the separator is touch-closed.
+
+What is left is `hbridge`: no plaquette of the separator carries a link of the second observable's
+support. **That is the non-bridging condition, at the level of links**, and it is the filter the
+vanishing sum is indexed by.
+
+DERIVED: no numeral. -/
+theorem disjoint_linkBlocks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (Sa Sb : Finset Lk)
+    (hab : Disjoint Sa Sb)
+    (hbridge : ∀ p ∈ V ∩ sepOfLinks bd V Sa, ∀ l ∈ linkSupp bd p, l ∉ Sb) :
+    Disjoint (linkBlock bd (V ∩ sepOfLinks bd V Sa) Sa)
+      (linkBlock bd (V \ sepOfLinks bd V Sa) Sb) := by
+  classical
+  rw [Finset.disjoint_left]
+  intro l hl hl'
+  rcases mem_linkBlock.mp hl with hA | ⟨p, hp, hlp⟩
+  · rcases mem_linkBlock.mp hl' with hB | ⟨r, hr, hlr⟩
+    · exact Finset.disjoint_left.mp hab hA hB
+    · rw [Finset.mem_sdiff] at hr
+      exact no_link_of_not_mem_sepOfLinks bd V Sa hr.1 hr.2 l hlr hA
+  · rcases mem_linkBlock.mp hl' with hB | ⟨r, hr, hlr⟩
+    · exact hbridge p hp l hlp hB
+    · exact sepOfLinks_closed bd V Sa p hp r hr ⟨l, hlp, hlr⟩
+
+#print axioms disjoint_linkBlocks
+
+open scoped Classical in
+/-- **LOCALITY IS MONOTONE IN THE LINK SET.** An observable reading only `S` reads only any larger
+`S'`; the witness is the old one composed with the inclusion of coordinates.
+
+Needed because each observable is local on its OWN support while `zwFull_add_exchange` wants it
+local on the whole block, which also carries that side's plaquette links.
+
+DERIVED: no numeral. -/
+theorem localOnLinks_mono (bd : Pq → List (Lk × Bool)) {S S' : Finset Lk} (hSS : S ⊆ S')
+    {O : (Lk → MassGap.SUN.SU Nc) → ℝ} (h : LocalOnLinks (Nc := Nc) S O) :
+    LocalOnLinks (Nc := Nc) S' O := by
+  obtain ⟨Ô, hm, he⟩ := h
+  refine ⟨fun v => Ô (fun i : S => v ⟨i.val, hSS i.2⟩), ?_, fun U => ?_⟩
+  · exact hm.comp (measurable_pi_lambda _ (fun i => measurable_pi_apply _))
+  · exact he U
+
+#print axioms localOnLinks_mono
+
+open scoped Classical in
+/-- **⭐⭐⭐ A PAIR AND ITS FLIP SUM TO ZERO, FOR TWO OBSERVABLES ON DISJOINT LINK SUPPORTS.**
+
+The observable counterpart of `pairTermF_add_pairFlip`, with no anchor plaquette anywhere. The
+separator is `sepOfLinks` — the plaquettes of the pair's union whose links meet `Sa`, closed under
+touching — and the two link blocks are each observable's support together with its side's plaquette
+links.
+
+**`hbridge` IS THE WHOLE CONDITION**, and it is the link-level statement of "nothing bridges": no
+plaquette of the separator carries a link of the second observable's support. Everything else is
+geometry that is already proved — see `disjoint_linkBlocks` for the three cases that cannot arise.
+
+For `hfin` the two supports lie in opposite half-spaces, so `hab` is geometry rather than an
+estimate, and `hbridge` is the statement that the activated plaquettes do not connect them.
+
+DERIVED: no numeral. The `0` is the exact cancellation, inherited from `zwFull_add_exchange`. -/
+theorem pairTermObs_add_flip_of_no_bridge (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (E F : Finset Pq) (Sa Sb : Finset Lk)
+    (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    (hbridge : ∀ p ∈ (E ∪ F) ∩ sepOfLinks bd (E ∪ F) Sa, ∀ l ∈ linkSupp bd p, l ∉ Sb) :
+    pairTermObs (Nc := Nc) bd O₁ O₂ β (E, F)
+      + pairTermObs (Nc := Nc) bd O₁ O₂ β
+          (pairFlip (sepOfLinks bd (E ∪ F) Sa) (E, F)) = 0 := by
+  classical
+  set V : Finset Pq := E ∪ F with hV
+  set A : Finset Pq := sepOfLinks bd V Sa with hA
+  refine zwFull_add_exchange (Nc := Nc) bd β O₁ O₂ E F A
+    (linkBlock bd (V ∩ A) Sa) (linkBlock bd (V \ A) Sb)
+    (disjoint_linkBlocks bd V Sa Sb hab hbridge)
+    (localOnLinks_mono bd (fun l hl => mem_linkBlock.mpr (Or.inl hl)) h₁)
+    (localOnLinks_mono bd (fun l hl => mem_linkBlock.mpr (Or.inl hl)) h₂)
+    ?_ ?_
+  · intro p hp l hl
+    exact mem_linkBlock.mpr (Or.inr ⟨p, hp, List.mem_toFinset.mpr hl⟩)
+  · intro p hp l hl
+    exact mem_linkBlock.mpr (Or.inr ⟨p, hp, List.mem_toFinset.mpr hl⟩)
+
+#print axioms pairTermObs_add_flip_of_no_bridge
+
+
+
+
+open scoped Classical in
+/-- **⭐⭐ AND THEN THE ANCHOR'S OWN COMPONENT ALREADY SEPARATES — NO NEW COUNTING IS NEEDED.**
+
+This is the statement that closes the finset join for touch-connected supports. Read the right-hand
+side: it quantifies over EVERY `a' ∈ A` and EVERY `b ∈ B`, so it is the full multi-plaquette
+condition "no component of `V` meets both" — and the left-hand side is a fact about
+`compOf bd V a` alone, which is what `IsCorePairF` and the whole counting side are already built on.
+
+So for `A` connected in `V` the vanishing set's complement and the existing bridging filter agree,
+`card_corePairsF_span_le`'s `connSets` count applies unchanged, and nothing has to be re-proved. The
+general case, where `A` spans several components, still needs the multi-component count — it is
+`compsMeet`'s criterion that survives there, not this one.
+
+Wilson-loop-shaped observables are of this form, which is the case the `…F` family was written for.
+
+DERIVED: no numeral. -/
+theorem disjoint_compOf_iff_of_connected (bd : Pq → List (Lk × Bool)) (V A B : Finset Pq) {a : Pq}
+    (ha : a ∈ A) (hB : B ⊆ V) (hconn : ∀ p ∈ A, Reach bd V a p) :
+    Disjoint B (compOf bd V a) ↔ ∀ b ∈ B, ∀ a' ∈ A, ¬ Reach bd V a' b := by
+  rw [← compsMeet_eq_compOf_of_connected bd V A ha hconn]
+  exact disjoint_compsMeet_iff bd V A B hB
+
+#print axioms disjoint_compOf_iff_of_connected
+
+open scoped Classical in
 /-- The exchange a pair supplies for itself: flip across `p₀`'s component inside the pair's union. -/
 noncomputable def exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     (q : Finset Pq × Finset Pq) : Finset Pq × Finset Pq :=
@@ -1198,6 +2176,282 @@ theorem exchange_exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (q : Fi
   exact pairFlip_pairFlip _ q
 
 #print axioms exchange_exchange
+
+open scoped Classical in
+/-- **THE EXCHANGE FOR AN ARBITRARY OBSERVABLE**: flip across the separator its link support grows.
+
+`exchange` flips across the component of an anchor PLAQUETTE. This flips across `sepOfLinks`, which
+needs only a link set, so it applies to any observable.
+
+DERIVED: no numeral. -/
+noncomputable def exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
+    (q : Finset Pq × Finset Pq) : Finset Pq × Finset Pq :=
+  pairFlip (sepOfLinks bd (q.1 ∪ q.2) Sa) q
+
+open scoped Classical in
+/-- **It preserves the pair's union**, which is what makes the separator recompute identically.
+
+DERIVED: no numeral. -/
+theorem exchangeObs_union (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
+    (q : Finset Pq × Finset Pq) :
+    (exchangeObs bd Sa q).1 ∪ (exchangeObs bd Sa q).2 = q.1 ∪ q.2 := by
+  unfold exchangeObs; exact pairFlip_union _ q
+
+#print axioms exchangeObs_union
+
+open scoped Classical in
+/-- **And it is an involution.** The separator is a function of the union alone, and the union
+survives the flip, so flipping twice is flipping twice across the SAME set.
+
+DERIVED: no numeral. -/
+theorem exchangeObs_exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
+    (q : Finset Pq × Finset Pq) :
+    exchangeObs bd Sa (exchangeObs bd Sa q) = q := by
+  have h : (exchangeObs bd Sa q).1 ∪ (exchangeObs bd Sa q).2 = q.1 ∪ q.2 :=
+    exchangeObs_union bd Sa q
+  show pairFlip (sepOfLinks bd ((exchangeObs bd Sa q).1 ∪ (exchangeObs bd Sa q).2) Sa)
+      (exchangeObs bd Sa q) = q
+  rw [h]
+  exact pairFlip_pairFlip _ q
+
+#print axioms exchangeObs_exchangeObs
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE VOLUME CANCELLATION, AT TWO ARBITRARY OBSERVABLES.**
+
+`nonbridging_sum_eq_zeroF` with the two plaquette finsets replaced by two observables reading
+disjoint link supports: every pair of activated subsets across which nothing connects the first
+support to the second cancels against its own flip, so the whole non-bridging sum is EXACTLY zero.
+No estimate, no volume, no coupling condition.
+
+**THE FILTER IS AT THE LEVEL OF LINKS, AND THAT IS WHAT MAKES IT GENERAL.** The plaquette version
+asks that no plaquette of `Ao` reach a plaquette of `Bo`; an arbitrary observable has no plaquettes,
+so this asks instead that no plaquette of the SEPARATOR carry a link of `Sb` — where the separator
+is grown from `Sa` by `sepOfLinks`. `disjoint_linkBlocks` is where that becomes the disjointness
+`zwFull_add_exchange` consumes.
+
+`hab` says the two observables read disjoint link sets. For `hfin` that is geometry — the two
+supports lie in opposite half-spaces — rather than an estimate.
+
+DERIVED: the `0` is the exact cancellation and is the theorem's whole content; the pairing is
+term-by-term and nothing is estimated. -/
+theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
+    (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+          ∀ l ∈ linkSupp bd p, l ∉ Sb),
+      pairTermObs (Nc := Nc) bd O₁ O₂ β q = 0 := by
+  classical
+  set s : Finset (Finset Pq × Finset Pq) :=
+    (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+      (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+        ∀ l ∈ linkSupp bd p, l ∉ Sb) with hs
+  have hmem : ∀ q ∈ s, exchangeObs bd Sa q ∈ s := by
+    intro q hq
+    rw [hs, Finset.mem_filter] at hq ⊢
+    refine ⟨Finset.mem_univ _, ?_⟩
+    rw [exchangeObs_union]
+    exact hq.2
+  have hcancel : ∀ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q
+      + pairTermObs (Nc := Nc) bd O₁ O₂ β (exchangeObs bd Sa q) = 0 := by
+    intro q hq
+    rw [hs, Finset.mem_filter] at hq
+    have h := pairTermObs_add_flip_of_no_bridge (Nc := Nc) bd β O₁ O₂ q.1 q.2 Sa Sb hab h₁ h₂ hq.2
+    simpa [exchangeObs] using h
+  have hinj : ∀ x ∈ s, ∀ y ∈ s, exchangeObs bd Sa x = exchangeObs bd Sa y → x = y := by
+    intro x _ y _ hxy
+    rw [← exchangeObs_exchangeObs bd Sa x, ← exchangeObs_exchangeObs bd Sa y, hxy]
+  have himg : s.image (exchangeObs bd Sa) = s := by
+    apply Finset.Subset.antisymm
+    · intro q hq
+      obtain ⟨r, hr, rfl⟩ := Finset.mem_image.mp hq
+      exact hmem r hr
+    · intro q hq
+      exact Finset.mem_image.mpr
+        ⟨exchangeObs bd Sa q, hmem q hq, exchangeObs_exchangeObs bd Sa q⟩
+  have key : ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q
+      = - ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q := by
+    calc ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q
+        = ∑ q ∈ s.image (exchangeObs bd Sa), pairTermObs (Nc := Nc) bd O₁ O₂ β q := by rw [himg]
+      _ = ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β (exchangeObs bd Sa q) :=
+          Finset.sum_image hinj
+      _ = ∑ q ∈ s, (- pairTermObs (Nc := Nc) bd O₁ O₂ β q) :=
+          Finset.sum_congr rfl (fun q hq => by have := hcancel q hq; linarith)
+      _ = - ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q := by simp
+  linarith
+
+#print axioms nonbridging_sum_eq_zeroObs
+
+open scoped Classical in
+/-- **THE CONNECTED CORRELATOR OF TWO ARBITRARY OBSERVABLES.**
+
+`WilsonBridge.wilsonCorrConnF` with the two plaquette finsets replaced by two observables. Stated
+here rather than in `WilsonBridge` because everything that consumes it is in this file.
+
+DERIVED: no numeral. -/
+noncomputable def wilsonCorrConnObs (bd : Pq → List (Lk × Bool))
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (β : ℝ) : ℝ :=
+  (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
+      (fun U => O₁ U * O₂ U)
+    - (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β O₁
+      * (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β O₂
+
+open scoped Classical in
+/-- **⭐⭐⭐ IT EQUALS THE BRIDGING SUM OVER `Z²`, FOR ANY TWO OBSERVABLES ON DISJOINT LINK
+SUPPORTS.**
+
+The observable counterpart of `wilsonCorrConnF_eq_bridging_sumF`, and **the step that makes the
+arbitrary-observable chain a statement about a CORRELATOR**. Every pair of activated subsets across
+which nothing connects the first support to the second contributes nothing
+(`nonbridging_sum_eq_zeroObs`), which is where the volume goes.
+
+The finset proof transfers with no new mathematics: `corrNum_eq_subset_sum` is ALREADY general in
+the observable, so the subset expansion is reused verbatim, and the four specialisations become
+`O₁·O₂`, `O₁`, `O₂` and the constant `1`.
+
+Scope, stated with it: `hab` asks the two observables to read disjoint link sets — for `hfin` that is
+geometry, the two half-spaces — and `h₁`, `h₂` say each reads only its own. `hint` is the same
+integrability side condition the finset version carries, and `hN` excludes the empty gauge group.
+
+DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per factor of the pair —
+`hprod` turns two sums over `Finset Pq` into one over `Finset Pq × Finset Pq`, so each of the two
+Gibbs numerators carries its own partition function. The `0` is `hN : Nc ≠ 0`, which makes the
+partition function positive so the division is meaningful. The `1` and `2` in `q.1` and `q.2` are
+projections, not numerals. -/
+theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
+    (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) (β : ℝ)
+    (hint : ∀ (O : (Lk → MassGap.SUN.SU Nc) → ℝ) (E : Finset Pq), Integrable
+      (fun U => O U * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) :
+    wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β
+      = (∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+            (fun q => ¬ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+              ∀ l ∈ linkSupp bd p, l ∉ Sb),
+          pairTermObs (Nc := Nc) bd O₁ O₂ β q)
+        / ((wilsonSystem bd (wilsonDensity (N := Nc))).partition
+            (probHaar (MassGap.SUN.SU Nc)) β) ^ 2 := by
+  classical
+  have hZpos : 0 < (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+      (probHaar (MassGap.SUN.SU Nc)) β := wilsonSystem_partition_pos hN bd β
+  have hz : ∀ O : (Lk → MassGap.SUN.SU Nc) → ℝ,
+      (∫ U, O U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        = ∑ E : Finset Pq, zwFull (Nc := Nc) bd β O E := by
+    intro O
+    have h := corrNum_eq_subset_sum (Nc := Nc) bd β O (fun E _ => hint O E)
+    rw [Finset.powerset_univ] at h
+    exact h
+  have hprod : ∀ f g : Finset Pq → ℝ,
+      (∑ E : Finset Pq, f E) * (∑ F : Finset Pq, g F)
+        = ∑ q : Finset Pq × Finset Pq, f q.1 * g q.2 := by
+    intro f g
+    rw [Fintype.sum_prod_type, Finset.sum_mul_sum]
+  have hnum : (∑ E : Finset Pq, zwFull (Nc := Nc) bd β (fun U => O₁ U * O₂ U) E)
+        * (∑ F : Finset Pq, zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) F)
+      - (∑ E : Finset Pq, zwFull (Nc := Nc) bd β O₁ E)
+        * (∑ F : Finset Pq, zwFull (Nc := Nc) bd β O₂ F)
+      = ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+          (fun q => ¬ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+            ∀ l ∈ linkSupp bd p, l ∉ Sb),
+        pairTermObs (Nc := Nc) bd O₁ O₂ β q := by
+    rw [hprod, hprod, ← Finset.sum_sub_distrib]
+    have hpt : ∀ q : Finset Pq × Finset Pq,
+        zwFull (Nc := Nc) bd β (fun U => O₁ U * O₂ U) q.1
+            * zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) q.2
+          - zwFull (Nc := Nc) bd β O₁ q.1 * zwFull (Nc := Nc) bd β O₂ q.2
+        = pairTermObs (Nc := Nc) bd O₁ O₂ β q := fun q => rfl
+    rw [Finset.sum_congr rfl (fun q _ => hpt q),
+      ← Finset.sum_filter_add_sum_filter_not (Finset.univ : Finset (Finset Pq × Finset Pq))
+        (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+          ∀ l ∈ linkSupp bd p, l ∉ Sb)
+        (pairTermObs (Nc := Nc) bd O₁ O₂ β),
+      nonbridging_sum_eq_zeroObs (Nc := Nc) bd β O₁ O₂ Sa Sb hab h₁ h₂, zero_add]
+  have hpart : (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+        (probHaar (MassGap.SUN.SU Nc)) β
+      = ∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) := rfl
+  have hZ : (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E : Finset Pq, zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E := by
+    refine Eq.trans ?_ (hz (fun _ => (1 : ℝ)))
+    refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+    simp only [one_mul]
+  have hne0 : (∑ E : Finset Pq, zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E) ≠ 0 := by
+    rw [← hZ, ← hpart]; exact hZpos.ne'
+  -- `expect` is the ratio definitionally, exactly as in `wilsonCorrConnF_eq_bridging_sumF`
+  have hconnEq : wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β
+      = (∫ U, (fun U => O₁ U * O₂ U) U
+            * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+          / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        - ((∫ U, O₁ U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+            / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))))
+          * ((∫ U, O₂ U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+            / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))) := rfl
+  rw [hconnEq, hpart, hz (fun U => O₁ U * O₂ U), hz O₁, hz O₂, hZ, ← hnum]
+  field_simp
+
+#print axioms wilsonCorrConnObs_eq_bridging_sumObs
+
+open scoped Classical in
+/-- **⭐⭐ AT ZERO COUPLING THE CONNECTED CORRELATOR IS EXACTLY ZERO**, for any two observables
+reading disjoint link sets.
+
+At `β = 0` the Boltzmann weight is `1`, so the measure is product Haar and two observables on
+disjoint link blocks are INDEPENDENT. `WilsonReal.block_integral_factor` is that independence, and
+it is stated for ANY two such observables — no plaquette structure is used.
+
+**WHY IT IS WORTH HAVING.** `ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` asks
+for a RATIO between two subtracted pairings, at reflection distances `2p-2` and `2p`, and nothing in
+the tree exhibits an instance of that shape. Here both sides are `0`, so the inequality holds at
+every rate: the shape is satisfiable. It is the correlator-side analogue of
+`TransferGap.exists_gapAt_lt_one`.
+
+**⛔ AND IT IS ONLY β = 0.** At `β = 0` there is no gauge dynamics at all — the links are
+independent and every connected correlation vanishes by construction, not by decay. Nothing here
+extends to `β > 0`, where the weight couples the blocks and the whole cluster expansion exists to
+bound what is left.
+
+DERIVED: the `0` coupling is the hypothesis, and the `0` value is the conclusion — the second is
+exact, not a bound. No numeral is chosen. -/
+theorem wilsonCorrConnObs_at_zero (bd : Pq → List (Lk × Bool))
+    {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ}
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) :
+    wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ 0 = 0 := by
+  classical
+  obtain ⟨Ô₁, hm₁, he₁⟩ := h₁
+  obtain ⟨Ô₂, hm₂, he₂⟩ := h₂
+  -- stated against `vol` rather than `Measure.pi`: they are defeq, and `rw` needs the syntactic
+  -- form the goal carries
+  have hfac : (∫ U, Ô₁ (fun i : Sa => (U : Lk → MassGap.SUN.SU Nc) i.val)
+          * Ô₂ (fun i : Sb => (U : Lk → MassGap.SUN.SU Nc) i.val)
+        ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))))
+      = (∫ U, Ô₁ (fun i : Sa => (U : Lk → MassGap.SUN.SU Nc) i.val)
+          ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))))
+        * ∫ U, Ô₂ (fun i : Sb => (U : Lk → MassGap.SUN.SU Nc) i.val)
+          ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))) :=
+    block_integral_factor (N := Nc) Sa Sb hab Ô₁ Ô₂ hm₁ hm₂
+  unfold wilsonCorrConnObs
+  rw [wilsonSystem_expect_at_zero bd (fun U => O₁ U * O₂ U),
+    wilsonSystem_expect_at_zero bd O₁, wilsonSystem_expect_at_zero bd O₂]
+  simp only [he₁, he₂]
+  rw [hfac]
+  ring
+
+#print axioms wilsonCorrConnObs_at_zero
+
+
+
 
 open scoped Classical in
 /-- **THE VOLUME CANCELLATION.** The connected numerator's double sum, restricted to the pairs in
@@ -3580,6 +4834,60 @@ theorem pairTerm_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ pd
 
 #print axioms pairTerm_abs_le
 
+/-- **⭐⭐ THE PER-CORE MAGNITUDE BOUND, FOR FINSET SUPPORTS.**
+
+`pairTerm_abs_le` with the constant `8 = 2³` replaced by `2^(|Ao| + |Bo| + 1)`: `zw_abs_le` pays
+`2^D.card` for the observable finset `D`, and `(Ao ∪ Bo).card ≤ |Ao| + |Bo|`. At `Ao = {p₀}`,
+`Bo = {pd}` the constant is `2³ = 8`, the original.
+
+DERIVED: the `2` in `2 ^ …` is `zw_abs_le`'s per-observable factor; the `2` in `2 * |β|` is that
+lemma's exponent; the `1` added to the cards is the second of the two products bounded; the `1`
+subtracted from `exp` is `zw_abs_le`'s own; the `0` is the rank `hN` excludes. -/
+theorem pairTermF_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
+    (q : Finset Pq × Finset Pq) :
+    |pairTermF (Nc := Nc) bd Ao Bo β q|
+      ≤ 2 ^ (Ao.card + Bo.card + 1)
+        * (Real.exp (2 * |β|) - 1) ^ (q.1.card + q.2.card) := by
+  have hq0 : (0 : ℝ) ≤ Real.exp (2 * |β|) - 1 := by
+    have h := Real.one_le_exp (x := 2 * |β|) (by positivity)
+    linarith
+  have hp1 : (0 : ℝ) ≤ (Real.exp (2 * |β|) - 1) ^ q.1.card := pow_nonneg hq0 _
+  have hp2 : (0 : ℝ) ≤ (Real.exp (2 * |β|) - 1) ^ q.2.card := pow_nonneg hq0 _
+  have hcardU : (Ao ∪ Bo).card ≤ Ao.card + Bo.card := Finset.card_union_le _ _
+  have e1 : |zw (Nc := Nc) bd β (Ao ∪ Bo) q.1|
+      ≤ (2 : ℝ) ^ (Ao.card + Bo.card) * (Real.exp (2 * |β|) - 1) ^ q.1.card := by
+    refine le_trans (zw_abs_le hN bd β _ _) ?_
+    refine mul_le_mul_of_nonneg_right ?_ hp1
+    exact pow_le_pow_right₀ (by norm_num) hcardU
+  have e2 : |zw (Nc := Nc) bd β ∅ q.2| ≤ 1 * (Real.exp (2 * |β|) - 1) ^ q.2.card := by
+    refine le_trans (zw_abs_le hN bd β _ _) ?_
+    refine mul_le_mul_of_nonneg_right ?_ hp2
+    simp
+  have e3 : |zw (Nc := Nc) bd β Ao q.1|
+      ≤ (2 : ℝ) ^ Ao.card * (Real.exp (2 * |β|) - 1) ^ q.1.card := zw_abs_le hN bd β _ _
+  have e4 : |zw (Nc := Nc) bd β Bo q.2|
+      ≤ (2 : ℝ) ^ Bo.card * (Real.exp (2 * |β|) - 1) ^ q.2.card := zw_abs_le hN bd β _ _
+  have key := abs_sub_mul_le_crs e1 e2 e3 e4 (by positivity) (by positivity)
+  have hpow : (2 : ℝ) ^ (Ao.card + Bo.card + 1)
+      = (2 : ℝ) ^ Ao.card * (2 : ℝ) ^ Bo.card * 2 := by
+    rw [pow_succ, pow_add]
+  have hr : (Real.exp (2 * |β|) - 1) ^ (q.1.card + q.2.card)
+      = (Real.exp (2 * |β|) - 1) ^ q.1.card * (Real.exp (2 * |β|) - 1) ^ q.2.card :=
+    pow_add _ _ _
+  have h2 : (2 : ℝ) ^ (Ao.card + Bo.card) = (2 : ℝ) ^ Ao.card * (2 : ℝ) ^ Bo.card :=
+    pow_add _ _ _
+  calc |pairTermF (Nc := Nc) bd Ao Bo β q|
+      ≤ (2 : ℝ) ^ (Ao.card + Bo.card) * (Real.exp (2 * |β|) - 1) ^ q.1.card
+          * (1 * (Real.exp (2 * |β|) - 1) ^ q.2.card)
+        + (2 : ℝ) ^ Ao.card * (Real.exp (2 * |β|) - 1) ^ q.1.card
+          * ((2 : ℝ) ^ Bo.card * (Real.exp (2 * |β|) - 1) ^ q.2.card) := key
+    _ = 2 ^ (Ao.card + Bo.card + 1)
+          * (Real.exp (2 * |β|) - 1) ^ (q.1.card + q.2.card) := by
+        rw [hpow, hr, h2]
+        ring
+
+#print axioms pairTermF_abs_le
+
 /-! #### The payoff: `Z²` discharged with no hypothesis left but integrability -/
 
 open scoped Classical in
@@ -3804,6 +5112,773 @@ theorem coreSpan_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool)) (p₀ p
   omega
 
 #print axioms coreSpan_card_ge_of_not_mem_ball
+
+/-! ### The same geometry for observables supported on FINSETS of plaquettes
+
+`ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` quantifies over
+`HalfSpaceAlgebra.halfSpaceAlg` — arbitrary local observables — while every decay theorem here is
+stated at ONE plaquette. Neither of those names is in scope in this file; they are named to say what
+this section is a step toward.
+
+These are the finset analogues of `coreSpan` and `IsCorePair`; the originals are the case
+`A = {p₀}`, `B = {pd}`. -/
+
+/-- **The span of a core, for two finsets of plaquettes.** `coreSpan` with `{p₀, pd}` replaced by
+`A ∪ B`.
+
+DERIVED: no numeral. -/
+def coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) : Finset Pq :=
+  c.1 ∪ c.2 ∪ (A ∪ B)
+
+/-- **A plaquette of `A` is in the span.**
+
+DERIVED: no numeral. -/
+theorem mem_coreSpanF_left {a : Pq} {A : Finset Pq} (ha : a ∈ A) (B : Finset Pq)
+    (c : Finset Pq × Finset Pq) : a ∈ coreSpanF A B c := by
+  simp [coreSpanF, ha]
+
+#print axioms mem_coreSpanF_left
+
+/-- **And a plaquette of `B`.**
+
+DERIVED: no numeral. -/
+theorem mem_coreSpanF_right {b : Pq} (A : Finset Pq) {B : Finset Pq} (hb : b ∈ B)
+    (c : Finset Pq × Finset Pq) : b ∈ coreSpanF A B c := by
+  simp [coreSpanF, hb]
+
+#print axioms mem_coreSpanF_right
+
+/-- **A core is one whose span is a single component**, anchored at a plaquette of `A`.
+
+DERIVED: no numeral. -/
+def IsCorePairF (bd : Pq → List (Lk × Bool)) (a : Pq) (A B : Finset Pq)
+    (c : Finset Pq × Finset Pq) : Prop :=
+  compOf bd (coreSpanF A B c) a = coreSpanF A B c
+
+/-- **Two distinct plaquettes, one from each side, give the span at least two elements.**
+
+DERIVED: the `2` is the two plaquettes exhibited. -/
+theorem two_le_coreSpanF_card {a b : Pq} {A B : Finset Pq} (ha : a ∈ A) (hb : b ∈ B)
+    (hne : a ≠ b) (c : Finset Pq × Finset Pq) : 2 ≤ (coreSpanF A B c).card := by
+  classical
+  have hsub : ({a, b} : Finset Pq) ⊆ coreSpanF A B c := by
+    intro x hx
+    rcases Finset.mem_insert.mp hx with hx' | hx'
+    · rw [hx']
+      exact mem_coreSpanF_left ha B c
+    · rw [Finset.mem_singleton] at hx'
+      rw [hx']
+      exact mem_coreSpanF_right A hb c
+  calc (2 : ℕ) = ({a, b} : Finset Pq).card := (Finset.card_pair hne).symm
+    _ ≤ (coreSpanF A B c).card := Finset.card_le_card hsub
+
+#print axioms two_le_coreSpanF_card
+
+/-- **⭐ THE SPAN IS LARGE WHEN THE SUPPORTS ARE FAR APART.**
+
+One plaquette of `A` outside the `k`-ball of one plaquette of `B` forces the span to have at least
+`k + 2` elements. `card_ge_of_reach_of_lvl` is carrier-free in the finset, so the proof is
+`coreSpan_card_ge_of_not_mem_ball`'s with the two membership facts supplied instead of assumed.
+
+**⛔ THIS IS A CARDINALITY BOUND, NOT A DECAY RATE.** In the singleton chain this `k` is what the
+rate's exponent is read off from, but that reading happens in `corePairs_sum_le` and
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, and neither has a finset counterpart yet.
+
+DERIVED: the `2` is `two_le_coreSpanF_card`'s two plaquettes; the `1`s are the two erasures. -/
+theorem coreSpanF_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool))
+    {a b : Pq} {A B : Finset Pq} (ha : a ∈ A) (hb : b ∈ B) (hne : a ≠ b)
+    (k : ℕ) (hk : b ∉ ball bd a k) {c : Finset Pq × Finset Pq}
+    (hc : IsCorePairF bd a A B c) :
+    k + 2 ≤ (coreSpanF A B c).card := by
+  classical
+  have h0 : a ∈ coreSpanF A B c := mem_coreSpanF_left ha B c
+  have hd : b ∈ coreSpanF A B c := mem_coreSpanF_right A hb c
+  have hreach : Reach bd (coreSpanF A B c) a b := by
+    have hm : b ∈ compOf bd (coreSpanF A B c) a := by rw [hc]; exact hd
+    exact (mem_compOf.mp hm).2
+  have hex : ∃ n, b ∈ ball bd a n := exists_mem_ball_of_reach bd hreach
+  have hlt : k < touchLvl bd a b := lt_touchLvl_of_not_mem_ball bd a b k hex hk
+  have hcore := card_ge_of_reach_of_lvl bd (coreSpanF A B c) (touchLvl bd a) a b k
+    (touchLvl_lipschitz bd a) (touchLvl_self bd a) hlt hreach
+  have hd' : b ∈ (coreSpanF A B c).erase a := Finset.mem_erase.mpr ⟨Ne.symm hne, hd⟩
+  have hc1 : ((coreSpanF A B c).erase a).card = (coreSpanF A B c).card - 1 :=
+    Finset.card_erase_of_mem h0
+  have hc2 : (((coreSpanF A B c).erase a).erase b).card
+      = ((coreSpanF A B c).erase a).card - 1 := Finset.card_erase_of_mem hd'
+  have h2 : 2 ≤ (coreSpanF A B c).card := two_le_coreSpanF_card ha hb hne c
+  omega
+
+#print axioms coreSpanF_card_ge_of_not_mem_ball
+
+/-- **The first half of a core is in its span.**
+
+DERIVED: no numeral. -/
+theorem fst_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
+    c.1 ⊆ coreSpanF A B c := by
+  intro x hx; simp [coreSpanF, hx]
+
+#print axioms fst_subset_coreSpanF
+
+/-- **And the second.**
+
+DERIVED: no numeral. -/
+theorem snd_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
+    c.2 ⊆ coreSpanF A B c := by
+  intro x hx; simp [coreSpanF, hx]
+
+#print axioms snd_subset_coreSpanF
+
+/-- **THE SEPARATOR IS RECOVERABLE FROM THE CORE**, for finset supports.
+
+`coreSpan_eq_of_mem_crs` with `p₀ ∈ A` and `pd ∈ A` replaced by `Ao ∪ Bo ⊆ A`.
+
+DERIVED: no numeral. -/
+theorem coreSpanF_eq_of_mem (Ao Bo A E F : Finset Pq)
+    (hAV : A ⊆ E ∪ F ∪ (Ao ∪ Bo)) (hobs : Ao ∪ Bo ⊆ A) :
+    coreSpanF Ao Bo (E ∩ A, F ∩ A) = A := by
+  ext x
+  simp only [coreSpanF, Finset.mem_union, Finset.mem_inter]
+  constructor
+  · rintro ((⟨-, h⟩ | ⟨-, h⟩) | h)
+    · exact h
+    · exact h
+    · exact hobs (Finset.mem_union.mpr h)
+  · intro hx
+    have hxV := hAV hx
+    simp only [Finset.mem_union] at hxV
+    rcases hxV with (h | h) | h
+    · exact Or.inl (Or.inl ⟨h, hx⟩)
+    · exact Or.inl (Or.inr ⟨h, hx⟩)
+    · exact Or.inr h
+
+#print axioms coreSpanF_eq_of_mem
+
+open scoped Classical in
+/-- **The component of a BRIDGING pair is the span of the core it cuts down to.**
+
+Bridging now means the anchor reaches every plaquette of the support, not just one.
+
+DERIVED: no numeral. -/
+theorem coreSpanF_core_eq (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (a : Pq)
+    (E F : Finset Pq)
+    (hbr : ∀ p ∈ Ao ∪ Bo, Reach bd (E ∪ F ∪ (Ao ∪ Bo)) a p) :
+    coreSpanF Ao Bo (E ∩ compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a,
+                     F ∩ compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a)
+      = compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a :=
+  coreSpanF_eq_of_mem Ao Bo (compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a) E F
+    (fun _ hx => (mem_compOf.mp hx).1)
+    (fun p hp => mem_compOf.mpr ⟨Finset.mem_union_right _ hp, hbr p hp⟩)
+
+#print axioms coreSpanF_core_eq
+
+open scoped Classical in
+/-- **A bridging pair cuts down to a core.**
+
+DERIVED: no numeral. -/
+theorem isCorePairF_of_bridging (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (a : Pq)
+    (E F : Finset Pq)
+    (hbr : ∀ p ∈ Ao ∪ Bo, Reach bd (E ∪ F ∪ (Ao ∪ Bo)) a p) :
+    IsCorePairF bd a Ao Bo (E ∩ compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a,
+                            F ∩ compOf bd (E ∪ F ∪ (Ao ∪ Bo)) a) := by
+  unfold IsCorePairF
+  rw [coreSpanF_core_eq bd Ao Bo a E F hbr]
+  exact compOf_idem_crs bd _ a
+
+#print axioms isCorePairF_of_bridging
+
+open scoped Classical in
+/-- **The finite family of cores**, for finset supports. `corePairs` with the anchor explicit.
+
+DERIVED: no numeral. -/
+noncomputable def corePairsF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq) :
+    Finset (Finset Pq × Finset Pq) :=
+  Finset.univ.filter (fun c => IsCorePairF bd a Ao Bo c)
+
+open scoped Classical in
+/-- **Membership in the core family is the core condition.**
+
+DERIVED: no numeral. -/
+theorem mem_corePairsF {bd : Pq → List (Lk × Bool)} {a : Pq} {Ao Bo : Finset Pq}
+    {c : Finset Pq × Finset Pq} :
+    c ∈ corePairsF bd a Ao Bo ↔ IsCorePairF bd a Ao Bo c := by
+  unfold corePairsF
+  simp
+
+#print axioms mem_corePairsF
+
+open scoped Classical in
+/-- **What lies outside the span is not in it** — the finset version.
+
+The `refl` branch needs a plaquette of `Bo` distinct from the anchor, which is what the singleton
+version got from `p₀ ≠ pd`.
+
+DERIVED: no numeral. -/
+theorem not_mem_coreSpanF_of_mem_outsideOf (bd : Pq → List (Lk × Bool))
+    {a b : Pq} {Ao Bo : Finset Pq} (hb : b ∈ Bo) (hne : a ≠ b)
+    {c : Finset Pq × Finset Pq} (hc : IsCorePairF bd a Ao Bo c) {z : Pq}
+    (hz : z ∈ outsideOf bd (coreSpanF Ao Bo c)) : z ∉ coreSpanF Ao Bo c := by
+  intro hzA
+  have hout : ∀ y ∈ coreSpanF Ao Bo c, ¬ Touch bd z y := (Finset.mem_filter.mp hz).2
+  have hreach : Reach bd (coreSpanF Ao Bo c) a z := by
+    have hzc : z ∈ compOf bd (coreSpanF Ao Bo c) a := by rw [hc]; exact hzA
+    exact (mem_compOf.mp hzc).2
+  rcases Relation.ReflTransGen.cases_tail hreach with hEq | ⟨y, -, hstep⟩
+  · rw [hEq] at hout
+    have hpd : Reach bd (coreSpanF Ao Bo c) a b := by
+      have hm : b ∈ compOf bd (coreSpanF Ao Bo c) a := by
+        rw [hc]; exact mem_coreSpanF_right Ao hb c
+      exact (mem_compOf.mp hm).2
+    rcases Relation.ReflTransGen.cases_head hpd with hEq2 | ⟨y, hy, -⟩
+    · exact hne hEq2
+    · exact hout y hy.2.1 hy.2.2
+  · exact hout y hstep.1 (touch_symm hstep.2.2)
+
+#print axioms not_mem_coreSpanF_of_mem_outsideOf
+
+open scoped Classical in
+/-- **Adding outside plaquettes does not change the component** — the finset version.
+
+DERIVED: no numeral. -/
+theorem compOf_union_outsideF (bd : Pq → List (Lk × Bool))
+    {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
+    {c : Finset Pq × Finset Pq} (hc : IsCorePairF bd a Ao Bo c) {X Y : Finset Pq}
+    (hX : X ⊆ outsideOf bd (coreSpanF Ao Bo c)) (hY : Y ⊆ outsideOf bd (coreSpanF Ao Bo c)) :
+    compOf bd ((c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ (Ao ∪ Bo)) a = coreSpanF Ao Bo c := by
+  have hAV : coreSpanF Ao Bo c ⊆ (c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ (Ao ∪ Bo) := by
+    intro x hx
+    simp only [coreSpanF, Finset.mem_union] at hx ⊢
+    tauto
+  have hout : ∀ z ∈ (c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ (Ao ∪ Bo), z ∉ coreSpanF Ao Bo c →
+      z ∈ outsideOf bd (coreSpanF Ao Bo c) := by
+    intro z hz hzn
+    by_cases h1 : z ∈ X
+    · exact hX h1
+    · by_cases h2 : z ∈ Y
+      · exact hY h2
+      · exfalso
+        apply hzn
+        simp only [Finset.mem_union] at hz
+        simp only [coreSpanF, Finset.mem_union]
+        tauto
+  apply Finset.Subset.antisymm
+  · intro x hx
+    have hrx : Reach bd ((c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ (Ao ∪ Bo)) a x := (mem_compOf.mp hx).2
+    clear hx
+    induction hrx with
+    | refl => exact mem_coreSpanF_left ha Bo c
+    | tail _ hbc ih =>
+        by_contra hcon
+        exact (Finset.mem_filter.mp (hout _ hbc.2.1 hcon)).2 _ ih (touch_symm hbc.2.2)
+  · intro x hx
+    refine mem_compOf.mpr ⟨hAV hx, ?_⟩
+    have hxc : x ∈ compOf bd (coreSpanF Ao Bo c) a := by rw [hc]; exact hx
+    exact reach_mono_crs bd hAV (mem_compOf.mp hxc).2
+
+#print axioms compOf_union_outsideF
+
+/-- **The support is in the span.**
+
+DERIVED: no numeral. -/
+theorem obs_subset_coreSpanF (Ao Bo : Finset Pq) (c : Finset Pq × Finset Pq) :
+    Ao ∪ Bo ⊆ coreSpanF Ao Bo c := fun _ hx => Finset.mem_union_right _ hx
+
+#print axioms obs_subset_coreSpanF
+
+open scoped Classical in
+/-- The finset exchange: flip across the anchor's component inside the pair's union. Identical in
+shape to `exchange`, with `{p₀, pd}` replaced by `Ao ∪ Bo`.
+
+DERIVED: no numeral. -/
+noncomputable def exchangeF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq)
+    (q : Finset Pq × Finset Pq) : Finset Pq × Finset Pq :=
+  pairFlip (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a) q
+
+open scoped Classical in
+/-- **It preserves the pair's union**, which is what makes the separator survive it.
+
+DERIVED: no numeral. -/
+theorem exchangeF_union (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq)
+    (q : Finset Pq × Finset Pq) :
+    (exchangeF bd a Ao Bo q).1 ∪ (exchangeF bd a Ao Bo q).2 = q.1 ∪ q.2 := by
+  unfold exchangeF; exact pairFlip_union _ q
+
+#print axioms exchangeF_union
+
+open scoped Classical in
+/-- **And it is an involution**, because the separator it is rebuilt from is the same finset.
+
+DERIVED: no numeral. -/
+theorem exchangeF_exchangeF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq)
+    (q : Finset Pq × Finset Pq) :
+    exchangeF bd a Ao Bo (exchangeF bd a Ao Bo q) = q := by
+  have h : (exchangeF bd a Ao Bo q).1 ∪ (exchangeF bd a Ao Bo q).2 ∪ (Ao ∪ Bo)
+      = q.1 ∪ q.2 ∪ (Ao ∪ Bo) := by rw [exchangeF_union]
+  show pairFlip (compOf bd ((exchangeF bd a Ao Bo q).1 ∪ (exchangeF bd a Ao Bo q).2 ∪ (Ao ∪ Bo)) a)
+      (exchangeF bd a Ao Bo q) = q
+  rw [h]
+  exact pairFlip_pairFlip _ q
+
+#print axioms exchangeF_exchangeF
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE VOLUME CANCELLATION, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
+
+`nonbridging_sum_eq_zero` with the two anchors replaced by two finsets: every pair of activated
+subsets across which NO plaquette of `Ao` reaches any plaquette of `Bo` cancels against its own
+flip, so the whole non-bridging sum is exactly zero. No estimate, no volume, no coupling condition.
+
+**The hypothesis that makes this work is `hconn`, and it is deliberately stated on `Ao` ALONE rather
+than on the pair's union.** The separator has to be built pairwise — it is
+`compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a`, which moves with `q` — so a connectivity hypothesis phrased
+at the pair's union would have to be re-supplied for every term of the sum, and there is nothing to
+supply it from. Phrased inside `Ao` it is a property of the OBSERVABLE, checked once:
+`reach_mono_crs` then carries it up into every pair's union, because reach only gets easier in a
+larger set. That is why the sum has one hypothesis instead of one per term.
+
+So this holds for any observable whose support is touch-connected — Wilson loops — and that is the
+case the `…F` family was written for. For a support spanning several components the separator must
+be `compsMeet` instead, and then `IsCorePairF` no longer normalises the pairs this admits; see the
+scope note on `bridging_sum_eq_core_sumF`.
+
+DERIVED: the `0` is the whole content of the theorem and is EXACT, not a bound — the involution
+pairs each term with its own flip and `pairTermF_add_pairFlip` sends each pair to zero, so the sum
+equals its own negation. Nothing is estimated and no numeral is chosen. -/
+theorem nonbridging_sum_eq_zeroF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    (hod : Disjoint Ao Bo) {a : Pq} (ha : a ∈ Ao)
+    (hconn : ∀ p ∈ Ao, Reach bd Ao a p) (β : ℝ) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ b ∈ Bo, ∀ a' ∈ Ao, ¬ Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b),
+      pairTermF (Nc := Nc) bd Ao Bo β q = 0 := by
+  classical
+  set s : Finset (Finset Pq × Finset Pq) :=
+    (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+      (fun q => ∀ b ∈ Bo, ∀ a' ∈ Ao, ¬ Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b) with hs
+  -- `Ao` and `Bo` sit inside every pair's union, and `Ao` is connected there by monotonicity.
+  have hAoV : ∀ q : Finset Pq × Finset Pq, Ao ⊆ q.1 ∪ q.2 ∪ (Ao ∪ Bo) := by
+    intro q x hx
+    exact Finset.mem_union_right _ (Finset.mem_union_left _ hx)
+  have hBoV : ∀ q : Finset Pq × Finset Pq, Bo ⊆ q.1 ∪ q.2 ∪ (Ao ∪ Bo) := by
+    intro q x hx
+    exact Finset.mem_union_right _ (Finset.mem_union_right _ hx)
+  have hconnV : ∀ q : Finset Pq × Finset Pq, ∀ p ∈ Ao,
+      Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p := by
+    intro q p hp
+    exact reach_mono_crs bd (hAoV q) (hconn p hp)
+  have hmem : ∀ q ∈ s, exchangeF bd a Ao Bo q ∈ s := by
+    intro q hq
+    rw [hs, Finset.mem_filter] at hq ⊢
+    refine ⟨Finset.mem_univ _, ?_⟩
+    rw [exchangeF_union]
+    exact hq.2
+  have hcancel : ∀ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β q
+      + pairTermF (Nc := Nc) bd Ao Bo β (exchangeF bd a Ao Bo q) = 0 := by
+    intro q hq
+    rw [hs, Finset.mem_filter] at hq
+    -- `Ao` lands in the anchor's component: connected, and inside the union.
+    have h0 : Ao ⊆ compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a := by
+      intro p hp
+      exact mem_compOf.mpr ⟨hAoV q hp, hconnV q p hp⟩
+    -- and `Bo` misses it, which is exactly the filter.
+    have hd : Disjoint Bo (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a) :=
+      (disjoint_compOf_iff_of_connected bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) Ao Bo ha (hBoV q)
+        (hconnV q)).mpr hq.2
+    have := pairTermF_add_pairFlip (Nc := Nc) bd Ao Bo hod β q.1 q.2
+      (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)
+      (compOf_closed bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a) h0 hd
+    simpa [exchangeF] using this
+  have hinj : ∀ x ∈ s, ∀ y ∈ s, exchangeF bd a Ao Bo x = exchangeF bd a Ao Bo y → x = y := by
+    intro x _ y _ hxy
+    rw [← exchangeF_exchangeF bd a Ao Bo x, ← exchangeF_exchangeF bd a Ao Bo y, hxy]
+  have himg : s.image (exchangeF bd a Ao Bo) = s := by
+    apply Finset.Subset.antisymm
+    · intro q hq
+      obtain ⟨r, hr, rfl⟩ := Finset.mem_image.mp hq
+      exact hmem r hr
+    · intro q hq
+      exact Finset.mem_image.mpr ⟨exchangeF bd a Ao Bo q, hmem q hq, exchangeF_exchangeF bd a Ao Bo q⟩
+  have key : ∑ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β q
+      = - ∑ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β q := by
+    calc ∑ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β q
+        = ∑ q ∈ s.image (exchangeF bd a Ao Bo), pairTermF (Nc := Nc) bd Ao Bo β q := by rw [himg]
+      _ = ∑ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β (exchangeF bd a Ao Bo q) :=
+          Finset.sum_image hinj
+      _ = ∑ q ∈ s, (- pairTermF (Nc := Nc) bd Ao Bo β q) :=
+          Finset.sum_congr rfl (fun q hq => by have := hcancel q hq; linarith)
+      _ = - ∑ q ∈ s, pairTermF (Nc := Nc) bd Ao Bo β q := by simp
+  linarith
+
+#print axioms nonbridging_sum_eq_zeroF
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE CONNECTED CORRELATOR OF TWO FINSET-SUPPORTED OBSERVABLES IS THE BRIDGING SUM.**
+
+`wilsonCorrConn_eq_bridging_sum` with the two anchor plaquettes replaced by two disjoint finsets:
+the connected correlation of `∏ Ao` against `∏ Bo` equals the sum of `pairTermF` over exactly those
+pairs of activated subsets in which SOME plaquette of `Ao` touch-reaches SOME plaquette of `Bo`
+inside the pair's union, divided by `Z²`. Every non-reaching pair contributes nothing
+(`nonbridging_sum_eq_zeroF`), which is where the volume goes.
+
+**THIS IS THE STEP THAT MAKES THE `…F` MACHINERY A STATEMENT ABOUT A CORRELATOR** rather than about
+sums over subsets. Before it, `zw_split`, `pairTermF`, `corePairsF` and `corePairsF_sum_le` bounded
+nothing observable.
+
+Its scope, stated with it: `hconn` asks `Ao` to be touch-connected in ITSELF, so this is the
+Wilson-loop-shaped case. `hod` asks the two supports to be disjoint, which is what
+`Finset.prod_union` needs to read `∏ Ao · ∏ Bo` as `∏ (Ao ∪ Bo)` — the two observables must not
+share a plaquette. `hint` is the same integrability side condition the singleton version carries,
+and `hN` excludes the empty gauge group.
+
+DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per factor of the pair —
+`hprod` turns two sums over `Finset Pq` into one sum over `Finset Pq × Finset Pq`, so each of the
+two Gibbs numerators carries its own partition function. It is forced by the product, not chosen.
+The `0` is `hN : Nc ≠ 0`, excluding the empty gauge group so the partition function is positive
+(`wilsonSystem_partition_pos`) and the division is meaningful. The `1` and `2` in `q.1` and `q.2`
+are projections, not numerals. -/
+theorem wilsonCorrConnF_eq_bridging_sumF (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    (Ao Bo : Finset Pq) (hod : Disjoint Ao Bo) {a : Pq} (ha : a ∈ Ao)
+    (hconn : ∀ p ∈ Ao, Reach bd Ao a p) (β : ℝ)
+    (hint : ∀ D E : Finset Pq, Integrable
+      (fun U => (∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U)
+        * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) :
+    MassGap.WilsonBridge.wilsonCorrConnF (Nc := Nc) bd Ao β Bo
+      = (∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+            (fun q => ∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b),
+          pairTermF (Nc := Nc) bd Ao Bo β q)
+        / ((wilsonSystem bd (wilsonDensity (N := Nc))).partition
+            (probHaar (MassGap.SUN.SU Nc)) β) ^ 2 := by
+  classical
+  have hZpos : 0 < (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+      (probHaar (MassGap.SUN.SU Nc)) β := wilsonSystem_partition_pos hN bd β
+  have hz : ∀ D : Finset Pq,
+      (∫ U, (∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U)
+          * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+          ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        = ∑ E : Finset Pq, zw (Nc := Nc) bd β D E := by
+    intro D
+    have h := corrNum_eq_subset_sum (Nc := Nc) bd β
+      (fun U => ∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U) (fun E _ => hint D E)
+    rw [Finset.powerset_univ] at h
+    exact h
+  have h2 : (∫ U, ((∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+        * ∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+        * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E : Finset Pq, zw (Nc := Nc) bd β (Ao ∪ Bo) E := by
+    refine Eq.trans ?_ (hz (Ao ∪ Bo))
+    refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+    -- `simp only`, not `rw`: the goal is a beta-redex on both sides, so `rw` cannot see the
+    -- product it is meant to match.
+    simp only [Finset.prod_union hod]
+  have hA : (∫ U, (∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+        * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E : Finset Pq, zw (Nc := Nc) bd β Ao E := hz Ao
+  have hB : (∫ U, (∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+        * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E : Finset Pq, zw (Nc := Nc) bd β Bo E := hz Bo
+  have hZ : (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+      = ∑ E : Finset Pq, zw (Nc := Nc) bd β ∅ E := by
+    refine Eq.trans ?_ (hz ∅)
+    refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+    simp only [Finset.prod_empty, one_mul]
+  have hprod : ∀ f g : Finset Pq → ℝ,
+      (∑ E : Finset Pq, f E) * (∑ F : Finset Pq, g F)
+        = ∑ q : Finset Pq × Finset Pq, f q.1 * g q.2 := by
+    intro f g
+    rw [Fintype.sum_prod_type, Finset.sum_mul_sum]
+  -- the non-bridging set, written as the negation the involution theorem is stated against
+  have hfilset : (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ¬ ∀ b ∈ Bo, ∀ a' ∈ Ao, ¬ Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b)
+      = (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b) := by
+    ext q
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, not_forall, not_not, exists_prop]
+  have hnum : (∑ E : Finset Pq, zw (Nc := Nc) bd β (Ao ∪ Bo) E)
+        * (∑ F : Finset Pq, zw (Nc := Nc) bd β ∅ F)
+      - (∑ E : Finset Pq, zw (Nc := Nc) bd β Ao E)
+        * (∑ F : Finset Pq, zw (Nc := Nc) bd β Bo F)
+      = ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+          (fun q => ∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b),
+        pairTermF (Nc := Nc) bd Ao Bo β q := by
+    rw [hprod, hprod, ← Finset.sum_sub_distrib]
+    have hpt : ∀ q : Finset Pq × Finset Pq,
+        zw (Nc := Nc) bd β (Ao ∪ Bo) q.1 * zw (Nc := Nc) bd β ∅ q.2
+          - zw (Nc := Nc) bd β Ao q.1 * zw (Nc := Nc) bd β Bo q.2
+        = pairTermF (Nc := Nc) bd Ao Bo β q := fun q => rfl
+    rw [Finset.sum_congr rfl (fun q _ => hpt q),
+      ← Finset.sum_filter_add_sum_filter_not (Finset.univ : Finset (Finset Pq × Finset Pq))
+        (fun q => ∀ b ∈ Bo, ∀ a' ∈ Ao, ¬ Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b)
+        (pairTermF (Nc := Nc) bd Ao Bo β),
+      nonbridging_sum_eq_zeroF bd Ao Bo hod ha hconn β, zero_add, hfilset]
+  have hconnEq : MassGap.WilsonBridge.wilsonCorrConnF (Nc := Nc) bd Ao β Bo
+      = (∫ U, ((∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+            * ∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+            * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+          / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+            ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+        - ((∫ U, (∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+              * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+            / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))))
+          * ((∫ U, (∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+              * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+            / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+              ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))) := rfl
+  have hpart : (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+        (probHaar (MassGap.SUN.SU Nc)) β
+      = ∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
+        ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) := rfl
+  have hne0 : (∑ E : Finset Pq, zw (Nc := Nc) bd β ∅ E) ≠ 0 := by
+    rw [← hZ, ← hpart]; exact hZpos.ne'
+  rw [hconnEq, hpart, h2, hA, hB, hZ, ← hnum]
+  field_simp
+
+#print axioms wilsonCorrConnF_eq_bridging_sumF
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE RESUMMATION, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
+
+`bridging_sum_eq_core_sum` with the two anchors replaced by their finsets. Every bridging pair is
+its core plus an outside; the outside is free, so the sum collapses to a sum over cores times the
+square of the outside partition sum.
+
+Bridging means the anchor reaches EVERY plaquette of the support — that is what makes the separator
+recoverable from the core (`coreSpanF_core_eq`).
+
+**⛔⛔ THIS FILTER IS NOT THE COMPLEMENT OF THE VANISHING SET, SO THIS DOES NOT YET COMPOSE INTO A
+NUMERATOR IDENTITY.** The involution that kills the other side (`nonbridging_sum_eq_zero`'s argument,
+via `pairTermF_add_pairFlip`) needs a touch-closed separator `A` with `Ao ⊆ A` and `Disjoint Bo A`.
+Such an `A` exists exactly when NO component of the pair's union meets both `Ao` and `Bo`: take `A`
+to be the union of the components meeting `Ao`, which is touch-closed and contains `Ao`, and misses
+`Bo` under that condition; conversely a component meeting both forces every touch-closed `A ⊇ Ao` to
+meet `Bo`. So the natural split is `{some component meets both}` plus a vanishing remainder — and
+that first set is STRICTLY LARGER than this filter, which asks ONE component to contain ALL of
+`Ao ∪ Bo`. Counterexample: `Ao = {x, y}`, `Bo = {z}`, components `{x, z}` and `{y}` — it does not
+vanish, and it is not here.
+
+**⭐ THE SEPARATOR IS BUILT: `compsMeet`.** The anchor's component is the wrong one. The union of
+the components that MEET `Ao` is the right one — touch-closed (`compsMeet_closed`), containing `Ao`
+(`subset_compsMeet`), smallest such (`compsMeet_minimal`), and missing `Bo` exactly when no component
+meets both (`disjoint_compsMeet_iff`). It plugs straight into `pairTermF_add_pairFlip`, whose
+`hclosed` is literally `compsMeet_closed`'s shape at `V = coreSpanF Ao Bo (E, F)`. **So the VANISHING
+half is done.**
+
+**⛔⛔ AND THE COUNTING HALF IS NOT, WHICH IS WHY THIS IS NOT A LOCAL REPAIR.** Widening the
+complement to "some component meets both" admits pairs whose support is split across components. For
+such a pair `coreSpanF Ao Bo c` still contains all of `Ao ∪ Bo`, including components the anchor
+never reaches, so `compOf bd (coreSpanF Ao Bo c) a ≠ coreSpanF Ao Bo c` and **`IsCorePairF` is
+unsatisfiable there** — the forward map has nowhere to send them. Replacing it by
+`compsMeet bd (coreSpanF Ao Bo c) (Ao ∪ Bo) = coreSpanF Ao Bo c` (note `Ao ∪ Bo`, since the isolated
+`Bo` pieces need their own components) then costs `not_mem_coreSpanF_of_mem_outsideOf`,
+`coreSpanF_card_ge_of_not_mem_ball` — whose `b ∉ ball bd a k` must become a separation between the
+two supports — and above all `card_corePairsF_span_le`, which counts through `connSets`,
+touch-CONNECTED sets rooted at ONE plaquette. A multi-component span is not a `connSets` member, so
+that becomes a composition count over how the size splits across components: provable, but a NEW
+counting theorem, not a restatement. `card_rooted_pairs_ge` in this file is the negative control
+saying connectedness is what keeps the volume out.
+
+**And `coreSpanF_eq_of_mem` cannot bridge it.** Its `hobs : Ao ∪ Bo ⊆ A` demands all of `Bo` inside
+the separator, while the involution demands `Disjoint Bo A`; the two meet only at `Bo = ∅`. Nor can
+it be weakened — `coreSpanF` contains `Ao ∪ Bo` by construction, so that hypothesis is forced by the
+definition rather than by the proof.
+
+**⭐ AND THE ANCHOR VERSION IS ALREADY RIGHT WHEN `Ao` AND `Bo` ARE EACH CONNECTED** in the pair's
+union, since then "some component meets both" forces "one component contains both" — which covers
+Wilson-loop-shaped observables, so this filter is not wasted work.
+
+DERIVED: no numeral of its own. -/
+theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b) (β : ℝ) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p),
+      pairTermF (Nc := Nc) bd Ao Bo β q
+    = ∑ c ∈ corePairsF bd a Ao Bo, pairTermF (Nc := Nc) bd Ao Bo β c
+        * ((∑ E ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ E)
+          * ∑ F ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ F) := by
+  refine Eq.trans (Finset.sum_fiberwise_of_maps_to (t := corePairsF bd a Ao Bo)
+      (g := fun q : Finset Pq × Finset Pq =>
+        (q.1 ∩ compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a,
+         q.2 ∩ compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)) ?_ _).symm ?_
+  · intro q hq
+    exact mem_corePairsF.mpr
+      (isCorePairF_of_bridging bd Ao Bo a q.1 q.2 (Finset.mem_filter.mp hq).2)
+  · refine Finset.sum_congr rfl ?_
+    intro c hc
+    have hcore : IsCorePairF bd a Ao Bo c := mem_corePairsF.mp hc
+    rw [mul_sq_sum_eq_sum_product_crs]
+    refine Finset.sum_nbij'
+      (i := fun q : Finset Pq × Finset Pq =>
+        (q.1 \ coreSpanF Ao Bo c, q.2 \ coreSpanF Ao Bo c))
+      (j := fun x : Finset Pq × Finset Pq => (c.1 ∪ x.1, c.2 ∪ x.2)) ?_ ?_ ?_ ?_ ?_
+    · intro q hq
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
+      have hspan : coreSpanF Ao Bo c = compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a := by
+        rw [← hq.2]; exact coreSpanF_core_eq bd Ao Bo a q.1 q.2 hq.1
+      rw [Finset.mem_product, Finset.mem_powerset, Finset.mem_powerset, hspan]
+      exact ⟨sdiff_compOf_subset_outsideOf_crs bd _ a (fun x hx => by simp [hx]),
+             sdiff_compOf_subset_outsideOf_crs bd _ a (fun x hx => by simp [hx])⟩
+    · intro x hx
+      rw [Finset.mem_product, Finset.mem_powerset, Finset.mem_powerset] at hx
+      have hcomp : compOf bd ((c.1 ∪ x.1) ∪ (c.2 ∪ x.2) ∪ (Ao ∪ Bo)) a = coreSpanF Ao Bo c :=
+        compOf_union_outsideF bd ha hcore hx.1 hx.2
+      have hi1 : (c.1 ∪ x.1) ∩ coreSpanF Ao Bo c = c.1 := by
+        ext z
+        simp only [Finset.mem_inter, Finset.mem_union]
+        constructor
+        · rintro ⟨hz | hz, hzA⟩
+          · exact hz
+          · exact absurd hzA
+              (not_mem_coreSpanF_of_mem_outsideOf bd hb hne hcore (hx.1 hz))
+        · intro hz
+          exact ⟨Or.inl hz, fst_subset_coreSpanF Ao Bo c hz⟩
+      have hi2 : (c.2 ∪ x.2) ∩ coreSpanF Ao Bo c = c.2 := by
+        ext z
+        simp only [Finset.mem_inter, Finset.mem_union]
+        constructor
+        · rintro ⟨hz | hz, hzA⟩
+          · exact hz
+          · exact absurd hzA
+              (not_mem_coreSpanF_of_mem_outsideOf bd hb hne hcore (hx.2 hz))
+        · intro hz
+          exact ⟨Or.inl hz, snd_subset_coreSpanF Ao Bo c hz⟩
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      refine ⟨?_, ?_⟩
+      · intro p hp
+        exact (mem_compOf.mp (by rw [hcomp]; exact obs_subset_coreSpanF Ao Bo c hp)).2
+      · show ((c.1 ∪ x.1) ∩ compOf bd ((c.1 ∪ x.1) ∪ (c.2 ∪ x.2) ∪ (Ao ∪ Bo)) a,
+              (c.2 ∪ x.2) ∩ compOf bd ((c.1 ∪ x.1) ∪ (c.2 ∪ x.2) ∪ (Ao ∪ Bo)) a) = c
+        rw [hcomp, hi1, hi2]
+    · intro q hq
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
+      have hspan : coreSpanF Ao Bo c = compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a := by
+        rw [← hq.2]; exact coreSpanF_core_eq bd Ao Bo a q.1 q.2 hq.1
+      have hc1 : c.1 = q.1 ∩ coreSpanF Ao Bo c := by rw [hspan, ← hq.2]
+      have hc2 : c.2 = q.2 ∩ coreSpanF Ao Bo c := by rw [hspan, ← hq.2]
+      have hrec : ∀ W : Finset Pq,
+          (W ∩ coreSpanF Ao Bo c) ∪ (W \ coreSpanF Ao Bo c) = W := by
+        intro W
+        ext z
+        by_cases hz : z ∈ coreSpanF Ao Bo c <;> simp [hz]
+      show (c.1 ∪ (q.1 \ coreSpanF Ao Bo c), c.2 ∪ (q.2 \ coreSpanF Ao Bo c)) = q
+      rw [hc1, hc2, hrec, hrec]
+    · intro x hx
+      rw [Finset.mem_product, Finset.mem_powerset, Finset.mem_powerset] at hx
+      have hrec1 : (c.1 ∪ x.1) \ coreSpanF Ao Bo c = x.1 := by
+        ext z
+        simp only [Finset.mem_sdiff, Finset.mem_union]
+        constructor
+        · rintro ⟨hz | hz, hzA⟩
+          · exact absurd (fst_subset_coreSpanF Ao Bo c hz) hzA
+          · exact hz
+        · intro hz
+          exact ⟨Or.inr hz,
+            not_mem_coreSpanF_of_mem_outsideOf bd hb hne hcore (hx.1 hz)⟩
+      have hrec2 : (c.2 ∪ x.2) \ coreSpanF Ao Bo c = x.2 := by
+        ext z
+        simp only [Finset.mem_sdiff, Finset.mem_union]
+        constructor
+        · rintro ⟨hz | hz, hzA⟩
+          · exact absurd (snd_subset_coreSpanF Ao Bo c hz) hzA
+          · exact hz
+        · intro hz
+          exact ⟨Or.inr hz,
+            not_mem_coreSpanF_of_mem_outsideOf bd hb hne hcore (hx.2 hz)⟩
+      show ((c.1 ∪ x.1) \ coreSpanF Ao Bo c, (c.2 ∪ x.2) \ coreSpanF Ao Bo c) = x
+      rw [hrec1, hrec2]
+    · intro q hq
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
+      have hspan : coreSpanF Ao Bo c = compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a := by
+        rw [← hq.2]; exact coreSpanF_core_eq bd Ao Bo a q.1 q.2 hq.1
+      have hfac := pairTermF_eq_core_mul_outside (Nc := Nc) bd Ao Bo β q.1 q.2
+        (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)
+        (compOf_closed bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)
+        (fun p hp => mem_compOf.mpr ⟨Finset.mem_union_right _ hp, hq.1 p hp⟩)
+      rw [hq.2] at hfac
+      show pairTermF (Nc := Nc) bd Ao Bo β q
+        = pairTermF (Nc := Nc) bd Ao Bo β c
+          * (zw (Nc := Nc) bd β ∅ (q.1 \ coreSpanF Ao Bo c)
+            * zw (Nc := Nc) bd β ∅ (q.2 \ coreSpanF Ao Bo c))
+      rw [hspan]
+      exact hfac
+
+#print axioms bridging_sum_eq_core_sumF
+
+open scoped Classical in
+/-- **The span of a core is a connected set at the anchor** — the finset version.
+
+DERIVED: no numeral. -/
+theorem coreSpanF_mem_connSets (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo : Finset Pq}
+    (ha : a ∈ Ao) {c : Finset Pq × Finset Pq} (hc : IsCorePairF bd a Ao Bo c) :
+    coreSpanF Ao Bo c ∈ connSets bd a (coreSpanF Ao Bo c).card := by
+  have h := compOf_mem_connSets bd (coreSpanF Ao Bo c) a (mem_coreSpanF_left ha Bo c)
+  rwa [hc] at h
+
+#print axioms coreSpanF_mem_connSets
+
+open scoped Classical in
+/-- **⭐⭐ THE COUNT IS UNCHANGED BY THE GENERALISATION.**
+
+`card_corePairs_span_le` for finset supports, with the SAME bound `(4(K+1)²)^m`. The count runs
+over connected sets of size `m` containing the ANCHOR and pairs of their subsets; the second
+observable never entered it, so replacing `{p₀}`/`{pd}` by `Ao`/`Bo` costs nothing here.
+
+**⛔ THE WEIGHT IS WHERE THE GENERALISATION IS PAID FOR**, not the count: `pairTermF_abs_le` pays
+`2^(|Ao|+|Bo|+1)` against the singleton's `8`.
+
+DERIVED: the `4` is the ordered split of a span into a pair of subsets, as in
+`card_corePairs_span_le`; the `1` is `stepSet`'s stay-put step; the `2` is the two steps a detour
+costs. -/
+theorem card_corePairsF_span_le (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo : Finset Pq}
+    (ha : a ∈ Ao) (m : ℕ) :
+    ((corePairsF bd a Ao Bo).filter (fun c => (coreSpanF Ao Bo c).card = m)).card
+      ≤ (4 * (touchDeg bd + 1) ^ 2) ^ m := by
+  classical
+  have hsub : ((corePairsF bd a Ao Bo).filter (fun c => (coreSpanF Ao Bo c).card = m))
+      ⊆ (connSets bd a m).biUnion (fun S => S.powerset ×ˢ S.powerset) := by
+    intro c hc
+    rw [Finset.mem_filter] at hc
+    obtain ⟨hcp, hcard⟩ := hc
+    have hcore : IsCorePairF bd a Ao Bo c := mem_corePairsF.mp hcp
+    have hmem : coreSpanF Ao Bo c ∈ connSets bd a m := by
+      have h := coreSpanF_mem_connSets bd ha hcore
+      rwa [hcard] at h
+    refine Finset.mem_biUnion.mpr ⟨coreSpanF Ao Bo c, hmem, ?_⟩
+    exact Finset.mem_product.mpr
+      ⟨Finset.mem_powerset.mpr (fst_subset_coreSpanF Ao Bo c),
+       Finset.mem_powerset.mpr (snd_subset_coreSpanF Ao Bo c)⟩
+  refine le_trans (Finset.card_le_card hsub) (le_trans Finset.card_biUnion_le ?_)
+  calc ∑ S ∈ connSets bd a m, (S.powerset ×ˢ S.powerset).card
+      ≤ ∑ _S ∈ connSets bd a m, 4 ^ m := by
+        refine Finset.sum_le_sum (fun S hS => ?_)
+        have hSm : S.card = m := (mem_connSets.mp hS).2.2
+        have h : (S.powerset ×ˢ S.powerset).card = 4 ^ m := by
+          rw [Finset.card_product, Finset.card_powerset, hSm, ← mul_pow]
+          norm_num
+        exact le_of_eq h
+    _ = (connSets bd a m).card * 4 ^ m := by rw [Finset.sum_const, smul_eq_mul]
+    _ ≤ ((touchDeg bd + 1) ^ 2) ^ m * 4 ^ m :=
+        Nat.mul_le_mul_right _ (card_connSets_le bd a m)
+    _ = (4 * (touchDeg bd + 1) ^ 2) ^ m := by rw [mul_pow]; ring
+
+#print axioms card_corePairsF_span_le
+
+/-- **`assembly_arith` with the constant and the offset free.** The `8` and the `+ 2` of the
+singleton case are `C` and `u` here.
+
+DERIVED: no numeral. -/
+theorem assembly_arith_gen (A q W C : ℝ) (n u : ℕ) :
+    A ^ (n + u) * (C * q ^ n * W ^ (n + u)) = C * A ^ u * W ^ u * (A * q * W) ^ n := by
+  rw [pow_add, pow_add, mul_pow, mul_pow]
+  ring
+
+#print axioms assembly_arith_gen
+
 
 /-! #### The count of cores, indexed by span size -/
 
@@ -4051,6 +6126,254 @@ theorem corePairs_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (
         exact assembly_arith _ _ _ _
 
 #print axioms corePairs_fiber_sum_le
+
+/-- **THE PREFACTOR, FOR FINSET SUPPORTS.**
+
+`corePrefactor` with its two hard-coded numbers made parameters: the per-pair constant `8` becomes
+`2^(|Ao| + |Bo| + 1)` (`pairTermF_abs_le`), and the two anchor factors become `u = |Ao ∪ Bo|` of
+them, because a span of `m` plaquettes pays the count `L^m` against a weight `q^(m − u)`.
+
+**At `u = 2` with `|Ao| = |Bo| = 1` this is `8 · (4(K+1)²)² · e^{4βK}²`, which is `corePrefactor`
+verbatim** — that agreement is the check that the arithmetic is right.
+
+DERIVED: the `2` in `2 ^ …` is `pairTermF_abs_le`'s per-observable factor; the `1` added to the
+cards is that lemma's second product; the `4` and the `1` in `4(K+1)²` and the `2` in `(K+1)²` are
+`coreRate`'s, as is the `4` in `4βK`. -/
+noncomputable def corePrefactorF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
+  2 ^ (na + nb + 1) * (4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u
+
+open scoped Classical in
+/-- **⭐⭐ ONE FIBRE OF THE CORE SUM, FOR FINSET SUPPORTS.**
+
+The cores whose span has `n + u` plaquettes contribute at most `corePrefactorF · rⁿ`. Count times
+weight, and nothing else — the same argument as `corePairs_fiber_sum_le`, with `u` in place of the
+two anchors.
+
+DERIVED: the `2` in `2 * β` is `pairTermF_abs_le`'s exponent; the `1` subtracted from `exp` is
+`zw_abs_le`'s; the `4` in `4 * β` is the hard core's; the `0` is the coupling's sign. -/
+theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
+    {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) (n : ℕ) :
+    ∑ c ∈ (corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+      |pairTermF (Nc := Nc) bd Ao Bo β c|
+        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ n := by
+  classical
+  have hq0 : (0 : ℝ) ≤ Real.exp (2 * β) - 1 := by
+    have := Real.one_le_exp (x := 2 * β) (by linarith)
+    linarith
+  have hWpos : (0 : ℝ) < Real.exp (4 * β * (touchDeg bd : ℝ)) := Real.exp_pos _
+  have hcard : ∀ c ∈ (corePairsF bd a Ao Bo).filter
+      (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+      (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card :=
+    fun c hc => (Finset.mem_filter.mp hc).2
+  have hpt : ∀ c ∈ (corePairsF bd a Ao Bo).filter
+      (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+      |pairTermF (Nc := Nc) bd Ao Bo β c|
+        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+          * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card) := by
+    intro c hc
+    have hm := hcard c hc
+    have h3 : (coreSpanF Ao Bo c).card ≤ (c.1 ∪ c.2).card + (Ao ∪ Bo).card := by
+      unfold coreSpanF
+      exact Finset.card_union_le _ _
+    have h1 := Finset.card_union_le c.1 c.2
+    have hle : n ≤ c.1.card + c.2.card := by omega
+    have hpair := pairTermF_abs_le (Nc := Nc) hN bd Ao Bo β c
+    rw [abs_of_nonneg hβ] at hpair
+    have hw : (Real.exp (2 * β) - 1) ^ (c.1.card + c.2.card)
+        ≤ (Real.exp (2 * β) - 1) ^ n := pow_le_pow_of_le_one_asm hq0 hq1 hle
+    have hpair' : |pairTermF (Nc := Nc) bd Ao Bo β c|
+        ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n := by
+      refine le_trans hpair ?_
+      exact mul_le_mul_of_nonneg_left hw (by positivity)
+    rw [exp_touchDeg_pow bd β ((coreSpanF Ao Bo c).card), hm]
+    exact mul_le_mul_of_nonneg_right hpair' (pow_nonneg hWpos.le _)
+  have hcount : (((corePairsF bd a Ao Bo).filter
+      (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card)).card : ℝ)
+      ≤ ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) ^ (n + (Ao ∪ Bo).card) := by
+    have hnat := card_corePairsF_span_le (Bo := Bo) bd ha (n + (Ao ∪ Bo).card)
+    calc (((corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card)).card : ℝ)
+        ≤ (((4 * (touchDeg bd + 1) ^ 2) ^ (n + (Ao ∪ Bo).card) : ℕ) : ℝ) :=
+          Nat.cast_le.mpr hnat
+      _ = ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) ^ (n + (Ao ∪ Bo).card) := by push_cast; ring
+  have hnn : (0 : ℝ) ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+      * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card) := by positivity
+  have hL : ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) = 4 * ((touchDeg bd : ℝ) + 1) ^ 2 := by
+    push_cast; ring
+  calc ∑ c ∈ (corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+        |pairTermF (Nc := Nc) bd Ao Bo β c|
+          * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ ∑ _c ∈ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+          (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+            * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) :=
+        Finset.sum_le_sum hpt
+    _ = (((corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card)).card : ℝ)
+          * (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+            * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) := by
+        rw [Finset.sum_const, nsmul_eq_mul]
+    _ ≤ ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) ^ (n + (Ao ∪ Bo).card)
+          * (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+            * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) :=
+        mul_le_mul_of_nonneg_right hcount hnn
+    _ = corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ n := by
+        rw [hL]
+        unfold corePrefactorF coreRate
+        exact assembly_arith_gen _ _ _ _ _ _
+
+#print axioms corePairsF_fiber_sum_le
+
+/-- **The prefactor is at least one**, which is what the sum's nonnegativity step reads off.
+
+DERIVED: the `1` is the bound; the `0` is the coupling's sign. -/
+theorem one_le_corePrefactorF (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (na nb u : ℕ) :
+    1 ≤ corePrefactorF K β na nb u := by
+  have hKnn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+  have hexp : (0 : ℝ) ≤ 4 * β * (K : ℝ) :=
+    mul_nonneg (mul_nonneg (by norm_num) hβ) hKnn
+  have hW : (1 : ℝ) ≤ Real.exp (4 * β * (K : ℝ)) := Real.one_le_exp hexp
+  have hA : (1 : ℝ) ≤ 4 * ((K : ℝ) + 1) ^ 2 := by nlinarith
+  have h1 : (1 : ℝ) ≤ (4 * ((K : ℝ) + 1) ^ 2) ^ u := one_le_pow₀ hA
+  have h2 : (1 : ℝ) ≤ Real.exp (4 * β * (K : ℝ)) ^ u := one_le_pow₀ hW
+  have h3 : (1 : ℝ) ≤ 2 ^ (na + nb + 1) := one_le_pow₀ (by norm_num)
+  unfold corePrefactorF
+  have hinner : (1 : ℝ) * 1
+      ≤ (4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u :=
+    mul_le_mul h1 h2 (by norm_num) (by positivity)
+  have houter : (1 : ℝ) * ((1 : ℝ) * 1)
+      ≤ 2 ^ (na + nb + 1)
+        * ((4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u) :=
+    mul_le_mul h3 hinner (by norm_num) (by positivity)
+  nlinarith [houter]
+
+#print axioms one_le_corePrefactorF
+
+/-- **THE ASSEMBLED CONSTANT, FOR FINSET SUPPORTS.** `coreConst` with the finset prefactor.
+
+DERIVED: the `1` is the geometric series' own `1 − r`. -/
+noncomputable def coreConstF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
+  corePrefactorF K β na nb u / (1 - coreRate K β)
+
+open scoped Classical in
+/-- **⭐⭐⭐ THE CORE SUM, RESUMMED, FOR FINSET SUPPORTS.**
+
+`corePairs_sum_le` with the two anchors replaced by their finsets.
+
+**⛔ THE EXPONENT IS `k + 2 − u`, NOT `k`.** The span's guaranteed size is `k + 2`
+(`coreSpanF_card_ge_of_not_mem_ball`) and the support occupies `u = |Ao ∪ Bo|` of it, so the power
+of the rate is reduced by the support's size. `hu` keeps that a real subtraction; it is the regime
+where the observables are small relative to their separation, and it is not removable — a
+connecting path may run THROUGH the support, so `k + u ≤ card` is false in general.
+
+At `u = 2` this is `corePairs_sum_le`'s exponent `k`.
+
+DERIVED: the `2` added to `k` is the span's two guaranteed plaquettes, as in
+`coreSpanF_card_ge_of_not_mem_ball`; the `1`s are the geometric series' `1 − r` and the rate's
+own bound; the `0`s are the coupling's sign and the rank `hN` excludes; the `4` is the hard
+core's exponent, as in `corePairs_sum_le`. -/
+theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
+    {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (touchDeg bd) β < 1) (k : ℕ)
+    (hu : (Ao ∪ Bo).card ≤ k + 2)
+    (hlow : ∀ c ∈ corePairsF bd a Ao Bo, k + 2 ≤ (coreSpanF Ao Bo c).card) :
+    ∑ c ∈ corePairsF bd a Ao Bo, |pairTermF (Nc := Nc) bd Ao Bo β c|
+        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+  classical
+  have hq1 := exp_sub_one_le_one_of_coreRate (touchDeg bd) hβ hr
+  have hr0 : 0 ≤ coreRate (touchDeg bd) β := coreRate_nonneg _ hβ
+  have hmaps : ∀ c ∈ corePairsF bd a Ao Bo,
+      (coreSpanF Ao Bo c).card - (k + 2) ∈ Finset.range (Fintype.card Pq + 1) := by
+    intro c _
+    rw [Finset.mem_range]
+    have h : (coreSpanF Ao Bo c).card ≤ (Finset.univ : Finset Pq).card :=
+      Finset.card_le_card (Finset.subset_univ _)
+    rw [Finset.card_univ] at h
+    omega
+  have hfib := (Finset.sum_fiberwise_of_maps_to hmaps
+    (fun c => |pairTermF (Nc := Nc) bd Ao Bo β c|
+      * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)))).symm
+  rw [hfib]
+  have hstep : ∀ j ∈ Finset.range (Fintype.card Pq + 1),
+      ∑ c ∈ (corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+        |pairTermF (Nc := Nc) bd Ao Bo β c|
+          * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+          * coreRate (touchDeg bd) β ^ j := by
+    intro j _
+    have hsub : ((corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j))
+        ⊆ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card
+            = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card) := by
+      intro c hc
+      rw [Finset.mem_filter] at hc ⊢
+      refine ⟨hc.1, ?_⟩
+      have h1 := hlow c hc.1
+      have h2 := hc.2
+      -- `hu` is spent HERE: without `(Ao ∪ Bo).card ≤ k + 2` the truncated subtraction
+      -- `k + 2 - (Ao ∪ Bo).card` collapses to `0` and this equation is false. `omega` reads it
+      -- from the context, so no name appears.
+      omega
+    have hmono : ∑ c ∈ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+          |pairTermF (Nc := Nc) bd Ao Bo β c|
+            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
+            (fun c => (coreSpanF Ao Bo c).card
+              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
+            |pairTermF (Nc := Nc) bd Ao Bo β c|
+              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) :=
+      Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun c _ _ => mul_nonneg (abs_nonneg _) (Real.exp_pos _).le)
+    have h := corePairsF_fiber_sum_le (Nc := Nc) (Bo := Bo) hN bd ha hβ hq1
+      (k + 2 - (Ao ∪ Bo).card + j)
+    rw [pow_add] at h
+    calc ∑ c ∈ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+          |pairTermF (Nc := Nc) bd Ao Bo β c|
+            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
+            (fun c => (coreSpanF Ao Bo c).card
+              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
+            |pairTermF (Nc := Nc) bd Ao Bo β c|
+              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) := hmono
+      _ ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+            * (coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card)
+              * coreRate (touchDeg bd) β ^ j) := h
+      _ = (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+            * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+            * coreRate (touchDeg bd) β ^ j := by ring
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [← Finset.mul_sum]
+  have hpre : 0 ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+      * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) :=
+    mul_nonneg (le_trans zero_le_one (one_le_corePrefactorF _ hβ _ _ _)) (pow_nonneg hr0 _)
+  have hgeom := geom_sum_le_inv_one_sub_asm hr0 hr (Fintype.card Pq + 1)
+  calc (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+        * ∑ j ∈ Finset.range (Fintype.card Pq + 1), coreRate (touchDeg bd) β ^ j
+      ≤ (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+          * (1 - coreRate (touchDeg bd) β)⁻¹ := mul_le_mul_of_nonneg_left hgeom hpre
+    _ = coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+        unfold coreConstF
+        rw [div_eq_mul_inv]
+        ring
+
+#print axioms corePairsF_sum_le
 
 open scoped Classical in
 /-- **THE CORE SUM, RESUMMED — AND THE VOLUME IS GONE.** Grouped by span size, bounded fibre by
@@ -4753,10 +7076,14 @@ the weaker bound.
 
 WHAT IT DOES NOT GIVE, AND THIS IS NOT A QUIBBLE.
 
-* `m` IS A HYPOTHESIS, AND PER-`N`. `Moment.Read.p` is `ρ/∑ρ`, so the constant carries `1/m` for a
-  lower bound `m ≤ ∑ρ`. Reflection positivity (`Complete.wilson_reflection_positive_at`) gives
-  `0 < ∑ρ` at each `N` SEPARATELY; it does not give one `m` good for every `N`. Nothing here supplies
-  that, and `confinement_of_geometric_decay` needs a single `C` across all `N`.
+* `m` IS A HYPOTHESIS HERE, AND PER-`N`. `Moment.Read.p` is `ρ/∑ρ`, so the constant carries `1/m`
+  for a lower bound `m ≤ ∑ρ`. Reflection positivity (`Complete.wilson_reflection_positive_at`) gives
+  `0 < ∑ρ` at each `N` SEPARATELY; it does not give one `m` good for every `N`, and this file has no
+  access to one — `MassGap.StrongCoupling` does not import `MassGap.ContactFloor`.
+  **⭐ THE TREE SUPPLIES IT.** `ContactFloor.read_p_le_aperture_uniform` discharges this hypothesis
+  with the contact floor, which is ONE number below `wilsonCorrAt N β 0` at every aperture
+  (`ContactFloor.contactFloor_holds`), and `∑ρ ≥ ρ 0` because `ρ` is nonnegative. Use that theorem
+  rather than this one when the constant has to be aperture-uniform.
 * `C` AND `r` DEPEND ON `β`, and `confinement_of_geometric_decay` quantifies over EVERY `β` with `C`
   and `r` fixed outside. `coreRate (16·4) β < 1` holds only on a neighbourhood of `β = 0`
   (`core_rate_lt_one_of_small_hypercubic`), and `coreRate → ∞` as `β` grows, so no choice of `C, r`

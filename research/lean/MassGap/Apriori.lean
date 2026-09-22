@@ -78,7 +78,7 @@ theorem continuum_well_defined {δ m s : ℝ} (hδ : 0 < δ) (hs : 0 < s) (hm : 
   gap_refinement_invariant hδ hs hm
 
 /-- **The result from THE a priori (conditional main theorem).** Given the two a priori inputs
-`A1` (confinement) and `A2` (isotropy), plus the finite-aperture read, the mass gap, non-triviality,
+`A1` (confinement) and `A2` (isotropy), plus the finite-aperture read, the correlator's decay to zero (`C(τ) → 0`; for the RATE, which is what a mass gap asserts, see `MassGap.mass_gap_rate_of_model`), non-triviality,
 and Euclidean `SO(4)` invariance all follow. Reflection positivity (Osterwalder-Seiler), the continuum
 identity (`continuum_well_defined`), and short distance (asymptotic freedom) are established
 separately. `A1` and `A2` are the two open a priori propositions; everything here is discharged from

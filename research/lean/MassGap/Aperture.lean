@@ -88,7 +88,9 @@ theorem uniform_margin_of_intensive_radius
   · rw [neg_neg, Real.exp_log hr0]; exact hbound F
 
 /-- **The gap survives `F → ∞`.** With an intensive margin (one `κ > 0` for all `F`), every
-dimension's autocorrelation decays with the SAME rate `κ`: the gap does not degrade as modes are
+dimension's autocorrelation decays — but NOT at a stated common rate: the `κ` this conclusion binds occurs
+nowhere after the `∧` (`VolumeRate.exists_pos_and_iff`), and the rate form is
+`VolumeRate.gap_rate_uniform_in_volume`. The gap does not degrade as modes are
 added. The input is the intensive radius `r < 1`, a size-independent transfer gap. -/
 theorem gap_uniform_in_F {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (μ₁ : ℕ → ℝ)

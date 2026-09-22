@@ -96,6 +96,43 @@ theorem gapAt_of_one_le_sq {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 #print axioms gapAt_of_one_le_sq
 
+/-- **⭐⭐ THE DEGENERATE OBSERVABLES ARE ALREADY DISCHARGED**, so `GapAt` need only be checked where
+the form is positive.
+
+At an `x` with `form x x = 0`, `T_contract` puts `form (T x) (T x)` at or below `0` and `form_nonneg`
+at or above it, so both sides of the gap inequality are `0` and it holds at EVERY `r` — including
+`r < 1`, where the statement is otherwise the whole content.
+
+**THE CONVERSE IS ONE LINE**, by dropping the positivity argument, so this is an iff whose whole
+content is the degenerate branch. What it buys a caller is the right to assume `0 < form x x`; that
+is real and it is small.
+
+**⛔ AND IT DOES NOT MAKE THE GAP EASIER.** `GapAt`'s content at a non-degenerate `x` is untouched.
+`GNSCompare.gapAt_of_opT_contracts` and `gapAt_of_tq_contracts` handle the same null space more
+strongly, by passing to the quotient where it is `0` outright.
+
+The `x` the form annihilates are the ones the GNS quotient cannot see — the same null space that
+separates `T ≠ 1` from `ClayAssembly.TransferMovesSomething`.
+
+DERIVED: the `0` is the degenerate value of the form and the vacuum-orthogonality it is checked
+against; the `2` is `GapAt`'s own degree, as there. -/
+theorem gapAt_of_nondegenerate {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : Transfer.TransferData A) {r : ℝ}
+    (h : ∀ x : A, D.form x D.vac = 0 → 0 < D.form x x →
+      D.form (D.T x) (D.T x) ≤ r ^ 2 * D.form x x) :
+    GapAt D r := by
+  intro x hvac
+  rcases lt_or_eq_of_le (D.form_nonneg x) with hpos | hzero
+  · exact h x hvac hpos
+  · have hxx : D.form x x = 0 := hzero.symm
+    have hle : D.form (D.T x) (D.T x) ≤ 0 := by
+      rw [← hxx]
+      exact D.T_contract x
+    have hTx : D.form (D.T x) (D.T x) = 0 := le_antisymm hle (D.form_nonneg _)
+    rw [hTx, hxx, mul_zero]
+
+#print axioms gapAt_of_nondegenerate
+
 /-! ## 2. The complement is invariant, and the contraction iterates -/
 
 /-- **THE VACUUM'S ORTHOGONAL COMPLEMENT IS `T`-INVARIANT.** Two fields and nothing else:
@@ -289,5 +326,97 @@ theorem gap_moves_something (D : Transfer.TransferData A) {r : ℝ} (hr0 : 0 ≤
   exact hnz (by nlinarith)
 
 #print axioms gap_moves_something
+
+/-! ## ⭐ A witness: `GapAt` is satisfiable below rate one
+
+Every occurrence of `GapAt` in this tree is a HYPOTHESIS, and above rate one it is free
+(`bound_is_free_of_one_le`). Nothing exhibited one below rate one, so every theorem downstream of it
+— `GNSCompare`, `GapToOperator`, `B2Locality` — ran on a predicate with no instance. This section
+supplies one.
+
+It is finite-dimensional and has no gauge content. It witnesses that the definitions are
+satisfiable, nothing more, in the same spirit as `FlagshipScope.flagship_for_bogus`. -/
+
+section Witness
+
+/-- **One time step on a two-dimensional model: fix the vacuum, scale its complement by `lam`.**
+
+DERIVED: the `2` in `Fin 2` is the smallest dimension that has both a vacuum and a complement, which
+is all a witness needs; `0` and `1` are those two coordinates, `0` carrying the vacuum. `lam` is the
+caller's rate and no magnitude is chosen here. -/
+def diagStep (lam : ℝ) : (Fin 2 → ℝ) →ₗ[ℝ] (Fin 2 → ℝ) where
+  toFun x := fun i => if i = 0 then x 0 else lam * x 1
+  map_add' x y := by
+    funext i
+    by_cases h : i = 0 <;> simp [h] <;> ring
+  map_smul' c x := by
+    funext i
+    by_cases h : i = 0 <;> simp [h] <;> ring
+
+/-- **⭐ A `TransferData` WHOSE STEP CONTRACTS THE VACUUM'S COMPLEMENT BY `lam`.**
+
+The standard form on `Fin 2 → ℝ`, the vacuum at coordinate `0`, and `diagStep lam`. Reflection
+positivity is the sum of two squares, self-adjointness is the diagonal, and contractivity is
+`lam² ≤ 1`.
+
+DERIVED: the `2` in `Fin 2` is the model's dimension, as in `diagStep`, and the `2` in `lam ^ 2` is
+the form's degree — `T_contract` compares `form (T x) (T x)` with `form x x`, so the rate enters
+squared. The `1` bounding it is contractivity, `TransferData`'s own field. `0` and `1` index the two
+coordinates, and the `1` in `vac_norm` is the normalisation `TransferData` requires. -/
+noncomputable def diagTransfer (lam : ℝ) (hlam : lam ^ 2 ≤ 1) :
+    MassGap.Transfer.TransferData (Fin 2 → ℝ) where
+  form x y := x 0 * y 0 + x 1 * y 1
+  form_symm x y := by ring
+  form_add_left x y z := by simp [Pi.add_apply]; ring
+  form_smul_left r x y := by simp [Pi.smul_apply]; ring
+  form_nonneg x := by nlinarith [sq_nonneg (x 0), sq_nonneg (x 1)]
+  T := diagStep lam
+  vac := fun i => if i = 0 then 1 else 0
+  T_symm x y := by simp [diagStep]; ring
+  T_contract x := by
+    simp only [diagStep, LinearMap.coe_mk, AddHom.coe_mk]
+    norm_num
+    nlinarith [sq_nonneg (x 1), sq_nonneg (x 0)]
+  T_vac := by
+    funext i
+    by_cases h : i = 0 <;> simp [diagStep, h]
+  vac_norm := by norm_num
+
+/-- **⭐⭐ AND IT SATISFIES `GapAt` AT `lam`, WITH EQUALITY.**
+
+Orthogonality to the vacuum is `x 0 = 0`, and then both sides read `lam² * (x 1)²`. So the rate is
+attained rather than merely bounded, and `GapAt` is satisfiable at every `lam` with `lam² ≤ 1` — in
+particular below one, where the predicate has content.
+
+DERIVED: the `2` in `Fin 2` is the model's dimension and the `2` in `lam ^ 2` is the form's degree,
+both as in `diagTransfer`; the `1` is that hypothesis's contractivity bound. The `0` is the vacuum
+coordinate, where orthogonality puts `x`. -/
+theorem gapAt_diagTransfer (lam : ℝ) (hlam : lam ^ 2 ≤ 1) :
+    GapAt (diagTransfer lam hlam) lam := by
+  intro x hx
+  simp only [diagTransfer, diagStep, LinearMap.coe_mk, AddHom.coe_mk]
+  simp only [diagTransfer] at hx
+  norm_num at hx ⊢
+  nlinarith [hx]
+
+#print axioms gapAt_diagTransfer
+
+/-- **⭐⭐⭐ SO A GAP BELOW RATE ONE EXISTS.** The predicate every theorem downstream of `GapAt`
+assumes is satisfiable with room to spare, and not only in the free regime `1 ≤ r²`.
+
+**⛔ IT IS A WITNESS, NOT A PHYSICAL RESULT.** The model is two-dimensional and carries no gauge
+field. What it settles is that `GapAt`, `GNSCompare`'s equivalences and `GapToOperator`'s bounds are
+not vacuously about nothing; what produces a gap for the WILSON transfer is untouched.
+
+DERIVED: `1` is the free-regime boundary this rate sits strictly below; `1/2` is a witness value,
+chosen only to be between `0` and `1`, and any other would do. -/
+theorem exists_gapAt_lt_one :
+    ∃ (D : MassGap.Transfer.TransferData (Fin 2 → ℝ)) (r : ℝ), 0 ≤ r ∧ r < 1 ∧ GapAt D r :=
+  ⟨diagTransfer (1 / 2) (by norm_num), 1 / 2, by norm_num, by norm_num,
+    gapAt_diagTransfer (1 / 2) (by norm_num)⟩
+
+#print axioms exists_gapAt_lt_one
+
+end Witness
 
 end MassGap.TransferGap

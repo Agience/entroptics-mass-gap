@@ -83,6 +83,7 @@ FIELD_BUILDERS = {
     # independence that makes the control a control.
     "cell_gap_budget.py": "diagonalises the defined cell Hamiltonian as the control for an exact-rational certificate",
     "cell_chain_coupling.py": "diagonalises the defined chain Hamiltonian as the control for the extensivity measurement",
+    "cell_relative_constant.py": "diagonalises the same defined chain Hamiltonian, imported from cell_chain_coupling, as the control for the relative-constant measurement",
 }
 
 

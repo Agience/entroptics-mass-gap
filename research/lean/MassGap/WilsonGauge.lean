@@ -395,7 +395,7 @@ theorem ym_mass_gap_rate_gauge (N : ℕ)
 
 #print axioms ym_mass_gap_rate_gauge
 
-/-- **And the rate is positive exactly when the measurement clears the floor.**
+/-- **And the measurement clearing the floor makes the rate positive.** One way only: `Δ` is an arbitrary function here, so `0 < Δ β` may hold with `κ₀YM ≤ μClampAt N β`.
 
 The gap is `Δ > 0`, and this says what has to be true of the ENSEMBLE for that: the clamped tension
 below `κ₀`. That is the measured statement the certificates report, so the chain's positivity

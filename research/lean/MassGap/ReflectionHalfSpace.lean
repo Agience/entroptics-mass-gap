@@ -5,6 +5,7 @@ import MassGap.WilsonTransferReduction
 import MassGap.CrossingIntegration
 import MassGap.ActionSplit
 import MassGap.GibbsSpec
+import MassGap.HaarVariance
 
 /-!
 # MassGap.ReflectionHalfSpace — which reflection pairs with which half-space
@@ -656,6 +657,343 @@ DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension. -
 def iplqAll (Λ : Finset MassGap.InfiniteLattice.ILink) : Finset MassGap.GibbsSpec.IPlaq :=
   (MassGap.GibbsSpec.plaqsIn Λ).filter (fun q => q.1.1 ≠ q.1.2)
 
+/-- Membership in `iplqAll`, unfolded. -/
+theorem mem_iplqAll {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq} :
+    q ∈ iplqAll Λ ↔ q ∈ MassGap.GibbsSpec.plaqsIn Λ ∧ q.1.1 ≠ q.1.2 := by
+  simp only [iplqAll, Finset.mem_filter]
+
+/-- **⭐⭐ THE BOX AS A FINITE WILSON SYSTEM: its boundary word.**
+
+`StrongCoupling`'s cluster expansion is CARRIER-FREE — it is stated over `{Lk Pq : Type}` with
+`Fintype` and `DecidableEq` and an abstract `bd : Pq → List (Lk × Bool)`, and the periodic lattice is
+one instantiation of it rather than its setting. This is the FIRST PIECE of making a `ℤ⁴` box
+another.
+
+The restriction is well defined for exactly one reason: `GibbsSpec.mem_plaqsIn` says every link of a
+plaquette in `plaqsIn Λ` lies in `Λ`, and `iplqAll Λ` is a subset of `plaqsIn Λ`. So the four links
+of `GibbsSpec.ibd` can be read as elements of `↥Λ` with no default and no truncation. (`ibd` is a
+distinct constant in `GibbsSpec` and in `InfiniteLattice`; this file carries `gibbs_ihol_eq` because
+of it, so the namespace is written out.)
+
+**⛔ THIS IS THE WORD, NOT THE BRIDGE.**
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` is the form that CONSUMES a
+`touchDeg` bound — the base form writes `touchDeg bd` straight into its `hr` and its constants — and
+it takes `hN`, `0 ≤ β`, `hK : touchDeg bd ≤ K`, `hr : coreRate K β < 1` and `hk`. Of those, `hK` and
+`hk` are the two GEOMETRIC ones, and both are now available.
+
+**`hr` IS FREE IN `K`**, and that is what makes the evaluation below legitimate: in the `_of_le`
+form `touchDeg bd` occurs only in `hK`, never in `hr`. (The BASE form is the one that writes
+`coreRate (touchDeg bd) β < 1`.) **⛔ IT IS STILL NOT DISCHARGED**:
+`StrongCoupling.core_rate_lt_one_of_small` supplies only an unevaluated `∃ b > 0`. Evaluated at
+`K = 16 * 4` from `coreRate K β = 4(K+1)²(e^{2β} − 1)e^{4βK}`, the condition is
+`β < 2.936337×10⁻⁵`. Nothing in this chain exhibits a coupling of physical interest at which the
+transported estimate is non-vacuous.
+
+1. ✅ The `touchDeg` bound — `touchDeg_boxBd_le` below, the `ℤ⁴` analogue of
+   `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`.
+2. ✅ The conversion of a `ℤ⁴` separation into that theorem's `hk : pd ∉ ball bd p₀ k` —
+   `not_mem_ball_of_axis_gt` below. The periodic analogue is
+   `StrongCoupling.siteAtHyper_not_mem_ball`, indexed by `Moment.circLag`;
+   `StrongCoupling.raw_lag_radius_refuted` refutes the RAW-LAG index THROUGH the periodic wrap, and
+   `ℤ⁴` has no wrap, so the plain displacement is already the right index.
+3. ✅ The identification of the resulting `WilsonBridge.wilsonCorrConn` with the `specFree`
+   connected correlation — `expect_boxBd`, and `wilsonCorrConn_boxBd` in that object's own
+   coordinates.
+
+All three hold, so the ESTIMATE transports. A gap does not: see `expect_boxBd`.
+
+**⛔ AND IT SAYS NOTHING ABOUT THE OBSERVABLE GAP.** The strong-coupling chain speaks about PLAQUETTE
+observables; `gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`.
+That gap is untouched by anything here.
+
+DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+def boxBd (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqAll Λ)) :
+    List (↥Λ × Bool) :=
+  List.pmap (fun lb (h : lb.1 ∈ Λ) => ((⟨lb.1, h⟩ : ↥Λ), lb.2))
+    (MassGap.GibbsSpec.ibd (q : MassGap.GibbsSpec.IPlaq))
+    (fun lb hlb => by
+      have hq : (q : MassGap.GibbsSpec.IPlaq) ∈ MassGap.GibbsSpec.plaqsIn Λ :=
+        (mem_iplqAll.mp q.2).1
+      exact MassGap.GibbsSpec.mem_plaqsIn.mp hq lb.1 (List.mem_map.mpr ⟨lb, hlb, rfl⟩))
+
+#print axioms boxBd
+
+/-- **The box word carries the plaquette's own four links**, in order. The `Bool` orientations are
+not this theorem's subject; `wilsonHol_boxBd` is what checks those.
+
+DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem boxBd_map_fst (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqAll Λ)) :
+    (boxBd Λ q).map (fun lb => (lb.1 : MassGap.InfiniteLattice.ILink))
+      = MassGap.GibbsSpec.ilinks (q : MassGap.GibbsSpec.IPlaq) := by
+  simp [boxBd, MassGap.GibbsSpec.ilinks, MassGap.GibbsSpec.ibd]
+
+#print axioms boxBd_map_fst
+
+/-- **⭐ AND ITS HOLONOMY IS THE LATTICE HOLONOMY**, at any boundary configuration.
+
+This is what makes the presentation faithful rather than merely typed: `wilsonHol` of the restricted
+word against the box's own variables is `GibbsSpec.ihol` of the spliced configuration. The boundary
+configuration `ω` is free on the right and absent on the left, which is the content.
+
+**⛔ THIS IS ONE PLAQUETTE'S HOLONOMY, NOT THE BOX WEIGHT.** `wtFree` sums over `iplqAll Λ`;
+`wtFree_congr_right` is what carries this to it.
+
+DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem wilsonHol_boxBd {G : Type} [Group G] (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (q : ↥(iplqAll Λ)) (u : MassGap.GibbsSpec.VConf G Λ)
+    (ω : MassGap.GibbsSpec.IConf G) :
+    MassGap.WilsonLattice.wilsonHol (boxBd Λ) q u
+      = MassGap.GibbsSpec.ihol (q : MassGap.GibbsSpec.IPlaq)
+          (MassGap.GibbsSpec.splice Λ u ω) := by
+  have hq : (q : MassGap.GibbsSpec.IPlaq) ∈ MassGap.GibbsSpec.plaqsIn Λ :=
+    (mem_iplqAll.mp q.2).1
+  have hmem : ∀ l ∈ MassGap.GibbsSpec.ilinks (q : MassGap.GibbsSpec.IPlaq), l ∈ Λ :=
+    MassGap.GibbsSpec.mem_plaqsIn.mp hq
+  have e1 : ((q : MassGap.GibbsSpec.IPlaq).1.1, (q : MassGap.GibbsSpec.IPlaq).2) ∈ Λ :=
+    hmem _ (by rw [MassGap.GibbsSpec.ilinks_eq]; simp)
+  have e2 : ((q : MassGap.GibbsSpec.IPlaq).1.2,
+      MassGap.GibbsSpec.ishift (q : MassGap.GibbsSpec.IPlaq).1.1
+        (q : MassGap.GibbsSpec.IPlaq).2) ∈ Λ :=
+    hmem _ (by rw [MassGap.GibbsSpec.ilinks_eq]; simp)
+  have e3 : ((q : MassGap.GibbsSpec.IPlaq).1.1,
+      MassGap.GibbsSpec.ishift (q : MassGap.GibbsSpec.IPlaq).1.2
+        (q : MassGap.GibbsSpec.IPlaq).2) ∈ Λ :=
+    hmem _ (by rw [MassGap.GibbsSpec.ilinks_eq]; simp)
+  have e4 : ((q : MassGap.GibbsSpec.IPlaq).1.2, (q : MassGap.GibbsSpec.IPlaq).2) ∈ Λ :=
+    hmem _ (by rw [MassGap.GibbsSpec.ilinks_eq]; simp)
+  simp [MassGap.WilsonLattice.wilsonHol, boxBd, MassGap.GibbsSpec.ihol,
+    MassGap.GibbsSpec.ibd, List.pmap, MassGap.GibbsSpec.splice_mem e1,
+    MassGap.GibbsSpec.splice_mem e2, MassGap.GibbsSpec.splice_mem e3,
+    MassGap.GibbsSpec.splice_mem e4]
+
+#print axioms wilsonHol_boxBd
+
+/-- **At most sixteen plaquettes read a given link.**
+
+`GibbsSpec.touching` is the enumeration — four directions against four placements — and
+`GibbsSpec.mem_touching` proves it a superset of the plaquettes reading the link. This is a BOUND on
+its cardinality — the set is strictly smaller, since at `ν = l.1` the first two entries coincide —
+which is what a `touchDeg` bound consumes and what `touching` itself does not state.
+
+DERIVED: `16` is FOUR PLACEMENTS against the `4` directions — `4 * dim` at `dim = 4`, as
+`StrongCoupling.linkMult_bd_le` derives the same count. The four placements are two
+pair-positions against two base sites and do NOT scale with the dimension, so this is not
+the dimension twice over; the two readings agree only at `dim = 4`. `4` is the dimension. -/
+theorem card_touching_le (l : MassGap.InfiniteLattice.ILink) :
+    (MassGap.GibbsSpec.touching l).card ≤ 16 := by
+  classical
+  have hcard4 : ∀ a b c d : MassGap.GibbsSpec.IPlaq,
+      ({a, b, c, d} : Finset MassGap.GibbsSpec.IPlaq).card ≤ 4 := by
+    intro a b c d
+    have h1 := Finset.card_insert_le a ({b, c, d} : Finset MassGap.GibbsSpec.IPlaq)
+    have h2 := Finset.card_insert_le b ({c, d} : Finset MassGap.GibbsSpec.IPlaq)
+    have h3 := Finset.card_insert_le c ({d} : Finset MassGap.GibbsSpec.IPlaq)
+    have h4 : ({d} : Finset MassGap.GibbsSpec.IPlaq).card = 1 := Finset.card_singleton d
+    omega
+  unfold MassGap.GibbsSpec.touching
+  refine le_trans Finset.card_biUnion_le ?_
+  refine le_trans (Finset.sum_le_sum (fun ν _ => hcard4 _ _ _ _)) ?_
+  simp
+
+#print axioms card_touching_le
+
+/-- **The box word supports at most four links.** The `ℤ⁴` mirror of
+`InfiniteLattice.linksOf_card_le`, repackaged for the subtype `↥Λ` that `boxBd` reads.
+
+`iplqAll` excludes the degenerate plane, so on this domain the four links are in fact distinct; `≤`
+is the form `StrongCoupling.touchDeg_bd_le`'s argument consumes.
+
+DERIVED: `4` is the number of links in a plaquette boundary word, as in `GibbsSpec.ibd`, and it is
+also the dimension carried inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem linkSupp_boxBd_card_le (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (q : ↥(iplqAll Λ)) :
+    (MassGap.StrongCoupling.linkSupp (boxBd Λ) q).card ≤ 4 := by
+  classical
+  refine le_trans (List.toFinset_card_le _) ?_
+  rw [List.length_map]
+  simp [boxBd, MassGap.GibbsSpec.ibd]
+
+#print axioms linkSupp_boxBd_card_le
+
+/-- **A link of the box word is a link of the plaquette.** `boxBd_map_fst` read through
+`linkSupp`'s `toFinset`, which is the step every argument about the box's touch graph starts from.
+
+DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried inside `ILink`
+and `IPlaq` as in `iplqAll`. -/
+theorem mem_ilinks_of_mem_linkSupp_boxBd (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (q : ↥(iplqAll Λ)) (l : ↥Λ)
+    (hl : l ∈ MassGap.StrongCoupling.linkSupp (boxBd Λ) q) :
+    (l : MassGap.InfiniteLattice.ILink)
+      ∈ MassGap.GibbsSpec.ilinks (q : MassGap.GibbsSpec.IPlaq) := by
+  classical
+  have h1 : l ∈ (boxBd Λ q).map Prod.fst := List.mem_toFinset.mp hl
+  have h2 : (l : MassGap.InfiniteLattice.ILink)
+      ∈ (boxBd Λ q).map (fun lb => (lb.1 : MassGap.InfiniteLattice.ILink)) := by
+    obtain ⟨lb, hlb, hlb2⟩ := List.mem_map.mp h1
+    exact List.mem_map.mpr ⟨lb, hlb, by rw [hlb2]⟩
+  rwa [boxBd_map_fst] at h2
+
+#print axioms mem_ilinks_of_mem_linkSupp_boxBd
+
+/-- **⭐ Each link of the box is read by at most sixteen of its plaquettes.**
+
+`boxBd_map_fst` carries a link of the box word back to `GibbsSpec.ilinks`, `mem_touching` puts the
+plaquette in `touching`, and `Subtype.val` is injective — so the count is bounded by
+`card_touching_le`. This is the `ℤ⁴` analogue of `StrongCoupling.linkMult_bd_le`.
+
+DERIVED: `16` is four placements against the `4` directions, `4 * dim` at `dim = 4`, as in
+`card_touching_le`; `4` is the dimension, carried inside `ILink` as in `iplqAll`. -/
+theorem linkMult_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) (l : ↥Λ) :
+    MassGap.StrongCoupling.linkMult (boxBd Λ) l ≤ 16 := by
+  classical
+  refine le_trans ?_ (card_touching_le (l : MassGap.InfiniteLattice.ILink))
+  refine Finset.card_le_card_of_injOn (fun q => (q : MassGap.GibbsSpec.IPlaq)) ?_ ?_
+  · intro q hq
+    exact MassGap.GibbsSpec.mem_touching
+      (mem_ilinks_of_mem_linkSupp_boxBd Λ q l (Finset.mem_filter.mp hq).2)
+  · intro a _ b _ h
+    exact Subtype.ext h
+
+#print axioms linkMult_boxBd_le
+
+/-- **⭐⭐⭐ THE BOX'S CONNECTIVITY CONSTANT, VOLUME-FREE** — the first of the carrier obligations,
+discharged.
+
+`StrongCoupling.touchNbrs_card_le` is CARRIER-FREE and bounds the touch count by
+`∑ l ∈ linkSupp bd p, linkMult bd l`; the two factors are `linkSupp_boxBd_card_le` and
+`linkMult_boxBd_le`. The assembly is exactly the one `StrongCoupling.touchDeg_bd_le` performs on the
+periodic lattice, and like it the bound carries NO dependence on the box: `Λ` appears nowhere on the
+right.
+
+**⛔ ON ITS OWN THIS TRANSPORTS NOTHING.** It closes the first of the two geometric inputs to
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` — the form that consumes a `touchDeg` bound,
+with `K = 16 * 4`; `not_mem_ball_of_axis_gt` closes the second and `expect_boxBd` identifies the
+state.
+
+DERIVED: `16` is four placements against the `4` directions, as in `card_touching_le`; `4` is the
+number of links in a plaquette boundary word and the dimension, as in `linkSupp_boxBd_card_le`. The
+PRODUCT `16 * 4` equals `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`, but the
+factorisations are transposed — here it is `linkMult` against `linkSupp`, there it is `linkSupp`
+against word slots and the dimension. -/
+theorem touchDeg_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) :
+    MassGap.StrongCoupling.touchDeg (boxBd Λ) ≤ 16 * 4 := by
+  classical
+  refine Finset.sup_le (fun p _ => ?_)
+  refine le_trans (MassGap.StrongCoupling.touchNbrs_card_le (boxBd Λ) p) ?_
+  calc ∑ l ∈ MassGap.StrongCoupling.linkSupp (boxBd Λ) p,
+        MassGap.StrongCoupling.linkMult (boxBd Λ) l
+      ≤ ∑ _l ∈ MassGap.StrongCoupling.linkSupp (boxBd Λ) p, 16 :=
+        Finset.sum_le_sum (fun l _ => linkMult_boxBd_le Λ l)
+    _ = (MassGap.StrongCoupling.linkSupp (boxBd Λ) p).card * 16 := by
+        rw [Finset.sum_const, smul_eq_mul]
+    _ ≤ 4 * 16 := Nat.mul_le_mul_right _ (linkSupp_boxBd_card_le Λ p)
+    _ = 16 * 4 := by ring
+
+#print axioms touchDeg_boxBd_le
+
+/-- **A PLAQUETTE'S LINKS LIE IN A ONE-STEP WINDOW ALONG EVERY AXIS**, on `ℤ⁴`.
+
+`GibbsSpec.ibd` names the sites `x`, `ishift a x` and `ishift b x` and no others, and `ishift_coord`
+says a shift raises ONE coordinate by one. So along any `τ` every link the word names sits at `x τ`
+or `x τ + 1`.
+
+Both offsets lying in `{0, +1}` rather than `{-1, 0, +1}` is the whole content: it is why two
+plaquettes sharing a link differ by at most ONE step along `τ` and not two.
+
+This is `StrongCoupling.link_site_coord` without the circle.
+
+DERIVED: `1` is the one lattice step `ishift` takes; `4` is the dimension. -/
+theorem ilink_site_coord (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq)
+    (l : MassGap.InfiniteLattice.ILink)
+    (hl : l ∈ MassGap.GibbsSpec.ilinks q) :
+    l.2 τ = q.2 τ ∨ l.2 τ = q.2 τ + 1 := by
+  have hup : ∀ ν : Fin 4, (MassGap.GibbsSpec.ishift ν q.2) τ = q.2 τ
+      ∨ (MassGap.GibbsSpec.ishift ν q.2) τ = q.2 τ + 1 := by
+    intro ν
+    rw [ishift_coord]
+    split
+    · exact Or.inr rfl
+    · exact Or.inl rfl
+  rw [MassGap.GibbsSpec.ilinks_eq] at hl
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
+  rcases hl with rfl | rfl | rfl | rfl
+  · exact Or.inl rfl
+  · exact hup _
+  · exact hup _
+  · exact Or.inl rfl
+
+#print axioms ilink_site_coord
+
+/-- **The level a radius argument measures on `ℤ⁴`**: displacement along `τ` from a base site.
+
+The `ℤ⁴` counterpart of `StrongCoupling.axisLvl`, and simpler — there is no circle, so this is the
+absolute value of an integer difference rather than a distance on `Fin n`.
+
+DERIVED: no numeral of its own; `τ` and `x₀` are the caller's and `4` is the dimension. -/
+def axisLvlBox (τ : Fin 4) (x₀ : MassGap.GibbsSpec.ISite)
+    (q : MassGap.GibbsSpec.IPlaq) : ℕ := (q.2 τ - x₀ τ).natAbs
+
+/-- **⭐ ONE TOUCH-STEP IS AT MOST ONE LATTICE STEP**, on the box.
+
+Two plaquettes that touch share a link, and by `ilink_site_coord` that link sits at each one's own
+`τ` coordinate or one above it. Both offsets are in `{0, +1}`, so the four cases put the two sites
+within a single step.
+
+DERIVED: `1` is the one lattice step a touch can cross, derived from `ilink_site_coord` and not
+chosen; `4` is the dimension. -/
+theorem axisLvlBox_lipschitz (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : Fin 4)
+    (x₀ : MassGap.GibbsSpec.ISite) (p q : ↥(iplqAll Λ))
+    (h : MassGap.StrongCoupling.Touch (boxBd Λ) p q) :
+    axisLvlBox τ x₀ (q : MassGap.GibbsSpec.IPlaq)
+      ≤ axisLvlBox τ x₀ (p : MassGap.GibbsSpec.IPlaq) + 1 := by
+  obtain ⟨l, hp, hq⟩ := h
+  have hP := ilink_site_coord τ (p : MassGap.GibbsSpec.IPlaq) _
+    (mem_ilinks_of_mem_linkSupp_boxBd Λ p l hp)
+  have hQ := ilink_site_coord τ (q : MassGap.GibbsSpec.IPlaq) _
+    (mem_ilinks_of_mem_linkSupp_boxBd Λ q l hq)
+  simp only [axisLvlBox]
+  rcases hP with hP | hP <;> rcases hQ with hQ | hQ <;> omega
+
+#print axioms axisLvlBox_lipschitz
+
+/-- **⭐⭐⭐ THE BOX'S RADIUS BRIDGE** — the second carrier obligation, discharged.
+
+A plaquette displaced more than `k` steps along `τ` from `p₀` is outside the `k`-step touch-ball of
+`p₀`. This is the hypothesis `hk` that
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` takes, supplied for `boxBd` from a
+`ℤ⁴` separation.
+
+`StrongCoupling.lvl_le_of_mem_ball` is carrier-free and does the work; `axisLvlBox` is zero at `p₀`
+and rises by at most one per touch, so a ball of radius `k` cannot reach level above `k`.
+
+**⛔ THE INDEX IS THE PLAIN DISPLACEMENT, AND THAT IS THE POINT.** On the torus the correct index is
+`Moment.circLag` rather than the raw lag, because the lattice wraps and
+`StrongCoupling.raw_lag_radius_refuted` exhibits a plaquette the raw index would place outside a ball
+it is inside. `ℤ⁴` does not wrap, so no such correction arises and the displacement is already right.
+
+**⛔ ON ITS OWN THIS TRANSPORTS NOTHING.** It is one of the two geometric inputs;
+`touchDeg_boxBd_le` is the other and `expect_boxBd` identifies the state.
+
+DERIVED: `4` is the dimension; the comparison is against the caller's `k` and carries no constant. -/
+theorem not_mem_ball_of_axis_gt (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : Fin 4)
+    (p₀ q : ↥(iplqAll Λ)) (k : ℕ)
+    (hk : k < ((q : MassGap.GibbsSpec.IPlaq).2 τ
+      - (p₀ : MassGap.GibbsSpec.IPlaq).2 τ).natAbs) :
+    q ∉ MassGap.StrongCoupling.ball (boxBd Λ) p₀ k := by
+  classical
+  intro hmem
+  have hlvl := MassGap.StrongCoupling.lvl_le_of_mem_ball (boxBd Λ) p₀
+    (fun r => axisLvlBox τ ((p₀ : MassGap.GibbsSpec.IPlaq).2) (r : MassGap.GibbsSpec.IPlaq))
+    (by simp [axisLvlBox])
+    (fun p r ht => axisLvlBox_lipschitz Λ τ _ p r ht) k q hmem
+  simp only [axisLvlBox] at hlvl
+  omega
+
+#print axioms not_mem_ball_of_axis_gt
+
 /-- **THE PLAQUETTES THE POSITIVE HALF-ACTION SUMS OVER.** Inside the box, non-degenerate, not in the
 plane, based at or above it. The `ℤ⁴` counterpart of `ActionSplit.plqPlus`.
 
@@ -873,6 +1211,214 @@ theorem iplqPlus_link_mem_box (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.Infini
 
 #print axioms iplqPlus_link_mem_box
 
+/-- **A transverse link based at the plane is in `boxR`.** `ν ≠ τ` and `x τ = p` give
+`(ireflLink τ (2p) (ν,x)).2 τ = 2p − p = p = x τ`, which is the `boxR` filter.
+
+DERIVED: no numeral of its own — the `2` of the reflection constant is inside `boxR`; `4` is
+the dimension. -/
+theorem transverse_link_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
+    (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (h : ((ν, x) : MassGap.InfiniteLattice.ILink) ∈ Λ) :
+    (⟨(ν, x), h⟩ : ↥Λ) ∈ boxR τ p Λ := by
+  simp only [boxR, Finset.mem_filter, Finset.mem_univ, true_and, ireflLink, if_neg hν,
+    ireflSite_axis, hx]
+  omega
+
+#print axioms transverse_link_mem_boxR
+
+/-- **The plaquette `((τ,ν), x)` with `x τ = p` is in `iplqPlus τ p Λ`**, given its links are in `Λ`.
+
+Its first direction is `τ`, so the transverse-at-the-plane exclusion of `mem_iplqPlus` does not fire,
+and `p ≤ x τ` holds with equality.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem iplqPlus_mem_of_tau_base (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
+    (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (hΛ : ∀ l ∈ MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq), l ∈ Λ) :
+    (((τ, ν), x) : MassGap.GibbsSpec.IPlaq) ∈ iplqPlus τ p Λ := by
+  refine mem_iplqPlus.mpr ⟨MassGap.GibbsSpec.mem_plaqsIn.mpr hΛ, Ne.symm hν, ?_, le_of_eq hx.symm⟩
+  rintro ⟨hne, -, -⟩
+  exact hne rfl
+
+#print axioms iplqPlus_mem_of_tau_base
+
+/-- **POSITIVE CONTROL: an `iplqPlus` plaquette WITH a link in `boxR`.**
+
+`iplqPlus_links_mem` bounds the half-action's links by `boxS ∪ boxR`; a half-action reading only
+`boxS` would satisfy it. This exhibits the other case.
+
+**⛔ IT DOES NOT SHOW `iactPlus` DEPENDS ON `boxR`.** Reading a coordinate is not varying with it.
+Dependence needs two configurations differing only on `boxR` at which `iactPlus` differs, and that
+is not proved.
+
+DERIVED: no numeral of its own; the `2` of the reflection constant is inside `boxR`; `4` is the
+dimension. -/
+theorem iplqPlus_has_link_in_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
+    (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (hΛ : ∀ l ∈ MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq), l ∈ Λ) :
+    (((τ, ν), x) : MassGap.GibbsSpec.IPlaq) ∈ iplqPlus τ p Λ ∧
+      ∃ l : ↥Λ, l ∈ boxR τ p Λ ∧
+        l.1 ∈ MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq) := by
+  have hmem : ((ν, x) : MassGap.InfiniteLattice.ILink) ∈
+      MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq) := by
+    rw [MassGap.GibbsSpec.ilinks_eq]
+    simp
+  exact ⟨iplqPlus_mem_of_tau_base τ ν hν p x hx Λ hΛ,
+    ⟨(ν, x), hΛ _ hmem⟩, transverse_link_mem_boxR τ ν hν p x hx Λ (hΛ _ hmem), hmem⟩
+
+#print axioms iplqPlus_has_link_in_boxR
+
+/-- **Distinct directions shift a site to distinct sites.**
+
+DERIVED: no numeral of its own; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
+dimension. -/
+theorem ishift_ne_ishift {μ ν : Fin 4} (h : μ ≠ ν) (x : MassGap.GibbsSpec.ISite) :
+    MassGap.GibbsSpec.ishift μ x ≠ MassGap.GibbsSpec.ishift ν x := by
+  intro he
+  have hc := congrFun he μ
+  rw [ishift_coord, ishift_coord, if_pos rfl, if_neg (Ne.symm h)] at hc
+  omega
+
+#print axioms ishift_ne_ishift
+
+/-- **A shift moves the site.**
+
+DERIVED: no numeral of its own; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
+dimension. -/
+theorem ishift_ne_self (μ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    MassGap.GibbsSpec.ishift μ x ≠ x := by
+  intro he
+  have hc := congrFun he μ
+  rw [ishift_coord, if_pos rfl] at hc
+  omega
+
+#print axioms ishift_ne_self
+
+/-- **The four links of one plaquette**, as a carrier in its own right.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+def quadLinks (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    Finset MassGap.InfiniteLattice.ILink :=
+  {(τ, x), (ν, MassGap.GibbsSpec.ishift τ x), (τ, MassGap.GibbsSpec.ishift ν x), (ν, x)}
+
+/-- **Every link of `((τ,ν), x)` is in `quadLinks`.** Membership, not equality.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem quadLinks_ilinks (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    ∀ l ∈ MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq),
+      l ∈ quadLinks τ ν x := by
+  intro l hl
+  rw [MassGap.GibbsSpec.ilinks_eq] at hl
+  simp only [quadLinks, List.mem_cons, List.not_mem_nil, or_false] at hl ⊢
+  simp only [Finset.mem_insert, Finset.mem_singleton]
+  tauto
+
+#print axioms quadLinks_ilinks
+
+/-- **And every link of the reversed orientation too.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem quadLinks_ilinks_swap (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    ∀ l ∈ MassGap.GibbsSpec.ilinks (((ν, τ), x) : MassGap.GibbsSpec.IPlaq),
+      l ∈ quadLinks τ ν x := by
+  intro l hl
+  rw [MassGap.GibbsSpec.ilinks_eq] at hl
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
+  simp only [quadLinks, Finset.mem_insert, Finset.mem_singleton]
+  tauto
+
+#print axioms quadLinks_ilinks_swap
+
+/-- **Two `quadLinks` links with a common base and distinct directions force the base to be `x`.**
+
+`x` is the only base in `quadLinks` carrying two directions; `ishift τ x` and `ishift ν x` carry one
+each and are distinct.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem quad_two_dirs (τ ν : Fin 4) (hν : ν ≠ τ) (x y : MassGap.GibbsSpec.ISite)
+    {a b : Fin 4} (hab : a ≠ b)
+    (ha : ((a, y) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x)
+    (hb : ((b, y) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x) :
+    y = x := by
+  simp only [quadLinks, Finset.mem_insert, Finset.mem_singleton, Prod.mk.injEq] at ha hb
+  rcases ha with ⟨ha1, ha2⟩ | ⟨ha1, ha2⟩ | ⟨ha1, ha2⟩ | ⟨ha1, ha2⟩
+  · exact ha2
+  · rcases hb with ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩
+    · exact hb2
+    · exact absurd (ha1.trans hb1.symm) hab
+    · exact absurd (ha2.symm.trans hb2) (ishift_ne_ishift (Ne.symm hν) x)
+    · exact hb2
+  · rcases hb with ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩ | ⟨hb1, hb2⟩
+    · exact hb2
+    · exact absurd (ha2.symm.trans hb2) (ishift_ne_ishift hν x)
+    · exact absurd (ha1.trans hb1.symm) hab
+    · exact hb2
+  · exact ha2
+
+#print axioms quad_two_dirs
+
+/-- **A `quadLinks` link based at `x` has direction `τ` or `ν`.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem quad_dirs (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) {a : Fin 4}
+    (ha : ((a, x) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x) : a = τ ∨ a = ν := by
+  simp only [quadLinks, Finset.mem_insert, Finset.mem_singleton, Prod.mk.injEq] at ha
+  tauto
+
+#print axioms quad_dirs
+
+/-- **`iplqPlus` on the one-plaquette carrier is EXACTLY the two orientations.**
+
+The half-action on `quadLinks τ ν x` with `x τ = p` is therefore a two-term sum, which is what makes
+it computable.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem iplqPlus_quad_eq (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
+    (x : MassGap.GibbsSpec.ISite) (hx : x τ = p) :
+    iplqPlus τ p (quadLinks τ ν x)
+      = {(((τ, ν), x) : MassGap.GibbsSpec.IPlaq), (((ν, τ), x) : MassGap.GibbsSpec.IPlaq)} := by
+  ext q
+  obtain ⟨⟨a, b⟩, y⟩ := q
+  simp only [Finset.mem_insert, Finset.mem_singleton, Prod.mk.injEq]
+  constructor
+  · intro hq
+    obtain ⟨hin, hne, -, -⟩ := mem_iplqPlus.mp hq
+    have hml := MassGap.GibbsSpec.mem_plaqsIn.mp hin
+    have hA : ((a, y) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x := by
+      refine hml _ ?_
+      rw [MassGap.GibbsSpec.ilinks_eq]
+      simp
+    have hB : ((b, y) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x := by
+      refine hml _ ?_
+      rw [MassGap.GibbsSpec.ilinks_eq]
+      simp
+    have hy : y = x := quad_two_dirs τ ν hν x y hne hA hB
+    subst hy
+    rcases quad_dirs τ ν y hA with ha | ha <;> rcases quad_dirs τ ν y hB with hb | hb
+    · exact absurd (ha.trans hb.symm) hne
+    · exact Or.inl ⟨⟨ha, hb⟩, rfl⟩
+    · exact Or.inr ⟨⟨ha, hb⟩, rfl⟩
+    · exact absurd (ha.trans hb.symm) hne
+  · intro h
+    refine mem_iplqPlus.mpr ⟨MassGap.GibbsSpec.mem_plaqsIn.mpr ?_, ?_, ?_, ?_⟩
+    · rcases h with ⟨⟨ha, hb⟩, hy⟩ | ⟨⟨ha, hb⟩, hy⟩ <;> subst ha <;> subst hb <;> subst hy
+      · exact quadLinks_ilinks _ _ _
+      · exact quadLinks_ilinks_swap _ _ _
+    · rcases h with ⟨⟨ha, hb⟩, -⟩ | ⟨⟨ha, hb⟩, -⟩ <;> subst ha <;> subst hb
+      · exact Ne.symm hν
+      · exact hν
+    · rcases h with ⟨⟨ha, hb⟩, -⟩ | ⟨⟨ha, hb⟩, -⟩ <;> subst ha <;> subst hb
+      · rintro ⟨hc, -, -⟩
+        exact hc rfl
+      · rintro ⟨-, hc, -⟩
+        exact hc rfl
+    · rcases h with ⟨-, hy⟩ | ⟨-, hy⟩ <;> subst hy <;> exact le_of_eq hx.symm
+
+#print axioms iplqPlus_quad_eq
+
 end HalfPlaq
 
 /-! ## ⭐ 3d″a. The three groups partition the box -/
@@ -887,10 +1433,6 @@ theorem mem_iplqZero {τ : Fin 4} {p : ℤ} {Λ : Finset MassGap.InfiniteLattice
       q ∈ MassGap.GibbsSpec.plaqsIn Λ ∧ q.1.1 ≠ q.1.2 ∧
         (q.1.1 ≠ τ ∧ q.1.2 ≠ τ ∧ q.2 τ = p) := by
   simp only [iplqZero, Finset.mem_filter]
-
-theorem mem_iplqAll {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq} :
-    q ∈ iplqAll Λ ↔ q ∈ MassGap.GibbsSpec.plaqsIn Λ ∧ q.1.1 ≠ q.1.2 := by
-  simp only [iplqAll, Finset.mem_filter]
 
 #print axioms mem_iplqZero
 
@@ -1155,6 +1697,76 @@ theorem iactPlus_local (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms iactPlus_local
 
+/-- **The half-action on the one-plaquette carrier is a two-term sum.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem iactPlus_quad (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
+    (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G (quadLinks τ ν x)) :
+    iactPlus φ τ p (quadLinks τ ν x) ω u
+      = φ (MassGap.GibbsSpec.ihol (((τ, ν), x) : MassGap.GibbsSpec.IPlaq)
+            (MassGap.GibbsSpec.splice (quadLinks τ ν x) u ω))
+        + φ (MassGap.GibbsSpec.ihol (((ν, τ), x) : MassGap.GibbsSpec.IPlaq)
+            (MassGap.GibbsSpec.splice (quadLinks τ ν x) u ω)) := by
+  have hne2 : (((τ, ν), x) : MassGap.GibbsSpec.IPlaq)
+      ≠ (((ν, τ), x) : MassGap.GibbsSpec.IPlaq) := by
+    intro h
+    exact (Ne.symm hν) (congrArg (fun q : MassGap.GibbsSpec.IPlaq => q.1.1) h)
+  unfold iactPlus MassGap.GibbsSpec.actionOn
+  rw [iplqPlus_quad_eq τ ν hν p x hx, Finset.sum_pair hne2]
+
+#print axioms iactPlus_quad
+
+/-- **THE HALF-ACTION DEPENDS ON THE SHARED BLOCK.** Two configurations agreeing off `boxR` at
+which `iactPlus` differs.
+
+`iplqPlus_has_link_in_boxR` shows the half-action READS `boxR`; this shows it VARIES with it. On
+`quadLinks τ ν x` the sole `boxR` link is `(ν, x)`, the two orientations give `g⁻¹` and `g`, and the
+all-identity configuration gives `1` and `1`.
+
+`hsep` excludes the trivial group, and with it `SU 0` and `SU 1`.
+
+**⛔ THE CARRIER IS ONE PLAQUETTE AND IS NOT REFLECTION-CLOSED.** This refutes the UNIVERSAL claim
+that the half-action is blind to `boxR`. On a given reflection-closed box the extra plaquettes could
+in principle cancel, and that is not settled here.
+
+DERIVED: the `2` is the two orientations, one per term of `iactPlus_quad`; the `1`s are the
+identity configuration and its two holonomies; `4` is the dimension. -/
+theorem iactPlus_depends_on_boxR (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ τ)
+    (p : ℤ) (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (ω : MassGap.GibbsSpec.IConf G) (g : G) (hsep : φ g + φ g⁻¹ ≠ 2 * φ 1) :
+    ∃ u u' : MassGap.GibbsSpec.VConf G (quadLinks τ ν x),
+      (∀ l : ↥(quadLinks τ ν x), l ∉ boxR τ p (quadLinks τ ν x) → u l = u' l) ∧
+        iactPlus φ τ p (quadLinks τ ν x) ω u
+          ≠ iactPlus φ τ p (quadLinks τ ν x) ω u' := by
+  classical
+  have m1 : ((τ, x) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x := by simp [quadLinks]
+  have m2 : ((ν, MassGap.GibbsSpec.ishift τ x) : MassGap.InfiniteLattice.ILink)
+      ∈ quadLinks τ ν x := by simp [quadLinks]
+  have m3 : ((τ, MassGap.GibbsSpec.ishift ν x) : MassGap.InfiniteLattice.ILink)
+      ∈ quadLinks τ ν x := by simp [quadLinks]
+  have m4 : ((ν, x) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x := by simp [quadLinks]
+  refine ⟨fun l => if (l : MassGap.InfiniteLattice.ILink) = ((ν, x) : _) then g else 1,
+    fun _ => 1, ?_, ?_⟩
+  · intro l hl
+    by_cases he : (l : MassGap.InfiniteLattice.ILink) = ((ν, x) : _)
+    · exfalso
+      apply hl
+      have hle : l = (⟨(ν, x), m4⟩ : ↥(quadLinks τ ν x)) := Subtype.ext he
+      rw [hle]
+      exact transverse_link_mem_boxR τ ν hν p x hx _ m4
+    · simp [he]
+  · rw [iactPlus_quad φ τ ν hν p x hx ω, iactPlus_quad φ τ ν hν p x hx ω]
+    simp [MassGap.GibbsSpec.ihol, MassGap.WilsonLattice.wilsonHol, MassGap.GibbsSpec.ibd,
+      MassGap.GibbsSpec.splice_mem m1, MassGap.GibbsSpec.splice_mem m2,
+      MassGap.GibbsSpec.splice_mem m3, MassGap.GibbsSpec.splice_mem m4,
+      Ne.symm hν, ishift_ne_self τ x, ishift_ne_self ν x]
+    intro h
+    apply hsep
+    linarith
+
+#print axioms iactPlus_depends_on_boxR
+
 /-- **THE HALF-SPACE BOLTZMANN FACTOR AT A BOX.** `ReflectionStrong.halfBoltz` on `ℤ⁴`.
 
 DERIVED: no numeral of its own; the sign is the Gibbs convention `e^{-β S}` and `β` is the caller's.
@@ -1184,6 +1796,60 @@ theorem ihalfBoltz_pos (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms ihalfBoltz_pos
 
+/-- **The half-action is bounded by the plaquette count times the density bound.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem abs_iactPlus_le (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) :
+    |iactPlus φ τ p Λ ω u| ≤ (iplqPlus τ p Λ).card * Cφ := by
+  unfold iactPlus MassGap.GibbsSpec.actionOn
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  refine (Finset.sum_le_sum (fun q _ => hφ _)).trans ?_
+  rw [Finset.sum_const, nsmul_eq_mul]
+
+#print axioms abs_iactPlus_le
+
+/-- **A UNIFORM positive lower bound on the dressing**, as `ActionSplit.le_halfIntegral` requires.
+
+`ihalfBoltz_pos` is pointwise and gives no constant.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ihalfBoltz_lower_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (β : ℝ)
+    (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
+    Real.exp (-(|β| * ((iplqPlus τ p Λ).card * Cφ))) ≤ ihalfBoltz φ β τ p Λ ω u := by
+  have hC : (0 : ℝ) ≤ Cφ := le_trans (abs_nonneg _) (hφ 1)
+  have hcard : (0 : ℝ) ≤ (iplqPlus τ p Λ).card * Cφ :=
+    mul_nonneg (Nat.cast_nonneg _) hC
+  have hA := abs_iactPlus_le φ hφ τ p Λ ω u
+  have hb : β * iactPlus φ τ p Λ ω u ≤ |β| * ((iplqPlus τ p Λ).card * Cφ) := by
+    refine le_trans (le_abs_self _) ?_
+    rw [abs_mul]
+    exact mul_le_mul_of_nonneg_left hA (abs_nonneg β)
+  unfold ihalfBoltz
+  exact Real.exp_le_exp.mpr (by linarith)
+
+#print axioms ihalfBoltz_lower_bound
+
+/-- **And the matching upper bound**, as `ActionSplit.le_halfIntegral` also requires.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem ihalfBoltz_upper_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (β : ℝ)
+    (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
+    |ihalfBoltz φ β τ p Λ ω u| ≤ Real.exp (|β| * ((iplqPlus τ p Λ).card * Cφ)) := by
+  have hA := abs_iactPlus_le φ hφ τ p Λ ω u
+  have hb : -β * iactPlus φ τ p Λ ω u ≤ |β| * ((iplqPlus τ p Λ).card * Cφ) := by
+    refine le_trans (le_abs_self _) ?_
+    rw [abs_mul, abs_neg]
+    exact mul_le_mul_of_nonneg_left hA (abs_nonneg β)
+  rw [abs_of_pos (ihalfBoltz_pos φ β τ p Λ ω u)]
+  unfold ihalfBoltz
+  exact Real.exp_le_exp.mpr hb
+
+#print axioms ihalfBoltz_upper_bound
+
 /-- **THE DRESSED OBSERVABLE** — the map that will carry the Gibbs pairing to the split pairing on
 `ℤ⁴`, exactly as `ReflectionStrong.dressed` does on the torus.
 
@@ -1206,6 +1872,51 @@ theorem idressed_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
   simp only [idressed, hF u v hS hR, ihalfBoltz_local φ β τ p Λ ω u v hS hR]
 
 #print axioms idressed_local
+
+/-- **AND SO DOES THE HALF BOLTZMANN FACTOR**, at every non-zero coupling.
+
+`exp` is injective and `-β` cancels.
+
+DERIVED: the `0` is the coupling excluded by `hβ`; the `2` and the `1`s are `hsep`'s, as in
+`iactPlus_depends_on_boxR`; `4` is the dimension. -/
+theorem ihalfBoltz_depends_on_boxR (φ : G → ℝ) (β : ℝ) (hβ : β ≠ 0) (τ ν : Fin 4) (hν : ν ≠ τ)
+    (p : ℤ) (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (ω : MassGap.GibbsSpec.IConf G) (g : G) (hsep : φ g + φ g⁻¹ ≠ 2 * φ 1) :
+    ∃ u u' : MassGap.GibbsSpec.VConf G (quadLinks τ ν x),
+      (∀ l : ↥(quadLinks τ ν x), l ∉ boxR τ p (quadLinks τ ν x) → u l = u' l) ∧
+        ihalfBoltz φ β τ p (quadLinks τ ν x) ω u
+          ≠ ihalfBoltz φ β τ p (quadLinks τ ν x) ω u' := by
+  obtain ⟨u, u', hagree, hne⟩ := iactPlus_depends_on_boxR φ τ ν hν p x hx ω g hsep
+  refine ⟨u, u', hagree, ?_⟩
+  intro h
+  simp only [ihalfBoltz] at h
+  exact hne (mul_left_cancel₀ (neg_ne_zero.mpr hβ) (Real.exp_eq_exp.mp h))
+
+#print axioms ihalfBoltz_depends_on_boxR
+
+/-- **⭐ SO `hOS` FAILS FOR THE DRESSED OBSERVABLE AT THE CONSTANT BARE ONE.**
+
+`ActionSplit.pairing_eq_zero_of_indep_R`'s `hOS` asks the observable not to depend on the shared
+block. The DRESSING alone breaks it: with `F ≡ 1` the dressed observable is the half Boltzmann
+factor, and it differs at two configurations agreeing off `boxR`.
+
+**⛔ THE CARRIER IS ONE PLAQUETTE AND IS NOT REFLECTION-CLOSED**, so this refutes the UNIVERSAL
+claim and does not settle any particular box.
+
+DERIVED: the `1` is the constant bare observable; the `0` is the coupling excluded by `hβ`; the `2`
+and the remaining `1`s are `hsep`'s; `4` is the dimension. -/
+theorem idressed_depends_on_boxR (φ : G → ℝ) (β : ℝ) (hβ : β ≠ 0) (τ ν : Fin 4) (hν : ν ≠ τ)
+    (p : ℤ) (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
+    (ω : MassGap.GibbsSpec.IConf G) (g : G) (hsep : φ g + φ g⁻¹ ≠ 2 * φ 1) :
+    ∃ u u' : MassGap.GibbsSpec.VConf G (quadLinks τ ν x),
+      (∀ l : ↥(quadLinks τ ν x), l ∉ boxR τ p (quadLinks τ ν x) → u l = u' l) ∧
+        idressed φ β τ p (quadLinks τ ν x) ω (fun _ => 1) u
+          ≠ idressed φ β τ p (quadLinks τ ν x) ω (fun _ => 1) u' := by
+  obtain ⟨u, u', hagree, hne⟩ := ihalfBoltz_depends_on_boxR φ β hβ τ ν hν p x hx ω g hsep
+  refine ⟨u, u', hagree, ?_⟩
+  simpa [idressed] using hne
+
+#print axioms idressed_depends_on_boxR
 
 end HalfAction
 
@@ -1297,6 +2008,120 @@ theorem iplaneWeight_nonneg (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms iplaneWeight_nonneg
 
+/-- **The plane weight is STRICTLY positive**, being an exponential. `iplaneWeight_nonneg` is the
+weak form; `ActionSplit.pairing_pos_iff_half_ne_const` needs this one, because it divides the weight
+out of `W·x² = 0`.
+
+DERIVED: the `0` is the positivity asserted, which is the whole statement; `β`, `τ`, `p`, `Λ` and
+`ω` are the caller's and `4` is the dimension. -/
+theorem iplaneWeight_pos {G : Type} [Group G] (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) : 0 < iplaneWeight φ β τ p Λ ω u :=
+  Real.exp_pos _
+
+#print axioms iplaneWeight_pos
+
+/-- **At zero coupling the half-weight is `1`.** `ihalfBoltz` is `exp(-β · iactPlus)`.
+
+DERIVED: the `0` is the coupling this is evaluated at; the `1` is `exp 0`; `4` is the dimension. -/
+theorem ihalfBoltz_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) : ihalfBoltz φ 0 τ p Λ ω u = 1 := by
+  unfold ihalfBoltz
+  simp
+
+#print axioms ihalfBoltz_at_zero_coupling
+
+/-- **The splice is continuous in the INNER configuration.** `WilsonDLR.continuous_splice_right` is
+the outer one.
+
+DERIVED: no numeral. -/
+theorem continuous_splice_left {G : Type} [TopologicalSpace G]
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
+    Continuous (fun u : MassGap.GibbsSpec.VConf G Λ => MassGap.GibbsSpec.splice Λ u ω) := by
+  refine continuous_pi (fun l => ?_)
+  by_cases hl : l ∈ Λ
+  · have he : (fun u : MassGap.GibbsSpec.VConf G Λ => MassGap.GibbsSpec.splice Λ u ω l)
+        = fun u => u ⟨l, hl⟩ := funext fun u => MassGap.GibbsSpec.splice_mem hl
+    rw [he]; exact continuous_apply _
+  · have he : (fun u : MassGap.GibbsSpec.VConf G Λ => MassGap.GibbsSpec.splice Λ u ω l)
+        = fun _ => ω l := funext fun u => MassGap.GibbsSpec.splice_not_mem hl
+    rw [he]; exact continuous_const
+
+#print axioms continuous_splice_left
+
+/-- **The spliced holonomy is continuous in the inner configuration.**
+
+DERIVED: no numeral. -/
+theorem continuous_ihol_splice {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    (q : MassGap.GibbsSpec.IPlaq) (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf G) :
+    Continuous (fun u : MassGap.GibbsSpec.VConf G Λ =>
+      MassGap.GibbsSpec.ihol q (MassGap.GibbsSpec.splice Λ u ω)) :=
+  (MassGap.PlaqVariance.continuous_wilsonHol MassGap.GibbsSpec.ibd q).comp
+    (continuous_splice_left Λ ω)
+
+#print axioms continuous_ihol_splice
+
+/-- **The positive half-action is continuous in the inner configuration**, for a continuous density.
+
+DERIVED: no numeral of its own; `4` is the dimension, carried inside `Fin 4` and `ILink`; the
+plaquette set summed over is `iplqPlus`. -/
+theorem continuous_iactPlus {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    {φ : G → ℝ} (hφc : Continuous φ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
+    Continuous (iactPlus φ τ p Λ ω) := by
+  unfold iactPlus MassGap.GibbsSpec.actionOn
+  exact continuous_finset_sum _ (fun q _ => hφc.comp (continuous_ihol_splice q Λ ω))
+
+#print axioms continuous_iactPlus
+
+/-- **The half-weight is continuous in the inner configuration.**
+
+DERIVED: no numeral of its own; `4` is the dimension, carried inside `Fin 4` and `ILink`; the
+plaquette set summed over is `iplqPlus`. -/
+theorem continuous_ihalfBoltz {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    {φ : G → ℝ} (hφc : Continuous φ) (β : ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
+    Continuous (ihalfBoltz φ β τ p Λ ω) := by
+  unfold ihalfBoltz
+  exact Real.continuous_exp.comp ((continuous_iactPlus hφc τ p Λ ω).const_smul (-β)
+    |>.congr (fun u => by simp [smul_eq_mul]))
+
+#print axioms continuous_ihalfBoltz
+
+/-- **⭐ AT ZERO COUPLING THE DRESSED OBSERVABLE IS THE BARE ONE.**
+
+`idressed = F · e^{-βA₊}`, and at `β = 0` the exponential is `1`. So the observable the three-block
+machinery sees is `F` itself, and every statement about the dressed observable becomes a statement
+about `F`.
+
+**⭐ THE DRESSING DOES DEPEND ON `boxR`.** `idressed_depends_on_boxR`: on `quadLinks τ ν x`, at
+`β ≠ 0` and with the BARE observable constant, two configurations agreeing off `boxR` give
+different dressed values. ⛔ That carrier is one plaquette and is not reflection-closed.
+
+DERIVED: the `0` is the coupling; `4` is the dimension. -/
+theorem idressed_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (F : MassGap.GibbsSpec.VConf G Λ → ℝ) :
+    idressed φ 0 τ p Λ ω F = F := by
+  funext u
+  unfold idressed
+  rw [ihalfBoltz_at_zero_coupling φ τ p Λ ω u, mul_one]
+
+#print axioms idressed_at_zero_coupling
+
+/-- **At zero coupling the plane weight is `1` too.**
+
+DERIVED: the `0` is the coupling; the `1` is `exp 0`; `4` is the dimension. -/
+theorem iplaneWeight_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) : iplaneWeight φ 0 τ p Λ ω u = 1 := by
+  unfold iplaneWeight
+  simp
+
+#print axioms iplaneWeight_at_zero_coupling
+
 end PlaneWeight
 
 /-! ## ⭐ 3d‴d. The bound `C`, and measurability -/
@@ -1327,6 +2152,26 @@ theorem abs_exp_neg_actionOn_le {G : Type} [Group G] {φ : G → ℝ}
 
 #print axioms abs_exp_neg_actionOn_le
 
+/-- **AND A FLOOR**, by the same route. `Real.exp_pos` is pointwise and gives no constant.
+
+DERIVED: the `2` is the range of the density, as in `abs_exp_neg_actionOn_le`; the `0` is the
+density's sign hypothesis. There is no dimension parameter here. -/
+theorem exp_neg_actionOn_ge {G : Type} [Group G] {φ : G → ℝ}
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
+    (S : Finset MassGap.GibbsSpec.IPlaq) (U : MassGap.GibbsSpec.IConf G) :
+    Real.exp (-(|β| * ((S.card : ℝ) * 2)))
+      ≤ Real.exp (-β * MassGap.GibbsSpec.actionOn φ S U) := by
+  refine Real.exp_le_exp.mpr ?_
+  have h1 : |(-β) * MassGap.GibbsSpec.actionOn φ S U| ≤ |β| * ((S.card : ℝ) * 2) := by
+    rw [abs_mul, abs_neg]
+    refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+    rw [abs_of_nonneg (MassGap.GibbsSpec.actionOn_nonneg hφ0 S U)]
+    exact MassGap.GibbsSpec.actionOn_le hφ2 S U
+  have h2 := neg_abs_le ((-β) * MassGap.GibbsSpec.actionOn φ S U)
+  linarith
+
+#print axioms exp_neg_actionOn_ge
+
 variable {G : Type} [Group G]
 
 /-- The half Boltzmann factor is bounded. -/
@@ -1342,6 +2187,21 @@ theorem iplaneWeight_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : 
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
     |iplaneWeight φ β τ p Λ ω u| ≤ Real.exp (|β| * (((iplqZero τ p Λ).card : ℝ) * 2)) :=
   abs_exp_neg_actionOn_le hφ0 hφ2 β _ _
+
+/-- **AND THE PLANE WEIGHT HAS A FLOOR**, which `irefl_box_pairing_ge_variance` passes as `Wmin`.
+`iplaneWeight_pos` is pointwise and gives no constant.
+
+DERIVED: the `2` is the range of the density; the `0` is the density's sign hypothesis; `4` is the
+dimension. -/
+theorem iplaneWeight_lower_bound {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g)
+    (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (τ : Fin 4) (p : ℤ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
+    Real.exp (-(|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+      ≤ iplaneWeight φ β τ p Λ ω u :=
+  exp_neg_actionOn_ge hφ0 hφ2 β _ _
+
+#print axioms iplaneWeight_lower_bound
 
 /-- **A DRESSED OBSERVABLE IS BOUNDED** when the bare one is. -/
 theorem idressed_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
@@ -1463,6 +2323,553 @@ theorem irefl_box_pairing_nonneg
     O hOm hOloc W hWm hWnn hWloc C hC
 
 #print axioms irefl_box_pairing_nonneg
+
+/-- **⭐⭐ EXACTLY WHEN THE BOX'S REFLECTION FORM VANISHES.**
+
+`irefl_box_pairing_nonneg` gives `0 ≤`; this gives the equivalence, at the same instantiation of the
+same three blocks. The form is zero exactly when the weight times the SQUARE of the observable's
+conditional half-integral — the integral over the positive block with the shared block held fixed —
+vanishes almost everywhere.
+
+**⛔ IT IS NOT "`O` IS CONSTANT".** What it constrains is the conditional half-integral, and an
+observable can vary while that vanishes. No witness either way is recorded here.
+
+**⛔ AND IT IS ONE FINITE BOX.** Transporting a vanishing criterion to a limit state is a separate
+step the tree does not take. `ActionSplit.glue_base_congr` does show the right-hand side is
+independent of the `base` the instantiation picks, so the criterion is a property of `O` and `W`
+alone.
+
+**WHY IT IS WORTH STATING.** `TransferGap.GapAt`'s denominator and row 13's null space are both
+questions about the lower end of a reflection form. This is that lower end, at finite volume, for the
+box — stated, not bounded: nothing here says the half-integral does not vanish.
+
+DERIVED: the `2` in `2 * p` is the even reflection constant, as in `irefl_box_pairing_nonneg`; the
+`2` in `^ 2` is the square of `ActionSplit.pairing_eq_weighted_square`; the `0`s are the vanishing
+asserted on each side and the weight's sign; the `1` is the all-identity `base`, which
+`glue_base_congr` shows the statement does not depend on; `4` is the dimension. -/
+theorem irefl_box_pairing_eq_zero_iff
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → (∀ i ∈ boxR τ p Λ, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (↥Λ → MassGap.SUN.SU N) → ℝ) (hWm : Measurable W) (hWnn : ∀ U, 0 ≤ W U)
+    (hWloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxR τ p Λ, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) :
+    (∫ U, W U * O U *
+        O (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+          (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U)
+        ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) = 0
+      ↔ (fun U => W U * (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+            (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+            (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+              (fun _ => 1) v w)) U) ^ 2)
+          =ᵐ[MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))] 0 :=
+  MassGap.ActionSplit.pairing_eq_zero_iff_local
+    (probHaar (MassGap.SUN.SU N))
+    (boxS τ p Λ) (boxT τ p Λ) (boxR τ p Λ)
+    boxS_disjoint_boxT boxS_disjoint_boxR boxT_disjoint_boxR
+    (ireflBoxPerm hΛ)
+    (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1)
+    (fun l => ilinkDagger_measurePreserving τ l.1)
+    (fun _ hi => ireflBoxPerm_eq_self_of_mem_boxR hΛ hi)
+    (fun _ hi u => ilinkDagger_eq_self_of_ne τ (boxR_ne_tau hi) u)
+    (fun _ hi => ireflBoxPerm_mem_boxT_of_mem_boxS hΛ hi)
+    (fun _ => 1)
+    O hOm hOloc Ch hOb W hWm hWnn hWloc Cw hWb
+
+#print axioms irefl_box_pairing_eq_zero_iff
+
+/-- **⭐⭐⭐ EXACTLY WHEN THE BOX'S REFLECTION FORM IS POSITIVE.**
+
+The companion to `irefl_box_pairing_eq_zero_iff`, and the side a gap's DENOMINATOR needs: the
+constant-subtracted form is strictly positive exactly when the observable's conditional half-integral
+is not almost everywhere `k`.
+
+**WHERE THE CONTENT SITS.** The criterion is about the half-integral as a function of the SHARED
+BLOCK. In the Wilson instantiation the observable carried here is the DRESSED one,
+`idressed = F · e^{-βA₊}`, and `idressed_depends_on_boxR` exhibits two configurations agreeing off
+`boxR` at which it differs.
+
+**⛔ THAT IS THE INTEGRAND, NOT THE INTEGRAL.** The half-integral integrates over the `S`-block;
+that IT varies with the plane is not proved.
+
+**⛔ THE TWO SIDES ARE THE SAME PROPOSITION.** With `0 < W` this is `irefl_box_pairing_eq_zero_iff`
+negated and signed; it moves no difficulty. What it buys is the criterion written as a statement
+about a function of the plane variables, which is the form
+`HaarVariance.variance_pos_of_two_values` could attack — available here, unlike in `ActionSplit`'s
+abstract section, because `SU N` carries a topology and Haar is open-positive.
+
+**⛔ AND NOTHING DISCHARGES IT.** No observable is exhibited whose dressed half-integral is
+non-constant, at any coupling.
+
+DERIVED: the `2` is the even reflection constant, as in `irefl_box_pairing_eq_zero_iff`; the `0`s are
+the positivity asserted, the weight's sign in `hWpos`, and the a.e. vanishing denied; the `1` is the
+all-identity `base`, which `ActionSplit.glue_base_congr` shows the statement does not depend on; `4`
+is the dimension. -/
+theorem irefl_box_pairing_pos_iff
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → (∀ i ∈ boxR τ p Λ, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (↥Λ → MassGap.SUN.SU N) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxR τ p Λ, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ) :
+    0 < (∫ U, W U * (O U - k) *
+        (O (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+          (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U) - k)
+        ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
+      ↔ ¬ ((fun U => MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+            (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+            (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+              (fun _ => 1) v w)) U - k)
+          =ᵐ[MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))] 0) :=
+  MassGap.ActionSplit.pairing_pos_iff_half_ne_const
+    (probHaar (MassGap.SUN.SU N))
+    (boxS τ p Λ) (boxT τ p Λ) (boxR τ p Λ)
+    boxS_disjoint_boxT boxS_disjoint_boxR boxT_disjoint_boxR
+    (ireflBoxPerm hΛ)
+    (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1)
+    (fun l => ilinkDagger_measurePreserving τ l.1)
+    (fun _ hi => ireflBoxPerm_eq_self_of_mem_boxR hΛ hi)
+    (fun _ hi u => ilinkDagger_eq_self_of_ne τ (boxR_ne_tau hi) u)
+    (fun _ hi => ireflBoxPerm_mem_boxT_of_mem_boxS hΛ hi)
+    (fun _ => 1)
+    O hOm hOloc Ch hOb W hWm hWpos hWloc Cw hWb k
+
+#print axioms irefl_box_pairing_pos_iff
+
+/-- **⭐⭐⭐ THE BOX'S REFLECTION FORM IS STRICTLY POSITIVE ON A DRESSED PLANE OBSERVABLE.**
+
+`O U = f(plane part of U) · K U`. The plane factor pulls out of the half-integral
+(`ActionSplit.halfIntegral_mul_R_left`), what is left is the `S`-integral of `K`, and a uniform
+lower bound `c > 0` makes that strictly positive (`ActionSplit.le_halfIntegral`). So `f` vanishing
+at one plane configuration and positive at another gives the half-integral TWO VALUES, which is
+`ActionSplit.pairing_pos_of_half_two_values`'s hypothesis.
+
+`K` is where the dressing goes: `irefl_box_pairing_pos_of_plane_factor_dressed` discharges every
+hypothesis on `K` for `ihalfBoltz`.
+
+**⛔ THE BARE OBSERVABLE READS THE PLANE ALONE; THE PRODUCT DOES NOT.** So
+`ActionSplit.pairing_pos_iff_ne_const_of_indep_S` does not cover this, and it is the mixed case.
+
+**⛔ THE POSITIVITY COMES FROM THE PLANE FACTOR, NOT FROM THE DRESSING.** What the theorem adds is
+that the dressing cannot CANCEL it. Two facts about `K` do that, both through `le_halfIntegral`:
+the floor `hKc`, and the BOUND `hKb` — without the bound the Bochner integral of a non-integrable
+function is `0` by convention and the floor would refute the conclusion rather than support it.
+
+**⛔ `0 <` IS NOT A RATE.** No lower bound on the pairing is produced, and `hfin`'s ratio needs one.
+
+DERIVED: the `2` is the even reflection constant `2 * p`, as in `irefl_box_pairing_pos_iff`; the
+`0`s are `c`'s sign, `f`'s value at `a`, the sign of `f`'s value at `b`, the weight's sign, and the
+positivity concluded; the `1` is the all-identity `base`; `4` is the dimension. -/
+theorem irefl_box_pairing_pos_of_plane_factor
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (f : (↥(boxR τ p Λ) → MassGap.SUN.SU N) → ℝ) (hfc : Continuous f)
+    {Cf : ℝ} (hfb : ∀ w, |f w| ≤ Cf)
+    (K : (↥Λ → MassGap.SUN.SU N) → ℝ) (hKm : Measurable K)
+    (hKloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → (∀ i ∈ boxR τ p Λ, U i = V i) → K U = K V)
+    {Ck : ℝ} (hKb : ∀ U, |K U| ≤ Ck) {c : ℝ} (hc0 : 0 < c) (hKc : ∀ U, c ≤ K U)
+    (hKcj : Continuous (fun q : ((↥(boxS τ p Λ) → MassGap.SUN.SU N) ×
+        (↥(boxR τ p Λ) → MassGap.SUN.SU N)) =>
+      K (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1) q.1 q.2)))
+    (W : (↥Λ → MassGap.SUN.SU N) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxR τ p Λ, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ)
+    {a b : ↥Λ → MassGap.SUN.SU N}
+    (ha : f (fun i : ↥(boxR τ p Λ) => a (i : ↥Λ)) = 0)
+    (hb : 0 < f (fun i : ↥(boxR τ p Λ) => b (i : ↥Λ))) :
+    0 < (∫ U, W U
+        * (f (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ)) * K U - k)
+        * (f (fun i : ↥(boxR τ p Λ) => MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+              (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U (i : ↥Λ))
+            * K (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+              (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U) - k)
+        ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) := by
+  classical
+  have hres : ∀ (v : ↥(boxS τ p Λ) → MassGap.SUN.SU N)
+      (w : ↥(boxR τ p Λ) → MassGap.SUN.SU N),
+      (fun i : ↥(boxR τ p Λ) => MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+        (fun _ => 1) v w (i : ↥Λ)) = w :=
+    fun v w => MassGap.ActionSplit.glue_restrict_R _ _ boxS_disjoint_boxR _ v w
+  refine MassGap.ActionSplit.pairing_pos_of_half_two_values
+    (probHaar (MassGap.SUN.SU N))
+    (boxS τ p Λ) (boxT τ p Λ) (boxR τ p Λ)
+    boxS_disjoint_boxT boxS_disjoint_boxR boxT_disjoint_boxR
+    (ireflBoxPerm hΛ)
+    (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1)
+    (fun l => ilinkDagger_measurePreserving τ l.1)
+    (fun _ hi => ireflBoxPerm_eq_self_of_mem_boxR hΛ hi)
+    (fun _ hi u => ilinkDagger_eq_self_of_ne τ (boxR_ne_tau hi) u)
+    (fun _ hi => ireflBoxPerm_mem_boxT_of_mem_boxS hΛ hi)
+    (fun _ => 1)
+    (fun U => f (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ)) * K U) ?_ ?_ (Cf * Ck) ?_ ?_
+    W hWm hWpos hWloc Cw hWb k (a := a) (b := b) ?_
+  · have hrm : Measurable (fun U : ↥Λ → MassGap.SUN.SU N =>
+        (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ))) :=
+      measurable_pi_lambda _ (fun i : ↥(boxR τ p Λ) => measurable_pi_apply (i : ↥Λ))
+    exact (hfc.measurable.comp hrm).mul hKm
+  · intro U V hS hR
+    have h1 : (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ))
+        = (fun i : ↥(boxR τ p Λ) => V (i : ↥Λ)) := funext (fun i => hR _ i.2)
+    rw [h1, hKloc U V hS hR]
+  · intro U
+    have hCf : (0 : ℝ) ≤ Cf :=
+      le_trans (abs_nonneg _) (hfb (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ)))
+    rw [abs_mul]
+    exact mul_le_mul (hfb _) (hKb U) (abs_nonneg _) hCf
+  · simp only [hres]
+    exact (hfc.comp continuous_snd).mul hKcj
+  · have key := MassGap.ActionSplit.halfIntegral_two_values_of_R_factor
+      (probHaar (MassGap.SUN.SU N)) (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR f
+      (fun v w => K (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1) v w))
+      (hKm.comp (MassGap.ActionSplit.measurable_glue _ _ _))
+      (fun _ _ => hKb _) hc0 (fun _ _ => hKc _) ha hb
+    simpa only [hres] using key
+
+#print axioms irefl_box_pairing_pos_of_plane_factor
+
+/-- **⭐⭐⭐ THE SAME, WITH THE DRESSING IN PLACE OF `K`.**
+
+Every hypothesis on `K` is discharged: `measurable_ihalfBoltz`, `ihalfBoltz_local`,
+`ihalfBoltz_upper_bound`, `ihalfBoltz_lower_bound`, and `continuous_ihalfBoltz` composed with
+`ActionSplit.continuous_glue`. Nothing is left about the weight `e^{-βA₊}`.
+
+**⛔ `f` IS STILL A HYPOTHESIS.** A plane function with a zero and a positive value is not
+exhibited here, and `hΛ` asks for a reflection-closed `Λ`, which `quadLinks` is not. So this is not
+yet a non-vacuity statement.
+
+**⛔ `0 <` IS NOT A RATE.**
+
+DERIVED: the `2` is the even reflection constant `2 * p`, as in `irefl_box_pairing_pos_iff`; the
+`0`s are `f`'s value at `a`, the sign of `f`'s value at `b`, the weight's sign, and the positivity
+concluded; `4` is the dimension. -/
+theorem irefl_box_pairing_pos_of_plane_factor_dressed
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (φ : MassGap.SUN.SU N → ℝ) (hφm : Measurable φ) (hφc : Continuous φ)
+    {Cφ : ℝ} (hφb : ∀ g, |φ g| ≤ Cφ) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f : (↥(boxR τ p Λ) → MassGap.SUN.SU N) → ℝ) (hfc : Continuous f)
+    {Cf : ℝ} (hfb : ∀ w, |f w| ≤ Cf)
+    (W : (↥Λ → MassGap.SUN.SU N) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxR τ p Λ, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ)
+    {a b : ↥Λ → MassGap.SUN.SU N}
+    (ha : f (fun i : ↥(boxR τ p Λ) => a (i : ↥Λ)) = 0)
+    (hb : 0 < f (fun i : ↥(boxR τ p Λ) => b (i : ↥Λ))) :
+    0 < (∫ U, W U
+        * (f (fun i : ↥(boxR τ p Λ) => U (i : ↥Λ))
+            * ihalfBoltz (G := MassGap.SUN.SU N) φ β τ p Λ ω U - k)
+        * (f (fun i : ↥(boxR τ p Λ) => MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+              (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U (i : ↥Λ))
+            * ihalfBoltz (G := MassGap.SUN.SU N) φ β τ p Λ ω
+              (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+                (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U) - k)
+        ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) :=
+  irefl_box_pairing_pos_of_plane_factor hΛ f hfc hfb
+    (ihalfBoltz (G := MassGap.SUN.SU N) φ β τ p Λ ω)
+    (measurable_ihalfBoltz hφm β τ p Λ ω)
+    (ihalfBoltz_local φ β τ p Λ ω)
+    (hKb := ihalfBoltz_upper_bound φ hφb β τ p Λ ω)
+    (hc0 := Real.exp_pos _)
+    (hKc := ihalfBoltz_lower_bound φ hφb β τ p Λ ω)
+    (hKcj := (continuous_ihalfBoltz hφc β τ p Λ ω).comp
+      (MassGap.ActionSplit.continuous_glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1)))
+    W hWm hWpos hWloc Cw hWb k ha hb
+
+#print axioms irefl_box_pairing_pos_of_plane_factor_dressed
+
+/-- **⭐⭐⭐ THE BOX'S REFLECTION FORM IS BOUNDED BELOW BY THE HALF-INTEGRAL'S VARIANCE, AT EVERY
+`k`.**
+
+`ActionSplit.pairing_ge_variance_of_local` with the box's own weight: `measurable_iplaneWeight`,
+`iplaneWeight_local`, `iplaneWeight_abs_le` for the ceiling and `iplaneWeight_lower_bound` for the
+floor. The floor is `exp(-|β|·card(iplqZero)·2)`, strictly positive at every `β`.
+
+**⛔ THE LEFT-HAND SIDE IS AN INTEGRAL, NOT A NUMBER**, so this is not a rate.
+
+**⛔ AND IT BEATS `pairing_nonneg_of_local` ONLY WHERE THE VARIANCE IS POSITIVE.** The floor is
+positive at every `β`, so what is left is `ActionSplit.variance_pos_of_not_ae_const`'s hypothesis:
+the half-integral not a.e. its own mean. Where that fails the bound is `0 ≤`, already known. Note
+also that this is the SHIFTED pairing, which agrees with the raw one only at `k = 0`.
+
+**⛔ AND NOTHING ROUTES IT INTO `hfin`.** `gapAt_of_finite_volume_connected` is discharged through
+`WilsonTransferReduction.gapAt_iff_subtracted_pairing`, which does not mention this. What the `k`-
+freedom buys is that a caller need not identify the state's mean; no caller does so yet.
+
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette
+count is the range of the density, as in `iplaneWeight_abs_le`; the `2`s in `^ 2` are the squares
+of the variance; the `0` is the density's lower sign hypothesis; the `1` is the all-identity
+`base`; `4` is the dimension. -/
+theorem irefl_box_pairing_ge_variance
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (φ : MassGap.SUN.SU N → ℝ) (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → (∀ i ∈ boxR τ p Λ, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch) (k : ℝ) :
+    Real.exp (-(|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+        * ((∫ U, (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+                (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+                (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+                  (fun _ => 1) v w)) U) ^ 2
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
+            - (∫ U, MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+                (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+                (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+                  (fun _ => 1) v w)) U
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) ^ 2)
+      ≤ ∫ U, iplaneWeight φ β τ p Λ ω U * (O U - k)
+          * (O (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+              (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U) - k)
+          ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) :=
+  MassGap.ActionSplit.pairing_ge_variance_of_local
+    (probHaar (MassGap.SUN.SU N))
+    (boxS τ p Λ) (boxT τ p Λ) (boxR τ p Λ)
+    boxS_disjoint_boxT boxS_disjoint_boxR boxT_disjoint_boxR
+    (ireflBoxPerm hΛ)
+    (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1)
+    (fun l => ilinkDagger_measurePreserving τ l.1)
+    (fun _ hi => ireflBoxPerm_eq_self_of_mem_boxR hΛ hi)
+    (fun _ hi u => ilinkDagger_eq_self_of_ne τ (boxR_ne_tau hi) u)
+    (fun _ hi => ireflBoxPerm_mem_boxT_of_mem_boxS hΛ hi)
+    (fun _ => 1)
+    O hOm hOloc Ch hOb
+    (iplaneWeight φ β τ p Λ ω)
+    (measurable_iplaneWeight hφm β τ p Λ ω)
+    (fun U V hR => iplaneWeight_local φ β τ p Λ ω U V hR)
+    (Real.exp (|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+    (iplaneWeight_abs_le hφ0 hφ2 β τ p Λ ω)
+    (hWmin0 := (Real.exp_pos _).le)
+    (hWmin := iplaneWeight_lower_bound hφ0 hφ2 β τ p Λ ω)
+    k
+
+#print axioms irefl_box_pairing_ge_variance
+
+/-- **⭐⭐⭐ AND THE BOUND IS STRICTLY POSITIVE WHEN THE HALF-INTEGRAL TAKES TWO VALUES.**
+
+`irefl_box_pairing_ge_variance` alone can degenerate to `0 ≤ pairing`, which
+`irefl_box_pairing_nonneg` already gives. Two values of the half-integral rule that out:
+`ActionSplit.continuous_halfIntegral` makes it continuous, `not_ae_eq_const_of_two_values` makes it
+not a.e. its own mean against the open-positive `cvol`, and `variance_pos_of_not_ae_const` turns
+that into a positive variance. The weight's floor is positive at every coupling.
+
+**⛔ STILL NOT A RATE.** The bound is a positive INTEGRAL, not a number, and `hfin` needs a number.
+
+DERIVED: the `2` multiplying the plaquette count is the range of the density; the `2`s in `^ 2`
+are the squares of the variance; the `0`s are the density's lower sign hypothesis, its upper bound
+being `2`, and the positivity concluded; the `1` is the all-identity `base`; `4` is the
+dimension. -/
+theorem irefl_box_pairing_ge_variance_pos
+    (φ : MassGap.SUN.SU N → ℝ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
+    (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (hcj : Continuous (fun q : ((↥(boxS τ p Λ) → MassGap.SUN.SU N) ×
+        (↥(boxR τ p Λ) → MassGap.SUN.SU N)) =>
+      O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1) q.1 q.2)))
+    {a b : ↥Λ → MassGap.SUN.SU N}
+    (hab : MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) a ≠ MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) b) :
+    0 < Real.exp (-(|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+        * ((∫ U, (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U) ^ 2
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
+            - (∫ U, MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) ^ 2) := by
+  classical
+  have hmj : Measurable (fun q : ((↥(boxS τ p Λ) → MassGap.SUN.SU N) ×
+      (↥(boxR τ p Λ) → MassGap.SUN.SU N)) =>
+      O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1) q.1 q.2)) :=
+    hOm.comp (MassGap.ActionSplit.measurable_glue _ _ _)
+  have hcont : Continuous (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w))) :=
+    MassGap.ActionSplit.continuous_halfIntegral _ _ _ _ _ hmj hcj (fun _ _ => hOb _)
+  have hbd : ∀ U, |MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U| ≤ Ch :=
+    fun U => MassGap.ActionSplit.abs_halfIntegral_le _ _ _ _ _ (fun _ _ => hOb _) U
+  have hCh0 : (0 : ℝ) ≤ Ch := le_trans (abs_nonneg _) (hOb (fun _ => 1))
+  have hgi : Integrable (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)))
+      (MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) :=
+    MassGap.ActionSplit.integrable_of_bounded _ hcont.measurable hbd
+  have hg2i : Integrable (fun U => (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U) ^ 2)
+      (MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) := by
+    refine MassGap.ActionSplit.integrable_of_bounded _ (hcont.measurable.pow_const 2)
+      (C := Ch ^ 2) (fun U => ?_)
+    rw [abs_pow]
+    nlinarith [abs_nonneg (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U), hbd U]
+  refine mul_pos (Real.exp_pos _) ?_
+  refine MassGap.ActionSplit.variance_pos_of_not_ae_const
+    (MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) _ hgi hg2i ?_
+  intro hae
+  refine MassGap.ActionSplit.not_ae_eq_const_of_two_values
+    (MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) hcont
+    (∫ y, MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) y ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) hab ?_
+  filter_upwards [hae] with U hU
+  simp only [Pi.zero_apply]
+  rw [hU]
+  ring
+
+#print axioms irefl_box_pairing_ge_variance_pos
+
+/-- **⭐⭐⭐ THE TWO HALVES JOINED: A POSITIVE FLOOR, BELOW THE BOX'S WILSON REFLECTION FORM.**
+
+`irefl_box_pairing_ge_variance_pos` gives the left conjunct, `irefl_box_pairing_ge_variance` the
+right. Together: the form is strictly positive at every `k`, and the quantity it exceeds is named.
+
+**⛔ THE FLOOR IS AN INTEGRAL, NOT A NUMBER.** `hfin` is a RATIO and needs a number, so this does
+not reach it; and nothing routes it there.
+
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette
+count is the range of the density; the `2`s in `^ 2` are the squares of the variance; the `0`s are
+the density's lower sign hypothesis and the positivity concluded; the `1` is the all-identity
+`base`; `4` is the dimension. -/
+theorem irefl_box_pairing_pos_and_floor
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (φ : MassGap.SUN.SU N → ℝ) (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → (∀ i ∈ boxR τ p Λ, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (hcj : Continuous (fun q : ((↥(boxS τ p Λ) → MassGap.SUN.SU N) ×
+        (↥(boxR τ p Λ) → MassGap.SUN.SU N)) =>
+      O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ) (fun _ => 1) q.1 q.2)))
+    {a b : ↥Λ → MassGap.SUN.SU N}
+    (hab : MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) a ≠ MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) b)
+    (k : ℝ) :
+    0 < Real.exp (-(|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+        * ((∫ U, (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U) ^ 2
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
+            - (∫ U, MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U
+              ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) ^ 2)
+      ∧ Real.exp (-(|β| * (((iplqZero τ p Λ).card : ℝ) * 2)))
+          * ((∫ U, (MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U) ^ 2
+                ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
+              - (∫ U, MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+          (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+          (fun v w => O (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+            (fun _ => 1) v w)) U
+                ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) ^ 2)
+        ≤ ∫ U, iplaneWeight φ β τ p Λ ω U * (O U - k)
+            * (O (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+                (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U) - k)
+            ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))) :=
+  ⟨irefl_box_pairing_ge_variance_pos φ hφ0 hφ2 β O hOm Ch hOb hcj hab,
+    irefl_box_pairing_ge_variance hΛ φ hφm hφ0 hφ2 β ω O hOm hOloc Ch hOb k⟩
+
+#print axioms irefl_box_pairing_pos_and_floor
+
+/-- **⭐⭐⭐ AT ZERO COUPLING THE BOX'S REFLECTION FORM ANNIHILATES EVERY STRICTLY-INTERIOR
+OBSERVABLE.**
+
+The weight here is the LITERAL `1` and the observable is the bare `F`, so
+`ActionSplit.pairing_eq_zero_of_indep_R` applies directly: subtract the constant its half-integral
+takes and the pairing is exactly `0`.
+
+**⛔ THIS IS NOT STATED IN THE BOX'S OWN WEIGHT.** The box's pairing carries `wtFree`;
+`wtFree_at_zero_coupling` is the bridge and is NOT used here — a caller holding the β-parametrised
+pairing must rewrite through it first.
+
+**THIS IS A CONSTRAINT ON PROOF STRATEGIES.** Non-degeneracy of the reflection form is what a gap's
+denominator needs, and here it is FALSE — at zero coupling, on every observable reading the positive
+block alone. So non-degeneracy is a PURE INTERACTION EFFECT, and no argument that does not use
+`β ≠ 0` can establish it.
+
+**⛔ IT SAYS NOTHING AT `β ≠ 0`, WHERE `hOS` FAILS.** `idressed_depends_on_boxR` refutes `hOS` for
+the dressed observable on `quadLinks τ ν x` at every `β ≠ 0`, so `pairing_eq_zero_of_indep_R` does
+not apply there, and the conjecture that the form is always degenerate is false.
+
+**⛔ AND IT IS ONE BOX, NOT A LIMIT STATE.**
+
+DERIVED: the only `0` in the statement is the pairing's value — `β` does not occur, the coupling
+being carried by the literal weight; the `2` is the even reflection constant `2 * p` as in
+`irefl_box_pairing_nonneg`; the `1`s are the weight, the all-identity `base`, and the point each
+half-integral is evaluated at; `4` is the dimension. -/
+theorem irefl_box_pairing_eq_zero_at_zero_coupling
+    (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
+    (F : (↥Λ → MassGap.SUN.SU N) → ℝ) (hFm : Measurable F)
+    (hFS : ∀ U V : ↥Λ → MassGap.SUN.SU N,
+      (∀ i ∈ boxS τ p Λ, U i = V i) → F U = F V)
+    (Ch : ℝ) (hFb : ∀ U, |F U| ≤ Ch) :
+    (∫ U, (1 : ℝ)
+        * (F U - MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+            (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+            (fun v w => F (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+              (fun _ => 1) v w)) (fun _ => 1))
+        * (F (MassGap.ActionSplit.twist (ireflBoxPerm hΛ)
+              (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1) U)
+            - MassGap.ActionSplit.halfIntegral (probHaar (MassGap.SUN.SU N))
+              (boxS τ p Λ) (boxR τ p Λ) boxS_disjoint_boxR
+              (fun v w => F (MassGap.ActionSplit.glue (boxS τ p Λ) (boxR τ p Λ)
+                (fun _ => 1) v w)) (fun _ => 1))
+      ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))) = 0 :=
+  MassGap.ActionSplit.pairing_eq_zero_of_indep_R
+    (probHaar (MassGap.SUN.SU N))
+    (boxS τ p Λ) (boxT τ p Λ) (boxR τ p Λ)
+    boxS_disjoint_boxT boxS_disjoint_boxR boxT_disjoint_boxR
+    (ireflBoxPerm hΛ)
+    (fun l : ↥Λ => ilinkDagger (G := MassGap.SUN.SU N) τ l.1)
+    (fun l => ilinkDagger_measurePreserving τ l.1)
+    (fun _ hi => ireflBoxPerm_eq_self_of_mem_boxR hΛ hi)
+    (fun _ hi u => ilinkDagger_eq_self_of_ne τ (boxR_ne_tau hi) u)
+    (fun _ hi => ireflBoxPerm_mem_boxT_of_mem_boxS hΛ hi)
+    (fun _ => 1)
+    F hFm hFS Ch hFb
+    (fun _ => (1 : ℝ)) measurable_const (fun _ => zero_le_one)
+    (fun _ _ _ => rfl) 1 (fun _ => by norm_num)
+
+#print axioms irefl_box_pairing_eq_zero_at_zero_coupling
 
 /-- **THE ABSTRACT TWIST AND THE CONCRETE REFLECTION AGREE ON THE BOX.**
 
@@ -1599,7 +3006,7 @@ every link inside. That is not a weakening chosen for convenience, it is what th
 argument proves; the DLR kernel with an arbitrary `ω` has no reason to be reflection positive.
 
 `ω` is carried and inert: every plaquette of `iplqAll` has all four links in `Λ`, so `splice` never
-consults it.
+consults it. That is `wtFree_congr_right`, proved below rather than asserted here.
 
 DERIVED: no numeral of its own; the sign is the Gibbs convention and `4` is the dimension. -/
 noncomputable def wtFree {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
@@ -1610,6 +3017,40 @@ noncomputable def wtFree {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
 theorem wtFree_pos {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : 0 < wtFree φ β Λ ω u := Real.exp_pos _
+
+/-- **⭐ THE BOX WEIGHT DOES NOT SEE THE BOUNDARY CONFIGURATION.**
+
+Every plaquette of `iplqAll Λ` has all four links inside `Λ` (`GibbsSpec.mem_plaqsIn`), so `splice`
+returns the box's own variable at each of them and `ω` is never consulted. Asserted in `wtFree`'s
+docstring since it was written; this is the term.
+
+It is what lets `boxBd` present the box as a finite Wilson system with no boundary data:
+`wilsonHol_boxBd` is the same fact at one plaquette, and this is it summed.
+
+DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried inside `ILink`
+and `IPlaq` as in `iplqAll`. -/
+theorem wtFree_congr_right {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω ω' : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) : wtFree φ β Λ ω u = wtFree φ β Λ ω' u := by
+  unfold wtFree MassGap.GibbsSpec.actionOn
+  refine congrArg (fun z => Real.exp (-β * z)) (Finset.sum_congr rfl (fun q hq => ?_))
+  refine congrArg φ (MassGap.GibbsSpec.ihol_congr q _ _ (fun l hl => ?_))
+  have hmem : l ∈ Λ :=
+    MassGap.GibbsSpec.mem_plaqsIn.mp (mem_iplqAll.mp hq).1 l hl
+  rw [MassGap.GibbsSpec.splice_mem hmem, MassGap.GibbsSpec.splice_mem hmem]
+
+#print axioms wtFree_congr_right
+
+/-- **At zero coupling the box weight is `1`.** `wtFree` is `exp(-β · actionOn …)`.
+
+DERIVED: the `0` is the coupling; the `1` is `exp 0`; `4` is the dimension. -/
+theorem wtFree_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) : wtFree φ 0 Λ ω u = 1 := by
+  unfold wtFree
+  simp
+
+#print axioms wtFree_at_zero_coupling
 
 #print axioms wtFree_pos
 
@@ -1716,6 +3157,149 @@ noncomputable def specFree {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
     (f : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ → ℝ) : ℝ :=
   (∫ u, f u * wtFree φ β Λ ω u ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
     / partFree (φ := φ) β Λ ω
+
+/-- **⭐ THE BOX'S ACTION IS THE FINITE WILSON SYSTEM'S ACTION.**
+
+`System.action` sums `φ ∘ hol` over the plaquette type; `GibbsSpec.actionOn` sums `φ ∘ ihol` over the
+`Finset`. With `Plaq := ↥(iplqAll Λ)` those are the same sum, by `Finset.sum_coe_sort`, and
+`wilsonHol_boxBd` matches the summands one plaquette at a time.
+
+DERIVED: no numeral of its own; `Λ` and `ω` are the caller's and `4` is the dimension, carried inside
+`ILink` and `IPlaq` as in `iplqAll`. -/
+theorem action_boxBd (φ : MassGap.SUN.SU N → ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ) :
+    (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).action u
+      = MassGap.GibbsSpec.actionOn φ (iplqAll Λ) (MassGap.GibbsSpec.splice Λ u ω) := by
+  classical
+  show ∑ p : ↥(iplqAll Λ), φ (MassGap.WilsonLattice.wilsonHol (boxBd Λ) p u)
+      = ∑ q ∈ iplqAll Λ, φ (MassGap.GibbsSpec.ihol q (MassGap.GibbsSpec.splice Λ u ω))
+  rw [← Finset.sum_coe_sort (iplqAll Λ)
+    (fun q => φ (MassGap.GibbsSpec.ihol q (MassGap.GibbsSpec.splice Λ u ω)))]
+  exact Finset.sum_congr rfl (fun q _ => by rw [wilsonHol_boxBd])
+
+#print axioms action_boxBd
+
+/-- **⭐ AND SO ITS BOLTZMANN WEIGHT IS `wtFree`.**
+
+The free-boundary weight of a box is literally the finite Wilson system's weight over `↥Λ`, at every
+boundary configuration — `ω` appears on the right and nowhere on the left, which `wtFree_congr_right`
+states on its own.
+
+DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem boltz_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ) :
+    (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).boltz β u = wtFree φ β Λ ω u := by
+  unfold MassGap.LatticeGauge.System.boltz wtFree
+  rw [action_boxBd φ Λ ω u]
+
+#print axioms boltz_boxBd
+
+/-- **⭐ THE TWO PARTITION FUNCTIONS AGREE** — the finite Wilson system's over `↥Λ`, and the box's
+`partFree`. Immediate from `boltz_boxBd` under the integral, the two measures being the same
+`Measure.pi`.
+
+DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem partition_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
+    (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).partition
+        (probHaar (MassGap.SUN.SU N)) β
+      = partFree (φ := φ) β Λ ω := by
+  unfold MassGap.LatticeGauge.System.partition partFree
+  exact integral_congr_ae (Filter.Eventually.of_forall (fun u => boltz_boxBd φ β Λ ω u))
+
+#print axioms partition_boxBd
+
+/-- **⭐⭐⭐ THE FREE-BOUNDARY STATE OF A BOX IS A FINITE WILSON SYSTEM'S GIBBS EXPECTATION** — the
+third carrier obligation, discharged.
+
+`specFree` and `System.expect` are the same quotient: the numerators agree by `boltz_boxBd` under the
+integral, the denominators by `partition_boxBd`, and the two measures are the same `Measure.pi`.
+
+With `touchDeg_boxBd_le` and `not_mem_ball_of_axis_gt`, the two GEOMETRIC hypotheses of
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` — which is the form that consumes
+a `touchDeg` bound, the base form writing `touchDeg bd` into its own constants — are available for
+`boxBd`. `hN`, `0 ≤ β` and `hr` remain on the caller. `hr` is FREE in `K` — `touchDeg bd` occurs
+only in `hK` — which is why it may be evaluated at `K = 16 * 4`, where it reads
+`β < 2.936337×10⁻⁵`.
+
+**⛔ `Config` AND `VConf` ARE DEFEQ BUT NOT SYNTACTIC**, `wilsonSystem` being a plain `def`. `rw` and
+`simp` at reducible transparency will not cross the two, which is why `action_boxBd` needs a `show`;
+a caller rewriting between them will need the same.
+
+`GibbsSpec.spec`/`part`/`num` sit on `GibbsSpec.vol` rather than `ActionSplit.cvol`, and
+`GibbsSpec`'s own docstring there already says it mirrors `LatticeGauge.System.expect` — this is that
+correspondence termed, for the free-boundary variant. `Measure.pi (fun _ => μ)` has three names in
+this tree; a fourth is not wanted.
+
+**⛔ THE OBSERVABLE GAP IS UNTOUCHED.** That theorem's conclusion is about `wilsonCorrConn`, a
+connected correlation of PLAQUETTE observables.
+`gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`, and nothing
+here says anything about a general member of that algebra.
+
+**⛔ AND NOTHING HERE IS A DECAY STATEMENT.** This is an identification of two definitions. The
+estimate still carries its own hypotheses, including the smallness
+`coreRate (touchDeg bd) β < 1`.
+
+DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
+inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem expect_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (O : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ → ℝ) :
+    (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).expect
+        (probHaar (MassGap.SUN.SU N)) β O
+      = specFree (φ := φ) β Λ ω O := by
+  unfold MassGap.LatticeGauge.System.expect MassGap.LatticeGauge.System.corrNum specFree
+  rw [partition_boxBd φ β Λ ω]
+  refine congrArg (fun z => z / partFree (φ := φ) β Λ ω) ?_
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun u => ?_))
+  show O u * (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).boltz β u
+      = O u * wtFree φ β Λ ω u
+  rw [boltz_boxBd φ β Λ ω u]
+
+#print axioms expect_boxBd
+
+/-- **⭐⭐⭐ THE CONNECTED CORRELATION THE DECAY THEOREM BOUNDS IS THE BOX'S OWN.**
+
+`WilsonBridge.wilsonCorrConn` for `boxBd` written out in `specFree` — the object
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds, expressed in the box's
+free-boundary state. `wilsonCorr` is `.expect` of the PRODUCT observable and the subtraction is a
+product of two single-observable `.expect`s, so all three terms are instances of `expect_boxBd`.
+
+**⛔ IT IS AN IDENTIFICATION, NOT AN ESTIMATE.** Nothing here decays. The estimate carries its own
+hypotheses — `Nc ≠ 0`, `0 ≤ β`, and the smallness `coreRate (touchDeg bd) β < 1`, which
+`StrongCoupling.core_rate_lt_one_of_small` supplies only NEAR `β = 0`.
+
+**⛔ AND THE OBSERVABLE IS A PLAQUETTE.** `wilsonPlaqObs` reads one plaquette;
+`gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`. That gap is
+untouched by the whole carrier construction and is what stands between this and row 17c.
+
+DERIVED: no numeral of its own; `β`, `Λ`, `ω`, `p₀` and `p` are the caller's and `4` is the dimension,
+carried inside `ILink` and `IPlaq` as in `iplqAll`. -/
+theorem wilsonCorrConn_boxBd (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (p₀ p : ↥(iplqAll Λ)) :
+    MassGap.WilsonBridge.wilsonCorrConn (Nc := N) (boxBd Λ) p₀ β p
+      = specFree (φ := MassGap.WilsonAction.wilsonDensity) β Λ ω
+          (fun u => MassGap.WilsonReal.wilsonPlaqObs (N := N) (boxBd Λ) p₀ u
+            * MassGap.WilsonReal.wilsonPlaqObs (N := N) (boxBd Λ) p u)
+        - specFree (φ := MassGap.WilsonAction.wilsonDensity) β Λ ω
+            (fun u => MassGap.WilsonReal.wilsonPlaqObs (N := N) (boxBd Λ) p₀ u)
+          * specFree (φ := MassGap.WilsonAction.wilsonDensity) β Λ ω
+            (fun u => MassGap.WilsonReal.wilsonPlaqObs (N := N) (boxBd Λ) p u) := by
+  unfold MassGap.WilsonBridge.wilsonCorrConn MassGap.WilsonBridge.wilsonCorr
+  rw [expect_boxBd (ω := ω), expect_boxBd (ω := ω), expect_boxBd (ω := ω)]
+  rfl
+
+#print axioms wilsonCorrConn_boxBd
 
 /-- **⭐⭐ REFLECTION POSITIVITY OF THE FREE-BOUNDARY STATE OF A BOX.**
 
@@ -1942,6 +3526,62 @@ noncomputable def stateFree {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable �
     (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
     stateFree hφm hφ0 hφ2 β Λ ω f
       = specFree (φ := φ) β Λ ω (fun u => f (MassGap.GibbsSpec.splice Λ u ω)) := rfl
+
+/-- **⭐⭐⭐ `hfin`'s OWN FUNCTIONAL IS A FINITE WILSON SYSTEM'S GIBBS EXPECTATION.**
+
+`stateFree` at a box, applied to any continuous observable, is the expectation of that observable
+read through `splice` against `wilsonSystem (boxBd Λ) φ` — the system `StrongCoupling`'s cluster
+expansion is stated over. `stateFree_apply` above is the first half and is definitional; `expect_boxBd`
+is the second and is not.
+
+This is the last coordinate change between the carrier construction, whose theorems all conclude
+about `specFree`, and `gapAt_of_finite_volume_connected`'s `hfin`, which is about `stateFree`.
+
+**⛔ IT IS A COORDINATE CHANGE, NOT A BOUND.** Nothing decays. The estimate still carries `Nc ≠ 0`,
+`0 ≤ β` and the smallness `hr`, which at `K = 16 * 4` reads `β < 2.936337×10⁻⁵`.
+
+**⛔ AND THE OBSERVABLE GAP REMAINS, THOUGH IT IS NOW A NAMED DISTANCE RATHER THAN A BLANK.** There
+are THREE tiers, and only the third is `hfin`'s:
+
+1. ONE plaquette — `StrongCoupling.wilsonCorrConn_eq_bridging_sum`, the original estimate.
+2. A finite PRODUCT of plaquettes — `StrongCoupling.wilsonCorrConnF_eq_bridging_sumF`, which writes
+   the connected correlator of `∏ Ao` against `∏ Bo` as the bridging sum over `Z²`, for disjoint
+   supports with `Ao` touch-connected. That is a proper enlargement of tier 1 and it is proved.
+3. **ANY continuous observable local on a finite link set** — which is what `halfSpaceAlg` IS. Read
+   its declaration: a `Submodule ℝ C(IConf G, ℝ)` with carrier
+   `{F | ∃ S : Finset ILink, ↑S ⊆ posHalf τ c ∧ IsLocalOn S F}`. No product structure and no gauge
+   invariance is asked of `F`.
+
+**⭐ AND TIER 3 IS REACHED BY GENERALISING THE EXPANSION, NOT BY SPANNING.** A product of
+`wilsonPlaqObs` is a gauge-invariant function of traces around closed plaquettes; a member of
+`halfSpaceAlg` is any continuous function of finitely many links. Spanning from tier 2 to tier 3
+fails, and not for a technical reason: `hfin` is QUADRATIC in `F`, so bounds on a spanning set do
+not bound their span — that needs a positive-semidefinite ordering, which entrywise bounds do not
+give.
+
+The expansion does not need spanning, because it was never restricted to plaquettes in the first
+place. `WilsonReal.block_integral_factor` is stated for ANY two observables reading disjoint link
+blocks; the plaquette product enters one level up, in `StrongCoupling.mixOn`, and from there into
+`StrongCoupling.zw`. `StrongCoupling.zwFull_split` and `StrongCoupling.zwFull_add_exchange` carry the
+split and the involution at arbitrary observables, and `StrongCoupling.zwFull_prod_eq_zw` shows the
+plaquette case is an instance. So the observable class was a property of a definition, and the route
+to `hfin` runs through an arbitrary `F` directly, never through a basis.
+
+DERIVED: the `0` and the `2` are `wilsonDensity`'s range, carried in as `hφ0` and `hφ2` exactly as
+`stateFree` takes them; `β`, `Λ`, `ω` and `f` are the caller's. -/
+theorem stateFree_eq_expect_boxBd {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
+    stateFree hφm hφ0 hφ2 β Λ ω f
+      = (MassGap.WilsonLattice.wilsonSystem (boxBd Λ) φ).expect
+          (probHaar (MassGap.SUN.SU N)) β
+          (fun u => f (MassGap.GibbsSpec.splice Λ u ω)) := by
+  rw [expect_boxBd φ β Λ ω]
+  rfl
+
+#print axioms stateFree_eq_expect_boxBd
 
 /-- **⭐⭐ REFLECTION POSITIVITY OF THE FINITE-VOLUME STATE, IN `InfiniteReflection`'s OWN FORM.**
 
@@ -2241,41 +3881,76 @@ theorem ireflConf_one (τ : Fin 4) (c : ℤ) :
 
 #print axioms ireflConf_one
 
+/-- **`Re tr` AS A BUNDLED CONTINUOUS MAP**, at every rank.
+
+`HaarVariance.reTr` is the function and `HaarVariance.continuous_reTr` its continuity; this only
+bundles them, because `HalfSpaceAlgebra.halfLinkObs` takes a `C(G, ℝ)`.
+
+DERIVED: no numeral; `N` is the caller's rank. -/
+noncomputable def reTrCM (N : ℕ) : C(MassGap.SUN.SU N, ℝ) :=
+  ⟨MassGap.HaarVariance.reTr, MassGap.HaarVariance.continuous_reTr⟩
+
+#print axioms reTrCM
+
+/-- **⭐ IT SEPARATES TWO GROUP ELEMENTS AT EVERY RANK AT LEAST TWO**, which is the hypothesis
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` takes.
+
+`HaarVariance.reTr_flipEl_ne_reTr_one` is the content: `Re tr` reads `m + 2` at the identity and
+`m - 2` at `flipEl m`.
+
+**⛔ IT IS FALSE AT `SU 0` AND `SU 1`**, where the group is a singleton — which is why the rank is
+written `m + 2` rather than `N` with a side condition.
+
+DERIVED: the `2` is the least matrix dimension at which two group elements exist to separate; the
+`1` is the identity, the element `flipEl` is separated from; `m` is the caller's. -/
+theorem reTrCM_separating (m : ℕ) :
+    reTrCM (m + 2) (MassGap.HaarVariance.flipEl m) ≠ reTrCM (m + 2) 1 :=
+  MassGap.HaarVariance.reTr_flipEl_ne_reTr_one m
+
+#print axioms reTrCM_separating
+
 /-- **⭐⭐ THE HALF-SPACE ALGEBRA IS MORE THAN THE CONSTANTS, AT `SU(3)`.**
 
 `HalfSpaceAlgebra.halfLinkObs_mem` cannot show this on its own: it is quantified over an arbitrary
 `f : C(G, ℝ)`, and a constant `f` gives a constant member. What is needed is a SEPARATING function
-and a pair it separates. `Re tr` is the function; `CrossingIntegration.trace_gNeg` computes
+and a pair it separates. `reTrCM` is the function and `reTrCM_separating` the separation, at every rank at least two. At `SU(3)` `CrossingIntegration.trace_gNeg` computes
 `Re tr gNeg = -1` against `Re tr 1 = 3` for the pair.
 
 **⛔ WHY IT MATTERS.** Without it every theorem about `halfSpaceAlg` admits the reading in which the
 algebra is one-dimensional and the conclusion is empty — and at `SU 0` and `SU 1` that reading is the
 true one, because the group is a singleton. This rules it out at `N = 3`, which is the group Clay's
-problem names. For other `N` no separating pair is constructed here.
+problem names.
 
-DERIVED: the `3` is `SU(3)`'s rank and the value of `Re tr 1`; the `-1` is `trace_gNeg`'s computed
-value; `4` is the dimension. -/
-theorem halfSpaceAlg_has_nonconstant (τ : Fin 4) (p : ℤ) :
-    ∃ F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU 3) τ p,
-      ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3), F U ≠ F V := by
+**⭐ AT EVERY RANK AT LEAST TWO**, `reTrCM_separating` being `HaarVariance.reTr_flipEl_ne_reTr_one`,
+which separates `flipEl m` from `1` at every `SU(m+2)`. The proof never used anything specific to
+three.
+
+**⛔ AT `SU 0` AND `SU 1` IT IS FALSE**: the group is a singleton, every observable is constant, and
+the carrier IS the constants. That is why the rank is written `m + 2`.
+
+DERIVED: the `2` is the least rank at which two group elements exist to separate; `m` is the
+caller's; the `-1` of the proof is `HaarVariance.reTr_flipEl`'s computed value; `4` is the spacetime
+dimension. -/
+theorem halfSpaceAlg_has_nonconstant_of_rank_two (m : ℕ) (τ : Fin 4) (p : ℤ) :
+    ∃ F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU (m + 2)) τ p,
+      ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2)), F U ≠ F V := by
   classical
   set l₀ : MassGap.InfiniteLattice.ILink := ((0 : Fin 4), fun _ => p) with hl₀
   have hmem : l₀ ∈ MassGap.HalfSpaceAlgebra.posHalf τ p := le_refl p
-  set f : C(MassGap.SUN.SU 3, ℝ) :=
-    ⟨fun g => (Matrix.trace (g : Matrix (Fin 3) (Fin 3) ℂ)).re,
-      Complex.continuous_re.comp continuous_subtype_val.matrix_trace⟩ with hf
-  refine ⟨MassGap.HalfSpaceAlgebra.halfLinkObs l₀ f,
-    MassGap.HalfSpaceAlgebra.halfLinkObs_mem τ p hmem f,
-    1, (fun _ => MassGap.CrossingIntegration.gNeg), ?_⟩
-  have h1 : MassGap.HalfSpaceAlgebra.halfLinkObs l₀ f
-      (1 : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3)) = 3 := by
-    show (Matrix.trace (((1 : MassGap.SUN.SU 3) : Matrix (Fin 3) (Fin 3) ℂ))).re = 3
-    simp
-  have h2 : MassGap.HalfSpaceAlgebra.halfLinkObs l₀ f
-      (fun _ => MassGap.CrossingIntegration.gNeg) = -1 :=
-    MassGap.CrossingIntegration.trace_gNeg
-  rw [h1, h2]
-  norm_num
+  exact ⟨MassGap.HalfSpaceAlgebra.halfLinkObs l₀ (reTrCM (m + 2)),
+    MassGap.HalfSpaceAlgebra.halfLinkObs_mem τ p hmem (reTrCM (m + 2)),
+    (fun _ => MassGap.HaarVariance.flipEl m), 1, reTrCM_separating m⟩
+
+#print axioms halfSpaceAlg_has_nonconstant_of_rank_two
+
+/-- **⭐ THE INSTANCE THE CLAY PROBLEM NAMES.** `SU(3)`, which is `m = 1` above.
+
+DERIVED: `3` is the MATRIX DIMENSION of `SU(3)` — its rank is `2`; `1` is the `m` that gives it;
+`4` is the spacetime dimension. -/
+theorem halfSpaceAlg_has_nonconstant (τ : Fin 4) (p : ℤ) :
+    ∃ F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU 3) τ p,
+      ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3), F U ≠ F V :=
+  halfSpaceAlg_has_nonconstant_of_rank_two 1 τ p
 
 #print axioms halfSpaceAlg_has_nonconstant
 
@@ -2328,6 +4003,94 @@ theorem eq_empty_of_stable_two_mirrors (τ : Fin 4) (a : ℤ)
   exact (Set.infinite_range_of_injective hinj) (Λ.finite_toSet.subset hsub)
 
 #print axioms eq_empty_of_stable_two_mirrors
+
+/-- **Mirrors TWO apart compose to a DOUBLE shift.** `ReflectionShift.ireflLink_comp_succ` composes
+adjacent mirrors into one shift; inserting `ireflLink_involutive` at the midpoint applies it twice.
+
+DERIVED: the `2` is the mirror separation this composes; the `1` is the midpoint the involution is
+inserted at; `4` is the dimension. -/
+theorem ireflLink_comp_add_two (τ : Fin 4) (a : ℤ) (l : MassGap.InfiniteLattice.ILink) :
+    ireflLink τ (a + 2) (ireflLink τ a l)
+      = MassGap.InfiniteShift.ishiftLink τ (MassGap.InfiniteShift.ishiftLink τ l) := by
+  have hmid : ireflLink τ (a + 1) (ireflLink τ (a + 1) (ireflLink τ a l))
+      = ireflLink τ a l := MassGap.LatticeReflection.ireflLink_involutive τ (a + 1) _
+  have ha2 : a + 2 = a + 1 + 1 := by ring
+  calc ireflLink τ (a + 2) (ireflLink τ a l)
+      = ireflLink τ (a + 1 + 1)
+          (ireflLink τ (a + 1) (ireflLink τ (a + 1) (ireflLink τ a l))) := by
+        rw [hmid, ha2]
+    _ = ireflLink τ (a + 1 + 1)
+          (ireflLink τ (a + 1) (MassGap.InfiniteShift.ishiftLink τ l)) := by
+        rw [MassGap.ReflectionShift.ireflLink_comp_succ τ a l]
+    _ = MassGap.InfiniteShift.ishiftLink τ (MassGap.InfiniteShift.ishiftLink τ l) :=
+        MassGap.ReflectionShift.ireflLink_comp_succ τ (a + 1) _
+
+#print axioms ireflLink_comp_add_two
+
+/-- **⭐⭐⭐ NO NON-EMPTY BOX IS STABLE UNDER TWO MIRRORS TWO APART EITHER** — and this is the pair
+the GAP RATIO uses.
+
+`eq_empty_of_stable_two_mirrors` rules out the pair `(a, a+1)`, which is the REFLECTION-POSITIVITY
+pair `(2p-1, 2p)`. `gapAt_of_finite_volume_connected` compares constants `2p-2` and `2p`, two apart,
+and that pair was not covered.
+
+**WHY IT IS THE PAIR THAT MATTERS.** The adjacent case is the REFLECTION-POSITIVITY pair
+`(2p-1, 2p)`, one even and one odd, and that is what every existing citation of it uses. The GAP
+RATIO compares `2p-2` against `2p`, and that pair had no theorem.
+
+**⛔ IT DOES NOT RESCUE THE ROUTE FROM VACUITY, BECAUSE THE ROUTE WAS NEVER OPEN TO IT.** The
+tempting argument is that a member of `halfSpaceAlg τ p` sits at `τ`-coordinates `≥ p`, the `2p-2`
+mirror's shared block is the plane at `p-1`, so the observable is blind to it and
+`ActionSplit.pairing_eq_zero_of_indep_R` zeroes the ratio's numerator. It fails, and not because of
+the box: that theorem wants the observable to read `S` ALONE, and the observable the Wilson
+instantiation supplies is the DRESSED `idressed = F · e^{-βA₊}`, and `idressed_depends_on_boxR`
+shows it is NOT blind to the shared block on `quadLinks τ ν x` at `β ≠ 0`. ⛔ That carrier is one
+plaquette and is not reflection-closed, so no particular box is settled.
+
+**⛔ SO THIS SUPPLIES NO GAP, NO BOUND AND NO STATE.** It is the companion to the adjacent no-go,
+at the separation the ratio uses.
+
+**⛔ AND IT SAYS NOTHING ABOUT ONE MIRROR.** A box stable under the `2p` mirror alone is exactly what
+the reflection-positivity construction uses and what `symCube` provides.
+
+DERIVED: the `2` is the mirror separation; `4` is the dimension. -/
+theorem eq_empty_of_stable_two_mirrors_step_two (τ : Fin 4) (a : ℤ)
+    {Λ : Finset MassGap.InfiniteLattice.ILink}
+    (h0 : ∀ l ∈ Λ, ireflLink τ a l ∈ Λ)
+    (h2 : ∀ l ∈ Λ, ireflLink τ (a + 2) l ∈ Λ) :
+    Λ = ∅ := by
+  by_contra hne
+  obtain ⟨l, hl⟩ := Finset.nonempty_iff_ne_empty.mpr hne
+  have hshift : ∀ m ∈ Λ, (MassGap.InfiniteShift.ishiftLink τ)^[2] m ∈ Λ := by
+    intro m hm
+    have : (MassGap.InfiniteShift.ishiftLink τ)^[2] m
+        = ireflLink τ (a + 2) (ireflLink τ a m) := by
+      rw [ireflLink_comp_add_two τ a m]
+      simp [Function.iterate_succ_apply']
+    rw [this]
+    exact h2 _ (h0 m hm)
+  have horb : ∀ k : ℕ, (MassGap.InfiniteShift.ishiftLink τ)^[2 * k] l ∈ Λ := by
+    intro k
+    induction k with
+    | zero => simpa using hl
+    | succ i ih =>
+        have hstep : 2 * (i + 1) = 2 + 2 * i := by ring
+        rw [hstep, Function.iterate_add_apply]
+        exact hshift _ ih
+  have hinj : Function.Injective
+      (fun k : ℕ => (MassGap.InfiniteShift.ishiftLink τ)^[2 * k] l) := by
+    intro k m hkm
+    have h := congrArg (fun q : MassGap.InfiniteLattice.ILink => q.2 τ) hkm
+    simp only [MassGap.InfiniteShift.ishiftLink_iterate,
+      MassGap.InfiniteShift.ishift_iterate] at h
+    omega
+  have hsub : Set.range (fun k : ℕ => (MassGap.InfiniteShift.ishiftLink τ)^[2 * k] l)
+      ⊆ (Λ : Set MassGap.InfiniteLattice.ILink) := by
+    rintro x ⟨k, rfl⟩
+    exact horb k
+  exact (Set.infinite_range_of_injective hinj) (Λ.finite_toSet.subset hsub)
+
+#print axioms eq_empty_of_stable_two_mirrors_step_two
 
 /-! ### ⭐ The ODD constant's block structure — the even one with the fixed set flipped -/
 
@@ -5266,6 +7029,181 @@ theorem symCube_refl_stable (τ : Fin 4) (c : ℤ) (n : ℕ) :
 
 #print axioms symCube_refl_stable
 
+/-- **The plane link**: direction `ν`, every coordinate `p`.
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+def planeLink (ν : Fin 4) (p : ℤ) : MassGap.InfiniteLattice.ILink := (ν, fun _ => p)
+
+/-- **It is in the symmetrised cube** once the radius reaches `p`.
+
+DERIVED: the `2` is the even reflection constant `2 * p`; `4` is the dimension. -/
+theorem planeLink_mem_symCube (τ ν : Fin 4) (p : ℤ) {n : ℕ}
+    (hlo : -(n : ℤ) ≤ p) (hhi : p ≤ (n : ℤ)) :
+    planeLink ν p ∈ symCube τ (2 * p) n := by
+  refine Finset.mem_union_left _ ?_
+  simp only [coordCube, planeLink, Finset.mem_product, Finset.mem_univ, true_and,
+    Fintype.mem_piFinset, Finset.mem_Icc]
+  intro _
+  omega
+
+#print axioms planeLink_mem_symCube
+
+/-- **AND IT IS IN THE SHARED BLOCK**, so the cube's plane is not empty.
+
+DERIVED: the `2` is the even reflection constant `2 * p`; `4` is the dimension. -/
+theorem planeLink_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
+    (hlo : -(n : ℤ) ≤ p) (hhi : p ≤ (n : ℤ)) :
+    (⟨planeLink ν p, planeLink_mem_symCube τ ν p hlo hhi⟩ : ↥(symCube τ (2 * p) n))
+      ∈ boxR τ p (symCube τ (2 * p) n) :=
+  transverse_link_mem_boxR τ ν hν p (fun _ => p) rfl _ _
+
+#print axioms planeLink_mem_boxR
+
+/-- **A PLANE FUNCTION WITH A ZERO.** Reads one shared-block link through `Re tr`, and is squashed
+so that no bound on the trace is needed: it lies in `[0, 1)` by construction.
+
+DERIVED: the leading `1` is `exp`'s value at `0`, so that the probe VANISHES where `Re tr` reads
+`m + 2`; the `2` in `m + 2` is the least rank at which two group elements exist; the exponent `2`
+makes the argument of `exp` nonpositive whatever the sign of the difference; `4` is the
+dimension. -/
+noncomputable def planeProbe (m : ℕ) {τ : Fin 4} {p : ℤ}
+    {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
+    (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2)) : ℝ :=
+  1 - Real.exp (-(MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2)
+
+/-- **It is continuous.**
+
+DERIVED: no numeral of its own; `4` is the dimension. -/
+theorem continuous_planeProbe (m : ℕ) {τ : Fin 4} {p : ℤ}
+    {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ)) :
+    Continuous (planeProbe m ℓ) := by
+  unfold planeProbe
+  exact continuous_const.sub (Real.continuous_exp.comp
+    (((MassGap.HaarVariance.continuous_reTr.comp (continuous_apply ℓ)).sub
+      continuous_const).pow 2).neg)
+
+#print axioms continuous_planeProbe
+
+/-- **And bounded by `1`**, with no bound on the trace.
+
+DERIVED: the `1` is the bound, which is `exp`'s value at `0`; the `2` in `m + 2` is the least
+rank carrying two group elements; `4` is the dimension. -/
+theorem planeProbe_abs_le_one (m : ℕ) {τ : Fin 4} {p : ℤ}
+    {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
+    (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2)) : |planeProbe m ℓ w| ≤ 1 := by
+  unfold planeProbe
+  have h1 : 0 < Real.exp (-(MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2) :=
+    Real.exp_pos _
+  have h2 : Real.exp (-(MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2) ≤ 1 := by
+    refine Real.exp_le_one_iff.mpr ?_
+    have := sq_nonneg (MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2))
+    linarith
+  rw [abs_le]
+  constructor <;> linarith
+
+#print axioms planeProbe_abs_le_one
+
+/-- **It vanishes where `Re tr` reads `m + 2`** — at the identity, by `HaarVariance.reTr_one`.
+
+DERIVED: the `0` is the value; the `1` is the identity `w` takes at `ℓ`; the `2` in `m + 2` is
+the least rank carrying two group elements; `4` is the dimension. -/
+theorem planeProbe_eq_zero (m : ℕ) {τ : Fin 4} {p : ℤ}
+    {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
+    (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2))
+    (hw : w ℓ = 1) : planeProbe m ℓ w = 0 := by
+  unfold planeProbe
+  rw [hw, MassGap.HaarVariance.reTr_one]
+  push_cast
+  simp
+
+#print axioms planeProbe_eq_zero
+
+/-- **And is positive where it does not** — at `HaarVariance.flipEl`, which reads `m − 2`.
+
+DERIVED: the `0` is the bound; the `2` in `m + 2` is `reTr`'s value at the identity; `4` is the
+dimension. -/
+theorem planeProbe_pos (m : ℕ) {τ : Fin 4} {p : ℤ}
+    {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
+    (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2))
+    (hw : MassGap.HaarVariance.reTr (w ℓ) ≠ (m : ℝ) + 2) : 0 < planeProbe m ℓ w := by
+  unfold planeProbe
+  have ht : MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2) ≠ 0 := sub_ne_zero.mpr hw
+  have ht2 : 0 < (MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2 :=
+    lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 ht))
+  have he : Real.exp (-(MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2) < 1 :=
+    Real.exp_lt_one_iff.mpr (by linarith)
+  linarith
+
+#print axioms planeProbe_pos
+
+/-- **⭐⭐⭐ THE BOX'S WILSON REFLECTION FORM IS STRICTLY POSITIVE AT SOME OBSERVABLE.**
+
+Non-vacuity for `irefl_box_pairing_pos_of_plane_factor_dressed`: every one of its hypotheses is
+discharged here at concrete data. The carrier `symCube τ (2p) n` is reflection-closed
+(`symCube_refl_stable`), the density is `WilsonAction.wilsonDensity` bounded in `[0,2]`, the weight
+is the box's own `iplaneWeight`, and the observable is `planeProbe` times the dressing. The two
+configurations are the constants `1` and `HaarVariance.flipEl m`, separated by `Re tr`.
+
+**⛔ THE RANK IS AT LEAST TWO.** At `SU 0` and `SU 1` the group is a singleton and no separating
+pair exists, which is why it is written `m + 2`.
+
+**⛔ `0 <` IS NOT A RATE**, and `hfin`'s ratio needs one. This says the form is not identically
+degenerate at this box; it bounds nothing.
+
+**⛔ ONE BOX, NOT A LIMIT STATE.**
+
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` in `m + 2` is the least rank
+carrying two group elements; the `0` is the positivity concluded; `4` is the dimension. The
+identity configuration and `flipEl m` are bound in the PROOF and appear in no literal here. -/
+theorem irefl_box_pairing_pos_witness (m : ℕ) (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
+    (hlo : -(n : ℤ) ≤ p) (hhi : p ≤ (n : ℤ)) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2))) (k : ℝ) :
+    ∃ O : (↥(symCube τ (2 * p) n) → MassGap.SUN.SU (m + 2)) → ℝ,
+      0 < (∫ U, iplaneWeight MassGap.WilsonAction.wilsonDensity β τ p
+              (symCube τ (2 * p) n) ω U
+          * (O U - k)
+          * (O (MassGap.ActionSplit.twist (ireflBoxPerm (symCube_refl_stable τ (2 * p) n))
+                (fun l : ↥(symCube τ (2 * p) n) =>
+                  ilinkDagger (G := MassGap.SUN.SU (m + 2)) τ l.1) U) - k)
+          ∂(MassGap.ActionSplit.cvol ↥(symCube τ (2 * p) n)
+              (probHaar (MassGap.SUN.SU (m + 2))))) := by
+  classical
+  have hN : (m + 2 : ℕ) ≠ 0 := by omega
+  have hφ0 : ∀ g : MassGap.SUN.SU (m + 2), 0 ≤ MassGap.WilsonAction.wilsonDensity g :=
+    fun g => MassGap.WilsonAction.wilsonDensity_nonneg hN g
+  have hφ2 : ∀ g : MassGap.SUN.SU (m + 2), MassGap.WilsonAction.wilsonDensity g ≤ 2 :=
+    fun g => MassGap.WilsonAction.wilsonDensity_le_two hN g
+  have hφb : ∀ g : MassGap.SUN.SU (m + 2), |MassGap.WilsonAction.wilsonDensity g| ≤ 2 := by
+    intro g
+    rw [abs_of_nonneg (hφ0 g)]
+    exact hφ2 g
+  refine ⟨fun U => planeProbe m
+      ⟨⟨planeLink ν p, planeLink_mem_symCube τ ν p hlo hhi⟩,
+        planeLink_mem_boxR τ ν hν p hlo hhi⟩
+      (fun i => U (i : ↥(symCube τ (2 * p) n)))
+      * ihalfBoltz MassGap.WilsonAction.wilsonDensity β τ p (symCube τ (2 * p) n) ω U, ?_⟩
+  refine irefl_box_pairing_pos_of_plane_factor_dressed
+    (symCube_refl_stable τ (2 * p) n)
+    MassGap.WilsonAction.wilsonDensity MassGap.WilsonAction.measurable_wilsonDensity
+    MassGap.WilsonAction.continuous_wilsonDensity hφb β ω
+    (planeProbe m ⟨⟨planeLink ν p, planeLink_mem_symCube τ ν p hlo hhi⟩,
+      planeLink_mem_boxR τ ν hν p hlo hhi⟩)
+    (continuous_planeProbe m _)
+    (hfb := planeProbe_abs_le_one m _)
+    (iplaneWeight MassGap.WilsonAction.wilsonDensity β τ p (symCube τ (2 * p) n) ω)
+    (measurable_iplaneWeight MassGap.WilsonAction.measurable_wilsonDensity β τ p _ ω)
+    (iplaneWeight_pos MassGap.WilsonAction.wilsonDensity β τ p _ ω)
+    (fun U V hR => iplaneWeight_local MassGap.WilsonAction.wilsonDensity β τ p _ ω U V hR)
+    _ (iplaneWeight_abs_le hφ0 hφ2 β τ p _ ω) k
+    (a := fun _ => 1) (b := fun _ => MassGap.HaarVariance.flipEl m) ?_ ?_
+  · exact planeProbe_eq_zero m _ _ rfl
+  · refine planeProbe_pos m _ _ ?_
+    rw [MassGap.HaarVariance.reTr_flipEl]
+    intro h
+    linarith
+
+#print axioms irefl_box_pairing_pos_witness
+
 /-- **AND IT EXHAUSTS** — `hexh`, discharged. A `Finset` of links has finitely many coordinates, so
 they are bounded, so it sits inside every large enough cube.
 
@@ -6289,9 +8227,15 @@ theorem wilson_positiveTransfer_of_common_subsequential_limit (τ : Fin 4) (p : 
 in two namespaces, so a lemma proved about one is inert on the other and nothing in a goal display
 tells them apart. The same bridge `gibbs_ishift_eq` records for `ishift`.
 
-**⛔ IT IS LOAD-BEARING.** `shift_no_finite_order_on_halfSpaceAlg` is about the first;
-`TransferData.T` is built by `TransferAssembly.restrictT` from the second. Without this the step
-between them is an unrecorded coincidence.
+**⛔ NOTHING CONSUMES IT.** `shift_no_finite_order_on_halfSpaceAlg` is about the first and
+`TransferData.T` is built by `TransferAssembly.restrictT` from the second, but
+`transferData_of_state_facts_T_ne_id` closes by definitional unfolding and never cites this — delete
+it and that proof still compiles. It is here so the agreement is RECORDED rather than rediscovered,
+not because a term needs it.
+
+**⛔ AND THERE ARE THREE COPIES, NOT TWO.** `InfiniteShift.ishiftObs` is the same map unbundled, and
+carries its own copies of the motion theorems (`ishiftObs_infinite_order`,
+`ishiftObs_ne_id_of_separating`). This records one of the three pairs.
 
 DERIVED: no numeral of its own; `4` is the dimension. -/
 theorem ishiftObsCM_eq_ishiftObsL (τ : Fin 4) :
@@ -6340,6 +8284,40 @@ theorem transferData_of_state_facts_T_ne_id (τ : Fin 4) (p : ℤ)
   exact congrArg Subtype.val h
 
 #print axioms transferData_of_state_facts_T_ne_id
+
+/-- **⭐⭐ AND AT EVERY RANK AT LEAST TWO THE SEPARATING PREMISE IS DISCHARGED.**
+
+`transferData_of_state_facts_T_ne_id` with `reTrCM_separating`: the assembled transfer operator is
+not the identity on the half-space algebra, with no hypothesis about a separating function left over.
+
+**⛔ THE OTHER THREE HYPOTHESES REMAIN.** `hinv`, `hpos` and `hnu` are unproved facts about a state,
+and the conclusion is about `transferData_of_state_facts` APPLIED to them — a `def` at hypotheses,
+not an object the tree has. What this discharges is the separating premise and nothing else.
+
+**⛔ AT `SU 0` AND `SU 1` NO SEPARATING FUNCTION EXISTS**, the group being a singleton, so this says
+nothing there. The tree does not formalise what happens at those ranks.
+
+**⛔ AND IT IS STILL NOT `TransferMovesSomething`.** Motion in the ALGEBRA is not motion in the GNS
+QUOTIENT; `ClayAssembly.transferMovesSomething_of_pairing_ne` gives a sufficient condition for that
+and nothing supplies it.
+
+DERIVED: the `2`s are the plane-to-constant conversion and the least rank at which two group elements
+exist; `m` is the caller's; `4` is the dimension. -/
+theorem transferData_T_ne_id_of_rank_two (τ : Fin 4) (p : ℤ) (m : ℕ)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2))))
+    (hinv : MassGap.InfiniteReflection.IsReflectionInvariant
+      (MassGap.LatticeReflection.latticeReflection τ (2 * p)) ν)
+    (hpos : MassGap.InfiniteReflection.ReflPositiveOn
+      (MassGap.LatticeReflection.latticeReflection τ (2 * p))
+      (MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU (m + 2)) τ p) ν)
+    (hnu : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2)), ℝ),
+      ν (MassGap.ReflectionShift.ishiftObsL τ f) = ν f) :
+    ∃ F : ↥(MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU (m + 2)) τ p),
+      (MassGap.WilsonTransferReduction.transferData_of_state_facts τ p ν hinv hpos hnu).T F
+        ≠ F :=
+  transferData_of_state_facts_T_ne_id (N := m + 2) τ p ν hinv hpos hnu (reTrCM_separating m)
+
+#print axioms transferData_T_ne_id_of_rank_two
 
 /-- **⭐⭐⭐ `PositiveTransfer` FROM ONE CONVERGENCE HYPOTHESIS, AT ONE FAMILY.**
 
@@ -6423,7 +8401,7 @@ noncomputable def wilson_transferData_of_thermodynamic_limit
 
 #print axioms wilson_transferData_of_thermodynamic_limit
 
-/-- **⭐⭐⭐ THE OPERATOR-SIDE GAP FROM A PURELY FINITE-VOLUME INEQUALITY.**
+/-- **⭐⭐⭐ THE OPERATOR-SIDE GAP FROM A FINITE-VOLUME INEQUALITY, ON TOP OF THE STATE'S THREE REFLECTION FACTS AND THE THERMODYNAMIC LIMIT.**
 
 For every `F` in the half-space algebra, eventually along the box family, with each box subtracting
 ITS OWN mean:
@@ -6433,7 +8411,7 @@ ITS OWN mean:
 where `⟨·⟩ₙ` is `stateFree` at `box n` with the all-identity boundary condition. Then the
 infinite-volume transfer data has a gap at `r`.
 
-**⛔ NOTHING IN THE HYPOTHESIS MENTIONS THE LIMIT STATE.** That is the point of this form. Both
+**⛔ `hfin` ALONE MENTIONS NO LIMIT STATE** — `ν`, `hinv`, `hpos`, `hnu` and `htend` all still do.** That is the point of this form. Both
 sides are CONNECTED two-point functions of one explicit finite integral — `stateFree` is `specFree`
 normalised, and `specFree` is a ratio of two Bochner integrals of `wtFree` over the box's product
 Haar measure. `InfiniteReflection.state_pairing_subtracted` is what makes the two ends meet: the

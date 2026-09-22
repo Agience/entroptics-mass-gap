@@ -438,7 +438,7 @@ Two things this bound does not claim, stated because the field names suggest oth
 here it is discharged as `Q ≤ 4 ≤ resolvedDim · 4`, which relates `Q` to nothing about the spectrum —
 it is OS0's uniform bound and only that. And `Na := Nmodes` is the lattice's genuine plaquette count,
 but `evUnit` ignores its argument, so the only thing the assembled family uses of it is
-`1 ≤ Nmodes a`; any `Na` bounded below by one would give the identical family. `Nmodes` is honest as
+`1 ≤ Nmodes a`; any `Na` bounded below by one would give the identical family. `Nmodes` is exact as
 a definition and inert in the family's content until a measured spectrum replaces `evUnit`.
 
 None of the three measure clauses is a clamp, and the index is the extent throughout.

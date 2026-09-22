@@ -1005,7 +1005,7 @@ least `e^{−128β}` at every aperture; `exists_haar_floor` supplies the rest. -
 
 open MassGap.PlaqVariance
 
-/-- **THE CONTACT VALUE, BOUNDED BELOW UNIFORMLY IN THE APERTURE.** -/
+/-- **THE CONTACT VALUE AT ANY COUPLING, RELATIVE TO ITS OWN APERTURE'S HAAR VALUE.** The FACTOR `e^{−128β}` carries no extent; the bound itself still does, `corrClay (N + 1) 0 0` being indexed by `N`. `exists_haar_floor` is the declaration that removes the remaining `N`. -/
 theorem corrClay_zero_ge (N : ℕ) {β : ℝ} (hβ : 0 ≤ β) :
     Real.exp (-(128 * β)) * corrClay (N + 1) 0 0 ≤ corrClay (N + 1) β 0 := by
   classical
@@ -1083,5 +1083,51 @@ theorem contact_relative_unconditional :
   exact ⟨b, hb, hrb, himp (contactFloor_holds b)⟩
 
 #print axioms contact_relative_unconditional
+
+/-- **⭐⭐⭐ THE READ'S WEIGHT BOUND, WITH ITS CONSTANT APERTURE-UNIFORM.**
+
+`StrongCoupling.read_p_le_of_corrClay` bounds the Entroptics read's weights,
+`p d ≤ C · r^{circLag d}`, but its `C` carries `1/m` for a hypothesised lower bound `m ≤ ∑ρ`, and
+its own scope note says: *"Reflection positivity gives `0 < ∑ρ` at each `N` SEPARATELY; it does not
+give one `m` good for every `N`. Nothing here supplies that."*
+
+**THIS SUPPLIES IT.** `ContactFloor b` is exactly one `δ > 0` below `wilsonCorrAt N β 0` at EVERY
+aperture and every coupling in `[0, b]`, and `contactFloor_holds` proves it unconditionally. The
+read's `ρ` is nonnegative, so `∑ρ ≥ ρ 0`, and `ρ 0` IS that contact term. So `δ` serves as `m` at
+every aperture at once, and the `∃ δ` below sits OUTSIDE the `∀ N`.
+
+The two files never met only because `StrongCoupling` does not import `ContactFloor`; the chain runs
+`StrongCoupling → StrongArm → ContactFloor`, so this composition needs no new import.
+
+**⛔ WHAT THIS STILL DOES NOT GIVE.** The SECOND obstruction that scope note names is untouched:
+`coreConst` and `coreRate` both depend on `β`, and the hypothesis `coreRate (16·4) β < 1` holds only
+on a neighbourhood of zero (`StrongCoupling.core_rate_lt_one_of_small_hypercubic`), with
+`coreRate → ∞` as `β` grows. `Complete.confinement_of_geometric_decay` quantifies over EVERY `β`
+with `C` and `r` fixed outside, so this is still a STRONG-COUPLING statement and is still not its
+hypothesis. What has moved is the aperture, not the coupling.
+
+DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited from
+`read_p_le_of_corrClay` and not chosen here. The `+ 1` in the constant and the division by
+`coreRate` are that theorem's own, documented there. The `0` in `0 < δ` and `0 < β` are
+positivity, and the `0` in `ρ 0` / `wilsonCorrAt N β 0` is the contact lag, where the two plaquettes
+coincide. -/
+theorem read_p_le_aperture_uniform (b : ℝ) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ (N : ℕ) (R : Moment.Read N) (β : ℝ),
+      (∀ d : Fin (N + 1), R.ρ d = MassGap.WilsonBridge.corrClay (N + 1) β d) →
+      0 < β → β ≤ b → MassGap.StrongCoupling.coreRate (16 * 4) β < 1 →
+      ∀ d : Fin (N + 1),
+        R.p d ≤ (MassGap.StrongCoupling.coreConst (16 * 4) β
+            / (MassGap.StrongCoupling.coreRate (16 * 4) β * δ) + 1)
+          * MassGap.StrongCoupling.coreRate (16 * 4) β ^ (Moment.circLag d) := by
+  obtain ⟨δ, hδ, hfloor⟩ := contactFloor_holds b
+  refine ⟨δ, hδ, fun N R β hρ hβ hb hr d => ?_⟩
+  refine MassGap.StrongCoupling.read_p_le_of_corrClay R hρ hδ ?_ hβ hr d
+  -- the contact term is the read's lag-zero weight, and the sum dominates one term.
+  have h0 : δ ≤ R.ρ 0 := by
+    rw [hρ 0, ← MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β 0]
+    exact hfloor N β hβ.le hb
+  exact le_trans h0 (Finset.single_le_sum (fun i _ => R.hρ i) (Finset.mem_univ (0 : Fin (N + 1))))
+
+#print axioms read_p_le_aperture_uniform
 
 end MassGap.ContactFloor

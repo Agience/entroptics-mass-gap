@@ -356,6 +356,495 @@ noncomputable def halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
     h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩) (fun i : R => U (i : ι))
     ∂(cvol {i : ι // i ∉ R} μ)
 
+/-- **The conditional half-integral is measurable**, as a function of the whole configuration — it
+reads it only through the shared block.
+
+Used by `pairing_eq_weighted_square` and `integrable_weighted_halfIntegral_sq`.
+
+DERIVED: no numeral. -/
+theorem measurable_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2)) :
+    Measurable (halfIntegral μ S R hSR h) := by
+  have hSoff : ∀ i : S, ((i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hSR i.2
+  have hrest : Measurable (fun (y : {i : ι // i ∉ R} → Ω) (i : S) => y ⟨(i : ι), hSoff i⟩) :=
+    measurable_pi_lambda _ (fun i => measurable_pi_apply _)
+  have hjoint : Measurable (fun p : ((R → Ω) × ({i : ι // i ∉ R} → Ω)) =>
+      h (fun i : S => p.2 ⟨(i : ι), hSoff i⟩) p.1) :=
+    hmj.comp ((hrest.comp measurable_snd).prodMk measurable_fst)
+  have hk : Measurable (fun v : (R → Ω) =>
+      ∫ y, h (fun i : S => y ⟨(i : ι), hSoff i⟩) v ∂(cvol {i : ι // i ∉ R} μ)) :=
+    (hjoint.stronglyMeasurable.integral_prod_right').measurable
+  have hres2 : Measurable (fun (U : ι → Ω) (i : R) => U (i : ι)) :=
+    measurable_pi_lambda _ (fun i => measurable_pi_apply (i : ι))
+  exact hk.comp hres2
+
+/-- **A bound on the observable bounds its half-integral**, the measure being a probability measure
+so the integral cannot amplify it.
+
+Used by `pairing_eq_weighted_square` and `integrable_weighted_halfIntegral_sq`.
+
+DERIVED: no numeral. -/
+theorem abs_halfIntegral_le (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ) {Ch : ℝ} (hCh : ∀ u v, |h u v| ≤ Ch) (U : ι → Ω) :
+    |halfIntegral μ S R hSR h U| ≤ Ch := by
+  show |∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)| ≤ Ch
+  have hb : ‖∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)‖
+      ≤ Ch * (cvol {i : ι // i ∉ R} μ Set.univ).toReal := by
+    refine norm_integral_le_of_norm_le_const ?_
+    exact Filter.Eventually.of_forall (fun y => by simpa [Real.norm_eq_abs] using hCh _ _)
+  simpa [Real.norm_eq_abs] using hb
+
+/-- **⭐ A FLOOR ON THE OBSERVABLE IS A FLOOR ON ITS HALF-INTEGRAL.**
+
+The half-integral is taken against a PROBABILITY measure, so it cannot fall below the observable's
+own lower bound. That is the whole content.
+
+**⛔ THE UPPER BOUND IS LOAD-BEARING FOR THE STATEMENT**, not merely for the tactic: the Bochner
+integral of a non-integrable function is `0` by convention, so without `hCh` an unbounded `h` gives
+`halfIntegral = 0` and any positive floor REFUTES the conclusion.
+
+**⛔ NOTHING CONSUMES THIS.** It is recorded as the companion to `abs_halfIntegral_le` — that one
+bounds above, this one below — and because the Bochner convention above is worth writing down once.
+
+DERIVED: no numeral. -/
+theorem le_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    {Ch : ℝ} (hCh : ∀ u v, |h u v| ≤ Ch)
+    {c : ℝ} (hc : ∀ u v, c ≤ h u v) (U : ι → Ω) :
+    c ≤ halfIntegral μ S R hSR h U := by
+  classical
+  have hSoff : ∀ i : S, ((i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hSR i.2
+  have hrest : Measurable (fun (y : {i : ι // i ∉ R} → Ω) (i : S) => y ⟨(i : ι), hSoff i⟩) :=
+    measurable_pi_lambda _ (fun i => measurable_pi_apply _)
+  have hfm : Measurable (fun y : {i : ι // i ∉ R} → Ω =>
+      h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι))) :=
+    hmj.comp (hrest.prodMk measurable_const)
+  have hfi : Integrable (fun y : {i : ι // i ∉ R} → Ω =>
+      h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι)))
+      (cvol {i : ι // i ∉ R} μ) :=
+    integrable_of_bounded (cvol {i : ι // i ∉ R} μ) hfm (fun _ => hCh _ _)
+  have hmono := integral_mono (integrable_const c) hfi (fun _ => hc _ _)
+  show c ≤ ∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)
+  simpa using hmono
+
+/-- **⭐ A CONSTANT COMES OUT OF THE HALF-INTEGRAL.**
+
+The half-integral is against a PROBABILITY measure, so subtracting a constant from the observable
+subtracts it from the half-integral.
+
+**WHY IT IS WANTED.** It is what makes the vanishing criterion usable on a MEAN-SUBTRACTED
+observable — the only kind `TransferGap.GapAt` sees. With it, the form at `O - k` vanishes exactly
+when `O`'s conditional half-integral is a.e. `k`, which is a statement about `O`'s dependence on the
+SHARED block and not about `O` being constant.
+
+DERIVED: no numeral. -/
+theorem halfIntegral_sub_const (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    {Ch : ℝ} (hCh : ∀ u v, |h u v| ≤ Ch) (k : ℝ) (U : ι → Ω) :
+    halfIntegral μ S R hSR (fun v w => h v w - k) U
+      = halfIntegral μ S R hSR h U - k := by
+  classical
+  have hSoff : ∀ i : S, ((i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hSR i.2
+  have hrest : Measurable (fun (y : {i : ι // i ∉ R} → Ω) (i : S) => y ⟨(i : ι), hSoff i⟩) :=
+    measurable_pi_lambda _ (fun i => measurable_pi_apply _)
+  have hfm : Measurable (fun y : {i : ι // i ∉ R} → Ω =>
+      h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι))) :=
+    hmj.comp (hrest.prodMk measurable_const)
+  have hfi : Integrable (fun y : {i : ι // i ∉ R} → Ω =>
+      h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι)))
+      (cvol {i : ι // i ∉ R} μ) :=
+    integrable_of_bounded (cvol {i : ι // i ∉ R} μ) hfm (fun _ => hCh _ _)
+  show (∫ y, (h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι)) - k) ∂(cvol {i : ι // i ∉ R} μ))
+      = (∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+        (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)) - k
+  rw [integral_sub hfi (integrable_const k), integral_const]
+  simp
+
+
+
+/-- **A factor reading the shared block alone pulls out of the half-integral.**
+
+DERIVED: no numeral. -/
+theorem halfIntegral_mul_R_left (S R : Finset ι) (hSR : Disjoint S R)
+    (f : (R → Ω) → ℝ) (k : (S → Ω) → (R → Ω) → ℝ) (U : ι → Ω) :
+    halfIntegral μ S R hSR (fun v w => f w * k v w) U
+      = f (fun i : R => U (i : ι)) * halfIntegral μ S R hSR k U := by
+  unfold halfIntegral
+  exact integral_const_mul _ _
+
+#print axioms halfIntegral_mul_R_left
+
+/-- **TWO VALUES of the half-integral, from a shared-block factor with a zero.**
+
+`f` vanishing at one plane configuration and positive at another suffices, because the remaining
+`S`-integral is strictly positive whenever the integrand has a positive lower bound.
+
+DERIVED: the `0`s are `f`'s value at `a` and the lower bounds; no other numeral. -/
+theorem halfIntegral_two_values_of_R_factor (S R : Finset ι) (hSR : Disjoint S R)
+    (f : (R → Ω) → ℝ) (k : (S → Ω) → (R → Ω) → ℝ)
+    (hkm : Measurable (fun q : ((S → Ω) × (R → Ω)) => k q.1 q.2))
+    {Ck : ℝ} (hkb : ∀ v w, |k v w| ≤ Ck) {c : ℝ} (hc0 : 0 < c) (hc : ∀ v w, c ≤ k v w)
+    {a b : ι → Ω}
+    (ha : f (fun i : R => a (i : ι)) = 0) (hb : 0 < f (fun i : R => b (i : ι))) :
+    halfIntegral μ S R hSR (fun v w => f w * k v w) a
+      ≠ halfIntegral μ S R hSR (fun v w => f w * k v w) b := by
+  rw [halfIntegral_mul_R_left μ S R hSR f k a, halfIntegral_mul_R_left μ S R hSR f k b, ha,
+    zero_mul]
+  have hD : 0 < halfIntegral μ S R hSR k b :=
+    lt_of_lt_of_le hc0 (le_halfIntegral μ S R hSR k hkm hkb hc b)
+  exact ne_of_lt (mul_pos hb hD)
+
+#print axioms halfIntegral_two_values_of_R_factor
+
+/-- **THE VARIANCE IS BELOW EVERY CENTRED SECOND MOMENT.** The quadratic in `k` is minimised at the
+mean, so subtracting the WRONG constant can only increase the integral.
+
+A lower bound built on this holds at EVERY `k`, so a caller need not identify the constant being
+subtracted.
+
+**⛔ NOTHING ROUTES THAT INTO `hfin` YET.** `gapAt_of_finite_volume_connected` is discharged
+through `WilsonTransferReduction.gapAt_iff_subtracted_pairing`, which does not mention this.
+
+DERIVED: the `2`s are the squares; no other numeral. -/
+theorem variance_le_integral_sub_const_sq {X : Type} [MeasurableSpace X] (ν : Measure X)
+    [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
+    (hg2 : Integrable (fun x => g x ^ 2) ν) (k : ℝ) :
+    (∫ x, g x ^ 2 ∂ν) - (∫ x, g x ∂ν) ^ 2 ≤ ∫ x, (g x - k) ^ 2 ∂ν := by
+  have hi1 : Integrable (fun x => g x ^ 2 - 2 * k * g x) ν := hg2.sub (hg.const_mul _)
+  have hrw : (fun x => (g x - k) ^ 2) = fun x => (g x ^ 2 - 2 * k * g x) + k ^ 2 := by
+    funext x
+    ring
+  have he : (∫ x, (g x - k) ^ 2 ∂ν)
+      = (∫ x, g x ^ 2 ∂ν) - 2 * k * (∫ x, g x ∂ν) + k ^ 2 := by
+    rw [hrw, integral_add hi1 (integrable_const _), integral_sub hg2 (hg.const_mul _)]
+    simp [integral_const_mul]
+  rw [he]
+  nlinarith [sq_nonneg (k - ∫ x, g x ∂ν)]
+
+#print axioms variance_le_integral_sub_const_sq
+
+/-- **THE VARIANCE IS THE SECOND MOMENT ABOUT THE MEAN.**
+
+**⛔ THIS IS NOT NEW CONTENT.** Mathlib's `ProbabilityTheory.variance` carries the same identity
+for `MemLp 2`; this states it for the `∫f² − (∫f)²` difference that
+`pairing_ge_weight_min_mul_variance` writes, with `Integrable` hypotheses instead.
+
+DERIVED: the `2`s are the squares; no other numeral. -/
+theorem variance_eq_integral_sub_mean_sq {X : Type} [MeasurableSpace X] (ν : Measure X)
+    [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
+    (hg2 : Integrable (fun x => g x ^ 2) ν) :
+    (∫ x, g x ^ 2 ∂ν) - (∫ x, g x ∂ν) ^ 2
+      = ∫ x, (g x - (∫ y, g y ∂ν)) ^ 2 ∂ν := by
+  have hi1 : Integrable (fun x => g x ^ 2 - 2 * (∫ y, g y ∂ν) * g x) ν :=
+    hg2.sub (hg.const_mul _)
+  have hrw : (fun x => (g x - (∫ y, g y ∂ν)) ^ 2)
+      = fun x => (g x ^ 2 - 2 * (∫ y, g y ∂ν) * g x) + (∫ y, g y ∂ν) ^ 2 := by
+    funext x
+    ring
+  have he : (∫ x, (g x - (∫ y, g y ∂ν)) ^ 2 ∂ν)
+      = (∫ x, g x ^ 2 ∂ν) - 2 * (∫ y, g y ∂ν) * (∫ x, g x ∂ν)
+        + (∫ y, g y ∂ν) ^ 2 := by
+    rw [hrw, integral_add hi1 (integrable_const _), integral_sub hg2 (hg.const_mul _)]
+    simp [integral_const_mul]
+  rw [he]
+  ring
+
+#print axioms variance_eq_integral_sub_mean_sq
+
+/-- **⭐ AND IT IS POSITIVE EXACTLY WHEN `g` IS NOT A.E. ITS OWN MEAN.**
+
+This is what makes `pairing_ge_weight_min_mul_variance` say more than `pairing_nonneg_of_local`:
+without it the bound is `0 ≤ pairing`, which is already known.
+`not_ae_eq_const_of_two_values` discharges the hypothesis from two values.
+
+**⛔ DO NOT ADD A `variance_pos_of_two_values` HERE.**
+`HaarVariance.variance_pos_of_two_values` proves the EQUIVALENT fact, independently: it cannot be
+this composition, since `HaarVariance` does not import `ActionSplit`. It works in Mathlib's
+`variance`, applies `Continuous.ae_eq_iff_eq` directly, and takes its integrability from
+`CompactSpace` rather than as a hypothesis. Compose the two here at the call site instead.
+
+DERIVED: the `2`s are the squares; the `0` is the positivity concluded. -/
+theorem variance_pos_of_not_ae_const {X : Type} [MeasurableSpace X] (ν : Measure X)
+    [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
+    (hg2 : Integrable (fun x => g x ^ 2) ν)
+    (hne : ¬ (g =ᵐ[ν] fun _ => ∫ y, g y ∂ν)) :
+    0 < (∫ x, g x ^ 2 ∂ν) - (∫ x, g x ∂ν) ^ 2 := by
+  have hqi : Integrable (fun x => (g x - (∫ y, g y ∂ν)) ^ 2) ν := by
+    have hrw : (fun x => (g x - (∫ y, g y ∂ν)) ^ 2)
+        = fun x => (g x ^ 2 - 2 * (∫ y, g y ∂ν) * g x) + (∫ y, g y ∂ν) ^ 2 := by
+      funext x
+      ring
+    rw [hrw]
+    exact (hg2.sub (hg.const_mul _)).add (integrable_const _)
+  rw [variance_eq_integral_sub_mean_sq ν g hg hg2]
+  have hnn : (0 : ℝ) ≤ ∫ x, (g x - (∫ y, g y ∂ν)) ^ 2 ∂ν :=
+    integral_nonneg (fun x => sq_nonneg _)
+  rcases hnn.lt_or_eq with hlt | heq
+  · exact hlt
+  · exfalso
+    refine hne ?_
+    have hz := (integral_eq_zero_iff_of_nonneg (fun x => sq_nonneg _) hqi).mp heq.symm
+    filter_upwards [hz] with x hx
+    have hx0 : (g x - (∫ y, g y ∂ν)) ^ 2 = 0 := hx
+    have := pow_eq_zero_iff (n := 2) (by norm_num) |>.mp hx0
+    linarith
+
+#print axioms variance_pos_of_not_ae_const
+
+/-- **⭐⭐ A NUMERIC FLOOR FOR THE VARIANCE, FROM A TEST FUNCTION WITH KNOWN MOMENTS.**
+
+Cauchy–Schwarz: correlating `f` against any mean-zero `g` bounds `f`'s variance below by
+`(∫f·g)² / ∫g²`. When `g`'s moments are COMPUTED and `∫f·g` has a floor, the right-hand side is a
+number.
+
+Proved by instantiating `0 ≤ ∫((f − mean) − λ·g)²` at the optimal `λ = ∫f·g / ∫g²`, rather than
+through a discriminant lemma: `Schwinger.sq_le_of_quad_nonneg` is this tree's discriminant lemma and
+`ActionSplit` does not import `Schwinger`.
+
+DERIVED: the `2`s are the squares; the `0`s are `g`'s mean and the sign of its second moment. -/
+theorem variance_ge_sq_div_of_mean_zero {X : Type} [MeasurableSpace X] (ν : Measure X)
+    [IsProbabilityMeasure ν] (f g : X → ℝ)
+    (hf : Integrable f ν) (hf2 : Integrable (fun x => f x ^ 2) ν)
+    (hg : Integrable g ν) (hg2 : Integrable (fun x => g x ^ 2) ν)
+    (hfg : Integrable (fun x => f x * g x) ν)
+    (hg0 : (∫ x, g x ∂ν) = 0) (hgpos : 0 < ∫ x, g x ^ 2 ∂ν) :
+    (∫ x, f x * g x ∂ν) ^ 2 / (∫ x, g x ^ 2 ∂ν)
+      ≤ (∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2 := by
+  have hi1 : Integrable (fun x => (f x - (∫ y, f y ∂ν)) ^ 2) ν := by
+    have hrw : (fun x => (f x - (∫ y, f y ∂ν)) ^ 2)
+        = fun x => (f x ^ 2 - 2 * (∫ y, f y ∂ν) * f x) + (∫ y, f y ∂ν) ^ 2 := by
+      funext x
+      ring
+    rw [hrw]
+    exact (hf2.sub (hf.const_mul _)).add (integrable_const _)
+  have hi2 : Integrable (fun x => (f x - (∫ y, f y ∂ν)) * g x) ν := by
+    have hrw : (fun x => (f x - (∫ y, f y ∂ν)) * g x)
+        = fun x => f x * g x - (∫ y, f y ∂ν) * g x := by
+      funext x
+      ring
+    rw [hrw]
+    exact hfg.sub (hg.const_mul _)
+  have hFg : (∫ x, (f x - (∫ y, f y ∂ν)) * g x ∂ν) = ∫ x, f x * g x ∂ν := by
+    have hrw : (fun x => (f x - (∫ y, f y ∂ν)) * g x)
+        = fun x => f x * g x - (∫ y, f y ∂ν) * g x := by
+      funext x
+      ring
+    rw [hrw, integral_sub hfg (hg.const_mul _), integral_const_mul, hg0]
+    ring
+  have hF2 : (∫ x, (f x - (∫ y, f y ∂ν)) ^ 2 ∂ν)
+      = (∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2 :=
+    (variance_eq_integral_sub_mean_sq ν f hf hf2).symm
+  set l : ℝ := (∫ x, f x * g x ∂ν) / (∫ x, g x ^ 2 ∂ν) with hl
+  set P1 : X → ℝ := fun x => (f x - (∫ y, f y ∂ν)) ^ 2
+      - 2 * l * ((f x - (∫ y, f y ∂ν)) * g x) with hP1
+  set P2 : X → ℝ := fun x => l ^ 2 * (g x ^ 2) with hP2
+  have hiP1 : Integrable P1 ν := hi1.sub (hi2.const_mul _)
+  have hiP2 : Integrable P2 ν := hg2.const_mul _
+  have h1 : (∫ x, P1 x ∂ν)
+      = ((∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2)
+        - 2 * l * (∫ x, f x * g x ∂ν) := by
+    simp only [hP1]
+    rw [integral_sub hi1 (hi2.const_mul _), integral_const_mul, hF2, hFg]
+  have h2 : (∫ x, P2 x ∂ν) = l ^ 2 * (∫ x, g x ^ 2 ∂ν) := by
+    simp only [hP2]
+    rw [integral_const_mul]
+  have he : (∫ x, ((f x - (∫ y, f y ∂ν)) - l * g x) ^ 2 ∂ν)
+      = ((∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2)
+        - 2 * l * (∫ x, f x * g x ∂ν) + l ^ 2 * (∫ x, g x ^ 2 ∂ν) := by
+    have hpt : (fun x => ((f x - (∫ y, f y ∂ν)) - l * g x) ^ 2)
+        = fun x => P1 x + P2 x := by
+      funext x
+      simp only [hP1, hP2]
+      ring
+    rw [hpt, integral_add hiP1 hiP2, h1, h2]
+  have hnn : 0 ≤ ((∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2)
+      - 2 * l * (∫ x, f x * g x ∂ν) + l ^ 2 * (∫ x, g x ^ 2 ∂ν) := by
+    rw [← he]
+    exact integral_nonneg (fun x => sq_nonneg _)
+  rw [div_le_iff₀ hgpos]
+  rw [hl] at hnn
+  field_simp at hnn
+  nlinarith [hnn, hgpos]
+
+#print axioms variance_ge_sq_div_of_mean_zero
+
+/-- **A FUNCTION OF ONE COORDINATE INTEGRATES AS IF THE OTHERS WERE NOT THERE.**
+
+`cvol` is `Measure.pi` of copies of one probability measure, so evaluation at a coordinate is
+measure preserving (`MeasureTheory.measurePreserving_eval`). This is what carries a COMPUTED
+single-link Haar moment to the configuration measure.
+
+DERIVED: no numeral. -/
+theorem integral_eval_cvol {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (i₀ : ι) (φ : Ω → ℝ) (hφ : Measurable φ) :
+    (∫ U, φ (U i₀) ∂(cvol ι μ)) = ∫ w, φ w ∂μ := by
+  have hmp := MeasureTheory.measurePreserving_eval (fun _ : ι => μ) i₀
+  have hmeas : AEMeasurable (Function.eval i₀ : (ι → Ω) → Ω) (cvol ι μ) :=
+    (measurable_pi_apply i₀).aemeasurable
+  have hsm : AEStronglyMeasurable φ (Measure.map (Function.eval i₀) (cvol ι μ)) := by
+    rw [hmp.map_eq]
+    exact hφ.aestronglyMeasurable
+  have h := integral_map hmeas hsm
+  rw [hmp.map_eq] at h
+  exact h.symm
+
+#print axioms integral_eval_cvol
+
+/-- **⭐⭐ OBSERVABLES ON DISJOINT BLOCKS FACTORISE**, in the LOCALITY form.
+
+`block_factor` states this for observables presented as functions of a block's coordinates. What a
+caller holds is a READING statement, so this restates it for `F` reading `R` and `G` reading the
+complement, and obtains it from `block_factor` rather than re-deriving the independence.
+
+**⛔ THIS IS THE FREE MEASURE**, not a Gibbs measure. At non-zero coupling the Boltzmann weight
+couples the blocks and this is false; bounding that coupling is what a cluster expansion is for.
+
+**⭐ IT IS STATED FOR ARBITRARY BOUNDED MEASURABLE OBSERVABLES**, which is the generality `hfin`
+quantifies over. `StrongCoupling`'s decay is stated for ONE PLAQUETTE.
+
+DERIVED: no numeral. -/
+theorem integral_mul_of_indep_blocks (R : Finset ι) (base : ι → Ω)
+    (F G : (ι → Ω) → ℝ) (hFm : Measurable F) (hGm : Measurable G)
+    (hFloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → F U = F V)
+    (hGloc : ∀ U V : ι → Ω, (∀ i, i ∉ R → U i = V i) → G U = G V) :
+    (∫ U, F U * G U ∂(cvol ι μ))
+      = (∫ U, F U ∂(cvol ι μ)) * ∫ U, G U ∂(cvol ι μ) := by
+  classical
+  set φ : (↥R → Ω) → ℝ := fun x => F (fun i => if h : i ∈ R then x ⟨i, h⟩ else base i) with hφd
+  set ψ : (↥(Rᶜ) → Ω) → ℝ :=
+    fun y => G (fun i => if h : i ∈ Rᶜ then y ⟨i, h⟩ else base i) with hψd
+  have hφm : Measurable φ := by
+    refine hFm.comp (measurable_pi_lambda _ (fun i => ?_))
+    by_cases h : i ∈ R
+    · simp only [dif_pos h]
+      exact measurable_pi_apply _
+    · simp only [dif_neg h]
+      exact measurable_const
+  have hψm : Measurable ψ := by
+    refine hGm.comp (measurable_pi_lambda _ (fun i => ?_))
+    by_cases h : i ∈ Rᶜ
+    · simp only [dif_pos h]
+      exact measurable_pi_apply _
+    · simp only [dif_neg h]
+      exact measurable_const
+  have hFeq : ∀ U : ι → Ω, F U = φ (fun i : ↥R => U (i : ι)) := by
+    intro U
+    refine hFloc _ _ (fun i hi => ?_)
+    simp [hi]
+  have hGeq : ∀ U : ι → Ω, G U = ψ (fun i : ↥(Rᶜ) => U (i : ι)) := by
+    intro U
+    refine hGloc _ _ (fun i hi => ?_)
+    have hic : i ∈ Rᶜ := Finset.mem_compl.mpr hi
+    simp [hic]
+  have hmul : (∫ U, F U * G U ∂(cvol ι μ))
+      = ∫ U, φ (fun i : ↥R => U (i : ι)) * ψ (fun i : ↥(Rᶜ) => U (i : ι)) ∂(cvol ι μ) :=
+    integral_congr_ae (Filter.Eventually.of_forall (fun U => by simp only [hFeq, hGeq]))
+  have hF : (∫ U, F U ∂(cvol ι μ)) = ∫ U, φ (fun i : ↥R => U (i : ι)) ∂(cvol ι μ) :=
+    integral_congr_ae (Filter.Eventually.of_forall (fun U => by simp only [hFeq]))
+  have hG : (∫ U, G U ∂(cvol ι μ)) = ∫ U, ψ (fun i : ↥(Rᶜ) => U (i : ι)) ∂(cvol ι μ) :=
+    integral_congr_ae (Filter.Eventually.of_forall (fun U => by simp only [hGeq]))
+  rw [hmul, hF, hG]
+  exact block_factor μ R Rᶜ disjoint_compl_right φ ψ hφm hψm
+
+#print axioms integral_mul_of_indep_blocks
+
+
+
+
+/-- **A UNIFORM LOWER BOUND ON THE WEIGHT PASSES THROUGH THE INTEGRAL**, for a nonnegative
+integrand.
+
+DERIVED: the `0` is the integrand's sign; no other numeral. -/
+theorem integral_weight_ge {X : Type} [MeasurableSpace X] (ν : Measure X) (W q : X → ℝ)
+    {Wmin : ℝ} (hW : ∀ x, Wmin ≤ W x) (hq : ∀ x, 0 ≤ q x)
+    (hqi : Integrable q ν) (hWqi : Integrable (fun x => W x * q x) ν) :
+    Wmin * (∫ x, q x ∂ν) ≤ ∫ x, W x * q x ∂ν := by
+  rw [← integral_const_mul]
+  exact integral_mono (hqi.const_mul _) hWqi
+    (fun x => mul_le_mul_of_nonneg_right (hW x) (hq x))
+
+#print axioms integral_weight_ge
+
+/-- **A CEILING ON THE THREE-BLOCK PAIRING**, from boundedness alone.
+
+The twin of the floor: `pairing_ge_weight_min_mul_variance` bounds the pairing below, this bounds it
+above, and `hfin` needs both because it is a RATIO of two pairings.
+
+**⛔ THERE IS NO DECAY IN THIS.** It is the product of the three bounding constants and nothing
+else, so a ratio formed from it and a floor measures how much decay is MISSING — it does not supply
+any.
+
+DERIVED: the `0`s are the signs of the two bounding constants; no other numeral. -/
+theorem abs_pairing_le
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
+    (O : (ι → Ω) → ℝ) (Ch : ℝ) (hCh0 : 0 ≤ Ch) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (Cw : ℝ) (hCw0 : 0 ≤ Cw) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ) :
+    |∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ)|
+      ≤ Cw * (Ch + |k|) * (Ch + |k|) := by
+  have hCh0' : (0 : ℝ) ≤ Ch + |k| := add_nonneg hCh0 (abs_nonneg _)
+  have hsub : ∀ U, |O U - k| ≤ Ch + |k| :=
+    fun U => le_trans (abs_sub _ _) (add_le_add (hOb U) (le_refl _))
+  have hpt : ∀ U, |W U * (O U - k) * (O (twist θ σ U) - k)| ≤ Cw * (Ch + |k|) * (Ch + |k|) := by
+    intro U
+    rw [abs_mul, abs_mul]
+    exact mul_le_mul (mul_le_mul (hWb U) (hsub U) (abs_nonneg _) hCw0) (hsub _)
+      (abs_nonneg _) (mul_nonneg hCw0 hCh0')
+  have hb : ‖∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ)‖
+      ≤ (Cw * (Ch + |k|) * (Ch + |k|)) * (cvol ι μ Set.univ).toReal := by
+    refine norm_integral_le_of_norm_le_const ?_
+    exact Filter.Eventually.of_forall (fun U => by simpa [Real.norm_eq_abs] using hpt U)
+  simpa [Real.norm_eq_abs] using hb
+
+#print axioms abs_pairing_le
+
+/-- **⭐⭐⭐ A NUMBER FOR THE VARIANCE OF `g · D`**, from `g`'s computed moments and a floor on `D`.
+
+Correlating against `g` itself makes the correlation `∫ D·g²`, which the floor bounds below by
+`c·v`; `variance_ge_sq_div_of_mean_zero` then gives `Var ≥ (c·v)²/v = c²·v`.
+
+**⛔ IT NEEDS `∫ g = 0`.** Against a `g` with a mean the correlation is not the second moment and
+the floor does not pass through.
+
+DERIVED: the `2`s are the squares; the `0`s are `g`'s mean and the signs of `c` and `v`. -/
+theorem variance_ge_sq_mul_of_factor_floor {X : Type} [MeasurableSpace X] (ν : Measure X)
+    [IsProbabilityMeasure ν] (g D : X → ℝ)
+    {c : ℝ} (hc0 : 0 < c) (hD : ∀ x, c ≤ D x)
+    (hg : Integrable g ν) (hg2 : Integrable (fun x => g x ^ 2) ν)
+    (hgD : Integrable (fun x => g x * D x) ν)
+    (hgDsq : Integrable (fun x => (g x * D x) ^ 2) ν)
+    (hgDg : Integrable (fun x => (g x * D x) * g x) ν)
+    {v : ℝ} (hg0 : (∫ x, g x ∂ν) = 0) (hv : (∫ x, g x ^ 2 ∂ν) = v) (hvpos : 0 < v) :
+    c ^ 2 * v
+      ≤ (∫ x, (g x * D x) ^ 2 ∂ν) - (∫ x, g x * D x ∂ν) ^ 2 := by
+  have hrw : (fun x => (g x * D x) * g x) = fun x => D x * (g x ^ 2) := by
+    funext x
+    ring
+  have hDg2 : Integrable (fun x => D x * (g x ^ 2)) ν := by
+    rw [← hrw]
+    exact hgDg
+  have hcorr : c * v ≤ ∫ x, (g x * D x) * g x ∂ν := by
+    rw [hrw, ← hv]
+    exact integral_weight_ge ν D (fun x => g x ^ 2) hD (fun x => sq_nonneg _) hg2 hDg2
+  have hcs := variance_ge_sq_div_of_mean_zero ν (fun x => g x * D x) g
+    hgD hgDsq hg hg2 hgDg hg0 (by rw [hv]; exact hvpos)
+  rw [hv] at hcs
+  have hcv : 0 ≤ c * v := le_of_lt (mul_pos hc0 hvpos)
+  have hsq : (c * v) ^ 2 ≤ (∫ x, (g x * D x) * g x ∂ν) ^ 2 := by
+    nlinarith [hcorr, hcv]
+  refine le_trans ?_ hcs
+  rw [le_div_iff₀ hvpos]
+  nlinarith [hsq]
+
+#print axioms variance_ge_sq_mul_of_factor_floor
+
+
 /-- **THE THREE-BLOCK CONDITIONAL IDENTITY.**
 
     ∫ W·O·(O∘Θ)  =  ∫ W · (half-integral)²
@@ -369,7 +858,10 @@ sign hypothesis on `w` is needed — this is an equation. Positivity follows the
 is `pairing_nonneg_of_shared_block`.
 
 The negative control says what changes if the shared block is moved inside the square:
-`NegControl.coin_pairing_ne_sq` computes `1/2` here against `1/4` there. -/
+`NegControl.coin_pairing_ne_sq` computes `1/2` here against `1/4` there.
+
+DERIVED: the `2` is the square the identity asserts; the `0`s are the signs of the two bounding
+constants `Ch` and `Cw`; the `1`s, `2` and `4` of the control are that control's own values. -/
 theorem pairing_eq_weighted_square
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -397,27 +889,9 @@ theorem pairing_eq_weighted_square
   have hSoff : ∀ i : S, ((i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hSR i.2
   have hToff : ∀ i : S, (θ (i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hTR (hθST _ i.2)
   -- the half-integral is measurable and bounded
-  have hrest : Measurable (fun (y : {i : ι // i ∉ R} → Ω) (i : S) => y ⟨(i : ι), hSoff i⟩) :=
-    measurable_pi_lambda _ (fun i => measurable_pi_apply _)
-  have hjoint : Measurable (fun p : ((R → Ω) × ({i : ι // i ∉ R} → Ω)) =>
-      h (fun i : S => p.2 ⟨(i : ι), hSoff i⟩) p.1) :=
-    hmj.comp ((hrest.comp measurable_snd).prodMk measurable_fst)
-  have hk : Measurable (fun v : (R → Ω) =>
-      ∫ y, h (fun i : S => y ⟨(i : ι), hSoff i⟩) v ∂(cvol {i : ι // i ∉ R} μ)) :=
-    (hjoint.stronglyMeasurable.integral_prod_right').measurable
-  have hres2 : Measurable (fun (U : ι → Ω) (i : R) => U (i : ι)) :=
-    measurable_pi_lambda _ (fun i => measurable_pi_apply (i : ι))
-  have hhm : Measurable (halfIntegral μ S R hSR h) := hk.comp hres2
-  have hhb : ∀ U, |halfIntegral μ S R hSR h U| ≤ Ch := by
-    intro U
-    show |∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
-        (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)| ≤ Ch
-    have hb : ‖∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
-        (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)‖
-        ≤ Ch * (cvol {i : ι // i ∉ R} μ Set.univ).toReal := by
-      refine norm_integral_le_of_norm_le_const ?_
-      exact Filter.Eventually.of_forall (fun y => by simpa [Real.norm_eq_abs] using hCh _ _)
-    simpa [Real.norm_eq_abs] using hb
+  have hhm : Measurable (halfIntegral μ S R hSR h) := measurable_halfIntegral μ S R hSR h hmj
+  have hhb : ∀ U, |halfIntegral μ S R hSR h U| ≤ Ch :=
+    fun U => abs_halfIntegral_le μ S R hSR h hCh U
   have hOb : ∀ U, |O U| ≤ Ch := fun U => by rw [hO]; exact hCh _ _
   have hWb : ∀ U, |W U| ≤ Cw := fun U => by rw [hW]; exact hCw _
   set F : (ι → Ω) → ℝ := fun U => W U * O U * O (twist θ σ U) with hF
@@ -536,6 +1010,220 @@ theorem pairing_eq_weighted_square
   rw [hLHS, hRHS]
   ring
 
+/-- **The weighted square is integrable**, which is what `integral_eq_zero_iff_of_nonneg` requires
+of it in `pairing_eq_zero_iff_halfIntegral`.
+
+DERIVED: the `2` is the square of `pairing_eq_weighted_square`, as there; the `0` is the sign of
+the weight's bound in `hCw0`, which `integrable_of_bounded` consumes. -/
+theorem integrable_weighted_halfIntegral_sq (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    {Ch : ℝ} (hCh : ∀ u v, |h u v| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) {Cw : ℝ} (hCw0 : 0 ≤ Cw) (hCw : ∀ U, |W U| ≤ Cw) :
+    Integrable (fun U => W U * (halfIntegral μ S R hSR h U) ^ 2) (cvol ι μ) := by
+  have hhm := measurable_halfIntegral μ S R hSR h hmj
+  refine integrable_of_bounded (cvol ι μ) (hWm.mul (hhm.pow_const 2))
+    (C := Cw * Ch ^ 2) (fun U => ?_)
+  have hsq : |halfIntegral μ S R hSR h U| * |halfIntegral μ S R hSR h U| ≤ Ch * Ch :=
+    mul_self_le_mul_self (abs_nonneg _) (abs_halfIntegral_le μ S R hSR h hCh U)
+  have e1 : |W U * (halfIntegral μ S R hSR h U) ^ 2|
+      = |W U| * (|halfIntegral μ S R hSR h U| * |halfIntegral μ S R hSR h U|) := by
+    simp only [abs_mul, abs_pow]; ring
+  calc |W U * (halfIntegral μ S R hSR h U) ^ 2|
+      = |W U| * (|halfIntegral μ S R hSR h U| * |halfIntegral μ S R hSR h U|) := e1
+    _ ≤ Cw * (Ch * Ch) :=
+        mul_le_mul (hCw U) hsq (mul_nonneg (abs_nonneg _) (abs_nonneg _)) hCw0
+    _ = Cw * Ch ^ 2 := by ring
+
+/-- **⭐⭐ THE REFLECTION FORM IS BOUNDED BELOW BY THE HALF-INTEGRAL'S VARIANCE, UNIFORMLY IN `k`.**
+
+`pairing_eq_weighted_square` at `h - k` writes the pairing as `∫ W·(halfIntegral - k)²`;
+`variance_le_integral_sub_const_sq` drops the `k`; `integral_weight_ge` drops the weight to its
+floor.
+
+**⛔ IT IS NOT A NUMBER.** The right-hand side is still an integral, and a ratio needs a value.
+
+What it removes is the dependence on `k`. `hfin` subtracts the state's mean and no lemma
+identifies that constant, so a bound holding at every `k` is the shape that could be used —
+**⛔ but no term in the tree connects this to `hfin`.**
+
+DERIVED: the `2`s are the squares; the `0`s are the signs of `Ch`, `Cw` and `Wmin`; no other
+numeral. -/
+theorem pairing_ge_weight_min_mul_variance
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u)
+    (hθST : ∀ i ∈ S, θ i ∈ T)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmS : ∀ v : (R → Ω), Measurable (fun u : (S → Ω) => h u v))
+    (hmj : Measurable (fun q : ((S → Ω) × (R → Ω)) => h q.1 q.2))
+    (Ch : ℝ) (hCh0 : 0 ≤ Ch) (hCh : ∀ u v, |h u v| ≤ Ch)
+    (w : (R → Ω) → ℝ) (Cw : ℝ) (hCw0 : 0 ≤ Cw) (hCw : ∀ v, |w v| ≤ Cw)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hO : ∀ U, O U = h (fun i : S => U (i : ι)) (fun i : R => U (i : ι)))
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W)
+    (hW : ∀ U, W U = w (fun i : R => U (i : ι)))
+    {Wmin : ℝ} (hWmin0 : 0 ≤ Wmin) (hWmin : ∀ U, Wmin ≤ W U) (k : ℝ) :
+    Wmin * ((∫ U, (halfIntegral μ S R hSR h U) ^ 2 ∂(cvol ι μ))
+        - (∫ U, halfIntegral μ S R hSR h U ∂(cvol ι μ)) ^ 2)
+      ≤ ∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ) := by
+  classical
+  have hmj' : Measurable (fun q : ((S → Ω) × (R → Ω)) => h q.1 q.2 - k) :=
+    hmj.sub measurable_const
+  have hCh' : ∀ u v, |h u v - k| ≤ Ch + |k| := by
+    intro u v
+    calc |h u v - k| ≤ |h u v| + |k| := abs_sub _ _
+      _ ≤ Ch + |k| := by linarith [hCh u v]
+  have hCh0' : (0 : ℝ) ≤ Ch + |k| := by linarith [abs_nonneg k]
+  -- the pairing IS the weighted square of the shifted half-integral
+  have hsq := pairing_eq_weighted_square μ S T R hST hSR hTR θ σ hσ hθR hσR hθST
+    (fun u v => h u v - k) (fun v => (hmS v).sub measurable_const) hmj'
+    (Ch + |k|) hCh0' hCh' w Cw hCw0 hCw
+    (fun U => O U - k) (hOm.sub measurable_const) (fun U => by rw [hO U])
+    W hWm hW
+  -- and that half-integral is the original one shifted
+  have hshift : ∀ U, halfIntegral μ S R hSR (fun u v => h u v - k) U
+      = halfIntegral μ S R hSR h U - k :=
+    fun U => halfIntegral_sub_const μ S R hSR h hmj hCh k U
+  have hhm : Measurable (halfIntegral μ S R hSR h) := measurable_halfIntegral μ S R hSR h hmj
+  have hhb : ∀ U, |halfIntegral μ S R hSR h U| ≤ Ch :=
+    fun U => abs_halfIntegral_le μ S R hSR h hCh U
+  have hgi : Integrable (halfIntegral μ S R hSR h) (cvol ι μ) :=
+    integrable_of_bounded (cvol ι μ) hhm hhb
+  have hg2i : Integrable (fun U => (halfIntegral μ S R hSR h U) ^ 2) (cvol ι μ) := by
+    refine integrable_of_bounded (cvol ι μ) (hhm.pow_const 2) (C := Ch ^ 2) (fun U => ?_)
+    rw [abs_pow]
+    nlinarith [abs_nonneg (halfIntegral μ S R hSR h U), hhb U]
+  have hqi : Integrable (fun U => (halfIntegral μ S R hSR h U - k) ^ 2) (cvol ι μ) := by
+    refine integrable_of_bounded (cvol ι μ) ((hhm.sub measurable_const).pow_const 2)
+      (C := (Ch + |k|) ^ 2) (fun U => ?_)
+    have hb : |halfIntegral μ S R hSR h U - k| ≤ Ch + |k| := by
+      calc |halfIntegral μ S R hSR h U - k| ≤ |halfIntegral μ S R hSR h U| + |k| := abs_sub _ _
+        _ ≤ Ch + |k| := by linarith [hhb U]
+    rw [abs_pow]
+    nlinarith [abs_nonneg (halfIntegral μ S R hSR h U - k), hb]
+  have hWqi : Integrable (fun U => W U * (halfIntegral μ S R hSR h U - k) ^ 2) (cvol ι μ) := by
+    have := integrable_weighted_halfIntegral_sq μ S R hSR (fun u v => h u v - k) hmj' hCh'
+      W hWm hCw0 (fun U => by rw [hW U]; exact hCw _)
+    refine this.congr (Filter.Eventually.of_forall (fun U => ?_))
+    simp only [hshift]
+  -- assemble
+  have hvar := variance_le_integral_sub_const_sq (cvol ι μ) (halfIntegral μ S R hSR h)
+    hgi hg2i k
+  have hstep1 : Wmin * ((∫ U, (halfIntegral μ S R hSR h U) ^ 2 ∂(cvol ι μ))
+      - (∫ U, halfIntegral μ S R hSR h U ∂(cvol ι μ)) ^ 2)
+      ≤ Wmin * ∫ U, (halfIntegral μ S R hSR h U - k) ^ 2 ∂(cvol ι μ) :=
+    mul_le_mul_of_nonneg_left hvar hWmin0
+  have hstep2 : Wmin * (∫ U, (halfIntegral μ S R hSR h U - k) ^ 2 ∂(cvol ι μ))
+      ≤ ∫ U, W U * (halfIntegral μ S R hSR h U - k) ^ 2 ∂(cvol ι μ) :=
+    integral_weight_ge (cvol ι μ) W _ hWmin (fun U => sq_nonneg _) hqi hWqi
+  have hrhs : (∫ U, W U * (halfIntegral μ S R hSR h U - k) ^ 2 ∂(cvol ι μ))
+      = ∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ) := by
+    rw [hsq]
+    refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
+    simp only [hshift]
+  linarith [hstep1, hstep2, hrhs.ge, hrhs.le]
+
+#print axioms pairing_ge_weight_min_mul_variance
+
+/-- **⭐⭐ EXACTLY WHEN THE REFLECTION PAIRING VANISHES.**
+
+    INT W·O·(O∘Θ) = 0   ↔   W · (half-integral)² = 0 almost everywhere
+
+`pairing_eq_weighted_square` is an EQUATION, so the pairing is an integral of a nonnegative function
+the moment the weight is nonnegative, and a nonnegative integrand integrates to zero exactly when it
+vanishes a.e. What enters beyond the identity is BOUNDEDNESS, which is what supplies the
+integrability `integral_eq_zero_iff_of_nonneg` requires. There is no smallness, no condition on the
+coupling and no topology on `Ω`.
+
+**WHY THIS IS THE ONE WORTH HAVING.** `pairing_nonneg_of_shared_block` gives `0 ≤`. A ratio needs its
+denominator bounded BELOW, and `0 ≤` does not bound anything below. This replaces the inequality by
+an equivalence, so the denominator's vanishing becomes a checkable property of the observable rather
+than an unknown.
+
+**⛔ THE RIGHT-HAND SIDE IS NOT "`O` IS CONSTANT".** What it constrains is the CONDITIONAL
+half-integral — `O` integrated over one side with the shared block held fixed — and not `O` itself.
+No witness is recorded here for an `O` that varies while its half-integral vanishes;
+`NegControl.coin_pairing_ne_sq` is NOT one, being a control on where the shared block sits (its
+half-integral is `1/2`, not `0`).
+
+**⛔ AND IT SAYS NOTHING ABOUT A LIMIT STATE.** This is one finite index set `ι` with the product
+measure. Transporting it to the thermodynamic limit is a separate step and the tree does not take it
+here.
+
+DERIVED: the `0`s are the vanishing asserted on each side, the weight's sign in `hwnn`, and the
+signs of the two bounding constants in `hCh0` and `hCw0`; the `2` is the square of
+`pairing_eq_weighted_square`, as there. -/
+theorem pairing_eq_zero_iff_halfIntegral
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u)
+    (hθST : ∀ i ∈ S, θ i ∈ T)
+    (h : (S → Ω) → (R → Ω) → ℝ) (hmS : ∀ v : (R → Ω), Measurable (fun u : (S → Ω) => h u v))
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    (Ch : ℝ) (hCh0 : 0 ≤ Ch) (hCh : ∀ u v, |h u v| ≤ Ch)
+    (w : (R → Ω) → ℝ) (hwnn : ∀ v, 0 ≤ w v)
+    (Cw : ℝ) (hCw0 : 0 ≤ Cw) (hCw : ∀ v, |w v| ≤ Cw)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hO : ∀ U, O U = h (fun i : S => U (i : ι)) (fun i : R => U (i : ι)))
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W)
+    (hW : ∀ U, W U = w (fun i : R => U (i : ι))) :
+    (∫ U, W U * O U * O (twist θ σ U) ∂(cvol ι μ)) = 0
+      ↔ (fun U => W U * (halfIntegral μ S R hSR h U) ^ 2) =ᵐ[cvol ι μ] 0 := by
+  have hWnn : ∀ U, 0 ≤ W U := fun U => by rw [hW]; exact hwnn _
+  have hWb : ∀ U, |W U| ≤ Cw := fun U => by rw [hW]; exact hCw _
+  have hnn : (0 : (ι → Ω) → ℝ) ≤ fun U => W U * (halfIntegral μ S R hSR h U) ^ 2 :=
+    fun U => mul_nonneg (hWnn U) (sq_nonneg _)
+  have hint := integrable_weighted_halfIntegral_sq μ S R hSR h hmj hCh W hWm hCw0 hWb
+  rw [pairing_eq_weighted_square μ S T R hST hSR hTR θ σ hσ hθR hσR hθST h hmS hmj
+    Ch hCh0 hCh w Cw hCw0 hCw O hOm hO W hWm hW]
+  exact integral_eq_zero_iff_of_nonneg hnn hint
+
+/-- **⭐⭐⭐ AND SO THE PAIRING IS STRICTLY POSITIVE**, given the one thing that can make it vanish.
+
+This is the shape a ratio bound consumes: a lower bound on the DENOMINATOR, at a fixed finite index
+set, on the hypotheses of `pairing_eq_weighted_square` plus the weight's nonnegativity and the
+failure of the a.e. identity above. Those hypotheses include a UNIFORM BOUND on the observable,
+which is a restriction on it and not bookkeeping.
+
+**⛔ THE HYPOTHESIS IS NOT DISCHARGED HERE**, and it is NOT the same proposition as the
+non-degeneracy guards on the GNS side. `TransferGap.gapAt_of_nondegenerate` guards on `0 < form x x`
+and `WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate` on a pairing of the
+MEAN-SUBTRACTED observable against a `DLRLimit.State`; `hne` has no subtraction, ranges over no
+algebra, and lives on `cvol ι μ` at a finite index set. It plays the same ROLE and nothing in the
+tree connects the two. What this theorem does is convert `hne` from a statement about an unknown
+pairing into a statement about an explicit integrand; it does not supply it.
+
+DERIVED: the `0`s are the vanishing denied, the positivity asserted, the weight's sign in `hwnn`,
+and the signs of the two bounding constants in `hCh0` and `hCw0`; the `2` is the square of
+`pairing_eq_weighted_square`, as there. -/
+theorem pairing_pos_of_halfIntegral_ne
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u)
+    (hθST : ∀ i ∈ S, θ i ∈ T)
+    (h : (S → Ω) → (R → Ω) → ℝ) (hmS : ∀ v : (R → Ω), Measurable (fun u : (S → Ω) => h u v))
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    (Ch : ℝ) (hCh0 : 0 ≤ Ch) (hCh : ∀ u v, |h u v| ≤ Ch)
+    (w : (R → Ω) → ℝ) (hwnn : ∀ v, 0 ≤ w v)
+    (Cw : ℝ) (hCw0 : 0 ≤ Cw) (hCw : ∀ v, |w v| ≤ Cw)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hO : ∀ U, O U = h (fun i : S => U (i : ι)) (fun i : R => U (i : ι)))
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W)
+    (hW : ∀ U, W U = w (fun i : R => U (i : ι)))
+    (hne : ¬ ((fun U => W U * (halfIntegral μ S R hSR h U) ^ 2) =ᵐ[cvol ι μ] 0)) :
+    0 < ∫ U, W U * O U * O (twist θ σ U) ∂(cvol ι μ) := by
+  have hWnn : ∀ U, 0 ≤ W U := fun U => by rw [hW]; exact hwnn _
+  have hnn : (0 : (ι → Ω) → ℝ) ≤ fun U => W U * (halfIntegral μ S R hSR h U) ^ 2 :=
+    fun U => mul_nonneg (hWnn U) (sq_nonneg _)
+  have hsq := pairing_eq_weighted_square μ S T R hST hSR hTR θ σ hσ hθR hσR hθST h hmS hmj
+    Ch hCh0 hCh w Cw hCw0 hCw O hOm hO W hWm hW
+  have hge : 0 ≤ ∫ U, W U * O U * O (twist θ σ U) ∂(cvol ι μ) := by
+    rw [hsq]; exact integral_nonneg hnn
+  refine lt_of_le_of_ne hge (fun h0 => hne ?_)
+  exact (pairing_eq_zero_iff_halfIntegral μ S T R hST hSR hTR θ σ hσ hθR hσR hθST h hmS hmj
+    Ch hCh0 hCh w hwnn Cw hCw0 hCw O hOm hO W hWm hW).mp h0.symm
+
 end Weld
 
 /-! ## The weld in the form a caller actually has it: LOCALITY instead of a factorisation
@@ -564,20 +1252,58 @@ theorem glue_agree_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω) (
   have hs : i ∉ S := fun hc => Finset.disjoint_left.mp hSR hc hi
   simp only [glue, dif_neg hs, dif_pos hi]
 
-theorem measurable_glue_left (S R : Finset ι) (base : ι → Ω) (w : R → Ω) :
-    Measurable (fun v : S → Ω => glue S R base v w) := by
+/-- **The `R`-restriction of a glue IS the `R`-part.** `glue_agree_R` pointwise, as a function.
+
+DERIVED: no numeral. -/
+theorem glue_restrict_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω) (v : S → Ω)
+    (w : R → Ω) : (fun i : R => glue S R base v w (i : ι)) = w := by
+  funext i
+  exact glue_agree_R S R hSR base v w i.2
+
+#print axioms glue_restrict_R
+
+/-- **`O` CANNOT SEE `base`.** Two glues differing only in `base` agree on `S` and on `R`, so a
+reading hypothesis equates the observable on them. The `base` in `glue` is scaffolding: it fills the
+coordinates the observable is blind to, and every VALUE built from it is independent of the filling,
+not merely every vanishing.
+
+DERIVED: no numeral. -/
+theorem glue_base_congr (S R : Finset ι) (hSR : Disjoint S R) (b b' : ι → Ω)
+    (O : (ι → Ω) → ℝ)
+    (hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V)
+    (v : S → Ω) (w : R → Ω) :
+    O (glue S R b v w) = O (glue S R b' v w) :=
+  hOloc _ _
+    (fun i hi => by rw [glue_agree_S S R b v w hi, glue_agree_S S R b' v w hi])
+    (fun i hi => by rw [glue_agree_R S R hSR b v w hi, glue_agree_R S R hSR b' v w hi])
+
+/-- **`glue` is JOINTLY measurable**, which the square identity needs because it integrates over both
+blocks. `measurable_glue_left` is the specialisation at a fixed `w`.
+
+DERIVED: no numeral. -/
+theorem measurable_glue (S R : Finset ι) (base : ι → Ω) :
+    Measurable (fun q : ((S → Ω) × (R → Ω)) => glue S R base q.1 q.2) := by
   refine measurable_pi_lambda _ (fun i => ?_)
   by_cases hs : i ∈ S
   · simp only [glue, dif_pos hs]
-    exact measurable_pi_apply _
-  · simp only [glue, dif_neg hs]
-    exact measurable_const
+    exact (measurable_pi_apply _).comp measurable_fst
+  · by_cases hr : i ∈ R
+    · simp only [glue, dif_neg hs, dif_pos hr]
+      exact (measurable_pi_apply _).comp measurable_snd
+    · simp only [glue, dif_neg hs, dif_neg hr]
+      exact measurable_const
+
+theorem measurable_glue_left (S R : Finset ι) (base : ι → Ω) (w : R → Ω) :
+    Measurable (fun v : S → Ω => glue S R base v w) :=
+  (measurable_glue S R base).comp (measurable_id.prodMk measurable_const)
 
 /-- **Reflection positivity from LOCALITY.** `O` need only READ `S ∪ R` and `W` read `R`; the
 factorised form the previous theorem wants is built here by `glue`.
 
 This is the shape the Wilson lattice supplies: a plaquette partition plus
-`ReflectionPositivity.hol_congr_on_support` gives exactly these two reading statements. -/
+`ReflectionPositivity.hol_congr_on_support` gives exactly these two reading statements.
+
+DERIVED: the `0`s are the nonnegativity asserted and the weight's sign in `hWnn`. -/
 theorem pairing_nonneg_of_local
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -605,7 +1331,528 @@ theorem pairing_nonneg_of_local
       (fun i hi => (glue_agree_R S R hSR base (fun i : S => base (i : ι))
         (fun i : R => U (i : ι)) hi).symm)
 
+
+/-- **⭐⭐ EXACTLY WHEN THE PAIRING VANISHES, FROM LOCALITY.**
+
+`pairing_nonneg_of_local` gives `0 ≤` from the reading statement a caller has;
+`pairing_eq_zero_iff_halfIntegral` gives the EQUIVALENCE from a factorisation no caller of the
+SHARED-BLOCK weld has. This is the equivalence from the reading statement, `glue` supplying the
+factorisation exactly as there.
+
+`base` APPEARS ON THE RIGHT AND CHANGES NOTHING: `glue_base_congr` shows `hOloc` makes the glued
+observable's VALUE independent of it, not merely its vanishing.
+
+**⛔ IT COSTS TWO BOUNDS WHERE `pairing_nonneg_of_local` COSTS ONE**, because the half-integral is
+bounded before it is squared. That cost is nominal in this tree: both caller families —
+`wilson_pairing_nonneg_even` and `ReflectionHalfSpace.irefl_box_wilson_pairing_nonneg` — already hold
+separate bounds and CONSTRUCT the single product bound from them.
+
+`ReflectionHalfSpace.irefl_box_pairing_eq_zero_iff` is the consumer: the same instantiation
+`irefl_box_pairing_nonneg` makes, at the box's three blocks, with `base` the all-identity
+configuration.
+
+**⛔ THE WELD SIBLINGS STILL HAVE NONE.** `pairing_eq_zero_iff_halfIntegral` and
+`pairing_pos_of_halfIntegral_ne` are reached only through this theorem. And a vanishing CRITERION is
+not a lower BOUND: the shape `TransferGap.GapAt`'s denominator and row 13's null space want is a
+proof that the half-integral does NOT vanish, which nothing supplies.
+
+`pairing_pos_iff_half_ne_const` below is this theorem with a constant subtracted and the weight
+strictly positive, stated as an equivalence. It adds `halfIntegral_sub_const` and the sign, and no
+content beyond them — with `0 < W` its two sides are the same proposition.
+
+DERIVED: the `0`s are the vanishing asserted on each side and the weight's sign in `hWnn`; the `2`
+is the square, as in `pairing_eq_weighted_square`. The two bounding constants carry no sign
+hypothesis — `base` is already a hypothesis, so `abs_nonneg` supplies it. -/
+theorem pairing_eq_zero_iff_local
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) (hWnn : ∀ U, 0 ≤ W U)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) :
+    (∫ U, W U * O U * O (twist θ σ U) ∂(cvol ι μ)) = 0
+      ↔ (fun U => W U
+          * (halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U) ^ 2) =ᵐ[cvol ι μ] 0 := by
+  refine pairing_eq_zero_iff_halfIntegral μ S T R hST hSR hTR θ σ hσ hθR hσR hθST
+    (fun v w => O (glue S R base v w))
+    (fun w => hOm.comp (measurable_glue_left S R base w))
+    (hOm.comp (measurable_glue S R base))
+    Ch (le_trans (abs_nonneg _) (hOb base)) (fun _ _ => hOb _)
+    (fun w => W (glue S R base (fun i : S => base (i : ι)) w))
+    (fun w => hWnn _) Cw (le_trans (abs_nonneg _) (hWb base)) (fun _ => hWb _)
+    O hOm ?_ W hWm ?_
+  · intro U
+    exact hOloc U _
+      (fun i hi => (glue_agree_S S R base (fun i : S => U (i : ι))
+        (fun i : R => U (i : ι)) hi).symm)
+      (fun i hi => (glue_agree_R S R hSR base (fun i : S => U (i : ι))
+        (fun i : R => U (i : ι)) hi).symm)
+  · intro U
+    exact hWloc U _
+      (fun i hi => (glue_agree_R S R hSR base (fun i : S => base (i : ι))
+        (fun i : R => U (i : ι)) hi).symm)
+
+
+
+/-- **⭐⭐ POSITIVITY OF THE CONSTANT-SUBTRACTED FORM, AS AN EQUIVALENCE.**
+
+The form at `O - k` is positive exactly when `O`'s conditional half-integral is NOT almost everywhere
+`k`.
+
+**⛔ THE TWO SIDES ARE THE SAME PROPOSITION, AND THAT IS WHY THIS IS AN `↔`.**
+`pairing_eq_zero_iff_local` is already an equivalence and assumes only `0 ≤ W`; with `0 < W` the
+factor `W` drops out of `W·x² = 0`, so the right-hand side is the form's non-vanishing rewritten. No
+difficulty is moved and none is removed. What is added over `pairing_eq_zero_iff_local` is exactly
+`halfIntegral_sub_const` — the constant coming out — and the sign, which turns non-vanishing into
+positivity.
+
+**⛔ `k` IS NOT A MEAN.** It is a free real. At `O ≡ 5` and `k = 0` the right-hand side holds while
+`O` is constant, so this is NOT the statement "the half-integral is non-constant", and the two are
+incomparable rather than ordered. Only when `k` is `O`'s own conditional mean does the right-hand
+side read "the half-integral is non-constant".
+
+**⛔ AND IT IS NOT THE GNS NON-DEGENERACY.** `WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate`
+guards a `DLRLimit.State` on `C(IConf G, ℝ)` at infinite volume with the subtracted constant pinned
+to `ν F`. This is `cvol ι μ` at a finite index set, over no algebra, with `k` free. It plays the same
+ROLE; nothing in the tree connects the two.
+
+**HOW SUCH A HYPOTHESIS GETS DISCHARGED ELSEWHERE.** `HaarVariance.variance_pos_of_two_values` does
+it with continuity, an open-positive measure and two values, and `PlaqVariance.wilsonCorrConn_self_pos`
+is the Wilson instance. That route is NOT available here: `Ω` carries no topology in this section.
+
+DERIVED: the `0`s are the positivity asserted, the weight's sign and the a.e. vanishing denied; the
+`2` of the proof is the square, as in `pairing_eq_weighted_square`. -/
+theorem pairing_pos_iff_half_ne_const
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ) :
+    0 < (∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ))
+      ↔ ¬ ((fun U => halfIntegral μ S R hSR
+          (fun v w => O (glue S R base v w)) U - k) =ᵐ[cvol ι μ] 0) := by
+  classical
+  have hCh0 : 0 ≤ Ch := le_trans (abs_nonneg _) (hOb base)
+  have hCw0 : 0 ≤ Cw := le_trans (abs_nonneg _) (hWb base)
+  have hWnn : ∀ U, 0 ≤ W U := fun U => (hWpos U).le
+  set O' : (ι → Ω) → ℝ := fun U => O U - k with hO'
+  have hO'm : Measurable O' := hOm.sub measurable_const
+  have hO'loc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O' U = O' V :=
+    fun U V h1 h2 => by simp only [hO']; rw [hOloc U V h1 h2]
+  have hO'b : ∀ U, |O' U| ≤ Ch + |k| := by
+    intro U
+    simp only [hO']
+    exact le_trans (abs_sub _ _) (add_le_add (hOb U) (le_refl _))
+  have hCh0' : 0 ≤ Ch + |k| := add_nonneg hCh0 (abs_nonneg _)
+  have hC : ∀ U, |W U * O' U * O' (twist θ σ U)| ≤ Cw * (Ch + |k|) * (Ch + |k|) := by
+    intro U
+    have e1 : |W U * O' U * O' (twist θ σ U)| = |W U| * |O' U| * |O' (twist θ σ U)| := by
+      simp only [abs_mul]
+    have h1 : |W U| * |O' U| ≤ Cw * (Ch + |k|) :=
+      mul_le_mul (hWb U) (hO'b U) (abs_nonneg _) hCw0
+    rw [e1]
+    exact mul_le_mul h1 (hO'b _) (abs_nonneg _) (mul_nonneg hCw0 hCh0')
+  have hnn := pairing_nonneg_of_local μ S T R hST hSR hTR θ σ hσ hθR hσR hθST base
+    O' hO'm hO'loc W hWm hWnn hWloc (Cw * (Ch + |k|) * (Ch + |k|)) hC
+  have hiff := pairing_eq_zero_iff_local μ S T R hST hSR hTR θ σ hσ hθR hσR hθST base
+    O' hO'm hO'loc (Ch + |k|) hO'b W hWm hWnn hWloc Cw hWb
+  have hsub : ∀ U, halfIntegral μ S R hSR (fun v w => O' (glue S R base v w)) U
+      = halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U - k :=
+    fun U => halfIntegral_sub_const μ S R hSR _ (hOm.comp (measurable_glue S R base))
+      (fun _ _ => hOb _) k U
+  constructor
+  · intro hpos hcon
+    have hz : (fun U => W U
+        * (halfIntegral μ S R hSR (fun v w => O' (glue S R base v w)) U) ^ 2)
+        =ᵐ[cvol ι μ] 0 := by
+      filter_upwards [hcon] with U hU
+      simp only [Pi.zero_apply] at hU ⊢
+      rw [hsub U, hU]
+      ring
+    exact absurd (hiff.mpr hz) hpos.ne'
+  · intro hne
+    refine lt_of_le_of_ne hnn (fun h0 => hne ?_)
+    have hae := hiff.mp h0.symm
+    filter_upwards [hae] with U hU
+    simp only [Pi.zero_apply, hsub U] at hU
+    have hW0 : W U ≠ 0 := (hWpos U).ne'
+    have hsq : (halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U - k) ^ 2 = 0 :=
+      (mul_eq_zero.mp hU).resolve_left hW0
+    simp only [Pi.zero_apply]
+    exact pow_eq_zero_iff (n := 2) (by norm_num) |>.mp hsq
+
+/-- **⭐⭐ THE VARIANCE BOUND IN THE SHAPE A BOX CALLER HAS.**
+
+`pairing_ge_weight_min_mul_variance` asks for a FACTORISATION of `O` and `W` through the blocks;
+what a caller of the shared-block weld holds is the READING statement. `glue` supplies the
+factorisation, exactly as in `pairing_nonneg_of_local`.
+
+DERIVED: the `2`s are the squares; the `0` is `Wmin`'s sign; no other numeral. -/
+theorem pairing_ge_variance_of_local
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw)
+    {Wmin : ℝ} (hWmin0 : 0 ≤ Wmin) (hWmin : ∀ U, Wmin ≤ W U) (k : ℝ) :
+    Wmin * ((∫ U, (halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U) ^ 2
+          ∂(cvol ι μ))
+        - (∫ U, halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U ∂(cvol ι μ)) ^ 2)
+      ≤ ∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ) :=
+  pairing_ge_weight_min_mul_variance μ S T R hST hSR hTR θ σ hσ hθR hσR hθST
+    (fun v w => O (glue S R base v w))
+    (fun w => hOm.comp (measurable_glue_left S R base w))
+    (hOm.comp (measurable_glue S R base))
+    Ch (le_trans (abs_nonneg _) (hOb base)) (fun _ _ => hOb _)
+    (fun w => W (glue S R base (fun i : S => base (i : ι)) w))
+    Cw (le_trans (abs_nonneg _) (hWb base)) (fun _ => hWb _)
+    O hOm
+    (fun U => hOloc U _
+      (fun i hi => (glue_agree_S S R base (fun i : S => U (i : ι))
+        (fun i : R => U (i : ι)) hi).symm)
+      (fun i hi => (glue_agree_R S R hSR base (fun i : S => U (i : ι))
+        (fun i : R => U (i : ι)) hi).symm))
+    W hWm
+    (fun U => hWloc U _
+      (fun i hi => (glue_agree_R S R hSR base (fun i : S => base (i : ι))
+        (fun i : R => U (i : ι)) hi).symm))
+    hWmin0 hWmin k
+
+#print axioms pairing_ge_variance_of_local
+
+/-- **⭐⭐ AN OBSERVABLE THAT DOES NOT READ THE SHARED BLOCK HAS A CONSTANT HALF-INTEGRAL.**
+
+`glue S R base v w` and `glue S R base v w'` agree on `S` whatever `w` and `w'` are, so an observable
+blind to `R` cannot tell them apart and its conditional half-integral does not depend on the
+configuration at all.
+
+DERIVED: no numeral. -/
+theorem halfIntegral_const_of_indep_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω)
+    (O : (ι → Ω) → ℝ)
+    (hOS : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → O U = O V) (U U' : ι → Ω) :
+    halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U
+      = halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U' := by
+  classical
+  refine integral_congr_ae (Filter.Eventually.of_forall (fun y => ?_))
+  exact hOS _ _ (fun i hi => by
+    rw [glue_agree_S S R base _ _ hi, glue_agree_S S R base _ _ hi])
+
+/-- **⭐⭐ AN OBSERVABLE THAT READS THE SHARED BLOCK ALONE IS ITS OWN HALF-INTEGRAL.**
+
+The dual of the previous theorem. `glue S R base v w` agrees with the configuration on `R` whatever
+`v` is, so an observable reading `R` alone does not depend on the integration variable, and against a
+PROBABILITY measure the integral of a constant is that constant.
+
+DERIVED: no numeral. -/
+theorem halfIntegral_of_indep_S (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω)
+    (O : (ι → Ω) → ℝ)
+    (hOR : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → O U = O V) (U : ι → Ω) :
+    halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U = O U := by
+  classical
+  have hval : ∀ y : {i : ι // i ∉ R} → Ω,
+      O (glue S R base (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+        (fun i : R => U (i : ι))) = O U := by
+    intro y
+    refine hOR _ _ (fun i hi => ?_)
+    rw [glue_agree_R S R hSR base _ _ hi]
+  show (∫ y, O (glue S R base (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι))) ∂(cvol {i : ι // i ∉ R} μ)) = O U
+  rw [integral_congr_ae (Filter.Eventually.of_forall hval), integral_const]
+  simp
+
+#print axioms halfIntegral_of_indep_S
+
+/-- **A reparametrisation that absorbs the configuration makes the half-integral constant.**
+
+If the integrand is `g` composed with a measure-preserving map that may depend on `U`, the
+half-integral equals `∫ g` for every `U`.
+
+This is the abstract form of the Haar obstruction: a free `S`-coordinate entering the integrand only
+through a group translation absorbs whatever the rest of the word contributes.
+
+DERIVED: no numeral. -/
+theorem halfIntegral_eq_integral_of_reparam (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (g : ({i : ι // i ∉ R} → Ω) → ℝ) (hg : Measurable g)
+    (e : (ι → Ω) → (({i : ι // i ∉ R} → Ω) → ({i : ι // i ∉ R} → Ω)))
+    (hmp : ∀ U, MeasurePreserving (e U) (cvol {i : ι // i ∉ R} μ) (cvol {i : ι // i ∉ R} μ))
+    (hrep : ∀ (U : ι → Ω) (y : {i : ι // i ∉ R} → Ω),
+      h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+        (fun i : R => U (i : ι)) = g (e U y))
+    (U : ι → Ω) :
+    halfIntegral μ S R hSR h U = ∫ y, g y ∂(cvol {i : ι // i ∉ R} μ) := by
+  classical
+  show (∫ y, h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+      (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ))
+      = ∫ y, g y ∂(cvol {i : ι // i ∉ R} μ)
+  rw [integral_congr_ae (Filter.Eventually.of_forall (hrep U))]
+  have hmap := integral_map (μ := cvol {i : ι // i ∉ R} μ) (f := g)
+    (hmp U).measurable.aemeasurable hg.aestronglyMeasurable
+  rw [(hmp U).map_eq] at hmap
+  exact hmap.symm
+
+#print axioms halfIntegral_eq_integral_of_reparam
+
+/-- **Hence such a half-integral takes ONE value**, so the two-values route cannot start from it.
+
+DERIVED: no numeral. -/
+theorem halfIntegral_const_of_reparam (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (g : ({i : ι // i ∉ R} → Ω) → ℝ) (hg : Measurable g)
+    (e : (ι → Ω) → (({i : ι // i ∉ R} → Ω) → ({i : ι // i ∉ R} → Ω)))
+    (hmp : ∀ U, MeasurePreserving (e U) (cvol {i : ι // i ∉ R} μ) (cvol {i : ι // i ∉ R} μ))
+    (hrep : ∀ (U : ι → Ω) (y : {i : ι // i ∉ R} → Ω),
+      h (fun i : S => y ⟨(i : ι), Finset.disjoint_left.mp hSR i.2⟩)
+        (fun i : R => U (i : ι)) = g (e U y))
+    (U U' : ι → Ω) :
+    halfIntegral μ S R hSR h U = halfIntegral μ S R hSR h U' := by
+  rw [halfIntegral_eq_integral_of_reparam μ S R hSR h g hg e hmp hrep U,
+    halfIntegral_eq_integral_of_reparam μ S R hSR h g hg e hmp hrep U']
+
+#print axioms halfIntegral_const_of_reparam
+
+/-- **⭐⭐⭐ THE REFLECTION FORM ANNIHILATES EVERY MEAN-SUBTRACTED OBSERVABLE BLIND TO THE SHARED
+BLOCK.**
+
+Subtract from such an observable the value its half-integral constantly takes and the form is
+exactly `0` — not bounded, not small, zero.
+
+**THIS IS A DISCHARGE, NOT A RESTATEMENT.** Everything else in this family says the form vanishes
+IF some condition holds. This computes the condition and finds it holds, for a class named by a
+reading statement a caller can check.
+
+**WHAT IT MEANS.** The even reflection form is degenerate precisely on the strictly-interior
+observables, so whatever the GNS quotient sees must COUPLE TO THE SHARED BLOCK. That is the
+transfer-matrix picture — the live observables sit on the time slice — and it is a term here rather
+than folklore.
+
+**⛔ AND IT DOES NOT SAY THE WILSON FORM IS DEGENERATE ON THE HALF-SPACE ALGEBRA.** `hOS` is about
+the observable THIS theorem is applied to, and the Wilson instantiation applies it to the DRESSED
+observable `ReflectionHalfSpace.idressed = F · e^{-βA₊}`, not to `F`. `ReflectionHalfSpace.idressed_depends_on_boxR` refutes `hOS` for the
+dressed observable on a one-plaquette carrier at every `β ≠ 0`, with the bare observable CONSTANT.
+
+**⛔ SO A BARE OBSERVABLE'S BLINDNESS TO `R` DOES NOT PUT IT IN THE WILSON FORM'S NULL SPACE.** That
+carrier is not reflection-closed, so no particular box is settled either way.
+
+**⛔ AND IT DOES NOT SAY THE FORM IS DEGENERATE ANYWHERE ELSE.** An observable that reads `R`
+may or may not have a constant half-integral; this says nothing about it.
+
+DERIVED: the `0` is the vanishing proved; the constant subtracted is the half-integral's own value,
+evaluated at `base` because `halfIntegral_const_of_indep_R` makes the point irrelevant. -/
+theorem pairing_eq_zero_of_indep_R
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOS : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) (hWnn : ∀ U, 0 ≤ W U)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) :
+    (∫ U, W U
+        * (O U - halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) base)
+        * (O (twist θ σ U)
+            - halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) base)
+      ∂(cvol ι μ)) = 0 := by
+  classical
+  set k : ℝ := halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) base with hk
+  have hCh0 : 0 ≤ Ch := le_trans (abs_nonneg _) (hOb base)
+  set O' : (ι → Ω) → ℝ := fun U => O U - k with hO'
+  have hO'm : Measurable O' := hOm.sub measurable_const
+  have hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V :=
+    fun U V h1 _ => hOS U V h1
+  have hO'loc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O' U = O' V :=
+    fun U V h1 h2 => by simp only [hO']; rw [hOloc U V h1 h2]
+  have hO'b : ∀ U, |O' U| ≤ Ch + |k| := by
+    intro U
+    simp only [hO']
+    exact le_trans (abs_sub _ _) (add_le_add (hOb U) (le_refl _))
+  have hsub : ∀ U, halfIntegral μ S R hSR (fun v w => O' (glue S R base v w)) U
+      = halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U - k :=
+    fun U => halfIntegral_sub_const μ S R hSR _ (hOm.comp (measurable_glue S R base))
+      (fun _ _ => hOb _) k U
+  refine (pairing_eq_zero_iff_local μ S T R hST hSR hTR θ σ hσ hθR hσR hθST base
+    O' hO'm hO'loc (Ch + |k|) hO'b W hWm hWnn hWloc Cw hWb).mpr ?_
+  refine Filter.Eventually.of_forall (fun U => ?_)
+  simp only [Pi.zero_apply]
+  rw [hsub U, halfIntegral_const_of_indep_R μ S R hSR base O hOS U base, ← hk, sub_self]
+  ring
+
+/-- **⭐⭐⭐ ON THE SHARED BLOCK, NON-DEGENERATE IS EXACTLY NON-CONSTANT.**
+
+For an observable reading the shared block ALONE, `halfIntegral_of_indep_S` collapses
+`pairing_pos_iff_half_ne_const` completely: no half-integral survives, and the form at `O - k` is
+strictly positive exactly when `O` itself is not almost everywhere `k`.
+
+**WHY THIS IS THE ONE WORTH HAVING.** Every other criterion in this family states non-degeneracy in
+terms of a conditional integral, which is a thing one must compute. This states it in terms of the
+observable, which is a thing one can EXHIBIT — and `Continuous.ae_eq_iff_eq` against an
+open-positive measure turns "not a.e. `k`" into "takes two values", which is how
+`HaarVariance.variance_pos_of_two_values` and `PlaqVariance.wilsonCorrConn_self_pos` discharge the
+same shape elsewhere.
+
+**⛔ IT IS THE OPPOSITE POLE FROM `pairing_eq_zero_of_indep_R`, NOT A GENERAL ANSWER.** That one has
+the observable blind to `R` and the form vanishes; this one has it blind to `S` and the form is
+positive iff non-constant. An observable reading BOTH blocks — which is what the Wilson instantiation
+supplies, since the dressing `e^{-βA₊}` reads the shared block — is covered by neither, and that is
+the case the mass gap is about.
+
+DERIVED: the `0`s are the positivity asserted, the weight's sign and the a.e. vanishing denied. -/
+theorem pairing_pos_iff_ne_const_of_indep_S
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOR : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ) :
+    0 < (∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ))
+      ↔ ¬ ((fun U => O U - k) =ᵐ[cvol ι μ] 0) := by
+  classical
+  have hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V :=
+    fun U V _ h2 => hOR U V h2
+  have hiff := pairing_pos_iff_half_ne_const μ S T R hST hSR hTR θ σ hσ hθR hσR hθST base
+    O hOm hOloc Ch hOb W hWm hWpos hWloc Cw hWb k
+  have hcol : (fun U => halfIntegral μ S R hSR
+      (fun v w => O (glue S R base v w)) U - k) = fun U => O U - k := by
+    funext U
+    rw [halfIntegral_of_indep_S μ S R hSR base O hOR U]
+  rwa [hcol] at hiff
+
 end Localised
+
+section WeldContinuity
+
+variable {ι : Type} [Fintype ι] [DecidableEq ι]
+variable {Ω : Type} [MeasurableSpace Ω] [TopologicalSpace Ω] [FirstCountableTopology Ω]
+variable (μ : Measure Ω) [IsProbabilityMeasure μ]
+
+/-- **The conditional half-integral is continuous**, for a jointly continuous bounded integrand.
+
+`MeasureTheory.continuous_of_dominated` at `halfIntegral`: the integrand is continuous in the
+configuration for each integration point, and bounded by a constant.
+
+DERIVED: no numeral. -/
+theorem continuous_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
+    (h : (S → Ω) → (R → Ω) → ℝ)
+    (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    (hcj : Continuous (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
+    {Ch : ℝ} (hCh : ∀ u v, |h u v| ≤ Ch) :
+    Continuous (halfIntegral μ S R hSR h) := by
+  classical
+  have hSoff : ∀ i : S, ((i : ι) ∉ R) := fun i => Finset.disjoint_left.mp hSR i.2
+  have hrest : Measurable (fun (y : {i : ι // i ∉ R} → Ω) (i : S) => y ⟨(i : ι), hSoff i⟩) :=
+    measurable_pi_lambda _ (fun i => measurable_pi_apply _)
+  have hresR : Continuous (fun (U : ι → Ω) (i : R) => U (i : ι)) :=
+    continuous_pi (fun i => continuous_apply _)
+  have hms : ∀ U : ι → Ω, AEStronglyMeasurable
+      (fun y : {i : ι // i ∉ R} → Ω =>
+        h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι)))
+      (cvol {i : ι // i ∉ R} μ) :=
+    fun U => (hmj.comp (hrest.prodMk measurable_const)).aestronglyMeasurable
+  have hbd : ∀ U : ι → Ω, ∀ᵐ y ∂(cvol {i : ι // i ∉ R} μ),
+      ‖h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι))‖ ≤ Ch := by
+    intro U
+    refine Filter.Eventually.of_forall (fun y => ?_)
+    simpa [Real.norm_eq_abs] using hCh _ _
+  have hct : ∀ᵐ y ∂(cvol {i : ι // i ∉ R} μ),
+      Continuous (fun U : ι → Ω =>
+        h (fun i : S => y ⟨(i : ι), hSoff i⟩) (fun i : R => U (i : ι))) := by
+    refine Filter.Eventually.of_forall (fun y => ?_)
+    exact hcj.comp (continuous_const.prodMk hresR)
+  exact continuous_of_dominated hms hbd (integrable_const _) hct
+
+#print axioms continuous_halfIntegral
+
+/-- **`glue` is JOINTLY CONTINUOUS.** The twin of `measurable_glue`.
+
+`pairing_pos_of_half_two_values`'s `hcj` is continuity of the GLUED observable, so continuity of the
+observable alone does not reach it.
+
+DERIVED: no numeral. -/
+theorem continuous_glue (S R : Finset ι) (base : ι → Ω) :
+    Continuous (fun q : ((S → Ω) × (R → Ω)) => glue S R base q.1 q.2) := by
+  refine continuous_pi (fun i => ?_)
+  by_cases hs : i ∈ S
+  · simp only [glue, dif_pos hs]
+    exact (continuous_apply _).comp continuous_fst
+  · by_cases hr : i ∈ R
+    · simp only [glue, dif_neg hs, dif_pos hr]
+      exact (continuous_apply _).comp continuous_snd
+    · simp only [glue, dif_neg hs, dif_neg hr]
+      exact continuous_const
+
+#print axioms continuous_glue
+
+/-- **A continuous function taking two values is not a.e. constant**, against an open-positive
+measure.
+
+DERIVED: the `0` is the a.e. vanishing denied. -/
+theorem not_ae_eq_const_of_two_values {X : Type*} [TopologicalSpace X] [MeasurableSpace X]
+    (ν : Measure X) [ν.IsOpenPosMeasure] {f : X → ℝ} (hf : Continuous f) (k : ℝ)
+    {a b : X} (hab : f a ≠ f b) :
+    ¬ ((fun x => f x - k) =ᵐ[ν] 0) := by
+  intro hae
+  have h1 : f =ᵐ[ν] (fun _ => k) := by
+    filter_upwards [hae] with x hx
+    simp only [Pi.zero_apply, sub_eq_zero] at hx
+    exact hx
+  have h2 : f = fun _ => k := (Continuous.ae_eq_iff_eq ν hf continuous_const).mp h1
+  exact hab (by rw [h2])
+
+#print axioms not_ae_eq_const_of_two_values
+
+
+/-- **⭐⭐⭐ TWO VALUES OF THE HALF-INTEGRAL MAKE THE FORM POSITIVE.**
+
+`pairing_pos_iff_half_ne_const` with its a.e. hypothesis discharged by `continuous_halfIntegral` and
+`not_ae_eq_const_of_two_values`.
+
+DERIVED: the `0`s are the positivity asserted and the weight's sign. -/
+theorem pairing_pos_of_half_two_values
+    [(cvol ι μ).IsOpenPosMeasure]
+    (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
+    (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
+    (hθR : ∀ i ∈ R, θ i = i) (hσR : ∀ i ∈ R, ∀ u, σ i u = u) (hθST : ∀ i ∈ S, θ i ∈ T)
+    (base : ι → Ω)
+    (O : (ι → Ω) → ℝ) (hOm : Measurable O)
+    (hOloc : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → O U = O V)
+    (Ch : ℝ) (hOb : ∀ U, |O U| ≤ Ch)
+    (hcj : Continuous (fun q : ((S → Ω) × (R → Ω)) => O (glue S R base q.1 q.2)))
+    (W : (ι → Ω) → ℝ) (hWm : Measurable W) (hWpos : ∀ U, 0 < W U)
+    (hWloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → W U = W V)
+    (Cw : ℝ) (hWb : ∀ U, |W U| ≤ Cw) (k : ℝ)
+    {a b : ι → Ω}
+    (hab : halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) a
+        ≠ halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) b) :
+    0 < ∫ U, W U * (O U - k) * (O (twist θ σ U) - k) ∂(cvol ι μ) := by
+  refine (pairing_pos_iff_half_ne_const μ S T R hST hSR hTR θ σ hσ hθR hσR hθST base
+    O hOm hOloc Ch hOb W hWm hWpos hWloc Cw hWb k).mpr ?_
+  exact not_ae_eq_const_of_two_values (cvol ι μ)
+    (continuous_halfIntegral μ S R hSR (fun v w => O (glue S R base v w))
+      (hOm.comp (measurable_glue S R base)) hcj (fun _ _ => hOb _)) k hab
+
+#print axioms pairing_pos_of_half_two_values
+
+end WeldContinuity
 
 /-! ## NEGATIVE CONTROL: the shared block may not move inside the square -/
 
@@ -1953,7 +3200,15 @@ section Audit
 #print axioms offBlock_disjoint
 #print axioms pairing_nonneg_of_shared_block
 #print axioms prod_integral_congr_inner
+#print axioms measurable_halfIntegral
+#print axioms abs_halfIntegral_le
+#print axioms le_halfIntegral
+
+#print axioms halfIntegral_sub_const
 #print axioms pairing_eq_weighted_square
+#print axioms integrable_weighted_halfIntegral_sq
+#print axioms pairing_eq_zero_iff_halfIntegral
+#print axioms pairing_pos_of_halfIntegral_ne
 #print axioms NegControl.integral_coin
 #print axioms NegControl.integral_gCoin
 #print axioms NegControl.integral_gCoin_sq
@@ -1978,6 +3233,14 @@ section Audit
 #print axioms reflConf_inverts_fixed_axis_link
 #print axioms wilson_pairing_nonneg_of_shared_block
 #print axioms pairing_nonneg_of_local
+#print axioms glue_base_congr
+#print axioms measurable_glue
+#print axioms pairing_eq_zero_iff_local
+#print axioms pairing_pos_iff_half_ne_const
+
+#print axioms pairing_pos_iff_ne_const_of_indep_S
+#print axioms halfIntegral_const_of_indep_R
+#print axioms pairing_eq_zero_of_indep_R
 #print axioms exists_of_eventually_of_frequently
 #print axioms frequently_even_succ
 #print axioms exists_even_extent_of_eventually

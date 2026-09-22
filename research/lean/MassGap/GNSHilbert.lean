@@ -83,18 +83,22 @@ plane, exactly as `Transfer`'s header says.
 the slab `TransferData` has `T = 1` on its own premise, and Part 7 exhibits an unconditional one that
 does.
 
-**⛔ THAT IS NO LONGER THE WHOLE STORY, BECAUSE A CARRIER ON WHICH `T` IS NOT THE IDENTITY NOW
-EXISTS.** `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves it: for every positive
-`k`, `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits a member of `halfSpaceAlg`
-that `k` shifts move, and at `k = 1` that carries through `TransferAssembly.restrictT` to the
-assembled `T`. So `positiveTransfer_of_T_eq_id` does not reach
-`WilsonTransferReduction.transferData_of_state_facts`, and `PositiveTransfer` there is a real
-condition rather than a formality.
+**⛔ THAT IS NO LONGER THE WHOLE STORY AT `SU(3)`, BECAUSE A CARRIER ON WHICH `T` IS NOT THE
+IDENTITY NOW EXISTS AT RANK AT LEAST TWO.** `ReflectionHalfSpace.transferData_T_ne_id_of_rank_two`
+proves it with the separating premise discharged — the three facts about the state remain — for every
+positive `k`, `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits
+a member of `halfSpaceAlg` that `k` shifts move, `HaarVariance.reTr_flipEl_ne_reTr_one` discharges
+the separating function it needs, and at `k = 1` that carries through `TransferAssembly.restrictT` to
+the assembled `T`. So `positiveTransfer_of_T_eq_id` does not reach
+`WilsonTransferReduction.transferData_of_state_facts` there, and `PositiveTransfer` is a real
+condition rather than a formality. **At `SU 0` and `SU 1` no separating function exists**, so nothing
+here applies and the tree formalises nothing about those ranks.
 
 **⛔ THE ALGEBRA IS WHAT EXISTS; THE `TransferData` IS NOT AN OBJECT THE TREE HAS.**
-`transferData_of_state_facts` is a `def` parameterised by three unproved facts about a state, and
-`WilsonState` says twice that nothing is shown to satisfy any of them. What follows is about that
-`def` applied to hypotheses, not about an object in hand.
+`transferData_of_state_facts` is a `def` parameterised by three unproved facts about a state.
+`WilsonState` says that `wilsonStateAt` is not shown to satisfy any of them, and says in the next
+breath that a DIFFERENT state does satisfy two: `ReflectionHalfSpace.reflection_facts_on_halfSpaceAlg`
+returns ONE state carrying both `IsReflectionInvariant` and `ReflPositiveOn`. What follows is about that `def` applied to hypotheses, not about an object in hand.
 
 **⛔ AND MOTION IN THE ALGEBRA IS NOT MOTION IN THE GNS QUOTIENT.** `opT [F] = [F]` whenever
 `T F - F` lies in the null space of the form, and nothing shows otherwise for this carrier. Part 6's
@@ -102,9 +106,10 @@ trap is stated at `opT`, not at `T`, and `shift_no_finite_order_on_halfSpaceAlg`
 caveat. `T ≠ 1` does not give `TransferMovesSomething`.
 
 **⛔ AND IT NEEDS A SEPARATING FUNCTION ON THE GROUP**, which is a real hypothesis: `SU 0` and `SU 1`
-are singletons and none exists. `CrossingIntegration.trace_gNeg` supplies one at `SU(3)`. Nothing in
-the tree composes that with `halfSpaceAlg_has_nonconstant`, which separates CONFIGURATIONS rather
-than group elements and does not discharge this.
+are singletons and none exists. `HaarVariance.reTr_flipEl_ne_reTr_one` supplies one at every
+`SU (m+2)`, `Re tr` reading `m + 2` at the identity against `m - 2` at `flipEl m`.
+`halfSpaceAlg_has_nonconstant` does not: it separates CONFIGURATIONS by an observable and has the
+wrong type.
 
 **AND `PositiveTransfer` IS DISCHARGED THERE, BY A DIFFERENT ROUTE.**
 `WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` makes it EQUIVALENT to reflection
@@ -477,8 +482,9 @@ says nothing about the SIGN of `λ`, and a negative eigenvalue is what an oscill
 like. It is reflection positivity about a HALF-INTEGER time plane — a second application of the same
 physics. `re_inner_opT_nonneg` proves it suffices on the whole completion.
 
-It is nevertheless a THEOREM whenever `T = 1` (`positiveTransfer_of_T_eq_id`), and every Wilson
-`TransferData` the tree has is of that kind, so at Yang–Mills today this is not the open item. See the
+It is nevertheless a THEOREM whenever `T = 1` (`positiveTransfer_of_T_eq_id`), ⛔ but it is STALE that every Wilson
+`TransferData` the tree has is of that kind — a `T ≠ 1` carrier now exists, as this file's header and
+`positiveTransfer_of_T_eq_id` both record.  Where `T = 1` does hold, so at Yang–Mills today this is not the open item. See the
 module header.
 -/
 

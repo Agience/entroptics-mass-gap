@@ -1,0 +1,27 @@
+# Conclusions that bind a positive real and never use it, as of 2026-09-22.
+#
+# `VolumeRate.exists_pos_and_iff` machine-checks that `exists k, 0 < k and Q` is equivalent to `Q`,
+# so these conclusions state NOTHING about a rate, a margin or a uniformity. This file records
+# DEBT, not permission. It may only shrink.
+#
+# THREE OF THESE ARE DELIBERATE and are not debt: the `VolumeRate` entries exist precisely to
+# exhibit the shape and prove it empty. They are listed so the scanner has one contract, not two.
+#
+# The other seven are declarations whose CONCLUSIONS are vacuous in the rate. Their docstrings were
+# repaired on 2026-09-22 -- several had claimed "a single rate k > 0" over exactly this shape, and
+# one contradicted its own file header. The statements themselves are unchanged and still say
+# nothing about a rate, which is what this file records. `VolumeRate.gap_rate_uniform_in_volume`,
+# `gap_rate_at_floor_uniform_in_volume` and `product_volume_gap_rate` are the rate-bearing
+# replacements; retiring a line below means moving its consumers onto one of those.
+
+VolumeRate.lean|exists_pos_and_iff
+VolumeRate.lean|vacuous_uniform_shape
+VolumeRate.lean|ym_gap_uniform_in_volume_shape_is_vacuous
+
+Aperture.lean|gap_uniform_in_F
+CellSpectrum.lean|gap_uniform_of_cell_intensive
+CellSpectrum.lean|cell_volume_bar_nonvacuous
+CellSpectrum.lean|product_volume_gap
+CellSpectrum.lean|product_volume_gap_concrete
+Certify.lean|gap_uniform_in_volume_of_intensive
+Complete.lean|ym_gap_uniform_in_volume

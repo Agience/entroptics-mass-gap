@@ -172,6 +172,114 @@ theorem one_mem_halfSpaceAlg (τ : Fin 4) (c : ℤ) :
 
 #print axioms one_mem_halfSpaceAlg
 
+/-- **⭐ THE HALF-SPACE ALGEBRA IS CLOSED UNDER MULTIPLICATION.**
+
+`halfSpaceAlg` is a `Submodule`, so it carried only additive and scalar closure. A product of two of
+its elements is local on the UNION of their supports, and that union is still inside `posHalf`
+because each piece already is — so the name was right and the closure was missing.
+
+It stays a `Submodule` deliberately: upgrading the definition to a `Subalgebra` would move the type
+every consumer is written against. The closure is supplied here as a lemma instead.
+
+**Why it is wanted.** A chessboard estimate bounds a PRODUCT of local observables over a region.
+Without this the product is not an element of the carrier the reflection forms are built on, so
+`Transfer.ReflForm.cauchy_schwarz` has nothing to be applied to.
+
+DERIVED: `4` is the spacetime dimension, the direction index `τ` ranges over; no other numeral. -/
+theorem halfSpaceAlg_mul_mem (τ : Fin 4) (c : ℤ) {F H : C(IConf G, ℝ)}
+    (hF : F ∈ halfSpaceAlg (G := G) τ c) (hH : H ∈ halfSpaceAlg (G := G) τ c) :
+    F * H ∈ halfSpaceAlg (G := G) τ c := by
+  classical
+  obtain ⟨S, hS, hFl⟩ := hF
+  obtain ⟨T, hT, hGl⟩ := hH
+  refine ⟨S ∪ T, ?_, ?_⟩
+  · intro l hl
+    rcases Finset.mem_union.mp (Finset.mem_coe.mp hl) with h1 | h1
+    · exact hS (Finset.mem_coe.mpr h1)
+    · exact hT (Finset.mem_coe.mpr h1)
+  · exact hFl.mul hGl
+
+#print axioms halfSpaceAlg_mul_mem
+
+/-- **⭐ AND A FINITE PRODUCT OF HALF-SPACE OBSERVABLES STAYS IN THE ALGEBRA.**
+
+`halfSpaceAlg_mul_mem` at a `Finset.prod`, with `one_mem_halfSpaceAlg` for the empty product. This
+is the membership a chessboard argument needs of the object it bounds: a product over blocks, each
+block's observable living on the positive half.
+
+DERIVED: `4` is the spacetime dimension, the direction index `τ` ranges over; no other numeral. -/
+theorem halfSpaceAlg_prod_mem (τ : Fin 4) (c : ℤ) {ι : Type*} (s : Finset ι)
+    (F : ι → C(IConf G, ℝ)) (hF : ∀ i ∈ s, F i ∈ halfSpaceAlg (G := G) τ c) :
+    (∏ i ∈ s, F i) ∈ halfSpaceAlg (G := G) τ c := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simpa using one_mem_halfSpaceAlg (G := G) τ c
+  | insert a s' ha ih =>
+    rw [Finset.prod_insert ha]
+    exact halfSpaceAlg_mul_mem τ c (hF a (Finset.mem_insert_self a s'))
+      (ih (fun i hi => hF i (Finset.mem_insert_of_mem hi)))
+
+#print axioms halfSpaceAlg_prod_mem
+
+
+
+/-! ## 2b. ⭐ The reflection moves the support, and moves it OFF the half-space
+
+`InfiniteShift.isLocalOn_ishiftObs` does this for the shift. The reflection needs the same two
+facts, and the second is the one that matters: reflected about `2p-2`, a support inside
+`{x_τ ≥ p}` lands inside `{x_τ ≤ p-2}`, which the original misses by two full lattice steps. -/
+
+/-- **THE REFLECTION OF A LOCAL OBSERVABLE IS LOCAL ON THE REFLECTED SUPPORT.** Reading
+`ireflObs τ c F` at a link reads `F` at that link's mirror, so the support is the image of the
+support under `ireflLink`. The dagger on `τ`-links changes the VALUE read and not the LINK read, so
+it does not enter.
+
+DERIVED: `4` is the dimension. -/
+theorem isLocalOn_ireflObs [Group G] [ContinuousInv G] [CompactSpace G] (τ : Fin 4) (c : ℤ)
+    {S : Finset ILink} {F : C(IConf G, ℝ)} (hF : IsLocalOn S (⇑F)) :
+    IsLocalOn (S.image (ireflLink τ c)) (⇑(ireflObs τ c F)) := by
+  classical
+  intro U V h
+  show F (ireflConf τ c U) = F (ireflConf τ c V)
+  refine hF _ _ (fun l hl => ?_)
+  have hUV : U (ireflLink τ c l) = V (ireflLink τ c l) :=
+    h (ireflLink τ c l) (Finset.mem_image_of_mem _ hl)
+  simp only [ireflConf, hUV]
+
+#print axioms isLocalOn_ireflObs
+
+/-- **⭐ AND THE REFLECTED SUPPORT MISSES THE HALF-SPACE ENTIRELY.**
+
+A support inside `{x_τ ≥ p}`, reflected about `2p-2`, lands inside `{x_τ ≤ p-2}`: a non-axis link
+based at `x` goes to `2p-2-x_τ ≤ p-2`, and a `τ`-link reflects about `2p-3` instead, landing at
+`≤ p-3`. Either way the two sets are disjoint, with a step to spare.
+
+DERIVED: the reflection constant `2p-2` is the one `gapAt_iff_subtracted_pairing` puts on the LEFT
+of the gap inequality, not a choice; the `2` separating it from `2p` is what makes this disjoint at
+all, and at `2p` the statement is FALSE — the supports meet on the reflection plane. `4` is the
+dimension. -/
+theorem disjoint_image_ireflLink_posHalf (τ : Fin 4) (p : ℤ) {S : Finset ILink}
+    (hS : (↑S : Set ILink) ⊆ posHalf τ p) :
+    Disjoint (S.image (ireflLink τ (2 * p - 2))) S := by
+  classical
+  rw [Finset.disjoint_left]
+  rintro l hl hlS
+  obtain ⟨m, hm, rfl⟩ := Finset.mem_image.mp hl
+  have hmp : p ≤ m.2 τ := hS (Finset.mem_coe.mpr hm)
+  have hlp : p ≤ (ireflLink τ (2 * p - 2) m).2 τ := hS (Finset.mem_coe.mpr hlS)
+  by_cases h1 : m.1 = τ
+  · rw [ireflLink_eq_axis τ (2 * p - 2) h1] at hlp
+    simp only [ireflSite_axis] at hlp
+    omega
+  · have hne : (ireflLink τ (2 * p - 2) m).2 = ireflSite τ (2 * p - 2) m.2 := by
+      simp only [ireflLink, if_neg h1]
+    rw [hne] at hlp
+    simp only [ireflSite_axis] at hlp
+    omega
+
+#print axioms disjoint_image_ireflLink_posHalf
+
+
 /-! ## 3. ⭐ The shift preserves it -/
 
 /-- The time shift on observables, as a linear map on continuous functions.

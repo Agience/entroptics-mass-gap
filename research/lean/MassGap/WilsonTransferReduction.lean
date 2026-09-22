@@ -53,7 +53,7 @@ invariance at the adjacent constant.
 two spectral hypotheses, which are the mass gap in operator form. This reduction is about the
 CONSTRUCTION of the operator, not about its spectrum.
 
-So the honest reading: C1's operator half was a list of nine obligations of two different kinds, and
+So the reading is: C1's operator half was a list of nine obligations of two different kinds, and
 it is now a list of three, all of one kind.
 -/
 
@@ -432,6 +432,58 @@ theorem gapAt_iff_subtracted_pairing (τ : Fin 4) (p : ℤ)
     rwa [hsub] at this
 
 #print axioms gapAt_iff_subtracted_pairing
+
+/-- **⭐⭐⭐ AND THE OBLIGATION IS ONLY ABOUT THE OBSERVABLES THE FORM SEES.**
+
+`gapAt_iff_subtracted_pairing` asks for the inequality at every member of the half-space algebra.
+This asks for it only where the lag-zero subtracted pairing is POSITIVE. At a member the form
+annihilates, `T_contract` and `form_nonneg` squeeze both sides to `0`, so the inequality holds at
+every `r`, including `r < 1` where it is otherwise the whole content. That is
+`TransferGap.gapAt_of_nondegenerate`'s argument REPEATED in these coordinates rather than called:
+translating between a carrier element and a mean-subtracted observable is what
+`gapAt_iff_subtracted_pairing` performs, and routing through it would not be shorter.
+
+**⛔ THE DISCARDED CASES WERE CARRYING NOTHING.** An observable with vanishing lag-zero subtracted
+pairing is one the GNS quotient cannot see; it is the same null space that separates `T ≠ 1` from
+`ClayAssembly.TransferMovesSomething`. Neither the gap nor the motion of the transfer operator is a
+statement about it.
+
+**⛔ AND NOTHING HERE MAKES THE GAP EASIER.** The content at a non-degenerate observable is untouched.
+The converse is immediate — drop the positivity argument — so this weakens a hypothesis rather than
+proving anything, and the degenerate cases were subsumed rather than prior: a proof of the
+unrestricted inequality would not have had to treat them separately.
+
+DERIVED: the `2`s are the plane-to-constant conversion, the two-step separation and the form's own
+degree, as in `gapAt_iff_subtracted_pairing`; the `0` is the sign asserted and the mean subtracted;
+the `1` is the constant observable; `4` is the dimension. -/
+theorem gapAt_of_subtracted_pairing_nondegenerate (τ : Fin 4) (p : ℤ)
+    (ν : MassGap.DLRLimit.State (IConf G))
+    (hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν)
+    (hpos : ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg (G := G) τ p) ν)
+    (hnu : ∀ f : C(IConf G, ℝ), ν (ishiftObsL τ f) = ν f) (r : ℝ)
+    (h : ∀ F ∈ halfSpaceAlg (G := G) τ p,
+      0 < ν (ireflObs τ (2 * p) (F - ν F • 1) * (F - ν F • 1)) →
+      ν (ireflObs τ (2 * p - 2) (F - ν F • 1) * (F - ν F • 1))
+        ≤ r ^ 2 * ν (ireflObs τ (2 * p) (F - ν F • 1) * (F - ν F • 1))) :
+    MassGap.TransferGap.GapAt (transferData_of_state_facts τ p ν hinv hpos hnu) r := by
+  refine (gapAt_iff_subtracted_pairing τ p ν hinv hpos hnu r).mpr (fun F hF => ?_)
+  have hsub : (F - ν F • (1 : C(IConf G, ℝ))) ∈ halfSpaceAlg (G := G) τ p :=
+    Submodule.sub_mem _ hF (Submodule.smul_mem _ _ (one_mem_halfSpaceAlg τ p))
+  set D := transferData_of_state_facts τ p ν hinv hpos hnu with hD
+  have hnn : 0 ≤ ν (ireflObs τ (2 * p) (F - ν F • (1 : C(IConf G, ℝ)))
+      * (F - ν F • (1 : C(IConf G, ℝ)))) :=
+    D.form_nonneg ⟨F - ν F • (1 : C(IConf G, ℝ)), hsub⟩
+  rcases lt_or_eq_of_le hnn with hp | hz
+  · exact h F hF hp
+  · have hxx : D.form ⟨F - ν F • (1 : C(IConf G, ℝ)), hsub⟩
+        ⟨F - ν F • (1 : C(IConf G, ℝ)), hsub⟩ = 0 := hz.symm
+    have hcontr := D.T_contract ⟨F - ν F • (1 : C(IConf G, ℝ)), hsub⟩
+    rw [hxx] at hcontr
+    rw [← hz, mul_zero,
+      ← gapAt_pairing_eq τ (2 * p) ν hnu (F - ν F • (1 : C(IConf G, ℝ)))]
+    exact hcontr
+
+#print axioms gapAt_of_subtracted_pairing_nondegenerate
 
 end Lattice
 

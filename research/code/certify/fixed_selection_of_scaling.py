@@ -37,6 +37,30 @@ every series, and the reader sees which prefer which.
 DERIVED THROUGHOUT. `sqrt(sigma)` per coupling is read from the string-tension artifact (Sec 8.8,
 textbook Wilson loops, no Entroptics read in the extraction). Nothing is fitted but the two
 one-parameter models being compared, and every series with enough points is reported.
+
+*** THE OUTPUT COLUMNS DO NOT MEAN THE SAME THING IN EVERY ROW GROUP. Read `test` first. ***
+
+  test=volume, test=scaling   fit_const = the fitted constant,  chi2_const = chi2 per dof.
+                              For `scaling`, chi2_alt = the competing model's chi2 per dof.
+
+  test=matched_volume         fit_const = the RATIO a'*m'/(a*m); fit_alt = the physical model's
+                              prediction; and the last two columns are NOT chi2 at all --
+                              *** chi2_const IS THE RATIO'S STANDARD ERROR *** (it is what the
+                              paper quotes as the parenthesised uncertainty in `0.644(12)`), and
+                              chi2_alt IS A STRING, "physical" or "cutoff", naming which model the
+                              ratio sits closer to. No chi2 is computed for this test: the two
+                              models are single predicted VALUES compared to one measured ratio,
+                              not fits, so there is no chi2 to report.
+
+  test=exclusion              chi2_const is EMPTY; fit_alt is the value at z=0 and chi2_alt is
+                              either a shown string or a z-score.
+
+The column names are the union of what the four groups need and they are inherited from the first
+two. Nothing downstream is misreading them -- `test_matched_volume_table_matches_the_artifact`
+reads `fit_const`/`fit_alt`, and PAPER Sec 8.7b quotes the error as an error -- but a reader
+opening the CSV cold would take `chi2_const` at its name, so it is written down here rather than
+left to be inferred. A schema that gave each meaning its own column would be the better artifact
+and would require regenerating it and moving every reader.
 """
 from __future__ import annotations
 

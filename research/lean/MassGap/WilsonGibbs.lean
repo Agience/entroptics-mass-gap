@@ -28,7 +28,7 @@ What closes is the measure-level statement. The kernel applied to `P`,
 
     Q(A) = ∫ spec φ β Λ μ 1_A ω dP(ω),
 
-is exhibited here as an honest measure `specMeasure`: the push-forward along the splice
+is exhibited here as a genuine measure `specMeasure`: the push-forward along the splice
 `(ω, u) ↦ splice Λ u ω` of the product measure `P ⊗ vol μ Λ` weighted by the normalised Boltzmann
 weight `wt / part`. Fubini on that product — legitimate because the weight is bounded above and
 below uniformly in both arguments, `exp_neg_escale_le_part` being the lower bound — gives

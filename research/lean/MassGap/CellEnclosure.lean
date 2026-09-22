@@ -74,7 +74,7 @@ theorem κ₀YM_le_half : κ₀YM ≤ 1 / 2 := by
     linarith [this]
   rw [this]; linarith
 
-/-- **The two-state truncation gap clears the floor, at every coupling.** The minimal character truncation
+/-- **The floor sits below `2√(9/64 + λ²)`, at every `λ`.** ⛔ That expression IS the two-state truncation's gap only once the eigenvalues below are computed, which this statement does not do — it mentions no matrix and no eigenvalue, and its machine-checked content is an inequality between `κ₀YM` and a real expression. The minimal character truncation
 (`j = 0, j = 1/2`) is `[[0, −λ], [−λ, 3/4]]`, with eigenvalues `3/8 ± √(9/64 + λ²)` and spectral gap
 `2√(9/64 + λ²) ≥ 2·(3/8) = 3/4 ≥ κ₀`. Proved from `√(9/64 + λ²) ≥ √(9/64) = 3/8` and `κ₀ ≤ 1/2`.
 A building block toward the Feshbach-tail single-cell bound: this small truncation has a large tail

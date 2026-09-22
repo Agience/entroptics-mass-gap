@@ -2351,7 +2351,16 @@ circumference and not a window anyone picked. `w ≥ 0` is reflection positivity
 `λ ∈ [0,1]` is `0 ≤ T ≤ 1` — the lower end from positivity, the upper from contractivity of a
 probability measure's transfer operator, which is a normalisation and NOT a gap. The gap is separate.
 
-**This is ASSUMED, not derived, and no empirical consistency claim is attached to it.** The measured
+**THIS IS PROVED AT THE CLAY APERTURE AND ASSUMED AT EVERY OTHER.**
+`SlabQuadratic.wilsonSpectral` supplies `WilsonSpectral 3 β` for every `β ≥ 0` from two reflection-positivity
+instances and no operator, foundational axioms only. `N` there is the LITERAL `3`, so the producer is
+one aperture at every nonnegative coupling; `Spectral2.wilsonSpectral_at_zero_coupling` is the other
+corner, every aperture at `β = 0`. Nothing supplies both, and nothing supplies `β < 0`.
+
+**And what it supplies is bare existence.** The Prop is `Nonempty`: it carries NO mode count and NO
+rate, and `SpectralFour.fourRepresentable_const` proves the CONSTANT triple representable, so it
+cannot on its own separate a gapped correlation from a flat one. No empirical consistency claim is
+attached to it either way, and the measured
 correlator cannot adjudicate it: the ensemble's bin count leaves fewer degrees of freedom than the
 error model such a test needs has parameters, and the mid-range lags carry no signal. The arithmetic
 of that verdict lives with the read, in `code/8_7_run_gap_correlator.py`, not here. -/
@@ -2499,7 +2508,9 @@ theorem ym_mass_gap_spectral {ι : Type*} (N : ℕ) (s : Finset ι) (P m : ι �
 
 #print axioms ym_mass_gap_spectral
 
-/-- **The gap is uniform in volume (`F → ∞`).** A SINGLE rate `κ > 0` makes the correlator decay at
+/-- **The gap is uniform in volume (`F → ∞`).** ⛔ NEITHER the rate nor the volume index carries content in this
+statement: `VolumeRate.ym_gap_uniform_in_volume_shape_is_vacuous` reproduces this exact conclusion and
+proves it equivalent to a single `Tendsto`. A fixed geometric family decays at
 every volume index at once, for any family size and any magnitude at or below the ceiling. The bound is
 intensive by hypothesis — the same at every `F`, carrying no lattice scale — which is what "the gap
 does not dilute as the volume grows" means. Foundational axioms only: this is a statement about the

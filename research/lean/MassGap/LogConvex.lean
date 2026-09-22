@@ -157,6 +157,33 @@ omit [Fintype ι] in
 theorem localObs_local {S R : Finset ι} {F : (ι → Ω) → ℝ} (hF : F ∈ localObs S R) :
     ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → F U = F V := hF.2.2
 
+/-- **⭐ THE TORUS CARRIER IS CLOSED UNDER MULTIPLICATION.**
+
+`localObs` is a `Submodule`, so it carried only additive and scalar closure — and a chessboard
+estimate bounds a PRODUCT over blocks, which was therefore not an element of the carrier the torus
+reflection form (`wilsonReflForm`, whose positivity is `pairing_nonneg` at EVERY direction and
+EVERY plane) is built on.
+
+Simpler than the infinite-lattice case (`HalfSpaceAlgebra.halfSpaceAlg_mul_mem`): locality here is
+stated at ONE fixed pair `(S, R)`, so two observables local on the same pair have a product local on
+that same pair — no union of supports enters.
+
+DERIVED: the bound exhibited is `|CF| · |CG|` rather than `CF · CG`, because nothing here makes the
+configuration space nonempty and so neither `C` can be shown nonnegative — taking absolute values
+costs nothing and needs no inhabitant. The `0`s are the nonnegativity of an absolute value. -/
+theorem localObs_mul_mem {S R : Finset ι} {F G : (ι → Ω) → ℝ}
+    (hF : F ∈ localObs S R) (hG : G ∈ localObs S R) : F * G ∈ localObs S R := by
+  obtain ⟨hFm, ⟨CF, hFb⟩, hFl⟩ := hF
+  obtain ⟨hGm, ⟨CG, hGb⟩, hGl⟩ := hG
+  refine ⟨hFm.mul hGm, ⟨|CF| * |CG|, fun U => ?_⟩, fun U V hS hR => ?_⟩
+  · show |F U * G U| ≤ |CF| * |CG|
+    rw [abs_mul]
+    exact mul_le_mul (le_trans (hFb U) (le_abs_self CF)) (le_trans (hGb U) (le_abs_self CG))
+      (abs_nonneg _) (abs_nonneg _)
+  · show F U * G U = F V * G V
+    rw [hFl U V hS hR, hGl U V hS hR]
+
+
 end Space
 
 /-! ## Part 3 — the Wilson reflection pairing, as a `ReflForm` -/
@@ -641,8 +668,10 @@ section Audit
 #print axioms integrand_eq_paired_pair
 #print axioms localObs
 #print axioms mem_localObs
+
 #print axioms localObs_measurable
 #print axioms localObs_bounded
+#print axioms localObs_mul_mem
 #print axioms localObs_local
 #print axioms pairing
 #print axioms measurable_wPlane

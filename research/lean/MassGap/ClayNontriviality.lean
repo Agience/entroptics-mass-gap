@@ -67,7 +67,7 @@ consistency relation and the variance floor all proved.
 
 `¬IsPointMass` says the limit state is not concentrated at a single configuration. Clay §4 asks for a
 theory whose correlations are not those of a generalised free field, which is a stronger and
-different statement. **Nothing here addresses that.** What is closed is the weakest honest reading of
+different statement. **Nothing here addresses that.** What is closed is the weakest defensible reading of
 "non-trivial" — that the object is not the vacuous witness — which is the reading
 `exists_infinite_volume_gibbs_state_nondegenerate` was written for.
 -/

@@ -30,8 +30,8 @@ namespace MassGap
 open Filter
 
 /-- **S1 — `ρ'(1) < 1 ⇒ the correlator forgets.** With the reach-freeze excess bounded by the single-cut
-maximal correlation, `σ n ≤ σ 0 · ρ'(1)^n` (RP reversibility gives `ρ'(n) = ρ'(1)^n`), a strict `ρ'(1) < 1`
-sends `σ → 0`: the gap. Volume-uniform because one `ρ'(1)` bounds every `n`. Wraps
+maximal correlation, `σ n ≤ σ 0 · ρ'(1)^n` (the geometric domination is the HYPOTHESIS `hsub`, not something reflection positivity supplies here), a strict `ρ'(1) < 1`
+sends `σ → 0`: the gap. Uniform in the SEPARATION `n`, NOT in the volume — no volume index occurs in this statement or anywhere in this module, as the header above says. Wraps
 `excess_tendsto_zero_of_geom`. -/
 theorem gap_of_maximal_correlation {σ : ℕ → ℝ} {ρ₁ : ℝ}
     (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1) (hσnn : ∀ n, 0 ≤ σ n)
@@ -44,7 +44,7 @@ correlation `ρ'(1)(·)` is `L`-Lipschitz on `[a,b]` (finite-volume analyticity 
 modulus, the §5.1 argument applied to the maximal-correlation functional) and a `δ`-grid certifies
 `ρ'(1)(γ) ≤ (1−ε) − L·δ` with strict margin `ε > 0`, then `ρ'(1)(β) < 1` throughout. Reuses
 `le_of_lipschitz_grid` (`B = 1 − ε`). The analog of `Interior.interior_confinement_of_analytic_grid` with
-`ρ'(1)` in place of `⟨d²⟩`; by RP reversibility this closes the gap uniform in volume. -/
+`ρ'(1)` in place of `⟨d²⟩`; carrying that across volumes is the separate intensive bound, which this module does not supply. -/
 theorem interior_mixing_of_analytic_grid {ρ₁ : ℝ → ℝ} {a b L δ ε : ℝ} (hL : 0 ≤ L) (hε : 0 < ε)
     (hlip : ∀ x ∈ Set.Icc a b, ∀ y ∈ Set.Icc a b, |ρ₁ x - ρ₁ y| ≤ L * |x - y|)
     (hcover : ∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧ ρ₁ γ ≤ (1 - ε) - L * δ) :

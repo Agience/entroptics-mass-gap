@@ -127,11 +127,272 @@ theorem coupling_form_extensive (s : Finset β) (V : β → Matrix ι ι ℝ) {a
   have h2 : (s.card : ℝ) * a * (v ⬝ᵥ v) ≤ δ * (v ⬝ᵥ v) := by linarith
   exact le_of_mul_le_mul_right h2 hv
 
+/-- **⭐ THE RELATIVE BOUND DOES NOT COUNT BONDS.** If every bond's coupling is bounded below by
+`−c` times the form of its OWN unperturbed part — rather than by `−c` times the global `‖x‖²` — then
+the sum obeys the same bound against the summed unperturbed part, **with the same `c`**. There is no
+`s.card` on the right.
+
+This is the non-extensive companion of `CellSpectrum.coupling_form_add`, and the contrast is the
+point: `coupling_form_le_bondCount` gives `n·q` because each bond is charged against the whole
+vector, while here each bond is charged against the energy it sits on and the charges add on both
+sides. `coupling_form_extensive` shows the `n·a` growth is real for the ABSOLUTE bound; it says
+nothing about this one.
+
+DERIVED: no numeral. The sign of `c` is not used — the inequality sums whatever it is. -/
+theorem relative_coupling_form_sum (s : Finset β) (V A : β → Matrix ι ι ℝ) {c : ℝ} (v : ι → ℝ)
+    (hrel : ∀ b ∈ s, -c * (v ⬝ᵥ (A b *ᵥ v)) ≤ v ⬝ᵥ (V b *ᵥ v)) :
+    -c * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) := by
+  rw [dotProduct_sum_mulVec, dotProduct_sum_mulVec, Finset.mul_sum]
+  exact Finset.sum_le_sum hrel
+
+#print axioms relative_coupling_form_sum
+
+/-- **⭐ AN ABSOLUTE BOND BOUND PLUS A LOCAL MARGIN IS A RELATIVE BOND BOUND**, with `c = q / m`.
+
+This is the conversion the cell already has both halves of: `straddle_form_bound` supplies the
+absolute cost `q` per bond by AM–GM with no spectral input, and `CellSpectrum.diag_form_margin`
+supplies the local margin `m` from the excited Casimir. Nothing new is measured.
+
+DERIVED: `q / m` is the ratio of the two supplied constants, not a choice; the `0`s are the
+sign conditions those constants must meet for the division to run the right way. -/
+theorem relative_of_absolute_form_bound {V A : Matrix ι ι ℝ} {q m : ℝ} (hq : 0 ≤ q)
+    (hm : 0 < m) (v : ι → ℝ)
+    (habs : |v ⬝ᵥ (V *ᵥ v)| ≤ q * (v ⬝ᵥ v))
+    (hA : m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A *ᵥ v)) :
+    -(q / m) * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v) := by
+  have hlow := (abs_le.mp habs).1
+  have hcoef : -(q / m) ≤ 0 := neg_nonpos.mpr (div_nonneg hq hm.le)
+  have hstep : -(q / m) * (v ⬝ᵥ (A *ᵥ v)) ≤ -(q / m) * (m * (v ⬝ᵥ v)) :=
+    mul_le_mul_of_nonpos_left hA hcoef
+  have heq : -(q / m) * (m * (v ⬝ᵥ v)) = -(q * (v ⬝ᵥ v)) := by
+    field_simp
+  rw [heq] at hstep
+  linarith
+
+#print axioms relative_of_absolute_form_bound
+
+/-- **⭐ THE SAME, AGAINST THE BOND'S OWN LOCAL MASS.** `relative_of_absolute_form_bound` charges the
+cost against the global `v ⊙ v`; this charges it against any quantity `loc` the caller nominates.
+The proof never uses what the mass is, so the generalisation is free — and it is the one that
+matters, because `shared_locals_force_shrinking_margin` says the relative route degenerates exactly
+when every bond is charged against the same thing.
+
+For a straddling plaquette `loc` is the mass carried on its OWN four links. Its cost vanishes with
+that mass — the magnetic term is off-diagonal in the flux basis, so on a definite-flux state with no
+flux on those links both sides are `0` — where a global margin `m > 0` would be false there.
+
+DERIVED: `q / δ` is the ratio of the two supplied constants; the `0`s are the sign conditions that
+make the division run the right way. -/
+theorem relative_of_local_bound {V A : Matrix ι ι ℝ} {q δ loc : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ)
+    (v : ι → ℝ)
+    (habs : |v ⬝ᵥ (V *ᵥ v)| ≤ q * loc)
+    (hA : δ * loc ≤ v ⬝ᵥ (A *ᵥ v)) :
+    -(q / δ) * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v) := by
+  have hlow := (abs_le.mp habs).1
+  have hcoef : -(q / δ) ≤ 0 := neg_nonpos.mpr (div_nonneg hq hδ.le)
+  have hstep : -(q / δ) * (v ⬝ᵥ (A *ᵥ v)) ≤ -(q / δ) * (δ * loc) :=
+    mul_le_mul_of_nonpos_left hA hcoef
+  have heq : -(q / δ) * (δ * loc) = -(q * loc) := by
+    field_simp
+  rw [heq] at hstep
+  linarith
+
+#print axioms relative_of_local_bound
+
+/-- **⭐⭐ AND SUMMING THEM KEEPS ONE CONSTANT, WITH THE MASSES ALL DIFFERENT.**
+
+Each bond carries its own `loc b`: its cost is `q·loc b` and its margin `δ·loc b`. The summed bound
+is `−(q/δ)` against the summed local parts — **no `s.card`, and no single mass shared between
+bonds.** This is the hypothesis shape `shared_locals_force_shrinking_margin` leaves open, and the
+one the lattice presents.
+
+Set the three side by side, all from per-bond data:
+
+* `coupling_form_le_bondCount` — global mass, absolute: `n·q`. Extensive, and
+  `coupling_form_extensive` shows that is real.
+* `relative_sum_of_absolute_bonds` — global mass, relative: `q/m`, but `m` must hold on every bond
+  against the whole vector, which `shared_locals_force_shrinking_margin` collapses to `M/n`.
+* **this one** — own mass, relative: `q/δ`, and the masses differ, so nothing collapses.
+
+DERIVED: the `0`s are the sign conditions on `q` and `δ`; no other numeral. -/
+theorem relative_sum_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) (loc : β → ℝ)
+    {q δ : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ) (v : ι → ℝ)
+    (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * loc b)
+    (hmar : ∀ b ∈ s, δ * loc b ≤ v ⬝ᵥ (A b *ᵥ v)) :
+    -(q / δ) * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) :=
+  relative_coupling_form_sum s V A v
+    (fun b hb => relative_of_local_bound hq hδ v (habs b hb) (hmar b hb))
+
+#print axioms relative_sum_of_local_bonds
+
+
+/-- **⭐⭐ SO THE SUMMED COST CARRIES NO BOND COUNT.** From the SAME per-bond inputs that
+`coupling_form_le_bondCount` consumes — an absolute cost `q` on each bond — together with a local
+margin `m` on each bond, the summed coupling obeys
+
+    −(q/m) · ⟨v, (∑ A_b) v⟩ ≤ ⟨v, (∑ V_b) v⟩
+
+and **`s.card` does not appear**. Set beside `coupling_form_le_bondCount`'s `n·q·⟨v,v⟩`, the two
+differ only in what the cost is charged against: the global vector, or the energy each bond sits on.
+
+`coupling_form_extensive` shows the `n·a` growth of the ABSOLUTE bound is real and not an artifact of
+the triangle inequality. It is equally not a statement about this one — and
+`form_perturbation_reaches_finitely_many` caps the bond count only for the absolute route.
+
+**⛔ WHAT IS STILL MISSING.** The `A b` here are whatever local parts the caller supplies, and for
+the physical Kogut–Susskind coupling they must (i) be the electric terms of the bond's own links and
+(ii) sum to at most the full electric term. Links are shared between plaquettes, so (ii) needs each
+link's energy apportioned among the plaquettes containing it — a factor set by the COORDINATION
+NUMBER, not by the volume. That apportionment is not proved here. -/
+theorem relative_sum_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) {q m : ℝ}
+    (hq : 0 ≤ q) (hm : 0 < m) (v : ι → ℝ)
+    (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v))
+    (hmar : ∀ b ∈ s, m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A b *ᵥ v)) :
+    -(q / m) * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) :=
+  relative_coupling_form_sum s V A v
+    (fun b hb => relative_of_absolute_form_bound hq hm v (habs b hb) (hmar b hb))
+
+#print axioms relative_sum_of_absolute_bonds
+
+/-- **⭐ LOCAL PARTS THAT DO NOT OVER-COUNT CARRY THE BOUND TO THE FULL OPERATOR.** A relative bound
+against the summed local parts becomes one against the whole unperturbed operator as soon as the
+locals are dominated by it in form. The coefficient is negative, so domination pushes the left side
+DOWN and the inequality survives.
+
+This is the apportionment link, and it is where the lattice's incidence enters rather than its size.
+For Kogut–Susskind, giving each plaquette a sixth of the electric energy of its own four links makes
+the sum over ALL plaquettes return each link exactly once — in four dimensions a link lies in six
+plaquettes — so the sum over the STRADDLING ones is at most the full electric term. The factor is the
+COORDINATION NUMBER and does not move with the volume, which is the whole difference from
+`coupling_form_le_bondCount`, whose factor is the bond count.
+
+DERIVED: the `0` is the sign condition on `c`, which is what makes domination push the left
+side down rather than up. No other numeral. -/
+theorem relative_of_dominated_locals {V A Aloc : Matrix ι ι ℝ} {c : ℝ} (hc : 0 ≤ c) (v : ι → ℝ)
+    (hrel : -c * (v ⬝ᵥ (Aloc *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v))
+    (hdom : v ⬝ᵥ (Aloc *ᵥ v) ≤ v ⬝ᵥ (A *ᵥ v)) :
+    -c * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v) := by
+  have hstep : -c * (v ⬝ᵥ (A *ᵥ v)) ≤ -c * (v ⬝ᵥ (Aloc *ᵥ v)) :=
+    mul_le_mul_of_nonpos_left hdom (neg_nonpos.mpr hc)
+  linarith
+
+#print axioms relative_of_dominated_locals
+
+/-- **⭐⭐⭐ AND TO THE FULL OPERATOR.** With the apportionment `∑ A_b ≤ A`, the per-bond local data
+bounds the whole coupling relative to the whole unperturbed operator by `q/δ`.
+
+**This is the statement the straddling plaquette has to meet**, and every quantity in it is local:
+`q` is the bond's cost coefficient, `δ` its margin coefficient, `loc b` the mass on its own links,
+and the apportionment is the coordination count. Feed the result to
+`CellSpectrum.coupled_gap_of_relative_coupling_bound` for the gap `(1 − q/δ)·mform`.
+
+DERIVED: the `0`s are the sign conditions on `q` and `δ`; no other numeral. -/
+theorem relative_full_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) (loc : β → ℝ)
+    (Afull : Matrix ι ι ℝ) {q δ : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ) (v : ι → ℝ)
+    (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * loc b)
+    (hmar : ∀ b ∈ s, δ * loc b ≤ v ⬝ᵥ (A b *ᵥ v))
+    (hdom : v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v) ≤ v ⬝ᵥ (Afull *ᵥ v)) :
+    -(q / δ) * (v ⬝ᵥ (Afull *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) :=
+  relative_of_dominated_locals (div_nonneg hq hδ.le) v
+    (relative_sum_of_local_bonds s V A loc hq hδ v habs hmar) hdom
+
+#print axioms relative_full_of_local_bonds
+
+/-- **⭐⭐ THE WHOLE NON-EXTENSIVE CHAIN, IN ONE STATEMENT.** From the per-bond inputs the cell
+already supplies — an absolute cost `q` on each bond and a local margin `m` on each bond — together
+with the apportionment `∑ A_b ≤ A`, the full coupling is bounded relative to the full unperturbed
+operator by `q/m`. **No bond count occurs anywhere**, in the statement or the proof.
+
+Set against `coupling_form_le_bondCount` (`n·q`) and `coupling_form_extensive` (`n·a` is attained),
+this is the same per-bond data yielding a volume-independent constant, because the cost is charged
+against the energy each bond sits on instead of against the global vector.
+
+Feed the result to `CellSpectrum.coupled_gap_of_relative_coupling_bound`, which needs `q/m < 1` and
+returns the gap `(1 − q/m)·m` — again with no bond count.
+
+DERIVED: the `0`s are the sign conditions on `q` and `m`; no other numeral. -/
+theorem relative_full_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ)
+    (Afull : Matrix ι ι ℝ) {q m : ℝ} (hq : 0 ≤ q) (hm : 0 < m) (v : ι → ℝ)
+    (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v))
+    (hmar : ∀ b ∈ s, m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A b *ᵥ v))
+    (hdom : v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v) ≤ v ⬝ᵥ (Afull *ᵥ v)) :
+    -(q / m) * (v ⬝ᵥ (Afull *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) :=
+  relative_of_dominated_locals (div_nonneg hq hm.le) v
+    (relative_sum_of_absolute_bonds s V A hq hm v habs hmar) hdom
+
+#print axioms relative_full_of_absolute_bonds
+
+/-- **⛔⭐ THE CONTROL: SHARED LOCALS PUT THE BOND COUNT BACK.**
+
+If every bond is charged against the SAME local part `A₀`, the apportionment forces
+`s.card · m ≤ M`, so a uniform margin `m` shrinks like `1/n` and `q/m` is extensive again. **The
+relative bound is therefore not automatically non-extensive**: it buys nothing unless the local
+parts are genuinely different from one another.
+
+That is the requirement the lattice meets and the reason the route can work there — each straddling
+plaquette is charged against the electric energy of ITS OWN four links, and distinct plaquettes
+charge distinct links up to the fixed coordination multiplicity. It is a fact about the incidence,
+to be proved rather than assumed, and this theorem is what makes the requirement explicit.
+
+DERIVED: the `0` is the sign condition on the vector's own form, needed to divide it out at
+the end. No other numeral. -/
+theorem shared_locals_force_shrinking_margin (s : Finset β) (A₀ Afull : Matrix ι ι ℝ) {m M : ℝ}
+    (v : ι → ℝ) (hv : 0 < v ⬝ᵥ v)
+    (hmar : m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A₀ *ᵥ v))
+    (hdom : v ⬝ᵥ ((∑ _b ∈ s, A₀) *ᵥ v) ≤ v ⬝ᵥ (Afull *ᵥ v))
+    (hfull : v ⬝ᵥ (Afull *ᵥ v) ≤ M * (v ⬝ᵥ v)) :
+    (s.card : ℝ) * m ≤ M := by
+  rw [dotProduct_sum_mulVec, Finset.sum_const, nsmul_eq_mul] at hdom
+  have hcard : (0 : ℝ) ≤ (s.card : ℝ) := Nat.cast_nonneg _
+  have hstep : (s.card : ℝ) * (m * (v ⬝ᵥ v)) ≤ (s.card : ℝ) * (v ⬝ᵥ (A₀ *ᵥ v)) :=
+    mul_le_mul_of_nonneg_left hmar hcard
+  have h2 : (s.card : ℝ) * m * (v ⬝ᵥ v) ≤ M * (v ⬝ᵥ v) := by nlinarith
+  exact le_of_mul_le_mul_right h2 hv
+
+#print axioms shared_locals_force_shrinking_margin
+
+/-- **⭐⭐⭐ THE VOLUME-UNIFORM GAP FROM PER-BOND DATA.** The chain, composed: per-bond costs `q`,
+per-bond local margins `m`, the apportionment `∑ A_b ≤ H₀`, and `q/m < 1` give the spectral gap
+
+    (1 − q/m) · mform
+
+for the COUPLED operator `H₀ + ∑ V_b`. **The bond set occurs in the hypotheses and nowhere in the
+conclusion's constant.** Contrast `bondCount_lt_of_budget`, which caps the bond count for the
+absolute route at `μ/(2a)`.
+
+**⛔ Read `shared_locals_force_shrinking_margin` before instantiating.** A uniform `m` over bonds
+sharing one local part collapses to `M/s.card`, which puts the bond count straight back into `q/m`.
+The hypotheses here are satisfiable at a volume-independent `q/m` only when the local parts are
+genuinely distinct.
+
+DERIVED: `1` is `coupled_gap_of_relative_coupling_bound`'s threshold, forced there rather than
+chosen here; the `0`s are the sign conditions on `q`, `m` and the gap. No numeral of this
+theorem's own. -/
+theorem gap_of_relative_bonds {N : ℕ} (s : Finset β) (V A : β → Matrix (Fin N) (Fin N) ℝ)
+    (H₀ : Matrix (Fin N) (Fin N) ℝ) (hH : (H₀ + ∑ b ∈ s, V b).IsHermitian)
+    {q m mform : ℝ} (hq : 0 ≤ q) (hm : 0 < m) (hlt : q / m < 1)
+    (hgap : 0 < (1 - q / m) * mform)
+    (W : Submodule ℝ (Fin N → ℝ)) (hW : N ≤ Module.finrank ℝ W + 1)
+    (hform0 : ∀ x ∈ W, mform * (x ⬝ᵥ x) ≤ x ⬝ᵥ (H₀ *ᵥ x))
+    (habs : ∀ x ∈ W, ∀ b ∈ s, |x ⬝ᵥ (V b *ᵥ x)| ≤ q * (x ⬝ᵥ x))
+    (hmar : ∀ x ∈ W, ∀ b ∈ s, m * (x ⬝ᵥ x) ≤ x ⬝ᵥ (A b *ᵥ x))
+    (hdom : ∀ x ∈ W, x ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ x) ≤ x ⬝ᵥ (H₀ *ᵥ x))
+    {i₀ : Fin N} (hi₀ : hH.eigenvalues i₀ ≤ 0) {i : Fin N} (hi : i ≠ i₀) :
+    (1 - q / m) * mform ≤ hH.eigenvalues i - hH.eigenvalues i₀ :=
+  coupled_gap_of_relative_coupling_bound H₀ (∑ b ∈ s, V b) hH hlt hgap W hW hform0
+    (fun x hx => relative_full_of_absolute_bonds s V A H₀ hq hm x (habs x hx) (hmar x hx) (hdom x hx))
+    hi₀ hi
+
+#print axioms gap_of_relative_bonds
+
+
+
+
 end BondDecomposition
 
 /-! ### The budget is a fixed number, so the bond count it admits is finite -/
 
-/-- **The budget caps the bond count.** An extensive residual `n·a ≤ δ` and the hypothesis `2δ < μ`
+/-- **The budget caps the bond count.** At a STRICTLY POSITIVE per-bond depth `a` — load-bearing, and the conclusion is false without it — an extensive residual `n·a ≤ δ` and the hypothesis `2δ < μ`
 of `gap_of_form_perturbation` together force `n < μ/(2a)`. Nothing about the lattice enters: this is
 the arithmetic of the two hypotheses, and it is where the route ends. -/
 theorem bondCount_lt_of_budget {n : ℕ} {a δ μ : ℝ} (ha : 0 < a)

@@ -144,12 +144,16 @@ own premise, and `HalfLineTransfer.shiftObs_pow_period` proves the shift has fin
 finite-order contraction is an isometry and carries no decay. Every operator on a PERIODIC carrier
 fails this predicate provably.
 
-**⛔ ON `ℤ⁴` IT IS UNDECIDED RATHER THAN FALSE.**
-`ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves `T ≠ 1` on the half-space
-algebra, so neither `shiftSlab_eq_id` nor `shiftObs_pow_period` applies there and the predicate is
-not refuted. Nor is it proved: motion in the ALGEBRA is not motion in the QUOTIENT, and
-`transferMovesSomething_of_seminorm_ne_zero` below says exactly what is missing — that the form
-does not annihilate one difference `T z - z`. Nothing in the tree decides that.
+**⛔ ON `ℤ⁴` AT RANK AT LEAST TWO IT IS NOT REFUTED.**
+`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` proves `T ≠ 1` on the half-space algebra at
+every `SU (m+2)`, so neither `shiftSlab_eq_id` nor `shiftObs_pow_period` applies and the predicate is
+not refuted there. Nor is it proved: motion in the ALGEBRA is not motion in the QUOTIENT, and the two
+lemmas below give SUFFICIENT conditions for the predicate — not a characterisation of it.
+
+**AT `SU 0` AND `SU 1` NOTHING IS FORMALISED EITHER WAY.** No separating function exists, so
+`transferData_T_ne_id_of_rank_two` says nothing; and the tree carries no `Subsingleton (SU 0)`, no
+lemma that `halfSpaceAlg` is the constants at a singleton group, and nothing about `T` or `opT`
+there. The expected answer is that the predicate fails, and it is not a theorem here.
 
 `-log T` needs `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary and not
 sufficient; it is stated as the first thing that is missing, not as the whole of C1's remainder.
@@ -168,10 +172,19 @@ The predicate holds as soon as the form does not annihilate a single difference 
 SEPARATED completion, so `[w] = 0` exactly when the seminorm of `w` is zero — that is what separation
 means — and `opT [z] = [z]` is therefore `‖cT z - z‖ = 0`.
 
-**⛔ IT CLOSES NOTHING; IT LOCATES THE GAP.** `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id`
-proves the shift is not the identity on the half-space ALGEBRA, and that is strictly weaker than this:
-motion in the algebra is not motion in the quotient. What stands between them is one statement about
-the reflection form at one element, and nothing in the tree decides it in either direction.
+**⛔ IT IS SUFFICIENT, AND THE CONVERSE IS NOT WRITTEN.** `opT = id` would force the seminorm to
+vanish at every `z` by `UniformSpace.Completion.induction_on`, which `GNSHilbert` already uses four
+times, `opT` being a bundled `ContinuousLinearMap` so continuity is free. The converse is a short
+lemma nobody has written, not a missing ingredient. As it stands this says one way to get the
+predicate, not what the predicate amounts to.
+
+`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` proves the shift is not the identity on the
+half-space ALGEBRA at every `SU (m+2)`, and that is strictly weaker than this: motion in the algebra is not motion in the
+quotient. Nothing in the tree decides the difference.
+
+**AND IT IS EQUIVALENT TO `transferMovesSomething_of_pairing_ne`'s HYPOTHESIS**, not weaker than it:
+`Pre` carries a `PreInnerProductSpace.Core`, so Cauchy–Schwarz gives one direction, and taking
+`w := cT z - z` gives the other. Neither direction is formalised here.
 
 DERIVED: the `0` is the seminorm value that separation quotients away. -/
 theorem transferMovesSomething_of_seminorm_ne_zero {A : Type*} [AddCommGroup A] [Module ℝ A]
@@ -194,15 +207,24 @@ If `opT` fixes a class it fixes every pairing against that class, so a single pa
 Gibbs pairing differs between `T z` and `z` already gives `TransferMovesSomething`. Taking `w = z`
 reads: the lag-one two-point function at `z` differs from the lag-zero one.
 
-**⛔ THIS IS WHAT IS LEFT OF `I4` ON `ℤ⁴`, AND IT IS ABOUT THE STATE.**
-`ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` gives `T ≠ 1` on the half-space algebra;
+**⛔ IT IS SUFFICIENT, AND IT IS ABOUT THE FORM RATHER THAN THE MAP.**
+`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` gives `T ≠ 1` on the half-space algebra at
+every `SU (m+2)`;
 that is about the MAP. This is about the FORM, and the two differ because `H` is the separated
-completion. What is not known is whether the Wilson state has a half-space observable whose
-correlation moves at all under one time step — if it has none, every correlation is lag-independent
-and there is no decay to measure, which is the degenerate case the tree keeps naming.
+completion. **It is not a characterisation** — the converse is a short unwritten lemma, by
+`UniformSpace.Completion.induction_on` — and its hypothesis is EQUIVALENT to the seminorm form's
+rather than weaker, by Cauchy–Schwarz on `Pre`'s core in one direction and `w := cT z - z` in the
+other. Neither direction is formalised.
 
-No inequality and no positivity is used: only that `opT` is linear and the inner product on `H` reads
-the Gibbs pairing (`GNSHilbert.inner_coe`).
+What no state in the tree is known to have is a NON-CONSTANT half-space observable whose correlation
+moves under one time step. At the CONSTANT observable both correlations are known and EQUAL —
+`InfiniteReflection.stateReflForm_vac_norm` gives lag zero `= 1` and `TransferData.T_vac` gives lag
+one `= 1` — so the one observable whose correlations are known is one this hypothesis excludes.
+
+No inequality and no positivity enters the proof step: it is `GNSHilbert.opT_coe` and `cTL_apply`,
+that `opT` agrees with `cT` on the image of `Pre`, together with `inner_coe`. Positivity is in the
+ambient objects — `Pre`'s seminorm exists because `Transfer.ReflForm.form_nonneg` discharges the
+core's nonnegativity — not avoided.
 
 DERIVED: no numeral. -/
 theorem transferMovesSomething_of_pairing_ne {A : Type*} [AddCommGroup A] [Module ℝ A]
@@ -363,14 +385,21 @@ so such a `T` is an isometry and carries no decay at all.
 no hypothesis on the module, the coupling or the reflection. So every operator assembled from lattice
 translations on a periodic lattice falls under this.
 
-**On `ℤ⁴` the hypothesis is FALSE**, so nothing here applies:
+**On `ℤ⁴` at rank at least two the hypothesis is FALSE**, so nothing here applies there. At `SU 0`
+and `SU 1` the tree formalises nothing either way:
 `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits, for every positive `k`, a member
 of `halfSpaceAlg` that the `k`-fold shift moves, given a separating function on the GROUP
-(`CrossingIntegration.trace_gNeg` supplies one at `SU(3)`; `halfSpaceAlg_has_nonconstant`
-separates CONFIGURATIONS and does not discharge this hypothesis). `I4` is therefore OPEN
+(`HaarVariance.reTr_flipEl_ne_reTr_one` supplies one at every `SU (m+2)`, bundled as
+`ReflectionHalfSpace.reTrCM_separating`; `halfSpaceAlg_has_nonconstant` separates CONFIGURATIONS and
+does not have the type to discharge this). `I4` is therefore OPEN
 on the infinite lattice, not closed, and what stands in the way there is a different thing: motion in
 the ALGEBRA is not motion in the GNS QUOTIENT, because `opT [F] = [F]` whenever `T F - F` lies in the
-null space of the form. -/
+null space of the form.
+
+**⛔ SO ON `ℤ⁴` AT RANK AT LEAST TWO `I4` IS OPEN.** The categorical reading — that the infinite
+lattice leaves it open — needs that qualification: it rests on a separating function, which exists
+from rank two (`HaarVariance.reTr_flipEl_ne_reTr_one`) and not below. Below it, nothing here is
+formalised in either direction. -/
 
 /-- **The form along the orbit is ANTITONE.** `T_contract` says one step cannot expand the form;
 iterating gives the whole sequence. This is the only place contractivity is used. -/
@@ -542,7 +571,7 @@ differ by at most `t` at every lag and whose moments differ by more than `L·t`,
 Lipschitz bound is a SPIKE at the middle lag (`ContactDominance.midLag`). That is exactly the shape a
 decaying correlation does not have, so the obstruction does not show the Wilson profile suffers it —
 it shows the map is bad on ARBITRARY reads. On profiles dominated by `c` with `∑_k c k · k² < ∞` the
-moment is bounded uniformly in the aperture, because that sum IS the moment. So the honest form of
+moment is bounded uniformly in the aperture, because that sum IS the moment. So the correct form of
 `I2` is: the connected correlator is dominated by a profile with a bounded SECOND MOMENT in the
 circle distance, uniformly in the volume.
 

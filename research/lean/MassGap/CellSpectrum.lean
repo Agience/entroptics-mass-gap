@@ -1067,7 +1067,7 @@ theorem cell_ceiling_lt_one : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 := by
   apply Real.rpow_lt_one_of_one_lt_of_neg <;> norm_num
 
 /-- **The volume-uniform gap with the radius from the machine-checked single-cell ceiling.** For any physical mode
-family `(P, μ)` with dominant transfer magnitude `mHi F ≤ 3^{−1/4}` at every volume `F`, a single rate `κ > 0`
+family `(P, μ)` with dominant transfer magnitude `mHi F ≤ 3^{−1/4}` at every volume `F`, the correlator forgets — but the `κ` this conclusion binds is INERT, occurring nowhere after the `∧` (`VolumeRate.exists_pos_and_iff`), so no common rate
 makes every volume's correlator forget. Composes the cell ceiling (`Hcell2_clears_floor`) with
 `gap_uniform_in_volume_of_intensive`. The input `hint` (`m_hi(F) ≤ 3^{−1/4}`) is the measured continuum read.
 Foundational axioms only. -/
@@ -1117,7 +1117,7 @@ only where raw links do (`L ≤ 20`): three usable points at `11–17%` error, o
 linear-in-`L` all fit equally well (`χ²/dof` = 0.04, 0.03, 0.045), so that window has no power to decide
 intensivity either. Nothing below should be read as the physical `∀F` bound being measured. -/
 
-/-- **The volume-uniform gap from the single-cell magnitude (S1 wired to `Hcell2`).** For a reach-freeze excess
+/-- **The reach-freeze excess decays over every SEPARATION at the single-cell magnitude (no volume index occurs) (S1 wired to `Hcell2`).** For a reach-freeze excess
 `σ` with `σ n ≤ σ 0 · ρ'(1)^n` at the machine-checked cell value `ρ'(1) = e^{−Δ_cell} < 1` (`Hcell2_gap` ⇒
 `cell_lt_one`), the excess tends to zero. -/
 theorem gap_uniform_of_cell {σ : ℕ → ℝ} {lam : ℝ} {i₀ i : Fin 2}
@@ -1132,7 +1132,7 @@ theorem gap_uniform_of_cell {σ : ℕ → ℝ} {lam : ℝ} {i₀ i : Fin 2}
 
 For any family size `n` and any strictly positive magnitude `x` at or below the single-plaquette
 ceiling `3^{-1/4}` (`Hcell2_clears_floor`), the constant family at `x` satisfies
-`gap_uniform_of_cell_intensive`'s hypotheses, so one rate `κ > 0` serves every `F`.
+`gap_uniform_of_cell_intensive`'s hypotheses, so its hypotheses are met.
 
 NO VALUE IS CHOSEN. The magnitude and the family size are both universally quantified, and the only
 constraint is the ceiling, which is derived (`3^{-1/4} = e^{-κ₀}`, `κ₀` counted off directed cube
@@ -1188,7 +1188,7 @@ theorem product_margin_le_cell_ceiling {F : ℕ} (lam : Fin F → ℝ)
 placeholder witness).** A mode family whose every active mode `μ F k` (for `k ∈ s F`) is a product
 `∏ᵢ (fac F k i)` of per-cell magnitudes in `[0,1]` with at least one cell excited
 (`fac F k j ≤ 3^{−1/4}`, the machine-checked single-cell ceiling `Hcell2_clears_floor`) has dominant
-magnitude `≤ 3^{−1/4}` UNIFORMLY in the volume `F` (`product_subvacuum_le`), so one rate `κ > 0` makes every
+magnitude `≤ 3^{−1/4}` UNIFORMLY in the volume `F` (`product_subvacuum_le`) — that magnitude bound is genuine, while the rate `κ` the conclusion binds is inert — so every
 volume's connected correlator forget. Unlike `witness_volume_gap_cell_nonvacuous` (constant witness
 `mWitnessYM ≡ 1/5`), the magnitude here is the actual product-of-cells spectrum and the intensive input of
 `gap_uniform_of_cell_intensive` is PROVED, not measured/placeholder. Foundational axioms only. This is the
@@ -1219,7 +1219,7 @@ theorem ceilFac_mem (F : ℕ) (i : Fin (F + 1)) : 0 ≤ ceilFac F i ∧ ceilFac 
 
 /-- **`product_volume_gap` is non-vacuous — a concrete constructed product model.** The `F`-cell product where
 one cell sits at the machine-checked single-cell ceiling `3^{−1/4}` and the rest at the vacuum `1` — the
-extremal product of `diag(1, 3^{−1/4})` cells — has a volume-uniform gap, uniform in the cell count `F`.
+extremal product of `diag(1, 3^{−1/4})` cells — decays at every cell count `F` — `F` occurs in the body, but no rate does.
 A genuine constructed spectrum (not the `mWitnessYM ≡ 1/5` constant witness), foundational axioms only. -/
 theorem product_volume_gap_concrete :
     ∃ κ : ℝ, 0 < κ ∧ ∀ F : ℕ, Filter.Tendsto
@@ -1363,6 +1363,42 @@ theorem interacting_cell_gap {N : ℕ} (d : Fin N → ℝ) (V : Matrix (Fin N) (
   have hformV : ∀ x ∈ LinearMap.ker p, (-c) * (x ⬝ᵥ x) ≤ x ⬝ᵥ (V *ᵥ x) :=
     fun x _ => coupling_form_lower V hVsymm hVrow x
   exact coupled_gap_of_coupling_bound (Matrix.diagonal d) V hH (LinearMap.ker p) hW hform0 hformV j₀ hj₀ i hi
+
+/-- **⭐⭐ A RELATIVE COUPLING BOUND KEEPS A GAP, WITH NO BOND COUNT IN IT.**
+
+`coupled_gap_of_coupling_bound` consumes an ABSOLUTE bound `−c·‖x‖² ≤ ⟨x, Vx⟩` and spends the
+margin `c` the cell supplies, so the admissible `c` is a fixed budget and
+`CellCouple.coupling_form_extensive` then caps the number of bonds that fit inside it. This version
+consumes a bound relative to the unperturbed form, `−c·⟨x, H₀x⟩ ≤ ⟨x, Vx⟩` with `c < 1`, and
+returns the gap `(1−c)·m`. **Nothing in the conclusion counts bonds**, because
+`CellCouple.relative_coupling_form_sum` carries the same `c` across the sum.
+
+So the extensivity that closes the perturbative route is a property of charging the coupling against
+the NORM, not of the coupling. Supplying the per-bond relative bound for the physical straddling
+plaquette is a separate statement about the Kogut–Susskind terms and is not proved here.
+
+DERIVED: `1` is the threshold the relative bound must sit below for the gap to survive, and it is
+forced rather than chosen — at `c = 1` the coupling can cancel the unperturbed form entirely. The
+`0`s are sign conditions: positivity of the surviving gap, and the ground level the others are
+measured against. -/
+theorem coupled_gap_of_relative_coupling_bound {N : ℕ} (H₀ V : Matrix (Fin N) (Fin N) ℝ)
+    (hH : (H₀ + V).IsHermitian) {c m : ℝ} (hc1 : c < 1) (hgap : 0 < (1 - c) * m)
+    (W : Submodule ℝ (Fin N → ℝ)) (hW : N ≤ Module.finrank ℝ W + 1)
+    (hform0 : ∀ x ∈ W, m * (x ⬝ᵥ x) ≤ x ⬝ᵥ (H₀ *ᵥ x))
+    (hformV : ∀ x ∈ W, -c * (x ⬝ᵥ (H₀ *ᵥ x)) ≤ x ⬝ᵥ (V *ᵥ x))
+    {i₀ : Fin N} (hi₀ : hH.eigenvalues i₀ ≤ 0) {i : Fin N} (hi : i ≠ i₀) :
+    (1 - c) * m ≤ hH.eigenvalues i - hH.eigenvalues i₀ := by
+  have hc0 : (0 : ℝ) ≤ 1 - c := by linarith
+  have hform : ∀ x ∈ W, ((1 - c) * m) * (x ⬝ᵥ x) ≤ x ⬝ᵥ ((H₀ + V) *ᵥ x) := by
+    intro x hx
+    have hsplit : x ⬝ᵥ ((H₀ + V) *ᵥ x) = x ⬝ᵥ (H₀ *ᵥ x) + x ⬝ᵥ (V *ᵥ x) := by
+      rw [Matrix.add_mulVec, dotProduct_add]
+    rw [hsplit]
+    nlinarith [mul_le_mul_of_nonneg_left (hform0 x hx) hc0, hformV x hx]
+  have hbound := eigenvalues_gap_of_codim1_form hH hgap W hW hform hi₀ hi
+  linarith
+
+#print axioms coupled_gap_of_relative_coupling_bound
 
 /-- **Form bounds add — the decomposition tool toward an intensive coupling bound.** If two couplings each
 have form bounded below, so does their sum: `−c₁·‖x‖² ≤ ⟨x,V₁x⟩` and `−c₂·‖x‖² ≤ ⟨x,V₂x⟩` give
@@ -2235,7 +2271,8 @@ theorem fiber_c1_neg {L : ℕ} [NeZero L] (m x : ℕ) (hmx : m + x ≤ L) :
   rw [fiber_sum_neg m x hmx (fun _ => (1 : ℝ))]; simp
 
 /-- **The abstract GM/Knabe eq. 23 operator inequality, fully machine-checked (foundational).** For a
-frustration-free nearest-neighbour projector chain (`h b` Hermitian idempotents on `ZMod L`), with the plain
+chain of IDEMPOTENTS `h b * h b = h b` on `ZMod L` — frustration-freeness is NOT assumed here, and
+neither is Hermiticity — with the plain
 Knabe windows `Bₖ = ∑_{j<m} h(k+j)` (`cⱼ=1`), `α=β=(m−1)⁻¹`, the operator inequality
 `(∑h)² + α•(∑h) − α•(∑ₖBₖ²) ⪰ 0` holds — **given only the physical commuting structure** `hpsd`
 (`Tδ=∑_b h_b h_{b+δ} ⪰ 0` for `δ∉{0,±1}`, i.e. disjoint bonds commute). Wires `eq23_of_terms` +
@@ -2355,10 +2392,19 @@ theorem gm_gap_of_eq23 {N : ℕ} {ι : Type*} [Fintype ι]
 
 open Matrix in
 /-- **The abstract Knabe/Gosset–Mozgunov bulk gap for the plain-window chain — CAPSTONE (foundational).**
-For a frustration-free nearest-neighbour projector chain (`h b` Hermitian idempotents on `ZMod L`, `2≤m`,
-`2m≤L`), given (i) the commuting structure `hpsd` (`Tδ⪰0` for `δ∉{0,±1}`), (ii) a low-energy eigenstate `ψ`
-of `H=∑h` (`Hψ=λψ`, `λ>0`), and (iii) GM's Lemma 4 `hlem4` on `ψ`, the eigenvalue obeys the Knabe finite-size
-bound `λ ≥ (m−1)⁻¹·γ'·m − (m−1)⁻¹`. Assembles `gm_eq23_c1` (the abstract eq. 23 operator inequality) →
+**⛔ THERE IS NO FRUSTRATION-FREENESS HYPOTHESIS HERE.** What is assumed is that each `h b` is a
+Hermitian IDEMPOTENT on `ZMod L` (`hherm`, `hproj`) with `2≤m`, `2m≤L` — idempotence, not
+frustration-freeness: nothing states that the `h b` share a common zero vector or that `H`'s ground
+energy is `0`. Given further (i) the commuting structure `hpsd` (`Tδ⪰0` for `δ∉{0,±1}`), (ii) an
+eigenvector `ψ` of `H=∑h` (`Hψ=λψ`, `λ>0`), and (iii) GM's Lemma 4 `hlem4` at that `ψ`, the
+eigenvalue obeys the Knabe finite-size bound `λ ≥ (m−1)⁻¹·γ'·m − (m−1)⁻¹`.
+
+**⛔ AND THAT IS NOT YET A GAP.** The bound holds of ANY strictly positive eigenvalue whose eigenvector
+satisfies `hlem4`. Reading it as the SPECTRAL GAP needs two further facts the statement does not
+carry: that the ground energy is `0`, and that `λ` is the LEAST positive eigenvalue.
+`LocalGap.laplace_ground_state` supplies the first separately for the control chain. Frustration-freeness
+is what would normally deliver both, which is why the assessment below is about it — but it is an
+assessment, not a hypothesis. Assembles `gm_eq23_c1` (the abstract eq. 23 operator inequality) →
 `eq23_form_of_psd` (form inequality at `ψ`) → `gm_gap_of_eq23` (gap), with `hsum=∑ₖBₖ=m•H`
 (`weighted_window_sum`). This is the ENTIRE abstract Knabe/GM finite-size criterion, machine-checked and
 axiom-free; the three physical inputs (`hpsd`, `ψ`, `hlem4`) are the sole remaining binding to the actual
@@ -2414,10 +2460,21 @@ theorem gm_gap_c1 {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) 
 #print axioms gm_gap_c1
 
 open Matrix in
-/-- **`gm_gap_c1` is non-vacuous (foundational).** The commuting-projector chain `h b = diag(0,1)` on `ZMod (2m)`
-satisfies all hypotheses of `gm_gap_c1`, with low-energy eigenstate `ψ=(0,1)` (`Hψ=(2m)ψ`); the theorem then
-yields the Knabe bound `(m−1)⁻¹·m·m − (m−1)⁻¹ = m+1 ≤ 2m`. So the abstract Knabe/GM gap theorem is not vacuous —
-its hypotheses are jointly satisfiable and deliver a genuine positive gap (cf. `GappedExample`). -/
+/-- **`gm_gap_c1` applied, at a constant chain (foundational).**
+
+**⛔ THE STATEMENT IS ARITHMETIC AND THE WITNESS IS NOT EXPORTED.** What is stated is the real
+inequality `(m−1)⁻¹·m·m − (m−1)⁻¹ ≤ 2m`, i.e. `m+1 ≤ 2m`; no matrix, no chain and no mention of
+`gm_gap_c1` occurs in it. The satisfying data lives only in the PROOF TERM, where `h b = diag(0,1)` on
+`ZMod (2m)` with `ψ=(0,1)` and `Hψ=(2m)ψ`. A reader checking the statement alone therefore learns
+nothing about satisfiability.
+
+**⛔ AND THE CHAIN IS CONSTANT.** Every one of the `2m` bonds carries the SAME rank-one projector on the
+SAME two-dimensional space, so commutation is trivial, the far-offset sums degenerate, and there is
+no spatial structure at all.
+
+**`LocalGap.knabe_witness` is the non-vacuity statement to quote instead**: a genuine existential over
+the structural hypotheses, built on pairwise orthogonal site projectors, so the far-offset sums vanish
+identically. Neither is a physical system (cf. `GappedExample`). -/
 theorem knabe_gap_demo (m : ℕ) (hm2 : 2 ≤ m) :
     ((m : ℝ) - 1)⁻¹ * (m : ℝ) * (m : ℝ) - ((m : ℝ) - 1)⁻¹ ≤ ((2 * m : ℕ) : ℝ) := by
   haveI : NeZero (2 * m) := ⟨by omega⟩

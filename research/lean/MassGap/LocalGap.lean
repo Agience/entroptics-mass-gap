@@ -18,7 +18,7 @@ choosing it, and exhibits a family that saturates the threshold exactly.
 
 ## The three statements
 
-* `knabe_chain_gap` / `knabe_chain_gap_of_local_spectrum` — the criterion. A frustration-free
+* `knabe_chain_gap` / `knabe_chain_gap_of_local_spectrum` — the criterion. A nearest-neighbour chain of Hermitian idempotents
   nearest-neighbour projector chain on `ZMod L` whose every `m`-bond window has spectrum in
   `{0} ∪ [ε,∞)` has every positive eigenvalue of `H = ∑ h_b` bounded below by `(m·ε − 1)/(m − 1)`.
   `L` does not occur in that bound, which is the whole point: `knabe_gap_volume_independent` says one
@@ -88,7 +88,7 @@ theorem win_isHermitian {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (F
   isHermitian_sum _ _ (fun j _ => by rw [one_smul]; exact hherm _)
 
 /-- A window of projectors is positive semidefinite, so its eigenvalues are nonnegative without any
-extra hypothesis: frustration-freeness already supplies the `hpsd` input of `operator_sq_ge_of_gap`. -/
+extra hypothesis: idempotence and Hermiticity already supply the `hpsd` input of `operator_sq_ge_of_gap`. -/
 theorem win_posSemidef {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (hproj : ∀ b, h b * h b = h b) (m : ℕ) (k : ZMod L) :
     (win h m k).PosSemidef :=
@@ -97,7 +97,7 @@ theorem win_posSemidef {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fi
 
 /-! ### The criterion -/
 
-/-- **Knabe local-gap criterion, operator-inequality form (foundational).** For a frustration-free
+/-- **Knabe local-gap criterion, operator-inequality form (foundational).** For a chain of Hermitian idempotents — frustration-freeness is NOT among the hypotheses —
 nearest-neighbour projector chain on `ZMod L` whose far-separated pair sums are positive semidefinite,
 if every `m`-bond window satisfies the operator inequality `W² ⪰ ε W`, then every positive eigenvalue
 `lam` of `H = ∑_b h_b` obeys `lam ≥ (m·ε − 1)/(m − 1)`.

@@ -145,6 +145,13 @@ def check(names: list[str]) -> int:
               "Reuse them, or pick a different statement.")
         return 1
     print(f"\nnone of the {len(names)} requested name(s) exist in {LEAN}.")
+    print()
+    print("⛔ THIS IS A NAME SEARCH AND CANNOT TELL YOU WHETHER THE FACT EXISTS.")
+    print("   If it does, it is under the name its author chose -- which is not the one")
+    print("   you were about to use. Before writing, grep the tree for the CONTENT: the")
+    print("   operators and types of the statement you intend. `su3ReTr` duplicated")
+    print("   `HaarVariance.reTr` and `reflClosure` duplicated `symCube`, each written")
+    print("   after this exact line printed.")
     return 0
 
 

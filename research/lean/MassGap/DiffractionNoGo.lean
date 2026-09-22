@@ -94,7 +94,7 @@ does witness it, at a lag-two ratio of `1/16` above `LagTwoSix.lagTwoThresholdSi
 the extent-six facts as well: it is `Hankel`-PSD on levels `{0,1,2}` (sitting on the boundary, with
 two vanishing minors), and it meets `MomentShape.corrClay_even_antitone`,
 `WeakArm.wilsonCorrAt_le_at_zero` and `LagTwoSix.lag_three_le_lag_two`. The tree states no quadratic
-and no `ρ(2) ≤ ρ(1)` at aperture five, so nothing there bites the way the extent-four quadratic does.
+and no `ρ(2) ≤ ρ(1)` at aperture five, so nothing there constrains the way the extent-four quadratic does.
 
 The size of the shortfall, computed rather than proved here. Holding `ρ(1)` at the quadratic's own
 boundary `ρ(1) = √((ρ(2)² + ρ(2))/2)`, the extent-four window in which the ceiling HOLDS and the

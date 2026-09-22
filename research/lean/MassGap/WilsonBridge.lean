@@ -212,6 +212,54 @@ noncomputable def wilsonCorrConn (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (β
       * (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
         (wilsonPlaqObs (N := Nc) bd p)
 
+/-- **The Wilson correlation of two PRODUCTS of plaquette observables.**
+
+`wilsonCorr` with each single plaquette replaced by a finset of them. `Ao = {p₀}`, `Bo = {p}`
+recovers it (`wilsonCorrF_singleton`).
+
+DERIVED: no numeral. -/
+noncomputable def wilsonCorrF (bd : Pq → List (Lk × Bool)) (Ao : Finset Pq) (β : ℝ)
+    (Bo : Finset Pq) : ℝ :=
+  (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
+    (fun U => (∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+      * ∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+
+/-- **And its CONNECTED form**, the disconnected floor subtracted.
+
+**⛔ THIS IS THE OBJECT, NOT A BOUND ON IT.** `StrongCoupling`'s finset core sum
+(`corePairsF_sum_le`) bounds the core side; nothing yet connects this correlator to that sum — the
+finset counterpart of `wilsonCorrConn_eq_bridging_sum` does not exist.
+
+DERIVED: no numeral. -/
+noncomputable def wilsonCorrConnF (bd : Pq → List (Lk × Bool)) (Ao : Finset Pq) (β : ℝ)
+    (Bo : Finset Pq) : ℝ :=
+  wilsonCorrF (Nc := Nc) bd Ao β Bo
+    - (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
+        (fun U => ∏ p ∈ Ao, wilsonPlaqObs (N := Nc) bd p U)
+      * (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
+        (fun U => ∏ p ∈ Bo, wilsonPlaqObs (N := Nc) bd p U)
+
+/-- **⭐ IT REDUCES TO `wilsonCorr` AT SINGLETONS.** The check that the generalisation is aligned.
+
+DERIVED: no numeral. -/
+theorem wilsonCorrF_singleton (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (β : ℝ) (p : Pq) :
+    wilsonCorrF (Nc := Nc) bd {p₀} β {p} = wilsonCorr (Nc := Nc) bd p₀ β p := by
+  unfold wilsonCorrF wilsonCorr
+  simp
+
+#print axioms wilsonCorrF_singleton
+
+/-- **⭐ AND SO DOES THE CONNECTED FORM.**
+
+DERIVED: no numeral. -/
+theorem wilsonCorrConnF_singleton (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (β : ℝ) (p : Pq) :
+    wilsonCorrConnF (Nc := Nc) bd {p₀} β {p} = wilsonCorrConn (Nc := Nc) bd p₀ β p := by
+  unfold wilsonCorrConnF wilsonCorrConn
+  rw [wilsonCorrF_singleton]
+  simp
+
+#print axioms wilsonCorrConnF_singleton
+
 /-- The connected correlation on the periodic ladder — the lag-indexed object the aperture condition
 is about, constructed from `SU(Nc)` Wilson expectations.
 

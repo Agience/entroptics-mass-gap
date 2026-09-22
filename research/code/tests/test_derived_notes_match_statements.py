@@ -33,7 +33,7 @@ TOOL = os.path.join(REPO, "research", "code", "certify", "lean_derived_literals.
 # DERIVED: measured on 2026-09-21 by running the tool over research/lean/MassGap. Not a chosen
 # tolerance -- it is the count that was there when the gate was written, and the only sanctioned
 # direction is down.
-BASELINE = 634
+BASELINE = 633
 
 
 def _scan_count() -> int:

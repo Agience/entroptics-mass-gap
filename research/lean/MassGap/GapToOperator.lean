@@ -343,7 +343,7 @@ family cannot be substituted here.** `CellSpectrum.cell_volume_bar_nonvacuous` a
 header make the same point about their own statements: quantifying a constant over an index is
 arithmetic, not uniformity.
 
-**The honest prior art is `VolumeRate.gap_rate_uniform_in_volume_of_intensive`**, which has the same
+**The closest prior art is `VolumeRate.gap_rate_uniform_in_volume_of_intensive`**, which has the same
 hypotheses and the same rate-form conclusion on the mode family. Note that
 `Certify.gap_uniform_in_volume_of_intensive` is NOT the right citation: its `κ` does not occur after
 the conjunction, which is the vacuous shape `VolumeRate` was written to repair and says it
@@ -410,5 +410,355 @@ section Audit
 #print axioms norm_opT_pow_le
 #print axioms clustering_opT
 end Audit
+
+/-! ## The vacuum's complement as an operator
+
+`hsp` in `OpTBridge.reconstruct_from_opT` is a statement about `spectrum ℝ (opT D)`, and nothing in
+the tree proves any spectral fact about `opT`. The block structure is what a spectral argument needs:
+`opT` fixes `Ω` and preserves `Ωᗮ`, and `GapAt` bounds it there. A bound ON a subspace is not a
+statement about an operator until that subspace carries one, which is what this section builds. -/
+
+section VacPerp
+
+open ComplexConjugate
+
+/-- **The vacuum's orthogonal complement in the completion.**
+
+`SecondEigenvalue.vacPerp` is the same idea on the REAL GNS quotient; this is the one `opT` acts on.
+
+DERIVED: no numeral. -/
+noncomputable def vacPerpH (D : TransferData A) : Submodule ℂ (H D.toReflForm) :=
+  (ℂ ∙ Omega D.toReflForm D.vac)ᗮ
+
+/-- **Membership is the orthogonality equation** the rest of the file states its hypotheses in.
+
+DERIVED: the `0` is orthogonality. -/
+theorem mem_vacPerpH (D : TransferData A) {x : H D.toReflForm} :
+    x ∈ vacPerpH D ↔ inner ℂ (Omega D.toReflForm D.vac) x = (0 : ℂ) :=
+  Submodule.mem_orthogonal_singleton_iff_inner_right
+
+#print axioms mem_vacPerpH
+
+/-- **`opT` maps the complement into itself** — `orth_invariant_opT` in the form `codRestrict` wants.
+
+DERIVED: no numeral. -/
+theorem opT_mem_vacPerpH (D : TransferData A) (x : vacPerpH D) :
+    (opT D) ((vacPerpH D).subtypeL x) ∈ vacPerpH D := by
+  rw [mem_vacPerpH, Submodule.subtypeL_apply]
+  exact orth_invariant_opT D ((mem_vacPerpH D).mp x.2)
+
+#print axioms opT_mem_vacPerpH
+
+/-- **⭐ THE COMPRESSION OF `opT` TO THE VACUUM'S COMPLEMENT.**
+
+The operator a spectral argument runs on. `opT` itself has `1` in its spectrum — it fixes `Ω`
+(`opT_Omega`) — so no contraction bound can hold for it globally; the decay lives entirely on this
+complement, and this is that restriction as an operator in its own right.
+
+DERIVED: no numeral. -/
+noncomputable def opTperp (D : TransferData A) : vacPerpH D →L[ℂ] vacPerpH D :=
+  ((opT D).comp (vacPerpH D).subtypeL).codRestrict (vacPerpH D) (opT_mem_vacPerpH D)
+
+/-- **What it does, read in the completion.**
+
+DERIVED: no numeral. -/
+@[simp] theorem coe_opTperp_apply (D : TransferData A) (x : vacPerpH D) :
+    ((opTperp D x : vacPerpH D) : H D.toReflForm) = (opT D) (x : H D.toReflForm) := by
+  rw [opTperp, ContinuousLinearMap.coe_codRestrict_apply, ContinuousLinearMap.comp_apply,
+    Submodule.subtypeL_apply]
+
+#print axioms coe_opTperp_apply
+
+/-- **⭐⭐ AND `GapAt D r` BOUNDS ITS OPERATOR NORM BY `r`.**
+
+`norm_opT_le_of_orth` gives `‖opT D x‖ ≤ r‖x‖` for each `x ⊥ Ω`. This is that bound as a statement
+about `‖opTperp D‖`, which is what a resolvent argument can consume: for `‖opTperp D‖ ≤ r < 1` and
+`r < |μ|`, `μ - opTperp D` is invertible by the Neumann series, and the only spectral value left is
+the vacuum's `1`.
+
+**⛔ AND IT IS NOT A STEP TOWARD `hsp`, WHICH IS THE POINT.** `hsp` asks for
+`Set.Icc ε (exp (-Δ))` with `ε > 0`, i.e. that the spectrum stay away from `0`, and
+`TransferInvertibility.isUnit_of_spectral_hypothesis` shows that is exactly `IsUnit T`.
+`spectral_hypothesis_fails_for_compact` then makes it UNSATISFIABLE for a compact operator in
+infinite dimensions, and `energies_bounded_of_spectral_hypothesis` shows it forces every energy
+below `max 0 (-log ε)` — a Hamiltonian bounded ABOVE, which a quantum field theory's is not. So the
+lower cut is not a gap to be closed; it is a hypothesis this route exists to avoid.
+
+What a norm bound on `opTperp` IS good for is the contraction form: `‖opTperp D‖ ≤ r < 1` gives decay
+on the vacuum's complement with no logarithm anywhere, which is what `norm_opT_pow_le` and
+`clustering_opT` below consume. Assembling `spectrum ℝ (opT D)` itself would still need `ℂ ∙ Ω` and
+`vacPerpH` as complementary subspaces, and no theorem here needs that.
+
+DERIVED: the `0` is `0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound` requires of any bound on
+an operator norm; `r` itself is `GapAt`'s rate and is the caller's. No numeral is chosen here. -/
+theorem norm_opTperp_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
+    ‖opTperp D‖ ≤ r := by
+  refine ContinuousLinearMap.opNorm_le_bound _ hr (fun x => ?_)
+  rw [Submodule.coe_norm, coe_opTperp_apply, Submodule.coe_norm]
+  exact norm_opT_le_of_orth D hr hg (x : H D.toReflForm) ((mem_vacPerpH D).mp x.2)
+
+#print axioms norm_opTperp_le
+
+end VacPerp
+
+/-! ## The spectrum of `opT`
+
+A norm bound ON a subspace is still not a statement about an operator, and `norm_opTperp_le` is
+where that gap shows. What closes it is that `ℂ ∙ Ω` and `vacPerpH D` are complementary and `opT`
+preserves both, so a resolvent can be assembled block by block. The route below does that without
+naming either subspace as a type: `vacProjH` is the rank-one projection onto the vacuum written as an
+operator, `opTgap` is what is left of `opT` once that block is removed, and the factorisation
+
+    μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)
+
+splits the resolvent into a Neumann series — legitimate because `GapAt` bounds `‖opTgap D‖` by `r`
+and `μ` lies outside `[-r, r]` — and the inversion of an idempotent, which needs only `μ ≠ 1`. -/
+
+section Spectrum
+
+/-- **THE VACUUM IS A UNIT VECTOR IN THE COMPLEX PAIRING.** `GNSHilbert.norm_Omega_vac` read
+through `inner_self_eq_norm_sq_to_K`.
+
+DERIVED: the `1` is `norm_Omega_vac`'s, which is `D.vac_norm`; nothing is chosen here. -/
+theorem inner_Omega_self (D : TransferData A) :
+    inner ℂ (Omega D.toReflForm D.vac) (Omega D.toReflForm D.vac) = (1 : ℂ) := by
+  rw [inner_self_eq_norm_sq_to_K, norm_Omega_vac]
+  norm_num
+
+/-- **THE VACUUM'S RANK-ONE PROJECTION, AS AN OPERATOR.** `x ↦ ⟪Ω, x⟫ • Ω` is the orthogonal
+projection onto `ℂ ∙ Ω`; bundling it as a `ContinuousLinearMap` is what lets it be MULTIPLIED inside
+the algebra `H →L[ℂ] H`, which is where a resolvent argument has to happen.
+
+DERIVED: no numeral. -/
+noncomputable def vacProjH (D : TransferData A) : H D.toReflForm →L[ℂ] H D.toReflForm :=
+  (innerSL ℂ (Omega D.toReflForm D.vac)).smulRight (Omega D.toReflForm D.vac)
+
+/-- What it does.
+
+DERIVED: no numeral. -/
+@[simp] theorem vacProjH_apply (D : TransferData A) (x : H D.toReflForm) :
+    vacProjH D x = (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac := rfl
+
+/-- It fixes the vacuum.
+
+DERIVED: no numeral. -/
+theorem vacProjH_Omega (D : TransferData A) :
+    vacProjH D (Omega D.toReflForm D.vac) = Omega D.toReflForm D.vac := by
+  rw [vacProjH_apply, inner_Omega_self, one_smul]
+
+/-- **AND IT IS IDEMPOTENT**, which is the whole content of the two-by-two inversion below.
+
+DERIVED: no numeral. -/
+theorem vacProjH_mul_vacProjH (D : TransferData A) : vacProjH D * vacProjH D = vacProjH D := by
+  ext x
+  rw [mul_apply_eq_comp, vacProjH_apply, vacProjH_apply, inner_smul_right, inner_Omega_self, mul_one]
+
+/-- **⭐ `opT` WITH THE VACUUM'S BLOCK SUBTRACTED.**
+
+`opT D` fixes `Ω`, so no contraction bound can hold for it globally — `1` is an eigenvalue. Removing
+the projection removes exactly that eigenvalue, and what is left is bounded by `r` on the WHOLE
+space rather than only on `vacPerpH D`. That is what makes a Neumann series available.
+
+DERIVED: no numeral. -/
+noncomputable def opTgap (D : TransferData A) : H D.toReflForm →L[ℂ] H D.toReflForm :=
+  opT D - vacProjH D
+
+/-- The definition, as a rewrite.
+
+DERIVED: no numeral. -/
+theorem opTgap_def (D : TransferData A) : opTgap D = opT D - vacProjH D := rfl
+
+/-- What it does.
+
+DERIVED: no numeral. -/
+theorem opTgap_apply (D : TransferData A) (x : H D.toReflForm) :
+    opTgap D x
+      = opT D x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac := by
+  rw [opTgap_def, sub_apply, vacProjH_apply]
+
+/-- The two blocks reassemble `opT`.
+
+DERIVED: no numeral. -/
+theorem opTgap_add_vacProjH (D : TransferData A) : opTgap D + vacProjH D = opT D := by
+  rw [opTgap_def]
+  abel
+
+/-- **THE TWO BLOCKS ANNIHILATE EACH OTHER.** `opTgap D` kills `Ω`, and the projection's range is
+the vacuum line, so the composite is zero — this is what makes the factorisation below exact rather
+than approximate.
+
+DERIVED: the `0` is the zero operator. -/
+theorem opTgap_mul_vacProjH (D : TransferData A) : opTgap D * vacProjH D = 0 := by
+  ext x
+  rw [mul_apply_eq_comp, vacProjH_apply, opTgap_apply, ContinuousLinearMap.map_smul, opT_Omega,
+    inner_smul_right, inner_Omega_self, mul_one, sub_self, zero_apply]
+
+/-- **⭐⭐ AND `GapAt D r` BOUNDS IT ON THE WHOLE SPACE.**
+
+`norm_opT_le_of_orth` bounds `opT` only on the vacuum's complement. Here the projection is
+subtracted first, so an arbitrary `x` is carried to `opT` of its projected part: `opTgap D x` equals
+`opT D (x - ⟪Ω,x⟫ • Ω)`, the argument is orthogonal to `Ω` by construction, and Pythagoras gives
+`‖x - ⟪Ω,x⟫ • Ω‖ ≤ ‖x‖`. Contrast `norm_opTperp_le`, which is the same bound confined to a submodule
+and therefore says nothing about any element of the operator algebra.
+
+DERIVED: the `0` is `0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound` requires of any bound on an
+operator norm; `r` is `GapAt`'s rate and is the caller's. -/
+theorem norm_opTgap_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
+    ‖opTgap D‖ ≤ r := by
+  refine ContinuousLinearMap.opNorm_le_bound _ hr (fun x => ?_)
+  have hwperp : inner ℂ (Omega D.toReflForm D.vac)
+      (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac) = (0 : ℂ) := by
+    rw [inner_sub_right, inner_smul_right, inner_Omega_self, mul_one, sub_self]
+  have hBx : opTgap D x
+      = opT D (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac) := by
+    rw [map_sub, ContinuousLinearMap.map_smul, opT_Omega, opTgap_apply]
+  have hperp2 : inner ℂ ((inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac)
+      (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac) = (0 : ℂ) := by
+    rw [inner_smul_left, hwperp, mul_zero]
+  have hsplit : (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac
+      + (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac) = x := by
+    abel
+  have hsum := norm_add_sq_eq_norm_sq_add_norm_sq_of_inner_eq_zero
+      ((inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac)
+      (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac) hperp2
+  rw [hsplit] at hsum
+  have hnw : ‖x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac‖ ≤ ‖x‖ := by
+    nlinarith [hsum, norm_nonneg x,
+      norm_nonneg (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac),
+      mul_self_nonneg ‖(inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac‖]
+  rw [hBx]
+  calc ‖opT D (x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac)‖
+      ≤ r * ‖x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac‖ :=
+        norm_opT_le_of_orth D hr hg _ hwperp
+    _ ≤ r * ‖x‖ := mul_le_mul_of_nonneg_left hnw hr
+
+/-- **THE GAP BLOCK'S RESOLVENT, BY NEUMANN SERIES.**
+
+`‖opTgap D‖ ≤ r < |μ|` makes `μ⁻¹ • opTgap D` a strict contraction, so `Units.oneSub` inverts
+`1 - μ⁻¹ • opTgap D`, and multiplying by the unit `algebraMap ℝ _ μ` gives `μ - opTgap D`.
+
+**⛔ THIS IS NOT `TransferInvertibility`'s HYPOTHESIS.** Nothing here asks `opT D` itself to be
+invertible, and `μ` ranges over the values EXCLUDED from the conclusion, never over the spectrum.
+
+DERIVED: the `0` is `0 ≤ r`; `r` and `μ` are the caller's, and the interval `|μ| > r` is what
+`Units.oneSub`'s contraction hypothesis becomes after the scalar is divided out. -/
+theorem isUnit_sub_opTgap (D : TransferData A) {r μ : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
+    (hrμ : r < |μ|) :
+    IsUnit (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ - opTgap D) := by
+  have hμabs : 0 < |μ| := lt_of_le_of_lt hr hrμ
+  have hμ0 : μ ≠ 0 := by
+    intro h
+    rw [h, abs_zero] at hμabs
+    exact lt_irrefl _ hμabs
+  have hB : ‖opTgap D‖ ≤ r := norm_opTgap_le D hr hg
+  have hlt : ‖(μ⁻¹ : ℝ) • opTgap D‖ < 1 := by
+    rw [norm_smul, Real.norm_eq_abs, abs_inv]
+    have h1 : ‖opTgap D‖ < |μ| := lt_of_le_of_lt hB hrμ
+    have h2 : |μ|⁻¹ * ‖opTgap D‖ < |μ|⁻¹ * |μ| :=
+      mul_lt_mul_of_pos_left h1 (inv_pos.mpr hμabs)
+    rwa [inv_mul_cancel₀ (ne_of_gt hμabs)] at h2
+  have hUn : IsUnit ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • opTgap D) :=
+    (Units.oneSub _ hlt).isUnit
+  have hUa : IsUnit (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ) :=
+    IsUnit.map (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm)) (isUnit_iff_ne_zero.mpr hμ0)
+  have hfac : algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ - opTgap D
+      = (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ)
+        * ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • opTgap D) := by
+    rw [mul_sub, mul_one, mul_smul_comm, ← Algebra.smul_def, smul_smul,
+      inv_mul_cancel₀ hμ0, one_smul]
+  rw [hfac]
+  exact hUa.mul hUn
+
+/-- **THE VACUUM BLOCK'S RESOLVENT, INVERTED BY HAND.**
+
+For an idempotent `e`, `(1 - t • e) * (1 + s • e) = 1 + (s - t - s*t) • e`, so the inverse exists as
+soon as `s(1 - t) = t` can be solved. At `t = μ⁻¹` the solution is `s = (μ - 1)⁻¹`, and the only
+thing that can obstruct it is `μ = 1` — the vacuum's own eigenvalue.
+
+DERIVED: the `1`s are the unit of the operator algebra and the vacuum's eigenvalue `opT D Ω = Ω`,
+which is what `μ ≠ 1` excludes; the `0` is `μ ≠ 0`, needed because `μ⁻¹` is the contraction scale.
+Both are forced by the factorisation, not chosen. -/
+theorem isUnit_one_sub_smul_vacProjH (D : TransferData A) {μ : ℝ} (hμ0 : μ ≠ 0) (hμ1 : μ ≠ 1) :
+    IsUnit ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • vacProjH D) := by
+  have he2 : vacProjH D * vacProjH D = vacProjH D := vacProjH_mul_vacProjH D
+  have hsub : μ - 1 ≠ 0 := sub_ne_zero.mpr hμ1
+  have hst : (μ - 1)⁻¹ - (μ - 1)⁻¹ * μ⁻¹ = μ⁻¹ := by
+    field_simp
+  have hA : ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • vacProjH D)
+      * ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) + (((μ - 1)⁻¹ : ℝ)) • vacProjH D) = 1 := by
+    rw [mul_add, mul_one, mul_smul_comm, sub_mul, one_mul, smul_mul_assoc, he2,
+      smul_sub, smul_smul, ← sub_smul, hst]
+    abel
+  have hB : ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) + (((μ - 1)⁻¹ : ℝ)) • vacProjH D)
+      * ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • vacProjH D) = 1 := by
+    rw [add_mul, one_mul, smul_mul_assoc, mul_sub, mul_one, mul_smul_comm, he2,
+      smul_sub, smul_smul, ← sub_smul, hst]
+    abel
+  exact ⟨⟨_, _, hA, hB⟩, rfl⟩
+
+/-- **⭐⭐⭐ THE SPECTRUM OF THE TRANSFER OPERATOR, FROM `GapAt` ALONE.**
+
+Every real spectral value of `opT D` is either the vacuum's `1` or within `r` of zero. This is the
+first spectral fact about `opT` anywhere in the tree: `OpTBridge.reconstruct_from_opT` takes a
+spectral hypothesis and discharges none of it, and `norm_opTperp_le` bounds a compression rather
+than saying anything about `spectrum ℝ (opT D)`.
+
+The proof is the factorisation named in this section's header. For `μ` outside `{1} ∪ [-r, r]`,
+`μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)`, whose first factor is a unit by
+`isUnit_sub_opTgap` (Neumann, on `r < |μ|`) and whose second is a unit by
+`isUnit_one_sub_smul_vacProjH` (idempotent, on `μ ≠ 1`). `spectrum.mem_iff` turns that into
+non-membership.
+
+**⛔ WHAT THIS IS NOT.** It is NOT `OpTBridge`'s `hsp`, which additionally asks
+`Set.Icc ε (exp (-Δ))` with `0 < ε`, i.e. that `0` stay OUT of the spectrum —
+`TransferInvertibility.isUnit_of_spectral_hypothesis` shows that is exactly `IsUnit (opT D)`, and
+this conclusion permits `0` deliberately. It is also NOT a gap: `GapAt D r` is a hypothesis, nothing
+in the tree supplies one, and at `1 ≤ r` the right-hand side already contains every value
+`norm_opT_le_one` allows, so the statement is empty unless `r < 1` — the same caveat
+`bound_is_free_of_one_le` records for the norm bounds. And it is a bound on `spectrum ℝ`, the REAL
+spectrum of a self-adjoint operator, which is where `isSelfAdjoint_opT` is doing its work.
+
+DERIVED: the `1` is the vacuum's eigenvalue, fixed by `GNSHilbert.opT_Omega`, not a level chosen
+here; the `0` is `0 ≤ r`, which `norm_opTgap_le` requires of any operator-norm bound. `r` is
+`GapAt`'s rate and the interval `[-r, r]` is its symmetric reach, since `spectrum ℝ` of a
+self-adjoint operator is not sign-constrained. -/
+theorem spectrum_opT_subset (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
+    spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc (-r) r := by
+  intro μ hμ
+  by_contra hcon
+  simp only [Set.mem_union, Set.mem_singleton_iff, Set.mem_Icc, not_or, not_and_or,
+    not_le] at hcon
+  obtain ⟨hμ1, hout⟩ := hcon
+  have hrμ : r < |μ| := by
+    rcases hout with h | h
+    · have h1 : -μ ≤ |μ| := neg_le_abs μ
+      linarith
+    · have h1 : μ ≤ |μ| := le_abs_self μ
+      linarith
+  have hμabs : 0 < |μ| := lt_of_le_of_lt hr hrμ
+  have hμ0 : μ ≠ 0 := by
+    intro h
+    rw [h, abs_zero] at hμabs
+    exact lt_irrefl _ hμabs
+  have hfac : algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ - opT D
+      = (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ - opTgap D)
+        * ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • vacProjH D) := by
+    rw [mul_sub, mul_one, mul_smul_comm, sub_mul, opTgap_mul_vacProjH, sub_zero,
+      ← Algebra.smul_def, smul_smul, inv_mul_cancel₀ hμ0, one_smul, sub_sub,
+      opTgap_add_vacProjH]
+  apply (spectrum.mem_iff.mp hμ)
+  rw [hfac]
+  exact (isUnit_sub_opTgap D hr hg hrμ).mul (isUnit_one_sub_smul_vacProjH D hμ0 hμ1)
+
+#print axioms inner_Omega_self
+#print axioms vacProjH_apply
+#print axioms vacProjH_mul_vacProjH
+#print axioms opTgap_mul_vacProjH
+#print axioms norm_opTgap_le
+#print axioms isUnit_sub_opTgap
+#print axioms isUnit_one_sub_smul_vacProjH
+#print axioms spectrum_opT_subset
+
+end Spectrum
 
 end MassGap.GapToOperator

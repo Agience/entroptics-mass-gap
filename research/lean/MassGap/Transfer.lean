@@ -175,9 +175,21 @@ structure PreForm (A : Type*) [AddCommGroup A] [Module ℝ A] where
 /-- **A REFLECTION FORM: symmetric, bilinear, and POSITIVE SEMIDEFINITE.**
 
 The last field is the whole of reflection positivity, and it is a field precisely so that it cannot
-be assumed silently: every theorem below that uses positivity takes a `ReflForm`, and producing one
-for the Wilson measure is the open axiom `Complete.wilson_reflection_positive_at`. Nothing in this
-file constructs a `ReflForm` from `reflForm`. -/
+be assumed silently: every theorem below that uses positivity takes a `ReflForm`.
+
+**⛔ AND PRODUCING ONE FOR THE WILSON MEASURE IS NOT OPEN, NOR IS IT THAT AXIOM.** Two `ReflForm`s
+built from the Wilson measure exist with `form_nonneg` supplied and are foundational-only:
+`ReflectionStrong.wilsonGibbsReflForm` and `LogConvex.wilsonReflForm`, both on the finite periodic
+torus at ONE plane. Nor is `Complete.wilson_reflection_positive_at` a statement of this shape — it
+asserts componentwise nonnegativity of a lag-correlation VECTOR and a positive sum, naming no plane,
+no reflection and no form, and its body is PROVED at even extent `≥ 4` and `0 ≤ β` by
+`Complete.wilson_reflection_positive_at_even`.
+
+What IS open is a `ReflForm` at a FAMILY of planes for one state, which is what a chessboard argument
+would iterate; `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows no finite region is stable
+under two mirrors of the family, so it cannot come from a single finite box.
+
+Nothing in THIS file constructs a `ReflForm` from `reflForm`. -/
 structure ReflForm (A : Type*) [AddCommGroup A] [Module ℝ A] extends PreForm A where
   /-- **REFLECTION POSITIVITY**, assumed. See the module docstring. -/
   form_nonneg : ∀ x, 0 ≤ form x x
@@ -225,6 +237,89 @@ theorem form_add_self (x y : A) :
   rw [h]; ring
 
 end PreForm
+
+/-! ## Part 2a — the multiple-reflection engine
+
+A chessboard estimate bounds a quantity over a whole region by a single-block quantity, with no
+factor counting the blocks. The mechanism is one Schwarz step applied over and over: each step
+halves the region and doubles what sits in it, so the exponent on the unknown halves while the
+single-block bound accumulates. In the limit the unknown drops out entirely.
+
+On the logarithms it is linear arithmetic, which is what the first theorem is; the second puts it
+back in the multiplicative form a reflection-positive state presents.
+
+**⛔ THIS IS THE ENGINE, NOT AN ESTIMATE.** Nothing here knows about a lattice, a reflection plane,
+or how a product over a region splits into two reflected halves. Supplying that geometry for the
+Wilson state is the open work; `ReflForm.cauchy_schwarz` below, reachable for a state through
+`InfiniteReflection.stateReflForm`, is the single step it would iterate. -/
+
+/-- **HALVING, ITERATED, KILLS THE UNKNOWN.** If each term is at most half the next, and the
+sequence is bounded above BY ANYTHING, then the first term is at most zero.
+
+`D` may be any real — it is not assumed small, positive, or related to the sequence. That is the
+content: `d 0 · 2^n ≤ D` for every `n`, which a positive `d 0` cannot survive.
+
+DERIVED: the `2` is the halving of one Schwarz step — a square root on the multiplicative side. The
+`0` is what the iterated bound forces, and the `1` is the index shift to the next term. None is
+chosen. -/
+theorem le_zero_of_halving {d : ℕ → ℝ} {D : ℝ} (hstep : ∀ k, d k ≤ d (k + 1) / 2)
+    (hbd : ∀ k, d k ≤ D) : d 0 ≤ 0 := by
+  have hiter : ∀ n : ℕ, d 0 * 2 ^ n ≤ d n := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ k ih =>
+      have hk := hstep k
+      have hrw : d 0 * 2 ^ (k + 1) = 2 * (d 0 * 2 ^ k) := by ring
+      rw [hrw]
+      linarith
+  have hle : ∀ n : ℕ, d 0 * 2 ^ n ≤ D := fun n => le_trans (hiter n) (hbd n)
+  by_contra hcon
+  push_neg at hcon
+  have hgrow : Filter.Tendsto (fun n : ℕ => d 0 * 2 ^ n) Filter.atTop Filter.atTop :=
+    Filter.Tendsto.const_mul_atTop hcon
+      (tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2))
+  obtain ⟨n, hn⟩ := (hgrow.eventually_gt_atTop D).exists
+  exact absurd (hle n) (not_le.mpr hn)
+
+#print axioms le_zero_of_halving
+
+/-- **⭐ AND MULTIPLICATIVELY: THE ITERATED SCHWARZ BOUND.** If every term is at most the geometric
+mean of the next and a fixed `M`, and the sequence is bounded above at all, then the FIRST term is
+at most `M`.
+
+This is what a chessboard estimate concludes. `M` is the single-block quantity; `s 0` is the one
+over the whole region; and `B`, the crude bound the sequence never exceeds, does not appear in the
+conclusion. **The number of halvings does not appear either** — that is the volume-independence.
+
+DERIVED: the `0`s are the positivity hypotheses — `M` and each `s k` must be positive for their
+logarithms to exist — and the `1` is the index shift to the next term. The square roots are one
+Schwarz step, and `le_zero_of_halving` carries the `2` they become on the logarithms. -/
+theorem le_of_iterated_schwarz {s : ℕ → ℝ} {M B : ℝ} (hM : 0 < M) (hs : ∀ k, 0 < s k)
+    (hB : ∀ k, s k ≤ B)
+    (hstep : ∀ k, s k ≤ Real.sqrt (s (k + 1)) * Real.sqrt M) : s 0 ≤ M := by
+  have hlog : ∀ k, Real.log (s k) - Real.log M
+      ≤ (Real.log (s (k + 1)) - Real.log M) / 2 := by
+    intro k
+    have hsq : Real.log (Real.sqrt (s (k + 1)) * Real.sqrt M)
+        = Real.log (s (k + 1)) / 2 + Real.log M / 2 := by
+      rw [Real.log_mul (Real.sqrt_pos.mpr (hs (k + 1))).ne' (Real.sqrt_pos.mpr hM).ne',
+        Real.log_sqrt (hs (k + 1)).le,
+        Real.log_sqrt hM.le]
+    have hmono : Real.log (s k) ≤ Real.log (Real.sqrt (s (k + 1)) * Real.sqrt M) :=
+      Real.log_le_log (hs k) (hstep k)
+    rw [hsq] at hmono
+    linarith
+  have hbd : ∀ k, Real.log (s k) - Real.log M ≤ Real.log B - Real.log M := by
+    intro k
+    have := Real.log_le_log (hs k) (hB k)
+    linarith
+  have h0 := le_zero_of_halving hlog hbd
+  have : Real.log (s 0) ≤ Real.log M := by linarith
+  exact (Real.log_le_log_iff (hs 0) hM).mp this
+
+#print axioms le_of_iterated_schwarz
+
 
 namespace ReflForm
 
@@ -749,8 +844,10 @@ theorem one_le_of_eigenvalues_le (hm : Module.finrank ℝ (GNS D.toReflForm) = m
 
 /-- **AND THIS IS EXACTLY WHERE `hdecay` WOULD ENTER.**
 
-Given a bound `r` on the transfer spectrum, the correlator decays geometrically out to half the
-period — `Spectral.periodic_decay_le` applied to the form just built. Taking `r = e^{−(κ₀−μ)}` makes
+⛔ THIS IS A BOUND, NOT A DECAY. Given `r` bounding the transfer spectrum, the correlator is at most
+`2·(∑ w)·r^d` out to half the period — but `hgap` here is LITERALLY the hypothesis of
+`one_le_of_eigenvalues_le` above, which concludes `1 ≤ r`. So `r^d` is non-decreasing in every
+instance, and at `r = e^{−(κ₀−μ)} < 1` the hypothesis is UNSATISFIABLE over the full spectrum — `Spectral.periodic_decay_le` applied to the form just built. Taking `r = e^{−(κ₀−μ)}` makes
 the hypothesis `hgap` the flagship's `hdecay`, now a statement about the eigenvalues of a DEFINED
 operator rather than about a free family.
 

@@ -256,7 +256,8 @@ deterministic intensive read across the volume sweep. -/
 the deterministic read that the dominant magnitude `μ₁(F) = m_hi` is bounded by one intensive `r < 1` across
 every dimension (`hbound`, the `L`-stable/converging read), the free-energy margin does not dilute with volume:
 via `uniform_margin_of_intensive_radius → UniformSpectralMargin` and `gap_uniform_in_F`, there is a single
-common rate `κ > 0` at which every `F`'s autocorrelation forgets, `C(τ) → 0`. Foundational axioms only. -/
+rate at which every `F`'s autocorrelation forgets, `C(τ) → 0` -- ⛔ the conclusion states NO
+common rate, its `κ` being absent from the body it binds (`VolumeRate.exists_pos_and_iff`). Foundational axioms only. -/
 theorem gap_uniform_in_volume_of_intensive {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (μ₁ : ℕ → ℝ) (r : ℝ)
     (hr0 : 0 < r) (hr1 : r < 1) (hbound : ∀ F, μ₁ F ≤ r)

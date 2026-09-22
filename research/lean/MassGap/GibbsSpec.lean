@@ -149,9 +149,10 @@ directions `ν`; so sixteen candidates per link suffice. This is what makes `bou
 `Finset` at all — `IPlaq` is infinite.
 
 DERIVED: `4` is the dimension — `ν` ranges over the spacetime directions, and the sixteen candidates
-are those four directions against the four placements listed in the braces, so the count is the
-dimension twice over and not a chosen bound. `mem_touching` proves the superset is big enough, so
-nothing downstream rests on the number. -/
+are those four directions against the four placements listed in the braces. The four placements are
+two pair-positions against two base sites and do NOT scale with the dimension, so the count is
+`4 * dim` and not the dimension twice over; the two readings agree only at `dim = 4`. `mem_touching`
+proves the superset is big enough, so nothing downstream rests on the number. -/
 def touching (l : ILink) : Finset IPlaq :=
   Finset.univ.biUnion (fun ν : Fin 4 =>
     ({((l.1, ν), l.2), ((ν, l.1), l.2),

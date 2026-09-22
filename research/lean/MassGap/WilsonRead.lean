@@ -165,8 +165,8 @@ theorem expect_ge_haar_of_nonneg (β : ℝ) (O : sysReal.Config → ℝ)
         ring_nf
     _ ≤ ∫ U, O U * sysReal.boltz β U ∂(sysReal.vol (probHaar G2)) := hnum
 
-/-- **`hpos` at every coupling from one Haar fact.** If the correlation's total mass is positive under
-plain product Haar, it is positive at every `β` — the coupling enters only through the constant
+/-- **`hpos` at every coupling from one Haar fact.** If the ZERO-LAG Haar integral `∫ φ₀²` is positive
+under plain product Haar — not the total mass, which would be `∑_d ∫ φ₀·φ_d` — it is positive at every `β` — the coupling enters only through the constant
 `e^{−8|β|}` of `expect_ge_haar_of_nonneg`. This is the reduction that makes P2 step 2 a single
 `β`-free integral rather than a statement over the whole half-line. -/
 theorem sum_wilsonCorrReal_pos_of_haar (β : ℝ)
@@ -358,7 +358,7 @@ theorem integral_plaqObs_eq_one :
       integral_re_trace_hol_zero]
   simp
 
-/-- **The Haar mean square plaquette energy is at least 1, hence positive.** Pointwise
+/-- **The Haar mean square plaquette energy is positive.** The route gives `∫ φ₀² ≥ 1`, but only positivity is EXPORTED; no caller can use the `1`. Pointwise
 `(φ₀ − 1)² ≥ 0` gives `φ₀² ≥ 2φ₀ − 1`, and integrating with `∫ φ₀ = 1` gives `∫ φ₀² ≥ 1`. No
 Cauchy–Schwarz: one pointwise inequality and `integral_mono`. -/
 theorem integral_plaqObs_sq_pos :

@@ -4,12 +4,16 @@ MassGap.ActionSplit.NegControl.integral_coin,Classical.choice Quot.sound propext
 MassGap.ActionSplit.NegControl.integral_gCoin,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.NegControl.integral_gCoin_sq,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.NegControl.shared_block_inside_square_false,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.abs_halfIntegral_le,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.abs_pairing_le,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.action_eq_split,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.axisDagger_measurePreserving,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.blkR_fixed,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.blkS_disjoint_blkT,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.blkS_maps_blkT,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.block_factor,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.continuous_glue,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.continuous_halfIntegral,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.corrHyper_nonneg_even_lag,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.degenerate_axis_plaquette_straddles,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.density_reflConf,Classical.choice Quot.sound propext,3
@@ -26,22 +30,48 @@ MassGap.ActionSplit.fcast_add,propext,1
 MassGap.ActionSplit.fin_even_add,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.frequently_even_succ,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.frequently_is_load_bearing,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.glue_base_congr,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.glue_restrict_R,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_const_of_indep_R,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_const_of_reparam,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_eq_integral_of_reparam,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_mul_R_left,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_of_indep_S,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_sub_const,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.halfIntegral_two_values_of_R_factor,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.integrable_of_bounded,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.integrable_weighted_halfIntegral_sq,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.integral_comp_of_mp,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.integral_eval_cvol,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.integral_mul_of_indep_blocks,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.integral_weight_ge,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.integrand_eq_paired,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.le_halfIntegral,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.lv_other_half,Quot.sound propext,2
+MassGap.ActionSplit.measurable_glue,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.measurable_halfIntegral,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.mem_blkS_union_blkR,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.mem_blkT_union_blkR,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.no_fixed_axis_link,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.no_half_of_odd_val,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.not_ae_eq_const_of_two_values,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.not_eventually_even_succ,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.obsPlus_local,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.odd_lag_has_fixed_axis_link,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.odd_lag_has_no_plane,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.offBlock_disjoint,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.pairing_eq_weighted_square,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_eq_zero_iff_halfIntegral,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_eq_zero_iff_local,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_eq_zero_of_indep_R,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_ge_variance_of_local,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_ge_weight_min_mul_variance,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.pairing_nonneg_of_local,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.pairing_nonneg_of_shared_block,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_pos_iff_half_ne_const,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_pos_iff_ne_const_of_indep_S,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_pos_of_halfIntegral_ne,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.pairing_pos_of_half_two_values,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.pinned_exists_half,Quot.sound propext,2
 MassGap.ActionSplit.pinned_exists_half_sub_one,Quot.sound propext,2
 MassGap.ActionSplit.pinned_half_unique,,0
@@ -66,6 +96,11 @@ MassGap.ActionSplit.sum_plaq_split,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.sum_plqDeg_zero,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.sum_plqMinus_eq_plus_refl,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.twist_measurePreserving,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.variance_eq_integral_sub_mean_sq,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.variance_ge_sq_div_of_mean_zero,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.variance_ge_sq_mul_of_factor_floor,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.variance_le_integral_sub_const_sq,Classical.choice Quot.sound propext,3
+MassGap.ActionSplit.variance_pos_of_not_ae_const,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.wPlane_local,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.wilson_expect_pairing_nonneg_even,Classical.choice Quot.sound propext,3
 MassGap.ActionSplit.wilson_pairing_nonneg_even,Classical.choice Quot.sound propext,3
@@ -166,6 +201,17 @@ MassGap.Bessel.besselTerm_two_le_quarter,Classical.choice Quot.sound propext,3
 MassGap.Bessel.ratio_le_quarter,Classical.choice Quot.sound propext,3
 MassGap.Bessel.strong_coupling_below_threshold,Classical.choice Quot.sound propext,3
 MassGap.Bessel.two_mul_ratio_lt_kappa0,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.box_reflection_form_ge_number,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.continuous_linkTr,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.exists_bound_reTr,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.exists_box_reflection_form_ge_number,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.haar_reTr_sq,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.haar_reTr_zero,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.halfIntegral_traceDressed,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.integral_linkTr,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.integral_linkTr_sq,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.re_chi_eq_reTr,Classical.choice Quot.sound propext,3
+MassGap.BoxNumericFloor.variance_halfIntegral_traceDressed_ge,Classical.choice Quot.sound propext,3
 MassGap.Capacity.existence_and_gap_of_junction,Classical.choice Quot.sound propext,3
 MassGap.Capacity.hread_of_junction,Classical.choice Quot.sound propext,3
 MassGap.CellBridge.cellGapAtLeastR_of_pivot,Classical.choice Quot.sound propext,3
@@ -231,6 +277,7 @@ MassGap.CellEnclosure.chain_sq_expand,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.combine_Tsum,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.commuting_proj_mul_posSemidef,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.coupled_gap_of_coupling_bound,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.coupled_gap_of_relative_coupling_bound,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.coupling_form_add,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.coupling_form_extensive,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.coupling_form_le_bondCount,Classical.choice Quot.sound propext,3
@@ -246,6 +293,7 @@ MassGap.CellEnclosure.form_perturbation_reaches_finitely_many,Classical.choice Q
 MassGap.CellEnclosure.gap_of_bond_coupling,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.gap_of_form_perturbation,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.gap_of_operator_sq_ge,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.gap_of_relative_bonds,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.gap_uniform_of_cell,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.gap_uniform_of_cell_intensive,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.gm_alpha_beta,Classical.choice Quot.sound propext,3
@@ -266,6 +314,15 @@ MassGap.CellEnclosure.product_volume_gap_concrete,Classical.choice Quot.sound pr
 MassGap.CellEnclosure.psd_form_nonneg,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.psd_nonneg_smul_sum,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.regroup_by_fiber,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_coupling_form_sum,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_full_of_absolute_bonds,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_full_of_local_bonds,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_of_absolute_form_bound,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_of_dominated_locals,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_of_local_bound,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_sum_of_absolute_bonds,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.relative_sum_of_local_bonds,Classical.choice Quot.sound propext,3
+MassGap.CellEnclosure.shared_locals_force_shrinking_margin,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.straddle_form_bound,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.weighted_window_sq_regrouped,Classical.choice Quot.sound propext,3
 MassGap.CellEnclosure.weighted_window_sq_sum,Classical.choice Quot.sound propext,3
@@ -385,6 +442,8 @@ MassGap.ClayAssembly.no_fixed_extent_decay_past_half_period,Classical.choice Quo
 MassGap.ClayAssembly.pow_apply_eq_iterate,Classical.choice Quot.sound propext,3
 MassGap.ClayAssembly.scaling_as_stated_is_vacuous,Classical.choice Quot.sound propext,3
 MassGap.ClayAssembly.summable_clustering_is_weaker_than_a_gap,Classical.choice Quot.sound propext,3
+MassGap.ClayAssembly.transferMovesSomething_of_pairing_ne,Classical.choice Quot.sound propext,3
+MassGap.ClayAssembly.transferMovesSomething_of_seminorm_ne_zero,Classical.choice Quot.sound propext,3
 MassGap.ClayNontriviality.clay_nontriviality_of_wilson_variance,Classical.choice Quot.sound propext,3
 MassGap.ClayNontriviality.floor_is_independent_of_any_family,Classical.choice Quot.sound propext,3
 MassGap.ClayNontriviality.uniform_variance_floor_exists,Classical.choice Quot.sound propext,3
@@ -515,6 +574,7 @@ MassGap.ContactFloor.linkTranslate_measurePreserving,Classical.choice Quot.sound
 MassGap.ContactFloor.linkTranslate_of_ne,Classical.choice Quot.sound propext,3
 MassGap.ContactFloor.linkTranslate_self,Classical.choice Quot.sound propext,3
 MassGap.ContactFloor.measureReal_univ_one,Classical.choice Quot.sound propext,3
+MassGap.ContactFloor.read_p_le_aperture_uniform,Classical.choice Quot.sound propext,3
 MassGap.ContactFloor.restWeight,Classical.choice Quot.sound propext,3
 MassGap.ContactFloor.rest_support,Classical.choice Quot.sound propext,3
 MassGap.ContactFloor.shift_ne,Quot.sound propext,2
@@ -784,9 +844,16 @@ MassGap.DLRLimit.ILink,,0
 MassGap.DLRLimit.IPlaq,,0
 MassGap.DLRLimit.ISite,,0
 MassGap.DLRLimit.IsDLR,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.IsLocalOnC,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.IsPointMass,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.abs_le_norm,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.abs_sub_le,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.continuous,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.eq_of_apply_eq,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.eq_of_eqOn_dense,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.eq_of_eqOn_localObs,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.eq_of_eqOn_subalgebra,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.le_norm,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.map_add,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.map_neg,Classical.choice Quot.sound propext,3
@@ -796,9 +863,11 @@ MassGap.DLRLimit.State.map_sub,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.map_zero,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.mem_Icc,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.mono,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.State.nonempty,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.State.nonneg,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.borelSpace_iconf,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.compactSpace_iconf,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.continuousMap_separatesPoints_of_t2,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.exists_dlr_state,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.exists_infinite_volume_gibbs_measure,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.exists_infinite_volume_gibbs_state,Classical.choice Quot.sound propext,3
@@ -812,9 +881,13 @@ MassGap.DLRLimit.instIsProbabilityMeasure,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.integral_gibbsMeasure,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.isDLR_of_tendsto,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.le_of_eventually_le,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.localObsAlg,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.localObsAlg_separatesPoints,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.mem_localObsAlg,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.not_isPointMass_of_uniform_variance,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.not_isPointMass_of_variance_pos,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.stateCc,Classical.choice Quot.sound propext,3
+MassGap.DLRLimit.tendsto_of_unique_dlr,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.variance_eq_zero_of_isPointMass,Classical.choice Quot.sound propext,3
 MassGap.DLRLimit.variance_ge_of_eventually,Classical.choice Quot.sound propext,3
 MassGap.DiffractionNoGo.CeilingClosesFour,Classical.choice Quot.sound propext,3
@@ -1016,19 +1089,31 @@ MassGap.GNSHilbert.ym_target_discharged_trivially,Classical.choice Quot.sound pr
 MassGap.GapToOperator.bound_is_free_of_one_le,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.clustering_opT,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.clustering_opT_general,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.coe_opTperp_apply,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.coe_vacPre,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.forgets_at_one_rate,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.inner_Omega_self,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.inner_vacPre_im,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.inner_vacPre_re,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.inner_vacPre_self,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.isUnit_one_sub_smul_vacProjH,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.isUnit_sub_opTgap,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.mem_vacPerpH,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.norm_cT_le_of_orth,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.norm_opT_le_of_orth,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.norm_opT_pow_le,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.norm_opTgap_le,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.norm_opTperp_le,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.opT_mem_vacPerpH,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.opT_pow_Omega,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.opTgap_mul_vacProjH,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.orth_components,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.orth_invariant_opT,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.spectrum_opT_subset,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.tendsto_zero_of_intensive_radius,Classical.choice Quot.sound propext,3
 MassGap.GapToOperator.vacPre,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.vacProjH_apply,Classical.choice Quot.sound propext,3
+MassGap.GapToOperator.vacProjH_mul_vacProjH,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.card_circLag_fiber_le_two,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.confines_of_countable_spectral,Classical.choice Quot.sound propext,3
 MassGap.GeometricProfile.confines_of_geometric_profile,Classical.choice Quot.sound propext,3
@@ -1134,8 +1219,12 @@ MassGap.HalfLineTransfer.shiftObs_pow_apply,Classical.choice Quot.sound propext,
 MassGap.HalfLineTransfer.shiftObs_pow_period,Classical.choice Quot.sound propext,3
 MassGap.HalfLineTransfer.shift_iterate,Classical.choice Quot.sound propext,3
 MassGap.HalfLineTransfer.shift_iterate_period,Classical.choice Quot.sound propext,3
+MassGap.HalfSpaceAlgebra.disjoint_image_ireflLink_posHalf,Classical.choice Quot.sound propext,3
 MassGap.HalfSpaceAlgebra.halfLinkObs_mem,Classical.choice Quot.sound propext,3
+MassGap.HalfSpaceAlgebra.halfSpaceAlg_mul_mem,Classical.choice Quot.sound propext,3
+MassGap.HalfSpaceAlgebra.halfSpaceAlg_prod_mem,Classical.choice Quot.sound propext,3
 MassGap.HalfSpaceAlgebra.halfSpaceAlg_shift_stable,Classical.choice Quot.sound propext,3
+MassGap.HalfSpaceAlgebra.isLocalOn_ireflObs,Classical.choice Quot.sound propext,3
 MassGap.HalfSpaceAlgebra.ishiftObsCM_halfLinkObs,Classical.choice Quot.sound propext,3
 MassGap.HalfSpaceAlgebra.ishiftObsCM_iterate_halfLinkObs,Classical.choice Quot.sound propext,3
 MassGap.HalfSpaceAlgebra.mem_halfSpaceAlg,Classical.choice Quot.sound propext,3
@@ -1156,6 +1245,7 @@ MassGap.InfiniteLattice.IPlaq,,0
 MassGap.InfiniteLattice.ISite,,0
 MassGap.InfiniteLattice.IsLocalOn,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.IsLocalOn.mono,Classical.choice Quot.sound propext,3
+MassGap.InfiniteLattice.IsLocalOn.mul,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.base_mem_linksOf,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.borelSpace_IConf,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.bounded_of_continuous,Classical.choice Quot.sound propext,3
@@ -1225,6 +1315,7 @@ MassGap.InfiniteLattice.siteMod_ishift,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.t2Space_IConf,Classical.choice Quot.sound propext,3
 MassGap.InfiniteLattice.wilsonHol_ibd,propext,1
 MassGap.InfiniteLattice.wilsonHol_periodic,Classical.choice Quot.sound propext,3
+MassGap.InfiniteReflection.Reflection.theta_prod,Classical.choice Quot.sound propext,3
 MassGap.InfiniteReflection.connected_pairing_le_of_eventually,Classical.choice Quot.sound propext,3
 MassGap.InfiniteReflection.isReflectionInvariant_of_tendsto,Classical.choice Quot.sound propext,3
 MassGap.InfiniteReflection.pairing_le_of_eventually_pointwise,Classical.choice Quot.sound propext,3
@@ -1254,6 +1345,7 @@ MassGap.InfiniteVolume.circLag_cast,Quot.sound propext,2
 MassGap.InfiniteVolume.clay_plaq_card,Classical.choice Quot.sound propext,3
 MassGap.InfiniteVolume.clay_site_def,,0
 MassGap.InfiniteVolume.clay_volume_tendsto_atTop,Classical.choice Quot.sound propext,3
+MassGap.InfiniteVolume.confinement_at_strong_coupling,Classical.choice Quot.sound propext wilson_reflection_positive_at,4
 MassGap.InfiniteVolume.corrLag,Classical.choice Quot.sound propext,3
 MassGap.InfiniteVolume.corrLag_abs_le_geometric,Classical.choice Quot.sound propext,3
 MassGap.InfiniteVolume.corrLag_index_val,Quot.sound propext,2
@@ -1370,6 +1462,8 @@ MassGap.LatticeReflection.ihol_ireflConf,Classical.choice Quot.sound propext,3
 MassGap.LatticeReflection.ireflConf_fixes_fixed_transverse_link,propext,1
 MassGap.LatticeReflection.ireflConf_inverts_fixed_axis_link,propext,1
 MassGap.LatticeReflection.ireflConf_involutive,Quot.sound propext,2
+MassGap.LatticeReflection.ireflLink_eq_axis,propext,1
+MassGap.LatticeReflection.ireflLink_eq_transverse,propext,1
 MassGap.LatticeReflection.ireflLink_involutive,Quot.sound propext,2
 MassGap.LatticeReflection.ireflLink_moves_a_link,Quot.sound propext,2
 MassGap.LatticeReflection.ireflObs_eq_id_of_subsingleton,Classical.choice Quot.sound propext,3
@@ -1464,6 +1558,7 @@ MassGap.LogConvex.localObs,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.localObs_bounded,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.localObs_local,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.localObs_measurable,Classical.choice Quot.sound propext,3
+MassGap.LogConvex.localObs_mul_mem,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.measurable_reflConf,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.measurable_wPlane,Classical.choice Quot.sound propext,3
 MassGap.LogConvex.mem_localObs,Classical.choice Quot.sound propext,3
@@ -1782,6 +1877,7 @@ MassGap.OddLagSplit.join3_mem_T,Classical.choice Quot.sound propext,3
 MassGap.OddLagSplit.join3_restrict,Classical.choice Quot.sound propext,3
 MassGap.OddLagSplit.lv_refl_site_odd,Quot.sound propext,2
 MassGap.OddLagSplit.measurable_coord_crossWord,Classical.choice Quot.sound propext,3
+MassGap.OddLagSplit.measurable_entry_blockDiagonal_fin,Classical.choice Quot.sound propext,3
 MassGap.OddLagSplit.measurable_join3,Classical.choice Quot.sound propext,3
 MassGap.OddLagSplit.measurable_uncurry_planeAct,Classical.choice Quot.sound propext,3
 MassGap.OddLagSplit.measurePreserving_join3,Classical.choice Quot.sound propext,3
@@ -2018,37 +2114,73 @@ MassGap.ReflectPositive.plaq_link_ne_refl,Quot.sound propext,2
 MassGap.ReflectPositive.reflLink_tau_coord,propext,1
 MassGap.ReflectPositive.reflPlaq_origin,Quot.sound propext,2
 MassGap.ReflectPositive.sum_pos_of_head_pos,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.abs_coord_ocrossWord_le_one,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.abs_exp_neg_actionOn_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.abs_iactPlus_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.abs_oddHalfA_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.abs_oddPairIntegrand_le,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.abs_weight_obs_obs_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.actionOn_ioplqPlus_ireflConf_ojoin,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.actionOn_ioplqPlus_ojoin,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.actionOn_split_three,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.action_boxBd,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.action_iplqAll_ireflConf,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.action_iplqPlus_ireflConf,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.axisLvlBox_lipschitz,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.baseTauLink_mem_box,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.baseTauLink_mem_oboxR,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.boltz_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.boxBd_map_fst,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.boxObs_bounded,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.boxR_ne_tau,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.card_touching_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.continuous_iactPlus,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.continuous_ihalfBoltz,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.continuous_ihol_splice,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.continuous_planeProbe,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.continuous_splice_left,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.eq_empty_of_stable_two_mirrors,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.eq_empty_of_stable_two_mirrors_step_two,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.exp_cross_ojoin,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.exp_neg_actionOn_ge,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.expect_boxBd,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.gapAt_of_finite_volume_connected,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.gibbs_ihol_eq,propext,1
 MassGap.ReflectionHalfSpace.gibbs_ishift_eq,,0
+MassGap.ReflectionHalfSpace.gibbs_iunshift_eq,,0
 MassGap.ReflectionHalfSpace.gibbs_weight_factors,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.halfSpaceAlg_has_nonconstant,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.halfSpaceAlg_has_nonconstant_of_rank_two,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.hsRe_ocrossWord,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.hsRe_ocrossWord_planeAct,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iactCross_eq_trace_sum,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iactPlus_depends_on_boxR,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iactPlus_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iactPlus_quad,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iactPlus_twist,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iactZero_local,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iblkS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.iblkS_disjoint_iblkT,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.idressed_abs_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.idressed_at_zero_coupling,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.idressed_depends_on_boxR,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.idressed_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ihalfBoltz_at_zero_coupling,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ihalfBoltz_depends_on_boxR,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ihalfBoltz_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ihalfBoltz_lower_bound,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ihalfBoltz_pos,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ihalfBoltz_upper_bound,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ilinkDagger,propext,1
 MassGap.ReflectionHalfSpace.ilinkDagger_eq_self_of_ne,propext,1
 MassGap.ReflectionHalfSpace.ilinkDagger_measurePreserving,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ilink_site_coord,propext,1
 MassGap.ReflectionHalfSpace.image_half_is_c_sub_p,propext,1
 MassGap.ReflectionHalfSpace.integrable_numFree,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.integral_obox_mirror,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.integral_obox_three_block,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.integrand_odd_eq,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ioblkS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ioblkS_of_le_coord,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ioblk_disjoint,Classical.choice Quot.sound propext,3
@@ -2065,11 +2197,17 @@ MassGap.ReflectionHalfSpace.ioplqPlus_links_mem,Classical.choice Quot.sound prop
 MassGap.ReflectionHalfSpace.ioplq_actionOn_split,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ioplq_disjoint,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ioplq_union,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplaneWeight_at_zero_coupling,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplaneWeight_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplaneWeight_lower_bound,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplaneWeight_nonneg,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplaneWeight_pos,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplqPlus_disjoint_iplqMinus,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplqPlus_has_link_in_boxR,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplqPlus_link_mem_box,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplqPlus_links_mem,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplqPlus_mem_of_tau_base,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.iplqPlus_quad_eq,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplqZero_links_mem,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.iplq_union,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflBoxPerm,Quot.sound propext,2
@@ -2079,10 +2217,13 @@ MassGap.ReflectionHalfSpace.ireflBoxPerm_mem_boxT_of_mem_boxS,Quot.sound propext
 MassGap.ReflectionHalfSpace.ireflBoxPerm_mem_oboxS_of_mem_oboxT,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflBoxPerm_mem_oboxT_of_mem_oboxS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflConf_eq_twist,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ireflConf_ojoin_eq_on_ioblkS,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflConf_one,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ireflLink_comp_add_two,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflLink_ioblkS_mem_ioblkT,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflLink_ioblkT_mem_ioblkS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflLink_mem_ilinks,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ireflLink_otLinkOf,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflPerm,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.ireflPlaq_ioplqCross_mem_ioplqCross,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflPlaq_ioplqMinus_mem_ioplqPlus,Classical.choice Quot.sound propext,3
@@ -2093,50 +2234,143 @@ MassGap.ReflectionHalfSpace.ireflPlaq_mem_iplqAll,Classical.choice Quot.sound pr
 MassGap.ReflectionHalfSpace.ireflPlaq_mem_iplqMinus,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflPlaq_mem_iplqPlus,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ireflPlaq_mem_plaqsIn,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_eq_zero_at_zero_coupling,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_eq_zero_iff,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_ge_variance,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_ge_variance_pos,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.irefl_box_pairing_nonneg,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_pos_and_floor,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_pos_iff,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_pos_of_plane_factor,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_pos_of_plane_factor_dressed,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.irefl_box_pairing_pos_witness,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.irefl_box_wilson_pairing_nonneg,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.irefl_eq_self_of_coord_eq,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.irefl_eq_self_of_mem_iblkR,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.irefl_eq_self_of_mem_ioblkR,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.irefl_le_self_of_posHalf,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.irefl_mem_iblkT_of_mem_iblkS,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ishiftObsCM_eq_ishiftObsL,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ishift_ne_ishift,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ishift_ne_self,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.linkMult_boxBd_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.linkSupp_boxBd_card_le,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.localSubmodule,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_coord_ocrossWord,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_entry_ocrossWord,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.measurable_idressed,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.measurable_iplaneWeight,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_obox_join3_mid,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.measurable_obox_join3_right,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_oddHalfA,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_oddHalfA_conf,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.measurable_oddPairIntegrand,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.measurable_wtFree,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.measurePreserving_omirrorT,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.mem_ilinks_of_mem_linkSupp_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.mem_ioplqCross_of_base,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.mem_ioplqPlus_of_base,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.mem_iplqPlus,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.mem_iplqZero,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.mem_oboxS_of_mem_ioblkS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.mismatched_pairing_stays_positive,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.mixCube_even,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.mixCube_odd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.mixCube_ultrafilter_sees_one_parity,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.no_tau_link_fixed,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.nonTau_fixed_iff,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.nonTau_link_at_plane_fixed,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.not_mem_ball_of_axis_gt,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.obLinkOf,,0
+MassGap.ReflectionHalfSpace.obLinkOf_mem_box,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.obLinkOf_mem_oboxR,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.oboxS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.obox_cover,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.obox_disjoint,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.obs_ireflConf_ojoin,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.obs_ojoin_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocDir,,0
+MassGap.ReflectionHalfSpace.ocDir_ne,,0
+MassGap.ReflectionHalfSpace.ocrossBox,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_cross_nonempty,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_oboxR_nonempty,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_oboxS_nonempty,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_odd_pairing_nonneg,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_plus_nonempty,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossBox_refl_closed,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossObs,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossObs_local,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossObs_nonconstant,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossPlaq,,0
+MassGap.ReflectionHalfSpace.ocrossPlaq_links_mem,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossSite,,0
+MassGap.ReflectionHalfSpace.ocrossSupp,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ocrossSupp_nonempty,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ocrossSupp_subset_box,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocrossSupp_subset_posHalf,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.ocrossWord,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ocross_links_distinct,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oddHalfA,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oddPairIntegrand,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.odd_nonTau_not_fixed,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.odd_pairing_integral_nonneg,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.odd_tau_fixed_iff,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.ojoin,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ojoin_def,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ojoin_mem_R,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ojoin_mem_S,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.ojoin_mem_T,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.omirrorEquivTS,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.omirrorT,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.omirrorT_otLinkOf,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplaneA,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplaneARaw,,0
+MassGap.ReflectionHalfSpace.oplaneA_osIdx,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplaneB,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplaneBRaw,,0
+MassGap.ReflectionHalfSpace.oplaneB_osIdx,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplanePick,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplanePick_of_mem,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.oplusPlaq,,0
+MassGap.ReflectionHalfSpace.oplusPlaq_links_mem,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.osIdx,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.osLinkOf,,0
+MassGap.ReflectionHalfSpace.osLinkOf_base,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.osLinkOf_dir,propext,1
 MassGap.ReflectionHalfSpace.osLinkOf_mem_box,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.osLinkOf_mem_ioblkS,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.osLinkOf_mem_oboxS,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.otLinkOf,,0
+MassGap.ReflectionHalfSpace.otLinkOf_mem_box,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.otLinkOf_mem_oboxT,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.partFree_pos,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.partition_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.planeLink_mem_boxR,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.planeLink_mem_symCube,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.planeProbe_abs_le_one,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.planeProbe_eq_zero,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.planeProbe_pos,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.plaq_links_ge_of_lt,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.plaq_links_le_of_le,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.plaq_links_one_side,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.quadLinks_ilinks,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.quadLinks_ilinks_swap,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.quad_dirs,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.quad_two_dirs,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reTrCM,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reTrCM_separating,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.re_tr_hol_oblock,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.re_tr_hol_ocross,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reflClosure,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reflClosure_closed,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositiveOn_stateFree,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositive_limit_exists,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositive_limit_of_tendsto,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositive_limit_on_halfSpaceAlg,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositive_limit_on_half_space,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflPositive_of_tendsto_halfSpaceAlg,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reflPositive_of_tendsto_halfSpaceAlg_odd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.reflPositive_symCube_odd,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflection_exchanges_halves,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.reflection_facts_of_limit,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.reflection_facts_on_halfSpaceAlg,Classical.choice Quot.sound propext,3
@@ -2150,15 +2384,43 @@ MassGap.ReflectionHalfSpace.specFree_smul,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.splice_twist_eq_ireflConf,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.splice_twist_eq_ireflConf_everywhere,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.stateFree,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.stateFree_eq_expect_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.stateFree_odd_refl_nonneg,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.stateFree_refl_nonneg_of_halfSpace_support,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.stateFree_reflection_invariant,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.subset_reflClosure,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.sum_re_tr_ioplqCross,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.symCube_eq_reflClosure,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.symCube_exhausts,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.symCube_oboxR_nonempty,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.symCube_refl_stable,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.tauLink_mem_oboxR,Quot.sound propext,2
 MassGap.ReflectionHalfSpace.tau_link_at_plane_moves_down,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.tendsto_symCube_even_of_mixCube,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.tendsto_symCube_odd_of_mixCube,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.touchDeg_boxBd_le,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.transferData_T_ne_id_of_rank_two,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.transferData_of_reflection_facts,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.transferData_of_state_facts_T_ne_id,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.transverse_link_mem_boxR,Quot.sound propext,2
+MassGap.ReflectionHalfSpace.wilsonCorrConn_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilsonHol_boxBd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_nu_T_of_tendsto,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_positiveTransfer_of_mixCube_limit,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_positiveTransfer_of_odd_limit,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflInvariant_of_tendsto,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflPositive_even_of_mixCube,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflPositive_even_of_tendsto,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wilson_reflPositive_limit_exists,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflPositive_limit_exists_odd,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflPositive_odd_of_mixCube,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wilson_reflPositive_odd_of_tendsto,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wilson_transferData_of_common_limit,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wilson_transferData_of_thermodynamic_limit,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wtFree_at_zero_coupling,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wtFree_congr_right,Classical.choice Quot.sound propext,3
+MassGap.ReflectionHalfSpace.wtFree_odd_paired,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wtFree_pos,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wtFree_refl_pairing_nonneg,Classical.choice Quot.sound propext,3
 MassGap.ReflectionHalfSpace.wtFree_twist,Classical.choice Quot.sound propext,3
@@ -2674,11 +2936,13 @@ MassGap.StrongArm.exists_geom_quartic_bound,Classical.choice Quot.sound propext,
 MassGap.StrongArm.exists_strong_arm_cut,Classical.choice Quot.sound propext,3
 MassGap.StrongArm.wilsonCorrAt_eq_corrClay,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.actOn_eq,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.assembly_arith_gen,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.axisLvl_origin_step,Quot.sound propext,2
 MassGap.StrongCoupling.ball_card_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.boltz_eq_subset_sum,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.boltz_factor_bound,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.bridging_sum_eq_core_sum,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.bridging_sum_eq_core_sumF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_bridging_pairs_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_compl_outsideOf_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_connSets_bridging_le,Classical.choice Quot.sound propext,3
@@ -2687,6 +2951,7 @@ MassGap.StrongCoupling.card_connSets_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_connSets_le_hypercubic,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_connSets_le_steps,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_connSets_le_steps_hypercubic,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.card_corePairsF_span_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_corePairs_span_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_ge_of_bridging,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.card_ge_of_reach_of_lvl,Classical.choice Quot.sound propext,3
@@ -2696,11 +2961,24 @@ MassGap.StrongCoupling.circLag_last,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.compOf_closed,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.compOf_idem_crs,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.compOf_mem_connSets,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compOf_subset_compsMeet,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compOf_union_outsideF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.compOf_union_outside_crs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compsMeet_closed,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compsMeet_eq_compOf_of_connected,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compsMeet_minimal,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compsMeet_singleton,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.compsMeet_subset,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.coreConst_nonpos_of_one_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.corePairsF_fiber_sum_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.corePairsF_sum_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.corePairs_fiber_sum_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.corePairs_sum_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.coreResummation_holds,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.coreSpanF_card_ge_of_not_mem_ball,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.coreSpanF_core_eq,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.coreSpanF_eq_of_mem,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.coreSpanF_mem_connSets,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.coreSpan_card_ge_of_not_mem_ball,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.coreSpan_core_eq_crs,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.coreSpan_eq_of_mem_crs,Classical.choice Quot.sound propext,3
@@ -2710,28 +2988,60 @@ MassGap.StrongCoupling.core_rate_lt_one_of_small_hypercubic,Classical.choice Quo
 MassGap.StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.corrNum_eq_subset_sum,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.decay_of_tail_series,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.disjoint_compOf_iff_of_connected,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.disjoint_compsMeet_iff,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.disjoint_linkBlocks,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.exchangeF_exchangeF,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.exchangeF_union,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.exchangeObs_exchangeObs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.exchangeObs_union,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.exchange_exchange,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.fst_subset_coreSpanF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.haar_mix_factor,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.haar_obs_mix_factor,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.haar_prod_factor_of_split,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.hard_core_outside_sq_div_partition_sq_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.hard_core_rate_lt_one_of_small,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.hard_core_ratio_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.integrable_obs_mul_wprod,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.isCorePairF_of_bridging,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.isCorePair_of_bridging,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.lag_last_mem_ball_two,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.linkMult_bd_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.localOnLinks_mono,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.localOnLinks_one,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.localOnLinks_prod,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.lvl_le_of_mem_ball,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.measurable_mixObs,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.mem_ball_of_bridging,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.mem_ball_one_of_touch,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_compsMeet,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_corePairsF,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_coreSpanF_left,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_coreSpanF_right,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_linkBlock,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mem_plaqsMeetingLinks,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.mixObs_prodOn,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.mul_sq_sum_eq_sum_product_crs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.no_link_of_not_mem_sepOfLinks,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.no_sep_family_of_reachable,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.no_separator_of_touch,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.nonbridging_sum_eq_zero,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.nonbridging_sum_eq_zeroF,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.nonbridging_sum_eq_zeroObs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.not_mem_coreSpanF_of_mem_outsideOf,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.not_mem_coreSpan_of_mem_outsideOf_crs,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.not_mem_outsideOf_self,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.obs_subset_coreSpanF,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.one_le_corePrefactorF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.one_le_outside_sum_div_partition,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.order_one_cancels,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.outside_sum_div_partition_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.pairTermF_abs_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.pairTermF_add_pairFlip,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.pairTermF_eq_core_mul_outside,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.pairTermObs_add_flip_of_no_bridge,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.pairTermObs_eq_pairTermF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.pairTerm_abs_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.pairTerm_add_exchange,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.pairTerm_add_pairFlip,Classical.choice Quot.sound propext,3
@@ -2743,17 +3053,25 @@ MassGap.StrongCoupling.read_decay_of_correlation_decay,Classical.choice Quot.sou
 MassGap.StrongCoupling.read_decay_rate_nonneg,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.read_p_le_of_corrClay,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.sdiff_compOf_subset_outsideOf_crs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.sepOfLinks_closed,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.sepOfLinks_subset,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.siteAtHyper_not_mem_ball,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.snd_subset_coreSpanF,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.split_links_disjoint,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.subPart_univ_eq_partition,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.subset_compsMeet,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.subset_sum_eq_subPart,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.subset_weight_bound,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.touchDeg_bd_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.touchNbrs_card_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.touch_advances_one,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.two_le_coreSpanF_card,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.two_le_coreSpan_card,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.walks_card_le,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.weight_mult_of_split,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.wilsonCorrConnF_eq_bridging_sumF,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.wilsonCorrConnObs_at_zero,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.wilsonCorrConnObs_eq_bridging_sumObs,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.wilsonCorrConn_abs_le_coreConst,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic,Classical.choice Quot.sound propext,3
@@ -2766,7 +3084,16 @@ MassGap.StrongCoupling.wilsonCorrConn_eq_zero_of_no_ball,Classical.choice Quot.s
 MassGap.StrongCoupling.wilsonCorrConn_eq_zero_of_split,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.wilsonCorrConn_eq_zero_of_touch_closed,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.wtOn_eq,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_add_exchange,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_congr,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_eq_zwObs,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_one_eq_zw_empty,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_prod_eq_zw,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwFull_split,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwObs_eq_zw,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zwObs_split,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.zw_abs_le,Classical.choice Quot.sound propext,3
+MassGap.StrongCoupling.zw_add_exchange_of_finsets,Classical.choice Quot.sound propext,3
 MassGap.StrongCoupling.zw_split,Classical.choice Quot.sound propext,3
 MassGap.Substrate.antipodeRead_moment_eq_quarter_sq,Classical.choice Quot.sound propext,3
 MassGap.Substrate.bounded_moment_does_not_give_geometric_decay,Classical.choice Quot.sound propext,3
@@ -2857,6 +3184,8 @@ MassGap.Transfer.TransferData.periodicSpectralForm_of_transfer,Classical.choice 
 MassGap.Transfer.TransferData.periodic_decay_of_transfer,Classical.choice Quot.sound propext,3
 MassGap.Transfer.TransferData.sum_weights,Classical.choice Quot.sound propext,3
 MassGap.Transfer.isSymmetric_pow,Classical.choice Quot.sound propext,3
+MassGap.Transfer.le_of_iterated_schwarz,Classical.choice Quot.sound propext,3
+MassGap.Transfer.le_zero_of_halving,Classical.choice Quot.sound propext,3
 MassGap.Transfer.reflForm_one_one,Classical.choice Quot.sound propext,3
 MassGap.Transfer.reflForm_symm,Classical.choice Quot.sound propext,3
 MassGap.TransferAssembly.assembleTransferData,Classical.choice Quot.sound propext,3
@@ -2864,7 +3193,10 @@ MassGap.TransferAssembly.restrictT_iterate,Classical.choice Quot.sound propext,3
 MassGap.TransferAssembly.shift_inverse_is_two_sided,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.GapAt,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.clustering_sq,Classical.choice Quot.sound propext,3
+MassGap.TransferGap.exists_gapAt_lt_one,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.finite_order_fails_gap,Classical.choice Quot.sound propext,3
+MassGap.TransferGap.gapAt_diagTransfer,Classical.choice Quot.sound propext,3
+MassGap.TransferGap.gapAt_of_nondegenerate,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.gapAt_of_one_le_sq,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.gap_moves_something,Classical.choice Quot.sound propext,3
 MassGap.TransferGap.gap_pow,Classical.choice Quot.sound propext,3
@@ -3074,6 +3406,8 @@ MassGap.WilsonBridge.chainRead,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.corrClay,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.corrHyper_unconnected_nonneg,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.tension_lt_floor_of_cosAvg_wilson,Classical.choice Quot.sound propext,3
+MassGap.WilsonBridge.wilsonCorrConnF_singleton,Classical.choice Quot.sound propext,3
+MassGap.WilsonBridge.wilsonCorrF_singleton,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.wilsonCorr_nonneg,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.wilsonRead,Classical.choice Quot.sound propext,3
 MassGap.WilsonBridge.wilson_correlation_decays,Classical.choice Quot.sound propext,3
@@ -3084,25 +3418,68 @@ MassGap.WilsonDLR.continuous_actionOn,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_ihol,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_num_right,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_part_right,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.continuous_permConf,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_spec_right,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_splice_right,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_stepListProd,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.continuous_twistConf,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.continuous_wt_right,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.coordTwist,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.coordTwist_apply,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_apply_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_eq_of_isDLR_at_zero,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.dlr_general,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_mul_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_permCM_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_twistCM_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_unique_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.dlr_unique_at_zero_eq,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.exists_infinite_volume_gibbs_measure_of_density,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.exists_wilson_infinite_volume_gibbs_measure,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.hcons_specState,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.imgEquiv,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.isDLR_permState_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.isDLR_twistState_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.isLocalOn_of_isLocalOnC,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.isLocalOn_spec,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.measurePreserving_coordTwist,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.measurePreserving_volReindex,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.measurePreserving_volTwist,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.mem_bdLinks,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.num_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.part_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.permCM,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.permCM_apply,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.permConf,Quot.sound,1
+MassGap.WilsonDLR.permConf_splice,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.permState,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.specCM,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.specCM_apply,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.specCM_permCM_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.specCM_twistCM_at_zero,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.specState,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.specState_apply,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.spec_add,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.spec_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.spec_at_zero_const,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.spec_at_zero_mul_of_disjoint,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.spec_at_zero_permConf,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.spec_at_zero_twistConf,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.spec_mem_localAlg,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.spec_nonneg,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.spec_smul,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.tendsto_specState_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.twistCM,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.twistCM_apply,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.twistConf,Quot.sound,1
+MassGap.WilsonDLR.twistConf_splice,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.twistState,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.volReindex,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.volReindex_apply,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.volTwist,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.volTwist_apply,Classical.choice Quot.sound propext,3
 MassGap.WilsonDLR.wilson_continuous_spec_right,Classical.choice Quot.sound propext,3
+MassGap.WilsonDLR.wt_at_zero,Classical.choice Quot.sound propext,3
 MassGap.WilsonGauge.evDemo_sorted,Classical.choice Quot.sound propext,3
 MassGap.WilsonGauge.resolvedDim_evDemo,Classical.choice Quot.sound propext,3
 MassGap.WilsonGauge.ym_continuum_gauge,Classical.choice Quot.sound propext,3
@@ -3211,7 +3588,14 @@ MassGap.WilsonReal.wilsonSystem_expect_plaqObs_mem,Classical.choice Quot.sound p
 MassGap.WilsonReal.wilsonSystem_gauge_invariant,Classical.choice Quot.sound propext,3
 MassGap.WilsonReal.wilsonSystem_partition_pos,Classical.choice Quot.sound propext,3
 MassGap.WilsonState.exists_wilson_infinite_volume_state,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.gapAt_zero_at_zero_coupling,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.hinv_at_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.hnu_at_zero,Classical.choice Quot.sound propext,3
 MassGap.WilsonState.integrable_of_continuousMap,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.ireflConf_eq_twistConf,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.ireflSigma,Quot.sound propext,2
+MassGap.WilsonState.refl_pairing_at_zero_eq_zero,Classical.choice Quot.sound propext,3
+MassGap.WilsonState.shiftLinkEquiv,Quot.sound propext,2
 MassGap.WilsonState.stateOfMeasure,Classical.choice Quot.sound propext,3
 MassGap.WilsonState.wilsonTransferData,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransfer.expect_shift_invariant,Classical.choice Quot.sound propext,3
@@ -3235,6 +3619,7 @@ MassGap.WilsonTransfer.shift_not_stable_on_slab,Classical.choice Quot.sound prop
 MassGap.WilsonTransferReduction.gapAt_iff_pairing,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransferReduction.gapAt_iff_pairing_of_mean_zero,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransferReduction.gapAt_iff_subtracted_pairing,Classical.choice Quot.sound propext,3
+MassGap.WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransferReduction.gapAt_pairing_eq,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransferReduction.norm_comp_le,Classical.choice Quot.sound propext,3
 MassGap.WilsonTransferReduction.norm_ireflObs_le,Classical.choice Quot.sound propext,3

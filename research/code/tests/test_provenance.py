@@ -92,8 +92,11 @@ def test_no_script_cites_a_file_that_does_not_exist():
 
     Test files are excluded: their prose names example files on purpose.
     """
+    import ast
+    import io
     import os
     import re
+    import tokenize
 
     root = REPO / "research"
     have = {p.name for p in root.rglob("*") if p.is_file()}
@@ -116,35 +119,103 @@ def test_no_script_cites_a_file_that_does_not_exist():
     # for is the opposite case: a rename that leaves the old name behind in prose, pointing a
     # reader at something gone. Whether a declared artifact is actually committed is a separate
     # invariant, held by test_every_listed_artifact_is_actually_tracked against regen_all.OWNERS.
-    quo = chr(34) + chr(39)                     # a filename in a string literal, either quote style
-    # `md` is here for the same reason as the rest: a name a program declares in code is a real
-    # reference. zenodo_deposit.COMPANIONS lists the release's own documents, which live in the
-    # separate ensemble store rather than under research/, so prose in that module naming them
-    # resolves to nothing this scan can see -- and the citation pattern below does match `.md`.
-    decl = re.compile("[" + quo + "]([A-Za-z0-9_./]+[.](?:csv|png|txt|md))[" + quo + "]")
+    # PROSE AND CODE ARE SPLIT BY PARSING, NOT BY LOOKING AT THE LINE.
+    #
+    # A line-shape test cannot do this. A docstring's BODY lines carry no `#` and no triple quote,
+    # so a classifier keyed on those characters reads a docstring's two delimiter lines and discards
+    # everything between them -- which is where nearly all the prose is. It fails in both
+    # directions at once: a dead reference in a docstring body is never cited, and a quoted name in
+    # a docstring body counts as DECLARED and so exempts that name everywhere else.
+    #
+    # `ast` gives the split exactly. A bare string expression -- a module, class or function
+    # docstring -- is prose. Every other string constant is a name the program uses, so it is a
+    # declaration. `tokenize` gives the comments, which no AST records.
+    #
+    # `md` is a declaration extension for the same reason as the rest: a name a program declares in
+    # code is a real reference. zenodo_deposit.COMPANIONS lists the release's own documents, which
+    # live in the separate ensemble store rather than under research/, so prose in that module
+    # naming them resolves to nothing this scan can see -- and the citation pattern matches `.md`.
+    decl = re.compile(r"^([A-Za-z0-9_./]+[.](?:csv|png|txt|md))$")
+
+    def prose_and_literals(path):
+        """(prose blobs, string-literal values) for one source file.
+
+        On a file that does not parse, everything is returned as prose and nothing as a
+        declaration. That is the conservative side for a gate whose failure mode is silence: an
+        unparsable file over-reports rather than exempting names.
+        """
+        src = path.read_text(encoding="utf-8", errors="replace")
+        try:
+            tree = ast.parse(src)
+        except SyntaxError:
+            return [src], []
+        docs, prose, literals = set(), [], []
+        for node in ast.walk(tree):
+            for field in ("body", "orelse", "finalbody"):
+                seq = getattr(node, field, None)
+                # `Lambda.body` and `IfExp.body` are single expressions, not statement lists.
+                if not isinstance(seq, list):
+                    continue
+                for stmt in seq:
+                    v = getattr(stmt, "value", None)
+                    if isinstance(stmt, ast.Expr) and isinstance(v, ast.Constant) \
+                            and isinstance(v.value, str):
+                        docs.add(id(v))
+                        prose.append(v.value)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str) \
+                    and id(node) not in docs:
+                literals.append(node.value)
+        try:
+            for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+                if tok.type == tokenize.COMMENT:
+                    prose.append(tok.string)
+        except (tokenize.TokenError, IndentationError, SyntaxError):
+            pass
+        return prose, literals
+
+    # tests are not programs: a test naming an artifact must not exempt it
+    sources = [p for p in sorted(root.rglob("*.py"))
+               if not any(x in p.parts for x in (".lake", "__pycache__"))
+               and p.parent.name != "tests"]
+    parsed = {p: prose_and_literals(p) for p in sources}
+
     declared = set()
-    for p in sorted(root.rglob("*.py")):
-        # tests are not programs: a test naming an artifact must not exempt it
-        if any(x in p.parts for x in (".lake", "__pycache__")) or p.parent.name == "tests":
-            continue
-        for line in p.read_text(encoding="utf-8", errors="replace").split(chr(10)):
-            stripped = line.strip()
-            if stripped.startswith("#") or '"""' in line:
-                continue
-            for m in decl.finditer(line):
+    for _p, (_prose, literals) in parsed.items():
+        for lit in literals:
+            m = decl.match(lit.strip())
+            if m:
                 declared.add(m.group(1).split("/")[-1])
 
-    for p in sorted(root.rglob("*.py")):
-        if any(x in p.parts for x in (".lake", "__pycache__")) or p.parent.name == "tests":
-            continue
-        for line in p.read_text(encoding="utf-8", errors="replace").split(chr(10)):
-            stripped = line.strip()
-            if not (stripped.startswith("#") or '"""' in line or stripped.startswith("*")):
-                continue
-            for cited in pat.findall(line):
-                name = cited.split("/")[-1]
-                if name not in have and name not in declared:
-                    unresolved.setdefault(name, set()).add(p.name)
+    # A line that INVOKES a script is showing how to run it, so the names on it are arguments of an
+    # example rather than references into the tree -- `--emit out.csv` names the file the reader
+    # will choose, and it is not supposed to exist. This exempts the line, not the name, so the same
+    # name elsewhere in real prose is still checked. The cost is narrow and worth stating: a genuine
+    # dead reference sharing a line with an example invocation is not seen.
+    usage = re.compile(r"python[a-z0-9.]* +[A-Za-z0-9_./]+\.py")
+
+    for p, (prose, _literals) in parsed.items():
+        for blob in prose:
+            for raw in blob.split(chr(10)):
+                if usage.search(raw):
+                    continue
+                # `pat` needs a delimiter before the name; a line may open with one.
+                for cited in pat.findall(" " + raw):
+                    # A citation rooted in `_archive/` names the SUPERSEDED tree, which is a
+                    # separate repository and is not expected in a clone of this one. Same reason
+                    # the ensemble store is unioned into `have` above when it happens to be
+                    # present: a checkout without it cannot check a reference into it either way.
+                    # Exempted by PATH, not by bare name, so the same name in ordinary prose with
+                    # no `_archive/` root is still checked.
+                    if cited.startswith("_archive/") or "/_archive/" in cited:
+                        continue
+                    name = cited.split("/")[-1]
+                    # An empty stem is a bare EXTENSION, not a filename: prose listing the suffixes
+                    # a loader accepts (`.yml/.yaml/.json/.md`) names no file to resolve.
+                    if not name.split(".")[0]:
+                        continue
+                    if name not in have and name not in declared:
+                        unresolved.setdefault(name, set()).add(p.name)
     assert not unresolved, (
         "scripts cite files that do not exist: "
         + "; ".join(f"{n} (in {sorted(w)})" for n, w in sorted(unresolved.items())))

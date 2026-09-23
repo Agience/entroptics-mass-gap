@@ -335,6 +335,128 @@ theorem confines_of_arms_six {ε B : ℝ} (hε : ε ≤ (epsMaxSix : ℝ))
   · exact hmid β hβ hle
   · exact hfar β hge
 
+/-- `EffectiveGaussianLagTwoSix` with the band asked at the **four** lags `0, 1, 2, 3` instead of all
+six.
+
+DERIVED: `0` is the sign condition on the scale `R` and the contact lag; `3` is the largest lag asked
+for, the half-period of the extent-six circle; `5` is the aperture index and `6` the lag arity, with
+`5 + 1 = 6`; `1` and `2` are the band's endpoints `1 + ε` and `1 - ε` and the square of the free-field
+amplitude. All are `EffectiveGaussianLagTwoSix`'s, carried unchanged. -/
+def EffectiveGaussianLagTwoSixFour (ε : ℝ) : Prop :=
+  ∃ B : ℝ, ∀ β : ℝ, B ≤ β → ∃ R : ℝ, 0 < R ∧
+    (∀ d : Fin 6, (d : ℕ) ≤ 3 →
+      MassGap.wilsonCorrAt 5 β d ≤ (1 + ε) * (R * ((fsCorr6 d : ℝ)) ^ 2)) ∧
+    (1 - ε) * (R * ((fsCorr6 0 : ℝ)) ^ 2) ≤ MassGap.wilsonCorrAt 5 β 0
+
+/-- **Two of the six lag bounds are redundant.** The four-lag form implies the six-lag one.
+
+Both sides of the band fold at extent six. `fsCorr6_fold` gives `fsCorr6 4 = fsCorr6 2` and
+`fsCorr6 5 = fsCorr6 1` by decision, and on the Wilson side `Moment.circLag 4 = 2` and
+`Moment.circLag 5 = 1` in `Fin 6`, so `MomentShape.wilsonCorrAt_circLag_congr` identifies
+`wilsonCorrAt 5 β 4` with `wilsonCorrAt 5 β 2` and `wilsonCorrAt 5 β 5` with `wilsonCorrAt 5 β 1`.
+The bands at lags 4 and 5 are therefore the bands at lags 2 and 1 written a second time.
+
+This does not weaken the hypothesis — it names how much of it is content. `EffectiveGaussianLagTwoSix`
+is the form `effective_lag_two_bound_six` consumes and is unchanged; a prover establishing the
+Gaussian band owes four lag bounds rather than six.
+
+**DO NOT REDUCE FURTHER BY DROPPING UNUSED LAGS.** `effective_lag_two_bound_six` reads exactly two
+of the constraints — the upper bound at lag `2` and the lower bound at lag `0`. Lags `1` and `3` are
+never used by that proof, and dropping them for that reason would be a mistake:
+`FreeFieldLagTwo.two_lag_form_collapses` proves that with only lags `0` and `2` the existential over
+the free scale `R` is EQUIVALENT to the ratio bound it is used to derive, because the lower
+constraint caps `R` at `r0 / ((1 - ε) * s0 ^ 2)` and that cap is also the witness. The hypothesis
+would still typecheck and the theorem would still compile, having become content-free.
+
+So the lags the proof does not read are what stop the hypothesis assuming its own conclusion. This
+reduction is safe for the opposite reason: lags `4` and `5` are not unused, they are EQUAL to lags
+`2` and `1` on both sides, so nothing is dropped and no constraint is lost.
+
+**This is not a recommendation to take the band route.** `lagTwoConstantSix ε` is by definition
+`((1+ε)/(1-ε)) * (fsCorr6 2 / fsCorr6 0) ^ 2`, so by `FreeFieldLagTwo.two_lag_form_collapses` the
+band's lag-0 and lag-2 constraints, with `R` eliminated, are exactly
+`wilsonCorrAt 5 β 2 ≤ lagTwoConstantSix ε * wilsonCorrAt 5 β 0` — the conclusion
+`effective_lag_two_bound_six` draws from them. The band therefore presents the far-field obligation
+rather than reducing it, and asks for lags `1` and `3` besides. A prover is better off targeting that
+conclusion directly. What this lemma does is make the band cheaper for anyone who takes it anyway.
+
+DERIVED: `4` and `5` are the two lags shown redundant, `2` and `1` the lags they fold onto; `3` is the
+largest lag the four-lag form asks for. All are positions on the extent-six circle, not magnitudes. -/
+theorem effectiveGaussianLagTwoSix_of_four_lags {ε : ℝ}
+    (h : EffectiveGaussianLagTwoSixFour ε) : EffectiveGaussianLagTwoSix ε := by
+  obtain ⟨B, hB⟩ := h
+  refine ⟨B, fun β hβ => ?_⟩
+  obtain ⟨R, hR0, hup, hlo⟩ := hB β hβ
+  refine ⟨R, hR0, ?_, hlo⟩
+  intro d
+  fin_cases d
+  · exact hup 0 (by norm_num)
+  · exact hup 1 (by norm_num)
+  · exact hup 2 (by norm_num)
+  · exact hup 3 (by norm_num)
+  · have hc : MassGap.wilsonCorrAt 5 β 4 = MassGap.wilsonCorrAt 5 β 2 :=
+      MassGap.MomentShape.wilsonCorrAt_circLag_congr 5 β (by decide)
+    show MassGap.wilsonCorrAt 5 β 4 ≤ (1 + ε) * (R * ((fsCorr6 4 : ℝ)) ^ 2)
+    rw [hc, fsCorr6_fold.1]
+    exact hup 2 (by norm_num)
+  · have hc : MassGap.wilsonCorrAt 5 β 5 = MassGap.wilsonCorrAt 5 β 1 :=
+      MassGap.MomentShape.wilsonCorrAt_circLag_congr 5 β (by decide)
+    show MassGap.wilsonCorrAt 5 β 5 ≤ (1 + ε) * (R * ((fsCorr6 5 : ℝ)) ^ 2)
+    rw [hc, fsCorr6_fold.2]
+    exact hup 1 (by norm_num)
+
+/-- The cut `LagTwoSix.exists_cut_lag_two_ratio_six` produces at `K`, named so the remaining
+obligation can be stated at it rather than at every positive real.
+
+DERIVED: `0` is the value `K` is required to exceed, `exists_cut_lag_two_ratio_six`'s own condition
+on its constant. The cut is whatever the strong arm returns and no magnitude is chosen here. -/
+noncomputable def strongCutSix {K : ℝ} (hK : 0 < K) : ℝ :=
+  (MassGap.LagTwoSix.exists_cut_lag_two_ratio_six K hK).choose
+
+/-- `strongCutSix` is positive — the first half of the strong arm's conclusion.
+
+DERIVED: `0` is the strict lower bound the strong arm asserts of its cut. -/
+theorem strongCutSix_pos {K : ℝ} (hK : 0 < K) : 0 < strongCutSix hK :=
+  (MassGap.LagTwoSix.exists_cut_lag_two_ratio_six K hK).choose_spec.1
+
+/-- The lag-two ratio bound below `strongCutSix` — the second half of the strong arm's conclusion,
+proved outright at every `K > 0` through `StrongCoupling.coreRate`.
+
+DERIVED: `0` is the sign condition on the coupling and the contact lag; `5` is the aperture index and
+`2` the lag. All are `exists_cut_lag_two_ratio_six`'s. -/
+theorem lag_two_below_strongCutSix {K : ℝ} (hK : 0 < K) :
+    ∀ β : ℝ, 0 ≤ β → β ≤ strongCutSix hK →
+      MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0 :=
+  (MassGap.LagTwoSix.exists_cut_lag_two_ratio_six K hK).choose_spec.2
+
+/-- **The whole lag-two obligation, from one bound above the named cut.**
+
+`LagTwoSix.exists_cut_lag_two_ratio_six` proves the ratio bound on `[0, strongCutSix hK0]` at every
+`K > 0`, through `StrongCoupling.coreRate` — an argument that reads the correlation's decay rather
+than its shape, which is what the tree's no-go results say is required. So the obligation that
+remains is the same bound on `[strongCutSix hK0, ∞)`, and nothing else.
+
+This delivers `LagTwoSix.LagTwoRatioSix`, hence `ApertureRoute.ConfinesAtAnAperture` through
+`LagTwoSix.confines_of_lagTwoRatioSix`, hence Parts I and II of `VarianceBridge.clay_four_parts`.
+
+The hypothesis is asked at the ONE cut the strong arm returns, not at every positive real. Asking at
+every cut would be strictly stronger and pointless: the proof instantiates it once, and at small
+cuts the premise supplies almost nothing while the conclusion demands almost everything, so the
+strong arm would buy the prover nothing back.
+
+DERIVED: `0` is the sign condition on `K` and on the coupling, and the contact lag in the last
+position; `5` is the aperture index, `corrClay` at periodic extent six; `2` is the lag the ratio is
+taken at. All are `LagTwoRatioSix`'s and `exists_cut_lag_two_ratio_six`'s. -/
+theorem lagTwoRatioSix_of_above_strongCut {K : ℝ} (hK0 : 0 < K)
+    (hKlt : K < MassGap.LagTwoSix.lagTwoThresholdSix)
+    (habove : ∀ β : ℝ, strongCutSix hK0 ≤ β →
+      MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0) :
+    MassGap.LagTwoSix.LagTwoRatioSix := by
+  refine ⟨K, hKlt, fun β hβ0 => ?_⟩
+  rcases le_total β (strongCutSix hK0) with hle | hge
+  · exact lag_two_below_strongCutSix hK0 β hβ0 hle
+  · exact habove β hge
+
 /-! ## 5. Footprints -/
 
 section Audit
@@ -361,6 +483,12 @@ section Audit
 #print axioms effective_lag_two_bound_six
 #print axioms MiddleIntervalLagTwoSix
 #print axioms confines_of_arms_six
+#print axioms EffectiveGaussianLagTwoSixFour
+#print axioms effectiveGaussianLagTwoSix_of_four_lags
+#print axioms strongCutSix
+#print axioms strongCutSix_pos
+#print axioms lag_two_below_strongCutSix
+#print axioms lagTwoRatioSix_of_above_strongCut
 end Audit
 
 end MassGap.FreeFieldLagTwoSix

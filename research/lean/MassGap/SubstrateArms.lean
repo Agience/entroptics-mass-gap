@@ -1889,6 +1889,48 @@ theorem ratio_hypothesis_of_lawAbove
 
 #print axioms ratio_hypothesis_of_lawAbove
 
+/-- The spectral reduction at ONE aperture and ONE coupling. The core of
+`substrate_bound_on_of_uniform_spectral_rate`, stated per-point because that is what its proof uses:
+the representation is read at the `(N, β)` being bounded and nowhere else.
+
+Stating it this way is what lets the bound be asked for eventually in the aperture
+(`confines_of_eventual_spectral_rate`) without handing one aperture's representation to another.
+
+DERIVED: `2` multiplying `W` is `GeometricProfile.profile_geometric_of_periodic_spectral`'s, from the
+two halves of the periodic pair; the outer `2` is `Moment.circ_moment_le_of_geometric`'s, from the
+two lags at each circle distance; the exponent `2` is what a second moment is. `1` is the aperture's
+index offset and the rates' strict bound. `0` is the sign of the rate and the weights. -/
+theorem substrate_bound_at_of_uniform_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W) {N : ℕ} {β : ℝ}
+    (hrep : ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+      (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+      (∑ k ∈ s, w k) ≤ W ∧
+      (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+        = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by
+  obtain ⟨ι, s, w, m, hw, hm0, hmr, hsum, hrep⟩ := hrep
+  -- the representation gives a geometric profile, with constant `2 * ∑ w`
+  have hgeo : ∀ d : Fin (N + 1),
+      (MassGap.readYMAt N β).p d ≤ (2 * W) * r ^ (Moment.circLag d) := by
+    intro d
+    have h := MassGap.GeometricProfile.profile_geometric_of_periodic_spectral
+      (MassGap.readYMAt N β) s w m hr1 hw hm0 hmr hrep d
+    have hrpow : (0 : ℝ) ≤ r ^ (Moment.circLag d) := pow_nonneg hr0 _
+    have hmul : (2 * ∑ k ∈ s, w k) * r ^ (Moment.circLag d)
+        ≤ (2 * W) * r ^ (Moment.circLag d) :=
+      mul_le_mul_of_nonneg_right (by linarith) hrpow
+    exact le_trans h hmul
+  -- `circ_moment_le_of_geometric` is a standalone theorem taking the read explicitly, not a
+  -- projection on it; called here the way `Complete.lean:602` calls it.
+  have hmom := Moment.circ_moment_le_of_geometric (MassGap.readYMAt N β)
+    (C := 2 * W) (r := r) (by linarith) hr0 hr1 hgeo
+  have hd2 : MassGap.d2At N β
+      = ∑ d, (MassGap.readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
+  rw [hd2]
+  exact hmom
+
+#print axioms substrate_bound_at_of_uniform_spectral_rate
+
 /-- **THE SUBSTRATE BOUND FROM A UNIFORM SPECTRAL RATE.** If at every aperture and every nonnegative
 coupling the read `readYMAt N β` has a periodic spectral representation whose rates are all at most
 `r < 1` and whose total weight is at most `W`, then
@@ -1926,6 +1968,28 @@ DERIVED: `2` multiplying `W` is `profile_geometric_of_periodic_spectral`'s, from
 the two lags at each circle distance. The exponent `2` is what a second moment is. `1` is the
 aperture's index offset and the bound the rates are below. `0` is the sign of the rates, the weights
 and the coupling. No constant is chosen: `B` is read off the two lemmas composed. -/
+theorem substrate_bound_on_of_uniform_spectral_rate {r W : ℝ} {S : Set ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ (N : ℕ), ∀ β ∈ S,
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∀ (N : ℕ), ∀ β ∈ S,
+      MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k :=
+  fun N β hβ => substrate_bound_at_of_uniform_spectral_rate hr0 hr1 hW (hspec N β hβ)
+
+#print axioms substrate_bound_on_of_uniform_spectral_rate
+
+/-- The nonnegative half-line instance of `substrate_bound_on_of_uniform_spectral_rate`, kept
+because `Set.Ici 0` is the domain every other arm in this file is stated on and the membership form
+reads awkwardly beside them.
+
+DERIVED: `0` is the lower end of the coupling half-line and the sign of the rate and the weight
+bound; `1` is the rate's strict upper bound and the aperture's index offset; the `2`s are the
+periodic pair, the two lags per circle distance and the second moment's exponent. All are the set
+version's, carried unchanged. -/
 theorem substrate_bound_of_uniform_spectral_rate {r W : ℝ}
     (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
     (hspec : ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
@@ -1935,28 +1999,10 @@ theorem substrate_bound_of_uniform_spectral_rate {r W : ℝ}
         (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
           = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
     ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
-      MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by
-  intro N β hβ
-  obtain ⟨ι, s, w, m, hw, hm0, hmr, hsum, hrep⟩ := hspec N β hβ
-  -- the representation gives a geometric profile, with constant `2 * ∑ w`
-  have hgeo : ∀ d : Fin (N + 1),
-      (MassGap.readYMAt N β).p d ≤ (2 * W) * r ^ (Moment.circLag d) := by
-    intro d
-    have h := MassGap.GeometricProfile.profile_geometric_of_periodic_spectral
-      (MassGap.readYMAt N β) s w m hr1 hw hm0 hmr hrep d
-    have hrpow : (0 : ℝ) ≤ r ^ (Moment.circLag d) := pow_nonneg hr0 _
-    have hmul : (2 * ∑ k ∈ s, w k) * r ^ (Moment.circLag d)
-        ≤ (2 * W) * r ^ (Moment.circLag d) :=
-      mul_le_mul_of_nonneg_right (by linarith) hrpow
-    exact le_trans h hmul
-  -- `circ_moment_le_of_geometric` is a standalone theorem taking the read explicitly, not a
-  -- projection on it; called here the way `Complete.lean:602` calls it.
-  have hmom := Moment.circ_moment_le_of_geometric (MassGap.readYMAt N β)
-    (C := 2 * W) (r := r) (by linarith) hr0 hr1 hgeo
-  have hd2 : MassGap.d2At N β
-      = ∑ d, (MassGap.readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
-  rw [hd2]
-  exact hmom
+      MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k :=
+  fun N β hβ =>
+    substrate_bound_on_of_uniform_spectral_rate (S := Set.Ici (0 : ℝ)) hr0 hr1 hW
+      (fun N' β' hβ' => hspec N' β' hβ') N β hβ
 
 #print axioms substrate_bound_of_uniform_spectral_rate
 
@@ -2132,6 +2178,195 @@ theorem confines_of_periodic_spectral_rate {r W : ℝ}
   exact hN β hβ
 
 #print axioms confines_of_periodic_spectral_rate
+
+/-- **THE TWO ARMS, WITH A SPECTRAL RATE ABOVE THE CUT.**
+
+`substrate_bounded_of_two_arms` pairs `NonnegArm.LawBelow b` with `NonnegArm.LawAbove b`.
+`lawBelow_holds` proves the first outright, so only the arm above the cut is open — and it need not
+be a quartic law. This pairs the proved arm with a spectral rate on `(b, ∞)`.
+
+So the spectral route is asked for the couplings ABOVE the strong-coupling cut only, not for every
+coupling at once. That is the same two-arm shape `NonnegArm.substrate_even_of_two_arm` uses, with a
+different object on the open side.
+
+The two branches reach the moment by different routes — a quartic-weight sum below the cut, a
+geometric sum above it — so unlike `substrate_bounded_of_two_arms` they cannot be funnelled through
+one lemma; each is bounded separately and the maximum serves both.
+
+DERIVED: `1` is the lag cut excluding the contact term, `ShareEnvelope.circ_moment_le_of_contact_relative`'s
+own, and the rate's strict upper bound, and the aperture's index offset. The `2`s are the quartic
+weight's leading factor, the periodic pair, the two lags per circle distance, and the second moment's
+exponent. `4` is the quartic law's exponent, `NonnegArm.LawBelow`'s. `0` is the sign of the rate, the
+weight bound and the coupling. Every one is carried in from the arm it belongs to. -/
+theorem substrate_bounded_of_below_arm_and_spectral_rate {b r W : ℝ}
+    (hbelow : MassGap.NonnegArm.LawBelow b)
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ (N : ℕ), ∀ β ∈ Set.Ioi b,
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∃ B : ℝ, ∀ (N : ℕ) (β : ℝ), 0 ≤ β → MassGap.d2At N β ≤ B := by
+  obtain ⟨C₁, hC₁, h₁⟩ := hbelow
+  have hspecB := substrate_bound_on_of_uniform_spectral_rate (S := Set.Ioi b) hr0 hr1 hW hspec
+  refine ⟨max (2 * ∑' k : ℕ, (k : ℝ) ^ 2 * MassGap.ShareEnvelope.quarticWeight 1 C₁ k)
+      (2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k), fun N β hβ0 => ?_⟩
+  rcases le_or_gt β b with hle | hgt
+  · -- below the cut: the proved quartic arm, as `substrate_bounded_of_two_arms` uses it
+    have hb : MassGap.d2At N β
+        ≤ 2 * ∑' k : ℕ, (k : ℝ) ^ 2 * MassGap.ShareEnvelope.quarticWeight 1 C₁ k := by
+      refine MassGap.ShareEnvelope.circ_moment_le_of_contact_relative
+        (MassGap.readYMAt N β) 1 hC₁ ?_
+      intro d hd
+      rw [MassGap.ShareEnvelope.readYMAt_rho]
+      exact h₁ N β d hβ0 hle hd
+    exact le_trans hb (le_max_left _ _)
+  · -- above the cut: the spectral rate
+    exact le_trans (hspecB N β hgt) (le_max_right _ _)
+
+#print axioms substrate_bounded_of_below_arm_and_spectral_rate
+
+/-- **Confinement from the proved arm and a spectral rate above the cut.** The previous theorem
+composed with `Complete.confinement_on_of_substrate_bound`.
+
+This is the chain of §1 with its open half replaced: no quartic law above the cut, no threshold, and
+the strong-coupling arm supplied by `NonnegArm.lawBelow_holds` rather than assumed.
+
+DERIVED: every numeral is the previous theorem's — `0` the signs and the coupling half-line's lower
+end, `1` the lag cut and the rate's strict bound and the aperture offset, the `2`s the quartic
+weight, the periodic pair, the two lags per circle distance and the second moment's exponent, and `4`
+the quartic exponent. This declaration introduces none. -/
+theorem confines_of_below_arm_and_spectral_rate {b r W : ℝ}
+    (hbelow : MassGap.NonnegArm.LawBelow b)
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ (N : ℕ), ∀ β ∈ Set.Ioi b,
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM := by
+  obtain ⟨B, hB⟩ := substrate_bounded_of_below_arm_and_spectral_rate hbelow hr0 hr1 hW hspec
+  have hev := MassGap.confinement_on_of_substrate_bound (B := B) (S := Set.Ici (0 : ℝ))
+    (fun N β hβ => hB N β hβ)
+  filter_upwards [hev] with N hN β hβ
+  exact hN β hβ
+
+#print axioms confines_of_below_arm_and_spectral_rate
+
+/-- **The substrate bound is only needed at large apertures.**
+
+`Complete.confinement_on_of_substrate_bound` asks for `d2At N β ≤ B` at EVERY aperture and concludes
+confinement EVENTUALLY in the aperture. The conclusion is eventual because the aperture factor
+`(2π/(N+1))²` must first shrink below the floor, and the proof reads the substrate bound only where
+it has — so the hypothesis at small apertures is never used.
+
+Weakening it costs one `filter_upwards` over two facts instead of one. It matters for the open
+input: the small apertures are where the read is coarsest and a spectral representation hardest to
+supply, and they are not needed.
+
+DERIVED: `2 * Real.pi` is the full turn and the outer `2` squares the aperture factor, both
+`Moment.aperture_factor_tendsto_zero`'s; the `2` dividing `B` is `Moment.Read.cos_avg_ge_circ`'s
+halving; `1` in `(N : ℝ) + 1` is the aperture's index offset and the value the floor is subtracted
+from; `3`, `1` and `4` are the entropy floor `3^{−1/4}`. Every one is carried from
+`confinement_on_of_substrate_bound`, whose proof this mirrors. -/
+theorem confinement_on_of_eventual_substrate_bound {B : ℝ} {S : Set ℝ}
+    (hB : ∀ᶠ N : ℕ in Filter.atTop, ∀ β ∈ S, MassGap.d2At N β ≤ B) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β ∈ S, MassGap.μYMAt N β < MassGap.κ₀YM := by
+  have hev : ∀ᶠ N : ℕ in Filter.atTop,
+      (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
+    (Moment.aperture_factor_tendsto_zero B).eventually_lt_const Moment.floor_rhs_pos
+  filter_upwards [hev, hB] with N hN hBN β hβ
+  exact (MassGap.readYMAt N β).tension_lt_floor_of_circ_moment (hBN β hβ) hN
+
+#print axioms confinement_on_of_eventual_substrate_bound
+
+/-- **Confinement from a spectral rate supplied only at large apertures.**
+
+The per-point reduction applied under a `filter_upwards`, then
+`confinement_on_of_eventual_substrate_bound`. Per-point is what makes this sound: the representation
+at one aperture is used to bound that aperture and no other.
+
+Taken with `substrate_bounded_of_below_arm_and_spectral_rate`, the open input has three relaxations
+against `NonnegArm.LawAbove` — it is a spectral RATE rather than a quartic tail law, it is asked only
+ABOVE the strong-coupling cut, and it is asked only at SUFFICIENTLY WIDE apertures.
+
+DERIVED: every numeral is carried from the two theorems composed — `0` the signs and the rate's lower
+bound, `1` the rate's strict upper bound and the aperture's index offset, the `2`s the periodic pair,
+the two lags per circle distance and the second moment's exponent. None is introduced here. -/
+theorem confines_of_eventual_spectral_rate {r W : ℝ} {S : Set ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ᶠ N : ℕ in Filter.atTop, ∀ β ∈ S,
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β ∈ S, MassGap.μYMAt N β < MassGap.κ₀YM := by
+  refine confinement_on_of_eventual_substrate_bound
+    (B := 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k) ?_
+  filter_upwards [hspec] with N hN β hβ
+  exact substrate_bound_at_of_uniform_spectral_rate hr0 hr1 hW (hN β hβ)
+
+#print axioms confines_of_eventual_spectral_rate
+
+/-- **THE ASSEMBLY FROM A SPECTRAL RATE ABOVE THE CUT** — the smallest input in this file.
+
+One hypothesis: at every aperture and every coupling strictly above the cut that
+`NonnegArm.lawBelow_holds` supplies, the read has a periodic spectral representation whose rates are
+at most `r < 1` and whose total weight is at most `W`. From it, three conclusions:
+
+1. confinement — the tension strictly below the entropy floor at every nonnegative coupling, at every
+   sufficiently wide aperture;
+2. one positive `c` below the surplus `κ₀YM − μYMAt` at every aperture past `N₀` and every `β ≥ 0`;
+3. that margin divided by the spacing a screen of fixed physical extent carries, which is the form
+   `Complete.ym_physical_gap_uniform_exact` and `ScreenedGap.uniform_physical_gap` are stated in.
+
+`clay_assembly_of_lawAbove` is the same three from `LawAbove`, a quartic tail law at every coupling
+above the cut. This asks for less in three ways: a RATE rather than a tail law, only ABOVE the cut,
+and — through `confines_of_eventual_spectral_rate` — the aperture condition is eventual rather than
+universal.
+
+The cut is not a parameter: `lawBelow_holds` produces it, so the caller supplies only the rate and
+never chooses `b`.
+
+All three conclusions come from one substrate bound, and all three consumers already take it. That
+is what routing through the substrate bound rather than through `LawAbove` bought.
+
+DERIVED: `0` is the sign of the rate, the weight bound, `c`, and the lower end of the coupling
+half-line; `1` is the rate's strict upper bound and the aperture's index offset; the `2`s are the
+periodic pair, the two lags per circle distance, and the second moment's exponent; `4` is the quartic
+exponent of the arm below the cut. Every one is carried in from the theorem it belongs to. -/
+theorem clay_assembly_of_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → ∀ (N : ℕ), ∀ β ∈ Set.Ioi b,
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    (∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM)
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+        ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+        ∀ (L : ℝ), 0 < L → ∀ (i : ℕ) (β : ℝ), 0 ≤ β →
+          c / L ≤ (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
+            / (L / (((N₀ + i : ℕ) : ℝ) + 1))) := by
+  obtain ⟨b, _, hbelow⟩ := MassGap.NonnegArm.lawBelow_holds
+  obtain ⟨B, hB⟩ :=
+    substrate_bounded_of_below_arm_and_spectral_rate hbelow hr0 hr1 hW (hspec b hbelow)
+  refine ⟨?_, exists_uniform_margin_of_substrate (B := B) hB,
+    exists_physical_gap_uniform_of_substrate (B := B) hB⟩
+  have hev := MassGap.confinement_on_of_substrate_bound (B := B) (S := Set.Ici (0 : ℝ))
+    (fun N β hβ => hB N β hβ)
+  filter_upwards [hev] with N hN β hβ
+  exact hN β hβ
+
+#print axioms clay_assembly_of_spectral_rate
+
+
+
 
 
 

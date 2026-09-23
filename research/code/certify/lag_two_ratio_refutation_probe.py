@@ -1,10 +1,21 @@
-"""REFUTATION PROBE for Clay row B5: `rho(2) <= K * rho(0)` with `K < 0.018623`.
+"""REFUTATION PROBE for the lag-two ratio `rho(2) <= K * rho(0)`, at extent four or extent six.
+
+`--extent` selects which obligation is probed, and the threshold comes from the Lean declaration
+that owns THAT extent -- they are different numbers against different theorems:
+
+    extent 4  `LagTwoBound.confines_of_lag_two_ratio`     K < lagTwoThreshold    ~ 0.018623
+    extent 6  `LagTwoSix`, via `ClayAssembly.I1_lagTwo`   K < lagTwoThresholdSix ~ 0.033796
+
+`K_BY_EXTENT` below carries both, and every row records the `K_claim` it was judged against, so a
+stored result cannot be read against the wrong bar. The sections below describe the object at
+extent four; at extent six the same construction runs on a 6^4 torus, where lag two is no longer
+half the extent.
 
 WHAT THIS CAN AND CANNOT DO. It can REFUTE. It cannot support. If the measured `rho(2)/rho(0)`
-reaches or exceeds `0.018623` at any coupling, `LagTwoBound.confines_of_lag_two_ratio`'s hypothesis
-is false at that coupling and the route is dead. If it never does, NOTHING is established: the data
-failed to refute over the couplings actually sampled, the Lean obligation is untouched, and no
-number from here may enter a proof or be fitted to.
+reaches or exceeds the threshold for its extent at any coupling, that extent's hypothesis is false
+at that coupling and the route is dead. If it never does, NOTHING is established: the data failed to
+refute over the couplings actually sampled, the Lean obligation is untouched, and no number from
+here may enter a proof or be fitted to.
 
 ## The object, read off the Lean definitions
 

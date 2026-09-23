@@ -200,7 +200,7 @@ theorem confines_extent_four_of_lag_two_ratio_quad
     have := mul_lt_mul_of_pos_left hlt hd
     nlinarith [this, hr]
   -- The second root is `1`, so the ratio is below one and `ρ(2) < ρ(0)`. Dividing `hlt'` through by
-  -- the leading coefficient is a NONLINEAR step, so the two products are supplied rather than
+  -- the leading coefficient is a nonlinear step, so the two products are supplied rather than
   -- searched for: `1.9 < 1+2c−c²` and `(1−c)² < 0.06` bracket the two coefficients apart, and the
   -- rest is linear in `r₀` and `r₂`.
   have ha : (1.9 : ℝ) < 1 + 2 * c - c ^ 2 := by nlinarith [hc.1, hc.2, hsqb.1, hsqb.2]

@@ -11,7 +11,7 @@ reassembled from six modules.
 ## What composes
 
 `Model.mass_gap_rate_of_model` gives a rate at one spacing: `Δ = κ₀ − μ β > 0`, with `‖C(τ)‖` bounded
-by a geometric series in `e^{−Δ}`. That rate is in LATTICE units, so halving the spacing halves it.
+by a geometric series in `e^{−Δ}`. That rate is in lattice units, so halving the spacing halves it.
 
 `ZeroMode.gap_phys_of_fixed_screen` converts it. The screen has a physical extent `L = (N+1)a`;
 holding that fixed makes the spacing cancel:
@@ -25,7 +25,7 @@ holding that fixed makes the spacing cancel:
 A screen of finite information capacity band-limits, a band-limit has a diffraction limit, and the
 limit cannot host the infinitely-extended mode a massless theory requires.
 
-`code/certify/aperture_cap_of_floor.py` computes that exclusion. A free MASSLESS field, whose lowest
+`code/certify/aperture_cap_of_floor.py` computes that exclusion. A free massless field, whose lowest
 mode on a periodic screen of `N+1` sites is `2π/(N+1)`, reads `⟨cos⟩ = 0.5452` against the entropy
 floor `3^{−1/4} = 0.7598`, so its tension is `μ = 0.6065 > κ₀ = 0.2747` and the massless
 configuration is inadmissible on the screen. The margin of exclusion is the critical scaling variable
@@ -39,7 +39,7 @@ refuses to report if that ordering reverses.
 These are hypotheses — fields of `Screened`, or arguments of `screened_gap_and_continuum` — rather
 than facts proved in this development:
 
-* `hrate` — the lattice gap at each spacing is at least `κ/(N+1)`. For an ARBITRARY mode family this
+* `hrate` — the lattice gap at each spacing is at least `κ/(N+1)`. For an arbitrary mode family this
   is the measured mode decay; `Capacity.modelOfJunction` reduces it to the two named residuals
   `κ−μ ≤ c` and `c ≤ Δ`, of which the first follows from the directed-cube count
   (`Capacity.junction_of_scale_duality`) given the count injection and the cited scale duality.
@@ -60,9 +60,9 @@ open MassGap Filter Topology
 
 /-- A lattice Yang–Mills family read through a screen of fixed physical extent.
 
-The index is the SPACING. `hscreen` is what distinguishes the structure: the aperture grows as the
+The index is the spacing. `hscreen` is what distinguishes the structure: the aperture grows as the
 spacing falls so that their product, the screen's physical size `L`, does not move. A family holding
-the aperture at a fixed number of SITES would have a shrinking screen, and one holding the box fixed
+the aperture at a fixed number of sites would have a shrinking screen, and one holding the box fixed
 a growing one; neither gives a spacing-independent bound.
 
 `gap i` is `LatticeYM` reduction data at each index, with confinement `h1` assumed there; `hrate`
@@ -176,7 +176,7 @@ The doubling between `rate_gt_of_tension`'s constant and the one in this conclus
 `2 * (kk i + 1)`, which is the aperture `2 * kk i + 1` plus one.
 
 `hscreen` is a hypothesis: the aperture is a property of the extraction boundary rather than of the
-lattice computed through. The correlation is a SINGLE transfer mode, `hρ` being an equation rather
+lattice computed through. The correlation is a single transfer mode, `hρ` being an equation rather
 than a bound; `ZeroMode.substrate_ge_of_subset_share` carries the multi-mode statement, where the
 bound degrades by the weight share.
 
@@ -202,7 +202,7 @@ theorem physical_gap_of_tension_at_screen
   have h3 : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 := by
     rw [Real.rpow_lt_one_iff (by norm_num)]; norm_num
   have h3pos : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
-  -- `c < 1` needs a genuine LOWER bound on `3^{-1/4}`: `1.5(1-T) < 1` iff `T > 1/3`. Positivity
+  -- `c < 1` needs a genuine lower bound on `3^{-1/4}`: `1.5(1-T) < 1` iff `T > 1/3`. Positivity
   -- alone gives only `c < 1.5`. The bound is `3^{-1/4} > 3^{-1}`, since the exponent is larger and
   -- the base exceeds one.
   have hTlb : (1 : ℝ) / 3 < (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
@@ -244,16 +244,16 @@ The aperture and the box are different things, and elsewhere in this tree only t
 A `Moment.Read N` carries `N+1` lags and says nothing about how large a system those lags were read
 from. This section makes the box a parameter and states what follows.
 
-The two are separate because a family of reads at DIFFERENT box sizes but the SAME aperture returns
+The two are separate because a family of reads at different box sizes but the same aperture returns
 the same bound, and that bound survives the box growing without limit:
 `gap_bound_box_independent` carries `box` as an argument and never uses it.
 
 The aperture is not treated the same way. The bound is `kappa / L`, with `L` the screen's extent, so
-letting the APERTURE grow without limit while `hscreen` holds drives `L` up and the bound down.
+letting the aperture grow without limit while `hscreen` holds drives `L` up and the bound down.
 Nothing in these statements forbids that; what fixes the aperture is the reading that its size is
 the observer's capacity.
 
-In the other direction the criterion refuses a window too SMALL to resolve the decay: at aperture
+In the other direction the criterion refuses a window too small to resolve the decay: at aperture
 `n` it passes only when `n * Delta > C`, so such a window returns no verdict rather than a
 flattering one. The sharpest bound comes from the smallest window that still passes.
 -/
@@ -304,11 +304,11 @@ theorem gap_survives_thermodynamic_limit
 /-! ## The noise edge taken on the residual rather than the raw spectrum
 
 `ZeroMode.resolved_count_le_of_subset` bounds the number of resolved modes by the measured tension,
-and that bound DIVIDES BY `edge`, so the edge's value moves the bound. This section states where the
+and that bound divides by `edge`, so the edge's value moves the bound. This section states where the
 two candidate edges differ and which way the difference runs.
 
 A transfer spectrum carries a near-unit component, `lam` close to `1`, holding most of the weight.
-An edge set as a share `theta` of the TOTAL weight therefore includes a share of that component's
+An edge set as a share `theta` of the total weight therefore includes a share of that component's
 weight, while a gap argument concerns the modes left once it is removed. Three steps:
 
 * the two edges differ by exactly the removed component's share (`edge_raw_sub_residual`);
@@ -432,7 +432,7 @@ Reading the right-hand side:
     12 * W * M / (edge * lam0^(k+1) * (2(k+1))^2 * S)
 
 `W = ∑ w` is the read's total weight, `edge` its noise floor, `lam0` the lower edge of the band the
-resolved modes occupy, and `M / S` is the weighted mean of `clag^2`, the SUBSTRATE. Every factor is
+resolved modes occupy, and `M / S` is the weighted mean of `clag^2`, the substrate. Every factor is
 the read's own, and `12` is `ZeroMode.six_mul_sum_sq`'s denominator carried through.
 
 The substrate is what the tension bounds (`Moment.Read.substrate_lt_of_tension_lt_floor`), so a cap

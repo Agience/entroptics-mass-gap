@@ -12,7 +12,7 @@ Schwinger form at that spacing.
 * `tight_limit_rp` — a sequence confined to `[0, C]` has a subsequence converging to some `q` with
   `0 ≤ q ≤ C`.
 * `tight_limit_vector` — a countably indexed family of sequences, each bounded in absolute value by
-  a common `C`, has ONE subsequence along which every component converges, with `|q j| ≤ C`.
+  a common `C`, has one subsequence along which every component converges, with `|q j| ≤ C`.
 * `rp_of_tight_limit_vector` — componentwise nonnegativity passes to that joint limit.
 * `symmetry_survives_limit`, `invariant_limit_of_action`, `os1_euclidean_survives`,
   `os3_symmetry_survives` — a reindexing of the index type that leaves every `Q j n` unchanged

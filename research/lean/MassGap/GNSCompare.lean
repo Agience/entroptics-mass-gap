@@ -11,8 +11,8 @@ import MassGap.SecondEigenvalue
 
 * the real quotient `Transfer.GNS P = A ⧸ P.nullSpace`, with step maps `Tq` and `TqL`, used by
   `VolumeRate`, `SecondEigenvalue`, `PeriodicRayleigh` and `HalfLineTransfer`;
-* the complex completion `GNSHilbert.H P = Completion (Pre P)`, with `opT`, used by `OpTBridge` and
-  `GapToOperator`.
+* the complex completion `GNSHilbert.H P = Completion (Pre P)`, with `opT`, used by `OpTBridge`,
+  `GapToOperator`, `B2Locality` and `ClayAssembly`.
 
 This module relates them, and states the contraction property on each side as an equivalence with
 `TransferGap.GapAt`.

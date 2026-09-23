@@ -14,6 +14,7 @@ only place their emission and refusal paths execute at all: the real reads are b
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -28,15 +29,33 @@ GUARDED = sorted(p.name for p in CERT.glob("*.py")
 
 
 def _load(name: str):
+    """Import a certification, leaving `sys.path` exactly as it was found.
+
+    `pop(0)` removed whatever was at index 0 AFTERWARDS, not what was inserted. Eleven guarded
+    modules insert their OWN directory at index 0 while executing, so the pop discarded the module's
+    entry and LEFT the test's `research/code` behind. Two consequences, and the second is a silent
+    one: `sys.path` grew by one entry per load, and `research/code/certify` stayed importable for
+    every later test in the file. `test_interior_mixing_grid_writes_its_artifact` passes only
+    because of that leak -- run on its own it raises `ModuleNotFoundError: beta_star_enclosure`,
+    because `interior_mixing_of_analytic_grid.py` puts only `research/code` on the path. Saving and
+    restoring the whole list makes each load independent of the ones before it.
+    """
     path = CERT / name
-    sys.path.insert(0, str(REPO / "research" / "code"))
+    mine = str(REPO / "research" / "code")
+    sys.path.insert(0, mine)
     try:
         spec = importlib.util.spec_from_file_location("certify_" + path.stem, path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         return mod
     finally:
-        sys.path.pop(0)
+        # By VALUE, not by position. A module's own insert stays: several of these import a sibling
+        # lazily, inside a function, and need the entry they put there at import time to still be
+        # present when that function runs. Wiping the list would break them for a different reason.
+        try:
+            sys.path.remove(mine)
+        except ValueError:                                  # pragma: no cover - already gone
+            pass
 
 
 def test_the_guarded_certifications_are_importable():
@@ -59,18 +78,57 @@ def test_certification_module_level_runs(name):
 def test_declared_output_lands_in_the_data_directory(name):
     """A certification that declares OUT_CSV points it at research/data, not somewhere else.
 
-    OUT_CSV is built by walking up from __file__; one dirname too few or too many puts the artifact
+    The path is built by walking up from __file__; one dirname too few or too many puts the artifact
     outside the tree, where regen_all --verify would never see it and the committed copy would go
     stale without anything objecting.
+
+    IT USED TO LOOK ONLY FOR THE NAME `OUT_CSV`, and so skipped 32 of the 41 guarded modules -- 78%
+    of its population, which is where every one of this file's skips came from. The name is not the
+    property: `aperture_cap_of_floor.py` and `floor_ladder_exact.py` call theirs `OUT`,
+    `free_field_muinf.py` has `OUT_EXACT` and `OUT_MEASURED`. `floor_ladder_exact.py` is the sharp
+    case -- it uses the exact `os.path.join(HERE, "..", "..", "data", …)` idiom this test exists to
+    police, and was not being looked at.
+
+    AND THE COMPARISON WAS UN-NORMALISED. `Path(out).parent == DATA` is a string-ish compare on an
+    unresolved path, so `…/certify/../../data` != `…/data` and a CORRECT declaration would have been
+    reported wrong. That the skip hid it is why it was never noticed: the comparison had only ever
+    been run against the nine modules that spell the path without `..`.
     """
     mod = _load(name)
-    out = getattr(mod, "OUT_CSV", None)
-    if out is None:
-        pytest.skip(f"{name} declares no OUT_CSV")
-    p = Path(out)
-    assert p.parent == DATA, f"{name} writes to {p.parent}, not {DATA}"
-    assert p.suffix == ".csv", f"{name} declares a non-csv artifact: {p.name}"
-    assert p.parent.is_dir(), f"{p.parent} does not exist"
+    declared = {attr: getattr(mod, attr) for attr in dir(mod)
+                if attr.isupper() and isinstance(getattr(mod, attr), str)
+                and getattr(mod, attr).endswith(".csv")}
+    if not declared:
+        pytest.skip(f"{name} declares no .csv artifact path")
+    for attr, out in sorted(declared.items()):
+        p = Path(out)
+        # `.resolve()` on both sides: the declaration is what is being checked, not its spelling.
+        assert p.parent.resolve() == DATA.resolve(), \
+            f"{name}.{attr} writes to {p.parent.resolve()}, not {DATA}"
+        assert p.suffix == ".csv", f"{name}.{attr} declares a non-csv artifact: {p.name}"
+        assert p.parent.is_dir(), f"{p.parent} does not exist"
+
+
+def test_the_artifact_path_check_reaches_most_of_the_tree():
+    """POSITIVE CONTROL for the POPULATION, which no per-module assertion can see.
+
+    A skip is a pass as far as a green run is concerned, and a check that skips 78% of its subjects
+    reports the same word as one that checks them all. This pins the count, so narrowing the
+    detection again shows up here rather than as a quieter suite.
+    """
+    found = 0
+    for name in GUARDED:
+        mod = _load(name)
+        if any(a.isupper() and isinstance(getattr(mod, a), str)
+               and getattr(mod, a).endswith(".csv") for a in dir(mod)):
+            found += 1
+    # DERIVED: 12 of the 41 guarded certifications declare a .csv artifact path, measured by the
+    # loop above. Only 9 of them spell it `OUT_CSV`; the bar is set at the measured count so that
+    # losing any of the three found by widening is a failure rather than a quieter run.
+    assert found >= 12, (
+        f"only {found} of {len(GUARDED)} guarded certifications declare a .csv path the check can "
+        "see; it used to be 9 of 41, and the ones it could not see were the ones writing through "
+        "`..` path joins")
 
 
 @pytest.mark.parametrize("name", ["interior_mixing_of_analytic_grid.py",
@@ -503,3 +561,66 @@ def test_gap_of_margin_pools_every_hop(tmp_path):
         f"gap_of_margin.load returned {None if got is None else got.shape[0]} configs from two hops "
         f"holding 3 and 5; pooling means 8")
     assert mod.load("su2", 6, 9.99, ncap=10) is None, "an absent coupling is still None"
+
+
+# The Lean modules `cell_pivot_certificate.py` emits, and the flag that emits each. Both say in
+# their own header that they are generated by this script; nothing checked that the script still
+# produces them, and both had drifted -- the .lean files were rewritten by hand (expanded DERIVED
+# notes, the shouting removed) and the templates were left behind. Regenerating would have reverted
+# every one of those repairs with no test objecting, which is why the missing check IS the defect.
+GENERATED_LEAN = [("--emit-lean", "CellPivot.lean"), ("--emit-lean-cover", "CellCover.lean")]
+
+
+@pytest.mark.parametrize("flag,target", GENERATED_LEAN, ids=[t for _f, t in GENERATED_LEAN])
+def test_generated_lean_is_reproducible(flag, target, tmp_path):
+    """A file that says it is generated must be what its generator generates, byte for byte.
+
+    Not a proof that the prose is right -- it is a proof that the two copies of it are the same one.
+    A doc-comment repair made in the .lean file and not in the template survives only until someone
+    runs the emitter, and nothing announces that it has been undone: the numbers are unchanged, so
+    every other gate in this suite still reads clean.
+
+    To satisfy it after editing either side: make the SAME edit in the other. The templates live in
+    `certify/cell_pivot_certificate.py` and every per-coupling value in them is a `{}` field.
+    """
+    import subprocess
+
+    out = tmp_path / target
+    r = subprocess.run(
+        [sys.executable, str(CERT / "cell_pivot_certificate.py"), flag, str(out)],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        cwd=str(CERT), env={**os.environ, "PYTHONIOENCODING": "utf-8"}, timeout=900)
+    # DERIVED: `0` is the process exit that means the emitter ran; any other value means it did not.
+    assert r.returncode == 0, f"the emitter refused:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+
+    committed = (REPO / "research" / "lean" / "MassGap" / target).read_bytes()
+    emitted = out.read_bytes()
+    # DERIVED: 1000 bytes is far below either file (CellCover is 132 KB, CellPivot 343 KB) and is a
+    # floor on the EMITTER having produced something, not a size the file must have. A zero-length
+    # write compares equal to nothing and would otherwise report as a clean diff of two blanks.
+    assert len(emitted) > 1000, f"the emitter wrote {len(emitted)} bytes"
+    if emitted != committed:
+        import difflib
+        d = list(difflib.unified_diff(
+            committed.decode("utf-8").splitlines(), emitted.decode("utf-8").splitlines(),
+            "committed", "regenerated", lineterm="", n=0))
+        pytest.fail(
+            f"{target} is not what `cell_pivot_certificate.py {flag}` emits, so running the "
+            f"generator would overwrite it with something else ({len(d)} differing line(s)).\n"
+            "Make the same edit on both sides -- the prose lives in the script's templates.\n"
+            + "\n".join(x[:200] for x in d[:40]))
+
+
+def test_the_reproducibility_check_can_actually_fail(tmp_path):
+    """POSITIVE CONTROL. A one-character difference must be detected.
+
+    The comparison above is an equality on bytes, so the way it goes wrong is not a weak comparison
+    but an empty one -- both sides missing, or the emitter writing nothing. This drives it with a
+    file that differs in exactly one character and requires a mismatch.
+    """
+    committed = (REPO / "research" / "lean" / "MassGap" / "CellCover.lean").read_bytes()
+    # DERIVED: the same 1000-byte floor as the check above, for the same reason -- an empty read
+    # would make the mutation below a no-op and the control inert.
+    assert len(committed) > 1000
+    mutated = committed.replace(b"generated", b"generatad", 1)
+    assert mutated != committed, "the mutation did not change the bytes; the control is inert"

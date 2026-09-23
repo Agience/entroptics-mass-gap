@@ -8,9 +8,9 @@ import MassGap.EvenAperture
 import MassGap.ApertureRoute
 
 /-!
-# MassGap.ShapeNoGo — five coupling-free shape properties do not bound the cosine average
+# MassGap.ShapeNoGo — six coupling-free shape properties do not bound the cosine average
 
-Collects, as the structure `ShapeFacts m ρ`, five properties of a lag correlation
+Collects, as the structure `ShapeFacts m ρ`, six properties of a lag correlation
 `ρ : Fin (N + 1) → ℝ`, each transcribed from a lemma this tree proves about
 `ρ = MassGap.wilsonCorrAt N β`:
 
@@ -24,11 +24,11 @@ Collects, as the structure `ShapeFacts m ρ`, five properties of a lag correlati
 * `hankel` — `0 ≤ ∑ i, ∑ j, c i * c j * ρ (e i + e j)` for level maps constrained below `m`, from
   `Hankel.corrClay_hankel_psd`.
 
-`wilsonCorrAt_shapeFacts` proves all five for `MassGap.wilsonCorrAt Nap β` at even extent
+`wilsonCorrAt_shapeFacts` proves all six for `MassGap.wilsonCorrAt Nap β` at even extent
 `Nap + 1 = 2 * m` with `3 ≤ m` and `0 ≤ β`.
 
 `flatRead` is the constant read `ρ ≡ 1`, which `flatRead_eq_default` identifies with
-`Moment.Read`'s `Inhabited` witness. `flatRead_shapeFacts` proves all five clauses for it at every
+`Moment.Read`'s `Inhabited` witness. `flatRead_shapeFacts` proves all six clauses for it at every
 `N` and every `m`, and `flat_cosAvg_eq_zero` computes its cosine average as `0` for `1 ≤ N`, since
 the `N + 1` angles are those of the `(N + 1)`-th roots of unity
 (`ZeroMode.sum_cos_theta_eq_zero`).
@@ -36,7 +36,7 @@ the `N + 1` angles are those of the `(N + 1)`-th roots of unity
 `shape_facts_do_not_imply_confinement` and its unwrapped form `..._'` conclude the negation of
 `∀ R, ShapeFacts m R.ρ → (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvg R`, at every `N ≥ 1` and every `m`.
 
-Scope. The negated implication is about the five listed properties only; nothing here evaluates
+Scope. The negated implication is about the six listed properties only; nothing here evaluates
 `wilsonCorrAt` at any lag, and no claim is made about whether the Wilson correlator clears the
 floor. Every clause of `ShapeFacts` is a statement across the lag index at fixed `β`, so the
 witness `flatRead`, which carries no coupling, satisfies all of them.
@@ -48,7 +48,7 @@ namespace MassGap.ShapeNoGo
 
 open Finset
 
-/-! ## 1. The five proved shape facts, as one predicate -/
+/-! ## 1. The six proved shape facts, as one predicate -/
 
 /-- Five properties of a lag correlation `ρ : Fin (N + 1) → ℝ`, bundled as one `Prop`-valued
 structure indexed by a half-extent bound `m`. Each field transcribes the conclusion of a lemma of
@@ -122,7 +122,7 @@ theorem wilsonCorrAt_shapeFacts (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm3 : 3 �
 
 /-! ## 3. The flat read -/
 
-/-- **THE FLAT READ** `ρ ≡ 1` — the tree's own `Moment.Read` `Inhabited` witness, named so it can be
+/-- **The flat read** `ρ ≡ 1` — the tree's own `Moment.Read` `Inhabited` witness, named so it can be
 reasoned about. `flatRead_eq_default` records that this is the same term and not a copy of it.
 
 DERIVED: `1` is the constant value of `Moment.Read`'s own `Inhabited` witness and `0` is the
@@ -189,7 +189,7 @@ DERIVED: no numeral occurs in the statement. -/
 theorem cosAvgEven_eq (a : MassGap.EvenAperture.EvenAp) (β : ℝ) :
     MassGap.ApertureRoute.cosAvgEven a β = cosAvg (MassGap.EvenAperture.readEven a β) := rfl
 
-/-- **THE FLAT READ'S COSINE AVERAGE IS EXACTLY ZERO.**
+/-- **The flat read's cosine average is exactly zero.**
 
     ∑_d p_d cos θ_d = (1/(N+1)) ∑_{d<N+1} cos(2πd/(N+1)) = 0
 
@@ -200,8 +200,8 @@ for `N+1 ≥ 2` — `ZeroMode.sum_cos_circle_eq_zero`, off `Complex.isPrimitiveR
 
 The flat read's `p` is constant, so the weight factors straight out of the sum; nothing else
 happens. This is the same mechanism `ZeroMode.zero_mode_lt_of_tension` runs on — a constant
-component contributes NOTHING to the circular first moment while still diluting the normalisation —
-taken to its limit, where the correlation is nothing BUT the constant component.
+component contributes nothing to the circular first moment while still diluting the normalisation —
+taken to its limit, where the correlation is nothing but the constant component.
 
 DERIVED: `1 ≤ N` is `2 ≤ N+1`, the root-of-unity identity's own hypothesis; at `N = 0` the single
 angle is `0` and the average is `1`, so the bound is not an artefact of the proof. -/
@@ -228,7 +228,7 @@ theorem flat_cosAvg (N : ℕ) (hN : 1 ≤ N) : cosAvg (flatRead N) = 0 :=
 
 /-! ## 5. The capstone -/
 
-/-- **THE SHAPE FACTS DO NOT IMPLY CONFINEMENT.**
+/-- **The shape facts do not imply confinement.**
 
 There is no implication of the form
 
@@ -238,11 +238,11 @@ at any extent `N ≥ 1` and any half-extent bound `m`. The flat read satisfies t
 (`flatRead_shapeFacts`) and its cosine average is `0` (`flat_cosAvg_eq_zero`), strictly below the
 floor `3^{−1/4} > 0`.
 
-**WHAT THIS DOES AND DOES NOT SAY.** It does NOT say `ConfinesAtAnAperture` is false — nothing here
+**What this does and does not say.** It does not say `ConfinesAtAnAperture` is false — nothing here
 evaluates `wilsonCorrAt` at any lag, and the Wilson correlator may well clear the floor. It says
-that the five coupling-free facts listed at the head of this file are not enough to show that it
-does, because a coupling-free object satisfies all five and fails the floor. So the remaining work
-is on the `β`-dependence, and a sixth fact of the same kind will not close it.
+that the six coupling-free facts listed at the head of this file are not enough to show that it
+does, because a coupling-free object satisfies all six and fails the floor. So the remaining work
+is on the `β`-dependence, and a further fact of the same kind will not close it.
 
 The `m` is universally quantified, so the statement is not evaded by taking the half-extent bound
 large: the flat read satisfies `ShapeFacts m` for every `m` at once.

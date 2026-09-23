@@ -41,7 +41,7 @@ plaquette count `Fintype.card Pq` appears explicitly in every bound. The action 
   `wilson_le_uniform_in_volume` and `wilson_le_uniform_of_clustering_total` carry those constants
   through the mean-value theorem and `MassGap.le_of_lipschitz_grid`.
 
-⛔ The vanishing (`hclust`) or domination (`hdom`) of the connected plaquette correlator is a
+The vanishing (`hclust`) or domination (`hdom`) of the connected plaquette correlator is a
 hypothesis of every theorem in that last group, and is proved nowhere in this file. Every statement
 here is at a fixed finite lattice; no thermodynamic limit is taken anywhere.
 
@@ -486,7 +486,7 @@ theorem cov_eq_sum_over_plaquettes {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fint
 with `Fintype.card Pq` absent from the conclusion. It is `cov_eq_sum_over_plaquettes` followed by
 `cov_sum_bound_of_local`, with the per-term bound `4 * M` coming from `wilsonPlaqObs_le_two`.
 
-⛔ `hclust` is a hypothesis at this one coupling `β`, and this file proves it for no lattice. The
+`hclust` is a hypothesis at this one coupling `β`, and this file proves it for no lattice. The
 statement is the implication only; compare `cov_bound_extensive`, which is the same bound with
 `supp.card` replaced by the plaquette count and no hypothesis at all.
 DERIVED: the `0`s are the `N ≠ 0` and the exact vanishing `hclust` asserts; the `4` is `2 + 2`, each `2` being `wilsonPlaqObs_le_two` entering once for `⟨O·φ_p⟩` and once for `⟨O⟩·⟨φ_p⟩`. -/
@@ -749,7 +749,7 @@ for all real `x`, `y`, on any `SU(N)` Wilson system with `N ≠ 0`. The mean val
 `Set.univ`, with `wilsonSystem_expect_hasDerivAt` giving the derivative and `cov_bound_local` bounding
 it at each point.
 
-⛔ `hclust` is quantified over all `z : ℝ`, not over an interval, and it is assumed, not proved.
+`hclust` is quantified over all `z : ℝ`, not over an interval, and it is assumed, not proved.
 `Fintype.card Pq` does not appear in the conclusion, but it does not follow that `supp.card` is
 independent of the lattice — that is part of what `hclust` is asked to supply.
 DERIVED: the `0`s are the `N ≠ 0` and the exact vanishing `hclust` asserts; the `4` is `cov_bound_local`'s, itself `2 + 2` from `wilsonPlaqObs_le_two`. -/
@@ -841,7 +841,7 @@ The proof weakens `expect_lipschitz_local`'s `4 * M * (supp V).card` to `4 * M *
 applies `MassGap.le_of_lipschitz_grid` at each `V`. The index `V` is a bare natural number: nothing in
 the statement makes the lattices grow with it, and no limit is taken.
 
-⛔ `hclust` and `hR` are hypotheses. Whether a real lattice family satisfies them is not addressed.
+`hclust` and `hR` are hypotheses. Whether a real lattice family satisfies them is not addressed.
 DERIVED: the `0`s are the `N ≠ 0`, the `0 ≤ M`, the `0 ≤ δ` and the exact vanishing `hclust` asserts; the `4` is `expect_lipschitz_local`'s, itself `2 + 2` from `wilsonPlaqObs_le_two`. -/
 theorem wilson_le_uniform_in_volume {N : ℕ} (hN : N ≠ 0)
     {Lk Pq : ℕ → Type} [∀ V, Fintype (Lk V)] [∀ V, Fintype (Pq V)] [∀ V, DecidableEq (Pq V)]
@@ -971,7 +971,7 @@ profile `c V z` at every index and coupling, one nonnegative total `K` bounding 
 does the rest. The hypothesis is domination rather than exact vanishing, so the correlator is never
 required to be zero anywhere.
 
-⛔ `hdom` and `hsum` are hypotheses, and `K`'s independence of `V` is asserted by `hsum`, not derived.
+`hdom` and `hsum` are hypotheses, and `K`'s independence of `V` is asserted by `hsum`, not derived.
 `Fintype.card (Pq V)` appears nowhere, and no limit in `V` is taken.
 DERIVED: the `0`s are the `N ≠ 0` and the `0 ≤ K` that `le_of_lipschitz_grid` requires of its constant; the statement carries no other numeral. -/
 theorem wilson_le_uniform_of_clustering_total {N : ℕ} (hN : N ≠ 0)

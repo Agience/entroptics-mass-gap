@@ -252,7 +252,7 @@ theorem le_of_lipschitz_grid {f : ℝ → ℝ} {a b B L δ : ℝ} (hL : 0 ≤ L)
 `uniform_margin_of_intensive_radius` from a single `r` with `0 < r < 1` bounding `μ₁ F` at every `F`.
 The conclusion is `∃ κ, 0 < κ ∧ ∀ F, Tendsto ... (nhds 0)`.
 
-⛔ The bound variable `κ` occurs only in the conjunct `0 < κ`, not in the `Tendsto` clause after the
+Scope: the bound variable `κ` occurs only in the conjunct `0 < κ`, not in the `Tendsto` clause after the
 `∧`. So the statement gives convergence at each `F` together with the existence of some positive `κ`;
 it does not assert a decay rate common to all `F`.
 

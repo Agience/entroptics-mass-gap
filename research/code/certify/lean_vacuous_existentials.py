@@ -35,14 +35,37 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean", "MassGap")
 BASELINE = os.path.join(REPO, "research", "code", "tests", "vacuous_existentials_baseline.txt")
 
-#: The shape: an existential over a real, immediately followed by its own positivity and a
-#: conjunction. `\w` covers the ASCII names; the Greek ones are spelled out because Python's `\w`
-#: does match them but the intent is clearer named.
-_EX = re.compile(r"∃\s*([A-Za-zα-ω][\w₀-₉']*)\s*:\s*ℝ\s*,\s*"
-                 r"0\s*<\s*\1\s*∧")
+#: A binder name. `[^\W\d]` rather than `[A-Za-zα-ω]`, which is the same ASCII-class defect one
+#: alphabet along: it spells out the LOWERCASE Greek block and stops, so `∃ Δ : ℝ, 0 < Δ ∧ …` was
+#: not the shape as far as this scanner was concerned. Two conclusions in the tree bind `Δ`.
+_NAME = r"[^\W\d][\w₀-₉']*"
 
-#: A declaration begins at column zero with one of these.
-_DECL = re.compile(r"^(?:theorem|lemma|noncomputable def|def|instance)\s+([\w.'₀-₉]+)")
+#: The shape: a conclusion that binds a positive real. Lean writes it three ways and the scanner
+#: saw one of them, so the other two were never examined -- a gate reporting on a population it did
+#: not scan, which is the failure this file exists to make impossible for the shape it hunts.
+#:
+#:   * TYPED, the form it did see:      `∃ κ : ℝ, 0 < κ ∧ …`
+#:   * TYPED, parenthesised and with further binders following it, which it did not:
+#:                                      `∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧ …`   (9 in the tree)
+#:   * Lean's BINDER-PREDICATE SUGAR, which it did not: `∃ b > 0, …`      (8 in the tree)
+#:
+#: The sugar elaborates to `∃ b, 0 < b ∧ …` -- the identical statement, and the one
+#: `VolumeRate.exists_pos_and_iff` proves equivalent to dropping the existential. Widening found no
+#: new vacuous conclusion, so the baseline does not move; what it removes is the blind spot, in
+#: which a vacuous conclusion written `∃ b > 0,` would have passed the ratchet in silence.
+_EX = re.compile(
+    r"∃\s*\(?\s*(?P<typed>" + _NAME + r")\s*:\s*ℝ\s*\)?(?:\s*\([^()]*\))*\s*,\s*"
+    r"0\s*<\s*(?P=typed)\s*∧"
+    r"|∃\s*(?P<sugar>" + _NAME + r")\s*>\s*(?:\(\s*0\s*:\s*ℝ\s*\)|0)\s*,")
+
+#: A declaration begins at column zero with one of these, and may carry an attribute or a
+#: visibility modifier first. Without those two prefixes the scan did not see 129 declarations in
+#: `research/lean/MassGap` at all -- 25 written `private theorem …` and the rest carrying an
+#: `@[simp]`-style attribute on the SAME line as the keyword -- so whatever their conclusions bound
+#: was never examined and the ratchet reported clean over them. Widening admits no new hit here,
+#: which is what says the baseline is unaffected; what it removes is the blind spot.
+_DECL = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|scoped\s+|noncomputable\s+)*"
+                   r"(?:theorem|lemma|def|abbrev|axiom|instance)\s+([\w.'₀-₉]+)")
 
 
 def _statements(text: str):
@@ -84,7 +107,7 @@ def scan():
             m = _EX.search(stmt)
             if not m:
                 continue
-            var = m.group(1)
+            var = m.group("typed") or m.group("sugar")
             body = stmt[m.end():]
             # strip the trailing proof opener so `:= by` cannot count as a use
             body = re.split(r":=", body)[0]

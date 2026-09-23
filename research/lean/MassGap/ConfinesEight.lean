@@ -215,7 +215,8 @@ symmetry folds. `max β 0` is what supplies that lemma's nonnegative-coupling si
 statement holds for every real `β`.
 
 DERIVED: `0` on the left is the strict lower bound, and `0` in `max β 0` is the clamp floor; `7` is
-the aperture's `N` and `4` the matching `m`; the lags `0`–`4` are the folded half of `Fin 8`; the
+the aperture's `N` and `4` the matching `m`; the lags `0`, `1`, `2`, `3` and `4` are the folded half
+of `Fin 8`; the
 `2`s are the fold multiplicities. -/
 theorem denom_pos_extent_eight (β : ℝ) :
     0 < MassGap.wilsonCorrAt 7 (max β 0) 0 + 2 * MassGap.wilsonCorrAt 7 (max β 0) 1

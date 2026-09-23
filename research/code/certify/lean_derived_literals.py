@@ -34,8 +34,15 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 LEAN = REPO / "research" / "lean" / "MassGap"
 
+# `[^\W\d]` rather than `[A-Za-z_]` for the NAME's first character. LEAN IDENTIFIERS ARE UNICODE,
+# and the declarations this development is most about begin with a Greek letter -- `ΔYM` the mass
+# gap, `κ₀YM` the entropy floor, `μYM` and `μYMAt` the tension, `μClampAt`, `βloYM`. An ASCII-only
+# start class matched none of them, so 29 declarations were never scanned at all and their
+# `DERIVED:`/`CHOSEN:` notes were never checked, however clean this gate reported the tree.
+# `lean_axiom_footprints.py` carries the same fix with the same reason; it was made there and not
+# propagated here.
 DECL = re.compile(
-    r"^(?:noncomputable\s+)?(?:private\s+)?(theorem|lemma|def|abbrev)\s+([A-Za-z_][A-Za-z0-9_'.]*)",
+    r"^(?:noncomputable\s+)?(?:private\s+)?(theorem|lemma|def|abbrev)\s+([^\W\d][\w'.]*)",
     re.M,
 )
 

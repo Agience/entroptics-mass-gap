@@ -42,13 +42,18 @@ TESTS_DIR = pathlib.Path(__file__).resolve().parent
 REPO = pathlib.Path(__file__).resolve().parents[3]
 LEAN = REPO / "research" / "lean" / "MassGap"
 
-#: A backticked token that names a module-qualified declaration.
-_CITE = re.compile(r"`([A-Z][A-Za-z0-9]*)\.([A-Za-z0-9_.']+)`")
+#: A backticked token that names a module-qualified declaration. The module part stays ASCII, since
+#: module names are filenames; the DECLARATION part must not, because Lean identifiers are Unicode
+#: and this tree's central ones are Greek — `Complete.κ₀YM_pos`, `Complete.μYMAt_nonneg`. An
+#: ASCII-only class did not match those citations at all, so they were dropped before checking.
+_CITE = re.compile(r"`([A-Z][A-Za-z0-9]*)\.([^\W\d][\w.']*)`")
 
-#: A top-level declaration.
+#: A top-level declaration. Same reason for `[^\W\d]`: 29 declarations here begin with a Greek
+#: letter, including `ΔYM`, `κ₀YM`, `μYM` and `μYMAt` — the mass gap, the entropy floor and the
+#: tension, which is to say the objects the development is about.
 _DECL = re.compile(
     r"^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+|private\s+|protected\s+|scoped\s+)*"
-    r"(?:theorem|lemma|def|abbrev|structure|instance|axiom|class)\s+([A-Za-z0-9_.']+)",
+    r"(?:theorem|lemma|def|abbrev|structure|instance|axiom|class)\s+([^\W\d][\w.']*)",
     re.MULTILINE,
 )
 
@@ -73,8 +78,14 @@ def _modules():
 
 
 def _words(path: pathlib.Path) -> set[str]:
-    """Every identifier-like token in the module, declarations and everything else."""
-    return set(re.findall(r"[A-Za-z0-9_']+", path.read_text(encoding="utf-8")))
+    """Every identifier-like token in the module, declarations and everything else.
+
+    `[^\\W\\d][\\w']*` rather than `[A-Za-z0-9_']+`: an ASCII-only scan begins at the first ASCII
+    letter INSIDE a Greek-initial name, so `κ₀YM_pos` entered this set as `YM_pos` and a citation
+    of the real name was reported dead. Worse, `ΔYM`, `κ₀YM` and `μYM` all truncate to `YM`, so
+    three distinct declarations collided on one token.
+    """
+    return set(re.findall(r"[^\W\d][\w']*", path.read_text(encoding="utf-8")))
 
 
 def _declared(path: pathlib.Path) -> set[str]:
@@ -88,20 +99,15 @@ def _declared(path: pathlib.Path) -> set[str]:
     return names
 
 
-def test_docstring_declaration_names_resolve():
+def _findings() -> dict[str, str]:
+    """Every live miscitation, as `{baseline key: reported line}`.
+
+    Split out of the test so the baseline can be checked against the same computation the gate
+    forgives with, rather than against a second one that could drift from it.
+    """
     mods = _modules()
-    # DERIVED: the bar is a floor on DISCOVERY, not on the tree. The tree has upwards of 150
-    # modules, so any count near 20 means the glob resolved somewhere else and the scan would pass
-    # by examining nothing. Set far below the true count so that growth never has to move it.
-    assert len(mods) >= 20, (
-        f"only {len(mods)} Lean modules discovered; the scan is looking in the wrong place and "
-        "would pass vacuously")
     present = {name: _words(p) for name, p in mods.items()}
-    known = set()
-    if _BASELINE.exists():
-        known = {l.strip() for l in _BASELINE.read_text(encoding="utf-8").splitlines()
-                 if l.strip() and not l.startswith("#")}
-    bad = []
+    out: dict[str, str] = {}
     for name, path in mods.items():
         text = path.read_text(encoding="utf-8")
         for doc in _DOC.finditer(text):
@@ -115,17 +121,70 @@ def test_docstring_declaration_names_resolve():
                 if mod in _COLLIDES:          # a Mathlib namespace of the same name
                     continue
                 if leaf not in present[mod]:
-                    key = f"{path.name} {mod}.{rest}"
-                    if key in known:
-                        continue
                     line = text[: doc.start() + c.start()].count("\n") + 1
-                    bad.append(f"  {path.name}:{line} cites `{mod}.{rest}`, "
-                               f"but `{leaf}` does not occur in `{mod}` at all")
+                    out[f"{path.name} {mod}.{rest}"] = (
+                        f"  {path.name}:{line} cites `{mod}.{rest}`, "
+                        f"but `{leaf}` does not occur in `{mod}` at all")
+    return out
+
+
+def _known() -> set[str]:
+    if not _BASELINE.exists():
+        return set()
+    return {l.strip() for l in _BASELINE.read_text(encoding="utf-8").splitlines()
+            if l.strip() and not l.startswith("#")}
+
+
+def test_docstring_declaration_names_resolve():
+    mods = _modules()
+    # DERIVED: the bar is a floor on DISCOVERY, not on the tree. The tree has upwards of 150
+    # modules, so any count near 20 means the glob resolved somewhere else and the scan would pass
+    # by examining nothing. Set far below the true count so that growth never has to move it.
+    assert len(mods) >= 20, (
+        f"only {len(mods)} Lean modules discovered; the scan is looking in the wrong place and "
+        "would pass vacuously")
+    known = _known()
+    bad = [msg for key, msg in sorted(_findings().items()) if key not in known]
     if bad:
         pytest.fail(
             f"{len(bad)} doc-comment reference(s) name a declaration the cited module does not "
             "have.\nFix the reference or drop the module prefix — a reader following it finds "
             "nothing, and the compiler never checks prose.\n" + "\n".join(bad))
+
+
+def test_the_baseline_carries_no_retired_debt():
+    """A baseline line that no longer describes a live miscitation must be DELETED.
+
+    The file says it may only shrink. Nothing made that true: the gate reads the baseline purely as
+    a set of keys to forgive, so a reference that was repaired — or a docstring that was rewritten
+    and dropped the citation entirely — left its line behind forever, silently PRE-FORGIVING the
+    next miscitation of that same `file Module.name`. Eight of the seventeen lines were in that
+    state when this check was added: every one had had its citing sentence removed, while the named
+    declaration still does not exist, so any return of the reference would have been waved through.
+
+    Retiring a miscitation and deleting its line are one change, not two. Same contract, and same
+    reasoning, as `test_no_undeclared_lean_constants.test_the_baseline_carries_no_retired_debt`.
+    """
+    known = _known()
+    if not known:
+        pytest.skip("no baseline file")
+    live = _findings()
+    stale = sorted(k for k in known if k not in live)
+    assert not stale, (
+        f"{len(stale)} baseline line(s) no longer describe a live miscitation and must be deleted "
+        f"from {_BASELINE.name}:\n  " + "\n  ".join(stale))
+
+
+def test_a_stale_baseline_line_would_be_caught():
+    """POSITIVE CONTROL for the check above: a key nothing produces is reported stale.
+
+    Without this, a `_findings()` that returned everything would make the staleness check green on
+    any baseline at all, which is the same defect one level up.
+    """
+    live = _findings()
+    invented = "Nonexistent.lean Nowhere.no_such_declaration_at_all"
+    assert invented not in live, "the planted key was accidentally a real finding"
+    assert sorted(k for k in {invented} if k not in live) == [invented]
 
 
 def test_the_gate_can_actually_fail():

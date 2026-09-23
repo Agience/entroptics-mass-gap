@@ -114,7 +114,7 @@ contradiction and `norm_num` on the squared comparison.
 
 DERIVED: `3` and the `1/3` are `LagTwoBound.floor_pow_four`'s, which is `Floor.lean`'s directed-path
 count; `0.5773502` and `0.5773507` are the two rationals whose squares bracket `1/3` at this
-resolution and they REPORT the derived quantity rather than decide anything. The `4` is the exponent
+resolution and they report the derived quantity rather than decide anything. The `4` is the exponent
 `floor_pow_four` carries and the `2` is the square being bracketed. -/
 theorem floor_sq_tight :
     0.5773502 < ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2
@@ -205,7 +205,7 @@ theorem lambdaThreshold_pos : 0 < lambdaThreshold := by
 /-- `0.136469 < lambdaThreshold`, from `floor_tight`'s upper bound after clearing the denominator.
 This is the largest five-digit numeral in this position provably below the threshold.
 
-DERIVED: `0.136469` REPORTS the derived `lambdaThreshold` and decides nothing; it is the truncation
+DERIVED: `0.136469` reports the derived `lambdaThreshold` and decides nothing; it is the truncation
 of the closed form, and `confines_of_subdominant_le` is the one statement that reads it. -/
 theorem lambdaThreshold_gt : 0.136469 < lambdaThreshold := by
   obtain ⟨_, hhi⟩ := floor_tight
@@ -222,7 +222,7 @@ theorem lambdaThreshold_gt : 0.136469 < lambdaThreshold := by
 the threshold, so a hypothesis `Λ < 0.13647` does not give the criterion and no statement below is
 available at that value.
 
-DERIVED: `0.13647` REPORTS the derived `lambdaThreshold` from above; it decides nothing and is used
+DERIVED: `0.13647` reports the derived `lambdaThreshold` from above; it decides nothing and is used
 nowhere except to bracket. -/
 theorem lambdaThreshold_lt : lambdaThreshold < 0.13647 := by
   obtain ⟨hlo, _⟩ := floor_tight

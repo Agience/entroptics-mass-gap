@@ -155,7 +155,7 @@ end Pairing
 
 /-! ## Part 1 — the adjoint of a bounded kernel operator
 
-The whole content is one Fubini. The integrand `g(x) · K(x,y) · f(y)` is NOT bounded — `f` and `g`
+The whole content is one Fubini. The integrand `g(x) · K(x,y) · f(y)` is not bounded — `f` and `g`
 are only `L²` — so `ActionSplit.integrable_of_bounded` does not apply and the dominating function is
 built instead from the product of the two `L¹` envelopes, which is where the probability
 normalisation is used a second time (an `L²` function on a probability space is `L¹`). -/
@@ -185,7 +185,8 @@ theorem abs_kernelTranspose_le {K : X → Y → ℝ} {C : ℝ} (hKb : ∀ x y, |
 /-- The pairing of the operator's image, as an iterated integral. No Fubini here — this is the
 definition of the `L²` pairing with the operator's value substituted.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent; the `0` is the sign condition `hC0` places on the kernel
+bound `C`. -/
 theorem inner_kernelCLM_left (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (f : Lp ℝ 2 ν) (g : Lp ℝ 2 μ) :
@@ -232,10 +233,11 @@ theorem integrable_kernel_pair {K : X → Y → ℝ} {C : ℝ} (hK : Measurable 
 
 /-- The adjoint of a kernel operator is the operator of the transposed kernel.
 
-This is the statement `SlabKernelOperator` did not make. It identifies `T†` concretely, rather than
-asserting it exists, and it is what turns "is `T` self-adjoint?" into "is `K` symmetric?".
+It identifies `T†` concretely rather than asserting that it exists, which turns self-adjointness of
+`T` into symmetry of `K`.
 
-DERIVED: the `2`s are the `L²` exponent; `C` is the caller's kernel bound. -/
+DERIVED: the `2`s are the `L²` exponent; the `0` is the sign condition `hC0` places on `C`; `C` is
+the caller's kernel bound. -/
 theorem adjoint_kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
@@ -268,7 +270,8 @@ theorem adjoint_kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Func
 
 /-- The operator is determined by the kernel, the proof arguments being irrelevant.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent; the `0` is the sign condition `hC0` places on the kernel
+bound `C`. -/
 theorem kernelCLM_congr {K K' : X → Y → ℝ} {C : ℝ} (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C)
     (hK' : Measurable (Function.uncurry K')) (hKb' : ∀ x y, |K' x y| ≤ C)
@@ -283,11 +286,11 @@ section SelfAdjoint
 
 variable {X : Type*} [MeasurableSpace X]
 
-/-- A symmetric kernel gives a self-adjoint operator. This is the answer to the first question
-`SlabKernelOperator` left open, on one space: self-adjointness is exactly kernel symmetry, through
-`adjoint_kernelCLM`.
+/-- A symmetric kernel gives a self-adjoint operator. On one space, self-adjointness is exactly
+kernel symmetry, through `adjoint_kernelCLM`.
 
-DERIVED: the `2`s are the `L²` exponent; `C` is the caller's kernel bound. -/
+DERIVED: the `2`s are the `L²` exponent; the `0` is the sign condition `hC0` places on `C`; `C` is
+the caller's kernel bound. -/
 theorem isSelfAdjoint_kernelCLM_of_symm (K : X → X → ℝ) (C : ℝ)
     (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C)
     (μ : Measure X) [IsProbabilityMeasure μ] (hsymm : ∀ x y, K x y = K y x) :
@@ -396,11 +399,11 @@ theorem FiniteGram.symm {K : X → X → ℝ} (h : FiniteGram K) (x y : X) : K x
   rw [hK, hK]
   exact Finset.sum_congr rfl (fun i _ => mul_comm _ _)
 
-/-- The quadratic form of a gram kernel is a sum of squares. The whole Osterwalder–Seiler
-positivity argument, at a finite Gram index, with `integral_finsetSum` in place of Fubini.
+/-- The quadratic form of a gram kernel is a sum of squares. The Osterwalder–Seiler positivity
+argument at a finite Gram index, with `integral_finsetSum` in place of Fubini.
 
-DERIVED: the `2`s are the `L²` exponent and, in `^ 2`, the square the argument produces; `C` and
-`CA` are the caller's bounds. -/
+DERIVED: the `2`s are the `L²` exponent and, in `^ 2`, the square the argument produces; the `0` is
+the sign condition `hC0` places on `C`; `C` and `CA` are the caller's bounds. -/
 theorem inner_kernelCLM_self_eq_sum_sq_of_gram (K : X → X → ℝ) (C : ℝ)
     (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C)
     (μ : Measure X) [IsProbabilityMeasure μ]
@@ -540,7 +543,8 @@ theorem inner_kernelCLM_self_ge_of_nonneg (K : X → X → ℝ) (C : ℝ)
 
 /-- A constant kernel gives the rank-one averaging map. `T f = (∫ f) · 1`.
 
-DERIVED: the `1`s are the kernel's constant value and `oneLp`'s; the `2`s are the `L²` exponent. -/
+DERIVED: the `1`s are the kernel's constant value and `oneLp`'s; the `2`s are the `L²` exponent; the
+`0` is the sign condition `hC0` places on the kernel bound `C`. -/
 theorem kernelCLM_apply_of_const (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (hK1 : ∀ x y, K x y = 1) (f : Lp ℝ 2 ν) :
@@ -572,10 +576,11 @@ theorem kernelCLM_apply_eq_zero_of_const (K : X → Y → ℝ) (C : ℝ)
 
 It is nonnegative — so the constant kernel is operator-positive — and it vanishes on the whole
 mean-zero subspace, although `1 ≤ K` holds with the largest constant a kernel bounded by `1` can
-have. **This is the refutation of "a Doeblin bound gives a spectral statement".**
+have. A Doeblin bound therefore does not by itself give a spectral statement.
 
 DERIVED: the `1` is the kernel's constant value; the `2` in `^ 2` is the square produced by the
-argument; the `2`s in `Lp ℝ 2` are the `L²` exponent. -/
+argument; the `2`s in `Lp ℝ 2` are the `L²` exponent; the `0` is the sign condition `hC0` places on
+the kernel bound `C`. -/
 theorem inner_kernelCLM_self_of_const (K : X → X → ℝ) (C : ℝ)
     (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C)
     (μ : Measure X) [IsProbabilityMeasure μ] (hK1 : ∀ x y, K x y = 1) (f : Lp ℝ 2 μ) :
@@ -622,14 +627,15 @@ section Vacuum
 variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
 
 /-- The stochastic condition — every row of the kernel integrates to one. This is exactly the
-normalisation `SliceTrace` records the slab kernel as NOT having.
+normalisation `SliceTrace` records the slab kernel as not having.
 
 DERIVED: the `1` is the total mass a stochastic row must carry. -/
 def KernelStochastic (K : X → Y → ℝ) (ν : Measure Y) : Prop := ∀ x, (∫ y, K x y ∂ν) = 1
 
 /-- The image of the constant observable is the row integral.
 
-DERIVED: the `2`s are the `L²` exponent; `oneLp`'s `1` is the constant observable's value. -/
+DERIVED: the `2`s are the `L²` exponent; `oneLp`'s `1` is the constant observable's value; the `0`
+is the sign condition `hC0` places on the kernel bound `C`. -/
 theorem coeFn_kernelCLM_oneLp (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
@@ -647,7 +653,7 @@ theorem coeFn_kernelCLM_oneLp (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (
 eigenvalue one, i.e. a vacuum.
 
 DERIVED: the `1`s are the stochastic normalisation and `oneLp`'s value; the `2`s are the `L²`
-exponent. -/
+exponent; the `0` is the sign condition `hC0` places on the kernel bound `C`. -/
 theorem kernelCLM_oneLp_eq_oneLp (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (hst : KernelStochastic K ν) :
@@ -660,7 +666,8 @@ theorem kernelCLM_oneLp_eq_oneLp (K : X → Y → ℝ) (C : ℝ) (hK : Measurabl
 
 /-- A sub-stochastic kernel makes the constant a supersolution, not an eigenvector.
 
-DERIVED: the `1`s are the kernel's cap and the bound asserted; the `2`s are the `L²` exponent. -/
+DERIVED: the `1`s are the kernel's cap and the bound asserted; the `2`s are the `L²` exponent; the
+`0` is the sign condition `hC0` places on the kernel bound `C`. -/
 theorem kernelCLM_oneLp_le_one (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (hK1 : ∀ x y, K x y ≤ 1) :
@@ -698,10 +705,11 @@ theorem adjoint_slabTransfer (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) 
           (slabHaar (N := N) τ (t + 1)) (slabHaar (N := N) τ t) :=
   adjoint_kernelCLM _ _ _ _ _ _ _
 
-/-- The one endomorphism in sight: `T† ∘ T`, on `L²` of the slab at `t+1`. `slabTransfer` is not
-an endomorphism at `n ≥ 2` and has no spectrum; this does.
+/-- The endomorphism `T† ∘ T`, on `L²` of the slab at `t+1`. `slabTransfer` is not an endomorphism
+at `n ≥ 2` and has no spectrum; this does.
 
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent. -/
+DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent; the `0` is
+the value `N` is required to differ from in `hN`. -/
 noncomputable def slabNormal (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     Lp ℝ 2 (slabHaar (N := N) τ (t + 1)) →L[ℝ] Lp ℝ 2 (slabHaar (N := N) τ (t + 1)) :=
   (ContinuousLinearMap.adjoint (slabTransfer (d := d) (n := n) hN τ β t)).comp
@@ -711,23 +719,27 @@ noncomputable def slabNormal (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) 
 premise, so the conclusion holds for every bounded operator, and `adjointComp_zero_eq_zero` is the
 control showing the zero operator satisfies it too.
 
-DERIVED: as `slabNormal`'s. -/
+DERIVED: as `slabNormal`'s — the `1` in `t + 1` is `slabKernel`'s time step, the `2`s are the `L²`
+exponent, and the `0` is the value `N` is required to differ from in `hN`. -/
 theorem isSelfAdjoint_slabNormal (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     IsSelfAdjoint (slabNormal (d := d) (n := n) hN τ β t) :=
   isSelfAdjoint_adjointComp _
 
-/-- The quadratic form of `slabNormal` is the squared norm of the image. **Also free.**
+/-- The quadratic form of `slabNormal` is the squared norm of the image.
 
-DERIVED: the `2` in `^ 2` is the square of a norm. -/
+DERIVED: the `2` in `^ 2` is the square of a norm and the `2`s in `Lp ℝ 2` are the `L²` exponent;
+the `1` in `t + 1` is `slabKernel`'s time step; the `0` is the value `N` is required to differ from
+in `hN`. -/
 theorem inner_slabNormal_self (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
     (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ)
       = ‖slabTransfer (d := d) (n := n) hN τ β t f‖ ^ 2 :=
   inner_adjointComp_self _ f
 
-/-- `slabNormal` is a positive operator. **Also free.**
+/-- `slabNormal` is a positive operator.
 
-DERIVED: the `0` is the sign asserted. -/
+DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
+in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent. -/
 theorem inner_slabNormal_self_nonneg (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
     0 ≤ (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ) :=
@@ -738,7 +750,9 @@ previous theorem this places the form in `[0, ‖f‖²]`, which is the interval
 spectrum would have to live in. It is still not a spectral statement: no eigenvalue, no gap, and
 Part 4 shows `0` can be in the spectrum with all of this holding.
 
-DERIVED: the `2` in `^ 2` is a squared norm; the `0` of `hβ` is the sign of the coupling. -/
+DERIVED: the `2` in `^ 2` is a squared norm and the `2`s in `Lp ℝ 2` are the `L²` exponent; the `0`
+of `hβ` is the sign of the coupling and is also the value `N` is required to differ from in `hN`;
+the `1` in `t + 1` is `slabKernel`'s time step. -/
 theorem inner_slabNormal_self_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n)
     (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
     (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ) ≤ ‖f‖ ^ 2 := by
@@ -858,7 +872,8 @@ theorem measurable_slabKernelPulled (τ : Fin d) (β : ℝ) (t : Fin n)
 
 /-- The pulled-back kernel keeps the slab cap as a uniform bound.
 
-DERIVED: the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis. -/
+DERIVED: the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis; the `1` in `t + 1` is
+`slabKernel`'s time step. -/
 theorem abs_slabKernelPulled_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
         → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)) :
@@ -880,7 +895,7 @@ Haar-measure kernel between two single slabs; `SlabKernelOperator` states the mi
 the three degenerate regimes the kernel is constant, hence symmetric, and this `Prop` holds there
 (`finiteGram_one`).
 
-DERIVED: no numeral. -/
+DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
 def SlabGramVia (τ : Fin d) (β : ℝ) (t : Fin n)
     (e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
         → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)) : Prop :=
@@ -889,7 +904,7 @@ def SlabGramVia (τ : Fin d) (β : ℝ) (t : Fin n)
 /-- The necessary half of the reduction. If the square condition holds, the pulled-back kernel
 is symmetric. Contrapositively, exhibiting an asymmetry refutes it.
 
-DERIVED: no numeral. -/
+DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
 theorem slabGramVia_symm {τ : Fin d} {β : ℝ} {t : Fin n}
     {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
         → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)}
@@ -900,7 +915,8 @@ theorem slabGramVia_symm {τ : Fin d} {β : ℝ} {t : Fin n}
 /-- The sufficient half of the reduction, proved. The square condition gives operator positivity
 of the pulled-back slab transfer operator on one space.
 
-DERIVED: the `0` is the sign asserted; the `2`s are the `L²` exponent; `CA` is the caller's bound
+DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
+in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent; `CA` is the caller's bound
 on the square's factors. -/
 theorem inner_slabPulled_self_nonneg_of_gram (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
@@ -919,7 +935,8 @@ theorem inner_slabPulled_self_nonneg_of_gram (hN : N ≠ 0) (τ : Fin d) (β : �
 reduction: whoever proves the open `Prop` gets operator positivity of the pulled-back slab transfer
 operator with nothing further to supply.
 
-DERIVED: the `0` is the sign asserted; the `2`s are the `L²` exponent. -/
+DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
+in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent. -/
 theorem inner_slabPulled_self_nonneg_of_slabGramVia (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
         → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)} (he : Measurable e)
@@ -957,7 +974,9 @@ theorem slabTransfer_apply_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
 
 /-- At zero coupling `slabNormal` annihilates every mean-zero vector.
 
-DERIVED: the `0`s are the coupling, the vanishing mass and the zero vector. -/
+DERIVED: the `0`s are the coupling, the vanishing mass, the zero vector and the value `N` is
+required to differ from in `hN`; the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the
+`L²` exponent. -/
 theorem slabNormal_apply_eq_zero_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
     (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1)))
     (hf0 : (∫ B, (f : _ → ℝ) B ∂(slabHaar (N := N) τ (t + 1))) = 0) :
@@ -977,7 +996,9 @@ fails exactly when the slab configuration space carries no nonconstant `L²` fun
 dimensional. **It is not discharged here and the tree does not discharge it**: exhibiting a
 nonconstant slab observable is the same open question `GNSHilbert`'s header records.
 
-DERIVED: the `0`s are the coupling and the spectral point; the `2` is the `L²` exponent. -/
+DERIVED: the `0`s are the coupling, the spectral point, the vanishing mass in `h` and the value `N`
+is required to differ from in `hN`; the `2` is the `L²` exponent; the `1` in `t + 1` is
+`slabKernel`'s time step. -/
 theorem zero_mem_spectrum_slabNormal_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
     (h : ∃ f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1)), f ≠ 0
         ∧ (∫ B, (f : _ → ℝ) B ∂(slabHaar (N := N) τ (t + 1))) = 0) :
@@ -990,12 +1011,13 @@ theorem zero_mem_spectrum_slabNormal_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t
 
 /-- At nonnegative coupling the constant observable is a supersolution. `T 1 ≤ 1` almost
 everywhere. With `slabCap_inv_le_slabTransfer_oneLp`, which bounds the same image below by
-`slabCap⁻¹ > 0`, the constant is moved into `[slabCap⁻¹, 1]`. **That interval contains `1`, so
-these two bounds do not decide whether the constant is an eigenvector, and this file does not decide
-it at any `β > 0`.** What would decide it is `KernelStochastic`, proved here only at `β = 0`.
+`slabCap⁻¹ > 0`, the constant is moved into `[slabCap⁻¹, 1]`. That interval contains `1`, so these
+two bounds leave open whether the constant is an eigenvector, and this file settles that at no
+`β > 0`. What settles it is `KernelStochastic`, proved here only at `β = 0`.
 
-DERIVED: the `1`s are the kernel's cap at `0 ≤ β` and the bound asserted; the `0` of `hβ` is the
-sign of the coupling. -/
+DERIVED: the `1`s are the kernel's cap at `0 ≤ β`, the bound asserted and the time step in `t + 1`;
+the `0` of `hβ` is the sign of the coupling and the value `N` is required to differ from in `hN`;
+the `2` is the `L²` exponent. -/
 theorem slabTransfer_oneLp_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n) :
     ∀ᵐ A ∂(slabHaar (N := N) τ t),
       ((slabTransfer (d := d) (n := n) hN τ β t (oneLp (slabHaar (N := N) τ (t + 1)))
@@ -1005,12 +1027,13 @@ theorem slabTransfer_oneLp_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 
 
 /-- The constant observable is moved off zero, uniformly. The Wilson instance of
 `SlabKernelOperator.le_kernelCLM_one` at the slab kernel's own Doeblin constant. With
-`slabTransfer_oneLp_le_one` this places `T 1` in `[slabCap⁻¹, 1]` at `0 ≤ β`. **That interval
-contains `1`, so it does NOT decide whether the constant is an eigenvector**; what decides it is
+`slabTransfer_oneLp_le_one` this places `T 1` in `[slabCap⁻¹, 1]` at `0 ≤ β`. That interval contains
+`1`, so it leaves open whether the constant is an eigenvector; what settles that is
 `KernelStochastic`, which is proved only at `β = 0`.
 
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; `slabCap⁻¹` is `slabWeight_bounds`'s own
-lower bound, not a chosen level. -/
+DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; the `0` is the value `N` is required to
+differ from in `hN`; the `2` is the `L²` exponent; `slabCap⁻¹` is `slabWeight_bounds`'s own lower
+bound, not a chosen level. -/
 theorem slabCap_inv_le_slabTransfer_oneLp (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     ∀ᵐ A ∂(slabHaar (N := N) τ t),
       (slabCap (d := d) (n := n) τ β t)⁻¹

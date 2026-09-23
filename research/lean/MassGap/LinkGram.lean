@@ -5,7 +5,7 @@ import MassGap.LagOneDominates
 /-!
 # MassGap.LinkGram — link-reflection positivity for a general half-local observable
 
-`OddLagSplit.odd_crossing_integral_nonneg` proves the crossing integral nonnegative for ONE
+`OddLagSplit.odd_crossing_integral_nonneg` proves the crossing integral nonnegative for one
 plaquette-energy observable. Three steps of that argument look at the observable at all —
 `OddLagSplit.aObs_local`, `measurable_aObs` and `abs_aObs_le`, which are half-locality,
 measurability and boundedness. The rest does not: `boltz_eq_paired_cross` is a statement about the
@@ -522,7 +522,7 @@ theorem pairReflPositive {β : ℝ} (hβ : 0 ≤ β) : MassGap.LagOneDominates.P
 
 /-- `wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1` at every `0 ≤ β`.
 
-It is proved here as reflection positivity at a LINK plane for a two-term half-space observable:
+It is proved here as reflection positivity at a link plane for a two-term half-space observable:
 `pairReflPositive` supplies `LagOneDominates.PairReflPositive β`, and
 `LagOneDominates.lag_two_le_lag_one` converts it. The link-reflection positivity itself is
 `gram_refl_positive`, which is `OddLagSplit`'s crossing integration run with the observable left as

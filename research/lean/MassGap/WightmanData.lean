@@ -3,7 +3,7 @@ import Mathlib
 /-!
 # MassGap.WightmanData — Osterwalder–Schrader reconstruction, stated between two structures
 
-`OSData` is Euclidean reconstruction input as a STRUCTURE: a normed real space of test configurations, a
+`OSData` is Euclidean reconstruction input as a structure: a normed real space of test configurations, a
 reflection, a **continuous bilinear** Schwinger form, a translation action, OS1/OS2/OS3 stated about that
 form, and non-degeneracy. `WightmanQFT` is Gårding–Wightman output as a structure: a complex Hilbert space,
 a unit vacuum vector, a unitary representation of the translation group `ℝ⁴` fixing the vacuum, a bounded
@@ -67,11 +67,11 @@ abbrev TestFn : Type := SchwartzMap E4 ℝ
 inequalities about an arbitrary real-valued function.
 
 `Test` is the space of smeared field arrangements. It is a real normed space, so `S`'s continuity IS the
-temperedness bound (OS0): `S : Test →L[ℝ] Test →L[ℝ] ℝ` bounds a BILINEAR FORM, and `osData_bounded` reads
+temperedness bound (OS0): `S : Test →L[ℝ] Test →L[ℝ] ℝ` bounds a bilinear form, and `osData_bounded` reads
 that bound back out.
 
 `S f g` is the Schwinger pairing; `os2` is reflection positivity of the reflected form `S (θ f) f`, which
-is a Gram condition because `S` is bilinear — a condition on a FORM, which a one-argument real-valued
+is a Gram condition because `S` is bilinear — a condition on a form, which a one-argument real-valued
 function on an index set cannot express.
 
 `os_nontriv` is the non-degeneracy that makes the structure refuse a subsingleton instance
@@ -178,8 +178,8 @@ Yang–Mills theory satisfies it.
 
 DERIVED: neither digit describes a theory; both are the structure's own obligations read at
 `Test := ℝ`. `0` is the zero of `ℝ` in the reflection-positivity field `os2`, where `0 ≤ f * f` is
-`mul_self_nonneg`. `1` is the unit of `ℝ` supplied as the witness in `os_nontriv`, which asks for SOME
-test function with `S (θ f) f ≠ 0` — the REFLECTED form, not `S f f`. Here `θ` is the identity and
+`mul_self_nonneg`. `1` is the unit of `ℝ` supplied as the witness in `os_nontriv`, which asks for some
+test function with `S (θ f) f ≠ 0` — the reflected form, not `S f f`. Here `θ` is the identity and
 `S f g = f * g`, so the obligation collapses to `1 * 1 ≠ 0` and any nonzero real would serve; the
 unit is the one at hand. Nothing is tuned, because the point of this definition is that it has
 no physics in it. -/
@@ -203,16 +203,16 @@ DERIVED: no numeral occurs in the statement. -/
 theorem osData_nonempty : Nonempty OSData := ⟨trivialOSData⟩
 
 /-- **Gårding–Wightman data on a fixed Hilbert space `H`**, at the fidelity Mathlib v4.31 supports, in the
-shape `Reconstruction.GappedQuantumTheory` uses for the operator-theoretic side: a quantum theory as DATA.
+shape `Reconstruction.GappedQuantumTheory` uses for the operator-theoretic side: a quantum theory as data.
 
-WHAT IS CARRIED. A complex Hilbert space `H` (the parameter, with completeness); a vacuum `vac` that is a
+What is carried. A complex Hilbert space `H` (the parameter, with completeness); a vacuum `vac` that is a
 unit vector; a representation `U` of the translation group `ℝ⁴` by surjective linear isometries, unital and
 additive, fixing the vacuum; a Hamiltonian `ham`, self-adjoint, annihilating the vacuum, with every spectral
 value in the closed right half-plane (`H ≥ 0`); and field operators `field`, indexed by real Schwartz test
-functions on `ℝ⁴`, acting on a DENSE common domain `dom` that contains the vacuum, additive in the test
+functions on `ℝ⁴`, acting on a dense common domain `dom` that contains the vacuum, additive in the test
 function.
 
-WHAT IS NOT CARRIED, and is therefore not claimed. (i) `ham` is BOUNDED (`H →L[ℂ] H`); a Wightman
+What is not carried, and is therefore not claimed. (i) `ham` is bounded (`H →L[ℂ] H`); a Wightman
 Hamiltonian is unbounded, and Mathlib v4.31 has no unbounded self-adjoint operator theory to state this in.
 (ii) There is no Lorentz or Euclidean rotation subgroup — only translations. (iii) `ham` is not tied to `U`:
 the statement that `ham` generates the time translation is absent. (iv) The fields are additive in the test
@@ -240,7 +240,7 @@ structure WightmanQFT (H : Type) [NormedAddCommGroup H] [InnerProductSpace ℂ H
   U_add : ∀ a b x, U (a + b) x = U a (U b x)
   /-- The vacuum is translation invariant. -/
   U_vac : ∀ a, U a vac = vac
-  /-- The Hamiltonian. BOUNDED — see the structure docstring. -/
+  /-- The Hamiltonian. Bounded — see the structure docstring. -/
   ham : H →L[ℂ] H
   /-- The Hamiltonian is self-adjoint. -/
   ham_selfAdjoint : IsSelfAdjoint ham
@@ -297,12 +297,12 @@ representation, zero Hamiltonian, fields all zero on the whole space.
 
 Two things follow, and they pull in opposite directions. (i) The target type of
 `os_reconstruction_wightman` is not empty, so that axiom cannot on its own prove `False` — the check a
-DATA-valued axiom needs and a `Prop`-valued one does not. (ii) Satisfying `WightmanQFT` is not by itself
+data-valued axiom needs and a `Prop`-valued one does not. (ii) Satisfying `WightmanQFT` is not by itself
 evidence of a Yang–Mills theory: the structure carries a vacuum, a positive Hamiltonian and a dense field
 domain, and this witness has all three with nothing in them.
 
 DERIVED: both digits are the units of `ℂ`, not physical quantities. `1` is the multiplicative unit
-serving as the vacuum, and it is forced rather than picked: `vac_norm` demands a UNIT vector, and in
+serving as the vacuum, and it is forced rather than picked: `vac_norm` demands a unit vector, and in
 `ℂ` the unit is a unit vector. `0` is the additive identity, used three times for the same reason —
 the Hamiltonian is the zero operator, so `ham_vac` and `ham_spectrum_nonneg` hold with the spectrum
 `{0}`, and the fields are the zero operator. That is the content of the witness: it is the theory
@@ -345,11 +345,11 @@ theorem wightmanQFTData_nonempty : Nonempty WightmanQFTData := ⟨trivialWightma
 
 /-! ## Part 2 — the reconstruction -/
 
-/-- **Osterwalder–Schrader reconstruction, stated between the two structures (NAMED AXIOM).**
+/-- **Osterwalder–Schrader reconstruction, stated between the two structures (named axiom).**
 K. Osterwalder, R. Schrader, Commun. Math. Phys. **31** (1973) 83 and **42** (1975) 281; textbook form
 J. Glimm, A. Jaffe, *Quantum Physics: A Functional Integral Point of View*, 2nd ed. (Springer 1987).
 
-This is an AXIOM, not a proof; the theorem it names is research-level and is not formalised here. What it
+This is an axiom, not a proof; the theorem it names is research-level and is not formalised here. What it
 states, on each side:
 
 * its hypothesis is a structure that no subsingleton inhabits (`osData_test_nontrivial`), whose form is

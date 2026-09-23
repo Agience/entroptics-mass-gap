@@ -62,7 +62,7 @@ record the three fields at this file's model.
   stated.
 * No declaration here establishes confinement at any aperture. `ConfinesAtAnAperture` is a hypothesis
   in every theorem that uses it.
-* The continuum clause is a limit in the VOLUME at fixed coupling: nothing sends the lattice spacing
+* The continuum clause is a limit in the volume at fixed coupling: nothing sends the lattice spacing
   to zero, `β` is fixed at `βFlag`, and no asymptotic-scaling relation appears in this tree.
   `Measure.continuum_of_family` extracts a subsequence and a pointwise limit `q : J → ℝ` by
   Bolzano–Weierstrass on a countable product; there is no uniqueness, no measure on `ℝ⁴` and no
@@ -327,7 +327,7 @@ at every `j`, with `|q j| ≤ ⌈measure.c⌉₊ * measure.B`, `0 ≤ q j`, and 
 `measure.actE` and `measure.actP`.
 
 Stated in the shape `NonnegArm.Flagship` uses, so `flagship_of_confinement_at_an_aperture` is
-faithful by type-checking. It is NOT the same proposition as `NonnegArm.Flagship h`, whose measure is
+faithful by type-checking. It is not the same proposition as `NonnegArm.Flagship h`, whose measure is
 `WilsonModel.ymFamilyTension` (`NonnegArm.measure_is_ymFamilyTension`, by `rfl`): the four
 measure-half clauses here quantify over a different `J`, a different `Q`, a different `B`
 (`OSFamily.osFamilyTension_B` is `4`, `WilsonModel.family_B` is `1`) and a different sequence

@@ -178,8 +178,10 @@ theorem actPlus_local (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 :
 
 /-- The half-space Boltzmann factor is an observable of the half-space.
 
-DERIVED: the `2` is the range of the Wilson density and the cardinality is the half-space's own
-plaquette count, both `ActionSplit.abs_exp_actSum_le`'s. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`, the evenness of the extent; the `0`s are the
+value `N` is required to differ from in `hN` and the strict lower bound on the half-extent in `hm0`.
+The range of the Wilson density and the half-space's plaquette count enter through the proof, from
+`ActionSplit.abs_exp_actSum_le`. -/
 theorem halfBoltz_mem (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     halfBoltz (N := N) τ a m β ∈ localObs (blkS τ a m) (blkR τ a m) := by
@@ -244,7 +246,8 @@ variable {d n N : ℕ} [NeZero n]
 /-- The factorisation, at arbitrary observables. The full Gibbs weight splits into the plane
 weight times the two dressings, one of them carried through the reflection.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN` and the strict lower bound on the half-extent in `hm0`. -/
 theorem integrand_eq_paired_obs (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (F G : (Link d n → MassGap.SUN.SU N) → ℝ) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
@@ -389,7 +392,9 @@ variable {d n N : ℕ} [NeZero n]
 
 /-- The split pairing's gram matrix is positive semidefinite.
 
-DERIVED: the `0` of `0 ≤ …` is positive semidefiniteness itself. -/
+DERIVED: the `0`s are positive semidefiniteness itself, the value `N` is required to differ from in
+`hN`, and the strict lower bound on the half-extent in `hm0`; the `2` is the doubling in
+`hm : n = 2 * m`. -/
 theorem pairing_gram_nonneg (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) {ι : Type} [Fintype ι]
     (F : ι → (Link d n → MassGap.SUN.SU N) → ℝ)
@@ -518,7 +523,9 @@ the slab algebra of an even-extent lattice, with every field proved and `form_no
 every real `β`. Symmetry is `Transfer.reflForm_symm`; bilinearity and positivity come through the
 split pairing.
 
-DERIVED: no numeral. `τ`, `a`, `m` and `β` are the caller's; `hm` and `hm0` are the extent's. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN` and the strict lower bound on the half-extent in `hm0`. `τ`, `a`, `m` and `β`
+are the caller's. -/
 noncomputable def wilsonGibbsReflForm (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     MassGap.Transfer.ReflForm
@@ -555,7 +562,9 @@ noncomputable def wilsonGibbsReflForm (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m
 outright.
 
 DERIVED: the `1`s are the constant observable and the total mass of a probability measure, both
-`Transfer.reflForm_one_one`'s. -/
+`Transfer.reflForm_one_one`'s; the `2` is the doubling in `hm : n = 2 * m`, and the `0`s are the
+value `N` is required to differ from in `hN` and the strict lower bound on the half-extent in
+`hm0`. -/
 theorem wilsonGibbsReflForm_vac_norm (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     (wilsonGibbsReflForm hN τ a m hm hm0 β).form
@@ -567,7 +576,7 @@ end GibbsForm
 /-! ## Part 7 — the corollary chain down to `corrClay`
 
 The strong form implies the weak one. `ReflectPositive.PlaqReflPositive` tests the pairing on affine
-functions of ONE plaquette's energy; that observable is a member of the module
+functions of one plaquette's energy; that observable is a member of the module
 (`plaqObs_sub_const_mem`), so the module statement specialises to it and the one-plaquette predicate
 follows with nothing further assumed.
 -/
@@ -578,7 +587,9 @@ variable {d n N : ℕ} [NeZero n]
 
 /-- The centred plaquette energy is an observable of the slab algebra.
 
-DERIVED: the `2` is the range of the Wilson density; `aC` is the caller's centring constant. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN` and the strict lower bound on the half-extent in `hm0`; `aC` is the caller's
+centring constant. -/
 theorem plaqObs_sub_const_mem (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (q₀ : Plaq d n)
     (hdeg : ¬ (q₀.1.1 = τ ∧ q₀.1.2 = τ)) (hlv : lv a (q₀.2 τ) < m) (aC : ℝ) :
@@ -673,8 +684,11 @@ section Clay
 not needed and this is the statement without it. What still needs it is the odd lags — see the module
 docstring.
 
-DERIVED: `3` is the gauge group's degree, its matrix dimension and `4` the dimension, both `WilsonBridge.corrClay`'s own; `m`
-is half the extent, the reflection geometry's own. -/
+DERIVED: `1` is the `+ 1` of the extent `Nap + 1` and of the lag index type; `2` is the doubling in
+`hm : Nap + 1 = 2 * m`; `0` is the lower bound concluded and the strict lower bound on the
+half-extent in `hm0`. The `3` of the gauge group's degree and matrix dimension and the `4` of the
+spacetime dimension sit inside `WilsonBridge.corrClay`, not in this statement; `m` is half the
+extent, the reflection geometry's own. -/
 theorem corrClay_nonneg_even_lag (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {lag : Fin (Nap + 1)} (hlag : Even lag.val) :
     0 ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β lag :=
@@ -686,10 +700,12 @@ theorem corrClay_nonneg_even_lag (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 <
 The even-lag companion of the axiom's second conjunct. Lag zero is even and its correlation is the
 plaquette-energy variance, strictly positive at every real coupling
 (`PlaqVariance.corrClay_zero_pos`); every other even lag is nonnegative by the theorem above. The
-full sum over ALL lags is not reachable this way at negative coupling, because the odd lags are not
+full sum over every lag is not reachable this way at negative coupling, because the odd lags are not
 controlled there.
 
-DERIVED: the `0` of `0 < …` is positive mass; the filter is the parity the site reflection covers. -/
+DERIVED: the `0` of `0 < …` is positive mass, and `0 < m` in `hm0` is the strict lower bound on the
+half-extent; `1` is the `+ 1` of the extent `Nap + 1` and of the lag index type; `2` is the doubling
+in `hm : Nap + 1 = 2 * m`. The filter is the parity the site reflection covers. -/
 theorem corrClay_even_sum_pos (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     0 < ∑ lag ∈ Finset.univ.filter (fun l : Fin (Nap + 1) => Even l.val),
       MassGap.WilsonBridge.corrClay (Nap + 1) β lag := by
@@ -747,8 +763,10 @@ theorem corrClay_reflection_positive_via_module (Nap m : ℕ) (hm : Nap + 1 = 2 
 holds. Here it is at `β = −1`, where `OddLagSplit.corrClay_reflection_positive` says nothing and
 `CharacterExpansion.NegControl.su3_kernel_neg_of_neg` says the odd-lag kernel is strictly negative.
 
-DERIVED: `3` is the aperture whose extent `3 + 1` is the smallest even extent, `2` its half, and
-`−1` a coupling of the sign the odd-lag route excludes. -/
+DERIVED: `3` is the aperture whose extent `3 + 1` is the smallest even extent, `1` the step from
+aperture to extent, `2` both its half and the even lag the second conjunct is stated at, `4` the
+size of the lag index type `Fin 4`, `0` the contact lag and the lower bound asserted of each value,
+and `−1` a coupling of the sign the odd-lag route excludes. -/
 theorem corrClay_nonneg_even_lag_at_negative_coupling :
     0 ≤ MassGap.WilsonBridge.corrClay (3 + 1) (-1 : ℝ) (0 : Fin 4)
       ∧ 0 ≤ MassGap.WilsonBridge.corrClay (3 + 1) (-1 : ℝ) (2 : Fin 4) :=

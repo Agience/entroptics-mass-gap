@@ -647,7 +647,7 @@ radius and no remainder. Each factor obeys `|w_p| ≤ e^{2|β|} − 1` (`boltz_f
 of size `n` contributes at most `(e^{2|β|}−1)ⁿ` (`subset_weight_bound`).
 
 The cancellation of the subsets that do not bridge `p₀` to `p_d` is not term by term. It is proved
-below for PAIRS of subsets, under an explicit involution, in `pairTerm_add_pairFlip` and
+below for pairs of subsets, under an explicit involution, in `pairTerm_add_pairFlip` and
 `nonbridging_sum_eq_zero`. -/
 
 /-- **The Boltzmann weight is a finite sum over subsets of plaquettes**, at any `β` and any
@@ -2435,7 +2435,7 @@ factorises the joint expectation into the two marginals, which is what `wilsonCo
 subtracts. No plaquette structure is used, and the measurability of the two witnesses is what
 `block_integral_factor` needs.
 
-⛔ This is the statement at `β = 0` alone. There the links are independent and the vanishing is by
+This is the statement at `β = 0` alone. There the links are independent and the vanishing is by
 factorisation, not by decay in any separation; nothing in it applies at `β > 0`, where the Boltzmann
 weight couples the two blocks.
 
@@ -5447,7 +5447,7 @@ and `IsCorePairF bd a A B c`. `coreSpan_card_ge_of_not_mem_ball` with the two an
 members of the two finsets; `card_ge_of_reach_of_lvl` does not mention them, so the proof is the
 same with the memberships supplied rather than definitional.
 
-⛔ This is a cardinality bound on the span. The rate's exponent is read off it in the singleton
+This is a cardinality bound on the span. The rate's exponent is read off it in the singleton
 chain, by `corePairs_sum_le` and `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`.
 
 DERIVED: the `2` added to `k` is `two_le_coreSpanF_card`'s two plaquettes, which the level argument
@@ -5911,7 +5911,7 @@ the sum of `pairTermF` over the pairs in which `a` reaches every plaquette of `A
 constrained outside sums. `bridging_sum_eq_core_sum` with the anchors replaced by finsets, by the
 same fibration and `Finset.sum_nbij'`.
 
-⛔ The filter here is not the complement of `nonbridging_sum_eq_zeroF`'s. This one asks one component
+The filter here is not the complement of `nonbridging_sum_eq_zeroF`'s. This one asks one component
 to contain all of `Ao ∪ Bo`; that one excludes only the pairs in which no component meets both `Ao`
 and `Bo`, and the set between the two is non-empty — for instance `Ao = {x, y}`, `Bo = {z}` with
 components `{x, z}` and `{y}`. So the two do not compose into a numerator identity as they stand.
@@ -6534,7 +6534,7 @@ open scoped Classical in
       ≤ coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
         * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card).
 
-⛔ The exponent is `k + 2 - (Ao ∪ Bo).card`, not `k`. The span's guaranteed size is `k + 2`
+The exponent is `k + 2 - (Ao ∪ Bo).card`, not `k`. The span's guaranteed size is `k + 2`
 (`coreSpanF_card_ge_of_not_mem_ball`) and the support occupies `(Ao ∪ Bo).card` of it, so the power
 of the rate is reduced by the support's size. `hu` is what keeps that subtraction in `ℕ` faithful;
 it holds when the supports are small relative to their separation. It cannot be dropped: a
@@ -6591,7 +6591,7 @@ theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
       refine ⟨hc.1, ?_⟩
       have h1 := hlow c hc.1
       have h2 := hc.2
-      -- `hu` is spent HERE: without `(Ao ∪ Bo).card ≤ k + 2` the truncated subtraction
+      -- `hu` is spent here: without `(Ao ∪ Bo).card ≤ k + 2` the truncated subtraction
       -- `k + 2 - (Ao ∪ Bo).card` collapses to `0` and this equation is false. `omega` reads it
       -- from the context, so no name appears.
       omega

@@ -89,8 +89,9 @@ end Symmetry
 section SymmetryClay
 
 /-- **Circle symmetry of the Clay correlation**: `corrClay n β (-lag) = corrClay n β lag`, at every
-extent and every real coupling, with no hypothesis. `corrHyper_neg` at `Nc = 3`, `d = 4`, plane
-`(0,1)` and lag axis `2`, with the two plane conditions discharged by `decide`.
+nonzero extent and every real coupling; the statement's only hypothesis is the instance `[NeZero n]`.
+It is `corrHyper_neg` at `Nc = 3`, `d = 4`, plane `(0,1)` and lag axis `2`, with the two plane
+conditions discharged by `decide`.
 
 The `3` of `SU(3)`, the `4` of the dimension and the plane and axis indices are supplied in the proof
 and sit inside `WilsonBridge.corrClay`; none of them appears in this statement.

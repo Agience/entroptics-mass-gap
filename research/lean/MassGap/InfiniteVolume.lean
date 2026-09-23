@@ -5,7 +5,7 @@ import MassGap.ContactFloor
 /-!
 # MassGap.InfiniteVolume — the thermodynamic limit of the Clay correlation
 
-## The limit is in ONE variable
+## The limit is in one variable
 
 `MassGap.wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` lives on
 `WilsonHypercubic.bd (d := 4) (n := N + 1)`, whose site type is `Fin 4 → Fin (N + 1)`
@@ -24,15 +24,15 @@ extent-`(N+1)` lattice.
 
 ## What is proved
 
-* `wilsonCorrConn_abs_le_four` / `wilsonCorrAt_abs_le_four` — `|ρ_N(β,d)| ≤ 4` at EVERY extent,
-  EVERY real coupling and EVERY lag, with no hypothesis. The Wilson plaquette observable takes
+* `wilsonCorrConn_abs_le_four` / `wilsonCorrAt_abs_le_four` — `|ρ_N(β,d)| ≤ 4` at every extent,
+  every real coupling and every lag, with no hypothesis. The Wilson plaquette observable takes
   values in `[0,2]` and the Gibbs state is a probability state, so the unconnected correlation lies
   in `[0,4]` and the product of the two one-point functions lies in `[0,4]`. Nothing in the constant
   refers to the extent.
 * `exists_subseq_tendsto` — consequently, at each lag and each coupling the sequence of finite-volume
   values has a convergent subsequence.
-* `exists_filter_tendsto_all_lags` / `exists_subseq_tendsto_all_lags` — ONE subsequence along which
-  EVERY lag converges simultaneously, so the whole finite-volume correlation function converges
+* `exists_filter_tendsto_all_lags` / `exists_subseq_tendsto_all_lags` — one subsequence along which
+  every lag converges simultaneously, so the whole finite-volume correlation function converges
   pointwise to a limit function `L : ℕ → ℝ`. This is subsequential, not full: nothing here shows the
   sequence itself converges.
 * `exists_uniform_contact_floor` — `e^{−128β}·δ₀ ≤ ρ_N(β,0)` with `δ₀ > 0` independent of the

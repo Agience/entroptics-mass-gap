@@ -3028,7 +3028,13 @@ def test_the_unfolded_cap_is_never_quoted_as_this_one():
     next to this development's numbers is not.
     """
     root = REPO / "research"
-    digits = "11.17597"
+    # The rule above is written about `11.1760`, and the search was for the 7-decimal `11.17597`,
+    # so it entered half the paragraphs the rule describes. `11.176` catches both spellings.
+    # Widening it alone would have reported four passages that DO name the constant, by giving its
+    # closed form or calling it the half-line one rather than by using one of the tag words -- so
+    # the notion of "named" widens with it, below. Naming it by its formula is the stronger label,
+    # not a weaker one.
+    digits = "11.176"
     offenders = []
     for path in list(root.rglob("*.lean")) + list(root.rglob("*.md")) + list(root.rglob("*.py")):
         if ".lake" in path.parts or "__pycache__" in path.parts:
@@ -3046,7 +3052,24 @@ def test_the_unfolded_cap_is_never_quoted_as_this_one():
             if not (has_digits or has_formula):
                 continue
             low = para.lower()
-            if any(tag in low for tag in ("unfolded", "lam^d", "λ^d", "cosh")):
+            # Named by a tag word, OR by the closed form the number IS, OR by calling it the
+            # half-line constant. `2π/√(3^{1/4}−1)` and `2π√(3^{−1/4}/(1−3^{−1/4}))` are the same
+            # value written two ways; a paragraph carrying either has said which constant it means
+            # more precisely than any tag word does.
+            # Whitespace- and minus-sign-tolerant: the tree writes both `3^{1/4}−1` and
+            # `3^{1/4} − 1`, with U+2212 as often as ASCII hyphen.
+            named_by_formula = bool(
+                re.search(r"3\^\{[-−]?1/4\}\s*[-−]\s*1", para)
+                or re.search(r"3\^\{[-−]1/4\}\s*/\s*\(\s*1\s*[-−]\s*3\^\{[-−]1/4\}",
+                             para))
+            # `structure-factor mass` is the third way the tree names it, and it is the one that
+            # matters most: it says the number is a MASS rather than an aperture cap, which is
+            # exactly the confusion this test exists to prevent. The criterion's own constant is
+            # 10.98875 and is never a mass.
+            if any(tag in low for tag in ("unfolded", "lam^d", "λ^d", "cosh", "half-line",
+                                          "structure-factor mass")):
+                continue
+            if named_by_formula:
                 continue
             offenders.append(f"{path.relative_to(REPO)}: {para.strip()[:110]}")
 

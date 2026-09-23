@@ -125,7 +125,7 @@ theorem eigen_crossForm' {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} (hA : A.IsHe
 
 /-- **Spectral core: a mode's contraction rate is at most its gap.** If the transfer eigenvalue at `i` is
 `e^{−Δ}` (the slowest excited mode) and the Rayleigh quotient of `T` at that eigenvector is `≤ e^{−c}`
-(a contraction at rate `c`), then `c ≤ Δ` — because the Rayleigh quotient of `T` at `vᵢ` is EXACTLY `e^{−Δ}`.
+(a contraction at rate `c`), then `c ≤ Δ` — because the Rayleigh quotient of `T` at `vᵢ` is exactly `e^{−Δ}`.
 Foundation-only.
 
 DERIVED: no numeral appears in the statement. -/
@@ -276,7 +276,7 @@ theorem atMostOne_eigenvalue_lt {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} (hA :
 
 /-- **Spectral gap from a codim-1 form bound.** If the quadratic form of a Hermitian `A` is `≥ μ·‖·‖²`
 (`μ > 0`) on a subspace of corank ≤ 1, and some eigenvalue `i₀` is `≤ 0` (a ground state at/below zero),
-then EVERY other eigenvalue exceeds it by at least `μ`: the spectrum sits in `{λ_{i₀}} ∪ [λ_{i₀}+μ, ∞)`.
+then every other eigenvalue exceeds it by at least `μ`: the spectrum sits in `{λ_{i₀}} ∪ [λ_{i₀}+μ, ∞)`.
 This is the count lemma (`atMostOne_eigenvalue_lt`) turned into the mass-gap spectral condition: at most one
 eigenvalue is below `μ`, and it is the ground `λ_{i₀} ≤ 0`, so all others are `≥ μ ≥ λ_{i₀}+μ`.
 
@@ -506,8 +506,8 @@ theorem gap_of_ldl_one_neg_pivot {N : ℕ} {A : Matrix (Fin N) (Fin N) ℝ} (hA 
 
 /-- **Relative gap from an LDLᵀ certificate with one negative pivot.** `A` Hermitian, `A − t•I = Lᵀ diag p L`
 with all pivots nonneg except at one index `m` (so at most one eigenvalue is below `t`), and a tight bound
-`λ_{i₀} ≤ t − μ` (`μ>0`): then every OTHER eigenvalue is `≥ λ_{i₀}+μ`. Generalizes
-`gap_of_ldl_one_neg_pivot` (the case `t=μ`, `λ_{i₀}≤0`) to the large-λ regime where BOTH `E₀,E₁` are
+`λ_{i₀} ≤ t − μ` (`μ>0`): then every other eigenvalue is `≥ λ_{i₀}+μ`. Generalizes
+`gap_of_ldl_one_neg_pivot` (the case `t=μ`, `λ_{i₀}≤0`) to the large-λ regime where both `E₀,E₁` are
 negative and the gap is relative — `t` is a Sturm shift with one eigenvalue below it, `t−μ` a tight `E₀`
 upper bound (a trial state); the two together bracket the gap.
 
@@ -561,9 +561,9 @@ theorem form_ge_convex {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℝ) {c : ℝ}
     mul_nonneg hs0 (sub_nonneg.mpr hBx)]
 
 /-- **Interval gap closure (absolute regime), the λ-grid step.** For an affine Hermitian family
-`(1−s)A+sB` (= the cell `H(λ)` at `λ = (1−s)λ_lo + sλ_hi`), if the codim-1 form is `≥ μ` on `W` at BOTH
+`(1−s)A+sB` (= the cell `H(λ)` at `λ = (1−s)λ_lo + sλ_hi`), if the codim-1 form is `≥ μ` on `W` at both
 endpoints `A,B` and the family has a vacuum eigenvalue `≤ 0`, then every non-vacuum eigenvalue is
-`≥ λ_{i₀}+μ` for EVERY `s∈[0,1]` — the whole `λ`-interval, from the two endpoint form-certificates. This
+`≥ λ_{i₀}+μ` for every `s∈[0,1]` — the whole `λ`-interval, from the two endpoint form-certificates. This
 replaces the banked per-λ grid + Weyl: a finite set of endpoint checks covers the continuum.
 
 DERIVED: `0` is the positivity threshold on `μ`, the lower endpoint for `s`, and the level the
@@ -613,8 +613,8 @@ lemma HcellRr_isHermitian (jmax : ℕ) (lam : ℝ) : (HcellRr jmax lam).IsHermit
   ext i j; simp only [Matrix.conjTranspose_apply, star_trivial]; exact congrFun (congrFun hT i) j
 
 /-- **Interval gap for the physical cell — the λ-grid step.** From the codim-1 form-certificate `≥ μ`
-on `W` at BOTH endpoints `HcellRr a`, `HcellRr b` and a vacuum eigenvalue `≤ 0`, the gap `≥ μ` holds at
-`HcellRr` for EVERY `λ = (1−s)a + s·b` in `[a,b]` — the whole interval from two endpoint certificates,
+on `W` at both endpoints `HcellRr a`, `HcellRr b` and a vacuum eigenvalue `≤ 0`, the gap `≥ μ` holds at
+`HcellRr` for every `λ = (1−s)a + s·b` in `[a,b]` — the whole interval from two endpoint certificates,
 no Weyl. Tiling `[0.16,6.76]` with such intervals closes the continuous-λ cell gap.
 
 DERIVED: `0` is the positivity threshold on `μ`, the lower endpoint for `s`, and the level the
@@ -679,7 +679,7 @@ set_option linter.unnecessarySeqFocus false in
 set_option linter.unusedSimpArgs false in
 /-- **End-to-end validation of the Sturm/LDLᵀ engine (non-vacuousness).** The 2-state SU(2) plaquette
 cell `M = [[0,−1],[−1,¾]]` (`λ=1`) has spectral gap `≥ ½ (≥ κ₀)`, proved purely through the abstract
-engine: the certificate `(p,e) = ((−9/2,¼),(0,−4))` factors `M − ½•I = Lᵀ diag p L` with exactly ONE
+engine: the certificate `(p,e) = ((−9/2,¼),(0,−4))` factors `M − ½•I = Lᵀ diag p L` with exactly one
 negative pivot (`p₀ = −9/2 < 0`, `p₁ = ¼ ≥ 0`), and `gap_of_ldl_one_neg_pivot` delivers the gap off the
 vacuum (`M₀₀ = 0`). Demonstrates the full chain `tridiag_ldl_of_recurrence → gap_of_ldl_one_neg_pivot`
 is correctly wired and satisfiable — the analogue of `knabe_gap_demo` for the cell engine.
@@ -804,7 +804,7 @@ theorem HcellR_gap_of_certificate_rel (jmax : ℕ) (lam : ℚ) (t μ : ℝ) (hμ
     (hrecD : ∀ i : Fin (dim jmax),
       (i.val * (i.val + 2) : ℝ) / 4 - t = p i + ∑ k, if k.val = i.val + 1 then e k * (p k * e k) else 0)
     (hrecO : ∀ i j : Fin (dim jmax), j.val = i.val + 1 → -(lam : ℝ) = e j * p j)
-    -- `v` is EXPLICIT: it is determined only by `hray`, which elaborates after `hv`, so an
+    -- `v` is explicit: it is determined only by `hray`, which elaborates after `hv`, so an
     -- implicit binder leaves `v` a metavariable while `hv` is being proved and no `simp` can
     -- see the vector it is about.
     (v : Fin (dim jmax) → ℝ) (hv : v ≠ 0)
@@ -878,9 +878,9 @@ theorem HcellR_gap_parametric (jmax : ℕ) (lam : ℚ) (μ : ℝ) (hμ : 0 < μ)
 
 /-- **Fully parametric physical-cell gap demo (end-to-end validation of the parametric chain).** The
 jmax=1 SU(2) cell at λ=1 has gap ≥ 1/2 (≥ κ₀), proved through `HcellR_gap_parametric` with the
-certificate supplied ENTIRELY by the `pivotSeq` recurrence — `pivotSeq` evaluates (via its
+certificate supplied entirely by the `pivotSeq` recurrence — `pivotSeq` evaluates (via its
 `Fin.reverseInduction` computation rules) to `(19/10, −5/12, 3/2)`, one negative pivot at index 1 —
-NOT hand-supplied. Confirms the parametric pivot construction produces a correct certificate.
+not hand-supplied. Confirms the parametric pivot construction produces a correct certificate.
 
 DERIVED: the two `1`s are `jmax = 1` and the coupling `λ = 1` at which the cell is read; `0` is the
 level the vacuum eigenvalue is shown not to exceed; `1/2` is the gap asserted, chosen below `κ₀YM`
@@ -934,9 +934,9 @@ section RelGapDemo
 open Matrix
 set_option linter.unusedSimpArgs false
 set_option linter.unreachableTactic false
-/-- **Concrete RELATIVE-gap demo (large-λ regime, non-vacuousness of `gap_of_ldl_one_neg_pivot_rel`).**
-The `jmax=2` SU(2) cell at `λ=3` (5×5) has TWO eigenvalues below `κ₀` (`E₀≈−3.73`, `E₁≈−0.53`) — the
-ABSOLUTE lemma (`gap_of_ldl_one_neg_pivot`) fails — yet its gap `≥ κ₀`, proved through the relative
+/-- **Concrete relative-gap demo (large-λ regime, non-vacuousness of `gap_of_ldl_one_neg_pivot_rel`).**
+The `jmax=2` SU(2) cell at `λ=3` (5×5) has two eigenvalues below `κ₀` (`E₀≈−3.73`, `E₁≈−0.53`) — the
+absolute lemma (`gap_of_ldl_one_neg_pivot`) fails — yet its gap `≥ κ₀`, proved through the relative
 toolchain: the trial state `ψ=(3/4,1,3/4,1/4,0)` gives `E₀ ≤ −2−κ₀` (`exists_eigenvalue_le_of_form`,
 `⟨ψ,Hψ⟩=−513/64 ≤ (−5/2)‖ψ‖²`, bridged via `κ₀≤½`), and the Sturm shift `t=−2` certificate `(p,e)`
 (one negative pivot at index 1) gives `E₁ ≥ −2` (`gap_of_ldl_one_neg_pivot_rel`). The rational
@@ -1189,7 +1189,7 @@ theorem cell_ceiling_lt_one : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 := by
   apply Real.rpow_lt_one_of_one_lt_of_neg <;> norm_num
 
 /-- **The volume-uniform gap with the radius from the machine-checked single-cell ceiling.** For any physical mode
-family `(P, μ)` with dominant transfer magnitude `mHi F ≤ 3^{−1/4}` at every volume `F`, the correlator forgets — but the `κ` this conclusion binds is INERT, occurring nowhere after the `∧` (`VolumeRate.exists_pos_and_iff`), so no common rate
+family `(P, μ)` with dominant transfer magnitude `mHi F ≤ 3^{−1/4}` at every volume `F`, the correlator forgets — but the `κ` this conclusion binds is inert, occurring nowhere after the `∧` (`VolumeRate.exists_pos_and_iff`), so no common rate
 makes every volume's correlator forget. Composes the cell ceiling (`Hcell2_clears_floor`) with
 `gap_uniform_in_volume_of_intensive`. The input `hint` (`m_hi(F) ≤ 3^{−1/4}`) is the measured continuum read.
 Foundational axioms only.
@@ -1240,7 +1240,7 @@ theorem Hcell2_read_margin (lam : ℝ) {μ : ℝ} (hμ : 0 ≤ μ) :
 The statement is about the sequence `σ` supplied by the caller. No volume index occurs in it, and
 nothing here reads the Wilson ensemble. -/
 
-/-- **The reach-freeze excess decays over every SEPARATION at the single-cell magnitude (no volume index occurs) (S1 wired to `Hcell2`).** For a reach-freeze excess
+/-- **The reach-freeze excess decays over every separation at the single-cell magnitude (no volume index occurs) (S1 wired to `Hcell2`).** For a reach-freeze excess
 `σ` with `σ n ≤ σ 0 · ρ'(1)^n` at the machine-checked cell value `ρ'(1) = e^{−Δ_cell} < 1` (`Hcell2_gap` ⇒
 `cell_lt_one`), the excess tends to zero.
 
@@ -1307,7 +1307,7 @@ theorem product_subvacuum_le {F : ℕ} (lam : Fin F → ℝ) {mc : ℝ} (hmc : 0
 
 /-- **The intensive margin holds for a product of cells at the single-cell ceiling, uniformly in `F`.** Any
 sub-vacuum configuration of an `F`-cell product (some cell `j` at `λⱼ ≤ 3^{−1/4}`, all cells in `[0,1]`) has
-product magnitude `≤ 3^{−1/4}`. So the intensive input `hint` of `gap_uniform_of_cell_intensive` is PROVED —
+product magnitude `≤ 3^{−1/4}`. So the intensive input `hint` of `gap_uniform_of_cell_intensive` is proved —
 not measured — for the product model, foundation-only, at the machine-checked cell ceiling.
 
 DERIVED: `0` and `1` are the ends of the interval each factor lies in; `3`, `1` and `4` form the
@@ -1478,7 +1478,7 @@ theorem coupling_form_lower {N : ℕ} (V : Matrix (Fin N) (Fin N) ℝ) {c : ℝ}
   linarith [key, hA, hB]
 
 /-- **(b assembly) The interacting cell gap `≥ κ₀` for a bounded coupling — the first machine-checked
-INTERACTING (coupled-cell) gap.** For `H = diagonal d + V`: Casimir energies `d` with vacuum `d i₀ = 0` and
+interacting (coupled-cell) gap.** For `H = diagonal d + V`: Casimir energies `d` with vacuum `d i₀ = 0` and
 excited `d i ≥ ¾` (`i ≠ i₀`), and a symmetric inter-cell coupling `V` with zero diagonal at the vacuum and
 row sums `∑ⱼ |V i j| ≤ c` bounded by the cell margin `c ≤ ¾ − κ₀`. Then `H` has a ground `j₀` with every
 other eigenvalue at least `κ₀` above — the spectral gap `≥ κ₀`, hence `ρ'(1) = e^{−gap} ≤ 3^{−1/4}`. Composes
@@ -1575,7 +1575,7 @@ The codim-1 form-certificate `form ≥ κ₀ on {x₀=0}` for the real-λ cell `
 supplied by `diag_form_margin` (excited Casimir `≥¾`) minus the coupling form `coupling_form_lower` (adjacency
 row-sum `≤ 2`, so coupling form `≥ −2a`): `form ≥ ¾ − 2a ≥ κ₀` for `a ≤ (¾−κ₀)/2 ≈ 0.237`. Together with the
 vacuum (`HcellRr 0 0 = 0`) and `HcellRr_gap_on_interval`, this closes the cell gap `≥ κ₀` over the whole strong
-`λ`-window as a SINGLE interval — the first slice of the un-banked continuous-λ grid. -/
+`λ`-window as a single interval — the first slice of the un-banked continuous-λ grid. -/
 
 /-- `∑ⱼ [p j] ≤ 1` when the predicate `p` has at most one witness.
 
@@ -1687,12 +1687,12 @@ lemma W0_corank (jmax : ℕ) : dim jmax ≤ Module.finrank ℝ (W0 jmax) + 1 := 
   unfold W0
   omega
 
-/-- **★ Strong-window closure of the continuous-λ cell gap.** For `0 ≤ a ≤ b` with `2b ≤ ¾−κ₀`, the
-physical SU(2) cell `HcellRr` has spectral gap `≥ κ₀` at EVERY real `λ = (1−s)a + s·b ∈ [a,b]` — a whole
+/-- **Strong-window closure of the continuous-λ cell gap.** For `0 ≤ a ≤ b` with `2b ≤ ¾−κ₀`, the
+physical SU(2) cell `HcellRr` has spectral gap `≥ κ₀` at every real `λ = (1−s)a + s·b ∈ [a,b]` — a whole
 continuum interval closed from just its two endpoint form-certificates (`HcellRr_form_ge_strong`) plus the
 vacuum (`HcellRr_zero_zero`), via `HcellRr_gap_on_interval`. Since `(¾−κ₀)/2 ≈ 0.237 ⊇ [0.16, 0.237]`, this
-closes the STRONG-COUPLING window of the physical range as ONE interval, fully foundational — the first real
-slice of the un-banked continuous-λ grid (no Weyl, no per-λ sampling).
+closes the strong-coupling window of the physical range as one interval, foundational, and over a
+continuum of couplings rather than a sampled grid. No Weyl inequality and no per-`λ` sampling enter.
 
 DERIVED: `0` is the sign condition on `a`, the lower endpoint for `s`, and the level the vacuum
 eigenvalue is shown not to exceed; `2` is the adjacency row-sum bound, so `2 * b` is the coupling
@@ -1714,15 +1714,15 @@ theorem HcellRr_gap_strong_window (jmax : ℕ) {a b : ℝ} (ha0 : 0 ≤ a) (hab 
 /-! ### Large-λ regime: relative interval gap closure
 
 The strong-window closure `HcellRr_gap_strong_window` uses the fixed subspace `{x₀=0}` where the form is
-`≥ κ₀`; that fails for `λ > (¾−κ₀)/2 ≈ 0.24` (both `E₀,E₁` go negative). The RELATIVE closure below tiles the
+`≥ κ₀`; that fails for `λ > (¾−κ₀)/2 ≈ 0.24` (both `E₀,E₁` go negative). The relative closure below tiles the
 remaining physical range `[0.24, 6.76]`: on each subinterval fix a codim-1 `W` (the `ldlKer` at a reference
-`λ`), verify the shifted form `≥ t` on `W` at BOTH endpoints (`form_ge_convex` extends it across), and bound
+`λ`), verify the shifted form `≥ t` on `W` at both endpoints (`form_ge_convex` extends it across), and bound
 the single low eigenvalue `E₀ ≤ t−κ₀` with a trial state whose Rayleigh is affine in `λ` (`form_le_convex`,
 checked at both endpoints). Four endpoint checks close the whole subinterval — no per-`λ` sampling, no Weyl. -/
 
 /-- **Relative interval gap closure (large-λ regime).** For the affine family `(1−s)A+sB` (`= H(λ)`), if the
-codim-1 form is `≥ t` on `W` at BOTH endpoints `A,B` (extended across `[a,b]` by `form_ge_convex`) and some
-eigenvalue `i₀` is `≤ t−μ` (the tight E₀ bound), then every OTHER eigenvalue is `≥ λ_{i₀}+μ` for the whole
+codim-1 form is `≥ t` on `W` at both endpoints `A,B` (extended across `[a,b]` by `form_ge_convex`) and some
+eigenvalue `i₀` is `≤ t−μ` (the tight E₀ bound), then every other eigenvalue is `≥ λ_{i₀}+μ` for the whole
 interval. Relative analogue of `gap_on_interval` (both `E₀,E₁` negative). Foundation-only.
 
 DERIVED: `0` is the positivity threshold on `μ` and the lower endpoint for `s`; `1` is the corank
@@ -1765,7 +1765,7 @@ lemma form_le_convex {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℝ) (ψ : Fin N �
 
 /-- **Relative interval gap for the physical cell (large-λ).** Given a codim-1 `W` with form `≥ t` at both
 endpoints `HcellRr a`, `HcellRr b`, and a trial state `ψ` with Rayleigh `≤ (t−κ₀)‖ψ‖²` at both endpoints, the
-gap `≥ κ₀` at `HcellRr` for EVERY `λ = (1−s)a+s·b ∈ [a,b]` — the large-λ analogue of
+gap `≥ κ₀` at `HcellRr` for every `λ = (1−s)a+s·b ∈ [a,b]` — the large-λ analogue of
 `HcellRr_gap_strong_window`, closing the interval from four endpoint checks. Foundation-only.
 
 DERIVED: `1` is the corank the subspace is allowed, the upper endpoint for `s`, and the
@@ -1806,7 +1806,7 @@ theorem HcellRr_gap_on_interval_rel (jmax : ℕ) (a b : ℝ) {t : ℝ}
   omega
 
 /-- **Restricted-form PSD certificate.** If the `r×r` matrix `Bᵀ(A−t)B` is PSD, the form is `≥ t` on the
-shared subspace `range B`. Valid for ANY `A`, so a FIXED `B` (fixed `W = range B`) certifies the form at BOTH
+shared subspace `range B`. Valid for any `A`, so a fixed `B` (fixed `W = range B`) certifies the form at both
 endpoints of a λ-interval — the missing shared-subspace ingredient the relative interval closure needs (the
 per-λ `ldlKer` differs endpoint to endpoint; this one doesn't). Foundation-only.
 
@@ -1855,7 +1855,7 @@ section RelTileDemo
 /-! ### Concrete large-λ tile — non-vacuousness of the relative interval closure
 
 Instantiates `HcellRr_gap_on_interval_rel` on a real large-λ sub-interval `[14/5, 16/5]` of the physical
-jmax=2 cell, where BOTH `E₀,E₁ < 0` (the absolute strong-window bound fails). The shared subspace is
+jmax=2 cell, where both `E₀,E₁ < 0` (the absolute strong-window bound fails). The shared subspace is
 `W = range Bt = φ⊥` (`φ = (1,5/4,3/4,1/2,0)` ≈ the ground state); the shift is `t = −2`. Four endpoint
 certificates close the whole interval: two restricted-form PSD (`psdTile_a/b'`, exact LDLᵀ of the 4×4
 `Bᵀ(H+2)B`) and two trial-state Rayleigh (`rayTile_a/b'`, `ψ=(3/4,1,3/4,1/4,0)`). Certificate machine-
@@ -1934,9 +1934,9 @@ private theorem rayTile_b :
   nlinarith [κ₀YM_le_half, κ₀YM_pos]
 
 /-- **Concrete large-λ tile: gap ≥ κ₀ across `λ ∈ [14/5, 16/5]` (foundational, no Weyl).** Non-vacuousness of
-`HcellRr_gap_on_interval_rel`: the physical jmax=2 SU(2) cell has spectral gap `≥ κ₀` at EVERY real
+`HcellRr_gap_on_interval_rel`: the physical jmax=2 SU(2) cell has spectral gap `≥ κ₀` at every real
 `λ ∈ [2.8, 3.2]` — a genuine slice of the large-λ regime where both `E₀,E₁ < 0` (the absolute strong-window
-bound fails), closed as ONE interval from four endpoint certificates.
+bound fails), closed as one interval from four endpoint certificates.
 
 DERIVED: `2` is `jmax`, so the cell is `5 × 5`; `14/5` and `16/5` are the endpoints of the
 coupling tile the statement covers, and `5` and `16` occur only as their numerator and
@@ -2059,14 +2059,14 @@ open Matrix in
 `operator_sq_ge_of_gap`), summing over windows and collapsing both sides yields
 `((n−1)ε − 1)(x·Hx) ≤ (n−2)(Hx·Hx)`; dividing by `n−2 > 0` + `gap_of_operator_sq_ge` gives bulk gap
 `((n−1)ε−1)/(n−2)`. **Scope, stated in full:** `hsum1` always holds (each site in `n−1` windows). `hsum2` as written
-holds only when NON-ADJACENT terms annihilate (`hⱼhₖ = 0` for `|j−k| ≥ 2`) — the idealized / blocked case; a
+holds only when non-adjacent terms annihilate (`hⱼhₖ = 0` for `|j−k| ≥ 2`) — the idealized / blocked case; a
 `m=2` check gives `∑ₐWₐ² = 2H + ∑_{|j−k|=1}hⱼhₖ` vs `H²+H = 2H + ∑_{j≠k}hⱼhₖ`, equal iff `∑_{|j−k|≥2}hⱼhₖ = 0`.
-For a GENERIC nearest-neighbour frustration-free chain the true identity is `∑ₐWₐ² = ∑ᵢⱼ(n−1−|i−j|)₊ hᵢhⱼ`, and
+For a generic nearest-neighbour frustration-free chain the true identity is `∑ₐWₐ² = ∑ᵢⱼ(n−1−|i−j|)₊ hᵢhⱼ`, and
 the passage to `H²⪰γH` needs the operator Cauchy–Schwarz weighted-sum inequality (Knabe 1988 / Gosset–Mozgunov
-2016). That step is NOT still open: `gm_eq23_c1`, `gm_gap_of_eq23`, `gm_gap_c1` and `Tdelta_posSemidef`
-below prove it, and `LocalGap.knabe_chain_gap_of_local_spectrum` supplies `gm_gap_c1`'s remaining bare
-hypothesis `hlem4` from the window's own spectrum. This lemma is the exact assembly for the special
-case and the correct skeleton for the general one. Foundational (`propext, Classical.choice, Quot.sound`).
+2016). That step is proved below, by `gm_eq23_c1`, `gm_gap_of_eq23`, `gm_gap_c1` and
+`Tdelta_posSemidef`, and `LocalGap.knabe_chain_gap_of_local_spectrum` supplies `gm_gap_c1`'s remaining
+bare hypothesis `hlem4` from the window's own spectrum. This lemma states the assembly for the
+annihilating case. Foundational (`propext, Classical.choice, Quot.sound`).
 
 DERIVED: `1` and `2` are the offsets in `n - 1` and `n - 2`, which are the two window counting
 identities `hsum1` and `hsum2`; the trailing `1` in `((n - 1) * ε - 1)` is the `H` term of
@@ -2099,7 +2099,7 @@ theorem knabe_gap_of_window_identities {N : ℕ} {ι : Type*} [Fintype ι]
 
 #print axioms knabe_gap_of_window_identities
 
-/-! ### The CORRECT Knabe window identities on the periodic chain (`ZMod L`), foundational
+/-! ### The correct Knabe window identities on the periodic chain (`ZMod L`), foundational
 
 These are the true combinatorial identities (no non-adjacent-vanishing assumption). `window_sum` is `hsum1`
 (always holds). `window_sq_sum` is `hsum2` written out in `Tδ` form: `∑ₐWₐ² = ∑ᵣ∑ₛ ∑_b h_b h_{b+(s−r)}`
@@ -2128,7 +2128,7 @@ theorem window_sum {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N)
   rw [Finset.sum_const, Finset.card_range]
 
 /-- **Correct window-square identity `hsum2` (the `Tδ` form, foundational).**
-`∑ₐ Wₐ² = ∑ᵣ ∑ₛ ∑_b h_b · h_{b+(s−r)}`, i.e. `∑_δ (m−|δ|)₊ Tδ` with `Tδ = ∑_b h_b h_{b+δ}` — the TRUE identity,
+`∑ₐ Wₐ² = ∑ᵣ ∑ₛ ∑_b h_b · h_{b+(s−r)}`, i.e. `∑_δ (m−|δ|)₊ Tδ` with `Tδ = ∑_b h_b h_{b+δ}` — the true identity,
 with NO assumption that non-adjacent products vanish (contrast the idealized `(n−2)H²+H`). Reaching `H²⪰γH`
 from this is the Knabe/Gosset–Mozgunov operator Cauchy–Schwarz step.
 
@@ -2235,7 +2235,7 @@ theorem regroup_by_fiber {N L : ℕ} [NeZero L] {ι : Type*} (s : Finset ι)
 #print axioms regroup_by_fiber
 
 /-- **`∑ₖBₖ²` fully in the `δ`-indexed (`Tδ`) basis (foundational).** Feeding `weighted_window_sq_sum` through
-`regroup_by_fiber`: `∑ₖBₖ² = ∑_δ (∑_{(j,s): s−j=δ} cⱼcₛ)•Tδ`. Now BOTH sides of eq. 21 are in the identical
+`regroup_by_fiber`: `∑ₖBₖ² = ∑_δ (∑_{(j,s): s−j=δ} cⱼcₛ)•Tδ`. Now both sides of eq. 21 are in the identical
 `∑_δ (coef)•Tδ` form (`H² = ∑_δ 1•Tδ` by `chain_sq_expand`), so `H²+βH−α∑Bₖ² = ∑_δ (netcoef δ)•Tδ` term-by-term.
 The remaining eq.-21 work is the scalar coefficient analysis: the fiber coefficient `∑_{s−j=δ}cⱼcₛ = A_{|δ|}`
 (autocorrelation, `m>2n`) and `netcoef δ = 1+β[δ=0]−αA_{|δ|}` vanishing at `δ=0,±1`.
@@ -2276,7 +2276,7 @@ theorem combine_Tsum {N L : ℕ} [NeZero L] (T : ZMod L → Matrix (Fin N) (Fin 
 /-- **GM eq. 21 LHS collapsed to a single net-coefficient `Tδ`-sum (foundational).** The entire structural side
 of eq. 21: `H² + β•H − α•∑ₖBₖ² = ∑_δ (1 + β[δ=0] − α·Wcoef δ)•Tδ`, where `Wcoef δ = ∑_{(j,s): s−j=δ} cⱼcₛ` is
 the fiber (autocorrelation) coefficient. Assembles `chain_sq_expand` (`H²`), `weighted_window_sq_regrouped`
-(`∑Bₖ²`), `H = T₀` (projectors), via `combine_Tsum`. What remains of eq. 21 is purely SCALAR: `Wcoef δ = A_{|δ|}`
+(`∑Bₖ²`), `H = T₀` (projectors), via `combine_Tsum`. What remains of eq. 21 is purely scalar: `Wcoef δ = A_{|δ|}`
 (`m>2n`) and the net coefficient `1 + β[δ=0] − αA_{|δ|}` vanishing at `δ=0,±1` (via `α=1/A₁`, `β=α(A₀−A₁)`) and
 `≥0` for `|δ|≥2` (autocorrelation) — then `psd_nonneg_smul_sum` + `Tdelta_posSemidef` give eq. 23.
 
@@ -2414,8 +2414,8 @@ theorem fiber_sum_neg {L : ℕ} [NeZero L] (m x : ℕ) (hmx : m + x ≤ L) (cc :
 #print axioms fiber_sum_neg
 
 /-- **Discharge `hterm` from nonneg coefficients + PSD-where-nonzero (foundational).** Each `aᵢ•Mᵢ ⪰ 0` when
-`aᵢ≥0` everywhere and `Mᵢ⪰0` wherever `aᵢ≠0`. Separates the SCALAR part (`hnn`: net coefficients `≥0`) from the
-PHYSICAL part (`hpsd`: `Tδ⪰0` where the coefficient is nonzero): the `δ=0,±1` terms have coefficient `0`
+`aᵢ≥0` everywhere and `Mᵢ⪰0` wherever `aᵢ≠0`. Separates the scalar part (`hnn`: net coefficients `≥0`) from the
+physical part (`hpsd`: `Tδ⪰0` where the coefficient is nonzero): the `δ=0,±1` terms have coefficient `0`
 (`gm_alpha_beta`), so `Tδ` need not be PSD there (`T_{±1}` isn't). This is exactly the hypothesis `hterm` of
 `eq23_of_terms`.
 
@@ -2452,10 +2452,10 @@ theorem fiber_empty {L : ℕ} [NeZero L] (m : ℕ) (hmL : 2 * m ≤ L) (δ : ZMo
 #print axioms fiber_empty
 
 /-- **Net-coefficient nonnegativity for `cⱼ=1` (the `hnn` input; foundational).** With plain Knabe windows
-(`cⱼ=1`), `α=β=(m−1)⁻¹`, the net coefficient `1 + β[δ=0] − α·Wcoef δ ≥ 0` for EVERY `δ` (`2m≤L`, `m≥2`). Proof
+(`cⱼ=1`), `α=β=(m−1)⁻¹`, the net coefficient `1 + β[δ=0] − α·Wcoef δ ≥ 0` for every `δ` (`2m≤L`, `m≥2`). Proof
 by casing `δ.val`: `0`→`Wcoef=m` (net `=0`); `[1,m)`→`Wcoef=m−δ.val` (`fiber_sum_pos`); `[m,L−m]`→`Wcoef=0`
 (`fiber_empty`); `(L−m,L)`→`Wcoef=m−(L−δ.val)` (`fiber_sum_neg`); each `≤ m−1`, so `α·Wcoef ≤ 1`. This is the
-SCALAR half of `hterm` — the Autocorrelation Lemma made trivial by `cⱼ=1` (`Aₓ=m−x`).
+scalar half of `hterm` — the Autocorrelation Lemma made trivial by `cⱼ=1` (`Aₓ=m−x`).
 
 DERIVED: `2` in `2 ≤ m` is the smallest window that makes `(m - 1)⁻¹` defined, and `2` in
 `2 * m ≤ L` is the two ends of the window; `1` is the coefficient the net coefficient starts from
@@ -2536,13 +2536,13 @@ theorem fiber_c1_neg {L : ℕ} [NeZero L] (m x : ℕ) (hmx : m + x ≤ L) :
   rw [fiber_sum_neg m x hmx (fun _ => (1 : ℝ))]; simp
 
 /-- **The abstract GM/Knabe eq. 23 operator inequality, fully machine-checked (foundational).** For a
-chain of IDEMPOTENTS `h b * h b = h b` on `ZMod L` — frustration-freeness is NOT assumed here, and
+chain of idempotents `h b * h b = h b` on `ZMod L` — frustration-freeness is not assumed here, and
 neither is Hermiticity — with the plain
 Knabe windows `Bₖ = ∑_{j<m} h(k+j)` (`cⱼ=1`), `α=β=(m−1)⁻¹`, the operator inequality
 `(∑h)² + α•(∑h) − α•(∑ₖBₖ²) ⪰ 0` holds — **given only the physical commuting structure** `hpsd`
 (`Tδ=∑_b h_b h_{b+δ} ⪰ 0` for `δ∉{0,±1}`, i.e. disjoint bonds commute). Wires `eq23_of_terms` +
-`hterm_of_nonneg_psd` + `hnn_c1` (scalar, DONE) + the `δ=0,±1` cancellations (`fiber_c1_pos/neg` + `field_simp`).
-This closes the abstract GM reduction: the ONLY remaining input is `hpsd` (the binding to actual KS/Wilson bond
+`hterm_of_nonneg_psd` + `hnn_c1` (scalar, done) + the `δ=0,±1` cancellations (`fiber_c1_pos/neg` + `field_simp`).
+This closes the abstract GM reduction: the only remaining input is `hpsd` (the binding to actual KS/Wilson bond
 projectors), plus GM Lemma 4 to pass from eq. 23 to the gap (`gm_gap_of_eq23`).
 
 DERIVED: `2` in `2 ≤ m` is the smallest window making `(m - 1)⁻¹` defined, and `2` in `2 * m ≤ L`
@@ -2604,7 +2604,7 @@ theorem isHermitian_sum {N : ℕ} {ι : Type*} (s : Finset ι) (f : ι → Matri
 #print axioms isHermitian_sum
 
 open Matrix in
-/-- **eq.-23 FORM inequality at any `x`, from the operator PSD (foundational).** Converts `gm_eq23_c1`'s
+/-- **eq.-23 form inequality at any `x`, from the operator PSD (foundational).** Converts `gm_eq23_c1`'s
 `(H²+α•H−α•∑ₖBₖ²)⪰0` into `α∑ₖ⟨Bₖx,Bₖx⟩ ≤ ⟨Hx,Hx⟩ + α⟨x,Hx⟩` — the `heq23` hypothesis of `gm_gap_of_eq23`. Via
 `psd_form_nonneg` + the symmetric-adjoint expansion (`sadj`, `mulVec_mulVec`, `sum_mulVec`).
 
@@ -2628,15 +2628,16 @@ theorem eq23_form_of_psd {N : ℕ} {ι : Type*} [Fintype ι]
 #print axioms eq23_form_of_psd
 
 open Matrix in
-/-- **Gosset–Mozgunov assembly — FAITHFUL state-level core reduction (foundational).** Following GM
+/-- **Gosset–Mozgunov assembly — faithful state-level core reduction (foundational).** Following GM
 (arXiv 1512.00088) exactly: for the low-energy eigenstate `ψ` of `H` (`Hψ = λψ`, `λ > 0` its gap), given
 (i) the deformed-window sum `∑ₖ Bₖ = c•H` (`weighted_window_sum`, `c = ∑ⱼ cⱼ`), (ii) GM's **Lemma 4**
-`⟨ψ|Bₖ²|ψ⟩ ≥ γ'⟨ψ|Bₖ|ψ⟩` (a STATE-level bound on `ψ`, `γ' = εₙ·(∑cⱼ)/(n−1)` — NOT the full operator inequality
+`⟨ψ|Bₖ²|ψ⟩ ≥ γ'⟨ψ|Bₖ|ψ⟩` (a state-level bound on `ψ`, `γ' = εₙ·(∑cⱼ)/(n−1)` — not the full operator inequality
 `Bₖ²⪰γ'Bₖ`, which GM note does not hold simply), and (iii) **eq. 23** `α·∑ₖBₖ² ⪯ H² + β·H`, the eigenvalue
 obeys `λ ≥ αγ'c − β`. Proof: expectation of eq. 23 in `ψ` — `⟨ψ|H²|ψ⟩=λ²`, `⟨ψ|H|ψ⟩=λ`, and Lemma 4 + the sum
-bound the `∑Bₖ²` side by `αγ'cλ`; divide by `λ>0`. This **isolates eq. 23 as the SINGLE remaining research
-input** (`hsum` = `weighted_window_sum` ✓, `hlem4` = GM Lemma 4). GM prove eq. 23 via their **1D Autocorrelation
-Lemma**: eq. 21 is the EQUALITY `H² − α∑Bₖ² + βH = ∑_{d(i,j)≥2}(1 − α·A_{d(i,j)})hᵢhⱼ` (`A_d=∑ᵣcᵣcᵣ₊d`; the
+bound the `∑Bₖ²` side by `αγ'cλ`; divide by `λ>0`. Of the three inputs, `hsum` is
+`weighted_window_sum` and `hlem4` is GM Lemma 4, so eq. 23 is the one this theorem takes as a
+hypothesis. GM prove eq. 23 via their **1D Autocorrelation
+Lemma**: eq. 21 is the equality `H² − α∑Bₖ² + βH = ∑_{d(i,j)≥2}(1 − α·A_{d(i,j)})hᵢhⱼ` (`A_d=∑ᵣcᵣcᵣ₊d`; the
 `H`/nearest-neighbour terms cancel by the `α,β` choice), PSD because `hᵢhⱼ⪰0` (commuting projectors, `d≥2`) and
 `1−α·A_d≥0` (`A_d ≤ A_1 = 1/α`, autocorrelation monotone). Foundational (`propext, Classical.choice, Quot.sound`).
 
@@ -2818,7 +2819,7 @@ theorem Tdelta_posSemidef {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) 
 
 /-- **Nonneg-weighted sum of PSD is PSD (foundational).** `∑ᵢ aᵢ•Mᵢ ⪰ 0` when each `aᵢ ≥ 0` and `Mᵢ ⪰ 0`. With
 `Tdelta_posSemidef` this gives GM eq. 21's RHS `∑_{|δ|≥2}(1−αA_{|δ|})•Tδ ⪰ 0` (the coefficients `1−αA_{|δ|}≥0`
-by the autocorrelation lemma). Combined with the eq.-21 EQUALITY this yields eq. 23 `H²+βH ⪰ α∑Bₖ²`.
+by the autocorrelation lemma). Combined with the eq.-21 equality this yields eq. 23 `H²+βH ⪰ α∑Bₖ²`.
 
 DERIVED: `0` is the sign required of each coefficient. -/
 theorem psd_nonneg_smul_sum {N : ℕ} {ι : Type*} (s : Finset ι) (a : ι → ℝ)

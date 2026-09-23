@@ -159,7 +159,7 @@ theorem card_link (d n : ℕ) : Fintype.card (Link d n) = d * n ^ d := by
 /-- `Fintype.card (Plaq d n) = d * d * n ^ d`: one plaquette per (ordered direction pair, site).
 Immediate from `Fintype.card_prod` and `Fintype.card_fin`.
 
-Scope: the count is over ORDERED pairs and includes the `d` degenerate pairs `μ = ν`, so it is
+Scope: the count is over ordered pairs and includes the `d` degenerate pairs `μ = ν`, so it is
 `d * d` rather than `d * (d - 1) / 2`.
 
 DERIVED: no numeral appears in the statement; the two factors of `d` are the two directions spanning

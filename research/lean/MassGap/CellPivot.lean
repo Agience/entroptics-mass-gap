@@ -49,7 +49,8 @@ private theorem sum_bridge (f : Fin 17 → ℝ) :
 /-- Pivots for `λ = 4/25` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_4_25 : Fin 17 → ℝ :=
   ![
     -208326199306233844488560680919759036815699183178159270184783331338419920957414464466587 / 630710440150939348018585480423525210402737924145699847719509025208016825184429787210000,
@@ -70,7 +71,8 @@ noncomputable def pv_4_25 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 4/25`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_4_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -21918775872981753492409530904635413448791922134584701260146376321111061924532251200 / 63071044015093934801858548042352521040273792414569984771950902520801682518442978721,
@@ -120,7 +122,8 @@ theorem cell_gap_4_25 :
 /-- Pivots for `λ = 27/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_27_100 : Fin 17 → ℝ :=
   ![
     -6025018883008097737650221489605691413864858423558579713498310887904569410006747 / 13592965184115879081704867255634773163971134037068990517183236155220401420010000,
@@ -141,7 +144,8 @@ noncomputable def pv_27_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 27/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_27_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -848530128493135464409590538697340453971106630953973340158546635579824125900 / 1359296518411587908170486725563477316397113403706899051718323615522040142001,
@@ -191,7 +195,8 @@ theorem cell_gap_27_100 :
 /-- Pivots for `λ = 19/50` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_19_50 : Fin 17 → ℝ :=
   ![
     -333636644839399706527949259370259301517767861402457525008536825864495863351991507026587 / 516938055667585161252523673749769963156224261579428376424657326668601669694671787210000,
@@ -212,7 +217,8 @@ noncomputable def pv_19_50 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 19/50`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_19_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -50429937091451069139968685839788813852303435985944355264390383744376574917596096600 / 51693805566758516125252367374976996315622426157942837642465732666860166969467178721,
@@ -262,7 +268,8 @@ theorem cell_gap_19_50 :
 /-- Pivots for `λ = 49/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_49_100 : Fin 17 → ℝ :=
   ![
     -3635481058376598557805586632805455693578497035872681683130544126231417333171840363 / 3629271763028598997518069179361931425852037007910788603105283106694583851481290000,
@@ -283,7 +290,8 @@ noncomputable def pv_49_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 49/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_49_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -538473490831151512895382250864231251203457646897875113032147521800492887585700 / 362927176302859899751806917936193142585203700791078860310528310669458385148129,
@@ -333,7 +341,8 @@ theorem cell_gap_49_100 :
 /-- Pivots for `λ = 3/5` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_3_5 : Fin 17 → ℝ :=
   ![
     -3031547030313926755851517043042402192328520819388984600191232987535906933139799521 / 1786046324007387552643194181170448156298940874968903807662036870801475519562430000,
@@ -354,7 +363,8 @@ noncomputable def pv_3_5 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 3/5`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_3_5 : Fin 17 → ℝ :=
   ![0 / 1,
     -423486684184849565856738600245813347298866960172504454037745243187790267986000 / 178604632400738755264319418117044815629894087496890380766203687080147551956243,
@@ -404,7 +414,8 @@ theorem cell_gap_3_5 :
 /-- Pivots for `λ = 71/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_71_100 : Fin 17 → ℝ :=
   ![
     -9239556770284282065475408148096943193758046018844700051142777630997332000987269910797 / 2627924724814141336750521809145790490195538607660806643129607738025579138671581510000,
@@ -425,7 +436,8 @@ noncomputable def pv_71_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 71/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_71_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -1199671246250399639474653493961210499450891769481729079757052730332634565013265700 / 262792472481414133675052180914579049019553860766080664312960773802557913867158151,
@@ -475,7 +487,8 @@ theorem cell_gap_71_100 :
 /-- Pivots for `λ = 41/50` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_41_50 : Fin 17 → ℝ :=
   ![
     -778106425741524603359721301068901269247540805910004639693422328053552770982396140626587 / 39221004440042915156035274090089165637179121386960642559959418280405075980191787210000,
@@ -496,7 +509,8 @@ noncomputable def pv_41_50 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 41/50`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_41_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -93577123880712782264190050155652899444757036739634945266122131201454328854955787400 / 3922100444004291515603527409008916563717912138696064255995941828040507598019178721,
@@ -546,7 +560,8 @@ theorem cell_gap_41_50 :
 /-- Pivots for `λ = 93/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_93_100 : Fin 17 → ℝ :=
   ![
     2014127108852699488050412440784521818222981112909815928734372736220651790232911 / 278244734157098459609821762442896526532972838224412911621954162304605023870000,
@@ -567,7 +582,8 @@ noncomputable def pv_93_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 93/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_93_100 : Fin 17 → ℝ :=
   ![0 / 1,
     224791498637167143538196825691138225167912768986028188769561671462981375300 / 27824473415709845960982176244289652653297283822441291162195416230460502387,
@@ -617,7 +633,8 @@ theorem cell_gap_93_100 :
 /-- Pivots for `λ = 26/25` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_26_25 : Fin 17 → ℝ :=
   ![
     1001270991330435048593939019456594205990076287183459299293411599679562836625263731666587 / 300218236595038976510037788314675034662628366463184002767969822508205484804530212790000,
@@ -638,7 +655,8 @@ noncomputable def pv_26_25 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 26/25`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_26_25 : Fin 17 → ℝ :=
   ![0 / 1,
     104205859704143486100119846144868792116528874947201533159016625954092969548179632800 / 30021823659503897651003778831467503466262836646318400276796982250820548480453021279,
@@ -688,7 +706,8 @@ theorem cell_gap_26_25 :
 /-- Pivots for `λ = 23/20` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_23_20 : Fin 17 → ℝ :=
   ![
     47189684295229150054535408699843014141067511765633794216801987829194725942595449815069 / 21206017281718154419223776274884566030498700694051909602803678237425499792163552730000,
@@ -709,7 +728,8 @@ noncomputable def pv_23_20 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 23/20`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_23_20 : Fin 17 → ℝ :=
   ![0 / 1,
     4609998021088445832477928699352504733012652595329552503016709412262218324826328500 / 2120601728171815441922377627488456603049870069405190960280367823742549979216355273,
@@ -759,7 +779,8 @@ theorem cell_gap_23_20 :
 /-- Pivots for `λ = 63/50` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_63_50 : Fin 17 → ℝ :=
   ![
     674634179560342309869392063133198018884748374058086611145653529150654308609 / 405018171854669876344590608497576620342716741869079423026935670120214530000,
@@ -780,7 +801,8 @@ noncomputable def pv_63_50 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 63/50`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_63_50 : Fin 17 → ℝ :=
   ![0 / 1,
     436607039649344513834028390715267953607162590583068182583973754295931800 / 283512720298268913441213425948303634239901719308355596118854969084150171,
@@ -830,7 +852,8 @@ theorem cell_gap_63_50 :
 /-- Pivots for `λ = 137/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_137_100 : Fin 17 → ℝ :=
   ![
     1152116913119918332002656181918496594434128652733796061783865617237355409800444211026587 / 885381856195304267430646502175868040757460977632089689714018088280278872555965712790000,
@@ -851,7 +874,8 @@ noncomputable def pv_137_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 137/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_137_100 : Fin 17 → ℝ :=
   ![0 / 1,
     101849000658158278413566042048628287973007531626958474419584407743645840590625400900 / 88538185619530426743064650217586804075746097763208968971401808828027887255596571279,
@@ -901,7 +925,8 @@ theorem cell_gap_137_100 :
 /-- Pivots for `λ = 37/25` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_37_25 : Fin 17 → ℝ :=
   ![
     30140367069993514898883272224808360019470942290371117846303201281122195800097553033151 / 29452348231912468930551503098026695415638856352648499421243168547363399571592924670000,
@@ -922,7 +947,8 @@ noncomputable def pv_37_25 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 37/25`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_37_25 : Fin 17 → ℝ :=
   ![0 / 1,
     2583170751979720953655795278772722516901820008813760853872885113586683896109062800 / 2945234823191246893055150309802669541563885635264849942124316854736339957159292467,
@@ -972,7 +998,8 @@ theorem cell_gap_37_25 :
 /-- Pivots for `λ = 159/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_159_100 : Fin 17 → ℝ :=
   ![
     5747494497737616604111832259577148224461210247897578622433522572320082182425559521 / 7302771479892451112160887852645429484324975097093685093240565090236374810937570000,
@@ -993,7 +1020,8 @@ noncomputable def pv_159_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 159/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_159_100 : Fin 17 → ℝ :=
   ![0 / 1,
     487645649261891378907070952999927528541212635664730435065830553623145556162900 / 730277147989245111216088785264542948432497509709368509324056509023637481093757,
@@ -1043,7 +1071,8 @@ theorem cell_gap_159_100 :
 /-- Pivots for `λ = 17/10` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_17_10 : Fin 17 → ℝ :=
   ![
     851157665346974203429448845346308482804278850574532184929447068842341125953871601746587 / 1493904100666844928991103944230571798234687645669269814349717468363809480084624212790000,
@@ -1064,7 +1093,8 @@ noncomputable def pv_17_10 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 17/10`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_17_10 : Fin 17 → ℝ :=
   ![0 / 1,
     74207830694126853260194417578026267987020443931757682525371438670698799419595169000 / 149390410066684492899110394423057179823468764566926981434971746836380948008462421279,
@@ -1114,7 +1144,8 @@ theorem cell_gap_17_10 :
 /-- Pivots for `λ = 181/100` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_181_100 : Fin 17 → ℝ :=
   ![
     604676847840732223701878171416876907972621089214502252702393514052148670330800490066587 / 1687087460594905598793859339279119114738872048493929900535295909540670261275337712790000,
@@ -1135,7 +1166,8 @@ noncomputable def pv_181_100 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 181/100`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_181_100 : Fin 17 → ℝ :=
   ![0 / 1,
     59012142169400706723234880216400603800629239830706342341405486210108883486361091700 / 168708746059490559879385933927911911473887204849392990053529590954067026127533771279,
@@ -1185,7 +1217,8 @@ theorem cell_gap_181_100 :
 /-- Pivots for `λ = 48/25` at `jmax = 8`, shift `μ = 2747/10000`. Exact; generated.
 DERIVED: every entry is fixed by the two recurrences of `HcellR_gap_of_certificate` solved backwards
 from the last index — `p (n-1) = d (n-1) - μ` and `p i = d i - μ - λ² / p (i+1)`, with the Casimir
-diagonal `d i = i(i+2)/4`. Nothing is chosen or rounded. -/
+diagonal `d i = i(i+2)/4`. The `17` is `dim 8`, the number of entries. Nothing is chosen or
+rounded. -/
 noncomputable def pv_48_25 : Fin 17 → ℝ :=
   ![
     1522208103219008362838145735145873519132270695899856313549956406215216775441239521 / 10554840354620059282870049387784228851976581168816106015744493359621099672437570000,
@@ -1206,7 +1239,8 @@ noncomputable def pv_48_25 : Fin 17 → ℝ :=
 
 /-- Multipliers for `λ = 48/25`.
 DERIVED: `e (i+1) = -λ / p (i+1)`, the second recurrence solved for `e`. `e 0` is constrained by
-neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so. -/
+neither recurrence — no `i` has `0 = i + 1` — so it is free, and `0` is the value that says so.
+The `17` is `dim 8`, the number of entries. -/
 noncomputable def ev_48_25 : Fin 17 → ℝ :=
   ![0 / 1,
     230292851491309304575132724060947978373449872029877116462237954797038169555200 / 1055484035462005928287004938778422885197658116881610601574449335962109967243757,
@@ -1258,8 +1292,8 @@ theorem cell_gap_48_25 :
 /-- Pivots at the Sturm shift `t = 0` for `λ = 203/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_203_100 : Fin 17 → ℝ :=
   ![
     742408286956922081610227450207598241516371006960 / 1048400168072605871298154272724658889359927431279,
@@ -1276,7 +1310,8 @@ noncomputable def rpv_203_100 : Fin 17 → ℝ :=
     7476551688555110 / 178372680497383, 178372680497383 / 3664464640000, 2565125248 / 45858791,
     45858791 / 720000, 72 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_203_100 : Fin 17 → ℝ :=
   ![0 / 1,
     365718367959074917049373128181082877594271432000 / 1048400168072605871298154272724658889359927431279,
@@ -1292,9 +1327,10 @@ noncomputable def rev_203_100 : Fin 17 → ℝ :=
     -21681999896809819000 / 380788095552547881279, -5172807734424107 / 106807881265073000,
     -7438863219200 / 178372680497383, -1329904939 / 36644646400, -1461600 / 45858791, -203 / 7200]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_203_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1339,8 +1375,8 @@ theorem rel_cell_gap_203_100 :
 /-- Pivots at the Sturm shift `t = 0` for `λ = 107/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_107_50 : Fin 17 → ℝ :=
   ![
     19473490077346509154915300693807336051300058760 / 42494067452540545317783336691267412341160846599,
@@ -1357,7 +1393,8 @@ noncomputable def rpv_107_50 : Fin 17 → ℝ :=
     3268954675782170 / 78007024404601, 78007024404601 / 1602836320000, 641134528 / 11463551,
     11463551 / 180000, 72 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_107_50 : Fin 17 → ℝ :=
   ![0 / 1,
     9099761718386219231268832099909970117429934000 / 42494067452540545317783336691267412341160846599,
@@ -1373,9 +1410,10 @@ noncomputable def rev_107_50 : Fin 17 → ℝ :=
     -17488907515434609500 / 291269721725623166901, -8346751611292307 / 163447733789108500,
     -3430069724800 / 78007024404601, -1226599957 / 32056726400, -385200 / 11463551, -107 / 3600]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_107_50 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1420,8 +1458,8 @@ theorem rel_cell_gap_107_50 :
 /-- Pivots at the Sturm shift `t = 0` for `λ = 9/4`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_9_4 : Fin 17 → ℝ :=
   ![5579726658995043350640 / 27208475198902068299911,
     -81625425596706204899733 / 3306504686811877541120,
@@ -1432,7 +1470,8 @@ noncomputable def rpv_9_4 : Fin 17 → ℝ :=
     1228715227332369 / 49987505513600, 9372657283800 / 313908671453, 313908671453 / 8810441440,
     1651957770 / 39430001, 118290003 / 2430976, 151936 / 2717, 8151 / 128, 72 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_9_4 : Fin 17 → ℝ :=
   ![0 / 1, 2479878515108908155840 / 27208475198902068299911,
     -9345033790201679228397 / 826626171702969385280,
@@ -1443,9 +1482,10 @@ noncomputable def rev_9_4 : Fin 17 → ℝ :=
     -941726014359 / 12496876378400, -19823493240 / 313908671453, -118290003 / 2202610360,
     -1823232 / 39430001, -24453 / 607744, -96 / 2717, -1 / 32]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_9_4 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1490,8 +1530,8 @@ theorem rel_cell_gap_9_4 :
 /-- Pivots at the Sturm shift `t = -1/2` for `λ = 59/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_59_25 : Fin 17 → ℝ :=
   ![
     53500682885683858266565709070282172355347491391791 / 35815569119458103636709192981475248047568291105038,
@@ -1508,7 +1548,8 @@ noncomputable def rpv_59_25 : Fin 17 → ℝ :=
     2468752153594729606433 / 68351268789810742500, 27340507515924297 / 645025857218458,
     322512928609229 / 6561639602500, 2624655841 / 46525554, 23262777 / 362500, 145 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_59_25 : Fin 17 → ℝ :=
   ![0 / 1,
     7540868289397204755976930631259438205839691915100 / 17907784559729051818354596490737624023784145552519,
@@ -1524,9 +1565,10 @@ noncomputable def rev_59_25 : Fin 17 → ℝ :=
     -161308994343953352300 / 2468752153594729606433, -38056525575889022 / 683512687898107425,
     -15485469461900 / 322512928609229, -2745007686 / 65616396025, -855500 / 23262777, -118 / 3625]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_59_25 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1571,8 +1613,8 @@ theorem rel_cell_gap_59_25 :
 /-- Pivots at the Sturm shift `t = -1/2` for `λ = 247/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_247_100 : Fin 17 → ℝ :=
   ![
     70969064045396143142053670416211251839955832277399 / 60424102857600990037816833560818546266661667782382,
@@ -1589,7 +1631,8 @@ noncomputable def rpv_247_100 : Fin 17 → ℝ :=
     19729155374630165871271 / 546422744417771415000, 109284548883554283 / 2578934600273662,
     1289467300136831 / 26239704640000, 2623970464 / 46520241, 46520241 / 725000, 145 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_247_100 : Fin 17 → ℝ :=
   ![0 / 1,
     8250407412266325531001063489028740628871457163200 / 30212051428800495018908416780409273133330833891191,
@@ -1606,9 +1649,10 @@ noncomputable def rev_247_100 : Fin 17 → ℝ :=
     -64812070460800 / 1289467300136831, -11490499527 / 262397046400, -1790750 / 46520241,
     -247 / 7250]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_247_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1653,8 +1697,8 @@ theorem rel_cell_gap_247_100 :
 /-- Pivots at the Sturm shift `t = -1/2` for `λ = 129/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_129_50 : Fin 17 → ℝ :=
   ![
     37920756637766434555690269563241182000518731442411 / 43622912153421189654568224506010688667449800159698,
@@ -1671,7 +1715,8 @@ noncomputable def rpv_129_50 : Fin 17 → ℝ :=
     2463419210131495822607 / 68252224529645892500, 27300889811858357 / 644428163461798,
     322214081730899 / 6558134672500, 2623253869 / 46514686, 23257343 / 362500, 145 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_129_50 : Fin 17 → ℝ :=
   ![0 / 1,
     3121957473072837156667859943844154586587951814450 / 21811456076710594827284112253005344333724900079849,
@@ -1687,9 +1732,10 @@ noncomputable def rev_129_50 : Fin 17 → ℝ :=
     -176090739286486402650 / 2463419210131495822607, -41565616543285971 / 682522245296458925,
     -16919987455050 / 322214081730899, -3000197247 / 65581346725, -935250 / 23257343, -129 / 3625]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_129_50 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1734,8 +1780,8 @@ theorem rel_cell_gap_129_50 :
 /-- Pivots at the Sturm shift `t = -1/2` for `λ = 269/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_269_100 : Fin 17 → ℝ :=
   ![
     6807497164164304851455337405860440355259542770874991 / 12022329119470007215139067339261472737032983387812638,
@@ -1752,7 +1798,8 @@ noncomputable def rpv_269_100 : Fin 17 → ℝ :=
     19684613535054859613119 / 545595319609623015000, 109119063921924603 / 2576437605726142,
     1288218802863071 / 26225060560000, 2622506056 / 46508889, 46508889 / 725000, 145 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_269_100 : Fin 17 → ℝ :=
   ![0 / 1,
     148017212719200974699963519745298138799823620254400 / 6011164559735003607569533669630736368516491693906319,
@@ -1769,9 +1816,10 @@ noncomputable def rev_269_100 : Fin 17 → ℝ :=
     -70545412906400 / 1288218802863071, -12510891141 / 262250605600, -1950250 / 46508889,
     -269 / 7250]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_269_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1816,8 +1864,8 @@ theorem rel_cell_gap_269_100 :
 /-- Pivots at the Sturm shift `t = -1/2` for `λ = 14/5`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_14_5 : Fin 17 → ℝ :=
   ![83673775128277170632231902482594648111 / 326724556282302853042729434484461517598,
     163362278141151426521364717242230758799 / 5082174937045552033745715227017609100,
@@ -1832,7 +1880,8 @@ noncomputable def rpv_14_5 : Fin 17 → ℝ :=
     157287491070853793 / 4361242631765700, 43612426317657 / 1030043789098,
     515021894549 / 10486908100, 104869081 / 1860114, 930057 / 14500, 145 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_14_5 : Fin 17 → ℝ :=
   ![0 / 1, -14230089823727545694488002635649305480 / 163362278141151426521364717242230758799,
     2803742133390080115699688807293906204 / 254108746852277601687285761350880455,
@@ -1846,9 +1895,10 @@ noncomputable def rev_14_5 : Fin 17 → ℝ :=
     -12211479368943960 / 157287491070853793, -14420613047372 / 218062131588285,
     -29363342680 / 515021894549, -26041596 / 524345405, -40600 / 930057, -28 / 725]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_14_5 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1893,8 +1943,8 @@ theorem rel_cell_gap_14_5 :
 /-- Pivots at the Sturm shift `t = -1` for `λ = 291/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_291_100 : Fin 17 → ℝ :=
   ![
     60980172641403795379197759562250857573842252941837 / 39932162736067627962259308526414374009544405581413,
@@ -1911,7 +1961,8 @@ noncomputable def rpv_291_100 : Fin 17 → ℝ :=
     6945197364860276792253 / 190007214365965510000, 19000721436596551 / 443638633093087,
     443638633093087 / 8944129900000, 2683238970 / 47182819, 47182819 / 730000, 73 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_291_100 : Fin 17 → ℝ :=
   ![0 / 1,
     7232993094617239662178161867985045898384139986400 / 39932162736067627962259308526414374009544405581413,
@@ -1927,9 +1978,10 @@ noncomputable def rev_291_100 : Fin 17 → ℝ :=
     -184306997934986544700 / 2315065788286758930751, -129098842230088317 / 1900072143659655100,
     -26027418009000 / 443638633093087, -4576733443 / 89441299000, -2124300 / 47182819, -291 / 7300]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_291_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -1974,8 +2026,8 @@ theorem rel_cell_gap_291_100 :
 /-- Pivots at the Sturm shift `t = -1` for `λ = 151/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_151_50 : Fin 17 → ℝ :=
   ![
     188631900505251676736650718744334344732865034026 / 159894067938570542645605865175632189560139965099,
@@ -1992,7 +2044,8 @@ noncomputable def rpv_151_50 : Fin 17 → ℝ :=
     3559586848499598 / 83136677853101, 83136677853101 / 1676494362500, 670597745 / 11794074,
     5897037 / 91250, 73 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_151_50 : Fin 17 → ℝ :=
   ![0 / 1,
     9515838598238786122862534294272236812160618850 / 159894067938570542645605865175632189560139965099,
@@ -2008,9 +2061,10 @@ noncomputable def rev_151_50 : Fin 17 → ℝ :=
     -26874880706171964900 / 325141442314172010349, -12553638355818251 / 177979342424979900,
     -5063012974750 / 83136677853101, -890452587 / 16764943625, -275575 / 5897037, -151 / 3650]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_151_50 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2055,8 +2109,8 @@ theorem rel_cell_gap_151_50 :
 /-- Pivots at the Sturm shift `t = -1` for `λ = 313/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_313_100 : Fin 17 → ℝ :=
   ![
     9323843110887693017498099855447501247956865645463191 / 11155156868807798789024782907193648327108423231366559,
@@ -2073,7 +2127,8 @@ noncomputable def rpv_313_100 : Fin 17 → ℝ :=
     20781543662439425465791 / 569028208757932530000, 56902820875793253 / 1329430834392461,
     1329430834392461 / 26815115300000, 2681511530 / 47169531, 47169531 / 730000, 73 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_313_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -585084267706104080359962636340622070016472072173600 / 11155156868807798789024782907193648327108423231366559,
@@ -2090,9 +2145,10 @@ noncomputable def rev_313_100 : Fin 17 → ℝ :=
     -83931310889000 / 1329430834392461, -14764063203 / 268151153000, -2284900 / 47169531,
     -313 / 7300]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_313_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2137,8 +2193,8 @@ theorem rel_cell_gap_313_100 :
 /-- Pivots at the Sturm shift `t = -1` for `λ = 81/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_81_25 : Fin 17 → ℝ :=
   ![357375806210064558628565509945954683253417037 / 736130688479732708541524068963460241659718713,
     736130688479732708541524068963460241659718713 / 36080140438735344260874729368379968602947500,
@@ -2154,7 +2210,8 @@ noncomputable def rpv_81_25 : Fin 17 → ℝ :=
     1184384581427701 / 27680164069387, 27680164069387 / 558458462500, 670150155 / 11790631,
     11790631 / 182500, 73 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_81_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -116899655021502515405234123153551098273549900 / 736130688479732708541524068963460241659718713,
@@ -2170,9 +2227,10 @@ noncomputable def rev_81_25 : Fin 17 → ℝ :=
     -2242093289620347 / 29609614535692525, -1809405418500 / 27680164069387,
     -318347037 / 5584584625, -591300 / 11790631, -81 / 1825]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_81_25 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2217,8 +2275,8 @@ theorem rel_cell_gap_81_25 :
 /-- Pivots at the Sturm shift `t = -1` for `λ = 67/20`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_67_20 : Fin 17 → ℝ :=
   ![142675540255282748953816324381937078493 / 1190746667014062734649288161992610261557,
     1190746667014062734649288161992610261557 / 93390165004123857045709230350694870400,
@@ -2233,7 +2291,8 @@ noncomputable def rpv_67_20 : Fin 17 → ℝ :=
     1326312110877744631 / 36349637397973200, 90874093494933 / 2124540765821,
     2124540765821 / 42874532000, 107186330 / 1886211, 1886211 / 29200, 73 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_67_20 : Fin 17 → ℝ :=
   ![0 / 1, -312857052763814921103125921674827815840 / 1190746667014062734649288161992610261557,
     15333042959057402758496970281774540871 / 4669508250206192852285461517534743520,
@@ -2248,9 +2307,10 @@ noncomputable def rev_67_20 : Fin 17 → ℝ :=
     -142344231310007 / 1817481869898660, -143629682200 / 2124540765821, -126376137 / 2143726600,
     -97820 / 1886211, -67 / 1460]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_67_20 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2295,8 +2355,8 @@ theorem rel_cell_gap_67_20 :
 /-- Pivots at the Sturm shift `t = -3/2` for `λ = 173/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_173_50 : Fin 17 → ℝ :=
   ![
     203784474838615452176241745708629569694653727278913 / 145565445950182322451298272203232391779237903206618,
@@ -2313,7 +2373,8 @@ noncomputable def rpv_173_50 : Fin 17 → ℝ :=
     2743329385272192121413 / 74197642474022777500, 29679056989609111 / 686050215014078,
     343025107507039 / 6854863322500, 2741945329 / 47839034, 23919517 / 367500, 147 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_173_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -2104580070326305130159777831823557510722995307950 / 72782722975091161225649136101616195889618951603309,
@@ -2329,9 +2390,10 @@ noncomputable def rev_173_50 : Fin 17 → ℝ :=
     -256723842960118810150 / 2743329385272192121413, -59343343598717747 / 741976424740227775,
     -23717827095850 / 343025107507039, -4138076441 / 68548633225, -1271550 / 23919517, -173 / 3675]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_173_50 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2376,8 +2438,8 @@ theorem rel_cell_gap_173_50 :
 /-- Pivots at the Sturm shift `t = -3/2` for `λ = 357/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_357_100 : Fin 17 → ℝ :=
   ![71213218914521608850983567763314328058053 / 69720690329026522453885613966394451118158,
     313743106480619351042485262848775030031711 / 11781589075283586904118654468708900720000,
@@ -2392,7 +2454,8 @@ noncomputable def rpv_357_100 : Fin 17 → ℝ :=
     1840434994247140493 / 49801668533535000, 89643003360363 / 2072898612674,
     3109347919011 / 62152660000, 6215266 / 108461, 325383 / 5000, 147 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_357_100 : Fin 17 → ℝ :=
   ![0 / 1, -14020090999587468415901198817763591856800 / 104581035493539783680828420949591676677237,
     804578518378799105065037227714789925523 / 117815890752835869041186544687089007200,
@@ -2407,9 +2470,10 @@ noncomputable def rev_357_100 : Fin 17 → ℝ :=
     -123337467454103 / 1494050056006050, -73961665400 / 1036449306337, -38720577 / 621526600,
     -5950 / 108461, -17 / 350]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_357_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2454,8 +2518,8 @@ theorem rel_cell_gap_357_100 :
 /-- Pivots at the Sturm shift `t = -3/2` for `λ = 92/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_92_25 : Fin 17 → ℝ :=
   ![
     191317064616742474383022821892874777102158786557 / 301426842003726469884449959996069015568207490302,
@@ -2472,7 +2536,8 @@ noncomputable def rpv_92_25 : Fin 17 → ℝ :=
     1287777099783797 / 29789501812006, 14894750906003 / 297813867500, 2739887581 / 47823326,
     23911663 / 367500, 147 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_92_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -35437934563702069353757081263753905740509843600 / 150713421001863234942224979998034507784103745151,
@@ -2488,9 +2553,10 @@ noncomputable def rev_92_25 : Fin 17 → ℝ :=
     -11847549318010932400 / 118915689044018820489, -2740634166704552 / 32194427494594925,
     -1095955032400 / 14894750906003, -191293304 / 2978138675, -1352400 / 23911663, -184 / 3675]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_92_25 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2535,8 +2601,8 @@ theorem rel_cell_gap_92_25 :
 /-- Pivots at the Sturm shift `t = -3/2` for `λ = 379/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_379_100 : Fin 17 → ℝ :=
   ![
     9689848183621372083122432445886419195981121107571053 / 42004738564953019550131876443881990835505218926196158,
@@ -2553,7 +2619,8 @@ noncomputable def rpv_379_100 : Fin 17 → ℝ :=
     21845919067665955026279 / 591748156013994845000, 118349631202798969 / 2738768789626262,
     1369384394813131 / 27388111540000, 2738811154 / 47815109, 47815109 / 735000, 147 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_379_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -7033939269631683013466409263843874281962626290464800 / 21002369282476509775065938221940995417752609463098079,
@@ -2570,9 +2637,10 @@ noncomputable def rev_379_100 : Fin 17 → ℝ :=
     -103800942736600 / 1369384394813131, -18121926311 / 273881115400, -2785650 / 47815109,
     -379 / 7350]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_379_100 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2617,8 +2685,8 @@ theorem rel_cell_gap_379_100 :
 /-- Pivots at the Sturm shift `t = -2` for `λ = 39/10`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_39_10 : Fin 17 → ℝ :=
   ![4873533639517189022619817173927012662 / 3164892020665856362625105190962228239,
     3164892020665856362625105190962228239 / 95742958699179730613438080736189600,
@@ -2633,7 +2701,8 @@ noncomputable def rpv_39_10 : Fin 17 → ℝ :=
     23120358092891089 / 618159410791600, 6181594107916 / 141459345491, 141459345491 / 2801912800,
     28019128 / 485029, 485029 / 7400, 74 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_39_10 : Fin 17 → ℝ :=
   ![0 / 1, -373397538926800949392408514871139440 / 3164892020665856362625105190962228239,
     74399971390849028293285909459941201 / 9574295869917973061343808073618960,
@@ -2647,9 +2716,10 @@ noncomputable def rev_39_10 : Fin 17 → ℝ :=
     -2410821702087240 / 23120358092891089, -5516914474149 / 61815941079160,
     -10927459920 / 141459345491, -18916131 / 280191280, -28860 / 485029, -39 / 740]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_39_10 : Fin 17 → ℝ :=
   ![1 / 1, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2694,8 +2764,8 @@ theorem rel_cell_gap_39_10 :
 /-- Pivots at the Sturm shift `t = -2` for `λ = 401/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_401_100 : Fin 17 → ℝ :=
   ![
     37255188149074786243728402598780478049336678017428542 / 32969176966242138412065911820648891596152765078103599,
@@ -2712,7 +2782,8 @@ noncomputable def rpv_401_100 : Fin 17 → ℝ :=
     23082409347273235682599 / 617475921188717760000, 61747592118871776 / 1413589950316601,
     1413589950316601 / 28007642680000, 2800764268 / 48494199, 48494199 / 740000, 74 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_401_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -7152909172920072463941002753744963876052082827625600 / 32969176966242138412065911820648891596152765078103599,
@@ -2729,9 +2800,10 @@ noncomputable def rev_401_100 : Fin 17 → ℝ :=
     -112310647146800 / 1413589950316601, -19446173799 / 280076426800, -2967400 / 48494199,
     -401 / 7400]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_401_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2776,8 +2848,8 @@ theorem rel_cell_gap_401_100 :
 /-- Pivots at the Sturm shift `t = -2` for `λ = 103/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_103_25 : Fin 17 → ℝ :=
   ![89688927069067303645223196420887259306733362 / 126568521192555527033210847442620905046682639,
     126568521192555527033210847442620905046682639 / 9629095303282811199288251629769214274827500,
@@ -2793,7 +2865,8 @@ noncomputable def rpv_103_25 : Fin 17 → ℝ :=
     963708905425224 / 22071229580399, 22071229580399 / 437434967500, 349947974 / 6060657,
     6060657 / 92500, 74 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_103_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -39671872649525182141067596714649162812289300 / 126568521192555527033210847442620905046682639,
@@ -2809,9 +2882,10 @@ noncomputable def rev_103_25 : Fin 17 → ℝ :=
     -2273336646781097 / 24092722635630600, -1802232066100 / 22071229580399,
     -624247671 / 8748699350, -381100 / 6060657, -103 / 1850]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_103_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2856,8 +2930,8 @@ theorem rel_cell_gap_103_25 :
 /-- Pivots at the Sturm shift `t = -2` for `λ = 423/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_423_100 : Fin 17 → ℝ :=
   ![
     9230184379189610761879447588692040188865724070009662 / 34653646850492843942746256990586369270081245114456239,
@@ -2874,7 +2948,8 @@ noncomputable def rpv_423_100 : Fin 17 → ℝ :=
     23003433781545986825911 / 616052768495892160000, 61605276849589216 / 1411499696382041,
     1411499696382041 / 27983713720000, 2798371372 / 48476071, 48476071 / 740000, 74 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_423_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -14202626317209474497308053520681016158698999091939200 / 34653646850492843942746256990586369270081245114456239,
@@ -2891,9 +2966,10 @@ noncomputable def rev_423_100 : Fin 17 → ℝ :=
     -118371109035600 / 1411499696382041, -20505378033 / 279837137200, -3130200 / 48476071,
     -423 / 7400]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_423_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -2938,8 +3014,8 @@ theorem rel_cell_gap_423_100 :
 /-- Pivots at the Sturm shift `t = -5/2` for `λ = 217/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_217_50 : Fin 17 → ℝ :=
   ![
     648748048373566881289004915091080198573035298397975 / 403659049286446148332053338930985022638956053267778,
@@ -2956,7 +3032,8 @@ noncomputable def rpv_217_50 : Fin 17 → ℝ :=
     3041307011918341469123 / 80408547431927362500, 32163418972770945 / 728831093310118,
     364415546655059 / 7155723192500, 2862289277 / 49167894, 24583947 / 372500, 149 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_217_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -41520688345915724601512492193131608067321985572750 / 201829524643223074166026669465492511319478026633889,
@@ -2972,9 +3049,10 @@ noncomputable def rev_217_50 : Fin 17 → ℝ :=
     -348973095854564753250 / 3041307011918341469123, -79078173624147803 / 804085474319273625,
     -31055838655450 / 364415546655059, -5334716499 / 71557231925, -1616650 / 24583947, -217 / 3725]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_217_50 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3019,8 +3097,8 @@ theorem rel_cell_gap_217_50 :
 /-- Pivots at the Sturm shift `t = -5/2` for `λ = 89/20`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_89_20 : Fin 17 → ℝ :=
   ![9157439137576208549392449838095137986275 / 7848096167658521746330772700405858716302,
     3924048083829260873165386350202929358151 / 264178797666206181452707534728430976000,
@@ -3035,7 +3113,8 @@ noncomputable def rpv_89_20 : Fin 17 → ℝ :=
     17464679769441551 / 462015414099000, 205596859274055 / 4660894827982,
     2330447413991 / 45776052800, 114440132 / 1966329, 1966329 / 29800, 149 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_89_20 : Fin 17 → ℝ :=
   ![0 / 1, -1175595649614617507464548529541517843200 / 3924048083829260873165386350202929358151,
     34443449341731357117349290588039648159 / 13208939883310309072635376736421548800,
@@ -3049,9 +3128,10 @@ noncomputable def rev_89_20 : Fin 17 → ℝ :=
     -2055968592740550 / 17464679769441551, -2330447413991 / 23100770704950,
     -203703434960 / 2330447413991, -175003281 / 2288802640, -132610 / 1966329, -89 / 1490]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_89_20 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3096,8 +3176,8 @@ theorem rel_cell_gap_89_20 :
 /-- Pivots at the Sturm shift `t = -5/2` for `λ = 114/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_114_25 : Fin 17 → ℝ :=
   ![21048941921850233176848658436180601147747425 / 29627997751399606913248586354078517176911514,
     14813998875699803456624293177039258588455757 / 1274936818459737229394448470900077230362500,
@@ -3113,7 +3193,8 @@ noncomputable def rpv_114_25 : Fin 17 → ℝ :=
     1188320108279135 / 26951276460974, 40426914691461 / 794356982500, 2859685137 / 49148314,
     24574157 / 372500, 149 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_114_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -5813711892176401766038685027304352170453000 / 14813998875699803456624293177039258588455757,
@@ -3129,9 +3210,10 @@ noncomputable def rev_114_25 : Fin 17 → ℝ :=
     -3072445516551036 / 29708002706978375, -1207422613400 / 13475638230487,
     -1867635932 / 23830709475, -1698600 / 24574157, -228 / 3725]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_114_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3176,8 +3258,8 @@ theorem rel_cell_gap_114_25 :
 /-- Pivots at the Sturm shift `t = -5/2` for `λ = 467/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_467_100 : Fin 17 → ℝ :=
   ![
     25128524090120983386971005075263826902416762773682475 / 110065035406388540583664981064960951052474636680143838,
@@ -3194,7 +3276,8 @@ noncomputable def rpv_467_100 : Fin 17 → ℝ :=
     24196382564549158686031 / 640876424716972275000, 128175284943394455 / 2908360172911342,
     1454180086455671 / 28583347880000, 2858334788 / 49138161, 49138161 / 745000, 149 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_467_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -26770242443881195725074030790914191726849018086368000 / 55032517703194270291832490532480475526237318340071919,
@@ -3211,9 +3294,10 @@ noncomputable def rev_467_100 : Fin 17 → ℝ :=
     -133484234599600 / 1454180086455671, -22947521187 / 285833478800, -3479150 / 49138161,
     -467 / 7450]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_467_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3258,8 +3342,8 @@ theorem rel_cell_gap_467_100 :
 /-- Pivots at the Sturm shift `t = -3` for `λ = 239/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_239_50 : Fin 17 → ℝ :=
   ![
     1997221896148512969379305551895620397715819621638 / 1242929039437308848865693877203977247318044618089,
@@ -3276,7 +3360,8 @@ noncomputable def rpv_239_50 : Fin 17 → ℝ :=
     4180671897506114 / 93831423934891, 93831423934891 / 1826919152500, 730767661 / 12458504,
     3114626 / 46875, 75 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_239_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -362252138527910790212923866049437519715128500550 / 1242929039437308848865693877203977247318044618089,
@@ -3292,9 +3377,10 @@ noncomputable def rev_239_50 : Fin 17 → ℝ :=
     -49959029175198062300 / 399642845304319884939, -22425710320438949 / 209033594875305700,
     -8732673548950 / 93831423934891, -1488791228 / 18269191525, -448125 / 6229252, -239 / 3750]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_239_50 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3339,8 +3425,8 @@ theorem rel_cell_gap_239_50 :
 /-- Pivots at the Sturm shift `t = -3` for `λ = 489/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_489_100 : Fin 17 → ℝ :=
   ![
     533255860295348191740690208873890764960503245279 / 469844967844915486920028222820834972944645676237,
@@ -3357,7 +3443,8 @@ noncomputable def rpv_489_100 : Fin 17 → ℝ :=
     824729211430219 / 18518982954261, 166670846588349 / 3246272540000, 324627254 / 5535931,
     16607793 / 250000, 75 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_489_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -179198168351615187938526474353499826967982368800 / 469844967844915486920028222820834972944645676237,
@@ -3373,9 +3460,10 @@ noncomputable def rev_489_100 : Fin 17 → ℝ :=
     -40329258438937709100 / 315154291706204017919, -9055782664633629 / 82472921143021900,
     -5291424240200 / 55556948862783, -2707070259 / 32462725400, -407500 / 5535931, -163 / 2500]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_489_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3420,8 +3508,8 @@ theorem rel_cell_gap_489_100 :
 /-- Pivots at the Sturm shift `t = -3` for `λ = 5`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_5_1 : Fin 17 → ℝ :=
   ![18134748249326063457 / 28271862334156337159, 141359311670781685795 / 13336167750628589604,
     -16670209688285737005 / 4567434130296223739, 4567434130296223739 / 1580295213590674228,
@@ -3430,7 +3518,8 @@ noncomputable def rpv_5_1 : Fin 17 → ℝ :=
     40198354831279 / 1821131279373, 1821131279373 / 67506583772, 16876645943 / 521764203,
     13044105075 / 341572756, 426965945 / 9591961, 9591961 / 186892, 46723 / 797, 797 / 12, 75 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_5_1 : Fin 17 → ℝ :=
   ![0 / 1, -13336167750628589604 / 28271862334156337159, 4567434130296223739 / 3334041937657147401,
     -7901476067953371140 / 4567434130296223739, -304977928072041365 / 395073803397668557,
@@ -3439,9 +3528,10 @@ noncomputable def rev_5_1 : Fin 17 → ℝ :=
     -337532918860 / 1821131279373, -2608821015 / 16876645943, -341572756 / 2608821015,
     -9591961 / 85393189, -934460 / 9591961, -3985 / 46723, -60 / 797, -1 / 15]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_5_1 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3486,8 +3576,8 @@ theorem rel_cell_gap_5_1 :
 /-- Pivots at the Sturm shift `t = -3` for `λ = 511/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_511_100 : Fin 17 → ℝ :=
   ![
     9813521099835332457740056108785832511214159310367013 / 84515408891915335414519086846577206942073493237939839,
@@ -3504,7 +3594,8 @@ noncomputable def rpv_511_100 : Fin 17 → ℝ :=
     25424955351245539145439 / 666218415288437390000, 66621841528843739 / 1497421659619141,
     1497421659619141 / 29186972860000, 2918697286 / 49801379, 49801379 / 750000, 75 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_511_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -47697202656733987042234286581398393016635287750186400 / 84515408891915335414519086846577206942073493237939839,
@@ -3521,9 +3612,10 @@ noncomputable def rev_511_100 : Fin 17 → ℝ :=
     -149145431314600 / 1497421659619141, -25448504669 / 291869728600, -3832500 / 49801379,
     -511 / 7500]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_511_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3568,8 +3660,8 @@ theorem rel_cell_gap_511_100 :
 /-- Pivots at the Sturm shift `t = -7/2` for `λ = 261/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_261_50 : Fin 17 → ℝ :=
   ![
     51695720884435088009129693954507955293552671172753 / 33535954548934060019183469004393803074337874671442,
@@ -3586,7 +3678,8 @@ noncomputable def rpv_261_50 : Fin 17 → ℝ :=
     3357575870293945146137 / 86884503380787447500, 34753801352314979 / 772755646598878,
     386377823299439 / 7460631962500, 2984252785 / 50501266, 25250633 / 377500, 151 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_261_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -6291199237244647706706173138014401864619721281350 / 16767977274467030009591734502196901537168937335721,
@@ -3602,9 +3695,10 @@ noncomputable def rev_261_50 : Fin 17 → ℝ :=
     -453537107647710475950 / 3357575870293945146137, -100844611881153579 / 868845033807874475,
     -38944498844250 / 386377823299439, -6590415213 / 74606319625, -1970550 / 25250633, -261 / 3775]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_261_50 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3649,8 +3743,8 @@ theorem rel_cell_gap_261_50 :
 /-- Pivots at the Sturm shift `t = -7/2` for `λ = 533/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_533_100 : Fin 17 → ℝ :=
   ![
     20081657971484978542435072072463892451589923976679309 / 19397918670941573997747557444321841925030247027521526,
@@ -3667,7 +3761,8 @@ noncomputable def rpv_533_100 : Fin 17 → ℝ :=
     2061894188000082286387 / 53392041335372685000, 138819307471968981 / 3088219870342342,
     1544109935171171 / 29826861100000, 2982686110 / 50489661, 50489661 / 755000, 151 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_533_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -4485089810207366833928834801375474135648774917415200 / 9698959335470786998873778722160920962515123513760763,
@@ -3684,9 +3779,10 @@ noncomputable def rev_533_100 : Fin 17 → ℝ :=
     -158977169663000 / 1544109935171171, -26910989313 / 298268611000, -4024150 / 50489661,
     -533 / 7550]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_533_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3731,8 +3827,8 @@ theorem rel_cell_gap_533_100 :
 /-- Pivots at the Sturm shift `t = -7/2` for `λ = 136/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_136_25 : Fin 17 → ℝ :=
   ![
     1713936734975588633132104630732419698286014829513 / 3422023746615045287893198829964964356716118431582,
@@ -3749,7 +3845,8 @@ noncomputable def rpv_136_25 : Fin 17 → ℝ :=
     2038520952322767 / 45372930363194, 22686465181597 / 438395112500, 2981086765 / 50477814,
     25238907 / 377500, 151 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_136_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -943303895053039510523353977403029002777610264800 / 1711011873307522643946599414982482178358059215791,
@@ -3765,9 +3862,10 @@ noncomputable def rev_136_25 : Fin 17 → ℝ :=
     -27723884951589631200 / 196672997566680966979, -6170718529394384 / 50963023808069175,
     -2384869412000 / 22686465181597, -403822512 / 4383951125, -2053600 / 25238907, -272 / 3775]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_136_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3812,8 +3910,8 @@ theorem rel_cell_gap_136_25 :
 /-- Pivots at the Sturm shift `t = -4` for `λ = 111/20`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_111_20 : Fin 17 → ℝ :=
   ![9510237278678733788098795885028046490948 / 4924852567999460196371637498618350659573,
     4924852567999460196371637498618350659573 / 330790455103290544513846412123865145600,
@@ -3828,7 +3926,8 @@ noncomputable def rpv_111_20 : Fin 17 → ℝ :=
     602507315258903613 / 15420561549101600, 38551403872754 / 848957577947,
     848957577947 / 16253379200, 121900344 / 2047279, 2047279 / 30400, 76 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_111_20 : Fin 17 → ℝ :=
   ![0 / 1, -1835887025823262522051847587287451558080 / 4924852567999460196371637498618350659573,
     30212593750079550539917721090360281243 / 16539522755164527225692320606193257280,
@@ -3843,9 +3942,10 @@ noncomputable def rev_111_20 : Fin 17 → ℝ :=
     -94234291152117 / 771028077455080, -90206254560 / 848957577947, -75749323 / 812668960,
     -168720 / 2047279, -111 / 1520]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_111_20 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3890,8 +3990,8 @@ theorem rel_cell_gap_111_20 :
 /-- Pivots at the Sturm shift `t = -4` for `λ = 283/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_283_50 : Fin 17 → ℝ :=
   ![
     3983847117615233136471098318325915106307851600644 / 2822745453004463654069644741645597954594111362919,
@@ -3908,7 +4008,8 @@ noncomputable def rpv_283_50 : Fin 17 → ℝ :=
     4511081115566622 / 99392728630421, 99392728630421 / 1903644740000, 761457896 / 12792411,
     12792411 / 190000, 76 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_283_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -1291013196890922522934183860115985284817772765200 / 2822745453004463654069644741645597954594111362919,
@@ -3924,9 +4025,10 @@ noncomputable def rev_283_50 : Fin 17 → ℝ :=
     -63831797785267701300 / 440328421616151273781, -28128142202409143 / 225554055778331100,
     -10774629228400 / 99392728630421, -3620252313 / 38072894800, -1075400 / 12792411, -283 / 3800]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_283_50 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -3971,8 +4073,8 @@ theorem rel_cell_gap_283_50 :
 /-- Pivots at the Sturm shift `t = -4` for `λ = 577/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_577_100 : Fin 17 → ℝ :=
   ![
     161006151698409167439082254339278978229640009265933964 / 185821121947284151188828808842630134809690143256628239,
@@ -3989,7 +4091,8 @@ noncomputable def rpv_577_100 : Fin 17 → ℝ :=
     28118361318972814973911 / 720686786694454620000, 72068678669445462 / 1588742501049041,
     1588742501049041 / 30441216560000, 3044121656 / 51157071, 51157071 / 760000, 76 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_577_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -100914789617110474404893064303508069498981033580689600 / 185821121947284151188828808842630134809690143256628239,
@@ -4006,9 +4109,10 @@ noncomputable def rev_577_100 : Fin 17 → ℝ :=
     -175645819551200 / 1588742501049041, -29517629967 / 304412165600, -4385200 / 51157071,
     -577 / 7600]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_577_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4053,8 +4157,8 @@ theorem rel_cell_gap_577_100 :
 /-- Pivots at the Sturm shift `t = -4` for `λ = 147/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_147_25 : Fin 17 → ℝ :=
   ![810958909162320313497094484905189987020448 / 2837391916996351748622835663049216050687873,
     2837391916996351748622835663049216050687873 / 304809592034079743422712994796487407322500,
@@ -4070,7 +4174,8 @@ noncomputable def rpv_147_25 : Fin 17 → ℝ :=
     93695349017114 / 2066630215877, 2066630215877 / 39614307500, 47537169 / 799129, 799129 / 11875,
     76 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_147_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -1792280401160388891325552409403345955056300 / 2837391916996351748622835663049216050687873,
@@ -4086,9 +4191,10 @@ noncomputable def rev_147_25 : Fin 17 → ℝ :=
     -303794641733919 / 2342383725427850, -232932128100 / 2066630215877, -39157321 / 396143075,
     -69825 / 799129, -147 / 1900]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_147_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4133,8 +4239,8 @@ theorem rel_cell_gap_147_25 :
 /-- Pivots at the Sturm shift `t = -9/2` for `λ = 599/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_599_100 : Fin 17 → ℝ :=
   ![
     944726692992111316274303811064027719527382655089120039 / 533499242512265331283394268183914167060821580185239198,
@@ -4151,7 +4257,8 @@ noncomputable def rpv_599_100 : Fin 17 → ℝ :=
     29607026530516867438599 / 750173436978060335000, 150034687395612067 / 3274541084612702,
     1637270542306351 / 31096248880000, 3109624888 / 51852449, 51852449 / 765000, 153 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_599_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -121537554116284029591065976274088984327739103150622400 / 266749621256132665641697134091957083530410790092619599,
@@ -4168,9 +4275,10 @@ noncomputable def rev_599_100 : Fin 17 → ℝ :=
     -186266530791200 / 1637270542306351, -31059616951 / 310962488800, -4582350 / 51852449,
     -599 / 7650]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_599_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4215,8 +4323,8 @@ theorem rel_cell_gap_599_100 :
 /-- Pivots at the Sturm shift `t = -9/2` for `λ = 61/10`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_61_10 : Fin 17 → ℝ :=
   ![16665575198808155295434582605646067722499 / 13721606084520422075880184688194618090418,
     6860803042260211037940092344097309045209 / 605773342939179576001427687331761807100,
@@ -4231,7 +4339,8 @@ noncomputable def rpv_61_10 : Fin 17 → ℝ :=
     236308188022168287 / 5991977363161300, 59919773631613 / 1308492567878,
     654246283939 / 12431211700, 124312117 / 2073566, 1036783 / 15300, 153 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_61_10 : Fin 17 → ℝ :=
   ![0 / 1, -3695217391928995413608708892723747023310 / 6860803042260211037940092344097309045209,
     30167975342864903802726204800045570147 / 30288667146958978800071384366588090355,
@@ -4246,9 +4355,10 @@ noncomputable def rev_61_10 : Fin 17 → ℝ :=
     -39909023320279 / 299598868158065, -75830391370 / 654246283939, -63243763 / 621560585,
     -93330 / 1036783, -61 / 765]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_61_10 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4293,8 +4403,8 @@ theorem rel_cell_gap_61_10 :
 /-- Pivots at the Sturm shift `t = -9/2` for `λ = 621/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_621_100 : Fin 17 → ℝ :=
   ![14666429173339859849345857281392061332279991 / 23456707770814159627619428637425359382483262,
     35185061656221239441429142956138039073724893 / 3535234419913489170301196122314097407520000,
@@ -4310,7 +4420,8 @@ noncomputable def rpv_621_100 : Fin 17 → ℝ :=
     1846420163878467 / 40343978471102, 60515967706653 / 1150351040000, 115035104 / 1919467,
     5758401 / 85000, 153 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_621_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -7317935249220922582523475973190181633566400 / 11728353885407079813809714318712679691241631,
@@ -4326,9 +4437,10 @@ noncomputable def rev_621_100 : Fin 17 → ℝ :=
     -4175601771759057 / 30773669397974450, -2381226652800 / 20171989235551,
     -1191989007 / 11503510400, -175950 / 1919467, -69 / 850]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_621_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4373,8 +4485,8 @@ theorem rel_cell_gap_621_100 :
 /-- Pivots at the Sturm shift `t = -5` for `λ = 158/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_158_25 : Fin 17 → ℝ :=
   ![
     12220473328382495203532962624805455637470014093315 / 5779442019769502106521326268895905586027528347959,
@@ -4391,7 +4503,8 @@ noncomputable def rpv_158_25 : Fin 17 → ℝ :=
     4870673452108035 / 105317252348861, 105317252348861 / 1983791867500, 793516747 / 13134519,
     13134519 / 192500, 77 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_158_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -2638724172541932805233175430328175995675257539000 / 5779442019769502106521326268895905586027528347959,
@@ -4407,9 +4520,10 @@ noncomputable def rev_158_25 : Fin 17 → ℝ :=
     -76956640543306953000 / 485683298382958201609, -16640125871120038 / 121766836302700875,
     -12537564602600 / 105317252348861, -2075254002 / 19837918675, -1216600 / 13134519, -158 / 1925]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_158_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4454,8 +4568,8 @@ theorem rel_cell_gap_158_25 :
 /-- Pivots at the Sturm shift `t = -5` for `λ = 643/100`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_643_100 : Fin 17 → ℝ :=
   ![
     588394548754383612097556256026448407292566739526265715 / 380520899381192733768069004473254550056755239446237599,
@@ -4472,7 +4586,8 @@ noncomputable def rpv_643_100 : Fin 17 → ℝ :=
     31009090142127416592151 / 778038055974611850000, 77803805597461185 / 1683304685313101,
     1683304685313101 / 31721315380000, 3172131538 / 52524051, 52524051 / 770000, 77 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_643_100 : Fin 17 → ℝ :=
   ![0 / 1,
     -204387239214864705558754084967313272626937707263596000 / 380520899381192733768069004473254550056755239446237599,
@@ -4489,9 +4604,10 @@ noncomputable def rev_643_100 : Fin 17 → ℝ :=
     -203968057893400 / 1683304685313101, -33772964793 / 317213153800, -4951100 / 52524051,
     -643 / 7700]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_643_100 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4536,8 +4652,8 @@ theorem rel_cell_gap_643_100 :
 /-- Pivots at the Sturm shift `t = -5` for `λ = 327/50`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_327_50 : Fin 17 → ℝ :=
   ![
     5482463165257121218297484075283716828371048252490 / 5787661563571953485510120268610602357090863375239,
@@ -4554,7 +4670,8 @@ noncomputable def rpv_327_50 : Fin 17 → ℝ :=
     4854669986645710 / 105093948261041, 105093948261041 / 1981351682500, 792540673 / 13127446,
     6563723 / 96250, 77 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_327_50 : Fin 17 → ℝ :=
   ![0 / 1,
     -3586520589082973426491302334521298923101417220750 / 5787661563571953485510120268610602357090863375239,
@@ -4570,9 +4687,10 @@ noncomputable def rev_327_50 : Fin 17 → ℝ :=
     -79373854281657358500 / 483331914095926853161, -34365721081360407 / 242733499332285500,
     -12958040003550 / 105093948261041, -2146337421 / 19813516825, -629475 / 6563723, -327 / 3850]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_327_50 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4617,8 +4735,8 @@ theorem rel_cell_gap_327_50 :
 /-- Pivots at the Sturm shift `t = -5` for `λ = 133/20`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_133_20 : Fin 17 → ℝ :=
   ![44772282004317944413723948988350165845 / 146264374753271761173628656607041731017,
     146264374753271761173628656607041731017 / 15524893250314678307522626130292464000,
@@ -4633,7 +4751,8 @@ noncomputable def rpv_133_20 : Fin 17 → ℝ :=
     282113758426528033 / 7089693406422000, 17724233516055 / 383924918603,
     383924918603 / 7241509600, 18103774 / 299973, 299973 / 4400, 77 / 1]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_133_20 : Fin 17 → ℝ :=
   ![0 / 1, -103240540114592610745025463766444885600 / 146264374753271761173628656607041731017,
     428543147097461360190778619232030549 / 776244662515733915376131306514623200,
@@ -4647,9 +4766,10 @@ noncomputable def rev_133_20 : Fin 17 → ℝ :=
     -47146461152706300 / 282113758426528033, -51062014174199 / 354484670321100,
     -48156038840 / 383924918603, -39896409 / 362075480, -29260 / 299973, -19 / 220]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_133_20 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]
@@ -4694,8 +4814,8 @@ theorem rel_cell_gap_133_20 :
 /-- Pivots at the Sturm shift `t = -11/2` for `λ = 169/25`, `jmax = 8`.
 DERIVED: the same backward recurrence as the absolute route, solved at `t` instead of `μ` —
 `p (n-1) = d (n-1) − t`, `p i = d i − t − λ²/p (i+1)`, `d i = i(i+2)/4`. `t` carries no sign condition
-and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero, which
-is the whole reason this route exists. -/
+and is negative here: at strong coupling the shift that isolates one eigenvalue lies below zero. The
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rpv_169_25 : Fin 17 → ℝ :=
   ![
     7752227160099071338921808696607150499548922283187141 / 4162197069070463091030655081694871365288280533293358,
@@ -4712,7 +4832,8 @@ noncomputable def rpv_169_25 : Fin 17 → ℝ :=
     4066393221718190689103 / 100977404819546467500, 40390961927818587 / 865907418228538,
     432953709114269 / 8092771152500, 3237108461 / 53211774, 26605887 / 387500, 155 / 2]
 
-/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained. -/
+/-- Multipliers at the same shift. DERIVED: `e (i+1) = −λ / p (i+1)`; `e 0` is unconstrained; the
+`17` is `dim 8`, the number of entries. -/
 noncomputable def rev_169_25 : Fin 17 → ℝ :=
   ![0 / 1,
     -1119811887558319205750502533484810799521939397183900 / 2081098534535231545515327540847435682644140266646679,
@@ -4728,9 +4849,10 @@ noncomputable def rev_169_25 : Fin 17 → ℝ :=
     -682607256580134120300 / 4066393221718190689103, -146338353680622922 / 1009774048195464675,
     -54707132990900 / 432953709114269, -8992789806 / 80927711525, -2619500 / 26605887, -338 / 3875]
 
-/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of ANY nonzero vector
+/-- A trial vector. DERIVED: nothing about it is special — the Rayleigh quotient of any nonzero vector
 bounds `E₀` from above, so a coarse rational gives a weaker bound and a smaller certified gap, which is
-still true. This is the ground-state direction rounded to a denominator of 2. -/
+still true. The `17` is `dim 8`, the number of entries. This is the ground-state direction rounded
+to a denominator of 2. -/
 noncomputable def rvv_169_25 : Fin 17 → ℝ :=
   ![1 / 2, 1 / 1, 1 / 1, 1 / 2, 1 / 2, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1, 0 / 1,
     0 / 1, 0 / 1, 0 / 1, 0 / 1]

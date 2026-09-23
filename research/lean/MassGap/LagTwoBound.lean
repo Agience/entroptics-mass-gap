@@ -167,7 +167,11 @@ theorem lagTwoThreshold_gt : 0.018623 < lagTwoThreshold := by
 #print axioms lagTwoThreshold_gt
 
 /-- `lagTwoThreshold < 0.018625`, the other half of the bracket, proved the same way from the lower
-half of `floor_bounds`. Used by `contact_relative_constant_too_large`.
+half of `floor_bounds`. Used by `contact_relative_constant_too_large` here, and by
+`LagTwoQuadratic.lagTwoThreshold_lt_lagTwoThresholdQuad`,
+`LagTwoSix.lagTwoThreshold_lt_lagTwoThresholdSix`,
+`DiffractionNoGo.ceiling_admits_lag_two_above_threshold`,
+`FreeFieldLagTwo.flat_profile_fails_the_threshold` and `TailRatio.no_bound_at_the_threshold`.
 
 DERIVED: `0.018625` is the reported upper bracket on `lagTwoThreshold`. -/
 theorem lagTwoThreshold_lt : lagTwoThreshold < 0.018625 := by

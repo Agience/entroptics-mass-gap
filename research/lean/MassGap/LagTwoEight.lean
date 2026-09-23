@@ -259,7 +259,7 @@ positive, so its left side is monotone in `vSix` and a value at `0.1839` already
 DERIVED: no numeral appears in the statement. -/
 theorem lagTwoThresholdSix_lt_lagTwoThresholdEight :
     MassGap.LagTwoSix.lagTwoThresholdSix < lagTwoThresholdEight := by
-  -- `LagTwoSix` publishes only a LOWER bracket (`lagTwoThresholdSix_gt`), so the upper one is taken
+  -- `LagTwoSix` publishes only a lower bracket (`lagTwoThresholdSix_gt`), so the upper one is taken
   -- here from `vSix_root` directly: both coefficients of that quadratic are positive, so it is
   -- monotone in `vSix` and a value at `0.1839` already overshoots `1 − c`.
   have hc := MassGap.LagTwoBound.floor_bounds
@@ -291,7 +291,7 @@ theorem vEight_lt_one : vEight < 1 := by
 
 The statement exhibits five reals `r₀ … r₄`, with `r₀` positive and the other four nonnegative, that
 satisfy the three log-convexity inequalities `r₁ ^ 2 ≤ r₀ * r₂`, `r₂ ^ 2 ≤ r₀ * r₄` and
-`r₃ ^ 2 ≤ r₂ * r₄`, sit at `r₂ = lagTwoThresholdEight * r₀` exactly, and do NOT satisfy the criterion's
+`r₃ ^ 2 ≤ r₂ * r₄`, sit at `r₂ = lagTwoThresholdEight * r₀` exactly, and do not satisfy the criterion's
 strict inequality. The witness is `(1, vEight, vEight ^ 2, vEight ^ 2, vEight ^ 2)`: on it the
 criterion's left side is `bEight·vEight + aEight·vEight²`, which `vEight_root` puts equal to `1 − c`,
 the right side, so the strict `<` fails.

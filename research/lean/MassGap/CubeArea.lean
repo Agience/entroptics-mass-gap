@@ -37,7 +37,7 @@ recovering the configuration from its boundary one coordinate-sum level at a tim
 Scope: everything is `Finset` combinatorics over `Fin 3 → ℕ`. No statement mentions a lattice gauge
 theory, an entropy, a coupling or a gap.
 
-DERIVED THROUGHOUT: `3` is the dimension the cube-path lives in, which is `Fin 3`, the step alphabet
+DERIVED throughout: `3` is the dimension the cube-path lives in, which is `Fin 3`, the step alphabet
 `Floor.directed_paths_card` counts over. `6` is the number of faces of a cube, `2` per axis over `3`
 axes. `2` is how many cubes a shared face belongs to. `1` is the unit lattice step. None is a
 magnitude; each is the arity of something the definitions already name.
@@ -63,7 +63,7 @@ abbrev Face : Type := Fin 3 × (Fin 3 → ℕ)
 
 /-- One unit step along axis `a`.
 
-DERIVED: `1` is the UNIT of the lattice — a cube-path advances one cube per step, which is what
+DERIVED: `1` is the unit of the lattice — a cube-path advances one cube per step, which is what
 `Floor.cubePos_succ` already states coordinatewise; `3` is `Cube`'s dimension. -/
 def step (a : Fin 3) (x : Cube) : Cube := Function.update x a (x a + 1)
 
@@ -120,7 +120,7 @@ theorem card_faces (x : Cube) : (faces x).card = 6 := by
       have := congrArg (fun y : Cube => y a) hx
       simp [step_self] at this
     simp [h]
-  · -- Faces on different axes are distinct in their FIRST component alone, so the two-element
+  · -- Faces on different axes are distinct in their first component alone, so the two-element
     -- families are disjoint without looking at the corners at all.
     intro a _ b _ hab
     refine Finset.disjoint_left.mpr ?_
@@ -154,7 +154,7 @@ theorem step_rel_of_shares {x y : Cube} {f : Face} (hx : f ∈ faces x) (hy : f 
     x = y ∨ (∃ a, y = step a x) ∨ (∃ a, x = step a y) := by
   obtain ⟨a, ha⟩ := mem_faces.mp hx
   obtain ⟨b, hb⟩ := mem_faces.mp hy
-  -- the axis is read off the face's first component, so the two descriptions use the SAME axis
+  -- the axis is read off the face's first component, so the two descriptions use the same axis
   have hab : a = b := by
     rcases ha with h | h <;> rcases hb with h' | h' <;>
       · have := congrArg Prod.fst (h.symm.trans h'); simpa using this
@@ -364,7 +364,7 @@ theorem shared_face_eq {a : Fin 3} {x : Cube} {f : Face}
     exfalso
     have := sum_step f.1 (step a x)
     rw [h2, ← h1] at this; omega
-  · -- step f.1 x = f.2 and step a x = f.2 : THE case. The axis and the corner both follow.
+  · -- step f.1 x = f.2 and step a x = f.2 : The case. The axis and the corner both follow.
     have haxis : f.1 = a := step_axis_inj (h1.trans h2.symm)
     have : f = (f.1, f.2) := rfl
     rw [this, haxis, ← h2]
@@ -556,7 +556,7 @@ theorem card_sharedFaces {k : ℕ} (s : Fin k → Fin 3) :
 owners is interior — the two cubes cancel across it — and `owners_one_or_two` says there is no third
 case, so this really is the surface of the union.
 
-DERIVED: `1` is the ARITY of the owner count, not a magnitude: `owners_one_or_two` proves every face
+DERIVED: `1` is the arity of the owner count, not a magnitude: `owners_one_or_two` proves every face
 of the configuration has one owner or two, so "exactly one" is the complement of "shared" and the
 only other case there is. -/
 noncomputable def boundaryFaces (C : Finset Cube) : Finset Face :=

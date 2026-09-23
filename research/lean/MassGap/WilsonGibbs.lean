@@ -11,7 +11,7 @@ import MassGap.WilsonAction
 
 `WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` produces a probability measure `P` on
 `IConf (SU N)` satisfying `∫ spec wilsonDensity β Λ probHaar f dP = ∫ f dP` for every finite volume
-`Λ` and every CONTINUOUS observable `f`. `GibbsSpec.IsGibbsMeasure` asks for that equation at every
+`Λ` and every continuous observable `f`. `GibbsSpec.IsGibbsMeasure` asks for that equation at every
 measurable `f` bounded by `1`. This file derives the second from the first.
 
 ## How the extension is made
@@ -66,8 +66,8 @@ measure built in another with no transport.
 
 Below the types, the three bridges have three different strengths:
 
-* the boundary WORDS are equal by `rfl` (`ibd_eq`) — same body, same `ishift`;
-* the link SETS do not share a type — `InfiniteLattice.linksOf q` is a `Finset`,
+* the boundary words are equal by `rfl` (`ibd_eq`) — same body, same `ishift`;
+* the link sets do not share a type — `InfiniteLattice.linksOf q` is a `Finset`,
   `GibbsSpec.ilinks q` the `List` it is the `toFinset` of — so `mem_linksOf_iff` relates them by
   `List.mem_toFinset`, not by `rfl`;
 * the two `plaqsIn` filter different candidate sets, so `gibbsSpec_plaqsIn_eq` is an extensional
@@ -210,7 +210,7 @@ theorem escale_nonneg (β : ℝ) (Λ : Finset ILink) : 0 ≤ escale β Λ :=
 #print axioms escale_nonneg
 
 /-- The Boltzmann weight is bounded below by `exp (-escale β Λ)`, uniformly in the inside
-configuration `u` AND the boundary condition `ω`. `GibbsSpec.wt_le` is the matching upper bound.
+configuration `u` and the boundary condition `ω`. `GibbsSpec.wt_le` is the matching upper bound.
 
 DERIVED: `0` and `2` are the proved range of the plaquette density — the hypotheses `hφ0` and
 `hφ2`, discharged at the Wilson instance by `WilsonAction.wilsonDensity_nonneg` and
@@ -461,7 +461,7 @@ continuous function are equal. `specMeasure` and `P` have that, by
 `integral_specMeasure`. -/
 
 /-- The kernel fixes the measure: for a `P` satisfying the DLR equation at continuous observables,
-`specMeasure φ β Λ μ P = P` at every finite volume. This is an equality of MEASURES, from which the
+`specMeasure φ β Λ μ P = P` at every finite volume. This is an equality of measures, from which the
 bounded measurable equation follows by reading it at one observable.
 
 DERIVED: `0` and `2` are the proved range of the plaquette density, the hypotheses `hφ0` and

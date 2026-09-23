@@ -267,7 +267,7 @@ positive total mass, on each side of `confines_extent_four_iff`'s inequality. So
 not a consequence of `Shape 4 2` and those two positivity conditions, and neither is its negation. -/
 
 /-- There is a `ρ : Fin 4 → ℝ` satisfying `MomentShape.Shape 4 2 ρ`, with `0 < ρ 0` and
-`0 < ∑ d, ρ d`, for which the extent-four criterion `2c·ρ(1) + (1+c)·ρ(2) < (1−c)·ρ(0)` is FALSE.
+`0 < ∑ d, ρ d`, for which the extent-four criterion `2c·ρ(1) + (1+c)·ρ(2) < (1−c)·ρ(0)` is false.
 
 The witness is the flat profile `ρ ≡ 1`: nonnegative, circle-symmetric by `rfl`, log-convex because
 `1 ≤ 1`, with total mass `4`. There the criterion reads `1 + 3c < 1 − c`, which fails because `c` is
@@ -296,7 +296,7 @@ theorem shape_admits_failure :
 #print axioms shape_admits_failure
 
 /-- There is a `ρ : Fin 4 → ℝ` satisfying `MomentShape.Shape 4 2 ρ`, with `0 < ρ 0` and
-`0 < ∑ d, ρ d`, for which the extent-four criterion `2c·ρ(1) + (1+c)·ρ(2) < (1−c)·ρ(0)` HOLDS.
+`0 < ∑ d, ρ d`, for which the extent-four criterion `2c·ρ(1) + (1+c)·ρ(2) < (1−c)·ρ(0)` holds.
 
 The witness is `wilsonCorrAt 3 0`, the ensemble's own profile at zero coupling, not an invented one.
 `MomentShape.shape_wilsonCorrAt` gives its `Shape 4 2`,

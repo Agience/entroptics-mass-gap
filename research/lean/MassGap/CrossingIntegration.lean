@@ -372,13 +372,13 @@ end Answer
 
 /-! ## A second, independent obstruction: the word is not a function of the two halves
 
-`straddling_word_not_matrix_paired_at_odd_lag` rules out the paired FORM, for an `X` allowed to read
+`straddling_word_not_matrix_paired_at_odd_lag` rules out the paired form, for an `X` allowed to read
 anything. There is a second obstruction, independent of it and immune to rescaling and to additive
 constants: `CharacterExpansion.crossweight_pairing_nonneg` reads its word through
-`X : (S → Ω) → Matrix`, a function of the POSITIVE HALF's restriction, and the straddling word is not
+`X : (S → Ω) → Matrix`, a function of the positive half's restriction, and the straddling word is not
 determined by that data at all.
 
-The reason is the geometry the odd lag forces. A fixed axis link lies in NEITHER half — it cannot,
+The reason is the geometry the odd lag forces. A fixed axis link lies in neither half — it cannot,
 because the reflection fixes it while `S` and `T` are disjoint and the reflection carries `S` into
 `T`. Moving one of them moves the straddling word and leaves both half-restrictions exactly where
 they were. -/
@@ -475,7 +475,7 @@ end NotAHalfFunction
 
 section NonVacuous
 
-/-- **THE HYPOTHESES ARE SATISFIABLE, AT `d = 4` AND `SU(3)`.**
+/-- **The hypotheses are satisfiable, at `d = 4` and `SU(3)`.**
 
 `d = 4`, extent `4` (even), axis `0`, transverse direction `1`, reflection constant `1` (odd) is a
 concrete instance of `straddling_word_not_paired_at_odd_lag`. So the refutation is about a case that
@@ -499,7 +499,7 @@ end NonVacuous
 /-! ## The change of variables the reflection suggests, and why it is inert
 
 `Reflect.isInvInvariant_probHaar` licenses substituting `g ↦ g⁻¹` on any link. On the fixed axis
-links that is the one substitution the reflection's own dagger suggests. This file does NOT prove
+links that is the one substitution the reflection's own dagger suggests. This file does not prove
 that it commutes with `reflConf`, so `no_paired_after_equivariant_reparam` is never actually fed it;
 what is proved is only that on this witness the substitution does nothing at all, because the witness
 carries only self-inverse elements. -/
@@ -546,7 +546,7 @@ end InvChange
 
 /-! ## Negative controls
 
-The obstruction argument must be capable of NOT firing, or it proves nothing about this geometry in
+The obstruction argument must be capable of not firing, or it proves nothing about this geometry in
 particular. Both controls below are on the same machinery. -/
 
 section NegControls
@@ -588,9 +588,9 @@ theorem negctl_identity_config [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n
 
 end NegControls
 
-/-! ## The crossing-link integration, WITHOUT representation theory
+/-! ## The crossing-link integration, without representation theory
 
-The obstruction above says the straddling weight is not positive POINTWISE. Osterwalder and Seiler
+The obstruction above says the straddling weight is not positive pointwise. Osterwalder and Seiler
 recover positivity by integrating the fixed axis links out, and do it with Schur orthogonality of
 matrix coefficients: the crossing integral becomes a Gram matrix. This section does the same
 integration and needs no irreducible representations at all.
@@ -602,14 +602,14 @@ transverse links beside it exactly as a gauge field acts on link variables,
 
     (F^G)_x = G_x · F_x · G_{x+ν̂}⁻¹,
 
-so the straddling plaquette word `G_x · F₊ · G_{x+ν̂}⁻¹ · F₋⁻¹` is `Re tr ((F₊^G) · F₋⁻¹)` — the SAME
+so the straddling plaquette word `G_x · F₊ · G_{x+ν̂}⁻¹ · F₋⁻¹` is `Re tr ((F₊^G) · F₋⁻¹)` — the same
 `hsRe` cross form the Wilson weight already has, with the plane links absorbed into one argument.
 The crossing weight is therefore `K (act g x) y` with `K a b = exp (β · ⟨a, b⟩)`, and `K` has two
 properties that are elementary here:
 
-* it is a POSITIVE-SEMIDEFINITE kernel — `CharacterExpansion.wilson_kernel_nonneg`, proved from the
+* it is a positive-semidefinite kernel — `CharacterExpansion.wilson_kernel_nonneg`, proved from the
   coordinate expansion with no representation theory; and
-* it is GAUGE-INVARIANT, `K (act g a) (act g b) = K a b` — `hsRe_conj`, which is cyclicity of the
+* it is gauge-invariant, `K (act g a) (act g b) = K a b` — `hsRe_conj`, which is cyclicity of the
   trace.
 
 Those two are enough. Averaging over the plane links is `P a = ∫ a(·^g) dg`, which lands in the
@@ -623,20 +623,20 @@ gauge-invariant, and against an invariant partner `P` may be moved from one fact
 
 `crossing_gauge_integral_eq` is the identity and `crossing_gauge_pairing_nonneg` the conclusion. The
 identity is where the invariances of Haar are spent: measure-preservation of the gauge action on the
-half, and RIGHT invariance of the plane measure — which for `probHaar` is
+half, and right invariance of the plane measure — which for `probHaar` is
 `CompactGauge.isMulRightInvariant_probHaar`.
 
 ## What this replaces
 
 Schur orthogonality, and therefore Peter-Weyl, for this application. Mathlib v4.31 has neither:
-`RepresentationTheory.Character.char_orthonormal` is stated for a FINITE group, and the library has
+`RepresentationTheory.Character.char_orthonormal` is stated for a finite group, and the library has
 no compact-group representation theory.
 
 `MassGap.HaarMoments` builds part of the tower by hand for `SU(2)`, by invariance under two explicit
-group elements, and gets the FUNDAMENTAL's second moment exactly
+group elements, and gets the fundamental's second moment exactly
 (`haar_su2_second_moment`, `∫ U_ij conj(U_kl) = ½ δ δ`). That is one irreducible representation at
 one order. The crossing weight `exp(β · Re tr W)` reaches every order in the plane links — its
-order-`k` term is degree `k` in their coordinates — so the moment route needs the BALANCED moments
+order-`k` term is degree `k` in their coordinates — so the moment route needs the balanced moments
 at all orders, and `HaarMoments` reaches order four only as bounds
 (`haar_su2_fourth_moment_diag_bounds`), with its own docstring naming the balanced fourth moment the
 remaining deep piece. Truncating at the second moment is a strong-coupling expansion of the weight,
@@ -645,12 +645,12 @@ not the weight.
 The projection argument below needs no moment of any order: it never expands in the plane links at
 all.
 
-## What it does NOT do
+## What it does not do
 
 It is stated for an abstract half `Ω`, plane group `Γ` and invariant kernel `K`. Pointing it at the
-Wilson lattice needs the odd-lag ACTION SPLIT — that at a link-reflection plane every plaquette reads
+Wilson lattice needs the odd-lag action split — that at a link-reflection plane every plaquette reads
 one half, the other half, or straddles; that the straddling ones are exactly the gauge-transformed
-cross form above, AGGREGATED over all of them and over both fixed planes at once (which wants `X`
+cross form above, aggregated over all of them and over both fixed planes at once (which wants `X`
 block-diagonal, and the direct-sum form of `hsRe_conj` that goes with it); and that the reflected
 half's weight is the same function of the transported variables. `ActionSplit` does that work for the
 even-lag case in two thousand lines; the odd-lag case is not done here. So this is the crossing
@@ -805,7 +805,7 @@ theorem crossing_gauge_integral_eq
     refine integral_congr_ae (Filter.Eventually.of_forall (fun y => ?_))
     show gaugeAvg lam act a (act g y) * K x y = gaugeAvg lam act a y * K x y
     rw [gaugeAvg_act lam hactm hmul ham g y]
-  -- STEP 1: push the gauge off the kernel's first argument
+  -- Step 1: push the gauge off the kernel's first argument
   have step1 : ∀ g : Γ, (∫ x, (∫ y, a x * a y * K (act g x) y ∂nu) ∂nu)
       = ∫ x, a x * (∫ y, a (act g y) * K x y ∂nu) ∂nu := by
     intro g
@@ -819,7 +819,7 @@ theorem crossing_gauge_integral_eq
       ring
     rw [hrw, kernel_arg_shift nu hmp hKsec hKinv ham g x]
   rw [integral_congr_ae (Filter.Eventually.of_forall step1)]
-  -- STEP 2: swap the plane integral past the two half integrals
+  -- Step 2: swap the plane integral past the two half integrals
   have hQm : Measurable (fun p : Γ × Ω => ∫ y, a (act p.1 y) * K p.2 y ∂nu) := by
     have hq : Measurable (fun p : (Γ × Ω) × Ω => a (act p.1.1 p.2) * K p.1.2 p.2) :=
       (ham.comp (hactm.comp ((measurable_fst.comp measurable_fst).prodMk measurable_snd))).mul
@@ -841,7 +841,7 @@ theorem crossing_gauge_integral_eq
     rw [abs_mul]
     exact mul_le_mul (hab _) (hQb p) (abs_nonneg _) hCa
   rw [integral_integral_swap hint1]
-  -- STEP 3: the inner plane integral IS the gauge average
+  -- Step 3: the inner plane integral IS the gauge average
   have hA : ∀ x : Ω, (∫ g, a x * (∫ y, a (act g y) * K x y ∂nu) ∂lam)
       = a x * ∫ y, gaugeAvg lam act a y * K x y ∂nu := by
     intro x
@@ -860,7 +860,7 @@ theorem crossing_gauge_integral_eq
     rw [integral_mul_const]
     rfl
   rw [integral_congr_ae (Filter.Eventually.of_forall hA)]
-  -- STEP 4: the right-hand side pairs `P a` against the same invariant partner
+  -- Step 4: the right-hand side pairs `P a` against the same invariant partner
   have hB : ∀ x : Ω, (∫ y, gaugeAvg lam act a x * gaugeAvg lam act a y * K x y ∂nu)
       = gaugeAvg lam act a x * ∫ y, gaugeAvg lam act a y * K x y ∂nu := by
     intro x
@@ -870,7 +870,7 @@ theorem crossing_gauge_integral_eq
         = gaugeAvg lam act a x * (gaugeAvg lam act a y * K x y)
     ring
   rw [integral_congr_ae (Filter.Eventually.of_forall hB)]
-  -- STEP 5: and the projection moves across an invariant partner
+  -- Step 5: and the projection moves across an invariant partner
   exact (integral_gaugeAvg_mul_invariant lam nu hactm hmp ham hCa hab hHm hHb hHinv).symm
 
 /-- `0 ≤ ∫ g ∫ x ∫ y, a x * a y * K (act g x) y`, given that `K` is invariant under the action and
@@ -1140,7 +1140,7 @@ end WilsonCrossing
 
 The abstract theorem above is worth nothing if its invariance hypothesis is empty. It is not: the
 Wilson cross form `hsRe` is invariant under the gauge action of the plane links, by cyclicity of the
-trace, and that is the ONE property of the straddling geometry the crossing integration consumes. -/
+trace, and that is the one property of the straddling geometry the crossing integration consumes. -/
 
 section GaugeInvariance
 

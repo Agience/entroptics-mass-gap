@@ -222,7 +222,7 @@ noncomputable def μYMAt (N : ℕ) (β : ℝ) : ℝ := (readYMAt N β).tension
 Under the aperture reading this is a quantity of the substrate: the window contributes the separate
 factor `(2π/(N+1))²` (`Moment.Read.thetaMoment_eq`), and clustering says this one does not grow with
 `N`. -/
--- DERIVED: `Fin (N+1)` is the lag arity; the exponent 2 is what a SECOND moment is; and the distance
+-- DERIVED: `Fin (N+1)` is the lag arity; the exponent 2 is what a second moment is; and the distance
 -- is `Moment.circLag`, the separation on the circle, because that is the only distance the read can
 -- see. `cos` is even and 2π-periodic, so `cos (θ d)` depends on the lag only through
 -- `min d (N+1-d)` (`Moment.Read.cos_theta_circ`).
@@ -789,7 +789,7 @@ theorem confinement_of_periodic_spectral_form {C r : ℝ}
     ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
   refine confinement_of_geometric_decay hC hr0 hr1 ?_
   intro N β d
-  -- The total mass is positive WITHOUT the reflection-positivity axiom: the hypothesis `S` already
+  -- The total mass is positive without the reflection-positivity axiom: the hypothesis `S` already
   -- carries nonnegative transfer weights, so `Spectral.rho_nonneg` gives every lag, and
   -- `PlaqVariance.corrClay_zero_pos` — the plaquette-energy variance, foundational-only — gives the
   -- lag-zero term strictly. DERIVED: the index `0` is the lag the variance sits at; no value.
@@ -833,7 +833,7 @@ theorem surplus_ge (N : ℕ) (β : ℝ)
     κ₀YM + Real.log (1 - (2 * Real.pi) ^ 2 * substrateRatio N β / 2) ≤ κ₀YM - μYMAt N β := by
   have hA : (0 : ℝ) < 1 - (2 * Real.pi) ^ 2 * substrateRatio N β / 2 := by linarith
   have hNpos : (0 : ℝ) < (N : ℝ) + 1 := by positivity
-  -- the aperture cancels EXACTLY: no inequality is spent here, because the ratio is the read itself
+  -- the aperture cancels exactly: no inequality is spent here, because the ratio is the read itself
   have hcancel : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2
         * (∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2) / 2
       = (2 * Real.pi) ^ 2 * substrateRatio N β / 2 := by
@@ -1241,7 +1241,7 @@ noncomputable def khat1 (N : ℕ) : ℝ := 2 * Real.sin (Real.pi / ((N : ℝ) + 
 /-- The second-moment mass in lattice units, `m = k̂₁/√(e^μ − 1)`, read off the same `μ` the
 confinement criterion uses. It carries the lattice spacing as `m_phys = m/a`.
 
-DERIVED: the `1` is subtracted because `e^μ = Ŝ(0)/Ŝ(k₁) = 1 + k̂₁²/m²` — it is the ZERO-MOMENTUM term
+DERIVED: the `1` is subtracted because `e^μ = Ŝ(0)/Ŝ(k₁) = 1 + k̂₁²/m²` — it is the zero-momentum term
 of that ratio, so `e^μ − 1` is the excess over it, and the whole definition is that identity solved
 for `m`. Nothing is chosen, and no scale enters: `k̂₁` is the aperture's own lowest momentum. -/
 noncomputable def m2At (N : ℕ) (β : ℝ) : ℝ :=
@@ -1675,7 +1675,7 @@ theorem surplus_ge_of_ratio {c : ℝ} (hc0 : 0 ≤ c)
     (hc : (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
     {N : ℕ} {β : ℝ} (h : substrateRatio N β ≤ c) :
     Real.log (1 - (2 * Real.pi) ^ 2 * c / 2) + κ₀YM ≤ κ₀YM - μYMAt N β := by
-  -- ONE PATH: this is `surplus_ge` weakened by monotonicity of `log`. The comparison constant `c`
+  -- One path: this is `surplus_ge` weakened by monotonicity of `log`. The comparison constant `c`
   -- buys nothing the measured ratio does not already give, and no cosine bound is re-derived here.
   have h3 : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
   have hA : (0 : ℝ) < 1 - (2 * Real.pi) ^ 2 * c / 2 := by linarith

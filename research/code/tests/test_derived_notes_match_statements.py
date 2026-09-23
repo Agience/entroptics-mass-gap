@@ -30,10 +30,23 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 TOOL = os.path.join(REPO, "research", "code", "certify", "lean_derived_literals.py")
 
-# DERIVED: measured on 2026-09-21 by running the tool over research/lean/MassGap. Not a chosen
-# tolerance -- it is the count that was there when the gate was written, and the only sanctioned
-# direction is down.
-BASELINE = 334
+# DERIVED: measured by running the tool over research/lean/MassGap. Not a chosen tolerance -- it is
+# the count the tree carries, and the only sanctioned direction is down. It has been 334, then 333,
+# and is now 0: the notes in `CellPivot`, `CellCover`, `OddLagSplit`, `SlabTransferAdjoint`,
+# `HaarMoments`, `ZeroMode` and eight further modules were completed.
+#
+# AT ZERO THE RATCHET NO LONGER GUARDS AGAINST BLINDNESS. The `n < BASELINE` branch below cannot
+# fire when BASELINE is 0, because a count is never negative -- so "checked both ways" stops being
+# true at exactly the value where a scanner that stopped seeing anything would report success. What
+# guards it instead is `test_the_detector_finds_a_known_omission`, which plants an omission and
+# requires it to be reported, and `test_the_scanner_still_sees_the_tree` below, which requires the
+# scan to have declarations to look at in the first place.
+BASELINE = 0
+
+#: DERIVED: the tree carries about 5,600 top-level declarations; `5000` is a floor well under that
+#: and far above zero, so it detects a scanner that has stopped matching without tracking the
+#: tree's exact size. Measured with `lean_derived_literals.DECL` over research/lean/MassGap.
+_DECLARATION_FLOOR = 5000
 
 
 def _scan_count() -> int:
@@ -91,6 +104,36 @@ def test_the_detector_finds_a_known_omission():
     assert name == "planted"
     assert "0" in missing, f"the planted omission was not reported: missing={missing}"
     assert "4" not in missing, f"the mentioned literal was wrongly reported: missing={missing}"
+
+
+def test_the_scanner_still_sees_the_tree():
+    """PROOF THAT A ZERO COUNT MEANS CLEAN AND NOT BLIND.
+
+    The ratchet above cannot distinguish "no declaration omits a literal" from "no declaration was
+    scanned" once BASELINE reaches 0, because a count is never negative. This asserts the scanner
+    matches the tree's declarations at all.
+
+    It is the same defect class this repo has already hit twice: an ASCII-only name class made a
+    gate report clean over a population it never looked at. So the guard is on the POPULATION, not
+    on the finding.
+    """
+    sys.path.insert(0, os.path.join(REPO, "research", "code", "certify"))
+    import importlib
+    import pathlib
+
+    mod = importlib.import_module("lean_derived_literals")
+    lean = pathlib.Path(REPO) / "research" / "lean" / "MassGap"
+    names = set()
+    for p in sorted(lean.glob("*.lean")):
+        for _kind, name in mod.DECL.findall(p.read_text(encoding="utf-8", errors="replace")):
+            names.add(name)
+    assert len(names) >= _DECLARATION_FLOOR, (
+        f"the scanner matched only {len(names)} declarations, under the floor of "
+        f"{_DECLARATION_FLOOR}. A zero offender count from this scan cannot be trusted: the "
+        "scanner is not seeing the tree.")
+    # The Greek-initial ones specifically, since an ASCII start class is how this broke before.
+    for greek in ("κ₀YM", "μYMAt", "ΔYM"):
+        assert greek in names, f"{greek} is invisible to the scanner; its note is unchecked"
 
 
 def test_a_field_projection_is_not_a_literal():

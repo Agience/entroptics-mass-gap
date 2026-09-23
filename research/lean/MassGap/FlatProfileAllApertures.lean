@@ -165,8 +165,9 @@ theorem flat_cosAvg_eq_zero (a : EvenAp) :
 `2 * ρ j ^ 2 ≤ ρ k ^ 2 + ρ 0 * ρ k`; a strictly positive normalisation
 `0 < ∑ d, ρ (circLag d)`; and a cosine average strictly below `3 ^ (-1/4)`.
 
-The witness supplied is the constant `fun _ => 1`. The first five conjuncts then hold with equality,
-and the last is `flat_cosAvg_eq_zero` together with positivity of `3 ^ (-1/4)`.
+The witness supplied is the constant `fun _ => 1`. The first conjunct then holds by `0 < 1` and the
+second through fifth hold with equality; the sixth counts the lags; and the last is
+`flat_cosAvg_eq_zero` together with positivity of `3 ^ (-1/4)`.
 
 Scope. The fourth and fifth conjuncts are quantified over all lags `j` and all pairs `j, k`, which is
 more than `SlabQuadratic` states — that module fixes one pair. Reflection symmetry is not a conjunct:

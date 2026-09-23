@@ -173,13 +173,13 @@ carries it to a full `TransferData` there.
 `Complete.wilson_reflection_positive_at` is a different statement, about a lag-correlation vector
 rather than a form.
 
-A `ReflForm` at a FAMILY of planes for one state is not in this tree, and
+A `ReflForm` at a family of planes for one state is not in this tree, and
 `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows no finite region is stable under two
 mirrors of such a family. That is a statement about a family; the single-plane forms above exist.
 
 DERIVED: the one numeral is the `0` of `form_nonneg`, the lower bound on the diagonal. -/
 structure ReflForm (A : Type*) [AddCommGroup A] [Module ℝ A] extends PreForm A where
-  /-- **REFLECTION POSITIVITY**, assumed. See the module docstring. -/
+  /-- **Reflection positivity**, assumed. See the module docstring. -/
   form_nonneg : ∀ x, 0 ≤ form x x
 
 namespace PreForm
@@ -236,13 +236,13 @@ single-block bound accumulates. In the limit the unknown drops out entirely.
 On the logarithms it is linear arithmetic, which is what the first theorem is; the second puts it
 back in the multiplicative form a reflection-positive state presents.
 
-**⛔ THIS IS THE ENGINE, NOT AN ESTIMATE.** Nothing here knows about a lattice, a reflection plane,
+**This is the engine, not an estimate.** Nothing here knows about a lattice, a reflection plane,
 or how a product over a region splits into two reflected halves. Supplying that geometry for the
 Wilson state is the open work; `ReflForm.cauchy_schwarz` below, reachable for a state through
 `InfiniteReflection.stateReflForm`, is the single step it would iterate. -/
 
-/-- **HALVING, ITERATED, KILLS THE UNKNOWN.** If each term is at most half the next, and the
-sequence is bounded above BY ANYTHING, then the first term is at most zero.
+/-- **Halving, iterated, kills the unknown.** If each term is at most half the next, and the
+sequence is bounded above by anything, then the first term is at most zero.
 
 `D` may be any real — it is not assumed small, positive, or related to the sequence. That is the
 content: `d 0 · 2^n ≤ D` for every `n`, which a positive `d 0` cannot survive.
@@ -272,8 +272,8 @@ theorem le_zero_of_halving {d : ℕ → ℝ} {D : ℝ} (hstep : ∀ k, d k ≤ d
 
 #print axioms le_zero_of_halving
 
-/-- **⭐ AND MULTIPLICATIVELY: THE ITERATED SCHWARZ BOUND.** If every term is at most the geometric
-mean of the next and a fixed `M`, and the sequence is bounded above at all, then the FIRST term is
+/-- **And multiplicatively: the iterated Schwarz bound.** If every term is at most the geometric
+mean of the next and a fixed `M`, and the sequence is bounded above at all, then the first term is
 at most `M`.
 
 This is what a chessboard estimate concludes. `M` is the single-block quantity; `s 0` is the one
@@ -313,7 +313,7 @@ namespace ReflForm
 
 variable (P : ReflForm A)
 
-/-- **CAUCHY–SCHWARZ FOR THE REFLECTION FORM.** The first real consequence of positivity, and the one
+/-- **Cauchy–Schwarz for the reflection form.** The first real consequence of positivity, and the one
 everything else needs: it makes the null space a subspace and makes the form descend to the quotient.
 
 Proved the elementary way — the quadratic `t ↦ ⟨tx+y, tx+y⟩` is nonnegative, so its discriminant is
@@ -329,7 +329,7 @@ theorem cauchy_schwarz (x y : A) : (P.form x y) ^ 2 ≤ P.form x x * P.form y y 
   simp only [discrim] at hd
   nlinarith [hd]
 
-/-- **THE NULL SPACE `N = {F : ⟨F,F⟩ = 0}` IS A SUBMODULE.**
+/-- **The null space `N = {F : ⟨F,F⟩ = 0}` is a submodule.**
 
 Closure under addition is not formal — it is Cauchy–Schwarz: a null vector is orthogonal to
 everything, so the cross term in `⟨x+y, x+y⟩` vanishes.
@@ -394,11 +394,11 @@ end ReflForm
 
 /-! ## Part 3 — the GNS quotient is a genuine inner product space -/
 
-/-- **THE GNS SPACE**: observables modulo the null space of the reflection form.
+/-- **The GNS space**: observables modulo the null space of the reflection form.
 
 `Submodule.Quotient` supplies the module; what is supplied below is the inner product, and the point
 is that `definite` — the one field that separates a form from an inner product — holds by
-CONSTRUCTION once the null space is quotiented out.
+construction once the null space is quotiented out.
 
 DERIVED: nothing numeric. -/
 def GNS (P : ReflForm A) : Type _ := A ⧸ P.nullSpace
@@ -443,7 +443,7 @@ theorem mk_eq_zero_iff (x : A) : mk P x = 0 ↔ P.form x x = 0 := by
   · intro h
     exact (Submodule.Quotient.mk_eq_zero _).mpr (P.mem_nullSpace.mpr h)
 
-/-- The form, descended in its FIRST slot.
+/-- The form, descended in its first slot.
 
 DERIVED: nothing numeric. -/
 noncomputable def toDual (P : ReflForm A) : GNS P →ₗ[ℝ] (A →ₗ[ℝ] ℝ) :=
@@ -455,7 +455,7 @@ noncomputable def toDual (P : ReflForm A) : GNS P →ₗ[ℝ] (A →ₗ[ℝ] ℝ
 
 @[simp] theorem toDual_mk (x y : A) : toDual P (mk P x) y = P.form x y := rfl
 
-/-- **The reflection form on the GNS space**, descended in BOTH slots — well defined because a null
+/-- **The reflection form on the GNS space**, descended in both slots — well defined because a null
 vector is orthogonal to everything.
 
 DERIVED: nothing numeric. -/
@@ -476,7 +476,7 @@ DERIVED: no numeral occurs. -/
   have h : bilQ P (mk P x) (mk P y) = P.form y x := rfl
   rw [h, P.form_symm]
 
-/-- **THE GNS INNER PRODUCT.** Symmetry is the form's; nonnegativity is reflection positivity; and
+/-- **The GNS inner product.** Symmetry is the form's; nonnegativity is reflection positivity; and
 definiteness — the one field that is not inherited — holds because the null space was quotiented out.
 
 DERIVED: the `0`s state nonnegativity and definiteness; they are not magnitudes. -/
@@ -515,7 +515,7 @@ DERIVED: nothing numeric; the norm is the one `InnerProductSpace.Core` derives f
 noncomputable instance instNormedAddCommGroup (P : ReflForm A) : NormedAddCommGroup (GNS P) :=
   @InnerProductSpace.Core.toNormedAddCommGroup ℝ (GNS P) _ _ _ (core P)
 
-/-- **THE GNS SPACE IS A REAL INNER PRODUCT SPACE.** The target of item 2 of the construction: not a
+/-- **The GNS space is a real inner product space.** The target of item 2 of the construction: not a
 form on a vector space but a genuine `InnerProductSpace ℝ`, so Mathlib's spectral theory applies to
 operators on it.
 
@@ -578,7 +578,7 @@ theorem T_mem_null {x : A} (hx : x ∈ D.toReflForm.nullSpace) :
   have h2 := D.form_nonneg (D.T x)
   linarith
 
-/-- **THE TRANSFER OPERATOR `T : H → H`** — one step of time translation on the GNS space.
+/-- **The transfer operator `T : H → H`** — one step of time translation on the GNS space.
 
 DERIVED: nothing numeric. -/
 noncomputable def Tq (D : TransferData A) : GNS D.toReflForm →ₗ[ℝ] GNS D.toReflForm :=
@@ -600,7 +600,7 @@ theorem Tq_isSymmetric (D : TransferData A) : (Tq D).IsSymmetric := by
   simp only [Tq_mk, GNS.inner_mk]
   exact D.T_symm x y
 
-/-- **THE VACUUM** `Ω = [1]`.
+/-- **The vacuum** `Ω = [1]`.
 
 DERIVED: nothing numeric. -/
 noncomputable def vacGNS (D : TransferData A) : GNS D.toReflForm := GNS.mk D.toReflForm D.vac
@@ -712,7 +712,7 @@ theorem inner_pow_expand (hm : Module.finrank ℝ (GNS D.toReflForm) = m)
     real_inner_comm v (((Tq_isSymmetric D).eigenvectorBasis hm) i)]
   ring
 
-/-- **EVERY TRANSFER EIGENVALUE IS AT MOST ONE IN MODULUS** — contractivity, which is normalisation.
+/-- **Every transfer eigenvalue is at most one in modulus** — contractivity, which is normalisation.
 
 DERIVED: the `1` is the contraction constant. -/
 theorem abs_eigenvalue_le_one (hm : Module.finrank ℝ (GNS D.toReflForm) = m) (i : Fin m) :
@@ -883,7 +883,7 @@ theorem periodic_decay_of_transfer
     periodicCorr D v per d
       ≤ 2 * (∑ i : Fin m, (inner ℝ ((Tq_isSymmetric D).eigenvectorBasis hm i) v) ^ 2)
           * r ^ (d : ℕ) :=
-  -- the gap is now required only on modes that CONTRIBUTE (a zero-weight vacuum mode is harmless),
+  -- the gap is now required only on modes that contribute (a zero-weight vacuum mode is harmless),
   -- so a bound on every eigenvalue is more than enough
   Spectral.periodic_decay_le (periodicSpectralForm_of_transfer D hm hpos per v)
     (fun k _ => hgap k) hr d hhalf

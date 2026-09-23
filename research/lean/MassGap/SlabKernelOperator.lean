@@ -358,7 +358,7 @@ theorem norm_kernelCLM_le_of_bound (K : X → Y → ℝ) (C : ℝ) (hK : Measura
 /-! ### Anti-vacuity
 
 An operator that is zero, or bounded only because its domain is trivial, satisfies everything above.
-The statements below rule both out. They take a strictly positive LOWER bound on the kernel, which
+The statements below rule both out. They take a strictly positive lower bound on the kernel, which
 is an extra hypothesis and does not follow from the upper bound. -/
 
 /-- The constant function `1` as an `L²(ν)` vector, via `memLp_const` at a probability measure. It
@@ -547,7 +547,7 @@ def slabPlaqCount (τ : Fin d) (t : Fin n) : ℕ :=
 /-- The uniform bound on the slab kernel: `exp (|β| * (2 * slabPlaqCount τ t))`. It is symmetric in
 the sign of `β` and grows exponentially in the slab's plaquette count.
 
-⛔ Reading a magnitude off this number requires carrying the convention. `β` is `sysWilson`'s, and
+Reading a magnitude off this number requires carrying the convention. `β` is `sysWilson`'s, and
 the plaquette sum runs over the ordered pair type, which counts each plane twice (`SliceTrace`'s
 header, via `PlaqCount.boltz_eq_std`), so this `β` is half the standard Wilson coupling and this
 count is twice the standard plaquette count. The inequalities below are correct against the tree's

@@ -73,7 +73,7 @@ The proof invokes `ClayAssembly.finite_order_contraction_is_isometry` at `x`, `y
 expands both `form (u + v) (u + v)` sides with the additive laws and `form_symm`, and cancels by
 `linarith`. This is polarisation, stated for `D.T` because that is the only map it is applied to.
 
-Scope: the finite-order hypothesis is `(fun z => D.T z)^[n] y = y` for EVERY `y` — surjectivity of
+Scope: the finite-order hypothesis is `(fun z => D.T z)^[n] y = y` for every `y` — surjectivity of
 the iterate is not enough. Contractivity and symmetry come from `TransferData`'s own fields, via the
 isometry lemma.
 

@@ -10,7 +10,7 @@ weight of the area `4n+2` they enclose at tension `μ`.
 Four groups of facts are proved about it, all for arbitrary real `μ`:
 
 * `one_lt_base` — `μ < ¼ log 3` implies `1 < 3 e^{-4μ}`, the sequence's geometric base;
-* `vortexTerm_tendsto_atTop` — under the same hypothesis the TERMS diverge, `vortexTerm μ n → ∞`. No
+* `vortexTerm_tendsto_atTop` — under the same hypothesis the terms diverge, `vortexTerm μ n → ∞`. No
   sum over `n` appears in the statement, and the reverse implication is not proved;
 * `log_vortexTerm` and `vortex_free_energy_per_step` — the log-weight `n log 3 − μ(4n+2)` and its exact
   per-step increment `4(¼ log 3 − μ)`;
@@ -101,7 +101,7 @@ theorem vortex_free_energy_per_step {μ : ℝ} (n : ℕ) :
 The three declarations below take an arbitrary `Z : ℕ → ℝ` with `vortexTerm μ n ≤ Z n` for every `n`
 and push the weight's log, and its log per unit area, downwards onto `Z`. `Z` carries no constraint
 beyond that domination, and nothing identifies it with a partition function. The last statement is a
-limit of the LOWER BOUND sequence, `n log 3 / (4n+2) − μ → ¼ log 3 − μ`; no limit or liminf of
+limit of the lower bound sequence, `n log 3 / (4n+2) − μ → ¼ log 3 − μ`; no limit or liminf of
 `log (Z n) / (4n+2)` is formed. -/
 
 /-- If `vortexTerm μ n ≤ Z n` for every `n`, then `n log 3 − μ(4n + 2) ≤ Real.log (Z n)`. The left-hand

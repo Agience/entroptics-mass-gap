@@ -60,7 +60,7 @@ noncomputable def floorTerm (μ : ℝ) (k : ℕ) : ℝ := (3 : ℝ) ^ k * Real.e
 `(CubeArea.boundaryFaces (cubeConfig s)).card = 4 * k + 6` as a real. It is
 `CubeArea.boundary_card_eq` cast to `ℝ`, which is the form `floorTerm`'s exponent is written in.
 
-Scope: the equality holds for EVERY `s` — the area does not depend on which path is taken — which is
+Scope: the equality holds for every `s` — the area does not depend on which path is taken — which is
 what makes a single exponent correct for the whole family of `3 ^ k` surfaces.
 
 DERIVED: `3` is the branching factor, the cardinality of `Fin 3` at each step; `4` and `6` are the
@@ -244,7 +244,7 @@ cube path's boundary surface belongs to a `Finset (Finset CubeArea.Face)` called
 `CubeArea.boundaryFaces_cubeConfig_injective`, which recovers each cube from the boundary through the
 face its step crosses, so the only hypothesis left to the caller is the containment `hsub`.
 
-Scope: `V` is a family of SURFACES — sets of faces — not of cube positions.
+Scope: `V` is a family of surfaces — sets of faces — not of cube positions.
 `CubeArea.Face` is `Fin 3 × (Fin 3 → ℕ)`, a face of a three-dimensional sublattice, so `hsub` is a
 statement about three-dimensional surfaces; no embedding into four-dimensional plaquettes appears
 here.

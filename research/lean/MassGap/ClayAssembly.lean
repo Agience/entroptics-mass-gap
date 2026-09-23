@@ -19,8 +19,9 @@ than against a model or an opaque predicate:
 
 `lagTwoRatioSix_of_clayRemaining` shows the first field is `LagTwoSix.LagTwoRatioSix` with an extra
 `0 < K` conjunct, and `flagship_of_clayRemaining` carries it through
-`LagTwoSix.confines_of_lagTwoRatioSix` to `ApertureRoute.FlagshipAt`. `I2_clustering` has no consumer
-here.
+`LagTwoSix.confines_of_lagTwoRatioSix` to `ApertureRoute.FlagshipAt`. Nothing in this module reads
+`I2_clustering`; `MassGap.SubstrateArms` does, in `d2Even_lipschitz_of_clayRemaining` and the
+theorems that take their Lipschitz data from it.
 
 ## Facts about a fixed extent
 
@@ -31,8 +32,9 @@ here.
 statement of the form "the correlation is below `ε` beyond separation `r`" holds at fixed extent with
 `r` past the half period, whatever `ε` is.
 
-`hilbert_space_half_of_C1_is_proved` records unconditionally that `GNSHilbert.ymOmega` is a unit
-vector and `GNSHilbert.ymH` is nontrivial.
+`hilbert_space_half_of_C1_is_proved` records that `GNSHilbert.ymOmega` is a unit vector and
+`GNSHilbert.ymH` is nontrivial, at `N ≠ 0` and even extent `n = 2 * m` with `0 < m`, and at every
+real coupling.
 
 ## The transfer operator
 
@@ -152,7 +154,8 @@ theorem hilbert_space_half_of_C1_is_proved {d n N : ℕ} [NeZero n]
 `TransferData` moves some vector of the GNS space.
 
 Written so that the identity operator fails it. `GNSHilbert.ym_target_discharged_trivially` builds
-`trivialTransfer`, an unconditional `TransferData` on the Wilson slab algebra discharging every
+`trivialTransfer`, a `TransferData` on the Wilson slab algebra needing no premise beyond the
+lattice geometry, discharging every
 clause of "Hilbert space, unit vacuum, positive self-adjoint contraction with `TΩ = Ω`", together
 with a sixth conjunct saying `T` is the identity.
 
@@ -300,8 +303,8 @@ theorem lagTwoRatioSix_of_clayRemaining (R : ClayRemaining) :
 `lagTwoRatioSix_of_clayRemaining` followed by `LagTwoSix.confines_of_lagTwoRatioSix` and
 `ApertureRoute.flagship_of_confinement_at_an_aperture`.
 
-It destructures `I1_lagTwo` alone; `I2_clustering` is not read here and has no consumer in this
-module.
+It destructures `I1_lagTwo` alone; `I2_clustering` is not read here, and its consumers are in
+`MassGap.SubstrateArms`.
 
 Scope. `#print axioms` reports `Complete.wilson_reflection_positive_at` on this and on
 `lagTwoRatioSix_of_clayRemaining`, inherited from `ClayRemaining`, whose `I2_clustering` field is

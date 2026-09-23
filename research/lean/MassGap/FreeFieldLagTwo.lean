@@ -4,7 +4,8 @@ import MassGap.LagTwoBound
 /-!
 # MassGap.FreeFieldLagTwo — an effective weak-coupling lag-two bound with an explicit constant
 
-`LagTwoBound.LagTwoRatio` asks for `ρ(2) ≤ K·ρ(0)` at every `β ≥ 0` with `K < lagTwoThreshold`.
+`LagTwoBound.confines_of_lag_two_ratio` asks for `ρ(2) ≤ K·ρ(0)` at every `β ≥ 0` with
+`K < lagTwoThreshold`.
 `effective_lag_two_bound` supplies the half of that from a coupling `B` upward,
 
     ∃ B, ∀ β ≥ B,  wilsonCorrAt 3 β 2  ≤  lagTwoConstant ε · wilsonCorrAt 3 β 0,
@@ -205,15 +206,15 @@ theorem fsCorr_three : fsCorr 3 = fsCorr 1 := by decide
 /-! ## 2. The ratio the Wilson observable inherits
 
 By Wick, the connected plaquette correlation of a Gaussian fluctuation field is `R · D(d)²` with `R`
-— the colour factor, the coupling normalisation and the lattice spacing together — INDEPENDENT of
+— the colour factor, the coupling normalisation and the lattice spacing together — independent of
 the lag. `sq_ratio_of_square_law` is that cancellation, and it is all the Wick step contributes to a
-RATIO. -/
+ratio. -/
 
 /-- The free-field lag-two ratio `(D(2)/D(0))^2`, as a rational, formed from `fsCorr` so that the
 common factor `V·1680` cancels.
 
 DERIVED: `2` and `0` inside `fsCorr` are lags — the lag the claim is about and the contact lag it is
-normalised against, the pair `LagTwoBound.LagTwoRatio` relates. The outer `2` is the square Wick's
+normalised against, the pair `LagTwoBound.confines_of_lag_two_ratio`'s hypothesis relates. The outer `2` is the square Wick's
  theorem puts on the propagator. The values are `fsCorr`'s, decided above. -/
 def freeRatio : ℚ := ((fsCorr 2 : ℚ) / (fsCorr 0 : ℚ)) ^ 2
 
@@ -438,8 +439,8 @@ theorem effective_lag_two_bound {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (epsM
 
 /-! ## 5. The complementary interval, and the join
 
-`effective_lag_two_bound` covers `β ≥ B`, while `LagTwoBound.LagTwoRatio` is quantified over every
-`β ≥ 0`. `MiddleIntervalLagTwo` names the same bound on `[0, B]`, and `confines_of_arms` joins the
+`effective_lag_two_bound` covers `β ≥ B`, while `LagTwoBound.confines_of_lag_two_ratio`'s hypothesis
+is quantified over every `β ≥ 0`. `MiddleIntervalLagTwo` names the same bound on `[0, B]`, and `confines_of_arms` joins the
 two at a shared `B` and a shared constant. -/
 
 /-- The lag-two bound at constant `K` on the coupling interval `[0, B]`:

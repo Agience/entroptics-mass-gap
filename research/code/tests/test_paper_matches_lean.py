@@ -65,24 +65,126 @@ def test_every_cited_lean_file_exists():
     assert not missing, f"PAPER.md cites Lean files that do not exist: {missing}"
 
 
+def _declared_axioms():
+    """Every real `axiom` declaration in the tree, as `(name, file)`.
+
+    Factored because two tests need it and a second copy of this loop is how the tree's other
+    readers drifted apart. The comment mask is the whole point: Lean's keywords are English words,
+    so a sentence inside a `/- -/` block that wraps onto "axiom above asserts…" reads as a
+    declaration named `above` to a bare `^axiom\\s+` match. Four of six names collected that way
+    were prose.
+    """
+    out = []
+    for p in _lean_files():
+        depth = 0
+        for line in p.read_text(encoding="utf-8").split("\n"):
+            # DERIVED: `0` is the nesting depth of a block comment, so `depth > 0` reads
+            # "inside one". A count of open `/-` against closed `-/`, not a magnitude.
+            in_comment = depth > 0 or line.lstrip().startswith(("/--", "/-!", "/-"))
+            depth = max(depth + line.count("/-") - line.count("-/"), 0)
+            if in_comment:
+                continue
+            m = re.match(r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|scoped\s+)*"
+                         r"axiom\s+([^\W\d][\w'.]*)", line)
+            if m:
+                out.append((m.group(1), p.name))
+    return out
+
+
+def test_the_stated_total_of_named_axioms_matches_the_tree():
+    """The paper's GLOBAL axiom count, checked against the tree.
+
+    `PAPER.md` states "The tree declares two named axioms in total." That is the development's
+    headline integrity claim -- it is what "proved rather than assumed" rests on -- and nothing
+    checked the NUMBER. The per-declaration sibling deliberately drops this sentence, because a
+    global count attributed to the nearest backticked name would be read as that declaration's
+    footprint; its comment says so. Correct, and it left the total unverified.
+
+    So a third axiom could be added and named in the paper, satisfying
+    `test_every_lean_axiom_is_named_in_the_paper`, while the stated total stayed at two and nothing
+    said otherwise.
+
+    The phrase not being found is a FAILURE, not a skip: a check that goes quiet when the sentence
+    is reworded reports the same thing as a check that passes.
+    """
+    text = _paper()
+    flat = " ".join(text.split())
+    m = re.search(r"declares\s+([A-Za-z]+|\d+)\s+named axioms? in total", flat)
+    assert m, ("the paper's stated total of named axioms could not be found; the phrasing changed "
+               "and this check would otherwise go silent on the tree's headline claim")
+    tok = m.group(1).lower()
+    stated = int(tok) if tok.isdigit() else COUNT_WORDS.get(tok)
+    assert stated is not None, f"unrecognised count word in the stated total: {tok!r}"
+
+    declared = _declared_axioms()
+    names = sorted({n for n, _ in declared})
+    assert len(names) == stated, (
+        f"the paper states {stated} named axiom(s) in total; the tree declares {len(names)}: "
+        f"{names}. One of the two is wrong, and this number is what the development's "
+        f"'proved rather than assumed' claim rests on.")
+
+
 def test_every_lean_axiom_is_named_in_the_paper():
     """Every `axiom` in the development is disclosed in the paper.
 
     An axiom is an unproved assumption the theorems above it inherit, so one that exists in the tree
     without appearing in the paper is an undisclosed input to the result.
+
+    TWO WAYS THIS READ CLEAN WITHOUT CHECKING ANYTHING, both now closed.
+
+    * `^axiom\\s+…` matched PROSE. Lean's keywords are English words, and a sentence inside a `/- -/`
+      block that happened to wrap so a line began "axiom above asserts…" was collected as a
+      declaration named `above`. Four of the six names this gathered were comment prose — `above`,
+      `footprint`, `and`, `cannot` — and each one is a common English word, so each passed
+      disclosure trivially. With BOTH real axiom declarations deleted from the tree the collection
+      was still non-empty, `assert axioms` still passed, and the test reported every axiom
+      disclosed while the tree contained none. The comment mask is what separates source from prose.
+    * `name not in text` was a SUBSTRING test. `os_reconstruction`, a RETIRED axiom, counted as
+      disclosed because the paper contains `os_reconstruction_wightman`. The check is on the name,
+      so the name gets word boundaries.
     """
-    axioms = []
-    for p in _lean_files():
-        for line in p.read_text(encoding="utf-8").split("\n"):
-            m = re.match(r"^axiom\s+([A-Za-z_][A-Za-z0-9_']*)", line)
-            if m:
-                axioms.append((m.group(1), p.name))
+    axioms = _declared_axioms()
     assert axioms, "no axioms found; the declaration syntax may have changed"
     text = _paper()
-    undisclosed = sorted({name for name, _ in axioms if name not in text})
+    undisclosed = sorted({name for name, _ in axioms
+                          if not re.search(rf"(?<![\w']){re.escape(name)}(?![\w'])", text)})
     assert not undisclosed, (
         f"axioms declared in Lean but not named in PAPER.md: {undisclosed}. "
         f"An axiom the paper does not name is an undisclosed assumption.")
+
+
+def test_the_axiom_scan_reads_source_and_not_prose():
+    """POSITIVE CONTROL for the two holes above, both demonstrated on planted text.
+
+    The disclosure test cannot detect either of them itself: prose names pass disclosure because
+    they are English words, and a substring match passes because the longer name really is there.
+    """
+    def collect(src: str) -> list[str]:
+        out, depth = [], 0
+        for line in src.split("\n"):
+            # DERIVED: `0` is the nesting depth of a block comment, so `depth > 0` reads
+            # "inside one". A count of open `/-` against closed `-/`, not a magnitude.
+            in_comment = depth > 0 or line.lstrip().startswith(("/--", "/-!", "/-"))
+            depth = max(depth + line.count("/-") - line.count("-/"), 0)
+            if in_comment:
+                continue
+            m = re.match(r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|scoped\s+)*"
+                         r"axiom\s+([^\W\d][\w'.]*)", line)
+            if m:
+                out.append(m.group(1))
+        return out
+
+    prose = "/- A comment whose line wraps so that the next one begins with\naxiom above asserts x.\n-/\n"
+    assert collect(prose) == [], (
+        f"a sentence inside a block comment was read as an axiom declaration: {collect(prose)}")
+    assert collect(prose + "axiom real_one : True\n") == ["real_one"], \
+        "masking the comment also lost the declaration after it"
+
+    # and the disclosure test is on the NAME, not on any string containing it
+    paper = "the paper names `os_reconstruction_wightman` and nothing else"
+    assert re.search(r"(?<![\w'])os_reconstruction(?![\w'])", paper) is None, \
+        "a retired axiom still counts as disclosed by a longer name that contains it"
+    assert re.search(r"(?<![\w'])os_reconstruction_wightman(?![\w'])", paper) is not None
 
 
 def test_cited_lean_declarations_resolve():
@@ -93,6 +195,14 @@ def test_cited_lean_declarations_resolve():
     """
     text = _paper()
     cited = set(re.findall(r"`([a-z_][a-z0-9_]{3,})`", text)) - NOT_LEAN
+    # DERIVED: the paper cites 157 such names today; the bar is a floor on DISCOVERY, set far below
+    # that so growth never has to move it. Nothing else here could notice the citation pattern
+    # ceasing to match: an empty `cited` gives an empty `candidates`, an empty `unresolved`, and
+    # `assert not unresolved` reports a clean paper having examined no citation at all. Every
+    # sibling scan in this suite carries such a floor; this one did not.
+    assert len(cited) >= 100, (
+        f"only {len(cited)} backticked declaration citations found in PAPER.md; the citation "
+        "pattern is not matching and this test would pass by checking nothing")
     lean_src = "\n".join(p.read_text(encoding="utf-8") for p in _lean_files())
 
     # Python names are collected as DEFINITIONS, by parsing, rather than by searching the source
@@ -128,7 +238,7 @@ def test_cited_lean_declarations_resolve():
                 for row in csv.reader(fh):
                     for cell in row:
                         cell = cell.strip()
-                        if cell and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", cell):
+                        if cell and re.fullmatch(r"[^\W\d][\w]*", cell):
                             data_labels.add(cell)
         except OSError:
             continue
@@ -244,10 +354,12 @@ def _lean_scan():
     root = REPO / "research" / "lean" / "MassGap"
     for p in sorted(root.glob("*.lean")):
         for line in p.read_text(encoding="utf-8", errors="replace").split("\n"):
-            m = re.match(r"\s*#print axioms\s+([A-Za-z_][A-Za-z0-9_.']*)", line)
+            # `[^\W\d]`: Lean identifiers are Unicode. An ASCII-only class matched no Greek-initial
+            # name, so `#print axioms κ₀YM` and its kin were not collected at all.
+            m = re.match(r"\s*#print axioms\s+([^\W\d][\w.']*)", line)
             if m:
                 printed.add(m.group(1).split(".")[-1])
-            d = re.match(r"(?:private\s+|protected\s+)?theorem\s+([A-Za-z_][A-Za-z0-9_.']*)", line)
+            d = re.match(r"(?:private\s+|protected\s+)?theorem\s+([^\W\d][\w.']*)", line)
             if d:
                 theorems.setdefault(d.group(1), p.name)
     return theorems, printed
@@ -374,6 +486,16 @@ def test_printed_footprints_are_the_ones_the_paper_states():
         return {w for w in wanted
                 if any(a == w or a.endswith("." + w) for a in actual)}
 
+    # DERIVED: the number of entries `NAMED_FOOTPRINTS` carries. Every assertion below is inside the
+    # loop, so an emptied dict gave an empty `problems` and a green report -- verified by emptying
+    # it: the test still passed. Its two siblings in this file, `test_every_claimed_footprint_is_
+    # printed` and `test_footprint_claim_list_matches_the_paper_and_the_lean_tree`, both guard their
+    # list and both fail when emptied, so this was an inconsistency inside one file rather than a
+    # choice. The entries it would have stopped guarding are the flagship empty-footprint claims,
+    # which the comments above call the whole claim.
+    assert len(NAMED_FOOTPRINTS) >= 20, (
+        f"NAMED_FOOTPRINTS holds {len(NAMED_FOOTPRINTS)} entries; the loop below would check "
+        "almost nothing and report clean")
     problems = []
     for decl, expected in sorted(NAMED_FOOTPRINTS.items()):
         if decl not in got:
@@ -444,7 +566,7 @@ def test_the_retired_axioms_are_not_declared_anywhere_in_lean():
     found = {}
     for p in files:
         for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            m = re.match(r"\s*axiom\s+([A-Za-z_][A-Za-z0-9_']*)", line)
+            m = re.match(r"\s*axiom\s+([^\W\d][\w']*)", line)
             if m and m.group(1) in RETIRED_AXIOMS:
                 found[f"{p.name}:{i}"] = m.group(1)
     assert not found, f"retired axioms redeclared: {found}"
@@ -455,7 +577,7 @@ def test_the_retired_axioms_are_not_declared_anywhere_in_lean():
 #: The paper quotes MACHINE OUTPUT here rather than describing it in prose, which reads as stronger
 #: evidence than a prose claim -- so it needs to be checked at least as tightly.
 _QUOTED_FOOTPRINT = re.compile(
-    r"'([A-Za-z_][A-Za-z0-9_.']*)'\s+depends on axioms:\s*\[([^\]]*)\]")
+    r"'([^\W\d][\w.']*)'\s+depends on axioms:\s*\[([^\]]*)\]")
 
 
 def test_quoted_footprint_blocks_match_the_artifact():
@@ -580,7 +702,7 @@ def test_no_pinned_witness_magnitude_remains():
     found = {}
     for p in files:
         for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            m = re.match(r"\s*(?:noncomputable\s+)?def\s+([A-Za-z_][A-Za-z0-9_']*)", line)
+            m = re.match(r"\s*(?:noncomputable\s+)?def\s+([^\W\d][\w']*)", line)
             if m and m.group(1) in banned:
                 found[f"{p.name}:{i}"] = m.group(1)
     assert not found, f"a pinned witness magnitude was reintroduced: {found}"
@@ -743,13 +865,18 @@ def test_every_stated_named_axiom_count_matches_the_build():
              for p in _lean_files()
              for m in re.finditer(r'^\s*#print axioms\s+(\S+)',
                                   p.read_text(encoding='utf-8', errors='replace'), re.M)}
+    # WHICH declaration is missing, before HOW MANY. The count fires first if it is tested first,
+    # and a count cannot say what to look at -- diagnosing `3791 >= 3792` meant reconstructing the
+    # set difference by hand, which the next assertion already holds. Same two facts, named end
+    # first.
+    absent = sorted(asked - set(named))
+    assert not absent, (
+        f'the Lean sources ask to print {len(absent)} declaration(s) the footprint artifact has no '
+        f'row for, so the artifact is stale (regenerate it from a cold build): '
+        + ', '.join(absent[:10]))
     assert len(named) >= len(asked), (
         f'the footprint artifact carries {len(named)} declarations but the Lean sources ask to '
         f'print {len(asked)}; regenerate it from a cold build')
-    absent = sorted(asked - set(named))
-    assert not absent, (
-        'the Lean sources ask to print declarations the footprint artifact has no row for, so the '
-        'artifact is stale: ' + ', '.join(absent[:10]))
 
     text = _paper()
     flat = ' '.join(text.split())
@@ -764,7 +891,7 @@ def test_every_stated_named_axiom_count_matches_the_build():
                 continue
             want = int(tok)
         window = flat[max(0, m.start() - 320):m.start()]
-        cands = [c for c in re.finditer(r'`([A-Za-z_][A-Za-z0-9_.]*)`', window)
+        cands = [c for c in re.finditer(r'`([^\W\d][\w.]*)`', window)
                  if c.group(1).split('.')[-1] in named]
         if not cands:
             continue

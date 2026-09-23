@@ -68,7 +68,7 @@ def JointUniform {ι : Type*} (f : ι → ℝ → ℝ) (K : Set ℝ) : Prop :=
   ∃ B : ℝ, ∀ i, ∀ β ∈ K, f i β ≤ B
 
 /-- `∀ ε > 0, ∃ δ > 0, ∀ i, ∀ β₁ β₂ ∈ K, |β₁ - β₂| < δ → |f i β₁ - f i β₂| < ε`: the ε–δ condition
-with the quantifier over the index `i` INSIDE the choice of `δ`, so one `δ` serves every member of
+with the quantifier over the index `i` inside the choice of `δ`, so one `δ` serves every member of
 the family. Without that placement the condition would say only that each member is continuous.
 
 DERIVED: `0` occurs twice, as the positivity condition on `ε` and on `δ`. `ε` is universally and `δ`
@@ -98,7 +98,7 @@ theorem jointUniform_of_pointwise_of_equicontinuous {ι : Type*} (f : ι → ℝ
     JointUniform f K := by
   classical
   obtain ⟨δ, hδ, hδ'⟩ := heq 1 one_pos
-  -- the pointwise bounds as a TOTAL function of the centre, so a finite maximum can be taken
+  -- the pointwise bounds as a total function of the centre, so a finite maximum can be taken
   have hpt' : ∀ β : ℝ, ∃ B : ℝ, ∀ i, β ∈ K → f i β ≤ B := by
     intro β
     by_cases hβ : β ∈ K
@@ -409,6 +409,11 @@ theorem no_go_and_compact_swap_are_compatible :
 
 /-! ## The size of the available Lipschitz constants -/
 
+/-- `x ≤ x ^ 4` for `1 ≤ x`, by `nlinarith` on the factorisation `x ^ 4 - x = x(x-1)(x²+x+1)`.
+Used below to compare the plaquette count with the aperture it is a quartic in.
+
+DERIVED: `1` is the lower bound on `x` that makes the factorisation nonnegative; `4` is the exponent
+the plaquette count carries, `WilsonHypercubic.card_plaq`'s. -/
 private theorem le_pow_four (x : ℝ) (hx : 1 ≤ x) : x ≤ x ^ 4 := by
   have h0 : (0 : ℝ) ≤ x := by linarith
   have h1 : (0 : ℝ) ≤ x - 1 := by linarith
@@ -460,7 +465,7 @@ theorem clay_covariance_constant_not_aperture_uniform (M : ℝ) (hM : 0 < M) (B 
 
 /-! ### The map from a raw profile to the normalised moment
 
-`MassGap.d2At` is the NORMALISED circular second moment. The probe below puts unit weight at lag zero
+`MassGap.d2At` is the normalised circular second moment. The probe below puts unit weight at lag zero
 and weight `t` at half the period; a sup-norm perturbation of size `t` in the raw profile moves the
 normalised moment by `t / (1 + t) * ((N + 1) / 2) ^ 2`, which grows with the aperture at fixed `t`.
 The probe's total mass is `1 + t`, so the growth is not a vanishing denominator: it is the weight

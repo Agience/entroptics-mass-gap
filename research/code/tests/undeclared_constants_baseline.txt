@@ -14,9 +14,6 @@
 # nothing. Entries added on that date are pre-existing named constants, not new violations.
 
 research/code/aperture_reads.py|compared against 5|if a.ndim != 5:
-research/code/certify/aperture_channel_control.py|named constant LS = 8,12,16|LS = [8, 12, 16]
-research/code/certify/aperture_channel_control.py|named constant NTS = 4,8|NTS = [4, 8]
-research/code/certify/aperture_channel_control.py|named constant SEEDS = 101,202,303|SEEDS = [101, 202, 303]
 research/code/certify/apriori_A1.py|compared against 0|Delta=float(Δ), xi=(1.0 / Δ if Δ > 0 else float("inf")),
 research/code/certify/apriori_A1.py|compared against 0|f"{(1.0/Δ if Δ>0 else float('inf')):>6.2f} {'':>4} | "
 research/code/certify/apriori_A1.py|compared against 0|f"{(1.0/Δ if Δ>0 else float('inf')):>6.2f} {'':>4} |"
@@ -51,19 +48,14 @@ research/code/certify/interior_mixing_of_analytic_grid.py|compared against 0|ret
 research/code/certify/interior_mixing_of_analytic_grid.py|compared against 4|if len(xs) < 4:
 research/code/certify/lean_axiom_footprints.py|compared against 0|axiom_free = sum(1 for r_ in rows if r_["n_axioms"] == 0)
 research/code/certify/lean_axiom_footprints.py|compared against 0|if r.returncode != 0:
-research/code/certify/polyakov_su2_aperture.py|named constant BETAS = 2.1,2.6|BETAS = ((2.10, "CONFINED"), (2.60, "DECONFINED"))
-research/code/certify/polyakov_su2_aperture.py|named constant NT = 4|NT = 4
-research/code/certify/polyakov_su2_aperture.py|named constant SEEDS = 11,22,33,44|SEEDS = [11, 22, 33, 44]
 research/code/certify/small_volume_enclosure.py|compared against 0|c = 1 if t < 0 else 0
 research/code/certify/small_volume_enclosure.py|compared against 0|if t < 0:
 research/code/certify/small_volume_enclosure.py|compared against 0|if t == 0:
 research/code/certify/small_volume_enclosure.py|jmax=30|def certified_gap
 research/code/certify/small_volume_enclosure.py|jmax=60|def float_gap
-research/code/certify/string_tension_eq_centre.py|compared against 0|ratio = sz / sf if sf > 0 else float("nan")
 research/code/certify/string_tension_eq_centre.py|compared against 0|return math.exp(-d) if d > 0 else 1.0
 research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|+ (f"  ({B16/umax:.0f}x margin)" if umax > 0 else ""))
 research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|if lo0 <= 0:
-research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|return float(sum(p[d] * d * d for d in range(MAXLAG + 1)) / s) if s > 0 else 0.0
 research/code/certify/ym_crossover_confinement_of_grid.py|compared against 4|if len(xs) < 4:
 research/code/certify/ym_crossover_confinement_of_grid.py|named constant L = 16|L = 16
 research/code/certify/ym_crossover_confinement_of_grid.py|ncap=256|def load
@@ -153,10 +145,8 @@ research/code/tests/test_paper_matches_artifacts.py|compared against 0.005|asser
 research/code/tests/test_paper_matches_artifacts.py|compared against 0.01|assert hi - max(vals) < 0.01, \
 research/code/tests/test_paper_matches_artifacts.py|compared against 0.01|assert hi_q - max(central) < 0.01, \
 research/code/tests/test_paper_matches_artifacts.py|compared against 0.05|assert abs(float(m.group(1)) - joint) < 0.05, \
-research/code/tests/test_paper_matches_artifacts.py|compared against 0.05|assert quoted_x and abs(quoted_x[0] - excess) < 0.05, \
 research/code/tests/test_paper_matches_artifacts.py|compared against 0.06|assert abs(pull - float(stated.group(1))) < 0.06, (
 research/code/tests/test_paper_matches_artifacts.py|compared against 0.0|bad = [(r["beta"], r["rho1_coset"]) for r in rows if not 0.0 <= float(r["rho1_co
-research/code/tests/test_paper_matches_artifacts.py|compared against 0.5|if not 0.5 <= float(r["Z_over_full"]) <= 2.0]
 research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert float(r["a2sigma_syst"]) > 0, (
 research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert len(pos) % 2 == 0, \
 research/code/tests/test_paper_matches_artifacts.py|compared against 0|assert r.returncode == 0, f"{script} failed:\n{r.stdout[-2000:]}\n{r.stderr[-200
@@ -183,8 +173,6 @@ research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert le
 research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert len(ten_n) == 1, f"the string-tension table spans several ensemble sizes:
 research/code/tests/test_paper_matches_artifacts.py|compared against 1|assert n == 1, (f"{marker!r} occurs {n} times in PAPER.md; a passage anchor must
 research/code/tests/test_paper_matches_artifacts.py|compared against 1|straddles = len({ratio(r) >= 1.0 for r in coul_rows}) > 1
-research/code/tests/test_paper_matches_artifacts.py|compared against 2.0|if not 0.5 <= float(r["Z_over_full"]) <= 2.0]
-research/code/tests/test_paper_matches_artifacts.py|compared against 2.0|window = [r for r in resolved if float(r["beta"]) >= 2.0]
 research/code/tests/test_paper_matches_artifacts.py|compared against 20|window = sorted(L for L in var if 12 <= L <= 20 and L in fwd)
 research/code/tests/test_paper_matches_artifacts.py|compared against 28|band = [float(r["m_hi"]) for r in rows if 12 <= int(r["L"]) <= 28]
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert checked >= 2, f"only {checked} multi-panel figures were checked"
@@ -195,7 +183,6 @@ research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert le
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(stated) >= 2, f"the joint confidence is stated in {len(stated)} place
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(used) >= 2, (
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert len(window) >= 2, (
-research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert seen >= 2, f"expected at least two couplings, matched {seen}"
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert text.count(f"$" + BS + "tau=" + str(last_positive) + "$") >= 2, (
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|assert text.count(f"$\\mu_\\infty(8)={mu8:.4f}") >= 2, \
 research/code/tests/test_paper_matches_artifacts.py|compared against 2|if len(drawn) < 2:
@@ -339,16 +326,12 @@ research/data/8_8_run_string_tension.py|named constant NSIG_RESOLVED = 3.0|NSIG_
 research/data/9_1_run_d2_bound.py|named constant BETAS = 0.5,0.8,1.0,1.2,1.4,1.6...|BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
 research/data/9_1_run_d2_certify.py|named constant BCYM = 0.767|BCYM = 0.767
 research/data/9_1_run_d2_certify.py|named constant BETAS = 0.5,0.8,1.0,1.2,1.4,1.6...|BETAS = [0.5, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
-research/data/9_1_run_d2_certify.py|named constant BOUND = 1.0|BOUND = 1.0            # proof bound B (< aperture ceiling 3.52)
-research/data/9_1_run_d2_certify.py|named constant CEIL = 3.52|CEIL = 3.52           # aperture ceiling for N = 16
 research/data/9_1_run_d2_certify.py|named constant DELTA = 1e-06|DELTA = 1e-6           # 99.9999% per coupling
 research/data/9_1_run_d2_certify.py|named constant DELTA_CEIL = 1e-30|DELTA_CEIL = 1e-30
-research/data/9_1_run_d2_su3.py|compared against 0|return float(sum(p[d] * d * d for d in range(maxlag + 1)) / s) if s > 0 else 0.0
 research/data/9_1_run_d2_su3.py|named constant SERIES = 6,5.0,5.25,5.5,5.75,6.0...|SERIES = [(6, [5.00, 5.25, 5.50, 5.75, 6.00, 6.25, 6.50, 6.75, 7.00]),
 research/data/9_1_run_d2_su3.py|ncap=128|def load
 research/data/regen_all.py|compared against 0|if head.returncode != 0:
 research/data/regen_all.py|compared against 0|if q > 0:
 research/data/regen_all.py|named constant RESERVE_GB = 6.0|RESERVE_GB = 6.0
 research/data/store_run_thermalisation.py|compared against 0|verdict = "under_thermalised" if off > 0 else "below_equilibrium"
-research/data/store_run_thermalisation.py|compared against 5|if a.ndim == 5:
 research/data/store_run_thermalisation.py|compared against 7|elif a.ndim == 7:

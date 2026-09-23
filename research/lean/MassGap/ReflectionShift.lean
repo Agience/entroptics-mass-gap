@@ -510,7 +510,7 @@ theorem ireflObs_pred_eq_unshift (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
 
 #print axioms ireflObs_pred_eq_unshift
 
-/-- Given reflection invariance of `ν` at `a`, reflection invariance at `a + 1` is EQUIVALENT to
+/-- Given reflection invariance of `ν` at `a`, reflection invariance at `a + 1` is equivalent to
 translation invariance `∀ f, ν (ishiftObsL τ f) = ν f`. The forward direction is
 `nu_T_of_reflection_invariant`; the reverse rewrites by `ireflObs_succ_eq_shiftObs_ireflObs`, applies
 the translation invariance, and finishes with the invariance at `a`.

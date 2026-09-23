@@ -329,7 +329,7 @@ theorem mass_gap_rate_and_continuum_at_each_coupling
 
 #print axioms mass_gap_rate_and_continuum_at_each_coupling
 
-/-! ## 4. The swapped hypothesis is WEAKER
+/-! ## 4. The swapped hypothesis is weaker
 
 One direction, and only one. -/
 
@@ -414,7 +414,7 @@ theorem confinement_at_each_coupling_of_law_above_cut :
 
 #print axioms confinement_at_each_coupling_of_law_above_cut
 
-/-! ## 6. What NEITHER hypothesis gives: a coupling-uniform rate
+/-! ## 6. What neither hypothesis gives: a coupling-uniform rate
 
 The flagship's gap clause is `∀ β, Tendsto … (nhds 0)` — decay at each coupling, at a rate
 `κ₀ − μ β` that is positive for each `β` and is not bounded away from zero over `β` by anything
@@ -422,7 +422,7 @@ proved. That is true of `ApertureRoute.FlagshipAt` as well, so it is not a cost 
 named here because a reader looking for where the `∀ β` went will look in exactly this place.
 
 `UniformSurplus` is the missing premise, as a Prop rather than as prose, and
-`uniform_gap_of_uniformSurplus` proves it SUFFICIENT. That direction only: no converse is proved
+`uniform_gap_of_uniformSurplus` proves it sufficient. That direction only: no converse is proved
 here, so nothing says a coupling-uniform bound could not arrive some other way. What the proof does
 show is that the premise is not merely sufficient by a detour — the rate it delivers is `Δ` itself,
 the surplus's own constant, unweakened. -/

@@ -51,11 +51,12 @@ to one in the circle distance, which is the direction `r ≤ 1` allows.
   like `N ^ 2` at fixed correlation length: for `ρ d = exp (-circLag d / 1.5)` the raw moment runs
   `14.5, 68.9, 307, 1305, 5384` across extents `8` to `128` while the circle moment settles at
   `3.28`.
-* `Read` carries two fields and no more. It does not carry whitening, entropy matching or
+* `Read` carries three fields and no more — the correlation `ρ`, its nonnegativity and its strictly
+  positive total mass. It does not carry whitening, entropy matching or
   translation invariance. Whitening in the certificate path is the scalar division `ρ / ρ 0`, which
   cancels out of `p = ρ / ∑ ρ`; translation invariance is proved separately of the concrete
   correlator.
-* `Read` is inhabited by the flat correlation `ρ ≡ 1`. That profile satisfies the five
+* `Read` is inhabited by the flat correlation `ρ ≡ 1`. That profile satisfies the six
   coupling-uniform facts `ShapeNoGo` collects, with equality in each, so no constraint of that kind
   excludes it. In the spectral form `ρ d = ∑ w n * exp (-E n * d)` the flat profile is the `E 0 = 0`
   term.
@@ -126,11 +127,11 @@ theorem tension_lt_floor_of_moment {ι : Type*} [Fintype ι] (p θ : ι → ℝ)
 A nonnegative correlation `ρ` over the lag index with positive total mass determines the probability
 vector `p = ρ / ∑ ρ`, the angles `θ d = 2 * π * d / (N + 1)`, and the tension
 `-log (∑ p d * cos (θ d))`. The vector properties of `p` and the inequalities below are consequences
-of the two structure fields. -/
+of the three structure fields. -/
 
 /-- A correlation over the lag index: a function `ρ : Fin (N + 1) → ℝ` together with `0 ≤ ρ d` at
 every lag and `0 < ∑ d, ρ d`. The derived quantities `p`, `θ` and `tension` are defined from these
-two fields alone.
+three fields alone.
 
 Scope: the structure carries no whitening, entropy matching or translation invariance. Whitening in
 the certificate path is the scalar division `ρ / ρ 0`, which cancels out of `p = ρ / ∑ ρ`;
@@ -575,7 +576,8 @@ does not depend on where the sum stops. -/
 `Finset.sum_fiberwise_of_maps_to` and bounds each fibre's cardinality by `2`.
 
 DERIVED: the `2` is that multiplicity and nothing else; `N + 2` is the range `circLag` lands in,
-since `min d (N+1−d) ≤ N+1`. -/
+since `min d (N+1−d) ≤ N+1`; the `1` is the `+ 1` of the lag index type `Fin (N + 1)`; the `0` is
+the sign condition `hg` places on `g`. -/
 theorem sum_circLag_le_two_mul {N : ℕ} (g : ℕ → ℝ) (hg : ∀ k, 0 ≤ g k) :
     ∑ d : Fin (N + 1), g (circLag d) ≤ 2 * ∑ k ∈ Finset.range (N + 2), g k := by
   classical
@@ -620,10 +622,12 @@ no `N` in it, so the bound is uniform in the aperture. The proof bounds each ter
 `sum_circLag_le_two_mul`, and compares the partial sum with the whole series, which is summable by
 `summable_pow_mul_geometric_of_norm_lt_one`.
 
-Scope: no condition beyond `r < 1` is needed, and no threshold on the aperture is introduced.
+Scope: the hypotheses are `0 ≤ C`, `0 ≤ r`, `r < 1` and the termwise decay bound; no threshold on
+the aperture is introduced.
 
 DERIVED: the `2` is the circle distance's multiplicity (`sum_circLag_le_two_mul`); the exponent `2` is
-the second moment's own; `C` and `r` are the caller's. Nothing here is chosen. -/
+the second moment's own; the `0`s are the sign conditions on `C` and on `r`, and the `1` is the
+upper bound on `r`; `C` and `r` are the caller's. Nothing here is chosen. -/
 theorem circ_moment_le_of_geometric {N : ℕ} (R : Read N) {C r : ℝ}
     (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
     (hdecay : ∀ d, R.p d ≤ C * r ^ (circLag d)) :

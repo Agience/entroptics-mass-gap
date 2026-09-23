@@ -15,21 +15,21 @@ existing theorems already reach, and reduces what is left to one statement.
 
 ## What is proved here
 
-* `cosAvgEven_at_zero` — **at zero coupling the cosine average is exactly `1`**, at EVERY even
+* `cosAvgEven_at_zero` — **at zero coupling the cosine average is exactly `1`**, at every even
   aperture. `PowerTail.wilsonCorrAt_at_zero_coupling` kills the correlation at every lag of nonzero
   circle distance (product Haar factorises the two plaquettes), and
   `PowerTail.contact_value_pos_at_zero_coupling` keeps lag `0` strictly positive. So the normalised
   read is a point mass at lag `0`, where `θ = 0` and `cos θ = 1`. Nothing is estimated.
-* `cosAvgEven_eq_one_of_nonpos` — and therefore at every NONPOSITIVE coupling, because `readEven`
+* `cosAvgEven_eq_one_of_nonpos` — and therefore at every nonpositive coupling, because `readEven`
   clamps at `max β 0` (`EvenAperture.readEven_eq_at_zero`). The negative half-line is not an
   achievement; it is the clamp, and it is stated so that `confines_near_zero` is not misread as
   two-sided evidence.
-* `continuous_cosAvgEven` — `β ↦ cosAvgEven a β` is CONTINUOUS on all of `ℝ`, at every even
+* `continuous_cosAvgEven` — `β ↦ cosAvgEven a β` is continuous on all of `ℝ`, at every even
   aperture. The input is `WilsonAnalytic.wilsonSystem_expect_hasDerivAt`, which differentiates a
   bounded measurable observable's Gibbs expectation in `β` on the genuine Wilson measure with no
   hypothesis at all; `corrClay` is three such expectations, the clamp is continuous, and the
-  denominator is the second clause of the PROVED reflection positivity, so it never vanishes.
-* `confines_near_zero`, `confines_below_a_cut` — the hypothesis therefore holds on a NEIGHBOURHOOD
+  denominator is the second clause of the proved reflection positivity, so it never vanishes.
+* `confines_near_zero`, `confines_below_a_cut` — the hypothesis therefore holds on a neighbourhood
   of zero, and in fact on a half-line `(−∞, b)`. The cut is existential and no numeral is named for
   it: it is whatever the continuity of the Wilson expectation supplies.
 
@@ -42,12 +42,12 @@ angles are `0, π/2, π, 3π/2` with cosines `1, 0, −1, 0`, and circle symmetr
     cosAvgEven ap4 β = (ρ(0) − ρ(2)) / (ρ(0) + 2ρ(1) + ρ(2))          (`cosAvgEven_extent_four`)
 
 with `ρ = wilsonCorrAt 3 (max β 0)`. The hypothesis at the smallest aperture is a statement about
-THREE NUMBERS, and lag `1` enters the denominator only — it can only hurt.
+three numbers, and lag `1` enters the denominator only — it can only hurt.
 
 `confines_extent_four_of_lag_two_small` is what the tree's proved shape facts do to that ratio.
 `LogConvex.corrClay_log_convex_at_extent_four` gives `ρ(1)² ≤ ρ(0)ρ(2)` and
 `Complete.wilson_reflection_positive_at_even` gives `ρ ≥ 0`; together they reduce the whole
-hypothesis at extent four to a bound on the SECOND lag alone,
+hypothesis at extent four to a bound on the second lag alone,
 
     (1 + 3^{−1/4})² ρ(2) < (1 − 3^{−1/4})² ρ(0),
 
@@ -56,7 +56,7 @@ and that threshold is not chosen — it is the exact one, as the identity
     ((1−c)ρ₀ − (1+c)ρ₂)² − 4c²ρ₀ρ₂ = ((1−c)²ρ₀ − (1+c)²ρ₂)(ρ₀ − ρ₂)
 
 shows by vanishing at it. `WeakArm.corrClay_le_at_zero` and `MomentShape.corrClay_even_antitone`
-DO NOT apply here: both carry `3 ≤ m`, which is extent six and above. At extent four the only shape
+DO not apply here: both carry `3 ≤ m`, which is extent six and above. At extent four the only shape
 facts available are nonnegativity, circle symmetry and log-convexity.
 
 ## The restatement as a non-equality
@@ -281,7 +281,7 @@ theorem continuous_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) :
 
 #print axioms continuous_wilsonCorrAt
 
-/-- **The CONNECTED plaquette correlation is DIFFERENTIABLE in the coupling**, on any Wilson system.
+/-- **The connected plaquette correlation is differentiable in the coupling**, on any Wilson system.
 
 The strict upgrade of `continuous_wilsonCorrConn`, by the same three expectations: the Gibbs
 expectation of a bounded measurable observable has a derivative in `β`
@@ -422,7 +422,7 @@ theorem wilsonSystem_expect_lipschitz {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [F
 
 #print axioms wilsonSystem_expect_lipschitz
 
-/-- **The CONNECTED plaquette correlation is LIPSCHITZ in the coupling**, with an explicit constant.
+/-- **The connected plaquette correlation is lipschitz in the coupling**, with an explicit constant.
 
 `wilsonCorrConn = ⟨φ₀φ⟩ − ⟨φ₀⟩⟨φ⟩`, three expectations. Each is Lipschitz by
 `wilsonSystem_expect_lipschitz`, and the product of two is handled by
@@ -556,7 +556,7 @@ theorem exists_profile_sum_floor {a b : ℝ} (ha : 0 ≤ a) :
 
 #print axioms exists_profile_sum_floor
 
-/-- **The zero-coupling profile is a DELTA at lag zero, at every aperture.**
+/-- **The zero-coupling profile is a delta at lag zero, at every aperture.**
 
 `PowerTail.wilsonCorrAt_at_zero_coupling` kills every weight whose circle distance is at least one,
 and `one_le_circLag` says that is exactly the lags other than `0`. No parity condition enters, so
@@ -710,7 +710,7 @@ theorem confines_below_a_cut (a : EvenAp) :
 angles are `0, π/2, π, 3π/2`, the cosines are `1, 0, −1, 0`, and circle symmetry identifies lag `3`
 with lag `1`. The hypothesis at this aperture is therefore a statement about three numbers. -/
 
-/-- The smallest aperture the PROVED reflection positivity admits: extent four.
+/-- The smallest aperture the proved reflection positivity admits: extent four.
 
 DERIVED: `3` is `N` with `N + 1 = 4 = 2 * 2`, the smallest even extent carrying `2 ≤ m`. Both are
 read off `Complete.wilson_reflection_positive_at_even`'s hypotheses and neither is chosen here —
@@ -837,15 +837,15 @@ theorem confines_extent_four_of_lag_two_small (β : ℝ)
 
 #print axioms confines_extent_four_of_lag_two_small
 
-/-! ## 3a. A LARGER EXTENT IS NOT THE SAME PROBLEM — the closed form at extent six
+/-! ## 3a. A larger extent is not the same problem — the closed form at extent six
 
-`ApertureRoute` records that the aperture cancels EXACTLY in the substrate route
+`ApertureRoute` records that the aperture cancels exactly in the substrate route
 (`Complete.surplus_ge`'s `hcancel`), so the criterion `(2π)²·substrateRatio/2 < 1 − 3^{−1/4}` carries
-no `N`. That is a statement about THAT ROUTE'S SUFFICIENT BOUND, and it does not transfer to
+no `N`. That is a statement about that route's sufficient bound, and it does not transfer to
 `cosAvgEven` itself, which is checked here rather than assumed.
 
 At extent six the angles are `2πd/6` and the cosines are `1, ½, −½, −1, −½, ½`, so the first lag
-enters the NUMERATOR with a positive weight, where at extent four its cosine is exactly zero and it
+enters the numerator with a positive weight, where at extent four its cosine is exactly zero and it
 enters the denominator alone. The two closed forms are therefore genuinely different problems, and
 extent four is not automatically the easiest. Nothing here says which extent is easier — that is a
 statement about the profiles, which this file does not bound. -/
@@ -931,7 +931,7 @@ theorem cosAvgEven_extent_six (β : ℝ) :
 
 /-! ## 4. What remains
 
-Everything above is about a neighbourhood of zero coupling. `ConfinesAtAnAperture` asks for EVERY
+Everything above is about a neighbourhood of zero coupling. `ConfinesAtAnAperture` asks for every
 coupling, and that is the whole of what is left. Because the cosine average is continuous and starts
 strictly above the floor, the remaining obligation can be stated without an inequality at all. -/
 

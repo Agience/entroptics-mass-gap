@@ -402,7 +402,9 @@ noncomputable def halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
 /-- **The conditional half-integral is measurable**, as a function of the whole configuration — it
 reads it only through the shared block.
 
-Used by `pairing_eq_weighted_square` and `integrable_weighted_halfIntegral_sq`.
+Used by `pairing_eq_weighted_square`, `integrable_weighted_halfIntegral_sq`,
+`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag` here, and by
+`BoxNumericFloor.variance_halfIntegral_traceDressed_ge`.
 
 DERIVED: no numeral. -/
 theorem measurable_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
@@ -425,7 +427,10 @@ theorem measurable_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
 /-- **A bound on the observable bounds its half-integral**, the measure being a probability measure
 so the integral cannot amplify it.
 
-Used by `pairing_eq_weighted_square` and `integrable_weighted_halfIntegral_sq`.
+Used by `pairing_eq_weighted_square`, `integrable_weighted_halfIntegral_sq`,
+`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag` here, and by
+`BoxNumericFloor.variance_halfIntegral_traceDressed_ge` and
+`ReflectionHalfSpace.irefl_box_pairing_ge_variance_pos`.
 
 DERIVED: no numeral. -/
 theorem abs_halfIntegral_le (S R : Finset ι) (hSR : Disjoint S R)

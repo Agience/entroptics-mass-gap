@@ -41,11 +41,16 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean", "MassGap")
 SCRATCH = os.path.join(os.path.dirname(REPO), "_scratch", "CURRENT")
 
-DOCS = ["CLAY-GOAL.md"]
+DOCS = ["CLAY-GOAL.md", "CLAY-ASSEMBLY-FROM-WHAT-EXISTS.md"]
 
 # A backticked token that could be a Lean name. Tactics and prose words are excluded by the
 # `_`-or-`.` requirement below, not here.
-TOKEN = re.compile(r"`([A-Za-z_][\w.']*)`")
+#
+# `[^\W\d]` rather than `[A-Za-z_]`: LEAN IDENTIFIERS ARE UNICODE and many here begin with a Greek
+# letter -- `κ₀YM`, `μYMAt_nonneg`, `θ`. An ASCII-only start class DROPPED every such citation
+# before it was ever checked, so a document could cite a Greek name that does not exist and this
+# gate would report it clean. `\d` is excluded so a bare numeral is not read as a name.
+TOKEN = re.compile(r"`([^\W\d][\w.']*)`")
 
 # Words that contain `_` or `.` but are not Lean names in this corpus.
 NOT_A_NAME = {"a.e", "i.e", "e.g", "w.r.t"}
@@ -85,7 +90,15 @@ def source_blob() -> str:
 
 
 def live_words(blob: str) -> set[str]:
-    return set(re.findall(r"[A-Za-z_][\w']*", blob))
+    """Every identifier the repo defines, Greek starts included.
+
+    The ASCII-only start class this used to carry truncated `κ₀YM_pos` to `YM_pos` -- the scan
+    began at the first ASCII letter and dropped everything before it. So a Greek-named declaration
+    was never in the live set, and a citation of one was reported dead however real it was, while a
+    BARE Greek citation was dropped by `TOKEN` and never checked at all. The two blind spots hid
+    each other: the false negative was invisible because the false positive never fired.
+    """
+    return set(re.findall(r"[^\W\d][\w']*", blob))
 
 
 def main() -> int:

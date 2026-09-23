@@ -148,8 +148,9 @@ section Bound
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- **The correlation at any separation is bounded in absolute value by `4`**, at every extent, every
-real coupling and every plane. The one hypothesis is `Nc ≠ 0`.
+/-- **The correlation at any separation is bounded in absolute value by `4`**, at every real coupling
+and every plane. The hypotheses are `Nc ≠ 0` and the instance `[NeZero n]`, so the extent is any
+nonzero one.
 
 DERIVED: the `0` in `Nc ≠ 0` excludes the empty gauge group. `4` is `2 × 2`, the product of the two
 plaquette-energy ranges — `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, carried unchanged,
@@ -158,8 +159,8 @@ theorem corrSep_abs_le_four (hN : Nc ≠ 0) (μ ν : Fin d) (β : ℝ) (v : Site
     |corrSep Nc μ ν β v| ≤ 4 :=
   MassGap.InfiniteVolume.wilsonCorrConn_abs_le_four hN _ _ _ _
 
-/-- The same bound at the Clay parameters, with no hypothesis left: `corrSep_abs_le_four`'s `Nc ≠ 0`
-is discharged by `SU(3)`.
+/-- The same bound at the Clay parameters: `corrSep_abs_le_four`'s `Nc ≠ 0` is discharged by `SU(3)`,
+leaving the instance `[NeZero n]` as the only hypothesis.
 
 DERIVED: the statement's numerals are the `4` of `Site 4 n`, the lattice dimension, and the `4` of
 the bound, which is `corrSep_abs_le_four`'s constant carried. The `3` of `SU(3)` appears in the proof
@@ -450,9 +451,9 @@ theorem EW_one_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) (
   exact congrArg (EW Nc β) (funext fun U => (plaqE_reflConf Nc τ c q U).symm)
 
 /-- **The connected correlation is invariant under reflecting both plaquettes**, at any reflection
-axis and constant, any plane and any pair of sites, with no hypothesis on the extent, the gauge rank
-or the coupling. The reflection is not a `LatticeGauge.Symmetry` — it carries the dagger — so this is
-not an instance of `wilsonCorrConn_relabel`; it comes from `Reflect.expect_reflect_invariant`, which
+axis and constant, any plane and any pair of sites, at any nonzero extent (`[NeZero n]`) and with no
+hypothesis on the gauge rank or the coupling. The reflection is not a `LatticeGauge.Symmetry` — it
+carries the dagger — so this is not an instance of `wilsonCorrConn_relabel`; it comes from `Reflect.expect_reflect_invariant`, which
 reaches the same conclusion through `System.expect_invariant_of_mp`.
 
 DERIVED: no numeral. -/

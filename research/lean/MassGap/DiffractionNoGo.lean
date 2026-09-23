@@ -143,7 +143,8 @@ theorem rho_sum_four (R : Moment.Read 3) (hsym : R.ρ 3 = R.ρ 1) :
 /-- `∑ d, R.ρ d * (circLag d : ℝ) ^ 2 = 2 * R.ρ 1 + 4 * R.ρ 2` for a `Moment.Read 3` with
 `R.ρ 3 = R.ρ 1`. Substitutes `clag_four` and folds the symmetric pair.
 
-DERIVED: `3` is the aperture; the lag indices are `0` to `3`; the exponent `2` is the moment's
+DERIVED: `3` is the aperture; the lag indices are `0`, `1`, `2` and `3`; the exponent `2` is the
+moment's
 order; the coefficient `2` on `R.ρ 1` is the two lags at circle distance one, whose squared distance
 is `1`, and `4` on `R.ρ 2` is the squared distance `2 ^ 2` at the single antipodal lag. -/
 theorem rho_moment_four (R : Moment.Read 3) (hsym : R.ρ 3 = R.ρ 1) :
@@ -159,7 +160,8 @@ theorem rho_moment_four (R : Moment.Read 3) (hsym : R.ρ 3 = R.ρ 1) :
 `Moment.Read 3` with `R.ρ 3 = R.ρ 1`. Pulls the normalisation out of the sum, then applies
 `rho_moment_four` and `rho_sum_four`.
 
-DERIVED: `3` is the aperture; the lag indices are `0` to `3`; the exponent `2` is the moment's
+DERIVED: `3` is the aperture; the lag indices are `0`, `1`, `2` and `3`; the exponent `2` is the
+moment's
 order; the coefficients `2` and `4` are the folded multiplicity and the squared antipodal distance,
 as in `rho_moment_four`, and the `2` in the denominator is the folded pair's multiplicity. -/
 theorem substrate_num_four (R : Moment.Read 3) (hsym : R.ρ 3 = R.ρ 1) :
@@ -178,8 +180,8 @@ theorem substrate_num_four (R : Moment.Read 3) (hsym : R.ρ 3 = R.ρ 1) :
 /-- `∑ d, R.ρ d = R.ρ 0 + 2 * R.ρ 1 + 2 * R.ρ 2 + R.ρ 3` for a `Moment.Read 5` with `R.ρ 5 = R.ρ 1`
 and `R.ρ 4 = R.ρ 2`. Expands the six-term sum and folds the two symmetric pairs.
 
-DERIVED: `5` is the aperture; `0` through `5` are the lag indices, with `5` identified to `1` and
-`4` to `2`; the two coefficients `2` count those identified pairs. -/
+DERIVED: `5` is the aperture; `0`, `1`, `2`, `3`, `4` and `5` are the lag indices, with `5` identified
+to `1` and `4` to `2`; the two coefficients `2` count those identified pairs. -/
 theorem rho_sum_six (R : Moment.Read 5) (hs1 : R.ρ 5 = R.ρ 1) (hs2 : R.ρ 4 = R.ρ 2) :
     ∑ d, R.ρ d = R.ρ 0 + 2 * R.ρ 1 + 2 * R.ρ 2 + R.ρ 3 := by
   rw [Fin.sum_univ_six, hs1, hs2]; ring
@@ -189,8 +191,8 @@ theorem rho_sum_six (R : Moment.Read 5) (hs1 : R.ρ 5 = R.ρ 1) (hs2 : R.ρ 4 = 
 /-- `∑ d, R.ρ d * (circLag d : ℝ) ^ 2 = 2 * R.ρ 1 + 8 * R.ρ 2 + 9 * R.ρ 3` for a `Moment.Read 5`
 with the two symmetry hypotheses. Substitutes `clag_six` and folds.
 
-DERIVED: `5` is the aperture; the lag indices run `0` to `5`; the exponent `2` is the moment's
-order. The coefficients are multiplicity times squared distance: `2 = 2 * 1 ^ 2` for the pair at
+DERIVED: `5` is the aperture; the lag indices run `0`, `1`, `2`, `3`, `4`, `5`; the exponent `2` is
+the moment's order. The coefficients are multiplicity times squared distance: `2 = 2 * 1 ^ 2` for the pair at
 circle distance one, `8 = 2 * 2 ^ 2` for the pair at distance two, and `9 = 1 * 3 ^ 2` for the
 single antipodal lag. -/
 theorem rho_moment_six (R : Moment.Read 5) (hs1 : R.ρ 5 = R.ρ 1) (hs2 : R.ρ 4 = R.ρ 2) :
@@ -207,8 +209,9 @@ theorem rho_moment_six (R : Moment.Read 5) (hs1 : R.ρ 5 = R.ρ 1) (hs2 : R.ρ 4
 for a `Moment.Read 5` with the two symmetry hypotheses. Pulls the normalisation out, then applies
 `rho_moment_six` and `rho_sum_six`.
 
-DERIVED: `5` is the aperture; the lag indices run `0` to `5`; the exponent `2` is the moment's
-order; `2`, `8` and `9` are the multiplicity-weighted squared distances of `rho_moment_six`, and the
+DERIVED: `5` is the aperture; the lag indices run `0`, `1`, `2`, `3`, `4`, `5`; the exponent `2` is
+the moment's order; `2`, `8` and `9` are the multiplicity-weighted squared distances of
+`rho_moment_six`, and the
 two `2`s in the denominator are the folded pairs' multiplicities. -/
 theorem substrate_num_six (R : Moment.Read 5) (hs1 : R.ρ 5 = R.ρ 1) (hs2 : R.ρ 4 = R.ρ 2) :
     ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2
@@ -338,7 +341,7 @@ theorem criterion_implies_ceiling_six {r₀ r₁ r₂ r₃ : ℝ} (h₁ : 0 ≤ 
 
 #print axioms criterion_implies_ceiling_six
 
-/-! ## 4. THE REFUTATION: the ceiling does not imply the criterion, at either extent
+/-! ## 4. The refutation: the ceiling does not imply the criterion, at either extent
 
 `CeilingClosesFour` and `CeilingClosesSix` are the single-extent implications a diffraction argument
 would have to supply — the ceiling, plus the uniform facts the tree proves at that extent, delivering
@@ -352,21 +355,21 @@ satisfies `ShapeNoGo`'s `Hankel` 3×3 PSD condition, `MomentShape.corrClay_even_
 `WeakArm.wilsonCorrAt_le_at_zero` and `LagTwoSix.lag_three_le_lag_two`, checked numerically rather
 than carried as premises, so granting those too would not rescue the implication.
 
-These refutations are NOT what closes the aperture differential — section 1.1 does that, and does it
+These refutations are not what closes the aperture differential — section 1.1 does that, and does it
 for a different reason. -/
 
 /-- The implication a diffraction argument would have to supply at extent four: the ceiling, together
-with EVERY coupling-uniform fact the tree proves of the extent-four triple, giving the exact
+with every coupling-uniform fact the tree proves of the extent-four triple, giving the exact
 criterion.
 
 The premise list is `SpectralFour.FourRepresentable` verbatim — nonnegativity, `ρ(2) ≤ ρ(1)`, the
 log-convexity instance `ρ(1)² ≤ ρ(0)ρ(2)`, and the quadratic `2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)` — and that
 is deliberate: `SlabQuadratic.wilsonSpectral` discharges all four at every `β ≥ 0`, so an implication
-refuted against THIS list is refuted against everything a diffraction argument may help itself to.
+refuted against this list is refuted against everything a diffraction argument may help itself to.
 Granting less would refute a weaker implication and prove nothing about the route.
 
 `MomentShape.Shape 4 2` alone supplies only the third of the four. `LinkGram.wilson_lag_two_le_lag_one`
-supplies the second and `SlabQuadratic.wilson_quadratic` the fourth, and the fourth is INDEPENDENT of
+supplies the second and `SlabQuadratic.wilson_quadratic` the fourth, and the fourth is independent of
 the others — `SpectralFour.missing_inequalities_independent` — so omitting it is not harmless.
 
 DERIVED: no literal here is chosen and none is a level. `3`, `1` and `4` are the floor `c = 3^{−1/4}`
@@ -449,7 +452,7 @@ theorem ceiling_admits_lag_two_above_threshold :
 
 /-- `lagTwoThresholdSix < 1/16`, from `LagTwoSix.vSix_root` alone. Needed to say where the extent-six
 witness sits relative to the bar; the true value is `0.0337959`, so this is a loose bracket used only
-for a comparison, and it rounds AWAY from the claim.
+for a comparison, and it rounds away from the claim.
 
 DERIVED: `1/16` is the extent-six witness rate `1/4` squared. Nothing is fitted. -/
 theorem lagTwoThresholdSix_lt_sixteenth : MassGap.LagTwoSix.lagTwoThresholdSix < 1 / 16 := by

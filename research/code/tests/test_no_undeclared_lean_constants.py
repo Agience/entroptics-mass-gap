@@ -43,6 +43,7 @@ shown to fire is unverified however green it reads.
 from __future__ import annotations
 
 import re
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -64,8 +65,35 @@ _ENDS = re.compile(r"^(?:@\[|/--|/-!|/-|--|noncomputable\s|private\s|protected\s
                    r"section\s|variable\s|open\s|import\s|#|structure\s|inductive\s|class\s)")
 # A numeric literal as a standalone token: not part of an identifier (`G2`, `SU3`, `Fin`), not part of
 # a name like `su2`. Lean numerals may be decimal or have a decimal point.
-_NUM = re.compile(r"(?<![A-Za-z0-9_'.])(\d+(?:\.\d+)?)(?![A-Za-z0-9_'])")
+#
+# `\w` rather than `A-Za-z0-9_` in the lookaround: IDENTIFIERS HERE CONTAIN GREEK LETTERS, and an
+# ASCII-only class does not recognise one as the character before a digit. So `κ0` had its `0` read
+# as the constant zero -- a literal that is part of the declaration's own NAME -- and the gate asked
+# for a `DERIVED:` note about a number nothing decides. `σL2` escaped only because its digit happens
+# to follow an ASCII `L`. Widening strictly reduces what counts as a literal, so it can remove a
+# false positive and cannot hide a real one: a genuine numeral adjacent to a letter with no
+# separator would be an identifier in Lean, not a literal.
+_NUM = re.compile(r"(?<![\w'.])(\d+(?:\.\d+)?)(?![\w'])")
 _MARK = re.compile(r"\b(DERIVED|CHOSEN)\b")
+
+# An ANONYMOUS declaration -- `instance : Nonempty (SU n) := ⟨1⟩` -- has no name of its own, and
+# `_IN_SCOPE` captures the `:` as one. Every anonymous instance in a file therefore produced the
+# SAME `_key`, so one baseline line pre-forgave all of them. This tree has eleven such instances,
+# nine of them in `SUN.lean`: planting a second `instance : Subsingleton (Fin 1)` beside the
+# baselined `instance : Nonempty (SU n)` gave two findings that both keyed to
+# `SUN.lean|instance : uses 1`, and the gate reported nothing new. The TYPE is what names an
+# anonymous instance, so the type goes in the key. Strictly narrows what a baseline line forgives.
+_ANON = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+|private\s+|protected\s+|scoped\s+)*"
+                   r"instance\s*:\s*(.+?)\s*(?::=|where\b|$)")
+
+
+def _name_of(line: str, name: str) -> str:
+    """The captured name, or the instance's type when the declaration is anonymous."""
+    if name != ":":
+        return name
+    m = _ANON.match(line)
+    return ": " + " ".join(m.group(1).split()) if m else name
+
 
 
 def _comment_mask(lines: list[str]) -> list[bool]:
@@ -121,7 +149,8 @@ def _declarations(path: Path) -> list[tuple[int, str, str, str]]:
                 j -= 1
             if j >= 0:
                 doc.insert(0, lines[j])
-        out.append((start + 1, m.group(1), m.group(2), "\n".join(doc + body)))
+        out.append((start + 1, m.group(1), _name_of(lines[start], m.group(2)),
+                    "\n".join(doc + body)))
     return out
 
 
@@ -193,3 +222,51 @@ def test_the_baseline_carries_no_retired_debt():
     assert not stale, (
         f"{len(stale)} baseline line(s) no longer describe an undeclared literal and must be "
         f"deleted from {BASELINE.name}:\n  " + "\n  ".join(stale))
+
+
+def test_two_anonymous_instances_do_not_share_one_key():
+    """POSITIVE CONTROL for the key. A second anonymous instance must be reported, not forgiven.
+
+    `instance : Nonempty (SU n) := <1>` has no name, and the scan captured the `:` as one. Every
+    anonymous instance in a file then produced the same `_key`, so the single baseline line for
+    `SUN.lean` pre-forgave the other eight anonymous instances in that file -- an undeclared literal
+    arriving in any of them would have been reported as nothing new, which is precisely the case the
+    guard exists for.
+
+    The fixture plants two anonymous instances carrying the same literal and asserts the gate
+    distinguishes them, and that the OLD key would not have.
+    """
+    src = "\n".join([
+        "namespace Probe",
+        "instance : Nonempty (Fin 1) := ⟨0⟩",
+        "instance : Subsingleton (Fin 1) := ⟨by decide⟩",
+        "end Probe",
+        "",
+    ])
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "Probe.lean"
+        path.write_bytes(src.encode("utf-8"))
+        hits = _undeclared(path)
+        keys = {h[1].strip() for h in hits}
+    # DERIVED: the number of `instance` lines in `src` above -- the fixture's own size, counted
+    # from it rather than restated. One finding per planted declaration, and one key per finding.
+    planted = sum(1 for ln in src.splitlines() if ln.startswith("instance"))
+    assert len(hits) == planted, f"the scan did not see both anonymous instances: {hits}"
+    assert len(keys) == planted, (
+        f"both anonymous instances key to the same string {keys}, so one baseline line forgives "
+        "the other")
+    assert keys == {"instance : Nonempty (Fin 1) uses 0,1",
+                    "instance : Subsingleton (Fin 1) uses 1"}
+    # THE DEFECT, exhibited: both lines capture `:` as their name, so under the old key the two
+    # findings are one string and a single baseline line covers both.
+    old = {f"instance {_IN_SCOPE.match(ln).group(2)}"
+           for ln in src.splitlines() if _IN_SCOPE.match(ln)}
+    assert old == {"instance :"}, (
+        f"the two anonymous instances no longer share a captured name ({old}), so this control "
+        "does not exercise the collision it is for")
+
+
+def test_a_named_declaration_keeps_its_own_name():
+    """NEGATIVE CONTROL: the type is used only when there is no name to use."""
+    assert _name_of("instance foo : Nonempty (Fin 1) := x", "foo") == "foo"
+    assert _name_of("noncomputable def bar : Real := 1", "bar") == "bar"

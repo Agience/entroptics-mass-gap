@@ -112,8 +112,9 @@ clear `3^{-1/4}` therefore bounds the constant against the rest of the correlati
 The bound's right-hand side carries no aperture. So the larger the aperture, the smaller the zero
 mode is forced to be — which is `no_zero_mode_of_tension_lt_floor` below.
 
-DERIVED: `3^{1/4} − 1 = e^{κ₀} − 1` with `κ₀ = ¼log3` proved in `Floor.lean`. No tolerance, no
-threshold, and `(N+1)` is the lag arity rather than any scale. -/
+DERIVED: `3^{1/4} − 1 = e^{κ₀} − 1` with `κ₀ = ¼log3` proved in `Floor.lean`. The `0`s are the sign
+conditions on `c` and on each `g d` and the strict positivity of the cosine average. No tolerance,
+no threshold, and `(N+1)` is the lag arity rather than any scale. -/
 theorem zero_mode_lt_of_tension {N : ℕ} (hN : 1 ≤ N) (c : ℝ) (g : Fin (N + 1) → ℝ)
     (hc : 0 ≤ c) (hg : ∀ d, 0 ≤ g d)
     (R : Moment.Read N) (hR : R.ρ = fun d => c + g d)
@@ -742,7 +743,9 @@ substrate ratio `(n³+2n)/(12n³) > 1/12 = 0.083`, far above the ceiling `(1-3^{
 aperture condition permits: the arithmetic form of the statement that a band-limited screen cannot
 carry a correlation spread across the whole circle.
 
-DERIVED: `12` is `2 · 6`, the fold's multiplicity times the sum-of-squares denominator. -/
+DERIVED: `12` is `2 · 6`, the fold's multiplicity times the sum-of-squares denominator; `2` and `1`
+are the even circle `2 * (k + 1)`, and `2` is again the square on the lag; `3` is the cubic power of
+the extent on the right. -/
 theorem sum_clag_sq (k : ℕ) :
     12 * ∑ d ∈ Finset.range (2 * (k + 1)), ((clag (2 * (k + 1)) d : ℝ)) ^ 2
       = ((2 * (k + 1) : ℕ) : ℝ) ^ 3 + 2 * ((2 * (k + 1) : ℕ) : ℝ) := by
@@ -837,8 +840,7 @@ satisfies `substrate ≥ λ^{n/2}/12`, stated here without division as
 
     λ^{n/2} · n² · (∑ λ^{clag d})  ≤  12 · ∑ λ^{clag d} · (clag d)²
 
-Three steps, each of which the proof assistant checks, rather than a numerical inversion of the
-exact criterion:
+Three steps, rather than a numerical inversion of the exact criterion:
 
 1. Every weight is at least `λ^{n/2}`, since `clag d ≤ n/2` and `λ ≤ 1`;
 2. The normalisation is at most `n`, since every weight is at most `1`;
@@ -850,7 +852,10 @@ decays too slowly cannot clear the floor: its weight is spread too far around th
 screen to carry. Composing the two bounds a mode away from `λ = 1` by an explicit amount, so the
 aperture yields not merely that a gap exists but how large it is.
 
-DERIVED: `12` is the sum-of-squares denominator, `n/2` the antipode. Nothing is chosen or fitted. -/
+DERIVED: `12` is the sum-of-squares denominator, `n/2` the antipode; `0` and `1` are the ends of the
+range `0 ≤ λ ≤ 1`, and `1` is also the `+ 1` in the even extent `2 * (k + 1)` and in the antipodal
+exponent `k + 1`; `2` is the doubling in that extent and the square on it. Nothing is chosen or
+fitted. -/
 theorem substrate_ge_of_slow_decay (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : lam ≤ 1) :
     lam ^ (k + 1) * ((2 * (k + 1) : ℕ) : ℝ) ^ 2
         * (∑ d ∈ Finset.range (2 * (k + 1)), lam ^ (clag (2 * (k + 1)) d))
@@ -941,18 +946,20 @@ above when the tension clears the floor; `substrate_ge_of_slow_decay` bounds it 
 forbids. The composition is the diffraction limit made quantitative: a band-limited screen cannot
 carry a correlation that decays too slowly, so what it does carry decays at least this fast.
 
-What this replaces. The read margin `hread` -- that the active modes decay at the free-energy margin
--- was an input, cited to the §2-§3 modelling identification and otherwise reducible only to the
-junction residuals. For a single mode it is now a consequence of the tension, which is measured.
+What it replaces. The read margin `hread` -- that the active modes decay at the free-energy margin
+-- is an input elsewhere in the tree. For a single mode it is a consequence of the tension, which is
+measured.
 
-The constant is not sharp, deliberately. Inverting the exact criterion numerically gives `5.54`; the
-sharp asymptotic cap is `10.99`. This route gives `2.04` because it passes through
-`cos x ≤ 1 - (2/π²)x²` and `substrate ≥ λ^{n/2}/12`, each lossy. What a mass gap needs is that the
-constant be positive and derived; sharpness is an optimisation. All three are computed, with
+The constant is not sharp. Inverting the exact criterion numerically gives `5.54`; the sharp
+asymptotic cap is `10.99`. This route gives `2.04` because it passes through
+`cos x ≤ 1 - (2/π²)x²` and `substrate ≥ λ^{n/2}/12`, each lossy. All three are computed, with
 refusals, in `code/certify/aperture_cap_of_floor.py`.
 
 DERIVED: `12` is the sum-of-squares denominator, `8` the constant of `cos_avg_le_circ`, and
-`3^{-1/4}` is `e^{-κ₀}` with `κ₀` proved in `Floor.lean`. -/
+`3^{-1/4}` is `e^{-κ₀}` with `κ₀` proved in `Floor.lean`. The `0`s are the sign condition `h0` places
+on `λ` and the strict positivity of the cosine average in `hpos`; the `1` is the upper bound on `λ`
+in `h1` and the `+ 1` of the screen's aperture; the `2` is the doubling in that aperture
+`2 * k + 1`. -/
 theorem lam_pow_lt_of_tension (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : lam ≤ 1)
     (R : Moment.Read (2 * k + 1))
     (hρ : ∀ d, R.ρ d = lam ^ (Moment.circLag d))
@@ -1001,8 +1008,8 @@ theorem lam_pow_lt_of_tension (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : lam �
 #print axioms lam_pow_lt_of_tension
 /-- The tension bounds the aggregate weight near `λ = 1`.
 
-The answer to the objection that a tension -- being a weighted average -- cannot see modes close to
-`1` that carry little weight. It sees them collectively. For a spectral correlation
+A tension is a weighted average, and it bounds the modes close to `1` collectively rather than one
+at a time. For a spectral correlation
 `ρ(d) = ∑ᵢ wᵢ λᵢ^{clag d}` and any sub-collection `A` whose eigenvalues are all at least `λ₀`:
 
     12 · W · (∑ ρ(d) clag(d)²)  ≥  W_A · λ₀^{n/2} · n² · (∑ ρ(d))
@@ -1017,14 +1024,15 @@ correlation's weight can sit at the unit circle. `no_zero_mode_of_tension_lt_flo
 exactly zero at one; this is the quantitative statement that survives near one, which is what a
 finite-capacity screen can actually say and what controls the correlation's asymptotics.
 
-Why the subset form is the right one. A bound on one mode at a time says nothing about a cloud of
-faint modes that collectively carry the tail. This bounds the cloud. And the degradation by the
-weight share is not a defect: a screen of finite information capacity should say less about fainter
-structure -- what decides whether such modes are in the theory at all is the noise edge, which
-`Measure.resolvedDim` counts against.
+Scope: a bound on one mode at a time says nothing about a cloud of faint modes that collectively
+carry the tail; this bounds the cloud, with the bound degrading by the weight share. What decides
+whether such modes are in the theory at all is the noise edge, which `Measure.resolvedDim` counts
+against.
 
-DERIVED: `12` is the sum-of-squares denominator, `n/2` the antipode; the share is a ratio of the
-read's own quantities. -/
+DERIVED: `12` is the sum-of-squares denominator, `n/2` the antipode; `0` and `1` are the ends of the
+ranges `0 ≤ w i`, `0 ≤ λ i ≤ 1` and `0 ≤ λ₀ ≤ 1`, and `1` is also the `+ 1` in the even extent
+`2 * (k + 1)` and in the antipodal exponent `k + 1`; `2` is the doubling in that extent and the
+square on it; the share is a ratio of the read's own quantities. -/
 theorem substrate_ge_of_subset_share {ι : Type*} (k : ℕ) (s A : Finset ι) (w lam : ι → ℝ)
     (hAs : A ⊆ s)
     (hw : ∀ i ∈ s, 0 ≤ w i) (hlam0 : ∀ i ∈ s, 0 ≤ lam i) (hlam1 : ∀ i ∈ s, lam i ≤ 1)
@@ -1126,18 +1134,21 @@ So with `μ < κ₀` (which caps the right-hand side by `Moment.Read.substrate_l
 
     |A|  <  0.360246 · W / (edge · λ₀^{n/2})
 
-Why this is the piece that was missing. `Measure.LatticeYMFamily.os_gap` asks that the modes above the
-noise edge have index below a spacing-independent cutoff `c`; `Measure.tight_of_gap_ir` turns that into
-tightness and `continuum_of_family` into an OS limit. That cutoff was an input, cited as
-`c = k⋆L/(2π)`. This derives a cutoff of the same shape from the tension: `W/edge` is the read's own
-dynamic range and `λ₀^{n/2}` its resolution at the antipode, neither of which is chosen here.
+What it supplies. `Measure.LatticeYMFamily.os_gap` asks that the modes above the noise edge have
+index below a spacing-independent cutoff `c`; `Measure.tight_of_gap_ir` turns that into tightness
+and `continuum_of_family` into an OS limit. This derives a cutoff of that shape from the tension:
+`W/edge` is the read's own dynamic range and `λ₀^{n/2}` its resolution at the antipode, neither of
+which is chosen here.
 
 What it does not do. It bounds the resolved modes near `λ₀`, not all modes: a mode far below `λ₀`
 decays fast and is not what a gap argument needs to exclude. And `edge` itself is not derived here --
 the noise floor is a property of the read, and per `entroptics-jlens` it must be computed on the
 identity-removed residual or it is inflated by the near-unit component and the count under-reported.
 
-DERIVED: `12` is the sum-of-squares denominator; `edge`, `W` and `λ₀` are the read's own quantities. -/
+DERIVED: `12` is the sum-of-squares denominator; `0` and `1` are the ends of the ranges `0 ≤ w i`,
+`0 ≤ λ i ≤ 1`, `0 ≤ λ₀ ≤ 1` and `0 ≤ edge`, and `1` is also the `+ 1` in the even extent
+`2 * (k + 1)` and in the antipodal exponent `k + 1`; `2` is the doubling in that extent and the
+square on it; `edge`, `W` and `λ₀` are the read's own quantities. -/
 theorem resolved_count_le_of_subset {ι : Type*} (k : ℕ) (s A : Finset ι) (w lam : ι → ℝ)
     (hAs : A ⊆ s)
     (hw : ∀ i ∈ s, 0 ≤ w i) (hlam0 : ∀ i ∈ s, 0 ≤ lam i) (hlam1 : ∀ i ∈ s, lam i ≤ 1)
@@ -1191,7 +1202,10 @@ that theorem then gives `Δ_phys > 2.042/L` -- independent of the lattice spacin
 decay rate is infinite and which no gap argument needs to bound.
 
 DERIVED: the constant is `-log` of the one in `lam_pow_lt_of_tension`, which is itself
-`12(1-e^{-κ₀})/8`. No new number enters. -/
+`12(1-3^{-1/4})/8`; the `3` and the `4` are that power's base and exponent, and the `4` is again the
+denominator of the floor `(1/4)·log 3` in `htens`. The `0`s are the strict positivity of `λ` in `h0`
+and of the cosine average in `hpos`; the `2` is the doubling in the screen's aperture `2 * k + 1`.
+No new number enters. -/
 theorem rate_gt_of_tension (k : ℕ) (lam : ℝ) (h0 : 0 < lam) (h1 : lam ≤ 1)
     (R : Moment.Read (2 * k + 1))
     (hρ : ∀ d, R.ρ d = lam ^ (Moment.circLag d))
@@ -1260,8 +1274,9 @@ exists.
 of the family depends on -- which is what a continuum limit needs and what a box-sized aperture
 cannot give.
 
-DERIVED: nothing is chosen. `κ` and `L` are the hypotheses' own constants, and the conclusion is
-their quotient. -/
+DERIVED: nothing is chosen. The `0`s are the strict positivity of `κ`, of `L` and of each spacing;
+the `1` is the `+ 1` of the screen's lag arity `N k + 1`. `κ` and `L` are the hypotheses' own
+constants, and the conclusion is their quotient. -/
 theorem gap_phys_of_fixed_screen
     (N : ℕ → ℕ) (spacing : ℕ → ℝ) (Δlat : ℕ → ℝ) (κ L : ℝ)
     (hκ : 0 < κ) (hL : 0 < L)

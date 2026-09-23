@@ -315,7 +315,7 @@ theorem tail_ratio_iff_ratio_below_threshold_of_limit
     MassGap.SpectralBound.TailRatioAtEveryCut ↔ RatioBelowThreshold :=
   ⟨ratio_below_threshold_of_tail_ratio, tail_ratio_of_ratio_below_threshold_of_limit L hL hlim⟩
 
-/-! ## 5. The no-go: reflection positivity at extent four is monotone the WRONG way
+/-! ## 5. The no-go: reflection positivity at extent four is monotone the wrong way
 
 At extent four the half-extent is `m = 2`, so `LogConvex.corrClay_log_convex`'s admissible levels are
 `0` and `1` and its only non-diagonal instance is `ρ(1)² ≤ ρ(0)·ρ(2)`. Nothing else the tree proves

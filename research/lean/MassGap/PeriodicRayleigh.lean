@@ -216,7 +216,8 @@ variable {d n N : ℕ} [NeZero n]
 One application of `WilsonTransfer.reflForm_shiftObs_symm` with the second argument taken to be
 `shiftObs τ F`.
 
-Scope: no hypothesis — every real `β`, every reflection constant, every observable, with no
+Scope: the statement's only hypothesis is the section instance `[NeZero n]`, which makes the extent
+nonzero. It holds at every real `β`, every reflection constant and every observable, with no
 measurability, boundedness or positivity.
 
 DERIVED: the statement carries no numeral. The two shifts are two applications of one map, written

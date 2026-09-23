@@ -399,7 +399,8 @@ combination of paired forms `hsRe (X ·) (X (Θ ·))`, for any finite family `X`
 The witness `cfgSum` is reflection-fixed and makes every straddling plaquette read `−1` at once, so
 the sum reads `−card < 0` where a paired form would be a sum of squares.
 
-DERIVED: `−1` is the computed `Re tr` of `diag(1, −1, −1)`; `card` is the number of plaquettes in the
+DERIVED: `−1` is the computed `Re tr` of `diag(1, −1, −1)`; `3` is the gauge group's degree in
+`SU 3` and the matrix dimension `Fin 3` it carries; `card` is the number of plaquettes in the
 family; `0` is the sign a square has. -/
 theorem straddling_sum_not_paired_at_odd_lag (hn : Even n) {τ : Fin d} {c : Fin n}
     (A : Finset (Plaq d n)) (hA : ∀ q ∈ A, OddCross τ c q) (hAne : A.Nonempty)
@@ -551,7 +552,8 @@ step from coordinate `2` to coordinate `0` changes the sum by `−2`, which pres
 parity argument is a fact about even extent, which is the case the theorem is stated in.
 
 DERIVED: `3` is the smallest odd extent above one; `2` and `0` are the wrapping coordinate and its
-image. -/
+image; `1` is the dimension of the witness lattice `Site 1 3` and the direction index `(0 : Fin 1)`
+it carries. -/
 theorem negctl_parity_needs_even_extent :
     ∃ x : Site 1 3, (Even (siteSum (shift (0 : Fin 1) x)) ↔ Even (siteSum x)) := by
   refine ⟨fun _ => (2 : Fin 3), ?_⟩
@@ -1295,7 +1297,7 @@ variable {d n N : ℕ} [NeZero n]
 
 /-- The plaquette word at `((τ, ν), x)`, written out as
 `U (τ, x) * U (ν, shift τ x) * (U (τ, shift ν x))⁻¹ * (U (ν, x))⁻¹`. This is the boundary word of
-`WilsonHypercubic.bd` regrouped; no hypothesis is taken.
+`WilsonHypercubic.bd` regrouped; the only hypothesis is the section instance `[NeZero n]`.
 
 DERIVED: no numeral. -/
 theorem cross_word_left (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
@@ -1723,7 +1725,7 @@ theorem oreflPlaq_cross_mem_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
         = ((τ, μ), reflSite τ ((a + a + 1) - 1) x) by simp [reflPlaq, hμ', hν']]
     exact ⟨fun h => hμ' h.2, Or.inl rfl, hgoal⟩
 
-/-- **The mirror identity at A link-reflection plane.**
+/-- **The mirror identity at a link-reflection plane.**
 
 The mirror part of the action, evaluated at `U`, is the positive part evaluated at the reflected
 configuration. This is what makes the Boltzmann factor a paired product, and it is the exchange
@@ -1733,7 +1735,9 @@ The holonomy of a reflected plaquette is only conjugate to the image plaquette's
 (`Reflect.hol_reflConf`); the Wilson density is a class function, which is why the identity holds on
 the nose (`ActionSplit.density_reflConf`).
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`, the evenness of the extent; the `0` is the
+strict lower bound on the half-extent in `hm0`; the `1` is the link reflection's one-step offset, in
+the constant `a + a + 1`. -/
 theorem sum_oplqMinus_eq_plus_refl {N : ℕ} (hm : n = 2 * m) (hm0 : 0 < m)
     (U : Link d n → MassGap.SUN.SU N) :
     ∑ q ∈ oplqMinus τ a m,
@@ -1785,7 +1789,9 @@ straddling class is carried to itself (`oreflPlaq_cross_mem_cross`), so it is no
 anything, and the same image argument applied to it gives the class back rather than a mirror. Any
 proof that "reflecting a class gives the complementary class" would therefore be wrong here.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`; the `1` is the link reflection's one-step offset, in the constant
+`a + a + 1`. -/
 theorem negctl_cross_not_exchanged (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) :
     (oplqCross (d := d) (n := n) τ a m).image (reflPlaq τ (a + a + 1))
@@ -2214,7 +2220,9 @@ the reflected configuration, plus the straddling part. The degenerate class cont
 This is `ActionSplit.action_eq_split` and `sum_plqMinus_eq_plus_refl` in one, at the geometry that
 file could not reach.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN` and the strict lower bound on the half-extent in `hm0`; the `1` is the link
+reflection's one-step offset, in the constant `a + a + 1`. -/
 theorem action_eq_split_odd (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (U : Link d n → MassGap.SUN.SU N) :
     (MassGap.WilsonHypercubic.sysWilson N d n).action U
@@ -2230,13 +2238,15 @@ theorem action_eq_split_odd (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
       = actPlusO τ a m U + actPlusO τ a m (reflConf τ (a + a + 1) U) + actCrossO τ a m U
   ring
 
-/-- **The Boltzmann weight is A paired product times the straddling factor.**
+/-- **The Boltzmann weight is a paired product times the straddling factor.**
 
 `e^{−βS} = h(U) · h(ΘU) · e^{−β S_cross}` with `h(U) = e^{−β·actPlusO U}`, the same `h` on both
 factors, and `h` reading `oblkS` alone (`actPlusO_local`). Only the straddling factor couples the two
 halves, and `actCross_eq_hsRe_uniform` says it does so through one gauge-invariant cross form.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN` and the strict lower bound on the half-extent in `hm0`; the `1` is the link
+reflection's one-step offset, in the constant `a + a + 1`. -/
 theorem boltz_eq_paired_cross (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
     (MassGap.WilsonHypercubic.sysWilson N d n).boltz β U
@@ -2257,7 +2267,8 @@ minus `1/N` times the sum of the words' real traces — and that sum is one cros
 `wilson_crossing_pairing_nonneg`'s `hβ`.
 
 DERIVED: `1` is the value of `wilsonDensity` at zero trace and the numerator of `1/N`; `N` is the
-rank. Both come from `WilsonAction.wilsonDensity`, not from here. -/
+rank. Both come from `WilsonAction.wilsonDensity`, not from here. `0` is the value `N` is required
+to differ from in `hN`. -/
 theorem actCrossO_eq_trace_sum (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N) :
     actCrossO (N := N) τ a m U
       = ((oplqCross τ a m).card : ℝ)
@@ -2437,7 +2448,8 @@ noncomputable def aObs (q₀ : Plaq d n) (β aC : ℝ) (U : Link d n → MassGap
 `actPlusO_local` for the weight, and the plaquette's own locality for the observable. This is what
 makes it the crossing integration's `a : Ω → ℝ`.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem aObs_local (hm : n = 2 * m) (hm0 : 0 < m) (q₀ : Plaq d n)
     (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (β aC : ℝ)
     (U V : Link d n → MassGap.SUN.SU N) (hS : ∀ l ∈ oblkS τ a m, U l = V l) :
@@ -2458,7 +2470,10 @@ This is the statement `CrossingIntegration.wilson_crossing_pairing_nonneg` prove
 once the product measure is factored over `oblkS ⊔ oblkT ⊔ oblkR` and the mirror's variables are
 transported to the positive half.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN`, the strict lower bound on the half-extent in `hm0`, and the sign asserted of
+the crossing integral in `hcross`; the `1` is the link reflection's one-step offset, in the constant
+`a + a + 1`. -/
 theorem plaqReflPositive_odd_of_crossing (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (β : ℝ) (q₀ : Plaq d n)
     (hcross : ∀ aC : ℝ, 0 ≤ ∫ U,
@@ -2488,7 +2503,10 @@ is not fixed anywhere in the reduction. A version that supplied one particular `
 strictly less, and would not feed `ReflectPositive.corrHyper_nonneg_of_reflPositive`, which applies
 the property at the mean.
 
-DERIVED: no numeral; `aC` is the caller's. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0`s are the value `N` is required to
+differ from in `hN`, the strict lower bound on the half-extent in `hm0`, and the sign asserted both
+of the crossing integral in `hcross` and of the pairing in the conclusion; the `1` is the link
+reflection's one-step offset, in the constant `a + a + 1`. `aC` is the caller's. -/
 theorem negctl_odd_gap_all_centrings (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (β : ℝ) (q₀ : Plaq d n)
     (hcross : ∀ aC : ℝ, 0 ≤ ∫ U,
@@ -2944,7 +2962,8 @@ noncomputable def mirrorT (hm : n = 2 * m) (hm0 : 0 < m)
 on some coordinates; Haar is inversion-invariant (`Reflect.isInvInvariant_probHaar`), so every
 coordinate map preserves the factor.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem measurePreserving_mirrorT (hm : n = 2 * m) (hm0 : 0 < m) :
     MeasurePreserving (mirrorT (N := N) τ a m hm hm0)
       (cvol ↥(oblkS τ a m) (probHaar (MassGap.SUN.SU N)))
@@ -2970,7 +2989,9 @@ With the mirror's block filled by `mirrorT y`, the reflection of the assembled c
 there is no dagger at all. This is what makes the pairing two evaluations of one function of the
 half, at two independent variables.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`; the `1` is the link reflection's one-step offset, in the constant
+`a + a + 1`. -/
 theorem reflConf_joinO_mirror (hm : n = 2 * m) (hm0 : 0 < m)
     (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N)
     {l : Link d n} (hl : l ∈ oblkS τ a m) :
@@ -3005,7 +3026,8 @@ between a link reflection and a site reflection: `ActionSplit`'s even-lag weld a
 block is not acted on, and here it is. A transport that dropped the inversion would be the map that
 case uses, and it would be the wrong map.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem negctl_mirrorT_daggers_axis (hm : n = 2 * m) (hm0 : 0 < m)
     (y : ↥(oblkS τ a m) → MassGap.SUN.SU N) (l : ↥(oblkT τ a m)) (hax : (l : Link d n).1 = τ) :
     mirrorT τ a m hm hm0 y l = (y (mirrorEquivTS τ a m hm hm0 l))⁻¹ := by
@@ -3068,7 +3090,8 @@ independent copies of the positive half's variable against the same measure. Tha
 `∫ lam ∫ nu ∫ nu` of `CrossingIntegration.wilson_crossing_pairing_nonneg`, and it is the last change
 of variables that inequality needs before the integrand identification.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem integral_oblk_mirror (hm : n = 2 * m) (hm0 : 0 < m)
     (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hFm : Measurable F) {C : ℝ}
     (hC : ∀ U, |F U| ≤ C) :
@@ -3199,7 +3222,7 @@ to join them and neither was stated:
 
 * Every odd lag at even extent is of that form (`ActionSplit.even_sub_one_of_odd` and
   `ActionSplit.exists_fixed_site` together), and
-* The plane can be CHOSEN so that the base plaquette lies in the positive half — the odd-lag
+* The plane can be chosen so that the base plaquette lies in the positive half — the odd-lag
   analogue of `ActionSplit.exists_half_below`, and sharper than it, because a link reflection needs
   `0 < lv ≤ m` rather than `lv < m`: the transverse family sits one step above the axis family.
 
@@ -3211,7 +3234,7 @@ section OddPlane
 
 variable {d n : ℕ} [NeZero n] (m : ℕ)
 
-/-- **Every odd lag at even extent has A plane, and the plane can be CHOSEN to put A given site in
+/-- **Every odd lag at even extent has a plane, and the plane can be chosen to put a given site in
 the positive half.**
 
 `a + a + 1 = c` says the reflection is the link reflection Part B is about; `0 < lv a p ≤ m` says the
@@ -3219,7 +3242,8 @@ site `p` sits at a transverse level of `oblkS`. Both solutions of `2x = c − 1`
 differ by `m`, which is exactly the offset that moves a level out of `{0} ∪ (m, n)` into `(0, m]`.
 
 DERIVED: `1` is the link reflection's one-step offset — the whole difference from a site reflection;
-`m` is the half-extent, a parameter. -/
+`2` is the doubling in `hm : n = 2 * m`; `0` is the strict lower bound on the half-extent in `hm0`
+and the strict lower bound asserted on the transverse level; `m` is the half-extent, a parameter. -/
 theorem exists_odd_lag_plane_in_half (hn : Even n) (hm : n = 2 * m) (hm0 : 0 < m)
     {c : Fin n} (hc : ¬ Even c.val) (p : Fin n) :
     ∃ a : Fin n, a + a + 1 = c ∧ 0 < lv a p ∧ lv a p ≤ m := by
@@ -3500,7 +3524,8 @@ at the upper because `m + m = n` makes the half-extent its own negative. So the 
 the cross form is the same word evaluated at the transported variable, which is what
 `wilson_crossing_pairing_nonneg` reads.
 
-DERIVED: no numeral beyond the geometry's own `a + a + 1`. -/
+DERIVED: the `1` is the geometry's own one-step offset in `a + a + 1`; the `2` is the doubling in
+`hm : n = 2 * m`; the `0` is the strict lower bound on the half-extent in `hm0`. -/
 theorem reflLink_tLinkOf (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqCross τ a m) :
     reflLink τ (a + a + 1) (tLinkOf τ a q) = sLinkOf τ a q := by
@@ -3608,7 +3633,8 @@ With the gauge variables of the upper plane inverted and nowhere else, both fixe
 — `cross_word_uniform_off_plane` at the lower plane, `cross_word_uniform_on_plane` at the upper. The
 two transverse links exchange roles between the planes, and `sLinkOf`/`tLinkOf` carry that exchange.
 
-DERIVED: `0` is the lower plane's level and `m` the upper one's. -/
+DERIVED: `0` is the lower plane's level and the strict lower bound on the half-extent in `hm0`, and
+`m` is the upper plane's level; `2` is the doubling in `hm : n = 2 * m`. -/
 theorem re_tr_hol_cross_explicit (hm : n = 2 * m) (hm0 : 0 < m) {ν : Fin d} (hν : ν ≠ τ)
     {x : Site d n} (hlev : lv a (x τ) = 0 ∨ lv a (x τ) = m)
     (U : Link d n → MassGap.SUN.SU N) :
@@ -3649,7 +3675,8 @@ theorem re_tr_hol_cross_explicit (hm : n = 2 * m) (hm0 : 0 < m) {ν : Fin d} (h�
 /-- **One formula for every block.** The straddling plaquette's contribution, in the roles
 `aLinkOf`, `bLinkOf`, `sLinkOf`, `tLinkOf` — orientation and plane both absorbed.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem re_tr_hol_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqCross τ a m) (U : Link d n → MassGap.SUN.SU N) :
     (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q U : MassGap.SUN.SU N)
@@ -3912,7 +3939,8 @@ def planeB (l : ↥(oblkS τ a m)) : ↥(oblkR τ a m) :=
 
 /-- A block's own half-link, as an index of the positive half.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 def sIdx (hm : n = 2 * m) (hm0 : 0 < m) (k : ↥(oplqCross τ a m)) : ↥(oblkS τ a m) :=
   ⟨sLinkOf τ a (k : Plaq d n), sLinkOf_mem τ a m hm hm0 k.2⟩
 
@@ -3920,7 +3948,8 @@ def sIdx (hm : n = 2 * m) (hm0 : 0 < m) (k : ↥(oplqCross τ a m)) : ↥(oblkS 
 the positive half's link at each — relabelled to a `Fin` because that is the type
 `wilson_crossing_pairing_nonneg` takes.
 
-DERIVED: no numeral; the size is `Fintype.card (Fin N × oplqCross)`, a count. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`; the size is `Fintype.card (Fin N × oplqCross)`, a count. -/
 noncomputable def crossWord (hm : n = 2 * m) (hm0 : 0 < m)
     (u : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
     Matrix (Fin (Fintype.card (Fin N × ↥(oplqCross τ a m))))
@@ -3942,7 +3971,8 @@ theorem hsRe_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
 plane links and `hsRe_conj` absorbs them one block at a time; this is `hsRe_dsum_conj` pointed at the
 lattice's own family.
 
-DERIVED: no numeral. -/
+DERIVED: the `2` is the doubling in `hm : n = 2 * m`; the `0` is the strict lower bound on the
+half-extent in `hm0`. -/
 theorem hsRe_crossWord_planeAct (hm : n = 2 * m) (hm0 : 0 < m)
     (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (u v : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
     hsRe (crossWord τ a m hm hm0 (planeAct (planeA τ a m) (planeB τ a m) g u))
@@ -4015,13 +4045,14 @@ theorem tLinkOf_dir {q : Plaq d n} : (tLinkOf τ a q).1 = cDir τ q := by
   · rw [if_pos h0]
   · rw [if_neg h0]
 
-/-- **One block'S contribution, in the crossing integration'S variables.**
+/-- **One block's contribution, in the crossing integration's variables.**
 
 At the configuration assembled from the three block variables, with the upper plane's gauge inverted,
 a straddling plaquette reads the cross form of the gauge-acted positive-half variable against the
 mirror's — and the mirror's, transported, is the second half-variable.
 
-DERIVED: no numeral. -/
+DERIVED: the `2`s are the doubling in `hm : n = 2 * m` and the lower bound on the half-extent in
+`hm2 : 2 ≤ m`; the `0` is the strict lower bound on the half-extent in `hm0`. -/
 theorem re_tr_hol_block (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
     (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N)
     (k : ↥(oplqCross τ a m)) :
@@ -4074,7 +4105,8 @@ theorem re_tr_hol_block (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
 and `hsRe_crossWord` folds it into a single `hsRe`. Both orientations of every geometric plaquette
 appear and both carry the same number; the direct sum simply has the block twice.
 
-DERIVED: no numeral. -/
+DERIVED: the `2`s are the doubling in `hm : n = 2 * m` and the lower bound on the half-extent in
+`hm2 : 2 ≤ m`; the `0` is the strict lower bound on the half-extent in `hm0`. -/
 theorem sum_re_tr_oplqCross (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
     (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
     (∑ q ∈ oplqCross τ a m, (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q
@@ -4160,7 +4192,9 @@ theorem measurable_aHalf (q₀ : Plaq d n) (β aC : ℝ) :
 /-- **The observable is bounded** — `hab`. The plaquette energy lies in `[0, 2]` and the half's
 Boltzmann factor is bounded by the exponential of the half's own cardinality.
 
-DERIVED: `2` is the range of `WilsonAction.wilsonDensity`, computed there, and the card is a count. -/
+DERIVED: `2` is the range of `WilsonAction.wilsonDensity`, computed there, and the doubling of the
+half's plaquette count in the exponent; `0` is the value `N` is required to differ from in `hN`; the
+card is a count. -/
 theorem abs_aObs_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
     |aObs (N := N) τ a m q₀ β aC U|
@@ -4203,7 +4237,9 @@ theorem abs_aHalf_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
 
 /-- **The straddling factor is bounded.**
 
-DERIVED: `2` is the range of `WilsonAction.wilsonDensity`; the card is a count. -/
+DERIVED: `2` is the range of `WilsonAction.wilsonDensity` and the doubling of the straddling
+plaquette count in the exponent; `0` is the value `N` is required to differ from in `hN`; the card
+is a count. -/
 theorem abs_exp_actCrossO_le (hN : N ≠ 0) (β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
     |Real.exp (-β * actCrossO (N := N) τ a m U)|
       ≤ Real.exp (|β| * (2 * (oplqCross τ a m).card)) := by
@@ -4551,10 +4587,14 @@ section Discharge
 
 open MassGap.ReflectPositive
 
-/-- **The odd lags, discharged.** `PlaqReflPositive` at a link-reflection plane, with no hypothesis
-left but the geometry, the extent bound and the sign of the coupling.
+/-- **The odd lags, discharged.** `PlaqReflPositive` at a link-reflection plane. The hypotheses left
+are `hN : N ≠ 0`, the geometry `hm : n = 2 * m` with the instance `[NeZero n]`, the extent bound
+`hm2 : 2 ≤ m`, the sign `hβ : 0 ≤ β`, and the base plaquette's locality `hq₀`.
 
-DERIVED: no numeral beyond `odd_crossing_integral_nonneg`'s own. -/
+DERIVED: the `2`s are the doubling in `hm : n = 2 * m` and the lower bound on the half-extent in
+`hm2`; the `0`s are the value `N` is required to differ from in `hN` and the sign of the coupling in
+`hβ`; the `1` is the link reflection's one-step offset, in the constant `a + a + 1`. Nothing further
+beyond `odd_crossing_integral_nonneg`'s own. -/
 theorem plaqReflPositive_odd {d n : ℕ} [NeZero n] {N : ℕ} (τ : Fin d) (a : Fin n) (m : ℕ)
     (hN : N ≠ 0) (hm : n = 2 * m) (hm2 : 2 ≤ m) {β : ℝ} (hβ : 0 ≤ β) (q₀ : Plaq d n)
     (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) :

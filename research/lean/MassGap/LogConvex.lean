@@ -514,7 +514,7 @@ theorem EW_refl_cauchy_schwarz (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
 
 end Members
 
-/-! ## Part 5 — the pairings ARE the correlation, at three lags
+/-! ## Part 5 — the pairings are the correlation, at three lags
 
 The pairing of the plaquette at level `P` with the reflected plaquette at level `Q` is the two-point
 function at separation `P − (a+a) + Q`. Turning that into `corrHyper`, which is based at the origin,
@@ -563,7 +563,7 @@ theorem reflPlaq_siteAtHyper {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ 
 
 /-- **Translation invariance of the two-point function, from the reflection.**
 `⟨φ_P · φ_Q⟩ = ⟨φ_0 · φ_{P−Q}⟩`, for plaquettes whose plane directions `μ`, `ν` both differ from the
-lag axis `τ`, at every real coupling and with no hypothesis on the extent.
+lag axis `τ`, at every real coupling and at any nonzero extent (`[NeZero n]`).
 
 The reflection at constant `P` sends level `x` to `P − x`, so it sends the pair `(0, P − Q)` to the
 pair `(P, Q)` — both plaquettes move under the same reflection, which is why one application of
@@ -598,7 +598,7 @@ theorem EW_plaqE_pair_shift {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ �
 expectation of the plaquette at lag `P`, centred at the one-point function at the origin, times the
 plaquette at lag `Q` read on the configuration reflected at constant `c` and centred the same way,
 equals `corrHyper` at lag `P − c + Q`. Requires `Nc ≠ 0` and both plane directions different from the
-lag axis; there is no hypothesis on the extent or the coupling.
+lag axis; the extent is any nonzero one (`[NeZero n]`) and the coupling is unconstrained.
 
 Centring at the one-point function at the origin is legitimate because that function is the same at
 every lag (`ReflectPositive.EW_plaqE_lag`), and `EW_plaqE_pair_shift` moves the base back to the

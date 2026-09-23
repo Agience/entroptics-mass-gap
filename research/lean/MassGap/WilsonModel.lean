@@ -184,7 +184,9 @@ the entropy floor `(1/4)·log 3`. It is `Moment.Read.tension_lt_floor_of_circ_mo
 bound `geoRead_moment_le` and the hypothesis `hk`.
 
 DERIVED: the `0` and `1` are the ends of the ratio's range; the numerals inside `hk` are
-`exists_aperture`'s, quoted unchanged; `(1/4)·log 3` is the entropy floor `κ₀`. -/
+`exists_aperture`'s, quoted unchanged — the `2` of `2 * π`, the `2` of the aperture `2 * k + 1`, the
+squaring exponent `2` and the halving `/ 2`, and the `3` and `4` of `3 ^ (-1/4)`; `(1/4)·log 3` is
+the entropy floor `κ₀`. -/
 theorem geoRead_tension_lt_floor (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ)
     (hk : (2 * Real.pi / (((2 * k + 1 : ℕ) : ℝ) + 1)) ^ 2
         * (2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * r ^ m) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
@@ -195,7 +197,9 @@ theorem geoRead_tension_lt_floor (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : �
 `resolvedDim_le_of_tension`'s `hcos` and `count_le_of_tension_uniform`'s.
 
 DERIVED: the `0` and `1` are the ends of the ratio's range; the numerals inside `hk` are
-`exists_aperture`'s, quoted unchanged; the `0` in the conclusion is the sign asserted of the average.
+`exists_aperture`'s, quoted unchanged — the `2` of `2 * π`, the `2` of the aperture `2 * k + 1`, the
+squaring exponent `2` and the halving `/ 2`, and the `3` and `4` of `3 ^ (-1/4)`; the `0` in the
+conclusion is the sign asserted of the average.
 -/
 theorem geoRead_cos_pos (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ)
     (hk : (2 * Real.pi / (((2 * k + 1 : ℕ) : ℝ) + 1)) ^ 2

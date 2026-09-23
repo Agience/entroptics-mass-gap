@@ -32,7 +32,7 @@ Plaquettes reflect by `ireflPlaq`, which transposes the plane when the plane con
   `Equiv.Perm`.
 * The commutation identities with `ishift`: `ireflSite_ishift_of_ne`, `ireflSite_ishift_axis`,
   `ishift_ireflSite_axis`, `ireflSite_ireflSite_pred`.
-* `ihol_ireflConf` — the holonomy of a plaquette in the reflected configuration is CONJUGATE to the
+* `ihol_ireflConf` — the holonomy of a plaquette in the reflected configuration is conjugate to the
   holonomy of the image plaquette, not equal to it. The mirrored boundary word is a cyclic rotation
   of the image word, and a rotated ordered product is a conjugated one; the conjugator is `1` exactly
   on the plaquettes transverse to the axis.
@@ -139,7 +139,7 @@ theorem ireflLink_eq_transverse (τ : Fin 4) (c : ℤ) {l : ILink} (h : l.1 ≠ 
 /-- `ireflLink τ c` is involutive, hence a bijection of the link set. Case split on the direction,
 with `ireflSite_involutive` at `c - 1` on the axis branch and at `c` on the transverse one.
 
-Both branches reflect twice about the SAME constant, which is why no shift survives; composing two
+Both branches reflect twice about the same constant, which is why no shift survives; composing two
 mirrors one apart instead gives `ireflSite_ireflSite_pred`.
 
 DERIVED: `1` is `ireflLink`'s link length, reached through the axis branch; `4` is the dimension. -/
@@ -380,7 +380,7 @@ def ireflConfCM (τ : Fin 4) (c : ℤ) : C(IConf G, IConf G) :=
 
 end Conf
 
-/-! ## 3′. The mirrored holonomy is CONJUGATE, never equal -/
+/-! ## 3′. The mirrored holonomy is conjugate, never equal -/
 
 section Conjugacy
 

@@ -444,7 +444,7 @@ theorem μEven_lt_floor_of_certified (a : EvenAp) (β : ℝ) {S0hat S1hat ε : �
 
 /-- `∃ a : EvenAp, ∀ β : ℝ, μEven a β < MassGap.κ₀YM`, from a certified read at one aperture.
 The inputs are one even aperture `a`, two read functions `S0hat S1hat : ℝ → ℝ` of the coupling, and a
-single error bar `ε`, followed by four conditions each holding at every coupling: the two
+single error bar `ε`, followed by five conditions each holding at every coupling: the two
 positivities `0 < S0hat β − ε` and `0 < S1hat β − ε`, the two error bounds, and the certified upper
 endpoint below `κ₀YM`. `μEven_lt_floor_of_certified` supplies each instance.
 

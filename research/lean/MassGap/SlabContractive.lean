@@ -153,9 +153,9 @@ does, at `N ≠ 0`, even extent `n = 2 * m` with `0 < m`, and any real coupling 
 
 The proof is `contract_of_periodic` at the form `ReflectionStrong.wilsonGibbsReflForm hN τ a m hm hm0 β`
 and the map `shiftSlab τ a m hstab`. Its symmetry hypothesis is discharged by
-`WilsonTransfer.reflForm_shiftObs_symm` at reflection constant `a + a`, which carries no hypothesis
-of its own; its periodicity hypothesis is `shiftSlab_iterate_period`, and `0 < n` comes from the
-`NeZero n` instance.
+`WilsonTransfer.reflForm_shiftObs_symm` at reflection constant `a + a`, whose only hypothesis is the
+`NeZero n` instance it shares with this statement; its periodicity hypothesis is
+`shiftSlab_iterate_period`, and `0 < n` comes from that same instance.
 
 `β` is unconstrained: the conclusion holds at every real coupling, strong or weak.
 

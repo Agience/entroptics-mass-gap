@@ -143,7 +143,7 @@ DERIVED, as `LagTwoBound.lagTwoThreshold`'s note is for extent four. Substitutin
     (2 + 3c)·v² + (2c − 1)·v − (1 − c) < 0.
 
 Its discriminant is `(2c−1)² + 4(2+3c)(1−c) = 9 − 8c²` — a `ring` identity, not a computed number —
-so the positive root is `vSix` and the threshold on the RATIO `v²` is `vSix²`. Every numeral in the
+so the positive root is `vSix` and the threshold on the ratio `v²` is `vSix²`. Every numeral in the
 two definitions below is one of those coefficients: `2c−1`, `1+2c` and `1+c` are
 `ConfinesSharp.confines_extent_six_iff`'s own, `2 + 3c = (1+2c) + (1+c)` is the collapse `ρ(3) ≤ ρ(2)`
 performs, `9` and `8` are the discriminant's, and the outer `2` in the denominator and the outer
@@ -303,7 +303,7 @@ theorem vSix_lt_one : vSix < 1 := by
 /-- There are reals `r₀ > 0`, `r₁, r₂, r₃ ≥ 0` satisfying `r₁² ≤ r₀r₂`, `r₂² ≤ r₀r₂` and
 `r₃² ≤ r₂²` — the three non-diagonal log-convexity instances available at half-extent three, read
 through circle symmetry — with `r₂ = lagTwoThresholdSix · r₀` exactly, and for which the extent-six
-criterion FAILS.
+criterion fails.
 
 The witness is `(1, vSix, vSix², vSix²)`, extended by circle symmetry to `ρ(4) = ρ(2)` and
 `ρ(5) = ρ(1)`. The first and third instances hold with equality, and `vSix_root` puts the criterion
@@ -546,7 +546,7 @@ theorem exists_cut_lag_two_ratio_six (K : ℝ) (hK : 0 < K) :
 `lagTwoThreshold_lt_lagTwoThresholdSix`.
 
 The direction check: the set of constants admissible at four lags is contained in the set admissible
-at six. It relates the two admissible SETS, not the two correlations, and supplies no `K`.
+at six. It relates the two admissible sets, not the two correlations, and supplies no `K`.
 
 DERIVED: no numeral. `K` is the caller's and both thresholds are closed forms. -/
 theorem admissible_at_six_of_admissible_at_four {K : ℝ}

@@ -440,7 +440,8 @@ theorem one_term_pairing_is_lag_one (β : ℝ) :
 /-- `WilsonSpectral 3 β` from `0 ≤ β`, `PairReflPositive β`, and the quadratic
 `2 * ρ(1) ^ 2 ≤ ρ(2) ^ 2 + ρ(0) * ρ(2)`.
 
-`SpectralFour.wilsonSpectral_of_representable` takes four fields of `FourRepresentable`. Two come
+`SpectralFour.wilsonSpectral_of_representable` takes the four conjuncts of `FourRepresentable`, which
+is a conjunction rather than a structure. Two come
 from `TailRatio.triple_wilsonCorrAt`, the third is `lag_two_le_lag_one` applied to `hpair`, and the
 fourth is `hquad`.
 

@@ -75,7 +75,8 @@ are that version. `summable_cubic_weight` and `flagship_of_cubic_tail_share` ins
   `bogusWilson`, an object with no read, correlation, gauge group or lattice;
   `gap_summand_is_manufactured` shows the gap clause's summand is `exp (-(κ₀ - μ)) ^ τ`, whose
   magnitude is its own bound; `flagship_measure_half_needs_no_hypothesis` shows the measure half
-  takes no hypothesis; and `Q_is_constant_in_the_test_configuration` shows OS1 and OS3 hold because
+  adds no hypothesis beyond `ConfinesAtAnAperture`, which is its one argument; and
+  `Q_is_constant_in_the_test_configuration` shows OS1 and OS3 hold because
   the reflected form does not depend on the components those actions move. The statement in these
   chains that is about the Wilson correlation is `ApertureRoute.ConfinesAtAnAperture`, which is about
   `cosAvgEven` of `readEven`; each `flagship_of_…` is its packaging.
@@ -742,7 +743,8 @@ Every `flagship_of_…` here ends at `ApertureRoute.flagship_of_confinement_at_a
   read, correlation, gauge group or lattice, whose tension is the constant `0`.
 * `gap_summand_is_manufactured`: the summand the gap clause is about is `exp (-(κ₀ - μ)) ^ τ` — one
   mode, weight `1`, magnitude equal to its own bound.
-* `flagship_measure_half_needs_no_hypothesis`: the measure half takes no hypothesis.
+* `flagship_measure_half_needs_no_hypothesis`: the measure half adds no hypothesis beyond
+  `ConfinesAtAnAperture`, which is its one argument.
 * `Q_is_constant_in_the_test_configuration`: OS1 and OS3 hold because the reflected form does not
   depend on the components those actions move.
 

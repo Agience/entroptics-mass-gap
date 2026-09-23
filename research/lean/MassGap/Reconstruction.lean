@@ -13,7 +13,7 @@ second says the null cone and the radical coincide, which is what lets `B` desce
 on `V / ker B`. Symmetry and diagonal nonnegativity are hypotheses of both theorems; neither is
 supplied here, and neither theorem builds the quotient or its completion.
 
-## The Hamiltonian `H = -log T` (`hamiltonian` and the five theorems after it)
+## The Hamiltonian `H = -log T` (`hamiltonian` and the six theorems after it)
 
 `hamiltonian T` is `cfc (fun x => -Real.log x) T` in a C\*-algebra `A`. The theorems fix its
 properties under spectral hypotheses on `T`: self-adjointness unconditionally; `0 ≤ H` from
@@ -214,7 +214,7 @@ theorem hamiltonian_mass_gap (T : A) {ε Δ : ℝ} (hT : IsSelfAdjoint T) (hε :
       rwa [Real.log_exp] at this
     linarith
 
-/-- The four preceding conclusions conjoined under one hypothesis set. In an ordered C\*-algebra,
+/-- Four conclusions conjoined under one hypothesis set. In an ordered C\*-algebra,
 given `T` self-adjoint, `0 < ε`, `0 < Δ`, `(1 : ℝ) ∈ spectrum ℝ T` and
 `spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))`, the element `hamiltonian T` satisfies:
 `IsSelfAdjoint`, `0 ≤ hamiltonian T`, `(0 : ℝ) ∈ spectrum ℝ (hamiltonian T)`, and

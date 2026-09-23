@@ -14,8 +14,11 @@ whatever `m` is.
 
 ## The spacing this file fixes instead
 
-`aRun N β = ((3β)/(22N²))^{−51/121} · exp(−3β/(44N²))`, the two-loop running spacing with the overall
-scale `Λ` set to `1`. The exponents come from `Running`'s coefficients `b₀ = 11N/3` and `b₁ = 34N²/3`
+`aRun N β = ((3β)/(22N²))^{51/121} · exp(−3β/(44N²))`, the two-loop running spacing with the overall
+scale `Λ` set to `1`. The exponent is POSITIVE on this base: the two-loop formula carries
+`(b₀g²)^{−b₁/(2b₀²)}` and `b₀g² = 22N²/(3β)` (`b0_g_sq`), whose reciprocal is the base written here,
+so inverting the base flips the sign. The exponents come from `Running`'s coefficients `b₀ = 11N/3`
+and `b₁ = 34N²/3`
 via
 
     a(β)·Λ  =  (b₀ g²)^{−b₁/(2b₀²)} · exp(−1/(2b₀ g²)),        g² = 2N/β
@@ -154,6 +157,192 @@ theorem aRun_pos {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β) : 0 < aRun N
   exact mul_pos (Real.rpow_pos_of_pos hbase _) (Real.exp_pos _)
 
 #print axioms aRun_pos
+
+/-- `exp (-t) ≤ 4 / t²` for `t > 0`, from `Real.add_one_le_exp` applied at `t/2` and squared:
+`exp t = exp (t/2)² ≥ (1 + t/2)² ≥ (t/2)²`.
+
+Elementary on purpose. The decay of `aRun` in the coupling is what the continuum reading needs, and
+proving it this way keeps the argument inside lemmas this development already uses.
+
+DERIVED: `4` is `2²`, the square of the halving in `exp t = exp (t/2)²`; the halving is there so
+that `Real.add_one_le_exp` can be squared rather than used once. `2` is that halving and the square.
+`1` is `add_one_le_exp`'s own offset. `0` is the sign condition on `t`. -/
+theorem exp_neg_le_four_div_sq {t : ℝ} (ht : 0 < t) :
+    Real.exp (-t) ≤ 4 / t ^ 2 := by
+  have hhalf : 1 + t / 2 ≤ Real.exp (t / 2) := by
+    have := Real.add_one_le_exp (t / 2); linarith
+  have hpos : (0 : ℝ) < Real.exp (t / 2) := Real.exp_pos _
+  have hsq : (t / 2) ^ 2 ≤ Real.exp (t / 2) ^ 2 := by nlinarith [hhalf, ht]
+  have hexp : Real.exp (t / 2) ^ 2 = Real.exp t := by
+    rw [sq, ← Real.exp_add]
+    ring_nf
+  rw [hexp] at hsq
+  have ht2 : (0 : ℝ) < t ^ 2 / 4 := by positivity
+  have hle : t ^ 2 / 4 ≤ Real.exp t := by nlinarith [hsq]
+  -- `exp (-t) * t² ≤ 4`, then divide. Stated as a product first so no inverse inequality is
+  -- rewritten under a hypothesis.
+  have hgoal : Real.exp (-t) * t ^ 2 ≤ 4 := by
+    rw [Real.exp_neg]
+    have hinv : (0 : ℝ) ≤ (Real.exp t)⁻¹ := by positivity
+    have hstep : (Real.exp t)⁻¹ * t ^ 2 ≤ (Real.exp t)⁻¹ * (4 * Real.exp t) :=
+      mul_le_mul_of_nonneg_left (by nlinarith [hle]) hinv
+    have hcol : (Real.exp t)⁻¹ * (4 * Real.exp t) = 4 := by
+      field_simp
+    rw [hcol] at hstep
+    exact hstep
+  rw [le_div_iff₀ (by positivity : (0:ℝ) < t ^ 2)]
+  exact hgoal
+
+#print axioms exp_neg_le_four_div_sq
+
+/-- `aRun N` decays at least like `1 / β` once the base has passed `1`: for `N ≥ 1` and
+`(3 * β) / (22 * N²) ≥ 1`,
+
+    aRun N β ≤ ((3 * β) / (22 * N²)) * (4 / ((3 * β) / (44 * N²)) ^ 2).
+
+The power factor is bounded by its base because the exponent `51/121` is at most `1`
+(`Real.rpow_le_rpow_of_exponent_le`, then `Real.rpow_one`), and the exponential by
+`exp_neg_le_four_div_sq`.
+
+DERIVED: `3`, `22` and `44` are `aRun`'s own constants, which `Running`'s coefficients fix; `4` is
+`exp_neg_le_four_div_sq`'s. Every `2` is a square — the `N²` of `aRun`'s two denominators, and the
+square in `exp_neg_le_four_div_sq`'s `4 / t²`. `1` is the least extent in `hN` and the threshold the
+base must pass for `x ^ p ≤ x`. `0` is the sign of the coupling. The exponent `51/121` is `aRun`'s
+and appears in the PROOF, where the bound `x ^ p ≤ x ^ 1` is applied; the statement does not
+mention it. -/
+theorem aRun_le_of_base_ge_one {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β)
+    (hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2)) :
+    aRun N β ≤ ((3 * β) / (22 * (N : ℝ) ^ 2)) * (4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2) := by
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hb : (0 : ℝ) < (3 * β) / (22 * (N : ℝ) ^ 2) := by positivity
+  have hc : (0 : ℝ) < (3 * β) / (44 * (N : ℝ) ^ 2) := by positivity
+  -- the power factor is at most its base
+  have hpow : ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ)
+      ≤ (3 * β) / (22 * (N : ℝ) ^ 2) := by
+    have h := Real.rpow_le_rpow_of_exponent_le hbase (by norm_num : (51 / 121 : ℝ) ≤ 1)
+    rwa [Real.rpow_one] at h
+  -- the exponential factor
+  have hexp : Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2))
+      ≤ 4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2 := by
+    have hrw : -(3 * β) / (44 * (N : ℝ) ^ 2) = -((3 * β) / (44 * (N : ℝ) ^ 2)) := by
+      field_simp
+    rw [hrw]
+    exact exp_neg_le_four_div_sq hc
+  have hepos : (0 : ℝ) < Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2)) := Real.exp_pos _
+  have hrpos : (0 : ℝ) ≤ ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ) :=
+    le_of_lt (Real.rpow_pos_of_pos hb _)
+  unfold aRun
+  exact mul_le_mul hpow hexp (le_of_lt hepos) (le_of_lt hb)
+
+#print axioms aRun_le_of_base_ge_one
+
+/-- The previous bound, collapsed: `aRun N β ≤ 352·N² / (3β)` once the base has passed `1`.
+
+With `u = 3β/(22N²)` the exponential's base is `u/2`, so the bound reads `u · 4/(u/2)² = 16/u`,
+and `16 · 22 = 352`. A plain `1/β` decay at fixed aperture.
+
+DERIVED: `352 = 16 · 22` where `16 = 4 · 2²` comes from `exp_neg_le_four_div_sq`'s `4` and the
+halving between `aRun`'s two denominators, and `22` is `aRun`'s own. `3` is `aRun`'s numerator
+constant. `1` is the threshold the base passes. `0` is a sign condition. Nothing chosen. -/
+theorem aRun_le_inv_of_base_ge_one {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β)
+    (hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2)) :
+    aRun N β ≤ 352 * (N : ℝ) ^ 2 / (3 * β) := by
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have h := aRun_le_of_base_ge_one hN hβ hbase
+  have hcol : ((3 * β) / (22 * (N : ℝ) ^ 2)) * (4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2)
+      = 352 * (N : ℝ) ^ 2 / (3 * β) := by
+    field_simp
+    ring
+  rwa [hcol] at h
+
+#print axioms aRun_le_inv_of_base_ge_one
+
+/-- `aRun N` is continuous: a rpow with nonnegative exponent composed with an affine map, times an
+exponential composed with another.
+
+`Real.continuous_rpow_const` needs the exponent nonnegative, which `51/121` is.
+
+DERIVED: `51/121`, `3`, `22` and `44` are `aRun`'s own constants. `0` is the nonnegativity of the
+exponent that `Real.continuous_rpow_const` requires. -/
+theorem continuous_aRun (N : ℕ) : Continuous (aRun N) := by
+  have h1 : Continuous fun β : ℝ => (3 * β) / (22 * (N : ℝ) ^ 2) :=
+    (continuous_const.mul continuous_id).div_const _
+  have h2 : Continuous fun β : ℝ => -(3 * β) / (44 * (N : ℝ) ^ 2) :=
+    ((continuous_const.mul continuous_id).neg).div_const _
+  exact ((Real.continuous_rpow_const (by norm_num : (0 : ℝ) ≤ 51 / 121)).comp h1).mul
+    (Real.continuous_exp.comp h2)
+
+#print axioms continuous_aRun
+
+/-- Past any coupling, and below any positive target, there is a coupling at which `aRun N` is
+smaller: `∃ β > β₀, aRun N β < ε`.
+
+The witness clears three conditions at once — past `β₀`, past the base threshold `22N²/3`, and past
+`352N²/(3ε)` — by taking a maximum and adding one.
+
+DERIVED: `352`, `22` and `3` are `aRun_le_inv_of_base_ge_one`'s. `1` is added to a maximum to make
+each inequality strict, which is the standard witness for "past every one of these" and is not a
+magnitude. `0` is the sign condition on `ε` and on the coupling. -/
+theorem exists_beta_aRun_lt {N : ℕ} (hN : 1 ≤ N) {ε : ℝ} (hε : 0 < ε) (β₀ : ℝ) :
+    ∃ β : ℝ, β₀ < β ∧ 0 < β ∧ aRun N β < ε := by
+  have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  set β : ℝ := max (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε)) + 1 with hβdef
+  have hgt0 : β₀ < β := by
+    have := le_max_left β₀ (22 * (N : ℝ) ^ 2 / 3)
+    have h2 := le_max_left (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+    rw [hβdef]; linarith
+  have hbaseth : 22 * (N : ℝ) ^ 2 / 3 < β := by
+    have := le_max_right β₀ (22 * (N : ℝ) ^ 2 / 3)
+    have h2 := le_max_left (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+    rw [hβdef]; linarith
+  have hepsth : 352 * (N : ℝ) ^ 2 / (3 * ε) < β := by
+    have := le_max_right (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+    rw [hβdef]; linarith
+  have hpos : 0 < β := by
+    have h22 : (0 : ℝ) < 22 * (N : ℝ) ^ 2 / 3 := by positivity
+    linarith
+  refine ⟨β, hgt0, hpos, ?_⟩
+  have hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2) := by
+    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 22 * (N : ℝ) ^ 2)]
+    linarith
+  have hb := aRun_le_inv_of_base_ge_one hN hpos hbase
+  have hlt : 352 * (N : ℝ) ^ 2 / (3 * β) < ε := by
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * β)]
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * ε)] at hepsth
+    nlinarith [hepsth, hε, hpos]
+  linarith
+
+#print axioms exists_beta_aRun_lt
+
+/-- **A coupling realising a chosen spacing, arbitrarily far out.** For `N ≥ 1`, any target
+`0 < a < aRun N β₁` is attained: `∃ β ≥ β₁, aRun N β = a`.
+
+`exists_beta_aRun_lt` puts a coupling past `β₁` where `aRun` is below the target,
+`continuous_aRun` makes the map continuous between, and `intermediate_value_uIcc` produces the
+coupling — the idiom `ConfinesZero.confinesAtAnAperture_of_missesTheFloor` uses.
+
+This is the branch asymptotic freedom lives on: `β₁` is arbitrary, so the coupling can be demanded
+as large as one likes. `fixed_extent_pins_the_spacing` is the reason the aperture must also grow for
+a continuum reading, and it is about a FIXED `N`, which this is not.
+
+DERIVED: `1` is the least extent in `hN`, which is what keeps `(N : ℝ)` away from zero so `aRun`'s
+base is defined; `0` is the target's sign in `ha`. `a`, `β₁` and `N` are the caller's. -/
+theorem exists_beta_aRun_eq {N : ℕ} (hN : 1 ≤ N) {a β₁ : ℝ} (ha : 0 < a)
+    (hlt : a < aRun N β₁) :
+    ∃ β : ℝ, β₁ ≤ β ∧ aRun N β = a := by
+  obtain ⟨β₂, h21, _, hsmall⟩ := exists_beta_aRun_lt hN ha β₁
+  have hcont : ContinuousOn (aRun N) (Set.uIcc β₁ β₂) := (continuous_aRun N).continuousOn
+  have hmem : a ∈ Set.uIcc (aRun N β₁) (aRun N β₂) := by
+    rw [Set.mem_uIcc]
+    exact Or.inr ⟨le_of_lt hsmall, le_of_lt hlt⟩
+  obtain ⟨x, hxmem, hx⟩ := intermediate_value_uIcc hcont hmem
+  refine ⟨x, ?_, hx⟩
+  rw [Set.uIcc_of_le (le_of_lt h21)] at hxmem
+  exact hxmem.1
+
+#print axioms exists_beta_aRun_eq
+
+
 
 /-! ## 3. The statement -/
 

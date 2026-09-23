@@ -417,7 +417,7 @@ theorem bd3_link_not_private {n : ℕ} [NeZero n] (k : Fin 3) (x : Site3 n) :
   have h : (k + 2) + 2 = k + 1 := by revert k; decide
   have hne : k + 2 ≠ k := by revert k; decide
   refine ⟨by simp [bd3], ?_, hne⟩
-  -- in the plaquette of normal `k+2` the FOURTH entry is `U_{(k+2)+2}(x) = U_{k+1}(x)`
+  -- in the plaquette of normal `k+2` the fourth entry is `U_{(k+2)+2}(x) = U_{k+1}(x)`
   simp [bd3, h]
 
 /-- `Function.update (fun _ => 0) μ d`: the site whose `μ` coordinate is `d` and whose other
@@ -486,7 +486,7 @@ noncomputable def corrHyper {d : ℕ} (Nc n : ℕ) [NeZero n] (μ ν τ : Fin d)
 /-- `0 ≤ wilsonCorr` at `corrHyper`'s two plaquettes, for `Nc ≠ 0`. `wilsonCorr_nonneg` applied
 directly, since it never inspects the geometry.
 
-About the UNCONNECTED correlation. `corrHyper` itself is connected and has no corresponding
+About the unconnected correlation. `corrHyper` itself is connected and has no corresponding
 statement.
 
 DERIVED: `0` is the value `Nc` is required to differ from, the origin the first plaquette sits at and

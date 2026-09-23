@@ -13,8 +13,8 @@ satisfies every pairing inequality and fails this one.
 
 Unfolding the constructed definitions — `corrClay n β lag = corrHyper (d := 4) 3 n 0 1 2 β lag`,
 `corrHyper … = wilsonCorrConn bd ((μ,ν), 0) β ((μ,ν), siteAtHyper τ lag)`, and
-`wilsonCorrConn` subtracting `⟨φ_{p₀}⟩·⟨φ_p⟩` — at `lag = 0` the two plaquettes COINCIDE
-(`siteAtHyper_zero`), so the quantity is the VARIANCE of one plaquette-energy observable:
+`wilsonCorrConn` subtracting `⟨φ_{p₀}⟩·⟨φ_p⟩` — at `lag = 0` the two plaquettes coincide
+(`siteAtHyper_zero`), so the quantity is the variance of one plaquette-energy observable:
 
     corrClay (N+1) β 0 = ⟨φ_q²⟩_β − ⟨φ_q⟩_β²,   q = plane (0,1) at the origin.
 
@@ -30,9 +30,9 @@ coupling. Three facts drive it:
   variance is `(∫ (φ − m)² e^{−βS}) / Z` with `Z > 0`.
 * Product Haar over the links is positive on nonempty opens: `probHaar` is a Haar measure, hence
   `IsOpenPosMeasure`, and `Measure.pi.isOpenPosMeasure` carries that to configurations.
-* `(φ − m)² e^{−βS}` is CONTINUOUS (`continuous_wilsonPlaqObs`, `continuous_wilsonSystem_boltz`).
+* `(φ − m)² e^{−βS}` is continuous (`continuous_wilsonPlaqObs`, `continuous_wilsonSystem_boltz`).
   A continuous function that integrates to zero against an open-positive measure is identically
-  zero (`Continuous.ae_eq_iff_eq`), which would force `φ` to take one single value at EVERY
+  zero (`Continuous.ae_eq_iff_eq`), which would force `φ` to take one single value at every
   configuration.
 
 The remaining obligation is two configurations at which `φ_q` differs. `obs_confOne` and
@@ -64,7 +64,7 @@ open MeasureTheory
 /-! ### Continuity of the Wilson observables
 
 `WilsonReal` proves measurability of the holonomy, the action and the Boltzmann weight; the argument
-below needs the stronger CONTINUITY, because the step that converts "integrates to zero" into
+below needs the stronger continuity, because the step that converts "integrates to zero" into
 "vanishes at every configuration" is `Continuous.ae_eq_iff_eq`. The proofs mirror the measurability
 ones line for line. -/
 
@@ -292,12 +292,12 @@ theorem wilsonCorrConn_self_pos (hN : N ≠ 0) (bd : Pq → List (Lk × Bool)) (
 
 #print axioms wilsonCorrConn_self_pos
 
-/-! ### NEGATIVE CONTROL: the same correlation VANISHES for a trivial gauge group
+/-! ### Negative control: the same correlation vanishes for a trivial gauge group
 
 The theorem above is not a formality of the Gibbs construction — it is false for a gauge group with
 one element. `SU(1)` is the `1×1` special unitary group: the determinant condition pins the single
 entry to `1`, so the group is trivial, every holonomy is the identity, the plaquette energy is
-identically `0`, and the connected self-correlation is EXACTLY `0`, not merely small.
+identically `0`, and the connected self-correlation is exactly `0`, not merely small.
 
 This is what makes the hypothesis of `wilsonCorrConn_self_pos` load-bearing, and it is why the
 Clay instance below has to produce two `SU(3)` elements that do not commute. -/
@@ -351,7 +351,7 @@ theorem su_one_has_no_two_values (bd : Pq → List (Lk × Bool)) (p : Pq)
 /-! ### Two non-commuting `SU(3)` elements, as real involutions
 
 `gA = diag(1,−1,−1)` and `gB` the sign-corrected transposition of the first two axes. Both square to
-the identity, so the boundary word's two INVERSE entries need no inverse computed, and
+the identity, so the boundary word's two inverse entries need no inverse computed, and
 
     gA·gB·gA⁻¹·gB⁻¹ = (gA·gB)² = diag(−1,−1,1),
 
@@ -497,12 +497,12 @@ noncomputable def confOne (n : ℕ) : MassGap.WilsonHypercubic.Link 4 n → Mass
 
 /-- The configuration carrying `gA` on every direction-`0` link and `gB` on every other link.
 
-It depends only on the DIRECTION, never on the site, which is what makes the holonomy come out as a
+It depends only on the direction, never on the site, which is what makes the holonomy come out as a
 commutator at every periodic extent `n` — including `n = 1`, where the four links of the plaquette
 are not distinct.
 
 DERIVED: `4` is the Clay problem's dimension, `3` the degree of `SU(3)`, its matrix dimension, `0` the direction whose links carry
-`gA`, and `1` the membership coercions. The split by DIRECTION rather than site is the content, as
+`gA`, and `1` the membership coercions. The split by direction rather than site is the content, as
 the paragraph above says; no numeral here is tunable. -/
 noncomputable def confAB (n : ℕ) : MassGap.WilsonHypercubic.Link 4 n → MassGap.SUN.SU 3 :=
   fun l => if l.1 = 0 then gA else gB

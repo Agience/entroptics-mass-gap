@@ -261,7 +261,7 @@ theorem disjoint_image_ireflLink_posHalf (τ : Fin 4) (p : ℤ) {S : Finset ILin
 #print axioms disjoint_image_ireflLink_posHalf
 
 
-/-! ## 3. ⭐ The shift preserves it -/
+/-! ## 3. The shift preserves it -/
 
 /-- The time shift on observables, as an `ℝ`-linear endomorphism of `C(IConf G, ℝ)`: precomposition
 with `ishiftConf τ`, which is continuous. Additivity and homogeneity are `rfl`.

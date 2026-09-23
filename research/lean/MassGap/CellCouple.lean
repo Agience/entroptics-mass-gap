@@ -33,7 +33,7 @@ against `∑ A b` to one against a dominating `Afull`, and `relative_full_of_abs
 `CellSpectrum.coupled_gap_of_relative_coupling_bound`, concluding the gap `(1 - q / m) * mform`.
 
 `shared_locals_force_shrinking_margin` is the constraint on the relative route: if every bond is
-charged against the SAME local part `A₀` and the sum is dominated by an `Afull` of form at most
+charged against the same local part `A₀` and the sum is dominated by an `Afull` of form at most
 `M * (v ⬝ᵥ v)`, then `s.card * m ≤ M`, so a uniform `m` shrinks like `1 / s.card`.
 
 ## The chain instance
@@ -120,7 +120,7 @@ per-bond bounds sum to `-(s.card * a * (v ⬝ᵥ v))`, which `neg_le_abs` compar
 bound; dividing by `v ⬝ᵥ v` finishes.
 
 Scope: `a` is not assumed nonnegative — at a negative `a` both hypothesis and conclusion weaken
-together. The hypothesis needs ONE vector extremal on every bond simultaneously, which a coupling
+together. The hypothesis needs one vector extremal on every bond simultaneously, which a coupling
 diagonal in a product basis has and `bondCouple_form` supplies for the chain.
 
 DERIVED: `0` is the strict lower bound on `v ⬝ᵥ v`, required so it can be divided out. -/
@@ -327,7 +327,7 @@ theorem relative_full_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι 
 
 #print axioms relative_full_of_absolute_bonds
 
-/-- Suppose every bond is charged against the SAME local part `A₀`: `m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A₀ *ᵥ v)`,
+/-- Suppose every bond is charged against the same local part `A₀`: `m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A₀ *ᵥ v)`,
 the constant sum `∑ _b ∈ s, A₀` is dominated in form by `Afull`, and `v ⬝ᵥ (Afull *ᵥ v) ≤ M * (v ⬝ᵥ v)`.
 Then `s.card * m ≤ M`. The constant sum evaluates to `s.card` copies of `A₀`'s form, and dividing by
 `0 < v ⬝ᵥ v` gives the bound.

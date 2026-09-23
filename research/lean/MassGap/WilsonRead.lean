@@ -102,7 +102,7 @@ theorem wilsonCorrReal_le_four (β : ℝ) (d : Fin 2) : wilsonCorrReal β d ≤ 
 The Gibbs state is sandwiched by the Haar integral, because `sysReal`'s action is bounded in `[0,4]`
 (`sysReal_action_nonneg`, `sysReal_action_le`) so its Boltzmann weight is bounded in
 `[e^{−4|β|}, e^{4|β|}]`. For a nonnegative observable that gives `⟨O⟩_β ≥ e^{−8|β|} ∫ O dHaar`, so
-positivity at EVERY coupling follows from positivity under plain Haar — one measure, no `β`. -/
+positivity at every coupling follows from positivity under plain Haar — one measure, no `β`. -/
 
 /-- `Real.exp (-(4 * |β|)) ≤ sysReal.boltz β U` at every configuration and every real coupling.
 
@@ -225,7 +225,7 @@ theorem sum_wilsonCorrReal_pos_of_haar (β : ℝ)
 /-! ### The single-link translation, and how the plaquette holonomy transports under it
 
 The remaining Haar integral (`∫ φ₀ dvol = 1`, equivalently `∫ Re tr(hol p₀) dvol = 0`) is reached by
-translating ONE link. Link `0` occurs exactly once in `bd2 0`, first and forward, so left-multiplying
+translating one link. Link `0` occurs exactly once in `bd2 0`, first and forward, so left-multiplying
 it by `g` left-multiplies the whole plaquette holonomy by `g`; and translating one coordinate preserves
 the product Haar measure by left-invariance in that factor and the identity elsewhere.
 

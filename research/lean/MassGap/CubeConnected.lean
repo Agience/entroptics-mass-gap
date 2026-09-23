@@ -113,7 +113,7 @@ theorem mem_faceEdges_iff {a d : Fin 3} (hd : d ≠ a) (y w : Cube) :
 
 /-! ### Which faces share an edge
 
-Four shapes are needed and each is witnessed by ONE named edge, along the axis that is neither of the
+Four shapes are needed and each is witnessed by one named edge, along the axis that is neither of the
 two in play. Nothing here is a case analysis on position: the witness is written down and checked. -/
 
 /-- Two faces share an edge: `(faceEdges f ∩ faceEdges g).Nonempty`. This is `VortexFamily.SurfAdj`
@@ -428,7 +428,7 @@ theorem reach_origin_face (s : Fin k → Fin 3) :
         have hjv : (j : ℕ) = i' := by omega
         rw [show j = (⟨i', hik⟩ : Fin k) from Fin.ext hjv]
         exact fun h => hc h.symm
-      -- pick the rung axis: not the entry axis, and not the PREVIOUS entry axis
+      -- pick the rung axis: not the entry axis, and not the previous entry axis
       have hpick : ∃ a : Fin 3, a ≠ s ⟨i', hik⟩ ∧
           (∀ j : Fin k, (j : ℕ) + 1 = i' → s j ≠ a) := by
         by_cases h1 : ∀ j : Fin k, (j : ℕ) + 1 = i' → s j ≠ rot1 (s ⟨i', hik⟩)

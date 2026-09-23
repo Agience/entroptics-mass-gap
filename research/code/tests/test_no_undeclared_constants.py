@@ -211,6 +211,51 @@ def test_no_undeclared_deciding_constants():
             "measures.\n" + "\n".join(lines))
 
 
+def test_the_baseline_carries_no_retired_debt():
+    """A baseline line that no longer describes an undeclared literal must be DELETED.
+
+    The header calls the file a dated record that may only shrink. Nothing made that true: the gate
+    reads it purely as a set of keys to forgive, so a line survived its own repair — and worse, a
+    line survived the DELETION OF ITS FILE. Six of the seventeen stale lines named
+    `certify/aperture_channel_control.py` and `certify/polyakov_su2_aperture.py`, neither of which
+    is in the tree; the other eleven named lines whose text had changed. A stale line is not inert.
+    The key is `path|what|source text`, so each one silently pre-forgives the NEXT literal to appear
+    at that spelling in that file, which is exactly the case the guard exists to catch. It also
+    makes the remaining-debt count wrong, and that count is the only thing anyone reads to know
+    whether the work is moving.
+
+    Same contract and same wording as
+    `test_no_undeclared_lean_constants.test_the_baseline_carries_no_retired_debt`. Retiring a
+    literal and deleting its line are one change, not two.
+    """
+    if not BASELINE.exists():
+        pytest.skip("no baseline file")
+    scripts = _scripts()
+    assert len(scripts) >= 20, (
+        f"only {len(scripts)} scripts discovered; the scan is looking in the wrong place, and every "
+        "baseline line would read as stale")
+    live = {_key(p, h) for p in scripts for h in _undeclared(p)}
+    known = [l.strip() for l in BASELINE.read_text(encoding="utf-8").splitlines()
+             if l.strip() and not l.startswith("#")]
+    assert known, "the baseline is empty; it should have been deleted along with its last line"
+    stale = [k for k in known if k not in live]
+    assert not stale, (
+        f"{len(stale)} baseline line(s) no longer describe an undeclared literal and must be "
+        f"deleted from {BASELINE.name}:\n  " + "\n  ".join(stale))
+
+
+def test_a_baseline_line_for_a_deleted_file_is_reported_stale():
+    """POSITIVE CONTROL. The check above must fire on the shape that produced most of the debt.
+
+    Six of the lines it removed named scripts that no longer exist. A staleness check that only
+    noticed edited lines would have left those, so the deleted-file case is pinned directly.
+    """
+    live = {_key(p, h) for p in _scripts() for h in _undeclared(p)}
+    gone = "research/code/certify/a_script_that_was_deleted.py|named constant X = 1|X = 1"
+    assert gone not in live, "the planted key was accidentally a real finding"
+    assert [k for k in [gone] if k not in live] == [gone]
+
+
 def test_no_comment_is_indented_off_the_line_it_annotates():
     """A comment's indent matches the statement below it, across every Python file here.
 

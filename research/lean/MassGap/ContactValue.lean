@@ -74,7 +74,7 @@ rank that selects which root of unity puts `ω·1` in the group. -/
 `om_sq_ne_one` are the facts about it used below; `om_conj` and `om_sq_conj` give its conjugate.
 
 DERIVED: both numerals sit in the body rather than the signature. The `3` is the rank of `SU(3)`
-and fixes the ORDER of the root, because `det(ω·1) = ω³` on a `3 × 3` matrix; the `2` is the `2π`
+and fixes the order of the root, because `det(ω·1) = ω³` on a `3 × 3` matrix; the `2` is the `2π`
 of one full turn, which that order divides. At rank `N` the expression reads `exp(2πi/N)`. -/
 noncomputable def om : ℂ := Complex.exp (2 * Real.pi * Complex.I / 3)
 
@@ -128,8 +128,8 @@ theorem dvec_two : dvec 2 = om ^ 2 := by simp [dvec]
 theorem zvec_apply (i : Fin 3) : zvec i = om := by fin_cases i <;> simp [zvec]
 
 /-- A diagonal matrix over `Fin 3` whose entries each satisfy `v i * conj (v i) = 1` and whose
-three entries multiply to `1` lies in `Matrix.specialUnitaryGroup (Fin 3) ℂ`. Used by `dvec_mem`
-and `zvec_mem`.
+three entries multiply to `1` lies in `Matrix.specialUnitaryGroup (Fin 3) ℂ`. Used by `dvec_mem`,
+`zvec_mem` and `corrClay_four_zero_zero`.
 
 DERIVED: `3` is the rank, an index type. The `1`s are the two conditions defining the special
 unitary group: unit modulus of each entry, and unit determinant. The `0`, `1` and `2` in
@@ -407,7 +407,7 @@ theorem haar_chi_sq_zero : ∫ g : SU 3, chi g ^ 2 ∂(probHaar (SU 3)) = 0 := b
 two indices.
 
 DERIVED: every `3` is the rank — `SU 3` and the matrix index type `Fin 3` — so `i` and `j` are
-matrix INDICES rather than magnitudes, and there are `3 × 3` of these numbers. The `2` of a second
+matrix indices rather than magnitudes, and there are `3 × 3` of these numbers. The `2` of a second
 moment is written here as multiplication by the conjugate. -/
 noncomputable def msq (i j : Fin 3) : ℂ :=
   ∫ g : SU 3, (g : Matrix (Fin 3) (Fin 3) ℂ) i j

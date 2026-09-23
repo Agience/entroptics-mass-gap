@@ -81,7 +81,7 @@ boundary configuration anchored at the identity.
   for `wilsonCorrAt N β 0` on a finite periodic lattice indexed by an aperture, while `specState` is
   indexed by a `Finset ILink` of `ℤ⁴` with a frozen boundary; relating a variance in one indexing to
   a variance in the other is not done here.
-* The DLR equation delivered here is tested against CONTINUOUS observables, so
+* The DLR equation delivered here is tested against continuous observables, so
   `GibbsSpec.IsGibbsMeasure` — which asks for it against every bounded measurable observable — is not
   claimed. `MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure` carries it there, by exhibiting the
   kernel applied to `P` as a measure and using that two finite Borel measures agreeing on continuous
@@ -902,7 +902,7 @@ theorem spec_at_zero_mul_of_disjoint (φ : G → ℝ) {S T : Finset ILink} (hST 
 #print axioms spec_at_zero_mul_of_disjoint
 
 /-- For a state `ν` satisfying `IsDLR (specCM … 0 μ)` and an `F` local on `S`,
-`ν F = spec φ 0 S μ F ω` at EVERY boundary configuration `ω`. Taking the volume to be `S` itself,
+`ν F = spec φ 0 S μ F ω` at every boundary configuration `ω`. Taking the volume to be `S` itself,
 `spec_at_zero_const` makes the kernel the constant observable `spec φ 0 S μ F ω • 1`, and the DLR
 equation with `State.map_smul` and `State.map_one` reads the value off it.
 

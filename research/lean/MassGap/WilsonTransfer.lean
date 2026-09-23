@@ -191,8 +191,8 @@ theorem shiftConf_eq_reflConf_comp (τ : Fin d) (c : Fin n) (U : Link d n → G)
 
 This is `Θ ∘ S = S⁻¹ ∘ Θ` written without an inverse. The proof rewrites each shift by
 `shiftConf_eq_reflConf_comp` at the same constant `c` and cancels with `reflConf_involutive` at `c`
-and at `c + 1`. It holds at every `c` and every configuration, with no hypothesis beyond `G` being a
-group.
+and at `c + 1`. It holds at every `c` and every configuration; the hypotheses are the section
+instances `[NeZero n]` and `[Group G]`.
 
 DERIVED: the statement carries no numeral. -/
 theorem shiftConf_reflConf_shiftConf (τ : Fin d) (c : Fin n) (U : Link d n → G) :
@@ -314,9 +314,10 @@ This is the `T_symm` field of `Transfer.TransferData`, on the concrete form
 `Transfer.reflForm N τ c β` that `ReflectionStrong.wilsonGibbsReflForm` carries. The two ingredients
 are `expect_shift_invariant` and `shiftConf_reflConf_shiftConf`.
 
-Scope: no hypothesis is imposed — it holds at every real `β`, every reflection constant, and every
-pair of real-valued observables, with no measurability, boundedness or positivity. In particular
-nothing here asserts that the form is positive semidefinite on these arguments.
+Scope: the statement's only hypothesis is the section instance `[NeZero n]`, which makes the extent
+nonzero. It holds at every real `β`, every reflection constant, and every pair of real-valued
+observables, with no measurability, boundedness or positivity. In particular nothing here asserts
+that the form is positive semidefinite on these arguments.
 
 DERIVED: the statement carries no numeral. -/
 theorem reflForm_shiftObs_symm (N : ℕ) (τ : Fin d) (c : Fin n) (β : ℝ)

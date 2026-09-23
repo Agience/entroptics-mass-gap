@@ -54,13 +54,28 @@ def corpus():
 
 
 def test_every_cited_name_resolves(corpus):
-    """No document may name a declaration the repo does not define."""
+    """No document may name a declaration the repo does not define.
+
+    THE DOCUMENTS ARE THE POPULATION, so reading none of them is not a clean bill. `gate.DOCS`
+    lives in a SIBLING repository (`_scratch/CURRENT`); with that repository absent, or either
+    document renamed, the loop below `continue`d on every entry and the test reported PASS having
+    scanned nothing — the exact shape this suite exists to refuse. Demonstrated by pointing
+    `gate.SCRATCH` at a directory that does not exist: zero documents read, `bad == {}`, green.
+    So the count of documents actually opened is asserted first, and an absent sibling repository
+    SKIPS visibly rather than passing silently.
+    """
     words, modules = corpus
+    present = [n for n in gate.DOCS if os.path.exists(os.path.join(gate.SCRATCH, n))]
+    if not present:
+        if os.path.isdir(gate.SCRATCH):
+            pytest.fail(
+                f"{gate.SCRATCH} exists but holds none of {gate.DOCS}; the documents have been "
+                "renamed or moved and this gate is scanning nothing. Update `DOCS` in "
+                "`certify/doc_cites_live_declarations.py`.")
+        pytest.skip(f"the sibling planning repository {gate.SCRATCH} is not present")
     bad: dict[str, list[str]] = {}
-    for name in gate.DOCS:
+    for name in present:
         path = os.path.join(gate.SCRATCH, name)
-        if not os.path.exists(path):
-            continue
         with open(path, encoding="utf-8", errors="replace") as fh:
             dead = _dead_for(fh.read(), words, modules)
         if dead:
@@ -94,6 +109,27 @@ def test_a_live_name_is_not_reported(corpus):
     """
     words, modules = corpus
     assert _dead_for("`ActionSplit.pairing_eq_weighted_square`", words, modules) == []
+
+
+def test_scanning_no_document_is_not_a_pass(corpus, tmp_path, monkeypatch):
+    """POSITIVE CONTROL for the population, not for the classifier.
+
+    Every other control here plants a name and checks the verdict. None of them could tell that the
+    gate had read zero documents, because the verdict on an empty corpus is the same word as the
+    verdict on a clean one. This drives the gate at a directory holding no document and requires it
+    to refuse — and at a missing directory, where a visible skip is the correct answer.
+    """
+    monkeypatch.setattr(gate, "SCRATCH", str(tmp_path))          # exists, holds nothing
+    with pytest.raises(BaseException) as e:
+        test_every_cited_name_resolves(corpus)
+    assert "holds none of" in str(e.value), (
+        f"an empty document directory did not make the gate refuse: {e.value}")
+
+    monkeypatch.setattr(gate, "SCRATCH", str(tmp_path / "absent"))  # not a directory at all
+    with pytest.raises(BaseException) as e:
+        test_every_cited_name_resolves(corpus)
+    assert "is not present" in str(e.value), (
+        f"a missing sibling repository did not raise a visible skip: {e.value}")
 
 
 def test_a_file_name_is_not_a_citation(corpus):

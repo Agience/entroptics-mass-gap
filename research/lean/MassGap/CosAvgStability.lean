@@ -1175,11 +1175,12 @@ coupling satisfies. The same check for the rest:
 | `confines_at_of_l1_control_from_zero` | `l1_control_from_zero_holds_near_zero` — on a neighbourhood of zero coupling |
 | `confines_of_grid_and_far_arm` | `grid_hypotheses_are_met_near_zero` — both hypotheses jointly, on an interval |
 | `confines_at_of_off_contact_share_small` | `contact_dominance_holds_at_zero_coupling`, below |
-| `confines_at_of_l1_close_to_free_field_six` | no such theorem — see the note after it |
+| `confines_at_of_l1_close_to_free_field_six` | no satisfiability theorem — see the paragraph below |
 
-For the last, the Wilson profile being within `9.9%` in `L¹` of the exact free-field profile at large
-coupling is the weak-coupling statement itself, so a satisfiability theorem for it would be the far
-arm. The reference has positive total mass and the distance to it is a continuous quantity, and
+The condition itself, `confines_at_of_l1_close_to_free_field_six`, is stated and proved in section 9;
+what is absent is a theorem exhibiting a coupling that meets its hypothesis. The Wilson profile being
+within `9.9%` in `L¹` of the exact free-field profile at large coupling is the weak-coupling statement
+itself, so such a theorem would be the far arm. The reference has positive total mass and the distance to it is a continuous quantity, and
 `FreeFieldLagTwoSix.EffectiveGaussianLagTwoSix` is the tree's more tolerant form of the same demand.
 -/
 

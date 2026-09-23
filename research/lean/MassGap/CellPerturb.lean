@@ -7,11 +7,11 @@ import MassGap.CellSpectrum
 
 `certify/cell_pivot_certificate.py` covers `λ ∈ [4/25, 169/25]` continuously: each of its 61
 certified couplings carries a neighbourhood of radius `(certified gap − κ₀)/4`, and the
-neighbourhoods overlap. `MassGap.CellPivot` transcribes the certified POINTS; lifting a grid to an
+neighbourhoods overlap. `MassGap.CellPivot` transcribes the certified points; lifting a grid to an
 interval looks like it needs eigenvalue perturbation, and Mathlib has no Weyl inequality for
 Hermitian matrices (it has Gershgorin, which is a different statement).
 
-The two spectral facts the certificate is built from are stated in terms of QUADRATIC FORMS rather
+The two spectral facts the certificate is built from are stated in terms of quadratic forms rather
 than eigenvalues:
 
 * `CellSpectrum.exists_eigenvalue_le_of_form` takes `ψ ⬝ᵥ (A *ᵥ ψ) ≤ r * (ψ ⬝ᵥ ψ)` and returns an
@@ -19,7 +19,7 @@ than eigenvalues:
 * `CellSpectrum.atMostOne_eigenvalue_lt` takes `∀ x ∈ W, μ * (x ⬝ᵥ x) ≤ x ⬝ᵥ (A *ᵥ x)` on a subspace
   of corank at most one and returns "at most one eigenvalue `< μ`".
 
-So the perturbation moves the FORM rather than an eigenvalue, and the form moves by an elementary
+So the perturbation moves the form rather than an eigenvalue, and the form moves by an elementary
 amount, proved here from the definition of `CellSpectrum.Hcell` and AM–GM. Feeding the moved form
 back into the same two lemmas reproduces the gap at a neighbouring coupling.
 
@@ -34,7 +34,7 @@ column of `Adj` has at most two nonzero entries, so AM–GM gives
 `|v ⬝ᵥ (Adj *ᵥ v)| ≤ 2 * (v ⬝ᵥ v)` (`adj_form_bound`), and the form moves by at most
 `2|Δλ| (v ⬝ᵥ v)` (`HcellR_form_lipschitz`).
 
-The certificate's `LIPSCHITZ = 4` is twice that because the gap is a DIFFERENCE of two eigenvalues:
+The certificate's `LIPSCHITZ = 4` is twice that because the gap is a difference of two eigenvalues:
 the upper one moves down by at most `2|Δλ|` and the lower one moves up by at most `2|Δλ|`, so the
 gap moves by at most `4|Δλ|`. The two halves are `cell_form_ge_of_form_ge` and
 `cell_form_le_of_form_le` below, one per eigenvalue.
@@ -246,7 +246,7 @@ theorem HcellR_form_lipschitz (jmax : ℕ) (lam lam' : ℚ) (v : Fin (dim jmax) 
   have ha : 0 ≤ |(lam : ℝ) - (lam' : ℝ)| := abs_nonneg _
   nlinarith [abs_nonneg (v ⬝ᵥ (Adj jmax *ᵥ v))]
 
-/-- Transport of a GROUND-STATE form bound. If `v ⬝ᵥ (HcellR jmax lam' *ᵥ v) ≤ r * (v ⬝ᵥ v)` at
+/-- Transport of a ground-state form bound. If `v ⬝ᵥ (HcellR jmax lam' *ᵥ v) ≤ r * (v ⬝ᵥ v)` at
 `lam'`, then at `lam` the same `v` gives `≤ (r + 2 * |lam - lam'|) * (v ⬝ᵥ v)`. The shape is what
 `CellSpectrum.exists_eigenvalue_le_of_form` consumes, so a trial vector certified at `lam'` is still
 one at `lam`, weakened by `2|Δλ|`.
@@ -261,7 +261,7 @@ theorem cell_form_le_of_form_le (jmax : ℕ) (lam lam' : ℚ) (v : Fin (dim jmax
       ≤ 2 * |(lam : ℝ) - (lam' : ℝ)| * (v ⬝ᵥ v) := (abs_le.mp hL).2
   nlinarith
 
-/-- Transport of an INERTIA form bound. If `t * (v ⬝ᵥ v) ≤ v ⬝ᵥ (HcellR jmax lam' *ᵥ v)` at `lam'`,
+/-- Transport of an inertia form bound. If `t * (v ⬝ᵥ v) ≤ v ⬝ᵥ (HcellR jmax lam' *ᵥ v)` at `lam'`,
 then at `lam` the shift drops to `t - 2 * |lam - lam'|`. The shape is what
 `CellSpectrum.atMostOne_eigenvalue_lt` consumes.
 
@@ -278,7 +278,7 @@ theorem cell_form_ge_of_form_ge (jmax : ℕ) (lam lam' : ℚ) (v : Fin (dim jmax
       ≤ v ⬝ᵥ (HcellR jmax lam *ᵥ v) - v ⬝ᵥ (HcellR jmax lam' *ᵥ v) := (abs_le.mp hL).1
   nlinarith
 
-/-- One certificate covers a BALL of rational couplings, relative route.
+/-- One certificate covers a ball of rational couplings, relative route.
 `CellPivot.HcellR_gap_of_certificate_rel` consumes a pivot certificate at `lam0` and concludes at
 `lam0`; this consumes the same certificate and concludes at every `lam` within `r` of it, with the
 certified gap reduced by `4 * r`. That is where the cover's radius `(gap - kappa_0)/4` comes from.
@@ -360,7 +360,7 @@ theorem HcellR_gap_of_certificate_ball (jmax : ℕ) (lam0 lam : ℚ) (r t μ : �
   have h2 : 1 < S.card := Finset.one_lt_card.mpr ⟨i, himem, i₀, hi0mem, hi⟩
   omega
 
-/-- The ABSOLUTE route on a ball, losing `2 * r` rather than `4 * r`.
+/-- The absolute route on a ball, losing `2 * r` rather than `4 * r`.
 
 The relative ball above transports both of its bounds. This one transports only the inertia bound:
 `CellSpectrum.cell_exists_eigenvalue_le_zero` gives an eigenvalue `≤ 0` at every coupling, because
@@ -500,7 +500,7 @@ theorem HcellRr_form_lipschitz (jmax : ℕ) (a b : ℝ) (v : Fin (dim jmax) → 
   have hb := adjM_form_bound jmax v
   nlinarith [abs_nonneg (v ⬝ᵥ (adjM (dim jmax) *ᵥ v)), abs_nonneg (a - b)]
 
-/-- Transport of a GROUND-state form bound at real coupling: `cell_form_le_of_form_le` with `ℝ` in
+/-- Transport of a ground-state form bound at real coupling: `cell_form_le_of_form_le` with `ℝ` in
 place of `ℚ`.
 
 DERIVED: `2` is `HcellRr_form_lipschitz`'s constant. -/
@@ -512,7 +512,7 @@ theorem cellRr_form_le_of_form_le (jmax : ℕ) (a b : ℝ) (v : Fin (dim jmax) �
       ≤ 2 * |a - b| * (v ⬝ᵥ v) := (abs_le.mp hL).2
   nlinarith
 
-/-- Transport of an INERTIA form bound at real coupling: `cell_form_ge_of_form_ge` with `ℝ` in place
+/-- Transport of an inertia form bound at real coupling: `cell_form_ge_of_form_ge` with `ℝ` in place
 of `ℚ`.
 
 DERIVED: `2` is `HcellRr_form_lipschitz`'s constant. -/
@@ -526,8 +526,8 @@ theorem cellRr_form_ge_of_form_ge (jmax : ℕ) (a b : ℝ) (v : Fin (dim jmax) �
 
 /-! ### The cover at real coupling
 
-The anchors stay RATIONAL — the certificate produces rational pivots — while the ball around each
-one ranges over the REALS, which is the coupling the problem is about.
+The anchors stay rational — the certificate produces rational pivots — while the ball around each
+one ranges over the reals, which is the coupling the problem is about.
 
 The LDL factorisation is established for `HcellR` at the rational anchor and carried across by
 `HcellR_eq_HcellRr`; the form moves by `cellRr_form_le_of_form_le` and `cellRr_form_ge_of_form_ge`;
@@ -545,7 +545,7 @@ theorem cellGapAtLeastR_mono {jmax : ℕ} {lam g g' : ℝ} (hg : g' ≤ g)
   obtain ⟨i₀, h⟩ := h
   exact ⟨i₀, fun i hi => by linarith [h i hi]⟩
 
-/-- A rational certificate covers a ball of REAL couplings, relative route.
+/-- A rational certificate covers a ball of real couplings, relative route.
 
 `lam0` is rational, `lam` is real, and `hclose` is `|lam - lam0| ≤ r`. The conclusion is
 `CellGapAtLeastR jmax lam (μ - 4 * r)`. The LDL factorisation is proved for `HcellR` at the rational
@@ -610,7 +610,7 @@ theorem cellGapAtLeastR_of_ball (jmax : ℕ) (lam0 : ℚ) (lam : ℝ) (r t μ : 
   have h2 : 1 < S.card := Finset.one_lt_card.mpr ⟨i, himem, i₀, hi0mem, hi⟩
   omega
 
-/-- The same at real coupling, ABSOLUTE route, losing `2 * r` instead of `4 * r`. The
+/-- The same at real coupling, absolute route, losing `2 * r` instead of `4 * r`. The
 ground-eigenvalue bound needs no transport: `CellSpectrum.HcellRr_zero_zero` gives `H₀₀ = 0` at
 every real `λ`, and `exists_eigenvalue_le_zero_of_diag` reads a nonpositive eigenvalue off it. Only
 the inertia bound moves. There is no trial vector and no Sturm shift; `hrecD` is stated at `μ`.

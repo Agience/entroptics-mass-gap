@@ -2,7 +2,7 @@ import Mathlib
 import MassGap.Schwinger
 
 /-!
-# MassGap.MomentMeasure — the bounded moment sequence as a MEASURE on the lag variable
+# MassGap.MomentMeasure — the bounded moment sequence as a measure on the lag variable
 
 ## What the object is
 
@@ -27,7 +27,7 @@ The classical bounded Hamburger construction, with every step taken from Mathlib
    coefficient family. The complex cross terms never appear: `L` is real, so
    `re (conj cᵢ · cⱼ · L) = (re cᵢ · re cⱼ + im cᵢ · im cⱼ) · L` term by term, and the two halves are
    real Hankel forms of exactly the kind `limit_hankel_psd` accepts.
-4. `Pre D` — `ℂ[X]` carrying that form as a SEMI-inner product, so no quotient by the null space is
+4. `Pre D` — `ℂ[X]` carrying that form as a semi-inner product, so no quotient by the null space is
    needed: `PreInnerProductSpace.Core` asks only for semidefiniteness, and `UniformSpace.Completion`
    Hausdorffifies and completes in one step.
 5. `opX` — multiplication by `X`, extended to the completion. Its norm is at most `R`, and that is
@@ -39,7 +39,7 @@ The classical bounded Hamburger construction, with every step taken from Mathlib
 7. The continuous functional calculus and Riesz–Markov–Kakutani turn the vector state
    `f ↦ ⟨1, f(A) 1⟩` into the measure.
 
-The Hilbert space is COMPLEX rather than real because Mathlib's continuous functional calculus for
+The Hilbert space is complex rather than real because Mathlib's continuous functional calculus for
 self-adjoint elements is an instance on complex C⋆-algebras (`CStarAlgebra` is complex by
 definition, `Mathlib/Analysis/CStarAlgebra/Classes.lean`), and `E →L[ℂ] E` is one exactly when `E` is
 a complex Hilbert space.
@@ -376,10 +376,10 @@ def toPoly (D : MomentData) (p : Pre D) : ℂ[X] := p
 @[simp] theorem toPoly_smul (c : ℂ) (p : Pre D) : toPoly D (c • p) = c • toPoly D p := rfl
 
 /-- **The semi-inner product.** Hermitian by `sform_conj_symm`, semidefinite by
-`re_sform_self_nonneg`, sesquilinear by construction. Definiteness is NOT claimed and is not needed:
+`re_sform_self_nonneg`, sesquilinear by construction. Definiteness is not claimed and is not needed:
 the completion quotients the null vectors out.
 
-DERIVED: `0` is the SHIFT index into the moment sequence, not a value. `sform D s p q` is
+DERIVED: `0` is the shift index into the moment sequence, not a value. `sform D s p q` is
 `lam D s (p* · q)`, which sums `D.L (k + s)`, so `s = 0` is the unshifted form — the moments
 themselves, which is what an inner product on polynomials has to be. A nonzero shift is the
 Stieltjes form, a different object used for a different positivity; nothing here is tuned. -/
@@ -521,7 +521,7 @@ theorem spectrum_opX_subset : spectrum ℝ (opX D) ⊆ Set.Icc (-D.R) D.R := by
 
 `cfcHom` is Mathlib's continuous functional calculus for a self-adjoint element: a star-algebra
 homomorphism `C(spectrum ℝ A, ℝ) →⋆ₐ[ℝ] (H →L[ℂ] H)` sending the restricted identity to `A`.
-Composing it with the vector state at the vacuum gives a POSITIVE linear functional on the
+Composing it with the vector state at the vacuum gives a positive linear functional on the
 continuous functions on the spectrum, and positivity is the only thing that needs proving: a
 nonnegative `f` is `g·g` for `g = √f`, whose image is self-adjoint, so the value is `‖g(A)1‖²`. -/
 
@@ -529,7 +529,7 @@ nonnegative `f` is `g·g` for `g = √f`, whose image is self-adjoint, so the va
 
 DERIVED: `1` is the unit of the ring `ℂ[X]`, not a normalisation applied to anything. It is the
 cyclic vector the construction is built around: `opX_pow_vac` says `A^k` sends it to the class of
-`X^k`, and `inner_vac_opX_pow` says its moments ARE the sequence `D.L`. Any other choice would not
+`X^k`, and `inner_vac_opX_pow` says its moments are the sequence `D.L`. Any other choice would not
 represent the moment sequence at all. -/
 def vac (D : MomentData) : H D := ((ofPoly D 1 : Pre D) : H D)
 

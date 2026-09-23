@@ -136,7 +136,7 @@ theorem corrHyper_hankel_psd (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
     intro O
     show _ = ((sysWilson N d n).corrNum (probHaar (MassGap.SUN.SU N)) β O / Z) * Z
     field_simp
-  -- THE ENTRY: the pairing of two plaquette observables is the correlation at the SUM of the levels
+  -- The entry: the pairing of two plaquette observables is the correlation at the sum of the levels
   have hshift : ∀ R S : Fin n, R - ((0 : Fin n) + (0 : Fin n)) + S = R + S := by
     intro R S; rw [add_zero, sub_zero]
   have hentry : ∀ i j : ι,
@@ -154,7 +154,7 @@ theorem corrHyper_hankel_psd (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
       exact hnum _
     rw [hpq, haC, EW_centred_refl_eq_corrHyper hN hμ hν β ((0 : Fin n) + (0 : Fin n)) (e i) (e j),
       hshift]
-  -- THE EXPANSION: bilinearity of the reflection form over a finite linear combination
+  -- The expansion: bilinearity of the reflection form over a finite linear combination
   have hexp : Pf.form (∑ i, c i • v i) (∑ i, c i • v i)
       = ∑ i, ∑ j, c i * c j * Pf.form (v i) (v j) := by
     have h1 : Pf.bil (∑ i, c i • v i) = ∑ i, c i • Pf.bil (v i) := by
@@ -177,7 +177,7 @@ theorem corrHyper_hankel_psd (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
               rw [smul_eq_mul]
             rw [hrow]
             simp only [Finset.mul_sum, mul_assoc]
-  -- POSITIVITY, and the partition function divides out of the whole double sum at once
+  -- Positivity, and the partition function divides out of the whole double sum at once
   have hnn := Pf.form_nonneg (∑ i, c i • v i)
   rw [hexp] at hnn
   have hZfac : ∑ i, ∑ j, c i * c j * Pf.form (v i) (v j)

@@ -38,6 +38,18 @@ apply to it.
 `transl` is the identity and `E4` is divisible, so `os1` holds of every bilinear form here
 (`LatticeTranslNoGo.os1_holds_of_everything_when_transl_trivial`). The Euclidean invariance a
 continuum theory carries lives in the limit, not at a finite periodic extent.
+
+## Separation
+
+`os_nontriv` asks that one family member have nonzero self-pairing, which a one-element family
+satisfies; at `v = ![1]` the Schwinger form takes the single value `P.form 1 1`, and that is
+`WightmanData.trivialOSData` in different clothes. `WightmanData.osData_test_nontrivial` does not
+exclude it, because it is about the test space rather than the form.
+
+`osDataOfReflForm_separates` is the statement about the form: two family members with different
+self-pairings give two different values of `S`. `osDataOfReflForm_constant_of_no_separation` records
+the other case explicitly, so the degenerate family is visible rather than unmentioned. Which
+observables separate the Gibbs form is a fact about the measure and stays the caller's.
 -/
 
 namespace MassGap.WilsonOS
@@ -153,12 +165,58 @@ noncomputable def osDataOfReflForm (P : MassGap.Transfer.ReflForm A) (v : Fin k 
 /-- The Schwinger form of `osDataOfReflForm` is the `ReflForm`'s own pairing on the combinations, so
 the physics the form carries is readable off the constructed data rather than hidden by it.
 
-DERIVED: no numeral. -/
+DERIVED: `0` is the value `hi` requires the self-pairing at `i₀` to differ from, `os_nontriv`'s own
+obligation carried in from `osDataOfReflForm`. No other numeral occurs. -/
 theorem osDataOfReflForm_S (P : MassGap.Transfer.ReflForm A) (v : Fin k → A) (i₀ : Fin k)
     (hi : P.form (v i₀) (v i₀) ≠ 0) (c c' : EuclideanSpace ℝ (Fin k)) :
     (osDataOfReflForm P v i₀ hi).S c c' = P.form (combo v c) (combo v c') := rfl
 
 #print axioms osDataOfReflForm_S
+
+/-- **The form takes two different values.** If two family members have different self-pairings under
+`P`, the Schwinger form of `osDataOfReflForm` separates their coordinate vectors.
+
+`os_nontriv` asks only that one member have nonzero self-pairing, which a one-element family
+satisfies; at `v = ![1]` the form takes the single value `P.form 1 1`, and that is
+`WightmanData.trivialOSData` in different clothes. `WightmanData.osData_test_nontrivial` does not
+exclude it — it says the test space has two elements, which holds whatever the form does.
+
+This says the form is not constant, which is the statement a construction claiming to carry a
+measure's content should make. The separating pair `i₀`, `j` is the caller's: which observables
+separate the Gibbs form is a fact about the measure, not about this construction.
+
+DERIVED: `1` is the coefficient of each coordinate vector, at which `combo_single` returns the
+family member itself. `0` is the value `hi` requires the self-pairing at `i₀` to differ from, which
+is `os_nontriv`'s own obligation carried in from `osDataOfReflForm`. -/
+theorem osDataOfReflForm_separates (P : MassGap.Transfer.ReflForm A) (v : Fin k → A) (i₀ : Fin k)
+    (hi : P.form (v i₀) (v i₀) ≠ 0) (j : Fin k)
+    (hne : P.form (v j) (v j) ≠ P.form (v i₀) (v i₀)) :
+    (osDataOfReflForm P v i₀ hi).S (EuclideanSpace.single j (1 : ℝ))
+        (EuclideanSpace.single j (1 : ℝ))
+      ≠ (osDataOfReflForm P v i₀ hi).S (EuclideanSpace.single i₀ (1 : ℝ))
+        (EuclideanSpace.single i₀ (1 : ℝ)) := by
+  rw [osDataOfReflForm_S, osDataOfReflForm_S, combo_single, combo_single]
+  exact hne
+
+#print axioms osDataOfReflForm_separates
+
+/-- The contrapositive, as a scope note with a proof: a family on which the form is constant gives
+an `OSData` whose Schwinger form carries one number. Stated so the degenerate case is visible rather
+than merely unmentioned.
+
+DERIVED: `1` is the coordinate vectors' coefficient, carried from `osDataOfReflForm_separates`. `0`
+is the value `hi` requires the self-pairing at `i₀` to differ from, `os_nontriv`'s obligation. -/
+theorem osDataOfReflForm_constant_of_no_separation (P : MassGap.Transfer.ReflForm A)
+    (v : Fin k → A) (i₀ : Fin k) (hi : P.form (v i₀) (v i₀) ≠ 0)
+    (hconst : ∀ j : Fin k, P.form (v j) (v j) = P.form (v i₀) (v i₀)) (j : Fin k) :
+    (osDataOfReflForm P v i₀ hi).S (EuclideanSpace.single j (1 : ℝ))
+        (EuclideanSpace.single j (1 : ℝ))
+      = P.form (v i₀) (v i₀) := by
+  rw [osDataOfReflForm_S, combo_single]
+  exact hconst j
+
+#print axioms osDataOfReflForm_constant_of_no_separation
+
 
 end Generic
 

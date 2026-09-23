@@ -259,10 +259,10 @@ theorem mem_edgesOf_faceToPlaq [NeZero n] (f : Face) (e : Link 4 n) :
 
 /-! ### Reading a link back as a 3-D edge
 
-The correspondence above sends 3-D edges forward. Closedness needs it BACKWARDS: given a link of the
+The correspondence above sends 3-D edges forward. Closedness needs it backwards: given a link of the
 physical lattice, the faces of the surface carrying it must be exactly the 3-D faces carrying one 3-D
 edge. That is where the periodic box cuts into the argument — `siteOf` reduces modulo `n`, so it is
-injective only on corners below `n`, and the corners of a face's EDGES reach one step further than
+injective only on corners below `n`, and the corners of a face's edges reach one step further than
 the face's own corner. Hence `k + 2 < n` here where the area count needed only `k + 1 < n`. -/
 
 /-- Every coordinate of every corner of every edge of a boundary face of a `k`-step path is below
@@ -545,7 +545,7 @@ theorem three_pow_le_card_vortexFamily_along_boxes (n : ℕ → ℕ) [∀ k, NeZ
 
 /-! ### `hM` discharged
 
-`VortexCount.junction_of_physical_count` consumes `hM : ∀ k, 3ᵏ ≤ M k` — a bound at EVERY `k`, because
+`VortexCount.junction_of_physical_count` consumes `hM : ∀ k, 3ᵏ ≤ M k` — a bound at every `k`, because
 the free-energy density it extracts is a `k → ∞` limit. The embedding is faithful only while the path
 and its edges fit in the box, so `M` is read in a box that grows with `k`. Naming that box removes the
 last free parameter: `hM` then holds with no hypothesis whatever. -/

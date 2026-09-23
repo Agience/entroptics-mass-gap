@@ -48,7 +48,7 @@ theorem const_witness_conclusion_is_arithmetic (_β : ℝ) :
     tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
   simpa using hp.const_mul (3 : ℝ)
 
-/-- The sequence `τ ↦ ‖∑_{k : Fin 1} 1 · ((2 : ℝ) : ℂ)^τ‖` does NOT converge to `0` along `atTop`.
+/-- The sequence `τ ↦ ‖∑_{k : Fin 1} 1 · ((2 : ℝ) : ℂ)^τ‖` does not converge to `0` along `atTop`.
 
 The proof rewrites the norm as `2^τ` and observes that a base above `1` tends to `atTop`, which no
 sequence converging in a neighbourhood of `0` can do. This is the negative case for the shape in

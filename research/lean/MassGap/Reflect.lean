@@ -268,7 +268,7 @@ theorem bd_reflect_transverse [NeZero n] (τ : Fin d) (c : Fin n) {μ ν : Fin d
   simp only [reflWord, bd, reflPlaq, reflLink, reflSite_shift_of_ne hμ, reflSite_shift_of_ne hν,
     hμ, hν, if_false, List.map_cons, List.map_nil]
 
-/-- A plaquette whose FIRST spanning direction is `τ`: the mirrored word is the image plaquette's
+/-- A plaquette whose first spanning direction is `τ`: the mirrored word is the image plaquette's
 own word rotated by `3`, i.e. the last of the four letters brought to the front. So the two words
 have the same letters in a rotated order, and the holonomies agree only up to conjugation.
 
@@ -282,7 +282,7 @@ theorem bd_reflect_axis_fst [NeZero n] (τ : Fin d) (c : Fin n) {ν : Fin d}
     List.map_cons, List.map_nil]
   rfl
 
-/-- A plaquette whose SECOND spanning direction is `τ`: the mirrored word is the image plaquette's
+/-- A plaquette whose second spanning direction is `τ`: the mirrored word is the image plaquette's
 word rotated by `1`, the other direction from `bd_reflect_axis_fst`.
 
 DERIVED: `1` is the rotation, one place, which is the inverse of `bd_reflect_axis_fst`'s `3` on a

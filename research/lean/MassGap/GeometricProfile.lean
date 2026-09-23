@@ -4,8 +4,8 @@ import MassGap.MomentArms
 /-!
 # MassGap.GeometricProfile — a geometric profile bounds the far share uniformly in the aperture
 
-`MomentArms.flagship_of_geometric_far_share` consumes a geometric bound on the FAR SHARE. This file
-supplies that bound from a geometric bound on the PROFILE, `ρ(d) ≤ M·r^{circLag d}`, the far share
+`MomentArms.flagship_of_geometric_far_share` consumes a geometric bound on the far share. This file
+supplies that bound from a geometric bound on the profile, `ρ(d) ≤ M·r^{circLag d}`, the far share
 being a sum of the profile over the lags whose circle distance exceeds a cutoff.
 
 The step is a counting fact. `circLag d = min d (N+1−d)` equals `j` only when `d = j` or

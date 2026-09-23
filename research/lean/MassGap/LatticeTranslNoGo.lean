@@ -15,7 +15,8 @@ every `a : E4`, `a = m • ((m : ℝ)⁻¹ • a)` (`exists_nsmul_eq`).
 
 Contents:
 * `transl_nsmul` — `D.transl (k • a) f` is the `k`-fold iterate of `fun g => D.transl a g` at `f`.
-  The only place the `OSData` fields are used.
+  The only place the `OSData` fields `transl_zero` and `transl_add` are used; `transl` itself is
+  read by every theorem below.
 * `exists_nsmul_eq` — divisibility of `E4`.
 * `transl_eq_id_of_finite_order` — if `(fun h => D.transl x h)^[m] g = g` for one `0 < m`, every `x`
   and every `g`, then `D.transl a f = f` for every `a` and `f`.
@@ -53,7 +54,7 @@ theorem transl_nsmul (D : OSData) (a : E4) (k : ℕ) (f : D.Test) :
   induction k with
   | zero => simpa using D.transl_zero f
   | succ k ih =>
-      -- `a` FIRST, so that `transl_add` peels the outer step and leaves `transl (k • a) f`, which is
+      -- `a` first, so that `transl_add` peels the outer step and leaves `transl (k • a) f`, which is
       -- exactly what `ih` is about. Peeling the other way leaves `transl (k • a) (transl a f)`, and
       -- `ih` is stated at `f` alone, so it would not apply.
       have hsucc : (k + 1) • a = a + k • a := by rw [succ_nsmul, add_comm]
@@ -159,7 +160,7 @@ theorem int_eq_zero_of_forall_dvd (k : ℤ)
   · simpa using ht
   · exfalso
     have h1 : 0 < t.natAbs := Int.natAbs_pos.mpr ht0
-    -- `conv_lhs` so the rewrite touches the bare `k` and NOT the `k` inside `k.natAbs`, which would
+    -- `conv_lhs` so the rewrite touches the bare `k` and not the `k` inside `k.natAbs`, which would
     -- otherwise loop the exponent back into its own definition.
     have hcast : ((k.natAbs + 1 : ℕ) : ℤ).natAbs = k.natAbs + 1 := by omega
     have h2 : k.natAbs = (k.natAbs + 1) * t.natAbs := by

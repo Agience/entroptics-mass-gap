@@ -194,7 +194,7 @@ theorem knabe_bound_pos_iff (m : ℕ) (hm2 : 2 ≤ m) (ε : ℝ) :
     nlinarith
 
 /-- For a window size `m ≥ 2` and a local gap `ε` with `1 / m < ε`, there is a single `g > 0` — the
-value `(m * ε - 1) / (m - 1)` — bounding every positive eigenvalue of `∑ b, h b` for EVERY chain
+value `(m * ε - 1) / (m - 1)` — bounding every positive eigenvalue of `∑ b, h b` for every chain
 satisfying the hypotheses, at every chain length `L` and every state-space dimension `N`. Positivity
 of `g` is `knabe_bound_pos_iff`; the bound is `knabe_chain_gap`.
 

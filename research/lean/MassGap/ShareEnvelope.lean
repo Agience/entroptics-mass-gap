@@ -488,16 +488,16 @@ theorem circ_moment_le_of_share_doubling {N : ℕ} (R : Moment.Read N) (m₀ : �
 
 #print axioms circ_moment_le_of_share_doubling
 
-/-! ### Condensation: the hypothesis is EQUIVALENT to a bound at a geometric sequence of cuts
+/-! ### Condensation: the hypothesis is equivalent to a bound at a geometric sequence of cuts
 
 `layer_le_condensed` and `condensed_le_layer` bracket the layer cake by the same condensed sum from
 both sides, up to the factor `3(m₀+1)²` and a shift of one cut. Since `farShare` is antitone for
-free, that makes the substrate hypothesis EQUIVALENT to uniform boundedness of
+free, that makes the substrate hypothesis equivalent to uniform boundedness of
 
     ∑_{j} 4^j · farShare R (cut m₀ j)
 
 (`substrate_iff_dyadic_shares`). This is Cauchy condensation for the weight `2m+1`: the `4^j` is the
-weight of the `j`-th block over the block before it. What it buys is that only a GEOMETRIC sequence
+weight of the `j`-th block over the block before it. What it buys is that only a geometric sequence
 of cuts has to be estimated — `O(log N)` numbers per `(N, β)` instead of `N` — and it gives away
 nothing, because it is an equivalence rather than a sufficient condition. -/
 
@@ -1388,7 +1388,7 @@ theorem substrate_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
   have hk1 : 1 ≤ Moment.circLag d := by omega
   have hk : (1 : ℝ) ≤ (Moment.circLag d : ℝ) := by exact_mod_cast hk1
   have hpos : (0 : ℝ) < (Moment.circLag d : ℝ) := by linarith
-  -- Only the LAG-ZERO value is needed, and that is the plaquette-energy variance
+  -- Only the lag-zero value is needed, and that is the plaquette-energy variance
   -- (`PlaqVariance.corrClay_zero_pos`, foundational-only), not reflection positivity.
   -- DERIVED: the index `0` is the lag the variance sits at; no value.
   have h0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.PlaqVariance.corrClay_zero_pos N β).le

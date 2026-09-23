@@ -137,7 +137,7 @@ theorem substrateRatio_le_quarter (N : ℕ) (β : ℝ) : MassGap.substrateRatio 
 /-- **The trivial bound cannot be fed to the flagship.** `ym_mass_gap_of_ratio` consumes
 `substrateRatio ≤ c` provided `c` clears `(2π)²c/2 < 1 − 3^{-1/4}`. At `c = 1/4` — the best constant
 the read interface supports (`substrateRatio_le_quarter`, `antipodeRead_moment_eq_quarter_sq`) — that
-condition FAILS: the left side is `π²/2 > 4.9` and the right side is below `1`. So the unconditional
+condition fails: the left side is `π²/2 > 4.9` and the right side is below `1`. So the unconditional
 bound is not merely weaker than what is needed, it is on the wrong side of the criterion, and
 `substrateRatio_le_quarter` discharges nothing.
 
@@ -176,7 +176,7 @@ theorem quarter_bound_grows_without_bound :
 
 /-- The antipodal lag on a circle of period `2k+2`.
 
-DERIVED: `2 * k + 1` is the aperture whose period `2k+2` is EVEN, which is the only case in which an
+DERIVED: `2 * k + 1` is the aperture whose period `2k+2` is even, which is the only case in which an
 antipode exists as a lag at all; `k + 1` is then half that period, and it is what `min d (n−d)`
 returns there. Neither is a magnitude — both are forced by the requirement that the point be the
 antipode. -/
@@ -448,7 +448,7 @@ amount to the moment while defeating every geometric bound. -/
 /-- The far-tail weight: the reciprocal cube of the half-period.
 
 DERIVED: the exponent `3` is the smallest integer for which the far atom's contribution to the
-SECOND moment, which carries a factor `(k+1)²`, still tends to zero — so it is fixed by the moment it
+second moment, which carries a factor `(k+1)²`, still tends to zero — so it is fixed by the moment it
 must not disturb, not chosen for size. The `1` is the numerator of a reciprocal. -/
 noncomputable def tailWeight (k : ℕ) : ℝ := 1 / ((k : ℝ) + 1) ^ 3
 
@@ -468,7 +468,7 @@ theorem tailWeight_le_one (k : ℕ) : tailWeight k ≤ 1 := by
 circular second moment is at most `1` at every aperture, and it obeys no geometric decay bound.
 
 DERIVED: the `1` at lag zero is the contact normalisation the far weight is measured against — `p`
-divides by the total, so only the RATIO of the two matters and the `1` fixes the scale of nothing.
+divides by the total, so only the ratio of the two matters and the `1` fixes the scale of nothing.
 The `0` is the absence of weight at every other lag. `2 * k + 1` is the even-period aperture the
 antipode needs. -/
 noncomputable def tailRead (k : ℕ) : Moment.Read (2 * k + 1) where

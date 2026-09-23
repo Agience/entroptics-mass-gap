@@ -12,7 +12,7 @@ research/lean/MassGap/CellSpectrum.lean|def BtTile uses 0,1,14,16,2,3,4,5
 research/lean/MassGap/CellSpectrum.lean|def CtTile uses 0,1,4,5
 research/lean/MassGap/CellSpectrum.lean|def HaTile uses 0,14,15,2,3,4,5,6
 research/lean/MassGap/CellSpectrum.lean|def HbTile uses 0,15,16,2,3,4,5,6
-research/lean/MassGap/Complete.lean|instance : uses 1,4
+research/lean/MassGap/Complete.lean|instance : Inhabited {M : Matrix (Fin 4) (Fin 4) ℝ // Mᵀ * M = 1} uses 1,4
 research/lean/MassGap/FullModel.lean|def WilsonParams.irCutoff uses 2
-research/lean/MassGap/SUN.lean|instance : uses 1
+research/lean/MassGap/SUN.lean|instance : Nonempty (SU n) uses 1
 research/lean/MassGap/WilsonReal.lean|def blockIntB uses 3,4,5,6,7

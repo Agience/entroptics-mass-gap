@@ -5,6 +5,8 @@ import MassGap.NonnegArm
 import MassGap.ConfinesZero
 import MassGap.MomentArms
 import MassGap.WilsonInstance
+import MassGap.AsymptoticScaling
+import MassGap.GeometricProfile
 
 /-!
 # MassGap.SubstrateArms — substrate bounds from three coupling ranges
@@ -803,6 +805,161 @@ theorem cosAvg_gt_floor_of_substrate {N : ℕ} {B₃ β : ℝ}
 
 #print axioms cosAvg_gt_floor_of_substrate
 
+/-- **A UNIFORM COSINE FLOOR FROM THE SUBSTRATE BOUND.** An aperture-uniform bound on the lag moment
+gives one `γ` strictly above the entropy floor `3^{−1/4}` and one aperture `N₀` past which the
+measured cosine average stays at or above it, at every coupling in `S`.
+
+`Moment.Read.cos_avg_ge_circ` floors the average by `1 − (2π/(N+1))²·⟨d²⟩/2`, and
+`Moment.aperture_factor_tendsto_zero` sends the subtracted term to zero once `⟨d²⟩` is bounded, so
+the average tends to `1`. This is the margin `cosAvg_gt_floor_of_substrate` does not carry: that
+lemma gives the strict inequality at each aperture separately, which is confinement, while
+`Complete.ym_physical_gap_uniform_exact` needs one constant serving every aperture at once.
+
+DERIVED: `3`, `1` and `4` are the entropy floor read as a contrast, `3^{−1/4} = e^{−κ₀}` at
+`κ₀ = ¼·log 3`, proved inline here as `VolumeRate.cell_ceiling_eq_exp_neg_floor` proves it. The `2`
+dividing `1 + f` is the midpoint of the interval `(3^{−1/4}, 1)` the hypothesis leaves open — a
+witness for an existential, the idiom `RatioGap.midpoint_is_strictly_better` records; any interior
+point serves and none is tuned. `2 * Real.pi` is the full turn, the `1` in `(N : ℝ) + 1` is the
+aperture's index offset, the outer `2` squares the aperture factor, and the `2` in `B / 2` is
+`cos_avg_ge_circ`'s own halving. -/
+theorem exists_uniform_cosAvg_floor_of_substrate {B : ℝ} {S : Set ℝ}
+    (hB : ∀ N : ℕ, ∀ β ∈ S, MassGap.d2At N β ≤ B) :
+    ∃ (γ : ℝ) (N₀ : ℕ), (3 : ℝ) ^ (-(1 : ℝ) / 4) < γ ∧
+      ∀ (i : ℕ), ∀ β ∈ S, γ ≤ MassGap.cosAvgYMAt (N₀ + i) β := by
+  set f : ℝ := (3 : ℝ) ^ (-(1 : ℝ) / 4) with hfdef
+  -- `f = e^{−κ₀}`, so `f < 1` because the floor is positive.
+  have h3 : f = Real.exp (-MassGap.κ₀YM) := by
+    rw [hfdef, Real.rpow_def_of_pos (by norm_num : (0 : ℝ) < 3)]
+    unfold MassGap.κ₀YM
+    congr 1
+    ring
+  have hf1 : f < 1 := by
+    rw [h3]
+    exact Real.exp_lt_one_iff.mpr (neg_lt_zero.mpr MassGap.κ₀YM_pos)
+  have hmidpos : (0 : ℝ) < 1 - (1 + f) / 2 := by linarith
+  have hev : ∀ᶠ N : ℕ in Filter.atTop,
+      (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (1 + f) / 2 :=
+    (Moment.aperture_factor_tendsto_zero B).eventually_lt_const hmidpos
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp hev
+  refine ⟨(1 + f) / 2, N₀, by linarith, ?_⟩
+  intro i β hβ
+  have hscale := hN₀ (N₀ + i) (Nat.le_add_right _ _)
+  have hge := (MassGap.readYMAt (N₀ + i) β).cos_avg_ge_circ
+  have hA : (0 : ℝ) ≤ (2 * Real.pi / (((N₀ + i : ℕ) : ℝ) + 1)) ^ 2 := sq_nonneg _
+  have hmono : (2 * Real.pi / (((N₀ + i : ℕ) : ℝ) + 1)) ^ 2 * MassGap.d2At (N₀ + i) β
+      ≤ (2 * Real.pi / (((N₀ + i : ℕ) : ℝ) + 1)) ^ 2 * B :=
+    mul_le_mul_of_nonneg_left (hB (N₀ + i) β hβ) hA
+  show (1 + f) / 2
+    ≤ ∑ d, (MassGap.readYMAt (N₀ + i) β).p d * Real.cos ((MassGap.readYMAt (N₀ + i) β).θ d)
+  have hd2 : MassGap.d2At (N₀ + i) β
+      = ∑ d, (MassGap.readYMAt (N₀ + i) β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
+  rw [hd2] at hmono
+  linarith
+
+#print axioms exists_uniform_cosAvg_floor_of_substrate
+
+/-- **THE UNIFORM MARGIN.** An aperture-uniform bound on the lag moment gives one `c > 0` and one
+aperture `N₀` with
+
+    c  ≤  κ₀YM − μYMAt (N₀+i) β
+
+at every refinement index `i` and every nonnegative coupling. One constant serves every aperture and
+every coupling at once.
+
+This is what `confinement_on_of_substrate_bound` leaves on the table. That theorem concludes the
+strict inequality `μYMAt N β < κ₀YM` at each aperture separately, which is confinement and carries no
+margin; a constant `c` below every surplus is a different statement and is what the continuum side
+reads.
+
+`c` is `κ₀YM + log γ` for the `γ` of `exists_uniform_cosAvg_floor_of_substrate`, positive because
+`γ > 3^{−1/4} = e^{−κ₀YM}`. The surplus identity is `Complete.surplus_eq_log_cosAvg`.
+
+DERIVED: `0` is the sign of `c` and the lower end of the coupling half-line. `3`, `1` and `4` are
+the entropy floor `3^{−1/4}`, carried from `exists_uniform_cosAvg_floor_of_substrate` unchanged. -/
+theorem exists_uniform_margin_of_substrate {B : ℝ}
+    (hB : ∀ N : ℕ, ∀ β : ℝ, 0 ≤ β → MassGap.d2At N β ≤ B) :
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+      ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β := by
+  obtain ⟨γ, N₀, hγ, hcos⟩ :=
+    exists_uniform_cosAvg_floor_of_substrate (B := B) (S := Set.Ici (0 : ℝ))
+      (fun N β hβ => hB N β hβ)
+  have h0 : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
+  have hγ0 : 0 < γ := lt_trans h0 hγ
+  have hval : Real.log ((3 : ℝ) ^ (-(1 : ℝ) / 4)) = -MassGap.κ₀YM := by
+    rw [Real.log_rpow (by norm_num)]
+    unfold MassGap.κ₀YM
+    ring
+  have hCpos : 0 < MassGap.κ₀YM + Real.log γ := by
+    have := Real.log_lt_log h0 hγ
+    rw [hval] at this
+    linarith
+  refine ⟨MassGap.κ₀YM + Real.log γ, N₀, hCpos, ?_⟩
+  intro i β hβ
+  rw [MassGap.surplus_eq_log_cosAvg]
+  have := Real.log_le_log hγ0 (hcos i β hβ)
+  linarith
+
+#print axioms exists_uniform_margin_of_substrate
+
+
+/-- **THE SPACING-INDEPENDENT PHYSICAL GAP, FROM THE SUBSTRATE BOUND.** One positive `c`, and one
+aperture `N₀`, such that at every screen extent `L > 0`, every refinement index `i` and every
+nonnegative coupling,
+
+    c / L  ≤  (κ₀YM − μYMAt (N₀+i) β) / (L / (N₀+i+1)).
+
+The right-hand side is the lattice margin divided by the spacing that a screen of fixed physical
+extent `L` carries at aperture `N₀+i`, so the bound is the margin in physical units and it does not
+degrade as the spacing shrinks.
+
+The content is `exists_uniform_margin_of_substrate`, which this is proved from. Since
+`L / (N₀+i+1)` makes the quotient `(κ₀YM − μYMAt (N₀+i) β)·(N₀+i+1)/L` and `N₀+i+1 ≥ 1`, the step
+from the margin to this form is one application of monotonicity. The form is here because it is what
+`Complete.ym_physical_gap_uniform_exact` and `ScreenedGap.uniform_physical_gap` are stated in.
+
+The screen spacing `L/(N₀+i+1)` is a convention fixing a physical extent and refining it. Reading
+the same bound against the renormalisation-group spacing is `AsymptoticScaling.aRun`'s question, and
+`AsymptoticScaling.fixed_extent_pins_the_spacing` is why the aperture has to grow for that reading
+to be available at all.
+
+This is `Complete.ym_physical_gap_uniform_exact` relativised to `Set.Ici 0`, which is the half-line
+the substrate bound is available on and the one `WilsonInstance.gapModelOf_A1` reads; the surplus
+identity is `Complete.surplus_eq_log_cosAvg`.
+
+DERIVED: `0` is the sign of `c`, of `L`, and the lower end of the coupling half-line. `3`, `1` and
+`4` are the entropy floor `3^{−1/4} = e^{−κ₀YM}`, carried from
+`exists_uniform_cosAvg_floor_of_substrate`. The `1` in `((N₀ + i : ℕ) : ℝ) + 1` is the aperture's
+index offset, which is also what makes that factor at least `1`. -/
+theorem exists_physical_gap_uniform_of_substrate {B : ℝ}
+    (hB : ∀ N : ℕ, ∀ β : ℝ, 0 ≤ β → MassGap.d2At N β ≤ B) :
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+      ∀ (L : ℝ), 0 < L → ∀ (i : ℕ) (β : ℝ), 0 ≤ β →
+        c / L ≤ (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
+          / (L / (((N₀ + i : ℕ) : ℝ) + 1)) := by
+  obtain ⟨c, N₀, hCpos, hmargin⟩ := exists_uniform_margin_of_substrate (B := B) hB
+  refine ⟨c, N₀, hCpos, ?_⟩
+  intro L hL i β hβ
+  have hstep : c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β := hmargin i β hβ
+  set n : ℝ := ((N₀ + i : ℕ) : ℝ) + 1 with hn
+  have hnpos : (0 : ℝ) < n := by rw [hn]; positivity
+  have hn1 : (1 : ℝ) ≤ n := by
+    rw [hn]
+    have : (0 : ℝ) ≤ ((N₀ + i : ℕ) : ℝ) := Nat.cast_nonneg _
+    linarith
+  have hrewrite : (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) / (L / n)
+      = (n / L) * (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) := by
+    field_simp
+  rw [hrewrite, div_le_iff₀ hL]
+  have hflat : (n / L) * (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) * L
+      = n * (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) := by
+    field_simp
+  rw [hflat]
+  nlinarith
+
+#print axioms exists_physical_gap_uniform_of_substrate
+
+
+
 /-- `NonnegArm.LawAbove b` produces a constant `B₃` and, under an arithmetic condition on it, the
 eventual inequality `∀ᶠ β in atTop, 3 ^ (-1/4) < cosAvgYMAt nCorrYM β`.
 
@@ -1394,6 +1551,35 @@ theorem exists_aperture_A1_of_lawAbove
 
 #print axioms exists_aperture_A1_of_lawAbove
 
+/-- **THE PHYSICAL GAP FROM THE SAME INPUT AS THE LATTICE GAP.** `NonnegArm.LawAbove` above the cut
+`NonnegArm.lawBelow_holds` supplies gives one positive `c` and one aperture `N₀` with
+
+    c / L  ≤  (κ₀YM − μYMAt (N₀+i) β) / (L / (N₀+i+1))
+
+at every screen extent `L > 0`, every refinement index and every nonnegative coupling — the lattice
+margin in physical units, not degrading as the spacing shrinks.
+
+`exists_aperture_A1_of_lawAbove` runs the same two arms to A1's hypothesis. This runs them to the
+physical gap, so one input serves the lattice chain and the continuum bound rather than the
+continuum bound resting on a separate modulus. `Complete.ym_physical_gap_uniform_exact` and
+`RefinementLaw.confinesAtAnAperture_of_uniform_cosAvg` state that bound from a supplied cosine
+modulus `γ`; `exists_uniform_cosAvg_floor_of_substrate` is what produces one.
+
+DERIVED: `0` is the sign of `c`, of `L`, and the lower end of the coupling half-line; the `1` in
+`((N₀ + i : ℕ) : ℝ) + 1` is the aperture's index offset. Both are carried from
+`exists_physical_gap_uniform_of_substrate` unchanged, and the cut `b` is `lawBelow_holds`'. -/
+theorem exists_physical_gap_uniform_of_lawAbove
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+      ∀ (L : ℝ), 0 < L → ∀ (i : ℕ) (β : ℝ), 0 ≤ β →
+        c / L ≤ (MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
+          / (L / (((N₀ + i : ℕ) : ℝ) + 1)) := by
+  obtain ⟨b, _, hbelow⟩ := MassGap.NonnegArm.lawBelow_holds
+  obtain ⟨B, hB⟩ := substrate_bounded_of_two_arms hbelow (habove b hbelow)
+  exact exists_physical_gap_uniform_of_substrate (B := B) hB
+
+#print axioms exists_physical_gap_uniform_of_lawAbove
+
 /-- The model conjunction for `gapModelOf N`, at an aperture the theorem chooses, from `habove`
 alone.
 
@@ -1433,6 +1619,527 @@ theorem exists_aperture_mass_gap_of_lawAbove {Idx : Type}
     (MassGap.gapModelOf_A2 N s Pw m Δ cf hdom hfe hgap)
 
 #print axioms exists_aperture_mass_gap_of_lawAbove
+
+/-- **The uniform margin from `LawAbove`.** `exists_uniform_margin_of_substrate` composed with the
+two arms, exactly as `exists_aperture_A1_of_lawAbove` composes them for Part I.
+
+DERIVED: `0` is the sign of `c` and the lower end of the coupling half-line; the cut `b` is
+`NonnegArm.lawBelow_holds`'. Both are carried from `exists_uniform_margin_of_substrate`. -/
+theorem exists_uniform_margin_of_lawAbove
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+      ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β := by
+  obtain ⟨b, _, hbelow⟩ := MassGap.NonnegArm.lawBelow_holds
+  obtain ⟨B, hB⟩ := substrate_bounded_of_two_arms hbelow (habove b hbelow)
+  exact exists_uniform_margin_of_substrate (B := B) hB
+
+#print axioms exists_uniform_margin_of_lawAbove
+
+/-- **THE ASSEMBLY: Parts I and II from one hypothesis.**
+
+The left conjunct is `exists_aperture_mass_gap_of_lawAbove` — an aperture at which the model
+conjunction holds: the mode sum tends to zero in the separation, the tension stays strictly below
+the entropy floor at every coupling, and the directional read is independent of direction. The
+right conjunct is `exists_uniform_margin_of_lawAbove` — one positive constant below the surplus
+`κ₀YM − μYMAt` at every aperture past `N₀` and every nonnegative coupling.
+
+They take the SAME hypothesis. That was prose until this declaration; now Lean checks it, and if a
+link is later weakened so the two stop sharing an input, this stops compiling.
+
+Scope. Part III is deliberately not conjoined here. `WilsonOS.wilsonOSData` is unconditional — it
+takes no `LawAbove`, no substrate bound and no coupling restriction — so joining it would suggest a
+dependence that does not exist. `MassGap.WilsonOS.wilson_reconstructed_nontrivial` carries it
+through the cited reconstruction on its own.
+
+DERIVED: `0` is the strict upper bound the tension is compared against in the model conjunction, the
+limit of the mode sum, the sign of `c`, and the lower end of the coupling half-line. Every numeral
+is carried in from the two conjuncts unchanged; this declaration introduces none. -/
+theorem lattice_gap_and_margin_of_lawAbove {Idx : Type}
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b)
+    (s : ℝ → Finset Idx) (Pw m : ℝ → Idx → ℂ) (Δ cf : ℝ → ℝ)
+    (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β)) :
+    (∃ N : ℕ,
+      ∀ (hfe : ∀ β, MassGap.κ₀YM - MassGap.μClampAt N β ≤ cf β)
+        (hgap : ∀ β, cf β ≤ Δ β),
+        (∀ β, Filter.Tendsto
+            (fun τ => ‖∑ k ∈ (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).s β,
+              (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).P β k
+                * ((MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).m β k) ^ τ‖)
+            Filter.atTop (nhds 0))
+          ∧ (∀ β, (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).μ β
+              - (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).κ < 0)
+          ∧ (∀ d d', (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d
+              = (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d'))
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+        ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) :=
+  ⟨exists_aperture_mass_gap_of_lawAbove habove s Pw m Δ cf hdom,
+    exists_uniform_margin_of_lawAbove habove⟩
+
+#print axioms lattice_gap_and_margin_of_lawAbove
+
+/-- **THE CAPSTONE'S INNER QUANTIFIER IS NOT EMPTY**, and its mode family need not be.
+
+`lattice_gap_and_margin_of_lawAbove`'s left conjunct reads `∃ N, ∀ hfe hgap, …`, with the mode
+family the caller's. Two readings would make it say nothing: an empty `s β`, which turns the
+clustering conclusion into a statement about an empty sum; and a `cf` no aperture admits, which
+leaves the inner `∀` vacuous. `cf` is fixed before `N` is produced, so the second is not
+hypothetical.
+
+This exhibits data defeating both, at **every** aperture. One mode of magnitude `exp (-κ₀YM)`, with
+`Δ` and `cf` the constant `κ₀YM`: `hdom` and `hgap` hold with equality, and `hfe` reduces to
+`0 ≤ μClampAt N β`, which is `Complete.μYMAt_nonneg` on the physical branch and `0 ≤ 0` on the
+clamped one. The mode's magnitude is below `1` (`Complete.κ₀YM_pos`), so the sum decays rather than
+being empty.
+
+DERIVED: `κ₀YM` is the entropy floor, `VortexCount.kappa0_is_the_surface_entropy_density`'s, used
+here as the one scale already in the statement rather than as a chosen magnitude — any value with
+`0 < Δ` and `κ₀YM - μClampAt ≤ cf ≤ Δ` would serve, and the floor is the one at hand. `1` is the
+mode count and the singleton's element. `0` is the sign of the tension, the boundary of the physical
+half-line inside `μClampAt`, and the value the clamped branch takes. -/
+theorem capstone_data_exists (N : ℕ) :
+    ∃ (s : ℝ → Finset Unit) (Pw m : ℝ → Unit → ℂ) (Δ cf : ℝ → ℝ),
+      (∀ β, (s β).Nonempty)
+      ∧ (∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
+      ∧ (∀ β, ‖m β ()‖ < 1)
+      ∧ (∀ β, MassGap.κ₀YM - MassGap.μClampAt N β ≤ cf β)
+      ∧ (∀ β, cf β ≤ Δ β) := by
+  classical
+  refine ⟨fun _ => {()}, fun _ _ => 1,
+    fun _ _ => ((Real.exp (-MassGap.κ₀YM) : ℝ) : ℂ),
+    fun _ => MassGap.κ₀YM, fun _ => MassGap.κ₀YM, ?_, ?_, ?_, ?_, ?_⟩
+  · intro β
+    exact Finset.singleton_nonempty _
+  · intro β k _
+    -- `rw`, not `simp`: `simp` normalises `((Real.exp x : ℝ) : ℂ)` to `Complex.exp` and the
+    -- `Complex.norm_real` step no longer applies.
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (Real.exp_nonneg _)]
+  · intro β
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (Real.exp_nonneg _)]
+    exact Real.exp_lt_one_iff.mpr (neg_lt_zero.mpr MassGap.κ₀YM_pos)
+  · intro β
+    have hclamp : 0 ≤ MassGap.μClampAt N β := by
+      unfold MassGap.μClampAt
+      by_cases h : (0 : ℝ) ≤ β
+      · simp only [if_pos h]; exact MassGap.μYMAt_nonneg N β
+      · simp [if_neg h]
+    linarith
+  · intro β
+    exact le_refl _
+
+#print axioms capstone_data_exists
+
+/-- **THE MARGIN AT THE RUNNING SPACING.** One positive `c` and one aperture `N₀ ≥ 1` such that at
+every refinement index `i`, every nonnegative `β₁` and every target `a` strictly between `0` and
+`AsymptoticScaling.aRun (N₀+i) β₁`, there is a coupling `β ≥ β₁` with
+
+    aRun (N₀+i) β = a    and    c ≤ κ₀YM − μYMAt (N₀+i) β.
+
+`exists_physical_gap_uniform_of_lawAbove` reads the margin against the screen spacing `L/(N+1)`,
+which is a convention fixing a physical extent and refining it. This reads it against the
+two-loop running spacing instead: `AsymptoticScaling.exists_beta_aRun_eq` supplies a coupling at
+which `aRun` equals the chosen target, and `β₁` is arbitrary, so that coupling can be demanded as
+large as wanted — the branch asymptotic freedom lives on.
+
+`c` depends on none of `i`, `a` or `β`. So shrinking the spacing does not erode the margin, which is
+what a continuum reading needs from the lattice side.
+
+DERIVED: `0` is the sign of `c`, the lower end of the coupling half-line in `hβ₁`, and the target's
+sign in `ha`. `1` is the least aperture `exists_beta_aRun_eq` requires, which is what keeps `aRun`'s
+base defined; `N₀` is raised to meet it by a maximum, which changes no constant. Both are carried
+from the two theorems composed here. -/
+theorem physical_gap_at_the_running_spacing
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧ 1 ≤ N₀ ∧
+      ∀ (i : ℕ) (a β₁ : ℝ), 0 ≤ β₁ → 0 < a →
+        a < MassGap.AsymptoticScaling.aRun (N₀ + i) β₁ →
+        ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun (N₀ + i) β = a ∧
+          c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β := by
+  obtain ⟨c, M, hc, hmargin⟩ := exists_uniform_margin_of_lawAbove habove
+  refine ⟨c, max M 1, hc, le_max_right _ _, ?_⟩
+  intro i a β₁ hβ₁ ha hlt
+  have hN1 : 1 ≤ max M 1 + i := le_trans (le_max_right M 1) (Nat.le_add_right _ _)
+  obtain ⟨β, hβge, hβeq⟩ :=
+    MassGap.AsymptoticScaling.exists_beta_aRun_eq (N := max M 1 + i) hN1 ha hlt
+  refine ⟨β, hβge, hβeq, ?_⟩
+  have hβ0 : 0 ≤ β := le_trans hβ₁ hβge
+  -- the margin is stated at `M + j`; the aperture here is `max M 1 + i`, which is such a `M + j`
+  have hsplit : max M 1 + i = M + ((max M 1 - M) + i) := by omega
+  rw [hsplit]
+  exact hmargin ((max M 1 - M) + i) β hβ0
+
+#print axioms physical_gap_at_the_running_spacing
+
+/-- **THE ASSEMBLY, WITH THE CONTINUUM CONJUNCT.** Parts I and II from one hypothesis, now including
+the reading against the renormalisation-group spacing.
+
+Three conjuncts, one `habove`:
+
+1. an aperture at which the model conjunction holds — the mode sum tends to zero in the separation,
+   the tension stays strictly below the entropy floor at every coupling, the directional read is
+   independent of direction (`exists_aperture_mass_gap_of_lawAbove`);
+2. one positive `c` below the surplus `κ₀YM − μYMAt` at every aperture past `N₀` and every
+   nonnegative coupling (`exists_uniform_margin_of_lawAbove`);
+3. that same margin at a coupling realising any target the running spacing reaches, arbitrarily far
+   out (`physical_gap_at_the_running_spacing`).
+
+`lattice_gap_and_margin_of_lawAbove` is this without the third conjunct; both are kept because the
+two-conjunct form needs no `AsymptoticScaling` import to state.
+
+The `N₀` of the second conjunct and of the third are each existential and need not agree — the
+statement says each holds, not that one aperture serves both. `capstone_data_exists` is why the
+first conjunct's inner quantifier is not empty.
+
+Scope. Part III is not conjoined: `WilsonOS.wilsonOSData` is unconditional, taking no `LawAbove`, no
+substrate bound and no coupling restriction, so joining it would suggest a dependence that does not
+exist.
+
+DERIVED: every numeral is carried in from the three conjuncts unchanged — `0` as the strict bound
+the tension is compared against, the limit of the mode sum, the sign of `c` and the lower end of the
+coupling half-line; `1` as the least aperture `AsymptoticScaling.exists_beta_aRun_eq` requires. This
+declaration introduces none. -/
+theorem clay_assembly_of_lawAbove {Idx : Type}
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b)
+    (s : ℝ → Finset Idx) (Pw m : ℝ → Idx → ℂ) (Δ cf : ℝ → ℝ)
+    (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β)) :
+    (∃ N : ℕ,
+      ∀ (hfe : ∀ β, MassGap.κ₀YM - MassGap.μClampAt N β ≤ cf β)
+        (hgap : ∀ β, cf β ≤ Δ β),
+        (∀ β, Filter.Tendsto
+            (fun τ => ‖∑ k ∈ (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).s β,
+              (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).P β k
+                * ((MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).m β k) ^ τ‖)
+            Filter.atTop (nhds 0))
+          ∧ (∀ β, (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).μ β
+              - (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).κ < 0)
+          ∧ (∀ d d', (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d
+              = (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d'))
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
+        ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧ 1 ≤ N₀ ∧
+        ∀ (i : ℕ) (a β₁ : ℝ), 0 ≤ β₁ → 0 < a →
+          a < MassGap.AsymptoticScaling.aRun (N₀ + i) β₁ →
+          ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun (N₀ + i) β = a ∧
+            c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) :=
+  ⟨exists_aperture_mass_gap_of_lawAbove habove s Pw m Δ cf hdom,
+    exists_uniform_margin_of_lawAbove habove,
+    physical_gap_at_the_running_spacing habove⟩
+
+#print axioms clay_assembly_of_lawAbove
+
+/-- **A uniform substrate bound drives the substrate RATIO to zero**, so it eventually clears any
+positive `c`.
+
+`substrateRatio N β = d2At N β / (N+1)²` (`Complete.substrateRatio`), so a bound that does not grow
+with the aperture is divided by something that does.
+
+DERIVED: `0` is the sign of `c` and the lower end of the coupling half-line; `1` is the aperture's
+index offset in `(N : ℝ) + 1`; `2` is the square in `substrateRatio`'s denominator. All are carried
+from `Complete.substrateRatio_le_iff`. -/
+theorem ratio_eventually_below_of_substrate_bound {B c : ℝ} (hc : 0 < c)
+    (hB : ∀ N : ℕ, ∀ β : ℝ, 0 ≤ β → MassGap.d2At N β ≤ B) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.substrateRatio N β ≤ c := by
+  obtain ⟨M, hM⟩ := exists_nat_gt (B / c)
+  refine Filter.eventually_atTop.mpr ⟨M, fun N hNM β hβ => ?_⟩
+  rw [MassGap.substrateRatio_le_iff]
+  have hMN : (M : ℝ) ≤ (N : ℝ) := by exact_mod_cast hNM
+  have hdiv : B / c < ((N : ℝ) + 1) := by linarith
+  rw [div_lt_iff₀ hc] at hdiv
+  have hN0 : (0 : ℝ) ≤ (N : ℝ) := Nat.cast_nonneg N
+  have hsq : ((N : ℝ) + 1) ≤ ((N : ℝ) + 1) ^ 2 := by nlinarith
+  have hstep : c * ((N : ℝ) + 1) ≤ c * ((N : ℝ) + 1) ^ 2 := by nlinarith
+  have := hB N β hβ
+  nlinarith [hdiv, hstep]
+
+#print axioms ratio_eventually_below_of_substrate_bound
+
+/-- **THE RATIO ROUTE IS THE WEAKER TARGET, and its side condition comes discharged.**
+
+From `LawAbove` above `lawBelow_holds`' cut: a `c > 0` that already satisfies
+`Complete.ym_mass_gap_of_ratio`'s arithmetic condition `(2π)²·c/2 < 1 − 3^{−1/4}`, together with
+`substrateRatio N β ≤ c` at every sufficiently wide aperture and every nonnegative coupling.
+
+Why it is worth stating. `confinement_on_of_substrate_bound` consumes a UNIFORM bound on `d2At`;
+`ym_mass_gap_of_ratio` consumes a bound on `d2At / (N+1)²`. The first implies the second and not
+conversely — a uniform bound sends the ratio to zero, while the ratio route still admits `d2At`
+growing like `c·(N+1)²`. So anyone attacking the open input should aim at the ratio, which asks for
+less, and this says so in the tree rather than in a note beside it.
+
+The witness `c = (1 − 3^{−1/4})/(2π)²` makes the condition's left-hand side exactly half its right,
+so the strict inequality is `Moment.floor_rhs_pos` and nothing is tuned.
+
+DERIVED: `3`, `1` and `4` are the entropy floor `3^{−1/4} = e^{−κ₀}`; `2π` is one turn, and the
+outer `2` squares it, both `ym_mass_gap_of_ratio`'s; the `2` dividing is that condition's own. `0` is
+the sign of `c` and the lower end of the coupling half-line. The witness is the condition solved for
+`c` at equality and halved, so it is read off the condition rather than chosen. -/
+theorem ratio_hypothesis_of_lawAbove
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
+    ∃ c : ℝ, 0 < c ∧ (2 * Real.pi) ^ 2 * c / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) ∧
+      ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.substrateRatio N β ≤ c := by
+  obtain ⟨b, _, hbelow⟩ := MassGap.NonnegArm.lawBelow_holds
+  obtain ⟨B, hB⟩ := substrate_bounded_of_two_arms hbelow (habove b hbelow)
+  have hrhs : (0 : ℝ) < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) := Moment.floor_rhs_pos
+  have hpi : (0 : ℝ) < (2 * Real.pi) ^ 2 := by positivity
+  refine ⟨(1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / (2 * Real.pi) ^ 2, by positivity, ?_, ?_⟩
+  · have hcol : (2 * Real.pi) ^ 2 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / (2 * Real.pi) ^ 2) / 2
+        = (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 2 := by
+      field_simp
+    rw [hcol]
+    linarith
+  · exact ratio_eventually_below_of_substrate_bound (by positivity) hB
+
+#print axioms ratio_hypothesis_of_lawAbove
+
+/-- **THE SUBSTRATE BOUND FROM A UNIFORM SPECTRAL RATE.** If at every aperture and every nonnegative
+coupling the read `readYMAt N β` has a periodic spectral representation whose rates are all at most
+`r < 1` and whose total weight is at most `W`, then
+
+    d2At N β ≤ 2·(2W)·∑' k² rᵏ
+
+at every `N` and every `β ≥ 0` — a bound containing neither the aperture nor the coupling.
+
+This is the open input restated as a RATE. `NonnegArm.LawAbove` is a quartic tail law relative to the
+contact term; this is a bound on the decay rate of the connected correlation's spectral modes, which
+is what the Entroptics instrument computes directly — its `connected_decay_rate`, `-log |μ₁|` of
+the connected read). Every step already existed and none had been composed:
+`GeometricProfile.profile_geometric_of_periodic_spectral` turns the representation into a geometric
+profile, and `Moment.circ_moment_le_of_geometric` turns that into a moment bound whose right-hand
+side has no `N` in it.
+
+The weight hypothesis is mild: `R.p` sums to one and each mode's own sum over the circle is at least
+one, so `∑ w ≤ 1` follows from the representation. It is carried rather than derived, so the statement
+does not depend on that reading.
+
+**The representation must be off the vacuum, and that is not a technicality.**
+`Transfer.one_le_of_eigenvalues_le` proves that a bound `∀ i, lam i ≤ r` read over the FULL transfer
+spectrum forces `1 ≤ r`, because the vacuum is a unit eigenvector at eigenvalue one; and
+`Spectral.PeriodicSpectralForm` carries no field excluding it. So instantiating `hspec` from a form
+that contains the vacuum mode makes `hmr` unsatisfiable for any `r < 1`. What makes the hypothesis
+about something is that `wilsonCorrAt` is the CONNECTED correlation — `WilsonBridge.wilsonCorrConn`
+subtracts the product of the one-plaquette expectations, which is the vacuum's contribution — so its
+modes are the non-vacuum ones. `TransferGap.GapAt` is stated on the vacuum complement for the same
+reason.
+
+`spectral_rate_representation_at_zero_coupling` exhibits an instance, so the shape is not empty.
+
+DERIVED: `2` multiplying `W` is `profile_geometric_of_periodic_spectral`'s, from the two halves
+`m^d` and `m^(N+1-d)` of the periodic pair; the outer `2` is `circ_moment_le_of_geometric`'s, from
+the two lags at each circle distance. The exponent `2` is what a second moment is. `1` is the
+aperture's index offset and the bound the rates are below. `0` is the sign of the rates, the weights
+and the coupling. No constant is chosen: `B` is read off the two lemmas composed. -/
+theorem substrate_bound_of_uniform_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by
+  intro N β hβ
+  obtain ⟨ι, s, w, m, hw, hm0, hmr, hsum, hrep⟩ := hspec N β hβ
+  -- the representation gives a geometric profile, with constant `2 * ∑ w`
+  have hgeo : ∀ d : Fin (N + 1),
+      (MassGap.readYMAt N β).p d ≤ (2 * W) * r ^ (Moment.circLag d) := by
+    intro d
+    have h := MassGap.GeometricProfile.profile_geometric_of_periodic_spectral
+      (MassGap.readYMAt N β) s w m hr1 hw hm0 hmr hrep d
+    have hrpow : (0 : ℝ) ≤ r ^ (Moment.circLag d) := pow_nonneg hr0 _
+    have hmul : (2 * ∑ k ∈ s, w k) * r ^ (Moment.circLag d)
+        ≤ (2 * W) * r ^ (Moment.circLag d) :=
+      mul_le_mul_of_nonneg_right (by linarith) hrpow
+    exact le_trans h hmul
+  -- `circ_moment_le_of_geometric` is a standalone theorem taking the read explicitly, not a
+  -- projection on it; called here the way `Complete.lean:602` calls it.
+  have hmom := Moment.circ_moment_le_of_geometric (MassGap.readYMAt N β)
+    (C := 2 * W) (r := r) (by linarith) hr0 hr1 hgeo
+  have hd2 : MassGap.d2At N β
+      = ∑ d, (MassGap.readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
+  rw [hd2]
+  exact hmom
+
+#print axioms substrate_bound_of_uniform_spectral_rate
+
+/-- **Confinement from a uniform spectral rate**, composing the bound above with
+`Complete.confinement_on_of_substrate_bound`: at every sufficiently wide aperture the tension stays
+strictly below the entropy floor at every nonnegative coupling.
+
+So the whole chain of §1 runs from a rate, with no quartic law and no threshold.
+
+DERIVED: every numeral is carried from `substrate_bound_of_uniform_spectral_rate` — the `2`s of the
+periodic pair, the two lags per circle distance, and the second moment's exponent; `1` the rates'
+strict bound and the aperture offset; `0` the signs. -/
+theorem confines_of_uniform_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hspec : ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      ∃ (ι : Type) (s : Finset ι) (w m : ι → ℝ),
+        (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ m k) ∧ (∀ k ∈ s, m k ≤ r) ∧
+        (∑ k ∈ s, w k) ≤ W ∧
+        (∀ d : Fin (N + 1), (MassGap.readYMAt N β).p d
+          = ∑ k ∈ s, w k * ((m k) ^ ((d : ℕ)) + (m k) ^ (N + 1 - (d : ℕ))))) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM := by
+  have hB := substrate_bound_of_uniform_spectral_rate hr0 hr1 hW hspec
+  have hev := MassGap.confinement_on_of_substrate_bound
+    (B := 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k) (S := Set.Ici (0 : ℝ))
+    (fun N β hβ => hB N β hβ)
+  filter_upwards [hev] with N hN β hβ
+  exact hN β hβ
+
+#print axioms confines_of_uniform_spectral_rate
+
+/-- **The spectral-rate representation, at zero coupling, with rate `0`.** At `β = 0` the read is a
+point mass at the contact lag, and a single mode of rate `0` reproduces it exactly:
+`0^0 + 0^(N+1) = 1` at `d = 0`, and `0 + 0` at every other lag.
+
+So `substrate_bound_of_uniform_spectral_rate`'s hypothesis is satisfiable — at rate `0`, which is
+below every admissible `r`. Without this the reduction could be about an empty shape, which is the
+failure `Transfer.one_le_of_eigenvalues_le` describes for the full-spectrum reading.
+
+`PowerTail.wilsonCorrAt_at_zero_coupling` kills every lag of nonzero circle distance and
+`PowerTail.contact_value_pos_at_zero_coupling` keeps the denominator positive, so the normalised read
+is exactly the indicator of the contact lag.
+
+DERIVED: `0` is the coupling, the mode's rate, the contact lag, and the value at every other lag;
+`1` is the mode's weight and the aperture's index offset. Both are the point mass's own description,
+not magnitudes. -/
+theorem spectral_rate_representation_at_zero_coupling (N : ℕ) :
+    ∀ d : Fin (N + 1), (MassGap.readYMAt N 0).p d
+      = ∑ _k ∈ ({0} : Finset (Fin 1)), (1 : ℝ)
+        * (((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ))) := by
+  intro d
+  have hpos : 0 < MassGap.wilsonCorrAt N 0 0 := MassGap.PowerTail.contact_value_pos_at_zero_coupling N
+  have hsum : ∑ _k ∈ ({0} : Finset (Fin 1)), (1 : ℝ)
+      * (((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ)))
+      = ((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ)) := by
+    simp
+  rw [hsum]
+  by_cases hd : (d : ℕ) = 0
+  · -- the contact lag: the first power is `0 ^ 0 = 1`, the second is `0 ^ (N+1) = 0`
+    have hd0 : d = (0 : Fin (N + 1)) := Fin.ext (by simpa using hd)
+    subst hd0
+    have hrhs : ((0 : ℝ)) ^ ((0 : Fin (N + 1)) : ℕ) + ((0 : ℝ)) ^ (N + 1 - ((0 : Fin (N + 1)) : ℕ))
+        = 1 := by simp
+    rw [hrhs]
+    show (MassGap.readYMAt N 0).p 0 = 1
+    -- the profile vanishes off the contact lag, so the total mass IS the contact value
+    have hz : ∀ e : Fin (N + 1), e ≠ 0 → (MassGap.readYMAt N 0).ρ e = 0 := by
+      intro e he
+      have h1 : 1 ≤ Moment.circLag e := by
+        have : (e : ℕ) ≠ 0 := fun h => he (Fin.ext (by simpa using h))
+        have hlt := e.isLt
+        simp only [Moment.circLag]
+        omega
+      exact MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N e h1
+    have htot : (∑ e, (MassGap.readYMAt N 0).ρ e) = (MassGap.readYMAt N 0).ρ 0 := by
+      refine Finset.sum_eq_single (0 : Fin (N + 1)) (fun e _ he => hz e he) (fun h => absurd
+        (Finset.mem_univ (0 : Fin (N + 1))) h)
+    show (MassGap.readYMAt N 0).ρ 0 / (∑ e, (MassGap.readYMAt N 0).ρ e) = 1
+    rw [htot]
+    exact div_self (ne_of_gt hpos)
+  · -- every other lag: both powers are `0`, and the profile vanishes there
+    have hd1 : 1 ≤ Moment.circLag d := by
+      have hlt := d.isLt
+      simp only [Moment.circLag]
+      omega
+    have hrhs : ((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ)) = 0 := by
+      have h1 : ((0 : ℝ)) ^ ((d : ℕ)) = 0 := zero_pow hd
+      have h2 : ((0 : ℝ)) ^ (N + 1 - (d : ℕ)) = 0 := by
+        have : N + 1 - (d : ℕ) ≠ 0 := by have := d.isLt; omega
+        exact zero_pow this
+      rw [h1, h2]; ring
+    rw [hrhs]
+    show (MassGap.readYMAt N 0).ρ d / (∑ e, (MassGap.readYMAt N 0).ρ e) = 0
+    -- `rw` is syntactic and `(readYMAt N 0).ρ d` only REDUCES to `wilsonCorrAt N 0 d`; build the
+    -- equation by `exact`, which works up to defeq, then rewrite with it.
+    have hzd : (MassGap.readYMAt N 0).ρ d = 0 :=
+      MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d hd1
+    rw [hzd]
+    simp
+
+#print axioms spectral_rate_representation_at_zero_coupling
+
+/-- **The substrate bound from the tree's own `PeriodicSpectralForm`.**
+
+`substrate_bound_of_uniform_spectral_rate` represents the NORMALISED read `R.p`;
+`Spectral.PeriodicSpectralForm (N+1) (wilsonCorrAt N β)` represents the UNNORMALISED correlation.
+They differ by the total mass, which `Moment.Read.hpos` keeps positive, so dividing each weight by
+it carries one to the other. Without this the tree's spectral objects cannot reach the reduction.
+
+`Complete.WilsonSpectral N β` is exactly `Nonempty (PeriodicSpectralForm (N+1) (wilsonCorrAt N β))`,
+so whatever proves it — `SlabQuadratic.wilsonSpectral` at one aperture for every nonnegative
+coupling, `Spectral2.wilsonSpectral_at_zero_coupling` at every aperture at zero coupling — feeds the
+substrate bound through this, once a rate is supplied.
+
+The rate bound is the whole content, and a form alone does not give it: `PeriodicSpectralForm`
+carries `hlam1 : lam k ≤ 1` with no field excluding the vacuum mode, and
+`Substrate.flatSpectral` exhibits the flat profile as a single mode at `lam = 1`, whose moment is
+unbounded. `hlam` is what separates a gapped correlation from that one.
+
+DERIVED: `2` multiplying `W` and the outer `2` are carried from
+`substrate_bound_of_uniform_spectral_rate` — the periodic pair and the two lags per circle distance;
+the exponent `2` is the second moment's. `1` is the aperture's index offset. `0` is the sign of the
+rate, the weights and the coupling. Nothing is introduced here. -/
+theorem substrate_bound_of_periodic_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hform : ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      ∃ F : Spectral.PeriodicSpectralForm (N + 1) (MassGap.wilsonCorrAt N β),
+        (∀ k, F.lam k ≤ r) ∧
+        (∑ k, F.w k) / (∑ e, (MassGap.readYMAt N β).ρ e) ≤ W) :
+    ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      MassGap.d2At N β ≤ 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by
+  refine substrate_bound_of_uniform_spectral_rate hr0 hr1 hW ?_
+  intro N β hβ
+  obtain ⟨F, hlam, hwt⟩ := hform N β hβ
+  have hTpos : 0 < ∑ e, (MassGap.readYMAt N β).ρ e := (MassGap.readYMAt N β).hpos
+  refine ⟨F.Idx, Finset.univ, (fun k => F.w k / (∑ e, (MassGap.readYMAt N β).ρ e)), F.lam,
+    ?_, ?_, ?_, ?_, ?_⟩
+  · exact fun k _ => div_nonneg (F.hw k) (le_of_lt hTpos)
+  · exact fun k _ => F.hlam0 k
+  · exact fun k _ => hlam k
+  · rw [← Finset.sum_div]; exact hwt
+  · intro d
+    -- `(readYMAt N β).ρ d` REDUCES to `wilsonCorrAt N β d`; `rw` needs the equation, not the defeq.
+    have hrho : (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N β d := rfl
+    show (MassGap.readYMAt N β).ρ d / (∑ e, (MassGap.readYMAt N β).ρ e) = _
+    rw [hrho, F.hrep d, Finset.sum_div]
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    ring
+
+#print axioms substrate_bound_of_periodic_spectral_rate
+
+/-- **Confinement from a periodic spectral form with a uniform rate.** The previous theorem composed
+with `Complete.confinement_on_of_substrate_bound`: at every sufficiently wide aperture the tension
+stays strictly below the entropy floor at every nonnegative coupling.
+
+The whole chain of §1 now runs from a spectral rate on the tree's own `PeriodicSpectralForm`, with
+no quartic law, no threshold and no supplied constant.
+
+DERIVED: `0` is the sign of the rate, of the weight bound and of the coupling, and `1` is the rate's
+strict upper bound and the aperture's index offset in `Fin (N + 1)` — all carried from
+`substrate_bound_of_periodic_spectral_rate` unchanged. This declaration introduces no numeral. -/
+theorem confines_of_periodic_spectral_rate {r W : ℝ}
+    (hr0 : 0 ≤ r) (hr1 : r < 1) (hW : 0 ≤ W)
+    (hform : ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
+      ∃ F : Spectral.PeriodicSpectralForm (N + 1) (MassGap.wilsonCorrAt N β),
+        (∀ k, F.lam k ≤ r) ∧
+        (∑ k, F.w k) / (∑ e, (MassGap.readYMAt N β).ρ e) ≤ W) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM := by
+  have hB := substrate_bound_of_periodic_spectral_rate hr0 hr1 hW hform
+  have hev := MassGap.confinement_on_of_substrate_bound
+    (B := 2 * (2 * W) * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k) (S := Set.Ici (0 : ℝ))
+    (fun N β hβ => hB N β hβ)
+  filter_upwards [hev] with N hN β hβ
+  exact hN β hβ
+
+#print axioms confines_of_periodic_spectral_rate
+
+
+
+
+
+
+
+
 
 /-- A geometric tail in the lag, uniform in the aperture and in the coupling above the cut, gives
 `NonnegArm.LawAbove b`.

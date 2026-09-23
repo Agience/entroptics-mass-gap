@@ -26,7 +26,7 @@ The remaining three theorems are the locality facts a splitting argument rests o
 `Finset.sum_filter_add_sum_filter_not`. `action_on_congr_of_support`: if every plaquette of `A` draws
 its boundary word from `S`, then `A`'s contribution is unchanged by configurations outside `S`.
 
-Scope: the hypothesis of `pairing_with_reflection_nonneg` is that the integrand is ALREADY written in
+Scope: the hypothesis of `pairing_with_reflection_nonneg` is that the integrand is already written in
 the paired form `h(U|_S) · h((U ∘ θ)|_S)`; no statement here puts a Wilson Boltzmann weight into that
 form, and no coupling `β` appears anywhere in this file. `reflection_positive_of_expansion` is stated
 for a `Fintype` index `K`, so it covers finite sums only. `Complete.wilson_reflection_positive_at`,
@@ -90,7 +90,7 @@ The proof defines `ψ v := h (fun i : S => v (e i))` on the `T`-coordinates, rew
 factor as `ψ (U|_T)` using `hθ`, factorises with `WilsonReal.block_integral_factor` on the disjoint
 blocks, and identifies `∫ ψ (U|_T)` with `∫ h (U|_S)` through `relabel_measurePreserving` at `θ`.
 
-Scope: the conclusion is an EQUALITY to a square, not an inequality — nonnegativity is read off it
+Scope: the conclusion is an equality to a square, not an inequality — nonnegativity is read off it
 in `reflection_positive_of_paired`. The integrand must already be of the paired shape; nothing here
 puts a Boltzmann weight into that shape, and no coupling appears. Integrability of the product is
 not hypothesised, so degenerate cases fall to Lean's junk value for a non-integrable integral.
@@ -103,7 +103,7 @@ theorem pairing_with_reflection_nonneg
     (h : (S → MassGap.SUN.SU N) → ℝ) (hm : Measurable h) :
     (∫ U, h (fun i : S => U (i : ι)) * h (fun i : S => U (θ (i : ι))) ∂(vol ι N))
       = (∫ U, h (fun i : S => U (i : ι)) ∂(vol ι N)) ^ 2 := by
-  -- the reflected copy, as a function of the NEGATIVE half alone
+  -- the reflected copy, as a function of the negative half alone
   set ψ : (T → MassGap.SUN.SU N) → ℝ := fun v => h (fun i : S => v (e i)) with hψ
   have hψm : Measurable ψ := hm.comp (measurable_pi_lambda _ fun i => measurable_pi_apply (e i))
   have hrw : ∀ U : ι → MassGap.SUN.SU N,

@@ -255,7 +255,7 @@ instance isProbabilityMeasure_sliceHaar : IsProbabilityMeasure (sliceHaar ι N) 
 nonnegativity of the bound from `transferCap_pos`, and the pointwise bound from
 `abs_transferKernel_le`.
 
-Scope: domain and codomain are the SAME space, since both measures passed to `kernelCLM` are
+Scope: domain and codomain are the same space, since both measures passed to `kernelCLM` are
 `sliceHaar ι N`. The intra-slice function `s` is the caller's, carrying the hypotheses `hs`
 (continuous) and `hsb` (bounded by `Cs`); both appear in the term, so operators built from different
 proofs of the same facts are distinct terms.

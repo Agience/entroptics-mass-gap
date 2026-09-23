@@ -515,7 +515,7 @@ theorem.
 
 Scope: this is one coupling. `SpectralBound.confines_of_subdominant_bound` consumes
 `SpectralBound.LagSpectralBound Λ`, which requires a single `Λ` serving every `β ≥ 0`, together with
-a STRICT comparison `Λ < SpectralBound.lambdaThreshold`. That threshold is the closed form
+a strict comparison `Λ < SpectralBound.lambdaThreshold`. That threshold is the closed form
 `(1 - 3 ^ (-1/4)) / (1 + 3 ^ (-1/4))`, whose square is `LagTwoBound.lagTwoThreshold` by
 `SpectralBound.lambdaThreshold_sq`; `SpectralBound.lambdaThreshold_lt` and `lambdaThreshold_gt`
 bracket it strictly between `0.136469` and `0.13647`, and

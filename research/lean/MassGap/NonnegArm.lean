@@ -7,7 +7,7 @@ import MassGap.ContactFloor
 
 `ShareEnvelope.substrate_of_contact_relative_decay` takes its contact-relative quartic law over all
 real `β`. This file restates the reduction with that law assumed only on `0 ≤ β`, and routes the
-conclusion through the CLAMPED read so the restriction is not lost.
+conclusion through the clamped read so the restriction is not lost.
 
 ## The clamp
 

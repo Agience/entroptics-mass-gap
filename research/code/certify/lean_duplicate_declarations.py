@@ -36,7 +36,10 @@ _DECL = re.compile(
     r"^\s*(?:@\[[^\]]*\]\s*)?"
     r"(?:private\s+|protected\s+|noncomputable\s+|partial\s+|unsafe\s+)*"
     r"(theorem|lemma|def|abbrev|structure|inductive)\s+"
-    r"([A-Za-z_][A-Za-z0-9_'!?]*(?:\.[A-Za-z_][A-Za-z0-9_'!?]*)*)",
+    # `[^\W\d]`: Lean identifiers are Unicode. An ASCII-only start class matched no Greek-initial
+    # declaration, so `κ₀YM`, `μYMAt`, `ΔYM` and their kin were never entered into the table and a
+    # second definition of one of them would not have been reported.
+    r"([^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*)",
     re.M)
 # A declaration may be written dotted -- `theorem State.map_sub` -- so a query for `map_sub` has to
 # match the LAST component too. Missing that is what let `State.map_sub` be written twice while a

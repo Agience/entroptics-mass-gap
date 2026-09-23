@@ -869,7 +869,7 @@ theorem exists_infinite_volume_gibbs_state (G : Type) [TopologicalSpace G] [Comp
 #print axioms exists_infinite_volume_gibbs_state
 
 /-- `exists_infinite_volume_gibbs_state` with a variance floor attached: given `0 < c` and
-`c ≤ μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2` at EVERY finite volume, there is a state `ν` with `IsDLR γ ν`,
+`c ≤ μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2` at every finite volume, there is a state `ν` with `IsDLR γ ν`,
 `ν 1 = 1` and `¬ IsPointMass ν`. It is `exists_dlr_state` followed by
 `not_isPointMass_of_uniform_variance`, the eventual form of the floor coming from
 `Filter.Eventually.of_forall`.

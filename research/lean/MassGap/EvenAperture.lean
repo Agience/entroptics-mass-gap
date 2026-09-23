@@ -143,7 +143,7 @@ theorem two_le_half_is_load_bearing :
   rintro ⟨m, hm, hm2⟩
   omega
 
-/-! ## 2. The read, built from the PROVED reflection positivity
+/-! ## 2. The read, built from the proved reflection positivity
 
 This is the single point of attack. `readEven` is `readYMAt` with the axiom replaced by the theorem;
 everything below is the existing chain rebuilt on it. -/
@@ -203,10 +203,10 @@ theorem readEven_eq_at_zero (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) :
 
 /-! ## 3. The substrate moment and the tension, rebuilt -/
 
-/-- The substrate's second moment about the CIRCLE distance at an even aperture — `Complete.d2At`
+/-- The substrate's second moment about the circle distance at an even aperture — `Complete.d2At`
 with `readEven` in place of `readYMAt`.
 
-DERIVED: the exponent `2` is the definition of a SECOND moment and `Moment.circLag` is the separation
+DERIVED: the exponent `2` is the definition of a second moment and `Moment.circLag` is the separation
 on the circle, both exactly as in `Complete.d2At`; nothing new is introduced. -/
 noncomputable def d2Even (a : EvenAp) (β : ℝ) : ℝ :=
   ∑ d, (readEven a β).p d * (Moment.circLag d : ℝ) ^ 2
@@ -433,7 +433,7 @@ theorem mass_gap_rate_and_continuum_even
         (∀ σ j, q ((fullModelEven h).measure.actP σ j) = q j)) :=
   MassGap.mass_gap_rate_and_continuum (fullModelEven h) β
 
-/-! ## 7. NON-VACUITY — an explicit even aperture at extent four
+/-! ## 7. Non-vacuity — an explicit even aperture at extent four
 
 A bound no extent satisfies would make everything above an empty quantification, and an aperture
 chosen from a cofinal set names no value. Extent four is the smallest extent the proved reflection
@@ -491,7 +491,7 @@ theorem ym_mass_gap_at_extent_four (hconf : ∀ β, μEven apFour β < MassGap.�
 
 /-! ## 8. Footprints
 
-The first block is the EXISTING chain, so the entry point of the axiom is visible rather than
+The first block is the existing chain, so the entry point of the axiom is visible rather than
 asserted. The second is this module's. -/
 
 section AuditExisting
@@ -539,7 +539,7 @@ section AuditEven
 end AuditEven
 
 section AuditBridges
--- These MENTION the axiom-carrying objects by design, so they report the axiom. They are the
+-- These mention the axiom-carrying objects by design, so they report the axiom. They are the
 -- comparison statements, not part of the axiom-free chain.
 #print axioms readEven_eq_readYMAt
 #print axioms d2Even_eq

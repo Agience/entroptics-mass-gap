@@ -29,6 +29,12 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # research/code
+# And this file's OWN directory, for the sibling certification it imports (`beta_star_enclosure`).
+# Running the script puts the script's directory on the path for free, so the missing entry showed
+# only when the module was IMPORTED -- which the smoke suite does. It passed there by accident: an
+# earlier `_load` leaked `research/code/certify` onto `sys.path` and left it, so the sibling was
+# importable because of a leak rather than because this file asked for it.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))                   # research/code/certify
 import entroptics_adapter as W  # THE WRAPPER
 from aperture_reads import load_su2   # one copy of the su2 shard loader
 import store_path                    # the ONE place the ensemble store is located

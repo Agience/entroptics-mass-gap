@@ -2,40 +2,43 @@ import Mathlib
 import MassGap.Apriori
 
 /-!
-# The lattice Yang-Mills model interface (Phase 0)
+# MassGap.Model — the lattice Yang-Mills model interface
 
-`MassGap.Apriori` derives the requirements from two propositions `A1`, `A2` stated over abstract
-data (`s, P, m, μ, R, κ₀, κ`). This file names that data as the objects of a lattice `SU(N)` gauge
-theory and packages the reduction as a single structure, so the two obligations `A1`, `A2` have a
-typed home and the cited inputs are separated from them.
+`MassGap.Apriori` states two propositions over abstract data: `A1 μ κ₀ : ∀ β, μ β < κ₀` and
+`A2 R : ∀ d d', R d = R d'`. This module names that data as the objects of a lattice `SU(N)` gauge
+theory, bundles it into the structure `LatticeYM`, and re-expresses the two propositions as
+predicates `A1_YM` and `A2_YM` on a single value of that structure.
 
-**What this file is.** An *interface*. The fields of `LatticeYM` are the inputs the Osterwalder-Seiler
-finite-spacing construction supplies (a bounded, positive, self-adjoint transfer matrix at every
-spacing) together with the two entropy-matched reads of the companion instrument [E]: the centre-vortex
-tension `μ` and the directional read `R`. `hfloor` is the entropy floor `κ₀ = ¼ log 3 ≤ κ` (`Floor.lean`);
-`hread` is the read margin, the bound on the DMD dominant magnitude the aperture returns
-(`Apriori.hread_of_dominant`, `Apriori.margin_of_dominant_rate`).
+Contents:
+* `LatticeYM` — a mode index type `Idx`, an orientation type `Dir`, the coupling-indexed active mode
+  set `s : ℝ → Finset Idx`, the weights `P` and magnitudes `m` of the finite exponential expansion
+  `C τ = ∑ P k * m k ^ τ`, the tension read `μ : ℝ → ℝ`, the directional read `R : Dir → ℝ`, the
+  floor `κ₀`, the multiplicity density `κ`, and two hypothesis fields: `hfloor : κ₀ ≤ κ` and
+  `hread`, which bounds every active mode magnitude at coupling `β` by `exp (-(κ₀ - μ β))`.
+* `A1_YM`, `A2_YM` — the two propositions instantiated at the structure's fields.
+* `geometric_bound_of_mode_bound` — a finite mode sum whose magnitudes are bounded by `E` satisfies
+  `‖∑ P k * m k ^ τ‖ ≤ (∑ ‖P k‖) * E ^ τ`.
+* `mass_gap_rate_of_model` — from `A1_YM`, both `0 < κ₀ - μ β` and that geometric bound at
+  `E = exp (-(κ₀ - μ β))`.
+* `mass_gap_ratio_lt_one` — from `A1_YM`, `exp (-(κ₀ - μ β)) < 1`.
+* `mass_gap_of_model` — `existence_and_gap_from_apriori` applied to the structure's fields, giving
+  convergence of the correlation to `0`, `μ β - κ < 0`, and direction-independence of `R`.
 
-**What this file supplies, and what it leaves open.** The physical realisation of `Idx, Dir, s, P, m,
-μ, R` from the `SU(N)` Wilson measure is the modelling identification stated in §2-§3 of the paper and
-cited to Osterwalder-Seiler; it is not re-derived here. `A1_YM` and `A2_YM` are the two obligations.
-`Apriori.lean` and `Certify.lean` prove them in part and reduce the remainder to one established input
-each. A1: the strong- and weak-coupling ends (`apriori_A1_strong`, `apriori_A1_weak`); the crossover
-interior reduces to one aperture-independent bound on the substrate's lag moment
-(`Complete.confinement_of_bounded_substrate`), and the uniform-in-`a` continuum to
-refinement-invariance, so A1's sole
-remaining input is that finite correlation length. A2: the discrete point group and the spatial Gram rotations
-(`A2_hypercubic_holds`, `gram_read_rotation_invariant`, `continuumRotationCongruence_of_gram`); the
-continuum axis-role `SO(4)` reduces to the Nyquist-Shannon sampling isometry (`A2_continuum_of_sampling`,
-`orthogonal_of_preserves_dotProduct`), A2's sole remaining input. Both remaining inputs are established
-results, cited, not re-derived here. `mass_gap_of_model` derives the mass gap, non-triviality, and `SO(4)`
-from `A1_YM ∧ A2_YM`; the two obligations remain hypotheses of that theorem.
+Scope. The structure takes `Idx, Dir, s, P, m, μ, R, κ₀, κ` as data; no realisation of them from the
+`SU(N)` Wilson measure is constructed here. `hfloor` and `hread` are fields, so they are assumed of
+any `LatticeYM` supplied. `A1_YM` and `A2_YM` are explicit hypotheses of every theorem below that
+uses them.
 -/
 
 namespace MassGap
 
-/-- **The lattice Yang-Mills model interface.** The abstract data of `existence_and_gap_from_apriori`, named as
-the objects of a lattice `SU(N)` gauge theory at every coupling `β`. -/
+/-- The lattice Yang-Mills model interface: the abstract data consumed by
+`existence_and_gap_from_apriori`, named as the objects of a lattice `SU(N)` gauge theory and indexed
+by the coupling `β`. Two fields are hypotheses (`hfloor`, `hread`), so constructing a value of this
+structure assumes them.
+
+DERIVED: no numeral occurs in the fields; `hread`'s bound is `exp (-(κ₀ - μ β))`, built from the two
+named fields, and `hfloor` compares two of them. -/
 structure LatticeYM where
   /-- Mode index type of the entropy-matched correlation read. -/
   Idx : Type
@@ -57,34 +60,35 @@ structure LatticeYM where
   κ : ℝ
   /-- The entropy floor sits below the multiplicity density. -/
   hfloor : κ₀ ≤ κ
-  /-- The read margin: every active mode magnitude clears the free-energy margin `e^{-(κ₀-μ)}`
-  (`Apriori.hread_of_dominant`; the DMD dominant magnitude the aperture returns). -/
+  /-- At every coupling `β`, every active mode magnitude is bounded by `exp (-(κ₀ - μ β))`. A
+  hypothesis field; `Apriori.hread_of_dominant` is one way to produce it. -/
   hread : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-(κ₀ - μ β))
 
-/-- **A1 for the model: confinement.** The centre-vortex tension stays below the floor at every
-coupling. Proved in part (`apriori_A1_strong`, `apriori_A1_weak`); the crossover interior reduces to the
-aperture-independent bound on the lag moment (`Complete.confinement_of_bounded_substrate`), and
-the uniform-in-`a` continuum to refinement-invariance, so A1's sole remaining input is that finite
-correlation length. -/
+/-- `A1` at the model's fields: `∀ β, M.μ β < M.κ₀`, the tension read strictly below the floor at
+every coupling. A `Prop`, not a theorem; it is supplied as a hypothesis wherever it is used.
+
+DERIVED: no numeral occurs; both sides are fields of the structure. -/
 def A1_YM (M : LatticeYM) : Prop := A1 M.μ M.κ₀
 
-/-- **A2 for the model: isotropy.** The directional read is direction-independent. Proved in part
-(`A2_hypercubic_holds`, `gram_read_rotation_invariant`, `continuumRotationCongruence_of_gram`); the
-continuum axis-role `SO(4)` reduces to the Nyquist-Shannon sampling isometry
-(`A2_continuum_of_sampling`). A2's sole remaining input is that sampling isometry. -/
+/-- `A2` at the model's fields: `∀ d d', M.R d = M.R d'`, the directional read taking the same value
+in every direction. A `Prop`, not a theorem; it is supplied as a hypothesis wherever it is used.
+
+DERIVED: no numeral occurs; the statement compares two values of one field. -/
 def A2_YM (M : LatticeYM) : Prop := A2 M.R
 
-/-- **A finite mode expansion whose magnitudes are bounded decays geometrically.**
+/-- A finite mode expansion with bounded magnitudes obeys a geometric bound. Over a `Finset` `s` of
+mode indices with weights `P : Idx → ℂ` and magnitudes `m : Idx → ℂ`, given `0 ≤ E` and `‖m k‖ ≤ E`
+for every `k ∈ s`, the expansion satisfies
+`‖∑ k ∈ s, P k * m k ^ τ‖ ≤ (∑ k ∈ s, ‖P k‖) * E ^ τ` at every lag `τ : ℕ`. Proved by `norm_sum_le`
+followed by a termwise `pow_le_pow_left₀`.
 
-The whole content of an exponential mass gap, separated from every structure that might carry it: if
-`‖m_k‖ ≤ E` for the active modes, then `‖∑ P_k m_k^τ‖ ≤ (∑‖P_k‖) E^τ`. Whether that is a GAP depends
-entirely on `E < 1`, which this does not assume and cannot supply -- it is the caller's `κ₀ - μ > 0`.
+Scope: the bound holds for any `0 ≤ E`, including `E ≥ 1`, so on its own it is not a decay
+statement; strictness is the caller's, for instance via `E = exp (-(κ₀ - μ β))` with `μ β < κ₀`. The
+statement mentions no `LatticeYM`, so it serves the model level and the Wilson level alike; those
+two differ only in where the magnitude bound comes from.
 
-Stated once, for the model level and the Wilson level both. The two differ only in where the bound on
-the magnitudes comes from (`LatticeYM.hread` there, the `hdom` hypothesis here), which is a difference
-in what is assumed, not in what is proved.
-
-DERIVED: no literal decides anything. The `τ` is the lag and `E` the caller's bound. -/
+DERIVED: the one numeral is the `0` in `0 ≤ E`, which is what makes `E ^ τ` monotone in `E`. `τ` is
+the lag and `E` the caller's bound; no numeral is a model constant. -/
 theorem geometric_bound_of_mode_bound {Idx : Type*} (s : Finset Idx) (P m : Idx → ℂ) (E : ℝ)
     (hE : 0 ≤ E) (hm : ∀ k ∈ s, ‖m k‖ ≤ E) (τ : ℕ) :
     ‖∑ k ∈ s, P k * (m k) ^ τ‖ ≤ (∑ k ∈ s, ‖P k‖) * E ^ τ := by
@@ -98,28 +102,21 @@ theorem geometric_bound_of_mode_bound {Idx : Type*} (s : Finset Idx) (P m : Idx 
 
 #print axioms geometric_bound_of_mode_bound
 
-/-- **THE GAP, WITH ITS RATE: `Δ = κ₀ - μ`.**
+/-- Geometric decay of the mode expansion at rate `κ₀ - μ β`. From `A1_YM M` and a coupling `β`,
+the conclusion is a conjunction: `0 < M.κ₀ - M.μ β`, and at every lag `τ : ℕ`
 
-`mass_gap_of_model` concludes that the correlation tends to zero. That is weaker than a mass gap and
-deliberately so -- a power law tends to zero too -- and it is not the statement the problem asks for,
-which is a POSITIVE `Δ` with `C(τ)` bounded by `e^{-Δτ}`.
+    ‖∑ k ∈ M.s β, M.P β k * M.m β k ^ τ‖ ≤ (∑ k ∈ M.s β, ‖M.P β k‖) * exp (-(M.κ₀ - M.μ β)) ^ τ.
 
-The rate was already in the structure. `LatticeYM.hread` bounds every active mode magnitude by
-`e^{-(κ₀ - μ β)}`, and A1 puts `μ β < κ₀`, so that factor is strictly below one. Summing the finite
-mode expansion against it gives geometric decay at an explicit rate, and the rate is the MARGIN
-BETWEEN THE ENTROPY FLOOR AND THE MEASURED TENSION -- not a fitted constant, not an existential, and
-not a limit: a difference of two named quantities, one proved (`Floor.lean`) and one measured.
+The first component is `sub_pos.mpr` applied to `A1_YM` at `β`; the second is
+`geometric_bound_of_mode_bound` at `E = Real.exp (-(M.κ₀ - M.μ β))`, whose magnitude hypothesis is
+the structure field `M.hread`.
 
-    |C(τ)|  ≤  (∑_k ‖P_k‖) · e^{-(κ₀ - μ)τ}
+Scope: `β` is a fixed argument, so this is a statement at one coupling; it says nothing about
+uniformity in the lattice spacing. `M.hread` is a field of `LatticeYM` and is assumed rather than
+derived.
 
-WHAT THIS DOES AND DOES NOT SETTLE. It settles the SHAPE: the conclusion is now exponential with a
-named positive rate rather than convergence to zero. It does not by itself make `Δ` uniform in the
-lattice spacing -- that is `ZeroMode.gap_phys_of_fixed_screen`, which needs the aperture held at a
-fixed physical extent -- nor does it discharge `hread`, which is the structure's own hypothesis and
-carries the modelling content.
-
-DERIVED: every constant is a hypothesis of the structure. `κ₀` is the proved entropy floor and `μ β`
-the measured tension; nothing here introduces a number of its own. -/
+DERIVED: the one numeral is the `0` in `0 < M.κ₀ - M.μ β`, the strict positivity of the difference.
+`κ₀` and `μ β` are fields of the structure; no number is introduced here. -/
 theorem mass_gap_rate_of_model (M : LatticeYM) (h1 : A1_YM M) (β : ℝ) :
     0 < M.κ₀ - M.μ β ∧
       ∀ τ : ℕ, ‖∑ k ∈ M.s β, M.P β k * (M.m β k) ^ τ‖
@@ -130,9 +127,14 @@ theorem mass_gap_rate_of_model (M : LatticeYM) (h1 : A1_YM M) (β : ℝ) :
 
 #print axioms mass_gap_rate_of_model
 
-/-- **The rate, as a decay constant.** `e^{-Δ}` with `Δ = κ₀ - μ > 0` is strictly inside the unit
-interval, which is the form a transfer-matrix gap is usually stated in and the one
-`ZeroMode.gap_phys_of_fixed_screen` consumes. -/
+/-- The decay constant is strictly below one. From `A1_YM M` and a coupling `β`,
+`Real.exp (-(M.κ₀ - M.μ β)) < 1`, via `Real.exp_lt_one_iff` applied to the positive difference
+`M.κ₀ - M.μ β`. The ratio form of the same content as `mass_gap_rate_of_model`, and the form
+`ZeroMode.gap_phys_of_fixed_screen` consumes.
+
+DERIVED: the one numeral is the `1` bounding the exponential; it is `Real.exp 0`, the value the
+exponential would take at a zero margin, so the strict inequality is exactly
+`0 < M.κ₀ - M.μ β`. -/
 theorem mass_gap_ratio_lt_one (M : LatticeYM) (h1 : A1_YM M) (β : ℝ) :
     Real.exp (-(M.κ₀ - M.μ β)) < 1 := by
   have hgap : 0 < M.κ₀ - M.μ β := sub_pos.mpr (h1 β)
@@ -140,13 +142,17 @@ theorem mass_gap_ratio_lt_one (M : LatticeYM) (h1 : A1_YM M) (β : ℝ) :
 
 #print axioms mass_gap_ratio_lt_one
 
-/-- **The result for the model.** Given the two obligations `A1_YM` (confinement) and `A2_YM`
-(isotropy) for a lattice Yang-Mills model `M`, the correlation's decay to zero (`C(τ) → 0` at every coupling -- for the RATE, which is what a
-mass gap asserts, see `mass_gap_rate_of_model` above),
-non-triviality (`μ - κ < 0`, the area law), and Euclidean `SO(4)` invariance all follow. This is
-`existence_and_gap_from_apriori` applied to the named model data; the two obligations are the open input, each
-reduced to one input (for A1 an aperture-independent bound on the lag moment, via
-`Complete.confinement_of_bounded_substrate`; for A2 the Nyquist-Shannon sampling isometry). -/
+/-- The three conclusions of `existence_and_gap_from_apriori`, at the model's fields. From `A1_YM M`
+and `A2_YM M`, a triple conjunction: at every coupling `β` the norm of the mode expansion tends to
+`0` along `atTop`; at every `β`, `M.μ β - M.κ < 0`; and `M.R d = M.R d'` for all directions `d, d'`.
+The proof applies `existence_and_gap_from_apriori` to `M.s, M.P, M.m, M.κ₀, M.κ, M.μ, M.R, M.hfloor`,
+the two hypotheses, and `M.hread`.
+
+Scope: the first component is convergence to zero with no rate attached; the rate at a fixed
+coupling is `mass_gap_rate_of_model`. `A1_YM M` and `A2_YM M` are hypotheses here.
+
+DERIVED: two numerals, both `0` — the limit point in `nhds 0`, and the strict upper bound in
+`M.μ β - M.κ < 0`. Neither is a chosen scale. -/
 theorem mass_gap_of_model (M : LatticeYM) (h1 : A1_YM M) (h2 : A2_YM M) :
     (∀ β, Filter.Tendsto
         (fun τ => ‖∑ k ∈ M.s β, M.P β k * (M.m β k) ^ τ‖) Filter.atTop (nhds 0)) ∧

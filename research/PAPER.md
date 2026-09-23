@@ -41,8 +41,8 @@ meeting the established results at junctions.
 At finite spacing the lattice regularisation is the finite-cell screen: for every $a$ there is a Hilbert space, a
 Hamiltonian bounded below, a unique vacuum, and the full Osterwalder–Schrader (OS) structure. Reflection positivity
 is inherited by the continuum limit as a closed condition, the gap supplying the uniform bound that makes the
-Schwinger functions tight. The mass gap, non-triviality, and Euclidean $SO(4)$ follow from the
-band-limit together with two reads: **A1**, the centre-vortex tension stays below the floor at every coupling and
+Schwinger functions tight. The mass gap, non-triviality, and the read-level axis-permutation form of
+Euclidean $SO(4)$ follow from the band-limit together with two reads: **A1**, the centre-vortex tension stays below the floor at every coupling and
 uniformly as $a\to0$; and **A2**, the continuum read is direction-independent. A1 meets the classical results at
 both ends (the Osterwalder–Seiler character bound at strong coupling, the asymptotic-freedom free-field plateau
 $\mu_\infty(8)=0.0326<\kappa_0$ at weak coupling) and its interior is a theorem on every compact interval,
@@ -60,9 +60,17 @@ coupling range for $SU(2)$ and $SU(3)$ and rises sharply across the compact $U(1
 is certified at $95\%$. Given A1 and A2, the mass gap, non-triviality, and the read-level form of $SO(4)$ follow as a single reduction,
 its inputs the classical results it names: the three foundational axioms, reflection positivity (now PROVED at even extent $\ge4$ and nonnegative coupling on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, on the observables of a fixed finite region, §11.1c, and cited only outside those domains — on that domain the gap side carries **no named axiom at all**, `EvenAperture.existence_and_gap_of_substrate_even` — an axiom-footprint claim, not a strength claim about the conclusion, whose scope is set out in §13 and machine-checked in `FlagshipScope`), the two cited
 coupling ends, and the crossover correlation length. Finite-spacing existence holds at every spacing; the
-continuum limit follows from the finite-spacing Osterwalder–Schrader data through the cited constructive
-four-dimensional measure and the OS→Wightman reconstruction — both established on a **constructed $SU(N)$
-realisation** whose
+limit over extents follows from the finite-spacing Osterwalder–Schrader data; the cited constructive
+four-dimensional measure and the OS→Wightman reconstruction are the two named external inputs. The
+reconstruction is applied to the Wilson data: `WilsonOS.wilsonOSData` is an `OSData` whose Schwinger form is
+the Gibbs reflected pairing of the constructed $SU(N)$ Wilson measure on the slab algebra of an even-extent
+lattice, its reflection positivity holding at every real coupling and its footprint the three foundational
+axioms alone, and `WilsonOS.wilson_reconstructed_nontrivial` carries it through the reconstruction adding only
+`os_reconstruction_wightman`. Its translation field is the identity — the value
+`LatticeTranslNoGo.transl_eq_id_of_finite_order` forces at a finite periodic extent, where the translations
+have finite order — so Euclidean invariance is carried by the limit rather than by this datum. The
+Osterwalder–Schrader data family is instantiated on a **constructed
+$SU(N)$ realisation** whose
 Osterwalder–Schrader data family is instantiated: the mass gap and the OS continuum measure carry **one** named
 axiom, reflection positivity (`ym_mass_gap_of_junction`), and `existence_and_gap_of_model` and
 `mass_gap_rate_and_continuum` carry none. **The tree declares two named axioms in total.** The
@@ -1095,15 +1103,21 @@ scale-covariance of the read (§8.5) and the uniform gap (§11); it is part of A
 propositions:
 
 - **A1 (confinement).** $\forall\beta\ge0,\ \mu(\beta)<\kappa_0$: the aperture tension read stays below the counting
-  floor at every coupling. It delivers the mass gap ($\mu<\kappa_0\Rightarrow C(\tau)\to0$) and non-triviality
-  ($\mu-\kappa<0$, the area law, an interacting theory); the quantitative rate $\Delta\ge\kappa_0-\mu>0$ follows from
+  floor at every coupling. It delivers the mass gap ($\mu<\kappa_0\Rightarrow C(\tau)\to0$) and non-triviality in the form
+  the development proves it, $\mu-\kappa<0$ — the area-law inequality on the scalar tension, not a
+  statement that the measure is non-Gaussian; no fourth cumulant, connected four-point function or
+  Wick comparison appears in the tree; the quantitative rate $\Delta\ge\kappa_0-\mu>0$ follows from
   reflection positivity ($\rho'(n)\le\rho'(1)^n$) and the single-plaquette magnitude $\rho'(1)\le3^{-1/4}$ (§6, §9).
 - **A2 (isotropy).** The continuum entropy-matched read is direction-independent, $R(d)=R(d')$: no residual lattice
-  anisotropy. It delivers the read-level form of Euclidean $SO(4)$.
+  anisotropy. It delivers the read-level form of Euclidean $SO(4)$ — which is the 24-element
+  hypercubic axis group `DYM = Equiv.Perm (Fin 4)` (`Complete.card_DYM`), not the continuous group.
+  The transport is that permutation's own matrix and `permMatrix_orthogonal` proves it orthogonal,
+  so it lands IN $O(4)$; what is quantified over is the finite axis group.
 
-Given A1 and A2, mass gap, non-triviality, and $SO(4)$ follow; reflection positivity (proved at even extent $\ge4$ and $\beta\ge0$ on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, §11.1c; Osterwalder–Seiler outside those domains), the
+Given A1 and A2, mass gap, non-triviality, and the axis-permutation form of $SO(4)$ follow; reflection positivity (proved at even extent $\ge4$ and $\beta\ge0$ on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, §11.1c; Osterwalder–Seiler outside those domains), the
 continuum identity ($\Delta$ homogeneous of degree one), and short distance (asymptotic freedom) are established
-separately. A1 and A2 reduce to named inputs, so the mass gap, non-triviality, and $SO(4)$ are a single
+separately. A1 and A2 reduce to named inputs, so the mass gap, non-triviality, and the axis-permutation
+form of $SO(4)$ are a single
 theorem carrying no A1/A2 hypothesis: beyond the three foundational axioms its inputs are the cited ends (the
 character bound and the asymptotic-freedom plateau), reflection positivity, and one finite-correlation-length input.
 The following table gives, for each part, the established content and the named input it introduces:
@@ -1518,7 +1532,7 @@ is orthogonal. The deterministic system identification (§8.6, $a_\star k_0=0.36
 the threshold) confirms the band-limit there, and the continuum limit $a\to0$ always sits below the sampling
 threshold.
 
-**Status of the inputs.** With A1 and A2 reduced to named inputs, the mass gap, non-triviality, and $SO(4)$ are a
+**Status of the inputs.** With A1 and A2 reduced to named inputs, the mass gap, non-triviality, and the axis-permutation form of $SO(4)$ are a
 single theorem: its axiom footprint is the three foundational axioms together with the named
 inputs, the character bound (strong end), the asymptotic-freedom plateau (weak end), reflection positivity
 (Osterwalder–Seiler), and a finite crossover correlation length (the interior). The
@@ -1829,8 +1843,9 @@ positivity holds at every spacing and is inherited by the continuum limit; the e
 cutoff-independent (§6), asymptotic freedom putting the ultraviolet modes below the noise edge so the gap sits at
 $\Lambda$; and the read is scale-covariant (§8.5). The uniform a-priori estimate the limit needs is the uniform gap
 itself: the reach-freeze monotone above the floor gives uniform exponential clustering, hence tightness of the
-finite-spacing Schwinger functions, whose limit is a non-trivial Osterwalder–Schrader measure on $\mathbb{R}^4$
-carrying the gap. Bałaban's renormalisation-group programme supplies uniform effective-action bounds for the
+finite-spacing Schwinger functions. What the formal development delivers from that tightness is a subsequential
+pointwise limit of the moment functionals satisfying OS0–OS3 — not a measure on $\mathbb{R}^4$, and not a proof
+that the limit is non-trivial. Bałaban's renormalisation-group programme supplies uniform effective-action bounds for the
 continuum limit; the stochastic-quantisation constructions (Chandra–Chevyrev–Hairer–Shen) establish the measure
 in two and three dimensions; the constructive four-dimensional $SU(N)$ measure is the named construction into which
 the existence half reduces. The finite-spacing OS-data family this limit consumes is instantiated for $SU(N)$, both established on it (§13).
@@ -1894,8 +1909,14 @@ trace class and a fortiori compact — Lüscher (CMP **54** (1977) 283), Osterwa
 cited and not formalised; the implication it feeds is. Accordingly the witness exhibited above,
 $\operatorname{diag}(1,3^{-1/4})$, is finite-dimensional, and the reconstruction in this form should
 be read as a statement about operators with a largest energy $-\log\varepsilon$. The form that carries
-no such restriction is the contraction form, $\|T^n x\|\le r^n\|x\|$ on the vacuum's complement, which
-needs no spectrum, no logarithm of an operator and no invertibility. The Minkowski
+no such restriction is the contraction form, $\|T^n x\|\le r^n\|x\|$ on the vacuum's complement
+(`TransferGap.GapAt`), which needs no spectrum, no logarithm of an operator and no invertibility: from
+it `GapToOperator.spectrum_opT_subset` gives $\operatorname{spec}_{\mathbb R}(T)\subseteq\{1\}\cup[-r,r]$
+with $0$ PERMITTED, so the invertibility requirement belongs to the $H=-\log T$ route and not to the
+gap conclusion itself, which is proved in seven places. Two limits travel with that form and are
+stated here rather than left to be inferred: the containment is empty unless $r<1$, and **no
+declaration in the tree produces a `GapAt`** — it is a hypothesis everywhere it appears, which is the
+same open intensive input §12 names. The Minkowski
 continuation of the Schwinger functions to the Wightman functions
 (tube domains / Bargmann–Hall–Wightman) is the classical Osterwalder–Schrader theorem, entered as a named axiom.
 
@@ -1920,9 +1941,9 @@ and a positive *mass gap*.
 |---|---|
 | mass gap $\Delta>0$ | $C(\tau)\to0$ at every coupling from A1 (the flagship, foundational axioms + the four cited inputs) — **read the scope with it (§13): that conclusion is carried by the scalar $\mu$ alone.** `ymModel`'s single mode is DEFINED as $e^{-(\kappa_0-\mu)}$, so $C(\tau)\to0$ restates $\mu<\kappa_0$; and `FlagshipScope.flagship_for_bogus` machine-checks that the whole conjunction — gap, $\mu-\kappa<0$, $SO(4)$ and the OS0–OS3 continuum existential — holds for a model whose tension is the constant $0$, with no read, no correlation, no lattice and no gauge group, the $SU(3)$ parameter record intact. Zero tension is the NON-confining case. What ties the conclusion to $SU(3)$ Yang–Mills is `WilsonSpectral` (§13), open above $\beta=0$ and now reduced to two polynomial inequalities on $(\rho_0,\rho_1,\rho_2)$ by `SpectralFour`. The HYPOTHESIS side is not affected: `ConfinesAtAnAperture` unfolds to `corrClay`, a genuine $SU(3)$ Haar Gibbs expectation on the 4-D periodic lattice; the quantitative rate $\Delta(\beta)\ge\kappa_0-\mu(\beta)>0$ with $\|C(\tau)\|\le(\sum\|P_k\|)\,e^{-\Delta\tau}$ is certified for the finite-aperture witness; reflection positivity gives $\rho'(n)\le\rho'(1)^n$, and the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$) with the read $m_{\mathrm{hi}}(L)=\rho'(1)(L)\approx0.33$ carries it to the physical modes; the decay reconstructs to $\operatorname{spec}\subseteq\{0\}\cup[\Delta,\infty)$ through the moment-support bridge. The margin $\mu<\kappa_0$ holds at both coupling ends (character bound below $\beta_\star\approx0.75$; asymptotic freedom above) and closes across the interior by finite-volume analyticity on a finite grid (§7–§9); the margin is intensive (it carries no lattice scale), the property the continuum limit uses (§11). |
 | gap uniform in volume | **read the conflation out of this row first.** Reflection positivity makes the transfer operator self-adjoint, giving $\rho'(n)\le\rho'(1)^n$ — but that is a statement about $n$ TIME-CUTS, and `Mixing.lean`, where it lives, carries no volume index at all. A single cut $\rho'(1)<1$ therefore gives the gap at every SEPARATION, not at every VOLUME. Carrying it across volumes is the separate intensive premise $\forall F,\ m_{\mathrm{hi}}(F)\le r$, which `Certify.gap_uniform_in_volume_of_intensive` TAKES as a hypothesis and which nothing in the tree supplies unconditionally — it is machine-checked for the DECOUPLED product transfer and measured for the interacting one (§13). Reflection positivity buys the time direction; the spatial direction is untouched by it. With that premise: the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$) is machine-checked at $V{=}1$; the forward read $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ is $0.31$–$0.37$ across the scaling window $L=12$–$28$ (mean $\approx0.33$), the $L=8$ and $L=32$ endpoints outside that window |
-| existence on $\mathbb{R}^4$, OS/Wightman | the tight continuum limit (§11): from the finite-spacing Osterwalder–Schrader data (reflection positivity, the infrared mode-count bound, Euclidean and permutation invariance), the reflected forms are uniformly bounded and the full Schwinger vector is jointly tight, and every closed OS condition (OS0 bound, OS1 Euclidean, OS2 RP, OS3 symmetry) survives the limit; the compactness assembly carries the three foundational axioms only. Cited inputs: the §2–§3 modelling identification (the $SU(N)$ Wilson ensemble is such a family, instantiated in §13), Bałaban's uniform effective-action bounds for the continuum limit, and the OS→Wightman reconstruction of the tight limit. |
-| local fields, short-distance $=$ asymptotic freedom, operator product expansion | standard once the measure exists |
-| any compact simple $G$ | $SU(N)$ here; the floor, RP, asymptotic freedom, and the band-limit lemma are $N$-general, the centre twist is $Z_N$; the rest is the group-specific write-up |
+| OS0–OS3 survive a tight subsequential limit over EXTENTS; existence on $\mathbb{R}^4$ NOT delivered | the tight limit over extents (§11): from the finite-spacing Osterwalder–Schrader data (reflection positivity, the infrared mode-count bound, Euclidean and permutation invariance), the reflected forms are uniformly bounded and the full Schwinger vector is jointly tight, and every closed OS condition (OS0 bound, OS1 Euclidean, OS2 RP, OS3 symmetry) survives the limit; the compactness assembly carries the three foundational axioms only. Cited inputs: the §2–§3 modelling identification (the $SU(N)$ Wilson ensemble is such a family, instantiated in §13), Bałaban's uniform effective-action bounds for the continuum limit, and the OS→Wightman reconstruction, which is stated as a named axiom and is **not** applied to the tight limit: it consumes an `OSData` whose `transl` acts by $\mathbb{R}^4$, which is divisible, and `LatticeTranslNoGo` closes both horns by proof — at finite periodic extent the translations have finite order and collide with divisibility (`transl_eq_id_of_finite_order`), while on $\mathbb{Z}^4$ they are torsion-free but $\mathbb{Z}$ is not divisible (`addHom_to_int_lattice_eq_zero`). Once `transl` is the identity, OS1 holds of an ARBITRARY bilinear form (`os1_holds_of_everything_when_transl_trivial`), so such an `OSData` would carry no invariance content. The only `OSData` in the tree is the trivial one. |
+| local fields, short-distance $=$ asymptotic freedom, operator product expansion | **not addressed.** No stress tensor and no operator product expansion appears anywhere in the development, and the measure they would be built on is not constructed (§11, §13). What IS here is the running side: `Running.lean` proves $b_0,b_1>0$ and no interior fixed point, and `AsymptoticScaling.lean` makes asymptotic scaling a real constraint — `AsymptoticScalingAt` is proved satisfiable AND refutable — with **no producer for it on the Wilson theory**. Standard *given* a constructed continuum measure, which is not what is proved here. |
+| any compact simple $G$ | the construction is polymorphic: `CompactGauge` runs over an arbitrary compact group, C4's capstone `clay_nontriviality_of_wilson_variance` is stated for an arbitrary compact $G$ with no `SU` and no $3$, and $SU(3)$ enters at exactly ONE numeral — `WilsonBridge.corrClay := corrHyper (d := 4) 3 n 0 1 2 \beta\ lag`, where `corrHyper` is general in $N_c$. The floor, RP, asymptotic freedom and the band-limit lemma are $N$-general and the centre twist is $Z_N$. Two things are absent and neither is a write-up: **Lie-algebra simplicity cannot be stated against Mathlib v4.31 at all** — `SimpleGroup.lean` settles only the abstract-group reading, where $SU(N)$ is provably NOT simple because it has a centre — and the per-$N$ Haar evaluations, which `ColourGeneral.lean` reduces to per-$N$ arithmetic rather than missing machinery. |
 | clustering | follows from $\Delta>0$ |
 
 **The load-bearing read.** The tension bound $\mu<\kappa_0$ is *soft*: on the action-density read it holds with
@@ -1983,11 +2004,21 @@ $\kappa_0=\tfrac14\ln3$ (§5–§6). The base is a theorem, asymptotic freedom, 
 carries it is entropic on both sides: confinement is the disorder entropy density $\kappa_0$ exceeding the tension
 $\mu$, and the gap is bounded below by the margin, $\Delta\ge\kappa_0-\mu>0$, the entropy surplus of disorder over tension.
 
-Two statements follow for pure $SU(N)$: the lattice family has a continuum limit carrying the
-Osterwalder–Schrader structure — a tight subsequential limit of the moment functionals, with
-reflection positivity and the Euclidean and permutation invariances surviving it
-(`Measure.continuum_of_family`, §11) — and its Hamiltonian has a mass gap $\Delta\ge\kappa_0-\mu>0$
-(§6). What is proved is that limit, **not** a constructed measure on $\mathbb{R}^4$; §13 states the
+Two statements follow for pure $SU(N)$: the lattice family has a limit over EXTENTS carrying the
+Osterwalder–Schrader structure — a tight subsequential limit of the moment functionals at a FIXED
+coupling, with reflection positivity and the axis-permutation invariance surviving it
+(`Measure.continuum_of_family`, §11; the index is the extent, not the spacing) — and its Hamiltonian has a mass gap $\Delta\ge\kappa_0-\mu>0$
+(§6). **And the plaquette variance is a theorem with no hypothesis.**
+`PlaqVariance.corrClay_zero_pos` gives $0<\rho(0)$ at **every** real coupling and **every** periodic
+extent, and `corrClay_zero_eq` identifies that value as the connected correlation of the
+four-dimensional $SU(3)$ plaquette-energy observable with ITSELF, on the genuine Wilson ensemble, with
+a separating witness (two configurations whose holonomy differs by a commutator of non-commuting
+$SU(3)$ elements) and a negative control (`wilsonCorrConn_self_eq_zero_of_trivial` gives exactly $0$ at
+$SU(1)$). Read what it is not: a non-vanishing connected correlator at lag ZERO is a variance, and a
+Gaussian measure has one too. Non-Gaussianity — a fourth cumulant, a connected four-point function,
+any comparison against a Wick factorisation — is absent from the development.
+
+What is proved is that limit, **not** a constructed measure on $\mathbb{R}^4$; §13 states the
 same, and the gap side is scoped to $\beta\ge0$ where the reflection-positivity certificate is proved.
 Each rests on the named inputs, and each is checkable by the axiom footprint printed in §13.
 
@@ -2042,8 +2073,8 @@ certificate of §11.1b gives an aperture-restricted read whose entire chain is f
 'EvenAperture.mass_gap_rate_and_continuum_even'     depends on axioms: [propext, Classical.choice, Quot.sound]
 ```
 
-So the mass gap, non-triviality, $SO(4)$ **and** the OS0–OS3 continuum limit follow from a single
-hypothesis with **no named axiom on either side** — the measure half was already clean. Read what
+So the mass gap, non-triviality, the axis-permutation invariance **and** the OS0–OS3 limit over
+extents follow from a single hypothesis with **no named axiom on either side** — the measure half was already clean. Read what
 "already clean" means, because it is stronger than it sounds and weaker than it reads:
 `FlagshipScope.flagship_measure_half_needs_no_hypothesis` proves the measure half takes **no
 hypothesis at all**, its proof term being the unconditional `ym_continuum_tension`, with `hc`
@@ -2288,10 +2319,13 @@ denominator and $(1-3^{-1/4})/8$ is the entropy floor composed with $\cos x\ge1-
 constant enters, and no fit. Foundational axioms only.
 
 That is the count hypothesis `Measure.familyOfSortedCount` asks for. The chain from a measured tension to an OS0--OS3
-continuum measure on the four-dimensional $SU(3)$ Wilson lattice is therefore closed as a chain of
+limit over EXTENTS on the four-dimensional $SU(3)$ Wilson lattice is therefore closed as a chain of
 theorems: $\mu<\kappa_0$ $\to$ substrate cap $\to$ resolved-count ceiling $\to$ `os_gap` $\to$
-`continuum_of_family`. What is left is instantiation -- a read at each spacing whose tension clears
-the floor -- not another inequality. And note where $\varepsilon$ sits: in the DENOMINATOR, which is
+`continuum_of_family`. What is left is instantiation -- a read at each EXTENT whose tension clears
+the floor -- not another inequality. Read the endpoint precisely: `OSFamily.osFamily_Q_eq` evaluates
+the family at index $a$ as `corrClay (extent a)` with `extent a = 2a+2` and the coupling a fixed
+PARAMETER, so the index sets the periodic extent and no lattice spacing occurs in `LatticeYMFamily`
+anywhere. This chain reaches the infinite-VOLUME limit. The continuum direction is untouched by it. And note where $\varepsilon$ sits: in the DENOMINATOR, which is
 why the residual-edge theorems matter rather than being commentary. An inflated floor makes this
 ceiling smaller, and a smaller ceiling is a stronger claim than the data supports.
 

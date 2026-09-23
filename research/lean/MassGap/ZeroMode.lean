@@ -1,34 +1,47 @@
 /-
-# The zero mode is punished by the aperture — the missing link from the tension to DECAY
+# MassGap.ZeroMode — a constant component of a lag correlation, against the tension
 
-WHAT WAS MISSING. `Moment.lean` proves everything about the tension `μ = -log⟨cos θ⟩` as a
-functional of the lag distribution, and `Complete.lean` carries `μ < κ₀` to a "mass gap" only
-through `ymModelAt.m := exp(-(κ₀ - μ))` — a mode DEFINED to equal its own bound. Nothing anywhere
-derives DECAY of the correlation from the tension. That is the gap this file closes.
+A `Moment.Read N` carries a lag correlation `ρ : Fin (N+1) → ℝ`, with angles
+`θ d = 2π d/(N+1)`, a normalised profile `p`, and a tension `μ = -log ⟨cos θ⟩`. This module asks what
+`μ < (1/4) log 3` does to a constant component of `ρ`.
 
-THE MECHANISM. A gapless theory has a zero mode: a CONSTANT component in the correlation, because
-`ρ(d) = Σ_n w_n e^{-E_n d}` contributes `w_0 · 1^d = w_0` when `E_0 = 0`. On the circle of lag
-arity `N+1` the angles are `θ d = 2π d/(N+1)`, and
+## The mechanism
 
-    ∑_{d<N+1} cos(2π d/(N+1)) = 0                       (`sum_cos_circle_eq_zero`)
+`sum_cos_circle_eq_zero` : `∑_{d<n} cos(2π d/n) = 0` for `n ≥ 2`, the real part of the vanishing sum
+of the `n`-th roots of unity, and `sum_cos_theta_eq_zero` is the same at a `Read`'s own angles. So a
+constant component of `ρ` contributes nothing to the first moment `∑ p d · cos (θ d)` while adding
+`c·(N+1)` to the normalisation.
 
-so a constant contributes NOTHING to the numerator `∑ p d · cos (θ d)` while still adding
-`c·(N+1)` to the normalisation. It dilutes, and only dilutes. Demanding `μ < κ₀` therefore BOUNDS
-the constant against the rest:
+`zero_mode_lt_of_tension` is the consequence: for `ρ = c + g` with `c ≥ 0` and `g ≥ 0`, a positive
+cosine average and `μ < (1/4) log 3` give
 
-    μ < κ₀   ⟹   c·(N+1) < (3^{1/4} - 1)·∑ g                (`zero_mode_lt_of_tension`)
+    c·(N+1) < (3^{1/4} − 1)·∑ g,
 
-The right-hand side carries no aperture. So if `∑ g` stays bounded as the aperture grows — which is
-what a decaying `g` gives — then `c·(N+1)` is bounded, hence `c → 0`: at every large enough aperture
-the zero mode is squeezed out. `no_zero_mode_of_tension_lt_floor` is that statement.
+whose right-hand side carries no aperture. `no_zero_mode_of_tension_lt_floor` concludes `c = 0` when
+`∑ g` is bounded by one `B` at every aperture and the two eventual hypotheses hold: a positive `c`
+would make the left side grow past a fixed ceiling.
 
-WHY THIS IS THE RIGHT SHAPE. It does not assume a gap and it does not define one. It takes the
-measured scalar `μ` and the structural decomposition `ρ = c + g` that reflection positivity supplies
-(`w_n ≥ 0`, the `E_0 = 0` term constant), and concludes the constant is zero. Absence of a zero mode
-IS the mass gap for a reflection-positive transfer operator.
+## The spectral side
 
-DERIVED, NOT CHOSEN. `3^{1/4} - 1` is `e^{κ₀} - 1` with `κ₀ = ¼log3` proved in `Floor.lean`; no
-tolerance and no threshold appears. The `(N+1)` is the lag arity, not a scale.
+`zeroWeight` and `gappedPart` split a finite mode sum `∑ₖ wₖ λₖ^d` at `λ = 1`, and `spectral_split`
+is the identity. `gappedPart_sum_le` bounds the partial sums of the gapped part,
+`le_geometric_of_lt_one` and `exists_exponential_decay` produce a geometric envelope from modes
+strictly below one, and `tendsto_zero_of_lt_one` the limit.
+
+`correlation_decays_of_tension` and `correlation_gap_of_tension` compose the two sides, and
+`hypotheses_satisfiable`, `contactRead_spectral` and `chain_hypotheses_satisfiable` exhibit the
+contact read satisfying every hypothesis, so neither statement is vacuous.
+
+## Scope
+
+Everything is about `Moment.Read` and finite mode families `w`, `lam : ι → ℝ`. The decomposition
+`ρ = c + g` and the spectral form `ρ(d) = ∑ₖ wₖ λₖ^d` are hypotheses; no statement here establishes
+either for a lattice correlation. The conclusions are about that mode family, and about the
+constant `c`, rather than about an operator or a spectrum.
+
+DERIVED throughout: `3^{1/4} − 1` is `e^{κ₀} − 1` at `κ₀ = (1/4) log 3`, the constant `Floor.lean`
+bounds; `(N+1)` is the lag arity, the cardinality of `Fin (N+1)`, not a scale. `1` is the mode value
+at which the split is taken — the value whose powers neither grow nor decay.
 -/
 import Mathlib
 import MassGap.Moment
@@ -37,14 +50,18 @@ namespace MassGap.ZeroMode
 
 open Finset Real
 
-/-- **A constant contributes nothing to the circular first moment.** The `N+1` angles
-`2πd/(N+1)` are the arguments of the `(N+1)`-th roots of unity, whose sum is zero for
-`N+1 ≥ 2`; the real part of that identity is this. This is the whole reason a zero mode is
-punished rather than rewarded. -/
+/-- `∑ d : Fin n, cos (2π d/n) = 0` for `n ≥ 2`. The angles are the arguments of the `n`-th roots of
+unity; `Complex.isPrimitiveRoot_exp` and `IsPrimitiveRoot.geom_sum_eq_zero` make their sum zero, and
+this is the real part of that identity.
+
+`2 ≤ n` is required: at `n = 1` the single angle is `0` and the sum is `1`.
+
+DERIVED: `2` in the hypothesis is the least `n` at which the roots of unity cancel, and `2` in
+`2 * π` is the full turn the `n` angles divide. `0` is the value of the sum. -/
 theorem sum_cos_circle_eq_zero (n : ℕ) (hn : 2 ≤ n) :
     ∑ d : Fin n, Real.cos (2 * Real.pi * (d : ℝ) / n) = 0 := by
   have hn0 : n ≠ 0 := by omega
-  -- ζ = exp(2πi/n) is a PRIMITIVE n-th root of unity (Mathlib), so its geometric sum vanishes
+  -- ζ = exp(2πi/n) is a primitive n-th root of unity (Mathlib), so its geometric sum vanishes
   set ζ : ℂ := Complex.exp (2 * Real.pi * Complex.I / n) with hζdef
   have hprim : IsPrimitiveRoot ζ n := Complex.isPrimitiveRoot_exp n hn0
   have hsum : ∑ d ∈ Finset.range n, ζ ^ d = 0 := hprim.geom_sum_eq_zero hn
@@ -65,8 +82,13 @@ theorem sum_cos_circle_eq_zero (n : ℕ) (hn : 2 ≤ n) :
         rw [Complex.re_sum]
     _ = 0 := by rw [hsum]; simp
 
-/-- The same identity in the shape the read uses: `Read.θ` is exactly the circle angle, so a
-constant component of `ρ` contributes zero to the first moment. -/
+/-- `∑ d, cos (R.θ d) = 0` for a `Moment.Read N` with `N ≥ 1`. `Moment.Read.θ` unfolds to the circle
+angle `2π d/(N+1)`, so this is `sum_cos_circle_eq_zero` at `n = N + 1`.
+
+`1 ≤ N` is what makes `N + 1 ≥ 2`, which that lemma requires.
+
+DERIVED: `1` is the lower bound on `N` in `hN`, chosen so the lag arity `N + 1` reaches the `2` that
+`sum_cos_circle_eq_zero` needs. `0` is the value of the sum. -/
 theorem sum_cos_theta_eq_zero {N : ℕ} (R : Moment.Read N) (hN : 1 ≤ N) :
     ∑ d, Real.cos (R.θ d) = 0 := by
   have h2 : 2 ≤ N + 1 := by omega
@@ -77,17 +99,17 @@ theorem sum_cos_theta_eq_zero {N : ℕ} (R : Moment.Read N) (hN : 1 ≤ N) :
   push_cast
   ring_nf
 
-/-- **THE ZERO MODE IS SQUEEZED BY THE APERTURE.**
+/-- The zero mode is squeezed by the aperture.
 
     `ρ = c + g`,  `c ≥ 0`,  `g ≥ 0`,  `μ < κ₀`   ⟹   `c·(N+1) < (3^{1/4} − 1)·∑ g`
 
-A gapless theory carries a CONSTANT component in its correlation: the transfer-operator form
+A gapless theory carries a constant component in its correlation: the transfer-operator form
 `ρ(d) = ∑ₙ wₙ e^{−Eₙ d}` contributes `w₀·1^d = w₀` exactly when `E₀ = 0`. On the lag circle that
-constant contributes NOTHING to the first moment (`sum_cos_theta_eq_zero`) while still adding
-`c·(N+1)` to the normalisation, so it can only DILUTE the cosine average. Requiring the average to
+constant contributes nothing to the first moment (`sum_cos_theta_eq_zero`) while still adding
+`c·(N+1)` to the normalisation, so it can only dilute the cosine average. Requiring the average to
 clear `3^{-1/4}` therefore bounds the constant against the rest of the correlation.
 
-The bound's right-hand side carries NO aperture. So the larger the aperture, the smaller the zero
+The bound's right-hand side carries no aperture. So the larger the aperture, the smaller the zero
 mode is forced to be — which is `no_zero_mode_of_tension_lt_floor` below.
 
 DERIVED: `3^{1/4} − 1 = e^{κ₀} − 1` with `κ₀ = ¼log3` proved in `Floor.lean`. No tolerance, no
@@ -120,7 +142,7 @@ theorem zero_mode_lt_of_tension {N : ℕ} (hN : 1 ≤ N) (c : ℝ) (g : Fin (N +
     refine Finset.sum_le_sum (fun d _ => ?_)
     have := Real.cos_le_one (R.θ d)
     nlinarith [hg d]
-  -- the cosine average IS the first moment over the normalisation
+  -- the cosine average is the first moment over the normalisation
   have havg : ∑ d, R.p d * Real.cos (R.θ d) = (∑ d, R.ρ d * Real.cos (R.θ d)) / S := by
     rw [Finset.sum_div]
     refine Finset.sum_congr rfl (fun d _ => ?_)
@@ -142,19 +164,19 @@ theorem zero_mode_lt_of_tension {N : ℕ} (hN : 1 ≤ N) (c : ℝ) (g : Fin (N +
   rw [hS] at hstep
   nlinarith [hstep, hr, hrpos, h14]
 
-/-- **NO ZERO MODE: the aperture condition kills the gapless component outright.**
+/-- If a family of reads carries the same constant `c ≥ 0` at every aperture, with
+`ρ_N = c + g_N`, `g_N ≥ 0`, `∑ g_N ≤ B` at every `N`, and the cosine average positive and the
+tension below `(1/4) log 3` eventually in `N`, then `c = 0`.
 
-If the correlation carries a FIXED constant `c ≥ 0` at every aperture, the rest of its weight stays
-bounded (`∑ g ≤ B` — what a decaying `g` gives), and the tension clears the floor at every aperture,
-then `c = 0`.
+`zero_mode_lt_of_tension` bounds `c·(N+1)` by `(3^{1/4} − 1)·B`, which carries no aperture, so a
+positive `c` would make the left side grow past a fixed ceiling.
 
-The reason is `zero_mode_lt_of_tension`: it bounds `c·(N+1)` by `(3^{1/4} − 1)·B`, a quantity with no
-aperture in it. A positive `c` makes the left side grow without bound while the right stands still,
-so a positive `c` is impossible. For a reflection-positive transfer operator the vanishing of the
-constant component IS the statement that no zero-energy mode contributes — a mass gap.
+`B` is one constant for all apertures; without that uniformity the argument gives nothing.
 
-This is what `Complete.ymModelAt` currently ASSUMES by defining its mode to be `e^{−(κ₀−μ)}`. Here
-it is derived from the tension instead. -/
+DERIVED: `0` is the lower bound on `c` and on each `g N d`, and the value concluded of `c`. `1` in
+`Fin (N + 1)` is the lag arity, and in `c * (N + 1)` inside the proof it is that same arity. `3`,
+`1` and `4` spell `3^{1/4} − 1 = e^{κ₀} − 1`, and `(1/4) * log 3` is `κ₀` itself, the constant
+`Floor.lean` bounds. -/
 theorem no_zero_mode_of_tension_lt_floor
     (c B : ℝ) (hc : 0 ≤ c)
     (g : (N : ℕ) → Fin (N + 1) → ℝ) (hg : ∀ N d, 0 ≤ g N d)
@@ -194,15 +216,15 @@ theorem no_zero_mode_of_tension_lt_floor
   have hmn : (m : ℝ) ≤ (n : ℝ) := by exact_mod_cast hnm
   nlinarith [hA, hBlt, hmn, hcp]
 
-/-! ### From the spectral form to the split, and from the split to DECAY
+/-! ### From the spectral form to the split, and from the split to decay
 
 Reflection positivity gives the transfer-operator form `ρ(d) = ∑ₖ wₖ λₖ^d` with `wₖ ≥ 0` and
 `λₖ ∈ [0,1]`. This section does the two steps that turn the zero-mode bound into a decay statement:
 
-  * `spectral_split` — the form IS `c + g`, with `c` the total weight sitting at `λ = 1` (the
+  * `spectral_split` — the form is `c + g`, with `c` the total weight sitting at `λ = 1` (the
     gapless modes) and `g` the rest. So the hypothesis `ρ = c + g` of `zero_mode_lt_of_tension`
     is not an assumption about the correlation; it is what the spectral form always looks like.
-  * `gapped_sum_le` — `∑_d g d` is bounded by `∑ₖ wₖ/(1−λₖ)` at EVERY aperture, because each
+  * `gapped_sum_le` — `∑_d g d` is bounded by `∑ₖ wₖ/(1−λₖ)` at every aperture, because each
     non-unit mode contributes a convergent geometric series. That is the `B` the zero-mode
     corollary needs, and it carries no aperture.
   * `tendsto_zero_of_lt_one` — once no weight sits at `λ = 1`, the correlation decays to zero.
@@ -214,10 +236,10 @@ section Spectral
 
 variable {ι : Type*} [DecidableEq ι]
 
-/-- The weight carried by the GAPLESS modes (`λ = 1`): the constant component.
+/-- The weight carried by the gapless modes (`λ = 1`): the constant component.
 
 DERIVED: `1` is the unit circle, not a cut. A transfer eigenvalue of modulus one is a mode that does
-not decay with the lag -- that IS gaplessness -- so the split is at the only value that separates
+not decay with the lag -- that is gaplessness -- so the split is at the only value that separates
 decaying from non-decaying, and no other value would name anything. -/
 noncomputable def zeroWeight (s : Finset ι) (w lam : ι → ℝ) : ℝ :=
   ∑ k ∈ s.filter (fun k => lam k = 1), w k
@@ -228,8 +250,15 @@ DERIVED: `1` is the unit circle, the complement of the split made in `zeroWeight
 noncomputable def gappedPart (s : Finset ι) (w lam : ι → ℝ) (d : ℕ) : ℝ :=
   ∑ k ∈ s.filter (fun k => lam k ≠ 1), w k * lam k ^ d
 
-/-- **The spectral form IS `c + g`.** Splitting the mode sum at `λ = 1` costs nothing: the unit
-modes contribute `wₖ·1^d = wₖ`, independent of the lag, which is exactly a constant. -/
+/-- `∑_{k ∈ s} w k * lam k ^ d = zeroWeight s w lam + gappedPart s w lam d` at every `d`:
+`Finset.sum_filter_add_sum_filter_not` at the predicate `lam k = 1`, with `1 ^ d = 1` collapsing the
+unit-mode half.
+
+So a finite mode sum splits as a constant plus a lag-dependent remainder, the constant being the
+total weight at `λ = 1`.
+
+DERIVED: `1` is the mode value the split is taken at — the value whose powers are constant in the
+lag, which is what makes `zeroWeight` independent of `d`. -/
 theorem spectral_split (s : Finset ι) (w lam : ι → ℝ) (d : ℕ) :
     ∑ k ∈ s, w k * lam k ^ d = zeroWeight s w lam + gappedPart s w lam d := by
   unfold zeroWeight gappedPart
@@ -249,9 +278,16 @@ theorem gappedPart_nonneg (s : Finset ι) (w lam : ι → ℝ) (hw : ∀ k ∈ s
     have hk' := (Finset.mem_filter.mp hk).1
     exact mul_nonneg (hw k hk') (pow_nonneg (hlam k hk') d))
 
-/-- **The gapped part has bounded total weight, at every aperture.** Each non-unit mode sums a
-geometric series, so the partial sums are under `∑ₖ wₖ/(1−λₖ)` — a bound with no aperture in it,
-which is exactly what `no_zero_mode_of_tension_lt_floor` consumes as `B`. -/
+/-- `∑_{d < M} gappedPart s w lam d ≤ ∑_{k, λₖ ≠ 1} wₖ/(1 − λₖ)`, at every `M`. Exchanging the two
+sums by `Finset.sum_comm`, each mode contributes a geometric partial sum `wₖ(1 − λₖ^M)/(1 − λₖ)`,
+which `geom_sum_eq` evaluates and which is at most `wₖ/(1 − λₖ)` because `λₖ^M ≥ 0`.
+
+The bound does not mention `M`, which is what makes it usable as the uniform `B` of
+`no_zero_mode_of_tension_lt_floor`.
+
+DERIVED: `1` is the mode value excluded by the filter, and the unit from which `λₖ` is subtracted —
+the same number, since the denominator vanishes exactly at the excluded value. `0` is the lower
+bound on each weight and each mode. -/
 theorem gappedPart_sum_le (s : Finset ι) (w lam : ι → ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hle : ∀ k ∈ s, lam k ≤ 1) (M : ℕ) :
     ∑ d ∈ Finset.range M, gappedPart s w lam d
@@ -277,26 +313,19 @@ theorem gappedPart_sum_le (s : Finset ι) (w lam : ι → ℝ)
       ≤ w k * (1 / (1 - lam k)) := mul_le_mul_of_nonneg_left hinner (hw k hk')
     _ = w k / (1 - lam k) := by ring
 
-/-! VERIFIED. `le_geometric_of_lt_one` and `exists_exponential_decay` typecheck against the
-local Mathlib build (8169 oleans, Lean 4.31.0) with `Moment` rebuilt for the current
-`cosAvg_gt_of_tension_lt_floor`, and `#print axioms` gives the three foundational axioms for
-both. They were written while the build host was unreachable and carried an UNVERIFIED
-marker until then; `pow_le_pow_left` -- which does not exist -- was corrected to
-`pow_le_pow_left₀` before any build, by grepping the Mathlib source that ships in the
-package tree. The full-project `lake build` on node 45 remains the authority and has not
-run since; nothing else in this file changed. -/
+/-! `le_geometric_of_lt_one` and `exists_exponential_decay` use `pow_le_pow_left₀`;
+`pow_le_pow_left` does not exist at the v4.31.0 pin. -/
 
-/-- **The decay is EXPONENTIAL, at an explicit positive rate.** `Tendsto ... 0` is weaker than a
-mass gap: a power law tends to zero too. What upgrades it here is FINITENESS -- the maximum of
-`lam` over a finite set is attained, so if every mode is strictly inside the unit circle then so is
-their maximum, and the whole sum is bounded by a single geometric term.
+/-- `∑ₖ wₖ λₖ^d ≤ (∑ₖ wₖ) · ρ^d` at every `d`, given nonnegative weights, nonnegative modes, and
+`λₖ ≤ ρ` at every mode. Termwise, by `pow_le_pow_left₀` and nonnegativity of the weights.
 
-    `∑ₖ wₖ λₖ^d ≤ (∑ₖ wₖ) · ρ^d`,  `ρ = max lam < 1`
+`ρ` is a parameter, not a maximum; `exists_exponential_decay` produces one strictly below `1` from a
+finite mode set. For a countable family the modes may accumulate at `1`, and "no mode at `λ = 1`"
+would then give no such `ρ`.
 
-That is a mass gap: the rate is `−log ρ > 0`. Read the other way, this is the load-bearing role of
-the finite mode set in `hspec` -- for a COUNTABLE family the modes may accumulate at `1`, and
-"no mode at `λ = 1`" would then not give any positive rate at all. The finite-dimensional transfer
-matrix of a finite lattice is what supplies it. -/
+DERIVED: `0` is the lower bound on each weight in `hw` and on each mode in `hlam`; the second is what
+`pow_le_pow_left₀` needs, and the first is what lets the termwise bound be multiplied through. `ρ` is
+the caller's bound on the modes and `d` the caller's lag. -/
 theorem le_geometric_of_lt_one (s : Finset ι) (w lam : ι → ℝ) (ρ : ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hρ : ∀ k ∈ s, lam k ≤ ρ) (d : ℕ) :
     ∑ k ∈ s, w k * lam k ^ d ≤ (∑ k ∈ s, w k) * ρ ^ d := by
@@ -304,9 +333,15 @@ theorem le_geometric_of_lt_one (s : Finset ι) (w lam : ι → ℝ) (ρ : ℝ)
   refine Finset.sum_le_sum (fun k hk => ?_)
   exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (hlam k hk) (hρ k hk) d) (hw k hk)
 
-/-- **The gap, explicitly.** With no weight at `λ = 1` on a finite mode set there is a `ρ < 1`
-dominating every mode, so the correlation is bounded by a geometric decay whose rate `−log ρ` is
-strictly positive. This is the statement a mass gap actually makes. -/
+/-- For a nonempty finite mode set with nonnegative weights and every mode in `[0, 1)`, there is a
+`ρ ∈ [0, 1)` with `∑ₖ wₖ λₖ^d ≤ (∑ₖ wₖ) · ρ^d` at every `d`. The witness is the maximum of `lam`,
+attained by `Finset.exists_max_image` because `s` is finite and nonempty, hence itself strictly below
+`1`; `le_geometric_of_lt_one` supplies the bound.
+
+Finiteness and nonemptiness are both used: the maximum must exist and must be a mode.
+
+DERIVED: `0` is the lower bound on each weight, on each mode, and on `ρ`. `1` is the strict upper
+bound on each mode and on `ρ` — the same bound, since `ρ` is one of the modes. -/
 theorem exists_exponential_decay [DecidableEq ι] (s : Finset ι) (w lam : ι → ℝ)
     (hs : s.Nonempty) (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k)
     (hlt : ∀ k ∈ s, lam k < 1) :
@@ -316,8 +351,13 @@ theorem exists_exponential_decay [DecidableEq ι] (s : Finset ι) (w lam : ι �
   refine ⟨lam k₀, hlam k₀ hk₀, hlt k₀ hk₀, fun d => ?_⟩
   exact le_geometric_of_lt_one s w lam (lam k₀) hw hlam (fun k hk => hmax k hk) d
 
-/-- **No weight at `λ = 1` ⟹ the correlation decays to zero.** A finite sum of geometric terms
-each strictly inside the unit circle tends to zero. This is the payoff: the gap. -/
+/-- With every mode in `[0, 1)`, `d ↦ ∑ₖ wₖ λₖ^d` tends to `0` along `atTop`: each term does, by
+`tendsto_pow_atTop_nhds_zero_of_lt_one`, and `tendsto_finsetSum` adds finitely many of them.
+
+No sign condition on the weights is needed here, unlike in `exists_exponential_decay`.
+
+DERIVED: `0` is the lower bound on each mode and the limit point; `1` is the strict upper bound on
+each mode, below which a power sequence is null. -/
 theorem tendsto_zero_of_lt_one (s : Finset ι) (w lam : ι → ℝ)
     (hlam : ∀ k ∈ s, 0 ≤ lam k) (hlt : ∀ k ∈ s, lam k < 1) :
     Filter.Tendsto (fun d : ℕ => ∑ k ∈ s, w k * lam k ^ d) Filter.atTop (nhds 0) := by
@@ -333,7 +373,7 @@ end Spectral
 
 A theorem whose hypotheses nothing satisfies proves nothing. The contact read `ρ = δ_{d,0}` is a
 correlation with all its weight at lag zero: nonnegative, positive total, cosine average
-`cos 0 = 1`, tension `-log 1 = 0`, below the floor at EVERY aperture. It satisfies every hypothesis
+`cos 0 = 1`, tension `-log 1 = 0`, below the floor at every aperture. It satisfies every hypothesis
 of `no_zero_mode_of_tension_lt_floor` with `c = 0` and `B = 1`, so the implication has content. -/
 namespace Witness
 
@@ -369,8 +409,16 @@ theorem contactRead_tension (N : ℕ) : (contactRead N).tension = 0 := by
   unfold Moment.Read.tension
   rw [contactRead_cosAvg N, Real.log_one, neg_zero]
 
-/-- **Non-vacuity.** The contact family satisfies every hypothesis, so
-`no_zero_mode_of_tension_lt_floor` is a statement with content rather than an empty implication. -/
+/-- There are `c`, `B`, `g` and a family of reads satisfying every hypothesis of
+`no_zero_mode_of_tension_lt_floor`. The witness is `c = 0`, `B = 1`, `g N` the indicator of lag `0`,
+and `R = contactRead`; the cosine average is `1` at every aperture (`contactRead_cosAvg`) and the
+tension is `0` (`contactRead_tension`), which is below `(1/4) log 3` because `log 3 > 0`.
+
+So the hypotheses are satisfiable, and that implication is not empty.
+
+DERIVED: `0` is the lower bound on `c` and on each `g N d`, the value taken for `c`, the lag the
+indicator is supported at, and the lower bound on the cosine average. `1` is the value taken for `B`
+and the indicator's own value. `(1/4) * log 3` is the floor constant, `Floor.lean`'s. -/
 theorem hypotheses_satisfiable :
     ∃ (c B : ℝ) (g : (N : ℕ) → Fin (N + 1) → ℝ) (R : (N : ℕ) → Moment.Read N),
       0 ≤ c ∧ (∀ N d, 0 ≤ g N d) ∧ (∀ N, (R N).ρ = fun d => c + g N d) ∧
@@ -386,8 +434,14 @@ theorem hypotheses_satisfiable :
     have : (0 : ℝ) < Real.log 3 := Real.log_pos (by norm_num)
     linarith
 
-/-- The contact read IS a reflection-positive spectral form: one mode of weight `1` at `λ = 0`,
-since `0^d` is `1` at `d = 0` and `0` after. So it witnesses the CHAIN's hypotheses too. -/
+/-- `(contactRead N).ρ` equals the one-mode spectral form `∑_{k : Unit} 1 * 0 ^ d`: `0 ^ d` is `1` at
+`d = 0` and `0` after, which is the contact indicator.
+
+So the contact read has the spectral shape `chain_hypotheses_satisfiable` needs, with a single mode
+of weight `1` at `λ = 0`.
+
+DERIVED: `1` is the single mode's weight and `0` its value; `0` is also the lag the indicator is
+supported at. The index type is `Unit`, so the sum has one term. -/
 theorem contactRead_spectral (N : ℕ) :
     (contactRead N).ρ = fun d : Fin (N + 1) =>
       ∑ _k ∈ (Finset.univ : Finset Unit), (1 : ℝ) * (0 : ℝ) ^ (d : ℕ) := by
@@ -400,8 +454,14 @@ theorem contactRead_spectral (N : ℕ) :
   · have hv : (d : ℕ) ≠ 0 := fun hc => h (Fin.ext hc)
     rw [if_neg h, zero_pow hv]
 
-/-- **The chain is not vacuous either.** The contact family satisfies every hypothesis of
-`correlation_decays_of_tension`, and its correlation does decay. -/
+/-- There are a finite mode set, weights, modes and a family of reads satisfying every hypothesis of
+`correlation_decays_of_tension`. The witness is `Finset.univ : Finset Unit`, weight `1`, mode `0`,
+and `R = contactRead`, with `contactRead_spectral` supplying the spectral form and
+`contactRead_cosAvg`, `contactRead_tension` the two eventual hypotheses.
+
+DERIVED: `1` is the single mode's weight and the upper bound each mode must satisfy; `0` is the mode
+value, the lower bound on the weights and on the modes, and the lower bound on the cosine average.
+`(1/4) * log 3` is the floor constant. -/
 theorem chain_hypotheses_satisfiable :
     ∃ (s : Finset Unit) (w lam : Unit → ℝ) (R : (N : ℕ) → Moment.Read N),
       (∀ k ∈ s, 0 ≤ w k) ∧ (∀ k ∈ s, 0 ≤ lam k) ∧ (∀ k ∈ s, lam k ≤ 1) ∧
@@ -419,22 +479,25 @@ theorem chain_hypotheses_satisfiable :
 
 end Witness
 
-/-- **THE CHAIN: a measured tension below the floor makes the correlation DECAY.**
+/-- Given a finite mode family with `0 ≤ wₖ` and `0 ≤ λₖ ≤ 1`, a family of reads whose correlation is
+`ρ_N(d) = ∑ₖ wₖ λₖ^d` at every aperture, and the cosine average positive and the tension below
+`(1/4) log 3` eventually in `N`, the sequence `d ↦ ∑ₖ wₖ λₖ^d` tends to `0`.
 
-    reflection-positive spectral form  +  `μ_N < κ₀` at large apertures   ⟹   `ρ(d) → 0`
+Four steps, none of which defines the conclusion:
 
-Every step is derived and none of them defines the conclusion:
+1. `spectral_split` — the mode sum splits as `c + g`, with `c = zeroWeight` the total weight at
+   `λ = 1`.
+2. `gappedPart_sum_le` — `∑_d g d` is bounded by `∑ₖ wₖ/(1−λₖ)`, which carries no aperture.
+3. `no_zero_mode_of_tension_lt_floor` — a constant contributes nothing to the circular first moment,
+   so the tension bound forces `c = 0`.
+4. `tendsto_zero_of_lt_one` — with no weight at `λ = 1`, every surviving mode is strictly below one
+   and the sum tends to zero.
 
-1. `spectral_split` — the RP form `ρ(d) = ∑ₖ wₖλₖ^d` splits as `c + g`, `c` the weight at `λ = 1`.
-2. `gappedPart_sum_le` — `∑_d g d` is under `∑ₖ wₖ/(1−λₖ)` at every aperture; no aperture in it.
-3. `no_zero_mode_of_tension_lt_floor` — a constant only dilutes the circular first moment, so the
-   tension clearing the floor at large apertures forces `c = 0`.
-4. `tendsto_zero_of_lt_one` — with no weight left at `λ = 1`, every surviving mode is strictly
-   inside the unit circle and the correlation decays.
+The conclusion is about the mode family; `hR` is what ties it to the reads, and it is a hypothesis.
 
-This is what `Complete.ymModelAt` assumes by setting its single mode to `e^{−(κ₀−μ)}`. Here the
-decay is CONCLUDED, over an arbitrary finite reflection-positive mode family, from the measured
-scalar alone. -/
+DERIVED: `0` is the lower bound on each weight and each mode, the lower bound on the cosine average,
+and the limit point. `1` is the upper bound on each mode — the value at which `spectral_split` cuts —
+and the `+1` of `Fin (N + 1)`, the lag arity. `(1/4) * log 3` is the floor constant. -/
 theorem correlation_decays_of_tension
     {ι : Type*} [DecidableEq ι] (s : Finset ι) (w lam : ι → ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hle : ∀ k ∈ s, lam k ≤ 1)
@@ -477,15 +540,15 @@ theorem correlation_decays_of_tension
 /-! ### The geometric cosine sum, machine-checked
 
 The `O(1/N)` ceiling on this criterion's certified rate rests on one identity: for a single transfer
-mode the cosine average is EXACT in closed form, because both of its sums are geometric. That identity
+mode the cosine average is exact in closed form, because both of its sums are geometric. That identity
 is computed and cross-checked numerically in `code/certify/aperture_cap_of_floor.py`, which reproduces
 it by direct summation over every lag and refuses if the two disagree. A numerical cross-check is
 evidence; it is not a proof. What follows proves the step the closed form turns on -- that the real
-cosine sum IS the real part of a complex geometric series -- so the identity rests on Mathlib's
+cosine sum is the real part of a complex geometric series -- so the identity rests on Mathlib's
 `geom_sum_eq` rather than on agreement between two floating-point computations.
 -/
 
-/-- **The cosine sum is the real part of a geometric series.**
+/-- The cosine sum is the real part of a geometric series.
 
 `\sum_{d<m} \lambda^d \cos(kd) = \mathrm{Re} \sum_{d<m} (\lambda e^{ik})^d`, for every real `\lambda` and `k`
 and every `m` -- no hypothesis on `\lambda`, since both sides are finite sums.
@@ -504,7 +567,7 @@ theorem sum_geom_cos_eq_re (lam k : ℝ) (m : ℕ) :
   rw [hz, Complex.mul_re, Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_im]
   simp [← Complex.ofReal_pow]
 
-/-- **The antipodal fold.** On a circle of even size `2m`, a summand invariant under `d ↦ 2m - d`
+/-- The antipodal fold. On a circle of even size `2m`, a summand invariant under `d ↦ 2m - d`
 is determined by the half-range: the two fixed points `0` and `m` appear once, everything between
 appears twice.
 
@@ -527,7 +590,7 @@ theorem sum_range_antipodal_fold (m : ℕ) (hm : 0 < m) (F : ℕ → ℝ)
   have hlow : ∑ d ∈ Finset.range m, F d = F 0 + ∑ d ∈ Finset.Ico 1 m, F d := by
     rw [Finset.range_eq_Ico]
     exact Finset.sum_eq_sum_Ico_succ_bot hm F
-  -- the upper half peels off the fixed point `m` and then REFLECTS onto the lower one
+  -- the upper half peels off the fixed point `m` and then reflects onto the lower one
   have hhigh : ∑ d ∈ Finset.Ico m (2 * m), F d = F m + ∑ d ∈ Finset.Ico 1 m, F d := by
     rw [Finset.sum_eq_sum_Ico_succ_bot (by omega : m < 2 * m) F]
     congr 1
@@ -555,7 +618,7 @@ theorem sum_range_antipodal_fold (m : ℕ) (hm : 0 < m) (F : ℕ → ℝ)
   rw [hsplit, hlow, hhigh]
   ring
 
-/-- **The aperture read's own sum folds.** The circular cosine sum of a single transfer mode
+/-- The aperture read's own sum folds. The circular cosine sum of a single transfer mode
 `ρ(d) = λ^{circLag d}` over the whole circle of even size `2m` collapses to a half-range sum:
 
     ∑_{d < 2m} λ^{min(d, 2m-d)} cos(2πd/2m)  =  1 - λ^m + 2 ∑_{1 ≤ d < m} λ^d cos(2πd/2m)
@@ -616,7 +679,7 @@ theorem circLag_cos_sum_fold (m : ℕ) (hm : 0 < m) (lam : ℝ) :
   rw [Finset.sum_congr rfl hinner]
   ring
 
-/-- **The closed form itself**, off `geom_sum_eq`: away from `\lambda e^{ik} = 1` the cosine sum is the
+/-- The closed form itself, off `geom_sum_eq`: away from `\lambda e^{ik} = 1` the cosine sum is the
 real part of `(z^m - 1)/(z - 1)`.
 
 The excluded case is exactly the one where every term is `1` -- `\lambda = 1` with `k` a multiple of
@@ -633,8 +696,8 @@ theorem sum_geom_cos_closed (lam k : ℝ) (m : ℕ)
   rw [sum_geom_cos_eq_re, geom_sum_eq h]
 /-! ### The circular second moment of the lag, in closed form
 
-The aperture's ceiling on the substrate becomes a FLOOR on the decay rate only once the second moment
-of a UNIFORM lag distribution is known -- that is what a slowly-decaying correlation gets compared
+The aperture's ceiling on the substrate becomes a floor on the decay rate only once the second moment
+of a uniform lag distribution is known -- that is what a slowly-decaying correlation gets compared
 against. It is `(n³ + 2n)/12`, exactly, and the route is the antipodal fold proved above: `clag` is
 symmetric under `d ↦ n - d` by construction, so the fold applies to it directly.
 
@@ -642,8 +705,14 @@ Mathlib carries Gauss' summation formula but not the sum of squares (only Bernou
 heavier than one induction), so that is proved here too.
 -/
 
-/-- `6 ∑_{i<n+1} i² = n(n+1)(2n+1)`, by induction. Stated in this shifted form because the usual
-`n(n-1)(2n-1)/6` needs truncated subtraction and a division exact only by accident. -/
+/-- `6 * ∑_{i < n+1} i² = n(n+1)(2n+1)`, by induction on `n`.
+
+Stated multiplied through by `6` and over `range (n+1)` rather than as `n(n−1)(2n−1)/6`, so that
+neither truncated subtraction nor an exact division in `ℕ` appears.
+
+DERIVED: `6` clears the denominator of the closed form for a sum of squares, so it is that formula's
+own divisor. The exponent `2` is the square being summed, `2` in `2n + 1` and the two `1`s are the
+closed form's coefficients. -/
 theorem six_mul_sum_sq (n : ℕ) :
     6 * ∑ i ∈ Finset.range (n + 1), i ^ 2 = n * (n + 1) * (2 * n + 1) := by
   induction n with
@@ -663,12 +732,12 @@ DERIVED: the circle has one origin, so the lag of `d` is the smaller of the two 
 literal here sets a scale. -/
 def clag (n d : ℕ) : ℕ := min d (n - d)
 
-/-- **The circular second moment of the lag is exactly `(n³ + 2n)/12`** on an even circle.
+/-- The circular second moment of the lag is exactly `(n³ + 2n)/12` on an even circle.
 
 Through `sum_range_antipodal_fold`: the fixed points `0` and `m` contribute `0` and `m²`, everything
 between contributes twice, and what remains is `six_mul_sum_sq`.
 
-This is the quantity a spread-out correlation is measured against. A UNIFORM lag distribution has
+This is the quantity a spread-out correlation is measured against. A uniform lag distribution has
 substrate ratio `(n³+2n)/(12n³) > 1/12 = 0.083`, far above the ceiling `(1-3^{-1/4})/8 = 0.030` the
 aperture condition permits: the arithmetic form of the statement that a band-limited screen cannot
 carry a correlation spread across the whole circle.
@@ -694,7 +763,7 @@ theorem sum_clag_sq (k : ℕ) :
   have hmm : ((clag (2 * (k + 1)) (k + 1) : ℕ) : ℝ) ^ 2 = ((k : ℝ) + 1) ^ 2 := by
     have h : clag (2 * (k + 1)) (k + 1) = k + 1 := by unfold clag; omega
     rw [h]; push_cast; ring
-  -- strictly between them the lag IS the index
+  -- strictly between them the lag is the index
   have hmid : ∑ d ∈ Finset.Ico 1 (k + 1), ((clag (2 * (k + 1)) d : ℝ)) ^ 2
       = ∑ d ∈ Finset.range (k + 1), ((d : ℝ)) ^ 2 := by
     have hzero : ∑ d ∈ Finset.range (k + 1), ((d : ℝ)) ^ 2
@@ -722,11 +791,17 @@ theorem sum_clag_sq (k : ℕ) :
   ring
 
 #print axioms sum_clag_sq
-/-- The core of both substrate bounds: `12 ∑ λ^{clag d}(clag d)² ≥ λ^{n/2} n³`.
+/-- `λ^{k+1} · n³ ≤ 12 ∑_{d < n} λ^{clag n d} (clag n d)²` at `n = 2(k+1)`, for `0 ≤ λ ≤ 1`.
 
-Every weight is at least `λ^{n/2}` because the lag never exceeds the antipode, and the unweighted
-second moment is `(n³+2n)/12 ≥ n³/12` by `sum_clag_sq`. Stated once because the single-mode and
-mode-share bounds both need exactly this and would otherwise each carry a copy. -/
+Every weight is at least `λ^{k+1}` because `clag n d ≤ k + 1`, the lag never exceeding the antipode,
+and the unweighted second moment is `(n³ + 2n)/12` by `sum_clag_sq`, which is at least `n³/12`.
+
+Both the single-mode and the mode-share bounds use exactly this, which is why it is stated once.
+
+DERIVED: `2` in `2 * (k + 1)` makes the extent even, so the antipode is `k + 1` and the maximum
+circle distance is exactly half. `12` clears the denominator of `sum_clag_sq`'s closed form, itself
+`6` times the `2` of the two-sided lag count. The exponent `3` is the extent's power in that closed
+form and `2` the square of the circle distance. `0` and `1` bracket `λ`. -/
 theorem twelve_weighted_moment_ge (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : lam ≤ 1) :
     lam ^ (k + 1) * ((2 * (k + 1) : ℕ) : ℝ) ^ 3
       ≤ 12 * ∑ d ∈ Finset.range (2 * (k + 1)),
@@ -754,7 +829,7 @@ theorem twelve_weighted_moment_ge (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : l
 
 #print axioms twelve_weighted_moment_ge
 
-/-- **A SLOWLY-DECAYING CORRELATION HAS A LARGE SUBSTRATE.** The bound that turns the aperture's
+/-- A slowly-decaying correlation has a large substrate. The bound that turns the aperture's
 ceiling into a floor on the decay rate.
 
 For a single mode `ρ(d) = λ^{clag d}` on an even circle of `n = 2(k+1)` sites, the substrate ratio
@@ -762,16 +837,16 @@ satisfies `substrate ≥ λ^{n/2}/12`, stated here without division as
 
     λ^{n/2} · n² · (∑ λ^{clag d})  ≤  12 · ∑ λ^{clag d} · (clag d)²
 
-THREE STEPS, each of which a proof assistant checks, which is the whole point of taking this route
-rather than inverting the exact criterion numerically:
+Three steps, each of which the proof assistant checks, rather than a numerical inversion of the
+exact criterion:
 
-1. every weight is at least `λ^{n/2}`, since `clag d ≤ n/2` and `λ ≤ 1`;
-2. the normalisation is at most `n`, since every weight is at most `1`;
-3. the unweighted second moment is exactly `(n³+2n)/12 ≥ n³/12` (`sum_clag_sq`).
+1. Every weight is at least `λ^{n/2}`, since `clag d ≤ n/2` and `λ ≤ 1`;
+2. The normalisation is at most `n`, since every weight is at most `1`;
+3. The unweighted second moment is exactly `(n³+2n)/12 ≥ n³/12` (`sum_clag_sq`).
 
-WHY IT IS THE MECHANISM. Read against `Moment.Read.substrate_lt_of_tension_lt_floor`, which caps the
+Why it is the mechanism. Read against `Moment.Read.substrate_lt_of_tension_lt_floor`, which caps the
 substrate at `(1-3^{-1/4})/8` whenever the tension clears the floor, this says a correlation that
-decays too slowly CANNOT clear the floor: its weight is spread too far around the circle for the
+decays too slowly cannot clear the floor: its weight is spread too far around the circle for the
 screen to carry. Composing the two bounds a mode away from `λ = 1` by an explicit amount, so the
 aperture yields not merely that a gap exists but how large it is.
 
@@ -829,22 +904,28 @@ theorem substrate_ge_of_slow_decay (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : 
           lam ^ (clag (2 * (k + 1)) d) * ((clag (2 * (k + 1)) d : ℝ)) ^ 2 := by linarith [hnum]
 
 #print axioms substrate_ge_of_slow_decay
-/-- `Moment.circLag` and `clag` are the same function, one indexed by `Fin (N+1)` and one by `ℕ`.
+/-- `Moment.circLag d = clag (N + 1) d` for `d : Fin (N + 1)`, by `rfl`: both are
+`min d (N + 1 − d)`, one indexed by `Fin (N + 1)` and one by `ℕ`.
 
-Definitionally equal: both are `min d (N+1-d)`. Recorded as a lemma anyway, because a reader checking
-that the `Finset.range` bounds above apply to the `Fin`-indexed reads below should not have to take
-that on trust. -/
+Recorded so that the `Finset.range` bounds above visibly apply to the `Fin`-indexed reads below.
+
+DERIVED: `1` is the `+1` of `Fin (N + 1)`, the lag arity, and the same `+1` inside `clag`'s
+extent argument. -/
 theorem circLag_eq_clag {N : ℕ} (d : Fin (N + 1)) :
     Moment.circLag d = clag (N + 1) (d : ℕ) := rfl
 
-/-- Sums over the lag transfer between the two indexings. -/
+/-- `∑ d : Fin (N+1), g (Moment.circLag d) = ∑ d ∈ Finset.range (N+1), g (clag (N+1) d)`, for any
+`g : ℕ → ℝ`. `Fin.sum_univ_eq_sum_range` at `circLag_eq_clag`.
+
+DERIVED: `1` is the `+1` of the lag arity, appearing in the index type, the range, and `clag`'s
+extent argument; it is one number. -/
 theorem sum_circLag_eq_range {N : ℕ} (g : ℕ → ℝ) :
     ∑ d : Fin (N + 1), g (Moment.circLag d)
       = ∑ d ∈ Finset.range (N + 1), g (clag (N + 1) d) :=
   Fin.sum_univ_eq_sum_range (fun i => g (clag (N + 1) i)) (N + 1)
 
 #print axioms sum_circLag_eq_range
-/-- **THE APERTURE NAMES THE GAP: a tension below the floor bounds `λ` away from `1` explicitly.**
+/-- The aperture names the gap: a tension below the floor bounds `λ` away from `1` explicitly.
 
 For a single transfer mode read through a screen of `n = 2(k+1)` lags, the entropy floor does not
 merely exclude `λ = 1` -- it excludes an explicit neighbourhood of it:
@@ -852,22 +933,22 @@ merely exclude `λ = 1` -- it excludes an explicit neighbourhood of it:
     μ < κ₀   ⟹   λ^{n/2}  <  12 · (1 - 3^{-1/4})/8  =  0.360246…
 
 Equivalently `n · (-log λ) > 2.0419`: the decay rate is bounded below by `2.0419/n`, so the gap has a
-SIZE and not merely an existence.
+size and not merely an existence.
 
-HOW THE TWO HALVES MEET. `Moment.Read.substrate_lt_of_tension_lt_floor` caps the substrate ratio from
+How the two halves meet. `Moment.Read.substrate_lt_of_tension_lt_floor` caps the substrate ratio from
 above when the tension clears the floor; `substrate_ge_of_slow_decay` bounds it from below by
 `λ^{n/2}/12`. A slowly-decaying mode spreads its weight around the circle, which the first bound
 forbids. The composition is the diffraction limit made quantitative: a band-limited screen cannot
 carry a correlation that decays too slowly, so what it does carry decays at least this fast.
 
-WHAT THIS REPLACES. The read margin `hread` -- that the active modes decay at the free-energy margin
--- was an INPUT, cited to the §2-§3 modelling identification and otherwise reducible only to the
+What this replaces. The read margin `hread` -- that the active modes decay at the free-energy margin
+-- was an input, cited to the §2-§3 modelling identification and otherwise reducible only to the
 junction residuals. For a single mode it is now a consequence of the tension, which is measured.
 
-THE CONSTANT IS NOT SHARP, deliberately. Inverting the exact criterion numerically gives `5.54`; the
+The constant is not sharp, deliberately. Inverting the exact criterion numerically gives `5.54`; the
 sharp asymptotic cap is `10.99`. This route gives `2.04` because it passes through
 `cos x ≤ 1 - (2/π²)x²` and `substrate ≥ λ^{n/2}/12`, each lossy. What a mass gap needs is that the
-constant be POSITIVE and derived; sharpness is an optimisation. All three are computed, with
+constant be positive and derived; sharpness is an optimisation. All three are computed, with
 refusals, in `code/certify/aperture_cap_of_floor.py`.
 
 DERIVED: `12` is the sum-of-squares denominator, `8` the constant of `cos_avg_le_circ`, and
@@ -918,27 +999,27 @@ theorem lam_pow_lt_of_tension (k : ℕ) (lam : ℝ) (h0 : 0 ≤ lam) (h1 : lam �
   linarith [hcap, hkey]
 
 #print axioms lam_pow_lt_of_tension
-/-- **THE TENSION BOUNDS THE AGGREGATE WEIGHT NEAR `λ = 1`.**
+/-- The tension bounds the aggregate weight near `λ = 1`.
 
 The answer to the objection that a tension -- being a weighted average -- cannot see modes close to
 `1` that carry little weight. It sees them collectively. For a spectral correlation
-`ρ(d) = ∑ᵢ wᵢ λᵢ^{clag d}` and ANY sub-collection `A` whose eigenvalues are all at least `λ₀`:
+`ρ(d) = ∑ᵢ wᵢ λᵢ^{clag d}` and any sub-collection `A` whose eigenvalues are all at least `λ₀`:
 
     12 · W · (∑ ρ(d) clag(d)²)  ≥  W_A · λ₀^{n/2} · n² · (∑ ρ(d))
 
-with `W = ∑ᵢ wᵢ` and `W_A = ∑_{i∈A} wᵢ`; equivalently `substrate ≥ (W_A/W)·λ₀^{n/2}/12`. Composed with
+With `W = ∑ᵢ wᵢ` and `W_A = ∑_{i∈A} wᵢ`; equivalently `substrate ≥ (W_A/W)·λ₀^{n/2}/12`. Composed with
 `Moment.Read.substrate_lt_of_tension_lt_floor`:
 
     μ < κ₀   ⟹   W_A / W  <  0.360246 / λ₀^{n/2}
 
-At `λ₀ = 1` that is `W_A/W < 0.360246` UNIFORMLY in the aperture: at most about a third of the
+At `λ₀ = 1` that is `W_A/W < 0.360246` uniformly in the aperture: at most about a third of the
 correlation's weight can sit at the unit circle. `no_zero_mode_of_tension_lt_floor` sharpens that to
-exactly zero AT one; this is the quantitative statement that survives NEAR one, which is what a
+exactly zero at one; this is the quantitative statement that survives near one, which is what a
 finite-capacity screen can actually say and what controls the correlation's asymptotics.
 
-WHY THE SUBSET FORM IS THE RIGHT ONE. A bound on one mode at a time says nothing about a cloud of
+Why the subset form is the right one. A bound on one mode at a time says nothing about a cloud of
 faint modes that collectively carry the tail. This bounds the cloud. And the degradation by the
-weight share is not a defect: a screen of finite information capacity SHOULD say less about fainter
+weight share is not a defect: a screen of finite information capacity should say less about fainter
 structure -- what decides whether such modes are in the theory at all is the noise edge, which
 `Measure.resolvedDim` counts against.
 
@@ -1007,7 +1088,16 @@ theorem substrate_ge_of_subset_share {ι : Type*} (k : ℕ) (s A : Finset ι) (w
 
 #print axioms substrate_ge_of_subset_share
 
-/-- The single-mode case: `A = {j}`, where the share is `wⱼ/W` and `λ₀ = λⱼ`. -/
+/-- The single-mode form of the substrate bound: at one mode `j ∈ s`,
+
+    Wⱼ λⱼ^{k+1} n² · (∑_d ρ(d))  ≤  12 (∑ᵢ wᵢ) · ∑_d ρ(d) (clag n d)²,   n = 2(k+1),
+
+Where `ρ(d) = ∑ᵢ wᵢ λᵢ^{clag n d}`. The mode share `wⱼ/W` and the rate `λⱼ` appear on the left, the
+weighted second moment on the right; `twelve_weighted_moment_ge` is the step.
+
+DERIVED: `2` in `2 * (k + 1)` makes the extent even and its half the antipode `k + 1`; `12` is
+`twelve_weighted_moment_ge`'s constant. The exponent `2` is the square of the circle distance and of
+the extent. `0` and `1` bracket the weights and modes. -/
 theorem substrate_ge_of_mode_share {ι : Type*} [DecidableEq ι] (k : ℕ) (s : Finset ι)
     (w lam : ι → ℝ)
     (hw : ∀ i ∈ s, 0 ≤ w i) (hlam0 : ∀ i ∈ s, 0 ≤ lam i) (hlam1 : ∀ i ∈ s, lam i ≤ 1)
@@ -1023,26 +1113,26 @@ theorem substrate_ge_of_mode_share {ι : Type*} [DecidableEq ι] (k : ℕ) (s : 
   simpa using h
 
 #print axioms substrate_ge_of_mode_share
-/-- **THE TENSION BOUNDS THE RESOLVED DIMENSION.**
+/-- The tension bounds the resolved dimension.
 
 The counting form of `substrate_ge_of_subset_share`, and the input a continuum limit actually
-consumes. A mode is RESOLVED when its weight clears the noise edge; the aggregate weight of the
+consumes. A mode is resolved when its weight clears the noise edge; the aggregate weight of the
 resolved modes near `λ₀` is capped by the tension, and each of them carries at least `edge`, so their
-NUMBER is capped too:
+number is capped too:
 
     |A| · edge · λ₀^{n/2} · n² · (∑ ρ)   ≤   12 · W · (∑ ρ(d) clag(d)²)
 
-so with `μ < κ₀` (which caps the right-hand side by `Moment.Read.substrate_lt_of_tension_lt_floor`),
+So with `μ < κ₀` (which caps the right-hand side by `Moment.Read.substrate_lt_of_tension_lt_floor`),
 
     |A|  <  0.360246 · W / (edge · λ₀^{n/2})
 
-WHY THIS IS THE PIECE THAT WAS MISSING. `Measure.LatticeYMFamily.os_gap` asks that the modes above the
-noise edge have index below a SPACING-INDEPENDENT cutoff `c`; `Measure.tight_of_gap_ir` turns that into
+Why this is the piece that was missing. `Measure.LatticeYMFamily.os_gap` asks that the modes above the
+noise edge have index below a spacing-independent cutoff `c`; `Measure.tight_of_gap_ir` turns that into
 tightness and `continuum_of_family` into an OS limit. That cutoff was an input, cited as
 `c = k⋆L/(2π)`. This derives a cutoff of the same shape from the tension: `W/edge` is the read's own
 dynamic range and `λ₀^{n/2}` its resolution at the antipode, neither of which is chosen here.
 
-WHAT IT DOES NOT DO. It bounds the resolved modes near `λ₀`, not all modes: a mode far below `λ₀`
+What it does not do. It bounds the resolved modes near `λ₀`, not all modes: a mode far below `λ₀`
 decays fast and is not what a gap argument needs to exclude. And `edge` itself is not derived here --
 the noise floor is a property of the read, and per `entroptics-jlens` it must be computed on the
 identity-removed residual or it is inflated by the near-unit component and the count under-reported.
@@ -1087,13 +1177,13 @@ theorem resolved_count_le_of_subset {ι : Type*} (k : ℕ) (s A : Finset ι) (w 
                 * ((clag (2 * (k + 1)) d : ℝ)) ^ 2 := hshare
 
 #print axioms resolved_count_le_of_subset
-/-- **THE RATE, AS A RATE.** `lam_pow_lt_of_tension` bounds `λ^{n/2}`; a gap is stated in
+/-- The rate, as a rate. `lam_pow_lt_of_tension` bounds `λ^{n/2}`; a gap is stated in
 `Δ = -log λ`. This is the same fact in the units the rest of the development uses:
 
     μ < κ₀   ⟹   (n/2) · Δ  >  -log(12(1-3^{-1/4})/8)  =  1.02097
              ⟹        n · Δ  >  2.04193
 
-so the decay rate clears `2.042/n`, which is the `κ/(N+1)` hypothesis of
+So the decay rate clears `2.042/n`, which is the `κ/(N+1)` hypothesis of
 `gap_phys_of_fixed_screen` with `κ = 2.042`. Composed with a screen of fixed physical extent `L`,
 that theorem then gives `Δ_phys > 2.042/L` -- independent of the lattice spacing.
 
@@ -1136,26 +1226,26 @@ theorem rate_gt_of_tension (k : ℕ) (lam : ℝ) (h0 : 0 < lam) (h1 : lam ≤ 1)
 /-! ### The screen is not the box: a fixed aperture gives a spacing-independent gap
 
 The `O(1/N)` ceiling reads as an obstruction only if `N` is forced to grow with the volume. It is not.
-`N` is the aperture -- the extraction screen -- and the screen has a PHYSICAL extent, `L = (N+1)a`,
+`N` is the aperture -- the extraction screen -- and the screen has a physical extent, `L = (N+1)a`,
 which is what the read actually resolves. Holding that fixed while the spacing falls is a different
 family from holding the lattice fixed, and the bound behaves differently on it:
 
     Δ_lat ≥ κ/(N+1)   and   L = (N+1)a   ⟹   Δ_phys = Δ_lat/a ≥ κ/L
 
-`a` has cancelled. The right-hand side depends on the SCREEN and on nothing else -- not on the
+`a` has cancelled. The right-hand side depends on the screen and on nothing else -- not on the
 lattice spacing, and not on the size of the box the screen sits in. This is the entroptics reading:
 the aperture is a property of the extraction, and a gap read through a finite screen is a physical
 statement about the theory rather than an artefact of the discretisation.
 
-WHY THIS IS NOT A FINITE-RESOLUTION ARTEFACT, which is the obvious objection and the one that must be
+Why this is not A finite-resolution artefact, which is the obvious objection and the one that must be
 answered before the framing is worth anything. A finite screen does not manufacture a gap: a free
-MASSLESS field, whose lowest mode in the same periodic screen is `2π/(N+1)`, reads `⟨cos⟩ = 0.5452`
-against a floor of `0.7598` and FAILS the criterion -- at every aperture, since `a⋆ = 1.7489 > 1`
+massless field, whose lowest mode in the same periodic screen is `2π/(N+1)`, reads `⟨cos⟩ = 0.5452`
+against a floor of `0.7598` and fails the criterion -- at every aperture, since `a⋆ = 1.7489 > 1`
 (`code/certify/aperture_cap_of_floor.py`, which refuses if that ordering ever reverses). So passing
 the criterion through a screen says something a massless theory cannot say, whatever the screen's size.
 
-WHAT IS AND IS NOT PROVED HERE. The arithmetic below is elementary and is not the point; the content
-is in the QUANTIFIER. Stating it as a theorem fixes which quantity is held fixed across the family and
+What is and is not proved here. The arithmetic below is elementary and is not the point; the content
+is in the quantifier. Stating it as a theorem fixes which quantity is held fixed across the family and
 makes the uniformity checkable rather than asserted, and it names the one input the chain still needs:
 an explicit `κ > 0` with `Δ_lat ≥ κ/(N+1)`. `correlation_gap_of_tension` currently supplies only
 `∃ ρ < 1`, which is not explicit, so `κ` is carried as a hypothesis here rather than derived -- that
@@ -1163,7 +1253,7 @@ gap is the next step, and `Moment.Read.substrate_lt_of_tension_lt_floor` is the 
 exists.
 -/
 
-/-- **A screen of fixed physical extent gives a gap independent of the spacing.**
+/-- A screen of fixed physical extent gives a gap independent of the spacing.
 
 `hL : (N a + 1) * spacing a = L` holds the screen fixed in physical units while the spacing varies;
 `hrate` is the lattice gap at each aperture. The conclusion is a single positive bound that no member
@@ -1192,14 +1282,15 @@ theorem gap_phys_of_fixed_screen
 
 #print axioms gap_phys_of_fixed_screen
 
-/-- **And the same bound survives the continuum limit**, because it never mentioned the spacing.
+/-- Under the same hypotheses as `gap_phys_of_fixed_screen`, there is a single `δ > 0` with
+`δ ≤ Δlat k / spacing k` at every `k`. The witness is `κ / L`, positive by `div_pos`.
 
-The statement a continuum construction consumes is not "each lattice has a gap" -- that is compatible
-with the gap closing as `a → 0` -- but "the gaps share a positive lower bound". At a fixed screen they
-do, and the bound is the same `κ/L` at every member, so no limit needs to be taken to obtain it.
+One constant for the whole family, not one per member: the screen condition
+`(N k + 1) · spacing k = L` fixes the physical size, and the bound is the same at every `k`, so no
+limit is taken.
 
-This is the form `Measure.LatticeYMFamily.os_gap` needs: its infrared cutoff `c = k⋆L/(2π)` is
-spacing-independent exactly when the physical scale it is built from is, and a screen supplies that. -/
+DERIVED: `0` is the strict lower bound on `κ`, on `L`, on each `spacing k`, and on `δ`. `1` in
+`N k + 1` is the lag arity. `κ` and `L` are the caller's. -/
 theorem gap_phys_uniform_of_fixed_screen
     (N : ℕ → ℕ) (spacing : ℕ → ℝ) (Δlat : ℕ → ℝ) (κ L : ℝ)
     (hκ : 0 < κ) (hL : 0 < L)
@@ -1212,69 +1303,52 @@ theorem gap_phys_uniform_of_fixed_screen
 
 #print axioms gap_phys_uniform_of_fixed_screen
 
-/-- **THE CHAIN, WITH A RATE: the measured tension gives an EXPONENTIAL bound.**
+/-- Under the same hypotheses as `correlation_decays_of_tension`, there is a `ρ ∈ [0, 1)` with
+`∑ₖ wₖ λₖ^d ≤ (∑ₖ wₖ) · ρ^d` at every `d`.
 
-    reflection-positive spectral form  +  `μ_N < κ₀` at large apertures
-        ⟹  ∃ ρ < 1,  ρ(d) ≤ (∑ₖ wₖ) · ρ^d
+The upgrade over `correlation_decays_of_tension`'s `Tendsto … 0` is `exists_exponential_decay`, which
+needs the mode set finite: once the tension has removed all weight at `λ = 1`, the maximum over a
+finite set is attained and is itself strictly below one. For a countable family the modes may
+accumulate at `1` and no such `ρ` follows, so the `Finset` in `hR` is load-bearing.
 
-`correlation_decays_of_tension` concludes `ρ(d) → 0`, and that is strictly weaker than a mass gap --
-a power law tends to zero too. This strengthens the conclusion to decay at an explicit positive rate
-`−log ρ`, which is what a gap asserts.
+How large the rate is. For a single mode `ρ(d) = λ^{circLag d}` both sums in the cosine average are
+geometric, so the average has a closed form — with `n = N+1`, `m = n/2`, `k = 2π/n`, and
+`(λe^{ik})^m = −λ^m`:
 
-The upgrade is exactly `exists_exponential_decay`, and what powers it is FINITENESS: with no weight
-left at `λ = 1` the maximum over a finite mode set is attained and is itself strictly inside the unit
-circle. For a countable family the modes could accumulate at `1` and no positive rate would follow --
-that accumulation IS gaplessness, and on a finite lattice the finite-dimensional transfer matrix is
-what rules it out. So the finite `Finset` in `hspec` is load-bearing, and it is also precisely where
-the thermodynamic limit takes hold: as `L → ∞` the spectrum fills in, and nothing here controls that.
+    ⟨cos⟩ = [2(1+λ^m)(1 − λ·cos k)/(1 − 2λ·cos k + λ²) − 1 − λ^m]
+          / [2(1 − λ^m)/(1 − λ) − 1 + λ^m]
 
-HOW BIG IS THE RATE THIS CERTIFIES? It shrinks with the aperture, and that is not a defect of the
-proof but of the criterion it consumes. For a single mode `ρ(d) = λ^{circLag d}` BOTH sums in the
-cosine average are geometric, so the average is EXACT in closed form -- with `n = N+1`, `m = n/2`,
-`k = 2π/n`, and using `(λe^{ik})^m = -λ^m`:
+Which is increasing in `1 − λ`, so clearing `3^{-1/4}` fixes a critical `λ` at
 
-    ⟨cos⟩ = [2(1+λ^m)(1 - λ·cos k)/(1 - 2λ·cos k + λ²) - 1 - λ^m]
-          / [2(1 - λ^m)/(1 - λ) - 1 + λ^m]
+    (N+1)·(1 − λ)  ≳  C = 2π·a⋆,    a⋆ the root of  a²·coth(aπ/2) = 3^{-1/4}(a² + 1),
 
-and it is increasing in `1 - λ`, so clearing `3^{-1/4}` fixes a unique critical `λ`, at which
+Giving `C = 10.9887497117`. So the tension at aperture `N` certifies a rate of order `C/(N+1)`, which
+falls as the aperture widens.
 
-    (N+1)·(1 - λ)  ≳  C = 2π·a⋆,    a⋆ the root of   a²·coth(aπ/2) = 3^{-1/4}(a² + 1)
+The criterion constrains `1 − λ` while a rate is `−log λ`. Both `(N+1)(1−λ)` and `(N+1)(−log λ)` rise
+to the same `C` from below, so `C/(N+1)` is a ceiling on the certified rate at every aperture; the
+value certified at a finite aperture is the finite-`N` one, `(N+1)Δ = 10.689` at `N+1 = 16` rather
+than `10.989`. `C` follows from the floor constant and the circle geometry;
+`code/certify/aperture_cap_of_floor.py` recomputes it by direct summation over every lag and refuses
+if the two disagree.
 
-giving `C = 10.9887497117`. So `μ < κ₀` at aperture `N` certifies only `Δ ≳ 11/(N+1)` -- a rate that
-VANISHES as the aperture widens.
-
-CEILING VERSUS CERTIFIED, because the two differ at a finite aperture. The criterion constrains
-`1 - λ`, while a MASS is `Δ = -log λ`. Both `(N+1)(1-λ)` and `(N+1)Δ` rise to the same `C`, and both
-from below, so `C/(N+1)` is a CEILING on the certified mass at every aperture -- which is exactly what
-makes this a no-go. What is certified AT aperture `N` is the finite-`N` value: `(N+1)Δ = 10.689` at
-`N+1 = 16`, not `10.989`. Quoting `C` at a finite volume claims about 3% more than the criterion
-gives. `C` descends from `κ₀` and the circle geometry, with no fit; it is
-computed with its own checks in `code/certify/aperture_cap_of_floor.py` → `9_10_dat_aperture_cap`,
-which reproduces the closed form by direct summation over every lag and REFUSES if they disagree.
-
-BEWARE A NEARBY CONSTANT. `2π·√(3^{-1/4}/(1 - 3^{-1/4})) = 11.1759763266` is the cap for `ρ(d) = λ^d`
-on the HALF-LINE, which is a different object: on the circle the antipodal reflection contributes a
-`coth(aπ/2) > 1` factor that LOWERS the requirement to `10.9887`. The two differ by `0.187`, while
-the `N+1 = 1024` entry of the sequence below is still `0.059` short of its own limit, so from small
-apertures they cannot be separated by eye. Use the circle constant here; the half-line one belongs
-to an open chain, not to this periodic read. The sequence `(N+1)(1-λ_crit)` runs
+`2π·√(3^{-1/4}/(1 − 3^{-1/4})) = 11.1759763266` is the corresponding constant for `ρ(d) = λ^d` on the
+half-line, a different geometry: on the circle the antipodal reflection contributes a factor
+`coth(aπ/2) > 1`, which lowers the requirement to `10.9887`. The sequence `(N+1)(1−λ_crit)` runs
 
     5.6894, 7.7968, 9.2453, 10.0806, 10.5258, 10.7551, 10.9299, 10.9814   at  N+1 = 8 … 8192
 
-rising to `10.98875`, resolved to eleven digits by `N+1 = 2⁴⁰` -- NOT to `11.176`.
+Rising to `10.98875`, resolved to eleven digits at `N+1 = 2⁴⁰`.
 
-That is the quantitative form of the statement made qualitatively elsewhere in this development: the
-aperture condition is a RESOLUTION condition, and it is why the same read does not separate a
-confining theory from a massless one (§9's U(1) control). What this theorem gives is a gap at FINITE
-aperture, whose certified size the criterion itself caps at `O(1/N)`.
+The falling rate is a statement about the aperture and not about the box:
+`ScreenedGap.gap_bound_box_independent` carries the box as a parameter and never reads it, and at a
+screen of fixed physical extent the spacing cancels (`ScreenedGap.uniform_physical_gap`).
 
-WHICH LIMIT THAT CAP BLOCKS. The APERTURE one, and only that. It is not a statement about the box:
-`ScreenedGap.gap_bound_box_independent` carries the box as a parameter and never uses it, so the
-thermodynamic limit is not a limit this bound has to survive. It is not a statement about the spacing
-either -- at a screen of fixed physical extent the spacing cancels
-(`ScreenedGap.uniform_physical_gap`). Taking the APERTURE to infinity destroys it, and that is not a
-limit a finite observer performs: the window is the observer's capacity, and an observer inside the
-substrate it reads has a window strictly smaller than that substrate. -/
+DERIVED: `0` is the lower bound on each weight and each mode, the lower bound on the cosine average,
+and the lower bound on `ρ`. `1` is the upper bound on each mode — the value `spectral_split` cuts at
+— the strict upper bound on `ρ`, and the `+1` of the lag arity `Fin (N + 1)`. `(1/4) * log 3` is the
+floor constant. The numerals in the prose above are computed values of `C` and of the finite-aperture
+sequence; none of them appears in the statement. -/
 theorem correlation_gap_of_tension
     {ι : Type*} [DecidableEq ι] (s : Finset ι) (w lam : ι → ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hle : ∀ k ∈ s, lam k ≤ 1)
@@ -1340,32 +1414,32 @@ section Audit
 #print axioms Witness.chain_hypotheses_satisfiable
 end Audit
 
-/-! ## The aperture cap does not bind a mode that is the SAME at every aperture
+/-! ## A rate bound read at one aperture
 
-`rate_gt_of_tension` certifies `Δ > C/(k+1)` at the aperture the tension was read at, and
-`CellSpectrum` records the consequence: read aperture by aperture the bound VANISHES as the volume
-grows, which is why that note calls this route closed for a volume-uniform gap.
+`rate_gt_of_tension` bounds a single mode's rate below by `C/(k+1)` at the aperture the tension was
+read at, and `C/(k+1)` falls as `k` grows.
 
-It is closed only if the bound is re-derived at each aperture. A mode's decay rate is a property of
-the MODE, not of the window used to look at it: `lam` is the same number whichever `k` the read is
-taken at. Granting that, the bound obtained at ONE aperture is a bound on that one number, so it
-holds at every aperture — and the STRONGEST comes from the SMALLEST `k`, where `C/(k+1)` is largest.
-
-This is not a stronger reading of `rate_gt_of_tension`; it is the observation that its conclusion is
-about `lam`, and `lam` carries no `k`. What it costs is the invariance hypothesis, which is NOT "the
-gap is positive" — it is "the mode does not depend on the window", the natural partner of the
-aperture postulate this program already assumes rather than proves.
+The conclusion is about `lam`, which carries no `k`: it is one real number, whichever aperture the
+read is taken at. So the bound obtained at one aperture is a bound on that number, and the strongest
+comes from the smallest `k`. The two theorems below state that, taking as their input a read whose
+correlation is `lam ^ circLag d` at a single named aperture.
 -/
 
-/-- **THE APERTURE CAP, ESCAPED BY INVARIANCE.** Confinement at ONE aperture `k₀` bounds the mode's
-decay rate by `C/(k₀+1)`, and that bound is then uniform: it is a statement about `lam`, which does
-not depend on the aperture at all.
+/-- From a read at one aperture `k₀` whose correlation is `lam ^ circLag d`, with a positive cosine
+average and tension below `(1/4) log 3`:
 
-`C = -log(12(1-3^{-1/4})/8) = 2.04193` is `rate_gt_of_tension`'s constant, unchanged — no new number
-enters here. The sharp circle value is `10.98875` (`CellSpectrum`'s cap, `a⋆` the root of
-`a²coth(aπ/2) = 3^{−1/4}(a²+1)`), so this is loose by `5.4×` and improving it is arithmetic, not a
-new mechanism. NOTE it is the CIRCLE constant that belongs here: the half-line `11.17598` is a
-different geometry and must not be substituted. -/
+    −log(12(1 − 3^{-1/4})/8) / (k₀ + 1)  <  −log lam.
+
+`rate_gt_of_tension` at `k₀`, with the division cleared by `div_lt_iff₀`.
+
+The conclusion names no aperture other than `k₀`, `lam` being a single real number.
+
+DERIVED: `12`, `8`, `3`, `1` and `4` spell `rate_gt_of_tension`'s constant
+`−log(12(1 − 3^{-1/4})/8) = 2.04193`, carried unchanged; the sharp circle value is `10.98875`, `2π`
+times the root of `a²coth(aπ/2) = 3^{−1/4}(a²+1)`, so this constant is loose by a factor of about
+`5.4`. The corresponding half-line constant is `11.17598` and belongs to a different geometry. `2` in
+`2 * k₀ + 1` makes the extent even and `1` the lag arity's own; `0` and `1` bracket `lam`, and
+`(1/4) * log 3` is the floor constant. -/
 theorem rate_uniform_of_mode_invariant {lam : ℝ} {k₀ : ℕ} (h0 : 0 < lam) (h1 : lam ≤ 1)
     (R₀ : Moment.Read (2 * k₀ + 1))
     (hρ : ∀ d, R₀.ρ d = lam ^ (Moment.circLag d))
@@ -1379,8 +1453,18 @@ theorem rate_uniform_of_mode_invariant {lam : ℝ} {k₀ : ℕ} (h0 : 0 < lam) (
 
 #print axioms rate_uniform_of_mode_invariant
 
-/-- **And the gap is then positive, uniformly.** One `δ`, fixed by the aperture the confinement was
-read at, that the mode's decay rate clears — with no dependence on any other aperture. -/
+/-- Under the same hypotheses with `lam < 1`, there is a `δ > 0` with `δ < −log lam`. The witness is
+`rate_uniform_of_mode_invariant`'s left-hand side, positive because
+`12(1 − 3^{-1/4})/8 = 0.360246 < 1` makes its logarithm negative; the proof brackets `3^{-1/4}`
+between `1/3` and `1` to get there.
+
+One `δ`, fixed by the aperture the read was taken at, with no other aperture entering.
+
+DERIVED: `0` is the strict lower bound on `lam` and on `δ`; `1` is the strict upper bound on `lam`,
+below which `−log lam` is positive. `12`, `8`, `3`, `1` and `4` are
+`rate_uniform_of_mode_invariant`'s constant, and `1/3` is the bracket
+`3^{-1} < 3^{-1/4}` used to show it is below one. `2` in `2 * k₀ + 1` makes the extent even, and
+`(1/4) * log 3` is the floor constant. -/
 theorem exists_uniform_rate_of_mode_invariant {lam : ℝ} {k₀ : ℕ} (h0 : 0 < lam) (h1 : lam < 1)
     (R₀ : Moment.Read (2 * k₀ + 1))
     (hρ : ∀ d, R₀.ρ d = lam ^ (Moment.circLag d))

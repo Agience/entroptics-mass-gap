@@ -2,51 +2,44 @@ import Mathlib
 import MassGap.WilsonBridge
 
 /-!
-# MassGap.LocalGauge — the LOCAL (site-dependent) gauge group of the hypercubic Wilson lattice
+# MassGap.LocalGauge — the site-dependent gauge group of the hypercubic Wilson lattice
 
-Every gauge-invariance statement elsewhere in this development is about `CompactGauge.confConj`,
-which conjugates every link by ONE constant group element. That is the global subgroup. The gauge
-group of a lattice gauge theory is larger: it carries one group element per SITE, and acts by
+`CompactGauge.confConj` conjugates every link by one constant group element. This module defines the
+larger action carrying one group element per site,
 
-    U_μ(x)  ↦  g(x) · U_μ(x) · g(x + μ̂)⁻¹.
+    U_μ(x)  ↦  g(x) · U_μ(x) · g(x + μ̂)⁻¹,
 
-This file defines that action (`gaugeTransform`) on `WilsonHypercubic.Link`, and proves that the
-plaquette holonomy transforms by conjugation at the plaquette's base point (`hol_gaugeTransform`) —
-the interior `g`s cancel telescopically because the boundary word is a closed loop and because the
-two unit shifts commute (`shift_comm`). Everything else follows: `wilsonDensity` is a class function,
-so the plaquette observable is invariant pointwise; the action is the sum of those, so the Boltzmann
-weight is invariant; and the transformation is a per-link left-and-right translation, so it preserves
-the product Haar measure and therefore the whole Gibbs state.
+as `gaugeTransform` on `WilsonHypercubic.Link d n`, and proves the Gibbs state of the Wilson system
+invariant under it.
 
-The payoff, `corrClay_gauge_invariant_local`, is that `WilsonBridge.corrClay` — the constructed
-four-dimensional `SU(3)` connected plaquette correlation — is a correlation function of local
-operators that are invariant under the genuine local gauge group, not merely under the constant one.
+The chain. `shift_comm` proves the two unit shifts of a plaquette commute. `hol_gaugeTransform` then
+proves the plaquette holonomy is conjugated by `g` at the plaquette's base site: the interior factors
+cancel telescopically along the four-letter boundary word, and the far-corner pair cancels because
+the shifts commute. `wilsonDensity_gaugeTransform` follows, since `wilsonDensity` is a class
+function, and with it `plaqObs_gauge_invariant_local`, `wilsonAction_gauge_invariant_local` and
+`boltz_gauge_invariant_local`.
 
-## What Clay row A8 still lacks after this file
+On the measure side, `linkTwoSided` is a per-coordinate left-then-right translation;
+`linkTwoSided_measurePreserving` proves it preserves the product Haar measure by
+`Measure.pi_map_pi`, and `linkTwoSidedEquiv` upgrades it to a measurable equivalence. `gaugeEquiv`
+is `gaugeTransform` in that form — `gaugeEquiv_apply` is the `rfl` identifying them — and
+`gaugeEquiv_measurePreserving` transports the result. `expect_gauge_invariant_local` combines the
+measure and action halves through `System.expect_invariant_of_mp`, for an arbitrary observable, not
+only a gauge-invariant one. `gaugeTransform_const` records that a constant `g` gives back
+`CompactGauge.confConj`, definitionally.
 
-Jaffe–Witten ask for "local quantum field operators in correspondence with the gauge-invariant local
-polynomials in the curvature `F` and its covariant derivatives, such as `Tr F_ij F_kl(x)`." What is
-here is a lattice object, and four things are still missing.
+`clayState_gauge_invariant_local` is the `d = 4`, `N = 3` instance, and
+`corrClay_gauge_invariant_local` applies it to `WilsonBridge.corrClay`.
 
-* **There is no `F`.** No definition in this tree constructs a curvature two-form, a covariant
-  derivative, or any polynomial in them. The identification of the plaquette with a discretised
-  `Tr F F` is prose only (`research/PAPER.md`, the weak-coupling paragraph beginning "The
-  weak-coupling limit is computed", around line 756), and there it is stated only for the `β → ∞`
-  free-field limit. No Lean statement relates `plaqE`/`wilsonPlaqObs` to any `F`.
-* **The index pairs are not independent.** `corrHyper` takes a single ordered plane `(μ, ν)` and
-  uses it for BOTH plaquettes, so `corrClay` is shaped like `⟨O_{01}(0) O_{01}(x)⟩`, never like
-  `⟨Tr F_ij F_kl⟩` with an independent second pair. Nothing here constructs the mixed-index object.
-* **There are no quantum field operators on a Hilbert space.** Everything in this file is a
-  real-valued function on a finite Euclidean configuration space integrated against a Gibbs measure.
-  No Osterwalder–Schrader reconstruction to operators on a Hilbert space is performed here.
-* **The lattice is finite and periodic.** `n` is an extent and there is no continuum limit; the
-  gauge group proved to act here is the lattice gauge group at fixed `n`.
+## Scope
 
-What this file does close is exactly one thing: the gauge invariance of the constructed correlator
-is now under the site-dependent group, which is the group A8 means.
-
-Foundational footprint only (`#print axioms` at the end).
-Build: `python research/code/lean_build.py build MassGap.LocalGauge`.
+Everything is stated at a fixed finite extent `n` with periodic sites `Site d n = Fin d → Fin n`; no
+limit in `n` and no continuum limit appears. The objects are real-valued functions on a finite
+configuration space integrated against a Gibbs measure — there is no Hilbert space and no operator
+here. No curvature two-form, covariant derivative or polynomial in them is defined anywhere in this
+module, and no statement relates `wilsonPlaqObs` to one. `corrClay_gauge_invariant_local` uses the
+single ordered plane `(0, 1)` for both of its plaquettes, so the correlator it concerns carries one
+index pair, not two independent ones.
 -/
 
 namespace MassGap.LocalGauge
@@ -59,13 +52,18 @@ variable {d n : ℕ}
 
 /-! ### The two unit shifts of a plaquette commute
 
-This is the whole geometric content of the telescoping: the plaquette loop closes, i.e. going one
-step along `μ` then one along `ν` lands on the same site as the other order, so the two `g`s at the
-far corner are the same element and cancel. -/
+The geometric content of the telescoping in `hol_gaugeTransform`: stepping one unit along `μ` and
+then one along `ν` reaches the same site as the other order, so the two gauge elements at the far
+corner of the plaquette are the same element and cancel. -/
 
-/-- **Unit shifts commute.** `shift` updates one coordinate, so two shifts in different directions
-are updates at different indices (which commute), and two shifts in the same direction are the same
-expression either way. -/
+/-- `shift ν (shift μ x) = shift μ (shift ν x)` for any two directions and any site. `shift` is a
+`Function.update` of one coordinate, so for `μ ≠ ν` the two updates are at different indices and
+`Function.update_comm` applies; for `μ = ν` the two sides are the same expression.
+
+The sites are `Site d n = Fin d → Fin n`, so the coordinate increment wraps — the periodicity is in
+the `Fin n` arithmetic, not in this statement.
+
+DERIVED: no numeral. The unit increment lives inside `shift` and does not appear here. -/
 theorem shift_comm [NeZero n] (μ ν : Fin d) (x : Site d n) :
     shift ν (shift μ x) = shift μ (shift ν x) := by
   by_cases h : μ = ν
@@ -84,29 +82,39 @@ theorem shift_comm [NeZero n] (μ ν : Fin d) (x : Site d n) :
 
 /-! ### The local gauge action on link variables -/
 
-/-- **The local (site-dependent) gauge transformation.**
+/-- The site-dependent gauge action on configurations: given `g : Site d n → G`, send
+`U : Link d n → G` to `fun l => g l.2 * U l * (g (shift l.1 l.2))⁻¹`.
 
-A link is `(direction, base site)`, and `WilsonHypercubic.bd` traverses it from its base site `x` to
-`shift μ x`. So a gauge element `g : Site → G` acts on the link by `g` at the source and `g⁻¹` at the
-target: `U_μ(x) ↦ g(x) · U_μ(x) · g(x + μ̂)⁻¹`.
+A link is a pair `(direction, base site)` and `WilsonHypercubic.bd` traverses it from its base site
+to the shifted one, so `g` enters at the source and `g⁻¹` at the target. For constant `g` the two
+factors are inverse to each other and the action becomes conjugation; `gaugeTransform_const` records
+that.
 
-This is the genuine lattice gauge group. `CompactGauge.confConj` is the constant-`g` subgroup of it:
-for `g` constant the target factor is the same element as the source factor and the action collapses
-to conjugation. -/
+`G` is any group with a `MeasurableSpace`, and `[NeZero n]` is required only because `Site d n` uses
+`Fin n`.
+
+DERIVED: no numeral. The `1` and `2` in `l.1` and `l.2` are structure projections of the pair
+`Link d n = Fin d × Site d n`, selecting the direction and the base site; they are not numbers. -/
 def gaugeTransform {G : Type} [Group G] [MeasurableSpace G] [NeZero n]
     (g : Site d n → G) (U : Link d n → G) : Link d n → G :=
   fun l => g l.2 * U l * (g (shift l.1 l.2))⁻¹
 
-/-- **The plaquette holonomy is conjugated by the gauge element at its BASE POINT.**
+/-- `wilsonHol bd q (gaugeTransform g U) = g q.2 * wilsonHol bd q U * (g q.2)⁻¹`: the plaquette
+holonomy is conjugated by the gauge element at the plaquette's base site.
 
-`hol q (gaugeTransform g U) = g(x) · hol q U · g(x)⁻¹` where `x = q.2` is the plaquette's base site.
-The proof is the telescoping: writing the four boundary factors out,
+The proof writes both sides out as four-letter products. In
 
     (g_x A g_μ⁻¹) · (g_μ B g_{νμ}⁻¹) · (g_ν C g_{μν}⁻¹)⁻¹ · (g_x D g_ν⁻¹)⁻¹
 
 the `g_μ` pair cancels between the first two factors, the `g_ν` pair between the last two, and the
-far-corner pair `g_{νμ}`, `g_{μν}` cancels because the shifts commute (`shift_comm`) — which is the
-statement that the loop closes. What survives is `g_x` on the left and `g_x⁻¹` on the right. -/
+far-corner pair `g_{νμ}`, `g_{μν}` cancels by `shift_comm`; `group` closes it. What survives is
+`g_x` on the left and `g_x⁻¹` on the right.
+
+Conjugation, not invariance: the holonomy does move, and it is `wilsonDensity` being a class function
+that makes the observable invariant.
+
+DERIVED: no numeral. The `2` in `q.2` is the structure projection selecting the plaquette's base
+site from `Plaq d n = (Fin d × Fin d) × Site d n`; the `⁻¹` is the group inverse. -/
 theorem hol_gaugeTransform {G : Type} [Group G] [MeasurableSpace G] [NeZero n]
     (g : Site d n → G) (U : Link d n → G) (q : Plaq d n) :
     wilsonHol (bd (d := d) (n := n)) q (gaugeTransform g U)
@@ -127,9 +135,14 @@ theorem hol_gaugeTransform {G : Type} [Group G] [MeasurableSpace G] [NeZero n]
 
 /-! ### The plaquette observable and the action are invariant, pointwise in the configuration -/
 
-/-- **The Wilson plaquette density is invariant under a LOCAL gauge transformation.** The holonomy is
-conjugated (`hol_gaugeTransform`) and `wilsonDensity` is a class function (`wilsonDensity_conj`, from
-trace cyclicity), so the density does not move at all. -/
+/-- `wilsonDensity (wilsonHol bd q (gaugeTransform g U)) = wilsonDensity (wilsonHol bd q U)`, for
+every site-dependent `g`, every configuration and every plaquette. `hol_gaugeTransform` conjugates
+the holonomy and `wilsonDensity_conj` — trace cyclicity — shows `wilsonDensity` does not see
+conjugation.
+
+Pointwise in the configuration: no measure and no expectation is involved.
+
+DERIVED: no numeral. -/
 theorem wilsonDensity_gaugeTransform {N : ℕ} [NeZero n] (g : Site d n → MassGap.SUN.SU N)
     (U : Link d n → MassGap.SUN.SU N) (q : Plaq d n) :
     wilsonDensity (wilsonHol (bd (d := d) (n := n)) q (gaugeTransform g U))
@@ -137,10 +150,15 @@ theorem wilsonDensity_gaugeTransform {N : ℕ} [NeZero n] (g : Site d n → Mass
   rw [hol_gaugeTransform]
   exact wilsonDensity_conj _ _
 
-/-- **The plaquette observable is a LOCAL gauge-invariant operator.** This is the A8 property of the
-operator itself: `wilsonPlaqObs` reads only the four links of its own plaquette
-(`ReflectionPositivity.hol_congr_on_support`) and is unchanged by every site-dependent gauge
-transformation, not merely by the constant ones. -/
+/-- `wilsonPlaqObs bd q (gaugeTransform g U) = wilsonPlaqObs bd q U`. The same statement as
+`wilsonDensity_gaugeTransform`, phrased on the observable of the `wilsonSystem` configuration type;
+the body is that theorem.
+
+So the plaquette observable is unchanged by every site-dependent gauge transformation, not only by
+the constant ones. Locality — that it reads only the four links of its own plaquette — is
+`ReflectionPositivity.hol_congr_on_support` and is not restated here.
+
+DERIVED: no numeral. -/
 theorem plaqObs_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → MassGap.SUN.SU N)
     (q : Plaq d n)
     (U : (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).Config) :
@@ -148,15 +166,24 @@ theorem plaqObs_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → Mas
       = wilsonPlaqObs (N := N) (bd (d := d) (n := n)) q U :=
   wilsonDensity_gaugeTransform g U q
 
-/-- **The full Wilson action is invariant under a local gauge transformation** — every plaquette term
-is, and the action is their sum over the `d²·n^d` plaquettes. -/
+/-- `(wilsonSystem bd wilsonDensity).action (gaugeTransform g U) = (…).action U`. The action is the
+sum of the plaquette density over all of `Plaq d n`, and every summand is invariant by
+`wilsonDensity_gaugeTransform`, so `Finset.sum_congr` closes it.
+
+DERIVED: no numeral. -/
 theorem wilsonAction_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → MassGap.SUN.SU N)
     (U : (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).Config) :
     (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).action (gaugeTransform g U)
       = (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).action U :=
   Finset.sum_congr rfl (fun q _ => wilsonDensity_gaugeTransform g U q)
 
-/-- The Boltzmann weight is invariant under a local gauge transformation. -/
+/-- `(wilsonSystem bd wilsonDensity).boltz β (gaugeTransform g U) = (…).boltz β U`, at every real
+`β`. `System.boltz` is `exp` of the negated action scaled by `β`, so this is
+`wilsonAction_gauge_invariant_local` under a rewrite.
+
+`β` is unrestricted in sign.
+
+DERIVED: no numeral. -/
 theorem boltz_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → MassGap.SUN.SU N) (β : ℝ)
     (U : (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).Config) :
     (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).boltz β (gaugeTransform g U)
@@ -164,24 +191,35 @@ theorem boltz_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → MassG
   unfold System.boltz
   rw [wilsonAction_gauge_invariant_local]
 
-/-! ### The measure side: the local gauge transformation preserves the product Haar measure
+/-! ### The measure side
 
-The gauge transformation is, per link, a LEFT translation by `g(x)` followed by a RIGHT translation
-by `g(x + μ̂)⁻¹`. On a compact group the probability Haar measure is invariant under both
-(`CompactGauge.isMulLeftInvariant_probHaar`, `CompactGauge.isMulRightInvariant_probHaar`, the latter
-from unimodularity), and the product measure is preserved coordinatewise. Unlike `confConj` the two
-translating elements differ from link to link, so the per-link maps form a family rather than a
-constant; that is the only difference from `CompactGauge.confConj_measurePreserving`. -/
+Per link, the gauge transformation is a left translation by `g(x)` followed by a right translation by
+`g(x + μ̂)⁻¹`. On a compact group the probability Haar measure is invariant under both
+(`CompactGauge.isMulLeftInvariant_probHaar` and `CompactGauge.isMulRightInvariant_probHaar`, the
+latter from unimodularity), and the product measure is preserved coordinatewise.
 
-/-- A per-coordinate two-sided translation of a configuration: `U ↦ (l ↦ a l · U l · b l)`. -/
+The two translating elements differ from link to link, so the per-link maps form a family rather
+than a single map; `linkTwoSided` is stated for an arbitrary such family, over an arbitrary finite
+index type. -/
+
+/-- The per-coordinate two-sided translation of a configuration by two families `a`, `b : ι → G`:
+`U ↦ fun l => a l * U l * b l`. `ι` is arbitrary and no relation between `a` and `b` is assumed.
+
+DERIVED: no numeral. -/
 def linkTwoSided (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G]
     {ι : Type} (a b : ι → G) (U : ι → G) : ι → G :=
   fun l => a l * U l * b l
 
-/-- **A per-link two-sided translation preserves the product Haar measure.** Each coordinate map
-`u ↦ a l · u · b l` is left-then-right translation, measure-preserving by left- and right-invariance
-of `probHaar`; `Measure.pi_map_pi` assembles the coordinates. -/
+/-- `linkTwoSided G a b` is measure-preserving from `Measure.pi (fun _ => probHaar G)` to itself, for
+any finite `ι` and any families `a`, `b : ι → G`. Each coordinate map `u ↦ a l * u * b l` is a
+left translation composed with a right translation, each preserving `probHaar G` on a compact group;
+`Measure.pi_map_pi` assembles the coordinates.
+
+`G` must be a compact, nonempty topological group with a Borel measurable structure; `ι` must be a
+`Fintype`, which is what `Measure.pi` needs.
+
+DERIVED: no numeral. -/
 theorem linkTwoSided_measurePreserving (G : Type) [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G]
     {ι : Type} [Fintype ι] (a b : ι → G) :
@@ -203,7 +241,13 @@ theorem linkTwoSided_measurePreserving (G : Type) [Group G] [TopologicalSpace G]
         = (fun (U : ι → G) (l : ι) => (fun u : G => a l * u * b l) (U l)) from rfl,
     Measure.pi_map_pi (fun l => (hstep l).aemeasurable), hmap]
 
-/-- The per-link translation as a MEASURABLE EQUIVALENCE (inverse: translate by the inverses). -/
+/-- `linkTwoSided G a b` as a measurable equivalence `(ι → G) ≃ᵐ (ι → G)`. The inverse is
+`linkTwoSided` at the pointwise inverse families, both round trips closed by `group`, and both
+directions measurable because multiplication by a constant on either side is continuous.
+
+No finiteness of `ι` is required here; only `linkTwoSided_measurePreserving` needs it.
+
+DERIVED: no numeral. The `⁻¹` in the inverse families is the group inverse. -/
 noncomputable def linkTwoSidedEquiv (G : Type) [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G]
     {ι : Type} (a b : ι → G) : (ι → G) ≃ᵐ (ι → G) where
@@ -218,26 +262,47 @@ noncomputable def linkTwoSidedEquiv (G : Type) [Group G] [TopologicalSpace G]
     (((continuous_const.mul continuous_id).mul continuous_const).measurable).comp
       (measurable_pi_apply l))
 
-/-- **The local gauge transformation as a measurable equivalence of configurations.** -/
+/-- The site-dependent gauge transformation as a measurable equivalence of `Link d n → G`:
+`linkTwoSidedEquiv` at the families `l ↦ g l.2` and `l ↦ (g (shift l.1 l.2))⁻¹`.
+
+Being an equivalence, it is invertible for every `g`, with inverse the transformation by `g⁻¹`
+pointwise.
+
+DERIVED: no numeral. The `1` and `2` in `l.1`, `l.2` are the projections of `Link d n` onto its
+direction and its base site. -/
 noncomputable def gaugeEquiv (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G] [NeZero n]
     (g : Site d n → G) : (Link d n → G) ≃ᵐ (Link d n → G) :=
   linkTwoSidedEquiv G (fun l : Link d n => g l.2) (fun l : Link d n => (g (shift l.1 l.2))⁻¹)
 
-/-- `gaugeEquiv` really is `gaugeTransform`: source-site left factor, target-site right factor. -/
+/-- `gaugeEquiv G g U = gaugeTransform g U`, by `rfl`: the equivalence and the plain function are the
+same map, with the source-site element on the left and the inverted target-site element on the right.
+
+DERIVED: no numeral. -/
 theorem gaugeEquiv_apply (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G] [NeZero n]
     (g : Site d n → G) (U : Link d n → G) :
     gaugeEquiv G g U = gaugeTransform g U := rfl
 
-/-- A constant gauge element acts by conjugation — `CompactGauge.confConj` is the constant subgroup
-of the local gauge group defined here, and nothing else in the tree acts by more than that. -/
+/-- `gaugeTransform (fun _ => a) U = confConj G a U`, by `rfl`: at a constant gauge element the
+site-dependent action is exactly `CompactGauge.confConj`, conjugation of every link by `a`.
+
+So `confConj` is the constant subgroup of the action defined here, definitionally rather than up to
+an isomorphism.
+
+DERIVED: no numeral. -/
 theorem gaugeTransform_const (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G] [NeZero n]
     (a : G) (U : Link d n → G) :
     gaugeTransform (fun _ : Site d n => a) U = confConj (ι := Link d n) G a U := rfl
 
-/-- **The local gauge transformation preserves the lattice measure.** -/
+/-- `gaugeEquiv G g` is measure-preserving for `Measure.pi (fun _ : Link d n => probHaar G)`.
+`linkTwoSided_measurePreserving` at the two gauge families; `Link d n` is a `Fintype`, which is what
+supplies the finiteness that lemma needs.
+
+Holds for every `g`, with no condition relating the values of `g` at different sites.
+
+DERIVED: no numeral. -/
 theorem gaugeEquiv_measurePreserving (G : Type) [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G]
     [NeZero n] (g : Site d n → G) :
@@ -245,14 +310,19 @@ theorem gaugeEquiv_measurePreserving (G : Type) [Group G] [TopologicalSpace G]
       (Measure.pi fun _ : Link d n => probHaar G) :=
   linkTwoSided_measurePreserving G _ _
 
-/-! ### The Gibbs state of the hypercubic Wilson lattice is locally gauge invariant -/
+/-! ### The Gibbs state under the site-dependent gauge group -/
 
-/-- **The Gibbs expectation is invariant under the LOCAL gauge group.** For ANY observable — not only
-gauge-invariant ones — transporting it by a site-dependent gauge transformation leaves the
-expectation unchanged: the transformation preserves the product Haar measure
-(`gaugeEquiv_measurePreserving`) and the Wilson action (`boltz_gauge_invariant_local`), so
-`System.expect_invariant_of_mp` applies. This is the defining symmetry of a gauge theory, on the
-genuine gauge group rather than its constant subgroup. -/
+/-- For every `g : Site d n → SU N`, every real `β` and every observable `O`, the Gibbs expectation
+of `fun U => O (gaugeTransform g U)` equals that of `O`.
+
+`System.expect_invariant_of_mp` applied to `gaugeEquiv_measurePreserving` (the measure is preserved)
+and `boltz_gauge_invariant_local` (the weight is preserved).
+
+`O` is arbitrary: it need not be gauge invariant, and need not be local. What is invariant is the
+expectation of the transported observable, which is a statement about the state rather than about
+`O`.
+
+DERIVED: no numeral. -/
 theorem expect_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → MassGap.SUN.SU N) (β : ℝ)
     (O : (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).Config → ℝ) :
     (wilsonSystem (bd (d := d) (n := n)) (wilsonDensity (N := N))).expect
@@ -263,10 +333,17 @@ theorem expect_gauge_invariant_local {N : ℕ} [NeZero n] (g : Site d n → Mass
     (gaugeEquiv (MassGap.SUN.SU N) g) (gaugeEquiv_measurePreserving (MassGap.SUN.SU N) g)
     (fun U => boltz_gauge_invariant_local g β U)
 
-/-! ### The payoff: `corrClay` is a correlator of local gauge-invariant operators -/
+/-! ### At `d = 4`, `N = 3` -/
 
-/-- **The four-dimensional `SU(3)` Gibbs state is invariant under the local gauge group.** The
-`d = 4`, `N = 3` instance — the Clay problem's own lattice — of `expect_gauge_invariant_local`. -/
+/-- `expect_gauge_invariant_local` at `d = 4` and `N = 3`: the Gibbs expectation of the
+four-dimensional `SU(3)` Wilson system is unchanged when the observable is transported by a
+site-dependent gauge transformation.
+
+The body is the general theorem; the two literals are the only difference.
+
+DERIVED: `4` is the spatial dimension `d`, fixing the site type to `Site 4 n` and the direction type
+to `Fin 4`. `3` is the `N` of `SU N`, the colour rank. Both are instantiations of the general
+statement's variables, so neither is derived from anything within this file. -/
 theorem clayState_gauge_invariant_local {n : ℕ} [NeZero n] (g : Site 4 n → MassGap.SUN.SU 3)
     (β : ℝ)
     (O : (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).Config → ℝ) :
@@ -276,13 +353,24 @@ theorem clayState_gauge_invariant_local {n : ℕ} [NeZero n] (g : Site 4 n → M
         (probHaar (MassGap.SUN.SU 3)) β O :=
   expect_gauge_invariant_local g β O
 
-/-- **THE PAYOFF.** `WilsonBridge.corrClay` — the connected two-point function of the plaquette
-observable of four-dimensional `SU(3)` Wilson lattice gauge theory, at an ordered plane and a genuine
-spatial separation — is unchanged when both operators are composed with an arbitrary site-dependent
-gauge transformation. Its operators are therefore LOCAL (each reads only its own four links) and
-GAUGE-INVARIANT under the genuine local gauge group, which is the correspondence Clay row A8 asks
-for at the operator level. What it is not is `Tr F_ij F_kl`; see the header for exactly what is
-still missing. -/
+/-- Building `WilsonBridge.corrClay n β lag` with both plaquette observables precomposed with
+`gaugeTransform g` gives back `corrClay n β lag` itself, for every `g : Site 4 n → SU 3`, every real
+`β` and every lag.
+
+The connected form is spelled out in the statement: the expectation of the product minus the product
+of the expectations, each observable being `wilsonPlaqObs` at the plane `(0, 1)`, one at the origin
+site and one at `siteAtHyper 2 lag`. The proof rewrites every occurrence by
+`plaqObs_gauge_invariant_local` and closes by `rfl`.
+
+Both plaquettes carry the same ordered plane `(0, 1)`, so this is a correlator of one index pair.
+`β` is unrestricted and `lag : Fin n`, so the separation wraps with the periodic extent.
+
+DERIVED: `4` is the spatial dimension and `3` the colour rank, as in
+`clayState_gauge_invariant_local`. `0` and `1` are the two directions of the ordered plane both
+plaquettes are taken in, and the `0` in `fun _ => 0` is the base site, every coordinate at the
+origin. `2` in `siteAtHyper 2 lag` names the axis the separation is taken along — a direction index
+in `Fin 4`, distinct from the plane's `0` and `1`, so the separation is transverse to the
+plaquette. -/
 theorem corrClay_gauge_invariant_local {n : ℕ} [NeZero n] (β : ℝ) (lag : Fin n)
     (g : Site 4 n → MassGap.SUN.SU 3) :
     (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect

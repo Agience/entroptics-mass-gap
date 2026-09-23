@@ -7,61 +7,54 @@ import MassGap.SUN
 import MassGap.WilsonAction
 
 /-!
-# MassGap.WilsonGibbs — the DLR equation against BOUNDED MEASURABLE observables
+# MassGap.WilsonGibbs — the DLR equation against bounded measurable observables
 
 `WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` produces a probability measure `P` on
 `IConf (SU N)` satisfying `∫ spec wilsonDensity β Λ probHaar f dP = ∫ f dP` for every finite volume
-`Λ` and every CONTINUOUS observable `f`. `GibbsSpec.IsGibbsMeasure` asks for the same equation
-against every BOUNDED MEASURABLE observable, so the object produced there was a continuous
-restriction of the object `GibbsSpec` defines. This file removes the restriction and lands
-`IsGibbsMeasure` itself.
+`Λ` and every CONTINUOUS observable `f`. `GibbsSpec.IsGibbsMeasure` asks for that equation at every
+measurable `f` bounded by `1`. This file derives the second from the first.
 
 ## How the extension is made
 
-NOT by approximating an observable. Continuous functions are dense in `L¹(P)`, but the DLR equation
-reads `f` twice — once against `P` and once against the kernel `spec … f ω`, which integrates `f`
-against a DIFFERENT measure for each `ω` — and `L¹(P)`-convergence says nothing about the second.
-`GibbsSpec.abs_spec_le` bounds the kernel by the SUP norm of the observable, not by its `L¹(P)`
-norm, so a dominated limit along an `L¹(P)`-approximating sequence does not close.
-
-What closes is the measure-level statement. The kernel applied to `P`,
+The step is taken at the level of measures, not of observables. The kernel applied to `P`,
 
     Q(A) = ∫ spec φ β Λ μ 1_A ω dP(ω),
 
-is exhibited here as a genuine measure `specMeasure`: the push-forward along the splice
-`(ω, u) ↦ splice Λ u ω` of the product measure `P ⊗ vol μ Λ` weighted by the normalised Boltzmann
-weight `wt / part`. Fubini on that product — legitimate because the weight is bounded above and
-below uniformly in both arguments, `exp_neg_escale_le_part` being the lower bound — gives
-`∫ f dQ = ∫ spec φ β Λ μ f dP` for EVERY bounded measurable `f` at once
-(`integral_specMeasure`). The continuous DLR equation then says `Q` and `P` integrate every bounded
-continuous function alike, and two finite Borel measures that do so on a pseudometrizable space are
-equal (`MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure`). With `Q = P` the bounded
-measurable equation is the bounded continuous one read at a different measure.
+is exhibited here as a measure `specMeasure`: the push-forward along the splice
+`(ω, u) ↦ splice Λ u ω` of the product `P ⊗ vol μ Λ` weighted by the normalised Boltzmann weight
+`wt / part`. Fubini applies on that product because the weight is bounded above and below uniformly
+in both arguments — `GibbsSpec.wt_le` above, `exp_neg_escale_le_part` below — and it gives
+`∫ f dQ = ∫ spec φ β Λ μ f dP` for every bounded measurable `f` at once (`integral_specMeasure`).
+The continuous DLR equation then says `Q` and `P` integrate every bounded continuous function
+alike, and two finite Borel measures that do so on a pseudometrizable space are equal
+(`MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure`). With `Q = P`, the bounded
+measurable equation is `integral_specMeasure` read at `P`.
 
-The pseudometrizability is not an extra hypothesis: `IConf G` is a topological group, hence regular,
-and second countable when `G` is, and Urysohn's theorem does the rest
-(`hasOuterApproxClosed_IConf`).
+Pseudometrizability costs no hypothesis: `IConf G` is a topological group, hence regular, and
+second countable when `G` is, and Urysohn's theorem finishes it (`pseudoMetrizable_IConf`,
+`hasOuterApproxClosed_IConf`).
 
 ## What is proved
 
-* `integral_specMeasure` — `∫ f d(specMeasure φ β Λ μ P) = ∫ spec φ β Λ μ f dP` for every bounded
-  measurable `f`. The kernel applied to a measure IS a measure.
+* `integral_specMeasure` — `∫ f d(specMeasure φ β Λ μ P) = ∫ spec φ β Λ μ f dP` for every
+  measurable `f` bounded by some `C`.
 * `specMeasure_eq_self` — `specMeasure φ β Λ μ P = P` for a `P` satisfying the continuous DLR
   equation.
-* `dlr_bounded_measurable` — the DLR equation at every bounded measurable observable.
+* `dlr_bounded_measurable` — the DLR equation at every measurable observable bounded by `1`.
 * `exists_isGibbsMeasure_of_density` / `existsGibbsMeasure_of_density` — `GibbsSpec.IsGibbsMeasure`
-  for a continuous plaquette density with values in `[0,2]`, at every real `β`; the second is
-  `GibbsSpec.ExistsGibbsMeasure`, the proposition `GibbsSpec` flags as NOT PROVED THERE. Both also
-  ask `G` to be Hausdorff and take the boundary configuration the finite-volume family is anchored
-  at as a parameter, on top of the standing context of Part 2: a compact, second-countable, Borel
-  topological group with measurable multiplication and inversion. `SU(N)` carries every one.
-* `exists_wilson_isGibbsMeasure` — the same at the genuine `WilsonAction.wilsonDensity` on `SU(N)`
-  against `CompactGauge.probHaar`, for every `N ≠ 0` and every real `β`. Row A6's object is now the
-  one `GibbsSpec.IsGibbsMeasure` defines.
+  and the proposition `GibbsSpec.ExistsGibbsMeasure` names, for a continuous plaquette density with
+  values in `[0, 2]`, at every real `β`. Both also ask `G` to be Hausdorff and take the boundary
+  configuration the finite-volume family is anchored at as a parameter, on top of the standing
+  context of Part 2: a compact, second-countable, Borel topological group with measurable
+  multiplication and inversion. `SU(N)` carries every one.
+* `exists_wilson_isGibbsMeasure` — the same at `WilsonAction.wilsonDensity` on `SU(N)` against
+  `CompactGauge.probHaar`, for every `N ≠ 0` and every real `β`.
 * `gibbsSpec_plaqsIn_eq` — the bridge between `GibbsSpec.plaqsIn` and `InfiniteLattice.plaqsIn`.
-  They are extensionally equal and NOT defeq: the first filters `boundaryPlaqs Λ` by a `List.all`
-  over `ilinks`, the second filters a site-image candidate set by `linksOf ⊆ Λ`. Both `mem_` lemmas
-  say "every link the plaquette reads lies in `Λ`", so `Finset.ext` closes it.
+
+The conclusions are existential: they produce one measure, at a boundary configuration supplied as
+a parameter, and say nothing about uniqueness, translation invariance or non-degeneracy. The
+measure is `WilsonDLR`'s, a subsequential limit along an ultrafilter refining `atTop` on finite
+volumes.
 
 ## Duplicated skeletons
 
@@ -71,26 +64,19 @@ their own namespace, in every case as the `abbrev`s `Fin 4 → ℤ`, `Fin 4 × I
 are interchangeable by `rfl`, which is what lets a statement in one namespace be read against a
 measure built in another with no transport.
 
-Below the types, the three bridges are of three different strengths, and the difference matters:
+Below the types, the three bridges have three different strengths:
 
 * the boundary WORDS are equal by `rfl` (`ibd_eq`) — same body, same `ishift`;
-* the link SETS do not even share a type — `InfiniteLattice.linksOf q` is a `Finset`,
+* the link SETS do not share a type — `InfiniteLattice.linksOf q` is a `Finset`,
   `GibbsSpec.ilinks q` the `List` it is the `toFinset` of — so `mem_linksOf_iff` relates them by
-  `List.mem_toFinset`, NOT by `rfl`;
-* the two `plaqsIn` are equal neither by `rfl` nor by a coercion: they filter different candidate
-  sets, and `gibbsSpec_plaqsIn_eq` is an extensional `Finset.ext` argument.
+  `List.mem_toFinset`, not by `rfl`;
+* the two `plaqsIn` filter different candidate sets, so `gibbsSpec_plaqsIn_eq` is an extensional
+  `Finset.ext` argument and neither a `rfl` nor a coercion.
 
-## What is NOT proved
-
-Uniqueness of `P`, translation invariance, and non-degeneracy — exactly as in `WilsonDLR`. The
-measure inherited here is the same subsequential limit, taken along an ultrafilter refining `atTop`
-on finite volumes, and may depend on the frozen boundary configuration.
-
-DERIVED: `4` is the dimension of the Clay problem; `2` is the proved upper bound on the plaquette
-density (`WilsonAction.wilsonDensity_le_two`), `0` its proved lower bound
-(`wilsonDensity_nonneg`), and `1` is the normalisation of a probability measure and the radius of
-the ball of observables `IsGibbsMeasure` is stated on. No constant is chosen here and none is
-fitted.
+DERIVED: `4` is the dimension of the lattice, carried by the types above; `2` is the proved upper
+bound on the plaquette density (`WilsonAction.wilsonDensity_le_two`) and `0` its proved lower bound
+(`WilsonAction.wilsonDensity_nonneg`); `1` is the normalisation of a probability measure and the
+radius of the ball of observables `GibbsSpec.IsGibbsMeasure` is stated on.
 
 Foundational footprint only (`#print axioms` after every declaration).
 Build: `python research/code/lean_build.py build MassGap.WilsonGibbs`.
@@ -105,32 +91,37 @@ open MassGap.GibbsSpec MassGap.WilsonLattice
 
 `GibbsSpec` and `InfiniteLattice` each carry a `plaqsIn`. The underlying boundary word is the same
 list in both (`ibd_eq`, a `rfl`), so the link sets agree definitionally; the two `plaqsIn` do not,
-because they filter different candidate sets. `gibbsSpec_plaqsIn_eq` is the one-line consequence, so
-that nothing downstream has to rediscover it. -/
+because they filter different candidate sets. `gibbsSpec_plaqsIn_eq` is the consequence, proved
+here so that nothing downstream has to rediscover it. -/
 
-/-- **The two boundary words are the same list.** `GibbsSpec.ibd` and `InfiniteLattice.ibd` have
-identical bodies over identical `ishift`s, so this is `rfl` and the two namespaces' plaquette
+/-- The two boundary words are the same list: `GibbsSpec.ibd q = InfiniteLattice.ibd q`, by `rfl`.
+The two namespaces give `ibd` identical bodies over identical `ishift`s, so their plaquette
 combinatorics are interchangeable.
 
 DERIVED: no numeral appears in this statement. The word has four letters because a plaquette is a
-square and has four edges, which is a count of the loop and not the dimension `4` that `ILink`
-carries; neither is written here. -/
+square, which is a count of the loop and not the dimension `4` that `ILink` carries; neither is
+written here. -/
 theorem ibd_eq (q : IPlaq) : MassGap.GibbsSpec.ibd q = MassGap.InfiniteLattice.ibd q := rfl
 
 #print axioms ibd_eq
 
-/-- **A link is read by a plaquette in one namespace exactly when it is in the other.**
-`InfiniteLattice.linksOf` is the `Finset` of `GibbsSpec.ilinks`. -/
+/-- A link is read by a plaquette in one namespace exactly when it is in the other:
+`l ∈ InfiniteLattice.linksOf q ↔ l ∈ GibbsSpec.ilinks q`. The `Finset` is the `List`'s `toFinset`,
+so `List.mem_toFinset` is the proof.
+
+DERIVED: no numeral appears in this statement. -/
 theorem mem_linksOf_iff {q : IPlaq} {l : ILink} :
     l ∈ MassGap.InfiniteLattice.linksOf q ↔ l ∈ MassGap.GibbsSpec.ilinks q :=
   List.mem_toFinset
 
 #print axioms mem_linksOf_iff
 
-/-- **The two `plaqsIn` agree.** `GibbsSpec.plaqsIn Λ` filters `boundaryPlaqs Λ` by a `List.all`
-over `ilinks`; `InfiniteLattice.plaqsIn Λ` filters a candidate set built from the sites of `Λ` by
-`linksOf q ⊆ Λ`. The candidate sets differ, so the two are NOT defeq, but both `mem_` lemmas say
-"every link `q` reads lies in `Λ`". -/
+/-- The two `plaqsIn` agree as `Finset`s. `GibbsSpec.plaqsIn Λ` filters `boundaryPlaqs Λ` by a
+`List.all` over `ilinks`; `InfiniteLattice.plaqsIn Λ` filters a candidate set built from the sites
+of `Λ` by `linksOf q ⊆ Λ`. The candidate sets differ, so the two are not definitionally equal, but
+both `mem_` lemmas say that every link `q` reads lies in `Λ`, and `Finset.ext` closes it.
+
+DERIVED: no numeral appears in this statement. -/
 theorem gibbsSpec_plaqsIn_eq (Λ : Finset ILink) :
     MassGap.GibbsSpec.plaqsIn Λ = MassGap.InfiniteLattice.plaqsIn Λ := by
   ext q
@@ -146,30 +137,35 @@ theorem gibbsSpec_plaqsIn_eq (Λ : Finset ILink) :
 /-! ## Part 1 — the configuration space is pseudometrizable
 
 This is what makes a finite Borel measure on `IConf G` determined by its integrals against bounded
-continuous functions, and it costs no hypothesis that is not already carried: `IConf G` is a product
-of topological groups, hence a topological group, hence regular; it is second countable because
-`ILink` is countable and `G` is; and Urysohn's metrization theorem turns regular plus second
-countable into pseudometrizable. -/
+continuous functions, and it costs no hypothesis that is not already carried: `IConf G` is a
+product of topological groups, hence a topological group, hence regular; it is second countable
+because `ILink` is countable and `G` is; and Urysohn's metrization theorem turns regular plus
+second countable into pseudometrizable. -/
 
 section Space
 
 variable (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [SecondCountableTopology G] [MeasurableSpace G] [BorelSpace G]
 
-/-- **The configuration space is pseudometrizable.** Instance search only: topological group ⇒
-regular, countable index and second countable factors ⇒ second countable, Urysohn ⇒ metrizable. -/
+/-- `IConf G` is pseudometrizable, by instance search alone: topological group gives regular,
+countable index with second-countable factors gives second countable, and Urysohn gives
+metrizable.
+
+DERIVED: no numeral appears in this statement. -/
 theorem pseudoMetrizable_IConf : TopologicalSpace.PseudoMetrizableSpace (IConf G) := inferInstance
 
 #print axioms pseudoMetrizable_IConf
 
-/-- **Indicators of closed sets are approximable from above on the configuration space.** The
-hypothesis `MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure` runs on: a finite Borel
-measure on such a space is determined by its integrals against bounded continuous functions.
+/-- Indicators of closed sets on `IConf G` are approximable from above. This is the hypothesis
+`MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure` runs on: a finite Borel measure on
+such a space is determined by its integrals against bounded continuous functions.
 
-This and `pseudoMetrizable_IConf` are witnesses, not steps: instance search finds the same two facts
-unaided where `specMeasure_eq_self` needs them. They are stated so that a reader can see WHICH
-property of the configuration space the measure-uniqueness argument spends, and check it here rather
-than inside a failed elaboration. -/
+This and `pseudoMetrizable_IConf` are witnesses rather than steps — instance search finds the same
+two facts unaided where `specMeasure_eq_self` needs them. They are stated so that the property of
+the configuration space the measure-uniqueness argument spends can be read here rather than inside
+a failed elaboration.
+
+DERIVED: no numeral appears in this statement. -/
 theorem hasOuterApproxClosed_IConf : HasOuterApproxClosed (IConf G) := inferInstance
 
 #print axioms hasOuterApproxClosed_IConf
@@ -185,39 +181,41 @@ variable {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Compa
   [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
   [MeasurableMul₂ G] [MeasurableInv G]
 
-/-! ## Part 3 — the Boltzmann weight is bounded on BOTH sides
+/-! ## Part 3 — the Boltzmann weight is bounded on both sides
 
-`GibbsSpec.wt_le` bounds the weight above. Fubini on `P ⊗ vol μ Λ` needs the NORMALISED weight
-`wt / part` bounded above, which needs the partition function bounded BELOW — uniformly in the
+`GibbsSpec.wt_le` bounds the weight above. Fubini on `P ⊗ vol μ Λ` needs the normalised weight
+`wt / part` bounded above, which needs the partition function bounded below — uniformly in the
 boundary condition, since the boundary condition is one of the two integration variables. -/
 
-/-- **The energy scale of a finite volume**: the largest the action of `boundaryPlaqs Λ` can
-contribute to the exponent, in absolute value.
+/-- The energy scale of a finite volume: `|β| * (card (boundaryPlaqs Λ) * 2)`, the largest the
+action of `boundaryPlaqs Λ` can contribute to the exponent in absolute value.
 
-DERIVED: `2` is the proved upper bound on the plaquette density (`WilsonAction.wilsonDensity_le_two`
-at the Wilson instance, the hypothesis `hφ2` in general), so `card * 2` is
-`GibbsSpec.actionOn_le`'s bound on the action of a finite plaquette set, and `|β|` is the coupling
-in absolute value. Nothing is chosen: this is the bound `actionOn_le` already proves, given a
-name. -/
+DERIVED: `2` is the proved upper bound on the plaquette density
+(`WilsonAction.wilsonDensity_le_two` at the Wilson instance, the hypothesis `hφ2` in general), so
+`card * 2` is `GibbsSpec.actionOn_le`'s bound on the action of a finite plaquette set, and `|β|` is
+the coupling in absolute value. The numeral appears in the body rather than the signature; this is
+the bound `actionOn_le` already proves, given a name. -/
 noncomputable def escale (β : ℝ) (Λ : Finset ILink) : ℝ :=
   |β| * (((boundaryPlaqs Λ).card : ℝ) * 2)
 
 #print axioms escale
 
-/-- **The energy scale is nonnegative.**
+/-- `0 ≤ escale β Λ`.
 
-DERIVED: `0` is the additive identity, and `2` is the density bound carried by `escale`. -/
+DERIVED: `0` is the additive identity; `2`, inside `escale`, is the density bound declared
+there. -/
 theorem escale_nonneg (β : ℝ) (Λ : Finset ILink) : 0 ≤ escale β Λ :=
   mul_nonneg (abs_nonneg β) (mul_nonneg (Nat.cast_nonneg _) (by norm_num))
 
 #print axioms escale_nonneg
 
-/-- **The Boltzmann weight is bounded below**, uniformly in the inside configuration AND the
-boundary condition. `GibbsSpec.wt_le` is the matching upper bound.
+/-- The Boltzmann weight is bounded below by `exp (-escale β Λ)`, uniformly in the inside
+configuration `u` AND the boundary condition `ω`. `GibbsSpec.wt_le` is the matching upper bound.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density — `hφ0` and `hφ2`, discharged at
-the Wilson instance by `wilsonDensity_nonneg` and `wilsonDensity_le_two`. The exponent is
-`-escale β Λ`, whose numeral is declared at `escale`. -/
+DERIVED: `0` and `2` are the proved range of the plaquette density — the hypotheses `hφ0` and
+`hφ2`, discharged at the Wilson instance by `WilsonAction.wilsonDensity_nonneg` and
+`WilsonAction.wilsonDensity_le_two`. The exponent is `-escale β Λ`, whose numeral is declared at
+`escale`. -/
 theorem exp_neg_escale_le_wt {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset ILink) (u : VConf G Λ) (ω : IConf G) :
     Real.exp (-escale β Λ) ≤ wt φ β Λ u ω := by
@@ -236,11 +234,12 @@ theorem exp_neg_escale_le_wt {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 :
 
 #print axioms exp_neg_escale_le_wt
 
-/-- **The partition function is bounded below, uniformly in the boundary condition.**
-`GibbsSpec.part_pos` gives positivity at each `ω` separately, which is not enough to bound the
+/-- The partition function is bounded below by `exp (-escale β Λ)`, uniformly in the boundary
+condition. `GibbsSpec.part_pos` gives positivity at each `ω` separately, which does not bound the
 normalised weight on the product space; the bound here is one constant for all `ω`.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density, as in `exp_neg_escale_le_wt`. -/
+DERIVED: `0` and `2` are the proved range of the plaquette density, as in
+`exp_neg_escale_le_wt`. -/
 theorem exp_neg_escale_le_part {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (ω : IConf G) : Real.exp (-escale β Λ) ≤ part φ β Λ μ ω := by
@@ -253,18 +252,19 @@ theorem exp_neg_escale_le_part {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : �
 
 #print axioms exp_neg_escale_le_part
 
-/-- **The uniform bound on the normalised Boltzmann weight.**
+/-- The uniform bound on the normalised Boltzmann weight: `exp (2 * escale β Λ)`.
 
-DERIVED: `2` multiplying the energy scale is `exp a / exp (-a) = exp (2a)` — the upper bound on the
-weight divided by the lower bound on the partition function, each at the scale `escale β Λ`. It is
-arithmetic, not a coupling window; the numeral inside `escale` is declared there. -/
+DERIVED: the `2` multiplying the energy scale is `exp a / exp (-a) = exp (2a)` — the upper bound on
+the weight divided by the lower bound on the partition function, each at the scale `escale β Λ`. It
+is arithmetic and not a coupling window; the numeral inside `escale` is declared there. -/
 noncomputable def ratioBound (β : ℝ) (Λ : Finset ILink) : ℝ := Real.exp (2 * escale β Λ)
 
 #print axioms ratioBound
 
-/-- **The normalised weight is nonnegative.**
+/-- `0 ≤ wt φ β Λ u ω / part φ β Λ μ ω`, from `GibbsSpec.wt_pos` and `GibbsSpec.part_pos`.
 
-DERIVED: `0` is the additive identity; `2` is the density bound in `hφ2`. -/
+DERIVED: `0` is the additive identity; `2` is the density bound in `hφ2`, which `part_pos`
+consumes. -/
 theorem wt_div_part_nonneg {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (u : VConf G Λ) (ω : IConf G) : 0 ≤ wt φ β Λ u ω / part φ β Λ μ ω :=
@@ -272,11 +272,12 @@ theorem wt_div_part_nonneg {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g,
 
 #print axioms wt_div_part_nonneg
 
-/-- **The normalised weight is bounded above, uniformly in both arguments.** This is what makes the
-integrand of the product integral in Part 4 bounded, hence integrable against the product of two
-probability measures.
+/-- `wt φ β Λ u ω / part φ β Λ μ ω ≤ ratioBound β Λ`, uniformly in both arguments. This is what
+makes the integrand of the product integral in Part 4 bounded, hence integrable against the product
+of two probability measures.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density. -/
+DERIVED: `0` and `2` are the proved range of the plaquette density, the hypotheses `hφ0` and
+`hφ2`. -/
 theorem wt_div_part_le {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (u : VConf G Λ) (ω : IConf G) : wt φ β Λ u ω / part φ β Λ μ ω ≤ ratioBound β Λ := by
@@ -291,26 +292,28 @@ theorem wt_div_part_le {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 �
 
 #print axioms wt_div_part_le
 
-/-! ## Part 4 — the kernel applied to a measure IS a measure
+/-! ## Part 4 — the kernel applied to a measure is a measure
 
-`spec φ β Λ μ f ω` is an integral against `vol μ Λ` of `f ∘ splice` weighted by `wt / part`. Read on
-the product space `IConf G × VConf G Λ`, that is one integral against `P ⊗ vol μ Λ` of the same
-integrand, and the push-forward of the weighted product along the splice is a measure whose integral
-of ANY bounded measurable `f` is `∫ spec φ β Λ μ f dP`. No approximation of `f` anywhere. -/
+`spec φ β Λ μ f ω` is an integral against `vol μ Λ` of `f ∘ splice` weighted by `wt / part`. Read
+on the product space `IConf G × VConf G Λ`, that is one integral against `P ⊗ vol μ Λ` of the same
+integrand, and the push-forward of the weighted product along the splice is a measure whose
+integral of any bounded measurable `f` is `∫ spec φ β Λ μ f dP`. No observable is approximated. -/
 
-/-- **The normalised Boltzmann weight as a density**, `ℝ≥0`-valued so that
+/-- The normalised Boltzmann weight as an `ℝ≥0`-valued density on the product, so that
 `MeasureTheory.integral_withDensity_eq_integral_smul` applies directly.
 
-DERIVED: no numeral appears; the nonnegativity that makes `Real.toNNReal` lossless here is
-`wt_div_part_nonneg`. -/
+DERIVED: no numeral appears in this statement. The nonnegativity that makes `Real.toNNReal`
+lossless here is `wt_div_part_nonneg`. -/
 noncomputable def dens (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     (z : IConf G × VConf G Λ) : NNReal :=
   Real.toNNReal (wt φ β Λ z.2 z.1 / part φ β Λ μ z.1)
 
 #print axioms dens
 
-/-- **The density is measurable on the product.** `GibbsSpec.measurable_wt_prod` is joint in the two
-arguments, which is exactly what the product space needs. -/
+/-- `dens φ β Λ μ` is measurable on the product. `GibbsSpec.measurable_wt_prod` is joint in the two
+arguments, which is what the product space needs.
+
+DERIVED: no numeral appears in this statement. -/
 theorem measurable_dens {φ : G → ℝ} (hφ : Measurable φ) (β : ℝ) (Λ : Finset ILink)
     (μ : Measure G) [IsProbabilityMeasure μ] : Measurable (dens φ β Λ μ) := by
   unfold dens
@@ -319,11 +322,12 @@ theorem measurable_dens {φ : G → ℝ} (hφ : Measurable φ) (β : ℝ) (Λ : 
 
 #print axioms measurable_dens
 
-/-- **The specification kernel applied to a measure.** The push-forward along the splice
+/-- The specification kernel applied to a measure: the push-forward along the splice
 `(ω, u) ↦ splice Λ u ω` of `P ⊗ vol μ Λ` weighted by the normalised Boltzmann weight. This is the
-measure `∫ spec φ β Λ μ · ω dP(ω)` is the integral against — `integral_specMeasure` — and being a
-measure by construction is the whole point: no countable additivity has to be proved for the
-kernel. -/
+measure `∫ spec φ β Λ μ · ω dP(ω)` integrates against (`integral_specMeasure`), and it is a measure
+by construction, so no countable additivity has to be proved for the kernel.
+
+DERIVED: no numeral appears in this statement. -/
 noncomputable def specMeasure (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     (P : Measure (IConf G)) : Measure (IConf G) :=
   ((P.prod (vol μ Λ)).withDensity (fun z => (dens φ β Λ μ z : ENNReal))).map
@@ -331,9 +335,12 @@ noncomputable def specMeasure (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (�
 
 #print axioms specMeasure
 
-/-- **The inner integral is the kernel.** Pure algebra: the partition function does not depend on
-the inside configuration, so it comes out of the integral, and what is left is `num / part`. No
-hypothesis on `φ`, `β` or `μ` is used. -/
+/-- The inner integral is the kernel:
+`∫ u, f (splice Λ u ω) * (wt / part) = spec φ β Λ μ f ω`. The partition function does not depend on
+the inside configuration, so it comes out of the integral and what is left is `num / part`. No
+hypothesis on `φ`, `β` or `μ` is used.
+
+DERIVED: no numeral appears in this statement. -/
 theorem integral_wt_div_part (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     (f : IConf G → ℝ) (ω : IConf G) :
     (∫ u, f (splice Λ u ω) * (wt φ β Λ u ω / part φ β Λ μ ω) ∂(vol μ Λ))
@@ -347,18 +354,18 @@ theorem integral_wt_div_part (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ
 
 #print axioms integral_wt_div_part
 
-/-- **THE KERNEL APPLIED TO A MEASURE, TESTED ON A BOUNDED MEASURABLE OBSERVABLE.** For every
-bounded measurable `f`,
+/-- The kernel applied to a measure, tested on a bounded measurable observable: for `f` measurable
+with `|f| ≤ C`,
 
     ∫ f d(specMeasure φ β Λ μ P) = ∫ spec φ β Λ μ f dP.
 
-Continuity of `f` is not used and no limit is taken: the equation is Fubini on
-`P ⊗ vol μ Λ` for an integrand bounded by `C * ratioBound β Λ`, followed by the change of variables
-along the splice and the change of measure along the density.
+Continuity of `f` is not assumed and no limit is taken. The equation is Fubini on `P ⊗ vol μ Λ` for
+an integrand bounded by `C * ratioBound β Λ`, followed by the change of variables along the splice
+and the change of measure along the density.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density (`hφ0`, `hφ2`); `1` in the
-nonnegativity of `C` is the constant configuration the bound `hC` is evaluated at, chosen only
-because SOME configuration is needed to see `0 ≤ C`, and any other gives the same conclusion. -/
+DERIVED: `0` and `2` are the proved range of the plaquette density, the hypotheses `hφ0` and
+`hφ2`. The bound `C` is the caller's and is quantified over; no numeral of this file's enters
+it. -/
 theorem integral_specMeasure {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (P : Measure (IConf G)) [IsProbabilityMeasure P]
@@ -403,8 +410,9 @@ theorem integral_specMeasure {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ 
 
 #print axioms integral_specMeasure
 
-/-- **The kernel applied to a probability measure has total mass one.** The `f = 1` case of
-`integral_specMeasure` together with `GibbsSpec.spec_one`.
+/-- The kernel applied to a probability measure has total mass one:
+`(specMeasure φ β Λ μ P) Set.univ` has real part `1`. The `f = 1` case of `integral_specMeasure`
+together with `GibbsSpec.spec_one`.
 
 DERIVED: `1` is the constant observable and the normalisation of a probability measure — the same
 `1` on both sides, which is what the statement says. `0` and `2` are the proved range of the
@@ -427,7 +435,8 @@ theorem specMeasure_univ_toReal {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : �
 
 #print axioms specMeasure_univ_toReal
 
-/-- **The kernel applied to a probability measure is a probability measure.**
+/-- `specMeasure φ β Λ μ P` is a probability measure when `P` is, by `specMeasure_univ_toReal` and
+finiteness of the mass.
 
 DERIVED: `1` is the normalisation, `0` and `2` the proved range of the plaquette density. -/
 theorem isProbabilityMeasure_specMeasure {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
@@ -451,11 +460,12 @@ continuous function are equal. `specMeasure` and `P` have that, by
 `WilsonDLR.exists_infinite_volume_gibbs_measure_of_density`'s conclusion read through
 `integral_specMeasure`. -/
 
-/-- **The kernel fixes the measure.** For a `P` satisfying the DLR equation at continuous
-observables, `specMeasure φ β Λ μ P = P` at every finite volume — an equality of MEASURES, from
-which the bounded measurable equation follows by reading it at one observable.
+/-- The kernel fixes the measure: for a `P` satisfying the DLR equation at continuous observables,
+`specMeasure φ β Λ μ P = P` at every finite volume. This is an equality of MEASURES, from which the
+bounded measurable equation follows by reading it at one observable.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density (`hφ0`, `hφ2`). -/
+DERIVED: `0` and `2` are the proved range of the plaquette density, the hypotheses `hφ0` and
+`hφ2`. -/
 theorem specMeasure_eq_self {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
     (P : Measure (IConf G)) [IsProbabilityMeasure P]
@@ -474,12 +484,12 @@ theorem specMeasure_eq_self {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ 
 
 #print axioms specMeasure_eq_self
 
-/-- **THE DLR EQUATION AT EVERY BOUNDED MEASURABLE OBSERVABLE.** The conclusion
-`GibbsSpec.IsGibbsMeasure` asks for, from the conclusion `WilsonDLR` delivers.
+/-- The DLR equation at every measurable observable bounded by `1`, which is what
+`GibbsSpec.IsGibbsMeasure` asks for, from the continuous DLR equation `WilsonDLR` delivers.
 
-DERIVED: `1` is the radius of the ball of observables `IsGibbsMeasure` is stated on — by linearity
-of both sides in `f` the statement at any other finite bound `B > 0` is this one applied to `f / B`,
-so it is a normalisation and not a restriction. `0` and `2` are the proved range of the plaquette
+DERIVED: `1` is the radius of the ball of observables the equation is tested on. Both sides are
+linear in `f`, so the statement at any other finite bound `B > 0` is this one applied to `f / B`;
+it is a normalisation rather than a restriction. `0` and `2` are the proved range of the plaquette
 density. -/
 theorem dlr_bounded_measurable {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
@@ -495,15 +505,14 @@ theorem dlr_bounded_measurable {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : �
 
 /-! ## Part 6 — `IsGibbsMeasure`, for a general density and then for Wilson -/
 
-/-- **THE INFINITE-VOLUME GIBBS MEASURE OF A BOUNDED CONTINUOUS PLAQUETTE DENSITY, AS
-`GibbsSpec.IsGibbsMeasure`.** The measure is `WilsonDLR`'s; what is new is that it satisfies the DLR
-equation against every bounded measurable observable and not only every continuous one, so it is a
-Gibbs measure in the sense the specification's own definition names.
+/-- A bounded continuous plaquette density has an infinite-volume Gibbs measure in the sense
+`GibbsSpec.IsGibbsMeasure` defines: the measure is `WilsonDLR`'s, and it satisfies the DLR equation
+against every measurable observable bounded by `1`, not only every continuous one.
 
 DERIVED: `0` and `2` are the proved range of the plaquette density — the hypotheses `hφ0` and
-`hφ2`, discharged at the Wilson instance by `wilsonDensity_nonneg` and `wilsonDensity_le_two`. They
-are the only numerals in the statement: the boundary configuration the finite-volume family is
-anchored at is the PARAMETER `ω₀`, quantified over, so nothing is chosen here. -/
+`hφ2`, discharged at the Wilson instance by `WilsonAction.wilsonDensity_nonneg` and
+`WilsonAction.wilsonDensity_le_two`. They are the only numerals in the statement: the boundary
+configuration the finite-volume family is anchored at is the parameter `ω₀`, quantified over. -/
 theorem exists_isGibbsMeasure_of_density [T2Space G] {φ : G → ℝ} (hφc : Continuous φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
     (ω₀ : IConf G) : ∃ P : Measure (IConf G), IsGibbsMeasure φ β μ P := by
@@ -514,13 +523,12 @@ theorem exists_isGibbsMeasure_of_density [T2Space G] {φ : G → ℝ} (hφc : Co
 
 #print axioms exists_isGibbsMeasure_of_density
 
-/-- **`GibbsSpec.ExistsGibbsMeasure`, discharged.** `GibbsSpec` declares this proposition and
-records it as NOT PROVED THERE; it is the same statement as `exists_isGibbsMeasure_of_density`,
-under the name the specification gives it.
+/-- `GibbsSpec.ExistsGibbsMeasure φ β μ`, under the name the specification gives it. Same statement
+as `exists_isGibbsMeasure_of_density`, and proved by it.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density (`hφ0`, `hφ2`), the only
-numerals in the statement; the anchoring boundary configuration is the parameter `ω₀`, as at
-`exists_isGibbsMeasure_of_density`. -/
+DERIVED: `0` and `2` are the proved range of the plaquette density, the hypotheses `hφ0` and
+`hφ2`, and are the only numerals in the statement; the anchoring boundary configuration is the
+parameter `ω₀`, as at `exists_isGibbsMeasure_of_density`. -/
 theorem existsGibbsMeasure_of_density [T2Space G] {φ : G → ℝ} (hφc : Continuous φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
     (ω₀ : IConf G) : ExistsGibbsMeasure φ β μ :=
@@ -532,26 +540,24 @@ section Wilson
 
 open MassGap.CompactGauge MassGap.WilsonAction
 
-/-- **THE WILSON SPECIFICATION HAS A GIBBS MEASURE ON `SU(N)`, IN THE FULL SENSE.** For every
-`N ≠ 0` and every real `β` there is a probability measure `P` on the configuration space of the
-infinite four-dimensional lattice with
+/-- The Wilson specification has a Gibbs measure on `SU(N)` in the sense `GibbsSpec.IsGibbsMeasure`
+defines. For every `N ≠ 0` and every real `β` there is a probability measure `P` on the
+configuration space of the infinite lattice with
 
     ∫ f dP = ∫ spec wilsonDensity β Λ probHaar f dP
 
-for every finite volume `Λ` and every BOUNDED MEASURABLE observable `f` — `GibbsSpec.IsGibbsMeasure`
-itself, not a continuous restriction of it. The density is the genuine `1 − Re tr U / N`, the
-single-link measure is probability Haar, and the conditioning is against a real boundary condition
-(`GibbsSpec.boundaryPlaqs`).
+for every finite volume `Λ` and every measurable observable `f` bounded by `1`. The density is
+`WilsonAction.wilsonDensity`, the single-link measure is probability Haar, and the conditioning is
+against a boundary condition (`GibbsSpec.boundaryPlaqs`).
 
-Hypotheses, in full: `N ≠ 0` and `β : ℝ` arbitrary. No coupling regime, no volume bound, no
+Hypotheses, in full: `N ≠ 0`, and `β : ℝ` arbitrary. No coupling regime, no volume bound, no
 smallness condition.
 
-DERIVED: the `0` in the statement is the rank condition `N ≠ 0` — the density `1 − Re tr U / N`
-needs `N` invertible, and `N ≠ 0` is exactly what `wilsonDensity_nonneg` and `wilsonDensity_le_two`
-consume to place it in `[0,2]` (the upper bound is not claimed least: at `SU(3)` the true supremum
-of `1 − Re tr g / 3` is `3/2`). The `1` is the identity configuration the finite-volume family is
-anchored at, a boundary condition rather than a constant of the model — any other configuration
-proves the same existence statement. No other numeral appears. -/
+DERIVED: the `0` in the statement is the rank condition `N ≠ 0`. The density divides by `N`, and
+`N ≠ 0` is what `WilsonAction.wilsonDensity_nonneg` and `WilsonAction.wilsonDensity_le_two` consume
+to place it in `[0, 2]`. It is the only numeral in the statement; the `1` supplied in the proof is
+the identity configuration the finite-volume family is anchored at, a boundary condition rather
+than a constant of the model, and any other configuration proves the same existence statement. -/
 theorem exists_wilson_isGibbsMeasure (N : ℕ) (hN : N ≠ 0) (β : ℝ) :
     ∃ P : Measure (IConf (MassGap.SUN.SU N)),
       IsGibbsMeasure (wilsonDensity (N := N)) β (probHaar (MassGap.SUN.SU N)) P :=
@@ -560,13 +566,13 @@ theorem exists_wilson_isGibbsMeasure (N : ℕ) (hN : N ≠ 0) (β : ℝ) :
 
 #print axioms exists_wilson_isGibbsMeasure
 
-/-- **The same, written out.** `IsGibbsMeasure` unfolded, so the DLR equation for bounded measurable
-observables can be read off the statement without chasing a definition.
+/-- The same statement with `GibbsSpec.IsGibbsMeasure` unfolded, so the DLR equation for bounded
+measurable observables can be read off the statement without chasing a definition.
 
-DERIVED: `1` is the radius of the ball of observables the DLR equation is tested on — by linearity
-of both sides in `f`, the statement at any other finite bound `B > 0` is this one applied to
-`f / B`. The `0` is the rank condition `N ≠ 0`, as at `exists_wilson_isGibbsMeasure`. No other
-numeral appears. -/
+DERIVED: `1` is the radius of the ball of observables the DLR equation is tested on; both sides are
+linear in `f`, so the statement at any other finite bound `B > 0` is this one applied to `f / B`.
+The `0` is the rank condition `N ≠ 0`, as at `exists_wilson_isGibbsMeasure`. No other numeral
+appears. -/
 theorem wilson_dlr_bounded_measurable (N : ℕ) (hN : N ≠ 0) (β : ℝ) :
     ∃ P : Measure (IConf (MassGap.SUN.SU N)), IsProbabilityMeasure P ∧
       ∀ (Λ : Finset ILink) (f : IConf (MassGap.SUN.SU N) → ℝ), Measurable f →

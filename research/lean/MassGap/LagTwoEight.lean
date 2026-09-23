@@ -3,88 +3,52 @@ import MassGap.LagTwoSix
 import MassGap.ConfinesEight
 
 /-!
-# MassGap.LagTwoEight — the lag-two threshold at extent eight, where the relief PEAKS
+# MassGap.LagTwoEight — the lag-two threshold at extent eight
 
-`LagTwoSix`'s header states the trend across even extents and says where it turns:
+The extent-eight counterparts of `LagTwoBound.lagTwoThreshold` and `LagTwoSix.lagTwoThresholdSix`, in
+the same currency: a bound on `ρ(2)/ρ(0)` sufficient for the extent-eight confinement criterion.
+`lagTwoThresholdSix_lt_lagTwoThresholdEight` compares the two thresholds.
 
->     extent  4 → 0.0186240      extent 10 → 0.0302593
->     extent  6 → 0.0337959      extent 12 → 0.0250940
->     extent  8 → 0.0354567
->
-> **The relief peaks at extent eight and then reverses.** … Only the extent-four and extent-six
-> entries are machine-checked, here and in `LagTwoBound`. The other three are stated as what the same
-> construction yields, not as theorems.
+## The criterion at even extent `2m`, reduced at `m = 4`
 
-This file machine-checks the peak entry. `lagTwoThresholdEight` is the extent-eight counterpart of
-`LagTwoBound.lagTwoThreshold` and `LagTwoSix.lagTwoThresholdSix`, in the SAME currency — a bound on
-`ρ(2)/ρ(0)` — and `lagTwoThresholdSix_lt_lagTwoThresholdEight` proves the peak claim itself, so that
-the best aperture is a theorem rather than a table entry.
-
-## The criterion at even extent `2m`, and its reduction at `m = 4`
-
-`LagTwoSix`'s header gives the general form, which is `ConfinesSharp.confines_extent_four_iff` at
-`m = 2` and `confines_extent_six_iff` at `m = 3`:
+`ConfinesEight.confines_extent_eight_iff` is the `m = 4` case of
 
     ∑_{d=1}^{m−1} 2(c − cos(πd/m))·ρ(d) + (1+c)·ρ(m) < (1−c)·ρ(0),      c = 3^{−1/4}
 
-At `m = 4` the cosines are `cos(π/4) = √2/2`, `cos(2π/4) = 0` and `cos(3π/4) = −√2/2`, so the
-coefficients are EXACT in `c` and `√2` with no further transcendental content:
+At `m = 4` the cosines are `cos(π/4) = √2/2`, `cos(2π/4) = 0` and `cos(3π/4) = −√2/2`, so every
+coefficient is exact in `c` and `√2`:
 
 * on `ρ(1)`:  `2(c − √2/2) = 2c − √2`                                    — `bEight`
-* on the deep lags together, each bounded by `ρ(2)` on the log-convexity cone:
+* on `ρ(2)`, `ρ(3)` and `ρ(4)` together, the deeper two bounded by `ρ(2)`:
   `2c + 2(c + √2/2) + (1 + c) = 5c + √2 + 1`                            — `aEight`
 
-Reducing against `LogConvex.corrClay_log_convex`'s cone exactly as `LagTwoSix` does — `ρ(1) = v`,
-every deeper lag at `ρ(2) = v²` — gives one quadratic in `v = √(ρ(2)/ρ(0))`:
+Substituting `ρ(1) = v` and every deeper lag at `ρ(2) = v²` on `LogConvex.corrClay_log_convex`'s cone
+leaves one quadratic in `v = √(ρ(2)/ρ(0))`:
 
     aEight·v² + bEight·v = 1 − c
 
-`vEight` is its positive root and `lagTwoThresholdEight` is `vEight²`.
+`vEight` is its positive root, `vEight_root` is the root identity, and `lagTwoThresholdEight` is
+`vEight ^ 2`. `bEight_pos` records that the `ρ(1)` coefficient is positive at this extent; the
+brackets `0.0354 < lagTwoThresholdEight < 0.0355` come from brackets on `c`
+(`LagTwoBound.floor_bounds`) and on `√2` (`sqrt_two_bounds`), with `vEight` bracketed first and only
+then squared.
 
-## Why extent eight and not further
+## What follows
 
-`bEight = 2c − √2 = 0.10545781` is POSITIVE but small, and it is the last extent at which it is:
-`2(c − cos(π/m))` falls with `m` and turns negative at `m = 5`. Meanwhile `aEight` grows
-monotonically, `1.76 → 4.28 → 6.21 → 7.94 → 9.57` across extents `4, 6, 8, 10, 12`. Past `m = 4` the
-growth of the deep-lag coefficient beats the shrinking of the `ρ(1)` term and the threshold falls
-again.
-
-**The sign change buys nothing**, which is why the reversal is real rather than an artifact of the
-reduction. A negative coefficient on `ρ(1)` wants `ρ(1)` LARGE, and the cone bounds an odd lag only
-from ABOVE — every right-hand lag `corrClay_log_convex` produces is `2e`, hence even — so `ρ(1) → 0`
-stays admissible (`MomentShape.odd_scaling_admissible`) and dropping the term is the exact worst case.
-
-## THE ROUTE THIS FILE COMPLETES, and it does not go through `LawAbove`
-
-`ApertureRoute.ConfinesAtAnAperture` is `∃ a : EvenAp, ∀ β, c < cosAvgEven a β` — EXISTENTIAL over
-apertures — so confinement at ONE aperture discharges it and thence the flagship through
-`flagship_of_confinement_at_an_aperture`. That is the short route, and `confines_of_lagTwoRatioEight`
-below carries it at the best aperture:
-
-    LagTwoRatioEight  =  ∃ K < 0.0354567, ∀ β ≥ 0, ρ(2) ≤ K·ρ(0)     [extent eight only]
-       ⟹ ConfinesAtAnAperture ⟹ the flagship
-
-**`NonnegArm.LawAbove` is the remaining obligation on the TWO-ARM SUBSTRATE route, not on this one.**
-Its constant must be uniform in EVERY aperture, at every lag, with a quartic rate; `LagTwoRatioEight`
-is one aperture, one lag, no rate, and the largest bar of the five even extents. The two are not
-comparable obligations and the shorter one is strictly weaker.
-
-## What this does NOT claim
-
-* It does **not** discharge `LagTwoRatioEight` at any coupling. That is B5, and it is open.
-  **The SHAPE facts cannot close it either**, and that was checked rather than assumed: the constant
-  profile conforms to every coupling-uniform fact — including this file's own
-  `lag_three_le_lag_two_eight` and `lag_four_le_lag_two`, both with EQUALITY — and its lag-two ratio
-  is exactly `1`, which `lagTwoThresholdEight_lt_one` puts above the threshold
-  (`flat_profile_defeats_every_admissible_K`). So what closes `LagTwoRatioEight` must come from the
-  DYNAMICS, exactly as `LagTwoSix` says of its own obligation.
-* The obstruction above is NOT the one `ClayAssembly.flat_profile_admits_no_uniform_quartic_constant`
-  raises against `LawAbove`. That one needs the aperture to GROW, forcing `C ≥ m⁴` at extent `2m`;
-  this one is a single fixed violation at one aperture. Same witness, different arithmetic — and only
-  the second applies to a single-aperture obligation.
-* The extent-eight threshold IS proved sharp (`lagTwoThresholdEight_sharp`), but sharp means best
-  possible from the LOG-CONVEXITY CONE, not best possible from everything the tree proves — the same
-  scope `LagTwoSix.lagTwoThresholdSix_sharp` has.
+* the three log-convexity instances at half-extent four — `logConvex_eight_lag_one`,
+  `logConvex_eight_lag_four`, `logConvex_eight_lag_three` — and the two orderings they give,
+  `lag_four_le_lag_two` and `lag_three_le_lag_two_eight`, both at the clamped coupling `max β 0`;
+* `confines_extent_eight_of_lag_two_ratio`, the sufficient condition at one coupling, and
+  `LagTwoRatioEight`, the `Prop` collecting it over all nonnegative couplings, with
+  `confines_of_lagTwoRatioEight` reducing `ApertureRoute.ConfinesAtAnAperture` to it at the witness
+  `ConfinesEight.ap8`;
+* `lagTwoThresholdEight_sharp`, which exhibits five reals satisfying the log-convexity inequalities
+  at `r₂ = lagTwoThresholdEight * r₀` and refuting the criterion there, so no larger constant is
+  carried by this reduction;
+* `flat_profile_defeats_every_admissible_K`, which says no `K` below the threshold bounds a ratio of
+  `1`;
+* `exists_cut_lag_two_ratio_eight`, which proves the ratio bound for every `K > 0` on an interval
+  `[0, b]` rather than on the whole half-line.
 
 Foundational footprint only (`#print axioms` on every declaration).
 Build: `python research/code/lean_build.py build MassGap.LagTwoEight`.
@@ -92,18 +56,21 @@ Build: `python research/code/lean_build.py build MassGap.LagTwoEight`.
 
 namespace MassGap.LagTwoEight
 
-/-- The `ρ(1)` coefficient of the extent-eight criterion: `2(c − cos(π/4)) = 2c − √2`.
+/-- The `ρ(1)` coefficient of the extent-eight criterion: `2(c − cos(π/4)) = 2c − √2`, at
+`c = 3 ^ (−1/4)`.
 
-DERIVED: `2` is the criterion's own multiplicity, `cos(π/4) = √2/2` is exact, and `c = 3^{−1/4}` is
-the entropy floor carried in by name from `Floor.lean`. Nothing is chosen. -/
+DERIVED: the leading `2` is the criterion's multiplicity on an interior lag; `3`, `1` and `4` are the
+entropy floor `3 ^ (−1/4)` written out, base and exponent; the `2` under `Real.sqrt` is
+`2 cos(π/4) = √2`. Nothing is chosen. -/
 noncomputable def bEight : ℝ := 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - Real.sqrt 2
 
-/-- The deep-lag coefficient, all of `ρ(2)`, `ρ(3)` and `ρ(4)` collected on the cone:
+/-- The deep-lag coefficient at extent eight, with `ρ(2)`, `ρ(3)` and `ρ(4)` collected on the cone:
 `2(c − cos(π/2)) + 2(c − cos(3π/4)) + (1 + c) = 2c + (2c + √2) + (1 + c) = 5c + √2 + 1`.
 
-DERIVED: every literal is a criterion coefficient at `m = 4`. `cos(π/2) = 0` and
-`cos(3π/4) = −√2/2` are exact, the `1 + c` is the self-paired lag `ρ(m)`'s own coefficient, and the
-`5` is `2 + 2 + 1` collected. No magnitude is chosen. -/
+DERIVED: `5` is `2 + 2 + 1`, the three criterion coefficients on `c` collected, using `cos(π/2) = 0`;
+`3`, `1` and `4` are the entropy floor `3 ^ (−1/4)`, base and exponent; the `2` under `Real.sqrt`
+comes from `−2 cos(3π/4) = √2`; the trailing `1` is the constant part of the self-paired lag's
+coefficient `1 + c`. No magnitude is chosen. -/
 noncomputable def aEight : ℝ := 5 * (3 : ℝ) ^ (-(1 : ℝ) / 4) + Real.sqrt 2 + 1
 
 theorem sqrt_two_bounds : 1.41421356 < Real.sqrt 2 ∧ Real.sqrt 2 < 1.41421357 := by
@@ -117,15 +84,24 @@ theorem aEight_pos : 0 < aEight := by
   unfold aEight
   linarith [hc.1, hs.1]
 
-/-- `bEight` is POSITIVE, and this is the fact that makes extent eight the peak rather than one more
-step down a monotone trend: at `m = 5` the same coefficient is negative. -/
+/-- `0 < bEight`: the `ρ(1)` coefficient is positive at extent eight, so the reduced quadratic has a
+positive linear term. From `LagTwoBound.floor_bounds`' lower bracket on `c` against
+`sqrt_two_bounds`' upper bracket on `√2`.
+
+DERIVED: `0` is the sign condition on `bEight`. -/
 theorem bEight_pos : 0 < bEight := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hs := sqrt_two_bounds
   unfold bEight
   linarith [hc.1, hs.2]
 
-/-- The discriminant `bEight² + 4·aEight·(1−c)`, positive. -/
+/-- The discriminant of the reduced quadratic is positive:
+`0 < bEight ^ 2 + 4 * aEight * (1 − c)`. `aEight_pos`, `bEight_pos` and `LagTwoBound.floor_bounds`
+(which puts `c` below `1`) are the inputs.
+
+DERIVED: `0` is the sign condition; `2` is the exponent on `bEight`; `4` is the quadratic formula's
+coefficient; the standalone `1` is the left term of `1 − c`; `3`, `1` and `4` are the entropy floor
+`3 ^ (−1/4)`, base and exponent. -/
 theorem disc_pos :
     0 < bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) := by
   have hc := MassGap.LagTwoBound.floor_bounds
@@ -133,18 +109,21 @@ theorem disc_pos :
   have hb := bEight_pos
   nlinarith [hc.1, hc.2, ha, hb, sq_nonneg bEight]
 
-/-- **The positive root of the extent-eight reduced criterion**, in `v = √(ρ(2)/ρ(0))`.
+/-- The positive root of the extent-eight reduced criterion `aEight·v² + bEight·v = 1 − c`, in
+`v = √(ρ(2)/ρ(0))`, written by the quadratic formula as
+`(√(bEight ^ 2 + 4·aEight·(1 − c)) − bEight) / (2·aEight)`.
 
-DERIVED: the quadratic formula applied to `aEight·v² + bEight·v = 1 − c`, with no numeral of its own
-beyond the formula's `2` and `4`. -/
+DERIVED: `2` is the exponent on `bEight` under the root and, in the denominator, the `2a` of the
+quadratic formula; `4` is that formula's `4ac`; the standalone `1` is the left term of `1 − c`; `3`,
+`1` and `4` are the entropy floor `3 ^ (−1/4)`, base and exponent. -/
 noncomputable def vEight : ℝ :=
   (Real.sqrt (bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))) - bEight) / (2 * aEight)
 
-/-- **THE THRESHOLD ON THE LAG-TWO RATIO AT EXTENT EIGHT** — `vEight` squared, because the criterion
-is a bound on `√(ρ(2)/ρ(0))` while the threshold is stated on the RATIO. The extent-eight counterpart
-of `LagTwoBound.lagTwoThreshold` and `LagTwoSix.lagTwoThresholdSix`.
+/-- The threshold on the lag-two ratio at extent eight: `vEight ^ 2`, because the reduced criterion
+is a bound on `√(ρ(2)/ρ(0))` while the threshold is stated on the ratio itself. The extent-eight
+counterpart of `LagTwoBound.lagTwoThreshold` and `LagTwoSix.lagTwoThresholdSix`.
 
-DERIVED: the `2` is the squaring and nothing else. -/
+DERIVED: `2` is the exponent of the squaring, and the only numeral in the body. -/
 noncomputable def lagTwoThresholdEight : ℝ := vEight ^ 2
 
 theorem vEight_pos : 0 < vEight := by
@@ -160,8 +139,13 @@ theorem vEight_pos : 0 < vEight := by
   rw [Real.sqrt_sq hb.le] at this
   linarith
 
-/-- **THE ROOT IDENTITY.** `aEight·vEight² + bEight·vEight = 1 − c`: the threshold is exactly the
-reduced criterion's own root and not a cut taken below it. -/
+/-- The root identity `aEight * vEight ^ 2 + bEight * vEight = 1 − c`: the threshold is the reduced
+criterion's own root, taken at equality rather than at a cut below it. Proved by collapsing
+`(D − b)² + 2b(D − b) = D² − b²` symbolically in `D` and then substituting
+`Real.sq_sqrt disc_pos.le`.
+
+DERIVED: `2` is the exponent on `vEight`; the standalone `1` is the left term of `1 − c`; `3`, `1`
+and `4` are the entropy floor `3 ^ (−1/4)`, base and exponent. -/
 theorem vEight_root :
     aEight * vEight ^ 2 + bEight * vEight = 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
   have ha := aEight_pos
@@ -170,9 +154,9 @@ theorem vEight_root :
   have hsq : Real.sqrt (bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))) ^ 2
       = bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :=
     Real.sq_sqrt hd.le
-  -- The `(D − b)² + 2b(D − b) = D² − b²` collapse, done SYMBOLICALLY and then closed by the
-  -- discriminant identity -- the shape `LagTwoSix.vSix_root` uses. Handing the whole thing to
-  -- `nlinarith` instead leaves it to substitute `(√disc)²` inside a polynomial, and it does not.
+  -- The `(D − b)² + 2b(D − b) = D² − b²` collapse, taken symbolically in `D` and then closed by
+  -- the discriminant identity, the shape `LagTwoSix.vSix_root` uses. Handing the whole goal to
+  -- `nlinarith` instead leaves it to substitute `(√disc)²` inside a polynomial.
   have hkey : ∀ D : ℝ, aEight * ((D - bEight) / (2 * aEight)) ^ 2
         + bEight * ((D - bEight) / (2 * aEight))
       = (D ^ 2 - bEight ^ 2) / (4 * aEight) := by
@@ -183,13 +167,20 @@ theorem vEight_root :
   rw [vEight, hkey, hsq, div_eq_iff hane]
   ring
 
-/-! ### The bracket, built the way `LagTwoSix` builds its own
+/-! ### The brackets
 
-`v` is bounded FIRST, from the closed form through `lt_div_iff₀`, and only then squared. Reading the
-bracket off the root identity instead leaves `nlinarith` to solve a quadratic in three unknowns
-(`c`, `√2`, `v`) and it does not. -/
+`v` is bracketed first, from the closed form through `lt_div_iff₀` and `div_lt_iff₀`, and only then
+squared. Every input is a bracket on `c` (`LagTwoBound.floor_bounds`) or on `√2`
+(`sqrt_two_bounds`); reading the bracket off the root identity instead would leave `nlinarith` a
+quadratic in the three unknowns `c`, `√2` and `v`. -/
 
-/-- The discriminant, bracketed. Every input is a bracket on `c` or on `√2`. -/
+/-- A rational lower bracket on the discriminant; `disc_lt` gives the matching upper bracket
+`5.9801`. Every input is a bracket on `c` or on `√2`.
+
+CHOSEN: `5.98` is the rational bracket, rounded down so the rounding cannot produce the inequality on
+its own; `2` is the exponent on `bEight`, `4` is the quadratic formula's coefficient, the standalone
+`1` is the left term of `1 − c`, and `3`, `1` and `4` are the entropy floor `3 ^ (−1/4)`, base and
+exponent. -/
 theorem disc_gt : 5.98 < bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hs := sqrt_two_bounds
@@ -212,9 +203,12 @@ theorem sqrt_disc_lt :
   nlinarith [Real.sq_sqrt disc_pos.le, Real.sqrt_nonneg
     (bEight ^ 2 + 4 * aEight * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))), disc_lt]
 
-/-- `vEight` bracketed. CHOSEN, and both rounded AWAY from the claim
-`lagTwoThresholdSix < lagTwoThresholdEight`: `0.1882` is below `vEight = 0.18829961…` and `0.18831`
-is above it, so neither rounding can manufacture the strict inequality. -/
+/-- A rational lower bracket on `vEight`; `vEight_lt` gives the upper one, `0.18831`. Both are
+rounded away from the claim `lagTwoThresholdSix < lagTwoThresholdEight`, so neither rounding can
+produce that strict inequality on its own. The inputs are `sqrt_disc_gt` and upper brackets on
+`bEight` and `aEight`.
+
+CHOSEN: `0.1882` is a rational bracket below `vEight`, rounded down. -/
 theorem vEight_gt : 0.1882 < vEight := by
   have ha := aEight_pos
   have hc := MassGap.LagTwoBound.floor_bounds
@@ -239,8 +233,11 @@ theorem vEight_lt : vEight < 0.18831 := by
     unfold aEight; linarith [hc.1, hs.1]
   nlinarith [sqrt_disc_lt, hb, haL, ha]
 
-/-- The threshold bracketed for a reader, between `0.0354` and `0.0355`. The decision is made by the
-closed form; these rationals decide nothing, and each rounds AWAY from the claim it is used in. -/
+/-- The threshold bracketed for a reader; `lagTwoThresholdEight_lt` gives the upper end, `0.0355`.
+The value is decided by the closed form `vEight ^ 2` through `vEight_gt` and `vEight_pos`; the
+rationals decide nothing, and each rounds away from the claim it is used in.
+
+CHOSEN: `0.0354` is a rational bracket below `lagTwoThresholdEight`, rounded down. -/
 theorem lagTwoThresholdEight_gt : 0.0354 < lagTwoThresholdEight := by
   have hg := vEight_gt
   have hp := vEight_pos
@@ -253,9 +250,13 @@ theorem lagTwoThresholdEight_lt : lagTwoThresholdEight < 0.0355 := by
   unfold lagTwoThresholdEight
   nlinarith [hl, hp]
 
-/-- **THE PEAK, AS A THEOREM.** Extent eight relieves the lag-two obligation more than extent six
-does. `LagTwoSix`'s header states the trend; this is the one comparison in it that decides which
-aperture to prefer, and it is now machine-checked rather than tabulated. -/
+/-- Extent eight admits a larger lag-two constant than extent six:
+`LagTwoSix.lagTwoThresholdSix < lagTwoThresholdEight`. The right-hand end comes from
+`lagTwoThresholdEight_gt`. `LagTwoSix` publishes only a lower bracket on its own threshold, so the
+upper one is derived here from `LagTwoSix.vSix_root`: both coefficients of that quadratic are
+positive, so its left side is monotone in `vSix` and a value at `0.1839` already overshoots `1 − c`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem lagTwoThresholdSix_lt_lagTwoThresholdEight :
     MassGap.LagTwoSix.lagTwoThresholdSix < lagTwoThresholdEight := by
   -- `LagTwoSix` publishes only a LOWER bracket (`lagTwoThresholdSix_gt`), so the upper one is taken
@@ -273,7 +274,10 @@ theorem lagTwoThresholdSix_lt_lagTwoThresholdEight :
     _ < 0.0354 := by norm_num
     _ < lagTwoThresholdEight := lagTwoThresholdEight_gt
 
-/-- `vEight < 1`, from the root identity alone: `aEight·vEight² < 1 − c < 1` and `aEight > 6`. -/
+/-- `vEight < 1`, from `vEight_root` alone: `aEight` exceeds `6` and both terms of the left side are
+nonnegative, so `vEight` cannot reach `1` without overshooting `1 − c`.
+
+DERIVED: `1` is the upper bound on `vEight`. -/
 theorem vEight_lt_one : vEight < 1 := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hs := sqrt_two_bounds
@@ -283,23 +287,27 @@ theorem vEight_lt_one : vEight < 1 := by
   have ha : (6 : ℝ) < aEight := by unfold aEight; linarith [hc.1, hs.1]
   nlinarith [hroot, hv0, hb, ha, hc.1, hc.2]
 
-/-- **THE THRESHOLD IS THE BEST ONE THE PROVED SHAPE FACTS CARRY AT EXTENT EIGHT** — it is not a cut
-with margin left in it.
+/-- No constant above `lagTwoThresholdEight` is carried by this reduction.
 
-The profile `ρ = (1, vEight, vEight², vEight², vEight²)`, extended by circle symmetry to
-`ρ(5) = ρ(3)`, `ρ(6) = ρ(2)`, `ρ(7) = ρ(1)`, satisfies the log-convexity instances available at
-half-extent four and sits at `ρ(2) = lagTwoThresholdEight · ρ(0)` exactly, where `vEight_root` puts
-the criterion at EQUALITY and hence not strictly below. So no constant above `lagTwoThresholdEight`
-is carried by this reduction.
+The statement exhibits five reals `r₀ … r₄`, with `r₀` positive and the other four nonnegative, that
+satisfy the three log-convexity inequalities `r₁ ^ 2 ≤ r₀ * r₂`, `r₂ ^ 2 ≤ r₀ * r₄` and
+`r₃ ^ 2 ≤ r₂ * r₄`, sit at `r₂ = lagTwoThresholdEight * r₀` exactly, and do NOT satisfy the criterion's
+strict inequality. The witness is `(1, vEight, vEight ^ 2, vEight ^ 2, vEight ^ 2)`: on it the
+criterion's left side is `bEight·vEight + aEight·vEight²`, which `vEight_root` puts equal to `1 − c`,
+the right side, so the strict `<` fails.
 
-**The equality is exact and is the point.** On this profile the criterion's left side is
-`bEight·vEight + aEight·vEight²`, which `vEight_root` says is `1 − c` — the right side — so the strict
-`<` fails by nothing at all. The extent-six counterpart is `LagTwoSix.lagTwoThresholdSix_sharp` and
-this is the same argument at `m = 4`.
+The criterion is written out in the statement with its own coefficients — `2c − √2` on `r₁`, `2c` on
+`r₂`, `2c + √2` on `r₃`, `1 + c` on `r₄`, against `(1 − c) * r₀` — rather than invoked through
+`ConfinesEight.confines_extent_eight_iff`. The five reals are constrained by nothing else: they are
+not values of `wilsonCorrAt`, and the circle symmetry that would carry `r₅`, `r₆`, `r₇` is not part
+of the statement. So this is sharpness against the three stated log-convexity inequalities, the same
+scope `LagTwoSix.lagTwoThresholdSix_sharp` has.
 
-DERIVED: no numeral. The five components are `1`, `vEight`, `vEight²`, `vEight²`, `vEight²`; the
-exponent `2` is the square in the log-convexity statement and in `lagTwoThresholdEight = vEight ^ 2`.
-The criterion's coefficients are `ConfinesEight.confines_extent_eight_iff`'s own. -/
+DERIVED: `0` is the sign condition on each of the five components; the three exponents `2` are the
+squares of the log-convexity inequalities; `2` also multiplies `c` in the coefficients of `r₁`, `r₂`
+and `r₃`; `3`, `1` and `4` are the entropy floor `3 ^ (−1/4)`, base and exponent, at each of its five
+occurrences; the `2` under `Real.sqrt` is `√2`; the standalone `1` is the constant part of `1 + c`
+and of `1 − c`. -/
 theorem lagTwoThresholdEight_sharp :
     ∃ r₀ r₁ r₂ r₃ r₄ : ℝ, 0 < r₀ ∧ 0 ≤ r₁ ∧ 0 ≤ r₂ ∧ 0 ≤ r₃ ∧ 0 ≤ r₄ ∧
       r₁ ^ 2 ≤ r₀ * r₂ ∧ r₂ ^ 2 ≤ r₀ * r₄ ∧ r₃ ^ 2 ≤ r₂ * r₄ ∧
@@ -321,21 +329,26 @@ theorem lagTwoThresholdEight_sharp :
     unfold aEight bEight at hroot
     nlinarith [hroot]
 
-/-- **THE THRESHOLD IS FAR UNDER ONE**, which is what makes the constant profile defeat it.
-`lagTwoThresholdEight = vEight²` and `vEight < 1`. -/
+/-- `lagTwoThresholdEight < 1`, since it is `vEight ^ 2` and `vEight_lt_one` puts `vEight` below `1`,
+with `vEight_pos` for the sign.
+
+DERIVED: `1` is the upper bound on the threshold. -/
 theorem lagTwoThresholdEight_lt_one : lagTwoThresholdEight < 1 := by
   have hv0 := vEight_pos
   have hv1 := vEight_lt_one
   unfold lagTwoThresholdEight
   nlinarith [hv0, hv1]
 
-/-- **THE CONSTANT PROFILE DEFEATS EVERY ADMISSIBLE `K`.** Its lag-two ratio is exactly `1` and the
-threshold is under one, so no `K < lagTwoThresholdEight` can bound it.
+/-- No `K` below the threshold bounds a lag-two ratio of `1`.
+For every real `K` with `K < lagTwoThresholdEight`, the inequality `(1 : ℝ) ≤ K * 1` is false —
+immediately from `lagTwoThresholdEight_lt_one`. The two `1`s stand for a profile whose `ρ(2)` and
+`ρ(0)` are equal, such as `TailRatio.no_strict_lag_bound_with_contact`'s constant profile, which also
+meets this file's `lag_three_le_lag_two_eight` and `lag_four_le_lag_two` with equality. The statement
+itself quantifies over `K` alone and mentions no correlation function, so that reading of the `1`s is
+supplied from outside it.
 
-This is `TailRatio.no_strict_lag_bound_with_contact`'s witness read against THIS extent's threshold.
-The profile conforms to every coupling-uniform fact the tree proves — including this file's
-`lag_three_le_lag_two_eight` and `lag_four_le_lag_two`, both with equality — so the shape facts
-cannot close `LagTwoRatioEight` and what does must come from the dynamics. -/
+DERIVED: `1` appears twice: as the ratio on the left of the bound, and as the `ρ(0)` the profile is
+normalised to, so that `K * 1` is the bound `K` would have to meet. -/
 theorem flat_profile_defeats_every_admissible_K :
     ∀ K : ℝ, K < lagTwoThresholdEight → ¬ ((1 : ℝ) ≤ K * 1) := by
   intro K hK hcon
@@ -345,8 +358,12 @@ theorem flat_profile_defeats_every_admissible_K :
 /-! ## The shape substitutions at half-extent four
 
 `LogConvex.corrClay_log_convex` at `Nap = 7`, `m = 4` admits every pair `e₁, e₂ < 4`. Three instances
-carry the reduction, and the third needs the second: `ρ(4) ≤ ρ(2)` comes from `(1,3)` folded by
-`ρ(6) = ρ(2)`, and only then does `(1,2)` give `ρ(3) ≤ ρ(2)`. -/
+carry the reduction, and the third needs the second: `ρ(4) ≤ ρ(2)` comes from the pair `(1, 3)`
+folded by `ρ(6) = ρ(2)`, and only then does `(1, 2)` give `ρ(3) ≤ ρ(2)`. The three instances are
+stated at an arbitrary real coupling; the two orderings drawn from them clamp it at `max β 0`.
+
+DERIVED: in `logConvex_eight_lag_one`, `7` is the extent index `N`, with `N + 1 = 8`; `2` is the
+exponent of the square on the left and the lag index on the right; `1` and `0` are lag indices. -/
 
 theorem logConvex_eight_lag_one (β : ℝ) :
     MassGap.wilsonCorrAt 7 β 1 ^ 2 ≤ MassGap.wilsonCorrAt 7 β 0 * MassGap.wilsonCorrAt 7 β 2 := by
@@ -378,7 +395,14 @@ theorem logConvex_eight_lag_three (β : ℝ) :
   rw [e12, e11, e22] at hh
   exact hh
 
-/-- **THE ANTIPODAL LAG IS BELOW THE LAG-TWO VALUE AT EXTENT EIGHT**, `ρ(4) ≤ ρ(2)`. -/
+/-- `ρ(4) ≤ ρ(2)` at extent eight, at the clamped coupling `max β 0`.
+`logConvex_eight_lag_four` gives `ρ(4) ^ 2 ≤ ρ(2) * ρ(6)`, `ConfinesEight.sym_eight_two` folds `ρ(6)`
+onto `ρ(2)`, and `wilson_reflection_positive_at_even` supplies the nonnegativity of the two values.
+Both sides are read at `max β 0`, so the statement holds for every real `β` and says nothing about
+the correlation at a negative coupling.
+
+DERIVED: `7` is the extent index `N`, with `N + 1 = 8`; `0` is the clamp in `max β 0`; `4` and `2`
+are lag indices. -/
 theorem lag_four_le_lag_two (β : ℝ) :
     MassGap.wilsonCorrAt 7 (max β 0) 4 ≤ MassGap.wilsonCorrAt 7 (max β 0) 2 := by
   have hrp := MassGap.wilson_reflection_positive_at_even 7 4 (by norm_num) (by norm_num)
@@ -387,7 +411,12 @@ theorem lag_four_le_lag_two (β : ℝ) :
   rw [MassGap.ConfinesEight.sym_eight_two β] at h4
   nlinarith [h4, hrp.1 4, hrp.1 2]
 
-/-- **AND SO IS THE LAG-THREE VALUE**, `ρ(3) ≤ ρ(2)`, through `ρ(4) ≤ ρ(2)`. -/
+/-- `ρ(3) ≤ ρ(2)` at extent eight, at the clamped coupling, through `ρ(4) ≤ ρ(2)`.
+`logConvex_eight_lag_three` gives `ρ(3) ^ 2 ≤ ρ(2) * ρ(4)`, `lag_four_le_lag_two` replaces `ρ(4)`,
+and `wilson_reflection_positive_at_even` supplies nonnegativity at lags `2`, `3` and `4`.
+
+DERIVED: `7` is the extent index `N`, with `N + 1 = 8`; `0` is the clamp in `max β 0`; `3` and `2`
+are lag indices. -/
 theorem lag_three_le_lag_two_eight (β : ℝ) :
     MassGap.wilsonCorrAt 7 (max β 0) 3 ≤ MassGap.wilsonCorrAt 7 (max β 0) 2 := by
   have hrp := MassGap.wilson_reflection_positive_at_even 7 4 (by norm_num) (by norm_num)
@@ -398,15 +427,24 @@ theorem lag_three_le_lag_two_eight (β : ℝ) :
 
 /-! ## The sufficient condition at extent eight -/
 
-/-- **A LAG-TWO RATIO BELOW `lagTwoThresholdEight` CLEARS THE FLOOR AT EXTENT EIGHT.**
+/-- A lag-two ratio below `lagTwoThresholdEight` clears the floor at extent eight.
+From `K < lagTwoThresholdEight` and `ρ(2) ≤ K · ρ(0)` at the clamped coupling, the conclusion is
+`3 ^ (−1/4) < ApertureRoute.cosAvgEven ConfinesEight.ap8 β`. The hypothesis is read at `max β 0`
+while the conclusion is stated at `β` itself, which is unrestricted in sign. The extent-eight
+counterpart of `LagTwoSix.confines_extent_six_of_lag_two_ratio`, consuming a weaker hypothesis by
+`lagTwoThresholdSix_lt_lagTwoThresholdEight`.
 
-The extent-eight counterpart of `LagTwoSix.confines_extent_six_of_lag_two_ratio`, consuming a
-strictly weaker hypothesis by `lagTwoThresholdSix_lt_lagTwoThresholdEight`.
+`ConfinesEight.confines_extent_eight_iff` is an equivalence, so the criterion is rewritten rather
+than weakened. The substitutions are `logConvex_eight_lag_one` for `ρ(1)`,
+`lag_three_le_lag_two_eight` and `lag_four_le_lag_two` for the deep lags; the collapse
+`2c·ρ(2) + (2c+√2)·ρ(3) + (1+c)·ρ(4) ≤ aEight·ρ(2)` is `aEight`'s own definition once `ρ(3)` and
+`ρ(4)` are under `ρ(2)`. `PlaqVariance.corrClay_zero_pos` supplies `0 < ρ(0)` and
+`wilson_reflection_positive_at_even` the nonnegativity of `ρ(1)` and `ρ(2)`.
 
-Nothing is spent that is not proved: `ConfinesEight.confines_extent_eight_iff` is an EQUIVALENCE, and
-the three substitutions are `logConvex_eight_lag_one`, `lag_three_le_lag_two_eight` and
-`lag_four_le_lag_two`. The collapse is `2c·ρ(2) + (2c+√2)ρ(3) + (1+c)ρ(4) ≤ aEight·ρ(2)`, which is
-`aEight`'s own definition once `ρ(3)` and `ρ(4)` are under `ρ(2)`. -/
+DERIVED: `7` is the extent index `N`, with `N + 1 = 8`, and the `8` in `ConfinesEight.ap8` is part of
+that aperture's name; `0` is the clamp in `max β 0` and the contact lag the ratio is taken relative
+to; `2` is the lag the ratio is taken at; `3`, `1` and `4` are the entropy floor `3 ^ (−1/4)` on the
+left of the conclusion, base and exponent. -/
 theorem confines_extent_eight_of_lag_two_ratio {β K : ℝ} (hK : K < lagTwoThresholdEight)
     (h : MassGap.wilsonCorrAt 7 (max β 0) 2 ≤ K * MassGap.wilsonCorrAt 7 (max β 0) 0) :
     (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.ApertureRoute.cosAvgEven MassGap.ConfinesEight.ap8 β := by
@@ -452,81 +490,75 @@ theorem confines_extent_eight_of_lag_two_ratio {β K : ℝ} (hK : K < lagTwoThre
   unfold bEight at hcollapse hstrict hval
   linarith
 
-/-- **THE REMAINING OBLIGATION AT EXTENT EIGHT.** One real constant strictly below
-`lagTwoThresholdEight`, bounding the lag-two ratio at every NONNEGATIVE coupling. The extent-eight
-counterpart of `LagTwoSix.LagTwoRatioSix`, and the weakest form of B5 this tree carries: ONE aperture,
-ONE lag, no rate, and the largest bar of the five even extents.
+/-- The lag-two obligation at extent eight: one real constant strictly below
+`lagTwoThresholdEight` bounding `ρ(2)` by `K · ρ(0)` at every nonnegative coupling. The extent-eight
+counterpart of `LagTwoSix.LagTwoRatioSix` — one aperture, one lag, no rate — and the bound the
+comparison `lagTwoThresholdSix_lt_lagTwoThresholdEight` makes the largest of the even extents
+compared here.
 
-OPEN. Nothing in this tree proves it, and the shape facts cannot — the SAME no-go that applies at
-extent six applies here, and it is worth being exact about why, because the obstructions to
-`NonnegArm.LawAbove` and the obstruction to this are different arguments that happen to share a
-witness.
+`confines_of_lagTwoRatioEight` consumes it. `exists_cut_lag_two_ratio_eight` gives the same bound,
+for every `K > 0`, on an interval `[0, b]` rather than on all of `0 ≤ β`. Any profile whose lag-two
+ratio reaches `1` meets no admissible `K`, by `flat_profile_defeats_every_admissible_K`, and the
+constant profile of `TailRatio.no_strict_lag_bound_with_contact` is such a profile: it satisfies
+nonnegativity, circle symmetry, log-convexity, `ρ(2) ≤ ρ(0)`, and this file's own
+`lag_three_le_lag_two_eight` and `lag_four_le_lag_two` with equality.
 
-`TailRatio.no_strict_lag_bound_with_contact`'s witness is the CONSTANT profile. It conforms to
-nonnegativity, circle symmetry, log-convexity and `ρ(2) ≤ ρ(0)`, at extent eight exactly as at extent
-six, and it also meets this file's own `lag_three_le_lag_two_eight` and `lag_four_le_lag_two` with
-equality. Its lag-two ratio is exactly `1`, and `lagTwoThresholdEight_lt_one` puts the threshold far
-under one — so every admissible `K` is defeated. **What closes `LagTwoRatioEight` must come from the
-dynamics**, not from the shape.
+The `0 ≤ β` guard costs the consumer nothing: `confines_of_lagTwoRatioEight` instantiates it at
+`max β 0`.
 
-That is NOT the flat-profile argument against `LawAbove`
-(`ClayAssembly.flat_profile_admits_no_uniform_quartic_constant`), which turns on `C` having to exceed
-`m⁴` at extent `2m` and so needs the aperture to grow. Here the refutation is a single fixed
-violation at one aperture, `1 > 0.0354567`. Same profile, different arithmetic, and the second does
-not depend on aperture-uniformity at all.
-
-The negative half-line is free: `EvenAperture.readEven` clamps at `max β 0`, so the hypothesis is only
-ever read at a nonnegative coupling.
-
-DERIVED: `7` is `ConfinesEight.ap8`'s extent index `N`, with `N + 1 = 8 = 2·4`; `2` and `0` are lag
-indices, the lag the ratio is taken at and the contact lag it is taken relative to. The only magnitude
-is `lagTwoThresholdEight`, which is a closed form. Nothing here is chosen. -/
+DERIVED: `0` is the sign condition on the coupling in `0 ≤ β` and, in the last position, the contact
+lag the ratio is taken relative to; `7` is the extent index `N` of `ConfinesEight.ap8`, with
+`N + 1 = 8 = 2·4`; `2` is the lag the ratio is taken at. The only magnitude is
+`lagTwoThresholdEight`, which is a closed form. Nothing here is chosen. -/
 def LagTwoRatioEight : Prop :=
   ∃ K : ℝ, K < lagTwoThresholdEight ∧
     ∀ β : ℝ, 0 ≤ β → MassGap.wilsonCorrAt 7 β 2 ≤ K * MassGap.wilsonCorrAt 7 β 0
 
-/-- **THE REDUCTION.** `LagTwoRatioEight` gives `ApertureRoute.ConfinesAtAnAperture` outright, with
-`ConfinesEight.ap8` as the witness — and thence the flagship through
-`ApertureRoute.flagship_of_confinement_at_an_aperture`.
+/-- `LagTwoRatioEight` gives `ApertureRoute.ConfinesAtAnAperture`, with `ConfinesEight.ap8` as the
+witness. `ConfinesAtAnAperture` is existential over apertures, so confinement at one aperture
+discharges it; `confines_extent_eight_of_lag_two_ratio` supplies that confinement at each coupling,
+reading the hypothesis at `max β 0` through `le_max_right`.
 
-`ConfinesAtAnAperture` is EXISTENTIAL over apertures, so confinement at ONE aperture discharges it.
-That is why this route does not need `NonnegArm.LawAbove`, whose constant must be uniform in EVERY
-aperture, at every lag, with a quartic rate. This hypothesis is one aperture, one lag, no rate. -/
+DERIVED: no numeral appears in the statement. -/
 theorem confines_of_lagTwoRatioEight (h : LagTwoRatioEight) :
     MassGap.ApertureRoute.ConfinesAtAnAperture := by
   obtain ⟨K, hK, hb⟩ := h
   exact ⟨MassGap.ConfinesEight.ap8, fun β =>
     confines_extent_eight_of_lag_two_ratio hK (hb (max β 0) (le_max_right β 0))⟩
 
-/-! ## The strong-coupling arm at extent eight — the first DYNAMICAL brick
+/-! ## The strong-coupling arm at extent eight
 
-`flat_profile_defeats_every_admissible_K` says the shape facts cannot close `LagTwoRatioEight`. What
-follows is what the dynamics do supply, and it is the extent-eight transcription of
-`LagTwoBound.exists_cut_lag_two_ratio`. Both inputs it runs on are aperture-GENERIC —
-`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow (N : ℕ)` and
+The extent-eight transcription of `LagTwoBound.exists_cut_lag_two_ratio`. Both inputs are
+aperture-generic — `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow (N : ℕ)` and
 `ContactFloor.corrClay_zero_ge (N : ℕ)` — so only `N` and the `circLag` fact change.
 
-**It reaches an interval and not the half-line.** The cut `b` is where
-`β ↦ coreConst·coreRate·e^{128β}` is still under `K·ρ(0)|₀`, and `coreRate (16·4) β < 1` alone caps it
-at `2.936e−5` (the same number the substrate route's split point has, and for the same reason: the
-binding factor is the per-plaquette activity `e^{2β}−1`). So this is the first brick of
-`LagTwoRatioEight`, not the whole of it — the obligation is `∀ β ≥ 0` and this is `β ∈ [0, b]`. -/
+The conclusion is an interval and not the half-line: the cut `b` is where
+`β ↦ coreConst·coreRate·e^{128β}` is still under `K·ρ(0)|₀`, and it is obtained from continuity of
+that majorant at `0`, intersected with the `b₀` of `StrongArm.exists_strong_arm_cut` on which
+`coreRate (16·4) β < 1`. -/
 
-/-- `circLag (2 : Fin 8) = 2` — the lag-two circle distance at extent eight, `min 2 (8−2)`. -/
+/-- `Moment.circLag (2 : Fin (7 + 1)) = 2`: the lag-two circle distance at extent eight is
+`min 2 (8 − 2)`. Closed by `decide` on the finite index type.
+
+DERIVED: `2` is the lag index inside `Fin (7 + 1)` and again the circle distance it evaluates to;
+`7` and `1` are the extent index `N` and the offset that makes the index type `Fin 8`. -/
 theorem circLag_two_eight : Moment.circLag (2 : Fin (7 + 1)) = 2 := by decide
 
-/-- **THE STRONG-COUPLING CUT AT EXTENT EIGHT.** For EVERY `K > 0` there is an interval `[0, b]` on
-which the extent-eight lag-two ratio is under `K`.
+/-- For every `K > 0` there is a `b > 0` such that the extent-eight lag-two ratio is under `K` on the
+whole of `[0, b]`. The quantifier order is `∀ K, ∃ b`, so the cut depends on `K` and shrinks with it.
 
 The transcription of `LagTwoBound.exists_cut_lag_two_ratio` at `N = 7`. The numerator is
-`corrClay_abs_le_coreConst_mul_rate_pow` at `k = 1`, admissible because `circLag 2 = 2` at extent
-eight as at extent four; the denominator is `ContactFloor.corrClay_zero_ge`'s
-`e^{−128β}·ρ(0)|₀ ≤ ρ(0)`. No numeral is named for `b`, and none could be: `ρ(0)|₀` enters through
-`PlaqVariance.corrClay_zero_pos`, which is non-constructive.
+`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` at power `k = 1`, admissible because
+`circLag_two_eight` gives `circLag 2 = 2` at extent eight as at extent four; the denominator is
+`ContactFloor.corrClay_zero_ge`'s `e^{−128β}·ρ(0)|₀ ≤ ρ(0)`. `StrongArm.exists_strong_arm_cut` fixes
+a `b₀` with `coreRate (16 * 4) b₀ < 1`, and `b` is `min b₀ (ε / 2)` for an `ε` drawn from continuity
+of the majorant at `0`. No numeral is named for `b`, and none could be: `ρ(0)|₀` enters through
+`PlaqVariance.corrClay_zero_pos`, which is non-constructive. The touch degree `16 * 4`, the exponent
+`128` and the power `1` occur in the proof and not in the statement.
 
-DERIVED: `16 * 4` is `StrongCoupling`'s touch degree at `dim = 4`, `128 = 2·64` is
-`ContactFloor.corrClay_zero_ge`'s own exponent, `1` is the power `k` admitted by `circLag 2 = 2`, and
-`2`, `0` are lag indices. Nothing is chosen. -/
+DERIVED: `0` is the sign condition on `K`, the sign condition on `b`, the lower end of the interval
+in `0 ≤ β`, and the contact lag in the last position; `7` is the extent index `N`, with `N + 1 = 8`;
+`2` is the lag the ratio is taken at. Nothing is chosen. -/
 theorem exists_cut_lag_two_ratio_eight (K : ℝ) (hK : 0 < K) :
     ∃ b : ℝ, 0 < b ∧ ∀ β : ℝ, 0 ≤ β → β ≤ b →
       MassGap.wilsonCorrAt 7 β 2 ≤ K * MassGap.wilsonCorrAt 7 β 0 := by
@@ -605,8 +637,10 @@ theorem exists_cut_lag_two_ratio_eight (K : ℝ) (hK : 0 < K) :
     _ ≤ K * (Real.exp (-(128 * β)) * D) := hkey
     _ ≤ K * MassGap.wilsonCorrAt 7 β 0 := mul_le_mul_of_nonneg_left hfloor hK.le
 
-/-- **A CONSTANT ADMISSIBLE AT EXTENT SIX IS ADMISSIBLE AT EXTENT EIGHT.** The direction check on
-`lagTwoThresholdSix_lt_lagTwoThresholdEight`. -/
+/-- A constant admissible at extent six is admissible at extent eight: transitivity of `<` through
+`lagTwoThresholdSix_lt_lagTwoThresholdEight`. The converse direction is not stated.
+
+DERIVED: no numeral appears in the statement. -/
 theorem admissible_at_eight_of_admissible_at_six {K : ℝ}
     (hK : K < MassGap.LagTwoSix.lagTwoThresholdSix) : K < lagTwoThresholdEight :=
   lt_trans hK lagTwoThresholdSix_lt_lagTwoThresholdEight

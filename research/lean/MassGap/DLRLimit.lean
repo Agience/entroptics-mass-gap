@@ -1,85 +1,69 @@
 import Mathlib
 
 /-!
-# MassGap.DLRLimit — existence of the infinite-volume (DLR) state
+# MassGap.DLRLimit — a limit state on `C(X, ℝ)` for `X` compact, and its DLR consistency
 
-The Yang–Mills development has no infinite-volume Gibbs measure, and the Clay rows that speak about
-one (A5, A6, B1, B5, B6) all run through the object this file builds: a state on the continuous
-functions of the FULL lattice configuration space `IConf G = ILink → G`, obtained as a limit of
-finite-volume states and inheriting their consistency relation.
+Builds a state on the continuous functions of a compact space as a limit of a family of states, shows
+the consistency relation passes to that limit, and represents the result as a probability measure.
+Everything is then instantiated at `IConf G = ILink → G`, the configuration space of the infinite
+four-dimensional lattice, which is compact by `Pi.compactSpace` (`compactSpace_iconf`).
 
-## Why this is compactness and not analysis
+## The argument
 
-`IConf G` is a product of copies of a compact group, so it is compact by Tychonoff
-(`compactSpace_iconf`, which is `Pi.compactSpace` and nothing else). On a compact space the states
-on `C(X, ℝ)` — positive normalised linear functionals — are uniformly bounded, `|ν f| ≤ ‖f‖`
-(`State.abs_le_norm`), by positivity alone. So each coordinate `ν ↦ ν f` of the finite-volume family
-lives in the fixed compact interval `[−‖f‖, ‖f‖]`, an ultrafilter converges in every one of them at
-once, and the limit is again a state because linearity, positivity and normalisation are each
-preserved by `tendsto_nhds_unique` or `ge_of_tendsto`. That is the whole existence argument.
+`State X` is a positive normalised linear functional on `C(X, ℝ)`. Positivity and normalisation alone
+give `|ν f| ≤ ‖f‖` (`State.abs_le_norm`), so every state's value at `f` lies in the compact interval
+`Set.Icc (-‖f‖) ‖f‖` fixed by `f` alone (`State.mem_Icc`). `exists_limit_state` runs
+`isCompact_Icc.ultrafilter_le_nhds` at one interval per observable: for any `NeBot` filter `l` on any
+index type and any family of states, there are an ultrafilter `u ≤ l` and a state `ν` with
+`μ i f → ν f` along `u`, simultaneously at every `f`. Linearity, positivity and normalisation of the
+limit come from `tendsto_nhds_unique` and `ge_of_tendsto'`.
 
-## Which of the two Mathlib routes, and why
+`IsDLR γ ν` is `∀ k f, ν (γ k f) = ν f` for a specification `γ : κ → C(X, ℝ) → C(X, ℝ)` acting on
+observables. `isDLR_of_tendsto` carries it to the limit, since the relation is an equality of two
+convergent numbers. `exists_dlr_state` assembles the two over a `SemilatticeSup` index, where
+directedness turns "for every `j ≤ i`" into "eventually in `i`".
+`tendsto_of_unique_dlr` upgrades the ultrafilter limit to convergence along `l` itself when the DLR
+state is unique.
 
-Two formulations were available in Mathlib v4.31.
+`State.eq_of_eqOn_dense`, `State.eq_of_eqOn_subalgebra` and `State.eq_of_eqOn_localObs` are the
+determination results: a state is `1`-Lipschitz (`State.abs_sub_le`) hence continuous, so agreement on
+a dense set extends; Stone–Weierstrass turns a point-separating subalgebra into a dense one; and
+`localObsAlg`, the observables local on some finite link set, separates points of `IConf G` when the
+gauge group is compact Hausdorff (`localObsAlg_separatesPoints`,
+`continuousMap_separatesPoints_of_t2`).
 
-* **States on `C(X, ℝ)`** — the route taken. The compactness used here is
-  `isCompact_Icc.ultrafilter_le_nhds`, ONE interval per observable, which is the Banach–Alaoglu
-  argument specialised to the case where the bound is uniform by positivity. It needs no normed-dual
-  API at all, and it is the same move `InfiniteVolume.exists_filter_tendsto_all_lags` already makes
-  one level down (there the coordinates are lags, here they are observables). The measure is then
-  recovered by Riesz–Markov–Kakutani, for which this tree already carries a worked instance:
-  `MomentMeasure.stateCc` / `MomentMeasure.spectralMeasure` build `RealRMK.rieszMeasure` out of a
-  `C_c(·, ℝ) →ₚ[ℝ] ℝ`, and `gibbsMeasure` below reuses that pattern verbatim.
-* **`MeasureTheory.ProbabilityMeasure X` with the weak topology.** Not taken. Mathlib has the type
-  and the portmanteau lemmas, but the statement this file needs — that the space of probability
-  measures on a compact space is itself compact — is the conclusion of Prokhorov's theorem, whose
-  Mathlib development is partial: what is available is tightness ⇒ relative compactness for the
-  finite-measure space, and the identification of weak convergence with convergence of integrals of
-  bounded continuous functions. Going that way would have meant proving the compactness statement
-  anyway, and proving it the same way — through `C(X, ℝ)`. So the functional route is not merely
-  cheaper here, it is a strict prefix of the measure route.
+`IsPointMass` and `variance_eq_zero_of_isPointMass` set up the non-degeneracy check:
+`variance_ge_of_eventually` carries a variance floor to the limit and
+`not_isPointMass_of_uniform_variance` concludes `ν 1 = 1` together with `¬ IsPointMass ν`.
 
-## What is proved
+`stateCc` presents a state as a positive linear map on `C_c(X, ℝ)`, which on a compact space is every
+continuous function; `gibbsMeasure` is `RealRMK.rieszMeasure` of it, `integral_gibbsMeasure` the
+representation, and `instIsProbabilityMeasure` the total mass.
 
-* `State` — a positive normalised linear functional on `C(X, ℝ)`, `X` compact, with the elementary
-  consequences `State.mono`, `State.abs_le_norm`, `State.mem_Icc`.
-* `exists_limit_state` — for ANY `NeBot` filter `l` on ANY index type and ANY family of states, an
-  ultrafilter `u ≤ l` and a state `ν` with `μ i f → ν f` along `u`, SIMULTANEOUSLY for every
-  observable `f`. This is the existence theorem; everything after it is inheritance.
-* `isDLR_of_tendsto` — the consistency relation is closed under such limits. Stated for an abstract
-  specification `γ : κ → C(X, ℝ) → C(X, ℝ)` acting on observables, because that is the shape a
-  finite-volume kernel with boundary conditions takes once it is applied to a function: the Feller
-  property (a kernel sends continuous functions to continuous functions) is carried by the TYPE of
-  `γ` and is therefore a hypothesis on whoever supplies it.
-* `exists_dlr_state` — the assembly, over a directed index: finite-volume states consistent for every
-  smaller volume have a limit state consistent for EVERY volume.
-* `exists_infinite_volume_gibbs_state` — the same statement with the index specialised to
-  `Finset ILink` and the space to `IConf G`. This is the infinite-volume object.
-* `gibbsMeasure` — the limit state as a genuine `MeasureTheory.Measure`, a probability measure whose
-  integral against every continuous observable is the state's value.
-* `exists_infinite_volume_gibbs_measure` — the same at `IConf G`. This spends the countability of
-  `ILink`: the Borel structure of the product topology and the product σ-algebra coincide only over a
-  countable index, so `SecondCountableTopology G` is a hypothesis here and not in the state version.
-* `not_isPointMass_of_variance_pos`, `variance_ge_of_eventually` — the non-degeneracy check.
+`exists_infinite_volume_gibbs_state`, `exists_infinite_volume_gibbs_state_nondegenerate` and
+`exists_infinite_volume_gibbs_measure` are the instantiations at `Finset ILink` and `IConf G`.
 
-## What is NOT proved
+## Scope
 
-Uniqueness, translation invariance, and any connection to the Wilson action. `γ` here is abstract;
-nothing in this file says the finite-volume states are the Wilson–Gibbs states or that `γ` is their
-kernel. The limit is subsequential in the same sense `InfiniteVolume` is: an ultrafilter refining
-`atTop` exists, nothing shows the net itself converges.
-
-Non-degeneracy beyond normalisation. `ν 1 = 1` is a field of `State` and is re-exported in the
-conclusions below for readability, not as evidence: it rules out the ZERO functional and nothing
-else. Ruling out a POINT MASS is strictly stronger and is proved here only CONDITIONALLY, on a
-variance floor `c ≤ μ_Λ(f₀²) − μ_Λ(f₀)²` holding uniformly in the volume. ⛔ THIS PARAGRAPH IS STALE — `InfiniteVolume.exists_uniform_contact_floor` supplies such a floor, as this file's own Part 6 prose records. What follows was written before it and is kept only for the distinction it draws:
- `GibbsPositive.corrNum_plaqObs_pos` bounds a finite-volume correlation below at a FIXED
-volume, with no statement that the bound survives the volume growing, and a variance is not a
-correlation. Supplying it is open work, and until it is supplied the infinite-volume state here is
-not known to be spread out.
-
-DERIVED: `4` is the problem's dimension. `1` is the unit of `C(X, ℝ)` and the normalisation of a
-probability state. No constant is chosen here and none is fitted.
+* `γ` and `μ` are hypotheses in every theorem here. No statement identifies them with a Wilson
+  specification or with Wilson–Gibbs states, and no Wilson action appears.
+* The limit is subsequential: an ultrafilter refining `atTop` exists, and nothing shows the net
+  itself converges. `tendsto_of_unique_dlr` is the conditional upgrade, whose hypothesis `huniq` is
+  supplied at coupling zero by `WilsonDLR.dlr_unique_at_zero_eq`.
+* Uniqueness and translation invariance of the limit are not proved.
+* `ν 1 = 1` is a field of `State`, so it holds of the limit by construction; it excludes the zero
+  functional and nothing else. A limit of point masses is a point mass, so ruling one out needs more
+  input: `not_isPointMass_of_uniform_variance` takes a variance floor `c ≤ μ i (f * f) - (μ i f) ^ 2`
+  holding uniformly in the index, and that floor is a hypothesis here.
+  `InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0` with
+  `exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
+  `PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
+  `ClayNontriviality.clay_nontriviality_of_wilson_variance` composes the two. What is not supplied
+  is the bridge between that aperture indexing and the `Finset ILink` indexing used here.
+* `gibbsMeasure` needs the Borel structure of `IConf G` to be its product σ-algebra, which over an
+  infinite index requires a countable index and a second-countable factor. `ILink` is countable, so
+  `SecondCountableTopology G` is a hypothesis of the measure statements and not of the state ones
+  (`borelSpace_iconf`).
 
 Build: `python research/code/lean_build.py build MassGap.DLRLimit`.
 -/
@@ -89,71 +73,90 @@ namespace MassGap.DLRLimit
 open Filter
 open scoped Topology CompactlySupported
 
-/-! ## Part 0 — the shared skeleton
+/-! ## Part 0 — the infinite-lattice skeleton
 
-Written here rather than imported so that this file stands alone. The four declarations are the
-skeleton agreed for `MassGap.InfiniteLattice`; being `abbrev`s they are reducible, so the two copies
-are interchangeable wherever both are in scope. -/
+Written here rather than imported so the file stands alone. The four declarations mirror
+`MassGap.InfiniteLattice`'s; being `abbrev`s they are reducible, so the two copies are
+interchangeable wherever both are in scope. -/
 
-/-- A site of the infinite four-dimensional lattice.
+/-- `Fin 4 → ℤ`: a site of the infinite four-dimensional lattice, one integer coordinate per
+direction. The lattice is infinite in each direction — the coordinate type is `ℤ`, not `Fin n`.
 
-DERIVED: `4` is the number of spacetime directions — the dimension of the Clay statement, the same
-`d` that `WilsonHypercubic` is instantiated at for the Clay instance (`bd (d := 4)` in `AreaLaw`).
-It is an index range, not an extent: the coordinate in each of the four directions is all of `ℤ`. -/
+DERIVED: `4` is the number of spacetime directions, the same `d` `WilsonHypercubic` is instantiated
+at for the Clay instance. It is an index range, not an extent. -/
 abbrev ISite : Type := Fin 4 → ℤ
 
 #print axioms ISite
 
-/-- An oriented link: a direction and the site it leaves.
+/-- `Fin 4 × ISite`: an oriented link, given by its direction and the site it leaves. Countable,
+which `borelSpace_iconf` spends.
 
-DERIVED: `4` is the dimension again — a link's direction ranges over the four spacetime directions,
-so `Fin 4` is the direction index and nothing else. Same constant as in `ISite`, not a second one. -/
+DERIVED: `4` is the number of spacetime directions, over which a link's direction ranges — the same
+constant as in `ISite`. -/
 abbrev ILink : Type := Fin 4 × ISite
 
 #print axioms ILink
 
-/-- A plaquette: a plane and the site at its corner.
+/-- `(Fin 4 × Fin 4) × ISite`: a plaquette, given by the ordered pair of directions spanning its
+plane and the site at its corner. `WilsonHypercubic.Plaq` carries the same pair.
 
-DERIVED: both `4`s are the dimension, written twice because a plane in `d` dimensions is spanned by
-an ORDERED PAIR of directions (`WilsonHypercubic.Plaq` carries the same pair for the same reason).
-The pair is the dimension used twice, not a separate constant. -/
+DERIVED: `4` occurs twice, as the number of spacetime directions each of the two spanning directions
+ranges over. A plane needs an ordered pair, so the dimension appears twice. -/
 abbrev IPlaq : Type := (Fin 4 × Fin 4) × ISite
 
 #print axioms IPlaq
 
-/-- A configuration of the infinite lattice: one group element per link. -/
+/-- `ILink → G`: a configuration of the infinite lattice, one group element per link. Compact
+whenever `G` is, by `compactSpace_iconf`.
+
+DERIVED: no numeral appears in the statement. -/
 abbrev IConf (G : Type) : Type := ILink → G
 
 #print axioms IConf
 
-/-- **Tychonoff.** The configuration space of the INFINITE lattice is compact whenever the gauge
-group is. Nothing is proved here that `Pi.compactSpace` does not already say; the point is that the
-instance fires at this type, which is what makes every compactness argument below available at
-`IConf G`. -/
+/-- `CompactSpace (IConf G)` whenever `G` is compact, by `inferInstance` — it is `Pi.compactSpace`,
+Tychonoff for a product of compact spaces. Recorded so that the instance is visibly available at this
+type, which is what the compactness arguments below need.
+
+DERIVED: no numeral appears in the statement. -/
 theorem compactSpace_iconf (G : Type) [TopologicalSpace G] [CompactSpace G] :
     CompactSpace (IConf G) := inferInstance
 
 #print axioms compactSpace_iconf
 
-/-! ## Part 1 — states
+/-! ## Part 1 — states, and what positivity alone gives
 
 A state is a positive normalised linear functional on the continuous functions. On a compact space
-that is exactly a probability measure (Part 6), but the functional is the object the limit argument
-moves, so it is the primitive here. -/
+Riesz–Markov–Kakutani makes it a probability measure (Part 5), but the functional is what the limit
+argument moves, so it is the primitive here. -/
 
 variable {X : Type*} [TopologicalSpace X] [CompactSpace X]
 
-/-- **A state on `C(X, ℝ)`**: linear, positive, normalised. -/
+/-- A state on `C(X, ℝ)` for `X` compact: a functional `toFun` that is additive and homogeneous,
+sends pointwise nonnegative observables to nonnegative reals, and sends the constant `1` to `1`.
+
+The positivity and normalisation fields alone give the uniform bound `|ν f| ≤ ‖f‖`
+(`State.abs_le_norm`) that the compactness argument runs on; no continuity is assumed.
+
+DERIVED: `0` occurs twice in the `nonneg'` field, as the pointwise lower bound on `f` and as the
+lower bound on its value; `1` occurs twice in the `one'` field, as the constant observable and as the
+value it takes. -/
 structure State (X : Type*) [TopologicalSpace X] [CompactSpace X] where
-  /-- The underlying functional. -/
+  /-- The underlying functional on `C(X, ℝ)`. DERIVED: no numeral. -/
   toFun : C(X, ℝ) → ℝ
-  /-- Additivity. -/
+  /-- Additivity: the functional carries a sum of observables to the sum of their values.
+  DERIVED: no numeral. -/
   map_add' : ∀ f g : C(X, ℝ), toFun (f + g) = toFun f + toFun g
-  /-- Homogeneity. -/
+  /-- Homogeneity: scaling an observable by a real scales its value by the same factor.
+  DERIVED: no numeral. -/
   map_smul' : ∀ (c : ℝ) (f : C(X, ℝ)), toFun (c • f) = c * toFun f
-  /-- Positivity: a pointwise nonnegative observable has a nonnegative value. -/
+  /-- Positivity: an observable nonnegative at every point has a nonnegative value.
+  DERIVED: `0` appears twice, as the lower bound hypothesised pointwise and as the lower bound
+  concluded of the value. -/
   nonneg' : ∀ f : C(X, ℝ), (∀ x, 0 ≤ f x) → 0 ≤ toFun f
-  /-- Normalisation. -/
+  /-- Normalisation: the constant observable `1` has value `1`.
+  DERIVED: `1` appears twice, as the constant observable and as its value; together with positivity
+  this is what makes a `State` a probability rather than a general positive functional. -/
   one' : toFun 1 = 1
 
 #print axioms State
@@ -199,7 +202,10 @@ theorem State.map_neg (ν : State X) (f : C(X, ℝ)) : ν (-f) = -ν f := by
 
 #print axioms State.map_neg
 
-/-- **A state is monotone.** Positivity applied to the difference. -/
+/-- `ν f ≤ ν g` whenever `f x ≤ g x` at every point: positivity applied to `g - f`, with
+`State.map_sub` splitting the value.
+
+DERIVED: no numeral appears in the statement. -/
 theorem State.mono (ν : State X) {f g : C(X, ℝ)} (h : ∀ x, f x ≤ g x) : ν f ≤ ν g := by
   have h0 : 0 ≤ ν (g - f) := ν.nonneg _ (fun x => by simpa using sub_nonneg.mpr (h x))
   rw [ν.map_sub] at h0
@@ -207,8 +213,13 @@ theorem State.mono (ν : State X) {f g : C(X, ℝ)} (h : ∀ x, f x ≤ g x) : �
 
 #print axioms State.mono
 
-/-- **A state is bounded above by the sup norm** — no continuity hypothesis is needed, positivity
-and normalisation give it. This is the uniform bound the compactness argument runs on. -/
+/-- `ν f ≤ ‖f‖` at every observable. `f x ≤ ‖f‖` pointwise, so `State.mono` against the constant
+observable `‖f‖ • 1` gives it, and `State.map_smul` with `State.map_one` evaluates that.
+
+Scope: no continuity of `ν` is assumed — positivity and normalisation give the bound. This is the
+uniform bound the compactness argument runs on.
+
+DERIVED: no numeral appears in the statement. -/
 theorem State.le_norm (ν : State X) (f : C(X, ℝ)) : ν f ≤ ‖f‖ := by
   have hle : ∀ x, f x ≤ ((‖f‖ : ℝ) • (1 : C(X, ℝ))) x := by
     intro x
@@ -220,7 +231,10 @@ theorem State.le_norm (ν : State X) (f : C(X, ℝ)) : ν f ≤ ‖f‖ := by
 
 #print axioms State.le_norm
 
-/-- **A state is bounded by the sup norm**, both signs. -/
+/-- `|ν f| ≤ ‖f‖` at every observable: `State.le_norm` at `f` and at `-f`, the latter through
+`State.map_neg` and `norm_neg`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem State.abs_le_norm (ν : State X) (f : C(X, ℝ)) : |ν f| ≤ ‖f‖ := by
   refine abs_le.mpr ⟨?_, ν.le_norm f⟩
   have h := ν.le_norm (-f)
@@ -229,28 +243,33 @@ theorem State.abs_le_norm (ν : State X) (f : C(X, ℝ)) : |ν f| ≤ ‖f‖ :=
 
 #print axioms State.abs_le_norm
 
-/-- Every state's value at `f` lies in ONE compact interval, fixed by `f` alone and independent of
-the state. This is the whole input to the compactness step. -/
+/-- `ν f ∈ Set.Icc (-‖f‖) ‖f‖`, from `State.abs_le_norm`. The interval depends on `f` alone and not
+on the state, which is what lets `exists_limit_state` apply compactness of one interval per
+observable.
+
+DERIVED: no numeral appears in the statement. -/
 theorem State.mem_Icc (ν : State X) (f : C(X, ℝ)) : ν f ∈ Set.Icc (-‖f‖) ‖f‖ :=
   Set.mem_Icc.mpr (abs_le.mp (ν.abs_le_norm f))
 
 #print axioms State.mem_Icc
 
 
-/-- **A STATE IS 1-LIPSCHITZ.** `|ν f - ν g| = |ν (f - g)| ≤ ‖f - g‖`, which is `State.map_sub`
-followed by `State.abs_le_norm`.
+/-- `|ν f - ν g| ≤ ‖f - g‖`: `State.map_sub` turns the left side into `|ν (f - g)|` and
+`State.abs_le_norm` bounds it. So a state is Lipschitz with constant one, which is forced by
+positivity and normalisation rather than assumed.
 
-DERIVED: the `1` is the Lipschitz constant, and it is forced — a state is unital and positive, so
-it cannot expand the sup norm. -/
+DERIVED: no numeral appears in the statement; the Lipschitz constant is the implicit factor one on
+the right. -/
 theorem State.abs_sub_le (ν : State X) (f g : C(X, ℝ)) : |ν f - ν g| ≤ ‖f - g‖ := by
   rw [← ν.map_sub]
   exact ν.abs_le_norm (f - g)
 
 #print axioms State.abs_sub_le
 
-/-- **So it is continuous as a function of the observable.**
+/-- `Continuous (fun f : C(X, ℝ) => ν f)`, from `State.abs_sub_le` with `δ := ε` in the metric
+criterion. This is what lets agreement on a dense set extend.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem State.continuous (ν : State X) : Continuous (fun f : C(X, ℝ) => ν f) := by
   refine Metric.continuous_iff.mpr (fun f ε hε => ⟨ε, hε, fun g hg => ?_⟩)
   have h := ν.abs_sub_le g f
@@ -260,16 +279,13 @@ theorem State.continuous (ν : State X) : Continuous (fun f : C(X, ℝ) => ν f)
 
 #print axioms State.continuous
 
-/-- **⭐⭐ AND TWO STATES AGREEING ON A DENSE SET ARE EQUAL.**
+/-- Two states agreeing on a dense set `s ⊆ C(X, ℝ)` agree everywhere. Both are continuous by
+`State.continuous`, so `Continuous.ext_on` applies.
 
-This is the half of DLR uniqueness that does not depend on the model. Uniqueness splits in two:
-a DLR state is pinned on LOCAL observables by the specification, and a state is determined by its
-values on a dense set. The first is Wilson-specific; **this is the second, and it is general**.
+Scope: density of `s` is a hypothesis. `State.eq_of_eqOn_subalgebra` obtains it from point
+separation via Stone–Weierstrass, and `State.eq_of_eqOn_localObs` at the local observables.
 
-The local observables are a subalgebra (`InfiniteLattice.quasiLocalAlg`); that they are DENSE is a
-Stone–Weierstrass statement and is not proved in this tree.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem State.eq_of_eqOn_dense {ν₁ ν₂ : State X} {s : Set C(X, ℝ)} (hs : Dense s)
     (h : ∀ f ∈ s, ν₁ f = ν₂ f) : ∀ f : C(X, ℝ), ν₁ f = ν₂ f := by
   have := Continuous.ext_on hs ν₁.continuous ν₂.continuous h
@@ -277,15 +293,11 @@ theorem State.eq_of_eqOn_dense {ν₁ ν₂ : State X} {s : Set C(X, ℝ)} (hs :
 
 #print axioms State.eq_of_eqOn_dense
 
-/-- **⭐ A STATE IS DETERMINED BY A POINT-SEPARATING SUBALGEBRA.**
+/-- Two states agreeing on a subalgebra `A ⊆ C(X, ℝ)` that separates points agree everywhere.
+`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints` makes `A` dense on the
+compact `X`, and `State.eq_of_eqOn_dense` finishes.
 
-The density hypothesis of `State.eq_of_eqOn_dense` is replaced by the one a model can check: that
-the subalgebra tells points apart. Stone–Weierstrass
-(`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints`) turns separation into
-density on a compact space, and a state is continuous, so agreement propagates from the subalgebra
-to everything.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem State.eq_of_eqOn_subalgebra {ν₁ ν₂ : State X} (A : Subalgebra ℝ C(X, ℝ))
     (hsep : A.SeparatesPoints) (h : ∀ f ∈ A, ν₁ f = ν₂ f) : ∀ f : C(X, ℝ), ν₁ f = ν₂ f := by
   have htop : A.topologicalClosure = ⊤ :=
@@ -297,12 +309,13 @@ theorem State.eq_of_eqOn_subalgebra {ν₁ ν₂ : State X} (A : Subalgebra ℝ 
 
 #print axioms State.eq_of_eqOn_subalgebra
 
-/-- **A STATE FORCES ITS SPACE TO BE INHABITED.** On an empty space the constant-one observable IS
-the zero observable, so `ν 1 = 1` and `ν 0 = 0` collide. Anything that needs a base configuration
-can take one from the state itself.
+/-- `Nonempty X` for any state on `C(X, ℝ)`. On an empty space the constant observable `1` is the
+zero observable, so `State.map_one` and `State.map_zero` would give `1 = 0`.
 
-DERIVED: the `1` and `0` are the two values a state takes on the unit and the zero observable,
-`State.map_one` and `State.map_zero`. -/
+So anything needing a base configuration can take one from the state.
+
+DERIVED: no numeral appears in the statement. The `1` and `0` compared in the proof are the values a
+state takes on the unit and the zero observable. -/
 theorem State.nonempty (ν : State X) : Nonempty X := by
   by_contra h
   rw [not_nonempty_iff] at h
@@ -315,11 +328,11 @@ theorem State.nonempty (ν : State X) : Nonempty X := by
 
 #print axioms State.nonempty
 
-/-- **A STATE IS ITS FUNCTIONAL.** The other four fields are Props, so they are equal by proof
-irrelevance once the functionals are. This is what `tendsto_of_unique_dlr` needs: it asks for
-equality of STATES, and a uniqueness argument delivers agreement at every observable.
+/-- Two states with equal functionals are equal. The other four fields are `Prop`s, so proof
+irrelevance settles them once `toFun` matches. `tendsto_of_unique_dlr` needs equality of states, and
+a uniqueness argument delivers agreement at every observable, so this is the bridge.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem State.eq_of_apply_eq {ν₁ ν₂ : State X} (h : ∀ f : C(X, ℝ), ν₁ f = ν₂ f) : ν₁ = ν₂ := by
   obtain ⟨t₁, _, _, _, _⟩ := ν₁
   obtain ⟨t₂, _, _, _, _⟩ := ν₂
@@ -335,21 +348,23 @@ section LocalObservables
 
 variable {G : Type} [TopologicalSpace G] [CompactSpace G]
 
-/-- A BUNDLED continuous observable is LOCAL on `S` when it does not move as the links outside `S`
-move. The unbundled twin is `InfiniteLattice.IsLocalOn`; the only difference is that continuity is
-carried by the bundling here rather than by a conjunct.
+/-- `∀ U V : IConf G, (∀ l ∈ S, U l = V l) → F U = F V`: a bundled continuous observable is local on
+the finite link set `S` when it is unchanged by the links outside `S`.
+`InfiniteLattice.IsLocalOn` is the unbundled twin; here continuity is carried by the type of `F`
+rather than by a conjunct.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def IsLocalOnC (S : Finset ILink) (F : C(IConf G, ℝ)) : Prop :=
   ∀ U V : IConf G, (∀ l ∈ S, U l = V l) → F U = F V
 
 #print axioms IsLocalOnC
 
-/-- **THE LOCAL OBSERVABLES AS A SUBALGEBRA OF `C(IConf G, ℝ)`.** A product of two observables
-reading disjoint finite link sets reads their union, which is again finite; that is the whole
-closure argument, and it is the same one `InfiniteLattice.quasiLocalAlg` makes one coercion away.
+/-- The subalgebra `{F | ∃ S : Finset ILink, IsLocalOnC S F}` of `C(IConf G, ℝ)`. Closure under
+products and sums holds because an observable local on `S` and one local on `T` are both local on
+`S ∪ T`, again finite; the constants are local on `∅`.
+`InfiniteLattice.quasiLocalAlg` is the same object one coercion away.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def localObsAlg (G : Type) [TopologicalSpace G] [CompactSpace G] :
     Subalgebra ℝ C(IConf G, ℝ) where
   carrier := {F | ∃ S : Finset ILink, IsLocalOnC S F}
@@ -371,22 +386,24 @@ def localObsAlg (G : Type) [TopologicalSpace G] [CompactSpace G] :
 
 #print axioms localObsAlg
 
-/-- Membership in `localObsAlg` is exactly locality on SOME finite link set. Mirrors
-`InfiniteLattice.mem_quasiLocalAlg`, one coercion away.
+/-- `F ∈ localObsAlg G ↔ ∃ S : Finset ILink, IsLocalOnC S F`, by `Iff.rfl`. Mirrors
+`InfiniteLattice.mem_quasiLocalAlg`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem mem_localObsAlg {F : C(IConf G, ℝ)} :
     F ∈ localObsAlg G ↔ ∃ S : Finset ILink, IsLocalOnC S F := Iff.rfl
 
 #print axioms mem_localObsAlg
 
 
-/-- **THE LOCAL OBSERVABLES SEPARATE CONFIGURATIONS**, as soon as the gauge group's continuous
-functions separate its elements. Two configurations that differ do so at some LINK, and a function
-of that one link is local on the singleton `{l}` — so the separating observable is as local as an
-observable can be.
+/-- `(localObsAlg G).SeparatesPoints`, given that `C(G, ℝ)` separates the points of `G`. Two distinct
+configurations differ at some link `l`; composing a separating `g : C(G, ℝ)` with evaluation at `l`
+gives an observable local on the singleton `{l}` that tells them apart.
 
-DERIVED: no numeral. -/
+Scope: the separation hypothesis on `G` is the caller's;
+`continuousMap_separatesPoints_of_t2` discharges it for a compact Hausdorff group.
+
+DERIVED: no numeral appears in the statement. -/
 theorem localObsAlg_separatesPoints
     (hG : ∀ a b : G, a ≠ b → ∃ g : C(G, ℝ), g a ≠ g b) :
     (localObsAlg G).SeparatesPoints := by
@@ -405,13 +422,12 @@ theorem localObsAlg_separatesPoints
 
 #print axioms localObsAlg_separatesPoints
 
-/-- **AND A COMPACT HAUSDORFF GROUP DISCHARGES THAT HYPOTHESIS**, by Urysohn. Two distinct points
-of a compact Hausdorff space are two disjoint closed singletons, and
-`exists_continuous_zero_one_of_isClosed` produces a continuous real function vanishing on one and
-equal to one on the other.
+/-- For a compact Hausdorff `G` and distinct `a`, `b`, there is a `g : C(G, ℝ)` with `g a ≠ g b`. The
+two singletons are disjoint closed sets, so `exists_continuous_zero_one_of_isClosed` produces a
+continuous function taking the value `0` on one and `1` on the other.
 
-DERIVED: the `0` and `1` are the two values Urysohn's lemma produces, not a threshold; any two
-distinct reals would do and Mathlib's statement fixes these. -/
+DERIVED: no numeral appears in the statement. The `0` and `1` are the values Urysohn's lemma
+produces in the proof; any two distinct reals would serve, and Mathlib's statement fixes these. -/
 theorem continuousMap_separatesPoints_of_t2 (G : Type) [TopologicalSpace G] [CompactSpace G]
     [T2Space G] (a b : G) (hab : a ≠ b) : ∃ g : C(G, ℝ), g a ≠ g b := by
   obtain ⟨g, hga, hgb, -⟩ :=
@@ -425,15 +441,15 @@ theorem continuousMap_separatesPoints_of_t2 (G : Type) [TopologicalSpace G] [Com
 
 #print axioms continuousMap_separatesPoints_of_t2
 
-/-- **⭐⭐ TWO STATES AGREEING ON THE LOCAL OBSERVABLES ARE EQUAL.**
+/-- Two states on `C(IConf G, ℝ)` agreeing on `localObsAlg G` agree everywhere, for `G` compact
+Hausdorff. It is `State.eq_of_eqOn_subalgebra` with separation supplied by
+`localObsAlg_separatesPoints` and `continuousMap_separatesPoints_of_t2`.
 
-Obligation II's general half, carrying NO density hypothesis and NO separation hypothesis: on a
-compact Hausdorff gauge group both are discharged above. What remains of II is exactly the
-Wilson-specific half — that the specification pins a DLR state on the LOCAL observables. Once that
-lands, this theorem takes it to equality of states, and `tendsto_of_unique_dlr` takes uniqueness to
-the infinite-volume limit.
+Scope: no density or separation hypothesis is left to the caller; what is left is agreement on the
+local observables, which is the input. Together with `State.eq_of_apply_eq` it gives equality of
+states, which `tendsto_of_unique_dlr` consumes.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem State.eq_of_eqOn_localObs {G : Type} [TopologicalSpace G] [CompactSpace G] [T2Space G]
     {ν₁ ν₂ : State (IConf G)} (h : ∀ F ∈ localObsAlg G, ν₁ F = ν₂ F) :
     ∀ F : C(IConf G, ℝ), ν₁ F = ν₂ F :=
@@ -446,18 +462,28 @@ end LocalObservables
 
 
 
-/-! ## Part 2 — the limit
+/-! ## Part 2 — the limit state
 
-The ultrafilter-plus-compactness move of `InfiniteVolume.exists_filter_tendsto_all_lags`, one level
-up: there the coordinates were lags and the compact set was `[−4, 4]`; here the coordinates are
-observables and the compact set is `[−‖f‖, ‖f‖]`. The limit functional is then assembled coordinate
-by coordinate, each of its four defining properties transported by uniqueness of limits. -/
+The ultrafilter-and-compactness move of `InfiniteVolume.exists_filter_tendsto_all_lags`, one level
+up: there the coordinates are lags and the compact set is `Set.Icc (-4) 4`; here the coordinates are
+observables and the compact set is `Set.Icc (-‖f‖) ‖f‖`. The limit functional is assembled
+coordinate by coordinate, each of its four defining properties transported by uniqueness of
+limits. -/
 
-/-- **THE EXISTENCE THEOREM.** Any family of states, along any `NeBot` filter on the index, has a
-limit state along an ultrafilter refining that filter — simultaneously at EVERY observable.
+/-- For any `NeBot` filter `l` on any index type `ι` and any family `μ : ι → State X`, there are an
+ultrafilter `u` with `(u : Filter ι) ≤ l` and a state `ν` such that `μ i f → ν f` along `u`,
+simultaneously at every observable `f`.
 
-No structure on the index is used: not directedness, not countability. The hypotheses are exactly
-`l.NeBot` and that each `μ i` is a state. -/
+`u` is `Ultrafilter.of l`. For each `f`, `State.mem_Icc` places every `μ i f` in
+`Set.Icc (-‖f‖) ‖f‖`, and `isCompact_Icc.ultrafilter_le_nhds` produces the limit value; `choose`
+collects them into a functional `L`. Additivity and homogeneity follow by `tendsto_nhds_unique`,
+positivity by `ge_of_tendsto'`, and normalisation by uniqueness against a constant sequence.
+
+Scope: no structure on the index is used — not directedness, not countability. The hypotheses are
+`l.NeBot` and that each `μ i` is a state. The conclusion is along `u`, not along `l`;
+`tendsto_of_unique_dlr` is the conditional upgrade.
+
+DERIVED: no numeral appears in the statement. -/
 theorem exists_limit_state {ι : Type*} (l : Filter ι) [l.NeBot] (μ : ι → State X) :
     ∃ (u : Ultrafilter ι) (ν : State X), (u : Filter ι) ≤ l ∧
       ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) (u : Filter ι) (𝓝 (ν f)) := by
@@ -508,25 +534,30 @@ theorem exists_limit_state {ι : Type*} (l : Filter ι) [l.NeBot] (μ : ι → S
 
 #print axioms exists_limit_state
 
-/-! ## Part 3 — the DLR property passes to the limit
+/-! ## Part 3 — the DLR property at the limit
 
-A specification is carried here by its action on OBSERVABLES: `γ k : C(X, ℝ) → C(X, ℝ)`. That the
+A specification is carried by its action on observables, `γ k : C(X, ℝ) → C(X, ℝ)`. That a
 finite-volume kernel with boundary conditions sends continuous functions to continuous functions —
-the Feller property — is therefore a hypothesis on whoever supplies `γ`, recorded in its type rather
-than proved here. The DLR equation is then the equality of two numbers, so it is closed and passes to
-limits by uniqueness of limits. -/
+the Feller property — is therefore carried by the type of `γ` and is a hypothesis on whoever supplies
+it. The DLR equation is an equality of two numbers, so it passes to limits by uniqueness of
+limits. -/
 
-/-- **The DLR (consistency) property**: the state is unmoved by every kernel of the specification. -/
+/-- `∀ (k : κ) (f : C(X, ℝ)), ν (γ k f) = ν f`: the state is unmoved by every kernel of the
+specification `γ`, read through its action on observables.
+
+DERIVED: no numeral appears in the statement. -/
 def IsDLR {κ : Type*} (γ : κ → C(X, ℝ) → C(X, ℝ)) (ν : State X) : Prop :=
   ∀ (k : κ) (f : C(X, ℝ)), ν (γ k f) = ν f
 
 #print axioms IsDLR
 
-/-- **Consistency is a closed condition.** If the finite-volume states satisfy the DLR equation for
-`k` EVENTUALLY along the filter, the limit state satisfies it outright.
+/-- If `μ i f → ν f` along `l` at every observable, and `fun i => μ i (γ k f)` agrees with
+`fun i => μ i f` eventually along `l` for every `k` and `f`, then `IsDLR γ ν`. It is
+`tendsto_nhds_unique` on the two sequences, which have the same eventual values.
 
-`ge_of_tendsto`-style: nothing here is an inequality, but the shape is the same — an eventual
-relation between two convergent quantities forces the relation between the limits. -/
+Scope: the hypothesis `hev` is the finite-volume consistency, required only eventually.
+
+DERIVED: no numeral appears in the statement. -/
 theorem isDLR_of_tendsto {ι κ : Type*} {l : Filter ι} [l.NeBot] {γ : κ → C(X, ℝ) → C(X, ℝ)}
     (μ : ι → State X) (ν : State X)
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -539,23 +570,18 @@ theorem isDLR_of_tendsto {ι κ : Type*} {l : Filter ι} [l.NeBot] {γ : κ → 
 #print axioms isDLR_of_tendsto
 
 
-/-- **⭐⭐⭐ UNIQUENESS OF THE DLR STATE UPGRADES COMPACTNESS TO CONVERGENCE.**
+/-- If every state satisfying `IsDLR γ` equals `ν`, and the finite-volume consistency `hev` holds
+eventually along `l`, then `μ i f → ν f` along `l` itself at every observable.
 
-Compactness gives a limit along SOME ultrafilter; `ReflectionHalfSpace`'s `htend` needs one along
-`atTop`. This is the step between them, and it is the classical one: if the DLR state is unique,
-every ultrafilter limit is the same state, and a filter converges exactly when every refining
-ultrafilter does.
+`Filter.tendsto_iff_ultrafilter` reduces it to every refining ultrafilter `u`. `exists_limit_state`
+at `u` produces a limit state `ν'` — and `u.unique` makes the refining ultrafilter `u` itself —
+`isDLR_of_tendsto` gives `IsDLR γ ν'`, and `huniq` identifies `ν'` with `ν`.
 
-**THIS IS WHAT `mixCube_ultrafilter_sees_one_parity` POINTS AT.** That theorem shows an ultrafilter
-sees only one parity class of the interleaved family, and its docstring says the two parity limits
-would agree if the DLR state were unique. This supplies that implication.
+Scope: `huniq` is a hypothesis, and it is what upgrades the ultrafilter limit of
+`exists_limit_state` to convergence along `l`. `WilsonDLR.dlr_unique_at_zero_eq` supplies it for the
+Wilson specification at coupling zero, where the kernel does not read the boundary.
 
-`hev` is the finite-volume DLR consistency, holding eventually along `l` — the same hypothesis
-`isDLR_of_tendsto` takes. `huniq` is the uniqueness itself, and it is the real content. At coupling
-ZERO `WilsonDLR.dlr_unique_at_zero_eq` proves it for the Wilson specification, the kernel
-there not seeing the boundary at all; at general coupling it is open.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem tendsto_of_unique_dlr {ι κ : Type*} {l : Filter ι} [l.NeBot]
     {γ : κ → C(X, ℝ) → C(X, ℝ)} (μ : ι → State X) (ν : State X)
     (hev : ∀ (k : κ) (f : C(X, ℝ)),
@@ -585,13 +611,16 @@ theorem tendsto_of_unique_dlr {ι κ : Type*} {l : Filter ι} [l.NeBot]
 #print axioms tendsto_of_unique_dlr
 
 
-/-- **THE INFINITE-VOLUME STATE, abstractly.** A directed family of finite-volume states, each
-consistent with the specification at every SMALLER index, has a limit state consistent at EVERY
-index.
+/-- For a `SemilatticeSup` index `ι` and a family `μ : ι → State X` with `μ i (γ j f) = μ i f` at
+every `j ≤ i`, there are an ultrafilter `u ≤ atTop` and a state `ν` with `μ i f → ν f` along `u` at
+every observable, satisfying `IsDLR γ ν`.
 
-`hcons` is the hypothesis a Gibbs specification supplies: the finite-volume state in volume `i`
-satisfies the DLR equation for every sub-volume `j ≤ i`. Directedness of the index is what turns
-"for every `j ≤ i`" into "eventually in `i`", and is the only structure the index needs. -/
+`exists_limit_state` gives the limit and `isDLR_of_tendsto` the consistency; the eventual form of
+`hcons` comes from `eventually_ge_atTop j`, which is where the index's directedness is used.
+
+Scope: `hcons` is a hypothesis. The conclusion is along `u`, not along `atTop`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem exists_dlr_state {ι : Type*} [SemilatticeSup ι] [Nonempty ι]
     (γ : ι → C(X, ℝ) → C(X, ℝ)) (μ : ι → State X)
     (hcons : ∀ i j : ι, j ≤ i → ∀ f : C(X, ℝ), μ i (γ j f) = μ i f) :
@@ -611,30 +640,31 @@ theorem exists_dlr_state {ι : Type*} [SemilatticeSup ι] [Nonempty ι]
 
 #print axioms exists_dlr_state
 
-/-! ## Part 4 — the limit is not vacuous
+/-! ## Part 4 — excluding a point mass, from a variance floor
 
-`GibbsPositive.corrNum_plaqObs_pos` exists because a state satisfying every field of the interface
-vacuously — the zero functional, or a point mass — was a live worry at finite volume. The same worry
-applies to a limit.
+`ν 1 = 1` is a field of `State`, so it holds of the limit by construction; it excludes the zero
+functional and nothing else. A limit of point masses is a point mass, so excluding one needs more
+input. What the theorems below take is a variance floor at a single observable, holding uniformly in
+the index.
 
-The zero functional is excluded for free: `ν 1 = 1` is a field of `State`, so it is true of the limit
-by construction and is not evidence of anything else. A POINT MASS is not excluded, and cannot be
-without more input, because a limit of point masses is a point mass. What suffices is a uniform
-second-moment gap — one observable whose variance is bounded below along the family, uniformly in the
-volume — and everything below is CONDITIONAL on being handed one. Such a floor IS supplied:
-`InfiniteVolume.exists_uniform_contact_floor` fixes one `δ₀ > 0` BEFORE the aperture with
-`exp(−128β)·δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
-`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette VARIANCE, so it is both a
-variance and uniform in the volume. `ClayNontriviality.clay_nontriviality_of_wilson_variance`
-composes it with the theorem below. What remains open is the BRIDGE between the aperture indexing
-that floor is stated in and the `Finset ILink` indexing used here. -/
+`InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0`, fixed before the aperture, with
+`exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
+`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
+`ClayNontriviality.clay_nontriviality_of_wilson_variance` composes it with
+`not_isPointMass_of_uniform_variance`. The bridge between that aperture indexing and the
+`Finset ILink` indexing used here is not in this file. -/
 
-/-- **A state is a point mass** when it is evaluation at a single configuration. -/
+/-- `∃ x : X, ∀ f : C(X, ℝ), ν f = f x`: the state is evaluation at a single point.
+
+DERIVED: no numeral appears in the statement. -/
 def IsPointMass (ν : State X) : Prop := ∃ x : X, ∀ f : C(X, ℝ), ν f = f x
 
 #print axioms IsPointMass
 
-/-- **A point mass has zero variance at every observable.** -/
+/-- `ν (f * f) - (ν f) ^ 2 = 0` at every observable, for a point mass: both terms evaluate to
+`f x ^ 2` at the witness point.
+
+DERIVED: the exponent `2` is the square in the variance; `0` is its value at a point mass. -/
 theorem variance_eq_zero_of_isPointMass {ν : State X} (h : IsPointMass ν) (f : C(X, ℝ)) :
     ν (f * f) - (ν f) ^ 2 = 0 := by
   obtain ⟨x, hx⟩ := h
@@ -643,8 +673,10 @@ theorem variance_eq_zero_of_isPointMass {ν : State X} (h : IsPointMass ν) (f :
 
 #print axioms variance_eq_zero_of_isPointMass
 
-/-- **A strictly positive variance rules the point masses out.** This is the check that the limit is
-a genuinely spread-out state and not the vacuous witness. -/
+/-- `¬ IsPointMass ν` whenever some observable has `0 < ν (f * f) - (ν f) ^ 2`, by
+`variance_eq_zero_of_isPointMass`.
+
+DERIVED: `0` is the strict lower bound on the variance; the exponent `2` is the square in it. -/
 theorem not_isPointMass_of_variance_pos {ν : State X} {f : C(X, ℝ)}
     (h : 0 < ν (f * f) - (ν f) ^ 2) : ¬ IsPointMass ν := by
   intro hp
@@ -653,8 +685,9 @@ theorem not_isPointMass_of_variance_pos {ν : State X} {f : C(X, ℝ)}
 
 #print axioms not_isPointMass_of_variance_pos
 
-/-- **A uniform lower bound passes to the limit.** If the finite-volume values of an observable are
-eventually at least `c`, so is the limit value. `ge_of_tendsto`, nothing more. -/
+/-- `c ≤ ν f` whenever `c ≤ μ i f` eventually along `l` and `μ i f → ν f`, by `ge_of_tendsto`.
+
+DERIVED: no numeral appears in the statement; `c` is the caller's bound. -/
 theorem le_of_eventually_le {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
     (f : C(X, ℝ)) (c : ℝ) (h : ∀ᶠ i in l, c ≤ μ i f) : c ≤ ν f :=
@@ -662,8 +695,12 @@ theorem le_of_eventually_le {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → 
 
 #print axioms le_of_eventually_le
 
-/-- **A uniform VARIANCE floor passes to the limit.** The variance is a continuous function of the
-two moments, so an eventual bound on the finite-volume variances bounds the limit variance. -/
+/-- `c ≤ ν (f * f) - (ν f) ^ 2` whenever `c ≤ μ i (f * f) - (μ i f) ^ 2` eventually along `l`. The
+variance is built from two convergent sequences by subtraction and squaring, so
+`Tendsto.sub` and `Tendsto.pow` give its convergence and `ge_of_tendsto` the bound.
+
+DERIVED: the exponent `2` occurs twice, as the square in the finite-index variance and in the limit
+variance. -/
 theorem variance_ge_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → State X}
     {ν : State X} (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
     (f : C(X, ℝ)) (c : ℝ) (h : ∀ᶠ i in l, c ≤ μ i (f * f) - (μ i f) ^ 2) :
@@ -672,9 +709,16 @@ theorem variance_ge_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot] {μ : �
 
 #print axioms variance_ge_of_eventually
 
-/-- **The limit is a genuine, spread-out state.** A single observable carrying a variance floor that
-does not depend on the volume forces the limit to be neither the zero functional (it is normalised by
-construction) nor a point mass. -/
+/-- Given `0 < c` and a variance floor `c ≤ μ i (f * f) - (μ i f) ^ 2` holding eventually along `l`,
+the limit satisfies `ν 1 = 1` and `¬ IsPointMass ν`. The first is `State.map_one`, true by
+construction; the second is `variance_ge_of_eventually` followed by
+`not_isPointMass_of_variance_pos`.
+
+Scope: the floor is a hypothesis at a single observable, holding uniformly in the index. `ν 1 = 1`
+excludes the zero functional and nothing else.
+
+DERIVED: `0` is the strict lower bound on `c`; the exponent `2` is the square in the variance; `1`
+occurs twice, as the constant observable and as its value under `ν`. -/
 theorem not_isPointMass_of_uniform_variance {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -688,21 +732,22 @@ theorem not_isPointMass_of_uniform_variance {ι : Type*} {l : Filter ι} [l.NeBo
 
 /-! ## Part 5 — the state as a measure
 
-Riesz–Markov–Kakutani, following `MomentMeasure.stateCc` / `MomentMeasure.spectralMeasure`: on a
+Riesz–Markov–Kakutani, following `MomentMeasure.stateCc` and `MomentMeasure.spectralMeasure`: on a
 compact space every continuous function is compactly supported, so a state is a positive linear map
-on `C_c(X, ℝ)` and `RealRMK.rieszMeasure` represents it. The measure is a PROBABILITY measure because
+on `C_c(X, ℝ)` and `RealRMK.rieszMeasure` represents it. The measure is a probability measure because
 the state is normalised, which is the `f = 1` case of the representation. -/
 
 section Measure
 
 variable [T2Space X] [LocallyCompactSpace X] [MeasurableSpace X] [BorelSpace X]
 
-/-- The state as the positive linear map on compactly supported functions that Riesz–Markov–
-Kakutani consumes.
+/-- The state as a `C_c(X, ℝ) →ₚ[ℝ] ℝ`: the positive linear map Riesz–Markov–Kakutani consumes. On a
+compact space every continuous function is compactly supported, so the underlying function is
+`fun f => ν f.toContinuousMap`. Additivity and homogeneity are the state's own; monotonicity is
+positivity applied to the difference.
 
-DERIVED: the only numeral here is the `0` of `ℝ` in the monotonicity obligation — `0 ≤ ν (g − f)`,
-which is the additive identity of the ordered field and the definition of "nonnegative". Nothing
-about the state, the space or the measure is set by a number. -/
+DERIVED: no numeral appears in the statement. The `0` in the monotonicity obligation is the lower
+bound in `0 ≤ ν (g - f)`, which is what nonnegativity means. -/
 def stateCc (ν : State X) : C_c(X, ℝ) →ₚ[ℝ] ℝ where
   toFun f := ν f.toContinuousMap
   map_add' f g := by
@@ -725,7 +770,11 @@ def stateCc (ν : State X) : C_c(X, ℝ) →ₚ[ℝ] ℝ where
 
 #print axioms stateCc
 
-/-- **The infinite-volume Gibbs measure of a state**: its Riesz–Markov–Kakutani representative. -/
+/-- `RealRMK.rieszMeasure (stateCc ν)`: the Riesz–Markov–Kakutani representative of the state, as a
+`MeasureTheory.Measure X`. `integral_gibbsMeasure` states the representation and
+`instIsProbabilityMeasure` the total mass.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def gibbsMeasure (ν : State X) : MeasureTheory.Measure X :=
   RealRMK.rieszMeasure (stateCc ν)
 
@@ -736,7 +785,11 @@ instance instIsFiniteMeasure (ν : State X) : MeasureTheory.IsFiniteMeasure (gib
 
 #print axioms instIsFiniteMeasure
 
-/-- **The measure represents the state**: every continuous observable integrates to its value. -/
+/-- `∫ x, f x ∂(gibbsMeasure ν) = ν f` at every continuous observable. The observable is transported
+to `C_c(X, ℝ)` by `CompactlySupportedContinuousMap.continuousMapEquiv` — the two agree pointwise on a
+compact space — and `RealRMK.integral_rieszMeasure` evaluates the integral.
+
+DERIVED: no numeral appears in the statement. -/
 theorem integral_gibbsMeasure (ν : State X) (f : C(X, ℝ)) :
     ∫ x, f x ∂(gibbsMeasure ν) = ν f := by
   set F : C_c(X, ℝ) := CompactlySupportedContinuousMap.continuousMapEquiv f with hF
@@ -750,11 +803,11 @@ theorem integral_gibbsMeasure (ν : State X) (f : C(X, ℝ)) :
 
 #print axioms integral_gibbsMeasure
 
-/-- The total mass is the value of the state at `1`, which is `1`.
+/-- `(gibbsMeasure ν Set.univ).toReal = 1`. It is `integral_gibbsMeasure` at the constant observable
+`1`, where `State.map_one` gives the right side and `MeasureTheory.integral_const` the left.
+`(1 : C(X, ℝ)) x` is `(1 : ℝ)` definitionally, so no rewriting is needed at that step.
 
-`(1 : C(X, ℝ)) x` is `(1 : ℝ)` definitionally, so `h1` is the `f = 1` case of
-`integral_gibbsMeasure` with no rewriting, and `Measure.real` is `ENNReal.toReal` of the measure by
-the same token (`ContactFloor.measureReal_univ_one` makes the same identification). -/
+DERIVED: `1` is the total mass, which is the state's value at the constant observable `1`. -/
 theorem gibbsMeasure_univ_toReal (ν : State X) : (gibbsMeasure ν Set.univ).toReal = 1 := by
   have h := integral_gibbsMeasure ν 1
   rw [ν.map_one] at h
@@ -764,7 +817,11 @@ theorem gibbsMeasure_univ_toReal (ν : State X) : (gibbsMeasure ν Set.univ).toR
 
 #print axioms gibbsMeasure_univ_toReal
 
-/-- **The Gibbs measure is a probability measure.** Normalisation of the state, transported. -/
+/-- `MeasureTheory.IsProbabilityMeasure (gibbsMeasure ν)`. The measure is finite, so
+`ENNReal.ofReal_toReal` transports `gibbsMeasure_univ_toReal` back to `ENNReal`.
+
+DERIVED: no numeral appears in the statement; the total mass one is inside
+`IsProbabilityMeasure`. -/
 instance instIsProbabilityMeasure (ν : State X) :
     MeasureTheory.IsProbabilityMeasure (gibbsMeasure ν) := by
   refine ⟨?_⟩
@@ -779,20 +836,24 @@ instance instIsProbabilityMeasure (ν : State X) :
 
 end Measure
 
-/-! ## Part 6 — the infinite lattice
+/-! ## Part 6 — the instantiation at `Finset ILink` and `IConf G`
 
-The instantiation. `Finset ILink` is the index of finite volumes; it is a `SemilatticeSup` with a
-bottom element, so `atTop` is `NeBot` and the directedness hypothesis of `exists_dlr_state` is
-discharged by the lattice structure of finite sets. `IConf G` is compact by Part 0. -/
+`Finset ILink` is a `SemilatticeSup` with a bottom element, so `atTop` is `NeBot` and the
+directedness hypothesis of `exists_dlr_state` is discharged by the lattice structure of finite sets.
+`IConf G` is compact by Part 0. -/
 
-/-- **THE INFINITE-VOLUME GIBBS STATE.** Given a gauge group that is compact, an abstract
-specification indexed by finite volumes, and finite-volume states consistent with it on every
-sub-volume, there EXISTS a state on the full infinite-lattice configuration space which is the limit
-of the finite-volume states and satisfies the DLR equation for EVERY finite volume.
+/-- `exists_dlr_state` at `ι := Finset ILink` and `X := IConf G`, with normalisation and positivity
+of the limit re-exported: there are an ultrafilter `u ≤ atTop` and a state `ν` on `C(IConf G, ℝ)`
+with `μ Λ f → ν f` along `u` at every observable, satisfying `IsDLR γ ν`, `ν 1 = 1`, and
+`0 ≤ ν f` for every pointwise nonnegative `f`.
 
-Every hypothesis is named: `γ` is Agent 2's specification once its kernels are applied to
-observables, `μ` is Agent 2's family of finite-volume states with boundary conditions, and `hcons` is
-its DLR consistency. Nothing about the Wilson action enters. -/
+Scope: `γ` and `μ` are hypotheses — a specification applied to observables and a family of
+finite-volume states — and `hcons` is their consistency. No Wilson action enters, and the limit is
+along `u` rather than along `atTop`. The last two conjuncts are fields of `State`, re-exported for
+readability.
+
+DERIVED: `1` occurs twice, as the constant observable and as its value under `ν`; `0` occurs twice,
+as the pointwise lower bound on `f` and as the lower bound on `ν f`. -/
 theorem exists_infinite_volume_gibbs_state (G : Type) [TopologicalSpace G] [CompactSpace G]
     (γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ))
     (μ : Finset ILink → State (IConf G))
@@ -807,17 +868,25 @@ theorem exists_infinite_volume_gibbs_state (G : Type) [TopologicalSpace G] [Comp
 
 #print axioms exists_infinite_volume_gibbs_state
 
-/-- **The same statement with the non-degeneracy attached.** A uniform variance floor at ONE
-observable, holding AT EVERY FINITE VOLUME (the eventual form is `not_isPointMass_of_uniform_variance`'s), gives an infinite-volume DLR state that is normalised and
-provably not a point mass. This is the form Clay row A6 needs: an infinite-volume object that is not
-the vacuous witness. -/
+/-- `exists_infinite_volume_gibbs_state` with a variance floor attached: given `0 < c` and
+`c ≤ μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2` at EVERY finite volume, there is a state `ν` with `IsDLR γ ν`,
+`ν 1 = 1` and `¬ IsPointMass ν`. It is `exists_dlr_state` followed by
+`not_isPointMass_of_uniform_variance`, the eventual form of the floor coming from
+`Filter.Eventually.of_forall`.
+
+Scope: `hvar` is a hypothesis at every volume, stronger than the eventual form
+`not_isPointMass_of_uniform_variance` takes. `ν 1 = 1` excludes the zero functional and nothing
+else; the variance floor is what excludes a point mass.
+
+DERIVED: `0` is the strict lower bound on `c`; the exponent `2` is the square in the variance; `1`
+occurs twice, as the constant observable and as its value under `ν`. -/
 theorem exists_infinite_volume_gibbs_state_nondegenerate (G : Type) [TopologicalSpace G]
     [CompactSpace G]
     (γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ))
     (μ : Finset ILink → State (IConf G))
     (hcons : ∀ Λ Λ' : Finset ILink, Λ' ≤ Λ → ∀ f : C(IConf G, ℝ), μ Λ (γ Λ' f) = μ Λ f)
     (f₀ : C(IConf G, ℝ)) (c : ℝ) (hc : 0 < c)
-    -- CONDITIONAL: this floor is an input, not a result. See the module header.
+    -- `hvar` is supplied by the caller; nothing in this file derives a variance floor.
     (hvar : ∀ Λ : Finset ILink, c ≤ μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2) :
     ∃ ν : State (IConf G), IsDLR γ ν ∧ ν 1 = 1 ∧ ¬ IsPointMass ν := by
   classical
@@ -829,27 +898,33 @@ theorem exists_infinite_volume_gibbs_state_nondegenerate (G : Type) [Topological
 
 #print axioms exists_infinite_volume_gibbs_state_nondegenerate
 
-/-! ### The infinite-volume state as a measure
+/-! ### The limit state as a measure on `IConf G`
 
-`gibbsMeasure` needs the Borel structure of `IConf G` to BE its product σ-algebra, and over an
-infinite index those agree only when the index is countable and the factor is second countable.
+`gibbsMeasure` needs the Borel structure of `IConf G` to be its product σ-algebra, and over an
+infinite index those agree only when the index is countable and the factor second countable.
 `ILink = Fin 4 × (Fin 4 → ℤ)` is countable, so the hypothesis lands on the gauge group. -/
 
-/-- **The product σ-algebra on configurations is the Borel one.** Where the countability of `ILink`
-is spent; without it `gibbsMeasure` below would name a measure on a strictly smaller σ-algebra than
-the topology's. -/
+/-- `BorelSpace (IConf G)` for a second-countable `G` with its Borel structure, by `inferInstance`.
+This is where the countability of `ILink` is spent: without it the product σ-algebra would be
+strictly smaller than the topology's Borel σ-algebra, and `gibbsMeasure` would name a measure on the
+wrong one.
+
+DERIVED: no numeral appears in the statement. -/
 theorem borelSpace_iconf (G : Type) [TopologicalSpace G] [SecondCountableTopology G]
     [MeasurableSpace G] [BorelSpace G] : BorelSpace (IConf G) := inferInstance
 
 #print axioms borelSpace_iconf
 
-/-- **THE INFINITE-VOLUME GIBBS MEASURE.** The same limit, delivered as a probability measure on the
-configuration space of the infinite lattice whose integral against every continuous observable is the
-limit state, and whose state satisfies the DLR equation at every finite volume.
+/-- The same limit as a measure: there are a probability measure `P` on `IConf G` and a state `ν`
+with `∫ U, f U ∂P = ν f` at every continuous observable and `IsDLR γ ν`. It is `exists_dlr_state`
+followed by `gibbsMeasure`, `integral_gibbsMeasure` and `instIsProbabilityMeasure`.
 
-This is the object Clay row A6 asks for: not a sequence of finite-volume numbers with a limit, but a
-single measure on the FULL lattice. What it does not yet carry is any tie to the Wilson action —
-`γ` and `μ` are hypotheses. -/
+Scope: `P` is a measure on the configuration space of the full lattice, not a sequence of
+finite-volume numbers. `γ` and `μ` remain hypotheses, so nothing ties `P` to the Wilson action. The
+extra instances on `G` — Hausdorff, second countable, Borel — are what `gibbsMeasure` and
+`borelSpace_iconf` require.
+
+DERIVED: no numeral appears in the statement. -/
 theorem exists_infinite_volume_gibbs_measure (G : Type) [TopologicalSpace G] [CompactSpace G]
     [T2Space G] [SecondCountableTopology G] [MeasurableSpace G] [BorelSpace G]
     (γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ))

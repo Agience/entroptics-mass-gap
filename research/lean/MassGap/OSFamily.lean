@@ -6,95 +6,87 @@ import MassGap.InfiniteVolume
 import MassGap.WilsonModel
 
 /-!
-# MassGap.OSFamily — the OS data family on the genuine Gibbs correlation, at arbitrary extent
+# MassGap.OSFamily — OS data on the Gibbs correlation, at an extent the index moves
 
-## What this file is for
+This module builds a `Measure.LatticeYMFamily` whose reflected form is the connected `SU(3)` Wilson
+plaquette correlation on a periodic four-dimensional lattice whose extent is the family index.
+`WilsonGauge.ymFamilyGauge` and `WilsonModel.ymFamilyTension` are untouched and remain in the tree.
 
-`WilsonGauge.ymFamilyGauge` supplies a `Measure.LatticeYMFamily` whose reflected form is
+## The reflected form
 
-    QG j a = min (max (sysYM.expect (probHaar G3) (a : ℝ) (O0 ∘ reindex …)) 0) 1
+`Qos β j a` is `connT (extent a) β (j.1 * j.2.1) (plaqBase _) (plaqAt _ (lagOf a j.2.2))`, and
+`Qos_eq` identifies it with `WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)`: the connected
+correlation on the four-dimensional periodic `SU(3)` lattice of extent `2a + 2`, between the `(0,1)`
+plaquette at the origin and the one displaced along direction `2` by the even lag the test
+configuration names. No `min` or `max` is applied to it. The coupling `β` is a parameter held fixed
+across the family and the index `a` sets the geometry.
 
-and three things about that object are weaker than the name "OS0–OS3 at finite spacing" reads.
+For comparison, `WilsonGauge.QG j a` is `min (max _ 0) 1` of a one-plaquette expectation at coupling
+`(a : ℝ)` on the single lattice `sysWilson 3 4 nYM` with `WilsonGauge.nYM = 2`.
 
-1. **The `[0,1]` clamp is doing the work.** `os_rp : 0 ≤ QG` holds because `QG` is `max _ 0`, and
-   `os_form` at `B = 1` because it is `min _ 1`. Neither clause is a property of the measure; both
-   would hold of any function whatever under the same clamp.
-2. **One lattice.** `WilsonGauge.nYM := 2`, so `sysYM = sysWilson 3 4 2` and every member of the
-   family lives on the same `2⁴` lattice. The index `a` never reaches a second geometry.
-3. **The index is fed in as the COUPLING.** `QG j a` passes `(a : ℝ)` to `expect … (a : ℝ) …`, which
-   is the Gibbs coupling `β`. So the sequence whose limit `continuum_of_family` takes is a sequence
-   in the coupling at fixed volume, not a sequence in the lattice spacing.
+## What discharges each OS field
 
-This file builds a second family, `osFamily`, beside those — `ymFamilyGauge` and `ymFamilyTension`
-are untouched — in which all three are repaired:
+* `os_rp` — `Qos_nonneg`, from `ReflectionStrong.corrClay_nonneg_even_lag`. That theorem takes an
+  even lag and an even extent `Nap + 1 = 2 * m` with `0 < m`, and no condition on the sign of `β`;
+  `Qos_nonneg_at_negative_coupling` instantiates it at `β = -1`. `lagOf` lands on the even
+  sublattice by construction (`lagOf_even`), so the family's test configurations reach the even lags
+  only. The clause is the single inequality `0 ≤ Q j a`; `LatticeYMFamily` carries no field for a
+  Gram condition over a half-space algebra. The tree's Gram statements —
+  `ReflectionStrong.wilson_expect_gram_nonneg` in the real case,
+  `OSPositivity.wilson_osC_diag_re_nonneg` and `wilson_osC_gram_re_nonneg` in the complex
+  sesquilinear case — are at finite volume on a slab and are not inputs here.
+* `os_form` — `Qos_abs_le_four`, from `InfiniteVolume.wilsonCorrConn_abs_le_four`, whose only
+  hypothesis is that the rank is nonzero. It is discharged as `Q ≤ 4 ≤ resolvedDim · 4`, which
+  relates `Q` to the uniform bound and not to the spectrum.
+* `os_euc` and `os_perm` — `Qos_actE` and `Qos_actP`. `Qos_depends_only_on_the_lag` records the
+  mechanism: the reflected form reads `j` through `j.2.2` alone, and neither `actEOS` nor `actPOS`
+  moves that component.
+* `os_gap` — `Measure.familyOfSortedCount` derives it from an ordered spectrum and a count on it,
+  both supplied by the caller, so it is a statement about that spectrum rather than about the
+  measure. `osFamily` supplies `evUnit`, a single-resolved-mode placeholder in the same role as
+  `WilsonGauge.evDemo`; `osFamilyTension` supplies `WilsonModel.wOne`, the witness read's
+  single-mode spectrum, with `WilsonModel.edgeW` and `WilsonModel.cW`.
 
-* **No clamp.** `Qos` IS the connected Wilson plaquette correlation (`Qos_eq`), and both OS clauses
-  are theorems about it: `os_rp` from reflection positivity
-  (`ReflectionStrong.corrClay_nonneg_even_lag`, a genuine RP theorem at every real `β` on the even
-  lags), `os_form` from `InfiniteVolume.wilsonCorrConn_abs_le_four`, which carries no hypothesis
-  beyond `3 ≠ 0`.
-* **The extent varies.** Index `a` sets the periodic extent `2a + 2`, so the family runs over an
-  unbounded sequence of four-dimensional lattices and the mode count `Nmodes` is that lattice's own
-  plaquette count, diverging by `InfiniteVolume.clay_volume_tendsto_atTop` (`Nmodes_tendsto_volume`).
-  This is the shape `InfiniteVolume` already uses: `N` is the sequence index and `N → ∞` IS the
-  infinite-volume limit, because the extent is the same in all four directions at once. The extent is
-  load-bearing — `Qos β j a` is an integral over the extent-`(2a+2)` lattice — but `Nmodes` is not,
-  until a measured spectrum replaces `evUnit`; see the note at `osFamilyCounted`.
-* **The coupling is a parameter, not the index.** `osFamily` takes `β : ℝ` and holds it fixed across
-  the sequence. `Qos_eq` displays exactly that: `β` is `corrClay`'s coupling, `a` is its extent.
+## The invariance
 
-## What is kept
+`connT` applies the axis relabelling `e` to all three Gibbs expectations the connected correlation is
+built from — the product term and both one-point functions — and `connT_eq` removes it again by three
+applications of `Symmetry.expect_invariant`: Haar-invariance of the `SU(3)` product measure over
+links, composed with invariance of the Wilson action under the lattice's own axis relabelling
+(`Symmetry.action_invariant` from `WilsonHypercubic.bd_axis`). The transport is put in by `connT`'s
+definition, so `connT_eq` states that a deliberately transported object equals the untransported one;
+what it establishes is the mechanism, on an object that has to survive a subtraction.
+`WilsonGauge.QG_eq` is the same derivation on one expectation of a one-plaquette observable.
 
-`WilsonGauge.QG_eq` derives the invariance from `Symmetry.expect_invariant` — Haar-invariance of the
-`SU(3)` product measure composed with the hypercubic lattice's own axis permutation — rather than by
-`rfl` through an inert label. That is the one part of the existing family that is a real theorem
-about a real measure, and `connT_eq` here is the same derivation on a larger object: the transport is
-removed from all THREE Gibbs expectations the connected correlation is built from (the product term
-and both one-point functions), by three applications of `Symmetry.expect_invariant`. `os_euc` and
-`os_perm` then follow from `Qos_eq`, whose right-hand side no longer mentions the transport.
+## Scope
 
-What that does and does not establish, since the shape invites a misreading: `connT` puts the
-transport in BY HAND, so `connT_eq` proves a deliberately transported object equals the untransported
-one. What is a theorem is the MECHANISM — that the `SU(3)` product measure does not notice the axis
-relabelling — not the existence of an invariant object. Same structure as `WilsonGauge.QG`; the
-difference is the object being transported, and that the removal now has to survive a subtraction.
+* The extent sequence is `extent a = 2a + 2`, even at every index, which is the parity
+  `ReflectionStrong`'s reflection geometry requires. It is unbounded (`ext_strictMono`) and the
+  plaquette count diverges (`Nmodes_tendsto_volume`). The extent is the same in all four directions
+  at once, so `a → ∞` is the infinite-volume limit with no second extent left over.
+* `Nmodes a` is the plaquette count of the extent-`(2a+2)` lattice, `4 · 4 · (2a+2)⁴`
+  (`Nmodes_eq`). In both assembled families the spectrum ignores its argument and
+  `WilsonModel.resolvedDim_wOne` returns `1` at every positive count, so `Nmodes` enters the
+  assembled family only through `1 ≤ Nmodes a`; any mode count bounded below by one gives the same
+  family. What makes the index the geometry is `extent` inside `Qos`, not `Na`.
+* `continuum_of_family` is Bolzano–Weierstrass: `os_continuum` and `os_continuum_tension` produce a
+  strictly monotone `φ : ℕ → ℕ` and a pointwise limit `q : J → ℝ`. There is no uniqueness claim, no
+  measure on `ℝ⁴` and no reconstruction. `InfiniteVolume.exists_infinite_volume_gapped_limit` has
+  geometric decay on a derived coupling interval and is not composed with this family, so nothing
+  here states a clustering property of the limit.
+* Strict positivity is available at lag zero only: `Qos_pos_at_lag_zero`, from
+  `PlaqVariance.corrClay_zero_pos`, with lag zero reachable by `lagOf_zero`.
+  `GibbsPositive.ymFamilyGauge_Q_pos` gives `0 < Q` at every test configuration for the clamped
+  family; a connected correlation at a general lag has no corresponding theorem in this tree.
+* `OddLagSplit.plaqReflPositive_odd`, the tree's odd-lag positivity, carries `0 ≤ β`, `2 ≤ m` and a
+  link-locality hypothesis, so it is not an available input for `os_rp` as stated here.
+  `CharacterExpansion.NegControl.su3_kernel_neg_of_neg` shows one quadratic form of the character
+  expansion is strictly negative at `β < 0`, which is a fact about that expansion and not about a
+  lag.
 
-## What OS0–OS3 still lacks, stated plainly
-
-A clamp-free family at arbitrary extent is still not OS0–OS3. What remains open is not hidden by any
-definition here:
-
-* **OS2 is positive semidefiniteness over the half-space algebra, not one nonnegative number.**
-  `os_rp` asks only `0 ≤ Q j a`. A Gram statement does exist in the tree — the real-valued
-  `ReflectionStrong.wilson_expect_gram_nonneg` on `LogConvex.localObs`, and the complex sesquilinear
-  `OSPositivity.wilson_osC_diag_re_nonneg` / `wilson_osC_gram_re_nonneg` on `localObsC` (a DIFFERENT
-  module, `MassGap.OSPositivity`, which this file does not import) — but only at FINITE volume, on
-  the slab `blkS τ a m` / `blkR τ a m`, at an even extent. Nothing here carries any of that into the
-  limit, and `LatticeYMFamily` has no field that could hold it.
-* **The RP input is even-lag only.** `corrClay_nonneg_even_lag` is unconditional in `β`. The tree's
-  only proof for the ODD lags, `OddLagSplit.plaqReflPositive_odd`, carries `0 ≤ β` together with
-  `2 ≤ m` and a link-locality hypothesis; nothing shows odd-lag positivity FAILS without them, only
-  that this development has not proved it. `lagOf` therefore lands on the even sublattice by
-  construction, which is a restriction on which test configurations the family reaches, not a proof
-  about the odd ones.
-* **OS4 clustering is absent.** Nothing here proves the limit factorises at large separation.
-  `InfiniteVolume.exists_infinite_volume_gapped_limit` has geometric decay, but only on a derived
-  coupling interval `[0,b)`, and it is not composed with this family.
-* **The limit is subsequential, and it is a limit of numbers.** `continuum_of_family` is
-  Bolzano–Weierstrass: it produces a subsequence `φ` and a pointwise limit `q : J → ℝ`. There is no
-  uniqueness, no measure on `ℝ⁴`, and no reconstruction. That is unchanged from `ymFamilyGauge`; what
-  changed is what the sequence is a sequence OF.
-* **The spectrum side is unchanged.** `evUnit` is a placeholder single-resolved-mode spectrum, the
-  same role `WilsonGauge.evDemo` plays. It makes `osFamily` unconditional; it is not a measured
-  spectrum, and `osFamilyCounted` is the constructor a measured one would go through.
-* **Non-degeneracy is not carried over.** `GibbsPositive.ymFamilyGauge_Q_pos` proves `0 < Q` for the
-  clamped family, because a one-point plaquette expectation is strictly positive. A CONNECTED
-  correlation is not, so no such theorem is available here at a general lag. At lag zero it is —
-  `PlaqVariance.corrClay_zero_pos` — and lag zero is reachable (`lagOf a 0 = 0`), so the family is
-  not the identically-zero one; but that is a remark, not a theorem in this file.
 Build: `python research/code/lean_build.py build MassGap.OSFamily`, or the whole tree with
-`… build MassGap` — `MassGap.lean` imports this module, and `MassGap.ApertureRoute` imports it too,
-because the flagship's measure field is `osFamilyTension` (see the last section of this file).
+`… build MassGap`. `MassGap.lean` imports this module, and `MassGap.ApertureRoute` imports it
+because the flagship's measure field is `osFamilyTension` (the last section of this file).
 -/
 
 namespace MassGap.OSFamily
@@ -106,89 +98,93 @@ open MeasureTheory Filter Topology
 
 /-- The rank of the Clay problem's gauge group.
 
-DERIVED: `3` is the rank the Clay problem names. It is not this file's choice; `SUN.SU` is general in
-the rank and `SU(3)` is the instantiation the statement is about. -/
+DERIVED: the declaration's type is `ℕ` and carries no numeral. The `3` in the body is the rank the
+Clay problem names; `SUN.SU` is general in the rank and `SU(3)` is the instantiation the statement
+is about. -/
 abbrev NYM : ℕ := 3
 
-/-- `SU(3)`, the Clay problem's gauge group.
+/-- `SU(3)`, the Clay problem's gauge group, as `SUN.SU NYM`.
 
-DERIVED: the `3` is `NYM`, the rank the Clay statement names and the rank `WilsonGauge.sysYM` is
-built at. It is carried, not chosen here. -/
+DERIVED: the declaration's type is `Type` and carries no numeral; the rank in the body is `NYM`, the
+rank the Clay statement names and the rank `WilsonGauge.sysYM` is built at. -/
 abbrev G3 : Type := MassGap.SUN.SU NYM
 
-/-- **The periodic extent at family index `a`.**
+/-- The periodic extent at family index `a`, namely `2a + 2`. Unbounded in `a`
+(`ext_strictMono`), unlike `WilsonGauge.nYM`, which is the literal `2` at every index of that
+family.
 
-This is the whole of defect (2): `WilsonGauge.nYM` is the literal `2` and every member of that family
-sits on the same `2⁴` lattice. Here the extent is a function of the index and is unbounded
-(`ext_strictMono`, `Nmodes_tendsto_volume`).
-
-DERIVED: the extent is `2a + 2`, written `2 * a + 1 + 1` so that the successor form `Nap + 1` that
-`ReflectionStrong.corrClay_nonneg_even_lag` states its conclusion in is available without conversion.
-The `2` is not a size: reflection positivity on this lattice is proved at EVEN extent (`n = 2 * m`,
-the reflection has to have a plane to sit on), so the sequence of extents a genuine RP input can be
-read at is the even ones, and `2a + 2` enumerates them from the smallest one at which a direction
-carries two distinct sites. -/
+DERIVED: the declaration's type is `ℕ` and carries no numeral. The body is written `2 * a + 1 + 1`
+so that the successor form `Nap + 1`, in which `ReflectionStrong.corrClay_nonneg_even_lag` states
+its conclusion, is available without conversion. The `2` is a parity rather than a size: reflection
+positivity on this lattice is proved at even extent `n = 2 * m`, the reflection needing a plane to
+sit on, so `2a + 2` enumerates the even extents from the smallest at which a direction carries two
+distinct sites. -/
 abbrev extent (a : ℕ) : ℕ := 2 * a + 1 + 1
 
-/-- The extent is twice the half-extent — the parity `ReflectionStrong`'s reflection geometry needs.
+/-- `extent a = 2 * (a + 1)`: the extent is twice the half-extent, the parity
+`ReflectionStrong`'s reflection geometry requires.
 
-DERIVED: `2` is the parity of the reflection, `a + 1` the half-extent. -/
+DERIVED: `2` is the parity of the reflection and `a + 1` the half-extent, so the `1` is that
+half-extent's successor. Both are `extent`'s own. -/
 theorem ext_eq_two_mul (a : ℕ) : extent a = 2 * (a + 1) := by
   show 2 * a + 1 + 1 = 2 * (a + 1); ring
 
-/-- The extent is positive at every index, so the lattice exists at every index.
+/-- `0 < extent a` at every index, which is what the `NeZero` instances on the lattice below
+consume.
 
-DERIVED: the `0` is the boundary a cardinality cannot cross, not a threshold. -/
+DERIVED: `0` is the strict lower bound on a cardinality, not a threshold. -/
 theorem ext_pos (a : ℕ) : 0 < extent a := Nat.succ_pos _
 
-/-- **The extent genuinely moves with the index.** This is the statement `WilsonGauge` cannot make. -/
+/-- `extent` is strictly monotone, so the family runs over an unbounded sequence of lattices
+rather than repeating one. -/
 theorem ext_strictMono : StrictMono extent := by
   intro a b hab
   show 2 * a + 1 + 1 < 2 * b + 1 + 1
   omega
 
-/-- **The four-dimensional periodic `SU(3)` Wilson system at extent `n`.**
+/-- The four-dimensional periodic `SU(3)` Wilson system at extent `n`:
+`WilsonHypercubic.sysWilson` at rank `NYM` and dimension `4`, with the extent left as the caller's.
+Links are `(direction, site)` pairs and plaquettes `(plane, site)` pairs, the holonomy is the
+ordered product around `U_μ(x) U_ν(x+μ̂) U_μ(x+ν̂)⁻¹ U_ν(x)⁻¹`, and the action density is
+`1 - (1/3) Re tr` (`WilsonHypercubic.sysWilson_phi`).
 
-`WilsonHypercubic.sysWilson` with the Clay problem's rank and dimension, and the extent left as the
-caller's. Links are `(direction, site)` pairs and plaquettes `(plane, site)` pairs, the holonomy is
-the ordered product around `U_μ(x) U_ν(x+μ̂) U_μ(x+ν̂)⁻¹ U_ν(x)⁻¹`, and the action density is Wilson's
-`1 - (1/3) Re tr` (`WilsonHypercubic.sysWilson_phi`), which is what makes `β` move the measure.
-
-DERIVED: `4` is four-dimensional spacetime and `NYM` the gauge rank — the Clay problem's own data.
-The extent is an argument. -/
+DERIVED: the declaration's type is `System G3` and carries no numeral. In the body `4` is the
+spacetime dimension and `NYM` the gauge rank, both the Clay problem's own data; the extent is an
+argument. -/
 noncomputable def sysOS (n : ℕ) [NeZero n] : System G3 :=
   MassGap.WilsonHypercubic.sysWilson NYM 4 n
 
-/-- The lattice's axis-permutation symmetry at extent `n`, from the geometry rather than asserted:
-relabelling the axes commutes with the unit shift (`WilsonHypercubic.shift_axis`), hence transports
-the plaquette boundary word (`bd_axis`), hence is a `Symmetry` of the gauge system.
+/-- The lattice's axis-permutation symmetry at extent `n`, derived from the geometry: relabelling
+the axes commutes with the unit shift (`WilsonHypercubic.shift_axis`), hence transports the
+plaquette boundary word (`WilsonHypercubic.bd_axis`), hence is a `Symmetry` of the gauge system.
 
-DERIVED: `4` is the dimension whose axes are being permuted. -/
+DERIVED: `4` is the spacetime dimension, the range of the axis index the permutation `e` acts
+on. -/
 noncomputable def symOS (n : ℕ) [NeZero n] (e : Equiv.Perm (Fin 4)) : Symmetry (sysOS n) :=
   MassGap.WilsonHypercubic.axisSymmetry NYM (n := n) e
 
-/-- The Wilson plaquette-energy observable of one plaquette of the extent-`n` lattice: the physical
-local action density `1 - (1/3) Re tr` of the ordered-loop holonomy. Values lie in `[0,2]`
-(`WilsonReal.wilsonPlaqObs_nonneg`, `wilsonPlaqObs_le_two`).
+/-- The Wilson plaquette-energy observable of one plaquette of the extent-`n` lattice: the local
+action density `1 - (1/3) Re tr` of the ordered-loop holonomy. Its values lie in `[0, 2]`
+(`WilsonReal.wilsonPlaqObs_nonneg`, `WilsonReal.wilsonPlaqObs_le_two`).
 
-DERIVED: `4` is the dimension and `NYM` the rank, both carried from `sysOS`. -/
+DERIVED: `4` is the spacetime dimension, appearing in the plaquette type `Plaq 4 n` and in the
+boundary word `bd (d := 4)`. `NYM` is the rank, carried from `sysOS`. -/
 noncomputable def obsOS (n : ℕ) [NeZero n] (p : MassGap.WilsonHypercubic.Plaq 4 n) :
     (sysOS n).Config → ℝ :=
   MassGap.WilsonReal.wilsonPlaqObs (N := NYM) (MassGap.WilsonHypercubic.bd (d := 4) (n := n)) p
 
 /-! ### The reflected form: a connected Gibbs correlation, transported by the axis symmetry -/
 
-/-- **The connected Wilson correlation with every factor transported by the axis symmetry.**
+/-- The connected Wilson correlation with every factor transported by the axis symmetry: three
+`SU(3)` Gibbs expectations against probability Haar with the Wilson Boltzmann weight at coupling
+`β` — the product term and the two one-point functions — each with its observable pulled back along
+the axis relabelling `e`. No clamp is applied.
 
-Three genuine `SU(3)` Gibbs expectations against the canonical probability Haar measure, with the
-Wilson Boltzmann weight at coupling `β`: the product term and the two one-point functions, each with
-its observable pulled back along the axis relabelling `e`. Nothing is clamped and nothing is cut.
+`connT_eq` removes the transport. It is a theorem rather than a `rfl` because the transport sits
+inside three separate integrals and only Haar-invariance of the product measure takes it out.
 
-This is the object `connT_eq` removes the transport from, and it is the reason the removal is a
-theorem rather than a definition: the transport sits inside three separate integrals and only
-Haar-invariance of the product measure takes it out of them.
-
-DERIVED: no literal in this definition. `4` is the dimension, carried from `sysOS`. -/
+DERIVED: `4` is the spacetime dimension, appearing in the permutation type `Equiv.Perm (Fin 4)` and
+in the plaquette type `Plaq 4 n`, carried from `sysOS` and `symOS`. -/
 noncomputable def connT (n : ℕ) [NeZero n] (β : ℝ) (e : Equiv.Perm (Fin 4))
     (p₀ p : MassGap.WilsonHypercubic.Plaq 4 n) : ℝ :=
   (sysOS n).expect (probHaar G3) β
@@ -199,20 +195,19 @@ noncomputable def connT (n : ℕ) [NeZero n] (β : ℝ) (e : Equiv.Perm (Fin 4))
       * (sysOS n).expect (probHaar G3) β
         (fun U => obsOS n p (Symmetry.reindex (symOS n e).onLink U))
 
-/-- **THE INVARIANCE, DERIVED — `WilsonGauge.QG_eq`'s content, on the connected correlation.**
+/-- For every axis permutation `e`, the transported connected correlation `connT n β e p₀ p` equals
+the untransported `WilsonBridge.wilsonCorrConn` at the same plaquettes and coupling. The proof is
+three applications of `Symmetry.expect_invariant`: Haar-invariance of the `SU(3)` product measure
+over links, composed with invariance of the Wilson action under the lattice's own axis relabelling
+(`Symmetry.action_invariant` from `WilsonHypercubic.bd_axis`), removes the reindex from each of the
+three integrals.
 
-For every axis permutation `e`, the transported connected correlation equals the untransported one.
-The proof is three applications of `Symmetry.expect_invariant`: Haar-invariance of the `SU(3)`
-product measure over links, composed with invariance of the Wilson action under the lattice's own
-axis relabelling (`Symmetry.action_invariant` from `WilsonHypercubic.bd_axis`), removes the reindex
-from each of the three integrals. No `rfl` on the correlation; the group element acts on a real
-measure and the measure does not notice.
+`WilsonGauge.QG_eq` is the same statement for one expectation of a one-plaquette observable; here
+there are three, and the result is a connected correlation.
 
-`WilsonGauge.QG_eq` does this for ONE expectation of a one-plaquette observable. Here it is three,
-and the object it produces is the connected correlation whose decay is a mass rather than a single
-plaquette energy.
-
-DERIVED: no literal. -/
+DERIVED: `4` is the spacetime dimension, the range of the axis index in `Equiv.Perm (Fin 4)`, in the
+plaquette type `Plaq 4 n` and in the boundary word `bd (d := 4)`. It carries no other numeral: the
+extent `n`, the coupling `β` and the plaquettes are all arguments. -/
 theorem connT_eq (n : ℕ) [NeZero n] (β : ℝ) (e : Equiv.Perm (Fin 4))
     (p₀ p : MassGap.WilsonHypercubic.Plaq 4 n) :
     connT n β e p₀ p
@@ -227,36 +222,42 @@ theorem connT_eq (n : ℕ) [NeZero n] (β : ℝ) (e : Equiv.Perm (Fin 4))
 
 /-! ### Test configurations, the lag, and the reflected form -/
 
-/-- Test configurations: a Euclidean component, a permutation component, and a lag label.
+/-- Test configurations: a Euclidean component, a permutation component and a lag label, as a
+triple. `Qos` reads the lag label only (`Qos_depends_only_on_the_lag`).
 
-DERIVED: `4` is the dimension whose axis permutations act. -/
+DERIVED: the declaration's type is `Type` and carries no numeral; the two `4`s in the body are the
+spacetime dimension, the range of the axis index the two permutation components act on. -/
 abbrev JOS : Type := Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ
 
-/-- Euclidean action on test configurations: multiply the Euclidean component.
+/-- The Euclidean action on test configurations: left-multiply the Euclidean component `j.1` and
+leave the other two alone.
 
-DERIVED: `4` is the problem's dimension, so `Equiv.Perm (Fin 4)` is the hypercubic axis group the
-lattice already carries (`WilsonHypercubic.axisSymmetry`). Not a size of anything. -/
+DERIVED: `4` is the spacetime dimension, so `Equiv.Perm (Fin 4)` is the hypercubic axis group the
+lattice already carries (`WilsonHypercubic.axisSymmetry`). It is not a size. -/
 def actEOS (g : Equiv.Perm (Fin 4)) (j : JOS) : JOS := (g * j.1, j.2.1, j.2.2)
 
-/-- Permutation action on test configurations: multiply the permutation component.
+/-- The permutation action on test configurations: left-multiply the permutation component
+`j.2.1` and leave the other two alone.
 
-DERIVED: `4` is the problem's dimension, as in `actEOS` — the same axis group acting on the other
+DERIVED: `4` is the spacetime dimension, as in `actEOS` — the same axis group acting on the other
 component. -/
 def actPOS (σ : Equiv.Perm (Fin 4)) (j : JOS) : JOS := (j.1, σ * j.2.1, j.2.2)
 
-/-- The separation the test configuration's label names, as a site index of the extent-`extent a`
-lattice.
+/-- The separation a test configuration's label `k` names, as a site index of the extent-`extent a`
+lattice: `2 * k` reduced modulo the extent.
 
-DERIVED: `2 * k` is the even sublattice of lags and the `%` wraps it into the periodic lattice. The
-factor `2` is not a scale: `ReflectionStrong.corrClay_nonneg_even_lag` is the RP theorem that holds
-at EVERY real coupling, and its hypothesis is that the lag is even, so the even lags are exactly the
-separations at which this family's `os_rp` is a theorem rather than an assumption on the sign of
-`β`. -/
+DERIVED: the declaration's type `Fin (extent a)` carries no numeral. In the body, `2 * k` ranges
+over the even sublattice of lags and `%` wraps it into the periodic lattice. The factor `2` is a
+parity, not a scale: `ReflectionStrong.corrClay_nonneg_even_lag`'s hypothesis is that the lag is
+even, so the even lags are the separations at which `Qos_nonneg` holds with no condition on the sign
+of `β`. -/
 def lagOf (a k : ℕ) : Fin (extent a) := ⟨2 * k % extent a, Nat.mod_lt _ (ext_pos a)⟩
 
-/-- The lag really is even, at every index and every label — so `corrClay_nonneg_even_lag` applies.
+/-- `(lagOf a k).val` is even, at every index and every label, which is
+`ReflectionStrong.corrClay_nonneg_even_lag`'s hypothesis.
 
-DERIVED: `2` is the parity; `0` is what an even residue is congruent to. -/
+DERIVED: the statement carries no numeral; `Even` is Mathlib's predicate. In the proof, `2` is the
+parity and `0` the residue an even number leaves. -/
 theorem lagOf_even (a k : ℕ) : Even (lagOf a k).val := by
   have hdvd : (2 : ℕ) ∣ extent a := ⟨a + 1, ext_eq_two_mul a⟩
   have hmm : 2 * k % extent a % 2 = 2 * k % 2 := Nat.mod_mod_of_dvd (2 * k) hdvd
@@ -266,147 +267,147 @@ theorem lagOf_even (a k : ℕ) : Even (lagOf a k).val := by
 
 /-- The base plaquette: the `(0,1)` plane at the origin of the extent-`n` lattice.
 
-DERIVED: `0` and `1` are the two directions spanning a plane — a plane needs two, and which two is a
-naming freedom on a lattice whose axes are interchangeable (`WilsonHypercubic.axisSymmetry`). The
-site is the origin, immaterial by periodicity. -/
+DERIVED: `4` is the spacetime dimension, in the plaquette type `Plaq 4 n`. The `0` and `1` in the
+body are the two direction indices spanning a plane — a plane needs two, and which two is a naming
+freedom on a lattice whose axes are interchangeable (`WilsonHypercubic.axisSymmetry`). The site is
+the origin, `fun _ => 0`, immaterial by periodicity. -/
 def plaqBase (n : ℕ) [NeZero n] : MassGap.WilsonHypercubic.Plaq 4 n := ((0, 1), fun _ => 0)
 
 /-- The displaced plaquette: the same `(0,1)` plane, `lag` steps along direction `2`.
 
-DERIVED: `0` and `1` span the plane as in `plaqBase`; `2` is a direction transverse to it, which is
-what makes the lag a genuine spatial separation rather than an in-plane offset, and which exists
-because the dimension exceeds two. -/
+DERIVED: `4` is the spacetime dimension, in the plaquette type `Plaq 4 n`. In the body `0` and `1`
+span the plane as in `plaqBase`, and `2` is a direction transverse to that plane, which makes the
+lag a spatial separation rather than an in-plane offset; such a direction exists because the
+dimension exceeds two. -/
 def plaqAt (n : ℕ) [NeZero n] (lag : Fin n) : MassGap.WilsonHypercubic.Plaq 4 n :=
   ((0, 1), MassGap.WilsonBridge.siteAtHyper 2 lag)
 
-/-- **THE REFLECTED SCHWINGER FORM — no clamp.**
+/-- The reflected Schwinger form. `Qos β j a` is the connected `SU(3)` Wilson plaquette
+correlation at coupling `β`, on the four-dimensional periodic lattice of extent `extent a`, between
+the `(0,1)` plaquette at the origin and the one displaced along direction `2` by the even lag the
+test configuration names, with both observables and the product transported by the axis permutation
+`j.1 * j.2.1`. No `min` or `max` is applied.
 
-`Qos β j a` is the connected `SU(3)` Wilson plaquette correlation, at coupling `β`, on the
-four-dimensional periodic lattice of extent `extent a`, between the `(0,1)` plaquette at the origin and
-the one displaced along direction `2` by the even lag the test configuration names — with both
-observables and the product transported by the axis permutation `j.1 * j.2.1`.
+`WilsonGauge.QG` is `min (max _ 0) 1` of a one-plaquette expectation at coupling `(a : ℝ)`; here the
+coupling is the parameter `β` and the index `a` is the extent.
 
-Compare `WilsonGauge.QG`, which is `min (max _ 0) 1` of a one-plaquette expectation at coupling
-`(a : ℝ)`. Here there is no `min`, no `max`, the coupling is the parameter `β` and the index `a` is
-the extent.
-
-DERIVED: no literal; the plane, the lag axis and the extent carry their notes at `plaqBase`,
-`plaqAt`, `lagOf` and `extent`. -/
+DERIVED: the statement carries no numeral — the plane, the lag axis and the extent carry their notes
+at `plaqBase`, `plaqAt`, `lagOf` and `extent`. -/
 noncomputable def Qos (β : ℝ) (j : JOS) (a : ℕ) : ℝ :=
   connT (extent a) β (j.1 * j.2.1) (plaqBase (extent a)) (plaqAt (extent a) (lagOf a j.2.2))
 
-/-- **The reflected form IS the Clay correlation at extent `extent a` and coupling `β`.**
+/-- `Qos β j a = WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)`. The transport is removed by
+`connT_eq`, leaving the connected `SU(3)` correlation on the four-dimensional periodic lattice, with
+`β` in the coupling slot and `extent a` in the extent slot. Every other statement about the family
+below is proved through this identity.
 
-Everything the family claims rests on this line. Reading it right to left: the transport is gone
-(`connT_eq`, i.e. the invariance is derived), what remains is `WilsonBridge.corrClay` — the genuine
-connected `SU(3)` correlation on the four-dimensional periodic lattice — the coupling slot holds `β`,
-and the extent slot holds `extent a`. The index enters as the geometry and nowhere else.
-
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral; `extent` and `lagOf` carry their own notes. -/
 theorem Qos_eq (β : ℝ) (j : JOS) (a : ℕ) :
     Qos β j a = MassGap.WilsonBridge.corrClay (extent a) β (lagOf a j.2.2) := by
   unfold Qos
   rw [connT_eq]
   rfl
 
-/-! ### The three OS clauses, each a theorem about the measure -/
+/-! ### The three OS clauses that are statements about the measure -/
 
-/-- **OS2 / `os_rp`: REFLECTION POSITIVITY, not a clamp.**
+/-- `0 ≤ Qos β j a` at every real coupling, every index and every test configuration — the family's
+`os_rp` clause. The input is `ReflectionStrong.corrClay_nonneg_even_lag`, which obtains
+nonnegativity of the connected correlation from the half-space module statement, reflection
+positivity as a quadratic form on the slab algebra, with no condition on the sign of `β`.
+Nonnegativity of the unconnected correlation would follow from positivity of the state alone; it is
+the subtraction of the disconnected part that makes this an RP consequence.
 
-`0 ≤ Qos β j a` at every real coupling, every extent in the sequence and every test configuration.
-The input is `ReflectionStrong.corrClay_nonneg_even_lag`, which obtains nonnegativity of the
-CONNECTED correlation from the half-space module statement — reflection positivity as a quadratic
-form on the slab algebra — with no sign condition on `β`. Nonnegativity of the UNCONNECTED
-correlation would be trivial (a product of nonnegative densities under a positive state); it is the
-subtraction of the disconnected floor that makes this RP.
-
-DERIVED: `2 * a + 1` is the APERTURE — `corrClay_nonneg_even_lag` states its conclusion at extent
-`Nap + 1`, so `Nap = 2a+1` and the extent is `2a+2` — and `a + 1` is the half-extent the reflection
-sits at; both are `extent`'s own. The `0` of `0 ≤ …` is positivity itself. -/
+DERIVED: `0` is the lower bound in the conclusion. In the proof, `2 * a + 1` is the aperture —
+`corrClay_nonneg_even_lag` states its conclusion at extent `Nap + 1`, so `Nap = 2a + 1` and the
+extent is `2a + 2` — and `a + 1` is the half-extent the reflection sits at. Both are `extent`'s
+own. -/
 theorem Qos_nonneg (β : ℝ) (j : JOS) (a : ℕ) : 0 ≤ Qos β j a := by
   rw [Qos_eq]
   exact MassGap.ReflectionStrong.corrClay_nonneg_even_lag (2 * a + 1) (a + 1)
     (ext_eq_two_mul a) (Nat.succ_pos a) β (lagOf_even a j.2.2)
 
-/-- **The RP input is not vacuous: it holds where the odd-lag route says nothing.**
+/-- `Qos_nonneg` at the coupling `-1`, a negative value. `OddLagSplit.plaqReflPositive_odd`, the
+tree's odd-lag positivity, carries `0 ≤ β`; this statement shows the even-lag input has no such
+restriction. `CharacterExpansion.NegControl.su3_kernel_neg_of_neg` shows one quadratic form of the
+character expansion is strictly negative at `β < 0`, which is a fact about that expansion rather
+than about a lag.
 
-`OddLagSplit.plaqReflPositive_odd` carries `0 ≤ β`. This family's `os_rp` does not, and here it is at
-a negative coupling. That the sign matters somewhere is visible in
-`CharacterExpansion.NegControl.su3_kernel_neg_of_neg`, which shows one quadratic form of the
-character expansion is strictly negative at `β < 0` — that is a failure of the EXPANSION route at
-negative coupling, not a statement about any lag. So the even-lag restriction in `lagOf` is buying
-something: a region of the coupling line the odd-lag route does not reach.
-
-DERIVED: `−1` is a coupling of the sign the odd-lag route excludes, not a fitted or measured value. -/
+DERIVED: `1` is the magnitude of the coupling `-1`, chosen as a value of the sign the odd-lag route
+excludes rather than fitted or measured; any negative value would serve, since `Qos_nonneg` is
+quantified over all real `β`. `0` is the lower bound in the conclusion, as in `Qos_nonneg`. -/
 theorem Qos_nonneg_at_negative_coupling (j : JOS) (a : ℕ) : 0 ≤ Qos (-1 : ℝ) j a :=
   Qos_nonneg (-1) j a
 
-/-- **OS0 / the uniform bound: `|Qos| ≤ 4`, with no hypothesis and no extent in the constant.**
+/-- `|Qos β j a| ≤ 4` at every real coupling, every index and every test configuration, with no
+hypothesis and no extent in the constant. `InfiniteVolume.wilsonCorrConn_abs_le_four` supplies it:
+the Wilson plaquette density lies in `[0, 2]` and the Gibbs state is a contractive probability state
+(`WilsonReal.wilsonSystem_expect_abs_le`), so the unconnected correlation and the disconnected part
+both lie in `[0, 4]`.
 
-`InfiniteVolume.wilsonCorrConn_abs_le_four` bounds the connected correlation at EVERY extent, EVERY
-real coupling and EVERY separation: the Wilson plaquette density lies in `[0,2]` and the Gibbs state
-is a contractive probability state (`WilsonReal.wilsonSystem_expect_abs_le`), so the unconnected
-correlation lies in `[0,4]` and so does the disconnected floor. Nothing in the constant refers to the
-extent, which is exactly what a sequence over extents needs.
-
-DERIVED: `4 = 2 · 2` is the square of the Wilson density's own range `[0,2]` —
-`InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, not a bound chosen here. `3 ≠ 0` is the rank
-being a group. -/
+DERIVED: `4 = 2 · 2` is the square of the Wilson density's range `[0, 2]`, and is
+`wilsonCorrConn_abs_le_four`'s own constant rather than one chosen here. The proof discharges that
+theorem's rank hypothesis with `3 ≠ 0`. -/
 theorem Qos_abs_le_four (β : ℝ) (j : JOS) (a : ℕ) : |Qos β j a| ≤ 4 := by
   unfold Qos
   rw [connT_eq]
   exact MassGap.InfiniteVolume.wilsonCorrConn_abs_le_four (Nc := NYM) (by norm_num) _ _ _ _
 
-/-- **OS1 / `os_euc`: Euclidean invariance, DERIVED.** Both sides reduce by `Qos_eq` to the same
-correlation, because `connT_eq` has already removed the transport that the Euclidean component
-supplies. The group element acts on the `SU(3)` measure and Haar does not notice; that is the whole
-content, and it is `Symmetry.expect_invariant`'s.
+/-- `Qos β (actEOS g j) a = Qos β j a` — the family's `os_euc` clause. Both sides reduce by
+`Qos_eq` to the same correlation: `actEOS` moves `j.1`, which the right-hand side of `Qos_eq` does
+not mention, and `connT_eq` has already removed the transport the Euclidean component supplies
+through `Symmetry.expect_invariant`.
 
-DERIVED: no literal. -/
+DERIVED: `4` is the spacetime dimension, the range of the axis index in the permutation type
+`Equiv.Perm (Fin 4)` that `g` inhabits. -/
 theorem Qos_actE (β : ℝ) (g : Equiv.Perm (Fin 4)) (j : JOS) (a : ℕ) :
     Qos β (actEOS g j) a = Qos β j a := by
   have hlab : (actEOS g j).2.2 = j.2.2 := rfl
   rw [Qos_eq, hlab, Qos_eq]
 
-/-- **OS3 / `os_perm`: permutation symmetry, DERIVED** — the same mechanism at the permutation
-component.
+/-- `Qos β (actPOS σ j) a = Qos β j a` — the family's `os_perm` clause, by the same route as
+`Qos_actE` at the other permutation component `j.2.1`.
 
-DERIVED: no literal. -/
+DERIVED: `4` is the spacetime dimension, the range of the axis index in the permutation type
+`Equiv.Perm (Fin 4)` that `σ` inhabits. -/
 theorem Qos_actP (β : ℝ) (σ : Equiv.Perm (Fin 4)) (j : JOS) (a : ℕ) :
     Qos β (actPOS σ j) a = Qos β j a := by
   have hlab : (actPOS σ j).2.2 = j.2.2 := rfl
   rw [Qos_eq, hlab, Qos_eq]
 
-/-! ### The mode count: the lattice's own, and it diverges -/
+/-! ### The mode count: the lattice's plaquette count, and it diverges -/
 
-/-- **The mode count at index `a`: the plaquette count of the extent-`extent a` lattice.**
+/-- The mode count at index `a`: the cardinality of the plaquette type of the extent-`extent a`
+lattice, which is the lattice the reflected form is integrated over. `LatticeYMFamily.Na` is
+documented as the lattice mode count at spacing index `a`; `WilsonGauge` supplies `NaG a = a + 1`
+for that field.
 
-`LatticeYMFamily.Na` is documented as "lattice mode count at spacing index `a` (`→ ∞`)". In
-`WilsonGauge` it is `NaG a = a + 1`, a counter with no lattice attached. Here it is the cardinality
-of the plaquette type of the lattice the family's reflected form is actually integrated over.
-
-DERIVED: `4` is the dimension; the count itself is a cardinality, not a chosen number. -/
+DERIVED: the declaration's type is `ℕ` and carries no numeral; the `4` in the body is the spacetime
+dimension in the plaquette type `Plaq 4 (extent a)`. The value is a cardinality. -/
 def Nmodes (a : ℕ) : ℕ := Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (extent a))
 
-/-- The count written out: `4 · 4 · (2a+2)⁴`.
+/-- The mode count in closed form: `Nmodes a = 4 * 4 * (2 * a + 1 + 1) ^ 4`.
 
-DERIVED: `4 · 4` is the number of ordered direction pairs in four dimensions and `(2a+2)⁴` the site
-count — `WilsonHypercubic.card_plaq` at `d = 4`, not a constant chosen here. -/
+DERIVED: `4 * 4` is the number of ordered direction pairs in four dimensions, the exponent `4` is
+the number of directions the sites range over, and `(2 * a + 1 + 1)` is `extent a` written out, so
+its `2` is the parity and its two `1`s are `extent`'s own successors. The whole identity is
+`WilsonHypercubic.card_plaq` at `d = 4`. -/
 theorem Nmodes_eq (a : ℕ) : Nmodes a = 4 * 4 * (2 * a + 1 + 1) ^ 4 :=
   MassGap.WilsonHypercubic.card_plaq 4 (extent a)
 
-/-- The count is positive at every index.
+/-- `0 < Nmodes a` at every index, which is what `hres_wOne` and
+`WilsonModel.resolvedDim_wOne` consume.
 
-DERIVED: the `0` is the boundary a cardinality cannot cross; the numerals are `Nmodes_eq`'s. -/
+DERIVED: `0` is the strict lower bound on a cardinality; the numerals in the proof are
+`Nmodes_eq`'s. -/
 theorem Nmodes_pos (a : ℕ) : 0 < Nmodes a := by
   rw [Nmodes_eq]; positivity
 
-/-- **The volume diverges along the family**, by `InfiniteVolume.clay_volume_tendsto_atTop` composed
-with the index-to-aperture map. This is the sense in which `a → ∞` is the infinite-volume limit: the
-extent is the same in all four directions at once, so there is no second extent left to send to
-infinity, and the plaquette count is the volume.
+/-- `(Nmodes a : ℝ) → ∞` as `a → ∞`, by `InfiniteVolume.clay_volume_tendsto_atTop` composed with
+the index-to-aperture map. The extent is the same in all four directions at once, so the plaquette
+count is the volume and `a → ∞` is the infinite-volume limit.
 
-DERIVED: `2 * a + 1` is `extent`'s aperture, `extent a = (2a+1) + 1`. -/
+DERIVED: the statement carries no numeral. In the proof `2 * a + 1` is `extent`'s aperture, since
+`extent a = (2a + 1) + 1`. -/
 theorem Nmodes_tendsto_volume : Tendsto (fun a : ℕ => (Nmodes a : ℝ)) atTop atTop := by
   have hg : Tendsto (fun a : ℕ => 2 * a + 1) atTop atTop :=
     tendsto_atTop_atTop.mpr (fun b => ⟨b, fun a ha => by omega⟩)
@@ -414,39 +415,33 @@ theorem Nmodes_tendsto_volume : Tendsto (fun a : ℕ => (Nmodes a : ℝ)) atTop 
 
 /-! ### The family
 
-The infrared clause `os_gap` is not supplied directly — `Measure.familyOfSortedCount` refuses to take
-it and asks instead for an ORDERED spectrum and a bound on how many of its modes clear the noise
-edge, deriving `os_gap` from the pair. That is unchanged from `WilsonGauge`, and deliberately: this
-file repairs the MEASURE side, and the spectrum side is the same interface a measured read would come
-through. -/
+`Measure.familyOfSortedCount` does not take the infrared clause `os_gap` directly. It takes an
+ordered spectrum and a bound on how many of its modes clear the noise edge, and derives `os_gap`
+from the pair. `WilsonGauge` uses the same constructor, so the spectrum side is the same interface
+here as there. -/
 
-/-- **The OS data family on the genuine Gibbs correlation, at arbitrary extent, from a counted
-spectrum.**
+/-- The OS data family on the connected Gibbs correlation, at extent `extent a`, from a spectrum
+`ev` the caller supplies together with an ordering, a count bound and a resolution bound.
 
-Three of the four OS fields are theorems about the `SU(3)` Wilson measure at extent `extent a`:
+Three of the four OS fields are statements about the `SU(3)` Wilson measure:
 
-* `os_rp` — `Qos_nonneg`, reflection positivity on the even lags at every real `β`;
-* `os_form` — `Qos_abs_le_four`, the hypothesis-free bound, against `B = 4`;
-* `os_euc` / `os_perm` — `Qos_actE` / `Qos_actP`, from `Symmetry.expect_invariant`.
+* `os_rp` — `Qos_nonneg`, nonnegativity on the even lags at every real `β`;
+* `os_form` — `Qos_abs_le_four`, against `B = 4`;
+* `os_euc` and `os_perm` — `Qos_actE` and `Qos_actP`, from `Symmetry.expect_invariant`.
 
-The fourth, `os_gap`, is NOT about the measure: `familyOfSortedCount` derives it from `hsorted` and
-`hcount`, which are facts about whatever spectrum the caller supplies. At `osFamily` that spectrum is
-the placeholder `evUnit`, so `os_gap` there says nothing about `SU(3)`.
+`os_gap` is derived by `familyOfSortedCount` from `hsorted` and `hcount`, which are facts about
+`ev`. At `osFamily` that spectrum is `evUnit`, at `osFamilyTension` it is `WilsonModel.wOne`.
 
-Two things this bound does not claim, stated because the field names suggest otherwise.
-`LatticeYMFamily.os_form` is documented as "the reflected form is built from the resolved modes", and
-here it is discharged as `Q ≤ 4 ≤ resolvedDim · 4`, which relates `Q` to nothing about the spectrum —
-it is OS0's uniform bound and only that. And `Na := Nmodes` is the lattice's genuine plaquette count,
-but `evUnit` ignores its argument, so the only thing the assembled family uses of it is
-`1 ≤ Nmodes a`; any `Na` bounded below by one would give the identical family. `Nmodes` is exact as
-a definition and inert in the family's content until a measured spectrum replaces `evUnit`.
+Two points on how the fields are discharged. `LatticeYMFamily.os_form` is documented as relating the
+reflected form to the resolved modes; here it is discharged as `Q ≤ 4 ≤ resolvedDim · 4`, which uses
+only the uniform bound and `hres`. And `Na := Nmodes` is the lattice's plaquette count, but the
+spectra used below ignore their index argument, so the assembled family uses `Nmodes` only through
+`1 ≤ resolvedDim …`; any mode count bounded below by one gives the same family.
 
-None of the three measure clauses is a clamp, and the index is the extent throughout.
-
-DERIVED: `4` in `B := 4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s own constant, the square of
-the Wilson density's range `[0,2]`; it is the smallest bound this development has proved for the
-object, not a scale chosen here. The `1` in `1 * 4` is arithmetic. `4` in `Equiv.Perm (Fin 4)` is the
-dimension. -/
+DERIVED: `1` is the resolution bound `hres` requires of `resolvedDim` at every index, and it is what
+the `os_form` calculation multiplies `4` by. In the proof, `4` is `B`, which is
+`InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant — the square of the Wilson density's range
+`[0, 2]` — and `4` also appears in `Equiv.Perm (Fin 4)`, the spacetime dimension. -/
 noncomputable def osFamilyCounted (β : ℝ)
     (ev : ℕ → ℕ → ℝ) (edge c : ℝ)
     (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
@@ -465,18 +460,16 @@ noncomputable def osFamilyCounted (β : ℝ)
     (fun g j a => Qos_actE β g j a)
     (fun σ j a => Qos_actP β σ j a)
 
-/-- **The OS0–OS3 continuum limit of that family**, at every real coupling.
+/-- `continuum_of_family` applied to `osFamilyCounted`, at every real coupling: a strictly
+monotone `φ : ℕ → ℕ` and a limit `q` with pointwise convergence of `Q j (φ k)`, the temperedness
+bound `|q j| ≤ ⌈c⌉₊ · B`, nonnegativity of `q`, and invariance of `q` under both group actions.
 
-`continuum_of_family` on `osFamilyCounted`: a subsequence and a limit `q` with joint convergence, the
-temperedness bound (OS0), nonnegativity (the `os_rp` clause, here sourced from reflection positivity
-rather than a clamp) and the Euclidean (OS1) / permutation (OS3) invariances, which flow from
-Haar-invariance of the actual `SU(3)` gauge measure composed with the hypercubic lattice's axis
-symmetry.
+The sequence this takes a limit of runs over the extent at fixed coupling.
+`WilsonGauge.ym_continuum_gauge_counted` takes a limit of a sequence in the coupling at a fixed
+volume.
 
-What this is a limit OF has changed from `WilsonGauge.ym_continuum_gauge_counted`: there, a sequence
-in the COUPLING at fixed `2⁴` volume; here, a sequence in the EXTENT at fixed coupling.
-
-DERIVED: no literal. -/
+DERIVED: `1` is the resolution bound in `hres`, carried from `osFamilyCounted`. `0` is the lower
+bound in the `∀ j, 0 ≤ q j` conjunct, which is the limit of `os_rp`. -/
 theorem os_continuum_counted (β : ℝ)
     (ev : ℕ → ℕ → ℝ) (edge c : ℝ)
     (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
@@ -494,21 +487,24 @@ theorem os_continuum_counted (β : ℝ)
 
 /-! ### An unconditional instance
 
-The three spectrum hypotheses are discharged at a single-resolved-mode spectrum, so that
-`os_continuum_counted` is about something. This is the ONE part of the construction that is a
-placeholder rather than a measured or derived quantity, and it is the same placeholder
-`WilsonGauge.evDemo` is. It is stated separately from the measure side for exactly that reason. -/
+The three spectrum hypotheses are discharged at a single-resolved-mode spectrum, which makes
+`os_continuum` unconditional. That spectrum is a placeholder rather than a measured or derived
+quantity, in the same role `WilsonGauge.evDemo` plays, and it is stated in its own section apart
+from the measure side. -/
 
-/-- A spectrum with a single supra-edge mode: the vacuum at `1`, everything else at `0`.
+/-- A spectrum with a single supra-edge mode: the mode at index `0` takes the value `1` and every
+other mode takes `0`. The index argument is ignored.
 
-DERIVED: `1` and `0` are the two values a single-resolved-mode spectrum takes; nothing is compared
-against them — they ARE the spectrum, the object under discussion. -/
+DERIVED: the declaration's type is `ℕ → ℕ → ℝ` and carries no numeral. In the body, `0` is the index
+of the single supra-edge mode and `1` and `0` are the two values the spectrum takes; nothing is
+compared against them. -/
 noncomputable def evUnit (_a n : ℕ) : ℝ := if n = 0 then 1 else 0
 
-/-- **Exactly one mode clears a floor strictly between `0` and `1`, at every index.**
+/-- `resolvedDim (Finset.range (Nmodes a)) (evUnit a) (1 / 2) = 1` at every index: exactly one
+mode of `evUnit` clears the floor `1 / 2`.
 
-DERIVED: `1 / 2` is any value strictly between the two the spectrum takes; nothing depends on which,
-and this theorem is proved at one. `1` is the resulting count. -/
+DERIVED: `1 / 2` is a value strictly between the two `evUnit` takes; nothing below depends on which
+such value is used, and the theorem is stated at this one. `1` is the resulting count. -/
 theorem resolvedDim_evUnit (a : ℕ) :
     resolvedDim (Finset.range (Nmodes a)) (evUnit a) (1 / 2) = 1 := by
   have hfilter : (Finset.range (Nmodes a)).filter (fun k => (1 / 2 : ℝ) < evUnit a k) = {0} := by
@@ -523,9 +519,9 @@ theorem resolvedDim_evUnit (a : ℕ) :
       exact ⟨Nmodes_pos a, by norm_num⟩
   rw [resolvedDim, hfilter, Finset.card_singleton]
 
-/-- **The spectrum is ordered.** A later index never carries more weight than an earlier one.
+/-- `evUnit a` is non-increasing in the mode index, which is `familyOfSortedCount`'s `hsorted`.
 
-DERIVED: `0` is the index of the leading mode, not a threshold. -/
+DERIVED: the statement carries no numeral. In the proof `0` is the index of the leading mode. -/
 theorem evUnit_sorted (a : ℕ) : ∀ m n : ℕ, m ≤ n → evUnit a n ≤ evUnit a m := by
   intro m n hmn
   by_cases hm : m = 0
@@ -536,33 +532,38 @@ theorem evUnit_sorted (a : ℕ) : ∀ m n : ℕ, m ≤ n → evUnit a n ≤ evUn
       intro h; exact hm (Nat.le_zero.mp (h ▸ hmn))
     simp [evUnit, if_neg hm, if_neg hn]
 
-/-- At most one mode clears the floor, so the count bound holds at `c = 1`.
+/-- The count bound at `c = 1`: at most one mode of `evUnit` clears the floor `1 / 2`. This is
+`familyOfSortedCount`'s `hcount`.
 
-DERIVED: `1 / 2` is the floor carried from `resolvedDim_evUnit`; `1` is the count it returns. -/
+DERIVED: `1 / 2` is the floor carried from `resolvedDim_evUnit`; `1` is both the count that theorem
+returns and the value of `c` this bounds it by. -/
 theorem evUnit_count (a : ℕ) :
     ((resolvedDim (Finset.range (Nmodes a)) (evUnit a) (1 / 2) : ℕ) : ℝ) ≤ 1 := by
   rw [resolvedDim_evUnit]; norm_num
 
-/-- At least one does, so the aperture bound is non-vacuous.
+/-- At least one mode of `evUnit` clears the floor `1 / 2`. This is `familyOfSortedCount`'s
+`hres`, which `osFamilyCounted`'s `os_form` calculation consumes.
 
 DERIVED: `1 / 2` is the floor carried from `resolvedDim_evUnit`; `1` is the count it returns. -/
 theorem evUnit_res (a : ℕ) : 1 ≤ resolvedDim (Finset.range (Nmodes a)) (evUnit a) (1 / 2) := by
   rw [resolvedDim_evUnit]
 
-/-- **THE FAMILY: `SU(3)` OS data on the genuine Gibbs correlation, at arbitrary extent, unclamped.**
+/-- `osFamilyCounted` at the single-supra-edge-mode spectrum `evUnit`, with floor `1 / 2` and
+count `1`: `SU(3)` OS data on the connected Gibbs correlation at extent `extent a`, with no clamp
+and no spectrum hypothesis left open.
 
-`osFamilyCounted` at the single-supra-edge-mode spectrum, so that it is unconditional and there is
-one route to the interface rather than two.
-
-DERIVED: the floor `1 / 2` is any value strictly between the two the spectrum takes and
-`resolvedDim_evUnit` is proved for this one; the count `1` is what it returns. -/
+DERIVED: the declaration's type is `LatticeYMFamily` and carries no numeral. In the body, the floor
+`1 / 2` is a value strictly between the two `evUnit` takes, the one `resolvedDim_evUnit` is stated
+at, and the count `1` is what that theorem returns. -/
 noncomputable def osFamily (β : ℝ) : LatticeYMFamily :=
   osFamilyCounted β evUnit (1 / 2) 1 evUnit_sorted evUnit_count evUnit_res
 
-/-- **The OS0–OS3 continuum limit of the unclamped, arbitrary-extent family**, at every real
-coupling.
+/-- `continuum_of_family` applied to `osFamily`, at every real coupling: a strictly monotone
+`φ : ℕ → ℕ` and a limit `q` with pointwise convergence, the temperedness bound `|q j| ≤ ⌈c⌉₊ · B`,
+nonnegativity, and invariance under both group actions.
 
-DERIVED: no literal. -/
+DERIVED: `0` is the lower bound in the `∀ j, 0 ≤ q j` conjunct, the limit of `os_rp`. The family's
+floor and count are `osFamily`'s, documented there. -/
 theorem os_continuum (β : ℝ) :
     ∃ (q : (osFamily β).J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => (osFamily β).Q j (φ k)) atTop (nhds (q j))) ∧
@@ -572,71 +573,64 @@ theorem os_continuum (β : ℝ) :
       (∀ σ j, q ((osFamily β).actP σ j) = q j) :=
   continuum_of_family (osFamily β)
 
-/-! ### What the family's own fields say
+/-! ### What the family's own fields are
 
-These are `rfl`, and that is the point: they let a reader check the three repairs without reading the
-constructor. -/
+Each of these is `rfl`, so they let a reader check the fields without unfolding the constructor. -/
 
-/-- The family's reflected form is `Qos` — the connected correlation, not a clamp.
+/-- The family's reflected form is `Qos`, the connected correlation.
 
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral. -/
 theorem osFamily_Q (β : ℝ) : (osFamily β).Q = Qos β := rfl
 
-/-- The family's mode count is the lattice's plaquette count, not a counter.
+/-- The family's mode count is `Nmodes`, the lattice's plaquette count.
 
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral; `Nmodes` carries its own note. -/
 theorem osFamily_Na (β : ℝ) : (osFamily β).Na = Nmodes := rfl
 
-/-- The family's per-mode bound is the proved correlation bound.
+/-- The family's per-mode bound `B` is `4`.
 
-DERIVED: `4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant. -/
+DERIVED: `4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, the square of the Wilson
+density's range `[0, 2]`, passed to `osFamilyCounted` as `B`. -/
 theorem osFamily_B (β : ℝ) : (osFamily β).B = 4 := rfl
 
-/-- **The index is the extent and the coupling is the parameter** — the family's reflected form at
-index `a` is the Clay correlation on the extent-`(2a+2)` lattice at coupling `β`.
+/-- The family's reflected form at index `a` is `WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)`:
+the index sets the extent and `β` is the coupling.
 
-DERIVED: no literal; `extent` carries the extent's note. -/
+DERIVED: the statement carries no numeral; `extent` and `lagOf` carry their own notes. -/
 theorem osFamily_Q_eq (β : ℝ) (j : JOS) (a : ℕ) :
     (osFamily β).Q j a = MassGap.WilsonBridge.corrClay (extent a) β (lagOf a j.2.2) :=
   Qos_eq β j a
 
-/-! ### The family the flagship can carry: this measure, with the tension's own infrared input
+/-! ### The same measure with the tension's infrared input
 
-`osFamily` above is unconditional at the placeholder spectrum `evUnit`, and its infrared cutoff `c`
-is the `1` that placeholder's count returns. The flagship cannot carry that cutoff. A
-`WilsonRealization` (in `MassGap.FullModel`) requires `model.measure.c = params.irCutoff`, and
-`WilsonModel.paramsTension` does not hardwire its cutoff: it reads it off the witness read's measured
-tension (`WilsonModel.paramsTension_irCutoff : paramsTension.irCutoff = cW`). So the family the
-flagship can carry is `osFamilyCounted` at the tension's own edge and count.
+`osFamily` has infrared cutoff `c = 1`, the count `evUnit` returns. A `WilsonRealization` (in
+`MassGap.FullModel`) requires `model.measure.c = params.irCutoff`, and `WilsonModel.paramsTension`
+reads its cutoff off the witness read's measured tension
+(`WilsonModel.paramsTension_irCutoff : paramsTension.irCutoff = cW`). `osFamilyTension` is therefore
+`osFamilyCounted` at the tension's own edge and count.
 
-NOTHING ON THE MEASURE SIDE CHANGES between the two. `os_rp`, `os_form`, `os_euc` and `os_perm` are
+The measure side is identical between the two: `os_rp`, `os_form`, `os_euc` and `os_perm` are
 `Qos_nonneg`, `Qos_abs_le_four`, `Qos_actE` and `Qos_actP` either way — the connected `SU(3)` Wilson
-correlation at extent `2a+2`, unclamped. What changes is only the spectrum `os_gap` is derived from,
-and it becomes `WilsonModel.wOne`: the same spectrum `WilsonModel.ymFamilyTension` uses, counted by
-the same theorem (`WilsonModel.count_le_of_tension_uniform`), now over the extent-`(2a+2)` lattice's
-own plaquette count `Nmodes` instead of over `WilsonGauge.NaG a = a + 1`.
+correlation at extent `2a + 2`, with no clamp. What differs is the spectrum `os_gap` is derived
+from, which becomes `WilsonModel.wOne`, the spectrum `WilsonModel.ymFamilyTension` uses, counted by
+`WilsonModel.count_le_of_tension_uniform` over `Nmodes` rather than over
+`WilsonGauge.NaG a = a + 1`. `os_gap` is thus a statement about `wOne`, the witness read's
+single-mode spectrum, here as it is in `ymFamilyTension`. -/
 
-What that does NOT do is make `os_gap` a statement about `SU(3)`. It is a fact about `wOne`, exactly
-as it is in `ymFamilyTension`, and `wOne` is the witness read's fabricated single-mode spectrum. The
-repair in this file is to the MEASURE side; the spectrum side is carried across unchanged so that the
-substitution moves one thing. -/
+/-- The count bound `resolvedDim (Finset.range (Nmodes a)) wOne edgeW ≤ cW`, at the lattice's own
+mode count. `WilsonModel.hcountW` is the same statement at `WilsonGauge.NaG`.
+`WilsonModel.count_le_of_tension_uniform` is general in `Na` — all it needs of the index set is a
+bound on the weight sum, and `WilsonModel.sum_wOne` supplies that at any positive count — so the
+bound transfers to `Nmodes`, whose positivity is `Nmodes_pos`.
 
-/-- **`hcount` from the tension, at the lattice's own mode count.**
+The right-hand side of `count_le_of_tension_uniform` contains no `Na`, and
+`WilsonModel.resolvedDim_wOne` returns `1` at every positive count, so `Nmodes` and
+`WilsonGauge.NaG` give the same family. What makes the index the geometry is `extent` inside `Qos`,
+not `Na`.
 
-`WilsonModel.hcountW` is this same statement at `WilsonGauge.NaG`.
-`WilsonModel.count_le_of_tension_uniform` is already general in `Na` — all it needs of the index set
-is a bound on the weight sum, and `WilsonModel.sum_wOne` supplies that at any positive count — so the
-identical tension bound holds at `Nmodes`, whose positivity is `Nmodes_pos`.
-
-AND THAT MOVE BUYS NOTHING, which is worth saying because the two index sets look like a difference.
-`count_le_of_tension_uniform`'s right-hand side contains no `Na` at all, and
-`WilsonModel.resolvedDim_wOne` returns `1` at EVERY positive count, so `Nmodes` and `WilsonGauge.NaG`
-give the identical family. `Nmodes` is the truthful definition — it is the lattice's own plaquette
-count rather than a counter — and it is INERT in the family's content until a measured spectrum
-replaces `wOne`. What makes the index the geometry is `extent` inside `Qos`, not `Na`.
-
-DERIVED: no literal of this declaration's. `W := 1` is the witness read's total weight
-(`WilsonModel.sum_wOne`), and every numeral inside the bound is `WilsonModel.cW`'s own. -/
+DERIVED: the statement carries no numeral of its own. In the proof, `W := 1` is the witness read's
+total weight (`WilsonModel.sum_wOne`), and the numerals inside the bound are `WilsonModel.cW`'s
+own. -/
 theorem hcount_wOne (a : ℕ) :
     ((resolvedDim (Finset.range (Nmodes a)) ((fun _ => MassGap.WilsonModel.wOne) a)
         MassGap.WilsonModel.edgeW : ℕ) : ℝ) ≤ MassGap.WilsonModel.cW :=
@@ -653,52 +647,56 @@ theorem hcount_wOne (a : ℕ) :
     (W := 1) (fun a => le_of_eq (MassGap.WilsonModel.sum_wOne (Nmodes a) (Nmodes_pos a)))
     MassGap.WilsonModel.readW_cos_pos MassGap.WilsonModel.readW_tension_lt_floor a
 
-/-- At least one mode clears the witness edge at every index, so `os_form` is not vacuous.
+/-- At least one mode of `WilsonModel.wOne` clears the witness edge at every index, which is
+`osFamilyCounted`'s `hres` and what its `os_form` calculation consumes.
 
-DERIVED: `1` is the count `WilsonModel.resolvedDim_wOne` returns, not a threshold. -/
+DERIVED: `1` is the count `WilsonModel.resolvedDim_wOne` returns at any positive mode count, not a
+threshold. -/
 theorem hres_wOne (a : ℕ) :
     1 ≤ resolvedDim (Finset.range (Nmodes a)) ((fun _ => MassGap.WilsonModel.wOne) a)
       MassGap.WilsonModel.edgeW := by
   rw [MassGap.WilsonModel.resolvedDim_wOne (Nmodes a) (Nmodes_pos a) MassGap.WilsonModel.edgeW
     MassGap.WilsonModel.edgeW_pos MassGap.WilsonModel.edgeW_lt_one]
 
-/-- **THE FAMILY THE FLAGSHIP CARRIES: the unclamped, arbitrary-extent `SU(3)` measure with the
-tension-derived infrared cutoff.**
+/-- The family the flagship carries: `osFamilyCounted` at the witness read's spectrum
+`WilsonModel.wOne`, edge `WilsonModel.edgeW` and count `WilsonModel.cW`. Its `c` is `cW`
+(`osFamilyTension_c`), which lets it stand where `WilsonModel.ymFamilyTension` stood in a
+`WilsonRealization` without changing `WilsonModel.paramsTension`.
 
-`osFamilyCounted` at the witness read's spectrum, edge and count. Its `c` is `WilsonModel.cW`
-(`osFamilyTension_c`), which is what lets it stand where `WilsonModel.ymFamilyTension` stood in a
-`WilsonRealization` without touching `WilsonModel.paramsTension`.
-
-DERIVED: no literal of this declaration's; `edgeW`, `cW` and `wOne` carry their notes in
-`WilsonModel`. -/
+DERIVED: the declaration's type is `LatticeYMFamily` and carries no numeral; `edgeW`, `cW` and
+`wOne` carry their notes in `WilsonModel`. -/
 noncomputable def osFamilyTension (β : ℝ) : LatticeYMFamily :=
   osFamilyCounted β (fun _ => MassGap.WilsonModel.wOne) MassGap.WilsonModel.edgeW
     MassGap.WilsonModel.cW MassGap.WilsonModel.wOne_sorted hcount_wOne hres_wOne
 
-/-- **The cutoff is the tension's**, so `WilsonRealization.hc` discharges against
-`WilsonModel.paramsTension` unchanged.
+/-- `(osFamilyTension β).c = WilsonModel.cW`, by `rfl`, so `WilsonRealization.hc` discharges
+against `WilsonModel.paramsTension` unchanged.
 
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral; `cW` carries its note in `WilsonModel`. -/
 theorem osFamilyTension_c (β : ℝ) : (osFamilyTension β).c = MassGap.WilsonModel.cW := rfl
 
-/-- The per-mode bound is the proved correlation bound, not a clamp's range.
+/-- The flagship family's per-mode bound `B` is `4`, the same constant `osFamily_B` records.
 
-DERIVED: `4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant. -/
+DERIVED: `4` is `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, the square of the Wilson
+density's range `[0, 2]`, passed to `osFamilyCounted` as `B`. -/
 theorem osFamilyTension_B (β : ℝ) : (osFamilyTension β).B = 4 := rfl
 
-/-- **The index is the extent and the coupling is the parameter**, on the flagship's family too.
+/-- The flagship family's reflected form at index `a` is
+`WilsonBridge.corrClay (extent a) β (lagOf a j.2.2)`, the same identity `osFamily_Q_eq` records.
 
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral; `extent` and `lagOf` carry their own notes. -/
 theorem osFamilyTension_Q_eq (β : ℝ) (j : JOS) (a : ℕ) :
     (osFamilyTension β).Q j a = MassGap.WilsonBridge.corrClay (extent a) β (lagOf a j.2.2) :=
   Qos_eq β j a
 
-/-- **The OS0–OS3 continuum limit of the flagship's family, at EVERY real coupling.**
+/-- `continuum_of_family` applied to `osFamilyTension`, at every real coupling: a strictly
+monotone `φ : ℕ → ℕ` and a limit `q` with pointwise convergence, the temperedness bound
+`|q j| ≤ ⌈c⌉₊ · B`, nonnegativity, and invariance under both group actions. The conclusion is
+quantified over `β`, so the coupling the flagship's model field is instantiated at does not enter
+it.
 
-This is the theorem that makes the coupling the flagship's model field is instantiated at inert: the
-conclusion holds for every `β`, so no value of it is load-bearing in anything concluded.
-
-DERIVED: no literal. -/
+DERIVED: `0` is the lower bound in the `∀ j, 0 ≤ q j` conjunct, the limit of `os_rp`. The family's
+edge and count are `WilsonModel.edgeW` and `WilsonModel.cW`, documented there. -/
 theorem os_continuum_tension (β : ℝ) :
     ∃ (q : (osFamilyTension β).J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => (osFamilyTension β).Q j (φ k)) atTop (nhds (q j))) ∧
@@ -708,57 +706,55 @@ theorem os_continuum_tension (β : ℝ) :
       (∀ σ j, q ((osFamilyTension β).actP σ j) = q j) :=
   continuum_of_family (osFamilyTension β)
 
-/-! ### What the substitution does NOT repair, at the declaration level
+/-! ### How the reflected form depends on the test configuration
 
-Two statements that the shape of `LatticeYMFamily` invites a reader to assume, proved here in the
-direction they actually go. -/
+Two statements about `Qos`'s dependence on `j`, proved in the direction they go. -/
 
-/-- **The reflected form reads the test configuration ONLY through the lag label.**
+/-- The reflected form reads the test configuration only through the lag label: two test
+configurations agreeing on `j.2.2` give the same value, whatever their group components.
+`Qos_eq`'s right-hand side mentions `j.2.2` and neither `j.1` nor `j.2.1`.
 
-`Qos_eq`'s right-hand side mentions `j.2.2` and neither `j.1` nor `j.2.1`, so two test configurations
-agreeing on the lag give the same number whatever their group components are.
+This is the mechanism behind `Qos_actE` and `Qos_actP`: `actEOS` multiplies `j.1` and `actPOS`
+multiplies `j.2.1`, and neither touches `j.2.2`, so both actions move components the reflected form
+does not read. `WilsonGauge.QG` satisfies its own invariance clauses the same way. `Qos` is not
+constant in `j`, since it varies with the lag, but the lag is the component the two actions leave
+fixed.
 
-WHY THIS MATTERS. `actEOS` multiplies `j.1` and `actPOS` multiplies `j.2.1`; NEITHER touches `j.2.2`.
-So `os_euc` and `os_perm` hold for the same reason they hold of `WilsonGauge.QG`: the group acts on
-components the reflected form is independent of. The repair in this file is to the reflected form, not
-to the group actions, and `Qos_actE` / `Qos_actP` are no stronger a statement than `QG_eq`'s
-corollaries were. The difference from `QG` is that `Qos` is not constant in `j` outright — it varies
-with the lag — but the lag is exactly the component the OS1 and OS3 clauses never move.
-
-DERIVED: no literal. -/
+DERIVED: the statement carries no numeral. -/
 theorem Qos_depends_only_on_the_lag (β : ℝ) (j j' : JOS) (a : ℕ) (h : j.2.2 = j'.2.2) :
     Qos β j a = Qos β j' a := by
   rw [Qos_eq, Qos_eq, h]
 
-/-- **The lag label `0` names the zero separation**, so lag zero is reachable.
+/-- `lagOf a 0 = 0`: the lag label `0` names the zero separation, so lag zero is in the family's
+range of test configurations.
 
-DERIVED: `0` is the label and the separation it names; `2 * 0 % extent a = 0` is arithmetic. -/
+DERIVED: `0` is the label on the left and the separation it names on the right. The proof is
+`2 * 0 % extent a = 0`. -/
 theorem lagOf_zero (a : ℕ) : lagOf a 0 = 0 := by
   apply Fin.ext
   simp [lagOf]
 
-/-- **The family is not the identically-zero one — the non-degeneracy that survives the repair.**
+/-- `0 < Qos β j a` at every index and every real coupling, for test configurations whose lag
+label is `0`. At lag zero the connected correlation is the plaquette-energy variance, strictly
+positive by `PlaqVariance.corrClay_zero_pos`, and lag zero is reachable by `lagOf_zero`. So `Qos` is
+not identically zero.
 
-`GibbsPositive.ymFamilyGauge_Q_pos` proves `0 < Q` at EVERY test configuration for the clamped family,
-because a one-point plaquette expectation is strictly positive. NO SUCH THEOREM IS AVAILABLE HERE, and
-that is a genuine regression rather than an oversight: a connected correlation at a general lag has no
-reason to be strictly positive, and nothing in this tree proves it is.
+The hypothesis `hj : j.2.2 = 0` is required: this is a lag-zero statement.
+`GibbsPositive.ymFamilyGauge_Q_pos` gives `0 < Q` at every test configuration for the clamped
+family, since a one-point plaquette expectation is strictly positive; a connected correlation at a
+general lag has no corresponding theorem in this tree.
 
-What is available is the lag-zero corner, and it is enough to rule out the vacuous family: at lag zero
-the connected correlation IS the plaquette-energy variance, strictly positive at every real coupling
-(`PlaqVariance.corrClay_zero_pos`), and lag zero is reachable (`lagOf_zero`). So `Qos` is not
-identically zero — which is what `GibbsPositive`'s module docstring says the positivity was guarding
-against — but the guard is now at one lag instead of at all of them.
-
-DERIVED: `2 * a + 1` is `extent`'s aperture, `extent a = (2a+1) + 1`; the `0`s are the lag label, the
-separation it names, and positivity itself. -/
+DERIVED: `0` is the lag label in `hj` and the strict lower bound in the conclusion. In the proof,
+`2 * a + 1` is `extent`'s aperture, since `extent a = (2a + 1) + 1`. -/
 theorem Qos_pos_at_lag_zero (β : ℝ) (j : JOS) (a : ℕ) (hj : j.2.2 = 0) : 0 < Qos β j a := by
   rw [Qos_eq, hj, lagOf_zero]
   exact MassGap.PlaqVariance.corrClay_zero_pos (2 * a + 1) β
 
-/-- The same, on the family the flagship carries.
+/-- `Qos_pos_at_lag_zero` restated on `osFamilyTension`: `0 < (osFamilyTension β).Q j a` for test
+configurations whose lag label is `0`.
 
-DERIVED: no literal of this declaration's. -/
+DERIVED: `0` is the lag label in `hj` and the strict lower bound in the conclusion, the same two
+occurrences as in `Qos_pos_at_lag_zero`. -/
 theorem osFamilyTension_pos_at_lag_zero (β : ℝ) (j : JOS) (a : ℕ) (hj : j.2.2 = 0) :
     0 < (osFamilyTension β).Q j a :=
   Qos_pos_at_lag_zero β j a hj

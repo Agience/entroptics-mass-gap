@@ -4,86 +4,108 @@ import MassGap.LagTwoSix
 import MassGap.SlabQuadratic
 
 /-!
-# MassGap.LagTwoQuadratic — the extent-four lag-two threshold, relaxed by the quadratic arm
+# MassGap.LagTwoQuadratic — an extent-four lag-two threshold from the quadratic inequality
 
-`LagTwoBound.lagTwoThreshold = ((1−c)/(1+c))² = 0.0186240` is obtained by substituting ONE shape fact
-into `ConfinesSharp.confines_extent_four_iff`: log-convexity, `ρ(1) ≤ √(ρ(0)ρ(2))`. That is not the
-strongest bound on `ρ(1)` this tree proves.
+Throughout, `c` abbreviates the real number `(3 : ℝ) ^ (-(1 : ℝ) / 4)`, which is
+`exp (-(1/4) * log 3)`, the exponential of the negated constant `Floor.floor_pos` bounds.
 
-`SlabQuadratic.wilson_quadratic` gives `2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)` at every real `β`, with no
-hypothesis at all, and `SpectralFour.missing_inequalities_independent` shows it does not follow from
-log-convexity and `ρ(2) ≤ ρ(1)` together. Substituting IT instead relaxes the threshold to
+`ConfinesSharp.confines_extent_four_iff` states the extent-four criterion as
+`2c·ρ(1) + (1+c)·ρ(2) < (1−c)·ρ(0)`. Bounding `ρ(1)` above turns that into a condition on
+`ρ(2)/ρ(0)` alone. This module performs the substitution with the quadratic bound
+`2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)`, which `confines_extent_four_of_lag_two_ratio_quad` takes as its
+hypothesis `hq`, and defines the resulting threshold
 
-    lagTwoThresholdQuad = (1−c)² / (1 + 2c − c²) = 0.0296959
+    lagTwoThresholdQuad = (1 − c)² / (1 + 2c − c²)
 
-a factor `(1+c)²/(1+2c−c²) = 1.594495` on the bar B5 must clear at extent four. Nothing is fitted and
-nothing is measured: both thresholds are closed forms in `c = 3^{−1/4}` and the relaxation is their
-exact ratio.
+`lagTwoThresholdQuad_gt` and `lagTwoThresholdQuad_lt` bracket it strictly between `0.02969` and
+`0.02970`. `lagTwoThreshold_lt_lagTwoThresholdQuad` proves it strictly exceeds
+`LagTwoBound.lagTwoThreshold`, and `lagTwoThresholdQuad_lt_lagTwoThresholdSix` proves it is strictly
+below `LagTwoSix.lagTwoThresholdSix`.
 
-## Why it is rational, where `lagTwoThresholdSix` needed a square root
+## Why the threshold is rational in `c`
 
-Substituting `ρ(1) ≤ √((ρ(2)²+ρ(0)ρ(2))/2)` into the criterion and clearing the root gives, in
+Substituting `ρ(1) ≤ √((ρ(2)² + ρ(0)ρ(2))/2)` into the criterion and clearing the root gives, in
 `t = ρ(2)/ρ(0)`,
 
-    (1 + 2c − c²)·t² − 2·t + (1−c)²  >  0
+    (1 + 2c − c²)·t² − 2·t + (1 − c)²  >  0
 
-whose discriminant is `1 − (1+2c−c²)(1−c)² = c²(2−c)²`, a PERFECT SQUARE. So the roots are rational in
-`c`: the quadratic factors as `(1+2c−c²)·(t − T)·(t − 1)` with `T = (1−c)²/(1+2c−c²)`, and the second
-root is exactly `1` because `(1+2c−c²) + (1−c)² = 2` is a `ring` identity. `root_sum_is_two` records
-that identity, because it is what makes the factorisation exact rather than approximate.
+whose discriminant is `1 − (1+2c−c²)(1−c)² = c²(2−c)²`, a square. The quadratic therefore factors as
+`(1+2c−c²)·(t − T)·(t − 1)` with `T = (1−c)²/(1+2c−c²)`, and the second root is exactly `1` because
+the two coefficients sum to `2`. `root_sum_is_two` is that `ring` identity, and `threshold_root`
+records that `lagTwoThresholdQuad` is exactly the smaller root rather than a value taken below it.
 
-`t = 1` is the flat profile, which is where `FreeFieldLagTwo.flat_profile_meets_every_uniform_fact`
-already puts the coupling-uniform ceiling — so the two roots of this quadratic are the new threshold
-and the known obstruction, and nothing between them is new information.
+## Scope
 
-## What this does and does NOT do
+`confines_extent_four_of_lag_two_ratio_quad` concludes the extent-four inequality for three reals
+`r₀`, `r₁`, `r₂` under `0 < r₀`, `0 ≤ r₁`, `0 ≤ r₂`, the quadratic hypothesis `hq`, and
+`r₂ < lagTwoThresholdQuad * r₀`. The three reals are arbitrary; nothing in the statement ties them to
+a correlation function, a coupling or an extent, and `hq` is a hypothesis the caller supplies.
 
-* It **relaxes the obligation at extent four**, and narrows the gap to extent six from `1.81×`
-  (`LagTwoSix.lagTwoThreshold_lt_lagTwoThresholdSix`) to `1.138×`
-  (`lagTwoThresholdQuad_lt_lagTwoThresholdSix`). Extent six remains the weaker bar.
-* It is **NOT proved sharp**, and is not claimed to be. `LagTwoSix.lagTwoThresholdSix_sharp` exhibits
-  a profile at exactly its threshold; no such profile is exhibited here, so `lagTwoThresholdQuad` is
-  a sufficient threshold and possibly not the best one. Saying otherwise would be the completeness
-  claim this file exists to correct elsewhere.
-* It does **not** close B5. The live route is weak coupling at extent six, which this does not touch,
-  and the β axis is untouched at both extents.
-* The hypothesis carried is `FourRepresentable`'s quadratic conjunct, so any consumer must have
-  `SlabQuadratic.wilsonSpectral` in hand — which holds at every `β ≥ 0` for the genuine Wilson
-  correlation, so the hypothesis is discharged rather than assumed.
+The threshold is proved sufficient. No profile attaining it is exhibited here, so the statements
+below do not determine whether a smaller threshold would also do.
 
-Foundational footprint only (`#print axioms` on every declaration).
 Build: `python research/code/lean_build.py build MassGap.LagTwoQuadratic`.
 -/
 
 namespace MassGap.LagTwoQuadratic
 
-/-- **THE RELAXED EXTENT-FOUR THRESHOLD ON THE LAG-TWO RATIO**, in the same currency as
-`LagTwoBound.lagTwoThreshold` — a bound on `ρ(2)/ρ(0)` rather than on its square root.
+/-- The real number `(1 − c)² / (1 + 2c − c²)` at `c = (3 : ℝ) ^ (-(1 : ℝ) / 4)`, written out in
+full. A bound on the ratio `ρ(2)/ρ(0)`, in the same currency as `LagTwoBound.lagTwoThreshold` rather
+than on its square root.
+
+A closed form: it is `noncomputable` because of the real power, and its value is fixed by the
+definition with no parameter and no input.
 
 DERIVED: every literal is a coefficient of `ConfinesSharp.confines_extent_four_iff` after the
-quadratic substitution, and none is chosen. `1 − c` and `1 + c` are the criterion's own; `1 + 2c − c²`
-is what `(1+c)² − 2c²` collapses to when the root is cleared, the `2c²` being the quadratic's own
-factor of two; the outer square is the criterion's, since it is stated on `ρ(1)²`. No numeral here is
-a level and none is measured. -/
+quadratic substitution, and none is chosen. `3` is the base of the constant `c` and `-(1)/4` its
+exponent, so the `1` and `4` of each of the three occurrences of `c` are that one exponent repeated;
+`3` and `4` are the base and the reciprocal weight of the floor constant `(1/4) log 3` that `c`
+exponentiates. `1 − c` is the criterion's right-hand coefficient and `1 + c` its coefficient on
+`ρ(2)`; `1 + 2c − c²` is what `(1+c)² − 2c²` collapses to when the root is cleared, the `2c²` being
+the quadratic hypothesis's own factor of two. The two exponents `2` are squares — the outer one is
+the criterion's, since the substitution is made on `ρ(1)²`, and the inner one is the square of `c` in
+the denominator. No numeral here is a measured level. -/
 noncomputable def lagTwoThresholdQuad : ℝ :=
   (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2
     / (1 + 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2)
 
-/-- The denominator is positive, from `floor_bounds` alone. -/
+/-- `0 < 1 + 2c − c²` at `c = (3 : ℝ) ^ (-(1 : ℝ) / 4)`. `nlinarith` from the two-sided numeric
+bracket `LagTwoBound.floor_bounds` on `c`, and nothing else.
+
+This is the denominator of `lagTwoThresholdQuad`, so its non-vanishing is what makes that definition
+well behaved and `threshold_root` available.
+
+DERIVED: `0` is the sign asserted. `1` and `2` are the constant term and the coefficient of `c` in
+the denominator, and the remaining `2` is the exponent squaring `c`; all three are
+`lagTwoThresholdQuad`'s, carried unchanged. `3` and the exponent `-(1)/4` spell the constant `c`. -/
 theorem den_pos :
     0 < 1 + 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 := by
   have hc := MassGap.LagTwoBound.floor_bounds
   nlinarith [hc.1, hc.2]
 
-/-- **THE TWO ROOTS SUM TO `2 / (1+2c−c²)`, because the coefficients sum to `2`.** A `ring` identity,
-and it is what makes the factorisation exact: the second root of the substituted quadratic is `1`,
-the flat profile.
+/-- For every real `c`, `(1 + 2c − c²) + (1 − c)² = 2`. A `ring` identity: expanding `(1 − c)²` gives
+`1 − 2c + c²`, and both the linear and the quadratic terms cancel.
 
-DERIVED: no numeral is chosen. The `2` is `(1+2c−c²) + (1−2c+c²)`, in which every `c` cancels. -/
+Stated for an arbitrary real `c`, not only for `3 ^ (-(1)/4)`. It is what makes the factorisation of
+the substituted quadratic exact: the leading coefficient and the constant term sum to `2`, so `t = 1`
+is a root, and the other root is their ratio.
+
+DERIVED: `1` is the constant term of each of the two coefficients — the `1` of `1 + 2c − c²` and the
+`1` of `(1 − c)` — and `2` is the coefficient of `c` in the first. The two exponents `2` are squares.
+The `2` on the right is the sum of the two constant terms, so it is forced by the other literals and
+is not a chosen value; every `c` cancels. -/
 theorem root_sum_is_two (c : ℝ) : (1 + 2 * c - c ^ 2) + (1 - c) ^ 2 = 2 := by ring
 
-/-- **THE ROOT IDENTITY.** `(1+2c−c²)·lagTwoThresholdQuad = (1−c)²`, so the threshold is exactly the
-substituted criterion's own smaller root and not a cut taken below it. -/
+/-- `(1 + 2c − c²) · lagTwoThresholdQuad = (1 − c)²` at `c = (3 : ℝ) ^ (-(1 : ℝ) / 4)`: the division
+in the definition is cancelled using `den_pos.ne'`.
+
+So `lagTwoThresholdQuad` is exactly the smaller root of the substituted quadratic, not a value chosen
+below it. This equation is what the sufficiency proof uses to clear the threshold out of its
+hypothesis and leave a polynomial statement in `c`.
+
+DERIVED: `1` and `2` are the constant term and the coefficient of `c` in the denominator, and the two
+exponents `2` are squares — one squaring `c` in the denominator, one squaring `1 − c` on the right.
+All are `lagTwoThresholdQuad`'s, carried unchanged. `3` and the exponent `-(1)/4` spell `c`. -/
 theorem threshold_root :
     (1 + 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2) * lagTwoThresholdQuad
       = (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 := by
@@ -91,9 +113,16 @@ theorem threshold_root :
   unfold lagTwoThresholdQuad
   rw [mul_comm, div_mul_cancel₀ _ hd]
 
-/-- The threshold bracketed for a reader, between `0.02969` and `0.02970`. The decision is made by
-the closed form; these rationals decide nothing, and each rounds AWAY from the claim it is used in —
-the lower one below the true value where a lower bound is wanted, the upper one above it. -/
+/-- `0.02969 < lagTwoThresholdQuad`. Clears the division with `den_pos` and closes the polynomial
+inequality by `nlinarith` from `LagTwoBound.floor_bounds` and `LagTwoBound.floor_sq_bounds`, the
+numeric brackets on `c` and `c²`.
+
+The lower half of a bracket for a reader. Every decision downstream is made from the closed form or
+from this inequality, so the decimal is a stated bound and not a value the threshold is replaced by.
+
+DERIVED: `0.02969` is a rational lower bound on the closed form, rounded down so that it lies below
+the true value, which is the direction a lower bound requires. The remaining literals are
+`lagTwoThresholdQuad`'s, unfolded by the proof. -/
 theorem lagTwoThresholdQuad_gt : 0.02969 < lagTwoThresholdQuad := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hsq := MassGap.LagTwoBound.floor_sq_bounds
@@ -102,6 +131,12 @@ theorem lagTwoThresholdQuad_gt : 0.02969 < lagTwoThresholdQuad := by
   rw [lt_div_iff₀ hd]
   nlinarith [hc.1, hc.2, hsq.1, hsq.2]
 
+/-- `lagTwoThresholdQuad < 0.02970`, the upper half of the bracket. Same proof shape as
+`lagTwoThresholdQuad_gt`, with the division cleared the other way.
+
+DERIVED: `0.02970` is a rational upper bound on the closed form, rounded up so that it lies above the
+true value, which is the direction an upper bound requires. The remaining literals are
+`lagTwoThresholdQuad`'s, unfolded by the proof. -/
 theorem lagTwoThresholdQuad_lt : lagTwoThresholdQuad < 0.02970 := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hsq := MassGap.LagTwoBound.floor_sq_bounds
@@ -110,8 +145,14 @@ theorem lagTwoThresholdQuad_lt : lagTwoThresholdQuad < 0.02970 := by
   rw [div_lt_iff₀ hd]
   nlinarith [hc.1, hc.2, hsq.1, hsq.2]
 
-/-- **THE RELAXATION, STATED AS THE INEQUALITY IT IS.** The quadratic arm gives a strictly weaker bar
-than log-convexity alone. -/
+/-- `LagTwoBound.lagTwoThreshold < lagTwoThresholdQuad`. A three-step `calc` through the decimal
+brackets: `LagTwoBound.lagTwoThreshold_lt`, then `norm_num` on the two rationals, then
+`lagTwoThresholdQuad_gt`.
+
+Both sides are closed forms in `c`, and the comparison is between them; nothing is measured.
+
+DERIVED: no numeral in the statement. The intermediate decimals `0.018625`, `0.02969` belong to the
+bracketing theorems the `calc` cites, each of which carries its own note. -/
 theorem lagTwoThreshold_lt_lagTwoThresholdQuad :
     MassGap.LagTwoBound.lagTwoThreshold < lagTwoThresholdQuad := by
   calc MassGap.LagTwoBound.lagTwoThreshold
@@ -119,17 +160,30 @@ theorem lagTwoThreshold_lt_lagTwoThresholdQuad :
     _ < 0.02969 := by norm_num
     _ < lagTwoThresholdQuad := lagTwoThresholdQuad_gt
 
-/-- **THE SUFFICIENCY.** A lag-two ratio below `lagTwoThresholdQuad` gives the exact extent-four
-criterion, using the quadratic in place of log-convexity.
+/-- For reals `r₀ > 0`, `r₁ ≥ 0`, `r₂ ≥ 0` satisfying the quadratic inequality
+`2r₁² ≤ r₂² + r₀r₂` and `r₂ < lagTwoThresholdQuad * r₀`, the extent-four criterion holds:
+`2c·r₁ + (1 + c)·r₂ < (1 − c)·r₀` at `c = (3 : ℝ) ^ (-(1 : ℝ) / 4)`.
 
-The proof is the factorisation and nothing else. Write `u = (1−c)ρ(0) − (1+c)ρ(2)`. The quadratic
-gives `(2c·ρ(1))² = 4c²ρ(1)² ≤ 2c²(ρ(2)² + ρ(0)ρ(2))`, and
+The proof is the factorisation. `threshold_root` turns `hlt` into `(1 + 2c − c²)r₂ < (1 − c)²r₀`;
+with `u = (1 − c)r₀ − (1 + c)r₂`, the quadratic hypothesis gives `(2c·r₁)² ≤ 2c²(r₂² + r₀r₂)`, and
 
-    u² − 2c²(ρ(2)² + ρ(0)ρ(2)) = ((1−c)²ρ(0) − (1+2c−c²)ρ(2))·(ρ(0) − ρ(2))
+    u² − 2c²(r₂² + r₀r₂) = ((1 − c)²r₀ − (1 + 2c − c²)r₂)·(r₀ − r₂)
 
-is a `ring` identity given `(1+2c−c²) + (1−c)² = 2`. Both factors are positive below the threshold, so
-`u > 0` and `(2c·ρ(1))² < u²`, and a nonnegative number whose square is below a positive number's
-square is below it. -/
+is a `ring` identity given `root_sum_is_two`. Both factors are positive below the threshold, so
+`u > 0` and `(2c·r₁)² < u²`, and a nonnegative number whose square is below a positive number's
+square is itself below it. The two products `1.9 < 1 + 2c − c²` and `(1 − c)² < 0.06` are supplied to
+`nlinarith` to separate the coefficients; they are bounds inside the proof and do not appear in the
+statement.
+
+Sufficiency only: the hypotheses imply the criterion. Nothing here says the criterion fails above the
+threshold. `r₀`, `r₁`, `r₂` are arbitrary reals and the quadratic inequality is a hypothesis.
+
+DERIVED: `0` is the strict lower bound on `r₀` and the lower bound on each of `r₁` and `r₂`. In `hq`,
+`2` is the factor the quadratic inequality carries on `r₁²`, and the two exponents `2` are squares.
+In the conclusion, `2` is the criterion's coefficient on `r₁` — it multiplies `c`, matching
+`ConfinesSharp.confines_extent_four_iff` — and `1` is the constant term of the criterion's two
+coefficients `1 + c` and `1 − c`. `3` and the exponent `-(1)/4`, appearing three times, spell the one
+constant `c`. -/
 theorem confines_extent_four_of_lag_two_ratio_quad
     {r₀ r₁ r₂ : ℝ} (h₀ : 0 < r₀) (h₁ : 0 ≤ r₁) (h₂ : 0 ≤ r₂)
     (hq : 2 * r₁ ^ 2 ≤ r₂ ^ 2 + r₀ * r₂)
@@ -164,11 +218,13 @@ theorem confines_extent_four_of_lag_two_ratio_quad
     nlinarith [hq, hfac, hc.1, hc.2, sq_nonneg r₁, h₂, h₀]
   nlinarith [hsq, hu, h₁, hc.1, hc.2]
 
-/-- **EXTENT SIX IS STILL THE WEAKER BAR, and by how much.** The relaxation narrows the gap from
-`1.81×` to `1.138×` but does not close it, so the preference for extent six recorded in
-`LagTwoSix` survives.
+/-- `lagTwoThresholdQuad < LagTwoSix.lagTwoThresholdSix`. A `calc` through the decimal brackets:
+`lagTwoThresholdQuad_lt`, `norm_num`, then `LagTwoSix.lagTwoThresholdSix_gt`.
 
-DERIVED: no numeral. Both sides are closed forms and the comparison is between them. -/
+So the extent-six threshold is the larger of the two numbers, strictly.
+
+DERIVED: no numeral in the statement. Both sides are closed forms and the comparison is between them;
+the intermediate decimals `0.02970`, `0.0337` belong to the bracketing theorems the `calc` cites. -/
 theorem lagTwoThresholdQuad_lt_lagTwoThresholdSix :
     lagTwoThresholdQuad < MassGap.LagTwoSix.lagTwoThresholdSix := by
   calc lagTwoThresholdQuad

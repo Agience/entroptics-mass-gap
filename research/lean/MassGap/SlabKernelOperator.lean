@@ -3,135 +3,116 @@ import MassGap.SliceTrace
 import MassGap.PlaqVariance
 
 /-!
-# MassGap.SlabKernelOperator — the slab kernel induces a BOUNDED operator on `L²`
+# MassGap.SlabKernelOperator — the slab kernel as a bounded operator on `L²`
 
-`SliceTrace` produced `slabKernel`, the slice-to-slice kernel whose cyclic integral is the partition
-function, and `GNSHilbert` recorded it as "a bare real-valued kernel with no normalisation and no
-L2-boundedness in the tree", adding that "Mathlib v4.31.0 has no integral-operator machinery". That
-second clause is not tested here and does not need to be: whether or not such a development exists at
-the pin, NONE IS USED BELOW. No Schatten class, no Hilbert–Schmidt class, no trace class and no
-integral-operator file is named anywhere in this file. What is used is that the configuration space
-is a finite power of a COMPACT group carrying a PROBABILITY measure and that the kernel is BOUNDED,
-at which point Cauchy–Schwarz in `MeasureTheory.L2` is the whole argument. The lemmas it runs on —
-`MemLp.of_bound`, `Lp.norm_le_of_ae_bound`, `abs_real_inner_le_norm`, `L2.inner_def` and
-`StronglyMeasurable.integral_prod_right'` — were checked to exist at v4.31.0 by elaborating them on
-the build host, not recalled.
+`SliceTrace` defines `slabKernel`, the slice-to-slice kernel whose cyclic integral is the partition
+function. This file turns a bounded jointly measurable kernel between two probability spaces into a
+`ContinuousLinearMap` between the corresponding `L²` spaces, and applies that to `slabKernel`.
 
-## What is proved
+The argument uses no integral-operator development: no Schatten, Hilbert–Schmidt or trace class is
+named anywhere below. What it uses is that each configuration space is a finite power of a compact
+group carrying a probability measure and that the kernel is bounded, after which the estimate is
+Cauchy–Schwarz in `MeasureTheory.L2`. The external lemmas are `MemLp.of_bound`,
+`Lp.norm_le_of_ae_bound`, `abs_real_inner_le_norm`, `L2.inner_def` and
+`StronglyMeasurable.integral_prod_right'`; the remainder is integral algebra (`integral_congr_ae`,
+`integral_add`, `integral_const_mul`, `integral_mono`, `integral_nonneg_of_ae`) and the `Lp`
+coercion lemmas. The file imports all of Mathlib.
 
-**Part 1, abstract.** For measurable spaces `X`, `Y` with PROBABILITY measures `μ`, `ν` and a kernel
-`K : X → Y → ℝ` that is jointly measurable and satisfies `|K x y| ≤ C`:
+## Part 1, abstract
 
-* `abs_kernelFun_le` — for `f` in `L²(ν)`, `|∫ K x y f y dν| ≤ C ‖f‖₂` for EVERY `x`, not merely
+For measurable spaces `X`, `Y` with probability measures `μ`, `ν` and a kernel `K : X → Y → ℝ` that
+is jointly measurable and satisfies `|K x y| ≤ C`:
+
+* `abs_kernelFun_le` — for `f` in `L²(ν)`, `|∫ K x y f y dν| ≤ C ‖f‖₂` at every `x`, not merely at
   almost every `x`. The kernel row is itself an `L²(ν)` vector of norm at most `C`
   (`Lp.norm_le_of_ae_bound` at a probability measure), and `abs_real_inner_le_norm` is
-  Cauchy–Schwarz. So the image is a BOUNDED function, which is stronger than what `L²(μ)` needs.
-* `kernelCLM` — the induced map `L²(ν) →L[ℝ] L²(μ)`, a genuine `ContinuousLinearMap`, with
-  `norm_kernelCLM_le : ‖kernelCLM‖ ≤ C`.
-* `norm_kernelCLM_le_of_bound` — the operator norm is at most ANY uniform bound on the kernel, not
-  only the one the operator was constructed with. This is what lets a sharper bound be applied to an
-  operator that is already built.
-* `kernelCLM_nonneg` — a nonnegative kernel gives a positivity-preserving operator.
-* `kernelCLM_ne_zero` — **the anti-vacuity statement.** If `K` is bounded BELOW by some `ε > 0` then
-  the operator is not the zero operator: its value on the constant observable is bounded below by `ε`
-  (`le_kernelCLM_one`), and a probability measure has a nonempty almost-everywhere filter, so it
-  cannot be almost-everywhere zero. Neither the domain nor the operator is trivial.
+  Cauchy–Schwarz. The image is therefore a bounded function.
+* `kernelCLM` — the induced map `L²(ν) →L[ℝ] L²(μ)`, with `norm_kernelCLM_le : ‖kernelCLM‖ ≤ C`.
+* `norm_kernelCLM_le_of_bound` — the operator norm is at most any uniform bound on the kernel, not
+  only the constant the operator was constructed with, so a sharper bound applies to an operator
+  already built.
+* `kernelCLM_nonneg` — a nonnegative kernel gives a positivity-preserving operator: a nonnegative
+  input has a nonnegative image.
+* `kernelCLM_ne_zero` — if `K` is bounded below by some `ε > 0` then the operator is not the zero
+  operator. Its value on the constant observable is bounded below by `ε` (`le_kernelCLM_one`), and a
+  probability measure's almost-everywhere filter is not the bottom filter. This also excludes a
+  trivial domain.
 
-Measurability of `x ↦ ∫ K x y f y dν` is `StronglyMeasurable.integral_prod_right'`, which is the only
-Fubini-flavoured input and is in Mathlib at the pin. `MemLp.of_bound` and `Lp.norm_le_of_ae_bound`
-are the two finite-measure facts. Those, with `abs_real_inner_le_norm` and `L2.inner_def`, are the
-whole of the NON-ROUTINE external footprint; the rest is ordinary integral algebra
-(`integral_congr_ae`, `integral_add`, `integral_const_mul`, `integral_mono`, `integral_nonneg_of_ae`)
-and the `Lp` coercion lemmas. The file imports all of Mathlib, as `GNSHilbert` does, so the import
-line pins nothing — what pins the claim is that these names elaborate at v4.31.0 on the build host.
+Measurability of `x ↦ ∫ K x y f y dν` is `StronglyMeasurable.integral_prod_right'`, the only
+Fubini-flavoured input.
 
-**Part 2, at the Wilson slab kernel.** `slabKernel τ β t` is the object `SliceTrace` built.
+## Part 2, at the Wilson slab kernel
 
-* `continuous_slabKernel_uncurry` — it is jointly CONTINUOUS in its two slab arguments, hence
+`slabKernel τ β t` is `SliceTrace`'s object.
+
+* `continuous_slabKernel_uncurry` — it is jointly continuous in its two slab arguments, hence
   jointly measurable (`measurable_slabKernel_uncurry`). Continuity passes through `patch` and
-  `regroup` because the branch tests in `patch` do not depend on the configuration, only on the time
-  index of the link being served.
+  `regroup` because the branch tests in `patch` read the time index of the link being served and not
+  the configuration.
 * `abs_slabKernel_le` / `slabCap_inv_le_slabKernel` — it lies between `exp (-|β| · 2 · P)` and
   `exp (|β| · 2 · P)`, where `P = slabPlaqCount τ t` counts exactly the plaquettes `slabWeight` sums
-  over, from `WilsonAction.wilsonDensity_nonneg` and `wilsonDensity_le_two` alone. `[0, 2P]` is a
-  CONTAINING interval for the slab energy and not its range: the upper end needs every plaquette
-  holonomy at `-I`, which for odd `N` is not in `SU N` at all.
-* `abs_slabKernel_le_one` and `norm_slabTransfer_le_one` — **at `0 ≤ β` the operator is a
-  CONTRACTION.** `slabWeight` is `e^{-βS}` with `S ≥ 0`, so at nonnegative coupling it is at most
-  `1`, and `norm_kernelCLM_le_of_bound` carries that to the operator already built. This is the
-  bound a spectral argument would consume. `slabCap` discards the sign of `β` and is exponentially
-  larger in the slab's plaquette count, hence in the volume.
+  over. The inputs are `WilsonAction.wilsonDensity_nonneg` and `wilsonDensity_le_two`. `[0, 2P]`
+  contains the slab energy and is not its range: the upper end needs every plaquette holonomy at
+  `-I`, which for odd `N` is not in `SU N`.
+* `abs_slabKernel_le_one` and `norm_slabTransfer_le_one` — at `0 ≤ β` the operator is a contraction.
+  `slabWeight` is `e^{-βS}` with `S ≥ 0`, so at nonnegative coupling it is at most `1`, and
+  `norm_kernelCLM_le_of_bound` carries that to the operator already built. `slabCap` discards the
+  sign of `β` and is exponentially larger in the slab's plaquette count, hence in the volume.
 * `slabTransfer` — the `ContinuousLinearMap` `L²(slab t+1) →L[ℝ] L²(slab t)` induced by
   `slabKernel τ β t`, with `norm_slabTransfer_le`, `norm_slabTransfer_le_one`,
   `slabTransfer_nonneg` and `slabTransfer_ne_zero`.
 * `slabVol_eq_pi_slabHaar` — the per-slab measure used here is the factor of `SliceTrace.slabVol`
-  that `partition_eq_cycleIntegral` integrates against. It is the only statement in this file
-  connecting the operator to the partition function, and it is a `rfl`.
+  that `partition_eq_cycleIntegral` integrates against. It is a `rfl`, and it is the only statement
+  in this file relating the operator to the partition function.
 
-## The degenerate regimes, named
+## Parameter values at which the statements are empty or collapse
 
-Every theorem below is TRUE in each of these and says nothing in any of them. Two have controls
-here; the rest are named because naming them is the report.
-
-* **`slabPlaqCount τ t = 0`** — `slabKernel_eq_one_of_plaqCount_zero`: the kernel is CONSTANTLY `1`,
-  so `slabTransfer` is the rank-one averaging map `f ↦ (∫ f) · 1`. This is the case at `d ≤ 1`, where
-  `intraPlaq` is empty and every plaquette of `interPlaq` is diagonal so the filter empties it.
-* **`β = 0`** — `slabKernel_beta_zero`: the same collapse and the same rank-one operator.
-* **`N = 1`** — `SimpleGroup.subsingleton_SU_one` makes the gauge group trivial, so every holonomy is
-  `1`, `wilsonDensity` is `0` and the kernel is constantly `1` again. The configuration space is a
-  single point and `L²` is one dimensional. `hN : N ≠ 0` does NOT exclude this. Not formalised here.
-* **`d = 0`** — `Fin 0` is empty, so there is no `τ` and every Part 2 statement is an empty
+* `slabPlaqCount τ t = 0` — `slabKernel_eq_one_of_plaqCount_zero`: the kernel is constantly `1`, so
+  `slabTransfer` is the rank-one averaging map `f ↦ (∫ f) · 1`. This is the case at `d ≤ 1`, where
+  `intraPlaq` is empty and every plaquette of `interPlaq` is diagonal, so the filter empties it.
+* `β = 0` — `slabKernel_beta_zero`: the same collapse and the same rank-one operator.
+* `N = 1` — `SimpleGroup.subsingleton_SU_one` makes the gauge group trivial, so every holonomy is
+  `1`, `wilsonDensity` is `0` and the kernel is constantly `1`. The configuration space is a single
+  point and `L²` is one dimensional. `hN : N ≠ 0` does not exclude this, and it is not formalised
+  here.
+* `d = 0` — `Fin 0` is empty, so there is no `τ` and every Part 2 statement is an empty
   quantification.
-* **`n = 1`** — `t + 1 = t` in `Fin 1`, so the two slab index types COINCIDE and `slabTransfer` IS an
-  endomorphism; `SliceTrace` records that `slabKernel` there ignores its second argument entirely.
-  What the next section says about the two spaces being different is a statement about `n ≥ 2`.
+* `n = 1` — `t + 1 = t` in `Fin 1`, so the two slab index types coincide and `slabTransfer` is an
+  endomorphism; `SliceTrace` records that `slabKernel` there ignores its second argument.
 
-## What this does NOT claim, named exactly
+## Scope
 
-* **At `n ≥ 2` it is not an endomorphism, and the typing is not the real obstruction.**
-  `slabKernel τ β t` maps the slab at `t+1` to the slab at `t`, and for `n ≥ 2` the types
-  `SlabIdx τ t` and `SlabIdx τ (t+1)` are distinct, so `slabTransfer` is a bounded map between two
-  different Hilbert spaces. They are nonetheless canonically isomorphic — time translation — so the
-  typing is an inconvenience and not the obstruction. The obstruction to composing the cycle into one
-  operator is one Fubini per intermediate variable, and that is not done here;
-  `SliceTrace.cycle_kernel_prod_split` exhibits the cut and nothing more. Nothing below mentions a
-  power of `slabTransfer`. At `n = 1` the types coincide and this bullet does not apply.
-* **It is not self-adjoint and not positive.** `SliceTrace`'s header lists three separate differences
-  between `slabKernel` and `SliceTransfer.transferKernel`, and the symmetry and
-  positive-semidefiniteness proved of the latter are not transported to the former. Nothing here
-  transports them either. `kernelCLM_nonneg` is POSITIVITY PRESERVATION (a nonnegative function goes
-  to a nonnegative function), which is a different statement from positivity of the operator
-  (`0 ≤ ⟨x, T x⟩`, which is `GNSHilbert.PositiveTransfer`'s shape) and does not imply it.
-* **No spectrum, no gap, no Hamiltonian.** A norm bound is not a spectral statement. `-log T` is not
-  built. At `n ≥ 2` `slabTransfer` is not an endomorphism, so it has no spectrum to be about; at
-  `n = 1` it is one, and its spectrum is not computed here either.
-* **It does not reach `GNSHilbert.ymH`, and the mismatch is fourfold.** `ymH` is the completion of
-  the complexification of `↥(LogConvex.localObs (blkS τ a m) (blkR τ a m))` under the Gibbs
-  reflection form `Transfer.reflForm`, which is the Gibbs expectation of `(F ∘ reflConf) · G` —
-  Boltzmann weight and division by the partition function included. A member of `localObs S R` is a
-  bounded measurable function on the FULL link configuration space `Link d n → SU N` that is
-  DETERMINED by its values on `S ∪ R`; that locality clause is part of the carrier, so the module is
-  local to a band of time slices, `ActionSplit.blkS` and `blkR` being cut by the time coordinate
-  relative to the reflection plane. `slabTransfer` acts on `L²` of ONE slab's links against the
-  unweighted product HAAR measure. The four differences: (i) the underlying type is
-  `SlabIdx τ t → SU N`, a fibre of the link set, where `localObs`'s is `Link d n → SU N` with a
-  locality clause — the two bands are cut by different decompositions and neither carrier is the
-  other; (ii) the measure is Haar, not the Gibbs measure, and the GNS form additionally reflects one
-  argument through `Θ` before pairing; (iii) `ymH` is a completion under a SEMIdefinite form, so its
-  vectors are classes modulo that form's null space, and nothing in the tree relates that null space
-  to `L²`-almost-everywhere equality in either direction; (iv) the parameters do not line up — `ymH`
-  exists only at `n = 2 * m` with `0 < m` and is indexed by a reflection plane `a` and a half-extent
-  `m`, while `slabTransfer` needs only `[NeZero n]` and is indexed by a time `t : Fin n`. No bridge
-  is asserted here. Anything of the shape "`slabTransfer` descends to `ymH`" would need a common
-  object these two are both built from, and the tree has none.
-* **It does not show the kernel couples its two arguments.** `SliceTrace` names that as open and it
-  stays open. A kernel constant in its second argument satisfies every theorem in this file — and in
-  the degenerate regimes listed above the kernel IS constant in both arguments. What is ruled out is
-  only that the operator is ZERO.
-* **The lower bound degenerates in the volume.** `slabCap⁻¹ = exp (-|β| · 2 · slabPlaqCount τ t)` is
-  a Doeblin constant and it shrinks exponentially in the slab's plaquette count. `SliceTrace`'s
-  header says the same of the only minorisation its objects support. It suffices to prove the
-  operator nonzero and it suffices for nothing that must be uniform in the volume.
+* `slabTransfer` is an endomorphism only at `n = 1`. For `n ≥ 2` the types `SlabIdx τ t` and
+  `SlabIdx τ (t+1)` are distinct, so it is a bounded map between two different Hilbert spaces. They
+  are canonically isomorphic by time translation, but no such identification is made here, and
+  nothing below mentions a power or a composite of `slabTransfer`.
+  `SliceTrace.cycle_kernel_prod_split` exhibits the cut of the cyclic integral.
+* No symmetry and no operator positivity. `SliceTrace`'s header lists the differences between
+  `slabKernel` and `SliceTransfer.transferKernel`; the symmetry and positive-semidefiniteness proved
+  of the latter are not transported here. `kernelCLM_nonneg` is positivity preservation — a
+  nonnegative function has a nonnegative image — which is a different statement from `0 ≤ ⟨x, T x⟩`,
+  the shape of `GNSHilbert.PositiveTransfer`.
+* No spectrum, no gap and no Hamiltonian. The results are norm bounds; `-log T` is not built.
+* No relation to `GNSHilbert.ymH`. `ymH` is the completion of the complexification of
+  `↥(LogConvex.localObs (blkS τ a m) (blkR τ a m))` under the Gibbs reflection form
+  `Transfer.reflForm`, the Gibbs expectation of `(F ∘ reflConf) · G` with Boltzmann weight and
+  division by the partition function. A member of `localObs S R` is a bounded measurable function on
+  the full link configuration space `Link d n → SU N` determined by its values on `S ∪ R`, so the
+  carrier is local to a band of time slices cut by `ActionSplit.blkS` and `blkR` relative to the
+  reflection plane. `slabTransfer` acts on `L²` of one slab's links against the unweighted product
+  Haar measure. Four differences: (i) the underlying type is `SlabIdx τ t → SU N`, a fibre of the
+  link set, where `localObs`'s is `Link d n → SU N` with a locality clause; (ii) the measure is
+  Haar, not the Gibbs measure, and the GNS form reflects one argument through `Θ` before pairing;
+  (iii) `ymH` is a completion under a semidefinite form, so its vectors are classes modulo that
+  form's null space, and nothing relates that null space to `L²`-almost-everywhere equality;
+  (iv) `ymH` exists only at `n = 2 * m` with `0 < m` and is indexed by a reflection plane `a` and a
+  half-extent `m`, while `slabTransfer` needs only `[NeZero n]` and is indexed by a time `t : Fin n`.
+* Nothing here shows the kernel couples its two arguments. A kernel constant in its second argument
+  satisfies every theorem in this file, and at the parameter values listed above the kernel is
+  constant in both. What `slabTransfer_ne_zero` rules out is that the operator is zero.
+* The lower bound degenerates in the volume. `slabCap⁻¹ = exp (-|β| · 2 · slabPlaqCount τ t)` is a
+  Doeblin constant that shrinks exponentially in the slab's plaquette count, so it supports no claim
+  uniform in the volume.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python research/code/lean_build.py build MassGap.SlabKernelOperator`.
@@ -145,15 +126,16 @@ open MassGap.CompactGauge MassGap.SliceTransfer MassGap.WilsonLattice
 
 /-! ## Part 1 — a bounded measurable kernel on probability spaces induces a bounded operator
 
-Nothing in this part is about the lattice. The two standing assumptions are that both measures are
-probability measures — FINITENESS is what the argument uses, and the unit normalisation only removes
-the measure factors from the constants — and that the kernel is bounded and jointly measurable. -/
+Nothing in this part mentions the lattice. The standing assumptions are that both measures are
+probability measures — finiteness is what the estimates use, and the unit normalisation removes the
+measure factors from the constants — and that the kernel is bounded and jointly measurable. -/
 
 section Abstract
 
 variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
 
-/-- **The kernel acting on a function.** `(T f)(x) = ∫ K x y · f y dν`.
+/-- The kernel acting on a function: `kernelFun K ν f x = ∫ y, K x y * f y ∂ν`. No hypothesis on
+`K`, `ν` or `f` is required to write it down; integrability is supplied by the callers.
 
 DERIVED: no numeral. -/
 noncomputable def kernelFun (K : X → Y → ℝ) (ν : Measure Y) (f : Y → ℝ) (x : X) : ℝ :=
@@ -161,8 +143,9 @@ noncomputable def kernelFun (K : X → Y → ℝ) (ν : Measure Y) (f : Y → �
 
 variable {K : X → Y → ℝ} {C : ℝ} {μ : Measure X} {ν : Measure Y}
 
-/-- **A ROW OF A BOUNDED KERNEL IS AN `L²` VECTOR.** On a finite measure a bounded measurable
-function lies in every `Lᵖ`; this is the instance at `p = 2`.
+/-- A row of a bounded kernel is an `L²` vector. Given joint measurability of `K` and the uniform
+bound `|K x y| ≤ C`, the function `K x` is in `MemLp _ 2 ν` at every `x`. The measure is only
+required to be finite here, not a probability measure; the proof is `MemLp.of_bound`.
 
 DERIVED: the `2` is the `L²` exponent — the one exponent at which Mathlib's `Lp` carries an inner
 product, which is what Cauchy–Schwarz is used through. It is not a chosen parameter. -/
@@ -172,7 +155,9 @@ theorem memLp_row (hK : Measurable (Function.uncurry K)) (hKb : ∀ x y, |K x y|
   refine MemLp.of_bound hm.aestronglyMeasurable C (Filter.Eventually.of_forall (fun y => ?_))
   simpa [Real.norm_eq_abs] using hKb x y
 
-/-- **The kernel row times an integrable function is integrable.**
+/-- The kernel row times an integrable function is integrable. `f` is assumed integrable for `ν` and
+`K` bounded by `C`, and the product is bounded times integrable (`Integrable.bdd_mul`). No
+finiteness assumption on `ν` is needed.
 
 DERIVED: no numeral. -/
 theorem integrable_row_mul (hK : Measurable (Function.uncurry K)) (hKb : ∀ x y, |K x y| ≤ C)
@@ -182,14 +167,13 @@ theorem integrable_row_mul (hK : Measurable (Function.uncurry K)) (hKb : ∀ x y
   refine hf.bdd_mul (c := C) hm.aestronglyMeasurable (Filter.Eventually.of_forall (fun y => ?_))
   simpa [Real.norm_eq_abs] using hKb x y
 
-/-- **THE POINTWISE CAUCHY–SCHWARZ BOUND.** At EVERY `x` — not almost every `x` — the kernel action
-is bounded by `C · ‖f‖₂`. The kernel row is an `L²(ν)` vector of norm at most `C`, because `ν` is a
-probability measure and the row is bounded by `C`; the pairing is then the `L²` inner product and
-`abs_real_inner_le_norm` is Cauchy–Schwarz.
+/-- The pointwise Cauchy–Schwarz bound: `|kernelFun K ν f x| ≤ C * ‖f‖` at every `x`, not merely at
+almost every `x`. The kernel row is an `L²(ν)` vector of norm at most `C` — this is where `ν` being
+a probability measure is used, since `Lp.norm_le_of_ae_bound` otherwise carries a factor of the
+total mass — the pairing with `f` is the `L²` inner product, and `abs_real_inner_le_norm` bounds it.
 
-This is the whole of the "integral-operator machinery" the tree was said to be missing.
-
-DERIVED: the `2`s are the `L²` exponent, as in `memLp_row`. `C` is the caller's kernel bound. -/
+DERIVED: the `2` is the `L²` exponent, as in `memLp_row`. The `0` is the sign tested in
+`hC0 : 0 ≤ C`, required by `Lp.norm_le_of_ae_bound`. `C` is the caller's kernel bound. -/
 theorem abs_kernelFun_le (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
     (hKb : ∀ x y, |K x y| ≤ C) [IsProbabilityMeasure ν] (f : Lp ℝ 2 ν) (x : X) :
     |kernelFun K ν (f : Y → ℝ) x| ≤ C * ‖f‖ := by
@@ -218,7 +202,9 @@ theorem abs_kernelFun_le (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
     _ ≤ ‖R‖ * ‖f‖ := abs_real_inner_le_norm _ _
     _ ≤ C * ‖f‖ := mul_le_mul_of_nonneg_right hnormR (norm_nonneg f)
 
-/-- **THE IMAGE IS MEASURABLE.** The only Fubini-flavoured input, and it is in Mathlib at the pin.
+/-- The image `x ↦ ∫ K x y * f y ∂ν` is strongly measurable, from
+`StronglyMeasurable.integral_prod_right'`. This needs joint measurability of `K` and `SFinite ν`,
+and it is the only Fubini-flavoured input in the file.
 
 DERIVED: the `2` is the `L²` exponent. -/
 theorem stronglyMeasurable_kernelFun (hK : Measurable (Function.uncurry K))
@@ -226,10 +212,11 @@ theorem stronglyMeasurable_kernelFun (hK : Measurable (Function.uncurry K))
   StronglyMeasurable.integral_prod_right'
     (hK.stronglyMeasurable.mul ((Lp.stronglyMeasurable f).comp_measurable measurable_snd))
 
-/-- **THE IMAGE IS IN `L²(μ)`**, because it is a bounded measurable function on a finite measure
-space. The bound is `abs_kernelFun_le`'s, so it is uniform in `x`.
+/-- The image is in `L²(μ)`: it is a strongly measurable function bounded by `C * ‖f‖` on a finite
+measure space. The bound is `abs_kernelFun_le`'s, so it is uniform in `x`. `μ` need only be finite;
+`ν` must be a probability measure, because `abs_kernelFun_le` requires that.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent. The `0` is the sign tested in `hC0 : 0 ≤ C`. -/
 theorem memLp_kernelFun (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
     (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) [IsFiniteMeasure μ] [IsProbabilityMeasure ν]
     (f : Lp ℝ 2 ν) : MemLp (kernelFun K ν (f : Y → ℝ)) 2 μ := by
@@ -237,10 +224,13 @@ theorem memLp_kernelFun (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
     (Filter.Eventually.of_forall (fun x => ?_))
   simpa [Real.norm_eq_abs] using abs_kernelFun_le hK hC0 hKb f x
 
-/-- **THE OPERATOR, AS A LINEAR MAP.** Linearity is linearity of the integral, moved across the
-almost-everywhere classes with `Lp.ext`.
+/-- The operator as a bare `LinearMap` `Lp ℝ 2 ν →ₗ[ℝ] Lp ℝ 2 μ`. It carries the kernel, the bound
+`C` and the two proofs as explicit arguments, so two different bounds give two different terms.
+Additivity and homogeneity are linearity of the integral, moved across the almost-everywhere classes
+with `Lp.ext`; integrability of each row product comes from `integrable_row_mul`. Both measures are
+probability measures here.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent. The `0` is the sign tested in `hC0 : 0 ≤ C`. -/
 noncomputable def kernelLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
@@ -284,9 +274,11 @@ noncomputable def kernelLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Fun
     simp only [Pi.smul_apply, smul_eq_mul]
     ring
 
-/-- The linear map's value is the kernel action, almost everywhere.
+/-- The linear map's value, as a function, agrees `μ`-almost everywhere with `kernelFun K ν f`. It
+is `MemLp.coeFn_toLp` at `memLp_kernelFun`, and it is what every later `filter_upwards` rewrites
+through.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent. The `0` is the sign tested in `hC0 : 0 ≤ C`. -/
 theorem coeFn_kernelLM (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
     (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (f : Lp ℝ 2 ν) :
@@ -294,10 +286,13 @@ theorem coeFn_kernelLM (hK : Measurable (Function.uncurry K)) (hC0 : 0 ≤ C)
       =ᵐ[μ] kernelFun K ν (f : Y → ℝ) :=
   (memLp_kernelFun hK hC0 hKb μ f).coeFn_toLp
 
-/-- **THE OPERATOR, AS A `ContinuousLinearMap`.** The operator norm is at most the kernel's uniform
-bound. No integral-operator machinery, no Schatten class, no trace class.
+/-- The operator as a `ContinuousLinearMap` `Lp ℝ 2 ν →L[ℝ] Lp ℝ 2 μ`, built from `kernelLM` by
+`LinearMap.mkContinuous` with the constant `C`. Continuity comes from the pointwise bound
+`abs_kernelFun_le` promoted to an `L²(μ)` norm bound by `Lp.norm_le_of_ae_bound`, where `μ` being a
+probability measure removes the total-mass factor.
 
-DERIVED: the `2`s are the `L²` exponent; `C` is the caller's kernel bound. -/
+DERIVED: the `2`s are the `L²` exponent; the `0` is the sign tested in `hC0 : 0 ≤ C`. `C` is the
+caller's kernel bound. -/
 noncomputable def kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
@@ -313,18 +308,21 @@ noncomputable def kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Fu
     rw [hmu] at h
     simpa using h)
 
-/-- **THE OPERATOR NORM BOUND.** `‖T‖ ≤ sup |K|`.
+/-- The operator norm of `kernelCLM` is at most the constant `C` it was built with. It is
+`LinearMap.mkContinuous_norm_le` applied to that construction.
 
-DERIVED: the `2`s are the `L²` exponent; `C` is the caller's kernel bound. -/
+DERIVED: the statement's only numeral is the `0` in `hC0 : 0 ≤ C`; the `2`s in the operator's type
+are the `L²` exponent. `C` is the caller's kernel bound. -/
 theorem norm_kernelCLM_le (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
     ‖kernelCLM K C hK hC0 hKb μ ν‖ ≤ C :=
   LinearMap.mkContinuous_norm_le _ hC0 _
 
-/-- The operator's value is the kernel action, almost everywhere.
+/-- The operator's value, as a function, agrees `μ`-almost everywhere with `kernelFun K ν f`. It is
+`coeFn_kernelLM` transported along the definition of `kernelCLM`.
 
-DERIVED: the `2`s are the `L²` exponent. -/
+DERIVED: the `2`s are the `L²` exponent. The `0` is the sign tested in `hC0 : 0 ≤ C`. -/
 theorem coeFn_kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (f : Lp ℝ 2 ν) :
@@ -332,13 +330,14 @@ theorem coeFn_kernelCLM (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Functi
       =ᵐ[μ] kernelFun K ν (f : Y → ℝ) :=
   coeFn_kernelLM hK hC0 hKb μ ν f
 
-/-- **THE OPERATOR NORM IS BOUNDED BY ANY UNIFORM BOUND ON THE KERNEL**, not only by the constant the
-operator happens to have been constructed with. `norm_kernelCLM_le` is this at `C' = C`; the point of
-the separate statement is that a SHARPER bound discovered afterwards can be applied to the operator
-already built, without rebuilding it. The Wilson contraction bound at nonnegative coupling is exactly
-that situation.
+/-- The operator norm of `kernelCLM K C …` is at most any second uniform bound `C'` on the same
+kernel, with `0 ≤ C'`. `norm_kernelCLM_le` is this at `C' = C`. The separate statement lets a
+sharper bound be applied to an operator already constructed with a weaker one; `slabTransfer` and
+`norm_slabTransfer_le_one` are that case. The proof is
+`ContinuousLinearMap.opNorm_le_bound` on `abs_kernelFun_le` restated at `C'`.
 
-DERIVED: the `2`s are the `L²` exponent; `C` and `C'` are the caller's kernel bounds. -/
+DERIVED: the `2`s are the `L²` exponent; the `0`s are the signs tested in `hC0 : 0 ≤ C` and
+`hC'0 : 0 ≤ C'`. `C` and `C'` are the caller's kernel bounds. -/
 theorem norm_kernelCLM_le_of_bound (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {C' : ℝ} (hC'0 : 0 ≤ C')
@@ -358,21 +357,25 @@ theorem norm_kernelCLM_le_of_bound (K : X → Y → ℝ) (C : ℝ) (hK : Measura
 
 /-! ### Anti-vacuity
 
-An operator that is zero, or bounded only because its domain is trivial, would satisfy everything
-above. The two statements below rule both out, and they need a LOWER bound on the kernel — which is
-a genuine hypothesis, not a consequence of the upper one. -/
+An operator that is zero, or bounded only because its domain is trivial, satisfies everything above.
+The statements below rule both out. They take a strictly positive LOWER bound on the kernel, which
+is an extra hypothesis and does not follow from the upper bound. -/
 
-/-- **THE CONSTANT OBSERVABLE**, as an `L²(ν)` vector.
+/-- The constant function `1` as an `L²(ν)` vector, via `memLp_const` at a probability measure. It
+is the test vector used by `le_kernelCLM_one` and `kernelCLM_ne_zero`.
 
-DERIVED: the `1` is the constant function's value — the unit of the algebra, the vacuum's
-representative, not a level. The `2` is the `L²` exponent. -/
+DERIVED: the `1` is the constant function's value, not a level. The `2` is the `L²` exponent. -/
 noncomputable def oneLp (ν : Measure Y) [IsProbabilityMeasure ν] : Lp ℝ 2 ν :=
   (memLp_const (1 : ℝ)).toLp _
 
-/-- **THE OPERATOR IS POSITIVITY PRESERVING** when the kernel is nonnegative. This is NOT positivity
-of the operator in the sense of `Transfer.PositiveTransfer`; see the module header.
+/-- With a pointwise nonnegative kernel, an almost-everywhere nonnegative `f` has an
+almost-everywhere nonnegative image, by `integral_nonneg_of_ae` under the coercion lemma
+`coeFn_kernelCLM`. This is positivity preservation on functions, a different statement from
+positivity of the operator in the sense of `Transfer.PositiveTransfer` (`0 ≤ ⟨x, T x⟩`), which is
+not claimed.
 
-DERIVED: the `0`s are the sign tested, forced by the statement. The `2`s are the `L²` exponent. -/
+DERIVED: the `0`s are the signs tested — in `hC0 : 0 ≤ C`, in `hKpos`, in the hypothesis on `f` and
+in the conclusion. The `2`s are the `L²` exponent. -/
 theorem kernelCLM_nonneg (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (hKpos : ∀ x y, 0 ≤ K x y)
@@ -384,13 +387,14 @@ theorem kernelCLM_nonneg (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Funct
   filter_upwards [hf] with y hy
   exact mul_nonneg (hKpos x y) hy
 
-/-- **THE OPERATOR MOVES THE CONSTANT OBSERVABLE OFF ZERO.** With a strictly positive lower bound on
-the kernel, the image of the constant observable is bounded below by that same constant almost
-everywhere — the measure of the second space being one is what turns the lower bound into the bound
-on the integral.
+/-- Under a uniform lower bound `ε ≤ K x y`, the image of `oneLp ν` is at least `ε` at
+`μ`-almost every `x`. The kernel action at `oneLp` is `∫ y, K x y ∂ν` and `integral_mono` against
+the constant `ε` gives the bound; `ν` being a probability measure is what makes `∫ ε ∂ν = ε`. No
+sign hypothesis is placed on `ε` here.
 
-DERIVED: the `1` is `oneLp`'s constant and, through `measure_univ`, the total mass of a probability
-measure; `ε` is the caller's lower bound. The `2`s are the `L²` exponent. -/
+DERIVED: the `1` is `oneLp`'s constant, and it is also the total mass of `ν` that turns `∫ ε ∂ν`
+into `ε`; the `0` is the sign tested in `hC0 : 0 ≤ C`. The `2`s are the `L²` exponent. `ε` is the
+caller's lower bound. -/
 theorem le_kernelCLM_one (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {ε : ℝ} (hKlb : ∀ x y, ε ≤ K x y) :
@@ -409,15 +413,14 @@ theorem le_kernelCLM_one (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Funct
     integral_mono (integrable_const ε) hint (fun y => hKlb x y)
   simpa using hmono
 
-/-- **THE OPERATOR IS NOT THE ZERO OPERATOR** — the anti-vacuity statement. A strictly positive
-kernel forces the image of the constant observable off zero, and a probability measure's
-almost-everywhere filter is not the bottom filter, so "almost everywhere `0`" and "everywhere at
-least `ε`" cannot both hold.
+/-- With a uniform lower bound `ε ≤ K x y` at some `ε > 0`, `kernelCLM` is not the zero operator.
+If it were, its value at `oneLp ν` would vanish `μ`-almost everywhere, while `le_kernelCLM_one`
+puts that value at or above `ε` on a set of full measure; a probability measure's
+almost-everywhere filter is not the bottom filter, so the two cannot both hold. This also excludes a
+trivial domain, since the zero space admits only the zero operator.
 
-This also rules out a trivial DOMAIN: the zero space admits only the zero operator.
-
-DERIVED: the `0` is the operator being excluded; `ε` and its positivity are the caller's. The `2`s
-are the `L²` exponent. -/
+DERIVED: the `0`s are the sign tested in `hC0 : 0 ≤ C`, the strict sign in `hε : 0 < ε`, and the
+operator being excluded in `≠ 0`. The `2`s are the `L²` exponent. `ε` is the caller's. -/
 theorem kernelCLM_ne_zero (K : X → Y → ℝ) (C : ℝ) (hK : Measurable (Function.uncurry K))
     (hC0 : 0 ≤ C) (hKb : ∀ x y, |K x y| ≤ C) (μ : Measure X) (ν : Measure Y)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {ε : ℝ} (hε : 0 < ε)
@@ -440,27 +443,28 @@ end Abstract
 /-! ## Part 2 — the Wilson slab kernel
 
 `SliceTrace.slabKernel τ β t` is a real-valued function of a configuration of the links at time `t`
-and a configuration of the links at time `t+1`. Both configuration spaces are finite products of
+and a configuration of the links at time `t + 1`. Both configuration spaces are finite products of
 copies of `SU N`, which is compact, and both carry the product of the probability Haar measure. The
-kernel is built from `WilsonAction.wilsonDensity` through `Real.exp`, so it is continuous and its
-logarithm is bounded by a plaquette count. Part 1 then applies with nothing further. -/
+kernel is built from `WilsonAction.wilsonDensity` through `Real.exp`, so it is continuous, and its
+logarithm is bounded in absolute value by a plaquette count times `|β|`. Part 1 then applies with
+no further input. -/
 
 section Wilson
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **THE PRODUCT HAAR MEASURE ON ONE SLAB'S LINKS.** `SliceTrace.slabVol` is the product of these
-over all times; this is the single factor, which is what a kernel between two slabs integrates
-against.
+/-- The product Haar measure on one slab's links: `Measure.pi` of `probHaar (SU N)` over
+`SlabIdx τ t`. `SliceTrace.slabVol` is the product of these over all times; this is the single
+factor, and it is what a kernel between two slabs integrates against.
 
 DERIVED: no numeral. -/
 noncomputable def slabHaar (τ : Fin d) (t : Fin n) :
     Measure (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N) :=
   Measure.pi fun _ => probHaar (MassGap.SUN.SU N)
 
-/-- The per-slab measure is a probability measure: a finite product of probability Haar measures.
-This is what every `IsProbabilityMeasure` side condition in Part 2 is discharged by, so it is listed
-in the axiom footprint block with the rest.
+/-- `slabHaar` is a probability measure, being a finite product of probability Haar measures. It
+discharges every `IsProbabilityMeasure` side condition that Part 1 imposes on the Part 2
+statements, so it is listed in the axiom footprint block with the rest.
 
 DERIVED: no numeral. -/
 instance isProbabilityMeasure_slabHaar (τ : Fin d) (t : Fin n) :
@@ -468,20 +472,21 @@ instance isProbabilityMeasure_slabHaar (τ : Fin d) (t : Fin n) :
   unfold slabHaar; infer_instance
 
 omit [NeZero n] in
-/-- **THE PER-SLAB MEASURE IS THE FACTOR OF `SliceTrace.slabVol`.** `partition_eq_cycleIntegral`
-integrates the cyclic product of kernels against `slabVol τ`, and `slabVol τ` is the product over
-times of exactly the measure this file's operator is built on. It is a `rfl`, and it is the only
-statement here connecting the operator to the partition function.
+/-- `slabVol τ` is the `Fin n`-indexed product of the `slabHaar τ t`. `partition_eq_cycleIntegral`
+integrates the cyclic product of kernels against `slabVol τ`, so the measure this file's operator is
+built on is exactly one factor of it. The proof is `rfl`, and this is the only statement here
+relating the operator to the partition function. The `[NeZero n]` instance is omitted for this
+declaration.
 
 DERIVED: no numeral. -/
 theorem slabVol_eq_pi_slabHaar (τ : Fin d) :
     slabVol (d := d) (n := n) (N := N) τ
       = Measure.pi fun t : Fin n => slabHaar (N := N) τ t := rfl
 
-/-- **THE ASSEMBLED PATCHED CONFIGURATION IS CONTINUOUS IN THE TWO SLAB ARGUMENTS.** `patch`'s branch
-tests read the time of the link being served and not the configuration, so each coordinate of the
-assembled configuration is a coordinate projection of one of the two arguments, or the constant
-identity.
+/-- The map sending a pair of slab configurations at `t` and `t + 1` to the regrouped patched full
+configuration is continuous. `patch`'s branch tests read the time of the link being served and not
+the configuration, so each coordinate of the result is a coordinate projection of one of the two
+arguments or the constant identity, and `continuous_pi` closes it.
 
 DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s own time step — one slice on, `Fin n`
 addition, which wraps. It is inherited from that file, not chosen here. -/
@@ -496,7 +501,10 @@ theorem continuous_regroup_patch (τ : Fin d) (t : Fin n) :
   · exact (continuous_apply _).comp continuous_snd
   · exact continuous_const
 
-/-- **THE SLAB KERNEL IS JOINTLY CONTINUOUS.**
+/-- `slabKernel τ β t` is continuous as a function of the pair of slab configurations at `t` and
+`t + 1`. It unfolds to a product of two exponentials of finite sums of `wilsonDensity` at plaquette
+holonomies, each of which is continuous in the assembled configuration by
+`continuous_regroup_patch` and `PlaqVariance.continuous_wilsonHol`.
 
 DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s own time step — one slice on, `Fin n`
 addition, which wraps. It is inherited from that file, not chosen here. -/
@@ -516,43 +524,50 @@ theorem continuous_slabKernel_uncurry (τ : Fin d) (β : ℝ) (t : Fin n) :
         continuous_wilsonDensity.comp
           ((MassGap.PlaqVariance.continuous_wilsonHol bd q).comp hreg))))
 
-/-- **THE SLAB KERNEL IS JOINTLY MEASURABLE.** `SU N` carries the Borel σ-algebra of its own topology
-(`MassGap.SUN`), so continuity gives measurability.
+/-- The uncurried slab kernel is measurable. `SU N` carries the Borel σ-algebra of its own topology
+(`MassGap.SUN`), so `continuous_slabKernel_uncurry` gives measurability, which is the hypothesis
+Part 1 takes.
 
-DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s own time step — one slice on, `Fin n`
-addition, which wraps. It is inherited from that file, not chosen here. -/
+DERIVED: the `1` in the implicit domain type `SlabIdx τ (t + 1) → SU N` is
+`SliceTrace.slabKernel`'s own time step — one slice on, `Fin n` addition, which wraps. It is
+inherited from that file, not chosen here. -/
 theorem measurable_slabKernel_uncurry (τ : Fin d) (β : ℝ) (t : Fin n) :
     Measurable (Function.uncurry (slabKernel (N := N) τ β t)) :=
   (continuous_slabKernel_uncurry τ β t).measurable
 
-/-- **THE PLAQUETTE COUNT OF ONE SLAB**: the intra-slice plaquettes of slice `t` plus the
-non-degenerate temporal plaquettes based at `t` — exactly the two `Finset`s `SliceTrace.slabWeight`
-sums over.
+/-- The plaquette count of one slab: the cardinality of `intraPlaq τ t` plus the cardinality of the
+non-degenerate part of `interPlaq τ t`. These are exactly the two `Finset`s `SliceTrace.slabWeight`
+sums over, which is what makes `slabCap` a bound and not merely an inequality.
 
-DERIVED: no numeral; both cardinalities are the lattice's own. -/
+DERIVED: no numeral. Both cardinalities are the lattice's own. -/
 def slabPlaqCount (τ : Fin d) (t : Fin n) : ℕ :=
   (intraPlaq (d := d) (n := n) τ t).card
     + ((interPlaq (d := d) (n := n) τ t).filter (fun q => q.1.1 ≠ q.1.2)).card
 
-/-- **THE UNIFORM BOUND ON THE SLAB KERNEL.**
+/-- The uniform bound on the slab kernel: `exp (|β| * (2 * slabPlaqCount τ t))`. It is symmetric in
+the sign of `β` and grows exponentially in the slab's plaquette count.
 
-DERIVED: the `2` is `WilsonAction.wilsonDensity_le_two`'s cap on ONE plaquette's Wilson density —
-`|Re tr U| ≤ N` read back — and the count is the lattice's. Nothing here is chosen.
+⛔ Reading a magnitude off this number requires carrying the convention. `β` is `sysWilson`'s, and
+the plaquette sum runs over the ordered pair type, which counts each plane twice (`SliceTrace`'s
+header, via `PlaqCount.boltz_eq_std`), so this `β` is half the standard Wilson coupling and this
+count is twice the standard plaquette count. The inequalities below are correct against the tree's
+own sums, but they are not in the standard normalisation.
 
-A READER EVALUATING THIS NUMBER MUST CARRY THE CONVENTION. `β` is `sysWilson`'s and the plaquette
-sum runs over the ORDERED pair type, which counts each plane twice
-(`SliceTrace`'s header, via `PlaqCount.boltz_eq_std`), so this `β` is half the standard Wilson
-coupling and this count is twice the standard plaquette count. The inequality is correct against
-the tree's own sums; a magnitude read off it is not in the standard normalisation. -/
+DERIVED: the `2` is `WilsonAction.wilsonDensity_le_two`'s cap on one plaquette's Wilson density —
+`|Re tr U| ≤ N` read back — and the count is the lattice's. Nothing here is chosen. -/
 noncomputable def slabCap (τ : Fin d) (β : ℝ) (t : Fin n) : ℝ :=
   Real.exp (|β| * (2 * (slabPlaqCount (d := d) (n := n) τ t : ℝ)))
 
-/-- **THE TWO-SIDED BOUND ON THE SLAB WEIGHT.** The total Wilson energy of a slab lies in
-`[0, 2 · #plaquettes]` by `wilsonDensity_nonneg` and `wilsonDensity_le_two`, so `e^{-βS}` lies
-between the reciprocal cap and the cap.
+/-- The two-sided bound on the slab weight: `slabCap⁻¹ ≤ slabWeight τ β t U ≤ slabCap`, at every
+full link configuration `U` and every real `β`. The total Wilson energy of the slab lies in
+`[0, 2 · slabPlaqCount τ t]` by `wilsonDensity_nonneg` and `wilsonDensity_le_two`, so the exponent
+`-β · S` has absolute value at most `|β| · 2 · slabPlaqCount τ t` and `Real.exp_le_exp` gives both
+sides.
 
-DERIVED: the `2` is `wilsonDensity_le_two`'s; the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s
-own hypothesis, ruling out the degenerate `1 / N` normalisation and NOT an empty gauge group. -/
+DERIVED: the only numeral in the statement is the `0` of `hN : N ≠ 0`, which is
+`wilsonDensity_nonneg`'s and `wilsonDensity_le_two`'s own hypothesis, ruling out the degenerate
+`1 / N` normalisation and not an empty gauge group. The `2` that appears in the proof is
+`wilsonDensity_le_two`'s and reaches the statement only inside `slabCap`. -/
 theorem slabWeight_bounds (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (U : Link d n → MassGap.SUN.SU N) :
     (slabCap (d := d) (n := n) τ β t)⁻¹ ≤ slabWeight (N := N) τ β t U
@@ -596,17 +611,21 @@ theorem slabWeight_bounds (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     exact Real.exp_le_exp.mpr (abs_le.mp habs).2
 
 omit [NeZero n] in
-/-- The cap is positive.
+/-- The cap is positive, at every `β` and `t`, because it is an exponential. This is what lets
+`slabCap⁻¹` be used as a strictly positive lower bound. The `[NeZero n]` instance is omitted for
+this declaration.
 
 DERIVED: the `0` is the sign tested; `Real.exp_pos` supplies it. -/
 theorem slabCap_pos (τ : Fin d) (β : ℝ) (t : Fin n) :
     0 < slabCap (d := d) (n := n) τ β t := Real.exp_pos _
 
-/-- **THE SLAB KERNEL IS BOUNDED ABOVE, UNIFORMLY IN BOTH ARGUMENTS.**
+/-- `|slabKernel τ β t A B| ≤ slabCap τ β t` at every pair of slab configurations, so the bound is
+uniform in both arguments. The kernel is positive (`slabKernel_pos`), so the absolute value is the
+value, and `slabWeight_bounds` supplies the upper side.
 
-DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step; the `0` of `hN : N ≠ 0` is
+DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step. The `0` of `hN : N ≠ 0` is
 `wilsonDensity_nonneg`'s and `wilsonDensity_le_two`'s own hypothesis, ruling out the degenerate
-`1 / N` normalisation. It does NOT rule out an empty gauge group: `SU 0` is the ONE-element group
+`1 / N` normalisation. It does not rule out a trivial gauge group: `SU 0` is the one-element group
 and `SUN` carries `Nonempty (SU n)` at every `n`. -/
 theorem abs_slabKernel_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (A : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
@@ -615,13 +634,14 @@ theorem abs_slabKernel_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
   rw [abs_of_pos (slabKernel_pos τ β t A B)]
   exact (slabWeight_bounds hN τ β t _).2
 
-/-- **THE SLAB KERNEL IS BOUNDED BELOW BY A POSITIVE CONSTANT, UNIFORMLY IN BOTH ARGUMENTS.** This is
-what makes the induced operator nonzero; it is a real hypothesis and does not follow from the upper
-bound.
+/-- `slabCap τ β t⁻¹ ≤ slabKernel τ β t A B` at every pair of slab configurations, so the kernel has
+a positive lower bound uniform in both arguments. It is the lower half of `slabWeight_bounds`, and
+it is what discharges `kernelCLM_ne_zero`'s hypothesis at `slabTransfer_ne_zero`. The constant
+shrinks exponentially in `slabPlaqCount τ t`.
 
-DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step; the `0` of `hN : N ≠ 0` is
+DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step. The `0` of `hN : N ≠ 0` is
 `wilsonDensity_nonneg`'s and `wilsonDensity_le_two`'s own hypothesis, ruling out the degenerate
-`1 / N` normalisation. It does NOT rule out an empty gauge group: `SU 0` is the ONE-element group
+`1 / N` normalisation. It does not rule out a trivial gauge group: `SU 0` is the one-element group
 and `SUN` carries `Nonempty (SU n)` at every `n`. -/
 theorem slabCap_inv_le_slabKernel (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (A : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
@@ -629,12 +649,14 @@ theorem slabCap_inv_le_slabKernel (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fi
     (slabCap (d := d) (n := n) τ β t)⁻¹ ≤ slabKernel (N := N) τ β t A B :=
   (slabWeight_bounds hN τ β t _).1
 
-/-- **AT NONNEGATIVE COUPLING THE SLAB WEIGHT IS AT MOST ONE.** `slabCap` symmetrises in the sign of
-`β` and therefore throws this away: the slab energy is NONNEGATIVE (`wilsonDensity_nonneg`), so at
-`0 ≤ β` the exponent `-β·S` is nonpositive and `e^{-βS} ≤ 1` with no plaquette count in it at all.
+/-- At `0 ≤ β` the slab weight is at most `1`, at every full link configuration. The slab energy is
+nonnegative (`wilsonDensity_nonneg`), so the exponent `-β · S` is nonpositive and
+`Real.exp_le_one_iff` applies to each of the two factors. The bound carries no plaquette count,
+unlike `slabCap`, which symmetrises in the sign of `β`. It holds at nonnegative coupling only; `β`
+is not universally quantified past `hβ`.
 
-DERIVED: the `1` is the value of `exp` at `0` and the `0`s are the signs tested; the `0` of
-`hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis. Nothing is chosen. -/
+DERIVED: the `1` is the value of `exp` at `0`; the `0` of `hβ` is the sign of the coupling and the
+`0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis. Nothing is chosen. -/
 theorem slabWeight_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n)
     (U : Link d n → MassGap.SUN.SU N) :
     slabWeight (N := N) τ β t U ≤ 1 := by
@@ -655,10 +677,12 @@ theorem slabWeight_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β
   refine le_trans (mul_le_mul e1 e2 (Real.exp_pos _).le zero_le_one) ?_
   norm_num
 
-/-- **AT NONNEGATIVE COUPLING THE SLAB KERNEL IS BOUNDED BY ONE.**
+/-- At `0 ≤ β` the slab kernel is bounded by `1`, uniformly in both slab arguments. The kernel is
+positive, so the absolute value is the value, and `slabWeight_le_one` supplies the bound.
 
-DERIVED: the `1` is `slabWeight_le_one`'s; the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step;
-the `0`s are the signs tested. -/
+DERIVED: the `1` on the right is `slabWeight_le_one`'s and is `Real.exp 0`; the `1` in `t + 1` is
+`SliceTrace.slabKernel`'s time step; the `0`s are the signs tested in `hN : N ≠ 0` and
+`hβ : 0 ≤ β`. -/
 theorem abs_slabKernel_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n)
     (A : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
     (B : SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N) :
@@ -666,13 +690,14 @@ theorem abs_slabKernel_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 �
   rw [abs_of_pos (slabKernel_pos τ β t A B)]
   exact slabWeight_le_one hN τ β hβ t _
 
-/-! ### Controls for the degenerate regimes
+/-! ### The collapsing parameter values
 
-The module header lists the parameter values at which every theorem here is true and empty. Two of
-them are settled outright below: in each the kernel is the CONSTANT `1`, so the induced operator is
-the rank-one averaging map and nothing in this file says anything about it. -/
+The module header lists the parameter values at which the statements above hold with no content.
+Two of them are settled outright below: in each the kernel is the constant `1`, so the induced
+operator is the rank-one averaging map. -/
 
-/-- **AT ZERO COUPLING THE KERNEL IS CONSTANTLY ONE.**
+/-- At `β = 0` the slab kernel is the constant `1`, at every pair of slab configurations. Both
+exponents carry a factor of `β`, so both exponentials are `Real.exp 0`.
 
 DERIVED: the `0` is the coupling being set and the `1` is `Real.exp 0`; neither is a chosen level.
 The `1` in `t + 1` is `SliceTrace.slabKernel`'s time step. -/
@@ -682,8 +707,10 @@ theorem slabKernel_beta_zero (τ : Fin d) (t : Fin n)
     slabKernel (N := N) τ 0 t A B = 1 := by
   simp [slabKernel, slabWeight, intraSliceAction]
 
-/-- **A SLAB WITH NO PLAQUETTES HAS A CONSTANT KERNEL.** This is the case at `d ≤ 1`, and it is the
-sharpest way to say that the theorems below can be about nothing.
+/-- If `slabPlaqCount τ t = 0` then the slab kernel is the constant `1`, at every `β` and every pair
+of slab configurations. A zero sum of two cardinalities makes both `Finset`s empty
+(`Finset.card_eq_zero`), so both sums in `slabWeight` are empty and both exponentials are
+`Real.exp 0`. This is the case at `d ≤ 1`.
 
 DERIVED: the `0` is the count being zero and the `1` is `Real.exp 0`; neither is chosen. The `1` in
 `t + 1` is `SliceTrace.slabKernel`'s time step. -/
@@ -700,45 +727,50 @@ theorem slabKernel_eq_one_of_plaqCount_zero (τ : Fin d) (β : ℝ) (t : Fin n)
   rw [Finset.card_eq_zero] at h1 h2
   simp [slabKernel, slabWeight, intraSliceAction, h1, h2]
 
-/-- **THE SLAB TRANSFER OPERATOR.** A bounded linear map from `L²` of the slab at `t+1` to `L²` of
-the slab at `t`, against the product Haar probability measures. It is NOT an endomorphism — the two
-slab index types differ — and no power of it is formed anywhere.
+/-- The slab transfer operator: `kernelCLM` at `slabKernel τ β t` with the bound `slabCap τ β t`. It
+is a `ContinuousLinearMap` from `L²` of the slab at `t + 1` to `L²` of the slab at `t`, against the
+product Haar probability measures `slabHaar`. Its source and target are different types except at
+`n = 1`, so it is not an endomorphism in general, and no power or composite of it is formed
+anywhere in this file.
 
 DERIVED: the `2`s are the `L²` exponent; the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step;
 the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis and rules out the `1 / N`
-normalisation, not an empty gauge group. -/
+normalisation, not a trivial gauge group. -/
 noncomputable def slabTransfer (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     Lp ℝ 2 (slabHaar (N := N) τ (t + 1)) →L[ℝ] Lp ℝ 2 (slabHaar (N := N) τ t) :=
   kernelCLM (slabKernel (N := N) τ β t) (slabCap (d := d) (n := n) τ β t)
     (measurable_slabKernel_uncurry τ β t) (le_of_lt (slabCap_pos τ β t))
     (abs_slabKernel_le hN τ β t) (slabHaar τ t) (slabHaar τ (t + 1))
 
-/-- **THE SLAB TRANSFER OPERATOR IS BOUNDED, WITH AN EXPLICIT NORM BOUND** — the answer to the
-question this file was written for.
+/-- `‖slabTransfer hN τ β t‖ ≤ slabCap τ β t`, at every real `β`. It is `norm_kernelCLM_le` at the
+constant `slabTransfer` was built with. The bound grows exponentially in `slabPlaqCount τ t`.
 
-DERIVED: as `slabTransfer`'s. -/
+DERIVED: the statement's only numeral is the `0` of `hN : N ≠ 0`, `wilsonDensity_nonneg`'s own
+hypothesis. The `2` inside `slabCap` is `wilsonDensity_le_two`'s. -/
 theorem norm_slabTransfer_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     ‖slabTransfer (d := d) (n := n) hN τ β t‖ ≤ slabCap (d := d) (n := n) τ β t :=
   norm_kernelCLM_le _ _ _ _ _ _ _
 
-/-- **AT NONNEGATIVE COUPLING THE SLAB TRANSFER OPERATOR IS A CONTRACTION.** This is the bound that
-matters: it carries no plaquette count, so it does not degrade with the volume, and `‖T‖ ≤ 1` is the
-shape any later spectral statement would consume. `norm_slabTransfer_le` is the sign-blind bound and
-is exponentially larger.
+/-- At `0 ≤ β` the slab transfer operator is a contraction: `‖slabTransfer hN τ β t‖ ≤ 1`. The
+kernel bound `abs_slabKernel_le_one` is carried to the already-constructed operator by
+`norm_kernelCLM_le_of_bound`, so no rebuilding at a smaller constant is needed. The bound carries no
+plaquette count, so it does not degrade with the volume, where `norm_slabTransfer_le` is
+exponentially larger and holds at every sign of `β`. It is a norm bound, and states nothing about
+the spectrum or self-adjointness.
 
-It is still only a norm bound. It says nothing about the spectrum, nothing about self-adjointness,
-and — with the degenerate regimes the header lists — nothing about whether `T` moves anything.
-
-DERIVED: the `1` is `abs_slabKernel_le_one`'s and is `Real.exp 0`; the `0` of `hβ` is the sign of the
-coupling, which is what the bound is about; the rest as `slabTransfer`'s. -/
+DERIVED: the `1` is `abs_slabKernel_le_one`'s and is `Real.exp 0`; the `0` of `hβ` is the sign of
+the coupling and the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis. -/
 theorem norm_slabTransfer_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n) :
     ‖slabTransfer (d := d) (n := n) hN τ β t‖ ≤ 1 :=
   norm_kernelCLM_le_of_bound _ _ _ _ _ _ _ zero_le_one (abs_slabKernel_le_one hN τ β hβ t)
 
-/-- **THE SLAB TRANSFER OPERATOR IS POSITIVITY PRESERVING.** Not to be confused with positivity of
-the operator; see the module header.
+/-- An almost-everywhere nonnegative `f` on the slab at `t + 1` has an almost-everywhere nonnegative
+image on the slab at `t`. It is `kernelCLM_nonneg` at `slabKernel_pos`. This is positivity
+preservation on functions, not positivity of the operator in the sense `0 ≤ ⟨x, T x⟩`.
 
-DERIVED: the `0`s are the sign tested; the rest as `slabTransfer`'s. -/
+DERIVED: the `0`s are the signs tested — in `hN : N ≠ 0`, in the hypothesis on `f` and in the
+conclusion. The `2`s are the `L²` exponent and the `1` in `t + 1` is `SliceTrace.slabKernel`'s time
+step. -/
 theorem slabTransfer_nonneg (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
     (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1)))
     (hf : 0 ≤ᵐ[slabHaar (N := N) τ (t + 1)] (f : _ → ℝ)) :
@@ -746,11 +778,13 @@ theorem slabTransfer_nonneg (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
       ((slabTransfer (d := d) (n := n) hN τ β t f : Lp ℝ 2 (slabHaar (N := N) τ t)) : _ → ℝ) :=
   kernelCLM_nonneg _ _ _ _ _ _ _ (fun A B => le_of_lt (slabKernel_pos τ β t A B)) f hf
 
-/-- **THE SLAB TRANSFER OPERATOR IS NOT THE ZERO OPERATOR** — the anti-vacuity statement at
-Yang–Mills. The kernel's uniform positive lower bound is what supplies it, and that lower bound is
-`wilsonDensity_le_two` read in the other direction.
+/-- `slabTransfer hN τ β t` is not the zero operator, at every real `β`. It is `kernelCLM_ne_zero`
+at the strictly positive lower bound `slabCap_inv_le_slabKernel`, whose positivity is
+`slabCap_pos`. That lower bound comes from `wilsonDensity_le_two` capping the slab energy above.
+The statement rules out only that the operator vanishes; it does not show the kernel couples its two
+arguments.
 
-DERIVED: the `0` is the operator excluded; the rest as `slabTransfer`'s. -/
+DERIVED: the `0`s are the sign tested in `hN : N ≠ 0` and the operator excluded in `≠ 0`. -/
 theorem slabTransfer_ne_zero (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
     slabTransfer (d := d) (n := n) hN τ β t ≠ 0 :=
   kernelCLM_ne_zero _ _ _ _ _ _ _ (inv_pos.mpr (slabCap_pos τ β t))

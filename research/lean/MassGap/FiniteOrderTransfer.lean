@@ -2,56 +2,37 @@ import Mathlib
 import MassGap.ClayAssembly
 
 /-!
-# MassGap.FiniteOrderTransfer — a POSITIVE finite-order transfer operator is the identity
+# MassGap.FiniteOrderTransfer — finite-order transfer operators on a `Transfer.TransferData`
 
-`ClayAssembly.TransferMovesSomething` is the open item behind C1's Hamiltonian: an operator on
-`GNSHilbert.ymH` that is not the identity. `ym_target_discharged_trivially` shows every operator the
-tree can currently build fails it, and `GNSHilbert.shiftSlab_eq_id` shows the slab shift IS the
-identity on `SlabShiftStable`'s own premise. Both are findings about particular constructions.
+Five theorems about a `D : Transfer.TransferData A` whose operator `D.T` has finite order in the
+sense `(fun z => D.T z)^[n] y = y` for all `y`, with `1 ≤ n`. All conclusions are equations or
+inequalities in `D.form`; nothing here builds a Hilbert space or takes a quotient.
 
-**This file gives the general reason, and it is not a fact about those constructions.**
+* `form_sub_left`, `form_sub_right` — subtraction on either side of a `Transfer.PreForm`, obtained
+  from the additive and scalar laws it carries.
+* `form_polarise` — if `D.T` preserves the diagonal of the form (which
+  `ClayAssembly.finite_order_contraction_is_isometry` supplies from finite order and contractivity),
+  it preserves the form off the diagonal: `form (T x) (T y) = form x y`.
+* `T_sq_eq` — moving one `T` across with `D.T_symm` turns that into `form (T (T x)) y = form x y`,
+  so `T` squares to the identity as seen by the form. No positivity is used.
+* `positive_finite_order_transfer_is_identity` and its `∀ x` restatement
+  `no_motion_of_positive_finite_order` — adding operator positivity `0 ≤ form (T z) z`,
+  `form (T x - x) (T x - x) = 0`: the displacement lies in the form's null cone. The argument applies
+  positivity to the displacement `z = T x - x`, where `T_sq_eq` makes `form (T z) z = - form z z`,
+  and `D.form_nonneg` supplies the opposite inequality.
+* `involution_without_positivity` — `form (T (T x) - x) y = 0` without any positivity hypothesis.
+* `moves_something_forces_infinite_order` — the contrapositive: a positive `D.T` with a displacement
+  outside the null cone satisfies no `(fun z => D.T z)^[n] = id` with `1 ≤ n`.
 
-## The statement
+Scope: `A` is any `ℝ`-module; the hypothesis `hpos` is operator positivity `0 ≤ form (T z) z`, which
+is distinct from `ReflForm.form_nonneg`, already a field of the structure. The conclusions are
+statements in the form — `form (T x - x) (T x - x) = 0` — not equalities of vectors, so they say
+`T x - x` is null for the form rather than zero in `A`. Finite order is a hypothesis; no statement
+here derives it from a lattice.
 
-Let `T` be self-adjoint for the reflection form, contractive, of finite order (`T^n = 1`), and
-POSITIVE in the operator sense `0 ≤ form (T x) x`. Then `T x = x` for every `x`, in the form — so it
-is the identity on the GNS space and `TransferMovesSomething` fails.
-
-## Why each hypothesis is there, and which one is the physics
-
-* **finite order** is what a periodic lattice gives: translation by one step in a direction of
-  extent `n` has `T^n = 1` on the nose. It is not an approximation and not a choice of boundary
-  condition that could be dropped — a torus is a torus.
-* **contractive** and **self-adjoint** are `TransferData`'s own fields.
-* **positive** is the physics: `T = e^{-H}` with `H` self-adjoint is EQUIVALENT to `T` positive, and
-  a Hamiltonian is what C1 asks for. Without it the argument still gives `T² = 1` — a self-adjoint
-  involution, spectrum in `{±1}` — and `-log T` does not exist on the `-1` part. So dropping
-  positivity does not rescue a Hamiltonian; it only changes the failure from `H = 0` to `H`
-  undefined.
-
-## The proof, which is three lines of algebra
-
-`finite_order_contraction_is_isometry` squeezes the contraction chain and gives
-`form (T x) (T x) = form x x`. Polarising that gives `form (T x) (T y) = form x y`, and with
-`T_symm` that is `form (T² x) y = form x y` — `T² = 1` in the form. Then put `z = T x - x`:
-
-    form (T z) z = form (T²x - Tx) (Tx - x) = form (x - Tx) (Tx - x) = - form z z
-
-and positivity forces `form z z ≤ 0`, while `form_nonneg` forces `form z z ≥ 0`.
-
-**The vector `z = T x - x` is the whole of it.** Positivity is applied not to `x` but to the
-DISPLACEMENT, where the involution turns the form's sign around.
-
-## What this does to the plan
-
-`LatticeTranslNoGo` puts C2 (infinite volume) strictly before C6. This puts it before C1's
-Hamiltonian as well, and for the same cause: a finite periodic lattice has finite-order translations,
-and a finite-order symmetry cannot carry a spectrum. So C2 gates C1, C5 and C6 — three of the nine
-rows — and is the single gate rather than one of several.
-
-DERIVED: no numeral here is a magnitude. `1` in `1 ≤ n` is the smallest order for which the chain
-has a step to squeeze, `0` is the positivity bound, and `2` counts the cross terms a symmetric form
-produces. `n` is a variable.
+DERIVED across the file: `1` appears only as the lower bound in `1 ≤ n`, the smallest order for
+which the contraction chain has a step; `0` appears as the lower bound of operator positivity and as
+the value the form takes on the displacement. `n` is a variable.
 -/
 
 namespace MassGap.FiniteOrderTransfer
@@ -63,8 +44,11 @@ variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 /-! ## 0. Subtraction in the form
 
 `Transfer.PreForm` carries `form_add_left`, `form_add_right`, `form_smul_left` and
-`form_smul_right`, and no subtraction lemma. Both are one rewrite from what is there, and the
-displacement `T x - x` is the only vector this file cares about, so they are needed immediately. -/
+`form_smul_right`, and no subtraction lemma. `form_sub_left` rewrites `x - y` as `x + (-1 : ℝ) • y`
+and applies the additive and scalar laws; `form_sub_right` transports it through `form_symm`. Both
+hold for any `Transfer.PreForm A` and any three vectors, with no hypothesis.
+
+DERIVED: no numeral appears in either statement. -/
 
 theorem form_sub_left (P : Transfer.PreForm A) (x y z : A) :
     P.form (x - y) z = P.form x z - P.form y z := by
@@ -80,10 +64,21 @@ theorem form_sub_right (P : Transfer.PreForm A) (x y z : A) :
 
 #print axioms form_sub_right
 
-/-! ## 1. Polarisation: an isometry of the form preserves it off the diagonal -/
+/-! ## 1. Polarisation, and `T` squaring to the identity in the form -/
 
-/-- **A map preserving the diagonal of a symmetric bilinear form preserves the form.** Standard
-polarisation, stated for `D.T` because that is the only map it is used on. -/
+/-- For a `Transfer.TransferData A` whose operator has order `n` with `1 ≤ n`,
+`D.form (D.T x) (D.T y) = D.form x y` at every pair `x`, `y`.
+
+The proof invokes `ClayAssembly.finite_order_contraction_is_isometry` at `x`, `y` and `x + y`,
+expands both `form (u + v) (u + v)` sides with the additive laws and `form_symm`, and cancels by
+`linarith`. This is polarisation, stated for `D.T` because that is the only map it is applied to.
+
+Scope: the finite-order hypothesis is `(fun z => D.T z)^[n] y = y` for EVERY `y` — surjectivity of
+the iterate is not enough. Contractivity and symmetry come from `TransferData`'s own fields, via the
+isometry lemma.
+
+DERIVED: `1` is the lower bound on the order `n`, the smallest order for which the contraction chain
+has a step to squeeze. No other numeral appears in the statement. -/
 theorem form_polarise (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
     (hper : ∀ y : A, (fun z => D.T z)^[n] y = y) (x y : A) :
     D.form (D.T x) (D.T y) = D.form x y := by
@@ -107,9 +102,14 @@ theorem form_polarise (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
 
 #print axioms form_polarise
 
-/-- **AND THEREFORE `T² = 1` IN THE FORM.** `T_symm` moves one `T` across, polarisation cancels the
-pair. No positivity is used here, so this holds of any finite-order contraction — the operator is a
-self-adjoint INVOLUTION, spectrum in `{±1}`. -/
+/-- `D.form (D.T (D.T x)) y = D.form x y` at every pair `x`, `y`, for a `D.T` of order `n` with
+`1 ≤ n`. `D.T_symm` moves one `D.T` onto the right argument and `form_polarise` cancels the pair.
+
+Scope: no positivity hypothesis is used, so this holds of any finite-order contraction on the
+structure. The conclusion is an identity in the form, not `D.T (D.T x) = x` in `A`: it says
+`D.T (D.T x) - x` pairs to zero against everything, which is weaker unless the form is definite.
+
+DERIVED: `1` is the lower bound on the order `n`. No other numeral appears in the statement. -/
 theorem T_sq_eq (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
     (hper : ∀ y : A, (fun z => D.T z)^[n] y = y) (x y : A) :
     D.form (D.T (D.T x)) y = D.form x y := by
@@ -118,16 +118,24 @@ theorem T_sq_eq (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
 
 #print axioms T_sq_eq
 
-/-! ## 2. Positivity closes it -/
+/-! ## 2. Adding operator positivity -/
 
-/-- **A POSITIVE FINITE-ORDER TRANSFER OPERATOR IS THE IDENTITY**, in the form.
+/-- For a `D : Transfer.TransferData A` whose operator has order `n` with `1 ≤ n` and satisfies
+operator positivity `0 ≤ D.form (D.T z) z` at every `z`, the displacement is null for the form:
+`D.form (D.T x - x) (D.T x - x) = 0`, at every `x`.
 
-`form (T x - x) (T x - x) = 0` says `T x - x` is in the reflection form's null space, so `T` descends
-to the identity on the GNS space and `ClayAssembly.TransferMovesSomething` fails for it.
+The proof sets `z := D.T x - x`, expands `form (D.T z) z` and `form z z` in the four scalars the
+form takes on `x` and `D.T x`, and uses `T_sq_eq` twice together with the isometry identity to get
+`form (D.T z) z = - form z z`. Positivity then gives `form z z ≤ 0` and `D.form_nonneg` gives
+`0 ≤ form z z`.
 
-The positivity hypothesis `0 ≤ form (T z) z` is the operator-positivity that makes `T = e^{-H}` with
-`H` self-adjoint; it is NOT `ReflForm.form_nonneg`, which is positivity of the form and is already a
-field. Applying it to the DISPLACEMENT `z = T x - x` rather than to `x` is the whole argument. -/
+Scope: `hpos` is operator positivity, applied to the displacement rather than to `x`; it is a
+separate hypothesis from `ReflForm.form_nonneg`, which is already a field. The conclusion places
+`D.T x - x` in the form's null cone, which is equality to zero in `A` only when the form is
+definite.
+
+DERIVED: `1` is the lower bound on the order `n`; `0` occurs twice, as the lower bound in the
+positivity hypothesis and as the value of the form on the displacement. -/
 theorem positive_finite_order_transfer_is_identity (D : Transfer.TransferData A) (n : ℕ)
     (hn : 1 ≤ n) (hper : ∀ y : A, (fun z => D.T z)^[n] y = y)
     (hpos : ∀ z : A, 0 ≤ D.form (D.T z) z) (x : A) :
@@ -161,12 +169,14 @@ theorem positive_finite_order_transfer_is_identity (D : Transfer.TransferData A)
 
 #print axioms positive_finite_order_transfer_is_identity
 
-/-- **SO `TransferMovesSomething` FAILS FOR EVERY POSITIVE FINITE-ORDER TRANSFER**, stated on the
-form so it does not depend on how the completion is built.
+/-- `positive_finite_order_transfer_is_identity` with the vector `x` moved into the conclusion:
+under the same hypotheses, `∀ x : A, D.form (D.T x - x) (D.T x - x) = 0`. The proof is that theorem
+applied pointwise, so this adds no content beyond the quantifier placement.
 
-This is the general form of `GNSHilbert.shiftSlab_eq_id` and of what
-`ClayAssembly.ym_target_discharged_trivially` observes: the triviality is not an artifact of the slab
-construction or of a particular premise, it is forced by the period of the lattice. -/
+Scope: stated on `D.form`, so it does not depend on how any completion of `A` is built.
+
+DERIVED: `1` is the lower bound on the order `n`; `0` occurs twice, as the lower bound in the
+positivity hypothesis and as the value of the form on each displacement. -/
 theorem no_motion_of_positive_finite_order (D : Transfer.TransferData A) (n : ℕ)
     (hn : 1 ≤ n) (hper : ∀ y : A, (fun z => D.T z)^[n] y = y)
     (hpos : ∀ z : A, 0 ≤ D.form (D.T z) z) :
@@ -175,11 +185,14 @@ theorem no_motion_of_positive_finite_order (D : Transfer.TransferData A) (n : �
 
 #print axioms no_motion_of_positive_finite_order
 
-/-- **AND WITHOUT POSITIVITY THERE IS STILL NO HAMILTONIAN**, which is why dropping the hypothesis
-does not open a route. `T_sq_eq` gives `T² = 1` from finite order and contractivity alone, so the
-spectrum lies in `{±1}`; `-log T` is `0` on the `+1` part and undefined on the `-1` part. Recorded as
-a theorem so the horn is not mistaken for an opening: the square of the displacement map vanishes
-identically in the form. -/
+/-- `D.form (D.T (D.T x) - x) y = 0` at every pair `x`, `y`, for a `D.T` of order `n` with `1 ≤ n`.
+`form_sub_left` splits the left argument and `T_sq_eq` equates the two halves.
+
+Scope: no positivity hypothesis is used here. The conclusion pairs `D.T (D.T x) - x` to zero against
+every `y`, which is the form-level statement that `D.T` squares to the identity; it is not an
+equation in `A`.
+
+DERIVED: `1` is the lower bound on the order `n`; `0` is the value of the form. -/
 theorem involution_without_positivity (D : Transfer.TransferData A) (n : ℕ)
     (hn : 1 ≤ n) (hper : ∀ y : A, (fun z => D.T z)^[n] y = y) (x y : A) :
     D.form (D.T (D.T x) - x) y = 0 := by
@@ -189,31 +202,20 @@ theorem involution_without_positivity (D : Transfer.TransferData A) (n : ℕ)
 
 #print axioms involution_without_positivity
 
-/-- **WHAT AN `I4` WITNESS MUST BE, stated as the obligation rather than as a prohibition.**
+/-- The contrapositive of `positive_finite_order_transfer_is_identity`. If `D.T` satisfies operator
+positivity `0 ≤ D.form (D.T z) z` at every `z`, and some `x` has
+`D.form (D.T x - x) (D.T x - x) ≠ 0`, then there is no `n` with `1 ≤ n` and
+`(fun z => D.T z)^[n] y = y` for all `y`.
 
-The contrapositive of `positive_finite_order_transfer_is_identity`: a POSITIVE transfer that moves
-something has INFINITE order. That is the checkable criterion a candidate must meet, and it is the
-precise scope of this file -- the no-go is about order, not about being built on a lattice.
+The proof takes such an `n`, applies the forward theorem at the witness `x`, and contradicts `hx`.
 
-**`ClayAssembly`'s scoping is the one to keep:** `HalfLineTransfer.shiftObs_pow_period` proves
-`(shiftObs τ)ⁿ = id` on every observable of the periodic lattice with no hypothesis, so any
-`TransferData` whose `T` is ASSEMBLED FROM LATTICE TRANSLATIONS has finite order and is caught.
-An operator that is not so assembled is not caught, and the tree has one:
-`SliceTransferSelfAdjoint.transferCLM` is an integral operator on `L²` of a single slice, bounded
-(`norm_transferCLM_le`), self-adjoint (`isSelfAdjoint_transferCLM`) and nonzero
-(`transferCLM_ne_zero`), and nothing makes it a translation. **So this file does not close C1's
-Hamiltonian; it closes the translation route to it.** `transferCLM` has since acquired POSITIVITY
-(`TransferGaussian.transferKernel_posDef`) and INJECTIVITY
-(`TransferGaussian.transferCLM_injective`); what it still lacks for C1 is `0 ∉ spectrum` and a carrier
-on `ymH`.
+Scope: the conclusion rules out finite order, not any other property. It applies to any
+`TransferData` meeting `hpos`, whether or not `D.T` comes from a lattice translation; conversely it
+says nothing about an operator that fails `hpos`.
 
-**And there is now a SECOND, independent route to this no-go.** `TransferGap.finite_order_fails_gap`
-reaches the same conclusion from a spectral GAP instead of from operator positivity, assuming no
-positivity at all. `TransferGap.gap_moves_something` goes further: a gap IMPLIES
-`TransferMovesSomething`, so the open item is a consequence of the gap rather than a separate
-obligation beside it.
-
-DERIVED: `1 ≤ n` is the smallest order the squeeze has a step for. -/
+DERIVED: `0` occurs twice, as the lower bound in the positivity hypothesis and as the value the
+displacement's form is assumed to differ from; `1` is the lower bound on the order `n` inside the
+negated existential. -/
 theorem moves_something_forces_infinite_order (D : Transfer.TransferData A)
     (hpos : ∀ z : A, 0 ≤ D.form (D.T z) z)
     (hmoves : ∃ x : A, D.form (D.T x - x) (D.T x - x) ≠ 0) :

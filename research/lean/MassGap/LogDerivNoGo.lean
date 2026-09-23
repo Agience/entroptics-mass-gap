@@ -2,87 +2,67 @@ import Mathlib
 import MassGap.PowerTail
 
 /-!
-# MassGap.LogDerivNoGo — B5's recorded target is refuted twice, and the L¹ target is not
+# MassGap.LogDerivNoGo — what a relative derivative bound forces
 
-## What B5's middle range is recorded as needing
+Four groups of results about a bound of the shape `|f'| ≤ K · f`.
 
-`CosAvgStability`'s docstring, and the goal document after it, state the missing estimate as
+## 1. A relative bound based at a zero forces vanishing
 
-> a bound on `|d log ρ_d/dβ|` **uniform in the lag and the volume**, on `β ≥ 0`.
+`vanishes_of_relative_deriv_bound_from_zero` — a nonnegative `f` on `[0, b]`, differentiable on
+`(0, b)`, with `|f'| ≤ K f` there and `f 0 = 0`, is identically zero on `[0, b]`. Grönwall in the
+direction that needs no integral: `f(x) e^{-Kx}` has nonpositive derivative, so it is antitone from
+the value `0`, and `f ≥ 0` closes it from below. `K` is an arbitrary real, positive or not.
 
-`CompactBeta` rules out the ABSOLUTE bound and, as `CosAvgStability` correctly says, is silent on
-the relative one. **That silence has been read as "open". It is not: the relative bound as stated is
-refuted, from two unrelated directions, by theorems already in the tree.**
+## 2. The same applied to `wilsonCorrAt`
 
-## ⛔ Refutation one — the `β → 0` end, and it has nothing to do with volume
+`per_lag_bound_from_zero_forces_vanishing` — the same hypotheses for
+`β ↦ wilsonCorrAt N β d` on `[0, b]`, at a lag with `1 ≤ Moment.circLag d`, give
+`wilsonCorrAt N x d = 0` throughout. The zero at `β = 0` is
+`PowerTail.wilsonCorrAt_at_zero_coupling`. Nonnegativity is a hypothesis the caller supplies rather
+than being taken from a reflection-positivity result.
 
-`PowerTail.wilsonCorrAt_at_zero_coupling` puts `ρ_d(0) = 0` at every lag of nonzero circle distance:
-at zero coupling the measure is product Haar and two plaquettes at distance read disjoint links.
+## 3. The two-term torus profile
 
-A relative bound `|ρ_d'| ≤ K·ρ_d` on an interval STARTING at zero therefore forces `ρ_d ≡ 0` on the
-whole interval — `vanishes_of_relative_deriv_bound_from_zero`, which is Grönwall in the one direction
-that needs no integral: `ρ_d(β)·e^{−Kβ}` is antitone and starts at zero.
+`torusProfile lam M n = lam^n + lam^(M−n)`, the shape a transfer operator on a circle of extent `M`
+gives. `torusProfile_midpoint` evaluates it at `M = 2n` as `2·lam^n`. `midpoint_relative_deriv` is
+the algebraic identity
 
-So the target on `β ≥ 0` is a dichotomy, not an estimate: either the correlation vanishes identically
-off contact — and `PowerTail.contact_value_pos_at_zero_coupling` shows the contact lag does NOT
-vanish, so the profile would be a point mass — or no `K` exists. **`[β₀, β₁]` with `β₀ > 0` is the
-only defensible range**, and that costs nothing, because `ConfinesZero.confines_near_zero` already
-covers a neighbourhood of zero by a different argument.
+    (2 · (n · lam^(n−1) · L)) / torusProfile lam (2n) n = n · L / lam,
 
-This is the same conclusion `CosAvgStability.mul_control_from_zero_forces_a_point_mass` reaches from
-a multiplicative bound. Reaching it from the DERIVATIVE is what makes it bear on the log-derivative
-target specifically, which the multiplicative statement does not.
+for `0 < lam` and `0 < n`. `L` is a free real standing in for `lam'`; nothing is differentiated in
+the statement. `no_uniform_bound_on_torus_profile` reads the `n` factor off it: for fixed `lam > 0`
+and `L ≠ 0`, no real `K` bounds the absolute value of that quotient at every `n`.
 
-## ⛔ Refutation two — the large-lag end, and here the volume IS the problem
+## 4. An aggregate bound that does hold
 
-A correlation governed by a transfer operator on a PERIODIC lattice is not `λ^d`. `ClayAssembly.
-corr_at_max_lag_eq_lag_one` proves `ρ(N) = ρ(1)` by circle symmetry, so pure geometric decay would
-force `λ = 1` and no gap at all. The correct shape is the **torus-symmetric** one,
-`ρ(n) = λ^n + λ^{N−n}`, and at the midpoint lag `n = N/2` it has
+`l1_moment_bounded_by_mass` — for `0 ≤ lam < 1` and `0 < n`,
 
-    ρ(n) = 2·λ^n,   ρ'(n)/ρ(n) = n · (λ'/λ).
+    ∑_{d<n} d·lam^d ≤ (lam/(1−lam)²) · ∑_{d<n} lam^d.
 
-**That grows with the extent.** `midpoint_relative_deriv` is the identity and
-`no_uniform_bound_on_torus_profile` is the consequence: no constant bounds it at every aperture,
-whenever the decay factor moves with the coupling at all — which is exactly what a running gap means.
+The constant carries neither `n` nor a lag. It is a statement about geometric partial sums: the
+numerator is bounded by the full series `lam/(1−lam)²` and the denominator is at least the `d = 0`
+term. The identification of either side with a derivative or with a correlation is the caller's.
 
-So "uniform in the lag and the volume" fails at the far lag for the same reason the gap runs.
-
-## ✅ What is NOT refuted — the L¹-aggregate form
-
-`∑_d |ρ_d'| ≤ K · ∑_d ρ_d` is a different statement, and the profile that kills the per-lag form
-satisfies it with a constant carrying **no lag and no extent**
-(`l1_relative_deriv_bounded_for_geometric`). The far-lag terms whose per-lag ratio diverges carry
-geometrically little mass; aggregating against the same weights absorbs them.
-
-That is not a happy accident — it is why `CosAvgStability` is built on `L1Close` and
-`avg_stable_of_l1_close` rather than on a per-lag bound. **This file supplies the proof that the
-choice was forced rather than convenient.**
-
-## ⚠ What this does NOT do
-
-**It proves nothing about the Wilson correlation's L¹ modulus.** Whether
-`∑_d |dρ_d/dβ| ≤ K·∑_d ρ_d` holds for `wilsonCorrAt` uniformly in the aperture on `[β₀, β₁]` is open
-and is B5. What is established is that the per-lag form should not be carried as the target, and
-that the L¹ form survives both refutations of it.
-
-**And §3's profile is an example.** One witness suffices to refute a `∀`, which is the only use of an
-example needing no justification; nothing here claims `wilsonCorrAt` has that shape.
+Nothing here evaluates `wilsonCorrAt` at any lag beyond §2's use of
+`PowerTail.wilsonCorrAt_at_zero_coupling`, and §3's profile is an arbitrary two-term expression, not
+a claim about `wilsonCorrAt`.
 -/
 
 namespace MassGap.LogDerivNoGo
 
 open Finset
 
-/-! ## 1. ⛔ A relative derivative bound based at a zero forces vanishing -/
+/-! ## 1. A relative derivative bound based at a zero forces vanishing -/
 
-/-- **GRÖNWALL, IN THE DIRECTION THAT NEEDS NO INTEGRAL.** If `f ≥ 0` obeys `|f'| ≤ K·f` on `[0, b]`
-and `f 0 = 0`, then `f ≡ 0` there.
+/-- A nonnegative `f`, continuous on `Set.Icc 0 b`, differentiable on `Set.Ioo 0 b` with
+`|deriv f x| ≤ K * f x` there, and vanishing at `0`, is identically zero on `Set.Icc 0 b`. The
+auxiliary `g x = f x · exp (-(K x))` has derivative `(f' − K f) e^{−Kx} ≤ 0`, so
+`antitoneOn_of_deriv_nonpos` makes it antitone from `g 0 = 0`; `f ≥ 0` and `exp > 0` close it from
+below. `K` is an arbitrary real, and `b` need only satisfy `0 ≤ b`.
 
-`f(β)·e^{−Kβ}` has derivative `(f' − K·f)·e^{−Kβ} ≤ 0`, so it is antitone and starts at zero; `f ≥ 0`
-closes it from the other side.
-
-DERIVED: the `0` is the base point and the value; `K` is the caller's bound. -/
+DERIVED: the `0`s are all the same base point of the interval — the left endpoint of `Icc 0 b` and
+`Ioo 0 b`, the point where `f` is assumed to vanish, the floor in `0 ≤ f x` and `0 ≤ b`, and the
+value concluded throughout. -/
 theorem vanishes_of_relative_deriv_bound_from_zero {f : ℝ → ℝ} {K b : ℝ} (hb : 0 ≤ b)
     (hcont : ContinuousOn f (Set.Icc 0 b))
     (hderiv : ∀ x ∈ Set.Ioo (0 : ℝ) b, HasDerivAt f (deriv f x) x)
@@ -124,23 +104,20 @@ theorem vanishes_of_relative_deriv_bound_from_zero {f : ℝ → ℝ} {K b : ℝ}
 
 #print axioms vanishes_of_relative_deriv_bound_from_zero
 
-/-! ## 2. ⛔ And the Wilson correlation HAS such a zero, off contact -/
+/-! ## 2. The Wilson correlation has such a zero off contact -/
 
-/-- **⛔ SO A PER-LAG RELATIVE BOUND BASED AT ZERO COUPLING FORCES THE CORRELATION TO VANISH.**
+/-- `vanishes_of_relative_deriv_bound_from_zero` instantiated at `f = fun β => wilsonCorrAt N β d`.
+At a lag with `1 ≤ Moment.circLag d`, a relative derivative bound `|ρ_d'| ≤ K ρ_d` holding on
+`Set.Ioo 0 b` forces `wilsonCorrAt N x d = 0` on all of `Set.Icc 0 b`. The value at zero coupling is
+`PowerTail.wilsonCorrAt_at_zero_coupling`; the interval must start at `0` for that to apply.
 
-`PowerTail.wilsonCorrAt_at_zero_coupling` supplies the zero at every lag of nonzero circle distance,
-and §1 does the rest. Combined with `PowerTail.contact_value_pos_at_zero_coupling` — the contact lag
-is strictly positive at zero coupling — the profile a `K` would force is a point mass.
+Nonnegativity is taken as the hypothesis `hnn` rather than from a reflection-positivity result, so
+the caller supplies whichever nonnegativity they have.
 
-**So the target must be stated on `[β₀, β₁]` with `β₀ > 0`.** That is free:
-`ConfinesZero.confines_near_zero` covers a neighbourhood of zero by a different argument, so no range
-is lost.
-
-Nonnegativity is a HYPOTHESIS rather than taken from `Complete.wilson_reflection_positive_at`, so
-this theorem carries no named axiom; the caller supplies whichever nonnegativity they have.
-
-DERIVED: the `0` is zero coupling and the vanishing value; `1 ≤ circLag d` is `PowerTail`'s own
-hypothesis, not a choice. -/
+DERIVED: the `1` in `Fin (N + 1)` is the lag index's range, one more than the extent `N`; the `1` in
+`hd` is `PowerTail.wilsonCorrAt_at_zero_coupling`'s own threshold, excluding the contact lag; the
+`0`s are the left endpoint of the interval, the coupling at which the correlation vanishes, the floor
+in `0 ≤ b` and `0 ≤ wilsonCorrAt`, and the value concluded throughout. -/
 theorem per_lag_bound_from_zero_forces_vanishing {N : ℕ} {d : Fin (N + 1)} {K b : ℝ}
     (hd : 1 ≤ Moment.circLag d) (hb : 0 ≤ b)
     (hcont : ContinuousOn (fun β => MassGap.wilsonCorrAt N β d) (Set.Icc 0 b))
@@ -156,32 +133,35 @@ theorem per_lag_bound_from_zero_forces_vanishing {N : ℕ} {d : Fin (N + 1)} {K 
 
 #print axioms per_lag_bound_from_zero_forces_vanishing
 
-/-! ## 3. ⛔ The far-lag end, on the TORUS-SYMMETRIC profile -/
+/-! ## 3. The two-term torus profile -/
 
-/-- **THE TORUS PROFILE.** Not `λ^d` — `ClayAssembly.corr_at_max_lag_eq_lag_one` forbids that, since
-`ρ(N) = ρ(1)` would force `λ = 1`. A transfer operator on a periodic lattice gives the symmetric
-form, one term running each way round the circle.
+/-- `lam ^ n + lam ^ (M − n)`, the two-term shape a transfer operator on a circle of extent `M`
+gives, one term running each way round. `M − n` is natural subtraction, so it truncates at zero for
+`n > M`.
 
 DERIVED: no numeral. `lam` is the decay factor, `n` the lag and `M` the extent. -/
 noncomputable def torusProfile (lam : ℝ) (M n : ℕ) : ℝ := lam ^ n + lam ^ (M - n)
 
-/-- At the midpoint of the circle the two arms coincide and the profile is `2·λ^n`.
+/-- At the midpoint of the circle the two arms coincide: `torusProfile lam (2n) n = 2 · lam^n`,
+since `2n − n = n`. An identity for every real `lam` and every `n`.
 
-DERIVED: the `2` is the two arms of the circle meeting, not a coefficient chosen here. -/
+DERIVED: the `2` in `2 * n` places the lag at the midpoint of a circle of extent `2n`; the `2` on the
+right is the number of arms that coincide there. -/
 theorem torusProfile_midpoint (lam : ℝ) (n : ℕ) :
     torusProfile lam (2 * n) n = 2 * lam ^ n := by
   unfold torusProfile
   rw [show 2 * n - n = n by omega]
   ring
 
-/-- **⛔ AND THERE THE RELATIVE DERIVATIVE IS `n` TIMES THE ONE-STEP RATE.**
+/-- The algebraic identity `(2 · (n · lam^(n−1) · L)) / torusProfile lam (2n) n = n · L / lam`, for
+`0 < lam` and `0 < n`. Read against the power rule, the left side is `ρ'/ρ` for `ρ = 2 lam^n` with
+`L` in the place of `lam'`; but `L` is a free real and nothing in the statement differentiates
+anything. The `n` on the right is what `no_uniform_bound_on_torus_profile` exploits.
 
-`ρ = 2λⁿ` gives `ρ'/ρ = n·λ'/λ` exactly, and at the midpoint `n` is half the extent — so the
-quantity the target asks to bound uniformly **in the volume** is proportional to the volume's linear
-size.
-
-DERIVED: the `2`s are the two arms and the midpoint's `2n = M`; the `1` is the power rule's offset,
-cancelled. -/
+DERIVED: `0` in `hlam` is what lets `lam` be cancelled from the quotient, and `0` in `hn` is what
+makes `n − 1` the ordinary predecessor; the `2` in `2 * n` places the lag at the midpoint and the
+leading `2` is the coefficient `torusProfile_midpoint` produces there; the `1` in `n − 1` is the power
+rule's offset, cancelled against one factor of `lam`. -/
 theorem midpoint_relative_deriv {lam L : ℝ} (hlam : 0 < lam) {n : ℕ} (hn : 0 < n) :
     ((2 : ℝ) * ((n : ℝ) * lam ^ (n - 1) * L)) / torusProfile lam (2 * n) n
       = (n : ℝ) * L / lam := by
@@ -195,13 +175,16 @@ theorem midpoint_relative_deriv {lam L : ℝ} (hlam : 0 < lam) {n : ℕ} (hn : 0
 
 #print axioms midpoint_relative_deriv
 
-/-- **⛔ SO NO CONSTANT SURVIVES EVERY APERTURE**, whenever the decay factor moves with the coupling.
+/-- For fixed `lam > 0` and `L ≠ 0`, and any real `K`, there is an `n > 0` at which the midpoint
+quotient exceeds `K` in absolute value. `midpoint_relative_deriv` reduces the quotient to
+`n · L / lam`, and `exists_nat_gt` supplies an `n` past `K / (|L| / lam)`. `K` is refuted one `lam`
+at a time: the `n` produced depends on `lam`, `L` and `K`. The hypothesis `L ≠ 0` is what makes the
+quotient grow at all.
 
-The obstruction is in the SHAPE, not in Yang–Mills: any correlation carried by a transfer operator on
-a circle has it. The escape is `L = 0` — a decay rate that does not run with the coupling — which is
-what a running gap denies.
-
-DERIVED: `K` is the candidate bound being refuted; nothing is chosen. -/
+DERIVED: `0` in `hlam` is the positivity of the decay factor and `0` in `hL` the value `L` must
+avoid; `0 < n` excludes the degenerate lag; the `2` in `2 * n` places the lag at the midpoint and the
+leading `2` is `torusProfile_midpoint`'s coefficient; the `1` in `n − 1` is the power rule's
+offset. -/
 theorem no_uniform_bound_on_torus_profile {lam L : ℝ} (hlam : 0 < lam) (hL : L ≠ 0) (K : ℝ) :
     ∃ n : ℕ, 0 < n ∧
       K < |((2 : ℝ) * ((n : ℝ) * lam ^ (n - 1) * L)) / torusProfile lam (2 * n) n| := by
@@ -218,22 +201,20 @@ theorem no_uniform_bound_on_torus_profile {lam L : ℝ} (hlam : 0 < lam) (hL : L
 
 #print axioms no_uniform_bound_on_torus_profile
 
-/-! ## 4. ✅ The L¹-aggregate form survives -/
+/-! ## 4. An aggregate bound on the geometric partial sums -/
 
-/-- **✅ AGGREGATED, THE SAME PROFILE IS CONTROLLED, WITH NO LAG AND NO EXTENT IN THE CONSTANT.**
+/-- For `0 ≤ lam < 1` and `0 < n`,
+`∑_{d ∈ range n} d · lam^d ≤ (lam/(1−lam)²) · ∑_{d ∈ range n} lam^d`. The numerator is bounded by the
+full series `∑' d, d·lam^d = lam/(1−lam)²` (`tsum_coe_mul_geometric_of_norm_lt_one`), and the
+denominator is at least `1`, since the `d = 0` term is `lam^0`. The constant carries neither `n` nor
+a lag. It is written on `∑ d·lam^d` rather than `∑ d·lam^{d−1}` to avoid a natural-number
+subtraction. A statement about geometric partial sums; nothing identifies either side with a
+derivative or a correlation.
 
-The aggregate numerator is `∑_d |ρ_d'| = (|λ'|/λ)·∑_d d·λ^d`, so the statement below IS the L¹-relative
-bound, with `K = |λ'|/(1−λ)²`. It is written on `∑ d·λ^d` rather than on `∑ d·λ^{d−1}` because the
-latter carries a natural-number subtraction that buys nothing and costs elaboration.
-
-**The far-lag terms whose per-lag ratio diverges (§3) carry geometrically little mass**, and the
-contact term alone puts the denominator at one — so no lower bound on the correlation is needed,
-which is the scale-freeness `CLAY-OUTSTANDING` requires of any argument away from zero coupling.
-
-**This is the statement that should replace the per-lag target.**
-
-DERIVED: the `2` is the exponent in `∑ d·λ^d = λ/(1−λ)²`; the `1`s are the geometric series' unit and
-the contact value `λ⁰`. Nothing is chosen. -/
+DERIVED: `0` in `hlam0` is the floor making the powers nonnegative; `1` in `hlam1` is the radius of
+convergence the summability needs; `0` in `hn` is what puts the `d = 0` term in `range n`, which is
+the `1` the denominator is bounded below by; the `2` is the exponent in the closed form
+`∑' d, d·lam^d = lam/(1−lam)²`; the `1` in `1 − lam` is that closed form's own. -/
 theorem l1_moment_bounded_by_mass {lam : ℝ} (hlam0 : 0 ≤ lam) (hlam1 : lam < 1)
     {n : ℕ} (hn : 0 < n) :
     ∑ d ∈ range n, (d : ℝ) * lam ^ d

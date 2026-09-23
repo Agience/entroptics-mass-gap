@@ -1,13 +1,14 @@
 import Mathlib
 
 /-!
-# MassGap.CentreDominance — the R3b assembly: area beats perimeter (`σ_SU(N) = σ_Z`)
+# MassGap.CentreDominance — the perimeter-over-area limit
 
-R3b (centre dominance) reduces the `SU(N)` gap to the `Z_N` centre gap: `σ_SU(N) = σ_Z`, given the non-centre
-(coset) contribution to the Wilson loop is perimeter-bounded (notes §13). This module proves the ASSEMBLY:
-if the perimeter/area ratio vanishes, the string tension equals the centre part `σ_Z`. The single remaining
-input is the non-centre perimeter bound itself — a convergent coset expansion, rigorous at strong coupling —
-which enters here as the hypothesis `P/A → 0`.
+One theorem about real sequences. If a per-area free energy is written as a constant `σZ` minus `c`
+times a perimeter/area ratio, and that ratio tends to zero, the free energy tends to `σZ`.
+
+The content is the limit itself. Nothing in the statement is specific to gauge theory: a caller
+supplies the identification of `σZ` with a centre string tension, of `c` with the size of the
+non-centre contribution, and of `P n / A n` with a loop's perimeter-to-area ratio.
 
 Imported by the `MassGap` aggregate (`MassGap.lean`).
 -/
@@ -16,10 +17,14 @@ namespace MassGap.CentreDominance
 
 open Filter
 
-/-- **Area beats perimeter: `σ_SU(N) = σ_Z`.** With `−log⟨W(C_n)⟩/A_n = σ_Z − c·(P_n/A_n)` (the centre area
-law `σ_Z` plus a non-centre correction of size `c·P_n`) and the perimeter/area ratio vanishing
-(`P_n/A_n → 0`, the non-centre perimeter bound), the per-area free energy tends to `σ_Z`: the `SU(N)` string
-tension is the centre `σ_Z`. Then `Δ ∼ π√σ_Z > 0`, so `ρ'(1) < 1`. -/
+/-- If `P n / A n` tends to `0`, then `σZ - c * (P n / A n)` tends to `σZ`.
+
+`σZ` and `c` are arbitrary reals, bound outside the hypothesis: neither is required to be positive,
+and `A` is allowed to vanish because division is total in `ℝ`. The sequences `A` and `P` enter only
+through their ratio.
+
+DERIVED: `0` is the limit of the perimeter/area ratio assumed in `hPA`, and is the only numeral in
+the statement. -/
 theorem string_tension_eq_centre {σZ c : ℝ} {A P : ℕ → ℝ}
     (hPA : Tendsto (fun n => P n / A n) atTop (nhds 0)) :
     Tendsto (fun n => σZ - c * (P n / A n)) atTop (nhds σZ) := by

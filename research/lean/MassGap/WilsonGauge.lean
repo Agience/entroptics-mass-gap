@@ -4,33 +4,44 @@ import MassGap.WilsonInstance
 import MassGap.WilsonHypercubic
 
 /-!
-# MassGap.WilsonGauge — an OS-data family whose invariances are DERIVED, not `rfl` (step A3)
+# MassGap.WilsonGauge — a `LatticeYMFamily` built on the four-dimensional `SU(3)` Wilson system
 
-`WilsonInstance.ymFamily` discharges the Osterwalder–Schrader invariances `os_euc`/`os_perm` by `rfl`:
-its reflected form reads only a label that the group actions leave fixed, so invariance holds for any
-form reading that label — it is *modelled*.
+Assembles `Measure.LatticeYMFamily` data whose reflected Schwinger form is an actual Gibbs
+expectation, and runs it through `Measure.continuum_of_family`.
 
-Here we build a `LatticeYMFamily` (`ymFamilyGauge`) whose reflected form is a genuine `SU(3)` gauge
-expectation — the Gibbs average, against the canonical probability Haar measure on `SU(3)` (A2b), of the
-Wilson plaquette energy on a four-dimensional periodic lattice, transported by that lattice's
-**axis-permutation symmetry** (A1) — and
-whose `os_euc`/`os_perm` are **derived from `Symmetry.expect_invariant`**: the Euclidean/permutation
-group elements act by relabelling the lattice axes, and Haar-invariance of the product measure makes
-the expectation invariant. No `rfl` on the correlation; the invariance is a theorem about the actual
-`SU(3)` measure.
+`sysYM` is `WilsonHypercubic.sysWilson NYM 4 nYM` with `NYM = 3` and `nYM = 2`: the four-dimensional
+periodic Wilson system over `SU 3`, with `4 * nYM ^ 4` links and `16 * nYM ^ 4` plaquettes
+(`WilsonHypercubic.card_link`, `card_plaq`), ordered-loop holonomy, and `WilsonAction.wilsonDensity`
+as action density (`WilsonHypercubic.sysWilson_phi`). `symAxis e` is its axis-permutation symmetry,
+from `WilsonHypercubic.axisSymmetry`.
 
-`ym_continuum_gauge` then runs this family through `continuum_of_family`, giving the OS0–OS3 continuum
-limit with the Euclidean/permutation invariances of the limit `q` now genuinely derived. Foundational
-footprint only. The existing flagship (`ym_existence_and_gap`) is untouched; retargeting it onto this
-family is a follow-up. Build: `lake build MassGap.WilsonGauge`.
+`O0` is the Wilson plaquette energy of one plaquette; `QG j a` is the Gibbs expectation of `O0`
+transported by the axis symmetry `symAxis (j.1 * j.2.1)`, clamped into `[0, 1]`. `QG_eq` collapses
+the transport by `Symmetry.expect_invariant`, which is how the `os_euc` and `os_perm` fields are
+discharged: `actEG` and `actPG` multiply the two permutation components of the index, and `QG` does
+not see them.
 
-The dynamical face (the confinement gap — B/C) is orthogonal to this invariance derivation and still
-enters through the cited RP + measured reads. The LATTICE is not orthogonal to it, though, and is no
-longer a stand-in: `sysYM` is `WilsonHypercubic.sysWilson 3 4 n`, the four-dimensional periodic `SU(3)`
-Wilson system — `4 · n⁴` links, `16 · n⁴` plaquettes, the ordered-loop holonomy and the genuine Wilson
-action density. It replaces a four-link, four-plaquette axis-indexed object whose action density was
-identically zero: that carried the axis-permutation symmetry, which was all the invariance derivation
-needed, but it was not a lattice in any dimension and `β` could not move its measure.
+`ymFamilyGaugeCounted` builds the family through `Measure.familyOfSortedCount`, which derives
+`os_gap` from an ordered spectrum (`hsorted`) plus a bound on how many modes clear the edge
+(`hcount`), with `hres` supplying at least one so the `os_form` bound at `B = 1` is not vacuous.
+`ym_continuum_gauge_counted` applies `continuum_of_family` to it.
+
+`evDemo` is the spectrum `1` at index `0` and `0` elsewhere; `resolvedDim_evDemo`, `evDemo_sorted`,
+`evDemo_count` and `evDemo_res` discharge the three hypotheses at edge `1 / 2`, giving the
+hypothesis-free `ymFamilyGauge` and `ym_continuum_gauge`.
+
+The remaining declarations pair that measure with the gap side: `ymFullModelGauge` is a
+`Measure.FullModel` whose `measure` field is `ymFamilyGauge`, `ym_wilson_gauge` wraps it with
+`ymParams N hN` as a `WilsonRealization`, and `ym_wilson_gauge_su3` fixes `N := NYM`, where
+`ym_wilson_gauge_su3_rank` records `params.N = NYM` by `rfl`. `ym_existence_and_gap_gauge`,
+`ym_existence_and_gap_gauge_wilson`, `ym_mass_gap_rate_gauge` and `ym_mass_gap_rate_pos` state the
+conclusions those carry.
+
+Scope: `os_rp` here is the lower end of the clamp `min (max _ 0) 1`, not reflection positivity of a
+measure. `hdom`, `hfe`, `hgap` and `hconf` are hypotheses in every theorem that uses them, and no
+declaration in this file discharges them. `Measure.continuum_of_family` produces a subsequential
+pointwise limit of the forms, not a measure on `ℝ⁴`. The gap side's rank `N` and the OS measure's
+rank `NYM` are independent parameters except in `ym_wilson_gauge_su3`, where `N := NYM`.
 -/
 
 namespace MassGap.WilsonGauge
@@ -38,124 +49,152 @@ namespace MassGap.WilsonGauge
 open MassGap.LatticeGauge MassGap.CompactGauge MassGap.Measure
 open MeasureTheory Filter Topology
 
-/-- The rank-3 special unitary group `SU(3)` — the Clay problem's gauge group.
+/-- The natural number `3`, used as the rank of the gauge group throughout this file. `SUN.SU` is
+general in the rank; this abbreviation fixes the one instantiation the file is about, so that every
+use below reads the same symbol.
 
-DERIVED: `3` is the rank the problem names. It is not a parameter of this development's choosing;
-`SUN.SU` is general in the rank and this is the instantiation the statement is about. -/
+DERIVED: `3` is the rank of the gauge group the Clay problem names. -/
 abbrev NYM : ℕ := 3
 
-/-- `SU(NYM)` — the Clay problem's gauge group, at the one rank this file names. -/
+/-- `MassGap.SUN.SU NYM`, the special unitary group at the rank `NYM` fixed above. All measures and
+configurations in this file are valued in it.
+
+DERIVED: no numeral appears in the statement; the rank is written `NYM`. -/
 abbrev G3 : Type := MassGap.SUN.SU NYM
 
-/-- The periodic extent of the constructed lattice.
+/-- The natural number `2`, used as the periodic extent of the constructed lattice.
 
-DERIVED: `2` is the smallest extent at which a direction carries two distinct sites, so that the unit
-shift is not the identity and a plaquette is a genuine four-link loop. It is ARITY — the minimum at
-which the object exists at all — not a size, and nothing proved here depends on its value: the
-underlying system, its cardinalities and its axis symmetry are established for `sysWilson 3 4 n` at
-arbitrary `n` in `WilsonHypercubic`, and this family instantiates one of them. -/
+Scope: `WilsonHypercubic` establishes the system, its cardinalities and its axis symmetry at
+arbitrary extent; this abbreviation picks one, and nothing below depends on which.
+
+DERIVED: `2` is the smallest extent at which a direction carries two distinct sites, so that the
+unit shift is not the identity. It is the arity at which the object exists, not a size. -/
 abbrev nYM : ℕ := 2
 
-/-- **The four-dimensional periodic `SU(3)` Wilson lattice gauge system.**
+/-- `WilsonHypercubic.sysWilson NYM 4 nYM`: the periodic Wilson lattice gauge system over `G3` in
+four dimensions at extent `nYM`. Links are `(direction, site)` pairs and plaquettes `(plane, site)`
+pairs, so there are `4 * nYM ^ 4` links and `16 * nYM ^ 4` plaquettes (`WilsonHypercubic.card_link`,
+`card_plaq`). The holonomy is the ordered product around `U_μ(x) U_ν(x+μ̂) U_μ(x+ν̂)⁻¹ U_ν(x)⁻¹`, and
+the action density is `WilsonAction.wilsonDensity` rather than the zero function
+(`WilsonHypercubic.sysWilson_phi`), so the coupling carried by `System.expect` moves the Gibbs
+weight.
 
-`d = 4` is the Clay problem's spacetime, `N = 3` its gauge group. Links are `(direction, site)` pairs
-and plaquettes `(plane, site)` pairs, so there are `4 · nYM⁴` links and `16 · nYM⁴` plaquettes
-(`WilsonHypercubic.card_link`, `card_plaq`); the holonomy is the ordered product around the boundary
-word `U_μ(x) U_ν(x+μ̂) U_μ(x+ν̂)⁻¹ U_ν(x)⁻¹`, and the action density is Wilson's
-`1 - (1/N) Re tr` rather than the zero function — which is what makes `β` move the Gibbs measure at
-all (`WilsonHypercubic.sysWilson_phi`).
-
-DERIVED: `3` is `SU(3)` and `4` is four dimensions — the Clay problem's own data; `nYM` carries its own
-note. -/
+DERIVED: `4` is the spacetime dimension the Clay problem names. The rank and the extent are written
+`NYM` and `nYM` and carry their own notes. -/
 noncomputable def sysYM : System G3 := MassGap.WilsonHypercubic.sysWilson NYM 4 nYM
 
-/-- An axis-permutation symmetry of `sysYM`, DERIVED from the lattice geometry rather than asserted:
-relabelling the axes commutes with the unit shift (`WilsonHypercubic.shift_axis`), hence transports
-the plaquette boundary word (`bd_axis`), hence is a `Symmetry` of the gauge system. -/
+/-- The `Symmetry sysYM` carried by an axis permutation `e : Equiv.Perm (Fin 4)`, as
+`WilsonHypercubic.axisSymmetry NYM e`. It rests on `WilsonHypercubic.shift_axis` (relabelling
+commutes with the unit shift) and `bd_axis` (so the plaquette boundary word transports).
+
+Scope: axis permutations only — reflections, translations and continuous rotations are not
+constructed.
+
+DERIVED: `4` is the spacetime dimension, the size of the permuted axis set. -/
 noncomputable def symAxis (e : Equiv.Perm (Fin 4)) : Symmetry sysYM :=
   MassGap.WilsonHypercubic.axisSymmetry NYM (n := nYM) e
 
-/-- A genuine config-dependent observable: the **Wilson plaquette energy** of one plaquette — the
-physical local action density `1 - (1/3) Re tr` of its ordered-loop holonomy, not a matrix entry.
+/-- The Wilson plaquette energy of the plaquette spanning directions `(0, 1)` at the origin site:
+`WilsonAction.wilsonDensity (N := 3)` applied to `sysYM.hol` of that plaquette. It depends on the
+configuration, unlike a label-reading form.
 
-DERIVED: `3` and `4` are `G3`'s rank and the spacetime dimension, carried through from `sysYM`.
-`0` and `1` are the two directions spanning the plaquette's plane — a plane needs two, and which
-two is a naming freedom on a lattice whose axes are interchangeable (`axisSymmetry`). The site is
-the origin, immaterial by periodicity. -/
+Scope: one fixed plaquette. Which pair of directions is named is a labelling choice on a lattice
+whose axes are interchangeable by `symAxis`, and the site is the origin, which periodicity makes
+immaterial.
+
+DERIVED: `3` is the gauge rank passed to `wilsonDensity`, matching `NYM`; `4` is the spacetime
+dimension in the plaquette's type; `0` and `1` are the two directions spanning the plane — a plane
+needs exactly two — and the second `0` is the origin site `fun _ => 0`. -/
 noncomputable def O0 : sysYM.Config → ℝ :=
   fun U => MassGap.WilsonAction.wilsonDensity (N := 3)
     (sysYM.hol (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 nYM) U)
 
-/-- The reflected Schwinger form: the clamped `SU(3)` Gibbs expectation of `O0` transported by the
-axis symmetry encoded in the test configuration `j` (its Euclidean × permutation components).
+/-- The reflected Schwinger form of the family: the Gibbs expectation of `O0` reindexed by
+`symAxis (j.1 * j.2.1)`, at coupling `(a : ℝ)`, clamped by `min (max _ 0) 1`. The test configuration
+`j` carries a Euclidean permutation, a permutation component and a natural number; the spacing index
+`a` doubles as the coupling.
 
-DERIVED: `0` and `1` are the CLAMP, `min (max · 0) 1` — the interval a reflected Schwinger form is
-required to lie in (`os_rp` is its lower end, `os_form` at `B = 1` its upper), not a cut on any
-measured quantity. `3` and `4` are the rank and dimension, carried from `sysYM`. -/
+Scope: the clamp is what makes `os_rp` and the `os_form` bound available; it is applied to the
+expectation, not derived from it.
+
+DERIVED: `4` occurs twice, as the size of the axis set in each permutation component of the index
+type; `0` and `1` are the endpoints of the clamp — the interval a reflected form is required to lie
+in, with `0` the lower end used by `os_rp` and `1` the value of `B` used by `os_form`. -/
 noncomputable def QG (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) (a : ℕ) : ℝ :=
   min (max (sysYM.expect (probHaar G3) (a : ℝ)
     (fun U => O0 (Symmetry.reindex (symAxis (j.1 * j.2.1)).onLink U))) 0) 1
 
-/-- **The reflected form is Euclidean/permutation-invariant, DERIVED from Haar-invariance.** For every
-`j`, `QG j a` collapses to the clamped expectation of the *untransported* `O0`, because
-`Symmetry.expect_invariant` (Haar-invariance of the `SU(3)` product measure under the axis relabelling)
-removes the transport. This is `os_euc`/`os_perm` DERIVED rather than asserted. -/
+/-- `QG j a = min (max (sysYM.expect (probHaar G3) a O0) 0) 1` at every `j` and `a`: the transport by
+`symAxis (j.1 * j.2.1)` drops out. The single rewrite is
+`Symmetry.expect_invariant`, which holds because the product Haar measure is invariant under the
+axis relabelling.
+
+Since the right-hand side does not mention `j`, this is what discharges the `os_euc` and `os_perm`
+fields of the family: both reduce to an equality between two copies of it.
+
+DERIVED: `4` occurs twice, as the size of the axis set in each permutation component of the index
+type; `0` and `1` are the endpoints of the clamp, carried from `QG`. -/
 theorem QG_eq (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) (a : ℕ) :
     QG j a = min (max (sysYM.expect (probHaar G3) (a : ℝ) O0) 0) 1 := by
   unfold QG
   rw [Symmetry.expect_invariant sysYM (probHaar G3) (symAxis (j.1 * j.2.1)) (a : ℝ) O0]
 
-/-- Euclidean action on test configurations: multiply the Euclidean component. -/
+/-- The action of `g : Equiv.Perm (Fin 4)` on a test configuration, multiplying the first component
+and leaving the other two: `actEG g j = (g * j.1, j.2.1, j.2.2)`. It is the `actE` field of the
+family.
+
+DERIVED: `4` occurs five times, as the size of the axis set — once in the type of `g`, and twice in
+each of the argument and result types. The `.1` and `.2` are projection notation, not numerals. -/
 def actEG (g : Equiv.Perm (Fin 4)) (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) :
     Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ := (g * j.1, j.2.1, j.2.2)
 
-/-- Permutation action on test configurations: multiply the permutation component. -/
+/-- The action of `σ : Equiv.Perm (Fin 4)` on a test configuration, multiplying the second component
+and leaving the other two: `actPG σ j = (j.1, σ * j.2.1, j.2.2)`. It is the `actP` field of the
+family.
+
+DERIVED: `4` occurs five times, as the size of the axis set — once in the type of `σ`, and twice in
+each of the argument and result types. The `.1` and `.2` are projection notation, not numerals. -/
 def actPG (σ : Equiv.Perm (Fin 4)) (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) :
     Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ := (j.1, σ * j.2.1, j.2.2)
 
-/-- Mode count per spacing (`→ ∞`). -/
+/-- The mode count at spacing index `a`, as `a + 1`. It is strictly positive at every `a`, which is
+what lets `Finset.range (NaG a)` contain the index `0`, and it increases without bound.
+
+DERIVED: `1` is the offset that keeps the count nonzero at `a = 0`. -/
 def NaG (a : ℕ) : ℕ := a + 1
 
-/-! ### The spectrum, the count, and the family
+/-! ### The family, assembled through `Measure.familyOfSortedCount`
 
-A `LatticeYMFamily` carries four Osterwalder–Schrader data. On this measure three of them -- `os_rp`,
-`os_euc`, `os_perm` -- are theorems about `SU(3)` Haar-invariance and the lattice's own axis symmetry.
-The fourth, `os_gap`, asks that every mode standing above the noise edge sit below a
-spacing-independent index cutoff, and supplying THAT directly is asserting where the resolved modes
-are.
+A `LatticeYMFamily` carries four Osterwalder–Schrader data. Here `os_rp` and the `os_form` bound come
+from the clamp `QG` applies, and `os_euc` and `os_perm` from `QG_eq`. The fourth, `os_gap`, asks that
+every mode standing above the noise edge sit below a spacing-independent index cutoff.
 
-`Measure.familyOfSortedCount` refuses to take it. It asks instead for the two things a read actually
-produces -- an ORDERED spectrum, and a bound on HOW MANY of its modes clear the edge -- and derives
-`os_gap` from the pair (`os_gap_of_sorted_count`). The count is exactly what
-`ZeroMode.resolved_count_le_of_subset` obtains from the measured tension, so a family assembled this
-way has its infrared input sourced from the correlation rather than asserted about it.
+`Measure.familyOfSortedCount` derives `os_gap` (by `os_gap_of_sorted_count`) from two other inputs:
+an ordered spectrum, and a bound on how many of its modes clear the edge.
+`ZeroMode.resolved_count_le_of_subset` is one source of such a count.
 
-That is the ONLY constructor here. The unconditional family below is not a second route to the same
-interface; it is this one at a particular spectrum.
-
-WHICH EDGE. The count bound divides by the edge, so the edge is not a spectator, and
-`ScreenedGap.resolved_count_under_reported_of_raw_edge` says which one a caller may use: the floor
-computed on the identity-removed residual, since a floor taken as a share of the TOTAL weight is
-larger by the vacuum's share and therefore under-reports the count.
+The edge appears in the count bound's divisor.
+`ScreenedGap.resolved_count_under_reported_of_raw_edge` compares two candidate edges: a floor taken
+as a share of the total weight is larger than one taken on the identity-removed residual by the
+vacuum's share, and therefore reports a smaller count.
 -/
 
-/-- **The `SU(3)` 4-D gauge family on a COUNTED spectrum.**
+/-- A `Measure.LatticeYMFamily` on the index type
+`Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ`, with reflected form `QG`, actions `actEG` and `actPG`,
+mode count `NaG`, spectrum `ev`, edge `edge`, count bound `c` and `B := 1`.
 
-The reflected form `QG` is a real `SU(3)` Haar expectation over a genuine four-dimensional Wilson
-lattice, and `os_euc`/`os_perm` are proved via `Symmetry.expect_invariant` (Haar-invariance composed
-with the lattice's axis symmetry) rather than by `rfl` through an inert label. `os_rp` and the
-aperture bound `os_form` come from the clamp into `[0,1]`. `os_gap` is DERIVED from `hsorted` and
-`hcount`.
+It is `Measure.familyOfSortedCount` at those arguments. The `os_rp` and `os_form` fields come from
+the clamp `QG` applies: `le_min (le_max_right _ _) zero_le_one` for the former, and for the latter
+`QG j a ≤ 1 ≤ resolvedDim … * 1` using `hres`. The `os_euc` and `os_perm` fields are `QG_eq` on both
+sides. The `os_gap` field is derived by `familyOfSortedCount` from `hsorted` and `hcount`.
 
-Two hypotheses are named rather than hidden:
+Scope: `hcount` bounds how many modes clear the edge at each spacing; `hres` requires at least one,
+which is what makes the `os_form` bound at `B = 1` usable. Both are hypotheses, as are `ev`, `edge`
+and `c`; nothing here obtains them from a measurement.
 
-* `hcount` -- at most `c` modes clear the edge, at every spacing. This is the one the tension supplies.
-* `hres` -- at least ONE does. That is what makes `os_form` non-vacuous at `B = 1`, and it is true of
-  any read of a theory with a vacuum: the near-unit component is resolved. It is arity (`Q ≤ 1` needs
-  something to be bounded BY), not a threshold.
-
-DERIVED: the `1` in `B := 1` is the range of the clamp `QG` already applies (`min (max _ 0) 1`), not a
-scale chosen here; `zero_le_one` is its nonnegativity. -/
+DERIVED: `1` in the type is the lower bound on `resolvedDim` in `hres`, requiring at least one
+resolved mode. In the body, `4` is the spacetime dimension in the index type, and `1` is the value of
+`B`, the upper end of the clamp `QG` already applies. -/
 noncomputable def ymFamilyGaugeCounted
     (ev : ℕ → ℕ → ℝ) (edge c : ℝ)
     (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
@@ -175,14 +214,17 @@ noncomputable def ymFamilyGaugeCounted
     (fun _ j a => by rw [QG_eq, QG_eq])
     (fun _ j a => by rw [QG_eq, QG_eq])
 
-/-- **The OS0–OS3 continuum limit of the 4-D `SU(3)` gauge measure, with the infrared input counted.**
+/-- `Measure.continuum_of_family` applied to `ymFamilyGaugeCounted`. Under the same three hypotheses,
+there are a limit `q` on the family's index type and a strictly monotone `φ : ℕ → ℕ` such that
+`Q j (φ k) → q j` at every `j`, with `|q j| ≤ ⌈c⌉₊ * B`, `0 ≤ q j`, and `q` invariant under both the
+Euclidean and the permutation actions.
 
-The composition the program builds toward on the measure side: the reflected form is a genuine
-`SU(3)` Gibbs expectation over a four-dimensional periodic Wilson lattice, its Euclidean and
-permutation invariances are derived from Haar-invariance composed with the lattice's axis symmetry,
-and `os_gap` is derived from an ordered spectrum together with a bound on its resolved count. Every
-OS datum is a theorem about the measure or a quantity a read reports; none is an assertion about the
-infrared. No axiom beyond the foundational three. -/
+Scope: the conclusion is a subsequential pointwise limit of the forms `Q j`, along one subsequence
+common to all `j`. It is not a measure on `ℝ⁴`, and the invariances are equalities between values of
+`q`.
+
+DERIVED: `1` is the lower bound on `resolvedDim` in `hres`, inherited from `ymFamilyGaugeCounted`;
+`0` is the lower bound on each limit value `q j`. -/
 theorem ym_continuum_gauge_counted
     (ev : ℕ → ℕ → ℝ) (edge c : ℝ)
     (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
@@ -200,26 +242,34 @@ theorem ym_continuum_gauge_counted
 
 #print axioms ym_continuum_gauge_counted
 
-/-! ### The unconditional family: the counted one at a single supra-edge mode
+/-! ### A spectrum satisfying the three hypotheses, and the resulting hypothesis-free family
 
-`ym_continuum_gauge_counted` is conditional, and a conditional theorem whose hypotheses cannot all
-hold at once proves nothing. The spectrum below satisfies all three, so the conditional is about
-something -- and rather than leaving it beside the thing it witnesses, it IS the spectrum the
-unconditional family uses.
+`evDemo` puts weight `1` at index `0` and `0` at every other index. `resolvedDim_evDemo`,
+`evDemo_sorted`, `evDemo_count` and `evDemo_res` discharge `hsorted`, `hcount` at `c = 1` and `hres`
+at edge `1 / 2`, so `ymFamilyGauge` and `ym_continuum_gauge` carry no hypotheses.
 
-It is deliberately the shape a gapped theory has: one resolved mode standing above the floor,
-everything else beneath it. What a physical instance must supply is the same three facts about a
-MEASURED spectrum.
+The shape is one resolved mode above the floor and the rest beneath it. A different instance supplies
+the same three facts about a different spectrum; the constructor is the same.
 -/
 
-/-- A spectrum with a single supra-edge mode: the vacuum at `1`, everything else at `0`.
+/-- The spectrum `fun _a n => if n = 0 then 1 else 0`: weight `1` at index `0`, weight `0` at every
+other index, the same at every spacing. The first argument is ignored.
 
-DERIVED: `1` and `0` are the two values a single-resolved-mode spectrum takes; the floor is any
-value strictly between them and `resolvedDim_evDemo` is proved at one. Nothing is compared
-against these numbers — they ARE the spectrum, the object under discussion. -/
+Scope: two-valued, so any edge strictly between `0` and `1` resolves exactly the index `0`;
+`resolvedDim_evDemo` fixes `1 / 2`.
+
+DERIVED: `0` occurs twice — the index at which the spectrum is nonzero, and the value taken
+everywhere else; `1` is the value at that index. These are the spectrum itself, not comparisons
+against it. -/
 noncomputable def evDemo (_a n : ℕ) : ℝ := if n = 0 then 1 else 0
 
-/-- **Exactly one mode clears a floor strictly between `0` and `1`, at every spacing.** -/
+/-- `resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2) = 1` at every spacing `a`. The filter
+`{k ∈ range (NaG a) | 1 / 2 < evDemo a k}` is shown to be `{0}`: the index `0` is in range because
+`NaG a = a + 1` is positive and carries value `1`, and every other index carries `0`, which does not
+exceed `1 / 2`.
+
+DERIVED: `1` and `2` are the edge `1 / 2`, a value strictly between the spectrum's two values; the
+final `1` is the resulting count, one resolved mode. -/
 theorem resolvedDim_evDemo (a : ℕ) :
     resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2) = 1 := by
   have hfilter : (Finset.range (NaG a)).filter (fun k => (1 / 2 : ℝ) < evDemo a k) = {0} := by
@@ -234,7 +284,12 @@ theorem resolvedDim_evDemo (a : ℕ) :
       exact ⟨by simp [NaG], by norm_num⟩
   rw [resolvedDim, hfilter, Finset.card_singleton]
 
-/-- **The spectrum is ordered.** A later index never carries more weight than an earlier one. -/
+/-- `evDemo a n ≤ evDemo a m` whenever `m ≤ n`: a later index never carries more weight. The proof
+splits on whether `m` is `0`; if it is, the left side is at most `1`, and if it is not, `m ≤ n`
+forces `n` nonzero too and both sides are `0`. This is the `hsorted` hypothesis of
+`ymFamilyGaugeCounted`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem evDemo_sorted (a : ℕ) : ∀ m n : ℕ, m ≤ n → evDemo a n ≤ evDemo a m := by
   intro m n hmn
   by_cases hm : m = 0
@@ -245,32 +300,40 @@ theorem evDemo_sorted (a : ℕ) : ∀ m n : ℕ, m ≤ n → evDemo a n ≤ evDe
       intro h; exact hm (Nat.le_zero.mp (h ▸ hmn))
     simp [evDemo, if_neg hm, if_neg hn]
 
-/-- At most one mode clears the floor, so `hcount` holds at `c = 1`. -/
+/-- `(resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2) : ℝ) ≤ 1` at every spacing, immediate
+from `resolvedDim_evDemo`. This is the `hcount` hypothesis of `ymFamilyGaugeCounted` at `c = 1`.
+
+DERIVED: `1` and `2` are the edge `1 / 2`; the final `1` is the count bound `c`, the number of modes
+the spectrum places above that edge. -/
 theorem evDemo_count (a : ℕ) :
     ((resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2) : ℕ) : ℝ) ≤ 1 := by
   rw [resolvedDim_evDemo]; norm_num
 
-/-- At least one does, so `hres` holds. -/
+/-- `1 ≤ resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2)` at every spacing, immediate from
+`resolvedDim_evDemo`. This is the `hres` hypothesis of `ymFamilyGaugeCounted`.
+
+DERIVED: the leading `1` is the lower bound, at least one resolved mode; `1` and `2` are the edge
+`1 / 2`. -/
 theorem evDemo_res (a : ℕ) : 1 ≤ resolvedDim (Finset.range (NaG a)) (evDemo a) (1 / 2) := by
   rw [resolvedDim_evDemo]
 
-/-- **The constructed `SU(3)` OS-data family with DERIVED invariances, on a 4-D lattice.**
+/-- `ymFamilyGaugeCounted` at spectrum `evDemo`, edge `1 / 2` and count bound `1`, with the three
+hypotheses supplied by `evDemo_sorted`, `evDemo_count` and `evDemo_res`. It takes no arguments.
 
-The counted family at the single-supra-edge-mode spectrum. Unconditional, because the three
-hypotheses are discharged here rather than assumed -- and it is the same constructor, so there is one
-route to this interface and not two.
-
-DERIVED: the floor `1/2` is any value strictly between the two the spectrum takes; nothing depends on
-which, and `resolvedDim_evDemo` is proved for this one. It separates the resolved mode from the rest,
-which is what a floor is. -/
+DERIVED: no numeral appears in the type. In the body, `1` and `2` are the edge `1 / 2`, any value
+strictly between the spectrum's two values, and the trailing `1` is the count bound `c`. -/
 noncomputable def ymFamilyGauge : LatticeYMFamily :=
   ymFamilyGaugeCounted evDemo (1 / 2) 1 evDemo_sorted evDemo_count evDemo_res
 
-/-- **The OS0–OS3 continuum limit with genuinely-derived invariances.** `continuum_of_family` on the
-constructed four-dimensional `SU(3)` family: a subsequence and limit `q` with joint convergence, the
-temperedness bound (OS0), reflection positivity (OS2), and Euclidean (OS1) / permutation (OS3)
-invariance — the last two now flowing from Haar-invariance of the actual `SU(3)` gauge measure
-composed with the hypercubic lattice's axis symmetry, not a `rfl`. Foundational footprint only. -/
+/-- `Measure.continuum_of_family` at `ymFamilyGauge`, with no hypotheses: there exist a limit `q` on
+the family's index type and a strictly monotone `φ : ℕ → ℕ` with `Q j (φ k) → q j` at every `j`,
+`|q j| ≤ ⌈c⌉₊ * B`, `0 ≤ q j`, and `q` invariant under `actE` and `actP`.
+
+Scope: a subsequential pointwise limit of the forms along one common subsequence. The `os_rp` datum
+behind `0 ≤ q j` is the lower end of the clamp in `QG`.
+
+DERIVED: `0` is the lower bound on each limit value `q j`. No other numeral appears in the
+statement. -/
 theorem ym_continuum_gauge :
     ∃ (q : ymFamilyGauge.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => ymFamilyGauge.Q j (φ k)) atTop (nhds (q j))) ∧
@@ -284,17 +347,22 @@ theorem ym_continuum_gauge :
 #print axioms evDemo_sorted
 #print axioms ym_continuum_gauge
 
-/-! ### The flagship existence-and-gap on the genuine-measure model
+/-! ### Pairing the gap side with `ymFamilyGauge`
 
-Reuse the flagship gap side (`gapModel`, with A1/A2 discharged in `WilsonInstance`) but take the
-Osterwalder–Schrader measure to be the genuine `ymFamilyGauge` — whose invariances are derived from
-`SU(3)` Haar-invariance rather than `rfl`. The existing flagship is untouched; this is the additive,
-higher-fidelity companion (the OS-measure's OS1/OS3 are now genuine). Footprint is set by the gap
-side; the measure side contributes NO axiom (its `os_rp` is the `[0,1]` clamp, not RP). -/
+The gap side is `gapModelOf` with A1 and A2 discharged in `WilsonInstance`; the measure field is
+`ymFamilyGauge`. The axiom footprint is set by the gap side — the measure side's `os_rp` is the
+lower end of the `[0, 1]` clamp in `QG`, not reflection positivity of a measure. -/
 
-/-- The full `SU(N)` model with the junction gap data at an aperture and the **genuine gauge
-OS-measure**. Confinement enters as the hypothesis `hconf`; the mode family is arbitrary. -/
--- DERIVED: the `0` below is the hypothesis `0 ≤ β`, the boundary of the physical half-line, not
+/-- A `Measure.FullModel` whose `gap` field is `gapModelOf N s P m Δ c hdom hfe hgap`, whose `h1` and
+`h2` are `gapModelOf_A1` and `gapModelOf_A2`, and whose `measure` field is `ymFamilyGauge`.
+
+Scope: the rank `N` of the gap side is a parameter, independent of the measure's rank `NYM`;
+`ym_wilson_gauge_su3` is where the two are identified. `hconf`, `hdom`, `hfe` and `hgap` are
+hypotheses carried into the record, not discharged. The mode index type `Idx` is arbitrary.
+
+DERIVED: `0` is the lower bound on `β` in `hconf`, the boundary of the half-line on which
+confinement is required. No other numeral appears in the statement. -/
+-- The `0` above is the hypothesis `0 ≤ β`, the boundary of the physical half-line, not
 -- a threshold on any measured quantity.
 noncomputable def ymFullModelGauge (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
@@ -305,10 +373,17 @@ noncomputable def ymFullModelGauge (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMA
   h2 := gapModelOf_A2 N s P m Δ c hdom hfe hgap
   measure := ymFamilyGauge
 
-/-- **Existence and the mass gap, with the OS-measure's Euclidean/permutation invariances DERIVED from
-`SU(3)` Haar-invariance.** Same statement as `ym_existence_and_gap_model`, but the continuum measure's
-OS1 (Euclidean) and OS3 (permutation) invariances flow from the actual `SU(3)` gauge measure, not from
-a `rfl` through an inert label. -/
+/-- `Measure.existence_and_gap_of_model` at `ymFullModelGauge`. The conclusion is a conjunction of two
+groups: from the gap side, that the mode sum tends to `0` at every `β`, that `gap.μ β - gap.κ < 0`,
+and that `gap.R` is constant; and from the measure side, the subsequential limit `q` with its
+temperedness bound, nonnegativity and invariance under `actE` and `actP`.
+
+Scope: the two groups are conjoined by `existence_and_gap_of_model` without either referring to the
+other — the gap side is about a correlation's decay at rank `N`, the measure side about
+`ymFamilyGauge` at rank `NYM`. `hconf`, `hdom`, `hfe` and `hgap` are hypotheses.
+
+DERIVED: `0` occurs four times — the lower bound on `β` in `hconf`, the limit point of the mode sum,
+the comparison point in `gap.μ β - gap.κ < 0`, and the lower bound on each `q j`. -/
 theorem ym_existence_and_gap_gauge (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
@@ -327,27 +402,18 @@ theorem ym_existence_and_gap_gauge (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMA
 
 #print axioms ym_existence_and_gap_gauge
 
-/-- The `SU(N)` Wilson realisation on the **genuine gauge OS-measure**: the flagship physical parameters
-(`ymParams`: box `L=1`, confinement scale `k⋆=2π`) with the genuine-measure `ymFullModelGauge`, the
-infrared cutoff matched (`hc`).
+/-- A `WilsonRealization` with `params := ymParams N hN` (box `L = 1`, confinement scale `k⋆ = 2π`)
+and `model := ymFullModelGauge N hconf s P m Δ c hdom hfe hgap`. The `hc` field, matching the
+infrared cutoff, is `1 = 2 * π * 1 / (2 * π)`, closed by `div_self`.
 
-TWO RANKS APPEAR HERE, AND ONE OF THEM IS A PARAMETER. This carried three until `ymParams` took its
-rank as an argument:
+Scope: two ranks appear. `N` is the rank of the gap side (`μYMAt N`, `μClampAt N`) and of the
+physical parameters `ymParams N hN`. The OS measure's rank is `NYM`, fixed inside `sysYM`. They
+coincide only when `N` is instantiated at `NYM`, which `ym_wilson_gauge_su3` does; at other `N` the
+two sides are about different ranks and no declaration here asserts otherwise.
 
-* `N` is the rank of BOTH the gap side (what `μYMAt N` and `μClampAt N` are read at) and the physical
-  parameters (`ymParams N hN`). These were separate and are now one.
-* the OS measure's rank is `NYM = 3`, fixed in `sysYM` as the Clay problem's group.
-
-At `N = NYM` — `ym_wilson_gauge_su3` below — the two coincide and the realisation is a statement about
-a single theory. At other `N` it is not, and no theorem here asserts otherwise: the gap side is a claim
-about a correlation's decay and the measure side a claim about `SU(3)` Haar-invariance, and
-`existence_and_gap_of_model` conjoins them without either referring to the other. Keeping `N` general
-and instantiating separately is what makes the coincidence visible where it holds rather than assumed
-everywhere.
-
-DERIVED: `2` in `hN` is the arity of a special unitary group — the smallest rank at which `SU(N)` is
-non-abelian — and `0 ≤ β` is the boundary of the physical half-line. Neither is a cut on a measured
-quantity. -/
+DERIVED: `2` is the lower bound on `N` in `hN`, the smallest rank at which `SU(N)` is non-abelian;
+`0` is the lower bound on `β` in `hconf`, the boundary of the half-line confinement is required on.
+The `1` and `2 * π` of the `hc` field live in the body, from `ymParams`. -/
 noncomputable def ym_wilson_gauge (N : ℕ) (hN : 2 ≤ N) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
@@ -358,30 +424,21 @@ noncomputable def ym_wilson_gauge (N : ℕ) (hN : 2 ≤ N) (hconf : ∀ β, 0 �
     show (1 : ℝ) = 2 * Real.pi * 1 / (2 * Real.pi)
     rw [mul_one, div_self (show (0 : ℝ) < 2 * Real.pi by positivity).ne']
 
-/-- **THE GAP WITH ITS RATE, ON THE `SU(3)` GAUGE CONSTRUCTION.**
+/-- Given `hdom` (every active mode magnitude at `β` is at most `Real.exp (-Δ β)`), `hfe`
+(`κ₀YM - μClampAt N β ≤ c β`) and `hgap` (`c β ≤ Δ β`), the conclusion at each `β` is the conjunction
 
-`ym_existence_and_gap_gauge_wilson` concludes that the correlation tends to zero. This concludes what
-a mass gap actually asserts: GEOMETRIC decay at a named rate, on the same hypotheses, with nothing
-added.
+    κ₀YM - μClampAt N β ≤ Δ β    and    ∀ τ, ‖∑ k ∈ s β, P β k * (m β k) ^ τ‖ ≤ (∑ k ∈ s β, ‖P β k‖) * Real.exp (-Δ β) ^ τ.
 
-    ‖C(τ)‖  ≤  (∑_k ‖P_k‖) · e^{-Δβ · τ}        and        κ₀ - μ_clamp  ≤  Δβ
+The first conjunct chains `hfe` with `hgap`; the second is `geometric_bound_of_mode_bound` at the
+mode bound `Real.exp (-Δ β)`, whose nonnegativity is `Real.exp_pos`.
 
-The second half is where the entropy floor enters: the rate is bounded below by the MARGIN between
-the proved floor `κ₀ = ¼ log 3` and the measured tension. It is not fitted, not asymptotic, and not an
-existential -- it is a difference of two named quantities, and it is positive exactly when the
-measurement clears the floor.
+Scope: the bound is at a single spacing, with `Δ` an arbitrary function — it is not asserted
+positive, so the second conjunct need not decay. `hdom` identifies the mode magnitudes and is a
+hypothesis. The first conjunct bounds `Δ β` below by the difference of `κ₀YM` and `μClampAt N β`;
+whether that difference is positive is the separate `ym_mass_gap_rate_pos`.
 
-WHAT IS STILL ASSUMED, stated plainly because the hypotheses are where the content sits. `hdom` says
-the active mode magnitudes are bounded by `e^{-Δβ}`; that is the modelling identification of §2-§3,
-cited, and this theorem does not discharge it. `hfe` and `hgap` chain the floor margin into `Δ`. What
-is proved here is that GIVEN those, the decay is geometric at that rate -- which is the step the
-`Tendsto → 0` conclusion was missing, and the one the problem's statement asks for.
-
-WHAT THIS DOES NOT YET GIVE. A rate at one spacing. Uniformity in the spacing is
-`ZeroMode.gap_phys_of_fixed_screen`, which needs the aperture held at fixed PHYSICAL extent; the two
-compose but are not composed here.
-
-DERIVED: every quantity is a hypothesis of the statement. `κ₀YM` is the proved floor. -/
+DERIVED: no numeral appears in the statement. `κ₀YM` and `μClampAt N` are named quantities defined
+elsewhere, and `s`, `P`, `m`, `Δ`, `c` and `β` are the caller's. -/
 theorem ym_mass_gap_rate_gauge (N : ℕ)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
@@ -395,12 +452,14 @@ theorem ym_mass_gap_rate_gauge (N : ℕ)
 
 #print axioms ym_mass_gap_rate_gauge
 
-/-- **And the measurement clearing the floor makes the rate positive.** One way only: `Δ` is an arbitrary function here, so `0 < Δ β` may hold with `κ₀YM ≤ μClampAt N β`.
+/-- Given `hfe` (`κ₀YM - μClampAt N β ≤ c β`), `hgap` (`c β ≤ Δ β`) and `hclear`
+(`μClampAt N β < κ₀YM`), the rate satisfies `0 < Δ β`. Chaining `hfe` and `hgap` bounds `Δ β` below
+by `κ₀YM - μClampAt N β`, which `hclear` makes positive.
 
-The gap is `Δ > 0`, and this says what has to be true of the ENSEMBLE for that: the clamped tension
-below `κ₀`. That is the measured statement the certificates report, so the chain's positivity
-requirement and the experiment's verdict are the same proposition rather than two that resemble each
-other. -/
+Scope: one direction only. `Δ` is an arbitrary function, so `0 < Δ β` can hold without `hclear`; the
+converse is not stated.
+
+DERIVED: `0` is the lower bound on `Δ β`. No other numeral appears in the statement. -/
 theorem ym_mass_gap_rate_pos (N : ℕ) (c Δ : ℝ → ℝ)
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β)
     (β : ℝ) (hclear : μClampAt N β < κ₀YM) :
@@ -409,10 +468,20 @@ theorem ym_mass_gap_rate_pos (N : ℕ) (c Δ : ℝ → ℝ)
 
 #print axioms ym_mass_gap_rate_pos
 
-/-- **The existence-and-gap problem for the `SU(N)` Wilson realisation, on the genuine gauge measure.**
-Same statement as `ym_existence_and_gap` (with named physical parameters), but the continuum OS-measure's
-Euclidean/permutation invariances are DERIVED from `SU(3)` Haar-invariance rather than `rfl`. The existing
-flagship `ym_existence_and_gap` is untouched; this is the additive, higher-fidelity realisation companion. -/
+/-- `Measure.existence_and_gap_of_wilson` at `ym_wilson_gauge N hN hconf s P m Δ c hdom hfe hgap`.
+The conclusion is the same two-group conjunction as `ym_existence_and_gap_gauge`, read through the
+realisation's `model` field: the gap side's decay to `0`, the strict inequality
+`model.gap.μ β - model.gap.κ < 0` and constancy of `model.gap.R`; and the measure side's
+subsequential limit `q` with its temperedness bound, nonnegativity and invariance under `actE` and
+`actP`.
+
+Scope: adds the named physical parameters `ymParams N hN` to `ym_existence_and_gap_gauge`; the
+mathematical content of the two conclusions is the same. `hconf`, `hdom`, `hfe` and `hgap` remain
+hypotheses.
+
+DERIVED: `2` is the lower bound on `N` in `hN`, the smallest rank at which `SU(N)` is non-abelian;
+`0` occurs four times — the lower bound on `β` in `hconf`, the limit point of the mode sum, the
+comparison point in `model.gap.μ β - model.gap.κ < 0`, and the lower bound on each `q j`. -/
 theorem ym_existence_and_gap_gauge_wilson (N : ℕ) (hN : 2 ≤ N)
     (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
@@ -432,37 +501,33 @@ theorem ym_existence_and_gap_gauge_wilson (N : ℕ) (hN : 2 ≤ N)
 
 #print axioms ym_existence_and_gap_gauge_wilson
 
-/-! ### The Clay rank — where the gap side, the parameters and the measure are one group -/
+/-! ### The instantiation at `N := NYM`, where the gap side and the measure share a rank -/
 
-/-- **The `SU(3)` Wilson realisation.** `ym_wilson_gauge` at `N = NYM`.
+/-- `ym_wilson_gauge` at `N := NYM`, with `hN : 2 ≤ NYM` discharged by `norm_num`. Here one rank
+serves all three components: the gap side is read at `NYM` (`μYMAt NYM`, `μClampAt NYM`), the
+physical parameters are `ymParams NYM`, and the OS measure is built on
+`sysYM = sysWilson NYM 4 nYM`. Every occurrence is the symbol `NYM`, whose value is fixed in one
+place.
 
-This is the object the three-ranks note is about. Here there is one rank and it is `NYM = 3`:
+Scope: `hfe` and `hgap` remain hypotheses, as at every rank, and the measure side still delivers a
+subsequential pointwise limit rather than a measure on `ℝ⁴`. What the instantiation adds is that the
+two sides are about the same rank.
 
-* the gap side is read at `NYM` — `μYMAt NYM`, `μClampAt NYM`;
-* the physical parameters are `ymParams NYM`, since `ymParams` takes its rank as an argument;
-* the OS measure is built on `sysYM = sysWilson NYM 4 nYM`, the four-dimensional periodic `SU(3)`
-  Wilson lattice.
-
-`NYM` appears once, in its own definition; every use above is that one symbol. There is no numeral
-here to disagree with another numeral.
-
-WHAT THIS DOES AND DOES NOT BUY. It makes the realisation a statement about a single gauge theory,
-which the general-`N` form is not. It does not discharge `hfe` or `hgap` — those are the two open
-junction residuals, and they are open at every rank. Nor does it make the measure side stronger: what
-`Measure.continuum_of_family` proves is still a subsequential pointwise limit, not a measure on `ℝ⁴`.
-The rank was never what those depended on, and tying it does not pretend otherwise.
-
-DERIVED: every numeral here is the Clay problem's own data or a boundary, none a cut on a measured
-quantity -- `3` is the rank `SU(3)` (written `NYM` everywhere it is used), `4` is four-dimensional
-spacetime, and `0` is the boundary of the physical half-line `0 <= beta`. -/
+DERIVED: `0` is the lower bound on `β` in `hconf`, the boundary of the half-line confinement is
+required on. The rank is written `NYM` throughout, so no rank numeral appears in the statement; the
+dimension `4` is inside `sysYM`. -/
 noncomputable def ym_wilson_gauge_su3 (hconf : ∀ β, 0 ≤ β → μYMAt NYM β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt NYM β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) : WilsonRealization :=
   ym_wilson_gauge NYM (by norm_num) hconf s P m Δ c hdom hfe hgap
 
-/-- The `SU(3)` realisation's physical rank IS the rank its OS measure is built at — the identity the
-general-`N` form cannot state, and the whole point of taking the rank as a parameter. -/
+/-- `(ym_wilson_gauge_su3 hconf s P m Δ c hdom hfe hgap).params.N = NYM`, by `rfl`: the realisation's
+physical rank is the same symbol the OS measure is built at. The general-`N` form cannot state this,
+since there the two ranks are independent parameters.
+
+DERIVED: `0` is the lower bound on `β` in `hconf`. The rank is written `NYM` on both sides, so no
+rank numeral appears. -/
 theorem ym_wilson_gauge_su3_rank (hconf : ∀ β, 0 ≤ β → μYMAt NYM β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))

@@ -8,71 +8,83 @@ import MassGap.WeakArm
 import MassGap.LagTwoEight
 
 /-!
-# MassGap.ClayAssembly — the remaining distance to the Clay statement, as a type
+# MassGap.ClayAssembly — two hypotheses as a structure, and facts about what they do and do not give
 
-Every other module in this tree proves something. This one states what is NOT proved, in one place,
-against the genuine objects, so that the distance to the Clay statement is a TYPE rather than prose
-in a planning document. `ClayRemaining` is that type. A term of it, together with what the tree
-already proves, is the Clay statement; there is no term of it, and each field names why.
+`ClayRemaining` is a structure with two fields, each a `Prop` stated against named objects rather
+than against a model or an opaque predicate:
 
-## Why a structure of hypotheses rather than a conditional theorem
+* `I1_lagTwo` — a constant `K` with `0 < K < LagTwoSix.lagTwoThresholdSix` bounding the lag-two ratio
+  of `wilsonCorrAt 5` at every `β ≥ 0`.
+* `I2_clustering` — one constant `L` making `MassGap.d2At N` Lipschitz in `β`, at every aperture `N`.
 
-`ApertureRoute.FlagshipAt` is already a conditional theorem, and `FlagshipScope` is the reason that
-is not enough: `flagship_for_bogus` discharges the ENTIRE flagship conjunction for `bogusYM`, whose
-tension is the constant zero and which contains no read, no correlation, no lattice and no gauge
-group. A conditional whose conclusion a fabricated object satisfies measures nothing. So every field
-below is stated against `wilsonCorrAt` / `GNSHilbert.ymH` / the Wilson Gibbs measure by name, which
-is what keeps a fabricated witness out: `bogusYM` has no `wilsonCorrAt` in it to satisfy `I1` with.
+`lagTwoRatioSix_of_clayRemaining` shows the first field is `LagTwoSix.LagTwoRatioSix` with an extra
+`0 < K` conjunct, and `flagship_of_clayRemaining` carries it through
+`LagTwoSix.confines_of_lagTwoRatioSix` to `ApertureRoute.FlagshipAt`. `I2_clustering` has no consumer
+here.
 
-## The four open inputs, and they are NOT independent
+## Facts about a fixed extent
 
-`I1` is B5, the one open inequality. `I2` is the clustering estimate B5's own middle coupling range
-needs. `I3` is asymptotic scaling. `I4` is the Hamiltonian. The dependencies are the content:
+`corr_at_max_lag_eq_lag_one` proves `ρ(N) = ρ(1)` at every aperture `N ≥ 1` and every real coupling:
+`Moment.circLag ⟨N⟩ = min N 1 = 1 = circLag ⟨1⟩`, and
+`MomentShape.wilsonCorrAt_circLag_congr` carries the values across.
+`no_fixed_extent_decay_past_half_period` and `I1_is_not_clustering` are the same fact restated. So no
+statement of the form "the correlation is below `ε` beyond separation `r`" holds at fixed extent with
+`r` past the half period, whatever `ε` is.
 
-* **`I2` is upstream of `I1`.** B5 is a `∀ β ≥ 0` statement. Strong coupling closes small `β` and
-  weak coupling is asymptotic at large `β`; the middle is `Interior.d2_le_of_analytic_grid`, whose
-  every analytic step is proved and whose Lipschitz constant is
-  `WilsonAnalytic.cov_bound_extensive`'s `4M·#Plaq`. At the Clay reads the aperture IS the extent, so
-  `CompactBeta.clay_covariance_constant_not_aperture_uniform` proves that constant exceeds every
-  bound. The volume-free alternatives `cov_bound_local` and `cov_bound_summable` take clustering as
-  an ARGUMENT. So `I1` is not reachable without `I2`.
-* **`I3` is upstream of `I1` TOO, and that is the part a planning document keeps losing.**
-  `corr_at_max_lag_eq_lag_one` below proves `ρ(N) = ρ(1)` at EVERY aperture and EVERY real coupling:
-  the correlation at the largest lag IS the correlation at lag one. A fixed-extent periodic
-  correlation therefore does not decay — it returns. `Complete.ym_wilson_decay_to_half_period` says
-  the same thing from the spectral side and says it is all a gap buys on a torus. Clustering in the
-  true sense is the `n → ∞` statement, so it is downstream of the infinite-volume limit, which is
-  `I3`'s half of C2.
-* **`I3` is upstream of C6**, by `LatticeTranslNoGo.transl_eq_id_of_finite_order` and
-  `addHom_to_int_lattice_eq_zero`: `OSData.transl` is an `ℝ⁴` action, `ℝ⁴` is divisible, and no
-  lattice translation group is — at finite extent by finite order, on `ℤ⁴` because `ℤ` is not
-  divisible either.
-* **`I4` is independent of the other three** and is the one C1 item that does not wait on the
-  continuum: `GNSHilbert.ymH` exists at fixed spacing.
+`hilbert_space_half_of_C1_is_proved` records unconditionally that `GNSHilbert.ymOmega` is a unit
+vector and `GNSHilbert.ymH` is nontrivial.
 
-So the dependency graph has ONE root, `I3`, and `I2` beside it; `I1` waits on both; `I4` waits on
-nothing. That is the ordering, and it is why "close B5 first" is the wrong plan.
+## The transfer operator
 
-## What is already proved, and is therefore NOT in the structure
+`TransferMovesSomething D` is `∃ x, GNSHilbert.opT D x ≠ x`. Two sufficient conditions:
+`transferMovesSomething_of_seminorm_ne_zero`, from a nonzero seminorm of `cT z - z`, and
+`transferMovesSomething_of_pairing_ne`, from one pairing that differs between `T z` and `z`. Neither
+is a characterisation; the converses are not stated.
 
-`GNSHilbert.ymH` is a complete complex Hilbert space built from the genuine Wilson Gibbs reflection
-form, `ymOmega` is a unit vector, and `nontrivial_ymH` proves the space is not the zero space. Clay
-§6.5 makes the Hilbert space part of the solution and it is done. `hilbert_space_half_of_C1_is_proved`
-restates that here unconditionally, so the structure carries only what is open.
+`form_iterate_antitone`, `finite_order_contraction_is_isometry` and its `pow` form, and
+`no_decay_of_finite_order` show that on a `TransferData` finite order plus contractivity forces the
+form to be preserved, so such a `T` is an isometry of the form and admits no geometric decay factor.
+`HalfLineTransfer.shiftObs_pow_period` supplies that hypothesis on the periodic lattice.
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` shows the hypothesis fails on `ℤ⁴` given a
+separating function on the group, which `HaarVariance.reTr_flipEl_ne_reTr_one` supplies at every
+`SU (m+2)` and not below.
 
-## The footprint, and the one place it is not foundational
+## Facts about the two candidate hypotheses
 
-Every THEOREM here is foundational-only. The structure TYPE `ClayRemaining` is not: it carries
-`Complete.wilson_reflection_positive_at`, the named axiom, and the reason is worth recording rather
-than hiding. `I2_clustering` quantifies over EVERY aperture `N`, and `Complete.d2At N β` at general
-`N` routes through reflection positivity — while the PROVED version,
-`Complete.wilson_reflection_positive_at_even`, covers even extent `≥ 4` only. Extent four is `2·2`,
-so the Clay instance itself does not use the axiom; an APERTURE-UNIFORM statement necessarily does,
-because it reaches the odd apertures the proof does not.
+`scaling_as_stated_is_vacuous` exhibits `exp(−β)` satisfying "a positive function tending to zero",
+so that statement is discharged without reference to a lattice or a gauge group.
+`MassGap.AsymptoticScaling` states the version tying `a(β)` to a lattice mass.
 
-That is a fact about the clustering input, not an accident of how the field is written: any bound
-uniform in the aperture has to say something at apertures where this tree's reflection positivity is
-cited rather than proved.
+`summable_clustering_is_weaker_than_a_gap` and `bounded_second_moment_clustering_is_weaker_than_a_gap`
+exhibit `1/(d+1)²` and `1/(d+1)⁴`: nonnegative, with the stated summability, and dominated by no
+geometric profile. So summability, and summability of the second moment, each hold of profiles no
+geometric bound covers.
+
+`CompactBeta.profile_to_moment_not_uniformly_lipschitz` shows that a volume-free bound on individual
+correlators does not give `I2_clustering`, the lost factor being `((N+1)/2)²`, because
+`d2At N β = ∑_d p_d · circLag(d)²` weights each lag by the square of its circle distance.
+
+`flat_profile_admits_no_uniform_quartic_constant` refutes `∃ C ≥ 0, ∀ m ≥ 1, 1 ≤ C/m⁴`, by
+`WeakArm.exists_lag_halving`. So an argument that never reads a profile's decay cannot produce a
+uniform quartic constant, the flat profile being a counterexample.
+
+`coreRate_lt_one_forces_small_beta` proves `coreRate K β < 1` forces `β < 0.12` at every `K`, because
+`coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` carries `e^{2β}−1` as a factor and the other two factors are
+at least one.
+
+`I2_needs_clustering_not_the_extensive_bound` restates
+`CompactBeta.clay_covariance_constant_not_aperture_uniform`: for every candidate constant there is an
+aperture at which `4M·#Plaq` exceeds it.
+
+## Scope
+
+Every theorem here is foundational-only. The structure type `ClayRemaining` is not: `I2_clustering`
+quantifies over every aperture `N`, and `MassGap.d2At N β` at general `N` routes through
+`Complete.wilson_reflection_positive_at`, while the proved version
+`Complete.wilson_reflection_positive_at_even` covers even extent at least four. So
+`flagship_of_clayRemaining` and `lagTwoRatioSix_of_clayRemaining` carry that axiom through the
+structure, although `LagTwoSix.confines_extent_six_of_lag_two_ratio` — the route they run through —
+is itself foundational-only, spending the proved `wilson_reflection_positive_at_even 5 3`.
 
 Build: `python research/code/lean_build.py build MassGap.ClayAssembly`.
 -/
@@ -81,22 +93,19 @@ namespace MassGap.ClayAssembly
 
 open Filter
 
-/-! ## 1. A fixed-extent correlation does not decay — it returns -/
+/-! ## 1. The correlation at the largest lag -/
 
-/-- **`ρ(N) = ρ(1)`: THE CORRELATION AT THE LARGEST LAG IS THE CORRELATION AT LAG ONE.**
+/-- `wilsonCorrAt N β ⟨N⟩ = wilsonCorrAt N β ⟨1⟩` at every aperture `N ≥ 1` and every real coupling.
+`Moment.circLag d = min d (N+1−d)`, so `circLag ⟨N⟩ = min N 1 = 1 = circLag ⟨1⟩`, and
+`MomentShape.wilsonCorrAt_circLag_congr` carries the values across.
 
-At every aperture `N ≥ 1` and every real coupling. `Moment.circLag d = min d (N+1−d)`, so
-`circLag ⟨N⟩ = min N 1 = 1 = circLag ⟨1⟩`, and `MomentShape.wilsonCorrAt_circLag_congr` — circle
-symmetry, proved at every aperture and coupling — carries the values across.
+So on a periodic lattice the largest lag carries the lag-one value. A decay statement past the half
+period is therefore not available at fixed extent; `Complete.ym_wilson_decay_to_half_period` reaches
+the same point from the spectral side.
 
-**This is why B5 at a fixed extent cannot be clustering.** Clustering asks the connected correlator to
-become small at large separation; on a periodic lattice the largest separation is not large, it is
-lag one seen from the other side. `Complete.ym_wilson_decay_to_half_period` reaches the same wall from
-the spectral side and its docstring says so: past `n/2` the periodic correlation turns back up, and
-clustering in the true sense is the `n → ∞` statement.
-
-DERIVED: no numeral is chosen. `1` is the lag whose circle distance the largest lag shares, and `N`
-is the largest element of `Fin (N+1)`. -/
+DERIVED: no numeral is chosen. `1` is the lower bound on `N` in `hN` and the lag whose circle
+distance the largest lag shares — the two coincide, since `min N 1 = 1` exactly when `1 ≤ N` — and
+`N` is the largest element of `Fin (N + 1)`. -/
 theorem corr_at_max_lag_eq_lag_one (N : ℕ) (hN : 1 ≤ N) (β : ℝ) :
     MassGap.wilsonCorrAt N β ⟨N, Nat.lt_succ_self N⟩
       = MassGap.wilsonCorrAt N β ⟨1, Nat.lt_succ_of_le hN⟩ := by
@@ -107,10 +116,13 @@ theorem corr_at_max_lag_eq_lag_one (N : ℕ) (hN : 1 ≤ N) (β : ℝ) :
   simp only []
   omega
 
-/-- **THE SAME FACT AS A REFUTATION.** There is no aperture at which the Wilson correlation is
-smaller at the largest lag than at lag one — not by any margin, at any coupling. So no statement of
-the form "the correlation is below `ε` beyond separation `r`" can hold at fixed extent with `r` past
-the half period, however `ε` is chosen. -/
+/-- `¬ (wilsonCorrAt N β ⟨N⟩ < wilsonCorrAt N β ⟨1⟩)` at every aperture `N ≥ 1` and every real
+coupling: `corr_at_max_lag_eq_lag_one` and `lt_irrefl`.
+
+So the correlation is never smaller at the largest lag than at lag one, by any margin.
+
+DERIVED: `1` is `corr_at_max_lag_eq_lag_one`'s — the lower bound on `N` and the lag compared
+against. -/
 theorem no_fixed_extent_decay_past_half_period (N : ℕ) (hN : 1 ≤ N) (β : ℝ) :
     ¬ (MassGap.wilsonCorrAt N β ⟨N, Nat.lt_succ_self N⟩
         < MassGap.wilsonCorrAt N β ⟨1, Nat.lt_succ_of_le hN⟩) := by
@@ -119,12 +131,16 @@ theorem no_fixed_extent_decay_past_half_period (N : ℕ) (hN : 1 ≤ N) (β : �
 
 /-! ## 2. The half of C1 that is proved, restated so the structure need not carry it -/
 
-/-- **CLAY §6.5's HILBERT SPACE EXISTS, UNCONDITIONALLY.** A complete complex inner-product space
-built from `ReflectionStrong.wilsonGibbsReflForm` — the genuine Wilson Gibbs reflection form — with a
-unit vacuum and provably more than the zero vector in it. No coupling condition, no hypothesis.
+/-- `‖GNSHilbert.ymOmega …‖ = 1` and `Nontrivial (GNSHilbert.ymH …)`, at `N ≠ 0`, even extent
+`n = 2 * m` with `0 < m`, and every real `β`. The conjunction of `GNSHilbert.ymOmega_norm` and
+`GNSHilbert.nontrivial_ymH`.
 
-Stated here so that `ClayRemaining` carries only what is OPEN: the Hilbert space is not in it because
-it is done. What remains of C1 is the Hamiltonian, which is `TransferMovesSomething` below. -/
+`ymH` is a complete complex inner-product space built from
+`ReflectionStrong.wilsonGibbsReflForm`. No condition on the coupling.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the strict lower bound on `m` in
+`hm0`. `2` in `hm : n = 2 * m` is the reflection geometry's. `1` is the norm asserted of the vacuum,
+`ymOmega_norm`'s normalisation. -/
 theorem hilbert_space_half_of_C1_is_proved {d n N : ℕ} [NeZero n]
     (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     ‖MassGap.GNSHilbert.ymOmega hN τ a m hm hm0 β‖ = 1
@@ -132,61 +148,50 @@ theorem hilbert_space_half_of_C1_is_proved {d n N : ℕ} [NeZero n]
   ⟨MassGap.GNSHilbert.ymOmega_norm hN τ a m hm hm0 β,
     MassGap.GNSHilbert.nontrivial_ymH hN τ a m hm hm0 β⟩
 
-/-- **`I4`, THE HAMILTONIAN'S OPERATOR, STATED SO THAT `T = 1` FAILS IT.** A `TransferData` whose
-induced operator MOVES something.
+/-- The `Prop` `∃ x : GNSHilbert.H D.toReflForm, GNSHilbert.opT D x ≠ x`: the operator induced by a
+`TransferData` moves some vector of the GNS space.
 
-The `∃ x, opT D x ≠ x` is the whole content and it is not decoration.
-`GNSHilbert.ym_target_discharged_trivially` builds `trivialTransfer`, an UNCONDITIONAL `TransferData`
-on the genuine Wilson slab algebra with no premise at all, discharging every clause of "Hilbert
-space, unit vacuum, positive self-adjoint contraction with `TΩ = Ω`" — and a sixth conjunct saying
-`T` is the IDENTITY. `shiftSlab_eq_id` proves the lattice shift is the identity on `SlabShiftStable`'s
-own premise, and `HalfLineTransfer.shiftObs_pow_period` proves the shift has finite order, so a
-finite-order contraction is an isometry and carries no decay. Every operator on a PERIODIC carrier
-fails this predicate provably.
+Written so that the identity operator fails it. `GNSHilbert.ym_target_discharged_trivially` builds
+`trivialTransfer`, an unconditional `TransferData` on the Wilson slab algebra discharging every
+clause of "Hilbert space, unit vacuum, positive self-adjoint contraction with `TΩ = Ω`", together
+with a sixth conjunct saying `T` is the identity.
 
-**⛔ ON `ℤ⁴` AT RANK AT LEAST TWO IT IS NOT REFUTED.**
-`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` proves `T ≠ 1` on the half-space algebra at
-every `SU (m+2)`, so neither `shiftSlab_eq_id` nor `shiftObs_pow_period` applies and the predicate is
-not refuted there. Nor is it proved: motion in the ALGEBRA is not motion in the QUOTIENT, and the two
-lemmas below give SUFFICIENT conditions for the predicate — not a characterisation of it.
+On a periodic carrier every such operator fails this predicate: `GNSHilbert.shiftSlab_eq_id` makes
+the lattice shift the identity on `SlabShiftStable`'s premise, and
+`HalfLineTransfer.shiftObs_pow_period` gives the shift finite order, which
+`finite_order_contraction_is_isometry` below turns into an isometry of the form.
 
-**AT `SU 0` AND `SU 1` NOTHING IS FORMALISED EITHER WAY.** No separating function exists, so
-`transferData_T_ne_id_of_rank_two` says nothing; and the tree carries no `Subsingleton (SU 0)`, no
-lemma that `halfSpaceAlg` is the constants at a singleton group, and nothing about `T` or `opT`
-there. The expected answer is that the predicate fails, and it is not a theorem here.
+On `ℤ⁴` at rank at least two neither direction is established here.
+`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` gives `T ≠ 1` on the half-space algebra at
+every `SU (m+2)`, which is about the map; motion in the algebra is not motion in the GNS quotient,
+since `opT [F] = [F]` whenever `T F − F` lies in the null space of the form. The two lemmas below
+give sufficient conditions for the predicate, not a characterisation. At `SU 0` and `SU 1` no
+separating function is available and nothing is stated either way.
 
-`-log T` needs `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary and not
-sufficient; it is stated as the first thing that is missing, not as the whole of C1's remainder.
+`-log T` requires `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary for it and
+not sufficient.
 
-DERIVED: no numeral is chosen and none is a level or a threshold. The literals in this declaration
-are the identities of the algebraic instances it quantifies over — `0` and `1` of the scalar ring in
-`AddCommGroup A` and `Module ℝ A` — and they reach the statement through those instances rather than
-through anything this file decides. -/
+DERIVED: no numeral is chosen and none is a level. The literals reaching this statement are the
+identities of the algebraic instances it quantifies over — the `0` and `1` of the scalar ring in
+`AddCommGroup A` and `Module ℝ A` — and they enter through those instances. -/
 def TransferMovesSomething {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) : Prop :=
   ∃ x : MassGap.GNSHilbert.H D.toReflForm, MassGap.GNSHilbert.opT D x ≠ x
 
-/-- **⭐⭐ WHAT IS LEFT OF `TransferMovesSomething`, ONCE `T ≠ 1` IS KNOWN.**
+/-- `TransferMovesSomething D` follows from `‖cT D z - z‖ ≠ 0` at a single `z : Pre D.toReflForm`.
 
-The predicate holds as soon as the form does not annihilate a single difference `T z - z`. `H` is the
-SEPARATED completion, so `[w] = 0` exactly when the seminorm of `w` is zero — that is what separation
-means — and `opT [z] = [z]` is therefore `‖cT z - z‖ = 0`.
+`H` is the separated completion, so a class vanishes exactly when the seminorm of a representative
+does, and `opT [z] = [z]` would make `‖cT z - z‖ = 0`.
 
-**⛔ IT IS SUFFICIENT, AND THE CONVERSE IS NOT WRITTEN.** `opT = id` would force the seminorm to
-vanish at every `z` by `UniformSpace.Completion.induction_on`, which `GNSHilbert` already uses four
-times, `opT` being a bundled `ContinuousLinearMap` so continuity is free. The converse is a short
-lemma nobody has written, not a missing ingredient. As it stands this says one way to get the
-predicate, not what the predicate amounts to.
+Sufficient, not a characterisation: `opT = id` would force the seminorm to vanish at every `z` by
+`UniformSpace.Completion.induction_on`, `opT` being a bundled `ContinuousLinearMap`, but that
+converse is not stated here. The hypothesis is equivalent to
+`transferMovesSomething_of_pairing_ne`'s, by Cauchy–Schwarz on `Pre`'s
+`PreInnerProductSpace.Core` in one direction and `w := cT z - z` in the other; neither direction is
+formalised.
 
-`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` proves the shift is not the identity on the
-half-space ALGEBRA at every `SU (m+2)`, and that is strictly weaker than this: motion in the algebra is not motion in the
-quotient. Nothing in the tree decides the difference.
-
-**AND IT IS EQUIVALENT TO `transferMovesSomething_of_pairing_ne`'s HYPOTHESIS**, not weaker than it:
-`Pre` carries a `PreInnerProductSpace.Core`, so Cauchy–Schwarz gives one direction, and taking
-`w := cT z - z` gives the other. Neither direction is formalised here.
-
-DERIVED: the `0` is the seminorm value that separation quotients away. -/
+DERIVED: `0` is the seminorm value the hypothesis excludes, which is the value separation quotients
+away; it is the only numeral. -/
 theorem transferMovesSomething_of_seminorm_ne_zero {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (z : MassGap.GNSHilbert.Pre D.toReflForm)
     (h : ‖MassGap.GNSHilbert.cT D z - z‖ ≠ 0) :
@@ -201,32 +206,25 @@ theorem transferMovesSomething_of_seminorm_ne_zero {A : Type*} [AddCommGroup A] 
 
 #print axioms transferMovesSomething_of_seminorm_ne_zero
 
-/-- **⭐⭐⭐ AND THE SAME THING AS PHYSICS: ONE TWO-POINT FUNCTION THAT CHANGES IN ONE TIME STEP.**
+/-- `TransferMovesSomething D` follows from a single pair `z`, `w` whose pairing differs between
+`cT D z` and `z`: if `opT` fixed the class of `z` it would fix every pairing against it.
 
-If `opT` fixes a class it fixes every pairing against that class, so a single pair `z`, `w` whose
-Gibbs pairing differs between `T z` and `z` already gives `TransferMovesSomething`. Taking `w = z`
-reads: the lag-one two-point function at `z` differs from the lag-zero one.
+Taking `w = z` reads as the lag-one pairing at `z` differing from the lag-zero one.
 
-**⛔ IT IS SUFFICIENT, AND IT IS ABOUT THE FORM RATHER THAN THE MAP.**
-`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` gives `T ≠ 1` on the half-space algebra at
-every `SU (m+2)`;
-that is about the MAP. This is about the FORM, and the two differ because `H` is the separated
-completion. **It is not a characterisation** — the converse is a short unwritten lemma, by
-`UniformSpace.Completion.induction_on` — and its hypothesis is EQUIVALENT to the seminorm form's
-rather than weaker, by Cauchy–Schwarz on `Pre`'s core in one direction and `w := cT z - z` in the
-other. Neither direction is formalised.
+Sufficient, not a characterisation, and about the form rather than the map —
+`ReflectionHalfSpace.transferData_T_ne_id_of_rank_two` is about the map, and the two differ because
+`H` is the separated completion. Its hypothesis is equivalent to
+`transferMovesSomething_of_seminorm_ne_zero`'s, by Cauchy–Schwarz in one direction and
+`w := cT z - z` in the other; neither direction is formalised.
 
-What no state in the tree is known to have is a NON-CONSTANT half-space observable whose correlation
-moves under one time step. At the CONSTANT observable both correlations are known and EQUAL —
-`InfiniteReflection.stateReflForm_vac_norm` gives lag zero `= 1` and `TransferData.T_vac` gives lag
-one `= 1` — so the one observable whose correlations are known is one this hypothesis excludes.
+At the constant observable the hypothesis fails: `InfiniteReflection.stateReflForm_vac_norm` gives
+the lag-zero pairing `1` and `TransferData.T_vac` gives the lag-one pairing `1`.
 
-No inequality and no positivity enters the proof step: it is `GNSHilbert.opT_coe` and `cTL_apply`,
-that `opT` agrees with `cT` on the image of `Pre`, together with `inner_coe`. Positivity is in the
-ambient objects — `Pre`'s seminorm exists because `Transfer.ReflForm.form_nonneg` discharges the
-core's nonnegativity — not avoided.
+The proof uses `GNSHilbert.opT_coe`, `cTL_apply` and `inner_coe`; no inequality and no positivity
+enters that step, although `Pre`'s seminorm exists because `Transfer.ReflForm.form_nonneg` discharges
+the core's nonnegativity.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. `D`, `z` and `w` are the caller's. -/
 theorem transferMovesSomething_of_pairing_ne {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (z w : MassGap.GNSHilbert.Pre D.toReflForm)
     (h : MassGap.OSPositivity.cform D.toReflForm.toPreForm
@@ -246,32 +244,35 @@ theorem transferMovesSomething_of_pairing_ne {A : Type*} [AddCommGroup A] [Modul
 
 #print axioms transferMovesSomething_of_pairing_ne
 
-/-! ## 3. The remaining distance -/
+/-! ## 3. The two hypotheses -/
 
-/-- **THE FOUR OPEN INPUTS, against the genuine objects.**
+/-- A structure with two fields, each a `Prop` about named objects rather than about a model or an
+opaque predicate:
 
-Each field is a statement about `wilsonCorrAt`, the Wilson Gibbs measure, or `GNSHilbert.ymH` by
-name. None is about a model, a fabricated spectrum, or an opaque `Prop`, which is the failure
-`FlagshipScope.flagship_for_bogus` exhibits and `WightmanData.trivialOSData` exhibits on the OS side.
+* `I1_lagTwo` — a constant `K` with `0 < K < LagTwoSix.lagTwoThresholdSix` bounding
+  `wilsonCorrAt 5 β 2` by `K * wilsonCorrAt 5 β 0` at every `β ≥ 0`.
+* `I2_clustering` — one constant `L ≥ 0` making `MassGap.d2At N` Lipschitz in `β` with that constant,
+  at every aperture `N`.
 
-* `I1_lagTwo` — **B5.** The one open inequality, at the extent the Clay instance uses. `K` is the
-  caller's and the thresholds are `LagTwoBound.lagTwoThreshold`,
-  `LagTwoQuadratic.lagTwoThresholdQuad` and `LagTwoSix.lagTwoThresholdSix`.
-* `I2_clustering` — the aperture-uniform covariance bound. Stated as: ONE constant `L`, at EVERY
-  aperture and every coupling, bounding the β-derivative of the substrate. This is exactly what
-  `CompactBeta.clay_covariance_constant_not_aperture_uniform` proves the unconditional constant is
-  not.
-Two of the four inputs are deliberately NOT fields, and the reasons differ. `I3`, asymptotic scaling,
-is absent because the obvious statement of it is VACUOUS — `scaling_as_stated_is_vacuous` proves it
-is discharged by `exp(−β)` — and the real statement needs a correlation length in lattice units that
-this tree does not have. `I4`, the Hamiltonian, is absent because stating it needs the `TransferData`
-it is about, so it is `TransferMovesSomething` above, parameterised by that datum. -/
+`CompactBeta.clay_covariance_constant_not_aperture_uniform` shows the unconditional constant
+`4M·#Plaq` is not such an `L`.
+
+Neither field mentions a spacing function or a `TransferData`. `scaling_as_stated_is_vacuous` shows
+the obvious statement of a spacing is discharged by `exp(−β)`, and `MassGap.AsymptoticScaling` states
+the version tying it to a lattice mass; the transfer-operator statement is
+`TransferMovesSomething` above, which needs the `TransferData` it is about as a parameter.
+
+DERIVED: `5` is the `N` of `wilsonCorrAt N`, so the lag index type is `Fin 6` — extent six, matching
+`LagTwoSix.lagTwoThresholdSix`. `2` and `0` are lag indices, the lag-two ratio's numerator and
+denominator. `0` is also the strict lower bound on `K`, the lower bound on `β`, and the lower bound
+on `L`; `lagTwoThresholdSix` is a closed form and not a numeral. -/
 structure ClayRemaining where
-  /-- **B5.** -/
+  /-- A single `K` strictly between `0` and `LagTwoSix.lagTwoThresholdSix` bounding the lag-two ratio
+  of `wilsonCorrAt 5` at every nonnegative coupling. -/
   I1_lagTwo : ∃ K : ℝ, 0 < K ∧ K < MassGap.LagTwoSix.lagTwoThresholdSix ∧
     ∀ β : ℝ, 0 ≤ β →
       MassGap.wilsonCorrAt 5 β ⟨2, by omega⟩ ≤ K * MassGap.wilsonCorrAt 5 β ⟨0, by omega⟩
-  /-- **Clustering, uniform in the aperture.** -/
+  /-- A single nonnegative `L` making `d2At N` Lipschitz in `β` at every aperture `N`. -/
   I2_clustering : ∃ L : ℝ, 0 ≤ L ∧
     ∀ (N : ℕ) (β₁ β₂ : ℝ),
       |MassGap.d2At N β₁ - MassGap.d2At N β₂| ≤ L * |β₁ - β₂|
@@ -279,16 +280,15 @@ structure ClayRemaining where
 #print axioms ClayRemaining
 #print axioms TransferMovesSomething
 
-/-! ## ⭐ The consumer
+/-! ## The consumers -/
 
-`ClayRemaining` typed what is open and nothing took it anywhere, so that these are the remaining
-inputs was prose beside a structure. The arrow below is the check.
--/
+/-- `ClayRemaining → LagTwoSix.LagTwoRatioSix`: destructuring `I1_lagTwo` and dropping its `0 < K`
+conjunct, which `LagTwoRatioSix` does not carry.
 
-/-- **`I1_lagTwo` IS `LagTwoSix.LagTwoRatioSix`**, carrying a `0 < K` conjunct the ratio route never
-reads.
+So the first field is `LagTwoRatioSix` with one extra conjunct.
 
-DERIVED: `5` is the aperture index of extent six (`N + 1 = 6`); `2` and `0` are lag indices. -/
+DERIVED: `5` is the `N` of `wilsonCorrAt N`, extent six; `2` and `0` are lag indices and `0` is also
+the discarded lower bound on `K`. All are `ClayRemaining`'s. -/
 theorem lagTwoRatioSix_of_clayRemaining (R : ClayRemaining) :
     MassGap.LagTwoSix.LagTwoRatioSix := by
   obtain ⟨K, _hK0, hKlt, hbound⟩ := R.I1_lagTwo
@@ -296,37 +296,27 @@ theorem lagTwoRatioSix_of_clayRemaining (R : ClayRemaining) :
 
 #print axioms lagTwoRatioSix_of_clayRemaining
 
-/-- **⭐ THE REMAINING INPUT REACHES THE TREE'S FINISH LINE — AND ONE FIELD DOES IT.**
+/-- `ClayRemaining → ApertureRoute.FlagshipAt (…)`:
+`lagTwoRatioSix_of_clayRemaining` followed by `LagTwoSix.confines_of_lagTwoRatioSix` and
+`ApertureRoute.flagship_of_confinement_at_an_aperture`.
 
-`ApertureRoute.FlagshipAt` is a pure function of `ApertureRoute.ConfinesAtAnAperture`, and
-`LagTwoSix.confines_of_lagTwoRatioSix` takes the extent-six lag-two ratio straight to it. So this
-destructures `I1_lagTwo` alone. **`I2_clustering` still has no consumer anywhere in the tree**, and
-this does not give it one: `I2` is a ROUTE to `I1` rather than a second requirement for THIS
-conclusion, and § above records that its stated form is not the bound the moment weights need.
+It destructures `I1_lagTwo` alone; `I2_clustering` is not read here and has no consumer in this
+module.
 
-**⚠ IT CARRIES THE NAMED AXIOM, AND SO DOES THE THEOREM ABOVE IT.** `#print axioms` reports
-`Complete.wilson_reflection_positive_at` on both, inherited from `ClayRemaining` itself — the
-structure's `I2_clustering` field is stated on `Complete.d2At` at EVERY aperture, and `d2At` at
-general `N` routes through the axiom, as § *The footprint* above records.
+Scope. `#print axioms` reports `Complete.wilson_reflection_positive_at` on this and on
+`lagTwoRatioSix_of_clayRemaining`, inherited from `ClayRemaining`, whose `I2_clustering` field is
+stated on `d2At` at every aperture. The route itself does not need it:
+`LagTwoSix.confines_extent_six_of_lag_two_ratio` is foundational-only, spending the proved
+`Complete.wilson_reflection_positive_at_even 5 3`, so a caller holding
+`LagTwoSix.LagTwoRatioSix` and using `confines_of_lagTwoRatioSix` directly reaches the same
+conclusion without the axiom.
 
-So this is **not** a path to the flagship that avoids the axiom, even though the extent-six reduction
-it runs through — `LagTwoSix.confines_extent_six_of_lag_two_ratio` — is itself foundational-only,
-spending the PROVED `Complete.wilson_reflection_positive_at_even 5 3`. The axiom enters through the
-STRUCTURE, not through the route: a caller who has `LagTwoSix.LagTwoRatioSix` in hand and uses
-`confines_of_lagTwoRatioSix` directly reaches the same conclusion without it.
+`FlagshipScope` records what `FlagshipAt` amounts to: `gap_summand_is_manufactured` shows its gap
+clause's sum is `exp(−(κ₀ − μ))^τ`, one mode whose magnitude is its own bound, and
+`flagship_for_bogus` discharges the whole conjunction for an object with no gauge content.
 
-**⚠ AND THE CONCLUSION IS SMALLER THAN ITS NAME.** `FlagshipScope` proves `FlagshipAt` reduces to
-`μ < κ₀` and nothing else: `gap_summand_is_manufactured` shows the gap clause's sum IS
-`exp(−(κ₀ − μ))^τ`, one mode whose magnitude is defined as its own bound, and
-`flagship_for_bogus` discharges the whole conjunction for an object with no gauge content. In
-particular the clauses NAMED non-triviality and continuum measure inside `FlagshipAt` are **not**
-Clay's C4 and C2 — no row of the Clay table is a consequence of `I1`.
-
-**⚠ And `I1_lagTwo` is open.** `LagTwoSix.exists_cut_lag_two_ratio_six` gives the bound on a cut
-`[0, b]` for every `K > 0`; `I1` asks a single `K < lagTwoThresholdSix` at every `β ≥ 0`. The open
-part is `β > b`.
-
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral of its own; every constant is `ClayRemaining`'s or
+`LagTwoSix.confines_of_lagTwoRatioSix`'s. -/
 theorem flagship_of_clayRemaining (R : ClayRemaining) :
     MassGap.ApertureRoute.FlagshipAt
       (MassGap.LagTwoSix.confines_of_lagTwoRatioSix (lagTwoRatioSix_of_clayRemaining R)) :=
@@ -334,36 +324,24 @@ theorem flagship_of_clayRemaining (R : ClayRemaining) :
 
 #print axioms flagship_of_clayRemaining
 
-/-- **`I3` IS NOT A FIELD, BECAUSE THE OBVIOUS STATEMENT OF IT IS VACUOUS — and here is the proof.**
+/-- There is a function `a : ℝ → ℝ` that is positive everywhere and tends to `0` along `atTop`. The
+witness is `exp(−β)`, positive by `Real.exp_pos` and null by `Real.tendsto_exp_neg_atTop_nhds_zero`.
 
-Asymptotic scaling is the missing input to C2's spacing limit and to C8. The naive way to state it is
-"a spacing as a function of the coupling, positive, tending to zero": that is discharged by
-`exp(−β)`, which knows nothing about `SU(3)`, the lattice, or the beta function. So writing it into
-`ClayRemaining` would have added a field a one-line witness satisfies — the failure
-`FlagshipScope.flagship_for_bogus` exhibits for the flagship and `WightmanData.trivialOSData`
-exhibits for the OS side, committed a third time.
+So "a spacing as a function of the coupling, positive, tending to zero" is satisfied by a function
+mentioning no gauge group, no lattice and no beta function, which is why `ClayRemaining` carries no
+such field.
 
-**What the real statement needs, and where it now lives.** `a(β)` has to be tied to the theory: the
-physical mass `m_phys = m_lat(β)/a(β)` must converge to a finite nonzero limit as `β → ∞`, which is
-what makes the limit a CONTINUUM limit rather than a relabelling. **`MassGap.AsymptoticScaling`
-writes that**, and it is downstream of this file, which is why the field is still not here.
+`MassGap.AsymptoticScaling` states the version that ties `a(β)` to the theory, requiring the ratio
+`m_lat(β)/a(β)` to converge to a finite nonzero limit; its
+`free_spacing_scaling_is_also_vacuous` shows that leaving the spacing existential is satisfied by
+taking `a := m_lat`, at ratio identically `1`, and `Running`'s `b₀ = 11N/3` and `b₁ = 34N²/3` pin the
+spacing in `aRun`. `mLatAt` supplies the lattice mass, its value at zero coupling being `0` because
+`Real.log 0 = 0`. `fixed_extent_pins_the_spacing` shows a lattice mass bounded away from zero
+forbids a vanishing spacing. `Complete.ym_physical_gap_uniform` and its siblings take the spacing as
+a parameter and relate it to no coupling.
 
-It also shows the obvious repair fails: `free_spacing_scaling_is_also_vacuous` proves that leaving
-the spacing EXISTENTIAL is discharged by taking `a := m_lat`, ratio identically `1`. The spacing has
-to be PINNED, and `Running`'s `b₀ = 11N/3` and `b₁ = 34N²/3` pin it — `aRun` is built from them and
-is the first thing to consume that file. `mLatAt` supplies the lattice mass, with the warning that
-`Real.log 0 = 0` makes its value at zero coupling a junk `0`.
-
-What remains genuinely open is the JOINT limit: `fixed_extent_pins_the_spacing` shows a lattice mass
-bounded away from zero forbids a vanishing spacing, so scaling cannot be stated at fixed extent
-either. `Complete.ym_physical_gap_uniform` and its siblings take the spacing `L` as a PARAMETER and
-never relate it to `β`.
-
-So C2's remaining half is not formalisation debt with a statement waiting to be proved. **The
-statement itself is absent**, and writing it is the first step, not the last.
-
-DERIVED: no numeral. `exp(−β)` is a witness, not a magnitude, and any positive function tending to
-zero does the same job. -/
+DERIVED: `0` is the strict lower bound asserted of `a` and the limit point; it is the only numeral.
+`exp(−β)` is a witness rather than a magnitude, and any positive null function does the same. -/
 theorem scaling_as_stated_is_vacuous :
     ∃ a : ℝ → ℝ, (∀ β, 0 < a β) ∧ Tendsto a atTop (nhds 0) := by
   refine ⟨fun β => Real.exp (-β), fun β => Real.exp_pos _, ?_⟩
@@ -371,38 +349,30 @@ theorem scaling_as_stated_is_vacuous :
 
 #print axioms scaling_as_stated_is_vacuous
 
-/-! ## 4. `I4` is not reachable from ANY finite-order map — and which lattices that rules out
+/-! ## 4. Finite-order maps on a `TransferData`
 
-`GNSHilbert` no longer states the open item as "a transfer operator that is not the finite-order
-shift" — `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` settles that — and states it
-instead as the three unproved facts about the state. The theorems below are about the other
-half: they sharpen finite order from a remark about one map to a property of every map of
-finite order: on a `TransferData`, finite order plus contractivity forces the form to be PRESERVED,
-so such a `T` is an isometry and carries no decay at all.
+On a `TransferData`, finite order plus contractivity forces the form to be preserved, so such a `T`
+is an isometry of the form and admits no geometric decay factor.
 
-**⛔ THE REACH IS THE PERIODIC LATTICE, AND ONLY THAT.** The hypothesis is supplied by
-`HalfLineTransfer.shiftObs_pow_period`, which gives `(shiftObs τ)ⁿ = id` on the PERIODIC lattice with
-no hypothesis on the module, the coupling or the reflection. So every operator assembled from lattice
-translations on a periodic lattice falls under this.
+The hypothesis is supplied by `HalfLineTransfer.shiftObs_pow_period`, which gives
+`(shiftObs τ)ⁿ = id` on the periodic lattice with no condition on the module, the coupling or the
+reflection. So every operator assembled from lattice translations on a periodic lattice satisfies it.
 
-**On `ℤ⁴` at rank at least two the hypothesis is FALSE**, so nothing here applies there. At `SU 0`
-and `SU 1` the tree formalises nothing either way:
+On `ℤ⁴` the hypothesis fails, given a separating function on the group:
 `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` exhibits, for every positive `k`, a member
-of `halfSpaceAlg` that the `k`-fold shift moves, given a separating function on the GROUP
-(`HaarVariance.reTr_flipEl_ne_reTr_one` supplies one at every `SU (m+2)`, bundled as
-`ReflectionHalfSpace.reTrCM_separating`; `halfSpaceAlg_has_nonconstant` separates CONFIGURATIONS and
-does not have the type to discharge this). `I4` is therefore OPEN
-on the infinite lattice, not closed, and what stands in the way there is a different thing: motion in
-the ALGEBRA is not motion in the GNS QUOTIENT, because `opT [F] = [F]` whenever `T F - F` lies in the
-null space of the form.
+of `halfSpaceAlg` that the `k`-fold shift moves.
+`HaarVariance.reTr_flipEl_ne_reTr_one` supplies such a function at every `SU (m+2)`, bundled as
+`ReflectionHalfSpace.reTrCM_separating`; `halfSpaceAlg_has_nonconstant` separates configurations
+rather than group elements and does not have the type for it. At `SU 0` and `SU 1` no separating
+function is available and nothing here applies in either direction. -/
 
-**⛔ SO ON `ℤ⁴` AT RANK AT LEAST TWO `I4` IS OPEN.** The categorical reading — that the infinite
-lattice leaves it open — needs that qualification: it rests on a separating function, which exists
-from rank two (`HaarVariance.reTr_flipEl_ne_reTr_one`) and not below. Below it, nothing here is
-formalised in either direction. -/
+/-- The form along the orbit of `T` is antitone: `k ↦ D.form (T^[k] x) (T^[k] x)` is nonincreasing.
+`antitone_nat_of_succ_le` on `D.T_contract`, which says one step cannot expand the form.
 
-/-- **The form along the orbit is ANTITONE.** `T_contract` says one step cannot expand the form;
-iterating gives the whole sequence. This is the only place contractivity is used. -/
+The only place contractivity is used in this section.
+
+DERIVED: no numeral. `D` and `x` are the caller's; the successor step belongs to
+`antitone_nat_of_succ_le`. -/
 theorem form_iterate_antitone {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (x : A) :
     Antitone (fun k : ℕ => D.form ((fun y => D.T y)^[k] x) ((fun y => D.T y)^[k] x)) := by
@@ -410,26 +380,19 @@ theorem form_iterate_antitone {A : Type*} [AddCommGroup A] [Module ℝ A]
   have h := D.T_contract ((fun y => D.T y)^[k] x)
   simpa [Function.iterate_succ_apply'] using h
 
-/-- **A FINITE-ORDER CONTRACTION IS AN ISOMETRY OF THE FORM.**
+/-- If `T^[n] = id` for some `n ≥ 1`, then `D.form (T x) (T x) = D.form x x` at every `x`. A squeeze:
+`form_iterate_antitone` makes the orbit values nonincreasing, and the order sends step `n` back to
+step `0`, so every value between them is equal — in particular the one at step one.
 
-If `Tⁿ = id` for some `n ≥ 1`, then `form (T x) (T x) = form x x` at EVERY `x`. The proof is a
-squeeze and nothing else: the form along the orbit is antitone, and the order sends step `n` back to
-step `0`, so every value between them is equal — in particular the value at step one.
+So a `TransferData` whose `T` is assembled from translations of a periodic lattice has an isometric
+`T`, hence an `opT` preserving norms and admitting no contraction factor below one anywhere, not
+merely on the vacuum complement. `GNSHilbert.shiftSlab_eq_id` is the case where the order is one.
 
-**This is why `I4` cannot come from a PERIODIC lattice.** `HalfLineTransfer.shiftObs_pow_period`
-proves `(shiftObs τ)ⁿ = id` on EVERY observable of the periodic lattice, with no hypothesis on the
-module, the coupling or the reflection. So any `TransferData` whose `T` is assembled from
-translations of a periodic lattice has an isometric `T`, hence an `opT` that preserves norms and
-admits no contraction factor below one anywhere — not merely on the vacuum complement.
-`GNSHilbert.shiftSlab_eq_id` is the extreme case of this at the slab, where the order is one.
+The hypothesis fails on `ℤ⁴` given a separating function
+(`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg`), so nothing here applies there.
 
-**⛔ IT SAYS NOTHING ABOUT `ℤ⁴`, WHERE THE HYPOTHESIS FAILS.**
-`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` proves the `ℤ⁴` shift has no finite order on
-the half-space algebra, so this theorem is inapplicable there and does not close `I4` for the
-infinite-volume construction.
-
-DERIVED: no numeral is chosen. `0` and `1` are the orbit steps the squeeze compares and `n` is the
-caller's order. -/
+DERIVED: `1` is the lower bound on the order in `hn`, needed so that step one lies between `0` and
+`n`; `0` and `1` are the orbit steps the squeeze compares, and `n` is the caller's order. -/
 theorem finite_order_contraction_is_isometry {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
     (hper : ∀ y : A, (fun z => D.T z)^[n] y = y) (x : A) :
@@ -460,9 +423,12 @@ theorem pow_apply_eq_iterate {A : Type*} [AddCommGroup A] [Module ℝ A]
       rw [Function.iterate_succ_apply, ← ih, pow_succ]
       rfl
 
-/-- **THE ISOMETRY STATEMENT IN THE FORM THE TREE STATES PERIODICITY IN.** Same content as
-`finite_order_contraction_is_isometry`, with `(D.T ^ n) x = x` as the hypothesis, so it applies
-directly to `HalfLineTransfer.shiftObs_pow_period`. -/
+/-- `finite_order_contraction_is_isometry` with `(D.T ^ n) y = y` as the hypothesis instead of the
+`Function.iterate` form, through `pow_apply_eq_iterate`. This is the shape
+`HalfLineTransfer.shiftObs_pow_period` states periodicity in.
+
+DERIVED: `1` is the lower bound on the order in `hn`, carried from
+`finite_order_contraction_is_isometry`; `n` is the caller's order. -/
 theorem finite_order_contraction_is_isometry_pow {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
     (hper : ∀ y : A, (D.T ^ n) y = y) (x : A) :
@@ -470,12 +436,15 @@ theorem finite_order_contraction_is_isometry_pow {A : Type*} [AddCommGroup A] [M
   finite_order_contraction_is_isometry D n hn
     (fun y => by rw [← pow_apply_eq_iterate D.T n y]; exact hper y) x
 
-/-- **AND THEN IT MOVES NOTHING THE FORM CAN SEE.** A finite-order `T` leaves the form's value
-unchanged at every vector, so it cannot be the source of a spectral gap: `-log T` needs
-`0 ∉ spectrum T`, and an isometry has all of its spectrum on the unit circle.
+/-- If `T` has finite order `n ≥ 1` and `D.form (T x) (T x) ≤ ρ * D.form x x` for some `ρ ∈ [0, 1)`,
+then `D.form x x = 0`. `finite_order_contraction_is_isometry` makes the left side `D.form x x`, and
+`D.form_nonneg` closes the resulting inequality.
 
-Stated as the contrapositive of `TransferMovesSomething`'s intent: a `D` satisfying this is exactly
-one that `I4` rules out, and every lattice-translation `D` satisfies it. -/
+So a finite-order `T` admits a geometric decay factor only where the form already vanishes.
+
+DERIVED: `1` is the lower bound on the order in `hn` and the strict upper bound on the decay factor
+`ρ`, below which a geometric bound decays. `0` is the lower bound on `ρ` and the value concluded of
+the form. -/
 theorem no_decay_of_finite_order {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) (n : ℕ) (hn : 1 ≤ n)
     (hper : ∀ y : A, (fun z => D.T z)^[n] y = y) (ρ : ℝ) (hρ : ρ < 1) (hρ0 : 0 ≤ ρ) (x : A)
@@ -485,38 +454,27 @@ theorem no_decay_of_finite_order {A : Type*} [AddCommGroup A] [Module ℝ A]
   rw [hiso] at hdecay
   nlinarith [D.form_nonneg x]
 
-/-! ## 5. `I2` IS NOT CIRCULAR, and that is what separates it from the aperture route
+/-! ## 5. Summability against a geometric bound
 
-The aperture route died because `Moment.Read.substrate_lt_of_tension_lt_floor` takes confinement as
-its HYPOTHESIS — `DiffractionNoGo` §1. The obvious worry about `I2` is the same one: clustering and
-a mass gap sound like the same statement, and assuming clustering to prove the gap would be the same
-circle in different clothes.
+`WilsonAnalytic.cov_bound_summable` consumes a dominating profile whose total is bounded
+independently of the volume — summable decay. A geometric bound is a stronger condition. The two
+theorems below exhibit profiles satisfying the weaker one and no geometric bound, so summability,
+and summability of the second moment, do not imply a geometric bound. -/
 
-**It is not the same statement, and the difference is provable.** What
-`WilsonAnalytic.cov_bound_summable` consumes is a dominating profile whose TOTAL is bounded
-independently of the volume — summable decay. What a mass gap gives is EXPONENTIAL decay. Exponential
-implies summable; summable does not imply exponential, and the theorem below exhibits the gap between
-them. So `I2` assumes strictly less than it would help prove.
+/-- There is a nonnegative summable `c : ℕ → ℝ` dominated by no geometric profile: no `C`, `r` with
+`0 ≤ r < 1` satisfy `c d ≤ C * r ^ d` at every `d`.
 
-This matters for what to work on. A route that assumes its own conclusion cannot be repaired by
-sharpening constants; a route that assumes something strictly weaker can be. `I2` is in the second
-class and the aperture was in the first. -/
+The witness is `c d = 1/(d+1)²`, summable by comparison with the shifted `1/n²`. For the second
+clause, `(d+1)²·c d` is identically one while `|C|·(2d²rᵈ + 2rᵈ)` tends to zero, so some `d`
+refutes the domination; `(d+1)² ≤ 2d² + 2` is `(d−1)² ≥ 0`.
 
-/-- **SUMMABLE DECAY DOES NOT IMPLY EXPONENTIAL DECAY**, so the clustering input `I2` consumes is
-strictly weaker than the mass gap it helps establish, and the interior route is not circular.
+A power law steep enough is summable, so the separating case is not exceptional; it is the shape a
+correlation falling like a power of the separation has.
 
-The witness is `c d = 1/(d+1)²`: nonnegative, summable, and dominated by no geometric profile. The
-argument is one line of asymptotics — if `c d ≤ C·rᵈ` with `r < 1` then `(d+1)²·c d ≤ C·(d+1)²·rᵈ`,
-whose right side tends to zero while the left side is identically one.
-
-**And the physics is not incidental to the choice.** In four dimensions a MASSLESS theory has
-plaquette–plaquette connected correlations falling like a power of the separation, and a power law
-steep enough is summable. So the separating case is not a contrivance: it is the very configuration
-`I2` must not silently exclude, which is why the hypothesis has to be summability rather than a rate.
-
-DERIVED: the exponent `2` is the least integer power making `1/(d+1)^p` summable in the sense used
-here; `1` is the shift that keeps the denominator away from zero. Neither is a level, and any
-summable non-geometric profile witnesses the same separation. -/
+DERIVED: the exponent `2` is the least integer power making `1/(d+1)^p` summable; `1` is the shift
+keeping the denominator away from zero, and the strict upper bound on `r` below which a geometric
+profile decays. `0` is the lower bound on each `c d` and on `r`. Neither is a level, and any summable
+profile with no geometric bound witnesses the same separation. -/
 theorem summable_clustering_is_weaker_than_a_gap :
     ∃ c : ℕ → ℝ, (∀ d, 0 ≤ c d) ∧ Summable c ∧
       ¬ ∃ C r : ℝ, 0 ≤ r ∧ r < 1 ∧ ∀ d, c d ≤ C * r ^ d := by
@@ -556,33 +514,26 @@ theorem summable_clustering_is_weaker_than_a_gap :
 
 #print axioms summable_clustering_is_weaker_than_a_gap
 
-/-- **AND THE WEIGHT `I2` ACTUALLY CARRIES IS `circLag²`, SO SUMMABILITY IS THE WRONG HYPOTHESIS —
-a BOUNDED SECOND MOMENT is.**
+/-- There is a nonnegative `c : ℕ → ℝ` whose second moment `d ↦ c d · d²` is summable and which is
+dominated by no geometric profile.
 
-This corrects the field's own description. `I2_clustering` is a Lipschitz bound on
-`Complete.d2At`, and `d2At N β = ∑_d p_d · circLag(d)²` — the moment weights each lag by the SQUARE
-of its circle distance. `CompactBeta.profile_to_moment_not_uniformly_lipschitz` is the machine-checked
-statement that this matters: for every `L` there are an aperture and two reads whose raw profiles
-differ by at most `t` at every lag and whose moments differ by more than `L·t`, the lost factor being
-`((N+1)/2)²`. So a volume-free bound on the INDIVIDUAL correlators — which is all
-`WilsonAnalytic.cov_bound_summable` delivers — does not give `I2`.
+The witness is `c d = 1/(d+1)⁴`, whose second moment is at most `1/(d+1)²` because `d² ≤ (d+1)²`.
+The second clause runs as in `summable_clustering_is_weaker_than_a_gap`, with
+`(d+1)⁴ ≤ 8d⁴ + 8`.
 
-**What the obstruction's witness is, and why it points somewhere.** The profile that defeats the
-Lipschitz bound is a SPIKE at the middle lag (`ContactDominance.midLag`). That is exactly the shape a
-decaying correlation does not have, so the obstruction does not show the Wilson profile suffers it —
-it shows the map is bad on ARBITRARY reads. On profiles dominated by `c` with `∑_k c k · k² < ∞` the
-moment is bounded uniformly in the aperture, because that sum IS the moment. So the correct form of
-`I2` is: the connected correlator is dominated by a profile with a bounded SECOND MOMENT in the
-circle distance, uniformly in the volume.
-
-**That is still strictly weaker than a mass gap**, which is what this theorem records: `1/(d+1)⁴` has
-a summable second moment and is dominated by no geometric profile. So sharpening `I2` from summability
-to a bounded second moment does NOT make it circular — it stays in the class the aperture route was
-not.
+The weight matters because `d2At N β = ∑_d p_d · circLag(d)²` weights each lag by the square of its
+circle distance: `CompactBeta.profile_to_moment_not_uniformly_lipschitz` exhibits, for every `L`, an
+aperture and two reads whose raw profiles differ by at most `t` at every lag and whose moments differ
+by more than `L·t`, the factor being `((N+1)/2)²`. That witness is a spike at the middle lag
+(`ContactDominance.midLag`), so it is about arbitrary reads rather than about a decaying profile; on
+profiles dominated by a `c` with `∑_k c k · k² < ∞` the moment is bounded uniformly in the aperture,
+that sum being the moment.
 
 DERIVED: the exponent `4` is `2 + 2` — two powers to beat the `circLag²` weight and two to leave a
-summable remainder — and `1` is the shift keeping the denominator from zero. Neither is a level, and
-any profile with a finite second moment and no geometric bound witnesses the same separation. -/
+summable remainder — and the exponent `2` is that weight. `1` is the shift keeping the denominator
+from zero and the strict upper bound on `r`; `0` is the lower bound on each `c d` and on `r`. None is
+a level, and any profile with a finite second moment and no geometric bound witnesses the same
+separation. -/
 theorem bounded_second_moment_clustering_is_weaker_than_a_gap :
     ∃ c : ℕ → ℝ, (∀ d, 0 ≤ c d) ∧ Summable (fun d => c d * ((d : ℝ)) ^ 2) ∧
       ¬ ∃ C r : ℝ, 0 ≤ r ∧ r < 1 ∧ ∀ d, c d ≤ C * r ^ d := by
@@ -633,59 +584,41 @@ theorem bounded_second_moment_clustering_is_weaker_than_a_gap :
 
 #print axioms bounded_second_moment_clustering_is_weaker_than_a_gap
 
-/-! ## 6. `LawAbove` IS THE REMAINING OBLIGATION, and it cannot come from a coupling-uniform argument
+/-! ## 6. A uniform quartic constant against the flat profile
 
-`NonnegArm.LawAbove b` is the tree's own name for what is left, and its docstring says so: *"THE
-REMAINING OBLIGATION… Nothing else is open."* The chain is short and every other link is proved —
-`NonnegArm.lawBelow_holds` gives the law on `[0, b]` unconditionally, and
-`ApertureRoute.confinement_at_an_aperture_of_law_above_cut` carries `LawAbove b` to
-`ConfinesAtAnAperture` and thence to the flagship.
+`NonnegArm.LawAbove b` asks for one `C`, at every aperture, with
+`ρ(d) ≤ C·ρ(0)/circLag(d)⁴`. `NonnegArm.lawBelow_holds` gives the law on `[0, b]`
+unconditionally, and `ApertureRoute.confinement_at_an_aperture_of_law_above_cut` carries `LawAbove b`
+to `ConfinesAtAnAperture`.
 
-**The split point is tiny, and that is measured rather than assumed.** `b` comes from
-`ContactFloor.contact_relative_unconditional`, whose own hypothesis is
-`StrongCoupling.coreRate (16*4) b < 1` with `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` at `K = 64`.
-Solving `coreRate 64 b = 1` gives `b = 2.936e−5`. So the PROVED arm covers `[0, 2.94e−5]` and
-`LawAbove` must carry everything above it, including the measured peak at `β = 2.8`.
+The cut `b` comes from `ContactFloor.contact_relative_unconditional`, whose hypothesis is
+`StrongCoupling.coreRate (16*4) b < 1` with `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` at `K = 64`;
+solving `coreRate 64 b = 1` gives `b = 2.936e−5`. -/
 
-**And the theorem below says where not to look for it.** -/
+/-- `¬ ∃ C ≥ 0, ∀ m ≥ 1, 1 ≤ C / m⁴`. `WeakArm.exists_lag_halving` produces, for every `C`, a lag `k`
+past the cut with `C/k⁴ < 1/2`, which contradicts the requirement at `k`.
 
-/-- **THE FLAT PROFILE REFUTES `LawAbove`.**
+On the flat profile `ρ ≡ 1` the condition `ρ(d) ≤ C·ρ(0)/circLag(d)⁴` reads `1 ≤ C/circLag(d)⁴`, and
+at extent `2m` the middle lag has `circLag = m`, so `C` would have to exceed `m⁴` at every `m`.
 
-`LawAbove` asks for ONE `C`, at EVERY aperture. On the flat profile `ρ ≡ 1` the requirement
-`ρ(d) ≤ C·ρ(0)/circLag(d)⁴` reads `1 ≤ C/circLag(d)⁴`, i.e. `C ≥ circLag(d)⁴` — and at extent `2m`
-the middle lag has `circLag = m`, so `C` would have to exceed `m⁴` at every `m`. No real number does.
+So an argument that never reads a profile's decay cannot give a uniform quartic constant: it would
+apply to the flat profile, where the conclusion fails.
+`FreeFieldLagTwo.flat_profile_meets_every_uniform_fact` exhibits the flat `r : Fin 4 → ℝ` satisfying
+seven named coupling-uniform facts — nonnegativity, positive total, circle symmetry `r 3 = r 1`,
+log-convexity `r 1² ≤ r 0 · r 2`, contact dominance `r 2 ≤ r 0`, `LinkGram`'s `r 2 ≤ r 1`, and
+`SlabQuadratic`'s `2·r 1² ≤ r 2² + r 0·r 2` — at four components and extent four.
 
-**THE ARITHMETIC IS NOT NEW AND IS NOT RE-PROVED HERE.** `WeakArm.exists_lag_halving` already gives,
-for every `C` and every cut, a lag `k` past the cut with `C/k⁴ < 1/2`, by the same ceiling
-construction. This theorem is that lemma applied at the flat profile, and the only thing it adds is
-the SENTENCE BELOW — which is about what the tree proves elsewhere, not about arithmetic.
+`WeakArm.no_uniform_quartic_constant_of_vanishing_rate` takes `hinf : ∀ ε > 0, ∃ i, M i < ε`, a rate
+family whose infimum is zero, and shows such a family defeats a quartic constant.
+`SubstrateArms.lawAbove_of_geometric_tail` is the positive direction: a geometric lag-decay rate,
+uniform in the aperture and in the coupling above the cut, gives `LawAbove`, a geometric sequence
+dominating a quartic.
 
-**What that rules out, and it is a whole class of attacks.**
-`FreeFieldLagTwo.flat_profile_meets_every_uniform_fact` proves `ρ ≡ 1` satisfies EVERY
-coupling-uniform fact this tree proves — nonnegativity, positive total mass, circle symmetry,
-log-convexity, contact dominance, `LinkGram`'s `ρ(2) ≤ ρ(1)` and `SlabQuadratic`'s quadratic. So no
-argument assembled from those facts can reach `LawAbove`, however the pieces are put together:
-the conclusion is false on a profile all of them admit.
-
-`LawAbove` therefore requires genuine `β`-DEPENDENCE. That is the same wall the shape route hits for
-B5, which is no coincidence — `LawAbove` implies B5 through the substrate, so it inherits B5's
-obstructions and adds the aperture-uniformity of `C` on top.
-
-**AND THE OBVIOUS `β`-DEPENDENT ROUTE IS CIRCULAR.** `WeakArm.no_uniform_quartic_constant_of_vanishing_rate`
-settles what a geometric envelope `ρ(d)/ρ(0) ≤ e^{−M·d}` would have to supply: its rate must be
-bounded away from ZERO **uniformly in the coupling AND the aperture**, because a rate positive at each
-coupling separately is defeated lag by lag. Its docstring names that as exactly what `[b, ∞)` lacks.
-A rate bounded away from zero uniformly in coupling and aperture IS the mass gap, so reaching
-`LawAbove` through an envelope assumes the conclusion — the same circle
-`DiffractionNoGo` §1 found in the aperture route.
-
-This does NOT close `LawAbove`: the theorem constrains the ENVELOPE route only, and nothing here says
-the law must come that way. What it does is leave the live question sharp — whether `LawAbove` is
-reachable without an envelope — rather than leaving "clustering" to do unexamined work.
-
-DERIVED: the exponent `4` is `LawAbove`'s own, and `NonnegArm`'s docstring derives it as the integer
-above the convergence threshold `3` for `∑ k²·C/k^s`, with `ShareEnvelope.cubic_contact_relative_gives_no_bound`
-proving `3` itself false. `1` is the lag cut excluding the contact term. Nothing here is chosen. -/
+DERIVED: the exponent `4` is `LawAbove`'s own; `NonnegArm` derives it as the integer above the
+convergence threshold `3` for `∑ k²·C/k^s`, with
+`ShareEnvelope.cubic_contact_relative_gives_no_bound` refuting `3` itself. `1` is the lower bound on
+`m`, the lag cut excluding the contact term, and the value the quotient must reach. `0` is the lower
+bound on `C`. Nothing here is chosen. -/
 theorem flat_profile_admits_no_uniform_quartic_constant :
     ¬ ∃ C : ℝ, 0 ≤ C ∧ ∀ m : ℕ, 1 ≤ m → (1 : ℝ) ≤ C / ((m : ℝ)) ^ 4 := by
   rintro ⟨C, _, h⟩
@@ -697,35 +630,26 @@ theorem flat_profile_admits_no_uniform_quartic_constant :
 
 #print axioms flat_profile_admits_no_uniform_quartic_constant
 
-/-! ## 7. THE STRONG ARM HAS AN ABSOLUTE CEILING, and it is nowhere near the physics
+/-! ## 7. The coupling range `coreRate K β < 1` allows
 
-`LagTwoBound.exists_cut_lag_two_ratio` and its extent-eight twin
-`LagTwoEight.exists_cut_lag_two_ratio_eight` both run under `StrongCoupling.coreRate (16·4) β < 1`,
-and the cut they produce is `2.936e−5`. The natural hope is that a sharper cluster expansion — a
-smaller touch degree `K`, a better prefactor — pushes that up far enough to meet the weak arm.
+`LagTwoBound.exists_cut_lag_two_ratio` and `LagTwoEight.exists_cut_lag_two_ratio_eight` both run
+under `StrongCoupling.coreRate (16·4) β < 1`. `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` carries the
+per-plaquette activity `e^{2β}−1` as a factor, and the other two factors are at least one at every
+`K` and every `β ≥ 0`, so the condition forces `4(e^{2β}−1) < 1` with no `K` in it. -/
 
-**It cannot, and the reason has nothing to do with `K`.** `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}`
-carries the per-plaquette activity `e^{2β}−1` as a FACTOR, and the other two factors are at least one
-at every `K` and every `β ≥ 0`. So `coreRate K β < 1` forces `4(e^{2β}−1) < 1` on its own, and that is
-a bound on `β` with no `K` in it at all. -/
+/-- At every `K : ℕ` and every `β ≥ 0`, `StrongCoupling.coreRate K β < 1` forces `β < 0.12`.
 
-/-- **NO CHOICE OF TOUCH DEGREE LETS THE STRONG ARM PAST `β = 0.12`.**
+By contradiction: at `β ≥ 0.12`, `Real.add_one_le_exp` gives `e^{0.12} ≥ 1.12`, so
+`e^{2β} ≥ 1.2544`; the factors `(K+1)² ≥ 1` and `e^{4βK} ≥ 1` then make `coreRate K β ≥ 1`.
 
-At every `K` and every `β ≥ 0`, `coreRate K β < 1` forces `β < 0.12`. The measured peak of the
-observable this programme is about sits at `β = 2.8`, a factor above `23` away, so the strong-coupling
-arm does not reach the physical region and no improvement to the expansion's constants will take it
-there. `CLAY-GOAL`'s prose puts the ceiling at `ln 2 / 2 = 0.347` for a hypothetical expansion needing
-activity below one; `coreRate`'s own `4(K+1)²` makes the real ceiling tighter still.
+The bound is on `coreRate`, hence on every route running under `coreRate K β < 1`, which is both
+strong arms in this tree. It says nothing about a strong-coupling estimate of a different form.
 
-**What this does NOT say.** It bounds `coreRate`, hence every route that runs under
-`coreRate K β < 1` — which is both strong arms in this tree. It says nothing about a DIFFERENT
-strong-coupling estimate not of this form, and it is not an impossibility proof for the middle
-interval; it locates the middle interval's lower end.
-
-DERIVED: `0.12` is a round rational ABOVE the true ceiling `log(5/4)/2 = 0.111572`, chosen so the
-bound is loose in the safe direction — a tighter numeral would strengthen the theorem and is not
-needed, since the claim is about the gap to `2.8`. `4`, `2` and the `+1` are `coreRate`'s own
-constants; `1.12` and `1.2544 = 1.12²` come from `Real.add_one_le_exp` at `0.12` and nothing else. -/
+DERIVED: `0.12` is a round rational above the true ceiling `log(5/4)/2 = 0.111572`, chosen so the
+bound is loose in the safe direction; a tighter numeral would strengthen the statement. `0` is the
+lower bound on `β` in `hβ` and `1` the strict upper bound on `coreRate` in `h`. `4`, `2` and the `+1`
+are `coreRate`'s own constants; `1.12` and `1.2544 = 1.12²` are `Real.add_one_le_exp` at `0.12`,
+squared, and appear in the proof rather than the statement. -/
 theorem coreRate_lt_one_forces_small_beta {K : ℕ} {β : ℝ} (hβ : 0 ≤ β)
     (h : MassGap.StrongCoupling.coreRate K β < 1) : β < 0.12 := by
   by_contra hcon
@@ -762,24 +686,30 @@ theorem coreRate_lt_one_forces_small_beta {K : ℕ} {β : ℝ} (hβ : 0 ≤ β)
 
 #print axioms coreRate_lt_one_forces_small_beta
 
-/-! ## 8. The guards — why no field is dischargeable by a witness with nothing in it -/
+/-! ## 8. Two facts about the fields -/
 
-/-- **`I2` IS NOT MET BY THE UNCONDITIONAL BOUND, and that is a theorem rather than a remark.**
-`CompactBeta.clay_covariance_constant_not_aperture_uniform` exhibits, for every candidate constant, an
-aperture at which `cov_bound_extensive`'s `4M·#Plaq` exceeds it — because at the Clay reads the
-aperture IS the extent and `#Plaq = 16(N+1)⁴`. So the only unconditional route to `I2` fails, and
-what is left is clustering.
+/-- For every `M > 0` and every `B` there is an aperture `N` with
+`B < 4 * M * card (WilsonHypercubic.Plaq 4 (N + 1))`. The body is
+`CompactBeta.clay_covariance_constant_not_aperture_uniform`.
 
-Recorded as the name to consult rather than restated, because restating a machine-checked theorem in
-a weaker form is how a tree starts disagreeing with itself. -/
+So `WilsonAnalytic.cov_bound_extensive`'s constant `4M·#Plaq` is not bounded over apertures, the
+plaquette count being `16(N+1)⁴` at dimension four.
+
+DERIVED: `0` is the strict lower bound on `M` in `hM`. `4` multiplying `M` is
+`cov_bound_extensive`'s own coefficient, and `4` in `Plaq 4 (N + 1)` is the spatial dimension; `1` in
+`N + 1` makes the aperture an extent. All are `clay_covariance_constant_not_aperture_uniform`'s. -/
 theorem I2_needs_clustering_not_the_extensive_bound (M : ℝ) (hM : 0 < M) (B : ℝ) :
     ∃ N : ℕ, B < 4 * M * (Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (N + 1)) : ℝ) :=
   MassGap.CompactBeta.clay_covariance_constant_not_aperture_uniform M hM B
 
-/-- **`I1` DOES NOT GIVE CLUSTERING BY ITSELF**, restated from `corr_at_max_lag_eq_lag_one` so the
-dependency is visible where the structure is. Whatever `I1` bounds at lag two, the correlation at the
-LARGEST lag is the lag-one value at every aperture and coupling, so no fixed-extent bound is a decay
-statement past the half period. -/
+/-- `corr_at_max_lag_eq_lag_one` restated beside the structure: `wilsonCorrAt N β ⟨N⟩` equals
+`wilsonCorrAt N β ⟨1⟩` at every aperture `N ≥ 1` and every real coupling.
+
+So whatever `I1_lagTwo` bounds at lag two, the correlation at the largest lag carries the lag-one
+value, and no fixed-extent bound is a decay statement past the half period.
+
+DERIVED: `1` is `corr_at_max_lag_eq_lag_one`'s — the lower bound on `N` and the lag compared
+against. -/
 theorem I1_is_not_clustering (N : ℕ) (hN : 1 ≤ N) (β : ℝ) :
     MassGap.wilsonCorrAt N β ⟨N, Nat.lt_succ_self N⟩
       = MassGap.wilsonCorrAt N β ⟨1, Nat.lt_succ_of_le hN⟩ :=

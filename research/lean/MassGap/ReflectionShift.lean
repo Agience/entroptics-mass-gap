@@ -3,88 +3,60 @@ import MassGap.LatticeReflection
 import MassGap.InfiniteShift
 
 /-!
-# MassGap.ReflectionShift — the reflection conjugates the time shift, on `ℤ⁴`
+# MassGap.ReflectionShift — reflections and the time shift on `ℤ⁴`
 
-## What this closes
+The file supplies a backward shift on the infinite lattice and proves the identities relating it to
+the reflections `ireflSite`, `ireflLink`, `ireflConf` and `ireflObs`. Three of them have the shapes
+`SchwarzIteration.ShiftCompat` asks for: `ishiftObsL_mul` is `T_mul`, `ishiftObsL_iunshiftObs` is
+`T_S`, and `ireflObs_ishiftObs` is `theta_T`. `nu_T_of_reflection_invariant` derives the fourth,
+`nu_T`, from reflection invariance of the state at two adjacent constants, and
+`reflection_invariant_succ_iff_nu_T` shows those two are equivalent given invariance at the first.
 
-`SchwarzIteration.ShiftCompat` has four fields. Three of them are about the maps alone and are
-settled here:
+## The geometry
 
-| field | settled by |
-|---|---|
-| `T_mul` | `ishiftObs_mul` — precomposition is multiplicative |
-| `T_S` | `ishiftConf_iunshiftConf` — the backward shift is a right inverse |
-| `theta_T` | `ireflObs_ishiftObs` — **the reflection conjugates the forward shift to the backward one** |
+A step along the axis moves the reflection constant by one, `ireflSite τ c (ishift τ x) =
+ireflSite τ (c - 1) x`, because `c - (x τ + 1) = (c - 1) - x τ`. On links the base shift of
+`ireflLink` travels with the constant, so `ireflLink τ c ∘ ishiftLink τ = ireflLink τ (c - 1)` in
+both cases of the direction split: `τ`-links reflect about `c - 1` and land on `c - 2`, the others
+reflect about `c` and land on `c - 1`.
 
-The fourth, `nu_T`, is translation invariance of the STATE. It is REDUCED here, not assumed:
+The inversion `ireflConf` applies on `τ`-links never has to be tracked. `ishiftLink` and
+`iunshiftLink` preserve a link's direction, so both sides of every identity carry the same
+`l.1 = τ` split and the inverses cancel case by case.
 
-| field | settled by |
-|---|---|
-| `nu_T` | `nu_T_of_reflection_invariant` — **one translation is two reflections**, so translation invariance of the state is reflection invariance of the state at two ADJACENT constants |
+## Two reflections compose to one translation
 
-## It is a transcription, not a new idea
+`ireflSite_comp` computes the composite of reflections about `a` and `b` as a translation by `a - b`
+in the `τ` coordinate. At separation one, `ireflSite_comp_succ`, `ireflLink_comp_succ` and
+`ireflConf_comp_eq_shift` give the forward shift; `ireflObs_comp_eq_shiftObs` is the observable
+form, where precomposition reverses the order of the two constants.
 
-`WilsonTransfer.shiftConf_reflConf_shiftConf` proves the same identity on the finite periodic
-lattice:
-
-    shiftConf τ (reflConf τ c (shiftConf τ U)) = reflConf τ c U
-
-and its docstring calls it *"the conjugation identity a transfer operator needs … `Θ ∘ S = S⁻¹ ∘ Θ`
-written without an inverse, and it is exactly what makes the time translation self-adjoint for the
-reflection form."* The tree already spends it on `WilsonTransfer.reflForm_shiftObs_symm`, which is
-the finite-volume `T_symm` — the same role `theta_T` plays in `SchwarzIteration.form_shift_symm`.
-
-**What was missing is the version on `InfiniteLattice`'s types.** `LatticeReflection` never mentions
-`ishift`; `InfiniteShift` never mentions a reflection; and no backward shift existed on `IConf` at
-all. `GibbsSpec` does define an `iunshift` on sites, but `GibbsSpec` is one of the import-isolated
-duplicates of the lattice skeleton, so nothing on this side can reach it.
-
-## The geometry, and why the constant moves
-
-Over `ℤ` exactly as over `Fin n`: a step along the axis moves the reflection CONSTANT by one,
-
-    ireflSite τ c (ishift τ x) = ireflSite τ (c−1) x,
-
-because `c − (x_τ + 1) = (c−1) − x_τ`. On links the base shift of `ireflLink` travels with it, giving
-`ireflLink τ c ∘ ishiftLink τ = ireflLink τ (c−1)` in BOTH cases of the direction split — the
-`τ`-links reflect about `c−1` and land on `c−2`, the others about `c` and land on `c−1`, and those are
-exactly `ireflLink τ (c−1)`'s two cases.
-
-**The dagger survives because it never moves.** `ireflConf` inverts on `τ`-links, `ishiftLink`
-preserves a link's direction (`ishiftLink_fst`), so both sides of every identity below carry the same
-`l.1 = τ` split and the inverses cancel case by case rather than needing to be tracked.
-
-## ⚠ What this does NOT close
-
-**Reflection invariance of the INFINITE-VOLUME state.** `nu_T_of_reflection_invariant` needs
-`IsReflectionInvariant` at `a` and at `a + 1`, so one of the two is always the LINK reflection. Both
-are available at FINITE volume — `ReflectionHalfSpace.stateFree_reflection_invariant` holds at every
-constant — and `InfiniteReflection.isReflectionInvariant_of_tendsto` carries either to a limit.
-
-**What is missing is that the two limits are the same state.**
-`ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` proves no non-empty finite box is stable under
-both mirrors, so the two finite-volume statements live on two box families and something must
-identify what they converge to. That, and not `nu_T`, is what stands between here and a constructible
-`ShiftCompat`; `ReflectionHalfSpace.wilson_transferData_of_thermodynamic_limit` parks it as a single
-convergence hypothesis.
-
-The odd constant needs no positivity, so the `0 ≤ β` restriction that makes the link reflection a
-separate problem for `ReflPositiveOn` does not apply to it — `IsReflectionInvariant` is an equality,
-not an inequality.
+Scope: the axis type is `Fin 4` throughout and the coordinates are `ℤ`, so these are statements on
+the infinite lattice, not the periodic torus. `WilsonTransfer.shiftConf_reflConf_shiftConf` is the
+corresponding identity there. The order of the two constants is load-bearing:
+`ireflConf τ a (ireflConf τ (a + 1) U)` is the forward shift, and the reversed composite is not
+covered. The separation is one: a composite at separation `k` translates by `k`, but
+`WilsonTransferReduction.shiftCompat_of_nu_T` fixes `T := ishiftObsL τ`, a single step.
+`nu_T_of_reflection_invariant` takes both reflection invariances as hypotheses; one of the two
+constants is always odd, hence the link reflection, and `IsReflectionInvariant` is an equality, so no
+sign condition on the coupling enters.
 -/
 
 namespace MassGap.ReflectionShift
 
 open MassGap.InfiniteLattice MassGap.LatticeReflection MassGap.InfiniteShift
 
-/-! ## 1. Sites: a step moves the reflection constant -/
+/-! ## 1. Sites: a step along the axis moves the reflection constant by one -/
 
-/-- **A STEP ALONG THE AXIS MOVES THE REFLECTION CONSTANT BY ONE.** `c − (x_τ + 1) = (c−1) − x_τ`.
+/-- `ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x`. Checked coordinatewise: at the axis `τ`
+both sides reduce to `c - (x τ + 1) = (c - 1) - x τ`, and every other coordinate is untouched by both
+maps.
 
-This is `Reflect.reflSite_shift_axis` over `ℤ` instead of `Fin n`. The `Fin n` proof used modular
-subtraction; this one does not need it, which is why the transcription is available at all.
+This is `Reflect.reflSite_shift_axis` over `ℤ` rather than `Fin n`; the coordinates being integers,
+no modular subtraction is involved.
 
-DERIVED: the `1` is one lattice step, `ishift`'s own; `4` is the spacetime dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the step, `ishift`'s own, and
+the amount the reflection constant moves. -/
 theorem ireflSite_ishift (τ : Fin 4) (c : ℤ) (x : ISite) :
     ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x := by
   funext j
@@ -96,9 +68,14 @@ theorem ireflSite_ishift (τ : Fin 4) (c : ℤ) (x : ISite) :
 
 #print axioms ireflSite_ishift
 
-/-- **AND UNDOING A STEP MOVES IT THE OTHER WAY.**
+/-- `Function.update (ireflSite τ c x) τ ((ireflSite τ c x) τ - 1) = ireflSite τ (c - 1) x`:
+lowering the `τ` coordinate of a reflected site by one is reflecting about the previous constant.
+Checked coordinatewise, as for `ireflSite_ishift`.
 
-DERIVED: the `1` is one lattice step; `4` is the dimension. -/
+Scope: the left side is written out rather than through `iunshift`, which is defined after it.
+
+DERIVED: `4` is the spacetime dimension; `1` occurs twice — the amount subtracted from the
+coordinate, and the amount the reflection constant moves. -/
 theorem iunshift_ireflSite (τ : Fin 4) (c : ℤ) (x : ISite) :
     Function.update (ireflSite τ c x) τ ((ireflSite τ c x) τ - 1) = ireflSite τ (c - 1) x := by
   funext j
@@ -110,16 +87,21 @@ theorem iunshift_ireflSite (τ : Fin 4) (c : ℤ) (x : ISite) :
 
 #print axioms iunshift_ireflSite
 
-/-! ## 2. The backward shift on the infinite lattice -/
+/-! ## 2. The backward shift on sites, links and configurations -/
 
-/-- **UNDO ONE STEP.** `InfiniteShift` carries only the forward translation; `ShiftCompat` needs both.
+/-- The backward shift on sites: `Function.update x τ (x τ - 1)`, lowering the `τ` coordinate by one
+and leaving the rest. `InfiniteShift` carries only the forward translation `ishift`;
+`SchwarzIteration.ShiftCompat` needs both directions.
 
-DERIVED: the `1` is one lattice step; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the single lattice step
+subtracted from the `τ` coordinate. -/
 def iunshift (τ : Fin 4) (x : ISite) : ISite := Function.update x τ (x τ - 1)
 
-/-- Undoing a step and taking it is doing nothing.
+/-- `ishift τ (iunshift τ x) = x`: the forward shift undoes the backward one on sites. Checked
+coordinatewise; at `τ` the two updates cancel and elsewhere neither map acts.
 
-DERIVED: the `1` is one lattice step. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. The single step lives inside
+`ishift` and `iunshift`, not in this statement. -/
 theorem ishift_iunshift (τ : Fin 4) (x : ISite) : ishift τ (iunshift τ x) = x := by
   funext j
   by_cases h : j = τ
@@ -129,9 +111,12 @@ theorem ishift_iunshift (τ : Fin 4) (x : ISite) : ishift τ (iunshift τ x) = x
 
 #print axioms ishift_iunshift
 
-/-- The backward shift on links; the direction is untouched, as for the forward one.
+/-- The backward shift on links: `(l.1, iunshift τ l.2)`. The direction component is untouched, as
+for `ishiftLink`, which is what makes the `l.1 = τ` case split the same on both sides of every
+identity below.
 
-DERIVED: `4` is the spacetime dimension, `InfiniteLattice.ISite`'s own. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. The `.1` and `.2` are projection
+notation, not numerals. -/
 def iunshiftLink (τ : Fin 4) (l : ILink) : ILink := (l.1, iunshift τ l.2)
 
 @[simp] theorem iunshiftLink_fst (τ : Fin 4) (l : ILink) : (iunshiftLink τ l).1 = l.1 := rfl
@@ -145,16 +130,16 @@ theorem ishiftLink_iunshiftLink (τ : Fin 4) (l : ILink) :
 
 #print axioms ishiftLink_iunshiftLink
 
-/-! ## 3. ⭐ Links: the reflection conjugates the shift -/
+/-! ## 3. Links: reflecting after a shift is reflecting about the previous constant -/
 
-/-- **⭐ REFLECTING AFTER A STEP IS REFLECTING ABOUT THE PREVIOUS PLANE.**
+/-- `ireflLink τ c (ishiftLink τ l) = ireflLink τ (c - 1) l`. The proof splits on `l.1 = τ` and
+closes both branches with `ireflSite_ishift`: a `τ`-link is reflected about `c - 1` and the step
+sends it to `c - 2`, which is the `τ`-case of `ireflLink τ (c - 1)`; any other link is reflected
+about `c` and the step sends it to `c - 1`, which is the other case. The base shift `ireflLink`
+applies to `τ`-links moves with the constant, so one identity covers both branches.
 
-Both cases of the direction split land on `ireflLink τ (c−1)`'s corresponding case: a `τ`-link
-reflects about `c−1` and a step sends it to `c−2`, which is `ireflLink τ (c−1)`'s `τ`-case; any other
-link reflects about `c` and a step sends it to `c−1`, which is the other case. **The base shift of
-`ireflLink` travels with the constant**, which is why one identity covers both.
-
-DERIVED: the `1` is the constant's step, `ireflSite_ishift`'s; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the amount the reflection
+constant moves, inherited from `ireflSite_ishift`. -/
 theorem ireflLink_ishiftLink (τ : Fin 4) (c : ℤ) (l : ILink) :
     ireflLink τ c (ishiftLink τ l) = ireflLink τ (c - 1) l := by
   obtain ⟨μ, x⟩ := l
@@ -166,9 +151,15 @@ theorem ireflLink_ishiftLink (τ : Fin 4) (c : ℤ) (l : ILink) :
 
 #print axioms ireflLink_ishiftLink
 
-/-- **AND THE BACKWARD SHIFT UNDOES THE CONSTANT'S STEP.**
+/-- `iunshiftLink τ (ireflLink τ c l) = ireflLink τ (c - 1) l`: applying the backward shift after the
+reflection also lowers the constant by one. The proof splits on `l.1 = τ` and closes both branches
+with `iunshift_ireflSite`.
 
-DERIVED: the `1` is the constant's step; `4` is the dimension. -/
+Scope: the conclusion coincides with `ireflLink_ishiftLink`'s, but the shift is on the other side of
+the reflection — both compositions lower the constant.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the amount the reflection
+constant moves. -/
 theorem iunshiftLink_ireflLink (τ : Fin 4) (c : ℤ) (l : ILink) :
     iunshiftLink τ (ireflLink τ c l) = ireflLink τ (c - 1) l := by
   obtain ⟨μ, x⟩ := l
@@ -184,15 +175,19 @@ theorem iunshiftLink_ireflLink (τ : Fin 4) (c : ℤ) (l : ILink) :
 
 #print axioms iunshiftLink_ireflLink
 
-/-! ## 4. ⭐ Configurations, with the dagger -/
+/-! ## 4. Configurations, where `ireflConf` inverts on `τ`-links -/
 
 section Conf
 
 variable {G : Type} [Group G] [TopologicalSpace G] [ContinuousInv G]
 
-/-- The backward shift on configurations.
+/-- The backward shift on configurations: `fun l => U (iunshiftLink τ l)`, precomposition with the
+backward link shift. Unlike `ireflConf` it applies no inversion.
 
-DERIVED: `4` is the spacetime dimension, `InfiniteLattice.ISite`'s own. -/
+Scope: stated for `G` a topological group with continuous inversion; only the group's carrier is
+used here.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. -/
 def iunshiftConf (τ : Fin 4) (U : IConf G) : IConf G := fun l => U (iunshiftLink τ l)
 
 omit [ContinuousInv G] in
@@ -210,10 +205,15 @@ theorem ishiftConf_iunshiftConf (τ : Fin 4) (U : IConf G) :
 
 #print axioms ishiftConf_iunshiftConf
 
-/-- **COMPOSING TWO REFLECTIONS TRANSLATES.** About `a` then `b`, the `τ` coordinate moves by
-`a - b`; every other coordinate is untouched.
+/-- `ireflSite τ a (ireflSite τ b x) = Function.update x τ (a - b + x τ)`: reflecting about `b` and
+then about `a` translates the `τ` coordinate by `a - b` and leaves every other coordinate alone.
+Checked coordinatewise.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+Scope: the translation distance is the difference of the two constants, with no constraint on either.
+`ireflSite_comp_succ` is the case `a = b + 1`.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. No other numeral appears; `a` and `b`
+are the caller's constants. -/
 theorem ireflSite_comp (τ : Fin 4) (a b : ℤ) (x : ISite) :
     ireflSite τ a (ireflSite τ b x) = Function.update x τ (a - b + x τ) := by
   funext j
@@ -225,13 +225,15 @@ theorem ireflSite_comp (τ : Fin 4) (a b : ℤ) (x : ISite) :
 
 #print axioms ireflSite_comp
 
-/-- **REFLECTING ABOUT `c` THEN `c + 1` TRANSLATES BY ONE**, in the `τ` coordinate only:
-`(c + 1) - (c - x_τ) = x_τ + 1`. `LatticeReflection.ireflSite_ireflSite_pred` is the same fact with
-the constants named `c` and `c - 1`; this spelling is the one the link lift needs at both of its
-cases.
+/-- `ireflSite τ (c + 1) (ireflSite τ c x) = ishift τ x`: reflecting about `c` and then about `c + 1`
+is the forward shift. At the axis coordinate `(c + 1) - (c - x τ) = x τ + 1`; elsewhere neither map
+acts.
 
-DERIVED: the `1` is the separation of the two mirrors, which is what makes the translation one step;
-`4` is the dimension. -/
+`LatticeReflection.ireflSite_ireflSite_pred` is the same fact with the constants written `c` and
+`c - 1`; this spelling is the one `ireflLink_comp_succ` uses at both of its cases.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants, which is what makes the composite a single step. -/
 theorem ireflSite_comp_succ (τ : Fin 4) (c : ℤ) (x : ISite) :
     ireflSite τ (c + 1) (ireflSite τ c x) = ishift τ x := by
   funext j
@@ -243,11 +245,15 @@ theorem ireflSite_comp_succ (τ : Fin 4) (c : ℤ) (x : ISite) :
 
 #print axioms ireflSite_comp_succ
 
-/-- The same on links. A `τ`-link reflects about each constant MINUS ONE, and that offset cancels in
-the difference of the two constants — which is why the translation comes out the same in every link
-direction and the case split closes on the same lemma twice.
+/-- `ireflLink τ (a + 1) (ireflLink τ a l) = ishiftLink τ l`, the link form of `ireflSite_comp_succ`.
+The proof splits on `l.1 = τ`, using `ireflLink_fst` to see that the direction is unchanged by the
+inner reflection. On a `τ`-link both reflections act about their constant minus one, and that common
+offset cancels in the difference, so both branches close on `ireflSite_comp_succ` — at `a - 1` in one
+case and at `a` in the other.
 
-DERIVED: the `1`s are the mirror separation and `ireflLink`'s link length; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. The `- 1` offset `ireflLink` applies to `τ`-links lives in its definition, not
+in this statement. -/
 theorem ireflLink_comp_succ (τ : Fin 4) (a : ℤ) (l : ILink) :
     ireflLink τ (a + 1) (ireflLink τ a l) = ishiftLink τ l := by
   refine Prod.ext rfl ?_
@@ -269,28 +275,23 @@ theorem ireflLink_comp_succ (τ : Fin 4) (a : ℤ) (l : ILink) :
 
 #print axioms ireflLink_comp_succ
 
-/-- **⭐⭐ ONE TRANSLATION IS TWO REFLECTIONS, ON `ℤ⁴`.** The `ℤ⁴` counterpart of
-`WilsonTransfer.shiftConf_eq_reflConf_comp`, which proves the same thing on the periodic torus and at
-the same separation.
+/-- `ireflConf τ a (ireflConf τ (a + 1) U) = ishiftConf τ U`: on configurations, the composite of the
+reflections about `a + 1` and `a` is the forward shift. It is the `ℤ⁴` counterpart of
+`WilsonTransfer.shiftConf_eq_reflConf_comp`.
 
-**⛔ THE ORDER IS LOAD-BEARING.** The SMALLER constant is applied first — outermost in the
-expression. `ireflConf τ (a + 1) (ireflConf τ a U)` is the BACKWARD shift, and nothing below covers
-it.
+The proof splits on `l.1 = τ`. The inversion `ireflConf` applies to `τ`-links occurs twice there and
+not at all elsewhere, and `ireflLink_fst` makes the inner and outer splits the same, so `inv_inv`
+closes it; `ireflLink_comp_succ` supplies the link identity in both branches.
 
-**⛔ AND THE SEPARATION IS ONE, NOT TWO.** A gap-`k` composite translates by `k` by the same
-argument, but `WilsonTransferReduction.shiftCompat_of_nu_T` hardcodes `T := ishiftObsL τ` and
-`transferData_of_state_facts` takes `hnu` at ONE step. Two-step invariance does not imply one-step,
-so a gap-2 statement — however natural its even constants look — cannot feed the consumer. Parity
-constrains `ReflPositiveOn` and `halfSpaceAlg`; it does not constrain `IsReflectionInvariant`, which
-is all `nu_T` consumes, so there is no reason to pay for an even second constant here.
+Scope: the order is load-bearing. The smaller constant is the outer application here, and the
+reversed composite `ireflConf τ (a + 1) (ireflConf τ a U)` is the backward shift, which no statement
+in this file covers. The separation is one; a composite at separation `k` translates by `k`, but
+`WilsonTransferReduction.shiftCompat_of_nu_T` takes `T := ishiftObsL τ`, a single step, and
+invariance under a `k`-step translation does not give invariance under one step. `Nat.iterate` does
+not appear — `ishiftConf τ U` is written directly.
 
-Two things cancel, and neither has to be tracked. The DAGGER cancels because it is applied twice on
-a `τ`-link and not at all elsewhere — `ireflLink_fst` is what makes the two case splits the same
-split. The `- 1` OFFSET on a `τ`-link cancels in the DIFFERENCE of the two constants.
-
-`Nat.iterate` is not used: `ishiftConf τ U` appears directly.
-
-DERIVED: the `1` is the separation of the two mirrors; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants, which is what makes the composite a single step. -/
 theorem ireflConf_comp_eq_shift (τ : Fin 4) (a : ℤ) (U : IConf G) :
     ireflConf τ a (ireflConf τ (a + 1) U) = ishiftConf τ U := by
   funext l
@@ -309,28 +310,31 @@ theorem ireflConf_comp_eq_shift (τ : Fin 4) (a : ℤ) (U : IConf G) :
 
 #print axioms ireflConf_comp_eq_shift
 
-/-- **⭐⭐ THE NEXT REFLECTION IS THIS ONE AFTER A SHIFT.** Apply `ireflConf τ a` to both sides of
-`ireflConf_comp_eq_shift` and cancel with `ireflConf_involutive`.
+/-- `ireflConf τ (a + 1) U = ireflConf τ a (ishiftConf τ U)`: the reflection at the next constant is
+the one at `a` applied after a shift. Obtained from `ireflConf_comp_eq_shift` by applying
+`ireflConf τ a` to both sides and cancelling with `LatticeReflection.ireflConf_involutive`.
 
-This is the same fact read the other way round, and reading it this way is what shows the two-
-reflection route does not make translation invariance cheaper — see
-`reflection_invariant_succ_iff_nu_T`.
+Scope: an equality of configurations; `reflection_invariant_succ_iff_nu_T` is what uses it on states.
 
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem ireflConf_succ_eq_ireflConf_shift (τ : Fin 4) (a : ℤ) (U : IConf G) :
     ireflConf τ (a + 1) U = ireflConf τ a (ishiftConf τ U) := by
   rw [← ireflConf_comp_eq_shift τ a U, ireflConf_involutive τ a]
 
 #print axioms ireflConf_succ_eq_ireflConf_shift
 
-/-- **⭐ THE CONJUGATION IDENTITY, ON CONFIGURATIONS.**
-`shift ∘ reflect = reflect ∘ unshift` — the `ℤ⁴` transcription of
+/-- `ishiftConf τ (ireflConf τ c U) = ireflConf τ c (iunshiftConf τ U)`: the reflection conjugates
+the forward shift into the backward one. It is the `ℤ⁴` form of
 `WilsonTransfer.shiftConf_reflConf_shiftConf`.
 
-**The dagger never has to be tracked.** `ishiftLink` and `iunshiftLink` both preserve a link's
-direction, so the `l.1 = τ` split is the same on both sides and the inverses cancel case by case.
+The proof splits on `l.1 = τ` and rewrites with `ireflLink_ishiftLink` and `iunshiftLink_ireflLink`,
+which lower the constant by one on either side. Both `ishiftLink` and `iunshiftLink` preserve a
+link's direction, so the split is the same on both sides and the inversions on `τ`-links match case
+by case.
 
-DERIVED: `4` is the dimension; no other numeral. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. No other numeral appears in the
+statement. -/
 theorem ishiftConf_ireflConf (τ : Fin 4) (c : ℤ) (U : IConf G) :
     ishiftConf τ (ireflConf τ c U) = ireflConf τ c (iunshiftConf τ U) := by
   funext l
@@ -344,7 +348,7 @@ theorem ishiftConf_ireflConf (τ : Fin 4) (c : ℤ) (U : IConf G) :
 
 end Conf
 
-/-! ## 5. ⭐ And on observables — `theta_T`'s shape -/
+/-! ## 5. The same identities on observables, in `ShiftCompat`'s field shapes -/
 
 section Obs
 
@@ -354,27 +358,39 @@ theorem continuous_iunshiftConf (τ : Fin 4) :
     Continuous (iunshiftConf (G := G) τ) :=
   continuous_pi fun l => continuous_apply (iunshiftLink τ l)
 
-/-- The backward shift as a linear map on observables.
+/-- The backward shift on observables, as an `ℝ`-linear endomorphism of `C(IConf G, ℝ)`:
+`F ↦ F.comp ⟨iunshiftConf τ, _⟩`. Additivity and homogeneity are `rfl`, since precomposition is
+pointwise. It is the map `SchwarzIteration.ShiftCompat` calls `S`.
 
-DERIVED: `4` is the spacetime dimension, `InfiniteLattice.ISite`'s own. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. -/
 def iunshiftObs (τ : Fin 4) : C(IConf G, ℝ) →ₗ[ℝ] C(IConf G, ℝ) where
   toFun F := F.comp ⟨iunshiftConf τ, continuous_iunshiftConf τ⟩
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
-/-- The forward shift as a linear map, matching `HalfSpaceAlgebra.ishiftObsCM`.
+/-- The forward shift on observables, as an `ℝ`-linear endomorphism of `C(IConf G, ℝ)`:
+`F ↦ F.comp ⟨ishiftConf τ, _⟩`, matching `HalfSpaceAlgebra.ishiftObsCM`. It is the map
+`SchwarzIteration.ShiftCompat` calls `T`.
 
-DERIVED: `4` is the spacetime dimension, `InfiniteLattice.ISite`'s own. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. -/
 def ishiftObsL (τ : Fin 4) : C(IConf G, ℝ) →ₗ[ℝ] C(IConf G, ℝ) where
   toFun F := F.comp ⟨ishiftConf τ, continuous_ishiftConf τ⟩
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
-/-- **`T_mul`** — precomposition is multiplicative, whatever it precomposes with. -/
+/-- `ishiftObsL τ (f * g) = ishiftObsL τ f * ishiftObsL τ g`, by `rfl`: precomposition is
+multiplicative, since multiplication of continuous functions is pointwise. This is the `T_mul` field
+of `SchwarzIteration.ShiftCompat`.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. -/
 theorem ishiftObsL_mul (τ : Fin 4) (f g : C(IConf G, ℝ)) :
     ishiftObsL τ (f * g) = ishiftObsL τ f * ishiftObsL τ g := rfl
 
-/-- **`T_S`** — translating back and then forward is doing nothing. -/
+/-- `ishiftObsL τ (iunshiftObs τ f) = f`: the forward shift undoes the backward one on observables.
+Evaluating at a configuration reduces it to `ishiftLink_iunshiftLink` on each link. This is the
+`T_S` field of `SchwarzIteration.ShiftCompat`.
+
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. -/
 theorem ishiftObsL_iunshiftObs (τ : Fin 4) (f : C(IConf G, ℝ)) :
     ishiftObsL τ (iunshiftObs τ f) = f := by
   ext U
@@ -386,17 +402,16 @@ theorem ishiftObsL_iunshiftObs (τ : Fin 4) (f : C(IConf G, ℝ)) :
 
 #print axioms ishiftObsL_iunshiftObs
 
-/-- **⭐ `theta_T` — THE REFLECTION CONJUGATES THE FORWARD SHIFT TO THE BACKWARD ONE.**
+/-- `ireflObs τ c (ishiftObsL τ f) = iunshiftObs τ (ireflObs τ c f)`: the reflection conjugates the
+forward shift on observables into the backward one. Evaluating at a configuration reduces it to
+`ishiftConf_ireflConf`.
 
-`θ(T f) = S(θ f)`, which is `SchwarzIteration.ShiftCompat.theta_T`'s field verbatim with
-`R.θ = ireflObs τ c`, `T = ishiftObsL τ` and `S = iunshiftObs τ`.
+This is the `theta_T` field of `SchwarzIteration.ShiftCompat` with `R.θ = ireflObs τ c`,
+`T = ishiftObsL τ` and `S = iunshiftObs τ`, and it is the identity that makes a reflection form
+symmetric for the transfer operator.
 
-This is the substantive field — the one the tree had on the periodic lattice
-(`WilsonTransfer.shiftConf_reflConf_shiftConf`, spent on `reflForm_shiftObs_symm`) and nowhere on
-`ℤ⁴`. It is what makes the reflection form symmetric for the transfer operator, which is the whole
-reason Osterwalder–Schrader pairs a reflection with a translation.
-
-DERIVED: `4` is the dimension; no other numeral. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. No other numeral appears in the
+statement. -/
 theorem ireflObs_ishiftObs (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
     ireflObs τ c (ishiftObsL τ f) = iunshiftObs τ (ireflObs τ c f) := by
   ext U
@@ -406,14 +421,16 @@ theorem ireflObs_ishiftObs (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
 #print axioms ireflObs_ishiftObs
 
 
-/-- **⭐⭐ ONE TRANSLATION IS TWO REFLECTIONS, ON OBSERVABLES.**
+/-- `ireflObs τ (a + 1) (ireflObs τ a f) = ishiftObsL τ f`: the observable form of
+`ireflConf_comp_eq_shift`. Evaluating at `U` turns the left side into
+`f (ireflConf τ a (ireflConf τ (a + 1) U))`, which that theorem rewrites.
 
-**⛔ THE CONSTANTS COME IN THE OTHER ORDER HERE, and that is not a typo.** `ireflObs` is
-PRECOMPOSITION, and precomposition reverses composition: `ireflObs τ (a+1) (ireflObs τ a f)` evaluated
-at `U` is `f (ireflConf τ a (ireflConf τ (a+1) U))`. So the LARGER constant is outermost on
-observables and the SMALLER one is outermost on configurations, for the same forward shift.
+Scope: the two constants appear in the opposite order to the configuration form, because `ireflObs`
+is precomposition and precomposition reverses composition. For the same forward shift, the larger
+constant is outermost on observables and the smaller one outermost on configurations.
 
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem ireflObs_comp_eq_shiftObs (τ : Fin 4) (a : ℤ) (f : C(IConf G, ℝ)) :
     ireflObs τ (a + 1) (ireflObs τ a f) = ishiftObsL τ f := by
   ext U
@@ -422,29 +439,19 @@ theorem ireflObs_comp_eq_shiftObs (τ : Fin 4) (a : ℤ) (f : C(IConf G, ℝ)) :
 
 #print axioms ireflObs_comp_eq_shiftObs
 
-/-- **⭐⭐⭐ `nu_T` FROM REFLECTION INVARIANCE AT TWO ADJACENT CONSTANTS.**
+/-- If a state `ν` is reflection-invariant at `a` and at `a + 1`, then it is translation-invariant:
+`ν (ishiftObsL τ f) = ν f` at every observable `f`. The proof rewrites the shift as the composite of
+the two reflections by `ireflObs_comp_eq_shiftObs` and applies the two invariances in turn.
 
-`WilsonTransferReduction.transferData_of_state_facts` takes three facts about the state and this
-supplies the third, `hnu : ∀ f, ν (ishiftObsL τ f) = ν f`, from reflection invariance at two
-ADJACENT constants: translation invariance of a state IS reflection invariance twice.
+This is the `hnu` hypothesis of `WilsonTransferReduction.transferData_of_state_facts`.
 
-**⛔ IT IS A RESTATEMENT, NOT A REDUCTION, AND `reflection_invariant_succ_iff_nu_T` PROVES THAT.**
-Given invariance at `a`, invariance at `a + 1` and `hnu` are EQUIVALENT. So this theorem does not
-make translation invariance cheaper, and no one should read it as discharging `hnu`. What it changes
-is the KIND of statement the remaining obligation is: two reflection invariances, each of the form
-`ReflectionHalfSpace.stateFree_reflection_invariant` already proved at finite volume for the even
-constant, instead of one reflection statement and one translation statement with no finite-volume
-counterpart at all.
+Scope: both invariances are hypotheses; nothing here exhibits a state satisfying either. One of the
+two constants is always odd, hence the link reflection, but `IsReflectionInvariant` is an equality,
+so no sign condition on the coupling enters. `reflection_invariant_succ_iff_nu_T` shows that, given
+invariance at `a`, the second invariance and the conclusion are equivalent.
 
-The second constant is ODD, hence the LINK reflection — but `IsReflectionInvariant` is an EQUALITY,
-so the `0 ≤ β` restriction that makes the odd reflection a separate problem for `ReflPositiveOn`
-does not touch it.
-
-**⛔ WHAT IS STILL OPEN.** Nothing here exhibits a Wilson state invariant under either reflection,
-and no box family gives both at once — see `reflection_invariant_succ_iff_nu_T` for why a finite box
-cannot be stable under both mirrors.
-
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem nu_T_of_reflection_invariant (τ : Fin 4) (a : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (h0 : MassGap.InfiniteReflection.IsReflectionInvariant
@@ -460,10 +467,12 @@ theorem nu_T_of_reflection_invariant (τ : Fin 4) (a : ℤ)
 
 #print axioms nu_T_of_reflection_invariant
 
-/-- **THE OBSERVABLE FORM OF `ireflConf_succ_eq_ireflConf_shift`.** Precomposition again reverses the
-order: the shift ends up OUTERMOST on observables and innermost on configurations.
+/-- `ireflObs τ (a + 1) f = ishiftObsL τ (ireflObs τ a f)`, the observable form of
+`ireflConf_succ_eq_ireflConf_shift`. Precomposition reverses the order, so the shift is outermost on
+observables and innermost on configurations.
 
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem ireflObs_succ_eq_shiftObs_ireflObs (τ : Fin 4) (a : ℤ) (f : C(IConf G, ℝ)) :
     ireflObs τ (a + 1) f = ishiftObsL τ (ireflObs τ a f) := by
   ext U
@@ -472,10 +481,12 @@ theorem ireflObs_succ_eq_shiftObs_ireflObs (τ : Fin 4) (a : ℤ) (f : C(IConf G
 
 #print axioms ireflObs_succ_eq_shiftObs_ireflObs
 
-/-- **UNDOING A STEP AFTER TAKING IT IS DOING NOTHING, ON OBSERVABLES.** The partner of
-`ishiftObsL_iunshiftObs`; both directions hold because `ishiftLink` is a bijection of the link set.
+/-- `iunshiftObs τ (ishiftObsL τ f) = f`, the other composition order from
+`ishiftObsL_iunshiftObs`. Evaluating at a configuration reduces it to `ishiftConf_iunshiftConf`. Both
+directions hold because `ishiftLink` is a bijection of the link set.
 
-DERIVED: no numeral; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`. No other numeral appears in the
+statement. -/
 theorem iunshiftObs_ishiftObsL (τ : Fin 4) (f : C(IConf G, ℝ)) :
     iunshiftObs τ (ishiftObsL τ f) = f := by
   ext U
@@ -484,10 +495,12 @@ theorem iunshiftObs_ishiftObsL (τ : Fin 4) (f : C(IConf G, ℝ)) :
 
 #print axioms iunshiftObs_ishiftObsL
 
-/-- **THE PRECEDING REFLECTION IS THIS ONE UNSHIFTED.** `ireflObs_succ_eq_shiftObs_ireflObs` read
-backwards, which needs the cancellation above.
+/-- `ireflObs τ (c - 1) f = iunshiftObs τ (ireflObs τ c f)`: the reflection at the previous constant
+is this one composed with the backward shift. It is `ireflObs_succ_eq_shiftObs_ireflObs` at `c - 1`,
+cancelled with `iunshiftObs_ishiftObsL`.
 
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem ireflObs_pred_eq_unshift (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
     ireflObs τ (c - 1) f = iunshiftObs τ (ireflObs τ c f) := by
   have h : ireflObs τ c f = ishiftObsL τ (ireflObs τ (c - 1) f) := by
@@ -497,28 +510,22 @@ theorem ireflObs_pred_eq_unshift (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
 
 #print axioms ireflObs_pred_eq_unshift
 
-/-- **⛔⛔ AND SO THE TWO-REFLECTION ROUTE IS AN EQUIVALENCE, NOT A REDUCTION.**
+/-- Given reflection invariance of `ν` at `a`, reflection invariance at `a + 1` is EQUIVALENT to
+translation invariance `∀ f, ν (ishiftObsL τ f) = ν f`. The forward direction is
+`nu_T_of_reflection_invariant`; the reverse rewrites by `ireflObs_succ_eq_shiftObs_ireflObs`, applies
+the translation invariance, and finishes with the invariance at `a`.
 
-Given invariance at `a`, invariance at `a + 1` and `nu_T` imply each other. `←` is
-`nu_T_of_reflection_invariant`; `→` is `ireflObs_succ_eq_shiftObs_ireflObs` followed by the
-hypothesis. **So nothing about translation invariance has been made cheaper by writing it as two
-reflections** — whoever supplies either one gets the other, and neither is supplied here.
+So the two formulations carry the same content: supplying either gives the other, and neither is
+supplied here.
 
-**The obstruction is a theorem, not a remark.** `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors`
-proves that a finite box stable under the reflections at BOTH `a` and `a + 1` is empty — the two
-mirrors compose to one link shift by `ireflLink_comp_succ`, and a `Finset` cannot contain an orbit of
-it. So no single box family delivers both finite-volume invariances, and the route asks instead for
-TWO families, one symmetric about each mirror, shown to have a common limit. That is the same
-boundary-independence argument translation invariance needed in the first place.
+Scope: `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows a finite box stable under the
+reflections at both `a` and `a + 1` is empty, since the two compose to one link shift by
+`ireflLink_comp_succ` and a `Finset` cannot contain an orbit of it. That rules out one finite-volume
+box family serving both invariances; it says nothing about routes to the second invariance that are
+not box statements.
 
-It rules out one FINITE-VOLUME box statement serving both; it says nothing against some other route
-to the odd-constant invariance that is not a box statement at all.
-
-**What the route does buy** is that both halves are then statements of the SAME kind, each one
-`ReflectionHalfSpace.stateFree_reflection_invariant` at its own constant, rather than one reflection
-statement and one translation statement with no finite-volume counterpart at all.
-
-DERIVED: the `1` is the mirror separation; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
+reflection constants. -/
 theorem reflection_invariant_succ_iff_nu_T (τ : Fin 4) (a : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (h0 : MassGap.InfiniteReflection.IsReflectionInvariant

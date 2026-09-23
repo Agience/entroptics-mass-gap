@@ -11,78 +11,69 @@ import MassGap.WilsonModel
 
     h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B
 
-with `d2At N β = ∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2`. This file rewrites that
-hypothesis as an exact statement about ONE scalar profile — the share of the read's weight beyond a
-cut — and reads off the threshold that profile must clear.
+with `d2At N β = ∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2`. This file restates that
+hypothesis as a condition on one scalar profile — the share of a read's weight beyond a cut — and
+records the exponent at which such a condition can be met.
 
 ## The far share and the layer cake
 
-`farShare R m = ∑_{d : circLag d > m} R.p d` is the probability the read puts at circle lag strictly
-beyond `m`. Because `k² = ∑_{m<k} (2m+1)`, the circular second moment is EXACTLY the `(2m+1)`-weighted
+`farShare R m = ∑_{d : circLag d > m} R.p d` is the probability a read places at circle lag strictly
+beyond `m`. Because `k² = ∑_{m<k} (2m+1)`, the circular second moment equals the `(2m+1)`-weighted
 sum of that profile:
 
     ∑_d p d · circLag(d)²  =  ∑_{m < N+1} (2m+1) · farShare R m        (`circ_moment_eq_layer`)
 
-No inequality is used, so nothing is given away: the substrate hypothesis and a uniform bound on this
-weighted sum are the same statement.
+The two sides are the same number at every aperture and for every read, so a uniform bound on the
+weighted sum and the substrate hypothesis are the same condition.
 
-## What the threshold is
+## The exponent
 
-From the identity, a uniform envelope `farShare ≤ a m` with `∑ (2m+1)·a m` convergent bounds the
-moment by that sum (`circ_moment_le_of_envelope`), and the bound is the sum itself — no constant is
-introduced. Convergence of `∑ (2m+1)·a m` is the whole condition, and since the layer cake is an IDENTITY the
-condition is not merely sufficient — it is the hypothesis restated. A power envelope `a m = C(m+1)^{-s}`
-meets it exactly when `s > 2`. `substrate_of_cubic_share` runs it at `s = 3`;
-`square_envelope_not_summable` proves the weighted total diverges at `s = 2`; and
-`square_share_is_not_enough` shows `s = 2` is not merely out of reach but FALSE — `squareRead` is a
-family of reads whose far share stays under `(4/3)(m+1)^{-2}` at every aperture and whose moments
-exceed every `B`. The threshold exponent `2` is DERIVED: `(2m+1)` is `(m+1)² − m²`, the second
-moment's own weight, and a square share profile has weighted total `∑ (2m+1)(m+1)^{-2}`, which is the
-harmonic series.
+From the identity, a nonnegative envelope `farShare ≤ a m` with `∑ (2m+1)·a m` convergent bounds the
+moment by that sum (`circ_moment_le_of_envelope`); the bound is the sum itself, and the aperture does
+not enter it. A power envelope `a m = C(m+1)^{-s}` has convergent weighted total exactly when
+`s > 2`. `substrate_of_cubic_share` runs the criterion at `s = 3`; `square_envelope_not_summable`
+shows the weighted total diverges at `s = 2`; and `square_share_is_not_enough` exhibits `squareRead`,
+a family of `Moment.Read`s whose far share stays under `(4/3)(m+1)^{-2}` at every aperture and whose
+circular second moments exceed every `B`. The exponent `2` comes from the weight: `(2m+1)` is
+`(m+1)² − m²`, so a square share profile has weighted total `∑ (2m+1)(m+1)^{-2}`, which diverges like
+the harmonic series.
 
-Two cruder facts bracket the identity and are stated separately because they are what a numerical
-certificate can check at a single aperture: a cut bound
-`moment ≤ m² + (N+1)²/4 · farShare m` (`circ_moment_le_cut`) and its Chebyshev converse
+Two cruder bounds are stated separately because each holds at a single aperture and a single cut: a
+cut bound `moment ≤ m² + (N+1)²/4 · farShare m` (`circ_moment_le_cut`) and its Chebyshev converse
 `(m+1)² · farShare m ≤ moment` (`farShare_le_of_circ_moment`).
 
-Only the TAIL of the profile is constrained. `circ_moment_le_of_tail_envelope` assumes the envelope
+Only the tail of the profile is constrained. `circ_moment_le_of_tail_envelope` assumes the envelope
 from a cut `m₀` upward and nothing below it: `farShare ≤ 1` caps the near block by `m₀²` on its own.
-So an envelope is always a statement about large lags, and the cut may be chosen after the fact.
+The cut is therefore a parameter of the criterion rather than of the read.
 
-## The two quantifiers are not of equal weight
+## The two quantifiers
 
-`∀ N` and `∀ β` split the hypothesis into an APERTURE half — `∃ B, ∀ N, d2At N β ≤ B` at one
-coupling, with `B` free to depend on `β` — and the COUPLING half, that those `B` are bounded over
-`β`. The first is implied by the hypothesis (`aperture_uniform_of_substrate`) and is discharged by a
-per-`β` envelope (`aperture_uniform_of_share_envelope`), so it asks strictly less.
-`aperture_uniformity_does_not_give_coupling_uniformity` shows the gap is real: `sepRead` is a family
-of reads satisfying every clause `wilson_reflection_positive_at` asserts whose moments are bounded in
-the aperture at each coupling and unbounded over couplings. So no argument controlling the aperture
-one coupling at a time can reach the hypothesis. It is a statement about `Moment.Read` families, so
-it shows the implication is not formal — it does not say the aperture half is easy, and at a general
-fixed `β` that half still needs a clustering estimate the tree has only near `β = 0`.
+`∀ N` and `∀ β` split the hypothesis into an aperture half — `∃ B, ∀ N, d2At N β ≤ B` at one
+coupling, with `B` bound inside the quantifier over couplings and so free to depend on `β` — and a
+coupling half, that those `B` are bounded over `β`. The aperture half follows from the hypothesis
+(`aperture_uniform_of_substrate`) and is discharged by a per-`β` envelope
+(`aperture_uniform_of_share_envelope`).
+`aperture_uniformity_does_not_give_coupling_uniformity` separates the two on abstract `Moment.Read`
+families: `sepRead` is bounded in the aperture at each coupling and unbounded over couplings, so
+`(∀ β, ∃ B, ∀ N, …)` does not imply `(∃ B, ∀ N β, …)` for `Moment.Read` families. That statement
+quantifies over `sepRead`, not over `readYMAt`.
 
-## The hypothesis is not slack
+## Summability carries weight in the criterion
 
-`envelope_load_bearing` exhibits a family of reads meeting every clause
-`wilson_reflection_positive_at` asserts whose far share is identically `1` below the antipode: the
-only envelope it admits is `a ≡ 1`, `∑ (2m+1)·1` diverges, and the moments are unbounded. Drop
-summability and the conclusion fails. `square_share_is_not_enough` says the same at the threshold
-itself, where the envelope is as small as it can be while still failing. `envelope_nonvacuous`
-exhibits a read the criterion accepts with bound `0`.
+`envelope_load_bearing` exhibits `Moment.Read` families whose far share is `1` at every cut the
+aperture admits: the only envelope covering them is `a ≡ 1`, `∑ (2m+1)·1` diverges, and circular
+second moments over `Moment.Read` families exceed every `B`. `square_share_is_not_enough` does the
+same at the exponent itself. `envelope_nonvacuous` exhibits a read the criterion accepts with bound
+`0`.
 
-## Why the aperture argument cannot be run forwards
+## The constants of the aperture argument
 
-`Moment.Read.substrate_lt_of_tension_lt_floor` turns a tension below the entropy floor into
-`substrateRatio < (1 − 3^{−1/4})/8`. Re-entering `Complete.confinement_at_of_substrate_sharp` needs
-`substrateRatio < substrateThreshold`. `substrateThreshold_lt_ceiling` proves the second number is
-strictly the smaller, so the forward run produces a bound weaker than the one it would have to supply
-and the loop does not close. `aperture_constants_ordered` places all three constants of the aperture
-argument in order; the outer two differ by exactly `π²/4`, since
-`(1 − 3^{−1/4})/8 = (π²/4)·(2(1 − 3^{−1/4})/(2π)²)`, which is the factor
-`Real.cos_le_one_sub_mul_cos_sq` gives away against `Sharp.cos_ge_tangent`. So the gap is a property
-of the two cosine inequalities, not of this development's numbers. Neither theorem bounds `d2At`
-itself in any case: both speak of the ratio, which carries the aperture divided out.
+`Moment.Read.substrate_lt_of_tension_lt_floor` produces `substrateRatio < (1 − 3^{−1/4})/8`;
+`Complete.confinement_at_of_substrate_sharp` consumes `substrateRatio < substrateThreshold`.
+`substrateThreshold_lt_ceiling` proves the second number is strictly smaller than the first, and
+`aperture_constants_ordered` places all three in order. The outer two differ by the factor `π²/4`:
+`(1 − 3^{−1/4})/8 = (π²/4)·(2(1 − 3^{−1/4})/(2π)²)`. All three constants are ratios with the
+aperture divided out; none of them bounds `d2At` itself.
 -/
 
 namespace MassGap.ContactDominance
@@ -91,16 +82,17 @@ open MassGap.Moment
 
 /-! ### The far share -/
 
-/-- The lags whose circle distance exceeds a cut `m`.
+/-- The lags whose circle distance exceeds a cut `m`, as a `Finset (Fin (N + 1))`.
 
-DERIVED: `1` is `Fin (N+1)`'s own offset -- the lag index runs over the whole period. The cut `m` is a parameter, not a constant. -/
+DERIVED: `1` is the offset in `Fin (N + 1)`: the lag index ranges over the whole period `N + 1`. The
+cut `m` is a parameter. -/
 def farSet (N m : ℕ) : Finset (Fin (N + 1)) :=
   Finset.univ.filter (fun d => m < Moment.circLag d)
 
-/-- **The far share**: the probability a read places strictly beyond circle lag `m`.
+/-- The far share: the total `p`-weight a read places at circle lag strictly beyond `m`, summed over
+`farSet N m`. It is a real number in the unit interval, by `farShare_nonneg` and `farShare_le_one`.
 
-DERIVED: nothing is chosen. `m` is the cut, quantified over; the set is `circLag > m` because the
-moment weights by `circLag`. -/
+DERIVED: no numeral appears in the statement. -/
 noncomputable def farShare {N : ℕ} (R : Moment.Read N) (m : ℕ) : ℝ :=
   ∑ d ∈ farSet N m, R.p d
 
@@ -116,11 +108,14 @@ theorem farShare_le_one {N : ℕ} (R : Moment.Read N) (m : ℕ) : farShare R m �
 
 /-! ### The two crude bounds: a cut, and its Chebyshev converse -/
 
-/-- **The cut bound.** Splitting the lag range at `m`, the near half contributes at most `m²` and the
-far half at most the squared half-period times its share.
+/-- The cut bound. At one aperture and one cut `m`, the circular second moment of `R` is at most
+`m² + ((N+1)²/4)·farShare R m`. The proof splits the lag range at `m`: below the cut every squared
+lag is at most `m²` and the shares there sum to at most one; above it every squared lag is at most
+the squared half-period, by `Substrate.circLag_le_half`.
 
-DERIVED: `m²` is the largest squared lag below the cut and `(N+1)²/4` the largest on the circle
-(`Substrate.circLag_le_half`). Nothing is chosen. -/
+DERIVED: the exponent `2` is the moment's own power, applied to `m` and to the half-period. `1` in
+`(N : ℝ) + 1` is the period `N + 1`. `4` is the square of the halving in `circLag ≤ (N+1)/2`, so
+`(N+1)²/4` is the largest squared circle distance available at this aperture. -/
 theorem circ_moment_le_cut {N : ℕ} (R : Moment.Read N) (m : ℕ) :
     ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2
       ≤ (m : ℝ) ^ 2 + ((N : ℝ) + 1) ^ 2 / 4 * farShare R m := by
@@ -183,10 +178,12 @@ theorem circ_moment_le_cut {N : ℕ} (R : Moment.Read N) (m : ℕ) :
 
 #print axioms circ_moment_le_cut
 
-/-- **Chebyshev, the other way.** Beyond the cut every squared lag is at least `(m+1)²`, so the far
-share is capped by the moment.
+/-- The Chebyshev converse of the cut bound: `(m+1)² · farShare R m` is at most the circular second
+moment. Beyond the cut every squared lag is at least `(m+1)²`, and the terms dropped from the moment
+are nonnegative.
 
-DERIVED: `(m+1)²` is the smallest squared lag strictly beyond `m`. -/
+DERIVED: `1` makes `m + 1` the smallest lag strictly beyond the cut `m`; the exponent `2` is the
+moment's own power, applied to that smallest lag. -/
 theorem farShare_le_of_circ_moment {N : ℕ} (R : Moment.Read N) (m : ℕ) :
     ((m : ℝ) + 1) ^ 2 * farShare R m ≤ ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 := by
   classical
@@ -211,17 +208,20 @@ theorem farShare_le_of_circ_moment {N : ℕ} (R : Moment.Read N) (m : ℕ) :
 
 #print axioms farShare_le_of_circ_moment
 
-/-! ### The layer cake: the moment IS the weighted far-share profile -/
+/-! ### The layer cake: the moment as a weighted far-share profile -/
 
-/-- `∑_{m<k} (2m+1) = k²` — the discrete derivative of the square.
+/-- `∑_{m < k} (2m + 1) = k²` in `ℝ`, by induction on `k`.
 
-DERIVED: `2m+1` is `(m+1)² − m²`. Nothing is chosen. -/
+DERIVED: `2` and `1` form the summand `2m + 1 = (m+1)² − m²`, the increment of the square; the
+exponent `2` on the right is that square. -/
 theorem sum_range_odd (k : ℕ) : ∑ m ∈ Finset.range k, (2 * (m : ℝ) + 1) = (k : ℝ) ^ 2 := by
   induction k with
   | zero => simp
   | succ j ih => rw [Finset.sum_range_succ, ih]; push_cast; ring
 
-/-- Below a ceiling the `<` filter of a range IS the shorter range. -/
+/-- When `k ≤ n`, filtering `Finset.range n` by `· < k` gives `Finset.range k`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem filter_lt_range {k n : ℕ} (hk : k ≤ n) :
     (Finset.range n).filter (fun m => m < k) = Finset.range k := by
   ext m
@@ -230,21 +230,26 @@ theorem filter_lt_range {k n : ℕ} (hk : k ≤ n) :
   · intro h; exact h.2
   · intro h; exact ⟨lt_of_lt_of_le h hk, h⟩
 
-/-- The circle lag never reaches the lag arity. -/
+/-- The circle lag of any `d : Fin (N + 1)` is strictly below `N + 1`: it never reaches the lag
+arity.
+
+DERIVED: `1` is the offset in `Fin (N + 1)`, which is both the lag arity and the period. -/
 theorem circLag_lt_succ {N : ℕ} (d : Fin (N + 1)) : Moment.circLag d < N + 1 := by
   have h := d.isLt
   unfold Moment.circLag
   omega
 
-/-- **THE LAYER CAKE — the substrate moment is exactly the weighted far-share profile.**
+/-- The layer cake. For any `R : Moment.Read N`,
 
     ∑_d p(d)·circLag(d)²  =  ∑_{m < N+1} (2m+1)·farShare R m
 
-An identity, not a bound: the two sides are the same number at every aperture and for every read. So
-the substrate hypothesis is precisely a uniform bound on the right-hand sum, and the whole content of
-`∃ B, ∀ N β, d2At N β ≤ B` is that the far-share profile stays summable against the weight `2m+1`.
+This is an equality, not a bound: the two sides are the same number at every aperture and for every
+read. `sum_range_odd` supplies the pointwise expansion of `circLag(d)²` and `circLag_lt_succ` fixes
+the index range.
 
-DERIVED: `2m+1` is `(m+1)² − m²` (`sum_range_odd`); `N+1` is the lag arity. -/
+DERIVED: the exponent `2` is the moment's own power. The weight `2m + 1` is `(m+1)² − m²`
+(`sum_range_odd`). `1` in `Finset.range (N + 1)` is the lag arity, which `circLag` never reaches
+(`circLag_lt_succ`). -/
 theorem circ_moment_eq_layer {N : ℕ} (R : Moment.Read N) :
     ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2
       = ∑ m ∈ Finset.range (N + 1), (2 * (m : ℝ) + 1) * farShare R m := by
@@ -267,10 +272,13 @@ theorem circ_moment_eq_layer {N : ℕ} (R : Moment.Read N) :
 
 /-! ### The criterion -/
 
-/-- **A summable far-share envelope bounds the moment, and the bound IS the sum.**
+/-- A nonnegative envelope `a` with `farShare R m ≤ a m` at every cut, and with `(2m+1)·a m`
+summable, bounds the circular second moment of `R` by `∑' m, (2m+1)·a m`. The bound is the envelope's
+own weighted total and the aperture `N` does not occur in it. The proof rewrites the moment by
+`circ_moment_eq_layer` and compares term by term against the tsum.
 
-No constant is introduced anywhere: the bound is `∑' m, (2m+1)·a m`, the envelope's own weighted
-total. The aperture does not appear, which is what makes the conclusion uniform in it. -/
+DERIVED: `0` in `ha0` is the sign condition on the envelope. `2` and `1` form the layer-cake weight
+`2m + 1 = (m+1)² − m²`. The exponent `2` is the moment's own power. -/
 theorem circ_moment_le_of_envelope {N : ℕ} (R : Moment.Read N) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m) (ha : ∀ m, farShare R m ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m)) :
@@ -286,13 +294,13 @@ theorem circ_moment_le_of_envelope {N : ℕ} (R : Moment.Read N) (a : ℕ → �
 
 #print axioms circ_moment_le_of_envelope
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM A UNIFORM FAR-SHARE ENVELOPE.**
+/-- One nonnegative profile `a` bounding `farShare (readYMAt N β) m` at every aperture, every
+coupling and every cut, with `(2m+1)·a m` summable, yields `∃ B, ∀ N β, d2At N β ≤ B`. The witness
+supplied for `B` is `∑' m, (2m+1)·a m`, and the per-aperture bound comes from
+`circ_moment_le_of_envelope`.
 
-One profile `a`, good at every aperture and every coupling, whose `(2m+1)`-weighted total converges,
-discharges `∃ B, ∀ N β, d2At N β ≤ B`. `B` is the total; nothing is fitted.
-
-By `circ_moment_eq_layer` this is not a sufficient condition that gives something away — the moment
-IS the weighted profile — so the only slack is between `farShare` and its envelope. -/
+DERIVED: `0` in `ha0` is the sign condition on the envelope; `2` and `1` form the layer-cake weight
+`2m + 1`. -/
 theorem substrate_of_share_envelope (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -303,8 +311,13 @@ theorem substrate_of_share_envelope (a : ℕ → ℝ)
 
 #print axioms substrate_of_share_envelope
 
-/-- **Confinement at every large enough aperture, from the far-share envelope.** The composition with
-`Complete.confinement_of_bounded_substrate`. -/
+/-- From the same envelope hypotheses, `μYMAt N β < κ₀YM` at every `β`, for `N` eventually in
+`Filter.atTop`. The composition of `substrate_of_share_envelope` with
+`MassGap.confinement_of_bounded_substrate`; the aperture quantifier is `∀ᶠ`, so the conclusion holds
+for all large enough `N` rather than for every `N`.
+
+DERIVED: `0` in `ha0` is the sign condition on the envelope; `2` and `1` form the layer-cake weight
+`2m + 1`. -/
 theorem confinement_of_share_envelope (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -315,15 +328,18 @@ theorem confinement_of_share_envelope (a : ℕ → ℝ)
 #print axioms confinement_of_share_envelope
 
 
-/-- **THE WHOLE STATEMENT, FROM A FAR-SHARE ENVELOPE.**
+/-- The envelope hypotheses yield a witness `h : ∃ B, ∀ N β, d2At N β ≤ B` paired with the first
+component of `MassGap.WilsonModel.existence_and_gap_of_substrate h`, stated for
+`wilsonOfSubstrate h`: the norm of the weighted moment sum over `gap.s β` tends to `0` along
+`Filter.atTop` in `τ` at every `β`; `gap.μ β - gap.κ` is negative at every `β`; and `gap.R` takes the
+same value at any two arguments. The conclusion is a `∃ h, …`, so the witness and the three clauses
+are bound together, and the clauses are stated about the model built from that particular witness.
 
-`WilsonModel.existence_and_gap_of_substrate` takes exactly `∃ B, ∀ N β, d2At N β ≤ B`, so
-`substrate_of_share_envelope` discharges it and the mass gap, non-triviality, `SO(4)` invariance and
-the continuum measure all follow from one scalar profile: a uniform bound on the share of the
-connected plaquette correlation beyond each cut, summable against `2m+1`.
+`substrate_of_share_envelope` supplies the witness.
 
-Stated as the composition so that the far-share condition is visibly the LAST hypothesis and not a
-reformulation alongside one. -/
+DERIVED: `0` in `ha0` is the sign condition on the envelope; `2` and `1` form the layer-cake weight
+`2m + 1`; `0` in `nhds 0` is the limit point of the norm; `0` in `… < 0` is the sign asserted of
+`gap.μ β - gap.κ`. -/
 theorem yang_mills_of_share_envelope (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -345,7 +361,11 @@ theorem yang_mills_of_share_envelope (a : ℕ → ℝ)
 
 /-! ### The threshold exponent is two -/
 
-/-- `∑ 1/(m+1)²` converges. -/
+/-- `fun m => 1/((m : ℝ) + 1)²` is summable, obtained from Mathlib's
+`Real.summable_one_div_nat_pow` at exponent `2` by shifting the index by one.
+
+DERIVED: `1` in the numerator is the constant of the comparison series; `1` in `(m : ℝ) + 1` is the
+index shift that keeps the summand finite at `m = 0`; `2` is the exponent. -/
 theorem summable_inv_succ_sq : Summable (fun m : ℕ => 1 / ((m : ℝ) + 1) ^ 2) := by
   have h : Summable (fun n : ℕ => 1 / (n : ℝ) ^ 2) := by
     simpa using Real.summable_one_div_nat_pow.mpr (by norm_num : 1 < 2)
@@ -354,11 +374,13 @@ theorem summable_inv_succ_sq : Summable (fun m : ℕ => 1 / ((m : ℝ) + 1) ^ 2)
   push_cast
   ring
 
-/-- **A cubic far-share envelope discharges the substrate hypothesis.**
+/-- `farShare (readYMAt N β) m ≤ C/(m+1)³`, uniformly in aperture and coupling, yields
+`∃ B, ∀ N β, d2At N β ≤ B`. The proof passes that envelope to `substrate_of_share_envelope`,
+dominating `(2m+1)·C/(m+1)³` by `2C/(m+1)²` and citing `summable_inv_succ_sq`.
 
-`farShare ≤ C/(m+1)³` uniformly in aperture and coupling gives `∃ B, ∀ N β, d2At N β ≤ B`. The
-exponent `3` is not chosen for room: it is the smallest INTEGER above the threshold `2` that
-`square_envelope_not_summable` shows cannot be reached. -/
+DERIVED: `0` in `hC` is the sign condition on `C`. `1` in `(m : ℝ) + 1` shifts the index so the
+envelope is finite at `m = 0`. `3` is the envelope exponent: the least integer strictly above `2`,
+and `square_envelope_not_summable` shows exponent `2` gives a divergent weighted total. -/
 theorem substrate_of_cubic_share {C : ℝ} (hC : 0 ≤ C)
     (ha : ∀ (N : ℕ) (β : ℝ) (m : ℕ),
       farShare (MassGap.readYMAt N β) m ≤ C / ((m : ℝ) + 1) ^ 3) :
@@ -379,11 +401,12 @@ theorem substrate_of_cubic_share {C : ℝ} (hC : 0 ≤ C)
 
 #print axioms substrate_of_cubic_share
 
-/-- **The threshold is exactly two: a square envelope is not summable against `2m+1`.**
+/-- For `C > 0` the weighted envelope `fun m => (2m+1)·(C/(m+1)²)` is not summable. The proof
+bounds it below by `C/(m+1)` and cites `Real.not_summable_one_div_natCast`. An envelope falling off
+like `(m+1)^{-2}` therefore cannot be supplied to `circ_moment_le_of_envelope`.
 
-`(2m+1)/(m+1)² ≥ 1/(m+1)`, and the harmonic series diverges. So no envelope falling off like
-`(m+1)^{-2}` can be fed to `circ_moment_le_of_envelope`, and the exponent `3` above cannot be
-lowered to `2`. -/
+DERIVED: `0` in `hC` is the strict sign condition on `C`; `2` and `1` form the layer-cake weight
+`2m + 1`; `1` in `(m : ℝ) + 1` is the index shift; the exponent `2` is the envelope's power. -/
 theorem square_envelope_not_summable {C : ℝ} (hC : 0 < C) :
     ¬ Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (C / ((m : ℝ) + 1) ^ 2)) := by
   intro hs
@@ -411,19 +434,22 @@ theorem square_envelope_not_summable {C : ℝ} (hC : 0 < C) :
 
 #print axioms square_envelope_not_summable
 
-/-! ### The companion threshold, on the correlation rather than on the share
+/-! ### The companion exponent, on the correlation rather than on the share
 
-`Moment.circ_moment_le_of_geometric` consumes `p d ≤ C·r^{circLag d}` with `r < 1`, which is a RATE.
-The same argument runs against any envelope in the circle lag whose squared-lag moment converges, and
-a power envelope has no rate in it — which matters because asymptotic freedom denies a decay rate
-uniform in the coupling while leaving a power untouched. The threshold exponent here is `3`, one
-above the share's `2`, because the share has already absorbed one summation. -/
+`Moment.circ_moment_le_of_geometric` consumes `p d ≤ C·r^{circLag d}` with `r < 1`, which is a decay
+rate. The lemmas below run the same argument against any envelope in the circle lag whose squared-lag
+moment converges; a power envelope carries no rate. The exponent here is `3`, one above the share's
+`2`, because the far share has already absorbed one summation. -/
 
-/-- **A summable squared-lag envelope on the read's own weights bounds the moment.**
+/-- A nonnegative envelope `b` in the circle lag with `R.p d ≤ b (circLag d)` and `(k : ℝ)^2 * b k`
+summable bounds the circular second moment of `R` by `2·∑' k, k²·b k`. The aperture `N` does not
+occur in the bound. `Moment.sum_circLag_le_two_mul` turns the sum over lags into a sum over circle
+distances, and `Summable.sum_le_tsum` closes the partial sum against the tsum.
 
-`p d ≤ b (circLag d)` with `∑ k²·b k` convergent gives `moment ≤ 2·∑' k²·b k`, uniformly in the
-aperture. The `2` is the fibre multiplicity of the circle lag (`Moment.sum_circLag_le_two_mul`): each
-distance is attained by at most two lags. Nothing else enters. -/
+DERIVED: `0` in `hb0` is the sign condition on the envelope. The exponents `2` are the squared circle
+lag, in the summability hypothesis and in the moment. The factor `2` in the conclusion is the fibre
+multiplicity of `circLag` (`Moment.sum_circLag_le_two_mul`): a circle distance is attained by at most
+two lags. -/
 theorem circ_moment_le_of_weight_envelope {N : ℕ} (R : Moment.Read N) (b : ℕ → ℝ)
     (hb0 : ∀ k, 0 ≤ b k)
     (hdecay : ∀ d, R.p d ≤ b (Moment.circLag d))
@@ -448,8 +474,13 @@ theorem circ_moment_le_of_weight_envelope {N : ℕ} (R : Moment.Read N) (b : ℕ
 
 #print axioms circ_moment_le_of_weight_envelope
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM A UNIFORM CORRELATION ENVELOPE.** One envelope `b` in the circle
-lag, good at every aperture and every coupling, with `∑ k²·b k` convergent. No rate is asked for. -/
+/-- One nonnegative envelope `b` in the circle lag, bounding `(readYMAt N β).p d` at every aperture,
+coupling and lag, with `(k : ℝ)^2 * b k` summable, yields `∃ B, ∀ N β, d2At N β ≤ B`. The witness
+supplied for `B` is `2 · ∑' k, k²·b k`, from `circ_moment_le_of_weight_envelope`. The hypothesis is a
+pointwise envelope, not a decay rate.
+
+DERIVED: `0` in `hb0` is the sign condition on the envelope; the exponent `2` is the squared circle
+lag; `1` in `Fin (N + 1)` is the lag arity at aperture `N`. -/
 theorem substrate_of_weight_envelope (b : ℕ → ℝ)
     (hb0 : ∀ k, 0 ≤ b k)
     (hs : Summable (fun k : ℕ => (k : ℝ) ^ 2 * b k))
@@ -461,7 +492,12 @@ theorem substrate_of_weight_envelope (b : ℕ → ℝ)
 
 #print axioms substrate_of_weight_envelope
 
-/-- `∑ k²/(k+1)⁴` converges, by comparison with `∑ 1/(k+1)²`. -/
+/-- `fun k => (k : ℝ)^2 * (1/((k : ℝ) + 1)^4)` is summable, by comparison with
+`summable_inv_succ_sq`.
+
+DERIVED: the exponent `2` is the squared-lag weight; `1` in the numerator and `1` in `(k : ℝ) + 1`
+are the constant and the index shift of the envelope; `4` is the envelope's exponent, so the summand
+falls off like `(k+1)^{-2}`. -/
 theorem summable_sq_div_succ_pow_four :
     Summable (fun k : ℕ => (k : ℝ) ^ 2 * (1 / ((k : ℝ) + 1) ^ 4)) := by
   refine Summable.of_nonneg_of_le (fun k => by positivity) (fun k => ?_) summable_inv_succ_sq
@@ -474,11 +510,14 @@ theorem summable_sq_div_succ_pow_four :
   have hb : (0 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 := sq_nonneg _
   nlinarith [hk, hb]
 
-/-- **A quartic correlation envelope discharges the substrate hypothesis.**
+/-- `(readYMAt N β).p d ≤ C/(circLag d + 1)⁴`, uniformly in aperture and coupling, yields
+`∃ B, ∀ N β, d2At N β ≤ B`. The proof passes that envelope to `substrate_of_weight_envelope`, with
+summability from `summable_sq_div_succ_pow_four`.
 
-`p d ≤ C/(circLag d + 1)⁴` uniformly in aperture and coupling is enough. The exponent `4` is the
-smallest INTEGER above the threshold `3` that `circ_moment_le_of_weight_envelope` sets, and `3` is
-where `∑ k²·b k` stops converging. -/
+DERIVED: `0` in `hC` is the sign condition on `C`. `1` in `Fin (N + 1)` is the lag arity; `1` in
+`(circLag d : ℝ) + 1` shifts the lag so the envelope is finite at lag `0`. `4` is the envelope
+exponent: the least integer strictly above `3`, which is where `∑ k²·b k` stops converging for a
+power envelope. -/
 theorem substrate_of_quartic_decay {C : ℝ} (hC : 0 ≤ C)
     (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)),
       (MassGap.readYMAt N β).p d ≤ C / ((Moment.circLag d : ℝ) + 1) ^ 4) :
@@ -494,11 +533,14 @@ theorem substrate_of_quartic_decay {C : ℝ} (hC : 0 ≤ C)
 
 /-! ### The same hypothesis in the unnormalised correlation
 
-`Moment.Read.p` divides by the total mass, so the substrate hypothesis is a statement about the
-correlation only through a RATIO. Stated that way it is uniform Cesàro contact dominance: the
-squared-lag-weighted total of `ρ` must stay within a fixed multiple of the plain total. -/
+`Moment.Read.p` divides by the total mass, so the substrate hypothesis constrains the correlation `ρ`
+only through a ratio. Written that way it reads: the squared-lag-weighted total of `ρ` stays within a
+fixed multiple of its plain total. -/
 
-/-- The normalised moment is the `ρ`-weighted moment over the total mass. -/
+/-- The `p`-weighted circular second moment equals the `ρ`-weighted one divided by the total
+`ρ`-mass, by unfolding `Moment.Read.p` termwise.
+
+DERIVED: the exponent `2` on each side is the moment's own power. -/
 theorem circ_moment_eq_rho_ratio {N : ℕ} (R : Moment.Read N) :
     ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2
       = (∑ d, R.ρ d * (Moment.circLag d : ℝ) ^ 2) / (∑ d, R.ρ d) := by
@@ -507,13 +549,15 @@ theorem circ_moment_eq_rho_ratio {N : ℕ} (R : Moment.Read N) :
   simp only [Moment.Read.p]
   ring
 
-/-- **THE HYPOTHESIS AS CESÀRO CONTACT DOMINANCE.**
+/-- For any `B` and any single read,
 
     ∑_d p(d)·circLag(d)² ≤ B   ↔   ∑_d ρ(d)·circLag(d)² ≤ B·∑_d ρ(d)
 
-An equivalence, so the substrate hypothesis is exactly: the squared-lag-weighted total of the
-connected correlation is within a fixed multiple of its plain total, at every aperture and every
-coupling. No decay, no rate, no normalisation. -/
+from `circ_moment_eq_rho_ratio` and `div_le_iff₀` applied to `R.hpos`. A bound on the normalised
+moment is thus the same as: the squared-lag-weighted total of `ρ` lies within the fixed multiple `B`
+of its plain total. No decay or rate enters.
+
+DERIVED: the exponent `2` on each side of the equivalence is the moment's own power. -/
 theorem circ_moment_le_iff_rho {N : ℕ} (R : Moment.Read N) (B : ℝ) :
     (∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 ≤ B)
       ↔ (∑ d, R.ρ d * (Moment.circLag d : ℝ) ^ 2 ≤ B * ∑ d, R.ρ d) := by
@@ -521,15 +565,14 @@ theorem circ_moment_le_iff_rho {N : ℕ} (R : Moment.Read N) (B : ℝ) :
 
 #print axioms circ_moment_le_iff_rho
 
-/-- **THE TWO INPUTS A CORRELATION BOUND MUST SUPPLY.**
+/-- Two inputs bound the normalised moment from an unnormalised envelope: `ρ d ≤ b (circLag d)` with
+`(k : ℝ)^2 * b k` summable, and a strictly positive lower bound `c` on the total `ρ`-mass. Together
+they give `moment ≤ (2/c)·∑' k, k²·b k`. Neither input follows from the other: the envelope leaves
+the normalisation free, and the mass bound says nothing about where the weight sits.
 
-An envelope `ρ d ≤ b (circLag d)` with `∑ k²·b k` convergent, AND a strictly positive lower bound `c`
-on the total mass, give `moment ≤ (2/c)·∑' k²·b k`. Both are needed and neither is implied by the
-other: the envelope alone leaves the normalisation free, and the mass bound alone says nothing about
-where the weight sits.
-
-DERIVED: the `2` is the fibre multiplicity of the circle lag (`Moment.sum_circLag_le_two_mul`); `c`
-is the caller's mass bound and the sum is the envelope's own. -/
+DERIVED: `0` in `hc` is the strict sign condition on `c`, and `0` in `hb0` the sign condition on the
+envelope. The exponents `2` are the squared circle lag. The factor `2` in `2/c` is the fibre
+multiplicity of `circLag` (`Moment.sum_circLag_le_two_mul`); `c` is the caller's own mass bound. -/
 theorem circ_moment_le_of_rho_envelope {N : ℕ} (R : Moment.Read N) (b : ℕ → ℝ) (c : ℝ)
     (hc : 0 < c) (hmass : c ≤ ∑ d, R.ρ d)
     (hb0 : ∀ k, 0 ≤ b k) (hrho : ∀ d, R.ρ d ≤ b (Moment.circLag d))
@@ -562,12 +605,14 @@ theorem circ_moment_le_of_rho_envelope {N : ℕ} (R : Moment.Read N) (b : ℕ �
 
 #print axioms circ_moment_le_of_rho_envelope
 
-/-! ### Negative control: the envelope hypothesis is load-bearing, and the criterion is not vacuous -/
+/-! ### Controls: the summability hypothesis is used, and the criterion is not vacuous -/
 
-/-- The contact read: all weight at lag zero.
+/-- The contact read at aperture `N`: `ρ` is the indicator of the lag index `0`, so all weight sits
+at zero separation.
 
-DERIVED: the `1` and `0` are the values of an indicator, and `p` normalises, so neither is a
-magnitude. -/
+DERIVED: `0` in `d = 0` is the lag index carrying the weight. `1` and `0` are the two values of the
+indicator; `Moment.Read.p` divides by the total `ρ`-mass, so their common scale does not reach the
+normalised read. -/
 noncomputable def contactRead (N : ℕ) : Moment.Read N where
   ρ := fun d => if d = 0 then 1 else 0
   hρ := fun d => by split <;> norm_num
@@ -577,8 +622,10 @@ theorem contactRead_sum (N : ℕ) : ∑ d, (contactRead N).ρ d = 1 := by
   show ∑ d : Fin (N + 1), (if d = 0 then (1 : ℝ) else 0) = 1
   simp
 
-/-- **The criterion accepts something.** The contact read's far share is zero at every cut, so the
-zero envelope applies and the bound it gives is `0`. -/
+/-- The contact read's far share vanishes at every aperture and every cut: the only lag carrying
+weight has circle lag `0`, so it lies outside `farSet N m`.
+
+DERIVED: `0` is the asserted value of the far share, a sum over an index set on which `ρ` is zero. -/
 theorem contactRead_farShare (N m : ℕ) : farShare (contactRead N) m = 0 := by
   classical
   refine Finset.sum_eq_zero (fun d hd => ?_)
@@ -596,9 +643,13 @@ theorem contactRead_farShare (N m : ℕ) : farShare (contactRead N) m = 0 := by
     rw [if_neg hne]
   rw [this, zero_div]
 
-/-- **NON-VACUITY.** A read satisfying the two clauses of `wilson_reflection_positive_at` whose far
-share is bounded by a summable envelope, with moment zero. So `circ_moment_le_of_envelope` is not
-an implication out of an unsatisfiable hypothesis. -/
+/-- The hypotheses of `circ_moment_le_of_envelope` are satisfiable. At every aperture `N` the
+contact read's far share is bounded by the constant envelope `fun _ => 0`, that envelope's weighted
+family is summable, and the moment bound it yields is `0`. The statement is about `contactRead`, an
+abstract `Moment.Read N`; no Wilson observable appears in it.
+
+DERIVED: `0` is the value of the envelope and hence also the bound on the moment; `2` and `1` form
+the layer-cake weight `2m + 1`; the exponent `2` is the moment's own power. -/
 theorem envelope_nonvacuous (N : ℕ) :
     (∀ m, farShare (contactRead N) m ≤ (fun _ : ℕ => (0 : ℝ)) m) ∧
       Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (0 : ℝ)) ∧
@@ -611,7 +662,11 @@ theorem envelope_nonvacuous (N : ℕ) :
 
 #print axioms envelope_nonvacuous
 
-/-- The antipodal read puts everything strictly beyond every cut below the antipode. -/
+/-- For `m ≤ k`, the far share of `Substrate.antipodeRead k` at cut `m` is `1`: all its weight sits
+at the antipode, whose circle lag `Substrate.circLag_antipode` places strictly beyond every such cut.
+`Substrate.antipodeRead_sum` supplies the normalisation.
+
+DERIVED: `1` is the asserted value of the far share, the whole weight of a normalised read. -/
 theorem antipodeRead_farShare (k m : ℕ) (hm : m ≤ k) :
     farShare (MassGap.Substrate.antipodeRead k) m = 1 := by
   classical
@@ -633,12 +688,17 @@ theorem antipodeRead_farShare (k m : ℕ) (hm : m ≤ k) :
   show (if MassGap.Substrate.antipode k = MassGap.Substrate.antipode k then (1 : ℝ) else 0) = 1
   rw [if_pos rfl]
 
-/-- **THE ENVELOPE HYPOTHESIS IS LOAD-BEARING.**
+/-- Three conjuncts about the summability hypothesis of `circ_moment_le_of_envelope`. First: any
+envelope `a` with `farShare (Substrate.antipodeRead k) m ≤ a m` for all `m ≤ k` satisfies `1 ≤ a m`
+at every `m`, by `antipodeRead_farShare` on the diagonal `k = m`. Second: the constant envelope
+`a ≡ 1` has a non-summable weighted family, since `(2m+1)·1` does not tend to zero. Third: for every
+`B` some aperture carries a `Moment.Read` whose circular second moment exceeds `B`; this conjunct is
+`Substrate.rp_alone_leaves_moment_unbounded` and quantifies over `Moment.Read` families, naming
+neither the antipodal family nor any Wilson observable.
 
-The antipodal family satisfies exactly the two clauses `wilson_reflection_positive_at` asserts, its
-far share is `1` at every cut the aperture admits — so the only envelope covering the family is
-`a ≡ 1`, whose `(2m+1)`-weighted total diverges — and its moments exceed every `B`. Remove
-summability from `circ_moment_le_of_envelope` and the conclusion is false, not merely unproved. -/
+DERIVED: `1` in `(1 : ℝ) ≤ a m` is the whole weight of a normalised read, the value the antipodal far
+share takes. `2` and `1` form the layer-cake weight `2m + 1`, and the following `1` is the constant
+envelope it is applied to. The exponent `2` is the moment's own power. -/
 theorem envelope_load_bearing :
     (∀ (a : ℕ → ℝ), (∀ (k m : ℕ), m ≤ k → farShare (MassGap.Substrate.antipodeRead k) m ≤ a m) →
         ∀ m, (1 : ℝ) ≤ a m) ∧
@@ -661,14 +721,19 @@ theorem envelope_load_bearing :
 
 /-! ### Only the tail is constrained
 
-The near lags need no hypothesis at all: `farShare ≤ 1` caps their contribution to the layer cake by
-`m₀²`, whatever the correlation does there. So an envelope is only ever a statement about the profile
-beyond a fixed cut, and the cut may be chosen after the fact. -/
+The near lags need no hypothesis: `farShare ≤ 1` caps their contribution to the layer cake by `m₀²`,
+whatever the correlation does there. An envelope is therefore a statement about the profile beyond a
+fixed cut, and the cut is a parameter of the criterion. -/
 
-/-- **A TAIL envelope is enough.** Nothing is assumed below the cut `m₀`; the layer cake's near block
-is bounded by `∑_{m<m₀}(2m+1) = m₀²` from `farShare ≤ 1` alone.
+/-- A tail envelope suffices. The hypothesis `ha` constrains `farShare R m` only for `m₀ ≤ m`, and
+the conclusion bounds the circular second moment by `m₀² + ∑' m, (2m+1)·a m`. The layer cake's near
+block is bounded by `∑_{m < m₀} (2m+1) = m₀²` using `farShare_le_one` and `sum_range_odd` alone; the
+far block is compared against the tsum.
 
-DERIVED: `m₀²` is `sum_range_odd` at `m₀` — the near block's worst case, not a chosen allowance. -/
+DERIVED: `0` in `ha0` is the sign condition on the envelope. `2` and `1` form the layer-cake weight
+`2m + 1`, in the summability hypothesis and in the tsum. The exponent `2` on the moment is its own
+power; the exponent `2` on `m₀` comes from `sum_range_odd` at `m₀`, the largest value the near block
+can take. -/
 theorem circ_moment_le_of_tail_envelope {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m) (ha : ∀ m, m₀ ≤ m → farShare R m ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m)) :
@@ -717,8 +782,12 @@ theorem circ_moment_le_of_tail_envelope {N : ℕ} (R : Moment.Read N) (m₀ : �
 
 #print axioms circ_moment_le_of_tail_envelope
 
-/-- **The substrate hypothesis from a TAIL envelope.** The cut `m₀` is uniform in aperture and
-coupling; below it nothing is assumed. -/
+/-- A tail envelope whose cut `m₀` is fixed uniformly in aperture and coupling yields
+`∃ B, ∀ N β, d2At N β ≤ B`. Below the cut nothing is assumed. The witness supplied for `B` is
+`m₀² + ∑' m, (2m+1)·a m`, from `circ_moment_le_of_tail_envelope`.
+
+DERIVED: `0` in `ha0` is the sign condition on the envelope; `2` and `1` form the layer-cake weight
+`2m + 1`. The cut `m₀` is a parameter. -/
 theorem substrate_of_tail_envelope (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -731,26 +800,25 @@ theorem substrate_of_tail_envelope (m₀ : ℕ) (a : ℕ → ℝ)
 
 /-! ### The aperture half and the coupling half
 
-The hypothesis carries two quantifiers, `∀ N` and `∀ β`, and they are not of equal weight. Split it:
+The hypothesis carries two quantifiers, `∀ N` and `∀ β`. Splitting them gives:
 
-* the APERTURE half, at one coupling — `∃ B, ∀ N, d2At N β ≤ B`, with `B` free to depend on `β`;
-* the COUPLING half — that those `B` are bounded over `β`, which is the hypothesis itself.
+* the aperture half, at one coupling — `∃ B, ∀ N, d2At N β ≤ B`, with `B` bound inside the
+  quantifier over couplings and so free to depend on `β`;
+* the coupling half — that those `B` are bounded over `β`, which is the hypothesis itself.
 
-The first follows from the second (`aperture_uniform_of_substrate`) and is discharged by a per-`β`
-envelope (`aperture_uniform_of_share_envelope`), so it asks strictly less. The theorems below show
-the gap is real: granting the aperture half at EVERY coupling does not give the hypothesis, because
-a family can be bounded in the aperture at each coupling with the bound growing without limit in the
-coupling. So any proof must use something about how the Wilson measure moves in `β`, and no amount of
-aperture control substitutes for it — the same shape of statement as
-`Substrate.substrate_bound_needs_more_than_positivity`, one quantifier up.
+The aperture half follows from the hypothesis (`aperture_uniform_of_substrate`) and is discharged by
+a per-`β` envelope (`aperture_uniform_of_share_envelope`). The theorems below separate the two on
+abstract `Moment.Read` families: `sepRead` is bounded in the aperture at each coupling by a bound
+that grows without limit in the coupling, so `(∀ β, ∃ B, ∀ N, …)` does not imply `(∃ B, ∀ N β, …)`
+for `Moment.Read` families. That is the shape of
+`Substrate.substrate_bound_needs_more_than_positivity`, one quantifier up. It quantifies over
+`sepRead`, not over `readYMAt`. -/
 
-What this does NOT say is that the aperture half is easy. It is a statement about `Moment.Read`
-families, so it shows the implication is not formal; at a general fixed `β` the aperture half needs a
-clustering estimate at that coupling, which the tree has only near `β = 0` (`StrongCoupling`). -/
+/-- The lag index at half the period, as an element of `Fin (N + 1)` at any aperture.
+`circLag_midLag` computes its circle lag as `(N + 1) / 2`.
 
-/-- The lag at half the period, at any aperture.
-
-DERIVED: `(N+1)/2` is half the period, the largest value `circLag` attains. `1` is the period offset and `2` the halving; both are the circle's, not chosen. -/
+DERIVED: `1` is the offset in `Fin (N + 1)` and the period `N + 1`; `2` is the halving, so
+`(N + 1) / 2` is the largest value `circLag` attains on this circle. -/
 def midLag (N : ℕ) : Fin (N + 1) := ⟨(N + 1) / 2, by omega⟩
 
 theorem circLag_midLag (N : ℕ) : Moment.circLag (midLag N) = (N + 1) / 2 := by
@@ -759,12 +827,13 @@ theorem circLag_midLag (N : ℕ) : Moment.circLag (midLag N) = (N + 1) / 2 := by
   rw [hv]
   omega
 
-/-- **All the weight at half the period**, at any aperture — the largest circle moment a read can
-have. `Substrate.antipodeRead` is this at odd `N`; this one carries every aperture, which is what a
-family indexed by `N` needs.
+/-- The read whose `ρ` is the indicator of `midLag N`: all weight at half the period, at any
+aperture. `Substrate.antipodeRead` is the same read at odd `N`; `midRead` is defined at every `N`,
+which is what a family indexed by `N` needs. `midRead_moment` computes its circular second moment as
+`((N + 1) / 2)²`.
 
-DERIVED: the `1` and `0` are the values of an indicator and `p` normalises, so neither is a
-magnitude; `(N+1)/2` is half the period. -/
+DERIVED: `1` and `0` are the two values of the indicator; `Moment.Read.p` divides by the total
+`ρ`-mass, so their common scale does not reach the normalised read. -/
 noncomputable def midRead (N : ℕ) : Moment.Read N where
   ρ := fun d => if d = midLag N then 1 else 0
   hρ := fun d => by split <;> norm_num
@@ -791,7 +860,11 @@ theorem midRead_moment (N : ℕ) :
   simp only [Finset.mem_univ, if_true]
   rw [circLag_midLag N]
 
-/-- The contact read has moment zero — every far share vanishes. -/
+/-- The contact read's circular second moment is `0` at every aperture, by `circ_moment_eq_layer`
+and `contactRead_farShare`.
+
+DERIVED: the exponent `2` is the moment's own power; `0` is the asserted value of the moment, every
+term of the layer cake vanishing. -/
 theorem contactRead_moment (N : ℕ) :
     ∑ d, (contactRead N).p d * (Moment.circLag d : ℝ) ^ 2 = 0 := by
   rw [circ_moment_eq_layer]
@@ -799,16 +872,23 @@ theorem contactRead_moment (N : ℕ) :
   rw [contactRead_farShare]
   ring
 
-/-- **A family bounded in the aperture at every coupling, unbounded over couplings.** At coupling `β`
-it is the mid-lag read while the aperture stays below `β` and the contact read afterwards, so at each
-`β` only finitely many apertures carry any weight away from zero.
+/-- A `Moment.Read N` indexed by aperture and coupling: `midRead N` while `(N : ℝ) ≤ β`, and
+`contactRead N` afterwards. At a fixed `β` only finitely many apertures carry weight away from lag
+zero, so the moments are bounded there (`sepRead_moment_le`); over couplings they are not
+(`sepRead_moment_unbounded`).
 
-DERIVED: the switch is at `(N : ℝ) ≤ β`, which is the statement "the aperture has not yet passed the
-coupling"; no magnitude is chosen, and any strictly increasing switch gives the same family. -/
+DERIVED: no numeral appears in the statement. The switch is the comparison `(N : ℝ) ≤ β`; any
+strictly increasing switch gives a family with the same two properties. -/
 noncomputable def sepRead (N : ℕ) (β : ℝ) : Moment.Read N :=
   if (N : ℝ) ≤ β then midRead N else contactRead N
 
-/-- At a fixed coupling the family's moments are capped, by a cap that depends on the coupling. -/
+/-- The circular second moment of `sepRead N β` is at most `((β + 1)/2)²`, a cap depending on `β`
+and not on `N`. On the `midRead` branch it follows from `midRead_moment` together with `(N : ℝ) ≤ β`;
+on the `contactRead` branch the moment is `0`.
+
+DERIVED: the exponent `2` on the moment is its own power. In `((β + 1)/2)²` the `1` and the inner `2`
+come from `circLag (midLag N) = (N + 1)/2`, with `N` replaced using `(N : ℝ) ≤ β`; the outer exponent
+`2` squares that lag. -/
 theorem sepRead_moment_le (N : ℕ) (β : ℝ) :
     ∑ d, (sepRead N β).p d * (Moment.circLag d : ℝ) ^ 2 ≤ ((β + 1) / 2) ^ 2 := by
   unfold sepRead
@@ -841,16 +921,16 @@ theorem sepRead_moment_unbounded (B : ℝ) :
   rw [hcast]
   nlinarith [hk, hk0]
 
-/-- **THE APERTURE HALF DOES NOT GIVE THE COUPLING HALF.**
+/-- The two halves separated on the `sepRead` family. The first conjunct: at every coupling the
+circular second moments of `sepRead N β` are bounded in the aperture, by `sepRead_aperture_bounded`.
+The second: no single `B` bounds them over all apertures and couplings, by
+`sepRead_moment_unbounded`. So `(∀ β, ∃ B, ∀ N, …)` does not imply `(∃ B, ∀ N β, …)` for
+`Moment.Read` families.
 
-`sepRead` is a family of reads meeting exactly the two clauses `wilson_reflection_positive_at`
-asserts. At every coupling its circular second moments are bounded in the aperture; over couplings
-they exceed every `B`. So `(∀ β, ∃ B, ∀ N, …)` does not imply `(∃ B, ∀ N β, …)`, and no argument that
-controls the aperture at each coupling separately can reach the substrate hypothesis.
+The statement quantifies over `sepRead`, an abstract family of `Moment.Read`s. It names no Wilson
+observable, and `d2At` does not occur in it.
 
-The measured flatness of `d2At` in the aperture at one coupling is therefore consistent with the
-hypothesis and does not bear on it: this theorem says exactly that such flatness, even granted at
-EVERY coupling, leaves the hypothesis open. -/
+DERIVED: the exponent `2` in each conjunct is the moment's own power. -/
 theorem aperture_uniformity_does_not_give_coupling_uniformity :
     (∀ β : ℝ, ∃ B : ℝ, ∀ N : ℕ,
         ∑ d, (sepRead N β).p d * (Moment.circLag d : ℝ) ^ 2 ≤ B) ∧
@@ -863,14 +943,22 @@ theorem aperture_uniformity_does_not_give_coupling_uniformity :
 
 #print axioms aperture_uniformity_does_not_give_coupling_uniformity
 
-/-- The aperture half is implied by the hypothesis, so it is the weaker of the two. -/
+/-- The aperture half follows from the substrate hypothesis: given `∃ B, ∀ N β, d2At N β ≤ B` and
+any `β`, the same `B` bounds `d2At N β` over all `N`.
+
+DERIVED: no numeral appears in the statement; the `2` in `d2At` belongs to that definition's name. -/
 theorem aperture_uniform_of_substrate (h : ∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B) (β : ℝ) :
     ∃ B : ℝ, ∀ N : ℕ, MassGap.d2At N β ≤ B := by
   obtain ⟨B, hB⟩ := h
   exact ⟨B, fun N => hB N β⟩
 
-/-- The aperture half at ONE coupling, from an envelope at that coupling only. The envelope may
-depend on `β`; what `substrate_of_share_envelope` additionally requires is that it need not. -/
+/-- The aperture half at one coupling, from an envelope assumed at that coupling only. Here `β` is
+bound outside the envelope `a`, so `a` may depend on it; `substrate_of_share_envelope` is the same
+statement with `a` bound outside the quantifier over couplings. The witness supplied for `B` is
+`∑' m, (2m+1)·a m`, from `circ_moment_le_of_envelope`.
+
+DERIVED: `0` in `ha0` is the sign condition on the envelope; `2` and `1` form the layer-cake weight
+`2m + 1`. -/
 theorem aperture_uniform_of_share_envelope (β : ℝ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -882,17 +970,21 @@ theorem aperture_uniform_of_share_envelope (β : ℝ) (a : ℕ → ℝ)
 #print axioms aperture_uniform_of_share_envelope
 
 
-/-! ### Sharpness: the threshold exponent is exactly two
+/-! ### The exponent is exactly two
 
 `square_envelope_not_summable` shows the criterion cannot be entered at exponent `2`. The family
-below shows more: exponent `2` is not merely out of the criterion's reach, it is FALSE. Its far share
-obeys a square envelope with a constant free of the aperture, and its moments are unbounded. So an
-envelope condition is enough exactly above exponent `2` and not at it. -/
+below goes further: at exponent `2` the conclusion itself fails over `Moment.Read` families. Its far
+share obeys a square envelope whose constant is free of the aperture, and its circular second moments
+are unbounded. An envelope condition therefore carries the conclusion above exponent `2` and not at
+it. -/
 
-/-- The telescoping weight `1/j² − 1/(j+1)²`, and `0` at the origin.
+/-- The telescoping weight: `1/j² − 1/(j+1)²` for `j ≥ 1`, and `0` at `j = 0`. It is nonnegative
+(`telWeight_nonneg`) and its partial sums telescope (`telWeight_sum`).
 
-DERIVED: nothing is chosen. The weight is the increment of `−1/j²`, which is the profile whose
-partial sums are exactly the square envelope this family is built to saturate. -/
+DERIVED: `0` in `j = 0` is the index excluded from the formula, where `1/j²` is undefined, and the
+`0` after it is the value taken there. `1` is the numerator of each term; the exponents `2` are the
+square whose increment this weight is; `1` in `(j : ℝ) + 1` is the index shift between the two
+terms. -/
 noncomputable def telWeight (j : ℕ) : ℝ :=
   if j = 0 then 0 else 1 / (j : ℝ) ^ 2 - 1 / ((j : ℝ) + 1) ^ 2
 
@@ -910,7 +1002,11 @@ theorem telWeight_nonneg (j : ℕ) : 0 ≤ telWeight j := by
       (by positivity : (0:ℝ) < (j:ℝ)^2)]
     nlinarith [hj, h1, h2]
 
-/-- **The telescoping sum.** `∑_{j ≤ M} telWeight j = 1 − 1/(M+1)²`. -/
+/-- `∑_{j < M+1} telWeight j = 1 − 1/(M+1)²`, by induction on `M`.
+
+DERIVED: `1` in `Finset.range (M + 1)` makes the range reach `M` inclusive. On the right, the leading
+`1` is the first surviving term `1/1²` of the telescope, the `1` in the numerator and the `1` in
+`(M : ℝ) + 1` are the last surviving term, and `2` is its exponent. -/
 theorem telWeight_sum (M : ℕ) :
     ∑ j ∈ Finset.range (M + 1), telWeight j = 1 - 1 / ((M : ℝ) + 1) ^ 2 := by
   induction M with
@@ -928,12 +1024,17 @@ theorem telWeight_sum (M : ℕ) :
       push_cast
       ring
 
-/-- **A read whose far share saturates a square envelope.** Weight `telWeight j` at lag `j` for
-`1 ≤ j ≤ k+1`, and nothing beyond; on that range the circle lag IS the lag index, so the far share
-telescopes.
+/-- A read carrying weight `telWeight j` at lag index `j` for `j ≤ k + 1` and nothing beyond. On
+that range the circle lag equals the lag index, so sums against `circLag` collapse to
+`Finset.range (k + 2)` (`squareRead_sum_eq`) and the far share telescopes
+(`squareRead_farShare_le`). Positivity of the total mass is witnessed by the weight at index `1`,
+which is `3/4`.
 
-DERIVED: `k+1` is the antipode of the period `2k+2`, which is the largest lag at which the circle
-distance still equals the index; the weights are `telWeight`. Nothing is chosen. -/
+DERIVED: `2` and `1` in `Moment.Read (2 * k + 1)` fix the aperture index at `2k + 1`, so the period
+is `2k + 2`; the family is defined at those apertures only. `1` in `k + 1` is the antipodal index of
+that period, the largest lag at which the circle distance still equals the index. `0` is the weight
+given outside that range. The `3 / 4` the `hpos` field computes with is `telWeight 1`, the weight at
+index `1`, which is what witnesses the positive total mass. -/
 noncomputable def squareRead (k : ℕ) : Moment.Read (2 * k + 1) where
   ρ := fun d => if (d : ℕ) ≤ k + 1 then telWeight (d : ℕ) else 0
   hρ := fun d => by
@@ -961,7 +1062,13 @@ noncomputable def squareRead (k : ℕ) : Moment.Read (2 * k + 1) where
       (if (d : ℕ) ≤ k + 1 then telWeight (d : ℕ) else 0)
     linarith
 
-/-- Every sum against the circle lag collapses to the near range, where the lag is the index. -/
+/-- For any `g`, the `ρ`-weighted sum of `g ∘ circLag` over the whole period equals
+`∑_{j < k+2} telWeight j * g j`: outside `j ≤ k + 1` the weight is zero, and inside it
+`circLag d = d`.
+
+DERIVED: `2` and the first `1` in `Fin (2 * k + 1 + 1)` are the aperture index `2k + 1`; the second
+`1` is the `Fin` offset, so the period is `2k + 2`. `2` in `Finset.range (k + 2)` makes the range
+cover indices `0` through `k + 1`, which is where `squareRead k` puts weight. -/
 theorem squareRead_sum_eq (k : ℕ) (g : ℕ → ℝ) :
     ∑ d : Fin (2 * k + 1 + 1), (squareRead k).ρ d * g (Moment.circLag d)
       = ∑ j ∈ Finset.range (k + 2), telWeight j * g j := by
@@ -990,7 +1097,13 @@ theorem squareRead_sum_eq (k : ℕ) (g : ℕ → ℝ) :
   have hmin : min j (2 * k + 1 + 1 - j) = j := by omega
   rw [hmin]
 
-/-- The read's total mass is `1 − 1/(k+2)²`, so it lies between `3/4` and `1`. -/
+/-- The total `ρ`-mass of `squareRead k` is `1 − 1/(k+2)²`, from `squareRead_sum_eq` at the constant
+function and `telWeight_sum (k + 1)`. `squareRead_mass_ge` and `squareRead_mass_le` bracket it
+between `3/4` and `1`.
+
+DERIVED: the leading `1` is the first surviving term `1/1²` of the telescope. `1` in the numerator
+and `2` in `(k : ℝ) + 2` are the last surviving term, indexed by the first position beyond the
+support; `2` is its exponent. -/
 theorem squareRead_mass (k : ℕ) :
     ∑ d, (squareRead k).ρ d = 1 - 1 / ((k : ℝ) + 2) ^ 2 := by
   have h := squareRead_sum_eq k (fun _ => 1)
@@ -1014,13 +1127,23 @@ theorem squareRead_mass_le (k : ℕ) : ∑ d, (squareRead k).ρ d ≤ 1 := by
   have h : (0 : ℝ) < 1 / ((k : ℝ) + 2) ^ 2 := by positivity
   linarith
 
-/-- The far share is the far `ρ`-mass over the total, for any read. -/
+/-- For any read, the far share equals the `ρ`-mass on `farSet N m` divided by the total `ρ`-mass,
+by unfolding `Moment.Read.p` termwise.
+
+DERIVED: no numeral appears in the statement. -/
 theorem farShare_eq_rho {N : ℕ} (R : Moment.Read N) (m : ℕ) :
     farShare R m = (∑ d ∈ farSet N m, R.ρ d) / (∑ d, R.ρ d) := by
   rw [farShare, Finset.sum_div]
   rfl
 
-/-- Beyond a cut, the telescoping profile carries at most `1/(m+1)²`. -/
+/-- The telescoping profile carries at most `1/(m+1)²` beyond a cut `m`. The proof splits
+`Finset.range (k + 2)` at `m`, applies `telWeight_sum` to both parts when `m + 1 ≤ k + 2`, and
+observes that the far part is empty otherwise.
+
+DERIVED: `2` in `Finset.range (k + 2)` is the index range of `squareRead k`'s support. `1` and `0`
+are the two values of the indicator selecting lags beyond the cut. On the right, `1` is the numerator
+of the bound, `1` in `(m : ℝ) + 1` is the smallest index beyond the cut, and `2` is the exponent of
+the square profile this weight saturates. -/
 theorem tel_far_le (k m : ℕ) :
     ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then (1 : ℝ) else 0)
       ≤ 1 / ((m : ℝ) + 1) ^ 2 := by
@@ -1054,7 +1177,13 @@ theorem tel_far_le (k m : ℕ) :
     rw [hempty, Finset.sum_empty]
     positivity
 
-/-- **The far share obeys a square envelope, at every aperture.** -/
+/-- `farShare (squareRead k) m ≤ (4/3)/(m+1)²` at every aperture index `k` and every cut `m`. The
+bound combines `tel_far_le`, which caps the far `ρ`-mass by `1/(m+1)²`, with `squareRead_mass_ge`,
+which keeps the total `ρ`-mass at or above `3/4`.
+
+DERIVED: `4/3` is the reciprocal of the mass lower bound `3/4` of `squareRead_mass_ge`, which is
+`telWeight 1 = 1 − 1/2²`. `1` in `(m : ℝ) + 1` is the smallest lag beyond the cut, and `2` is the
+exponent of the square envelope. -/
 theorem squareRead_farShare_le (k m : ℕ) :
     farShare (squareRead k) m ≤ (4 / 3) / ((m : ℝ) + 1) ^ 2 := by
   classical
@@ -1081,7 +1210,14 @@ theorem squareRead_farShare_le (k m : ℕ) :
   rw [farShare_eq_rho, div_le_div_iff₀ hden hm]
   linarith [hF, hmass]
 
-/-- The harmonic comparison: the telescoping profile's squared-lag total dominates `H_{k+2} − 1`. -/
+/-- The circular second moment of `squareRead k` is at least `(∑_{j < k+2} 1/(j+1)) − 1`. Termwise
+`telWeight j · j² = (2j+1)/(j+1)²`, which dominates `1/(j+1)` for `j ≥ 1`; the `j = 0` term is
+carried by the subtracted `1`, and `squareRead_mass_le` turns the `ρ`-weighted sum into a lower bound
+for the `p`-weighted one.
+
+DERIVED: `2` in `Finset.range (k + 2)` is the index range of the support; `1` in `(j : ℝ) + 1` is the
+harmonic index shift. The subtracted `1` covers the `j = 0` term, where `telWeight 0 = 0` while
+`1/(0+1) = 1`. The exponent `2` on the right is the moment's own power. -/
 theorem squareRead_moment_ge (k : ℕ) :
     (∑ j ∈ Finset.range (k + 2), 1 / ((j : ℝ) + 1)) - 1
       ≤ ∑ d, (squareRead k).p d * (Moment.circLag d : ℝ) ^ 2 := by
@@ -1134,15 +1270,22 @@ theorem squareRead_moment_ge (k : ℕ) :
   rw [hnum] at hge
   linarith [hsum, hge]
 
-/-- **SHARPNESS: A SQUARE FAR-SHARE ENVELOPE IS NOT ENOUGH.**
+/-- Two conjuncts at exponent `2`. First, the far share of `squareRead k` stays under
+`(4/3)/(m+1)²` at every aperture index and every cut, with a constant free of the aperture
+(`squareRead_farShare_le`). Second, its circular second moments exceed every `B`
+(`squareRead_moment_ge` together with the divergence of `∑ 1/(i+1)`). So an envelope at exponent `2`
+does not bound the circular second moment over a `Moment.Read` family, while
+`circ_moment_le_of_envelope` fed a cubic envelope does.
 
-`squareRead` satisfies the two clauses of `wilson_reflection_positive_at`, its far share is under
-`(4/3)/(m+1)²` at every cut and every aperture, and its circular second moments exceed every `B`. So
-the threshold exponent in `substrate_of_cubic_share` is exactly `2`: above it the envelope
-discharges the substrate hypothesis, at it the hypothesis is FALSE.
+Both conjuncts are about `squareRead`, a family of `Moment.Read`s at aperture index `2k + 1`.
+Neither mentions `readYMAt`, `d2At` or any Wilson observable.
 
 The mechanism is the layer cake: a square share profile has weighted total
-`∑ (2m+1)/(m+1)² ≍ ∑ 1/(m+1)`, which is the harmonic series. -/
+`∑ (2m+1)/(m+1)² ≍ ∑ 1/(m+1)`, the harmonic series.
+
+DERIVED: `4/3` is the reciprocal of the mass bound `3/4` of `squareRead_mass_ge`. `1` in
+`(m : ℝ) + 1` is the smallest lag beyond the cut, and the `2` above it is the envelope's exponent.
+The remaining `2` is the moment's own power. -/
 theorem square_share_is_not_enough :
     (∀ k m : ℕ, farShare (squareRead k) m ≤ (4 / 3) / ((m : ℝ) + 1) ^ 2) ∧
       (∀ B : ℝ, ∃ k : ℕ, B < ∑ d, (squareRead k).p d * (Moment.circLag d : ℝ) ^ 2) := by
@@ -1170,13 +1313,15 @@ theorem square_share_is_not_enough :
 #print axioms square_share_is_not_enough
 
 
-/-! ### Why the aperture argument cannot be run forwards -/
+/-! ### The constants of the aperture argument, in order -/
 
 /-- `3/4 < 3^{-1/4} < 19/25`, from `(3^{-1/4})⁴ = 1/3` and the strict monotonicity of the fourth
-power on the nonnegatives.
+power on the nonnegatives. Each side is proved by contradiction, raising the candidate bracket to the
+fourth power.
 
-DERIVED: `3` and `-1/4` are `e^{-κ₀}` with `κ₀ = ¼log3`; the two rationals are the coarsest brackets
-that separate the two constants below, and the proof exhibits them rather than assuming them. -/
+DERIVED: `3` is the base and `-1/4` the exponent of `3^{-1/4}`, which is `exp (-κ₀)` for
+`κ₀ = (log 3)/4`; `1` and `4` are the numerator and denominator of that exponent. `3/4` and `19/25`
+are the two rational brackets, exhibited here and consumed by `substrateThreshold_lt_ceiling`. -/
 theorem rpow_bracket :
     (3 : ℝ) / 4 < (3 : ℝ) ^ (-(1 : ℝ) / 4) ∧ (3 : ℝ) ^ (-(1 : ℝ) / 4) < 19 / 25 := by
   set f : ℝ := (3 : ℝ) ^ (-(1 : ℝ) / 4) with hf
@@ -1200,7 +1345,11 @@ theorem rpow_bracket :
     rw [hf4] at hle
     norm_num at hle
 
-/-- `arccos y < π/2 − y` for `y ∈ (0,1)`, because `sin x < x`. -/
+/-- For `0 < y < 1`, `Real.arccos y < π/2 − y`. From `Real.arccos y = π/2 − Real.arcsin y` together
+with `Real.sin_lt`, which gives `y = sin (arcsin y) < arcsin y`.
+
+DERIVED: `0` and `1` are the endpoints of the open interval the hypotheses place `y` in; `2` in `π/2`
+is the halving of `π` in the `arccos`/`arcsin` identity. -/
 theorem arccos_lt_half_pi_sub {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1) :
     Real.arccos y < Real.pi / 2 - y := by
   have hy1' : y ≤ 1 := le_of_lt hy1
@@ -1212,19 +1361,20 @@ theorem arccos_lt_half_pi_sub {y : ℝ} (hy0 : 0 < y) (hy1 : y < 1) :
   rw [Real.arccos]
   linarith
 
-/-- **THE FORWARD RUN CANNOT RE-ENTER.**
+/-- `MassGap.substrateThreshold < (1 − 3^{−1/4}) / 8`.
 
-    substrateThreshold  <  (1 − 3^{−1/4}) / 8
+`Moment.Read.substrate_lt_of_tension_lt_floor` produces a substrate ratio below the right-hand
+number; `Complete.confinement_at_of_substrate_sharp` consumes a ratio below the left-hand one. This
+ theorem places the left one strictly below the right.
 
-`Moment.Read.substrate_lt_of_tension_lt_floor` turns `μ < κ₀` into a substrate ratio below the right
-side; `Complete.confinement_at_of_substrate_sharp` consumes a ratio below the left side. The left is
-strictly the smaller, so what the first produces is not what the second consumes and running the
-aperture argument forwards yields no new bound.
+The proof unfolds `MassGap.substrateThreshold`, bounds `arccos (3^{−1/4})` above by `0.825` using
+`arccos_lt_half_pi_sub` and `rpow_bracket`, squares that to `0.69`, and bounds `(2π)²` below by `36`
+using `Real.pi_gt_three`; `Real.pi_lt_d2` supplies the upper bracket on `π`.
 
-DERIVED: both constants are the development's own — `arccos(3^{−1/4})²/(2π)²` is
-`Complete.substrateThreshold` and `(1 − 3^{−1/4})/8` is the ceiling of
-`Moment.Read.substrate_lt_of_tension_lt_floor`. The brackets on `3^{−1/4}` and `π` are exhibited by
-`rpow_bracket` and Mathlib's `pi_gt_three` / `pi_lt_d2`. -/
+DERIVED: `1` and the base `3` with exponent `-1/4` form `1 − 3^{−1/4}`, the numerator of the ceiling
+that `Moment.Read.substrate_lt_of_tension_lt_floor` produces, and `1` and `4` are the numerator and
+denominator of that exponent. `8` is that ceiling's divisor. `MassGap.substrateThreshold` is
+`arccos(3^{−1/4})²/(2π)²` and contributes no literal of its own to this statement. -/
 theorem substrateThreshold_lt_ceiling :
     MassGap.substrateThreshold < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8 := by
   obtain ⟨hlow, hhigh⟩ := rpow_bracket
@@ -1246,14 +1396,19 @@ theorem substrateThreshold_lt_ceiling :
 
 #print axioms substrateThreshold_lt_ceiling
 
-/-- **The two numbers, side by side.** `taylor_le_substrateThreshold` already places the
-origin-tangent threshold below `substrateThreshold`; this places `substrateThreshold` strictly below
-the ceiling a tension under the floor produces. So the three constants of the aperture argument are
-ordered
+/-- The three constants of the aperture argument, in order:
 
     2(1 − 3^{−1/4})/(2π)²  ≤  substrateThreshold  <  (1 − 3^{−1/4})/8
 
-and the forward direction lands on the far side of the entry condition. -/
+The left inequality is `MassGap.taylor_le_substrateThreshold`, which places the origin-tangent
+number below `substrateThreshold`; the right is `substrateThreshold_lt_ceiling`. The outer two differ
+by the factor `π²/4`.
+
+DERIVED: the leading `2` is the numerator of the origin-tangent bound
+`MassGap.taylor_le_substrateThreshold` supplies; the `2` in `(2 * Real.pi)` is the period of the
+angle it is divided by, and the exponent `2` squares that period. `1` and the base `3` with exponent
+`-1/4` form `1 − 3^{−1/4}` on both sides, with `1` and `4` the numerator and denominator of that
+exponent. `8` is the divisor of the ceiling. -/
 theorem aperture_constants_ordered :
     2 * (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / (2 * Real.pi) ^ 2 ≤ MassGap.substrateThreshold ∧
       MassGap.substrateThreshold < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8 :=

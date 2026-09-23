@@ -2,46 +2,36 @@ import Mathlib
 import MassGap.WilsonReal
 
 /-!
-# MassGap.ReflectionPositivity — the MECHANISM of reflection positivity, proved
+# MassGap.ReflectionPositivity — paired integrals over product Haar, and the locality that feeds them
 
-`Complete.wilson_reflection_positive_at` is an axiom, cited to Osterwalder–Seiler (*Gauge field
-theories on a lattice*, Ann. Phys. **110** (1978) 440). A citation is a fine thing to stand on, but
-it is worth knowing which half of the cited theorem is doing the work, because the two halves are of
-very different difficulty and only one of them is hard.
+Everything here is stated over `vol ι N`, the product Haar measure on configurations
+`ι → MassGap.SUN.SU N` for a finite link index `ι`. A reflection is a permutation `θ : Equiv.Perm ι`
+together with two disjoint `Finset`s `S`, `T` and an equivalence `e : S ≃ T` agreeing with `θ` on
+`S`.
 
-WHAT REFLECTION POSITIVITY IS, MECHANICALLY. Split the links into a POSITIVE half `S` and a NEGATIVE
-half `T`, disjoint, exchanged by a reflection `θ`. Reflection positivity says that an observable
-paired with its own reflection has nonnegative expectation. The reason is not analytic: it is that
-such a pairing is a SQUARE. If everything supported on the positive half integrates to some number,
-the reflected copy integrates to the same number (the measure does not know which side is which), and
-the two sides are independent (they read disjoint coordinates), so the product integrates to that
-number squared.
+`pairing_with_reflection_nonneg` is the core identity: for a measurable `h` on the `S`-coordinates,
 
-That is `pairing_with_reflection_nonneg` below, and it is proved here with no axiom. What it needs
-from the caller is exactly one thing: the observable-times-weight has to be WRITTEN in the paired
-form `h(U|_S) · h((U∘θ)|_S)`.
+    ∫ h(U|_S) · h((U ∘ θ)|_S) dvol = (∫ h(U|_S) dvol)²
 
-SO WHAT IS ACTUALLY CITED. Putting the Wilson Boltzmann weight into that form is the cited content.
-The action splits as `S₊ + S₋ + S_cross`, and the cross term — the plaquettes straddling the
-reflection plane — does not factorise on its own; Osterwalder–Seiler expand `e^{-β S_cross}` into a
-convergent sum of products, each term of the paired form, and conclude by summing nonnegatives. The
-expansion is the theorem. The pairing-is-a-square step, which is what the expansion is FOR, is below.
+Two inputs carry it. `WilsonReal.block_integral_factor` factorises the integral because the two
+halves read disjoint coordinates, and `relabel_measurePreserving` — the permutation invariance of a
+product of identical factors — makes the two resulting integrals equal.
+`reflection_positive_of_paired` reads off `0 ≤` that integral, `reflection_positive_at_zero` restates
+it with the function named `O`, and `reflection_positive_of_expansion` extends it to a finite sum
+`∑ k, c k * (g k (U|_S) * g k ((U ∘ θ)|_S))` with nonnegative coefficients.
 
-WHY THIS DISTINCTION IS WORTH DRAWING. `entroptics-positivity` makes the same separation in a
-different setting and finds it decisive there. It has two routes to its pairing identity: a
-similarity `S K S⁻¹ = −K`, which leaves the weights REAL and does carry positivity, and an
-ANTI-similarity `S K S⁻¹ = −conj(K)`, which restores the identity on an odd cycle and leaves a phase
-behind. On an odd cycle only the second is available, so there the identity can be restored and the
-positivity cannot — measured, the identity goes to `8e-14` while the sign deficit gets nine times
-WORSE. Reading that back here: "the measure is invariant under the reflection" is the easy half and
-is not by itself reflection positivity. The content is whether the weight can be written as a
-pairing at all.
+The remaining three theorems are the locality facts a splitting argument rests on.
+`hol_congr_on_support`: a plaquette's holonomy depends only on the links its boundary word names.
+`action_split`: the total action splits over a `Finset` of plaquettes and its complement, by
+`Finset.sum_filter_add_sum_filter_not`. `action_on_congr_of_support`: if every plaquette of `A` draws
+its boundary word from `S`, then `A`'s contribution is unchanged by configurations outside `S`.
 
-AT ZERO COUPLING there is no cross term, so the hypothesis is discharged outright and reflection
-positivity is a theorem with nothing cited (`reflection_positive_at_zero`). That is the free case,
-and it is the base the expansion perturbs around.
-
-Foundational footprint only (`#print axioms` at the end). Build: `lake build MassGap.ReflectionPositivity`.
+Scope: the hypothesis of `pairing_with_reflection_nonneg` is that the integrand is ALREADY written in
+the paired form `h(U|_S) · h((U ∘ θ)|_S)`; no statement here puts a Wilson Boltzmann weight into that
+form, and no coupling `β` appears anywhere in this file. `reflection_positive_of_expansion` is stated
+for a `Fintype` index `K`, so it covers finite sums only. `Complete.wilson_reflection_positive_at`,
+the axiom cited to Osterwalder–Seiler (Ann. Phys. 110 (1978) 440), is not used or discharged here.
+Axiom footprint is recorded by the `#print axioms` line after each declaration.
 -/
 
 namespace MassGap.ReflectionPositivity
@@ -50,14 +40,21 @@ open MeasureTheory MassGap.WilsonReal MassGap.CompactGauge
 
 variable {ι : Type} [Fintype ι] [DecidableEq ι] {N : ℕ}
 
-/-- The product Haar measure on link configurations valued in `SU N`. -/
+/-- The product Haar measure on configurations `ι → MassGap.SUN.SU N`, as
+`Measure.pi (fun _ : ι => probHaar (MassGap.SUN.SU N))` over a finite index type `ι`. Every factor
+is the same normalised Haar measure, which is what makes index permutations measure-preserving.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable abbrev vol (ι : Type) [Fintype ι] (N : ℕ) : Measure (ι → MassGap.SUN.SU N) :=
   Measure.pi (fun _ : ι => probHaar (MassGap.SUN.SU N))
 
-/-- Relabelling links by a permutation, as a measurable equivalence of configurations.
+/-- The measurable equivalence of configurations induced by a permutation `e : Equiv.Perm ι`, as
+`(MeasurableEquiv.piCongrLeft _ e).symm`. By `relabel_apply` it acts as `relabel e U l = U (e l)`.
 
-The same construction as `LatticeGauge.reindex`, stated directly on `ι → SU N` so that this module
-does not have to carry a `System` to talk about a reflection. -/
+This is the same construction as `LatticeGauge.reindex`, stated directly on `ι → MassGap.SUN.SU N`
+so the module needs no `System` to speak of a reflection.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def relabel (e : Equiv.Perm ι) :
     (ι → MassGap.SUN.SU N) ≃ᵐ (ι → MassGap.SUN.SU N) :=
   (MeasurableEquiv.piCongrLeft (fun _ : ι => MassGap.SUN.SU N) e).symm
@@ -65,9 +62,15 @@ noncomputable def relabel (e : Equiv.Perm ι) :
 @[simp] theorem relabel_apply (e : Equiv.Perm ι) (U : ι → MassGap.SUN.SU N) (l : ι) :
     relabel (N := N) e U l = U (e l) := rfl
 
-/-- **Relabelling links preserves the product Haar measure.** Identical factors, so a permutation of
-the index set is a symmetry of the product — the same fact `LatticeGauge.reindex_measurePreserving`
-records, on the bare configuration type. -/
+/-- `relabel e` is measure-preserving from `vol ι N` to itself, for every `e : Equiv.Perm ι`. The
+factors of the product are identical copies of `probHaar`, so `measurePreserving_piCongrLeft`
+applies and `MeasurePreserving.symm` transports it to the inverse equivalence.
+
+Scope: this is permutation invariance of the product measure. It uses no property of
+`MassGap.SUN.SU N` beyond carrying `probHaar`, and is the same fact
+`LatticeGauge.reindex_measurePreserving` records on a `System`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem relabel_measurePreserving (e : Equiv.Perm ι) :
     MeasurePreserving (relabel (N := N) e) (vol ι N) (vol ι N) := by
   have h : MeasurePreserving
@@ -78,22 +81,22 @@ theorem relabel_measurePreserving (e : Equiv.Perm ι) :
 
 #print axioms relabel_measurePreserving
 
-/-- **THE MECHANISM: a positive-half function paired with its own reflection integrates to a square.**
+/-- For disjoint `Finset`s `S`, `T`, a permutation `θ : Equiv.Perm ι`, an equivalence `e : S ≃ T`
+agreeing with `θ` on `S`, and a measurable `h : (S → MassGap.SUN.SU N) → ℝ`,
 
-`h` is anything supported on the positive half `S` — in the application, an observable multiplied by
-whatever part of the Boltzmann weight is supported there. `e : S ≃ T` is the reflection restricted to
-that half, `hθ` saying it agrees with the global permutation `θ`. The conclusion is that the pairing
+    ∫ U, h (U|_S) * h ((U ∘ θ)|_S) ∂(vol ι N)  =  (∫ U, h (U|_S) ∂(vol ι N)) ^ 2
 
-    ∫ h(U|_S) · h((U ∘ θ)|_S)  dvol
+The proof defines `ψ v := h (fun i : S => v (e i))` on the `T`-coordinates, rewrites the second
+factor as `ψ (U|_T)` using `hθ`, factorises with `WilsonReal.block_integral_factor` on the disjoint
+blocks, and identifies `∫ ψ (U|_T)` with `∫ h (U|_S)` through `relabel_measurePreserving` at `θ`.
 
-equals `(∫ h(U|_S))²`, hence is nonnegative — REFLECTION POSITIVITY, for any weight already written
-in paired form.
+Scope: the conclusion is an EQUALITY to a square, not an inequality — nonnegativity is read off it
+in `reflection_positive_of_paired`. The integrand must already be of the paired shape; nothing here
+puts a Boltzmann weight into that shape, and no coupling appears. Integrability of the product is
+not hypothesised, so degenerate cases fall to Lean's junk value for a non-integrable integral.
 
-Two facts carry it and neither is analytic: the two halves read disjoint coordinates, so the integral
-factorises (`WilsonReal.block_integral_factor`); and the measure does not distinguish the halves, so
-the two factors are equal (`relabel_measurePreserving`).
-
-DERIVED: no numeric content whatsoever. The `0` in the conclusion is the statement. -/
+DERIVED: the exponent `2` is the square on the right, which is what the two factors combine to. No
+other numeral appears in the statement. -/
 theorem pairing_with_reflection_nonneg
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (e : S ≃ T)
     (hθ : ∀ i : S, ((e i : ι)) = θ (i : ι))
@@ -128,7 +131,11 @@ theorem pairing_with_reflection_nonneg
 
 #print axioms pairing_with_reflection_nonneg
 
-/-- **Reflection positivity, in the form it is used: the pairing is nonnegative.** -/
+/-- `0 ≤ ∫ U, h (U|_S) * h ((U ∘ θ)|_S) ∂(vol ι N)`, under the same hypotheses as
+`pairing_with_reflection_nonneg`. The proof rewrites by that identity and applies `sq_nonneg`.
+
+DERIVED: `0` is the lower bound on the integral. No other numeral appears in the statement; the
+square has been rewritten away. -/
 theorem reflection_positive_of_paired
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (e : S ≃ T)
     (hθ : ∀ i : S, ((e i : ι)) = θ (i : ι))
@@ -139,24 +146,20 @@ theorem reflection_positive_of_paired
 
 #print axioms reflection_positive_of_paired
 
-/-- **A SUM of paired products is nonnegative, given nonnegative coefficients.**
+/-- If `F` is pointwise equal to a finite sum `∑ k, c k * (g k (U|_S) * g k ((U ∘ θ)|_S))` with
+`0 ≤ c k`, each `g k` measurable and each paired product integrable, then
+`0 ≤ ∫ U, F U ∂(vol ι N)`.
 
-This is the shape the cited expansion produces, and adding it narrows what is cited. Osterwalder-Seiler
-expand `exp(-beta S_cross)` over the straddling plaquettes into a convergent sum
+The proof rewrites `F` by `hF`, exchanges sum and integral with `integral_finset_sum` using the
+integrability hypothesis, pulls out each `c k` with `integral_const_mul`, and applies
+`pairing_with_reflection_nonneg` and `sq_nonneg` to each term before `Finset.sum_nonneg`.
 
-    sum_k  c_k * g_k(U|_+) * g_k((U . theta)|_+)
+Scope: `K` is a `Fintype`, so the sum is finite — an infinite convergent expansion is not covered,
+and neither is any question of exchanging a limit with the integral. The existence of such an
+expansion, and the nonnegativity of its coefficients, are hypotheses `hF` and `hc`.
 
-and conclude by summing nonnegatives. The summing is here, proved: each term is a nonnegative multiple
-of a square by `pairing_with_reflection_nonneg`, and a finite sum of nonnegatives is nonnegative.
-
-What that leaves cited is no longer "reflection positivity holds" but the narrower and far more
-checkable "the expansion exists with nonnegative coefficients". The difference matters because the
-second is a statement about characters of a compact group, where the coefficients are known, and the
-first is a statement about the theory.
-
-Stated for a FINITE index set. The cited expansion is an infinite convergent sum; a finite truncation
-of it is what a lattice with finitely many straddling plaquettes and a convergent character expansion
-produces at each order, and the limit is the analytic half that remains outside. -/
+DERIVED: `0` occurs twice, as the lower bound on each coefficient `c k` and as the lower bound on the
+integral of `F`. No other numeral appears in the statement. -/
 theorem reflection_positive_of_expansion
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (e : S ≃ T)
     (hθ : ∀ i : S, ((e i : ι)) = θ (i : ι))
@@ -181,15 +184,15 @@ theorem reflection_positive_of_expansion
 
 #print axioms reflection_positive_of_expansion
 
-/-- **At zero coupling it is unconditional.**
+/-- `0 ≤ ∫ U, O (U|_S) * O ((U ∘ θ)|_S) ∂(vol ι N)` for any measurable `O` on the `S`-coordinates,
+against the bare product Haar measure `vol ι N`.
 
-With `β = 0` the Boltzmann weight is `1`, so there is no cross term to expand and the observable
-alone is the paired function: any observable of the positive half, paired with its own reflection, has
-nonnegative expectation under the bare product Haar measure. Nothing is cited here.
+Scope: this is `reflection_positive_of_paired` with the function renamed, and the two statements are
+identical. No coupling and no Boltzmann weight appear in it: the measure is product Haar, which is
+the `β = 0` case, and the observable itself plays the role of the paired function. The proof is that
+ theorem applied directly.
 
-This is the base the Osterwalder–Seiler expansion perturbs around, and it says the axiom's SHAPE is
-right: the quantity asserted nonnegative really is nonnegative in the case where the hard half is
-absent. -/
+DERIVED: `0` is the lower bound on the integral. No other numeral appears in the statement. -/
 theorem reflection_positive_at_zero
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (e : S ≃ T)
     (hθ : ∀ i : S, ((e i : ι)) = θ (i : ι))
@@ -199,37 +202,29 @@ theorem reflection_positive_at_zero
 
 #print axioms reflection_positive_at_zero
 
-/-! ## What the cited expansion has to handle: the action splits, and the cross term is what is left
+/-! ## Locality of the holonomy, and the resulting action split
 
-`pairing_with_reflection_nonneg` needs the observable-times-weight WRITTEN in paired form. Getting the
-Wilson weight there is the cited content, and it is worth making precise what "there" means, because
-the first two thirds of it are elementary and only the last third is Osterwalder--Seiler.
+The three theorems below are what lets a sum over plaquettes be regarded as a function of a subset of
+the links. `hol_congr_on_support` is the locality itself: a plaquette's holonomy depends only on the
+links its own boundary word names. `action_split` partitions the plaquette sum over a `Finset` and
+its complement — that step is `Finset.sum_filter_add_sum_filter_not` and carries no geometry.
+`action_on_congr_of_support` combines the two: a block of plaquettes whose boundary words lie inside
+`S` contributes a quantity determined by `U` restricted to `S`.
 
-Split the plaquettes by where their boundary words live. A plaquette entirely inside the positive
-half contributes a term that depends only on the positive links; one entirely inside the negative
-half, only on the negative; and the rest -- those straddling the reflection plane -- are the CROSS
-term. So
-
-    S(U) = S_+(U|_+) + S_-(U|_-) + S_cross(U)
-
-and `exp(-beta S)` factorises into `g(U|_+) * g'(U|_-) * exp(-beta S_cross)`. The first two factors
-are already of the paired shape. The cross term is not, and expanding `exp(-beta S_cross)` into a
-convergent sum of paired products is the theorem that is cited.
-
-THE SUBSTANTIVE STEP HERE IS LOCALITY, not the partition. Splitting a finite sum by a partition is
-`Finset.sum_filter_add_sum_filter_not` and says nothing. What has content is that a plaquette's
-holonomy READS ONLY THE LINKS IN ITS OWN BOUNDARY WORD -- `hol_congr_on_support` -- so a term indexed
-by a plaquette supported in the positive half really is a function of the positive links alone, and
-not merely written next to them.
+That restriction property is what a function has to satisfy to be the `h` of
+`pairing_with_reflection_nonneg`. Writing a Wilson Boltzmann weight in the paired form that theorem
+requires is not done in this file.
 -/
 
-/-- **A plaquette's holonomy reads only the links in its own boundary word.**
+/-- For a boundary-word assignment `bd : P → List (L × Bool)`, a plaquette `p`, and configurations
+`U`, `V` agreeing at every link occurring in `(bd p).map Prod.fst`,
+`wilsonHol bd p U = wilsonHol bd p V`. The proof rewrites the mapped list entrywise with
+`List.map_congr_left`; the ordered product is then the same list.
 
-The locality on which every splitting argument rests. Two configurations agreeing on the links the
-word names have the same holonomy, whatever they do elsewhere.
+Scope: `L` and `P` are arbitrary types and `bd` is arbitrary — no lattice geometry is used. Agreement
+is required only on the links the word names, not on their orientations or on any neighbourhood.
 
-DERIVED: nothing numeric. This is congruence of an ordered product under pointwise equality of its
-factors. -/
+DERIVED: no numeral appears in the statement. -/
 theorem hol_congr_on_support {L P : Type} [MeasurableSpace (MassGap.SUN.SU N)]
     (bd : P → List (L × Bool)) (p : P) (U V : L → MassGap.SUN.SU N)
     (h : ∀ l ∈ (bd p).map Prod.fst, U l = V l) :
@@ -243,12 +238,14 @@ theorem hol_congr_on_support {L P : Type} [MeasurableSpace (MassGap.SUN.SU N)]
 
 #print axioms hol_congr_on_support
 
-/-- **So the action splits by any partition of the plaquettes**, and each piece is a function of the
-links its own plaquettes read.
+/-- `∑ p, φ (wilsonHol bd p U)` equals the sum over `{p | p ∈ A}` plus the sum over `{p | p ∉ A}`,
+for any `A : Finset P`. It is `Finset.sum_filter_add_sum_filter_not` reversed.
 
-Stated as the plain sum split; the content is `hol_congr_on_support` above, which is what makes the
-`A`-indexed piece a function of `U` restricted to the links `A` names rather than merely a sum
-written over `A`. -/
+Scope: this is the partition of a finite sum and nothing more — it says nothing about which links
+each piece reads. That property is `action_on_congr_of_support`, which uses
+`hol_congr_on_support`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem action_split {L P : Type} [Fintype L] [Fintype P] [DecidableEq P]
     (bd : P → List (L × Bool)) (φ : MassGap.SUN.SU N → ℝ) (A : Finset P)
     (U : L → MassGap.SUN.SU N) :
@@ -259,12 +256,17 @@ theorem action_split {L P : Type} [Fintype L] [Fintype P] [DecidableEq P]
 
 #print axioms action_split
 
-/-- **The half-action is a function of its half's links alone.**
+/-- If every plaquette of `A` draws every link of its boundary word from `S`, and `U`, `V` agree on
+all of `S`, then `∑ p ∈ A, φ (wilsonHol bd p U) = ∑ p ∈ A, φ (wilsonHol bd p V)`. It is
+`hol_congr_on_support` applied under `Finset.sum_congr`.
 
-`hol_congr_on_support` lifted from one plaquette to a set of them: if every plaquette in `A` draws its
-boundary word from `S`, then `A`'s contribution to the action is unchanged by anything outside `S`.
-This is the statement "`S_+` depends only on `U|_+`" that the splitting picture assumes and that makes
-`exp(-beta S_+)` a candidate for the `h` of `pairing_with_reflection_nonneg`. -/
+This is the statement that `A`'s contribution to the action is determined by `U` restricted to `S`,
+which is what a function must satisfy to serve as the `h` of `pairing_with_reflection_nonneg`.
+
+Scope: `φ` is an arbitrary real-valued function on the group; no exponential, coupling or Boltzmann
+weight is involved.
+
+DERIVED: no numeral appears in the statement. -/
 theorem action_on_congr_of_support {L P : Type} [Fintype L] [Fintype P]
     (bd : P → List (L × Bool)) (φ : MassGap.SUN.SU N → ℝ) (A : Finset P) (S : Finset L)
     (hsupp : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)

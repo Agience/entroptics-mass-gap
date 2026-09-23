@@ -2,44 +2,46 @@ import MassGap.GappedExample
 import MassGap.YMGap
 
 /-!
-# Clay row B3: the mass `m` is finite — for the constructed witnesses
+# MassGap.MassFinite — Clay's admissible gaps, their supremum, and two witnesses attaining it
 
-Jaffe–Witten define the mass of a quantum theory as a supremum, not a lower bound: *"A quantum field
-theory has a mass gap `Δ` if `H` has no spectrum in the interval `(0, Δ)` for some `Δ > 0`. The
-supremum of such `Δ` is the mass `m`, and we require `m < ∞`."*
+Jaffe–Witten define the mass of a quantum theory as a supremum: *"A quantum field theory has a mass
+gap `Δ` if `H` has no spectrum in the interval `(0, Δ)` for some `Δ > 0`. The supremum of such `Δ`
+is the mass `m`, and we require `m < ∞`."*
 
-Everything upstream in this development bounds the gap from BELOW: `spectrum H ⊆ {0} ∪ [Δ, ∞)` says
-`Δ` is admissible, and nothing says the admissible set stops. A set of admissible `Δ` that is
-unbounded above is the theory `H = 0` on a one-dimensional space — a vacuum and nothing else — for
-which `m = ∞` and row B3 fails. Bounding `m` above therefore needs a point of `spectrum H` that is
-strictly positive: one excited state, exhibited.
+A containment `spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ` says `Δ` is admissible and leaves the admissible set
+possibly unbounded above — it is unbounded for `H = 0` on a one-dimensional space. Bounding the
+supremum therefore requires a strictly positive point of `spectrum ℝ H`, exhibited.
 
-`AdmissibleGaps H` is Clay's set, `clayMass H` its supremum. The bridge is that the spectral mapping
-theorem `cfc_map_spectrum` is an EQUALITY, so an eigenvalue of the transfer operator `T` produces a
-genuine point of `spectrum (-log T)`, not merely a constraint on it. Concretely:
+`AdmissibleGaps H` is the set of such `Δ` and `clayMass H` its supremum. The membership direction of
+the spectral mapping equality `cfc_map_spectrum` is what produces the required point:
 
-* `lam_mem_spectrum_diagOp` — the converse of `GapOfDecay.mem_spectrum_diagOp`: every eigenvalue of
-  `diag(λ)` really is in the `ℝ`-spectrum. That direction was missing; it needs no hypothesis.
-* `hamiltonian_mem_spectrum` — the membership form of `Reconstruction.hamiltonian_vacuum_energy`,
-  with the vacuum eigenvalue `1` replaced by an arbitrary spectral point.
-* `isGreatest_admissibleGaps` — one exhibited spectral point `Δ > 0` together with the upstream
-  containment `spectrum H ⊆ {0} ∪ [Δ, ∞)` pins the supremum exactly: `m = Δ`, hence `m < ∞`.
+* `lam_mem_spectrum_diagOp` — every value of `lam` lies in `spectrum ℝ (diagOp lam)`, with no
+  hypothesis. With `GapOfDecay.mem_spectrum_diagOp` this makes the spectrum equal to the range.
+* `hamiltonian_mem_spectrum` — for self-adjoint `T` with strictly positive spectrum, each
+  `x ∈ spectrum ℝ T` gives `-Real.log x ∈ spectrum ℝ (hamiltonian T)`.
+* `isGreatest_admissibleGaps` — a spectral point `Δ > 0` together with
+  `spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ` makes `Δ` the greatest admissible gap, so the set is bounded
+  above and `clayMass H = Δ`.
 
-## What this gives, and what it does not
+## Scope of the two witnesses
 
-It closes `m < ∞` for the CONSTRUCTED WITNESSES — `concreteGapped`, whose transfer operator is the
-hand-set `Tc = diag(1, 3^{-1/4})` on `ℂ²`, and `ymGapped`, whose transfer datum is the hand-set
-`diag(1, e^{-ΔYMAt N β})` on `ℂ²`. For those objects the mass is not merely finite but exact:
-`m = κ₀ = ¼ log 3` and `m = ΔYMAt N β`. That is the same strength at which the gap bounds B1 and B2
-hold for those objects, on the same operators — no more and no less.
+The two instantiations are `concreteGapped`, whose transfer operator is `Tc = diag(1, 3^(-1/4))` on
+`Fin 2 → ℂ`, and `ymGapped N β hconf`, whose transfer datum is `diag(1, exp (-(ΔYMAt N β)))` on the
+same two-point index. For both, the mass is exact: `clayMass concreteGapped.ham = κ0 = ¼ log 3` and
+`clayMass (ymGapped N β hconf).ham = ΔYMAt N β`.
 
-It does NOT give `m < ∞` for the Wilson theory. No Wilson transfer operator is constructed anywhere
-in this development, so there is no Wilson `H` whose spectrum could be exhibited; `ymGapped` is a
-two-dimensional stand-in carrying the derived number `ΔYMAt N β`, not a transfer operator built from
-the Wilson action. The upper bound proved here is a statement about the stand-in.
+Both are statements about those two-mode operators. No Wilson transfer operator is constructed in
+this development, so `ymGapped` carries the number `ΔYMAt N β` on a two-dimensional carrier rather
+than being built from the Wilson action.
 
-Foundational axioms only for the generic lemmas and the concrete witness; the Yang–Mills statements
-carry the reduction's own footprint, unchanged (they add no axiom of their own).
+The generic lemmas and the concrete witness carry foundational axioms only; the Yang–Mills
+statements carry the reduction's existing footprint and add no axiom of their own.
+
+DERIVED: `0` is the vacuum energy that Clay's interval `(0, Δ)` has as its left endpoint, the
+positivity threshold on `Δ` and on spectral values, and the singleton in the containment; `1` is the
+vacuum eigenvalue of both transfer data; `2` is the carrier's mode count, `Fin 2`; `3` and `4` are
+the base and root order in `3 ^ (-(1:ℝ) / 4)`, the excited eigenvalue of `Tc`, whose energy is
+`κ0 = ¼ log 3`.
 -/
 
 namespace MassGap.Reconstruction
@@ -50,25 +52,32 @@ open scoped ComplexOrder
 
 variable {A : Type*} [CStarAlgebra A]
 
-/-- **Clay's admissible gaps.** `Δ` is admissible for `H` when `Δ > 0` and `H` has no spectrum in the
-open interval `(0, Δ)` — verbatim the Jaffe–Witten condition "`H` has no spectrum in the interval
-`(0, Δ)` for some `Δ > 0`".
+/-- The set of admissible gaps of `H`: those `Δ : ℝ` with `0 < Δ` and
+`spectrum ℝ H ∩ Set.Ioo 0 Δ = ∅`. This transcribes the Jaffe–Witten condition "`H` has no spectrum
+in the interval `(0, Δ)` for some `Δ > 0`". Stated for any `A` with a `CStarAlgebra` instance.
 
-DERIVED: the `0` is the vacuum energy, fixed by the Clay statement's own wording -- the
-interval is `(0, Δ)` and the vacuum sits at its left endpoint. Nothing here chooses it. -/
+DERIVED: `0` is the positivity threshold on `Δ` and the left endpoint of Clay's interval `(0, Δ)`,
+where the vacuum sits. Neither is chosen here. -/
 def AdmissibleGaps (H : A) : Set ℝ := {Δ : ℝ | 0 < Δ ∧ spectrum ℝ H ∩ Set.Ioo 0 Δ = ∅}
 
-/-- **The mass `m`** of Clay row B3: the supremum of the admissible gaps. Row B3 is the requirement
-that this is finite, i.e. that `AdmissibleGaps H` is bounded above (a supremum of an unbounded-above
-set is junk in `ℝ`, so `BddAbove` is the content, and `clayMass` is only meaningful with it). -/
+/-- The mass `m` of Clay row B3: `sSup (AdmissibleGaps H)`. Row B3 asks that this be finite, which
+in `ℝ` is `BddAbove (AdmissibleGaps H)` — `sSup` of a set unbounded above returns a junk value, so
+`clayMass` carries information only together with that boundedness.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def clayMass (H : A) : ℝ := sSup (AdmissibleGaps H)
 
-/-- **The mass is exactly `Δ` when `Δ` is both attained and the floor of the excited spectrum.** One
-exhibited spectral point `Δ > 0` makes every admissible gap `≤ Δ` (an admissible gap `δ > Δ` would
-put `Δ` inside the forbidden interval `(0, δ)`), and the upstream containment
-`spectrum H ⊆ {0} ∪ [Δ, ∞)` makes `Δ` itself admissible. So `Δ` is the GREATEST admissible gap: the
-set is bounded above and its supremum is `Δ`. This is the step that turns a lower bound on the gap
-into the finiteness of the mass. -/
+/-- `IsGreatest (AdmissibleGaps H) Δ` from three inputs: `0 < Δ`, `Δ ∈ spectrum ℝ H`, and
+`spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ`. Membership of `Δ` in the set uses the containment, since any
+spectral point in `Set.Ioo 0 Δ` would be neither `0` nor at least `Δ`. Upper-boundedness uses the
+exhibited spectral point: an admissible `δ > Δ` would place `Δ` in `spectrum ℝ H ∩ Set.Ioo 0 δ`,
+which is empty.
+
+Both directions are needed, and the spectral point is what supplies the upper bound; a containment
+alone leaves the set possibly unbounded.
+
+DERIVED: `0` is the positivity threshold on `Δ`, the left endpoint of Clay's interval, and the
+singleton in the containment. -/
 theorem isGreatest_admissibleGaps {H : A} {Δ : ℝ} (hΔ : 0 < Δ)
     (hmem : Δ ∈ spectrum ℝ H) (hsub : spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ) :
     IsGreatest (AdmissibleGaps H) Δ := by
@@ -86,13 +95,20 @@ theorem isGreatest_admissibleGaps {H : A} {Δ : ℝ} (hΔ : 0 < Δ)
     rw [hempty] at hin
     simp at hin
 
-/-- **`m < ∞`**, from an exhibited excited spectral point at the gap. -/
+/-- `BddAbove (AdmissibleGaps H)` under the same three hypotheses, as the `bddAbove` field of
+`isGreatest_admissibleGaps`. This is Clay row B3's `m < ∞` for `H`.
+
+DERIVED: `0` is the positivity threshold on `Δ` and the singleton in the containment. -/
 theorem bddAbove_admissibleGaps {H : A} {Δ : ℝ} (hΔ : 0 < Δ)
     (hmem : Δ ∈ spectrum ℝ H) (hsub : spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ) :
     BddAbove (AdmissibleGaps H) :=
   (isGreatest_admissibleGaps hΔ hmem hsub).bddAbove
 
-/-- **`m = Δ`**, the exact Clay mass. -/
+/-- `clayMass H = Δ` under the same three hypotheses, as `csSup_eq` applied to
+`isGreatest_admissibleGaps`. The mass is not merely finite but equal to the exhibited spectral
+point.
+
+DERIVED: `0` is the positivity threshold on `Δ` and the singleton in the containment. -/
 theorem clayMass_eq {H : A} {Δ : ℝ} (hΔ : 0 < Δ)
     (hmem : Δ ∈ spectrum ℝ H) (hsub : spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ) :
     clayMass H = Δ :=
@@ -102,11 +118,16 @@ theorem clayMass_eq {H : A} {Δ : ℝ} (hΔ : 0 < Δ)
 
 /-! ## The spectral mapping equality, in its membership direction -/
 
-/-- **Every spectral point of `T` produces one of `H = -log T`.** `Reconstruction.hamiltonian_vacuum_energy`
-is this at the vacuum eigenvalue `1`; the `1` plays no role there beyond `map_one`, and dropping it
-costs nothing. The proof is the forward reading of the spectral mapping EQUALITY
-`spectrum (cfc f T) = f '' spectrum T` (`cfc_map_spectrum`), which is what makes an upper bound on
-the mass available at all: the containment `⊆` alone would only ever bound the gap below. -/
+/-- `-Real.log x ∈ spectrum ℝ (hamiltonian T)` for every `x ∈ spectrum ℝ T`, given that `T` is
+self-adjoint and every spectral value is strictly positive. Positivity is what makes `-Real.log`
+continuous on `spectrum ℝ T`, which is the side condition of `cfc_map_spectrum`; the conclusion is
+that equality read from right to left.
+
+`Reconstruction.hamiltonian_vacuum_energy` is the same statement at the vacuum eigenvalue `1`. The
+membership direction is what gives an upper bound on the mass; a containment `⊆` would bound the gap
+only from below.
+
+DERIVED: `0` is the positivity threshold every spectral value of `T` is required to exceed. -/
 theorem hamiltonian_mem_spectrum (T : A) (hT : IsSelfAdjoint T)
     (hpos : ∀ x ∈ spectrum ℝ T, 0 < x) {x : ℝ} (hx : x ∈ spectrum ℝ T) :
     -Real.log x ∈ spectrum ℝ (hamiltonian T) := by
@@ -126,10 +147,14 @@ theorem hamiltonian_mem_spectrum (T : A) (hT : IsSelfAdjoint T)
 
 variable {ι : Type*}
 
-/-- **Every eigenvalue of `diag(λ)` is in its `ℝ`-spectrum** — the converse of
-`GapOfDecay.mem_spectrum_diagOp`, which had only `⊆`. No hypothesis is needed: at index `k` the
-element `algebraMap (λ_k) - diag(λ)` is `λ_k - λ_k = 0`, and `Pi.isUnit_iff` reads unithood
-componentwise. Together with `mem_spectrum_diagOp` this makes `spectrum ℝ (diag λ) = range λ`. -/
+/-- `lam k ∈ spectrum ℝ (diagOp lam)` for every index `k`, with no hypothesis on `lam`. At index `k`
+the element `algebraMap (lam k) - diagOp lam` has component `lam k - lam k = 0`, and `Pi.isUnit_iff`
+reads unithood componentwise, so the element is not a unit.
+
+Together with `GapOfDecay.mem_spectrum_diagOp`, which gives the other inclusion, the spectrum of
+`diagOp lam` is the range of `lam`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem lam_mem_spectrum_diagOp {lam : ι → ℝ} (k : ι) : lam k ∈ spectrum ℝ (diagOp lam) := by
   rw [spectrum.mem_iff]
   intro hu
@@ -139,8 +164,13 @@ theorem lam_mem_spectrum_diagOp {lam : ι → ℝ} (k : ι) : lam k ∈ spectrum
     sub_ne_zero] at h0
   exact h0 (by simp [diagOp])
 
-/-- `-log λ_k` is in the spectrum of the reconstructed `H = -log diag(λ)`, for every mode `k`, once
-every eigenvalue is positive (which `-log` needs to be continuous there). -/
+/-- `-Real.log (lam k) ∈ spectrum ℝ (hamiltonian (diagOp lam))` for every mode `k`, given a finite
+index type and `0 < lam k` at every `k`. It feeds `lam_mem_spectrum_diagOp` and
+`diagOp_selfAdjoint` to `hamiltonian_mem_spectrum`, the positivity of the whole spectrum coming from
+`mem_spectrum_diagOp` and `hlam`.
+
+DERIVED: `0` is the positivity threshold on each eigenvalue, required so that `-Real.log` is
+continuous on the spectrum. -/
 theorem neg_log_mem_spectrum_hamiltonian_diagOp [Fintype ι] {lam : ι → ℝ} (hlam : ∀ k, 0 < lam k)
     (k : ι) : -Real.log (lam k) ∈ spectrum ℝ (hamiltonian (diagOp lam)) := by
   refine hamiltonian_mem_spectrum _ (diagOp_selfAdjoint lam) ?_ (lam_mem_spectrum_diagOp k)
@@ -152,9 +182,13 @@ theorem neg_log_mem_spectrum_hamiltonian_diagOp [Fintype ι] {lam : ι → ℝ} 
 
 /-! ## The concrete witness: `m = κ₀ = ¼ log 3` -/
 
-/-- `3^{-1/4}` is in the spectrum of `Tc` — the EXCITED eigenvalue. This is `GappedExample.one_mem`
-at index `1` instead of index `0`, with `Tc_one` for `Tc_zero`; `one_mem` could use `map_one` where
-this goes through `Pi.algebraMap_apply`, and that is the whole difference. -/
+/-- `(3 : ℝ) ^ (-(1 : ℝ) / 4) ∈ spectrum ℝ Tc`, the excited eigenvalue of the concrete transfer
+operator. Proved at index `1`, where `Tc_one` makes the component of
+`algebraMap (3 ^ (-(1:ℝ)/4)) - Tc` zero, so `Pi.isUnit_iff` refutes unithood. It is
+`GappedExample.one_mem` at index `1` in place of index `0`, with `Tc_one` for `Tc_zero`.
+
+DERIVED: `3` and `4` are the base and root order of `Tc`'s excited eigenvalue `3 ^ (-1/4)`, which is
+`exp (-κ0)`; `1` is the numerator of that exponent. -/
 theorem rpow_mem : ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ∈ spectrum ℝ Tc := by
   rw [spectrum.mem_iff]
   intro hu
@@ -164,19 +198,29 @@ theorem rpow_mem : ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ∈ spectrum ℝ Tc := by
     Tc_one] at h1
   exact h1 rfl
 
-/-- Both spectral points of `Tc` are strictly positive, so `-log` is continuous on `spectrum Tc`. -/
+/-- `0 < x` for every `x ∈ spectrum ℝ Tc`. By `spectrum_subset`, a spectral value is either `1` or
+lies in an interval whose lower endpoint is `3 ^ (-(1:ℝ)/4)`, and `rpow_pos` makes that positive.
+This is the side condition `hamiltonian_mem_spectrum` requires of `Tc`.
+
+DERIVED: `0` is the level every spectral value is shown to exceed. -/
 theorem Tc_spectrum_pos : ∀ x ∈ spectrum ℝ Tc, 0 < x := by
   intro x hx
   rcases spectrum_subset hx with h | h
   · rw [Set.mem_singleton_iff] at h; rw [h]; norm_num
   · exact lt_of_lt_of_le rpow_pos (Set.mem_Icc.mp h).1
 
-/-- The concrete theory's Hamiltonian is `-log Tc`. -/
+/-- `concreteGapped.ham = hamiltonian Tc`, by `rfl`: the concrete theory's Hamiltonian field is the
+continuous functional calculus of `-Real.log` applied to `Tc`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem concreteGapped_ham : concreteGapped.ham = hamiltonian Tc := rfl
 
-/-- **`κ₀` is attained in the spectrum of the concrete Hamiltonian.** The excited eigenvalue
-`3^{-1/4}` of `Tc` maps to `-log 3^{-1/4} = ¼ log 3 = κ₀` under the spectral mapping equality. The
-value is derived from `Real.log_rpow`, not matched to `κ₀`'s definition by hand. -/
+/-- `κ0 ∈ spectrum ℝ concreteGapped.ham`. The excited eigenvalue `3 ^ (-(1:ℝ)/4)` of `Tc` is sent
+to `-Real.log (3 ^ (-(1:ℝ)/4))` by `hamiltonian_mem_spectrum`, and `Real.log_rpow` evaluates that to
+`κ0`; the identification is computed rather than matched by hand.
+
+DERIVED: no numeral appears in the statement. The `3` and `4` of the eigenvalue and of
+`κ0 = ¼ log 3` occur in the proof. -/
 theorem κ0_mem_spectrum_concrete : κ0 ∈ spectrum ℝ concreteGapped.ham := by
   have hval : -Real.log ((3 : ℝ) ^ (-(1 : ℝ) / 4)) = κ0 := by
     rw [Real.log_rpow (by norm_num : (0 : ℝ) < 3)]
@@ -186,22 +230,31 @@ theorem κ0_mem_spectrum_concrete : κ0 ∈ spectrum ℝ concreteGapped.ham := b
   rw [concreteGapped_ham]
   exact h
 
-/-- **`κ₀` is the greatest admissible gap of the concrete theory.** Below: the reconstructed spectrum
-misses `(0, κ₀)` (`concreteGapped.spectral_gap`). Above: `κ₀` is itself in the spectrum, so no larger
-`Δ` is admissible. -/
+/-- `IsGreatest (AdmissibleGaps concreteGapped.ham) κ0`. It is `isGreatest_admissibleGaps` at
+`Δ := κ0`, with `κ0_pos`, the attained point `κ0_mem_spectrum_concrete`, and the containment from
+`concreteGapped.spectral_gap` rewritten by `concreteGapped_gap`.
+
+DERIVED: no numeral appears in the statement; the `0` of `κ0` is part of that identifier, the
+entropy floor ¼ log 3. -/
 theorem isGreatest_admissibleGaps_concrete :
     IsGreatest (AdmissibleGaps concreteGapped.ham) κ0 := by
   refine isGreatest_admissibleGaps κ0_pos κ0_mem_spectrum_concrete ?_
   have h := concreteGapped.spectral_gap
   rwa [concreteGapped_gap] at h
 
-/-- **Clay row B3 for the concrete witness: `m < ∞`.** The set of admissible gaps of the
-reconstructed Hamiltonian `-log diag(1, 3^{-1/4})` is bounded above. -/
+/-- `BddAbove (AdmissibleGaps concreteGapped.ham)`: Clay row B3 for the concrete witness, whose
+Hamiltonian is `-Real.log` of `Tc = diag(1, 3 ^ (-1/4))` on `Fin 2 → ℂ`. It is the `bddAbove` field
+of `isGreatest_admissibleGaps_concrete`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem mass_finite_concrete : BddAbove (AdmissibleGaps concreteGapped.ham) :=
   isGreatest_admissibleGaps_concrete.bddAbove
 
-/-- **The concrete mass is exactly the entropy floor: `m = κ₀ = ¼ log 3`.** Both Clay inequalities on
-one object: `m ≥ κ₀` is the spectral gap (B1/B2), `m ≤ κ₀` is the attained excited state (B3). -/
+/-- `clayMass concreteGapped.ham = κ0`, the `csSup_eq` of `isGreatest_admissibleGaps_concrete`. The
+lower bound comes from the spectral gap and the upper bound from the attained excited eigenvalue, so
+the two meet at `κ0 = ¼ log 3`.
+
+DERIVED: no numeral appears in the statement; the `0` of `κ0` is part of that identifier. -/
 theorem clayMass_concrete : clayMass concreteGapped.ham = κ0 :=
   isGreatest_admissibleGaps_concrete.csSup_eq
 
@@ -210,15 +263,24 @@ theorem clayMass_concrete : clayMass concreteGapped.ham = κ0 :=
 
 /-! ## The Yang–Mills witness: `m = ΔYMAt N β` -/
 
-/-- The Yang–Mills theory's Hamiltonian is `-log diag(1, e^{-ΔYMAt N β})`. -/
+/-- `(ymGapped N β hconf).ham = hamiltonian (diagOp ![1, Real.exp (-(ΔYMAt N β))])` on
+`Fin 2 → ℝ`, by `rfl`: the witness's Hamiltonian field is `-Real.log` of the two-mode diagonal
+transfer datum.
+
+DERIVED: `1` is the vacuum eigenvalue of the transfer datum; `2` is the mode count of the carrier,
+`Fin 2`. -/
 theorem ymGapped_ham (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     (ymGapped N β hconf).ham
       = hamiltonian (diagOp (![1, Real.exp (-(ΔYMAt N β))] : Fin 2 → ℝ)) := rfl
 
-/-- **`ΔYMAt N β` is attained in the spectrum of the reconstructed Yang–Mills Hamiltonian.** The
-excited mode `e^{-Δ}` of the transfer datum maps to `-log e^{-Δ} = Δ`. This uses the reverse spectral
-inclusion `lam_mem_spectrum_diagOp`; the vacuum-only lemma `one_mem_spectrum_diagOp` upstream cannot
-supply it, because its `1` is what makes the vacuum, not an excited state. -/
+/-- `ΔYMAt N β ∈ spectrum ℝ (ymGapped N β hconf).ham`. The excited mode `exp (-(ΔYMAt N β))` at
+index `1` of the transfer datum is carried to `ΔYMAt N β` by
+`neg_log_mem_spectrum_hamiltonian_diagOp` and `Real.log_exp`. The membership direction comes from
+`lam_mem_spectrum_diagOp`; a vacuum-only lemma exhibits the eigenvalue `1` and so cannot supply an
+excited point.
+
+DERIVED: no numeral appears in the statement. The index `1`, the vacuum eigenvalue `1` and the mode
+count `2` occur in the proof, through `ymGapped_ham`. -/
 theorem ΔYM_mem_spectrum_ym (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     ΔYMAt N β ∈ spectrum ℝ (ymGapped N β hconf).ham := by
   have hlam : ∀ k : Fin 2, 0 < (![1, Real.exp (-(ΔYMAt N β))] : Fin 2 → ℝ) k := by
@@ -232,23 +294,33 @@ theorem ΔYM_mem_spectrum_ym (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM
   rw [ymGapped_ham]
   exact h
 
-/-- **`ΔYMAt N β` is the greatest admissible gap of the Yang–Mills witness.** -/
+/-- `IsGreatest (AdmissibleGaps (ymGapped N β hconf).ham) (ΔYMAt N β)`. It is
+`isGreatest_admissibleGaps` with positivity from `gap_pos_iff_confinement_at` applied to `hconf`,
+the attained point `ΔYM_mem_spectrum_ym`, and the containment from `ym_spectral_gap`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem isGreatest_admissibleGaps_ym (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     IsGreatest (AdmissibleGaps (ymGapped N β hconf).ham) (ΔYMAt N β) :=
   isGreatest_admissibleGaps ((gap_pos_iff_confinement_at N β).mpr hconf)
     (ΔYM_mem_spectrum_ym N β hconf) (ym_spectral_gap N β hconf).2.2.2
 
-/-- **Clay row B3 for the Yang–Mills witness: `m < ∞`.** The admissible gaps of the reconstructed
-Hamiltonian are bounded above — by the entropy surplus itself. This is a statement about the
-constructed two-mode transfer datum `diag(1, e^{-ΔYMAt N β})` that `ymGapped` builds, not about a
-Wilson transfer operator; none exists in this development. -/
+/-- `BddAbove (AdmissibleGaps (ymGapped N β hconf).ham)`: Clay row B3 for the Yang–Mills witness,
+the `bddAbove` field of `isGreatest_admissibleGaps_ym`. The bound is `ΔYMAt N β` itself.
+
+The object is the two-mode transfer datum `diag(1, exp (-(ΔYMAt N β)))` that `ymGapped` builds; no
+Wilson transfer operator is constructed in this development.
+
+DERIVED: no numeral appears in the statement. -/
 theorem mass_finite_ym (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     BddAbove (AdmissibleGaps (ymGapped N β hconf).ham) :=
   (isGreatest_admissibleGaps_ym N β hconf).bddAbove
 
-/-- **The Yang–Mills witness has mass exactly the entropy surplus: `m = ΔYMAt N β = κ₀YM - μYMAt N β`.**
-The gap is bounded below by the surplus (the reconstruction) and above by it (the attained excited
-state), so the two meet. -/
+/-- `clayMass (ymGapped N β hconf).ham = ΔYMAt N β`, the `csSup_eq` of
+`isGreatest_admissibleGaps_ym`. The lower bound is the reconstruction's spectral gap and the upper
+bound the attained excited eigenvalue, so the mass equals the surplus
+`ΔYMAt N β = κ₀YM - μYMAt N β` exactly, for this two-mode witness.
+
+DERIVED: no numeral appears in the statement. -/
 theorem clayMass_ym (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     clayMass (ymGapped N β hconf).ham = ΔYMAt N β :=
   (isGreatest_admissibleGaps_ym N β hconf).csSup_eq

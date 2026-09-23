@@ -3,60 +3,53 @@ import MassGap.LagTwoSix
 import MassGap.FreeFieldLagTwo
 
 /-!
-# MassGap.FreeFieldLagTwoSix — the same weak-coupling arm at extent six, where the room is 65×
+# MassGap.FreeFieldLagTwoSix — the free-field lag-two ratio on the periodic `6⁴` torus
 
-`FreeFieldLagTwo` builds the effective weak-coupling lag-two bound at extent four, where the
-free-field value `5329/3186225 = 0.0016725` sits `11.1×` under `LagTwoBound.lagTwoThreshold`. This
-file does the same at extent six, and the room is not `11×` but `65×`.
+The extent-four construction of `FreeFieldLagTwo`, repeated at extent six.
 
-## Why extent six is the better target, in two numbers
+## Section 1 — the exact propagator data
 
-`LagTwoSix.lagTwoThresholdSix_gt` puts the extent-six threshold above `0.0337`, against `0.018623`
-at extent four — `1.81×` more permissive, which `LagTwoSix` already proved. What that file did NOT
-have is the other factor. The free-field ratio must be read at the extent's OWN correlation, and
+On the `6⁴` torus the momenta are `p_μ = π k_μ / 3`, so `p̂_μ² = 2 - 2 cos p_μ` takes only the
+integer values `0, 1, 3, 4, 3, 1` (`hatSq6`), and the lag phase `cos (p₂ d)` is a half-integer,
+carried doubled as `lagPhase6` so it stays in `ℤ`. That doubling is the same at every lag and
+cancels in any ratio. `clearDen6 = 720720` is the least common multiple of `1 … 16`, the range of
+nonzero values of `momSq6`, and `clearDen6_exact` decides that it clears every one of them across
+all `6 ^ 4 = 1296` momenta. `fsCorr6 d` is the resulting exact integer `2 · V · 720720 · D d`, and
+`fsCorr6_zero`, `fsCorr6_one`, `fsCorr6_two`, `fsCorr6_three` decide its values;
+`fsCorr6_fold` decides the circle symmetry `fsCorr6 4 = fsCorr6 2` and `fsCorr6 5 = fsCorr6 1`.
 
-    extent four:  ρ(2)/ρ(0) → 5329/3186225       = 0.00167251
-    extent six:   ρ(2)/ρ(0) → 34515625/67215229081 = 0.00051351
+## Section 2 — the ratio
 
-— a further `3.26×` down, because at extent four lag two is the ANTIPODAL lag and collects the torus
-both ways round, while at extent six it is an interior lag. The two factors compound:
+`freeRatioSix = (fsCorr6 2 / fsCorr6 0) ^ 2`, and `freeRatioSix_eq` evaluates it to
+`34515625 / 67215229081`, which `freeRatioSix_lt_freeRatio` proves is below
+`FreeFieldLagTwo.freeRatio = 5329 / 3186225`. At extent four lag two is the antipodal lag and
+collects the torus both ways round; at extent six it is an interior lag.
 
-    extent four margin  11.1×,   admissible relative error  ε ≤ 5/6  = 0.833
-    extent six  margin  65.6×,   admissible relative error  ε ≤ 24/25 = 0.96
+## Section 3 — the hypothesis and the effective bound
 
-So the leading-order Gaussian calculation may be wrong by **96% relatively, at every lag, in the
-worst direction at each**, and the extent-six obligation still closes, with `1.34×` of the room left
-unspent. That is the strongest form of the point `FreeFieldLagTwo` makes at extent four.
+`EffectiveGaussianLagTwoSix ε` posits a coupling `B` beyond which one positive scale `R` gives
+`wilsonCorrAt 5 β d ≤ (1 + ε) * (R * fsCorr6 d ^ 2)` at every one of the six lags, together with the
+matching lower bound `(1 - ε) * (R * fsCorr6 0 ^ 2) ≤ wilsonCorrAt 5 β 0` at the contact lag only.
+It is a hypothesis; no declaration in this module proves it. The upper bound ranges over all six
+lags because, restricted to the two lags the conclusion names, a free scale can be chosen exactly
+when the conclusion already holds — that is `FreeFieldLagTwo.two_lag_form_collapses`. The lower
+bound is stated at the contact lag alone, where `PlaqVariance.corrClay_zero_pos` supplies
+positivity; a two-sided sandwich at every lag would assert `wilsonCorrAt 5 β 2 > 0`, which is not
+proved here.
 
-What it is NOT is a derivation. As at extent four, the named hypothesis implies its conclusion by
-elimination of the free scale `R`; what this file adds is the exact constant, proved, and the size of
-the room around it. See `FreeFieldLagTwo`'s header.
+`lagTwoConstantSix ε = ((1 + ε) / (1 - ε)) * (fsCorr6 2 / fsCorr6 0) ^ 2` is the constant the
+hypothesis delivers; `epsMaxSix = 24 / 25` is the admissible relative error;
+`inflationSix_le` bounds `(1 + ε) / (1 - ε)` by `49` there; and
+`lagTwoConstantSix_lt_threshold` puts `lagTwoConstantSix ε` below
+`LagTwoSix.lagTwoThresholdSix`, since `49 * (34515625 / 67215229081) = 0.0251622…` and
+`LagTwoSix.lagTwoThresholdSix_gt` puts the threshold above `0.0337`. `effective_lag_two_bound_six`
+assembles these into the lag-two bound above `B`.
 
-## What is PROVED here
-
-The same shape as `FreeFieldLagTwo`, at extent six. The extent-six momenta are `p_μ = πk_μ/3`, so
-`p̂_μ² = 2 − 2cos p_μ` is `0, 1, 3, 4, 3, 1` — integers again — and the lag phase `cos(p₂d)` is a
-HALF-integer, carried here doubled. That factor of two is the same at every lag and cancels in the
-ratio; `clearDen6 = 720720` is the lcm of `1 … 16`, the values `p̂²` takes, and `clearDen6_exact`
-checks it clears every one of them over all `1296` momenta. The four values are decided by the
-kernel and reported in `fsCorr6_zero`, `fsCorr6_one`, `fsCorr6_two`, `fsCorr6_three`.
-
-## What is ASSUMED, ONCE
-
-`EffectiveGaussianLagTwoSix ε`, the extent-six twin of `FreeFieldLagTwo.EffectiveGaussianLagTwo`:
-one scale, an upper bound at ALL SIX lags and a lower bound at the contact lag only. `FreeFieldLagTwo.two_lag_form_collapses` is the
-reason its upper bound is not restricted to the two lags the conclusion names: restricted that way it
-would be equivalent to its own conclusion. It is OPEN.
-
-## What this does NOT do
-
-As at extent four, the bound starts at `B`. `MiddleIntervalLagTwoSix` names the rest and
-`confines_of_arms_six` assembles the two through `LagTwoSix.confines_of_lagTwoRatioSix`.
-
-Foundational footprint on every declaration (`#print axioms`, §5).
-The module is in the library root's import list, so repository-wide sweeps cover it.
-Build: `python research/code/lean_build.py build MassGap.FreeFieldLagTwoSix`.
-Numerals produced and cross-checked by `research/code/certify/free_field_lag_two_ratio.py`.
+Scope: `effective_lag_two_bound_six` eliminates the free scale `R` from the hypothesis; it does not
+derive the hypothesis. The bound it produces starts at `B` and says nothing below it.
+`MiddleIntervalLagTwoSix K B` states the missing range `0 ≤ β ≤ B`, and `confines_of_arms_six`
+combines the two through `LagTwoSix.confines_of_lagTwoRatioSix`. Numerals cross-checked by
+`research/code/certify/free_field_lag_two_ratio.py`.
 -/
 
 namespace MassGap.FreeFieldLagTwoSix
@@ -69,20 +62,21 @@ DERIVED throughout: `6` is the periodic extent `wilsonCorrAt 5` runs on (`5 + 1 
 dimension of the problem, and `0, 1, 2` name the plaquette plane and the lag direction as
 `WilsonBridge.corrClay` fixes them. -/
 
-/-- `p̂² = 2 − 2cos(2πk/6)` at extent six, as a natural number.
+/-- `p̂² = 2 - 2 cos (2πk/6)` at extent six, tabulated as a natural number on `Fin 6`.
 
 DERIVED: evaluating `2 − 2cos(2πk/6)` at `k = 0 … 5` gives `0, 1, 3, 4, 3, 1`. Every entry is a value
 of that expression. -/
 def hatSq6 : Fin 6 → ℕ := ![0, 1, 3, 4, 3, 1]
 
-/-- **Twice** the lag phase, `2cos(2πkd/6)`, as an integer.
+/-- Twice the lag phase, `2 cos (2πkd/6)`, tabulated as an integer on `Fin 6 × Fin 6`. The doubling
+is what makes the entries integral.
 
 DERIVED: `2cos(2πm/6)` is `2, 1, −1, −2, −1, 1` at `m = 0 … 5`; the doubling is what makes the phase
 an integer and it is the SAME at every lag, so it cancels in every ratio. The argument is `k·d`
 reduced mod the extent, which is `Fin 6` multiplication. -/
 def lagPhase6 (k d : Fin 6) : ℤ := ![2, 1, -1, -2, -1, 1] (k * d)
 
-/-- **The common denominator.** `720720 = lcm{1,…,16}`.
+/-- The common denominator `720720`, the least common multiple of `1 … 16`.
 
 DERIVED: `p̂²` is a sum of four values from `{0,1,3,4}`, so its nonzero values lie in `1 … 16`, and
 `720720` is their least common multiple. `clearDen6_exact` checks it. -/
@@ -110,19 +104,30 @@ def fsTerm6 (d a b c e : Fin 6) : ℤ :=
   if momSq6 a b c e = 0 then 0
   else lagPhase6 c d * (planeNum6 a b * (clearDen6 / momSq6 a b c e) : ℕ)
 
-/-- **THE FREE-FIELD FIELD-STRENGTH CORRELATION AT LAG `d`, EXTENT SIX**, as the exact integer
-`2·V·720720·D(d)`.
+/-- The free-field field-strength correlation at lag `d` on the extent-six torus, as the exact
+integer `2 · V · 720720 · D d`: the sum of `fsTerm6 d` over all four momentum indices.
 
-DERIVED: no numeral. The overall `2·V·720720` is lag-independent and cancels in every ratio. -/
+DERIVED: the one numeral in the statement is the `6` of `Fin 6`, the extent of the torus, so `d` is
+a lag index. The overall factor `2 · V · 720720` sits in `fsTerm6` and `clearDen6`, is the same at
+every lag, and cancels in every ratio. -/
 def fsCorr6 (d : Fin 6) : ℤ := ∑ a, ∑ b, ∑ c, ∑ e, fsTerm6 d a b c e
 
-/-- **`720720` clears every denominator**, over all `1296` momenta. -/
+/-- `momSq6 a b c e * (clearDen6 / momSq6 a b c e) = clearDen6` whenever `momSq6 a b c e ≠ 0`: the
+natural-number division in `fsTerm6` is exact. Proved by `decide` over all `6 ^ 4 = 1296` momenta.
+
+DERIVED: `6` is the extent, as `Fin 6`, so `a b c e` are momentum indices; `0` is the excluded
+value of `momSq6`, the zero momentum, where the division would not be exact. -/
 theorem clearDen6_exact (a b c e : Fin 6) (h : momSq6 a b c e ≠ 0) :
     momSq6 a b c e * (clearDen6 / momSq6 a b c e) = clearDen6 := by
   revert h; revert a b c e; decide
 
-/-- **The zero momentum contributes nothing**, numerator and denominator alike, so no zero-mode
-subtraction is performed and none is available to be got wrong. -/
+/-- `planeNum6 a b = 0` whenever `momSq6 a b c e = 0`: at the zero momentum the plaquette-plane
+numerator vanishes too. Proved by `decide` over all momenta. Together with the guard in `fsTerm6`
+this means the excluded branch would have contributed zero anyway, so no zero-mode subtraction is
+performed.
+
+DERIVED: `6` is the extent, as `Fin 6`; the two `0`s are the vanishing of `momSq6` in the hypothesis
+and of `planeNum6` in the conclusion. -/
 theorem zero_momentum_term_vanishes6 (a b c e : Fin 6) (h : momSq6 a b c e = 0) :
     planeNum6 a b = 0 := by
   revert h; revert a b c e; decide
@@ -135,13 +140,19 @@ theorem fsCorr6_two : fsCorr6 2 = 21150000 := by decide
 
 theorem fsCorr6_three : fsCorr6 3 = 7678032 := by decide
 
-/-- **CIRCLE SYMMETRY, MACHINE-CHECKED.** `D(4) = D(2)` and `D(5) = D(1)` on the extent-six torus. -/
+/-- Circle symmetry of the correlation on the extent-six torus: `fsCorr6 4 = fsCorr6 2` and
+`fsCorr6 5 = fsCorr6 1`, both by `decide`.
+
+DERIVED: the four numerals `4, 2, 5, 1` are lag indices in `Fin 6`, paired by `d ↦ 6 - d`, which is
+the reflection the torus identifies. -/
 theorem fsCorr6_fold : fsCorr6 4 = fsCorr6 2 ∧ fsCorr6 5 = fsCorr6 1 := by
   constructor <;> decide
 
 /-! ## 2. The ratio -/
 
-/-- **THE FREE-FIELD LAG-TWO RATIO AT EXTENT SIX**, `(D(2)/D(0))²`.
+/-- The free-field lag-two ratio at extent six, `(fsCorr6 2 / fsCorr6 0) ^ 2`, as a rational. The
+common factor `2 · V · 720720` cancels between numerator and denominator, so the ratio is the one
+`D 2 / D 0` would give.
 
 DERIVED: `2` and `0` are LAGS — the lag the claim is about and the contact lag it is normalised
 against — and the outer `2` is Wick's square. The values are `fsCorr6`'s, decided above. -/
@@ -151,16 +162,21 @@ def freeRatioSix : ℚ := ((fsCorr6 2 : ℚ) / (fsCorr6 0 : ℚ)) ^ 2
 extent-four value, because lag two is an interior lag at extent six and the antipodal one at extent
 four.
 
-DERIVED: the two numerals are `fsCorr6 2` and `fsCorr6 0`, both decided above; the `2` is Wick's
-square. -/
+DERIVED: `2` and `0` are lag indices, selecting `fsCorr6 2 = 21150000` and
+`fsCorr6 0 = 933332400`, both decided above; the outer `2` is Wick's square. `34515625` and
+`67215229081` are the numerator and denominator of `(21150000 / 933332400) ^ 2` in lowest terms —
+computed, not chosen. -/
 theorem freeRatioSix_eq : freeRatioSix = 34515625 / 67215229081 := by
   rw [freeRatioSix, fsCorr6_two, fsCorr6_zero]; norm_num
 
 theorem freeRatioSix_pos : 0 < freeRatioSix := by rw [freeRatioSix_eq]; norm_num
 
-/-- **THE EXTENT-SIX FREE-FIELD RATIO IS BELOW THE EXTENT-FOUR ONE**, as rationals. The relief the
-extent buys is therefore TWO factors, not one: `LagTwoSix.lagTwoThreshold_lt_lagTwoThresholdSix`
-raises the bar by `1.81×`, and this lowers what has to clear it by `3.26×`. -/
+/-- `freeRatioSix < FreeFieldLagTwo.freeRatio`, as rationals: the extent-six free-field lag-two
+ratio is below the extent-four one, by a factor of about `3.26`. Both sides are rewritten to their
+decided values and compared by `norm_num`. The companion inequality on the thresholds is
+`LagTwoSix.lagTwoThreshold_lt_lagTwoThresholdSix`.
+
+DERIVED: no numeral occurs in the statement; both sides are named definitions. -/
 theorem freeRatioSix_lt_freeRatio : freeRatioSix < MassGap.FreeFieldLagTwo.freeRatio := by
   rw [freeRatioSix_eq, MassGap.FreeFieldLagTwo.freeRatio_eq]; norm_num
 
@@ -169,20 +185,20 @@ theorem freeRatioSix_lt_freeRatio : freeRatioSix < MassGap.FreeFieldLagTwo.freeR
 DERIVED: `5` is the extent index with `5 + 1 = 6`, the extent `LagTwoSix` works at; `2` and `0` are
 lag indices. `24/25` is the one CHOSEN numeral — see its note. -/
 
-/-- **THE ONE OPEN HYPOTHESIS AT EXTENT SIX.** Beyond an explicit coupling `B` there is ONE positive
-scale `R` with `ρ(d) ≤ (1+ε)·R·D(d)²` at EVERY lag and `ρ(0) ≥ (1−ε)·R·D(0)²` at the contact lag.
+/-- The hypothesis this module's effective bound consumes. `EffectiveGaussianLagTwoSix ε` asserts
+that there is a coupling `B` such that for every `β ≥ B` there is a scale `R` with `0 < R`,
 
-The upper bound ranges over all six lags for the reason `FreeFieldLagTwo.two_lag_form_collapses`
-proves: restricted to the two lags the conclusion names, a free scale can always be chosen exactly
-when the conclusion already holds, and the reduction would assume what it concludes.
+* `wilsonCorrAt 5 β d ≤ (1 + ε) * (R * fsCorr6 d ^ 2)` at every one of the six lags `d : Fin 6`, and
+* `(1 - ε) * (R * fsCorr6 0 ^ 2) ≤ wilsonCorrAt 5 β 0` at the contact lag.
 
-It is ONE-SIDED everywhere but the contact lag, deliberately. A two-sided sandwich at every lag would
-assert `ρ(2) > 0`, which nothing in this tree supports; only `ρ(0) > 0` is asserted, and
-`PlaqVariance.corrClay_zero_pos` proves it.
+A `Prop`, not a theorem; no declaration in this module or its imports establishes it.
 
-OPEN. Nothing in this tree proves it, this file does not, and no measurement may be substituted for
-it. And, as at extent four, the implication it feeds is an elimination of `R`, not a derivation:
-what this file contributes is the exact constant and the size of the room around it.
+Scope. The upper bound ranges over all six lags rather than the two the conclusion names: restricted
+to those two, a free scale can be chosen exactly when the conclusion already holds, which is
+`FreeFieldLagTwo.two_lag_form_collapses`. The lower bound is at the contact lag only, where
+`PlaqVariance.corrClay_zero_pos` supplies positivity; a two-sided sandwich at every lag would assert
+`wilsonCorrAt 5 β 2 > 0`. The scale `R` is existentially bound inside the quantifier over `β`, so it
+may vary with the coupling.
 
 DERIVED: no numeral is a magnitude. `5` is the APERTURE — `wilsonCorrAt 5` is the extent-six torus
 (`5 + 1 = 6`) — and `6` is that extent, as `Fin 6`, the lags the upper bound ranges over. `0` is the
@@ -194,7 +210,9 @@ def EffectiveGaussianLagTwoSix (ε : ℝ) : Prop :=
     (∀ d : Fin 6, MassGap.wilsonCorrAt 5 β d ≤ (1 + ε) * (R * ((fsCorr6 d : ℝ)) ^ 2)) ∧
     (1 - ε) * (R * ((fsCorr6 0 : ℝ)) ^ 2) ≤ MassGap.wilsonCorrAt 5 β 0
 
-/-- **THE CONSTANT THE HYPOTHESIS DELIVERS AT EXTENT SIX.**
+/-- The constant `((1 + ε) / (1 - ε)) * (fsCorr6 2 / fsCorr6 0) ^ 2` that
+`effective_lag_two_bound_six` produces from `EffectiveGaussianLagTwoSix ε`: the band's width times
+the free-field lag-two ratio.
 
 DERIVED: the `1`s are the band `(1 ± ε)` `EffectiveGaussianLagTwoSix` states, so the first factor is
 that hypothesis's own width and not a number this definition picks. The `2` and `0` are the two LAGS,
@@ -202,27 +220,35 @@ and the outer `2` is Wick's square; the value is `freeRatioSix`, decided above. 
 noncomputable def lagTwoConstantSix (ε : ℝ) : ℝ :=
   ((1 + ε) / (1 - ε)) * ((fsCorr6 2 : ℝ) / (fsCorr6 0 : ℝ)) ^ 2
 
-/-- **THE ADMISSIBLE RELATIVE ERROR AT EXTENT SIX.**
+/-- The admissible relative error at extent six, `24 / 25`, as a rational.
 
-CHOSEN, and rounded DOWN — away from the claim `lagTwoConstantSix ε < lagTwoThresholdSix`, so the
-rounding cannot manufacture the inequality. The exact supremum against
-`LagTwoSix.lagTwoThresholdSix_gt`'s bracket `0.0337` is `0.96998…`, where `(1+ε)/(1−ε)` reaches
-`0.0337/0.000513509 = 65.62…`. `24/25` spends only `49` of that `65.6`, leaving `1.34×` unspent, and
-any `ε` below `0.96998` would serve. -/
+CHOSEN: `24 / 25` is picked, and rounded DOWN — away from the claim
+`lagTwoConstantSix ε < lagTwoThresholdSix`, so the rounding cannot manufacture the inequality. The
+exact supremum against `LagTwoSix.lagTwoThresholdSix_gt`'s bracket `0.0337` is `0.96998…`, where
+`(1 + ε) / (1 - ε)` reaches `0.0337 / 0.000513509 = 65.62…`. At `24 / 25` the inflation factor is
+`49`, so `1.34` of that margin is unspent and any `ε` below `0.96998` would serve. -/
 def epsMaxSix : ℚ := 24 / 25
 
-/-- `(1+ε)/(1−ε) ≤ 49` for `ε ≤ 24/25`. Nonnegativity of `ε` is not needed — `ε ≤ 24/25` puts
-`1 − ε` above `1/25`. -/
+/-- `(1 + ε) / (1 - ε) ≤ 49` for every real `ε ≤ (epsMaxSix : ℝ)`. The hypothesis puts `1 - ε`
+at or above `1 / 25`, which is positive, so `div_le_iff₀` applies and `linarith` closes.
+Nonnegativity of `ε` is not assumed and is not needed.
+
+DERIVED: `1` is the centre of the band `(1 ± ε)`, appearing in both numerator and denominator; `49`
+is `(1 + 24 / 25) / (1 - 24 / 25)` evaluated at the endpoint `epsMaxSix`, so it is that chosen
+error's own inflation factor and nothing else. -/
 theorem inflationSix_le {ε : ℝ} (hε : ε ≤ (epsMaxSix : ℝ)) : (1 + ε) / (1 - ε) ≤ 49 := by
   have he : ε ≤ 24 / 25 := by rw [epsMaxSix] at hε; norm_num at hε; linarith
   have hden : (0 : ℝ) < 1 - ε := by linarith
   rw [div_le_iff₀ hden]
   linarith [he]
 
-/-- **THE CONSTANT CLEARS THE EXTENT-SIX THRESHOLD** for every admissible `ε`.
+/-- `lagTwoConstantSix ε < LagTwoSix.lagTwoThresholdSix` for every `ε ≤ (epsMaxSix : ℝ)`. The proof
+bounds the inflation factor by `49` with `inflationSix_le`, evaluates the squared ratio as
+`34515625 / 67215229081`, so that `lagTwoConstantSix ε ≤ 49 * (34515625 / 67215229081) = 0.0251622…`,
+and compares with `LagTwoSix.lagTwoThresholdSix_gt`, which places the threshold above `0.0337`.
 
-`49 · (21150000/933332400)² = 1691265625/67215229081 = 0.0251622…`, and
-`LagTwoSix.lagTwoThresholdSix_gt` puts the threshold above `0.0337`. -/
+DERIVED: no numeral occurs in the statement — both sides are named definitions, and `ε` is bounded
+by the named `epsMaxSix`. The numerals above are the proof's. -/
 theorem lagTwoConstantSix_lt_threshold {ε : ℝ} (hε : ε ≤ (epsMaxSix : ℝ)) :
     lagTwoConstantSix ε < MassGap.LagTwoSix.lagTwoThresholdSix := by
   have hinf := inflationSix_le hε
@@ -235,8 +261,19 @@ theorem lagTwoConstantSix_lt_threshold {ε : ℝ} (hε : ε ≤ (epsMaxSix : ℝ
   have hnum : (49 : ℝ) * (34515625 / 67215229081) < 0.0337 := by norm_num
   linarith
 
-/-- **THE DELIVERABLE AT EXTENT SIX — an EFFECTIVE weak-coupling lag-two bound with an explicit
-constant**, and `65.6×` of room rather than `11.1×`. -/
+/-- The lag-two bound above a coupling, from the hypothesis. Given `0 ≤ ε`, `ε ≤ (epsMaxSix : ℝ)`
+and `EffectiveGaussianLagTwoSix ε`, there is a `B` such that
+`lagTwoConstantSix ε < LagTwoSix.lagTwoThresholdSix` and, for every `β ≥ B`,
+`wilsonCorrAt 5 β 2 ≤ lagTwoConstantSix ε * wilsonCorrAt 5 β 0`. The proof takes the hypothesis's own
+`B` and `R`, applies its upper bound at lag `2` and its lower bound at lag `0`, and cancels `R` and
+`fsCorr6 0 ^ 2` through `lagTwoConstantSix`'s definition by `field_simp`.
+
+Scope: `R` is eliminated rather than determined, and the bound holds only for `β ≥ B`; the range
+below `B` is `MiddleIntervalLagTwoSix`.
+
+DERIVED: `0` is the lower bound on `ε`, which is what makes `lagTwoConstantSix ε` nonnegative, and
+the contact lag in `wilsonCorrAt 5 β 0`; `5` is the aperture, `wilsonCorrAt 5` being the extent-six
+torus since `5 + 1 = 6`; `2` is the lag the bound is about. -/
 theorem effective_lag_two_bound_six {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (epsMaxSix : ℝ))
     (h : EffectiveGaussianLagTwoSix ε) :
     ∃ B : ℝ, lagTwoConstantSix ε < MassGap.LagTwoSix.lagTwoThresholdSix ∧
@@ -263,9 +300,11 @@ theorem effective_lag_two_bound_six {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (
     _ ≤ lagTwoConstantSix ε * MassGap.wilsonCorrAt 5 β 0 :=
         mul_le_mul_of_nonneg_left hlower hcnn
 
-/-! ## 4. What is still missing, named -/
+/-! ## 4. The complementary coupling range -/
 
-/-- **THE SECOND OPEN PIECE AT EXTENT SIX — the middle interval.**
+/-- The complementary range, as a `Prop`: `MiddleIntervalLagTwoSix K B` asserts
+`wilsonCorrAt 5 β 2 ≤ K * wilsonCorrAt 5 β 0` for every `β` with `0 ≤ β ≤ B`. Nothing in this module
+proves it; `confines_of_arms_six` takes it as a hypothesis.
 
 DERIVED: `5` is the APERTURE — `wilsonCorrAt 5` is the extent-six torus (`5 + 1 = 6`) — and `2` and
 `0` are the LAGS the ratio relates. The `0` in `0 ≤ β` is the bottom of the coupling range, where the
@@ -273,8 +312,17 @@ half-line the weak arm does not reach begins; `K` and `B` are variables, not num
 def MiddleIntervalLagTwoSix (K B : ℝ) : Prop :=
   ∀ β : ℝ, 0 ≤ β → β ≤ B → MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0
 
-/-- **THE TWO ARMS ASSEMBLE AT EXTENT SIX**, through `LagTwoSix.confines_of_lagTwoRatioSix`. The `B`
-is shared and explicit, for the reason `FreeFieldLagTwo.confines_of_arms` records. -/
+/-- The two ranges combine. Given `ε ≤ (epsMaxSix : ℝ)`, a bound `hfar` holding for every `β ≥ B`
+and `hmid : MiddleIntervalLagTwoSix (lagTwoConstantSix ε) B` covering `0 ≤ β ≤ B`, the conclusion is
+`ApertureRoute.ConfinesAtAnAperture`. The proof supplies `lagTwoConstantSix ε` and
+`lagTwoConstantSix_lt_threshold` to `LagTwoSix.confines_of_lagTwoRatioSix`, splitting on
+`le_total β B` to choose between `hmid` and `hfar`.
+
+Scope: `B` is shared between the two hypotheses and appears in both, so no gap is left between the
+ranges. `hmid` is a hypothesis; nothing here proves it.
+
+DERIVED: no numeral occurs in the statement. `B` and `ε` are variables, and both bounds are named
+definitions. -/
 theorem confines_of_arms_six {ε B : ℝ} (hε : ε ≤ (epsMaxSix : ℝ))
     (hfar : ∀ β : ℝ, B ≤ β →
       MassGap.wilsonCorrAt 5 β 2 ≤ lagTwoConstantSix ε * MassGap.wilsonCorrAt 5 β 0)

@@ -2,59 +2,53 @@ import MassGap.ReachFreeze
 import MassGap.Floor
 
 /-!
-# MassGap.Margin — the aperture margin from ONE cited junction (no bare postulate)
+# MassGap.Margin — the read margin as a chain of real inequalities
 
-The read margin `‖m_hi‖ ≤ e^{−(κ₀−μ)}` (the `hread` field of `LatticeYM`) is not a bare postulate. It
-decomposes into three inputs, ONE of them already proved:
+Two theorems about real numbers. Both are `Real.exp_le_exp` steps over a `linarith` chain; neither
+mentions a lattice, an operator or a spectrum.
 
-* **`κ₀ ≤ κ`** — the counting floor, PROVED (`Floor`: the directed-cube-path count `3^{n−1}` gives
-  `κ ≥ κ₀ = ¼log3`).
-* **`c ≤ Δ`** — the contraction rate lower-bounds the transfer gap. A HYPOTHESIS here.
-  `ReachFreeze.gap_from_contraction` proves only that an *abstract* `σ` with an *assumed* contraction decays
-  as `e^{−c·n}` — it neither defines `Δ` nor discharges `c ≤ Δ`, and it is not composed here (no call site).
-* **`κ − μ ≤ c`** — the self-sourcing contraction rate is at least the vortex free-energy density. One of the
-  TWO OPEN inputs (with `c ≤ Δ`): the centre-vortex confinement mechanism, whose qualitative form (vortex
-  condensation `F_v = μ−κ < 0 ⇒` area law `⇒` gap) is cited to 't Hooft (Nucl. Phys. B 138, 1978) and
-  Greensite (Prog. Part. Nucl. Phys. 51, 2003), and whose quantitative form is the framework's read.
+* `band_of_contraction` — from `c ≤ Δ`, concludes `exp (-Δ) ≤ exp (-c)`.
+* `margin_of_contraction` — from `κ₀ ≤ κ`, `κ - μ ≤ c` and `c ≤ Δ`, concludes
+  `exp (-Δ) ≤ exp (-(κ₀ - μ))`.
 
-`margin_of_contraction` assembles them: the dominant mode `e^{−Δ}` clears the entropy-floor margin. So the
-gap rests on the two open inputs `κ−μ ≤ c` and `c ≤ Δ`, the counting floor being closed and the assembly proved. This is
-the forward bridge from the PROVED counting floor to the SPECTRAL gap — the decomposition of
-the read margin the referee report flagged as a bare axiom.
+The names read the variables as a mass gap `Δ`, a contraction rate `c`, an entropy floor `κ₀`, a
+counting rate `κ` and a vortex free-energy density `μ`, but the statements quantify over arbitrary
+reals: nothing here defines any of those quantities or supplies any of the three hypotheses. The
+hypotheses are the interface a caller must discharge.
 
-Imported by `MassGap.lean` (part of the aggregate). It derives the read margin
-`e^{−Δ} ≤ e^{−(κ₀−μ)}` from the floor junction; the STRONGER spectral ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}`
-asked by the aperture hypothesis of `Complete.ym_mass_gap_spectral` (`Δ ≥ κ₀`) is supplied by that
-theorem's caller, not here.
+`margin_of_contraction` concludes the margin `e^{-Δ} ≤ e^{-(κ₀-μ)}`. The stronger ceiling
+`e^{-Δ} ≤ 3^{-1/4} = e^{-κ₀}` requires `Δ ≥ κ₀` and is not concluded here.
 -/
 
 namespace MassGap
 
-/-- **The band-limit step (a consequence, not an input).** A dominant mode of magnitude `e^{−Δ}` whose gap
-clears the contraction, `c ≤ Δ` (`ReachFreeze.gap_from_contraction`), decays at least at the contraction rate:
-`e^{−Δ} ≤ e^{−c}`. So the band-limit `‖m‖ ≤ e^{−c}` is not an independent assumption. -/
+/-- Antitone exponential on the two reals `c ≤ Δ`: `exp (-Δ) ≤ exp (-c)`. Read as a band limit, a
+dominant mode of magnitude `e^{-Δ}` whose exponent clears a contraction rate `c` decays at least as
+fast as `e^{-c}`. Both `c` and `Δ` are implicit and unconstrained beyond `hgap`.
+
+DERIVED: no numeral. -/
 theorem band_of_contraction {Δ c : ℝ} (hgap : c ≤ Δ) : Real.exp (-Δ) ≤ Real.exp (-c) :=
   Real.exp_le_exp.mpr (by linarith)
 
-/-- **The aperture-margin bridge — the read margin from the two open inputs.** From
-* `hfloor : κ₀ ≤ κ` (the counting floor, PROVED in `Floor`),
-* `hfe : κ − μ ≤ c` (the vortex free-energy / self-sourcing-contraction identification — the centre-vortex
-  mechanism, 't Hooft 1978 / Greensite 2003, cited; OPEN), and
-* `hgap : c ≤ Δ` (the contraction rate lower-bounds the gap — a HYPOTHESIS; `gap_from_contraction` shows only
-  abstract-`σ` decay at rate `c`, it does not supply this; OPEN),
+/-- Chains three real inequalities through the antitone exponential. From
 
-the dominant transfer mode `e^{−Δ}` clears the entropy-floor margin: `e^{−Δ} ≤ e^{−(κ₀−μ)}`. This is the
-content of the `hread` field, assembled from the two open inputs `hfe` and `hgap` (only the counting floor
-is proved; the assembly is one `Real.exp_le_exp` step). -/
+* `hfloor : κ₀ ≤ κ`,
+* `hfe : κ - μ ≤ c`, and
+* `hgap : c ≤ Δ`,
+
+`linarith` gives `κ₀ - μ ≤ Δ`, hence `exp (-Δ) ≤ exp (-(κ₀ - μ))`. All five variables are implicit
+reals with no further constraint, and all three hypotheses are used. The reading of `κ₀` as an entropy
+floor, `μ` as a vortex free-energy density and `Δ` as a transfer gap is the caller's; the statement
+neither defines those quantities nor discharges any of the three inputs.
+
+DERIVED: no numeral. -/
 theorem margin_of_contraction {κ₀ κ μ c Δ : ℝ}
     (hfloor : κ₀ ≤ κ) (hfe : κ - μ ≤ c) (hgap : c ≤ Δ) :
     Real.exp (-Δ) ≤ Real.exp (-(κ₀ - μ)) :=
   Real.exp_le_exp.mpr (by linarith)
 
-/-! **Scope note.** `margin_of_contraction` derives the READ margin `e^{−Δ} ≤ e^{−(κ₀−μ)}` — exactly the
-`hread` field consumed by `gap_of_confinement`, sufficient for the mass gap. The
-STRONGER spectral-form ceiling `e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}` (`ym_mass_gap_spectral`'s `haperture`) needs `Δ ≥ κ₀`, i.e. the
-contraction to clear the FULL multiplicity `c ≥ κ` (not the free-energy density `c ≥ κ−μ`); the bridge does
-not supply it, and the flagship does not need it. -/
+/-! **Scope.** `margin_of_contraction` concludes `e^{−Δ} ≤ e^{−(κ₀−μ)}`. The stronger ceiling
+`e^{−Δ} ≤ 3^{−1/4} = e^{−κ₀}` needs `Δ ≥ κ₀`, i.e. the contraction to clear the full rate `κ` rather than
+the difference `κ−μ`. No declaration in this file concludes it. -/
 
 end MassGap

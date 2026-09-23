@@ -1,22 +1,34 @@
 import Mathlib
 
 /-!
-# Entropy is monotone along a concentrating segment (the deterministic `χ_v ≥ 0`)
+# MassGap.Majorization — Shannon entropy is antitone along a straight segment between two
+probability vectors
 
-Pure, deterministic, algebraic. No probability. Fix probability vectors `r, q` and the straight segment
-`p(s) = (1-s)·r + s·q = r + (q-r)·s`. The Shannon entropy `H(p(s)) = ∑ negMulLog(pₖ(s))` is
-**non-increasing** in `s ∈ [0,1)` under one start condition:
+Fix two functions `r, q : ι → ℝ` on a `Fintype` and the straight segment
+`pseg r q k s = r k + (q k - r k) * s`, so the segment runs from `r` at `s = 0` to `q` at `s = 1`.
+`Hseg r q s` is the Shannon entropy `∑ k, Real.negMulLog (pseg r q k s)` along it, and `D1 r q s` is
+`-∑ k, (q k - r k) * Real.log (pseg r q k s)`.
 
-  `0 ≤ ∑ₖ (qₖ - rₖ) · log rₖ`.
+`entropy_antitone` concludes `AntitoneOn (Hseg r q) (Set.Ico 0 1)` from: `r` strictly positive, `q`
+nonnegative, both summing to `1`, and one scalar start condition,
 
-Proof: `d/ds H = -∑ₖ (qₖ - rₖ) log pₖ(s)`, and this is `≤ 0` at every `s` because, termwise,
-`(qₖ - rₖ)(log pₖ(s) - log rₖ) = rₖ · xₖ log(1 + s xₖ) ≥ 0` with `xₖ = (qₖ-rₖ)/rₖ`, using the
-elementary `x·log(1+sx) ≥ 0`. So the derivative never exceeds its value at `s=0`, which the condition
-makes `≤ 0`. Then `H(p(s))` is antitone.
+    0 ≤ ∑ k, (q k - r k) * Real.log (r k).
 
-This is the framework-native form of the disorder-susceptibility sign `χ_v = -dH/dβ ≥ 0` (PAPER §8.4):
-`r` the start (disordered) spectrum, `q` the ordered limit; the condition holds iff `q` concentrates on
-the heavy coordinates of `r`.
+The route is `hasDerivAt_Hseg` (the derivative of `Hseg` is `D1`, the two terms of the product rule
+collapsing because `∑ (q k - r k) = 0`), `term_le` (moving along the segment raises
+`(q k - r k) * log`, by a sign split on `q k` against `r k`), `D1_nonpos` (summing `term_le`), and
+`antitoneOn_of_deriv_nonpos`.
+
+Two families of results discharge the start condition rather than assuming it:
+* `concentration_at_dominant` and `entropy_antitone_at_dominant`, where `q` is the point mass at an
+  index `j` at which `r` is maximal, and the condition reduces to `∑ k, r k * log (r j / r k) ≥ 0`.
+* `concentration_of_majorizes` and `entropy_antitone_of_majorizes`, where `r` is sorted
+  non-increasing on `Finset.range n` and `q` majorizes it — all partial sums of `q - r` nonnegative,
+  total zero. Summation by parts turns the condition into a sum of nonnegative products.
+
+Scope: the segment is the straight line in the simplex, and antitonicity is stated on `Set.Ico 0 1`,
+the half-open interval, since `pseg_pos` needs `s < 1` to keep every coordinate positive. All
+statements are about real vectors and sums; no measure, probability space or dynamics appears.
 -/
 
 namespace MassGap.Majorization
@@ -25,19 +37,36 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι]
 
-/-- The straight segment `p(s) = r + (q - r)·s` (so `p(0) = r`, `p(1) = q`).
+/-- The straight segment between two vectors, coordinatewise: `pseg r q k s = r k + (q k - r k) * s`.
+At segment parameter zero it is `r k` and at one it is `q k`, but the definition places no
+restriction on `s`.
 
-DERIVED: the `0` and `1` are the endpoints of the segment parameter, not constants of the model — the
-definition carries no numeral at all, and `s` ranges over whatever interval the caller supplies. -/
+DERIVED: no numeral occurs in the definition. `s` ranges over whatever the caller supplies; the
+endpoints are properties of `pseg`, not constants written into it. -/
 def pseg (r q : ι → ℝ) (k : ι) (s : ℝ) : ℝ := r k + (q k - r k) * s
 
-/-- Shannon entropy along the segment, `H(p(s)) = ∑ₖ negMulLog(pₖ(s))`. -/
+/-- Shannon entropy along the segment: `∑ k, Real.negMulLog (pseg r q k s)`, a sum over the whole
+`Fintype` index. `Real.negMulLog t` is `-t * log t`, defined at every real `t`, so `Hseg` is total
+and does not presuppose that `pseg` is positive.
+
+DERIVED: no numeral occurs. -/
 noncomputable def Hseg (r q : ι → ℝ) (s : ℝ) : ℝ := ∑ k, Real.negMulLog (pseg r q k s)
 
-/-- Its derivative in `s`: `-∑ₖ (qₖ - rₖ) log pₖ(s)`. -/
+/-- The candidate derivative of `Hseg` in `s`: `-∑ k, (q k - r k) * Real.log (pseg r q k s)`. A
+definition; `hasDerivAt_Hseg` is what identifies it with the derivative, and only under the
+hypotheses stated there.
+
+DERIVED: no numeral occurs. -/
 noncomputable def D1 (r q : ι → ℝ) (s : ℝ) : ℝ := - ∑ k, (q k - r k) * Real.log (pseg r q k s)
 
-/-- **The elementary inequality.** For `s ≥ 0` and `1 + s·x > 0`, `x · log(1 + s·x) ≥ 0`. -/
+/-- For `0 ≤ s` and `0 < 1 + s * x`, the product `x * Real.log (1 + s * x)` is nonnegative. The
+proof splits on the sign of `x`: for `0 ≤ x` the logarithm's argument is at least one, so the
+logarithm is nonnegative; for `x < 0` it is at most one and positive, so the logarithm is
+non-positive and the product of two non-positive factors is nonnegative.
+
+DERIVED: `0` is the lower bound on `s`, the strict lower bound on the logarithm's argument, and the
+bound asserted on the product; `1` is the base point of the logarithm's argument `1 + s * x`, the
+value at which `Real.log` changes sign. -/
 theorem mul_log_one_add_nonneg {x s : ℝ} (hs : 0 ≤ s) (h : 0 < 1 + s * x) :
     0 ≤ x * Real.log (1 + s * x) := by
   rcases le_or_gt 0 x with hx | hx
@@ -62,8 +91,15 @@ theorem hasDerivAt_pseg (r q : ι → ℝ) (k : ι) (s : ℝ) :
   exact h
 
 omit [Fintype ι] in
-/-- **Termwise concavity step.** `(qₖ - rₖ) log rₖ ≤ (qₖ - rₖ) log pₖ(s)`: moving along the segment
-raises `(qₖ-rₖ)·log`. Sign-split on `qₖ` vs `rₖ`, using monotonicity of `log`. -/
+/-- Termwise: `(q k - r k) * Real.log (r k) ≤ (q k - r k) * Real.log (pseg r q k s)`, given `r`
+strictly positive, `q` nonnegative, `0 ≤ s` and `s < 1`. The proof splits on `r k ≤ q k` against
+`q k < r k`. In the first case `pseg` has moved up and the factor is nonnegative; in the second both
+have flipped sign, so the product is nonnegative either way. Positivity of `pseg r q k s` comes from
+`pseg_pos`, which is where `s < 1` is used.
+
+DERIVED: `0` is the strict lower bound on `r`, the lower bound on `q`, and the lower bound on `s`;
+`1` is the strict upper bound on `s`, the endpoint at which a coordinate of `pseg` could reach zero
+and the logarithm cease to be monotone-usable. -/
 theorem term_le (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0 ≤ q k)
     {s : ℝ} (hs0 : 0 ≤ s) (hs1 : s < 1) (k : ι) :
     (q k - r k) * Real.log (r k) ≤ (q k - r k) * Real.log (pseg r q k s) := by
@@ -80,7 +116,15 @@ theorem term_le (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0 ≤ q k)
     nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ r k - q k)
       (by linarith : (0:ℝ) ≤ Real.log (r k) - Real.log (pseg r q k s))]
 
-/-- **The derivative is nonpositive** on `[0,1)`, given the start condition. -/
+/-- `D1 r q s ≤ 0` for `0 ≤ s` and `s < 1`, given `r` strictly positive, `q` nonnegative, and the
+start condition `0 ≤ ∑ k, (q k - r k) * Real.log (r k)`. `Finset.sum_le_sum` applied to `term_le`
+raises the start-condition sum to the sum at `s`, and `linarith` concludes after unfolding `D1`.
+
+Scope: the start condition is a hypothesis; only the value at `s = 0` is assumed, and the inequality
+at every other `s` follows from it.
+
+DERIVED: `0` is the lower bounds on `r`, `q` and `s`, the bound in the start condition, and the
+upper bound on `D1`; `1` is the strict upper bound on `s`, inherited from `term_le`. -/
 theorem D1_nonpos (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0 ≤ q k)
     (hcond : 0 ≤ ∑ k, (q k - r k) * Real.log (r k))
     {s : ℝ} (hs0 : 0 ≤ s) (hs1 : s < 1) : D1 r q s ≤ 0 := by
@@ -123,9 +167,19 @@ theorem hasDerivAt_Hseg (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0 
     rw [Finset.sum_congr rfl (fun k _ => hterm k), Finset.sum_sub_distrib, hrs, hqs, sub_self]
   rw [heq] at hraw; exact hraw
 
-/-- **Main theorem.** Under the start condition `0 ≤ ∑ₖ (qₖ - rₖ) log rₖ`, the Shannon entropy along the
-segment `p(s) = (1-s)r + s q` is non-increasing on `[0,1)`. Elementary, deterministic, no probability;
-the whole content is the one scalar start inequality. -/
+/-- `AntitoneOn (Hseg r q) (Set.Ico 0 1)`, given `r` strictly positive, `q` nonnegative, both
+summing to `1`, and the start condition `0 ≤ ∑ k, (q k - r k) * Real.log (r k)`. The proof supplies
+continuity of `Hseg`, differentiability on `interior (Set.Ico 0 1) = Set.Ioo 0 1` via
+`hasDerivAt_Hseg`, and `D1_nonpos` for the sign of the derivative, to
+`antitoneOn_of_deriv_nonpos` over `convex_Ico 0 1`.
+
+Scope: the conclusion is on the half-open interval `Set.Ico 0 1`; the endpoint `1`, where a
+coordinate of `pseg` may vanish, is excluded. The normalisation hypotheses `hrs` and `hqs` are used
+to make `∑ (q k - r k) = 0`, which is what collapses the product rule in `hasDerivAt_Hseg`.
+
+DERIVED: `0` is the strict lower bound on `r`, the lower bound on `q`, the bound in the start
+condition, and the left endpoint of the interval; `1` is the common value of both sums, fixing the
+vectors to the probability simplex, and the right endpoint of the interval. -/
 theorem entropy_antitone (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0 ≤ q k)
     (hrs : ∑ k, r k = 1) (hqs : ∑ k, q k = 1)
     (hcond : 0 ≤ ∑ k, (q k - r k) * Real.log (r k)) :
@@ -143,17 +197,25 @@ theorem entropy_antitone (r q : ι → ℝ) (hr : ∀ k, 0 < r k) (hq : ∀ k, 0
     rw [(hasDerivAt_Hseg r q hr hq hrs hqs hx.1.le hx.2).deriv]
     exact D1_nonpos r q hr hq hcond hx.1.le hx.2
 
-/-! ## The single-cut case: the concentration condition is automatic
+/-! ## Discharging the start condition: a point-mass limit
 
-When the ordered limit is a single dominant mode `q = e_j` (the leading correlation mode, `r_j` the
-heaviest component of the disordered start `r`), the start condition `0 ≤ ∑(q-r)log r` is not an
-assumption: it equals `∑_k r_k log(r_j/r_k) ≥ 0`, a divergence, nonnegative because `r_j` is the maximum.
-So for the single-cut spectral flow (`ρ'(1) < 1`, one dominant mode), the entropy is monotone with no
-extra input. This is the deterministic form of `χ_v ≥ 0`: no probability, no reflection positivity. -/
+When `q` is the indicator of a single index `j` at which `r` attains its maximum, the start
+condition is provable rather than assumed. The sum `∑ k, (q k - r k) * log (r k)` rearranges to
+`∑ k, r k * (log (r j) - log (r k))`, every term of which is nonnegative because `r k ≤ r j`. -/
 
-/-- **The concentration condition holds at the dominant-mode limit.** For a probability vector `r` whose
-`j`-th component is maximal, concentrating fully onto mode `j` (`q = e_j`) gives
-`0 ≤ ∑_k (e_j - r)_k log r_k = ∑_k r_k log(r_j/r_k)`. Unconditional. -/
+/-- The start condition at a point-mass limit. For `r` strictly positive with `∑ k, r k = 1`, an
+index `j` with `r k ≤ r j` for every `k`, and `q` the indicator `if k = j then 1 else 0`, the
+conclusion is `0 ≤ ∑ k, ((if k = j then (1 : ℝ) else 0) - r k) * Real.log (r k)`. The proof
+rearranges the sum to `∑ k, r k * (Real.log (r j) - Real.log (r k))`, using `hrs` to replace
+`Real.log (r j)` by `(∑ k, r k) * Real.log (r j)`, and concludes by `Finset.sum_nonneg` with
+`Real.log_le_log` at `hmax`.
+
+Scope: `hmax` requires `j` to be a maximiser of `r`, not merely a large coordinate. `DecidableEq ι`
+is needed for the indicator.
+
+DERIVED: `0` is the strict lower bound on `r`, the off-index value of the indicator, and the bound
+asserted on the sum; `1` is the total mass of `r` and the on-index value of the indicator, so the
+indicator is a probability vector too. -/
 theorem concentration_at_dominant [DecidableEq ι] (r : ι → ℝ) (hr : ∀ k, 0 < r k)
     (hrs : ∑ k, r k = 1) (j : ι) (hmax : ∀ k, r k ≤ r j) :
     0 ≤ ∑ k, ((if k = j then (1 : ℝ) else 0) - r k) * Real.log (r k) := by
@@ -176,21 +238,34 @@ theorem concentration_at_dominant [DecidableEq ι] (r : ι → ℝ) (hr : ∀ k,
   intro k _
   exact mul_nonneg (hr k).le (by rw [sub_nonneg]; exact Real.log_le_log (hr k) (hmax k))
 
-/-- **Entropy is monotone when concentrating onto the dominant mode.** For a probability vector `r` with
-maximal `j`-th component, the Shannon entropy along the segment from `r` to the point mass `e_j` is
-non-increasing. Unconditional (the concentration condition is discharged by `concentration_at_dominant`):
-this is `χ_v = -dH/dβ ≥ 0` for a single-cut spectral flow, deterministically. -/
+/-- `AntitoneOn (Hseg r (fun k => if k = j then 1 else 0)) (Set.Ico 0 1)`, for `r` strictly positive
+with total mass `1` and `j` a maximiser of `r`. `entropy_antitone` with the indicator as `q`: its
+nonnegativity is `split_ifs`, its total mass is `simp`, and its start condition is
+`concentration_at_dominant`. No start condition is left for the caller.
+
+DERIVED: `0` is the strict lower bound on `r`, the off-index value of the indicator, and the left
+endpoint of the interval; `1` is the total mass of `r`, the on-index value of the indicator, and the
+right endpoint of the interval. -/
 theorem entropy_antitone_at_dominant [DecidableEq ι] (r : ι → ℝ) (hr : ∀ k, 0 < r k)
     (hrs : ∑ k, r k = 1) (j : ι) (hmax : ∀ k, r k ≤ r j) :
     AntitoneOn (Hseg r (fun k => if k = j then 1 else 0)) (Set.Ico 0 1) :=
   entropy_antitone r (fun k => if k = j then 1 else 0) hr
     (fun k => by split_ifs <;> norm_num) hrs (by simp) (concentration_at_dominant r hr hrs j hmax)
 
-/-- **Concentration condition, general aligned form.** If `r` is sorted non-increasing on `[0,n)` and the
-ordered limit `q` majorizes `r` (partial sums of `q - r` are `≥ 0`, with equal totals), then
-`0 ≤ ∑_k (q-r)_k log r_k`. Summation-by-parts turns it into `∑_m D_m · (log r_{m-1} - log r_m)` with
-`D_m = ∑_{k<m}(q-r)_k ≥ 0` and `log r_{m-1} - log r_m ≥ 0`. The partial-concentration generalisation of
-`concentration_at_dominant` (the point-mass case `q = e_j`). -/
+/-- The start condition from a majorization hypothesis. For `r q : ℕ → ℝ` with `r` strictly
+positive and sorted non-increasing on `Finset.range n`, all partial sums `∑ k ∈ range m, (q k - r k)`
+nonnegative, and total `∑ k ∈ range n, (q k - r k) = 0`, the conclusion is
+`0 ≤ ∑ k ∈ range n, (q k - r k) * Real.log (r k)`. `Finset.sum_range_by_parts` converts the sum into
+the boundary term, which `htot` kills, minus a sum of products of a partial sum with a logarithm
+increment; each such product is non-positive because `r` is sorted, so the negated sum is
+nonnegative.
+
+Scope: `hmaj` is required at every `m : ℕ`, not only for `m ≤ n`. `hsort` is a consecutive
+comparison, which gives the monotone ordering across `range n` by transitivity in the proof.
+
+DERIVED: `0` is the strict lower bound on `r`, the bound on every partial sum, the value of the
+total, and the bound asserted on the conclusion; `1` is the step between consecutive indices in
+`hsort` and in the summation-by-parts increments. -/
 theorem concentration_of_majorizes {n : ℕ} (r q : ℕ → ℝ)
     (hr : ∀ k, k < n → 0 < r k)
     (hsort : ∀ i, i + 1 < n → r (i + 1) ≤ r i)
@@ -211,13 +286,20 @@ theorem concentration_of_majorizes {n : ℕ} (r q : ℕ → ℝ)
     rw [sub_nonpos]; exact Real.log_le_log (hr (i + 1) hi1) (hsort i hi1)
   nlinarith [mul_nonneg (neg_nonneg.mpr h1) (hmaj (i + 1))]
 
-/-- **Entropy is monotone under any aligned majorizing concentration** (the general Schur-concave form).
-For a strictly positive, sorted non-increasing probability vector `r` on `[0,n)` and an ordered limit `q`
-(also a probability vector) that majorizes it, the Shannon entropy along the segment `r → q` is
-non-increasing on `[0,1)`. This feeds `concentration_of_majorizes` (the start condition, by
-summation-by-parts) into `entropy_antitone` (the monotonicity), indexed over `Fin n`. The single dominant
-mode `q = e_j` of `entropy_antitone_at_dominant` is the special case; here `q` may spread over several
-heavy modes, provided it majorizes `r`. Deterministic, no probability, no reflection positivity. -/
+/-- Antitonicity under a majorization hypothesis. For `r q : ℕ → ℝ` with `r` strictly positive and
+`q` nonnegative below `n`, both summing to `1` over `Finset.range n`, `r` sorted non-increasing, all
+partial sums of `q - r` nonnegative and their total zero, the conclusion is
+`AntitoneOn (Hseg (fun k : Fin n => r k.val) (fun k : Fin n => q k.val)) (Set.Ico 0 1)`.
+`entropy_antitone` over the index type `Fin n`, with the three `Fin n` sums converted to
+`Finset.range n` sums by `Fin.sum_univ_eq_sum_range` and the start condition supplied by
+`concentration_of_majorizes`.
+
+Scope: the conclusion is about the restrictions of `r` and `q` to `Fin n`; values at indices `≥ n`
+are unconstrained by `hr` and `hq` and do not enter `Hseg`. The interval is again half-open.
+
+DERIVED: `0` is the strict lower bound on `r`, the lower bound on `q`, the bound on the partial
+sums, the value of the total, and the left endpoint of the interval; `1` is the common total mass of
+`r` and `q`, the consecutive-index step in `hsort`, and the right endpoint of the interval. -/
 theorem entropy_antitone_of_majorizes {n : ℕ} (r q : ℕ → ℝ)
     (hr : ∀ k, k < n → 0 < r k) (hq : ∀ k, k < n → 0 ≤ q k)
     (hrs : ∑ k ∈ Finset.range n, r k = 1) (hqs : ∑ k ∈ Finset.range n, q k = 1)

@@ -2,78 +2,52 @@ import Mathlib
 import MassGap.WightmanData
 
 /-!
-# MassGap.LatticeTranslNoGo — an `OSData` on a FIXED lattice has a trivial translation, and that is
-group theory rather than a missing construction
+# MassGap.LatticeTranslNoGo — a translation of finite exponent on an `OSData` is the identity
 
-`WightmanData.os_reconstruction_wightman` is the one axiom the Clay statement itself names as a route,
-and it consumes an `OSData`. `WightmanData` records that no `OSData` is constructed anywhere in this
-tree. Of its six substantive fields, four are already theorems about the genuine Wilson measure:
-`GNSHilbert.ym_inner_eq_osPairing` gives the Schwinger form `S` as one Gibbs expectation,
-`ReflectionStrong.wilsonGibbsReflForm`'s positivity gives `os2`, its symmetry gives `os3`, and
-`wilsonGibbsReflForm_vac_norm`'s `⟨1,1⟩ = 1` gives `os_nontriv`. The fields that remain are `transl`
-and `os1`.
+`WightmanData.OSData` carries a field `transl : E4 → (Test →L[ℝ] Test)` together with `transl_zero`
+and `transl_add`, and no continuity requirement in the vector argument. `transl` is therefore an
+additive homomorphism from `E4 = EuclideanSpace ℝ (Fin 4)` into the composition monoid of continuous
+linear endomorphisms of `Test`. This module derives what that forces when the homomorphism's image
+has finite exponent, and the parallel statement for an integer-valued target.
 
-This file settles what `transl` can be while the lattice spacing is held fixed, and the answer is:
-the identity, always.
+The arithmetic input is that `E4` is a divisible additive group: for every `m` with `0 < m` and
+every `a : E4`, `a = m • ((m : ℝ)⁻¹ • a)` (`exists_nsmul_eq`).
 
-## The statement
+Contents:
+* `transl_nsmul` — `D.transl (k • a) f` is the `k`-fold iterate of `fun g => D.transl a g` at `f`.
+  The only place the `OSData` fields are used.
+* `exists_nsmul_eq` — divisibility of `E4`.
+* `transl_eq_id_of_finite_order` — if `(fun h => D.transl x h)^[m] g = g` for one `0 < m`, every `x`
+  and every `g`, then `D.transl a f = f` for every `a` and `f`.
+* `os1_holds_of_everything_when_transl_trivial` — under the same finite-exponent hypothesis, an
+  arbitrary continuous bilinear `T` satisfies `T (transl a f) (transl a g) = T f g`.
+* `no_finite_order_of_transl_ne_id` — the contrapositive: if `transl` moves even one test function,
+  no `0 < m` makes `(transl x)^[m]` the identity.
+* `image_divisible`, `int_eq_zero_of_forall_dvd`, `addHom_to_int_lattice_eq_zero` — the same
+  divisibility argument against an integer lattice: every additive homomorphism
+  `E4 →+ (Fin 4 → ℤ)` is zero, with no finite-order hypothesis, since a nonzero integer is not
+  divisible by every positive integer.
 
-`OSData.transl : E4 → (Test →L[ℝ] Test)` with `transl_zero` and `transl_add`. There is no continuity
-requirement in `a`, so `transl` is exactly an additive-group homomorphism from `E4` into the
-composition monoid of continuous linear endomorphisms. Two facts then collide:
-
-* `E4 = EuclideanSpace ℝ (Fin 4)` is a real vector space, hence DIVISIBLE as an additive group:
-  every `a` is `m • ((m:ℝ)⁻¹ • a)` for every `m ≥ 1`.
-* A lattice translation on a periodic lattice of extent `n` has ORDER DIVIDING `n`. That is
-  `HalfLineTransfer.shiftObs_pow_period` — `(shiftObs τ)ⁿ = id` on every observable, with no
-  hypothesis on the module, the coupling or the reflection.
-
-`transl_eq_id_of_finite_order` is the collision: a homomorphism out of a divisible group into
-anything of finite exponent is trivial. Write `a = m • y`, push the `m` through `transl_add`, and the
-finite order eats it.
-
-## Why this is not the same statement as the shift no-gos already in the tree
-
-`HalfLineTransfer.no_rate_below_one_of_finite_order` says a finite-order `T` admits no per-step
-contraction, which is about DECAY. `GNSHilbert.shiftSlab_eq_id` says the slab shift is the identity
-on `SlabShiftStable`'s own premise, which is about that premise. Both are statements about the
-transfer operator.
-
-This one is about the INDEX GROUP, and it does not care what the operator is. Even granting a
-transfer operator with everything `GNSHilbert` says is missing — bounded, self-adjoint, positive,
-with `0 ∉ spectrum` — it still could not serve as `transl`, because `transl` is indexed by `ℝ⁴` and
-the lattice supplies only a finite group of translations to represent. The obstruction survives every
-improvement to the operator.
-
-## What this does NOT claim
-
-* It does not claim `OSData` is unsatisfiable. `WightmanData.trivialOSData` inhabits it, and
-  `os1_holds_of_everything_when_transl_trivial` is the reason that inhabitant is cheap: once `transl`
-  is the identity, `os1` holds for EVERY bilinear `S` whatsoever, so the Euclidean-invariance field
-  constrains nothing and an `OSData` built this way carries no invariance content. This is the
-  `WitnessVacuity` idiom of `GNSHilbert.ym_target_discharged_trivially`, applied to the OS side.
-* It does not claim the continuum limit is unreachable. It says the ORDER is forced: the `a → 0`
-  limit of `OSFamily.osFamily` has to exist before an `OSData` with content can be written down, so
-  C6 cannot be closed before C2. The route in the goal document has C1 and C6 as one step taken
-  before the continuum; that is right for C1, whose Hilbert space `GNSHilbert.ymH` already exists at
-  fixed spacing, and wrong for C6.
-* It proves nothing about `os2`, `os3` or `os_nontriv`, which are the fields already discharged.
-* The finite-order hypothesis is carried as a HYPOTHESIS rather than derived from a Wilson
-  construction, because no `OSData` exists here to derive it of. It is discharged by any
-  representation of the lattice translations, and `shiftObs_pow_period` is the tree's instance.
-
-Foundational footprint only (`#print axioms` on every declaration).
-Build: `python research/code/lean_build.py build MassGap.LatticeTranslNoGo`.
+Scope. The finite-exponent hypothesis `hfin` is carried as a hypothesis throughout; no `OSData` is
+constructed here, and nothing in this module derives `hfin` from a lattice construction.
+`HalfLineTransfer.shiftObs_pow_period` is one statement of the tree that has that shape. These
+theorems say nothing about the `os2`, `os3` or `os_nontriv` fields of `OSData`, and they do not
+assert that `OSData` is uninhabited — `WightmanData.trivialOSData` inhabits it, and
+`os1_holds_of_everything_when_transl_trivial` records that with a trivial `transl` the invariance
+field holds of every bilinear form, so it constrains nothing.
 -/
 
 namespace MassGap.LatticeTranslNoGo
 
 open MassGap.WightmanData
 
-/-- **The translation of an `n`-fold multiple is the `n`-fold composite.** Pure `transl_add`
-bookkeeping, and the only place the `OSData` axioms are used at all.
+/-- `D.transl (k • a) f = (fun g => D.transl a g)^[k] f`, for an `OSData` `D`, a vector `a : E4`, a
+natural `k` and a test function `f`. Proved by induction on `k`, peeling `a` off the front of
+`(k + 1) • a = a + k • a` so that the inductive hypothesis, which is stated at `f`, applies. The
+only declaration here that uses the `OSData` fields `transl_zero` and `transl_add`.
 
-DERIVED: no numeral. `k` is the induction variable and the `0` case is `transl_zero`. -/
+DERIVED: no numeral occurs in the statement. `k` is the multiple and the iterate count; the base
+case `0` and the successor's `1` are in the proof. -/
 theorem transl_nsmul (D : OSData) (a : E4) (k : ℕ) (f : D.Test) :
     D.transl (k • a) f = (fun g => D.transl a g)^[k] f := by
   induction k with
@@ -85,29 +59,29 @@ theorem transl_nsmul (D : OSData) (a : E4) (k : ℕ) (f : D.Test) :
       have hsucc : (k + 1) • a = a + k • a := by rw [succ_nsmul, add_comm]
       rw [hsucc, D.transl_add, ih, Function.iterate_succ_apply']
 
-/-- **`E4` IS DIVISIBLE**, stated as the one arithmetic fact the no-go turns on: every vector is an
-`m`-fold multiple of another, for every `m ≥ 1`.
+/-- `E4` is divisible as an additive group: for `0 < m` and any `a : E4`, there is `y` with
+`m • y = a`. The witness is `(m : ℝ)⁻¹ • a`, and the proof turns the `ℕ`-scalar action into the
+`ℝ`-scalar one with `Nat.cast_smul_eq_nsmul` before cancelling.
 
-DERIVED: no numeral. `m` is the exponent supplied by the caller; `(m:ℝ)⁻¹` is its inverse in the
-scalars, which exists precisely because `E4` is a real vector space and `m ≠ 0`. -/
+DERIVED: the one numeral is the `0` in `0 < m`, which is what makes `(m : ℝ)` invertible in the
+scalars. `m` is the caller's. -/
 theorem exists_nsmul_eq (m : ℕ) (hm : 0 < m) (a : E4) : ∃ y : E4, m • y = a := by
   refine ⟨(m : ℝ)⁻¹ • a, ?_⟩
   have hm' : (m : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hm.ne'
   rw [← Nat.cast_smul_eq_nsmul ℝ, smul_smul, mul_inv_cancel₀ hm', one_smul]
 
-/-- **THE NO-GO: a translation of finite exponent on an `OSData` is the identity.**
+/-- A translation of finite exponent on an `OSData` is the identity. Given `0 < m` and
+`hfin : ∀ x : E4, ∀ g : D.Test, (fun h => D.transl x h)^[m] g = g`, the conclusion is
+`D.transl a f = f` for every `a : E4` and every `f : D.Test`. The proof writes `a = m • y` by
+`exists_nsmul_eq`, converts `D.transl (m • y) f` into the `m`-fold iterate by `transl_nsmul`, and
+applies `hfin` at `y`.
 
-If every `transl x` satisfies `(transl x)^m = id` for one fixed `m ≥ 1` — which is what a
-representation of the translations of a periodic lattice of extent `m` gives, by
-`HalfLineTransfer.shiftObs_pow_period` — then `transl a = id` at EVERY `a : E4`, with no further
-hypothesis.
+Scope: `hfin` is a hypothesis and is not established here. Nothing in the statement refers to a
+Hilbert space, a measure, a coupling or a gauge group; the argument is about the index group `E4`
+and the exponent `m` alone. The same `m` must work at every `x`.
 
-The proof is three lines and they are the whole content: `E4` is divisible, so `a = m • y`;
-`transl_add` turns `transl (m • y)` into the `m`-fold composite of `transl y`; the finite order makes
-that composite the identity. Nothing about the Hilbert space, the measure, the coupling or the gauge
-group enters, which is why no improvement to the transfer operator can evade it.
-
-DERIVED: no numeral. `m` is the exponent, carried from the hypothesis to the conclusion unchanged. -/
+DERIVED: the one numeral is the `0` in `0 < m`, which `exists_nsmul_eq` requires. `m` is the
+exponent, carried from the hypothesis unchanged. -/
 theorem transl_eq_id_of_finite_order (D : OSData) (m : ℕ) (hm : 0 < m)
     (hfin : ∀ x : E4, ∀ g : D.Test, (fun h => D.transl x h)^[m] g = g)
     (a : E4) (f : D.Test) : D.transl a f = f := by
@@ -116,16 +90,17 @@ theorem transl_eq_id_of_finite_order (D : OSData) (m : ℕ) (hm : 0 < m)
     _ = (fun h => D.transl y h)^[m] f := transl_nsmul D y m f
     _ = f := hfin y f
 
-/-- **AND THEN `os1` IS SATISFIED BY EVERY BILINEAR FORM, so it constrains nothing.**
+/-- Translation invariance holds of every bilinear form when `transl` has finite exponent. Under the
+same hypotheses as `transl_eq_id_of_finite_order`, and for an arbitrary continuous bilinear
+`T : D.Test →L[ℝ] D.Test →L[ℝ] ℝ`, `T (D.transl a f) (D.transl a g) = T f g`. The proof rewrites
+both arguments with `transl_eq_id_of_finite_order`.
 
-Stated separately from the no-go because it is the part that matters for what an `OSData` is WORTH.
-`os1` is Euclidean invariance, the field that makes the Schwinger form a function of differences
-rather than of positions. Once `transl` is the identity it holds of an ARBITRARY `S`, including one
-with no relation to Yang–Mills, so producing an `OSData` this way and feeding it to
-`os_reconstruction_wightman` would yield a `WightmanQFTData` whose invariance content is empty.
+Scope: `T` is unconstrained, so the invariance identity carries no information about `T`. This is
+the shape of the `os1` field of `OSData`, instantiated at an arbitrary form rather than at a
+Schwinger form.
 
-The same shape as `GNSHilbert.ym_target_discharged_trivially`: the target is met, and meeting it
-conveys nothing. -/
+DERIVED: the one numeral is the `0` in `0 < m`, inherited from
+`transl_eq_id_of_finite_order`. -/
 theorem os1_holds_of_everything_when_transl_trivial (D : OSData) (m : ℕ) (hm : 0 < m)
     (hfin : ∀ x : E4, ∀ g : D.Test, (fun h => D.transl x h)^[m] g = g)
     (T : D.Test →L[ℝ] D.Test →L[ℝ] ℝ) (a : E4) (f g : D.Test) :
@@ -133,12 +108,15 @@ theorem os1_holds_of_everything_when_transl_trivial (D : OSData) (m : ℕ) (hm :
   rw [transl_eq_id_of_finite_order D m hm hfin a f,
       transl_eq_id_of_finite_order D m hm hfin a g]
 
-/-- **THE CONTRAPOSITIVE, which is the usable direction.** An `OSData` whose translation acts
-non-trivially at even one vector has NO finite exponent — so it cannot be carried by the translations
-of a lattice at fixed spacing, at any extent whatever.
+/-- The contrapositive. If there exist `a : E4` and `f : D.Test` with `D.transl a f ≠ f`, then for
+every `m` with `0 < m` the finite-exponent property
+`∀ x g, (fun h' => D.transl x h')^[m] g = g` fails. Proved by feeding any such `m` and hypothesis to
+`transl_eq_id_of_finite_order` and contradicting the witness.
 
-This is the statement to discharge when the continuum limit arrives: it names exactly what the limit
-has to supply that a fixed lattice cannot. -/
+Scope: the statement quantifies over all `0 < m`, so it excludes every exponent at once; it says
+nothing about which representations of a translation group could supply one.
+
+DERIVED: the one numeral is the `0` in `0 < m`, which fixes the range of exponents excluded. -/
 theorem no_finite_order_of_transl_ne_id (D : OSData)
     (h : ∃ a : E4, ∃ f : D.Test, D.transl a f ≠ f) :
     ∀ m : ℕ, 0 < m → ¬ (∀ x : E4, ∀ g : D.Test, (fun h' => D.transl x h')^[m] g = g) := by
@@ -146,36 +124,34 @@ theorem no_finite_order_of_transl_ne_id (D : OSData)
   intro m hm hfin
   exact haf (transl_eq_id_of_finite_order D m hm hfin a f)
 
-/-! ## The infinite lattice, where the translations do NOT have finite order
+/-! ## The integer lattice, where no exponent is available
 
-`WilsonGibbs.exists_wilson_isGibbsMeasure` puts a DLR Gibbs measure on the infinite lattice `ℤ⁴`,
-and there the translation group is `ℤ⁴` itself — torsion-free, so `transl_eq_id_of_finite_order` has
-no exponent to work with and says nothing. The no-go survives anyway, and by the same divisibility
-fact, because `ℤ⁴` is not divisible either: the only element of `ℤ` divisible by every positive
-integer is `0`.
+On `ℤ⁴` the translation group is torsion-free, so `transl_eq_id_of_finite_order` has no exponent to
+apply and says nothing. The three results below reach the same conclusion from divisibility alone:
+an integer lying in `m * ℤ` for every positive `m` is zero, so every additive homomorphism
+`E4 →+ (Fin 4 → ℤ)` is the zero map. The hypothesis traded away is finite exponent; what replaces
+it is the failure of divisibility in `ℤ`. -/
 
-So neither horn of C2 escapes. At fixed finite extent the translations have finite order and the
-first theorem applies; on `ℤ⁴` they have infinite order and the second does. An `OSData` with a
-non-trivial `transl` requires a translation group that is itself divisible, which is what `ℝ⁴` is and
-what no lattice at any spacing supplies. -/
+/-- The image of an additive homomorphism out of `E4` is divisible: for any additive commutative
+group `A`, any `φ : E4 →+ A`, any `0 < m` and any `a : E4`, there is `b : A` with `φ a = m • b`.
+The witness is `φ y` for the `y` supplied by `exists_nsmul_eq`, using `map_nsmul`.
 
-/-- **THE DIVISIBILITY, ABSTRACTLY**: the image of an additive homomorphism out of `E4` is divisible.
-Every value is an `m`-fold multiple, at every `m ≥ 1`. This is the single fact both no-gos spend. -/
+DERIVED: the one numeral is the `0` in `0 < m`, which `exists_nsmul_eq` requires. -/
 theorem image_divisible {A : Type*} [AddCommGroup A] (φ : E4 →+ A) (m : ℕ) (hm : 0 < m) (a : E4) :
     ∃ b : A, φ a = m • b := by
   obtain ⟨y, hy⟩ := exists_nsmul_eq m hm a
   exact ⟨φ y, by rw [← hy, map_nsmul]⟩
 
-/-- **THE NO-GO AT INFINITE EXTENT**: every additive homomorphism `E4 →+ (Fin 4 → ℤ)` is zero.
+/-- An integer divisible by every positive natural is zero. Given `k : ℤ` and
+`h : ∀ m : ℕ, 0 < m → ∃ t : ℤ, k = (m : ℤ) * t`, the conclusion is `k = 0`. The proof instantiates
+`h` at `m = k.natAbs + 1`; if the cofactor is nonzero then `k.natAbs = (k.natAbs + 1) * t.natAbs` is
+at least `k.natAbs + 1`, which `omega` refutes.
 
-So a `transl` that acts by translations of the INFINITE lattice `ℤ⁴` is the identity too, for the
-same reason and with no finite order anywhere in the argument. `ℤ` is torsion-free, so the exponent
-route is unavailable; what does the work is that `ℤ` is not DIVISIBLE, and an integer lying in
-`m·ℤ` for every `m` is zero.
+Scope: `h` must hold at every positive `m`, not merely at arbitrarily large ones in a chosen family.
 
-DERIVED: `k.natAbs + 1` is the one exponent the proof needs — strictly larger than `|k|`, so a
-multiple of it that is smaller in absolute value than it can only be zero. Nothing is chosen; any
-`m > |k|` does the same job and this is the least one. -/
+DERIVED: `0` is the strict lower bound on `m` in the hypothesis and the value of `k` in the
+conclusion. `1` is the increment in the instantiating exponent `k.natAbs + 1`, chosen because it is
+the least exponent strictly larger than `|k|`; any larger one would serve. -/
 theorem int_eq_zero_of_forall_dvd (k : ℤ)
     (h : ∀ m : ℕ, 0 < m → ∃ t : ℤ, k = (m : ℤ) * t) : k = 0 := by
   obtain ⟨t, ht⟩ := h (k.natAbs + 1) (Nat.succ_pos _)

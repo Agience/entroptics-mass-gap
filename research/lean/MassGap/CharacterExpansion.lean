@@ -2,81 +2,69 @@ import Mathlib
 import MassGap.ActionSplit
 
 /-!
-# MassGap.CharacterExpansion — the Wilson weight's expansion coefficients are NONNEGATIVE
+# MassGap.CharacterExpansion — paired expansion of the Wilson plaquette weight
 
-`ReflectionPositivity.reflection_positive_of_expansion` proves that a finite expansion into paired
-products with nonnegative coefficients integrates to something nonnegative, and `ActionSplit` proves
-the conditional weld that discharges the pairing inequality at even extent and even lag. What neither
-supplies is the expansion itself: a way to handle a term that COUPLES the two halves of the
-reflection, which is what the plaquettes straddling a link-reflection plane produce.
+This module expands `exp (β * Re tr (A Bᴴ))` into a sum of terms each of which is a function of `A`
+times the same function of `B`, and derives from that expansion a positivity statement for a
+reflection that inverts the gauge variable on the links whose direction it fixes.
 
-That coupling is the Osterwalder-Seiler character expansion, and the content of it is a sign. This
-file proves the sign.
+## The expansion
 
-## What is proved
+`hsRe A B = Re tr (A Bᴴ)`. `hsRe_eq_sum` identifies it with the Euclidean inner product of the real
+coordinate vectors of `A` and `B`, indexed by `Coord N = Fin N × Fin N × Bool`. `hsRe_pow` raises
+that to a power: `hsRe A B ^ k` is the sum, over functions `α : Fin k → Coord N`, of
+`mono α A * mono α B`, where `mono α` is the product of the coordinates `α` names. Each summand is a
+function of `A` times the same function of `B`, and the sum carries no coefficients.
 
-**The expansion, exactly, at every order.** Write `hsRe A B = Re tr (A Bᴴ)` — the `Re tr` of a word
-with `A` on one side of the plane and `B` on the other, which is the Wilson plaquette energy's own
-functional form. `hsRe` is a real inner product in the `2N²` real coordinates of a complex `N × N`
-matrix (`hsRe_eq_sum`), so its `k`-th power expands with NO cross terms between the two arguments:
+`hasSum_wilsonWeight_paired` sums those orders against `wilsonCoef β k = β ^ k / k !`, giving
+`exp (β * hsRe A B)` as a `HasSum` over the paired expansion. `wilsonCoef_nonneg` gives the
+coefficients a sign from `0 ≤ β`; `wilsonCoef_neg_of_neg` shows the order-one coefficient is negative
+when `β < 0`.
 
-    hsRe A B ^ k = ∑ over degree-k monomials α of  mono α A * mono α B      (`hsRe_pow`)
+Everything in this section is stated for arbitrary complex `N × N` matrices. No group, no Haar
+measure and no representation theory enters: the monomial index `α` stands where the irreducible
+characters would, and Peter-Weyl and Schur orthogonality are not used anywhere in this file.
 
-— a FINITE sum of PAIRED products, one factor reading `A` and one reading `B`, with coefficient `1`.
-The Wilson weight `exp (β * hsRe A B)` is then the sum over `k` of these with coefficient `β^k / k!`,
-which is nonnegative exactly when `β` is (`hasSum_wilsonWeight_paired`).
+## Positive semidefiniteness
 
-That is the CONTENT of "the character expansion has nonnegative coefficients", and it needs no
-representation theory: the coefficients are nonnegative because they are multiplicities in a tensor
-power, and the tensor power is written out here as the monomial index `α`. What is NOT formalised is
-the DICTIONARY — that a class function on a compact group is positive-definite exactly when its
-coefficients against the irreducible characters are nonnegative. That dictionary is Peter-Weyl, it is
-not in this development, and nothing below uses it: the paired expansion is produced directly, in the
-form the pairing mechanism consumes, so the irreducible characters never have to be named.
+`quadform_pow_eq_sum_sq` rewrites the order-`k` quadratic form `∑ᵢⱼ zᵢ zⱼ (hsRe Aᵢ Aⱼ) ^ k` as
+`∑_α (∑ᵢ zᵢ * mono α Aᵢ) ^ 2`. `wilson_kernel_nonneg` sums the orders and concludes
+`0 ≤ ∑ᵢⱼ zᵢ zⱼ exp (β * hsRe Aᵢ Aⱼ)` for `0 ≤ β`, for any finite family of matrices and any real
+weights. It too is stated for arbitrary matrices; membership in a group is never used.
 
-**Positive definiteness**, the operational form of the same statement: the Wilson weight is a
-positive-semidefinite kernel on matrices (`wilson_kernel_nonneg`). Its proof is the identity
-`quadform_pow_eq_sum_sq`, which turns the order-`k` quadratic form into an explicit SUM OF SQUARES.
+## Negative control
 
-**The mechanism, for a reflection that DAGGERS.** `ReflectionPositivity.reflection_positive_of_expansion`
-is stated for a bare relabelling `U ∘ θ`, and the Osterwalder-Seiler time reflection is not one: it
-inverts the gauge variable on every link running along the reflection axis. `twisted_pairing_eq_sq`
-and `twisted_reflection_positive_of_expansion` are the same statements for
-`ActionSplit.twist θ σ`, which `Reflect.reflConf` IS (`ActionSplit.reflConf_eq_twist`). Without them
-the expansion mechanism cannot be pointed at the actual Wilson reflection at all.
+`NegControl` fixes two diagonal matrices, the identity and `diag(1, -1, -1)`, proves both lie in
+`Matrix.specialUnitaryGroup (Fin 3) ℂ` (`cA_mem_SU`), and evaluates the quadratic form on them at the
+weights `(1, -1)`: `su3_quadform` gives `2 * (exp (3 * β) - exp (-β))`, and `su3_kernel_nonneg_iff`
+turns that into an equivalence with `0 ≤ β`. `su3_kernel_neg_of_neg` is the strict form at `β < 0`.
+So the hypothesis `0 ≤ β` of `wilson_kernel_nonneg` cannot be dropped.
 
-**The two put together.** `crossweight_pairing_nonneg` is reflection positivity for an observable
-paired against a cross weight `exp (β * hsRe (X (U|₊)) (X ((ΘU)|₊)))` that genuinely COUPLES the two
-halves — the first statement in this development that allows any coupling across the plane.
-`ActionSplit`'s weld cannot: it requires every plaquette to read one side or the plane alone.
+## Reflections that invert
 
-## The negative control
+`ReflectionPositivity.pairing_with_reflection_nonneg` and
+`ReflectionPositivity.reflection_positive_of_expansion` are stated for a relabelling `U ∘ θ`.
+`Reflect.reflConf` is not a relabelling: it is `ActionSplit.twist (reflLinkPerm τ c) (axisDagger τ)`
+(`ActionSplit.reflConf_eq_twist`), which also inverts the gauge variable on every link running along
+the reflection axis. `twisted_pairing_eq_sq` and `twisted_reflection_positive_of_expansion` restate
+those two lemmas with `ActionSplit.twist θ σ` in place of `U ∘ θ`, using
+`ActionSplit.twist_measurePreserving`.
 
-`NegControl.su3_kernel_nonneg_iff` computes the quadratic form on two genuine `SU(3)` elements — the
-identity and `diag(1, −1, −1)`, both shown to lie in `specialUnitaryGroup` — and finds it equal to
-`2 (e^{3β} − e^{−β})`, which is nonnegative IF AND ONLY IF `β ≥ 0`. So the nonnegativity is a
-property of the sign of the Wilson coupling and not of the machinery: at negative coupling the same
-weight, on the same group, with the same observable, has a negative expansion coefficient
-(`wilsonCoef_neg_of_neg`) and fails positive definiteness outright.
+## The two together
 
-## What this does NOT discharge, and why
+`crossweight_pairing_nonneg` pairs an observable `O` of one side `S` with its twisted reflection
+against the weight `exp (β * hsRe (X (U|S)) (X ((twist θ σ U)|S)))`, where `X` is a matrix-valued
+function of the configuration on `S` whose real coordinates are measurable and bounded by one. That
+weight reads both sides at once, so it is not of the form a factorised weld consumes. The conclusion
+is that the integral against `cvol ι μ` is nonnegative, for `0 ≤ β`.
+`wilson_crossweight_pairing_nonneg` is the same statement at `ι = Link d n`,
+`μ = probHaar (SUN.SU N)`, with `reflConf τ cst` as the reflection.
 
-`ReflectPositive.corrClay_rp_of` needs `PlaqReflPositive` at EVERY lag. `ActionSplit` covers the even
-lags. An ODD lag at even extent is a LINK reflection, and two things go wrong there, only one of
-which this file fixes:
-
-* the reflection inverts a SHARED axis link (`ActionSplit.reflConf_inverts_fixed_axis_link`) — the
-  twist, which `twisted_pairing_eq_sq` handles for links the reflection MOVES, but not for a link it
-  FIXES and inverts; and
-* a plaquette straddling a link-reflection plane reads TWO DISTINCT fixed axis links, so its word is
-  `G · F · G'⁻¹ · (ΘF)⁻¹` with `G ≠ G'` both inverted by `Θ`. That is not `X · (ΘX)ᴴ` for any `X`,
-  so `crossweight_pairing_nonneg` does not apply to it and neither does any paired-word hypothesis.
-  Osterwalder-Seiler close that case by expanding the straddling weight into matrix elements and
-  integrating the crossing links against them, where Schur orthogonality supplies a Gram matrix.
-
-`plaqReflPositive_of_pairing_nonneg` is the connector that says exactly which integral inequality is
-left: nonnegativity of the un-normalised pairing integral at that lag. Everything between it and the
-character coefficients is here; the crossing-link integration is not.
+`odd_lag_straddling_plaq_two_fixed_axis_links` exhibits, at even extent and odd lag, a plaquette in a
+`(τ, ν)` plane two of whose boundary links are distinct axis links that `reflLink τ c` fixes.
+`plaqReflPositive_of_pairing_nonneg` divides the un-normalised pairing integral by the partition
+function, positive by `WilsonReal.wilsonSystem_partition_pos` when `N ≠ 0`, to obtain
+`ReflectPositive.PlaqReflPositive`.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python code/lean_build.py build MassGap.CharacterExpansion`.
@@ -90,35 +78,39 @@ open MassGap.WilsonHypercubic MassGap.CompactGauge MassGap.Reflect
 
 /-! ## `Re tr (A Bᴴ)` is a real inner product
 
-The Wilson plaquette energy is `1 − (1/N) Re tr g`, and a plaquette straddling a reflection plane has
-`g` a word containing one link on each side. `hsRe` is the bilinear shell of that: `Re tr (A Bᴴ)`,
-which for unitary `B` is `Re tr (A B⁻¹)`. The point of this section is that it is the STANDARD REAL
-INNER PRODUCT on the `2N²` real coordinates of a complex matrix, so every power of it splits into
-paired monomials with no cross terms. -/
+`hsRe A B = Re tr (A Bᴴ)`, which for unitary `B` is `Re tr (A B⁻¹)` — the form a plaquette holonomy
+takes when its boundary word is cut into a factor `A` and a factor `B`. `hsRe_eq_sum` identifies it
+with the Euclidean inner product on the real coordinates of a complex matrix, and `hsRe_pow` uses
+that to split every power into paired monomials. -/
 
-/-- A real coordinate of a complex `N × N` matrix: an entry `(i, j)` and a choice of real or
-imaginary part. There are `2N²` of them.
+/-- A real coordinate of a complex `N × N` matrix: a row index, a column index, and a `Bool`
+selecting the real or the imaginary part. The type has `2 * N ^ 2` elements.
 
-DERIVED: nothing numeric. The `Bool` is the two parts of a complex number, not a chosen cut. -/
+DERIVED: no numeral appears in the statement. -/
 abbrev Coord (N : ℕ) : Type := Fin N × Fin N × Bool
 
-/-- The value of that coordinate. -/
+/-- The value of that coordinate: the real part of the entry when the `Bool` is `true`, the
+imaginary part when it is `false`.
+
+DERIVED: the digits in `p.1`, `p.2.1` and `p.2.2` are projections out of the triple `Coord N`,
+selecting the row index, the column index and the part flag. No other numeral appears. -/
 noncomputable def coord {N : ℕ} (p : Coord N) (A : Matrix (Fin N) (Fin N) ℂ) : ℝ :=
   if p.2.2 then (A p.1 p.2.1).re else (A p.1 p.2.1).im
 
-/-- **The Wilson cross form** `Re tr (A Bᴴ)`. For `A` and `B` in `SU(N)`, `Bᴴ = B⁻¹`, so this is the
-`Re tr` of the word the straddling plaquette contributes, with `A` read on one side of the reflection
-plane and `B` on the other. -/
+/-- The cross form `Re tr (A Bᴴ)`. For `A` and `B` unitary, `Bᴴ = B⁻¹`, so this is the real part of
+the trace of the word `A B⁻¹`.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def hsRe {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℂ) : ℝ :=
   (Matrix.trace (A * Matrix.conjTranspose B)).re
 
-/-- **`Re tr (A Bᴴ)` is the real inner product of the coordinate vectors.**
+/-- `Re tr (A Bᴴ)` is the sum over `Coord N` of the product of the two matrices' coordinates.
 
-`tr (A Bᴴ) = ∑ᵢⱼ Aᵢⱼ · conj Bᵢⱼ`, whose real part is `∑ᵢⱼ (Re Aᵢⱼ Re Bᵢⱼ + Im Aᵢⱼ Im Bᵢⱼ)`. That is
-the Euclidean inner product on `ℝ^{2N²}` — the one fact this whole file runs on, because it is what
-makes every power of `hsRe` split into products of a function of `A` with the SAME function of `B`.
+`tr (A Bᴴ) = ∑ᵢⱼ Aᵢⱼ · conj Bᵢⱼ`, whose real part is `∑ᵢⱼ (Re Aᵢⱼ Re Bᵢⱼ + Im Aᵢⱼ Im Bᵢⱼ)`: the
+Euclidean inner product of the coordinate vectors. This is what makes every power of `hsRe` split
+into products of a function of `A` with the same function of `B`.
 
-DERIVED: no numeral. `2N²` is the count of real coordinates of a complex `N × N` matrix. -/
+DERIVED: no numeral appears in the statement. -/
 theorem hsRe_eq_sum {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℂ) :
     hsRe A B = ∑ p : Coord N, coord p A * coord p B := by
   have hL : hsRe A B = ∑ i : Fin N, ∑ j : Fin N,
@@ -144,22 +136,21 @@ theorem hsRe_eq_sum {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℂ) :
     simp [coord]
   rw [hL, hR]
 
-/-- A degree-`k` monomial in the real coordinates of a matrix, indexed by the `k` coordinates it
-multiplies. These are the `g_k` of the expansion. -/
+/-- A degree-`k` monomial in the real coordinates of a matrix: the product, over `t : Fin k`, of the
+coordinate `α t`.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def mono {N k : ℕ} (α : Fin k → Coord N) (A : Matrix (Fin N) (Fin N) ℂ) : ℝ :=
   ∏ t, coord (α t) A
 
-/-- **THE EXPANSION, EXACTLY, AT EVERY ORDER.**
+/-- The `k`-th power of `hsRe A B`, expanded: it is the sum over functions `α : Fin k → Coord N` of
+`mono α A * mono α B`.
 
-    (Re tr (A Bᴴ))^k  =  ∑ over degree-k monomials α of  mono α A * mono α B
+Every summand is a function of `A` times the same function of `B`, and the index ranges over a
+`Fintype`, so the sum is finite. Proved from `hsRe_eq_sum` by `Fintype.sum_pow`, which is where the
+index `α` comes from.
 
-A FINITE sum of PAIRED products — each term a function of `A` times the SAME function of `B` — with
-every coefficient equal to `1`. This is the whole reason the character expansion of the Wilson weight
-has nonnegative coefficients: the coefficients are the multiplicities with which an irreducible
-occurs in a tensor power, and the tensor power is written out here as the index `α`. No
-representation theory is used or needed.
-
-DERIVED: the `1` coefficients are not chosen; they are what multiplying out a power of a sum gives. -/
+DERIVED: no numeral appears in the statement; the exponent is the variable `k`. -/
 theorem hsRe_pow {N : ℕ} (k : ℕ) (A B : Matrix (Fin N) (Fin N) ℂ) :
     hsRe A B ^ k = ∑ α : Fin k → Coord N, mono α A * mono α B := by
   rw [hsRe_eq_sum, Fintype.sum_pow]
@@ -169,33 +160,48 @@ theorem hsRe_pow {N : ℕ} (k : ℕ) (A B : Matrix (Fin N) (Fin N) ℂ) :
 
 /-! ## The Wilson weight, and its coefficients -/
 
-/-- The exponential series, as a `HasSum`. -/
+/-- The exponential series, as a `HasSum`: `fun k => x ^ k / k !` sums to `Real.exp x`. Restated
+from `NormedSpace.expSeries_div_hasSum_exp`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem hasSum_exp_div (x : ℝ) :
     HasSum (fun k : ℕ => x ^ k / (Nat.factorial k : ℝ)) (Real.exp x) := by
   rw [Real.exp_eq_exp_ℝ]
   exact NormedSpace.expSeries_div_hasSum_exp x
 
-/-- The coefficient the Wilson weight carries at order `k`. -/
+/-- The coefficient carried at order `k`: `β ^ k / k !`.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def wilsonCoef (β : ℝ) (k : ℕ) : ℝ := β ^ k / (Nat.factorial k : ℝ)
 
-/-- **THE COEFFICIENTS ARE NONNEGATIVE — for `β ≥ 0`.** -/
+/-- For `0 ≤ β` every coefficient is nonnegative.
+
+DERIVED: both numerals are the `0` of a sign condition — one in the hypothesis on `β`, one in the
+conclusion about `wilsonCoef β k`. Neither is a magnitude. -/
 theorem wilsonCoef_nonneg {β : ℝ} (hβ : 0 ≤ β) (k : ℕ) : 0 ≤ wilsonCoef β k :=
   div_nonneg (pow_nonneg hβ k) (Nat.cast_nonneg _)
 
-/-- **NEGATIVE CONTROL, at the coefficient.** At negative coupling the order-one coefficient is
-negative, so `wilsonCoef_nonneg`'s hypothesis is doing work rather than decorating. -/
+/-- At `β < 0` the order-one coefficient is negative, so the hypothesis of `wilsonCoef_nonneg` is
+not vacuous.
+
+DERIVED: the two `0`s are sign conditions, on `β` and on the coefficient. The `1` is the order at
+which the coefficient is read — an index into the series, and the lowest order at which `β` occurs to
+an odd power. -/
 theorem wilsonCoef_neg_of_neg {β : ℝ} (hβ : β < 0) : wilsonCoef β 1 < 0 := by
   unfold wilsonCoef
   simpa using hβ
 
-/-- **THE WILSON WEIGHT IS ITS OWN PAIRED EXPANSION**, with the coefficients above:
+/-- The Wilson weight is the sum of its own paired expansion:
 
     exp (β · Re tr (A Bᴴ))  =  ∑ₖ  (β^k / k!) · ∑_α  mono α A · mono α B.
 
-Each order is a finite sum of paired products (`hsRe_pow`); the coefficient of order `k` is
-`β^k / k!`, nonnegative for `β ≥ 0` (`wilsonCoef_nonneg`). That is the statement
-`ReflectionPositivity.reflection_positive_of_expansion` was written to consume, for the `SU(N)`
-Wilson plaquette weight and hence for `SU(3)`. -/
+Each order is `hsRe_pow`; the series is `hasSum_exp_div` at `β * hsRe A B`. Stated for arbitrary
+complex matrices `A` and `B`, with no hypothesis on `β` — the sign of the coefficients is
+`wilsonCoef_nonneg`, which needs `0 ≤ β`. This is the shape
+`ReflectionPositivity.reflection_positive_of_expansion` and
+`twisted_reflection_positive_of_expansion` consume.
+
+DERIVED: no numeral appears in the statement. -/
 theorem hasSum_wilsonWeight_paired {N : ℕ} (β : ℝ) (A B : Matrix (Fin N) (Fin N) ℂ) :
     HasSum (fun k : ℕ => wilsonCoef β k * ∑ α : Fin k → Coord N, mono α A * mono α B)
       (Real.exp (β * hsRe A B)) := by
@@ -207,18 +213,20 @@ theorem hasSum_wilsonWeight_paired {N : ℕ} (β : ℝ) (A B : Matrix (Fin N) (F
   rw [heq]
   exact hasSum_exp_div (β * hsRe A B)
 
-/-! ## Positive definiteness: the same statement, in the form a referee checks
+/-! ## Positive semidefiniteness
 
-A class function on a compact group has nonnegative character coefficients exactly when it is a
-positive-definite function. `quadform_pow_eq_sum_sq` is that equivalence made explicit at each order
-— the order-`k` quadratic form IS a sum of squares — and `wilson_kernel_nonneg` sums it. -/
+`quadform_pow_eq_sum_sq` writes the order-`k` quadratic form as an explicit sum of squares, and
+`wilson_kernel_nonneg` sums the orders against the coefficients. -/
 
-/-- **THE ORDER-`k` QUADRATIC FORM IS A SUM OF SQUARES.**
+/-- The order-`k` quadratic form is a sum of squares:
 
-    ∑ᵢⱼ zᵢ zⱼ (Re tr (Aᵢ Aⱼᴴ))^k  =  ∑_α ( ∑ᵢ zᵢ · mono α Aᵢ )²
+    ∑_α ( ∑ᵢ zᵢ · mono α Aᵢ )²  =  ∑ᵢⱼ zᵢ zⱼ (Re tr (Aᵢ Aⱼᴴ))^k
 
-Immediate from `hsRe_pow` once the sums are exchanged: the monomial index `α` is common to both
-factors, so the double sum over `(i, j)` collapses into a square for each `α`. -/
+`A` is a family of `m` matrices and `z` a family of `m` reals. The proof expands each square by
+`Finset.sum_mul_sum`, exchanges the sums so that `α` is innermost, and applies `hsRe_pow`.
+
+DERIVED: the `2` is the exponent of the square on the left. `k` and `m` are variables, not
+numerals. -/
 theorem quadform_pow_eq_sum_sq {N : ℕ} (k m : ℕ) (A : Fin m → Matrix (Fin N) (Fin N) ℂ)
     (z : Fin m → ℝ) :
     (∑ α : Fin k → Coord N, (∑ i, z i * mono α (A i)) ^ 2)
@@ -239,19 +247,18 @@ theorem quadform_pow_eq_sum_sq {N : ℕ} (k m : ℕ) (A : Fin m → Matrix (Fin 
         rw [hsRe_pow, Finset.mul_sum]
         exact Finset.sum_congr rfl (fun α _ => by ring)
 
-/-- **THE `SU(N)` WILSON PLAQUETTE WEIGHT IS A POSITIVE-SEMIDEFINITE KERNEL**, for `β ≥ 0`.
+/-- For `0 ≤ β`, `0 ≤ ∑ᵢⱼ zᵢ zⱼ exp (β · Re tr (Aᵢ Aⱼᴴ))` for any finite family of matrices `A`
+and any real weights `z`.
 
-    0 ≤ ∑ᵢⱼ zᵢ zⱼ exp (β · Re tr (Aᵢ Aⱼᴴ))   for any finite family of matrices and any real weights.
+Each order of the series is a nonnegative coefficient (`wilsonCoef_nonneg`) times a sum of squares
+(`quadform_pow_eq_sum_sq`); `hasSum_exp_div` sums the orders and `tsum_nonneg` concludes.
 
-This is exactly "the character expansion of the Wilson weight has nonnegative coefficients", stated
-without the words: the order-`k` contribution is `β^k/k!` times a sum of squares
-(`quadform_pow_eq_sum_sq`), and the series converges to the weight (`hasSum_exp_div`).
+Stated for arbitrary complex `N × N` matrices — no group membership is assumed or used — so it
+applies in particular to elements of `specialUnitaryGroup` and to words built from them. The only
+hypothesis is `0 ≤ β`, and `NegControl.su3_kernel_nonneg_iff` shows it cannot be dropped.
 
-Stated for arbitrary matrices, so it holds in particular for `SU(3)` elements and for the specific
-words a straddling plaquette builds out of them. The only hypothesis is `0 ≤ β`, and
-`NegControl.su3_kernel_nonneg_iff` shows it cannot be dropped.
-
-DERIVED: the only numeral is the `0` of `0 ≤ …`, which IS positive semidefiniteness. -/
+DERIVED: both numerals are the `0` of a sign condition — the hypothesis `0 ≤ β` and the conclusion
+`0 ≤ ∑ …`. Neither is a magnitude. -/
 theorem wilson_kernel_nonneg {N : ℕ} {β : ℝ} (hβ : 0 ≤ β) {m : ℕ}
     (A : Fin m → Matrix (Fin N) (Fin N) ℂ) (z : Fin m → ℝ) :
     0 ≤ ∑ i, ∑ j, z i * z j * Real.exp (β * hsRe (A i) (A j)) := by
@@ -290,17 +297,20 @@ theorem wilson_kernel_nonneg {N : ℕ} {β : ℝ} (hβ : 0 ≤ β) {m : ℕ}
 #print axioms quadform_pow_eq_sum_sq
 #print axioms wilson_kernel_nonneg
 
-/-! ## MANDATORY NEGATIVE CONTROL: the sign of the coupling is what carries it
+/-! ## Negative control
 
-The machinery above would produce the same shape for any weight of the form `exp (β · ⟨A, B⟩)`. What
-makes the conclusion a property of the `SU(3)` WILSON weight rather than of the machinery is the sign
-of `β`. Computed on two genuine `SU(3)` elements, the quadratic form is nonnegative IF AND ONLY IF
-`β ≥ 0`: at negative coupling the same weight, the same group and the same observable give a strictly
-negative value. -/
+The lemmas above would read the same for any weight of the form `exp (β · ⟨A, B⟩)`. What the sign of
+`β` decides is computed here on two explicit elements of `Matrix.specialUnitaryGroup (Fin 3) ℂ`: the
+quadratic form is nonnegative exactly when `0 ≤ β`, and strictly negative below it. -/
 
 namespace NegControl
 
-/-- A diagonal matrix whose entries have modulus one and product one lies in `SU(N)`. -/
+/-- A diagonal matrix whose entries satisfy `d i * star (d i) = 1` and whose entries multiply to `1`
+lies in `Matrix.specialUnitaryGroup (Fin N) ℂ`. The first hypothesis gives unitarity through
+`Matrix.diagonal_mul_diagonal`, the second gives determinant one through `Matrix.det_diagonal`.
+
+DERIVED: both numerals are `1`. The first is the unit of `ℂ` in the unit-modulus condition on each
+entry; the second is the unit determinant that distinguishes `SU` from `U`. -/
 theorem diagonal_mem_SU {N : ℕ} (d : Fin N → ℂ)
     (h1 : ∀ i, d i * star (d i) = 1) (h2 : ∏ i, d i = 1) :
     Matrix.diagonal d ∈ Matrix.specialUnitaryGroup (Fin N) ℂ := by
@@ -316,7 +326,9 @@ theorem diagonal_mem_SU {N : ℕ} (d : Fin N → ℂ)
     simp
   · rw [Matrix.det_diagonal, h2]
 
-/-- `Re tr` of a product of diagonals, entrywise. -/
+/-- `hsRe` of two diagonal matrices is the sum over the diagonal of `Re (d i * conj (e i))`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem hsRe_diagonal {N : ℕ} (d e : Fin N → ℂ) :
     hsRe (Matrix.diagonal d) (Matrix.diagonal e) = ∑ i, (d i * (starRingEnd ℂ) (e i)).re := by
   unfold hsRe
@@ -324,27 +336,36 @@ theorem hsRe_diagonal {N : ℕ} (d e : Fin N → ℂ) :
     Complex.re_sum]
   rfl
 
-/-- The two diagonal vectors: the identity, and the centre-like element `diag(1, −1, −1)`. Both have
-determinant one and unit-modulus entries, so both are genuine `SU(3)` elements.
+/-- The two diagonal vectors of the control: the constant vector `1`, and `(1, -1, -1)`. Membership
+in `SU(3)` is not asserted here — `cA_mem_SU` proves it, by feeding these entries to
+`diagonal_mem_SU`.
 
-DERIVED: the entries of two explicit SU(3) elements. `1` is the identity's diagonal and `-1` the sign that makes the second a non-identity involution; `3` is the rank and `2` the number of elements the control needs. Determinant 1 forces the pattern, so nothing here is chosen. -/
+DERIVED: `2` is the number of control elements, indexing the outer vector; `3` is the matrix size,
+indexing each inner vector. The entries `1` and `-1` are unit-modulus complex numbers whose product
+along each row is `1`, which is the determinant condition; the second row is the shortest entry
+pattern over `{1, -1}` that satisfies it and is not the identity. -/
 noncomputable def dvec : Fin 2 → (Fin 3 → ℂ) := ![![1, 1, 1], ![1, -1, -1]]
 
-/-- The two `SU(3)` matrices.
+/-- The two control matrices, diagonal over `dvec`.
 
-DERIVED: `3` is SU(3)'s rank and `2` indexes the two control elements. Both are the ambient type's. -/
+DERIVED: `2` indexes the two control elements and `3` is the matrix size, both carried over from
+`dvec`. -/
 noncomputable def cA (i : Fin 2) : Matrix (Fin 3) (Fin 3) ℂ := Matrix.diagonal (dvec i)
 
-/-- **Both control matrices really are in `SU(3)`.** -/
+/-- Both control matrices lie in `Matrix.specialUnitaryGroup (Fin 3) ℂ`, by `diagonal_mem_SU` with
+the two conditions discharged by `fin_cases` on both indices.
+
+DERIVED: `2` indexes the two control elements; `3` is the matrix size, the same one as in `cA`. -/
 theorem cA_mem_SU (i : Fin 2) : cA i ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
   refine diagonal_mem_SU (dvec i) ?_ ?_
   · intro j
     fin_cases i <;> fin_cases j <;> norm_num [dvec]
   · fin_cases i <;> norm_num [dvec, Fin.prod_univ_succ]
 
-/-- The weights of the control vector: `+1` on the identity, `−1` on the other element.
+/-- The weights of the control vector: `1` on the first element, `-1` on the second.
 
-DERIVED: the weights `(1, -1)` of the negative control. Any pair with opposite signs exhibits the indefiniteness; these are the smallest, and `2` is the number of elements being paired. -/
+DERIVED: `2` is the number of elements being weighted. The entries `1` and `-1` are the two signs; a
+pair of opposite signs is what a quadratic form has to survive, and these are the units of `ℝ`. -/
 def zc : Fin 2 → ℝ := ![1, -1]
 
 theorem hsRe_cA_zero_zero : hsRe (cA 0) (cA 0) = 3 := by
@@ -363,7 +384,13 @@ theorem hsRe_cA_one_one : hsRe (cA 1) (cA 1) = 3 := by
   simp only [cA, hsRe_diagonal]
   norm_num [dvec, Fin.sum_univ_succ]
 
-/-- The quadratic form on the two control elements, evaluated. -/
+/-- The quadratic form on the two control matrices at the weights `zc`, evaluated:
+`2 * (exp (3 * β) - exp (-β))`. The four values of `hsRe` it rests on are `hsRe_cA_zero_zero`,
+`hsRe_cA_zero_one`, `hsRe_cA_one_zero` and `hsRe_cA_one_one`.
+
+DERIVED: the leading `2` is a multiplicity — the two diagonal terms are equal and so are the two
+off-diagonal ones. The `3` inside the first exponential is the common value of `hsRe (cA i) (cA i)`,
+the trace of a `3 × 3` identity. -/
 theorem su3_quadform (β : ℝ) :
     (∑ i, ∑ j, zc i * zc j * Real.exp (β * hsRe (cA i) (cA j)))
       = 2 * (Real.exp (3 * β) - Real.exp (-β)) := by
@@ -373,13 +400,14 @@ theorem su3_quadform (β : ℝ) :
   rw [show β * (3 : ℝ) = 3 * β by ring, show β * (-1 : ℝ) = -β by ring]
   ring
 
-/-- **THE NEGATIVE CONTROL.** On two genuine `SU(3)` elements the Wilson quadratic form is
-nonnegative IF AND ONLY IF the coupling is nonnegative.
+/-- On the two control matrices the quadratic form is nonnegative if and only if `0 ≤ β`. Both
+directions go through `Real.exp_le_exp` applied to `su3_quadform`.
 
-So `wilson_kernel_nonneg`'s hypothesis `0 ≤ β` is load-bearing and the positivity is a property of
-the `SU(3)` Wilson weight at physical coupling, not an artifact of the expansion machinery: run the
-same expansion at `β < 0` and the coefficients alternate (`wilsonCoef_neg_of_neg`) and the kernel is
-indefinite. -/
+So the hypothesis `0 ≤ β` of `wilson_kernel_nonneg` is load-bearing: at `β < 0` the same weight on
+the same two group elements with the same weights gives a negative value, and the order-one
+coefficient is negative (`wilsonCoef_neg_of_neg`).
+
+DERIVED: both numerals are the `0` of a sign condition — one on the quadratic form, one on `β`. -/
 theorem su3_kernel_nonneg_iff (β : ℝ) :
     0 ≤ (∑ i, ∑ j, zc i * zc j * Real.exp (β * hsRe (cA i) (cA j))) ↔ 0 ≤ β := by
   rw [su3_quadform]
@@ -393,7 +421,9 @@ theorem su3_kernel_nonneg_iff (β : ℝ) :
     have h1 : Real.exp (-β) ≤ Real.exp (3 * β) := Real.exp_le_exp.mpr h2
     linarith
 
-/-- The same, as a strict failure: at negative coupling the form is strictly negative. -/
+/-- The strict form: at `β < 0` the quadratic form on the two control matrices is strictly negative.
+
+DERIVED: both numerals are the `0` of a sign condition, one on `β` and one on the form. -/
 theorem su3_kernel_neg_of_neg {β : ℝ} (hβ : β < 0) :
     (∑ i, ∑ j, zc i * zc j * Real.exp (β * hsRe (cA i) (cA j))) < 0 := by
   by_contra h
@@ -406,30 +436,32 @@ theorem su3_kernel_neg_of_neg {β : ℝ} (hβ : β < 0) :
 
 end NegControl
 
-/-! ## The mechanism, for a reflection that DAGGERS
+/-! ## The same two lemmas, for a twist
 
 `ReflectionPositivity.pairing_with_reflection_nonneg` and
-`ReflectionPositivity.reflection_positive_of_expansion` are stated for a bare relabelling `U ∘ θ`.
-The Osterwalder-Seiler reflection is not one: `Reflect.reflConf` INVERTS the gauge variable on every
-link running along the reflection axis, and is `ActionSplit.twist (reflLinkPerm τ c) (axisDagger τ)`
-(`ActionSplit.reflConf_eq_twist`). So neither lemma can be pointed at the actual Wilson reflection.
+`ReflectionPositivity.reflection_positive_of_expansion` are stated for the relabelling `U ∘ θ`.
+`Reflect.reflConf` is `ActionSplit.twist (reflLinkPerm τ c) (axisDagger τ)`
+(`ActionSplit.reflConf_eq_twist`), which also inverts the gauge variable on every link running along
+the reflection axis, so neither lemma applies to it as stated.
 
-The two statements below are those lemmas for a twist. Nothing about the argument changes — the twist
-preserves the product measure coordinate by coordinate (`ActionSplit.twist_measurePreserving`), which
-is all the mirror step ever used — but without them the expansion has no mechanism to feed. -/
+The two statements below are those lemmas with `ActionSplit.twist θ σ` in place of `U ∘ θ`. The
+argument is unchanged: `ActionSplit.twist_measurePreserving` supplies coordinatewise measure
+preservation, which is what the mirror step uses. -/
 
 section Twisted
 
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- **A half-supported function paired with its TWISTED reflection integrates to a square.**
+/-- A function of the coordinates in `S`, paired with its value on the twisted configuration,
+integrates to the square of its own integral.
 
-The twisted form of `ReflectionPositivity.pairing_with_reflection_nonneg`. `S` and `T` are disjoint
-and `θ` carries `S` into `T`, so the two factors read disjoint coordinates and the integral
-factorises; the twist is measure-preserving coordinatewise, so the two factors are equal.
+`S` and `T` are disjoint and `θ` carries `S` into `T`, so the two factors read disjoint coordinates
+and `block_factor` splits the integral. Each `σ i` is measure-preserving, so the mirrored factor has
+the same integral as the original. `h` is required measurable; no bound on it is needed, since the
+measure is a probability measure.
 
-DERIVED: the `2` is the square the identity asserts. -/
+DERIVED: the `2` is the exponent of the square on the right-hand side. -/
 theorem twisted_pairing_eq_sq
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (hσ : ∀ i, MeasurePreserving (σ i) μ μ) (hθST : ∀ i ∈ S, θ i ∈ T)
@@ -465,11 +497,17 @@ theorem twisted_pairing_eq_sq
           * (∫ U, ψ (fun i : T => U (i : ι)) ∂(cvol ι μ)) := hfac
     _ = (∫ U, h (fun i : S => U (i : ι)) ∂(cvol ι μ)) ^ 2 := by rw [hmirror]; ring
 
-/-- **A finite expansion into paired products with nonnegative coefficients integrates to something
-nonnegative — under a TWISTED reflection.**
+/-- A finite expansion into paired products with nonnegative coefficients integrates to something
+nonnegative, under a twisted reflection.
 
-`ReflectionPositivity.reflection_positive_of_expansion` for `ActionSplit.twist`. This is the
-statement that `hasSum_wilsonWeight_paired` was proved to feed. -/
+`hF` supplies `F` as `∑ k, c k * (g k (U|S) * g k ((twist θ σ U)|S))` over a `Fintype` index `K`,
+with `0 ≤ c k` and each term integrable. Each term's integral is a square by
+`twisted_pairing_eq_sq`, so the sum is nonnegative. This is
+`ReflectionPositivity.reflection_positive_of_expansion` with the twist in place of the relabelling,
+and it is the shape `hasSum_wilsonWeight_paired` produces order by order.
+
+DERIVED: both numerals are the `0` of a sign condition — the hypothesis `0 ≤ c k` on every
+coefficient and the conclusion `0 ≤ ∫ …`. -/
 theorem twisted_reflection_positive_of_expansion
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (hσ : ∀ i, MeasurePreserving (σ i) μ μ) (hθST : ∀ i ∈ S, θ i ∈ T)
@@ -495,20 +533,20 @@ theorem twisted_reflection_positive_of_expansion
 
 end Twisted
 
-/-! ## The two put together: a cross weight that COUPLES the two halves
+/-! ## A cross weight that reads both sides
 
-`ActionSplit`'s conditional weld needs the Boltzmann weight to split into a function of one side, a
-function of the other, and a function of the plane. It cannot touch a term that reads BOTH sides at
-once, and that is exactly what a plaquette straddling a reflection plane contributes.
+A weld that conditions on the reflection plane needs the weight to factor into a function of one
+side, a function of the other and a function of the plane. `crossweight_pairing_nonneg` allows a
+weight that does not: `exp (β · Re tr (X₊ · X₋ᴴ))` with `X₋` the value of the same word on the
+reflected configuration. The proof expands the weight order by order into paired monomials with
+nonnegative coefficients (`hasSum_wilsonWeight_paired`), makes each order a square
+(`twisted_pairing_eq_sq`), and sums the orders by dominated convergence against a bound that does not
+depend on the configuration. -/
 
-`crossweight_pairing_nonneg` is the first statement here that allows one. The cross weight is
-`exp (β · Re tr (X₊ · X₋ᴴ))` with `X₋` the reflection of `X₊` — a genuine coupling — and the
-conclusion is still nonnegativity, for every observable of the positive half. The proof is the
-character expansion: order by order the coupling separates into paired monomials with nonnegative
-coefficients (`hasSum_wilsonWeight_paired`), each order is a square by `twisted_pairing_eq_sq`, and
-dominated convergence sums them. -/
+/-- A monomial in the coordinates of a matrix-valued function is measurable when each coordinate is:
+`mono` is a finite product, so `Finset.measurable_prod` applies.
 
-/-- A monomial in the coordinates of a matrix-valued function is measurable. -/
+DERIVED: no numeral appears in the statement. -/
 theorem measurable_mono {N k : ℕ} {γ : Type} [MeasurableSpace γ]
     (X : γ → Matrix (Fin N) (Fin N) ℂ)
     (hX : ∀ p : Coord N, Measurable (fun v => coord p (X v))) (α : Fin k → Coord N) :
@@ -516,9 +554,13 @@ theorem measurable_mono {N k : ℕ} {γ : Type} [MeasurableSpace γ]
   unfold mono
   exact Finset.measurable_prod _ (fun t _ => hX (α t))
 
-/-- A monomial in coordinates of modulus at most one has modulus at most one. For `SU(N)` every
-entry has norm `≤ 1` (`SUN.unitary_entry_norm_le_one`), so this applies to the words the lattice
-builds. -/
+/-- A monomial in coordinates of absolute value at most one has absolute value at most one. `mono`
+is a product over `Fin k`, bounded termwise by `Finset.prod_le_prod`. For a matrix in `SU N` the
+hypothesis is supplied by `SUN.unitary_entry_norm_le_one`.
+
+DERIVED: both numerals are the `1` bounding an absolute value — the hypothesis on each coordinate and
+the conclusion on the monomial. The two are the same bound, because a product of factors bounded by
+one is bounded by one, whatever the degree `k`. -/
 theorem abs_mono_le_one {N k : ℕ} {γ : Type} (X : γ → Matrix (Fin N) (Fin N) ℂ)
     (hXb : ∀ (p : Coord N) (v : γ), |coord p (X v)| ≤ 1) (α : Fin k → Coord N) (v : γ) :
     |mono α (X v)| ≤ 1 := by
@@ -528,9 +570,11 @@ theorem abs_mono_le_one {N k : ℕ} {γ : Type} (X : γ → Matrix (Fin N) (Fin 
         Finset.prod_le_prod (fun t _ => abs_nonneg _) (fun t _ => hXb (α t) v)
     _ = 1 := by simp
 
-/-- **The half-function of the expansion at monomial `α`**: the observable of the positive half times
-that monomial of the half's matrix word. These are the `g_k` that
-`twisted_reflection_positive_of_expansion` consumes, and they read the positive half alone. -/
+/-- The observable of one side times a monomial of that side's matrix word. These are the functions
+`twisted_reflection_positive_of_expansion` takes as its `g k`, and they read the coordinates in `S`
+alone.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def halfFun {N k : ℕ} {γ : Type} (O : γ → ℝ)
     (X : γ → Matrix (Fin N) (Fin N) ℂ) (α : Fin k → Coord N) : γ → ℝ :=
   fun v => O v * mono α (X v)
@@ -556,23 +600,25 @@ section CrossWeight
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- **REFLECTION POSITIVITY WITH A CROSS WEIGHT THAT COUPLES THE TWO HALVES.**
+/-- Reflection positivity with a cross weight that reads both sides.
 
-`O` is an observable of the positive half `S`; `X` is a matrix-valued word of the positive half —
-in the application, the product of link variables a straddling plaquette reads there. The weight
+`O` is a measurable observable of the coordinates in `S`, bounded in absolute value by `C`; `X` is a
+matrix-valued function of the same coordinates whose real coordinates are measurable and bounded in
+absolute value by one. The integrand is `O (U|S) * O ((twist θ σ U)|S)` times
 
-    exp (β · Re tr ( X(U|₊) · X((ΘU)|₊)ᴴ ))
+    exp (β · Re tr ( X(U|S) · X((twist θ σ U)|S)ᴴ ))
 
-couples the two halves, which is precisely what `ActionSplit`'s weld forbids. The conclusion is
-nonnegativity of the pairing anyway, for every `β ≥ 0`.
+which is a function of both sides at once. The conclusion is that its integral against `cvol ι μ` is
+nonnegative.
 
-The hypotheses on `X` are that its coordinates are measurable and bounded by one — both automatic
-for a word in `SU(N)` link variables, whose entries have norm at most one.
+`C` is bound before the integral and is a hypothesis, not a construction: it is what makes the
+dominating series summable. `S` and `T` must be disjoint and `θ` must carry `S` into `T`, as in
+`twisted_pairing_eq_sq`. The matrix size `N` of `X` is independent of everything else in the
+statement. `NegControl.su3_kernel_nonneg_iff` shows `0 ≤ β` cannot be dropped.
 
-`NegControl.su3_kernel_nonneg_iff` shows `0 ≤ β` cannot be dropped.
-
-DERIVED: the only numerals are the `0` of `0 ≤ …`, which IS the property, and the `1` bounding a
-unitary matrix entry, which is unitarity and not a choice. -/
+DERIVED: the `1` bounds a real coordinate of `X`, which is what a unitary entry satisfies. The three
+`0`s are sign conditions — on the bound `C`, on the coupling `β`, and on the integral in the
+conclusion. -/
 theorem crossweight_pairing_nonneg
     (S T : Finset ι) (hST : Disjoint S T) (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (hσ : ∀ i, MeasurePreserving (σ i) μ μ) (hθST : ∀ i ∈ S, θ i ∈ T)
@@ -706,19 +752,26 @@ theorem crossweight_pairing_nonneg
 
 end CrossWeight
 
-/-! ## Pointed at the actual Wilson reflection, and the connector to `PlaqReflPositive` -/
+/-! ## On the Wilson lattice, and the connector to `PlaqReflPositive` -/
 
 section Wilson
 
 variable {N d n : ℕ}
 
-/-- **The cross-weight pairing inequality, on the Wilson lattice, for `Reflect.reflConf`.**
+/-- `crossweight_pairing_nonneg` on the Wilson lattice, with `Reflect.reflConf` as the reflection.
 
-`reflConf` IS the twist (`ActionSplit.reflConf_eq_twist`) and the axis dagger preserves Haar
-(`ActionSplit.axisDagger_measurePreserving`), so `crossweight_pairing_nonneg` applies to it directly.
-`S` is one side of the reflection plane and `T` its mirror; the reflection must carry `S` into `T`
-and the two must be disjoint, which is the locality side condition `ReflectPositive.plaq_link_ne_refl`
-checks for the observable used in this development. -/
+`reflConf` is the twist `ActionSplit.twist (reflLinkPerm τ cst) (axisDagger τ)`
+(`ActionSplit.reflConf_eq_twist`), and `ActionSplit.axisDagger_measurePreserving` gives each
+component map the measure preservation the twisted lemmas want, so `crossweight_pairing_nonneg`
+applies directly at `ι = Link d n` and `μ = probHaar (SUN.SU N)`.
+
+`S` and `T` are supplied by the caller. That they are disjoint and that `reflLink τ cst` carries `S`
+into `T` are hypotheses, not consequences: nothing in the statement ties `S` to a side of the
+reflection plane. The matrix size `Nc` of `X` is a separate parameter from the gauge group's `N`; the
+statement relates them only through the coordinate bound.
+
+DERIVED: the `1` bounds a real coordinate of `X`. The three `0`s are sign conditions — on the bound
+`C`, on the coupling `β`, and on the integral in the conclusion. -/
 theorem wilson_crossweight_pairing_nonneg [NeZero n] (τ : Fin d) (cst : Fin n)
     (S T : Finset (Link d n)) (hST : Disjoint S T)
     (hSmap : ∀ l ∈ S, reflLink τ cst l ∈ T)
@@ -737,21 +790,22 @@ theorem wilson_crossweight_pairing_nonneg [NeZero n] (τ : Fin d) (cst : Fin n)
     (fun l => axisDagger_measurePreserving τ l)
     (fun l hl => hSmap l hl) X hXm hXb O hOm C hC0 hCb β hβ
 
-/-- **THE OBSTRUCTION AT AN ODD LAG, as a positive statement about the geometry.**
+/-- At even extent and odd lag, a plaquette in a `(τ, ν)` plane has two distinct axis links in its
+boundary word, both fixed by `reflLink τ c`.
 
-`ActionSplit.odd_lag_has_fixed_axis_link` produces ONE fixed axis link and
-`ActionSplit.reflConf_inverts_fixed_axis_link` shows the reflection inverts it. The sharper fact,
-and the one that rules out the paired-word route, is that a plaquette spanning the axis and a
-transverse direction reads TWO DISTINCT fixed axis links: its boundary word
-`U_τ(x) · U_ν(x+τ̂) · U_τ(x+ν̂)⁻¹ · U_ν(x)⁻¹` has `U_τ(x)` and `U_τ(x+ν̂)` at the SAME axis
-coordinate, so they are fixed together, and the reflection inverts both.
+The site comes from `exists_fixed_site` applied to `even_sub_one_of_odd`, which consumes `Even n`,
+`2 ≤ n` and `¬ Even c.val`. The conclusion names the links `(τ, x)` and `(τ, shift ν x)` and gives
+five facts about them: they are distinct, each lies in `(bd ((τ, ν), x)).map Prod.fst`, and
+`reflLink τ c` fixes each. `hν : ν ≠ τ` is what makes the plane nondegenerate; the site is
+constructed as `Function.update (fun _ => 0) τ y`, so only the axis coordinate is moved.
 
 A word of the form `G · F · G'⁻¹ · (ΘF)⁻¹` with `G ≠ G'` is not `X · (ΘX)ᴴ` for any `X`, so
-`crossweight_pairing_nonneg` cannot be pointed at it — not for want of a proof, but because the
-paired form is absent. Osterwalder-Seiler close that case by expanding the straddling weight into
-matrix elements and integrating the two crossing links against them.
+`crossweight_pairing_nonneg` does not apply to a weight built from such a word.
 
-DERIVED: nothing numeric. `2 ≤ n` is what makes a step in a transverse direction move the site. -/
+DERIVED: `2` is the hypothesis `2 ≤ n` on the extent — a step in a transverse direction has to move
+the site, which it does not at extent one. It is the only numeral in the statement; the `0` in the
+constructed site appears in the proof term, where it is the site coordinate in every non-axis
+direction. -/
 theorem odd_lag_straddling_plaq_two_fixed_axis_links [NeZero n] (hn : Even n) (h2 : 2 ≤ n)
     {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} (hc : ¬ Even c.val) :
     ∃ x : Site d n, ((τ, x) : Link d n) ≠ (τ, WilsonHypercubic.shift ν x)
@@ -794,13 +848,17 @@ theorem odd_lag_straddling_plaq_two_fixed_axis_links [NeZero n] (hn : Even n) (h
     rw [hsτ]
     simpa using hy.symm
 
-/-- **THE CONNECTOR: what is left to prove at a lag.**
+/-- `ReflectPositive.PlaqReflPositive N τ cst β q₀` follows from nonnegativity of the un-normalised
+pairing integral at every subtraction constant `aC`.
 
-`ReflectPositive.PlaqReflPositive` is the Gibbs pairing inequality; the only thing between it and the
-un-normalised integral is the partition function, which is positive. So the whole remaining content
-at any lag — even or odd — is nonnegativity of the integral below. `ActionSplit` supplies it at even
-extent and even lag by conditioning on the plane; this file supplies the character expansion the odd
-lags need but not the geometry that would put the odd-lag integrand into the shape above. -/
+`PlaqReflPositive` is the pairing inequality for the Gibbs expectation; between it and the integral
+in `hpair` stands only the partition function, which `WilsonReal.wilsonSystem_partition_pos` shows is
+positive when `N ≠ 0`. `div_nonneg` then gives the conclusion. The hypothesis quantifies over `aC`
+because the conclusion does, and it is stated at one plaquette `q₀` and one lag `cst`, not over all
+of them.
+
+DERIVED: the `0` in `N ≠ 0` excludes the empty matrix size, which is what the partition-function
+positivity lemma requires; the `0` in `0 ≤ ∫ …` is the sign condition the hypothesis asserts. -/
 theorem plaqReflPositive_of_pairing_nonneg [NeZero n] (hN : N ≠ 0)
     (τ : Fin d) (cst : Fin n) (β : ℝ) (q₀ : Plaq d n)
     (hpair : ∀ aC : ℝ, 0 ≤ ∫ U,

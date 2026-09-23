@@ -2,37 +2,33 @@ import MassGap.WilsonGauge
 import MassGap.ScreenedGap
 
 /-!
-# MassGap.WilsonModel — the infrared input SOURCED FROM THE TENSION, and the model it assembles
+# MassGap.WilsonModel — a `LatticeYMFamily` whose count bound is read off a tension
 
-Two `LatticeYMFamily` values already exist. `WilsonInstance.ymFamily` asserts `os_gap` directly from a
-hardwired two-valued spectrum; `WilsonGauge.ymFamilyGauge` routes through `familyOfSortedCount` but
-discharges its `hcount` by COUNTING a hardwired spectrum (`evDemo`), which is the same assertion in a
-different place. In both, the statement "at most `c` modes clear the noise edge" is put in by hand.
+Two `LatticeYMFamily` values already exist. `WilsonInstance.ymFamily` supplies `os_gap` from a
+two-valued spectrum written into its own definition; `WilsonGauge.ymFamilyGauge` routes through
+`familyOfSortedCount` and discharges `hcount` by counting the fixed spectrum `evDemo`. In both, the
+bound "at most `c` modes clear the noise edge" is supplied as data.
 
-This module builds the family whose `hcount` is a CONSEQUENCE of a measured tension.
+The family assembled here discharges `hcount` from a tension read instead, along
 
     ScreenedGap.resolvedDim_le_of_tension     count ≤ 12·((1−3^{−1/4})/8)·W / (edge·λ₀^{k+1})
     Measure.os_gap_of_sorted_count            count + ordered spectrum ⟹ os_gap
     Measure.familyOfSortedCount               ⟹ LatticeYMFamily
-    Measure.continuum_of_family               ⟹ OS0–OS3
+    Measure.continuum_of_family               ⟹ the continuum conclusions
 
-`count_le_of_tension_uniform` is the missing joint: `resolvedDim_le_of_tension` holds at ONE spacing
-and its right-hand side carries the spacing's own total weight `∑_{i<Na a} w i`, so it is not yet the
-spacing-INDEPENDENT `c` that `familyOfSortedCount` consumes. Given a weight cap `W` holding at every
-spacing, it is.
+`count_le_of_tension_uniform` is the joint between the first two. `resolvedDim_le_of_tension` holds at
+one spacing and its right-hand side carries that spacing's own total weight `∑_{i<Na a} w i`, while
+`familyOfSortedCount` consumes one spacing-independent `c`. A cap `W` on the total weight, holding at
+every spacing, supplies that `c`.
 
-The reflected form is `WilsonGauge.QG` unchanged — a genuine `SU(3)` Gibbs expectation of the Wilson
-plaquette energy on a four-dimensional periodic lattice, with `os_euc`/`os_perm` derived from
-Haar-invariance. Nothing about the form is touched here; what changes is where `os_gap` comes from.
+The reflected form is `WilsonGauge.QG` and is taken over unchanged, together with `os_euc` and
+`os_perm`. What this module supplies is `os_gap`.
 
-## What is NOT claimed
-
-* The gap side still enters through `Complete.confinement_of_bounded_substrate`, whose hypothesis
-  `∃ B, ∀ N β, d2At N β ≤ B` is open. `fullModelOfSubstrate` takes it as an argument and says so.
-* `QG` is not proved nonvanishing. The non-degeneracy section below establishes that `J` is infinite,
-  that `Na → ∞`, that exactly ONE mode is resolved at every spacing (so `os_form` is not the vacuous
-  `Q ≤ 0`), that the cutoff is positive and finite, and that the read is not the flat default — but
-  positivity of the `SU(3)` Gibbs expectation is not among them and is not available in this tree.
+Scope. The gap side enters through `Complete.confinement_of_bounded_substrate`, whose hypothesis
+`∃ B, ∀ N β, d2At N β ≤ B` is an argument of `fullModelOfSubstrate` and is not discharged here.
+Nothing here states that `QG` is nonvanishing. The non-degeneracy section establishes that `J` is
+infinite, that `Na → ∞`, that one mode is resolved at every spacing, that the noise edge and the
+cutoff are positive, and that the witness read takes different values at lag zero and lag one.
 -/
 
 namespace MassGap.WilsonModel
@@ -41,20 +37,26 @@ open MassGap MassGap.Measure MassGap.WilsonGauge Filter
 
 /-! ## The count from the tension, uniformly in the spacing -/
 
-/-- **The resolved count, capped by the tension at EVERY spacing by one number.**
+/-- One number caps the resolved count at every spacing.
 
-`ScreenedGap.resolvedDim_le_of_tension` caps the count at a single spacing by
-`12·c₀·(∑_{i<Na a} w i)/(edge·λ₀^{k+1})`, whose numerator moves with the spacing. `familyOfSortedCount`
-needs one `c` for all of them. A cap `W` on the correlation's total weight, holding at every spacing,
-supplies it, and nothing else is added: this is that inequality with the weight sum replaced by its
-own bound.
+Given a read `R : Moment.Read (2 * k + 1)` whose correlation is the spectral sum
+`ρ d = ∑_{i < Na a} w i · lam i ^ circLag d` at every spacing `a`, with nonnegative weights, rates in
+`[lam0, 1]` for a positive `lam0 ≤ 1`, a positive noise edge, a cap `W` on the total weight holding at
+every spacing, a positive cosine average and a tension below `(1/4)·log 3`, the count of modes above
+the edge satisfies `resolvedDim ≤ 12·((1 − 3^{−1/4})/8)·W / (edge·lam0^{k+1})` at every spacing.
 
-The read `R` is a SINGLE read — the same correlation seen at every spacing — which is what makes the
-cap spacing-independent rather than a supremum over a family of reads.
+`ScreenedGap.resolvedDim_le_of_tension` supplies the same bound at a single spacing with
+`∑_{i < Na a} w i` in place of `W`; the content here is that `hW` replaces that spacing-dependent
+numerator, so the right-hand side no longer mentions `a`. The read `R` is one read, shared by every
+spacing through `hR`, not a family of reads.
 
-DERIVED: `12` is the sum-of-squares denominator and `(1 − 3^{−1/4})/8` the entropy floor composed with
-`cos_avg_le_circ`, both carried through from `resolvedDim_le_of_tension`. `W`, `edge` and `λ₀` are the
-caller's own read quantities. -/
+DERIVED: `2 * k + 1` is the read's odd period, inherited from `Moment.Read`; the `0` and `1` in `hw`,
+`hlam0`, `hlam1`, `hlam00`, `hlam01`, `hedge` and `hcos` are the ends of the weight and rate ranges
+and the sign conditions; `(1/4)·log 3` is the entropy floor `κ₀` that `resolvedDim_le_of_tension`
+compares the tension against; `12` is the sum-of-squares denominator and `(1 − 3^{−1/4})/8` the
+entropy floor composed with `cos_avg_le_circ`, both carried through from that theorem, and the `1` in
+`lam0^(k+1)` is the antipodal lag at aperture `k`. `W`, `edge` and `lam0` are the caller's own read
+quantities. -/
 theorem count_le_of_tension_uniform
     {k : ℕ} {Na : ℕ → ℕ} {w lam : ℕ → ℝ} (R : Moment.Read (2 * k + 1))
     (hR : ∀ a, ∀ d, R.ρ d = ∑ i ∈ Finset.range (Na a), w i * lam i ^ (Moment.circLag d))
@@ -91,22 +93,27 @@ theorem count_le_of_tension_uniform
 
 /-! ## A read that meets those hypotheses
 
-`count_le_of_tension_uniform` is conditional, and a conditional theorem whose hypotheses cannot all
-hold at once proves nothing. The read below satisfies every one of them.
+`count_le_of_tension_uniform` is conditional. The read below satisfies each of its hypotheses, so the
+ theorem is not vacuous.
 
-It is the shape reflection positivity gives on a circle at a single decaying mode: `ρ(d) = r^{dist}`
-with `dist` the separation ON THE CIRCLE. Its tension clears the entropy floor at a large enough
-aperture, and that aperture is obtained from `Moment.aperture_factor_tendsto_zero` — no threshold is
-named anywhere, here or in the theorems that consume it. -/
+The read is geometric in the circle distance, `ρ(d) = r^{circLag d}`, for a ratio `r ∈ [0, 1)`. Its
+tension is below the entropy floor at a large enough aperture, and that aperture is obtained from
+`Moment.aperture_factor_tendsto_zero` rather than named. -/
 
-/-- The lag zero is at circle distance zero. -/
+/-- The lag-zero index of the circle is at circle distance zero.
+
+DERIVED: the `0` on the left is the zero index of `Fin (2 * k + 1 + 1)` and the `0` on the right is
+its circle distance; `2 * k + 1` is the read's odd period and the outer `+ 1` is the number of lags
+such a period carries. -/
 theorem circLag_zero (k : ℕ) : Moment.circLag (0 : Fin (2 * k + 1 + 1)) = 0 := by
   simp [Moment.circLag]
 
-/-- **A geometric read on the circle**: `ρ(d) = r^{circLag d}`. Nonnegative and of positive total mass
-for any `0 ≤ r`, because the lag-zero term is `r^0 = 1`.
+/-- A geometric read on the circle: `ρ d = r ^ circLag d`, for any `r` with `0 ≤ r`. Its `hρ` field is
+nonnegativity of a power and its `hpos` field is positivity of the total mass, which holds because the
+lag-zero term is `r ^ 0 = 1`.
 
-DERIVED: `2*k+1` is an ODD period, which is what gives the circle a unique antipode; `0` and `1` are the geometric shape's own base and ratio bound. `k` is a parameter. -/
+DERIVED: the `0` is the lower end of the ratio's range, all `geoRead` asks of `r`; `2 * k + 1` is the
+period, odd so that the circle has a unique antipode, and `k` is the caller's aperture. -/
 noncomputable def geoRead (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) : Moment.Read (2 * k + 1) where
   ρ := fun d => r ^ (Moment.circLag d)
   hρ := fun _ => pow_nonneg hr0 _
@@ -119,14 +126,22 @@ noncomputable def geoRead (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) : Moment.Read (2 *
 theorem geoRead_rho (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) (d : Fin (2 * k + 1 + 1)) :
     (geoRead r hr0 k).ρ d = r ^ (Moment.circLag d) := rfl
 
-/-- The total mass is at least one — the lag-zero term alone. -/
+/-- The read's total mass over the lags is at least one, from the lag-zero term alone.
+
+DERIVED: the `0` is the lower end of the ratio's range and the `1` is the lag-zero term `r ^ 0`. -/
 theorem geoRead_sum_ge_one (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) :
     (1 : ℝ) ≤ ∑ d, (geoRead r hr0 k).ρ d := by
   have h := Finset.single_le_sum (f := fun d : Fin (2 * k + 1 + 1) => (geoRead r hr0 k).ρ d)
     (fun i _ => (geoRead r hr0 k).hρ i) (Finset.mem_univ (0 : Fin (2 * k + 1 + 1)))
   rwa [geoRead_rho, circLag_zero, pow_zero] at h
 
-/-- The read's probability vector is under the geometric bound `1 · r^{circLag d}`. -/
+/-- The read's normalised weight at each lag is at most `1 * r ^ circLag d`, because the total mass it
+is divided by is at least one (`geoRead_sum_ge_one`). The shape `A * r ^ circLag d` is what
+`Moment.circ_moment_le_of_geometric` consumes.
+
+DERIVED: the `0` is the lower end of the ratio's range; the `1` is the amplitude `A` of that geometric
+shape, which is one here because the numerator is `r ^ circLag d` itself; `2 * k + 1` is the read's
+period and the outer `+ 1` the number of lags. -/
 theorem geoRead_p_le (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) (d : Fin (2 * k + 1 + 1)) :
     (geoRead r hr0 k).p d ≤ 1 * r ^ (Moment.circLag d) := by
   have h : (geoRead r hr0 k).p d ≤ (geoRead r hr0 k).ρ d :=
@@ -134,15 +149,27 @@ theorem geoRead_p_le (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) (d : Fin (2 * k + 1 + 1
   rw [geoRead_rho] at h
   rwa [one_mul]
 
-/-- The circle second moment is bounded by a series with no aperture in it. -/
+/-- The read's second moment in the circle distance is at most `2 * 1 * ∑' m, m² r^m`, a bound with no
+`k` in it, so one bound serves every aperture. It is `Moment.circ_moment_le_of_geometric` at the
+geometric shape `geoRead_p_le` supplies.
+
+DERIVED: the `0` and `1` are the ends of the ratio's range, `0 ≤ r` and `r < 1`, the second of which
+is what makes the series converge; the exponents `2` are the second moment and the `m²` of the
+series; `2 * 1` is the circle's two arcs per lag times the amplitude of the geometric shape. -/
 theorem geoRead_moment_le (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ) :
     ∑ d, (geoRead r hr0 k).p d * (Moment.circLag d : ℝ) ^ 2
       ≤ 2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * r ^ m :=
   Moment.circ_moment_le_of_geometric (geoRead r hr0 k) zero_le_one hr0 hr1 (geoRead_p_le r hr0 k)
 
-/-- **An aperture at which the geometric read clears the entropy floor exists**, and no value is named
-for it: the aperture factor `(2π/(N+1))²·B/2` tends to zero at the fixed `B` the series supplies, so
-the floor condition holds eventually, and an eventual statement on `atTop` has a witness. -/
+/-- Some aperture makes the geometric read's aperture factor smaller than the entropy floor, and no
+value is named for it. The factor `(2π/(N+1))²·B/2` tends to zero at the fixed `B` the moment series
+supplies (`Moment.aperture_factor_tendsto_zero`), so the inequality holds eventually along `atTop`,
+and an eventual statement has a witness.
+
+DERIVED: the `0` and `1` are the ends of the ratio's range; `2 * π` is the circle's circumference and
+the `+ 1` under it is the lag count of period `2 * k + 1`; the exponent `2` and the division by `2`
+are the second moment and its halving in the aperture factor; `2 * 1 * ∑' m, m² r^m` is the moment
+bound carried in from `geoRead_moment_le`; `1 − 3^{−1/4}` is the entropy floor. -/
 theorem exists_aperture (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) :
     ∃ k : ℕ, (2 * Real.pi / (((2 * k + 1 : ℕ) : ℝ) + 1)) ^ 2
         * (2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * r ^ m) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
@@ -152,15 +179,24 @@ theorem exists_aperture (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) :
     Filter.tendsto_atTop_atTop.mpr (fun b => ⟨b, fun a ha => by omega⟩)
   exact (htend.eventually hev).exists
 
-/-- The tension of the geometric read is below the entropy floor at such an aperture. -/
+/-- At an aperture `k` satisfying `exists_aperture`'s inequality, the geometric read's tension is below
+the entropy floor `(1/4)·log 3`. It is `Moment.Read.tension_lt_floor_of_circ_moment` fed the moment
+bound `geoRead_moment_le` and the hypothesis `hk`.
+
+DERIVED: the `0` and `1` are the ends of the ratio's range; the numerals inside `hk` are
+`exists_aperture`'s, quoted unchanged; `(1/4)·log 3` is the entropy floor `κ₀`. -/
 theorem geoRead_tension_lt_floor (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ)
     (hk : (2 * Real.pi / (((2 * k + 1 : ℕ) : ℝ) + 1)) ^ 2
         * (2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * r ^ m) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
     (geoRead r hr0 k).tension < (1 / 4) * Real.log 3 :=
   (geoRead r hr0 k).tension_lt_floor_of_circ_moment (geoRead_moment_le r hr0 hr1 k) hk
 
-/-- The read's cosine average is positive there, so the tension is a logarithm of a positive number
-and `resolvedDim_le_of_tension`'s `hcos` holds. -/
+/-- At the same aperture the read's cosine average is positive, which is
+`resolvedDim_le_of_tension`'s `hcos` and `count_le_of_tension_uniform`'s.
+
+DERIVED: the `0` and `1` are the ends of the ratio's range; the numerals inside `hk` are
+`exists_aperture`'s, quoted unchanged; the `0` in the conclusion is the sign asserted of the average.
+-/
 theorem geoRead_cos_pos (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ)
     (hk : (2 * Real.pi / (((2 * k + 1 : ℕ) : ℝ) + 1)) ^ 2
         * (2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * r ^ m) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
@@ -174,16 +210,19 @@ theorem geoRead_cos_pos (r : ℝ) (hr0 : 0 ≤ r) (hr1 : r < 1) (k : ℕ)
 
 /-! ## The witness spectrum
 
-One mode carrying weight, the rest carrying none — a spectrum sorted descending, with exactly one
-member above a floor strictly inside `(0,1)`. The rate is shared by every index, so the band
-hypothesis `λ₀ ≤ λ i` is an identity rather than a restriction. -/
+One mode carrying weight one, every other carrying zero: a spectrum sorted descending, with one member
+above a floor strictly inside `(0,1)`. The rate is shared by every index, so the band hypothesis
+`λ₀ ≤ λ i` holds by reflexivity. -/
 
-/-- The mode weights: one resolved mode, nothing else. -/
--- DERIVED: `1` and `0` are the two values a single-resolved-mode spectrum takes. They ARE the
--- spectrum — the object under discussion — not a cut on any measured quantity.
+/-- The mode weights: weight one at index zero, weight zero at every other index.
+
+DERIVED: the `0` is the index carrying the weight and the `1` and the trailing `0` are the two values
+the spectrum takes. They are the spectrum itself, not a cut on a measured quantity. -/
 noncomputable def wOne : ℕ → ℝ := fun n => if n = 0 then 1 else 0
 
-/-- The mode rates: one rate, shared. -/
+/-- The mode rates: the constant function at `r`, so every index carries the same rate.
+
+DERIVED: no numeral. -/
 noncomputable def lamConst (r : ℝ) : ℕ → ℝ := fun _ => r
 
 theorem wOne_nonneg (i : ℕ) : 0 ≤ wOne i := by unfold wOne; split <;> norm_num
@@ -199,14 +238,22 @@ theorem wOne_sorted (a : ℕ) : ∀ m n : ℕ, m ≤ n → wOne n ≤ wOne m := 
     unfold wOne
     rw [if_neg hm, if_neg hn]
 
-/-- The read's total weight is one at every spacing that resolves any mode at all. -/
+/-- The weights sum to one over any nonempty initial range, because index zero lies in the range and
+carries all of the weight. This is the `W = 1` that `count_le_of_tension_uniform`'s `hW` consumes.
+
+DERIVED: the `0` is the lower bound on the range's length, the condition that index zero is in it, and
+the `1` is the weight that index carries. -/
 theorem sum_wOne (m : ℕ) (hm : 0 < m) : ∑ i ∈ Finset.range m, wOne i = 1 := by
   rw [Finset.sum_eq_single_of_mem 0 (Finset.mem_range.mpr hm)]
   · unfold wOne; rw [if_pos rfl]
   · intro b _ hb; unfold wOne; rw [if_neg hb]
 
-/-- **Exactly one mode is resolved, at every spacing.** Neither none — which would make `os_form` the
-vacuous `Q ≤ 0` — nor all. -/
+/-- Over a nonempty initial range and at a noise edge strictly between zero and one, exactly one weight
+clears the edge: `resolvedDim = 1`. The edge separates the two values `wOne` takes, so the filtered
+set is the singleton `{0}`.
+
+DERIVED: the two `0`s are the lower bound on the range's length and the lower bound on the edge, and
+the `1`s are the upper bound on the edge and the resulting count. -/
 theorem resolvedDim_wOne (m : ℕ) (hm : 0 < m) (edge : ℝ) (he0 : 0 < edge) (he1 : edge < 1) :
     resolvedDim (Finset.range m) wOne edge = 1 := by
   have hfilter : (Finset.range m).filter (fun i => edge < wOne i) = {0} := by
@@ -221,7 +268,12 @@ theorem resolvedDim_wOne (m : ℕ) (hm : 0 < m) (edge : ℝ) (he0 : 0 < edge) (h
       exact ⟨hm, by rw [show wOne 0 = 1 by unfold wOne; rw [if_pos rfl]]; exact he1⟩
   rw [resolvedDim, hfilter, Finset.card_singleton]
 
-/-- The geometric read IS the spectral sum of the witness spectrum, at every spacing. -/
+/-- The geometric read's correlation equals the spectral sum of the witness spectrum over any nonempty
+initial range: `ρ d = ∑_{i < m} wOne i · lamConst r i ^ circLag d`. This is `count_le_of_tension_uniform`'s
+hypothesis `hR`, at every range length at once.
+
+DERIVED: the `0`s are the lower bound on the ratio and the lower bound on the range's length;
+`2 * k + 1` is the read's period and the outer `+ 1` the number of lags. -/
 theorem geoRead_is_sum (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) (m : ℕ) (hm : 0 < m)
     (d : Fin (2 * k + 1 + 1)) :
     (geoRead r hr0 k).ρ d
@@ -233,56 +285,67 @@ theorem geoRead_is_sum (r : ℝ) (hr0 : 0 ≤ r) (k : ℕ) (m : ℕ) (hm : 0 < m
 
 /-! ## The family
 
-The reflected form, the lattice, the group actions and both invariances are `WilsonGauge`'s
-unchanged. What is supplied here is `hcount`, and it is supplied by the tension. -/
+The reflected form, the lattice, the group actions and both invariances are `WilsonGauge`'s,
+unchanged. What is supplied here is `hcount`, from the tension. -/
 
-/-- The witness rate.
+/-- The witness read's decay ratio.
 
-DERIVED: `1/2` is the witness read's own decay ratio — the object under discussion, not a threshold
-on a measured quantity. Every theorem above is stated at an arbitrary `r ∈ [0,1)` and this is one
-value of it; nothing in the construction depends on which. -/
+CHOSEN: `1/2` is one value of the ratio `r`. Every theorem above is stated at an arbitrary `r` with
+`0 ≤ r < 1`, and nothing below depends on which value is taken. -/
 noncomputable def rW : ℝ := 1 / 2
 
 theorem rW_nonneg : (0 : ℝ) ≤ rW := by unfold rW; norm_num
 theorem rW_lt_one : rW < 1 := by unfold rW; norm_num
 theorem rW_pos : (0 : ℝ) < rW := by unfold rW; norm_num
 
-/-- The noise edge.
+/-- The noise edge the resolved count is taken at.
 
-DERIVED: `1/2` is any value strictly between the two the witness spectrum takes, which is what a
-floor separating the resolved mode from the rest is. -/
+CHOSEN: `1/2` is one value strictly between the two values `wOne` takes, which is what
+`resolvedDim_wOne` asks of the edge; any other such value serves. -/
 noncomputable def edgeW : ℝ := 1 / 2
 
 theorem edgeW_pos : (0 : ℝ) < edgeW := by unfold edgeW; norm_num
 theorem edgeW_lt_one : edgeW < 1 := by unfold edgeW; norm_num
 
-/-- The read aperture — SOME aperture at which the witness read's tension clears the entropy floor.
-No value is named: `exists_aperture` supplies one from `aperture_factor_tendsto_zero`. -/
+/-- The read aperture: the witness supplied by `exists_aperture` at the ratio `rW`, through
+`Classical.choose`. No value is named for it.
+
+DERIVED: no numeral. -/
 noncomputable def kW : ℕ := (exists_aperture rW rW_nonneg rW_lt_one).choose
 
 theorem kW_spec : (2 * Real.pi / (((2 * kW + 1 : ℕ) : ℝ) + 1)) ^ 2
     * (2 * 1 * ∑' m : ℕ, (m : ℝ) ^ 2 * rW ^ m) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
   (exists_aperture rW rW_nonneg rW_lt_one).choose_spec
 
-/-- **The witness read**: the geometric circle correlation at the chosen aperture.
+/-- The witness read: `geoRead` at the ratio `rW` and the aperture `kW`.
 
-DERIVED: `2*kW+1` is `geoRead`'s odd period at the witness aperture, and `kW` is obtained from `aperture_factor_tendsto_zero` -- no threshold is named. -/
+DERIVED: `2 * kW + 1` is `geoRead`'s odd period at the witness aperture, and `kW` comes from
+`exists_aperture` rather than from a named value. -/
 noncomputable def readW : Moment.Read (2 * kW + 1) := geoRead rW rW_nonneg kW
 
-/-- **The witness read's tension clears the entropy floor.** -/
+/-- The witness read's tension is below the entropy floor `(1/4)·log 3`. It is
+`geoRead_tension_lt_floor` at `rW` and `kW`, with `kW_spec` discharging the aperture hypothesis.
+
+DERIVED: `(1/4)·log 3` is the entropy floor `κ₀`, the value `Moment.Read.tension_lt_floor_of_circ_moment`
+compares against. -/
 theorem readW_tension_lt_floor : readW.tension < (1 / 4) * Real.log 3 :=
   geoRead_tension_lt_floor rW rW_nonneg rW_lt_one kW kW_spec
 
-/-- Its cosine average is positive, so that tension is a read and not a limit of one. -/
+/-- The witness read's cosine average is positive. It is `geoRead_cos_pos` at `rW` and `kW`, and it
+discharges `count_le_of_tension_uniform`'s `hcos`.
+
+DERIVED: the `0` is the sign asserted of the average. -/
 theorem readW_cos_pos : 0 < ∑ d, readW.p d * Real.cos (readW.θ d) :=
   geoRead_cos_pos rW rW_nonneg rW_lt_one kW kW_spec
 
-/-- **The infrared cutoff, computed from the tension.** Every symbol is the read's own: `12` the
-sum-of-squares denominator, `(1 − 3^{−1/4})/8` the entropy floor composed with `cos_avg_le_circ`, `1`
-the read's total weight, `edgeW` its noise floor and `rW^{k+1}` its resolution at the antipode.
-Nothing here is an assertion about where the resolved modes are.
+/-- The infrared cutoff: `count_le_of_tension_uniform`'s right-hand side evaluated at the witness read,
+with `W = 1` from `sum_wOne`, `edge = edgeW` and `lam0 = rW`. It is defined as that bound, so it
+asserts nothing on its own about where the resolved modes are.
 
-DERIVED: every numeral is a factor of `count_le_of_tension_uniform`'s own right-hand side at the witness read: `12` the sum-of-squares denominator from `ZeroMode.sum_clag_sq`, `8` and `3` and `4` the entropy floor `(1 - 3^(-1/4))/8` composed with `cos_avg_le_circ`, `1` the read's total weight. It is DEFINED as that bound, so nothing in it is an assertion about where the resolved modes are. -/
+DERIVED: every numeral is a factor of that right-hand side. `12` is the sum-of-squares denominator
+from `ZeroMode.sum_clag_sq`; `1 − 3^{−1/4}` over `8` is the entropy floor composed with
+`cos_avg_le_circ`; the standalone `1` in the numerator is the read's total weight; the `1` in
+`rW ^ (kW + 1)` is the antipodal lag at aperture `kW`. -/
 noncomputable def cW : ℝ :=
   12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) * 1 / (edgeW * rW ^ (kW + 1))
 
@@ -292,9 +355,13 @@ theorem cW_pos : 0 < cW := by
     have := Moment.floor_rhs_pos; linarith
   exact div_pos h1 (mul_pos edgeW_pos (pow_pos rW_pos _))
 
-/-- **`hcount` FROM THE TENSION.** At every spacing, the number of modes clearing the noise edge is at
-most `cW` — and `cW` was not chosen to make that true: it is `count_le_of_tension_uniform`'s own
-right-hand side at the witness read. -/
+/-- The `hcount` field, from the tension. At every spacing `a`, the number of `wOne` weights clearing
+`edgeW` is at most `cW`. It is `count_le_of_tension_uniform` applied to the witness read, with `wOne`
+as the weights, `lamConst rW` as the rates, `rW` as the band floor, `1` as the weight cap and the
+tension and cosine hypotheses discharged by `readW_tension_lt_floor` and `readW_cos_pos`. `cW` is that
+theorem's own right-hand side at those arguments.
+
+DERIVED: no numeral. -/
 theorem hcountW (a : ℕ) :
     ((resolvedDim (Finset.range (NaG a)) ((fun _ => wOne) a) edgeW : ℕ) : ℝ) ≤ cW :=
   count_le_of_tension_uniform (k := kW) (Na := NaG) (w := wOne) (lam := lamConst rW) readW
@@ -305,22 +372,23 @@ theorem hcountW (a : ℕ) :
     (W := 1) (fun a => le_of_eq (sum_wOne (NaG a) (by unfold NaG; omega)))
     readW_cos_pos readW_tension_lt_floor a
 
-/-- At least one mode is resolved, so `os_form` is not the vacuous `Q ≤ 0`. -/
+/-- The `hres` field: at every spacing the resolved count is at least one. It is `resolvedDim_wOne`,
+which gives the count exactly.
+
+DERIVED: the `1` is the lower bound asserted on the count. -/
 theorem hresW (a : ℕ) : 1 ≤ resolvedDim (Finset.range (NaG a)) ((fun _ => wOne) a) edgeW := by
   rw [resolvedDim_wOne (NaG a) (by unfold NaG; omega) edgeW edgeW_pos edgeW_lt_one]
 
-/-- **THE `SU(3)` OS-DATA FAMILY WITH ITS INFRARED INPUT SOURCED FROM THE TENSION.**
+/-- The `LatticeYMFamily` this module assembles: `WilsonGauge.ymFamilyGaugeCounted` at the constant
+weight family `fun _ => wOne`, the noise edge `edgeW` and the cutoff `cW`, with its three obligations
+discharged by `wOne_sorted`, `hcountW` and `hresW`.
 
-The reflected form is `WilsonGauge.QG` — the clamped `SU(3)` Gibbs expectation of the Wilson plaquette
-energy on a four-dimensional periodic lattice — and `os_euc`/`os_perm` are Haar-invariance composed
-with the lattice's axis symmetry, both unchanged. What is new is `os_gap`: it is derived from an
-ordered spectrum together with a count bound, and that count bound is derived from the witness read's
-measured tension through `ScreenedGap.resolvedDim_le_of_tension`, not asserted.
+The reflected form, `os_euc` and `os_perm` come from `ymFamilyGaugeCounted` unchanged. `os_gap` is
+built from the sorted spectrum together with the count bound, and that count bound is `hcountW`, which
+runs back through `count_le_of_tension_uniform` to `ScreenedGap.resolvedDim_le_of_tension` and the
+witness read's tension.
 
-Every `LatticeYMFamily` previously in the tree supplied its infrared input by hand. This one does
-not.
-
-DERIVED: `3` is SU(3)'s rank, carried from `WilsonGauge.sysYM`. -/
+DERIVED: no numeral. -/
 noncomputable def ymFamilyTension : LatticeYMFamily :=
   ymFamilyGaugeCounted (fun _ => wOne) edgeW cW wOne_sorted hcountW hresW
 
@@ -329,7 +397,11 @@ noncomputable def ymFamilyTension : LatticeYMFamily :=
 #print axioms hcountW
 #print axioms ymFamilyTension
 
-/-- **The OS0–OS3 continuum limit of that family.** -/
+/-- `Measure.continuum_of_family` at `ymFamilyTension`: there is a strictly monotone `φ : ℕ → ℕ` and a
+limit `q : J → ℝ` such that `Q j` converges along `φ` to `q j` at every `j`, with `|q j|` bounded by
+`⌈c⌉₊ · B`, `q j` nonnegative, and `q` invariant under both `actE` and `actP`.
+
+DERIVED: the `0` is the lower bound asserted on each limit value. -/
 theorem ym_continuum_tension :
     ∃ (q : ymFamilyTension.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => ymFamilyTension.Q j (φ k)) atTop (nhds (q j))) ∧
@@ -344,9 +416,12 @@ theorem ym_continuum_tension :
 /-! ## Non-degeneracy
 
 An instance over an empty test set, a mode count that never grows, or an empty resolved set would
-typecheck and say nothing. None of those is what this is. -/
+typecheck. The theorems here record that `ymFamilyTension` is none of those. -/
 
-/-- The test configurations are not merely inhabited — there are infinitely many of them. -/
+/-- The family's index type `J` is infinite: `n ↦ (1, 1, n)` injects `ℕ` into it, so `J` contains a
+copy of `ℕ`.
+
+DERIVED: no numeral. -/
 theorem J_infinite : Infinite ymFamilyTension.J :=
   Infinite.of_injective
     (fun n : ℕ => ((1, 1, n) : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ))
@@ -355,7 +430,11 @@ theorem J_infinite : Infinite ymFamilyTension.J :=
         (fun j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ => j.2.2) h
       simpa using h2)
 
-/-- The lattice mode count grows without bound: `Na a = a + 1`. -/
+/-- The family's mode count at spacing `a` exceeds `a`, which with `Na_tendsto` is what makes it grow
+without bound. The statement is the strict inequality only; the definition of `NaG` is what the proof
+unfolds.
+
+DERIVED: no numeral. -/
 theorem Na_ge (a : ℕ) : a < ymFamilyTension.Na a := by
   show a < NaG a
   unfold NaG; omega
@@ -363,18 +442,25 @@ theorem Na_ge (a : ℕ) : a < ymFamilyTension.Na a := by
 theorem Na_tendsto : Filter.Tendsto ymFamilyTension.Na Filter.atTop Filter.atTop :=
   Filter.tendsto_atTop_atTop.mpr (fun b => ⟨b, fun a ha => le_trans ha (Na_ge a).le⟩)
 
-/-- **Exactly one mode is resolved at every spacing.** The resolved set is neither empty (which would
-force `Q ≤ 0` through `os_form`) nor the whole spectrum. -/
+/-- The family's resolved count is one at every spacing, so the resolved set is a singleton and in
+particular not empty. The statement fixes the count and says nothing about how it compares with the
+length of the mode range.
+
+DERIVED: the `1` is the count, carried from `resolvedDim_wOne`. -/
 theorem resolvedDim_family (a : ℕ) :
     resolvedDim (Finset.range (ymFamilyTension.Na a)) (ymFamilyTension.ev a)
       ymFamilyTension.edge = 1 :=
   resolvedDim_wOne (NaG a) (by unfold NaG; omega) edgeW edgeW_pos edgeW_lt_one
 
-/-- The noise edge is a positive number, so the count bound divides by something real. -/
+/-- The family's noise edge is positive: it is `edgeW`.
+
+DERIVED: the `0` is the sign asserted of the edge. -/
 theorem family_edge_pos : 0 < ymFamilyTension.edge := edgeW_pos
 
-/-- The infrared cutoff is positive and at least the count it bounds — the bound is not vacuous in
-either direction. -/
+/-- The family's infrared cutoff is positive: it is `cW`. That the cutoff is also at least the count
+it bounds is the separate `one_le_family_c`.
+
+DERIVED: the `0` is the sign asserted of the cutoff. -/
 theorem family_c_pos : 0 < ymFamilyTension.c := cW_pos
 
 theorem one_le_family_c : (1 : ℝ) ≤ ymFamilyTension.c := by
@@ -382,13 +468,17 @@ theorem one_le_family_c : (1 : ℝ) ≤ ymFamilyTension.c := by
   rwa [resolvedDim_wOne (NaG 0) (by unfold NaG; omega) edgeW edgeW_pos edgeW_lt_one,
     Nat.cast_one] at h
 
-/-- The per-mode bound is one, so the OS0 conclusion `|q| ≤ ⌈c⌉₊ · B` is a genuine finite bound. -/
+/-- The family's per-mode bound `B` is one, by definitional unfolding. It is the `B` appearing in the
+continuum conclusion `|q j| ≤ ⌈c⌉₊ · B`.
+
+DERIVED: the `1` is the value of `B`. -/
 theorem family_B : ymFamilyTension.B = 1 := rfl
 
-/-- **The witness read is not the flat default.** `Moment.Read`'s `Inhabited` instance is the constant
-correlation `ρ ≡ 1`, whose tension is not below the floor at any aperture
-(`Read.tension_ge_floor_of_substrate` excludes it). This read decays: lag one carries half the weight
-of lag zero. -/
+/-- The witness read is not constant in the lag: its correlation at the lag-one index differs from its
+correlation at the lag-zero index. At `rW = 1/2` the two values are `1/2` and `1`.
+
+DERIVED: the `1` is the lag-one index of `Fin (2 * kW + 1 + 1)` and the `0` is its lag-zero index;
+`2 * kW + 1` is the read's period and the outer `+ 1` the number of lags. -/
 theorem readW_not_flat :
     readW.ρ (⟨1, by omega⟩ : Fin (2 * kW + 1 + 1)) ≠ readW.ρ (0 : Fin (2 * kW + 1 + 1)) := by
   have h1 : Moment.circLag (⟨1, by omega⟩ : Fin (2 * kW + 1 + 1)) = 1 := by
@@ -399,7 +489,10 @@ theorem readW_not_flat :
   unfold rW
   norm_num
 
-/-- The read's tension is a nonnegative number strictly below the floor — a margin, not a zero. -/
+/-- The witness read's tension is nonnegative, by `Moment.Read.tension_nonneg`. The strict inequality
+against the floor is the separate `readW_tension_lt_floor`; this statement does not exclude zero.
+
+DERIVED: the `0` is the lower bound asserted on the tension. -/
 theorem readW_tension_nonneg : 0 ≤ readW.tension := Moment.Read.tension_nonneg readW
 
 #print axioms J_infinite
@@ -408,18 +501,21 @@ theorem readW_tension_nonneg : 0 ≤ readW.tension := Moment.Read.tension_nonneg
 
 /-! ## The model
 
-The measure side above is unconditional. The gap side is not, and the hypothesis it needs is named
-rather than absorbed: `∃ B, ∀ N β, d2At N β ≤ B`, an aperture-independent bound on the substrate's
-moment about the circle distance. `Complete.confinement_of_bounded_substrate` turns it into
-confinement at every large enough aperture, which is exactly `A1_YM (ymModelAt N)` there.
+The measure side above carries no hypothesis. The gap side carries one: `∃ B, ∀ N β, d2At N β ≤ B`,
+an aperture-independent bound on the substrate's moment about the circle distance, which every
+declaration below takes as an argument. `Complete.confinement_of_bounded_substrate` turns it into
+confinement at every large enough aperture, which is `A1_YM (ymModelAt N)` there.
 
-WHAT THE APERTURE IS. `confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop`, with the threshold
-determined by the existentially-supplied `B` and therefore not nameable. So the model below is built
-at an aperture obtained from that eventual statement, NOT at `Complete.nCorrYM`: nothing in this tree
-proves the pinned aperture exceeds the threshold, and nothing can, because the threshold moves with
-`B`. This is stated rather than papered over. -/
+The aperture is not a named value. `confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop`, with
+the threshold determined by the existentially supplied `B`, so the model below is built at an aperture
+taken from that eventual statement by `Classical.choose` rather than at `Complete.nCorrYM`. Nothing
+here relates the two. -/
 
-/-- An aperture at which confinement holds, obtained from the substrate bound. No value is named. -/
+/-- An aperture at which confinement holds: the witness taken from
+`Complete.confinement_of_bounded_substrate`'s eventual statement, given the substrate bound. No value
+is named for it.
+
+DERIVED: no numeral. -/
 noncomputable def apertureOf (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) : ℕ :=
   (confinement_of_bounded_substrate h).exists.choose
 
@@ -427,25 +523,23 @@ theorem apertureOf_confines (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) :
     ∀ β : ℝ, μYMAt (apertureOf h) β < κ₀YM :=
   (confinement_of_bounded_substrate h).exists.choose_spec
 
-/-- **A1 at that aperture.** `A1_YM (ymModelAt N)` is `∀ β, μYMAt N β < κ₀YM` by definition, so the
-confinement statement IS the obligation, at every coupling with no half-line restriction and no
-coupling-by-coupling split. -/
+/-- A1 holds at that aperture. `A1_YM (ymModelAt N)` unfolds to `∀ β, μYMAt N β < κ₀YM`, which is what
+`apertureOf_confines` supplies, so the proof is that theorem itself. The coupling is quantified over
+all of `ℝ`.
+
+DERIVED: no numeral. -/
 theorem A1_at_aperture (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) :
     A1_YM (ymModelAt (apertureOf h)) := apertureOf_confines h
 
-/-- **A FULL MODEL FROM ONE OPEN HYPOTHESIS.**
+/-- A `FullModel` from the substrate moment bound. Its gap side is `Complete.ymModelAt` at the aperture
+`apertureOf h`, with `h1` the A1 obligation discharged by `A1_at_aperture` and `h2` by `ym_A2_at`; its
+measure side is `ymFamilyTension`, which carries no hypothesis. The substrate bound `h` is the only
+argument.
 
-`WilsonInstance.ymFullModelOf` and `WilsonGauge.ymFullModelGauge` each need four — confinement
-`hconf`, the mode decay `hdom`, and the two junction residuals `hfe`, `hgap`. This needs one: the
-substrate moment bound. The gap side is `Complete.ymModelAt` at the aperture the bound supplies, whose
-`hread` is definitional and whose A2 is the proved Nyquist congruence; the measure side is the
-tension-counted family above, which needs nothing.
+Scope. `ymModelAt` carries `Idx := Unit` and `m := e^{−(κ₀−μ)}`, so its index set is a single point
+and its mode magnitude is defined equal to its own bound.
 
-WHAT THE GAP SIDE COSTS. `ymModelAt` carries `Idx := Unit` and `m := e^{−(κ₀−μ)}` — one mode defined
-equal to its own bound. Read literally its clustering conclusion is that a single complex number of
-modulus below one has powers tending to zero. That is `Complete.lean`'s own assessment of the witness
-and it is not repaired here; what is repaired is the number of open hypotheses and the provenance of
-the measure side's infrared input. -/
+DERIVED: no numeral. -/
 noncomputable def fullModelOfSubstrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) : FullModel where
   gap := ymModelAt (apertureOf h)
   h1 := A1_at_aperture h
@@ -455,16 +549,13 @@ noncomputable def fullModelOfSubstrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤
 #print axioms A1_at_aperture
 #print axioms fullModelOfSubstrate
 
-/-- **Physical parameters whose infrared cutoff IS the tension-derived one.**
+/-- The `WilsonParams` the realisation is built at: the gauge rank `NYM`, box size `L = 1` and
+confinement momentum scale `kstar = 2π·cW`. The scale is set from `cW` so that the parameters' own
+`irCutoff = kstar·L/(2π)` comes out equal to `cW`, which `paramsTension_irCutoff` proves.
 
-`WilsonInstance.ymParams` sets `k⋆ = 2π` and `L = 1` so that `k⋆L/(2π) = 1` matches a family whose
-cutoff was hardwired to `1`. Here the cutoff is not hardwired: it is `cW`, computed from the read. So
-the confinement momentum scale is read off it, `k⋆ = 2π·cW`, and the match `c = k⋆L/(2π)` is an
-identity between two named quantities in the direction the measurement runs.
-
-DERIVED: `L = 1` is the unit box; `NYM = 3` is the rank the Clay problem names and the rank the OS
-measure is built at (`WilsonGauge.sysYM`), so the realisation is a statement about one gauge group.
-`2 ≤ 3` is the arity of a non-abelian special unitary group. -/
+DERIVED: `L = 1` is the unit box; the `2` in `2 * Real.pi * cW` is the `2π` that `irCutoff` divides
+back out, so `kstar` is `cW` in momentum units. `NYM` is a named rank carried in, not a numeral here,
+and `hN` is discharged by `norm_num` on it. -/
 noncomputable def paramsTension : WilsonParams where
   N := NYM
   hN := by norm_num
@@ -480,26 +571,31 @@ theorem paramsTension_irCutoff : paramsTension.irCutoff = cW := by
   rw [mul_one]
   field_simp
 
-/-- **AN `SU(3)` WILSON REALISATION FROM THE SUBSTRATE BOUND ALONE.**
+/-- A `WilsonRealization` from the substrate moment bound: `paramsTension` as its parameters,
+`fullModelOfSubstrate h` as its model, and `paramsTension_irCutoff` discharging the field `hc` that
+ties the parameters' infrared cutoff to the measure side's `c`. The gauge rank is whatever
+`paramsTension` carries, and the aperture is `Classical.choose`n inside `fullModelOfSubstrate`.
 
-DERIVED: `3` is SU(3)'s rank, carried from `paramsTension`, which reads it off the group rather than
-naming it. The aperture is `Classical.choose`n from the substrate bound's own eventual set. -/
+DERIVED: no numeral. -/
 noncomputable def wilsonOfSubstrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) : WilsonRealization where
   params := paramsTension
   model := fullModelOfSubstrate h
   hc := paramsTension_irCutoff.symm
 
-/-- **EXISTENCE AND THE GAP, FROM THE SUBSTRATE MOMENT BOUND.**
+/-- `existence_and_gap_of_wilson` at `wilsonOfSubstrate h`. It gives, at every coupling, that the
+model's correlator norm tends to zero, that `μ β - κ < 0`, and that the model's read `R` is
+direction-independent; together with the continuum conclusions of the measure side.
 
-`existence_and_gap_of_wilson` at the realisation above. The single open input is
-`∃ B, ∀ N β, d2At N β ≤ B` — an aperture-independent bound on the read's circle second moment, with no
-value supplied for it anywhere. The measure side contributes NO hypothesis: its `os_gap` is derived
-from the witness read's tension.
+The only argument is `h : ∃ B, ∀ N β, d2At N β ≤ B`, a bound on the read's circle second moment
+holding at every aperture and coupling; no value is supplied for `B` anywhere. The measure side adds
+no hypothesis, since its `os_gap` comes from the witness read's tension.
 
-FOOTPRINT. The gap side reads `μYMAt`, which is built from the opaque Wilson ensemble, so
-`wilson_reflection_positive_at` — the cited Osterwalder–Seiler reflection positivity — appears, and it
-is named here because it is the one physical axiom in the chain. The measure side adds nothing:
-`ym_continuum_tension` above is foundational-only. -/
+The gap side reads `μYMAt`, which is built from the Wilson ensemble, so the axiom footprint printed
+below includes `wilson_reflection_positive_at`, the cited Osterwalder–Seiler reflection positivity.
+
+DERIVED: the `0` in `nhds 0` is the limit of the correlator norm, the `0` in `μ β - κ < 0` is the sign
+of the free-energy difference, and the `0` in `0 ≤ q j` is the lower bound on each continuum limit
+value. -/
 theorem existence_and_gap_of_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ (wilsonOfSubstrate h).model.gap.s β,
           (wilsonOfSubstrate h).model.gap.P β k
@@ -517,7 +613,12 @@ theorem existence_and_gap_of_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤
 
 #print axioms existence_and_gap_of_substrate
 
-/-- **The gap WITH ITS RATE, and the continuum measure, from the substrate bound.** -/
+/-- `mass_gap_rate_and_continuum` at `fullModelOfSubstrate h` and a coupling `β`. It gives a positive
+margin `κ₀ - μ β`, the exponential bound `‖∑ P m^τ‖ ≤ (∑ ‖P‖)·exp(-(κ₀ - μ β))^τ` at every `τ : ℕ`,
+and the continuum conclusions of the measure side. The rate in the exponential is the margin itself.
+
+DERIVED: the `0` is the sign asserted of the margin, and the `0` in `0 ≤ q j` is the lower bound on
+each continuum limit value. -/
 theorem mass_gap_rate_and_continuum_of_substrate (h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B) (β : ℝ) :
     (0 < (fullModelOfSubstrate h).gap.κ₀ - (fullModelOfSubstrate h).gap.μ β ∧
       ∀ τ : ℕ, ‖∑ k ∈ (fullModelOfSubstrate h).gap.s β,

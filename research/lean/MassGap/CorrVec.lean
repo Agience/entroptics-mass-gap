@@ -4,76 +4,55 @@ import MassGap.InfiniteVolume
 import MassGap.PlaqVariance
 
 /-!
-# MassGap.CorrVec — the plaquette correlation at a GENERAL lattice separation
+# MassGap.CorrVec — the plaquette correlation at a general lattice separation
 
-## What was narrow
+## The object
 
-`WilsonBridge.corrClay n β lag = corrHyper (d := 4) 3 n 0 1 2 β lag`: the plaquette plane is spanned
-by directions `0` and `1`, and the second plaquette sits at `siteAtHyper 2 lag`, a site whose only
-nonzero coordinate is along direction `2`. So the whole development downstream of it — the moment
-read, the aperture, the spectral measure of `MomentMeasure.rieszMeasure` — is indexed by ONE integer,
-the lag along one axis. A Schwinger function is a function of a four-vector separation, and a
-one-axis family is a restriction of one, not one.
+`corrSep Nc μ ν β v` is the connected correlation of the `(μ,ν)`-plane plaquette at the origin with
+the `(μ,ν)`-plane plaquette at an arbitrary site `v : Fin d → Fin n`, and `corrVec n β v` is its
+`SU(3)`, four-dimensional, `(0,1)`-plane instance. `corrVec_restricts_to_corrClay` relates it to the
+one-lag object: `corrVec n β (siteAtHyper 2 lag) = corrClay n β lag`, and it is `rfl`.
 
-## What is here
+`WilsonBridge.corrClay n β lag = corrHyper (d := 4) 3 n 0 1 2 β lag` fixes the plaquette plane to the
+directions `0` and `1` and puts the second plaquette at `siteAtHyper 2 lag`, a site whose only
+nonzero coordinate is along direction `2`. So `corrClay` and everything indexed by it — the moment
+read, the aperture, the spectral measure of `MomentMeasure.rieszMeasure` — is indexed by one integer,
+the lag along one axis. `corrSep` is indexed by a full site instead.
 
-`corrSep Nc μ ν β v` is the connected correlation of the `(μ,ν)`-plane plaquette at the ORIGIN with
-the `(μ,ν)`-plane plaquette at an ARBITRARY site `v : Fin d → Fin n`, and `corrVec n β v` is its
-`SU(3)`, four-dimensional, `(0,1)`-plane instance. `corrVec_restricts_to_corrClay` is the statement
-that makes it an extension rather than a new object: `corrVec n β (siteAtHyper 2 lag) = corrClay n β
-lag`, and it is `rfl`.
+## What holds at a general separation
 
-Four pieces of structure carry, and the file says which and how far:
-
-* **The extent-free bound** carries with no hypothesis beyond a nonzero gauge rank: `corrSep_abs_le_four` is
-  `InfiniteVolume.wilsonCorrConn_abs_le_four`, which never looked at the geometry.
-* **Componentwise circle symmetry** carries: `corrSep_negAt` negates ANY ONE coordinate of `v` in a
+* **The extent-free bound**, with no hypothesis beyond a nonzero gauge rank: `corrSep_abs_le_four`
+  is `InfiniteVolume.wilsonCorrConn_abs_le_four`, which reads no geometry.
+* **Componentwise circle symmetry**: `corrSep_negAt` negates any one coordinate of `v` in a
   direction transverse to the plane and the correlation is unchanged, at every extent and every real
   coupling. `MomentShape.corrHyper_neg` is its one-axis case (`corrSep_siteAtHyper_neg`).
-* **Axis permutation — the first genuinely four-dimensional statement.** `corrSep_axis` says
-  relabelling the axes by any `e : Equiv.Perm (Fin d)` carries the correlation to the one with plane
-  `(e μ, e ν)` and separation `axisSite e v`. When `e` fixes the plane (`corrSep_axis_fix`) the
-  separation's components may be permuted among themselves with the correlation unchanged. At the
-  Clay parameters that is `corrVec_swap_transverse`, and one of its consequences is
-  `corrVec_siteAtHyper_three_eq_two`: the lag along direction `3` and the lag along direction `2`
-  are the same number, which no theorem in the tree previously proved, though corrHyper could always express it.
-* **Nonnegativity and positive mass carry ONLY on the single-axis separations, and that is not a gap
-  in the proof but the shape of the input.** See the next section.
+* **Axis permutation.** `corrSep_axis` says relabelling the axes by any `e : Equiv.Perm (Fin d)`
+  carries the correlation to the one with plane `(e μ, e ν)` and separation `axisSite e v`. When `e`
+  fixes the plane (`corrSep_axis_fix`) the separation's components may be permuted among themselves
+  with the correlation unchanged. At the Clay parameters that is `corrVec_swap_transverse`, and
+  `corrVec_siteAtHyper_three_eq_two` reads off that the lag along direction `3` and the lag along
+  direction `2` are the same number.
+* **Nonnegativity**, at single-axis separations only. See the next section.
 
-## How far reflection positivity reaches, stated exactly
+## How far reflection positivity reaches
 
-The site reflection is `Reflect.reflSite τ c x = Function.update x τ (c - x τ)` — it moves ONE
-coordinate. The Osterwalder–Seiler pairing that `ReflectionStrong` proves nonnegative is
-`⟨F · (F ∘ Θ)⟩` read at ONE member of the module (the module statement itself ranges over all of localObs) `F` based at a site `x`, and `Θ` carries that
-plaquette to the one based at `reflSite τ c x`. The separation between the two is therefore
-`reflSite τ c x - x`, whose only nonzero coordinate is along `τ`. So the one-plaquette pairing
-produces nonnegativity of the correlation at one-axis separations and at no others:
-`corrSep_nonneg_even_single_axis` is the statement, with the even-parity and half-extent hypotheses
-`ReflectionStrong.corrHyper_nonneg_even_lag_of_module` already carries.
+The site reflection `Reflect.reflSite τ c x = Function.update x τ (c - x τ)` moves one coordinate.
+The Osterwalder–Seiler pairing that `ReflectionStrong` proves nonnegative is `⟨F · (F ∘ Θ)⟩` at a
+member `F` of the observable module based at a site `x`, and `Θ` carries that plaquette to the one
+based at `reflSite τ c x`. The separation between the two is `reflSite τ c x - x`, whose only nonzero
+coordinate is along `τ`. So the one-plaquette pairing gives nonnegativity of the correlation at
+one-axis separations: `corrSep_nonneg_even_single_axis` is the statement, with the even-parity and
+half-extent hypotheses `ReflectionStrong.corrHyper_nonneg_even_lag_of_module` carries.
 
-What is NOT claimed, and what would be needed to claim it: a separation with two or more nonzero
-components is not the reflection of anything through one hyperplane, so nothing here bounds
-`corrSep Nc μ ν β v` below for such a `v`. The reflection module `LogConvex.localObs` is
-closed under linear combination and its Gram form is nonnegative, which gives a positive
-SEMIDEFINITE QUADRATIC FORM over families of sites — and the separations appearing inside that form
-do have several nonzero components. Extracting a pointwise lower bound at a general separation from
-that quadratic form is a separate argument and is not attempted here.
+A separation with two or more nonzero components is not the reflection of anything through one
+hyperplane, and no theorem here bounds `corrSep Nc μ ν β v` below for such a `v`. The reflection
+module `LogConvex.localObs` is closed under linear combination and its Gram form is nonnegative,
+which gives a positive semidefinite quadratic form over families of sites, and the separations inside
+that form do have several nonzero components; extracting a pointwise bound from it is a separate
+argument and is not made here.
 
-## What a Schwinger function still needs after this file
-
-Three things, none of them touched here and none of them small.
-
-1. **Smearing.** A Schwinger function is a distribution: it is paired with test functions on
-   spacetime, not evaluated at lattice sites. Nothing here defines a pairing of `corrVec` against a
-   test function, and the lattice-to-continuum embedding that such a pairing needs does not exist in
-   the tree.
-2. **The continuum limit.** `corrVec` lives at finite extent `n` and finite lattice spacing. The
-   limit `n → ∞` is `InfiniteVolume`'s subject in the ONE-axis variable only; the joint limit at a
-   scaled general separation, and the lattice spacing going to zero with a renormalised coupling,
-   are both absent. `Measure.continuum_of_family` is deliberately untouched.
-3. **The `k`-point functions for `k > 2`.** `corrVec` is a TWO-point function. OS reconstruction
-   consumes the whole family `{S_k}` with its symmetry, positivity and cluster properties; a
-   two-point function alone reconstructs a free field and nothing else.
+`corrVec` is a two-point function at finite extent `n` and finite lattice spacing. No pairing of it
+against a test function is defined here, and no limit in `n` or in the lattice spacing is taken here.
 
 Foundational footprint only; every declaration is printed in the Audit section at the end.
 
@@ -93,29 +72,34 @@ section Object
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- **The connected plaquette correlation at a GENERAL separation.**
+/-- **The connected plaquette correlation at a general separation.**
 
 `corrSep Nc μ ν β v = ⟨φ_{(μ,ν),0} · φ_{(μ,ν),v}⟩_β − ⟨φ_{(μ,ν),0}⟩_β ⟨φ_{(μ,ν),v}⟩_β`, the
 connected two-point function of the `(μ,ν)`-plane plaquette energy at the origin with the one at the
-site `v`, on the `d`-dimensional periodic `SU(Nc)` Wilson lattice of extent `n`.
+site `v`, on the `d`-dimensional periodic `SU(Nc)` Wilson lattice of extent `n`. It is
+`wilsonCorrConn` at the two plaquettes `((μ,ν), 0)` and `((μ,ν), v)`.
 
-`WilsonBridge.corrHyper` is this with `v` forced to be `siteAtHyper τ lag` — a site with one nonzero
-coordinate. Here `v` is any site, which is what a two-point Schwinger function needs and what a
-single lag index cannot express.
+`WilsonBridge.corrHyper` is this with `v` forced to be `siteAtHyper τ lag`, a site with one nonzero
+coordinate. Here `v` is any site.
 
-DERIVED: no literal sets a scale. The origin is immaterial by periodicity of the lattice; the plane
-and the separation are the caller's. -/
+DERIVED: the only numeral is the `0` of the origin site `fun _ => 0`, where the first plaquette is
+based. The plane, the separation, the extent and the coupling are all the caller's. -/
 noncomputable def corrSep (Nc : ℕ) {d n : ℕ} [NeZero n] (μ ν : Fin d) (β : ℝ) (v : Site d n) : ℝ :=
   wilsonCorrConn (Nc := Nc) (bd (d := d) (n := n))
     ((μ, ν), (fun _ => 0 : Site d n)) β ((μ, ν), v)
 
-/-- **`corrHyper` is `corrSep` at a one-axis separation** — definitionally, so the two objects are
-not merely related but the same construction at a restricted argument. -/
+/-- **`corrHyper` is `corrSep` at a one-axis separation.** The proof is `rfl`, so the two are the
+same construction at a restricted argument rather than two objects with a bridge between them.
+
+DERIVED: no numeral. -/
 theorem corrHyper_eq_corrSep (Nc : ℕ) {d n : ℕ} [NeZero n] (μ ν τ : Fin d) (β : ℝ) (lag : Fin n) :
     corrHyper (d := d) Nc n μ ν τ β lag = corrSep Nc μ ν β (siteAtHyper τ lag) := rfl
 
-/-- `corrSep` written out as the two-point function minus the product of one-point functions, in the
-notation `ReflectPositive` uses. Definitional; it is the working form for every proof below. -/
+/-- `corrSep` written out as the two-point expectation minus the product of the two one-point
+expectations, in the `EW`/`plaqE` notation `ReflectPositive` uses. The proof is `rfl`; this is the
+working form for the proofs below.
+
+DERIVED: the only numeral is the `0` of the origin site `fun _ => 0`, carried from `corrSep`. -/
 theorem corrSep_unfold (Nc : ℕ) {d n : ℕ} [NeZero n] (μ ν : Fin d) (β : ℝ) (v : Site d n) :
     corrSep Nc μ ν β v
       = EW Nc β (fun U => plaqE Nc (((μ, ν), (fun _ => 0 : Site d n)) : Plaq d n) U
@@ -125,33 +109,32 @@ theorem corrSep_unfold (Nc : ℕ) {d n : ℕ} [NeZero n] (μ ν : Fin d) (β : �
 
 end Object
 
-/-- **The four-dimensional `SU(3)` correlation at a general four-vector separation.**
-
-The Clay problem's dimension and gauge group, on the lattice `WilsonGauge`'s Osterwalder–Schrader
+/-- **The four-dimensional `SU(3)` correlation at a general four-vector separation.** `corrSep` at
+the Clay problem's dimension and gauge group, on the lattice `WilsonGauge`'s Osterwalder–Schrader
 measure is built on, with the separation a full site of `Fin 4 → Fin n` rather than a single lag.
 
-DERIVED: `3` is `SU(3)` and `4` is four dimensions — the problem's own data, exactly as in
-`WilsonBridge.corrClay`; `0` and `1` span the plaquette plane and which two directions those are is a
-naming freedom (`corrSep_axis` below turns that freedom into a theorem). `n` is the periodic extent
-and stays the caller's. -/
+DERIVED: `3` is the `N` of `SU(3)` and `4` is the dimension — the problem's own data, exactly as in
+`WilsonBridge.corrClay`; `0` and `1` span the plaquette plane, and which two directions those are is
+a naming freedom `corrSep_axis` below states as a theorem. `n` is the periodic extent and stays the
+caller's. -/
 noncomputable def corrVec (n : ℕ) [NeZero n] (β : ℝ) (v : Site 4 n) : ℝ :=
   corrSep (d := 4) 3 0 1 β v
 
-/-- **THE RESTRICTION: `corrClay` is `corrVec` at a separation along direction `2`.**
+/-- **`corrClay` is `corrVec` at a separation along direction `2`.** The proof is `rfl`, so any
+ theorem about `corrClay` — reflection positivity at even lag, circle symmetry, log-convexity, the
+moment read, the representing measure of `MomentMeasure.rieszMeasure` — is a theorem about `corrVec`
+restricted to the separations `siteAtHyper 2 lag`.
 
-This is the statement that makes the generalisation an extension of the development rather than a
-second object beside it. Every theorem the tree proves about `corrClay` — reflection positivity at
-even lag, circle symmetry, log-convexity, the moment read, the representing measure of
-`MomentMeasure.rieszMeasure` — is a theorem about `corrVec` restricted to the one-axis separations,
-and it is `rfl`, so nothing is lost in the transport.
-
-DERIVED: `2` is the lag direction `corrClay` itself names, transverse to its `(0,1)` plane. -/
+DERIVED: `2` is the lag direction `corrClay` itself names, transverse to its `(0,1)` plane; `4` in
+`Fin 4` is the lattice dimension, `corrVec`'s own. -/
 theorem corrVec_restricts_to_corrClay (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
     corrVec n β (siteAtHyper (2 : Fin 4) lag) = corrClay n β lag := rfl
 
-/-- `corrVec` at a separation along any direction `τ` is `corrHyper` with lag axis `τ`.
+/-- `corrVec` at a separation along any direction `τ : Fin 4` is `corrHyper` with lag axis `τ`, by
+`rfl`. Unlike `corrVec_restricts_to_corrClay` the axis is not fixed to `2`.
 
-DERIVED: `3` is `SU(3)`, `4` the dimension and `0`, `1` the plane — all `corrVec`'s own. -/
+DERIVED: `3` is the `N` of `SU(3)`, `4` the dimension and `0`, `1` the plane — all `corrVec`'s
+own. -/
 theorem corrVec_siteAtHyper (n : ℕ) [NeZero n] (β : ℝ) (τ : Fin 4) (lag : Fin n) :
     corrVec n β (siteAtHyper τ lag) = corrHyper (d := 4) 3 n 0 1 τ β lag := rfl
 
@@ -165,20 +148,22 @@ section Bound
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- **The correlation at ANY separation is bounded by `4`**, at every extent, every real coupling and
-every plane. No hypothesis beyond a nonzero gauge rank.
+/-- **The correlation at any separation is bounded in absolute value by `4`**, at every extent, every
+real coupling and every plane. The one hypothesis is `Nc ≠ 0`.
 
-DERIVED: `4` is `2 × 2`, the product of the two plaquette-energy ranges — it is
-`InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, carried unchanged, and nothing about the
-separation enters it. -/
+DERIVED: the `0` in `Nc ≠ 0` excludes the empty gauge group. `4` is `2 × 2`, the product of the two
+plaquette-energy ranges — `InfiniteVolume.wilsonCorrConn_abs_le_four`'s constant, carried unchanged,
+and nothing about the separation enters it. -/
 theorem corrSep_abs_le_four (hN : Nc ≠ 0) (μ ν : Fin d) (β : ℝ) (v : Site d n) :
     |corrSep Nc μ ν β v| ≤ 4 :=
   MassGap.InfiniteVolume.wilsonCorrConn_abs_le_four hN _ _ _ _
 
-/-- The same at the Clay parameters.
+/-- The same bound at the Clay parameters, with no hypothesis left: `corrSep_abs_le_four`'s `Nc ≠ 0`
+is discharged by `SU(3)`.
 
-DERIVED: `4` is the bound above; `3` is `SU(3)`, whose rank is nonzero, which is the only hypothesis
-the general statement had. -/
+DERIVED: the statement's numerals are the `4` of `Site 4 n`, the lattice dimension, and the `4` of
+the bound, which is `corrSep_abs_le_four`'s constant carried. The `3` of `SU(3)` appears in the proof
+and in `corrVec`'s definition, not in this statement. -/
 theorem corrVec_abs_le_four (n : ℕ) [NeZero n] (β : ℝ) (v : Site 4 n) :
     |corrVec n β v| ≤ 4 := by
   show |corrSep (d := 4) 3 0 1 β v| ≤ 4
@@ -192,15 +177,19 @@ The general machinery behind the axis-permutation invariance, stated for an arbi
 boundary-word map so that it is about `wilsonCorrConn` itself rather than about the hypercubic
 instance. A `WilsonLattice.wilsonSymmetry` is exactly a pair of permutations that maps boundary words
 compatibly; `WilsonLattice.wilson_expect_invariant` moves the Gibbs state along it, and what is added
-here is that it moves the CONNECTED two-plaquette correlation, which needs the one-point functions to
+here is that it moves the connected two-plaquette correlation, which needs the one-point functions to
 move too. -/
 
 section Relabel
 
 variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
 
-/-- **A relabelled configuration gives the relabelled plaquette's observable.** The `compat` field of
-`WilsonLattice.wilsonSymmetry`, pushed through the (class-function) Wilson density. -/
+/-- **A relabelled configuration gives the relabelled plaquette's observable.** Reading the
+plaquette `q` on `U ∘ σL` is reading `σP q` on `U`, given the compatibility `hbd` between the two
+permutations and the boundary-word map. This is the `compat` field of
+`WilsonLattice.wilsonSymmetry`, pushed through the (class-function) Wilson density.
+
+DERIVED: no numeral. -/
 theorem wilsonPlaqObs_relabel (bd' : Pq → List (Lk × Bool))
     (σL : Equiv.Perm Lk) (σP : Equiv.Perm Pq)
     (hbd : ∀ p, bd' (σP p) = (bd' p).map (fun lo => (σL lo.1, lo.2)))
@@ -210,8 +199,11 @@ theorem wilsonPlaqObs_relabel (bd' : Pq → List (Lk × Bool))
   congrArg (wilsonDensity (N := Nc))
     ((wilsonSymmetry bd' (wilsonDensity (N := Nc)) σL σP hbd).compat q U)
 
-/-- The Gibbs expectation is unchanged when the configuration is relabelled — `wilson_expect_invariant`
-with the `Symmetry.reindex` wrapper removed, so it can be rewritten under. -/
+/-- The Gibbs expectation of an observable is unchanged when the configuration is relabelled by
+`σL`. This is `wilson_expect_invariant` with the `Symmetry.reindex` wrapper unfolded to a plain
+composition, so that it can be rewritten under.
+
+DERIVED: no numeral. -/
 theorem expect_relabel (bd' : Pq → List (Lk × Bool))
     (σL : Equiv.Perm Lk) (σP : Equiv.Perm Pq)
     (hbd : ∀ p, bd' (σP p) = (bd' p).map (fun lo => (σL lo.1, lo.2))) (β : ℝ)
@@ -229,15 +221,20 @@ theorem expect_relabel (bd' : Pq → List (Lk × Bool))
   rw [hfun]
   exact h
 
-/-- `wilsonCorr` as a Gibbs expectation of the product of the two plaquette observables.
-Definitional; it is here because `unfold` will not open `wilsonCorr` under the subtraction in
-`wilsonCorrConn`, and a rewrite needs the equation as a lemma. -/
+/-- `wilsonCorr` as a Gibbs expectation of the product of the two plaquette observables. The proof is
+`rfl`; the lemma exists because `unfold` will not open `wilsonCorr` under the subtraction in
+`wilsonCorrConn`, and a rewrite needs the equation as a lemma.
+
+DERIVED: no numeral. -/
 theorem wilsonCorr_eq_expect (bd' : Pq → List (Lk × Bool)) (p₀ : Pq) (β : ℝ) (p : Pq) :
     MassGap.WilsonBridge.wilsonCorr (Nc := Nc) bd' p₀ β p
       = (wilsonSystem bd' (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β
           (fun U => wilsonPlaqObs (N := Nc) bd' p₀ U * wilsonPlaqObs (N := Nc) bd' p U) := rfl
 
-/-- The two-plaquette expectation moves with the relabelling. -/
+/-- The expectation of the product of two plaquette observables is unchanged when both plaquettes are
+moved by `σP`.
+
+DERIVED: no numeral. -/
 theorem expect_pair_relabel (bd' : Pq → List (Lk × Bool))
     (σL : Equiv.Perm Lk) (σP : Equiv.Perm Pq)
     (hbd : ∀ p, bd' (σP p) = (bd' p).map (fun lo => (σL lo.1, lo.2))) (β : ℝ) (q₁ q₂ : Pq) :
@@ -254,7 +251,10 @@ theorem expect_pair_relabel (bd' : Pq → List (Lk × Bool))
         * wilsonPlaqObs (N := Nc) bd' q₂ (fun l => U (σL l))
   rw [wilsonPlaqObs_relabel bd' σL σP hbd q₁ U, wilsonPlaqObs_relabel bd' σL σP hbd q₂ U]
 
-/-- The one-plaquette expectation moves with the relabelling. -/
+/-- The expectation of a single plaquette observable is unchanged when the plaquette is moved by
+`σP`.
+
+DERIVED: no numeral. -/
 theorem expect_one_relabel (bd' : Pq → List (Lk × Bool))
     (σL : Equiv.Perm Lk) (σP : Equiv.Perm Pq)
     (hbd : ∀ p, bd' (σP p) = (bd' p).map (fun lo => (σL lo.1, lo.2))) (β : ℝ) (q : Pq) :
@@ -266,10 +266,12 @@ theorem expect_one_relabel (bd' : Pq → List (Lk × Bool))
   rw [← h]
   exact congrArg _ (funext fun U => (wilsonPlaqObs_relabel bd' σL σP hbd q U).symm)
 
-/-- **THE CONNECTED CORRELATION IS INVARIANT UNDER A LATTICE RELABELLING**, at any geometry: moving
-both plaquettes by the plaquette permutation of a `wilsonSymmetry` leaves the connected two-point
-function unchanged. The disconnected part moves too, which is why this needs `expect_one_relabel` and
-is not a restatement of `wilson_expect_invariant`. -/
+/-- **The connected correlation is invariant under a lattice relabelling**, for an arbitrary
+boundary-word map: moving both plaquettes by the plaquette permutation `σP` of a `wilsonSymmetry`
+leaves `wilsonCorrConn` unchanged. The subtracted product of one-point functions moves too, which is
+why the proof needs `expect_one_relabel` as well as `expect_pair_relabel`.
+
+DERIVED: no numeral. -/
 theorem wilsonCorrConn_relabel (bd' : Pq → List (Lk × Bool))
     (σL : Equiv.Perm Lk) (σP : Equiv.Perm Pq)
     (hbd : ∀ p, bd' (σP p) = (bd' p).map (fun lo => (σL lo.1, lo.2)))
@@ -286,23 +288,32 @@ end Relabel
 /-! ## Part 4 — Euclidean invariance: permuting the axes
 
 `WilsonHypercubic.axisSymmetry` is the discrete Euclidean group of the lattice, and `bd_axis` is the
-compatibility hypothesis the relabelling machinery above consumes. Instantiating at it gives the
-first statement in the development that is about a four-dimensional separation rather than a lag. -/
+compatibility hypothesis the relabelling machinery above consumes. Instantiating at it gives a
+statement about a full separation rather than a lag. -/
 
 section Axis
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- The axis relabelling of a plaquette, computed on its components. -/
+/-- The axis relabelling of a plaquette, computed on its components: the plane directions are moved
+by `e` and the base site by `axisSite e`. The proof is `rfl`.
+
+DERIVED: no numeral. -/
 theorem axisPlaq_mk (e : Equiv.Perm (Fin d)) (μ ν : Fin d) (x : Site d n) :
     axisPlaq (n := n) e (((μ, ν), x) : Plaq d n) = ((e μ, e ν), axisSite e x) := rfl
 
-/-- The origin is fixed by an axis relabelling. -/
+/-- The origin is fixed by an axis relabelling, for every permutation `e`.
+
+DERIVED: both `0`s are the coordinate value of the origin site, which permuting the axes cannot
+change because every coordinate carries the same value. -/
 theorem axisSite_origin (e : Equiv.Perm (Fin d)) :
     axisSite (n := n) e (fun _ => 0 : Site d n) = (fun _ => 0 : Site d n) :=
   funext fun _ => rfl
 
-/-- **A one-axis separation relabels to a one-axis separation along the relabelled axis.** -/
+/-- **A one-axis separation relabels to a one-axis separation along the relabelled axis**, with the
+same lag: `axisSite e (siteAtHyper τ lag) = siteAtHyper (e τ) lag`.
+
+DERIVED: no numeral. -/
 theorem axisSite_siteAtHyper (e : Equiv.Perm (Fin d)) (τ : Fin d) (lag : Fin n) :
     axisSite (n := n) e (siteAtHyper τ lag) = siteAtHyper (e τ) lag := by
   funext j
@@ -313,17 +324,16 @@ theorem axisSite_siteAtHyper (e : Equiv.Perm (Fin d)) (τ : Fin d) (lag : Fin n)
   · have h' : e.symm j ≠ τ := fun hc => h (by rw [← hc]; simp)
     simp [siteAtHyper, Function.update_of_ne h, Function.update_of_ne h']
 
-/-- **EUCLIDEAN INVARIANCE AT A GENERAL SEPARATION.**
+/-- **Axis-permutation invariance at a general separation.**
 
 Relabelling the lattice axes by any permutation `e` carries the correlation of the `(μ,ν)`-plane at
-separation `v` to the correlation of the `(e μ, e ν)`-plane at separation `axisSite e v`. Both sides
-are Gibbs expectations of the real `SU(Nc)` Wilson ensemble at the same coupling; the content is that
-the action and the product Haar measure are invariant under the relabelling
+separation `v` to the correlation of the `(e μ, e ν)`-plane at separation `axisSite e v`, at every
+dimension, extent, gauge rank and real coupling, with no further hypothesis. Both sides are Gibbs
+expectations of the real `SU(Nc)` Wilson ensemble at the same coupling; the content is that the
+action and the product Haar measure are invariant under the relabelling
 (`WilsonHypercubic.bd_axis`, then `wilsonCorrConn_relabel`).
 
-This is the discrete Euclidean symmetry of the hypercubic lattice acting on a FOUR-VECTOR separation.
-The one-axis object `corrHyper` could not state it: a permutation acting on a single lag index has
-nothing to permute. -/
+DERIVED: no numeral. -/
 theorem corrSep_axis (Nc : ℕ) {d n : ℕ} [NeZero n] (e : Equiv.Perm (Fin d)) (μ ν : Fin d) (β : ℝ)
     (v : Site d n) :
     corrSep Nc (e μ) (e ν) β (axisSite e v) = corrSep Nc μ ν β v := by
@@ -336,10 +346,12 @@ theorem corrSep_axis (Nc : ℕ) {d n : ℕ} [NeZero n] (e : Equiv.Perm (Fin d)) 
 
 /-- **The separation's components may be permuted among themselves.**
 
-For a permutation that FIXES the two directions spanning the plaquette plane, the plane does not move
-and the statement is about the separation alone: `corrSep` depends on `v` only up to the axis
-permutations that preserve the plane. This is the invariance a two-point Schwinger function is
-required to have, restricted to the lattice's own symmetry group. -/
+For a permutation `e` that fixes both directions spanning the plaquette plane, the plane does not
+move and the statement is about the separation alone: `corrSep Nc μ ν β (axisSite e v)` equals
+`corrSep Nc μ ν β v`. The hypotheses `e μ = μ` and `e ν = ν` are pointwise, not setwise, so a
+permutation that swaps `μ` with `ν` is not covered.
+
+DERIVED: no numeral. -/
 theorem corrSep_axis_fix (Nc : ℕ) {d n : ℕ} [NeZero n] (e : Equiv.Perm (Fin d)) {μ ν : Fin d}
     (hμ : e μ = μ) (hν : e ν = ν) (β : ℝ) (v : Site d n) :
     corrSep Nc μ ν β (axisSite e v) = corrSep Nc μ ν β v := by
@@ -348,14 +360,15 @@ theorem corrSep_axis_fix (Nc : ℕ) {d n : ℕ} [NeZero n] (e : Equiv.Perm (Fin 
 
 end Axis
 
-/-- **THE FOUR-DIMENSIONAL STATEMENT, AT THE CLAY PARAMETERS.** Exchanging directions `2` and `3` —
-the two directions transverse to the `(0,1)` plaquette plane — leaves the `SU(3)` four-dimensional
-correlation unchanged at EVERY separation, every extent and every real coupling.
+/-- **Swapping the two transverse directions, at the Clay parameters.** Exchanging directions `2` and
+`3` — the two directions transverse to the `(0,1)` plaquette plane — leaves the `SU(3)`
+four-dimensional correlation unchanged at every separation, every extent and every real coupling.
+`corrSep_axis_fix` at the transposition, with `e 0 = 0` and `e 1 = 1` discharged by `decide`.
 
-DERIVED: `2` and `3` are the two directions of `Fin 4` that are not `0` or `1`, i.e. the complement of
-the plaquette plane; the transposition of them is the only nontrivial permutation of `Fin 4` that
-fixes the plane pointwise, so it is not one choice among several. The `0` and `1` are `corrVec`'s own
-plane. -/
+DERIVED: `2` and `3` are the two directions of `Fin 4` that are not `0` or `1`, the complement of the
+plaquette plane; their transposition is the only nontrivial permutation of `Fin 4` fixing the plane
+pointwise, so it is not one choice among several. `4` in `Fin 4` and `Site 4 n` is the lattice
+dimension, `corrVec`'s own. -/
 theorem corrVec_swap_transverse (n : ℕ) [NeZero n] (β : ℝ) (v : Site 4 n) :
     corrVec n β (axisSite (Equiv.swap (2 : Fin 4) 3) v) = corrVec n β v := by
   have h0 : Equiv.swap (2 : Fin 4) 3 0 = 0 :=
@@ -367,24 +380,23 @@ theorem corrVec_swap_transverse (n : ℕ) [NeZero n] (β : ℝ) (v : Site 4 n) :
   exact corrSep_axis_fix 3 (Equiv.swap (2 : Fin 4) 3) h0 h1 β v
 
 /-- **The lag along direction `3` is the same number as the lag along direction `2`**, at every
-extent, every real coupling and every lag — so `corrClay`, which names direction `2`, was naming a
-representative of an orbit and not a choice that could have mattered.
-
-Nothing in the tree could state this before: it is the axis symmetry acting on a separation, and a
-one-index lag has no axis to act on.
+extent, every real coupling and every lag. So the direction `corrClay` names is a representative of
+an orbit of the axis symmetry rather than a distinguished choice.
 
 DERIVED: `2` and `3` are the two directions transverse to `corrVec`'s `(0,1)` plane, as in
-`corrVec_swap_transverse`. -/
+`corrVec_swap_transverse`; `4` in `Fin 4` is the lattice dimension. -/
 theorem corrVec_siteAtHyper_three_eq_two (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
     corrVec n β (siteAtHyper (3 : Fin 4) lag) = corrVec n β (siteAtHyper (2 : Fin 4) lag) := by
   have hswap : Equiv.swap (2 : Fin 4) 3 2 = 3 := Equiv.swap_apply_left 2 3
   have h := corrVec_swap_transverse n β (siteAtHyper (2 : Fin 4) lag)
   rwa [axisSite_siteAtHyper (n := n) (Equiv.swap (2 : Fin 4) 3) 2 lag, hswap] at h
 
-/-- The same statement read against `corrClay`: the lag-`lag` correlation along direction `3` IS the
-Clay correlation.
+/-- The same statement read against `corrClay`: the lag-`lag` correlation along direction `3` is the
+Clay correlation. It is `corrVec_siteAtHyper_three_eq_two` composed with
+`corrVec_restricts_to_corrClay`.
 
-DERIVED: `3` is the fourth lattice direction, `2` the one `corrClay` names. -/
+DERIVED: `3` is the fourth lattice direction, transverse to `corrVec`'s `(0,1)` plane; `4` in
+`Fin 4` is the lattice dimension. -/
 theorem corrVec_siteAtHyper_three (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
     corrVec n β (siteAtHyper (3 : Fin 4) lag) = corrClay n β lag :=
   corrVec_siteAtHyper_three_eq_two n β lag
@@ -401,13 +413,19 @@ section Circle
 variable {d n Nc : ℕ} [NeZero n]
 
 /-- **A plaquette whose plane misses the reflection axis keeps its plane and moves its base site.**
-The third branch of `Reflect.reflPlaq`, for an arbitrary base rather than the origin
-(`ReflectPositive.reflPlaq_origin`) or a one-axis site (`LogConvex.reflPlaq_siteAtHyper`). -/
+Both plane directions must differ from the axis `τ`; the base site then moves by `reflSite τ c`. This
+is the third branch of `Reflect.reflPlaq`, at an arbitrary base rather than the origin
+(`ReflectPositive.reflPlaq_origin`) or a one-axis site (`LogConvex.reflPlaq_siteAtHyper`).
+
+DERIVED: no numeral. -/
 theorem reflPlaq_transverse {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (c : Fin n) (x : Site d n) :
     reflPlaq τ c (((μ, ν), x) : Plaq d n) = ((μ, ν), reflSite τ c x) := by
   simp only [reflPlaq, hμ, hν, if_false]
 
-/-- The two-plaquette expectation is unchanged when BOTH plaquettes are reflected. -/
+/-- The expectation of the product of two plaquette energies is unchanged when both plaquettes are
+reflected at the same axis and constant. No hypothesis on the plaquettes.
+
+DERIVED: no numeral. -/
 theorem EW_pair_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) (β : ℝ)
     (q₁ q₂ : Plaq d n) :
     EW Nc β (fun U => plaqE Nc (reflPlaq τ c q₁) U * plaqE Nc (reflPlaq τ c q₂) U)
@@ -420,7 +438,9 @@ theorem EW_pair_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) 
   exact congrArg (EW Nc β)
     (funext fun U => by rw [plaqE_reflConf Nc τ c q₁ U, plaqE_reflConf Nc τ c q₂ U])
 
-/-- The one-plaquette expectation is unchanged when the plaquette is reflected. -/
+/-- The expectation of a single plaquette energy is unchanged when the plaquette is reflected.
+
+DERIVED: no numeral. -/
 theorem EW_one_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) (β : ℝ)
     (q : Plaq d n) :
     EW Nc β (plaqE Nc (reflPlaq τ c q)) = EW Nc β (plaqE Nc q) := by
@@ -429,11 +449,13 @@ theorem EW_one_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) (
   rw [← h]
   exact congrArg (EW Nc β) (funext fun U => (plaqE_reflConf Nc τ c q U).symm)
 
-/-- **THE CONNECTED CORRELATION IS INVARIANT UNDER REFLECTING BOTH PLAQUETTES**, at any reflection
-axis and constant, any plane and any pair of sites. The reflection is not a `LatticeGauge.Symmetry`
-— it carries the dagger — so this is not an instance of `wilsonCorrConn_relabel`; it comes from
-`Reflect.expect_reflect_invariant`, which reaches the same conclusion through
-`System.expect_invariant_of_mp`. -/
+/-- **The connected correlation is invariant under reflecting both plaquettes**, at any reflection
+axis and constant, any plane and any pair of sites, with no hypothesis on the extent, the gauge rank
+or the coupling. The reflection is not a `LatticeGauge.Symmetry` — it carries the dagger — so this is
+not an instance of `wilsonCorrConn_relabel`; it comes from `Reflect.expect_reflect_invariant`, which
+reaches the same conclusion through `System.expect_invariant_of_mp`.
+
+DERIVED: no numeral. -/
 theorem wilsonCorrConn_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : Fin n) (β : ℝ)
     (p₀ p : Plaq d n) :
     wilsonCorrConn (Nc := Nc) (bd (d := d) (n := n)) (reflPlaq τ c p₀) β (reflPlaq τ c p)
@@ -447,12 +469,17 @@ theorem wilsonCorrConn_refl (Nc : ℕ) {d n : ℕ} [NeZero n] (τ : Fin d) (c : 
 /-- **Negating one component of a separation.** `negAt τ v` is `v` with its `τ`-coordinate replaced by
 its negative, every other coordinate fixed — the componentwise version of `lag ↦ -lag`.
 
-DERIVED: nothing numeric; the negation is `Fin n`'s own, which is modular, so it is the circle
-inversion of that coordinate rather than a sign convention. -/
+The negation is `Fin n`'s own, which is modular, so it is the circle inversion of that coordinate
+rather than a sign convention.
+
+DERIVED: no numeral. -/
 def negAt {d n : ℕ} (τ : Fin d) (v : Site d n) : Site d n :=
   Function.update v τ (-(v τ))
 
-/-- The reflection at constant zero IS the componentwise negation. -/
+/-- The site reflection at constant zero is the componentwise negation `negAt`.
+
+DERIVED: the `0` is the reflection constant at which `reflSite τ c x = c - x τ` reduces to a plain
+negation; it is not a choice of origin but the value that makes the two definitions agree. -/
 theorem reflSite_zero_eq_negAt (τ : Fin d) (v : Site d n) :
     reflSite τ (0 : Fin n) v = negAt τ v := by
   funext j
@@ -460,14 +487,20 @@ theorem reflSite_zero_eq_negAt (τ : Fin d) (v : Site d n) :
   · subst h; simp [reflSite, negAt]
   · simp [reflSite, negAt, Function.update_of_ne h]
 
-/-- Negating a component of the origin leaves the origin. -/
+/-- Negating any one component of the origin leaves the origin.
+
+DERIVED: both `0`s are the coordinate value of the origin site; the identity holds because `-0 = 0`
+in `Fin n`. -/
 theorem negAt_origin (τ : Fin d) : negAt (n := n) τ (fun _ => 0 : Site d n) = (fun _ => 0) := by
   funext j
   by_cases h : j = τ
   · subst h; simp [negAt]
   · simp [negAt, Function.update_of_ne h]
 
-/-- Negating the one nonzero component of a one-axis separation is negating its lag. -/
+/-- Negating the `τ`-component of a one-axis separation along `τ` is negating its lag:
+`negAt τ (siteAtHyper τ lag) = siteAtHyper τ (-lag)`.
+
+DERIVED: no numeral. -/
 theorem negAt_siteAtHyper (τ : Fin d) (lag : Fin n) :
     negAt (n := n) τ (siteAtHyper τ lag) = siteAtHyper τ (-lag) := by
   funext j
@@ -475,14 +508,17 @@ theorem negAt_siteAtHyper (τ : Fin d) (lag : Fin n) :
   · subst h; simp [negAt, siteAtHyper]
   · simp [negAt, siteAtHyper, Function.update_of_ne h]
 
-/-- **COMPONENTWISE CIRCLE SYMMETRY AT A GENERAL SEPARATION.**
+/-- **Componentwise circle symmetry at a general separation.**
 
-Negating ANY ONE coordinate of the separation, in a direction transverse to the plaquette plane,
-leaves the correlation unchanged — at every extent, every real coupling and every plane. No
-hypothesis on the parity of the component, on the sign of the coupling, or on the other components.
+Negating any one coordinate of the separation, in a direction `τ` transverse to the plaquette plane,
+leaves the correlation unchanged — at every extent, every gauge rank, every real coupling and every
+plane. The two hypotheses are `μ ≠ τ` and `ν ≠ τ`; there is no hypothesis on the parity of the
+component, on the sign of the coupling, or on the other components.
 
-`MomentShape.corrHyper_neg` is the special case in which the separation had only that one component
-to begin with (`corrSep_siteAtHyper_neg` below). -/
+`MomentShape.corrHyper_neg` is the case in which the separation has only that one component
+(`corrSep_siteAtHyper_neg` below).
+
+DERIVED: no numeral. -/
 theorem corrSep_negAt (Nc : ℕ) {d n : ℕ} [NeZero n] {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ)
     (β : ℝ) (v : Site d n) :
     corrSep Nc μ ν β (negAt τ v) = corrSep Nc μ ν β v := by
@@ -494,7 +530,10 @@ theorem corrSep_negAt (Nc : ℕ) {d n : ℕ} [NeZero n] {μ ν τ : Fin d} (hμ 
     negAt_origin (n := n) τ] at h
   exact h
 
-/-- The one-axis case, which is `MomentShape.corrHyper_neg` recovered from the general statement. -/
+/-- The one-axis case: `corrSep` at the one-axis separation with lag `-lag` equals the one at lag
+`lag`. This is `MomentShape.corrHyper_neg` recovered from `corrSep_negAt`.
+
+DERIVED: no numeral. -/
 theorem corrSep_siteAtHyper_neg (Nc : ℕ) {d n : ℕ} [NeZero n] {μ ν τ : Fin d}
     (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ) (lag : Fin n) :
     corrSep Nc μ ν β (siteAtHyper τ (-lag)) = corrSep Nc μ ν β (siteAtHyper τ lag) := by
@@ -504,35 +543,38 @@ theorem corrSep_siteAtHyper_neg (Nc : ℕ) {d n : ℕ} [NeZero n] {μ ν τ : Fi
 end Circle
 
 /-- **Componentwise circle symmetry at the Clay parameters.** Either transverse component of a
-four-vector separation may be negated.
+four-vector separation may be negated, at every extent and every real coupling.
 
-DERIVED: `3` is `SU(3)` and `0`, `1` span `corrVec`'s plane; `τ` is the caller's and the two
-hypotheses say exactly that it is one of the two remaining directions. -/
+DERIVED: `0` and `1` are `corrVec`'s plane, and the two hypotheses `0 ≠ τ`, `1 ≠ τ` say exactly that
+`τ` is one of the two remaining directions; `4` in `Fin 4` and `Site 4 n` is the lattice dimension.
+The `3` of `SU(3)` is in `corrVec`'s definition, not in this statement. -/
 theorem corrVec_negAt (n : ℕ) [NeZero n] {τ : Fin 4} (h0 : (0 : Fin 4) ≠ τ) (h1 : (1 : Fin 4) ≠ τ)
     (β : ℝ) (v : Site 4 n) :
     corrVec n β (negAt τ v) = corrVec n β v := by
   show corrSep (d := 4) 3 0 1 β (negAt τ v) = corrSep (d := 4) 3 0 1 β v
   exact corrSep_negAt (d := 4) 3 h0 h1 β v
 
-/-! ## Part 6 — nonnegativity and positive mass: exactly the single-axis separations
+/-! ## Part 6 — nonnegativity and positive mass, at the single-axis separations
 
 Reflection positivity through one hyperplane pairs a plaquette observable with its own mirror image,
-and the mirror of a site differs from it in ONE coordinate. So what the pairing bounds below is the
-correlation at a separation supported on the reflection axis, and the statements below say no more
-than that. The module docstring records what would be needed to go further. -/
+and the mirror of a site differs from it in one coordinate. So the pairing bounds the correlation at
+a separation supported on the reflection axis, and the statements below say no more than that. -/
 
 section Nonneg
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- **NONNEGATIVE AT A SINGLE-AXIS SEPARATION**, at every real coupling, on an even-extent lattice and
-at an even component. This is `ReflectionStrong.corrHyper_nonneg_even_lag_of_module` transported to
-the general-separation object, and it is the FULL reach of the one-plaquette reflection argument: the
-separation has one nonzero coordinate because a reflection through one hyperplane moves one
-coordinate.
+/-- **Nonnegative at a single-axis separation with even lag**, at every real coupling, on an
+even-extent lattice `n = 2 * m` with `0 < m`, gauge rank `Nc ≠ 0`, and both plane directions
+different from the lag axis `τ`. This is
+`ReflectionStrong.corrHyper_nonneg_even_lag_of_module` transported to the general-separation object.
+The separation has one nonzero coordinate because a reflection through one hyperplane moves one
+coordinate; nothing here bounds `corrSep` at a separation with two or more nonzero components.
 
-DERIVED: `2` in `n = 2 * m` is the two halves a reflection hyperplane cuts the periodic lattice into,
-which is the reflection geometry's own and not a choice made here. -/
+DERIVED: the statement's numerals are the `0` in `Nc ≠ 0`, the `2` in `n = 2 * m`, the `0` in
+`0 < m` and the `0` the correlation is bounded below by. The `2` is the two halves a reflection
+hyperplane cuts the periodic lattice into, the reflection geometry's own; `Even lag.val` carries no
+numeral of its own. -/
 theorem corrSep_nonneg_even_single_axis (hN : Nc ≠ 0) (τ : Fin d) (m : ℕ) (hm : n = 2 * m)
     (hm0 : 0 < m) {μ ν : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ)
     {lag : Fin n} (hlag : Even lag.val) :
@@ -541,15 +583,15 @@ theorem corrSep_nonneg_even_single_axis (hN : Nc ≠ 0) (τ : Fin d) (m : ℕ) (
 
 end Nonneg
 
-/-- **The Clay correlation is nonnegative at every single-axis, even separation, along EITHER
-transverse direction**, at every real coupling.
+/-- **The Clay correlation is nonnegative at a single-axis separation with even lag, along either
+transverse direction**, at even extent `Nap + 1 = 2 * m` with `0 < m` and at every real coupling.
+The axis `τ` is quantified over and constrained only by `0 ≠ τ` and `1 ≠ τ`, so it may be either
+direction transverse to `corrVec`'s plane.
 
-That it holds along direction `3` as well as direction `2` is the axis symmetry doing work: it is
-`corrSep_nonneg_even_single_axis` at `τ = 3`, and `corrVec_siteAtHyper_three_eq_two` says the two
-numbers are equal rather than merely both nonnegative.
-
-DERIVED: `3` is `SU(3)`, whose rank is nonzero; `2` in `Nap + 1 = 2 * m` is the two halves of the
-reflection geometry; `0` and `1` are `corrVec`'s plane, and the hypotheses say `τ` is neither. -/
+DERIVED: the statement's numerals are the `1` in `Nap + 1`, the lag arity and the extent, the `2` in
+`2 * m` saying that extent is even, the `0` in `0 < m`, the `4` of `Fin 4` and the `0` and `1` of
+`corrVec`'s plane appearing in the hypotheses on `τ`, and the `0` the correlation is bounded below
+by. The `3` of `SU(3)` is in the proof, not in the statement. -/
 theorem corrVec_nonneg_even_single_axis (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {τ : Fin 4} (h0 : (0 : Fin 4) ≠ τ) (h1 : (1 : Fin 4) ≠ τ)
     {lag : Fin (Nap + 1)} (hlag : Even lag.val) :
@@ -557,14 +599,16 @@ theorem corrVec_nonneg_even_single_axis (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm
   show (0 : ℝ) ≤ corrSep (d := 4) 3 0 1 β (siteAtHyper τ lag)
   exact corrSep_nonneg_even_single_axis (Nc := 3) (by norm_num) τ m hm hm0 h0 h1 β hlag
 
-/-- **POSITIVE MASS AT ZERO SEPARATION**, at every extent and every real coupling: the correlation at
-the zero four-vector is the plaquette-energy VARIANCE, strictly positive by
-`PlaqVariance.corrClay_zero_pos`. So the general-separation object is not identically zero and the
-nonnegativity statements above are not vacuous.
+/-- **Strictly positive at zero separation**, at every extent and every real coupling: the
+correlation at the zero four-vector is the plaquette-energy variance, strictly positive by
+`PlaqVariance.corrClay_zero_pos`. So `corrVec` is not identically zero and the nonnegativity
+statements above are not vacuous.
 
-DERIVED: `2` is the direction whose zero lag is used to name the zero separation; by
-`LogConvex.siteAtHyper_zero` the site is the origin whichever direction is named, so nothing depends
-on it. -/
+DERIVED: the statement's numerals are the `0` the correlation is bounded below by, the `1` in `N + 1`
+making the extent positive so that `Fin` is inhabited, the `4` of `Site 4 (N + 1)`, the lattice
+dimension, and the `0` of the origin site `fun _ => 0`, which is the zero separation. The direction
+`2` used in the proof to name that site is immaterial: by `LogConvex.siteAtHyper_zero` the site at
+lag zero is the origin whichever direction is named. -/
 theorem corrVec_zero_pos (N : ℕ) (β : ℝ) : 0 < corrVec (N + 1) β (fun _ => 0 : Site 4 (N + 1)) := by
   have hzero : siteAtHyper (d := 4) (n := N + 1) (2 : Fin 4) 0 = (fun _ => 0 : Site 4 (N + 1)) :=
     MassGap.LogConvex.siteAtHyper_zero (2 : Fin 4)

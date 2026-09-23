@@ -3,62 +3,51 @@ import MassGap.WilsonTransfer
 import MassGap.VolumeRate
 
 /-!
-# MassGap.HalfLineTransfer — why a shift-built transfer operator on a periodic lattice carries no gap
+# MassGap.HalfLineTransfer — the lattice shift as a transfer operator on a periodic lattice
 
-`WilsonTransfer` proved three of the five fields of `Transfer.TransferData` on the genuine Wilson
-measure and exhibited ONE link whose image under the lattice shift leaves the slab
-(`shift_not_stable_on_slab`). That witness leaves two questions open, and this file answers both.
+`Transfer.TransferData` carries six own fields beyond `ReflForm` — `T`, `vac`, `T_symm`,
+`T_contract`, `T_vac` and `vac_norm`. On the Wilson measure `WilsonTransfer` supplies ingredients for
+three of them: `shiftObs` as `T`, `reflForm_shiftObs_symm` as `T_symm`, and `shiftObs_one` with
+`expect_shift_invariant` toward `T_vac`. It assembles no `TransferData`, and
+`shift_not_stable_on_slab` exhibits one link whose image under the lattice shift leaves the slab.
+This file proves two further statements about that shift.
 
-## 1. The shift has order `n`, so no module can carry a gap
+## 1. `n` steps of the shift is the identity
 
-`shiftObs_pow_period`: `(shiftObs τ)^n = id` on EVERY observable of the periodic lattice, because
-`n` steps along `τ` is the identity on sites. There is no hypothesis on the module, the coupling or
-the reflection.
+`shiftObs_pow_period`: `(shiftObs τ)^n F = F` for every observable `F` of the lattice of extent `n`,
+because `n` steps along `τ` is the identity on sites. There is no hypothesis on the module, the
+coupling or the reflection.
 
-`no_rate_below_one_of_finite_order` turns that into a statement about the object B5 wants. A
-`Transfer.TransferData` whose `T` has finite order `p` admits NO per-step contraction factor
-`ρ₁ < 1` on the vacuum complement: `VolumeRate.norm_Tq_pow_le` gives `‖T^p x‖ ≤ ρ₁^p‖x‖` while
-`T^p = id` gives `‖T^p x‖ = ‖x‖`, so `x = 0`. `no_rate_of_shift_transfer` is the same statement for
-any `TransferData` on a submodule of Wilson observables whose `T` is the one-step shift.
+`no_rate_below_one_of_finite_order` takes a `Transfer.TransferData` whose `T` satisfies `T^p = id` for
+some `p > 0` and a per-step contraction factor `ρ₁ < 1` on the vacuum complement, and concludes that
+the complement is zero: `VolumeRate.norm_Tq_pow_le` gives `‖T^p x‖ ≤ ρ₁^p‖x‖` while `T^p = id` gives
+`‖T^p x‖ = ‖x‖`. `no_rate_of_shift_transfer` is the same statement for any `TransferData` on a
+submodule of Wilson observables whose `T` is the one-step shift, at any extent and on any module.
 
-**So the spectral route to `ρ(2) ≤ K·ρ(0)` cannot be run with the lattice shift as `T` on a lattice
-periodic in `τ`, at any extent, on any module, however the module is chosen.** The eigenvalues of
-such a `T` are real (self-adjointness) and satisfy `λ^n = 1`, hence `λ = ±1`;
-`VolumeRate.rp_sub_geometric` then delivers `ρ₁ = 1` and nothing else. This is a stronger obstruction
-than the failure of shift-stability, and it is independent of it.
+## 2. Shift-stable submodules of the slab algebra
 
-## 2. Shift-stability, for ALL submodules rather than for support sets
+`const_of_shift_stable`: at even extent `n = 2m` with `2 ≤ m`, every submodule of the slab algebra
+`LogConvex.localObs (blkS τ a m) (blkR τ a m)` that is stable under `shiftObs τ` consists of constant
+observables, and `shiftObs_eq_self_of_shift_stable` says the shift acts on such a module as the
+identity.
 
-`const_of_shift_stable`: at `n = 2m` with `2 ≤ m`, EVERY submodule of the slab algebra
-`LogConvex.localObs (blkS τ a m) (blkR τ a m)` that is stable under `shiftObs τ` consists of CONSTANT
-observables, and `shiftObs_eq_self_of_shift_stable` says the shift acts on it as the identity.
+The argument quantifies over submodules, not over support sets. Determination by a set of links is
+closed under intersection (`detBy_inter`, proved by splicing two configurations along the set).
+Stability pushes a determination set through every power of the shift (`detBy_iterate`), and no link
+keeps its whole `τ`-orbit inside the slab (`orbitCore_eq_empty`): an axis link is admitted only below
+level `m` and its orbit meets level `m`, and a transverse link is admitted only up to level `m` and
+its orbit meets level `m + 1`, which lies below the extent because `2 ≤ m`. Determination by the empty
+set is constancy.
 
-The argument is not about support sets. An observable has a smallest set of links it is determined
-by, because determination is closed under intersection (`detBy_inter`, proved by splicing two
-configurations along the set). Stability pushes that set through every power of the shift
-(`detBy_iterate`), and the links whose whole `τ`-orbit stays inside the slab are none
-(`orbitCore_eq_empty`): an axis link admitted below level `m` meets level `m`, and a transverse link
-admitted up to level `m` meets level `n − 1 = 2m − 1 > m`. So the smallest determining set is empty
-and the observable is constant.
+`2 ≤ m` is not slack. At `n = 2` the admitted transverse levels `{0, m} = {0, 1}` are the whole cycle,
+so `blkR τ a 1`, every transverse link, is shift-stable inside the slab
+(`blkR_shift_stable_of_extent_two`). `Fin 2` carries no lag `2`, and `shiftObs_pow_period` still
+applies at that extent. Extent four has `m = 2` and is covered by `const_of_shift_stable`.
 
-`2 ≤ m` is sharp, not an artefact. At `n = 2` the transverse level set `{0, m} = {0, 1}` is already
-the whole cycle, so `blkR τ a 1` — all transverse links — IS shift-stable inside the slab
-(`blkR_shift_stable_of_extent_two`). That extent carries no lag `2` at all (`Fin 2` has no such
-index) and the shift there still has order two, so part 1 applies to it unchanged. Extent four, the
-extent `Complete.wilsonCorrAt 3` is defined at, has `m = 2` and is covered by the theorem.
-
-## What this says about the route
-
-Both obstructions point the same way and neither can be worked around inside this lattice: what a
-transfer operator needs is a `τ`-direction with infinitely many levels, so that the shift is not of
-finite order and a half-line of levels exists to be stable. Nothing in this development carries an
-infinite-volume Gibbs measure — `InfiniteVolume` takes subsequential limits of finite-volume NUMBERS,
-not of measures — so that is the cost, and it is a new measure-theoretic foundation rather than a
-change of block.
-
-Everything below is stated at an arbitrary reflection constant, arbitrary `β` and arbitrary module,
-so nothing here has to be restated when the geometry changes; what changes is that
-`shiftObs_pow_period` stops being true, which is the point.
+Scope. Every statement is at an arbitrary reflection constant, arbitrary `β` and arbitrary module, on
+a lattice periodic in `τ` of extent `n`. Nothing here is stated for an infinite `τ`-direction, and
+nothing in this development carries an infinite-volume Gibbs measure: `InfiniteVolume` takes
+subsequential limits of finite-volume numbers, not of measures.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python research/code/lean_build.py build MassGap.HalfLineTransfer`.
@@ -71,14 +60,16 @@ open MassGap MassGap.Reflect MassGap.WilsonHypercubic MassGap.CompactGauge
 open MassGap.ActionSplit MassGap.LogConvex MassGap.WilsonTransfer
 open MassGap.Transfer
 
-/-! ## Part 1 — the lattice shift has order `n` -/
+/-! ## Part 1 — `n` steps of the lattice shift is the identity -/
 
 section Order
 
-/-- **Every level is reachable**: from level `j` some number of steps below the extent lands on
-level `t`. The orbit of the shift meets every level, which is what Part 4 reads off it.
+/-- From any level `j` below the extent, some step count `k < n` satisfies `(j + k) % n = t` for any
+target level `t` below the extent. The witness is `(n + t - j) % n`. Part 4 uses it to send an orbit
+to a chosen level.
 
-DERIVED: no numeral; `j` and `t` are levels of the caller's lattice. -/
+DERIVED: the `0` is the positivity of the extent, without which the modulus is not defined; `j` and
+`t` are levels of the caller's lattice. -/
 theorem exists_step_to_level {n : ℕ} (hn : 0 < n) (j t : ℕ) (hj : j < n) (ht : t < n) :
     ∃ k < n, (j + k) % n = t := by
   refine ⟨(n + t - j) % n, Nat.mod_lt _ hn, ?_⟩
@@ -88,10 +79,10 @@ theorem exists_step_to_level {n : ℕ} (hn : 0 < n) (j t : ℕ) (hj : j < n) (ht
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **`k` steps along `τ` add `k` to the `τ`-coordinate.** The site shift only ever touches one
-coordinate, so its iterate is a single `Function.update`.
+/-- `k` steps of the site shift along `τ` add `fcast n k` to the `τ`-coordinate and leave the others
+alone: the iterate is a single `Function.update`. Proved by induction on `k`.
 
-DERIVED: the `1` inside `shift` is one lattice step; `k` is the caller's. -/
+DERIVED: no numeral. -/
 theorem shift_iterate (τ : Fin d) (k : ℕ) (x : Site d n) :
     (shift τ)^[k] x = Function.update x τ (x τ + fcast n k) := by
   induction k with
@@ -108,12 +99,19 @@ theorem shift_iterate (τ : Fin d) (k : ℕ) (x : Site d n) :
       congr 1
       rw [← fcast_one (n := n), fcast_add]
 
-/-- **`n` steps along `τ` is the identity on sites.** The `τ`-coordinate returns to itself because
-`fcast n n = 0`; that is the whole content of periodicity in `τ`. -/
+/-- `n` steps of the site shift along `τ` is the identity. The `τ`-coordinate returns to itself
+because `fcast n n = 0`. The statement is that `n` steps act trivially; it does not say `n` is the
+least such count.
+
+DERIVED: no numeral. -/
 theorem shift_iterate_period (τ : Fin d) (x : Site d n) : (shift τ)^[n] x = x := by
   rw [shift_iterate, fcast_self, add_zero, Function.update_eq_self]
 
-/-- Iterating the shift on links moves the base site and leaves the direction alone. -/
+/-- Iterating the link shift moves the base site by the iterated site shift and leaves the direction
+alone. Induction on `k`.
+
+DERIVED: no numeral; the `.1` and `.2` are the projections of a link onto its direction and its base
+site, not magnitudes. -/
 theorem shiftLink_iterate (τ : Fin d) (k : ℕ) (l : Link d n) :
     (shiftLink τ)^[k] l = (l.1, (shift τ)^[k] l.2) := by
   induction k with
@@ -123,19 +121,26 @@ theorem shiftLink_iterate (τ : Fin d) (k : ℕ) (l : Link d n) :
         Function.iterate_succ_apply' (shift τ)]
       rfl
 
-/-- The direction of an iterated shift is untouched. -/
+/-- The direction component of an iterated link shift is the original direction, read off
+`shiftLink_iterate`.
+
+DERIVED: no numeral; the `.1` is the projection of a link onto its direction. -/
 theorem shiftLink_iterate_fst (τ : Fin d) (k : ℕ) (l : Link d n) :
     ((shiftLink τ)^[k] l).1 = l.1 := by
   rw [shiftLink_iterate]
 
-/-- **The link shift has order `n`.** -/
+/-- `n` steps of the link shift is the identity on links, from `shiftLink_iterate` and
+`shift_iterate_period`. It does not say `n` is the least such count.
+
+DERIVED: no numeral. -/
 theorem shiftLink_iterate_period (τ : Fin d) (l : Link d n) : (shiftLink τ)^[n] l = l := by
   rw [shiftLink_iterate, shift_iterate_period]
 
-/-- **The level after `k` steps is `(level + k) mod n`.** The one arithmetic fact the orbit argument
-needs, and the reason the orbit of any link visits every level.
+/-- The level of a site after `k` steps of the shift is `(level + k) % n`, measured from the base point
+`a`. This is the arithmetic the orbit argument of Part 4 runs on; `lv_add_fcast` and `fcast_mod` carry
+the modular arithmetic.
 
-DERIVED: no numeral of its own; `lv_add_fcast` and `fcast_mod` carry the modular arithmetic. -/
+DERIVED: no numeral. -/
 theorem lv_shift_iterate (τ : Fin d) (a : Fin n) (k : ℕ) (x : Site d n) :
     lv a (((shift τ)^[k] x) τ) = (lv a (x τ) + k) % n := by
   have h1 : ((shift τ)^[k] x) τ = x τ + fcast n k := by
@@ -145,13 +150,19 @@ theorem lv_shift_iterate (τ : Fin d) (a : Fin n) (k : ℕ) (x : Site d n) :
     rw [fcast_mod, ← fcast_add, ← add_assoc, ← eq_add_lv]
   rw [h1, h2, lv_add_fcast a _ (Nat.mod_lt _ (NeZero.pos n))]
 
-/-- The level of an iterated link shift. -/
+/-- The level of an iterated link shift's base site is `(level + k) % n`: `lv_shift_iterate` applied
+through `shiftLink_iterate`.
+
+DERIVED: no numeral; the `.2` is the projection of a link onto its base site. -/
 theorem lv_shiftLink_iterate (τ : Fin d) (a : Fin n) (k : ℕ) (l : Link d n) :
     lv a (((shiftLink τ)^[k] l).2 τ) = (lv a (l.2 τ) + k) % n := by
   rw [shiftLink_iterate]
   exact lv_shift_iterate τ a k l.2
 
-/-- **`n` steps along `τ` is the identity on configurations.** -/
+/-- `k` steps of the configuration shift precompose the configuration with `k` steps of the link
+shift. Induction on `k`; the period statement is the separate `shiftConf_period`.
+
+DERIVED: no numeral. -/
 theorem shiftConf_iterate {G : Type} (τ : Fin d) (k : ℕ) :
     ∀ U : Link d n → G, (shiftConf τ)^[k] U = fun l => U ((shiftLink τ)^[k] l) := by
   induction k with
@@ -163,7 +174,11 @@ theorem shiftConf_iterate {G : Type} (τ : Fin d) (k : ℕ) :
       show (shiftConf τ U) ((shiftLink τ)^[k] l) = U ((shiftLink τ)^[k + 1] l)
       rw [shiftConf_apply, ← Function.iterate_succ_apply' (shiftLink τ)]
 
-/-- **The configuration shift has order `n`.** -/
+/-- `n` steps of the configuration shift is the identity, for a configuration valued in any type `G`.
+It composes `shiftConf_iterate` with `shiftLink_iterate_period`, and does not say `n` is the least
+such count.
+
+DERIVED: no numeral. -/
 theorem shiftConf_period {G : Type} (τ : Fin d) (U : Link d n → G) :
     (shiftConf τ)^[n] U = U := by
   rw [shiftConf_iterate]
@@ -172,7 +187,10 @@ theorem shiftConf_period {G : Type} (τ : Fin d) (U : Link d n → G) :
 
 variable {N : ℕ}
 
-/-- A power of the shift operator, read on configurations. -/
+/-- The `k`-th power of the shift operator on observables acts by precomposing with `k` steps of the
+configuration shift. Induction on `k`.
+
+DERIVED: no numeral. -/
 theorem shiftObs_pow_apply (τ : Fin d) (k : ℕ)
     (F : (Link d n → MassGap.SUN.SU N) → ℝ) :
     ((shiftObs (n := n) (N := N) τ) ^ k) F = fun U => F ((shiftConf τ)^[k] U) := by
@@ -187,12 +205,12 @@ theorem shiftObs_pow_apply (τ : Fin d) (k : ℕ)
       show F ((shiftConf τ)^[k] (shiftConf τ U)) = F ((shiftConf τ)^[k + 1] U)
       rw [Function.iterate_succ_apply]
 
-/-- **THE SHIFT OPERATOR HAS ORDER `n` ON EVERY OBSERVABLE.**
+/-- The `n`-th power of the shift operator is the identity on every observable of a lattice of extent
+`n`, where `n` is the extent the observable's configuration type is indexed by. There is no hypothesis
+on the module, the coupling or the reflection: it follows from `shiftObs_pow_apply` and
+`shiftConf_period`. It does not say `n` is the least power that acts trivially.
 
-No hypothesis: not on the module, not on the coupling, not on the reflection. It is periodicity of
-the lattice in `τ` and nothing else, and it is what makes a shift-built transfer operator gapless.
-
-DERIVED: `n` is the extent — the caller's lattice, not a choice made here. -/
+DERIVED: no numeral. -/
 theorem shiftObs_pow_period (τ : Fin d) (F : (Link d n → MassGap.SUN.SU N) → ℝ) :
     ((shiftObs (n := n) (N := N) τ) ^ n) F = F := by
   rw [shiftObs_pow_apply]
@@ -207,7 +225,10 @@ section FiniteOrder
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- A power of the transfer operator, read on a representative. -/
+/-- The `k`-th power of `TransferData.Tq` on a GNS class is the class of the `k`-th power of `T` on a
+representative. Induction on `k`, from `TransferData.Tq_mk`.
+
+DERIVED: no numeral. -/
 theorem Tq_pow_mk (D : TransferData A) (k : ℕ) (x : A) :
     ((TransferData.Tq D) ^ k) (GNS.mk D.toReflForm x)
       = GNS.mk D.toReflForm ((D.T ^ k) x) := by
@@ -221,17 +242,18 @@ theorem Tq_pow_mk (D : TransferData A) (k : ℕ) (x : A) :
         rw [pow_succ']; rfl
       rw [h1, ih, h2, TransferData.Tq_mk]
 
-/-- **A TRANSFER OPERATOR OF FINITE ORDER ADMITS NO RATE BELOW ONE.**
+/-- For a `TransferData` whose `T` satisfies `T^p = id` at some `p > 0`, a per-step contraction
+`‖Tq y‖ ≤ ρ₁‖y‖` on the vacuum complement with `0 ≤ ρ₁ < 1` forces every vector of that complement to
+be zero. `VolumeRate.norm_Tq_pow_le` iterates the per-step bound to `‖Tq^p x‖ ≤ ρ₁^p‖x‖`, and
+`Tq_pow_mk` with `hper` makes the left-hand side `‖x‖`.
 
-If `T^p = id` for some `p > 0`, then a per-step contraction `‖T y‖ ≤ ρ₁‖y‖` on the vacuum complement
-with `ρ₁ < 1` forces that complement to be zero. `VolumeRate.norm_Tq_pow_le` iterates the per-step
-bound to `‖T^p x‖ ≤ ρ₁^p‖x‖`; finite order says the left side is `‖x‖`.
+The module `A` is an arbitrary real vector space. The proof uses `T_symm` through `norm_Tq_pow_le` and
+nothing else about the form.
 
-This is the whole obstruction to the spectral route on a periodic lattice, in the abstract. It uses
-`T_symm` (through `norm_Tq_pow_le`) and nothing else about the form.
-
-DERIVED: the `1` is the vacuum's own eigenvalue, carried through `ρ₁ < 1`; `p` is the caller's
-order. -/
+DERIVED: the `0` in `0 < p` is what makes `ρ₁^p` strictly below one; the `0` in `0 ≤ ρ₁` is the sign of
+a norm ratio; the `1` in `ρ₁ < 1` is the vacuum's own eigenvalue, the value a contraction must beat;
+the `0`s in `inner ℝ D.vacGNS y = 0` and `x = 0` are the orthogonality to the vacuum and the
+conclusion. -/
 theorem no_rate_below_one_of_finite_order (D : TransferData A) {p : ℕ} (hp : 0 < p)
     (hper : ∀ x : A, (D.T ^ p) x = x)
     {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1)
@@ -255,7 +277,10 @@ section ShiftTransfer
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- A power of a transfer operator that acts as the shift on representatives. -/
+/-- If `D.T` acts as `shiftObs τ` on representatives, then `D.T ^ k` acts as `(shiftObs τ) ^ k` on
+them. Induction on `k`, carrying the coercion out of the submodule at each step.
+
+DERIVED: no numeral. -/
 theorem T_pow_coe_of_shift
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (D : TransferData ↥M) (τ : Fin d)
@@ -274,18 +299,17 @@ theorem T_pow_coe_of_shift
         rw [pow_succ']; rfl
       rw [h1, hT, ih, h2]
 
-/-- **NO TRANSFER OPERATOR BUILT FROM THE LATTICE SHIFT HAS A GAP, ON ANY MODULE.**
+/-- For any submodule `M` of the Wilson observables at extent `n`, any `TransferData` on `M` whose `T`
+acts as the one-step shift on representatives, and any per-step contraction factor `ρ₁ < 1` on the
+vacuum complement, that complement is zero. `shiftObs_pow_period` supplies `T^n = id` through
+`T_pow_coe_of_shift`, and `no_rate_below_one_of_finite_order` does the rest.
 
-Take any submodule `M` of the Wilson observables, any `Transfer.TransferData` on it whose `T` is the
-one-step shift, and any per-step contraction factor `ρ₁ < 1` on the vacuum complement: the vacuum
-complement is zero. `shiftObs_pow_period` supplies the order, `no_rate_below_one_of_finite_order`
-does the rest.
+`M` is arbitrary, so the statement is not about shift-stability on one block; it holds at every extent
+`n` with `NeZero n`.
 
-The module is arbitrary. So this is not the failure of shift-stability on one block — it says that
-even if a shift-stable positive module were found, `VolumeRate.rp_sub_geometric` applied to it would
-deliver `ρ₁ = 1` and the lag-two bound `ρ(2) ≤ K·ρ(0)` with `K < 1` would not follow.
-
-DERIVED: `n` is the extent; the `1` is the vacuum eigenvalue. -/
+DERIVED: the `0` in `0 ≤ ρ₁` is the sign of a norm ratio; the `1` in `ρ₁ < 1` is the vacuum's own
+eigenvalue; the `0`s in `inner ℝ D.vacGNS y = 0` and `x = 0` are the orthogonality to the vacuum and
+the conclusion. -/
 theorem no_rate_of_shift_transfer
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (D : TransferData ↥M) (τ : Fin d)
@@ -307,18 +331,22 @@ section Determination
 
 variable {ι : Type} {Ω : Type}
 
-/-- **`F` is determined by the links in `E`** — the locality clause of `LogConvex.localObs`, with the
-two blocks merged and the measurability and boundedness clauses dropped, because the argument below
-uses only this one. -/
+/-- `F` is determined by the links in `E`: any two configurations agreeing on `E` give `F` the same
+value. It is the locality clause of `LogConvex.localObs` with the two blocks merged and the
+measurability and boundedness clauses dropped, which is all Part 4 uses.
+
+DERIVED: no numeral. -/
 def DetBy (E : Set ι) (F : (ι → Ω) → ℝ) : Prop :=
   ∀ U V : ι → Ω, (∀ i ∈ E, U i = V i) → F U = F V
 
-/-- **DETERMINATION IS CLOSED UNDER INTERSECTION** — the fact that makes "the smallest set an
-observable is determined by" exist, and the only non-formal step in Part 4.
+/-- Determination is closed under intersection: if `F` is determined by `E₁` and by `E₂`, it is
+determined by `E₁ ∩ E₂`.
 
-Given `U` and `V` agreeing on `E₁ ∩ E₂`, splice them: `W` follows `U` on `E₁` and `V` off it. Then
-`W` agrees with `U` on `E₁`, and with `V` on `E₂` — on `E₂ \ E₁` because it IS `V` there, and on
-`E₂ ∩ E₁` because `U` and `V` agree there. So `F U = F W = F V`. -/
+Given `U` and `V` agreeing on `E₁ ∩ E₂`, splice them: `W` follows `U` on `E₁` and `V` off it. Then `W`
+agrees with `U` on `E₁`, and with `V` on `E₂` — on `E₂ \ E₁` because it is `V` there, and on `E₂ ∩ E₁`
+because `U` and `V` agree there. So `F U = F W = F V`.
+
+DERIVED: no numeral. -/
 theorem detBy_inter {E₁ E₂ : Set ι} {F : (ι → Ω) → ℝ}
     (h1 : DetBy E₁ F) (h2 : DetBy E₂ F) : DetBy (E₁ ∩ E₂) F := by
   classical
@@ -333,14 +361,20 @@ theorem detBy_inter {E₁ E₂ : Set ι} {F : (ι → Ω) → ℝ}
     · simp only [if_neg h]
   exact hUW.trans hWV
 
-/-- An observable determined by nothing is constant. -/
+/-- An observable determined by the empty set takes the same value on any two configurations: the
+agreement hypothesis of `DetBy` is vacuous there.
+
+DERIVED: no numeral. -/
 theorem const_of_detBy_empty {F : (ι → Ω) → ℝ} (h : DetBy (∅ : Set ι) F) (U V : ι → Ω) :
     F U = F V :=
   h U V (fun i hi => absurd hi (by simp))
 
 variable [MeasurableSpace Ω]
 
-/-- Membership in the local module gives determination by the union of the two blocks. -/
+/-- An observable in `localObs S R` is determined by the union of the two blocks. It reads the locality
+clause of `localObs` and weakens the two agreement hypotheses to one over `S ∪ R`.
+
+DERIVED: no numeral. -/
 theorem detBy_of_mem_localObs [DecidableEq ι] {S R : Finset ι} {F : (ι → Ω) → ℝ}
     (hF : F ∈ localObs S R) : DetBy (↑(S ∪ R) : Set ι) F := by
   intro U V hUV
@@ -354,12 +388,12 @@ section Stable
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **THE SHIFTED OBSERVABLE'S DETERMINATION SET, PULLED BACK.** If one step of the shift is
-determined by `E`, the observable itself is determined by the preimage of `E`.
+/-- If `shiftObs τ F` is determined by `E`, then `F` is determined by `shiftLink τ ⁻¹' E`.
 
-The inverse of the shift is not introduced: `n − 1` further steps invert it
-(`shiftConf_period`), so the configuration `U` is exhibited as a shift of one built from `U`
-itself. -/
+No inverse shift is introduced: `n − 1` further steps invert one step (`shiftLink_iterate_period`), so
+each configuration is exhibited as a shift of one built from it.
+
+DERIVED: no numeral. -/
 theorem detBy_of_detBy_shiftObs (τ : Fin d) {E : Set (Link d n)}
     {F : (Link d n → MassGap.SUN.SU N) → ℝ} (h : DetBy E (shiftObs τ F)) :
     DetBy ((shiftLink τ) ⁻¹' E) F := by
@@ -386,8 +420,10 @@ theorem detBy_of_detBy_shiftObs (τ : Fin d) {E : Set (Link d n)}
   rw [hper']
   exact hl
 
-/-- **The links whose first `k` shifts all stay inside `X`.** The candidate determination set after
-`k` uses of stability. -/
+/-- The set of links whose first `k` shifts all stay inside `X`: `{l | ∀ j < k, (shiftLink τ)^[j] l ∈ X}`.
+It is the candidate determination set after `k` uses of stability.
+
+DERIVED: no numeral. -/
 def orbitCore (τ : Fin d) (X : Set (Link d n)) (k : ℕ) : Set (Link d n) :=
   {l | ∀ j < k, (shiftLink τ)^[j] l ∈ X}
 
@@ -404,7 +440,11 @@ theorem orbitCore_succ (τ : Fin d) (X : Set (Link d n)) (k : ℕ) :
 
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- Stability pushes membership through every power of the shift. -/
+/-- For a submodule `M` inside the slab algebra and stable under `shiftObs τ`, every `F ∈ M` is
+determined by the `k`-step preimage of the slab's link set, at every `k`. Induction on `k`, pushing
+`F` through `hMstab` and pulling the determination set back with `detBy_of_detBy_shiftObs`.
+
+DERIVED: no numeral. -/
 theorem detBy_iterate
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (hMsub : ∀ F ∈ M, F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -426,7 +466,11 @@ theorem detBy_iterate
       rw [Function.iterate_succ_apply]
       exact hl
 
-/-- The determination set after `k` uses of stability is the `k`-fold orbit core. -/
+/-- For the same `M`, every `F ∈ M` is determined by the `k`-fold orbit core of the slab's link set, at
+every `k`. Induction on `k`: `orbitCore_succ` splits the core as an intersection and `detBy_inter`
+combines the two determination statements.
+
+DERIVED: no numeral. -/
 theorem detBy_orbitCore
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (hMsub : ∀ F ∈ M, F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -446,14 +490,16 @@ theorem detBy_orbitCore
       rw [orbitCore_succ]
       exact detBy_inter (ih F hF) (detBy_iterate τ a m hMsub hMstab k F hF)
 
-/-- **No link keeps its whole `τ`-orbit inside the slab**, once the extent is at least four.
+/-- At even extent `n = 2m` with `2 ≤ m`, the `n`-fold orbit core of the slab's link set is empty: no
+link keeps its whole `τ`-orbit inside the slab.
 
-An axis link is admitted only strictly below level `m`, and its orbit visits level `m`; a transverse
-link is admitted only up to level `m`, and its orbit visits level `m + 1`, which is below the extent
-exactly because `2 ≤ m`. Both targets are read off `mem_blkS_union_blkR`.
+An axis link is admitted only strictly below level `m`, and `exists_step_to_level` sends its orbit to
+level `m`; a transverse link is admitted only up to level `m`, and its orbit is sent to level `m + 1`,
+which is below the extent because `2 ≤ m`. Both targets are read off `mem_blkS_union_blkR`.
 
-DERIVED: `m` and `m + 1` are the first levels the union refuses for the two kinds of link; neither is
-chosen. -/
+DERIVED: the `2` in `n = 2 * m` makes the extent twice the slab width, and the `2` in `2 ≤ m` is what
+puts level `m + 1` below the extent — the two levels the union refuses for the two kinds of link are
+`m` and `m + 1`, neither chosen. -/
 theorem orbitCore_eq_empty (hm : n = 2 * m) (hm2 : 2 ≤ m) :
     orbitCore τ (↑(blkS τ a m ∪ blkR τ a m) : Set (Link d n)) n = (∅ : Set (Link d n)) := by
   have hn : 0 < n := NeZero.pos n
@@ -475,13 +521,18 @@ theorem orbitCore_eq_empty (hm : n = 2 * m) (hm2 : 2 ≤ m) :
       lv_shiftLink_iterate, hkk] at hmem
     omega
 
-/-- **EVERY SHIFT-STABLE SUBMODULE OF THE SLAB ALGEBRA IS CONSTANTS**, at extent four and above.
+/-- At even extent `n = 2m` with `2 ≤ m`, every `F` in a submodule of the slab algebra that is stable
+under `shiftObs τ` is constant: it takes the same value on any two configurations.
 
-Not "every submodule cut out by a support set" — every submodule. An observable in such a module is
-determined by the orbit core at every depth (`detBy_orbitCore`), the core at depth `n` is empty
-(`orbitCore_eq_empty`), and determination by nothing is constancy.
+The quantification is over submodules, not over submodules cut out by a support set. An observable in
+such a module is determined by the orbit core at every depth (`detBy_orbitCore`), the core at depth
+`n` is empty (`orbitCore_eq_empty`), and determination by the empty set is constancy.
 
-`2 ≤ m` is where the statement lives: `blkR_shift_stable_of_extent_two` shows it fails at `n = 2`. -/
+The hypothesis `2 ≤ m` is not slack: `blkR_shift_stable_of_extent_two` exhibits a shift-stable module
+inside the slab at `n = 2`.
+
+DERIVED: the `2` in `n = 2 * m` makes the extent twice the slab width, and the `2` in `2 ≤ m` is what
+`orbitCore_eq_empty` needs; together they put the extent at four or more. -/
 theorem const_of_shift_stable (hm : n = 2 * m) (hm2 : 2 ≤ m)
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (hMsub : ∀ F ∈ M, F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -492,8 +543,11 @@ theorem const_of_shift_stable (hm : n = 2 * m) (hm2 : 2 ≤ m)
   rw [orbitCore_eq_empty τ a m hm hm2] at h
   exact const_of_detBy_empty h U V
 
-/-- **SO THE SHIFT ACTS ON SUCH A MODULE AS THE IDENTITY.** `T = id` has every eigenvalue one; there
-is no vacuum complement to contract and no lag-two ratio below one to extract. -/
+/-- Under the same hypotheses, the shift fixes every element of such a module: `shiftObs τ F = F`. It
+is `const_of_shift_stable` read at the shifted and unshifted configuration.
+
+DERIVED: the `2`s are `const_of_shift_stable`'s, the extent being twice the slab width and the slab
+width being at least two. -/
 theorem shiftObs_eq_self_of_shift_stable (hm : n = 2 * m) (hm2 : 2 ≤ m)
     {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
     (hMsub : ∀ F ∈ M, F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -512,16 +566,15 @@ section Sharp
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **AT EXTENT TWO THE TRANSVERSE LINKS ARE SHIFT-STABLE AND INSIDE THE SLAB.**
+/-- At extent two, `blkR τ a 1` is stable under the link shift. `blkR τ a 1` is every transverse link
+there, because the two admitted levels `0` and `m = 1` are the whole cycle, so the shift cannot leave
+it. This is why `const_of_shift_stable` asks for `2 ≤ m`.
 
-`blkR τ a 1` is every transverse link, because at `n = 2` the two admitted levels `0` and `m = 1` are
-the whole cycle. So `const_of_shift_stable`'s hypothesis `2 ≤ m` is not slack.
+Scope. The statement is about one block at one extent. `Fin 2` carries no lag `2`, and
+`shiftObs_pow_period` applies at this extent as at any other.
 
-That extent settles nothing about the mass gap. `Fin 2` carries no lag `2`, so `ρ(2)` is not even an
-index there, and `shiftObs_pow_period` still says the shift squares to the identity, so Part 3
-applies to it unchanged.
-
-DERIVED: `1` is `m` at extent two and `2` is that extent; both are forced by `n = 2 * m`. -/
+DERIVED: the `2` is the extent fixed by `hn2`, and the `1` is `m` at that extent, forced by
+`n = 2 * m`. -/
 theorem blkR_shift_stable_of_extent_two (hn2 : n = 2) (τ : Fin d) (a : Fin n)
     {l : Link d n} (hl : l ∈ blkR τ a 1) : shiftLink τ l ∈ blkR τ a 1 := by
   obtain ⟨hne, hor⟩ := (mem_blkR τ a 1 l).mp hl
@@ -531,8 +584,10 @@ theorem blkR_shift_stable_of_extent_two (hn2 : n = 2) (τ : Fin d) (a : Fin n)
   subst hn2
   omega
 
-/-- The transverse links are inside the slab at every extent — level `0` and level `m` are `blkR`'s
-own. -/
+/-- `blkR τ a m` is contained in `blkS τ a m ∪ blkR τ a m`, at every extent and every `m`. It is
+`Finset.subset_union_right` and depends on nothing about the blocks.
+
+DERIVED: no numeral. -/
 theorem blkR_subset_slab (τ : Fin d) (a : Fin n) (m : ℕ) :
     blkR τ a m ⊆ blkS τ a m ∪ blkR τ a m := Finset.subset_union_right
 

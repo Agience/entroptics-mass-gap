@@ -8,53 +8,49 @@ The time translation `Transfer.TransferData` asks for, built on the Wilson measu
 the two of its four fields that hold for it and the exact reason the other two cannot be stated on
 the slab algebra.
 
-## What the shift is, and why it costs nothing
+## The shift, and the identity everything rests on
 
 `shiftConf τ U l = U (shiftLink τ l)` is one lattice step along `τ`, pulled back to configurations.
-The one fact that carries everything is
+The identity the rest of the file uses is
 
     shiftConf τ U = reflConf τ c (reflConf τ (c + 1) U)          (`shiftConf_eq_reflConf_comp`)
 
-for EVERY reflection constant `c`: a translation by one step is the composite of the two site
-reflections whose constants differ by one. The dagger on the axis links appears twice and cancels, so
-no new measure theory is needed — invariance of the Gibbs expectation under the shift
-(`expect_shift_invariant`) is two applications of `Reflect.expect_reflect_invariant`, and the
-conjugation identity a transfer operator needs,
+at every reflection constant `c`: a one-step translation is the composite of the two site reflections
+whose constants differ by one. On an axis link each reflection inverts the gauge variable, so the two
+inversions cancel and the composite is a bare relabelling. Two consequences follow with no measure
+theory beyond `Reflect`'s: invariance of the Gibbs expectation under the shift
+(`expect_shift_invariant`) is `Reflect.expect_reflect_invariant` applied twice, and
 
     shiftConf τ (reflConf τ c (shiftConf τ U)) = reflConf τ c U  (`shiftConf_reflConf_shiftConf`)
 
-is involutivity of the two reflections and nothing else.
+is involutivity of the two reflections.
 
-## The four fields of `Transfer.TransferData`, one at a time
+## Relation to the fields of `Transfer.TransferData`
 
-* `T` — `shiftObs τ` is an `ℝ`-linear endomorphism of the observables, and an algebra map
-  (`shiftObs_one`, `shiftObs_mul`). On the FULL observable space, not on the slab algebra; see
-  below.
-* `T_symm` — `reflForm_shiftObs_symm`: `⟨T F, G⟩ = ⟨F, T G⟩` for the concrete Gibbs reflection form
-  `Transfer.reflForm N τ c β`, at every real `β`, every reflection constant, and every pair of
-  observables, with no measurability, boundedness or positivity hypothesis. This is what reflection
-  positivity is for and it is the field that was expected to be hard; it is two lines once the
-  composite identity is in hand.
-* `T_vac` — `shiftObs_one`: the constant observable is translation-invariant, definitionally.
-* `T_contract` — NOT proved here, and not provable on this module. Contractivity is Cauchy–Schwarz
-  on a form that is positive semidefinite, iterated along the orbit `T^k x`; the form is positive
-  semidefinite only on `LogConvex.localObs (blkS τ a m) (blkR τ a m)`
-  (`ReflectionStrong.wilsonGibbsReflForm`), and that module is not stable under the shift.
+* `T` — `shiftObs τ` is an `ℝ`-linear endomorphism of the observables and an algebra map
+  (`shiftObs_one`, `shiftObs_mul`). It is carried on the full observable space.
+* `T_symm` — `reflForm_shiftObs_symm` gives `⟨T F, G⟩ = ⟨F, T G⟩` for the concrete Gibbs reflection
+  form `Transfer.reflForm N τ c β`, at every real `β`, every reflection constant and every pair of
+  observables, with no measurability, boundedness or positivity hypothesis.
+* `T_vac` — `shiftObs_one`: the constant observable is fixed by the shift, by `rfl`.
+* `T_contract` — no statement of it appears in this file. Contractivity would be a Cauchy–Schwarz
+  argument on a positive semidefinite form, and the form
+  `ReflectionStrong.wilsonGibbsReflForm` carries is positive semidefinite on
+  `LogConvex.localObs (blkS τ a m) (blkR τ a m)`, which the theorems in Part 6 show is not stable
+  under the shift.
 
-## The obstruction, as a theorem rather than a remark
+## The slab is not stable under the shift
 
-`shift_not_stable_on_slab` exhibits a link of `blkS ∪ blkR` — an axis link at level `m − 1` — whose
-image under one step along `τ` is at level `m`, which `mem_blkS_union_blkR` refuses for an axis link.
-So the shift moves the slab algebra off itself, and `shiftObs_mem` says where it goes: an observable
-of `S ∪ R` becomes an observable of the image of `S ∪ R` under the shift. A transfer operator wants a
-half-line; the site reflection's half-space on a periodic lattice is a slab of width `m` bounded
-above by the second mirror plane. The two are not the same region and the shift is what tells them
-apart.
+`shiftLink_axis_leaves_slab` exhibits an axis link at level `m − 1`, which `mem_blkS_union_blkR`
+admits, whose image one step along `τ` is at level `m`, which it refuses.
+`shift_not_stable_on_slab` states that existentially. `shiftObs_mem` says where a shifted observable
+does live: an observable reading `S ∪ R` becomes an observable reading the image of `S ∪ R` under
+`shiftLink`.
 
-The obstruction is not special to the direction chosen. The shift permutes the `n` levels cyclically,
-so a set of links stable under it is stable under the whole cycle, and the only such subsets of the
-levels are the empty one and all of them — while `blkS ∪ blkR` omits the axis levels `m` to `n − 1`.
-The witness below is the concrete half of that statement.
+The region a site reflection cuts out on a periodic lattice is a slab of width `m`, bounded above by
+the second mirror plane, rather than a half-line. The shift permutes the `n` levels cyclically, so
+the only subsets of levels stable under it are the empty one and all of them, while `blkS ∪ blkR`
+omits the axis levels from `m` to `n − 1`.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python research/code/lean_build.py build MassGap.WilsonTransfer`.
@@ -72,21 +68,25 @@ section Geometry
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **One lattice step along `τ`, on links**: the direction is untouched and the base site moves by
-`WilsonHypercubic.shift`.
+/-- A link moved one lattice step along `τ`: the direction component is unchanged, the base site
+moves by `WilsonHypercubic.shift`.
 
-DERIVED: no numeral of its own; the single step is `shift`'s, which is the definition of a
-neighbouring site. -/
+DERIVED: the statement carries no numeral. The single step lives inside `shift`, which is where a
+neighbouring site is defined. -/
 def shiftLink (τ : Fin d) (l : Link d n) : Link d n := (l.1, shift τ l.2)
 
 @[simp] theorem shiftLink_fst (τ : Fin d) (l : Link d n) : (shiftLink τ l).1 = l.1 := rfl
 
 @[simp] theorem shiftLink_snd (τ : Fin d) (l : Link d n) : (shiftLink τ l).2 = shift τ l.2 := rfl
 
-/-- **Two reflections one apart compose to one step**, on sites: `(c+1) − (c − x) = x + 1`.
+/-- Two site reflections whose constants differ by one compose to one step:
+`reflSite τ (c + 1) (reflSite τ c x) = shift τ x`.
 
-DERIVED: the `1`s are the gap between the two reflection constants and the one lattice step it
-produces — the same `1`, read twice. -/
+The coordinate along `τ` goes `x ↦ c - x ↦ (c + 1) - (c - x) = x + 1`; the other coordinates are
+untouched by both reflections. `c` is arbitrary in `Fin n` and does not survive into the conclusion.
+
+DERIVED: `1` is the gap between the two reflection constants, and it is the same `1` as the lattice
+step it produces. -/
 theorem reflSite_comp_succ (τ : Fin d) (c : Fin n) (x : Site d n) :
     reflSite τ (c + 1) (reflSite τ c x) = shift τ x := by
   funext j
@@ -96,8 +96,13 @@ theorem reflSite_comp_succ (τ : Fin d) (c : Fin n) (x : Site d n) :
     abel
   · simp [reflSite, shift, Function.update_of_ne hj]
 
-/-- The same statement with the lower constant written as a predecessor: `c − ((c−1) − x) = x + 1`.
-This is the form the AXIS links need, since `reflLink` reflects them about `c − 1`. -/
+/-- The same composite with the lower constant written as a predecessor:
+`reflSite τ c (reflSite τ (c - 1) x) = shift τ x`.
+
+This is the form needed for axis links, which `reflLink` reflects about `c - 1` rather than `c`.
+Arithmetic in `Fin n`, so the predecessor wraps at `0`.
+
+DERIVED: `1` is the gap between the two reflection constants, and the lattice step it produces. -/
 theorem reflSite_comp_pred (τ : Fin d) (c : Fin n) (x : Site d n) :
     reflSite τ c (reflSite τ (c - 1) x) = shift τ x := by
   funext j
@@ -110,9 +115,13 @@ theorem reflSite_comp_pred (τ : Fin d) (c : Fin n) (x : Site d n) :
 @[simp] theorem reflLink_fst (τ : Fin d) (c : Fin n) (l : Link d n) :
     (reflLink τ c l).1 = l.1 := rfl
 
-/-- **Two link reflections one apart compose to one step along the axis.** The axis links carry the
-base shift `c − 1` on both reflections and come out at the same place as the transverse ones, which
-is why a single statement covers the whole link set. -/
+/-- Two link reflections whose constants differ by one compose to one step:
+`reflLink τ (c + 1) (reflLink τ c l) = shiftLink τ l`, for every link `l`.
+
+Axis links reflect about the predecessor constant on both applications and land where the transverse
+ones do, so one statement covers the whole link set with no case hypothesis on `l.1`.
+
+DERIVED: `1` is the gap between the two reflection constants, and the lattice step it produces. -/
 theorem reflLink_comp_succ (τ : Fin d) (c : Fin n) (l : Link d n) :
     reflLink τ (c + 1) (reflLink τ c l) = shiftLink τ l := by
   obtain ⟨μ, x⟩ := l
@@ -129,8 +138,12 @@ section Configs
 
 variable {d n : ℕ} [NeZero n] {G : Type}
 
-/-- **One lattice step along `τ`, on configurations.** A pure relabelling: unlike the reflection it
-carries no dagger, because a translation does not reverse the traversal of an axis link. -/
+/-- A configuration moved one lattice step along `τ`, by pullback along `shiftLink τ`.
+
+A relabelling only: unlike `reflConf` it applies no inverse on the axis links, because a translation
+does not reverse the traversal of a link. `G` carries no structure here beyond being a type.
+
+DERIVED: the statement carries no numeral. -/
 def shiftConf (τ : Fin d) (U : Link d n → G) : Link d n → G := fun l => U (shiftLink τ l)
 
 @[simp] theorem shiftConf_apply (τ : Fin d) (U : Link d n → G) (l : Link d n) :
@@ -150,16 +163,17 @@ theorem reflConf_apply_transverse (τ : Fin d) (c : Fin n) (U : Link d n → G) 
     (h : l.1 ≠ τ) : reflConf τ c U l = U (reflLink τ c l) := by
   simp [reflConf, h]
 
-/-- **THE ONE FACT THE WHOLE FILE RESTS ON: a step is two reflections one apart.**
+/-- One step along `τ` is the composite of two configuration reflections one apart:
+`shiftConf τ U = reflConf τ c (reflConf τ (c + 1) U)`, for every `c : Fin n`.
 
-`reflConf τ c ∘ reflConf τ (c+1)` is the translation by one step along `τ`, for EVERY `c`. On the
-axis links each reflection inverts the gauge variable, so the two daggers cancel and the composite is
-a bare relabelling; off the axis there is no dagger to cancel. The reflection constant does not
-survive into the conclusion, which is what makes the composite a translation rather than a family of
-them.
+On an axis link each reflection inverts the gauge variable and the two inversions cancel, leaving a
+relabelling; off the axis there is no inversion to cancel. `reflLink_comp_succ` supplies the
+geometry. The constant `c` is universally quantified and does not appear on the left, so the
+composite is one map rather than a `c`-indexed family. `G` is required to be a `Group` for the
+inversions.
 
-DERIVED: the `1` is the gap between the two reflection constants, and it is the same `1` as the
-lattice step it produces (`reflSite_comp_succ`). -/
+DERIVED: `1` is the gap between the two reflection constants, the same `1` as the lattice step it
+produces. -/
 theorem shiftConf_eq_reflConf_comp (τ : Fin d) (c : Fin n) (U : Link d n → G) :
     shiftConf τ U = reflConf τ c (reflConf τ (c + 1) U) := by
   funext l
@@ -172,12 +186,15 @@ theorem shiftConf_eq_reflConf_comp (τ : Fin d) (c : Fin n) (U : Link d n → G)
       reflConf_apply_transverse τ (c + 1) U (hfst.trans_ne h), reflLink_comp_succ]
     rfl
 
-/-- **THE CONJUGATION IDENTITY A TRANSFER OPERATOR NEEDS**: the reflection turns a step into its
-inverse, so stepping, reflecting and stepping again is reflecting.
+/-- Stepping, reflecting and stepping again is reflecting:
+`shiftConf τ (reflConf τ c (shiftConf τ U)) = reflConf τ c U`.
 
-This is `Θ ∘ S = S⁻¹ ∘ Θ` written without an inverse, and it is exactly what makes the time
-translation self-adjoint for the reflection form. Its proof is the composite identity above plus
-involutivity of the two reflections — no geometry beyond what `Reflect` already has. -/
+This is `Θ ∘ S = S⁻¹ ∘ Θ` written without an inverse. The proof rewrites each shift by
+`shiftConf_eq_reflConf_comp` at the same constant `c` and cancels with `reflConf_involutive` at `c`
+and at `c + 1`. It holds at every `c` and every configuration, with no hypothesis beyond `G` being a
+group.
+
+DERIVED: the statement carries no numeral. -/
 theorem shiftConf_reflConf_shiftConf (τ : Fin d) (c : Fin n) (U : Link d n → G) :
     shiftConf τ (reflConf τ c (shiftConf τ U)) = reflConf τ c U := by
   have hinv : ∀ V : Link d n → G, reflConf τ c (reflConf τ c V) = V :=
@@ -195,19 +212,16 @@ section Invariance
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **THE GIBBS EXPECTATION OF THE WILSON SYSTEM IS INVARIANT UNDER ONE LATTICE STEP.**
+/-- The Wilson Gibbs expectation is unchanged when an observable is composed with one lattice step:
+`expect (fun U => O (shiftConf τ U)) = expect O`.
 
-The lattice's translation invariance, which the tree did not have: `LogConvex.EW_plaqE_pair_shift`
-obtains a translated PAIR of plaquettes from a single reflection, and says in its own docstring that
-no separate translation symmetry is needed for that; this is the symmetry itself, on an arbitrary
-observable.
+Holds at every gauge order `N`, every direction `τ`, every real `β` and every real-valued observable
+`O`, with no measurability or boundedness hypothesis. The proof rewrites the shift as two reflections
+(`shiftConf_eq_reflConf_comp`) and applies `Reflect.expect_reflect_invariant` twice; the reflection
+constant it picks is immaterial, since the composite identity holds at every constant.
 
-It needs no new measure theory. The shift is two reflections (`shiftConf_eq_reflConf_comp`) and the
-Gibbs expectation is invariant under each (`Reflect.expect_reflect_invariant`), so the invariance is
-that theorem twice.
-
-DERIVED: the `0` is a reflection constant, and it is arbitrary — the identity holds at every `c`, and
-`0` is picked only because a constant must be supplied. -/
+DERIVED: the statement carries no numeral. The gauge order, direction, coupling and observable are
+all parameters, and the reflection constants appear in the proof rather than in the type. -/
 theorem expect_shift_invariant (N : ℕ) (τ : Fin d) (β : ℝ)
     (O : (Link d n → MassGap.SUN.SU N) → ℝ) :
     (sysWilson N d n).expect (probHaar (MassGap.SUN.SU N)) β (fun U => O (shiftConf τ U))
@@ -227,16 +241,22 @@ end Invariance
 
 /-! ## Part 4 — the shift as a linear operator on observables
 
-This is the `T` of `Transfer.TransferData`: an `ℝ`-linear endomorphism of the observables, in fact an
-algebra map. It is carried on the FULL observable space because that is the largest space it IS an
-endomorphism of; Part 6 shows it is not one on the slab algebra.
+`shiftObs` is the `T` of `Transfer.TransferData`: an `ℝ`-linear endomorphism of the observables,
+and an algebra map. It is stated on the full observable space; Part 6 gives a witness showing it is
+not an endomorphism of the slab algebra.
 -/
 
 section Operator
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **THE TIME TRANSLATION, AS A LINEAR OPERATOR ON OBSERVABLES**: `T F = F ∘ shiftConf`. -/
+/-- The time translation as an `ℝ`-linear endomorphism of the real observables on
+`Link d n → SU N`: `shiftObs τ F = F ∘ shiftConf τ`.
+
+Additivity and scalar multiplication both hold by `rfl`, since the map is a precomposition. The
+domain and codomain are the full function space, with no measurability or locality condition.
+
+DERIVED: the statement carries no numeral. -/
 def shiftObs (τ : Fin d) :
     ((Link d n → MassGap.SUN.SU N) → ℝ) →ₗ[ℝ] ((Link d n → MassGap.SUN.SU N) → ℝ) where
   toFun F := fun U => F (shiftConf τ U)
@@ -246,25 +266,30 @@ def shiftObs (τ : Fin d) :
 @[simp] theorem shiftObs_apply (τ : Fin d) (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (U : Link d n → MassGap.SUN.SU N) : shiftObs τ F U = F (shiftConf τ U) := rfl
 
-/-- **`T 1 = 1` — `TransferData.T_vac`.** The shift of the constant observable is the constant
-observable, definitionally.
+/-- `shiftObs τ` fixes the constant observable `fun _ => 1`, by `rfl`. This is the `T_vac` field of
+`Transfer.TransferData`.
 
-DERIVED: the `1` is the constant observable's own value. -/
+DERIVED: `1` is the constant observable's value, and is the only numeral in the statement. -/
 theorem shiftObs_one (τ : Fin d) :
     shiftObs (n := n) (N := N) τ (fun _ => (1 : ℝ)) = (fun _ => (1 : ℝ)) := rfl
 
-/-- **The shift is an algebra map**, not merely linear — so it acts on the unital subalgebra
-`ReflectionStrong.mul_mem_localObs` exhibits, wherever that algebra is stable under it. -/
+/-- `shiftObs τ` is multiplicative: the shift of a pointwise product is the product of the shifts,
+by `rfl`. With `shiftObs_one` and linearity this makes it an algebra map on the full observable
+space.
+
+DERIVED: the statement carries no numeral. -/
 theorem shiftObs_mul (τ : Fin d) (F G : (Link d n → MassGap.SUN.SU N) → ℝ) :
     shiftObs τ (fun U => F U * G U) = (fun U => shiftObs τ F U * shiftObs τ G U) := rfl
 
-/-- **WHERE THE SHIFTED OBSERVABLE LIVES.** An observable reading `S ∪ R` becomes, after one step,
-an observable reading the IMAGE of `S ∪ R` under the shift. Bounds and measurability carry across
-unchanged; only the block moves.
+/-- An observable in `localObs S R` lands in `localObs E ∅` after one step, provided `E` contains
+the image of both `S` and `R` under `shiftLink τ`.
 
-This is the sharp form of the obstruction: paired with `shift_not_stable_on_slab`, which shows the
-image is not contained in `blkS ∪ blkR`, it says the slab algebra is not stable under the shift and
-names the algebra the shifted observable belongs to instead. -/
+Measurability composes with `measurable_shiftConf`, the bound `C` carries over unchanged, and
+locality transports because the shifted configuration reads `E` exactly where the original read
+`S ∪ R`. The second block of the conclusion is empty: the two blocks merge into `E`, so the output
+is not split into a reflected and unreflected part.
+
+DERIVED: the statement carries no numeral; `∅` is the empty `Finset`, not a numeral. -/
 theorem shiftObs_mem (τ : Fin d) {S R E : Finset (Link d n)}
     {F : (Link d n → MassGap.SUN.SU N) → ℝ} (hF : F ∈ localObs S R)
     (hS : ∀ l ∈ S, shiftLink τ l ∈ E) (hR : ∀ l ∈ R, shiftLink τ l ∈ E) :
@@ -282,16 +307,18 @@ section Symm
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **`⟨T F, G⟩ = ⟨F, T G⟩` FOR THE WILSON GIBBS REFLECTION FORM** — `TransferData.T_symm`, on the
-concrete form `Transfer.reflForm N τ c β` that `ReflectionStrong.wilsonGibbsReflForm` carries.
+/-- `shiftObs τ` is self-adjoint for the Wilson Gibbs reflection form:
+`reflForm N τ c β (shiftObs τ F) G = reflForm N τ c β F (shiftObs τ G)`.
 
-No hypothesis at all: every real `β`, every reflection constant, every pair of observables, no
-measurability, no boundedness, no positivity. The two ingredients are invariance of the Gibbs
-expectation under the shift (`expect_shift_invariant`) and the conjugation identity
-(`shiftConf_reflConf_shiftConf`) — which is what "reflection positivity is what makes the time
-translation self-adjoint" means concretely.
+This is the `T_symm` field of `Transfer.TransferData`, on the concrete form
+`Transfer.reflForm N τ c β` that `ReflectionStrong.wilsonGibbsReflForm` carries. The two ingredients
+are `expect_shift_invariant` and `shiftConf_reflConf_shiftConf`.
 
-DERIVED: no numeral. -/
+Scope: no hypothesis is imposed — it holds at every real `β`, every reflection constant, and every
+pair of real-valued observables, with no measurability, boundedness or positivity. In particular
+nothing here asserts that the form is positive semidefinite on these arguments.
+
+DERIVED: the statement carries no numeral. -/
 theorem reflForm_shiftObs_symm (N : ℕ) (τ : Fin d) (c : Fin n) (β : ℝ)
     (F G : (Link d n → MassGap.SUN.SU N) → ℝ) :
     MassGap.Transfer.reflForm N τ c β (shiftObs τ F) G
@@ -308,21 +335,29 @@ end Symm
 
 /-! ## Part 6 — the slab is not stable under the shift
 
-The structural blocker, as a witness rather than a remark.
+An explicit link of `blkS ∪ blkR` whose image under one step lies outside it, and the existential
+form of that fact.
 -/
 
 section Blocker
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **AN AXIS LINK AT LEVEL `m − 1` IS IN THE SLAB AND ITS IMAGE IS NOT.**
+/-- An axis link at level `m - 1` lies in `blkS τ a m ∪ blkR τ a m` and its image under
+`shiftLink τ` does not.
 
-`mem_blkS_union_blkR` admits an axis link exactly when its level is strictly below `m`; one step
-along `τ` takes level `m − 1` to level `m` (`lv_shift_axis`), which is refused. So the one-step shift
-is not an endomorphism of the slab algebra, and `TransferData.T` cannot be instantiated by it there.
+`mem_blkS_union_blkR` admits an axis link exactly when its level is strictly below `m`, and
+`lv_shift_axis` sends level `m - 1` to level `m`. The hypotheses are that the extent is even,
+`n = 2 * m`, that `m` is positive, that the link is an axis link (`hl1 : l.1 = τ`), and that its
+level is `m - 1`.
 
-DERIVED: `m − 1` is the highest axis level the slab admits and `m` is the first it refuses; both are
-read off `mem_blkS_union_blkR`, not chosen. -/
+Scope: stated for the periodic torus `Link d n` at even extent; it says nothing about transverse
+links, whose membership condition is different.
+
+DERIVED: `2` is the factor in the evenness hypothesis `n = 2 * m`, which is what makes the slab half
+the extent. `0` is the strict lower bound in `hm0 : 0 < m`, required so that `m - 1` is a level below
+`m`. `1` is the single lattice step, appearing as the offset in `m - 1`, the highest axis level the
+slab admits. All three are read off `mem_blkS_union_blkR` and the step, not chosen. -/
 theorem shiftLink_axis_leaves_slab (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m)
     {l : Link d n} (hl1 : l.1 = τ) (hlv : lv a (l.2 τ) = m - 1) :
     l ∈ blkS τ a m ∪ blkR τ a m ∧ shiftLink τ l ∉ blkS τ a m ∪ blkR τ a m := by
@@ -336,15 +371,20 @@ theorem shiftLink_axis_leaves_slab (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 
     rw [hs, Nat.mod_eq_of_lt hmn]
     omega
 
-/-- **THE SLAB ALGEBRA IS NOT STABLE UNDER ONE LATTICE STEP** — the blocker, existentially.
+/-- Some link of `blkS τ a m ∪ blkR τ a m` has its image under `shiftLink τ` outside that set, at
+even extent `n = 2 * m` with `m` positive.
 
-A `Transfer.TransferData` on `LogConvex.localObs (blkS τ a m) (blkR τ a m)` needs `T` to be an
-endomorphism of that module. By `shiftObs_mem` the shifted observable reads the image of the block
-under `shiftLink`, and this says that image is not inside the block. The site reflection's half-space
-on a periodic lattice is a SLAB bounded above by the second mirror plane; a transfer operator wants a
-half-line.
+The witness is the axis link at level `m - 1` supplied by `shiftLink_axis_leaves_slab`. Together with
+`shiftObs_mem`, which says the shifted observable reads the image of the block, this is the statement
+that the block is not stable under the shift, so `shiftObs τ` is not an endomorphism of
+`LogConvex.localObs (blkS τ a m) (blkR τ a m)`.
 
-DERIVED: no numeral of its own; the witness is `shiftLink_axis_leaves_slab`'s. -/
+Scope: an existential about the link set. It is not a statement about observables, and it does not
+assert that no other region is stable.
+
+DERIVED: `2` is the factor in the evenness hypothesis `n = 2 * m`, making the slab half the extent.
+`0` is the strict lower bound in `hm0 : 0 < m`. Both come from `shiftLink_axis_leaves_slab`'s own
+hypotheses. -/
 theorem shift_not_stable_on_slab (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m) :
     ∃ l ∈ blkS τ a m ∪ blkR τ a m, shiftLink τ l ∉ blkS τ a m ∪ blkR τ a m := by
   have hlt : m - 1 < n := by omega

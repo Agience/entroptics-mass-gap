@@ -2,22 +2,31 @@ import MassGap.GappedTheory
 import MassGap.MomentSupport
 
 /-!
-# The spectral gap from the correlator's decay — the reduction-core bridge, wired end-to-end
+# MassGap.GapOfDecay — a gapped theory built from a diagonal transfer operator and a decay bound
 
-`GappedExample` builds a gapped theory from the HAND-SET operator `Tc = diag(1, 3^{-1/4})`, computing its
-spectrum by hand. This module instead **derives** the transfer operator's spectral-support bound (`hsp`) from
-the PROVED decay of the connected correlator, closing the gap the reduction-core audit found (the reduction
-delivers `C(τ)→0`; the spectral gap was a disconnected conditional assuming `hsp`).
+This module works with a diagonal operator on `ι → ℂ` whose entries are real, and derives its
+spectral-support bound from a decay hypothesis rather than taking that bound as an argument.
 
-The finite-volume transfer operator `T` is self-adjoint (reflection positivity, Osterwalder–Seiler), hence
-unitarily a real diagonal `diag(λ_k)` with `λ_k ∈ (0,1]`, and the connected correlator is the positive-weight
-sum `C_conn(τ) = ∑_{k excited} w_k λ_k^τ`, `w_k = |⟨v,e_k⟩|² ≥ 0`. The proof supplies `C_conn(τ) ≤ M e^{-Δτ}`.
-`MomentSupport.le_of_positive_weight_decay` then forces every excited `λ_k ≤ e^{-Δ}`, so
-`spectrum ⊆ {1} ∪ [ε, e^{-Δ}] = hsp`, which feeds `reconstruct_gapped` to yield the mass gap `Δ`.
+The setting it is written for: a finite-volume transfer operator is self-adjoint under reflection
+positivity, hence unitarily a real diagonal `diag(λ_k)`, and the connected correlator is a
+positive-weight sum `∑_{k excited} w_k λ_k^τ` with `w_k = |⟨v, e_k⟩|²`. The module takes the
+eigenvalues `lam`, the weights `w`, and the excited set `s` as data.
 
-The physics inputs are named hypotheses, each grounded: `hwnn` (positive weights = RP), `hwpos` (cyclicity =
-a good `0⁺⁺` operator overlapping the excited modes, R1), `hεlam` (`T ≥ ε > 0`, bounded action, R2),
-`hvac` (the non-excited modes are the vacuum `λ=1`). The gap `Δ` is the DECAY RATE, derived — not assumed.
+The chain. `diagOp` is the operator; `mem_spectrum_diagOp` shows every real spectral point is one of
+the `λ_k`; `one_mem_spectrum_diagOp` places the vacuum eigenvalue in the spectrum;
+`spectrum_diagOp_subset` assembles `spectrum ⊆ {1} ∪ Icc ε ρ` from a vacuum clause and a two-sided
+bound on the excited modes. `gapped_of_positive_decay` supplies the upper bound `ρ = exp (-Δ)` by
+calling `MomentSupport.le_of_positive_weight_decay` on the decay hypothesis, then hands the result to
+`reconstruct_gapped`.
+
+The hypotheses are named for what they correspond to: `hwnn` and `hwpos` for non-negative and strictly
+positive weights on the excited set, `hεlam` for a strictly positive floor on the excited eigenvalues,
+`hvac` for the non-excited modes being at eigenvalue `1`, and `hdecay` for the bound
+`∑_{k ∈ s} w_k λ_k^τ ≤ M (e^{-Δ})^τ` at every natural `τ`.
+
+Scope: `ι` is required to be a `Fintype` for the reconstruction, the operator is diagonal by
+construction rather than diagonalised here, and the gap delivered is exactly the `Δ` that appears in
+`hdecay`. `multiModeGapped` is a worked instance with three excited modes.
 -/
 
 namespace MassGap.Reconstruction
@@ -49,7 +58,12 @@ theorem mem_spectrum_diagOp {lam : ι → ℝ} {r : ℝ} (hr : r ∈ spectrum �
   intro h
   exact hc k (by exact_mod_cast h)
 
-/-- The vacuum eigenvalue `1` is in the spectrum whenever some mode has `λ_{k₀} = 1`. -/
+/-- If some index `k0` has `lam k0 = 1`, then `1` lies in the `ℝ`-spectrum of `diagOp lam`.
+
+No finiteness or positivity is needed; the witness index is supplied explicitly.
+
+DERIVED: `1` is the vacuum eigenvalue, both as the hypothesis on `lam k0` and as the spectral point
+concluded. It is the only numeral in the statement. -/
 theorem one_mem_spectrum_diagOp {lam : ι → ℝ} (k0 : ι) (hk0 : lam k0 = 1) :
     (1 : ℝ) ∈ spectrum ℝ (diagOp lam) := by
   rw [spectrum.mem_iff, map_one]
@@ -60,7 +74,14 @@ theorem one_mem_spectrum_diagOp {lam : ι → ℝ} (k0 : ι) (hk0 : lam k0 = 1) 
   simp only [diagOp, hk0, Complex.ofReal_one, sub_self] at h0
   exact not_isUnit_zero h0
 
-/-- `spectrum ⊆ {1} ∪ [ε, ρ]` from: non-excited modes are the vacuum `1`, excited modes lie in `[ε, ρ]`. -/
+/-- The `ℝ`-spectrum of `diagOp lam` is contained in `{1} ∪ Set.Icc ε ρ`, given that every index
+outside the finite set `s` has `lam k = 1` and every index in `s` has `ε ≤ lam k ≤ ρ`.
+
+`ε` and `ρ` are arbitrary reals bound outside both hypotheses: neither is required to be positive, and
+`ε ≤ ρ` is not assumed — if the excited set is empty the interval clause is vacuous.
+
+DERIVED: `1` is the vacuum eigenvalue, appearing as the value `hvac` assigns outside `s` and as the
+isolated point of the containing set. It is the only numeral in the statement. -/
 theorem spectrum_diagOp_subset {lam : ι → ℝ} (s : Finset ι) {ε ρ : ℝ}
     (hvac : ∀ k, k ∉ s → lam k = 1) (hexc : ∀ k ∈ s, ε ≤ lam k ∧ lam k ≤ ρ) :
     spectrum ℝ (diagOp lam) ⊆ {1} ∪ Set.Icc ε ρ := by
@@ -70,12 +91,24 @@ theorem spectrum_diagOp_subset {lam : ι → ℝ} (s : Finset ι) {ε ρ : ℝ}
   · exact Or.inr (Set.mem_Icc.mpr (hexc k hk))
   · exact Or.inl (Set.mem_singleton_iff.mpr (hvac k hk))
 
-/-- **The spectral gap, derived from the connected correlator's decay.** Given the finite-volume transfer
-spectral data — real eigenvalues `lam`, positive weights `w` — with reflection positivity (`hwnn`), cyclicity
-of a good operator (`hwpos`, R1), strict positivity `T ≥ ε` (`hεlam`, R2), the non-excited modes the vacuum
-(`hvac`), and the PROVED connected-correlator decay `∑_{k∈s} w_k λ_k^τ ≤ M e^{-Δτ}` (`hdecay`), the
-reconstruction yields a `GappedQuantumTheory` with mass gap exactly the decay rate `Δ`. The spectral bound
-`hsp` is DERIVED here (via `MomentSupport.le_of_positive_weight_decay`), not assumed. -/
+/-- A `GappedQuantumTheory (ι → ℂ)` built from diagonal spectral data and a decay bound, with gap `Δ`.
+
+Inputs: real eigenvalues `lam` and weights `w` on a `Fintype` index `ι`, a finite excited set `s`, a
+prefactor `M`, a floor `ε` with `0 < ε`, and a rate `Δ` with `0 < Δ`. The hypotheses are `hvac` (every
+index outside `s` has eigenvalue `1`), `hvacpt` (at least one index lies outside `s`, so the vacuum is
+actually present), `hεlam` (`ε ≤ lam k` on `s`), `hwnn` and `hwpos` (`0 ≤ w k` and `0 < w k` on `s`),
+and `hdecay` (`∑_{k ∈ s} w k * lam k ^ τ ≤ M * (exp (-Δ)) ^ τ` for every `τ : ℕ`).
+
+The spectral-support bound is computed, not supplied: `MomentSupport.le_of_positive_weight_decay` turns
+`hdecay` plus strict positivity of the weights into `lam k ≤ exp (-Δ)` on `s`, and
+`spectrum_diagOp_subset` assembles `spectrum ⊆ {1} ∪ Icc ε (exp (-Δ))` for `reconstruct_gapped`.
+
+Scope: `M` is unconstrained — it need not be positive, because the pointwise bound is what the
+moment-support lemma consumes. The construction is `noncomputable`.
+
+DERIVED: `0` is the strict lower bound in `hε : 0 < ε`, `hΔ : 0 < Δ`, `hwnn : 0 ≤ w k` and
+`hwpos : 0 < w k`. `1` is the vacuum eigenvalue that `hvac` assigns off the excited set. No other
+numeral appears in the statement. -/
 noncomputable def gapped_of_positive_decay [Fintype ι]
     (lam w : ι → ℝ) (s : Finset ι) (M ε Δ : ℝ)
     (hε : 0 < ε) (hΔ : 0 < Δ)
@@ -95,7 +128,12 @@ noncomputable def gapped_of_positive_decay [Fintype ι]
     hvacpt.elim (fun k0 hk0 => one_mem_spectrum_diagOp k0 (hvac k0 hk0))
   reconstruct_gapped (diagOp lam) (diagOp_selfAdjoint lam) hε hΔ h1 hsp
 
-/-- The gap reconstructed from the decay is exactly the decay rate `Δ`. -/
+/-- The gap field of `gapped_of_positive_decay` is the rate `Δ` appearing in `hdecay`, by `rfl`.
+
+The binders repeat those of `gapped_of_positive_decay`; nothing further is assumed.
+
+DERIVED: `0` is the strict lower bound in `hε`, `hΔ`, `hwnn` and `hwpos`; `1` is the vacuum eigenvalue
+assigned by `hvac`. Both reach the statement only through those repeated binders. -/
 theorem gapped_of_positive_decay_gap [Fintype ι]
     (lam w : ι → ℝ) (s : Finset ι) (M ε Δ : ℝ)
     (hε : 0 < ε) (hΔ : 0 < Δ)
@@ -107,10 +145,18 @@ theorem gapped_of_positive_decay_gap [Fintype ι]
 
 #print axioms gapped_of_positive_decay
 
-/-- **A genuine multi-mode witness.** Vacuum `1` plus three excited modes `1/2, 1/4, 1/8` with positive weights.
-Here the moment-support lemma does real work: it bounds ALL THREE excited eigenvalues below `e^{-Δ}=1/2`, and the
-decay hypothesis is a TRUE inequality `∑_k λ_k^τ ≤ 3·(1/2)^τ` (each mode `≤ 1/2`), not the equality of a single
-hand-placed mode. The reconstructed mass gap is `Δ = log 2 > 0`. -/
+/-- A four-mode instance of `gapped_of_positive_decay`: vacuum eigenvalue `1` at index `0`, and excited
+eigenvalues `1/2, 1/4, 1/8` at indices `1, 2, 3`, each with weight `1`.
+
+The arguments supplied are `M = 3`, `ε = 1/8` and `Δ = log 2`, so `exp (-Δ) = 1/2` and the decay
+hypothesis is the inequality `∑_{k ∈ {1,2,3}} λ_k^τ ≤ 3·(1/2)^τ`, which holds termwise because each
+excited eigenvalue is at most `1/2`. Two of the three excited eigenvalues are strictly below the bound,
+so `MomentSupport.le_of_positive_weight_decay` is applied at a genuine inequality rather than at an
+equality. The gap of the result is `log 2`.
+
+DERIVED: `4` is the carrier dimension `Fin 4` — one vacuum index and three excited indices. It is the
+only numeral in the statement; the eigenvalues, weights, `M`, `ε` and `Δ` are all arguments in the
+term, not part of the type. -/
 noncomputable def multiModeGapped : GappedQuantumTheory (Fin 4 → ℂ) :=
   gapped_of_positive_decay (ι := Fin 4)
     ![1, 1/2, 1/4, 1/8] ![0, 1, 1, 1] {1, 2, 3} 3 (1/8) (Real.log 2)
@@ -135,7 +181,10 @@ noncomputable def multiModeGapped : GappedQuantumTheory (Fin 4 → ℂ) :=
               rw [Finset.sum_const, show ({1, 2, 3} : Finset (Fin 4)).card = 3 from by decide]
               norm_num [nsmul_eq_mul])
 
-/-- The multi-mode witness reconstructs a gap `log 2`. -/
+/-- The gap field of `multiModeGapped` is `Real.log 2`, by `rfl`.
+
+DERIVED: `2` is the argument of the logarithm, fixed by `exp (-log 2) = 1/2` being the bound the four
+eigenvalues of `multiModeGapped` were chosen against. It is the only numeral in the statement. -/
 theorem multiModeGapped_gap : multiModeGapped.gap = Real.log 2 := rfl
 
 #print axioms multiModeGapped

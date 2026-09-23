@@ -3,62 +3,47 @@ import MassGap.EvenAperture
 import MassGap.ContactFloor
 
 /-!
-# MassGap.NonnegArm — the Clay reduction on the nonnegative half-line
+# MassGap.NonnegArm — the contact-relative reduction with the coupling restricted to `0 ≤ β`
 
-`ShareEnvelope.substrate_of_contact_relative_decay` takes its contact-relative power law over
-`∀ (N : ℕ) (β : ℝ)` — the coupling UNRESTRICTED — and `ContactFloor.contact_relative_unconditional`
-proves that law on `0 ≤ β ≤ b` only. The open region of the reduction is therefore
-`(-∞, 0) ∪ (b, ∞)`, and the left piece is not open in any useful sense: it is unprovable.
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` proves the Wilson cross kernel is
-positive-semidefinite EXACTLY when `0 ≤ β`, so at negative coupling there is no reflection
-positivity to have and no statement to prove.
+`ShareEnvelope.substrate_of_contact_relative_decay` takes its contact-relative quartic law over all
+real `β`. This file restates the reduction with that law assumed only on `0 ≤ β`, and routes the
+conclusion through the CLAMPED read so the restriction is not lost.
 
-This file removes that piece, and it costs nothing because the flagship already lives without it.
+## The clamp
 
-## Why the conclusion has to move too
+`EvenAperture.readEven a β` reads the correlation at `max β 0`, so `d2Even a β` never evaluates the
+model below zero; at `β < 0` it is the `β = 0` value (`d2Even_eq_at_zero`). The hypothesis of
+`EvenAperture.existence_and_gap_of_substrate_even` is `∃ B, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B`,
+and a law assumed on `0 ≤ β` supplies it, because the only coupling ever fed to the correlation is
+`max β 0`. That is `substrate_of_contact_relative_decay_nonneg`.
 
-A hypothesis quantified over `0 ≤ β` cannot produce `∃ B, ∀ N β, d2At N β ≤ B`: for `β < 0`,
-`d2At N β` is a perfectly good real number built from `readYMAt N β`, about which a nonnegative-only
-hypothesis says nothing at all. Two conclusions are available instead.
+`substrate_at_nonneg_of_contact_relative_decay_nonneg` is the alternative: the same hypothesis with
+the conclusion carrying the side condition `0 ≤ β` on the unclamped `d2At`. It is stated for the
+record and is not used below; it mentions `d2At`, hence `readYMAt`, so its `#print axioms` differs
+from the rest of the file's, which is why its audit line sits in its own section.
 
-* **(a)** Restate the conclusion on the same domain: `∃ B, ∀ N β, 0 ≤ β → d2At N β ≤ B`. This is
-  `substrate_at_nonneg_of_contact_relative_decay_nonneg` below. It is true, and it is useless on its
-  own, because `WilsonModel.existence_and_gap_of_substrate` does not take it.
-* **(b)** Route through the CLAMPED read. `EvenAperture.d2Even a β = d2At a.1 (max β 0)`, so the
-  clamped moment never evaluates the model below zero — at `β < 0` it is the `β = 0` column
-  relabelled (`EvenAperture.readEven_eq_at_zero`), which is exactly the price the flagship already
-  pays and names. The hypothesis of `EvenAperture.existence_and_gap_of_substrate_even` is
-  `∃ B, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B`, and a nonnegative-only power law DOES give that,
-  because the only coupling ever fed to the correlation is `max β 0`.
+`nonneg_hypothesis_of_unrestricted` records that the unrestricted law implies the restricted one.
+The converse is not stated.
 
-(b) is what this file builds. It lands directly on the axiom-free flagship, and the composite is
-foundational-only: the route never mentions `readYMAt`, so `wilson_reflection_positive_at` never
-enters. The nonnegativity the merge step needs is supplied by the PROVED reflection positivity
-`Complete.wilson_reflection_positive_at_even`, which is available precisely on `EvenAp` extents at
-nonnegative coupling — the domain the clamp puts us on.
+## The two arms
 
-## The continuum half is NOT lost
+`LawBelow b` and `LawAbove b` are the same quartic contact-relative law on `0 ≤ β ≤ b` and on
+`b < β`. `lawBelow_holds` supplies the lower arm from
+`ContactFloor.contact_relative_unconditional`. `substrate_even_of_two_arm` merges them: at the
+clamped coupling one or the other applies, and `max C₁ C₂` serves both, which needs the contact
+value's sign — `wilsonCorrAt_nonneg`, from `Complete.wilson_reflection_positive_at_even` on `EvenAp`
+extents at nonnegative coupling.
 
-The obvious trap is that `WilsonModel.existence_and_gap_of_substrate` takes the unrestricted
-bounded-moment form for the CONTINUUM half, so a restatement that cannot feed it would buy a
-narrower obligation at the cost of the continuum limit. It does not happen here, and the reason is
-structural rather than lucky: the measure side takes NO hypothesis. `WilsonModel.ymFamilyTension` is
-a fixed object and `WilsonModel.ym_continuum_tension` is foundational-only, so the substrate bound is
-consumed entirely by the gap side. `fullModelEven` reuses `ymFamilyTension` verbatim
-(`measure_is_ymFamilyTension`, by `rfl`), and the second component of
-`existence_and_gap_of_substrate_even` is the same tightness-and-invariance statement about the same
-family. Nothing about the continuum limit is weakened, restricted or dropped.
+`existence_and_gap_of_law_above_cut` is the composite: there is a `b > 0` for which `LawAbove b`
+alone yields `Flagship`. The lower arm is discharged inside the proof rather than assumed.
 
-## What is left
+## `Flagship`
 
-`existence_and_gap_of_law_above_cut`: there is a `b > 0` such that `LawAbove b` — the quartic
-contact-relative law on `(b, ∞)` alone — yields the gap, non-triviality, `SO(4)` invariance and the
-continuum measure. The `[0, b]` arm is discharged INSIDE that theorem from
-`ContactFloor.contact_relative_unconditional`; it is not assumed. So the open region is one interval
-and the open obligation is one statement.
-
-This proves nothing new about Yang–Mills. It deletes a region that was never provable and never
-needed, and puts the reduction on the same half-line as the flagship it feeds.
+`Flagship h` writes out the conclusion of `EvenAperture.existence_and_gap_of_substrate_even` as a
+predicate on its hypothesis. `flagship_of_substrate_even` is that theorem applied, so the two
+propositions agree by type-checking. `measure_is_ymFamilyTension` records by `rfl` that the measure
+component is `WilsonModel.ymFamilyTension`, the same family
+`WilsonModel.existence_and_gap_of_substrate` uses.
 
 `#print axioms` after every declaration.
 -/
@@ -70,22 +55,28 @@ open MassGap.EvenAperture
 
 /-! ## 1. The clamped read, as the correlation
 
-Two facts about `EvenAperture.readEven` that the rest of the file runs on. Both are about objects
-that carry no named axiom, so the chain below carries none either. -/
+Two facts about `EvenAperture.readEven` that the rest of the file runs on. -/
 
-/-- **The clamped read's weights ARE the constructed Wilson correlation**, at the clamped coupling.
-The analogue of `ShareEnvelope.readYMAt_rho` for `readEven`, and by `rfl` for the same reason.
+/-- `(readEven a β).ρ d = wilsonCorrAt a.1 (max β 0) d`, by `rfl`: the clamped read's weights are the
+Wilson correlation evaluated at the clamped coupling. The analogue of `ShareEnvelope.readYMAt_rho`
+for `readEven`. It is what lets a hypothesis about `wilsonCorrAt` be fed to a theorem about a
+`Moment.Read` without passing through `readYMAt`.
 
-This is the one lemma that lets a hypothesis about `wilsonCorrAt` be fed to a theorem about a
-`Moment.Read` without going through `readYMAt` — which is where the axiom would enter. -/
+DERIVED: `1` in `Fin (a.1 + 1)` is the lag index's range, one more than the extent `a.1`; `0` in
+`max β 0` is the clamp floor, the least coupling the read ever evaluates the correlation at. -/
 theorem readEven_rho (a : EvenAp) (β : ℝ) (d : Fin (a.1 + 1)) :
     (readEven a β).ρ d = MassGap.wilsonCorrAt a.1 (max β 0) d := rfl
 
 #print axioms readEven_rho
 
-/-- **The correlation is nonnegative at an even aperture and nonnegative coupling** — from the PROVED
-reflection positivity, not the axiom. Used only to merge two power laws with different constants into
-one with their maximum, which needs the contact value's sign. -/
+/-- `0 ≤ wilsonCorrAt a.1 β d` for an `EvenAp` aperture at nonnegative coupling. The first component
+of `Complete.wilson_reflection_positive_at_even`, applied at the `m` and the two side conditions the
+`EvenAp` structure carries in `a.2`. Used in `substrate_even_of_two_arm` to merge two constants into
+their maximum, which needs the contact value's sign.
+
+DERIVED: `0` in `hβ` is the least coupling reflection positivity is available at; `1` in
+`Fin (a.1 + 1)` is the lag index's range; `0` in the conclusion is the lower bound on the
+correlation. -/
 theorem wilsonCorrAt_nonneg (a : EvenAp) {β : ℝ} (hβ : 0 ≤ β) (d : Fin (a.1 + 1)) :
     0 ≤ MassGap.wilsonCorrAt a.1 β d :=
   (MassGap.wilson_reflection_positive_at_even a.1 a.2.choose a.2.choose_spec.1 a.2.choose_spec.2
@@ -95,16 +86,20 @@ theorem wilsonCorrAt_nonneg (a : EvenAp) {β : ℝ} (hβ : 0 ≤ β) (d : Fin (a
 
 /-! ## 2. The reduction, pointwise
 
-`ShareEnvelope.circ_moment_le_of_contact_relative` is generic in the read and carries no axiom. Fed
-`readEven a β` it bounds `d2Even a β`, and the coupling it reads the correlation at is `max β 0`,
-which is nonnegative whatever `β` is. That is the whole mechanism. -/
+`ShareEnvelope.circ_moment_le_of_contact_relative` is generic in the read. Fed `readEven a β` it
+bounds `d2Even a β`, and the coupling it reads the correlation at is `max β 0`, which is nonnegative
+whatever `β` is. -/
 
-/-- **The clamped moment is bounded by the envelope total, at one aperture and one coupling.**
+/-- `d2Even a β ≤ 2 · ∑' k, k² · quarticWeight m₀ C k`, at one aperture and one coupling, from the
+contact-relative quartic law at the clamped coupling `max β 0`. `readEven_rho` rewrites the
+hypothesis into the shape `ShareEnvelope.circ_moment_le_of_contact_relative` consumes. Because the
+hypothesis is asked only at `max β 0`, a law holding on `0 ≤ β` suffices at every real `β`.
 
-The hypothesis is the contact-relative quartic law AT THE CLAMPED COUPLING `max β 0` only, so a law
-that holds on `0 ≤ β` suffices at every real `β`. The bound
-`2·∑' k, k²·quarticWeight m₀ C k` is `ShareEnvelope.substrate_of_contact_relative_decay`'s own, and
-nothing is fitted. -/
+DERIVED: `0` in `hC` is the sign of the law's constant; `1` in `Fin (a.1 + 1)` is the lag index's
+range; `0` in `max β 0` is the clamp floor; `0` in `wilsonCorrAt … 0` is the contact lag the law is
+stated relative to; `4` is the law's decay exponent, `∑ k²·C/k^s` converging exactly when `s > 3`;
+the `2` in the exponent `k ^ 2` is the moment's own order and the leading `2` is
+`ShareEnvelope.circ_moment_le_of_contact_relative`'s two-sided fold of the circle. -/
 theorem d2Even_le_of_contact_relative (a : EvenAp) (β : ℝ) (m₀ : ℕ) {C : ℝ} (hC : 0 ≤ C)
     (h : ∀ d : Fin (a.1 + 1), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt a.1 (max β 0) d
@@ -117,11 +112,16 @@ theorem d2Even_le_of_contact_relative (a : EvenAp) (β : ℝ) (m₀ : ℕ) {C : 
 
 #print axioms d2Even_le_of_contact_relative
 
-/-- **THE REDUCTION ON THE NONNEGATIVE HALF-LINE.**
+/-- `∃ B, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B`, from the contact-relative quartic law assumed on
+`0 ≤ β` only. The witness is `2 · ∑' k, k² · quarticWeight m₀ C k` and each instance is
+`d2Even_le_of_contact_relative`, applied at `max β 0` with `le_max_right` discharging the
+nonnegativity side condition. The conclusion is in the clamped form
+`EvenAperture.existence_and_gap_of_substrate_even` consumes; no coupling below zero is ever fed to
+the correlation.
 
-`ShareEnvelope.substrate_of_contact_relative_decay` with the hypothesis quantified over `0 ≤ β` only,
-and the conclusion stated in the clamped form the axiom-free flagship consumes. No coupling below
-zero appears anywhere: the correlation is read at `max β 0` and nowhere else. -/
+DERIVED: `0` in `hC` is the sign of the constant and `0` in `h`'s `0 ≤ β` is the restricted domain;
+`1` in `Fin (N + 1)` is the lag index's range; `0` in `wilsonCorrAt N β 0` is the contact lag; `4` is
+the law's decay exponent. -/
 theorem substrate_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ), 0 ≤ β → ∀ d : Fin (N + 1), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -132,12 +132,19 @@ theorem substrate_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : ℝ) (hC : 
 
 #print axioms substrate_of_contact_relative_decay_nonneg
 
-/-- **OPTION (a), for the record.** The same hypothesis with the conclusion restated on `0 ≤ β`
-rather than clamped. It is true and it is a dead end: `WilsonModel.existence_and_gap_of_substrate`
-takes `∃ B, ∀ N β, d2At N β ≤ B` with no side condition on `β`, and this does not imply it —
-`d2At N β` at `β < 0` is untouched by any nonnegative-only hypothesis.
+/-- The same hypothesis with the conclusion stated on the unclamped moment and carrying the side
+condition: `∃ B, ∀ N β, 0 ≤ β → d2At N β ≤ B`. Proved directly from
+`ShareEnvelope.circ_moment_le_of_contact_relative` at `readYMAt N β`, with the same witness.
 
-It mentions `d2At`, hence `readYMAt`, hence the named axiom; the clamped route above does not. -/
+The side condition is not removable: `d2At N β` at `β < 0` is a real number built from
+`readYMAt N β`, about which the hypothesis says nothing, and
+`WilsonModel.existence_and_gap_of_substrate` asks for the bound with no side condition on `β`. This
+declaration mentions `d2At` and hence `readYMAt`, so its axiom footprint differs from the clamped
+route's; nothing below uses it.
+
+DERIVED: `0` in `hC` is the sign of the constant; the two `0 ≤ β`s are the restricted domain, in the
+hypothesis and again in the conclusion; `1` in `Fin (N + 1)` is the lag index's range; `0` in
+`wilsonCorrAt N β 0` is the contact lag; `4` is the law's decay exponent. -/
 theorem substrate_at_nonneg_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ), 0 ≤ β → ∀ d : Fin (N + 1), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -151,9 +158,14 @@ theorem substrate_at_nonneg_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : �
 
 #print axioms substrate_at_nonneg_of_contact_relative_decay_nonneg
 
-/-- **The nonnegative hypothesis is strictly weaker than the unrestricted one**, so nothing that
-could be reduced before can fail to be reduced now. The converse is not available and is not claimed:
-the unrestricted hypothesis says things at `β < 0` that this one does not. -/
+/-- The contact-relative quartic law stated for all real `β` implies the same law restricted to
+`0 ≤ β`. The proof discards the `0 ≤ β` argument. The converse is not stated: the unrestricted form
+constrains the correlation at `β < 0` and the restricted form does not.
+
+DERIVED: `1` in both `Fin (N + 1)`s is the lag index's range; `0` in `0 ≤ β` is the restricted
+domain the conclusion adds; the `0`s in `wilsonCorrAt N β 0` are the contact lag the law is relative
+to; both `4`s are the law's decay exponent, identical on the two sides so the implication is by
+weakening alone. -/
 theorem nonneg_hypothesis_of_unrestricted (m₀ : ℕ) (C : ℝ)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -165,10 +177,12 @@ theorem nonneg_hypothesis_of_unrestricted (m₀ : ℕ) (C : ℝ)
 
 #print axioms nonneg_hypothesis_of_unrestricted
 
-/-- **THE PRICE, at the level of the moment.** Below zero the clamped moment is the `β = 0` moment.
-So the nonnegative reduction claims nothing at negative coupling beyond the `β = 0` claim relabelled
-— which is the flagship's existing price (`EvenAperture.readEven_eq_at_zero`,
-`EvenAperture.μEven_eq_at_zero`), not a new one this file introduces. -/
+/-- `d2Even a β = d2Even a 0` for `β ≤ 0`: below zero the clamped moment is the `β = 0` moment.
+Immediate from `EvenAperture.readEven_eq_at_zero`. So every statement about `d2Even` at negative
+coupling is the `β = 0` statement relabelled, and none of them constrains the model there.
+
+DERIVED: `0` in `hβ` is the clamp floor, and `0` on the right is the coupling the clamp maps
+everything below it to. -/
 theorem d2Even_eq_at_zero (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) : d2Even a β = d2Even a 0 := by
   show ∑ d, (readEven a β).p d * (Moment.circLag d : ℝ) ^ 2 = _
   rw [readEven_eq_at_zero a hβ]
@@ -176,23 +190,24 @@ theorem d2Even_eq_at_zero (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) : d2Even a β
 
 #print axioms d2Even_eq_at_zero
 
-/-! ## 3. Wiring it to the flagship
+/-! ## 3. The conclusion, written out
 
 `Flagship h` is `EvenAperture.existence_and_gap_of_substrate_even`'s conclusion, written once so the
-theorems below can be read. That it IS that conclusion is not asserted: `flagship_of_substrate_even`
-is literally that theorem, and it type-checks only if the two are the same proposition. -/
+theorems below can be read. `flagship_of_substrate_even` is that theorem applied, so it type-checks
+only if the two are the same proposition. -/
 
 /-- The conclusion of `EvenAperture.existence_and_gap_of_substrate_even`, as a predicate on its
-hypothesis: the mass gap, non-triviality, `SO(4)` invariance, and the continuum measure with its
-tightness, bound, positivity and both invariances.
+hypothesis. Its two components are
 
-DERIVED: no magnitude appears anywhere in this statement. Every `0` is a sign or a limit point:
-`nhds 0` is the assertion that the correlation TENDS TO zero, which is the mass gap itself and not a
-level it is compared against; `μ − κ < 0` is the SIGN of the tension deficit; and `0 ≤ q j` is
-nonnegativity of the limit functional, not a floor on it. The `4` is not a numeral of the definition
-at all — it is the dimension inside the NAME `SO(4)`, the rotation group of the four-dimensional
-hypercubic lattice `WilsonBridge.corrClay` is stated on. The one magnitude in sight, `B`, is the
-hypothesis's own and is existentially quantified there. -/
+* the gap side: at every `β` the correlator norm tends to `0`, the tension deficit `μ β − κ` is
+  negative, and `R` is constant across lag pairs;
+* the measure side: a subsequence `φ` along which each `Q j` converges to a `q j`, with
+  `|q j| ≤ ⌈c⌉₊ · B`, `0 ≤ q j`, and invariance of `q` under both group actions.
+
+DERIVED: no magnitude appears in this statement. Every `0` is a sign or a limit point: `nhds 0` is
+the limit the correlator norm reaches, not a level it is compared against; `μ β − κ < 0` is the sign
+of the tension deficit; and `0 ≤ q j` is nonnegativity of the limit functional. `B` and `c` are the
+hypothesis's and the measure's own, quantified there. -/
 def Flagship (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) : Prop :=
   ((∀ β, Tendsto (fun τ : ℕ => ‖∑ k ∈ (wilsonEven h).model.gap.s β,
         (wilsonEven h).model.gap.P β k
@@ -208,31 +223,36 @@ def Flagship (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
 
 #print axioms Flagship
 
-/-- **`Flagship` is the flagship.** The proof term is
-`EvenAperture.existence_and_gap_of_substrate_even` and nothing else, so the abbreviation above is
-faithful by type-checking rather than by assertion. -/
+/-- `Flagship h` holds for every `h`. The proof term is
+`EvenAperture.existence_and_gap_of_substrate_even` applied to `h` and nothing else, so `Flagship` is
+that theorem's conclusion by type-checking rather than by assertion.
+
+DERIVED: no numeral. -/
 theorem flagship_of_substrate_even (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     Flagship h :=
   existence_and_gap_of_substrate_even h
 
 #print axioms flagship_of_substrate_even
 
-/-- **THE CONTINUUM HALF IS THE SAME OBJECT.** The measure the clamped flagship delivers its
-tightness and invariance statements about is `WilsonModel.ymFamilyTension` — by `rfl`, the very
-family `WilsonModel.existence_and_gap_of_substrate` uses. So restricting the substrate hypothesis to
-the clamped read costs the continuum limit nothing: the measure side never consumed that hypothesis.
--/
+/-- `(wilsonEven h).model.measure = WilsonModel.ymFamilyTension`, by `rfl`: the measure component
+of the clamped model is the same family `WilsonModel.existence_and_gap_of_substrate` uses. The
+substrate bound `h` is consumed by the gap side, and this records that the measure side is unchanged
+by the restriction.
+
+DERIVED: no numeral. -/
 theorem measure_is_ymFamilyTension (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     (wilsonEven h).model.measure = MassGap.WilsonModel.ymFamilyTension := rfl
 
 #print axioms measure_is_ymFamilyTension
 
-/-- **THE WHOLE STATEMENT, FROM A CONTACT-RELATIVE POWER LAW ON `0 ≤ β` ALONE.**
+/-- From the contact-relative quartic law assumed on `0 ≤ β` alone, both the clamped substrate bound
+and `Flagship` of it. `substrate_of_contact_relative_decay_nonneg` supplies the bound and
+`flagship_of_substrate_even` the conclusion; the result is packaged as a dependent pair so the
+`Flagship` is stated about the bound just produced.
 
-`ShareEnvelope.yang_mills_of_contact_relative_decay` with the coupling restricted to the physical
-half-line and the flagship replaced by the axiom-free one. Gap, non-triviality, `SO(4)` invariance
-and the continuum measure, from one inequality on the connected plaquette correlation at nonnegative
-coupling. -/
+DERIVED: `0` in `hC` is the sign of the law's constant and `0` in `0 ≤ β` is its restricted domain;
+`1` in `Fin (N + 1)` is the lag index's range; `0` in `wilsonCorrAt N β 0` is the contact lag; `4` is
+the law's decay exponent. -/
 theorem existence_and_gap_of_contact_relative_nonneg (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ), 0 ≤ β → ∀ d : Fin (N + 1), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -243,28 +263,24 @@ theorem existence_and_gap_of_contact_relative_nonneg (m₀ : ℕ) (C : ℝ) (hC 
 
 #print axioms existence_and_gap_of_contact_relative_nonneg
 
-/-! ## 4. Composing the two arms, and what is left
+/-! ## 4. Composing the two arms
 
-`ContactFloor.contact_relative_unconditional` proves the law on `[0, b]` with its own constant. An
-obligation on `(b, ∞)` would come with a different one. Two constants are merged into their maximum,
-which needs the contact value's sign — supplied by `wilsonCorrAt_nonneg`, i.e. by the PROVED
-reflection positivity on exactly the domain the clamp puts us on. -/
+`ContactFloor.contact_relative_unconditional` proves the law on `[0, b]` with its own constant; a
+law on `(b, ∞)` comes with a different one. The two are merged into their maximum, which needs the
+contact value's sign — `wilsonCorrAt_nonneg`, available on exactly the domain the clamp puts the
+argument on. -/
 
-/-- **THE REMAINING OBLIGATION.** The contact-relative quartic law above the cut: one constant, every
-aperture, every coupling strictly above `b`, every lag at distance one or more.
+/-- The contact-relative quartic law above the cut `b`: one nonnegative constant `C` serving every
+extent, every coupling strictly above `b`, and every lag at circle distance at least one. Written in
+the same shape as `LawBelow` so the two compose in `substrate_even_of_two_arm`.
 
-Nothing else is open. The same statement on `[0, b]` is `ContactFloor.contact_relative_unconditional`
-and is proved; below zero there is nothing to state, because the clamped read never evaluates the
-model there.
-
-DERIVED: the numerals are `LawBelow`'s below, kept identical so the two arms compose. The exponent
-`4` is the threshold: `∑ k²·C/k^s` converges exactly when `s > 3`, so `4` is the integer above it,
-and `ShareEnvelope.cubic_contact_relative_gives_no_bound` proves `3` itself FALSE. The lag cut `1`
-excludes the contact term and nothing else, because `StrongArm.exists_geom_quartic_bound` shows a
-geometric sequence dominates a quartic outright rather than eventually — there is no cut to name. The
-`0`s are the sign of `C`, the contact lag `wilsonCorrAt N β 0` the law is stated RELATIVE to, and the
-lower end of the physical coupling domain named in the prose — none of them a magnitude; `b` is the
-cut, quantified over, and `C` is existential. -/
+DERIVED: the numerals are identical to `LawBelow`'s, which is what lets the two arms compose. The
+exponent `4` is the convergence threshold: `∑ k²·C/k^s` converges exactly when `s > 3`, `4` is the
+integer above it, and `ShareEnvelope.cubic_contact_relative_gives_no_bound` refutes `3`. The lag cut
+`1` excludes the contact term and nothing else, `StrongArm.exists_geom_quartic_bound` showing a
+geometric sequence dominates a quartic outright rather than eventually. `1` in `Fin (N + 1)` is the
+lag index's range. The `0`s are the sign of `C` and the contact lag `wilsonCorrAt N β 0` the law is
+stated relative to; `b` is the cut, quantified over, and `C` is existential. -/
 def LawAbove (b : ℝ) : Prop :=
   ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), b < β → 1 ≤ Moment.circLag d →
     MassGap.wilsonCorrAt N β d
@@ -272,15 +288,15 @@ def LawAbove (b : ℝ) : Prop :=
 
 #print axioms LawAbove
 
-/-- The same statement on `[0, b]`, written in the same shape so the two arms can be read side by
-side.
+/-- The same law on `0 ≤ β ≤ b`, written in the same shape as `LawAbove` so the two can be read side
+by side and merged. `lawBelow_holds` supplies it for some `b > 0`.
 
-DERIVED: the numerals are `LawAbove`'s, kept identical so the two arms compose. The exponent `4` is
-the threshold: `∑ k²·C/k^s` converges exactly when `s > 3`, so `4` is the integer above it, and
-`ShareEnvelope.cubic_contact_relative_gives_no_bound` proves `3` itself FALSE. The lag cut `1`
-excludes the contact term and nothing else, because `StrongArm.exists_geom_quartic_bound` shows a
-geometric sequence dominates a quartic outright rather than eventually — there is no cut to name. The
-`0`s are the lower end of the physical coupling domain and the sign of `C`, neither a magnitude. -/
+DERIVED: the numerals are identical to `LawAbove`'s, which is what lets the two arms compose. The
+exponent `4` is the convergence threshold: `∑ k²·C/k^s` converges exactly when `s > 3`, `4` is the
+integer above it, and `ShareEnvelope.cubic_contact_relative_gives_no_bound` refutes `3`. The lag cut
+`1` excludes the contact term and nothing else. `1` in `Fin (N + 1)` is the lag index's range. The
+`0`s are the sign of `C`, the lower end of the coupling interval, and the contact lag
+`wilsonCorrAt N β 0` the law is stated relative to. -/
 def LawBelow (b : ℝ) : Prop :=
   ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), 0 ≤ β → β ≤ b → 1 ≤ Moment.circLag d →
     MassGap.wilsonCorrAt N β d
@@ -288,17 +304,25 @@ def LawBelow (b : ℝ) : Prop :=
 
 #print axioms LawBelow
 
-/-- **The lower arm is PROVED** — `ContactFloor.contact_relative_unconditional`, restated in the
-shape above. No hypothesis. -/
+/-- `∃ b, 0 < b ∧ LawBelow b`, with no hypothesis. It destructures
+`ContactFloor.contact_relative_unconditional` and repackages its cut, constant and bound in
+`LawBelow`'s shape; the discarded component is that lemma's own extra conclusion.
+
+DERIVED: `0` is the strict positivity of the cut `b`, carried from
+`ContactFloor.contact_relative_unconditional`. -/
 theorem lawBelow_holds : ∃ b : ℝ, 0 < b ∧ LawBelow b := by
   obtain ⟨b, hb, _, C, hC, h⟩ := MassGap.ContactFloor.contact_relative_unconditional
   exact ⟨b, hb, C, hC, h⟩
 
 #print axioms lawBelow_holds
 
-/-- **Both arms give the clamped substrate bound.** The merge: at the clamped coupling `max β 0`
-either the lower arm or the upper applies, and `max C₁ C₂` serves both because the contact value is
-nonnegative there. -/
+/-- `LawBelow b` and `LawAbove b` together give `∃ B, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B`. At the
+clamped coupling `max β 0` one of the two arms applies according to `max β 0 ≤ b`, and `max C₁ C₂`
+serves both, which needs the contact value nonnegative — `wilsonCorrAt_nonneg` at `max β 0`. The
+envelope is then `d2Even_le_of_contact_relative` at `m₀ = 1`.
+
+DERIVED: no numeral. The `1` used as `m₀` and the constants `C₁`, `C₂` come from `LawBelow` and
+`LawAbove`, which the statement names rather than unfolds. -/
 theorem substrate_even_of_two_arm (b : ℝ) (hb : LawBelow b) (ha : LawAbove b) :
     ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B := by
   obtain ⟨C₁, hC₁, h₁⟩ := hb
@@ -327,15 +351,14 @@ theorem substrate_even_of_two_arm (b : ℝ) (hb : LawBelow b) (ha : LawAbove b) 
 
 #print axioms substrate_even_of_two_arm
 
-/-- **THE OBLIGATION, REDUCED TO ONE INTERVAL.**
+/-- There is a `b > 0` such that `LawAbove b` alone yields the clamped substrate bound together with
+`Flagship` of it. The lower arm is supplied inside the proof by `lawBelow_holds` rather than assumed,
+and no coupling below zero appears, the clamped read never evaluating the model there.
 
-There is a `b > 0` such that the contact-relative quartic law on `(b, ∞)` ALONE yields the mass gap,
-non-triviality, `SO(4)` invariance and the continuum measure. The `[0, b)` arm is not assumed: it is
-discharged inside this proof by `ContactFloor.contact_relative_unconditional`. The negative arm does
-not appear, because the clamped read never evaluates the model below zero.
+`b` is neither named nor chosen here: it is the cut `ContactFloor.contact_relative_unconditional`
+produces, carried through `lawBelow_holds`.
 
-`b` is not named and not chosen here; it is the cut
-`ContactFloor.contact_relative_unconditional` produces, carried out of `lawBelow_holds`. -/
+DERIVED: `0` is the strict positivity of the cut `b`, inherited from `lawBelow_holds`. -/
 theorem existence_and_gap_of_law_above_cut :
     ∃ b : ℝ, 0 < b ∧ (LawAbove b →
       ∃ hsub : (∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B), Flagship hsub) := by
@@ -367,8 +390,8 @@ section Audit
 end Audit
 
 section AuditBridge
--- Mentions `d2At`/`readYMAt` by design, so it reports the named axiom. It is option (a), kept as the
--- record of what the unclamped restatement gives; it is not part of the chain above.
+-- Mentions `d2At`/`readYMAt`, so its footprint differs from the clamped route's. Audited separately
+-- for that reason; it is not part of the chain above.
 #print axioms substrate_at_nonneg_of_contact_relative_decay_nonneg
 end AuditBridge
 

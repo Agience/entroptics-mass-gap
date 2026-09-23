@@ -2,70 +2,70 @@ import MassGap.CellPivot
 import MassGap.CellPerturb
 
 /-!
-# Spending the pivot certificate: eigenvalue transport across `HcellR = HcellRr`
+# MassGap.CellBridge — carrying eigenvalue certificates from the rational cell to the real cell
 
-`CellPivot` certifies 61 couplings — 17 by the absolute route, 44 by the relative one — and **nothing
-in the tree consumes a single one of them.** It is imported by the aggregate `MassGap.lean` and by
-nothing else, and no declaration anywhere mentions `cell_gap_*` or `rel_cell_gap_*`. It is also the
-most expensive module in the tree (~15GB to elaborate) and the one that OOM-killed a whole build.
+`CellPivot` certifies eigenvalue gaps for the rational cell operator `HcellR jmax (q : ℚ)`. The rest
+of the development states its cell bounds as `CellGapAtLeastR jmax (lam : ℝ) g`, which is about
+`HcellRr jmax (lam : ℝ)`. `CellPerturb.HcellR_eq_HcellRr` equates the two matrices, and `CellCover`
+rewrites along that equality.
 
-**WHY THEY WERE UNSPENDABLE, stated correctly.** It is NOT that the rational cell and the real cell
-were never identified: `CellPerturb.HcellR_eq_HcellRr` proves `HcellR jmax (q : ℚ) = HcellRr jmax (q : ℝ)`
-and `CellCover` already rewrites along it nineteen times. What is missing is one step further on.
-`CellPivot`'s theorems are not about the MATRIX, they are about its EIGENVALUES, and
-`Matrix.IsHermitian.eigenvalues` takes the Hermiticity PROOF as an argument. Two proofs about
-propositionally-equal matrices do not give definitionally-equal eigenvalue functions, so an equation
-between the matrices does not by itself rewrite `(HcellR_isHermitian …).eigenvalues` into
-`(HcellRr_isHermitian …).eigenvalues`. Nothing in the tree bridged that, so the certificates sat in a
-module that imported into the aggregate and fed nothing.
+An equality of matrices does not by itself move a statement about eigenvalues.
+`Matrix.IsHermitian.eigenvalues` takes the Hermiticity proof as an argument, so
+`(HcellR_isHermitian …).eigenvalues` and `(HcellRr_isHermitian …).eigenvalues` are two different
+functions even once the matrices are known equal. `eigenvalues_congr` supplies the transport:
+substituting the matrix equality puts both Hermiticity proofs in the same `Prop`, where proof
+irrelevance is definitional in Lean 4.
 
-`eigenvalues_congr` bridges it, in one line: substituting the matrix equality makes the two Hermiticity
-proofs inhabit the same `Prop`, and proof irrelevance is definitional in Lean 4.
+On top of that the module exports `cellGapAtLeastR_of_pivot`, which turns a `CellPivot`-shaped gap
+statement into a `CellGapAtLeastR`, and two instantiations of it at `jmax = 8` — one from the
+absolute route at `λ = 4/25`, one from the relative route at `λ = 203/100` — together with a `norm_num`
+comparison of the relative value against the constant `CellCover.cell_gap_on_range` carries.
 
-**WHAT SPENDING THEM IS WORTH.** `CellCover.cell_gap_on_range` carries
-`757…173/2756…200 = 0.27465307` — the entropy floor `¼ log 3` — uniformly across `λ ∈ [4/25, 169/25]`,
-because it is an INTERVAL statement and must hold at its worst point. The relative anchors already
-proved far more pointwise, and the numbers were sitting unused: at `λ = 203/100` the certified gap is
-`484/225 = 2.1511`, which is **7.83×** the covered value. `cell_gap_big_at_203_100` spends it.
-
-**WHAT THIS DOES AND DOES NOT DO.** It transports existing certificates onto the operator the rest of
-the tree speaks about; it proves no new spectral bound. The INTERVAL statement is NOT improved by it —
-covering `[4/25, 169/25]` uniformly at a larger value still needs the radii re-earned at the larger
-shifts, which is generated-file work in `CellCover`. What it removes is the reason that work looked
-unavailable.
+Scope: everything here is transport of certificates that already exist. No new spectral bound is
+proved, and the interval statement `CellCover.cell_gap_on_range` is unchanged — it is uniform on
+`[4/25, 169/25]` and so is set by its worst point, which the pointwise statements below do not
+address.
 -/
 
 namespace MassGap.CellBridge
 
 open MassGap.CellEnclosure
 
-/-- **Eigenvalues transport across an equality of Hermitian matrices.**
+/-- Equal Hermitian matrices have equal eigenvalue functions: given `h : A = B` and Hermiticity proofs
+`hA` of `A` and `hB` of `B`, `hA.eigenvalues = hB.eigenvalues`.
 
-`Matrix.IsHermitian.eigenvalues` takes the Hermiticity PROOF as an argument, so two proofs about
-propositionally-equal matrices do not give definitionally-equal eigenvalue functions. Substituting the
-equality makes the two proofs inhabit the same `Prop`, and proof irrelevance is definitional in Lean 4,
-so `rfl` closes it.
+`Matrix.IsHermitian.eigenvalues` is indexed by the Hermiticity proof, so the two sides are not the
+same term before the substitution. After `subst h` both proofs inhabit `A.IsHermitian`, proof
+irrelevance is definitional in Lean 4, and `rfl` closes it.
 
-This is the step that was missing. The matrix equality it is applied to below already existed
-(`CellPerturb.HcellR_eq_HcellRr`, used throughout `CellCover`); what did not exist was any way to carry
-a statement about EIGENVALUES across it, which is the only form `CellPivot`'s certificates come in. -/
+Scope: stated for real square matrices `Matrix (Fin n) (Fin n) ℝ` at arbitrary `n`, with `n` implicit;
+it is not specific to the cell operators. -/
 theorem eigenvalues_congr {n : ℕ} {A B : Matrix (Fin n) (Fin n) ℝ}
     (hA : A.IsHermitian) (hB : B.IsHermitian) (h : A = B) :
     hA.eigenvalues = hB.eigenvalues := by
   subst h
   rfl
 
-/-- The Hermiticity proofs the rational and real cells carry give the same eigenvalue function.
+/-- The rational cell and the real cell at the coerced coupling have the same eigenvalue function:
+`(HcellR_isHermitian jmax lam).eigenvalues = (HcellRr_isHermitian jmax (lam : ℝ)).eigenvalues`, for
+every `jmax : ℕ` and every rational `lam`.
 
-The matrix equality is `CellPerturb.HcellR_eq_HcellRr`; this adds only the transport. -/
+`eigenvalues_congr` applied to `CellPerturb.HcellR_eq_HcellRr`. The coupling on the right is the image
+of `lam` under the `ℚ → ℝ` coercion, not an arbitrary real. -/
 theorem eigenvalues_HcellR_eq (jmax : ℕ) (lam : ℚ) :
     (HcellR_isHermitian jmax lam).eigenvalues
       = (HcellRr_isHermitian jmax (lam : ℝ)).eigenvalues :=
   eigenvalues_congr _ _ (HcellR_eq_HcellRr jmax lam)
 
-/-- **SPENDING A PIVOT CERTIFICATE.** Any `CellPivot` gap statement — absolute or relative, they share
-this shape once the ground-state clause is dropped — becomes a `CellGapAtLeastR` about the operator the
-rest of the development uses. -/
+/-- A gap statement about the rational cell's eigenvalues becomes one about the real cell.
+
+The hypothesis is the shape both `CellPivot` routes produce once the ground-state clause is dropped:
+some index `i₀` such that every other eigenvalue of `HcellR jmax lam` exceeds the `i₀`-th by at least
+`g`. The conclusion is `CellGapAtLeastR jmax (lam : ℝ) g`. The proof is a rewrite by
+`eigenvalues_HcellR_eq`, so the two carry identical content.
+
+Scope: `i₀` is not required to index the smallest eigenvalue, and `g` is not required to be positive;
+the coupling is a rational coerced into `ℝ`. -/
 theorem cellGapAtLeastR_of_pivot {jmax : ℕ} {lam : ℚ} {g : ℝ}
     (h : ∃ i₀, ∀ i, i ≠ i₀ →
       (HcellR_isHermitian jmax lam).eigenvalues i₀ + g
@@ -74,30 +74,48 @@ theorem cellGapAtLeastR_of_pivot {jmax : ℕ} {lam : ℚ} {g : ℝ}
   rw [eigenvalues_HcellR_eq] at h
   exact h
 
-/-- **THE ABSOLUTE ROUTE, SPENT.** `CellPivot.cell_gap_4_25` at the bottom of the covered range.
+/-- `CellGapAtLeastR 8 ((4 / 25 : ℚ) : ℝ) (2747 / 10000)`, obtained by transporting
+`CellPivot.cell_gap_4_25` onto the real cell.
 
-`lam` is passed EXPLICITLY. Left implicit, Lean must solve `((?lam : ℚ) : ℝ) =?= (4/25 : ℝ)` — a
-unification through the `ℚ → ℝ` coercion — and that times out at `isDefEq` on a 17-dimensional cell
-rather than failing fast. Naming the rational makes both sides the same term by construction. -/
+`lam` is passed explicitly to `cellGapAtLeastR_of_pivot`. Left implicit, unification has to solve
+`((?lam : ℚ) : ℝ) =?= (4 / 25 : ℝ)` through the `ℚ → ℝ` coercion, which on a cell of this dimension
+does not fail fast. Naming the rational makes both sides the same term by construction.
+
+DERIVED: `8` is `jmax`, the cell truncation level the certificate was produced at. `4 / 25` is the
+coupling, the left endpoint of the range `CellCover` covers. `2747 / 10000` is the gap value
+`CellPivot.cell_gap_4_25` carries. All three are read off that certificate; none is chosen here. -/
 theorem cell_gap_at_4_25 :
     CellGapAtLeastR 8 (((4 / 25 : ℚ) : ℝ)) (2747 / 10000) :=
   cellGapAtLeastR_of_pivot (jmax := 8) (lam := (4 / 25 : ℚ)) (g := (2747 / 10000 : ℝ))
     ⟨(CellPivot.cell_gap_4_25).choose, (CellPivot.cell_gap_4_25).choose_spec.2⟩
 
-/-- **THE RELATIVE ROUTE, SPENT — AND IT IS 7.83× THE COVERED VALUE.**
+/-- `CellGapAtLeastR 8 ((203 / 100 : ℚ) : ℝ) (484 / 225)`, obtained by transporting
+`CellPivot.rel_cell_gap_203_100` onto the real cell.
 
-`CellCover.cell_gap_on_range` certifies `0.27465307` uniformly on `[4/25, 169/25]`. At `λ = 203/100`
-the pivot certificate proves `484/225 = 2.15111` for the same operator. The interval statement is not
-wrong; it is uniform, and uniformity over a range where the gap grows monotonically costs everything
-above the left endpoint. -/
+This is a statement at one coupling. `CellCover.cell_gap_on_range` is an interval statement holding
+uniformly on `[4/25, 169/25]`, so its constant is set at the worst point of that range; the two are
+bounds of different kinds, and `cell_gap_203_100_gt_floor` compares the numbers.
+
+DERIVED: `8` is `jmax`, the cell truncation level. `203 / 100` is the coupling the relative route was
+certified at. `484 / 225` is the gap `CellPivot.rel_cell_gap_203_100` carries. All three come from
+that certificate. -/
 theorem cell_gap_big_at_203_100 :
     CellGapAtLeastR 8 (((203 / 100 : ℚ) : ℝ)) (484 / 225) :=
   cellGapAtLeastR_of_pivot (jmax := 8) (lam := (203 / 100 : ℚ)) (g := (484 / 225 : ℝ))
     ⟨(CellPivot.rel_cell_gap_203_100).choose,
       (CellPivot.rel_cell_gap_203_100).choose_spec.2⟩
 
-/-- **AND IT STRICTLY EXCEEDS THE ENTROPY FLOOR THE COVER CARRIES**, stated so the improvement is a
-theorem rather than a comparison of decimals in a comment. -/
+/-- The exact rational constant `CellCover.cell_gap_on_range` carries is strictly less than
+`484 / 225`.
+
+A `norm_num` comparison of two rationals, stated so that the relation between the uniform interval
+constant and the pointwise value above is a theorem rather than a comparison of decimals in a comment.
+It says nothing about either quantity being a gap; that content is in the two statements it names.
+
+DERIVED: the fraction
+`757208153840462049843660207489122776833562120275247490173 / 2756962257389109957235490077421880340994208596975891251200`
+is the exact constant certified by `CellCover.cell_gap_on_range`, transcribed. `484 / 225` is the gap
+value transported just above. Neither is chosen here. -/
 theorem cell_gap_203_100_gt_floor :
     (757208153840462049843660207489122776833562120275247490173 /
       2756962257389109957235490077421880340994208596975891251200 : ℝ) < 484 / 225 := by

@@ -3,50 +3,42 @@ import MassGap.WilsonHypercubic
 import MassGap.ReflectionPositivity
 
 /-!
-# MassGap.Reflect — the coordinate REFLECTION of the periodic hypercubic lattice
+# MassGap.Reflect — the coordinate reflection `x_τ ↦ c − x_τ` of the periodic hypercubic lattice
 
-`WilsonHypercubic` supplies the axis PERMUTATIONS of the hypercubic lattice: relabel direction `μ`
-as `e μ`, carry the site coordinates with it, and `wilsonSymmetry` turns it into a `Symmetry` of the
-gauge system. This file supplies the other half of the lattice's discrete Euclidean group — the
-REFLECTION `x_τ ↦ c − x_τ` in one coordinate — because that is the map Osterwalder–Seiler reflection
-positivity is stated about and the one thing the tree could not write down.
+`WilsonHypercubic` supplies the axis permutations of the hypercubic lattice. This file supplies the
+reflection in one coordinate, on sites, links, plaquettes and configurations, and proves that the
+Wilson action and the Gibbs expectation are invariant under it.
 
-## Why a reflection is not an axis permutation, and what has to change
-
-An axis permutation carries a link to a link and leaves the traversal direction alone, so
-`wilsonSymmetry`'s hypothesis — the boundary word of the permuted plaquette is the relabelled
-boundary word, ORDER AND ORIENTATION INTACT — is available. A reflection in direction `τ` is not
-like that, in two ways, and both are forced:
+## How a reflection differs from an axis permutation
 
 * **The base site of a `τ`-link moves by one step.** The link `U_τ(x)` spans `[x_τ, x_τ+1]`; its
-  mirror image spans `[c−x_τ−1, c−x_τ]`, whose base is `c−1−x_τ`. So the reflection acts on
-  `τ`-links through the constant `c−1` and on every other link through `c` (`reflLink`).
-* **A `τ`-link is traversed BACKWARDS by the mirrored loop**, so the reflection carries a DAGGER on
-  those links: `U_τ(x) ↦ U_τ(c−1−x_τ)⁻¹` (`reflConf`). Without it the action is not invariant — the
-  plaquette holonomy `A·B·C⁻¹·D⁻¹` would go to `A·B·C⁻¹·D⁻¹` with the wrong two letters inverted,
-  which is not conjugate to any plaquette's holonomy. This is exactly the `†` that appears in the
-  Osterwalder–Seiler time reflection, and it is why a reflection is NOT of the form
-  `LatticeGauge.Symmetry` (whose `onLink` is a bare permutation of the links).
+  mirror spans `[c−x_τ−1, c−x_τ]`, based at `c−1−x_τ`. So `reflLink` acts on `τ`-links through the
+  constant `c−1` and on every other link through `c`.
+* **A `τ`-link is traversed backwards by the mirrored loop**, so `reflConf` inverts the gauge
+  variable on those links. This is the `†` of the Osterwalder–Seiler time reflection, and it is why
+  a reflection is not of the form `LatticeGauge.Symmetry`, whose `onLink` is a bare permutation.
 
-The consequence worth stating plainly: the mirrored boundary word is a CYCLIC ROTATION of the image
-plaquette's own word, not that word itself, so the holonomies agree only up to CONJUGATION
-(`hol_reflConf`). That is enough, because the Wilson density is a class function
-(`WilsonAction.wilsonDensity_conj`), and it is the reason `reflect_action_invariant` is proved here
-rather than obtained from `wilsonSymmetry`.
+The mirrored boundary word is therefore a cyclic rotation of the image plaquette's word rather than
+that word itself (`bd_reflect_axis_fst` rotates by `3`, `bd_reflect_axis_snd` by `1`,
+`bd_reflect_transverse` not at all), so the holonomies agree only up to conjugation
+(`hol_reflConf`). `reflect_action_invariant` is proved from that conjugation together with
+`WilsonAction.wilsonDensity_conj`, not from `WilsonLattice.wilsonSymmetry`.
 
-## What is here and what is not
+## Contents
 
-`reflSite`/`reflLink`/`reflPlaq`/`reflConf` with their involutivity, the four site identities the
-geometry rests on, the boundary-word transformation in each of its three non-degenerate shapes
-(`bd_reflect_*`), the holonomy conjugation, the invariance of the Wilson action, and — over a compact
-gauge group — the invariance of the Gibbs expectation (`expect_reflect_invariant`).
+`reflSite`, `reflLink`, `reflPlaq`, `reflConf` with their involutivity; the four site identities the
+geometry rests on; the boundary-word transformation in its three non-degenerate shapes; the holonomy
+conjugation; invariance of the Wilson action; and, over a compact gauge group, invariance of the
+Gibbs expectation (`expect_reflect_invariant`), routed through
+`LatticeGauge.System.expect_invariant_of_mp`.
 
-What is NOT here is the character expansion. `ReflectionPositivity.reflection_positive_of_expansion`
-consumes a paired expansion of the cross term with nonnegative coefficients; producing it is the
-cited half of Osterwalder–Seiler and nothing below attempts it. This file supplies the geometry that
-expansion would be stated over, which is what the tree was missing.
+The character expansion is not here. `ReflectionPositivity.reflection_positive_of_expansion` consumes
+a paired expansion of the cross term with nonnegative coefficients; no declaration below produces
+one. What this file provides is the geometry such an expansion would be stated over.
 
-Foundational footprint only (`#print axioms` at the end).
+`c` is a `Fin n`, and the subtraction is `Fin n`'s own modular one, so every statement is on the
+periodic lattice.
+
 Build: `python code/lean_build.py build MassGap.Reflect`.
 -/
 
@@ -58,27 +50,37 @@ variable {d n : ℕ}
 
 /-! ### The reflection on sites -/
 
-/-- **Reflection of one coordinate**: `x_τ ↦ c − x_τ`, every other coordinate fixed.
+/-- Reflection of one coordinate: `x_τ ↦ c − x_τ`, every other coordinate fixed, by
+`Function.update`.
 
 `c` is the reflection constant, not a position: the fixed set of `x ↦ c − x` on `Fin n` is where
-`2x = c`, so the plane sits at `c/2` and the whole one-parameter family of reflections in direction
-`τ` is swept by `c`. Carrying `c` rather than a plane is what makes the two hyperplanes of an
-even-extent lattice (`c` even and `c` odd) the same construction at two values.
+`2x = c`, so the plane sits at `c/2` and the family of reflections in direction `τ` is swept by `c`.
+Carrying `c` rather than a plane makes the two hyperplanes of an even-extent lattice (`c` even and
+`c` odd) the same construction at two values.
 
-DERIVED: no literal appears. `c` and `τ` are the caller's; the subtraction is `Fin n`'s own, which is
+DERIVED: no numeral. `c` and `τ` are the caller's; the subtraction is `Fin n`'s own, which is
 modular, so periodicity is inherited rather than imposed. -/
 def reflSite [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) : Site d n :=
   Function.update x τ (c - x τ)
 
+/-- The reflected site's `τ` coordinate is `c - x τ`, by `Function.update_self`.
+
+DERIVED: no numeral. -/
 @[simp] theorem reflSite_axis [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
     reflSite τ c x τ = c - x τ := by
   simp [reflSite]
 
+/-- Every coordinate other than `τ` is fixed by the reflection, by `Function.update_of_ne`.
+
+DERIVED: no numeral. -/
 theorem reflSite_of_ne [NeZero n] {τ j : Fin d} (h : j ≠ τ) (c : Fin n) (x : Site d n) :
     reflSite τ c x j = x j := by
   simp [reflSite, Function.update_of_ne h]
 
-/-- **The reflection is an involution on sites** — `c − (c − a) = a`. -/
+/-- `reflSite τ c` is an involution on `Site d n`, from `c − (c − a) = a` in `Fin n` on the `τ`
+coordinate and from the update being trivial on the others.
+
+DERIVED: no numeral. -/
 theorem reflSite_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
     Function.Involutive (reflSite (d := d) (n := n) τ c) := by
   intro x
@@ -88,7 +90,10 @@ theorem reflSite_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
     simp [reflSite, sub_sub_cancel]
   · simp [reflSite, Function.update_of_ne h]
 
-/-- **A step in a direction the reflection does not touch commutes with it.** -/
+/-- A step in a direction `ν ≠ τ` commutes with the reflection:
+`reflSite τ c (shift ν x) = shift ν (reflSite τ c x)`. The two updates are at different coordinates.
+
+DERIVED: no numeral. -/
 theorem reflSite_shift_of_ne [NeZero n] {τ ν : Fin d} (h : ν ≠ τ) (c : Fin n) (x : Site d n) :
     reflSite τ c (shift ν x) = shift ν (reflSite τ c x) := by
   funext j
@@ -101,9 +106,10 @@ theorem reflSite_shift_of_ne [NeZero n] {τ ν : Fin d} (h : ν ≠ τ) (c : Fin
       simp [reflSite, shift, Function.update_of_ne hj]
     · simp [reflSite, shift, Function.update_of_ne hj, Function.update_of_ne hν]
 
-/-- **A step ALONG the reflection axis shifts the reflection constant by one.** This is the identity
-that makes `τ`-links base-shifted: reflecting the far end of a `τ`-link is reflecting its near end
-about the neighbouring constant.
+/-- A step along the reflection axis shifts the reflection constant by one:
+`reflSite τ c (shift τ x) = reflSite τ (c − 1) x`. Reflecting the far end of a `τ`-link is
+reflecting its near end about the neighbouring constant, and this is what makes `τ`-links
+base-shifted in `reflLink`.
 
 DERIVED: the `1` is one lattice step, the same `1` as in `WilsonHypercubic.shift`. -/
 theorem reflSite_shift_axis [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
@@ -115,9 +121,10 @@ theorem reflSite_shift_axis [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
     abel
   · simp [reflSite, shift, Function.update_of_ne hj]
 
-/-- **And stepping back along the axis undoes it.**
+/-- The converse rewriting: `shift τ (reflSite τ (c − 1) x) = reflSite τ c x`. The same identity as
+`reflSite_shift_axis` with the shift on the other side, used to rewrite in the opposite direction.
 
-DERIVED: the `1` is one lattice step. -/
+DERIVED: the `1` is one lattice step, the same `1` as in `WilsonHypercubic.shift`. -/
 theorem shift_reflSite_axis [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
     shift τ (reflSite τ (c - 1) x) = reflSite τ c x := by
   funext j
@@ -129,15 +136,20 @@ theorem shift_reflSite_axis [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
 
 /-! ### The reflection on links and plaquettes -/
 
-/-- **Reflection of a link.** A link in direction `τ` spans `[x_τ, x_τ+1]`, so its mirror image spans
-`[c−1−x_τ, c−x_τ]` and is based at `c−1−x_τ`; a link in any other direction is based at the mirror
-of its own base. That base shift by one is the whole difference between a reflection and an axis
-permutation on the link set, and it is not a choice.
+/-- Reflection of a link, keeping its direction and reflecting its base site: through `c − 1` when
+the direction is `τ`, through `c` otherwise. A `τ`-link spans `[x_τ, x_τ+1]`, so its mirror spans
+`[c−1−x_τ, c−x_τ]`, based at `c−1−x_τ`. That base shift is the whole difference between a reflection
+and an axis permutation on the link set.
 
-DERIVED: the `1` is the length of a link in lattice steps — the offset between a link's two ends. -/
+DERIVED: the `1` is the length of a link in lattice steps, the offset between a link's two ends. The
+`1` and `2` in `l.1` and `l.2` are the pair's projections, not numerals. -/
 def reflLink [NeZero n] (τ : Fin d) (c : Fin n) (l : Link d n) : Link d n :=
   (l.1, if l.1 = τ then reflSite τ (c - 1) l.2 else reflSite τ c l.2)
 
+/-- `reflLink τ c` is an involution on `Link d n`, by cases on whether the direction is `τ` and
+`reflSite_involutive` at the matching constant.
+
+DERIVED: no numeral. -/
 theorem reflLink_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
     Function.Involutive (reflLink (d := d) (n := n) τ c) := by
   intro l
@@ -146,24 +158,36 @@ theorem reflLink_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
   · simp [reflLink, h, reflSite_involutive τ (c - 1) x]
   · simp [reflLink, h, reflSite_involutive τ c x]
 
-/-- The reflection of links as a permutation. -/
+/-- `reflLink τ c` packaged as an `Equiv.Perm (Link d n)` via `Function.Involutive.toPerm`, so it
+can be summed over with `Equiv.sum_comp`.
+
+DERIVED: no numeral. -/
 def reflLinkPerm [NeZero n] (τ : Fin d) (c : Fin n) : Equiv.Perm (Link d n) :=
   (reflLink_involutive (d := d) (n := n) τ c).toPerm _
 
+/-- `reflLinkPerm τ c l = reflLink τ c l`, by `rfl`.
+
+DERIVED: no numeral. -/
 @[simp] theorem reflLinkPerm_apply [NeZero n] (τ : Fin d) (c : Fin n) (l : Link d n) :
     reflLinkPerm τ c l = reflLink τ c l := rfl
 
-/-- **Reflection of a plaquette.** A plaquette whose plane misses the reflection axis keeps its plane
-and moves its corner; one whose plane CONTAINS the axis has its loop traversed the other way round by
-the mirror, and the boundary word `WilsonHypercubic.bd` writes a reversed loop by swapping the two
-spanning directions — so the image plane is the transposed pair, based at the shifted corner.
+/-- Reflection of a plaquette. A plaquette whose plane misses the axis keeps its plane and moves its
+corner through `c`; one whose plane contains the axis has its loop traversed the other way by the
+mirror, and `WilsonHypercubic.bd` writes a reversed loop by swapping the two spanning directions, so
+the image plane is the transposed pair based at the corner reflected through `c − 1`.
 
-DERIVED: the `1` is the link-length offset of `reflLink`, for the same reason. -/
+DERIVED: the `1` is the link-length offset of `reflLink`, for the same reason. The `1`s and `2`s in
+`q.1.1`, `q.1.2` and `q.2` are projections of the nested pair, not numerals. -/
 def reflPlaq [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n) : Plaq d n :=
   if q.1.1 = τ then ((q.1.2, τ), reflSite τ (c - 1) q.2)
   else if q.1.2 = τ then ((τ, q.1.1), reflSite τ (c - 1) q.2)
   else ((q.1.1, q.1.2), reflSite τ c q.2)
 
+/-- `reflPlaq τ c` is an involution on `Plaq d n`. Four cases on which of the two spanning
+directions is `τ`, including the degenerate one where both are; in each, `reflSite_involutive`
+applies at the matching constant and the direction pair returns to its original order.
+
+DERIVED: no numeral. -/
 theorem reflPlaq_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
     Function.Involutive (reflPlaq (d := d) (n := n) τ c) := by
   intro q
@@ -179,10 +203,16 @@ theorem reflPlaq_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
       simp [reflPlaq, hμ, reflSite_involutive ν (c - 1) x]
     · simp [reflPlaq, hμ, hν, reflSite_involutive τ c x]
 
-/-- The reflection of plaquettes as a permutation. -/
+/-- `reflPlaq τ c` packaged as an `Equiv.Perm (Plaq d n)`. This is what lets
+`reflect_action_invariant` reindex the sum over plaquettes with `Equiv.sum_comp`.
+
+DERIVED: no numeral. -/
 def reflPlaqPerm [NeZero n] (τ : Fin d) (c : Fin n) : Equiv.Perm (Plaq d n) :=
   (reflPlaq_involutive (d := d) (n := n) τ c).toPerm _
 
+/-- `reflPlaqPerm τ c q = reflPlaq τ c q`, by `rfl`.
+
+DERIVED: no numeral. -/
 @[simp] theorem reflPlaqPerm_apply [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n) :
     reflPlaqPerm τ c q = reflPlaq τ c q := rfl
 
@@ -190,15 +220,23 @@ def reflPlaqPerm [NeZero n] (τ : Fin d) (c : Fin n) : Equiv.Perm (Plaq d n) :=
 
 variable {G : Type} [Group G]
 
-/-- **The reflection acting on a gauge-field configuration.** Off the axis it is a relabelling; ON
-the axis it is a relabelling followed by INVERSION, because the mirror traverses a `τ`-link the other
-way. This is the `†` of the Osterwalder–Seiler time reflection, and the reason a reflection is not a
-`LatticeGauge.Symmetry`: `Symmetry.onLink` is a bare permutation of links and cannot carry it.
+/-- The reflection acting on a gauge-field configuration: off the axis a relabelling by `reflLink`,
+on the axis a relabelling followed by inversion, because the mirror traverses a `τ`-link the other
+way. The inversion is the `†` of the Osterwalder–Seiler time reflection, and is why a reflection is
+not a `LatticeGauge.Symmetry`, whose `onLink` is a bare permutation of links.
 
-DERIVED: nothing numeric; the only data is the caller's `τ` and `c`. -/
+`G` need only be a `Group`; no topology or measure is required for this definition.
+
+DERIVED: no numeral. The `1` in `l.1` is the pair's first projection, not a numeral; the only data is
+the caller's `τ` and `c`. -/
 def reflConf [NeZero n] (τ : Fin d) (c : Fin n) (U : Link d n → G) : Link d n → G :=
   fun l => if l.1 = τ then (U (reflLink τ c l))⁻¹ else U (reflLink τ c l)
 
+/-- `reflConf τ c` is an involution on configurations. The direction of a link is unchanged by
+`reflLink`, so the same branch is taken twice; on the axis the two inversions cancel by `inv_inv`,
+and off it `reflLink_involutive` closes it.
+
+DERIVED: no numeral. -/
 theorem reflConf_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
     Function.Involutive (reflConf (d := d) (n := n) (G := G) τ c) := by
   intro U
@@ -210,27 +248,32 @@ theorem reflConf_involutive [NeZero n] (τ : Fin d) (c : Fin n) :
 
 /-! ### The boundary word under reflection -/
 
-/-- **The mirrored boundary word.** Each link is carried by `reflLink`, and the traversal of a
-`τ`-link is REVERSED — which is what `reflConf`'s dagger and this bit flip are two readings of. -/
+/-- The mirrored boundary word: each link is carried by `reflLink`, and the orientation bit of a
+`τ`-link is flipped. The bit flip here and `reflConf`'s inversion are two readings of the same
+reversal.
+
+DERIVED: no numeral. The `1` and `2` in `lo.1`, `lo.1.1` and `lo.2` are projections, not numerals. -/
 def reflWord [NeZero n] (τ : Fin d) (c : Fin n) (w : List (Link d n × Bool)) :
     List (Link d n × Bool) :=
   w.map (fun lo => (reflLink τ c lo.1, if lo.1.1 = τ then !lo.2 else lo.2))
 
-/-- **A plaquette transverse to the reflection keeps its word**, exactly as under an axis
-permutation (`WilsonHypercubic.bd_axis`): no link of its boundary runs along the axis, so nothing is
-reversed and nothing is base-shifted. -/
+/-- A plaquette whose two spanning directions both differ from `τ` keeps its boundary word:
+`reflWord τ c (bd ((μ, ν), x)) = bd (reflPlaq τ c ((μ, ν), x))`, with no rotation. No link of its
+boundary runs along the axis, so nothing is reversed and nothing is base-shifted.
+
+DERIVED: no numeral. -/
 theorem bd_reflect_transverse [NeZero n] (τ : Fin d) (c : Fin n) {μ ν : Fin d}
     (hμ : μ ≠ τ) (hν : ν ≠ τ) (x : Site d n) :
     reflWord τ c (bd ((μ, ν), x)) = bd (reflPlaq τ c ((μ, ν), x)) := by
   simp only [reflWord, bd, reflPlaq, reflLink, reflSite_shift_of_ne hμ, reflSite_shift_of_ne hν,
     hμ, hν, if_false, List.map_cons, List.map_nil]
 
-/-- **A plaquette whose FIRST direction is the reflection axis.** The mirrored word is the image
-plaquette's own word rotated by one — the last letter brought to the front — so the holonomies agree
-only up to conjugation, which is all a class function needs.
+/-- A plaquette whose FIRST spanning direction is `τ`: the mirrored word is the image plaquette's
+own word rotated by `3`, i.e. the last of the four letters brought to the front. So the two words
+have the same letters in a rotated order, and the holonomies agree only up to conjugation.
 
-DERIVED: `3` is the index of the last letter of a four-letter plaquette word; `1` is the link-length
-offset carried by `reflLink`. -/
+DERIVED: `3` is the rotation, the index of the last letter of a four-letter plaquette word, which is
+what brings it to the front. -/
 theorem bd_reflect_axis_fst [NeZero n] (τ : Fin d) (c : Fin n) {ν : Fin d}
     (hν : ν ≠ τ) (x : Site d n) :
     reflWord τ c (bd ((τ, ν), x)) = (bd (reflPlaq τ c ((τ, ν), x))).rotate 3 := by
@@ -239,10 +282,11 @@ theorem bd_reflect_axis_fst [NeZero n] (τ : Fin d) (c : Fin n) {ν : Fin d}
     List.map_cons, List.map_nil]
   rfl
 
-/-- **A plaquette whose SECOND direction is the reflection axis** — the mirror image of the previous
-case, rotated the other way.
+/-- A plaquette whose SECOND spanning direction is `τ`: the mirrored word is the image plaquette's
+word rotated by `1`, the other direction from `bd_reflect_axis_fst`.
 
-DERIVED: `1` is one place of rotation, and the link-length offset of `reflLink`. -/
+DERIVED: `1` is the rotation, one place, which is the inverse of `bd_reflect_axis_fst`'s `3` on a
+four-letter word. -/
 theorem bd_reflect_axis_snd [NeZero n] (τ : Fin d) (c : Fin n) {μ : Fin d}
     (hμ : μ ≠ τ) (x : Site d n) :
     reflWord τ c (bd ((μ, τ), x)) = (bd (reflPlaq τ c ((μ, τ), x))).rotate 1 := by
@@ -253,21 +297,28 @@ theorem bd_reflect_axis_snd [NeZero n] (τ : Fin d) (c : Fin n) {μ : Fin d}
 
 /-! ### The holonomy, and the action -/
 
-/-- The plaquette holonomy of the hypercubic boundary word, written out. -/
+/-- The plaquette holonomy of `WilsonHypercubic.bd` written out as the four-factor product
+`V(μ,x) · V(ν, x+μ̂) · V(μ, x+ν̂)⁻¹ · V(ν,x)⁻¹`, by `simp [wilsonHol, bd]`.
+
+DERIVED: no numeral. The `1`s and `2`s in `q.1.1`, `q.1.2` and `q.2` are projections of the nested
+pair, not numerals. -/
 theorem hol_bd [NeZero n] (q : Plaq d n) (V : Link d n → G) :
     wilsonHol (bd (d := d) (n := n)) q V
       = V (q.1.1, q.2) * (V (q.1.2, shift q.1.1 q.2)
           * ((V (q.1.1, shift q.1.2 q.2))⁻¹ * (V (q.1.2, q.2))⁻¹)) := by
   simp [wilsonHol, bd]
 
-/-- **The mirrored holonomy is CONJUGATE to the image plaquette's holonomy.**
+/-- The mirrored holonomy is conjugate to the image plaquette's holonomy: there is a `g` with
+`wilsonHol bd q (reflConf τ c U) = g · wilsonHol bd (reflPlaq τ c q) U · g⁻¹`. Conjugate, not equal,
+because the mirrored word is a cyclic rotation of the image word (`bd_reflect_axis_fst`,
+`bd_reflect_axis_snd`) and a rotated ordered product is a conjugated one. The conjugator is exhibited
+in each of the four cases: `1` where both directions miss the axis and where the plaquette is
+degenerate, and an inverse link variable in the two axis cases.
 
-Not equal: the mirrored boundary word is a cyclic rotation of the image word (`bd_reflect_axis_fst`,
-`bd_reflect_axis_snd`), and a rotated ordered product is a conjugated one. Equality holds only for
-plaquettes transverse to the reflection, where the rotation is trivial.
+This is the point at which a reflection stops being a `LatticeGauge.Symmetry`. It is enough for
+`reflect_action_invariant`, because `WilsonAction.wilsonDensity` is a class function.
 
-This is the exact point at which a reflection stops being a `LatticeGauge.Symmetry`, and it costs
-nothing downstream because the Wilson density is a class function. -/
+DERIVED: no numeral. -/
 theorem hol_reflConf [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n) (U : Link d n → G) :
     ∃ g : G, wilsonHol (bd (d := d) (n := n)) q (reflConf τ c U)
       = g * wilsonHol (bd (d := d) (n := n)) (reflPlaq τ c q) U * g⁻¹ := by
@@ -302,15 +353,15 @@ theorem hol_reflConf [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n) (U : Lin
 /-! ### The Wilson action is invariant under the reflection -/
 
 open MassGap.WilsonAction in
-/-- **The Wilson action is invariant under the reflection** — the analogue of
-`WilsonHypercubic.axisSymmetry` for the other half of the lattice's Euclidean group, and the
-property `CompactGauge.expect_invariant_haar` needs of a map before it can move it through the
-Gibbs measure.
+/-- `(sysWilson N d n).action (reflConf τ c U) = (sysWilson N d n).action U`, for every `N`, every
+reflection axis `τ` and constant `c`, and every configuration. Termwise, `hol_reflConf` replaces the
+mirrored holonomy by a conjugate of the image plaquette's and `WilsonAction.wilsonDensity_conj`
+discards the conjugator; `Equiv.sum_comp` at `reflPlaqPerm` then reindexes the sum over plaquettes.
 
-It does NOT go through `WilsonLattice.wilsonSymmetry`, and cannot: the mirrored holonomy is only
-CONJUGATE to the image plaquette's (`hol_reflConf`), so what carries the sum is that `wilsonDensity`
-is a class function (`wilsonDensity_conj`) together with `reflPlaqPerm` being a bijection of the
-plaquettes. -/
+It does not go through `WilsonLattice.wilsonSymmetry`, whose hypothesis asks for equality of boundary
+words rather than conjugacy of holonomies.
+
+DERIVED: no numeral. -/
 theorem reflect_action_invariant (N : ℕ) [NeZero n] (τ : Fin d) (c : Fin n)
     (U : Link d n → MassGap.SUN.SU N) :
     (sysWilson N d n).action (reflConf τ c U) = (sysWilson N d n).action U := by
@@ -333,19 +384,19 @@ theorem reflect_action_invariant (N : ℕ) [NeZero n] (τ : Fin d) (c : Fin n)
 
 open MeasureTheory MassGap.CompactGauge MassGap.ReflectionPositivity
 
-/-- **The probability Haar measure of a compact group is invariant under INVERSION.**
+/-- The probability Haar measure of a compact group is invariant under inversion. Stated for any
+compact, nonempty topological group with a Borel structure, so it covers the non-abelian `SU(N)`,
+which `Measure.IsHaarMeasure.isInvInvariant_of_regular` does not.
 
-Mathlib derives this from regularity only for an ABELIAN group
-(`Measure.IsHaarMeasure.isInvInvariant_of_regular`), and `SU(N)` is not abelian. On a compact group
-it follows instead from unimodularity: `μ.inv` is left-invariant because `μ` is right-invariant
-(`CompactGauge.isMulRightInvariant_probHaar`), so by uniqueness of Haar measure on a compact group it
-is a multiple of `μ`, and both are probability measures, so the multiple is one.
+The proof uses unimodularity: `μ.inv` is left-invariant because `μ` is right-invariant
+(`CompactGauge.isMulRightInvariant_probHaar`), so by
+`Measure.isMulInvariant_eq_smul_of_compactSpace` it is a Haar multiple of `μ`, and evaluating both at
+`univ` forces the scalar factor to be one.
 
-This is what the reflection's dagger needs: inverting the gauge variable on the axis links has to
-leave the measure alone, or the reflected expectation is not the original one.
+This is what `reflConf`'s inversion needs of the measure.
 
-DERIVED: the `1` is the total mass of a probability measure, which is what forces the Haar scalar
-factor between `μ.inv` and `μ` to be one. It is the conclusion, not an input. -/
+DERIVED: no numeral. The unit Haar scalar factor is a step of the proof, not part of the
+statement. -/
 instance isInvInvariant_probHaar (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G] :
     (probHaar G).IsInvInvariant := by
@@ -360,18 +411,21 @@ instance isInvInvariant_probHaar (G : Type) [Group G] [TopologicalSpace G] [IsTo
 
 variable {N : ℕ}
 
-/-- **The DAGGER half of the reflection**, on its own: invert the gauge variable on every link that
-runs along the reflection axis, leave the rest alone. Composed with the relabelling
-`ReflectionPositivity.relabel (reflLinkPerm τ c)` it is `reflConf`, and splitting it off this way is
-what lets the measure argument be made one coordinate at a time.
+/-- The inversion half of the reflection on its own: invert the gauge variable on every link running
+along `τ`, leave the rest alone. Composed with `ReflectionPositivity.relabel (reflLinkPerm τ c)` it
+is `reflConf`, which is what lets the measure argument be made coordinatewise.
 
-DERIVED: nothing numeric. -/
+DERIVED: no numeral. The `1` in `l.1` is the pair's first projection, not a numeral. -/
 def daggerAxis [NeZero n] (τ : Fin d) (V : Link d n → MassGap.SUN.SU N) :
     Link d n → MassGap.SUN.SU N :=
   fun l => if l.1 = τ then (V l)⁻¹ else V l
 
-/-- **The dagger preserves the product Haar measure** — coordinatewise, since each coordinate map is
-either the identity or inversion and Haar is invariant under both. -/
+/-- `daggerAxis τ` preserves the product Haar measure `vol (Link d n) N`. Coordinatewise: each
+coordinate map is either the identity or inversion, measure-preserving by `MeasurePreserving.id` and
+`Measure.measurePreserving_inv` (available through `isInvInvariant_probHaar`), and
+`Measure.pi_map_pi` assembles them.
+
+DERIVED: no numeral. -/
 theorem daggerAxis_measurePreserving [NeZero n] (τ : Fin d) :
     MeasurePreserving (daggerAxis (d := d) (n := n) (N := N) τ)
       (vol (Link d n) N) (vol (Link d n) N) := by
@@ -392,10 +446,12 @@ theorem daggerAxis_measurePreserving [NeZero n] (τ : Fin d) :
   rw [Measure.pi_map_pi (fun l => (hf l).aemeasurable)]
   exact congrArg Measure.pi (funext fun l => (hf l).map_eq)
 
-/-- **The reflection preserves the product Haar measure over links.** Relabelling is
-measure-preserving because the factors are identical
-(`ReflectionPositivity.relabel_measurePreserving`); the dagger is because Haar is
-inversion-invariant. -/
+/-- `reflConf τ c` preserves the product Haar measure over links. It factors by `rfl` as
+`daggerAxis τ ∘ relabel (reflLinkPerm τ c)`; the relabelling is measure-preserving because the
+factors are identical (`ReflectionPositivity.relabel_measurePreserving`) and the inversion by
+`daggerAxis_measurePreserving`.
+
+DERIVED: no numeral. -/
 theorem reflConf_measurePreserving [NeZero n] (τ : Fin d) (c : Fin n) :
     MeasurePreserving (reflConf (G := MassGap.SUN.SU N) τ c)
       (vol (Link d n) N) (vol (Link d n) N) := by
@@ -406,7 +462,11 @@ theorem reflConf_measurePreserving [NeZero n] (τ : Fin d) (c : Fin n) :
   rw [hcomp]
   exact (daggerAxis_measurePreserving τ).comp (relabel_measurePreserving (reflLinkPerm τ c))
 
-/-- The reflection of configurations as a measurable equivalence — its own inverse. -/
+/-- `reflConf τ c` as a measurable equivalence of configuration space, with itself as inverse on
+both sides (`reflConf_involutive`) and measurability from `reflConf_measurePreserving`. This is the
+shape `LatticeGauge.System.expect_invariant_of_mp` takes.
+
+DERIVED: no numeral. -/
 noncomputable def reflConfEquiv [NeZero n] (τ : Fin d) (c : Fin n) :
     (Link d n → MassGap.SUN.SU N) ≃ᵐ (Link d n → MassGap.SUN.SU N) where
   toFun := reflConf τ c
@@ -416,18 +476,17 @@ noncomputable def reflConfEquiv [NeZero n] (τ : Fin d) (c : Fin n) :
   measurable_toFun := (reflConf_measurePreserving (N := N) τ c).measurable
   measurable_invFun := (reflConf_measurePreserving (N := N) τ c).measurable
 
-/-- **The Gibbs expectation of the `d`-dimensional `SU(N)` Wilson system is invariant under the
-reflection.**
+/-- The Gibbs expectation of the `d`-dimensional `SU(N)` Wilson system is unchanged by precomposing
+an observable with the reflection:
+`expect … (fun U => O (reflConf τ c U)) = expect … O`, for every real `β` and every
+`O : (Link d n → SU N) → ℝ`, with no integrability or measurability hypothesis on `O`.
 
-The reflection analogue of `WilsonHypercubic.axisSymmetry`'s payoff
-(`WilsonLattice.wilson_expect_invariant`), reached the only way it can be: not through `Symmetry`,
-which cannot carry the dagger, but through `LatticeGauge.System.expect_invariant_of_mp`, whose two
-hypotheses are exactly the two halves proved above — the measure is preserved
-(`reflConf_measurePreserving`) and the Boltzmann weight is unchanged (`reflect_action_invariant`).
+It is `LatticeGauge.System.expect_invariant_of_mp` at `reflConfEquiv`, whose two hypotheses are the
+halves proved above: the measure is preserved (`reflConf_measurePreserving`) and the Boltzmann weight
+is unchanged (`reflect_action_invariant`). It does not go through `Symmetry`, which cannot carry the
+inversion.
 
-This is the invariance a reflection-positivity argument on this lattice consumes: it is what makes
-the reflected copy of an observable integrate to the same number as the observable, which is the
-`hmirror` step inside `ReflectionPositivity.pairing_with_reflection_nonneg`. -/
+DERIVED: no numeral. -/
 theorem expect_reflect_invariant (N : ℕ) [NeZero n] (τ : Fin d) (c : Fin n) (β : ℝ)
     (O : (Link d n → MassGap.SUN.SU N) → ℝ) :
     (sysWilson N d n).expect (probHaar (MassGap.SUN.SU N)) β (fun U => O (reflConf τ c U))

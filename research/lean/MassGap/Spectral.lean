@@ -2,75 +2,53 @@ import MassGap.Aperture
 import MassGap.Moment
 
 /-!
-# The transfer spectral form on a PERIODIC lattice
+# MassGap.Spectral — the two-term periodic spectral form, and what a half-line form forces
 
-**WHY THIS FILE EXISTS.** `Complete.ym_mass_gap_of_decay_at_floor` concludes that a correlator
-`τ ↦ ‖∑ₖ Pₖ mₖ^τ‖` tends to zero, from a hypothesis bounding `‖mₖ‖`, over an ARBITRARY family `m` —
-and `ymModel` instantiates it at `Idx := Unit`, `P := 1`, `m := e^{−(κ₀−μ)}`, one number defined equal
-to its own bound. `Apriori.hread_of_dominant` is `le_trans` and supplies no link to the ensemble.
-Giving the modes a definition is what would make that hypothesis a statement about Yang–Mills.
+Two independent groups of results about finite sums `∑ₖ wₖ λₖ^d` over a `Fintype` index, with
+`0 ≤ wₖ` and `λₖ ∈ [0, 1]`.
 
-**WHY THE HALF-LINE SHAPE WAS ABANDONED, AND EXACTLY HOW FAR THE ARGUMENT GOES.**
-An earlier version of this file used the half-line shape `ρ(d) = ∑ₙ wₙ λₙ^d`. The argument against it
-is `flat_of_aperiodic` below, and ALL THREE of its premises are now facts about this tree:
+## The one-term (half-line) shape
 
-* PROVED: `WilsonHypercubic.Site d n = Fin d → Fin n` and `shift` adds in `Fin n`, so the lattice is a
-  fully PERIODIC torus of extent `n`.
-* PROVED: `Complete.wilsonCorrAt N β = WilsonBridge.corrClay (N+1) β` with `lag : Fin (N+1)`, so the
-  lag index runs the WHOLE period, not a half-line.
-* **PROVED: `ρ(d) = ρ(n−d)`**, by `MomentShape.corrHyper_neg` and its corollaries `corrClay_neg` /
-  `wilsonCorrAt_neg`, of the genuine `wilsonCorrAt`, at every extent and every real coupling with no
-  hypothesis. It comes from `LogConvex.EW_plaqE_pair_shift` — translation invariance of the
-  two-plaquette expectation, itself derived FROM the reflection — at `P = 0`, plus the
-  lag-independence of the one-point term (`ReflectPositive.EW_plaqE_lag`). So `Moment.circLag`, built
-  as if the symmetry held, reads the correlation correctly rather than by construction
-  (`MomentShape.wilsonCorrAt_circLag_congr`).
-  BEWARE THE NEIGHBOURING STATEMENT: `ZeroMode`'s "symmetric under `d ↦ n − d` by construction" is
-  about `clag`, the LAG FUNCTION, where it is arithmetic — NOT about `ρ`. Earlier versions of this
-  docstring, and of `rho_symm`'s, cited it as though it were about `ρ`. It is not, and the two must
-  not be conflated.
+`aperiodic_antitone` — a one-term sum `∑ₖ wₖ λₖ^d` is antitone in `d`, since each `λₖ ≤ 1`.
+`flat_of_aperiodic` — if in addition the value at some `m` equals the value at `1`, then the sum is
+constant on every `d` with `1 ≤ d ≤ m`. The hypothesis `1 ≤ d` leaves the value at `d = 0`
+unconstrained. Both are statements about the sums themselves; neither mentions a lattice or a
+correlation, and neither concludes that such a shape is impossible.
 
-Because the symmetry is now free, `flat_of_aperiodic`'s `hsym` is DISCHARGEABLE for the Wilson
-correlation at `m := N`: `(-1 : Fin (N+1)).val = N`, so `wilsonCorrAt_neg N β 1` gives `ρ(N) = ρ(1)`
-outright. A half-line form for `wilsonCorrAt` therefore forces `ρ` FLAT from lag one
-UNCONDITIONALLY, where this file previously could only say so under an assumption.
+## The two-term (periodic) shape
 
-Given that symmetry, a half-line form forces `ρ` ANTITONE, and antitone together with `ρ(1) = ρ(n−1)`
-forces `ρ` FLAT from lag one onward. Two further limits on what that shows, both real:
-`flat_of_aperiodic` assumes `1 ≤ d`, so `ρ(0)` is unconstrained and a half-line form with a contact
-term at lag zero and a flat tail survives it; and "a flat correlator is false for an interacting
-theory" is physics, not a theorem here — nothing in the tree evaluates `wilsonCorrAt` at any lag, and
-the RP axiom (`0 ≤ ρ d`, `0 < ∑ ρ`) is satisfied by a constant positive `ρ`.
+`PeriodicSpectralForm n ρ` bundles a finite index type, weights `w`, factors `lam`, the three range
+hypotheses, and `hrep : ρ d = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` for every `d : Fin n`. It is the shape a
+transfer matrix on a circle of extent `n` produces, `Tr(A T^d A T^{n−d})/Tr(T^n)`. From it:
 
-So the accurate statement is: **on this lattice the half-line shape is UNCONDITIONALLY degenerate —
-and still not machine-checked false.** Degenerate is now free, the symmetry having become a theorem.
-False it is not: `flat_of_aperiodic` assumes `1 ≤ d`, so a contact term at lag zero over a flat tail
-survives it, and nothing in the tree proves `wilsonCorrAt` is non-constant — `Substrate.flatRead` is
-a legal `Moment.Read` and `Substrate.flatSpectral` gives it a periodic form. The periodic shape below
-is used because it is the one a transfer matrix on a circle actually produces, and because the
-correlation's proved symmetry matches it; not because its rival has been refuted.
+* `sum_eq_rho` — `hrep` read right-to-left;
+* `rho_nonneg` — `0 ≤ ρ d` at every lag;
+* `rho_symm` — `ρ e = ρ d` whenever `e = n − d`, from the two terms swapping;
+* `periodic_decay_le` — given `r` bounding `lam k` wherever `w k ≠ 0`, and `2d ≤ n`, the bound
+  `ρ d ≤ 2 (∑ₖ wₖ) r^d`. The hypothesis `2d ≤ n` restricts it to the near half of the period;
+* `periodic_decay_le_circLag` — the same bound at every `d`, with exponent `min d (n − d)`, by
+  reflecting the far half through `rho_symm`.
 
-**THE RIGHT SHAPE IS THE PERIODIC ONE**, `ρ(d) = ∑ₙ wₙ (λₙ^d + λₙ^{n−d})`, which is what a transfer
-matrix on a circle of extent `n` gives: `Tr(A T^d A T^{n−d})/Tr(T^n)`. It is symmetric under
-`d ↦ n−d` by construction, nonnegative, and NOT antitone — it turns around at `n/2`.
+`r` is only required nonnegative, so these are geometric bounds in `r` and say nothing on their own
+about decay unless a caller supplies `r < 1`. No statement here takes `n → ∞`.
 
-**AND THE CLUSTERING STATEMENT CHANGES WITH IT, which is the cost.** A periodic correlator
-does NOT tend to zero at large lag; it comes back up. What the gap buys on a torus is decay out to
-HALF the period (`periodic_decay_le`). Clustering in the true sense needs `n → ∞`, and that is the
-infinite-volume obligation, not something this file can supply.
-
-DERIVED: nothing here fixes a scale. `0` and `1` bound `λ` because it is `e^{−E}` with `E ≥ 0`; the
-`2` in the decay bound is the two terms of the periodic shape, not a magnitude.
+DERIVED: nothing here fixes a scale. `0` and `1` bound `λ` as the range of `e^{−E}` with `E ≥ 0`; the
+`2` in the decay bound is the number of terms of the periodic shape, not a magnitude.
 -/
 
 namespace MassGap.Spectral
 
 open Finset
 
-/-! ### The refutation of the half-line shape, kept as a theorem -/
+/-! ### The one-term shape -/
 
-/-- **A HALF-LINE SPECTRAL SHAPE FORCES THE CORRELATION TO BE ANTITONE.** With `λ ∈ [0,1]` and
-`w ≥ 0`, raising the lag can only shrink every term. -/
+/-- A one-term sum `∑ₖ wₖ λₖ^d` is antitone in the exponent: with `0 ≤ w k`, `0 ≤ lam k` and
+`lam k ≤ 1` for every `k`, and `d ≤ e`, the value at `e` is at most the value at `d`. Termwise, by
+`pow_le_pow_of_le_one` and `mul_le_mul_of_nonneg_left`. The index type need only be a `Fintype`.
+
+DERIVED: the two `0`s are the nonnegativity of the weights and of the factors, the first needed for
+the termwise multiplication and the second for `pow_le_pow_of_le_one`; `1` is the ceiling on each
+factor, which is what makes higher powers smaller. -/
 theorem aperiodic_antitone {ι : Type*} [Fintype ι] (w lam : ι → ℝ)
     (hw : ∀ k, 0 ≤ w k) (hlam0 : ∀ k, 0 ≤ lam k) (hlam1 : ∀ k, lam k ≤ 1)
     {d e : ℕ} (hde : d ≤ e) :
@@ -78,12 +56,17 @@ theorem aperiodic_antitone {ι : Type*} [Fintype ι] (w lam : ι → ℝ)
   refine Finset.sum_le_sum (fun k _ => ?_)
   exact mul_le_mul_of_nonneg_left (pow_le_pow_of_le_one (hlam0 k) (hlam1 k) hde) (hw k)
 
-/-- **AND ON A PERIODIC LATTICE THAT FORCES IT FLAT — so the half-line shape is refuted there.**
+/-- A one-term sum that takes the same value at exponents `1` and `m` is constant on every exponent
+between. Two applications of `aperiodic_antitone` sandwich the value at `d` between the values at `1`
+and at `m`, and `hsym` identifies those two; `le_antisymm` closes it.
 
-If the correlation carries a half-line shape AND is periodic-symmetric (`ρ 1 = ρ m` for the lag `m`
-opposite to `1`), then it is constant on every lag between. Zero connected decay, which an
-interacting theory does not have. This is why `PeriodicSpectralForm` below uses the two-term shape.
--/
+The conclusion is an equality of sums on `1 ≤ d ≤ m`. The exponent `0` is excluded by `h1d`, so a
+sum whose value at `0` differs from a constant tail satisfies every hypothesis here. Nothing in the
+statement rules the one-term shape out.
+
+DERIVED: the two `0`s are the nonnegativity of the weights and of the factors; `1` in `hlam1` is the
+ceiling on each factor; the `1`s in `hsym`, `h1d` and the conclusion are the same base exponent, the
+one the sandwich is anchored at, and `h1d` is what excludes exponent `0`. -/
 theorem flat_of_aperiodic {ι : Type*} [Fintype ι] (w lam : ι → ℝ)
     (hw : ∀ k, 0 ≤ w k) (hlam0 : ∀ k, 0 ≤ lam k) (hlam1 : ∀ k, lam k ≤ 1)
     {m d : ℕ} (hsym : ∑ k, w k * (lam k) ^ m = ∑ k, w k * (lam k) ^ 1)
@@ -101,14 +84,18 @@ theorem flat_of_aperiodic {ι : Type*} [Fintype ι] (w lam : ι → ℝ)
 
 /-! ### The periodic form -/
 
-/-- **THE TRANSFER SPECTRAL FORM ON A CIRCLE OF EXTENT `n`.** Nonnegative weights and decay factors
-in `[0,1]`, entering through the two-term periodic shape `λ^d + λ^{n−d}`.
+/-- A witness that `ρ : Fin n → ℝ` has the two-term periodic spectral shape. It carries a `Fintype`
+index `Idx`, weights `w : Idx → ℝ`, factors `lam : Idx → ℝ`, the three range hypotheses `0 ≤ w k`,
+`0 ≤ lam k`, `lam k ≤ 1`, and `hrep`, which states `ρ d = ∑ₖ wₖ (λₖ^d + λₖ^{n−d})` at every
+`d : Fin n`.
 
-This is what a transfer matrix on a periodic lattice gives, `Tr(A T^d A T^{n−d})/Tr(T^n)`; the
-half-line shape `λ^d` is the `n → ∞` limit of it and is refuted at finite `n` by `flat_of_aperiodic`.
-`w ≥ 0` is reflection positivity's content; `λ ∈ [0,1]` is `0 ≤ T ≤ 1`, where `T ≤ 1` is
-contractivity of a probability measure's transfer operator — a normalisation, NOT a gap. The gap is
-a separate hypothesis wherever it is needed. -/
+This is the shape a transfer matrix on a circle of extent `n` gives,
+`Tr(A T^d A T^{n−d})/Tr(T^n)`. `lam k ≤ 1` is contractivity — a normalisation, not a gap; the gap is
+supplied separately as the `hgap` hypothesis of `periodic_decay_le`. The structure has no field
+relating distinct `lam k`, so nothing here forces the factors apart.
+
+DERIVED: `0` in `hw` is the floor on the weights and `0` in `hlam0` the floor on the factors; `1` in
+`hlam1` is the ceiling on the factors, the range of `e^{−E}` for `E ≥ 0`. -/
 structure PeriodicSpectralForm (n : ℕ) (ρ : Fin n → ℝ) where
   /-- The transfer spectrum's index. -/
   Idx : Type
@@ -127,23 +114,32 @@ attribute [instance] PeriodicSpectralForm.fin
 
 variable {n : ℕ} {ρ : Fin n → ℝ}
 
-/-- **THE CORRELATOR IS THE CORRELATION**, at every lag the period resolves. -/
+/-- `hrep` read right-to-left: the two-term sum equals `ρ d` at every `d : Fin n`.
+
+DERIVED: no numeral. -/
 theorem sum_eq_rho (S : PeriodicSpectralForm n ρ) (d : Fin n) :
     ∑ k, S.w k * ((S.lam k) ^ (d : ℕ) + (S.lam k) ^ (n - (d : ℕ))) = ρ d := (S.hrep d).symm
 
-/-- **THE FORM IS NONNEGATIVE AT EVERY LAG** — so a measured correlation that is negative beyond its
-errors would refute it. -/
+/-- `0 ≤ ρ d` at every `d : Fin n`, for any `ρ` carrying a `PeriodicSpectralForm`. Each summand is a
+nonnegative weight times a sum of two nonnegative powers.
+
+DERIVED: `0` is the lower bound, inherited from `hw` and `hlam0`. -/
 theorem rho_nonneg (S : PeriodicSpectralForm n ρ) (d : Fin n) : 0 ≤ ρ d := by
   rw [← sum_eq_rho S d]
   refine Finset.sum_nonneg (fun k _ => mul_nonneg (S.hw k) ?_)
   exact add_nonneg (pow_nonneg (S.hlam0 k) _) (pow_nonneg (S.hlam0 k) _)
 
-/-- **DECAY OUT TO HALF THE PERIOD, from a gap on the spectrum.** At `2d ≤ n` the far term is no
-larger than the near one, so the periodic correlation is bounded by twice the half-line bound.
+/-- With `r` bounding `lam k` at every `k` whose weight is nonzero, `0 ≤ r`, and a lag in the near
+half of the period (`2d ≤ n`), `ρ d ≤ 2 (∑ₖ wₖ) r^d`. At such a `d` the far exponent `n − d` is at
+least `d`, so the far term is at most the near one; both are then bounded by `r^d`.
 
-**This is all a gap buys on a torus.** Past `n/2` the correlation turns back up, so no bound of this
-shape can hold there and no periodic correlator tends to zero. Clustering in the true sense is the
-`n → ∞` statement, and it is the infinite-volume obligation. -/
+Stated on `2d ≤ n` only, and `r` is required merely nonnegative: the bound is geometric in `r`, and
+a caller wanting decay must supply `r < 1`. `periodic_decay_le_circLag` extends it to every lag with
+the exponent `min d (n − d)`.
+
+DERIVED: `0` in `hgap` selects the weights the bound must cover, and `0` in `hr` is the floor `r`
+needs for `r^d` to be nonnegative; `2` in `hhalf` marks the near half of the period, and `2` on the
+right is the number of terms in the periodic shape, each bounded by `wₖ r^d`. -/
 theorem periodic_decay_le (S : PeriodicSpectralForm n ρ) {r : ℝ}
     (hgap : ∀ k, S.w k ≠ 0 → S.lam k ≤ r) (hr : 0 ≤ r)
     (d : Fin n) (hhalf : 2 * (d : ℕ) ≤ n) :
@@ -166,19 +162,12 @@ theorem periodic_decay_le (S : PeriodicSpectralForm n ρ) {r : ℝ}
 #print axioms rho_nonneg
 #print axioms periodic_decay_le
 
-/-- **THE PERIODIC FORM IS SYMMETRIC UNDER `d ↦ n − d`**, straight from its own shape — the two terms
-swap.
+/-- `ρ e = ρ d` whenever `(e : ℕ) = n − d` and `d ≤ n`: the periodic form is symmetric under
+`d ↦ n − d`. The two terms `λ^d` and `λ^{n−d}` exchange, using `n − (n − d) = d`, which is where
+`hdn` is needed. It follows from the structure's own shape and assumes nothing about `ρ` beyond
+carrying a `PeriodicSpectralForm`.
 
-The Wilson correlation has that same symmetry as a THEOREM, `MomentShape.corrHyper_neg` and its
-corollaries `corrClay_neg` / `wilsonCorrAt_neg`, at every extent and every real coupling with no
-hypothesis — so a form of this shape is compatible with the correlation where a half-line form is
-not, and `Moment.circLag` reads the correlation correctly rather than by construction
-(`MomentShape.wilsonCorrAt_circLag_congr`).
-
-NOT `ZeroMode`, which this docstring previously cited. `ZeroMode.sum_range_antipodal_fold` takes
-`hsym` on an ARBITRARY `F` and says so in its own docstring ("a reindexing, not a fact about cosines
-or about `λ`"); its instantiations in this tree are the LAG FUNCTION (`sum_clag_sq`) and a stipulated
-model profile. It records nothing about the Wilson correlation. -/
+DERIVED: no numeral. -/
 theorem rho_symm (S : PeriodicSpectralForm n ρ) (d e : Fin n)
     (hde : (e : ℕ) = n - (d : ℕ)) (hdn : (d : ℕ) ≤ n) : ρ e = ρ d := by
   rw [← sum_eq_rho S e, ← sum_eq_rho S d, hde]
@@ -187,13 +176,13 @@ theorem rho_symm (S : PeriodicSpectralForm n ρ) (d e : Fin n)
   rw [this]
   ring
 
-/-- **DECAY AT THE CIRCLE LAG, FOR EVERY LAG.** `periodic_decay_le` bounds the near half; the far half
-follows from `rho_symm`, so the bound holds at every `d` with the exponent `min d (n−d)` — which is
-exactly `Moment.circLag`, the distance the read can actually see.
+/-- `periodic_decay_le` extended to every lag: `ρ d ≤ 2 (∑ₖ wₖ) r^(min d (n − d))`. On the near half
+this is `periodic_decay_le` with `min d (n − d) = d`; on the far half the lag is reflected through
+`rho_symm` and the near bound applied at `n − d`. The exponent `min d (n − d)` is the circle
+distance. As in `periodic_decay_le`, `r` is only required nonnegative.
 
-**This is the shape `Complete.confinement_of_geometric_decay` consumes.** So a periodic spectral form
-with a gap feeds the confinement machinery directly, where a half-line form cannot (it is refuted on
-this lattice by `flat_of_aperiodic`). -/
+DERIVED: `0` in `hgap` selects the weights the bound must cover and `0` in `hr` is the floor on `r`;
+`2` is the number of terms in the periodic shape. -/
 theorem periodic_decay_le_circLag (S : PeriodicSpectralForm n ρ) {r : ℝ}
     (hgap : ∀ k, S.w k ≠ 0 → S.lam k ≤ r) (hr : 0 ≤ r) (d : Fin n) :
     ρ d ≤ 2 * (∑ k, S.w k) * r ^ (min (d : ℕ) (n - (d : ℕ))) := by

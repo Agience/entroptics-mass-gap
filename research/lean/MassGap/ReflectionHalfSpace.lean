@@ -8,57 +8,28 @@ import MassGap.GibbsSpec
 import MassGap.HaarVariance
 
 /-!
-# MassGap.ReflectionHalfSpace — which reflection pairs with which half-space
+# MassGap.ReflectionHalfSpace — pairing a reflection with a half-space
 
-## ⛔ The pairing was wrong
-
-`HalfSpaceAlgebra.posHalf τ p = {l | p ≤ l.2 τ}` takes `p` as the **plane**.
-`LatticeReflection.ireflSite τ c x` sends `x_τ` to `c − x_τ`, so `c` is the **reflection constant**
-and the plane it fixes is at `c/2` — its own docstring says so.
-
-So the reflection about `c` carries `{x_τ ≥ p}` into `{x_τ ≤ c − p}`, and that is the COMPLEMENTARY
-half only when
+`HalfSpaceAlgebra.posHalf τ p = {l | p ≤ l.2 τ}` indexes the half-space by the plane `p`.
+`LatticeReflection.ireflSite τ c x` sends `x_τ` to `c − x_τ`, so `c` is the reflection constant and
+the plane it fixes sits at `c/2`. The reflection about `c` carries `{x_τ ≥ p}` into `{x_τ ≤ c − p}`,
+which is the complementary half at
 
     c = 2p.
 
-Every statement of the form `ReflPositiveOn (latticeReflection τ c) (halfSpaceAlg τ c)` therefore
-asks for positivity of a pairing that is **not the reflection pairing** unless `c = 0`: at `c ≠ 2p`
-the map is a mirror composed with a translation, `F` and `θF` sit in two half-spaces that are not
-mirror images about a common plane, and Osterwalder–Schrader positivity has no reason to hold of it.
+`reflection_exchanges_halves` states that case: at `c = 2p` the image of `posHalf τ p` lies in
+`negHalf τ p`. `image_half_is_c_sub_p` gives the image coordinate exactly, for a link whose
+direction
+is not `τ`.
 
-`reflection_exchanges_halves` is the correct pairing, and `image_half_is_c_sub_p` is why no other
-one works.
+Both are containments, not equalities. At `c = 2p` a `τ`-link reflects about `c − 1` and lands at
+`≤ p − 1`, so the `τ`-link based at `p` is outside the image, and the image meets `posHalf τ p` at
+`x_τ = p`. At `c = 2p − 1` the image lies in `{x_τ ≤ p − 1}`, its `τ` part reaching only `≤ p − 2`,
+and is disjoint from `posHalf τ p`.
 
-## What this changes
-
-The open obligation B3 is
-
-    ReflPositiveOn (latticeReflection τ (2*p)) (halfSpaceAlg τ p) ν
-
-and not the `c`-with-`c` form. **This does not make it easier** — it makes it the right statement.
-An attempt against the old form would have been trying to prove something false.
-
-## ⚠ And the parity is now visible
-
-`c = 2p` is EVEN, so the pairing `image_half_is_c_sub_p` describes is the even reflection constant —
-matching `ReflectStrong`, which records that the even constant (site reflection) and the odd one
-(link reflection) are different problems, the odd one needing `0 ≤ β` with
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` refuting it at `β < 0`.
-
-**⛔ BUT `halfSpaceAlg τ p` PAIRS WITH THE ODD CONSTANT TOO**, and
-`reflPositive_of_tendsto_halfSpaceAlg_odd` proves it does — reflection positivity at
-`latticeReflection τ (2p-1)` on that same algebra.
-
-What settles the pairing is CONTAINMENT, not equality, and no lemma here states an equality in either
-case. `reflection_exchanges_halves` is a `⊆`: at `c = 2p` the image of `posHalf τ p` lands in
-`negHalf τ p`, PROPERLY — a `τ`-link reflects about `c - 1`, so it lands at `≤ p - 1` and the
-`τ`-link based at `p` is never hit. At `c = 2p-1` the image lands in `{x_τ ≤ p-1}`, again properly,
-the `τ` part reaching only `≤ p - 2`. `image_half_is_c_sub_p` is stated for a NON-`τ` link alone, so it
-describes one part of the image and not the whole of it.
-
-**WHAT DISTINGUISHES THE TWO** is that the odd image is DISJOINT from `posHalf τ p`, where the even
-image meets it at `x_τ = p`. So the plane sitting at a half-integer is no obstruction: the algebra is
-indexed by the integer `p` and the reflection by the constant, and the two indices need not agree.
+The algebra is indexed by the integer `p` and the reflection by the constant, and the two indices
+need not agree: `reflPositive_of_tendsto_halfSpaceAlg_odd` states reflection positivity on
+`halfSpaceAlg τ p` at the odd constant `2p − 1`.
 -/
 
 namespace MassGap.ReflectionHalfSpace
@@ -67,23 +38,24 @@ open MassGap.InfiniteLattice MassGap.LatticeReflection MassGap.HalfSpaceAlgebra
 
 /-! ## 1. The negative half -/
 
-/-- **THE HALF-SPACE ON THE OTHER SIDE OF THE PLANE `p`.** A link counts as below the plane when its
-base is, which for a `τ`-link spanning `[x_τ, x_τ+1]` is the end nearer the plane.
+/-- The half-space of links at or below the plane `p` in the `τ` coordinate, `{l | l.2 τ ≤ p}`. A
+link is
+placed by its base site, so a `τ`-link spanning `[x_τ, x_τ+1]` is placed by the end nearer the
+plane.
+Complementary to `HalfSpaceAlgebra.posHalf τ p`.
 
-DERIVED: `4` is the spacetime dimension; `p` is the caller's plane. -/
+DERIVED: `4` is the spacetime dimension carried by `Fin 4`; `p` is the caller's plane. -/
 def negHalf (τ : Fin 4) (p : ℤ) : Set ILink := {l | l.2 τ ≤ p}
 
-/-! ## 2. ⭐ The correct pairing -/
+/-! ## 2. The pairing -/
 
-/-- **⭐ THE REFLECTION AT CONSTANT `2p` EXCHANGES THE HALVES AT PLANE `p`.**
+/-- At reflection constant `c = 2 * p`, every link of `posHalf τ p` lands in `negHalf τ p`. A
+`τ`-link
+reflects about `2p - 1` and lands at `2p - 1 - x_τ ≤ p - 1`; a link in any other direction reflects
+about `2p` and lands at `2p - x_τ ≤ p`. This is the containment Osterwalder–Schrader positivity is
+stated against: `θ` carries the positive half-space algebra into the negative one.
 
-Both cases of the direction split land below the plane: a `τ`-link reflects about `2p − 1` and lands
-at `2p − 1 − x_τ ≤ p − 1`; any other link reflects about `2p` and lands at `2p − x_τ ≤ p`.
-
-This is the geometric content Osterwalder–Schrader positivity is stated against: `θ` must carry the
-positive half-space algebra into the negative one.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, forced by `ireflSite`'s own
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`, forced by `ireflSite`'s own
 parametrisation; the `1` is `ireflLink`'s link length; `4` is the dimension. -/
 theorem reflection_exchanges_halves (τ : Fin 4) (p : ℤ) {l : ILink} (hl : l ∈ posHalf τ p) :
     ireflLink τ (2 * p) l ∈ negHalf τ p := by
@@ -97,28 +69,27 @@ theorem reflection_exchanges_halves (τ : Fin 4) (p : ℤ) {l : ILink} (hl : l �
 
 #print axioms reflection_exchanges_halves
 
-/-- **⛔ AND NO OTHER CONSTANT DOES.** The reflection at `c` carries the plane-`p` half-space into
-`{x_τ ≤ c − p}`, exactly. So it is the complementary half iff `c − p = p`.
+/-- The image coordinate at an arbitrary reflection constant: for a link whose direction is not `τ`,
+`(ireflLink τ c l).2 τ = c - l.2 τ`, an equality rather than a bound, because `ireflLink`'s base
+shift applies to `τ`-links only. It places the image of the plane-`p` half-space in `{x_τ ≤ c - p}`,
+which is the complementary half exactly when `c - p = p`.
 
-Stated on a non-`τ` link, where the base shift does not enter and the image is exact rather than an
-inequality — which is what makes this a characterisation and not a bound.
-
-DERIVED: `4` is the dimension; `c` and `p` are the caller's. -/
+DERIVED: `4` is the dimension; `c` is the caller's reflection constant. -/
 theorem image_half_is_c_sub_p (τ : Fin 4) (c : ℤ) {l : ILink} (h : l.1 ≠ τ) :
     (ireflLink τ c l).2 τ = c - l.2 τ := by
   simp only [ireflLink, if_neg h, ireflSite_axis]
 
 #print axioms image_half_is_c_sub_p
 
-/-- **⛔ THE MISMATCHED PAIRING PUTS THE IMAGE IN THE WRONG PLACE.** At `c = p` with `p < 0`, a link
-of the plane-`p` half-space reflects to `p − x_τ`, which is at most `p − p = 0` and is **still above
-the plane**, so `θ` does not leave the positive half at all.
+/-- A witness that pairing the reflection at `c` with the half-space indexed by the same `c` does
+not
+exchange the halves. At `c = -1` the link `(μ, fun _ => -1)` with `μ ≠ τ` reflects to `τ`-coordinate
+`0`, which still satisfies `-1 ≤ x`, so the image has not left the positive half. Negative control
+for `reflection_exchanges_halves`.
 
-The negative control for `reflection_exchanges_halves`: pairing `latticeReflection τ c` with
-`halfSpaceAlg τ c` is not a weaker statement, it is a different and wrong one.
-
-CHOSEN: `p = -1` and the base site at `x_τ = -1` are the simplest witness with `p < 0`; the direction
-`μ ≠ τ` avoids the base shift. Neither carries another role. DERIVED: `4` is the dimension. -/
+CHOSEN: `-1` for both the reflection constant and the base coordinate is the smallest witness with a
+negative plane, and the hypothesis `μ ≠ τ` avoids `ireflLink`'s base shift; neither carries another
+role. DERIVED: `4` is the dimension. -/
 theorem mismatched_pairing_stays_positive {τ μ : Fin 4} (hμ : μ ≠ τ) :
     (ireflLink τ (-1) (μ, fun _ => (-1 : ℤ))).2 τ ∈ {x : ℤ | (-1 : ℤ) ≤ x} := by
   have h := image_half_is_c_sub_p τ (-1) (l := (μ, fun _ => (-1 : ℤ))) hμ
@@ -128,12 +99,13 @@ theorem mismatched_pairing_stays_positive {τ μ : Fin 4} (hμ : μ ≠ τ) :
 
 #print axioms mismatched_pairing_stays_positive
 
-/-! ## ⭐ 3. The reflection as a permutation, and its fixed set -/
+/-! ## 3. The reflection as a permutation, and its fixed set -/
 
-/-- **THE REFLECTION, AS A PERMUTATION OF THE LINKS.** `ActionSplit.pairing_nonneg_of_shared_block`
-consumes `θ : Equiv.Perm ι`, so the involution has to be packaged.
+/-- The reflection packaged as `Equiv.Perm ILink`, built from
+`LatticeReflection.ireflLink_involutive`. `ActionSplit.pairing_nonneg_of_shared_block` takes its `θ`
+as a permutation, so the involution has to be presented in that form.
 
-DERIVED: no numeral of its own; `c` is the caller's reflection constant. -/
+DERIVED: `4` is the dimension carried by `Fin 4`; `c` is the caller's reflection constant. -/
 def ireflPerm (τ : Fin 4) (c : ℤ) : Equiv.Perm ILink :=
   (MassGap.LatticeReflection.ireflLink_involutive τ c).toPerm _
 
@@ -142,14 +114,13 @@ def ireflPerm (τ : Fin 4) (c : ℤ) : Equiv.Perm ILink :=
 
 #print axioms ireflPerm
 
-/-- **⛔ NO `τ`-LINK IS FIXED AT AN EVEN CONSTANT.** A `τ`-link reflects about `2p - 1`, so being fixed
-would need `2p - 1 - x_τ = x_τ`, i.e. `2x_τ = 2p - 1` — odd equals even, impossible over `ℤ`.
+/-- At the even constant `2 * p` no `τ`-link is fixed: a `τ`-link reflects about `2p - 1`, so being
+fixed
+would need `2 * x_τ = 2p - 1`, which has no solution over `ℤ`. The plane therefore carries no
+`τ`-link, and the `τ`-direction links split between the two halves without remainder.
 
-This is what makes the shared block clean: the plane carries no `τ`-link, so the time-direction links
-split without remainder into the two halves.
-
-DERIVED: the `2` is the plane-to-constant conversion and the `1` is `ireflLink`'s link length; `4` is
-the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion, the `1` is `ireflLink`'s link length, and `4`
+is the dimension. -/
 theorem no_tau_link_fixed (τ : Fin 4) (p : ℤ) {l : ILink} (hτ : l.1 = τ) :
     MassGap.LatticeReflection.ireflLink τ (2 * p) l ≠ l := by
   intro h
@@ -160,11 +131,9 @@ theorem no_tau_link_fixed (τ : Fin 4) (p : ℤ) {l : ILink} (hτ : l.1 = τ) :
 
 #print axioms no_tau_link_fixed
 
-/-- **AND A NON-`τ` LINK IS FIXED EXACTLY ON THE PLANE.** It reflects about `2p`, so `2p - x_τ = x_τ`
-iff `x_τ = p`.
-
-With `no_tau_link_fixed` this determines the shared block `R` of the Osterwalder–Seiler split: the
-non-`τ` links whose base sits on the plane, and nothing else.
+/-- At `2 * p`, a link whose direction is not `τ` is fixed exactly when its base sits on the plane:
+`2p - x_τ = x_τ` iff `x_τ = p`. With `no_tau_link_fixed` this identifies the shared block `R` of the
+Osterwalder–Seiler split as the transverse links based on the plane, and nothing else.
 
 DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
 theorem nonTau_fixed_iff (τ : Fin 4) (p : ℤ) {l : ILink} (hτ : l.1 ≠ τ) :
@@ -187,31 +156,27 @@ theorem nonTau_fixed_iff (τ : Fin 4) (p : ℤ) {l : ILink} (hτ : l.1 ≠ τ) :
 
 #print axioms nonTau_fixed_iff
 
-/-! ## ⭐ 3b. The dagger, and the reflection AS A TWIST -/
+/-! ## 3b. The dagger, and the reflection as a twist -/
 
 section Twist
 
 variable {G : Type} [Group G]
 
-/-- **THE COORDINATE TWIST OF THE REFLECTION** on `ℤ⁴` — invert on `τ`-links, leave the rest alone.
-The infinite-lattice counterpart of `ActionSplit.axisDagger`.
+/-- The coordinate twist attached to the reflection on `ℤ⁴`: invert the group element on a `τ`-link,
+leave it alone in every other direction. The infinite-lattice counterpart of
+`ActionSplit.axisDagger`.
 
-DERIVED: no numeral of its own; `τ` is the caller's reflected direction. -/
+DERIVED: `4` is the dimension carried by `Fin 4`; `τ` is the caller's reflected direction. -/
 def ilinkDagger (τ : Fin 4) : ILink → G → G :=
   fun l u => if l.1 = τ then u⁻¹ else u
 
-/-- **⭐ THE `ℤ⁴` REFLECTION IS A TWIST — DEFINITIONALLY**, exactly as
-`ActionSplit.reflConf_eq_twist` says of the finite lattice.
+/-- `LatticeReflection.ireflConf τ c` is `ActionSplit.twist (ireflPerm τ c) (ilinkDagger τ)`, by
+`rfl`.
+`ActionSplit.twist e σ U i = σ i (U (e i))`, and `ireflConf` moves the base by `ireflLink` and
+inverts precisely on `τ`-links, so the two sides are the same function. Stated for a compact
+topological group with continuous inversion.
 
-`ActionSplit.twist e σ U i = σ i (U (e i))`, and `LatticeReflection.ireflConf` moves the base by
-`ireflLink` and inverts precisely on `τ`-links. So `ActionSplit`'s machinery — including
-`pairing_nonneg_of_shared_block`, the Osterwalder–Seiler split — is stated about this object and not
-merely about an analogue of it.
-
-**⚠ The shape matching is not the theorem.** What `pairing_nonneg_of_shared_block` still needs here
-is the factorisation of the Wilson weight (`hO`, `hW`), which nothing supplies.
-
-DERIVED: no numeral of its own. -/
+DERIVED: `4` is the dimension carried by `Fin 4`; `c` is the caller's reflection constant. -/
 theorem ireflConf_eq_twist [TopologicalSpace G] [ContinuousInv G] [CompactSpace G]
     (τ : Fin 4) (c : ℤ) (U : MassGap.InfiniteLattice.IConf G) :
     MassGap.LatticeReflection.ireflConf τ c U
@@ -219,10 +184,11 @@ theorem ireflConf_eq_twist [TopologicalSpace G] [ContinuousInv G] [CompactSpace 
 
 #print axioms ireflConf_eq_twist
 
-/-- **AND THE DAGGER IS THE IDENTITY OFF THE `τ`-LINKS**, which is `hσR`: by `no_tau_link_fixed` the
-shared block carries no `τ`-link, so the twist acts trivially on it.
+/-- `ilinkDagger τ l u = u` whenever `l.1 ≠ τ` — `ActionSplit`'s `hσR`. By `no_tau_link_fixed` the
+shared
+block carries no `τ`-link, so the twist acts as the identity there.
 
-DERIVED: no numeral of its own. -/
+DERIVED: `4` is the dimension carried by `Fin 4`. -/
 theorem ilinkDagger_eq_self_of_ne (τ : Fin 4) {l : ILink} (h : l.1 ≠ τ) (u : G) :
     ilinkDagger τ l u = u := by
   simp [ilinkDagger, h]
@@ -236,13 +202,13 @@ section DaggerMeasure
 
 open MeasureTheory MassGap.CompactGauge
 
-/-- **⭐ THE DAGGER PRESERVES HAAR** — `ActionSplit`'s `hσ`.
+/-- The twist preserves `probHaar (SU N)` on every link — `ActionSplit`'s `hσ`. On a `τ`-link it is
+group
+inversion and Haar on a compact group is inversion-invariant (`Measure.measurePreserving_inv`);
+elsewhere it is the identity. Holds for every `N : ℕ`, with no hypothesis on `N`. The argument is
+`ActionSplit.axisDagger_measurePreserving`'s and does not read which lattice the link came from.
 
-On a `τ`-link the twist is group inversion, elsewhere the identity, and Haar on a compact group is
-inversion-invariant. This is `ActionSplit.axisDagger_measurePreserving`'s argument verbatim; that
-proof is `Measure.measurePreserving_inv` and knows nothing about which lattice the link came from.
-
-DERIVED: no numeral of its own; `4` is the dimension carried by `ILink`. -/
+DERIVED: `4` is the dimension carried by `Fin 4`. -/
 theorem ilinkDagger_measurePreserving {N : ℕ} (τ : Fin 4) (l : ILink) :
     MeasurePreserving (ilinkDagger (G := MassGap.SUN.SU N) τ l)
       (probHaar (MassGap.SUN.SU N)) (probHaar (MassGap.SUN.SU N)) := by
@@ -260,7 +226,7 @@ theorem ilinkDagger_measurePreserving {N : ℕ} (τ : Fin 4) (l : ILink) :
 
 end DaggerMeasure
 
-/-! ## ⭐ 3c. The blocks `ActionSplit.pairing_nonneg_of_local` consumes -/
+/-! ## 3c. The blocks `ActionSplit.pairing_nonneg_of_local` consumes -/
 
 section Blocks
 
@@ -268,30 +234,38 @@ open MassGap.LatticeReflection
 
 variable (τ : Fin 4) (p : ℤ) (Λ : Finset ILink)
 
-/-- **THE POSITIVE HALF OF THE BOX** — the links the reflection moves DOWN in the `τ` coordinate.
+/-- The positive half of a finite link set `Λ`: the links whose `τ` coordinate the reflection at `2
+* p`
+moves down. Classifying by the reflection's own action rather than by an inequality on the base is
+what makes the three blocks disjoint by trichotomy, with no case split on the link's direction.
 
-Classifying by the reflection's own action rather than by a hand-written inequality is what makes the
-three blocks disjoint by trichotomy, with no case split on the link's direction.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: `τ`, `p` and `Λ` come from the `variable` line above, so the signature writes no numeral of
+its own; in the body the `2` is the plane-to-constant conversion `c = 2 * p` and `4` is the
+dimension carried by `ILink`. -/
 def iblkS : Finset ILink :=
   Λ.filter (fun l => (ireflLink τ (2 * p) l).2 τ < l.2 τ)
 
-/-- **THE NEGATIVE HALF** — moved UP.
+/-- The negative half: the links whose `τ` coordinate the reflection at `2 * p` moves up.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, as in `iblkS`; `4` is the dimension. -/
+DERIVED: as `iblkS` — the `2` is the plane-to-constant conversion and `4` the dimension, both in the
+body rather than in the signature. -/
 def iblkT : Finset ILink :=
   Λ.filter (fun l => l.2 τ < (ireflLink τ (2 * p) l).2 τ)
 
-/-- **THE SHARED BLOCK** — not moved in the `τ` coordinate.
+/-- The shared block: the links whose `τ` coordinate the reflection at `2 * p` leaves fixed.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, as in `iblkS`; `4` is the dimension. -/
+DERIVED: as `iblkS` — the `2` is the plane-to-constant conversion and `4` the dimension, both in the
+body rather than in the signature. -/
 def iblkR : Finset ILink :=
   Λ.filter (fun l => (ireflLink τ (2 * p) l).2 τ = l.2 τ)
 
 #print axioms iblkS
 
-/-- The three blocks are pairwise disjoint, by trichotomy on `ℤ`. -/
+/-- The three blocks are pairwise disjoint, by trichotomy on `ℤ`. `iblkS_disjoint_iblkR` and
+`iblkT_disjoint_iblkR` are the other two pairs.
+
+DERIVED: `τ`, `p` and `Λ` come from the `variable` line above, so the signature writes no numeral.
+-/
 theorem iblkS_disjoint_iblkT : Disjoint (iblkS τ p Λ) (iblkT τ p Λ) := by
   refine Finset.disjoint_left.2 fun l hS hT => ?_
   simp only [iblkS, iblkT, Finset.mem_filter] at hS hT
@@ -309,12 +283,13 @@ theorem iblkT_disjoint_iblkR : Disjoint (iblkT τ p Λ) (iblkR τ p Λ) := by
 
 #print axioms iblkS_disjoint_iblkT
 
-/-- **⭐ THE REFLECTION FIXES THE SHARED BLOCK POINTWISE** — this is `ActionSplit`'s `hθR`.
+/-- The reflection at `2 * p` fixes each link of `iblkR` as a link, not only in its `τ` coordinate —
+`ActionSplit`'s `hθR`. The `τ`-link case is vacuous, since a fixed `τ` coordinate would need
+`2 * x_τ = 2p - 1`; the transverse case is `nonTau_fixed_iff`. Classifying by the `τ` coordinate
+alone therefore already forces the whole link fixed.
 
-The `τ`-link case is VACUOUS: a fixed `τ`-coordinate would need `2x_τ = 2p - 1`. The non-`τ` case is
-`nonTau_fixed_iff`. So classifying by the `τ`-coordinate alone already forces the whole link fixed.
-
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `τ`, `p` and `Λ` come from the
+`variable` line above. -/
 theorem irefl_eq_self_of_mem_iblkR {l : ILink} (hl : l ∈ iblkR τ p Λ) :
     ireflLink τ (2 * p) l = l := by
   simp only [iblkR, Finset.mem_filter] at hl
@@ -330,12 +305,12 @@ theorem irefl_eq_self_of_mem_iblkR {l : ILink} (hl : l ∈ iblkR τ p Λ) :
 
 #print axioms irefl_eq_self_of_mem_iblkR
 
-/-- **⭐ AND IT CARRIES THE POSITIVE HALF INTO THE NEGATIVE ONE** — `ActionSplit`'s `hθST`, given a box
-stable under the reflection.
+/-- Given a link set stable under the reflection, the reflection at `2 * p` carries `iblkS` into
+`iblkT`
+— `ActionSplit`'s `hθST`. The inequality flips because `ireflLink` is an involution, so the image of
+the image is the original link.
 
-The inequality flips because the reflection is an involution, so the image's image is the original.
-
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`. -/
 theorem irefl_mem_iblkT_of_mem_iblkS
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ) {l : ILink} (hl : l ∈ iblkS τ p Λ) :
     ireflLink τ (2 * p) l ∈ iblkT τ p Λ := by
@@ -349,7 +324,7 @@ theorem irefl_mem_iblkT_of_mem_iblkS
 
 end Blocks
 
-/-! ## ⭐ 3d. Transport to the box — the index `ActionSplit` actually takes -/
+/-! ## 3d. Transport to the box — the index `ActionSplit` takes -/
 
 section Box
 
@@ -357,13 +332,13 @@ open MassGap.LatticeReflection
 
 variable {τ : Fin 4} {p : ℤ} {Λ : Finset ILink}
 
-/-- **THE REFLECTION, AS A MAP OF THE BOX.** `ActionSplit.cvol` carries `[Fintype ι]`, so the index
-must be finite: the instantiation runs at the box as a subtype and not at `ILink`, which is infinite.
+/-- The reflection as a map of a reflection-stable box `↥Λ`. `ActionSplit.cvol` carries `[Fintype
+ι]`, so
+the index has to be the box as a subtype rather than the infinite `ILink`. The hypothesis
+`hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ` is what makes the map well defined.
 
-A reflection-STABLE box carries the reflection to itself, which is the hypothesis this takes.
-
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: the signature writes no numeral of its own; `c` is the caller's reflection constant and is
+not pinned to an even `2 * p` here, and `4` is the dimension carried by `ILink`. -/
 def ireflBox {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) : ↥Λ → ↥Λ :=
   fun l => ⟨ireflLink τ c l.1, hΛ l.1 l.2⟩
 
@@ -373,9 +348,10 @@ theorem ireflBox_involutive {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ 
   refine Subtype.ext ?_
   simpa [ireflBox] using ireflLink_involutive τ c l.1
 
-/-- **AND SO IT IS A PERMUTATION OF THE BOX** — the `θ` at the index `ActionSplit` takes.
+/-- The box reflection as `Equiv.Perm ↥Λ`, from `ireflBox_involutive` — the `θ` at the index
+`ActionSplit` takes.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the signature writes no numeral. -/
 def ireflBoxPerm {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) : Equiv.Perm ↥Λ :=
   (ireflBox_involutive hΛ).toPerm _
 
@@ -384,14 +360,13 @@ def ireflBoxPerm {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) : Equiv
 
 #print axioms ireflBoxPerm
 
-/-- **A BOX CLOSED UNDER THE REFLECTION, BY CONSTRUCTION.** Union a finite set of links with its
-reflected image.
+/-- `Λ ∪ Λ.image (ireflLink τ c)`: a finite link set closed under the reflection at `c`, built from
+any
+starting set. The lemmas of this file carry `hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ`, and
+`reflClosure_closed` discharges that hypothesis for this set, so a witness box can be specified by
+the plaquettes it must contain rather than link by link.
 
-Every lemma of the odd chain carries `hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ`, and until now the only way
-to produce one was to check it link by link. This produces it for ANY starting set, so a witness box
-can be specified by the plaquettes it must contain rather than by the links it happens to have.
-
-DERIVED: no numeral of its own; `c` is the caller's reflection constant and `4` is the dimension. -/
+DERIVED: `4` is the dimension carried by `ILink`; `c` is the caller's reflection constant. -/
 def reflClosure (τ : Fin 4) (c : ℤ) (Λ : Finset ILink) : Finset ILink :=
   Λ ∪ Λ.image (ireflLink τ c)
 
@@ -402,10 +377,12 @@ theorem subset_reflClosure (τ : Fin 4) (c : ℤ) (Λ : Finset ILink) : Λ ⊆ r
 
 #print axioms subset_reflClosure
 
-/-- **AND IT IS CLOSED.** A link of `Λ` reflects into the image; a link of the image reflects back
-into `Λ`, because `ireflLink` is an involution. No case split on direction and no arithmetic.
+/-- `reflClosure τ c Λ` is closed under `ireflLink τ c`. A link of `Λ` reflects into the image part;
+a
+link of the image reflects back into `Λ`, because `ireflLink` is an involution. No case split on the
+link's direction and no arithmetic.
 
-DERIVED: no numeral of its own; `c` is the caller's reflection constant and `4` is the dimension. -/
+DERIVED: `4` is the dimension carried by `ILink`; `c` is the caller's reflection constant. -/
 theorem reflClosure_closed (τ : Fin 4) (c : ℤ) (Λ : Finset ILink) :
     ∀ l ∈ reflClosure τ c Λ, ireflLink τ c l ∈ reflClosure τ c Λ := by
   intro l hl
@@ -418,20 +395,20 @@ theorem reflClosure_closed (τ : Fin 4) (c : ℤ) (Λ : Finset ILink) :
 
 #print axioms reflClosure_closed
 
-/-- The three blocks, at the box index. Same classification as `iblkS`/`iblkT`/`iblkR` — the
-reflection moves a link's `τ` coordinate DOWN, UP, or not at all.
+/-- The positive half at the box index: the elements of `↥Λ` whose `τ` coordinate the reflection at
+`2 * p` moves down. The same classification as `iblkS`, over the subtype.
 
 DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
 def boxS (τ : Fin 4) (p : ℤ) (Λ : Finset ILink) : Finset ↥Λ :=
   Finset.univ.filter (fun l : ↥Λ => (ireflLink τ (2 * p) l.1).2 τ < l.1.2 τ)
 
-/-- The negative half at the box index.
+/-- The negative half at the box index: moved up in the `τ` coordinate.
 
 DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
 def boxT (τ : Fin 4) (p : ℤ) (Λ : Finset ILink) : Finset ↥Λ :=
   Finset.univ.filter (fun l : ↥Λ => l.1.2 τ < (ireflLink τ (2 * p) l.1).2 τ)
 
-/-- The shared block at the box index.
+/-- The shared block at the box index: not moved in the `τ` coordinate.
 
 DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
 def boxR (τ : Fin 4) (p : ℤ) (Λ : Finset ILink) : Finset ↥Λ :=
@@ -452,9 +429,11 @@ theorem boxT_disjoint_boxR : Disjoint (boxT τ p Λ) (boxR τ p Λ) := by
   simp only [boxT, boxR, Finset.mem_filter] at hT hR
   omega
 
-/-- **⭐ `hθR` AT THE BOX INDEX.** Transported from `irefl_eq_self_of_mem_iblkR` by `Subtype.ext`.
+/-- `hθR` at the box index: `ireflBoxPerm hΛ l = l` for `l ∈ boxR τ p Λ`. The same argument as
+`irefl_eq_self_of_mem_iblkR`, transported by `Subtype.ext`. The stability hypothesis is taken at the
+even constant `2 * p`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`. -/
 theorem ireflBoxPerm_eq_self_of_mem_boxR (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {l : ↥Λ} (hl : l ∈ boxR τ p Λ) : ireflBoxPerm hΛ l = l := by
   simp only [boxR, Finset.mem_filter] at hl
@@ -470,9 +449,10 @@ theorem ireflBoxPerm_eq_self_of_mem_boxR (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * 
     simp only [ireflLink, if_neg hτ, ireflSite_axis] at this
     omega
 
-/-- **⭐ `hθST` AT THE BOX INDEX.**
+/-- `hθST` at the box index: `ireflBoxPerm hΛ` carries `boxS τ p Λ` into `boxT τ p Λ`. The stability
+hypothesis is taken at the even constant `2 * p`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`. -/
 theorem ireflBoxPerm_mem_boxT_of_mem_boxS (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {l : ↥Λ} (hl : l ∈ boxS τ p Λ) : ireflBoxPerm hΛ l ∈ boxT τ p Λ := by
   simp only [boxS, Finset.mem_filter] at hl
@@ -483,10 +463,10 @@ theorem ireflBoxPerm_mem_boxT_of_mem_boxS (hΛ : ∀ l ∈ Λ, ireflLink τ (2 *
 #print axioms ireflBoxPerm_eq_self_of_mem_boxR
 #print axioms ireflBoxPerm_mem_boxT_of_mem_boxS
 
-/-- **NO `τ`-LINK LIES IN THE SHARED BLOCK**, at the box index — the transported
-`no_tau_link_fixed`, and what makes the dagger trivial there.
+/-- No element of `boxR τ p Λ` is a `τ`-link — `no_tau_link_fixed` transported to the box index, and
+what makes `ilinkDagger` the identity on the shared block.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the signature writes no numeral; `τ`, `p` and `Λ` are the caller's. -/
 theorem boxR_ne_tau {l : ↥Λ} (hl : l ∈ boxR τ p Λ) : l.1.1 ≠ τ := by
   simp only [boxR, Finset.mem_filter] at hl
   intro hτ
@@ -496,14 +476,13 @@ theorem boxR_ne_tau {l : ↥Λ} (hl : l ∈ boxR τ p Λ) : l.1.1 ≠ τ := by
 
 #print axioms boxR_ne_tau
 
-/-- **A `τ`-LINK AT THE PLANE GOES DOWN.** Based at `x_τ = p` it reflects to `p - 1`, so it lands in
-the POSITIVE block `boxS` and never in the shared one.
+/-- A `τ`-link based on the plane moves down: from `x_τ = p` it reflects to `p - 1`, so it lies in
+`boxS`
+and not in the shared block. With `nonTau_link_at_plane_fixed` this places a plaquette in a `(τ, ν)`
+plane based on the plane inside `S ∪ R`, which is what `hOloc` asks of the half-action.
 
-This is the boundary case the action split turns on: a plaquette in a `(τ, ν)` plane based at the
-plane has its `τ`-links here and its transverse link in `boxR`, so it sits entirely inside
-`S ∪ R` — which is what `hOloc` needs of the half-action.
-
-DERIVED: the `2` is the plane-to-constant conversion and the `1` is `ireflLink`'s link length; `4` is
+DERIVED: the `2` is the plane-to-constant conversion and the `1` is `ireflLink`'s link length; `4`
+is
 the dimension. -/
 theorem tau_link_at_plane_moves_down {l : ILink} (hτ : l.1 = τ) (hp : l.2 τ = p) :
     (ireflLink τ (2 * p) l).2 τ < l.2 τ := by
@@ -512,9 +491,10 @@ theorem tau_link_at_plane_moves_down {l : ILink} (hτ : l.1 = τ) (hp : l.2 τ =
 
 #print axioms tau_link_at_plane_moves_down
 
-/-- **AND A NON-`τ` LINK AT THE PLANE IS FIXED**, hence in the shared block. The companion of the
-previous lemma: together they say the plane carries transverse links only, and the time-direction
-links at the plane belong to the positive half.
+/-- A link based on the plane whose direction is not `τ` keeps its `τ` coordinate under the
+reflection at
+`2 * p`, so it lies in the shared block. Companion to `tau_link_at_plane_moves_down`: the plane
+carries transverse links only, and the `τ`-direction links at the plane belong to the positive half.
 
 DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
 theorem nonTau_link_at_plane_fixed {l : ILink} (hτ : l.1 ≠ τ) (hp : l.2 τ = p) :
@@ -526,13 +506,13 @@ theorem nonTau_link_at_plane_fixed {l : ILink} (hτ : l.1 ≠ τ) (hp : l.2 τ =
 
 end Box
 
-/-! ## ⭐ 3d′. Every plaquette lies on ONE side of the plane -/
+/-! ## 3d′. Every plaquette lies on one side of the plane -/
 
 section Plaquette
 
 open MassGap.LatticeReflection
 
-/-- The `τ` coordinate of a shifted site: up by one in direction `τ`, unchanged otherwise.
+/-- The `τ` coordinate of `GibbsSpec.ishift μ x`: `x τ + 1` when `μ = τ`, and `x τ` otherwise.
 
 DERIVED: the `1` is `ishift`'s lattice step; `4` is the dimension. -/
 theorem ishift_coord (μ τ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
@@ -541,36 +521,35 @@ theorem ishift_coord (μ τ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
   · subst h; simp [MassGap.GibbsSpec.ishift]
   · simp [MassGap.GibbsSpec.ishift, Ne.symm h, h]
 
-/-- The reflected `τ` coordinate in closed form: a `τ`-link reflects about `2p - 1` because the link
-occupies the segment `[x, x+e_τ]`, everything else about `2p`. Shared by the two directed lemmas.
+/-- The reflected `τ` coordinate in closed form: `2 * p - 1 - l.2 τ` for a `τ`-link, which reflects
+about
+`2p - 1` because the link occupies the segment `[x, x + e_τ]`, and `2 * p - l.2 τ` for every other
+direction. Shared by the two directed plaquette lemmas below.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is `ireflLink`'s link length,
-and `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`, the `1` is `ireflLink`'s link
+length, and `4` is the dimension. -/
 theorem irefl_coord (τ : Fin 4) (p : ℤ) (l : MassGap.InfiniteLattice.ILink) :
     (ireflLink τ (2 * p) l).2 τ = if l.1 = τ then 2 * p - 1 - l.2 τ else 2 * p - l.2 τ := by
   by_cases h : l.1 = τ
   · simp [ireflLink, if_pos h, ireflSite_axis]
   · simp [ireflLink, if_neg h, ireflSite_axis]
 
-/-- **A PLAQUETTE BASED AT OR ABOVE THE PLANE HAS ALL FOUR LINKS IN `S ∪ R`.** `(irefl l).2 τ ≤ l.2 τ`
-is exactly membership of the positive half together with the shared block — moved DOWN, or fixed.
+/-- Every link of a plaquette based at or above the plane satisfies `(irefl l).2 τ ≤ l.2 τ` — moved
+down
+or fixed, that is, lying in `S ∪ R`. The directed form: which side a plaquette belongs to is decided
+by its base's `τ` coordinate against the plane.
 
-This is the DIRECTED form, and it is the one the half-action needs: which side a plaquette belongs to
-is decided by its base's `τ` coordinate against the plane, not merely that it belongs to one of them.
+The tight case is a `τ`-link, which reflects about `2p - 1`: it moves down exactly when `x_τ ≥ p`,
+because `2 * x_τ ≥ 2p - 1` leaves no room between the integers.
 
-The delicate case is a `τ`-link, which reflects about `2p - 1`: it moves down exactly when
-`x_τ ≥ p`, because `2x_τ ≥ 2p - 1` has no room between the integers.
-
-**⛔ AND IT NEEDS NO NON-DEGENERACY HYPOTHESIS — the linter caught the author assuming otherwise.**
-The first version carried `μ ≠ ν`, and the unreachable-tactic linter reported the fallback never
-fired. It is right: on THIS side every case closes, degenerate included. A `τ`-link at `a ≥ p`
-reflects to `2p - 1 - a ≤ a`; a non-`τ` link of a plaquette based at `a` sits at `a` or `a + 1`,
-both `≥ p`, and reflects to `2p - b ≤ b`. The asymmetry is real — only `plaq_links_ge_of_lt` breaks,
-and only at `μ = ν = τ` with `x_τ = p - 1`. An unused hypothesis would have been a false statement
-about what the result costs.
+This side takes no non-degeneracy hypothesis and holds for `q.1.1 = q.1.2` too. A `τ`-link at `a ≥
+p`
+reflects to `2p - 1 - a ≤ a`; a transverse link of a plaquette based at `a` sits at `a` or `a + 1`,
+both `≥ p`, and reflects to `2p - b ≤ b`. `plaq_links_ge_of_lt`, the statement for the other side,
+does take one.
 
 DERIVED: the `2` is the plane-to-constant conversion, the `1`s are `ireflLink`'s link length and
-`ishift`'s step, and `4` is the dimension. Nothing is chosen. -/
+`ishift`'s step, and `4` is the dimension. -/
 theorem plaq_links_le_of_le (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
     (hq : p ≤ q.2 τ) :
     ∀ l ∈ MassGap.GibbsSpec.ilinks q, (ireflLink τ (2 * p) l).2 τ ≤ l.2 τ := by
@@ -584,20 +563,16 @@ theorem plaq_links_le_of_le (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
 
 #print axioms plaq_links_le_of_le
 
-/-- **AND A PLAQUETTE BASED BELOW THE PLANE HAS ALL FOUR LINKS IN `T ∪ R`** — the mirror statement,
-moved UP or fixed.
+/-- Every link of a non-degenerate plaquette based strictly below the plane satisfies
+`l.2 τ ≤ (irefl l).2 τ` — moved up or fixed, that is, lying in `T ∪ R`.
 
-**⛔ HERE IS WHERE DEGENERACY ACTUALLY BREAKS IT, AND THAT WAS MEASURED, NOT ARGUED.** At
-`μ = ν = τ` and `x_τ = p - 1` the conclusion is FALSE: the link `(τ, x)` sits at `p - 1` and moves UP
-to `p`, while `(τ, x + e_τ)` sits at `p` and moves DOWN to `p - 1`, so that plaquette straddles with
-links strictly on both sides.
+`hne : q.1.1 ≠ q.1.2` is required on this side. At `μ = ν = τ` with `x_τ = p - 1` the conclusion
+fails: `(τ, x)` sits at `p - 1` and moves up to `p`, while `(τ, x + e_τ)` sits at `p` and moves down
+to `p - 1`, so that plaquette has links strictly on both sides. `hne` never appears in the tactic
+script; `omega` reads it from the context.
 
-`hne` never appears in the tactic script, so the unreachable-tactic linter cannot say whether it is
-load-bearing — `omega` reads it from the context. Removing it and rebuilding is the only test, and
-that build fails here with two `omega could not prove the goal`s, one per degenerate `τ`-link, while
-`plaq_links_le_of_le` stays clean. The asymmetry between the two sides is real.
-
-DERIVED: as `plaq_links_le_of_le`. -/
+DERIVED: the `2` is the plane-to-constant conversion, the `1` is `ireflLink`'s link length, and `4`
+is the dimension, as in `plaq_links_le_of_le`. -/
 theorem plaq_links_ge_of_lt (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
     (hne : q.1.1 ≠ q.1.2) (hq : q.2 τ < p) :
     ∀ l ∈ MassGap.GibbsSpec.ilinks q, l.2 τ ≤ (ireflLink τ (2 * p) l).2 τ := by
@@ -611,14 +586,17 @@ theorem plaq_links_ge_of_lt (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
 
 #print axioms plaq_links_ge_of_lt
 
-/-- **⭐ EVERY PLAQUETTE SITS ENTIRELY ON ONE SIDE, TOGETHER WITH THE PLANE.** The undirected
-corollary: no plaquette straddles with links strictly on both sides, which is what `ActionSplit`'s
-`hOloc` and `hWloc` require of the action's two halves.
+/-- Every non-degenerate plaquette lies on one side of the plane together with the plane: either all
+of
+its links are moved down or fixed, or all are moved up or fixed, so none has links strictly on both
+sides. The undirected corollary of the two lemmas above, and the form `ActionSplit`'s `hOloc` and
+`hWloc` take of the action's two halves.
 
-DERIVED: as `plaq_links_le_of_le`. -/
+DERIVED: the `2` is the plane-to-constant conversion, the `1` is `ireflLink`'s link length, and `4`
+is the dimension, as in `plaq_links_le_of_le`. -/
 theorem plaq_links_one_side (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
     (hne : q.1.1 ≠ q.1.2) :
-    -- `hne` is consumed by the NEGATIVE branch only; see `plaq_links_le_of_le`.
+    -- `hne` is consumed by the second disjunct's branch only; see `plaq_links_ge_of_lt`.
     (∀ l ∈ MassGap.GibbsSpec.ilinks q, (ireflLink τ (2 * p) l).2 τ ≤ l.2 τ) ∨
       (∀ l ∈ MassGap.GibbsSpec.ilinks q, l.2 τ ≤ (ireflLink τ (2 * p) l).2 τ) := by
   by_cases hq : q.2 τ < p
@@ -629,85 +607,53 @@ theorem plaq_links_one_side (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
 
 end Plaquette
 
-/-! ## ⭐ 3d″. The plaquettes of the positive half, and the links they read -/
+/-! ## 3d″. The plaquettes of the positive half, and the links they read -/
 
 section HalfPlaq
 
 open MassGap.LatticeReflection
 
-/-- **THE PLANE PLAQUETTES.** Transverse to `τ` and based exactly AT the plane, so every one of
-their links is fixed by the reflection — they lie in the shared block `R`.
+/-- The plane plaquettes at a box: non-degenerate, transverse to `τ` in both directions, and based
+exactly on the plane. Every link of such a plaquette is fixed by the reflection at `2 * p`, since
+`2p - p = p`, so they lie in the shared block `R` and the reflection does not carry them from one
+half to the other. `ActionSplit.plqZero` is the corresponding set on the torus.
 
-**⛔ THEY MUST NOT BE IN EITHER HALF-ACTION.** The reflection FIXES them (`2p - p = p`), so it does
-not carry them from one half to the other; a factorisation `h(U) · h(ΘU)` would count them twice.
-They belong to the plane weight, which is exactly what `ActionSplit.plqZero` is for on the torus.
-This is invisible to `iplqPlus_links_mem` — a plane plaquette does read `S ∪ R` — and shows up only in
-the covariance step.
-
-DERIVED: no numeral of its own; `τ`, `p` and `Λ` are the caller's, and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `τ`, `p` and `Λ` are the caller's, and `4` is the
+dimension carried by `ILink` and `IPlaq`. -/
 def iplqZero (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.GibbsSpec.IPlaq :=
   (MassGap.GibbsSpec.plaqsIn Λ).filter
     (fun q => q.1.1 ≠ q.1.2 ∧ q.1.1 ≠ τ ∧ q.1.2 ≠ τ ∧ q.2 τ = p)
 
-/-- **ALL THE PLAQUETTES THE ACTION SUMS OVER** at this box — inside it and non-degenerate. The three
-groups below partition exactly this.
+/-- The plaquettes the action sums over at this box: those inside `Λ` by `GibbsSpec.plaqsIn`, and
+non-degenerate. The three groups defined below partition exactly this set.
 
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`. -/
 def iplqAll (Λ : Finset MassGap.InfiniteLattice.ILink) : Finset MassGap.GibbsSpec.IPlaq :=
   (MassGap.GibbsSpec.plaqsIn Λ).filter (fun q => q.1.1 ≠ q.1.2)
 
-/-- Membership in `iplqAll`, unfolded. -/
+/-- Membership in `iplqAll`, unfolded: a plaquette is in it exactly when it lies in
+`GibbsSpec.plaqsIn Λ` and is non-degenerate.
+
+DERIVED: the signature writes no numeral. -/
 theorem mem_iplqAll {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq} :
     q ∈ iplqAll Λ ↔ q ∈ MassGap.GibbsSpec.plaqsIn Λ ∧ q.1.1 ≠ q.1.2 := by
   simp only [iplqAll, Finset.mem_filter]
 
-/-- **⭐⭐ THE BOX AS A FINITE WILSON SYSTEM: its boundary word.**
+/-- The boundary word of a plaquette restricted to the box: `GibbsSpec.ibd q` read as a list of `↥Λ`
+paired with orientations. `StrongCoupling`'s cluster expansion is stated over abstract
+`{Lk Pq : Type}` with `Fintype`, `DecidableEq` and `bd : Pq → List (Lk × Bool)`, and this presents a
+`ℤ⁴` box in that form.
 
-`StrongCoupling`'s cluster expansion is CARRIER-FREE — it is stated over `{Lk Pq : Type}` with
-`Fintype` and `DecidableEq` and an abstract `bd : Pq → List (Lk × Bool)`, and the periodic lattice is
-one instantiation of it rather than its setting. This is the FIRST PIECE of making a `ℤ⁴` box
-another.
+The restriction is total because `GibbsSpec.mem_plaqsIn` puts every link of a plaquette of
+`plaqsIn Λ` in `Λ`, and `iplqAll Λ` is a subset of `plaqsIn Λ`; so `List.pmap` needs no default and
+no truncation. `ibd` is a separate constant in `GibbsSpec` and in `InfiniteLattice`, so the
+namespace
+is written out here, and `gibbs_ihol_eq` below relates the two.
 
-The restriction is well defined for exactly one reason: `GibbsSpec.mem_plaqsIn` says every link of a
-plaquette in `plaqsIn Λ` lies in `Λ`, and `iplqAll Λ` is a subset of `plaqsIn Λ`. So the four links
-of `GibbsSpec.ibd` can be read as elements of `↥Λ` with no default and no truncation. (`ibd` is a
-distinct constant in `GibbsSpec` and in `InfiniteLattice`; this file carries `gibbs_ihol_eq` because
-of it, so the namespace is written out.)
-
-**⛔ THIS IS THE WORD, NOT THE BRIDGE.**
-`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` is the form that CONSUMES a
-`touchDeg` bound — the base form writes `touchDeg bd` straight into its `hr` and its constants — and
-it takes `hN`, `0 ≤ β`, `hK : touchDeg bd ≤ K`, `hr : coreRate K β < 1` and `hk`. Of those, `hK` and
-`hk` are the two GEOMETRIC ones, and both are now available.
-
-**`hr` IS FREE IN `K`**, and that is what makes the evaluation below legitimate: in the `_of_le`
-form `touchDeg bd` occurs only in `hK`, never in `hr`. (The BASE form is the one that writes
-`coreRate (touchDeg bd) β < 1`.) **⛔ IT IS STILL NOT DISCHARGED**:
-`StrongCoupling.core_rate_lt_one_of_small` supplies only an unevaluated `∃ b > 0`. Evaluated at
-`K = 16 * 4` from `coreRate K β = 4(K+1)²(e^{2β} − 1)e^{4βK}`, the condition is
-`β < 2.936337×10⁻⁵`. Nothing in this chain exhibits a coupling of physical interest at which the
-transported estimate is non-vacuous.
-
-1. ✅ The `touchDeg` bound — `touchDeg_boxBd_le` below, the `ℤ⁴` analogue of
-   `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`.
-2. ✅ The conversion of a `ℤ⁴` separation into that theorem's `hk : pd ∉ ball bd p₀ k` —
-   `not_mem_ball_of_axis_gt` below. The periodic analogue is
-   `StrongCoupling.siteAtHyper_not_mem_ball`, indexed by `Moment.circLag`;
-   `StrongCoupling.raw_lag_radius_refuted` refutes the RAW-LAG index THROUGH the periodic wrap, and
-   `ℤ⁴` has no wrap, so the plain displacement is already the right index.
-3. ✅ The identification of the resulting `WilsonBridge.wilsonCorrConn` with the `specFree`
-   connected correlation — `expect_boxBd`, and `wilsonCorrConn_boxBd` in that object's own
-   coordinates.
-
-All three hold, so the ESTIMATE transports. A gap does not: see `expect_boxBd`.
-
-**⛔ AND IT SAYS NOTHING ABOUT THE OBSERVABLE GAP.** The strong-coupling chain speaks about PLAQUETTE
-observables; `gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`.
-That gap is untouched by anything here.
-
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`, as in `iplqAll`. -/
 def boxBd (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqAll Λ)) :
     List (↥Λ × Bool) :=
   List.pmap (fun lb (h : lb.1 ∈ Λ) => ((⟨lb.1, h⟩ : ↥Λ), lb.2))
@@ -719,11 +665,12 @@ def boxBd (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqAll Λ)) :
 
 #print axioms boxBd
 
-/-- **The box word carries the plaquette's own four links**, in order. The `Bool` orientations are
-not this theorem's subject; `wilsonHol_boxBd` is what checks those.
+/-- The box word lists the plaquette's own four links, in order: mapping the first component back to
+`ILink` gives `GibbsSpec.ilinks q`. The `Bool` orientations are not this statement's subject;
+`wilsonHol_boxBd` is what checks those.
 
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem boxBd_map_fst (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqAll Λ)) :
     (boxBd Λ q).map (fun lb => (lb.1 : MassGap.InfiniteLattice.ILink))
       = MassGap.GibbsSpec.ilinks (q : MassGap.GibbsSpec.IPlaq) := by
@@ -731,17 +678,15 @@ theorem boxBd_map_fst (Λ : Finset MassGap.InfiniteLattice.ILink) (q : ↥(iplqA
 
 #print axioms boxBd_map_fst
 
-/-- **⭐ AND ITS HOLONOMY IS THE LATTICE HOLONOMY**, at any boundary configuration.
+/-- `WilsonLattice.wilsonHol (boxBd Λ) q u` equals `GibbsSpec.ihol q (GibbsSpec.splice Λ u ω)`: the
+holonomy of the restricted word against the box's own variables is the lattice holonomy of the
+spliced configuration. The boundary configuration `ω` is free on the right and absent on the left.
 
-This is what makes the presentation faithful rather than merely typed: `wilsonHol` of the restricted
-word against the box's own variables is `GibbsSpec.ihol` of the spliced configuration. The boundary
-configuration `ω` is free on the right and absent on the left, which is the content.
+This is one plaquette. `wtFree` sums over `iplqAll Λ`, and `wtFree_congr_right` is what carries this
+equality to that sum.
 
-**⛔ THIS IS ONE PLAQUETTE'S HOLONOMY, NOT THE BOX WEIGHT.** `wtFree` sums over `iplqAll Λ`;
-`wtFree_congr_right` is what carries this to it.
-
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem wilsonHol_boxBd {G : Type} [Group G] (Λ : Finset MassGap.InfiniteLattice.ILink)
     (q : ↥(iplqAll Λ)) (u : MassGap.GibbsSpec.VConf G Λ)
     (ω : MassGap.GibbsSpec.IConf G) :
@@ -771,17 +716,16 @@ theorem wilsonHol_boxBd {G : Type} [Group G] (Λ : Finset MassGap.InfiniteLattic
 
 #print axioms wilsonHol_boxBd
 
-/-- **At most sixteen plaquettes read a given link.**
+/-- At most sixteen plaquettes read a given link: `(GibbsSpec.touching l).card ≤ 16`.
+`GibbsSpec.touching` enumerates four directions against four placements and `GibbsSpec.mem_touching`
+puts every plaquette reading the link inside it. The statement is a bound and not a count — the set
+of readers is strictly smaller, since at `ν = l.1` the first two entries coincide — and a bound is
+what a `touchDeg` estimate consumes.
 
-`GibbsSpec.touching` is the enumeration — four directions against four placements — and
-`GibbsSpec.mem_touching` proves it a superset of the plaquettes reading the link. This is a BOUND on
-its cardinality — the set is strictly smaller, since at `ν = l.1` the first two entries coincide —
-which is what a `touchDeg` bound consumes and what `touching` itself does not state.
-
-DERIVED: `16` is FOUR PLACEMENTS against the `4` directions — `4 * dim` at `dim = 4`, as
-`StrongCoupling.linkMult_bd_le` derives the same count. The four placements are two
-pair-positions against two base sites and do NOT scale with the dimension, so this is not
-the dimension twice over; the two readings agree only at `dim = 4`. `4` is the dimension. -/
+DERIVED: `16` is four placements against the `4` directions, `4 * dim` at `dim = 4`, the same count
+`StrongCoupling.linkMult_bd_le` derives. The four placements are two pair-positions against two base
+sites and do not scale with the dimension, so this is not the dimension twice over; the two readings
+agree only at `dim = 4`. `4` is the dimension. -/
 theorem card_touching_le (l : MassGap.InfiniteLattice.ILink) :
     (MassGap.GibbsSpec.touching l).card ≤ 16 := by
   classical
@@ -800,14 +744,14 @@ theorem card_touching_le (l : MassGap.InfiniteLattice.ILink) :
 
 #print axioms card_touching_le
 
-/-- **The box word supports at most four links.** The `ℤ⁴` mirror of
-`InfiniteLattice.linksOf_card_le`, repackaged for the subtype `↥Λ` that `boxBd` reads.
+/-- The box word supports at most four links: `(StrongCoupling.linkSupp (boxBd Λ) q).card ≤ 4`. The
+`ℤ⁴`
+mirror of `InfiniteLattice.linksOf_card_le`, repackaged for the subtype `↥Λ` that `boxBd` reads.
+`iplqAll` excludes the degenerate plane, so on this domain the four links are distinct; `≤` is the
+form `StrongCoupling.touchDeg_bd_le`'s argument consumes.
 
-`iplqAll` excludes the degenerate plane, so on this domain the four links are in fact distinct; `≤`
-is the form `StrongCoupling.touchDeg_bd_le`'s argument consumes.
-
-DERIVED: `4` is the number of links in a plaquette boundary word, as in `GibbsSpec.ibd`, and it is
-also the dimension carried inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: `4` is the number of links in a plaquette boundary word, as in `GibbsSpec.ibd`, and also
+the dimension carried by `ILink` and `IPlaq` as in `iplqAll`. -/
 theorem linkSupp_boxBd_card_le (Λ : Finset MassGap.InfiniteLattice.ILink)
     (q : ↥(iplqAll Λ)) :
     (MassGap.StrongCoupling.linkSupp (boxBd Λ) q).card ≤ 4 := by
@@ -818,11 +762,11 @@ theorem linkSupp_boxBd_card_le (Λ : Finset MassGap.InfiniteLattice.ILink)
 
 #print axioms linkSupp_boxBd_card_le
 
-/-- **A link of the box word is a link of the plaquette.** `boxBd_map_fst` read through
-`linkSupp`'s `toFinset`, which is the step every argument about the box's touch graph starts from.
+/-- A link in the support of the box word is a link of the plaquette: `boxBd_map_fst` read through
+`linkSupp`'s `toFinset`. Every argument about the box's touch graph starts here.
 
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried inside `ILink`
-and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem mem_ilinks_of_mem_linkSupp_boxBd (Λ : Finset MassGap.InfiniteLattice.ILink)
     (q : ↥(iplqAll Λ)) (l : ↥Λ)
     (hl : l ∈ MassGap.StrongCoupling.linkSupp (boxBd Λ) q) :
@@ -838,14 +782,14 @@ theorem mem_ilinks_of_mem_linkSupp_boxBd (Λ : Finset MassGap.InfiniteLattice.IL
 
 #print axioms mem_ilinks_of_mem_linkSupp_boxBd
 
-/-- **⭐ Each link of the box is read by at most sixteen of its plaquettes.**
-
-`boxBd_map_fst` carries a link of the box word back to `GibbsSpec.ilinks`, `mem_touching` puts the
-plaquette in `touching`, and `Subtype.val` is injective — so the count is bounded by
-`card_touching_le`. This is the `ℤ⁴` analogue of `StrongCoupling.linkMult_bd_le`.
+/-- Each link of the box is read by at most sixteen of its plaquettes:
+`StrongCoupling.linkMult (boxBd Λ) l ≤ 16`. `boxBd_map_fst` carries a link of the box word back to
+`GibbsSpec.ilinks`, `GibbsSpec.mem_touching` puts the plaquette in `touching`, and `Subtype.val` is
+injective, so `card_touching_le` bounds the count. The `ℤ⁴` analogue of
+`StrongCoupling.linkMult_bd_le`.
 
 DERIVED: `16` is four placements against the `4` directions, `4 * dim` at `dim = 4`, as in
-`card_touching_le`; `4` is the dimension, carried inside `ILink` as in `iplqAll`. -/
+`card_touching_le`; `4` is the dimension carried by `ILink` as in `iplqAll`. -/
 theorem linkMult_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) (l : ↥Λ) :
     MassGap.StrongCoupling.linkMult (boxBd Λ) l ≤ 16 := by
   classical
@@ -859,25 +803,21 @@ theorem linkMult_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) (l : ↥Λ
 
 #print axioms linkMult_boxBd_le
 
-/-- **⭐⭐⭐ THE BOX'S CONNECTIVITY CONSTANT, VOLUME-FREE** — the first of the carrier obligations,
-discharged.
+/-- `StrongCoupling.touchDeg (boxBd Λ) ≤ 16 * 4`, with no dependence on the box: `Λ` does not occur
+on
+the right.
 
-`StrongCoupling.touchNbrs_card_le` is CARRIER-FREE and bounds the touch count by
+`StrongCoupling.touchNbrs_card_le` is carrier-free and bounds the touch count by
 `∑ l ∈ linkSupp bd p, linkMult bd l`; the two factors are `linkSupp_boxBd_card_le` and
-`linkMult_boxBd_le`. The assembly is exactly the one `StrongCoupling.touchDeg_bd_le` performs on the
-periodic lattice, and like it the bound carries NO dependence on the box: `Λ` appears nowhere on the
-right.
-
-**⛔ ON ITS OWN THIS TRANSPORTS NOTHING.** It closes the first of the two geometric inputs to
-`wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` — the form that consumes a `touchDeg` bound,
-with `K = 16 * 4`; `not_mem_ball_of_axis_gt` closes the second and `expect_boxBd` identifies the
-state.
+`linkMult_boxBd_le`. The assembly is the one `StrongCoupling.touchDeg_bd_le` performs on the
+periodic
+lattice.
 
 DERIVED: `16` is four placements against the `4` directions, as in `card_touching_le`; `4` is the
 number of links in a plaquette boundary word and the dimension, as in `linkSupp_boxBd_card_le`. The
-PRODUCT `16 * 4` equals `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`, but the
-factorisations are transposed — here it is `linkMult` against `linkSupp`, there it is `linkSupp`
-against word slots and the dimension. -/
+product `16 * 4` equals `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`, but the
+factorisations are transposed — here `linkMult` against `linkSupp`, there `linkSupp` against word
+slots and the dimension. -/
 theorem touchDeg_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) :
     MassGap.StrongCoupling.touchDeg (boxBd Λ) ≤ 16 * 4 := by
   classical
@@ -894,16 +834,14 @@ theorem touchDeg_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) :
 
 #print axioms touchDeg_boxBd_le
 
-/-- **A PLAQUETTE'S LINKS LIE IN A ONE-STEP WINDOW ALONG EVERY AXIS**, on `ℤ⁴`.
+/-- Along any axis `τ`, every link of a plaquette sits at the plaquette's own coordinate or one
+above it:
+`l.2 τ = q.2 τ ∨ l.2 τ = q.2 τ + 1`. `GibbsSpec.ibd` names the sites `x`, `ishift a x` and
+`ishift b x` and no others, and `ishift_coord` says a shift raises one coordinate by one.
 
-`GibbsSpec.ibd` names the sites `x`, `ishift a x` and `ishift b x` and no others, and `ishift_coord`
-says a shift raises ONE coordinate by one. So along any `τ` every link the word names sits at `x τ`
-or `x τ + 1`.
-
-Both offsets lying in `{0, +1}` rather than `{-1, 0, +1}` is the whole content: it is why two
-plaquettes sharing a link differ by at most ONE step along `τ` and not two.
-
-This is `StrongCoupling.link_site_coord` without the circle.
+The offsets lie in `{0, +1}` rather than `{-1, 0, +1}`, which is why two plaquettes sharing a link
+differ by at most one step along `τ`. The `ℤ⁴` form of `StrongCoupling.link_site_coord`, without the
+circle.
 
 DERIVED: `1` is the one lattice step `ishift` takes; `4` is the dimension. -/
 theorem ilink_site_coord (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq)
@@ -927,23 +865,23 @@ theorem ilink_site_coord (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq)
 
 #print axioms ilink_site_coord
 
-/-- **The level a radius argument measures on `ℤ⁴`**: displacement along `τ` from a base site.
+/-- Displacement along `τ` from a base site, `(q.2 τ - x₀ τ).natAbs` — the level a radius argument
+measures on `ℤ⁴`. The counterpart of `StrongCoupling.axisLvl`; with no circle it is the absolute
+value of an integer difference rather than a distance on `Fin n`.
 
-The `ℤ⁴` counterpart of `StrongCoupling.axisLvl`, and simpler — there is no circle, so this is the
-absolute value of an integer difference rather than a distance on `Fin n`.
-
-DERIVED: no numeral of its own; `τ` and `x₀` are the caller's and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `τ` and `x₀` are the caller's and `4` is the dimension. -/
 def axisLvlBox (τ : Fin 4) (x₀ : MassGap.GibbsSpec.ISite)
     (q : MassGap.GibbsSpec.IPlaq) : ℕ := (q.2 τ - x₀ τ).natAbs
 
-/-- **⭐ ONE TOUCH-STEP IS AT MOST ONE LATTICE STEP**, on the box.
+/-- One touch-step moves `axisLvlBox` by at most one:
+`axisLvlBox τ x₀ q ≤ axisLvlBox τ x₀ p + 1` whenever `p` and `q` touch in the box word. Two touching
+plaquettes share a link, and by `ilink_site_coord` that link sits at each one's own `τ` coordinate
+or
+one above it; both offsets lie in `{0, +1}`, so the four cases put the two base sites within one
+step.
 
-Two plaquettes that touch share a link, and by `ilink_site_coord` that link sits at each one's own
-`τ` coordinate or one above it. Both offsets are in `{0, +1}`, so the four cases put the two sites
-within a single step.
-
-DERIVED: `1` is the one lattice step a touch can cross, derived from `ilink_site_coord` and not
-chosen; `4` is the dimension. -/
+DERIVED: `1` is the one lattice step a touch can cross, read off `ilink_site_coord` and not chosen;
+`4` is the dimension. -/
 theorem axisLvlBox_lipschitz (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : Fin 4)
     (x₀ : MassGap.GibbsSpec.ISite) (p q : ↥(iplqAll Λ))
     (h : MassGap.StrongCoupling.Touch (boxBd Λ) p q) :
@@ -959,25 +897,22 @@ theorem axisLvlBox_lipschitz (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : F
 
 #print axioms axisLvlBox_lipschitz
 
-/-- **⭐⭐⭐ THE BOX'S RADIUS BRIDGE** — the second carrier obligation, discharged.
-
-A plaquette displaced more than `k` steps along `τ` from `p₀` is outside the `k`-step touch-ball of
-`p₀`. This is the hypothesis `hk` that
+/-- A plaquette displaced more than `k` steps along `τ` from `p₀` lies outside the `k`-step
+touch-ball of
+`p₀`: `q ∉ StrongCoupling.ball (boxBd Λ) p₀ k`. This is the shape of the hypothesis `hk` that
 `StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` takes, supplied for `boxBd` from a
-`ℤ⁴` separation.
+`ℤ⁴`
+separation.
 
-`StrongCoupling.lvl_le_of_mem_ball` is carrier-free and does the work; `axisLvlBox` is zero at `p₀`
-and rises by at most one per touch, so a ball of radius `k` cannot reach level above `k`.
+`StrongCoupling.lvl_le_of_mem_ball` is carrier-free and does the work: `axisLvlBox` is zero at `p₀`
+and rises by at most one per touch, so a ball of radius `k` reaches no level above `k`.
 
-**⛔ THE INDEX IS THE PLAIN DISPLACEMENT, AND THAT IS THE POINT.** On the torus the correct index is
-`Moment.circLag` rather than the raw lag, because the lattice wraps and
-`StrongCoupling.raw_lag_radius_refuted` exhibits a plaquette the raw index would place outside a ball
-it is inside. `ℤ⁴` does not wrap, so no such correction arises and the displacement is already right.
+The index is the plain displacement. On the torus the index has to be `Moment.circLag` rather than
+the raw lag, because the lattice wraps and `StrongCoupling.raw_lag_radius_refuted` exhibits a
+plaquette the raw index would place outside a ball it is inside. `ℤ⁴` does not wrap.
 
-**⛔ ON ITS OWN THIS TRANSPORTS NOTHING.** It is one of the two geometric inputs;
-`touchDeg_boxBd_le` is the other and `expect_boxBd` identifies the state.
-
-DERIVED: `4` is the dimension; the comparison is against the caller's `k` and carries no constant. -/
+DERIVED: `4` is the dimension; the comparison is against the caller's `k` and carries no constant.
+-/
 theorem not_mem_ball_of_axis_gt (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : Fin 4)
     (p₀ q : ↥(iplqAll Λ)) (k : ℕ)
     (hk : k < ((q : MassGap.GibbsSpec.IPlaq).2 τ
@@ -994,24 +929,31 @@ theorem not_mem_ball_of_axis_gt (Λ : Finset MassGap.InfiniteLattice.ILink) (τ 
 
 #print axioms not_mem_ball_of_axis_gt
 
-/-- **THE PLAQUETTES THE POSITIVE HALF-ACTION SUMS OVER.** Inside the box, non-degenerate, not in the
-plane, based at or above it. The `ℤ⁴` counterpart of `ActionSplit.plqPlus`.
+/-- The plaquettes the positive half-action sums over: inside the box by `GibbsSpec.plaqsIn`,
+non-degenerate, not in the plane, and based at or above it. The `ℤ⁴` counterpart of
+`ActionSplit.plqPlus`.
 
 Degenerate plaquettes are filtered out rather than assumed away, because a `Finset IPlaq` carries no
-`μ < ν` side condition and `plaq_links_ge_of_lt` is false without it. The whole diagonal `μ = ν` is
-dropped, not just `μ = ν = τ`: its holonomy is the identity (`InfiniteLattice.ibd_diag_hol_one`), so
-for the Wilson density it contributes `wilsonDensity 1 = 0` and dropping it changes nothing. For a
-general `φ` it would shift the action by a constant per diagonal plaquette.
+`μ < ν` side condition and `plaq_links_ge_of_lt` is false without one. The whole diagonal `μ = ν` is
+dropped, not only `μ = ν = τ`: its holonomy is the identity
+(`InfiniteLattice.ibd_diag_hol_one`), so for the Wilson density it contributes `wilsonDensity 1 = 0`
+and dropping it changes the sum by nothing. For a general `φ` it would shift the action by a
+constant
+per diagonal plaquette.
 
-DERIVED: no numeral of its own; `τ`, `p` and `Λ` are the caller's, and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `τ`, `p` and `Λ` are the caller's, and `4` is the
+dimension. -/
 def iplqPlus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.GibbsSpec.IPlaq :=
   (MassGap.GibbsSpec.plaqsIn Λ).filter
     (fun q => q.1.1 ≠ q.1.2 ∧ ¬ (q.1.1 ≠ τ ∧ q.1.2 ≠ τ ∧ q.2 τ = p) ∧ p ≤ q.2 τ)
 
-/-- **AND ITS MIRROR** — the plaquettes the NEGATIVE half-action sums over, below the plane.
+/-- The mirror set: the plaquettes the negative half-action sums over, based strictly below the
+plane,
+with the same non-degeneracy and off-plane filters as `iplqPlus`.
 
-DERIVED: no numeral of its own; `τ`, `p` and `Λ` are the caller's, and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `τ`, `p` and `Λ` are the caller's, and `4` is the
+dimension. -/
 def iplqMinus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.GibbsSpec.IPlaq :=
   (MassGap.GibbsSpec.plaqsIn Λ).filter
@@ -1041,19 +983,19 @@ theorem iplqPlus_disjoint_iplqMinus (τ : Fin 4) (p : ℤ)
 
 #print axioms iplqPlus_disjoint_iplqMinus
 
-/-- **⭐ THE REFLECTION CARRIES THE POSITIVE HALF ONTO THE NEGATIVE ONE.** The `ℤ⁴` counterpart of
-`ActionSplit.reflPlaq_plus_mem_minus`, and what makes `h(ΘU)` the other half-action.
+/-- The reflection at `2 * p` carries `iplqPlus τ p Λ` into `iplqMinus τ p Λ`, given that the image
+plaquette is in `plaqsIn Λ`. The `ℤ⁴` counterpart of `ActionSplit.reflPlaq_plus_mem_minus`.
 
-Three branches, and the third is where excluding the plane plaquettes pays: for a transverse
-plaquette the image's base sits at `2p - x_τ`, which is `< p` only when `x_τ > p`. At `x_τ = p` the
-plaquette is its own image — that is `iplqZero`, and it is excluded from `iplqPlus` for precisely this
-reason.
+Three branches on whether `μ` or `ν` equals `τ`. In the transverse branch the image base sits at
+`2p - x_τ`, which is `< p` only when `x_τ > p`; at `x_τ = p` the plaquette is its own image, which
+is
+`iplqZero` and is excluded from `iplqPlus`.
 
-The `plaqsIn` half is a hypothesis rather than a conclusion: it holds whenever `Λ` is stable under
-the link reflection, which is the same `hΛ` that `irefl_box_pairing_nonneg` already takes.
+The `plaqsIn` half is taken as the hypothesis `hmem` rather than proved: it holds whenever `Λ` is
+stable under the link reflection, which is the same `hΛ` that `irefl_box_pairing_nonneg` takes.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is `ireflPlaq`'s link-length
-offset, and `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`, the `1` is `ireflPlaq`'s
+link-length offset, and `4` is the dimension. -/
 theorem ireflPlaq_mem_iplqMinus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqPlus τ p Λ)
     (hmem : ireflPlaq τ (2 * p) q ∈ MassGap.GibbsSpec.plaqsIn Λ) :
@@ -1087,55 +1029,56 @@ theorem ireflPlaq_mem_iplqMinus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.Infi
 
 #print axioms ireflPlaq_mem_iplqMinus
 
-/-- **THE TWO `ishift`s ARE THE SAME FUNCTION**, and saying so is what lets the reflection lemmas
-reach a goal produced by `GibbsSpec.ilinks_eq`.
+/-- `GibbsSpec.ishift` and `InfiniteLattice.ishift` are the same function, by `rfl`. The two
+namespaces
+are import-isolated and each defines `ISite` and `ishift` for itself with identical bodies, so they
+are distinct constants: a rewrite stated on one does not fire on the other, and both print as
+`ishift` in a goal. This equation is what lets the reflection lemmas reach a goal produced by
+`GibbsSpec.ilinks_eq`.
 
-`GibbsSpec` and `InfiniteLattice` are import-isolated and each defines `ISite` and `ishift` for
-itself, with identical bodies. They are still two constants: a rewrite stated on one does not fire on
-the other, and NOTHING IN A GOAL DISPLAY SHOWS IT — both print as `ishift`. What showed it here was
-the unused-simp-argument linter naming three lemmas at once that plainly applied.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem gibbs_ishift_eq :
     (MassGap.GibbsSpec.ishift : Fin 4 → MassGap.GibbsSpec.ISite → MassGap.GibbsSpec.ISite)
       = MassGap.InfiniteLattice.ishift := rfl
 
 #print axioms gibbs_ishift_eq
 
-/-- **AND THE TWO `iunshift`s ARE THE SAME MAP**, for the same reason: identical bodies in two
-isolated namespaces are still two constants, and nothing in a goal display tells them apart — both
-print as `iunshift`. A lemma proved about one is inert on the other.
+/-- `GibbsSpec.iunshift` and `ReflectionShift.iunshift` are the same map, by `rfl` — the same
+situation
+as `gibbs_ishift_eq`: identical bodies in two isolated namespaces are still two constants, both
+printing as `iunshift`, and a lemma proved about one is inert on the other.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem gibbs_iunshift_eq :
     (MassGap.GibbsSpec.iunshift : Fin 4 → MassGap.GibbsSpec.ISite → MassGap.GibbsSpec.ISite)
       = MassGap.ReflectionShift.iunshift := rfl
 
 #print axioms gibbs_iunshift_eq
 
-/-- **EVERY LINK OF THE IMAGE PLAQUETTE IS A REFLECTED LINK OF THE ORIGINAL.**
+/-- Every link of the image plaquette is a reflected link of the original, stated as: reflecting a
+link
+of `ilinks (ireflPlaq τ c q)` again lands it back in `ilinks q`. By involutivity this is the same
+fact, and it is the form the box transport consumes.
 
-Stated as "reflecting it again lands back in the original's links", which is the same thing by
-involutivity and is the form the box transport consumes.
+The order of the links differs — the mirror reverses the loop, which is what `ihol_ireflConf` reads
+as conjugacy rather than equality. `plaqsIn` asks only that every link lie in the box, so order does
+not enter here.
 
-The ORDER differs — the mirror reverses the loop, which is the same fact `ihol_ireflConf` reads as
-conjugacy rather than equality. `plaqsIn` asks only that every link be in the box, so order is not
-something this has to track.
+`hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)` is required. For `q = ((τ, τ), x)` the links sit at `x_τ` and
+`x_τ + 1`, covering `[x, x + 2e_τ]`; their reflections cover `[c - 2 - x_τ, c - x_τ]`, based at
+`c - 2 - x_τ`, while `ireflPlaq` puts the image base at `c - 1 - x_τ`, so the image's links are not
+the reflections of the original's. The open goal in that case is
+`ireflSite τ (c-1) (ishift τ (ireflSite τ (c-1) x))` against `ishift τ x`, reducing to `x_τ - 1`
+against `x_τ + 1`.
 
-**⛔ IT IS FALSE FOR A `τ`-ALIGNED DEGENERATE PLAQUETTE, and the prover found that, not the author.**
-`q = ((τ, τ), x)` has links at `x_τ` and `x_τ + 1`, covering `[x, x + 2e_τ]`; their reflections cover
-`[c - 2 - x_τ, c - x_τ]`, based at `c - 2 - x_τ`. `ireflPlaq` puts the image base at `c - 1 - x_τ` —
-off by one — so the image's links are NOT the reflections of the original's. The build left exactly
-that one case open, with `ireflSite τ (c-1) (ishift τ (ireflSite τ (c-1) x))` against `ishift τ x`,
-and it reduces to `x_τ - 1` against `x_τ + 1`.
+That case is excluded where `ireflPlaq` is used: `ihol_ireflConf` holds for a degenerate plaquette
+anyway with `g = 1`, since a degenerate loop retraces itself and both holonomies are the identity.
+The torus has the same feature, which is why `ActionSplit.plqDeg` is a separate group excluded from
+the action split. This hypothesis is `plqDeg`'s complement, and `iplqPlus` excludes the whole
+diagonal, so it costs nothing at the call site.
 
-`ireflPlaq` is not wrong where it is used: `ihol_ireflConf` holds for that plaquette anyway, with
-`g = 1`, because a degenerate loop retraces itself and BOTH holonomies are the identity. The torus
-has the same feature, which is why `ActionSplit.plqDeg` is a group of its own and is excluded from
-the action split. The hypothesis below is exactly `plqDeg`'s complement, and `iplqPlus` excludes the
-whole diagonal, so it costs nothing at the call site.
-
-DERIVED: the `1` is `ireflPlaq`'s link-length offset; `4` is the dimension. -/
+DERIVED: the `1` is `ireflPlaq`'s link-length offset, the `2` appears in the description of the
+excluded degenerate case rather than in the signature, and `4` is the dimension. -/
 theorem ireflLink_mem_ilinks (τ : Fin 4) (c : ℤ) (q : MassGap.GibbsSpec.IPlaq)
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) {l : MassGap.InfiniteLattice.ILink}
     (hl : l ∈ MassGap.GibbsSpec.ilinks (ireflPlaq τ c q)) :
@@ -1153,11 +1096,11 @@ theorem ireflLink_mem_ilinks (τ : Fin 4) (c : ℤ) (q : MassGap.GibbsSpec.IPlaq
 
 #print axioms ireflLink_mem_ilinks
 
-/-- **⭐ A REFLECTION-STABLE BOX CONTAINS THE IMAGE PLAQUETTE.** This discharges the `hmem`
-hypothesis of `ireflPlaq_mem_iplqMinus` from the SAME `hΛ` that `irefl_box_pairing_nonneg` already
-takes — no new assumption enters.
+/-- A box stable under the link reflection contains the image plaquette. This discharges the `hmem`
+hypothesis of `ireflPlaq_mem_iplqMinus` from the same `hΛ` that `irefl_box_pairing_nonneg` takes, so
+no new assumption enters. Carries `ireflLink_mem_ilinks`'s non-degeneracy hypothesis `hdeg`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ireflPlaq_mem_plaqsIn (τ : Fin 4) (c : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) {q : MassGap.GibbsSpec.IPlaq}
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) (hq : q ∈ MassGap.GibbsSpec.plaqsIn Λ) :
@@ -1171,10 +1114,13 @@ theorem ireflPlaq_mem_plaqsIn (τ : Fin 4) (c : ℤ) {Λ : Finset MassGap.Infini
 
 #print axioms ireflPlaq_mem_plaqsIn
 
-/-- **⭐ AND SO THE REFLECTION MAPS THE POSITIVE HALF INTO THE NEGATIVE ONE OUTRIGHT** — no leftover
-hypothesis. This is `ActionSplit.reflPlaq_plus_mem_minus` on `ℤ⁴`.
+/-- The reflection at `2 * p` maps `iplqPlus τ p Λ` into `iplqMinus τ p Λ` with no leftover
+hypothesis —
+`ireflPlaq_mem_iplqMinus` composed with `ireflPlaq_mem_plaqsIn`.
+`ActionSplit.reflPlaq_plus_mem_minus`
+on `ℤ⁴`.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. -/
 theorem ireflPlaq_maps_plus_to_minus (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ) {q : MassGap.GibbsSpec.IPlaq}
@@ -1186,11 +1132,13 @@ theorem ireflPlaq_maps_plus_to_minus (τ : Fin 4) (p : ℤ)
 
 #print axioms ireflPlaq_maps_plus_to_minus
 
-/-- **AND EVERY LINK OF ONE LIES IN `S ∪ R`.** This is the step `ReflectionStrong.actPlus_local`
-consumes on the torus (`plaq_links_le`): it is what makes the positive half-action an observable of
-the positive half, hence what lets the half Boltzmann factor be absorbed into the observable.
+/-- Every link of a positive-half plaquette lies in `boxS τ p Λ ∪ boxR τ p Λ`, given that the link
+is in
+the box. The `ℤ⁴` form of the step `ReflectionStrong.actPlus_local` consumes on the torus
+(`plaq_links_le`): it makes the positive half-action an observable of the positive half, which is
+what lets the half Boltzmann factor be absorbed into the observable.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplqPlus_links_mem (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqPlus τ p Λ)
     {l : MassGap.InfiniteLattice.ILink} (hl : l ∈ MassGap.GibbsSpec.ilinks q) (h : l ∈ Λ) :
@@ -1202,8 +1150,10 @@ theorem iplqPlus_links_mem (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteL
 
 #print axioms iplqPlus_links_mem
 
-/-- The links of a positive-half plaquette ARE in the box — the side condition
-`iplqPlus_links_mem` asks for, read off the `plaqsIn` filter. -/
+/-- The links of a positive-half plaquette lie in the box — the side condition `iplqPlus_links_mem`
+asks for, read off the `plaqsIn` filter inside `iplqPlus`.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplqPlus_link_mem_box (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqPlus τ p Λ)
     {l : MassGap.InfiniteLattice.ILink} (hl : l ∈ MassGap.GibbsSpec.ilinks q) : l ∈ Λ :=
@@ -1211,11 +1161,11 @@ theorem iplqPlus_link_mem_box (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.Infini
 
 #print axioms iplqPlus_link_mem_box
 
-/-- **A transverse link based at the plane is in `boxR`.** `ν ≠ τ` and `x τ = p` give
-`(ireflLink τ (2p) (ν,x)).2 τ = 2p − p = p = x τ`, which is the `boxR` filter.
+/-- A link based on the plane whose direction is not `τ` lies in `boxR`: `ν ≠ τ` and `x τ = p` give
+`(ireflLink τ (2 * p) (ν, x)).2 τ = 2p - p = p = x τ`, which is `boxR`'s filter.
 
-DERIVED: no numeral of its own — the `2` of the reflection constant is inside `boxR`; `4` is
-the dimension. -/
+DERIVED: the signature writes no numeral of its own — the `2` of the reflection constant sits inside
+`boxR`; `4` is the dimension. -/
 theorem transverse_link_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
     (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -1227,12 +1177,13 @@ theorem transverse_link_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
 
 #print axioms transverse_link_mem_boxR
 
-/-- **The plaquette `((τ,ν), x)` with `x τ = p` is in `iplqPlus τ p Λ`**, given its links are in `Λ`.
-
-Its first direction is `τ`, so the transverse-at-the-plane exclusion of `mem_iplqPlus` does not fire,
+/-- The plaquette `((τ, ν), x)` with `x τ = p` is in `iplqPlus τ p Λ`, given that its links are in
+`Λ`.
+Its first direction is `τ`, so the transverse-at-the-plane exclusion in `mem_iplqPlus` does not
+fire,
 and `p ≤ x τ` holds with equality.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplqPlus_mem_of_tau_base (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
     (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -1244,17 +1195,15 @@ theorem iplqPlus_mem_of_tau_base (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
 
 #print axioms iplqPlus_mem_of_tau_base
 
-/-- **POSITIVE CONTROL: an `iplqPlus` plaquette WITH a link in `boxR`.**
+/-- An `iplqPlus` plaquette that has a link in `boxR`: `((τ, ν), x)` with `x τ = p` is in `iplqPlus
+τ p Λ`
+and its transverse link `(ν, x)` lies in the shared block. `iplqPlus_links_mem` bounds the
+half-action's links by `boxS ∪ boxR`, and a half-action reading only `boxS` would satisfy that
+bound; this exhibits the other case. The statement is about which links a plaquette reads, not about
+how `iactPlus` varies with them.
 
-`iplqPlus_links_mem` bounds the half-action's links by `boxS ∪ boxR`; a half-action reading only
-`boxS` would satisfy it. This exhibits the other case.
-
-**⛔ IT DOES NOT SHOW `iactPlus` DEPENDS ON `boxR`.** Reading a coordinate is not varying with it.
-Dependence needs two configurations differing only on `boxR` at which `iactPlus` differs, and that
-is not proved.
-
-DERIVED: no numeral of its own; the `2` of the reflection constant is inside `boxR`; `4` is the
-dimension. -/
+DERIVED: the signature writes no numeral; the `2` of the reflection constant sits inside `boxR`, and
+`4` is the dimension. -/
 theorem iplqPlus_has_link_in_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
     (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -1271,9 +1220,9 @@ theorem iplqPlus_has_link_in_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
 
 #print axioms iplqPlus_has_link_in_boxR
 
-/-- **Distinct directions shift a site to distinct sites.**
+/-- Shifts in distinct directions send a site to distinct sites.
 
-DERIVED: no numeral of its own; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
+DERIVED: the signature writes no numeral; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
 dimension. -/
 theorem ishift_ne_ishift {μ ν : Fin 4} (h : μ ≠ ν) (x : MassGap.GibbsSpec.ISite) :
     MassGap.GibbsSpec.ishift μ x ≠ MassGap.GibbsSpec.ishift ν x := by
@@ -1284,9 +1233,9 @@ theorem ishift_ne_ishift {μ ν : Fin 4} (h : μ ≠ ν) (x : MassGap.GibbsSpec.
 
 #print axioms ishift_ne_ishift
 
-/-- **A shift moves the site.**
+/-- A shift moves the site: `GibbsSpec.ishift μ x ≠ x`.
 
-DERIVED: no numeral of its own; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
+DERIVED: the signature writes no numeral; `1` is `ishift`'s step, inside `ishift_coord`; `4` is the
 dimension. -/
 theorem ishift_ne_self (μ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
     MassGap.GibbsSpec.ishift μ x ≠ x := by
@@ -1297,16 +1246,18 @@ theorem ishift_ne_self (μ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
 
 #print axioms ishift_ne_self
 
-/-- **The four links of one plaquette**, as a carrier in its own right.
+/-- The four links of the plaquette at `x` spanned by `τ` and `ν`, as a `Finset ILink` in its own
+right —
+the one-plaquette carrier the lemmas below run on.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def quadLinks (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
     Finset MassGap.InfiniteLattice.ILink :=
   {(τ, x), (ν, MassGap.GibbsSpec.ishift τ x), (τ, MassGap.GibbsSpec.ishift ν x), (ν, x)}
 
-/-- **Every link of `((τ,ν), x)` is in `quadLinks`.** Membership, not equality.
+/-- Every link of `((τ, ν), x)` lies in `quadLinks τ ν x`. A containment, not an equality of lists.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem quadLinks_ilinks (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
     ∀ l ∈ MassGap.GibbsSpec.ilinks (((τ, ν), x) : MassGap.GibbsSpec.IPlaq),
       l ∈ quadLinks τ ν x := by
@@ -1318,9 +1269,9 @@ theorem quadLinks_ilinks (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
 
 #print axioms quadLinks_ilinks
 
-/-- **And every link of the reversed orientation too.**
+/-- The same for the reversed orientation `((ν, τ), x)`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem quadLinks_ilinks_swap (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
     ∀ l ∈ MassGap.GibbsSpec.ilinks (((ν, τ), x) : MassGap.GibbsSpec.IPlaq),
       l ∈ quadLinks τ ν x := by
@@ -1332,12 +1283,12 @@ theorem quadLinks_ilinks_swap (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) :
 
 #print axioms quadLinks_ilinks_swap
 
-/-- **Two `quadLinks` links with a common base and distinct directions force the base to be `x`.**
+/-- If two links of `quadLinks τ ν x` share a base `y` and have distinct directions, then `y = x`.
+In
+`quadLinks`, `x` is the only base carrying two directions; `ishift τ x` and `ishift ν x` carry one
+each and are distinct by `ishift_ne_ishift`.
 
-`x` is the only base in `quadLinks` carrying two directions; `ishift τ x` and `ishift ν x` carry one
-each and are distinct.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem quad_two_dirs (τ ν : Fin 4) (hν : ν ≠ τ) (x y : MassGap.GibbsSpec.ISite)
     {a b : Fin 4} (hab : a ≠ b)
     (ha : ((a, y) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x)
@@ -1360,9 +1311,9 @@ theorem quad_two_dirs (τ ν : Fin 4) (hν : ν ≠ τ) (x y : MassGap.GibbsSpec
 
 #print axioms quad_two_dirs
 
-/-- **A `quadLinks` link based at `x` has direction `τ` or `ν`.**
+/-- A link of `quadLinks τ ν x` based at `x` has direction `τ` or `ν`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem quad_dirs (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) {a : Fin 4}
     (ha : ((a, x) : MassGap.InfiniteLattice.ILink) ∈ quadLinks τ ν x) : a = τ ∨ a = ν := by
   simp only [quadLinks, Finset.mem_insert, Finset.mem_singleton, Prod.mk.injEq] at ha
@@ -1370,12 +1321,12 @@ theorem quad_dirs (τ ν : Fin 4) (x : MassGap.GibbsSpec.ISite) {a : Fin 4}
 
 #print axioms quad_dirs
 
-/-- **`iplqPlus` on the one-plaquette carrier is EXACTLY the two orientations.**
+/-- On the one-plaquette carrier, `iplqPlus τ p (quadLinks τ ν x)` is exactly the two orientations
+`{((τ, ν), x), ((ν, τ), x)}`, for `x τ = p` and `ν ≠ τ`. The half-action on this carrier is
+therefore
+a two-term sum.
 
-The half-action on `quadLinks τ ν x` with `x τ = p` is therefore a two-term sum, which is what makes
-it computable.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplqPlus_quad_eq (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
     (x : MassGap.GibbsSpec.ISite) (hx : x τ = p) :
     iplqPlus τ p (quadLinks τ ν x)
@@ -1421,7 +1372,7 @@ theorem iplqPlus_quad_eq (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
 
 end HalfPlaq
 
-/-! ## ⭐ 3d″a. The three groups partition the box -/
+/-! ## 3d″a. The three groups partition the box -/
 
 section Partition
 
@@ -1448,10 +1399,12 @@ theorem iplqZero_disjoint_iplqMinus (τ : Fin 4) (p : ℤ)
   refine Finset.disjoint_left.2 fun q hZ hM => ?_
   exact (mem_iplqMinus.mp hM).2.2.1 (mem_iplqZero.mp hZ).2.2
 
-/-- **⭐ THE THREE GROUPS PARTITION THE BOX'S PLAQUETTES.** Every non-degenerate plaquette of the box
-is in the plane, above it, or below it — and in exactly one of the three.
+/-- The three groups partition the box's plaquettes:
+`iplqZero ∪ iplqPlus ∪ iplqMinus = iplqAll`. Every non-degenerate plaquette of the box is in the
+plane, above it, or below it, and in exactly one of the three — disjointness is
+`iplqZero_disjoint_iplqPlus`, `iplqZero_disjoint_iplqMinus` and `iplqPlus_disjoint_iplqMinus`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplq_union (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     iplqZero τ p Λ ∪ iplqPlus τ p Λ ∪ iplqMinus τ p Λ = iplqAll Λ := by
   ext q
@@ -1467,13 +1420,15 @@ theorem iplq_union (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.I
 
 #print axioms iplq_union
 
-/-- **⭐ AND SO THE ACTION SPLITS** into a plane part and the two halves. With
-`action_iplqPlus_ireflConf` this is the factorisation
-`exp(-βS) = exp(-βA₀) · exp(-βA₊(U)) · exp(-βA₊(ΘU))` — a weight reading the shared block only,
-times an observable times its own reflection, which is exactly what
-`ActionSplit.pairing_nonneg_of_local` consumes.
+/-- The action over `iplqAll Λ` splits into a plane part and the two halves:
+`actionOn φ (iplqAll Λ) U = actionOn φ (iplqZero τ p Λ) U + actionOn φ (iplqPlus τ p Λ) U
++ actionOn φ (iplqMinus τ p Λ) U`, by `iplq_union` and the disjointness lemmas. With
+`action_iplqPlus_ireflConf` this gives
+`exp(-βS) = exp(-βA₀) · exp(-βA₊(U)) · exp(-βA₊(ΘU))`: a weight reading the shared block only, times
+an observable times its own reflection, which is the shape
+`ActionSplit.pairing_nonneg_of_local` consumes. Holds for any `φ : G → ℝ`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem actionOn_split_three {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (U : MassGap.GibbsSpec.IConf G) :
     MassGap.GibbsSpec.actionOn φ (iplqAll Λ) U
@@ -1490,21 +1445,23 @@ theorem actionOn_split_three {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) 
 
 end Partition
 
-/-! ## ⭐ 3d‴a. The reflection is a BIJECTION between the two halves -/
+/-! ## 3d‴a. The reflection is a bijection between the two halves -/
 
 section Bijection
 
 open MassGap.LatticeReflection
 
-/-- **THE MIRROR OF `ireflPlaq_mem_iplqMinus`** — the reflection carries the negative half back onto
-the positive one. Needed because the action identity reindexes a sum, which wants a bijection, not
-just a map.
+/-- The mirror of `ireflPlaq_mem_iplqMinus`: the reflection at `2 * p` carries `iplqMinus τ p Λ`
+into
+`iplqPlus τ p Λ`, given the image is in `plaqsIn Λ`. The action identity reindexes a sum, which
+needs
+a bijection rather than a map in one direction.
 
-Its third branch needs no non-plane hypothesis: below the plane `x_τ < p` already forces
-`2p - x_τ > p`, so the image cannot land ON the plane.
+The transverse branch needs no off-plane hypothesis here: below the plane `x_τ < p` already forces
+`2p - x_τ > p`, so the image cannot land on the plane.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is `ireflPlaq`'s link-length
-offset, and `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`, the `1` is `ireflPlaq`'s
+link-length offset, and `4` is the dimension. -/
 theorem ireflPlaq_mem_iplqPlus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqMinus τ p Λ)
     (hmem : ireflPlaq τ (2 * p) q ∈ MassGap.GibbsSpec.plaqsIn Λ) :
@@ -1537,9 +1494,11 @@ theorem ireflPlaq_mem_iplqPlus (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.Infin
 
 #print axioms ireflPlaq_mem_iplqPlus
 
-/-- The negative half maps back into the positive one outright, on the same `hΛ`.
+/-- The negative half maps back into the positive one with no leftover hypothesis, on the same `hΛ`
+as
+`ireflPlaq_maps_plus_to_minus`.
 
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. -/
 theorem ireflPlaq_maps_minus_to_plus (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ) {q : MassGap.GibbsSpec.IPlaq}
@@ -1553,7 +1512,7 @@ theorem ireflPlaq_maps_minus_to_plus (τ : Fin 4) (p : ℤ)
 
 end Bijection
 
-/-! ## ⭐ 3d‴b. The reflected positive half-action IS the negative half-action -/
+/-! ## 3d‴b. The reflected positive half-action is the negative half-action -/
 
 section Covariance
 
@@ -1561,28 +1520,28 @@ open MassGap.LatticeReflection MassGap.WilsonLattice
 
 variable {G : Type} [Group G]
 
-/-- **THE TWO `ibd`s ARE THE SAME WORD**, so `GibbsSpec.ihol` is the holonomy `ihol_ireflConf` talks
-about. The same import-isolation bridge as `gibbs_ishift_eq`, for the same reason: identical bodies
-in two isolated namespaces are still two constants.
+/-- `GibbsSpec.ihol q U` is `WilsonLattice.wilsonHol InfiniteLattice.ibd q U`, by `rfl`, so
+`GibbsSpec.ihol` is the holonomy `ihol_ireflConf` speaks about. The same import-isolation bridge as
+`gibbs_ishift_eq`: identical bodies in two isolated namespaces are still two constants.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension carried by `IPlaq` and `IConf`. -/
 theorem gibbs_ihol_eq (q : MassGap.GibbsSpec.IPlaq) (U : MassGap.GibbsSpec.IConf G) :
     MassGap.GibbsSpec.ihol q U = wilsonHol MassGap.InfiniteLattice.ibd q U := rfl
 
 #print axioms gibbs_ihol_eq
 
-/-- **⭐ THE REFLECTED POSITIVE HALF-ACTION IS THE NEGATIVE HALF-ACTION.**
-
-This is what makes `exp(-βS)` factor as `w(U|R) · h(U) · h(ΘU)` — the shape
-`ActionSplit.pairing_nonneg_of_local` consumes, and the `ℤ⁴` counterpart of
+/-- The positive half-action at the reflected configuration equals the negative half-action at the
+original: `actionOn φ (iplqPlus τ p Λ) (ireflConf τ (2 * p) U) = actionOn φ (iplqMinus τ p Λ) U`.
+With `actionOn_split_three` this makes `exp(-βS)` factor as `w(U|R) · h(U) · h(ΘU)`, the shape
+`ActionSplit.pairing_nonneg_of_local` consumes; the `ℤ⁴` counterpart of
 `ActionSplit.sum_plqMinus_eq_plus_refl`.
 
-It does NOT go through a `LatticeGauge.Symmetry`, and cannot: the mirrored holonomy is only
-CONJUGATE to the image plaquette's (`ihol_ireflConf`). What carries the sum is that `φ` is a CLASS
-FUNCTION — true of the Wilson density (`WilsonAction.wilsonDensity_conj`) — together with the
-reflection being a bijection `iplqPlus ↔ iplqMinus`.
+It does not go through a `LatticeGauge.Symmetry`: the mirrored holonomy is only conjugate to the
+image plaquette's, which is what `ihol_ireflConf` gives. The sum is carried by the hypothesis `hφ`
+that `φ` is a class function — true of the Wilson density by `WilsonAction.wilsonDensity_conj` —
+together with `ireflPlaq` being a bijection `iplqPlus ↔ iplqMinus` on a reflection-stable box.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. -/
 theorem action_iplqPlus_ireflConf (φ : G → ℝ) (hφ : ∀ g h : G, φ (g * h * g⁻¹) = φ h)
     (τ : Fin 4) (p : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ) (U : MassGap.GibbsSpec.IConf G) :
@@ -1601,13 +1560,12 @@ theorem action_iplqPlus_ireflConf (φ : G → ℝ) (hφ : ∀ g h : G, φ (g * h
 
 #print axioms action_iplqPlus_ireflConf
 
-/-- **THE REFLECTION PRESERVES NON-DEGENERACY**, hence maps `iplqAll` into itself on a stable box.
+/-- The reflection preserves non-degeneracy, so it maps `iplqAll Λ` into itself on a stable box. At
+`μ = τ` the image plane is `(ν, τ)` with `ν ≠ τ`; at `ν = τ` it is `(τ, μ)` with `μ ≠ τ`; otherwise
+it is `(μ, ν)` unchanged. Stated at an arbitrary constant `c`.
 
-At `μ = τ` the image plane is `(ν, τ)` with `ν ≠ τ`; at `ν = τ` it is `(τ, μ)` with `μ ≠ τ`;
-otherwise it is `(μ, ν)` unchanged. In every case a non-diagonal plane stays non-diagonal.
-
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem ireflPlaq_mem_iplqAll (τ : Fin 4) (c : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) {q : MassGap.GibbsSpec.IPlaq}
     (hq : q ∈ iplqAll Λ) : ireflPlaq τ c q ∈ iplqAll Λ := by
@@ -1626,14 +1584,14 @@ theorem ireflPlaq_mem_iplqAll (τ : Fin 4) (c : ℤ) {Λ : Finset MassGap.Infini
 
 #print axioms ireflPlaq_mem_iplqAll
 
-/-- **⭐ THE FULL ACTION IS INVARIANT UNDER THE REFLECTION.** The covariance machinery used the other
-way: there `ireflPlaq` carried `iplqPlus` onto `iplqMinus`; here it carries `iplqAll` onto itself.
+/-- The full action over `iplqAll Λ` is invariant under the reflection at any constant `c`, for a
+class
+function `φ` on a reflection-stable box. The same three ingredients as
+`action_iplqPlus_ireflConf` — `ihol_ireflConf`, `hφ`, and `ireflPlaq` a bijection of the index set,
+which here it is of `iplqAll` with itself by `ireflPlaq_mem_iplqAll` and involutivity.
 
-Same three ingredients — `ihol_ireflConf`, `φ` a class function, and `ireflPlaq` a bijection of the
-index set, which on a reflection-stable box it is by involutivity.
-
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem action_iplqAll_ireflConf (φ : G → ℝ) (hφ : ∀ g h : G, φ (g * h * g⁻¹) = φ h)
     (τ : Fin 4) (c : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ) (U : MassGap.GibbsSpec.IConf G) :
@@ -1654,7 +1612,7 @@ theorem action_iplqAll_ireflConf (φ : G → ℝ) (hφ : ∀ g h : G, φ (g * h 
 
 end Covariance
 
-/-! ## ⭐ 3d‴. The half-action at a box, and its Boltzmann factor -/
+/-! ## 3d‴. The half-action at a box, and its Boltzmann factor -/
 
 section HalfAction
 
@@ -1662,27 +1620,29 @@ open MassGap.LatticeReflection
 
 variable {G : Type} [Group G]
 
-/-- **THE POSITIVE HALF-ACTION AT A BOX.** The Wilson action restricted to the plaquettes of
-`iplqPlus`, read off a finite-volume configuration spliced into a background.
+/-- The positive half-action at a box: the action `φ` summed over `iplqPlus τ p Λ`, read off a
+finite-volume configuration `u` spliced into a background `ω`.
 
-The background `ω` is inert: every plaquette summed over has all four links inside `Λ`
-(`iplqPlus_link_mem_box`), so `splice` never consults it. It is carried rather than fixed because
-`GibbsSpec.actionOn` is stated on `IConf G` and the finite-volume configuration lives on `↥Λ`.
+The background is inert — every plaquette summed over has all four links inside `Λ` by
+`iplqPlus_link_mem_box`, so `splice` never consults `ω`. It is carried rather than fixed because
+`GibbsSpec.actionOn` is stated on `IConf G` while the finite-volume configuration lives on `↥Λ`.
 
-DERIVED: no numeral of its own; `φ`, `τ`, `p`, `Λ` and `ω` are the caller's, and `4` is the
-dimension. -/
+DERIVED: the signature writes no numeral; `φ`, `τ`, `p`, `Λ` and `ω` are the caller's, and `4` is
+the dimension. -/
 noncomputable def iactPlus (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   MassGap.GibbsSpec.actionOn φ (iplqPlus τ p Λ) (MassGap.GibbsSpec.splice Λ u ω)
 
-/-- **⭐ THE HALF-ACTION READS `S ∪ R`** — the `ℤ⁴` counterpart of `ReflectionStrong.actPlus_local`,
-and the reason the half Boltzmann factor can be absorbed into the observable.
+/-- `iactPlus` depends on the configuration only through `boxS ∪ boxR`: two configurations agreeing
+on
+`boxS` and on `boxR` give the same value. The `ℤ⁴` counterpart of `ReflectionStrong.actPlus_local`,
+and what lets the half Boltzmann factor be absorbed into the observable.
 
-The two hypotheses are kept apart rather than merged over the union because this is verbatim the
-`hOloc` of `ActionSplit.pairing_nonneg_of_local`, which is where it is going.
+The two hypotheses are kept apart rather than merged over the union because this is the shape of
+`hOloc` in `ActionSplit.pairing_nonneg_of_local`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iactPlus_local (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u v : MassGap.GibbsSpec.VConf G Λ)
@@ -1697,9 +1657,12 @@ theorem iactPlus_local (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms iactPlus_local
 
-/-- **The half-action on the one-plaquette carrier is a two-term sum.**
+/-- On the one-plaquette carrier `quadLinks τ ν x` with `x τ = p`, the half-action is the two-term
+sum
+over the orientations `((τ, ν), x)` and `((ν, τ), x)` — `iplqPlus_quad_eq` summed by
+`Finset.sum_pair`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iactPlus_quad (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
     (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G (quadLinks τ ν x)) :
@@ -1717,21 +1680,18 @@ theorem iactPlus_quad (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ τ) (p : �
 
 #print axioms iactPlus_quad
 
-/-- **THE HALF-ACTION DEPENDS ON THE SHARED BLOCK.** Two configurations agreeing off `boxR` at
-which `iactPlus` differs.
+/-- On the one-plaquette carrier there are two configurations agreeing off `boxR` at which
+`iactPlus`
+differs. `iplqPlus_has_link_in_boxR` shows the half-action reads `boxR`; this shows it varies with
+it. On `quadLinks τ ν x` the only `boxR` link is `(ν, x)`; the two orientations give `g⁻¹` and `g`,
+and the all-identity configuration gives `1` and `1`.
 
-`iplqPlus_has_link_in_boxR` shows the half-action READS `boxR`; this shows it VARIES with it. On
-`quadLinks τ ν x` the sole `boxR` link is `(ν, x)`, the two orientations give `g⁻¹` and `g`, and the
-all-identity configuration gives `1` and `1`.
+Scope: `hsep : φ g + φ g⁻¹ ≠ 2 * φ 1` is unsatisfiable in the trivial group, so it carries a
+non-triviality assumption on `G`, and with it excludes `SU 0` and `SU 1`. The carrier is a single
+plaquette and is not closed under the reflection.
 
-`hsep` excludes the trivial group, and with it `SU 0` and `SU 1`.
-
-**⛔ THE CARRIER IS ONE PLAQUETTE AND IS NOT REFLECTION-CLOSED.** This refutes the UNIVERSAL claim
-that the half-action is blind to `boxR`. On a given reflection-closed box the extra plaquettes could
-in principle cancel, and that is not settled here.
-
-DERIVED: the `2` is the two orientations, one per term of `iactPlus_quad`; the `1`s are the
-identity configuration and its two holonomies; `4` is the dimension. -/
+DERIVED: the `2` is the two orientations, one per term of `iactPlus_quad`; the `1`s are the identity
+configuration and its two holonomies; `4` is the dimension. -/
 theorem iactPlus_depends_on_boxR (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ τ)
     (p : ℤ) (x : MassGap.GibbsSpec.ISite) (hx : x τ = p)
     (ω : MassGap.GibbsSpec.IConf G) (g : G) (hsep : φ g + φ g⁻¹ ≠ 2 * φ 1) :
@@ -1767,16 +1727,20 @@ theorem iactPlus_depends_on_boxR (φ : G → ℝ) (τ ν : Fin 4) (hν : ν ≠ 
 
 #print axioms iactPlus_depends_on_boxR
 
-/-- **THE HALF-SPACE BOLTZMANN FACTOR AT A BOX.** `ReflectionStrong.halfBoltz` on `ℤ⁴`.
+/-- The half-space Boltzmann factor at a box, `exp (-β * iactPlus φ τ p Λ ω u)` —
+`ReflectionStrong.halfBoltz` on `ℤ⁴`.
 
-DERIVED: no numeral of its own; the sign is the Gibbs convention `e^{-β S}` and `β` is the caller's.
+DERIVED: the sign is the Gibbs convention `e^{-β S}` and `β` is the caller's; `4` is the dimension.
 -/
 noncomputable def ihalfBoltz (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   Real.exp (-β * iactPlus φ τ p Λ ω u)
 
-/-- **AND SO DOES THE FACTOR** — `exp` of a function of `S ∪ R` alone. Again in `hOloc`'s shape. -/
+/-- The half Boltzmann factor depends on the configuration only through `boxS ∪ boxR`: `exp` of
+`iactPlus_local`. Again in `hOloc`'s shape, with the two blocks as separate hypotheses.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ihalfBoltz_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u v : MassGap.GibbsSpec.VConf G Λ)
@@ -1786,8 +1750,12 @@ theorem ihalfBoltz_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms ihalfBoltz_local
 
-/-- **THE FACTOR IS STRICTLY POSITIVE**, which is what keeps the dressing from collapsing an
-observable to zero and is `hWnn` for the plane weight built the same way. -/
+/-- The half Boltzmann factor is strictly positive, at every `φ`, `β`, box and configuration — it is
+an
+exponential. This is what keeps the dressing from collapsing an observable to zero, and is `hWnn`
+for a plane weight built the same way.
+
+DERIVED: the `0` is the lower bound of the strict inequality; `4` is the dimension. -/
 theorem ihalfBoltz_pos (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -1796,9 +1764,10 @@ theorem ihalfBoltz_pos (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms ihalfBoltz_pos
 
-/-- **The half-action is bounded by the plaquette count times the density bound.**
+/-- `|iactPlus φ τ p Λ ω u| ≤ (iplqPlus τ p Λ).card * Cφ` for any uniform bound `Cφ` on `|φ|`: the
+plaquette count times the density bound. The bound depends on the box through the cardinality.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem abs_iactPlus_le (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -1810,11 +1779,12 @@ theorem abs_iactPlus_le (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ C�
 
 #print axioms abs_iactPlus_le
 
-/-- **A UNIFORM positive lower bound on the dressing**, as `ActionSplit.le_halfIntegral` requires.
+/-- A lower bound on the dressing that does not depend on the configuration:
+`exp (-(|β| * ((iplqPlus τ p Λ).card * Cφ))) ≤ ihalfBoltz φ β τ p Λ ω u`, from `abs_iactPlus_le`.
+`ActionSplit.le_halfIntegral` requires a constant of this kind; `ihalfBoltz_pos` is pointwise and
+supplies none.
 
-`ihalfBoltz_pos` is pointwise and gives no constant.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ihalfBoltz_lower_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (β : ℝ)
     (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -1832,9 +1802,11 @@ theorem ihalfBoltz_lower_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g|
 
 #print axioms ihalfBoltz_lower_bound
 
-/-- **And the matching upper bound**, as `ActionSplit.le_halfIntegral` also requires.
+/-- The matching upper bound, `|ihalfBoltz φ β τ p Λ ω u| ≤ exp (|β| * ((iplqPlus τ p Λ).card *
+Cφ))`,
+also from `abs_iactPlus_le`, and also required by `ActionSplit.le_halfIntegral`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ihalfBoltz_upper_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g| ≤ Cφ) (β : ℝ)
     (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -1850,17 +1822,21 @@ theorem ihalfBoltz_upper_bound (φ : G → ℝ) {Cφ : ℝ} (hφ : ∀ g, |φ g|
 
 #print axioms ihalfBoltz_upper_bound
 
-/-- **THE DRESSED OBSERVABLE** — the map that will carry the Gibbs pairing to the split pairing on
-`ℤ⁴`, exactly as `ReflectionStrong.dressed` does on the torus.
+/-- The dressed observable, `fun u => F u * ihalfBoltz φ β τ p Λ ω u` — the map that carries the
+Gibbs
+pairing to the split pairing on `ℤ⁴`, as `ReflectionStrong.dressed` does on the torus.
 
-DERIVED: no numeral of its own; the product is the dressing and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; the product is the dressing and `4` is the dimension. -/
 noncomputable def idressed (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (F : MassGap.GibbsSpec.VConf G Λ → ℝ) : MassGap.GibbsSpec.VConf G Λ → ℝ :=
   fun u => F u * ihalfBoltz φ β τ p Λ ω u
 
-/-- **⭐ AND THE DRESSED OBSERVABLE STILL READS `S ∪ R`** — `hOloc` for the dressed observable,
-given `hOloc` for the bare one. This is `ReflectionStrong.dressed_mem`'s locality half. -/
+/-- The dressed observable reads `boxS ∪ boxR` whenever the bare one does — `hOloc` for `idressed`
+given
+`hOloc` for `F`. The locality half of `ReflectionStrong.dressed_mem`.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem idressed_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     {F : MassGap.GibbsSpec.VConf G Λ → ℝ}
@@ -1873,9 +1849,9 @@ theorem idressed_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms idressed_local
 
-/-- **AND SO DOES THE HALF BOLTZMANN FACTOR**, at every non-zero coupling.
-
-`exp` is injective and `-β` cancels.
+/-- At every non-zero coupling the half Boltzmann factor also varies with `boxR`, on the
+one-plaquette
+carrier: `exp` is injective and the factor `-β` cancels, so `iactPlus_depends_on_boxR` transfers.
 
 DERIVED: the `0` is the coupling excluded by `hβ`; the `2` and the `1`s are `hsep`'s, as in
 `iactPlus_depends_on_boxR`; `4` is the dimension. -/
@@ -1894,14 +1870,13 @@ theorem ihalfBoltz_depends_on_boxR (φ : G → ℝ) (β : ℝ) (hβ : β ≠ 0) 
 
 #print axioms ihalfBoltz_depends_on_boxR
 
-/-- **⭐ SO `hOS` FAILS FOR THE DRESSED OBSERVABLE AT THE CONSTANT BARE ONE.**
+/-- With the constant bare observable `F ≡ 1` the dressed observable varies with `boxR`, at every
+non-zero coupling, on the one-plaquette carrier. `ActionSplit.pairing_eq_zero_of_indep_R`'s `hOS`
+asks the observable not to depend on the shared block, and the dressing alone breaks that: the
+dressed observable is then the half Boltzmann factor, which differs at two configurations agreeing
+off `boxR`.
 
-`ActionSplit.pairing_eq_zero_of_indep_R`'s `hOS` asks the observable not to depend on the shared
-block. The DRESSING alone breaks it: with `F ≡ 1` the dressed observable is the half Boltzmann
-factor, and it differs at two configurations agreeing off `boxR`.
-
-**⛔ THE CARRIER IS ONE PLAQUETTE AND IS NOT REFLECTION-CLOSED**, so this refutes the UNIVERSAL
-claim and does not settle any particular box.
+Scope: the carrier `quadLinks τ ν x` is a single plaquette and is not closed under the reflection.
 
 DERIVED: the `1` is the constant bare observable; the `0` is the coupling excluded by `hβ`; the `2`
 and the remaining `1`s are `hsep`'s; `4` is the dimension. -/
@@ -1920,26 +1895,28 @@ theorem idressed_depends_on_boxR (φ : G → ℝ) (β : ℝ) (hβ : β ≠ 0) (�
 
 end HalfAction
 
-/-! ## ⭐ 3d‴c. The plane weight, which reads the shared block only -/
+/-! ## 3d‴c. The plane weight, which reads the shared block only -/
 
 section PlaneWeight
 
 open MassGap.LatticeReflection
 
-/-- The links of a plane plaquette are in the box — read off the `plaqsIn` filter. -/
+/-- The links of a plane plaquette lie in the box, read off the `plaqsIn` filter inside `iplqZero`.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplqZero_link_mem_box (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqZero τ p Λ)
     {l : MassGap.InfiniteLattice.ILink} (hl : l ∈ MassGap.GibbsSpec.ilinks q) : l ∈ Λ :=
   MassGap.GibbsSpec.mem_plaqsIn.mp (mem_iplqZero.mp hq).1 l hl
 
-/-- **⭐ EVERY LINK OF A PLANE PLAQUETTE IS FIXED BY THE REFLECTION**, so the whole group lives in the
-shared block `boxR`. This is what makes the plane weight a `hWloc` weight.
+/-- Every link of a plane plaquette lies in `boxR τ p Λ`, so the whole group sits in the shared
+block —
+what makes the plane weight a `hWloc` weight. Both spanning directions are transverse to `τ`, so no
+link points along `τ` and neither `ishift μ` nor `ishift ν` moves the `τ` coordinate; all four links
+therefore sit at the plane, where a transverse link is fixed.
 
-Both spanning directions are transverse to `τ`, so no link of the plaquette points along `τ`, and
-neither `ishift μ` nor `ishift ν` moves the `τ` coordinate — so all four links sit at the plane, where
-a transverse link is fixed.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`, inside `boxR`; `4` is the
+dimension. -/
 theorem iplqZero_links_mem (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     {q : MassGap.GibbsSpec.IPlaq} (hq : q ∈ iplqZero τ p Λ)
     {l : MassGap.InfiniteLattice.ILink} (hl : l ∈ MassGap.GibbsSpec.ilinks q) (h : l ∈ Λ) :
@@ -1957,19 +1934,20 @@ theorem iplqZero_links_mem (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteL
 
 variable {G : Type} [Group G]
 
-/-- **THE PLANE ACTION AT A BOX** — the Wilson action over the plane plaquettes alone.
+/-- The plane action at a box: `φ` summed over `iplqZero τ p Λ` alone, at the spliced configuration.
 
-DERIVED: no numeral of its own; `φ`, `τ`, `p`, `Λ` and `ω` are the caller's, and `4` is the
-dimension. -/
+DERIVED: the signature writes no numeral; `φ`, `τ`, `p`, `Λ` and `ω` are the caller's, and `4` is
+the dimension. -/
 noncomputable def iactZero (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   MassGap.GibbsSpec.actionOn φ (iplqZero τ p Λ) (MassGap.GibbsSpec.splice Λ u ω)
 
-/-- **⭐ THE PLANE ACTION READS `R` ALONE** — verbatim `hWloc`'s shape, one hypothesis over the shared
-block and nothing else.
+/-- The plane action depends on the configuration only through `boxR` — one hypothesis, over the
+shared
+block and nothing else, which is `hWloc`'s shape.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iactZero_local (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u v : MassGap.GibbsSpec.VConf G Λ) (hR : ∀ l ∈ boxR τ p Λ, u l = v l) :
@@ -1981,23 +1959,29 @@ theorem iactZero_local (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms iactZero_local
 
-/-- **THE PLANE WEIGHT** — the `W` of `ActionSplit.pairing_nonneg_of_local`, on `ℤ⁴`.
+/-- The plane weight, `exp (-β * iactZero φ τ p Λ ω u)` — the `W` of
+`ActionSplit.pairing_nonneg_of_local` on `ℤ⁴`.
 
-DERIVED: no numeral of its own; the sign is the Gibbs convention `e^{-βS}` and `β` is the caller's.
+DERIVED: the sign is the Gibbs convention `e^{-β S}` and `β` is the caller's; `4` is the dimension.
 -/
 noncomputable def iplaneWeight (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   Real.exp (-β * iactZero φ τ p Λ ω u)
 
-/-- **`hWloc` FOR THE PLANE WEIGHT.** -/
+/-- `hWloc` for the plane weight: it depends on the configuration only through `boxR`, by `exp` of
+`iactZero_local`.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem iplaneWeight_local (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u v : MassGap.GibbsSpec.VConf G Λ) (hR : ∀ l ∈ boxR τ p Λ, u l = v l) :
     iplaneWeight φ β τ p Λ ω u = iplaneWeight φ β τ p Λ ω v := by
   simp only [iplaneWeight, iactZero_local φ τ p Λ ω u v hR]
 
-/-- **`hWnn` FOR THE PLANE WEIGHT** — free, it is an exponential. -/
+/-- `hWnn` for the plane weight: `0 ≤ iplaneWeight φ β τ p Λ ω u`, since it is an exponential.
+
+DERIVED: the `0` is the lower bound asserted; `4` is the dimension. -/
 theorem iplaneWeight_nonneg (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -2008,12 +1992,13 @@ theorem iplaneWeight_nonneg (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
 
 #print axioms iplaneWeight_nonneg
 
-/-- **The plane weight is STRICTLY positive**, being an exponential. `iplaneWeight_nonneg` is the
-weak form; `ActionSplit.pairing_pos_iff_half_ne_const` needs this one, because it divides the weight
-out of `W·x² = 0`.
+/-- The plane weight is strictly positive, being an exponential. `iplaneWeight_nonneg` is the weak
+form;
+`ActionSplit.pairing_pos_iff_half_ne_const` needs this one, because it divides the weight out of
+`W·x² = 0`.
 
-DERIVED: the `0` is the positivity asserted, which is the whole statement; `β`, `τ`, `p`, `Λ` and
-`ω` are the caller's and `4` is the dimension. -/
+DERIVED: the `0` is the strict lower bound, which is the whole statement; `β`, `τ`, `p`, `Λ` and `ω`
+are the caller's, and `4` is the dimension. -/
 theorem iplaneWeight_pos {G : Type} [Group G] (φ : G → ℝ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : 0 < iplaneWeight φ β τ p Λ ω u :=
@@ -2021,7 +2006,7 @@ theorem iplaneWeight_pos {G : Type} [Group G] (φ : G → ℝ) (β : ℝ) (τ : 
 
 #print axioms iplaneWeight_pos
 
-/-- **At zero coupling the half-weight is `1`.** `ihalfBoltz` is `exp(-β · iactPlus)`.
+/-- At `β = 0` the half-weight is `1`: `ihalfBoltz` is `exp (-β * iactPlus)` and `exp 0 = 1`.
 
 DERIVED: the `0` is the coupling this is evaluated at; the `1` is `exp 0`; `4` is the dimension. -/
 theorem ihalfBoltz_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
@@ -2032,10 +2017,10 @@ theorem ihalfBoltz_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : 
 
 #print axioms ihalfBoltz_at_zero_coupling
 
-/-- **The splice is continuous in the INNER configuration.** `WilsonDLR.continuous_splice_right` is
-the outer one.
+/-- `GibbsSpec.splice Λ · ω` is continuous in the inner configuration, for any topological group.
+`WilsonDLR.continuous_splice_right` is the statement for the outer one.
 
-DERIVED: no numeral. -/
+DERIVED: the signature writes no numeral. -/
 theorem continuous_splice_left {G : Type} [TopologicalSpace G]
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
     Continuous (fun u : MassGap.GibbsSpec.VConf G Λ => MassGap.GibbsSpec.splice Λ u ω) := by
@@ -2050,9 +2035,10 @@ theorem continuous_splice_left {G : Type} [TopologicalSpace G]
 
 #print axioms continuous_splice_left
 
-/-- **The spliced holonomy is continuous in the inner configuration.**
+/-- The spliced holonomy `fun u => GibbsSpec.ihol q (splice Λ u ω)` is continuous in the inner
+configuration — `PlaqVariance.continuous_wilsonHol` composed with `continuous_splice_left`.
 
-DERIVED: no numeral. -/
+DERIVED: the signature writes no numeral. -/
 theorem continuous_ihol_splice {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     (q : MassGap.GibbsSpec.IPlaq) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) :
@@ -2063,10 +2049,12 @@ theorem continuous_ihol_splice {G : Type} [Group G] [TopologicalSpace G] [IsTopo
 
 #print axioms continuous_ihol_splice
 
-/-- **The positive half-action is continuous in the inner configuration**, for a continuous density.
+/-- The positive half-action is continuous in the inner configuration, for a continuous density `φ`:
+a
+finite sum of `continuous_ihol_splice` terms over `iplqPlus τ p Λ`.
 
-DERIVED: no numeral of its own; `4` is the dimension, carried inside `Fin 4` and `ILink`; the
-plaquette set summed over is `iplqPlus`. -/
+DERIVED: the signature writes no numeral of its own; `4` is the dimension carried by `Fin 4` and
+`ILink`. -/
 theorem continuous_iactPlus {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     {φ : G → ℝ} (hφc : Continuous φ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
@@ -2076,10 +2064,11 @@ theorem continuous_iactPlus {G : Type} [Group G] [TopologicalSpace G] [IsTopolog
 
 #print axioms continuous_iactPlus
 
-/-- **The half-weight is continuous in the inner configuration.**
+/-- The half-weight is continuous in the inner configuration — `Real.exp` composed with
+`continuous_iactPlus`.
 
-DERIVED: no numeral of its own; `4` is the dimension, carried inside `Fin 4` and `ILink`; the
-plaquette set summed over is `iplqPlus`. -/
+DERIVED: the signature writes no numeral of its own; `4` is the dimension carried by `Fin 4` and
+`ILink`. -/
 theorem continuous_ihalfBoltz {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     {φ : G → ℝ} (hφc : Continuous φ) (β : ℝ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
@@ -2090,15 +2079,12 @@ theorem continuous_ihalfBoltz {G : Type} [Group G] [TopologicalSpace G] [IsTopol
 
 #print axioms continuous_ihalfBoltz
 
-/-- **⭐ AT ZERO COUPLING THE DRESSED OBSERVABLE IS THE BARE ONE.**
+/-- At `β = 0` the dressed observable is the bare one: `idressed φ 0 τ p Λ ω F = F`, since the
+exponential is `1` there by `ihalfBoltz_at_zero_coupling`. The observable the three-block machinery
+sees at zero coupling is `F` itself.
 
-`idressed = F · e^{-βA₊}`, and at `β = 0` the exponential is `1`. So the observable the three-block
-machinery sees is `F` itself, and every statement about the dressed observable becomes a statement
-about `F`.
-
-**⭐ THE DRESSING DOES DEPEND ON `boxR`.** `idressed_depends_on_boxR`: on `quadLinks τ ν x`, at
-`β ≠ 0` and with the BARE observable constant, two configurations agreeing off `boxR` give
-different dressed values. ⛔ That carrier is one plaquette and is not reflection-closed.
+At `β ≠ 0` the dressing does vary with `boxR`; `idressed_depends_on_boxR` exhibits that on the
+one-plaquette carrier.
 
 DERIVED: the `0` is the coupling; `4` is the dimension. -/
 theorem idressed_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
@@ -2111,7 +2097,7 @@ theorem idressed_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fi
 
 #print axioms idressed_at_zero_coupling
 
-/-- **At zero coupling the plane weight is `1` too.**
+/-- At `β = 0` the plane weight is `1` as well.
 
 DERIVED: the `0` is the coupling; the `1` is `exp 0`; `4` is the dimension. -/
 theorem iplaneWeight_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (p : ℤ)
@@ -2124,18 +2110,19 @@ theorem iplaneWeight_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ) (τ 
 
 end PlaneWeight
 
-/-! ## ⭐ 3d‴d. The bound `C`, and measurability -/
+/-! ## 3d‴d. The bound `C`, and measurability -/
 
 section Bounds
 
 open MassGap.LatticeReflection
 
-/-- **THE EXPONENTIAL OF A BOUNDED ACTION IS BOUNDED.** The `ℤ⁴` counterpart of
-`ActionSplit.abs_exp_actSum_le`.
+/-- `|exp (-β * actionOn φ S U)| ≤ exp (|β| * (S.card * 2))` for a density with `0 ≤ φ ≤ 2`, over
+any
+finite plaquette set `S`. The `ℤ⁴` counterpart of `ActionSplit.abs_exp_actSum_le`.
 
 DERIVED: the `2` is the range of the Wilson density (`WilsonAction.wilsonDensity_le_two` and
-`wilsonDensity_nonneg`), carried in as `hφ0`/`hφ2`; the cardinality is the plaquette group's own.
-Nothing is chosen. -/
+`wilsonDensity_nonneg`), carried in as `hφ2`, and the `0` is its sign hypothesis `hφ0`; the
+cardinality is the plaquette set's own. -/
 theorem abs_exp_neg_actionOn_le {G : Type} [Group G] {φ : G → ℝ}
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (S : Finset MassGap.GibbsSpec.IPlaq) (U : MassGap.GibbsSpec.IConf G) :
@@ -2152,10 +2139,12 @@ theorem abs_exp_neg_actionOn_le {G : Type} [Group G] {φ : G → ℝ}
 
 #print axioms abs_exp_neg_actionOn_le
 
-/-- **AND A FLOOR**, by the same route. `Real.exp_pos` is pointwise and gives no constant.
+/-- The matching floor, `exp (-(|β| * (S.card * 2))) ≤ exp (-β * actionOn φ S U)`, by the same
+route.
+`Real.exp_pos` is pointwise and supplies no constant.
 
-DERIVED: the `2` is the range of the density, as in `abs_exp_neg_actionOn_le`; the `0` is the
-density's sign hypothesis. There is no dimension parameter here. -/
+DERIVED: the `2` is the range of the density and the `0` its sign hypothesis, as in
+`abs_exp_neg_actionOn_le`. No dimension parameter enters this signature. -/
 theorem exp_neg_actionOn_ge {G : Type} [Group G] {φ : G → ℝ}
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (S : Finset MassGap.GibbsSpec.IPlaq) (U : MassGap.GibbsSpec.IConf G) :
@@ -2174,22 +2163,32 @@ theorem exp_neg_actionOn_ge {G : Type} [Group G] {φ : G → ℝ}
 
 variable {G : Type} [Group G]
 
-/-- The half Boltzmann factor is bounded. -/
+/-- The half Boltzmann factor is bounded by `exp (|β| * ((iplqPlus τ p Λ).card * 2))` —
+`abs_exp_neg_actionOn_le` at the positive-half plaquette set.
+
+DERIVED: the `2` is the range of the density and the `0` its sign hypothesis, as in
+`abs_exp_neg_actionOn_le`; `4` is the dimension. -/
 theorem ihalfBoltz_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
     |ihalfBoltz φ β τ p Λ ω u| ≤ Real.exp (|β| * (((iplqPlus τ p Λ).card : ℝ) * 2)) :=
   abs_exp_neg_actionOn_le hφ0 hφ2 β _ _
 
-/-- The plane weight is bounded. -/
+/-- The plane weight is bounded by `exp (|β| * ((iplqZero τ p Λ).card * 2))` — the same lemma at the
+plane plaquette set.
+
+DERIVED: the `2` is the range of the density and the `0` its sign hypothesis, as in
+`abs_exp_neg_actionOn_le`; `4` is the dimension. -/
 theorem iplaneWeight_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) (u : MassGap.GibbsSpec.VConf G Λ) :
     |iplaneWeight φ β τ p Λ ω u| ≤ Real.exp (|β| * (((iplqZero τ p Λ).card : ℝ) * 2)) :=
   abs_exp_neg_actionOn_le hφ0 hφ2 β _ _
 
-/-- **AND THE PLANE WEIGHT HAS A FLOOR**, which `irefl_box_pairing_ge_variance` passes as `Wmin`.
-`iplaneWeight_pos` is pointwise and gives no constant.
+/-- A floor for the plane weight, `exp (-(|β| * ((iplqZero τ p Λ).card * 2))) ≤ iplaneWeight ...`,
+which
+`irefl_box_pairing_ge_variance` passes as `Wmin`. `iplaneWeight_pos` is pointwise and supplies no
+constant.
 
 DERIVED: the `2` is the range of the density; the `0` is the density's sign hypothesis; `4` is the
 dimension. -/
@@ -2203,7 +2202,12 @@ theorem iplaneWeight_lower_bound {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g)
 
 #print axioms iplaneWeight_lower_bound
 
-/-- **A DRESSED OBSERVABLE IS BOUNDED** when the bare one is. -/
+/-- A dressed observable is bounded when the bare one is:
+`|idressed φ β τ p Λ ω F u| ≤ CF * exp (|β| * ((iplqPlus τ p Λ).card * 2))`, from `hF` and
+`ihalfBoltz_abs_le`.
+
+DERIVED: the `2` is the range of the density and the `0` its sign hypothesis, as in
+`abs_exp_neg_actionOn_le`; `4` is the dimension. -/
 theorem idressed_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (τ : Fin 4) (p : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf G) {F : MassGap.GibbsSpec.VConf G Λ → ℝ} {CF : ℝ}
@@ -2215,11 +2219,12 @@ theorem idressed_abs_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ 
 
 #print axioms idressed_abs_le
 
-/-- **⭐ `hC`'s SHAPE, ONCE AND FOR ALL**: a bounded weight times a bounded observable times that
-observable at ANY other point is bounded by the product of the three bounds. The reflection enters
-only as "some other point", so nothing about it needs to be known here.
+/-- `|W u * O u * O (f u)| ≤ CW * CO * CO` for any bounded `W` and `O` and any map `f` — the shape
+of the
+`hC` hypothesis the split lemmas take. The reflection enters only as `f`, so nothing about it is
+used. Stated over an arbitrary type `α`.
 
-DERIVED: no numeral; the bound is the product of the caller's two. -/
+DERIVED: the signature writes no numeral; the bound is the product of the caller's two. -/
 theorem abs_weight_obs_obs_le {α : Type} {W O : α → ℝ} {CW CO : ℝ}
     (hW : ∀ u, |W u| ≤ CW) (hO : ∀ u, |O u| ≤ CO) (f : α → α) (u : α) :
     |W u * O u * O (f u)| ≤ CW * CO * CO := by
@@ -2232,14 +2237,19 @@ theorem abs_weight_obs_obs_le {α : Type} {W O : α → ℝ} {CW CO : ℝ}
 
 variable [MeasurableSpace G] [MeasurableMul₂ G] [MeasurableInv G]
 
-/-- The half-action is measurable in the finite-volume configuration. -/
+/-- The positive half-action is measurable in the finite-volume configuration —
+`GibbsSpec.measurable_actionOn` composed with `GibbsSpec.measurable_splice_left`.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem measurable_iactPlus {φ : G → ℝ} (hφ : Measurable φ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
     Measurable (iactPlus φ τ p Λ ω) :=
   (MassGap.GibbsSpec.measurable_actionOn hφ _).comp
     (MassGap.GibbsSpec.measurable_splice_left Λ ω)
 
-/-- The plane action is measurable in the finite-volume configuration. -/
+/-- The plane action is measurable in the finite-volume configuration, by the same composition.
+
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem measurable_iactZero {φ : G → ℝ} (hφ : Measurable φ) (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G) :
     Measurable (iactZero φ τ p Λ ω) :=
@@ -2268,7 +2278,7 @@ theorem measurable_idressed {φ : G → ℝ} (hφ : Measurable φ) (β : ℝ) (�
 
 end Bounds
 
-/-! ## ⭐ 3e. The Osterwalder–Seiler split on `ℤ⁴`, at a box -/
+/-! ## 3e. The Osterwalder–Seiler split on `ℤ⁴`, at a box -/
 
 section Split
 
@@ -2276,23 +2286,25 @@ open MeasureTheory MassGap.CompactGauge MassGap.LatticeReflection
 
 variable {N : ℕ} {τ : Fin 4} {p : ℤ} {Λ : Finset ILink}
 
-/-- **⭐ THE OSTERWALDER–SEILER SPLIT ON `ℤ⁴`.** Reflection positivity of the pairing at a
-reflection-stable box, from `ActionSplit.pairing_nonneg_of_local`.
+/-- The Osterwalder–Seiler split on `ℤ⁴`: `0 ≤ ∫ W · O · (O ∘ Θ)` over `ActionSplit.cvol ↥Λ` with
+Haar
+on `SU N`, at a box stable under the reflection at `2 * p`. Instantiates
+`ActionSplit.pairing_nonneg_of_local`.
 
-**Every structural hypothesis is discharged here** by the pieces above: the blocks
-`boxS`/`boxT`/`boxR` and their disjointness, `θ = ireflBoxPerm`, `hθR`, `hθST`, the dagger as `σ`,
-`hσR` (from `boxR_ne_tau`: the shared block carries no `τ`-link, so the twist is trivial on it) and
-`hσ` (Haar is inversion-invariant).
+The structural inputs are supplied here from the pieces above: the blocks `boxS`, `boxT`, `boxR` and
+their disjointness, `θ = ireflBoxPerm`, `hθR` from `ireflBoxPerm_eq_self_of_mem_boxR`, `hθST` from
+`ireflBoxPerm_mem_boxT_of_mem_boxS`, the dagger as `σ`, `hσR` from `boxR_ne_tau` (the shared block
+carries no `τ`-link, so the twist is trivial there), and `hσ` from
+`ilinkDagger_measurePreserving`.
 
-**⚠ WHAT IT STILL TAKES IS WILSON-SPECIFIC AND IS NOT SUPPLIED ANYWHERE**: that the observable reads
-only `S ∪ R`, that the weight reads only `R` and is nonnegative, and that the integrand is bounded.
-For the Wilson measure those come from DRESSING — absorbing the half Boltzmann weight into the
-observable, as `ReflectionStrong.dressed_mem` does on the torus — and nothing here does that.
+What the caller supplies is Wilson-specific and stays as hypotheses: `hOloc`, that the observable
+reads only `S ∪ R`; `hWloc` and `hWnn`, that the weight reads only `R` and is nonnegative; and `hC`,
+that the integrand is bounded. For the Wilson measure those come from dressing — absorbing the half
+Boltzmann weight into the observable, as `ReflectionStrong.dressed_mem` does on the torus.
 
-So this is the `ℤ⁴` counterpart of `ReflectionStrong.wilson_pairing_nonneg_module`'s inner step, with
-the geometry discharged and the measure-theoretic content open.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; the `0`s are the lower bound
+concluded and the weight's sign in `hWnn`; `N`, `τ`, `p` and `Λ` come from the `variable` line, so
+the dimension does not appear in this signature. -/
 theorem irefl_box_pairing_nonneg
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
@@ -2324,29 +2336,23 @@ theorem irefl_box_pairing_nonneg
 
 #print axioms irefl_box_pairing_nonneg
 
-/-- **⭐⭐ EXACTLY WHEN THE BOX'S REFLECTION FORM VANISHES.**
+/-- When the box's reflection form vanishes. `irefl_box_pairing_nonneg` gives `0 ≤`; this gives the
+equivalence at the same instantiation of the same three blocks, from
+`ActionSplit.pairing_eq_zero_iff_local`. The form is zero exactly when the weight times the square
+of
+the observable's conditional half-integral — the integral over the positive block with the shared
+block held fixed — vanishes almost everywhere.
 
-`irefl_box_pairing_nonneg` gives `0 ≤`; this gives the equivalence, at the same instantiation of the
-same three blocks. The form is zero exactly when the weight times the SQUARE of the observable's
-conditional half-integral — the integral over the positive block with the shared block held fixed —
-vanishes almost everywhere.
+The right-hand side constrains the conditional half-integral, not `O` itself: an observable can vary
+while that half-integral vanishes. `ActionSplit.glue_base_congr` shows the right-hand side does not
+depend on the `base` the instantiation picks, so the criterion is a property of `O` and `W` alone.
 
-**⛔ IT IS NOT "`O` IS CONSTANT".** What it constrains is the conditional half-integral, and an
-observable can vary while that vanishes. No witness either way is recorded here.
-
-**⛔ AND IT IS ONE FINITE BOX.** Transporting a vanishing criterion to a limit state is a separate
-step the tree does not take. `ActionSplit.glue_base_congr` does show the right-hand side is
-independent of the `base` the instantiation picks, so the criterion is a property of `O` and `W`
-alone.
-
-**WHY IT IS WORTH STATING.** `TransferGap.GapAt`'s denominator and row 13's null space are both
-questions about the lower end of a reflection form. This is that lower end, at finite volume, for the
-box — stated, not bounded: nothing here says the half-integral does not vanish.
+Stated at one finite box.
 
 DERIVED: the `2` in `2 * p` is the even reflection constant, as in `irefl_box_pairing_nonneg`; the
 `2` in `^ 2` is the square of `ActionSplit.pairing_eq_weighted_square`; the `0`s are the vanishing
-asserted on each side and the weight's sign; the `1` is the all-identity `base`, which
-`glue_base_congr` shows the statement does not depend on; `4` is the dimension. -/
+asserted on each side and the weight's sign; the `1` is the all-identity `base`; `4` is the
+dimension. -/
 theorem irefl_box_pairing_eq_zero_iff
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
@@ -2381,33 +2387,27 @@ theorem irefl_box_pairing_eq_zero_iff
 
 #print axioms irefl_box_pairing_eq_zero_iff
 
-/-- **⭐⭐⭐ EXACTLY WHEN THE BOX'S REFLECTION FORM IS POSITIVE.**
+/-- When the box's reflection form is strictly positive. The companion to
+`irefl_box_pairing_eq_zero_iff`, from `ActionSplit.pairing_pos_iff_half_ne_const`: the
+`k`-subtracted form is strictly positive exactly when the observable's conditional half-integral is
+not almost everywhere `k`. Takes `hWpos : ∀ U, 0 < W U` where the vanishing criterion takes only
+`hWnn`.
 
-The companion to `irefl_box_pairing_eq_zero_iff`, and the side a gap's DENOMINATOR needs: the
-constant-subtracted form is strictly positive exactly when the observable's conditional half-integral
-is not almost everywhere `k`.
+The criterion is about the half-integral as a function of the shared block. In the Wilson
+instantiation the observable carried here is the dressed one, `idressed = F · e^{-βA₊}`, and
+`idressed_depends_on_boxR` exhibits two configurations agreeing off `boxR` at which the integrand
+differs — the half-integral integrates over the `S`-block, so that is a statement about the
+integrand.
 
-**WHERE THE CONTENT SITS.** The criterion is about the half-integral as a function of the SHARED
-BLOCK. In the Wilson instantiation the observable carried here is the DRESSED one,
-`idressed = F · e^{-βA₊}`, and `idressed_depends_on_boxR` exhibits two configurations agreeing off
-`boxR` at which it differs.
+With `0 < W` the two sides are `irefl_box_pairing_eq_zero_iff` negated and signed. What the form
+adds is the criterion written as a statement about a function of the plane variables, which is the
+shape `HaarVariance.variance_pos_of_two_values` takes — available at this instantiation, unlike in
+`ActionSplit`'s abstract section, because `SU N` carries a topology and Haar is open-positive.
 
-**⛔ THAT IS THE INTEGRAND, NOT THE INTEGRAL.** The half-integral integrates over the `S`-block;
-that IT varies with the plane is not proved.
-
-**⛔ THE TWO SIDES ARE THE SAME PROPOSITION.** With `0 < W` this is `irefl_box_pairing_eq_zero_iff`
-negated and signed; it moves no difficulty. What it buys is the criterion written as a statement
-about a function of the plane variables, which is the form
-`HaarVariance.variance_pos_of_two_values` could attack — available here, unlike in `ActionSplit`'s
-abstract section, because `SU N` carries a topology and Haar is open-positive.
-
-**⛔ AND NOTHING DISCHARGES IT.** No observable is exhibited whose dressed half-integral is
-non-constant, at any coupling.
-
-DERIVED: the `2` is the even reflection constant, as in `irefl_box_pairing_eq_zero_iff`; the `0`s are
-the positivity asserted, the weight's sign in `hWpos`, and the a.e. vanishing denied; the `1` is the
-all-identity `base`, which `ActionSplit.glue_base_congr` shows the statement does not depend on; `4`
-is the dimension. -/
+DERIVED: the `2` is the even reflection constant, as in `irefl_box_pairing_eq_zero_iff`; the `0`s
+are the positivity asserted, the weight's sign in `hWpos`, and the a.e. vanishing denied; the `1` is
+the all-identity `base`, which `ActionSplit.glue_base_congr` shows the statement does not depend on;
+`4` is the dimension. -/
 theorem irefl_box_pairing_pos_iff
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     (O : (↥Λ → MassGap.SUN.SU N) → ℝ) (hOm : Measurable O)
@@ -2442,26 +2442,22 @@ theorem irefl_box_pairing_pos_iff
 
 #print axioms irefl_box_pairing_pos_iff
 
-/-- **⭐⭐⭐ THE BOX'S REFLECTION FORM IS STRICTLY POSITIVE ON A DRESSED PLANE OBSERVABLE.**
+/-- The box's reflection form is strictly positive for an observable of the form
+`O U = f(plane part of U) · K U`, at every `k`.
 
-`O U = f(plane part of U) · K U`. The plane factor pulls out of the half-integral
-(`ActionSplit.halfIntegral_mul_R_left`), what is left is the `S`-integral of `K`, and a uniform
-lower bound `c > 0` makes that strictly positive (`ActionSplit.le_halfIntegral`). So `f` vanishing
-at one plane configuration and positive at another gives the half-integral TWO VALUES, which is
-`ActionSplit.pairing_pos_of_half_two_values`'s hypothesis.
+The plane factor pulls out of the half-integral (`ActionSplit.halfIntegral_mul_R_left`), what is
+left
+is the `S`-integral of `K`, and the uniform lower bound `hKc : c ≤ K` with `hc0 : 0 < c` makes that
+strictly positive (`ActionSplit.le_halfIntegral`). So `ha : f a = 0` and `hb : 0 < f b` give the
+half-integral two values, which is `ActionSplit.pairing_pos_of_half_two_values`'s hypothesis.
 
-`K` is where the dressing goes: `irefl_box_pairing_pos_of_plane_factor_dressed` discharges every
-hypothesis on `K` for `ihalfBoltz`.
+The bare factor `f` reads the plane alone but the product does not, so
+`ActionSplit.pairing_pos_iff_ne_const_of_indep_S` does not apply; this is the mixed case. Both `hKc`
+and the bound `hKb` are used, through `le_halfIntegral`: without a bound the Bochner integral of a
+non-integrable function is `0` by convention and the floor would not carry the conclusion.
 
-**⛔ THE BARE OBSERVABLE READS THE PLANE ALONE; THE PRODUCT DOES NOT.** So
-`ActionSplit.pairing_pos_iff_ne_const_of_indep_S` does not cover this, and it is the mixed case.
-
-**⛔ THE POSITIVITY COMES FROM THE PLANE FACTOR, NOT FROM THE DRESSING.** What the theorem adds is
-that the dressing cannot CANCEL it. Two facts about `K` do that, both through `le_halfIntegral`:
-the floor `hKc`, and the BOUND `hKb` — without the bound the Bochner integral of a non-integrable
-function is `0` by convention and the floor would refute the conclusion rather than support it.
-
-**⛔ `0 <` IS NOT A RATE.** No lower bound on the pairing is produced, and `hfin`'s ratio needs one.
+`K` is where the dressing goes; `irefl_box_pairing_pos_of_plane_factor_dressed` discharges every
+hypothesis on `K` for `ihalfBoltz`. The conclusion is a strict sign, not a quantitative lower bound.
 
 DERIVED: the `2` is the even reflection constant `2 * p`, as in `irefl_box_pairing_pos_iff`; the
 `0`s are `c`'s sign, `f`'s value at `a`, the sign of `f`'s value at `b`, the weight's sign, and the
@@ -2534,17 +2530,13 @@ theorem irefl_box_pairing_pos_of_plane_factor
 
 #print axioms irefl_box_pairing_pos_of_plane_factor
 
-/-- **⭐⭐⭐ THE SAME, WITH THE DRESSING IN PLACE OF `K`.**
+/-- The same statement with `ihalfBoltz φ β τ p Λ ω` in place of `K`. Every hypothesis on `K` is
+discharged here: `measurable_ihalfBoltz`, `ihalfBoltz_local`, `ihalfBoltz_upper_bound`,
+`ihalfBoltz_lower_bound`, and `continuous_ihalfBoltz` composed with `ActionSplit.continuous_glue`.
 
-Every hypothesis on `K` is discharged: `measurable_ihalfBoltz`, `ihalfBoltz_local`,
-`ihalfBoltz_upper_bound`, `ihalfBoltz_lower_bound`, and `continuous_ihalfBoltz` composed with
-`ActionSplit.continuous_glue`. Nothing is left about the weight `e^{-βA₊}`.
-
-**⛔ `f` IS STILL A HYPOTHESIS.** A plane function with a zero and a positive value is not
-exhibited here, and `hΛ` asks for a reflection-closed `Λ`, which `quadLinks` is not. So this is not
-yet a non-vacuity statement.
-
-**⛔ `0 <` IS NOT A RATE.**
+`f` remains a hypothesis, with `ha` and `hb` asking for a plane function that vanishes at one
+configuration and is positive at another, and `hΛ` asks for a `Λ` closed under the reflection, which
+`quadLinks` is not. The conclusion is a strict sign, not a quantitative lower bound.
 
 DERIVED: the `2` is the even reflection constant `2 * p`, as in `irefl_box_pairing_pos_iff`; the
 `0`s are `f`'s value at `a`, the sign of `f`'s value at `b`, the weight's sign, and the positivity
@@ -2585,28 +2577,21 @@ theorem irefl_box_pairing_pos_of_plane_factor_dressed
 
 #print axioms irefl_box_pairing_pos_of_plane_factor_dressed
 
-/-- **⭐⭐⭐ THE BOX'S REFLECTION FORM IS BOUNDED BELOW BY THE HALF-INTEGRAL'S VARIANCE, AT EVERY
-`k`.**
+/-- The box's reflection form is bounded below by the half-integral's variance, at every `k`:
+`ActionSplit.pairing_ge_variance_of_local` instantiated with the box's own plane weight —
+`measurable_iplaneWeight`, `iplaneWeight_local`, `iplaneWeight_abs_le` for the ceiling and
+`iplaneWeight_lower_bound` for the floor. The floor is `exp(-|β| · card (iplqZero τ p Λ) · 2)`,
+strictly positive at every `β`.
 
-`ActionSplit.pairing_ge_variance_of_local` with the box's own weight: `measurable_iplaneWeight`,
-`iplaneWeight_local`, `iplaneWeight_abs_le` for the ceiling and `iplaneWeight_lower_bound` for the
-floor. The floor is `exp(-|β|·card(iplqZero)·2)`, strictly positive at every `β`.
+Both sides are integrals. The bound improves on `irefl_box_pairing_nonneg` where the variance is
+positive, which by `ActionSplit.variance_pos_of_not_ae_const` needs the half-integral not to be
+almost everywhere its own mean; where that fails the bound reads `0 ≤`. The pairing here is the
+`k`-subtracted one, which agrees with the raw pairing at `k = 0`.
 
-**⛔ THE LEFT-HAND SIDE IS AN INTEGRAL, NOT A NUMBER**, so this is not a rate.
-
-**⛔ AND IT BEATS `pairing_nonneg_of_local` ONLY WHERE THE VARIANCE IS POSITIVE.** The floor is
-positive at every `β`, so what is left is `ActionSplit.variance_pos_of_not_ae_const`'s hypothesis:
-the half-integral not a.e. its own mean. Where that fails the bound is `0 ≤`, already known. Note
-also that this is the SHIFTED pairing, which agrees with the raw one only at `k = 0`.
-
-**⛔ AND NOTHING ROUTES IT INTO `hfin`.** `gapAt_of_finite_volume_connected` is discharged through
-`WilsonTransferReduction.gapAt_iff_subtracted_pairing`, which does not mention this. What the `k`-
-freedom buys is that a caller need not identify the state's mean; no caller does so yet.
-
-DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette
-count is the range of the density, as in `iplaneWeight_abs_le`; the `2`s in `^ 2` are the squares
-of the variance; the `0` is the density's lower sign hypothesis; the `1` is the all-identity
-`base`; `4` is the dimension. -/
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette count
+is the range of the density, as in `iplaneWeight_abs_le`; the `2`s in `^ 2` are the squares of the
+variance; the `0` is the density's lower sign hypothesis; the `1` is the all-identity `base`; `4` is
+the dimension. -/
 theorem irefl_box_pairing_ge_variance
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     (φ : MassGap.SUN.SU N → ℝ) (hφm : Measurable φ)
@@ -2654,20 +2639,19 @@ theorem irefl_box_pairing_ge_variance
 
 #print axioms irefl_box_pairing_ge_variance
 
-/-- **⭐⭐⭐ AND THE BOUND IS STRICTLY POSITIVE WHEN THE HALF-INTEGRAL TAKES TWO VALUES.**
+/-- The lower bound of `irefl_box_pairing_ge_variance` is itself strictly positive when the
+half-integral
+takes two values — the hypothesis `hab`, that it differs at `a` and at `b`.
+`ActionSplit.continuous_halfIntegral` makes the half-integral continuous,
+`ActionSplit.not_ae_eq_const_of_two_values` makes it not a.e. its own mean against the open-positive
+`cvol`, and `ActionSplit.variance_pos_of_not_ae_const` turns that into a positive variance. The
+weight's floor is positive at every coupling.
 
-`irefl_box_pairing_ge_variance` alone can degenerate to `0 ≤ pairing`, which
-`irefl_box_pairing_nonneg` already gives. Two values of the half-integral rule that out:
-`ActionSplit.continuous_halfIntegral` makes it continuous, `not_ae_eq_const_of_two_values` makes it
-not a.e. its own mean against the open-positive `cvol`, and `variance_pos_of_not_ae_const` turns
-that into a positive variance. The weight's floor is positive at every coupling.
+The quantity shown positive is an integral expression, not a number.
 
-**⛔ STILL NOT A RATE.** The bound is a positive INTEGRAL, not a number, and `hfin` needs a number.
-
-DERIVED: the `2` multiplying the plaquette count is the range of the density; the `2`s in `^ 2`
-are the squares of the variance; the `0`s are the density's lower sign hypothesis, its upper bound
-being `2`, and the positivity concluded; the `1` is the all-identity `base`; `4` is the
-dimension. -/
+DERIVED: the `2` multiplying the plaquette count is the range of the density; the `2`s in `^ 2` are
+the squares of the variance; the `0`s are the density's lower sign hypothesis, its upper bound being
+`2`, and the positivity concluded; the `1` is the all-identity `base`; `4` is the dimension. -/
 theorem irefl_box_pairing_ge_variance_pos
     (φ : MassGap.SUN.SU N → ℝ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
@@ -2746,18 +2730,18 @@ theorem irefl_box_pairing_ge_variance_pos
 
 #print axioms irefl_box_pairing_ge_variance_pos
 
-/-- **⭐⭐⭐ THE TWO HALVES JOINED: A POSITIVE FLOOR, BELOW THE BOX'S WILSON REFLECTION FORM.**
+/-- The two halves joined: the variance expression is strictly positive
+(`irefl_box_pairing_ge_variance_pos`) and it lies below the box's Wilson reflection form at every
+`k`
+(`irefl_box_pairing_ge_variance`). So the form is strictly positive, and the quantity it exceeds is
+named.
 
-`irefl_box_pairing_ge_variance_pos` gives the left conjunct, `irefl_box_pairing_ge_variance` the
-right. Together: the form is strictly positive at every `k`, and the quantity it exceeds is named.
+The floor is an integral expression rather than a number.
 
-**⛔ THE FLOOR IS AN INTEGRAL, NOT A NUMBER.** `hfin` is a RATIO and needs a number, so this does
-not reach it; and nothing routes it there.
-
-DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette
-count is the range of the density; the `2`s in `^ 2` are the squares of the variance; the `0`s are
-the density's lower sign hypothesis and the positivity concluded; the `1` is the all-identity
-`base`; `4` is the dimension. -/
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` multiplying the plaquette count
+is the range of the density; the `2`s in `^ 2` are the squares of the variance; the `0`s are the
+density's lower sign hypothesis and the positivity concluded; the `1` is the all-identity `base`;
+`4` is the dimension. -/
 theorem irefl_box_pairing_pos_and_floor
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     (φ : MassGap.SUN.SU N → ℝ) (hφm : Measurable φ)
@@ -2810,30 +2794,20 @@ theorem irefl_box_pairing_pos_and_floor
 
 #print axioms irefl_box_pairing_pos_and_floor
 
-/-- **⭐⭐⭐ AT ZERO COUPLING THE BOX'S REFLECTION FORM ANNIHILATES EVERY STRICTLY-INTERIOR
-OBSERVABLE.**
+/-- At the literal weight `1` and the bare observable `F`, the box's `k`-subtracted reflection form
+is
+exactly `0` for every `F` reading the positive block alone — `hFS` asks agreement on `boxS` only.
+`ActionSplit.pairing_eq_zero_of_indep_R` applies directly: subtract the constant the half-integral
+takes and the pairing vanishes.
 
-The weight here is the LITERAL `1` and the observable is the bare `F`, so
-`ActionSplit.pairing_eq_zero_of_indep_R` applies directly: subtract the constant its half-integral
-takes and the pairing is exactly `0`.
-
-**⛔ THIS IS NOT STATED IN THE BOX'S OWN WEIGHT.** The box's pairing carries `wtFree`;
-`wtFree_at_zero_coupling` is the bridge and is NOT used here — a caller holding the β-parametrised
-pairing must rewrite through it first.
-
-**THIS IS A CONSTRAINT ON PROOF STRATEGIES.** Non-degeneracy of the reflection form is what a gap's
-denominator needs, and here it is FALSE — at zero coupling, on every observable reading the positive
-block alone. So non-degeneracy is a PURE INTERACTION EFFECT, and no argument that does not use
-`β ≠ 0` can establish it.
-
-**⛔ IT SAYS NOTHING AT `β ≠ 0`, WHERE `hOS` FAILS.** `idressed_depends_on_boxR` refutes `hOS` for
-the dressed observable on `quadLinks τ ν x` at every `β ≠ 0`, so `pairing_eq_zero_of_indep_R` does
-not apply there, and the conjecture that the form is always degenerate is false.
-
-**⛔ AND IT IS ONE BOX, NOT A LIMIT STATE.**
+Scope: the weight is the constant `1`, not the box's `wtFree`. `wtFree_at_zero_coupling` is the
+bridge between them and is not used here, so a caller holding the `β`-parametrised pairing rewrites
+through it first. Nothing is asserted at `β ≠ 0`, where `hOS` can fail —
+`idressed_depends_on_boxR` exhibits a dressed observable that depends on `boxR` at every non-zero
+coupling. The statement is at one box, not at a limit state.
 
 DERIVED: the only `0` in the statement is the pairing's value — `β` does not occur, the coupling
-being carried by the literal weight; the `2` is the even reflection constant `2 * p` as in
+being carried by the literal weight; the `2` is the even reflection constant `2 * p`, as in
 `irefl_box_pairing_nonneg`; the `1`s are the weight, the all-identity `base`, and the point each
 half-integral is evaluated at; `4` is the dimension. -/
 theorem irefl_box_pairing_eq_zero_at_zero_coupling
@@ -2871,15 +2845,17 @@ theorem irefl_box_pairing_eq_zero_at_zero_coupling
 
 #print axioms irefl_box_pairing_eq_zero_at_zero_coupling
 
-/-- **THE ABSTRACT TWIST AND THE CONCRETE REFLECTION AGREE ON THE BOX.**
+/-- The abstract twist and the concrete reflection agree inside the box: splicing
+`ActionSplit.twist (ireflBoxPerm hΛ) (ilinkDagger τ ·) u` into `ω` gives, at a link `l ∈ Λ`, the
+same
+group element as `ireflConf τ c (splice Λ u ω) l`. `ActionSplit` relabels and maps fibres on the
+index type; the lattice relabels and inverts on configurations.
 
-`ActionSplit` works with `twist θ σ`, a relabelling-plus-fibre-map on the index type; the lattice
-works with `ireflConf`, a relabelling-plus-inversion on configurations. They are the same thing
-INSIDE `Λ`, and they need not agree outside it — every plaquette the action sums over has all four
-links in the box, so nothing outside is ever read.
+Stated for `l ∈ Λ` only; the two need not agree outside the box. Every plaquette the action sums
+over has all four links in `Λ`, so nothing outside is read.
 
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem splice_twist_eq_ireflConf {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
     (u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ)
@@ -2897,10 +2873,12 @@ theorem splice_twist_eq_ireflConf {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c 
 
 #print axioms splice_twist_eq_ireflConf
 
-/-- **THE REFLECTED HALF-ACTION AT THE BOX IS THE NEGATIVE HALF-ACTION.** `iactPlus` composed with
-the abstract twist, identified through `action_iplqPlus_ireflConf`.
+/-- The half-action at the twisted configuration is the negative half-action at the original:
+`iactPlus φ τ p Λ ω (twist ... u) = actionOn φ (iplqMinus τ p Λ) (splice Λ u ω)`.
+`splice_twist_eq_ireflConf` moves the twist to `ireflConf`, and `action_iplqPlus_ireflConf` does the
+rest; `hφ` asks `φ` to be a class function.
 
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. -/
 theorem iactPlus_twist (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφ : ∀ g h, φ (g * h * g⁻¹) = φ h)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -2921,17 +2899,18 @@ theorem iactPlus_twist (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
 
 #print axioms iactPlus_twist
 
-/-- **⭐⭐ THE GIBBS WEIGHT OF THE BOX IS A PLANE WEIGHT TIMES AN OBSERVABLE TIMES ITS REFLECTION.**
+/-- The Gibbs weight of the box factors as a plane weight times an observable times that observable
+at
+the twisted configuration:
+`exp (-β * actionOn φ (iplqAll Λ) (splice Λ u ω)) = iplaneWeight · ihalfBoltz(u) · ihalfBoltz(Θu)`.
+This is the shape `ActionSplit.pairing_nonneg_of_local` consumes.
 
-`e^{-βA(U)} = W(U) · h(U) · h(ΘU)`. This is the whole point of the split, and the exact shape
-`ActionSplit.pairing_nonneg_of_local` consumes.
+It is `actionOn_split_three` — the action splits into three groups — together with `iactPlus_twist`,
+which carries the positive group onto the negative one and needs `hφ`, `φ` a class function, because
+the mirrored holonomy is only conjugate to the image plaquette's.
 
-It is the product of two facts proved separately: the action splits into three groups
-(`actionOn_split_three`), and the reflection carries the positive group onto the negative one
-(`action_iplqPlus_ireflConf`, which needs `φ` to be a class function because the mirrored holonomy is
-only CONJUGATE to the image plaquette's).
-
-DERIVED: no numeral of its own; the sign is the Gibbs convention and `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` in `hΛ`; the sign is the Gibbs
+convention; `4` is the dimension. -/
 theorem gibbs_weight_factors (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφ : ∀ g h, φ (g * h * g⁻¹) = φ h) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -2949,24 +2928,24 @@ theorem gibbs_weight_factors (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
 
 #print axioms gibbs_weight_factors
 
-/-- **⭐⭐ REFLECTION POSITIVITY OF THE WILSON PAIRING ON `ℤ⁴`, AT A REFLECTION-STABLE BOX.**
+/-- Reflection positivity of the Wilson pairing on `ℤ⁴` at a reflection-stable box:
+`0 ≤ ∫ iplaneWeight · idressed F · (idressed F ∘ Θ)`. Every hypothesis of
+`irefl_box_pairing_nonneg` is discharged here from the plane weight and the dressing.
 
-Every hypothesis of `irefl_box_pairing_nonneg` discharged. What the caller supplies is only what is
-genuinely about the theory rather than about the reflection:
+What the caller supplies:
 
-* `φ` measurable, with `0 ≤ φ ≤ 2` — the Wilson density's own range
+* `φ` measurable with `0 ≤ φ ≤ 2` — the Wilson density's own range
   (`WilsonAction.wilsonDensity_nonneg`, `wilsonDensity_le_two`);
-* `F` measurable, bounded, and reading `S ∪ R` — an observable of the positive half.
+* `F` measurable, bounded, and reading `S ∪ R`;
+* `hΛ`, that the box is stable under the link reflection at `2 * p`.
 
-The reflection contributes `hΛ` alone: the box is stable under the link reflection. Everything else
-— the blocks, the dagger, the plane weight, the dressing, the bound — is proved here.
+The blocks, the dagger, the plane weight, the dressing and the bound are proved here. Note that this
+statement is about `iplaneWeight` times the dressed observable, not about `wtFree`;
+`wtFree_refl_pairing_nonneg` is the statement in the free-boundary weight.
 
-**⛔ `hφ` IS NOT DECORATION.** The mirrored holonomy is only CONJUGATE to the image plaquette's
-(`ihol_ireflConf`), so the half-action covariance holds for a CLASS FUNCTION and for nothing weaker.
-The Wilson density is one; a general `φ` is not.
-
-DERIVED: the `2`s are the plane-to-constant conversion `c = 2p` and the Wilson density's ceiling;
-`4` is the dimension. Nothing is chosen. -/
+DERIVED: the `2`s are the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling
+in `hφ2`; the `0`s are the density's sign hypothesis and the lower bound concluded; `4` is the
+dimension. -/
 theorem irefl_box_wilson_pairing_nonneg
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -2994,41 +2973,42 @@ theorem irefl_box_wilson_pairing_nonneg
 
 #print axioms irefl_box_wilson_pairing_nonneg
 
-/-- **THE FREE-BOUNDARY WEIGHT OF A BOX.**
+/-- The free-boundary weight of a box: `exp (-β * actionOn φ (iplqAll Λ) (splice Λ u ω))`, summing
+over
+the plaquettes with every link inside `Λ`.
 
-**⛔ IT IS NOT `GibbsSpec.wt`, AND THE DIFFERENCE IS THE WHOLE POINT.** `wt` sums over
-`boundaryPlaqs Λ` — every plaquette with SOME link in `Λ`. Those straddling the edge read the
-boundary condition `ω` outside the box, and they do not split: a plaquette with links on both sides
-of the box EDGE belongs to neither half of the reflection.
-
-Reflection positivity is a statement about the FREE-boundary measure, which sums over `iplqAll Λ` —
-every link inside. That is not a weakening chosen for convenience, it is what the Osterwalder–Seiler
-argument proves; the DLR kernel with an arbitrary `ω` has no reason to be reflection positive.
+This is not `GibbsSpec.wt`, which sums over `boundaryPlaqs Λ` — every plaquette with some link in
+`Λ`. Those straddling the edge read the boundary condition `ω` outside the box, and a plaquette with
+links on both sides of the box edge belongs to neither half of the reflection. The
+Osterwalder–Seiler argument is about the free-boundary measure, which sums over `iplqAll Λ`.
 
 `ω` is carried and inert: every plaquette of `iplqAll` has all four links in `Λ`, so `splice` never
-consults it. That is `wtFree_congr_right`, proved below rather than asserted here.
+consults it. `wtFree_congr_right` is that statement.
 
-DERIVED: no numeral of its own; the sign is the Gibbs convention and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; the sign is the Gibbs convention and `4` is the
+dimension. -/
 noncomputable def wtFree {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   Real.exp (-β * MassGap.GibbsSpec.actionOn φ (iplqAll Λ) (MassGap.GibbsSpec.splice Λ u ω))
 
+/-- The free-boundary weight is strictly positive, being an exponential.
+
+DERIVED: the `0` is the strict lower bound asserted. -/
 theorem wtFree_pos {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : 0 < wtFree φ β Λ ω u := Real.exp_pos _
 
-/-- **⭐ THE BOX WEIGHT DOES NOT SEE THE BOUNDARY CONFIGURATION.**
+/-- The box weight does not see the boundary configuration: `wtFree φ β Λ ω u = wtFree φ β Λ ω' u`
+for
+any two backgrounds. Every plaquette of `iplqAll Λ` has all four links inside `Λ` by
+`GibbsSpec.mem_plaqsIn`, so `splice` returns the box's own variable at each of them.
 
-Every plaquette of `iplqAll Λ` has all four links inside `Λ` (`GibbsSpec.mem_plaqsIn`), so `splice`
-returns the box's own variable at each of them and `ω` is never consulted. Asserted in `wtFree`'s
-docstring since it was written; this is the term.
+This is what lets `boxBd` present the box as a finite Wilson system with no boundary data;
+`wilsonHol_boxBd` is the same fact at one plaquette.
 
-It is what lets `boxBd` present the box as a finite Wilson system with no boundary data:
-`wilsonHol_boxBd` is the same fact at one plaquette, and this is it summed.
-
-DERIVED: no numeral of its own; `Λ` is the caller's and `4` is the dimension, carried inside `ILink`
-and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` is the caller's and `4` is the dimension carried by
+`ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem wtFree_congr_right {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink) (ω ω' : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) : wtFree φ β Λ ω u = wtFree φ β Λ ω' u := by
@@ -3041,7 +3021,7 @@ theorem wtFree_congr_right {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
 
 #print axioms wtFree_congr_right
 
-/-- **At zero coupling the box weight is `1`.** `wtFree` is `exp(-β · actionOn …)`.
+/-- At `β = 0` the box weight is `1`, `wtFree` being `exp (-β * actionOn …)`.
 
 DERIVED: the `0` is the coupling; the `1` is `exp 0`; `4` is the dimension. -/
 theorem wtFree_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ)
@@ -3054,17 +3034,18 @@ theorem wtFree_at_zero_coupling {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms wtFree_pos
 
-/-- **⭐⭐ THE REFLECTION PAIRING OF A HALF-SPACE OBSERVABLE IS NONNEGATIVE IN THE FREE-BOUNDARY
-MEASURE.**
+/-- Reflection positivity in the free-boundary measure:
+`0 ≤ ∫ F(U) · F(ΘU) · wtFree φ β Λ ω U`, with the Gibbs weight itself rather than a weight already
+split by hand. This is the form the Osterwalder–Schrader reconstruction takes.
 
-`0 ≤ ∫ F(U) · F(ΘU) · e^{-βA(U)}` — reflection positivity in the form the OS reconstruction wants,
-with the Gibbs weight itself rather than a weight already split by hand.
+The rearrangement is `gibbs_weight_factors`:
+`F(U) · F(ΘU) · e^{-βA(U)} = iplaneWeight(U) · (F·h)(U) · (F·h)(ΘU)`, and `F·h` is `idressed`.
+`hφc` asks `φ` to be a class function, which `irefl_box_wilson_pairing_nonneg` does not need but
+`gibbs_weight_factors` does.
 
-The rearrangement is the content of `gibbs_weight_factors`:
-`F(U) · F(ΘU) · e^{-βA(U)} = W(U) · (F·h)(U) · (F·h)(ΘU)`, and `F·h` is exactly `idressed`.
-
-DERIVED: the `2`s are the plane-to-constant conversion and the Wilson density's ceiling; `4` is the
-dimension. Nothing is chosen. -/
+DERIVED: the `2`s are the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling
+in `hφ2`; the `0`s are the density's sign hypothesis and the lower bound concluded; `4` is the
+dimension. -/
 theorem wtFree_refl_pairing_nonneg
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -3097,11 +3078,11 @@ theorem wtFree_refl_pairing_nonneg
 
 #print axioms wtFree_refl_pairing_nonneg
 
-/-- The free weight is bounded, by the same argument as `GibbsSpec.wt_le` over a smaller plaquette
-set.
+/-- The free weight is bounded: `|wtFree φ β Λ ω u| ≤ exp (|β| * ((iplqAll Λ).card * 2))`. The same
+argument as `GibbsSpec.wt_le`, over a smaller plaquette set.
 
-DERIVED: the `2` is the Wilson density's ceiling, carried in as `hφ2`; the cardinality is the
-plaquette set's own. -/
+DERIVED: the `2` is the Wilson density's ceiling, carried in as `hφ2`, and the `0` is its sign
+hypothesis `hφ0`; the cardinality is the plaquette set's own. -/
 theorem wtFree_le {G : Type} [Group G] {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
     (u : MassGap.GibbsSpec.VConf G Λ) :
@@ -3118,19 +3099,22 @@ theorem measurable_wtFree {G : Type} [Group G] [MeasurableSpace G] [MeasurableMu
 
 #print axioms measurable_wtFree
 
-/-- **THE FREE-BOUNDARY PARTITION FUNCTION OF A BOX.**
+/-- The free-boundary partition function of a box: `wtFree` integrated against product Haar over the
+box's links, `ActionSplit.cvol ↥Λ (probHaar (SU N))`.
 
-DERIVED: no numeral of its own; the measure is product Haar over the box's links. -/
+DERIVED: the signature writes no numeral; the measure is product Haar over the box's links. -/
 noncomputable def partFree {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) : ℝ :=
   ∫ u, wtFree φ β Λ ω u ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N)))
 
-/-- **THE PARTITION FUNCTION IS STRICTLY POSITIVE**, so the normalisation is legitimate. Exactly
-`GibbsSpec.part_pos`'s argument, over the free plaquette set: the integrand is strictly positive
-everywhere, so its support is the whole space, which the probability measure gives measure one.
+/-- The partition function is strictly positive, so the normalisation in `specFree` is legitimate.
+`GibbsSpec.part_pos`'s argument over the free plaquette set: the integrand is strictly positive
+everywhere, so its support is the whole space, to which the probability measure gives measure one.
+Integrability comes from `wtFree_le`.
 
-DERIVED: the `2` is the Wilson density's ceiling; `4` is the dimension. -/
+DERIVED: the `2` is the Wilson density's ceiling in `hφ2` and the `0`s are its sign hypothesis and
+the strict lower bound concluded; `4` is the dimension. -/
 theorem partFree_pos {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3147,10 +3131,11 @@ theorem partFree_pos {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
 
 #print axioms partFree_pos
 
-/-- **THE FREE-BOUNDARY EXPECTATION OF A BOX** — the normalised state whose limit Chain B's endpoint
-takes.
+/-- The free-boundary expectation of a box: `∫ f · wtFree` divided by `partFree`, the normalised
+state
+whose limit the statements at the end of this file take.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the signature writes no numeral. -/
 noncomputable def specFree {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -3158,14 +3143,14 @@ noncomputable def specFree {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
   (∫ u, f u * wtFree φ β Λ ω u ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU N))))
     / partFree (φ := φ) β Λ ω
 
-/-- **⭐ THE BOX'S ACTION IS THE FINITE WILSON SYSTEM'S ACTION.**
+/-- The box's action is the finite Wilson system's action: `(wilsonSystem (boxBd Λ) φ).action u`
+equals
+`GibbsSpec.actionOn φ (iplqAll Λ) (splice Λ u ω)`. `System.action` sums `φ ∘ hol` over the plaquette
+type and `actionOn` sums `φ ∘ ihol` over the `Finset`; at `Plaq := ↥(iplqAll Λ)` those are the same
+sum by `Finset.sum_coe_sort`, with `wilsonHol_boxBd` matching the summands one plaquette at a time.
 
-`System.action` sums `φ ∘ hol` over the plaquette type; `GibbsSpec.actionOn` sums `φ ∘ ihol` over the
-`Finset`. With `Plaq := ↥(iplqAll Λ)` those are the same sum, by `Finset.sum_coe_sort`, and
-`wilsonHol_boxBd` matches the summands one plaquette at a time.
-
-DERIVED: no numeral of its own; `Λ` and `ω` are the caller's and `4` is the dimension, carried inside
-`ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `Λ` and `ω` are the caller's and `4` is the dimension
+carried by `ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem action_boxBd (φ : MassGap.SUN.SU N → ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -3181,14 +3166,13 @@ theorem action_boxBd (φ : MassGap.SUN.SU N → ℝ)
 
 #print axioms action_boxBd
 
-/-- **⭐ AND SO ITS BOLTZMANN WEIGHT IS `wtFree`.**
+/-- The finite Wilson system's Boltzmann weight over `↥Λ` is `wtFree`, at every boundary
+configuration —
+`ω` occurs on the right and nowhere on the left, which is what `wtFree_congr_right` states on its
+own.
 
-The free-boundary weight of a box is literally the finite Wilson system's weight over `↥Λ`, at every
-boundary configuration — `ω` appears on the right and nowhere on the left, which `wtFree_congr_right`
-states on its own.
-
-DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `β`, `Λ` and `ω` are the caller's and `4` is the dimension
+carried by `ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem boltz_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -3199,12 +3183,12 @@ theorem boltz_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
 
 #print axioms boltz_boxBd
 
-/-- **⭐ THE TWO PARTITION FUNCTIONS AGREE** — the finite Wilson system's over `↥Λ`, and the box's
-`partFree`. Immediate from `boltz_boxBd` under the integral, the two measures being the same
-`Measure.pi`.
+/-- The two partition functions agree: the finite Wilson system's over `↥Λ` and the box's
+`partFree`.
+Immediate from `boltz_boxBd` under the integral, the two measures being the same `Measure.pi`.
 
-DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `β`, `Λ` and `ω` are the caller's and `4` is the dimension
+carried by `ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem partition_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
@@ -3216,39 +3200,28 @@ theorem partition_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
 
 #print axioms partition_boxBd
 
-/-- **⭐⭐⭐ THE FREE-BOUNDARY STATE OF A BOX IS A FINITE WILSON SYSTEM'S GIBBS EXPECTATION** — the
-third carrier obligation, discharged.
+/-- The free-boundary state of a box is a finite Wilson system's Gibbs expectation:
+`(wilsonSystem (boxBd Λ) φ).expect (probHaar (SU N)) β O = specFree β Λ ω O`. The numerators agree
+by
+`boltz_boxBd` under the integral, the denominators by `partition_boxBd`, and the two measures are
+the same `Measure.pi`.
 
-`specFree` and `System.expect` are the same quotient: the numerators agree by `boltz_boxBd` under the
-integral, the denominators by `partition_boxBd`, and the two measures are the same `Measure.pi`.
+With `touchDeg_boxBd_le` and `not_mem_ball_of_axis_gt`, this supplies the third of the inputs that
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` reads off the carrier; `hN`,
+`0 ≤ β` and `hr` stay with the caller, and that theorem's conclusion is about `wilsonCorrConn`, a
+connected correlation of plaquette observables.
 
-With `touchDeg_boxBd_le` and `not_mem_ball_of_axis_gt`, the two GEOMETRIC hypotheses of
-`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` — which is the form that consumes
-a `touchDeg` bound, the base form writing `touchDeg bd` into its own constants — are available for
-`boxBd`. `hN`, `0 ≤ β` and `hr` remain on the caller. `hr` is FREE in `K` — `touchDeg bd` occurs
-only in `hK` — which is why it may be evaluated at `K = 16 * 4`, where it reads
-`β < 2.936337×10⁻⁵`.
+`LatticeGauge.Config` and `GibbsSpec.VConf` are definitionally equal but not syntactically so,
+`wilsonSystem` being a plain `def`, so `rw` and `simp` at reducible transparency do not cross them —
+which is why `action_boxBd` needs a `show`, and a caller rewriting between them needs the same.
 
-**⛔ `Config` AND `VConf` ARE DEFEQ BUT NOT SYNTACTIC**, `wilsonSystem` being a plain `def`. `rw` and
-`simp` at reducible transparency will not cross the two, which is why `action_boxBd` needs a `show`;
-a caller rewriting between them will need the same.
+`GibbsSpec.spec`, `part` and `num` sit on `GibbsSpec.vol` rather than on `ActionSplit.cvol`; this is
+the free-boundary variant of the same correspondence, stated as a term.
 
-`GibbsSpec.spec`/`part`/`num` sit on `GibbsSpec.vol` rather than `ActionSplit.cvol`, and
-`GibbsSpec`'s own docstring there already says it mirrors `LatticeGauge.System.expect` — this is that
-correspondence termed, for the free-boundary variant. `Measure.pi (fun _ => μ)` has three names in
-this tree; a fourth is not wanted.
+The statement is an identification of two definitions.
 
-**⛔ THE OBSERVABLE GAP IS UNTOUCHED.** That theorem's conclusion is about `wilsonCorrConn`, a
-connected correlation of PLAQUETTE observables.
-`gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`, and nothing
-here says anything about a general member of that algebra.
-
-**⛔ AND NOTHING HERE IS A DECAY STATEMENT.** This is an identification of two definitions. The
-estimate still carries its own hypotheses, including the smallness
-`coreRate (touchDeg bd) β < 1`.
-
-DERIVED: no numeral of its own; `β`, `Λ` and `ω` are the caller's and `4` is the dimension, carried
-inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `β`, `Λ` and `ω` are the caller's and `4` is the dimension
+carried by `ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem expect_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -3266,23 +3239,18 @@ theorem expect_boxBd (φ : MassGap.SUN.SU N → ℝ) (β : ℝ)
 
 #print axioms expect_boxBd
 
-/-- **⭐⭐⭐ THE CONNECTED CORRELATION THE DECAY THEOREM BOUNDS IS THE BOX'S OWN.**
+/-- `WilsonBridge.wilsonCorrConn` for `boxBd Λ` written in the box's free-boundary state: the
+`specFree`
+expectation of the product of the two `wilsonPlaqObs` minus the product of their separate `specFree`
+expectations. `wilsonCorr` is `.expect` of the product observable and the subtraction is a product
+of
+two single-observable `.expect`s, so all three terms are instances of `expect_boxBd`. The density is
+`WilsonAction.wilsonDensity` and the observables are the one-plaquette `WilsonReal.wilsonPlaqObs`.
 
-`WilsonBridge.wilsonCorrConn` for `boxBd` written out in `specFree` — the object
-`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds, expressed in the box's
-free-boundary state. `wilsonCorr` is `.expect` of the PRODUCT observable and the subtraction is a
-product of two single-observable `.expect`s, so all three terms are instances of `expect_boxBd`.
+The statement is an identification of two expressions; nothing here is an estimate.
 
-**⛔ IT IS AN IDENTIFICATION, NOT AN ESTIMATE.** Nothing here decays. The estimate carries its own
-hypotheses — `Nc ≠ 0`, `0 ≤ β`, and the smallness `coreRate (touchDeg bd) β < 1`, which
-`StrongCoupling.core_rate_lt_one_of_small` supplies only NEAR `β = 0`.
-
-**⛔ AND THE OBSERVABLE IS A PLAQUETTE.** `wilsonPlaqObs` reads one plaquette;
-`gapAt_of_finite_volume_connected`'s `hfin` quantifies over every `F ∈ halfSpaceAlg τ p`. That gap is
-untouched by the whole carrier construction and is what stands between this and row 17c.
-
-DERIVED: no numeral of its own; `β`, `Λ`, `ω`, `p₀` and `p` are the caller's and `4` is the dimension,
-carried inside `ILink` and `IPlaq` as in `iplqAll`. -/
+DERIVED: the signature writes no numeral; `β`, `Λ`, `ω`, `p₀` and `p` are the caller's and `4` is
+the dimension carried by `ILink` and `IPlaq`, as in `iplqAll`. -/
 theorem wilsonCorrConn_boxBd (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -3301,15 +3269,14 @@ theorem wilsonCorrConn_boxBd (β : ℝ)
 
 #print axioms wilsonCorrConn_boxBd
 
-/-- **⭐⭐ REFLECTION POSITIVITY OF THE FREE-BOUNDARY STATE OF A BOX.**
+/-- Reflection positivity of the box's free-boundary state: `0 ≤ specFree β Λ ω (F · (F ∘ Θ))`, with
+`Θ`
+the abstract twist. The numerator is `wtFree_refl_pairing_nonneg` and the denominator is
+`partFree_pos`. This is `InfiniteReflection.ReflPositiveOn`'s content at one finite volume.
 
-`0 ≤ ⟨F · (F ∘ Θ)⟩_Λ`, normalised — which is `InfiniteReflection.ReflPositiveOn`'s content at one
-finite volume, and the thing `reflPositive_of_tendsto` transports to the limit.
-
-The numerator is `wtFree_refl_pairing_nonneg`; the denominator is `partFree_pos`.
-
-DERIVED: the `2`s are the plane-to-constant conversion and the Wilson density's ceiling; `4` is the
-dimension. Nothing is chosen. -/
+DERIVED: the `2`s are the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling
+in `hφ2`; the `0`s are the density's sign hypothesis and the lower bound concluded; `4` is the
+dimension. -/
 theorem specFree_refl_nonneg
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -3328,23 +3295,18 @@ theorem specFree_refl_nonneg
 
 #print axioms specFree_refl_nonneg
 
-/-- **⭐⭐ REFLECTION POSITIVITY OF THE FREE-BOUNDARY STATE, FOR AN OBSERVABLE OF THE LATTICE.**
+/-- The same with `f` a function of the whole lattice configuration and `Θ` the concrete lattice
+reflection `ireflConf τ (2 * p)`, which is the form `InfiniteReflection.ReflPositiveOn` asks for.
 
-`0 ≤ ⟨f · (f ∘ Θ)⟩_Λ` where `f` is a function of the WHOLE configuration and `Θ` is the concrete
-lattice reflection `ireflConf` — which is the form `InfiniteReflection.ReflPositiveOn` asks for, and
-the last step before `reflPositive_of_tendsto` can be applied.
+`hfΛ`, locality to the box, is load-bearing: `splice_twist_eq_ireflConf` identifies the abstract
+twist with `ireflConf` on `Λ` and says nothing off it, so an `f` that read outside the box would
+distinguish the two. `InfiniteReflection.reflPositive_of_tendsto` holds its submodule `A` fixed
+across the volumes for the same reason: `A` is observables local to one fixed finite region of the
+positive half, and every large enough box contains that region.
 
-**⛔ `hfΛ` (LOCALITY TO THE BOX) IS LOAD-BEARING AND IS NOT A CONVENIENCE.**
-`splice_twist_eq_ireflConf` says the abstract twist and `ireflConf` agree ON `Λ` and says nothing off
-it — they need not agree there. An `f` that could see outside the box would distinguish the two and
-the identification would fail.
-
-That is exactly why `InfiniteReflection.reflPositive_of_tendsto` holds its submodule `A` FIXED across
-the volumes: `A` must be observables local to ONE fixed finite region of the positive half, and every
-box past some point contains it. A half-space algebra that grew with the volume would have no limit
-to transport to.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0`s are the density's sign hypothesis and the lower bound concluded; `4` is the
+dimension. -/
 theorem specFree_refl_nonneg_of_local
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -3376,17 +3338,18 @@ theorem specFree_refl_nonneg_of_local
 
 #print axioms specFree_refl_nonneg_of_local
 
-/-! ## ⭐ 3g. The free-boundary expectation is a STATE -/
+/-! ## 3g. The free-boundary expectation is a state -/
 
 section StateAlgebra
 
 open MeasureTheory MassGap.CompactGauge MassGap.LatticeReflection
 
 /-- A bounded measurable observable against the free weight is integrable — bounded times bounded on
-a probability space.
+a
+probability space, with `wtFree_le` supplying the weight's bound.
 
-DERIVED: the `2` is the Wilson density's ceiling, carried in as `hφ2`; the cardinality is the
-plaquette set's own. -/
+DERIVED: the `2` is the Wilson density's ceiling in `hφ2` and the `0` is its sign hypothesis `hφ0`;
+the cardinality is the plaquette set's own. -/
 theorem integrable_numFree {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3403,7 +3366,11 @@ theorem integrable_numFree {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ
 
 #print axioms integrable_numFree
 
-/-- **ADDITIVITY.** -/
+/-- `specFree` is additive on bounded measurable observables. Boundedness and measurability enter
+through `integrable_numFree`, which `integral_add` requires.
+
+DERIVED: the `2` is the Wilson density's ceiling in `hφ2` and the `0` is its sign hypothesis `hφ0`;
+both are carried only to reach `partFree` and `integrable_numFree`. -/
 theorem specFree_add {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3422,7 +3389,10 @@ theorem specFree_add {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
 
 #print axioms specFree_add
 
-/-- **HOMOGENEITY.** -/
+/-- `specFree` is homogeneous: a scalar pulls out of both the numerator and the quotient. No
+integrability hypothesis is needed, so `φ` carries no range assumption here.
+
+DERIVED: the signature writes no numeral. -/
 theorem specFree_smul {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (c : ℝ)
@@ -3436,9 +3406,13 @@ theorem specFree_smul {φ : MassGap.SUN.SU N → ℝ} (β : ℝ)
 
 #print axioms specFree_smul
 
-/-- **NORMALISATION** — the partition function divided by itself.
+/-- `specFree` is normalised: the constant observable `1` gives `1`, the partition function divided
+by
+itself, which `partFree_pos` makes legitimate.
 
-DERIVED: the `1`s are the constant observable's value and the normalised result. -/
+DERIVED: the `1`s are the constant observable's value and the normalised result; the `2` is the
+Wilson density's ceiling in `hφ2` and the `0` is its sign hypothesis `hφ0`, both carried to reach
+`partFree_pos`. -/
 theorem specFree_one {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3455,10 +3429,12 @@ theorem specFree_one {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
 
 #print axioms specFree_one
 
-/-- **POSITIVITY** — the free weight is strictly positive everywhere, so a pointwise nonnegative
-observable has a nonnegative integral, and the denominator is positive.
+/-- `specFree` is positive: a pointwise nonnegative observable has a nonnegative value, since
+`wtFree` is
+strictly positive everywhere and the denominator is positive by `partFree_pos`.
 
-DERIVED: the `0` is the sign asserted. -/
+DERIVED: the `0`s are the observable's sign hypothesis `hF`, the density's sign hypothesis `hφ0`,
+and the sign concluded; the `2` is the Wilson density's ceiling in `hφ2`. -/
 theorem specFree_nonneg {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3470,8 +3446,10 @@ theorem specFree_nonneg {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
 
 #print axioms specFree_nonneg
 
-/-- The observable a continuous lattice function induces on the box, measurable and bounded because
-the configuration space is compact. -/
+/-- The observable a continuous lattice function induces on the box is measurable —
+`f.continuous.measurable` composed with `GibbsSpec.measurable_splice_left`.
+
+DERIVED: the signature writes no numeral. -/
 theorem boxObs_measurable {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
     (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
@@ -3479,6 +3457,11 @@ theorem boxObs_measurable {Λ : Finset MassGap.InfiniteLattice.ILink}
       f (MassGap.GibbsSpec.splice Λ u ω)) :=
   f.continuous.measurable.comp (MassGap.GibbsSpec.measurable_splice_left Λ ω)
 
+/-- And it is bounded, because the configuration space is compact:
+`InfiniteLattice.bounded_of_continuous` supplies the constant, which is stated as an existential
+rather than computed.
+
+DERIVED: the signature writes no numeral. -/
 theorem boxObs_bounded {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
     (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
@@ -3489,14 +3472,15 @@ theorem boxObs_bounded {Λ : Finset MassGap.InfiniteLattice.ILink}
 
 #print axioms boxObs_bounded
 
-/-- **⭐⭐ THE FREE-BOUNDARY STATE OF A BOX.** The finite-volume object whose limit Chain B's endpoint
-takes, as a `DLRLimit.State` — the exact type `InfiniteReflection.reflPositive_of_tendsto` consumes.
+/-- The box's free-boundary state as a `DLRLimit.State` on `C(IConf (SU N), ℝ)` — the type
+`InfiniteReflection.reflPositive_of_tendsto` consumes.
 
-All four fields come from the section above: additivity and homogeneity from `integral_add` and
-`integral_const_mul` through `integrable_numFree`, positivity from the weight being strictly positive
-everywhere, normalisation from `partFree / partFree`.
+All four fields come from the section above: `map_add'` from `specFree_add`, `map_smul'` from
+`specFree_smul`, `nonneg'` from `specFree_nonneg`, and `one'` from `specFree_one`. The bounds the
+first and third need come from `boxObs_bounded` and `boxObs_measurable`.
 
-DERIVED: no numeral of its own; the `2` in the hypotheses is the Wilson density's ceiling. -/
+DERIVED: the `2` in the hypotheses is the Wilson density's ceiling and the `0` its sign hypothesis,
+both carried through to `partFree_pos`. -/
 noncomputable def stateFree {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -3527,45 +3511,15 @@ noncomputable def stateFree {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable �
     stateFree hφm hφ0 hφ2 β Λ ω f
       = specFree (φ := φ) β Λ ω (fun u => f (MassGap.GibbsSpec.splice Λ u ω)) := rfl
 
-/-- **⭐⭐⭐ `hfin`'s OWN FUNCTIONAL IS A FINITE WILSON SYSTEM'S GIBBS EXPECTATION.**
+/-- `stateFree` at a box, applied to a continuous observable, is that observable read through
+`splice`
+and expected against `wilsonSystem (boxBd Λ) φ` — the finite Wilson system `StrongCoupling`'s
+cluster expansion is stated over. `stateFree_apply` is the first half and is definitional;
+`expect_boxBd` is the second and is not.
 
-`stateFree` at a box, applied to any continuous observable, is the expectation of that observable
-read through `splice` against `wilsonSystem (boxBd Λ) φ` — the system `StrongCoupling`'s cluster
-expansion is stated over. `stateFree_apply` above is the first half and is definitional; `expect_boxBd`
-is the second and is not.
-
-This is the last coordinate change between the carrier construction, whose theorems all conclude
-about `specFree`, and `gapAt_of_finite_volume_connected`'s `hfin`, which is about `stateFree`.
-
-**⛔ IT IS A COORDINATE CHANGE, NOT A BOUND.** Nothing decays. The estimate still carries `Nc ≠ 0`,
-`0 ≤ β` and the smallness `hr`, which at `K = 16 * 4` reads `β < 2.936337×10⁻⁵`.
-
-**⛔ AND THE OBSERVABLE GAP REMAINS, THOUGH IT IS NOW A NAMED DISTANCE RATHER THAN A BLANK.** There
-are THREE tiers, and only the third is `hfin`'s:
-
-1. ONE plaquette — `StrongCoupling.wilsonCorrConn_eq_bridging_sum`, the original estimate.
-2. A finite PRODUCT of plaquettes — `StrongCoupling.wilsonCorrConnF_eq_bridging_sumF`, which writes
-   the connected correlator of `∏ Ao` against `∏ Bo` as the bridging sum over `Z²`, for disjoint
-   supports with `Ao` touch-connected. That is a proper enlargement of tier 1 and it is proved.
-3. **ANY continuous observable local on a finite link set** — which is what `halfSpaceAlg` IS. Read
-   its declaration: a `Submodule ℝ C(IConf G, ℝ)` with carrier
-   `{F | ∃ S : Finset ILink, ↑S ⊆ posHalf τ c ∧ IsLocalOn S F}`. No product structure and no gauge
-   invariance is asked of `F`.
-
-**⭐ AND TIER 3 IS REACHED BY GENERALISING THE EXPANSION, NOT BY SPANNING.** A product of
-`wilsonPlaqObs` is a gauge-invariant function of traces around closed plaquettes; a member of
-`halfSpaceAlg` is any continuous function of finitely many links. Spanning from tier 2 to tier 3
-fails, and not for a technical reason: `hfin` is QUADRATIC in `F`, so bounds on a spanning set do
-not bound their span — that needs a positive-semidefinite ordering, which entrywise bounds do not
-give.
-
-The expansion does not need spanning, because it was never restricted to plaquettes in the first
-place. `WilsonReal.block_integral_factor` is stated for ANY two observables reading disjoint link
-blocks; the plaquette product enters one level up, in `StrongCoupling.mixOn`, and from there into
-`StrongCoupling.zw`. `StrongCoupling.zwFull_split` and `StrongCoupling.zwFull_add_exchange` carry the
-split and the involution at arbitrary observables, and `StrongCoupling.zwFull_prod_eq_zw` shows the
-plaquette case is an instance. So the observable class was a property of a definition, and the route
-to `hfin` runs through an arbitrary `F` directly, never through a basis.
+This converts between the two coordinate systems in this file: the carrier construction concludes
+about `specFree`, and `gapAt_of_finite_volume_connected`'s `hfin` is about `stateFree`. The
+statement is an equality of two expectations, not a bound.
 
 DERIVED: the `0` and the `2` are `wilsonDensity`'s range, carried in as `hφ0` and `hφ2` exactly as
 `stateFree` takes them; `β`, `Λ`, `ω` and `f` are the caller's. -/
@@ -3583,23 +3537,21 @@ theorem stateFree_eq_expect_boxBd {φ : MassGap.SUN.SU N → ℝ} (hφm : Measur
 
 #print axioms stateFree_eq_expect_boxBd
 
-/-- **⭐⭐ REFLECTION POSITIVITY OF THE FINITE-VOLUME STATE, IN `InfiniteReflection`'s OWN FORM.**
+/-- Reflection positivity of the finite-volume state in `InfiniteReflection`'s own form:
+`ReflPositiveOn (latticeReflection τ (2 * p)) A (stateFree …)`. Built from
+`specFree_refl_nonneg_of_local`, with `heq` turning `θ f * f` into the product this file's lemmas
+carry.
 
-`ReflPositiveOn (latticeReflection τ (2p)) A (stateFree …)` — the hypothesis
-`InfiniteReflection.reflPositive_of_tendsto` transports to the limit. Everything below it is proved:
-the box pairing, the factorisation of the Gibbs weight, the normalisation, and the locality lift.
+`A` is a parameter. `InfiniteReflection.reflPositive_of_tendsto` requires `A` held fixed across the
+volumes, so the caller that chooses the exhausting sequence of boxes chooses `A` too, and `A` must
+be observables local to one fixed finite region of the positive half; constructing it here would pin
+it to a single `Λ`.
 
-**⛔ `A` IS A PARAMETER, AND THAT IS NOT LAZINESS.** `reflPositive_of_tendsto` requires `A` held FIXED
-across the volumes — a half-space algebra that grew with the volume would have no limit to transport
-to. So the caller that chooses the exhausting sequence of boxes is the one that must choose `A`, and
-`A` must be observables local to ONE fixed finite region of the positive half. Constructing it here
-would pin it to a single `Λ` and defeat the purpose.
+`hAloc` is locality to the box, needed because the abstract twist and `ireflConf` agree only on `Λ`,
+and `hAhalf` is the half-space reading `ActionSplit`'s `hOloc` asks for.
 
-`hAloc` is locality to the box (needed because the abstract twist and `ireflConf` agree only ON `Λ`)
-and `hAhalf` is the half-space reading that `ActionSplit`'s `hOloc` asks for.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `0` is the sign asserted; `4` is
-the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0`s are the density's sign hypothesis and the sign asserted; `4` is the dimension. -/
 theorem reflPositiveOn_stateFree
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -3635,24 +3587,21 @@ theorem reflPositiveOn_stateFree
 
 #print axioms reflPositiveOn_stateFree
 
-/-- **⭐⭐ CHAIN B'S ENDPOINT, CONDITIONAL ON CONVERGENCE ALONE.**
+/-- Reflection positivity of an infinite-volume state `ν`, from a family of reflection-stable boxes
+`box : ι → Finset ILink` whose free-boundary states converge to `ν` along a `NeBot` filter.
+`InfiniteReflection.reflPositive_of_tendsto` applied to `reflPositiveOn_stateFree` at each box.
 
-Reflection positivity of the INFINITE-VOLUME state, from a family of reflection-stable boxes whose
-free-boundary states converge. Every other hypothesis is discharged inside: the box pairing, the
-Osterwalder–Seiler split, the covariance of the half-action, the plane weight, the bound, the
-measurability, the normalisation and the locality lift.
+The convergence is the hypothesis `htend`; this does not construct the limit state and does not
+show any sequence converges. Apart from `htend` the hypotheses are `hbox`, the density's range and
+class-function property, and the two locality conditions on `A`; there is no second positivity
+assumption and no condition on the filter beyond `NeBot`.
 
-**⛔ WHAT THIS DOES AND DOES NOT SAY.** It does NOT construct the limit state and does not prove any
-sequence converges. `htend` is the whole remaining obligation on this route, and it is real analysis:
-the free-boundary states of an exhausting sequence must converge on the fixed algebra `A`. What the
-theorem buys is that NOTHING ELSE is outstanding — no second positivity assumption, no axiom, no
-hypothesis on the filter beyond `NeBot`.
+`A` is held fixed across the volumes, which is why `hAloc` is quantified over the family:
+observables local to one fixed finite region of the positive half are local to every box containing
+it.
 
-`A` is held FIXED across the volumes, which is what makes the statement usable and is why `hAloc` is
-quantified over the family: observables local to one fixed finite region of the positive half are
-local to every box that contains it.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0` is the density's sign hypothesis `hφ0`; `4` is the dimension. -/
 theorem reflPositive_limit_of_tendsto
     {ι : Type*} {l : Filter ι} [l.NeBot] (τ : Fin 4) (p : ℤ)
     (box : ι → Finset MassGap.InfiniteLattice.ILink)
@@ -3678,24 +3627,23 @@ theorem reflPositive_limit_of_tendsto
 
 #print axioms reflPositive_limit_of_tendsto
 
-/-- **⭐⭐⭐ REFLECTION POSITIVITY OF AN INFINITE-VOLUME STATE OF THE WILSON MEASURE ON `ℤ⁴`.**
+/-- Reflection positivity of an infinite-volume state of the Wilson measure on `ℤ⁴`, with no
+convergence
+hypothesis. `DLRLimit.exists_limit_state` supplies, for any `NeBot` filter and any family of states,
+an ultrafilter refining it together with a state to which every observable converges — one compact
+interval per observable. So the limit is produced here rather than assumed, and
+`reflPositive_limit_of_tendsto` is applied to it.
 
-No convergence hypothesis. **`htend` is not analysis, it is COMPACTNESS.**
-`DLRLimit.exists_limit_state` supplies, for ANY `NeBot` filter and ANY family of states, an
-ultrafilter refining it together with a state to which EVERY observable converges — one compact
-interval per observable, which is Banach–Alaoglu done by hand. So no sequence has to be shown to
-converge; the limit exists along a refinement, which is all `reflPositive_of_tendsto` ever needed.
+The caller supplies a family of boxes each stable under the link reflection at `2 * p`, and a fixed
+submodule `A` of observables local to the boxes and reading the positive half. The Wilson density
+satisfies `hφm`, `hφ0`, `hφ2` and `hφc`.
 
-What the caller supplies is structural, not open: a family of boxes each STABLE under the link
-reflection, and a fixed submodule `A` of observables local to the boxes and reading the positive
-half. The Wilson density satisfies `hφm`, `hφ0`, `hφ2` and `hφc` (`WilsonAction.wilsonDensity_*`).
+Scope: the limit is along an ultrafilter refining `l`, so it is subsequential; it is not claimed to
+be the DLR state nor to be translation invariant. What is concluded is `ReflPositiveOn` for the
+limit, on `A`.
 
-**⛔ WHAT IS AND IS NOT CLAIMED.** The limit is SUBSEQUENTIAL — along an ultrafilter refining `l` —
-in exactly the sense `DLRLimit` and `InfiniteVolume` are throughout. It is not claimed to be THE DLR
-state, nor to be translation invariant: that is `ShiftCompat` and a separate obligation. What is
-claimed is reflection positivity of the limit, on `A`, with no named axiom.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0` is the density's sign hypothesis `hφ0`; `4` is the dimension. -/
 theorem reflPositive_limit_exists
     {ι : Type*} (l : Filter ι) [l.NeBot] (τ : Fin 4) (p : ℤ)
     (box : ι → Finset MassGap.InfiniteLattice.ILink)
@@ -3726,13 +3674,15 @@ theorem reflPositive_limit_exists
 
 #print axioms reflPositive_limit_exists
 
-/-- **THE HALF-SPACE OBSERVABLES OF A FIXED REGION**, as a `Submodule ℝ C(X, ℝ)` — the type
-`ReflPositiveOn` asks for.
+/-- The observables depending on a fixed finite region `R₀` only, as a `Submodule ℝ C(X, ℝ)` — the
+type
+`InfiniteReflection.ReflPositiveOn` asks for. `InfiniteLattice.localAlg` is the same notion as a
+`Subalgebra ℝ (IConf G → ℝ)` over raw functions, which is the wrong type here.
 
-`InfiniteLattice.localAlg` is a `Subalgebra ℝ (IConf G → ℝ)`, over RAW functions. That is the right
-notion and the wrong type, which is why this exists.
+At `R₀ = ∅` the carrier reads `∀ U V, f U = f V`, so the submodule is exactly the constants.
 
-DERIVED: no numeral of its own; `R₀` is the caller's fixed region and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `R₀` is the caller's fixed region and `4` is the
+dimension. -/
 def localSubmodule (R₀ : Finset MassGap.InfiniteLattice.ILink) :
     Submodule ℝ C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ) where
   carrier := {f | ∀ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N),
@@ -3754,34 +3704,28 @@ theorem mem_localSubmodule {R₀ : Finset MassGap.InfiniteLattice.ILink}
 
 #print axioms localSubmodule
 
-/-- **⭐⭐⭐ REFLECTION POSITIVITY OF AN INFINITE-VOLUME STATE, ON A GENUINE HALF-SPACE ALGEBRA.**
+/-- `reflPositive_limit_exists` with the submodule supplied rather than assumed, so the conclusion
+is
+not satisfiable by `⊥`. The caller fixes a finite region `R₀` of links lying at or above the plane
+(`hR₀`) and a family of reflection-stable boxes each containing it (`hsub`, `hbox`).
 
-`reflPositive_limit_exists` with the submodule supplied rather than assumed, so the statement cannot
-be satisfied by `⊥`. The caller fixes a finite region `R₀` of links lying AT OR ABOVE the plane, and
-the boxes grow around it.
+`R₀` is fixed first and every box contains it, which is what `reflPositive_of_tendsto` needs of a
+submodule held fixed across volumes, and it is why the two locality hypotheses of
+`reflPositive_limit_exists` are discharged here: locality to the box because `R₀` is inside it, and
+the half-space reading because every link of `R₀` lands in `boxS ∪ boxR`.
 
-**⛔ THE ORDER IS THE POINT.** `R₀` is fixed FIRST and every box contains it. That is what
-`reflPositive_of_tendsto` needs of a submodule held fixed across volumes, and it is why the two
-hypotheses come for free: locality to the box because `R₀` is inside it, and the half-space reading
-because every link of `R₀` lands in `boxS ∪ boxR`.
+Scope: `localSubmodule R₀` is one fixed finite support, where `HalfSpaceAlgebra.halfSpaceAlg τ p` is
+a directed union over all finite supports in the positive half; positivity on the former is weaker.
+`reflPositive_limit_on_halfSpaceAlg` below states the union, trading the `∀ i` quantifier for an
+eventual one (`InfiniteReflection.reflPositive_of_eventually_pointwise`) and choosing the fixed
+region per observable, in exchange for an exhaustion hypothesis on the box family that this
+statement does not take. At `R₀ = ∅` the submodule is the constants and every hypothesis holds
+vacuously, so the content rests on `R₀` and on the convergence clause, which is what ties `ν` to the
+Wilson measure. `HalfSpaceAlgebra.halfLinkObs_mem` puts `halfLinkObs l f` in `halfSpaceAlg` for
+every link `l` of the half-space and every `f : C(G, ℝ)`.
 
-**⛔ AND `localSubmodule R₀` IS NOT THE HALF-SPACE ALGEBRA.**
-`HalfSpaceAlgebra.halfSpaceAlg τ p` is a DIRECTED UNION over all finite supports in the positive
-half; `localSubmodule R₀` is ONE fixed finite support, and positivity on it is strictly weaker.
-**`reflPositive_limit_on_halfSpaceAlg` below delivers the union**, by trading the `∀ i` quantifier for
-an eventual one (`InfiniteReflection.reflPositive_of_eventually_pointwise`) and choosing the fixed
-region PER OBSERVABLE. What it asks of the caller in exchange is an exhaustion hypothesis on the box
-family, which this statement lacks.
-
-**⛔ AND AT `R₀ = ∅` THE SUBMODULE IS EXACTLY THE CONSTANTS.** The carrier reads `∀ U V, f U = f V`
-there, and every hypothesis is vacuously satisfied. So excluding `⊥` is not enough on its own; the
-content comes from `R₀` being nonempty AND from the convergence clause, which is what ties `ν` to the
-Wilson measure. No declaration in this tree yet exhibits a NON-CONSTANT member of `localSubmodule`.
-`halfSpaceAlg` does not have this defect — `HalfSpaceAlgebra.halfLinkObs_mem` puts `halfLinkObs l f`
-in it for every link `l` of the half-space and every `f : C(G, ℝ)`, which is non-constant as soon as
-`f` is — and that is a second reason to prefer the statement below.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0` is the density's sign hypothesis `hφ0`; `4` is the dimension. -/
 theorem reflPositive_limit_on_half_space
     {ι : Type*} (l : Filter ι) [l.NeBot] (τ : Fin 4) (p : ℤ)
     (R₀ : Finset MassGap.InfiniteLattice.ILink)
@@ -3815,14 +3759,15 @@ theorem reflPositive_limit_on_half_space
 
 #print axioms reflPositive_limit_on_half_space
 
-/-! ## 6′. ⭐⭐⭐ B3 on the DIRECTED UNION -/
+/-! ## 6′. B3 on the directed union -/
 
-/-- **EVERY LINK OF THE POSITIVE HALF REFLECTS TO OR BELOW ITSELF.**
-`reflection_exchanges_halves` puts the image at or below the plane and membership puts the link at or
-above it, so the two orderings compose. This is exactly the `hR₀` that
-`reflPositive_limit_on_half_space` has to ASSUME — for a half-space support it is a theorem.
+/-- A link of `posHalf τ p` reflects to or below itself in the `τ` coordinate:
+`reflection_exchanges_halves` puts the image at or below the plane and membership puts the link at
+or
+above it. This is the `hR₀` that `reflPositive_limit_on_half_space` takes as a hypothesis; for a
+half-space support it is a theorem.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. -/
 theorem irefl_le_self_of_posHalf (τ : Fin 4) (p : ℤ) {lk : ILink} (hlk : lk ∈ posHalf τ p) :
     (ireflLink τ (2 * p) lk).2 τ ≤ lk.2 τ := by
   have h1 : (ireflLink τ (2 * p) lk).2 τ ≤ p := reflection_exchanges_halves τ p hlk
@@ -3831,15 +3776,17 @@ theorem irefl_le_self_of_posHalf (τ : Fin 4) (p : ℤ) {lk : ILink} (hlk : lk �
 
 #print axioms irefl_le_self_of_posHalf
 
-/-- **⭐⭐ REFLECTION POSITIVITY OF THE FINITE-VOLUME STATE AT ONE MEMBER OF THE DIRECTED UNION.**
+/-- Reflection positivity of the finite-volume state at one observable of the directed union:
+`0 ≤ stateFree … ((latticeReflection τ (2 * p)).θ f * f)` for an `f` whose finite support `S` lies
+in
+`posHalf τ p` and inside the box.
 
 `reflPositiveOn_stateFree` needs a submodule every member of which is local to the box, and
-`halfSpaceAlg` is not one. But a MEMBER of `halfSpaceAlg` carries its own finite support `S`, so the
-fixed region that fits it is `localSubmodule S` — chosen per observable instead of once for the whole
-algebra. That is the whole of the trick.
+`halfSpaceAlg` is not one. A member of `halfSpaceAlg` carries its own finite support, so the fixed
+region that fits it is `localSubmodule S`, chosen per observable rather than once for the algebra.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `0` is the sign asserted; `4` is
-the dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0`s are the density's sign hypothesis and the sign asserted; `4` is the dimension. -/
 theorem stateFree_refl_nonneg_of_halfSpace_support
     (hΛ : ∀ l ∈ Λ, ireflLink τ (2 * p) l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -3866,9 +3813,9 @@ theorem stateFree_refl_nonneg_of_halfSpace_support
 
 #print axioms stateFree_refl_nonneg_of_halfSpace_support
 
-/-- **THE ALL-IDENTITY BOUNDARY CONDITION IS SYMMETRIC ABOUT EVERY MIRROR AT ONCE.**
-`ireflConf` inverts on `τ`-links and does nothing elsewhere, and `1⁻¹ = 1`, so the constant
-configuration is fixed for EVERY constant — which is what lets one boundary condition serve two
+/-- The all-identity configuration is fixed by `ireflConf τ c` at every constant `c`: the map
+inverts on
+`τ`-links and does nothing elsewhere, and `1⁻¹ = 1`. So one boundary condition serves two box
 families with different mirrors.
 
 DERIVED: the `1` is the group identity; `4` is the dimension. -/
@@ -3881,25 +3828,23 @@ theorem ireflConf_one (τ : Fin 4) (c : ℤ) :
 
 #print axioms ireflConf_one
 
-/-- **`Re tr` AS A BUNDLED CONTINUOUS MAP**, at every rank.
+/-- `Re tr` as a bundled `C(SU N, ℝ)`, at every rank. `HaarVariance.reTr` is the function and
+`HaarVariance.continuous_reTr` its continuity; this bundles them because
+`HalfSpaceAlgebra.halfLinkObs` takes a `C(G, ℝ)`.
 
-`HaarVariance.reTr` is the function and `HaarVariance.continuous_reTr` its continuity; this only
-bundles them, because `HalfSpaceAlgebra.halfLinkObs` takes a `C(G, ℝ)`.
-
-DERIVED: no numeral; `N` is the caller's rank. -/
+DERIVED: the signature writes no numeral; `N` is the caller's rank. -/
 noncomputable def reTrCM (N : ℕ) : C(MassGap.SUN.SU N, ℝ) :=
   ⟨MassGap.HaarVariance.reTr, MassGap.HaarVariance.continuous_reTr⟩
 
 #print axioms reTrCM
 
-/-- **⭐ IT SEPARATES TWO GROUP ELEMENTS AT EVERY RANK AT LEAST TWO**, which is the hypothesis
+/-- `reTrCM` separates `HaarVariance.flipEl m` from `1` in `SU (m + 2)`, which is the hypothesis
 `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` takes.
-
 `HaarVariance.reTr_flipEl_ne_reTr_one` is the content: `Re tr` reads `m + 2` at the identity and
 `m - 2` at `flipEl m`.
 
-**⛔ IT IS FALSE AT `SU 0` AND `SU 1`**, where the group is a singleton — which is why the rank is
-written `m + 2` rather than `N` with a side condition.
+The rank is written `m + 2` rather than `N` with a side condition, because at `SU 0` and `SU 1` the
+group is a singleton and no two elements exist to separate.
 
 DERIVED: the `2` is the least matrix dimension at which two group elements exist to separate; the
 `1` is the identity, the element `flipEl` is separated from; `m` is the caller's. -/
@@ -3909,28 +3854,21 @@ theorem reTrCM_separating (m : ℕ) :
 
 #print axioms reTrCM_separating
 
-/-- **⭐⭐ THE HALF-SPACE ALGEBRA IS MORE THAN THE CONSTANTS, AT `SU(3)`.**
+/-- `HalfSpaceAlgebra.halfSpaceAlg τ p` contains a non-constant observable at every `SU (m + 2)`:
+the
+witness is `halfLinkObs l₀ (reTrCM (m + 2))` at a link `l₀` based on the plane, and the two
+configurations separating it are the constant `flipEl m` and the constant `1`.
 
-`HalfSpaceAlgebra.halfLinkObs_mem` cannot show this on its own: it is quantified over an arbitrary
-`f : C(G, ℝ)`, and a constant `f` gives a constant member. What is needed is a SEPARATING function
-and a pair it separates. `reTrCM` is the function and `reTrCM_separating` the separation, at every rank at least two. At `SU(3)` `CrossingIntegration.trace_gNeg` computes
-`Re tr gNeg = -1` against `Re tr 1 = 3` for the pair.
+`HalfSpaceAlgebra.halfLinkObs_mem` alone does not give this: it is quantified over an arbitrary
+`f : C(G, ℝ)`, and a constant `f` gives a constant member. The separating function is `reTrCM` and
+the separated pair is `reTrCM_separating`, which is `HaarVariance.reTr_flipEl_ne_reTr_one`.
 
-**⛔ WHY IT MATTERS.** Without it every theorem about `halfSpaceAlg` admits the reading in which the
-algebra is one-dimensional and the conclusion is empty — and at `SU 0` and `SU 1` that reading is the
-true one, because the group is a singleton. This rules it out at `N = 3`, which is the group Clay's
-problem names.
-
-**⭐ AT EVERY RANK AT LEAST TWO**, `reTrCM_separating` being `HaarVariance.reTr_flipEl_ne_reTr_one`,
-which separates `flipEl m` from `1` at every `SU(m+2)`. The proof never used anything specific to
-three.
-
-**⛔ AT `SU 0` AND `SU 1` IT IS FALSE**: the group is a singleton, every observable is constant, and
-the carrier IS the constants. That is why the rank is written `m + 2`.
+Scope: false at `SU 0` and `SU 1`, where the group is a singleton, every observable is constant and
+the carrier is the constants. That is why the rank is written `m + 2`.
 
 DERIVED: the `2` is the least rank at which two group elements exist to separate; `m` is the
-caller's; the `-1` of the proof is `HaarVariance.reTr_flipEl`'s computed value; `4` is the spacetime
-dimension. -/
+caller's; the `-1` reached in the proof is `HaarVariance.reTr_flipEl`'s computed value; `4` is the
+spacetime dimension. -/
 theorem halfSpaceAlg_has_nonconstant_of_rank_two (m : ℕ) (τ : Fin 4) (p : ℤ) :
     ∃ F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU (m + 2)) τ p,
       ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2)), F U ≠ F V := by
@@ -3943,10 +3881,11 @@ theorem halfSpaceAlg_has_nonconstant_of_rank_two (m : ℕ) (τ : Fin 4) (p : ℤ
 
 #print axioms halfSpaceAlg_has_nonconstant_of_rank_two
 
-/-- **⭐ THE INSTANCE THE CLAY PROBLEM NAMES.** `SU(3)`, which is `m = 1` above.
+/-- The same at `SU 3`, which is `m = 1` in `halfSpaceAlg_has_nonconstant_of_rank_two`. At `SU 3`,
+`CrossingIntegration.trace_gNeg` computes `Re tr gNeg = -1` against `Re tr 1 = 3` for such a pair.
 
-DERIVED: `3` is the MATRIX DIMENSION of `SU(3)` — its rank is `2`; `1` is the `m` that gives it;
-`4` is the spacetime dimension. -/
+DERIVED: `3` is the matrix dimension of `SU 3` — its rank is `2`; `1` is the `m` that gives it; `4`
+is the spacetime dimension. -/
 theorem halfSpaceAlg_has_nonconstant (τ : Fin 4) (p : ℤ) :
     ∃ F ∈ MassGap.HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU 3) τ p,
       ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3), F U ≠ F V :=
@@ -3954,20 +3893,17 @@ theorem halfSpaceAlg_has_nonconstant (τ : Fin 4) (p : ℤ) :
 
 #print axioms halfSpaceAlg_has_nonconstant
 
-/-- **⛔⛔ NO NON-EMPTY FINITE BOX IS STABLE UNDER TWO ADJACENT MIRRORS.**
+/-- No non-empty finite box is stable under two adjacent mirrors: `h0` at `a` and `h1` at `a + 1`
+force
+`Λ = ∅`.
 
-This is why the even and the odd reflection invariance cannot come from one box family, and so why
-`wilson_transferData_of_common_limit` has to assume something that relates two families.
+Three steps. `ReflectionShift.ireflLink_comp_succ` composes the two mirrors into one link shift, so
+a doubly stable box is shift-stable; the shift orbit of any member stays inside it; and the orbit is
+injective because `InfiniteShift.ishift_iterate` moves the `τ` coordinate by the step count. An
+infinite injective image inside a `Finset` is the contradiction.
 
-The argument is three steps and each is now a citation rather than prose.
-`ReflectionShift.ireflLink_comp_succ` composes the two mirrors into ONE link shift, so a doubly
-stable box is shift-stable; the orbit of any member stays inside it; and the orbit is injective
-because `InfiniteShift.ishift_iterate` moves the `τ` coordinate by the step count. An infinite
-injective image inside a `Finset` is the contradiction.
-
-**⛔ WHAT THIS DOES AND DOES NOT RULE OUT.** It rules out getting both invariances from a single
-FINITE-VOLUME box statement. It says nothing against some other route to odd-constant invariance of
-the infinite-volume state that is not a box statement at all.
+Scope: this is about a finite-volume box carrying both invariances. It says nothing about the
+infinite-volume state.
 
 DERIVED: the `1` is the mirror separation, which is what makes the composite a single lattice step;
 `4` is the dimension. -/
@@ -4004,8 +3940,10 @@ theorem eq_empty_of_stable_two_mirrors (τ : Fin 4) (a : ℤ)
 
 #print axioms eq_empty_of_stable_two_mirrors
 
-/-- **Mirrors TWO apart compose to a DOUBLE shift.** `ReflectionShift.ireflLink_comp_succ` composes
-adjacent mirrors into one shift; inserting `ireflLink_involutive` at the midpoint applies it twice.
+/-- Mirrors two apart compose to a double shift:
+`ireflLink τ (a + 2) ∘ ireflLink τ a = ishiftLink τ ∘ ishiftLink τ`.
+`ReflectionShift.ireflLink_comp_succ` composes adjacent mirrors into one shift, and inserting
+`ireflLink_involutive` at the midpoint `a + 1` applies it twice.
 
 DERIVED: the `2` is the mirror separation this composes; the `1` is the midpoint the involution is
 inserted at; `4` is the dimension. -/
@@ -4027,31 +3965,16 @@ theorem ireflLink_comp_add_two (τ : Fin 4) (a : ℤ) (l : MassGap.InfiniteLatti
 
 #print axioms ireflLink_comp_add_two
 
-/-- **⭐⭐⭐ NO NON-EMPTY BOX IS STABLE UNDER TWO MIRRORS TWO APART EITHER** — and this is the pair
-the GAP RATIO uses.
+/-- No non-empty finite box is stable under two mirrors two apart either: `h0` at `a` and `h2` at
+`a + 2` force `Λ = ∅`. `ireflLink_comp_add_two` makes the composite a double shift, and the rest is
+`eq_empty_of_stable_two_mirrors`'s argument on the doubled orbit.
 
-`eq_empty_of_stable_two_mirrors` rules out the pair `(a, a+1)`, which is the REFLECTION-POSITIVITY
-pair `(2p-1, 2p)`. `gapAt_of_finite_volume_connected` compares constants `2p-2` and `2p`, two apart,
-and that pair was not covered.
+`eq_empty_of_stable_two_mirrors` covers the adjacent pair `(a, a + 1)`, which at `a = 2p - 1` is the
+reflection-positivity pair `(2p - 1, 2p)`. `gapAt_of_finite_volume_connected` compares the constants
+`2p - 2` and `2p`, which is the separation this statement covers.
 
-**WHY IT IS THE PAIR THAT MATTERS.** The adjacent case is the REFLECTION-POSITIVITY pair
-`(2p-1, 2p)`, one even and one odd, and that is what every existing citation of it uses. The GAP
-RATIO compares `2p-2` against `2p`, and that pair had no theorem.
-
-**⛔ IT DOES NOT RESCUE THE ROUTE FROM VACUITY, BECAUSE THE ROUTE WAS NEVER OPEN TO IT.** The
-tempting argument is that a member of `halfSpaceAlg τ p` sits at `τ`-coordinates `≥ p`, the `2p-2`
-mirror's shared block is the plane at `p-1`, so the observable is blind to it and
-`ActionSplit.pairing_eq_zero_of_indep_R` zeroes the ratio's numerator. It fails, and not because of
-the box: that theorem wants the observable to read `S` ALONE, and the observable the Wilson
-instantiation supplies is the DRESSED `idressed = F · e^{-βA₊}`, and `idressed_depends_on_boxR`
-shows it is NOT blind to the shared block on `quadLinks τ ν x` at `β ≠ 0`. ⛔ That carrier is one
-plaquette and is not reflection-closed, so no particular box is settled.
-
-**⛔ SO THIS SUPPLIES NO GAP, NO BOUND AND NO STATE.** It is the companion to the adjacent no-go,
-at the separation the ratio uses.
-
-**⛔ AND IT SAYS NOTHING ABOUT ONE MIRROR.** A box stable under the `2p` mirror alone is exactly what
-the reflection-positivity construction uses and what `symCube` provides.
+Scope: this is about a finite-volume box carrying both invariances. A box stable under the `2p`
+mirror alone is what the reflection-positivity construction uses, and `symCube` provides one.
 
 DERIVED: the `2` is the mirror separation; `4` is the dimension. -/
 theorem eq_empty_of_stable_two_mirrors_step_two (τ : Fin 4) (a : ℤ)
@@ -4092,40 +4015,38 @@ theorem eq_empty_of_stable_two_mirrors_step_two (τ : Fin 4) (a : ℤ)
 
 #print axioms eq_empty_of_stable_two_mirrors_step_two
 
-/-! ### ⭐ The ODD constant's block structure — the even one with the fixed set flipped -/
+/-! ### The odd constant's block structure — the even one with the fixed set flipped -/
 
-/-- **THE POSITIVE HALF AT AN ARBITRARY CONSTANT** — the links the reflection moves DOWN.
+/-- The positive half of `Λ` at an arbitrary reflection constant `c`: the links the reflection moves
+down in the `τ` coordinate. `iblkS` is this at `c = 2 * p`.
 
-`iblkS` is this at `c = 2p`. Classifying by the reflection's own action rather than by an inequality
-written out by hand is what makes the three blocks DISJOINT by trichotomy, with no case split on the
-link's direction, and that argument never looks at the parity of `c`.
+Classifying by the reflection's own action makes the three blocks disjoint by trichotomy, with no
+case split on the link's direction, and that argument does not read the parity of `c`.
 
-**⛔ DISJOINTNESS IS PARITY-FREE; BEING A HALF-SPACE IS NOT.** A `τ`-link reflects about `c - 1` and
-a transverse one about `c`, so they enter `ioblkS` at `2x_τ > c - 1` and `2x_τ > c`. Those two
-thresholds coincide only when `2x_τ ≠ c` can be assumed — that is, only at ODD `c`. At even `c` the
-gap is real: a plaquette of `ioplqPlus` can have a boundary link in `ioblkR`, and the even chain's own
-locality lemma `iplqPlus_links_mem` concludes `boxS ∪ boxR` rather than `boxS` for precisely this
-reason. **Any locality statement built on these blocks must carry `c` odd.**
+Parity does enter membership. A `τ`-link reflects about `c - 1` and a transverse one about `c`, so
+they enter `ioblkS` at `2 x_τ > c - 1` and at `2 x_τ > c`; those thresholds coincide only when
+`2 x_τ ≠ c` can be assumed, that is at odd `c`. At even `c` a plaquette of `ioplqPlus` can have a
+boundary link in `ioblkR`, which is why the even chain's `iplqPlus_links_mem` concludes
+`boxS ∪ boxR` rather than `boxS`. A locality statement built on these blocks carries `c` odd.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioblkS (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.InfiniteLattice.ILink :=
   Λ.filter (fun l => (ireflLink τ c l).2 τ < l.2 τ)
 
-/-- **THE NEGATIVE HALF** — moved UP.
+/-- The negative half at an arbitrary constant: moved up in the `τ` coordinate.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioblkT (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.InfiniteLattice.ILink :=
   Λ.filter (fun l => l.2 τ < (ireflLink τ c l).2 τ)
 
-/-- **THE SHARED BLOCK** — not moved in the `τ` coordinate.
+/-- The shared block at an arbitrary constant: not moved in the `τ` coordinate.
 
-**⛔ ITS CONTENT FLIPS WITH THE PARITY OF `c`.** At an even constant it holds TRANSVERSE links lying
-in the plane and the twist does not invert them; at an odd one it holds the AXIS links straddling the
-mirror and the twist DOES (`odd_tau_fixed_iff`,
-`LatticeReflection.ireflConf_inverts_fixed_axis_link`). The definition is the same either way, which
-is the point of classifying by the reflection's action.
+Its content depends on the parity of `c`. At an even constant it holds the transverse links lying in
+the plane, and the twist does not invert them; at an odd one it holds the axis links straddling the
+mirror, and the twist does invert them (`odd_tau_fixed_iff`,
+`LatticeReflection.ireflConf_inverts_fixed_axis_link`). The definition is the same either way.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioblkR (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
@@ -4134,7 +4055,7 @@ def ioblkR (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
 
 #print axioms ioblkS
 
-/-- The three are pairwise disjoint, by trichotomy on `ℤ`.
+/-- The three blocks are pairwise disjoint, by trichotomy on `ℤ`, at any constant.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioblk_disjoint (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
@@ -4148,7 +4069,7 @@ theorem ioblk_disjoint (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLatti
 
 #print axioms ioblk_disjoint
 
-/-- **AND THEY EXHAUST THE BOX.** Every link falls in exactly one, again by trichotomy.
+/-- And they exhaust the box: `ioblkS ∪ ioblkT ∪ ioblkR = Λ`, again by trichotomy.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioblk_union (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
@@ -4166,8 +4087,9 @@ theorem ioblk_union (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.
 
 #print axioms ioblk_union
 
-/-- **THE REFLECTION SWAPS THE TWO HALVES**, at any constant — it is an involution, so a link moved
-down has an image moved up and back again.
+/-- The reflection carries `ioblkS` into `ioblkT` at any constant: `ireflLink` is an involution, so
+a
+link moved down has an image moved up. Takes the box's stability `hΛ`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflLink_ioblkS_mem_ioblkT (τ : Fin 4) (c : ℤ)
@@ -4182,8 +4104,8 @@ theorem ireflLink_ioblkS_mem_ioblkT (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflLink_ioblkS_mem_ioblkT
 
-/-- **AND BACK AGAIN.** `Finset.sum_nbij'` needs the map in both directions, and the partner above
-supplies only one.
+/-- And back: `ioblkT` into `ioblkS`. `Finset.sum_nbij'` needs the map in both directions, and the
+ lemma above supplies one.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflLink_ioblkT_mem_ioblkS (τ : Fin 4) (c : ℤ)
@@ -4198,13 +4120,12 @@ theorem ireflLink_ioblkT_mem_ioblkS (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflLink_ioblkT_mem_ioblkS
 
-/-- **⭐ A LINK OF THE SHARED BLOCK IS FIXED OUTRIGHT, NOT MERELY IN ITS `τ` COORDINATE.**
+/-- A link whose `τ` coordinate the reflection leaves fixed is fixed outright, at every constant:
+`ireflSite` touches the `τ` coordinate and nothing else. Parity enters nowhere.
 
-`ireflSite` touches the `τ` coordinate and nothing else, so a link the reflection leaves at the same
-`τ` height is left alone entirely. True at EVERY constant — the parity enters nowhere.
-
-This is the `hθR` every downstream pairing lemma takes: `ActionSplit.pairing_nonneg_of_local` needs
-the reflection to fix the shared block pointwise before it can integrate over it.
+This is the `hθR` the downstream pairing lemmas take —
+`ActionSplit.pairing_nonneg_of_local` needs the reflection to fix the shared block pointwise before
+it integrates over it.
 
 DERIVED: the `1` is `ireflLink`'s link-length offset; `c` is the caller's constant; `4` is the
 dimension. -/
@@ -4234,7 +4155,9 @@ theorem irefl_eq_self_of_coord_eq (τ : Fin 4) (c : ℤ)
 
 #print axioms irefl_eq_self_of_coord_eq
 
-/-- The block form, which is how a caller usually has it. -/
+/-- The block form of `irefl_eq_self_of_coord_eq`, which is how a caller usually has it.
+
+DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem irefl_eq_self_of_mem_ioblkR (τ : Fin 4) (c : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {l : MassGap.InfiniteLattice.ILink}
     (hl : l ∈ ioblkR τ c Λ) : ireflLink τ c l = l :=
@@ -4242,22 +4165,23 @@ theorem irefl_eq_self_of_mem_ioblkR (τ : Fin 4) (c : ℤ)
 
 #print axioms irefl_eq_self_of_mem_ioblkR
 
-/-! ### The same three blocks at the BOX SUBTYPE index -/
+/-! ### The same three blocks at the box-subtype index -/
 
-/-- **THE POSITIVE HALF AT THE BOX INDEX.** `ioblkS` is over `ILink`; every locality hypothesis
-downstream is over `↥Λ`, so both indexings are needed. `boxS` is this at `c = 2p`.
+/-- The positive half at the box-subtype index. `ioblkS` is over `ILink`, and every locality
+hypothesis
+downstream is over `↥Λ`, so both indexings are carried. `boxS` is this at `c = 2 * p`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def oboxS (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) : Finset ↥Λ :=
   Finset.univ.filter (fun l : ↥Λ => (ireflLink τ c l.1).2 τ < l.1.2 τ)
 
-/-- The negative half at the box index.
+/-- The negative half at the box-subtype index.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def oboxT (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) : Finset ↥Λ :=
   Finset.univ.filter (fun l : ↥Λ => l.1.2 τ < (ireflLink τ c l.1).2 τ)
 
-/-- The shared block at the box index.
+/-- The shared block at the box-subtype index.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def oboxR (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) : Finset ↥Λ :=
@@ -4265,7 +4189,8 @@ def oboxR (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) : F
 
 #print axioms oboxS
 
-/-- The two indexings of the positive block agree: `ioblkS` filters `Λ`, `oboxS` filters the subtype
+/-- The two indexings of the positive block agree: `ioblkS` filters `Λ` and `oboxS` filters the
+subtype
 with the same predicate.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
@@ -4277,8 +4202,8 @@ theorem mem_oboxS_of_mem_ioblkS (τ : Fin 4) (c : ℤ)
 
 #print axioms mem_oboxS_of_mem_ioblkS
 
-/-- **⭐ THE BOX PERMUTATION FIXES THE SHARED BLOCK POINTWISE** — `hθR`, at the index the pairing
-lemmas use.
+/-- `hθR` at the box-subtype index: `ireflBoxPerm hΛ` fixes every element of `oboxR τ c Λ`, from
+`irefl_eq_self_of_coord_eq` by `Subtype.ext`. Holds at any constant.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflBoxPerm_eq_self_of_mem_oboxR (τ : Fin 4) (c : ℤ)
@@ -4292,7 +4217,8 @@ theorem ireflBoxPerm_eq_self_of_mem_oboxR (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflBoxPerm_eq_self_of_mem_oboxR
 
-/-- **AND CARRIES THE POSITIVE HALF INTO THE NEGATIVE ONE** — `hSmap`, at the box index.
+/-- The box permutation carries `oboxS` into `oboxT` — the `hSmap` the pairing lemmas take, at any
+constant.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflBoxPerm_mem_oboxT_of_mem_oboxS (τ : Fin 4) (c : ℤ)
@@ -4306,7 +4232,7 @@ theorem ireflBoxPerm_mem_oboxT_of_mem_oboxS (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflBoxPerm_mem_oboxT_of_mem_oboxS
 
-/-- **AND BACK.** The reverse membership, which the mirror bijection needs for its inverse.
+/-- And back, `oboxT` into `oboxS`, which the mirror bijection needs for its inverse.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflBoxPerm_mem_oboxS_of_mem_oboxT (τ : Fin 4) (c : ℤ)
@@ -4320,15 +4246,13 @@ theorem ireflBoxPerm_mem_oboxS_of_mem_oboxT (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflBoxPerm_mem_oboxS_of_mem_oboxT
 
-/-- **⭐ THE MIRROR BIJECTION BETWEEN THE TWO HALF-BLOCKS.**
-
-The reflection carries the negative half onto the positive one and back, and since `ireflBoxPerm` is
-an `Equiv.Perm` built from an involution, the two directions are each other's inverse with no
+/-- The bijection `↥(oboxT τ c Λ) ≃ ↥(oboxS τ c Λ)` given by the reflection. `ireflBoxPerm` is an
+`Equiv.Perm` built from an involution, so the two directions are each other's inverse with no
 computation. The `ℤ⁴` counterpart of `OddLagSplit.mirrorEquivTS`.
 
-**⛔ THIS IS ONLY THE RELABELLING.** The transport of CONFIGURATIONS carries the dagger as well —
-the reflection inverts on `τ`-links — and that is what makes the transport measure-preserving only
-because Haar is inversion-invariant.
+This is the relabelling of indices only. Transporting configurations carries the dagger as well,
+since the reflection inverts on `τ`-links; `omirrorT` is that map and
+`measurePreserving_omirrorT` is where inversion-invariance of Haar is used.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def omirrorEquivTS (τ : Fin 4) (c : ℤ)
@@ -4342,11 +4266,9 @@ def omirrorEquivTS (τ : Fin 4) (c : ℤ)
 
 #print axioms omirrorEquivTS
 
-/-- **⭐ THE MIRROR'S VARIABLE, WRITTEN AS A VARIABLE OF THE POSITIVE HALF.**
-
-The relabelling is `omirrorEquivTS`; the twist is the dagger the reflection puts on `τ`-links — the
-same `σ` that `ireflConf` carries, restricted to the mirror block. The `ℤ⁴` counterpart of
-`OddLagSplit.mirrorT`.
+/-- The mirror block's variable written as a variable of the positive half: relabel by
+`omirrorEquivTS` and invert on `τ`-links, which is the same `σ` that `ireflConf` carries restricted
+to the mirror block. The `ℤ⁴` counterpart of `OddLagSplit.mirrorT`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 noncomputable def omirrorT (τ : Fin 4) (c : ℤ)
@@ -4359,15 +4281,12 @@ noncomputable def omirrorT (τ : Fin 4) (c : ℤ)
 
 #print axioms omirrorT
 
-/-- **⭐⭐ THE TRANSPORT IS MEASURE-PRESERVING.**
-
-Relabelling by a bijection of index sets and inverting on some coordinates. Haar is
-inversion-invariant, so every coordinate map preserves its factor, and
-`OddLagSplit.measurePreserving_relabel_twist` — abstract in both index types — assembles them.
-
-**⛔ THE DAGGER IS THE WHOLE CONTENT.** Without inversion-invariance of Haar the negative half could
-not be moved onto the positive one at all, and the odd pairing would never become two evaluations of
-one function of the half.
+/-- `omirrorT` preserves product Haar: relabelling by a bijection of index sets and inverting on
+some
+coordinates. Haar on a compact group is inversion-invariant, so every coordinate map preserves its
+factor, and `OddLagSplit.measurePreserving_relabel_twist` — abstract in both index types —
+assembles them. The inversion-invariance is what lets the negative half be moved onto the positive
+one, turning the odd pairing into two evaluations of one function of the half.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem measurePreserving_omirrorT (τ : Fin 4) (c : ℤ)
@@ -4411,12 +4330,10 @@ theorem obox_disjoint (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattic
 
 #print axioms obox_disjoint
 
-/-- **AND THEY COVER THE BOX.** Stated over the SUBTYPE, which is what
-`OddLagSplit.integral_three_block` needs: its cover hypothesis is over the whole index type, and on
-`ℤ⁴` that can only be `↥Λ` — `ILink` itself is infinite and no finite family covers it.
-
-**⛔ THIS IS WHY THE BOX-SUBTYPE BLOCKS EXIST.** `ioblkS/T/R` over `ILink` cannot satisfy it at any
-box.
+/-- And they cover the box, stated over the subtype `↥Λ`. `OddLagSplit.integral_three_block`'s cover
+hypothesis is over the whole index type, which on `ℤ⁴` can only be `↥Λ`: `ILink` is infinite and no
+finite family covers it. This is why the box-subtype blocks exist beside `ioblkS`, `ioblkT` and
+`ioblkR`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem obox_cover (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -4429,21 +4346,16 @@ theorem obox_cover (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.I
 
 #print axioms obox_cover
 
-/-- **⭐⭐ THE BOX INTEGRAL, AS THREE NESTED INTEGRALS OVER THE BLOCKS.**
+/-- The box integral written as three nested integrals — over the shared block's variables, the
+positive
+half's, and the negative half's — with the integrand still free to couple all three. This is not a
+product factorisation, which matters for the straddling term: it reads all three blocks at once, so
+no factor of it is a function of one block alone.
 
-One integral over configurations of the box, rewritten as an iterated integral over the shared
-block's variables, the positive half's, and the negative half's — **with the integrand still free to
-couple all three**. That last point is what distinguishes this from a product factorisation, and it
-is exactly what the straddling term needs: it reads all three blocks at once, so no factor of it is a
-function of one block alone.
-
-**⛔ THERE IS NOTHING TO PROVE HERE.** `OddLagSplit.integral_three_block` is abstract in the index
-type and the fibre; this supplies the instance. Its two combinatorial inputs are `obox_disjoint` and
-`obox_cover`, and its index MUST be the box subtype, because the cover hypothesis quantifies over the
-whole index type and `ILink` is infinite.
-
-This is the `ℤ⁴` counterpart of `OddLagSplit.integral_oblk_three_block`, and the largest analytic
-step of the odd chain — obtained without repeating any analysis.
+`OddLagSplit.integral_three_block` is abstract in the index type and the fibre and does the work;
+this supplies the instance. Its combinatorial inputs are `obox_disjoint` and `obox_cover`, and its
+index has to be the box subtype because the cover hypothesis quantifies over the whole index type
+and `ILink` is infinite. The `ℤ⁴` counterpart of `OddLagSplit.integral_oblk_three_block`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem integral_obox_three_block (τ : Fin 4) (c : ℤ)
@@ -4465,7 +4377,7 @@ theorem integral_obox_three_block (τ : Fin 4) (c : ℤ)
 
 #print axioms integral_obox_three_block
 
-/-- Measurability in the third slot of `join3`, with the first two held fixed.
+/-- Measurability of `OddLagSplit.join3` in its third slot, with the first two held fixed.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem measurable_obox_join3_right (τ : Fin 4) (c : ℤ)
@@ -4483,8 +4395,9 @@ theorem measurable_obox_join3_right (τ : Fin 4) (c : ℤ)
 
 #print axioms measurable_obox_join3_right
 
-/-- Measurability in the SECOND slot of `join3`, with the first and third held fixed — the sibling of
-`measurable_obox_join3_right`, at the slot the positive half occupies.
+/-- Measurability of `OddLagSplit.join3` in its second slot, the one the positive half occupies,
+with
+the first and third held fixed — the sibling of `measurable_obox_join3_right`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem measurable_obox_join3_mid (τ : Fin 4) (c : ℤ)
@@ -4502,21 +4415,14 @@ theorem measurable_obox_join3_mid (τ : Fin 4) (c : ℤ)
 
 #print axioms measurable_obox_join3_mid
 
-/-- **⭐⭐⭐ THE ITERATED INTEGRAL, WITH BOTH HALVES ON THE POSITIVE BLOCK.**
+/-- The iterated integral with both half-variables on the positive block: `∫` over the box equals
+`∫_R ∫_S ∫_S`. The innermost integral has been moved from the negative block to the positive one by
+`measurePreserving_omirrorT`, so the two half-variables are independent draws from the same space.
 
-    ∫ over the box  =  ∫_R ∫_S ∫_S
-
-The third integral has been moved from the negative block to the positive one by the mirror
-transport, so the two half-variables are INDEPENDENT DRAWS FROM THE SAME SPACE.
-
-**⛔ THIS IS THE SHAPE THE CROSSING KERNEL TAKES.**
-`CrossingIntegration.wilson_crossing_pairing_nonneg` asks for exactly
-`∫_Γ ∫_Ω ∫_Ω a(x)·a(y)·exp(β·hsRe(X(g·x), X(y)))` — one integral over the shared block and two over
-the same half. Getting here is what the three-block factorisation and the mirror transport are for,
-and it is why the pairing becomes two evaluations of ONE function of the half rather than a coupling
-of two different spaces.
-
-The `ℤ⁴` counterpart of `OddLagSplit.integral_oblk_mirror`.
+This is the shape `CrossingIntegration.wilson_crossing_pairing_nonneg` takes: one integral over the
+shared block and two over the same half, which is what turns the pairing into two evaluations of one
+function of the half rather than a coupling of two different spaces. The `ℤ⁴` counterpart of
+`OddLagSplit.integral_oblk_mirror`.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem integral_obox_mirror (τ : Fin 4) (c : ℤ)
@@ -4540,31 +4446,31 @@ theorem integral_obox_mirror (τ : Fin 4) (c : ℤ)
 
 #print axioms integral_obox_mirror
 
-/-- **THE PLAQUETTES READING THE POSITIVE HALF** — those the reflection moves DOWN.
+/-- The plaquettes of `iplqAll Λ` whose base the reflection at `c` moves down in the `τ` coordinate.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioplqPlus (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.GibbsSpec.IPlaq :=
   (iplqAll Λ).filter (fun q => (ireflPlaq τ c q).2 τ < q.2 τ)
 
-/-- **AND THEIR MIRROR** — moved UP.
+/-- Their mirror: base moved up.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioplqMinus (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
     Finset MassGap.GibbsSpec.IPlaq :=
   (iplqAll Λ).filter (fun q => q.2 τ < (ireflPlaq τ c q).2 τ)
 
-/-- **THE PLAQUETTES WHOSE BASE IS NOT MOVED** in the `τ` coordinate.
+/-- The plaquettes whose base is not moved in the `τ` coordinate.
 
-**⛔ "STRADDLING" IS THE ODD READING ONLY.** At an EVEN constant this set is the PLANE plaquettes,
-which straddle nothing — all four of their links lie in the shared block. At an odd constant there is
-no plane, and the set is the axis plaquettes based one step below the mirror, which genuinely cross
-it. The definition is the same; the geometry is not.
+The geometry depends on the parity of `c`. At an even constant this is the plane plaquettes, all
+four of whose links lie in the shared block. At an odd constant there is no plane, and the set is
+the axis plaquettes based one step below the mirror, which cross it. The definition is the same
+either way.
 
-**⛔ IT IS THE ONLY PLACE THE SHARED BLOCK APPEARS**, and at an ODD constant the shared block is
-axis links the twist INVERTS (`odd_tau_fixed_iff`,
-`LatticeReflection.ireflConf_inverts_fixed_axis_link`). That is why the odd pairing is an integral
-against a kernel: `OddLagSplit.actCrossO` is the periodic counterpart and carries the same role.
+It is the only one of the three classes in which the shared block appears, and at an odd constant
+the shared block is axis links the twist inverts (`odd_tau_fixed_iff`,
+`LatticeReflection.ireflConf_inverts_fixed_axis_link`). `OddLagSplit.actCrossO` is the periodic
+counterpart.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 def ioplqCross (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
@@ -4587,13 +4493,13 @@ theorem ioplq_disjoint (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLatti
 
 #print axioms ioplq_disjoint
 
-/-- **AND THEY EXHAUST THE ACTION'S PLAQUETTES.** `iplqAll` is the plaquette set of `wtFree`, the
-FREE-BOUNDARY weight — not of `GibbsSpec.wt`, whose specification sums over `boundaryPlaqs` and for
-which `plaqsIn` is provably not local (`GibbsSpec.plaqsIn_split_not_local`). That is the weight this
-split plugs into, and the distinction is the whole point of `wtFree` existing.
+/-- And they exhaust `iplqAll Λ`, the plaquette set of `wtFree`.
 
-⚠ `iplqAll` also drops the diagonal `μ = ν`. Harmless for the Wilson density, whose degenerate
-holonomy is the identity; for a general `φ` it shifts the action by `φ 1` per diagonal plaquette.
+Scope: `iplqAll` is the free-boundary plaquette set, not `GibbsSpec.wt`'s, which sums over
+`boundaryPlaqs` and for which `plaqsIn` is provably not local
+(`GibbsSpec.plaqsIn_split_not_local`). `iplqAll` also drops the diagonal `μ = ν`; that is inert for
+the Wilson density, whose degenerate holonomy is the identity, and for a general `φ` it shifts the
+action by `φ 1` per diagonal plaquette.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioplq_union (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink) :
@@ -4611,19 +4517,16 @@ theorem ioplq_union (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.
 
 #print axioms ioplq_union
 
-/-- **⭐ AT AN ODD CONSTANT EVERY STRADDLING PLAQUETTE HAS A `τ` DIRECTION.**
+/-- At the odd constant `2 * p - 1` every straddling plaquette has a `τ` direction. A transverse
+plaquette reflects about `c` itself, so its base is unmoved only when `2 x_τ = c`, which is
+impossible for odd `c`; only axis plaquettes, reflecting about `c - 1`, can straddle.
 
-A TRANSVERSE plaquette reflects about `c` itself, so its base is unmoved only when `2x_τ = c` —
-impossible for odd `c`. Only AXIS plaquettes, which reflect about `c - 1`, can straddle.
+This is what makes the crossing word well defined: a cross plaquette with a `τ` direction has
+exactly one boundary link in the positive half — the transverse link one step up — so the word can
+be indexed by the cross plaquettes themselves, one block each. At an even constant the set is the
+plane plaquettes, whose links all lie in the shared block, and no such indexing exists.
 
-**⛔ THIS IS WHAT MAKES THE CROSSING WORD WELL DEFINED.** Every cross plaquette having a `τ`
-direction means it has exactly ONE boundary link in the positive half — the transverse link one step
-up — so the word can be indexed by the cross plaquettes themselves, one block each. At an even
-constant the set is the plane plaquettes, all of whose links lie in the shared block, and no such
-indexing exists.
-
-DERIVED: the `2` and the `1` make the constant odd, which is the entire content; `4` is the
-dimension. -/
+DERIVED: the `2` and the `1` make the constant odd, which is the content; `4` is the dimension. -/
 theorem ioplqCross_axis (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq}
     (hq : q ∈ ioplqCross τ (2 * p - 1) Λ) : q.1.1 = τ ∨ q.1.2 = τ := by
@@ -4637,17 +4540,14 @@ theorem ioplqCross_axis (τ : Fin 4) (p : ℤ)
 
 #print axioms ioplqCross_axis
 
-/-- **⭐⭐ THE ODD ACTION SPLIT.** The action over the box's non-degenerate plaquettes is the
-positive part, plus its mirror, plus the straddling part — with nothing left over.
+/-- The action over the box's non-degenerate plaquettes splits as `A = A₊ + A₋ + A_cross`, at any
+constant `c` and any `φ`, from `ioplq_union` and `ioplq_disjoint`.
 
-    A = A₊ + A₋ + A_cross
-
-**⛔ THE STRADDLING PART IS WHERE THE DIFFICULTY LIVES.** At an EVEN constant the analogous
-decomposition (`actionOn_split_three`) has a PLANE part reading only the shared block, the twist acts
-trivially on it, and the Gibbs weight factors as `W · h(U) · h(ΘU)` — a square. At an ODD constant the
-shared block is axis links the twist INVERTS, so `A_cross` does not factor that way and its
-exponential has to be integrated against the crossing kernel
-(`CrossingIntegration.wilson_crossing_pairing_nonneg`), which is what needs `0 ≤ β`.
+At an even constant the analogous decomposition `actionOn_split_three` has a plane part reading the
+shared block only, on which the twist acts trivially, and the Gibbs weight factors as
+`W · h(U) · h(ΘU)`. At an odd constant the shared block is axis links the twist inverts, so
+`A_cross` does not factor that way and its exponential is integrated against the crossing kernel
+(`CrossingIntegration.wilson_crossing_pairing_nonneg`), which is where `0 ≤ β` is used.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioplq_actionOn_split {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) (c : ℤ)
@@ -4664,16 +4564,16 @@ theorem ioplq_actionOn_split {G : Type} [Group G] (φ : G → ℝ) (τ : Fin 4) 
 
 #print axioms ioplq_actionOn_split
 
-/-- **AT AN ODD CONSTANT, HEIGHT `p` IS ENOUGH TO BE IN THE POSITIVE HALF** — for a `τ`-link and a
-transverse link alike.
+/-- At the odd constant `2 * p - 1`, a link of the box based at height `p` or above is in `ioblkS` —
+for a `τ`-link and a transverse link alike.
 
-**⛔ THIS IS WHERE THE PARITY IS LOAD-BEARING.** A `τ`-link needs `2x_τ > c - 1 = 2p - 2` and a
-transverse one `2x_τ > c = 2p - 1`; between `2p-2` and `2p-1` there is no even number, so both
-conditions read `x_τ ≥ p`. At an EVEN constant they separate and no single height works, which is
-why the even chain's locality lemma lands in `boxS ∪ boxR` rather than `boxS`.
+The parity is load-bearing: a `τ`-link needs `2 x_τ > c - 1 = 2p - 2` and a transverse one
+`2 x_τ > c = 2p - 1`, and between `2p - 2` and `2p - 1` there is no even number, so both read
+`x_τ ≥ p`. At an even constant the two conditions separate and no single height serves, which is why
+the even chain's `iplqPlus_links_mem` lands in `boxS ∪ boxR`.
 
 DERIVED: the `2` is the plane-to-constant conversion and the `1` the half-step, together making the
-constant odd — which is the content; `4` is the dimension. -/
+constant odd, which is the content; `4` is the dimension. -/
 theorem ioblkS_of_le_coord (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {l : MassGap.InfiniteLattice.ILink}
     (hl : l ∈ Λ) (hp : p ≤ l.2 τ) : l ∈ ioblkS τ (2 * p - 1) Λ := by
@@ -4687,9 +4587,10 @@ theorem ioblkS_of_le_coord (τ : Fin 4) (p : ℤ)
 
 #print axioms ioblkS_of_le_coord
 
-/-- **A POSITIVE PLAQUETTE IS BASED AT HEIGHT `p` OR ABOVE**, in all three branches of `ireflPlaq`.
-The axis branches use the `c - 1` offset and the transverse one uses `c`; at an odd constant both
-reduce to the same cut.
+/-- A plaquette of `ioplqPlus τ (2 * p - 1) Λ` is based at height `p` or above, in all three
+branches of
+`ireflPlaq`: the axis branches use the `c - 1` offset and the transverse branch uses `c`, and at an
+odd constant both reduce to the same cut.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ioplqPlus_base_ge (τ : Fin 4) (p : ℤ)
@@ -4708,18 +4609,17 @@ theorem ioplqPlus_base_ge (τ : Fin 4) (p : ℤ)
 
 #print axioms ioplqPlus_base_ge
 
-/-- **⭐⭐ THE POSITIVE ODD ACTION READS THE POSITIVE HALF ALONE.**
+/-- Every boundary link of a plaquette in `ioplqPlus τ (2 * p - 1) Λ` lies in `ioblkS τ (2 * p - 1)
+Λ`,
+not merely in `ioblkS ∪ ioblkR` as the even chain's `iplqPlus_links_mem` concludes. The shared block
+does not appear in the positive action at an odd constant.
 
-Every boundary link of a plaquette in `ioplqPlus τ (2p-1) Λ` lies in `ioblkS τ (2p-1) Λ` — **not** in
-`ioblkS ∪ ioblkR`, which is the best the even chain can say (`iplqPlus_links_mem`). The shared block
-does not appear in the positive action at all.
-
-`ilinks_eq` puts the four boundary links at `x`, `ishift μ x`, `ishift ν x` and `x`, and only a shift
-along `τ` moves the `τ` coordinate — so they sit at height `x_τ` or `x_τ + 1`, and
+`GibbsSpec.ilinks_eq` puts the four boundary links at `x`, `ishift μ x`, `ishift ν x` and `x`, and
+only a shift along `τ` moves the `τ` coordinate, so they sit at height `x_τ` or `x_τ + 1`;
 `ioplqPlus_base_ge` puts `x_τ` at `p` or above.
 
-**⛔ ODD CONSTANT ONLY.** `ioblkS_of_le_coord` is where that is used and where it cannot be dropped.
-The `ℤ⁴` counterpart of `OddLagSplit.oplaq_links_plus`.
+Odd constant only: `ioblkS_of_le_coord` is where the parity is used. The `ℤ⁴` counterpart of
+`OddLagSplit.oplaq_links_plus`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ioplqPlus_links_mem (τ : Fin 4) (p : ℤ)
@@ -4749,8 +4649,9 @@ theorem ioplqPlus_links_mem (τ : Fin 4) (p : ℤ)
 
 #print axioms ioplqPlus_links_mem
 
-/-- **A STRADDLING PLAQUETTE SITS ONE STEP BELOW THE MIRROR.** At `c = 2p-1` the mirror is at
-`p - 1/2`, and an axis plaquette's base is unmoved exactly at `x_τ = p - 1`.
+/-- A straddling plaquette at `c = 2 * p - 1` is based at `p - 1`, one step below the mirror, which
+sits
+at `p - 1/2`.
 
 DERIVED: the `2` and the `1`s are the odd constant and `ireflPlaq`'s axis offset; `4` is the
 dimension. -/
@@ -4770,25 +4671,23 @@ theorem ioplqCross_base (τ : Fin 4) (p : ℤ)
 
 #print axioms ioplqCross_base
 
-/-- **THE POSITIVE HALF'S LINK AT A STRADDLING PLAQUETTE.** The transverse link one step above the
-base — the only one of the four that lies in `ioblkS`.
+/-- The positive half's link at a straddling plaquette: the transverse link one step above the base.
+The
+other three boundary links are the two `τ`-links at the base, which the mirror fixes, and the
+transverse link at the base, which it sends below. `ioplqCross_axis` is what guarantees a `τ`
+direction exists to step along.
 
-The other three are: two `τ`-links at the base, which the mirror FIXES, and the transverse link at
-the base, which it sends below. `ioplqCross_axis` is what guarantees a `τ` direction exists to step
-along.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def osLinkOf (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) : MassGap.InfiniteLattice.ILink :=
   if q.1.1 = τ then (q.1.2, MassGap.GibbsSpec.ishift q.1.1 q.2)
   else (q.1.1, MassGap.GibbsSpec.ishift q.1.2 q.2)
 
 #print axioms osLinkOf
 
-/-- **⭐⭐ AND IT LIES IN THE POSITIVE HALF.**
-
-A cross plaquette is based at `p - 1` (`ioplqCross_base`), so stepping once along `τ` lands at `p`,
-which `ioblkS_of_le_coord` accepts. **Exactly one of the four boundary links is in `ioblkS`**, which
-is what lets the crossing word carry one block per straddling plaquette.
+/-- `osLinkOf τ q` lies in `ioblkS τ (2 * p - 1) Λ` for a straddling plaquette `q`: the plaquette is
+based at `p - 1` by `ioplqCross_base`, so stepping once along `τ` lands at `p`, which
+`ioblkS_of_le_coord` accepts. Exactly one of the four boundary links is in `ioblkS`, which is what
+lets the crossing word carry one block per straddling plaquette.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem osLinkOf_mem_ioblkS (τ : Fin 4) (p : ℤ)
@@ -4823,7 +4722,8 @@ theorem osLinkOf_mem_ioblkS (τ : Fin 4) (p : ℤ)
 
 #print axioms osLinkOf_mem_ioblkS
 
-/-- The half-link is in the box. `ioblkS` is a filter of `Λ`, so this is its first component.
+/-- The half-link is in the box: `ioblkS` is a filter of `Λ`, so this is the first component of
+`osLinkOf_mem_ioblkS`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem osLinkOf_mem_box (τ : Fin 4) (p : ℤ)
@@ -4833,8 +4733,8 @@ theorem osLinkOf_mem_box (τ : Fin 4) (p : ℤ)
 
 #print axioms osLinkOf_mem_box
 
-/-- **AND IT IS IN THE POSITIVE BLOCK AT THE BOX INDEX.** Same inequality as `ioblkS`, carried to the
-subtype the mirror factorisation's integrals run over.
+/-- And it is in the positive block at the box-subtype index — the same inequality as in `ioblkS`,
+carried to the subtype the mirror factorisation's integrals run over.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem osLinkOf_mem_oboxS (τ : Fin 4) (p : ℤ)
@@ -4845,14 +4745,11 @@ theorem osLinkOf_mem_oboxS (τ : Fin 4) (p : ℤ)
 
 #print axioms osLinkOf_mem_oboxS
 
-/-- **⭐ ONE STRADDLING PLAQUETTE, ONE POSITIVE-HALF LINK.**
-
-The map the crossing word is built along: each straddling plaquette contributes exactly one block,
-namely the half's variable at its own `osLinkOf`. `ioplqCross_axis` and `osLinkOf_mem_ioblkS` are
-what make this well defined — at an even constant there is no such map, because a plane plaquette has
-no link in the positive half at all.
-
-The `ℤ⁴` counterpart of `OddLagSplit.sIdx`.
+/-- The map the crossing word is built along: each straddling plaquette contributes exactly one
+block,
+the half's variable at its own `osLinkOf`. `ioplqCross_axis` and `osLinkOf_mem_ioblkS` are what make
+it well defined; at an even constant there is no such map, since a plane plaquette has no link in
+the positive half. The `ℤ⁴` counterpart of `OddLagSplit.sIdx`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 def osIdx (τ : Fin 4) (p : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
@@ -4861,17 +4758,12 @@ def osIdx (τ : Fin 4) (p : ℤ) {Λ : Finset MassGap.InfiniteLattice.ILink}
 
 #print axioms osIdx
 
-/-- **⭐⭐ THE WORD THE CROSSING INTEGRATION READS.**
-
-The direct sum, over the straddling plaquettes, of the positive half's link at each — relabelled to a
-`Fin` because that is the type `CrossingIntegration.wilson_crossing_pairing_nonneg` takes for its
-word `X`.
-
-**⛔ ONE BLOCK PER STRADDLING PLAQUETTE**, and `osIdx` is what makes that indexing exist. At an even
-constant there is no such word: the cross set is the plane plaquettes, none of which has a link in
-the positive half.
-
-The `ℤ⁴` counterpart of `OddLagSplit.crossWord`.
+/-- The word the crossing integration reads: the block-diagonal sum, over the straddling plaquettes,
+of
+the positive half's link at each, relabelled to a `Fin` index because that is the type
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes for its word `X`. One block per
+straddling plaquette, with `osIdx` supplying the indexing. The `ℤ⁴` counterpart of
+`OddLagSplit.crossWord`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension; the matrix size is
 `Fintype.card (Fin N × ioplqCross)`, a count. -/
@@ -4887,10 +4779,9 @@ noncomputable def ocrossWord (τ : Fin 4) (p : ℤ)
 
 #print axioms ocrossWord
 
-/-- **AND ITS CROSS FORM IS THE SUM OVER THE STRADDLING PLAQUETTES.**
-
-`OddLagSplit.hsRe_blockDiagonal_fin` is abstract in the block index and the matrix size, so this is
-that lemma pointed at this family — the relabelling to `Fin` is invisible to the cross form.
+/-- The word's cross form is the sum of the per-block cross forms over the straddling plaquettes.
+`OddLagSplit.hsRe_blockDiagonal_fin` is abstract in the block index and the matrix size, so the
+relabelling to `Fin` is invisible to the cross form.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem hsRe_ocrossWord (τ : Fin 4) (p : ℤ)
@@ -4905,19 +4796,15 @@ theorem hsRe_ocrossWord (τ : Fin 4) (p : ℤ)
 
 #print axioms hsRe_ocrossWord
 
-/-- **⭐⭐ `hXinv`: THE WORD DOES NOT SEE THE PLANE GAUGE.**
+/-- The word's cross form is unchanged by `OddLagSplit.planeAct`, which conjugates each half-link by
+its
+own pair of shared-block variables. `hsRe_ocrossWord` reduces the cross form to a sum of per-block
+cross forms and `CrossingIntegration.hsRe_conj` absorbs the conjugation one block at a time. This is
+the hypothesis `CrossingIntegration.wilson_crossing_pairing_nonneg` calls `hXinv`.
 
-`OddLagSplit.planeAct` conjugates each half-link by its own pair of shared-block variables, and
-`hsRe_ocrossWord` has already reduced the cross form to a sum of per-block cross forms — so
-`CrossingIntegration.hsRe_conj` absorbs the conjugation one block at a time.
-
-This is the hypothesis `CrossingIntegration.wilson_crossing_pairing_nonneg` calls `hXinv`.
-
-**⛔ IT HOLDS FOR ANY `A` AND `B`, AND THAT CUTS BOTH WAYS.** The invariance is a property of
-conjugation, not of which straddling links the assignment picks, so it is available before the plane
-assignment exists — and a mistake in that assignment could not be caught here. What the assignment
-must get right is the SUM IDENTITY, where the actual straddling links appear and where a wrong choice
-would show up.
+Scope: it holds for any `A` and `B`, because the invariance is a property of conjugation and not of
+which straddling links the assignment picks. What the assignment has to get right is the sum
+identity, where the actual straddling links appear.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem hsRe_ocrossWord_planeAct (τ : Fin 4) (p : ℤ)
@@ -4936,9 +4823,10 @@ theorem hsRe_ocrossWord_planeAct (τ : Fin 4) (p : ℤ)
 
 #print axioms hsRe_ocrossWord_planeAct
 
-/-- **THE STRADDLING PLAQUETTE'S BASE `τ`-LINK IS IN THE BOX.** It is a boundary link of the
-plaquette in both orientations of the plane — first in the list when the plane leads with `τ`, fourth
-when it trails — so `GibbsSpec.mem_plaqsIn` places it in `Λ`.
+/-- A straddling plaquette's base `τ`-link is in the box. It is a boundary link in both orientations
+of
+the plane — first in the list when the plane leads with `τ`, fourth when it trails — so
+`GibbsSpec.mem_plaqsIn` places it in `Λ`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem baseTauLink_mem_box (τ : Fin 4) (p : ℤ)
@@ -4957,15 +4845,13 @@ theorem baseTauLink_mem_box (τ : Fin 4) (p : ℤ)
 
 #print axioms baseTauLink_mem_box
 
-/-- **⭐ EVERY `τ`-LINK BASED AT `p - 1` IS IN THE SHARED BLOCK** at an odd constant: it reflects to
-`(2p-1) - 1 - (p-1) = p - 1`, so the mirror at `p - 1/2` leaves it where it is.
+/-- At the odd constant `2 * p - 1`, every `τ`-link based at `p - 1` is in the shared block: it
+reflects
+to `(2p - 1) - 1 - (p - 1) = p - 1`, so the mirror at `p - 1/2` leaves it where it is.
 
-**ONE INCLUSION ONLY.** That the shared block contains NOTHING ELSE is a separate statement, not
-proved here; `odd_nonTau_not_fixed` is the nearest thing to it and is about `ireflLink l ≠ l` rather
-than about `oboxR`.
-
-This is the general fact; a straddling plaquette's base link is one instance of it, and the family of
-boxes the limit lift runs over needs it to know its shared block is inhabited at all.
+This is one inclusion. That the shared block contains nothing else is a separate statement, not
+proved here; `odd_nonTau_not_fixed` is the nearest statement to it and is about `ireflLink l ≠ l`
+rather than about `oboxR`.
 
 DERIVED: the `2` and the `1`s are the odd constant and `ireflLink`'s link-length offset; `4` is the
 dimension. -/
@@ -4981,8 +4867,9 @@ theorem tauLink_mem_oboxR (τ : Fin 4) (p : ℤ)
 
 #print axioms tauLink_mem_oboxR
 
-/-- **AND SO THE STRADDLING PLAQUETTE'S BASE `τ`-LINK IS**, since `ioplqCross_base` puts it at
-`p - 1`.
+/-- And so a straddling plaquette's base `τ`-link is in the shared block, since `ioplqCross_base`
+puts
+it at `p - 1`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem baseTauLink_mem_oboxR (τ : Fin 4) (p : ℤ)
@@ -4993,10 +4880,10 @@ theorem baseTauLink_mem_oboxR (τ : Fin 4) (p : ℤ)
 
 #print axioms baseTauLink_mem_oboxR
 
-/-- **THE TRANSVERSE DIRECTION OF A STRADDLING PLAQUETTE** — the one that is not the axis.
-
-The `ℤ⁴` counterpart of `OddLagSplit.cDir`, and the same definition: `ioplqCross_axis` says one of the
-two plane directions is `τ`, so this picks the other.
+/-- The transverse direction of a plaquette: the plane direction that is not `τ`. `ioplqCross_axis`
+says
+one of the two plane directions of a straddling plaquette is `τ`, and this picks the other. The `ℤ⁴`
+counterpart of `OddLagSplit.cDir`.
 
 DERIVED: `4` is the dimension; the projections are structure fields. -/
 def ocDir (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) : Fin 4 :=
@@ -5004,13 +4891,13 @@ def ocDir (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) : Fin 4 :=
 
 #print axioms ocDir
 
-/-- **AND IT IS NOT THE AXIS.** Either branch: if the first direction is `τ` the second differs from
-it by non-degeneracy, and otherwise the first is not `τ` by the case.
+/-- `ocDir τ q ≠ τ` for a non-degenerate plaquette. If the first direction is `τ` the second differs
+from it by `hnd`, and otherwise the first is not `τ` by the case.
 
-**NON-DEGENERACY IS THE WHOLE HYPOTHESIS** — no box, no constant, no reflection. The plaquette need
-not lie in any `Λ`.
+Non-degeneracy is the whole hypothesis: no box, no constant and no reflection enter, and the
+plaquette need not lie in any `Λ`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ocDir_ne (τ : Fin 4) {q : MassGap.GibbsSpec.IPlaq} (hnd : q.1.1 ≠ q.1.2) :
     ocDir τ q ≠ τ := by
   show (if q.1.1 = τ then q.1.2 else q.1.1) ≠ τ
@@ -5022,31 +4909,32 @@ theorem ocDir_ne (τ : Fin 4) {q : MassGap.GibbsSpec.IPlaq} (hnd : q.1.1 ≠ q.1
 
 #print axioms ocDir_ne
 
-/-- **THE STRADDLING PLAQUETTE'S SECOND `τ`-LINK** — one transverse step along from the base one.
+/-- A plaquette's second `τ`-link, one transverse step along from the base one. Together with `(τ,
+q.2)`
+these are the two links the mirror fixes, and they are the plane gauge acting on the half. The `ℤ⁴`
+counterpart of `OddLagSplit.bLinkOf`.
 
-The `ℤ⁴` counterpart of `OddLagSplit.bLinkOf`. Together with `(τ, q.2)` these are the two links the
-mirror fixes, and they are the plane gauge that acts on the half.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def obLinkOf (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) : MassGap.InfiniteLattice.ILink :=
   (τ, MassGap.GibbsSpec.ishift (ocDir τ q) q.2)
 
 #print axioms obLinkOf
 
-/-- **THE MIRROR'S TRANSVERSE LINK** — the one at the base, which the reflection sends to height `p`.
+/-- The mirror's transverse link: the one at the base, which the reflection sends to height `p`. The
+`ℤ⁴` counterpart of `OddLagSplit.tLinkOf`.
 
-The `ℤ⁴` counterpart of `OddLagSplit.tLinkOf`. **⛔ AND IT TESTS NOTHING ABOUT THE PLANE.** On the
-torus `tLinkOf` tests which of the two fixed planes the plaquette sits at, because the two transverse
-links exchange roles between them. `ℤ⁴` has ONE mirror, so there is nothing to test — the only case
-split left is `ocDir`'s, which picks the transverse direction and is not about the reflection.
+It tests nothing about which plane the plaquette sits at. On the torus `tLinkOf` does, because the
+two fixed planes exchange the roles of the two transverse links; `ℤ⁴` has one mirror, and the only
+case split left is `ocDir`'s.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def otLinkOf (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) : MassGap.InfiniteLattice.ILink :=
   (ocDir τ q, q.2)
 
 #print axioms otLinkOf
 
-/-- The second `τ`-link is a boundary link of the plaquette in both orientations of the plane — third
+/-- The second `τ`-link is in the box. It is a boundary link in both orientations of the plane —
+third
 in the list when the plane leads with `τ`, second when it trails — so `GibbsSpec.mem_plaqsIn` places
 it in `Λ`.
 
@@ -5069,8 +4957,8 @@ theorem obLinkOf_mem_box (τ : Fin 4) (p : ℤ)
 
 #print axioms obLinkOf_mem_box
 
-/-- **AND THE SECOND `τ`-LINK IS ALSO IN THE SHARED BLOCK.** Its base is one TRANSVERSE step from
-`q.2`, which `ishift_coord` leaves at `p - 1`, so it reflects exactly as the base one does.
+/-- And the second `τ`-link is in the shared block too. Its base is one transverse step from `q.2`,
+which `ishift_coord` leaves at `p - 1`, so it reflects exactly as the base `τ`-link does.
 
 DERIVED: the `2` and the `1`s are the odd constant and `ireflLink`'s link-length offset; `4` is the
 dimension. -/
@@ -5096,11 +4984,11 @@ theorem obLinkOf_mem_oboxR (τ : Fin 4) (p : ℤ)
 /-- The mirror's transverse link is in the box, by the same boundary-word argument — fourth in the
 boundary word when `q.1.1 = τ`, first otherwise.
 
-Like `ocDir_ne`, this needs no reflection, and the branch is on `q.1.1 = τ` rather than on which
+Like `ocDir_ne` this needs no reflection, and the branch is on `q.1.1 = τ` rather than on which
 direction is the axis: at a general plaquette of `iplqAll` neither need be `τ`, and both branches
-land on a boundary link regardless. `iplqAll` membership is the whole hypothesis.
+land on a boundary link. `iplqAll` membership is the whole hypothesis.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem otLinkOf_mem_box (τ : Fin 4)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq}
     (hq : q ∈ iplqAll Λ) : otLinkOf τ q ∈ Λ := by
@@ -5115,14 +5003,13 @@ theorem otLinkOf_mem_box (τ : Fin 4)
 
 #print axioms otLinkOf_mem_box
 
-/-- **AND IT IS IN THE NEGATIVE BLOCK.** A transverse link reflects about `c` rather than `c - 1`, so
-its image sits at `(2p-1) - (p-1) = p`, strictly above its own height `p - 1`.
+/-- And it is in the negative block: a transverse link reflects about `c` rather than `c - 1`, so
+its
+image sits at `(2p - 1) - (p - 1) = p`, strictly above its own height `p - 1`.
 
-**⛔ THIS IS THE ASYMMETRY THAT MAKES THE ODD CONSTANT HARD.** With the three memberships above, the
-straddling plaquette has a link in `S`, a link in `T`, and two in `R`, and
-`ocross_links_distinct` shows the four are distinct — so its contribution is a genuine cross term
-between the two halves and cannot be written as a square, which is exactly what the even constant
-gives.
+With the memberships above, a straddling plaquette has one link in `S`, one in `T` and two in `R`,
+and `ocross_links_distinct` shows the four are distinct. Its contribution is therefore a cross term
+between the two halves rather than a square, which is what the even constant gives.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem otLinkOf_mem_oboxT (τ : Fin 4) (p : ℤ)
@@ -5140,23 +5027,21 @@ theorem otLinkOf_mem_oboxT (τ : Fin 4) (p : ℤ)
 
 #print axioms otLinkOf_mem_oboxT
 
-/-- **⭐⭐ ONE FORMULA FOR EVERY STRADDLING PLAQUETTE.**
-
-The plaquette's `Re tr` is the cross form of its `τ`-links acting on the positive half's link, against
-the mirror's link:
+/-- One formula for every straddling plaquette: its `Re tr` is the cross form of its `τ`-links
+acting on
+the positive half's link, against the mirror's link,
 
     Re tr (hol q U) = hsRe (U(A) · U(S) · U(B)⁻¹) (U(T))
 
-with `A = (τ, q.2)`, `B = obLinkOf`, `S = osLinkOf`, `T = otLinkOf`. This is the identification
-`CrossingIntegration` states as its remaining task and does not perform: its `hsRe (X (act g x)) (X y)`
-is this, with `act` the gauge action of the two `τ`-links.
+with `A = (τ, q.2)`, `B = obLinkOf τ q`, `S = osLinkOf τ q`, `T = otLinkOf τ q`. This is the
+identification `CrossingIntegration`'s `hsRe (X (act g x)) (X y)` reads, with `act` the gauge action
+of the two `τ`-links.
 
-**⛔ THE RIGHT-HAND SIDE IS THE SAME IN BOTH ORIENTATIONS OF THE PLANE**, by construction of `ocDir`;
-only the WORD's direction differs, and `Re tr` does not see inversion. The second branch's
-`group` then `re_trace_inv` IS `OddLagSplit.re_tr_hol_swap`'s argument, inlined — `ℤ⁴` does not avoid
-that work, it just does not need it as a separate canonicalisation step. What `ℤ⁴` does avoid is
-`invLink`, which existed only to put the torus's TWO mirror planes into one handedness, and there is
-one mirror here.
+The right-hand side is the same in both orientations of the plane by construction of `ocDir`; only
+the word's direction differs, and `Re tr` does not see inversion. The second branch's `group`
+followed by `OddLagSplit.re_trace_inv` is `OddLagSplit.re_tr_hol_swap`'s argument inlined. `invLink`
+is not needed here: on the torus it existed to put two mirror planes into one handedness, and there
+is one mirror on `ℤ⁴`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem re_tr_hol_ocross (τ : Fin 4) (p : ℤ)
@@ -5203,8 +5088,9 @@ theorem re_tr_hol_ocross (τ : Fin 4) (p : ℤ)
 
 #print axioms re_tr_hol_ocross
 
-/-- The half-link's DIRECTION is the plaquette's transverse one — in both orientations, because
-`ocDir` and `osLinkOf` split on the same condition into matching branches. No hypothesis needed.
+/-- The half-link's direction is the plaquette's transverse one, in both orientations, because
+`ocDir`
+and `osLinkOf` split on the same condition into matching branches. No hypothesis is needed.
 
 DERIVED: `4` is the dimension. -/
 theorem osLinkOf_dir (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) :
@@ -5215,7 +5101,7 @@ theorem osLinkOf_dir (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) :
 
 #print axioms osLinkOf_dir
 
-/-- And its BASE is one `τ` step up from the plaquette's. Here the orientation matters: the shifted
+/-- And its base is one `τ` step up from the plaquette's. The orientation matters here: the shifted
 direction is `q.1.1` in one branch and `q.1.2` in the other, and `ioplqCross_axis` says whichever it
 is equals `τ`.
 
@@ -5232,15 +5118,15 @@ theorem osLinkOf_base (τ : Fin 4) (p : ℤ)
 
 #print axioms osLinkOf_base
 
-/-- **⭐ THE FOUR ROLES ARE FOUR DISTINCT LINKS.**
-
-Without this, "one link in `S`, one in `T`, two in `R`" is not a count. Two mechanisms cover all six
-pairs: `ocDir_ne` separates the two `τ`-links from the two transverse ones by DIRECTION, and a
-one-step shift separates within each pair by BASE — the `τ`-links at `q.2` and `ishift (ocDir) q.2`,
-the transverse ones at `q.2` and `ishift τ q.2`.
+/-- The four roles at a straddling plaquette are four distinct links, so "one link in `S`, one in
+`T`,
+two in `R`" is a count. Two mechanisms cover all six pairs: `ocDir_ne` separates the two `τ`-links
+from the two transverse ones by direction, and a one-step shift separates within each pair by base —
+the `τ`-links at `q.2` and `ishift (ocDir τ q) q.2`, the transverse ones at `q.2` and `ishift τ
+q.2`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. The one-step shift that
-separates each pair lives in `osLinkOf` and `obLinkOf`, not in this statement. -/
+separates each pair lives in `osLinkOf` and `obLinkOf`, not in this signature. -/
 theorem ocross_links_distinct (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq}
     (hq : q ∈ ioplqCross τ (2 * p - 1) Λ) :
@@ -5282,13 +5168,13 @@ theorem ocross_links_distinct (τ : Fin 4) (p : ℤ)
 
 #print axioms ocross_links_distinct
 
-/-- **THE CONVERSE OF `ioplqCross_base`.** An axis plaquette based one step below the mirror is
-straddling.
+/-- The converse of `ioplqCross_base`: a plaquette of `iplqAll Λ` with a `τ` direction, based one
+step
+below the mirror, is straddling. With `ioplqCross_base` and `ioplqCross_axis` this characterises the
+straddling set at an odd constant as the plaquettes with a `τ` direction based at `p - 1`.
 
-Taken with `ioplqCross_base` and `ioplqCross_axis` this is a characterisation: the straddling set at
-an odd constant is exactly the plaquettes with a `τ` direction based at `p - 1`. **BOTH orientations
-of the plane are covered**, which matters because `ioplqCross` contains both copies of every
-geometric plaquette and `sum_re_tr_ioplqCross` relies on that.
+Both orientations of the plane are covered, which matters because `ioplqCross` contains both copies
+of every geometric plaquette and `sum_re_tr_ioplqCross` sums over them.
 
 DERIVED: the `2` and the `1`s are the odd constant and `ireflPlaq`'s axis offset; `4` is the
 dimension. -/
@@ -5307,13 +5193,12 @@ theorem mem_ioplqCross_of_base (τ : Fin 4) (p : ℤ)
 
 #print axioms mem_ioplqCross_of_base
 
-/-- **THE CONVERSE OF `ioplqPlus_base_ge`.** A plaquette based at or above the plane is positive — in
-all three branches of `ireflPlaq`, and with no hypothesis on direction.
+/-- The converse of `ioplqPlus_base_ge`: a plaquette of `iplqAll Λ` based at or above the plane is
+positive, in all three branches of `ireflPlaq` and with no hypothesis on direction. The axis
+branches reflect about `c - 1` and the transverse one about `c`; at an odd constant `p ≤ x_τ` clears
+both, the same collapse `ioblkS_of_le_coord` performs on links.
 
-The axis branches reflect about `c - 1` and the transverse one about `c`; at an odd constant
-`p ≤ x_τ` clears both, which is the same collapse `ioblkS_of_le_coord` performs on links.
-
-DERIVED: the `2` and the `1` make the constant odd — which is what lets one cut serve all three
+DERIVED: the `2` and the `1` make the constant odd, which is what lets one cut serve all three
 branches; `4` is the dimension. -/
 theorem mem_ioplqPlus_of_base (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink} {q : MassGap.GibbsSpec.IPlaq}
@@ -5332,38 +5217,38 @@ theorem mem_ioplqPlus_of_base (τ : Fin 4) (p : ℤ)
 
 #print axioms mem_ioplqPlus_of_base
 
-/-- The base site of the witness box's straddling plaquette — one `τ` step below the mirror at
+/-- The base site of the witness box's straddling plaquette, one `τ` step below the mirror at
 `p - 1/2`.
 
-CHOSEN: all four coordinates are set to `p - 1`. Only the `τ` one is forced — `ioplqCross_base` fixes
-it at `p - 1` and nothing constrains the other three, so they are set equal for brevity. `4` is the
+CHOSEN: all four coordinates are set to `p - 1`. Only the `τ` one is forced — `ioplqCross_base`
+fixes it at `p - 1` and nothing constrains the other three, so they are set equal. `4` is the
 dimension. -/
 def ocrossSite (p : ℤ) : MassGap.GibbsSpec.ISite := fun _ => p - 1
 
 #print axioms ocrossSite
 
-/-- The witness box's STRADDLING plaquette — based one step below the mirror.
+/-- The witness box's straddling plaquette: the `(τ, ν)` plane based at `ocrossSite p`, one step
+below
+the mirror.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def ocrossPlaq (τ ν : Fin 4) (p : ℤ) : MassGap.GibbsSpec.IPlaq := ((τ, ν), ocrossSite p)
 
-/-- And its POSITIVE one — the same plane, one `τ` step up, based at `p`.
+/-- And its positive companion: the same plane, one `τ` step up, based at `p`. A box holding only a
+straddling plaquette has `ioplqPlus` empty, and every statement about the positive half-action would
+hold vacuously there.
 
-**⛔ WITHOUT THIS THE CONTROL COVERS HALF THE SPLIT.** A box holding only a straddling plaquette has
-`ioplqPlus` empty, so every statement about the positive half-action is true and empty there.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def oplusPlaq (τ ν : Fin 4) (p : ℤ) : MassGap.GibbsSpec.IPlaq :=
   ((τ, ν), MassGap.GibbsSpec.ishift τ (ocrossSite p))
 
 #print axioms ocrossPlaq
 #print axioms oplusPlaq
 
-/-- **THE WITNESS BOX** — the boundary links of one straddling plaquette and one positive plaquette,
-closed under the reflection.
-
-`reflClosure` supplies the closure, so the box is specified by the plaquettes it must carry rather
-than by the links it happens to have.
+/-- The witness box: the boundary links of one straddling plaquette and one positive plaquette,
+closed
+under the reflection at `2 * p - 1`. `reflClosure` supplies the closure, so the box is specified by
+the plaquettes it must carry rather than by the links it happens to have.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 def ocrossBox (τ ν : Fin 4) (p : ℤ) : Finset MassGap.InfiniteLattice.ILink :=
@@ -5373,8 +5258,9 @@ def ocrossBox (τ ν : Fin 4) (p : ℤ) : Finset MassGap.InfiniteLattice.ILink :
 
 #print axioms ocrossBox
 
-/-- **AND IT IS REFLECTION-CLOSED** — the `hΛ` every lemma of the odd chain carries. One application
-of `reflClosure_closed`; no case split on direction and no arithmetic.
+/-- The witness box is closed under the reflection at `2 * p - 1` — the `hΛ` every lemma of the odd
+chain carries. One application of `reflClosure_closed`, with no case split on direction and no
+arithmetic.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossBox_refl_closed (τ ν : Fin 4) (p : ℤ) :
@@ -5383,11 +5269,17 @@ theorem ocrossBox_refl_closed (τ ν : Fin 4) (p : ℤ) :
 
 #print axioms ocrossBox_refl_closed
 
+/-- Every boundary link of `ocrossPlaq τ ν p` is in the witness box, by `subset_reflClosure`.
+
+DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossPlaq_links_mem (τ ν : Fin 4) (p : ℤ) {l : MassGap.InfiniteLattice.ILink}
     (hl : l ∈ MassGap.GibbsSpec.ilinks (ocrossPlaq τ ν p)) : l ∈ ocrossBox τ ν p :=
   subset_reflClosure τ (2 * p - 1) _
     (Finset.mem_union_left _ (List.mem_toFinset.mpr hl))
 
+/-- And every boundary link of `oplusPlaq τ ν p` is too.
+
+DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem oplusPlaq_links_mem (τ ν : Fin 4) (p : ℤ) {l : MassGap.InfiniteLattice.ILink}
     (hl : l ∈ MassGap.GibbsSpec.ilinks (oplusPlaq τ ν p)) : l ∈ ocrossBox τ ν p :=
   subset_reflClosure τ (2 * p - 1) _
@@ -5396,11 +5288,11 @@ theorem oplusPlaq_links_mem (τ ν : Fin 4) (p : ℤ) {l : MassGap.InfiniteLatti
 #print axioms ocrossPlaq_links_mem
 #print axioms oplusPlaq_links_mem
 
-/-- **⭐⭐ THE STRADDLING SET IS NOT ALWAYS EMPTY.**
-
-**⛔ WITHOUT THIS THE WHOLE CROSSING CHAIN WOULD BE VACUOUS.** `sum_re_tr_ioplqCross`,
-`hsRe_ocrossWord_planeAct`, `ocrossWord` and every membership above are statements ABOUT
-`ioplqCross`; each is true and empty when that set is.
+/-- `ioplqCross τ (2 * p - 1) (ocrossBox τ ν p)` contains `ocrossPlaq τ ν p`, so the straddling set
+is
+not always empty. `sum_re_tr_ioplqCross`, `hsRe_ocrossWord_planeAct`, `ocrossWord` and the
+memberships above are statements about `ioplqCross`, and each holds vacuously when that set is
+empty.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossBox_cross_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
@@ -5412,11 +5304,10 @@ theorem ocrossBox_cross_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 
 #print axioms ocrossBox_cross_nonempty
 
-/-- **⭐⭐ AND NEITHER IS THE POSITIVE SET.**
-
-**⛔ THIS IS THE HALF THE FIRST WITNESS MISSED.** With only a straddling plaquette in the box
-`ioplqPlus` is empty, and then `actionOn_ioplqPlus_ojoin` reads `0 = 0` and two of
-`wtFree_odd_paired`'s three factors read `exp 0 = 1` — true, and about nothing.
+/-- And `ioplqPlus τ (2 * p - 1) (ocrossBox τ ν p)` contains `oplusPlaq τ ν p`. With only a
+straddling
+plaquette in the box, `ioplqPlus` is empty, `actionOn_ioplqPlus_ojoin` reads `0 = 0` and two of
+`wtFree_odd_paired`'s three factors read `exp 0 = 1`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossBox_plus_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
@@ -5431,13 +5322,12 @@ theorem ocrossBox_plus_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 
 #print axioms ocrossBox_plus_nonempty
 
-/-- **⭐ AND THE SHARED BLOCK IS INHABITED**, which is what `sum_re_tr_ioplqCross` and
-`re_tr_hol_oblock` need before they can be used at all: both take a default
-`dflt : ↥(oboxR τ (2p-1) Λ)` as an explicit parameter, so a box with an empty shared block admits no
-application of either.
+/-- The witness box's shared block is inhabited, the straddling plaquette's base `τ`-link supplying
+the
+witness — `baseTauLink_mem_oboxR` read as an existence claim.
 
-The straddling plaquette's base `τ`-link supplies it — which is the same fact
-`baseTauLink_mem_oboxR` states, read as an existence claim.
+`sum_re_tr_ioplqCross` and `re_tr_hol_oblock` each take a default `dflt : ↥(oboxR τ (2p-1) Λ)` as an
+explicit parameter, so a box with an empty shared block admits no application of either.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossBox_oboxR_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
@@ -5447,12 +5337,10 @@ theorem ocrossBox_oboxR_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 
 #print axioms ocrossBox_oboxR_nonempty
 
-/-- **⭐ AND SO IS THE POSITIVE BLOCK**, which is the space the crossing integration integrates over
-and the domain of both half-variables.
-
-**⛔ EMPTY THERE WOULD MAKE THE WHOLE PAIRING AN IDENTITY BETWEEN TWO FIXED REALS**: `x` and `y`
-would both be the unique empty function, `oddHalfA` a constant, and `integrand_odd_eq` true and
-about nothing.
+/-- And its positive block is inhabited, which is the space the crossing integration integrates over
+and
+the domain of both half-variables. Were it empty, `x` and `y` would both be the unique empty
+function, `oddHalfA` a constant, and `integrand_odd_eq` an identity between two fixed reals.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ocrossBox_oboxS_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
@@ -5463,33 +5351,34 @@ theorem ocrossBox_oboxS_nonempty (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 
 #print axioms ocrossBox_oboxS_nonempty
 
-/-- **A NONEMPTY HALF-SPACE SUPPORT INSIDE THE WITNESS BOX** — the straddling plaquette's own
-half-link, and nothing else.
+/-- A nonempty half-space support inside the witness box: the straddling plaquette's own half-link,
+and
+nothing else.
 
-**⛔ WITHOUT THIS THE OBSERVABLE HALF OF `integrand_odd_eq` IS UNWITNESSED.** That lemma takes a
-support `S` with `↑S ⊆ posHalf τ p` and `S ⊆ Λ`; at `S = ∅` its hypothesis `hf` reads
-`∀ U V, f U = f V`, so `f` is constant, `obs_ojoin_local` and `obs_ireflConf_ojoin` both read
-`c = c`, and only the weight half of the identity carries content.
+`integrand_odd_eq` takes a support `S` with `↑S ⊆ posHalf τ p` and `S ⊆ Λ`; at `S = ∅` its
+hypothesis `hf` reads `∀ U V, f U = f V`, so `f` is constant, `obs_ojoin_local` and
+`obs_ireflConf_ojoin` both read `c = c`, and only the weight half of the identity carries content.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def ocrossSupp (τ ν : Fin 4) (p : ℤ) : Finset MassGap.InfiniteLattice.ILink :=
   {osLinkOf τ (ocrossPlaq τ ν p)}
 
 #print axioms ocrossSupp
 
-/-- And it is nonempty — which is the point of it.
+/-- And it is nonempty, being a singleton.
 
-DERIVED: no numeral; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ocrossSupp_nonempty (τ ν : Fin 4) (p : ℤ) : (ocrossSupp τ ν p).Nonempty :=
   Finset.singleton_nonempty _
 
 #print axioms ocrossSupp_nonempty
 
-/-- It lies in the positive half — at height exactly `p`, since `osLinkOf` steps one `τ` up from a
-base at `p - 1`.
+/-- It lies in the positive half, at height exactly `p`, since `osLinkOf` steps one `τ` up from a
+base
+at `p - 1`.
 
-DERIVED: no numeral of its own — the odd constant enters only through the proof's appeal to
-`osLinkOf_base`; `4` is the dimension. -/
+DERIVED: the signature writes no numeral of its own — the odd constant enters only through the
+proof's appeal to `osLinkOf_base`; `4` is the dimension. -/
 theorem ocrossSupp_subset_posHalf (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
     ↑(ocrossSupp τ ν p) ⊆ posHalf τ p := by
   intro l hl
@@ -5504,10 +5393,10 @@ theorem ocrossSupp_subset_posHalf (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 
 #print axioms ocrossSupp_subset_posHalf
 
-/-- And it lies in the box, being a boundary link of a plaquette the box was built around.
+/-- And it lies in the witness box, being a boundary link of a plaquette the box was built around.
 
-DERIVED: no numeral of its own — the odd constant enters only through the proof; `4` is the
-dimension. -/
+DERIVED: the signature writes no numeral of its own — the odd constant enters only through the
+proof; `4` is the dimension. -/
 theorem ocrossSupp_subset_box (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
     ocrossSupp τ ν p ⊆ ocrossBox τ ν p := by
   intro l hl
@@ -5518,37 +5407,36 @@ theorem ocrossSupp_subset_box (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) :
 #print axioms ocrossSupp_subset_box
 
 
-/-- **THE ASSIGNMENT, RUN BACKWARDS — FIRST `τ`-LINK.** A half-link at height `p` is the far
-transverse link of the plaquette based one `τ` step down, whose first `τ`-link sits at that base.
+/-- The plane assignment run backwards, first `τ`-link: a half-link at height `p` is the far
+transverse
+link of the plaquette based one `τ` step down, whose first `τ`-link sits at that base.
 
-**⛔ NO `if`.** `OddLagSplit.planeARaw` tests which of the torus's two straddling levels the link sits
-at; `ℤ⁴` has one mirror, so there is one case. A link this map is wrong about — a `τ`-link, or one no
-straddling plaquette of `Λ` owns — is caught by `oplanePick`, not by a test here.
+No case split. `OddLagSplit.planeARaw` tests which of the torus's two straddling levels the link
+sits at; `ℤ⁴` has one mirror. A link this map is wrong about — a `τ`-link, or one no straddling
+plaquette of `Λ` owns — is caught by `oplanePick` rather than by a test here.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def oplaneARaw (τ : Fin 4) (l : MassGap.InfiniteLattice.ILink) :
     MassGap.InfiniteLattice.ILink :=
   (τ, MassGap.GibbsSpec.iunshift τ l.2)
 
 #print axioms oplaneARaw
 
-/-- **AND THE SECOND** — one transverse step along, in the half-link's own direction.
+/-- The second one: one transverse step along, in the half-link's own direction.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def oplaneBRaw (τ : Fin 4) (l : MassGap.InfiniteLattice.ILink) :
     MassGap.InfiniteLattice.ILink :=
   (τ, MassGap.GibbsSpec.ishift l.1 (MassGap.GibbsSpec.iunshift τ l.2))
 
 #print axioms oplaneBRaw
 
-/-- **THE MEMBERSHIP GATE.** `ioblkR` is a filter of `Λ`, not of the whole lattice, so a backward
-assignment cannot simply return a link — it must return one `Λ` contains and the mirror fixes. This
-takes the raw link when both hold and the caller's default otherwise.
+/-- The membership gate. `oboxR` is a filter of `Λ` rather than of the whole lattice, so a backward
+assignment has to return a link that `Λ` contains and the mirror fixes; this returns the raw link
+when both hold and the caller's default `dflt` otherwise.
 
-**⛔ THE DEFAULT IS NEVER THE VALUE THAT MATTERS.** `oplaneA_osIdx` and `oplaneB_osIdx` show the raw
-link passes the gate at every half-link the crossing word actually reads. Everywhere else the gauge
-acts by conjugation on a variable the word does not read, which is why the periodic proof could get
-away with a constant.
+`oplaneA_osIdx` and `oplaneB_osIdx` show the raw link passes the gate at every half-link the
+crossing word reads. Elsewhere the gauge acts by conjugation on a variable the word does not read.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 noncomputable def oplanePick (τ : Fin 4) (p : ℤ)
@@ -5572,8 +5460,9 @@ theorem oplanePick_of_mem (τ : Fin 4) (p : ℤ)
 
 #print axioms oplanePick_of_mem
 
-/-- **⭐ THE PLANE ASSIGNMENT**, in the types `OddLagSplit.planeAct` takes: a map from the positive
-half's index set to the shared block's.
+/-- The plane assignment in the types `OddLagSplit.planeAct` takes: a map from the positive half's
+index
+set to the shared block's, given by `oplaneARaw` through the gate.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 noncomputable def oplaneA (τ : Fin 4) (p : ℤ)
@@ -5583,7 +5472,7 @@ noncomputable def oplaneA (τ : Fin 4) (p : ℤ)
 
 #print axioms oplaneA
 
-/-- The second one, likewise.
+/-- The second assignment, from `oplaneBRaw` through the same gate.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 noncomputable def oplaneB (τ : Fin 4) (p : ℤ)
@@ -5593,12 +5482,12 @@ noncomputable def oplaneB (τ : Fin 4) (p : ℤ)
 
 #print axioms oplaneB
 
-/-- **⭐⭐ AND IT IS RIGHT WHERE THE WORD READS IT.** At the half-link of a straddling plaquette, the
-backward map returns that plaquette's own base `τ`-link — `iunshift` undoes the `τ` step `osLinkOf`
-took — and `baseTauLink_mem_oboxR` clears the gate.
+/-- At the half-link of a straddling plaquette the backward map returns that plaquette's own base
+`τ`-link: `GibbsSpec.iunshift` undoes the `τ` step `osLinkOf` took, and `baseTauLink_mem_oboxR`
+clears the gate.
 
-**⛔ THIS IS WHERE A WRONG ASSIGNMENT WOULD SHOW UP.** `hsRe_ocrossWord_planeAct` holds for ANY `A`
-and `B`, so it could not catch a mistake here; this lemma and the sum identity can.
+`hsRe_ocrossWord_planeAct` holds for any `A` and `B`, so it does not constrain the assignment; this
+ lemma and the sum identity do.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem oplaneA_osIdx (τ : Fin 4) (p : ℤ)
@@ -5618,8 +5507,9 @@ theorem oplaneA_osIdx (τ : Fin 4) (p : ℤ)
 
 #print axioms oplaneA_osIdx
 
-/-- **AND SO IS THE SECOND.** The transverse step is taken in the half-link's own direction, which
-`osLinkOf_dir` identifies with the plaquette's `ocDir` — so the result is exactly `obLinkOf`.
+/-- And the second returns `obLinkOf`. The transverse step is taken in the half-link's own
+direction,
+which `osLinkOf_dir` identifies with the plaquette's `ocDir`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem oplaneB_osIdx (τ : Fin 4) (p : ℤ)
@@ -5640,11 +5530,10 @@ theorem oplaneB_osIdx (τ : Fin 4) (p : ℤ)
 
 #print axioms oplaneB_osIdx
 
-/-- **THE MIRROR CARRIES THE STRADDLING PLAQUETTE'S NEGATIVE LINK ONTO ITS POSITIVE ONE.**
-
-Both are transverse links in the same direction, based one `τ` step apart at `p - 1` and `p`, and the
-reflection about `p - 1/2` exchanges exactly those two heights. That the bases DIFFER is the content:
-the mirror moves the base, and `iunshift`/`ishift` is how far. The `ℤ⁴` counterpart of
+/-- The mirror carries a straddling plaquette's negative link onto its positive one:
+`ireflLink τ (2 * p - 1) (otLinkOf τ q) = osLinkOf τ q`. Both are transverse links in the same
+direction, based one `τ` step apart at `p - 1` and `p`, and the reflection about `p - 1/2` exchanges
+those two heights. The bases differ, and `iunshift`/`ishift` is by how much. The `ℤ⁴` counterpart of
 `OddLagSplit.reflLink_tLinkOf`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
@@ -5667,9 +5556,9 @@ theorem ireflLink_otLinkOf (τ : Fin 4) (p : ℤ)
 
 #print axioms ireflLink_otLinkOf
 
-/-- The three-block configuration, named. `integral_obox_mirror` already integrates against exactly
-this; giving it a name is what lets the straddling sum be stated without repeating the three
-disjointness proofs and the cover.
+/-- The three-block configuration, named. `integral_obox_mirror` integrates against exactly this;
+naming it lets the straddling sum be stated without repeating the three disjointness proofs and the
+cover.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 noncomputable def ojoin (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -5682,8 +5571,8 @@ noncomputable def ojoin (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLatt
 #print axioms ojoin
 
 /-- `ojoin` folded, for rewriting under a binder. `integral_obox_mirror` states its integrand with
-`join3` spelled out, and `rw` cannot refold that under the three integral binders because the block
-variables are bound there, so `simp only` does it with this.
+`OddLagSplit.join3` spelled out, and `rw` cannot refold that under the three integral binders
+because the block variables are bound there, so `simp only` does it with this.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ojoin_def (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
@@ -5696,6 +5585,9 @@ theorem ojoin_def (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.IL
 
 #print axioms ojoin_def
 
+/-- On the shared block, `ojoin` returns the shared block's variable.
+
+DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ojoin_mem_R (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (g : ↥(oboxR τ c Λ) → MassGap.SUN.SU N) (x : ↥(oboxS τ c Λ) → MassGap.SUN.SU N)
     (y : ↥(oboxT τ c Λ) → MassGap.SUN.SU N) {l : ↥Λ} (hl : l ∈ oboxR τ c Λ) :
@@ -5704,6 +5596,9 @@ theorem ojoin_mem_R (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.
     (obox_disjoint τ c Λ).1 (obox_disjoint τ c Λ).2.1 (obox_disjoint τ c Λ).2.2
     (obox_cover τ c Λ) g x y hl
 
+/-- On the positive block, it returns the positive half's variable.
+
+DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ojoin_mem_S (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (g : ↥(oboxR τ c Λ) → MassGap.SUN.SU N) (x : ↥(oboxS τ c Λ) → MassGap.SUN.SU N)
     (y : ↥(oboxT τ c Λ) → MassGap.SUN.SU N) {l : ↥Λ} (hl : l ∈ oboxS τ c Λ) :
@@ -5712,6 +5607,9 @@ theorem ojoin_mem_S (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.
     (obox_disjoint τ c Λ).1 (obox_disjoint τ c Λ).2.1 (obox_disjoint τ c Λ).2.2
     (obox_cover τ c Λ) g x y hl
 
+/-- And on the negative block, the negative half's.
+
+DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ojoin_mem_T (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.ILink)
     (g : ↥(oboxR τ c Λ) → MassGap.SUN.SU N) (x : ↥(oboxS τ c Λ) → MassGap.SUN.SU N)
     (y : ↥(oboxT τ c Λ) → MassGap.SUN.SU N) {l : ↥Λ} (hl : l ∈ oboxT τ c Λ) :
@@ -5724,9 +5622,9 @@ theorem ojoin_mem_T (τ : Fin 4) (c : ℤ) (Λ : Finset MassGap.InfiniteLattice.
 #print axioms ojoin_mem_S
 #print axioms ojoin_mem_T
 
-/-- **AND THE MIRROR'S VARIABLE THERE IS THE SECOND HALF-VARIABLE, UNTWISTED.** The straddling
-plaquette's negative link is TRANSVERSE, so the dagger branch of `omirrorT` is not taken — the
-reflection inverts only on `τ`-links.
+/-- At a straddling plaquette's negative link, the mirror's variable is the second half-variable
+untwisted. That link is transverse, so the dagger branch of `omirrorT` is not taken — the reflection
+inverts only on `τ`-links.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem omirrorT_otLinkOf (τ : Fin 4) (p : ℤ)
@@ -5756,16 +5654,16 @@ theorem omirrorT_otLinkOf (τ : Fin 4) (p : ℤ)
 
 #print axioms omirrorT_otLinkOf
 
-/-- **⭐⭐ ONE BLOCK'S CONTRIBUTION, IN THE CROSSING INTEGRATION'S VARIABLES.**
+/-- One straddling plaquette's contribution in the crossing integration's variables: at the
+configuration assembled from the three block variables, the plaquette reads the cross form of the
+gauge-acted positive-half variable against the mirror's, and the mirror's transported variable is
+the second half-variable.
 
-At the configuration assembled from the three block variables, a straddling plaquette reads the cross
-form of the gauge-acted positive-half variable against the mirror's — and the mirror's, transported,
-IS the second half-variable.
-
-**⛔ ALL FOUR LINKS PASS THROUGH `splice`.** On the torus the blocks filter the whole lattice and the
-join is already a configuration; here they filter `Λ`, so the holonomy sees the join against a
-boundary condition. Every one of the four is inside `Λ` — `baseTauLink_mem_box`, `obLinkOf_mem_box`,
-`osLinkOf_mem_box`, `otLinkOf_mem_box` — so `ω` is never read and the identity is independent of it.
+All four links pass through `GibbsSpec.splice`. On the torus the blocks filter the whole lattice and
+the join is already a configuration; here they filter `Λ`, so the holonomy sees the join against a
+boundary condition. All four are inside `Λ` — `baseTauLink_mem_box`, `obLinkOf_mem_box`,
+`osLinkOf_mem_box`, `otLinkOf_mem_box` — so `ω` is never read and the identity does not depend on
+it.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem re_tr_hol_oblock (τ : Fin 4) (p : ℤ)
@@ -5808,17 +5706,15 @@ theorem re_tr_hol_oblock (τ : Fin 4) (p : ℤ)
 
 #print axioms re_tr_hol_oblock
 
-/-- **⭐⭐⭐ THE WHOLE STRADDLING SUM IS ONE CROSS FORM.**
+/-- The whole straddling sum is one cross form. `ioplqCross` indexes the blocks directly, so the sum
+over the `Finset` is the sum over the block index, and `hsRe_ocrossWord` folds it into a single
+`hsRe`. Both orientations of every geometric plaquette appear and carry the same number; the direct
+sum holds the block twice.
 
-`ioplqCross` indexes the blocks directly, so the sum over the `Finset` is the sum over the block
-index, and `hsRe_ocrossWord` folds it into a single `hsRe`. Both orientations of every geometric
-plaquette appear and both carry the same number; the direct sum simply has the block twice.
+This is where `oplaneA` and `oplaneB` have to be the plaquette's own `τ`-links:
+`hsRe_ocrossWord_planeAct` holds for any assignment, and this identity does not.
 
-**⛔ THIS IS THE STEP `hXinv` COULD NOT CHECK.** `hsRe_ocrossWord_planeAct` holds for any assignment;
-this identity is where `oplaneA` and `oplaneB` have to be the plaquette's own `τ`-links, and a wrong
-choice would fail here.
-
-With `integral_obox_mirror` this puts the odd-constant pairing in exactly the shape
+With `integral_obox_mirror` it puts the odd-constant pairing in the shape
 `CrossingIntegration.wilson_crossing_pairing_nonneg` takes.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
@@ -5848,12 +5744,12 @@ theorem sum_re_tr_ioplqCross (τ : Fin 4) (p : ℤ)
 
 #print axioms sum_re_tr_ioplqCross
 
-/-- **EVERY COORDINATE OF THE WORD IS BOUNDED BY ONE** — `hXb`. Each is a unitary entry on a diagonal
-block or `0` off one, and `OddLagSplit.entry_blockDiagonal_fin_norm_le_one` is abstract in the block
-index, so the `ℤ⁴` family needs no argument of its own.
+/-- Every coordinate of the word is bounded by `1` — the `hXb` the crossing kernel takes. Each is a
+unitary entry on a diagonal block or `0` off one, and
+`OddLagSplit.entry_blockDiagonal_fin_norm_le_one` is abstract in the block index.
 
 DERIVED: `1` is the bound a unitary entry carries (`SUN.unitary_entry_norm_le_one`), not a chosen
-cut; the `2` and the `1` in the constant make it odd. `4` is the dimension.-/
+cut; the `2` and the `1` in the constant make it odd. `4` is the dimension. -/
 theorem abs_coord_ocrossWord_le_one (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (c : MassGap.CharacterExpansion.Coord
@@ -5866,7 +5762,8 @@ theorem abs_coord_ocrossWord_le_one (τ : Fin 4) (p : ℤ)
 
 #print axioms abs_coord_ocrossWord_le_one
 
-/-- And every entry is measurable in the half-variable — the same abstract lemma.
+/-- Every entry of the word is measurable in the half-variable, by the same abstract lemma
+(`OddLagSplit.measurable_entry_blockDiagonal_fin`).
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem measurable_entry_ocrossWord (τ : Fin 4) (p : ℤ)
@@ -5881,7 +5778,7 @@ theorem measurable_entry_ocrossWord (τ : Fin 4) (p : ℤ)
 
 #print axioms measurable_entry_ocrossWord
 
-/-- **AND SO IS EVERY COORDINATE** — `hXm`.
+/-- And so is every coordinate — the `hXm` the crossing kernel takes.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem measurable_coord_ocrossWord (τ : Fin 4) (p : ℤ)
@@ -5894,24 +5791,20 @@ theorem measurable_coord_ocrossWord (τ : Fin 4) (p : ℤ)
 
 #print axioms measurable_coord_ocrossWord
 
-/-- **⭐ THE STRADDLING FACTOR, IN THE CROSSING ENGINE'S VARIABLES.**
+/-- The straddling part of the Wilson action in the crossing engine's variables: since
+`wilsonDensity W = 1 - (1/N) · Re tr W`, it is the cardinality of `ioplqCross τ c Λ` minus `1/N`
+times the sum of the words' real traces. `sum_re_tr_ioplqCross` turns that sum into one cross form.
 
-`wilsonDensity W = 1 − (1/N)·Re tr W`, so the straddling part of the action is its own cardinality
-minus `1/N` times the sum of the words' real traces — and `sum_re_tr_ioplqCross` makes that sum one
-cross form.
-
-**⛔ IT IS AN ALGEBRAIC IDENTITY AND CARRIES NO `β`.** The SIGN is what its consumer will use: because
-the trace enters negatively, `e^{−β·S_cross} = e^{−β·card} · e^{(β/N)·(cross form)}`, so the exponent
-reaching the kernel is `β/N` and `0 ≤ β` becomes
-`CrossingIntegration.wilson_crossing_pairing_nonneg`'s `hβ`. That condition is physics, not
-bookkeeping — `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel
-fails to be positive-semidefinite at negative coupling — but it is stated where it is used, not
-here.
-
-The `ℤ⁴` counterpart of `OddLagSplit.actCrossO_eq_trace_sum`.
+An algebraic identity, carrying no `β`. The trace enters negatively, so
+`e^{-β·S_cross} = e^{-β·card} · e^{(β/N)·(cross form)}` and the exponent reaching the kernel is
+`β/N`, which is how `0 ≤ β` becomes
+`CrossingIntegration.wilson_crossing_pairing_nonneg`'s `hβ`; that hypothesis is stated where it is
+used, and `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel is
+not positive-semidefinite at negative coupling. The `ℤ⁴` counterpart of
+`OddLagSplit.actCrossO_eq_trace_sum`.
 
 DERIVED: `1` is the value of `wilsonDensity` at zero trace and the numerator of `1/N`; `N` is the
-rank. Both come from `WilsonAction.wilsonDensity`, not from here. `4` is the dimension.-/
+rank. Both come from `WilsonAction.wilsonDensity`, not from here. `4` is the dimension. -/
 theorem iactCross_eq_trace_sum (τ : Fin 4) (c : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (U : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
@@ -5933,60 +5826,55 @@ theorem iactCross_eq_trace_sum (τ : Fin 4) (c : ℤ)
 
 /-! ### The odd crossing structure on `ℤ⁴`, and how it differs from the torus
 
-Everything `CrossingIntegration.wilson_crossing_pairing_nonneg` asks about the GEOMETRY is now here:
-the four link roles (`(τ, q.2)`, `obLinkOf`, `osLinkOf`, `otLinkOf`), the per-plaquette identity
-`re_tr_hol_ocross`, the assignment `oplaneA`/`oplaneB` with `oplaneA_osIdx`/`oplaneB_osIdx`, the word
-`ocrossWord` with `hXinv` (`hsRe_ocrossWord_planeAct`), and the sum identity
-`sum_re_tr_ioplqCross`. `OddLagSplit.planeAct_measurePreserving` and `measurable_uncurry_planeAct`
-are abstract in `{ι κ}` and apply at these index types unchanged.
+The geometric inputs `CrossingIntegration.wilson_crossing_pairing_nonneg` reads are the four link
+roles (`(τ, q.2)`, `obLinkOf`, `osLinkOf`, `otLinkOf`), the per-plaquette identity
+`re_tr_hol_ocross`, the assignment `oplaneA`/`oplaneB` with `oplaneA_osIdx`/`oplaneB_osIdx`, the
+word `ocrossWord` with its `hXinv` (`hsRe_ocrossWord_planeAct`), and the sum identity
+`sum_re_tr_ioplqCross`. `OddLagSplit.planeAct_measurePreserving` and
+`OddLagSplit.measurable_uncurry_planeAct` are abstract in `{ι κ}` and apply at these index types
+unchanged.
 
-**EASIER HERE THAN ON THE TORUS.** `OddLagSplit.planeARaw` tests TWO straddling levels, `1` and `m`,
-because a periodic lattice has two mirror planes. They are disjoint only when `1 ≠ m`, which is the
-`2 ≤ m` hypothesis, and at `m = 1` a single link is owned by two plaquettes with different plane
-links so no assignment exists at all. **`ℤ⁴` has ONE mirror**: a transverse link at height `p` is the
-far link of the plaquette based at `p - 1`, `oplaneARaw` carries no case split, and there is no
-analogue of `2 ≤ m`. The same collapse removes `invLink` and `uplane`, which existed only to put the
-torus's two planes into one handedness. The ORIENTATION reconciliation is a separate matter and does
-not collapse: `re_tr_hol_ocross` inlines it in its second branch, where
-`OddLagSplit.re_tr_hol_swap`'s `group` and `re_trace_inv` reappear.
+`OddLagSplit.planeARaw` tests two straddling levels, `1` and `m`, because a periodic lattice has two
+mirror planes; they are disjoint only when `1 ≠ m`, which is that development's `2 ≤ m` hypothesis,
+and at `m = 1` a single link is owned by two plaquettes with different plane links. `ℤ⁴` has one
+mirror: a transverse link at height `p` is the far link of the plaquette based at `p - 1`,
+`oplaneARaw` carries no case split, and no analogue of `2 ≤ m` appears. The same collapse removes
+`OddLagSplit.invLink` and `OddLagSplit.uplane`, which put the torus's two planes into one
+handedness. The orientation reconciliation does not collapse: `re_tr_hol_ocross` inlines it in its
+second branch, where `OddLagSplit.re_tr_hol_swap`'s `group` and `OddLagSplit.re_trace_inv` reappear.
 
-**HARDER HERE IN ONE RESPECT.** The periodic blocks filter the whole lattice, so an assignment may
-return any fixed default and its membership in `oblkR` is automatic. `oboxR` filters `Λ`, so a
-default must lie in `Λ`, and for a half-link that is the `osLinkOf` of no straddling plaquette OF `Λ`
-the owning plaquette's `τ`-links need not be in `Λ` either. Hence `oplanePick`, which decides
-membership, and a default carried as an explicit parameter — the requirement sits in the signature
-rather than in a hidden nonemptiness assumption. The same layer appears in `re_tr_hol_oblock`, where
-the joined configuration reaches the holonomy through `GibbsSpec.splice`.
+The periodic blocks filter the whole lattice, so an assignment there may return any fixed default
+and its membership in `OddLagSplit.oblkR` is automatic. `oboxR` filters `Λ`, so a default has to lie
+in `Λ`, and for a half-link that is the `osLinkOf` of no straddling plaquette of `Λ` the owning
+plaquette's `τ`-links need not be in `Λ` either. Hence `oplanePick`, which decides membership, and a
+default carried as an explicit parameter, so the requirement sits in the signature rather than in a
+nonemptiness assumption. The same layer appears in `re_tr_hol_oblock`, where the joined
+configuration reaches the holonomy through `GibbsSpec.splice`. -/
 
-What remains is analytic, not geometric: the Wilson density in terms of `hsRe` at `β' = β/N`, the
-observable as a function of the half, the word's coordinate measurability and bound, and then the
-kernel. -/
+/-! ### Two hypotheses of the even pairing lemma at an odd constant
 
-/-! ### ⛔ Why the even pairing route does not extend to the odd constant
+`ActionSplit.pairing_nonneg_of_local` is the lemma the even chain instantiates. Two of its
+hypotheses read differently at an odd constant.
 
-`ActionSplit.pairing_nonneg_of_local` is the engine of the even chain, and it takes two hypotheses
-the odd constant breaks. Naming them here so the next attempt does not find out by trying.
+`hσR : ∀ i ∈ R, ∀ u, σ i u = u` asks the twist to act trivially on the shared block. `σ` on a
+`τ`-link is `ilinkDagger τ`, which is inversion, and at an odd constant the shared block is the
+`τ`-links straddling the mirror (`odd_tau_fixed_iff`), where
+`LatticeReflection.ireflConf_inverts_fixed_axis_link` says it inverts. Inversion is the identity
+only on elements with `g = g⁻¹`.
 
-**`hσR : ∀ i ∈ R, ∀ u, σ i u = u`** — the twist acts trivially on the shared block. `σ` on a
-`τ`-link is `ilinkDagger τ`, which is INVERSION, and at an odd constant the shared block is exactly
-the `τ`-links straddling the mirror (`odd_tau_fixed_iff`). So `σ` inverts there rather than fixing:
-`LatticeReflection.ireflConf_inverts_fixed_axis_link`. Inversion is the identity only on elements
-with `g = g⁻¹`, which `SU(3)` contains but is not made of.
+`hWloc : ∀ U V, (∀ i ∈ R, U i = V i) → W U = W V` asks the weight to read `R` alone. At an odd
+constant `W = e^{-βA_cross}` reads the straddling plaquettes, and those touch all three blocks: a
+cross plaquette `((τ, ν), x)` based at `x_τ = p - 1` reads two links in `ioblkR`, one in `ioblkS` at
+height `p`, and one in `ioblkT` at height `p - 1`.
 
-**`hWloc : ∀ U V, (∀ i ∈ R, U i = V i) → W U = W V`** — the weight reads `R` alone. Here
-`W = e^{-βA_cross}` reads the STRADDLING plaquettes, and those touch all three blocks: a cross
-plaquette `((τ,ν), x)` based at `x_τ = p-1` reads two links in `ioblkR`, one in `ioblkS` at height
-`p`, and one in `ioblkT` at height `p-1`.
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes neither hypothesis: it integrates the
+shared block out against a positive-semidefinite kernel rather than factoring it out as a constant,
+and that is where `0 ≤ β` enters. `OddLagSplit` is arranged the same way. -/
 
-Neither is a technicality that a sharper statement removes; they are the geometry of a mirror that
-cuts links rather than passing between them. **The odd route is
-`CrossingIntegration.wilson_crossing_pairing_nonneg`**, which asks for neither: it integrates the
-shared block out against a positive-semidefinite kernel instead of factoring it out as a constant,
-and that is where `0 ≤ β` enters. `OddLagSplit` does not reuse the even route either, for these
-reasons. -/
-
-/-- **THE REFLECTION CARRIES THE POSITIVE PLAQUETTES ONTO THE NEGATIVE ONES.** By involutivity, as
-for the links: a plaquette whose base the reflection moves down has an image whose base it moves up.
+/-- The reflection carries the positive plaquettes into the negative ones, by involutivity, as for
+the
+links: a plaquette whose base it moves down has an image whose base it moves up. Holds at any
+constant, given the box's stability.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflPlaq_ioplqPlus_mem_ioplqMinus (τ : Fin 4) (c : ℤ)
@@ -6001,7 +5889,7 @@ theorem ireflPlaq_ioplqPlus_mem_ioplqMinus (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflPlaq_ioplqPlus_mem_ioplqMinus
 
-/-- **AND BACK AGAIN**, which is what the bijection in the covariance proof needs on both sides.
+/-- And back, which is what the bijection in the covariance proof needs on both sides.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflPlaq_ioplqMinus_mem_ioplqPlus (τ : Fin 4) (c : ℤ)
@@ -6016,16 +5904,15 @@ theorem ireflPlaq_ioplqMinus_mem_ioplqPlus (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflPlaq_ioplqMinus_mem_ioplqPlus
 
-/-- **⭐⭐ THE ODD COVARIANCE: `A₊(ΘU) = A₋(U)`.**
+/-- The odd covariance `A₊(ΘU) = A₋(U)`, at a free constant `c` and for a class function `φ`. The
+reflection is a bijection from the positive plaquettes to the negative ones, and on each the
+mirrored holonomy is conjugate to the image's, which `hφ` does not see —
+`action_iplqPlus_ireflConf`'s
+argument with the constant left free.
 
-The reflection is a bijection from the positive plaquettes to the negative ones, and on each the
-mirrored holonomy is CONJUGATE to the image's, which a class function does not see. Exactly
-`action_iplqPlus_ireflConf`'s argument at a free constant.
-
-**⛔ AND THE STRADDLING TERM PAIRS WITH NOTHING.** It has an identity of its own —
-`ioplqCross_actionOn_ireflConf` proves `A_cross(ΘU) = A_cross(U)` — but no identity carrying it to a
-DIFFERENT block, because the reflection maps it to itself. That, with the twist inverting the axis
-links it reads, is why the odd case needs `0 ≤ β` and the even case does not.
+The straddling term has no partner block: the reflection maps it to itself, and
+`ioplqCross_actionOn_ireflConf` states `A_cross(ΘU) = A_cross(U)`. That, with the twist inverting
+the axis links it reads, is why the odd case carries `0 ≤ β` where the even case does not.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioplqPlus_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
@@ -6047,8 +5934,9 @@ theorem ioplqPlus_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms ioplqPlus_actionOn_ireflConf
 
-/-- **THE STRADDLING PLAQUETTES ARE MAPPED TO THEMSELVES.** A base the reflection does not move stays
-unmoved under the image, by involutivity.
+/-- The reflection maps the straddling plaquettes to themselves: a base it does not move stays
+unmoved
+under the image, by involutivity.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ireflPlaq_ioplqCross_mem_ioplqCross (τ : Fin 4) (c : ℤ)
@@ -6063,8 +5951,9 @@ theorem ireflPlaq_ioplqCross_mem_ioplqCross (τ : Fin 4) (c : ℤ)
 
 #print axioms ireflPlaq_ioplqCross_mem_ioplqCross
 
-/-- **⭐ THE STRADDLING ACTION DOES NOT SEE THE REFLECTION.** Same bijection argument as the
-covariance, with `ioplqCross` mapped to itself instead of to a mirror partner.
+/-- The straddling action is invariant under the reflection: `A_cross(ΘU) = A_cross(U)`, for a class
+function `φ`. The same bijection argument as the covariance, with `ioplqCross` mapped to itself
+instead of to a mirror partner.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioplqCross_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
@@ -6086,7 +5975,8 @@ theorem ioplqCross_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms ioplqCross_actionOn_ireflConf
 
-/-- **AND THE MIRROR: `A₋(ΘU) = A₊(U)`.** The same bijection with the two block memberships swapped.
+/-- The mirror statement, `A₋(ΘU) = A₊(U)`: the same bijection with the two block memberships
+swapped.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem ioplqMinus_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
@@ -6108,18 +5998,15 @@ theorem ioplqMinus_actionOn_ireflConf {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms ioplqMinus_actionOn_ireflConf
 
-/-- **⭐⭐ THE ODD SPLIT, IN THE FORM THE PAIRING ARGUMENT CONSUMES.**
+/-- The odd split in paired form,
 
-    A(U) = A₊(U) + A₊(ΘU) + A_cross(U)
+    A(U) = A₊(U) + A₊(ΘU) + A_cross(U),
 
-— the SAME `A₊` on both of the first two summands, which is what exponentiates to
-`e^{-βA(U)} = h(U) · h(ΘU) · W(U)` with `h = e^{-βA₊}` and `W = e^{-βA_cross}`. The `ℤ⁴`
+with the same `A₊` on both of the first two summands, which is what exponentiates to
+`e^{-βA(U)} = h(U) · h(ΘU) · W(U)` with `h = e^{-βA₊}` and `W = e^{-βA_cross}`. From
+`ioplq_actionOn_split` and `ioplqPlus_actionOn_ireflConf`; the paired shape comes from the latter,
+which invariance of the whole action (`action_iplqAll_ireflConf`) does not give. The `ℤ⁴`
 counterpart of `OddLagSplit.action_eq_split_odd`.
-
-**⛔ WHAT IS NOT WORTH STATING.** That the whole action is reflection-invariant is already
-`action_iplqAll_ireflConf`, at a free constant, and re-deriving it through this partition adds
-nothing and produces a less usable normal form. The content here is the PAIRED shape, and it comes
-from `ioplqPlus_actionOn_ireflConf` — which whole-action invariance does not imply.
 
 DERIVED: `c` is the caller's reflection constant; `4` is the dimension. -/
 theorem iodd_action_paired {G : Type} [Group G] (φ : G → ℝ)
@@ -6134,22 +6021,19 @@ theorem iodd_action_paired {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms iodd_action_paired
 
-/-- **⭐⭐ THE BOLTZMANN WEIGHT IN PAIRED FORM.**
+/-- The free-boundary Boltzmann weight in paired form,
+`wtFree = h(u) · h(Θu) · W_cross(u)` with `h = e^{-βA₊}` and `W_cross = e^{-βA_cross}`:
+`iodd_action_paired` exponentiated. This is the shape
+`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes.
 
-    Wᵧᵣᶒᵣ = h(U) · h(ΘU) · W_cross(U),   h = e^{−βA₊},  W_cross = e^{−βA_cross}
+At an even constant the third factor reads the shared block alone, so it comes out of both inner
+integrals and the pairing is a square. At an odd constant `A_cross` sums over plaquettes touching
+all three blocks (`otLinkOf_mem_oboxT` beside `osLinkOf_mem_oboxS`), so `W_cross` does not factor
+out and the pairing is an integral against a kernel, which is where `0 ≤ β` enters. The `ℤ⁴`
+counterpart of `OddLagSplit.boltz_eq_paired_cross`.
 
-`iodd_action_paired` splits the action three ways; exponentiating turns that sum into this product,
-which is the shape `CrossingIntegration.wilson_crossing_pairing_nonneg` consumes.
-
-**⛔ THIS IS WHERE THE ODD CASE PARTS FROM THE EVEN ONE.** At an EVEN constant the third factor reads
-the shared block alone, so it comes out of both inner integrals and the pairing is a SQUARE. At an
-ODD constant `A_cross` sums over plaquettes touching all three blocks (`otLinkOf_mem_oboxT` beside
-`osLinkOf_mem_oboxS`), so `W_cross` cannot be factored out and the pairing is an integral against a
-kernel — which is exactly why `0 ≤ β` becomes unavoidable.
-
-The `ℤ⁴` counterpart of `OddLagSplit.boltz_eq_paired_cross`.
-
-DERIVED: no numeral of its own; `c` is the caller's reflection constant and `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `c` is the caller's reflection constant and `4` is the
+dimension. -/
 theorem wtFree_odd_paired {G : Type} [Group G] (φ : G → ℝ)
     (hφ : ∀ g h : G, φ (g * h * g⁻¹) = φ h) (τ : Fin 4) (c : ℤ) (β : ℝ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
@@ -6172,20 +6056,17 @@ theorem wtFree_odd_paired {G : Type} [Group G] (φ : G → ℝ)
 
 #print axioms wtFree_odd_paired
 
-/-- **⭐⭐ THE POSITIVE HALF-ACTION IS A FUNCTION OF THE POSITIVE HALF ALONE.**
+/-- The positive half-action at an odd constant is a function of the positive half alone: changing
+the
+shared block variable `g` and the mirror block variable `y` does not move it. `ioplqPlus_links_mem`
+is what carries it — every boundary link of a positive plaquette is in `ioblkS`, `S` only rather
+than `S ∪ R`, which is where the odd constant differs from the even one.
 
-Change the shared block and the mirror block however you like; the positive part of the action does
-not move. `ioplqPlus_links_mem` is the whole content — every boundary link of a positive plaquette is
-in `ioblkS`, **`S` only and not `S ∪ R`**, which is where the odd constant is SHARPER than the even
-one and is what makes this true at all.
-
-This is what lets `h(U) = e^{−βA₊(U)}` in `wtFree_odd_paired` be the `a : Ω → ℝ` that
+This is what lets `h(U) = e^{-βA₊(U)}` in `wtFree_odd_paired` be the `a : Ω → ℝ` that
 `CrossingIntegration.wilson_crossing_pairing_nonneg` takes: a function of the half, not of the whole
-configuration.
+configuration. The `ℤ⁴` counterpart of `OddLagSplit.actPlusO_local`.
 
-The `ℤ⁴` counterpart of `OddLagSplit.actPlusO_local`.
-
-DERIVED: the `2` and the `1` make the constant odd — which is what collapses the two locality
+DERIVED: the `2` and the `1` make the constant odd, which is what collapses the two locality
 thresholds into one; `4` is the dimension. -/
 theorem actionOn_ioplqPlus_ojoin (φ : MassGap.SUN.SU N → ℝ) (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
@@ -6206,20 +6087,17 @@ theorem actionOn_ioplqPlus_ojoin (φ : MassGap.SUN.SU N → ℝ) (τ : Fin 4) (p
 
 #print axioms actionOn_ioplqPlus_ojoin
 
-/-- **⭐⭐⭐ AND THE MIRROR FACTOR IS THE SAME FUNCTION AT THE SECOND HALF-VARIABLE.**
+/-- On the positive block, the reflected configuration assembled with the mirror transport reads the
+second half-variable outright: `ireflConf τ (2p-1) (splice Λ (ojoin g x (omirrorT y)) ω) l` equals
+`splice Λ (ojoin g' y y') ω l` for `l ∈ ioblkS τ (2p-1) Λ`.
 
-`wtFree_odd_paired` writes the weight as `h(U) · h(ΘU) · W_cross(U)`. `actionOn_ioplqPlus_ojoin` makes
-the first factor a function of `x` alone; this makes the second the same function of `y`.
+The two daggers cancel. `ireflConf` inverts on `τ`-links and `omirrorT` carries the same dagger, so
+on the positive block the composition is `inv_inv`, with no appeal to conjugation invariance of `φ`
+and no trace identity; off the `τ`-links neither inverts and the two agree directly.
 
-**⛔ THE TWO DAGGERS CANCEL, AND NOTHING ELSE IS NEEDED.** `ireflConf` inverts on `τ`-links and
-`omirrorT` carries the same dagger, so on the positive block the reflected configuration reads `y`
-outright — `inv_inv`, with no appeal to conjugation invariance of `φ` and no trace identity. Off the
-`τ`-links neither inverts and the two agree directly.
-
-**THIS IS WHAT MAKES THE PAIRING TWO EVALUATIONS OF ONE FUNCTION.** Both inner integrals now run over
-`oboxS` against the same measure and read the same `a : Ω → ℝ`, which is the shape
-`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes. Without the dagger on `omirrorT` the
-negative half could not be moved onto the positive one at all.
+Both inner integrals therefore run over `oboxS` against the same measure and read the same
+`a : Ω → ℝ`, which is the shape
+`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem ireflConf_ojoin_eq_on_ioblkS (τ : Fin 4) (p : ℤ)
@@ -6259,10 +6137,9 @@ theorem ireflConf_ojoin_eq_on_ioblkS (τ : Fin 4) (p : ℤ)
 
 #print axioms ireflConf_ojoin_eq_on_ioblkS
 
-/-- **AND SO THE MIRROR FACTOR OF THE ACTION IS THE SAME FUNCTION AT THE SECOND HALF-VARIABLE.**
-
-`actionOn_congr` with `ioplqPlus_links_mem`: a positive plaquette reads only links of `ioblkS`, and
-on those the reflected configuration IS the plain one at `y`.
+/-- And so the mirror factor of the action is the same function at the second half-variable:
+`GibbsSpec.actionOn_congr` with `ioplqPlus_links_mem`, since a positive plaquette reads only links
+of `ioblkS` and `ireflConf_ojoin_eq_on_ioblkS` covers those.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem actionOn_ioplqPlus_ireflConf_ojoin (φ : MassGap.SUN.SU N → ℝ) (τ : Fin 4) (p : ℤ)
@@ -6284,16 +6161,14 @@ theorem actionOn_ioplqPlus_ireflConf_ojoin (φ : MassGap.SUN.SU N → ℝ) (τ :
 
 #print axioms actionOn_ioplqPlus_ireflConf_ojoin
 
-/-- **⭐⭐ A HALF-SPACE-SUPPORTED OBSERVABLE IS A FUNCTION OF THE POSITIVE HALF ALONE.**
+/-- An observable whose support `S` lies in `posHalf τ p` and inside `Λ` is a function of the
+positive
+half alone: changing the shared block variable and the mirror block variable does not move it.
 
-Change the shared block and the mirror block however you like; an observable whose support lies in
-`posHalf τ p` does not move.
-
-**⛔ AND THIS IS WHERE THE PARITY PAYS AGAIN.** `ioblkS_of_le_coord` sends ANY link of `Λ` at height
-`≥ p` into the positive block — `τ`-link or transverse — because a `τ`-link needs `2x > 2p-2`, a
-transverse one `2x > 2p-1`, and no even number lies between. At an EVEN constant the two thresholds
-separate and a half-space-supported observable can reach the shared block, so this statement would be
-false as written.
+`ioblkS_of_le_coord` sends any link of `Λ` at height `≥ p` into the positive block — `τ`-link or
+transverse — because a `τ`-link needs `2x > 2p - 2`, a transverse one `2x > 2p - 1`, and no even
+number lies between. At an even constant the two thresholds separate and a half-space-supported
+observable can reach the shared block, so the statement is specific to the odd constant.
 
 DERIVED: the `2` and the `1` make the constant odd, which is what collapses the two thresholds; `4`
 is the dimension. -/
@@ -6319,16 +6194,12 @@ theorem obs_ojoin_local (τ : Fin 4) (p : ℤ)
 
 #print axioms obs_ojoin_local
 
-/-- **⭐⭐⭐ AND ITS REFLECTION IS THE SAME OBSERVABLE AT THE SECOND HALF-VARIABLE.**
+/-- And its reflection is the same observable at the second half-variable — the statement
+`actionOn_ioplqPlus_ireflConf_ojoin` makes for the action, from the same pointwise lemma
+`ireflConf_ojoin_eq_on_ioblkS`, because both read only links of `ioblkS`.
 
-`Θf` evaluated at the configuration assembled with the mirror transport is `f` evaluated at `y` — the
-same statement `actionOn_ioplqPlus_ireflConf_ojoin` makes for the action, from the same pointwise
-lemma, because both read only links of `ioblkS`.
-
-**⛔ THIS IS THE STEP THAT MAKES THE PAIRING A PAIRING.** `ν(ΘF · F)` becomes an integral of
-`a(x) · a(y)` against a kernel in `x` and `y` — two independent draws from ONE space, read by ONE
-function. Without the dagger on `omirrorT` the mirror's variables could not be moved onto the
-positive block and there would be no such `a`.
+With `obs_ojoin_local` this turns `ν(ΘF · F)` into an integral of `a(x) · a(y)` against a kernel in
+`x` and `y`: two independent draws from one space, read by one function.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem obs_ireflConf_ojoin (τ : Fin 4) (p : ℤ)
@@ -6351,20 +6222,19 @@ theorem obs_ireflConf_ojoin (τ : Fin 4) (p : ℤ)
 
 #print axioms obs_ireflConf_ojoin
 
-/-- **⭐⭐⭐ THE STRADDLING FACTOR IS A CONSTANT TIMES THE CROSSING KERNEL.**
+/-- The straddling factor is a constant times the crossing kernel,
 
-    e^{−β·A_cross} = e^{−β·card} · e^{(β/N)·hsRe(X(g·x), X(y))}
+    e^{-β·A_cross} = e^{-β·card} · e^{(β/N)·hsRe(X(g·x), X(y))}.
 
 `iactCross_eq_trace_sum` turns the straddling action into its cardinality minus `1/N` times a sum of
-real traces, and `sum_re_tr_ioplqCross` turns that sum into ONE cross form of the crossing word. What
-is left is exactly the kernel `CrossingIntegration.wilson_crossing_pairing_nonneg` integrates.
+real traces, and `sum_re_tr_ioplqCross` turns that sum into one cross form of the crossing word.
+What is left is the kernel `CrossingIntegration.wilson_crossing_pairing_nonneg` integrates.
 
-**⛔ IT IS AN IDENTITY AND CARRIES NO HYPOTHESIS ON `β`** — it holds at every real `β` and asserts no
-nonnegativity. What it fixes is the SIGN: `wilsonDensity` enters the action with a minus on the
-trace, so `e^{−βA_cross}` carries `+β/N` on the cross form, and the exponent reaching the kernel is
-`β/N` rather than `−β/N`. That is what makes `0 ≤ β` the right condition where the kernel is finally
-applied — `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel fails
-to be positive-semidefinite below zero — but the condition is stated there, not here.
+An identity at every real `β`, asserting no nonnegativity. It fixes the sign: `wilsonDensity` enters
+the action with a minus on the trace, so `e^{-βA_cross}` carries `+β/N` on the cross form, and the
+exponent reaching the kernel is `β/N`. `0 ≤ β` is stated where the kernel is applied, and
+`CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel is not
+positive-semidefinite below zero.
 
 DERIVED: the `2` and the `1` make the constant odd; `N` is the rank, from
 `WilsonAction.wilsonDensity` and not chosen here; `4` is the dimension. -/
@@ -6396,20 +6266,16 @@ theorem exp_cross_ojoin (τ : Fin 4) (p : ℤ)
 
 #print axioms exp_cross_ojoin
 
-/-- **⭐⭐ THE OBSERVABLE THE CROSSING INTEGRATION TAKES** — its `a : Ω → ℝ`, a function of the
-POSITIVE HALF alone.
+/-- The observable the crossing integration takes as its `a : Ω → ℝ`: the observable `f` times the
+positive half-weight, read at the configuration assembled with the constant-one gauge on the shared
+and mirror blocks. No inhabitant of `oboxR` or `oboxT` is needed, `1` being `Pi.one`.
 
-The observable times the positive half-weight, read at the configuration assembled with the
-constant-one gauge on the other two blocks.
-
-**⛔ THE TWO FACTORS IGNORE THOSE REFERENCE VALUES FOR DIFFERENT REASONS.** The WEIGHT factor ignores
-them unconditionally — `actionOn_ioplqPlus_ojoin` carries no hypothesis, because
-`ioplqPlus_links_mem` puts every link a positive plaquette reads in `ioblkS`. The OBSERVABLE factor
-ignores them only when `f` has half-space support, which is `obs_ojoin_local`'s hypothesis and which
-this definition does NOT require — `f` here is arbitrary, so at a general `f` the first factor does
-depend on the choice. Callers that need the choice to be immaterial must supply that support.
-
-No inhabitant of `oboxR` or `oboxT` is needed either way: `1` is `Pi.one`.
+The two factors ignore those reference values for different reasons. The weight factor ignores them
+unconditionally, by `actionOn_ioplqPlus_ojoin`, which carries no hypothesis because
+`ioplqPlus_links_mem` puts every link a positive plaquette reads in `ioblkS`. The observable factor
+ignores them when `f` has half-space support, which is `obs_ojoin_local`'s hypothesis and which this
+definition does not require: `f` here is arbitrary, so at a general `f` the value depends on the
+choice. A caller that needs the choice to be immaterial supplies that support.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. The `1`s in the body are
 the group identity. -/
@@ -6425,7 +6291,8 @@ noncomputable def oddHalfA (τ : Fin 4) (p : ℤ)
 
 #print axioms oddHalfA
 
-/-- The configuration `oddHalfA` reads, as a measurable function of the half-variable.
+/-- The configuration `oddHalfA` reads is a measurable function of the half-variable —
+`GibbsSpec.measurable_splice_left` composed with `measurable_obox_join3_mid`.
 
 DERIVED: the `2` and the `1` of the constant make it odd; the two other `1`s are the group identity,
 the constant-one gauge on the shared and mirror blocks; `4` is the dimension. -/
@@ -6439,14 +6306,13 @@ theorem measurable_oddHalfA_conf (τ : Fin 4) (p : ℤ)
 
 #print axioms measurable_oddHalfA_conf
 
-/-- **`ham` — the observable is measurable**, given that `f` is.
+/-- `oddHalfA` is measurable — the `ham` the crossing kernel takes — given that `f` is.
+Measurability of
+`f` is a hypothesis because `oddHalfA` takes an arbitrary `f`; the torus twin gets it from `aObs`'s
+concrete definition (`OddLagSplit.measurable_aHalf`).
 
-**⛔ IT CANNOT BE UNCONDITIONAL.** `oddHalfA` takes an arbitrary `f`, so measurability of `f` is a
-hypothesis here where the torus twin gets it from `aObs`'s concrete definition
-(`OddLagSplit.measurable_aHalf`).
-
-DERIVED: no numeral of its own — the odd constant reaches this only through `oddHalfA`'s body; `4`
-is the dimension. -/
+DERIVED: the signature writes no numeral of its own — the odd constant reaches this only through
+`oddHalfA`'s body; `4` is the dimension. -/
 theorem measurable_oddHalfA (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (β : ℝ)
@@ -6460,15 +6326,14 @@ theorem measurable_oddHalfA (τ : Fin 4) (p : ℤ)
 
 #print axioms measurable_oddHalfA
 
-/-- **`hab` — the observable is bounded**, given that `f` is.
-
-The positive half-weight is bounded because the Wilson density lies in `[0, 2]`
-(`abs_exp_neg_actionOn_le`), so the bound is the observable's own times a factor set by the number of
-positive plaquettes and the coupling. **Nothing is chosen** — both are the caller's.
+/-- `oddHalfA` is bounded — the `hab` the crossing kernel takes — given that `f` is. The positive
+half-weight is bounded because the Wilson density lies in `[0, 2]` (`abs_exp_neg_actionOn_le`), so
+the bound is the observable's own times a factor set by the number of positive plaquettes and the
+coupling, both the caller's.
 
 DERIVED: the `2` is the range of the Wilson density (`WilsonAction.wilsonDensity_le_two`), the
-cardinality is the positive plaquette set's own, and the `2` and `1` of the constant make it odd; `4`
-is the dimension. The `0`s are the one in `N ≠ 0` and the sign in `0 ≤ CF`.-/
+cardinality is the positive plaquette set's own, and the `2` and `1` of the constant make it odd;
+`4` is the dimension. The `0`s are the one in `N ≠ 0` and the sign in `0 ≤ CF`. -/
 theorem abs_oddHalfA_le (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (β : ℝ) (hN : N ≠ 0)
@@ -6485,25 +6350,23 @@ theorem abs_oddHalfA_le (τ : Fin 4) (p : ℤ)
 #print axioms abs_oddHalfA_le
 
 
-/-- **⭐⭐⭐ THE PAIRING INTEGRAND, IN THE CROSSING INTEGRATION'S VARIABLES.**
+/-- The pairing integrand in the crossing integration's variables:
 
     f(ΘU) · f(U) · W(U)  =  const · (a(x) · a(y) · e^{(β/N)·hsRe(X(g·x), X(y))})
 
 pointwise, at the configuration assembled from the three block variables with the mirror transport.
-Every factor has been identified: `obs_ireflConf_ojoin` and `obs_ojoin_local` for the observable,
+The factors come from `obs_ireflConf_ojoin` and `obs_ojoin_local` for the observable,
 `actionOn_ioplqPlus_ireflConf_ojoin` and `actionOn_ioplqPlus_ojoin` for the two half-weights, and
 `exp_cross_ojoin` for the straddling factor.
 
-**⛔ IT IS NOT YET THE CONSUMER'S INTEGRAND.**
-`CrossingIntegration.wilson_crossing_pairing_nonneg` takes `a x * a y * exp (β * hsRe …)` — no
-constant factor, and `β` multiplying `hsRe` directly. So the consumer is instantiated at
-`β' = β/N` and the constant is pulled out first. The parenthesisation here puts the constant
-OUTERMOST AND LEFTMOST for exactly that reason, matching `OddLagSplit.oddIntegrand_join`, so
-`integral_const_mul` fires with no reassociation.
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes `a x * a y * exp (β * hsRe …)`, with no
+constant factor and `β` multiplying `hsRe` directly, so it is instantiated at `β' = β/N` and the
+constant is pulled out first. The parenthesisation here puts the constant outermost and leftmost for
+that reason, matching `OddLagSplit.oddIntegrand_join`, so `integral_const_mul` fires with no
+reassociation.
 
-**⛔ THE TWO HALVES ARE READ BY THE SAME FUNCTION.** `a` appears once at `x` and once at `y`, not two
-different functions of two different spaces — that is what `omirrorT`'s dagger bought, and it is what
-makes the pairing a pairing rather than a coupling.
+`a` appears once at `x` and once at `y` — one function of one space, which is what `omirrorT`'s
+dagger provides.
 
 DERIVED: the `2` and the `1` make the constant odd; `N` is the rank; `4` is the dimension. -/
 theorem integrand_odd_eq (τ : Fin 4) (p : ℤ)
@@ -6544,7 +6407,9 @@ theorem integrand_odd_eq (τ : Fin 4) (p : ℤ)
 
 #print axioms integrand_odd_eq
 
-/-- **THE PAIRING INTEGRAND ON THE BOX** — `f(ΘU)·f(U)` against the free-boundary Wilson weight.
+/-- The pairing integrand on the box: `f(ΘU) · f(U)` against the free-boundary Wilson weight, with
+`Θ`
+the reflection at the odd constant `2 * p - 1`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 noncomputable def oddPairIntegrand (τ : Fin 4) (p : ℤ)
@@ -6558,8 +6423,8 @@ noncomputable def oddPairIntegrand (τ : Fin 4) (p : ℤ)
 
 #print axioms oddPairIntegrand
 
-/-- The pairing integrand is measurable, given that `f` is. The reflection is CONTINUOUS
-(`LatticeReflection.continuous_ireflConf`), so the reflected factor costs nothing beyond composing.
+/-- The pairing integrand is measurable, given that `f` is. The reflection is continuous
+(`LatticeReflection.continuous_ireflConf`), so the reflected factor costs only a composition.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem measurable_oddPairIntegrand (τ : Fin 4) (p : ℤ)
@@ -6575,12 +6440,13 @@ theorem measurable_oddPairIntegrand (τ : Fin 4) (p : ℤ)
 
 #print axioms measurable_oddPairIntegrand
 
-/-- The integrand is bounded — two copies of the observable's bound times the weight's, which is
-`wtFree_le` and rests on the Wilson density lying in `[0, 2]`.
+/-- The pairing integrand is bounded by two copies of the observable's bound times the weight's,
+which
+is `wtFree_le` and rests on the Wilson density lying in `[0, 2]`.
 
 DERIVED: the `2` is the range of the Wilson density (`WilsonAction.wilsonDensity_le_two`) and the
-cardinality is the box's own plaquette set — neither is chosen; the `0` is the sign in `N ≠ 0` and
-`0 ≤ CF`; `4` is the dimension. -/
+cardinality is the box's own plaquette set; the `0` is the sign in `N ≠ 0` and in `0 ≤ CF`; `4` is
+the dimension. -/
 theorem abs_oddPairIntegrand_le (τ : Fin 4) (p : ℤ)
     {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (β : ℝ) (hN : N ≠ 0)
@@ -6597,26 +6463,19 @@ theorem abs_oddPairIntegrand_le (τ : Fin 4) (p : ℤ)
 
 #print axioms abs_oddPairIntegrand_le
 
-/-- **⭐⭐⭐ THE ODD-CONSTANT PAIRING INTEGRAL IS NONNEGATIVE, AT FINITE VOLUME.**
+/-- `0 ≤ ∫ f(ΘU) · f(U) · W(U)` over the box, for `f` supported in the positive half-space and
+`0 ≤ β`, at the odd constant `2 * p - 1` — Osterwalder–Seiler reflection positivity at a link
+reflection on `ℤ⁴`, the mirror at `p - 1/2` that cuts `τ`-links.
 
-    0 ≤ ∫ f(ΘU) · f(U) · W(U)
-
-for `f` supported in the positive half-space. This is Osterwalder--Seiler reflection positivity at a
-LINK reflection — the mirror at `p - 1/2` that cuts `τ`-links in half — on `ℤ⁴`, and it is the
-half-step the even chain cannot reach: `ActionSplit.pairing_nonneg_of_local` needs the twist to act
-trivially on the shared block and the residual weight to read that block alone, and an odd constant
-breaks both.
-
-The proof is the SAME ARGUMENT as `OddLagSplit.odd_crossing_integral_nonneg`, re-derived here — that
-lemma is the torus statement and carries `hm : n = 2 * m` and `2 ≤ m`, so it cannot be applied.
 `integral_obox_mirror` puts both half-variables on `oboxS`, `integrand_odd_eq` identifies the
 integrand, `integral_const_mul` takes the constant out through all three integrals, and
 `CrossingIntegration.wilson_crossing_pairing_nonneg` — abstract in the group, the space and the word
-— closes it.
+— closes it. The same argument as `OddLagSplit.odd_crossing_integral_nonneg`, re-derived because
+that lemma is the torus statement and carries `hm : n = 2 * m` and `2 ≤ m`.
 
-**⛔ `0 ≤ β` IS USED ONCE, ON THE LAST LINE**, as `0 ≤ β/N`. Everything before it is an identity.
+`0 ≤ β` is used once, at the end, as `0 ≤ β/N`; everything before is an identity.
 `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows the Wilson cross kernel is not
-positive-semidefinite below zero, so the hypothesis is the sign of the coupling, not an artefact.
+positive-semidefinite below zero.
 
 DERIVED: the `2` and the `1` make the constant odd; the `0` is the sign asserted and the one in
 `N ≠ 0`; `N` is the rank, from `wilsonDensity`; `4` is the dimension. -/
@@ -6718,38 +6577,29 @@ theorem odd_pairing_integral_nonneg (τ : Fin 4) (p : ℤ)
 
 #print axioms odd_pairing_integral_nonneg
 
-/-- **⭐⭐⭐ THE FREE-BOUNDARY STATE OF A BOX IS REFLECTION POSITIVE AT THE ODD CONSTANT.**
+/-- `0 ≤ stateFree … ((latticeReflection τ (2 * p - 1)).θ f * f)` for a continuous `f` supported in
+the
+positive half-space — `InfiniteReflection.ReflPositiveOn`'s content at one finite volume, at the
+mirror `p - 1/2` that cuts `τ`-links. `odd_pairing_integral_nonneg` is the numerator and
+`partFree_pos` the denominator; the observable's bound comes from
+`InfiniteLattice.bounded_of_continuous`, `IConf` being a product of compact groups.
 
-    0 ≤ ⟨Θf · f⟩_Λ
+Three hypotheses distinguish it from the even counterpart
+`stateFree_refl_nonneg_of_halfSpace_support`, which is general in `φ` under `hφm`, `hφ0`, `hφ2` and
+`hφc`, takes no condition on `N`, and asks nothing of the box beyond reflection-closure. This one:
 
-for `f` supported in the positive half-space — `InfiniteReflection.ReflPositiveOn`'s content at one
-finite volume, at the mirror `p - 1/2` that CUTS `τ`-links.
-
-`odd_pairing_integral_nonneg` is the numerator and `partFree_pos` the denominator; the observable's
-bound is `InfiniteLattice.bounded_of_continuous`, since `IConf` is a product of compact groups and a
-continuous real function on it is bounded outright.
-
-**⛔ IT CARRIES THREE RESTRICTIONS THE EVEN COUNTERPART DOES NOT**, and they are not bookkeeping.
-`stateFree_refl_nonneg_of_halfSpace_support` is general in `φ` under `hφm`/`hφ0`/`hφ2`/`hφc`, needs no
-condition on `N`, and asks nothing of the box beyond reflection-closure. This one:
-
-* takes `dflt : ↥(oboxR τ (2p-1) Λ)`, so **the box's SHARED BLOCK must be nonempty**. At an odd
-  constant that block is exactly the `τ`-links based at `p - 1`, and a reflection-closed box built
-  from transverse links alone satisfies `hΛ` with `oboxR = ∅`, where this theorem cannot be stated at
-  all;
-* hard-wires `φ` to `WilsonAction.wilsonDensity`, because the crossing kernel is the Wilson one; and
+* takes `dflt : ↥(oboxR τ (2p-1) Λ)`, so the box's shared block must be nonempty. At an odd constant
+  that block is the `τ`-links based at `p - 1`, and a reflection-closed box built from transverse
+  links alone satisfies `hΛ` with `oboxR = ∅`, where this statement cannot be formed;
+* fixes `φ` to `WilsonAction.wilsonDensity`, the crossing kernel being the Wilson one;
 * takes `hN : N ≠ 0`.
 
-**⛔ AND THE EVEN ROUTE FAILS UNDER EXACTLY THE FIRST OF THOSE, NOT IN GENERAL.**
-`ActionSplit.pairing_nonneg_of_local` needs `hσR` — the twist trivial on the shared block — and
-`hWloc` — the residual weight reading that block alone. When `oboxR` is NONEMPTY both fail at an odd
-constant: the shared block is the `τ`-links, where the twist is INVERSION
-(`LatticeReflection.ireflConf_inverts_fixed_axis_link`), and the weight reads straddling plaquettes
-touching all three blocks (`osLinkOf_mem_oboxS` beside `otLinkOf_mem_oboxT`). When it is EMPTY both
-hold vacuously — `ioplqCross` is empty too, so the residual weight is `1` — and the even route works
-while this theorem does not apply. **The two conditions are the same condition.** Neither direction is
-formalised here; this paragraph is a reading of the two hypothesis sets, not a theorem, and
-`eq_empty_of_stable_two_mirrors` is what a proved no-go in this file looks like.
+When `oboxR` is empty, `ioplqCross` is empty too and the residual weight is `1`, so
+`ActionSplit.pairing_nonneg_of_local`'s `hσR` and `hWloc` hold vacuously there; when it is nonempty
+both fail at an odd constant, by
+`LatticeReflection.ireflConf_inverts_fixed_axis_link` and by `osLinkOf_mem_oboxS` beside
+`otLinkOf_mem_oboxT`. Neither direction is formalised here; `eq_empty_of_stable_two_mirrors` is the
+proved no-go in this file.
 
 DERIVED: the `2` and the `1` make the constant odd; the `0` is the sign asserted and the one in
 `N ≠ 0`; `4` is the dimension. -/
@@ -6784,12 +6634,12 @@ theorem stateFree_odd_refl_nonneg (τ : Fin 4) (p : ℤ)
 
 #print axioms stateFree_odd_refl_nonneg
 
-/-- **`Re tr` AT THE WITNESS BOX'S OWN HALF-LINK** — an observable supported exactly on
-`ocrossSupp`.
+/-- `Re tr` at the witness box's own half-link, as a `C(IConf (SU 3), ℝ)` — an observable supported
+exactly on `ocrossSupp`, built with `HalfSpaceAlgebra.halfLinkObs`.
 
-CHOSEN: `3` is SU(3)'s rank. Nothing in this definition forces it — `Re tr` reads any `SU N` — but
-`ocrossObs_nonconstant` needs `CrossingIntegration.trace_gNeg`, which exists at `3`. `4` is the
-dimension. -/
+CHOSEN: `3` is `SU 3`'s matrix dimension. Nothing in this definition forces it, since `Re tr` reads
+any `SU N`, but `ocrossObs_nonconstant` uses `CrossingIntegration.trace_gNeg`, which is stated at
+`3`. `4` is the dimension. -/
 noncomputable def ocrossObs (τ ν : Fin 4) (p : ℤ) :
     C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3), ℝ) :=
   MassGap.HalfSpaceAlgebra.halfLinkObs (osLinkOf τ (ocrossPlaq τ ν p))
@@ -6798,7 +6648,8 @@ noncomputable def ocrossObs (τ ν : Fin 4) (p : ℤ) :
 
 #print axioms ocrossObs
 
-/-- It reads that link and nothing else — the `hf` `odd_pairing_integral_nonneg` takes.
+/-- `ocrossObs` reads its own link and nothing else — the `hf` that `odd_pairing_integral_nonneg`
+takes.
 
 CHOSEN: `3` is inherited from `ocrossObs` and is not forced here. `4` is the dimension. -/
 theorem ocrossObs_local (τ ν : Fin 4) (p : ℤ)
@@ -6815,18 +6666,17 @@ theorem ocrossObs_local (τ ν : Fin 4) (p : ℤ)
 
 #print axioms ocrossObs_local
 
-/-- **⭐ AND IT IS NOT CONSTANT** — at SU(3), `Re tr 1 = 3` against `Re tr gNeg = -1`.
+/-- `ocrossObs` is not constant at `SU 3`: it reads `3` at the identity configuration and `-1` at
+the
+constant `CrossingIntegration.gNeg` configuration.
 
-**⛔ WITHOUT THIS THE OBSERVABLE HALF OF THE KEYSTONE IS DECORATIVE.** `odd_pairing_integral_nonneg`
-assumes only `N ≠ 0`, and at `N = 1` the group `SU 1` is a singleton, so `IConf` is a singleton,
-EVERY observable is constant, and the conclusion holds with `0 ≤ β` never used. The theorem is true
-for a trivial reason on a member of its own hypothesis set. This says the non-trivial case is real:
-at SU(3) the integrand genuinely varies with the half-variable, which is the only case the Clay
-problem is about.
+`odd_pairing_integral_nonneg` assumes only `N ≠ 0`, and at `N = 1` the group `SU 1` is a singleton,
+so `IConf` is a singleton, every observable is constant and the conclusion holds with `0 ≤ β` never
+used. This exhibits a case where the integrand varies with the half-variable.
 
-DERIVED: `3` is SU(3)'s rank, and here it IS forced — `trace_gNeg` is what separates the two
-configurations, and it exists at `3`. `4` is the dimension. The `1` and `-1` of the proof are the
-trace of the identity and `trace_gNeg`'s computed value; neither is in the statement. -/
+DERIVED: `3` is `SU 3`'s matrix dimension, and here it is forced — `trace_gNeg` is what separates
+the two configurations and is stated at `3`. `4` is the dimension. The `1` and `-1` of the proof are
+the trace of the identity and `trace_gNeg`'s computed value; neither is in the statement. -/
 theorem ocrossObs_nonconstant (τ ν : Fin 4) (p : ℤ) :
     ∃ U V : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3),
       ocrossObs τ ν p U ≠ ocrossObs τ ν p V := by
@@ -6841,27 +6691,24 @@ theorem ocrossObs_nonconstant (τ ν : Fin 4) (p : ℤ) :
 
 #print axioms ocrossObs_nonconstant
 
-/-- **⭐⭐⭐ THE KEYSTONE, AT A BOX AND AN OBSERVABLE THAT EXIST.**
-
-Every hypothesis of `odd_pairing_integral_nonneg` discharged at once, with no hypothesis left open
-but `0 ≤ β` and `ν ≠ τ`:
+/-- `odd_pairing_integral_nonneg` at the witness box and the witness observable, leaving only `0 ≤
+β`
+and `ν ≠ τ` on the caller. Each hypothesis is discharged here:
 
 * `hΛ` — `ocrossBox_refl_closed`;
-* `dflt` — `ocrossBox_oboxR_nonempty`, so the SHARED BLOCK is inhabited and the theorem can be
-  stated at all;
+* `dflt` — `ocrossBox_oboxR_nonempty`, so the shared block is inhabited and the statement can be
+  formed;
 * `S`, `hS`, `hSΛ` — `ocrossSupp` with `ocrossSupp_subset_posHalf` and `ocrossSupp_subset_box`;
 * `f`, `hfm`, `hf`, `hfb` — `ocrossObs`, continuous hence measurable, local by `ocrossObs_local`,
   bounded by `InfiniteLattice.bounded_of_continuous`.
 
-**⛔ THIS IS WHAT THE WITNESS LEMMAS ARE FOR.** Separately they say four sets are inhabited;
-composed, they say the keystone's hypothesis set is. And `ocrossBox_cross_nonempty`,
-`ocrossBox_plus_nonempty`, `ocrossBox_oboxS_nonempty` and `ocrossObs_nonconstant` say the conclusion
-is not empty at it — straddling plaquettes exist, positive plaquettes exist, the integration space is
-not a point, and the observable is not constant.
+`ocrossBox_cross_nonempty`, `ocrossBox_plus_nonempty`, `ocrossBox_oboxS_nonempty` and
+`ocrossObs_nonconstant` say the conclusion is not vacuous at this data: straddling plaquettes exist,
+positive plaquettes exist, the integration space is not a point, and the observable is not constant.
 
 CHOSEN: `3` is inherited from `ocrossObs`; `odd_pairing_integral_nonneg` is general in `N` under
-`N ≠ 0` and every other input here is `N`-free, so this instance is narrower than what it proves — it
-is pinned at `3` so that `ocrossObs_nonconstant` applies to the same observable.
+`N ≠ 0` and every other input here is `N`-free, so this instance is narrower than what it proves —
+it is pinned at `3` so that `ocrossObs_nonconstant` applies to the same observable.
 DERIVED: the first `0` is the sign of the coupling and the second the sign asserted; `4` is the
 dimension. -/
 theorem ocrossBox_odd_pairing_nonneg (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
@@ -6879,38 +6726,31 @@ theorem ocrossBox_odd_pairing_nonneg (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ)
 
 #print axioms ocrossBox_odd_pairing_nonneg
 
-/-- **⭐⭐⭐ REFLECTION POSITIVITY AT THE ODD CONSTANT, ON THE HALF-SPACE ALGEBRA.**
-
-The limit of the free-boundary states over any reflection-closed exhausting family is reflection
-positive at the mirror `p - 1/2`, on the whole half-space algebra.
-
-**IT IS NOT `reflPositive_of_tendsto_halfSpaceAlg` AT A DIFFERENT CONSTANT.** It is strictly
-narrower: it adds `hR`, adds `0 ≤ β`, adds `hN : N ≠ 0`, and replaces the abstract class function
-`φ` — which includes `φ = 0`, the free theory — by `WilsonAction.wilsonDensity`, because the crossing
-kernel is the Wilson one. It drops `hφc`, which the odd route never needs. And `B3` is this file's
-name for the EVEN statement (`HalfSpaceReflPositive`), which this does not instantiate.
+/-- The limit of the free-boundary states over a reflection-stable family of boxes is reflection
+positive at the mirror `p - 1/2`, on the whole of `HalfSpaceAlgebra.halfSpaceAlg τ p`.
 
 `InfiniteReflection.reflPositive_of_eventually_pointwise` does the transport: a member of
 `halfSpaceAlg` carries its own finite support `S`, `hexh` puts `S` inside the box eventually, and
-`stateFree_odd_refl_nonneg` gives the sign at each such box. **The support is chosen per observable,
-not once for the algebra** — `halfSpaceAlg` is a directed union and is local to no single box.
+`stateFree_odd_refl_nonneg` gives the sign at each such box. The support is chosen per observable
+rather than once for the algebra, `halfSpaceAlg` being a directed union local to no single box.
 
-**⛔ IT CARRIES `hR`, WHICH THE EVEN LIFT DOES NOT.** The box must have a NONEMPTY shared block,
-because `stateFree_odd_refl_nonneg` takes an inhabitant of it. At an odd constant that block CONTAINS
-the `τ`-links based at `p - 1` (`tauLink_mem_oboxR`; that it contains nothing else is not proved
-here, though `odd_nonTau_not_fixed` is most of it), so a family built only from transverse links
-satisfies `hbox` and fails `hR`. **Reading the two hypothesis sets** — not a theorem, and neither
-direction is formalised — that is also the condition under which the EVEN route would work, so it may
-be no gap at all; but it is a real hypothesis and a family has to meet it.
+Against `reflPositive_of_tendsto_halfSpaceAlg`, the even statement, this adds `hR`, adds `0 ≤ β`,
+adds `hN : N ≠ 0`, and fixes `φ` to `WilsonAction.wilsonDensity` — which excludes `φ = 0`, the free
+theory — because the crossing kernel is the Wilson one. It drops `hφc`, which the odd route does not
+use. `HalfSpaceReflPositive`, the even statement this file calls `B3`, is not instantiated by it.
 
-**IT IS EVENTUAL, NOT UNIVERSAL**, because a cube of radius `n` centred on the constant contains no
-site at height `p - 1` until `n ≥ |p|`. At `p = 0` that is every `n` and the universal form would
-hold; at other `p` it would not, so the eventual form is what a statement over all `p` can carry.
+`hR` asks the box to have a nonempty shared block, since `stateFree_odd_refl_nonneg` takes an
+inhabitant of it. At an odd constant that block contains the `τ`-links based at `p - 1`
+(`tauLink_mem_oboxR`; that it contains nothing else is not proved here, though
+`odd_nonTau_not_fixed` is most of it), so a family built only from transverse links satisfies `hbox`
+and fails `hR`.
+
+`hR` is eventual rather than universal because a cube of radius `n` centred on the constant contains
+no site at height `p - 1` until `n ≥ |p|`; at `p = 0` that holds at every `n`.
 `symCube_oboxR_nonempty` discharges it.
 
-**⛔ AND AT `N ≤ 1` THE CONCLUSION IS EMPTY** — `SU 1` is a singleton, so `halfSpaceAlg` is the
-constants and `ReflPositiveOn` says nothing. `halfSpaceAlg_has_nonconstant` is the witness at
-SU(3).
+At `N ≤ 1` the conclusion is empty: `SU 1` is a singleton, so `halfSpaceAlg` is the constants and
+`ReflPositiveOn` says nothing. `halfSpaceAlg_has_nonconstant` is a witness at `SU 3`.
 
 DERIVED: the `2` and the `1` make the constant odd; the `0` is the sign of the coupling and the one
 in `N ≠ 0`; `4` is the dimension. -/
@@ -6941,14 +6781,12 @@ theorem reflPositive_of_tendsto_halfSpaceAlg_odd
 
 
 
-/-- **AT AN ODD CONSTANT NO TRANSVERSE LINK IS FIXED.** A non-`τ` link reflects about `c` itself, so
-fixing it needs `2x_τ = c`, which an odd `c` cannot satisfy.
-
-This is the exact mirror of `no_tau_link_fixed`, which says the same of `τ`-links at an EVEN
-constant.
+/-- At the odd constant `2 * p - 1` no transverse link is fixed: a non-`τ` link reflects about `c`
+itself, so fixing it needs `2 x_τ = c`, which an odd `c` cannot satisfy. The mirror of
+`no_tau_link_fixed`, which says the same of `τ`-links at an even constant.
 
 DERIVED: the `2` is the plane-to-constant conversion and the `1` the half-step, together making the
-constant odd — which is the whole content; `4` is the dimension. -/
+constant odd, which is the content; `4` is the dimension. -/
 theorem odd_nonTau_not_fixed (τ : Fin 4) (p : ℤ) {l : MassGap.InfiniteLattice.ILink}
     (h : l.1 ≠ τ) : ireflLink τ (2 * p - 1) l ≠ l := by
   intro heq
@@ -6958,13 +6796,14 @@ theorem odd_nonTau_not_fixed (τ : Fin 4) (p : ℤ) {l : MassGap.InfiniteLattice
 
 #print axioms odd_nonTau_not_fixed
 
-/-- **AND AN AXIS LINK IS FIXED EXACTLY WHEN IT STRADDLES THE MIRROR.** A `τ`-link reflects about
-`c - 1 = 2p - 2`, so it is fixed exactly at base `p - 1` — the link spanning `[p-1, p]`, which is the
-one the mirror at `p - 1/2` cuts in half.
+/-- An axis link is fixed at the odd constant exactly when it straddles the mirror: a `τ`-link
+reflects
+about `c - 1 = 2p - 2`, so it is fixed exactly at base `p - 1` — the link spanning `[p-1, p]`, which
+is the one the mirror at `p - 1/2` cuts.
 
-**⛔ AND THE DAGGER INVERTS ON IT.** `ireflConf` inverts on `τ`-links, so unlike the even case the
-twist does NOT act trivially on the shared block. That is why the odd pairing is an integral against
-a kernel rather than a square, and why it needs `0 ≤ β`.
+`ireflConf` inverts on `τ`-links, so the twist does not act trivially on the shared block as it does
+in the even case. That is why the odd pairing is an integral against a kernel rather than a square,
+and why it carries `0 ≤ β`.
 
 DERIVED: the `2` is the plane-to-constant conversion, the `1`s are the half-step and `ireflLink`'s
 link length; `4` is the dimension. -/
@@ -6988,29 +6827,29 @@ theorem odd_tau_fixed_iff (τ : Fin 4) (p : ℤ) {l : MassGap.InfiniteLattice.IL
 
 #print axioms odd_tau_fixed_iff
 
-/-! ### A box family that is reflection-stable AND exhausting -/
+/-! ### A box family that is reflection-stable and exhausting -/
 
-/-- The coordinate cube of radius `n` centred at the REFLECTION CONSTANT `c`, in every coordinate.
+/-- The coordinate cube of radius `n` centred at the reflection constant `c` in every coordinate.
+`c` is
+the constant, not the plane — the mirror it names sits at `c / 2`. Centring on `c` rather than on
+the plane is what makes `symCube` stable without further argument.
 
-`c` is the constant, not the plane — the mirror it names sits at `c / 2`. Centring the cube on `c`
-rather than on the plane is what makes `symCube` stable for free.
-
-DERIVED: `4` is the spacetime dimension, `ILink`'s own; `c` and `n` are the caller's constant and
-radius. The pair `(direction, site)` a link is comes from `×ˢ` and carries no numeral. -/
+DERIVED: the signature writes no numeral; `c` and `n` are the caller's constant and radius, and `4`
+is the dimension carried by `ILink` inside the body. The pair `(direction, site)` a link is comes
+from `×ˢ`. -/
 noncomputable def coordCube (c : ℤ) (n : ℕ) : Finset MassGap.InfiniteLattice.ILink :=
   Finset.univ ×ˢ Fintype.piFinset (fun _ : Fin 4 => Finset.Icc (c - n) (c + n))
 
-/-- **THE SYMMETRISED CUBE.** The cube together with its mirror image — stable by construction, and
-still finite.
+/-- The symmetrised cube: `coordCube c n` together with its image under `ireflLink τ c`. Finite, and
+stable by construction.
 
-DERIVED: `c` is the caller's reflection constant; `n` is the caller's radius; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant; `n` is the caller's radius; `4` is the dimension.
+-/
 noncomputable def symCube (τ : Fin 4) (c : ℤ) (n : ℕ) : Finset MassGap.InfiniteLattice.ILink :=
   coordCube c n ∪ (coordCube c n).image (ireflLink τ c)
 
-/-- **THE SYMMETRISED CUBE IS THE REFLECTION CLOSURE OF THE PLAIN ONE.** Same construction, stated
-once: `reflClosure` unions a set with its reflected image, which is what `symCube` does to
-`coordCube`.
+/-- `symCube τ c n = reflClosure τ c (coordCube c n)`, by `rfl`: `reflClosure` unions a set with its
+reflected image, which is what `symCube` does to `coordCube`.
 
 DERIVED: `c` is the caller's reflection constant; `n` is the radius; `4` is the dimension. -/
 theorem symCube_eq_reflClosure (τ : Fin 4) (c : ℤ) (n : ℕ) :
@@ -7018,23 +6857,26 @@ theorem symCube_eq_reflClosure (τ : Fin 4) (c : ℤ) (n : ℕ) :
 
 #print axioms symCube_eq_reflClosure
 
-/-- **IT IS REFLECTION-STABLE** — `hbox`, discharged. `reflClosure_closed`, at the plain cube: a
-member reflects into the image part, and a member of the image part reflects back by involutivity.
+/-- The symmetrised cube is closed under the reflection — the `hbox` the limit statements take. One
+application of `reflClosure_closed` at the plain cube: a member reflects into the image part, and a
+member of the image part reflects back by involutivity. Holds at any constant.
 
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem symCube_refl_stable (τ : Fin 4) (c : ℤ) (n : ℕ) :
     ∀ lk ∈ symCube τ c n, ireflLink τ c lk ∈ symCube τ c n :=
   reflClosure_closed τ c (coordCube c n)
 
 #print axioms symCube_refl_stable
 
-/-- **The plane link**: direction `ν`, every coordinate `p`.
+/-- The plane link: direction `ν`, every coordinate `p`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 def planeLink (ν : Fin 4) (p : ℤ) : MassGap.InfiniteLattice.ILink := (ν, fun _ => p)
 
-/-- **It is in the symmetrised cube** once the radius reaches `p`.
+/-- `planeLink ν p` is in `symCube τ (2 * p) n` once the radius reaches `|p|`, which is what `hlo`
+and
+`hhi` ask.
 
 DERIVED: the `2` is the even reflection constant `2 * p`; `4` is the dimension. -/
 theorem planeLink_mem_symCube (τ ν : Fin 4) (p : ℤ) {n : ℕ}
@@ -7048,7 +6890,7 @@ theorem planeLink_mem_symCube (τ ν : Fin 4) (p : ℤ) {n : ℕ}
 
 #print axioms planeLink_mem_symCube
 
-/-- **AND IT IS IN THE SHARED BLOCK**, so the cube's plane is not empty.
+/-- And it is in the shared block, by `transverse_link_mem_boxR`, so the cube's plane is not empty.
 
 DERIVED: the `2` is the even reflection constant `2 * p`; `4` is the dimension. -/
 theorem planeLink_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
@@ -7059,21 +6901,21 @@ theorem planeLink_mem_boxR (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
 
 #print axioms planeLink_mem_boxR
 
-/-- **A PLANE FUNCTION WITH A ZERO.** Reads one shared-block link through `Re tr`, and is squashed
-so that no bound on the trace is needed: it lies in `[0, 1)` by construction.
+/-- A plane function with a zero: it reads one shared-block link through `HaarVariance.reTr` and is
+squashed by `1 - exp (-(·)^2)`, so it lies in `[0, 1)` and needs no bound on the trace.
 
-DERIVED: the leading `1` is `exp`'s value at `0`, so that the probe VANISHES where `Re tr` reads
-`m + 2`; the `2` in `m + 2` is the least rank at which two group elements exist; the exponent `2`
-makes the argument of `exp` nonpositive whatever the sign of the difference; `4` is the
-dimension. -/
+DERIVED: the leading `1` is `exp`'s value at `0`, so the probe vanishes where `Re tr` reads `m + 2`;
+the `2` in `m + 2` is the least matrix dimension at which two group elements exist; the exponent `2`
+makes the argument of `exp` nonpositive whatever the sign of the difference; `4` is the dimension.
+-/
 noncomputable def planeProbe (m : ℕ) {τ : Fin 4} {p : ℤ}
     {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
     (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2)) : ℝ :=
   1 - Real.exp (-(MassGap.HaarVariance.reTr (w ℓ) - ((m : ℝ) + 2)) ^ 2)
 
-/-- **It is continuous.**
+/-- `planeProbe m ℓ` is continuous, `HaarVariance.continuous_reTr` composed with the squashing.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem continuous_planeProbe (m : ℕ) {τ : Fin 4} {p : ℤ}
     {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ)) :
     Continuous (planeProbe m ℓ) := by
@@ -7084,10 +6926,10 @@ theorem continuous_planeProbe (m : ℕ) {τ : Fin 4} {p : ℤ}
 
 #print axioms continuous_planeProbe
 
-/-- **And bounded by `1`**, with no bound on the trace.
+/-- And bounded by `1`, with no bound on the trace: the subtracted exponential lies in `(0, 1]`.
 
-DERIVED: the `1` is the bound, which is `exp`'s value at `0`; the `2` in `m + 2` is the least
-rank carrying two group elements; `4` is the dimension. -/
+DERIVED: the `1` is the bound, which is `exp`'s value at `0`; the `2` in `m + 2` is the least matrix
+dimension carrying two group elements; `4` is the dimension. -/
 theorem planeProbe_abs_le_one (m : ℕ) {τ : Fin 4} {p : ℤ}
     {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
     (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2)) : |planeProbe m ℓ w| ≤ 1 := by
@@ -7103,10 +6945,10 @@ theorem planeProbe_abs_le_one (m : ℕ) {τ : Fin 4} {p : ℤ}
 
 #print axioms planeProbe_abs_le_one
 
-/-- **It vanishes where `Re tr` reads `m + 2`** — at the identity, by `HaarVariance.reTr_one`.
+/-- It vanishes where `Re tr` reads `m + 2` — at the identity, by `HaarVariance.reTr_one`.
 
-DERIVED: the `0` is the value; the `1` is the identity `w` takes at `ℓ`; the `2` in `m + 2` is
-the least rank carrying two group elements; `4` is the dimension. -/
+DERIVED: the `0` is the value; the `1` is the identity `w` takes at `ℓ`; the `2` in `m + 2` is the
+least matrix dimension carrying two group elements; `4` is the dimension. -/
 theorem planeProbe_eq_zero (m : ℕ) {τ : Fin 4} {p : ℤ}
     {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥(boxR τ p Λ))
     (w : ↥(boxR τ p Λ) → MassGap.SUN.SU (m + 2))
@@ -7118,7 +6960,7 @@ theorem planeProbe_eq_zero (m : ℕ) {τ : Fin 4} {p : ℤ}
 
 #print axioms planeProbe_eq_zero
 
-/-- **And is positive where it does not** — at `HaarVariance.flipEl`, which reads `m − 2`.
+/-- And is positive where it does not — at `HaarVariance.flipEl`, which reads `m - 2`.
 
 DERIVED: the `0` is the bound; the `2` in `m + 2` is `reTr`'s value at the identity; `4` is the
 dimension. -/
@@ -7136,25 +6978,21 @@ theorem planeProbe_pos (m : ℕ) {τ : Fin 4} {p : ℤ}
 
 #print axioms planeProbe_pos
 
-/-- **⭐⭐⭐ THE BOX'S WILSON REFLECTION FORM IS STRICTLY POSITIVE AT SOME OBSERVABLE.**
+/-- An observable at which the box's Wilson reflection form is strictly positive, at every `k`. Each
+hypothesis of `irefl_box_pairing_pos_of_plane_factor_dressed` is discharged at concrete data: the
+carrier `symCube τ (2 * p) n` is reflection-closed (`symCube_refl_stable`), the density is
+`WilsonAction.wilsonDensity` bounded in `[0, 2]`, the weight is the box's own `iplaneWeight`, and
+the
+observable is `planeProbe` times the dressing. The two configurations are the constants `1` and
+`HaarVariance.flipEl m`, separated by `Re tr`.
 
-Non-vacuity for `irefl_box_pairing_pos_of_plane_factor_dressed`: every one of its hypotheses is
-discharged here at concrete data. The carrier `symCube τ (2p) n` is reflection-closed
-(`symCube_refl_stable`), the density is `WilsonAction.wilsonDensity` bounded in `[0,2]`, the weight
-is the box's own `iplaneWeight`, and the observable is `planeProbe` times the dressing. The two
-configurations are the constants `1` and `HaarVariance.flipEl m`, separated by `Re tr`.
+Scope: the matrix dimension is written `m + 2` because at `SU 0` and `SU 1` the group is a singleton
+and no separating pair exists. The conclusion is a strict sign at one box, not a quantitative bound
+and not a statement about a limit state.
 
-**⛔ THE RANK IS AT LEAST TWO.** At `SU 0` and `SU 1` the group is a singleton and no separating
-pair exists, which is why it is written `m + 2`.
-
-**⛔ `0 <` IS NOT A RATE**, and `hfin`'s ratio needs one. This says the form is not identically
-degenerate at this box; it bounds nothing.
-
-**⛔ ONE BOX, NOT A LIMIT STATE.**
-
-DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` in `m + 2` is the least rank
-carrying two group elements; the `0` is the positivity concluded; `4` is the dimension. The
-identity configuration and `flipEl m` are bound in the PROOF and appear in no literal here. -/
+DERIVED: the `2` in `2 * p` is the even reflection constant; the `2` in `m + 2` is the least matrix
+dimension carrying two group elements; the `0` is the positivity concluded; `4` is the dimension.
+The identity configuration and `flipEl m` are bound in the proof and appear in no literal here. -/
 theorem irefl_box_pairing_pos_witness (m : ℕ) (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
     (hlo : -(n : ℤ) ≤ p) (hhi : p ≤ (n : ℤ)) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2))) (k : ℝ) :
@@ -7204,8 +7042,9 @@ theorem irefl_box_pairing_pos_witness (m : ℕ) (τ ν : Fin 4) (hν : ν ≠ τ
 
 #print axioms irefl_box_pairing_pos_witness
 
-/-- **AND IT EXHAUSTS** — `hexh`, discharged. A `Finset` of links has finitely many coordinates, so
-they are bounded, so it sits inside every large enough cube.
+/-- The cube family exhausts — the `hexh` the limit statements take. A `Finset` of links has
+finitely
+many coordinates, so they are bounded, so it sits inside every large enough cube.
 
 DERIVED: `n` is the radius; `4` is the dimension. -/
 theorem symCube_exhausts (τ : Fin 4) (c : ℤ) (S : Finset MassGap.InfiniteLattice.ILink) :
@@ -7228,15 +7067,14 @@ theorem symCube_exhausts (τ : Fin 4) (c : ℤ) (S : Finset MassGap.InfiniteLatt
 
 #print axioms symCube_exhausts
 
-/-- **⭐ AND THE CUBE FAMILY MEETS `hR`.** Eventually the cube reaches height `p - 1`, and then its
-`τ`-link there is in the shared block.
+/-- The cube family meets `hR`: eventually the cube reaches height `p - 1`, and then its `τ`-link
+there
+is in the shared block by `tauLink_mem_oboxR`. `ocrossSite p` is the site all of whose coordinates
+are `p - 1`; only its `τ` one is used.
 
-`ocrossSite p` is the site all of whose coordinates are `p - 1`; only its `τ` one matters here.
-
-**⛔ WHY EVENTUAL.** `coordCube` admits sites with every coordinate in `Icc (c-n) (c+n)` at
-`c = 2p-1`, so height `p - 1` is in range exactly when `n ≥ |p|`. At `p = 0` that holds at every `n`,
-including `n = 0`; at other `p` the cube is genuinely too small at first. A statement over all `p`
-therefore has to be eventual, though it is not sharp at every `p`.
+Eventual rather than universal: `coordCube` admits sites with every coordinate in `Icc (c-n) (c+n)`
+at `c = 2p - 1`, so height `p - 1` is in range exactly when `n ≥ |p|`. At `p = 0` that holds at
+every `n`, including `n = 0`.
 
 DERIVED: the `2` and the `1` make the constant odd; `4` is the dimension. -/
 theorem symCube_oboxR_nonempty (τ : Fin 4) (p : ℤ) :
@@ -7250,7 +7088,9 @@ theorem symCube_oboxR_nonempty (τ : Fin 4) (p : ℤ) :
 
 #print axioms symCube_oboxR_nonempty
 
-/-- The same at the ODD constant, where `hR` transports the same way.
+/-- `reflPositive_of_tendsto_halfSpaceAlg_odd` at the cube family `symCube τ (2 * p - 1)`, along any
+filter refining `atTop`: `symCube_refl_stable` is `hbox`, `symCube_oboxR_nonempty` is `hR` and
+`symCube_exhausts` is `hexh`, both transported by `Filter.Eventually.filter_mono`.
 
 DERIVED: the `2` and the `1` make the constant odd; the two `0`s are the sign of the coupling and
 the one in `N ≠ 0`; `4` is the dimension. -/
@@ -7276,18 +7116,15 @@ theorem wilson_reflPositive_odd_of_tendsto (τ : Fin 4) (p : ℤ) (hN : N ≠ 0)
 
 #print axioms wilson_reflPositive_odd_of_tendsto
 
-/-- **⭐⭐⭐ B3 AT THE ODD CONSTANT, AT THE CUBE FAMILY — ONE CONVERGENCE HYPOTHESIS AND NOTHING
-ELSE.**
+/-- The same at `atTop` itself: reflection positivity at the odd constant on `halfSpaceAlg τ p`,
+given
+convergence of the odd cube family's free-boundary states along `atTop`. The remaining hypotheses
+are that convergence and the sign of the coupling.
 
-`symCube_refl_stable` is `hbox`, `symCube_exhausts` is `hexh`, `symCube_oboxR_nonempty` is `hR`. What
-is left is the thermodynamic limit itself and the sign of the coupling.
-
-**⛔ NOTHING IS KNOWN TO SATISFY `htend` AS STATED.** Compactness gives convergence along a refining
-ULTRAFILTER for free — `DLRLimit.exists_limit_state` — and not along `atTop`;
-`wilson_reflPositive_limit_exists_odd` below is the unconditional form, and this one is for a caller
-who already has an `atTop` limit.
-
-**⛔ AND AT `N ≤ 1` THE CONCLUSION IS EMPTY**, as for the abstract form above.
+`DLRLimit.exists_limit_state` gives convergence along a refining ultrafilter rather than along
+`atTop`, so `wilson_reflPositive_limit_exists_odd` is the form that takes no convergence hypothesis;
+this one is for a caller who has an `atTop` limit. At `N ≤ 1` the conclusion is empty, as for the
+abstract form.
 
 DERIVED: the `2` and the `1` make the constant odd; the `0` is the sign of the coupling and the one
 in `N ≠ 0`; `4` is the dimension. -/
@@ -7307,19 +7144,15 @@ theorem reflPositive_symCube_odd (τ : Fin 4) (p : ℤ)
 
 #print axioms reflPositive_symCube_odd
 
-/-- **⭐⭐⭐ AND A LIMIT STATE WITH ODD REFLECTION POSITIVITY EXISTS, UNCONDITIONALLY.**
+/-- A limit state with odd reflection positivity exists, with no convergence hypothesis.
+`DLRLimit.exists_limit_state` gives a refining ultrafilter along which the free-boundary states
+converge, and `reflPositive_of_tendsto_halfSpaceAlg_odd` is filter-generic, so `hR` and `hexh`
+transport by `Filter.Eventually.filter_mono`. The `ℤ⁴` odd counterpart of
+`wilson_reflPositive_limit_exists`.
 
-No convergence hypothesis. `DLRLimit.exists_limit_state` gives a refining ULTRAFILTER along which the
-free-boundary states converge — compactness, no uniqueness — and
-`reflPositive_of_tendsto_halfSpaceAlg_odd` is filter-generic, so `hR` and `hexh` transport by
-`Filter.Eventually.filter_mono`. The `ℤ⁴` odd counterpart of `wilson_reflPositive_limit_exists`.
-
-**⛔ IT IS AN ULTRAFILTER, NOT `atTop`.** Compactness cannot give convergence along `atTop` itself;
-that is the thermodynamic limit and is not proved anywhere here. What this removes is the need to
-ASSUME a limit exists at all.
-
-**⛔ AND AT `N ≤ 1` THE CONCLUSION IS EMPTY** — `SU 1` is a singleton, so `halfSpaceAlg` is the
-constants. `halfSpaceAlg_has_nonconstant` is the witness at SU(3).
+The convergence is along an ultrafilter, not along `atTop`. At `N ≤ 1` the conclusion is empty:
+`SU 1` is a singleton, so `halfSpaceAlg` is the constants; `halfSpaceAlg_has_nonconstant` is a
+witness at `SU 3`.
 
 DERIVED: the `2` and the `1` make the constant odd; the `0` is the sign of the coupling and the one
 in `N ≠ 0`; `4` is the dimension. -/
@@ -7352,35 +7185,28 @@ theorem wilson_reflPositive_limit_exists_odd (τ : Fin 4) (p : ℤ) (hN : N ≠ 
 
 #print axioms wilson_reflPositive_limit_exists_odd
 
-/-- **⭐⭐⭐ THE TRANSFER OPERATOR IS POSITIVE — `hposOdd` DISCHARGED.**
+/-- `GNSHilbert.PositiveTransfer` for the transfer data assembled from the state facts.
+`WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` is an equivalence — that data is a
+positive transfer exactly when the state is reflection positive at the odd constant on the same
+algebra — and `reflPositive_symCube_odd` supplies that side.
 
-`WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` is an EQUIVALENCE: the transfer data
-assembled from the state facts is a positive transfer **exactly when** the state is reflection
-positive at the ODD constant on the same algebra. `reflPositive_symCube_odd` supplies that side, so
-the composition is one line.
-
-**⛔ `hposOdd` WAS THE OPEN HYPOTHESIS OF THE WHOLE OPERATOR SIDE.** It is now a consequence of the
-thermodynamic limit and `0 ≤ β`, with no assumption about the transfer operator anywhere.
-
-**⛔ `hpos` AND `htend` ARE ABOUT DIFFERENT FAMILIES, AND THEY CANNOT BE THE SAME ONE.** `hpos` is
-reflection positivity at `2p`, which the even chain gets from `symCube τ (2 * p)`; `htend` here is
-convergence of `symCube τ (2 * p - 1)`. **No nonempty box is stable under both mirrors** —
-`eq_empty_of_stable_two_mirrors` proves exactly that — so no single family discharges both, and the
-two limits agreeing is an assumption this statement leaves implicit in sharing `ν`.
-`wilson_transferData_of_common_limit` is the form that makes that assumption visible, and
+`hpos` and `htend` are about different families: `hpos` is reflection positivity at `2 * p`, which
+the even chain gets from `symCube τ (2 * p)`, while `htend` here is convergence of
+`symCube τ (2 * p - 1)`. `eq_empty_of_stable_two_mirrors` shows no nonempty box is stable under both
+mirrors, so no single family discharges both, and sharing `ν` between them is an assumption this
+statement leaves implicit. `wilson_transferData_of_common_limit` makes that assumption explicit,
 `wilson_transferData_of_thermodynamic_limit` discharges it by interleaving the two shapes into
-`mixCube`, whose even and odd subsequences converge to one state automatically.
-`wilson_positiveTransfer_of_mixCube_limit` below is this theorem in that form, and
-`wilson_positiveTransfer_of_common_subsequential_limit` is the weakest of the three — it asks only
-that the two families share a state, along filters that need not agree.
+`mixCube`, `wilson_positiveTransfer_of_mixCube_limit` is this theorem in that form, and
+`wilson_positiveTransfer_of_common_subsequential_limit` asks only that the two families share a
+state along filters that need not agree.
 
-**⛔ AND AT `N ≤ 1` THE CONCLUSION IS EMPTY.** `hN : N ≠ 0` is not enough for the carrier to be
-non-trivial: at `N = 1` the group `SU 1` is a singleton, so `IConf` is, so `halfSpaceAlg` is the
-constants and `PositiveTransfer` holds of a one-dimensional space. `halfSpaceAlg_has_nonconstant`
-supplies the witness at SU(3), which is the case the Clay problem is about.
+At `N ≤ 1` the conclusion is empty: `hN : N ≠ 0` leaves `N = 1`, where `SU 1` is a singleton, so
+`IConf` is, `halfSpaceAlg` is the constants and `PositiveTransfer` holds of a one-dimensional space.
+`halfSpaceAlg_has_nonconstant` is a witness at `SU 3`.
 
-DERIVED: the `2` and the `1` make the odd constant; the `2` alone is the plane-to-constant conversion
-`c = 2p`; the `0` is the sign of the coupling and the one in `N ≠ 0`; `4` is the dimension. -/
+DERIVED: the `2` and the `1` make the odd constant; the `2` alone is the plane-to-constant
+conversion `c = 2 * p`; the `0` is the sign of the coupling and the one in `N ≠ 0`; `4` is the
+dimension. -/
 theorem wilson_positiveTransfer_of_odd_limit (τ : Fin 4) (p : ℤ)
     {β : ℝ} (hβ : 0 ≤ β) (hN : N ≠ 0)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -7404,14 +7230,15 @@ theorem wilson_positiveTransfer_of_odd_limit (τ : Fin 4) (p : ℤ)
 
 #print axioms wilson_positiveTransfer_of_odd_limit
 
-/-- **⭐⭐ REFLECTION POSITIVITY ON `halfSpaceAlg`, GIVEN CONVERGENCE.** The `_of_tendsto` half of
-the pair below, so the limit theorem and `reflection_facts_on_halfSpaceAlg` share one proof.
+/-- Reflection positivity at the even constant `2 * p` on `halfSpaceAlg τ p`, given convergence of
+the
+free-boundary states along `l`. The observable's own support picks the fixed region, `hexh` puts
+that support inside the box eventually, and
+`InfiniteReflection.reflPositive_of_eventually_pointwise` accepts an eventual hypothesis in place of
+a uniform one. The sign at each box is `stateFree_refl_nonneg_of_halfSpace_support`.
 
-The observable's own support picks the fixed region, `hexh` puts that support inside the box
-eventually, and `InfiniteReflection.reflPositive_of_eventually_pointwise` is what accepts an
-eventual hypothesis in place of a uniform one.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. The `0` is the sign in `0 ≤ φ`.-/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the Wilson density's ceiling in
+`hφ2`; the `0` is the sign in `hφ0`; `4` is the dimension. -/
 theorem reflPositive_of_tendsto_halfSpaceAlg
     {ι : Type*} {l : Filter ι} [l.NeBot] (τ : Fin 4) (p : ℤ)
     (box : ι → Finset MassGap.InfiniteLattice.ILink)
@@ -7436,12 +7263,14 @@ theorem reflPositive_of_tendsto_halfSpaceAlg
 
 #print axioms reflPositive_of_tendsto_halfSpaceAlg
 
-/-- Reflection positivity at the EVEN constant from convergence of the even cube family along ANY
-filter refining `atTop` — a subsequential limit is enough, because `hexh` transports by
-`Filter.Eventually.filter_mono`.
+/-- Reflection positivity at the even constant from convergence of the even cube family along any
+filter
+refining `atTop`; a subsequential limit suffices, because `hexh` transports by
+`Filter.Eventually.filter_mono`. The density is `WilsonAction.wilsonDensity`, whose class-function
+property is `wilsonDensity_conj`.
 
-DERIVED: the `2` is the plane-to-constant conversion; the `0` is the one in `N ≠ 0`; `4` is the
-dimension. -/
+DERIVED: the `2` is the plane-to-constant conversion and the Wilson density's ceiling; the `0` is
+the one in `N ≠ 0`; `4` is the dimension. -/
 theorem wilson_reflPositive_even_of_tendsto (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
     (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
@@ -7465,36 +7294,30 @@ theorem wilson_reflPositive_even_of_tendsto (τ : Fin 4) (p : ℤ) (hN : N ≠ 0
 
 #print axioms wilson_reflPositive_even_of_tendsto
 
-/-- **⭐⭐⭐ B3, ON `halfSpaceAlg` ITSELF.**
+/-- `ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg τ p) ν` for a limit state produced
+here,
+on the directed union rather than on one fixed finite region. The submodule is supplied rather than
+assumed, so `⊥` does not satisfy it: it contains the constants
+(`HalfSpaceAlgebra.one_mem_halfSpaceAlg`) and every `halfLinkObs` of a link in the positive half
+(`HalfSpaceAlgebra.halfLinkObs_mem`).
 
-    ReflPositiveOn (latticeReflection τ (2*p)) (halfSpaceAlg τ p) ν
+`halfLinkObs_mem` alone does not make it more than the constants, being quantified over an arbitrary
+`f : C(G, ℝ)`; a separating `f` is needed, which is what
+`HalfSpaceAlgebra.shift_moves_halfLinkObs` takes as a hypothesis and what
+`halfSpaceAlg_has_nonconstant` supplies at `SU 3`, by `Re tr` against
+`CrossingIntegration.trace_gNeg`. At `N ≤ 1` the algebra is the constants, since `SU 0` and `SU 1`
+are singletons; no statement in this file carries `2 ≤ N`.
 
-— the statement this module's header names as the open obligation, on the DIRECTED UNION and not on
-one fixed finite region. The submodule is supplied, not assumed, so `⊥` cannot satisfy it; it
-contains the constants (`one_mem_halfSpaceAlg`) and every `halfLinkObs` of a link in the positive
-half (`HalfSpaceAlgebra.halfLinkObs_mem`).
+`hexh` is a property of the box family alone — every finite set of links eventually lies inside the
+box — satisfiable by any increasing exhaustion of `ℤ⁴`. It replaces the fixed region `R₀` of
+`reflPositive_limit_on_half_space`.
 
-**⛔ THAT LAST LEMMA DOES NOT SHOW IT IS MORE THAN THE CONSTANTS.** `halfLinkObs_mem` is quantified
-over an arbitrary `f : C(G, ℝ)`, and a constant `f` gives a constant member. Non-constancy needs a
-SEPARATING `f` — which is exactly what `HalfSpaceAlgebra.shift_moves_halfLinkObs` takes as a
-hypothesis rather than discharging. **`halfSpaceAlg_has_nonconstant` above supplies one**, at SU(3),
-by `Re tr` against `CrossingIntegration.trace_gNeg`.
+The limit is along an ultrafilter refining `l`, and translation invariance is not asserted;
+`ReflectionShift.nu_T_of_reflection_invariant` relates it to reflection invariance, one translation
+being the composite of the reflections at `2p` and `2p - 1`.
 
-**⛔ AND IT IS FALSE AT `N ≤ 1`**: `SU 0` and `SU 1` are singletons, so `IConf (SU N)` is a singleton
-and every observable is constant. No statement in this file carries `2 ≤ N`, so all of them admit
-that case, and `halfSpaceAlg_has_nonconstant` is stated at `3` for that reason.
-
-**What the caller now supplies is `hexh`, and it is not a positivity assumption.** Every finite set
-of links must eventually lie inside the box — a property of the box family alone, satisfiable by any
-increasing exhaustion of `ℤ⁴`. It replaces the fixed region `R₀` of
-`reflPositive_limit_on_half_space`, and it is the hypothesis that statement was missing.
-
-**⛔ STILL SUBSEQUENTIAL, AND STILL NOT TRANSLATION INVARIANT.** The limit is along an ultrafilter
-refining `l`, as everywhere in `DLRLimit`. Translation invariance is `ShiftCompat` and a separate
-obligation; `ReflectionShift.nu_T_of_reflection_invariant` is the route to it, since one translation
-is the composite of the reflections at `2p` and `2p - 1`.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. The `0` is the sign in `0 ≤ φ`.-/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the density's ceiling in
+`hφ2`; the `0` is the sign in `hφ0`; `4` is the dimension. -/
 theorem reflPositive_limit_on_halfSpaceAlg
     {ι : Type*} (l : Filter ι) [l.NeBot] (τ : Fin 4) (p : ℤ)
     (box : ι → Finset MassGap.InfiniteLattice.ILink)
@@ -7522,11 +7345,13 @@ theorem reflPositive_limit_on_halfSpaceAlg
 
 #print axioms reflPositive_limit_on_halfSpaceAlg
 
-/-- **THE FREE WEIGHT IS REFLECTION INVARIANT.** The action over `iplqAll` sees only links inside the
-box, and there the abstract twist IS `ireflConf`, which the action does not see.
+/-- The free weight is invariant under the abstract twist, for a class function `φ`: the action over
+`iplqAll` sees only links inside the box, where `splice_twist_eq_ireflConf` identifies the twist
+with
+`ireflConf`, and `action_iplqAll_ireflConf` says the action does not see that.
 
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem wtFree_twist {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφc : ∀ g h, φ (g * h * g⁻¹) = φ h) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
@@ -7550,16 +7375,18 @@ theorem wtFree_twist {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
 
 #print axioms wtFree_twist
 
-/-- **⭐⭐ THE FREE-BOUNDARY STATE DOES NOT SEE THE REFLECTION.**
+/-- The free-boundary state does not see the reflection: `specFree` of `f ∘ ireflConf τ c` equals
+`specFree` of `f`. Change of variables along the measure-preserving twist
+(`ActionSplit.twist_measurePreserving` with `ilinkDagger_measurePreserving`), with the weight
+invariant by `wtFree_twist`.
 
-`IsReflectionInvariant` at one box, which `InfiniteReflection.isReflectionInvariant_of_tendsto` transports to the
-limit. Unlike positivity this is asserted on ALL observables, where it is the true statement.
+This is `IsReflectionInvariant` at one box, which
+`InfiniteReflection.isReflectionInvariant_of_tendsto` transports to the limit. Unlike positivity it
+is stated for all observables. `hagree` carries the box-locality of `f`, for the same reason as
+elsewhere: the twist and `ireflConf` agree only on `Λ`.
 
-Change of variables along the measure-preserving twist, with the weight invariant by `wtFree_twist`.
-`hfΛ` enters for the same reason as everywhere else: the twist and `ireflConf` agree only on the box.
-
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem specFree_reflection_invariant {c : ℤ}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -7601,23 +7428,26 @@ theorem specFree_reflection_invariant {c : ℤ}
 
 #print axioms specFree_reflection_invariant
 
-/-- A reflection-stable box has a reflection-stable COMPLEMENT — by involutivity. -/
+/-- A reflection-stable box has a reflection-stable complement, by involutivity.
+
+DERIVED: the signature writes no numeral; `c` is the caller's reflection constant. -/
 theorem not_mem_of_not_mem_box {c : ℤ} (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     {l : ILink} (hl : l ∉ Λ) : ireflLink τ c l ∉ Λ := by
   intro hmem
   exact hl (by simpa [ireflLink_involutive τ c l] using hΛ _ hmem)
 
-/-- **⭐ WITH A REFLECTION-SYMMETRIC BOUNDARY CONDITION THE TWO AGREE EVERYWHERE**, not only on the
-box — which is what `IsReflectionInvariant` needs, since it quantifies over ALL observables.
+/-- With a reflection-symmetric boundary condition `hω : ireflConf τ c ω = ω`, the spliced twist and
+`ireflConf` agree at every link, not only inside the box — which is what `IsReflectionInvariant`
+needs, since it quantifies over all observables.
 
-Inside the box this is `splice_twist_eq_ireflConf`. Outside it, the box's complement is stable too,
-so the splice reads `ω` on both sides and `hω` closes it.
+Inside the box this is `splice_twist_eq_ireflConf`. Outside it, the complement is stable by
+`not_mem_of_not_mem_box`, so the splice reads `ω` on both sides and `hω` closes it.
 
-It is satisfiable: the identity configuration is reflection-symmetric, because the dagger inverts `1`
-to `1`. So this is a genuine condition on the boundary condition, not a vacuous one.
+`hω` is satisfiable: the identity configuration is reflection-symmetric, because the dagger sends
+`1` to `1`.
 
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. -/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. -/
 theorem splice_twist_eq_ireflConf_everywhere {c : ℤ}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     {ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)}
@@ -7639,14 +7469,14 @@ theorem splice_twist_eq_ireflConf_everywhere {c : ℤ}
 
 #print axioms splice_twist_eq_ireflConf_everywhere
 
-/-- **⭐⭐ THE FREE-BOUNDARY STATE DOES NOT SEE THE REFLECTION**, on ALL observables —
-`InfiniteReflection.IsReflectionInvariant`, which `invariant_of_tendsto` transports to the limit.
+/-- The free-boundary state at a box is invariant under the reflection, on all observables —
+`InfiniteReflection.IsReflectionInvariant`, which
+`InfiniteReflection.isReflectionInvariant_of_tendsto` transports to a limit. It is stated for every
+observable, which is why the boundary condition has to satisfy `hω : ireflConf τ c ω = ω`;
+`splice_twist_eq_ireflConf_everywhere` is where that is used.
 
-Unlike positivity this is asserted on every observable, where it is the true statement — and that is
-exactly why the boundary condition has to be symmetric.
-
-DERIVED: `c` is the caller's reflection constant, no longer pinned to an even `2p`; `4` is the
-dimension. The `0` is the sign in `0 ≤ φ`.-/
+DERIVED: `c` is the caller's reflection constant and is not pinned to an even `2 * p` here; `4` is
+the dimension. The `0` is the sign in `hφ0` and the `2` the ceiling in `hφ2`. -/
 theorem stateFree_reflection_invariant {c : ℤ}
     (hΛ : ∀ l ∈ Λ, ireflLink τ c l ∈ Λ)
     {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
@@ -7663,24 +7493,27 @@ theorem stateFree_reflection_invariant {c : ℤ}
 
 #print axioms stateFree_reflection_invariant
 
-/-- **⭐⭐⭐ BOTH REFLECTION PROPERTIES OF THE INFINITE-VOLUME STATE, TOGETHER.**
+/-- `IsReflectionInvariant` and `ReflPositiveOn` for the same limit state, along the same
+ultrafilter.
+Invariance comes from `stateFree_reflection_invariant` at each box through
+`InfiniteReflection.isReflectionInvariant_of_tendsto`; positivity is
+`reflPositive_limit_exists` on `localSubmodule R₀`.
 
-`IsReflectionInvariant` AND `ReflPositiveOn` for the same limit state, along the same ultrafilter.
-These are two of the three facts `WilsonTransferReduction` says the infinite-volume state owes:
+These are two of the three facts `WilsonTransferReduction` reads off the infinite-volume state:
 
     hinv : IsReflectionInvariant (latticeReflection τ (2*p)) ν      ← here
-    hpos : ReflPositiveOn (latticeReflection τ (2*p)) A ν          ← here
-    hnu  : ∀ f, ν (ishiftObsL τ f) = ν f                          ← NOT here
+    hpos : ReflPositiveOn (latticeReflection τ (2*p)) A ν           ← here
+    hnu  : ∀ f, ν (ishiftObsL τ f) = ν f                            ← not here
 
-**⛔ THE THIRD IS A DIFFERENT ARGUMENT AND IS NOT CLAIMED.** Translation invariance does not follow
-from the reflection, and the finite-volume free state is not translation invariant — the box breaks
-it. That is `B2-shift`, and it stays open.
+The third is translation invariance and is not asserted; the finite-volume free state does not have
+it, the box breaking it.
 
-What the caller supplies remains structural: a finite region at or above the plane, reflection-stable
-boxes containing it, a REFLECTION-SYMMETRIC boundary condition (the identity configuration is one),
-and the Wilson density's own four properties.
+The caller supplies a finite region at or above the plane, reflection-stable boxes containing it, a
+reflection-symmetric boundary condition (the identity configuration is one, by `ireflConf_one`), and
+the density's four properties.
 
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. The `0` is the sign in `0 ≤ φ`.-/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the ceiling in `hφ2`; `4` is
+the dimension. The `0` is the sign in `hφ0`. -/
 theorem reflection_facts_of_limit
     {ι : Type*} (l : Filter ι) [l.NeBot] (τ : Fin 4) (p : ℤ)
     (R₀ : Finset MassGap.InfiniteLattice.ILink)
@@ -7721,26 +7554,20 @@ theorem reflection_facts_of_limit
 
 #print axioms reflection_facts_of_limit
 
-/-- **⭐⭐⭐ B3 FOR THE WILSON MEASURE, AT A CONCRETE BOX FAMILY, WITH NO STRUCTURAL HYPOTHESIS LEFT.**
-
-Everything above is stated for an abstract `φ : SU N → ℝ` with four properties — a class that also
-contains `φ = 0`, the free theory — and for an assumed box family. This runs the chain once with
-neither: `φ` is `WilsonAction.wilsonDensity` and the boxes are `symCube`, so the only hypotheses left
-are the coupling `β`, the boundary configuration `ω`, and `N ≠ 0`.
+/-- `reflPositive_limit_on_halfSpaceAlg` run once with no abstract parameters: `φ` is
+`WilsonAction.wilsonDensity` and the boxes are `symCube τ (2 * p)`, so the hypotheses left are the
+coupling `β`, the boundary configuration `ω` and `N ≠ 0`.
 
 The four density properties are `WilsonAction.measurable_wilsonDensity`, `wilsonDensity_nonneg`,
-`wilsonDensity_le_two` and `wilsonDensity_conj`; the first needs nothing, the middle two need
-`N ≠ 0`, the last nothing.
+`wilsonDensity_le_two` and `wilsonDensity_conj`; the middle two take `N ≠ 0` and the others take
+nothing.
 
-**⛔ `N ≠ 0` IS NOT ENOUGH FOR THE CARRIER TO BE NON-TRIVIAL.** At `N = 1` the group is a singleton,
-so `IConf (SU 1)` is a singleton and `halfSpaceAlg` is the constants; the statement is then true and
-empty. Non-triviality needs `2 ≤ N` and a separating function, neither of which this tree proves.
+Scope: `N ≠ 0` leaves `N = 1`, where the group is a singleton, `IConf (SU 1)` is a singleton and
+`halfSpaceAlg` is the constants, so the statement holds there with no content. The limit is along an
+ultrafilter refining `atTop`, from `DLRLimit.exists_limit_state`; no sequence is shown to converge.
 
-**⛔ AND THE LIMIT IS SUBSEQUENTIAL.** Along an ultrafilter refining `atTop`, as everywhere in
-`DLRLimit`. No sequence is shown to converge, and none has to be:
-`DLRLimit.exists_limit_state` is compactness.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. The `0` is the one in `N ≠ 0`.-/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p`; `4` is the dimension. The `0` is
+the one in `N ≠ 0`. -/
 theorem wilson_reflPositive_limit_exists (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
     ∃ (u : Ultrafilter ℕ) (ν : MassGap.DLRLimit.State
@@ -7765,18 +7592,18 @@ theorem wilson_reflPositive_limit_exists (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (
 
 #print axioms wilson_reflPositive_limit_exists
 
-/-! ## 6″. ⭐⭐⭐ What the operator side still owes -/
+/-! ## 6″. The reflection facts the operator side reads -/
 
 
 
-/-- **⭐⭐⭐ BOTH REFLECTION FACTS OF THE LIMIT STATE, ON THE HALF-SPACE ALGEBRA.**
+/-- `reflection_facts_of_limit` with positivity on `halfSpaceAlg τ p` rather than on one fixed
+finite
+region — the form `WilsonTransferReduction` consumes. Invariance is unchanged,
+`InfiniteReflection.isReflectionInvariant_of_tendsto` over `stateFree_reflection_invariant`, which
+is why `hω` asks the boundary condition to be reflection symmetric.
 
-`reflection_facts_of_limit` in the form `WilsonTransferReduction` actually consumes: positivity on
-`halfSpaceAlg τ p` rather than on one fixed finite region. Invariance is unchanged —
-`isReflectionInvariant_of_tendsto` over `stateFree_reflection_invariant` — and is why the boundary
-condition must be reflection symmetric.
-
-DERIVED: the `2` is the plane-to-constant conversion `c = 2p`; `4` is the dimension. The `0` is the sign in `0 ≤ φ`.-/
+DERIVED: the `2` is the plane-to-constant conversion `c = 2 * p` and the ceiling in `hφ2`; `4` is
+the dimension. The `0` is the sign in `hφ0`. -/
 theorem reflection_facts_on_halfSpaceAlg
     {ι : Type*} (l : Filter ι) [l.NeBot] (τ : Fin 4) (p : ℤ)
     (box : ι → Finset MassGap.InfiniteLattice.ILink)
@@ -7810,45 +7637,31 @@ theorem reflection_facts_on_halfSpaceAlg
 
 #print axioms reflection_facts_on_halfSpaceAlg
 
-/-- **⭐⭐⭐ THE TRANSFER DATA OF AN INFINITE-VOLUME WILSON STATE, FROM REFLECTION FACTS ALONE.**
+/-- `WilsonTransferReduction.transferData_of_state_facts` with its third input derived: it takes
+`hinv`,
+`hpos` and `hnu`, and `ReflectionShift.nu_T_of_reflection_invariant` produces `hnu` from reflection
+invariance at two adjacent constants, one translation being two reflections. So the inputs here are
+`hinv` at `2 * p`, `hinvOdd` at `2 * p - 1`, and `hpos`.
 
-`WilsonTransferReduction.transferData_of_state_facts` takes three facts about the state. Two of them
-`reflection_facts_on_halfSpaceAlg` supplies. The third, `hnu`, is translation invariance, and
-`ReflectionShift.nu_T_of_reflection_invariant` derives it from reflection invariance at two ADJACENT
-constants — one translation is two reflections.
+`ReflectionShift.reflection_invariant_succ_iff_nu_T` shows that, given `hinv`, `hinvOdd` and `hnu`
+imply each other, so this changes the kind of the remaining hypothesis rather than removing one.
+`hinvOdd` has the shape `stateFree_reflection_invariant` proves at finite volume at every constant,
+where `hnu` has no finite-volume counterpart; it is an equality, so the `0 ≤ β` restriction that
+separates the odd reflection for `ReflPositiveOn`
+(`CharacterExpansion.NegControl.su3_kernel_nonneg_iff`) does not enter it, and it transports to a
+limit by `InfiniteReflection.isReflectionInvariant_of_tendsto`.
 
-**⛔ SO THE OPERATOR SIDE NOW OWES EXACTLY ONE FACT: `hinvOdd`** — reflection invariance of the
-state at `2p - 1`, the ODD constant, which is the LINK reflection. Everything else is discharged.
+`eq_empty_of_stable_two_mirrors` shows one box family cannot supply both invariances, so two
+families are needed and something has to identify their limits.
+`wilson_transferData_of_thermodynamic_limit` states that as a single convergence hypothesis.
 
-**⛔⛔ AND THAT ONE FACT IS TRANSLATION INVARIANCE UNDER ANOTHER NAME.**
-`ReflectionShift.reflection_invariant_succ_iff_nu_T` proves that, given `hinv`, `hinvOdd` and `hnu`
-imply each other. Counting hypotheses makes this look like a reduction and it is not one: what
-changed is the KIND of statement outstanding, not its difficulty. Do not report this as progress on
-`hnu`.
-
-What the change of kind is worth: `hinvOdd` is the same shape as `stateFree_reflection_invariant`,
-which this file proves at finite volume at EVERY constant, whereas `hnu` has no finite-volume
-counterpart at all — the box breaks translation invariance. It is an EQUALITY, so the `0 ≤ β`
-restriction that makes the odd reflection a separate problem for `ReflPositiveOn`
-(`CharacterExpansion.NegControl.su3_kernel_nonneg_iff`) does not touch it, and it transports to a
-limit by `InfiniteReflection.isReflectionInvariant_of_tendsto`, the same lemma the even case uses.
-
-**⛔ AND ONE BOX FAMILY CANNOT GIVE BOTH** — `eq_empty_of_stable_two_mirrors`. So the route needs
-two families, one symmetric about each mirror, shown to have a common limit, which is the
-boundary-independence argument and not an escape from it.
-**`wilson_transferData_of_thermodynamic_limit` below discharges `hinvOdd` and re-parks the debt
-there**, as a single convergence hypothesis; prefer it to this definition, whose `ν` is a free
-parameter and therefore admits degenerate states.
-
-**⛔ AND `ν` IS AN ARBITRARY STATE HERE, SO THE RESULT CAN BE RANK ONE.** Evaluation at the
-all-identity configuration satisfies all three hypotheses at EVERY constant, even and odd, because
-`ireflConf` inverts only on `τ`-links and `1⁻¹ = 1`; its form is `F ↦ F(1)·H(1)`, whose GNS space is
-`ℝ`, whose transfer operator is the identity, and which has no gap. `TransferData`'s only
-non-degeneracy field is `vac_norm`, and that holds there too. So this produces the OBJECT the
-operator side needs and says nothing about its SPECTRUM — which is `TransferGap.GapAt`, carried
-separately and still open. Tying `ν` to the Wilson measure is what
-`reflection_facts_on_halfSpaceAlg`'s conjoined `Tendsto` clause does, and this definition does not
-carry it.
+`ν` is a free parameter here, so the result can be rank one: evaluation at the all-identity
+configuration satisfies all three hypotheses at every constant, even and odd, since `ireflConf`
+inverts only on `τ`-links and `1⁻¹ = 1`. Its form is `F ↦ F(1)·H(1)`, whose GNS space is `ℝ` and
+whose transfer operator is the identity, and `TransferData`'s only non-degeneracy field, `vac_norm`,
+holds there. The object is produced; its spectrum is `TransferGap.GapAt` and is carried separately.
+`reflection_facts_on_halfSpaceAlg`'s conjoined `Tendsto` clause is what ties `ν` to the Wilson
+measure, and this definition does not carry it.
 
 DERIVED: the `2` and the `1` are the plane-to-constant conversion and the mirror separation; `4` is
 the dimension. -/
@@ -7869,36 +7682,29 @@ noncomputable def transferData_of_reflection_facts (τ : Fin 4) (p : ℤ)
 
 #print axioms transferData_of_reflection_facts
 
-/-- **⭐⭐⭐ THE WHOLE OPERATOR SIDE, FROM ONE ANALYTIC FACT AND NOTHING ELSE.**
+/-- `transferData_of_reflection_facts` with every structural hypothesis discharged: `φ` is the
+Wilson
+density, the boundary condition is the all-identity configuration (symmetric about every mirror by
+`ireflConf_one`), and the boxes are `symCube` at each of the two constants — reflection-stable by
+`symCube_refl_stable` and exhausting by `symCube_exhausts`. Positivity comes from
+`reflPositive_of_tendsto_halfSpaceAlg`, invariance at each constant from
+`stateFree_reflection_invariant` there, and translation invariance from
+`ReflectionShift.nu_T_of_reflection_invariant`.
 
-Every structural hypothesis is discharged inside. `φ` is the Wilson density, the boundary condition
-is the all-identity configuration (symmetric about every mirror by `ireflConf_one`), and the boxes
-are `symCube` at each of the two constants — reflection-stable by `symCube_refl_stable` and
-exhausting by `symCube_exhausts`. Positivity comes from `reflPositive_of_tendsto_halfSpaceAlg`,
-invariance at each constant from `stateFree_reflection_invariant` at that constant, and translation
-invariance from `ReflectionShift.nu_T_of_reflection_invariant`.
+What is assumed is that the two families converge to the same state: `hEven` and `hOdd` name the
+same `ν`. `eq_empty_of_stable_two_mirrors` shows a finite box stable under the mirrors at `2 * p`
+and `2 * p - 1` is empty, so two families are needed whenever the odd invariance comes from a
+finite-volume box statement. The two also differ by a diagonal translation of their centre, since
+`coordCube c n` is centred at `c` in every coordinate.
 
-**⛔ WHAT IS ASSUMED IS EXACTLY ONE THING: THAT THE TWO FAMILIES CONVERGE TO THE SAME STATE.**
-`hEven` and `hOdd` name the same `ν`. That is boundary independence of the infinite-volume limit, and
-it is the open problem — not a technicality. It cannot be avoided by a cleverer box family:
-`eq_empty_of_stable_two_mirrors` proves that a finite box stable under the mirrors at `2p` and
-`2p - 1` is empty. So two families are forced **as long as the odd invariance is to come from a
-finite-volume box statement**, and something must then identify their limits.
+Convergence is along `atTop` rather than along a refining ultrafilter:
+`DLRLimit.exists_limit_state` gives the latter for one family but not a common limit for two.
 
-The two families also differ by a diagonal translation of their centre, not only by the mirror,
-because `coordCube c n` is centred at `c` in every coordinate. The hypothesis is therefore boundary
-independence across two differently-centred exhaustions.
-
-Note also that convergence here is along `atTop` itself, not along a refining ultrafilter. Compactness
-gives the latter for free (`DLRLimit.exists_limit_state`) but cannot give a COMMON limit for two
-different families, which is why the hypothesis is stated as genuine convergence.
-
-**⛔ AND THIS PRODUCES THE OBJECT, NOT A GAP.** `TransferData` carries no spectral content; the gap
-is `TransferGap.GapAt` and is carried separately. At `N ≤ 1` the carrier is the constants and the
-result is empty.
+`TransferData` carries no spectral content; the gap is `TransferGap.GapAt`. At `N ≤ 1` the carrier
+is the constants.
 
 DERIVED: the `2` and the `1` are the plane-to-constant conversion and the mirror separation; `4` is
-the dimension. The `0` is the one in `N ≠ 0`.-/
+the dimension. The `0` is the one in `N ≠ 0`. -/
 noncomputable def wilson_transferData_of_common_limit (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
     (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
     (hEven : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
@@ -7942,8 +7748,9 @@ noncomputable def wilson_transferData_of_common_limit (τ : Fin 4) (p : ℤ) (hN
 
 #print axioms wilson_transferData_of_common_limit
 
-/-- **THE TWO BOX SHAPES, INTERLEAVED INTO ONE SEQUENCE.** Even steps carry the mirror at `2p`, odd
-steps the mirror at `2p + 1`, each at half the step index so both shapes still grow without bound.
+/-- The two box shapes interleaved into one sequence: even steps carry the mirror at `2 * p`, odd
+steps
+the mirror at `2 * p - 1`, each at half the step index so both shapes grow without bound.
 
 DERIVED: the `2`s are the plane-to-constant conversion, the interleaving period and the halved
 index; the `1` is the mirror separation; the `0` is the parity test `n % 2 = 0`; `4` is the
@@ -7951,6 +7758,11 @@ dimension. -/
 noncomputable def mixCube (τ : Fin 4) (p : ℤ) (n : ℕ) : Finset MassGap.InfiniteLattice.ILink :=
   if n % 2 = 0 then symCube τ (2 * p) (n / 2) else symCube τ (2 * p - 1) (n / 2)
 
+/-- At an even index, `mixCube` is the even cube family: `mixCube τ p (2 * k) = symCube τ (2 * p)
+k`.
+
+DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period; `4` is the
+dimension. -/
 theorem mixCube_even (τ : Fin 4) (p : ℤ) (k : ℕ) :
     mixCube τ p (2 * k) = symCube τ (2 * p) k := by
   have h1 : (2 * k) % 2 = 0 := by omega
@@ -7959,6 +7771,10 @@ theorem mixCube_even (τ : Fin 4) (p : ℤ) (k : ℕ) :
 
 #print axioms mixCube_even
 
+/-- At an odd index it is the odd one: `mixCube τ p (2 * k + 1) = symCube τ (2 * p - 1) k`.
+
+DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period, and the `1`s are
+the odd index and the mirror separation; `4` is the dimension. -/
 theorem mixCube_odd (τ : Fin 4) (p : ℤ) (k : ℕ) :
     mixCube τ p (2 * k + 1) = symCube τ (2 * p - 1) k := by
   have h1 : (2 * k + 1) % 2 = 1 := by omega
@@ -7967,8 +7783,9 @@ theorem mixCube_odd (τ : Fin 4) (p : ℤ) (k : ℕ) :
 
 #print axioms mixCube_odd
 
-/-- **THE EVEN SUBSEQUENCE OF `mixCube` IS THE EVEN CUBE FAMILY.** Stated as a lemma rather than
-derived inside a proof because the forms below need it in a STATEMENT.
+/-- The even subsequence of `mixCube` is `symCube τ (2 * p)`, so one convergence hypothesis about
+`mixCube` gives convergence of the even cube family to the same state. Stated as a lemma rather than
+derived inside a proof because the results below need it in a statement.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period; the `0` is the
 one in `N ≠ 0`; the `1` is the all-identity boundary condition; `4` is the dimension. -/
@@ -7995,7 +7812,9 @@ theorem tendsto_symCube_even_of_mixCube (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (�
 
 #print axioms tendsto_symCube_even_of_mixCube
 
-/-- **AND THE ODD SUBSEQUENCE IS THE ODD ONE.**
+/-- And the odd subsequence is `symCube τ (2 * p - 1)`, giving convergence of the odd cube family to
+the
+same state.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period, the `1` the
 mirror separation; the `0` is the one in `N ≠ 0`; the other `1` is the all-identity boundary
@@ -8023,9 +7842,9 @@ theorem tendsto_symCube_odd_of_mixCube (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β
 
 #print axioms tendsto_symCube_odd_of_mixCube
 
-/-- **⭐⭐ THE EVEN CONSTANT FROM THE INTERLEAVED FAMILY.** The even subsequence of `mixCube` IS
-`symCube τ (2 * p)`, so one convergence hypothesis about `mixCube` gives the even-constant reflection
-positivity.
+/-- Reflection positivity at the even constant from one convergence hypothesis about the interleaved
+family: the even subsequence of `mixCube` is `symCube τ (2 * p)`
+(`tendsto_symCube_even_of_mixCube`), and `wilson_reflPositive_even_of_tendsto` takes it from there.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period; `4` is the
 dimension. The `0` is the one in `N ≠ 0` and the `1` is the all-identity boundary condition. -/
@@ -8045,7 +7864,9 @@ theorem wilson_reflPositive_even_of_mixCube (τ : Fin 4) (p : ℤ) (hN : N ≠ 0
 
 #print axioms wilson_reflPositive_even_of_mixCube
 
-/-- **⭐⭐ AND THE ODD CONSTANT FROM THE SAME ONE.** The odd subsequence is `symCube τ (2 * p - 1)`.
+/-- And reflection positivity at the odd constant from the same hypothesis, the odd subsequence
+being
+`symCube τ (2 * p - 1)`. Takes `0 ≤ β`, which the even statement does not.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period, the `1` the
 mirror separation; the `0` is the sign of the coupling; `4` is the dimension. -/
@@ -8067,24 +7888,20 @@ theorem wilson_reflPositive_odd_of_mixCube (τ : Fin 4) (p : ℤ) (hN : N ≠ 0)
 #print axioms wilson_reflPositive_odd_of_mixCube
 
 
-/-- **⛔ INTERLEAVING BUYS NOTHING UNDER COMPACTNESS.** Along any ultrafilter, `mixCube` is
-eventually equal to one of the two box shapes, so an ultrafilter limit of the interleaved sequence is
-a limit of a single shape and carries a single reflection constant.
+/-- Along any ultrafilter, `mixCube` is eventually equal to one of the two box shapes, so an
+ultrafilter
+limit of the interleaved sequence is a limit of a single shape and carries a single reflection
+constant. The `∨` is `Ultrafilter.mem_or_compl_mem`, the "at least one" half; exclusivity is neither
+stated nor used.
 
-**⛔ IT IS NOT A NO-GO, AND IT SAYS NOTHING ABOUT THE TWO SEPARATE FAMILIES.**
-`wilson_reflPositive_limit_exists` and `wilson_reflPositive_limit_exists_odd` each produce a limit
-state without mentioning `mixCube`, and nothing here forbids those two states from being equal — if
-the DLR state were unique they would be. What this rules out is one specific attempt: reaching both
-constants by taking an ultrafilter limit of the interleaved sequence. `atTop` works there
-(`wilson_positiveTransfer_of_mixCube_limit`) precisely because it meets both parity classes
-cofinally, which is convergence rather than compactness.
+Scope: this is about ultrafilter limits of `mixCube`. `wilson_reflPositive_limit_exists` and
+`wilson_reflPositive_limit_exists_odd` each produce a limit state without mentioning `mixCube`, and
+nothing here relates those two states. `atTop` meets both parity classes cofinally, which is what
+`wilson_positiveTransfer_of_mixCube_limit` uses.
 
-The `∨` is `Ultrafilter.mem_or_compl_mem`, the "at least one" half. Exclusivity is true and is
-neither proved nor needed.
-
-DERIVED: the `2`s are the plane-to-constant conversion, the interleaving period and the halved index,
-the `1` the mirror separation; `4` is the dimension. The `0` of the parity test is in the proof, not
-in the statement. -/
+DERIVED: the `2`s are the plane-to-constant conversion, the interleaving period and the halved
+index, the `1` the mirror separation; `4` is the dimension. The `0` of the parity test is in the
+proof, not in the signature. -/
 theorem mixCube_ultrafilter_sees_one_parity (τ : Fin 4) (p : ℤ) (u : Ultrafilter ℕ) :
     (∀ᶠ n in (u : Filter ℕ), mixCube τ p n = symCube τ (2 * p) (n / 2))
       ∨ (∀ᶠ n in (u : Filter ℕ), mixCube τ p n = symCube τ (2 * p - 1) (n / 2)) := by
@@ -8104,11 +7921,12 @@ theorem mixCube_ultrafilter_sees_one_parity (τ : Fin 4) (p : ℤ) (u : Ultrafil
 
 
 
-/-- **THE STATE IS REFLECTION-INVARIANT, AT WHATEVER CONSTANT THE FAMILY IS CLOSED UNDER.**
-
+/-- The limit state is invariant under the reflection at whatever constant the family is closed
+under.
 Each finite-volume state is invariant because the all-identity boundary condition is fixed by every
-mirror (`ireflConf_one`) and the Wilson density is conjugation-invariant, and invariance passes to
-limits. Generic in the constant, so it serves both `2p` and `2p - 1`.
+mirror (`ireflConf_one`) and the Wilson density is conjugation-invariant
+(`wilsonDensity_conj`), and `InfiniteReflection.isReflectionInvariant_of_tendsto` passes that to the
+limit. Generic in `c`, so it serves both `2 * p` and `2 * p - 1`.
 
 DERIVED: `c` is the caller's reflection constant; the `0` is the one in `N ≠ 0`; the `1` is the
 all-identity boundary condition; `4` is the dimension. -/
@@ -8133,14 +7951,14 @@ theorem wilson_reflInvariant_of_tendsto (τ : Fin 4) (c : ℤ) (hN : N ≠ 0) (�
 
 #print axioms wilson_reflInvariant_of_tendsto
 
-/-- **AND THE STATE DOES NOT SEE A TRANSLATION** — `hnu`, from the two invariances.
+/-- The limit state is translation invariant — the `hnu` that
+`WilsonTransferReduction.transferData_of_state_facts` takes — from invariance at the two adjacent
+constants. `ReflectionShift.nu_T_of_reflection_invariant` composes the mirrors at `a` and `a + 1`
+into one translation; here `a = 2 * p - 1`, so the two mirrors are the odd and the even one and each
+family supplies its own.
 
-`ReflectionShift.nu_T_of_reflection_invariant`: a translation is the composite of the mirrors at `a`
-and `a + 1`, so invariance under both adjacent mirrors IS translation invariance. Here `a = 2p - 1`,
-so the two mirrors are the odd and the even one, and each family supplies its own.
-
-**⛔ NO SINGLE FAMILY GIVES BOTH** — `eq_empty_of_stable_two_mirrors`. That is why this takes two
-convergence hypotheses and not one.
+The two convergence hypotheses are separate because `eq_empty_of_stable_two_mirrors` shows no single
+family is stable under both mirrors. The filters `lE` and `lO` need not agree.
 
 DERIVED: the `2` is the plane-to-constant conversion and the `1` the mirror separation; the `0` is
 the one in `N ≠ 0`; the other `1` is the all-identity boundary condition; `4` is the dimension. -/
@@ -8170,24 +7988,21 @@ theorem wilson_nu_T_of_tendsto (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
 
 #print axioms wilson_nu_T_of_tendsto
 
-/-- **⭐⭐⭐ `PositiveTransfer` FROM TWO CONVERGENCE FACTS AND NOTHING ELSE.**
+/-- `GNSHilbert.PositiveTransfer` for the assembled transfer data, from two convergence facts. The
+two
+cube families need share only one state `ν`, and may reach it along different filters; each filter
+refines `atTop` so that `hexh` and `hR` transport, and nothing else about it is used. Reflection
+invariance comes from `wilson_reflInvariant_of_tendsto` at each constant and translation invariance
+from `wilson_nu_T_of_tendsto`, so what the caller supplies is the two limits, the two filter
+refinements, `0 ≤ β` and `N ≠ 0`.
 
-The two cube families need only share ONE state, and they may reach it along DIFFERENT filters. Each
-filter refines `atTop` solely so that `hexh` and `hR` transport; nothing else about it is used. The
-reflection invariance and the translation invariance are DISCHARGED here, not assumed —
-`wilson_reflInvariant_of_tendsto` at each constant and `wilson_nu_T_of_tendsto` from the pair — so
-what is left is two limits, two filter refinements, `0 ≤ β` and `N ≠ 0`.
+That the two limits can be chosen equal is a hypothesis. Compactness gives each family its own
+subsequential limit — `wilson_reflPositive_limit_exists` unconditionally,
+`wilson_reflPositive_limit_exists_odd` under `0 ≤ β` — and nothing here identifies the two states;
+`eq_empty_of_stable_two_mirrors` shows no single family carries both constants. Convergence along
+`atTop` is one sufficient condition (`wilson_positiveTransfer_of_mixCube_limit`).
 
-**⛔ WHAT IS OPEN IS THAT THE TWO LIMITS CAN BE CHOSEN EQUAL.** Compactness already hands each family
-a subsequential limit with its own reflection constant — `wilson_reflPositive_limit_exists`
-unconditionally, `wilson_reflPositive_limit_exists_odd` under `0 ≤ β` — and nothing identifies the
-two states. `eq_empty_of_stable_two_mirrors` shows no single family carries both constants, so the
-two families are forced. Convergence along `atTop` is one sufficient condition
-(`wilson_positiveTransfer_of_mixCube_limit`); uniqueness of the DLR state would be another. Neither
-is proved here.
-
-**⛔ AND AT `N ≤ 1` IT HOLDS OF A ONE-DIMENSIONAL CARRIER.** `halfSpaceAlg_has_nonconstant` is the
-witness at SU(3).
+At `N ≤ 1` the carrier is one-dimensional; `halfSpaceAlg_has_nonconstant` is a witness at `SU 3`.
 
 DERIVED: the `2` is the plane-to-constant conversion and the `1` the mirror separation; the `0` is
 the sign of the coupling and the one in `N ≠ 0`; the other `1` is the all-identity boundary
@@ -8222,45 +8037,38 @@ theorem wilson_positiveTransfer_of_common_subsequential_limit (τ : Fin 4) (p : 
 
 #print axioms wilson_positiveTransfer_of_common_subsequential_limit
 
-/-- **THE TWO SHIFT OPERATORS ARE THE SAME MAP.** `HalfSpaceAlgebra.ishiftObsCM` and
-`ReflectionShift.ishiftObsL` have identical bodies — precomposition with `InfiniteShift.ishiftConf` —
-in two namespaces, so a lemma proved about one is inert on the other and nothing in a goal display
-tells them apart. The same bridge `gibbs_ishift_eq` records for `ishift`.
+/-- `HalfSpaceAlgebra.ishiftObsCM` and `ReflectionShift.ishiftObsL` are the same map, by `rfl`:
+identical bodies — precomposition with `InfiniteShift.ishiftConf` — in two namespaces, so a lemma
+proved about one is inert on the other and a goal display does not tell them apart. The same bridge
+`gibbs_ishift_eq` records for `ishift`.
 
-**⛔ NOTHING CONSUMES IT.** `shift_no_finite_order_on_halfSpaceAlg` is about the first and
-`TransferData.T` is built by `TransferAssembly.restrictT` from the second, but
-`transferData_of_state_facts_T_ne_id` closes by definitional unfolding and never cites this — delete
-it and that proof still compiles. It is here so the agreement is RECORDED rather than rediscovered,
-not because a term needs it.
+Nothing in this file consumes it: `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` is about
+the first, `TransferData.T` is built by `TransferAssembly.restrictT` from the second, and
+`transferData_of_state_facts_T_ne_id` closes by definitional unfolding without citing this.
+`InfiniteShift.ishiftObs` is a third, unbundled copy of the same map, carrying its own motion
+theorems (`InfiniteShift.ishiftObs_infinite_order`,
+`InfiniteShift.ishiftObs_ne_id_of_separating`); this records one of the three pairs.
 
-**⛔ AND THERE ARE THREE COPIES, NOT TWO.** `InfiniteShift.ishiftObs` is the same map unbundled, and
-carries its own copies of the motion theorems (`ishiftObs_infinite_order`,
-`ishiftObs_ne_id_of_separating`). This records one of the three pairs.
-
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: the signature writes no numeral; `4` is the dimension. -/
 theorem ishiftObsCM_eq_ishiftObsL (τ : Fin 4) :
     (MassGap.HalfSpaceAlgebra.ishiftObsCM (G := MassGap.SUN.SU N) τ)
       = MassGap.ReflectionShift.ishiftObsL τ := rfl
 
 #print axioms ishiftObsCM_eq_ishiftObsL
 
-/-- **⭐⭐ THE TRANSFER OPERATOR MOVES SOMETHING, ON THIS CARRIER.**
+/-- The assembled data's `T` is not the identity on `halfSpaceAlg`, given a function separating two
+group elements. `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` at `k = 1` supplies a
+member the shift moves, and `TransferAssembly.restrictT_coe` carries it through the restriction.
 
-The assembled data's `T` is not the identity on `halfSpaceAlg`: `shift_no_finite_order_on_halfSpaceAlg`
-at `k = 1` supplies a member the shift moves, and `TransferAssembly.restrictT_coe` carries that
-through the restriction.
+So `GNSHilbert.positiveTransfer_of_T_eq_id`, which discharges `PositiveTransfer` for the other
+`TransferData`s in this tree, does not apply to this carrier; positivity here is
+`wilson_positiveTransfer_of_common_subsequential_limit`'s to supply.
 
-**⛔ SO `GNSHilbert.positiveTransfer_of_T_eq_id` DOES NOT REACH THIS CARRIER**, where it discharges
-`PositiveTransfer` for every other `TransferData` in the tree. Positivity here is
-`wilson_positiveTransfer_of_common_subsequential_limit`'s to supply, and it is a real condition.
-
-**⛔ AND IT IS NOT `TransferMovesSomething`.** Motion in the ALGEBRA is not motion in the GNS
-QUOTIENT: `opT [F] = [F]` whenever `T F - F` lies in the null space of the form, and nothing here
-rules that out. `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` carries the same caveat.
-
-**⛔ AND IT NEEDS A SEPARATING FUNCTION ON THE GROUP**, which is a real hypothesis: at `SU 0` and
-`SU 1` the group is a singleton and none exists. `CrossingIntegration.trace_gNeg` supplies one at
-`SU(3)`, where `Re tr` separates `gNeg` from the identity.
+This is motion in the algebra, not in the GNS quotient: `opT [F] = [F]` whenever `T F - F` lies in
+the null space of the form, and nothing here rules that out.
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` carries the same caveat. The separating
+hypothesis `hf` is real: at `SU 0` and `SU 1` the group is a singleton and no separating function
+exists, while `CrossingIntegration.trace_gNeg` supplies one at `SU 3`.
 
 DERIVED: the `2` is the plane-to-constant conversion; the `1` is the single shift step; `4` is the
 dimension. -/
@@ -8285,24 +8093,18 @@ theorem transferData_of_state_facts_T_ne_id (τ : Fin 4) (p : ℤ)
 
 #print axioms transferData_of_state_facts_T_ne_id
 
-/-- **⭐⭐ AND AT EVERY RANK AT LEAST TWO THE SEPARATING PREMISE IS DISCHARGED.**
+/-- `transferData_of_state_facts_T_ne_id` with the separating premise discharged by
+`reTrCM_separating`: the assembled transfer operator is not the identity on the half-space algebra
+at every `SU (m + 2)`.
 
-`transferData_of_state_facts_T_ne_id` with `reTrCM_separating`: the assembled transfer operator is
-not the identity on the half-space algebra, with no hypothesis about a separating function left over.
+`hinv`, `hpos` and `hnu` remain hypotheses, and the conclusion is about
+`WilsonTransferReduction.transferData_of_state_facts` applied to them. At `SU 0` and `SU 1` no
+separating function exists, which is why the matrix dimension is written `m + 2`. This is motion in
+the algebra, not in the GNS quotient; `ClayAssembly.transferMovesSomething_of_pairing_ne` is a
+sufficient condition for the latter.
 
-**⛔ THE OTHER THREE HYPOTHESES REMAIN.** `hinv`, `hpos` and `hnu` are unproved facts about a state,
-and the conclusion is about `transferData_of_state_facts` APPLIED to them — a `def` at hypotheses,
-not an object the tree has. What this discharges is the separating premise and nothing else.
-
-**⛔ AT `SU 0` AND `SU 1` NO SEPARATING FUNCTION EXISTS**, the group being a singleton, so this says
-nothing there. The tree does not formalise what happens at those ranks.
-
-**⛔ AND IT IS STILL NOT `TransferMovesSomething`.** Motion in the ALGEBRA is not motion in the GNS
-QUOTIENT; `ClayAssembly.transferMovesSomething_of_pairing_ne` gives a sufficient condition for that
-and nothing supplies it.
-
-DERIVED: the `2`s are the plane-to-constant conversion and the least rank at which two group elements
-exist; `m` is the caller's; `4` is the dimension. -/
+DERIVED: the `2`s are the plane-to-constant conversion and the least matrix dimension at which two
+group elements exist; `m` is the caller's; `4` is the dimension. -/
 theorem transferData_T_ne_id_of_rank_two (τ : Fin 4) (p : ℤ) (m : ℕ)
     (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU (m + 2))))
     (hinv : MassGap.InfiniteReflection.IsReflectionInvariant
@@ -8319,21 +8121,16 @@ theorem transferData_T_ne_id_of_rank_two (τ : Fin 4) (p : ℤ) (m : ℕ)
 
 #print axioms transferData_T_ne_id_of_rank_two
 
-/-- **⭐⭐⭐ `PositiveTransfer` FROM ONE CONVERGENCE HYPOTHESIS, AT ONE FAMILY.**
+/-- `wilson_positiveTransfer_of_common_subsequential_limit` at `lE = lO = atTop`, with the two
+convergence facts read off the interleaved family's even and odd subsequences, so both reflection
+constants come from one hypothesis.
 
-`wilson_positiveTransfer_of_common_subsequential_limit` at `lE = lO = atTop`, with the two
-convergence facts read off the interleaved family's even and odd subsequences. Both reflection
-constants therefore come from ONE hypothesis, and the reflection and translation invariances are
-discharged as they are there.
+`eq_empty_of_stable_two_mirrors` shows no nonempty box is stable under two adjacent mirrors, so
+`symCube τ (2 * p)` and `symCube τ (2 * p - 1)` are different families; subsequences of one
+convergent sequence share a limit, but only along a filter meeting both parity classes cofinally,
+which `mixCube_ultrafilter_sees_one_parity` shows an ultrafilter need not do.
 
-**⛔ WHY INTERLEAVING IS NEEDED AT ALL.** `eq_empty_of_stable_two_mirrors` proves no nonempty box is
-stable under two adjacent mirrors, so `symCube τ (2 * p)` and `symCube τ (2 * p - 1)` are different
-families and assuming both converge to one state would be an assumption. Subsequences of one
-convergent sequence converge to one limit for free — but only along a filter meeting both parity
-classes cofinally, which `mixCube_ultrafilter_sees_one_parity` shows an ultrafilter does not.
-
-**⛔ AND AT `N ≤ 1` IT HOLDS OF A ONE-DIMENSIONAL CARRIER.** `halfSpaceAlg_has_nonconstant` is the
-witness at SU(3).
+At `N ≤ 1` the carrier is one-dimensional; `halfSpaceAlg_has_nonconstant` is a witness at `SU 3`.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the interleaving period, the `1` the
 mirror separation; the `0` is the sign of the coupling and the one in `N ≠ 0`; the other `1` is the
@@ -8357,25 +8154,19 @@ theorem wilson_positiveTransfer_of_mixCube_limit (τ : Fin 4) (p : ℤ) (hN : N 
 
 #print axioms wilson_positiveTransfer_of_mixCube_limit
 
-/-- **⭐⭐⭐ THE OPERATOR SIDE FROM ONE CONVERGENCE HYPOTHESIS, AND IT IS THE STANDARD ONE.**
+/-- `wilson_transferData_of_common_limit` with the two convergence hypotheses read off one:
+interleaving
+the two box shapes into `mixCube` makes the sharing automatic, since the even and odd subsequences
+of a convergent sequence converge to its limit.
 
-`wilson_transferData_of_common_limit` asks that two families converge to the SAME state, which reads
-like a uniqueness assumption. It is not one. Interleaving the two box shapes into a single sequence
-makes the sharing automatic: if `mixCube` converges, its even and odd subsequences converge to the
-same limit because they are subsequences of one convergent sequence.
+What the caller supplies is convergence along one exhausting family of boxes with the all-identity
+boundary condition, along `atTop`. `DLRLimit.exists_limit_state` gives convergence along a refining
+ultrafilter instead, and that difference is what this hypothesis covers.
 
-**⛔ SO WHAT THE OPERATOR SIDE OWES IS EXISTENCE OF THE THERMODYNAMIC LIMIT** along one exhausting
-family of boxes with the all-identity boundary condition — the canonical hypothesis of lattice gauge
-theory, not a technicality of this construction and not a uniqueness claim.
+`TransferData` carries no spectral content. At `N ≤ 1` the carrier is the constants.
 
-Compactness gives convergence along a refining ULTRAFILTER for free
-(`DLRLimit.exists_limit_state`); what it does not give is convergence along `atTop` itself, and the
-difference is exactly what is assumed here.
-
-**⛔ AND IT PRODUCES THE OBJECT, NOT A GAP.** `TransferData` carries no spectral content. At
-`N ≤ 1` the carrier is the constants and the result is empty.
-
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. The `0` is the one in `N ≠ 0` and the `1` is the all-identity boundary condition.-/
+DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. The `0` is the one in
+`N ≠ 0` and the `1` is the all-identity boundary condition. -/
 noncomputable def wilson_transferData_of_thermodynamic_limit
     (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
     (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
@@ -8401,34 +8192,31 @@ noncomputable def wilson_transferData_of_thermodynamic_limit
 
 #print axioms wilson_transferData_of_thermodynamic_limit
 
-/-- **⭐⭐⭐ THE OPERATOR-SIDE GAP FROM A FINITE-VOLUME INEQUALITY, ON TOP OF THE STATE'S THREE REFLECTION FACTS AND THE THERMODYNAMIC LIMIT.**
+/-- `TransferGap.GapAt` for the infinite-volume transfer data at `r`, from a finite-volume
+inequality.
+The hypothesis `hfin` asks that for every `F` in the half-space algebra, eventually along the box
+family and with each box subtracting its own mean,
 
-For every `F` in the half-space algebra, eventually along the box family, with each box subtracting
-ITS OWN mean:
+    ⟨θ_{2p-2} F · F⟩ₙ - ⟨F⟩ₙ⟨θ_{2p-2} F⟩ₙ  ≤  r² · ( ⟨θ_{2p} F · F⟩ₙ - ⟨F⟩ₙ⟨θ_{2p} F⟩ₙ ),
 
-    ⟨θ_{2p-2} F · F⟩ₙ - ⟨F⟩ₙ⟨θ_{2p-2} F⟩ₙ  ≤  r² · ( ⟨θ_{2p} F · F⟩ₙ - ⟨F⟩ₙ⟨θ_{2p} F⟩ₙ )
+where `⟨·⟩ₙ` is `stateFree` at `box n` with the all-identity boundary condition. The other
+hypotheses are the state's three reflection facts `hinv`, `hpos`, `hnu` and the convergence `htend`.
 
-where `⟨·⟩ₙ` is `stateFree` at `box n` with the all-identity boundary condition. Then the
-infinite-volume transfer data has a gap at `r`.
+`hfin` itself names no limit state: both sides are connected two-point functions of one explicit
+finite integral, `stateFree` being `specFree` normalised and `specFree` a ratio of two Bochner
+integrals of `wtFree` over the box's product Haar measure.
+`InfiniteReflection.state_pairing_subtracted` identifies the vacuum-subtracted pairing with the
+connected correlator, so each box's connected pairing converges to the limit state's term by term,
+and `InfiniteReflection.connected_pairing_le_of_eventually` carries the inequality across.
 
-**⛔ `hfin` ALONE MENTIONS NO LIMIT STATE** — `ν`, `hinv`, `hpos`, `hnu` and `htend` all still do.** That is the point of this form. Both
-sides are CONNECTED two-point functions of one explicit finite integral — `stateFree` is `specFree`
-normalised, and `specFree` is a ratio of two Bochner integrals of `wtFree` over the box's product
-Haar measure. `InfiniteReflection.state_pairing_subtracted` is what makes the two ends meet: the
-vacuum-subtracted pairing IS the connected correlator, so each box's connected pairing converges to
-the limit state's term by term.
-
-**⛔ AND THERE IS NO SIDE CONDITION TO DROP.** At `F = 1` both sides are `0`, so the collapse that
-makes an UNSUBTRACTED decay hypothesis contradictory — `1 ≤ r²`, whence
-`TransferGap.gapAt_of_one_le_sq` gives the conclusion for free — cannot arise here. The subtraction
-is built into the statement rather than carried as a premise.
-
-**⛔ IT IS STILL THE MASS GAP.** Nothing here makes the hypothesis true. It says the connected
-two-step reflection pairing decays by `r²` against the connected zero-step one, uniformly in the
-volume. That is exponential clustering, and it is the physics.
+The subtraction is part of the statement rather than a premise: at `F = 1` both sides are `0`, so
+the collapse that makes an unsubtracted decay hypothesis contradictory — `1 ≤ r²`, whence
+`TransferGap.gapAt_of_one_le_sq` gives the conclusion — does not arise. What `hfin` asserts is that
+the connected two-step reflection pairing decays by `r²` against the connected zero-step one,
+uniformly in the volume.
 
 DERIVED: the `2`s are the plane-to-constant conversion and the two-step separation, the `1` is the
-all-identity boundary condition; `4` is the dimension. The `0` is the one in `N ≠ 0`.-/
+all-identity boundary condition; `4` is the dimension. The `0` is the one in `N ≠ 0`. -/
 theorem gapAt_of_finite_volume_connected (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ) (r : ℝ)
     (box : ℕ → Finset MassGap.InfiniteLattice.ILink)
     (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
@@ -8482,18 +8270,17 @@ end StateAlgebra
 
 end Split
 
-/-! ## 4. The obligation, stated correctly -/
+/-! ## 4. The obligation, as a named proposition -/
 
 section Obligation
 
 variable {G : Type} [Group G] [TopologicalSpace G] [ContinuousInv G] [CompactSpace G]
 
-/-- **B3, IN THE FORM THAT IS NOT FALSE BY CONSTRUCTION.** The reflection constant must be twice the
-plane.
+/-- `ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg τ p) ν` as a named proposition: the
+reflection constant is twice the plane, which is the pairing `reflection_exchanges_halves`
+establishes. This declaration names the statement; it does not supply it.
 
-Nothing here supplies it. What is supplied is the shape: an attempt against
-`ReflPositiveOn (latticeReflection τ c) (halfSpaceAlg τ c)` would be attempting a statement whose
-geometry does not hold.
+Stated for a compact topological group with continuous inversion, not only for `SU N`.
 
 DERIVED: the `2` is `reflection_exchanges_halves`'s plane-to-constant conversion; `4` is the
 dimension. -/

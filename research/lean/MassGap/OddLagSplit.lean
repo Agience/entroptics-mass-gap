@@ -6,86 +6,87 @@ import MassGap.HaarMoments
 /-!
 # MassGap.OddLagSplit — the odd-lag (link-reflection) action split
 
-`ActionSplit` splits the Wilson action at a SITE-reflection plane (even extent, even lag) and proves
-the Osterwalder–Seiler pairing inequality there. `CrossingIntegration` supplies the analytic engine
-for the remaining case and states its own two limits. This file is the LINK-reflection geometry: even
-extent `n = 2m`, ODD lag `c`, where `2x = c` has no solution and `2x = c − 1` has two.
+`ActionSplit` splits the Wilson action at a site-reflection plane, at even extent and even lag, and
+proves the Osterwalder–Seiler pairing inequality there. `CrossingIntegration` supplies the analytic
+engine for the remaining case and states its own two limits. This file is the link-reflection
+geometry: even extent `n = 2m` and odd lag `c`, where `2x = c` has no solution and `2x = c − 1` has
+two.
 
-## Part A — the obstruction, at the level of the SUM
+## Part A — the obstruction at the level of the sum
 
-`CrossingIntegration`'s two obstructions are stated for ONE straddling plaquette, and its scope note
-records that the Boltzmann weight's straddling factor is the exponential of a SUM, so neither
-theorem rules out that the SUM is a paired form. It names a witness that should lift and does not
-build it. It is built here and it does lift.
+`CrossingIntegration`'s two obstructions are stated for one straddling plaquette, and the Boltzmann
+weight's straddling factor is the exponential of a sum, so neither rules out that the sum is a paired
+form. Part A settles that question with an explicit configuration.
 
-`cfgSum` carries `gNeg = diag(1, −1, −1)` on every reflection-FIXED axis link whose site coordinates
-have EVEN SUM, and the identity everywhere else. Two facts make it work:
+`cfgSum` carries `gNeg = diag(1, −1, −1)` on every reflection-fixed axis link whose site coordinates
+have even sum, and the identity on every other link. Two facts about it:
 
-* it is reflection-fixed (`reflConf_cfgSum`) — every link carries `1` or `gNeg`, both self-inverse,
+* It is reflection-fixed (`reflConf_cfgSum`) — every link carries `1` or `gNeg`, both self-inverse,
   and the reflection inverts only the axis links, mapping fixed ones to themselves and non-fixed ones
   to other non-fixed ones; and
-* a transverse step FLIPS the coordinate-sum parity when the extent is even
-  (`sum_val_shift_parity`), so of the two fixed axis links a straddling plaquette reads, EXACTLY ONE
-  carries `gNeg` — and the word is `gNeg` at every straddling plaquette at once
+* A transverse step flips the coordinate-sum parity when the extent is even
+  (`sum_val_shift_parity`), so of the two fixed axis links a straddling plaquette reads, exactly one
+  carries `gNeg`, and the plaquette word is `gNeg` at every straddling plaquette at once
   (`hol_cfgSum_oddCross`).
 
-So the straddling sum reads `−card` where a paired form would read `≥ 0`
+The straddling sum therefore reads `−card` where a paired form would read at least `0`
 (`straddling_sum_not_paired_at_odd_lag`), and it reads `−card` against `3 · card` at the identity
-while both half-restrictions are untouched (`no_half_function_for_straddling_sum`). Both obstructions
-lift; the second lifts with no parity argument at all, since the fixed axis links are absent from
-both halves however many plaquettes read them.
+while both half-restrictions are unchanged (`no_half_function_for_straddling_sum`). The second
+statement uses no parity argument, since the fixed axis links belong to neither half however many
+plaquettes read them.
 
 ## Part B — the block partition at a link-reflection plane
 
-`oblkR` is the fixed set: the AXIS links at levels `0` and `m` measured from `a`, where `a + a = c − 1`
-(two planes, because the extent is periodic). `oblkS` and `oblkT` are the two open sides. The
-reflection carries `oblkS` onto `oblkT` (`oblkS_maps_oblkT`) and fixes `oblkR` pointwise
-(`oblkR_fixed`), which `reflConf` then INVERTS — that inversion is the whole difference from the
-even-lag case.
+`oblkR` is the fixed set: the axis links at levels `0` and `m` measured from `a`, where
+`a + a = c − 1`; there are two planes because the extent is periodic. `oblkS` and `oblkT` are the two
+open sides. The reflection carries `oblkS` onto `oblkT` (`oblkS_maps_oblkT`) and fixes `oblkR`
+pointwise (`oblkR_fixed`), on which `reflConf` inverts — that inversion is what distinguishes this
+geometry from the even-lag one.
 
 `oplaq_side` is the trichotomy: a non-degenerate plaquette reads `oblkS` alone, reads `oblkT` alone,
-or STRADDLES, and the straddling ones are exactly those with one direction along the axis and a base
-site at level `0` or `m` (`oplqCross`). Unlike the even-lag case the one-sided plaquettes touch the
-fixed set not at all: `R` appears only in the straddling words.
+or straddles, and the straddling ones are those with one direction along the axis and a base site at
+level `0` or `m` (`oplqCross`). The one-sided plaquettes do not touch the fixed set: `oblkR` appears
+only in the straddling words.
 
-## Part C — the direct sum, which is what a SUM of straddling plaquettes needs
+## Part C — the direct sum, for a sum of straddling plaquettes
 
-`CrossingIntegration.hsRe_conj` is one matrix pair under one gauge pair; `wilson_crossing_pairing_nonneg`
-reads a single `X`. A sum of straddling words is a block-diagonal `X`: `dsum` builds it,
-`hsRe_dsum` says the cross form of two block-diagonal matrices is the sum of the blocks' cross forms,
-and `hsRe_dsum_conj` is `hsRe_conj` for a whole family at once, each block conjugated by its own
-gauge pair. That is the direct-sum form the aggregation needs.
+`CrossingIntegration.hsRe_conj` treats one matrix pair under one gauge pair, and
+`wilson_crossing_pairing_nonneg` reads a single word `X`. A sum of straddling words is a
+block-diagonal `X`: `hsReG_blockDiagonal` says the cross form of two block diagonals is the sum of
+the blocks' cross forms, `hsRe_blockDiagonal_fin` transports that to the `Fin`-indexed type the
+crossing theorem takes, and `hsRe_dsum_conj` conjugates each block by its own gauge pair.
 
-## Part D — the straddling word IS the gauge-transformed cross form
+## Part D — the straddling word as a gauge-transformed cross form
 
-`cross_word_level_zero` and `cross_word_level_m` compute the straddling plaquette's holonomy at each
-of the two fixed planes and exhibit it as `g · F · g'⁻¹ · F̄⁻¹`, the Wilson cross form of one
-transverse link against another with the plane links absorbed as a gauge. `hsRe_cross_word` is that
-statement in `hsRe` form, which is what `CrossingIntegration` consumes.
+`cross_word_left` and `cross_word_right` write out the straddling plaquette's holonomy at each
+orientation as `g · F · g'⁻¹ · F̄⁻¹`, the Wilson cross form of one transverse link against another
+with the two plane links absorbed as a gauge. `hsRe_cross_word_left` and `hsRe_cross_word_right`
+state that in `hsRe` form, `sum_hsRe_cross_word` aggregates it over a family, and
+`cross_word_both_handednesses` records that the two fixed planes present the gauge in opposite
+orders.
 
-## Parts E to K — the discharge
+## Parts E to K — the integration
 
 Parts E to G do the measure theory: `integral_three_block` factors the product Haar over
 `oblkR ⊔ oblkS ⊔ oblkT` as an iterated integral with the integrand still coupling all three,
 `integral_oblk_mirror` transports the mirror's variables onto the positive half so both inner
 integrals run over the same block, and `plane_group_haar`, `planeAct_measurePreserving`,
-`measurable_uncurry_planeAct` and `abs_coord_le_one_of_entries` supply every instance the crossing
-integration asks for. Part H chooses the plane: every odd lag is `a + a + 1` for some `a`, and one of
-the two choices puts the base plaquette inside the positive half
-(`exists_odd_lag_plane_in_half`).
+`measurable_uncurry_planeAct` and `abs_coord_le_one_of_entries` supply the instances the crossing
+integration takes. Part H chooses the plane: every odd lag is `a + a + 1` for some `a`, and one of
+the two choices puts the base plaquette inside the positive half (`exists_odd_lag_plane_in_half`).
 
 Parts I to K identify the integrand. `oplqCross` indexes the blocks directly — both orientations of
-every geometric plaquette, both fixed planes — and after inverting the gauge on the upper plane alone
+every geometric plaquette, both fixed planes — and with the gauge inverted on the upper plane alone
 every block reads `hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))` (`re_tr_hol_cross`). `crossWord` is the
-direct sum of those, `planeA`/`planeB` run the assignment backwards from a half-link to its
-plaquette's plane links, and `sum_re_tr_oplqCross` is the whole straddling factor as ONE cross form.
+direct sum of those, `planeA` and `planeB` run the assignment backwards from a half-link to its
+plaquette's plane links, and `sum_re_tr_oplqCross` presents the whole straddling factor as one cross
+form.
 
-`corrClay_reflection_positive` is the conclusion: the body of
-`Complete.wilson_reflection_positive_at` at aperture `Nap`, with no hypothesis about the lattice
-left. It carries `2 ≤ m` — extent at least four, because the backward plane assignment collides at
-extent two (`negctl_plane_assignment_collides_at_m_one`) — and `0 ≤ β`, because the Wilson cross
-kernel is positive-semidefinite exactly there
-(`negctl_odd_discharge_needs_nonneg_coupling`).
+`corrClay_reflection_positive` is the file's conclusion: the body of
+`Complete.wilson_reflection_positive_at` at aperture `Nap`, with no hypothesis about the lattice. It
+carries `2 ≤ m` — extent at least four, because the backward plane assignment collides at extent two
+(`negctl_plane_assignment_collides_at_m_one`) — and `0 ≤ β`, because the Wilson cross kernel is
+positive-semidefinite exactly there (`negctl_odd_discharge_needs_nonneg_coupling`).
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python code/lean_build.py build MassGap.OddLagSplit`.
@@ -98,7 +99,7 @@ open MassGap MassGap.ActionSplit MassGap.CharacterExpansion MassGap.CrossingInte
 open MassGap.WilsonLattice MassGap.WilsonHypercubic
 open MassGap.CompactGauge MassGap.Reflect
 
-/-! ## Part A — the obstruction lifted to the SUM
+/-! ## Part A — the obstruction lifted to the sum
 
 ### The parity that separates the two fixed axis links of a straddling plaquette -/
 
@@ -106,16 +107,18 @@ section Parity
 
 variable {d n : ℕ} [NeZero n]
 
-/-- The coordinate sum of a site, as a natural number. Its PARITY is the only thing used. -/
+/-- The sum of a site's coordinates, as a natural number.
+
+DERIVED: no numeral. -/
 def siteSum (x : Site d n) : ℕ := ∑ k, (x k).val
 
 /-- **A transverse step flips the coordinate-sum parity, at even extent.**
 
 Stepping in direction `ν` replaces `x ν` by `x ν + 1` and leaves every other coordinate alone, so the
 two sums differ by the one coordinate. When the step does not wrap, the change is `+1`; when it wraps,
-the coordinate drops from `n − 1` to `0`, and `n − 1` is ODD because the extent is even. So the
+the coordinate drops from `n − 1` to `0`, and `n − 1` is odd because the extent is even. So the
 parity flips either way — which is what makes the two fixed axis links of a straddling plaquette
-carry DIFFERENT group elements.
+carry different group elements.
 
 DERIVED: `1` is one lattice step; the evenness of `n` is the hypothesis, not a choice. -/
 theorem sum_val_shift_parity (hn : Even n) (ν : Fin d) (x : Site d n) :
@@ -164,12 +167,12 @@ section SumWitness
 variable {d n : ℕ} [NeZero n]
 
 open Classical in
-/-- **THE SUM-LEVEL WITNESS.** `gNeg = diag(1, −1, −1)` on every reflection-FIXED axis link whose
+/-- **The sum-level witness.** `gNeg = diag(1, −1, −1)` on every reflection-fixed axis link whose
 site coordinates have even sum; the identity on every other link.
 
 This is the configuration `CrossingIntegration`'s scope note names and does not build. Its point is
-that a straddling plaquette reads TWO fixed axis links whose sites differ by one transverse step, so
-by `sum_val_shift_parity` exactly ONE of them carries `gNeg` — and the plaquette word is `gNeg` no
+that a straddling plaquette reads two fixed axis links whose sites differ by one transverse step, so
+by `sum_val_shift_parity` exactly one of them carries `gNeg` — and the plaquette word is `gNeg` no
 matter which.
 
 DERIVED: `3` is the rank of the gauge group the development is built at, and the size `gNeg` already
@@ -200,8 +203,10 @@ theorem cfgSum_one_of_odd {l : Link d n} (h : ¬ Even (siteSum l.2)) : cfgSum τ
   simp only [cfgSum]
   rw [if_neg (fun hc => h hc.2.2)]
 
-/-- **Every value of the witness is its own inverse** — `1` and `gNeg` both are. This is what makes
-the configuration reflection-fixed even though the reflection DAGGERS the axis links. -/
+/-- Every value of `cfgSum` is its own inverse. The configuration takes only the two values `gNeg`
+and `1`, and each is its own inverse, so inverting a link's value does not change it.
+
+DERIVED: no numeral in the statement. -/
 theorem cfgSum_inv (l : Link d n) : (cfgSum τ c l)⁻¹ = cfgSum τ c l := by
   classical
   simp only [cfgSum]
@@ -209,12 +214,14 @@ theorem cfgSum_inv (l : Link d n) : (cfgSum τ c l)⁻¹ = cfgSum τ c l := by
   · exact gNeg_inv
   · exact inv_one
 
-/-- **THE WITNESS IS REFLECTION-FIXED.**
+/-- `reflConf τ c` fixes `cfgSum τ c`.
 
-On a fixed axis link the reflection inverts and the value is self-inverse. On a non-fixed axis link
-the reflection reads the partner link, which is also non-fixed (the reflection is an involution), so
-both carry the identity. On a transverse link the reflection reads another transverse link, and the
-witness is the identity on all of them. -/
+On a fixed axis link the reflection inverts and the value is self-inverse (`cfgSum_inv`). On a
+non-fixed axis link the reflection reads the partner link, which is also non-fixed because the
+reflection is an involution, so both carry the identity. On a transverse link the reflection reads
+another transverse link, and `cfgSum` is the identity on every transverse link.
+
+DERIVED: no numeral. -/
 theorem reflConf_cfgSum (τ : Fin d) (c : Fin n) :
     reflConf τ c (cfgSum τ c) = cfgSum τ c := by
   funext l
@@ -240,16 +247,21 @@ section OddCross
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **A straddling plaquette of a link reflection**: one direction along the axis and one across it,
-with a base site whose AXIS link the reflection fixes.
+/-- The predicate picking out a straddling plaquette of a link reflection: the two directions are
+distinct, one of them is the axis `τ`, and the axis link at the base site is fixed by `reflLink τ c`.
 
-`CharacterExpansion.odd_lag_straddling_plaq_two_fixed_axis_links` produces exactly such a plaquette
-at even extent and odd lag, and `oplaq_side` below proves these are ALL of the straddling ones. -/
+`CharacterExpansion.odd_lag_straddling_plaq_two_fixed_axis_links` produces such a plaquette at even
+extent and odd lag; `oplaq_side` below shows every straddling plaquette is of this form.
+
+DERIVED: no numeral; `q.1.1`, `q.1.2` and `q.2` are structure projections. -/
 def OddCross (τ : Fin d) (c : Fin n) (q : Plaq d n) : Prop :=
   q.1.1 ≠ q.1.2 ∧ (q.1.1 = τ ∨ q.1.2 = τ) ∧ reflLink τ c ((τ, q.2) : Link d n) = (τ, q.2)
 
-/-- The SECOND fixed axis link a straddling plaquette reads: the transverse step does not move the
-axis coordinate, so its midpoint is the same plane. -/
+/-- The second axis link a straddling plaquette reads is fixed too. A transverse step leaves the
+axis coordinate alone, so the shifted axis link sits at the same plane as the unshifted one and the
+same fixed-point condition holds.
+
+DERIVED: no numeral. -/
 theorem reflLink_fixed_shift {τ ν : Fin d} (hν : ν ≠ τ) (c : Fin n) {x : Site d n}
     (h : reflLink τ c ((τ, x) : Link d n) = (τ, x)) :
     reflLink τ c ((τ, shift ν x) : Link d n) = (τ, shift ν x) := by
@@ -261,15 +273,14 @@ theorem reflLink_fixed_shift {τ ν : Fin d} (hν : ν ≠ τ) (c : Fin n) {x : 
   rw [hs]
   exact hx
 
-/-- **THE WITNESS'S WORD IS `gNeg` AT EVERY STRADDLING PLAQUETTE AT ONCE.**
+/-- At a straddling plaquette of even extent, exactly one of the two fixed axis links carries `gNeg`
+and the other carries the identity.
 
-The two transverse links carry the identity because their direction is not the axis. The two axis
-links are both reflection-fixed and their sites differ by one transverse step, so by
-`sum_val_shift_parity` exactly one of them carries `gNeg`. Whichever it is, the word reduces to
-`gNeg` or to `gNeg⁻¹`, which is the same element.
+The two axis links are both reflection-fixed and their sites differ by one transverse step, so
+`sum_val_shift_parity` makes their coordinate-sum parities differ, and `cfgSum` reads `gNeg` on
+exactly one of them.
 
-This is the step `CrossingIntegration`'s `cfgWitness` could not take: that configuration made ONE
-plaquette read `−1` and left every other straddling plaquette at `+3`. -/
+DERIVED: `1` is the group identity, the value `cfgSum` takes on the other link. -/
 theorem cfgSum_pair (hn : Even n) {τ ρ : Fin d} (hρ : ρ ≠ τ) {c : Fin n} {x : Site d n}
     (hfix : reflLink τ c ((τ, x) : Link d n) = (τ, x)) :
     (cfgSum τ c ((τ, x) : Link d n) = gNeg
@@ -289,8 +300,10 @@ theorem cfgSum_pair (hn : Even n) {τ ρ : Fin d} (hρ : ρ ≠ τ) {c : Fin n} 
     exact Or.inr ⟨cfgSum_one_of_odd (l := ((τ, x) : Link d n)) hx,
       cfgSum_gNeg (l := ((τ, shift ρ x) : Link d n)) rfl hfix2 hev⟩
 
-/-- The straddling word at `((τ, ν), x)`: the two transverse links drop out and the two fixed axis
-links leave exactly one `gNeg`. -/
+/-- The plaquette word of `cfgSum` at `((τ, ν), x)` is `gNeg`. The two transverse links carry the
+identity and the two fixed axis links leave one `gNeg`, which is self-inverse.
+
+DERIVED: no numeral. -/
 theorem hol_cfgSum_left (hn : Even n) {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} {x : Site d n}
     (hfix : reflLink τ c ((τ, x) : Link d n) = (τ, x)) :
     wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) (cfgSum τ c) = gNeg := by
@@ -300,7 +313,9 @@ theorem hol_cfgSum_left (hn : Even n) {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin
   · simp [wilsonHol, bd, ha, hb, h2, h4]
   · simp [wilsonHol, bd, ha, hb, h2, h4, gNeg_inv]
 
-/-- The straddling word at the reversed orientation `((ν, τ), x)`, which is the same element. -/
+/-- The plaquette word of `cfgSum` at the reversed orientation `((ν, τ), x)` is also `gNeg`.
+
+DERIVED: no numeral. -/
 theorem hol_cfgSum_right (hn : Even n) {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} {x : Site d n}
     (hfix : reflLink τ c ((τ, x) : Link d n) = (τ, x)) :
     wilsonHol (bd (d := d) (n := n)) (((ν, τ), x) : Plaq d n) (cfgSum τ c) = gNeg := by
@@ -329,7 +344,11 @@ theorem hol_cfgSum_oddCross (hn : Even n) {τ : Fin d} {c : Fin n} {q : Plaq d n
     rw [hq]
     exact hol_cfgSum_right hn hρ hfix'
 
-/-- **The straddling SUM at the witness is `−card`.** Every term is `Re tr gNeg = −1`. -/
+/-- The sum of `Re tr` over a family of straddling plaquettes, evaluated at `cfgSum`, is minus the
+cardinality of the family: every term is `Re tr gNeg`, which is `-1`.
+
+DERIVED: `3` is the gauge group's degree and its matrix dimension, both fixed by the `SU 3` the
+statement is written at. -/
 theorem sum_re_tr_cfgSum (hn : Even n) {τ : Fin d} {c : Fin n} (A : Finset (Plaq d n))
     (hA : ∀ q ∈ A, OddCross τ c q) :
     (∑ q ∈ A, (Matrix.trace
@@ -343,7 +362,7 @@ theorem sum_re_tr_cfgSum (hn : Even n) {τ : Fin d} {c : Fin n} (A : Finset (Pla
   rw [Finset.sum_congr rfl hterm, Finset.sum_const, nsmul_eq_mul]
   ring
 
-/-- **The straddling SUM at the identity is `3 · card`.** The control value the witness is measured
+/-- **The straddling sum at the identity is `3 · card`.** The control value the witness is measured
 against — the same sum with the plane links set to the identity.
 
 DERIVED: `3` is `Re tr 1` in `SU(3)`, the rank. -/
@@ -364,20 +383,20 @@ theorem sum_re_tr_one (A : Finset (Plaq d n)) :
 
 end OddCross
 
-/-! ### THE ANSWER TO THE SCOPED QUESTION: the obstruction LIFTS to the sum -/
+/-! ### The answer to the scoped question: the obstruction lifts to the sum -/
 
 section SumAnswer
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **THE SCOPED CLAIM, SETTLED — the SUM is not a paired form either.**
+/-- **The scoped claim, settled — the sum is not a paired form either.**
 
-`CrossingIntegration.straddling_word_not_paired_at_odd_lag` is about ONE straddling plaquette and its
-scope note says so. This is the same statement for the whole straddling factor: for ANY nonempty
+`CrossingIntegration.straddling_word_not_paired_at_odd_lag` is about one straddling plaquette and its
+scope note says so. This is the same statement for the whole straddling factor: for any nonempty
 finite family of straddling plaquettes, the sum of their words' `Re tr` is not a nonnegative
 combination of paired forms `hsRe (X ·) (X (Θ ·))`, for any finite family `X` reading anything.
 
-The witness `cfgSum` is reflection-fixed and makes EVERY straddling plaquette read `−1` at once, so
+The witness `cfgSum` is reflection-fixed and makes every straddling plaquette read `−1` at once, so
 the sum reads `−card < 0` where a paired form would be a sum of squares.
 
 DERIVED: `−1` is the computed `Re tr` of `diag(1, −1, −1)`; `card` is the number of plaquettes in the
@@ -398,7 +417,11 @@ theorem straddling_sum_not_paired_at_odd_lag (hn : Even n) {τ : Fin d} {c : Fin
     exact_mod_cast Finset.card_pos.mpr hAne
   linarith
 
-/-- **The same for the literal matrix form.** The straddling factor's word is not `X · (ΘX)ᴴ`. -/
+/-- No matrix-valued `X` of any size makes the straddling sum equal `hsRe (X U) (X (Θ U))` for every
+configuration. The hypothesis quantifies over all `U`, and `cfgSum` refutes it.
+
+DERIVED: `3` is the gauge group's degree and its matrix dimension; `Nc` is the caller's size and is
+quantified over. -/
 theorem straddling_sum_not_matrix_paired_at_odd_lag (hn : Even n) {τ : Fin d} {c : Fin n}
     (A : Finset (Plaq d n)) (hA : ∀ q ∈ A, OddCross τ c q) (hAne : A.Nonempty)
     {Nc : ℕ} (X : (Link d n → MassGap.SUN.SU 3) → Matrix (Fin Nc) (Fin Nc) ℂ) :
@@ -415,11 +438,11 @@ theorem straddling_sum_not_matrix_paired_at_odd_lag (hn : Even n) {τ : Fin d} {
     exact_mod_cast Finset.card_pos.mpr hAne
   linarith
 
-/-- **THE SECOND OBSTRUCTION LIFTS, and it lifts with no parity argument at all.**
+/-- **The second obstruction lifts, and it lifts with no parity argument at all.**
 
-A reflection-fixed axis link lies in NEITHER half — it cannot, since the reflection fixes it while
+A reflection-fixed axis link lies in neither half — it cannot, since the reflection fixes it while
 `S` and `T` are disjoint and the reflection carries `S` into `T`. That is true however many
-plaquettes read it, so the straddling SUM is no more a function of the two half-restrictions than one
+plaquettes read it, so the straddling sum is no more a function of the two half-restrictions than one
 straddling word is. The two configurations are the identity and `cfgSum`, which agree on `S` and
 whose reflections agree on `S`, and whose straddling sums are `3 · card` and `−card`.
 
@@ -470,9 +493,11 @@ section SumControls
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **The straddling set is nonempty at even extent and odd lag** — the family the theorems above
-quantify over actually exists. Built from the fixed axis link
-`ActionSplit.odd_lag_has_fixed_axis_link` supplies. -/
+/-- A straddling plaquette exists at even extent and odd lag, so the family the statements above
+quantify over is inhabited. The base site comes from the fixed axis link
+`ActionSplit.odd_lag_has_fixed_axis_link` supplies.
+
+DERIVED: `2` in `2 ≤ n` is the smallest extent at which an odd lag admits a fixed axis link. -/
 theorem exists_oddCross (hn : Even n) (h2 : 2 ≤ n) {τ ν : Fin d} (hν : ν ≠ τ)
     {c : Fin n} (hc : ¬ Even c.val) : ∃ q : Plaq d n, OddCross τ c q := by
   obtain ⟨y, hy⟩ := exists_fixed_site (even_sub_one_of_odd hn h2 hc)
@@ -480,7 +505,7 @@ theorem exists_oddCross (hn : Even n) (h2 : 2 ≤ n) {τ ν : Fin d} (hν : ν �
   refine (reflLink_fixed_iff_axis c _ rfl).mpr ?_
   simpa using hy.symm
 
-/-- **THE REFUTED CASE OCCURS AT THE PHYSICAL DIMENSION**, `d = 4` and `SU(3)`: extent `4` (even),
+/-- **The refuted case occurs at the physical dimension**, `d = 4` and `SU(3)`: extent `4` (even),
 axis `0`, transverse direction `1`, lag `1` (odd). The sum-level obstruction is not a vacuous
 quantification.
 
@@ -489,20 +514,23 @@ distinct directions. -/
 theorem oddCross_four_dim : ∃ q : Plaq 4 4, OddCross (0 : Fin 4) (1 : Fin 4) q :=
   exists_oddCross (by decide) (by norm_num) (by decide : (1 : Fin 4) ≠ (0 : Fin 4)) (by decide)
 
-/-- **NEGATIVE CONTROL 1 — the sum-level test does not fire on a genuinely paired sum.** For a family
-whose total IS a paired form, the quantity the obstruction looks at is nonnegative at every
-reflection-fixed configuration, so there is no hypothesis to consume. The refutation detects the
-absence of the paired form, not the presence of a reflection or of a sum. -/
+/-- Negative control. At a configuration fixed by `Θ`, the paired form `hsRe (X U₀) (X (Θ U₀))` is
+nonnegative for every `X`. So the refutation above turns on the straddling sum being negative there,
+not on the presence of a reflection or of a sum.
+
+DERIVED: `0` is the asserted lower bound. -/
 theorem negctl_paired_sum_is_nonneg {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     {Nc : ℕ} (X : γ → Matrix (Fin Nc) (Fin Nc) ℂ) :
     0 ≤ hsRe (X U₀) (X (Θ U₀)) := by
   rw [hfix]
   exact hsRe_self_nonneg _
 
-/-- **NEGATIVE CONTROL 2 — the sign is carried by the witness, not by the straddling geometry.** The
-same family of straddling plaquettes, evaluated at the all-identity configuration (which is also
-reflection-fixed), sums to `3 · card > 0`. So `sum_re_tr_cfgSum` measures `diag(1, −1, −1)` sitting
-on the fixed axis links, not the fact that the plaquettes straddle. -/
+/-- Negative control. The all-identity configuration is also reflection-fixed, and the same sum over
+the same family is strictly positive there. The negative value in `sum_re_tr_cfgSum` therefore comes
+from the group elements `cfgSum` puts on the fixed axis links, not from the plaquettes straddling.
+
+DERIVED: `1` is the group identity the configuration carries; `3` is the gauge group's degree and
+its matrix dimension; `0` is the asserted strict lower bound. -/
 theorem negctl_sum_identity_positive {τ : Fin d} {c : Fin n} (A : Finset (Plaq d n))
     (hAne : A.Nonempty) :
     reflConf τ c (fun _ : Link d n => (1 : MassGap.SUN.SU 3)) = (fun _ => 1)
@@ -517,7 +545,7 @@ theorem negctl_sum_identity_positive {τ : Fin d} {c : Fin n} (A : Finset (Plaq 
   have : 0 < (A.card : ℝ) := by exact_mod_cast Finset.card_pos.mpr hAne
   linarith
 
-/-- **NEGATIVE CONTROL 3 — the witness needs the EVEN extent.** `sum_val_shift_parity` is what makes
+/-- **Negative control 3 — the witness needs the even extent.** `sum_val_shift_parity` is what makes
 exactly one of the two fixed axis links carry `gNeg`, and it is false at odd extent: at `n = 3` the
 step from coordinate `2` to coordinate `0` changes the sum by `−2`, which preserves parity. So the
 parity argument is a fact about even extent, which is the case the theorem is stated in.
@@ -534,13 +562,13 @@ theorem negctl_parity_needs_even_extent :
 
 end SumControls
 
-/-! ## Part B — the block partition at a LINK-reflection plane
+/-! ## Part B — the block partition at a link-reflection plane
 
-The reflection constant is `c = a + a + 1`, so `2x = c` has NO solution (no fixed site, no fixed
-transverse link) and `2x = c − 1` is solved by `a` and by `a + m` — the TWO fixed axis planes the
+The reflection constant is `c = a + a + 1`, so `2x = c` has no solution (no fixed site, no fixed
+transverse link) and `2x = c − 1` is solved by `a` and by `a + m` — the two fixed axis planes the
 periodic extent forces. Levels are measured from `a` by `ActionSplit.lv`.
 
-Under the reflection an AXIS coordinate at level `j` goes to level `(n − j) % n` and a TRANSVERSE one
+Under the reflection an axis coordinate at level `j` goes to level `(n − j) % n` and a transverse one
 to level `((n − j) % n + 1) % n`. That one-step offset between the two families is what a link
 reflection is, and it is why the fixed set is made of axis links rather than a site-plane. -/
 
@@ -548,8 +576,8 @@ section OddBlocks
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **The fixed set of a link reflection**: the AXIS links at levels `0` and `m`, whose MIDPOINTS are
-the two reflection planes. `reflLink` fixes each of them (`oblkR_fixed`) and `reflConf` INVERTS each
+/-- **The fixed set of a link reflection**: the axis links at levels `0` and `m`, whose midpoints are
+the two reflection planes. `reflLink` fixes each of them (`oblkR_fixed`) and `reflConf` inverts each
 of them (`ActionSplit.reflConf_inverts_fixed_axis_link`) — that inversion is the entire difference
 from the even-lag case, and the reason `ActionSplit`'s conditional argument does not apply here.
 
@@ -626,8 +654,10 @@ theorem oblkT_disjoint_oblkR : Disjoint (oblkT τ a m) (oblkR τ a m) := by
   rw [mem_oblkT, if_pos hax] at hT
   omega
 
-/-- **The three blocks exhaust the links.** With the three disjointness lemmas this is the
-partition. -/
+/-- The union of the three blocks is the whole link set. With the three disjointness lemmas beside
+it, `oblkS`, `oblkT` and `oblkR` partition `Link d n`.
+
+DERIVED: no numeral. -/
 theorem oblk_union_univ : oblkS τ a m ∪ oblkT τ a m ∪ oblkR τ a m = Finset.univ := by
   refine Finset.eq_univ_of_forall (fun l => ?_)
   simp only [Finset.mem_union, mem_oblkS, mem_oblkT, mem_oblkR]
@@ -648,9 +678,12 @@ theorem oblk_union_univ : oblkS τ a m ∪ oblkT τ a m ∪ oblkR τ a m = Finse
 
 /-! ### The reflection on the blocks -/
 
-/-- **The fixed set really is fixed.** An axis link is fixed exactly when its midpoint is a plane,
-which at levels `0` and `m` it is: `fcast j + fcast j = 0` for `j = 0` and for `j = m`, the latter
-because `m + m = n`. -/
+/-- Every link of `oblkR` is fixed by the reflection `reflLink τ (a + a + 1)`. An axis link is
+fixed exactly when its midpoint is a plane, and at levels `0` and `m` it is: the doubled level
+vanishes at `j = 0`, and at `j = m` because `m + m = n`.
+
+DERIVED: `2` is the extent hypothesis `n = 2 * m`; `1` is the one-step offset in the link
+reflection's constant `a + a + 1`. -/
 theorem oblkR_fixed (hm : n = 2 * m) {l : Link d n} (hl : l ∈ oblkR τ a m) :
     reflLink τ (a + a + 1) l = l := by
   obtain ⟨hax, hor⟩ := (mem_oblkR τ a m l).mp hl
@@ -671,8 +704,11 @@ theorem oblkR_fixed (hm : n = 2 * m) {l : Link d n} (hl : l ∈ oblkR τ a m) :
     have hmn : m + m = n := by omega
     rw [hmn, fcast_self]
 
-/-- **The reflection carries the positive half onto the mirror.** An axis level `j` goes to `n − j`
-and a transverse level `j` to `n − j + 1` modulo the extent, and the two ranges are exchanged. -/
+/-- The reflection carries `oblkS` into `oblkT`. An axis level `j` goes to `n − j` and a transverse
+level `j` to `n − j + 1` modulo the extent, and those two maps exchange the two blocks' level ranges.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oblkS_maps_oblkT (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l ∈ oblkS τ a m) :
     reflLink τ (a + a + 1) l ∈ oblkT τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -708,13 +744,15 @@ with one direction along the axis reads the axis links at level `j` and the tran
 levels `j` and `j + 1`; one with neither direction along the axis reads four transverse links at
 level `j`. -/
 
-/-- Plaquettes with BOTH directions along the axis: identity holonomy, zero contribution. They are
-excluded from the trichotomy because they genuinely straddle — see
-`odd_degenerate_axis_plaquette_straddles`. -/
+/-- The plaquettes whose two directions are both the axis. Their boundary word retraces itself, so
+their Wilson density is zero (`sum_oplqDeg_zero`). `oplaq_side` excludes them by hypothesis, and
+`odd_degenerate_axis_plaquette_straddles` shows they read links of both halves.
+
+DERIVED: no numeral; `q.1.1` and `q.1.2` are structure projections. -/
 def oplqDeg (τ : Fin d) : Finset (Plaq d n) :=
   Finset.univ.filter (fun q => q.1.1 = τ ∧ q.1.2 = τ)
 
-/-- The STRADDLING plaquettes: one direction along the axis, base level on one of the two planes.
+/-- The straddling plaquettes: one direction along the axis, base level on one of the two planes.
 
 DERIVED: `0` is the level of the lower plane; the upper one is `m`, a parameter. -/
 def oplqCross (τ : Fin d) (a : Fin n) (m : ℕ) : Finset (Plaq d n) :=
@@ -762,8 +800,11 @@ theorem mem_oplqMinus (q : Plaq d n) :
   rw [oplqMinus, Finset.mem_filter]
   exact ⟨fun h => h.2, fun h => ⟨Finset.mem_univ _, h⟩⟩
 
-/-- **A positive-half plaquette reads the positive half ALONE** — not `S ∪ R`, as in the even-lag
-case, but `S`. At a link reflection the fixed set appears only in the straddling words. -/
+/-- Every link of a plaquette in `oplqPlus` lies in `oblkS`. The conclusion is membership in the
+half alone, not in the half together with the fixed set: at a link reflection the fixed set appears
+only in the straddling words.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`. -/
 theorem oplaq_links_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqPlus τ a m) : ∀ l ∈ (bd q).map Prod.fst, l ∈ oblkS τ a m := by
   obtain ⟨hdeg, h0, hle, hax⟩ := (mem_oplqPlus τ a m q).mp hq
@@ -812,7 +853,9 @@ theorem oplaq_links_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     · rw [if_pos hν]; exact ⟨h0', hax' (Or.inr hν)⟩
     · rw [if_neg hν]; exact ⟨h0', hle'⟩
 
-/-- **A mirror plaquette reads the mirror ALONE.** -/
+/-- Every link of a plaquette in `oplqMinus` lies in `oblkT`.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`. -/
 theorem oplaq_links_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqMinus τ a m) : ∀ l ∈ (bd q).map Prod.fst, l ∈ oblkT τ a m := by
   obtain ⟨hdeg, hj, hax⟩ := (mem_oplqMinus τ a m q).mp hq
@@ -861,9 +904,11 @@ theorem oplaq_links_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     · rw [if_pos hν]; exact hax' (Or.inr hν)
     · rw [if_neg hν]; exact hj'
 
-/-- **A straddling plaquette is exactly an `OddCross` plaquette of the reflection `a + a + 1`** — the
-predicate Part A's obstruction is stated over. The class the partition isolates and the class the
-witness defeats are the same class. -/
+/-- A plaquette of `oplqCross` satisfies `OddCross τ (a + a + 1)`, the predicate the statements of
+Part A are written over.
+
+DERIVED: `2` is the extent hypothesis `n = 2 * m`; `1` is the one-step offset in the reflection
+constant `a + a + 1`. -/
 theorem oplqCross_oddCross (hm : n = 2 * m) {q : Plaq d n} (hq : q ∈ oplqCross τ a m) :
     OddCross τ (a + a + 1) q := by
   obtain ⟨hdeg, hax, hlev⟩ := (mem_oplqCross τ a m q).mp hq
@@ -875,13 +920,16 @@ theorem oplqCross_oddCross (hm : n = 2 * m) {q : Plaq d n} (hq : q ∈ oplqCross
     rw [mem_oblkR]
     exact ⟨rfl, hlev⟩
 
-/-- **THE TRICHOTOMY.** Every non-degenerate plaquette reads the positive half alone, reads the
-mirror alone, or STRADDLES — and the straddling ones are exactly those with one direction along the
-axis and a base site on one of the two planes.
+/-- Every plaquette that is not degenerate falls into one of three classes: all its links lie in
+`oblkS`, all its links lie in `oblkT`, or it satisfies `OddCross τ (a + a + 1)`. The degenerate case
+is excluded by the hypothesis `hdeg`.
 
-This is `ActionSplit.plaq_side` at a link-reflection plane, and it is sharper there than here in one
-respect and blunter in another: the one-sided cases do not touch the fixed set at all, but a third
-class survives, which the even-lag geometry does not have. -/
+The two one-sided cases conclude membership in a half alone and never in the fixed set, which is
+where this differs from `ActionSplit.plaq_side` at a site reflection; the third class is the
+straddling one, which a site reflection does not produce.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oplaq_side (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) :
     (∀ l ∈ (bd q).map Prod.fst, l ∈ oblkS τ a m)
@@ -907,9 +955,11 @@ theorem oplaq_side (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
       · exact Or.inr (Or.inl (oplaq_links_minus τ a m hm hm0
           ((mem_oplqMinus τ a m q).mpr ⟨hdeg, Or.inr (by omega), fun h => absurd h hax⟩)))
 
-/-- **THE ACTION SPLITS FOUR WAYS.** The four classes partition the plaquettes, so any plaquette sum
-— the Wilson action among them — is the degenerate part (which vanishes), plus the positive half's
-part, plus the mirror's part, plus the straddling part. -/
+/-- A sum over all plaquettes, valued in any additive commutative monoid, equals the sum over the
+four classes: degenerate, straddling, positive half, mirror. The four `Finset`s are pairwise
+disjoint and cover, which is what the identity records.
+
+DERIVED: no numeral. -/
 theorem sum_oplaq_split {M : Type} [AddCommMonoid M] (f : Plaq d n → M) :
     ∑ q, f q = ((∑ q ∈ oplqDeg (d := d) (n := n) τ, f q) + (∑ q ∈ oplqCross τ a m, f q))
       + ((∑ q ∈ oplqPlus τ a m, f q) + (∑ q ∈ oplqMinus τ a m, f q)) := by
@@ -962,7 +1012,11 @@ theorem sum_oplaq_split {M : Type} [AddCommMonoid M] (f : Plaq d n → M) :
           · exact Or.inr (Or.inr ⟨hdeg, Or.inr (by omega), fun h => absurd h hax⟩)
   rw [← huniv, Finset.sum_union hcross, Finset.sum_union hdc, Finset.sum_union hpm]
 
-/-- **The degenerate class contributes nothing** — the boundary word retraces itself. -/
+/-- The Wilson density summed over the degenerate class is zero: both directions of such a
+plaquette are the axis, so its boundary word retraces itself and the holonomy is the identity.
+
+DERIVED: `0` appears twice — in the hypothesis `N ≠ 0`, which is what makes `SU N` a group of
+matrices of positive size, and as the asserted value of the sum. -/
 theorem sum_oplqDeg_zero {N : ℕ} (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N) :
     ∑ q ∈ oplqDeg (d := d) (n := n) τ,
       MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U) = 0 := by
@@ -983,13 +1037,14 @@ section BlockControls
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **NEGATIVE CONTROL — a straddling plaquette genuinely straddles.** Isolating `oplqCross` is not
-bookkeeping convenience: such a plaquette reads a link of `oblkS` AND a link of `oblkT`, so it lies
-in neither half however the halves are read, and no rearrangement of the partition removes it.
+/-- Negative control. A plaquette of `oplqCross` reads at least one link of `oblkS` and at least one
+link of `oblkT`, so it belongs to neither one-sided class.
 
-At base level `0` its two transverse links sit at levels `0` (mirror) and `1` (positive half); at
-base level `m` they sit at levels `m` (positive half) and `m + 1` (mirror, or level `0` when the
-extent is `2`). -/
+At base level `0` its two transverse links sit at levels `0`, in the mirror, and `1`, in the positive
+half; at base level `m` they sit at level `m`, in the positive half, and `m + 1`, in the mirror, or
+at level `0` when the extent is `2`.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`. -/
 theorem oplqCross_reads_both (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m)
     {q : Plaq d n} (hq : q ∈ oplqCross τ a m) :
     (∃ l ∈ (bd q).map Prod.fst, l ∈ oblkS τ a m)
@@ -1035,14 +1090,16 @@ theorem oplqCross_reads_both (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m)
     · exact ⟨⟨(μ, shift ν x), by simp [bd], h1⟩, ⟨(μ, x), by simp [bd], h2⟩⟩
     · exact ⟨⟨(μ, x), by simp [bd], h1⟩, ⟨(μ, shift ν x), by simp [bd], h2⟩⟩
 
-/-- **NEGATIVE CONTROL — the degenerate class cannot be folded into the trichotomy.** The plaquette
-with BOTH directions along the axis, based at level `m − 1`, reads an axis link at level `m − 1`
-(positive half) and one at level `m` (the fixed set), so it is in neither `oblkS` alone nor `oblkT`
-alone; and it has no transverse direction, so it is not `OddCross` either. Its holonomy is the
-identity (`sum_oplqDeg_zero`), which is why excluding it costs nothing.
+/-- Negative control. There is a plaquette with both directions along the axis that satisfies none
+of the three cases of `oplaq_side`: the witness is based at level `m − 1`, so it reads an axis link
+at level `m − 1`, in the positive half, and one at level `m`, in the fixed set, putting it in neither
+one-sided class; and it has no transverse direction, so it is not `OddCross` either. Its holonomy is
+the identity (`sum_oplqDeg_zero`), so excluding the degenerate class from `oplaq_side` costs no term
+of the action.
 
-DERIVED: `m − 1` is the level one step below the upper plane; `2 ≤ m` is what makes that level
-strictly inside the positive half rather than the lower plane itself. -/
+DERIVED: `2` appears twice — in the extent hypothesis `n = 2 * m`, and in `2 ≤ m`, which is what
+puts the witness's base level strictly inside the positive half rather than on the lower plane. `1`
+is the one-step offset in the reflection constant `a + a + 1`. -/
 theorem odd_degenerate_axis_plaquette_straddles (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm2 : 2 ≤ m) :
     ∃ q : Plaq d n, q.1.1 = τ ∧ q.1.2 = τ
@@ -1098,16 +1155,16 @@ section AuditB
 end AuditB
 
 
-/-! ## Part C — the DIRECT SUM, which is what a sum of straddling plaquettes needs
+/-! ## Part C — the direct sum, which is what a sum of straddling plaquettes needs
 
 `CrossingIntegration.hsRe_conj` is one matrix pair under one gauge pair, and its own docstring says
-the direct-sum version is not proved there. `wilson_crossing_pairing_nonneg` reads a SINGLE word `X`,
+the direct-sum version is not proved there. `wilson_crossing_pairing_nonneg` reads a single word `X`,
 so aggregating several straddling plaquettes means making `X` block-diagonal. Two facts are then
 needed and are proved here:
 
-* the cross form of two block-diagonal matrices is the SUM of the blocks' cross forms
+* The cross form of two block-diagonal matrices is the sum of the blocks' cross forms
   (`hsReG_blockDiagonal`); and
-* it is invariant when each block is conjugated by ITS OWN gauge pair (`hsRe_dsum_conj`) — which is
+* It is invariant when each block is conjugated by its own gauge pair (`hsRe_dsum_conj`) — which is
   the form the lattice supplies, since each straddling plaquette carries its own two plane links.
 
 `hsRe_blockDiagonal_fin` transports the identity to a `Fin`-indexed matrix, which is the type
@@ -1115,15 +1172,20 @@ needed and are proved here:
 
 section DirectSum
 
-/-- The Wilson cross form over an arbitrary finite index. `CharacterExpansion.hsRe` is this at
-`ι = Fin N`; the generality is only so that a block-diagonal index `Fin N × K` can be used before it
-is transported to a `Fin`. -/
+/-- The Wilson cross form `Re tr (A Bᴴ)` over an arbitrary finite index type.
+`CharacterExpansion.hsRe` is this at `ι = Fin N`; the extra generality lets a block-diagonal index
+`Fin N × K` be used before it is transported to a `Fin`.
+
+DERIVED: no numeral. -/
 noncomputable def hsReG {ι : Type} [Fintype ι] (A B : Matrix ι ι ℂ) : ℝ :=
   (Matrix.trace (A * Matrix.conjTranspose B)).re
 
 theorem hsReG_eq_hsRe {N : ℕ} (A B : Matrix (Fin N) (Fin N) ℂ) : hsReG A B = hsRe A B := rfl
 
-/-- **Relabelling the index does not move the cross form.** -/
+/-- The cross form is unchanged by relabelling the index along a bijection: `hsReG` of two
+submatrices taken along `e` equals `hsReG` of the originals.
+
+DERIVED: no numeral. -/
 theorem hsReG_submatrix_equiv {ι κ : Type} [Fintype ι] [Fintype κ] (e : κ ≃ ι)
     (A B : Matrix ι ι ℂ) :
     hsReG (A.submatrix e e) (B.submatrix e e) = hsReG A B := by
@@ -1135,11 +1197,11 @@ theorem hsReG_submatrix_equiv {ι κ : Type} [Fintype ι] [Fintype κ] (e : κ �
   unfold hsReG
   rw [Matrix.conjTranspose_submatrix, Matrix.submatrix_mul_equiv, htr]
 
-/-- **THE CROSS FORM OF TWO DIRECT SUMS IS THE SUM OF THE CROSS FORMS.**
+/-- **The cross form of two direct sums is the sum of the cross forms.**
 
 `blockDiagonal X * (blockDiagonal Y)ᴴ` is block-diagonal with blocks `X k * (Y k)ᴴ`, and the trace of
-a block-diagonal matrix is the sum of the blocks' traces. This is the whole reason a SUM of
-straddling plaquettes can be read as ONE cross form.
+a block-diagonal matrix is the sum of the blocks' traces. This is the whole reason a sum of
+straddling plaquettes can be read as one cross form.
 
 DERIVED: no numeral. -/
 theorem hsReG_blockDiagonal {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
@@ -1150,12 +1212,14 @@ theorem hsReG_blockDiagonal {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
     Complex.re_sum]
   rfl
 
-/-- **`hsRe_conj` FOR A WHOLE FAMILY AT ONCE** — each block conjugated by its OWN gauge pair.
+/-- The cross form of two block diagonals is unchanged when each block is replaced by
+`g k * · * (h k)⁻¹`, with a gauge pair that varies from block to block.
 
-This is the direct-sum form `CrossingIntegration.hsRe_conj`'s docstring names and does not prove. On
-the lattice the family is indexed by the straddling plaquettes and each one's gauge pair is the two
-fixed axis links it reads, so the per-block pairs are genuinely different and the one-pair version
-does not suffice. -/
+`CrossingIntegration.hsRe_conj` is the one-block case. On the lattice the family is indexed by the
+straddling plaquettes and each one's gauge pair is the two fixed axis links it reads, so the pairs
+differ between blocks and the one-block form does not apply directly.
+
+DERIVED: no numeral; `Fin N` carries the rank, which is a parameter. -/
 theorem hsRe_dsum_conj {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
     (g h a b : K → MassGap.SUN.SU N) :
     hsReG (Matrix.blockDiagonal (fun k => ((g k * a k * (h k)⁻¹ : MassGap.SUN.SU N)
@@ -1169,9 +1233,12 @@ theorem hsRe_dsum_conj {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
   rw [hsReG_blockDiagonal, hsReG_blockDiagonal]
   exact Finset.sum_congr rfl (fun k _ => hsRe_conj (g k) (h k) (a k) (b k))
 
-/-- **The same identity for a `Fin`-indexed block-diagonal matrix**, which is the type
-`CrossingIntegration.wilson_crossing_pairing_nonneg` takes for its word `X`. The relabelling is any
-bijection `Fin (card (Fin N × K)) ≃ Fin N × K` and the cross form does not see it. -/
+/-- The cross form of two block diagonals relabelled onto a `Fin` is the sum of the blocks' cross
+forms. The relabelling is `Fintype.equivFin (Fin N × K)`, and the cross form does not see it.
+`Matrix (Fin _) (Fin _) ℂ` is the type `CrossingIntegration.wilson_crossing_pairing_nonneg` takes
+for its word.
+
+DERIVED: no numeral; the size is `Fintype.card (Fin N × K)`, a count. -/
 theorem hsRe_blockDiagonal_fin {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
     (X Y : K → Matrix (Fin N) (Fin N) ℂ) :
     hsRe ((Matrix.blockDiagonal X).submatrix
@@ -1181,9 +1248,9 @@ theorem hsRe_blockDiagonal_fin {K : Type} [Fintype K] [DecidableEq K] {N : ℕ}
       = ∑ k, hsRe (X k) (Y k) := by
   rw [← hsReG_eq_hsRe, hsReG_submatrix_equiv, hsReG_blockDiagonal]
 
-/-- **NEGATIVE CONTROL — the two-sided shape is load-bearing in the direct sum too.** Multiplying one
+/-- **Negative control — the two-sided shape is load-bearing in the direct sum too.** Multiplying one
 argument's block by a group element and not the other's changes the cross form: with a single block
-it moves `3` to `−1`. So `hsRe_dsum_conj` is a statement about CONJUGATION, not about direct sums
+it moves `3` to `−1`. So `hsRe_dsum_conj` is a statement about conjugation, not about direct sums
 absorbing arbitrary group elements.
 
 DERIVED: `3` is `Re tr 1` in `SU(3)` and `−1` is `Re tr diag(1, −1, −1)`; both are computed. -/
@@ -1210,39 +1277,44 @@ theorem negctl_dsum_one_sided_not_invariant :
 
 end DirectSum
 
-/-! ## Part D — the straddling word IS the gauge-transformed cross form
+/-! ## Part D — the straddling word is the gauge-transformed cross form
 
 A straddling plaquette reads two links of the fixed set and two transverse links, one from each half.
 Written out, its boundary word is
 
     g · F · g'⁻¹ · F̄⁻¹
 
-with `g, g'` the two fixed axis links and `F, F̄` the two transverse ones. That is exactly
+With `g, g'` the two fixed axis links and `F, F̄` the two transverse ones. That is exactly
 `hsRe (g F g'⁻¹) F̄` — the Wilson cross form of one half's link against the other's, with the plane
-links absorbed into one argument as a GAUGE. `CrossingIntegration`'s crossing integration consumes
+links absorbed into one argument as a gauge. `CrossingIntegration`'s crossing integration consumes
 that shape and nothing else about the geometry. -/
 
 section CrossWord
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **The straddling word, written out** at `((τ, ν), x)`. Nothing is assumed: this is the boundary
-word of `WilsonHypercubic.bd` regrouped. -/
+/-- The plaquette word at `((τ, ν), x)`, written out as
+`U (τ, x) * U (ν, shift τ x) * (U (τ, shift ν x))⁻¹ * (U (ν, x))⁻¹`. This is the boundary word of
+`WilsonHypercubic.bd` regrouped; no hypothesis is taken.
+
+DERIVED: no numeral. -/
 theorem cross_word_left (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) U
       = (U (τ, x) * U (ν, shift τ x) * (U (τ, shift ν x))⁻¹) * (U (ν, x))⁻¹ := by
   simp [wilsonHol, bd, mul_assoc]
 
-/-- **The straddling word at the reversed orientation** `((ν, τ), x)`, which is the inverse of the
-other and therefore has the same `Re tr`. -/
+/-- The plaquette word at the reversed orientation `((ν, τ), x)`, written out. It is the inverse of
+the word at `((τ, ν), x)`, so `re_trace_inv` gives the two the same `Re tr`.
+
+DERIVED: no numeral. -/
 theorem cross_word_right (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonHol (bd (d := d) (n := n)) (((ν, τ), x) : Plaq d n) U
       = (U (ν, x) * U (τ, shift ν x) * (U (ν, shift τ x))⁻¹) * (U (τ, x))⁻¹ := by
   simp [wilsonHol, bd, mul_assoc]
 
-/-- **THE STRADDLING WORD'S `Re tr` IS THE GAUGE-TRANSFORMED WILSON CROSS FORM.**
+/-- **The straddling word'S `Re tr` is the gauge-transformed Wilson cross form.**
 
-`U (τ, x)` and `U (τ, shift ν x)` are the plaquette's two FIXED AXIS links — the plane gauge — and
+`U (τ, x)` and `U (τ, shift ν x)` are the plaquette's two fixed axis links — the plane gauge — and
 they act on the transverse link `U (ν, shift τ x)` exactly as a gauge field acts on a link variable,
 `F ↦ g F g'⁻¹`. The word's real trace is the cross form of that gauge-transformed link against the
 transverse link on the other side of the plane.
@@ -1259,8 +1331,10 @@ theorem hsRe_cross_word_left (τ ν : Fin d) (x : Site d n) (U : Link d n → Ma
           ((U (ν, x) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) := by
   rw [hsRe_coe_eq, cross_word_left]
 
-/-- The same at the reversed orientation: the gauge is the same pair, and the two transverse links
-exchange roles. -/
+/-- `Re tr` of the plaquette word at the reversed orientation, as a cross form. The gauge is the
+same pair of axis links and the two transverse links exchange roles between the two arguments.
+
+DERIVED: no numeral. -/
 theorem hsRe_cross_word_right (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) (((ν, τ), x) : Plaq d n) U
         : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
@@ -1269,15 +1343,15 @@ theorem hsRe_cross_word_right (τ ν : Fin d) (x : Site d n) (U : Link d n → M
           ((U (τ, x) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) := by
   rw [hsRe_coe_eq, cross_word_right]
 
-/-- **THE STRADDLING FACTOR IS ONE CROSS FORM OF TWO BLOCK-DIAGONAL WORDS.**
+/-- The sum of `Re tr` over a family of straddling plaquettes is one cross form of two block
+diagonals: the gauge-transformed links `U (τ, w k) * U (v k, shift τ (w k)) * (U (τ, shift (v k) (w k)))⁻¹`
+against the links `U (v k, w k)`. It is `hsRe_cross_word_left` summed over the family and folded by
+`hsReG_blockDiagonal`.
 
-Summing `hsRe_cross_word_left` over a family of straddling plaquettes and folding the sum into a
-single direct sum (`hsReG_blockDiagonal`) gives the aggregated form: the whole straddling part of the
-Wilson action is `hsReG` of one block-diagonal matrix — the gauge-transformed positive-half links —
-against another — the mirror's links. That is the single `X` the crossing integration reads.
+The family is presented by its base sites `w : K → Site d n` and transverse directions
+`v : K → Fin d`, which is how `oplqCross` enumerates it.
 
-Here the family is presented by its base sites `w : K → Site d n` and transverse directions
-`v : K → Fin d`, which is how `oplqCross` enumerates it. -/
+DERIVED: no numeral. -/
 theorem sum_hsRe_cross_word {K : Type} [Fintype K] [DecidableEq K] (τ : Fin d)
     (v : K → Fin d) (w : K → Site d n) (U : Link d n → MassGap.SUN.SU N) :
     (∑ k, (Matrix.trace ((wilsonHol (bd (d := d) (n := n))
@@ -1291,7 +1365,7 @@ theorem sum_hsRe_cross_word {K : Type} [Fintype K] [DecidableEq K] (τ : Fin d)
   rw [hsReG_blockDiagonal]
   exact Finset.sum_congr rfl (fun k _ => hsRe_cross_word_left τ (v k) (w k) U)
 
-/-- **AND THE AGGREGATED FORM IS GAUGE-INVARIANT.** Replacing the plane links by `p · g` on the left
+/-- **And the aggregated form is gauge-invariant.** Replacing the plane links by `p · g` on the left
 of each block and `q · h` on the right leaves the aggregated cross form alone, block by block. This
 is `hsRe_dsum_conj` pointed at the lattice's own family: each straddling plaquette carries its own
 pair of fixed axis links, so the per-block pairs really are different and the single-pair statement
@@ -1312,42 +1386,49 @@ theorem sum_hsRe_cross_word_gauge_invariant {K : Type} [Fintype K] [DecidableEq 
 
 end CrossWord
 
-/-! ### The two planes present the gauge with OPPOSITE handedness
+/-! ### The two planes present the gauge with opposite handedness
 
-A link reflection has TWO fixed planes, at levels `0` and `m`, and the straddling plaquettes at the
-two of them do NOT present the same side to the positive half. At level `0` the transverse link the
+A link reflection has two fixed planes, at levels `0` and `m`, and the straddling plaquettes at the
+two of them do not present the same side to the positive half. At level `0` the transverse link the
 positive half owns is `(ν, x + τ̂)` and the gauge acts on it as `F ↦ g · F · h⁻¹`; at level `m` the
-positive half owns `(ν, x)` instead, and the SAME word then reads `F ↦ g⁻¹ · F · h`.
+positive half owns `(ν, x)` instead, and the same word then reads `F ↦ g⁻¹ · F · h`.
 
 `cross_word_both_handednesses` is that statement: one word, two readings, gauges inverse to each
 other. It matters because `CrossingIntegration.wilson_crossing_pairing_nonneg` takes a single group
 action `act : Γ → Ω → Ω` with `act h (act g x) = act (h * g) x`, and `g · F · h⁻¹` on one plane
 together with `g⁻¹ · F · h` on the other is not one such action on a non-abelian group — the two
-compose in opposite orders. Making it one requires reparametrising the plane variables of ONE of the
+compose in opposite orders. Making it one requires reparametrising the plane variables of one of the
 two planes by inversion, which `Reflect.isInvInvariant_probHaar` licenses inside the integral and
-which is NOT performed here. -/
+which is not performed here. -/
 
 section Handedness
 
 variable {N : ℕ}
 
-/-- **`Re tr` does not see inversion on `SU(N)`** — the inverse is the conjugate transpose and the
-trace of a conjugate transpose is the conjugate of the trace. -/
+/-- `Re tr u⁻¹ = Re tr u` on `SU(N)`: the inverse is the conjugate transpose, and the trace of a
+conjugate transpose is the conjugate of the trace.
+
+DERIVED: no numeral. -/
 theorem re_trace_inv (u : MassGap.SUN.SU N) :
     (Matrix.trace (((u⁻¹ : MassGap.SUN.SU N)) : Matrix (Fin N) (Fin N) ℂ)).re
       = (Matrix.trace ((u : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re := by
   rw [coe_inv_eq_conjTranspose, Matrix.trace_conjTranspose]
   simp
 
-/-- **Trace cyclicity on `SU(N)`**, in the coerced form the plaquette words come in. -/
+/-- Trace cyclicity on `SU(N)`: `tr (X * Y) = tr (Y * X)`, stated on the matrix coercion, which is
+the form the plaquette words come in.
+
+DERIVED: no numeral. -/
 theorem trace_su_mul_comm (X Y : MassGap.SUN.SU N) :
     Matrix.trace (((X * Y : MassGap.SUN.SU N)) : Matrix (Fin N) (Fin N) ℂ)
       = Matrix.trace (((Y * X : MassGap.SUN.SU N)) : Matrix (Fin N) (Fin N) ℂ) := by
   rw [Submonoid.coe_mul, Submonoid.coe_mul, Matrix.trace_mul_comm]
 
-/-- **The same word read from the other side.** `Re tr (g · a · h⁻¹ · b⁻¹)` is the cross form of `a`
-against `b` gauged by `(g, h)`, and equally the cross form of `b` against `a` gauged by
-`(g⁻¹, h⁻¹)`. The two readings differ by inverting the gauge. -/
+/-- The same word read from the other side. `Re tr (g * a * h⁻¹ * b⁻¹)` equals the cross form of
+`g⁻¹ * b * h` against `a`, so the word is also the cross form of `b` against `a` with the gauge pair
+inverted. The two readings differ by inverting the gauge.
+
+DERIVED: no numeral. -/
 theorem re_trace_flip (g h a b : MassGap.SUN.SU N) :
     (Matrix.trace ((((g * a * h⁻¹) * b⁻¹ : MassGap.SUN.SU N))
         : Matrix (Fin N) (Fin N) ℂ)).re
@@ -1373,9 +1454,9 @@ section HandednessLattice
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **ONE STRADDLING WORD, TWO GAUGE READINGS, AND THE GAUGES ARE INVERSE.**
+/-- **One straddling word, two gauge readings, and the gauges are inverse.**
 
-Which reading the action split needs is decided by WHICH transverse link the positive half owns, and
+Which reading the action split needs is decided by which transverse link the positive half owns, and
 that differs between the plane at level `0` and the plane at level `m` (`oplqCross_reads_both`
 computes both). So a single `Γ`-action realising both planes at once does not exist on a non-abelian
 group without first inverting the plane variables of one of them.
@@ -1411,7 +1492,7 @@ end AuditF
 
 section CrossControls
 
-/-- **NEGATIVE CONTROL — `SU(1)` cannot carry the obstruction.** Every element of `SU(1)` is the
+/-- **Negative control — `SU(1)` cannot carry the obstruction.** Every element of `SU(1)` is the
 `1 × 1` identity (its determinant is `1` and that is its only entry), so `Re tr` is `1` on the whole
 group and no configuration makes any plaquette word negative.
 
@@ -1427,7 +1508,7 @@ theorem negctl_su_one_trace (u : MassGap.SUN.SU 1) :
   rw [Matrix.trace_fin_one, hdet]
   norm_num
 
-/-- **NEGATIVE CONTROL, the consequence.** At `N = 1` every plaquette word of every configuration has
+/-- **Negative control, the consequence.** At `N = 1` every plaquette word of every configuration has
 `Re tr = 1 > 0`, so `straddling_sum_not_paired_at_odd_lag`'s witness has no analogue there and the
 sum-level obstruction is empty. The refutation is not a consequence of the reflection geometry alone.
 
@@ -1461,7 +1542,7 @@ end AuditCD
 /-! ## The mirror-action identity at a link-reflection plane
 
 `sum_oplaq_split` separates the action into four groups; it does not say the mirror group is the
-positive group of the REFLECTED configuration. That exchange is what makes the Boltzmann weight a
+positive group of the reflected configuration. That exchange is what makes the Boltzmann weight a
 paired product, and it is proved here — the odd-lag analogue of
 `ActionSplit.sum_plqMinus_eq_plus_refl`.
 
@@ -1475,9 +1556,12 @@ section Mirror
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **The reflected level of a TRANSVERSE coordinate at a link reflection.** `c = a + a + 1`, so the
-reflected coordinate is one step past the axis reflection's, and the level picks up the `+ 1` that
-makes the two families of links sit on opposite sublattices. -/
+/-- The level of a reflected coordinate at a link reflection: `lv a ((a + a + 1) - p)` is
+`((n - lv a p) % n + 1) % n`. The reflection constant is one step past the site reflection's, so the
+level picks up the `+ 1`.
+
+DERIVED: `1` appears twice — the one-step offset in the reflection constant `a + a + 1`, and the
+`+ 1` it induces on the level. -/
 theorem lv_refl_site_odd (a p : Fin n) :
     lv a ((a + a + 1) - p) = ((n - lv a p) % n + 1) % n := by
   have hstep : (a + a + 1 : Fin n) - p = ((a + a) - p) + 1 := by abel
@@ -1485,7 +1569,10 @@ theorem lv_refl_site_odd (a p : Fin n) :
 
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- **The reflection carries the positive-half plaquettes onto the mirror ones.** -/
+/-- The reflection carries a plaquette of `oplqPlus` to one of `oplqMinus`.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oreflPlaq_plus_mem_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqPlus τ a m) : reflPlaq τ (a + a + 1) q ∈ oplqMinus τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -1535,7 +1622,11 @@ theorem oreflPlaq_plus_mem_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
       · have he : n - lv a (x τ) + 1 = n := by omega
         exact Or.inl (by rw [he, Nat.mod_self])
 
-/-- And back the other way, so the two groups are exchanged. -/
+/-- The reflection carries a plaquette of `oplqMinus` to one of `oplqPlus`, so with
+`oreflPlaq_plus_mem_minus` the two classes are exchanged.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oreflPlaq_minus_mem_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqMinus τ a m) : reflPlaq τ (a + a + 1) q ∈ oplqPlus τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -1594,9 +1685,12 @@ theorem oreflPlaq_minus_mem_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
           rw [h1]; omega
       exact ⟨hdeg', hkey.1, hkey.2, fun h => absurd h (fun hc => hc.elim hμ hν)⟩
 
-/-- **The straddling class is carried to itself.** The two fixed planes are exchanged or fixed by the
-reflection but never mixed with the halves, so the four-way split of `sum_oplaq_split` is a
-reflection-compatible partition and not merely a partition. -/
+/-- The reflection carries a plaquette of `oplqCross` to one of `oplqCross`. Together with the two
+lemmas above, every class of the four-way split of `sum_oplaq_split` is either preserved or
+exchanged with another, so the reflection acts on the partition.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oreflPlaq_cross_mem_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ oplqCross τ a m) : reflPlaq τ (a + a + 1) q ∈ oplqCross τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -1629,13 +1723,13 @@ theorem oreflPlaq_cross_mem_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
         = ((τ, μ), reflSite τ ((a + a + 1) - 1) x) by simp [reflPlaq, hμ', hν']]
     exact ⟨fun h => hμ' h.2, Or.inl rfl, hgoal⟩
 
-/-- **THE MIRROR IDENTITY AT A LINK-REFLECTION PLANE.**
+/-- **The mirror identity at A link-reflection plane.**
 
-The mirror part of the action, evaluated at `U`, is the positive part evaluated at the REFLECTED
+The mirror part of the action, evaluated at `U`, is the positive part evaluated at the reflected
 configuration. This is what makes the Boltzmann factor a paired product, and it is the exchange
 `sum_oplaq_split` does not supply.
 
-The holonomy of a reflected plaquette is only CONJUGATE to the image plaquette's
+The holonomy of a reflected plaquette is only conjugate to the image plaquette's
 (`Reflect.hol_reflConf`); the Wilson density is a class function, which is why the identity holds on
 the nose (`ActionSplit.density_reflConf`).
 
@@ -1684,10 +1778,10 @@ section MirrorControl
 
 variable {d n : ℕ} [NeZero n]
 
-/-- **NEGATIVE CONTROL — the mirror identity is not a relabelling that would hold for any set.**
+/-- **Negative control — the mirror identity is not a relabelling that would hold for any set.**
 
 The exchange `oplqPlus ↔ oplqMinus` is a fact about the two classes, not about `reflPlaq`. The
-STRADDLING class is carried to itself (`oreflPlaq_cross_mem_cross`), so it is NOT exchanged with
+straddling class is carried to itself (`oreflPlaq_cross_mem_cross`), so it is not exchanged with
 anything, and the same image argument applied to it gives the class back rather than a mirror. Any
 proof that "reflecting a class gives the complementary class" would therefore be wrong here.
 
@@ -1713,37 +1807,37 @@ section AuditH
 end AuditH
 
 
-/-! ## The handedness reconciliation — a SINGLE action for both fixed planes
+/-! ## One action of the plane group for both fixed planes
 
-`cross_word_both_handednesses` is the obstruction: the plane at level `0` presents the gauge as
-`F ↦ g · F · h⁻¹` and the plane at level `m` presents it as `F ↦ g⁻¹ · F · h`, and the two compose in
-opposite orders, so together they are not one action of the plane group.
+`cross_word_both_handednesses` reads the gauge at the plane at level `0` as `F ↦ g · F · h⁻¹` and at
+the plane at level `m` as `F ↦ g⁻¹ · F · h`. The two compose in opposite orders, so as they stand
+they are not one action of the plane group.
 
-They are reconciled, and the reconciliation is exactly the substitution
-`CrossingIntegration.invLink` names: invert the plane variables on ONE of the two planes. The two
-planes are disjoint sets of links, and both gauge links of a straddling plaquette lie in the SAME
-plane (a transverse step does not move the axis coordinate), so one substitution on the plane
-variables fixes every block at once.
+Inverting the plane variables on one of the two planes — the substitution `CrossingIntegration.invLink`
+performs — makes them one action. The two planes are disjoint sets of links, and both gauge links of
+a straddling plaquette lie in the same plane, because a transverse step does not move the axis
+coordinate, so one substitution covers every block.
 
 * `planeAct` is the gauge action and `planeAct_mul` is the law `act h (act g x) = act (h * g) x` that
-  `CrossingIntegration.wilson_crossing_pairing_nonneg` demands.
-* `planeActOpp_mul` shows the other handedness composes as `g * h` — the opposite order, and on a
-  non-abelian group a genuinely different law (`negctl_opposite_order_differs`,
-  `negctl_su2_handedness_needs_substitution`).
-* `mixedAct_invAt_eq_planeAct` is the reconciliation, and `mixedAct_invAt_mul` is the action law it
-  buys.
-* On the lattice, `invLink_measurePreserving` is the licence (product Haar is inversion-invariant,
-  `Reflect.isInvInvariant_probHaar`), `oplqCross_gauge_same_plane` is the geometric fact that makes
-  one substitution enough, and `cross_word_uniform` is both planes in one handedness.
-
-ANSWER TO THE GATING QUESTION: the two handednesses ARE reconcilable. -/
+  `CrossingIntegration.wilson_crossing_pairing_nonneg` takes.
+* `planeActOpp_mul` composes as `g * h`, the opposite order; on a non-abelian group that is a
+  different law (`negctl_opposite_order_differs`, `negctl_su2_handedness_needs_substitution`).
+* `mixedAct_invAt_eq_planeAct` identifies the mixed presentation at the inverted plane variable with
+  `planeAct`, and `mixedAct_invAt_mul` is the action law that follows.
+* On the lattice, `invLink_measurePreserving` is the measure-theoretic licence, product Haar being
+  inversion-invariant by `Reflect.isInvInvariant_probHaar`; `oplqCross_gauge_same_plane` is the
+  geometric fact that one substitution suffices, and `cross_word_uniform_on_plane` together with
+  `cross_word_uniform_off_plane` puts both planes in one handedness. -/
 
 section PlaneAction
 
 variable {ι κ G : Type} [Group G]
 
-/-- **The gauge action of the plane variables on the half.** Each block `l` reads two plane links
-`A l` and `B l`, and they act on it as a gauge field acts on a link variable. -/
+/-- The gauge action of the plane variables on the half: block `l` is sent to
+`g (A l) * u l * (g (B l))⁻¹`, with `A l` and `B l` the two plane links that block reads. The form is
+the one a gauge field takes on a link variable.
+
+DERIVED: no numeral. -/
 def planeAct (A B : ι → κ) (g : κ → G) (u : ι → G) : ι → G :=
   fun l => g (A l) * u l * (g (B l))⁻¹
 
@@ -1755,8 +1849,10 @@ theorem planeAct_one (A B : ι → κ) (u : ι → G) : planeAct A B (1 : κ →
   show (1 : κ → G) (A l) * u l * ((1 : κ → G) (B l))⁻¹ = u l
   simp [Pi.one_apply]
 
-/-- **IT IS AN ACTION**, in the order `wilson_crossing_pairing_nonneg`'s `hmul` requires:
-`act h (act g x) = act (h * g) x`. -/
+/-- `planeAct` satisfies the action law `act h (act g u) = act (h * g) u`, which is the order
+`CrossingIntegration.wilson_crossing_pairing_nonneg`'s `hmul` takes.
+
+DERIVED: no numeral. -/
 theorem planeAct_mul (A B : ι → κ) (g h : κ → G) (u : ι → G) :
     planeAct A B h (planeAct A B g u) = planeAct A B (h * g) u := by
   funext l
@@ -1766,15 +1862,20 @@ theorem planeAct_mul (A B : ι → κ) (g h : κ → G) (u : ι → G) :
       = (h (A l) * g (A l)) * u l * (h (B l) * g (B l))⁻¹
   group
 
-/-- **The OPPOSITE handedness**, which is what the second fixed plane presents. -/
+/-- The opposite handedness: block `l` is sent to `(g (A l))⁻¹ * u l * g (B l)`. This is the form
+the second fixed plane presents.
+
+DERIVED: no numeral. -/
 def planeActOpp (A B : ι → κ) (g : κ → G) (u : ι → G) : ι → G :=
   fun l => (g (A l))⁻¹ * u l * g (B l)
 
 @[simp] theorem planeActOpp_apply (A B : ι → κ) (g : κ → G) (u : ι → G) (l : ι) :
     planeActOpp A B g u l = (g (A l))⁻¹ * u l * g (B l) := rfl
 
-/-- **AND IT COMPOSES IN THE OPPOSITE ORDER** — `g * h`, where `planeAct` gives `h * g`. On a
-non-abelian group these are different laws, which is the whole obstruction. -/
+/-- `planeActOpp` composes at `g * h`, where `planeAct` composes at `h * g`. On a non-abelian group
+the two products differ (`negctl_opposite_order_differs`), so the two are different composition laws.
+
+DERIVED: no numeral. -/
 theorem planeActOpp_mul (A B : ι → κ) (g h : κ → G) (u : ι → G) :
     planeActOpp A B h (planeActOpp A B g u) = planeActOpp A B (g * h) u := by
   funext l
@@ -1784,16 +1885,21 @@ theorem planeActOpp_mul (A B : ι → κ) (g h : κ → G) (u : ι → G) :
       = (g (A l) * h (A l))⁻¹ * u l * (g (B l) * h (B l))
   group
 
-/-- **THE ONE-LINE RECONCILIATION**: the opposite handedness is the SAME action at the inverted
-plane variable. -/
+/-- The opposite handedness is `planeAct` at the inverted plane variable: `planeActOpp A B g u`
+equals `planeAct A B g⁻¹ u`.
+
+DERIVED: no numeral. -/
 theorem planeActOpp_eq_planeAct_inv (A B : ι → κ) (g : κ → G) (u : ι → G) :
     planeActOpp A B g u = planeAct A B g⁻¹ u := by
   funext l
   show (g (A l))⁻¹ * u l * g (B l) = g⁻¹ (A l) * u l * (g⁻¹ (B l))⁻¹
   simp [Pi.inv_apply]
 
-/-- Invert the plane variables on a chosen set of plane links — `CrossingIntegration.invLink`, stated
-over an arbitrary index so the algebra can be done once. -/
+/-- Invert the plane variable on the links satisfying `P` and leave the rest alone.
+`CrossingIntegration.invLink` is this on the lattice's link type; the statement is over an arbitrary
+index type so the algebra is done once.
+
+DERIVED: no numeral. -/
 def invAt (P : κ → Prop) [DecidablePred P] (g : κ → G) : κ → G :=
   fun l => if P l then (g l)⁻¹ else g l
 
@@ -1804,17 +1910,20 @@ theorem invAt_invAt (P : κ → Prop) [DecidablePred P] (g : κ → G) : invAt P
   · rw [if_pos h, if_pos h, inv_inv]
   · rw [if_neg h, if_neg h]
 
-/-- **The action as the LATTICE presents it**: the blocks whose gauge links sit in the second plane
-read the opposite handedness, the rest read the first. This is the mixed object
-`cross_word_both_handednesses` exhibits, and on its own it is not an action. -/
+/-- The mixed presentation: blocks satisfying `Q` are sent to `(g (A l))⁻¹ * u l * g (B l)` and the
+rest to `g (A l) * u l * (g (B l))⁻¹`. This is the shape `cross_word_both_handednesses` exhibits on
+the lattice, with one handedness at each fixed plane. It does not satisfy the action law on its own;
+`negctl_su2_handedness_needs_substitution` exhibits the failure.
+
+DERIVED: no numeral. -/
 def mixedAct (Q : ι → Prop) [DecidablePred Q] (A B : ι → κ) (g : κ → G) (u : ι → G) : ι → G :=
   fun l => if Q l then (g (A l))⁻¹ * u l * g (B l) else g (A l) * u l * (g (B l))⁻¹
 
-/-- **THE HANDEDNESS RECONCILIATION.**
+/-- **The handedness reconciliation.**
 
 If each block's two gauge links lie in the second plane exactly when the block itself does — which on
 the lattice is the statement that a transverse step does not move the axis coordinate
-(`oplqCross_gauge_same_plane`) — then the mixed presentation is the UNIFORM action at the plane
+(`oplqCross_gauge_same_plane`) — then the mixed presentation is the uniform action at the plane
 variable with that plane inverted.
 
 DERIVED: no numeral. -/
@@ -1830,15 +1939,22 @@ theorem mixedAct_eq_planeAct_invAt (Q : ι → Prop) [DecidablePred Q]
   · rw [if_pos h, if_pos ((hA l).mpr h), if_pos ((hB l).mpr h), inv_inv]
   · rw [if_neg h, if_neg (fun hc => h ((hA l).mp hc)), if_neg (fun hc => h ((hB l).mp hc))]
 
-/-- **The substituted variable is the one the crossing integration reads.** -/
+/-- The converse direction of `mixedAct_eq_planeAct_invAt`: `mixedAct` at the inverted plane
+variable is `planeAct` at the original one, under the same hypotheses `hA` and `hB`.
+
+DERIVED: no numeral. -/
 theorem mixedAct_invAt_eq_planeAct (Q : ι → Prop) [DecidablePred Q]
     (P : κ → Prop) [DecidablePred P] (A B : ι → κ)
     (hA : ∀ l, P (A l) ↔ Q l) (hB : ∀ l, P (B l) ↔ Q l) (g : κ → G) (u : ι → G) :
     mixedAct Q A B (invAt P g) u = planeAct A B g u := by
   rw [mixedAct_eq_planeAct_invAt Q P A B hA hB, invAt_invAt]
 
-/-- **AND IT THEN SATISFIES THE ACTION LAW** `act h (act g x) = act (h * g) x`, which is exactly
-`wilson_crossing_pairing_nonneg`'s `hmul`. Item one, closed at the algebraic level. -/
+/-- With the plane variable inverted, the mixed presentation satisfies the action law
+`act h (act g u) = act (h * g) u`, which is the form
+`CrossingIntegration.wilson_crossing_pairing_nonneg`'s `hmul` takes. The hypotheses `hA` and `hB` say
+each block's two gauge links lie in the substituted set exactly when the block does.
+
+DERIVED: no numeral. -/
 theorem mixedAct_invAt_mul (Q : ι → Prop) [DecidablePred Q]
     (P : κ → Prop) [DecidablePred P] (A B : ι → κ)
     (hA : ∀ l, P (A l) ↔ Q l) (hB : ∀ l, P (B l) ↔ Q l) (g h : κ → G) (u : ι → G) :
@@ -1853,12 +1969,13 @@ end PlaneAction
 
 section HandednessControls
 
-/-- **NEGATIVE CONTROL — the substitution is not cosmetic.** `planeAct` composes at `h * g` and
-`planeActOpp` at `g * h`; on `Equiv.Perm (Fin 3)` those two conjugations genuinely differ, so no
-single `Γ`-action realises both handednesses without the substitution.
+/-- Negative control. There exist `g`, `h`, `u` in `Equiv.Perm (Fin 3)` with
+`(g * h)⁻¹ * u * (g * h) ≠ (h * g)⁻¹ * u * (h * g)`. The two composition orders of `planeAct` and
+`planeActOpp` therefore give different conjugations, so no single action of the plane group realises
+both handednesses without the substitution.
 
-DERIVED: `3` is the smallest order at which a symmetric group is non-abelian; the elements are
-searched for, not chosen. -/
+DERIVED: `3` is the smallest order at which a symmetric group is non-abelian; the elements are found
+by `decide`, not chosen. -/
 theorem negctl_opposite_order_differs :
     ∃ g h u : Equiv.Perm (Fin 3),
       (g * h)⁻¹ * u * (g * h) ≠ (h * g)⁻¹ * u * (h * g) := by decide
@@ -1880,13 +1997,14 @@ theorem negctl_su2_noncomm :
       MassGap.SUN.wmat, Matrix.mul_apply, Fin.sum_univ_two] using h
   exact Complex.I_ne_zero (by linear_combination hI / 2)
 
-/-- **NEGATIVE CONTROL — the mixed presentation is NOT an action before the substitution, for the
-ACTUAL gauge group.** With one block, two distinct plane links and the two `SU(2)` elements above,
-`planeActOpp` composed twice is `(g·h)⁻¹` where the action law would give `(h·g)⁻¹`, and those differ
-because the group does not commute. So `mixedAct_invAt_mul` is buying something.
+/-- Negative control, on the gauge group itself. With one block, two distinct plane links and two
+non-commuting `SU(2)` elements, `planeActOpp` composed twice differs from `planeActOpp` at the
+product: the composition gives `(g · h)⁻¹` where the action law would give `(h · g)⁻¹`. So the mixed
+presentation does not satisfy the action law before the substitution of `mixedAct_invAt_mul`.
 
-DERIVED: the indices are a single block and two distinct plane links, the minimum the statement
-needs; the group elements are the tree's own. -/
+DERIVED: `2` is the rank of the `SU 2` the witnesses live in, and the index types are `Unit`, a
+single block, and `Bool`, two distinct plane links — the smallest instance the statement admits. The
+group elements are `MassGap.SUN.h0` and `MassGap.SUN.w`, already in the tree. -/
 theorem negctl_su2_handedness_needs_substitution :
     ∃ (A B : Unit → Bool) (g h : Bool → MassGap.SUN.SU 2) (u : Unit → MassGap.SUN.SU 2),
       planeActOpp A B h (planeActOpp A B g u) ≠ planeActOpp A B (h * g) u := by
@@ -1908,9 +2026,9 @@ section HandednessLatticeFix
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **BOTH GAUGE LINKS OF A STRADDLING PLAQUETTE LIE IN THE SAME PLANE.** A transverse step does not
+/-- **Both gauge links of A straddling plaquette lie in the same plane.** A transverse step does not
 move the axis coordinate, so the two fixed axis links a straddling plaquette reads are at the same
-level. This is what makes ONE substitution on the plane variables enough for every block at once —
+level. This is what makes one substitution on the plane variables enough for every block at once —
 the hypothesis `hA`/`hB` of `mixedAct_eq_planeAct_invAt`.
 
 DERIVED: no numeral. -/
@@ -1918,7 +2036,7 @@ theorem oplqCross_gauge_same_plane {τ ν : Fin d} (hν : ν ≠ τ) (a : Fin n)
     lv a (((τ, shift ν x) : Link d n).2 τ) = lv a (((τ, x) : Link d n).2 τ) :=
   lv_shift_of_ne hν a x
 
-/-- **THE SUBSTITUTION IS MEASURE-PRESERVING.** Inverting the gauge variable on any set of links
+/-- **The substitution is measure-preserving.** Inverting the gauge variable on any set of links
 preserves the product Haar measure, because Haar on a compact group is inversion-invariant
 (`Reflect.isInvInvariant_probHaar`). This is the licence for the change of variables the
 reconciliation needs; it is `ActionSplit.twist_measurePreserving` with the trivial relabelling.
@@ -1950,7 +2068,7 @@ theorem invLink_measurePreserving [DecidableEq (Link d n)] (R : Finset (Link d n
     simp
   rwa [hfun] at hmp
 
-/-- **THE STRADDLING WORD AT THE SECOND PLANE, IN THE FIRST PLANE'S HANDEDNESS.**
+/-- **The straddling word at the second plane, in the first plane'S handedness.**
 
 With the plane variables of this plane inverted, the word reads `hsRe (g̃_A · F · g̃_B⁻¹) F̄` — the same
 shape as at the first plane, with `F` the link the positive half owns and `F̄` the mirror's. This is
@@ -1975,8 +2093,8 @@ theorem cross_word_uniform_on_plane [DecidableEq (Link d n)] (τ ν : Fin d) (x 
   rw [hiA, hiB, inv_inv]
   exact (cross_word_both_handednesses τ ν x U).2
 
-/-- **THE STRADDLING WORD AT THE FIRST PLANE IS UNTOUCHED BY THE SUBSTITUTION**, because that plane's
-links are not in the substituted set. So after one substitution BOTH planes read
+/-- **The straddling word at the first plane is untouched by the substitution**, because that plane's
+links are not in the substituted set. So after one substitution both planes read
 `hsRe (g̃_A · F · g̃_B⁻¹) F̄` — one handedness, one action, `planeAct_mul`.
 
 DERIVED: no numeral. -/
@@ -2018,46 +2136,56 @@ section AuditG
 end AuditG
 
 
-/-! ## THE ODD-LAG ACTION SPLIT, as a pointwise identity
+/-! ## The odd-lag action split, as a pointwise identity
 
-Everything above assembles into one statement about the Boltzmann weight at a link-reflection plane:
+The Boltzmann weight at a link-reflection plane factors pointwise:
 
     e^{−βS(U)}  =  h(U|S) · h(ΘU|S) · e^{−β·S_cross(U)}
 
-with `h` a function of the positive half alone, the SAME `h` on both factors, and `S_cross` reading
-only the straddling plaquettes. That is the analogue of `ActionSplit.integrand_eq_paired`, and it is
-what the whole file is for.
+With `h` a function of the positive half alone, the same `h` on both factors, and `S_cross` reading
+only the straddling plaquettes. `ActionSplit.integrand_eq_paired` is the corresponding identity at a
+site reflection.
 
-* `actPlusO` reads `oblkS` alone (`actPlusO_local`) — sharper than the even-lag case, where the
-  positive part also reads the shared block.
-* `boltz_eq_paired_cross` is the factorisation, from `sum_oplaq_split` (the four classes),
-  `sum_oplqDeg_zero` (the degenerate class is free) and `sum_oplqMinus_eq_plus_refl` (the mirror is
-  the positive part of the reflected configuration).
-* `actCross_eq_hsRe_uniform` turns the straddling factor into ONE cross form of two block-diagonal
-  words, in one handedness, with the plane links absorbed as a gauge — the shape
-  `CrossingIntegration.wilson_crossing_pairing_nonneg` reads.
+* `actPlusO` depends on `oblkS` alone (`actPlusO_local`). At a site reflection the positive part also
+  reads the shared block.
+* `boltz_eq_paired_cross` is the factorisation, from `sum_oplaq_split` for the four classes,
+  `sum_oplqDeg_zero` for the degenerate class and `sum_oplqMinus_eq_plus_refl` for the mirror as the
+  positive part of the reflected configuration.
+* `actCrossO_eq_trace_sum` writes the straddling factor as the cardinality of `oplqCross` minus
+  `1/N` times a sum of real traces, and `sum_hsRe_cross_word` folds that sum into one cross form of
+  two block-diagonal words with the plane links absorbed as a gauge — the shape
+  `CrossingIntegration.wilson_crossing_pairing_nonneg` takes.
 
-What is NOT here is the integration: factoring the product Haar over `oblkS ⊔ oblkT ⊔ oblkR`,
-transporting the mirror's variables to the positive half along the reflection, and applying the
-crossing theorem. `WHAT REMAINS` below says exactly what that is. -/
+The identity is pointwise. Parts E to K carry it under the integral: the product Haar is factored
+over `oblkR ⊔ oblkS ⊔ oblkT`, the mirror's variables are transported to the positive half along the
+reflection, and the crossing theorem is applied. -/
 
 section ActionSplitOdd
 
 variable {d n : ℕ} [NeZero n] {N : ℕ}
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- The positive half's part of the Wilson action at a link-reflection plane. -/
+/-- The Wilson density summed over `oplqPlus`: the positive half's part of the action at a
+link-reflection plane.
+
+DERIVED: no numeral. -/
 noncomputable def actPlusO (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ oplqPlus τ a m,
     MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
 
-/-- The straddling part — the only place the fixed axis links appear. -/
+/-- The Wilson density summed over `oplqCross`: the straddling part of the action, and the only
+part whose plaquettes read the fixed axis links.
+
+DERIVED: no numeral. -/
 noncomputable def actCrossO (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ oplqCross τ a m,
     MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
 
-/-- **The positive part READS THE POSITIVE HALF ALONE.** At a link reflection it does not touch the
-fixed set at all, which is where this differs from `ActionSplit.wPlane_local`. -/
+/-- `actPlusO` depends only on the links of `oblkS`: two configurations agreeing there give it the
+same value. The hypothesis is agreement on the half alone, with no condition on the fixed set, which
+is where this differs from `ActionSplit.wPlane_local` at a site reflection.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`. -/
 theorem actPlusO_local (hm : n = 2 * m) (hm0 : 0 < m)
     (U V : Link d n → MassGap.SUN.SU N) (hS : ∀ l ∈ oblkS τ a m, U l = V l) :
     actPlusO (N := N) τ a m U = actPlusO τ a m V :=
@@ -2065,8 +2193,11 @@ theorem actPlusO_local (hm : n = 2 * m) (hm0 : 0 < m)
     (MassGap.WilsonAction.wilsonDensity (N := N)) (oplqPlus τ a m) (oblkS τ a m)
     (fun p hp => oplaq_links_plus τ a m hm hm0 hp) U V hS
 
-/-- **The straddling part reads everything**, which is the point: it is the only factor that couples
-the two halves, and the coupling runs through the fixed axis links. -/
+/-- `actCrossO` depends only on the links its own plaquettes read: two configurations agreeing on
+every link of every plaquette of `oplqCross` give it the same value. Those links run through both
+halves and the fixed set, so this is the term that couples the two halves.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`. -/
 theorem actCrossO_local (hm : n = 2 * m) (hm0 : 0 < m)
     (U V : Link d n → MassGap.SUN.SU N)
     (hall : ∀ q ∈ oplqCross τ a m, ∀ l ∈ (bd q).map Prod.fst, U l = V l) :
@@ -2075,9 +2206,9 @@ theorem actCrossO_local (hm : n = 2 * m) (hm0 : 0 < m)
     rw [MassGap.ReflectionPositivity.hol_congr_on_support (bd (d := d) (n := n)) p U V
       (fun l hl => hall p hp l hl)]
 
-/-- **THE ODD-LAG ACTION SPLIT.**
+/-- **The odd-lag action split.**
 
-The Wilson action at a link-reflection plane is the positive half's part, plus the SAME function of
+The Wilson action at a link-reflection plane is the positive half's part, plus the same function of
 the reflected configuration, plus the straddling part. The degenerate class contributes nothing.
 
 This is `ActionSplit.action_eq_split` and `sum_plqMinus_eq_plus_refl` in one, at the geometry that
@@ -2099,9 +2230,9 @@ theorem action_eq_split_odd (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
       = actPlusO τ a m U + actPlusO τ a m (reflConf τ (a + a + 1) U) + actCrossO τ a m U
   ring
 
-/-- **THE BOLTZMANN WEIGHT IS A PAIRED PRODUCT TIMES THE STRADDLING FACTOR.**
+/-- **The Boltzmann weight is A paired product times the straddling factor.**
 
-`e^{−βS} = h(U) · h(ΘU) · e^{−β S_cross}` with `h(U) = e^{−β·actPlusO U}`, the SAME `h` on both
+`e^{−βS} = h(U) · h(ΘU) · e^{−β S_cross}` with `h(U) = e^{−β·actPlusO U}`, the same `h` on both
 factors, and `h` reading `oblkS` alone (`actPlusO_local`). Only the straddling factor couples the two
 halves, and `actCross_eq_hsRe_uniform` says it does so through one gauge-invariant cross form.
 
@@ -2144,15 +2275,15 @@ theorem actCrossO_eq_trace_sum (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N
 
 end ActionSplitOdd
 
-/-! ## HOW IT CLOSES
+/-! ## From the pointwise identity to the inequality
 
 `boltz_eq_paired_cross` and `actCrossO_eq_trace_sum` put the integrand of
 `CharacterExpansion.plaqReflPositive_of_pairing_nonneg` into the form
-`CrossingIntegration.wilson_crossing_pairing_nonneg` consumes, POINTWISE. Parts E to K below turn
-that pointwise identity into the inequality:
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes, pointwise. Parts E to K carry that
+identity under the integral:
 
 1. **The measure.** `integral_oblk_three_block` factors the product Haar over the three blocks — not
-   as a product of integrals, which the straddling factor forbids, but as an ITERATED integral whose
+   as a product of integrals, which the straddling factor forbids, but as an iterated integral whose
    integrand couples all three. `integral_oblk_mirror` then transports the mirror's variables onto
    `oblkS`, so the two inner integrals run over the same block against the same measure.
 
@@ -2160,15 +2291,15 @@ that pointwise identity into the inequality:
    plaquette appear and both contribute the same number (`re_tr_hol_swap`), so the direct sum simply
    carries each block twice; no bijection or fibre count is needed.
 
-3. **One handedness.** Inverting the gauge on the UPPER plane alone — `invLink_measurePreserving`'s
+3. **One handedness.** Inverting the gauge on the upper plane alone — `invLink_measurePreserving`'s
    substitution, performed under the integral by `integral_odd_eq_oddIntegrand` — makes both planes
    read the same shape (`re_tr_hol_cross`).
 
 4. **The action.** `planeARaw` and `planeBRaw` run the assignment backwards, from a half-link to the
    plane links of the plaquette that owns it, which is what makes the plane gauge a coordinatewise
-   action on `oblkS → SU N` rather than a family indexed by blocks. This step and no other needs
-   `2 ≤ m`: at extent two the level one step above the lower plane IS the upper plane, one half-link
-   is owned by two plaquettes with different plane links, and no such assignment exists
+   action on `oblkS → SU N` rather than a family indexed by blocks. This is where `2 ≤ m` enters: at
+   extent two the level one step above the lower plane is the upper plane, one half-link is owned by
+   two plaquettes with different plane links, and no such assignment exists
    (`negctl_plane_assignment_collides_at_m_one`).
 
 5. **The observable.** `aHalf` is `aObs` as a function of `oblkS` alone — `aObs_local` with
@@ -2176,9 +2307,9 @@ that pointwise identity into the inequality:
    `a` must be.
 
 `odd_crossing_integral_nonneg` is the result, at `β' = β / N`, and `corrClay_reflection_positive`
-composes it with Part H's plane choice. The `0 ≤ β` it carries is the sign of the coupling, not a
-limitation of the method: `negctl_odd_discharge_needs_nonneg_coupling` shows the cross kernel is
-nonnegative exactly there. -/
+composes it with Part H's plane choice. Both carry `0 ≤ β`:
+`negctl_odd_discharge_needs_nonneg_coupling` shows the cross kernel is nonnegative exactly on that
+range of the coupling. -/
 
 section AuditI
 #print axioms actPlusO_local
@@ -2189,43 +2320,47 @@ section AuditI
 end AuditI
 
 
-/-! ## The composition — the axiom at even extent
+/-! ## The composition at even extent
 
-`ReflectPositive.corrClay_rp_of` takes two inputs: `PlaqReflPositive` at EVERY lag, and strict
-positivity at lag zero. The second is `PlaqVariance.corrClay_zero_pos`, which holds for every extent
-and every coupling. Of the first, `ActionSplit.plaqReflPositive_of_even_lag` supplies the EVEN lags
+`ReflectPositive.corrClay_rp_of` takes two inputs: `PlaqReflPositive` at every lag, and strict
+positivity at lag zero. The second is `PlaqVariance.corrClay_zero_pos`, which holds at every extent
+and every coupling. Of the first, `ActionSplit.plaqReflPositive_of_even_lag` supplies the even lags
 whenever the extent is even.
 
-So at even extent the whole of `Complete.wilson_reflection_positive_at` reduces to one hypothesis:
-`PlaqReflPositive` at the ODD lags. `corrClay_rp_of_odd_lags` is that reduction.
-`plaqReflPositive_odd_of_crossing` reduces that hypothesis in turn to a single integral,
-`corrClay_rp_of_crossing` composes the two with the plane-choice glue of Part H, and
-`odd_crossing_integral_nonneg` proves the integral nonnegative. `corrClay_reflection_positive` is the
-composite, and it takes no hypothesis about the lattice at all.
+At even extent the remaining input is `PlaqReflPositive` at the odd lags.
+`corrClay_rp_of_odd_lags` states the conclusion with that as its one hypothesis;
+`plaqReflPositive_odd_of_crossing` replaces it in turn by a single integral;
+`corrClay_rp_of_crossing` composes the two with the plane-choice glue of Part H; and
+`odd_crossing_integral_nonneg` proves that integral nonnegative. `corrClay_reflection_positive` is
+the composite, and its hypotheses are `Nap + 1 = 2 * m`, `2 ≤ m` and `0 ≤ β`.
 
 `ActionSplit`'s `halfIntegral`, `pairing_eq_weighted_square` and `pairing_nonneg_of_local` are the
-even-lag versions of the measure-theoretic step, and they assume the fixed block is NOT acted on —
+even-lag versions of the measure-theoretic step, and they assume the fixed block is not acted on,
 which at a link reflection is false (`ActionSplit.reflConf_inverts_fixed_axis_link`). Parts E and F
-replace them: the three-block factorisation does not require the plane to be inert, because the plane
-variable is integrated LAST rather than conditioned on. -/
+replace them: the three-block factorisation does not require the plane to be inert, because the
+plane variable is integrated last rather than conditioned on. -/
 
 section Assembly
 
 open MassGap.ReflectPositive
 
-/-- **THE AXIOM AT EVEN EXTENT, REDUCED TO THE ODD LAGS ALONE.**
+/-- At even extent, `PlaqReflPositive` at the odd lags alone gives nonnegativity of
+`WilsonBridge.corrClay (Nap + 1) β` at every lag together with strict positivity of its total.
 
-The conclusion is the conjunction `Complete.wilson_reflection_positive_at` asserts, at aperture `Nap`
-— `Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition. The extent
-`Nap + 1` is required EVEN, which is the case `ActionSplit.exists_even_extent_aperture` shows is
-reachable without moving any pinned constant.
+The conclusion is the conjunction `Complete.wilson_reflection_positive_at` asserts at aperture `Nap`,
+since `Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition. The extent
+`Nap + 1` is required even by `hm`; `ActionSplit.exists_even_extent_aperture` shows even extents are
+available at every aperture bound.
 
-Two of the three inputs are discharged here and not assumed: the even lags by
-`ActionSplit.plaqReflPositive_of_even_lag`, and lag-zero positivity by
-`PlaqVariance.corrClay_zero_pos`. The odd lags remain a hypothesis.
+The even lags come from `ActionSplit.plaqReflPositive_of_even_lag` and lag-zero positivity from
+`PlaqVariance.corrClay_zero_pos`, so neither is a hypothesis here; the odd lags are.
 
-DERIVED: `3` is the gauge group's rank, `4` the dimension, `(0, 1)` the plaquette's plane and `2` the
-lag axis — all of them `WilsonBridge.corrClay`'s own choices, not this file's. -/
+DERIVED: `1` is the step from aperture to extent, `Nap + 1`. `2` is the even-extent hypothesis
+`Nap + 1 = 2 * m` and the lag axis `(2 : Fin 4)`. `0` is the hypothesis `0 < m`, the base site's
+coordinates and the first plane direction, and the two bounds asserted of `corrClay`. `3` is the
+gauge group's degree and its matrix dimension, `4` the dimension, and `1` also the second plane
+direction. The group degree, the dimension, the plane `(0, 1)` and the lag axis `2` are
+`WilsonBridge.corrClay`'s own choices. -/
 theorem corrClay_rp_of_odd_lags (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     (hodd : ∀ lag : Fin (Nap + 1), ¬ Even lag.val →
       PlaqReflPositive 3 (2 : Fin 4) lag β
@@ -2243,11 +2378,16 @@ theorem corrClay_rp_of_odd_lags (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < 
         exact absurd hzero (by decide)) β
   · exact hodd lag h
 
-/-- **The remaining hypothesis, in integral form.** `CharacterExpansion.plaqReflPositive_of_pairing_nonneg`
-divides out the partition function, so `PlaqReflPositive` at an odd lag is exactly nonnegativity of
-the un-normalised pairing integral. Stating it this way names the object Parts B–D are about: the
-integrand is `exp(−β·S)` with `S` split by `sum_oplaq_split`, and its straddling factor is the single
-cross form `sum_hsRe_cross_word` exhibits. -/
+/-- `PlaqReflPositive Nc τ cst β q₀` follows from nonnegativity of the un-normalised pairing
+integral at every centring `aC`. `CharacterExpansion.plaqReflPositive_of_pairing_nonneg` divides out
+the partition function, which is what turns the integral into the property.
+
+The integrand is the centred plaquette energy against its reflection, times the Boltzmann weight;
+`sum_oplaq_split` splits the action inside that weight and `sum_hsRe_cross_word` presents its
+straddling factor as one cross form.
+
+DERIVED: `0` appears twice — in the hypothesis `Nc ≠ 0`, which makes `SU Nc` a group of matrices of
+positive size, and as the lower bound asserted of the integral. -/
 theorem plaqReflPositive_of_integral {d n Nc : ℕ} [NeZero n] (hNc : Nc ≠ 0)
     (τ : Fin d) (cst : Fin n) (β : ℝ) (q₀ : Plaq d n)
     (hpair : ∀ aC : ℝ, 0 ≤ ∫ U,
@@ -2267,11 +2407,11 @@ section AuditE
 end AuditE
 
 
-/-! ## The odd-lag gap as ONE integral
+/-! ## The odd-lag gap as one integral
 
 `boltz_eq_paired_cross` regroups the integrand of
 `CharacterExpansion.plaqReflPositive_of_pairing_nonneg` into the observable-times-weight of the
-positive half, the SAME function of the reflected configuration, and the straddling factor. Doing
+positive half, the same function of the reflected configuration, and the straddling factor. Doing
 that regrouping under the integral sign reduces `PlaqReflPositive` at an odd lag to a single
 statement — `plaqReflPositive_odd_of_crossing`'s hypothesis — which is exactly the object
 `CrossingIntegration.wilson_crossing_pairing_nonneg` is about.
@@ -2285,13 +2425,15 @@ section OddGap
 variable {d n : ℕ} [NeZero n] {N : ℕ}
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- **The positive half's observable-and-weight**, the `a` of the crossing integration: the plaquette
-energy centred at `aC`, times the positive half's Boltzmann factor. -/
+/-- The plaquette energy at `q₀` centred at `aC`, times `exp (-β * actPlusO)`. This is the function
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes as its observable `a`.
+
+DERIVED: no numeral. -/
 noncomputable def aObs (q₀ : Plaq d n) (β aC : ℝ) (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   (MassGap.WilsonAction.wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC)
     * Real.exp (-β * actPlusO τ a m U)
 
-/-- **IT READS THE POSITIVE HALF ALONE**, provided the base plaquette does. Both factors do:
+/-- **It reads the positive half alone**, provided the base plaquette does. Both factors do:
 `actPlusO_local` for the weight, and the plaquette's own locality for the observable. This is what
 makes it the crossing integration's `a : Ω → ℝ`.
 
@@ -2305,7 +2447,7 @@ theorem aObs_local (hm : n = 2 * m) (hm0 : 0 < m) (q₀ : Plaq d n)
       (fun l hl => hS l (hq₀ l hl)),
     actPlusO_local τ a m hm hm0 U V hS]
 
-/-- **THE ODD-LAG GAP, AS ONE INTEGRAL.**
+/-- **The odd-lag gap, as one integral.**
 
 `PlaqReflPositive` at a link-reflection plane follows from nonnegativity of the pairing of `aObs`
 against its own reflection through the straddling factor — and nothing else. Every other ingredient
@@ -2340,7 +2482,7 @@ theorem plaqReflPositive_odd_of_crossing (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 
   rw [integral_congr_ae (Filter.Eventually.of_forall hint)]
   exact hcross aC
 
-/-- **NEGATIVE CONTROL — the reduction keeps the centring constant.** `PlaqReflPositive` quantifies
+/-- **Negative control — the reduction keeps the centring constant.** `PlaqReflPositive` quantifies
 over every centring `aC`, and `plaqReflPositive_odd_of_crossing`'s hypothesis does too: the constant
 is not fixed anywhere in the reduction. A version that supplied one particular `aC` would prove
 strictly less, and would not feed `ReflectPositive.corrHyper_nonneg_of_reflPositive`, which applies
@@ -2389,21 +2531,21 @@ section AuditA
 #print axioms negctl_parity_needs_even_extent
 end AuditA
 
-/-! ## Part E — the product measure over THREE blocks, as an iterated integral
+/-! ## Part E — the product measure over three blocks, as an iterated integral
 
-`ActionSplit.block_factor` turns an integral over two DISJOINT blocks into a PRODUCT of two
-integrals, and that is exactly what the straddling factor forbids here: it reads `oblkS`, `oblkT` and
-`oblkR` at once, so no factor of the integrand is a function of one block alone
-(`no_half_function_for_straddling_sum` is that statement). What is needed instead is a
-REPARAMETRISATION — the same integral, written as an ITERATED integral over the three blocks'
-variables, with the integrand still coupling all three.
+`ActionSplit.block_factor` turns an integral over two disjoint blocks into a product of two
+integrals. The straddling factor does not admit that form: it reads `oblkS`, `oblkT` and `oblkR` at
+once, so no factor of the integrand is a function of one block alone
+(`no_half_function_for_straddling_sum`). What is used instead is a reparametrisation — the same
+integral written as an iterated integral over the three blocks' variables, with the integrand still
+coupling all three.
 
 Mathlib splits a product measure two ways: along a decidable predicate
 (`measurePreserving_piEquivPiSubtypeProd`, whose second application lands on a subtype of a subtype)
-or along a SUM index type (`measurePreserving_sumPiEquivProdPi`). The sum form is the one to use.
-`blockEquiv3` presents the index type as `R ⊕ (S ⊕ T)`, so two applications of the sum split give the
-three factors with no subtype of a subtype anywhere: each block appears as its own `Finset`
-coercion, which is the type the rest of the file already speaks.
+or along a sum index type (`measurePreserving_sumPiEquivProdPi`). The sum form is the one used here.
+`blockEquiv3` presents the index type as `R ⊕ (S ⊕ T)`, so two applications of the sum split give
+the three factors with no subtype of a subtype: each block appears as its own `Finset` coercion,
+which is the type the rest of the file is written in.
 
 `join3` is the inverse reparametrisation — the configuration assembled from its three block
 restrictions — and `integral_three_block` is the iterated-integral identity. Nothing here is specific
@@ -2489,7 +2631,7 @@ theorem join3_mem_T (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω) {i : �
   rw [dif_neg hR, dif_neg hS]
   rfl
 
-/-- **NEGATIVE CONTROL — the reparametrisation drops and duplicates nothing.** Joining a
+/-- **Negative control — the reparametrisation drops and duplicates nothing.** Joining a
 configuration's own three restrictions returns that configuration. A partition that overlapped, or
 that failed to cover, would fail exactly here, and the failure would be silent inside an integral:
 the change of variables would still typecheck and would integrate the wrong function.
@@ -2504,7 +2646,7 @@ theorem join3_restrict (U : ι → Ω) :
   · rw [join3_mem_S R S T hRS hRT hST hU _ _ _ hi]
   · rw [join3_mem_T R S T hRS hRT hST hU _ _ _ hi]
 
-/-- **THE PRODUCT HAAR MEASURE, FACTORED OVER THREE BLOCKS.**
+/-- **The product Haar measure, factored over three blocks.**
 
 The assembly map carries `(cvol R μ) ⊗ ((cvol S μ) ⊗ (cvol T μ))` to `cvol ι μ`. Two applications of
 `measurePreserving_sumPiEquivProdPi` supply the two splits and `measurePreserving_piCongrLeft`
@@ -2566,7 +2708,7 @@ theorem measurePreserving_join3 :
     exact hkey g x y
   rwa [hfun] at hcomp
 
-/-- **THE ITERATED INTEGRAL OVER THE THREE BLOCKS.**
+/-- **The iterated integral over the three blocks.**
 
 One integral over configurations, rewritten as three nested integrals over the blocks' own variables,
 with the integrand free to couple all three — which is what distinguishes this from
@@ -2601,8 +2743,10 @@ section ThreeBlockLattice
 variable {d n : ℕ} [NeZero n] {N : ℕ}
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- **The three blocks cover the links** — `oblk_union_univ` read pointwise, which is the form
-`blockEquiv3` takes. -/
+/-- Every link lies in one of `oblkR`, `oblkS`, `oblkT`. This is `oblk_union_univ` read pointwise,
+which is the form `blockEquiv3` takes for its covering hypothesis.
+
+DERIVED: no numeral. -/
 theorem oblk_cover (l : Link d n) :
     l ∈ oblkR τ a m ∨ l ∈ oblkS τ a m ∨ l ∈ oblkT τ a m := by
   have h : l ∈ oblkS τ a m ∪ oblkT τ a m ∪ oblkR τ a m := by
@@ -2613,7 +2757,10 @@ theorem oblk_cover (l : Link d n) :
     · exact Or.inr (Or.inr hT)
   · exact Or.inl h2
 
-/-- The configuration assembled from its plane, positive-half and mirror variables. -/
+/-- The configuration assembled from a plane variable, a positive-half variable and a mirror
+variable: `join3` at the three link-reflection blocks.
+
+DERIVED: no numeral. -/
 noncomputable def joinO (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
     (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N) :
     Link d n → MassGap.SUN.SU N :=
@@ -2621,11 +2768,11 @@ noncomputable def joinO (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
     (oblkS_disjoint_oblkR τ a m).symm (oblkT_disjoint_oblkR τ a m).symm
     (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m) g x y
 
-/-- **THE PRODUCT HAAR OVER THE LINK-REFLECTION BLOCKS, AS AN ITERATED INTEGRAL.**
+/-- **The product Haar over the link-reflection blocks, as an iterated integral.**
 
 `integral_three_block` at the blocks of Part B: the plane `oblkR` outermost — which is where the
 crossing integration needs it, since `wilson_crossing_pairing_nonneg` integrates the plane links
-LAST — then the positive half, then the mirror.
+last — then the positive half, then the mirror.
 
 DERIVED: no numeral. -/
 theorem integral_oblk_three_block (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hFm : Measurable F)
@@ -2643,7 +2790,7 @@ end ThreeBlockLattice
 
 section PlaneGroup
 
-/-- **THE PLANE GROUP CARRIES WHAT THE CROSSING INTEGRATION ASKS OF IT.**
+/-- **The plane group carries what the crossing integration asks of it.**
 
 `wilson_crossing_pairing_nonneg` takes `Γ` a measurable group and `lam` a right-invariant probability
 measure on it. With `Γ = oblkR → SU N` and `lam` the product Haar, all three are already available:
@@ -2666,7 +2813,7 @@ variable {d n : ℕ} [NeZero n]
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
 
-/-- **NEGATIVE CONTROL — the plane block is not empty, so the outer integral is not a formality.**
+/-- **Negative control — the plane block is not empty, so the outer integral is not a formality.**
 At even extent the fixed set contains the axis link at level `0` through the site `a`, so `Γ` is a
 nontrivial group and `lam` is not a point mass. A reduction that quietly integrated over an empty
 plane would prove nothing about the odd lag.
@@ -2683,25 +2830,26 @@ end ThreeBlockLattice2
 
 /-! ## Part F — the mirror's variables, transported to the positive half
 
-After Part E the innermost integral runs over `oblkT → SU N`, and the crossing integration wants BOTH
-inner integrals to run over the SAME half with the SAME measure. The transport is the reflection
-itself: `reflLink` is a bijection `oblkT ≃ oblkS` (`oblkT_maps_oblkS` with `oblkS_maps_oblkT` as its
-inverse) and `reflConf` daggers exactly the axis links among them, so the map is a RELABELLING
-composed with a per-coordinate inversion — measure-preserving by the same two facts
-`invLink_measurePreserving` uses, one of them for a different reason: here the relabelling is between
-two DIFFERENT index types, which `ActionSplit.twist_measurePreserving` (a permutation of one index
-set) does not cover. `measurePreserving_relabel_twist` is the two-type form.
+After Part E the innermost integral runs over `oblkT → SU N`, while
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes both inner integrals over the same half
+against the same measure. The transport is the reflection: `reflLink` is a bijection
+`oblkT ≃ oblkS` (`oblkT_maps_oblkS` with `oblkS_maps_oblkT` as its inverse) and `reflConf` inverts
+exactly the axis links among them, so the map is a relabelling composed with a per-coordinate
+inversion. It preserves the measure by the same two facts `invLink_measurePreserving` uses, but the
+relabelling here runs between two different index types, which
+`ActionSplit.twist_measurePreserving`, a permutation of one index set, does not cover.
+`measurePreserving_relabel_twist` is the two-type form.
 
-`reflConf_joinO_mirror` is the payoff: with the mirror's variable written as `mirrorT y`, the
-REFLECTED configuration restricted to the positive half is `y` itself. So the two factors of the
-pairing become the same function of two independent `oblkS`-variables, which is the shape
-`CrossingIntegration.wilson_crossing_pairing_nonneg` reads. -/
+`reflConf_joinO_mirror` then reads: with the mirror's variable written as `mirrorT y`, the reflected
+configuration restricted to the positive half is `y` itself. The two factors of the pairing are
+therefore the same function of two independent `oblkS`-variables, which is the shape
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes. -/
 
 section Relabel
 
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- **A relabelling BETWEEN TWO INDEX TYPES, twisted coordinatewise, preserves the product measure.**
+/-- **A relabelling between two index types, twisted coordinatewise, preserves the product measure.**
 
 `ActionSplit.twist_measurePreserving` is this with the two index types equal, which is what a
 reflection of the whole link set is. The mirror transport is not a permutation of one index set: it
@@ -2731,10 +2879,13 @@ section Mirror2
 variable {d n : ℕ} [NeZero n] {N : ℕ}
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- **The reflection carries the mirror onto the positive half** — the converse of
-`oblkS_maps_oblkT`, and what makes `reflLink` a bijection between the two blocks. An axis level
-`j > m` goes to `n − j`, strictly between `0` and `m`; a transverse level `0` goes to `1` and a
-transverse level `j > m` to `n − j + 1`, which is at most `m` because `n − m = m`. -/
+/-- The reflection carries `oblkT` into `oblkS`, the converse of `oblkS_maps_oblkT`; together the
+two make `reflLink` a bijection between the two blocks. An axis level `j > m` goes to `n − j`,
+strictly between `0` and `m`; a transverse level `0` goes to `1` and a transverse level `j > m` to
+`n − j + 1`, which is at most `m` because `n − m = m`.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the one-step offset
+in the reflection constant `a + a + 1`. -/
 theorem oblkT_maps_oblkS (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l ∈ oblkT τ a m) :
     reflLink τ (a + a + 1) l ∈ oblkS τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -2765,7 +2916,7 @@ theorem oblkT_maps_oblkS (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l �
         rw [hinner, Nat.mod_eq_of_lt (by omega)]
       rw [hs]; omega
 
-/-- **The reflection as a BIJECTION of the two halves.** Its inverse is itself
+/-- **The reflection as a bijection of the two halves.** Its inverse is itself
 (`reflLink_involutive`); the two membership lemmas are what make it typecheck in both directions.
 
 DERIVED: `2` and `0` are the extent hypotheses `n = 2m` and `0 < m` — the geometry of an even extent
@@ -2789,7 +2940,7 @@ noncomputable def mirrorT (hm : n = 2 * m) (hm0 : 0 < m)
   fun l => if (l : Link d n).1 = τ then (y (mirrorEquivTS τ a m hm hm0 l))⁻¹
     else y (mirrorEquivTS τ a m hm hm0 l)
 
-/-- **THE TRANSPORT IS MEASURE-PRESERVING.** Relabelling by a bijection of index sets and inverting
+/-- **The transport is measure-preserving.** Relabelling by a bijection of index sets and inverting
 on some coordinates; Haar is inversion-invariant (`Reflect.isInvInvariant_probHaar`), so every
 coordinate map preserves the factor.
 
@@ -2812,11 +2963,11 @@ theorem measurePreserving_mirrorT (hm : n = 2 * m) (hm0 : 0 < m) :
     (mirrorEquivTS τ a m hm hm0)
     (fun l u => if (l : Link d n).1 = τ then u⁻¹ else u) hσ
 
-/-- **THE REFLECTED CONFIGURATION, RESTRICTED TO THE POSITIVE HALF, IS THE TRANSPORTED VARIABLE.**
+/-- **The reflected configuration, restricted to the positive half, is the transported variable.**
 
 With the mirror's block filled by `mirrorT y`, the reflection of the assembled configuration reads
 `y` on `oblkS` — the dagger applied twice on an axis link is the identity, and on a transverse link
-there is no dagger at all. This is what makes the pairing two evaluations of ONE function of the
+there is no dagger at all. This is what makes the pairing two evaluations of one function of the
 half, at two independent variables.
 
 DERIVED: no numeral. -/
@@ -2848,10 +2999,10 @@ theorem reflConf_joinO_mirror (hm : n = 2 * m) (hm0 : 0 < m)
   · rw [if_pos h, if_pos h, inv_inv]
   · rw [if_neg h, if_neg h]
 
-/-- **NEGATIVE CONTROL — the transport is not the identity relabelling.** On an AXIS link of the
-mirror the transported variable is the INVERSE of the half's, and that dagger is the whole difference
+/-- **Negative control — the transport is not the identity relabelling.** On an axis link of the
+mirror the transported variable is the inverse of the half's, and that dagger is the whole difference
 between a link reflection and a site reflection: `ActionSplit`'s even-lag weld assumes the shared
-block is NOT acted on, and here it is. A transport that dropped the inversion would be the map that
+block is not acted on, and here it is. A transport that dropped the inversion would be the map that
 case uses, and it would be the wrong map.
 
 DERIVED: no numeral. -/
@@ -2864,13 +3015,15 @@ theorem negctl_mirrorT_daggers_axis (hm : n = 2 * m) (hm0 : 0 < m)
 
 end Mirror2
 
-/-! ### The iterated integral with both halves on the SAME block -/
+/-! ### The iterated integral with both halves on the same block -/
 
 section MirrorIntegral
 
 variable {ι : Type} [Fintype ι] [DecidableEq ι] {Ω : Type} [MeasurableSpace Ω]
 
-/-- The assembly map is measurable in all three block variables at once. -/
+/-- `join3` is measurable as a function of the triple of block variables.
+
+DERIVED: no numeral. -/
 theorem measurable_join3 (R S T : Finset ι) (hRS : Disjoint R S) (hRT : Disjoint R T)
     (hST : Disjoint S T) (hU : ∀ i : ι, i ∈ R ∨ i ∈ S ∨ i ∈ T) :
     Measurable (fun p : (↥R → Ω) × ((↥S → Ω) × (↥T → Ω)) =>
@@ -2908,10 +3061,10 @@ theorem measurable_joinO_right (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
       (oblkS_disjoint_oblkT τ a m) (oblk_cover τ a m)).comp
     (measurable_const.prodMk (measurable_const.prodMk measurable_id))
 
-/-- **THE ITERATED INTEGRAL, WITH BOTH HALVES ON `oblkS`.**
+/-- **The iterated integral, with both halves on `oblkS`.**
 
-Part E's three blocks with the mirror's variable transported: the plane outermost, then TWO
-independent copies of the positive half's variable against the SAME measure. That is exactly the
+Part E's three blocks with the mirror's variable transported: the plane outermost, then two
+independent copies of the positive half's variable against the same measure. That is exactly the
 `∫ lam ∫ nu ∫ nu` of `CrossingIntegration.wilson_crossing_pairing_nonneg`, and it is the last change
 of variables that inequality needs before the integrand identification.
 
@@ -2948,7 +3101,7 @@ section GaugeActionMeasure
 
 variable {ι κ : Type} [Fintype ι] [DecidableEq ι] {N : ℕ}
 
-/-- **THE PLANE GAUGE ACTION PRESERVES THE HALF'S PRODUCT HAAR.** Each coordinate is
+/-- **The plane gauge action preserves the half'S product Haar.** Each coordinate is
 `u ↦ g_A · u · g_B⁻¹`, a left translation composed with a right translation, and probability Haar on
 a compact group is invariant under both (`CompactGauge.isMulRightInvariant_probHaar` for the second).
 
@@ -2981,7 +3134,7 @@ section GaugeActionMeasurable
 
 variable {ι κ : Type} {N : ℕ}
 
-/-- **THE ACTION IS JOINTLY MEASURABLE** — `hactm`. Multiplication and inversion are measurable on
+/-- **The action is jointly measurable** — `hactm`. Multiplication and inversion are measurable on
 `SU(N)` (`SUN` supplies `MeasurableMul₂` and `MeasurableInv`), and the action reads three
 coordinates.
 
@@ -3044,9 +3197,9 @@ end WordBound
 `plaqReflPositive_odd_of_crossing` supplies it at a lag of the form `a + a + 1`. Two facts are needed
 to join them and neither was stated:
 
-* every odd lag at even extent IS of that form (`ActionSplit.even_sub_one_of_odd` and
+* Every odd lag at even extent is of that form (`ActionSplit.even_sub_one_of_odd` and
   `ActionSplit.exists_fixed_site` together), and
-* the plane can be CHOSEN so that the base plaquette lies in the positive half — the odd-lag
+* The plane can be CHOSEN so that the base plaquette lies in the positive half — the odd-lag
   analogue of `ActionSplit.exists_half_below`, and sharper than it, because a link reflection needs
   `0 < lv ≤ m` rather than `lv < m`: the transverse family sits one step above the axis family.
 
@@ -3058,8 +3211,8 @@ section OddPlane
 
 variable {d n : ℕ} [NeZero n] (m : ℕ)
 
-/-- **EVERY ODD LAG AT EVEN EXTENT HAS A PLANE, AND THE PLANE CAN BE CHOSEN TO PUT A GIVEN SITE IN
-THE POSITIVE HALF.**
+/-- **Every odd lag at even extent has A plane, and the plane can be CHOSEN to put A given site in
+the positive half.**
 
 `a + a + 1 = c` says the reflection is the link reflection Part B is about; `0 < lv a p ≤ m` says the
 site `p` sits at a transverse level of `oblkS`. Both solutions of `2x = c − 1` are available and they
@@ -3097,12 +3250,16 @@ theorem exists_odd_lag_plane_in_half (hn : Even n) (hm : n = 2 * m) (hm0 : 0 < m
 
 variable (τ : Fin d) (a : Fin n)
 
-/-- **A plaquette with NEITHER direction along the axis, based inside the positive half, reads the
-positive half alone.** Its four links all sit at the base site's level, because a transverse step
-does not move the axis coordinate — which is why `0 < lv ≤ m` is enough and no `< m` is needed.
+/-- A plaquette with neither direction along the axis and base level strictly between `0` and `m`
+inclusive has all four of its links in `oblkS`. A transverse step does not move the axis coordinate,
+so the four links sit at the base site's level; that is why the hypotheses are `0 < lv` and `lv ≤ m`
+rather than `lv < m`.
 
-This is the locality hypothesis `aObs_local` takes, at the base plaquette
-`WilsonBridge.corrClay` reads. -/
+This is the locality hypothesis `aObs_local` takes, at the base plaquette `WilsonBridge.corrClay`
+reads.
+
+DERIVED: `2` is the extent hypothesis `n = 2 * m`; `0` appears twice, in `0 < m` and in the base
+level bound `0 < lv a (q₀.2 τ)`. -/
 theorem transverse_plaq_links_in_oblkS (hm : n = 2 * m) (hm0 : 0 < m) {q₀ : Plaq d n}
     (h1 : q₀.1.1 ≠ τ) (h2 : q₀.1.2 ≠ τ) (hlv : 0 < lv a (q₀.2 τ)) (hle : lv a (q₀.2 τ) ≤ m) :
     ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m :=
@@ -3117,22 +3274,25 @@ section Collapse
 
 open MassGap.ReflectPositive
 
-/-- **THE AXIOM AT EVEN EXTENT, REDUCED TO ONE INEQUALITY PER PLANE.**
+/-- The same conclusion as `corrClay_rp_of_odd_lags`, taking the crossing integral at each plane in
+place of `PlaqReflPositive` at the odd lags.
 
-`corrClay_rp_of_odd_lags` left `PlaqReflPositive` at the odd lags as a hypothesis. This consumes
-instead the CROSSING INTEGRAL at each plane, with the locality of the base plaquette SUPPLIED rather
-than assumed — so the caller's obligation is exactly the object
-`CrossingIntegration.wilson_crossing_pairing_nonneg` proves in the abstract, and nothing else about
-the lattice remains between the two.
+The hypothesis is nonnegativity, at every plane `a` and every centring `aC`, of the integral of
+`aObs` against its reflection times the straddling factor. Its locality premise on the base
+plaquette is supplied by `transverse_plaq_links_in_oblkS`, not assumed, and the plane is chosen by
+`exists_odd_lag_plane_in_half`.
 
-What is still not here is the identification of that integrand with the crossing theorem's: Part E
-factors the measure, Part F transports the mirror, Part G supplies the instances, and what remains is
-to exhibit the straddling factor as `exp (β' · hsRe (X (act g x)) (X y))` for the block-diagonal word
-`X` of Parts C and D. `integral_oblk_mirror` is the change of variables that identification is
-performed in.
+`odd_crossing_integral_nonneg` discharges that hypothesis, through the three-block factorisation of
+Part E, the mirror transport of Part F, the instances of Part G and the word of Parts I and J, with
+`integral_oblk_mirror` as the change of variables.
 
-DERIVED: `3` is the gauge group's rank, `4` the dimension, `(0, 1)` the base plaquette's plane and
-`2` the lag axis — all of them `WilsonBridge.corrClay`'s own choices, not this file's. -/
+DERIVED: `1` is the step from aperture to extent, `Nap + 1`, and the one-step offset in the
+reflection constant `a + a + 1`. `2` is the even-extent hypothesis `Nap + 1 = 2 * m` and the lag
+axis `(2 : Fin 4)`. `0` is the hypothesis `0 < m`, the base site's coordinates, the first plane
+direction, the lower bound asserted of the integral and the two bounds asserted of `corrClay`. `3`
+is the gauge group's degree and its matrix dimension, `4` the dimension, and `1` also the second
+plane direction. The group degree, the dimension, the plane `(0, 1)` and the lag axis `2` are
+`WilsonBridge.corrClay`'s own choices. -/
 theorem corrClay_rp_of_crossing (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     (hcross : ∀ a : Fin (Nap + 1),
       (∀ l ∈ (bd ((((0 : Fin 4), (1 : Fin 4)),
@@ -3167,28 +3327,28 @@ end Collapse
 
 /-! ## Part I — the straddling family, block by block
 
-The blocks of the direct sum are indexed by `oplqCross` ITSELF, not by a reduced family. That is the
-cheap way to do it: `oplqCross` carries both orientations of every geometric plaquette, and summing
-over it double-counts each one — but the double count is harmless, because the two orientations
-contribute the SAME `Re tr` (`re_tr_hol_swap`: their words are inverse) and the direct sum simply
-carries the block twice. No bijection, no fibre counting, no factor to track.
+The blocks of the direct sum are indexed by `oplqCross` itself, not by a reduced family.
+`oplqCross` carries both orientations of every geometric plaquette, so summing over it counts each
+one twice; the two orientations contribute the same `Re tr` (`re_tr_hol_swap`, their words being
+inverse) and the direct sum carries the block twice, so no bijection, fibre count or compensating
+factor appears.
 
 Each `q ∈ oplqCross` reads four links in fixed roles: `aLinkOf` and `bLinkOf` are its two fixed axis
-links (the plane gauge), `sLinkOf` is the link the POSITIVE half owns and `tLinkOf` the one the mirror
-owns. Which of the two transverse links is which depends on the plane — at level `0` the positive
-half owns the far one, at level `m` the near one — and that is the same swap the handedness
-reconciliation is about. After inverting the plane variables on the UPPER plane alone (`uplane`,
+links, the plane gauge; `sLinkOf` is the link the positive half owns and `tLinkOf` the one the
+mirror owns. Which of the two transverse links is which depends on the plane — at level `0` the
+positive half owns the far one, at level `m` the near one — and that is the same exchange the
+handedness section is about. With the plane variables inverted on the upper plane alone (`uplane`,
 licensed by `invLink_measurePreserving`) both planes read one shape:
 
     Re tr (word) = hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))
 
 `re_tr_hol_cross` is that identity, uniformly over `oplqCross`.
 
-`planeARaw` and `planeBRaw` run the assignment BACKWARDS — from a half-link to the plane links of the
-plaquette that owns it — which is what makes the gauge a genuine action on `oblkS → SU N` rather
-than a family indexed by blocks. **That inverse assignment needs `2 ≤ m`**, and it is the only place
-the restriction is used: at `m = 1` the level-`1` and level-`m` families coincide, one half-link is
-owned by two different plaquettes with different plane links, and no coordinatewise action exists.
+`planeARaw` and `planeBRaw` run the assignment backwards — from a half-link to the plane links of
+the plaquette that owns it — which is what makes the gauge a coordinatewise action on
+`oblkS → SU N` rather than a family indexed by blocks. That inverse assignment requires `2 ≤ m`: at
+`m = 1` the level-`1` and level-`m` families coincide, one half-link is owned by two different
+plaquettes with different plane links, and no coordinatewise action exists.
 `negctl_plane_assignment_collides_at_m_one` exhibits the collision. -/
 
 section Family
@@ -3196,7 +3356,7 @@ section Family
 variable {d n : ℕ} [NeZero n] {N : ℕ}
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- **A site is at level zero exactly when it IS the plane's base site.**
+/-- **A site is at level zero exactly when it is the plane's base site.**
 
 DERIVED: `0` is the level of `a` itself, which is what `lv` measures from. -/
 theorem lv_eq_zero_iff (a p : Fin n) : lv a p = 0 ↔ p = a := by
@@ -3209,7 +3369,7 @@ theorem lv_eq_zero_iff (a p : Fin n) : lv a p = 0 ↔ p = a := by
     subst h
     simp [lv]
 
-/-- One step BACK along the axis — the inverse of `WilsonHypercubic.shift` in the axis direction.
+/-- One step back along the axis — the inverse of `WilsonHypercubic.shift` in the axis direction.
 
 DERIVED: `1` is one lattice step, the same `1` as in `shift`. -/
 def backSite (τ : Fin d) (x : Site d n) : Site d n := Function.update x τ (x τ - 1)
@@ -3251,7 +3411,7 @@ theorem cDir_ne {q : Plaq d n} (hq : q ∈ oplqCross τ a m) : cDir τ q ≠ τ 
   · rw [if_neg h]
     exact h
 
-/-- **The upper plane** — the fixed axis links at level `m`. Inverting the gauge variable on THESE
+/-- **The upper plane** — the fixed axis links at level `m`. Inverting the gauge variable on these
 links and nowhere else is what puts the two planes into one handedness
 (`cross_word_uniform_on_plane` against `cross_word_uniform_off_plane`).
 
@@ -3263,14 +3423,14 @@ theorem mem_uplane (l : Link d n) :
     l ∈ uplane τ a m ↔ (l ∈ oblkR τ a m ∧ lv a (l.2 τ) = m) := by
   rw [uplane, Finset.mem_filter]
 
-/-- The link of the POSITIVE half that a straddling plaquette owns: the far transverse link at the
+/-- The link of the positive half that a straddling plaquette owns: the far transverse link at the
 lower plane, the near one at the upper.
 
 DERIVED: `0` is the lower plane's level and `m` the upper one's; both are the geometry. -/
 def sLinkOf (τ : Fin d) (a : Fin n) (q : Plaq d n) : Link d n :=
   if lv a (q.2 τ) = 0 then (cDir τ q, shift τ q.2) else (cDir τ q, q.2)
 
-/-- The link of the MIRROR that a straddling plaquette owns — the other transverse one.
+/-- The link of the mirror that a straddling plaquette owns — the other transverse one.
 
 DERIVED: `0` is the lower plane's level. -/
 def tLinkOf (τ : Fin d) (a : Fin n) (q : Plaq d n) : Link d n :=
@@ -3334,10 +3494,10 @@ theorem tLinkOf_mem (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n} (hq : q ∈ op
     · have he : m + 1 = n := by omega
       exact Or.inl (by rw [he, Nat.mod_self])
 
-/-- **THE MIRROR TRANSPORT MATCHES THE BLOCKS.** The reflection carries a straddling plaquette's
-MIRROR link to its own POSITIVE-half link — at the lower plane because the base site is `a` itself,
+/-- **The mirror transport matches the blocks.** The reflection carries a straddling plaquette's
+mirror link to its own positive-half link — at the lower plane because the base site is `a` itself,
 at the upper because `m + m = n` makes the half-extent its own negative. So the second argument of
-the cross form is the SAME word evaluated at the transported variable, which is what
+the cross form is the same word evaluated at the transported variable, which is what
 `wilson_crossing_pairing_nonneg` reads.
 
 DERIVED: no numeral beyond the geometry's own `a + a + 1`. -/
@@ -3410,8 +3570,11 @@ theorem re_tr_hol_swap (τ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.
       = (((U (τ, x) * U (ν, shift τ x) * (U (τ, shift ν x))⁻¹) * (U (ν, x))⁻¹)⁻¹) := by group
   rw [hinv, re_trace_inv]
 
-/-- **Every straddling plaquette reads the same as its canonical orientation**, the one with the axis
-first. -/
+/-- A plaquette of `oplqCross` has the same `Re tr` as its canonical orientation, the one with the
+axis direction first. It is `re_tr_hol_swap` applied to whichever of the two orientations `q`
+carries.
+
+DERIVED: no numeral. -/
 theorem re_tr_hol_canon {q : Plaq d n} (hq : q ∈ oplqCross τ a m)
     (U : Link d n → MassGap.SUN.SU N) :
     (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q U : MassGap.SUN.SU N)
@@ -3436,9 +3599,9 @@ theorem re_tr_hol_canon {q : Plaq d n} (hq : q ∈ oplqCross τ a m)
     rw [hcd, hν']
     exact re_tr_hol_swap τ μ x U
 
-/-- **THE STRADDLING WORD, AT THE CANONICAL ORIENTATION, IN ONE HANDEDNESS.**
+/-- **The straddling word, at the canonical orientation, in one handedness.**
 
-With the gauge variables of the UPPER plane inverted and nowhere else, both fixed planes read
+With the gauge variables of the upper plane inverted and nowhere else, both fixed planes read
 
     hsRe (g̃(A) · U(S) · g̃(B)⁻¹) (U(T))
 
@@ -3483,7 +3646,7 @@ theorem re_tr_hol_cross_explicit (hm : n = 2 * m) (hm0 : 0 < m) {ν : Fin d} (h�
     rw [if_neg h0, if_neg h0]
     exact cross_word_uniform_on_plane τ ν x (uplane τ a m) hA hB U
 
-/-- **ONE FORMULA FOR EVERY BLOCK.** The straddling plaquette's contribution, in the roles
+/-- **One formula for every block.** The straddling plaquette's contribution, in the roles
 `aLinkOf`, `bLinkOf`, `sLinkOf`, `tLinkOf` — orientation and plane both absorbed.
 
 DERIVED: no numeral. -/
@@ -3499,7 +3662,7 @@ theorem re_tr_hol_cross (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
   exact re_tr_hol_cross_explicit τ a m hm hm0 (cDir_ne τ a m hq)
     ((mem_oplqCross τ a m q).mp hq).2.2 U
 
-/-! ### The assignment run BACKWARDS — and where `2 ≤ m` is needed -/
+/-! ### The assignment run backwards — and where `2 ≤ m` is needed -/
 
 /-- The default plane link — the axis link at level `0` through the plane's own base site. A half-link
 that is the positive-half link of no straddling plaquette is assigned this, and the gauge then acts on
@@ -3515,7 +3678,10 @@ theorem dfltPlane_mem : dfltPlane τ a ∈ oblkR τ a m := by
   show lv a ((fun _ => a : Site d n) τ) = 0
   simp [lv]
 
-/-- **A level-one site is one step above the plane.** -/
+/-- A site at level one steps back to level zero: if `lv a p = 1` then `lv a (p - 1) = 0`.
+
+DERIVED: `1` is the level hypothesised and the one lattice step taken back; `0` is the level that
+results. -/
 theorem lv_sub_one_of_lv_one {a p : Fin n} (h : lv a p = 1) : lv a (p - 1) = 0 := by
   have hb := lv_add_one a (p - 1)
   rw [sub_add_cancel, h] at hb
@@ -3529,7 +3695,7 @@ theorem lv_sub_one_of_lv_one {a p : Fin n} (h : lv a p = 1) : lv a (p - 1) = 0 :
 /-- **The first plane link of the straddling plaquette that owns a given half-link.**
 
 Run backwards from the link: a transverse link at level `1` is the far link of a plaquette based at
-the LOWER plane, one at level `m` is the near link of a plaquette based at the UPPER plane. Those two
+the lower plane, one at level `m` is the near link of a plaquette based at the upper plane. Those two
 cases are disjoint exactly when `1 ≠ m`, which is `2 ≤ m`; at `m = 1` one link is owned by two
 plaquettes with different plane links and no assignment exists
 (`negctl_plane_assignment_collides_at_m_one`).
@@ -3605,9 +3771,13 @@ theorem planeBRaw_mem (l : Link d n) : planeBRaw τ a m l ∈ oblkR τ a m := by
       · rw [if_neg h3]
         exact dfltPlane_mem τ a m
 
-/-- **THE BACKWARD ASSIGNMENT RECOVERS THE BLOCK'S OWN PLANE LINK** — and this is the one statement
-in the development that needs `2 ≤ m`, i.e. extent at least four. At `m = 1` the two straddling
-families sit at the same level and the assignment is not well defined. -/
+/-- `planeARaw` applied to a straddling plaquette's positive-half link returns that plaquette's own
+first plane link. It carries `2 ≤ m`, that is, extent at least four; at `m = 1` the two straddling
+families sit at the same level and the assignment is not single-valued
+(`negctl_plane_assignment_collides_at_m_one`).
+
+DERIVED: `2` appears twice — in the extent hypothesis `n = 2 * m` and in the half-extent bound
+`2 ≤ m`. -/
 theorem planeARaw_sLinkOf (hm : n = 2 * m) (hm2 : 2 ≤ m) {q : Plaq d n}
     (hq : q ∈ oplqCross τ a m) : planeARaw τ a m (sLinkOf τ a q) = aLinkOf τ q := by
   have hn : 0 < n := NeZero.pos n
@@ -3679,13 +3849,12 @@ end Family
 
 section FamilyControl
 
-/-- **NEGATIVE CONTROL — THE BACKWARD ASSIGNMENT COLLIDES AT `m = 1`, AND THE RESTRICTION TO
-`2 ≤ m` IS NOT DECORATION.**
+/-- Negative control on the restriction `2 ≤ m`: the backward assignment collides at `m = 1`.
 
-At extent `2` the level one step above the lower plane IS the upper plane, so a single transverse
-link of the positive half is the half-link of TWO different straddling plaquettes — and their plane
-links differ, so no map from half-links to plane links can serve both. The gauge is then not a
-coordinatewise action of the plane group on the half, and `planeAct` cannot be used.
+At extent `2` the level one step above the lower plane is the upper plane, so a single transverse
+link of the positive half is the half-link of two different straddling plaquettes, and their plane
+links differ, so no map from half-links to plane links serves both. The gauge is then not a
+coordinatewise action of the plane group on the half, and `planeAct` does not apply.
 
 Exhibited at `d = 2`, extent `2`, axis `0`, plane base `0`, `m = 1`: the plaquettes based at the site
 `(0, 0)` and at the site `(1, 0)` share the positive-half link `(1, (1, 0))` and read different
@@ -3709,20 +3878,20 @@ theorem negctl_plane_assignment_collides_at_m_one :
 
 end FamilyControl
 
-/-! ## Part J — the word, and the straddling sum as ONE cross form
+/-! ## Part J — the word, and the straddling sum as one cross form
 
 `crossWord` is the block-diagonal of the positive half's straddling links, indexed by `oplqCross`
 itself. `planeA` and `planeB` are the backward assignment of Part I, so the plane group acts on the
 half by `planeAct` and `crossWord` is invariant under it (`hsRe_crossWord_planeAct`, which is
 `hsRe_dsum_conj` pointed at this family).
 
-`sum_re_tr_oplqCross` is the payoff: the whole straddling sum, at the configuration assembled from
-the three block variables AND with the upper plane's gauge inverted, is
+`sum_re_tr_oplqCross` states the result: the whole straddling sum, at the configuration assembled
+from the three block variables and with the upper plane's gauge inverted, is
 
     hsRe (crossWord (planeAct planeA planeB g x)) (crossWord y)
 
-— one cross form, one word, two independent half-variables and the plane group acting on one of them.
-That is the integrand of `CrossingIntegration.wilson_crossing_pairing_nonneg` and nothing else. -/
+— one cross form, one word, two independent half-variables and the plane group acting on one of
+them, which is the form `CrossingIntegration.wilson_crossing_pairing_nonneg` takes. -/
 
 section Word
 
@@ -3747,7 +3916,7 @@ DERIVED: no numeral. -/
 def sIdx (hm : n = 2 * m) (hm0 : 0 < m) (k : ↥(oplqCross τ a m)) : ↥(oblkS τ a m) :=
   ⟨sLinkOf τ a (k : Plaq d n), sLinkOf_mem τ a m hm hm0 k.2⟩
 
-/-- **THE WORD THE CROSSING INTEGRATION READS.** The direct sum, over the straddling plaquettes, of
+/-- **The word the crossing integration reads.** The direct sum, over the straddling plaquettes, of
 the positive half's link at each — relabelled to a `Fin` because that is the type
 `wilson_crossing_pairing_nonneg` takes.
 
@@ -3769,7 +3938,7 @@ theorem hsRe_crossWord (hm : n = 2 * m) (hm0 : 0 < m)
             ((v (sIdx τ a m hm hm0 k) : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ) :=
   hsRe_blockDiagonal_fin _ _
 
-/-- **THE WORD DOES NOT SEE THE PLANE GAUGE** — `hXinv`. Each block is conjugated by its own pair of
+/-- **The word does not see the plane gauge** — `hXinv`. Each block is conjugated by its own pair of
 plane links and `hsRe_conj` absorbs them one block at a time; this is `hsRe_dsum_conj` pointed at the
 lattice's own family.
 
@@ -3782,7 +3951,11 @@ theorem hsRe_crossWord_planeAct (hm : n = 2 * m) (hm0 : 0 < m)
   rw [hsRe_crossWord, hsRe_crossWord]
   exact Finset.sum_congr rfl (fun k _ => hsRe_conj _ _ _ _)
 
-/-- **EVERY COORDINATE OF THE WORD IS BOUNDED BY ONE** — `hXb`. -/
+/-- Every real coordinate of `crossWord` has absolute value at most one. This is the bound
+`CrossingIntegration.wilson_crossing_pairing_nonneg` takes as `hXb`.
+
+DERIVED: `2` and `0` are the extent hypotheses `n = 2 * m` and `0 < m`; `1` is the bound a unitary
+entry carries (`SUN.unitary_entry_norm_le_one`), not a chosen cut. -/
 theorem abs_coord_crossWord_le_one (hm : n = 2 * m) (hm0 : 0 < m)
     (p : Coord (Fintype.card (Fin N × ↥(oplqCross τ a m))))
     (u : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
@@ -3810,7 +3983,10 @@ theorem invLink_of_not_mem (R : Finset (Link d n)) (U : Link d n → MassGap.SUN
   show (if l ∈ R then (U l)⁻¹ else U l) = U l
   rw [if_neg hl]
 
-/-- The three block restrictions of `joinO`, in the form the word identity needs. -/
+/-- `joinO` reads the plane variable on `oblkR`. With `joinO_mem_S` and `joinO_mem_T` beside it,
+these are the three block restrictions in the form the word identity uses.
+
+DERIVED: no numeral. -/
 theorem joinO_mem_R (g : ↥(oblkR τ a m) → MassGap.SUN.SU N)
     (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) (y : ↥(oblkT τ a m) → MassGap.SUN.SU N)
     {l : Link d n} (hl : l ∈ oblkR τ a m) : joinO τ a m g x y l = g ⟨l, hl⟩ :=
@@ -3839,11 +4015,11 @@ theorem tLinkOf_dir {q : Plaq d n} : (tLinkOf τ a q).1 = cDir τ q := by
   · rw [if_pos h0]
   · rw [if_neg h0]
 
-/-- **ONE BLOCK'S CONTRIBUTION, IN THE CROSSING INTEGRATION'S VARIABLES.**
+/-- **One block'S contribution, in the crossing integration'S variables.**
 
 At the configuration assembled from the three block variables, with the upper plane's gauge inverted,
 a straddling plaquette reads the cross form of the gauge-acted positive-half variable against the
-mirror's — and the mirror's, transported, IS the second half-variable.
+mirror's — and the mirror's, transported, is the second half-variable.
 
 DERIVED: no numeral. -/
 theorem re_tr_hol_block (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
@@ -3892,7 +4068,7 @@ theorem re_tr_hol_block (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
   rw [hmirT, hpa, hpb]
   rfl
 
-/-- **THE WHOLE STRADDLING SUM IS ONE CROSS FORM.**
+/-- **The whole straddling sum is one cross form.**
 
 `oplqCross` indexes the blocks directly, so the sum over the Finset is the sum over the block index,
 and `hsRe_crossWord` folds it into a single `hsRe`. Both orientations of every geometric plaquette
@@ -3920,15 +4096,14 @@ end Word
 is the `a : Ω → ℝ` the crossing integration takes. `aObs_local` with
 `transverse_plaq_links_in_oblkS` is what makes the two agree.
 
-`odd_crossing_integral_nonneg` is the discharge: the odd-lag pairing integral is nonnegative. It
-carries two hypotheses beyond the geometry of Part B, and both are real:
+`odd_crossing_integral_nonneg` states that the odd-lag pairing integral is nonnegative. Beyond the
+geometry of Part B it carries two hypotheses:
 
 * `2 ≤ m` — extent at least four, because the backward plane assignment collides at `m = 1`
   (`negctl_plane_assignment_collides_at_m_one`); and
 * `0 ≤ β` — because the Wilson cross kernel `exp(β' · hsRe)` is positive-semidefinite only for
-  `β' ≥ 0`, which `CrossingIntegration.NegControl.su3_kernel_nonneg_iff` shows cannot be dropped.
-  This is physics, not bookkeeping: at negative coupling the weight is not reflection positive at a
-  link reflection. -/
+  `β' ≥ 0`. `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` evaluates that kernel on two
+  explicit `SU(3)` elements and finds the value nonnegative exactly when the coupling is. -/
 
 section Observable
 
@@ -4063,7 +4238,7 @@ theorem measurable_coord_of_entries {γ : Type} [MeasurableSpace γ] {Nc : ℕ}
     rw [he]
     exact Complex.measurable_im.comp (h _ _)
 
-/-- **EVERY ENTRY OF A BLOCK-DIAGONAL OF `SU(N)` MATRICES IS MEASURABLE IN THE FAMILY** — it is one
+/-- **Every entry of A block-diagonal of `SU(N)` matrices is measurable in the family** — it is one
 unitary entry on the diagonal blocks and the constant `0` off them.
 
 Stated on the abstract family, like `entry_blockDiagonal_fin_norm_le_one` beside it, because the
@@ -4159,8 +4334,13 @@ theorem abs_oddIntegrand_le (hN : N ≠ 0) (q₀ : Plaq d n) (β aC : ℝ)
     (abs_aObs_le τ a m hN q₀ β aC _) (abs_nonneg _) (by positivity))
     (abs_exp_actCrossO_le τ a m hN β _) (abs_nonneg _) (by positivity)
 
-/-- **The substitution on the upper plane leaves the two observables alone.** Both read the positive
-half or its mirror, and the plane meets neither. -/
+/-- Inverting the plane variables on the upper plane inside the straddling factor does not change
+the value of the integral. The two observables read `oblkS` and its mirror, and the upper plane meets
+neither, so the substitution `invLink_measurePreserving` licenses leaves them alone.
+
+DERIVED: `0` appears twice — in `N ≠ 0`, which makes `SU N` a group of matrices of positive size,
+and in `0 < m`; `2` is the extent hypothesis `n = 2 * m`; `1` is the one-step offset in the
+reflection constant `a + a + 1`. -/
 theorem integral_odd_eq_oddIntegrand (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (q₀ : Plaq d n) (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (β aC : ℝ) :
     (∫ U, aObs (N := N) τ a m q₀ β aC U
@@ -4210,7 +4390,13 @@ theorem integral_odd_eq_oddIntegrand (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < 
   rw [h1, h2]
   rfl
 
-/-- **THE INTEGRAND, IN THE CROSSING INTEGRATION'S VARIABLES.** -/
+/-- The odd-lag integrand at a configuration assembled from the three block variables, with the
+mirror's variable transported: it is `exp (-β * card)` times `aHalf` at each of the two half
+variables times `exp ((β / N) * hsRe (crossWord (planeAct ... G x)) (crossWord y))`. That is the
+product `CrossingIntegration.wilson_crossing_pairing_nonneg` integrates.
+
+DERIVED: `0` appears twice — in `N ≠ 0` and in `0 < m`; `2` appears twice, in the extent hypothesis
+`n = 2 * m` and in the half-extent bound `2 ≤ m`. `N` is the rank, and the card is a count. -/
 theorem oddIntegrand_join (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
     (q₀ : Plaq d n) (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (β aC : ℝ)
     (g : ↥(oblkR τ a m) → MassGap.SUN.SU N) (x y : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
@@ -4253,19 +4439,21 @@ theorem oddIntegrand_join (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2
   rw [hexp]
   ring
 
-/-- **THE ODD-LAG PAIRING INTEGRAL IS NONNEGATIVE.**
+/-- The odd-lag pairing integral is nonnegative: at every centring `aC`, the integral of `aObs`
+against its reflection times the straddling factor is at least zero.
 
-This is the hypothesis `plaqReflPositive_odd_of_crossing` and `corrClay_rp_of_crossing` consume,
-discharged: the product Haar factored over the three blocks (Part E), the mirror transported to the
+This is the hypothesis `plaqReflPositive_odd_of_crossing` and `corrClay_rp_of_crossing` take. It
+follows from the product Haar factored over the three blocks (Part E), the mirror transported to the
 positive half (Part F), the instances (Part G), the family and its word (Parts I and J), and
 `CrossingIntegration.wilson_crossing_pairing_nonneg` applied at `β' = β / N`.
 
-Two hypotheses are carried and neither is bookkeeping: `2 ≤ m`, because the backward plane assignment
-collides at `m = 1`; and `0 ≤ β`, because the Wilson cross kernel is positive-semidefinite only
-there.
+Beyond the extent geometry it carries `2 ≤ m`, because the backward plane assignment collides at
+`m = 1`, and `0 ≤ β`, because the Wilson cross kernel is positive-semidefinite only there.
 
-DERIVED: `2` is the smallest half-extent at which the plane assignment is single-valued; `0` is the
-sign of the coupling the kernel needs and the sign asserted. -/
+DERIVED: `0` appears four times — in `N ≠ 0`, in `0 < m`, in `0 ≤ β` and as the lower bound
+asserted of the integral. `2` appears twice, in the extent hypothesis `n = 2 * m` and in the
+half-extent bound `2 ≤ m`, which is the smallest half-extent at which the plane assignment is
+single-valued. `1` is the one-step offset in the reflection constant `a + a + 1`. -/
 theorem odd_crossing_integral_nonneg (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m) (hm2 : 2 ≤ m)
     {β : ℝ} (hβ : 0 ≤ β) (q₀ : Plaq d n)
     (hq₀ : ∀ l ∈ (bd q₀).map Prod.fst, l ∈ oblkS τ a m) (aC : ℝ) :
@@ -4342,32 +4530,28 @@ theorem odd_crossing_integral_nonneg (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < 
 
 end Observable
 
-/-! ## THE AXIOM AT EVEN EXTENT — discharged, at extent at least four and nonnegative coupling
+/-! ## The composite, at even extent of at least four and nonnegative coupling
 
-`corrClay_rp_of_crossing` reduced the axiom's conclusion to one inequality per plane, with the base
-plaquette's locality supplied. `odd_crossing_integral_nonneg` proves that inequality. Composing them
-leaves NO hypothesis about the lattice: what remains are the two conditions named in
-`odd_crossing_integral_nonneg`'s own statement, and both are properties of the case rather than gaps
-in the argument.
+`corrClay_rp_of_crossing` states the conclusion with one inequality per plane as its hypothesis, the
+base plaquette's locality supplied. `odd_crossing_integral_nonneg` proves that inequality. The
+composite `corrClay_reflection_positive` takes no hypothesis about the lattice beyond the two
+conditions `odd_crossing_integral_nonneg` carries:
 
-* `2 ≤ m`, i.e. extent `Nap + 1 ≥ 4`. At extent `2` the two straddling families read the same
+* `2 ≤ m`, that is, extent `Nap + 1 ≥ 4`. At extent `2` the two straddling families read the same
   transverse links (`negctl_plane_assignment_collides_at_m_one`) and the plane gauge is not a
   coordinatewise action. `ActionSplit.exists_even_extent_aperture` picks the aperture from a cofinal
-  set, so extents of at least four are exactly as available as extents of at least two.
+  set, so extents of at least four are as available as extents of at least two.
 * `0 ≤ β`. `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the Wilson cross kernel's
-  quadratic form on two explicit `SU(3)` elements and finds it nonnegative IF AND ONLY IF `β ≥ 0`.
-  At negative coupling the weight is not reflection positive at a link reflection; this is the sign of
-  the coupling, not a limitation of the method.
+  quadratic form on two explicit `SU(3)` elements and finds it nonnegative if and only if `β ≥ 0`.
 
-`Complete.wilson_reflection_positive_at` quantifies over EVERY real `β`, so the composite below does
-not cover its statement at negative coupling. It covers it at `0 ≤ β`, which is where the theory
-lives. -/
+Scope: `Complete.wilson_reflection_positive_at` quantifies over every real `β`, and the composite
+below states the conclusion at `0 ≤ β` only. -/
 
 section Discharge
 
 open MassGap.ReflectPositive
 
-/-- **THE ODD LAGS, DISCHARGED.** `PlaqReflPositive` at a link-reflection plane, with no hypothesis
+/-- **The odd lags, discharged.** `PlaqReflPositive` at a link-reflection plane, with no hypothesis
 left but the geometry, the extent bound and the sign of the coupling.
 
 DERIVED: no numeral beyond `odd_crossing_integral_nonneg`'s own. -/
@@ -4378,19 +4562,20 @@ theorem plaqReflPositive_odd {d n : ℕ} [NeZero n] {N : ℕ} (τ : Fin d) (a : 
   plaqReflPositive_odd_of_crossing τ a m hN hm (by omega) β q₀
     (fun aC => odd_crossing_integral_nonneg τ a m hN hm (by omega) hm2 hβ q₀ hq₀ aC)
 
-/-- **THE CLAY CORRELATION IS REFLECTION POSITIVE AT EVERY EVEN EXTENT OF AT LEAST FOUR, FOR EVERY
-NONNEGATIVE COUPLING.**
+/-- `WilsonBridge.corrClay (Nap + 1) β` is nonnegative at every lag and its total is strictly
+positive, whenever the extent `Nap + 1` is `2 * m` with `2 ≤ m` and the coupling is nonnegative.
 
-This is the body of `Complete.wilson_reflection_positive_at` at aperture `Nap`
-(`Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition), with NO
-hypothesis about the lattice remaining. Every input is proved: the even lags by
-`ActionSplit.plaqReflPositive_of_even_lag`, lag zero by `PlaqVariance.corrClay_zero_pos`, and the odd
-lags by `plaqReflPositive_odd` — which is the crossing integration applied to the three-block
-factorisation of Part E, the mirror transport of Part F and the word of Part J.
+This is the body of `Complete.wilson_reflection_positive_at` at aperture `Nap`, since
+`Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition. The three inputs
+are supplied rather than assumed: the even lags by `ActionSplit.plaqReflPositive_of_even_lag`, lag
+zero by `PlaqVariance.corrClay_zero_pos`, and the odd lags by `plaqReflPositive_odd`, which applies
+the crossing integration to the three-block factorisation of Part E, the mirror transport of Part F
+and the word of Part J.
 
-DERIVED: `3` is the gauge group's rank and `4` the dimension, both `WilsonBridge.corrClay`'s own; `2`
-is the half-extent bound the plane assignment needs and `0` the sign of the coupling the cross kernel
-needs. -/
+DERIVED: `1` is the step from aperture to extent, `Nap + 1`. `2` appears twice, in the even-extent
+hypothesis `Nap + 1 = 2 * m` and in the half-extent bound `2 ≤ m` the plane assignment needs. `0`
+appears three times — in `0 ≤ β`, in the lower bound asserted of each `corrClay` value, and in the
+strict lower bound asserted of the total. No other numeral occurs in the statement. -/
 theorem corrClay_reflection_positive (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm2 : 2 ≤ m)
     {β : ℝ} (hβ : 0 ≤ β) :
     (∀ lag, 0 ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β lag)
@@ -4399,15 +4584,15 @@ theorem corrClay_reflection_positive (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm2 :
     (fun a hloc aC =>
       odd_crossing_integral_nonneg (2 : Fin 4) a m (by norm_num) hm (by omega) hm2 hβ _ hloc aC)
 
-/-- **NEGATIVE CONTROL — the sign of the coupling cannot be dropped.**
+/-- Negative control on the sign of the coupling. The Wilson cross kernel's quadratic form,
+evaluated on the two explicit `SU(3)` elements `CharacterExpansion.NegControl.cA` supplies — the
+identity and `diag(1, −1, −1)` — is nonnegative if and only if `0 ≤ β`. That kernel is the one
+`odd_crossing_integral_nonneg` integrates, so its `0 ≤ β` cannot be weakened: at negative coupling
+the form is negative on the gauge group this development is built at.
 
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` evaluates the Wilson cross kernel's quadratic
-form on two explicit `SU(3)` elements — the identity and `diag(1, −1, −1)` — and the value is
-nonnegative exactly when `β ≥ 0`. That kernel is the one `odd_crossing_integral_nonneg` integrates,
-so `0 ≤ β` there is carrying weight: at negative coupling the object the whole odd-lag argument is
-about is itself negative on the group the development is built at.
-
-DERIVED: no numeral of this file's; the elements and the value are `CharacterExpansion`'s. -/
+DERIVED: `0` appears twice, on each side of the equivalence — as the lower bound on the quadratic
+form and as the lower bound on the coupling. The group elements and the coefficients are
+`CharacterExpansion.NegControl`'s. -/
 theorem negctl_odd_discharge_needs_nonneg_coupling (β : ℝ) :
     0 ≤ (∑ i, ∑ j, MassGap.CharacterExpansion.NegControl.zc i
         * MassGap.CharacterExpansion.NegControl.zc j
@@ -4415,13 +4600,14 @@ theorem negctl_odd_discharge_needs_nonneg_coupling (β : ℝ) :
             (MassGap.CharacterExpansion.NegControl.cA j))) ↔ 0 ≤ β :=
   MassGap.CharacterExpansion.NegControl.su3_kernel_nonneg_iff β
 
-/-- **NON-VACUITY — the extent bound is met, at the smallest extent that meets it.** Reflection
-positivity of the Clay correlation, unconditionally, at extent four and any nonnegative coupling. A
-bound no extent satisfied would make `corrClay_reflection_positive` an empty quantification; this is
-the witness that it is not.
+/-- The conclusion of `corrClay_reflection_positive` at aperture `3`, that is, extent `3 + 1`, with
+no hypothesis but `0 ≤ β`. This is the smallest extent meeting the bound `2 ≤ m`, so the bound is
+not an empty quantification.
 
-DERIVED: `3` is the aperture whose extent `3 + 1` is the smallest even extent with `2 ≤ m`, and `2`
-is that half. Both are read off the bound, not chosen. -/
+DERIVED: `3` is the aperture and `1` the step from aperture to extent, `3 + 1` being the smallest
+even extent with `2 ≤ m`; both are read off that bound. `0` appears three times — in `0 ≤ β`, in
+the lower bound asserted of each `corrClay` value, and in the strict lower bound asserted of the
+total. -/
 theorem corrClay_reflection_positive_at_extent_four {β : ℝ} (hβ : 0 ≤ β) :
     (∀ lag, 0 ≤ MassGap.WilsonBridge.corrClay (3 + 1) β lag)
       ∧ 0 < ∑ lag, MassGap.WilsonBridge.corrClay (3 + 1) β lag :=

@@ -1,22 +1,26 @@
 import MassGap.LatticeGauge
 
 /-!
-# MassGap.CompactGauge — the canonical probability Haar on a compact gauge group (step A2a)
+# MassGap.CompactGauge — the probability Haar measure on a compact group (step A2a)
 
-`LatticeGauge` (step A1) derives the invariance of lattice-gauge correlations for *any* gauge group
-carrying a left-invariant probability measure. This file discharges that measure hypothesis: a
-compact, Hausdorff (`T2`), Borel topological group carries a **canonical left-invariant probability
-measure** — the Haar measure normalized on the whole (compact) group. So the correlation invariance
-`Symmetry.expect_invariant` holds with the measure `μ` **derived**, not assumed.
+Fixes a canonical measure on a compact gauge group and derives what lattice-gauge correlations need
+from it.
 
-The measure is `probHaar G := haarMeasure ⊤`, normalized to total mass one by `haarMeasure_self`
-(the whole compact group has Haar-measure one) and left-invariant by `isMulLeftInvariant_haarMeasure`.
+`probHaar G` is `haarMeasure (default : PositiveCompacts G)`; on a compact group the default positive
+compact is the whole group, so `haarMeasure_self` makes it a probability measure. Instances record
+that it is left-invariant, a Haar measure and regular, all inherited from `haarMeasure`, and that it
+is right-invariant — the latter argued from the modular character, since `G` is not assumed abelian.
 
-What remains for a fully concrete SU(N) realisation (step A2b) is purely the topological instances on
-`Matrix.specialUnitaryGroup n ℂ` — `TopologicalSpace`/`IsTopologicalGroup`/`CompactSpace`/`BorelSpace`
-— which Mathlib v4.31 does not yet provide; the measure-theoretic content is complete here.
+`confConj G g` is per-link conjugation `U ↦ (l ↦ g * U l * g⁻¹)` of a configuration `ι → G`.
+`confConj_measurePreserving` shows it preserves the product measure `Measure.pi (fun _ : ι => probHaar G)`
+for `ι` a `Fintype`, and `confConjEquiv` packages it as a `MeasurableEquiv` with inverse conjugation
+by `g⁻¹`. `expect_invariant_haar` instantiates `LatticeGauge.Symmetry.expect_invariant` at
+`μ := probHaar G`.
 
-Foundational footprint only (`#print axioms` at the end). Build: `lake build MassGap.CompactGauge`.
+Scope: `G` is a group carrying `TopologicalSpace`, `IsTopologicalGroup`, `CompactSpace`, `Nonempty`,
+`MeasurableSpace` and `BorelSpace` instances. Nothing here instantiates those at
+`Matrix.specialUnitaryGroup n ℂ`; the results are stated for the abstract `G` only. The index type
+`ι` is finite for the measure-preserving results.
 -/
 
 namespace MassGap.CompactGauge
@@ -27,33 +31,50 @@ open MassGap.LatticeGauge
 variable (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [Nonempty G] [MeasurableSpace G] [BorelSpace G]
 
-/-- The canonical probability Haar measure on a compact gauge group: the Haar measure normalized so
-that the whole (compact) group has measure one. -/
+/-- The Haar measure of `G` at the default `PositiveCompacts G`. On a compact group that default is
+the whole group, so this is the Haar measure normalised to total mass one.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def probHaar : Measure G := haarMeasure (default : PositiveCompacts G)
 
-/-- `probHaar` is a probability measure: the whole compact group carries Haar-measure one
-(`haarMeasure_self`, with `default = ⊤` whose carrier is `univ`). -/
+/-- `probHaar G` is a probability measure. The proof rewrites the default positive compact to
+`Set.univ` via `PositiveCompacts.coe_top` and applies `haarMeasure_self`, which gives the chosen
+positive compact measure one.
+
+DERIVED: no numeral appears in the statement; the total mass one is inside `IsProbabilityMeasure`. -/
 instance isProbabilityMeasure_probHaar : IsProbabilityMeasure (probHaar G) := by
   refine ⟨?_⟩
   have h : ((default : PositiveCompacts G) : Set G) = Set.univ := PositiveCompacts.coe_top
   rw [probHaar, ← h]
   exact haarMeasure_self
 
-/-- `probHaar` is left-invariant (inherited from `haarMeasure`). -/
+/-- `probHaar G` is left-invariant, inherited from `isMulLeftInvariant_haarMeasure`.
+
+DERIVED: no numeral appears in the statement. -/
 instance isMulLeftInvariant_probHaar : IsMulLeftInvariant (probHaar G) :=
   isMulLeftInvariant_haarMeasure _
 
-/-- `probHaar` is a Haar measure (inherited from `haarMeasure`). -/
+/-- `probHaar G` is a Haar measure, inherited from `isHaarMeasure_haarMeasure`.
+
+DERIVED: no numeral appears in the statement. -/
 instance isHaarMeasure_probHaar : IsHaarMeasure (probHaar G) := isHaarMeasure_haarMeasure _
 
-/-- `probHaar` is regular (inherited from `haarMeasure`), hence inner regular. -/
+/-- `probHaar G` is regular, inherited from `regular_haarMeasure`. Inner regularity follows from
+`Regular` and is not separately stated.
+
+DERIVED: no numeral appears in the statement. -/
 instance regular_probHaar : (probHaar G).Regular := regular_haarMeasure
 
-/-- **Compact-group unimodularity.** On a COMPACT group the probability Haar measure is also
-RIGHT-invariant. The modular character `Δ` satisfies `map (·*g) μ = Δ(g) • μ`; taking total mass, the
-left side is a probability (`μ (·*g)⁻¹univ = μ univ = 1`) and the right side has mass `Δ(g)·1`, so
-`Δ(g) = 1` and the right-translate equals `μ`. (SU(N) is non-abelian, so this needs the mass argument,
-not the commutative `IsMulLeftInvariant.isMulRightInvariant`.) -/
+/-- `probHaar G` is right-invariant: the compact group `G` is unimodular. The proof evaluates
+`map_right_mul_eq_modularCharacterFun_smul` on `Set.univ`; both sides then have total mass
+`modularCharacterFun g` times one, and since `probHaar G` is a probability measure this forces
+`modularCharacterFun g = 1`, so the right translate equals the measure.
+
+Scope: `G` is not assumed commutative, so this goes through the modular character rather than
+`IsMulLeftInvariant.isMulRightInvariant`. Compactness is what makes the total mass finite and equal
+on both sides.
+
+DERIVED: no numeral appears in the statement. -/
 instance isMulRightInvariant_probHaar : IsMulRightInvariant (probHaar G) := by
   refine ⟨fun g => ?_⟩
   have hmap := map_right_mul_eq_modularCharacterFun_smul (probHaar G) g
@@ -65,14 +86,22 @@ instance isMulRightInvariant_probHaar : IsMulRightInvariant (probHaar G) := by
     exact_mod_cast h1.symm
   rw [hmap, hone, one_smul]
 
-/-- Per-link conjugation of a configuration by a fixed group element `g`: `U ↦ (l ↦ g · U l · g⁻¹)` —
-a constant (global) gauge transformation. -/
+/-- Per-link conjugation of a configuration `U : ι → G` by a fixed `g : G`:
+`confConj G g U l = g * U l * g⁻¹`. The same `g` is used at every index, so this is a constant
+(global) gauge transformation, not a site-dependent one. `ι` is an arbitrary type here.
+
+DERIVED: no numeral appears in the statement. -/
 def confConj {ι : Type} (g : G) (U : ι → G) : ι → G := fun l => g * U l * g⁻¹
 
-/-- **A constant gauge transformation preserves the product Haar measure.** Per link the map is
-`u ↦ g·u·g⁻¹ = (g·_) ∘ (_·g⁻¹)`, measure-preserving by LEFT- and RIGHT-invariance (the unimodularity
-just established); the product measure is preserved coordinatewise. So the lattice-gauge measure is
-invariant under a global gauge transformation. -/
+/-- For a finite index type `ι` and any `g : G`, `confConj G g` is measure-preserving from
+`Measure.pi (fun _ : ι => probHaar G)` to itself. Per coordinate the map factors as
+`(g * ·) ∘ (· * g⁻¹)`, measure-preserving by left-invariance and by the right-invariance established
+above; `Measure.pi_map_pi` lifts this to the product.
+
+Scope: `ι` must be a `Fintype` for the product measure to be handled this way; the transformation is
+global (one `g` for all links).
+
+DERIVED: no numeral appears in the statement. -/
 theorem confConj_measurePreserving {ι : Type} [Fintype ι] (g : G) :
     MeasurePreserving (confConj G g) (Measure.pi fun _ : ι => probHaar G)
       (Measure.pi fun _ : ι => probHaar G) := by
@@ -88,7 +117,11 @@ theorem confConj_measurePreserving {ι : Type} [Fintype ι] (g : G) :
       Measure.pi_map_pi (fun _ => hconj.aemeasurable)]
   simp only [hconj.map_eq]
 
-/-- The constant gauge transformation as a MEASURABLE EQUIVALENCE (inverse: conjugation by `g⁻¹`). -/
+/-- `confConj G g` packaged as a measurable equivalence `(ι → G) ≃ᵐ (ι → G)`, with inverse
+`confConj G g⁻¹`. The two inverse laws are `group`-normalisation of `g⁻¹ * (g * U l * g⁻¹) * g⁻¹⁻¹`
+and its mirror; measurability in both directions comes from continuity of conjugation.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def confConjEquiv {ι : Type} (g : G) : (ι → G) ≃ᵐ (ι → G) where
   toFun := confConj G g
   invFun := confConj G g⁻¹
@@ -103,16 +136,25 @@ noncomputable def confConjEquiv {ι : Type} (g : G) : (ι → G) ≃ᵐ (ι → 
       (continuous_const.mul continuous_id).mul continuous_const
     exact measurable_pi_lambda _ (fun l => hcont.measurable.comp (measurable_pi_apply l))
 
-/-- `confConjEquiv` preserves the product Haar measure (same map as `confConj`). -/
+/-- `confConjEquiv G g` is measure-preserving for the product measure, for a finite `ι`. Its
+underlying function is definitionally `confConj G g`, so the proof is `confConj_measurePreserving`
+directly.
+
+DERIVED: no numeral appears in the statement. -/
 theorem confConjEquiv_measurePreserving {ι : Type} [Fintype ι] (g : G) :
     MeasurePreserving (confConjEquiv G g) (Measure.pi fun _ : ι => probHaar G)
       (Measure.pi fun _ : ι => probHaar G) :=
   confConj_measurePreserving G g
 
-/-- **Correlation invariance over the canonical Haar measure** — the A1 payoff instantiated at
-`μ := probHaar G`, with the measure now derived from compactness rather than assumed:
-`⟨O ∘ reindex⟩ = ⟨O⟩` for the Gibbs expectation against normalized Haar. This is the derived form of
-the Osterwalder–Schrader invariances `os_euc`/`os_perm` on a genuine compact gauge measure. -/
+/-- `LatticeGauge.Symmetry.expect_invariant` instantiated at `μ := probHaar G`: for a `System G`,
+a `Symmetry sys`, an inverse temperature `β` and an observable `O : sys.Config → ℝ`, the expectation
+of `O ∘ Symmetry.reindex sym.onLink` equals the expectation of `O`.
+
+The measure is supplied by `probHaar`, so no left-invariant probability measure is assumed at this
+call site. Scope: the symmetry is the reindexing carried by `sym.onLink`; `β` is an arbitrary real,
+not required positive.
+
+DERIVED: no numeral appears in the statement. -/
 theorem expect_invariant_haar {sys : System G} (sym : Symmetry sys) (β : ℝ) (O : sys.Config → ℝ) :
     sys.expect (probHaar G) β (fun U => O (Symmetry.reindex sym.onLink U))
       = sys.expect (probHaar G) β O :=

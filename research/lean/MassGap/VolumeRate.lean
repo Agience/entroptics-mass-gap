@@ -3,115 +3,73 @@ import MassGap.CellSpectrum
 import MassGap.Transfer
 
 /-!
-# MassGap.VolumeRate — Clay row B7: the gap is uniform in volume, WITH A RATE
+# MassGap.VolumeRate — exponential decay bounds carrying an explicit rate
 
-## The defect this file exists to repair
+Six groups of statements about a family of finite exponential sums
+`∑ k ∈ s F, P F k * (μ F k) ^ τ` indexed by a volume `F : ℕ`, and about the transfer operator of a
+`Transfer.TransferData`.
 
-Every "uniform in volume" conclusion in the tree before this file has the shape
+## §1 Quantifier shapes
 
-    ∃ κ : ℝ, 0 < κ ∧ ∀ F, Filter.Tendsto (fun τ => ‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖) atTop (nhds 0)
+`exists_pos_and_iff`, `forall_nat_const_iff` and `vacuous_uniform_shape` are propositional
+equivalences: `∃ κ : ℝ, 0 < κ ∧ Q` is equivalent to `Q`, and `∀ _F : ℕ, Q` is equivalent to `Q`, when
+`Q` is a `Prop` parameter and so contains neither bound variable.
+`ym_gap_uniform_in_volume_shape_is_vacuous` instantiates the pair at a specific `Tendsto` statement
+whose summand mentions neither `κ` nor `F`.
 
-and `κ` does not occur anywhere after the `∧`. A bound variable that does not occur in the body it
-binds carries no content: `∃ κ : ℝ, 0 < κ ∧ Q` is logically `Q` (`exists_pos_and_iff` below,
-machine-checked, discharged with `κ = 1`). So that shape says *"for each volume the correlator tends
-to zero"*, which is `gap_at_finite_F` quantified over `F`, and NOT *"at a common rate"*. The
-uniformity lived only in the hypothesis `Aperture.UniformSpectralMargin`; `gap_uniform_in_F` extracts
-its `κ`, uses it to build one `Tendsto` per `F`, and then discards it.
+## §2–§3 The rate bound, at one volume and uniformly
 
-Two occurrences are weaker still: the `∀ _F : ℕ` there binds a summand containing no `F` at all
-(`forall_nat_const_iff`, `vacuous_uniform_shape`), so the volume index is vacuous on both sides.
+`finite_sum_rate_bound` is `Aperture.finite_sum_margin_bound` with the margin written as
+`Real.exp (-κ)` and the exponent moved inside: `‖∑ k ∈ s, P k * (μ k) ^ τ‖ ≤ (∑ k ∈ s, ‖P k‖) *
+exp (-κ * τ)`. `gap_rate_uniform_in_volume` takes `Aperture.UniformSpectralMargin μ₁` — which
+carries a volume-independent `κ` — plus a dominance read, and produces one `κ > 0` bounding every
+volume's sum; `κ` occurs in the body after the `∧`.
+`gap_rate_and_decay_uniform_in_volume` adds the `Tendsto` conclusion at the same `κ`, and
+`gap_rate_uniform_in_volume_of_intensive` obtains the margin from a single `r < 1` bounding `μ₁` at
+every volume, through `Aperture.uniform_margin_of_intensive_radius`.
 
-DO NOT REINTRODUCE THE PATTERN. A conclusion claims uniformity in `F` only if `κ` occurs to the right
-of the quantifier that binds it AND the quantity being bounded actually depends on `F`. Before adding
-a `∃ κ, 0 < κ ∧ …` theorem, check that deleting `∃ κ, 0 < κ ∧` changes the statement.
+## §4–§5 The rate as a named constant
 
-## What is proved here
+`cell_ceiling_eq_exp_neg_floor` is the identity `3 ^ (-(1:ℝ)/4) = exp (-κ₀YM)`.
+`gap_rate_at_floor_uniform_in_volume` states the bound at `κ₀YM` with no existential, given
+`mHi F ≤ 3 ^ (-(1:ℝ)/4)` at every volume. `product_volume_gap_rate` derives that input for a
+product spectrum: `CellEnclosure.product_subvacuum_le` says a product of factors in `[0, 1]` with one
+factor at most `3 ^ (-(1:ℝ)/4)` is itself at most `3 ^ (-(1:ℝ)/4)`, independently of how many factors
+there are. `product_volume_gap_rate_concrete` and `product_volume_gap_rate_concrete_one` instantiate
+that at `CellEnclosure.ceilFac`.
 
-* `finite_sum_rate_bound` — the single-volume rate form, `‖C τ‖ ≤ (∑‖P k‖) · e^{−κτ}`. It is
-  `Aperture.finite_sum_margin_bound` with `ρ = e^{−κ}` and the exponent moved into the exponential,
-  the same step `GapRate.mass_gap_exponential_decay` performs for one `LatticeYM`.
-* `gap_rate_uniform_in_volume` — the repair. From `UniformSpectralMargin μ₁` (which already carries a
-  volume-independent `κ`) and the dominance read, ONE `κ > 0` bounds EVERY volume's correlator by
-  `(∑ k ∈ s F, ‖P F k‖) · e^{−κτ}`. Here `κ` occurs after the `∧`, so the statement is not the
-  `∃`-free one.
-* `gap_rate_and_decay_uniform_in_volume` — the same `κ` delivering both the rate and the old
-  `Tendsto` conclusion, so it supersedes `Aperture.gap_uniform_in_F` and
-  `Certify.gap_uniform_in_volume_of_intensive` rather than sitting beside them.
-* `gap_rate_at_floor_uniform_in_volume` — the rate at the DERIVED constant `κ₀ = ¼log3`, with no
-  existential at all. A statement with no `∃ κ` cannot be vacuous in `κ`.
-* `product_volume_gap_rate` / `product_volume_gap_rate_concrete` — the decoupled product-of-cells
-  transfer closed at that explicit rate. This is the case where the intensive input is DERIVED
-  (`CellEnclosure.product_subvacuum_le`: a product of factors in `[0,1]` with one factor
-  `≤ 3^{−1/4}` is `≤ 3^{−1/4}`, uniformly in the cell count), so nothing here is measured.
+## §6 The geometric law on the vacuum complement
 
-## The prefactor depends on the volume, and that is the correct statement
+`inner_vac_Tq` uses `TransferData.Tq_isSymmetric` and `Tq_vacGNS` to show the vacuum-orthogonal
+subspace is `Tq`-invariant; `inner_vac_Tq_pow` iterates it. `norm_Tq_pow_le` then turns a per-step
+bound `‖Tq y‖ ≤ ρ₁ ‖y‖` on that subspace into `‖Tq^n x‖ ≤ ρ₁^n ‖x‖`, and `rp_sub_geometric` restates
+it in the form `Mixing.gap_of_maximal_correlation` consumes. `rp_gap_of_one_cut` applies
+that theorem to conclude `‖Tq^n x‖ → 0` when `ρ₁ < 1`.
 
-`M F := ∑ k ∈ s F, ‖P F k‖` is the total spectral weight at volume `F`; it grows with the number of
-modes and pretending otherwise would be the same defect in a new place. What "uniform in volume"
-means for a mass gap is that the EXPONENTIAL RATE is volume-independent — the correlation length
-`1/κ` does not grow with the box — while the amplitude may not be. That is exactly the shape proved
-here: `M` is given explicitly as a function of `F`, `κ` is a single constant. No theorem in this file
-claims a volume-independent prefactor.
-
-## What remains open
-
-* **The coupled (physical) transfer.** Not open — closed NEGATIVELY, and that is a theorem.
-  `CellCouple.form_perturbation_reaches_finitely_many` with `CellCouple.chain_coupling_extensive`
-  show the operator-norm budget `2δ < μ` is unsatisfiable past some cell count at ANY budget, so the
-  decoupled-plus-perturbation route cannot reach the thermodynamic limit. Nothing here routes around
-  it. The surviving route is `LocalGap.lean`'s Knabe criterion, which does not bind to Yang–Mills:
-  the Kogut–Susskind terms do not commute and `Transfer.TransferData` carries a positive contraction,
-  not a sum of projectors.
-* **The physical intensive input.** `∀ F, m_hi(F) ≤ 3^{−1/4}` for the `SU(N)` ensemble read is a
-  measured continuum statement, not proved anywhere. Everything in this file that mentions the volume
-  either takes it as a hypothesis (`gap_rate_uniform_in_volume`) or derives it for the decoupled
-  product (`product_volume_gap_rate`).
-
-## The `ρ'(n) = ρ'(1)^n` claim, and what is actually reachable
-
-`MassGap.lean`'s `CellSpectrum` import line and `CellSpectrum`'s §"volume-uniform gap from the single
-cell" both say `gap_uniform_of_cell` "wires Mixing S1 — RP ⟹ ρ'(n)=ρ'(1)^n exactly, one cut controls
-every volume". That is not what those declarations do. `Mixing.gap_of_maximal_correlation` TAKES
-`∀ n, σ n ≤ σ 0 * ρ₁ ^ n` as the hypothesis `hsub`; nothing derives it. And `gap_uniform_of_cell`'s
-`σ : ℕ → ℝ` is indexed by the SEPARATION `n`, not by a volume — there is no volume index in its
-statement, so it cannot be uniform in one.
-
-The reachable part is proved here, and it is the INEQUALITY, which is all `hsub` needs:
-`rp_sub_geometric` derives `‖T^n x‖ ≤ ‖x‖ · ρ₁^n` on the vacuum-orthogonal subspace from reflection
-positivity alone. RP enters as `TransferData.T_symm`; with `T_vac` it makes the vacuum-orthogonal
-subspace `T`-invariant (`inner_vac_Tq`), after which submultiplicativity of the per-step bound gives
-the geometric law by induction. `rp_gap_of_one_cut` then feeds it straight into
-`Mixing.gap_of_maximal_correlation`, so S1's hypothesis is DERIVED rather than assumed.
-
-The EQUALITY `ρ'(n) = ρ'(1)^n` is a different statement and is not proved here. It would need
-`‖T^n‖ = ‖T‖^n` for a self-adjoint operator — true, and reachable through the C*-identity — plus an
-identification of the Dobrushin–Shlosman `ρ'(n)` with `‖T^n‖` restricted to the vacuum complement,
-which requires the time-Markov property of the measure and has no object in this tree. It is also not
-needed: every consumer wants the upper bound.
-
-NEITHER DIRECTION GIVES UNIFORMITY IN VOLUME. `rp_sub_geometric` says one cut controls every
-SEPARATION at a fixed volume. Volume-uniformity is the separate statement that `ρ₁` does not depend on
-the volume — the intensive input again. The claim that RP makes the volume-uniform gap free is false,
-and correcting it is part of this file's purpose.
-
-No `sorry`, no new axiom; every declaration's footprint is printed at the end of the file.
+Scope: the prefactor `∑ k ∈ s F, ‖P F k‖` depends on `F` and is written out explicitly; no statement
+here claims a volume-independent prefactor. In §6 the index `n` is the number of applications of
+`Tq`, not a volume, and `ρ₁` is a per-step bound for the given `D` — nothing makes it independent of
+anything. The intensive hypotheses `hint`, `hbound` and `hdom` are supplied by the caller except in
+`product_volume_gap_rate`, where the product structure supplies them. Axiom footprints are printed at
+the end of the file.
 -/
 
 namespace MassGap.VolumeRate
 
 open MassGap MassGap.CellEnclosure
 
-/-! ## §1 The vacuous-`κ` pattern, stated formally
+/-! ## §1 Quantifiers over variables that do not occur in the body
 
-These three are the defect written as theorems, so that the claim "the old shape carries no
-uniformity" is machine-checked rather than asserted in prose. -/
+Three propositional equivalences and one instance of them, so that the relation between a shape like
+`∃ κ, 0 < κ ∧ Q` and `Q` itself is a theorem rather than a remark. -/
 
-/-- **`∃ κ, 0 < κ ∧ Q` is `Q`** when `κ` does not occur in `Q`. The forward direction drops the
-witness; the reverse supplies `κ = 1`. This is the shape of `Aperture.gap_uniform_in_F`,
-`Certify.gap_uniform_in_volume_of_intensive`, `CellEnclosure.gap_uniform_of_cell_intensive`,
-`CellEnclosure.product_volume_gap` and `Complete.ym_gap_uniform_in_volume`: in each of them the
-conclusion after the `∧` mentions no `κ`, so each is equivalent to its own `∃`-free body and asserts
-nothing about a common rate. -/
+/-- `(∃ κ : ℝ, 0 < κ ∧ Q) ↔ Q`, for `Q : Prop` a parameter. Since `Q` is a parameter it cannot
+mention `κ`, so the forward direction discards the witness and the reverse supplies `κ = 1`.
+
+Scope: the equivalence holds because `Q` is a parameter of the theorem. A statement whose body does
+mention the bound `κ` is not an instance of it.
+
+DERIVED: `0` is the positivity threshold on the bound variable `κ`. -/
 theorem exists_pos_and_iff (Q : Prop) : (∃ κ : ℝ, 0 < κ ∧ Q) ↔ Q := by
   constructor
   · rintro ⟨_, _, hq⟩
@@ -119,21 +77,30 @@ theorem exists_pos_and_iff (Q : Prop) : (∃ κ : ℝ, 0 < κ ∧ Q) ↔ Q := by
   · intro hq
     exact ⟨1, one_pos, hq⟩
 
-/-- **`∀ _F : ℕ, Q` is `Q`** when `F` does not occur in `Q`. `ℕ` is inhabited, so the quantifier is
-discharged at `F = 0`. -/
+/-- `(∀ _F : ℕ, Q) ↔ Q`, for `Q : Prop` a parameter. The forward direction instantiates at `0`, which
+`ℕ` provides; the reverse ignores the argument.
+
+DERIVED: no numeral appears in the statement; the `0` used to instantiate lives in the proof. -/
 theorem forall_nat_const_iff (Q : Prop) : (∀ _F : ℕ, Q) ↔ Q :=
   ⟨fun h => h 0, fun h _ => h⟩
 
-/-- **The doubly-vacuous shape.** `∃ κ, 0 < κ ∧ ∀ _F : ℕ, Q` is `Q`. Both binders are inert, so the
-statement is about neither a rate nor a volume. -/
+/-- `(∃ κ : ℝ, 0 < κ ∧ ∀ _F : ℕ, Q) ↔ Q`, for `Q : Prop` a parameter — `exists_pos_and_iff` composed
+with `forall_nat_const_iff`. Neither binder occurs in `Q`.
+
+DERIVED: `0` is the positivity threshold on the bound variable `κ`. -/
 theorem vacuous_uniform_shape (Q : Prop) : (∃ κ : ℝ, 0 < κ ∧ ∀ _F : ℕ, Q) ↔ Q :=
   (exists_pos_and_iff _).trans (forall_nat_const_iff Q)
 
-/-- **`Complete.ym_gap_uniform_in_volume`'s conclusion, shown equivalent to a single decay statement
-with neither a rate nor a volume in it.** The literal conclusion of that theorem (and, with the same
-summand, of `CellEnclosure.cell_volume_bar_nonvacuous`) is reproduced on the left. The `∃ κ, 0 < κ ∧`
-and the `∀ _F : ℕ` are both discharged, leaving `gap_at_finite_F` at one fixed mode family. Nothing
-in it is uniform in anything. -/
+/-- `vacuous_uniform_shape` instantiated at a concrete decay statement: for `n : ℕ` and `x : ℝ`,
+
+    (∃ κ : ℝ, 0 < κ ∧ ∀ _F : ℕ, Tendsto (fun τ => ‖∑ _k : Fin (n + 1), (1 : ℂ) * (x : ℂ) ^ τ‖) atTop (nhds 0))
+      ↔ Tendsto (fun τ => ‖∑ _k : Fin (n + 1), (1 : ℂ) * (x : ℂ) ^ τ‖) atTop (nhds 0)
+
+The summand on either side mentions neither `κ` nor `F`, so both binders are discharged.
+
+DERIVED: `0` occurs three times — the positivity threshold on `κ`, and the limit point `nhds 0` on
+each side of the equivalence. `1` occurs four times — the `+ 1` in the index type `Fin (n + 1)` and
+the coefficient `(1 : ℂ)`, once on each side. -/
 theorem ym_gap_uniform_in_volume_shape_is_vacuous (n : ℕ) (x : ℝ) :
     (∃ κ : ℝ, 0 < κ ∧ ∀ _F : ℕ,
         Filter.Tendsto (fun τ => ‖∑ _k : Fin (n + 1), (1 : ℂ) * ((x : ℂ)) ^ τ‖)
@@ -142,16 +109,21 @@ theorem ym_gap_uniform_in_volume_shape_is_vacuous (n : ℕ) (x : ℝ) :
           Filter.atTop (nhds 0) :=
   vacuous_uniform_shape _
 
-/-! ## §2 The rate form at one volume
+/-! ## §2 The rate form at one mode family
 
-`Aperture.finite_sum_margin_bound` already bounds the finite exponential sum by `(∑‖P k‖) · ρ^τ`.
-Writing `ρ = e^{−κ}` and moving the exponent inside turns it into the geometric-decay form the mass
-gap is stated in. This is the same step `GapRate.mass_gap_exponential_decay` performs for a single
-`LatticeYM`, reused here in the free-standing form the volume family needs. -/
+`Aperture.finite_sum_margin_bound` bounds a finite exponential sum by `(∑ ‖P k‖) * ρ ^ τ`. Writing
+`ρ = exp (-κ)` and moving the exponent inside gives the form used throughout the rest of the file.
+`GapRate.mass_gap_exponential_decay` performs the same step for a single `LatticeYM`. -/
 
-/-- **The rate bound at one mode family.** Every active mode inside the margin `e^{−κ}` gives
-`‖∑ₖ Pₖ μₖ^τ‖ ≤ (∑ₖ ‖Pₖ‖) · e^{−κτ}`: exponential decay at rate `κ`, with the total spectral weight
-as prefactor. Reuses `Aperture.finite_sum_margin_bound`. -/
+/-- If `‖μ k‖ ≤ Real.exp (-κ)` at every `k ∈ s`, then
+`‖∑ k ∈ s, P k * (μ k) ^ τ‖ ≤ (∑ k ∈ s, ‖P k‖) * Real.exp (-κ * τ)` at every `τ : ℕ`. It is
+`Aperture.finite_sum_margin_bound` at `ρ = Real.exp (-κ)`, with `Real.exp_nat_mul` moving the power
+into the exponent.
+
+Scope: `κ` is not assumed positive — for `κ ≤ 0` the bound still holds but does not decay. The
+prefactor is the total spectral weight `∑ k ∈ s, ‖P k‖`, given explicitly.
+
+DERIVED: no numeral appears in the statement. -/
 theorem finite_sum_rate_bound {ι : Type*} (s : Finset ι) (P μ : ι → ℂ) {κ : ℝ}
     (hμ : ∀ k ∈ s, ‖μ k‖ ≤ Real.exp (-κ)) (τ : ℕ) :
     ‖∑ k ∈ s, P k * (μ k) ^ τ‖ ≤ (∑ k ∈ s, ‖P k‖) * Real.exp (-κ * τ) := by
@@ -159,22 +131,25 @@ theorem finite_sum_rate_bound {ι : Type*} (s : Finset ι) (P μ : ι → ℂ) {
   rw [← Real.exp_nat_mul] at h
   rwa [mul_comm (τ : ℝ) (-κ)] at h
 
-/-! ## §3 The repair: one rate for every volume
+/-! ## §3 One rate for every volume
 
-The input `Aperture.UniformSpectralMargin μ₁ = ∃ κ, 0 < κ ∧ ∀ F, μ₁ F ≤ e^{−κ}` already carries a
-volume-independent `κ`. `gap_uniform_in_F` obtains it and then states a conclusion it does not appear
-in. Here it is obtained once and kept: it is the rate in every volume's bound. -/
+`Aperture.UniformSpectralMargin μ₁` unfolds to `∃ κ, 0 < κ ∧ ∀ F, μ₁ F ≤ exp (-κ)`, so it already
+carries a `κ` that does not depend on `F`. The three theorems below extract that `κ` and keep it in
+the conclusion, as the rate of every volume's bound. -/
 
-/-- **THE GAP IS UNIFORM IN VOLUME, WITH A RATE.** From a volume-independent spectral margin
-(`hmargin`) and the read that every active mode at volume `F` sits under `μ₁ F` (`hdom`), there is a
-SINGLE `κ > 0` such that at EVERY volume `F` and every separation `τ`
+/-- From `UniformSpectralMargin μ₁` and `‖μ F k‖ ≤ μ₁ F` at every volume `F` and every active mode
+`k ∈ s F`, there is a single `κ > 0` with
 
-    ‖∑ k ∈ s F, P F k · (μ F k)^τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) · e^{−κτ}.
+    ‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) * Real.exp (-κ * τ)
 
-`κ` occurs to the right of the `∧`, so deleting `∃ κ, 0 < κ ∧` changes the statement — this is the
-content `gap_uniform_in_F` was missing. The prefactor `∑ k ∈ s F, ‖P F k‖` is volume-dependent and is
-given explicitly rather than existentially: the correlation length `1/κ` is what does not grow with
-the box, the amplitude may. -/
+at every `F` and `τ`. The proof takes `κ` from the margin and applies `finite_sum_rate_bound` at each
+volume.
+
+Scope: `κ` occurs in the body after the `∧`, so it is not eliminable by `exists_pos_and_iff`. The
+prefactor `∑ k ∈ s F, ‖P F k‖` does depend on `F` and is written out explicitly; the statement makes
+no claim that it is bounded in `F`.
+
+DERIVED: `0` is the positivity threshold on `κ`, inherited from `UniformSpectralMargin`. -/
 theorem gap_rate_uniform_in_volume {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (μ₁ : ℕ → ℝ)
     (hmargin : UniformSpectralMargin μ₁)
@@ -185,10 +160,17 @@ theorem gap_rate_uniform_in_volume {ι : Type*}
   exact ⟨κ, hκ, fun F τ => finite_sum_rate_bound (s F) (P F) (μ F)
     (fun k hk => le_trans (hdom F k hk) (hbnd F)) τ⟩
 
-/-- **The rate AND the decay, at the same `κ`.** The rate bound above together with the qualitative
-conclusion the older declarations stop at. One theorem supersedes `Aperture.gap_uniform_in_F`: its
-`Tendsto` half is literally that theorem's conclusion, and the extra conjunct is the uniformity the
-name promises. -/
+/-- The same hypotheses as `gap_rate_uniform_in_volume`, with a conclusion conjoining two statements
+at one `κ > 0`: the rate bound
+`‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) * exp (-κ * τ)` at every `F` and `τ`, and
+`Tendsto (fun τ => ‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖) atTop (nhds 0)` at every `F`. The second
+conjunct is `Aperture.gap_at_finite_F` applied volume by volume.
+
+Scope: `κ` occurs in the first conjunct but not in the second, so only the first is sensitive to the
+value of the rate.
+
+DERIVED: `0` occurs twice — the positivity threshold on `κ`, and the limit point in the `Tendsto`
+conjunct. -/
 theorem gap_rate_and_decay_uniform_in_volume {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (μ₁ : ℕ → ℝ)
     (hmargin : UniformSpectralMargin μ₁)
@@ -203,10 +185,14 @@ theorem gap_rate_and_decay_uniform_in_volume {ι : Type*}
     (fun k hk => le_trans (hdom F k hk) (hbnd F)) τ, fun F => ?_⟩
   exact gap_at_finite_F (s F) (P F) (μ F) hκ (fun k hk => le_trans (hdom F k hk) (hbnd F))
 
-/-- **The rate form from an intensive spectral radius.** The `Certify.gap_uniform_in_volume_of_intensive`
-input — one `r < 1` bounding the dominant magnitude at every volume — delivered as a volume-uniform
-RATE rather than a per-volume limit. The rate is `κ = −log r`, supplied by
-`Aperture.uniform_margin_of_intensive_radius`. -/
+/-- `gap_rate_uniform_in_volume` with the margin hypothesis replaced by a single `r` with `0 < r`,
+`r < 1` and `μ₁ F ≤ r` at every volume. `Aperture.uniform_margin_of_intensive_radius` converts that
+to a `UniformSpectralMargin`, whose rate is `-Real.log r`.
+
+Scope: `0 < r` is needed for the logarithm and `r < 1` for the rate to be positive.
+
+DERIVED: `0` occurs twice, as the positivity threshold on `r` and on the produced `κ`; `1` is the
+upper bound on `r`, the point at which the rate would vanish. -/
 theorem gap_rate_uniform_in_volume_of_intensive {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (μ₁ : ℕ → ℝ) (r : ℝ)
     (hr0 : 0 < r) (hr1 : r < 1) (hbound : ∀ F, μ₁ F ≤ r)
@@ -216,29 +202,36 @@ theorem gap_rate_uniform_in_volume_of_intensive {ι : Type*}
   gap_rate_uniform_in_volume s P μ μ₁
     (uniform_margin_of_intensive_radius μ₁ r hr0 hr1 hbound) hdom
 
-/-! ## §4 The rate named outright: `κ₀ = ¼log3`
+/-! ## §4 The rate as the named constant `κ₀YM`
 
-An `∃ κ` can be vacuous; a named constant cannot. The single-cell ceiling `3^{−1/4}` IS `e^{−κ₀}`
-with `κ₀` the directed-path counting floor of `Floor.lean`, so the intensive input pins the rate to a
-derived constant and the existential can be removed entirely. -/
+The ceiling `3 ^ (-(1:ℝ)/4)` equals `exp (-κ₀YM)`, with `κ₀YM = (1/4) log 3` the directed-path
+counting constant of `Floor.lean`. With that identity the bound can be stated at `κ₀YM` outright,
+with no existential quantifier over the rate. -/
 
-/-- **The single-cell ceiling is `e^{−κ₀}`.** `3^{−1/4} = exp(−¼log3)`. The identity is used inline in
-five places in the tree (`CellEnclosure.lean:53,68`, `Complete.lean:2487,2541,2564`); named here
-because §4 needs it as a rewrite. -/
+/-- `(3 : ℝ) ^ (-(1 : ℝ) / 4) = Real.exp (-κ₀YM)`. `Real.rpow_def_of_pos` rewrites the left side as
+`exp ((-(1)/4) * log 3)`, and unfolding `κ₀YM` to `(1/4) * log 3` makes the exponents equal by `ring`.
+
+DERIVED: `3` is the base, the directed-path branching count; `1` and `4` are the numerator and
+denominator of the exponent `-(1)/4`, matching `κ₀YM`'s own `1/4`. -/
 theorem cell_ceiling_eq_exp_neg_floor : (3 : ℝ) ^ (-(1 : ℝ) / 4) = Real.exp (-κ₀YM) := by
   rw [Real.rpow_def_of_pos (by norm_num : (0 : ℝ) < 3)]
   unfold κ₀YM
   congr 1
   ring
 
-/-- **THE VOLUME-UNIFORM RATE AT THE COUNTING FLOOR — no existential.** With the intensive input
-`m_hi(F) ≤ 3^{−1/4}` at every volume, every volume's correlator obeys
+/-- Given `mHi F ≤ (3 : ℝ) ^ (-(1 : ℝ) / 4)` at every volume and `‖μ F k‖ ≤ mHi F` at every active
+mode, then at every `F` and `τ`
 
-    ‖∑ k ∈ s F, P F k · (μ F k)^τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) · e^{−κ₀ τ},   κ₀ = ¼log3,
+    ‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) * Real.exp (-κ₀YM * τ).
 
-with `κ₀` a DERIVED constant (`Floor.lean`), the same at every `F`. There is no `∃ κ` to be vacuous
-in, and `κ₀YM_pos` gives `κ₀ > 0` separately. The remaining input is the intensive read `hint`, which
-for the physical `SU(N)` ensemble is measured, and for the decoupled product is derived in §5. -/
+The proof rewrites the ceiling as `exp (-κ₀YM)` by `cell_ceiling_eq_exp_neg_floor` and applies
+`finite_sum_rate_bound`.
+
+Scope: the rate is the named constant `κ₀YM`, so there is no existential quantifier over it;
+positivity of `κ₀YM` is the separate `κ₀YM_pos`. The hypothesis `hint` is supplied by the caller.
+
+DERIVED: `3` is the base of the ceiling, the directed-path branching count; `1` and `4` are the
+numerator and denominator of its exponent `-(1)/4`, which is what makes the ceiling `exp (-κ₀YM)`. -/
 theorem gap_rate_at_floor_uniform_in_volume {ι : Type*}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (mHi : ℕ → ℝ)
     (hint : ∀ F, mHi F ≤ (3 : ℝ) ^ (-(1 : ℝ) / 4))
@@ -250,30 +243,29 @@ theorem gap_rate_at_floor_uniform_in_volume {ι : Type*}
   rw [← cell_ceiling_eq_exp_neg_floor]
   exact le_trans (hdom F k hk) (hint F)
 
-/-! ## §5 The decoupled product of cells, closed at the explicit rate
+/-! ## §5 A product spectrum, where the ceiling hypothesis is derived
 
-`CellEnclosure.product_volume_gap` is the one place in the tree where the intensive input is DERIVED
-rather than assumed: `product_subvacuum_le` shows a product of factors in `[0,1]` carrying one factor
-`≤ 3^{−1/4}` is itself `≤ 3^{−1/4}`, with no dependence on how many factors there are. Adding cells
-adds vacuum factors `1`, so the dominant sub-vacuum magnitude stays at the single-plaquette ceiling.
-That is a genuine volume-uniformity mechanism — but `product_volume_gap` spends it on the vacuous
-shape. Here it is spent on the rate. -/
+`CellEnclosure.product_subvacuum_le` says a product of factors in `[0, 1]` carrying one factor at
+most `3 ^ (-(1:ℝ)/4)` is itself at most `3 ^ (-(1:ℝ)/4)`, whatever the number of factors. Adding
+factors equal to `1` therefore leaves the bound unchanged, so the hypothesis `hint` of
+`gap_rate_at_floor_uniform_in_volume` can be discharged rather than assumed for such a spectrum. -/
 
-/-- **THE DECOUPLED PRODUCT-OF-CELLS TRANSFER HAS A VOLUME-INDEPENDENT RATE.** A mode family whose
-every active mode at volume `F` is a product `∏ᵢ fac F k i` of per-cell magnitudes in `[0,1]` with at
-least one cell excited below the machine-checked single-cell ceiling `3^{−1/4}`
-(`CellEnclosure.Hcell2_clears_floor`) satisfies
+/-- Suppose every active mode is a product of per-cell factors: `μ F k = ∏ i, fac F k i` with each
+factor in `[0, 1]` (`h01`) and at least one factor at most `(3 : ℝ) ^ (-(1 : ℝ) / 4)` (`hexc`). Then
+`0 < κ₀YM` and, at every cell count `F` and every `τ`,
 
-    ‖∑ k ∈ s F, P F k · (μ F k)^τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) · e^{−κ₀ τ}
+    ‖∑ k ∈ s F, P F k * (μ F k) ^ τ‖ ≤ (∑ k ∈ s F, ‖P F k‖) * Real.exp (-κ₀YM * τ).
 
-at EVERY cell count `F`, with `κ₀ = ¼log3 > 0` derived and volume-independent. This is
-`CellEnclosure.product_volume_gap` upgraded from "each volume forgets" to "every volume forgets at
-one rate", and the rate is named rather than existentially quantified. The intensive input is proved,
-not measured: `product_subvacuum_le` does not see the cell count.
+The ceiling hypothesis of `gap_rate_at_floor_uniform_in_volume` is discharged by
+`CellEnclosure.product_subvacuum_le`, which does not see the number of cells, so the same rate serves
+every `F`.
 
-This closes B7 for the DECOUPLED transfer. The physical coupled transfer is a different object, and
-`CellCouple.form_perturbation_reaches_finitely_many` / `chain_coupling_extensive` show the
-perturbative route to it terminates. -/
+Scope: the modes are products of independent per-cell factors; the statement says nothing about a
+spectrum that is not of that form. The prefactor still depends on `F`.
+
+DERIVED: `0` occurs twice, as the lower bound on each factor and as the positivity threshold on
+`κ₀YM`; `1` occurs twice, as the upper bound on each factor (the vacuum value) and as the exponent
+numerator in `-(1)/4`; `3` is the base of the ceiling and `4` its root. -/
 theorem product_volume_gap_rate {ι : Type*} {ncell : ℕ → ℕ}
     (s : ℕ → Finset ι) (P μ : ℕ → ι → ℂ) (fac : ∀ F, ι → Fin (ncell F) → ℝ)
     (h01 : ∀ F, ∀ k ∈ s F, ∀ i, 0 ≤ fac F k i ∧ fac F k i ≤ 1)
@@ -287,11 +279,17 @@ theorem product_volume_gap_rate {ι : Type*} {ncell : ℕ → ℕ}
   obtain ⟨j, hj⟩ := hexc F k hk
   exact product_subvacuum_le (fac F k) (by positivity) (fun i => h01 F k hk i) j hj
 
-/-- **The product rate is non-vacuous — the extremal constructed model.** The `F+1`-cell product with
-one cell at the machine-checked ceiling `3^{−1/4}` and the rest at the vacuum `1`
-(`CellEnclosure.ceilFac`) obeys the `κ₀` rate at every cell count. The magnitude is an actual
-constructed spectrum, not a constant witness, and the cell count is universally quantified while the
-rate is fixed. -/
+/-- `product_volume_gap_rate` instantiated at `ι := Unit`, `ncell F := F + 1`, unit projections and
+factors `CellEnclosure.ceilFac F` — one cell at the ceiling and the rest at `1`. The conclusion has
+no hypotheses: `0 < κ₀YM`, and at every `F` and `τ`,
+`‖∑ _ : Unit, (1 : ℂ) * ((∏ i, ceilFac F i : ℝ) : ℂ) ^ τ‖ ≤ (∑ _ : Unit, ‖(1 : ℂ)‖) * exp (-κ₀YM * τ)`.
+The excited-cell hypothesis is met at index `0` by `simp [ceilFac]`.
+
+Scope: the index type is `Unit`, so the sum has one term; the cell count `F` is universally
+quantified while the rate stays `κ₀YM`.
+
+DERIVED: `0` is the positivity threshold on `κ₀YM`; `1` occurs twice, as the projection coefficient
+`(1 : ℂ)` on the left and inside the prefactor `‖(1 : ℂ)‖` on the right. -/
 theorem product_volume_gap_rate_concrete :
     0 < κ₀YM ∧ ∀ F τ : ℕ,
       ‖∑ _ : Unit, (1 : ℂ) * (((∏ i, ceilFac F i : ℝ)) : ℂ) ^ τ‖
@@ -300,9 +298,15 @@ theorem product_volume_gap_rate_concrete :
     (fun _ _ => 1) (fun F _ => (((∏ i, ceilFac F i : ℝ)) : ℂ)) (fun F _ i => ceilFac F i)
     (fun F _ _ i => ceilFac_mem F i) (fun F _ _ => ⟨0, by simp [ceilFac]⟩) (fun _ _ _ => rfl)
 
-/-- The same bound with the prefactor evaluated: the extremal product's correlator is at most
-`e^{−κ₀τ}` at every cell count `F`. Reading the constant off the statement is the point — `κ₀` is
-`¼log3 ≈ 0.2747`, and it is the same number at `F = 0` and at `F = 10¹⁰`. -/
+/-- `product_volume_gap_rate_concrete` with the prefactor evaluated: at every `F` and `τ`,
+`‖∑ _ : Unit, (1 : ℂ) * ((∏ i, ceilFac F i : ℝ) : ℂ) ^ τ‖ ≤ Real.exp (-κ₀YM * τ)`. The sum
+`∑ _ : Unit, ‖(1 : ℂ)‖` is `1`, so the prefactor drops out.
+
+Scope: the same rate `κ₀YM` appears at every `F`; the statement quantifies over both `F` and `τ` and
+involves no existential.
+
+DERIVED: `1` is the projection coefficient `(1 : ℂ)`; no other numeral appears in the statement, the
+prefactor having been evaluated away. -/
 theorem product_volume_gap_rate_concrete_one (F τ : ℕ) :
     ‖∑ _ : Unit, (1 : ℂ) * (((∏ i, ceilFac F i : ℝ)) : ℂ) ^ τ‖ ≤ Real.exp (-κ₀YM * τ) := by
   have h := product_volume_gap_rate_concrete.2 F τ
@@ -310,29 +314,29 @@ theorem product_volume_gap_rate_concrete_one (F τ : ℕ) :
   rw [hpre] at h
   linarith [h]
 
-/-! ## §6 What reflection positivity actually gives: one cut controls every SEPARATION
+/-! ## §6 The geometric law on the vacuum complement of a `TransferData`
 
-The tree's prose says RP gives `ρ'(n) = ρ'(1)^n` and hence the volume-uniform gap for free. It does
-not, and `Mixing.gap_of_maximal_correlation` assumes the geometric law rather than deriving it. The
-part that IS derivable from RP is derived here.
+`Transfer.TransferData` carries `T_symm` (self-adjointness of the operator for the reflection form),
+`T_contract`, and `T_vac` with `vac_norm`. From the first and the third, the vacuum-orthogonal
+subspace is invariant under `Tq`; a per-step bound `‖Tq y‖ ≤ ρ₁ ‖y‖` on that subspace then iterates
+to `‖Tq^n x‖ ≤ ρ₁^n ‖x‖`, which is the hypothesis `Mixing.gap_of_maximal_correlation` consumes.
 
-`Transfer.TransferData` carries exactly the Osterwalder–Seiler data: `T_symm` (self-adjointness of
-time translation for the reflection form — this IS reflection positivity's payload), `T_contract`,
-and `T_vac` with `vac_norm`. From `T_symm` and `T_vac`, the vacuum-orthogonal subspace is
-`T`-invariant; a per-step contraction factor `ρ₁` on that subspace then iterates, giving the
-geometric law `‖T^n x‖ ≤ ρ₁^n ‖x‖` — the `hsub` hypothesis of S1, now discharged.
-
-SCOPE. This is uniformity in the SEPARATION `n` at one volume. It says nothing about the volume, and
-`ρ₁` here is whatever the per-step bound is at that volume. Volume-uniformity is the separate claim
-that `ρ₁` can be chosen independently of the volume, i.e. the intensive input of §3–§5. -/
+Scope: `n` counts applications of `Tq`, not a volume, and `ρ₁` is whatever per-step bound the caller
+supplies for the given `D`. Nothing in this section makes `ρ₁` independent of anything, and nothing
+here states an equality `‖Tq^n‖ = ‖Tq‖^n`. -/
 
 open MassGap.Transfer
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- **The vacuum-orthogonal subspace is transfer-invariant.** `⟨Ω, Tx⟩ = ⟨TΩ, x⟩ = ⟨Ω, x⟩ = 0`, using
-self-adjointness (`TransferData.T_symm`, which is what reflection positivity supplies) and the vacuum
-eigenvector `TΩ = Ω`. Without self-adjointness this fails, so the step is genuinely RP's. -/
+/-- If `inner ℝ D.vacGNS x = 0` then `inner ℝ D.vacGNS (D.Tq x) = 0`: the vacuum-orthogonal subspace
+is `Tq`-invariant. The proof moves `Tq` across the inner product with `D.Tq_isSymmetric` and uses
+`D.Tq_vacGNS` (`Tq` fixes the vacuum) to return to the hypothesis.
+
+Scope: both ingredients are fields of `TransferData` — symmetry of `Tq` and the vacuum being fixed.
+Neither is established here.
+
+DERIVED: `0` occurs twice, as the value of the inner product assumed and as the value concluded. -/
 theorem inner_vac_Tq (D : TransferData A) {x : GNS D.toReflForm}
     (hx : inner ℝ D.vacGNS x = (0 : ℝ)) :
     inner ℝ D.vacGNS (D.Tq x) = (0 : ℝ) := by
@@ -341,8 +345,11 @@ theorem inner_vac_Tq (D : TransferData A) {x : GNS D.toReflForm}
   rw [← h]
   exact hx
 
-/-- Iterating `inner_vac_Tq`: every power of the transfer operator keeps a vacuum-orthogonal vector
-vacuum-orthogonal. -/
+/-- `inner ℝ D.vacGNS ((D.Tq ^ n) x) = 0` at every `n : ℕ`, given `inner ℝ D.vacGNS x = 0`. Induction
+on `n`, with `inner_vac_Tq` at each step and `pow_succ'` to peel off one application.
+
+DERIVED: `0` occurs twice, as the value of the inner product assumed and as the value concluded at
+every power. -/
 theorem inner_vac_Tq_pow (D : TransferData A) {x : GNS D.toReflForm}
     (hx : inner ℝ D.vacGNS x = (0 : ℝ)) :
     ∀ n : ℕ, inner ℝ D.vacGNS ((D.Tq ^ n) x) = (0 : ℝ) := by
@@ -355,10 +362,16 @@ theorem inner_vac_Tq_pow (D : TransferData A) {x : GNS D.toReflForm}
       rw [hstep]
       exact inner_vac_Tq D ih
 
-/-- **`‖T^n x‖ ≤ ρ₁^n ‖x‖` on the vacuum complement.** A single-step bound `‖Ty‖ ≤ ρ₁‖y‖` on
-vacuum-orthogonal `y` iterates, because the subspace it holds on is invariant (`inner_vac_Tq_pow`).
-This is the geometric law `Mixing.gap_of_maximal_correlation` assumes; here it is a consequence of
-reflection positivity plus the per-step bound. -/
+/-- Given `0 ≤ ρ₁` and a per-step bound `‖D.Tq y‖ ≤ ρ₁ * ‖y‖` for every vacuum-orthogonal `y`, a
+vacuum-orthogonal `x` satisfies `‖(D.Tq ^ n) x‖ ≤ ρ₁ ^ n * ‖x‖` at every `n`. Induction on `n`; the
+per-step bound applies at each stage because `inner_vac_Tq_pow` keeps the iterate
+vacuum-orthogonal.
+
+Scope: the per-step bound `hρ` is a hypothesis, required only on the vacuum-orthogonal subspace. `ρ₁`
+is not assumed below `1`, so the conclusion need not decay.
+
+DERIVED: `0` occurs three times — the lower bound on `ρ₁`, and the inner-product value in the
+orthogonality hypothesis of `hρ` and in that of `x`. -/
 theorem norm_Tq_pow_le (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁)
     (hρ : ∀ y : GNS D.toReflForm, inner ℝ D.vacGNS y = (0 : ℝ) → ‖D.Tq y‖ ≤ ρ₁ * ‖y‖)
     {x : GNS D.toReflForm} (hx : inner ℝ D.vacGNS x = (0 : ℝ)) (n : ℕ) :
@@ -374,9 +387,13 @@ theorem norm_Tq_pow_le (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁)
         _ ≤ ρ₁ * (ρ₁ ^ n * ‖x‖) := mul_le_mul_of_nonneg_left ih hρ0
         _ = ρ₁ ^ (n + 1) * ‖x‖ := by ring
 
-/-- **S1's hypothesis, DERIVED.** In the exact form `Mixing.gap_of_maximal_correlation` consumes:
-`σ n ≤ σ 0 · ρ₁^n` for `σ n = ‖T^n x‖`. The tree previously took this as an assumption and credited
-it to RP in prose; this is the proof. -/
+/-- `norm_Tq_pow_le` rewritten as `‖(D.Tq ^ n) x‖ ≤ ‖(D.Tq ^ 0) x‖ * ρ₁ ^ n`, which is the shape
+`Mixing.gap_of_maximal_correlation` consumes for `σ n = ‖(D.Tq ^ n) x‖`. `D.Tq ^ 0` is the identity,
+so the prefactor is `‖x‖` and the two statements have the same content.
+
+DERIVED: `0` occurs four times — the lower bound on `ρ₁`, the inner-product value in the
+orthogonality hypothesis of `hρ` and in that of `x`, and the exponent `0` in `D.Tq ^ 0`, which names
+the sequence's initial value. -/
 theorem rp_sub_geometric (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁)
     (hρ : ∀ y : GNS D.toReflForm, inner ℝ D.vacGNS y = (0 : ℝ) → ‖D.Tq y‖ ≤ ρ₁ * ‖y‖)
     {x : GNS D.toReflForm} (hx : inner ℝ D.vacGNS x = (0 : ℝ)) (n : ℕ) :
@@ -384,14 +401,17 @@ theorem rp_sub_geometric (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁)
   rw [show (D.Tq ^ 0) x = x from by simp, mul_comm]
   exact norm_Tq_pow_le D hρ0 hρ hx n
 
-/-- **One cut controls every separation — from reflection positivity, at one volume.** A per-step
-contraction `ρ₁ < 1` on the vacuum complement sends `‖T^n x‖ → 0`. `Mixing.gap_of_maximal_correlation`
-with its `hsub` now supplied rather than assumed.
+/-- With `0 ≤ ρ₁ < 1` and a per-step bound `‖D.Tq y‖ ≤ ρ₁ * ‖y‖` on the vacuum-orthogonal subspace, a
+vacuum-orthogonal `x` satisfies `Tendsto (fun n => ‖(D.Tq ^ n) x‖) atTop (nhds 0)`. It is
+`Mixing.gap_of_maximal_correlation` with its geometric hypothesis supplied by `rp_sub_geometric` and
+nonnegativity of the norms.
 
-NOT A VOLUME STATEMENT. `n` is the Euclidean-time separation. `ρ₁` is the per-step bound at whatever
-volume `D` describes, and nothing here makes it volume-independent; that is §3–§5's intensive input.
-The equality `ρ'(n) = ρ'(1)^n` asserted in `MassGap.lean`'s `CellSpectrum` import line is neither
-proved nor needed — the inequality above is what every consumer uses. -/
+Scope: `n` counts applications of `Tq`. There is no volume index in the statement, and `ρ₁` is the
+per-step bound for the given `D`; nothing here relates it to any other `D`.
+
+DERIVED: `0` occurs four times — the lower bound on `ρ₁`, the inner-product value in `hρ` and in
+`hx`, and the limit point `nhds 0`; `1` is the upper bound on `ρ₁`, the contraction threshold that
+makes the powers vanish. -/
 theorem rp_gap_of_one_cut (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1)
     (hρ : ∀ y : GNS D.toReflForm, inner ℝ D.vacGNS y = (0 : ℝ) → ‖D.Tq y‖ ≤ ρ₁ * ‖y‖)
     {x : GNS D.toReflForm} (hx : inner ℝ D.vacGNS x = (0 : ℝ)) :
@@ -402,7 +422,7 @@ theorem rp_gap_of_one_cut (D : TransferData A) {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁
 /-! ## Axiom footprints
 
 Foundational-only is exactly `{propext, Classical.choice, Quot.sound}`. Every declaration above is
-printed; nothing in this file introduces an axiom. -/
+printed below. -/
 
 #print axioms exists_pos_and_iff
 #print axioms forall_nat_const_iff

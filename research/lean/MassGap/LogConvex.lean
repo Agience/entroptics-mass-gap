@@ -9,16 +9,14 @@ import MassGap.Transfer
     ρ(e₁ + e₂)²  ≤  ρ(2e₁) · ρ(2e₂)
 
 for the connected plaquette correlation `ρ = corrClay`, at every even lattice extent and every real
-coupling. The first ratio inequality in this tree that carries no coupling and no constant: the `2`
-is the exponent of a square and the `1` that multiplies the right-hand side is not written because it
-is one.
+coupling. The `2` is the exponent of a square, and no constant multiplies the right-hand side.
 
 ## Where it comes from
 
-Reflection positivity is a statement about a BILINEAR form, and the tree had only its diagonal.
-`ActionSplit.pairing_nonneg_of_local` is already the general statement — it is nonnegativity of
-`∫ W·O·(O∘Θ)` for ANY bounded measurable `O` reading one half-space plus the plane — so the diagonal
-holds on a whole vector space of observables, and Cauchy–Schwarz on that space is the off-diagonal.
+Reflection positivity is a statement about a bilinear form. `ActionSplit.pairing_nonneg_of_local` is
+that general statement — nonnegativity of `∫ W·O·(O∘Θ)` for any bounded measurable `O` reading one
+half-space plus the plane — so the diagonal holds on a whole vector space of observables, and
+Cauchy–Schwarz on that space is the off-diagonal.
 `Transfer.ReflForm.cauchy_schwarz` is the abstract half of that and needs only symmetry, bilinearity
 and diagonal nonnegativity; `localObs` is the space and `wilsonReflForm` the instance.
 
@@ -31,19 +29,19 @@ at level `s` below the plane is carried by the reflection to level `−s`, so
 * `⟨F_t , F_t ∘ Θ⟩` is the correlation at lag `t + t`,
 * `⟨F_s , F_t ∘ Θ⟩` is the correlation at lag `s + t`,
 
-all three from the SAME reflection. Cauchy–Schwarz reads the last against the first two and there is
-nowhere for a constant to enter. The identification of a pairing with a correlation based at the
-ORIGIN is `EW_plaqE_pair_shift`, which is translation invariance obtained from the reflection itself
-— `⟨φ_P φ_Q⟩ = ⟨φ_0 φ_{P−Q}⟩`, one application of `Reflect.expect_reflect_invariant` at constant `P`.
+all three from the same reflection, and all three carrying the same partition function, so no
+constant enters. The identification of a pairing with a correlation based at the origin is
+`EW_plaqE_pair_shift`, which is translation invariance obtained from the reflection itself —
+`⟨φ_P φ_Q⟩ = ⟨φ_0 φ_{P−Q}⟩`, one application of `Reflect.expect_reflect_invariant` at constant `P`.
 
-## What this needs and what it does NOT need
+## Scope
 
-It needs the extent even (`n = 2m`) and the two levels strictly below the plane (`s.val < m`,
-`t.val < m`). It does NOT need `0 ≤ β`: the whole argument runs on `ActionSplit`'s even-lag weld,
-which is a conditional square against a positive Boltzmann weight and never looks at the sign of the
-coupling. It does NOT need the odd-lag link reflection either, though the lag `s + t` on the left may
-be odd — that lag arises as an OFF-DIAGONAL pairing under an even reflection, not as a diagonal one,
-so no axis link is inverted and no dagger has to be reconciled.
+The extent must be even (`n = 2m`) and both levels strictly below the plane (`s.val < m`,
+`t.val < m`). There is no hypothesis `0 ≤ β`: the argument runs on `ActionSplit`'s even-lag weld,
+which is a conditional square against a positive Boltzmann weight and does not read the sign of the
+coupling. The odd-lag link reflection is not used either, though the lag `s + t` on the left may be
+odd — that lag arises as an off-diagonal pairing under an even reflection, not as a diagonal one, so
+no axis link is inverted and no dagger has to be reconciled.
 
 The cross lag `s + t` and the diagonal lags `s + s`, `t + t` are all below `n` when `s.val, t.val < m`,
 so the `Fin n` sums here are the arithmetic sums and nothing wraps.
@@ -59,20 +57,27 @@ open MassGap MassGap.Reflect MassGap.WilsonHypercubic MassGap.ReflectionPositivi
 open MassGap.CompactGauge MassGap.WilsonReal MassGap.WilsonAction
 open MassGap.ActionSplit MassGap.ReflectPositive MassGap.WilsonBridge
 
-/-! ## Part 1 — the three-block factorisation with TWO observables
+/-! ## Part 1 — the three-block factorisation with two observables
 
 `ActionSplit.integrand_eq_paired` collapses the two half-space observables to one at its last line.
-Nothing in its proof needs them equal: the mirror identity `actPlus ∘ Θ = actMinus` is a statement
-about the ACTION, not about the observable. Rerun with two.
+The mirror identity `actPlus ∘ Θ = actMinus` is a statement about the action, not about the
+observable, so the same factorisation holds with the two observables kept apart.
 -/
 
 section Factor
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **THE FACTORISATION, WITH TWO OBSERVABLES.** `ActionSplit.integrand_eq_paired` with the two
-plaquettes kept apart. The shared plane weight `wPlane` still sits outside, which is the whole point
-of the split; what changes is only that the left factor reads `p` and the right factor reads `q`. -/
+/-- **The three-block factorisation, with two observables.** The centred density of the plaquette `p`
+read on `U`, times the centred density of `q` read on the reflected configuration, times the Boltzmann
+weight, equals the plane weight `wPlane` times `obsPlus` at `p` times `obsPlus` at `q` on the
+reflected configuration. This is `ActionSplit.integrand_eq_paired` with the two plaquettes kept
+apart: the shared plane weight sits outside the product, and only the left and right factors differ.
+
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m` and the `0` in
+`0 < m`. The first excludes the empty gauge group; the second says the extent is even, which is what
+lets a reflection plane cut it into two halves, and the third says a half is nonempty. All three are
+`ActionSplit.action_eq_split`'s own hypotheses, carried. -/
 theorem integrand_eq_paired_pair (τ : Fin d) (a : Fin n) (m : ℕ) (hN : N ≠ 0)
     (hm : n = 2 * m) (hm0 : 0 < m) (p q : Plaq d n) (aC β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
@@ -96,26 +101,25 @@ end Factor
 
 /-! ## Part 2 — the vector space the form lives on
 
-`pairing_nonneg_of_local` is quantified over observables, so its hypotheses cut out a SET of
+`pairing_nonneg_of_local` is quantified over observables, so its hypotheses cut out a set of
 observables, and that set is closed under addition and scaling: measurability, a bound and reading a
-fixed pair of blocks all survive both. So it is a submodule of the functions on configurations, and
-that is the `A` a `Transfer.ReflForm` wants.
+fixed pair of blocks all survive both. So it is a submodule of the functions on configurations, which
+is the carrier type a `Transfer.ReflForm` takes.
 -/
 
 section Space
 
 variable {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
 
-/-- **Observables reading `S ∪ R`**: bounded, measurable, and determined by the configuration on
-`S ∪ R` alone. Exactly the three hypotheses `ActionSplit.pairing_nonneg_of_local` places on its
-observable, collected so that they can be carried as membership in a module rather than as three
-side conditions per call.
+/-- **Observables reading `S ∪ R`**: the submodule of real functions on `ι → Ω` that are measurable,
+bounded by some constant, and determined by the configuration on `S ∪ R` alone. These are the three
+hypotheses `ActionSplit.pairing_nonneg_of_local` places on its observable, collected so that they can
+be carried as membership in a module rather than as three side conditions per call.
 
-DERIVED: the only numeral is the `0` in `zero_mem'`, and it is the bound exhibited for the ZERO
-function — `|0| ≤ 0`, forced by the element being tested and not a level anything is compared
-against. No bound is named anywhere else: `C` is existentially quantified in the carrier, and
-`add_mem'` and `smul_mem'` carry it forward as `CF + CG` and `|r| · CF`, both read off the operation
-rather than chosen. The three clauses are `ActionSplit.pairing_nonneg_of_local`'s own, restated. -/
+DERIVED: the carrier carries no numeral — the bound `C` is existentially quantified. The `0` in
+`zero_mem'` is the bound exhibited for the zero function, `|0| ≤ 0`, forced by the element being
+tested; `add_mem'` and `smul_mem'` carry the bound forward as `CF + CG` and `|r| · CF`, both read off
+the operation rather than chosen. -/
 def localObs (S R : Finset ι) : Submodule ℝ ((ι → Ω) → ℝ) where
   carrier := {F | Measurable F ∧ (∃ C : ℝ, ∀ U, |F U| ≤ C)
       ∧ ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → F U = F V}
@@ -157,20 +161,20 @@ omit [Fintype ι] in
 theorem localObs_local {S R : Finset ι} {F : (ι → Ω) → ℝ} (hF : F ∈ localObs S R) :
     ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → (∀ i ∈ R, U i = V i) → F U = F V := hF.2.2
 
-/-- **⭐ THE TORUS CARRIER IS CLOSED UNDER MULTIPLICATION.**
+/-- **`localObs` is closed under pointwise multiplication.** If `F` and `G` are both measurable,
+bounded and determined by the configuration on `S ∪ R`, so is `F * G`. `localObs` is a `Submodule`,
+so it carries additive and scalar closure only; this supplies the product, which is what a
+block-by-block estimate needs.
 
-`localObs` is a `Submodule`, so it carried only additive and scalar closure — and a chessboard
-estimate bounds a PRODUCT over blocks, which was therefore not an element of the carrier the torus
-reflection form (`wilsonReflForm`, whose positivity is `pairing_nonneg` at EVERY direction and
-EVERY plane) is built on.
+Locality here is stated at one fixed pair `(S, R)`, so two observables local on that pair have a
+product local on that same pair and no union of supports enters. Compare
+`HalfSpaceAlgebra.halfSpaceAlg_mul_mem`, the infinite-lattice statement.
 
-Simpler than the infinite-lattice case (`HalfSpaceAlgebra.halfSpaceAlg_mul_mem`): locality here is
-stated at ONE fixed pair `(S, R)`, so two observables local on the same pair have a product local on
-that same pair — no union of supports enters.
+The bound exhibited in the proof is `|CF| · |CG|` rather than `CF · CG`, because nothing here makes
+the configuration space nonempty and so neither `C` can be shown nonnegative; taking absolute values
+needs no inhabitant.
 
-DERIVED: the bound exhibited is `|CF| · |CG|` rather than `CF · CG`, because nothing here makes the
-configuration space nonempty and so neither `C` can be shown nonnegative — taking absolute values
-costs nothing and needs no inhabitant. The `0`s are the nonnegativity of an absolute value. -/
+DERIVED: no numeral. -/
 theorem localObs_mul_mem {S R : Finset ι} {F G : (ι → Ω) → ℝ}
     (hF : F ∈ localObs S R) (hG : G ∈ localObs S R) : F * G ∈ localObs S R := by
   obtain ⟨hFm, ⟨CF, hFb⟩, hFl⟩ := hF
@@ -192,40 +196,57 @@ section Form
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **The pairing.** The plane weight outside, one observable, the other composed with the
-reflection. This is `ActionSplit.wilson_pairing_nonneg_even`'s integral with the two slots kept
-apart, and `Transfer.reflForm`'s shape with the Gibbs weight split at the plane. -/
+/-- **The reflection pairing of two observables.** The integral of the plane weight `wPlane` times
+`F` times `G` composed with the reflection at constant `a + a`, against the product Haar measure on
+configurations. This is `ActionSplit.wilson_pairing_nonneg_even`'s integral with the two slots kept
+apart, and `Transfer.reflForm`'s shape with the Gibbs weight split at the plane. No integrability or
+locality hypothesis is imposed here; those are hypotheses of the theorems below.
+
+DERIVED: no numeral. -/
 noncomputable def pairing (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ)
     (F G : (Link d n → MassGap.SUN.SU N) → ℝ) : ℝ :=
   ∫ U, wPlane τ a m β U * F U * G (reflConf τ (a + a) U)
     ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N)))
 
-/-- The plane weight is measurable. -/
+/-- The plane weight is measurable, as a function of the configuration.
+
+DERIVED: no numeral. -/
 theorem measurable_wPlane (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ) :
     Measurable (wPlane (N := N) τ a m β) := by
   unfold wPlane actZero
   exact Real.measurable_exp.comp ((measurable_actSum _).const_mul _)
 
-/-- The plane weight is nonnegative — it is an exponential. -/
+/-- The plane weight is nonnegative at every configuration, because it is an exponential.
+
+DERIVED: the `0` is the floor `Real.exp` cannot go below; it is not a bound anyone chose. -/
 theorem wPlane_nonneg (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) : 0 ≤ wPlane τ a m β U := le_of_lt (Real.exp_pos _)
 
-/-- The plane weight is bounded, by the same exponential bound `ActionSplit` uses.
+/-- The plane weight is bounded in absolute value by `exp (|β| · 2 · |plqZero|)`, uniformly in the
+configuration — the same exponential bound `ActionSplit.abs_exp_actSum_le` supplies. Requires
+`N ≠ 0`.
 
-DERIVED: the `2` is the range of the Wilson density, and the cardinality is the plane's own
-plaquette count. Nothing is chosen. -/
+DERIVED: the `0` in `N ≠ 0` excludes the empty gauge group. The `2` is the range of the Wilson
+plaquette density on `SU(N)`, not a chosen bound, and the cardinality is the plane block's own
+plaquette count. -/
 theorem wPlane_abs_le (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
     |wPlane τ a m β U| ≤ Real.exp (|β| * (2 * ((plqZero (d := d) (n := n) τ a m).card : ℝ))) :=
   abs_exp_actSum_le hN β _ U
 
-/-- The reflection is measurable, as a map of configurations. -/
+/-- The reflection at constant `c` along axis `τ` is measurable, as a map of configurations. It comes
+from `reflConf_measurePreserving`, which gives measure preservation and measurability together.
+
+DERIVED: no numeral. -/
 theorem measurable_reflConf (τ : Fin d) (c : Fin n) :
     Measurable (reflConf (G := MassGap.SUN.SU N) τ c) :=
   (reflConf_measurePreserving τ c).measurable
 
-/-- The integrand of the pairing is integrable: bounded and measurable against a probability
-measure. -/
+/-- The integrand of the pairing is integrable when both observables lie in
+`localObs (blkS τ a m) (blkR τ a m)`: it is then bounded and measurable, against a probability
+measure. Requires `N ≠ 0`, which is what `wPlane_abs_le` needs for the weight's bound.
+
+DERIVED: the only numeral in the statement is the `0` in `N ≠ 0`, the excluded gauge rank. -/
 theorem integrable_pairing (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ)
     {F G : (Link d n → MassGap.SUN.SU N) → ℝ}
     (hF : F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -245,7 +266,11 @@ theorem integrable_pairing (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (β
   exact mul_le_mul (mul_le_mul (wPlane_abs_le hN τ a m β U) (hCF U) (abs_nonneg _) hKnn)
     (hCG _) (abs_nonneg _) (mul_nonneg hKnn hCFnn)
 
-/-- **The pairing is additive in its first slot.** -/
+/-- **The pairing is additive in its first slot**, for observables of
+`localObs (blkS τ a m) (blkR τ a m)`. All three observables are required to lie in the module,
+because the proof splits one integral into two and needs each to be integrable. Requires `N ≠ 0`.
+
+DERIVED: the only numeral in the statement is the `0` in `N ≠ 0`, the excluded gauge rank. -/
 theorem pairing_add_left (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ)
     {F₁ F₂ G : (Link d n → MassGap.SUN.SU N) → ℝ}
     (hF₁ : F₁ ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -263,7 +288,11 @@ theorem pairing_add_left (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (β :
   rw [← integral_add i1 i2]
   exact integral_congr_ae (Filter.Eventually.of_forall fun U => by ring)
 
-/-- **The pairing is homogeneous in its first slot.** -/
+/-- **The pairing is homogeneous in its first slot**: scaling `F` by a real `r` scales the pairing by
+`r`. Unlike `pairing_add_left`, this needs no membership and no integrability — the scalar comes out
+of the integral by `integral_const_mul`, which holds whether or not the integrand is integrable.
+
+DERIVED: no numeral. -/
 theorem pairing_smul_left (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ) (r : ℝ)
     (F G : (Link d n → MassGap.SUN.SU N) → ℝ) :
     pairing τ a m β (r • F) G = r * pairing τ a m β F G := by
@@ -274,9 +303,13 @@ theorem pairing_smul_left (τ : Fin d) (a : Fin n) (m : ℕ) (β : ℝ) (r : ℝ
         ∂(cvol (Link d n) (probHaar (MassGap.SUN.SU N))) from (integral_const_mul _ _).symm]
   exact integral_congr_ae (Filter.Eventually.of_forall fun U => by ring)
 
-/-- **The plane weight is reflection invariant.** It reads only the plane block, the reflection fixes
-every link of that block, and no link of it runs along the axis — so the dagger never fires. This is
-what makes the pairing symmetric rather than merely bilinear. -/
+/-- **The plane weight is unchanged by the reflection**, at even extent `n = 2 * m`. It reads only
+the plane block `blkR`; the reflection fixes every link of that block (`blkR_fixed`), and no link of
+it runs along the axis (`blkR_axis_free`), so the dagger branch never fires. This is what makes the
+pairing symmetric rather than merely bilinear.
+
+DERIVED: the `2` in `n = 2 * m` says the extent is even, which is what `blkR_fixed` requires of the
+plane block. -/
 theorem wPlane_reflConf (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) :
     wPlane τ a m β (reflConf τ (a + a) U) = wPlane τ a m β U := by
@@ -284,9 +317,12 @@ theorem wPlane_reflConf (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (β 
   show (if l.1 = τ then (U (reflLink τ (a + a) l))⁻¹ else U (reflLink τ (a + a) l)) = U l
   rw [if_neg (blkR_axis_free τ a m hl), blkR_fixed τ a m hm hl]
 
-/-- **THE PAIRING IS SYMMETRIC.** The reflection preserves the product Haar measure and is an
-involution, and the plane weight does not move under it, so the change of variables `U ↦ ΘU` carries
-the reflection from one slot to the other. -/
+/-- **The pairing is symmetric** in its two observables, at even extent `n = 2 * m`, for `F` and `G`
+in `localObs (blkS τ a m) (blkR τ a m)`. The reflection preserves the product Haar measure and is an
+involution, and the plane weight does not move under it (`wPlane_reflConf`), so the change of
+variables `U ↦ ΘU` carries the reflection from one slot to the other.
+
+DERIVED: the `2` in `n = 2 * m` is the even extent `wPlane_reflConf` requires. -/
 theorem pairing_symm (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (β : ℝ)
     {F G : (Link d n → MassGap.SUN.SU N) → ℝ}
     (hF : F ∈ localObs (blkS τ a m) (blkR τ a m))
@@ -308,9 +344,15 @@ theorem pairing_symm (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (β : �
   rw [wPlane_reflConf τ a m hm β U, reflConf_involutive τ (a + a) U]
   ring
 
-/-- **THE PAIRING IS NONNEGATIVE ON THE DIAGONAL** — reflection positivity, for every observable of
-the module rather than for one plaquette. This is `ActionSplit.pairing_nonneg_of_local` read at the
-Wilson lattice's own blocks; `reflConf` is the twist by `ActionSplit.reflConf_eq_twist`. -/
+/-- **The pairing is nonnegative on the diagonal** — reflection positivity, for every observable of
+the module rather than for one plaquette. Requires `N ≠ 0`, even extent `n = 2 * m` and `0 < m`.
+This is `ActionSplit.pairing_nonneg_of_local` read at the Wilson lattice's own blocks `blkS`, `blkT`,
+`blkR`; `reflConf` is the twist by `ActionSplit.reflConf_eq_twist`.
+
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m`, the `0` in `0 < m`
+and the `0` the pairing is bounded below by. The first excludes the empty gauge group, the next two
+are the reflection geometry's even extent and nonempty half, and the last is the sign the
+conclusion asserts. -/
 theorem pairing_nonneg (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {F : (Link d n → MassGap.SUN.SU N) → ℝ}
@@ -337,14 +379,15 @@ theorem pairing_nonneg (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
   exact mul_le_mul (mul_le_mul (wPlane_abs_le hN τ a m β U) (hCF U) (abs_nonneg _) hKnn)
     (hCF _) (abs_nonneg _) (mul_nonneg hKnn hCFnn)
 
-/-- **THE REFLECTION FORM OF THE WILSON LATTICE, BUILT.**
+/-- **The Wilson lattice's reflection form**, on the half-space observables
+`localObs (blkS τ a m) (blkR τ a m)` of an even-extent lattice. Every field of
+`Transfer.ReflForm` is supplied: `form_symm` from `pairing_symm`, `form_add_left` and
+`form_smul_left` from the integral, and `form_nonneg` — which `Transfer.ReflForm` carries as a field
+rather than a hypothesis — from `pairing_nonneg`. Requires `N ≠ 0`, `n = 2 * m` and `0 < m`.
 
-`Transfer.ReflForm` carries positivity as a FIELD precisely so that it cannot be assumed silently,
-and `Transfer` builds none. This is the first one built, on the half-space observables of an
-even-extent lattice, with every field proved: symmetry from the measure-preserving involution,
-bilinearity from the integral, and `form_nonneg` from the three-block weld.
-
-DERIVED: no numeral. `τ`, `a`, `m` and `β` are the caller's; `hm` and `hm0` are the extent's. -/
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m` and the `0` in
+`0 < m`: the excluded gauge rank, and the even extent and nonempty half the reflection geometry
+needs. `τ`, `a`, `m` and `β` are the caller's. -/
 noncomputable def wilsonReflForm (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ) :
     MassGap.Transfer.ReflForm
@@ -368,12 +411,17 @@ section Members
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **The half-space plaquette observable is a member of the module.** Its three hypotheses are
-`ActionSplit`'s own: measurability of the density and the half action, the range of the Wilson
-density, and `obsPlus_local`.
+/-- **The half-space plaquette observable lies in the module.** `obsPlus τ a m q aC β` — the centred
+Wilson density of the plaquette `q` times the half-space Boltzmann factor — is measurable, bounded
+and determined by `blkS ∪ blkR`, so it is an element of `localObs (blkS τ a m) (blkR τ a m)`. The
+three facts are `ActionSplit`'s: measurability of the density and of the half action, the range of
+the Wilson density, and `obsPlus_local`. The plaquette must not have both its directions equal to the
+reflection axis (`hqdeg`), and its level must be strictly below the plane (`hqlv`).
 
-DERIVED: the `2` is the range of the Wilson density; the cardinality is the half-space's own
-plaquette count. -/
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m` and the `0` in
+`0 < m` — the excluded gauge rank and the reflection geometry's even extent and nonempty half. The
+bound exhibited in the proof is `(2 + |aC|) · exp (|β| · 2 · |plqPlus|)`, where `2` is the range of
+the Wilson plaquette density and the cardinality is the half-space's own plaquette count. -/
 theorem obsPlus_mem (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m)
     (q : Plaq d n) (hqdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) (hqlv : lv a (q.2 τ) < m) (aC β : ℝ) :
     obsPlus (N := N) τ a m q aC β ∈ localObs (blkS τ a m) (blkR τ a m) := by
@@ -397,8 +445,14 @@ theorem obsPlus_mem (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 
     rw [abs_le]
     constructor <;> linarith
 
-/-- **The pairing of two half-space plaquette observables IS the unnormalised centred correlation.**
-This is Part 1 integrated. -/
+/-- **The pairing of two half-space plaquette observables is the unnormalised centred correlation.**
+`pairing` at `obsPlus p` and `obsPlus q` equals `(sysWilson N d n).corrNum` of the product of the two
+centred plaquette energies, the second read on the reflected configuration. This is
+`integrand_eq_paired_pair` integrated. Requires `N ≠ 0`, `n = 2 * m` and `0 < m`.
+
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m` and the `0` in
+`0 < m`, all carried from `integrand_eq_paired_pair`. `corrNum` is the unnormalised correlation, so
+no partition function appears. -/
 theorem pairing_obsPlus (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m)
     (p q : Plaq d n) (aC β : ℝ) :
     pairing τ a m β (obsPlus (N := N) τ a m p aC β) (obsPlus τ a m q aC β)
@@ -411,11 +465,14 @@ theorem pairing_obsPlus (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ) (hm : 
   exact integral_congr_ae (Filter.Eventually.of_forall
     (fun U => integrand_eq_paired_pair τ a m hN hm hm0 p q aC β U))
 
-/-- **CAUCHY–SCHWARZ ON THE GIBBS STATE**, for two plaquette observables below one plane, at one
-reflection. The partition function cancels because it is the SAME `Z` in all three places, which is
-why the inequality carries no constant.
+/-- **Cauchy–Schwarz on the Gibbs state**, for two plaquette observables below one plane, at one
+reflection: the square of the mixed centred reflected expectation is at most the product of the two
+diagonal ones. Requires `N ≠ 0`, `n = 2 * m` and `0 < m`, and both plaquettes non-degenerate along
+the axis and strictly below the plane. The partition function cancels because the same `Z` appears in
+all three places, so the inequality carries no constant.
 
-DERIVED: the `2` is the exponent of a square. -/
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m`, the `0` in `0 < m`
+and the exponent `2` of the square Cauchy–Schwarz produces. None is a level. -/
 theorem EW_refl_cauchy_schwarz (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (p q : Plaq d n)
     (hpdeg : ¬ (p.1.1 = τ ∧ p.1.2 = τ)) (hplv : lv a (p.2 τ) < m)
@@ -460,16 +517,20 @@ end Members
 /-! ## Part 5 — the pairings ARE the correlation, at three lags
 
 The pairing of the plaquette at level `P` with the reflected plaquette at level `Q` is the two-point
-function at separation `P − (a+a) + Q`. Turning that into `corrHyper`, which is based at the ORIGIN,
-needs translation invariance — and a translation is a product of two reflections, so the tree already
-has it: one application of `Reflect.expect_reflect_invariant` moves BOTH plaquettes at once.
+function at separation `P − (a+a) + Q`. Turning that into `corrHyper`, which is based at the origin,
+needs translation invariance; a translation is a product of two reflections, so one application of
+`Reflect.expect_reflect_invariant` moves both plaquettes at once.
 -/
 
 section Identify
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- The site at lag zero is the origin. -/
+/-- The site at lag zero along axis `τ` is the origin of `Site d n`.
+
+DERIVED: the `0` on the left is the lag and the `0` on the right is the coordinate value at every
+axis; both are `Fin n`'s zero, and the identity is what makes the two spellings of the origin
+interchangeable. -/
 theorem siteAtHyper_zero (τ : Fin d) :
     siteAtHyper (d := d) (n := n) τ 0 = (fun _ => 0 : Site d n) := by
   funext j
@@ -477,14 +538,19 @@ theorem siteAtHyper_zero (τ : Fin d) :
   · subst h; simp [siteAtHyper]
   · simp [siteAtHyper, Function.update_of_ne h]
 
-/-- The lag coordinate of the site at lag `P` is `P`. -/
+/-- The `τ`-coordinate of the site at lag `P` along `τ` is `P`. A simp lemma.
+
+DERIVED: no numeral. -/
 @[simp] theorem siteAtHyper_axis (τ : Fin d) (P : Fin n) :
     siteAtHyper (d := d) (n := n) τ P τ = P := by
   simp [siteAtHyper]
 
-/-- **The reflection carries the plaquette at lag `P` to the plaquette at lag `c − P`.** The plane
-spanned by two directions transverse to the axis is untouched; only the base site moves, by
-`reflSite`. This is `ReflectPositive.reflPlaq_origin` for a base that need not be the origin. -/
+/-- **The reflection carries the plaquette at lag `P` to the plaquette at lag `c − P`.** Both
+directions `μ`, `ν` spanning the plaquette plane must differ from the reflection axis `τ`; the plane
+is then untouched and only the base site moves, by `reflSite`. This is
+`ReflectPositive.reflPlaq_origin` for a base that need not be the origin.
+
+DERIVED: no numeral. -/
 theorem reflPlaq_siteAtHyper {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (c P : Fin n) :
     reflPlaq τ c (((μ, ν), siteAtHyper τ P) : Plaq d n)
       = ((μ, ν), siteAtHyper τ (c - P)) := by
@@ -495,11 +561,16 @@ theorem reflPlaq_siteAtHyper {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ 
     · simp [reflSite, siteAtHyper, Function.update_of_ne hj]
   simp only [reflPlaq, hμ, hν, if_false, h]
 
-/-- **TRANSLATION INVARIANCE, FROM THE REFLECTION.** `⟨φ_P · φ_Q⟩ = ⟨φ_0 · φ_{P−Q}⟩`.
+/-- **Translation invariance of the two-point function, from the reflection.**
+`⟨φ_P · φ_Q⟩ = ⟨φ_0 · φ_{P−Q}⟩`, for plaquettes whose plane directions `μ`, `ν` both differ from the
+lag axis `τ`, at every real coupling and with no hypothesis on the extent.
 
 The reflection at constant `P` sends level `x` to `P − x`, so it sends the pair `(0, P − Q)` to the
-pair `(P, Q)` — both plaquettes move under the SAME reflection, which is why one application of
-`Reflect.expect_reflect_invariant` suffices and no separate translation symmetry is needed. -/
+pair `(P, Q)` — both plaquettes move under the same reflection, which is why one application of
+`Reflect.expect_reflect_invariant` suffices and no separate translation symmetry is needed.
+
+DERIVED: the `0` is the base lag the right-hand side is written at, which is `Fin n`'s zero and the
+lag `corrHyper` is based at. -/
 theorem EW_plaqE_pair_shift {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ) (P Q : Fin n) :
     EW Nc β (fun U => plaqE Nc (((μ, ν), siteAtHyper τ P) : Plaq d n) U
         * plaqE Nc (((μ, ν), siteAtHyper τ Q) : Plaq d n) U)
@@ -523,11 +594,18 @@ theorem EW_plaqE_pair_shift {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ �
     reflPlaq_siteAtHyper hμ hν P (0 : Fin n), reflPlaq_siteAtHyper hμ hν P (P - Q),
     sub_zero, sub_sub_cancel]
 
-/-- **THE CENTRED REFLECTED PAIRING IS THE CONNECTED CORRELATION, AT LAG `P − c + Q`.**
+/-- **The centred reflected pairing is the connected correlation at lag `P − c + Q`.** The
+expectation of the plaquette at lag `P`, centred at the one-point function at the origin, times the
+plaquette at lag `Q` read on the configuration reflected at constant `c` and centred the same way,
+equals `corrHyper` at lag `P − c + Q`. Requires `Nc ≠ 0` and both plane directions different from the
+lag axis; there is no hypothesis on the extent or the coupling.
 
-Centring at the common one-point function — which is the same at every lag by
-`ReflectPositive.EW_plaqE_lag` — turns the pairing into `corrHyper`, and translation invariance moves
-the base back to the origin. -/
+Centring at the one-point function at the origin is legitimate because that function is the same at
+every lag (`ReflectPositive.EW_plaqE_lag`), and `EW_plaqE_pair_shift` moves the base back to the
+origin.
+
+DERIVED: the statement's numerals are the `0` in `Nc ≠ 0` and the `0`s of the origin site
+`fun _ => 0` that the centring one-point function is read at. -/
 theorem EW_centred_refl_eq_corrHyper (hNc : Nc ≠ 0) {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ)
     (β : ℝ) (c P Q : Fin n) :
     EW Nc β (fun U =>
@@ -571,13 +649,19 @@ section Convex
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **LOG-CONVEXITY OF THE LAG CORRELATION IN THE LAG, WITH CONSTANT ONE**, at a general plane.
+/-- **Log-convexity of the lag correlation, at a general plane.**
 
     ρ(P − c + Q)²  ≤  ρ(P − c + P) · ρ(Q − c + Q),     c = a + a.
 
-Both plaquettes sit strictly below the plane at `a`; every other hypothesis is the extent's. No
-constant is introduced and none could be: the three pairings share one partition function and one
-reflection. -/
+Holds for `ρ = corrHyper` on an even-extent lattice `n = 2 * m` with `0 < m`, gauge rank `N ≠ 0`,
+plane directions `μ`, `ν` both different from the lag axis `τ`, every real coupling, and both levels
+strictly below the plane at `a` (`lv a P < m`, `lv a Q < m`). No constant multiplies the right-hand
+side: the three pairings share one partition function and one reflection.
+
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m`, the `0` in `0 < m`
+and the exponent `2`. The exponent is the square Cauchy–Schwarz produces; the others are the gauge
+rank and the reflection geometry's even extent and nonempty half. `m` is half the extent and is a
+variable, not a level. -/
 theorem corrHyper_log_convex_at_plane (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) {μ ν : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ)
     {P Q : Fin n} (hP : lv a P < m) (hQ : lv a Q < m) :
@@ -600,17 +684,19 @@ theorem corrHyper_log_convex_at_plane (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m
     EW_centred_refl_eq_corrHyper hN hμ hν β (a + a) P P,
     EW_centred_refl_eq_corrHyper hN hμ hν β (a + a) Q Q] at h
 
-/-- **LOG-CONVEXITY, at the plane through the origin** — the statement in the form the lag carries
-it:
+/-- **Log-convexity at the plane through the origin** — the statement in the form the lag carries it:
 
     ρ(e₁ + e₂)²  ≤  ρ(e₁ + e₁) · ρ(e₂ + e₂)
 
-for every pair of lags strictly below half the extent. Taking the plane at the origin is what makes
-the reflection constant zero and the three lags read off directly.
+for every pair of lags strictly below half the extent, at even extent `n = 2 * m` with `0 < m`,
+gauge rank `N ≠ 0`, plane directions `μ`, `ν` different from the lag axis, and every real coupling.
+Taking the plane at the origin makes the reflection constant zero and the three lags read off
+directly. This is `corrHyper_log_convex_at_plane` at `a = 0`.
 
-DERIVED: `m` is half the extent, which is the reflection geometry's own bound — the levels must sit
-strictly between the two fixed planes, which are `m` apart. It is not a threshold chosen to make the
-inequality true. -/
+DERIVED: the statement's numerals are the `0` in `N ≠ 0`, the `2` in `n = 2 * m`, the `0` in `0 < m`
+and the exponent `2` of the square. The bound `m` on the lags is the reflection geometry's own — the
+levels must sit strictly between the two fixed planes, which are `m` apart — and is a variable, not a
+threshold chosen to make the inequality true. -/
 theorem corrHyper_log_convex (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) {μ ν : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ)
     {e₁ e₂ : Fin n} (h1 : e₁.val < m) (h2 : e₂.val < m) :
@@ -625,16 +711,19 @@ theorem corrHyper_log_convex (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
     (P := e₁) (Q := e₂) (by rw [hlv]; exact h1) (by rw [hlv]; exact h2)
   rwa [hshift e₁ e₂, hshift e₁ e₁, hshift e₂ e₂] at h
 
-/-- **LOG-CONVEXITY OF THE CLAY CORRELATION.** `SU(3)`, four dimensions, the lattice
-`WilsonGauge`'s Osterwalder–Schrader measure is built on:
+/-- **Log-convexity of the Clay correlation.** `corrClay` is `corrHyper` at `SU(3)` in four
+dimensions, on the lattice `WilsonGauge`'s Osterwalder–Schrader measure is built on:
 
     corrClay (e₁ + e₂)²  ≤  corrClay (e₁ + e₁) · corrClay (e₂ + e₂)
 
-at every EVEN extent and every REAL coupling. The coupling's sign is not a hypothesis: the even-lag
-weld is a conditional square against a strictly positive Boltzmann weight and never reads it.
+at even extent `Nap + 1 = 2 * m` with `0 < m`, for lags `e₁`, `e₂` strictly below `m`, and at every
+real coupling. The sign of the coupling is not a hypothesis: the even-lag weld is a conditional
+square against a strictly positive Boltzmann weight and does not read it.
 
-DERIVED: `3` is the gauge group's rank and `4` the dimension, both `WilsonBridge.corrClay`'s own; `m`
-is half the extent, the reflection geometry's own bound. -/
+DERIVED: the statement's numerals are the `1` in `Nap + 1`, which is the lag arity at aperture `Nap`
+and is the extent, the `2` in `2 * m`, which says that extent is even, the `0` in `0 < m`, and the
+exponent `2` of the square. The `3` and `4` that fix `SU(3)` and four dimensions appear in the proof,
+not in the statement — they are `WilsonBridge.corrClay`'s own. -/
 theorem corrClay_log_convex (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {e₁ e₂ : Fin (Nap + 1)} (h1 : e₁.val < m) (h2 : e₂.val < m) :
     MassGap.WilsonBridge.corrClay (Nap + 1) β (e₁ + e₂) ^ 2
@@ -643,9 +732,14 @@ theorem corrClay_log_convex (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (
   corrHyper_log_convex (N := 3) (d := 4) (by norm_num) (2 : Fin 4) m hm hm0
     (by decide) (by decide) β h1 h2
 
-/-- **NON-VACUITY — the smallest extent that meets the bound, with a lag pair that is not the
-diagonal.** At extent four the half is two, so lags `0` and `1` are both admissible and the
-inequality reads `ρ(1)² ≤ ρ(0)·ρ(2)`: a genuine three-lag statement, not an identity. -/
+/-- **Non-vacuity: the smallest extent that meets the bound, with a lag pair that is not the
+diagonal.** At extent four the half is two, so lags `0` and `1` are both admissible, and the
+inequality reads `ρ(1)² ≤ ρ(0)·ρ(2)` — three distinct lags, not an identity.
+
+DERIVED: `3 + 1` is the extent four, written as `Nap + 1` at `Nap = 3` so that it matches
+`corrClay_log_convex`'s index type; the half `m = 2` is then forced by `Nap + 1 = 2 * m`. The lags
+`0 + 1`, `0 + 0` and `1 + 1` are the sums `corrClay_log_convex` forms from `e₁ = 0` and `e₂ = 1`,
+which are the only two lags strictly below `m = 2`. The exponent `2` is the square. -/
 theorem corrClay_log_convex_at_extent_four (β : ℝ) :
     MassGap.WilsonBridge.corrClay (3 + 1) β (0 + 1) ^ 2
       ≤ MassGap.WilsonBridge.corrClay (3 + 1) β (0 + 0)
@@ -653,8 +747,12 @@ theorem corrClay_log_convex_at_extent_four (β : ℝ) :
   corrClay_log_convex 3 2 (by norm_num) (by norm_num) β
     (e₁ := (0 : Fin 4)) (e₂ := (1 : Fin 4)) (by decide) (by decide)
 
-/-- **SANITY CASE — equal lags.** With `e₁ = e₂` the statement is `ρ(2e)² ≤ ρ(2e)²`, which is an
-equality. A route that produced anything else at the diagonal would be producing a constant. -/
+/-- **The diagonal case.** With `e₁ = e₂` the statement reads `ρ(e+e)² ≤ ρ(e+e) · ρ(e+e)`, which
+holds with equality. Hypotheses are `corrClay_log_convex`'s: even extent `Nap + 1 = 2 * m`, `0 < m`,
+and the lag strictly below `m`.
+
+DERIVED: the statement's numerals are the `1` in `Nap + 1`, the extent, the `2` in `2 * m` saying it
+is even, the `0` in `0 < m`, and the exponent `2` of the square. -/
 theorem corrClay_log_convex_diagonal (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {e : Fin (Nap + 1)} (h : e.val < m) :
     MassGap.WilsonBridge.corrClay (Nap + 1) β (e + e) ^ 2

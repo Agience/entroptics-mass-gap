@@ -2,18 +2,24 @@ import MassGap.GapOfDecay
 import MassGap.Complete
 
 /-!
-# Yang–Mills: the spectral gap, wired from confinement through the moment-support bridge
+# MassGap.YMGap — a gapped quantum theory for `SU(N)` from the confinement inequality
 
-This instantiates the reduction-core bridge (`GapOfDecay.gapped_of_positive_decay`) for `SU(N)`. The reduction
-takes confinement `μYMAt N β < κ₀YM` as the hypothesis `hconf`, hence the entropy margin `ΔYMAt N β = κ₀YM - μYMAt N β
-> 0`. Feeding the finite-aperture transfer datum — vacuum eigenvalue `1` and a single excited mode at the margin
-`e^{-ΔYMAt N β}`, with reflection-positive weight `1` — through `gapped_of_positive_decay` **derives** the spectral
-support bound and reconstructs a `GappedQuantumTheory` whose mass gap is exactly `ΔYMAt N β`.
+This module instantiates `GapOfDecay.gapped_of_positive_decay` at a two-mode transfer datum and states
+the resulting spectral containment.
 
-Unlike the flagship (which delivers only `C(τ)→0`), this produces the relevant object:
-`spectrum(H) ⊆ {0} ∪ [ΔYMAt N β, ∞)` for the reconstructed Hamiltonian `H = -log T` — the spectral gap DERIVED from
-the decay via `MomentSupport.le_of_positive_weight_decay`, not assumed. Foundational axioms + the reduction's own
-(the read's footprint).
+The input is `hconf : μYMAt N β < κ₀YM`. `gap_pos_iff_confinement_at` turns it into `0 < ΔYMAt N β`,
+where `ΔYMAt N β = κ₀YM - μYMAt N β`. The datum supplied is eigenvalues `![1, exp (-(ΔYMAt N β))]`,
+weights `![0, 1]`, excited set `{1}`, prefactor `M = 1` and floor `ε = exp (-(ΔYMAt N β))`: index `0`
+carries the vacuum eigenvalue `1` and weight `0`, index `1` is a single excited mode sitting exactly at
+the margin. The decay hypothesis is then the equality `∑_{k ∈ {1}} w_k λ_k^τ = (e^{-Δ})^τ`.
+
+The spectral-support bound is not an argument to this module. `gapped_of_positive_decay` obtains it
+from the decay through `MomentSupport.le_of_positive_weight_decay`; what is supplied here is the decay
+and the positivity side conditions.
+
+Scope: `ΔYMAt`, `κ₀YM` and `μYMAt` are defined in `MassGap.Complete`. This module adds no lattice input
+of its own and says nothing about how `hconf` is obtained. The carrier is finite-dimensional,
+`Fin 2 → ℂ`.
 -/
 
 namespace MassGap
@@ -21,10 +27,17 @@ namespace MassGap
 open scoped ComplexOrder
 open MassGap.Reconstruction
 
-/-- **The Yang–Mills gapped quantum theory, from confinement.** For every physical coupling `β ≥ 0`, the entropy
-margin `ΔYMAt N β = κ₀YM - μYMAt N β > 0` reconstructs (through the moment-support bridge) a gapped quantum theory with
-mass gap `ΔYMAt N β`. The finite-aperture transfer datum is `diag(1, e^{-ΔYMAt N β})`; the spectral bound feeding the CFC
-core is DERIVED from the single-mode decay, not hand-set. -/
+/-- The two-mode gapped quantum theory on `Fin 2 → ℂ` built from `hconf : μYMAt N β < κ₀YM`.
+
+`N : ℕ` and `β : ℝ` are arbitrary: no positivity, integrality beyond `ℕ`, or range is imposed on
+either, and `hconf` is the only hypothesis. The transfer datum is `diag(1, e^{-ΔYMAt N β})` with weight
+`0` on the vacuum index and weight `1` on the excited index; `gap_pos_iff_confinement_at` converts
+`hconf` into the positivity of `ΔYMAt N β` that `gapped_of_positive_decay` requires. The gap of the
+resulting structure is `ΔYMAt N β`.
+
+DERIVED: `2` is the carrier dimension `Fin 2` — one vacuum index and one excited index, the smallest
+state space on which the excited/non-excited split of `gapped_of_positive_decay` is inhabited on both
+sides. It is the only numeral in the statement. -/
 noncomputable def ymGapped (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     GappedQuantumTheory (Fin 2 → ℂ) :=
   gapped_of_positive_decay
@@ -59,13 +72,23 @@ noncomputable def ymGapped (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) 
       rw [Finset.sum_singleton]
       simp)
 
-/-- The Yang–Mills mass gap reconstructed from confinement is exactly the entropy margin `ΔYMAt N β = κ₀YM - μYMAt N β`. -/
+/-- The gap field of `ymGapped N β hconf` is `ΔYMAt N β`, by `rfl`: the reconstruction carries the
+decay rate through definitionally rather than recomputing it. -/
 theorem ymGapped_gap (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     (ymGapped N β hconf).gap = ΔYMAt N β := rfl
 
-/-- **The reconstructed Yang–Mills Hamiltonian has a positive spectral gap.** `spectrum(H) ⊆ {0} ∪ [ΔYMAt N β, ∞)`
-with `H` self-adjoint, `H ≥ 0`, and the vacuum at `0` — the spectral-gap form, derived end-to-end from
-confinement through the moment-support bridge (not the weaker `C(τ)→0`, and not an assumed `hsp`). -/
+/-- Four properties of the Hamiltonian `(ymGapped N β hconf).ham`: it is self-adjoint, it is
+non-negative, `0` lies in its `ℝ`-spectrum, and that spectrum is contained in
+`{0} ∪ Set.Ici (ΔYMAt N β)`.
+
+The conjuncts are the `GappedQuantumTheory` fields `selfAdjoint`, `nonneg`, `vacuum` and
+`spectral_gap`, the last rewritten along `ymGapped_gap`. Scope: the spectrum is taken over `ℝ` on the
+finite-dimensional carrier `Fin 2 → ℂ`, and the containment is one-directional — it does not assert
+that any point of `Set.Ici (ΔYMAt N β)` is attained, nor that `ΔYMAt N β` is positive (that comes from
+`hconf`, used to build the structure).
+
+DERIVED: `0` is the vacuum energy. It is the lower bound in `0 ≤ ham`, the spectral point asserted to
+be present, and the isolated point of the containing set. It is the only numeral in the statement. -/
 theorem ym_spectral_gap (N : ℕ) (β : ℝ) (hconf : μYMAt N β < κ₀YM) :
     IsSelfAdjoint (ymGapped N β hconf).ham ∧ 0 ≤ (ymGapped N β hconf).ham ∧
       (0 : ℝ) ∈ spectrum ℝ (ymGapped N β hconf).ham ∧

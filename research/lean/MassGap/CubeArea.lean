@@ -1,34 +1,45 @@
 import MassGap.Floor
 
 /-!
-# The area of a directed cube-path's boundary
+# MassGap.CubeArea — the boundary face-count of a directed cube-path
 
-**WHY THIS FILE EXISTS.** `κ₀ = ¼log3` is the only thing in the development that bounds the mass gap
-from BELOW, and it decomposes into two halves:
+A `Cube` is a point of `Fin 3 → ℕ`, its low corner; a `Face` is a pair `(axis, corner)`; `faces x` is
+the six-element `Finset` of a cube's faces, and `boundaryFaces C` the faces of `C` with exactly one
+owner.
 
-* `log 3` — the branching of a directed cube-path, three choices per step. PROVED, by
-  `Floor.directed_paths_card`.
-* `¼` — the `1/4` of `(n−1)log3/(4n+2) → ¼log3` (`Floor.floor_density_limit`). The `4` is the AREA
-  per step, and it was **assumed**: written as a literal into `VortexCount.floorTerm` and derived
-  nowhere.
+`boundary_card_eq` is the main statement: for `s : Fin k → Fin 3`, the configuration
+`Floor.cubeConfig s` has `(boundaryFaces (cubeConfig s)).card = 4 * k + 6`. The double count behind
+it is
 
-That matters structurally, not cosmetically. Classical pure Yang–Mills carries no dimensionful
-parameter, so a mass can only arise by dimensional transmutation — a PURE NUMBER becoming a scale.
-A fitted constant anywhere in the chain would therefore be a smuggled scale, i.e. assuming the thing
-being proved. `κ₀` being a counting number is the transmutation step, and a counting number with an
-unproved coefficient is not yet one.
+    |∂C| = 6(k+1) − 2·(#shared faces) = 6(k+1) − 2k = 4k + 6.
 
-**WHAT IS PROVED HERE.** The double count behind `4k+6`:
+The inputs:
 
-    |∂C| = 6(k+1) − 2·(#shared faces) = 6(k+1) − 2k = 4k+6
+* `card_faces` — a cube has six faces, two per axis over three axes.
+* `card_cubeConfig` — the path visits `k + 1` distinct cubes, from `cubePos_injOn`, which is
+  `Floor.cubePos_sum_le` reading the coordinate sum as the index.
+* `card_cubes_with_face_le_two` — a face has at most two owners, from `cube_of_face` and
+  `step_injective`.
+* `card_sharedFaces` — the shared faces are exactly the `k` crossed ones, via
+  `sharedFaces_eq_crossFaces`. The forward inclusion runs through `step_rel_of_shares`,
+  `sum_dist_one_of_shares` (the coordinate sum forces sharing to be between consecutive cubes) and
+  `shared_face_eq`; the backward one through `crossFace_shared` and `cubePos_injOn`.
+* `incidence_double_count` and `boundary_card_of_shared` — the `Finset` bookkeeping, with the shared
+  count left as a parameter so the arithmetic is separate from the geometry.
 
-for `C` the `k+1` cubes of a directed path. Its hard input already exists: `Floor.cubePos_sum_le`
-gives the `i`-th cube coordinate-sum exactly `i`, which forces face-adjacency to mean CONSECUTIVE —
-two cubes can share a face only if their positions differ by one unit in one coordinate, and that
-moves the coordinate sum by exactly one.
+`boundaryFaces_cubeConfig_injective` then shows distinct step sequences give distinct boundaries, by
+recovering the configuration from its boundary one coordinate-sum level at a time
+(`mem_of_boundary_eq_aux`, using `not_mem_boundaryFaces_of_both` and
+`mem_of_not_mem_boundaryFaces`). `directed_surfaces_count_and_area` combines it with
+`Floor.directed_paths_card`: there is a `Finset` of `3 ^ k` face-sets, each of cardinality
+`4 * k + 6`.
 
-DERIVED THROUGHOUT: `3` is the spatial dimension the cube-path lives in, `6` is the number of faces
-of a cube (`2` per axis, `3` axes), and `2` is how many cubes a shared face belongs to. None is a
+Scope: everything is `Finset` combinatorics over `Fin 3 → ℕ`. No statement mentions a lattice gauge
+theory, an entropy, a coupling or a gap.
+
+DERIVED THROUGHOUT: `3` is the dimension the cube-path lives in, which is `Fin 3`, the step alphabet
+`Floor.directed_paths_card` counts over. `6` is the number of faces of a cube, `2` per axis over `3`
+axes. `2` is how many cubes a shared face belongs to. `1` is the unit lattice step. None is a
 magnitude; each is the arity of something the definitions already name.
 -/
 
@@ -62,8 +73,12 @@ theorem step_self (a : Fin 3) (x : Cube) : step a x a = x a + 1 := by
 theorem step_other {a b : Fin 3} (h : b ≠ a) (x : Cube) : step a x b = x b := by
   simp [step, h]
 
-/-- A step raises the coordinate sum by exactly one. This is what makes the adjacency argument work:
-the coordinate sum is a distance along the path. -/
+/-- `∑ b, step a x b = (∑ b, x b) + 1`: one step raises the coordinate sum by exactly one. The
+summand at `a` rises by one and every other is unchanged, so `Finset.add_sum_erase` splits it off.
+
+This is what makes the adjacency argument work: the coordinate sum measures position along a path.
+
+DERIVED: `1` is the unit lattice step, `step`'s own increment; `3` is the dimension. -/
 theorem sum_step (a : Fin 3) (x : Cube) : ∑ b, step a x b = (∑ b, x b) + 1 := by
   classical
   rw [← Finset.add_sum_erase _ _ (mem_univ a), ← Finset.add_sum_erase _ x (mem_univ a)]
@@ -74,10 +89,12 @@ theorem sum_step (a : Fin 3) (x : Cube) : ∑ b, step a x b = (∑ b, x b) + 1 :
   rw [this]
   ring
 
-/-- The six faces of a unit cube: on each axis, the low face at `x` and the high face at `step a x`.
+/-- The faces of the unit cube at `x`: on each axis `a`, the low face `(a, x)` and the high face
+`(a, step a x)`, collected by `Finset.biUnion` over the axes.
 
-DERIVED: `3` is `Cube`'s dimension, and the six of `card_faces` is `2` per axis times that — the
-`2` being the two sides of a cube along one axis. Neither is a magnitude. -/
+DERIVED: `3` is `Cube`'s dimension, the number of axes the union runs over. The pair on each axis is
+the two sides of a cube along it; the resulting total of six is `card_faces`, not part of this
+definition. -/
 def faces (x : Cube) : Finset Face :=
   (univ : Finset (Fin 3)).biUnion (fun a => {(a, x), (a, step a x)})
 
@@ -86,8 +103,12 @@ theorem mem_faces {f : Face} {x : Cube} :
   classical
   simp [faces, Finset.mem_biUnion, Finset.mem_insert, Finset.mem_singleton]
 
-/-- **A cube has six faces.** `2` per axis (low and high), `3` axes — and the two on one axis are
-distinct because a step changes that axis's coordinate. -/
+/-- `(faces x).card = 6`. `Finset.card_biUnion` needs the axis families disjoint, which holds on the
+first component alone; each family has two elements because a step changes that axis's coordinate, so
+the low and high faces differ.
+
+DERIVED: `6` is `2` per axis times `3` axes — the two sides of a cube along one axis, and the
+dimension. Neither factor is a magnitude. -/
 theorem card_faces (x : Cube) : (faces x).card = 6 := by
   classical
   rw [faces, Finset.card_biUnion]
@@ -123,9 +144,12 @@ theorem step_injective (a : Fin 3) : Function.Injective (step a) := by
   · have := congrArg (fun z : Cube => z b) h
     simpa [step_other hb] using this
 
-/-- **Sharing a face means being one step apart.** Two cubes with a common face are either equal or
-differ by a single unit step along one axis — nothing else can happen, because a face names its axis
-and its corner, and the corner is either the cube or its step. -/
+/-- Two cubes carrying a common face are equal, or one is a single step from the other along one
+axis. The axis is read off the face's first component, so both descriptions use the same axis, and
+the four cases on the corner close by `step_injective` or by equality of corners.
+
+DERIVED: `3` is the dimension, the range of the axis; the unit step is inside `step` and the
+statement carries no literal. -/
 theorem step_rel_of_shares {x y : Cube} {f : Face} (hx : f ∈ faces x) (hy : f ∈ faces y) :
     x = y ∨ (∃ a, y = step a x) ∨ (∃ a, x = step a y) := by
   obtain ⟨a, ha⟩ := mem_faces.mp hx
@@ -148,10 +172,13 @@ theorem step_rel_of_shares {x y : Cube} {f : Face} (hx : f ∈ faces x) (hy : f 
       have := congrArg Prod.snd (ha.symm.trans hb)
       exact step_injective a (by simpa using this))
 
-/-- **THE ADJACENCY FACT THE AREA COUNT NEEDS.** Two cubes sharing a face have coordinate sums
-differing by exactly one. Along a directed path `Floor.cubePos_sum_le` makes the coordinate sum the
-INDEX, so this says: only CONSECUTIVE cubes of the path can share a face. That is the step the area
-identity `6(k+1) − 2k = 4k+6` turns on, and the reason it is true in `ℕ³` with no further geometry. -/
+/-- Two distinct cubes carrying a common face have coordinate sums differing by exactly one:
+`step_rel_of_shares` puts one a step from the other, and `sum_step` moves the sum by one.
+
+Along a directed path `Floor.cubePos_sum_le` makes the coordinate sum the index, so only consecutive
+cubes can share a face. That is what `sharedFaces_eq_crossFaces` consumes.
+
+DERIVED: `1` is the unit lattice step, carried from `sum_step`; `3` is the dimension. -/
 theorem sum_dist_one_of_shares {x y : Cube} {f : Face}
     (hx : f ∈ faces x) (hy : f ∈ faces y) (hne : x ≠ y) :
     (∑ b, x b) + 1 = (∑ b, y b) ∨ (∑ b, y b) + 1 = (∑ b, x b) := by
@@ -160,8 +187,12 @@ theorem sum_dist_one_of_shares {x y : Cube} {f : Face}
   · exact Or.inl (sum_step a x).symm
   · exact Or.inr (sum_step a y).symm
 
-/-- The path's `(j+1)`-th cube IS the `j`-th stepped along `s j` — `Floor.cubePos_succ` read as an
-equation between cubes rather than coordinatewise. -/
+/-- `cubePos s (j + 1) = step (s j) (cubePos s j)`: `Floor.cubePos_succ` as an equation between cubes
+rather than coordinate by coordinate. By `funext` and a case split on whether the coordinate is
+`s j`.
+
+DERIVED: `1` is the index increment, one step of the path; `3` is the dimension, the range of the
+step alphabet. -/
 theorem cubePos_succ_eq_step {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) :
     MassGap.cubePos s ((j : ℕ) + 1) = step (s j) (MassGap.cubePos s (j : ℕ)) := by
   funext a
@@ -172,8 +203,13 @@ theorem cubePos_succ_eq_step {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) :
   · have h' : a ≠ s j := fun hh => h hh.symm
     simp [step_other h', h]
 
-/-- **Consecutive cubes of a directed path DO share a face** — the one the step crosses. With
-`sum_dist_one_of_shares` this pins the sharing to consecutive pairs exactly: `k` of them. -/
+/-- The face `(s j, cubePos s (j+1))` lies in `faces (cubePos s j) ∩ faces (cubePos s (j+1))`: it is
+the high face of the `j`-th cube along the step's axis and the low face of the `(j+1)`-th.
+
+With `sum_dist_one_of_shares` ruling out non-consecutive pairs, this pins the shared faces to the `k`
+consecutive pairs.
+
+DERIVED: `1` is the index increment, one step; `3` is the dimension. -/
 theorem shares_succ {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) :
     ((s j : Fin 3), MassGap.cubePos s ((j : ℕ) + 1))
       ∈ faces (MassGap.cubePos s (j : ℕ)) ∩ faces (MassGap.cubePos s ((j : ℕ) + 1)) := by
@@ -182,15 +218,21 @@ theorem shares_succ {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) :
   · exact mem_faces.mpr ⟨s j, Or.inr (by rw [cubePos_succ_eq_step])⟩
   · exact mem_faces.mpr ⟨s j, Or.inl rfl⟩
 
-/-- A step along one axis is not a step along another: the axis is recoverable from the result. -/
+/-- `step a x = step b x → a = b`: the axis is recoverable from the result, since only the stepped
+coordinate changes.
+
+DERIVED: `3` is the dimension, the range of the two axes; no other numeral. -/
 theorem step_axis_inj {a b : Fin 3} {x : Cube} (h : step a x = step b x) : a = b := by
   by_contra hne
   have h1 : step a x a = step b x a := congrArg (fun z : Cube => z a) h
   rw [step_self, step_other hne] at h1
   omega
 
-/-- A face names its own two possible owners: the cube at its corner, and the cube one step back
-along its axis. Nothing else can carry it. -/
+/-- A cube carrying the face `f` is either `f.2` itself or the cube one step back along `f.1`:
+`x = f.2 ∨ step f.1 x = f.2`. Directly from `mem_faces`.
+
+DERIVED: `3` is the dimension. The `1` and `2` in `f.1`, `f.2` are the projections of `Face` onto its
+axis and its corner, not numbers. -/
 theorem cube_of_face {f : Face} {x : Cube} (h : f ∈ faces x) :
     x = f.2 ∨ step f.1 x = f.2 := by
   obtain ⟨a, ha⟩ := mem_faces.mp h
@@ -198,10 +240,13 @@ theorem cube_of_face {f : Face} {x : Cube} (h : f ∈ faces x) :
   · left; rw [ha]
   · right; rw [ha]
 
-/-- **A FACE BELONGS TO AT MOST TWO CUBES.** This is the `2` of the double count `6(k+1) − 2k`, and
-it is derived rather than assumed: by `cube_of_face` an owner is either the corner itself or a step
-back along the axis, and `step_injective` makes the second unique. A cube has two sides along each
-axis for the same reason, which is why the same `2` appears in `card_faces`. -/
+/-- For any `Finset Cube` and any face, the owners number at most two:
+`(C.filter (fun x => f ∈ faces x)).card ≤ 2`. By `cube_of_face` an owner is the corner itself or a
+step back along the axis, and `step_injective` makes the second unique, so the owners sit inside a
+two-element insert.
+
+DERIVED: `2` is the number of cubes a face can lie between — one at its corner, one a step back — and
+is derived here rather than assumed. `3` is the dimension. -/
 theorem card_cubes_with_face_le_two (C : Finset Cube) (f : Face) :
     (C.filter (fun x => f ∈ faces x)).card ≤ 2 := by
   classical
@@ -225,9 +270,13 @@ theorem card_cubes_with_face_le_two (C : Finset Cube) (f : Face) :
 #print axioms cube_of_face
 #print axioms card_cubes_with_face_le_two
 
-/-- **The path visits `k+1` DISTINCT cubes.** Two positions with the same coordinates would have the
-same coordinate sum, and `Floor.cubePos_sum_le` makes that sum the index. So the path never revisits
-a cube — which is what makes `6(k+1)` the total face count rather than an over-count. -/
+/-- `cubePos s` is injective on `Finset.range (k + 1)`: equal positions have equal coordinate sums,
+and `Floor.cubePos_sum_le` makes that sum the index.
+
+So the path never revisits a cube, which is what makes `6(k+1)` a count rather than an over-count.
+
+DERIVED: `1` in `range (k + 1)` makes the range run through `k` inclusive, the `k + 1` positions of a
+`k`-step path. `3` is the dimension. -/
 theorem cubePos_injOn {k : ℕ} (s : Fin k → Fin 3) :
     Set.InjOn (MassGap.cubePos s) (Finset.range (k + 1)) := by
   intro i hi j hj hij
@@ -238,7 +287,11 @@ theorem cubePos_injOn {k : ℕ} (s : Fin k → Fin 3) :
   rw [hij] at hi'
   omega
 
-/-- The cube configuration has exactly `k+1` elements. -/
+/-- `(Floor.cubeConfig s).card = k + 1`: the image of a map injective on `range (k + 1)`, by
+`Finset.card_image_of_injOn` at `cubePos_injOn`.
+
+DERIVED: `1` is the `+1` of `range (k + 1)`, so the count is the number of cubes of a `k`-step path;
+`3` is the dimension. -/
 theorem card_cubeConfig {k : ℕ} (s : Fin k → Fin 3) :
     (MassGap.cubeConfig s).card = k + 1 := by
   classical
@@ -247,17 +300,21 @@ theorem card_cubeConfig {k : ℕ} (s : Fin k → Fin 3) :
 #print axioms cubePos_injOn
 #print axioms card_cubeConfig
 
-/-- The face the `j`-th step crosses: the one shared by cube `j` and cube `j+1`.
+/-- The face the `j`-th step crosses: `(s j, cubePos s (j + 1))`, the one shared by cube `j` and cube
+`j + 1`. `crossFace_shared` proves it is shared and `crossFace_injective` that these `k` faces are
+distinct.
 
-DERIVED: `1` is the step — `Floor.cubePos_succ` advances the index by one per step, so `j+1` names
-the cube the `j`-th step lands on and nothing is chosen. `3` is `Cube`'s dimension, the arity of the
-step alphabet `Fin 3`. -/
+DERIVED: `1` is the index increment — `Floor.cubePos_succ` advances the index by one per step, so
+`j + 1` names the cube the `j`-th step lands on and nothing is chosen. `3` is `Cube`'s dimension, the
+arity of the step alphabet `Fin 3`. -/
 def crossFace {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) : Face :=
   ((s j : Fin 3), MassGap.cubePos s ((j : ℕ) + 1))
 
-/-- **THE `k` CROSSING FACES ARE DISTINCT.** This is the `k` of `6(k+1) − 2k`. Distinctness comes
-from the SECOND component alone: the crossed face is named by the cube the step lands on, and
-`cubePos_injOn` says the path never lands on the same cube twice. The axis never has to be compared. -/
+/-- `crossFace s` is injective on `Fin k`. Distinctness comes from the second component alone: the
+crossed face is named by the cube the step lands on, and `cubePos_injOn` says the path never lands on
+the same cube twice. The axis is never compared.
+
+DERIVED: `3` is the dimension; the index increment inside `crossFace` is that definition's. -/
 theorem crossFace_injective {k : ℕ} (s : Fin k → Fin 3) : Function.Injective (crossFace s) := by
   intro i j hij
   have h2 : MassGap.cubePos s ((i : ℕ) + 1) = MassGap.cubePos s ((j : ℕ) + 1) :=
@@ -269,26 +326,34 @@ theorem crossFace_injective {k : ℕ} (s : Fin k → Fin 3) : Function.Injective
   have := cubePos_injOn s hi hj h2
   exact Fin.ext (by omega)
 
-/-- Each crossing face really is shared by the two cubes it names — `shares_succ`, restated on
-`crossFace` so the two halves of the count speak about the same object. -/
+/-- `crossFace s j ∈ faces (cubePos s j) ∩ faces (cubePos s (j+1))`: `shares_succ` restated on
+`crossFace`, so the two halves of the count speak about the same object. The body is that theorem.
+
+DERIVED: `1` is the index increment, one step; `3` is the dimension. -/
 theorem crossFace_shared {k : ℕ} (s : Fin k → Fin 3) (j : Fin k) :
     crossFace s j ∈ faces (MassGap.cubePos s (j : ℕ))
       ∩ faces (MassGap.cubePos s ((j : ℕ) + 1)) :=
   shares_succ s j
 
-/-- The `k` crossing faces, as a `Finset`, with its cardinality. -/
+/-- `(Finset.univ.image (crossFace s)).card = k`: the image of an injective map on `Fin k`, by
+`crossFace_injective` and `Fintype.card_fin`.
+
+DERIVED: `3` is the dimension. The cardinality `k` is the number of steps, not a literal. -/
 theorem card_crossFaces {k : ℕ} (s : Fin k → Fin 3) :
     (Finset.univ.image (crossFace s)).card = k := by
   classical
   rw [Finset.card_image_of_injective _ (crossFace_injective s), Finset.card_univ,
     Fintype.card_fin]
 
-/-- **ADJACENT CUBES SHARE EXACTLY ONE FACE, AND IT IS THE ONE THE STEP CROSSES.** With
-`sum_dist_one_of_shares` ruling out every non-adjacent pair, this is the other half of `|shared| = k`:
-each consecutive pair contributes one face and no pair contributes two.
+/-- A face carried by both `x` and `step a x` is `(a, step a x)`. Four cases from `cube_of_face` on
+each side; two are impossible because they would equate cubes whose coordinate sums differ by one,
+and of the remaining two `step_axis_inj` fixes the axis and `step_injective` the corner.
 
-The four cases close on sums and injectivity alone — `step_axis_inj` for the axis, `step_injective`
-for the corner, and the coordinate sum for the two impossible ones. -/
+So adjacent cubes share exactly one face, and it is the one the step crosses — the half of
+`|shared| = k` saying no consecutive pair contributes two.
+
+DERIVED: `3` is the dimension; the unit step is inside `step` and the statement carries no
+literal. -/
 theorem shared_face_eq {a : Fin 3} {x : Cube} {f : Face}
     (hx : f ∈ faces x) (hy : f ∈ faces (step a x)) : f = (a, step a x) := by
   have hsx : (∑ b, step a x b) = (∑ b, x b) + 1 := sum_step a x
@@ -310,9 +375,13 @@ theorem shared_face_eq {a : Fin 3} {x : Cube} {f : Face}
 
 #print axioms shared_face_eq
 
-/-- **THE DOUBLE COUNT.** Count incident (cube, face) pairs two ways: by cube, giving `6` each, and
-by face, giving that face's number of owners. This is the identity the area argument turns on, and it
-is pure `Finset` bookkeeping — no geometry enters until the two sides are evaluated. -/
+/-- Counting incident (cube, face) pairs two ways:
+`∑_{x ∈ C} (faces x).card = ∑_{f ∈ C.biUnion faces} (C.filter (fun x => f ∈ faces x)).card`. Each
+side is the same indicator summed over the product, exchanged by `Finset.sum_comm`.
+
+Pure `Finset` bookkeeping for an arbitrary `C`; no geometry enters until the two sides are evaluated.
+
+DERIVED: no numeral. `3` is the dimension, carried by the types `Cube` and `Face`. -/
 theorem incidence_double_count (C : Finset Cube) :
     ∑ x ∈ C, (faces x).card
       = ∑ f ∈ C.biUnion faces, (C.filter (fun x => f ∈ faces x)).card := by
@@ -328,7 +397,11 @@ theorem incidence_double_count (C : Finset Cube) :
   rw [Finset.sum_congr rfl hL, Finset.sum_comm]
   exact Finset.sum_congr rfl (fun f _ => (Finset.card_filter _ _).symm)
 
-/-- **The left-hand side, evaluated: a path of `k+1` cubes carries `6(k+1)` incidences.** -/
+/-- `∑_{x ∈ cubeConfig s} (faces x).card = 6 * (k + 1)`: `card_faces` makes every summand `6` and
+`card_cubeConfig` counts the summands.
+
+DERIVED: `6` is the number of faces of a cube, `card_faces`'s; `1` is the `+1` of `k + 1`, the number
+of cubes, `card_cubeConfig`'s; `3` is the dimension. -/
 theorem incidence_left {k : ℕ} (s : Fin k → Fin 3) :
     ∑ x ∈ MassGap.cubeConfig s, (faces x).card = 6 * (k + 1) := by
   classical
@@ -336,10 +409,13 @@ theorem incidence_left {k : ℕ} (s : Fin k → Fin 3) :
     smul_eq_mul]
   ring
 
-/-- **EVERY FACE OF THE CONFIGURATION HAS ONE OR TWO OWNERS.** The upper half is
-`card_cubes_with_face_le_two`; the lower is that a face of `C.biUnion faces` is a face of something.
-So the right-hand side of the double count is `|B| + |shared|`, which is what turns the identity into
-an area. -/
+/-- A face of `C.biUnion faces` has at least one and at most two owners. The lower bound is that such
+a face belongs to some cube of `C`; the upper is `card_cubes_with_face_le_two`.
+
+This is what makes the right-hand side of the double count split as `|B| + |shared|`.
+
+DERIVED: `1` is the least number of owners a face of the union has, since it lies in some cube's face
+set; `2` is `card_cubes_with_face_le_two`'s bound; `3` is the dimension. -/
 theorem owners_one_or_two (C : Finset Cube) {f : Face} (hf : f ∈ C.biUnion faces) :
     1 ≤ (C.filter (fun x => f ∈ faces x)).card
       ∧ (C.filter (fun x => f ∈ faces x)).card ≤ 2 := by
@@ -348,17 +424,18 @@ theorem owners_one_or_two (C : Finset Cube) {f : Face} (hf : f ∈ C.biUnion fac
   obtain ⟨x, hxC, hxf⟩ := Finset.mem_biUnion.mp hf
   exact Finset.card_pos.mpr ⟨x, Finset.mem_filter.mpr ⟨hxC, hxf⟩⟩
 
-/-- **THE AREA IDENTITY, REDUCED TO THE SHARED COUNT.** Splitting the faces by how many cubes own
-them, the double count reads `6(k+1) = |B| + |shared|`, where `B` is every face the configuration
-touches and `shared` those with two owners. The BOUNDARY is `B` minus `shared`, so
+/-- Given that every face of `C.biUnion faces` has one or two owners, and that exactly `sharedCount`
+of them have two, the double count reads
+`∑_{x ∈ C} (faces x).card = (C.biUnion faces).card + sharedCount`.
 
-    |∂C| = |B| − |shared| = (6(k+1) − |shared|) − |shared| = 6(k+1) − 2|shared|,
+The owner count of each face splits as `1 + (1 if shared)`; summing the constant gives `|B|` and
+summing the indicator gives the shared count.
 
-and with `|shared| = k` — `card_crossFaces` for the lower bound, `sum_dist_one_of_shares` and
-`shared_face_eq` for the upper — that is `6k + 6 − 2k = 4k + 6`.
+`sharedCount` is a parameter, so the arithmetic is separated from the geometry; `card_sharedFaces`
+supplies it as `k` at the cube-path configuration.
 
-Stated with `|shared|` as a parameter so the arithmetic is separated from the geometry: everything
-above is proved, and what this consumes is the one count. -/
+DERIVED: `1` is the owner every face of the union has, and the extra owner a shared face has; `2` is
+the owner count that marks a face as shared; `3` is the dimension. -/
 theorem boundary_card_of_shared (C : Finset Cube) (sharedCount : ℕ)
     (hall : ∀ f ∈ C.biUnion faces, (C.filter (fun x => f ∈ faces x)).card = 1
       ∨ (C.filter (fun x => f ∈ faces x)).card = 2)
@@ -386,9 +463,12 @@ theorem boundary_card_of_shared (C : Finset Cube) (sharedCount : ℕ)
 #print axioms owners_one_or_two
 #print axioms boundary_card_of_shared
 
-/-- A face carried by two cubes of the path, one a step from the other, IS one of the `k` crossed
-faces. The step's axis is recovered by `step_axis_inj` and its index by the coordinate sum, so no
-choice of labelling enters. -/
+/-- A face carried by two cubes of the path, one a step from the other, lies in the image of
+`crossFace s`. The coordinate sum identifies both cubes' indices and forces the second to be the
+first plus one; `step_axis_inj` identifies the step's axis with `s` at that index, and
+`shared_face_eq` names the face.
+
+DERIVED: `3` is the dimension; the index increment is `cubePos_succ_eq_step`'s. -/
 theorem crossFace_of_step {k : ℕ} (s : Fin k → Fin 3) {x : Cube} {a : Fin 3} {f : Face}
     (hx : x ∈ MassGap.cubeConfig s) (hy : step a x ∈ MassGap.cubeConfig s)
     (hxf : f ∈ faces x) (hyf : f ∈ faces (step a x)) :
@@ -413,12 +493,15 @@ theorem crossFace_of_step {k : ℕ} (s : Fin k → Fin 3) {x : Cube} {a : Fin 3}
   show ((s ⟨i, hik'⟩ : Fin 3), MassGap.cubePos s (i + 1)) = f
   rw [shared_face_eq hxf hyf, ← hjy, hji, haxis]
 
-/-- **THE SHARED FACES ARE EXACTLY THE `k` CROSSED ONES.** Forward: two owners must be a step apart
-(`step_rel_of_shares`), the pair must be consecutive (`sum_dist_one_of_shares`, through the coordinate
-sum), and the face they share is the crossed one (`shared_face_eq`). Backward: each crossed face has
-its two distinct owners on the path (`crossFace_shared`, `cubePos_injOn`), and `≤ 2` caps it.
+/-- The two-owner faces of `cubeConfig s` are exactly the image of `crossFace s`.
 
-This is where `|shared| = k` stops being an assumption. -/
+Forward: two owners are a step apart (`step_rel_of_shares`), the pair is consecutive through the
+coordinate sum (`sum_dist_one_of_shares`), and `crossFace_of_step` names the face. Backward: each
+crossed face has two distinct owners on the path (`crossFace_shared`, `cubePos_injOn`), and
+`card_cubes_with_face_le_two` caps the count at two.
+
+DERIVED: `2` is the owner count that marks a face as shared, `card_cubes_with_face_le_two`'s bound;
+`3` is the dimension. -/
 theorem sharedFaces_eq_crossFaces {k : ℕ} (s : Fin k → Fin 3) :
     ((MassGap.cubeConfig s).biUnion faces).filter
         (fun f => ((MassGap.cubeConfig s).filter (fun x => f ∈ faces x)).card = 2)
@@ -459,7 +542,11 @@ theorem sharedFaces_eq_crossFaces {k : ℕ} (s : Fin k → Fin 3) :
         Finset.mem_filter.mpr ⟨hj1m, hin1⟩, hne⟩
     omega
 
-/-- **THE SHARED COUNT IS `k`.** -/
+/-- The two-owner faces of `cubeConfig s` number exactly `k`: `sharedFaces_eq_crossFaces` followed by
+`card_crossFaces`.
+
+DERIVED: `2` is the owner count marking a face as shared; `3` is the dimension. The count `k` is the
+number of steps, not a literal. -/
 theorem card_sharedFaces {k : ℕ} (s : Fin k → Fin 3) :
     (((MassGap.cubeConfig s).biUnion faces).filter
       (fun f => ((MassGap.cubeConfig s).filter (fun x => f ∈ faces x)).card = 2)).card = k := by
@@ -475,22 +562,23 @@ only other case there is. -/
 noncomputable def boundaryFaces (C : Finset Cube) : Finset Face :=
   (C.biUnion faces).filter (fun f => (C.filter (fun x => f ∈ faces x)).card = 1)
 
-/-- **THE AREA IDENTITY: `|∂C| = 4k + 6`.**  Every constant in it is now a theorem of this file:
+/-- `(boundaryFaces (cubeConfig s)).card = 4 * k + 6`, for every `s : Fin k → Fin 3`.
 
-* `6`  — `card_faces`: a cube has six sides (two per axis).
-* `k+1` — `card_cubeConfig`: the path visits `k+1` distinct cubes.
-* `2`  — `card_cubes_with_face_le_two`: a face has at most two owners.
-* `k`  — `card_sharedFaces`: the shared faces are exactly the `k` crossed ones.
+Four inputs, each a theorem of this file:
 
-Double counting gives `6(k+1) = |B| + k`, so `|B| = 5k + 6`, and the boundary drops the shared ones
-once more: `|∂C| = |B| − k = 4k + 6`.
+* `card_faces` — a cube has six faces, two per axis.
+* `card_cubeConfig` — the path visits `k + 1` distinct cubes.
+* `card_cubes_with_face_le_two` and `owners_one_or_two` — every touched face has one or two owners.
+* `card_sharedFaces` — the two-owner faces number exactly `k`.
 
-This closes the last free constant in the ENTROPY FLOOR, which is the only thing in the development
-that bounds the gap from below — so it is the one that had to be derived. (What is still marked
-`CHOSEN:` elsewhere is the read aperture `16`, the coupling scale `73/100`, a positive offset, and
-`WilsonBridge`'s 3-D sublattice; none of them enters `κ₀`.) `VortexCount.floorTerm` ASSUMED the area of a
-`k`-step directed vortex surface was `4k + 6`; with the `4` derived, the entropy floor's
-`κ₀ = ¼ log 3` has its `¼` — one unit of `log 3` of directional entropy per four units of area. -/
+`incidence_left` evaluates the double count's left side as `6(k+1)`, `boundary_card_of_shared` reads
+its right side as `|B| + k`, so `|B| = 5k + 6`; splitting `B` into one-owner and two-owner faces
+drops the shared ones once more, leaving `4k + 6`.
+
+DERIVED: `4` is `6 − 2`, the six faces of a cube less twice the one shared per step, so it is the two
+counts above and not a chosen coefficient. `6` is the face count of a cube, from `card_faces`; `2` is
+the owner count of a shared face; `1` is the owner count of a boundary face, inside `boundaryFaces`;
+`3` is the dimension. -/
 theorem boundary_card_eq {k : ℕ} (s : Fin k → Fin 3) :
     (boundaryFaces (MassGap.cubeConfig s)).card = 4 * k + 6 := by
   classical
@@ -522,15 +610,16 @@ theorem boundary_card_eq {k : ℕ} (s : Fin k → Fin 3) :
 #print axioms card_sharedFaces
 #print axioms boundary_card_eq
 
-/-! ### Distinct paths give distinct SURFACES
+/-! ### Distinct paths give distinct boundaries
 
-`Floor.directed_surface_count` counts cube CONFIGURATIONS. The entropy floor wants surfaces: the
-boundaries. Since the boundary map could in principle collapse two configurations onto one surface,
-the count only transfers if it is injective — which is proved here, so the `3ᵏ` is a count of
-distinct surfaces, each of area `4k+6`. -/
+`Floor.directed_surface_count` counts cube configurations. `boundaryFaces_cubeConfig_injective`
+shows the boundary map does not collapse two configurations onto one face-set, so the count of `3 ^ k`
+transfers to the boundaries, each of cardinality `4 * k + 6`. -/
 
-/-- **A FACE NAMES ITS OWN TWO CANDIDATE OWNERS.** Whatever the configuration, the cubes carrying
-`(a, step a p)` lie in `{step a p, p}` — the corner itself and the cube one step back. -/
+/-- Whatever the configuration, the cubes carrying `(a, step a p)` lie in `{step a p, p}` — the
+corner itself and the cube one step back. `cube_of_face` and `step_injective`.
+
+DERIVED: `3` is the dimension; the statement carries no literal, the unit step being inside `step`. -/
 theorem owners_subset_pair (C : Finset Cube) (a : Fin 3) (p : Cube) :
     C.filter (fun y => ((a, step a p) : Face) ∈ faces y) ⊆ {step a p, p} := by
   classical
@@ -540,21 +629,31 @@ theorem owners_subset_pair (C : Finset Cube) (a : Fin 3) (p : Cube) :
   · exact Finset.mem_insert.mpr (Or.inl h)
   · exact Finset.mem_insert_of_mem (Finset.mem_singleton.mpr (step_injective a h))
 
-/-- Membership in the boundary, unfolded once. -/
+/-- `f ∈ boundaryFaces C ↔ f ∈ C.biUnion faces ∧ (C.filter (fun x => f ∈ faces x)).card = 1`, by
+`Finset.mem_filter`: membership in the boundary unfolded once.
+
+DERIVED: `1` is the owner count a boundary face has, `boundaryFaces`'s own; `3` is the dimension. -/
 theorem mem_boundaryFaces_iff (C : Finset Cube) (f : Face) :
     f ∈ boundaryFaces C
       ↔ f ∈ C.biUnion faces ∧ (C.filter (fun x => f ∈ faces x)).card = 1 :=
   Finset.mem_filter
 
-/-- A step never returns to where it started: the coordinate sum rises. -/
+/-- `p ≠ step a p`: a step never returns to where it started, because `sum_step` raises the
+coordinate sum.
+
+DERIVED: `3` is the dimension; the unit step is inside `step` and the statement carries no
+literal. -/
 theorem ne_step (a : Fin 3) (p : Cube) : p ≠ step a p := by
   intro hpx
   have hs := sum_step a p
   rw [← hpx] at hs
   omega
 
-/-- **A CROSSED FACE IS INTERIOR.** If a configuration holds both ends of a step, the face between
-them has two owners, so it is not on the boundary. -/
+/-- If a configuration holds both ends of a step, the face between them is not on its boundary: the
+two cubes are distinct (`ne_step`) and both own the face, so the owner count exceeds one.
+
+DERIVED: `1` is the owner count a boundary face has, from `boundaryFaces` via
+`mem_boundaryFaces_iff`; `3` is the dimension. -/
 theorem not_mem_boundaryFaces_of_both {C : Finset Cube} {a : Fin 3} {p : Cube}
     (hp : p ∈ C) (hq : step a p ∈ C) : ((a, step a p) : Face) ∉ boundaryFaces C := by
   classical
@@ -567,9 +666,15 @@ theorem not_mem_boundaryFaces_of_both {C : Finset Cube} {a : Fin 3} {p : Cube}
   have h1 := ((mem_boundaryFaces_iff C _).mp hmem).2
   omega
 
-/-- **AND THE CONVERSE, WHICH IS THE RECOVERY STEP.** If a configuration holds one end of a step and
-the face between them is NOT on its boundary, it holds the other end too — because the face's only
-possible owners are those two cubes (`owners_subset_pair`), and a face off the boundary has two. -/
+/-- If a configuration holds one end of a step and the face between the two ends is not on its
+boundary, it holds the other end too. `owners_one_or_two` makes the owner count one or two, the
+hypothesis rules out one, and `owners_subset_pair` then forces the owner set to be exactly
+`{step a p, p}`.
+
+The recovery step `mem_of_boundary_eq_aux` runs on.
+
+DERIVED: `2` is the owner count a non-boundary face of the union has, and `1` the count a boundary
+face has; `3` is the dimension. -/
 theorem mem_of_not_mem_boundaryFaces {C : Finset Cube} {a : Fin 3} {p : Cube}
     (hp : p ∈ C) (hnb : ((a, step a p) : Face) ∉ boundaryFaces C) : step a p ∈ C := by
   classical
@@ -588,9 +693,15 @@ theorem mem_of_not_mem_boundaryFaces {C : Finset Cube} {a : Fin 3} {p : Cube}
     rw [heq]; exact Finset.mem_insert_self _ _
   exact (Finset.mem_filter.mp hmem).1
 
-/-- The step from `n` to `n+1`: a cube of the first path is a cube of the second, by induction on the
-coordinate sum. The crossed face is interior on the left, so by the hypothesis it is interior on the
-right; the predecessor is already known to be present there, so the cube itself must be too. -/
+/-- If two paths have equal boundaries, every cube of the first configuration is a cube of the
+second. Induction on the coordinate sum: at sum `0` the cube is the origin, which every configuration
+contains; at sum `i + 1` the cube is a step from one of sum `i`, which the inductive hypothesis puts
+in the second configuration, and the face between them is not on the first boundary
+(`not_mem_boundaryFaces_of_both`) hence not on the second, so
+`mem_of_not_mem_boundaryFaces` supplies the cube.
+
+DERIVED: `3` is the dimension; the induction's `0` and `i + 1` are `Nat.rec`'s and the unit step is
+inside `step`. The statement itself carries no literal. -/
 theorem mem_of_boundary_eq_aux {k : ℕ} (s t : Fin k → Fin 3)
     (h : boundaryFaces (MassGap.cubeConfig s) = boundaryFaces (MassGap.cubeConfig t)) :
     ∀ n : ℕ, ∀ x : Cube, (∑ b, x b) = n → x ∈ MassGap.cubeConfig s → x ∈ MassGap.cubeConfig t := by
@@ -627,8 +738,13 @@ theorem mem_of_boundary_eq_aux {k : ℕ} (s t : Fin k → Fin 3)
     rw [hxstep]
     exact mem_of_not_mem_boundaryFaces hpt hnotL
 
-/-- **DISTINCT DIRECTED PATHS GIVE DISTINCT SURFACES.** Not just distinct cube configurations: the
-boundary map itself is injective on them, so no two paths bound the same surface. -/
+/-- `fun s => boundaryFaces (cubeConfig s)` is injective on `Fin k → Fin 3`.
+`mem_of_boundary_eq_aux` in both directions makes the two configurations equal, and
+`Floor.cubeConfig_injective` descends to the step sequences.
+
+Stronger than distinctness of configurations: the boundary map does not collapse two of them.
+
+DERIVED: `3` is the dimension, the range of the step alphabet; no other numeral. -/
 theorem boundaryFaces_cubeConfig_injective {k : ℕ} :
     Function.Injective (fun s : Fin k → Fin 3 => boundaryFaces (MassGap.cubeConfig s)) := by
   intro s t h
@@ -637,10 +753,17 @@ theorem boundaryFaces_cubeConfig_injective {k : ℕ} :
   exact ⟨fun hx => mem_of_boundary_eq_aux s t h _ x rfl hx,
     fun hx => mem_of_boundary_eq_aux t s h.symm _ x rfl hx⟩
 
-/-- **THEOREM 7.1, WHOLE.** There are `3ᵏ` distinct surfaces of area exactly `4k+6` arising as
-boundaries of directed cube-paths. The count is `Floor.directed_paths_card` transported along the
-injection `boundaryFaces_cubeConfig_injective`; the area is `boundary_card_eq`. Together they give
-the entropy density `(k log 3)/(4k+6) → ¼ log 3 = κ₀` with no constant supplied at any point. -/
+/-- There is a `Finset (Finset Face)` of cardinality `3 ^ k` every member of which has cardinality
+`4 * k + 6`. The witness is the image of `fun s => boundaryFaces (cubeConfig s)`; its cardinality is
+`Floor.directed_paths_card` transported along `boundaryFaces_cubeConfig_injective`, and the member
+cardinality is `boundary_card_eq`.
+
+A statement about `Finset`s of faces. It says nothing about an entropy density or a limit; the
+quotient `(k log 3)/(4k + 6)` is `Floor.floor_density_limit`'s, reindexed.
+
+DERIVED: `3` is the dimension and the base of the count — the same number, since the step alphabet is
+`Fin 3`. `4` and `6` are `boundary_card_eq`'s, the six faces of a cube less twice the one shared per
+step. -/
 theorem directed_surfaces_count_and_area {k : ℕ} :
     ∃ S : Finset (Finset Face), S.card = 3 ^ k ∧ ∀ F ∈ S, F.card = 4 * k + 6 := by
   classical

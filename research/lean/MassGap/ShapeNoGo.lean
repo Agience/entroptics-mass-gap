@@ -8,56 +8,40 @@ import MassGap.EvenAperture
 import MassGap.ApertureRoute
 
 /-!
-# MassGap.ShapeNoGo — the coupling-free route to B5 is closed
+# MassGap.ShapeNoGo — five coupling-free shape properties do not bound the cosine average
 
-`ApertureRoute.ConfinesAtAnAperture` — `∃ a : EvenAp, ∀ β, 3^{−1/4} < cosAvgEven a β` — is the
-development's one open hypothesis. Over the last weeks the tree has accumulated a series of
-COUPLING-FREE SHAPE FACTS about the lag correlation `ρ = wilsonCorrAt N β`, each proved at every
-even extent and (mostly) every coupling, each saying something about the SHAPE of `ρ` across the
-lag index and nothing about how `ρ` moves with `β`:
+Collects, as the structure `ShapeFacts m ρ`, five properties of a lag correlation
+`ρ : Fin (N + 1) → ℝ`, each transcribed from a lemma this tree proves about
+`ρ = MassGap.wilsonCorrAt N β`:
 
-* `Complete.wilson_reflection_positive_at_even` — `0 ≤ ρ d` and `0 < ∑ ρ`;
-* `MomentShape.wilsonCorrAt_neg` / `MomentShape.corrClay_neg` — `ρ(−d) = ρ(d)`, circle symmetry;
-* `LogConvex.corrClay_log_convex` — `ρ(e₁+e₂)² ≤ ρ(2e₁)·ρ(2e₂)` below half the extent;
-* `MomentShape.corrClay_even_antitone` (and `_of_nonneg_coupling`) — the even lags are
-  non-increasing in the circle distance;
-* `Hankel.corrClay_hankel_psd` — the reflection Gram matrix `ρ(eᵢ + eⱼ)` is positive-semidefinite.
+* `nonneg`, `posMass` — `0 ≤ ρ d` at every lag and `0 < ∑ d, ρ d`, the two conjuncts of
+  `Complete.wilson_reflection_positive_at_even`;
+* `symm` — `ρ (-d) = ρ d`, from `MomentShape.wilsonCorrAt_neg`;
+* `logConvex` — `ρ (e₁ + e₂) ^ 2 ≤ ρ (e₁ + e₁) * ρ (e₂ + e₂)` for levels below `m`, from
+  `LogConvex.corrClay_log_convex`;
+* `evenAntitone` — `ρ (ev N c₂) ≤ ρ (ev N c₁)` for `c₁ ≤ c₂` with `2 * c₂ ≤ m`, from
+  `MomentShape.corrClay_even_antitone`;
+* `hankel` — `0 ≤ ∑ i, ∑ j, c i * c j * ρ (e i + e j)` for level maps constrained below `m`, from
+  `Hankel.corrClay_hankel_psd`.
 
-`ShapeFacts` below is exactly that list, each clause transcribed from the statement of the lemma
-that proves it. `wilsonCorrAt_shapeFacts` discharges all five for the real Wilson correlator, so the
-predicate is about the right object and is not an invented weakening.
+`wilsonCorrAt_shapeFacts` proves all five for `MassGap.wilsonCorrAt Nap β` at even extent
+`Nap + 1 = 2 * m` with `3 ≤ m` and `0 ≤ β`.
 
-**THE RESULT.** `shape_facts_do_not_imply_confinement`: no implication of the form
-"`ShapeFacts` ⟹ the cosine average clears `3^{−1/4}`" can hold, at any extent and any half-extent
-bound. The witness is the FLAT read `ρ ≡ 1` — the tree's own `Moment.Read` `Inhabited` instance,
-here named `flatRead`, with `flatRead_eq_default` recording that they are the same term. The flat
-read satisfies every clause (`flatRead_shapeFacts`, foundational footprint), and its cosine average
-is EXACTLY ZERO (`flat_cosAvg_eq_zero`), because the `(N+1)`-th roots of unity sum to zero —
-`ZeroMode.sum_cos_theta_eq_zero`, already in the tree. Zero is strictly below `3^{−1/4} > 0`.
+`flatRead` is the constant read `ρ ≡ 1`, which `flatRead_eq_default` identifies with
+`Moment.Read`'s `Inhabited` witness. `flatRead_shapeFacts` proves all five clauses for it at every
+`N` and every `m`, and `flat_cosAvg_eq_zero` computes its cosine average as `0` for `1 ≤ N`, since
+the `N + 1` angles are those of the `(N + 1)`-th roots of unity
+(`ZeroMode.sum_cos_theta_eq_zero`).
 
-**WHAT THIS CLOSES, AND IT IS A NARROWING, NOT A DEFEAT.** The five lemmas above are a large part of
-what the last weeks produced, and this file says where the remaining work is: not in adding a sixth
-shape fact of the same kind, and not in combining the five more cleverly. Any argument that closes
-B5 must read the COUPLING DEPENDENCE — how `wilsonCorrAt N β` moves as `β` moves — because the
-shape facts are all satisfied by an object with no coupling in it at all. A future session that
-finds itself deriving confinement from nonnegativity, symmetry, log-convexity, even-antitonicity and
-Hankel positive-semidefiniteness, in any combination, can stop here: the derivation is refuted, not
-merely unfinished.
+`shape_facts_do_not_imply_confinement` and its unwrapped form `..._'` conclude the negation of
+`∀ R, ShapeFacts m R.ρ → (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvg R`, at every `N ≥ 1` and every `m`.
 
-This is the third no-go stated about the same premise set and the strongest. `MomentShape`'s
-`odd_scaling_admissible` shows the odd lags cannot be lower-bounded from nonnegativity, symmetry and
-log-convexity, and `not_antitone_circLag_of_shape` shows the full profile need not be monotone in
-the circle distance. Both are statements about the PROFILE. This one is about the CONCLUSION: the
-scalar the flagship actually consumes. `Spectral.lean` observes in prose that "nothing in the tree
-proves `wilsonCorrAt` is non-constant" and that "the RP axiom is satisfied by a constant positive
-`ρ`"; this file turns that observation into a theorem against the full five-fact premise set and
-carries it all the way to the floor comparison.
-
-**DERIVED, NOT CHOSEN.** No numeral is introduced. `3^{−1/4} = e^{−κ₀}` with `κ₀ = ¼log3` is
-`Floor.lean`'s, carried in unchanged from `ApertureRoute.ConfinesAtAnAperture`. `m` is half the
-extent, the reflection geometry's own bound, carried in from `LogConvex.corrClay_log_convex` and
-`Hankel.corrClay_hankel_psd`. The `1` of the flat read is not a scale: the cosine average is
-invariant under rescaling `ρ`, so every positive constant read gives the same zero.
+Scope. The negated implication is about the five listed properties only; nothing here evaluates
+`wilsonCorrAt` at any lag, and no claim is made about whether the Wilson correlator clears the
+floor. Every clause of `ShapeFacts` is a statement across the lag index at fixed `β`, so the
+witness `flatRead`, which carries no coupling, satisfies all of them.
+`wilsonCorrAt_shapeFacts` is stated at even extent with `3 ≤ m`, which is extent at least six; the
+no-go quantifies `m` universally, so that restriction does not narrow it.
 -/
 
 namespace MassGap.ShapeNoGo
@@ -66,28 +50,22 @@ open Finset
 
 /-! ## 1. The five proved shape facts, as one predicate -/
 
-/-- **THE COUPLING-FREE SHAPE FACTS, COLLECTED.** Each field is the statement of a lemma this tree
-proves about `wilsonCorrAt`, transcribed rather than weakened:
+/-- Five properties of a lag correlation `ρ : Fin (N + 1) → ℝ`, bundled as one `Prop`-valued
+structure indexed by a half-extent bound `m`. Each field transcribes the conclusion of a lemma of
+this tree, side conditions included; see the field docstrings.
 
-* `nonneg`, `posMass` — `Complete.wilson_reflection_positive_at_even`'s two conjuncts;
-* `symm` — `MomentShape.wilsonCorrAt_neg`;
-* `logConvex` — `LogConvex.corrClay_log_convex`, including its `< m` side conditions;
-* `evenAntitone` — `MomentShape.corrClay_even_antitone`, at `MomentShape.ev` and with its
-  `2 * c₂ ≤ m` side condition;
-* `hankel` — `Hankel.corrClay_hankel_psd`.
+`m` is a parameter of the structure because `logConvex`, `evenAntitone` and `hankel` each restrict
+their indices relative to it, as `MomentShape.Shape n m ρ` does.
 
-`m` is carried because three of the five clauses are stated relative to half the extent and cannot
-be written without it, exactly as `MomentShape.Shape n m ρ` carries it.
+The `hankel` field specialises `Hankel.corrClay_hankel_psd`'s arbitrary `Fintype ι` to `Fin k`,
+keeping the level map `e` and its `(e i).val < m` constraint. That constraint is part of the
+statement: the entries are correlations at sums of levels below the reflection plane, not at
+arbitrary index sums.
 
-**THE SPELLING OF THE HANKEL CLAUSE.** `Hankel.corrClay_hankel_psd` quantifies over an arbitrary
-`ι : Type` with `[Fintype ι]`, over a level map `e : ι → Fin n` constrained by `(e i).val < m`, and
-over coefficients `c : ι → ℝ`, concluding `0 ≤ ∑ i, ∑ j, c i * c j * ρ (e i + e j)`. This field is
-that statement with `ι` specialised to `Fin k`, which loses nothing — every finite index type is
-equivalent to one — and keeps the level map and its `< m` constraint, which the suggested spelling
-`0 ≤ ∑ i, ∑ j, v i * v j * ρ (i + j)` over `Fin m` would have dropped. The constraint is not
-decoration: the Hankel argument is a reflection Gram matrix and the levels have to sit below the
-reflection plane for the entries to be the correlation at all. Dropping it would have made this
-predicate assert something the tree has not proved. -/
+DERIVED: `1` is the `+ 1` in the index type `Fin (N + 1)`, so the correlation is indexed by `N + 1`
+lags; `0` is the lower bound in `nonneg`, `posMass` and `hankel`; `2` appears as the exponent in
+`ρ (e₁ + e₂) ^ 2`, the square of the middle term in log-convexity, and as the doubling in
+`2 * c₂ ≤ m`, which is the even lag `ev N c₂` expressed in the half-extent bound. -/
 structure ShapeFacts {N : ℕ} (m : ℕ) (ρ : Fin (N + 1) → ℝ) : Prop where
   /-- Reflection positivity, first conjunct: the correlation is nonnegative at every lag. -/
   nonneg : ∀ d, 0 ≤ ρ d
@@ -107,40 +85,28 @@ structure ShapeFacts {N : ℕ} (m : ℕ) (ρ : Fin (N + 1) → ℝ) : Prop where
 
 /-! ## 2. The real correlator satisfies them -/
 
-/-- **THE WILSON CORRELATOR SATISFIES ALL FIVE SHAPE FACTS**, at even extent with `3 ≤ m` and
-nonnegative coupling. This is what makes `ShapeFacts` non-vacuous and about the right object.
+/-- `ShapeFacts m (MassGap.wilsonCorrAt Nap β)` at even extent. Takes `hm : Nap + 1 = 2 * m`,
+`hm3 : 3 ≤ m` and `hβ : 0 ≤ β`, and builds the structure field by field:
 
-**THE HYPOTHESES ARE NOT UNIFORM ACROSS THE CLAUSES, and the strongest one is `evenAntitone`'s.**
-Read the proof term rather than this list, but it is:
+* `nonneg` and `posMass` are the two conjuncts of
+  `Complete.wilson_reflection_positive_at_even Nap m hm _ hβ`, which uses the coupling sign;
+* `symm` is `MomentShape.wilsonCorrAt_neg Nap β`, which takes no hypothesis on extent or coupling;
+* `logConvex` is `LogConvex.corrClay_log_convex Nap m hm _ β`, with the even-extent geometry and no
+  coupling hypothesis;
+* `evenAntitone` is `MomentShape.corrClay_even_antitone_of_nonneg_coupling hm hm3 hβ`, the clause
+  that consumes `3 ≤ m`;
+* `hankel` is `Hankel.corrClay_hankel_psd (Nap + 1) m hm _ β`.
 
-* `symm` takes NO hypothesis — `MomentShape.wilsonCorrAt_neg` holds at every extent and every real
-  coupling;
-* `logConvex` and `hankel` take the even-extent geometry and `0 < m`, and no coupling hypothesis —
-  the even-lag weld is a conditional square against a strictly positive Boltzmann weight;
-* `nonneg` and `posMass` take `2 ≤ m` and `0 ≤ β` — `Complete.wilson_reflection_positive_at_even`'s
-  own hypotheses, the coupling sign being load-bearing there by
-  `CharacterExpansion.NegControl.su3_kernel_nonneg_iff`;
-* `evenAntitone` takes `3 ≤ m` — `MomentShape.corrClay_even_antitone`'s own bound, where its
-  hypotheses stop being vacuous. So this theorem is stated at extent at least SIX, not four.
+Scope: the hypotheses differ across the clauses and `3 ≤ m` is the strongest of them, so the
+ theorem as a whole holds at extent at least six. The even-extent and nonnegative-coupling
+restrictions are what let every clause go through a theorem rather than through the named axiom
+`Complete.wilson_reflection_positive_at`; `#print axioms` on this declaration reports
+`propext, Classical.choice, Quot.sound`.
 
-That is carried rather than hidden, and it does not weaken the no-go: `flatRead_shapeFacts` holds at
-EVERY `m`, so the capstone is quantified over all of them and the `3 ≤ m` here only makes the
-premise set the no-go refutes larger.
-
-**FOOTPRINT: FOUNDATIONAL-ONLY, and that was not a foregone conclusion.** `Complete.wilsonCorrAt`
-is the correlation the named axiom `Complete.wilson_reflection_positive_at` is stated about, so a
-nonnegativity clause about it would ordinarily carry that axiom. It does not, because the even
-extent and the nonnegative coupling let every clause go through `wilson_reflection_positive_at_even`
-and `corrClay_even_antitone_of_nonneg_coupling`, which are THEOREMS — that restriction is exactly
-what buys the foundational footprint, and it is why this theorem is stated on that domain rather
-than at every extent and every real coupling. `#print axioms` at the foot of this file reports
-`[propext, Classical.choice, Quot.sound]` and nothing else.
-
-Every declaration in this file is foundational-only. The no-go therefore rests on no cited physics:
-it is a statement about what these five inequalities do and do not entail, and it would stand even
-if the named axiom were withdrawn.
-
-DERIVED: `m` is half the extent, carried in from the cited lemmas; no numeral is introduced here. -/
+DERIVED: `1` is the `+ 1` of the extent relation `Nap + 1 = 2 * m` and of the index type; `2` is the
+doubling in that relation, which is what makes the extent even; `3` is `corrClay_even_antitone`'s own
+lower bound on the half-extent, transcribed; `0` is the lower bound on the coupling, required by
+`wilson_reflection_positive_at_even`. `m` is half the extent, carried in from the cited lemmas. -/
 theorem wilsonCorrAt_shapeFacts (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm3 : 3 ≤ m)
     {β : ℝ} (hβ : 0 ≤ β) :
     ShapeFacts (N := Nap) m (MassGap.wilsonCorrAt Nap β) where
@@ -167,23 +133,30 @@ def flatRead (N : ℕ) : MassGap.Moment.Read N where
   hρ := fun _ => zero_le_one
   hpos := Finset.sum_pos (fun _ _ => one_pos) ⟨0, Finset.mem_univ 0⟩
 
-/-- The flat read IS `Moment.Read`'s `Inhabited` default, definitionally. -/
+/-- `flatRead N = (default : Moment.Read N)`, by `rfl`: the two are the same term, so results about
+`flatRead` are results about the tree's own default read.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem flatRead_eq_default (N : ℕ) : flatRead N = (default : MassGap.Moment.Read N) := rfl
 
-/-- The flat read's correlation, by definition. -/
+/-- `(flatRead N).ρ = fun _ : Fin (N + 1) => (1 : ℝ)`, by `rfl`: the flat read's correlation is the
+constant one at every lag.
+
+DERIVED: `1` is the `+ 1` in the index type `Fin (N + 1)` and the constant value of the
+correlation. -/
 theorem flatRead_rho (N : ℕ) : (flatRead N).ρ = fun _ : Fin (N + 1) => (1 : ℝ) := rfl
 
-/-- **THE FLAT READ SATISFIES EVERY SHAPE FACT**, at every extent and every half-extent bound, with
-a foundational footprint.
+/-- `ShapeFacts m (fun _ : Fin (N + 1) => (1 : ℝ))` at every `N` and every `m`. Clause by clause:
+`nonneg` is `zero_le_one`; `posMass` is `Finset.sum_pos` over the nonempty index type; `symm` is
+`rfl`, since the function is constant; `logConvex` holds with equality; `evenAntitone` is
+`le_refl`; and `hankel` reduces to `0 ≤ (∑ i, c i) * (∑ i, c i)`, which is `mul_self_nonneg`.
 
-Clause by clause: `1 ≥ 0`; the total mass is `N+1 > 0`; `−d` and `d` carry the same value because
-every lag does; `1² ≤ 1·1` with equality, so log-convexity holds as an equality; `1 ≤ 1`, so the
-even lags are non-increasing non-strictly; and the Hankel form collapses to `(∑ c)² ≥ 0`.
+Scope: `m` is unconstrained, so the constant correlation satisfies the structure at every
+half-extent bound at once.
 
-This is the whole no-go: the five facts are a description of a shape, and the constant shape has it.
-
-DERIVED: the `1` is not a scale. The cosine average is invariant under rescaling `ρ` by any positive
-constant, so every constant read gives the same answer and `1` is the representative. -/
+DERIVED: `1` is the `+ 1` of the index type `Fin (N + 1)` and the constant value of the
+correlation. That value is not a scale: `cosAvg` divides by the total mass, so any positive constant
+gives the same average and `1` is the representative. -/
 theorem flatRead_shapeFacts (N m : ℕ) : ShapeFacts (N := N) m (fun _ : Fin (N + 1) => (1 : ℝ)) where
   nonneg := fun _ => zero_le_one
   posMass := Finset.sum_pos (fun _ _ => one_pos) ⟨0, Finset.mem_univ 0⟩
@@ -202,15 +175,17 @@ theorem flatRead_shapeFacts (N m : ℕ) : ShapeFacts (N := N) m (fun _ : Fin (N 
 
 /-! ## 4. The flat read's cosine average is exactly zero -/
 
-/-- The cosine average of a read — the scalar `ApertureRoute.cosAvgEven` is, and the scalar the
-tension is the negative logarithm of. Named here so the capstone's conclusion is the floor
-comparison the flagship actually consumes and not a paraphrase of it. -/
+/-- The cosine average of a read: `∑ d, R.p d * Real.cos (R.θ d)`, the scalar
+`ApertureRoute.cosAvgEven` is and the one whose negative logarithm is the tension.
+
+DERIVED: no numeral occurs; the weights and angles are the read's own. -/
 noncomputable def cosAvg {N : ℕ} (R : MassGap.Moment.Read N) : ℝ :=
   ∑ d, R.p d * Real.cos (R.θ d)
 
-/-- **THIS IS `cosAvgEven`.** `ApertureRoute.cosAvgEven a β` is `cosAvg` of `EvenAperture.readEven`,
-definitionally — so the capstone below is about the scalar `ConfinesAtAnAperture` bounds and nothing
-adjacent to it. -/
+/-- `ApertureRoute.cosAvgEven a β = cosAvg (EvenAperture.readEven a β)`, by `rfl`. So the
+statements below are about the scalar `ApertureRoute.ConfinesAtAnAperture` bounds.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem cosAvgEven_eq (a : MassGap.EvenAperture.EvenAp) (β : ℝ) :
     MassGap.ApertureRoute.cosAvgEven a β = cosAvg (MassGap.EvenAperture.readEven a β) := rfl
 
@@ -243,7 +218,11 @@ theorem flat_cosAvg_eq_zero (N : ℕ) (hN : 1 ≤ N) :
         rw [Finset.mul_sum]
     _ = 0 := by rw [hzero, mul_zero]
 
-/-- The same, at `cosAvg`. -/
+/-- `cosAvg (flatRead N) = 0` for `1 ≤ N`. The previous theorem with the sum folded into `cosAvg`,
+which is definitionally that sum.
+
+DERIVED: `1` is the lower bound on the extent index, inherited from `flat_cosAvg_eq_zero`; `0` is
+the value of the average. -/
 theorem flat_cosAvg (N : ℕ) (hN : 1 ≤ N) : cosAvg (flatRead N) = 0 :=
   flat_cosAvg_eq_zero N hN
 
@@ -268,7 +247,10 @@ is on the `β`-dependence, and a sixth fact of the same kind will not close it.
 The `m` is universally quantified, so the statement is not evaded by taking the half-extent bound
 large: the flat read satisfies `ShapeFacts m` for every `m` at once.
 
-DERIVED: `3^{−1/4} = e^{−κ₀}` is `ApertureRoute.ConfinesAtAnAperture`'s own floor, transcribed. -/
+DERIVED: `3` is the base of the floor `(3 : ℝ) ^ (-(1 : ℝ) / 4)`, and the `1` and `4` are its
+exponent `-1/4`; together they are `exp (-κ₀)` for `κ₀ = (1 / 4) * log 3`, transcribed unchanged from
+`ApertureRoute.ConfinesAtAnAperture`. The other `1` is the lower bound `1 ≤ N`, which
+`flat_cosAvg_eq_zero` requires so that the angles are those of at least two roots of unity. -/
 theorem shape_facts_do_not_imply_confinement (N m : ℕ) (hN : 1 ≤ N) :
     ¬ (∀ R : MassGap.Moment.Read N, ShapeFacts m R.ρ →
         (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvg R) := by
@@ -279,13 +261,14 @@ theorem shape_facts_do_not_imply_confinement (N m : ℕ) (hN : 1 ≤ N) :
   have h3 : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
   linarith
 
-/-- **THE SAME, WITHOUT THE `Moment.Read` WRAPPER** — quantified over bare correlations, with the
-cosine average written out. Stated so the no-go cannot be read as an artefact of packaging the
-correlation into a `Read`: the conclusion here is the explicit sum
+/-- The same negation over bare correlations `ρ : Fin (N + 1) → ℝ`, with the cosine average written
+out as `∑ d, (ρ d / ∑ d', ρ d') * Real.cos (2 * Real.pi * d / (N + 1))`. That sum is
+`Moment.Read.p` and `Moment.Read.θ` unfolded, so the step from `flat_cosAvg_eq_zero` is `rfl`; the
+floor compared against is the same.
 
-    ∑_d (ρ_d / ∑ ρ) · cos(2π d/(N+1))
-
-which is `Moment.Read.p` and `Moment.Read.θ` unfolded, and the comparison is the same floor. -/
+DERIVED: `3`, `1` and `4` are the floor `(3 : ℝ) ^ (-(1 : ℝ) / 4)`, as above; `2` is the `2 * π` of
+a full turn, so the angles are `2πd / (N + 1)`; the `1`s in `Fin (N + 1)` and `(N : ℝ) + 1` are the
+number of lags, and the remaining `1` is the bound `1 ≤ N`. -/
 theorem shape_facts_do_not_imply_confinement' (N m : ℕ) (hN : 1 ≤ N) :
     ¬ (∀ ρ : Fin (N + 1) → ℝ, ShapeFacts m ρ →
         (3 : ℝ) ^ (-(1 : ℝ) / 4)

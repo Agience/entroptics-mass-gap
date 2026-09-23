@@ -2,70 +2,44 @@ import Mathlib
 import MassGap.SmallCouplingGap
 
 /-!
-# MassGap.RatioGap — vary the argument, and the constant moves while the shape does not
+# MassGap.RatioGap — two centres for a two-sided kernel bound, and the threshold each gives
 
-`SmallCouplingGap` bounds a kernel's action on mean-zero functions by its deviation from a centre,
-and evaluates the reach: the derived contraction holds only for `β < L/|ι|`, inversely proportional
-to the number of links in the slice. Its own docstring leaves the threshold constant `L` free and
-says why: *"improving the constant moves the threshold, it does not change what the threshold is
-proportional to."*
+A `TwoSided K lo hi` is the statement that every entry of `K : X → X → ℝ` lies in `[lo, hi]`. Two
+ways of centring it are compared.
 
-**That is an assertion about all future improvements, and this file tests it by making one.**
+* `TwoSided.abs_sub_lo_le` centres at `lo` and gives deviation `hi − lo`.
+* `TwoSided.abs_sub_mid_le` centres at `(lo + hi)/2` and gives deviation `(hi − lo)/2`.
+* `midpoint_is_strictly_better` is `(hi − lo)/2 < hi − lo` whenever `lo < hi`.
 
-## The test
+`meanZero_form_le` turns a deviation bound `δ` into `|∫ f·(Kf)| ≤ δ·(∫|f|)²` for mean-zero `f`, and
+`meanZero_form_le_of_norm_le_one` converts the `L¹` factor to `L²` by Cauchy–Schwarz, giving
+`|∫ f·(Kf)| ≤ δ` when `∫ f² ≤ 1`. `rayleigh_const_ge` is the companion at the constant function:
+`lo ≤ ∫∫K` on a probability measure.
 
-Centre the kernel at the LOW END of its range and the deviation is `hi − lo`; centre it at the
-MIDPOINT and the deviation is `(hi − lo)/2`, half as large. That is a strictly better argument on the
-same data — the sharpening `SmallCouplingGap` §4 establishes for the slice weight, applied here to a
-general two-sided bound. It changes the separation condition from `hi < 2·lo` to `hi < 3·lo`, and at
-the real kernel it changes `cap² < 2` to `cap² < 3`.
+The two centres give two separation conditions — `separates_iff_hi_lt_two_lo` (`hi < 2·lo`) and
+`separates_iff_hi_lt_three_lo` (`hi < 3·lo`) — which `cap_condition` and `cap_sq_lt_iff` turn into
+`cap² < A` and then into a linear condition on the exponent. `transferCap_eq` identifies the cap with
+`exp Cs · exp (|b|·|ι|·N)`, `rank_cancels` cancels the `N` of `b = β/N` against the `N` in the
+exponent, and `threshold_shape` rearranges the result: for every constant `L`,
 
-**And `threshold_shape` shows that changes nothing that matters.** For every constant `L`,
+    2·(Cs + β·v) < L   ↔   β < (L − 2·Cs) / (2·v),
 
-    2·(Cs + β·|ι|) < L   ↔   β < (L − 2·Cs) / (2·|ι|),
+so the coupling threshold is inversely proportional to `v` at every `L`.
+`threshold_at_endpoint_centre` and `threshold_at_midpoint_centre` are the instances at `L = log 2`
+and `L = log 3`, `midpoint_admits_strictly_more` compares them, `threshold_is_satisfiable` exhibits a
+point satisfying the first, and `threshold_fails_at_large_slices` shows that at any fixed positive
+`β` and any `L` some positive `v` fails the condition.
 
-so the endpoint centre gives `L = log 2`, the midpoint centre gives `L = log 3`, and both give a
-threshold inversely proportional to `|ι|`. The numerator moved by `log(3/2)`; the `1/|ι|` did not
-move at all.
+## Scope
 
-**So `SmallCouplingGap`'s claim survives a real attempt to break it**, and that is what this file is
-for. It is a stability check on a negative result, not a new route to a gap.
+These are inequalities between integrals and between real numbers. No statement mentions an operator,
+an eigenvalue or a spectrum, and none is proved from a min–max principle. `TwoSided` carries no
+symmetry hypothesis, so the kernel it describes need not be symmetric, and the quadratic form on
+mean-zero functions is not tied here to a second eigenvalue of anything.
 
-## Why that is worth a file
-
-A negative result derived from one argument invites the reply *"then use a better argument"*. The
-reply is reasonable and it has to be answered by trying, not by asserting. Here the better argument
-exists, is strictly better, is proved better, and moves the threshold by a constant factor while the
-volume dependence is untouched. **The `1/|ι|` is therefore a property of the DATUM — a two-sided
-bound on the kernel, which is exponential in `|ι|` because `transferCap = exp(Cs + |b|·|ι|·N)` — and
-not of either argument built on it.**
-
-That is the finding, and it is narrower than "no positivity argument can work". See the limits below.
-
-## What the theorems here actually are
-
-**Integral inequalities, not spectral theory.** `rayleigh_const_ge` bounds a double integral;
-`rayleigh_meanZero_le` and `rayleigh_meanZero_le_of_norm_le_one` bound a quadratic form. None of them
-mentions an operator, an eigenvalue or a spectrum, and none is proved from min–max.
-
-The quadratic form on mean-zero functions is the quantity min–max would bound the second eigenvalue
-by, **if** the kernel operator were self-adjoint and compact and the top eigenvalue isolated. This
-file assumes none of that and proves none of it. `TwoSided` carries no symmetry hypothesis; the
-tree's symmetry theorem (`SliceTransfer.transferKernel_symm`) is not used here; and nothing in the
-tree establishes compactness of `transferCLM` or that its spectrum has an isolated top. **So the
-separation conditions below are conditions on an integral inequality, and calling them a spectral
-gap would be a claim this file does not make.**
-
-## ⚠ Limits, stated exactly
-
-* **Nothing here concludes `TransferGap.GapAt`**, and neither does `SmallCouplingGap` — its own §
-  header says only that `GapAt` "is not vacuous as a hypothesis".
-* **`separates_iff_*` are arithmetic equivalences**, proved by `linarith`, between two inequalities
-  on reals. Both sides of the estimate they compare are slack, so failing the condition implies
-  nothing about any spectrum.
-* **Two centres are not all centres.** What is proved is that one specific improvement moves only the
-  constant. A third argument could in principle do better, and this file does not exclude that; it
-  removes the cheapest reason to expect it.
+`separates_iff_hi_lt_two_lo` and `separates_iff_hi_lt_three_lo` are `linarith` equivalences between
+two inequalities on reals. What is compared is two centres, so the results fix the threshold constant
+that each of those two produces and nothing about any other centre.
 -/
 
 namespace MassGap.RatioGap
@@ -74,9 +48,13 @@ open MeasureTheory
 
 /-! ## 1. The datum: a two-sided bound, and the two ways to centre it -/
 
-/-- **A TWO-SIDED BOUND ON A KERNEL**, named so that what the argument consumes is visible in the
-statement rather than spread across hypotheses. **No symmetry is assumed** — see the module header on
-why that rules out reading anything here spectrally.
+/-- A `Prop`-valued structure on a kernel `K : X → X → ℝ` and two reals: every entry is at least `lo`
+and at most `hi`. Named so that what the arguments below consume is one hypothesis rather than
+several.
+
+No symmetry, measurability, positivity or continuity of `K` is assumed, and `X` carries no structure
+beyond being a type. Nothing requires `lo ≤ hi`, although the two fields together force it when `X`
+is nonempty.
 
 DERIVED: no numeral; `lo` and `hi` are the caller's. -/
 structure TwoSided {X : Type*} (K : X → X → ℝ) (lo hi : ℝ) : Prop where
@@ -85,10 +63,10 @@ structure TwoSided {X : Type*} (K : X → X → ℝ) (lo hi : ℝ) : Prop where
   /-- Every entry is at most `hi`. -/
   le_hi : ∀ V W, K V W ≤ hi
 
-/-- **CENTRED AT THE LOW END**, the deviation is the full width. This is the naive reading of a
-two-sided bound and it is the one the sharper centre below beats.
+/-- Centred at the low end, the deviation is the full width: `|K V W - lo| ≤ hi - lo` at every pair
+of arguments. Both sides of `abs_le` are `linarith` from the two fields of `TwoSided`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. `lo` and `hi` are the structure's. -/
 theorem TwoSided.abs_sub_lo_le {X : Type*} {K : X → X → ℝ} {lo hi : ℝ}
     (h : TwoSided K lo hi) (V W : X) : |K V W - lo| ≤ hi - lo := by
   have hlo := h.lo_le V W
@@ -98,15 +76,15 @@ theorem TwoSided.abs_sub_lo_le {X : Type*} {K : X → X → ℝ} {lo hi : ℝ}
 
 #print axioms TwoSided.abs_sub_lo_le
 
-/-- **CENTRED AT THE MIDPOINT, THE DEVIATION IS HALVED.** Strictly better than
-`TwoSided.abs_sub_lo_le` whenever `lo < hi`, and this is the improvement the whole file is a test of.
+/-- Centred at the midpoint, the deviation is the half-width:
+`|K V W - (lo + hi)/2| ≤ (hi - lo)/2` at every pair of arguments. Same `linarith` proof as
+`TwoSided.abs_sub_lo_le`, at the other centre.
 
-It is `SmallCouplingGap`'s own sharpening — `two_point_spread_le` and `abs_sliceWeight_sub_cosh_le`
-make the same move for the slice weight — read here at the level of a general two-sided bound, where
-it is the elementary fact that the midpoint of an interval is the point furthest from both ends by
-the least amount.
+The same move `SmallCouplingGap`'s `two_point_spread_le` and `abs_sliceWeight_sub_cosh_le` make for
+the slice weight, stated here for a general two-sided bound.
 
-DERIVED: the `2`s are the midpoint and the half-width of an interval, not chosen tolerances. -/
+DERIVED: the two `2`s are the midpoint of an interval and its half-width; both are forced by the
+interval `[lo, hi]` and neither is a chosen tolerance. -/
 theorem TwoSided.abs_sub_mid_le {X : Type*} {K : X → X → ℝ} {lo hi : ℝ}
     (h : TwoSided K lo hi) (V W : X) :
     |K V W - (lo + hi) / 2| ≤ (hi - lo) / 2 := by
@@ -117,9 +95,14 @@ theorem TwoSided.abs_sub_mid_le {X : Type*} {K : X → X → ℝ} {lo hi : ℝ}
 
 #print axioms TwoSided.abs_sub_mid_le
 
-/-- **AND IT IS STRICTLY BETTER**, not merely no worse — the negative control for using it.
+/-- `(hi - lo) / 2 < hi - lo` whenever `lo < hi`. One `linarith` step; the strict hypothesis is what
+makes the conclusion strict rather than non-strict.
 
-DERIVED: the `2` is the half-width's; the strictness is `lo < hi`. -/
+So the midpoint deviation is strictly smaller than the endpoint deviation on any nondegenerate
+interval — the control for preferring `TwoSided.abs_sub_mid_le`.
+
+DERIVED: the `2` is the half-width's, carried from `TwoSided.abs_sub_mid_le`; it is the only
+numeral, and the strictness comes from the hypothesis `lo < hi`. -/
 theorem midpoint_is_strictly_better {lo hi : ℝ} (h : lo < hi) :
     (hi - lo) / 2 < hi - lo := by linarith
 
@@ -127,12 +110,16 @@ theorem midpoint_is_strictly_better {lo hi : ℝ} (h : lo < hi) :
 
 /-! ## 2. What a centred bound gives on mean-zero functions -/
 
-/-- **THE CONSTANT FUNCTION ALREADY SEES `lo`.** On a probability measure `∫∫K ≥ lo`.
+/-- On a probability measure, `lo ≤ ∫ V, (∫ W, K V W ∂μ) ∂μ`. Twice `integral_mono` against the
+constant `lo`, using the `lo_le` field of `TwoSided`; the two integrability hypotheses `hKi` and
+`hrow` are what let the comparison be made on each integral.
 
-This is the quantity a Rayleigh quotient at the constant vector would be. It is stated and proved as
-a double integral, with no operator in sight, and the module header says why that distinction is kept.
+A double integral, not an operator applied to a constant vector; no eigenvalue or Rayleigh quotient
+appears in the statement. `hi` enters only through the `TwoSided` argument and plays no part in the
+conclusion.
 
-DERIVED: `lo` is the caller's; the unit mass is `IsProbabilityMeasure`'s. -/
+DERIVED: no numeral. `lo` and `hi` are the caller's, and the unit total mass used by the two
+`integral_mono` steps comes from `IsProbabilityMeasure`, not from a literal in the statement. -/
 theorem rayleigh_const_ge {X : Type*} [MeasurableSpace X] {μ : Measure X} [IsProbabilityMeasure μ]
     {K : X → X → ℝ} {lo hi : ℝ} (h : TwoSided K lo hi)
     (hKi : ∀ V, Integrable (fun W => K V W) μ)
@@ -145,10 +132,21 @@ theorem rayleigh_const_ge {X : Type*} [MeasurableSpace X] {μ : Measure X} [IsPr
 
 #print axioms rayleigh_const_ge
 
-/-- **THE QUADRATIC FORM ON MEAN-ZERO FUNCTIONS, AT ANY CENTRE.** The centre enters only through the
-deviation `δ`, which is why the two centres above can be compared by substituting into one theorem.
+/-- For `f` integrable with `∫ f = 0`, and a kernel whose deviation from a centre `c` is at most `δ`
+everywhere,
 
-DERIVED: no numeral. The exponent `2` is the `L¹` norm appearing once for each copy of `f`. -/
+    |∫ V, f V * (∫ W, K V W * f W ∂μ) ∂μ|  ≤  δ * (∫ x, |f x| ∂μ) ^ 2.
+
+`SmallCouplingGap.kernel_contracts_on_mean_zero` bounds the inner integral by `δ · ∫|f|` at each `V`;
+multiplying by `|f V|` and integrating gives the outer factor.
+
+The centre `c` enters only through `δ`, which is what lets the two centres above be compared by
+substituting into this one statement. `c` may depend on `V`, and no symmetry or positivity of `K` is
+used.
+
+DERIVED: `0` is the mean `f` is required to have, in `hmean`. The exponent `2` counts the two copies
+of `f` in the double integral, one from each factor, each contributing a `∫|f|`; it is not a
+tolerance. -/
 theorem meanZero_form_le {X : Type*} [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] {K : X → X → ℝ} {c : X → ℝ} {δ : ℝ}
     (hK : ∀ V W, |K V W - c V| ≤ δ)
@@ -175,14 +173,20 @@ theorem meanZero_form_le {X : Type*} [MeasurableSpace X] {μ : Measure X}
 
 #print axioms meanZero_form_le
 
-/-- **AND IN `L²`, WHICH IS THE NORMALISATION THE COMPARISON NEEDS.** Cauchy–Schwarz on a probability
-measure turns the `L¹` factor into the `L²` one:
-`(∫|f|)² ≤ ∫|f|² = ∫f² ≤ 1`, via `SmallCouplingGap.sq_integral_le_integral_sq`.
+/-- The same bound with the `L¹` factor removed: under the extra hypotheses `0 ≤ δ` and
+`∫ f² ≤ 1`,
 
-Without this step the bound above is an `L¹` statement being compared with an `L²` normalisation, and
-the comparison would not be like for like.
+    |∫ V, f V * (∫ W, K V W * f W ∂μ) ∂μ|  ≤  δ.
 
-DERIVED: the `1` is the unit `L²` normalisation the caller supplies; the `2`s are squares. -/
+`SmallCouplingGap.sq_integral_le_integral_sq` — Cauchy–Schwarz on a probability measure — gives
+`(∫|f|)² ≤ ∫|f|² = ∫ f² ≤ 1`, and `hδ` is what lets the bound be multiplied through by it.
+
+This is the form in which the deviation is compared with an `L²` normalisation, so the two sides are
+measured in the same norm.
+
+DERIVED: `0` is the lower bound on `δ` in `hδ` and the mean `f` is required to have in `hmean`. `1`
+is the `L²` normalisation the caller supplies in `hnorm`, and it is what makes the right-hand side
+`δ` alone. The exponents `2` are squares of `f`, in `hf2` and `hnorm`. -/
 theorem meanZero_form_le_of_norm_le_one {X : Type*} [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] {K : X → X → ℝ} {c : X → ℝ} {δ : ℝ} (hδ : 0 ≤ δ)
     (hK : ∀ V W, |K V W - c V| ≤ δ)
@@ -209,27 +213,40 @@ theorem meanZero_form_le_of_norm_le_one {X : Type*} [MeasurableSpace X] {μ : Me
 
 /-! ## 3. The two separation conditions the two centres give -/
 
-/-- **ENDPOINT CENTRE: separation needs the kernel within a factor of TWO of itself.**
+/-- `hi - lo < lo ↔ hi < 2 * lo`, for reals. Both directions by `linarith`.
 
-DERIVED: the `2` is the arithmetic of `hi − lo < lo`, not a chosen tolerance. -/
+The endpoint deviation falls below `lo` exactly when the kernel's range is within a factor of two of
+itself.
+
+DERIVED: `2` is what `hi − lo < lo` rearranges to; it is the arithmetic of moving `lo` across the
+inequality, not a chosen tolerance. -/
 theorem separates_iff_hi_lt_two_lo {lo hi : ℝ} : hi - lo < lo ↔ hi < 2 * lo := by
   constructor <;> intro h <;> linarith
 
 #print axioms separates_iff_hi_lt_two_lo
 
-/-- **MIDPOINT CENTRE: a factor of THREE.** The strictly better argument buys a strictly weaker
-condition, which is what makes the comparison in §5 a real test rather than a restatement.
+/-- `(hi - lo) / 2 < lo ↔ hi < 3 * lo`, for reals. Both directions by `linarith`.
 
-DERIVED: the `2` is the half-width; the `3` is what `(hi − lo)/2 < lo` rearranges to. Neither is
-chosen. -/
+The midpoint deviation falls below `lo` under a strictly weaker condition than the endpoint
+deviation does: a factor of three rather than two.
+
+DERIVED: `2` is the half-width from `TwoSided.abs_sub_mid_le`; `3` is what `(hi − lo)/2 < lo`
+rearranges to once that half is cleared. Neither is chosen. -/
 theorem separates_iff_hi_lt_three_lo {lo hi : ℝ} : (hi - lo) / 2 < lo ↔ hi < 3 * lo := by
   constructor <;> intro h <;> linarith
 
 #print axioms separates_iff_hi_lt_three_lo
 
-/-- A reciprocal pair of bounds turns either condition into one on the cap, at the factor `A`.
+/-- For `0 < c` and any real `A`: `c < A * c⁻¹ ↔ c ^ 2 < A`. Rewrites `A * c⁻¹` as `A / c` and
+clears the division by `lt_div_iff₀`.
 
-DERIVED: `A` is the caller's factor — `2` from the endpoint centre, `3` from the midpoint. -/
+The form in which a separation condition stated on a reciprocal pair of bounds becomes a condition on
+the square of the cap. `A` is unrestricted in sign; positivity of `c` is what the division needs.
+
+DERIVED: `0` is the strict lower bound on `c` in `hc`, which the division requires. The exponent `2`
+is the square produced by multiplying the inequality through by `c`. `A` is the caller's factor —
+`2` when it comes from `separates_iff_hi_lt_two_lo` and `3` from
+`separates_iff_hi_lt_three_lo` — and is a variable here, not a literal. -/
 theorem cap_condition {c A : ℝ} (hc : 0 < c) : c < A * c⁻¹ ↔ c ^ 2 < A := by
   rw [show A * c⁻¹ = A / c by ring, lt_div_iff₀ hc, sq]
 
@@ -237,19 +254,31 @@ theorem cap_condition {c A : ℝ} (hc : 0 < c) : c < A * c⁻¹ ↔ c ^ 2 < A :=
 
 /-! ## 4. And each is a linear condition on the exponent -/
 
-/-- The cap is a single exponential — `rfl`-level against `SliceTransferSelfAdjoint.transferCap`.
+/-- `SliceTransferSelfAdjoint.transferCap ι N b Cs = Real.exp Cs * Real.exp (|b| * (|ι| * N))`, by
+`rfl`. Records that the cap is a single exponential whose exponent is linear in the slice size
+`Fintype.card ι` and in the rank `N`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral of this declaration's; every constant is `transferCap`'s and is carried through
+the definitional equality. -/
 theorem transferCap_eq (ι : Type) [Fintype ι] (N : ℕ) (b Cs : ℝ) :
     MassGap.SliceTransferSelfAdjoint.transferCap ι N b Cs
       = Real.exp Cs * Real.exp (|b| * ((Fintype.card ι : ℝ) * (N : ℝ))) := rfl
 
 #print axioms transferCap_eq
 
-/-- **`cap² < A` IS LINEAR IN THE EXPONENT**, at every positive factor `A` — so the endpoint centre
-(`A = 2`) and the midpoint centre (`A = 3`) differ only in `log A`.
+/-- For any reals `v`, `Nr`, `b`, `Cs` and any `A > 0`:
 
-DERIVED: the `2` is the square of the cap; `A` and `log A` are the caller's factor. -/
+    (exp Cs * exp (|b| * (v * Nr))) ^ 2 < A   ↔   2 * (Cs + |b| * (v * Nr)) < Real.log A.
+
+The square of the product of exponentials is one exponential at twice the exponent, and `exp` is
+strictly monotone with `exp (log A) = A`.
+
+So the condition is linear in the exponent at every positive `A`, and two different factors differ
+only through `log A`. `hA` is needed for `Real.exp_log`.
+
+DERIVED: `0` is the strict lower bound on `A` in `hA`. The exponent `2` squares the cap, and the
+factor `2` on the right is that same square moved into the exponent, so the two are one numeral.
+`A` and `log A` are the caller's factor, variables rather than literals. -/
 theorem cap_sq_lt_iff (v Nr b Cs A : ℝ) (hA : 0 < A) :
     (Real.exp Cs * Real.exp (|b| * (v * Nr))) ^ 2 < A
       ↔ 2 * (Cs + |b| * (v * Nr)) < Real.log A := by
@@ -266,14 +295,17 @@ theorem cap_sq_lt_iff (v Nr b Cs A : ℝ) (hA : 0 < A) :
 
 #print axioms cap_sq_lt_iff
 
-/-- **THE RANK CANCELS**, as in `SmallCouplingGap.reach_is_inverse_in_slice_size`: the `N` of
-`b = β/N` meets the `N` of `|sliceForm| ≤ |ι|·N`.
+/-- For `0 ≤ β` and `0 < Nr`: `2 * (Cs + |β / Nr| * (v * Nr)) < L ↔ 2 * (Cs + β * v) < L`. The
+identity `|β/Nr| * (v * Nr) = β * v` is established by `abs_div` and the two sign hypotheses, then
+rewritten.
 
-The extra hypothesis `0 ≤ β` is not slack borrowed from the sibling: `transferCap` carries `|b|`
-where `deviation_lt_one_iff` carries a bare `b`, so the absolute value has to be discharged here and
-the sibling never had one.
+The rank `Nr` appearing in `b = β / Nr` cancels against the `Nr` in the exponent, leaving a condition
+in `β` and `v` alone. Both sign hypotheses are consumed by the absolute value: `transferCap` carries
+`|b|` rather than a bare `b`, so `hβ` is what removes it.
 
-DERIVED: the `2` is `cap_sq_lt_iff`'s square; `L` is the caller's threshold constant. -/
+DERIVED: `0` is the lower bound on `β` in `hβ` and the strict lower bound on `Nr` in `hN`; both are
+spent discharging the absolute value. `2` is `cap_sq_lt_iff`'s square moved into the exponent,
+carried unchanged on both sides. `L` is the caller's threshold constant, a variable. -/
 theorem rank_cancels {β Cs v Nr L : ℝ} (hβ : 0 ≤ β) (hN : 0 < Nr) :
     2 * (Cs + |β / Nr| * (v * Nr)) < L ↔ 2 * (Cs + β * v) < L := by
   have hshape : |β / Nr| * (v * Nr) = β * v := by
@@ -283,19 +315,22 @@ theorem rank_cancels {β Cs v Nr L : ℝ} (hβ : 0 ≤ β) (hN : 0 < Nr) :
 
 #print axioms rank_cancels
 
-/-! ## 5. ⭐ The test, and its result -/
+/-! ## 5. The threshold, as a condition on the coupling -/
 
-/-- **⭐ THE THRESHOLD IS `1/|ι|` FOR EVERY CONSTANT `L`.**
+/-- For `0 < v` and any reals `β`, `Cs`, `L`:
 
-This is the statement the file exists to make, and `L` is free on purpose — exactly as it is free in
-`SmallCouplingGap.reach_is_inverse_in_slice_size`, and for the same reason. The endpoint centre
-supplies `L = log 2`, the midpoint centre supplies `L = log 3`, and **any future sharpening supplies
-some other `L` and lands here too.**
+    2 * (Cs + β * v) < L   ↔   β < (L - 2 * Cs) / (2 * v).
 
-The numerator is what an argument can move. The `1/(2·v)` is what it cannot.
+`lt_div_iff₀` at `0 < 2 * v`, then `linarith` in both directions.
 
-DERIVED: the `2`s are `cap_sq_lt_iff`'s square, carried through the rearrangement. `L` is the
-caller's and nothing about it is chosen here. -/
+`L` is a variable, so the shape holds at every threshold constant: the numerator depends on `L` and
+`Cs`, and the denominator is `2 * v` regardless. `threshold_at_endpoint_centre` and
+`threshold_at_midpoint_centre` are the two instances used here.
+
+DERIVED: `0` is the strict lower bound on `v` in `hv`, which the division requires. The three `2`s
+are one numeral, `cap_sq_lt_iff`'s square, carried through the rearrangement — it multiplies the
+exponent on the left and appears in the numerator and denominator on the right. `L` is the caller's
+threshold constant. -/
 theorem threshold_shape {β Cs v L : ℝ} (hv : 0 < v) :
     2 * (Cs + β * v) < L ↔ β < (L - 2 * Cs) / (2 * v) := by
   rw [lt_div_iff₀ (by linarith : (0 : ℝ) < 2 * v)]
@@ -303,33 +338,46 @@ theorem threshold_shape {β Cs v L : ℝ} (hv : 0 < v) :
 
 #print axioms threshold_shape
 
-/-- **THE ENDPOINT CENTRE'S THRESHOLD.**
+/-- `threshold_shape` at `L = Real.log 2`:
+`2 * (Cs + β * v) < log 2 ↔ β < (log 2 - 2 * Cs) / (2 * v)`, for `0 < v`. The body is
+`threshold_shape hv`.
 
-DERIVED: `log 2` is `separates_iff_hi_lt_two_lo`'s factor read through `cap_sq_lt_iff`. -/
+DERIVED: `0` is the strict lower bound on `v`. The three `2`s outside the logarithm are
+`threshold_shape`'s single square. The `2` inside `Real.log 2` is
+`separates_iff_hi_lt_two_lo`'s factor, read through `cap_sq_lt_iff`, so it is the endpoint centre's
+and is not chosen here. -/
 theorem threshold_at_endpoint_centre {β Cs v : ℝ} (hv : 0 < v) :
     2 * (Cs + β * v) < Real.log 2 ↔ β < (Real.log 2 - 2 * Cs) / (2 * v) :=
   threshold_shape hv
 
 #print axioms threshold_at_endpoint_centre
 
-/-- **THE MIDPOINT CENTRE'S THRESHOLD — a different numerator, the same `1/v`.**
+/-- `threshold_shape` at `L = Real.log 3`:
+`2 * (Cs + β * v) < log 3 ↔ β < (log 3 - 2 * Cs) / (2 * v)`, for `0 < v`. The body is
+`threshold_shape hv`, the same as `threshold_at_endpoint_centre`; only the constant differs, and the
+denominator `2 * v` is unchanged.
 
-DERIVED: `log 3` is `separates_iff_hi_lt_three_lo`'s factor read through `cap_sq_lt_iff`. -/
+DERIVED: `0` is the strict lower bound on `v`. The three `2`s outside the logarithm are
+`threshold_shape`'s single square. `3` inside `Real.log 3` is
+`separates_iff_hi_lt_three_lo`'s factor, read through `cap_sq_lt_iff`, so it is the midpoint centre's
+and is not chosen here. -/
 theorem threshold_at_midpoint_centre {β Cs v : ℝ} (hv : 0 < v) :
     2 * (Cs + β * v) < Real.log 3 ↔ β < (Real.log 3 - 2 * Cs) / (2 * v) :=
   threshold_shape hv
 
 #print axioms threshold_at_midpoint_centre
 
-/-- **⭐ SO THE BETTER ARGUMENT IS BETTER, AND BY A BOUNDED AMOUNT.** The midpoint centre admits
-strictly more couplings than the endpoint centre at every slice size — the improvement is real — and
-the ratio of the two thresholds is `log 3 / log 2` at `Cs = 0`, a constant, **independent of `v`**.
+/-- `(log 2 - 2 * Cs) / (2 * v) < (log 3 - 2 * Cs) / (2 * v)` for every `Cs` and every `0 < v`. Both
+sides share the denominator, so `div_lt_div_iff₀` reduces it to `log 2 < log 3`, which is
+`Real.log_lt_log`.
 
-An improvement that multiplied the threshold by a constant cannot rescue a threshold that is
-proportional to `1/v`, and this is that statement.
+The midpoint centre's threshold exceeds the endpoint centre's at every `v`. The two denominators are
+identical, so the difference is in the numerator alone and does not depend on `v`.
 
-DERIVED: `log 2` and `log 3` are the two centres' factors; the `2`s are the square and the
-rearrangement. Nothing is chosen. -/
+DERIVED: `0` is the strict lower bound on `v`. The `2`s outside the logarithms are
+`threshold_shape`'s single square, appearing in both numerators and both denominators. `2` inside
+`log 2` and `3` inside `log 3` are the endpoint and midpoint centres' factors, from
+`separates_iff_hi_lt_two_lo` and `separates_iff_hi_lt_three_lo`. Nothing is chosen. -/
 theorem midpoint_admits_strictly_more {Cs v : ℝ} (hv : 0 < v) :
     (Real.log 2 - 2 * Cs) / (2 * v) < (Real.log 3 - 2 * Cs) / (2 * v) := by
   have h2v : (0 : ℝ) < 2 * v := by linarith
@@ -342,15 +390,16 @@ theorem midpoint_admits_strictly_more {Cs v : ℝ} (hv : 0 < v) :
 
 /-! ## 6. Anti-vacuity, in both directions -/
 
-/-- **THE THRESHOLD IS NOT EMPTY**, and not only in the free case. `Cs = 1/4` is a genuine bound on a
-non-zero intra-slice action, and at one link `β = 1/20` still qualifies against `log 2`.
+/-- `2 * ((1/4 : ℝ) + (1/20) * 1) < Real.log 2`. The left side is `0.6`, and
+`Real.log_two_gt_d9` bounds `log 2` below by a rational above it.
 
-The earlier witness used `Cs = 0`, which forces `s ≡ 0` — the free theory — and so exhibited only the
-degenerate sub-family. This one does not.
+A point satisfying `threshold_at_endpoint_centre`'s left-hand condition, so that condition is not
+vacuous. The value of `Cs` is nonzero, so the witness is not the free case.
 
-CHOSEN: `Cs = 1/4`, `v = 1` and `β = 1/20` are a witness with room to spare against `log 2 ≈ 0.6931`;
-`Cs` is deliberately non-zero so the witness is not the free case, and none of the three carries any
-other role. -/
+CHOSEN: `Cs = 1/4`, `v = 1` and `β = 1/20` are a witness with room against `log 2 ≈ 0.6931`; `Cs` is
+deliberately nonzero, `v = 1` is one link, and none of the three carries any other role. The leading
+`2` is `threshold_shape`'s square, not part of the witness, and `2` inside `Real.log 2` is the
+endpoint centre's factor. -/
 theorem threshold_is_satisfiable :
     2 * ((1 / 4 : ℝ) + (1 / 20) * 1) < Real.log 2 := by
   have h := Real.log_two_gt_d9
@@ -359,11 +408,15 @@ theorem threshold_is_satisfiable :
 
 #print axioms threshold_is_satisfiable
 
-/-- **⛔ AND IT IS GENUINELY LOST IN THE VOLUME, AT EVERY CONSTANT `L`.** At any fixed positive
-coupling there is a slice size past which the condition fails — and because `L` is free, this covers
-the endpoint centre, the midpoint centre and every sharpening that supplies some other `L`.
+/-- For every `Cs`, every `L`, and every `β > 0`, there is a `v > 0` with
+`¬ (2 * (Cs + β * v) < L)`. The witness is any `v` above `max ((L - 2*Cs)/(2*β)) 0`, supplied by
+`exists_gt`.
 
-DERIVED: no numeral of its own; the `2` is `threshold_shape`'s and `L` is the caller's. -/
+So at a fixed positive coupling the condition fails at some positive slice size. `L` is universally
+quantified, so this covers every threshold constant, including `log 2` and `log 3`.
+
+DERIVED: `0` is the strict lower bound on `β` in `hβ` and the strict lower bound asserted of the
+witness `v`. `2` is `threshold_shape`'s square, carried unchanged. `L` and `Cs` are the caller's. -/
 theorem threshold_fails_at_large_slices {β Cs L : ℝ} (hβ : 0 < β) :
     ∃ v : ℝ, 0 < v ∧ ¬ (2 * (Cs + β * v) < L) := by
   obtain ⟨v, hv⟩ := exists_gt (max ((L - 2 * Cs) / (2 * β)) 0)

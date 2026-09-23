@@ -3,133 +3,100 @@ import MassGap.StrongCoupling
 import MassGap.ShareEnvelope
 
 /-!
-# MassGap.StrongArm — the contact-relative power law on a DERIVED coupling interval `[0, b]`
+# MassGap.StrongArm — a contact-relative quartic bound on a coupling interval `[0, b]`
 
-`ShareEnvelope.substrate_of_contact_relative_decay` discharges the substrate hypothesis from
+The main statement, `contact_relative_on_strong_arm`, produces a cut `b > 0` at which
+`coreRate (16 * 4) b < 1`, and, given a contact floor on `[0, b]`, one constant `C` with
 
-    ρ(d) ≤ C · ρ(0) / circLag(d)⁴      for circLag d ≥ m₀
+    wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d) ^ 4
 
-with ONE `C`, ONE `m₀`, EVERY aperture and EVERY coupling. The coupling quantifier is the open part.
-This file closes the STRONG-COUPLING ARM of that quantifier, and it does so CONDITIONALLY on one
-named statement which it does NOT prove — see "What is open" below, which is the point of the file.
+at every aperture `N`, every `β ∈ [0, b]`, and every lag with `1 ≤ circLag d`. That is the shape
+`ShareEnvelope.substrate_of_contact_relative_decay` consumes, restricted to a bounded coupling
+interval; that theorem quantifies over every coupling and is not invoked here.
 
-## What is proved here, unconditionally
+## The pieces
 
-* `exists_strong_arm_cut` — a coupling cut `b > 0` with `coreRate (16·4) b < 1`, obtained from
-  `StrongCoupling.core_rate_lt_one_of_small_hypercubic`, which is an EXISTENTIAL carrying no numeral.
-  Nothing is chosen: the cut is the estimate's own neighbourhood of `β = 0` and no literal appears in
-  the statement.
-* `coreRate_mono_beta`, `corePrefactor_mono_beta`, `coreConst_mono_beta` — the rate and the constant
-  are monotone in the coupling on `β ≥ 0`, read off the closed forms
-  `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` and `corePrefactor K β = 8(4(K+1)²)²(e^{4βK})²`. This is
-  what makes ONE `(C, r)` serve the whole closed interval `[0, b]` rather than one pair per coupling.
-* `exists_geom_quartic_bound`, `exists_contact_shape_bound` — a geometric sequence dominates a
-  quartic OUTRIGHT, not merely eventually: for `0 ≤ r < 1` there is a single `S` with
-  `L⁴·r^{L−1} ≤ S` at every `L ≥ 1`. The consequence is that the cut `m₀` in the target statement is
-  `1`, DERIVED rather than chosen — no lag has to be excluded — and `S` comes from `r` alone, through
-  `tendsto_pow_const_mul_const_pow_of_lt_one` and boundedness of a convergent sequence.
-* `wilsonCorrAt_eq_corrClay` — the identification `wilsonCorrAt N β d = corrClay (N+1) β d`, by
-  `rfl`, checked here rather than taken from a docstring. It is what lets the estimate on the
-  constructed `SU(3)` four-dimensional correlation be read as a statement about the object
-  `substrate_of_contact_relative_decay` consumes.
-* `coreRate_exceeds` — the rate is unbounded above in the coupling, at every degree: `∀ M, ∃ β ≥ 0,
-  M < coreRate K β`. That is the whole statement. `coreRate K β ≥ 8β`, which falls out of
-  `e^x ≥ x + 1`, is how the witness is built inside the proof and is NOT a conclusion a caller gets.
-  This is the arithmetic behind the reading "the rate diverges as `β → ∞`", made a theorem rather
-  than a remark.
+* `exists_strong_arm_cut` — the cut, from
+  `StrongCoupling.core_rate_lt_one_of_small_hypercubic`'s half-open interval, taken at its midpoint
+  so the rate is below one at the endpoint itself. The lemma is existential, so the cut is not
+  named.
+* `coreRate_mono_beta`, `corePrefactor_mono_beta`, `coreConst_mono_beta` — the rate, the prefactor
+  and the assembled constant are monotone in the coupling on `β ≥ 0`, read off the closed forms
+  `coreRate K β = 4(K+1)²(e^{2β}-1)e^{4βK}` and `corePrefactor K β = 8(4(K+1)²)²(e^{4βK})²`. This is
+  what lets one pair `(C, r)` serve a whole closed interval. `StrongCoupling`'s own `coreRate_mono`
+  and `coreConst_mono` are monotonicity in the degree `K`, a different statement.
+* `coreConst_nonneg_of_lt_one` — non-negativity of the assembled constant below the rate-one
+  threshold.
+* `exists_geom_quartic_bound`, `exists_contact_shape_bound` — at `0 ≤ r < 1` a single `S` bounds
+  `L ^ 4 * r ^ (L - 1)` at every `L ≥ 1`, not merely eventually. The sequence converges to zero, so
+  it is bounded; `(m+1)^4 ≤ 16m^4 + 16` reduces it to two Mathlib limits. The consequence is that the
+  lag cut in the main statement is `1`, which excludes only `circLag d = 0`.
+* `wilsonCorrAt_eq_corrClay` — `wilsonCorrAt N β d = WilsonBridge.corrClay (N + 1) β d`, by `rfl`,
+  stated so the build checks it. It is what lets
+  `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` be read as a bound on `wilsonCorrAt`.
+* `coreRate_exceeds` — for every `M` there is a `β ≥ 0` with `M < coreRate K β`.
 
-## What is open, and it is the whole crux
+## Scope
 
-`contact_relative_on_strong_arm` is stated as an IMPLICATION out of `ContactFloor b`:
+`ContactFloor b` — one `δ > 0` with `δ ≤ wilsonCorrAt N β 0` at every aperture and every
+`β ∈ [0, b]` — is a hypothesis of `contact_relative_on_strong_arm`, defined here and proved in
+`MassGap.ContactFloor` by `contactFloor_holds`, whose floor is `e^{-128b}·δ₀` and therefore degrades
+with `b`. `PlaqVariance.corrClay_zero_pos` gives strict positivity of the contact value at each
+aperture and coupling but attaches no number, so it does not supply an aperture-uniform floor.
 
-    ∃ δ > 0, ∀ N, ∀ β ∈ [0, b],  δ ≤ wilsonCorrAt N β 0
+`coreRate_exceeds` says `coreRate` is unbounded in the coupling, so the condition
+`coreRate (16 * 4) b < 1` that `exists_strong_arm_cut` supplies cannot hold at large `β`. That is a
+statement about the reach of this estimate. Nothing here says the quartic bound fails at large
+coupling.
 
-— one positive lower bound on the CONTACT value, uniform in the APERTURE. This file does not prove
-it. **IT IS PROVED**, in `MassGap.ContactFloor`: `contactFloor_holds b : ContactFloor b` at
-every real `b`, foundational only, with `contact_relative_unconditional` carrying nothing. The floor
-is `e^{−128b}·δ₀`, and the section below says where the aperture leaves.
-
-**⛔ WHAT REMAINS OPEN IS THE COUPLING RANGE, NOT THE FLOOR.** `b` is existential and comes from
-`exists_strong_arm_cut`, whose only lever is `coreRate (16·4) b < 1`; `coreRate_exceeds` proves that
-condition FAILS at large `β`. So this arm is closed on `[0, b]` and the crux is `β > b`.
-
-`PlaqVariance.corrClay_zero_pos` gives `0 < corrClay (N+1) β 0` at every aperture and every coupling,
-but it gives no number: its proof runs through `Continuous.ae_eq_iff_eq` against an
-`IsOpenPosMeasure`, which yields strict positivity and no rate. Taking a minimum over a compact
-coupling interval at FIXED aperture is immediate from that plus
-`PlaqVariance.continuous_wilsonSystem_boltz`; the minimum so obtained depends on the aperture, and a
-hypothesis that quantifies over every aperture cannot consume it. The only quantitative Gibbs-
-versus-Haar domination in the tree, `WilsonRead.expect_ge_haar_of_nonneg`, carries the constant
-`e^{−8|β|}` whose exponent is twice the plaquette count, so it degrades as the lattice grows; and
-`WilsonReal.wilsonSystem_partition_pos` bounds the weight by `e^{|β|·2·card Pq}`, extensive in the
-same way.
-
-The ingredients a locality argument would need do exist — `ReflectionPositivity.hol_congr_on_support`
-(a holonomy reads only its own links), `ReflectionPositivity.action_split` and
-`action_on_congr_of_support` (the action splits along a plaquette subset), `StrongCoupling.touchDeg`
-with `touchDeg_bd_le` (the number of plaquettes meeting one plaquette is `≤ 16·dim`, with no extent
-in it), and `WilsonReal.block_integral_factor` — but every one of them is used in the tree in the
-identity, vanishing or upper-bound direction, and none is applied to bound anything below.
-`WilsonAnalytic.expect_lipschitz_local` produces exactly the extent-free Lipschitz constant such an
-argument wants, and it takes as hypothesis that the connected correlation VANISHES outside a finite
-plaquette set at every coupling, which is the clustering statement under proof.
-
-So the arm is reduced to one statement, not discharged.
-
-## Two things this file must not be read as saying
-
-**It does not discharge the substrate hypothesis.** That hypothesis needs every coupling.
-`substrate_of_contact_relative_decay` is not invoked here and cannot be: what is produced is a
-`(C, m₀)` valid on `[0, b]` and silent on `[b, ∞)`. What changes is the shape of what is open — from
-the whole coupling line to `[b, ∞)`, plus `ContactFloor b` on the arm itself.
-
-**The route re-introduces a non-scale-free ingredient, and the tree already says why that costs
-something.** `ShareEnvelope.mass_floor_is_not_scale_free` proves that pairing an unnormalised
-envelope with a positive floor is strictly stronger than the scale-free conclusion it is used to
-reach, by one whole degree of freedom. `ContactFloor` is a floor of exactly that kind. The strong-
-coupling estimate bounds `|ρ(d)|` ABSOLUTELY, the target is a RATIO, and the only way across is a
-floor on the denominator — so the composite hypothesis here is strictly stronger than the
-contact-relative law it yields. That is a real cost and it is not hidden by the statement.
-
-## Why the arm is unfinished rather than excluded
-
-The reason on record for not pursuing this route is that the rate diverges as `β → ∞`.
-`coreRate_exceeds` confirms the arithmetic: `coreRate K β = 4(K+1)²(e^{2β}−1)e^{4βK}` is unbounded,
-so `coreRate < 1` — the hypothesis every bound in `StrongCoupling` carries — cannot hold at large
-coupling. That is a statement about the reach of THIS estimate. It is not a theorem that the
-contact-relative law fails at large coupling, and no such theorem is in the tree. The estimate stops;
-the arm it stops on is the one this file fills in.
+The main statement carries `C` bound outside the quantifiers over `N`, `β` and `d`, and is silent
+about `β > b`. `ShareEnvelope.mass_floor_is_not_scale_free` records that pairing an unnormalised
+envelope with a positive floor is strictly stronger than the scale-free conclusion it yields, by one
+degree of freedom; the hypothesis pair here is of that kind, since the strong-coupling estimate
+bounds `|ρ(d)|` absolutely and the conclusion is a ratio.
 -/
 
 namespace MassGap.StrongArm
 
 open MassGap.StrongCoupling
 
-/-! ### The coupling cut, from the estimate's own neighbourhood
+/-! ### The coupling cut
 
-`core_rate_lt_one_of_small_hypercubic` gives a half-open interval on which the rate is below one. The
-statements below need the rate below one AT an endpoint, so that monotonicity in the coupling can
-carry one constant across the whole CLOSED interval. That endpoint is produced from the existential,
-never named: no numeral occurs in `exists_strong_arm_cut`. -/
+`StrongCoupling.core_rate_lt_one_of_small_hypercubic` gives a half-open interval on which the rate is
+below one. The statements below need the rate below one at an endpoint, so that monotonicity in the
+coupling can carry one constant across a closed interval. The endpoint comes out of that existential
+rather than being named. -/
 
-/-- **A CUT WITH THE RATE BELOW ONE AT THE ENDPOINT.** The interval `core_rate_lt_one_of_small_hypercubic`
-supplies is half-open, so its right endpoint need not itself satisfy the bound. Any interior point
-does, and the statement records only that one exists — the threshold is whatever `16·dim` makes it,
-exactly as in the lemma this is derived from. -/
+/-- There is a `b > 0` with `coreRate (16 * 4) b < 1`.
+
+The interval `StrongCoupling.core_rate_lt_one_of_small_hypercubic` supplies is half-open, so its
+right endpoint need not satisfy the bound; the witness taken is its midpoint. The statement is
+existential, so no particular cut is named.
+
+DERIVED: `16` and `4` are the degree argument `16 * 4` — `StrongCoupling.touchDeg_bd_le`'s cap of
+`16` plaquettes per dimension meeting a given plaquette, times the lattice dimension `4`. `0` is the
+strict lower bound on the cut and `1` the rate threshold the estimate carries. None is chosen
+here. -/
 theorem exists_strong_arm_cut : ∃ b : ℝ, 0 < b ∧ coreRate (16 * 4) b < 1 := by
   obtain ⟨b₀, hb₀, hlt⟩ := core_rate_lt_one_of_small_hypercubic 4
   exact ⟨b₀ / 2, by linarith, hlt (b₀ / 2) (by linarith) (by linarith)⟩
 
 #print axioms exists_strong_arm_cut
 
-/-! ### Monotonicity in the coupling — what makes ONE constant serve a whole interval
+/-! ### Monotonicity in the coupling
 
-Both `coreRate` and `corePrefactor` are increasing on `β ≥ 0`, read off their closed forms. Neither
-monotonicity is in the tree: `coreRate_mono` and `coreConst_mono` are monotonicity in the DEGREE `K`
-at fixed coupling, which is a different statement and does not give this one. -/
+`coreRate` and `corePrefactor` are increasing on `β ≥ 0`, read off their closed forms. This is what
+lets one constant serve a whole interval. `StrongCoupling.coreRate_mono` and
+`StrongCoupling.coreConst_mono` are monotonicity in the degree `K` at fixed coupling, a different
+statement. -/
 
-/-- The rate increases with the coupling on `β ≥ 0`: both `e^{2β} − 1` and `e^{4βK}` do, and both are
-nonnegative there. -/
+/-- `coreRate K x ≤ coreRate K y` whenever `0 ≤ x ≤ y`, at every degree `K`.
+
+Both factors of the closed form, `e^{2β} - 1` and `e^{4βK}`, are non-negative and increasing on
+`β ≥ 0`. The hypothesis `0 ≤ x` is needed for the first factor's non-negativity.
+
+DERIVED: `0` is the lower bound on the coupling in `hx : 0 ≤ x`, and is the only numeral in the
+statement; the closed form's constants live inside `coreRate`. -/
 theorem coreRate_mono_beta (K : ℕ) {x y : ℝ} (hx : 0 ≤ x) (hxy : x ≤ y) :
     coreRate K x ≤ coreRate K y := by
   have hK : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
@@ -153,8 +120,13 @@ theorem coreRate_mono_beta (K : ℕ) {x y : ℝ} (hx : 0 ≤ x) (hxy : x ≤ y) 
 
 #print axioms coreRate_mono_beta
 
-/-- The prefactor increases with the coupling on `β ≥ 0`: it is a positive constant times
-`(e^{4βK})²`. -/
+/-- `corePrefactor K x ≤ corePrefactor K y` whenever `x ≤ y`, at every degree `K`.
+
+The closed form is a positive constant times `(e^{4βK})²`, which is increasing. The binder `_hx` is
+present for symmetry with `coreRate_mono_beta` and is not used.
+
+DERIVED: `0` is the lower bound in the unused binder `_hx : 0 ≤ x`, and is the only numeral in the
+statement. -/
 theorem corePrefactor_mono_beta (K : ℕ) {x y : ℝ} (_hx : 0 ≤ x) (hxy : x ≤ y) :
     corePrefactor K x ≤ corePrefactor K y := by
   have hK : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
@@ -169,9 +141,14 @@ theorem corePrefactor_mono_beta (K : ℕ) {x y : ℝ} (_hx : 0 ≤ x) (hxy : x �
 
 #print axioms corePrefactor_mono_beta
 
-/-- **The assembled constant increases with the coupling**, below the rate-one threshold: the
-numerator increases and the denominator `1 − rate` decreases. This is the step that lets the value at
-the right endpoint bound the constant on the whole interval. -/
+/-- `coreConst K x ≤ coreConst K y` whenever `0 ≤ x ≤ y` and `coreRate K y < 1`.
+
+The numerator increases by `corePrefactor_mono_beta` and the denominator `1 - coreRate` decreases by
+`coreRate_mono_beta`. The hypothesis at `y` is what keeps both denominators positive, so it is
+required at the upper point rather than the lower.
+
+DERIVED: `0` is the lower bound in `hx : 0 ≤ x`; `1` is the rate threshold in `hy : coreRate K y < 1`,
+which is where the denominator `1 - coreRate` changes sign. -/
 theorem coreConst_mono_beta (K : ℕ) {x y : ℝ} (hx : 0 ≤ x) (hxy : x ≤ y)
     (hy : coreRate K y < 1) : coreConst K x ≤ coreConst K y := by
   have hrx : coreRate K x ≤ coreRate K y := coreRate_mono_beta K hx hxy
@@ -200,8 +177,13 @@ theorem coreConst_mono_beta (K : ℕ) {x y : ℝ} (hx : 0 ≤ x) (hxy : x ≤ y)
 
 #print axioms coreConst_mono_beta
 
-/-- The assembled constant is nonnegative below the rate-one threshold — `corePrefactor ≥ 1` and the
-denominator is positive. -/
+/-- `0 ≤ coreConst K β` when `0 ≤ β` and `coreRate K β < 1`.
+
+`StrongCoupling.one_le_corePrefactor` makes the numerator at least one and the rate hypothesis makes
+the denominator positive.
+
+DERIVED: `0` is the lower bound on the coupling and the bound concluded; `1` is the rate threshold in
+`hr : coreRate K β < 1`. -/
 theorem coreConst_nonneg_of_lt_one (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate K β < 1) :
     0 ≤ coreConst K β := by
   have hP : (1 : ℝ) ≤ corePrefactor K β := one_le_corePrefactor K hβ
@@ -211,16 +193,24 @@ theorem coreConst_nonneg_of_lt_one (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr : c
 
 #print axioms coreConst_nonneg_of_lt_one
 
-/-! ### A geometric sequence dominates a quartic OUTRIGHT
+/-! ### A geometric sequence against a quartic
 
-The target carries `1/L⁴` and the estimate carries `r^{L−1}`. What is needed is one `S` with
-`L⁴·r^{L−1} ≤ S` for EVERY `L ≥ 1` — not eventually, because an eventual statement would leave a cut
-`m₀` to be named, and naming it would be choosing it. Boundedness of the whole sequence removes the
-cut: `m₀ = 1`, and the only lag it excludes is `circLag d = 0`, which is `d = 0` — the contact term
-itself, which the target statement does not speak about. -/
+The conclusion carries `1 / L ^ 4` and the estimate carries `r ^ (L - 1)`. What is needed is one `S`
+with `L ^ 4 * r ^ (L - 1) ≤ S` at every `L ≥ 1`, not merely eventually: an eventual statement would
+leave a cut to be named. Boundedness of the whole sequence makes the cut `1`, whose only exclusion is
+`circLag d = 0`, the contact term. -/
 
-/-- **Boundedness of `(m+1)⁴·rᵐ` at `0 ≤ r < 1`.** The sequence converges to zero, hence is bounded;
-`(m+1)⁴ ≤ 16m⁴ + 16` reduces it to the two Mathlib limits `(m)⁴rᵐ → 0` and `rᵐ → 0`. -/
+/-- At `0 ≤ r < 1` there is an `S ≥ 0` with `((m : ℝ) + 1) ^ 4 * r ^ m ≤ S` at every `m : ℕ`.
+
+The sequence converges to zero, hence is bounded; `(m+1)^4 ≤ 16 m^4 + 16` reduces it to the two
+Mathlib limits `m^4 r^m → 0` and `r^m → 0`. The witness is taken as `max S 0` so the non-negativity
+clause holds.
+
+Scope: the bound holds at every `m`, not only past a cut. `r < 1` is strict and required.
+
+DERIVED: `0` is the lower bound on `r` and on `S`; `1` is the strict upper bound on `r` and the
+offset in `(m : ℝ) + 1`; `4` is the quartic's exponent, the power the conclusion of the main theorem
+divides by. The `16`s used to dominate `(m+1)^4` appear in the proof, not in the statement. -/
 theorem exists_geom_quartic_bound {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
     ∃ S : ℝ, 0 ≤ S ∧ ∀ m : ℕ, ((m : ℝ) + 1) ^ 4 * r ^ m ≤ S := by
   have h4 : Filter.Tendsto (fun m : ℕ => (m : ℝ) ^ 4 * r ^ m) Filter.atTop (nhds 0) :=
@@ -250,8 +240,13 @@ theorem exists_geom_quartic_bound {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
 
 #print axioms exists_geom_quartic_bound
 
-/-- **The shape the contact-relative statement consumes.** One `S` with `L⁴·r^{L−1} ≤ S` at every
-`L ≥ 1`. Reindexing `m = L − 1` is the whole content. -/
+/-- At `0 ≤ r < 1` there is an `S ≥ 0` with `(L : ℝ) ^ 4 * r ^ (L - 1) ≤ S` at every `L ≥ 1`.
+
+`exists_geom_quartic_bound` reindexed by `m = L - 1`; the hypothesis `1 ≤ L` is what makes the
+natural-number subtraction faithful.
+
+DERIVED: `0` is the lower bound on `r` and on `S`; `1` is the strict upper bound on `r`, the lower
+bound on `L`, and the offset in `L - 1`; `4` is the quartic's exponent. -/
 theorem exists_contact_shape_bound {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
     ∃ S : ℝ, 0 ≤ S ∧ ∀ L : ℕ, 1 ≤ L → (L : ℝ) ^ 4 * r ^ (L - 1) ≤ S := by
   obtain ⟨S, hS0, hS⟩ := exists_geom_quartic_bound hr0 hr1
@@ -263,53 +258,52 @@ theorem exists_contact_shape_bound {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
 
 #print axioms exists_contact_shape_bound
 
-/-! ### The identification, checked rather than cited
+/-! ### The identification of the two correlation names
 
 `Complete.wilsonCorrAt N β` is `WilsonBridge.corrClay (N+1) β` by definition, and `corrClay` is
 `corrHyper` at `d = 4`, `Nc = 3`, plane `(0,1)`, lag axis `2`, which unfolds to `wilsonCorrConn` on
-`WilsonHypercubic.bd (d := 4) (n := N+1)`. The first link is `rfl` and is recorded as a theorem so
-that the build checks it; the rest is `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow`'s own
-statement, which is already in terms of `corrClay`. -/
+`WilsonHypercubic.bd (d := 4) (n := N+1)`. The first link is stated as a theorem so the build checks
+it; `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` is already in terms of `corrClay`. -/
 
-/-- `wilsonCorrAt` IS `corrClay`, definitionally. -/
+/-- `wilsonCorrAt N β d = WilsonBridge.corrClay (N + 1) β d`, by `rfl`.
+
+Stated as a theorem so the identification is checked by the build rather than asserted in prose.
+
+DERIVED: `1` is the offset in the aperture size `N + 1`, which is how `corrClay` indexes the extent
+that `wilsonCorrAt` indexes by `N`. It is the only numeral in the statement. -/
 theorem wilsonCorrAt_eq_corrClay (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
     MassGap.wilsonCorrAt N β d = MassGap.WilsonBridge.corrClay (N + 1) β d := rfl
 
 #print axioms wilsonCorrAt_eq_corrClay
 
-/-! ### The open input, named
+/-! ### The contact floor, as a named `Prop`
 
-Everything below the cut `b` reduces to this one statement and nothing else. Its two quantifiers are
-not symmetric: the coupling one is over a COMPACT interval and is discharged at each fixed aperture
-by continuity and `PlaqVariance.corrClay_zero_pos`; the APERTURE one is the crux, and nothing in the
-development bears on it. -/
+`ContactFloor b` asks for one `δ > 0` good at every aperture and every `β ∈ [0, b]`. Its two
+quantifiers behave differently: at fixed aperture the coupling one is a minimum over a compact
+interval, available from continuity and `PlaqVariance.corrClay_zero_pos`, while the aperture one asks
+for a single number across all extents. -/
 
-/-- **THE CARRIED HYPOTHESIS: an APERTURE-UNIFORM floor on the contact value, on `[0, b]`.**
+/-- `ContactFloor b` unfolds to: there is a `δ > 0` such that `δ ≤ wilsonCorrAt N β 0` at every
+aperture `N` and every coupling `β` with `0 ≤ β ≤ b`.
 
-`PlaqVariance.corrClay_zero_pos` gives `0 < corrClay (N+1) β 0` at every aperture and every coupling,
-with no number attached; this asks for ONE number good at every aperture at once.
+One number, uniform in the aperture. `PlaqVariance.corrClay_zero_pos` gives strict positivity of the
+contact value at each aperture and coupling separately but attaches no number, so it does not supply
+this.
 
-**IT IS PROVED**, in `MassGap.ContactFloor`: `contactFloor_holds b : ContactFloor b` at every real `b`,
-foundational only, and `contact_relative_unconditional` is the theorem below with this hypothesis
-discharged and nothing carried. The floor is `e^{−128b}·δ₀`. The aperture leaves at two places and
-both are worth naming: the exponent counts only the plaquettes SHARING A LINK with the one being read,
-which `StrongCoupling.touchDeg_bd_le` caps at `16·dim = 64` with no extent in it (the `2` is
-`WilsonAction.wilsonDensity_le_two`); and at `β = 0` the measure IS Haar, so the contact value is a
-single `SU(3)` number, `haarSecond − haarMean²`, the same at every extent `≥ 2`
-(`ContactFloor.corrClay_zero_at_zero_eq`, `corrClay_zero_at_zero_const`).
+`MassGap.ContactFloor` proves it: `contactFloor_holds b` at every real `b`, with floor
+`e^{-128b}·δ₀`. The aperture drops out at two places. The exponent counts only the plaquettes sharing
+a link with the one being read, which `StrongCoupling.touchDeg_bd_le` caps at `16` per dimension,
+hence `64` in four dimensions, with no extent in it; doubling that by
+`WilsonAction.wilsonDensity_le_two`'s range bound gives `128`. And at `β = 0` the measure is Haar, so
+the contact value is a single `SU(3)` number, the same at every extent at least `2`
+(`corrClay_zero_at_zero_eq`, `corrClay_zero_at_zero_const`).
 
-WHAT IT DOES NOT GIVE, and cannot: the floor DEGRADES like `e^{−128b}`, so this proves a floor on each
-bounded coupling interval and never one number for the half-line. That is not slack in the proof — the
-plaquette variance really does vanish as `β → ∞`. Any argument for `[b, ∞)` must therefore never bound
-`ρ(0)` below at all.
+Scope: the floor obtained there depends on `b` and decreases with it, so the statement is per bounded
+interval and does not extend to the half-line.
 
-DERIVED: every numeral above is read off an existing theorem, none is chosen. `16·dim` is
-`StrongCoupling.touchDeg_bd_le`'s cap on the number of plaquettes sharing a link with the one being
-read; `dim = 4` is the lattice's own dimension, so that cap is `64`. The `2` is
-`WilsonAction.wilsonDensity_le_two`, and `2 · 64 = 128` is the exponent. `3` is `SU(3)`'s rank, carried
-from the ensemble. The statement's own `0` is the lower end of the physical coupling domain and `1`
-does not appear in it — `0 < δ` is positivity, not a magnitude, and `δ` is existentially bound rather
-than named. -/
+DERIVED: the statement carries no numeral. `ContactFloor` takes `b : ℝ` and everything else — the
+positivity of `δ`, the coupling range and the contact lag — lives in the body rather than the
+type. -/
 def ContactFloor (b : ℝ) : Prop :=
   ∃ δ : ℝ, 0 < δ ∧ ∀ (N : ℕ) (β : ℝ), 0 ≤ β → β ≤ b → δ ≤ MassGap.wilsonCorrAt N β 0
 
@@ -317,22 +311,30 @@ def ContactFloor (b : ℝ) : Prop :=
 
 /-! ### The strong arm -/
 
-/-- **THE CONTACT-RELATIVE POWER LAW ON A DERIVED COUPLING INTERVAL.**
+/-- There is a cut `b > 0` with `coreRate (16 * 4) b < 1` such that, given `ContactFloor b`, there is
+one constant `C ≥ 0` with
 
-There is a cut `b > 0`, coming from the strong-coupling estimate's own neighbourhood of zero and
-named by no numeral, such that GIVEN an aperture-uniform contact floor on `[0, b]` there is ONE
-constant `C` with
+    wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d : ℝ) ^ 4
 
-    ρ_N(β, d) ≤ C · ρ_N(β, 0) / circLag(d)⁴
+at every aperture `N`, every coupling `β` with `0 ≤ β ≤ b`, and every lag with `1 ≤ circLag d`.
 
-at EVERY aperture `N`, EVERY coupling `β ∈ [0, b]` and EVERY lag with `circLag d ≥ 1`. The cut in the
-lag is `1`, which excludes only the contact term itself, so it is not a threshold in any working
-sense; `C` is `coreConst(16·4, b) · S / δ` with `S` the geometric-beats-quartic bound at
-`r = coreRate(16·4, b)`, so every ingredient is read off the estimate and the floor.
+The cut comes from `exists_strong_arm_cut`. The constant produced is
+`coreConst (16 * 4) b * S / δ`, with `S` from `exists_contact_shape_bound` at
+`r = coreRate (16 * 4) b` and `δ` from the floor. Monotonicity in the coupling
+(`coreRate_mono_beta`, `coreConst_mono_beta`) is what lets the endpoint values serve the whole
+interval; `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` supplies the absolute bound and
+`wilsonCorrAt_eq_corrClay` transfers it.
 
-WHAT IS NOT PROVED: `ContactFloor b`, and anything at all on `[b, ∞)`. This does not discharge
-`ShareEnvelope.substrate_of_contact_relative_decay`'s hypothesis, which quantifies over every
-coupling, and that theorem is deliberately not invoked. -/
+Scope. `C` is bound outside the quantifiers over `N`, `β` and `d`. `ContactFloor b` is a hypothesis,
+and the statement is silent about `β > b`; `coreRate_exceeds` shows the cut condition cannot hold at
+large coupling. `ShareEnvelope.substrate_of_contact_relative_decay` quantifies over every coupling and
+is not invoked. The lag condition `1 ≤ circLag d` excludes only `circLag d = 0`.
+
+DERIVED: `16` and `4` are the degree argument `16 * 4`, `StrongCoupling.touchDeg_bd_le`'s per-dimension
+cap times the lattice dimension. `0` is the lower end of the coupling range, the lower bound on `b`
+and on `C`, and the contact lag in `wilsonCorrAt N β 0`. `1` is the rate threshold in
+`coreRate (16 * 4) b < 1`, the lag cut in `1 ≤ circLag d`, and the offset in the aperture size
+`Fin (N + 1)`. `4` is also the exponent the conclusion divides by, from the target shape. -/
 theorem contact_relative_on_strong_arm :
     ∃ b : ℝ, 0 < b ∧ coreRate (16 * 4) b < 1 ∧
       (ContactFloor b →
@@ -395,16 +397,20 @@ theorem contact_relative_on_strong_arm :
 
 #print axioms contact_relative_on_strong_arm
 
-/-! ### The reach of the estimate, and what it does and does not exclude -/
+/-! ### The reach of the estimate in the coupling -/
 
-/-- **THE RATE IS UNBOUNDED IN THE COUPLING.** The statement is exactly that: for every `M` there is
-a `β ≥ 0` with `M < coreRate K β`. The inequality `coreRate K β ≥ 8β` — from `e^{2β} − 1 ≥ 2β`,
-`4(K+1)² ≥ 4` and `e^{4βK} ≥ 1` — is the WITNESS CONSTRUCTION inside the proof, which takes
-`β = max 0 ((M+1)/8)`; it is not what the theorem asserts, and quoting it as the theorem overstates
-what is available to a caller. This is the arithmetic
-behind "the rate diverges as `β → ∞`", and it is a statement about `coreRate`, hence about the reach
-of the estimate carrying it. It is NOT a statement that the contact-relative law fails at large
-coupling: nothing in the tree says that. -/
+/-- For every real `M` and every degree `K` there is a `β ≥ 0` with `M < coreRate K β`.
+
+The witness is built inside the proof from `coreRate K β ≥ 8β`, which follows from `e^{2β} - 1 ≥ 2β`,
+`4(K+1)² ≥ 4` and `e^{4βK} ≥ 1`. That inequality is not part of the conclusion, so a caller gets the
+existential and not the linear lower bound.
+
+Scope: this is a statement about `coreRate`, and so about the range of couplings on which the
+`coreRate < 1` hypothesis of the `StrongCoupling` bounds is available. It says nothing about whether
+the quartic bound itself holds at large coupling.
+
+DERIVED: `0` is the lower bound on the witness coupling, and is the only numeral in the statement;
+`M` and `K` are parameters and the rate's own constants live inside `coreRate`. -/
 theorem coreRate_exceeds (K : ℕ) (M : ℝ) : ∃ β : ℝ, 0 ≤ β ∧ M < coreRate K β := by
   refine ⟨max 0 ((M + 1) / 8), le_max_left _ _, ?_⟩
   set β := max 0 ((M + 1) / 8) with hβdef

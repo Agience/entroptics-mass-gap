@@ -3,184 +3,64 @@ import MassGap.VolumeRate
 import MassGap.SpectralBound
 
 /-!
-# MassGap.SecondEigenvalue — an upper bound on the subdominant eigenvalue, with no spectral theorem
+# MassGap.SecondEigenvalue — an operator bound on an invariant subspace from a Rayleigh bound
 
-## What this file is for
+## §1 The generic lemma
 
-`VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut` and `HalfLineTransfer` all take one
-input and none of them produces it:
+For `T : E →ₗ[ℝ] E` symmetric on a real inner product space and `V : Submodule ℝ E`:
 
-    hρ :  ∀ y ⊥ Ω,  ‖T y‖ ≤ Λ ‖y‖.
+* `inner_map_quad` — the expansion
+  `⟪T (t • u + v), t • u + v⟫ = ⟪T u, u⟫ t² + 2 ⟪T u, v⟫ t + ⟪T v, v⟫`, with symmetry used once to
+  merge the two cross terms.
+* `inner_map_cauchy_schwarz` — `⟪T u, v⟫ ² ≤ ⟪T u, u⟫ ⟪T v, v⟫` for `u, v ∈ V`, from the
+  discriminant of that quadratic, assuming the form is nonnegative on `V` only.
+* `norm_le_of_rayleigh_le` — if `V` is `T`-invariant and `0 ≤ ⟪T y, y⟫ ≤ Λ ‖y‖²` on `V`, then
+  `‖T y‖ ≤ Λ ‖y‖` on `V`. The proof is one Cauchy–Schwarz with the Rayleigh bound read at `y` and at
+  `T y`; invariance is what puts `T y` back in `V`.
+* `rayleighSet`, `lambdaTwo` — the Rayleigh quotients at the nonzero vectors of `V`, and their
+  supremum. `lambdaTwo_nonneg`, `rayleigh_le_of_lambdaTwo_le`, `lambdaTwo_le_of_rayleigh_le` and
+  `norm_le_lambdaTwo_mul` relate the two directions and give the operator bound at the supremum.
 
-`SpectralBound.confines_of_subdominant_bound` closes Clay row B5 from an input written in the same
-letter — `Λ` below `lambdaThreshold` at every nonnegative coupling — but IT IS NOT THE SAME INPUT.
-`SpectralBound.LagSpectralBound` unfolds through `SpectralAt` (`SpectralBound.lean:288`) into a
-statement about `wilsonCorrAt 3 β 0` and `wilsonCorrAt 3 β 2` and nothing else; `SpectralBound`'s own
-docstring says so — "no operator, no completeness, no identification of `Z` with a trace". Equating
-the two IS the unproved step, and it appears below as the named hypotheses `h0` and `h2`, never as
-prose.
+The section uses no compactness, completeness, finite dimension, eigenvalue ordering or spectral
+theorem. `lambdaTwo` is a definition, not an assertion that the supremum is attained; the theorems
+that use it carry `BddAbove (rayleighSet T V)` or `(rayleighSet T V).Nonempty`, since `sSup` is a
+junk value otherwise.
 
-The obstruction to producing `hρ` was believed to be that Mathlib v4.31.0 has no
-apparatus for a second eigenvalue. THAT READING IS WRONG IN BOTH DIRECTIONS, and both halves were
-checked by grep against the pinned checkout on the build host (rev
-`fabf563a7c95a166b8d7b6efca11c8b4dc9d911f`, "chore: bump toolchain to v4.31.0", 2026-06-15), not
-recalled:
+The discriminant step repeats what `Reconstruction.gns_cauchy_schwarz` and
+`Transfer.ReflForm.cauchy_schwarz` do, with the same `discrim_le_zero` proof. It is separate because
+both of those require the form to be nonnegative on the whole module, while `B (u, v) = ⟪T u, v⟫` is
+assumed nonnegative on `V` alone.
 
-* **Eigenvalue ordering EXISTS.** `LinearMap.IsSymmetric.eigenvalues`
-  (`Mathlib/Analysis/InnerProductSpace/Spectrum.lean:279`) is DEFINED sorted in decreasing order —
-  `unsortedEigenvalues ∘ Tuple.sort ∘ Fin.revPerm` — and `eigenvalues_antitone` (same file, line 312)
-  proves it. `Matrix.IsHermitian.eigenvalues₀_antitone` (`Mathlib/Analysis/Matrix/Spectrum.lean:61`)
-  is the matrix corollary, and that file contains no TODO at all. So `λ₂` is nameable as
-  `hT.eigenvalues hn 1` — BUT ONLY IN FINITE DIMENSION: every one of those declarations carries
-  `hn : Module.finrank 𝕜 E = n`. `Transfer`'s spectral section already uses them, behind
-  `[FiniteDimensional ℝ (GNS ...)]`, and `SliceTrace` records why that hypothesis is not available
-  for Yang–Mills: a slab configuration is a point of a compact group of positive dimension, so the
-  operator acts on `L²` of a continuum.
-* **The compact self-adjoint spectral theorem EXISTS too**, in eigenspace-completeness form:
-  `ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot` (Spectrum.lean:443) and
-  `finite_dimensional_eigenspace` (Spectrum.lean:463), both under `IsCompactOperator`. The file's
-  TODO (line 59) is "Spectral theory for bounded self-adjoint operators" — the NON-compact case.
-  `Rayleigh.lean`'s TODO (line 31) is a different one again: an eigenvector AT the `iSup` for a
-  compact operator on a complete space.
+## §2 At a `Transfer.TransferData`
 
-So the long route to `λ₂` is available in finite dimension and unavailable here, for a reason that
-bumping Mathlib would not change. This file takes the short route instead.
+`vacPerp D` is `{y | ⟪Ω, y⟫ = 0}` as a submodule, equal to `(Submodule.span ℝ {Ω})ᗮ`
+(`vacPerp_eq_orthogonal`) but spelled so that `mem_vacPerp` is `Iff.rfl`. `vacPerp_invariant` is
+`VolumeRate.inner_vac_Tq` in submodule form. `norm_Tq_le_of_rayleigh` produces `‖Tq y‖ ≤ Λ ‖y‖` on
+the complement, which is the hypothesis `VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut`
+and `HalfLineTransfer` take; `Tq_pow_norm_le_of_rayleigh` and `tendsto_zero_of_rayleigh` are those
+two consumers with it supplied.
 
-## The finding, stated loudly: NONE OF THAT APPARATUS IS NEEDED
+## §3 Lag two
 
-An UPPER bound on the subdominant eigenvalue is a bound on the Rayleigh quotient over the orthogonal
-complement of the top eigenvector, and that is a definition rather than a theorem. What has to be
-proved is only the step from the quotient to the operator norm, and for a SELF-ADJOINT map that step
-is one application of Cauchy–Schwarz to the semidefinite form `B(u,v) = ⟪T u, v⟫`, followed by the
-Rayleigh hypothesis at TWO vectors — at `y`, and at `T y`, which is where invariance earns its place:
+`inner_Tq_two_eq` is `⟪x, Tq² x⟫ = ‖Tq x‖²`, from symmetry alone; `inner_Tq_two_le_of_rayleigh`
+bounds it by `Λ² ‖x‖²`. `lag_two_ratio_of_vacuum_rayleigh` and `spectralAt_of_vacuum_rayleigh` carry
+that to `wilsonCorrAt 3 β 2 ≤ Λ² wilsonCorrAt 3 β 0` and to `SpectralBound.SpectralAt β Λ`.
 
-    ‖T y‖⁴ = B(y, T y)² ≤ B(y, y) · B(T y, T y) ≤ (Λ‖y‖²)(Λ‖T y‖²).
+## Scope
 
-`norm_le_of_rayleigh_le` is that argument. It needs no compactness, no completeness, no finite
-dimension, no eigenvalue ordering, no min-max principle, no Hilbert–Schmidt or trace class, no
-Perron–Frobenius and no spectral theorem. Three of its four hypotheses are statements about the
-subspace `V` alone — `V` is `T`-invariant, the form is nonnegative on `V`, the form is bounded by `Λ`
-on `V`. The fourth, `T.IsSymmetric`, is Mathlib's and is GLOBAL: `∀ x y, ⟪T x, y⟫ = ⟪x, T y⟫` over all
-of `E`. The proof invokes it only at pairs drawn from `V`, so the hypothesis is stronger than the
-proof needs; it is taken in Mathlib's form because that is the form every caller already has
-(`Transfer.TransferData.Tq_isSymmetric`).
-
-WHAT IS GENUINELY ABSENT FROM MATHLIB AT THE PIN, also by grep over the whole checkout, is the rest
-of the list — and none of it turns out to be needed. Zero mathematical hits for Cheeger or
-conductance; for Hilbert–Schmidt, Schatten or trace class (the only hits are Lean's own
-`registerTraceClass` in tactic files); for Perron–Frobenius; for a spectral gap of any kind; for
-Doeblin; and for a Poincaré or log-Sobolev inequality (the `Poincare` files are the conjecture and a
-curve integral). There is no Birkhoff CONTRACTION and no Hilbert projective metric: the three
-`Birkhoff` locations are `Dynamics/BirkhoffSum` (ergodic sums), `Analysis/Convex/Birkhoff.lean`
-(Birkhoff–von Neumann) and `Order/Birkhoff.lean` (lattice representation). There is no
-Courant–Fischer: the four `MinMax` files are lattice `min`/`max`, and `Mathlib/Topology/Sion.lean` is
-Sion's minimax for a quasiconvex–quasiconcave function, which says nothing about eigenvalues. The one
-near-miss is `ProbabilityTheory.Kernel.IsReversible`
-(`Mathlib/Probability/Kernel/Invariance.lean:60`) with `IsReversible.invariant` — reversibility of a
-Markov kernel is defined, and nothing spectral is attached to it.
-
-WHAT THIS DOES AND DOES NOT CHANGE. It removes the Mathlib obstruction from the OPERATOR route —
-`VolumeRate` and `HalfLineTransfer`'s `hρ` is now derivable from a Rayleigh bound. It changes nothing
-about the path from `SpectralAt` to `ConfinesAtAnAperture`, which never had one:
-`SpectralBound.spectralAt_iff` already proves, unconditionally and with no operator anywhere, that at
-extent four the subdominant-eigenvalue statement and the lag-two ratio statement are the SAME
-statement. What is still missing is the bridge between the two routes, and it is not a Mathlib
-absence — see the last section.
-
-## What is proved
-
-**§1, generic.** For `T : E →ₗ[ℝ] E` symmetric on a real inner product space and `V : Submodule ℝ E`:
-
-* `inner_map_quad` — the quadratic expansion `⟪T(t•u+v), t•u+v⟫ = ⟪Tu,u⟫t² + 2⟪Tu,v⟫t + ⟪Tv,v⟫`.
-  Symmetry enters exactly once, to merge the two cross terms.
-* `inner_map_cauchy_schwarz` — `⟪Tu,v⟫² ≤ ⟪Tu,u⟫⟪Tv,v⟫` for `u, v ∈ V`, from the discriminant.
-* `norm_le_of_rayleigh_le` — **the lemma.** The Rayleigh bound on `V` gives the operator bound on `V`.
-* `rayleighSet`, `lambdaTwo` — the variational characterisation as a DEFINITION: `lambdaTwo T V` is
-  the supremum of `⟪Ty,y⟫/‖y‖²` over nonzero `y ∈ V`. With `V = Ωᗮ` this is `λ₂`, named without any
-  enumeration or ordering of a spectrum, and without `T` being compact or even bounded.
-* `lambdaTwo_nonneg`, `rayleigh_le_of_lambdaTwo_le`, `lambdaTwo_le_of_rayleigh_le`,
-  `norm_le_lambdaTwo_mul` — the two directions of the characterisation, and the operator bound at the
-  supremum itself. THESE THREE ARE WHERE THE SUPREMUM HAS TO BE REAL: each carries
-  `BddAbove (rayleighSet T V)`, and `lambdaTwo_le_of_rayleigh_le` carries `Nonempty` instead. So the
-  definition is free of boundedness and every USE of it is not.
-
-The discriminant step reproves what `Reconstruction.gns_cauchy_schwarz` and
-`Transfer.ReflForm.cauchy_schwarz` already do, twice over, with the same `discrim_le_zero` + `nlinarith`
-proof. It is separate here for one reason: both of those need the form nonnegative on the WHOLE
-module, and the form `B(u,v) = ⟪T u, v⟫` is nonnegative only on the vacuum complement — positivity in
-the vacuum direction is a different statement. Reusing `gns_cauchy_schwarz` would mean carrying `↥V`
-as the module and building `B : ↥V →ₗ[ℝ] ↥V →ₗ[ℝ] ℝ`; that is a real alternative and it is not taken
-here.
-
-**§2, the transfer operator.** `vacPerp` is the vacuum complement as a submodule — it IS Mathlib's
-`(Submodule.span ℝ {Ω})ᗮ` (`vacPerp_eq_orthogonal`), constructed rather than abbreviated only so that
-membership is the equation `⟪Ω, y⟫ = 0` by `Iff.rfl`, which is the form every consumer in the tree
-states it in. `vacPerp_invariant` is `VolumeRate.inner_vac_Tq` in submodule form;
-`norm_Tq_le_of_rayleigh` produces the hypothesis `hρ` that `VolumeRate.rp_sub_geometric`,
-`VolumeRate.rp_gap_of_one_cut` and `HalfLineTransfer` consume. `Tq_pow_norm_le_of_rayleigh` and
-`tendsto_zero_of_rayleigh` are those consumers with `hρ` discharged.
-
-**§3, to B5.** `inner_Tq_two_le_of_rayleigh` is the lag-two two-point bound `⟪x, T²x⟫ ≤ Λ²‖x‖²`. It
-still runs through §1's Cauchy–Schwarz, via `norm_Tq_le_of_rayleigh`; what lag two avoids is a SECOND
-Cauchy–Schwarz on the correlator, because self-adjointness turns `⟪x, T²x⟫` into `‖Tx‖²` exactly.
-`lag_two_ratio_of_vacuum_rayleigh` and `spectralAt_of_vacuum_rayleigh` carry it into
-`SpectralBound.SpectralAt`, hence into `SpectralBound.confines_of_subdominant_bound`.
-
-## What is ASSUMED, and it is not one thing
-
-* **`0 ≤ ⟪T y, y⟫` on the complement.** `Transfer`'s header says why this is a second application of
-  reflection positivity — about a half-integer time plane — and not a consequence of contractivity: a
-  negative transfer eigenvalue is what an oscillating correlator looks like, and `T_contract` bounds
-  `|λ|`, not `λ`. It is a named hypothesis of every theorem here that uses it, never a field.
-* **The Rayleigh bound itself.** This file converts it; it does not prove it. Producing `Λ` is the
-  open work.
-* **That the contact value lies entirely in the vacuum complement.** §3 pairs `hx : ⟪Ω, x⟫ = 0` with
-  `h0 : ρ(0) = ‖x‖²`, and together those say the whole of `ρ(0)` is carried by a vacuum-orthogonal
-  vector — i.e. that `wilsonCorrAt` is already vacuum-subtracted. That is a physical claim about the
-  correlator, it is not proved anywhere in the tree, and it is separate from the Rayleigh bound.
-
-## What stands between this and B5, named exactly
-
-1. **The `TransferData` over the Wilson measure rests on two premises, and reflection positivity is
-   not one of them.** `Complete.wilson_reflection_positive_at` is an axiom, but
-   `Complete.wilson_reflection_positive_at_even` PROVES its body at even extent `N + 1 = 2m`,
-   `2 ≤ m`, `0 ≤ β` — and §3 lives at `N = 3`, so `N + 1 = 4 = 2·2`, exactly that domain.
-   `ConfinesZero` already calls it there. `OSPositivity.wilsonSlabTransfer` builds a full
-   `Transfer.TransferData` on the slab algebra, with the foundational axioms only, from exactly
-   `SlabShiftStable` and `SlabShiftContractive`; the time translation itself is
-   `WilsonTransfer.shiftObs` and `T_symm` is `WilsonTransfer.reflForm_shiftObs_symm`. What blocks
-   `SlabShiftStable` is `WilsonTransfer.shift_not_stable_on_slab`, and
-   `PeriodicRayleigh.const_of_slabShiftStable` sharpens that to: granting the premise makes every
-   slab observable constant at `2 ≤ m`, so the operator it unlocks is the identity. §1 removes the
-   finite-dimensionality requirement from every
-   BOUND in `Transfer`'s Part 6 — `PeriodicRayleigh.periodic_decay_of_rayleigh` and
-   `PeriodicRayleigh.one_le_of_rayleigh_le` are those two without it — and removes it from nothing
-   that produces a `Spectral.PeriodicSpectralForm`, whose `hrep` is an exact finite expansion.
-2. **`SliceTrace`'s `K_t` is not `SliceTransfer.transferKernel`.** `SliceTrace.partition_eq_cycleIntegral`
-   gives `Z` as a cyclic integral of `K_t`, but `K_t` reads the axis links of its own slab (removing
-   them is a change of variables in temporal gauge, a hypothesis in `SliceTransfer` and discharged
-   nowhere), carries the whole intra-slice weight rather than the symmetric `e^{−s/2}` split, and
-   carries a constant plus an ordered-`Plaq` sum that counts each plane twice
-   (`PlaqCount.boltz_eq_std`). So `transferKernel_symm` and `transferKernel_psd` are NOT transported
-   to `K_t`; only `slabKernel_pos` is. Symmetry is what `LinearMap.IsSymmetric` needs, so §1 does not
-   apply to `K_t` as it stands.
-3. **Nothing proves `K_t` couples its two arguments.** Strict positivity and the regrouping bijection
-   do not rule out a kernel constant in its second argument, and a kernel constant in its second
-   argument has `Λ = 0` for a trivial and useless reason. `SliceTransfer.exists_nondeg_interPlaq` is
-   where a non-degeneracy control would start; there is none.
-4. **The arcs are not composed.** `SliceTrace.cycle_kernel_prod_split` exhibits the cut and no more;
-   turning an arc into an operator power needs one Fubini per intermediate variable.
-5. **`h0` and `h2` are satisfiable by objects with no relation to Yang–Mills, so they carry no
-   physics on their own.** They assert that two REAL NUMBERS agree; nothing in them ties `D` to the
-   Wilson measure. `Spectral2` makes the same observation about `WilsonSpectral` and calls it the
-   free point. What stops `spectralAt_of_vacuum_rayleigh` being useless is not the hypotheses' shape
-   but the quantifier a caller must eventually meet: `LagSpectralBound` needs ONE `Λ` below
-   `lambdaThreshold` at EVERY `β ≥ 0`, and the smallest `Λ` any construction can report is
-   `√(ρ(2)/ρ(0))` itself.
-6. **`Λ` is still not produced.** `SpectralBound.expansion_domain_bounded` proves the cluster
-   expansion's own rate exceeds one past a cut, and `SpectralBound.doeblin_exceeds_lambdaThreshold`
-   puts the Doeblin floor above `lambdaThreshold` at every coupling. This file supplies the
-   conversion from a Rayleigh bound; it does not produce one.
+* The Rayleigh bound `Λ` is a hypothesis throughout. No declaration here produces one.
+* `hpos`, nonnegativity of `⟪Tq y, y⟫` on the complement, is a hypothesis of every theorem that uses
+  it and is not a field of `TransferData`. `T_contract` bounds the magnitude of the form, not its
+  sign.
+* §3's `h0 : wilsonCorrAt 3 β 0 = ‖x‖²` and `h2 : wilsonCorrAt 3 β 2 = ⟪x, Tq² x⟫` are equations
+  between real numbers, supplied by the caller. Nothing in them ties `D` to the Wilson measure, and
+  together with `hx` they assert that the whole contact value is carried by a vacuum-orthogonal
+  vector.
+* `SpectralBound.LagSpectralBound` requires one `Λ` below `SpectralBound.lambdaThreshold` at every
+  `β ≥ 0`; a single coupling is not enough for it.
+* `SpectralBound.spectralAt_iff` shows `SpectralAt β Λ` is the lag-two ratio statement, with no
+  operator in it. The identification of that statement with an operator's subdominant bound is `h0`
+  and `h2`, not a theorem.
 
 Foundational footprint only (`#print axioms` throughout).
 Build: `python code/lean_build.py build MassGap.SecondEigenvalue`.
@@ -190,22 +70,24 @@ namespace MassGap.SecondEigenvalue
 
 open MassGap MassGap.Transfer
 
-/-! ## §1 The variational route, on any real inner product space
+/-! ## §1 The Rayleigh quotient on an invariant subspace, over any real inner product space
 
-Nothing in this section knows about a lattice, a measure, or a gauge group. `T` is any symmetric
-linear map and `V` is any submodule it preserves. -/
+Nothing in this section mentions a lattice, a measure or a gauge group. `T` is any symmetric linear
+map on a real inner product space and `V` is any submodule it preserves. -/
 
 section Generic
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- **The quadratic expansion.** `⟪T(t•u+v), t•u+v⟫ = ⟪Tu,u⟫·t² + 2⟪Tu,v⟫·t + ⟪Tv,v⟫`.
+/-- For `T` symmetric, `⟪T (t • u + v), t • u + v⟫ = ⟪T u, u⟫ * (t * t) + (2 * ⟪T u, v⟫) * t + ⟪T v, v⟫`
+at every pair `u`, `v` and every real `t`. The map is expanded by linearity and the inner product by
+bilinearity; symmetry is used once, to identify `⟪T v, u⟫` with `⟪T u, v⟫`.
 
-Symmetry of `T` is used exactly once, to identify the two cross terms `⟪Tu,v⟫` and `⟪Tv,u⟫`. Without
-it the middle coefficient is `⟪Tu,v⟫ + ⟪Tv,u⟫` and the discriminant argument below reads a different
-number.
+Scope: without symmetry the middle coefficient would be `⟪T u, v⟫ + ⟪T v, u⟫`, and the discriminant
+argument in `inner_map_cauchy_schwarz` would read a different number.
 
-DERIVED: the `2` is the number of cross terms a symmetric form produces. Nothing is chosen. -/
+DERIVED: `2` is the coefficient of the linear term, the number of cross terms a symmetric form
+produces. -/
 theorem inner_map_quad (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (u v : E) (t : ℝ) :
     (inner ℝ (T (t • u + v)) (t • u + v) : ℝ)
       = (inner ℝ (T u) u : ℝ) * (t * t)
@@ -222,18 +104,17 @@ theorem inner_map_quad (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (u v : E) (t :
 
 #print axioms inner_map_quad
 
-/-- **Cauchy–Schwarz for the form `B(u,v) = ⟪T u, v⟫`, on a subspace where it is nonnegative.**
+/-- For `T` symmetric and `V` a submodule on which `0 ≤ ⟪T y, y⟫`, every pair `u, v ∈ V` satisfies
+`⟪T u, v⟫ ^ 2 ≤ ⟪T u, u⟫ * ⟪T v, v⟫`. The quadratic `t ↦ ⟪T (t • u + v), t • u + v⟫` is nonnegative
+because `t • u + v` lies in `V`, so `discrim_le_zero` applies to the expansion `inner_map_quad`.
 
-The hypothesis is nonnegativity on `V` only, so `T` may be indefinite off `V` — which is the point:
-the vacuum direction is where the transfer operator's positivity is a different statement.
+Scope: nonnegativity is required on `V` only, so `T` may be indefinite elsewhere.
+`Transfer.ReflForm.cauchy_schwarz` and `Reconstruction.gns_cauchy_schwarz` are the same argument, but
+both require the form to be nonnegative on the whole module, so neither is reused here.
 
-Proved the elementary way, as `Transfer.ReflForm.cauchy_schwarz` and `Reconstruction.gns_cauchy_schwarz`
-both are: the quadratic `t ↦ B(t•u+v, t•u+v)` is nonnegative because `t•u+v` lies in `V`, so its
-discriminant is not positive. Neither of those two is reused here because both require the form
-nonnegative on the whole module; see the module docstring for what reuse would cost.
-
-DERIVED: the exponent `2` is the degree of that quadratic and the `4` inside `discrim` is the `4` of
-`b² − 4ac`. Neither is chosen. -/
+DERIVED: `0` is the lower bound in the nonnegativity hypothesis; the exponent `2` is the square on
+the left, the degree of the quadratic the discriminant is taken of. The `4` of `b ^ 2 - 4 * a * c`
+lives inside `discrim`, not in this statement. -/
 theorem inner_map_cauchy_schwarz (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Submodule ℝ E)
     (hpos : ∀ y ∈ V, (0 : ℝ) ≤ (inner ℝ (T y) y : ℝ))
     {u v : E} (hu : u ∈ V) (hv : v ∈ V) :
@@ -249,29 +130,25 @@ theorem inner_map_cauchy_schwarz (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V :
 
 #print axioms inner_map_cauchy_schwarz
 
-/-- **THE LEMMA: A RAYLEIGH BOUND ON AN INVARIANT SUBSPACE IS AN OPERATOR BOUND ON IT.**
+/-- For `T` symmetric, `V` a `T`-invariant submodule on which `0 ≤ ⟪T y, y⟫ ≤ Λ * ‖y‖ ^ 2` with
+`0 ≤ Λ`, every `y ∈ V` satisfies `‖T y‖ ≤ Λ * ‖y‖`.
 
-If `V` is `T`-invariant and `0 ≤ ⟪T y, y⟫ ≤ Λ‖y‖²` for every `y ∈ V`, then `‖T y‖ ≤ Λ‖y‖` on `V`.
+The argument applies `inner_map_cauchy_schwarz` at the pair `y`, `T y` and reads the Rayleigh bound
+at both:
 
-This is the whole of the spectral apparatus B5 needs, and it is ONE Cauchy–Schwarz with the Rayleigh
-hypothesis read at two vectors:
+    ‖T y‖ ^ 4 = ⟪T y, T y⟫ ^ 2 ≤ ⟪T y, y⟫ * ⟪T (T y), T y⟫ ≤ (Λ * ‖y‖ ^ 2) * (Λ * ‖T y‖ ^ 2).
 
-    ‖T y‖⁴ = ⟪T y, T y⟫² = B(y, T y)² ≤ B(y,y)·B(T y, T y) ≤ (Λ‖y‖²)(Λ‖T y‖²).
+Invariance is what puts `T y` back in `V`, licensing the second factor's bound; nonnegativity is
+what makes the form semidefinite, licensing Cauchy–Schwarz.
 
-Invariance is what puts `T y` back in `V`, which is what licenses the second factor's bound; without
-it the argument does not start. Nonnegativity is what makes `B` a semidefinite form, which is what
-licenses Cauchy–Schwarz at all.
+Scope: `E` is any real inner product space and `T` any symmetric linear map — no compactness,
+completeness, finite dimension, eigenvalue ordering or spectral theorem is used. `T.IsSymmetric` is
+Mathlib's global condition `∀ x y, ⟪T x, y⟫ = ⟪x, T y⟫`, although the proof invokes it only at pairs
+from `V`. `hΛ : 0 ≤ Λ` follows from `hpos` and `hle` at any nonzero `y ∈ V`; it is taken as a
+hypothesis so that `y = 0` needs no separate case.
 
-NO COMPACTNESS, NO COMPLETENESS, NO SPECTRAL THEOREM, NO EIGENVALUE ORDERING. `E` is any real inner
-product space and `T` any symmetric linear map on it. In particular the conclusion holds where
-`Analysis/InnerProductSpace/Spectrum.lean`'s compact spectral theorem — a TODO at the pin — would not
-even apply.
-
-`hΛ : 0 ≤ Λ` is convenience rather than content: at any nonzero `y ∈ V` it already follows from
-`hpos` and `hle`. It is taken as a hypothesis so the `y = 0` case needs no separate argument.
-
-DERIVED: the exponent `2` in `‖y‖^2` is the degree of a quadratic form; `0` is a sign. Nothing here
-is a magnitude and nothing is chosen. -/
+DERIVED: `0` occurs twice, as the lower bound of the form on `V` and as the lower bound on `Λ`; the
+exponent `2` is the degree of the quadratic form in the Rayleigh bound. -/
 theorem norm_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Submodule ℝ E)
     (hinv : ∀ y ∈ V, T y ∈ V)
     (hpos : ∀ y ∈ V, (0 : ℝ) ≤ (inner ℝ (T y) y : ℝ))
@@ -297,33 +174,40 @@ theorem norm_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : S
 
 #print axioms norm_le_of_rayleigh_le
 
-/-- The Rayleigh quotients of `T` at the nonzero vectors of `V`, as a set of reals.
+/-- The set `{r | ∃ y ∈ V, y ≠ 0 ∧ r = ⟪T y, y⟫ / ‖y‖ ^ 2}`: the Rayleigh quotients of `T` at the
+nonzero vectors of `V`. It may be empty (when `V` is the zero submodule) and may be unbounded above;
+both are handled by hypotheses on the theorems that use `lambdaTwo`.
 
-DERIVED: the `2` is the degree of the norm in a Rayleigh quotient; `0` is the excluded vector, at
-which the quotient is not defined. Neither is a magnitude. -/
+DERIVED: `0` is the vector excluded from the index set, at which the quotient is undefined; the
+exponent `2` is the degree of the norm in a Rayleigh quotient. -/
 def rayleighSet (T : E →ₗ[ℝ] E) (V : Submodule ℝ E) : Set ℝ :=
   {r | ∃ y ∈ V, y ≠ 0 ∧ r = (inner ℝ (T y) y : ℝ) / ‖y‖ ^ 2}
 
 #print axioms rayleighSet
 
-/-- **`λ₂`, NAMED.** The supremum of the Rayleigh quotient over the nonzero vectors of `V`. With
-`V = Ωᗮ` and `T` the transfer operator this IS the subdominant eigenvalue, and it is written down
-here as a DEFINITION — no enumeration of a spectrum, no ordering of eigenvalues, no compactness, no
-`Matrix.IsHermitian.eigenvalues` and so no dependence on the ordering TODOs at the pin.
+/-- `sSup (rayleighSet T V)`: the supremum of the Rayleigh quotient over the nonzero vectors of `V`.
+With `V` the vacuum complement and `T` a transfer operator this is the subdominant eigenvalue read
+variationally.
 
-What the definition does not do is assert that the supremum is ATTAINED, which is what would need a
-spectral theorem. Every theorem below uses it only as an upper bound, where attainment is irrelevant.
+Scope: the definition involves no enumeration or ordering of a spectrum, no compactness and no
+finite dimension, and it does not assert the supremum is attained. When `rayleighSet T V` is empty
+or unbounded above, `sSup` returns Lean's junk value, which is why
+`lambdaTwo_le_of_rayleigh_le` carries `Nonempty` and the others carry `BddAbove`.
 
-DERIVED: nothing numeric. -/
+DERIVED: no numeral appears in the statement. -/
 noncomputable def lambdaTwo (T : E →ₗ[ℝ] E) (V : Submodule ℝ E) : ℝ := sSup (rayleighSet T V)
 
 #print axioms lambdaTwo
 
-/-- **The variational characterisation, upward.** A Rayleigh bound on `V` bounds the supremum. The
-nonemptiness hypothesis is not cosmetic: `sSup ∅ = 0` in `ℝ` by convention, so without it the
-statement would be about a junk value rather than about `T`.
+/-- If `rayleighSet T V` is nonempty and `⟪T y, y⟫ ≤ Λ * ‖y‖ ^ 2` on `V`, then `lambdaTwo T V ≤ Λ`.
+By `csSup_le`, each element of the set is a quotient at some nonzero `y ∈ V`, and dividing the
+hypothesis by the positive `‖y‖ ^ 2` bounds it by `Λ`.
 
-DERIVED: the `2` is the degree of the norm in the quotient; `0` is the excluded vector. -/
+Scope: nonemptiness is required because `sSup ∅` is `0` by convention, which would make the
+conclusion a statement about a junk value at negative `Λ`.
+
+DERIVED: the exponent `2` is the degree of the norm in the Rayleigh bound. No other numeral appears
+in the statement. -/
 theorem lambdaTwo_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
     (hne : (rayleighSet T V).Nonempty) {Λ : ℝ}
     (hle : ∀ y ∈ V, (inner ℝ (T y) y : ℝ) ≤ Λ * ‖y‖ ^ 2) :
@@ -338,12 +222,14 @@ theorem lambdaTwo_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 
 #print axioms lambdaTwo_le_of_rayleigh_le
 
-/-- **The variational characterisation, downward.** The supremum bounds the Rayleigh quotient, hence
-the form. `BddAbove` is what makes `sSup` an upper bound rather than a junk value.
+/-- If `rayleighSet T V` is bounded above, then `⟪T y, y⟫ ≤ lambdaTwo T V * ‖y‖ ^ 2` at every
+`y ∈ V`. At `y = 0` both sides vanish; otherwise the quotient at `y` belongs to the set, `le_csSup`
+bounds it by the supremum, and multiplying through by the positive `‖y‖ ^ 2` gives the statement.
 
-The zero vector is handled separately and trivially: both sides are `0` there.
+Scope: `BddAbove` is what makes `sSup` an upper bound rather than a junk value.
 
-DERIVED: the `2` is the degree of the norm in the quotient; `0` is the vector split off. -/
+DERIVED: the exponent `2` is the degree of the norm in the Rayleigh bound. No other numeral appears
+in the statement. -/
 theorem rayleigh_le_of_lambdaTwo_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
     (hbdd : BddAbove (rayleighSet T V)) {y : E} (hy : y ∈ V) :
     (inner ℝ (T y) y : ℝ) ≤ lambdaTwo T V * ‖y‖ ^ 2 := by
@@ -359,10 +245,15 @@ theorem rayleigh_le_of_lambdaTwo_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 
 #print axioms rayleigh_le_of_lambdaTwo_le
 
-/-- **`λ₂ ≥ 0` when the form is nonnegative on `V`.** The sign, not a magnitude — it is what lets
-`norm_le_lambdaTwo_mul` apply `norm_le_of_rayleigh_le`.
+/-- If the form is nonnegative on `V`, `rayleighSet T V` is bounded above, and `V` contains some
+nonzero `y₀`, then `0 ≤ lambdaTwo T V`. The quotient at `y₀` is nonnegative and lies below the
+supremum.
 
-DERIVED: `0` is that sign; the `2` is the degree of the norm in the quotient. -/
+The nonzero witness is what makes the set nonempty; without it `sSup ∅` would be the junk value.
+This is the sign `norm_le_lambdaTwo_mul` needs in order to apply `norm_le_of_rayleigh_le`.
+
+DERIVED: `0` occurs three times — the lower bound of the form on `V`, the value `y₀` is assumed to
+differ from, and the lower bound concluded for `lambdaTwo T V`. -/
 theorem lambdaTwo_nonneg (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
     (hbdd : BddAbove (rayleighSet T V))
     (hpos : ∀ y ∈ V, (0 : ℝ) ≤ (inner ℝ (T y) y : ℝ))
@@ -375,13 +266,15 @@ theorem lambdaTwo_nonneg (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 
 #print axioms lambdaTwo_nonneg
 
-/-- **THE OPERATOR BOUND AT THE SUPREMUM ITSELF.** `‖T y‖ ≤ λ₂ ‖y‖` on `V`.
+/-- `‖T y‖ ≤ lambdaTwo T V * ‖y‖` at every `y ∈ V`, for `T` symmetric, `V` invariant and carrying a
+nonnegative form, `rayleighSet T V` bounded above, and some nonzero `y₀ ∈ V`. It is
+`norm_le_of_rayleigh_le` with `Λ := lambdaTwo T V`, whose nonnegativity is `lambdaTwo_nonneg` and
+whose Rayleigh bound is `rayleigh_le_of_lambdaTwo_le`.
 
-This is the statement the spectral theorem is usually invoked for, and it is here without one: the
-two directions of the variational characterisation compose with `norm_le_of_rayleigh_le`, and no step
-needs the supremum to be attained.
+Scope: no step requires the supremum to be attained, and no compactness or spectral theorem is used.
 
-DERIVED: nothing numeric beyond the `0` sign carried by `lambdaTwo_nonneg`. -/
+DERIVED: `0` occurs twice, as the lower bound of the form on `V` and as the value `y₀` is assumed to
+differ from. No other numeral appears in the statement. -/
 theorem norm_le_lambdaTwo_mul (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Submodule ℝ E)
     (hinv : ∀ y ∈ V, T y ∈ V)
     (hpos : ∀ y ∈ V, (0 : ℝ) ≤ (inner ℝ (T y) y : ℝ))
@@ -396,21 +289,25 @@ theorem norm_le_lambdaTwo_mul (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Su
 
 end Generic
 
-/-! ## §2 The transfer operator on the vacuum complement
+/-! ## §2 §1 applied to `Transfer.TransferData`'s operator on the vacuum complement
 
-`Transfer.TransferData` carries the Osterwalder–Seiler data. `Tq` is self-adjoint
-(`Transfer.TransferData.Tq_isSymmetric`, which is reflection positivity's payload) and fixes the
-vacuum (`Tq_vacGNS`), and those two facts alone make the vacuum complement invariant. -/
+`Transfer.TransferData` carries `Tq_isSymmetric` and `Tq_vacGNS`: the operator is symmetric for the
+reflection form and fixes the vacuum. Those two facts make the vacuum complement invariant
+(`VolumeRate.inner_vac_Tq`), which is the hypothesis §1's lemma needs. -/
 
 section Transfer
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- **The vacuum complement `Ωᗮ`, as a submodule.** Membership is the equation
-`⟪Ω, y⟫ = 0` definitionally, which is the form every consumer in the tree states it in
-(`VolumeRate.rp_sub_geometric`, `HalfLineTransfer`).
+/-- The submodule `{y | ⟪D.vacGNS, y⟫ = 0}` of `GNS D.toReflForm`, with the three closure fields
+proved from additivity and homogeneity of the inner product in its right argument. Membership is the
+equation `⟪Ω, y⟫ = 0` definitionally (`mem_vacPerp` is `Iff.rfl`), which is the form
+`VolumeRate.rp_sub_geometric` and `HalfLineTransfer` state their hypotheses in.
 
-DERIVED: the `0` is orthogonality. -/
+`vacPerp_eq_orthogonal` identifies it with `(Submodule.span ℝ {D.vacGNS})ᗮ`, so this is a spelling
+rather than a second notion.
+
+DERIVED: `0` in the carrier is orthogonality to the vacuum. -/
 def vacPerp (D : TransferData A) : Submodule ℝ (GNS D.toReflForm) where
   carrier := {y | (inner ℝ D.vacGNS y : ℝ) = 0}
   zero_mem' := by simp
@@ -427,21 +324,21 @@ def vacPerp (D : TransferData A) : Submodule ℝ (GNS D.toReflForm) where
 
 #print axioms vacPerp
 
-/-- Membership in `vacPerp` is orthogonality to the vacuum, definitionally.
+/-- `y ∈ vacPerp D ↔ ⟪D.vacGNS, y⟫ = 0`, by `Iff.rfl`. Marked `@[simp]`, so consumers stating their
+hypotheses as the equation need no rewriting step.
 
-DERIVED: the `0` is orthogonality, the same `0` as in `vacPerp`'s carrier. -/
+DERIVED: `0` is orthogonality to the vacuum, the same `0` as in `vacPerp`'s carrier. -/
 @[simp] theorem mem_vacPerp (D : TransferData A) {y : GNS D.toReflForm} :
     y ∈ vacPerp D ↔ (inner ℝ D.vacGNS y : ℝ) = 0 := Iff.rfl
 
 #print axioms mem_vacPerp
 
-/-- **`vacPerp` IS Mathlib's orthogonal complement of the vacuum line**, so the construction above is
-a spelling and not a second definition. It is spelled out rather than abbreviated because
-`mem_vacPerp` is then `Iff.rfl`, and `⟪Ω, y⟫ = 0` is the form `VolumeRate.rp_sub_geometric` and
-`HalfLineTransfer` state their hypotheses in; `Submodule.mem_orthogonal_singleton_iff_inner_right`
-is a lemma rather than a definitional unfolding.
+/-- `vacPerp D = (Submodule.span ℝ {D.vacGNS})ᗮ`, by extensionality through `mem_vacPerp` and
+`Submodule.mem_orthogonal_singleton_iff_inner_right`. So `vacPerp` is a spelling of Mathlib's
+orthogonal complement of the vacuum line rather than a second notion; it is written out so that
+`mem_vacPerp` is `Iff.rfl`, which the orthogonal-complement form is not.
 
-DERIVED: nothing numeric. -/
+DERIVED: no numeral appears in the statement. -/
 theorem vacPerp_eq_orthogonal (D : TransferData A) :
     vacPerp D = (Submodule.span ℝ {D.vacGNS})ᗮ :=
   Submodule.ext fun _ =>
@@ -449,29 +346,33 @@ theorem vacPerp_eq_orthogonal (D : TransferData A) :
 
 #print axioms vacPerp_eq_orthogonal
 
-/-- **The vacuum complement is transfer-invariant**, in submodule form. This is
-`VolumeRate.inner_vac_Tq`, which is `⟨Ω, Tx⟩ = ⟨TΩ, x⟩ = ⟨Ω, x⟩ = 0` — self-adjointness and the
-vacuum eigenvector, so the step is reflection positivity's. -/
+/-- `∀ y ∈ vacPerp D, D.Tq y ∈ vacPerp D`: the vacuum complement is invariant under the transfer
+operator, in submodule form. It is `VolumeRate.inner_vac_Tq`, which moves `Tq` across the inner
+product by `Tq_isSymmetric` and uses `Tq_vacGNS` to return to the hypothesis.
+
+This is the `hinv` hypothesis of `norm_le_of_rayleigh_le`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem vacPerp_invariant (D : TransferData A) :
     ∀ y ∈ vacPerp D, D.Tq y ∈ vacPerp D :=
   fun _ hy => MassGap.VolumeRate.inner_vac_Tq D hy
 
 #print axioms vacPerp_invariant
 
-/-- **THE HYPOTHESIS `hρ`, DISCHARGED FROM A RAYLEIGH BOUND.**
+/-- From `0 ≤ Λ`, nonnegativity of `⟪Tq y, y⟫` on the vacuum complement (`hpos`), and the Rayleigh
+bound `⟪Tq y, y⟫ ≤ Λ * ‖y‖ ^ 2` there (`hray`), every vacuum-orthogonal `y` satisfies
+`‖D.Tq y‖ ≤ Λ * ‖y‖`. It is `norm_le_of_rayleigh_le` at `T := D.Tq`, `V := vacPerp D`, with symmetry
+from `TransferData.Tq_isSymmetric` and invariance from `vacPerp_invariant`.
 
-`VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut` and `HalfLineTransfer` all take
-`‖T y‖ ≤ Λ‖y‖` on the vacuum complement as an assumption. This produces it from a bound on the
-Rayleigh quotient there, via `norm_le_of_rayleigh_le`.
+This is the hypothesis `VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut` and
+`HalfLineTransfer` take.
 
-`hpos` IS A SEPARATE ASSUMPTION AND NOT A CONSEQUENCE OF CONTRACTIVITY. `TransferData.T_contract`
-bounds `|λ|`; it says nothing about the sign of `λ`, and a negative transfer eigenvalue is what an
-oscillating correlator looks like. `Transfer`'s header records this: positivity of the transfer
-operator is reflection positivity about a HALF-INTEGER time plane, a second application of the
-physics. It appears here as a hypothesis and nowhere as a field.
+Scope: `hpos` is a separate hypothesis, not a consequence of `TransferData.T_contract`, which bounds
+the magnitude of the form and not its sign. It is not a field of `TransferData`.
 
-DERIVED: the `2` is the degree of the norm in a Rayleigh quotient; the `0`s are a sign and an
-orthogonality. -/
+DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
+lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
+`y`. The exponent `2` is the degree of the norm in the Rayleigh bound. -/
 theorem norm_Tq_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
@@ -484,11 +385,13 @@ theorem norm_Tq_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
 
 #print axioms norm_Tq_le_of_rayleigh
 
-/-- **The geometric law, with its hypothesis gone.** `‖Tⁿx‖ ≤ Λⁿ‖x‖` on the vacuum complement,
-from a Rayleigh bound alone. This is `VolumeRate.norm_Tq_pow_le` — equivalently
-`VolumeRate.rp_sub_geometric` — with `hρ` supplied by `norm_Tq_le_of_rayleigh`.
+/-- `‖(D.Tq ^ n) x‖ ≤ Λ ^ n * ‖x‖` at every `n`, for vacuum-orthogonal `x`, from `0 ≤ Λ` and the same
+nonnegativity and Rayleigh hypotheses as `norm_Tq_le_of_rayleigh`. It is `VolumeRate.norm_Tq_pow_le`
+with its per-step hypothesis supplied by that theorem.
 
-DERIVED: the `2` is the Rayleigh quotient's norm degree; the `0`s are a sign and an orthogonality. -/
+DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
+lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
+`x`. The exponent `2` is the degree of the norm in the Rayleigh bound. -/
 theorem Tq_pow_norm_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
@@ -501,12 +404,17 @@ theorem Tq_pow_norm_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ 
 
 #print axioms Tq_pow_norm_le_of_rayleigh
 
-/-- **One cut controls every separation, from a Rayleigh bound.** A Rayleigh bound strictly below one
-on the vacuum complement sends `‖Tⁿx‖ → 0`. `VolumeRate.rp_gap_of_one_cut` with its hypothesis
-discharged.
+/-- With `0 ≤ Λ < 1` and the same nonnegativity and Rayleigh hypotheses,
+`Tendsto (fun n => ‖(D.Tq ^ n) x‖) atTop (nhds 0)` for vacuum-orthogonal `x`. It is
+`VolumeRate.rp_gap_of_one_cut` with its per-step hypothesis supplied by `norm_Tq_le_of_rayleigh`.
 
-DERIVED: the `1` is the vacuum eigenvalue, which is what a subdominant bound must sit below; the `2`
-is the Rayleigh quotient's norm degree; the `0`s are a sign and an orthogonality. -/
+Scope: `n` counts applications of `Tq`, not a volume.
+
+DERIVED: `0` occurs six times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
+lower bound of the form in `hpos`, the orthogonality condition in `hray`, the orthogonality of `x`,
+and the limit point `nhds 0`. `1` is the upper bound on `Λ`, the value the vacuum's own Rayleigh
+quotient takes and which the powers must sit below to vanish. The exponent `2` is the degree of the
+norm in the Rayleigh bound. -/
 theorem tendsto_zero_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ) (hΛ1 : Λ < 1)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
@@ -519,16 +427,19 @@ theorem tendsto_zero_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ
 
 #print axioms tendsto_zero_of_rayleigh
 
-/-! ## §3 The lag-two two-point function, and B5
+/-! ## §3 Lag two, and the shape `SpectralBound` consumes
 
-At lag two the argument is shorter than at a general lag, and it is worth saying why: self-adjointness
-turns `⟪x, T²x⟫` into `‖Tx‖²` exactly, so the bound is the operator bound squared and no
-Cauchy–Schwarz on the correlator is needed. -/
+At lag two symmetry turns `⟪x, Tq ^ 2 x⟫` into `‖Tq x‖ ^ 2` exactly, so the bound is the operator
+bound squared and no second Cauchy–Schwarz on the correlator is needed. -/
 
-/-- **`⟪x, T²x⟫ = ‖Tx‖²`.** Self-adjointness, with nothing else in it. Stated separately because it
-is the step that makes lag two cheaper than an odd lag.
+/-- `⟪x, (D.Tq ^ 2) x⟫ = ‖D.Tq x‖ * ‖D.Tq x‖` at every `x`. Expanding `Tq ^ 2` and moving one `Tq`
+across by `TransferData.Tq_isSymmetric` leaves `⟪Tq x, Tq x⟫`, which
+`real_inner_self_eq_norm_mul_norm` evaluates.
 
-DERIVED: the `2` is the lag index, and it is the same `2` as the square. -/
+Scope: no hypothesis beyond the structure's own symmetry; `x` need not be vacuum-orthogonal.
+
+DERIVED: `2` is the power of `Tq`, the lag index, and it is the same `2` that makes the right side a
+square. -/
 theorem inner_Tq_two_eq (D : TransferData A) (x : GNS D.toReflForm) :
     (inner ℝ x ((D.Tq ^ 2) x) : ℝ) = ‖D.Tq x‖ * ‖D.Tq x‖ := by
   have h2 : (D.Tq ^ 2) x = D.Tq (D.Tq x) := by
@@ -539,12 +450,14 @@ theorem inner_Tq_two_eq (D : TransferData A) (x : GNS D.toReflForm) :
 
 #print axioms inner_Tq_two_eq
 
-/-- **THE LAG-TWO BOUND: `⟪x, T²x⟫ ≤ Λ²‖x‖²` on the vacuum complement.**
+/-- For vacuum-orthogonal `x` and the same hypotheses as `norm_Tq_le_of_rayleigh`,
+`⟪x, (D.Tq ^ 2) x⟫ ≤ Λ ^ 2 * ‖x‖ ^ 2`. `inner_Tq_two_eq` rewrites the left side as `‖D.Tq x‖ ^ 2`
+and `norm_Tq_le_of_rayleigh` bounds `‖D.Tq x‖` by `Λ * ‖x‖`.
 
-`inner_Tq_two_eq` makes it `‖Tx‖²`, and `norm_Tq_le_of_rayleigh` bounds `‖Tx‖` by `Λ‖x‖`.
-
-DERIVED: the `2`s are the lag index and the square it forces; the `0`s are a sign and an
-orthogonality. Nothing is a magnitude. -/
+DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
+lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
+`x`. `2` occurs four times — the exponent in the Rayleigh bound, the power of `Tq` (the lag index),
+and the two squares in the conclusion, both forced by that lag. -/
 theorem inner_Tq_two_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
@@ -559,30 +472,28 @@ theorem inner_Tq_two_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤
 
 #print axioms inner_Tq_two_le_of_rayleigh
 
-/-- **THE B5 RATIO, FROM A RAYLEIGH BOUND.** `ρ(2) ≤ Λ²·ρ(0)` at extent four, given two numeric
-identifications:
+/-- `MassGap.wilsonCorrAt 3 β 2 ≤ Λ ^ 2 * MassGap.wilsonCorrAt 3 β 0`, from the Rayleigh hypotheses
+together with two identifications supplied by the caller:
 
-* `h0 : ρ(0) = ‖x‖²` — the contact value is the trial vector's squared norm;
-* `h2 : ρ(2) = ⟪x, T²x⟫` — the lag-two value is its two-step two-point function.
+* `h0 : wilsonCorrAt 3 β 0 = ‖x‖ ^ 2` — the contact value is the trial vector's squared norm;
+* `h2 : wilsonCorrAt 3 β 2 = ⟪x, (D.Tq ^ 2) x⟫` — the lag-two value is its two-step two-point
+  function.
 
-BOTH ARE HYPOTHESES AND NEITHER IS PROVED ANYWHERE IN THIS TREE. They are what `Z = Tr(Tⁿ)` would
-supply, and `SliceTrace` records exactly why it does not yet: its `K_t` is not
-`SliceTransfer.transferKernel`, it is not known to be symmetric, and it is not known to couple its two
-arguments. Carrying them as named hypotheses is the point — it puts the missing step in the
-statement rather than in the prose.
+The proof rewrites by both and applies `inner_Tq_two_le_of_rayleigh`.
 
-AND THEY ASSERT LESS THAN THEY LOOK LIKE. Each says two REAL NUMBERS agree; nothing in either ties
-`D` to the Wilson measure, so a `D` built to hit the numbers satisfies them while carrying no physics
-— `Spectral2` calls the same phenomenon the free point. What keeps the chain from being empty is the
-quantifier downstream: `SpectralBound.LagSpectralBound` needs a SINGLE `Λ` below `lambdaThreshold` at
-EVERY `β ≥ 0`, and the smallest `Λ` any such construction can report is `√(ρ(2)/ρ(0))` itself. Note
-also that `hx` and `h0` together assert the whole contact value is vacuum-orthogonal.
+Scope: `h0` and `h2` are equations between real numbers and are hypotheses; nothing in them relates
+`D` to the Wilson measure, so a `D` chosen to match the numbers satisfies them. Together with
+`hx : ⟪Ω, x⟫ = 0`, `h0` asserts that the whole contact value is carried by a vacuum-orthogonal
+vector. The conclusion is the shape `LagTwoBound.confines_of_lag_two_ratio` consumes, at `K = Λ ^ 2`;
+that consumer requires one `Λ` serving every `β ≥ 0`.
 
-This is the exact shape `LagTwoBound.confines_of_lag_two_ratio` consumes, at `K = Λ²`.
-
-DERIVED: `0` and `2` are the two lag indices `ConfinesZero.confines_extent_four_of_lag_two_small`
-reads; the `2` in `Λ²` is that same lag; `3` is the extent-four index `N + 1 = 4`, the smallest even
-extent `EvenAp` admits. -/
+DERIVED: `3` occurs four times, as the aperture argument of each `wilsonCorrAt` — once in `h0`, once
+in `h2`, and twice in the conclusion. `0` occurs seven times — the lower bound on `Λ`, the
+orthogonality condition in `hpos`, the lower bound of the form in `hpos`, the orthogonality condition
+in `hray`, the orthogonality of `x`, and the contact lag index in `h0` and in the conclusion. `2`
+occurs six times — the exponent in the Rayleigh bound, the exponent in `h0`, the lag index and the
+power of `Tq` in `h2`, and the lag index and the exponent on `Λ` in the conclusion; every one of them
+is the second lag or the square that lag forces. -/
 theorem lag_two_ratio_of_vacuum_rayleigh {β : ℝ} (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
@@ -597,22 +508,24 @@ theorem lag_two_ratio_of_vacuum_rayleigh {β : ℝ} (D : TransferData A) {Λ : �
 
 #print axioms lag_two_ratio_of_vacuum_rayleigh
 
-/-- **THE SAME, IN `SpectralBound`'s VARIABLE.** `SpectralAt β Λ` is by `SpectralBound.spectralAt_iff`
-exactly `0 ≤ Λ ∧ ρ(2) ≤ Λ²ρ(0)`, so the Rayleigh bound lands directly in the `Prop` that
-`SpectralBound.confines_of_subdominant_bound` consumes.
+/-- `MassGap.SpectralBound.SpectralAt β Λ`, from the same hypotheses as
+`lag_two_ratio_of_vacuum_rayleigh`. `SpectralBound.spectralAt_iff` unfolds that proposition to
+`0 ≤ Λ ∧ wilsonCorrAt 3 β 2 ≤ Λ ^ 2 * wilsonCorrAt 3 β 0`, whose two halves are `hΛ` and the previous
+theorem.
 
-To reach `ApertureRoute.ConfinesAtAnAperture` a caller supplies this at every `β ≥ 0` — that is
-`SpectralBound.LagSpectralBound Λ` — together with `Λ < SpectralBound.lambdaThreshold`. The
-comparison there is STRICT and the threshold is the closed form
-`(1 − 3^{−1/4})/(1 + 3^{−1/4})`, whose square is `LagTwoBound.lagTwoThreshold` definitionally
-(`SpectralBound.lambdaThreshold_sq`); `SpectralBound.lambdaThreshold_lt` puts it strictly below
-`0.13647`, so `0.13647` is NOT an admissible value of `Λ`, while `0.136469` is
-(`SpectralBound.lambdaThreshold_gt`) and is what `SpectralBound.confines_of_subdominant_le` takes.
-Rounding `0.1364697…` up to `0.13647` and comparing non-strictly is the unsafe direction, and it is
-wrong. No numeral is introduced here.
+Scope: this is one coupling. `SpectralBound.confines_of_subdominant_bound` consumes
+`SpectralBound.LagSpectralBound Λ`, which requires a single `Λ` serving every `β ≥ 0`, together with
+a STRICT comparison `Λ < SpectralBound.lambdaThreshold`. That threshold is the closed form
+`(1 - 3 ^ (-1/4)) / (1 + 3 ^ (-1/4))`, whose square is `LagTwoBound.lagTwoThreshold` by
+`SpectralBound.lambdaThreshold_sq`; `SpectralBound.lambdaThreshold_lt` and `lambdaThreshold_gt`
+bracket it strictly between `0.136469` and `0.13647`, and
+`SpectralBound.confines_of_subdominant_le` takes the lower bracket.
 
-DERIVED: `0` and `2` are the two lag indices; the `2` in `Λ²` is that lag; `3` is the extent-four
-index `N + 1 = 4`. -/
+DERIVED: `3` occurs twice, as the aperture argument of `wilsonCorrAt` in `h0` and in `h2`. `0`
+occurs six times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the lower bound of
+the form in `hpos`, the orthogonality condition in `hray`, the orthogonality of `x`, and the contact
+lag index in `h0`. `2` occurs four times — the exponent in the Rayleigh bound, the exponent in `h0`,
+and the lag index and power of `Tq` in `h2`. -/
 theorem spectralAt_of_vacuum_rayleigh {β : ℝ} (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
     (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
       (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))

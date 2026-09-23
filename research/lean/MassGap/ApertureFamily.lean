@@ -1,103 +1,76 @@
 import MassGap.ApertureRoute
 
 /-!
-# MassGap.ApertureFamily — the flagship from confinement at EACH coupling
+# MassGap.ApertureFamily — the flagship from an aperture chosen per coupling
 
-`ApertureRoute.ConfinesAtAnAperture` is `∃ a : EvenAp, ∀ β, 3^{−1/4} < cosAvgEven a β`: ONE extent
-serving EVERY coupling. This file rebuilds the whole flagship from the quantifier-swapped
+`ApertureRoute.ConfinesAtAnAperture` is `∃ a : EvenAp, ∀ β, 3^(-1/4) < cosAvgEven a β`: one extent
+serving every coupling. This module defines the quantifier-swapped
 
-    ConfinesAtEachCoupling := ∀ β : ℝ, ∃ a : EvenAp, 3^{−1/4} < cosAvgEven a β
+    ConfinesAtEachCoupling := ∀ β : ℝ, ∃ a : EvenAp, 3^(-1/4) < cosAvgEven a β
 
-— a READ APERTURE CHOSEN PER COUPLING. The swap is a genuine weakening (`∀∃` from `∃∀`, one way
-only), and the conclusion is unchanged: gap, non-triviality, `SO(4)` invariance and the tight OS0–OS3
-continuum limit, `flagship_of_confinement_at_each_coupling`, foundational axioms only.
+and rebuilds the same conclusion from it — gap, non-triviality, `SO(4)` invariance and the OS0–OS3
+continuum clause — as `flagship_of_confinement_at_each_coupling`, with foundational axioms only.
+`confinesAtEachCoupling_of_confinesAtAnAperture` is the implication from the unswapped hypothesis;
+it is proved in one direction only.
 
-## WHERE THE `∀ β` STRENGTH WAS BEING SPENT: NOWHERE
+## Why the swap goes through
 
-`ApertureRoute.fullModelOfConfinement` consumes the hypothesis through `apertureOf hc = hc.choose`
-and its `.choose_spec`, and nothing else. `Classical.choose` there sits OUTSIDE the `∀ β`, so the
-construction fixes one extent before quantifying over the coupling. That placement is what makes the
-`∃∀` order look load-bearing. It is not, and the reason is in the structure the model has to inhabit:
+`ApertureRoute.fullModelOfConfinement` consumes its hypothesis through `apertureOf hc = hc.choose`
+and `.choose_spec`, with the `Classical.choose` outside the `∀ β`. Every field the construction has
+to fill accepts a per-coupling aperture instead:
 
-* `Model.LatticeYM.μ : ℝ → ℝ` is a FUNCTION OF THE COUPLING. Nothing requires it to factor as
-  `μEven a` for a fixed `a`; `fun β => μEven (A β) β` is as good a field value.
-* `Model.LatticeYM.m : ℝ → Idx → ℂ` is likewise a function of `β`, and `ymModelEven`'s value for it
-  is `exp(-(κ₀ − μ β))` — it reads the aperture only through `μ β`.
-* `Model.A1_YM M = Apriori.A1 M.μ M.κ₀ = ∀ β, M.μ β < M.κ₀`. POINTWISE IN `β`. There is no clause
-  asking that the `β`s be served by one object.
-* `Model.LatticeYM.R`, and therefore `A2_YM`, contains NO aperture at all. `EvenAperture.A2_even`'s
-  proof body never mentions its own argument: it is `MassGap.A2_continuum_of_congruence` on
-  `freadYM ∘ Gram ∘ Fym`, which is the same term at every extent.
-* `FullModel.measure` is a `LatticeYMFamily` FIELD, given a CLOSED TERM in every construction in the
-  tree — `OSFamily.osFamilyTension ApertureRoute.βFlag` here and in `ApertureRoute`,
-  `WilsonModel.ymFamilyTension` in the older `EvenAperture` and `WilsonModel` constructions — and
-  `Measure.continuum_of_family` takes the family as DATA and no hypothesis. The continuum half never
-  saw the aperture.
-* `LatticeYM.hfloor` is `le_refl _`, independent of everything. `LatticeYM.hread` does mention the
-  tension — it is `‖m β k‖ ≤ exp(-(κ₀ − μ β))` — but at `ymModelEven`'s field values `m` is that
-  exponential cast to `ℂ`, so the proof is `Complex.norm_real` and `le_of_eq`: aperture-blind in
-  SHAPE, and it survives any substitution for `μ` that leaves `m` its exponential.
+* `LatticeYM.μ : ℝ → ℝ` is a function of the coupling; `fun β => μEven (A β) β` is a value of that
+  type as much as `μEven a` is.
+* `LatticeYM.m : ℝ → Idx → ℂ` is likewise a function of `β`, and `ymModelEven`'s value for it is
+  `exp(-(κ₀ − μ β))`, which reads the aperture only through `μ β`.
+* `A1_YM M` is `Apriori.A1 M.μ M.κ₀`, that is `∀ β, M.μ β < M.κ₀`, pointwise in `β`.
+* `LatticeYM.R`, and hence `A2_YM`, contains no aperture: `EvenAperture.A2_even`'s proof body does
+  not mention its own argument, being `A2_continuum_of_congruence` on `freadYM ∘ Gram ∘ Fym`.
+* `FullModel.measure` is a `LatticeYMFamily` given as a closed term —
+  `OSFamily.osFamilyTension ApertureRoute.βFlag` here and in `ApertureRoute` — and
+  `Measure.continuum_of_family` takes it as data.
+* `LatticeYM.hfloor` is `le_refl _`. `LatticeYM.hread` is `‖m β k‖ ≤ exp(-(κ₀ − μ β))`, and at these
+  field values `m` is that exponential cast to `ℂ`, so its proof is `Complex.norm_real` and
+  `le_of_eq`, unchanged by any substitution for `μ` that leaves `m` its exponential.
 
-So the aperture is fixed before `β` only because `apertureOf` was written that way, not because any
-consumer demands it. Pushing the choice inside the binder — `apertureAt hc β = (hc β).choose` — gives
-a function `ℝ → EvenAp` and every field above accepts it unchanged.
+`ApertureRoute.FlagshipAt`'s gap conjuncts are `∀ β, Tendsto … (nhds 0)` and `∀ β, μ β − κ < 0`,
+both quantified over `β` outermost, and its measure conjunct does not mention `β`, so no conjunct
+relates two couplings.
 
-## AND THE CONCLUSION IS POINTWISE TOO
+## Scope
 
-`ApertureRoute.FlagshipAt`'s gap side is `∀ β, Tendsto … (nhds 0)` and `∀ β, μ β − κ < 0`: both
-quantify over `β` OUTERMOST, with nothing shared between couplings. Its measure side mentions `β`
-nowhere. So the weaker hypothesis lands on the same conclusion with nothing to reconcile across
-couplings, which is the whole reason this file is short.
+Neither hypothesis gives a gap rate uniform in the coupling. `FlagshipAt` gives `0 < κ₀ − μ β` at
+each `β` separately, and so does `mass_gap_rate_and_continuum_at_each_coupling`. `UniformSurplus`
+states the uniform premise, and `uniform_gap_of_uniformSurplus` proves it sufficient for a
+coupling-uniform geometric bound; no converse is proved.
 
-**What is NOT concluded, at either hypothesis.** A gap rate uniform in the coupling. `FlagshipAt`
-gives `0 < κ₀ − μ β` at each `β` separately, and so does this file. `UniformSurplus` below names the
-missing premise and `uniform_gap_of_uniformSurplus` proves it SUFFICIENT for a coupling-uniform
-geometric bound. Only that direction is proved; no converse is stated anywhere, so nothing here says
-the premise is necessary.
+`forall_exists_aperture_does_not_give_exists_forall` shows that over `EvenAp` and `ℝ` the
+implication `(∀ β, ∃ a, P a β) → (∃ a, ∀ β, P a β)` fails for some predicate `P`. It is a statement
+about the quantifier shape, not about `cosAvgEven`; no declaration in this tree settles whether the
+converse holds for that predicate.
 
-`ConfinesAtAnAperture` does not supply it either: it is an inequality at each `β` with no modulus, so
-a single extent still leaves `μEven a β` free to approach `κ₀`. That is a reading of the two
-statements, not a theorem — no declaration in the tree computes `μEven a β` as `β → ∞`. The point
-stands either way that this is not a COST OF THE SWAP: the premise is equally absent from both.
+`ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity` concerns a different
+implication: there the swapped quantifier is a bound `B` on the moment and the aperture is universal
+on both sides, whereas here the swapped quantifier is the aperture itself and no `B` occurs.
 
-## THE ORDERING BETWEEN THE TWO HYPOTHESES
-
-`confinesAtEachCoupling_of_confinesAtAnAperture` is the implication, and it is one-way.
-`forall_exists_aperture_does_not_give_exists_forall` machine-checks that the converse is not
-SCHEMATICALLY valid over `EvenAp × ℝ`, by exhibiting a predicate on which it fails. That is a
-statement about the quantifier shape, not about `cosAvgEven`: whether the converse happens to hold
-for this particular predicate is left open, and no declaration in the tree settles it.
-
-**This is a different swap from the one `ContactDominance` refutes.**
-`ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity` is about the MOMENT BOUND
-that feeds the substrate hypothesis: it refutes `(∀ β, ∃ B, ∀ N, …) → (∃ B, ∀ N β, …)`, where the
-swapped quantifier is the BOUND `B` and the aperture `N` is UNIVERSAL on both sides. Its counterexample
-is `sepRead`, a family CONSTRUCTED to meet the two clauses `wilson_reflection_positive_at` asserts —
-so the refutation is of the implication, not of anything about `wilsonCorrAt`. Here the swapped
-quantifier is the APERTURE itself and there is no `B` at all. Neither result bears on the other, and
-in particular `ContactDominance`'s counterexample does not obstruct anything below — nothing in this
-file tries to recover a uniform object from pointwise ones.
+`MassGap.FlagshipScope`, not imported here, records what `FlagshipAt` delimits:
+`flagship_for_bogus` proves the whole conclusion for an object with tension the constant `0` and
+carrier types `Unit`, and `gap_summand_is_manufactured` shows the gap conjunct's sum is a one-mode
+geometric sequence whose magnitude is the bound itself. The hypothesis
+`ConfinesAtAnAperture` is a statement about `cosAvgEven` of `readEven`, hence about `wilsonCorrAt`
+at an even aperture of at least four.
 
 ## Provenance
 
-Sections 2, 3 and 5 are `EvenAperture`'s and `ApertureRoute`'s field values and proof terms,
-transcribed with `apertureAt hc β` in place of the fixed `apertureOf hc`, and introduce no numeral.
-Sections 4 and 6 are new: `forall_exists_aperture_does_not_give_exists_forall` and
-`uniform_gap_of_uniformSurplus` have no antecedent in either file, and the first introduces the
-numerals `2n+3`, `n+2` and `a.1 + 1`, all forced by `EvenAp`'s own `N + 1 = 2m ∧ 2 ≤ m` and derived at
-that declaration. `#print axioms` after every declaration.
-## ⚠ WHAT THE FLAGSHIP IS WORTH
+Sections 2, 3 and 5 transcribe `EvenAperture`'s and `ApertureRoute`'s field values and proof terms
+with `apertureAt hc β` in place of the fixed `apertureOf hc`, introducing no numeral. Sections 4 and
+6 have no antecedent in either module; the numerals `2n+3`, `n+2` and `a.1 + 1` occur in
+`forall_exists_aperture_does_not_give_exists_forall`'s proof and are forced by `EvenAp`'s own
+`N + 1 = 2m ∧ 2 ≤ m`. `#print axioms` follows every declaration.
 
-`MassGap.FlagshipScope` — the tree's own adversarial audit, deliberately not imported — measures
-`ApertureRoute.flagship_of_confinement_at_an_aperture`. `flagship_for_bogus` proves the WHOLE
-conclusion (gap, non-triviality, `SO(4)`, OS0–OS3) for an object with **no read, no correlation, no
-gauge group and no lattice in it**, tension the constant `0`; and `gap_summand_is_manufactured` shows
-the gap clause's "correlation" is a one-mode sequence whose magnitude is DEFINED as its own bound.
-
-**So the content sits at `ConfinesAtAnAperture`** — a statement about `cosAvgEven` of `readEven`,
-hence about the genuine `wilsonCorrAt` at an even aperture ≥ 4 — and the `FlagshipAt` step is
-packaging. Every `flagship_…` below should be read that way.
-
+DERIVED: `3`, `1` and `4` are `3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)`, the entropy floor, carried from
+`ConfinesAtAnAperture`; `0` is a sign condition, a limit point, or the level non-triviality compares
+against; `1` is the single mode's weight in `ymModelFamily`.
 -/
 
 namespace MassGap.ApertureFamily
@@ -109,46 +82,51 @@ open MassGap.ApertureRoute
 
 /-! ## 1. The hypothesis, swapped -/
 
-/-- **CONFINEMENT AT EACH COUPLING.** At every coupling there is SOME even extent of at least four at
-which the read's cosine average clears the entropy floor `3^{−1/4} = e^{−κ₀}`.
+/-- At every coupling `β` there is some `a : EvenAp` — an even extent of at least four — at which
+`cosAvgEven a β` exceeds the entropy floor `3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)`. It is
+`ApertureRoute.ConfinesAtAnAperture` with the two quantifiers exchanged, so the extent may vary with
+the coupling.
 
-`ApertureRoute.ConfinesAtAnAperture` with the two quantifiers exchanged. The extent may move with the
-coupling.
+The condition is on the cosine average rather than on the tension.
+`ApertureRoute.unguarded_confinement_is_satisfiable_without_decay` shows the bare tension form is
+satisfied by a read with no decay, because `Real.log` is even.
 
-MOTIVATION, NOT DERIVATION: a read aperture held at a fixed physical scale is a growing number of
-lattice sites as the lattice refines, so a coupling-dependent `EvenAp` is what a fixed physical
-aperture looks like in lattice units. Nothing in this tree ties `β` to a lattice spacing —
-`LatticeYM`'s `β` is the coupling and `FullModel` is explicitly NOT indexed by spacing
-(`FullModel.mass_gap_rate_and_continuum`'s first caveat) — so that reading motivates the definition
-and does not derive it. What is derived is everything below the definition.
+Nothing in this tree ties `β` to a lattice spacing: `LatticeYM`'s `β` is the coupling and
+`FullModel` is not indexed by spacing, as `FullModel.mass_gap_rate_and_continuum`'s first caveat
+records. The reading of a coupling-dependent `EvenAp` as a fixed physical aperture in lattice units
+is not derived anywhere here.
 
-The guard is `ConfinesAtAnAperture`'s, unchanged and for its reason: the condition is on the COSINE
-AVERAGE and not on the tension, because `Real.log` is even and the bare tension form is satisfied by
-a read with no decay at all (`ApertureRoute.unguarded_confinement_is_satisfiable_without_decay`).
-
-DERIVED: no numeral. `EvenAp` and `3^{−1/4}` are `ConfinesAtAnAperture`'s, carried across the swap. -/
+DERIVED: `3`, `1` and `4` form `3 ^ (-(1 : ℝ) / 4)`, the entropy floor `e^(-κ₀YM)` with
+`κ₀YM = ¼ log 3`, carried from `ConfinesAtAnAperture` unchanged. `EvenAp`'s own conditions are
+likewise carried across the swap. -/
 def ConfinesAtEachCoupling : Prop :=
   ∀ β : ℝ, ∃ a : EvenAp, (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven a β
 
 #print axioms ConfinesAtEachCoupling
 
-/-- The aperture the hypothesis supplies AT `β`. `ApertureRoute.apertureOf` with the
-`Classical.choose` moved INSIDE the coupling binder — the whole of the difference between the two
-hypotheses, as a term. -/
+/-- The aperture the hypothesis supplies at `β`: `(hc β).choose`. It is `ApertureRoute.apertureOf`
+with the `Classical.choose` inside the coupling binder, so the result is a function `ℝ → EvenAp`
+rather than a single `EvenAp`.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def apertureAt (hc : ConfinesAtEachCoupling) (β : ℝ) : EvenAp := (hc β).choose
 
 #print axioms apertureAt
 
-/-- That aperture's read clears the floor at that coupling. -/
+/-- `3 ^ (-(1 : ℝ) / 4) < cosAvgEven (apertureAt hc β) β`, which is `(hc β).choose_spec`: the
+aperture chosen at `β` clears the floor at `β`.
+
+DERIVED: `3`, `1` and `4` form the entropy floor `3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)`. -/
 theorem apertureAt_cosAvg (hc : ConfinesAtEachCoupling) (β : ℝ) :
     (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven (apertureAt hc β) β := (hc β).choose_spec
 
 #print axioms apertureAt_cosAvg
 
-/-- **The choice made visible.** The hypothesis is equivalent to the existence of an APERTURE
-FUNCTION `ℝ → EvenAp` clearing the floor at every coupling. Forward is `Classical.choice` and nothing
-else; backward is projection. Stated so that the one place the swap spends choice is a theorem rather
-than a step buried in `apertureAt`. -/
+/-- `ConfinesAtEachCoupling` is equivalent to the existence of an aperture function
+`A : ℝ → EvenAp` with `3 ^ (-(1 : ℝ) / 4) < cosAvgEven (A β) β` at every `β`. Forward is
+`apertureAt` with its specification, which is where the choice is spent; backward is projection.
+
+DERIVED: `3`, `1` and `4` form the entropy floor `3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)`. -/
 theorem confinesAtEachCoupling_iff_apertureFunction :
     ConfinesAtEachCoupling
       ↔ ∃ A : ℝ → EvenAp, ∀ β : ℝ, (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven (A β) β :=
@@ -156,18 +134,22 @@ theorem confinesAtEachCoupling_iff_apertureFunction :
 
 #print axioms confinesAtEachCoupling_iff_apertureFunction
 
-/-- **The tension along the aperture function.** This is the `LatticeYM.μ` field below, and it is the
-one place the swap shows up in the model: `ApertureRoute` has `μEven (apertureOf hc)`, a fixed extent
-applied to `β`; here the extent is read at `β` too. -/
+/-- The tension along the aperture function: `fun β => μEven (apertureAt hc β) β`. This is the
+`LatticeYM.μ` field of `ymModelFamily`, and the one place the quantifier swap appears in the model —
+`ApertureRoute` has `μEven (apertureOf hc)`, a fixed extent applied to `β`.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def tensionOf (hc : ConfinesAtEachCoupling) : ℝ → ℝ :=
   fun β => μEven (apertureAt hc β) β
 
 #print axioms tensionOf
 
-/-- **And therefore confines, at every coupling.** `Moment.Read.tension_lt_floor_of_cosAvg` applied
-inside the binder — the guarded direction, which reads the logarithm only where its argument is
-positive. This is the `A1_YM` field of the model below, and `A1` is pointwise in `β`, so the
-per-coupling aperture discharges it exactly as a fixed one would. -/
+/-- `tensionOf hc β < κ₀YM` at every coupling. It is
+`Moment.Read.tension_lt_floor_of_cosAvg` applied to `(hc β).choose_spec` inside the binder, the
+direction that reads the logarithm only where its argument is positive. Since `Apriori.A1` is
+pointwise in `β`, this discharges `A1_YM` for `ymModelFamily`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem tensionOf_lt_floor (hc : ConfinesAtEachCoupling) (β : ℝ) :
     tensionOf hc β < MassGap.κ₀YM :=
   (readEven (apertureAt hc β) β).tension_lt_floor_of_cosAvg ((hc β).choose_spec)
@@ -179,17 +161,16 @@ theorem tensionOf_lt_floor (hc : ConfinesAtEachCoupling) (β : ℝ) :
 `EvenAperture.ymModelEven` and `ApertureRoute.fullModelOfConfinement`, with `tensionOf hc` in place
 of `μEven (apertureOf hc)` wherever that appears. -/
 
-/-- **THE LATTICE YANG–MILLS WITNESS ALONG AN APERTURE FUNCTION.** `EvenAperture.ymModelEven` with
-the tension read at the coupling's own extent.
+/-- A `LatticeYM` whose tension is read at each coupling's own extent:
+`EvenAperture.ymModelEven` with `μEven a` replaced by `tensionOf hc`.
 
-`Idx`, `Dir`, `s`, `P`, `R`, `κ₀`, `κ`, `hfloor` are `ymModelEven`'s, character for character: none of
-them mentions the aperture. `m`, `μ` and `hread` are `ymModelEven`'s with `μEven a` replaced by
-`tensionOf hc` — three occurrences, and the only substitution this file makes. `hread`'s proof is
-unchanged in shape because it never looks inside the tension: `Complex.norm_real` and
-`Real.norm_of_nonneg` on `m`'s exponential, then `le_of_eq`.
+`Idx`, `Dir`, `s`, `P`, `R`, `κ₀`, `κ` and `hfloor` are `ymModelEven`'s unchanged; none mentions an
+aperture. `m`, `μ` and `hread` are `ymModelEven`'s with the substitution, three occurrences in all.
+`hread`'s proof is `Complex.norm_real` and `Real.norm_of_nonneg` on `m`'s exponential followed by
+`le_of_eq`, which does not look inside the tension.
 
-DERIVED: as in `ymModelEven`, the `1` is the single mode's weight, forced by normalisation; nothing
-else here carries a numeral. -/
+DERIVED: as in `ymModelEven`, `1` is the single mode's weight, forced by normalisation; no other
+numeral occurs. -/
 noncomputable def ymModelFamily (hc : ConfinesAtEachCoupling) : MassGap.LatticeYM where
   Idx := Unit
   Dir := MassGap.DYM
@@ -210,32 +191,33 @@ noncomputable def ymModelFamily (hc : ConfinesAtEachCoupling) : MassGap.LatticeY
 
 #print axioms ymModelFamily
 
-/-- **A1 along the aperture function.** `∀ β, μ β < κ₀`, which is `tensionOf_lt_floor` unchanged:
-`Apriori.A1` quantifies over `β` and asks nothing of the relation between different `β`. -/
+/-- `A1_YM (ymModelFamily hc)`, which unfolds to `∀ β, tensionOf hc β < κ₀YM` and is
+`tensionOf_lt_floor` unchanged. `Apriori.A1` quantifies over `β` and relates no two couplings.
+
+DERIVED: no numeral appears in the statement. -/
 theorem A1_family (hc : ConfinesAtEachCoupling) : MassGap.A1_YM (ymModelFamily hc) :=
   tensionOf_lt_floor hc
 
 #print axioms A1_family
 
-/-- **A2 is untouched by the swap, because `R` never carried an aperture.**
-`EvenAperture.A2_even`'s statement is `A2_YM (ymModelEven a)`, and `A2_YM M` is `A2 M.R`; the `R`
-fields of `ymModelEven a` and of `ymModelFamily hc` are the SAME TERM, so the instance at any extent
-is the instance here. `apFour` — extent four, `EvenAperture.evenAp_nonempty`'s witness — is supplied
-only because `A2_even` takes an argument its proof body never mentions; any `EvenAp` would do, and
-which one is chosen has no effect on the term proved. -/
+/-- `A2_YM (ymModelFamily hc)`, which is `EvenAperture.A2_even` at `apFour`. `A2_YM M` is `A2 M.R`,
+and the `R` fields of `ymModelEven a` and `ymModelFamily hc` are the same term, so the instance at
+any extent proves this one. `apFour` is supplied because `A2_even` takes an argument its proof body
+does not mention; any `EvenAp` would serve.
+
+DERIVED: no numeral appears in the statement. -/
 theorem A2_family (hc : ConfinesAtEachCoupling) : MassGap.A2_YM (ymModelFamily hc) :=
   MassGap.EvenAperture.A2_even MassGap.EvenAperture.apFour
 
 #print axioms A2_family
 
-/-- **A FULL MODEL FROM CONFINEMENT AT EACH COUPLING.** `ApertureRoute.fullModelOfConfinement` with
-the per-coupling aperture. The measure field is the same closed term it carries —
-`OSFamily.osFamilyTension ApertureRoute.βFlag`, the unclamped connected `SU(3)` correlation whose
-sequence index is the lattice EXTENT; `ApertureRoute`'s module docstring states what that clause means
-and what it still lacks.
+/-- A `FullModel` with `gap := ymModelFamily hc`, `h1` and `h2` from `A1_family` and `A2_family`,
+and `measure := OSFamily.osFamilyTension ApertureRoute.βFlag` — the same closed term
+`ApertureRoute.fullModelOfConfinement` carries, whose sequence index is the lattice extent.
+`ApertureRoute`'s module docstring states what that clause gives.
 
-DERIVED: no numeral; every constant belongs to the pieces assembled, and `βFlag` carries its own
-note. -/
+DERIVED: no numeral appears in the statement; every constant belongs to the pieces assembled, and
+`βFlag` carries its own note. -/
 noncomputable def fullModelOfEachCoupling (hc : ConfinesAtEachCoupling) : MassGap.FullModel where
   gap := ymModelFamily hc
   h1 := A1_family hc
@@ -244,29 +226,29 @@ noncomputable def fullModelOfEachCoupling (hc : ConfinesAtEachCoupling) : MassGa
 
 #print axioms fullModelOfEachCoupling
 
-/-- **The measure side takes no hypothesis, by `rfl`.** The same closed term `ApertureRoute` uses. The
-swap in the GAP-side hypothesis does not reach this field, which is the claim; the field itself is not
-`WilsonModel.ymFamilyTension` any more — both this file and `ApertureRoute` now carry
-`OSFamily.osFamilyTension`, and `ApertureRoute`'s module docstring states what that clause means and
-what it still lacks. -/
+/-- `(fullModelOfEachCoupling hc).measure = OSFamily.osFamilyTension ApertureRoute.βFlag`, by
+`rfl`: the measure field is the closed term `ApertureRoute` also uses, and the quantifier swap in
+the gap-side hypothesis does not reach it.
+
+DERIVED: no numeral appears in the statement. -/
 theorem measure_is_osFamilyTension (hc : ConfinesAtEachCoupling) :
     (fullModelOfEachCoupling hc).measure
       = MassGap.OSFamily.osFamilyTension MassGap.ApertureRoute.βFlag := rfl
 
 #print axioms measure_is_osFamilyTension
 
-/-- **AN `SU(3)` WILSON REALISATION FROM CONFINEMENT AT EACH COUPLING.**
-`ApertureRoute.wilsonOfConfinement`'s transcription. `WilsonModel.paramsTension` is reused unchanged:
-it reads its infrared cutoff off the witness read, `paramsTension.irCutoff = cW`.
+/-- A `WilsonRealization` pairing `WilsonModel.paramsTension` with `fullModelOfEachCoupling hc`,
+the `hc` field being `paramsTension_irCutoff.symm`. It transcribes
+`ApertureRoute.wilsonOfConfinement`.
 
-`paramsTension` IS aperture-dependent, and it is worth saying so rather than repeating that it is
-not: `cW` contains `rW ^ (kW + 1)`, and `WilsonModel.kW` is itself `Classical.choose`n — some aperture
-at which the WITNESS read `readW` (a geometric circle correlation, not the Wilson ensemble) clears the
-entropy floor. That aperture is a bare `ℕ` belonging to the measure side's own witness. It is not an
-`EvenAp`, it is not `apertureAt hc β`, and no field of this file's model reaches it — which is why the
-swap cannot move it, and why `paramsTension` is reusable here verbatim.
+`paramsTension` depends on an aperture of its own: its infrared cutoff `cW` contains
+`rW ^ (kW + 1)`, and `WilsonModel.kW` is `Classical.choose`n — an aperture at which the witness read
+`readW`, a geometric circle correlation rather than the Wilson ensemble, clears the entropy floor.
+That aperture is a bare `ℕ` on the measure side; it is not an `EvenAp`, not `apertureAt hc β`, and
+no field of this model reaches it, so `paramsTension` is reused unchanged.
 
-DERIVED: no numeral of this declaration's; `3` is `SU(3)`'s rank, carried from `paramsTension`. -/
+DERIVED: no numeral appears in the statement; `3` is `SU(3)`'s rank, carried inside
+`paramsTension`. -/
 noncomputable def wilsonOfEachCoupling (hc : ConfinesAtEachCoupling) : MassGap.WilsonRealization where
   params := MassGap.WilsonModel.paramsTension
   model := fullModelOfEachCoupling hc
@@ -276,14 +258,15 @@ noncomputable def wilsonOfEachCoupling (hc : ConfinesAtEachCoupling) : MassGap.W
 
 /-! ## 3. The flagship, from the swapped hypothesis -/
 
-/-- The flagship's conclusion at this file's realisation: the mass gap (`C(τ) → 0`), non-triviality
-(`μ − κ < 0`), `SO(4)` invariance (`R` direction-independent), and the tight OS0–OS3 continuum limit.
+/-- The flagship conclusion at this module's realisation: the mode sum tending to `0` at every
+coupling, non-triviality `μ β − κ < 0`, direction-independence of `R`, and the OS0–OS3 subsequential
+limit with its bound, nonnegativity and two invariances.
 
-Clause for clause `ApertureRoute.FlagshipAt`, about `wilsonOfEachCoupling hc` instead of
-`wilsonOfConfinement hc`, so the two conclusions can be compared by reading rather than by assertion.
+It is `ApertureRoute.FlagshipAt`'s statement clause for clause, about `wilsonOfEachCoupling hc`
+rather than `wilsonOfConfinement hc`, so the two can be compared by reading.
 
-DERIVED: no magnitude appears. Every `0` is a sign or a limit point, the `4` is the dimension inside
-the NAME `SO(4)`, and `c`, `B` are the measure's own fields. -/
+DERIVED: every `0` in the statement is a limit point, the level non-triviality compares against, or
+the lower bound asserted on `q`; `c` and `B` are the measure family's own fields. -/
 def FlagshipAtEach (hc : ConfinesAtEachCoupling) : Prop :=
   ((∀ β, Tendsto (fun τ : ℕ => ‖∑ k ∈ (wilsonOfEachCoupling hc).model.gap.s β,
         (wilsonOfEachCoupling hc).model.gap.P β k
@@ -302,30 +285,30 @@ def FlagshipAtEach (hc : ConfinesAtEachCoupling) : Prop :=
 
 #print axioms FlagshipAtEach
 
-/-- **THE FLAGSHIP FROM CONFINEMENT AT EACH COUPLING — THE WHOLE OF IT.**
+/-- `FlagshipAtEach hc` from `ConfinesAtEachCoupling` alone, the proof term being
+`existence_and_gap_of_wilson (wilsonOfEachCoupling hc)`. No conjunct is dropped and no further
+premise is taken.
 
-Existence, the mass gap, non-triviality, `SO(4)` invariance and the continuum measure, from
-`∀ β, ∃ a : EvenAp, 3^{−1/4} < cosAvgEven a β` alone. No conjunct is dropped and no extra premise is
-taken.
+`FlagshipAtEach` is not the same proposition as `ApertureRoute.FlagshipAt`: the two realisations'
+`μ` fields are `μEven ((hc β).choose) β` and `μEven hc.choose β`, drawn by `Classical.choose` from
+different propositions, so they are not definitionally equal. The clauses coincide and each is the
+flagship at its own model.
 
-`FlagshipAtEach` is `ApertureRoute.FlagshipAt`'s statement clause for clause, about
-`wilsonOfEachCoupling hc` instead of `wilsonOfConfinement hc`. It is NOT the same proposition and
-claiming so would be false: the two realisations' `μ` fields are `μEven ((hc β).choose) β` and
-`μEven hc.choose β`, drawn by `Classical.choose` from different propositions, and they are not
-definitionally equal. What is the same is the content — each is the flagship at its own model —
-exactly as `ApertureRoute` records for its own transcription of `EvenAperture`'s.
-
-The proof term is `existence_and_gap_of_wilson` applied to this file's realisation and nothing else,
-exactly as `flagship_of_confinement_at_an_aperture`'s is — so the statement is known to be the
-flagship by type-checking rather than by assertion. -/
+DERIVED: no numeral appears in the statement; those in `FlagshipAtEach` are noted there. -/
 theorem flagship_of_confinement_at_each_coupling (hc : ConfinesAtEachCoupling) : FlagshipAtEach hc :=
   MassGap.existence_and_gap_of_wilson (wilsonOfEachCoupling hc)
 
 #print axioms flagship_of_confinement_at_each_coupling
 
-/-- **The gap WITH ITS RATE, and the continuum measure, at each coupling.** The rate is the entropy
-surplus `κ₀ − μ β` at THAT coupling's extent. `ApertureRoute.mass_gap_rate_and_continuum_at_an_aperture`
-from the swapped hypothesis. -/
+/-- At each coupling `β`: `0 < κ₀ − μ β`, the geometric bound
+`‖∑ k, P β k * m β k ^ τ‖ ≤ (∑ k, ‖P β k‖) * exp(-(κ₀ − μ β)) ^ τ` at every `τ`, and the OS0–OS3
+subsequential limit. It is `MassGap.mass_gap_rate_and_continuum` at
+`fullModelOfEachCoupling hc`.
+
+The rate is the entropy surplus at that coupling's own extent; it is not claimed to be bounded away
+from zero over `β`, which is what `UniformSurplus` would add.
+
+DERIVED: `0` is the level the surplus exceeds and the lower bound asserted on `q`. -/
 theorem mass_gap_rate_and_continuum_at_each_coupling
     (hc : ConfinesAtEachCoupling) (β : ℝ) :
     (0 < (fullModelOfEachCoupling hc).gap.κ₀ - (fullModelOfEachCoupling hc).gap.μ β ∧
@@ -350,43 +333,44 @@ theorem mass_gap_rate_and_continuum_at_each_coupling
 
 One direction, and only one. -/
 
-/-- **THE OLD HYPOTHESIS GIVES THE NEW ONE.** Instantiate the single extent at every coupling. This
-is the whole proof, and it is what puts the swap on the record as a WEAKENING rather than a variant
-spelling. -/
+/-- `ConfinesAtEachCoupling` from `ConfinesAtAnAperture`: instantiate the single extent
+`apertureOf hc` at every coupling, with `apertureOf_cosAvg` for the inequality. Only this direction
+is proved.
+
+DERIVED: no numeral appears in the statement. -/
 theorem confinesAtEachCoupling_of_confinesAtAnAperture (hc : ConfinesAtAnAperture) :
     ConfinesAtEachCoupling :=
   fun β => ⟨apertureOf hc, apertureOf_cosAvg hc β⟩
 
 #print axioms confinesAtEachCoupling_of_confinesAtAnAperture
 
-/-- **The flagship from the aperture hypothesis, through the swapped one.** Composing the two results
-above reaches the flagship from `ConfinesAtAnAperture` by way of `ConfinesAtEachCoupling`, which is
-the check that the swap costs nothing: every clause the `∃∀` route concludes is concluded here too,
-from strictly less.
+/-- `FlagshipAtEach (confinesAtEachCoupling_of_confinesAtAnAperture hc)` from
+`ConfinesAtAnAperture`, composing the two preceding results. Every conjunct the unswapped route
+concludes is concluded here.
 
-It lands on `FlagshipAtEach`, not on `ApertureRoute.FlagshipAt`, and those are different
-propositions — the realisations differ in their `Classical.choose`n aperture. The clauses are
-identical and the models are both flagship models; it is the witness that differs. -/
+The conclusion is `FlagshipAtEach`, not `ApertureRoute.FlagshipAt`; the two realisations differ in
+their `Classical.choose`n aperture, so the propositions differ while the clauses coincide.
+
+DERIVED: no numeral appears in the statement. -/
 theorem flagship_of_confinesAtAnAperture_via_family (hc : ConfinesAtAnAperture) :
     FlagshipAtEach (confinesAtEachCoupling_of_confinesAtAnAperture hc) :=
   flagship_of_confinement_at_each_coupling _
 
 #print axioms flagship_of_confinesAtAnAperture_via_family
 
-/-- **NO SCHEMATIC CONVERSE.** Over `EvenAp` and `ℝ` the implication `(∀ β, ∃ a, P a β) →
-(∃ a, ∀ β, P a β)` fails, so nothing about the quantifier shape alone recovers
-`ConfinesAtAnAperture` from `ConfinesAtEachCoupling`.
+/-- The schema `∀ P : EvenAp → ℝ → Prop, (∀ β, ∃ a, P a β) → (∃ a, ∀ β, P a β)` is false. The
+refuting predicate is `P a β := β ≤ (a.1 : ℝ)`: extents are unbounded, since `⟨2n+3, n+2, _, _⟩` is
+an `EvenAp` for every `n` and `exists_nat_gt` puts one past any `β`, while a single extent fails at
+`β = (a.1 : ℝ) + 1`.
 
-The witness is `P a β := β ≤ a.1`. Forward: extents are unbounded — `⟨2n+3, n+2, …⟩` is an `EvenAp`
-for every `n`, and `exists_nat_gt` puts one past any `β`. Backward: a single extent fails at
-`β = a.1 + 1`.
+The statement is about the quantifier shape over `EvenAp` and `ℝ`. It does not concern
+`cosAvgEven`, and it does not settle whether `ConfinesAtEachCoupling` implies
+`ConfinesAtAnAperture` for that particular predicate; no declaration in this tree settles that in
+either direction.
 
-**This does not refute the converse FOR `cosAvgEven`.** It says the converse is not available from
-the logic, so anyone wanting `ConfinesAtAnAperture` back must argue from the Wilson read itself. No
-declaration in the tree does, in either direction.
-
-DERIVED: no magnitude. `2n+3` is the odd extent whose successor is `2(n+2)`, forced by `EvenAp`'s own
-`N + 1 = 2m` with `2 ≤ m`; `a.1 + 1` is the successor, the smallest point past a given extent. -/
+DERIVED: no numeral appears in the statement. In the proof, `2n+3` is the odd extent whose successor
+is `2(n+2)`, forced by `EvenAp`'s own `N + 1 = 2m` with `2 ≤ m`, and `a.1 + 1` is the smallest point
+past a given extent. -/
 theorem forall_exists_aperture_does_not_give_exists_forall :
     ¬ (∀ P : EvenAp → ℝ → Prop, (∀ β : ℝ, ∃ a : EvenAp, P a β) → (∃ a : EvenAp, ∀ β : ℝ, P a β)) := by
   intro hswap
@@ -405,16 +389,19 @@ theorem forall_exists_aperture_does_not_give_exists_forall :
 `NonnegArm.lawBelow_holds` plus `NonnegArm.substrate_even_of_two_arm` reduce the Clay statement to
 `LawAbove b`. That composition is reused verbatim; the only change is where it lands. -/
 
-/-- **THE OBLIGATION, AT EACH COUPLING.** There is a `b > 0` such that the contact-relative quartic
-law on `(b, ∞)` alone yields confinement at a per-coupling even aperture, and with it the gap,
-non-triviality, `SO(4)` invariance and the continuum measure.
+/-- There is a `b > 0` such that `NonnegArm.LawAbove b` — the contact-relative quartic law on
+`(b, ∞)` — yields some `hc : ConfinesAtEachCoupling` together with `FlagshipAtEach hc`.
 
-The `[0, b]` arm is discharged inside the proof by `ContactFloor.contact_relative_unconditional`,
-carried out of `NonnegArm.lawBelow_holds`; `b` is that theorem's own cut, not named and not chosen.
+`b` and the `[0, b]` arm come from `NonnegArm.lawBelow_holds`, which carries
+`ContactFloor.contact_relative_unconditional`; `b` is that theorem's own cut and is not named here.
+The two arms feed `NonnegArm.substrate_even_of_two_arm` and
+`confinement_at_an_aperture_of_substrate`, and the result is weakened by
+`confinesAtEachCoupling_of_confinesAtAnAperture`.
 
-This proves nothing new about Yang–Mills — `LawAbove b` is the same sufficient input. What has
-changed is the intermediate target: a route reaching confinement without the power law now has to
-produce ONE extent PER COUPLING, not one extent for all of them. -/
+`LawAbove b` is the same sufficient input `ApertureRoute` takes; what differs is that the
+intermediate conclusion here is one extent per coupling.
+
+DERIVED: `0` is the positivity threshold on the cut `b`. -/
 theorem confinement_at_each_coupling_of_law_above_cut :
     ∃ b : ℝ, 0 < b ∧ (MassGap.NonnegArm.LawAbove b →
       ∃ hc : ConfinesAtEachCoupling, FlagshipAtEach hc) := by
@@ -440,27 +427,27 @@ here, so nothing says a coupling-uniform bound could not arrive some other way. 
 show is that the premise is not merely sufficient by a detour — the rate it delivers is `Δ` itself,
 the surplus's own constant, unweakened. -/
 
-/-- **A COUPLING-UNIFORM ENTROPY SURPLUS.** The tension stays a fixed distance below the floor at
-every coupling, rather than merely below it at each coupling.
+/-- A coupling-uniform entropy surplus for a tension function `μ`: there is a `Δ > 0` with
+`Δ ≤ κ₀YM - μ β` at every `β`. The quantifier over `Δ` is outside the quantifier over `β`.
 
-This is what `A1` does NOT say. `Apriori.A1 μ κ₀` is `∀ β, μ β < κ₀`, which permits `μ β → κ₀`, and
-the model's mode magnitude `exp(−(κ₀ − μ β))` then approaches `1` — geometric decay at every coupling,
-with no common ratio.
+`Apriori.A1 μ κ₀` is `∀ β, μ β < κ₀`, which permits `μ β → κ₀` and hence a mode magnitude
+`exp(-(κ₀ - μ β))` approaching `1`, so `A1` does not give this.
 
-DERIVED: `Δ` is quantified, not chosen; `0 < Δ` is a sign. -/
+DERIVED: `0` is the positivity threshold on `Δ`; `Δ` is quantified, not chosen. -/
 def UniformSurplus (μ : ℝ → ℝ) : Prop := ∃ Δ : ℝ, 0 < Δ ∧ ∀ β : ℝ, Δ ≤ MassGap.κ₀YM - μ β
 
 #print axioms UniformSurplus
 
-/-- **THE COUPLING-UNIFORM GEOMETRIC BOUND, FROM THE UNIFORM SURPLUS AND NOT WITHOUT IT.** One rate
-`Δ > 0` and one bound `‖C(τ)‖ ≤ (∑‖P‖)·e^{−Δτ}` holding at EVERY coupling.
+/-- From `UniformSurplus (tensionOf hc)`: one `Δ > 0` and one bound
+`‖∑ k ∈ s β, P β k * m β k ^ τ‖ ≤ (∑ k ∈ s β, ‖P β k‖) * exp(-Δ) ^ τ` holding at every coupling and
+every `τ`. It is `MassGap.geometric_bound_of_mode_bound` at the ratio `exp(-Δ)`, the surplus
+entering only through `Real.exp_le_exp`, so the rate delivered is `Δ` itself.
 
-`Model.geometric_bound_of_mode_bound` at the ratio `e^{−Δ}`; the hypothesis enters only through
-`Real.exp_le_exp`, so the rate delivered IS the surplus's constant.
+Only this direction is proved; no converse is stated. The proof does not use the aperture function,
+so the same statement over `ApertureRoute.fullModelOfConfinement`'s tension would need the same
+premise.
 
-Stated over `ymModelFamily hc` because that is this file's model, but nothing in the proof uses the
-aperture function: the same statement with `ApertureRoute.fullModelOfConfinement`'s tension needs the
-same premise. The swap neither supplies nor costs it. -/
+DERIVED: `0` is the positivity threshold on `Δ`. -/
 theorem uniform_gap_of_uniformSurplus (hc : ConfinesAtEachCoupling)
     (hu : UniformSurplus (tensionOf hc)) :
     ∃ Δ : ℝ, 0 < Δ ∧ ∀ (β : ℝ) (τ : ℕ),

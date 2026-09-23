@@ -2,57 +2,44 @@ import Mathlib
 import MassGap.InfiniteLattice
 
 /-!
-# MassGap.InfiniteShift — a time translation that is neither the identity nor of finite order
+# MassGap.InfiniteShift — the lattice translation acting on the quasi-local algebra
 
-## The obstruction this answers
+The unit translation in a direction `μ : Fin 4`, built up from links to observables on the infinite
+lattice `ISite = Fin 4 → ℤ` of `MassGap.InfiniteLattice`, and three properties of it.
 
-`Transfer.TransferData` asks for `T : A →ₗ[ℝ] A` — an ENDOMORPHISM of the observable algebra. The
-Wilson time shift is not one on any finite carrier the tree has, and the tree proves this twice, by
-two unrelated arguments:
+## The maps
 
-| carrier | closed by | why |
-|---|---|---|
-| the fixed-block slab algebra | `HalfLineTransfer.shiftObs_eq_self_of_shift_stable` | asking the shift to land back inside ONE FIXED BLOCK forces it to be the identity |
-| any algebra on the torus `Link d n` | `TransferGap.finite_order_fails_gap` | `shiftObs_pow_period` gives `shiftObs^[n] = id`, and a finite-order operator cannot carry a gap |
+`ishiftLink` moves a link's base site by one step in direction `μ`, keeping its direction.
+`ishiftPlaq` does the same for a plaquette, keeping the plane — a translation does not transpose it,
+so the loop is not reversed. `ishiftConf` pulls a configuration back along `ishiftLink`, and
+`ishiftObs` precomposes an observable with `ishiftConf`.
 
-**Read the first no-go's hypothesis and it says what to build.** `const_of_shift_stable` requires
+`wilsonHol_ishiftPlaq` records the consequence for the Wilson holonomy: it is equal on the two
+sides, not merely conjugate. The plaquette's boundary word is the same word at a moved base, so no
+hypothesis on the plaquette density is needed — unlike a reflection, where the word is rotated and
+the ordered product is conjugated (`LatticeReflection.ihol_ireflConf`).
 
-    hMsub : ∀ F ∈ M, F ∈ localObs (blkS τ a m) (blkR τ a m)
+## The three properties
 
-— every element determined by ONE FIXED finite block. The proof needs exactly that: `detBy_orbitCore`
-intersects the shifted copies of *the same* block and `orbitCore_eq_empty` empties the intersection.
-**A directed union of local algebras satisfies no such hypothesis**, because an observable in it is
-determined by *some* finite set and the shift carries that set to another finite set. The support is
-allowed to MOVE rather than required to STAY. The no-go does not reach the union — not because the
-union evades it, but because its hypothesis is false of the union.
+* `ishiftObs_mem_quasiLocalAlg` — `ishiftObs μ` maps `InfiniteLattice.quasiLocalAlg` into itself. The
+  support of an observable local on `S` moves to `S.image (ishiftLink μ)`, which is again finite;
+  `isLocalOn_ishiftObs` is that step, and `continuous_ishiftConf` supplies continuity.
+* `ishiftObs_infinite_order` — for every `k > 0`, `(ishiftObs μ)^[k]` is not the identity on the
+  witness observable `linkObs l f`. `ishift_iterate` is where `ℤ` enters: `k` steps add `k` to a
+  coordinate, and on `ℤ` that is never zero for `k > 0`, whereas on `Fin n` it wraps.
+* `ishiftObs_ne_id_of_separating` — the case `k = 1` of the previous statement.
 
-`InfiniteLattice.quasiLocalAlg` is that directed union, already built, and `ISite = Fin 4 → ℤ` makes
-it infinite in every direction. **This file shows the shift acts on it, and acts non-trivially.**
+## Scope
 
-## What is proved
+The two non-triviality statements take a separating pair: `f g₀ ≠ f g₁` for a real-valued `f` on the
+gauge group. Without it the conclusion is false — on a group whose continuous real functions are all
+constant, every observable is fixed by every translation, which is a property of the group rather
+than of the translation.
 
-* `ishiftObs_mem_quasiLocalAlg` — the shift is an endomorphism of the quasi-local algebra. Its
-  support moves from `S` to `S.image (ishiftLink μ)`, which is what the slab could not do.
-* `ishiftObs_ne_id_of_separating` — it is **not the identity**, so the first no-go's conclusion fails
-  here, as its hypothesis predicted.
-* `ishiftObs_infinite_order` — no positive power of it is the identity, so
-  `TransferGap.finite_order_fails_gap` does not apply either. This is where `ℤ` is doing the work:
-  `ishift` adds one to a coordinate, and `k` steps add `k`, which is never zero for `k > 0`.
-
-**So this is the first carrier in the tree on which the time translation is a non-trivial
-endomorphism of infinite order** — the two properties every finite carrier was proved to lack.
-
-## ⚠ What is NOT proved, and it is the larger half
-
-**No reflection form, no positivity, no `TransferData`.** A `TransferData` on this algebra needs a
-Gibbs reflection form on `IConf` with `form_nonneg`, `T_symm` and `T_contract`, and those need the
-infinite-volume state (`DLRLimit`) together with reflection positivity transported to it. None of
-that is here. What is closed is the *structural* obstruction that made the finite carriers worthless;
-what remains is the analysis.
-
-**This file therefore proves a necessary condition, not a sufficient one.** A carrier on which the
-shift is trivial is certainly useless; that this one is non-trivial does not by itself make it
-useful, and nothing here should be read as saying the transfer operator has been built.
+Nothing here constructs a reflection form, a positivity statement, or a `Transfer.TransferData`. The
+declarations below concern the translation map alone; `IConf` carries no measure or state in this
+file, and `G` is only a topological space (a group structure is assumed for
+`wilsonHol_ishiftPlaq` alone).
 -/
 
 namespace MassGap.InfiniteShift
@@ -65,15 +52,20 @@ variable {G : Type} [TopologicalSpace G]
 
 /-! ## 1. The shift, on links, configurations and observables -/
 
-/-- **TRANSLATE A LINK** one step in direction `μ`: same direction, base site moved.
+/-- A link translated one step in direction `μ`: the direction component is unchanged, the base site
+is moved by `InfiniteLattice.ishift`.
 
-DERIVED: no numeral of its own — the step is `InfiniteLattice.ishift`'s. -/
+DERIVED: `4` is the spacetime dimension, the range of the direction index `μ : Fin 4`. It is the only
+numeral in the statement; the unit step lives inside `ishift`. -/
 def ishiftLink (μ : Fin 4) (l : ILink) : ILink := (l.1, ishift μ l.2)
 
-/-- Shifts in any two directions commute — they touch one coordinate each, and when it is the same
-coordinate they both add one to it.
+/-- Translations in any two directions commute: `ishift μ (ishift ν x) = ishift ν (ishift μ x)`.
 
-DERIVED: the `1`s are `ishift`'s lattice step; `4` is the dimension. -/
+Each touches one coordinate, and when `μ = ν` both add the same step to the same coordinate. No
+hypothesis relates `μ` and `ν`.
+
+DERIVED: `4` is the spacetime dimension, the range of both direction indices. It is the only numeral
+in the statement; the unit step lives inside `ishift`. -/
 theorem ishift_comm (μ ν : Fin 4) (x : ISite) :
     ishift μ (ishift ν x) = ishift ν (ishift μ x) := by
   by_cases h : μ = ν
@@ -89,34 +81,45 @@ theorem ishift_comm (μ ν : Fin 4) (x : ISite) :
 
 #print axioms ishift_comm
 
-/-- **TRANSLATE A PLAQUETTE** — same plane, base site moved. Unlike the reflection, the plane is NOT
-transposed: a translation does not reverse the loop.
+/-- A plaquette translated one step in direction `μ`: the plane is unchanged, the base site is moved
+by `ishift`.
 
-DERIVED: no numeral of its own — the step is `ishift`'s; `4` is the dimension. -/
+The plane is not transposed, so the boundary loop keeps its orientation — which is what separates a
+translation from the reflection of `LatticeReflection`.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement. -/
 def ishiftPlaq (μ : Fin 4) (q : IPlaq) : IPlaq := (q.1, ishift μ q.2)
 
-/-- **TRANSLATE A CONFIGURATION** by pulling back along the link shift.
+/-- A configuration translated by pullback along `ishiftLink μ`: the value at `l` becomes the old
+value at `ishiftLink μ l`.
 
-DERIVED: `4` is the spacetime dimension, the same constant `InfiniteLattice.ISite` and `ILink` are
-built on. It is the direction index's range, not a size. -/
+DERIVED: `4` is the spacetime dimension, the constant `InfiniteLattice.ISite` and `ILink` are built
+on and the range of the direction index. It is the only numeral in the statement, and it is an index
+range, not a size. -/
 def ishiftConf (μ : Fin 4) (U : IConf G) : IConf G := fun l => U (ishiftLink μ l)
 
-/-- **TRANSLATE AN OBSERVABLE** by precomposition — this is the map that must be an endomorphism.
+/-- An observable translated by precomposition with `ishiftConf μ`. This is the map the endomorphism
+statement below is about.
 
-DERIVED: `4` is the spacetime dimension again, as in `ishiftConf`. -/
+DERIVED: `4` is the spacetime dimension, as in `ishiftConf`. It is the only numeral in the
+statement. -/
 def ishiftObs (μ : Fin 4) (F : IConf G → ℝ) : IConf G → ℝ := fun U => F (ishiftConf μ U)
 
 /-! ## 2. The shift moves every site, and keeps moving -/
 
-/-- **⭐ THE SHIFTED HOLONOMY IS EQUAL, NOT MERELY CONJUGATE.**
+/-- The Wilson holonomy of a translated plaquette equals the holonomy of the original plaquette on
+the translated configuration: `wilsonHol ibd (ishiftPlaq μ q) U = wilsonHol ibd q (ishiftConf μ U)`.
 
-This is the contrast with `LatticeReflection.ihol_ireflConf` and it is the reason the two symmetries
-cost different things. The MIRROR reverses the loop, so the mirrored boundary word is a cyclic
-rotation of the image word and a rotated ordered product is a CONJUGATED one — which is why the
-reflection needs `φ` to be a class function. A TRANSLATION reverses nothing: the word is the same
-word at a moved base, so the holonomy is equal on the nose and NO hypothesis on `φ` is needed.
+Equality, not conjugacy. The boundary word is the same word at a moved base, since `ishift_comm`
+lets the translation pass through each of the four link lookups. A reflection instead rotates the
+word and conjugates the ordered product (`LatticeReflection.ihol_ireflConf`), which is why that case
+needs the plaquette density to be a class function and this one needs no hypothesis on it.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+Scope: `G` is required to be a `Group` here, unlike the rest of the section.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement. -/
 theorem wilsonHol_ishiftPlaq {G : Type} [Group G] (μ : Fin 4) (q : IPlaq) (U : IConf G) :
     MassGap.WilsonLattice.wilsonHol ibd (ishiftPlaq μ q) U
       = MassGap.WilsonLattice.wilsonHol ibd q (ishiftConf μ U) := by
@@ -126,10 +129,14 @@ theorem wilsonHol_ishiftPlaq {G : Type} [Group G] (μ : Fin 4) (q : IPlaq) (U : 
 
 #print axioms wilsonHol_ishiftPlaq
 
-/-- **`k` STEPS ADD `k` TO THE COORDINATE.** This is the whole of why the infinite lattice differs
-from the torus: on `Fin n` the coordinate wraps, on `ℤ` it does not.
+/-- Iterating the translation `k` times adds `k` to the `μ` coordinate:
+`((ishift μ)^[k] x) μ = x μ + k`.
 
-DERIVED: no numeral. The `1` inside `ishift` is one lattice step. -/
+The coordinate lives in `ℤ`, so the sum is taken there and does not wrap; on `Fin n` the
+corresponding statement would reduce mod `n`. Stated for every `k : ℕ`, including `0`.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement; the unit step lives inside `ishift`. -/
 
 theorem ishift_iterate (μ : Fin 4) (k : ℕ) (x : ISite) :
     ((ishift μ)^[k] x) μ = x μ + k := by
@@ -142,10 +149,13 @@ theorem ishift_iterate (μ : Fin 4) (k : ℕ) (x : ISite) :
 
 #print axioms MassGap.InfiniteShift.ishift_iterate
 
-/-- **SO NO POSITIVE NUMBER OF STEPS RETURNS A SITE.** The torus statement
-`HalfLineTransfer.shift_iterate_period` has no counterpart here, and that is the point.
+/-- No positive number of translations fixes a site: `(ishift μ)^[k] x ≠ x` whenever `k > 0`.
 
-DERIVED: the `0` is the excluded step count; nothing is chosen. -/
+From `ishift_iterate`, since `x μ + k = x μ` fails in `ℤ` for positive `k`. The hypothesis `0 < k` is
+required — at `k = 0` the iterate is the identity.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. `0` is the excluded step
+count in `hk : 0 < k`. -/
 theorem ishift_iterate_ne (μ : Fin 4) {k : ℕ} (hk : 0 < k) (x : ISite) :
     (ishift μ)^[k] x ≠ x := by
   intro h
@@ -155,10 +165,11 @@ theorem ishift_iterate_ne (μ : Fin 4) {k : ℕ} (hk : 0 < k) (x : ISite) :
 
 #print axioms MassGap.InfiniteShift.ishift_iterate_ne
 
-/-- **`k` STEPS ON A LINK MOVE ITS BASE AND NOTHING ELSE.** This was a `have` inside
-`ishiftLink_iterate_ne`; it is exported because the box obstruction needs the coordinate.
+/-- Iterating the link translation moves the base site and leaves the direction alone:
+`(ishiftLink μ)^[k] l = (l.1, (ishift μ)^[k] l.2)`, for every `k : ℕ`.
 
-DERIVED: no numeral of its own; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement — `l.1` and `l.2` are projections. -/
 theorem ishiftLink_iterate (μ : Fin 4) (k : ℕ) (l : ILink) :
     (ishiftLink μ)^[k] l = (l.1, (ishift μ)^[k] l.2) := by
   induction k with
@@ -168,7 +179,13 @@ theorem ishiftLink_iterate (μ : Fin 4) (k : ℕ) (l : ILink) :
 
 #print axioms MassGap.InfiniteShift.ishiftLink_iterate
 
-/-- The link shift inherits it. -/
+/-- No positive number of translations fixes a link: `(ishiftLink μ)^[k] l ≠ l` whenever `k > 0`.
+
+The direction component is fixed by the translation, so the difference is in the base site, where
+`ishift_iterate_ne` applies.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. `0` is the excluded step
+count in `hk : 0 < k`. -/
 theorem ishiftLink_iterate_ne (μ : Fin 4) {k : ℕ} (hk : 0 < k) (l : ILink) :
     (ishiftLink μ)^[k] l ≠ l := by
   have hfst : ∀ j : ℕ, ((ishiftLink μ)^[j] l) = (l.1, (ishift μ)^[j] l.2) := by
@@ -212,7 +229,11 @@ theorem ishiftObs_iterate (μ : Fin 4) (k : ℕ) (F : IConf G → ℝ) :
 
 /-! ## 4. It is an endomorphism of the quasi-local algebra -/
 
-/-- The shift on configurations is continuous: each output coordinate IS an input coordinate. -/
+/-- `ishiftConf μ` is continuous on `IConf G` with the product topology: each output coordinate is
+one of the input coordinates, so the map is a projection composed with a relabelling.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement. -/
 theorem continuous_ishiftConf (μ : Fin 4) :
     Continuous (ishiftConf (G := G) μ) :=
   continuous_pi fun l => continuous_apply (ishiftLink μ l)
@@ -220,11 +241,14 @@ theorem continuous_ishiftConf (μ : Fin 4) :
 #print axioms MassGap.InfiniteShift.continuous_ishiftConf
 
 omit [TopologicalSpace G] in
-/-- **LOCALITY MOVES WITH THE SUPPORT.** An observable local on `S` becomes local on the image of `S`
-under the link shift. **This is exactly what a fixed-block algebra cannot do**, and it is the whole
-difference between this carrier and the slab.
+/-- An observable local on a finite link set `S` becomes local on `S.image (ishiftLink μ)` after
+translation.
 
-DERIVED: no numeral. -/
+The support is not preserved; it is carried to its image, which is again finite. `S` is an arbitrary
+`Finset ILink` and no relation between `S` and its image is required.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement. -/
 theorem isLocalOn_ishiftObs (μ : Fin 4) {S : Finset ILink} {F : IConf G → ℝ}
     (hF : IsLocalOn S F) :
     IsLocalOn (S.image (ishiftLink μ)) (ishiftObs μ F) := by
@@ -235,13 +259,14 @@ theorem isLocalOn_ishiftObs (μ : Fin 4) {S : Finset ILink} {F : IConf G → ℝ
 
 #print axioms MassGap.InfiniteShift.isLocalOn_ishiftObs
 
-/-- **⭐ THE SHIFT IS AN ENDOMORPHISM OF THE QUASI-LOCAL ALGEBRA.**
+/-- `ishiftObs μ` maps `InfiniteLattice.quasiLocalAlg` into itself.
 
-The support is not required to stay inside one block; it is required only to stay FINITE, and the
-shift of a finite set is finite. That is the hypothesis `HalfLineTransfer.const_of_shift_stable`
-needs and does not get here.
+Membership of that algebra asks for continuity and locality on some finite link set. Continuity
+composes (`continuous_ishiftConf`), and the witnessing set moves to its image under `ishiftLink μ`
+(`isLocalOn_ishiftObs`), which is again finite. No fixed block is required to contain the support.
 
-DERIVED: no numeral. -/
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement. -/
 theorem ishiftObs_mem_quasiLocalAlg (μ : Fin 4) {F : IConf G → ℝ}
     (hF : F ∈ quasiLocalAlg (G := G)) :
     ishiftObs μ F ∈ quasiLocalAlg (G := G) := by
@@ -253,9 +278,10 @@ theorem ishiftObs_mem_quasiLocalAlg (μ : Fin 4) {F : IConf G → ℝ}
 
 /-! ## 5. And it is non-trivial, at every power -/
 
-/-- The witness observable: read one link through a real-valued function.
+/-- The observable reading one link through a real-valued function: `linkObs l f U = f (U l)`.
 
-DERIVED: no numeral. -/
+DERIVED: the statement carries no numeral — the link, the function and the configuration are all
+parameters. -/
 def linkObs (l : ILink) (f : G → ℝ) : IConf G → ℝ := fun U => f (U l)
 
 theorem linkObs_mem_quasiLocalAlg {l : ILink} {f : G → ℝ} (hf : Continuous f) :
@@ -268,15 +294,20 @@ theorem linkObs_mem_quasiLocalAlg {l : ILink} {f : G → ℝ} (hf : Continuous f
 #print axioms MassGap.InfiniteShift.linkObs_mem_quasiLocalAlg
 
 omit [TopologicalSpace G] in
-/-- **⛔ NO POSITIVE POWER OF THE SHIFT IS THE IDENTITY.** Both no-gos fail here at once: `k = 1`
-gives that the shift is not the identity, and general `k` gives that it has no finite order, so
-`TransferGap.finite_order_fails_gap` has no `p` to be applied at.
+/-- For every `k > 0`, `(ishiftObs μ)^[k] (linkObs l f) ≠ linkObs l f`, given a separating pair
+`hf : f g₀ ≠ f g₁`.
 
-The separation hypothesis is what makes the statement about the shift rather than about a constant
-observable: a group on which every continuous function is constant would make every operator the
-identity, and that is a fact about the group, not about the translation.
+The witness configuration is `g₁` at `l` and `g₀` elsewhere. `ishiftLink_iterate_ne` puts
+`(ishiftLink μ)^[k] l` away from `l`, so the translated observable reads `g₀` where the original
+reads `g₁`.
 
-DERIVED: the `0` is the excluded step count. `g₀`, `g₁` and `f` are the caller's separating data. -/
+Scope. The separating pair is a hypothesis and the conclusion fails without it: on a gauge group
+whose real-valued functions are all constant, every observable is fixed by every translation, which
+is a fact about the group rather than about the map. The statement is about this one observable
+family, not about every element of the algebra, and it says nothing about a spectrum or a gap.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. `0` is the excluded step
+count in `hk : 0 < k`. The subscripts on `g₀` and `g₁` are part of their names, not numerals. -/
 theorem ishiftObs_infinite_order (μ : Fin 4) {k : ℕ} (hk : 0 < k) (l : ILink)
     {f : G → ℝ} {g₀ g₁ : G} (hf : f g₀ ≠ f g₁) :
     (ishiftObs (G := G) μ)^[k] (linkObs l f) ≠ linkObs l f := by
@@ -290,11 +321,13 @@ theorem ishiftObs_infinite_order (μ : Fin 4) {k : ℕ} (hk : 0 < k) (l : ILink)
 
 #print axioms MassGap.InfiniteShift.ishiftObs_infinite_order
 
-/-- **AND IN PARTICULAR IT IS NOT THE IDENTITY** — the direct contradiction of
-`HalfLineTransfer.shiftObs_eq_self_of_shift_stable`'s conclusion, on a carrier its hypothesis does
-not cover.
+/-- `ishiftObs μ (linkObs l f) ≠ linkObs l f`, given a separating pair `hf : f g₀ ≠ f g₁`.
 
-DERIVED: the `1` is one shift step, `ishiftObs_infinite_order` at `k = 1`. -/
+`ishiftObs_infinite_order` at a single step, with `Function.iterate_one` removing the iterate. The
+separating pair is required for the same reason as there.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. It is the only numeral in
+the statement; the single step appears in the proof, not in the type. -/
 theorem ishiftObs_ne_id_of_separating (μ : Fin 4) (l : ILink)
     {f : G → ℝ} {g₀ g₁ : G} (hf : f g₀ ≠ f g₁) :
     ishiftObs (G := G) μ (linkObs l f) ≠ linkObs l f := by

@@ -2,66 +2,60 @@ import Mathlib
 import MassGap.ContactFloor
 
 /-!
-# MassGap.ContactValue — the exact zero-coupling contact value on `SU(3)`
+# MassGap.ContactValue — the zero-coupling contact value on `SU(3)`
 
 `ContactFloor.corrClay_zero_at_zero_eq` reduces the zero-coupling, zero-lag connected plaquette
-correlator at every extent `n ≥ 2` to ONE number, `haarSecond − haarMean ^ 2`: two Haar integrals of
-the Wilson density `φ(g) = 1 − (1/3)·Re tr g` on `SU(3)`. It does not evaluate them, and
-`ContactFloor.exists_haar_floor` only asserts the difference is positive. This file evaluates them.
+correlator, at every extent `n ≥ 2`, to `haarSecond − haarMean ^ 2`: two Haar integrals of the
+Wilson density `φ(g) = 1 − (1/3)·Re tr g` on `SU(3)`. This file evaluates those two integrals.
 
-## The obstruction and the way round it
+## Method
 
-Mathlib at this pin has no Peter–Weyl and no Schur orthogonality for compact groups, so `∫ |χ|² = 1`
-is not available as a citation. `HaarMoments` solves the same problem for `SU(2)` by
-**invariant projection on explicit group elements**: translating by a fixed `h` multiplies the
-integrand by a fixed scalar `λ`, and `c = λ·c` with `λ ≠ 1` forces `c = 0`. That method is not
-`SU(2)`-specific; only the elements are. `HaarMoments.haar_su2_second_moment` is stated for
-`Fin 2` matrices throughout and does not generalise as written — it is re-derived here for `Fin 3`
-with `SU(3)`'s own elements.
+Mathlib at this pin carries no Peter–Weyl theorem and no Schur orthogonality for compact groups, so
+`∫ |χ|² = 1` is not available as a citation. `phase_zero` stands in for it: if left translation by a
+single group element multiplies the integrand by a fixed scalar `lam ≠ 1`, the integral is zero.
+Every moment below is that lemma applied at an explicit element of `SU(3)`, and the only property of
+`probHaar` used is left (and once right) invariance.
 
-Three elements of `SU(3)` carry the whole file, and each is in `SU(3)` for a reason `SU(2)` cannot
-copy:
+Three elements are defined here, each with its membership proof:
 
-* `Zg = ω·1` with `ω` a primitive cube root of unity — **central**, and in the group because
-  `det(ω·1) = ω³ = 1`. It multiplies the character by `ω`, so `∫ χ = 0` and, crucially,
-  `∫ χ² = ω²·∫ χ² ⇒ ∫ χ² = 0`. THE SECOND ONE IS FALSE FOR `SU(2)`: the central elements of `SU(2)`
-  are `±1`, whose square is `1`, the projection is vacuous, and indeed `∫ χ² = 1` there. That is a
-  factor of `2` of the `4.5` between the two answers — see the arithmetic below.
-* `Dg = diag(1, ω, ω²)` — left translation attaches the phase `ω^{i−k}` to `g_{ii}·conj(g_{kk})`,
-  which is `1` only when `i = k`, so every off-diagonal second moment vanishes.
-* `Pg` — the three-cycle permutation matrix, in `SU(3)` because a three-cycle is EVEN. It makes the
-  nine numbers `∫ |g_{ij}|²` equal; unitarity of one row then fixes each at `1/3`.
+* `Zg = ω·1`, with `ω` a primitive cube root of unity. It lies in `SU(3)` because
+  `det(ω·1) = ω³ = 1`. Translation by it multiplies `χ` by `ω` and `χ²` by `ω²`, giving
+  `haar_chi_zero` and `haar_chi_sq_zero`.
+* `Dg = diag(1, ω, ω²)`. Translation by it attaches the phase `ω^(i−k)` to `g_ii · conj (g_kk)`,
+  which is `1` only when `i = k`; `off_01` through `off_21` are the six vanishing off-diagonal
+  moments.
+* `Pg`, the three-cycle permutation matrix, which lies in `SU(3)` because a three-cycle is an even
+  permutation. Translating on either side by it makes the nine entry moments `∫ |g_ij|²` equal, and
+  one row of a unitary matrix then fixes each at `1/3` (`msq_row_zero_sum`, `msq_zero_zero`).
 
-## What comes out
+## What is proved
 
-`∫ Re χ = 0`, `∫ (Re χ)² = 1/2`, hence `haarMean = 1`, `haarSecond = 1 + 1/18`, and
+`haar_re_chi_zero` gives `∫ Re χ = 0`, `haar_chi_normsq` gives `∫ |χ|² = 1`, and `haar_re_chi_sq`
+gives `∫ (Re χ)² = 1/2`. Those feed `haarMean_eq : haarMean = 1` and
+`haarSecond_eq : haarSecond = 1 + 1/18`, and hence
 
-    WilsonBridge.corrClay 4 0 0 = 1/18.
+    WilsonBridge.corrClay (m + 2) 0 0 = 1/18
+
+at every `m` (`corrClay_zero_at_zero_value`), with `corrClay_four_zero_zero` the instance at
+extent four.
 
 ## Where each numeral comes from
 
-* DERIVED `3`: the rank of the gauge group, carried in from `WilsonBridge.corrClay`, which is the
-  Clay problem's `SU(3)`. Every `Fin 3`, every `ω³`, and the `1/3` below are that one datum.
-* DERIVED `1/3`: `∫ |g_{ij}|² `. The nine are equal (`Pg`) and one row of a unitary matrix has three
-  entries summing in square modulus to `1`; `1/3 = 1/(rank)`.
-* DERIVED `1`: `∫ |χ|² = 3 · (1/3)`, the three diagonal terms that survive `Dg`.
-* DERIVED `1/2`: `∫ (Re χ)² = (∫ Re(χ²) + ∫ |χ|²)/2 = (0 + 1)/2`. The dividing `2` is the `2` of
-  `(Re t)² = (Re(t²) + |t|²)/2`, an identity of `Re` and nothing else; the `0` is `Re(∫ χ²)` and the
-  `1` is `∫ |χ|²`.
-* DERIVED `1/9`: `(1/3)²`, the square of the `1/N` normalising `wilsonDensity`.
-* DERIVED `1/18`: `haarSecond − haarMean² = (1 + (1/9)·(1/2)) − 1² = 1/18`. In general the contact
-  value is `(1/N²)·∫ (Re χ)²`, so `SU(2)`'s `1/4` and `SU(3)`'s `1/18` differ by `4.5`, of which the
-  centre argument above contributes `2` (`∫ (Re χ)²`: `1` against `1/2`) and the `1/N²` of
-  `wilsonDensity` contributes `2.25` (`1/4` against `1/9`). Neither factor alone is the gap.
-* DERIVED `4`: the extent at which the target is stated; `4 = 2 + 2` feeds
-  `ContactFloor.corrClay_zero_at_zero_eq` at `m = 2`. `corrClay_zero_at_zero_value` below carries the
-  same value to every extent `≥ 2`.
-* DERIVED both `0`s in `corrClay 4 0 0`: the first is the COUPLING `β = 0` — this file is the
-  zero-coupling contact term and nothing else — and the second is the LAG, `0 : Fin 4`, which is what
-  makes the correlator a variance rather than a separated two-point function.
-* DERIVED `2` as an exponent: the definition of a second moment, and of a variance. DERIVED `2` as
-  the minimum extent in `m + 2`: `ContactFloor`'s own, the extent at which a plaquette's four links
-  are distinct and the holonomy pushes Haar forward.
+* `3` is the rank of the gauge group, carried in from `WilsonBridge.corrClay`, which is stated at
+  `SU(3)`. Every `Fin 3`, the order of `ω`, and the `1/3` below are that one datum.
+* `1/3` is `∫ |g_ij|²`: the nine are equal by `Pg`, and one row of a unitary matrix has three
+  entries whose square moduli sum to `1`.
+* `1` is `∫ |χ|² = 3 · (1/3)`, the three diagonal terms that survive `Dg`.
+* `1/2` is `∫ (Re χ)² = (∫ Re(χ²) + ∫ |χ|²)/2 = (0 + 1)/2`, the dividing `2` belonging to the
+  identity `(Re t)² = (Re(t²) + |t|²)/2`.
+* `1/9` is `(1/3)²`, the square of the `1/N` normalising `WilsonAction.wilsonDensity`.
+* `1/18` is `haarSecond − haarMean² = (1 + (1/9)·(1/2)) − 1²`.
+* `4` is the extent at which the instance is stated; `4 = 2 + 2` reads
+  `ContactFloor.corrClay_zero_at_zero_eq` at `m = 2`.
+* The two `0`s in `corrClay 4 0 0` are the coupling `β = 0` and the lag `0 : Fin 4`. The second is
+  what makes the correlator a variance rather than a separated two-point function.
+* `2` as an exponent is the second moment, and the variance; `2` as the minimum extent in `m + 2`
+  is `ContactFloor`'s own, the extent at which a plaquette's four links are distinct.
 
 Foundational footprint only. Build: `python research/code/lean_build.py build MassGap.ContactValue`.
 -/
@@ -73,14 +67,15 @@ open MassGap.SUN MassGap.CompactGauge MassGap.WilsonAction
 
 /-! ### A primitive cube root of unity
 
-DERIVED: `3` is the rank of `SU(3)`; the cube root exists because `det(ω·1) = ω^3` on a `3 × 3`
-matrix, so it is the rank that selects the order of the root. -/
+DERIVED: the order `3` is the rank of `SU(3)`. On a `3 × 3` matrix `det(ω·1) = ω^3`, so it is the
+rank that selects which root of unity puts `ω·1` in the group. -/
 
-/-- A primitive cube root of unity.
+/-- A primitive cube root of unity, `exp(2πi/3)`. `om_primitive`, `om_cube`, `om_ne_one` and
+`om_sq_ne_one` are the facts about it used below; `om_conj` and `om_sq_conj` give its conjugate.
 
-DERIVED: both numerals come from the gauge group. The `3` is the rank of `SU(3)` and fixes the ORDER
-of the root, because `det(ω·1) = ω³` on a `3 × 3` matrix; the `2` is the `2π` of one full turn, which
-that order divides. At rank `N` the same expression reads `exp(2πi/N)`, so neither is chosen here. -/
+DERIVED: both numerals sit in the body rather than the signature. The `3` is the rank of `SU(3)`
+and fixes the ORDER of the root, because `det(ω·1) = ω³` on a `3 × 3` matrix; the `2` is the `2π`
+of one full turn, which that order divides. At rank `N` the expression reads `exp(2πi/N)`. -/
 noncomputable def om : ℂ := Complex.exp (2 * Real.pi * Complex.I / 3)
 
 theorem om_primitive : IsPrimitiveRoot om 3 := Complex.isPrimitiveRoot_exp 3 (by norm_num)
@@ -113,17 +108,17 @@ theorem om_sq_mul_conj : om ^ 2 * (starRingEnd ℂ) (om ^ 2) = 1 := by
 
 /-! ### Three explicit elements of `SU(3)` -/
 
-/-- The diagonal separator `diag(1, ω, ω²)`.
+/-- The diagonal separator `diag(1, ω, ω²)`, given as its vector of entries.
 
-DERIVED: the entries are the three successive powers `ω⁰, ω¹, ω²` of the cube root, one per row, and
-the `3` is `Fin 3`, the rank. Exponents and an index type, not magnitudes: the determinant is
-`ω^(0+1+2) = ω³ = 1`, which is exactly what puts the element in `SU(3)`. -/
+DERIVED: the `3` of `Fin 3` is the rank, an index type. The entries are the successive powers
+`ω⁰, ω¹, ω²`, one per row; their product is `ω^(0+1+2) = ω³ = 1`, which is what `dvec_mem` uses to
+place the diagonal matrix in `SU(3)`. None of them is a magnitude. -/
 noncomputable def dvec : Fin 3 → ℂ := ![1, om, om ^ 2]
 
-/-- The central element `ω·1`.
+/-- The central element `ω·1`, given as its vector of entries — `ω` in each diagonal place.
 
-DERIVED: the `3` is `Fin 3`, the rank — an index type. The `1` is the identity matrix `ω` scales;
-`ω·1` is the centre at whatever rank, so there is nothing here to choose. -/
+DERIVED: the `3` of `Fin 3` is the rank, an index type. `zvec_mem` places the matrix in `SU(3)`
+because the product of the three entries is `ω³ = 1`. -/
 noncomputable def zvec : Fin 3 → ℂ := ![om, om, om]
 
 theorem dvec_zero : dvec 0 = 1 := by simp [dvec]
@@ -132,7 +127,14 @@ theorem dvec_two : dvec 2 = om ^ 2 := by simp [dvec]
 
 theorem zvec_apply (i : Fin 3) : zvec i = om := by fin_cases i <;> simp [zvec]
 
-/-- A diagonal matrix whose entries have unit modulus and unit product is in `SU(3)`. -/
+/-- A diagonal matrix over `Fin 3` whose entries each satisfy `v i * conj (v i) = 1` and whose
+three entries multiply to `1` lies in `Matrix.specialUnitaryGroup (Fin 3) ℂ`. Used by `dvec_mem`
+and `zvec_mem`.
+
+DERIVED: `3` is the rank, an index type. The `1`s are the two conditions defining the special
+unitary group: unit modulus of each entry, and unit determinant. The `0`, `1` and `2` in
+`v 0 * v 1 * v 2` are the three diagonal positions, written out because `Fin.prod_univ_three`
+expands the determinant that way. -/
 theorem diag_mem (v : Fin 3 → ℂ) (hu : ∀ i, v i * (starRingEnd ℂ) (v i) = 1)
     (hd : v 0 * v 1 * v 2 = 1) :
     Matrix.diagonal v ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
@@ -164,13 +166,11 @@ theorem zvec_mem : Matrix.diagonal zvec ∈ Matrix.specialUnitaryGroup (Fin 3) �
   · rw [zvec_apply]; exact om_mul_conj
   · rw [zvec_apply, zvec_apply, zvec_apply, show om * om * om = om ^ 3 by ring, om_cube]
 
-/-- The three-cycle permutation matrix. It is in `SU(3)` because a three-cycle is EVEN — the
-corresponding transposition matrix of `SU(2)` has determinant `−1` and needs a sign, which is why
-`HaarMoments.wmat` carries one and this does not.
+/-- The three-cycle permutation matrix. `pmat_mem` places it in `SU(3)`: a three-cycle is an even
+permutation, so the matrix is unitary with determinant `1`.
 
-DERIVED: the `0`s and `1`s are the incidence pattern of a permutation — absent and present — and the
-`3` is the rank, an index type. The pattern is the three-cycle `1 ↦ 2 ↦ 3 ↦ 1` written out; no entry
-is a magnitude and none is chosen. -/
+DERIVED: the `3` is the rank, an index type. The `0`s and `1`s of the literal matrix are a
+permutation's incidence pattern — absent and present — and no entry is a magnitude. -/
 noncomputable def pmat : Matrix (Fin 3) (Fin 3) ℂ := !![0, 0, 1; 1, 0, 0; 0, 1, 0]
 
 theorem pmat_mem : pmat ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
@@ -182,22 +182,20 @@ theorem pmat_mem : pmat ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
         Matrix.conjTranspose_apply]
   · simp [pmat, Matrix.det_fin_three]
 
-/-- `diag(1, ω, ω²)` as an element of `SU(3)`.
+/-- `diag(1, ω, ω²)` as an element of `SU 3`, pairing `dvec` with `dvec_mem`.
 
-DERIVED: the `3` is the rank in the type `SU 3`, and the `1` is the first entry of `dvec`, already
-derived there. This declaration adds no number of its own — it pairs that matrix with its membership
-proof. -/
+DERIVED: the `3` is the rank in the type `SU 3`. The entries are `dvec`'s and are derived there;
+this declaration adds no numeral of its own. -/
 noncomputable def Dg : SU 3 := ⟨Matrix.diagonal dvec, dvec_mem⟩
 
-/-- `ω·1` as an element of `SU(3)` — the centre.
+/-- `ω·1` as an element of `SU 3` — the central element — pairing `zvec` with `zvec_mem`.
 
-DERIVED: as `Dg` — the `3` is the rank in `SU 3` and the `1` is the identity `ω` scales, both from
-`zvec`. This pairs that matrix with its membership proof. -/
+DERIVED: the `3` is the rank in the type `SU 3`. The entries are `zvec`'s, derived there. -/
 noncomputable def Zg : SU 3 := ⟨Matrix.diagonal zvec, zvec_mem⟩
 
-/-- The three-cycle as an element of `SU(3)`.
+/-- The three-cycle as an element of `SU 3`, pairing `pmat` with `pmat_mem`.
 
-DERIVED: the `3` is the rank in the type `SU 3`; `pmat` carries the pattern. -/
+DERIVED: the `3` is the rank in the type `SU 3`; the entry pattern is `pmat`'s. -/
 noncomputable def Pg : SU 3 := ⟨pmat, pmat_mem⟩
 
 /-! ### How the three elements act -/
@@ -244,9 +242,13 @@ theorem mul_pmat_col_one (M : Matrix (Fin 3) (Fin 3) ℂ) (i : Fin 3) :
 
 /-! ### The invariant-projection principle -/
 
-/-- **Invariant projection.** If left translation by one group element multiplies the integrand by a
-fixed scalar `λ ≠ 1`, the integral is zero. This is the whole method; Mathlib has no Schur
-orthogonality to cite, and everything below is an instance of this line. -/
+/-- Invariant projection. If left translation by one group element `h` multiplies the integrand by
+a fixed scalar `lam ≠ 1`, then `∫ f d(probHaar (SU 3)) = 0`. The proof uses left invariance of
+`probHaar` and nothing else about it; every moment below is an instance.
+
+DERIVED: `3` is the rank in `SU 3`. The `1` is the excluded value of `lam`: at `lam = 1` the
+translation identity is vacuous and the conclusion does not follow. The `0` is the value of the
+integral. -/
 theorem phase_zero {f : SU 3 → ℂ} (h : SU 3) (lam : ℂ) (hlam : lam ≠ 1)
     (hpt : ∀ g : SU 3, f (h * g) = lam * f g) :
     ∫ g : SU 3, f g ∂(probHaar (SU 3)) = 0 := by
@@ -285,10 +287,12 @@ theorem integrableR {f : SU 3 → ℝ} (hc : Continuous f) (C : ℝ) (hb : ∀ g
   haveI := isProbabilityMeasure_probHaar (SU 3)
   exact (integrable_const C).mono' hc.aestronglyMeasurable (Filter.Eventually.of_forall hb)
 
-/-- The fundamental character, as a function on `SU(3)`.
+/-- The character of the defining representation: the trace of `g` read as a `3 × 3` complex
+matrix. `chi_eq` writes it out as the sum of the three diagonal entries.
 
-DERIVED: every `3` is the rank — the group in `SU 3` and its matrix index type `Fin 3`. The trace
-sums the diagonal of whatever matrix it is given and takes no parameter of its own. -/
+DERIVED: every `3` is the rank — the group in `SU 3` and its matrix index type `Fin 3`.
+`Matrix.trace` sums the diagonal of whatever matrix it is given and carries no parameter of its
+own. -/
 noncomputable def chi (g : SU 3) : ℂ := Matrix.trace (g : Matrix (Fin 3) (Fin 3) ℂ)
 
 theorem chi_eq (g : SU 3) :
@@ -303,7 +307,10 @@ theorem chi_cont : Continuous chi := by
   rw [h]
   exact ((entry_cont 0 0).add (entry_cont 1 1)).add (entry_cont 2 2)
 
-/-- DERIVED: `3` is the rank — the character is a sum of `3` entries, each of modulus at most `1`. -/
+/-- `‖chi g‖ ≤ 3` for every `g`.
+
+DERIVED: `3` is the rank — the character is a sum of `3` diagonal entries, and `entry_norm_le`
+bounds each of them by `1`. -/
 theorem chi_norm_le (g : SU 3) : ‖chi g‖ ≤ 3 := by
   rw [chi_eq]
   calc ‖(g : Matrix (Fin 3) (Fin 3) ℂ) 0 0 + (g : Matrix (Fin 3) (Fin 3) ℂ) 1 1
@@ -361,26 +368,33 @@ theorem re_chi_sq_integrable : Integrable (fun g : SU 3 => ((chi g).re) ^ 2) (pr
 
 /-! ### The first moment: `∫ χ = 0` -/
 
-/-- **`∫_{SU(3)} tr U dHaar = 0`** — by translation by the CENTRAL element `ω·1`, which multiplies
-the character by `ω ≠ 1`. -/
+/-- `∫ tr U d(probHaar (SU 3)) = 0`, by `phase_zero` at the central element `Zg = ω·1`: translation
+by it multiplies the character by `ω`, and `om_ne_one` gives `ω ≠ 1`.
+
+DERIVED: `3` is the rank in `SU 3`; `0` is the value of the integral. -/
 theorem haar_chi_zero : ∫ g : SU 3, chi g ∂(probHaar (SU 3)) = 0 := by
   refine phase_zero Zg om om_ne_one (fun g => ?_)
   rw [chi_eq, chi_eq, coe_Zg_mul, coe_Zg_mul, coe_Zg_mul]
   ring
 
-/-- `∫_{SU(3)} Re tr U dHaar = 0`. -/
+/-- `∫ Re tr U d(probHaar (SU 3)) = 0`. The real part is pulled through the integral by
+`Complex.reCLM` and `chi_integrable`, and `haar_chi_zero` closes it.
+
+DERIVED: `3` is the rank in `SU 3`; `0` is the value of the integral. -/
 theorem haar_re_chi_zero : ∫ g : SU 3, (chi g).re ∂(probHaar (SU 3)) = 0 := by
   have h := ContinuousLinearMap.integral_comp_comm Complex.reCLM chi_integrable
   simp only [Complex.reCLM_apply] at h
   rw [h, haar_chi_zero]
   simp
 
-/-! ### The moment that `SU(2)` does NOT share: `∫ χ² = 0` -/
+/-! ### The second character moment: `∫ χ² = 0` -/
 
-/-- **`∫_{SU(3)} (tr U)² dHaar = 0`.** Translation by `ω·1` multiplies `χ²` by `ω²`, and `ω² ≠ 1`
-because `ω` has order `3`. THE ANALOGUE FAILS AT `SU(2)`: its centre is `{±1}` and `(±1)² = 1`, so
-no central element separates `χ²`; there `∫ χ² = ∫ |χ|² = 1`. That doubles `∫ (Re χ)²`, hence doubles
-the contact value, at whatever rank; it is not by itself the `SU(2)`/`SU(3)` gap. -/
+/-- `∫ (tr U)² d(probHaar (SU 3)) = 0`, by `phase_zero` at `Zg`: translation by `ω·1` multiplies
+`χ²` by `ω²`, and `om_sq_ne_one` gives `ω² ≠ 1` because `ω` has order `3`.
+
+DERIVED: `3` is the rank in `SU 3` and the order of `ω`; the exponent `2` is the moment being
+taken, and is also the power of `ω` the translation contributes; `0` is the value of the
+integral. -/
 theorem haar_chi_sq_zero : ∫ g : SU 3, chi g ^ 2 ∂(probHaar (SU 3)) = 0 := by
   refine phase_zero Zg (om ^ 2) om_sq_ne_one (fun g => ?_)
   have hc : chi (Zg * g) = om * chi g := by
@@ -389,11 +403,12 @@ theorem haar_chi_sq_zero : ∫ g : SU 3, chi g ^ 2 ∂(probHaar (SU 3)) = 0 := b
 
 /-! ### The second moment `∫ |χ|² = 1` -/
 
-/-- The nine numbers `∫ |U_{ij}|²`.
+/-- The nine entry second moments `∫ U_ij · conj (U_ij) d(probHaar (SU 3))`, as a function of the
+two indices.
 
-DERIVED: every `3` is the rank — `SU 3` and the matrix index type `Fin 3`, so `i` and `j` are matrix
-INDICES rather than magnitudes, and "nine" is `3 × 3` of them. The `2` of `|·|²` is the second moment
-being defined. -/
+DERIVED: every `3` is the rank — `SU 3` and the matrix index type `Fin 3` — so `i` and `j` are
+matrix INDICES rather than magnitudes, and there are `3 × 3` of these numbers. The `2` of a second
+moment is written here as multiplication by the conjugate. -/
 noncomputable def msq (i j : Fin 3) : ℂ :=
   ∫ g : SU 3, (g : Matrix (Fin 3) (Fin 3) ℂ) i j
     * (starRingEnd ℂ) ((g : Matrix (Fin 3) (Fin 3) ℂ) i j) ∂(probHaar (SU 3))
@@ -446,8 +461,12 @@ theorem msq_col_12 (i : Fin 3) : msq i 2 = msq i 1 := by
   refine msq_eq_right i 1 i 2 (fun g => ?_)
   rw [coe_mul_Pg, mul_pmat_col_one]
 
-/-- **One row of a unitary matrix has square-modulus sum `1`.** DERIVED: the `1` is `(U U*)_{00}`, an
-entry of the identity. -/
+/-- One row of a unitary matrix has square-modulus sum `1`:
+`msq 0 0 + msq 0 1 + msq 0 2 = 1`.
+
+DERIVED: `0`, `1` and `2` on the left are the three column indices of row zero, written out because
+`Fin.sum_univ_three` expands the sum that way; the `1` on the right is the `(0, 0)` entry of the
+identity matrix `U U* = 1`. -/
 theorem msq_row_zero_sum : msq 0 0 + msq 0 1 + msq 0 2 = 1 := by
   haveI := isProbabilityMeasure_probHaar (SU 3)
   have hpt : ∀ g : SU 3, (∑ j : Fin 3, (g : Matrix (Fin 3) (Fin 3) ℂ) 0 j
@@ -470,8 +489,11 @@ theorem msq_row_zero_sum : msq 0 0 + msq 0 1 + msq 0 2 = 1 := by
   rw [integral_finsetSum _ (fun j _ => entry_prod_integrable 0 j 0 j), Fin.sum_univ_three] at hint
   exact hint
 
-/-- **`∫ |U_{00}|² = 1/3`.** DERIVED: `1/3 = 1/(rank)`; the nine entry moments are equal by the
-three-cycle and one row's three of them sum to `1`. -/
+/-- `∫ |U_00|² d(probHaar (SU 3)) = 1 / 3`.
+
+DERIVED: the two `0`s are the index of the entry. `1 / 3` is `1 / rank`: the nine entry moments are
+equal (`msq_col_01`, `msq_col_12`, from the three-cycle) and the three in row zero sum to `1`
+(`msq_row_zero_sum`). -/
 theorem msq_zero_zero : msq 0 0 = 1 / 3 := by
   have h1 : msq 0 1 = msq 0 0 := msq_col_01 0
   have h2 : msq 0 2 = msq 0 0 := by rw [msq_col_12 0, h1]
@@ -493,8 +515,12 @@ theorem msq_two_two : msq 2 2 = 1 / 3 := by
 
 /-! ### The off-diagonal second moments vanish -/
 
-/-- The separator `diag(1, ω, ω²)` kills `∫ U_{ii}·conj(U_{kk})` whenever the phase it attaches is
-not `1`. -/
+/-- The separator `Dg = diag(1, ω, ω²)` kills `∫ U_ii · conj (U_kk)` whenever the phase
+`dvec i * conj (dvec k)` it attaches is a `lam ≠ 1`. An instance of `phase_zero`; the six diagonal
+pairs with `i ≠ k` are discharged below.
+
+DERIVED: `3` is the rank, in `SU 3` and in the index type `Fin 3`; `1` is the excluded phase, which
+is the case `i = k` the lemma says nothing about; `0` is the value of the integral. -/
 theorem offdiag_zero (i k : Fin 3) (lam : ℂ) (hlam : lam ≠ 1)
     (hph : dvec i * (starRingEnd ℂ) (dvec k) = lam) :
     ∫ g : SU 3, (g : Matrix (Fin 3) (Fin 3) ℂ) i i
@@ -531,9 +557,11 @@ theorem off_21 : ∫ g : SU 3, (g : Matrix (Fin 3) (Fin 3) ℂ) 2 2
 
 /-! ### `∫ |χ|² = 1` -/
 
-/-- **The character norm: `∫_{SU(3)} |tr U|² dHaar = 1`** — Schur orthogonality for the defining
-representation, derived rather than cited. DERIVED: `1 = 3 · (1/3)`, the three surviving diagonal
-terms at `1/3` each. -/
+/-- `∫ |tr U|² d(probHaar (SU 3)) = 1`. This is Schur orthogonality for the defining
+representation, assembled from `msq_zero_zero`, `msq_one_one`, `msq_two_two` and the six `off_`
+lemmas rather than cited.
+
+DERIVED: `1 = 3 · (1/3)`, the three surviving diagonal terms at `1/3` each; `3` is the rank. -/
 theorem haar_chi_normsq :
     ∫ g : SU 3, chi g * (starRingEnd ℂ) (chi g) ∂(probHaar (SU 3)) = 1 := by
   have hpt : ∀ g : SU 3, chi g * (starRingEnd ℂ) (chi g)
@@ -567,10 +595,11 @@ theorem haar_chi_normsq :
 
 /-! ### `∫ (Re χ)² = 1/2` -/
 
-/-- **`∫_{SU(3)} (Re tr U)² dHaar = 1/2`.** The pointwise algebra is
-`(Re t)² = (Re(t²) + |t|²)/2`; DERIVED: the `2` on the right is that identity's own, the `Re(t²)`
-integrates to `0` by `haar_chi_sq_zero` and the `|t|²` to `1` by `haar_chi_normsq`, giving
-`(0 + 1)/2`. At `SU(2)` the first term is `1`, not `0`, and the answer is `1`. -/
+/-- `∫ (Re tr U)² d(probHaar (SU 3)) = 1 / 2`. Pointwise `(Re t)² = (Re(t²) + |t|²)/2`; the first
+term integrates to `0` by `haar_chi_sq_zero` and the second to `1` by `haar_chi_normsq`.
+
+DERIVED: `3` is the rank in `SU 3`. The exponent `2` is the moment; the dividing `2` is the
+identity's own, an identity of `Re` and nothing else. `1 / 2` is `(0 + 1)/2`. -/
 theorem haar_re_chi_sq :
     ∫ g : SU 3, ((chi g).re) ^ 2 ∂(probHaar (SU 3)) = 1 / 2 := by
   have hpt : ∀ g : SU 3, ((chi g).re) ^ 2
@@ -601,8 +630,10 @@ theorem wilsonDensity_eq (g : SU 3) :
   rw [chi]
   norm_num
 
-/-- **`haarMean = 1`.** DERIVED: `1 − (1/3)·0`; the `1/3` is `1/(rank)` from `wilsonDensity` and the
-`0` is `∫ Re tr U`. -/
+/-- The Haar mean of the Wilson density on `SU 3` is `1`: `ContactFloor.haarMean = 1`.
+
+DERIVED: `1 − (1/3)·0`. The `1/3` is `1 / rank`, from `WilsonAction.wilsonDensity`; the `0` is
+`∫ Re tr U`, from `haar_re_chi_zero`. -/
 theorem haarMean_eq : MassGap.ContactFloor.haarMean = 1 := by
   haveI := isProbabilityMeasure_probHaar (SU 3)
   unfold MassGap.ContactFloor.haarMean
@@ -611,8 +642,12 @@ theorem haarMean_eq : MassGap.ContactFloor.haarMean = 1 := by
   rw [integral_const_mul, haar_re_chi_zero, integral_const]
   simp
 
-/-- **`haarSecond = 1 + 1/18`.** DERIVED: `1 − (2/3)·0 + (1/9)·(1/2)`, the expansion of
-`(1 − r/3)²` against `∫ r = 0` and `∫ r² = 1/2`; `1/9 = (1/3)²` and `(1/9)·(1/2) = 1/18`. -/
+/-- The Haar second moment of the Wilson density on `SU 3` is `1 + 1 / 18`:
+`ContactFloor.haarSecond = 1 + 1 / 18`.
+
+DERIVED: expanding `(1 − r/3)²` against `∫ r = 0` (`haar_re_chi_zero`) and `∫ r² = 1/2`
+(`haar_re_chi_sq`) gives `1 − (2/3)·0 + (1/9)·(1/2)`, where `1/9 = (1/3)²` and
+`(1/9)·(1/2) = 1/18`. -/
 theorem haarSecond_eq : MassGap.ContactFloor.haarSecond = 1 + 1 / 18 := by
   haveI := isProbabilityMeasure_probHaar (SU 3)
   have hA : Integrable (fun _ : SU 3 => (1 : ℝ)) (probHaar (SU 3)) := integrable_const 1
@@ -634,17 +669,24 @@ theorem haarSecond_eq : MassGap.ContactFloor.haarSecond = 1 + 1 / 18 := by
 
 /-! ### The contact value -/
 
-/-- **The zero-coupling contact value at every extent at least two is `1/18`.**
+/-- The zero-coupling, zero-lag correlator is `1 / 18` at every extent of the form `m + 2`:
+`WilsonBridge.corrClay (m + 2) 0 0 = 1 / 18`.
 
-DERIVED: `1/18 = haarSecond − haarMean² = (1 + 1/18) − 1²`. No extent appears on the right, which is
-`ContactFloor.corrClay_zero_at_zero_eq`'s content and the reason one statement covers every `m`. -/
+DERIVED: `1 / 18 = haarSecond − haarMean² = (1 + 1/18) − 1²`, by `haarSecond_eq` and `haarMean_eq`.
+The two `0`s are the coupling and the lag. The `2` of `m + 2` is the minimum extent
+`ContactFloor.corrClay_zero_at_zero_eq` is stated from; no extent appears on the right, which is
+why one statement covers every `m`. -/
 theorem corrClay_zero_at_zero_value (m : ℕ) :
     MassGap.WilsonBridge.corrClay (m + 2) 0 0 = 1 / 18 := by
   rw [MassGap.ContactFloor.corrClay_zero_at_zero_eq m, haarSecond_eq, haarMean_eq]
   norm_num
 
-/-- **THE ZERO-COUPLING CONTACT VALUE AT THE CLAY EXTENT IS `1/18`.** The instance at `m = 2`; the
-`4` selects a statement, not a value. -/
+/-- The instance at extent four: `WilsonBridge.corrClay 4 0 0 = 1 / 18`, which is
+`corrClay_zero_at_zero_value` read at `m = 2`.
+
+DERIVED: `4 = 2 + 2` is the extent, and it selects a statement rather than a value. The two `0`s
+are the coupling and the lag, and `1 / 18` is the value `corrClay_zero_at_zero_value` carries to
+every extent `m + 2`. -/
 theorem corrClay_four_zero_zero : MassGap.WilsonBridge.corrClay 4 0 0 = 1 / 18 :=
   corrClay_zero_at_zero_value 2
 

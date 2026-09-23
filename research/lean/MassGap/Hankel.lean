@@ -2,62 +2,41 @@ import Mathlib
 import MassGap.LogConvex
 
 /-!
-# MassGap.Hankel — the Wilson reflection Gram matrix is a POSITIVE-SEMIDEFINITE HANKEL matrix
+# MassGap.Hankel — positive semidefiniteness of the Wilson reflection Gram matrix
 
-    0 ≤ ∑ᵢ ∑ⱼ cᵢ cⱼ ρ(eᵢ + eⱼ)     for every real `c`, every family of lags `e` below half the extent
+Three statements of the shape
 
-for `ρ = corrHyper` (and its `SU(3)`, four-dimensional instance `corrClay`), at every even lattice
-extent and every real coupling. The matrix entry depends on the two indices only through their SUM,
-which is what makes it a HANKEL matrix rather than merely a Gram matrix.
+    0 ≤ ∑ᵢ ∑ⱼ cᵢ cⱼ ρ(eᵢ + eⱼ)
 
-## Where it comes from, and why nothing new is assumed
+for a real coefficient family `c` and lags `e` taken strictly below half the extent, plus the
+arithmetic lemma that fixes the lag range. The entry depends on the two indices only through their
+sum, so the matrix is Hankel as well as Gram.
 
-`LogConvex.wilsonReflForm` is the reflection form of the Wilson measure — the first and still the only
-`Transfer.ReflForm` built from that measure — and its `form_nonneg` field is positive
-semidefiniteness of the reflection pairing on the whole module `LogConvex.localObs` of half-space
-observables. `LogConvex.EW_centred_refl_eq_corrHyper` identifies the pairing of two centred plaquette
-observables at levels `P` and `Q`, reflected at the plane through the origin, with the connected
-correlation at lag `P + Q`.
+`corrHyper_hankel_psd` is the general case: `ρ = corrHyper N n μ ν τ β` at any `N ≠ 0`, any pair of
+plaquette directions `μ`, `ν` distinct from the reflection axis `τ`, any real coupling `β`, and any
+even extent `n = 2 * m` with `0 < m`. The proof takes the centred half-space plaquette observables
+`obsPlus` at levels `e i`, places them in `LogConvex.localObs` by `LogConvex.obsPlus_mem`, applies
+the `form_nonneg` field of `LogConvex.wilsonReflForm` to `∑ i, c i • v i`, expands by bilinearity of
+`Transfer.ReflForm.bil`, and uses `LogConvex.EW_centred_refl_eq_corrHyper` to rewrite the `(i, j)`
+entry as `corrHyper ... (e i + e j) * Z`. The partition function `Z` is the same factor in every
+entry and is strictly positive (`wilsonSystem_partition_pos`), so it cancels from the whole double
+sum at once.
 
-So `form (v_P, v_Q) = Z · ρ(P + Q)`: a Gram matrix whose entries depend only on `P + Q`. Applying
-`form_nonneg` to the linear combination `∑ᵢ cᵢ • v_{eᵢ}` and expanding through
-`Transfer.ReflForm.bil` gives the quadratic form above; the partition function `Z` is the same in
-every entry and is strictly positive, so it divides out.
+`corrClay_hankel_psd` instantiates that at `N := 3`, `d := 4`, `τ := (2 : Fin 4)`, `μ := 0`,
+`ν := 1`, which is the definition of `WilsonBridge.corrClay`.
+`corrClay_hankel_psd_at_extent_four` evaluates the general statement at `n = 4`, `m = 2`, two levels
+`0` and `1` and coefficients `(t, 1)`, producing an explicit inequality among `corrClay 4 β 0`,
+`corrClay 4 β 1` and `corrClay 4 β 2`.
 
-`LogConvex.corrHyper_log_convex` is the `2 × 2` minor of exactly this statement — Cauchy–Schwarz is
-positive semidefiniteness restricted to two vectors. This is the full matrix.
+`hankel_lag_val` records the lag range: for `n = 2 * m` and `P.val, Q.val < m`, the `Fin n` sum
+`P + Q` has value `P.val + Q.val` — no wrap-around — and `P.val + Q.val + 2 ≤ n`.
 
-## The index range, which is the whole delicacy
-
-`obsPlus_mem` requires each level strictly below the plane, `lv 0 P < m` with `n = 2m`, so the lags
-`eᵢ` satisfy `eᵢ.val < m` and the entry lag `eᵢ + eⱼ` reaches `2m − 2 = n − 2` and no further —
-`hankel_lag_val` records both that the `Fin n` sum does not wrap and that `n − 1` is out of reach.
-The missing lag is not an accident of bookkeeping: `n − 1` is the lag at which
-`MomentShape.corrClay_neg` (`ρ(n−1) = ρ(1)`) together with a half-line representation
-`ρ(k) = ∑ w λᵏ` with `λ ∈ [0,1]` would feed `Spectral.flat_of_aperiodic` and force `ρ` flat from lag
-one. A statement about lags `0 … n−2` is the largest one this geometry supports and the largest one
-that is not self-refuting.
-
-## What this is NOT
-
-It is not a finite mode count. A positive-semidefinite Hankel matrix is the HYPOTHESIS of the
-truncated Hamburger moment problem, whose conclusion `ρ(k) = ∑ᵢ wᵢ λᵢᵏ` with finitely many atoms is
-the finite mode count the development wants — and that conclusion does not follow from this
-hypothesis alone. The implication is FALSE at the singular Hankel matrices, and it is false inside
-everything this tree proves about `ρ`: at extent six, `ρ = (1, s, s², s³, s², s)` with `0 < s < 1`
-has Hankel matrix `v vᵀ + s²(1−s²)·e₂e₂ᵀ` at `v = (1, s, s²)`, positive semidefinite of rank two,
-and it satisfies `ρ ≥ 0`, `corrHyper_log_convex`, `MomentShape.corrClay_even_antitone` and
-`MomentShape.corrClay_neg` — yet `∫(x−s)² dμ = ρ(2) − 2sρ(1) + s²ρ(0) = 0` forces any representing
-measure to be `δ_s`, which gives `ρ(4) = s⁴ ≠ s²`. So there is no representing measure and no atomic
-decomposition. The missing ingredient is the flat-extension (Curto–Fialkow) condition, or positive
-DEFINITENESS, under which the Gauss quadrature rule does produce `m` atoms; Mathlib v4.31 has
-neither, and has no Hankel matrix, no moment problem and no general quadrature at all.
-
-Nothing here closes that gap. What it does is put the hypothesis of the classical theorem on the
-record as a proved property of the Wilson correlation.
-
-Foundational footprint only (`#print axioms` at the end).
-Build: `python code/lean_build.py build MassGap.Hankel`.
+Scope: the extent must be even and positive, and the lags reached by these statements are `0` to
+`n - 2`; lag `n - 1` is outside the range at every extent, because both levels sit strictly below
+the reflection plane. The coupling `β` is an arbitrary real — no sign hypothesis. What is stated is
+positive semidefiniteness of the matrix; no representation of `ρ` as a finite sum of exponentials,
+and no bound on the number of modes, is stated or implied. Axiom footprint is recorded by the
+`#print axioms` line after each declaration.
 -/
 
 namespace MassGap.Hankel
@@ -68,20 +47,23 @@ open MassGap.CompactGauge MassGap.WilsonReal MassGap.WilsonAction
 open MassGap.ActionSplit MassGap.ReflectPositive MassGap.WilsonBridge
 open MassGap.LogConvex
 
-/-! ## Part 1 — the index range -/
+/-! ## Part 1 — the lag range reached by two levels below the reflection plane -/
 
 section Range
 
-/-- **THE ENTRY LAG IS THE ARITHMETIC SUM, AND IT STOPS AT `n − 2`.**
+/-- For `n = 2 * m` and `P Q : Fin n` with `P.val < m` and `Q.val < m`, the `Fin n` sum satisfies
+`((P + Q : Fin n) : ℕ) = P.val + Q.val`, and `P.val + Q.val + 2 ≤ n`.
 
-Both halves matter. The first says the `Fin n` addition in the entry lag does not wrap, so
-"depends only on `P + Q`" is a statement about the SUM of the levels and not about a residue. The
-second says the lags this construction reaches are exactly `0 … n − 2`: the last lag `n − 1` is
-outside the range at every extent, because both levels must sit strictly below the plane and the two
-fixed planes are `m` apart.
+The first conjunct says the addition does not wrap, so the entry lag is the arithmetic sum of the
+two levels rather than a residue; `Fin.val_add` plus `Nat.mod_eq_of_lt` gives it. The second bounds
+the reachable lags by `n - 2`, from `P.val ≤ m - 1` and `Q.val ≤ m - 1`; `omega` closes it.
 
-DERIVED: the `2` is `2m − 2` read off `P.val ≤ m − 1` and `Q.val ≤ m − 1`; the `m` is half the
-extent, which is the reflection geometry's own bound carried in from `LogConvex.obsPlus_mem`. -/
+Scope: `[NeZero n]` is required for `Fin n` arithmetic. The bound is sharp in the sense that lag
+`n - 1` is never reached from two levels strictly below `m`.
+
+DERIVED: `2` occurs twice — as the factor in the evenness hypothesis `n = 2 * m`, and as the offset
+in `P.val + Q.val + 2 ≤ n`, which is `2 * m - 2` rewritten. `m` is a bound variable, half the
+extent, carried in from the geometry of `LogConvex.obsPlus_mem`. -/
 theorem hankel_lag_val {n m : ℕ} [NeZero n] (hm : n = 2 * m) {P Q : Fin n}
     (hP : P.val < m) (hQ : Q.val < m) :
     ((P + Q : Fin n) : ℕ) = P.val + Q.val ∧ P.val + Q.val + 2 ≤ n := by
@@ -93,33 +75,35 @@ theorem hankel_lag_val {n m : ℕ} [NeZero n] (hm : n = 2 * m) {P Q : Fin n}
 
 end Range
 
-/-! ## Part 2 — the positive-semidefinite Hankel form -/
+/-! ## Part 2 — positive semidefiniteness of the `corrHyper` Hankel form -/
 
 section Psd
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- **THE WILSON REFLECTION GRAM MATRIX IS POSITIVE SEMIDEFINITE, AND ITS ENTRY DEPENDS ONLY ON THE
-SUM OF THE TWO INDICES.**
+/-- Positive semidefiniteness of the Hankel matrix of `corrHyper`:
+`0 ≤ ∑ i, ∑ j, c i * c j * corrHyper N n μ ν τ β (e i + e j)` for any finite index type `ι`, any
+coefficients `c : ι → ℝ` and any levels `e : ι → Fin n` with `(e i).val < m`.
 
-    0 ≤ ∑ᵢ ∑ⱼ cᵢ cⱼ ρ(eᵢ + eⱼ)
+Hypotheses: `N ≠ 0`; a reflection axis `τ : Fin d` and plaquette directions `μ ν : Fin d` both
+distinct from `τ`; an even extent `n = 2 * m` with `0 < m`; and a real coupling `β`.
 
-for every real coefficient family `c`, at every even extent `n = 2m`, every real coupling, and every
-family of lags strictly below half the extent. The `2 × 2` case is `corrHyper_log_convex`'s
-Cauchy–Schwarz; this is the whole matrix.
+The proof builds `v i` from `obsPlus τ 0 m ((μ, ν), siteAtHyper τ (e i)) aC β`, centred at the
+one-point function `aC`, and `LogConvex.obsPlus_mem` places each in
+`localObs (blkS τ 0 m) (blkR τ 0 m)`. Applying `form_nonneg` of `LogConvex.wilsonReflForm` to
+`∑ i, c i • v i` and expanding through `Transfer.ReflForm.bil` gives the double sum;
+`LogConvex.EW_centred_refl_eq_corrHyper` rewrites each entry as
+`corrHyper N n μ ν τ β (e i + e j) * Z`, with the partition function `Z` common to every entry and
+strictly positive, so `le_of_mul_le_mul_right` removes it.
 
-The vectors are the centred half-space plaquette observables `obsPlus` at levels `eᵢ`, which
-`LogConvex.obsPlus_mem` places in `localObs`; `form_nonneg` of `LogConvex.wilsonReflForm` applied to
-`∑ᵢ cᵢ • v_{eᵢ}` is the inequality, and `LogConvex.EW_centred_refl_eq_corrHyper` at the plane through
-the origin is what turns the `(i, j)` entry into `ρ(eᵢ + eⱼ)`. The partition function is the same in
-every entry — one reflection, one measure — so it factors out of the whole double sum rather than
-entry by entry, and being strictly positive it divides out.
+Scope: the reflection plane is fixed at `0` inside the proof; the statement quantifies over levels
+below `m` only, so lags above `n - 2` are not covered (see `hankel_lag_val`). `β` is an arbitrary
+real — no sign hypothesis is used, since the argument is a square against a strictly positive
+Boltzmann weight.
 
-It does NOT require `0 ≤ β`: like everything downstream of the even-lag weld, the argument is a
-conditional square against a strictly positive Boltzmann weight and never reads the coupling's sign.
-
-DERIVED: no numeral. `m` is half the extent — the reflection geometry's own bound, the two fixed
-planes being `m` apart — and `τ`, `μ`, `ν`, `β`, `e` and `c` are the caller's. -/
+DERIVED: `0` occurs three times — in `N ≠ 0`, in `0 < m`, and as the lower bound of the double sum.
+`2` is the factor in the evenness hypothesis `n = 2 * m`. `m`, `τ`, `μ`, `ν`, `β`, `e` and `c` are
+bound variables supplied by the caller. -/
 theorem corrHyper_hankel_psd (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) {μ ν : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ)
     {ι : Type} [Fintype ι] (e : ι → Fin n) (he : ∀ i, (e i).val < m) (c : ι → ℝ) :
@@ -209,18 +193,27 @@ theorem corrHyper_hankel_psd (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
 
 end Psd
 
-/-! ## Part 3 — the Clay instance, and a non-vacuous case -/
+/-! ## Part 3 — the `corrClay` instance, and an explicit two-level case -/
 
 section Clay
 
-/-- **THE CLAY CORRELATION'S REFLECTION GRAM MATRIX IS POSITIVE-SEMIDEFINITE HANKEL** — `SU(3)`, four
-dimensions, every even extent, every real coupling, no hypothesis but the geometry.
+/-- `corrHyper_hankel_psd` instantiated at the parameters that define
+`MassGap.WilsonBridge.corrClay`: `0 ≤ ∑ i, ∑ j, c i * c j * corrClay n β (e i + e j)` for an even
+extent `n = 2 * m` with `0 < m`, any real coupling `β`, any finite `ι`, any levels `e` with
+`(e i).val < m`, and any coefficients `c`.
 
-`MassGap.wilsonCorrAt N β` is `corrClay (N + 1) β` by definition, so this is the same statement about
+The proof unfolds `corrClay` and supplies `N := 3`, `d := 4`, reflection axis `(2 : Fin 4)` and
+directions `0` and `1`, discharging the two distinctness side conditions by `decide`. Since
+`MassGap.wilsonCorrAt N β` is `corrClay (N + 1) β` by definition, the same inequality reads off for
 the aperture-carrying correlation.
 
-DERIVED: `3` is the gauge group's rank and `4` the dimension, both `WilsonBridge.corrClay`'s own; the
-directions `0`, `1` and the lag axis `2` are `corrClay`'s own as well. `m` is half the extent. -/
+Scope: the level range `(e i).val < m` is inherited, so lags above `n - 2` are not covered; `β` is
+unconstrained in sign.
+
+DERIVED: `2` is the factor in the evenness hypothesis `n = 2 * m`; `0` occurs twice, in `0 < m` and
+as the lower bound of the double sum. The `3`, `4`, `2`, `0` and `1` fixing the gauge group, the
+dimension, the reflection axis and the two plaquette directions appear in the proof term, not in the
+statement — in the statement they are already absorbed into `corrClay`. -/
 theorem corrClay_hankel_psd (n : ℕ) [NeZero n] (m : ℕ) (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ)
     {ι : Type} [Fintype ι] (e : ι → Fin n) (he : ∀ i, (e i).val < m) (c : ι → ℝ) :
     0 ≤ ∑ i, ∑ j, c i * c j * MassGap.WilsonBridge.corrClay n β (e i + e j) := by
@@ -230,15 +223,27 @@ theorem corrClay_hankel_psd (n : ℕ) [NeZero n] (m : ℕ) (hm : n = 2 * m) (hm0
 
 #print axioms corrClay_hankel_psd
 
-/-- **NON-VACUITY — the `2 × 2` Hankel minor at extent four.**
+/-- `corrClay_hankel_psd` evaluated at extent four. For any reals `β` and `t`,
+`0 ≤ t * t * corrClay 4 β 0 + 2 * t * corrClay 4 β 1 + corrClay 4 β 2`.
 
-At `n = 4`, `m = 2`, the admissible levels are `0` and `1`, so the matrix is
-`[[ρ(0), ρ(1)], [ρ(1), ρ(2)]]` and its positive semidefiniteness at the coefficient family
-`c = (t, 1)` is a genuine one-parameter family of constraints on three distinct lags. Written at an
-explicit `c` so that the statement is not an empty quantification over a vacuous index range.
+The proof instantiates the general statement at `n = 4`, `m = 2`, index type `Fin 2`, levels
+`fun i => if i = 0 then 0 else 1` and coefficients `fun i => if i = 0 then t else 1`, expands the
+double sum with `Fin.sum_univ_two`, and rewrites `(1 + 1 : Fin 4) = 2` to name the off-diagonal
+lag.
 
-DERIVED: the extent `4` is the smallest even extent with `0 < m`; the levels `0` and `1` are the two
-below the plane at half of it. Nothing is chosen. -/
+This is the `2 × 2` Hankel minor `[[ρ 0, ρ 1], [ρ 1, ρ 2]]` written out, so the statement is a
+one-parameter family of constraints on three distinct lags rather than a quantification over a
+possibly empty index range.
+
+Scope: extent four is the smallest even extent with `0 < m`; at `m = 2` the only levels strictly
+below the plane are `0` and `1`, so no larger minor is available at this extent. `β` and `t` are
+unconstrained reals.
+
+DERIVED: `0` occurs twice, as the lower bound of the inequality and as the lag of the first term;
+`4` occurs three times, once as the extent argument of each `corrClay`; `2` occurs twice, as the
+coefficient of the cross term (the two equal off-diagonal entries) and as the lag of the third
+term; `1` occurs once, as the lag of the cross term. The second coefficient is fixed at `1` in the
+proof, which is why `t` appears squared in the first term and linearly in the second. -/
 theorem corrClay_hankel_psd_at_extent_four (β t : ℝ) :
     0 ≤ t * t * MassGap.WilsonBridge.corrClay 4 β 0
       + 2 * t * MassGap.WilsonBridge.corrClay 4 β 1

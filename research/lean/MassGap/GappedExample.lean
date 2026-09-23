@@ -1,21 +1,33 @@
 import MassGap.GappedTheory
 
 /-!
-# A concrete gapped quantum theory: the finite-aperture transfer operator diag(1, 3^{-1/4}) on ℂ²
+# A worked instance of `reconstruct_gapped`: the diagonal element `![1, 3^{-1/4}]` of `ℂ²`
 
-`reconstruct_gapped` builds a gapped quantum theory from any gapped transfer operator. Here the transfer
-operator is the CONCRETE `Tc : Fin 2 → ℂ = ![1, 3^{-1/4}]` — the vacuum eigenvalue `1` and, below the gap
-`e^{-κ₀} = 3^{-1/4}`, the single excited mode. Its `ℝ`-spectrum `{1, 3^{-1/4}}` is computed from `Pi` units,
-so the mass gap `κ₀ = ¼ log 3` is discharged **by computation**: a fully CONSTRUCTED gapped quantum theory,
-not a hypothesis. The C\*-positivity order on `Fin 2 → ℂ` is the scoped `ComplexOrder` lifted by
-`Pi.instStarOrderedRing`. Foundational axioms only.
+`reconstruct_gapped` (in `MassGap.GappedTheory`) turns a self-adjoint element whose `ℝ`-spectrum sits
+in `{1} ∪ [ε, e^{-Δ}]` into a `GappedQuantumTheory` of gap `Δ`. This file supplies one concrete
+argument for it and one abstract specialisation.
+
+The concrete argument is `Tc : Fin 2 → ℂ = ![1, 3^{-1/4}]`. Its spectral obligations are discharged
+against the `Pi` unit criterion (`Pi.isUnit_iff`): `one_mem` gives `1 ∈ spectrum ℝ Tc`, and
+`spectrum_subset` gives `spectrum ℝ Tc ⊆ {1} ∪ Icc (3^{-1/4}) (3^{-1/4})`. Membership of `3^{-1/4}`
+in the spectrum is not proved and is not needed: `reconstruct_gapped` consumes the inclusion and the
+vacuum eigenvalue only.
+
+The abstract specialisation `gapped_of_aperture_margin` fixes the gap at `κ₀` and the interval's right
+endpoint at `3^{-1/4}`, leaving the C\*-algebra `A`, the element `T` and the left endpoint `ε` free.
+
+The order on `Fin 2 → ℂ` is the scoped `ComplexOrder` lifted pointwise by `Pi.instStarOrderedRing`;
+`open scoped ComplexOrder` is what puts that instance in scope.
 -/
 
 namespace MassGap.Reconstruction
 
 open scoped ComplexOrder
 
-/-- `κ₀ = ¼ log 3`, the entropy floor / mass gap. -/
+/-- `κ₀ = ¼ · log 3`, the gap value used throughout this file.
+
+DERIVED: `3` is the base whose negative fourth power is the excited entry of `Tc`; `1 / 4` is that
+power's exponent, chosen so `exp (-κ₀) = 3^{-1/4}` (`exp_neg_κ0`). -/
 noncomputable def κ0 : ℝ := (1 / 4) * Real.log 3
 
 theorem κ0_pos : 0 < κ0 := by
@@ -24,13 +36,21 @@ theorem κ0_pos : 0 < κ0 := by
 
 theorem rpow_pos : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := by positivity
 
-/-- `e^{-κ₀} = 3^{-1/4}`. -/
+/-- `Real.exp (-κ₀) = (3 : ℝ) ^ (-1/4 : ℝ)`, by `Real.rpow_def_of_pos` and `ring` on the exponent.
+This identity lets a spectral bound written as a power of `3` be passed where `reconstruct_gapped`
+expects `exp (-Δ)`.
+
+DERIVED: `3`, `1` and `4` are `κ0`'s own `(1 / 4) * Real.log 3`, re-expressed as an `rpow`. -/
 theorem exp_neg_κ0 : Real.exp (-κ0) = (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
   rw [Real.rpow_def_of_pos (by norm_num : (0 : ℝ) < 3), κ0]
   congr 1
   ring
 
-/-- The concrete finite-aperture transfer operator on `ℂ²`: vacuum `1`, excited mode `3^{-1/4} = e^{-κ₀}`. -/
+/-- The element `![1, 3^{-1/4}]` of `Fin 2 → ℂ`, the second entry being the real `3^{-1/4}` coerced
+into `ℂ`. It is the test argument for `reconstruct_gapped` below.
+
+DERIVED: `2` is the number of entries, one vacuum and one excited; `1` is the vacuum entry; `3`, `1`
+and `4` are the excited entry `3^{-1/4} = exp (-κ0)`. -/
 noncomputable def Tc : Fin 2 → ℂ := ![1, (((3 : ℝ) ^ (-(1 : ℝ) / 4) : ℝ) : ℂ)]
 
 theorem Tc_zero : Tc 0 = 1 := by simp [Tc]
@@ -41,7 +61,10 @@ theorem Tc_selfAdjoint : IsSelfAdjoint Tc := by
   funext i
   fin_cases i <;> simp [Tc, Pi.star_apply, Complex.conj_ofReal]
 
-/-- `1` is in the spectrum of `Tc` — the vacuum eigenvalue. -/
+/-- `(1 : ℝ) ∈ spectrum ℝ Tc`. Via `Pi.isUnit_iff`: `Tc - 1` vanishes in coordinate `0`, and zero is
+not a unit, so `algebraMap 1 - Tc` is not a unit.
+
+DERIVED: `1` is `Tc 0`, so `1` is the spectral value that coordinate contributes. -/
 theorem one_mem : (1 : ℝ) ∈ spectrum ℝ Tc := by
   rw [spectrum.mem_iff, map_one]
   intro hu
@@ -50,7 +73,14 @@ theorem one_mem : (1 : ℝ) ∈ spectrum ℝ Tc := by
   rw [Pi.sub_apply, Pi.one_apply, Tc_zero, sub_self] at h0
   exact not_isUnit_zero h0
 
-/-- The `ℝ`-spectrum of `Tc` is contained in `{1, 3^{-1/4}}`. -/
+/-- `spectrum ℝ Tc ⊆ {1} ∪ Set.Icc (3^{-1/4}) (3^{-1/4})`. The interval is degenerate, so the
+right-hand side is the two-point set `{1, 3^{-1/4}}`; it is written as an `Icc` to match the shape
+`reconstruct_gapped` expects. Proved contrapositively through `Pi.isUnit_iff` and
+`Fin.forall_fin_two`: if `r` is neither entry, both coordinates of `algebraMap r - Tc` are nonzero
+and hence units. Only the inclusion is established; equality with `{1, 3^{-1/4}}` is not.
+
+DERIVED: `1` is `Tc 0`; `3`, `1` and `4` are `Tc 1 = 3^{-1/4}`, appearing as both endpoints of the
+degenerate interval. -/
 theorem spectrum_subset :
     spectrum ℝ Tc ⊆ {1} ∪ Set.Icc ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ((3 : ℝ) ^ (-(1 : ℝ) / 4)) := by
   intro r hr
@@ -73,42 +103,55 @@ theorem spectrum_subset :
   · exact Or.inl h
   · exact Or.inr (Set.mem_Icc.mpr ⟨le_of_eq h.symm, le_of_eq h⟩)
 
-/-- **A concrete gapped quantum theory.** The finite-aperture transfer operator `Tc = diag(1, 3^{-1/4})`,
-with its computed `ℝ`-spectrum, feeds `reconstruct_gapped` to build a `GappedQuantumTheory` whose mass gap is
-`κ₀ = ¼ log 3` — discharged by computation, not assumed. -/
+/-- `reconstruct_gapped` applied to `Tc`, with `ε := 3^{-1/4}` and `Δ := κ₀`. Its five obligations are
+supplied by `Tc_selfAdjoint`, `rpow_pos`, `κ0_pos`, `one_mem`, and `spectrum_subset` rewritten through
+`exp_neg_κ0`. The result is a `GappedQuantumTheory (Fin 2 → ℂ)` carrying no remaining hypothesis.
+
+DERIVED: `2` is `Tc`'s index type `Fin 2`. -/
 noncomputable def concreteGapped : GappedQuantumTheory (Fin 2 → ℂ) :=
   reconstruct_gapped Tc (ε := (3 : ℝ) ^ (-(1 : ℝ) / 4)) (Δ := κ0)
     Tc_selfAdjoint rpow_pos κ0_pos one_mem (by rw [exp_neg_κ0]; exact spectrum_subset)
 
-/-- The concrete theory's mass gap is `κ₀ = ¼ log 3`. -/
+/-- `concreteGapped.gap = κ0`, by `rfl`: `reconstruct_gapped` stores its `Δ` argument in the `gap`
+field unchanged.
+
+DERIVED: no numeral. -/
 theorem concreteGapped_gap : concreteGapped.gap = κ0 := rfl
 
--- Footprint of the constructed concrete gapped theory: foundational axioms only (inherits
--- `reconstruct_qm_core`'s footprint; the concrete operator, its spectrum, and the gap add none).
+-- Reports the axiom footprint of the constructed theory.
 #print axioms concreteGapped
 
 section AbstractAperture
 
 variable {A : Type*} [CStarAlgebra A] [PartialOrder A] [StarOrderedRing A]
 
-/-- **The finite-aperture margin reconstructs a gapped quantum theory with gap `κ₀`.** Any Euclidean-time
-transfer operator `T` whose spectrum meets the finite-aperture margin `spectrum T ⊆ {1} ∪ [ε, 3^{-1/4}]` — the
-SU(N) read `m_hi ≤ 3^{-1/4} = e^{-κ₀}`, with the vacuum eigenvalue `1` — reconstructs to a `GappedQuantumTheory`
-with mass gap `κ₀ = ¼ log 3`, discharged from the margin. With `concreteGapped` as a witness that the margin is
-inhabited, this is the finite-aperture read carried end-to-end to a constructed gapped quantum theory. -/
+/-- `reconstruct_gapped` with `Δ` fixed at `κ₀` and the spectral interval's right endpoint fixed at
+`3^{-1/4}`. Given a self-adjoint `T` in a C\*-algebra `A` with `StarOrderedRing A`, a positive `ε`,
+the eigenvalue `1 ∈ spectrum ℝ T`, and `spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (3^{-1/4})`, it produces a
+`GappedQuantumTheory A`. `ε` remains free, so the hypothesis is inclusion in a band with an arbitrary
+positive floor and the fixed ceiling `3^{-1/4}`. `concreteGapped` witnesses that the hypotheses are
+satisfiable.
+
+DERIVED: `0` is the positivity demanded of `ε`; `1` is the eigenvalue asked for in `h1` and the
+singleton in `hsp`; `3`, `1` and `4` are the fixed ceiling `3^{-1/4} = exp (-κ0)`, which is what pins
+the reconstructed gap to `κ0`. -/
 noncomputable def gapped_of_aperture_margin (T : A) {ε : ℝ}
     (hT : IsSelfAdjoint T) (hε : 0 < ε) (h1 : (1 : ℝ) ∈ spectrum ℝ T)
     (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε ((3 : ℝ) ^ (-(1 : ℝ) / 4))) :
     GappedQuantumTheory A :=
   reconstruct_gapped T hT hε κ0_pos h1 (by rw [exp_neg_κ0]; exact hsp)
 
-/-- The gap reconstructed from the aperture margin is exactly `κ₀ = ¼ log 3`. -/
+/-- The theory built by `gapped_of_aperture_margin` has `gap = κ0`, by `rfl`, for every `A`, `T`, `ε`
+and choice of proofs.
+
+DERIVED: `0` is `hε`'s positivity bound; `1` is the eigenvalue in `h1` and the singleton in `hsp`;
+`3`, `1` and `4` are the fixed ceiling `3^{-1/4}`. The conclusion itself carries no numeral. -/
 theorem gapped_of_aperture_margin_gap (T : A) {ε : ℝ}
     (hT : IsSelfAdjoint T) (hε : 0 < ε) (h1 : (1 : ℝ) ∈ spectrum ℝ T)
     (hsp : spectrum ℝ T ⊆ {1} ∪ Set.Icc ε ((3 : ℝ) ^ (-(1 : ℝ) / 4))) :
     (gapped_of_aperture_margin T hT hε h1 hsp).gap = κ0 := rfl
 
--- Footprint of the end-to-end margin-to-theory chain: foundational axioms only.
+-- Reports the axiom footprint of the abstract margin-to-theory construction.
 #print axioms gapped_of_aperture_margin
 
 end AbstractAperture

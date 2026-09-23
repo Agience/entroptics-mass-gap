@@ -4,40 +4,37 @@ import MassGap.OSPositivity
 import MassGap.HalfLineTransfer
 
 /-!
-# MassGap.SlabContractive — `SlabShiftContractive` is not an independent premise
+# MassGap.SlabContractive — contractivity of a finite-order symmetric map
 
-## What this closes
+`OSPositivity.wilsonSlabTransfer` takes two premises about the slab shift: `SlabShiftStable`, that
+the shift maps the local slab algebra into itself, and `SlabShiftContractive`, that it does not
+increase the reflection form. This module derives the second from the first.
 
-`OSPositivity.wilsonSlabTransfer` produces a `Transfer.TransferData` on the Wilson slab algebra from
-**two** named premises and nothing else: `SlabShiftStable` (the shift is an endomorphism) and
-`SlabShiftContractive` (it does not expand the reflection form). Its own docstring says *"the distance
-from what is proved to a transfer operator is exactly `SlabShiftStable` and `SlabShiftContractive`."*
+## The general statement
 
-**It is one premise.** `SlabShiftContractive` follows from `SlabShiftStable` alone.
+`SchwarzIteration.contract_of_bounded_orbit` gives contractivity for a map symmetric with respect to
+a positive semidefinite form, provided the orbit quantities `P.form (T^[k] x) (T^[k] x)` are
+uniformly bounded in `k`. `iterate_eq_mod_of_period` shows that a map of finite order `n` has
+`T^[k] x = T^[k % n] x`, so the orbit takes at most `n` values and the supremum over `Finset.range n`
+is a bound. `contract_of_periodic` combines the two.
 
-## Why — a periodic symmetric map cannot expand a positive form
+That lemma is stated for an arbitrary real module `A`, an arbitrary `ReflForm A` and an arbitrary map
+`T`. It assumes only symmetry for the form and `T^[n] = id` with `0 < n`. No positivity of `T`, no
+topology, no compactness and no spectral theory enters, and no gauge theory appears in its statement.
 
-`SchwarzIteration.contract_of_bounded_orbit` derives `T_contract` from `T_symm` plus a uniform bound
-on the orbit `⟨Tⁿx, Tⁿx⟩`. On the torus the orbit is **finite**: `HalfLineTransfer.shiftObs_pow_period`
-gives `shiftObs τ ^ n = id`, so the orbit visits at most `n` points and the maximum over
-`Finset.range n` bounds it. `contract_of_periodic` packages that, and it is general — nothing about
-Yang–Mills enters, only that the map is symmetric for the form and has finite order.
+## At the Wilson slab
 
-The symmetry it needs is already unconditional: `WilsonTransfer.reflForm_shiftObs_symm` holds at every
-real coupling and every reflection constant, with no hypothesis, and is what `wilsonSlabTransfer`
-already uses for its own `T_symm` field.
+`shiftSlab_iterate_period` shows the slab shift has order dividing the temporal extent `n`, by
+transporting `HalfLineTransfer.shiftObs_pow_period` through the subtype.
+`slabShiftContractive_of_stable` then applies `contract_of_periodic` with the form
+`ReflectionStrong.wilsonGibbsReflForm` and the symmetry `WilsonTransfer.reflForm_shiftObs_symm`,
+producing `SlabShiftContractive` from `SlabShiftStable`.
+`wilsonSlabTransferOfStable` is `wilsonSlabTransfer` with that argument filled in, so it constructs a
+`TransferData` from `SlabShiftStable` alone.
 
-## ⚠ And this makes the slab route WORSE, not better
-
-The premise that survives is `SlabShiftStable`, and the tree proves it is fatal:
-`HalfLineTransfer.shiftObs_eq_self_of_shift_stable` says a shift-stable submodule of the slab algebra
-is acted on by the shift as the IDENTITY at `2 ≤ m`, and `GNSHilbert.shiftSlab_eq_id` is that
-statement for this carrier. So `wilsonSlabTransfer`'s operator is `1` whenever its premises hold.
-
-**Removing a premise from a construction whose surviving premise forces triviality is a sharpening of
-a no-go, not progress toward a gap.** What it establishes is that contractivity was never the
-obstruction: the whole content of the slab route is the stability premise, and that premise is the one
-`TransferGap.finite_order_fails_gap` and `shiftObs_eq_self_of_shift_stable` between them close.
+Scope: the slab results require an even extent, `n = 2 * m` with `0 < m`, and `N ≠ 0`, and they are
+stated on the periodic torus `Link d n` that `Fin n` indexes. Finite order is what supplies the
+orbit bound, so the argument applies to the periodic lattice and not to an infinite time axis.
 -/
 
 namespace MassGap.SlabContractive
@@ -52,10 +49,14 @@ section General
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- **AN ORBIT THAT REPEATS IS AN ORBIT THAT IS BOUNDED.** With `T^[n] = id` the iterate at `k` is the
-iterate at `k % n`, so the orbit visits at most `n` points.
+/-- A map `T : A → A` of finite order `n` has `T^[k] x = T^[k % n] x` for every `k`. Proved by
+writing `k = n * (k / n) + k % n` and iterating the periodicity hypothesis `n * (k / n)` times.
 
-DERIVED: no numeral. `n` is the caller's period. -/
+Consequence: the orbit `{T^[k] x : k : ℕ}` is contained in the finite set of iterates below `n`. The
+hypothesis `0 < n` is what makes `k % n` meaningful as a representative.
+
+DERIVED: `0` is the strict lower bound on the period `n` in `hn`; it is the only numeral. `n` is the
+caller's period and `k` the caller's index. -/
 theorem iterate_eq_mod_of_period {T : A → A} {n : ℕ} (hn : 0 < n)
     (hper : ∀ y, T^[n] y = y) (k : ℕ) (x : A) : T^[k] x = T^[k % n] x := by
   have hmul : ∀ (q : ℕ) (y : A), T^[n * q] y = y := by
@@ -70,16 +71,18 @@ theorem iterate_eq_mod_of_period {T : A → A} {n : ℕ} (hn : 0 < n)
 
 #print axioms iterate_eq_mod_of_period
 
-/-- **⭐ A PERIODIC SYMMETRIC MAP CANNOT EXPAND A POSITIVE SEMIDEFINITE FORM.**
+/-- For a `ReflForm A` and a map `T : A → A` symmetric for it (`P.form (T y) z = P.form y (T z)`)
+with `T^[n] = id` for some `n > 0`, every `x` satisfies `P.form (T x) (T x) ≤ P.form x x`.
 
-`SchwarzIteration.contract_of_bounded_orbit` needs symmetry and a bounded orbit. Finite order supplies
-the bound for free: the orbit takes at most `n` values, and the maximum over `Finset.range n` is one
-of them.
+The bound `contract_of_bounded_orbit` needs is `(Finset.range n).sup'` of the orbit quantities,
+which is a genuine element of the orbit by `iterate_eq_mod_of_period`.
 
-**No positivity of the operator, no compactness, no spectral theory** — only that the form is positive
-semidefinite and the map is symmetric for it and repeats.
+`A` is any real module, `P` any `ReflForm A`, `T` any map: no linearity of `T`, no topology, no
+compactness and no operator positivity is assumed, and nothing about a lattice or a gauge group
+appears. Finite order is essential — it is the sole source of the orbit bound.
 
-DERIVED: no numeral. `n` is the caller's period. -/
+DERIVED: `0` is the strict lower bound on the period `n` in `hn`; it is the only numeral. `n` is the
+caller's period. -/
 theorem contract_of_periodic (P : ReflForm A) (T : A → A)
     (hsym : ∀ y z, P.form (T y) z = P.form y (T z))
     {n : ℕ} (hn : 0 < n) (hper : ∀ y, T^[n] y = y) (x : A) :
@@ -96,15 +99,25 @@ theorem contract_of_periodic (P : ReflForm A) (T : A → A)
 
 end General
 
-/-! ## 2. ⭐ At the Wilson slab -/
+/-! ## 2. At the Wilson slab -/
 
 section Slab
 
 variable {d n N : ℕ} [NeZero n]
 
-/-- The slab shift has the torus's period, on the subtype.
+/-- The `n`-th iterate of `OSPositivity.shiftSlab τ a m hstab` is the identity on the local slab
+algebra `localObs (blkS τ a m) (blkR τ a m)`, where `n` is the temporal extent carried by `Fin n`.
 
-DERIVED: no numeral. `n` is the lattice extent, `shiftObs_pow_period`'s own. -/
+The proof descends to the underlying observable: iterating `shiftSlab` is `Subtype.ext`-equal to
+iterating `WilsonTransfer.shiftObs τ`, that iterate is the monoid power, and
+`HalfLineTransfer.shiftObs_pow_period` closes it. So the order divides `n`; the statement does not
+claim `n` is least.
+
+Requires `N ≠ 0` and `[NeZero n]`. The period is the extent of the periodic direction, so this is a
+torus statement.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`; it is the only numeral. `n` is the
+extent, fixed by the section variable, and `d`, `τ`, `a`, `m` are the caller's. -/
 theorem shiftSlab_iterate_period (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hstab : MassGap.OSPositivity.SlabShiftStable N τ a m)
     (F : ↥(localObs (Ω := MassGap.SUN.SU N) (blkS τ a m) (blkR τ a m))) :
@@ -135,17 +148,20 @@ theorem shiftSlab_iterate_period (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : �
 
 #print axioms shiftSlab_iterate_period
 
-/-- **⭐ `SlabShiftContractive` FOLLOWS FROM `SlabShiftStable`.**
+/-- `OSPositivity.SlabShiftContractive N τ a m β` holds whenever `OSPositivity.SlabShiftStable N τ a m`
+does, at `N ≠ 0`, even extent `n = 2 * m` with `0 < m`, and any real coupling `β`.
 
-So `OSPositivity.wilsonSlabTransfer` carries ONE premise, not two, and `SchwarzIteration`'s headline
-— that `T_contract` is derived rather than assumed — is cashed at the one site in the tree where a
-`T_contract` was a live hypothesis.
+The proof is `contract_of_periodic` at the form `ReflectionStrong.wilsonGibbsReflForm hN τ a m hm hm0 β`
+and the map `shiftSlab τ a m hstab`. Its symmetry hypothesis is discharged by
+`WilsonTransfer.reflForm_shiftObs_symm` at reflection constant `a + a`, which carries no hypothesis
+of its own; its periodicity hypothesis is `shiftSlab_iterate_period`, and `0 < n` comes from the
+`NeZero n` instance.
 
-**⚠ This does not help the gap.** `GNSHilbert.shiftSlab_eq_id` proves the surviving premise makes the
-shift the IDENTITY at `2 ≤ m`, so the operator it buys is `1`. What is established is that
-contractivity was never the obstruction.
+`β` is unconstrained: the conclusion holds at every real coupling, strong or weak.
 
-DERIVED: no numeral. `n` is the extent and the shift's period. -/
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the strict lower bound on `m` in
+`hm0`. `2` is the factor in `hm : n = 2 * m`, the evenness of the extent, which is what allows the
+reflection plane and the half-extent `m` to be named. -/
 theorem slabShiftContractive_of_stable (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ)
     (hstab : MassGap.OSPositivity.SlabShiftStable N τ a m) :
@@ -160,10 +176,17 @@ theorem slabShiftContractive_of_stable (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (
 
 #print axioms slabShiftContractive_of_stable
 
-/-- **AND THE TRANSFER DATA FROM ONE PREMISE.** `wilsonSlabTransfer` with its second premise
-discharged.
+/-- The `Transfer.TransferData` on the local slab algebra built by
+`OSPositivity.wilsonSlabTransfer`, with its contractivity argument supplied by
+`slabShiftContractive_of_stable`. The remaining inputs are `N ≠ 0`, the even extent `n = 2 * m` with
+`0 < m`, the coupling `β`, and `SlabShiftStable N τ a m`.
 
-DERIVED: no numeral. -/
+Definitionally the same `TransferData` as `wilsonSlabTransfer` at those arguments; the only change is
+which of its premises the caller must provide.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the strict lower bound on `m` in
+`hm0`. `2` is the factor in `hm : n = 2 * m`. All three are the binders'
+(`slabShiftContractive_of_stable` and `wilsonSlabTransfer` share them); the body introduces none. -/
 noncomputable def wilsonSlabTransferOfStable (hN : N ≠ 0) (τ : Fin d) (a : Fin n) (m : ℕ)
     (hm : n = 2 * m) (hm0 : 0 < m) (β : ℝ)
     (hstab : MassGap.OSPositivity.SlabShiftStable N τ a m) :

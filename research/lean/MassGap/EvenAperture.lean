@@ -3,55 +3,52 @@ import MassGap.ActionSplit
 import MassGap.WilsonModel
 
 /-!
-# MassGap.EvenAperture — the flagship with NO named axiom on the gap side
+# MassGap.EvenAperture — the model chain rebuilt on even apertures and clamped coupling
 
-`Complete.wilson_reflection_positive_at` is the last named axiom the mass-gap chain carries. It is
-not carried because reflection positivity is unproved: `Complete.wilson_reflection_positive_at_even`
-PROVES the axiom's body — the same conjunction, of the same `wilsonCorrAt` — whenever the extent is
-even and at least four and the coupling is nonnegative, with `#print axioms` reporting the
-foundational three and nothing else. The axiom survives only because it is stated at EVERY aperture
-and EVERY real coupling, and `Complete.readYMAt` is DEFINED from it:
+`Complete.readYMAt N β` is defined as `readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)`,
+so it mentions the named axiom `Complete.wilson_reflection_positive_at`, and every object defined
+from it — `μYMAt`, `d2At`, `ymModelAt`, `WilsonModel.fullModelOfSubstrate`,
+`WilsonModel.existence_and_gap_of_substrate` — reports that axiom.
+`Complete.wilson_reflection_positive_at_even` proves the same conjunction about the same
+`wilsonCorrAt` whenever `N + 1 = 2 * m` with `2 ≤ m` and `0 ≤ β`, on the foundational axioms only.
+This module rebuilds the chain on that theorem.
 
-    readYMAt N β := readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)
+Contents:
+* `EvenAp` — the subtype `{N // ∃ m, N + 1 = 2 * m ∧ 2 ≤ m}`. `mem_evenAp_iff` shows the condition
+  is `4 ≤ N + 1 ∧ Even (N + 1)`.
+* `frequently_even_extent_four`, `exists_even_extent_four_of_eventually`,
+  `exists_evenAp_of_eventually` — that set is frequently true along `atTop`, so it meets any
+  eventual set, which is what `Complete.confinement_of_bounded_substrate` produces.
+  `not_eventually_even_extent_four` and `two_le_half_is_load_bearing` are the two negative controls:
+  the condition is not eventually true, and parity alone does not give `2 ≤ m`.
+* `readEven` — `readA (wilsonCorrAt a.1 (max β 0))` with the theorem as its certificate.
+  `readA_congr`, `readEven_eq_readYMAt_max`, `readEven_eq_readYMAt` and `readEven_eq_at_zero` relate
+  it to `readYMAt`.
+* `d2Even`, `μEven`, `d2Even_eq`, `μEven_eq`, `μEven_eq_at_zero`, `substrate_even_of_substrate` —
+  the second circle moment and the tension, rebuilt, and the restricted substrate bound derived from
+  the original.
+* `exists_confining_even_aperture`, `apertureEven`, `apertureEven_confines`, `ymModelEven`,
+  `A2_even`, `fullModelEven`, `wilsonEven` — confinement at a chosen even aperture, and the model,
+  full model and Wilson realisation built on it.
+* `ym_mass_gap_of_substrate_even`, `existence_and_gap_of_substrate_even`,
+  `mass_gap_rate_and_continuum_even` — the three conclusions at that aperture.
+* `apFour`, `evenAp_nonempty`, `rp_at_extent_four`, `readEven_apFour_rho`,
+  `ym_mass_gap_at_extent_four` — the explicit aperture `3`, whose extent `4` is the smallest the
+  even-extent theorem reaches.
 
-Every downstream object — `μYMAt`, `d2At`, `ymModelAt`, `WilsonModel.fullModelOfSubstrate`,
-`WilsonModel.existence_and_gap_of_substrate` — mentions that definition, so all of them report the
-axiom. There is exactly one place to attack, and it is that `def`.
-
-## What this module does
-
-The flagship does not need the read at every aperture. `Complete.confinement_of_bounded_substrate`
-concludes `∀ᶠ N in atTop`, and `WilsonModel.apertureOf` picks a witness from that eventual set. An
-eventual set is cofinal, and so is `{N | ∃ m, N + 1 = 2 * m ∧ 2 ≤ m}`, so the two meet: the aperture
-may be taken with even extent at least four at no cost. `ActionSplit.exists_even_extent_of_eventually`
-does this for parity alone; `exists_even_extent_four_of_eventually` below does it for the bound the
-proved reflection positivity actually needs.
-
-`readEven` is then the same read built from the PROVED reflection positivity, and everything above it
-is rebuilt on that: `d2Even`, `μEven`, `ymModelEven`, `fullModelEven`, `wilsonEven`, and
-`existence_and_gap_of_substrate_even`. None of them mentions the axiom.
-
-## The coupling, stated rather than absorbed
-
-`Apriori.A1 μ κ₀ := ∀ β, μ β < κ₀` quantifies over ALL of `ℝ`, and `LatticeYM.μ : ℝ → ℝ` is total, so
-a read defined only at nonnegative coupling cannot populate the `A1` field. The proved reflection
-positivity is available only at `0 ≤ β` — and that is not a gap in the argument but the sign of the
-coupling: `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` proves the Wilson cross kernel is
-positive-semidefinite EXACTLY when `0 ≤ β`.
-
-So `readEven a β` is built at `max β 0`. On `0 ≤ β` it IS `readYMAt a.1 β` (`readEven_eq_readYMAt`);
-below zero it is the `β = 0` read (`readEven_eq_at_zero`), and `μEven_eq_at_zero` says so in Lean.
-**What the model claims at negative coupling is therefore the `β = 0` claim relabelled, and that is
-the whole price of removing the axiom.** It is named here rather than hidden: the two lemmas that
-locate the substitution are axiom-free and stated as theorems.
-
-The hypothesis moves the same way. `existence_and_gap_of_substrate` asks `∃ B, ∀ N β, d2At N β ≤ B`;
-this asks `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B`, which by `d2Even_eq` is the original restricted to
-even extents at least four and to nonnegative coupling. `substrate_even_of_substrate` proves the
-restricted hypothesis follows from the original, so the axiom-free result is available everywhere the
-axiom-carrying one is, and is STRICTLY WEAKER as a hypothesis — nothing in this tree derives the
-original from it, because nothing here says anything about `d2At` at an odd extent or a negative
-coupling.
+Scope.
+* `Apriori.A1 μ κ₀` quantifies over all of `ℝ` and `LatticeYM.μ : ℝ → ℝ` is total, while
+  `wilson_reflection_positive_at_even` requires `0 ≤ β`. `readEven a β` is therefore built at
+  `max β 0`. At `0 ≤ β` it equals `readYMAt a.1 β` (`readEven_eq_readYMAt`); at `β ≤ 0` it equals
+  `readEven a 0` (`readEven_eq_at_zero`), and `μEven_eq_at_zero` records the same for the tension.
+  So at negative coupling the model states its `β = 0` content.
+  `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an iff placing the boundary at `0`.
+* The substrate hypothesis `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B` is `d2Even_eq`'s restriction of
+  `∃ B, ∀ N β, d2At N β ≤ B` to even extents at least four and clamped coupling.
+  `substrate_even_of_substrate` derives the restricted form from the original; the converse is not
+  proved here, and nothing in this module constrains `d2At` at an odd extent or a negative coupling.
+* `readEven_eq_readYMAt`, `d2Even_eq`, `μEven_eq` and `substrate_even_of_substrate` mention the
+  axiom-carrying objects and so report the named axiom; the other declarations do not.
 -/
 
 namespace MassGap.EvenAperture
@@ -66,15 +63,19 @@ needs more: `N + 1 = 2 * m` with `2 ≤ m`, because at `m = 1` levels `1` and `m
 assignment collides (`OddLagSplit.negctl_plane_assignment_collides_at_m_one`). The larger set is still
 cofinal, so the strengthening costs nothing. -/
 
-/-- The extents the PROVED reflection positivity is available at: even, and at least four.
+/-- The subtype of apertures `N` with `N + 1 = 2 * m` for some `m` with `2 ≤ m`: even extent, at
+least four. These are the extents `Complete.wilson_reflection_positive_at_even` applies at.
 
-DERIVED: `2 * m` is the even extent and `2 ≤ m` is `4 ≤ N + 1`, both read off
-`Complete.wilson_reflection_positive_at_even`'s hypotheses. Neither is chosen here. -/
+DERIVED: `1` is the `+ 1` relating the aperture `N` to the extent `N + 1`; `2` appears twice, as the
+factor making the extent even and as the lower bound on the half `m`. Both are read off
+`wilson_reflection_positive_at_even`'s hypotheses; neither is chosen here. -/
 abbrev EvenAp : Type := {N : ℕ // ∃ m : ℕ, N + 1 = 2 * m ∧ 2 ≤ m}
 
-/-- The membership condition is `{N | 4 ≤ N + 1 ∧ Even (N + 1)}`, written in the shape
-`wilson_reflection_positive_at_even` consumes. Stated so the two descriptions are known to be the
-same set rather than assumed to be. -/
+/-- `(∃ m, N + 1 = 2 * m ∧ 2 ≤ m) ↔ (4 ≤ N + 1 ∧ Even (N + 1))`: the two descriptions of `EvenAp`'s
+membership condition agree. Both directions by `omega` after unpacking.
+
+DERIVED: `1` is the `+ 1` from aperture to extent; `2` is the factor making the extent even and the
+lower bound on the half; `4` is the resulting lower bound on the extent, which is `2 * 2`. -/
 theorem mem_evenAp_iff (N : ℕ) :
     (∃ m : ℕ, N + 1 = 2 * m ∧ 2 ≤ m) ↔ (4 ≤ N + 1 ∧ Even (N + 1)) := by
   constructor
@@ -83,32 +84,47 @@ theorem mem_evenAp_iff (N : ℕ) :
   · rintro ⟨h4, r, hr⟩
     exact ⟨r, by omega, by omega⟩
 
-/-- **The extents with `N + 1` even and at least four are cofinal.** The strengthening of
-`ActionSplit.frequently_even_succ` that the proved reflection positivity needs. -/
+/-- `∃ᶠ N in atTop, ∃ m, N + 1 = 2 * m ∧ 2 ≤ m`: the even extents at least four occur arbitrarily
+late. Given any `a`, the witness is `N = 2 * a + 3` with `m = a + 2`. The strengthening of
+`ActionSplit.frequently_even_succ` by the bound `2 ≤ m`.
+
+DERIVED: `1` is the `+ 1` from aperture to extent; the two `2`s are the even factor and the lower
+bound on the half. The witnesses `2 * a + 3` and `a + 2` are in the proof. -/
 theorem frequently_even_extent_four :
     ∃ᶠ N : ℕ in atTop, ∃ m : ℕ, N + 1 = 2 * m ∧ 2 ≤ m := by
   rw [Filter.frequently_atTop]
   intro a
   exact ⟨2 * a + 3, by omega, a + 2, by omega, by omega⟩
 
-/-- **An aperture may be taken with even extent at least four, from any eventual set.** Generic in
-`P`, as `ActionSplit.exists_even_extent_of_eventually` is. -/
+/-- From `∀ᶠ N in atTop, P N`, an `N` and `m` with `P N`, `N + 1 = 2 * m` and `2 ≤ m`: an eventual
+set meets the frequently-true even-extent set. Via
+`ActionSplit.exists_of_eventually_of_frequently` and `frequently_even_extent_four`. Generic in `P`.
+
+DERIVED: `1` is the `+ 1` from aperture to extent; the two `2`s are the even factor and the lower
+bound on the half. -/
 theorem exists_even_extent_four_of_eventually {P : ℕ → Prop}
     (hP : ∀ᶠ N in atTop, P N) : ∃ N m : ℕ, P N ∧ N + 1 = 2 * m ∧ 2 ≤ m := by
   obtain ⟨N, hPN, m, hm, hm2⟩ :=
     MassGap.ActionSplit.exists_of_eventually_of_frequently hP frequently_even_extent_four
   exact ⟨N, m, hPN, hm, hm2⟩
 
-/-- The same in the bundled form the rest of this file consumes. -/
+/-- The same conclusion bundled as `∃ a : EvenAp, P a.1`, which is the form the rest of this module
+consumes.
+
+DERIVED: no numeral occurs in the statement; the extent conditions are inside `EvenAp`. -/
 theorem exists_evenAp_of_eventually {P : ℕ → Prop} (hP : ∀ᶠ N in atTop, P N) :
     ∃ a : EvenAp, P a.1 := by
   obtain ⟨N, hPN, hE⟩ :=
     MassGap.ActionSplit.exists_of_eventually_of_frequently hP frequently_even_extent_four
   exact ⟨⟨N, hE⟩, hPN⟩
 
-/-- **NEGATIVE CONTROL.** Like parity alone, the extent-four condition is only FREQUENTLY true, never
-eventually — so `Filter.Eventually.and` cannot produce it and `and_frequently` is load-bearing here
-for the same reason `ActionSplit.not_eventually_even_succ` gives for parity. -/
+/-- `¬ (∀ᶠ N in atTop, ∃ m, N + 1 = 2 * m ∧ 2 ≤ m)`: the condition is frequently true but not
+eventually true, since `2 * a + 2` fails it beyond any `a`. So `Filter.Eventually.and` cannot
+produce the conjunction of this with an eventual property, and the frequently-meets-eventually
+argument of `exists_even_extent_four_of_eventually` is the one that applies.
+
+DERIVED: `1` is the `+ 1` from aperture to extent; the two `2`s are the even factor and the lower
+bound on the half. -/
 theorem not_eventually_even_extent_four :
     ¬ (∀ᶠ N : ℕ in atTop, ∃ m : ℕ, N + 1 = 2 * m ∧ 2 ≤ m) := by
   rw [Filter.eventually_atTop]
@@ -116,10 +132,11 @@ theorem not_eventually_even_extent_four :
   obtain ⟨m, hm, _⟩ := ha (2 * a + 2) (by omega)
   omega
 
-/-- **NEGATIVE CONTROL.** The strengthening is not cosmetic: parity alone does NOT give `2 ≤ m`. At
-`N = 1` the extent `N + 1 = 2` is even and the half is `1`, which is exactly the case the plane
-assignment collides at. So `ActionSplit.exists_even_extent_of_eventually` could not have been used
-here as it stands. -/
+/-- `Even (1 + 1) ∧ ¬ (∃ m, 1 + 1 = 2 * m ∧ 2 ≤ m)`: parity alone does not give `2 ≤ m`. At aperture
+`1` the extent is `2`, which is even, but its half is `1`, below the bound.
+
+DERIVED: `1` is the aperture at which the two conditions come apart, and the `+ 1` giving its
+extent; `2` is that extent's even factor and the lower bound on the half that fails there. -/
 theorem two_le_half_is_load_bearing :
     Even (1 + 1) ∧ ¬ (∃ m : ℕ, 1 + 1 = 2 * m ∧ 2 ≤ m) := by
   refine ⟨⟨1, rfl⟩, ?_⟩
@@ -131,13 +148,11 @@ theorem two_le_half_is_load_bearing :
 This is the single point of attack. `readEven` is `readYMAt` with the axiom replaced by the theorem;
 everything below is the existing chain rebuilt on it. -/
 
-/-- **Reading-A of the Wilson ensemble at an even aperture, with NO named axiom.**
-
-Identical in shape to `Complete.readYMAt`, and identical in content at nonnegative coupling
-(`readEven_eq_readYMAt`), but its positivity certificate is the THEOREM
-`Complete.wilson_reflection_positive_at_even` rather than the axiom
-`Complete.wilson_reflection_positive_at`. That is the whole difference, and it is what removes the
-named axiom from every declaration below.
+/-- Reading-A of the Wilson correlation at an even aperture: `readA (wilsonCorrAt a.1 (max β 0))`,
+with the positivity certificate supplied by the theorem
+`Complete.wilson_reflection_positive_at_even` at `a.2.choose` rather than by the axiom
+`Complete.wilson_reflection_positive_at`. The shape is `Complete.readYMAt`'s, and at `0 ≤ β` the two
+are the same object (`readEven_eq_readYMAt`).
 
 DERIVED: the `0` is the lower end of the physical coupling domain — the clamp `max β 0` is what makes
 this a total function `ℝ → Moment.Read` so the `A1` field can be populated, and
@@ -148,27 +163,40 @@ noncomputable def readEven (a : EvenAp) (β : ℝ) : Moment.Read a.1 :=
     (MassGap.wilson_reflection_positive_at_even a.1 a.2.choose a.2.choose_spec.1 a.2.choose_spec.2
       (le_max_right β 0))
 
-/-- Two reads built by `readA` from the same correlation are the same read: the remaining fields are
-proofs. Used to compare `readEven` with `readYMAt` without unfolding either certificate. -/
+/-- `readA ρ h = readA ρ' h'` whenever `ρ = ρ'`: two reads built from the same correlation agree,
+because the remaining fields are proofs. By `subst` and `rfl`. Used to compare `readEven` with
+`readYMAt` without unfolding either certificate.
+
+DERIVED: `1` is the `+ 1` in the index type `Fin (N + 1)`, the number of lags; `0` is the lower
+bound in the nonnegativity clause and the strict lower bound on the total mass, both belonging to
+`readA`'s certificate. -/
 theorem readA_congr {N : ℕ} {ρ ρ' : Fin (N + 1) → ℝ}
     {h : (∀ d, 0 ≤ ρ d) ∧ 0 < ∑ d, ρ d} {h' : (∀ d, 0 ≤ ρ' d) ∧ 0 < ∑ d, ρ' d}
     (e : ρ = ρ') : MassGap.readA ρ h = MassGap.readA ρ' h' := by
   subst e; rfl
 
-/-- **The read IS the axiom-carrying one, at the clamped coupling.** A bridge, so it mentions
-`readYMAt` and therefore reports the axiom; that is the point of stating it separately. -/
+/-- `readEven a β = readYMAt a.1 (max β 0)`, by `readA_congr rfl`. A bridge lemma: it mentions
+`readYMAt` and therefore reports the named axiom, which is why it is stated separately from the
+chain.
+
+DERIVED: the one numeral is `0`, the clamp point in `max β 0`. -/
 theorem readEven_eq_readYMAt_max (a : EvenAp) (β : ℝ) :
     readEven a β = MassGap.readYMAt a.1 (max β 0) := readA_congr rfl
 
-/-- **At nonnegative coupling the two reads are the SAME OBJECT.** Nothing is approximated and no
-hypothesis is weakened on `0 ≤ β`; the axiom-free chain is about the same Wilson correlation. -/
+/-- `readEven a β = readYMAt a.1 β` whenever `0 ≤ β`: on the nonnegative coupling range the clamp is
+inert, so the two reads are the same object and the same Wilson correlation.
+
+DERIVED: the one numeral is `0`, the lower bound on `β` at which `max β 0` reduces to `β`. -/
 theorem readEven_eq_readYMAt (a : EvenAp) {β : ℝ} (hβ : 0 ≤ β) :
     readEven a β = MassGap.readYMAt a.1 β :=
   readA_congr (by rw [max_eq_left hβ])
 
-/-- **THE PRICE, NAMED.** At negative coupling `readEven` is the `β = 0` read. The model built below
-therefore makes, at every `β < 0`, the claim it makes at `β = 0` — relabelled, not established. This
-is axiom-free and is the exact statement of what the restriction costs. -/
+/-- `readEven a β = readEven a 0` whenever `β ≤ 0`: below zero the clamp collapses the read to the
+one at zero coupling, so every statement the model makes at a negative `β` is its statement at
+`β = 0`.
+
+DERIVED: the one numeral is `0`, the clamp point, appearing as the upper bound on `β` and as the
+coupling the read collapses to. -/
 theorem readEven_eq_at_zero (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) :
     readEven a β = readEven a 0 :=
   readA_congr (by rw [max_eq_right hβ, max_self])
@@ -189,26 +217,39 @@ noncomputable def d2Even (a : EvenAp) (β : ℝ) : ℝ :=
 DERIVED: no numeral; `tension` is `-log ⟨cos θ⟩_p`, defined in `Moment`. -/
 noncomputable def μEven (a : EvenAp) (β : ℝ) : ℝ := (readEven a β).tension
 
-/-- The moment is the axiom-carrying one at the clamped coupling. -/
+/-- `d2Even a β = d2At a.1 (max β 0)`, by rewriting with `readEven_eq_readYMAt_max`. A bridge
+lemma; it mentions `d2At` and so reports the named axiom.
+
+DERIVED: the one numeral is `0`, the clamp point in `max β 0`. -/
 theorem d2Even_eq (a : EvenAp) (β : ℝ) : d2Even a β = MassGap.d2At a.1 (max β 0) := by
   show ∑ d, (readEven a β).p d * (Moment.circLag d : ℝ) ^ 2 = _
   rw [readEven_eq_readYMAt_max]
   rfl
 
-/-- The tension is the axiom-carrying one at the clamped coupling. -/
+/-- `μEven a β = μYMAt a.1 (max β 0)`, by rewriting with `readEven_eq_readYMAt_max`. A bridge
+lemma; it mentions `μYMAt` and so reports the named axiom.
+
+DERIVED: the one numeral is `0`, the clamp point in `max β 0`. -/
 theorem μEven_eq (a : EvenAp) (β : ℝ) : μEven a β = MassGap.μYMAt a.1 (max β 0) := by
   show (readEven a β).tension = _
   rw [readEven_eq_readYMAt_max]
   rfl
 
-/-- **THE PRICE, at the level of the tension.** Axiom-free. -/
+/-- `μEven a β = μEven a 0` whenever `β ≤ 0`: `readEven_eq_at_zero` at the level of the tension.
+
+DERIVED: the one numeral is `0`, the upper bound on `β` and the coupling the tension collapses
+to. -/
 theorem μEven_eq_at_zero (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) : μEven a β = μEven a 0 := by
   show (readEven a β).tension = (readEven a 0).tension
   rw [readEven_eq_at_zero a hβ]
 
-/-- **The restricted hypothesis follows from the original.** So every consequence of the axiom-free
-chain is available wherever `existence_and_gap_of_substrate`'s hypothesis holds. This bridge mentions
-`d2At` and so reports the axiom; the chain it feeds does not. -/
+/-- From `∃ B, ∀ N β, d2At N β ≤ B`, the restricted bound `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B`,
+with the same `B`. Via `d2Even_eq`.
+
+Scope: the implication runs one way. Nothing here derives the unrestricted bound from the restricted
+one. This lemma mentions `d2At` and so reports the named axiom.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem substrate_even_of_substrate (h : ∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B) :
     ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B := by
   obtain ⟨B, hB⟩ := h
@@ -218,13 +259,14 @@ theorem substrate_even_of_substrate (h : ∃ B : ℝ, ∀ N β, MassGap.d2At N �
 
 /-! ## 4. Confinement, and the aperture chosen from the cofinal set -/
 
-/-- **CONFINEMENT AT AN EVEN APERTURE, FROM ONE SUBSTRATE BOUND — no named axiom.**
+/-- From `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B`, an even aperture `a` with `μEven a β < κ₀YM` at
+every `β`. `Moment.aperture_factor_tendsto_zero` makes the floor comparison eventually true along
+`atTop`, `exists_evenAp_of_eventually` selects an even extent at least four inside that eventual
+set, and `Moment.Read.tension_lt_floor_of_circ_moment` converts the moment bound into the tension
+bound. The last lemma is generic in the read, so no named axiom enters.
 
-The proof is `Complete.confinement_of_substrate_bound`'s, with the cofinal even choice inserted where
-that one takes an arbitrary large `N`: the aperture factor tends to zero, so the floor comparison
-holds eventually, and `frequently_even_extent_four` supplies an even extent at least four inside that
-eventual set. `Moment.Read.tension_lt_floor_of_circ_moment` is generic in the read and carries no
-axiom, so nothing here does. -/
+DERIVED: no numeral occurs in the statement; `κ₀YM` is a named constant. The `2`, `1`, `3` and `4`
+of the aperture factor and the floor appear in the proof. -/
 theorem exists_confining_even_aperture
     (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     ∃ a : EvenAp, ∀ β : ℝ, μEven a β < MassGap.κ₀YM := by
@@ -271,10 +313,15 @@ noncomputable def ymModelEven (a : EvenAp) : MassGap.LatticeYM where
       rw [Complex.norm_real, Real.norm_of_nonneg (Real.exp_pos _).le]
     exact le_of_eq h
 
-/-- **A2 at an even aperture.** `Complete.ym_A2`'s proof, replayed. It cannot be cited directly:
-`ym_A2 : A2_YM ymModel` has `ymModel` — hence `μYM`, hence the axiom — in its TYPE, so
-`#print axioms ym_A2` reports the axiom although the argument never touches the read. The directional
-field `R` of `ymModelEven` is `ymModelAt`'s verbatim, so the same Nyquist congruence discharges it. -/
+/-- `A2_YM (ymModelEven a)`: the directional read of `ymModelEven` takes the same value in every
+direction. `Complete.ym_A2`'s argument replayed — `A2_continuum_of_congruence` against
+`continuumRotationCongruence_of_gram`, with the two side goals discharged from `Otr_iso`.
+
+Scope: `ym_A2` cannot be cited directly because its type mentions `ymModel`, hence `μYM`, hence the
+named axiom, although its argument never reads the correlation. The `R` field of `ymModelEven` is
+`ymModelAt`'s verbatim, so the same congruence applies.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem A2_even (a : EvenAp) : MassGap.A2_YM (ymModelEven a) := by
   show MassGap.A2 (fun d => MassGap.freadYM ((MassGap.Fym d)ᵀ * MassGap.Fym d).charpoly)
   refine MassGap.A2_continuum_of_congruence MassGap.freadYM
@@ -291,9 +338,10 @@ theorem A2_even (a : EvenAp) : MassGap.A2_YM (ymModelEven a) := by
     rw [← Matrix.mul_assoc, Matrix.mul_assoc MassGap.Fbase (MassGap.Otr d) ((MassGap.Otr d)ᵀ),
       mul_eq_one_comm.mp (MassGap.Otr_iso d), Matrix.mul_one]
 
-/-- **A FULL MODEL FROM ONE OPEN HYPOTHESIS AND NO NAMED AXIOM.** `WilsonModel.fullModelOfSubstrate`
-with the even aperture and the axiom-free read. The measure side is unchanged — it was already
-foundational-only.
+/-- A `FullModel` from the restricted substrate bound: `gap := ymModelEven (apertureEven h)`, the
+two hypotheses from `apertureEven_confines` and `A2_even`, and the measure side
+`WilsonModel.ymFamilyTension` unchanged. `WilsonModel.fullModelOfSubstrate` with the even aperture
+in place of the arbitrary one.
 
 DERIVED: no numeral; every constant belongs to the pieces assembled. -/
 noncomputable def fullModelEven (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
@@ -303,13 +351,16 @@ noncomputable def fullModelEven (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d
   h2 := A2_even (apertureEven h)
   measure := MassGap.WilsonModel.ymFamilyTension
 
-/-- **AN `SU(3)` WILSON REALISATION AT AN EVEN APERTURE.** `WilsonModel.paramsTension` is reused
-unchanged: it reads its infrared cutoff off the witness read. That cutoff does contain an aperture --
-`kstar = 2π·cW` and `cW` carries `rW ^ (kW + 1)` with `kW` a `Classical.choose`n extent
-(`WilsonModel.lean:261`) -- but it is a bare `ℕ` on the MEASURE side, fixed by the witness read and
-unrelated to the `EvenAp` this file quantifies over.
+/-- A `WilsonRealization` at an even aperture: `params := WilsonModel.paramsTension`,
+`model := fullModelEven h`, and `hc` from `paramsTension_irCutoff`.
 
-DERIVED: no numeral of this declaration's; `3` is `SU(3)`'s rank, carried from `paramsTension`. -/
+Scope: `paramsTension` is reused unchanged and reads its infrared cutoff off its own witness read.
+That cutoff contains an extent — `kstar = 2π * cW` with `cW` carrying `rW ^ (kW + 1)` for a
+`Classical.choose`n `kW` — but it is a bare `ℕ` on the measure side, fixed by that witness read and
+unrelated to the `EvenAp` this module quantifies over.
+
+DERIVED: no numeral occurs in the statement; the gauge group's degree and the cutoff's constants are
+inside `paramsTension`. -/
 noncomputable def wilsonEven (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     MassGap.WilsonRealization where
   params := MassGap.WilsonModel.paramsTension
@@ -318,8 +369,13 @@ noncomputable def wilsonEven (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Ev
 
 /-! ## 6. The flagship, with no named axiom on the gap side -/
 
-/-- **THE MASS GAP AT AN EVEN APERTURE, FROM THE SUBSTRATE BOUND — no named axiom.**
-`Complete.ym_mass_gap_of_substrate`'s conclusion at the even aperture the bound supplies. -/
+/-- The three conclusions of `mass_gap_of_model` at `ymModelEven (apertureEven h)`, from the
+restricted substrate bound: the mode expansion's norm tends to `0` at every coupling,
+`μ β - κ < 0` at every coupling, and the directional read is direction-independent. The two
+hypotheses are `apertureEven_confines` and `A2_even`.
+
+DERIVED: the one numeral is `0`, the limit point in `nhds 0` and the strict upper bound in
+`μ β - κ < 0`. -/
 theorem ym_mass_gap_of_substrate_even
     (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     (∀ β, Tendsto (fun τ => ‖∑ k ∈ (ymModelEven (apertureEven h)).s β,
@@ -330,12 +386,16 @@ theorem ym_mass_gap_of_substrate_even
   MassGap.mass_gap_of_model (ymModelEven (apertureEven h)) (apertureEven_confines h)
     (A2_even (apertureEven h))
 
-/-- **EXISTENCE AND THE GAP, FROM THE SUBSTRATE MOMENT BOUND, WITH NO NAMED AXIOM.**
+/-- `existence_and_gap_of_wilson` at `wilsonEven h`: the three gap-side conclusions together with
+the measure-side conclusion — a subsequence along which every `Q j` converges to a limit `q j`,
+bounded by `⌈c⌉₊ * B`, nonnegative, and invariant under both group actions.
+`WilsonModel.existence_and_gap_of_substrate` with the gap side rebuilt on the even-extent theorem.
 
-`WilsonModel.existence_and_gap_of_substrate` with the gap side rebuilt on the PROVED reflection
-positivity. The single open input is `∃ B, ∀ a β, d2Even a β ≤ B` — the original substrate bound
-restricted to even extents at least four and nonnegative coupling, which
-`substrate_even_of_substrate` derives from the original. -/
+Scope: the single hypothesis is `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B`, which
+`substrate_even_of_substrate` derives from the unrestricted substrate bound.
+
+DERIVED: the one numeral is `0`, the limit point in `nhds 0`, the strict upper bound in
+`μ β - κ < 0`, and the lower bound on each `q j`. -/
 theorem existence_and_gap_of_substrate_even
     (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ (wilsonEven h).model.gap.s β,
@@ -352,7 +412,12 @@ theorem existence_and_gap_of_substrate_even
         (∀ σ j, q ((wilsonEven h).model.measure.actP σ j) = q j)) :=
   MassGap.existence_and_gap_of_wilson (wilsonEven h)
 
-/-- **The gap WITH ITS RATE, and the continuum measure, with no named axiom.** -/
+/-- `mass_gap_rate_and_continuum` at `fullModelEven h` and a coupling `β`: strict positivity of
+`κ₀ - μ β`, the geometric bound on the mode expansion at that coupling, and the measure-side
+subsequence with its four properties.
+
+DERIVED: the one numeral is `0`, the strict lower bound on `κ₀ - μ β`, the limit point in `nhds 0`,
+and the lower bound on each `q j`. -/
 theorem mass_gap_rate_and_continuum_even
     (h : ∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B) (β : ℝ) :
     (0 < (fullModelEven h).gap.κ₀ - (fullModelEven h).gap.μ β ∧
@@ -375,33 +440,48 @@ chosen from a cofinal set names no value. Extent four is the smallest extent the
 positivity reaches, and the whole even chain is available there explicitly, in the style of
 `OddLagSplit.corrClay_reflection_positive_at_extent_four`. -/
 
-/-- The aperture whose extent is four.
+/-- The explicit aperture `3`, with half `2`, whose extent `3 + 1 = 4` is the smallest even extent
+satisfying `2 ≤ m`.
 
 DERIVED: `3` is the aperture whose extent `3 + 1` is the smallest even extent with `2 ≤ m`, and `2`
 is that half. Both are read off `wilson_reflection_positive_at_even`'s bound, not chosen. -/
 def apFour : EvenAp := ⟨3, 2, by norm_num, by norm_num⟩
 
-/-- `EvenAp` is inhabited, so the substrate hypothesis is not a quantification over nothing. -/
+/-- `Nonempty EvenAp`, witnessed by `apFour`: the quantifications over `EvenAp` above range over a
+nonempty type.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem evenAp_nonempty : Nonempty EvenAp := ⟨apFour⟩
 
-/-- **NON-VACUITY — the extent bound is met, at the smallest extent that meets it.** Reflection
-positivity of the constructed Wilson correlation at aperture `3`, unconditionally at any nonnegative
-coupling, with no named axiom. This is `Complete.wilson_reflection_positive_at`'s body at an explicit
-aperture, proved. -/
+/-- `(∀ d, 0 ≤ wilsonCorrAt 3 β d) ∧ 0 < ∑ d, wilsonCorrAt 3 β d` for every `0 ≤ β`:
+`wilson_reflection_positive_at_even` instantiated at aperture `3` and half `2`. This is the body of
+`Complete.wilson_reflection_positive_at` at one explicit aperture.
+
+DERIVED: `3` is the aperture, whose extent `3 + 1 = 4` is the smallest the even-extent theorem
+reaches; `0` is the lower bound on the coupling, on each correlation value, and the strict lower
+bound on the total. -/
 theorem rp_at_extent_four {β : ℝ} (hβ : 0 ≤ β) :
     (∀ d, 0 ≤ MassGap.wilsonCorrAt 3 β d) ∧ 0 < ∑ d, MassGap.wilsonCorrAt 3 β d :=
   MassGap.wilson_reflection_positive_at_even 3 2 (by norm_num) (by norm_num) hβ
 
-/-- **The read at extent four IS the constructed Wilson correlation**, by `rfl`: the four-dimensional
-periodic `SU(3)` Gibbs expectation of `WilsonBridge.corrClay`, at the clamped coupling. So the
-axiom-free object at this aperture is the physical one, not an abstract stand-in. -/
+/-- `(readEven apFour β).ρ = fun d => WilsonBridge.corrClay (3 + 1) (max β 0) d`, by `rfl`: at
+aperture `3` the read's correlation is the constructed Wilson quantity at the clamped coupling, not
+an abstract stand-in.
+
+DERIVED: `3` is the aperture and `1` the `+ 1` giving its extent `4`, which is `corrClay`'s own
+extent argument; `0` is the clamp point in `max β 0`. -/
 theorem readEven_apFour_rho (β : ℝ) :
     (readEven apFour β).ρ = fun d => MassGap.WilsonBridge.corrClay (3 + 1) (max β 0) d := rfl
 
-/-- **THE AXIOM-FREE CHAIN FIRES AT AN EXPLICIT EVEN APERTURE.** Gap, non-triviality and `SO(4)` for
-`ymModelEven apFour` — extent four — from confinement at that ONE aperture and nothing else. The
-aperture is named, so nothing here is chosen from an existential; confinement stays a hypothesis
-because its threshold moves with the substrate bound and no value for it is named anywhere. -/
+/-- The three conclusions of `mass_gap_of_model` at `ymModelEven apFour`, from the hypothesis
+`hconf : ∀ β, μEven apFour β < κ₀YM` and `A2_even apFour`. The aperture is the named `apFour`, so
+nothing here is chosen from an existential.
+
+Scope: `hconf` is a hypothesis. Its threshold moves with the substrate bound `B`, and no value for
+either is named in this module.
+
+DERIVED: the one numeral is `0`, the limit point in `nhds 0` and the strict upper bound in
+`μ β - κ < 0`. -/
 theorem ym_mass_gap_at_extent_four (hconf : ∀ β, μEven apFour β < MassGap.κ₀YM) :
     (∀ β, Tendsto (fun τ => ‖∑ k ∈ (ymModelEven apFour).s β,
           (ymModelEven apFour).P β k * ((ymModelEven apFour).m β k) ^ τ‖) atTop (nhds 0)) ∧

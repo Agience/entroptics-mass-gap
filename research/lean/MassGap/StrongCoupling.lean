@@ -6,73 +6,54 @@ import MassGap.ReflectionPositivity
 /-!
 # MassGap.StrongCoupling — geometric clustering at small coupling
 
-WHAT THIS IS FOR. `Complete.confinement_of_lag_decay` takes `p d ≤ C·rᵈ` with `r < 1` and returns
-confinement at every large enough aperture; `Complete.ym_mass_gap_of_lag_decay` takes it to the gap.
-Everything downstream of that hypothesis is proved. This file is about supplying it — and at SMALL
-COUPLING it can be supplied, because that is the one regime where the coupled correction to the
-product measure is controlled.
+This file bounds the connected Wilson plaquette correlation on a finite lattice by a constant times
+a geometric factor in the touch-distance between the two plaquettes, and carries that bound to the
+weights of a `Moment.Read`. Both the constant and the rate are read off the plaquette-graph degree
+`touchDeg bd` and the coupling `β`; the lattice extent appears in neither.
 
-THE ARGUMENT, AND WHERE IT SPLITS. Write the Boltzmann weight as a product over plaquettes and expand
-each factor as `1 + (e^{−βφ_p} − 1)`. At `β = 0` every correction vanishes and the measure is product
-Haar, under which two plaquettes sharing no link are independent — so the CONNECTED correlation is
-exactly zero. At `β > 0` a term survives the connected subtraction only if the chosen plaquettes
-CONNECT `p₀` to `p_d`, and the shortest connecting chain has length at least `d`. Each plaquette in
-the chain pays a factor `|e^{−βφ} − 1| ≤ e^{2|β|} − 1`, and the number of connected chains of length
-`n` from a fixed plaquette is at most `Kⁿ` for a connectivity constant `K` of the lattice. Hence
+## The expansion
 
-    |ρ_conn(d)| ≤ ∑_{n ≥ d} Kⁿ (e^{2|β|} − 1)ⁿ = (1 − q)⁻¹ qᵈ,   q = K(e^{2|β|} − 1),
+Write the Boltzmann weight as a product over plaquettes and expand each factor as
+`1 + (e^{−βφ_p} − 1)`. `boltz_eq_subset_sum` makes that a finite sum over subsets of plaquettes,
+an identity at every `β` with nothing to converge. Each activated plaquette pays a factor of at most
+`e^{2|β|} − 1` (`boltz_factor_bound`), so a subset of size `n` weighs at most `(e^{2|β|} − 1)ⁿ`
+(`subset_weight_bound`), and the touch-connected sets of size `n` containing a fixed plaquette
+number at most `touchDeg bd ^ n` (`card_connSets_le`). Summing from size `k` upwards gives
+`coreConst · coreRate ^ k` with `coreRate K β = K · (e^{2β} − 1)`.
 
-which is geometric as soon as `q < 1` — a threshold in `β` that the assembled rate names for itself
-(`core_rate_lt_one_of_small`), rather than one chosen here.
+## The two halves
 
-That argument has an ANALYTIC half and a COMBINATORIAL half, and they are very different in size:
+* Analytic: `boltz_factor_bound` for the per-plaquette weight, `decay_of_tail_series` and the
+  `assembly_arith` lemmas for the resummation, and `core_rate_lt_one_of_small` and
+  `core_rate_lt_one_of_small_hypercubic` for the `β` below which the rate is under one.
+* Combinatorial: `nonbridging_sum_eq_zero`, and `wilsonCorrConn_eq_bridging_sum` on the correlation
+  itself, say a pair of activated subsets carrying no touching chain from `p₀` to `p_d` contributes
+  exactly zero, at every coupling and every lattice size. `card_connSets_le`,
+  `card_bridging_pairs_le`, `card_ge_of_bridging` and `coreSpan_card_ge_of_not_mem_ball` count the
+  surviving pairs and make the separation force their size. `pairTerm_abs_le` bounds the per-pair
+  factor and `hard_core_ratio_le` the `Z²` denominator on `0 ≤ β`.
 
-* the analytic half — the per-plaquette weight, the geometric resummation, and the threshold on `β`
-  at which the rate drops below one — is PROVED here, foundation-only;
-* the combinatorial half splits again, and the two pieces are now in different states:
-  * the VOLUME CANCELLATION — that every configuration failing to connect `p₀` to `p_d` contributes
-    exactly nothing — is PROVED here, foundation-only, in `nonbridging_sum_eq_zero` and applied to
-    the Wilson correlation itself in `wilsonCorrConn_eq_bridging_sum`;
-  * the COUNT — that the surviving, connecting configurations number at most `Kⁿ` at size `n` and
-    carry a chain of length at least `d` — is PROVED here too: `card_connSets_le` bounds the
-    touch-connected sets of each size with the lattice extent in neither statement nor proof, and
-    `coreSpan_card_ge_of_not_mem_ball` makes the separation force the size.
+The cancellation is an explicit involution on pairs of activated subsets, exchanging the halves that
+lie beyond a separator. It uses no expansion in `β` and no bound on the lattice size.
 
-The volume cancellation is the reason a naive perturbative bound fails: term by term the correction
-is `O(β · #plaquettes)`, which grows with the lattice, and only the connected (subtracted) quantity
-has the volume factors cancel. That cancellation is an exchange between PAIRS of activated subsets
-across a separator — proved below at every coupling and every lattice size — not an estimate, and
-nothing in it is perturbative.
+## Inputs from elsewhere in the tree
 
-WHERE THIS SITS IN THE EXISTING PROGRAMME. Two milestones toward nontrivial clustering are already
-in the tree and this is the piece between them and the gap:
+* `MassGap.WilsonBridge` — `wilsonCorrConn`, the connected correlation this file bounds.
+* `MassGap.ReflectionPositivity.hol_congr_on_support` — a holonomy reads only the links its own
+  boundary word names; every restriction lemma here goes through it.
+* `MassGap.WilsonReal.block_integral_factor` — product Haar factorises across disjoint link blocks;
+  every splitting lemma here goes through it.
+* `MassGap.Moment` — `Read`, `Read.p` and `circLag`, the weights the final bound lands on.
 
-* `HaarMoments` — the SU(2) integration engine: `∫U_ij = 0`, Schur orthogonality
-  `∫U_ij Ū_kl = ½δδ`, and the two-point form `∫tr(UA)tr(U*B) = ½tr(AB)`, all by explicit-element
-  invariance with no Peter–Weyl. This is what evaluates ONE link's integral in a chain.
-* `InteractingTwoPoint` — `sysInt`'s two plaquettes SHARE a link, and integrating THAT LINK ALONE
-  gives `½tr(C₀C₁)`, generically nonzero, while the product of the marginals is `0`. Read it for
-  exactly what it says: it is a statement about `tr(hol)` after one link integral, not about
-  `⟨φ_p φ_q⟩_c`. The full connected correlation of those two plaquettes at `β = 0` is ZERO — the
-  remaining links integrate `tr(C₀C₁) = tr(U₀·U₁U₂⁻¹U₄U₅⁻¹U₆⁻¹)` to nothing by
-  `HaarMoments.haar_su2_trace_mul_zero` (measured by Monte-Carlo at 2·10⁶ samples:
-  `7.7·10⁻⁵ ± 1.1·10⁻³`). Sharing a link is what makes a nonzero connected correlation POSSIBLE at
-  `β > 0`; it does not produce one at `β = 0`.
+## Scope
 
-`WilsonAnalytic` then records what remains: "clustering — that the connected plaquette correlator has
-a volume-independent reach — is now the single open input". Between a nonzero connected pair at
-separation one and a bound that decays in separation lies the chain sum, and that is what this file
-resums: `wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds the connected Wilson correlation by
-`coreConst · coreRateᵏ` whenever `p_d` lies more than `k` touch-steps from `p₀`, with the lattice
-extent in neither factor.
-
-WHAT IT BUYS, AND WHAT IT DOES NOT. `siteAtHyper_not_mem_ball` turns that touch-ball index into the
-LAG `Complete.readYMAt` carries, capped at the CIRCLE distance the periodic lattice imposes, and
-`read_p_le_of_corrClay` carries it to the read's own weights. What comes out is a bound at a fixed
-aperture and a fixed coupling: the constant and the rate both depend on `β`, and the rate is below
-one only near `β = 0` (`core_rate_lt_one_of_small_hypercubic`). So it does not meet the all-`β`
-quantifier `Complete.confinement_of_geometric_decay` carries, and it does not reach the continuum
-limit, where `β → ∞` and the expansion diverges.
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds the connected Wilson correlation by
+`coreConst · coreRate ^ k` whenever `pd ∉ ball bd p₀ k`. `siteAtHyper_not_mem_ball` converts that
+touch-ball index into the lag `Moment.Read` carries, at the circle distance the periodic torus
+imposes rather than the raw lag, and `read_p_le_of_corrClay` carries the bound to the read's
+weights. The constant and the rate both depend on `β`, and the rate is below one only for `β` near
+`0`. Everything here is stated on a finite lattice at a fixed coupling; the hypercubic sections fix
+the periodic torus `Site dim n`.
 -/
 
 namespace MassGap.StrongCoupling
@@ -81,12 +62,16 @@ open Filter
 
 /-! ### The analytic half -/
 
-/-- **The per-plaquette weight a strong-coupling expansion pays.** The Wilson density `φ_W` lies in
-`[0,2]`, so the Boltzmann factor sits within `e^{2|β|} − 1` of one. This is the only place the
-coupling enters the rate.
+/-- **The Boltzmann factor of one plaquette sits within `e^{2|β|} − 1` of one.** For a real `φ` with
+`0 ≤ φ ≤ 2` and any real `β`, `|e^{−βφ} − 1| ≤ e^{2|β|} − 1`.
 
-DERIVED: `2` is the range of the Wilson plaquette density `φ_W(g) = 1 − ½ Re tr g` on `SU(N)`
-(`WilsonReal.plaqObs_le_two`), not a chosen bound. -/
+The statement is about an arbitrary real in that range. The two hypotheses are the range of the
+Wilson plaquette density `φ_W(g) = 1 − ½ Re tr g` on `SU(N)`, discharged at the call sites in
+`subset_weight_bound` by `wilsonDensity_nonneg` and `wilsonDensity_le_two`.
+
+DERIVED: the `0` and the `2` bounding `φ` are that density's range; the `2` in the exponent is the
+same one, entering through `|β * φ| ≤ 2 * |β|`. The two `1`s are `e^0`, the factor at zero coupling,
+from which both sides measure the deviation. -/
 theorem boltz_factor_bound {β φ : ℝ} (h0 : 0 ≤ φ) (h2 : φ ≤ 2) :
     |Real.exp (-(β * φ)) - 1| ≤ Real.exp (2 * |β|) - 1 := by
   have habs : |β * φ| ≤ 2 * |β| := by
@@ -110,14 +95,16 @@ theorem boltz_factor_bound {β φ : ℝ} (h0 : 0 ≤ φ) (h2 : φ ≤ 2) :
 
 /-! ### From the correlation to the read's weights -/
 
-/-- **A geometric bound on the correlation is a geometric bound on the normalised weights**, once the
-total mass is bounded below. `Moment.Read.p` is `ρ/∑ρ`, so a lower bound `m ≤ ∑ρ` turns a bound on
-`ρ` into one on `p` with constant divided by `m`.
+/-- **A geometric bound on the unnormalised weights is a geometric bound on the normalised ones.**
+Given `0 < m`, `m ≤ ∑ d, R.ρ d`, `0 ≤ C`, `0 ≤ q` and `R.ρ d ≤ C * q ^ (d : ℕ)` at every lag, the
+normalised weight obeys `R.p d ≤ (C / m) * q ^ (d : ℕ)` at every lag.
 
-The lower bound is a hypothesis and has to be: the constant `C` that
-`Complete.confinement_of_lag_decay` consumes must not depend on the aperture, so `m` must hold at
-every `N`. Reflection positivity gives `0 < ∑ρ` at each `N` separately, which is not the same thing —
-this is exactly the sort of uniformity the aperture argument is sensitive to. -/
+`Moment.Read.p` is `ρ` divided by the total mass, so the lower bound `m` on that mass is what turns
+a bound on the numerator into one on the quotient. `m` is a hypothesis: it is bound outside the
+quantifier over `d`, and nothing in this theorem produces one.
+
+DERIVED: the three `0`s are the sign hypotheses on `m`, `C` and `q`; the `1` in `Fin (N + 1)` is
+`Moment.Read N`'s index type, which carries the `N + 1` lags `0` through `N`. -/
 theorem read_decay_of_correlation_decay {N : ℕ} (R : Moment.Read N) {C q m : ℝ}
     (hm : 0 < m) (hmass : m ≤ ∑ d, R.ρ d) (hC : 0 ≤ C) (hq0 : 0 ≤ q)
     (hdecay : ∀ d : Fin (N + 1), R.ρ d ≤ C * q ^ (d : ℕ)) :
@@ -137,41 +124,24 @@ theorem read_decay_of_correlation_decay {N : ℕ} (R : Moment.Read N) {C q m : �
 
 #print axioms read_decay_of_correlation_decay
 
-/-! ### The TAYLOR route — a more tractable shape for the same obligation
+/-! ### A tail series with Cauchy-bounded coefficients
 
-The chain sum above is one way to reach geometric decay and it is the expensive one: it means
-running a polymer expansion and showing the volume cancels. There is a second route to the SAME
-conclusion which asks for something local instead.
-
-`WilsonAnalytic` proves the Gibbs expectation is analytic in `β` at finite volume, by
-differentiation under the integral against a constant dominating function (the action is bounded in
-`[0,4]`). At `β = 0` the measure is product Haar and two plaquettes sharing no link are INDEPENDENT
-(`WilsonReal.block_integral_factor`), so the connected correlation is exactly `0` there. The same
-argument applies order by order: the `k`-th Taylor coefficient activates `k` plaquette corrections,
-and `k < d` of them cannot link two plaquettes at separation `d` — every such configuration
-factorises and cancels in the connected part.
-
-So the obligation becomes **`ρ_conn(d)` vanishes to order `d` in `β`**, which is a statement about
-finitely many derivatives at a single point rather than about a sum over all polymers. A function
-vanishing to that order with Cauchy-bounded coefficients decays geometrically, at rate `β/R` with `R`
-the radius of analyticity — which is the lemma below.
-
-Both routes need the same fact (unlinked configurations factorise). They differ in what has to be
-controlled: the chain route needs a bound on a sum over all connected chains at once, the Taylor
-route needs a coefficient bound on a disc. Mathlib supplies Cauchy estimates; it supplies no polymer
-combinatorics. -/
+`decay_of_tail_series` is a real-analysis fact stated for an arbitrary coefficient sequence, with no
+lattice and no measure in it: a series whose terms all carry order at least `d`, with coefficients
+obeying the Cauchy estimate `|a_k| ≤ M / R^k`, sums at `0 ≤ x < R` to at most
+`M (x/R)^d / (1 − x/R)`. The order `d` becomes the exponent and the rate is `x / R`, the evaluation
+point measured against the radius. -/
 
 /-- **A series supported on orders `≥ d`, with Cauchy-bounded coefficients, decays geometrically.**
+If `|a (d + n)| ≤ M / R ^ (d + n)` for every `n` — the Cauchy estimate for a function analytic and
+bounded by `M` on a disc of radius `R` — and `0 ≤ M`, `0 < R`, `0 ≤ x < R`, then
+`|∑' n, a (d + n) * x ^ (d + n)| ≤ M * (x / R) ^ d / (1 - x / R)`.
 
-If `|a_k| ≤ M/Rᵏ` — the Cauchy estimate for a function analytic and bounded by `M` on a disc of
-radius `R` — and the series carries no term below order `d`, then its sum at `x < R` is at most
-`M(x/R)ᵈ/(1 − x/R)`.
+The coefficient hypothesis is imposed only at the indices `d + n`, so entries of `a` below order `d`
+are unconstrained and do not enter the sum.
 
-This is the analytic half of the Taylor route, and it is where `d` becomes an exponent. The rate is
-`x/R`: the coupling measured against the radius of analyticity, with no lattice and no volume in it.
-
-DERIVED: `(1 − x/R)⁻¹` is the geometric series' own value; `x/R` is forced by the Cauchy estimate.
-Nothing is chosen. -/
+DERIVED: the `0`s are the sign hypotheses `0 ≤ M`, `0 < R` and `0 ≤ x`; the `1` is the value
+`(1 - x / R)⁻¹` of the geometric series at ratio `x / R`. -/
 theorem decay_of_tail_series {a : ℕ → ℝ} {M R x : ℝ} (d : ℕ)
     (hM : 0 ≤ M) (hR : 0 < R) (hx0 : 0 ≤ x) (hxR : x < R)
     (hcoef : ∀ n : ℕ, |a (d + n)| ≤ M / R ^ (d + n)) :
@@ -200,34 +170,30 @@ theorem decay_of_tail_series {a : ℕ → ℝ} {M R x : ℝ} (d : ℕ)
 
 /-! ### The estimate the expansion produces
 
-The bound this file reaches is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`: the connected Wilson
-correlation is at most `coreConst · coreRateᵏ` whenever `p_d` lies more than `k` touch-steps from
-`p₀`, with `coreConst` and `coreRate` read off `touchDeg bd` and `β` alone and the lattice extent in
-neither. Three things go into it and all three are proved below:
+The bound assembled in this file is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`: the connected
+Wilson correlation is at most `coreConst · coreRate ^ k` whenever `pd ∉ ball bd p₀ k`, with
+`coreConst` and `coreRate` functions of `touchDeg bd` and `β` alone. Three ingredients go into it:
 
-* the VOLUME CANCELLATION — `nonbridging_sum_eq_zero`, and on the Wilson correlation itself
-  `wilsonCorrConn_eq_bridging_sum`: every pair of activated subsets that fails to carry a touching
-  chain from `p₀` to `p_d` contributes exactly zero, at every coupling and every lattice size;
-* the COUNT of the pairs that survive — `card_connSets_le` and `card_bridging_pairs_le`, both
-  volume-free, with `card_ge_of_bridging` and `coreSpan_card_ge_of_not_mem_ball` making the
-  separation force the size;
-* the WEIGHT — `pairTerm_abs_le` for the per-pair factor, with `hard_core_ratio_le` discharging the
-  exponentially small `Z²` on `β ≥ 0` alone.
+* the cancellation — `nonbridging_sum_eq_zero`, and on the Wilson correlation itself
+  `wilsonCorrConn_eq_bridging_sum`: a pair of activated subsets that carries no touching chain from
+  `p₀` to `pd` contributes exactly zero, at every coupling and every lattice size;
+* the count of the pairs that survive — `card_connSets_le` and `card_bridging_pairs_le`, neither
+  mentioning the lattice extent, with `card_ge_of_bridging` and `coreSpan_card_ge_of_not_mem_ball`
+  making the separation force the size;
+* the weight — `pairTerm_abs_le` for the per-pair factor, with `hard_core_ratio_le` bounding the
+  `Z²` denominator on `0 ≤ β`.
 
-THE INDEX IS A TOUCH-BALL, AND THE READ'S IS A LAG. `siteAtHyper_not_mem_ball` converts between them
-on the periodic hypercubic lattice, at the CIRCLE distance the torus imposes rather than the raw lag,
-and `read_p_le_of_corrClay` carries the result to the read's own weights. -/
+The index throughout is the touch-ball `ball bd p₀ k`, while a `Moment.Read` is indexed by a lag.
+`siteAtHyper_not_mem_ball` converts between them on the periodic hypercubic lattice, at the circle
+distance the torus imposes rather than the raw lag, and `read_p_le_of_corrClay` carries the result
+to the read's weights. -/
 
-/-! ### The order-zero coefficient
+/-! ### Zero coupling
 
-The `k = 0` coefficient of the Taylor route: at `β = 0` the Gibbs measure IS product Haar, so two
-plaquettes drawing on disjoint link sets are independent and the CONNECTED correlation is exactly
-zero. Proved below for an arbitrary geometry, with the disjointness carried as the hypothesis it is.
-
-WHY THIS IS NOT THE FREE-FIELD TRAP. `WilsonBridge` warns that a flagship whose non-vacuity comes
-from a free case is worthless, and it is right. This is a different use: `β = 0` here is the FIRST of
-`d` vanishing Taylor coefficients in a bound at `β > 0`, not a claim about the theory at `β = 0`. The
-base case of an induction is not a result about the base case. -/
+At `β = 0` the Boltzmann weight is `1`, so the Gibbs state is product Haar and two plaquettes drawing
+on disjoint link sets are independent. `wilsonCorrConn_at_zero_of_disjoint` below turns that into the
+vanishing of the connected correlation, for an arbitrary plaquette geometry, with the disjointness
+of the two link sets carried as an explicit hypothesis. -/
 
 section ZeroCoupling
 
@@ -237,23 +203,27 @@ open MassGap.CompactGauge MassGap.LatticeGauge
 variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [DecidableEq Pq]
 
 open scoped Classical in
-/-- Extend a tuple on `S` to a full link configuration, with the identity outside `S`. The value
-outside is immaterial: every use is guarded by a support hypothesis.
+/-- Extend a tuple on `S` to a full link configuration, taking the group identity outside `S`.
 
-DERIVED: `1` is the group identity of `SU(Nc)`, the only canonical element available to fill links
-outside `S`. It is not a magnitude, and nothing depends on it — `wilsonCorrConn_eq_zero_of_split`
-and its callers each carry the support hypothesis that makes the choice immaterial. -/
+CHOSEN: the `1` is the group identity of `SU(Nc)`, filling the links outside `S`. It is not a
+magnitude and nothing depends on it: every consumer carries a support hypothesis placing the links
+it reads inside `S`, which is what `plaqOn_eq`, `prodOn_eq`, `actOn_eq` and `locOn_eq` use. -/
 noncomputable def extendOn (S : Finset Lk) (v : S → MassGap.SUN.SU Nc) : Lk → MassGap.SUN.SU Nc :=
   fun i => if h : i ∈ S then v ⟨i, h⟩ else 1
 
-/-- The plaquette observable read as a function of `S`'s links alone. -/
+/-- The Wilson plaquette observable of `p`, as a function of a tuple on `S` alone, via `extendOn`.
+
+DERIVED: no numeral. -/
 noncomputable def plaqOn (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk)
     (v : S → MassGap.SUN.SU Nc) : ℝ :=
   wilsonPlaqObs (N := Nc) bd p (extendOn (Lk := Lk) (Nc := Nc) S v)
 
-/-- **The restriction is faithful**: on any configuration, reading only `S` gives the same value,
-provided `S` contains the plaquette's boundary links. This is `hol_congr_on_support` — a holonomy
-reads only the links its own word names — and it is what makes `plaqOn` an observable of `S`. -/
+/-- **Restricting a configuration to `S` does not change the plaquette observable**, provided every
+link of `p`'s boundary word lies in `S`. Proved from
+`MassGap.ReflectionPositivity.hol_congr_on_support`: a holonomy reads only the links its own word
+names, and outside `S` the extension differs from `U`.
+
+DERIVED: no numeral. -/
 theorem plaqOn_eq (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk)
     (hsupp : ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
     plaqOn (Nc := Nc) bd p S (fun i : S => U i.val) = wilsonPlaqObs (N := Nc) bd p U := by
@@ -263,7 +233,10 @@ theorem plaqOn_eq (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk)
   have hmem : l ∈ S := hsupp l hl
   simp only [extendOn, dif_pos hmem]
 
-/-- `plaqOn` is measurable — the extension is a coordinatewise projection-or-constant. -/
+/-- `plaqOn bd p S` is measurable. `extendOn` is coordinatewise a projection or a constant, so it is
+measurable, and `measurable_wilsonPlaqObs` supplies the rest.
+
+DERIVED: no numeral. -/
 theorem measurable_plaqOn (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset Lk) :
     Measurable (plaqOn (Nc := Nc) bd p S) := by
   refine (measurable_wilsonPlaqObs bd p).comp ?_
@@ -273,17 +246,18 @@ theorem measurable_plaqOn (bd : Pq → List (Lk × Bool)) (p : Pq) (S : Finset L
   · simp only [extendOn, dif_pos h]; exact measurable_pi_apply (⟨i, h⟩ : S)
   · simp only [extendOn, dif_neg h]; exact measurable_const
 
-/-- **CLUSTERING AT ZERO COUPLING, at any geometry.** If two plaquettes draw their boundary words
-from disjoint link sets then their CONNECTED correlation vanishes identically at `β = 0`.
+/-- **At zero coupling the connected correlation of two link-disjoint plaquettes vanishes**, at any
+plaquette geometry. The hypotheses are two link sets `S`, `T` with `Disjoint S T`, `p₀`'s boundary
+word inside `S` and `p`'s inside `T`; the conclusion is `wilsonCorrConn bd p₀ 0 p = 0`.
 
 At zero coupling the Boltzmann weight is `1`, so the state is product Haar
 (`wilsonSystem_expect_at_zero`) and observables reading disjoint blocks are independent
 (`WilsonReal.block_integral_factor`). The unconnected correlation is then exactly the product of the
-two marginals, which is what the connected correlation subtracts.
+two marginals, which is what `wilsonCorrConn` subtracts.
 
-This is the `k = 0` coefficient of the strong-coupling expansion, and it is the only one that costs
-nothing: at order `k` one must show that `k` activated plaquettes cannot link two at separation `d`
-when `k < d`, which is the combinatorial heart and is not proved here. -/
+DERIVED: the first `0` is the coupling the statement fixes — this is the `β = 0` case only, and
+`wilsonCorrConn_eq_zero_of_split` is the corresponding statement at arbitrary `β`. The second `0` is
+the value of the connected correlation. -/
 theorem wilsonCorrConn_at_zero_of_disjoint (bd : Pq → List (Lk × Bool)) (p₀ p : Pq)
     (S T : Finset Lk) (hST : Disjoint S T)
     (h0 : ∀ l ∈ (bd p₀).map Prod.fst, l ∈ S)
@@ -325,26 +299,24 @@ theorem wilsonCorrConn_at_zero_of_disjoint (bd : Pq → List (Lk × Bool)) (p₀
 
 #print axioms wilsonCorrConn_at_zero_of_disjoint
 
-/-! ### The engine every order needs: factorisation across a link-disjoint SPLIT
+/-! ### Factorisation across a link-disjoint split of two groups
 
-At order `k` the Taylor coefficient of `⟨φ₀ φ_d⟩_β` at `β = 0` is a Haar moment of
-`φ₀ · φ_d · Sᵏ`, and `S = ∑_p φ_p` expands it over `k`-tuples of plaquettes. A tuple contributes to
-the CONNECTED correlation only if it links `p₀` to `p_d`; otherwise the whole product splits into two
-groups drawing on disjoint links, the Haar expectation factorises, and the connected subtraction
-removes it.
+`WilsonReal.block_integral_factor` is stated for two observables. `haar_prod_factor_of_split` below
+is the same fact for two groups of plaquettes: `prodOn` bundles a group into a single observable of
+its own links, and the two-block lemma then applies unchanged. It is the step `order_one_cancels`
+and `wilsonCorrConn_eq_zero_of_split` both run on. -/
 
-`block_integral_factor` is stated for two observables. What the expansion needs is the same fact for
-two GROUPS of plaquettes, which is below: bundle each group into a single observable of its own
-links, and the two-block lemma applies unchanged. This is the step used once per order, and it is
-where `k < d` will do its work — a group of `k` plaquettes cannot bridge a separation of `d`. -/
+/-- A finite product of plaquette observables over `A`, as a function of a tuple on `S` alone.
 
-/-- A finite product of plaquette observables, read as a function of `S`'s links alone. -/
+DERIVED: no numeral. -/
 noncomputable def prodOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
     (v : S → MassGap.SUN.SU Nc) : ℝ :=
   ∏ p ∈ A, plaqOn (Nc := Nc) bd p S v
 
-/-- The bundled product is faithful on any configuration, given a support hypothesis for every
-plaquette in the group. -/
+/-- **Restricting to `S` does not change the bundled product**, given that every plaquette of `A`
+draws its boundary word from `S`. A `Finset.prod_congr` over `plaqOn_eq`.
+
+DERIVED: no numeral. -/
 theorem prodOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
     (hsupp : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
     prodOn (Nc := Nc) bd A S (fun i : S => U i.val)
@@ -352,18 +324,22 @@ theorem prodOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk
   unfold prodOn
   exact Finset.prod_congr rfl (fun p hp => plaqOn_eq bd p S (hsupp p hp) U)
 
-/-- The bundled product is measurable — a finite product of measurable factors. -/
+/-- `prodOn bd A S` is measurable, being a finite product of `measurable_plaqOn` factors.
+
+DERIVED: no numeral. -/
 theorem measurable_prodOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk) :
     Measurable (prodOn (Nc := Nc) bd A S) :=
   Finset.measurable_prod _ (fun p _ => measurable_plaqOn bd p S)
 
-/-- **HAAR FACTORISES ACROSS A LINK-DISJOINT SPLIT OF TWO GROUPS.** If every plaquette of `A` draws
-its boundary word from `S`, every plaquette of `B` from `T`, and `S` and `T` are disjoint, then the
-Haar expectation of the whole product is the product of the two group expectations.
+/-- **The product Haar integral factorises across a link-disjoint split of two plaquette groups.**
+If every plaquette of `A` draws its boundary word from `S`, every plaquette of `B` from `T`, and `S`
+and `T` are disjoint, then the Haar integral of the product over `A ∪ B` is the product of the two
+group integrals.
 
-This is `block_integral_factor` with each group bundled into one observable, and it is the fact that
-makes an unlinked configuration contribute nothing to a connected correlation — at EVERY order of the
-strong-coupling expansion, not just the zeroth. -/
+This is `WilsonReal.block_integral_factor` with each group bundled by `prodOn`. The measure is
+product Haar, not the Gibbs measure: no Boltzmann weight appears.
+
+DERIVED: no numeral. -/
 theorem haar_prod_factor_of_split (bd : Pq → List (Lk × Bool)) (A B : Finset Pq)
     (S T : Finset Lk) (hST : Disjoint S T)
     (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
@@ -383,33 +359,34 @@ theorem haar_prod_factor_of_split (bd : Pq → List (Lk × Bool)) (A B : Finset 
 
 #print axioms haar_prod_factor_of_split
 
-/-! ### Order one, and why the cumulant machinery is not needed
+/-! ### Order one
 
-The obstacle at order `k` looked like cumulants, and Mathlib has none. The cumulant structure is an
-artefact of the RATIO `⟨·⟩ = N/Z`, and the ratio can be cleared. Writing `N(O,β) = ∫O e^{−βS}` and
-`Z(β) = ∫e^{−βS}`,
+`wilsonCorrConn` is a ratio. Writing `N(O, β) = ∫ O e^{−βS}` and `Z(β) = ∫ e^{−βS}`,
 
-    ρ_conn = [ N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) ] / Z²,      Z(0) = 1 ≠ 0,
+    ρ_conn = [ N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) ] / Z²,
 
-so `ρ_conn` vanishes to order `d` at `β = 0` exactly when its NUMERATOR does — and the numerator is a
-difference of products of integrals, with no division in it. Its coefficients are
+so the connected correlation vanishes exactly where the numerator does, and the numerator is a
+difference of products of integrals with no division in it. Its `βᵏ` coefficient is
 
     [βᵏ] = (−1)ᵏ ∑_{i+j=k} 1/(i!j!) [ ∫φ₀φ_d Sⁱ · ∫Sʲ − ∫φ₀Sⁱ · ∫φ_d Sʲ ],
 
-a polynomial identity in Haar moments whose engine is `haar_prod_factor_of_split`.
+a polynomial identity in product-Haar moments. `order_one_cancels` below is the `k = 1` combination:
+four applications of `haar_prod_factor_of_split` and `ring`. -/
 
-Order one is below. Its proof is four applications of that lemma and `ring`, and the two cases — the
-extra plaquette joining either side of the split — cancel by the same mechanism. That is the pattern
-the general order follows. -/
+/-- **The order-one four-term combination cancels across a link-disjoint split.** For plaquettes
+`p₀`, `pd`, `q` pairwise distinct, link sets `S` and `T` with `Disjoint S T`, `p₀`'s boundary word
+inside `S` and `pd`'s inside `T`, and `q`'s word inside `S` or inside `T`,
 
-/-- **ORDER ONE CANCELS.** The `k = 1` coefficient of the connected correlation's numerator vanishes
-whenever the three plaquettes admit a link-disjoint split with `p₀` and `p_d` on opposite sides — that
-is, whenever the single available plaquette `q` fails to bridge them.
+    ∫φ₀φ_d·φ_q − (∫φ₀φ_q)·(∫φ_d) + (∫φ₀φ_d)·(∫φ_q) − (∫φ₀)·(∫φ_d φ_q) = 0
 
-Both cases collapse for the same reason. With `q` on `p₀`'s side the first two terms are equal and the
-last two are equal; with `q` on `p_d`'s side the pairing is the mirror image. Neither case needs to
-know anything about `q` beyond which side of the split it lies on, which is exactly the content of
-"fewer than `d` plaquettes cannot bridge a separation of `d`" at `d = 2`. -/
+under product Haar.
+
+The hypothesis on `q` is a disjunction: `q` lies wholly on one side of the split or wholly on the
+other, and the statement says nothing about a `q` whose word meets both. With `q` on `p₀`'s side the
+first two terms agree and the last two agree; with `q` on `pd`'s side the pairing is the mirror
+image. Neither case uses anything about `q` beyond which side it lies on.
+
+DERIVED: the `0` is the value of the four-term combination. -/
 theorem order_one_cancels (bd : Pq → List (Lk × Bool)) (p₀ pd q : Pq)
     (hq0 : q ≠ p₀) (hqd : q ≠ pd) (h0d : p₀ ≠ pd)
     (S T : Finset Lk) (hST : Disjoint S T)
@@ -497,12 +474,11 @@ theorem order_one_cancels (bd : Pq → List (Lk × Bool)) (p₀ pd q : Pq)
 
 #print axioms order_one_cancels
 
-/-! ### Connected means connected — at EVERY coupling, not order by order
+/-! ### Vanishing across a link-disjoint split, at every coupling
 
-Working the general order turned up a stronger statement than order-by-order vanishing, and a simpler
-one. Suppose the plaquette set splits as `A ⊎ Aᶜ` with `A`'s links inside `S`, `Aᶜ`'s inside `T`, and
-`S`, `T` disjoint — `p₀ ∈ A`, `p_d ∈ Aᶜ`. Then the action splits, `S = S_A + S_{Aᶜ}`, each half a
-function of its own links, so the Boltzmann weight factorises and every integral does:
+Suppose the plaquette type splits as `A ⊎ Aᶜ` with `A`'s links inside `S`, `Aᶜ`'s inside `T`, and
+`S`, `T` disjoint, with `p₀ ∈ A` and `p_d ∈ Aᶜ`. Then the action splits as `S = S_A + S_{Aᶜ}`, each
+half a function of its own links, so the Boltzmann weight factorises and every integral does:
 
     N(φ₀φ_d) = N_A(φ₀)·N_B(φ_d)     Z      = Z_A·Z_B
     N(φ₀)    = N_A(φ₀)·Z_B          N(φ_d) = Z_A·N_B(φ_d)
@@ -511,22 +487,25 @@ and therefore
 
     D = N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) = N_A(φ₀)N_B(φ_d)Z_A Z_B − N_A(φ₀)Z_B Z_A N_B(φ_d) = 0
 
-**identically in `β`**, not merely to order `d`. The `β = 0` result above is the special case where
-the split is free; this is the statement for every coupling.
+identically in `β`. The `β = 0` statement above is the special case in which the split is free.
 
-WHAT IT IS AND IS NOT. It says the connected correlation vanishes when the two plaquettes sit in
-non-interacting halves — "connected means connected", exactly. It does NOT apply to a real lattice,
-which is connected and admits no such split; that is precisely why the expansion exists. Its value is
-that it is the statement each TERM of the expansion needs, with the activated plaquettes in place of
-the whole set, and it fixes the shape of the general argument: the term vanishes when its activated
-set fails to bridge, and that failure is a split. -/
+The hypothesis is a split of the whole plaquette type, so the lemma does not apply to a lattice whose
+plaquette graph is connected. It is applied below to the activated set of one term of the subset
+expansion instead, in `pairTerm_add_exchange` and `nonbridging_sum_eq_zero`. -/
 
-/-- The half-action carried by `A`, read on `S`'s links alone. -/
+/-- The half of the Wilson action carried by the plaquettes of `A`, as a function of a tuple on `S`
+alone, via `extendOn`.
+
+DERIVED: no numeral. -/
 noncomputable def actOn (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
     (v : S → MassGap.SUN.SU Nc) : ℝ :=
   ∑ p ∈ A, wilsonDensity (N := Nc) (wilsonHol bd p (extendOn (Lk := Lk) (Nc := Nc) S v))
 
-/-- The half-action is faithful on any configuration, given a support hypothesis for the group. -/
+/-- **Restricting to `S` does not change the half-action**, given that every plaquette of `A` draws
+its boundary word from `S`. A `Finset.sum_congr` over
+`MassGap.ReflectionPositivity.hol_congr_on_support`.
+
+DERIVED: no numeral. -/
 theorem actOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
     (hsupp : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S) (U : Lk → MassGap.SUN.SU Nc) :
     actOn (Nc := Nc) bd A S (fun i : S => U i.val)
@@ -537,8 +516,12 @@ theorem actOn_eq (bd : Pq → List (Lk × Bool)) (A : Finset Pq) (S : Finset Lk)
       have hmem : l ∈ S := hsupp p hp l hl
       simp only [extendOn, dif_pos hmem])])
 
-/-- A plaquette product times its half's Boltzmann factor — the observable each of the four integrals
-in `D` restricts to on one side of the split. -/
+/-- The product of `E`'s plaquette observables times `exp (-β · actOn bd A S)`, the half Boltzmann
+factor of `A`, all as a function of a tuple on `S` alone. This is what each of the four integrals in
+`N(φ₀φ_d)·Z − N(φ₀)·N(φ_d)` restricts to on one side of a split. Note `E` and `A` are separate
+arguments: the observables and the action half need not range over the same plaquettes.
+
+DERIVED: no numeral. -/
 noncomputable def wtOn (bd : Pq → List (Lk × Bool)) (E : Finset Pq) (A : Finset Pq)
     (S : Finset Lk) (β : ℝ) (v : S → MassGap.SUN.SU Nc) : ℝ :=
   prodOn (Nc := Nc) bd E S v * Real.exp (-β * actOn (Nc := Nc) bd A S v)
@@ -569,25 +552,24 @@ theorem measurable_wtOn (bd : Pq → List (Lk × Bool)) (E A : Finset Pq) (S : F
 #print axioms actOn_eq
 #print axioms wtOn_eq
 
-/-- **CONNECTED MEANS CONNECTED — the connected correlation vanishes across a link-disjoint split, at
-EVERY coupling.**
-
-If the plaquettes split as `A ⊎ Aᶜ` with `A` drawing only on `S`, `Aᶜ` only on `T`, `S` and `T`
-disjoint, and `p₀ ∈ A`, `p_d ∈ Aᶜ`, then `ρ_conn(p₀, p_d) = 0` for every `β`.
+/-- **The connected correlation vanishes across a link-disjoint split, at every coupling.** If the
+plaquette type splits as `A ⊎ Aᶜ` with `A` drawing only on `S`, `Aᶜ` only on `T`, `S` and `T`
+disjoint, and `p₀ ∈ A`, `pd ∈ Aᶜ`, then `wilsonCorrConn bd p₀ β pd = 0` for the given `β`, which is
+universally quantified in the statement.
 
 The action splits into two halves, each a function of its own links, so the Boltzmann weight
 factorises and all four integrals do:
 
-    N(φ₀φ_d) = a·b,  Z = c·d,  N(φ₀) = a·d,  N(φ_d) = c·b
+    N(φ₀φ_d) = a·b,  Z = c·e,  N(φ₀) = a·e,  N(φ_d) = c·b
 
-whence `N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) = abcd − adcb = 0`. Nothing is expanded and no coupling is small:
-two non-interacting halves have no connected correlation, and this says exactly that.
+whence `N(φ₀φ_d)·Z − N(φ₀)·N(φ_d) = abce − aecb = 0`. No coupling is assumed small and nothing is
+expanded. The degenerate case `c * e = 0` is handled separately in the proof, since
+`wilsonCorrConn` divides by `Z`.
 
-WHY IT MATTERS AND WHAT IT DOES NOT DO. A real lattice is connected and admits no such split, so this
-does not apply to it directly — which is why the expansion exists at all. What it fixes is the SHAPE
-of the general order: an expansion term vanishes when its activated plaquettes fail to bridge `p₀` to
-`p_d`, and failing to bridge IS a split of this kind. The order-`k` statement is this theorem applied
-to the activated set rather than to the whole lattice. -/
+The hypothesis is a split of the whole plaquette type, and `hA`/`hB` must hold for every plaquette
+of `A` and of `Aᶜ`, not only for `p₀` and `pd`.
+
+DERIVED: the `0` is the value of the connected correlation. -/
 theorem wilsonCorrConn_eq_zero_of_split (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     (A : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
     (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
@@ -654,28 +636,26 @@ theorem wilsonCorrConn_eq_zero_of_split (bd : Pq → List (Lk × Bool)) (p₀ pd
 
 #print axioms wilsonCorrConn_eq_zero_of_split
 
-/-! ### The expansion is EXACT and FINITE — no series, no convergence
+/-! ### The subset expansion
 
-The strong-coupling expansion is usually presented as a power series in `β` whose convergence is the
-hard part. On a FINITE lattice it is neither: it is an algebraic identity. Writing
-`w_p = e^{−βφ_p} − 1`,
+Writing `w_p = e^{−βφ_p} − 1`,
 
     e^{−βS} = ∏_p e^{−βφ_p} = ∏_p (1 + w_p) = ∑_{E ⊆ P} ∏_{p∈E} w_p
 
-by `Finset.prod_add` — a finite sum over SUBSETS of plaquettes, exact at every `β`, with nothing to
-converge. This is what removes the analytic difficulty from the combinatorial one: there is no
-radius, no remainder, and no Taylor coefficient to bound. What is left is which subsets contribute.
+by `Finset.prod_add`: a finite sum over subsets of the plaquette type, holding at every `β`, with no
+radius and no remainder. Each factor obeys `|w_p| ≤ e^{2|β|} − 1` (`boltz_factor_bound`), so a subset
+of size `n` contributes at most `(e^{2|β|}−1)ⁿ` (`subset_weight_bound`).
 
-Each factor obeys `|w_p| ≤ e^{2|β|} − 1` (`boltz_factor_bound`), so a subset of size `n` contributes
-at most `(e^{2|β|}−1)ⁿ`, and a subset whose plaquettes fail to bridge `p₀` to `p_d` contributes
-NOTHING, by `wilsonCorrConn_eq_zero_of_split` applied to that subset's own split. Both halves of the
-chain bound are then in hand, and what remains is counting the bridging subsets. -/
+The cancellation of the subsets that do not bridge `p₀` to `p_d` is not term by term. It is proved
+below for PAIRS of subsets, under an explicit involution, in `pairTerm_add_pairFlip` and
+`nonbridging_sum_eq_zero`. -/
 
-/-- **THE BOLTZMANN WEIGHT EXPANDS OVER SUBSETS, EXACTLY.** A finite identity at every coupling, not
-a truncated series: `e^{−βS} = ∑_{E ⊆ P} ∏_{p∈E} (e^{−βφ_p} − 1)`.
+/-- **The Boltzmann weight is a finite sum over subsets of plaquettes**, at any `β` and any
+configuration: `boltz β U = ∑_{E ⊆ univ} ∏_{p ∈ E} (e^{−βφ_p(U)} − 1)`. The sum runs over
+`(Finset.univ : Finset Pq).powerset`, so `Pq` being a `Fintype` is what makes it finite.
 
-DERIVED: the `1` split off each factor is `e^{−βφ_p} = (e^{−βφ_p} − 1) + 1`, and the sum over subsets
-is `Finset.prod_add`. Nothing is approximated and no coupling is assumed small. -/
+DERIVED: the `1` is the one split off each factor in `e^{−βφ_p} = (e^{−βφ_p} − 1) + 1`, which is
+what `Finset.prod_add` then expands over subsets. -/
 theorem boltz_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (U : Lk → MassGap.SUN.SU Nc) :
     (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
@@ -698,12 +678,14 @@ theorem boltz_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
 
 #print axioms boltz_eq_subset_sum
 
-/-- **A subset's weight is bounded by the per-plaquette weight to its size.** With
-`boltz_factor_bound` per factor, a subset of `n` plaquettes contributes at most `(e^{2|β|}−1)ⁿ` — the
-`qⁿ` the chain bound sums.
+/-- **A subset's activated weight is at most the per-plaquette bound raised to its cardinality.**
+`|∏_{p ∈ E} (e^{−βφ_p(U)} − 1)| ≤ (e^{2|β|} − 1) ^ E.card`, for any `β`, any configuration and any
+`E`. Requires `Nc ≠ 0`, which is what `wilsonDensity_nonneg` and `wilsonDensity_le_two` need to put
+the density in `[0, 2]`.
 
-DERIVED: nothing beyond `boltz_factor_bound` and `Finset.prod_le_prod`; the exponent is the subset's
-cardinality. -/
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`, excluding the empty gauge group. The two `1`s and the
+`2` are `boltz_factor_bound`'s, applied once per factor by `Finset.prod_le_prod`; the exponent is
+`E.card`, not a chosen power. -/
 theorem subset_weight_bound (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (U : Lk → MassGap.SUN.SU Nc) (E : Finset Pq) :
     |∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1)|
@@ -718,12 +700,14 @@ theorem subset_weight_bound (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β 
 
 #print axioms subset_weight_bound
 
-/-- **THE NUMERATOR EXPANDS OVER SUBSETS, EXACTLY.** `boltz_eq_subset_sum` moved inside the integral:
-since the sum is FINITE, linearity applies with no convergence condition — only integrability of each
-term, which is carried as a hypothesis rather than assumed away.
+/-- **A Gibbs numerator is a finite sum of product-Haar integrals, one per subset of plaquettes.**
+`∫ O · boltz β = ∑_{E ⊆ univ} ∫ O · ∏_{p ∈ E} (e^{−βφ_p} − 1)`, for an arbitrary observable `O`.
 
-This is what makes a term-by-term analysis possible at all: every Gibbs numerator is a finite sum of
-Haar integrals, one per subset of activated plaquettes, exact at every coupling. -/
+`boltz_eq_subset_sum` moved inside the integral. The sum being finite, linearity needs no convergence
+condition, only integrability of each summand — carried here as the hypothesis `hint`, one condition
+per subset.
+
+DERIVED: the `1` is `boltz_eq_subset_sum`'s, split off each Boltzmann factor. -/
 theorem corrNum_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (O : (Lk → MassGap.SUN.SU Nc) → ℝ)
     (hint : ∀ E ∈ (Finset.univ : Finset Pq).powerset,
@@ -748,35 +732,44 @@ theorem corrNum_eq_subset_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
 
 #print axioms corrNum_eq_subset_sum
 
-/-! ### Plaquette connectivity — the combinatorial side of the split
+/-! ### Plaquette connectivity
 
-Every route to the chain bound needs the same structure and the tree has it nowhere: when do two
-plaquettes interact, and what does it mean for a set of them to separate `p₀` from `p_d`. Two
-plaquettes interact exactly when they SHARE A LINK — that is the only way the Haar measure couples
-them, which is the content of `haar_prod_factor_of_split`.
+Two plaquettes are coupled by the Haar measure only through a shared link, which is what
+`haar_prod_factor_of_split` says. `Touch` names that relation, and `split_links_disjoint` turns a
+plaquette set closed under it into the pair of disjoint link sets the analytic lemmas above consume.
+`wilsonCorrConn_eq_zero_of_touch_closed` is then the vanishing statement with the link bookkeeping
+discharged: its hypothesis mentions only the plaquette graph. -/
 
-The theorems above take two explicit link sets `S`, `T` and a disjointness hypothesis. That is the
-right analytic interface and the wrong combinatorial one: what a counting argument produces is a SET
-OF PLAQUETTES closed under touching, not a pair of link sets. The bridge is below, and after it the
-vanishing theorem can be stated in purely combinatorial terms. -/
+/-- The links a plaquette's boundary word names, as a `Finset`.
 
-/-- The links a plaquette's boundary word names. -/
+DERIVED: no numeral. -/
 def linkSupp (bd : Pq → List (Lk × Bool)) (p : Pq) : Finset Lk :=
   ((bd p).map Prod.fst).toFinset
 
-/-- Two plaquettes TOUCH when they share a link — the only way the Haar measure couples them. -/
+/-- Two plaquettes touch when some link lies in both their boundary supports. This is the relation
+under which product Haar couples them; `haar_prod_factor_of_split` factorises whenever it fails.
+
+DERIVED: no numeral. -/
 def Touch (bd : Pq → List (Lk × Bool)) (p q : Pq) : Prop :=
   ∃ l ∈ linkSupp bd p, l ∈ linkSupp bd q
 
-/-- A plaquette's own links lie in the union over any set containing it. -/
+/-- Every link of a plaquette of `A` lies in `A.biUnion (linkSupp bd)`. This is the support
+hypothesis the splitting lemmas take, discharged for the canonical link set of a plaquette group.
+
+DERIVED: no numeral. -/
 theorem supp_subset_biUnion (bd : Pq → List (Lk × Bool)) (A : Finset Pq) :
     ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ A.biUnion (linkSupp bd) := by
   intro p hp l hl
   exact Finset.mem_biUnion.mpr ⟨p, hp, by simpa [linkSupp] using hl⟩
 
-/-- **A set closed under touching has links disjoint from its complement's.** This is the bridge from
-the combinatorial condition a counting argument produces to the analytic hypothesis the vanishing
-theorem consumes: no plaquette inside touches one outside, so the two link unions cannot meet. -/
+/-- **A plaquette set closed under touching has links disjoint from its complement's.** If no
+plaquette of `A` touches one outside `A`, then `A.biUnion (linkSupp bd)` and
+`Aᶜ.biUnion (linkSupp bd)` are disjoint. A shared link would itself witness a touch.
+
+This converts the combinatorial hypothesis into the pair of disjoint link sets that
+`wilsonCorrConn_eq_zero_of_split` consumes.
+
+DERIVED: no numeral. -/
 theorem split_links_disjoint (bd : Pq → List (Lk × Bool)) (A : Finset Pq)
     (hclosed : ∀ p ∈ A, ∀ q, q ∉ A → ¬ Touch bd p q) :
     Disjoint (A.biUnion (linkSupp bd)) (Aᶜ.biUnion (linkSupp bd)) := by
@@ -787,12 +780,14 @@ theorem split_links_disjoint (bd : Pq → List (Lk × Bool)) (A : Finset Pq)
   obtain ⟨q, hq, hlq⟩ := Finset.mem_biUnion.mp hl'
   exact hclosed p hp q (Finset.mem_compl.mp hq) ⟨l, hlp, hlq⟩
 
-/-- **CONNECTED MEANS CONNECTED, COMBINATORIALLY.** If some set of plaquettes containing `p₀` is
-closed under touching and excludes `p_d`, the connected correlation vanishes at every coupling.
+/-- **The connected correlation vanishes when a touch-closed set separates the two plaquettes.** If
+`A` contains `p₀`, excludes `pd`, and no plaquette of `A` touches one outside `A`, then
+`wilsonCorrConn bd p₀ β pd = 0` for the given `β`.
 
-This is `wilsonCorrConn_eq_zero_of_split` with the link bookkeeping discharged: the hypothesis is now
-a statement about the plaquette graph alone — "`p₀`'s side is closed and `p_d` is not in it" — which
-is what a connectivity or counting argument actually delivers. No link sets appear in it. -/
+This is `wilsonCorrConn_eq_zero_of_split` through `split_links_disjoint` and `supp_subset_biUnion`:
+the hypothesis is now about the plaquette graph alone and no link set appears in it.
+
+DERIVED: the `0` is the value of the connected correlation. -/
 theorem wilsonCorrConn_eq_zero_of_touch_closed (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     (A : Finset Pq) (hclosed : ∀ p ∈ A, ∀ q, q ∉ A → ¬ Touch bd p q)
     (h0 : p₀ ∈ A) (hd : pd ∉ A) (β : ℝ) :
@@ -807,23 +802,22 @@ theorem wilsonCorrConn_eq_zero_of_touch_closed (bd : Pq → List (Lk × Bool)) (
 #print axioms split_links_disjoint
 #print axioms wilsonCorrConn_eq_zero_of_touch_closed
 
-/-! ### The polymer structure — weights multiply across components
+/-! ### Multiplicativity of the activated weight
 
-A polymer model is exactly a weight that MULTIPLIES over connected components, and that is what
-`haar_prod_factor_of_split` says once one notices that the Boltzmann correction `w_p = e^{−βφ_p} − 1`
-reads only `p`'s own links, just as `φ_p` does. So for any per-plaquette function `f`,
+The Boltzmann correction `w_p = e^{−βφ_p} − 1` reads only `p`'s own links, just as `φ_p` does, so
+`haar_prod_factor_of_split` generalises from the plaquette observable to any per-plaquette function
+`f`:
 
     ∫ ∏_{p ∈ E₁ ⊎ E₂} f(φ_p)  =  (∫ ∏_{E₁} f(φ_p)) · (∫ ∏_{E₂} f(φ_p))
 
-whenever `E₁` and `E₂` are link-disjoint. Setting `f = id` recovers the plaquette observables; setting
-`f x = e^{−βx} − 1` gives the activated-subset weights `ζ(E) = ∫W_E` of the expansion. With
-`ζ` multiplicative over components, `Z = ∑_E ζ(E)` IS a polymer partition function — which is the
-object Mayer's theorem is about.
+whenever `E₁` and `E₂` are link-disjoint. Taking `f = id` recovers the plaquette observables; taking
+`f x = e^{−βx} − 1` gives the activated-subset weights `ζ(E) = ∫ W_E` of the subset expansion. That
+is `weight_mult_of_split`, and `zw_split` below is the version carrying an observable alongside. -/
 
-This is the entry point, not the theorem: Mayer says `log Z` is a sum over CONNECTED clusters, and
-that is what supplies the `Kⁿ` count. Multiplicativity is its hypothesis. -/
+/-- The product over `E` of a per-plaquette function `f` of the plaquette's own Wilson density, as a
+function of a tuple on `S` alone, via `extendOn`.
 
-/-- A per-plaquette function of the plaquette's own energy, over a group, read on `S`'s links. -/
+DERIVED: no numeral. -/
 noncomputable def locOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
     (v : S → MassGap.SUN.SU Nc) : ℝ :=
   ∏ p ∈ E, f (wilsonDensity (N := Nc) (wilsonHol bd p (extendOn (Lk := Lk) (Nc := Nc) S v)))
@@ -850,12 +844,14 @@ theorem measurable_locOn (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf :
       · simp only [extendOn, dif_pos h]; exact measurable_pi_apply (⟨i, h⟩ : S)
       · simp only [extendOn, dif_neg h]; exact measurable_const))
 
-/-- **THE POLYMER WEIGHT IS MULTIPLICATIVE ACROSS A LINK-DISJOINT SPLIT.** For any per-plaquette
-function `f` — in particular `f x = e^{−βx} − 1`, the activated-subset weight — the Haar integral of
-a product over two link-disjoint groups factorises.
+/-- **The activated weight is multiplicative across a link-disjoint split.** For any measurable
+per-plaquette function `f`, with `A`'s boundary words inside `S`, `B`'s inside `T` and `S`, `T`
+disjoint, the product-Haar integral of `∏_A f(φ_p) · ∏_B f(φ_p)` is the product of the two integrals.
 
-This is the hypothesis of a polymer model, and it is what makes `Z = ∑_E ζ(E)` with `ζ` multiplicative
-over components. Mayer's theorem takes it from here; nothing below supplies Mayer. -/
+`haar_prod_factor_of_split` is the case `f = id`. Taking `f = wfun β` gives the activated-subset
+weight of the expansion. `f` need only be measurable; no continuity or boundedness is assumed.
+
+DERIVED: no numeral. -/
 theorem weight_mult_of_split (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
     (A B : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
     (hA : ∀ p ∈ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
@@ -876,44 +872,40 @@ theorem weight_mult_of_split (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (
 
 #print axioms weight_mult_of_split
 
-/-! ### THE VOLUME CANCELLATION, EXACTLY — non-bridging PAIRS cancel under an exchange
+/-! ### Non-bridging pairs cancel under an exchange
 
-`boltz_eq_subset_sum` makes every Gibbs numerator a FINITE sum over activated subsets, so the
+`boltz_eq_subset_sum` makes every Gibbs numerator a finite sum over activated subsets, so the
 connected correlation's numerator
 
     D(β) = N(φ₀φ_d)·Z − N(φ₀)·N(φ_d)
 
-is a finite DOUBLE sum over pairs `(E, F)` of activated subsets, with summand
+is a finite double sum over pairs `(E, F)` of activated subsets, with summand
 
     T(E,F) = ζ_{p₀p_d}(E)·ζ_∅(F) − ζ_{p₀}(E)·ζ_{p_d}(F),   ζ_D(E) = ∫ (∏_{p∈D} φ_p)·∏_{p∈E} w_p,
 
-`ζ_D(E)` being `zw` below. `wilsonCorrConn_eq_zero_of_split` says `D = 0` when the WHOLE lattice
-splits, and this file already says that never happens on a real lattice. What does happen is that a
-single PAIR splits, and the content here is that such pairs cancel — not term by term, which is
-false, but two at a time, under an explicit exchange.
+`ζ_D(E)` being `zw` below and `T` being `pairTerm`.
 
-Let `A` be touch-closed relative to `V = E ∪ F ∪ {p₀, p_d}` with `p₀ ∈ A` and `p_d ∉ A`: `A`
+Let `A` be touch-closed relative to `V = E ∪ F ∪ {p₀, p_d}` with `p₀ ∈ A` and `p_d ∉ A`, so that `A`
 separates the two plaquettes inside the union of the two activated sets. Writing `X = E ∩ A`,
 `Y = E \ A`, `X' = F ∩ A`, `Y' = F \ A`, all four integrals factorise across the split and
 
     T(E,F) = ζ₀(X)·ζ(X')·(ζ_d(Y)·ζ(Y') − ζ(Y)·ζ_d(Y')),
 
-so the EXCHANGE `(E,F) ↦ (X ∪ Y', X' ∪ Y)` — swap the far halves, keep the near ones — sends `T` to
-its negative. It preserves `E ∪ F`, hence `A`, hence the separating condition, and it is an
-involution. So the entire non-bridging part of the double sum is zero.
+so the exchange `(E,F) ↦ (X ∪ Y', X' ∪ Y)` — swapping the far halves and keeping the near ones —
+sends `T` to its negative. It preserves `E ∪ F`, hence `A`, hence the separating condition, and it is
+an involution, so the non-bridging part of the double sum is zero. That is `pairTerm_add_pairFlip`
+and `nonbridging_sum_eq_zero`. The cancellation is between pairs, not within one term, and it holds
+at every `β` and every lattice size.
 
-That is the volume cancellation, PROVED rather than assumed: nothing in it is perturbative, no
-coupling is small, and the lattice may be as large as one likes. It is the step the prose above calls
-"the whole content of a cluster expansion".
+The pairs that survive are those in which `p₀` reaches `p_d` by a chain of touching plaquettes inside
+`E ∪ F`. `card_bridging_pairs_le` counts them and `pairTerm_abs_le` bounds their weight. -/
 
-WHAT IS LEFT, PRECISELY. The surviving pairs are exactly those in which `p₀` reaches `p_d` by a chain
-of TOUCHING plaquettes lying inside `E ∪ F`. Bounding their number and weight is the counting step,
-supplied further down by `card_bridging_pairs_le` and `pairTerm_abs_le` rather than here. -/
+/-- The activated weight of one plaquette, `wfun β x = e^{−βx} − 1`. A name for the function the
+splitting lemmas below instantiate `f` with; `wfun_apply` is the `rfl` that unfolds it back to the
+form `boltz_eq_subset_sum` produces.
 
-/-- The activated weight of one plaquette, `w(x) = e^{−βx} − 1`. Named so that the splitting lemmas
-below match it syntactically; `wfun_apply` is the `rfl` that connects it to `boltz_eq_subset_sum`.
-
-DERIVED: the `1` is the `1` split off `e^{−βφ_p} = (e^{−βφ_p} − 1) + 1` in `boltz_eq_subset_sum`. -/
+DERIVED: the `1` is the one split off `e^{−βφ_p} = (e^{−βφ_p} − 1) + 1` in
+`boltz_eq_subset_sum`. -/
 noncomputable def wfun (β x : ℝ) : ℝ := Real.exp (-(β * x)) - 1
 
 theorem wfun_apply (β x : ℝ) : wfun β x = Real.exp (-(β * x)) - 1 := rfl
@@ -921,9 +913,11 @@ theorem wfun_apply (β x : ℝ) : wfun β x = Real.exp (-(β * x)) - 1 := rfl
 theorem measurable_wfun (β : ℝ) : Measurable (wfun β) :=
   (Real.measurable_exp.comp ((measurable_const.mul measurable_id).neg)).sub measurable_const
 
-/-- One side of a link-disjoint split carries BOTH plaquette observables and activated weights. The
-two existing bundles (`prodOn`, `locOn`) are each half of what a term of the expansion restricts to;
-this is the whole of it. -/
+/-- `prodOn bd D S` times `locOn bd f E S`: the plaquette observables of `D` together with the
+activated weights of `E`, both read on a tuple on `S` alone. This is what one side of a link-disjoint
+split of an expansion term restricts to. `D` and `E` are independent arguments.
+
+DERIVED: no numeral. -/
 noncomputable def mixOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (D E : Finset Pq) (S : Finset Lk)
     (v : S → MassGap.SUN.SU Nc) : ℝ :=
   prodOn (Nc := Nc) bd D S v * locOn (Nc := Nc) bd f E S v
@@ -941,18 +935,17 @@ theorem measurable_mixOn (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf :
     (D E : Finset Pq) (S : Finset Lk) : Measurable (mixOn (Nc := Nc) bd f D E S) :=
   (measurable_prodOn bd D S).mul (measurable_locOn bd hf E S)
 
-/-- **THE SAME BUNDLE AT AN ARBITRARY OBSERVABLE.** `mixOn` is `prodOn` (a plaquette product) times
-`locOn` (the weights). This is ANY restricted observable times the same weights.
-
-`mixObs_prodOn` below checks that `mixOn` is its plaquette instance, so this generalises rather than
-forks.
+/-- An arbitrary function `O` of a tuple on `S`, times `locOn bd f E S`, the activated weights of
+`E`. Where `mixOn` fixes the first factor to be a plaquette product, this leaves it free.
+`mixObs_prodOn` records that `mixOn` is the plaquette instance.
 
 DERIVED: no numeral. -/
 noncomputable def mixObs (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
     (O : (S → MassGap.SUN.SU Nc) → ℝ) (v : S → MassGap.SUN.SU Nc) : ℝ :=
   O v * locOn (Nc := Nc) bd f E S v
 
-/-- **`mixOn` IS THE PLAQUETTE INSTANCE**, definitionally. The alignment check.
+/-- **`mixObs` at `O = prodOn bd D S` is `mixOn bd f D E S`**, by `rfl`. `D` appears only in the
+observable slot, so the two bundles agree definitionally.
 
 DERIVED: no numeral. -/
 theorem mixObs_prodOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (D E : Finset Pq) (S : Finset Lk) :
@@ -960,8 +953,9 @@ theorem mixObs_prodOn (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (D E : F
 
 #print axioms mixObs_prodOn
 
-/-- **What it reads on a configuration** — the observable at the restriction, times the weights of
-the plaquettes that draw their links from `S`.
+/-- **What `mixObs` reads on a full configuration**: `O` at the restriction to `S`, times
+`∏_{p ∈ E} f(φ_p U)`. Needs every plaquette of `E` to draw its boundary word from `S`; no hypothesis
+is placed on `O`, which already takes a tuple on `S`.
 
 DERIVED: no numeral. -/
 theorem mixObs_eq (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset Pq) (S : Finset Lk)
@@ -973,7 +967,7 @@ theorem mixObs_eq (bd : Pq → List (Lk × Bool)) (f : ℝ → ℝ) (E : Finset 
   unfold mixObs
   rw [locOn_eq bd f E S hE U]
 
-/-- **Measurable when the observable is.**
+/-- `mixObs bd f E S O` is measurable when `f` and `O` are.
 
 DERIVED: no numeral. -/
 theorem measurable_mixObs (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
@@ -983,24 +977,14 @@ theorem measurable_mixObs (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf 
 
 #print axioms measurable_mixObs
 
-/-- **⭐⭐⭐ THE EXPANSION'S FACTORISATION STEP, AT ARBITRARY OBSERVABLES.**
+/-- **Product Haar factorises across a link-disjoint split, with an arbitrary observable on each
+side.** `O₁` is a measurable function of a tuple on `S`, `O₂` one of a tuple on `T`, `Disjoint S T`,
+and `E₁`, `E₂` draw their boundary words from `S` and `T` respectively. Then the integral of
+`(O₁ · ∏_{E₁} f(φ_p)) · (O₂ · ∏_{E₂} f(φ_p))` is the product of the two integrals.
 
-`haar_mix_factor` with the two plaquette products replaced by two arbitrary measurable observables,
-each reading only its own side of the link split. Same proof, same lemma underneath.
-
-**THIS IS WHY THE OBSERVABLE CLASS WAS NEVER THE OBSTRUCTION.**
-`WilsonReal.block_integral_factor` — *"General disjoint-support factorization: any two observables
-that read only disjoint link-blocks `S`, `T` have a factorizing product-Haar integral"* — is already
-general, with `φ` and `ψ` arbitrary and measurable. The plaquette product enters ONE LEVEL UP, in
-`mixOn`, and from there is baked into `zw`. What the split actually needs from an observable is
-LOCALITY ON A LINK SET, and nothing else.
-
-That matters because `ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` quantifies over
-every `F ∈ HalfSpaceAlgebra.halfSpaceAlg τ p` — any continuous observable local on a finite link
-set — while every decay theorem in this file is stated at a plaquette or a finite product of them.
-This removes that difference at the base. **It does not by itself carry it upward**: `zw`,
-`pairTerm`, `pairTermF` and the resummation are all still defined through plaquette products, and
-each would have to be restated against `mixObs` to consume this.
+`haar_mix_factor` is the case where each observable is a plaquette product. What the split asks of
+an observable is measurability and locality on one link set; `WilsonReal.block_integral_factor`,
+which supplies it, is already stated at that generality. `f` need only be measurable.
 
 DERIVED: no numeral. -/
 theorem haar_obs_mix_factor (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
@@ -1029,9 +1013,16 @@ theorem haar_obs_mix_factor (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (h
 
 #print axioms haar_obs_mix_factor
 
-/-- **HAAR FACTORISES ACROSS A LINK-DISJOINT SPLIT, OBSERVABLES AND WEIGHTS TOGETHER.** The common
-generalisation of `haar_prod_factor_of_split` (observables only) and `weight_mult_of_split` (weights
-only): a term of the subset expansion carries both, and both must cross the split at once. -/
+/-- **Product Haar factorises across a link-disjoint split carrying observables and weights at
+once.** Four plaquette groups: `D₁`, `E₁` drawing on `S` and `D₂`, `E₂` drawing on `T`, with
+`Disjoint S T`. The integral of `(∏_{D₁} φ_p · ∏_{E₁} f(φ_p)) · (∏_{D₂} φ_p · ∏_{E₂} f(φ_p))` is the
+product of the two side integrals.
+
+The common generalisation of `haar_prod_factor_of_split` (observables only, `f` absent) and
+`weight_mult_of_split` (weights only, `D₁ = D₂ = ∅`). A term of the subset expansion carries both,
+so both must cross the split together. Nothing requires `D₁` and `E₁` to be related.
+
+DERIVED: no numeral. -/
 theorem haar_mix_factor (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : Measurable f)
     (D₁ E₁ D₂ E₂ : Finset Pq) (S T : Finset Lk) (hST : Disjoint S T)
     (hD₁ : ∀ p ∈ D₁, ∀ l ∈ (bd p).map Prod.fst, l ∈ S)
@@ -1058,17 +1049,26 @@ theorem haar_mix_factor (bd : Pq → List (Lk × Bool)) {f : ℝ → ℝ} (hf : 
 
 #print axioms haar_mix_factor
 
-/-- **A TERM OF THE EXPANSION.** `zw bd β D E` is `∫ (∏_{p ∈ D} φ_p) · ∏_{p ∈ E} w_p` against product
-Haar: the plaquette observables `D` read against the activated subset `E`. The four integrals the
-connected numerator is built from are the four choices `D = {p₀,p_d}, ∅, {p₀}, {p_d}`. -/
+/-- A term of the subset expansion: `zw bd β D E = ∫ (∏_{p ∈ D} φ_p) · ∏_{p ∈ E} wfun β (φ_p)`
+against product Haar, the plaquette observables of `D` read against the activated subset `E`. The
+four integrals the connected numerator is built from are the choices
+`D = {p₀, pd}`, `∅`, `{p₀}`, `{pd}`.
+
+DERIVED: no numeral. -/
 noncomputable def zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) : ℝ :=
   ∫ U, (∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U)
       * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
     ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
 
-/-- **A TERM SPLITS WHEN ITS PLAQUETTES DO.** If the observables and the activated plaquettes each
-divide into two groups drawing on disjoint link sets, the term is the product of the two half-terms.
-This is the one computational step the exchange below uses, applied eight times. -/
+/-- **A `zw` term is the product of its two half-terms when its plaquettes divide across a
+link-disjoint split.** `D = D₁ ∪ D₂` and `E = E₁ ∪ E₂`, each union disjoint, with the `₁` groups
+drawing on `S`, the `₂` groups on `T` and `Disjoint S T`. Then
+`zw bd β D E = zw bd β D₁ E₁ * zw bd β D₂ E₂`.
+
+`haar_mix_factor` with the two products rewritten by `Finset.prod_union`. It is the computational
+step `pairTerm_add_exchange` uses, there applied eight times.
+
+DERIVED: no numeral. -/
 theorem zw_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (D D₁ D₂ E E₁ E₂ : Finset Pq)
     (S T : Finset Lk) (hST : Disjoint S T)
     (hDu : D = D₁ ∪ D₂) (hEu : E = E₁ ∪ E₂)
@@ -1088,8 +1088,9 @@ theorem zw_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (D D₁ D₂ E E₁ 
 
 #print axioms zw_split
 
-/-- **THE SUBSET-EXPANSION TERM AT AN ARBITRARY OBSERVABLE.** `zw` is the case where the observable
-is a plaquette product (`zwObs_eq_zw`).
+/-- A term of the subset expansion with the observable left free: `∫ O(U|_S) · ∏_{p ∈ E} wfun β (φ_p)`
+against product Haar, where `O` is typed on a tuple on `S`. `zw` is the case where `O` is a plaquette
+product (`zwObs_eq_zw`).
 
 DERIVED: no numeral. -/
 noncomputable def zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) {S : Finset Lk}
@@ -1098,7 +1099,9 @@ noncomputable def zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) {S : Finset L
       * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
     ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
 
-/-- **`zw` IS THE PLAQUETTE INSTANCE**, given that `D`'s plaquettes draw their links from `S`.
+/-- **`zwObs` at `prodOn bd D S` is `zw bd β D E`**, given that every plaquette of `D` draws its
+boundary word from `S`. The hypothesis is what `prodOn_eq` needs; without it the restricted product
+is not the full one.
 
 DERIVED: no numeral. -/
 theorem zwObs_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) (S : Finset Lk)
@@ -1111,17 +1114,12 @@ theorem zwObs_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq)
 
 #print axioms zwObs_eq_zw
 
-/-- **⭐⭐⭐ THE SPLIT, AT ARBITRARY OBSERVABLES.**
+/-- **The split at arbitrary observables.** With `O₁` measurable on a tuple on `S`, `O₂` on one on
+`T`, `Disjoint S T`, and `E = E₁ ∪ E₂` a disjoint union with `E₁` drawing on `S` and `E₂` on `T`, the
+integral of `(O₁ · O₂) · ∏_{p ∈ E} wfun β (φ_p)` equals `zwObs bd β O₁ E₁ * zwObs bd β O₂ E₂`.
 
-`zw_split` — "the one computational step the exchange uses, applied eight times" — with the
-plaquette products replaced by two arbitrary measurable observables reading opposite sides of a
-link-disjoint split. The activated plaquettes divide the same way, and the term is the product of
-the two half-terms.
-
-**THIS IS THE SHAPE `hfin` WANTS.** `gapAt_of_finite_volume_connected` is about `θF` against `F`:
-one observable in the negative half, one in the positive, automatically on disjoint link sets. A
-PAIR OF OBSERVABLES ON DISJOINT LINK SETS is what that needs — and it is also all the expansion's
-factorisation ever consumed. Plaquette finsets were never the natural index; they were `zw`'s.
+`zw_split` with the plaquette products replaced by two measurable observables, each reading one side
+of the split. Proved from `haar_obs_mix_factor` and `Finset.prod_union`.
 
 DERIVED: no numeral. -/
 theorem zwObs_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : Finset Pq)
@@ -1146,20 +1144,22 @@ theorem zwObs_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : Fi
 
 #print axioms zwObs_split
 
-/-- **AN OBSERVABLE READS ONLY THE LINKS OF `S`.** Locality as a PREDICATE on an ordinary
+/-- An observable on full configurations reads only the links of `S`: there is a measurable `Ô` on
+tuples over `S` with `O U = Ô (U|_S)` at every `U`. Locality as a predicate on an ordinary
 observable, rather than as a restricted type.
 
 `zwObs` types its observable on the restriction, which is what `block_integral_factor` consumes but
-is awkward to compose: the combined observable of a pair would live on `S ∪ T` and every step would
-carry a coercion. With locality as a hypothesis, a product of two observables is just a product.
+is awkward to compose: the product of a pair of such observables would live on `S ∪ T` and carry a
+coercion at every step. With locality as a hypothesis, that product is an ordinary product.
 
 DERIVED: no numeral. -/
 def LocalOnLinks (S : Finset Lk) (O : (Lk → MassGap.SUN.SU Nc) → ℝ) : Prop :=
   ∃ Ô : (S → MassGap.SUN.SU Nc) → ℝ, Measurable Ô ∧
     ∀ U : Lk → MassGap.SUN.SU Nc, O U = Ô (fun i : S => U i.val)
 
-/-- **A PLAQUETTE PRODUCT IS LOCAL ON ANY LINK SET ITS PLAQUETTES DRAW FROM.** The witness is
-`prodOn`, which is exactly that product typed on the restriction.
+/-- **A plaquette product is `LocalOnLinks S` whenever its plaquettes draw their boundary words from
+`S`.** The witness is `prodOn bd D S`, measurable by `measurable_prodOn` and equal to the full
+product by `prodOn_eq`.
 
 DERIVED: no numeral. -/
 theorem localOnLinks_prod (bd : Pq → List (Lk × Bool)) (D : Finset Pq) (S : Finset Lk)
@@ -1170,8 +1170,9 @@ theorem localOnLinks_prod (bd : Pq → List (Lk × Bool)) (D : Finset Pq) (S : F
 
 #print axioms localOnLinks_prod
 
-/-- **THE SUBSET-EXPANSION TERM AT AN ORDINARY OBSERVABLE.** No locality in the type; it enters as a
-hypothesis where the split needs it.
+/-- A term of the subset expansion at an observable of full configurations:
+`∫ O U · ∏_{p ∈ E} wfun β (φ_p)` against product Haar. Locality is absent from the type and enters as
+a hypothesis in `zwFull_split`, the one place the split needs it.
 
 DERIVED: no numeral. -/
 noncomputable def zwFull (bd : Pq → List (Lk × Bool)) (β : ℝ)
@@ -1179,7 +1180,8 @@ noncomputable def zwFull (bd : Pq → List (Lk × Bool)) (β : ℝ)
   ∫ U, O U * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
     ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
 
-/-- **It is `zwObs` at the witness.**
+/-- **`zwFull` at `O` is `zwObs` at `Ô`**, given `O U = Ô (U|_S)` at every `U`. The hypothesis is
+the equation part of `LocalOnLinks`; measurability of `Ô` is not needed here.
 
 DERIVED: no numeral. -/
 theorem zwFull_eq_zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset Pq) (S : Finset Lk)
@@ -1192,11 +1194,13 @@ theorem zwFull_eq_zwObs (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset P
 
 #print axioms zwFull_eq_zwObs
 
-/-- **⭐⭐⭐ THE SPLIT, AT ORDINARY OBSERVABLES.**
+/-- **The split at ordinary observables.** With `LocalOnLinks S O₁`, `LocalOnLinks T O₂`,
+`Disjoint S T`, and `E = E₁ ∪ E₂` a disjoint union whose halves draw on `S` and on `T`,
+`zwFull bd β (O₁ · O₂) E = zwFull bd β O₁ E₁ * zwFull bd β O₂ E₂`.
 
-`zwObs_split` with locality carried as a hypothesis instead of a type, so the two observables
-multiply without a coercion. This is the form `pairTerm`'s four terms want:
-`(O₁·O₂, q.1)`, `(1, q.2)`, `(O₁, q.1)`, `(O₂, q.2)` are four `zwFull`s and nothing else.
+`zwObs_split` with locality carried as a hypothesis rather than in the type, so that the two
+observables multiply without a coercion. `pairTerm`'s four terms take this form: `(O₁·O₂, q.1)`,
+`(1, q.2)`, `(O₁, q.1)` and `(O₂, q.2)` are four `zwFull`s.
 
 DERIVED: no numeral. -/
 theorem zwFull_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : Finset Pq)
@@ -1219,7 +1223,8 @@ theorem zwFull_split (bd : Pq → List (Lk × Bool)) (β : ℝ) (E E₁ E₂ : F
 
 #print axioms zwFull_split
 
-/-- **A PLAQUETTE PRODUCT'S TERM IS `zw`'s.**
+/-- **`zwFull` at a plaquette product over `D` is `zw bd β D E`**, by `rfl`. No support hypothesis
+is needed: the observable is already a function of the full configuration.
 
 DERIVED: no numeral. -/
 theorem zwFull_prod_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) :
@@ -1228,9 +1233,10 @@ theorem zwFull_prod_eq_zw (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Fins
 
 #print axioms zwFull_prod_eq_zw
 
-/-- **THE CONSTANT OBSERVABLE'S TERM IS `zw` AT THE EMPTY SUPPORT.** `∏ over ∅` is `1`.
+/-- **`zwFull` at the constant observable is `zw bd β ∅ E`**, the empty plaquette product being `1`.
 
-DERIVED: the `1` is the empty product, and the `∅` is the observable support it comes from. -/
+DERIVED: the `1` is the constant observable, and the `∅` is the plaquette set whose empty product it
+equals. -/
 theorem zwFull_one_eq_zw_empty (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset Pq) :
     zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E = zw (Nc := Nc) bd β ∅ E := by
   unfold zwFull zw
@@ -1242,25 +1248,38 @@ theorem zwFull_one_eq_zw_empty (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : F
 
 
 
-/-- The summand of the connected numerator's double sum, at the pair `q = (E, F)` of activated
-subsets: `ζ_{p₀p_d}(E)·ζ_∅(F) − ζ_{p₀}(E)·ζ_{p_d}(F)`. -/
+/-- The summand of the connected numerator's double sum at the pair `q = (E, F)` of activated
+subsets: `zw {p₀, pd} E · zw ∅ F − zw {p₀} E · zw {pd} F`. The first component of the pair always
+carries the observables and the second never does.
+
+DERIVED: no numeral. -/
 noncomputable def pairTerm (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
     (q : Finset Pq × Finset Pq) : ℝ :=
   zw (Nc := Nc) bd β {p₀, pd} q.1 * zw (Nc := Nc) bd β ∅ q.2
     - zw (Nc := Nc) bd β {p₀} q.1 * zw (Nc := Nc) bd β {pd} q.2
 
-/-- **THE EXCHANGE.** Across a separator `A`, swap the two pairs' far halves and keep their near
-halves. It preserves the union of the pair, so it preserves the separator it was built from. -/
+/-- The exchange across a separator `A`: `(E, F) ↦ (E ∩ A ∪ F \ A, F ∩ A ∪ E \ A)`, swapping the two
+halves outside `A` and keeping those inside. `pairFlip_union` records that it preserves the union of
+the pair, and `pairFlip_pairFlip` that it is an involution.
+
+DERIVED: no numeral. -/
 def pairFlip (A : Finset Pq) (q : Finset Pq × Finset Pq) : Finset Pq × Finset Pq :=
   ((q.1 ∩ A) ∪ (q.2 \ A), (q.2 ∩ A) ∪ (q.1 \ A))
 
-/-- **THE CANCELLATION, FOR ONE PAIR.** If some `A` separates `p₀` from `p_d` inside
-`E ∪ F ∪ {p₀,p_d}` — touch-closed there, containing `p₀`, missing `p_d` — then the pair's term and
-its exchange's term sum to zero.
+/-- **A pair's term and its exchange's term sum to zero across a separator.** If `A` contains `p₀`,
+misses `pd`, and no plaquette of `(E ∪ F ∪ {p₀, pd}) ∩ A` touches one of `(E ∪ F ∪ {p₀, pd}) \ A`,
+then
 
-The eight factorisations are all `zw_split` across the same two link sets, and the algebra is
-`ac(be − gh) + ac(hg − eb) = 0`. Nothing is small and nothing is expanded: this is an identity in `β`
-on a lattice of any size. -/
+    pairTerm (E, F) + pairTerm (E ∩ A ∪ F \ A, F ∩ A ∪ E \ A) = 0,
+
+written out in `zw`s. `hne : p₀ ≠ pd` is needed for `{p₀, pd}` to split as two singletons.
+
+The eight factorisations are all `zw_split` across the same two link sets, built as the boundary
+unions of `V ∩ A` and `V \ A`, and the algebra is `ac(be − gh) + ac(hg − eb) = 0`. The closure
+hypothesis is relative to `E ∪ F ∪ {p₀, pd}` only, not to the whole plaquette type. It is an identity
+in `β` at any lattice size.
+
+DERIVED: the `0` is the value of the two terms summed. -/
 theorem pairTerm_add_exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ)
     (E F A : Finset Pq)
     (hclosed : ∀ p ∈ (E ∪ F ∪ {p₀, pd}) ∩ A, ∀ r ∈ (E ∪ F ∪ {p₀, pd}) \ A, ¬ Touch bd p r)
@@ -1352,13 +1371,13 @@ theorem pairTerm_add_exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hn
 
 #print axioms pairTerm_add_exchange
 
-/-- **⭐⭐ THE EXCHANGE, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
-
+/-- **The exchange cancels for observables carried on two finsets of plaquettes.**
 `pairTerm_add_exchange` with `{p₀, pd}` replaced by `Ao ∪ Bo`, `{p₀}` by `Ao` and `{pd}` by `Bo`.
 `zw_split` is already general in the observable finsets, so the eight factorisations are unchanged;
-what the singletons carried becomes `Ao ⊆ A`, `Disjoint Bo A` and `Disjoint Ao Bo`.
+what the singletons carried becomes `Ao ⊆ A`, `Disjoint Bo A` and `Disjoint Ao Bo`. The closure
+hypothesis is relative to `E ∪ F ∪ (Ao ∪ Bo)`.
 
-DERIVED: the `0` is the value the exchange cancels to. -/
+DERIVED: the `0` is the value of the pair's term and its exchange's term summed. -/
 theorem zw_add_exchange_of_finsets (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
     (hod : Disjoint Ao Bo) (β : ℝ) (E F A : Finset Pq)
     (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A,
@@ -1443,8 +1462,9 @@ theorem zw_add_exchange_of_finsets (bd : Pq → List (Lk × Bool)) (Ao Bo : Fins
 
 #print axioms zw_add_exchange_of_finsets
 
-/-- **The expansion's summand, for observables on finsets of plaquettes.** `pairTerm` with
-`{p₀, pd}` replaced by `Ao ∪ Bo`, `{p₀}` by `Ao` and `{pd}` by `Bo`.
+/-- The expansion's summand with the two observables carried on finsets of plaquettes: `pairTerm`
+with `{p₀, pd}` replaced by `Ao ∪ Bo`, `{p₀}` by `Ao` and `{pd}` by `Bo`. Nothing here requires `Ao`
+and `Bo` to be disjoint; the lemmas that need it take it as a hypothesis.
 
 DERIVED: no numeral. -/
 noncomputable def pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
@@ -1452,9 +1472,12 @@ noncomputable def pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) 
   zw (Nc := Nc) bd β (Ao ∪ Bo) q.1 * zw (Nc := Nc) bd β ∅ q.2
     - zw (Nc := Nc) bd β Ao q.1 * zw (Nc := Nc) bd β Bo q.2
 
-/-- **The pair form of `zw_add_exchange_of_finsets`** — the shape the involution consumes.
+/-- **`pairTermF (E, F) + pairTermF (pairFlip A (E, F)) = 0`**, under the same hypotheses as
+`zw_add_exchange_of_finsets`: `Disjoint Ao Bo`, `Ao ⊆ A`, `Disjoint Bo A`, and no touch between
+`(E ∪ F ∪ (Ao ∪ Bo)) ∩ A` and `(E ∪ F ∪ (Ao ∪ Bo)) \ A`. This is the shape the summation over an
+involution consumes.
 
-DERIVED: the `0` is the value the involution cancels to. -/
+DERIVED: the `0` is the value of the two terms summed. -/
 theorem pairTermF_add_pairFlip (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
     (hod : Disjoint Ao Bo) (β : ℝ) (E F A : Finset Pq)
     (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A,
@@ -1467,10 +1490,14 @@ theorem pairTermF_add_pairFlip (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset P
 
 #print axioms pairTermF_add_pairFlip
 
-/-- **The summand splits into core times outside**, for finset supports.
+/-- **The summand is its restriction to `A` times the two outside weights.** With both observable
+finsets inside `A` (`Ao ∪ Bo ⊆ A`) and no touch across `A` inside `E ∪ F ∪ (Ao ∪ Bo)`,
 
-`pairTerm_eq_core_mul_outside` with the two anchors replaced by their finsets; `p₀ ∈ A` and `pd ∈ A`
-become `Ao ∪ Bo ⊆ A`.
+    pairTermF (E, F) = pairTermF (E ∩ A, F ∩ A) · (zw ∅ (E \ A) · zw ∅ (F \ A)).
+
+The finset counterpart of `pairTerm_eq_core_mul_outside`, where `p₀ ∈ A` and `pd ∈ A` become the
+single hypothesis `Ao ∪ Bo ⊆ A`. Note `hd : Disjoint Bo A` of the exchange lemma is replaced here by
+`Bo ⊆ A`: this statement puts both observable groups on the same side.
 
 DERIVED: no numeral. -/
 theorem pairTermF_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
@@ -1543,23 +1570,25 @@ theorem pairTermF_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (Ao Bo : F
 
 #print axioms pairTermF_eq_core_mul_outside
 
-/-- **THE CONNECTED NUMERATOR'S SUMMAND, AT TWO ARBITRARY OBSERVABLES.**
+/-- The connected numerator's summand at two arbitrary observables of full configurations:
+`zwFull (O₁·O₂) q.1 · zwFull 1 q.2 − zwFull O₁ q.1 · zwFull O₂ q.2`. `pairTermF`'s four terms with
+the two plaquette products replaced by `O₁` and `O₂`; `pairTermObs_eq_pairTermF` records the
+reduction. No measurability or locality is asked for here.
 
-`pairTermF`'s four terms with the two plaquette products replaced by two ordinary observables:
-the joint term against the disconnected one. `pairTermObs_eq_pairTermF` checks it reduces.
-
-DERIVED: no numeral. -/
+DERIVED: the `1` is the constant observable standing where `pairTermF` has `zw` at the empty
+plaquette set, the two being equal by `zwFull_one_eq_zw_empty`. -/
 noncomputable def pairTermObs (bd : Pq → List (Lk × Bool))
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (β : ℝ)
     (q : Finset Pq × Finset Pq) : ℝ :=
   zwFull (Nc := Nc) bd β (fun U => O₁ U * O₂ U) q.1 * zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) q.2
     - zwFull (Nc := Nc) bd β O₁ q.1 * zwFull (Nc := Nc) bd β O₂ q.2
 
-/-- **⭐ THE ALIGNMENT: AT PLAQUETTE PRODUCTS IT IS `pairTermF`.**
+/-- **`pairTermObs` at the two plaquette products of `Ao` and `Bo` is `pairTermF bd Ao Bo β q`**,
+given `Disjoint Ao Bo`.
 
-`hod` is what turns `∏ Ao · ∏ Bo` into `∏ (Ao ∪ Bo)`, and it is the same disjointness
-`pairTermF_add_pairFlip` already carries. So the generalisation reduces exactly, and the `…F`
-family is the plaquette case of the observable one rather than a fork.
+The disjointness is what turns `∏ Ao · ∏ Bo` into `∏ (Ao ∪ Bo)` under `Finset.prod_union`; it is the
+same hypothesis `pairTermF_add_pairFlip` carries. So the `…F` family is the plaquette case of the
+observable one.
 
 DERIVED: no numeral. -/
 theorem pairTermObs_eq_pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
@@ -1580,7 +1609,8 @@ theorem pairTermObs_eq_pairTermF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset
 
 #print axioms pairTermObs_eq_pairTermF
 
-/-- **The term depends on the observable only through its values.**
+/-- **`zwFull` depends on its observable only through its values**: pointwise equality of `O` and
+`O'` at every configuration gives equal terms. Pointwise, not almost everywhere.
 
 DERIVED: no numeral. -/
 theorem zwFull_congr (bd : Pq → List (Lk × Bool)) (β : ℝ)
@@ -1593,35 +1623,31 @@ theorem zwFull_congr (bd : Pq → List (Lk × Bool)) (β : ℝ)
 
 #print axioms zwFull_congr
 
-/-- **The constant observable is local on every link set** — it reads none of them.
+/-- **The constant observable `fun _ => 1` is `LocalOnLinks S` for every `S`**, the witness being the
+constant on the restriction. It reads no link, so every `S` serves.
 
-DERIVED: the `1` is the constant's value. -/
+DERIVED: the `1` is the constant observable's value. -/
 theorem localOnLinks_one (S : Finset Lk) :
     LocalOnLinks (Nc := Nc) S (fun _ => (1 : ℝ)) :=
   ⟨fun _ => (1 : ℝ), measurable_const, fun _ => rfl⟩
 
 #print axioms localOnLinks_one
 
-/-- **⭐⭐⭐ THE VOLUME CANCELLATION'S INVOLUTION, AT TWO ARBITRARY OBSERVABLES.**
+/-- **A pair and its flip across `A` sum to zero, at two arbitrary observables.**
+`pairTermObs bd O₁ O₂ β (E, F) + pairTermObs bd O₁ O₂ β (pairFlip A (E, F)) = 0`, given
+`LocalOnLinks S O₁`, `LocalOnLinks T O₂`, `Disjoint S T`, and the two support conditions: the
+plaquettes of `(E ∪ F) ∩ A` draw on `S` and those of `(E ∪ F) \ A` draw on `T`.
 
-`zw_add_exchange_of_finsets` with the two plaquette products replaced by two observables, each
-reading only its own side of a link-disjoint split. A pair and its flip across `A` sum to ZERO —
-exactly, with no estimate.
+`zw_add_exchange_of_finsets` with the plaquette products replaced by two observables, each reading
+one side of the split. The link blocks differ in how they arrive: there they are built inside the
+proof as the boundary unions of `V ∩ A` and `V \ A`, with disjointness derived from the closure
+hypothesis, which works because the observable is itself made of plaquettes of `V`. An arbitrary
+observable's support need not lie in `V`, so here `S` and `T` are parameters and the caller supplies
+`hST` along with the two locality facts.
 
-**THE ONE DESIGN CHANGE, AND WHY.** The original builds its two link-blocks INSIDE the proof, as the
-links of `V ∩ A` and `V \ A` for `V = E ∪ F ∪ (Ao ∪ Bo)`, and derives their disjointness from
-`hclosed`. That works because there the observable IS plaquettes, so its links are among `V`'s. An
-arbitrary observable's support is not, so `S` and `T` become PARAMETERS and the caller supplies
-`hST` together with the two locality facts. In the plaquette case the caller can build them exactly
-as the original does; in the half-space case `S` and `T` are the two halves, which are disjoint by
-geometry rather than by an estimate.
+The algebra is eight `zwFull_split`s and `a·c·(b·d − e·f) + a·c·(f·e − d·b) = 0`.
 
-The algebra is unchanged: eight splits, then `a·c·(b·d − e·f) + a·c·(f·e − d·b) = 0`.
-
-DERIVED: the `0` is the whole content and is EXACT, not a bound — the pair and its flip cancel term
-by term after the eight splits, and `ring` closes it. Nothing is estimated and no numeral is chosen.
-(The constant observable standing where the plaquette proof has `zw` at the empty support is why
-`zwFull_one_eq_zw_empty` exists; that constant does not appear in this statement.) -/
+DERIVED: the `0` is the value of the pair's term and its flip's term summed. -/
 theorem zwFull_add_exchange (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (E F A : Finset Pq) (S T : Finset Lk)
     (hST : Disjoint S T)
@@ -1688,7 +1714,12 @@ theorem zwFull_add_exchange (bd : Pq → List (Lk × Bool)) (β : ℝ)
 
 
 
-/-- The pair form of `pairTerm_add_exchange` — the shape the involution consumes. -/
+/-- **`pairTerm (E, F) + pairTerm (pairFlip A (E, F)) = 0`**, under the same hypotheses as
+`pairTerm_add_exchange`: `p₀ ≠ pd`, `p₀ ∈ A`, `pd ∉ A`, and no touch between
+`(E ∪ F ∪ {p₀, pd}) ∩ A` and `(E ∪ F ∪ {p₀, pd}) \ A`. This is the shape the summation over an
+involution consumes.
+
+DERIVED: the `0` is the value of the two terms summed. -/
 theorem pairTerm_add_pairFlip (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ)
     (E F A : Finset Pq)
     (hclosed : ∀ p ∈ (E ∪ F ∪ {p₀, pd}) ∩ A, ∀ r ∈ (E ∪ F ∪ {p₀, pd}) \ A, ¬ Touch bd p r)
@@ -1702,18 +1733,23 @@ theorem pairTerm_add_pairFlip (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hn
 
 /-! ### The separator a pair supplies by itself
 
-The hypothesis of `pairTerm_add_exchange` is an existential over separators, and a sum needs a
-FUNCTION. `compOf` supplies one: `p₀`'s touch-reachable component inside the pair's own union. It is
-touch-closed there by construction, it contains `p₀`, and it misses `p_d` exactly when `p₀` does not
-reach `p_d` — which is the definition of a non-bridging pair. -/
+`pairTerm_add_exchange` takes a separator `A`, and summing over an involution needs one chosen as a
+function of the pair. `compOf` is that choice: `p₀`'s touch-reachable component inside the pair's own
+union. It is touch-closed there by construction (`compOf_closed`), it contains `p₀`
+(`self_mem_compOf`), and it misses `pd` exactly when `p₀` does not reach `pd` inside the union. -/
 
-/-- Touch-reachability inside a plaquette set — a chain of plaquettes each sharing a link with the
-next, all of them lying in `V`. -/
+/-- Touch-reachability inside a plaquette set: the reflexive-transitive closure of touching, with
+both endpoints of every step required to lie in `V`.
+
+DERIVED: no numeral. -/
 def Reach (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a b : Pq) : Prop :=
   Relation.ReflTransGen (fun x y => x ∈ V ∧ y ∈ V ∧ Touch bd x y) a b
 
 open scoped Classical in
-/-- `a`'s touch-reachable component inside `V`. -/
+/-- `a`'s touch-reachable component inside `V`: the plaquettes of `V` that `Reach bd V a` holds of.
+`a` itself belongs only when `a ∈ V`.
+
+DERIVED: no numeral. -/
 noncomputable def compOf (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) : Finset Pq :=
   V.filter (fun p => Reach bd V a p)
 
@@ -1728,9 +1764,12 @@ theorem self_mem_compOf {bd : Pq → List (Lk × Bool)} {V : Finset Pq} {a : Pq}
   mem_compOf.mpr ⟨ha, Relation.ReflTransGen.refl⟩
 
 open scoped Classical in
-/-- **A COMPONENT IS TOUCH-CLOSED IN ITS OWN SET.** Nothing inside the component touches anything of
-`V` outside it: a touch would extend the chain. This is the hypothesis `pairTerm_add_exchange`
-consumes, produced rather than assumed. -/
+/-- **A component is touch-closed inside its own set.** No plaquette of `V ∩ compOf bd V a` touches
+one of `V \ compOf bd V a`: such a touch would extend the reach chain and put the far end back in the
+component. This is the closure hypothesis `pairTerm_add_exchange` takes, here produced rather than
+assumed. The closure is relative to `V`; a touch to a plaquette outside `V` is not excluded.
+
+DERIVED: no numeral. -/
 theorem compOf_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
     ∀ p ∈ V ∩ compOf bd V a, ∀ r ∈ V \ compOf bd V a, ¬ Touch bd p r := by
   intro p hp r hr ht
@@ -1741,16 +1780,15 @@ theorem compOf_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
 #print axioms compOf_closed
 
 open scoped Classical in
-/-- **THE UNION OF THE COMPONENTS THAT MEET `A`** — and `compOf` is the case `A = {a}`
-(`compsMeet_singleton`).
+/-- The plaquettes of `V` reachable inside `V` from some member of `A`: the union of the components
+of `V` that meet `A`. `compsMeet_singleton` records that `compOf` is the case `A = {a}`.
 
-**⭐ THIS IS THE SEPARATOR THE FINSET INVOLUTION NEEDS, AND THE ANCHOR'S COMPONENT IS NOT.**
-`pairTermF_add_pairFlip` wants a touch-closed `S` with `Ao ⊆ S` and `Disjoint Bo S`. When `Ao` is a
-single plaquette the anchor's own component is such an `S`; when `Ao` is a finset spanning several
-components it is not, because it holds the anchor and misses the rest of `Ao`. This set contains ALL
-of `A` that lies in `V` (`subset_compsMeet`), is touch-closed in `V` (`compsMeet_closed`), is
-contained in every touch-closed superset of `A` (`compsMeet_minimal`), and misses `B` EXACTLY when no
-component of `V` meets both (`disjoint_compsMeet_iff`).
+`pairTermF_add_pairFlip` takes a touch-closed `S` with `Ao ⊆ S` and `Disjoint Bo S`. When `Ao` is a
+single plaquette its own component serves; when `Ao` spans several components it does not, since it
+holds one member of `Ao` and misses the rest. This set contains all of `A` that lies in `V`
+(`subset_compsMeet`), is touch-closed in `V` (`compsMeet_closed`), sits inside every touch-closed
+superset of `A ∩ V` (`compsMeet_minimal`), and misses `B` exactly when no component of `V` meets both
+(`disjoint_compsMeet_iff`).
 
 DERIVED: no numeral. -/
 noncomputable def compsMeet (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (A : Finset Pq) :
@@ -1758,7 +1796,7 @@ noncomputable def compsMeet (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (A :
   V.filter (fun p => ∃ a ∈ A, Reach bd V a p)
 
 open scoped Classical in
-/-- **Membership, unfolded.**
+/-- **`p ∈ compsMeet bd V A ↔ p ∈ V ∧ ∃ a ∈ A, Reach bd V a p`**, the defining filter unfolded.
 
 DERIVED: no numeral. -/
 theorem mem_compsMeet {bd : Pq → List (Lk × Bool)} {V A : Finset Pq} {p : Pq} :
@@ -1768,7 +1806,7 @@ theorem mem_compsMeet {bd : Pq → List (Lk × Bool)} {V A : Finset Pq} {p : Pq}
 #print axioms mem_compsMeet
 
 open scoped Classical in
-/-- **It lives inside `V`.**
+/-- **`compsMeet bd V A ⊆ V`**, being a filter of `V`. Members of `A` outside `V` are not included.
 
 DERIVED: no numeral. -/
 theorem compsMeet_subset (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
@@ -1778,8 +1816,8 @@ theorem compsMeet_subset (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
 #print axioms compsMeet_subset
 
 open scoped Classical in
-/-- **AND IT CONTAINS ALL OF `A` THAT LIES IN `V`** — by reflexivity of reach, one witness each.
-This is the clause `compOf` cannot give for a multi-plaquette `A`.
+/-- **`A ∩ V ⊆ compsMeet bd V A`**: each member of `A` inside `V` reaches itself, by reflexivity of
+`Reach`. The intersection with `V` is needed — the statement is not `A ⊆ compsMeet bd V A`.
 
 DERIVED: no numeral. -/
 theorem subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
@@ -1791,9 +1829,10 @@ theorem subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
 #print axioms subset_compsMeet
 
 open scoped Classical in
-/-- **IT IS TOUCH-CLOSED IN `V`** — the shape `pairTermF_add_pairFlip` consumes, produced rather than
-assumed. Same one-step argument as `compOf_closed`: a touch out of the set would extend the chain
-from whichever `a ∈ A` reached `p`, putting the far end back in the set.
+/-- **`compsMeet bd V A` is touch-closed in `V`**: no plaquette of `V ∩ compsMeet bd V A` touches one
+of `V \ compsMeet bd V A`. Same one-step argument as `compOf_closed` — a touch out of the set extends
+the chain from whichever `a ∈ A` reached `p`, putting the far end back in. This is the closure
+hypothesis `pairTermF_add_pairFlip` takes.
 
 DERIVED: no numeral. -/
 theorem compsMeet_closed (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
@@ -1807,13 +1846,13 @@ theorem compsMeet_closed (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) :
 #print axioms compsMeet_closed
 
 open scoped Classical in
-/-- **⭐ AND IT IS THE SMALLEST SUCH SET** — every touch-closed `S ⊆ V` containing `A ∩ V` contains
-it. Induct along the chain: the first vertex is in `A ∩ V`, and a chain step out of `S` would be a
-touch from `V ∩ S` to `V \ S`, which closure forbids.
+/-- **`compsMeet bd V A` is the smallest touch-closed set containing `A ∩ V`.** Any `S` that is
+touch-closed in `V` and contains `A ∩ V` contains it. The induction runs along the reach chain: the
+first vertex lies in `A ∩ V ⊆ S`, and a chain step leaving `S` would be a touch from `V ∩ S` to
+`V \ S`, which the closure hypothesis forbids. `S` is not required to be a subset of `V`.
 
-This is the converse `disjoint_compsMeet_iff` needs to mean what it says. Without it, "a separator
-exists exactly when this one works" is prose; with it, a touch-closed `S ⊇ A ∩ V` missing `B` forces
-this set to miss `B` too, so no OTHER choice of separator can succeed where this one fails.
+With this, a touch-closed `S ⊇ A ∩ V` missing `B` forces `compsMeet bd V A` to miss `B` as well, so
+`disjoint_compsMeet_iff` characterises when any separator at all exists, not just this one.
 
 DERIVED: no numeral. -/
 theorem compsMeet_minimal (bd : Pq → List (Lk × Bool)) (V A S : Finset Pq)
@@ -1838,8 +1877,9 @@ theorem compsMeet_minimal (bd : Pq → List (Lk × Bool)) (V A S : Finset Pq)
 #print axioms compsMeet_minimal
 
 open scoped Classical in
-/-- **`compOf` IS THE SINGLETON CASE.** So every lemma stated against the anchor's component is the
-`A = {a}` instance of one stated against this set, and generalising costs no theorem.
+/-- **`compsMeet bd V {a} = compOf bd V a`.** Every lemma about a single plaquette's component is
+therefore the singleton instance of the corresponding `compsMeet` lemma. Note `a ∈ V` is not
+assumed: both sides are empty when it fails.
 
 DERIVED: no numeral. -/
 theorem compsMeet_singleton (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
@@ -1857,8 +1897,8 @@ theorem compsMeet_singleton (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a :
 #print axioms compsMeet_singleton
 
 open scoped Classical in
-/-- **AND THE ANCHOR'S COMPONENT SITS INSIDE IT** whenever the anchor belongs to `A`. The swap only
-ever ENLARGES the separator, which is why it cannot lose a pair the old filter kept.
+/-- **`compOf bd V a ⊆ compsMeet bd V A` whenever `a ∈ A`.** Replacing a single plaquette's component
+by the union of the components meeting `A` only enlarges the separator.
 
 DERIVED: no numeral. -/
 theorem compOf_subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) {a : Pq}
@@ -1870,21 +1910,14 @@ theorem compOf_subset_compsMeet (bd : Pq → List (Lk × Bool)) (V A : Finset Pq
 #print axioms compOf_subset_compsMeet
 
 open scoped Classical in
-/-- **⭐ THE SEPARATOR CRITERION.**
+/-- **`Disjoint B (compsMeet bd V A) ↔ ∀ b ∈ B, ∀ a ∈ A, ¬ Reach bd V a b`**, given `B ⊆ V`. The
+separator misses `B` exactly when no plaquette of `B` is touch-reachable inside `V` from any
+plaquette of `A`, which is to say when no component of `V` meets both.
 
-The set misses `B` exactly when no plaquette of `B` is touch-reachable inside `V` from any plaquette
-of `A` — equivalently, exactly when no component of `V` meets both. So
-`Disjoint B (compsMeet bd V A)` IS the complement of "some component meets both", and with
-`compsMeet_minimal` a touch-closed separator containing `A ∩ V` and missing `B` exists precisely when
-this set is one.
+With `compsMeet_minimal`, this characterises when a touch-closed separator containing `A ∩ V` and
+missing `B` exists at all: if any does, this one does.
 
-That is the identity the anchor's component cannot supply, and it is what makes the involution's
-vanishing set and its complement fit together for a multi-plaquette support.
-
-**⛔ IT DOES NOT BY ITSELF CLOSE THE FINSET ROUTE.** See `bridging_sum_eq_core_sumF` — widening the
-complement to "some component meets both" admits pairs whose support is split across components, and
-those are exactly the pairs `IsCorePairF` cannot normalise. The counting side needs its own
-multi-component statement before this criterion can be spent.
+The hypothesis `B ⊆ V` is used in the forward direction only.
 
 DERIVED: no numeral. -/
 theorem disjoint_compsMeet_iff (bd : Pq → List (Lk × Bool)) (V A B : Finset Pq)
@@ -1902,12 +1935,10 @@ theorem disjoint_compsMeet_iff (bd : Pq → List (Lk × Bool)) (V A B : Finset P
 #print axioms disjoint_compsMeet_iff
 
 open scoped Classical in
-/-- **⭐ WHEN `A` IS TOUCH-CONNECTED IN `V`, THE SEPARATOR COLLAPSES TO THE ANCHOR'S COMPONENT.**
-
-`compsMeet bd V A` was introduced because `compOf bd V a` holds the anchor and misses the rest of a
-multi-plaquette `A`. If every plaquette of `A` is reachable from `a` inside `V`, that gap closes:
-anything reached from any `a' ∈ A` is reached from `a` by composing the two chains, so the union of
-the components meeting `A` IS the one component containing `a`.
+/-- **`compsMeet bd V A = compOf bd V a` when every plaquette of `A` is reachable from `a` inside
+`V`.** Anything reached from some `a' ∈ A` is reached from `a` by composing the two chains, so the
+union of the components meeting `A` is the single component containing `a`. Both `a ∈ A` and the
+connectivity hypothesis are needed; `A ⊆ V` is not.
 
 DERIVED: no numeral. -/
 theorem compsMeet_eq_compOf_of_connected (bd : Pq → List (Lk × Bool)) (V A : Finset Pq) {a : Pq}
@@ -1921,11 +1952,11 @@ theorem compsMeet_eq_compOf_of_connected (bd : Pq → List (Lk × Bool)) (V A : 
 #print axioms compsMeet_eq_compOf_of_connected
 
 open scoped Classical in
-/-- **THE PLAQUETTES OF `V` WHOSE OWN LINKS MEET `S`.**
+/-- The plaquettes of `V` at least one of whose boundary links lies in `S`.
 
-The seed a separator for an ARBITRARY observable is grown from. `nonbridging_sum_eq_zeroF` flips
-across the component of an ANCHOR PLAQUETTE, and an arbitrary observable has none — but it has a
-link support, and these are the plaquettes that touch it.
+This is the seed from which a separator for an arbitrary observable is grown. `nonbridging_sum_eq_zeroF`
+flips across the component of an anchor plaquette; an observable given only by a link support has no
+anchor, and these are the plaquettes that meet the support instead.
 
 DERIVED: no numeral. -/
 noncomputable def plaqsMeetingLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
@@ -1933,7 +1964,8 @@ noncomputable def plaqsMeetingLinks (bd : Pq → List (Lk × Bool)) (V : Finset 
   V.filter (fun p => ∃ l ∈ linkSupp bd p, l ∈ S)
 
 open scoped Classical in
-/-- **Membership, unfolded.**
+/-- **`p ∈ plaqsMeetingLinks bd V S ↔ p ∈ V ∧ ∃ l ∈ linkSupp bd p, l ∈ S`**, the defining filter
+unfolded.
 
 DERIVED: no numeral. -/
 theorem mem_plaqsMeetingLinks {bd : Pq → List (Lk × Bool)} {V : Finset Pq} {S : Finset Lk}
@@ -1944,11 +1976,11 @@ theorem mem_plaqsMeetingLinks {bd : Pq → List (Lk × Bool)} {V : Finset Pq} {S
 #print axioms mem_plaqsMeetingLinks
 
 open scoped Classical in
-/-- **⭐ THE SEPARATOR OF A LINK SUPPORT**: the seed, closed under touching.
+/-- The separator grown from a link support: `compsMeet bd V (plaqsMeetingLinks bd V S)`, the
+plaquettes of `V` whose links meet `S`, closed under touching inside `V`.
 
-`compsMeet` does the closing, so this is the whole construction. It is the object that plays the
-anchor component's role when the observable is not a plaquette product, and it specialises: at the
-link support of a single plaquette's boundary the seed contains that plaquette, so the separator
+It plays the part a single plaquette's component plays when the observable is a plaquette product.
+At the link support of one plaquette's boundary the seed contains that plaquette, so the separator
 contains its component.
 
 DERIVED: no numeral. -/
@@ -1957,7 +1989,8 @@ noncomputable def sepOfLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S 
   compsMeet bd V (plaqsMeetingLinks bd V S)
 
 open scoped Classical in
-/-- **It is touch-closed in `V`** — `compsMeet_closed` at the seed.
+/-- **`sepOfLinks bd V S` is touch-closed in `V`**: `compsMeet_closed` at the seed
+`plaqsMeetingLinks bd V S`.
 
 DERIVED: no numeral. -/
 theorem sepOfLinks_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
@@ -1967,7 +2000,7 @@ theorem sepOfLinks_closed (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : F
 #print axioms sepOfLinks_closed
 
 open scoped Classical in
-/-- **And it lives inside `V`.**
+/-- **`sepOfLinks bd V S ⊆ V`**: `compsMeet_subset` at the seed.
 
 DERIVED: no numeral. -/
 theorem sepOfLinks_subset (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk) :
@@ -1977,12 +2010,9 @@ theorem sepOfLinks_subset (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : F
 #print axioms sepOfLinks_subset
 
 open scoped Classical in
-/-- **⭐⭐ EVERY PLAQUETTE OF `V` OUTSIDE THE SEPARATOR MISSES `S` ENTIRELY.**
-
-This is what makes the construction work. The separator is grown from exactly the plaquettes whose
-links meet `S`, so anything left outside cannot touch `S` at all — which is how the observable's own
-support ends up on one side of the link split with nothing of the other side's plaquettes reaching
-it.
+/-- **A plaquette of `V` outside `sepOfLinks bd V S` has no link in `S`.** The separator contains the
+whole seed, which is every plaquette of `V` meeting `S`, so a plaquette left outside meets `S`
+nowhere. This is what puts the observable's own support on one side of the link split.
 
 DERIVED: no numeral. -/
 theorem no_link_of_not_mem_sepOfLinks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (S : Finset Lk)
@@ -1997,11 +2027,9 @@ theorem no_link_of_not_mem_sepOfLinks (bd : Pq → List (Lk × Bool)) (V : Finse
 #print axioms no_link_of_not_mem_sepOfLinks
 
 open scoped Classical in
-/-- **ONE SIDE'S LINK BLOCK**: an observable's own support, together with the links of the
-plaquettes on that side.
-
-This is what `zwFull_add_exchange` wants for `S` and `T` — the observable has to read only its own
-side, and so do that side's activated plaquettes.
+/-- One side's link block: `S ∪ W.biUnion (linkSupp bd)`, an observable's own link support together
+with the links of the plaquettes `W` on that side. This is what `zwFull_add_exchange` takes for its
+two link sets, since both the observable and that side's activated plaquettes must read only it.
 
 DERIVED: no numeral. -/
 noncomputable def linkBlock (bd : Pq → List (Lk × Bool)) (W : Finset Pq) (S : Finset Lk) :
@@ -2009,7 +2037,7 @@ noncomputable def linkBlock (bd : Pq → List (Lk × Bool)) (W : Finset Pq) (S :
   S ∪ W.biUnion (linkSupp bd)
 
 open scoped Classical in
-/-- **Membership, unfolded.**
+/-- **`l ∈ linkBlock bd W S ↔ l ∈ S ∨ ∃ p ∈ W, l ∈ linkSupp bd p`**, the union unfolded.
 
 DERIVED: no numeral. -/
 theorem mem_linkBlock {bd : Pq → List (Lk × Bool)} {W : Finset Pq} {S : Finset Lk} {l : Lk} :
@@ -2020,20 +2048,19 @@ theorem mem_linkBlock {bd : Pq → List (Lk × Bool)} {W : Finset Pq} {S : Finse
 #print axioms mem_linkBlock
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE TWO BLOCKS ARE DISJOINT EXACTLY WHEN NOTHING BRIDGES.**
+/-- **The two link blocks either side of `sepOfLinks bd V Sa` are disjoint**, given that `Sa` and
+`Sb` are disjoint and that no plaquette of `V ∩ sepOfLinks bd V Sa` carries a link of `Sb`.
 
-Four ways a link could sit in both, and three of them are already impossible:
+A link in both blocks falls into four cases, three of which the construction already rules out:
 
-* in both observables' supports — excluded by `hab`, which says the two observables read disjoint
-  link sets. For `hfin` this is geometry: they live in opposite half-spaces.
-* in the first observable's support and on a plaquette OUTSIDE the separator — excluded by
-  `no_link_of_not_mem_sepOfLinks`, since the separator was grown from exactly those plaquettes.
-* on plaquettes on both sides — excluded by `sepOfLinks_closed`, because two plaquettes sharing a
-  link TOUCH, and the separator is touch-closed.
+* in both `Sa` and `Sb` — excluded by `hab`;
+* in `Sa` and on a plaquette outside the separator — excluded by `no_link_of_not_mem_sepOfLinks`,
+  since the separator contains every plaquette of `V` meeting `Sa`;
+* on plaquettes on both sides — excluded by `sepOfLinks_closed`, two plaquettes sharing a link being
+  a touch.
 
-What is left is `hbridge`: no plaquette of the separator carries a link of the second observable's
-support. **That is the non-bridging condition, at the level of links**, and it is the filter the
-vanishing sum is indexed by.
+The fourth is `hbridge`, which is a hypothesis: no plaquette of the separator carries a link of
+`Sb`. That is the non-bridging condition stated at the level of links.
 
 DERIVED: no numeral. -/
 theorem disjoint_linkBlocks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (Sa Sb : Finset Lk)
@@ -2056,11 +2083,11 @@ theorem disjoint_linkBlocks (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (Sa 
 #print axioms disjoint_linkBlocks
 
 open scoped Classical in
-/-- **LOCALITY IS MONOTONE IN THE LINK SET.** An observable reading only `S` reads only any larger
-`S'`; the witness is the old one composed with the inclusion of coordinates.
+/-- **`LocalOnLinks` is monotone in the link set**: `S ⊆ S'` and `LocalOnLinks S O` give
+`LocalOnLinks S' O`. The witness is the old one composed with the inclusion of coordinates.
 
-Needed because each observable is local on its OWN support while `zwFull_add_exchange` wants it
-local on the whole block, which also carries that side's plaquette links.
+Used because each observable is local on its own support while `zwFull_add_exchange` needs it local
+on the whole block, which also carries that side's plaquette links.
 
 DERIVED: no numeral. -/
 theorem localOnLinks_mono (bd : Pq → List (Lk × Bool)) {S S' : Finset Lk} (hSS : S ⊆ S')
@@ -2074,21 +2101,21 @@ theorem localOnLinks_mono (bd : Pq → List (Lk × Bool)) {S S' : Finset Lk} (hS
 #print axioms localOnLinks_mono
 
 open scoped Classical in
-/-- **⭐⭐⭐ A PAIR AND ITS FLIP SUM TO ZERO, FOR TWO OBSERVABLES ON DISJOINT LINK SUPPORTS.**
+/-- **A pair and its flip sum to zero, for two observables on disjoint link supports.** With
+`Disjoint Sa Sb`, `LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂`, and no plaquette of
+`(E ∪ F) ∩ sepOfLinks bd (E ∪ F) Sa` carrying a link of `Sb`,
 
-The observable counterpart of `pairTermF_add_pairFlip`, with no anchor plaquette anywhere. The
-separator is `sepOfLinks` — the plaquettes of the pair's union whose links meet `Sa`, closed under
-touching — and the two link blocks are each observable's support together with its side's plaquette
-links.
+    pairTermObs bd O₁ O₂ β (E, F) + pairTermObs bd O₁ O₂ β (pairFlip A (E, F)) = 0,
 
-**`hbridge` IS THE WHOLE CONDITION**, and it is the link-level statement of "nothing bridges": no
-plaquette of the separator carries a link of the second observable's support. Everything else is
-geometry that is already proved — see `disjoint_linkBlocks` for the three cases that cannot arise.
+where `A = sepOfLinks bd (E ∪ F) Sa`.
 
-For `hfin` the two supports lie in opposite half-spaces, so `hab` is geometry rather than an
-estimate, and `hbridge` is the statement that the activated plaquettes do not connect them.
+The observable counterpart of `pairTermF_add_pairFlip`, with no anchor plaquette. The separator is
+grown from `Sa` inside the pair's union, and the two link blocks are each observable's support
+together with its side's plaquette links. `hbridge` is the only hypothesis that concerns the
+activated plaquettes; `disjoint_linkBlocks` disposes of the other three ways the blocks could meet.
 
-DERIVED: no numeral. The `0` is the exact cancellation, inherited from `zwFull_add_exchange`. -/
+DERIVED: the `0` is the value of the pair's term and its flip's term summed, inherited from
+`zwFull_add_exchange`. -/
 theorem pairTermObs_add_flip_of_no_bridge (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (E F : Finset Pq) (Sa Sb : Finset Lk)
     (hab : Disjoint Sa Sb)
@@ -2117,19 +2144,14 @@ theorem pairTermObs_add_flip_of_no_bridge (bd : Pq → List (Lk × Bool)) (β : 
 
 
 open scoped Classical in
-/-- **⭐⭐ AND THEN THE ANCHOR'S OWN COMPONENT ALREADY SEPARATES — NO NEW COUNTING IS NEEDED.**
+/-- **`Disjoint B (compOf bd V a) ↔ ∀ b ∈ B, ∀ a' ∈ A, ¬ Reach bd V a' b`**, when `a ∈ A`, `B ⊆ V`
+and every plaquette of `A` is reachable from `a` inside `V`.
 
-This is the statement that closes the finset join for touch-connected supports. Read the right-hand
-side: it quantifies over EVERY `a' ∈ A` and EVERY `b ∈ B`, so it is the full multi-plaquette
-condition "no component of `V` meets both" — and the left-hand side is a fact about
-`compOf bd V a` alone, which is what `IsCorePairF` and the whole counting side are already built on.
-
-So for `A` connected in `V` the vanishing set's complement and the existing bridging filter agree,
-`card_corePairsF_span_le`'s `connSets` count applies unchanged, and nothing has to be re-proved. The
-general case, where `A` spans several components, still needs the multi-component count — it is
-`compsMeet`'s criterion that survives there, not this one.
-
-Wilson-loop-shaped observables are of this form, which is the case the `…F` family was written for.
+`disjoint_compsMeet_iff` composed with `compsMeet_eq_compOf_of_connected`. The right-hand side
+quantifies over every `a' ∈ A`, so it is the multi-plaquette condition "no component of `V` meets
+both", while the left-hand side mentions only the component of the single plaquette `a`. The
+connectivity of `A` inside `V` is what makes the two agree; without it the equivalence is stated for
+`compsMeet bd V A` instead.
 
 DERIVED: no numeral. -/
 theorem disjoint_compOf_iff_of_connected (bd : Pq → List (Lk × Bool)) (V A B : Finset Pq) {a : Pq}
@@ -2141,20 +2163,28 @@ theorem disjoint_compOf_iff_of_connected (bd : Pq → List (Lk × Bool)) (V A B 
 #print axioms disjoint_compOf_iff_of_connected
 
 open scoped Classical in
-/-- The exchange a pair supplies for itself: flip across `p₀`'s component inside the pair's union. -/
+/-- The exchange a pair supplies for itself: `pairFlip` across `p₀`'s touch component inside
+`q.1 ∪ q.2 ∪ {p₀, pd}`. The separator is a function of the pair, which is what summing over an
+involution requires.
+
+DERIVED: no numeral. -/
 noncomputable def exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     (q : Finset Pq × Finset Pq) : Finset Pq × Finset Pq :=
   pairFlip (compOf bd (q.1 ∪ q.2 ∪ {p₀, pd}) p₀) q
 
-/-- The exchange preserves the pair's union — which is why the separator it is built from survives
-it, and why it is an involution. -/
+/-- **`pairFlip` preserves the union of the pair**: `(pairFlip A q).1 ∪ (pairFlip A q).2 = q.1 ∪ q.2`
+for every `A`. A separator computed from that union is therefore unchanged by the flip.
+
+DERIVED: no numeral. -/
 theorem pairFlip_union (A : Finset Pq) (q : Finset Pq × Finset Pq) :
     (pairFlip A q).1 ∪ (pairFlip A q).2 = q.1 ∪ q.2 := by
   classical
   ext x
   by_cases hx : x ∈ A <;> simp [pairFlip, hx] <;> tauto
 
-/-- Flipping twice across the same separator is the identity. -/
+/-- **`pairFlip A` is an involution**: flipping twice across the same `A` returns the pair.
+
+DERIVED: no numeral. -/
 theorem pairFlip_pairFlip (A : Finset Pq) (q : Finset Pq × Finset Pq) :
     pairFlip A (pairFlip A q) = q := by
   classical
@@ -2178,10 +2208,9 @@ theorem exchange_exchange (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (q : Fi
 #print axioms exchange_exchange
 
 open scoped Classical in
-/-- **THE EXCHANGE FOR AN ARBITRARY OBSERVABLE**: flip across the separator its link support grows.
-
-`exchange` flips across the component of an anchor PLAQUETTE. This flips across `sepOfLinks`, which
-needs only a link set, so it applies to any observable.
+/-- The exchange for an observable given by a link support: `pairFlip` across
+`sepOfLinks bd (q.1 ∪ q.2) Sa`. Where `exchange` flips across the component of an anchor plaquette,
+this needs only a link set.
 
 DERIVED: no numeral. -/
 noncomputable def exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
@@ -2189,7 +2218,8 @@ noncomputable def exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
   pairFlip (sepOfLinks bd (q.1 ∪ q.2) Sa) q
 
 open scoped Classical in
-/-- **It preserves the pair's union**, which is what makes the separator recompute identically.
+/-- **`exchangeObs` preserves the union of the pair**, so the separator recomputed from that union
+after the flip is the same set. `pairFlip_union` at `sepOfLinks bd (q.1 ∪ q.2) Sa`.
 
 DERIVED: no numeral. -/
 theorem exchangeObs_union (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
@@ -2200,8 +2230,9 @@ theorem exchangeObs_union (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
 #print axioms exchangeObs_union
 
 open scoped Classical in
-/-- **And it is an involution.** The separator is a function of the union alone, and the union
-survives the flip, so flipping twice is flipping twice across the SAME set.
+/-- **`exchangeObs bd Sa` is an involution.** The separator is a function of the pair's union alone,
+and `exchangeObs_union` says the union survives the flip, so the second flip is across the same set
+and `pairFlip_pairFlip` applies.
 
 DERIVED: no numeral. -/
 theorem exchangeObs_exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
@@ -2217,24 +2248,18 @@ theorem exchangeObs_exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
 #print axioms exchangeObs_exchangeObs
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE VOLUME CANCELLATION, AT TWO ARBITRARY OBSERVABLES.**
+/-- **The non-bridging sum vanishes, at two arbitrary observables.** For `O₁` local on `Sa`, `O₂`
+local on `Sb` and `Disjoint Sa Sb`, the sum of `pairTermObs bd O₁ O₂ β q` over the pairs `q` in which
+no plaquette of `(q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa` carries a link of `Sb` is zero, at every
+`β`.
 
-`nonbridging_sum_eq_zeroF` with the two plaquette finsets replaced by two observables reading
-disjoint link supports: every pair of activated subsets across which nothing connects the first
-support to the second cancels against its own flip, so the whole non-bridging sum is EXACTLY zero.
-No estimate, no volume, no coupling condition.
+`nonbridging_sum_eq_zeroF` with the two plaquette finsets replaced by two observables. The filter is
+at the level of links: where the plaquette version asks that no plaquette of `Ao` reach one of `Bo`,
+this asks that no plaquette of the separator grown from `Sa` carry a link of `Sb`.
+`exchangeObs_exchangeObs` makes the flip an involution on that filtered set and
+`pairTermObs_add_flip_of_no_bridge` negates the summand, so the sum equals its own negation.
 
-**THE FILTER IS AT THE LEVEL OF LINKS, AND THAT IS WHAT MAKES IT GENERAL.** The plaquette version
-asks that no plaquette of `Ao` reach a plaquette of `Bo`; an arbitrary observable has no plaquettes,
-so this asks instead that no plaquette of the SEPARATOR carry a link of `Sb` — where the separator
-is grown from `Sa` by `sepOfLinks`. `disjoint_linkBlocks` is where that becomes the disjointness
-`zwFull_add_exchange` consumes.
-
-`hab` says the two observables read disjoint link sets. For `hfin` that is geometry — the two
-supports lie in opposite half-spaces — rather than an estimate.
-
-DERIVED: the `0` is the exact cancellation and is the theorem's whole content; the pairing is
-term-by-term and nothing is estimated. -/
+DERIVED: the `0` is the value of the filtered sum. -/
 theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
     (hab : Disjoint Sa Sb)
@@ -2285,10 +2310,9 @@ theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
 #print axioms nonbridging_sum_eq_zeroObs
 
 open scoped Classical in
-/-- **THE CONNECTED CORRELATOR OF TWO ARBITRARY OBSERVABLES.**
-
-`WilsonBridge.wilsonCorrConnF` with the two plaquette finsets replaced by two observables. Stated
-here rather than in `WilsonBridge` because everything that consumes it is in this file.
+/-- The connected correlator of two arbitrary observables:
+`⟨O₁·O₂⟩_β − ⟨O₁⟩_β ⟨O₂⟩_β`, each expectation taken in the Gibbs state of `wilsonSystem`.
+`WilsonBridge.wilsonCorrConnF` with the two plaquette finsets replaced by observables.
 
 DERIVED: no numeral. -/
 noncomputable def wilsonCorrConnObs (bd : Pq → List (Lk × Bool))
@@ -2299,27 +2323,26 @@ noncomputable def wilsonCorrConnObs (bd : Pq → List (Lk × Bool))
       * (wilsonSystem bd (wilsonDensity (N := Nc))).expect (probHaar (MassGap.SUN.SU Nc)) β O₂
 
 open scoped Classical in
-/-- **⭐⭐⭐ IT EQUALS THE BRIDGING SUM OVER `Z²`, FOR ANY TWO OBSERVABLES ON DISJOINT LINK
-SUPPORTS.**
+/-- **The connected correlator of two observables on disjoint link supports is the bridging sum over
+`Z²`.** With `Nc ≠ 0`, `Disjoint Sa Sb`, `LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂` and the
+integrability side condition `hint`,
 
-The observable counterpart of `wilsonCorrConnF_eq_bridging_sumF`, and **the step that makes the
-arbitrary-observable chain a statement about a CORRELATOR**. Every pair of activated subsets across
-which nothing connects the first support to the second contributes nothing
-(`nonbridging_sum_eq_zeroObs`), which is where the volume goes.
+    wilsonCorrConnObs bd O₁ O₂ β = (∑ over bridging q, pairTermObs bd O₁ O₂ β q) / Z ^ 2,
 
-The finset proof transfers with no new mathematics: `corrNum_eq_subset_sum` is ALREADY general in
-the observable, so the subset expansion is reused verbatim, and the four specialisations become
-`O₁·O₂`, `O₁`, `O₂` and the constant `1`.
+the sum running over the pairs that fail the non-bridging filter — those in which some plaquette of
+the separator grown from `Sa` carries a link of `Sb`.
 
-Scope, stated with it: `hab` asks the two observables to read disjoint link sets — for `hfin` that is
-geometry, the two half-spaces — and `h₁`, `h₂` say each reads only its own. `hint` is the same
-integrability side condition the finset version carries, and `hN` excludes the empty gauge group.
+The observable counterpart of `wilsonCorrConnF_eq_bridging_sumF`. `corrNum_eq_subset_sum` is already
+general in the observable, so the subset expansion is reused with the four specialisations `O₁·O₂`,
+`O₁`, `O₂` and the constant `1`; `nonbridging_sum_eq_zeroObs` removes the complementary pairs.
+`hint` is required for every observable and every subset, not only the four used.
 
-DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per factor of the pair —
-`hprod` turns two sums over `Finset Pq` into one over `Finset Pq × Finset Pq`, so each of the two
+DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per component of the pair
+— `hprod` turns two sums over `Finset Pq` into one over `Finset Pq × Finset Pq`, so each of the two
 Gibbs numerators carries its own partition function. The `0` is `hN : Nc ≠ 0`, which makes the
-partition function positive so the division is meaningful. The `1` and `2` in `q.1` and `q.2` are
-projections, not numerals. -/
+partition function positive so the division is meaningful. The `1` in `hint`'s
+`Real.exp (-(β * φ_p)) - 1` is the activated weight of `boltz_eq_subset_sum`. The `1` and `2` in
+`q.1` and `q.2` are projections, not numerals. -/
 theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
     (hab : Disjoint Sa Sb)
@@ -2403,26 +2426,21 @@ theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (
 #print axioms wilsonCorrConnObs_eq_bridging_sumObs
 
 open scoped Classical in
-/-- **⭐⭐ AT ZERO COUPLING THE CONNECTED CORRELATOR IS EXACTLY ZERO**, for any two observables
-reading disjoint link sets.
+/-- **At zero coupling the connected correlator of two observables on disjoint link supports is
+zero.** `wilsonCorrConnObs bd O₁ O₂ 0 = 0`, given `Disjoint Sa Sb`, `LocalOnLinks Sa O₁` and
+`LocalOnLinks Sb O₂`.
 
-At `β = 0` the Boltzmann weight is `1`, so the measure is product Haar and two observables on
-disjoint link blocks are INDEPENDENT. `WilsonReal.block_integral_factor` is that independence, and
-it is stated for ANY two such observables — no plaquette structure is used.
+At `β = 0` the Boltzmann weight is `1`, so the state is product Haar and `block_integral_factor`
+factorises the joint expectation into the two marginals, which is what `wilsonCorrConnObs`
+subtracts. No plaquette structure is used, and the measurability of the two witnesses is what
+`block_integral_factor` needs.
 
-**WHY IT IS WORTH HAVING.** `ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` asks
-for a RATIO between two subtracted pairings, at reflection distances `2p-2` and `2p`, and nothing in
-the tree exhibits an instance of that shape. Here both sides are `0`, so the inequality holds at
-every rate: the shape is satisfiable. It is the correlator-side analogue of
-`TransferGap.exists_gapAt_lt_one`.
+⛔ This is the statement at `β = 0` alone. There the links are independent and the vanishing is by
+factorisation, not by decay in any separation; nothing in it applies at `β > 0`, where the Boltzmann
+weight couples the two blocks.
 
-**⛔ AND IT IS ONLY β = 0.** At `β = 0` there is no gauge dynamics at all — the links are
-independent and every connected correlation vanishes by construction, not by decay. Nothing here
-extends to `β > 0`, where the weight couples the blocks and the whole cluster expansion exists to
-bound what is left.
-
-DERIVED: the `0` coupling is the hypothesis, and the `0` value is the conclusion — the second is
-exact, not a bound. No numeral is chosen. -/
+DERIVED: the first `0` is the coupling the statement fixes; the second is the value of the
+correlator. -/
 theorem wilsonCorrConnObs_at_zero (bd : Pq → List (Lk × Bool))
     {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
     {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ}
@@ -2454,19 +2472,18 @@ theorem wilsonCorrConnObs_at_zero (bd : Pq → List (Lk × Bool))
 
 
 open scoped Classical in
-/-- **THE VOLUME CANCELLATION.** The connected numerator's double sum, restricted to the pairs in
-which `p₀` does NOT reach `p_d` by a chain of touching plaquettes inside the pair's own union, is
-EXACTLY ZERO — at every coupling, on a lattice of any size.
+/-- **The non-bridging part of the connected numerator's double sum is zero.** Summing `pairTerm` over
+the pairs `q` with `¬ Reach bd (q.1 ∪ q.2 ∪ {p₀, pd}) p₀ pd` gives `0`, for every `β` and at any
+lattice size. `p₀ ≠ pd` is required.
 
-This is what a cluster expansion is for and what this file said was not proved here. The proof is the
-exchange `pairFlip` across `p₀`'s own component: it is an involution on the non-bridging pairs
+The exchange is `pairFlip` across `p₀`'s own component inside the pair's union. It is an involution
 (`exchange_exchange`), it preserves the union and hence the component (`exchange_union`), and it
 negates the summand (`pairTerm_add_pairFlip`). A sum equal to its own negation is zero.
 
-WHAT REMAINS is the complementary sum — over pairs whose union DOES carry a touching chain from `p₀`
-to `p_d` — and that is a counting problem: how many such pairs there are at each total size, against
-the `(e^{2|β|}−1)` each activated plaquette costs (`subset_weight_bound`). That count is
-`card_bridging_pairs_le`, and it is not supplied here. -/
+The complementary sum, over pairs whose union carries a touching chain from `p₀` to `pd`, is counted
+by `card_bridging_pairs_le` and weighted by `subset_weight_bound`.
+
+DERIVED: the `0` is the value of the filtered sum. -/
 theorem nonbridging_sum_eq_zero (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ) :
     ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
         (fun q => ¬ Reach bd (q.1 ∪ q.2 ∪ {p₀, pd}) p₀ pd),
@@ -2517,9 +2534,12 @@ theorem nonbridging_sum_eq_zero (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (
 
 #print axioms nonbridging_sum_eq_zero
 
-/-- **NEGATIVE CONTROL — the separator hypothesis is refutable exactly where it must be.** If `p₀`
-touches `p_d` there is NO separator at all, so `pairTerm_add_exchange` says nothing about a pair at
-separation one. A lemma whose hypothesis could not fail would be vacuous; this is where it fails. -/
+/-- **When `p₀` touches `pd`, no `A` satisfies the separator hypothesis.** For any `A` containing
+`p₀` and missing `pd`, the closure condition of `pairTerm_add_exchange` is false: `p₀` lies in
+`(E ∪ F ∪ {p₀, pd}) ∩ A`, `pd` in the complement, and they touch. So that lemma and
+`pairTerm_eq_core_mul_outside` say nothing about a pair at touch-separation one.
+
+DERIVED: no numeral. -/
 theorem no_separator_of_touch (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F A : Finset Pq)
     (ht : Touch bd p₀ pd) (h0 : p₀ ∈ A) (hd : pd ∉ A) :
     ¬ (∀ p ∈ (E ∪ F ∪ {p₀, pd}) ∩ A, ∀ r ∈ (E ∪ F ∪ {p₀, pd}) \ A, ¬ Touch bd p r) := by
@@ -2529,16 +2549,18 @@ theorem no_separator_of_touch (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E 
 
 #print axioms no_separator_of_touch
 
-/-- **A SURVIVING PAIR FACTORISES INTO A CORE AND AN OUTSIDE.** For a pair that DOES bridge, take `A`
-containing both `p₀` and `p_d` and touch-closed in the pair's union. Then the term is the term of the
-pair restricted to `A` — the connected core anchored on `p₀` and `p_d` — times the plain weights of
-whatever lies outside it. The outside carries no observable and no cancellation; it is a vacuum
-factor.
+/-- **A pair's term is its restriction to `A` times the two outside weights.** For `A` containing
+both `p₀` and `pd` and touch-closed inside `E ∪ F ∪ {p₀, pd}`,
 
-This is the companion of `pairTerm_add_exchange` on the other side of the split, and it is what turns
-the surviving sum into a POLYMER sum: a sum over cores, each multiplied by a sum over outside sets
-constrained not to touch its core. Bounding that constrained sum against `Z²` is the hard core of a
-Mayer expansion and is NOT done here; what is done is the factorisation it starts from. -/
+    pairTerm (E, F) = pairTerm (E ∩ A, F ∩ A) · (zw ∅ (E \ A) · zw ∅ (F \ A)).
+
+The outside factors carry no plaquette observable: both are `zw` at the empty observable set.
+
+The companion of `pairTerm_add_exchange` on the other side of the split — there `pd ∉ A`, here
+`pd ∈ A`. It is what turns the surviving sum into a sum over cores, each multiplied by a sum over
+outside sets that do not touch the core; `hard_core_ratio_le` is what bounds the latter against `Z`.
+
+DERIVED: no numeral. -/
 theorem pairTerm_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
     (E F A : Finset Pq)
     (hclosed : ∀ p ∈ (E ∪ F ∪ {p₀, pd}) ∩ A, ∀ r ∈ (E ∪ F ∪ {p₀, pd}) \ A, ¬ Touch bd p r)
@@ -2620,23 +2642,31 @@ theorem pairTerm_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (p₀ pd : 
 
 /-! ### The cancellation, applied to the Wilson connected correlation itself
 
-`nonbridging_sum_eq_zero` is an identity about the double sum; below it is the same identity about
-`WilsonBridge.wilsonCorrConn`, the object `Complete` consumes. The four Gibbs integrals expand over
-activated subsets (`corrNum_eq_subset_sum`), their two products become one sum over PAIRS, and the
-non-bridging pairs drop out. What is left is a sum over pairs whose union carries a touching chain
-from `p₀` to `p_d`, divided by `Z²`.
+`nonbridging_sum_eq_zero` is an identity about the double sum; `wilsonCorrConn_eq_bridging_sum` below
+is the same identity about `MassGap.WilsonBridge.wilsonCorrConn`. The four Gibbs integrals expand
+over activated subsets (`corrNum_eq_subset_sum`), their two products become one sum over pairs, and
+the non-bridging pairs drop out, leaving a sum over pairs whose union carries a touching chain from
+`p₀` to `p_d`, divided by `Z²`.
 
-The integrability side condition is the one `corrNum_eq_subset_sum` already carries, stated once for
-all the observable/subset pairs the proof uses. -/
+The integrability side condition is the one `corrNum_eq_subset_sum` carries, stated once for all the
+observable/subset pairs the proof uses. -/
 
 open scoped Classical in
-/-- **THE CONNECTED CORRELATION IS A SUM OVER BRIDGING PAIRS ALONE.** Every pair of activated subsets
-whose union fails to carry a touching chain from `p₀` to `p_d` contributes exactly nothing — at every
-coupling, on a lattice of any size. This is the volume cancellation done, on the actual object.
+/-- **The connected Wilson correlation is the sum over bridging pairs, divided by `Z²`.** With
+`Nc ≠ 0`, `p₀ ≠ pd` and the integrability condition `hint`,
 
-WHAT THIS DOES NOT DO. It does not bound the surviving sum. That needs `Kⁿ` bridging configurations
-at size `n` and a chain of length at least `d`; this supplies the reduction to that count, and
-nothing more. -/
+    wilsonCorrConn bd p₀ β pd = (∑ over q with Reach bd (q.1 ∪ q.2 ∪ {p₀, pd}) p₀ pd,
+                                   pairTerm bd p₀ pd β q) / Z ^ 2.
+
+The pairs that carry no touching chain from `p₀` to `pd` inside their own union contribute nothing,
+by `nonbridging_sum_eq_zero`, at every coupling and any lattice size. This is an identity, not a
+bound; the surviving sum is bounded further down by `wilsonCorrConn_abs_le_core_sum` and its
+successors.
+
+DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per component of the pair,
+each Gibbs numerator carrying its own partition function. The `0` is `hN : Nc ≠ 0`, which makes `Z`
+positive so the division is meaningful. The `1` in `hint`'s `Real.exp (-(β * φ_p)) - 1` is the
+activated weight of `boltz_eq_subset_sum`; the `1` and `2` in `q.1` and `q.2` are projections. -/
 theorem wilsonCorrConn_eq_bridging_sum (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ)
     (hint : ∀ D E : Finset Pq, Integrable
@@ -2741,37 +2771,40 @@ theorem wilsonCorrConn_eq_bridging_sum (hN : Nc ≠ 0) (bd : Pq → List (Lk × 
 
 #print axioms wilsonCorrConn_eq_bridging_sum
 
-/-! ### SEPARATION FORCES SIZE — what makes the bridging sum decay in the lag at all
+/-! ### Separation forces size
 
-`wilsonCorrConn_eq_bridging_sum` is exact but says nothing about the LAG on its own: it would read the
-same at separation one as at separation a hundred. What makes `d` an exponent is that a surviving
-pair has to be BIG: its union must carry a chain of touching plaquettes from `p₀` to `p_d`, and if
-`p_d` is more than `k` touch-steps from `p₀` then that chain needs `k` plaquettes strictly between
-them, all of which lie in `E ∪ F`.
+`wilsonCorrConn_eq_bridging_sum` is an identity and carries no dependence on the separation by
+itself. What puts the separation in the exponent is that a surviving pair must be large: its union
+carries a chain of touching plaquettes from `p₀` to `p_d`, and if `p_d` is more than `k` touch-steps
+from `p₀` then that chain needs `k` plaquettes strictly between them, all lying in `E ∪ F`. That is
+`card_ge_of_bridging`.
 
-The proof is a level function rather than a path argument, which is what makes it short. Let
-`lvl p` be the touch-distance from `p₀`. It is `0` at `p₀`, it rises by at most one across a touch,
-and it exceeds `k` at `p_d`. Walking any reaching chain, the level starts at `0` and ends above `k`
-with steps of at most `+1`, so it takes EVERY value `1, …, k` somewhere on the chain. Those `k`
-witnesses have distinct levels, hence are distinct; none is `p₀` (level `0`) or `p_d` (level `> k`);
-and all lie in the chain's ambient set. So `E ∪ F` has at least `k` elements.
+The argument is a level function rather than a path. Let `lvl p` be `touchLvl bd p₀ p`, the
+touch-distance from `p₀`. It is `0` at `p₀` (`touchLvl_self`), rises by at most one across a touch
+(`touchLvl_lipschitz`), and exceeds `k` at `p_d` (`lt_touchLvl_of_not_mem_ball`). Along any reaching
+chain the level starts at `0` and ends above `k` in steps of at most `+1`, so it takes every value
+`1, …, k` somewhere on the chain (`exists_of_level_le`). Those `k` witnesses have distinct levels,
+hence are distinct; none is `p₀`, of level `0`, or `p_d`, of level above `k`; and all lie in the
+chain's ambient set.
 
-The converse is proved too, and it is what makes the bound EXACT rather than merely true:
-`mem_ball_of_bridging` says a bridging pair always puts `p_d` within `|E| + |F| + 1` steps, so the
-hypothesis `p_d ∉ ball p₀ k` is false for every `k ≥ |E| + |F| + 1`. There is no slack to recover. -/
+`mem_ball_of_bridging` is the converse: a bridging pair always puts `p_d` within `|E| + |F| + 1`
+steps, so the hypothesis `p_d ∉ ball p₀ k` of `card_ge_of_bridging` is false for every
+`k ≥ |E| + |F| + 1`, and `k ≤ |E| + |F|` is the strongest conclusion the hypothesis admits. -/
 
-/-- Touching is symmetric — sharing a link is. -/
+/-- **`Touch` is symmetric**, sharing a link being a symmetric condition.
+
+DERIVED: no numeral. -/
 theorem touch_symm {bd : Pq → List (Lk × Bool)} {p q : Pq} (h : Touch bd p q) : Touch bd q p := by
   obtain ⟨l, hp, hq⟩ := h
   exact ⟨l, hq, hp⟩
 
 open scoped Classical in
-/-- The plaquettes within `n` touch-steps of `p₀`. No set `V` restricts it: this is the geometry of
-`bd` alone, which is what the lag has to be measured against.
+/-- The plaquettes within `n` touch-steps of `p₀`, by recursion on `n`. No ambient set restricts it,
+unlike `Reach` and `compOf`: this is the geometry of `bd` alone.
 
-DERIVED: `0` and `1` are the recursion's base and step, not parameters. The ball of radius zero is
-`{p₀}` because zero steps reach only the start, and radius `n+1` adds exactly the touch-neighbours of
-radius `n` because one step is one touch. -/
+DERIVED: the `0` and the `1` are the recursion's base and step. The ball of radius `0` is `{p₀}`,
+zero steps reaching only the start, and radius `n + 1` adds exactly the touch-neighbours of radius
+`n`, one step being one touch. -/
 noncomputable def ball (bd : Pq → List (Lk × Bool)) (p₀ : Pq) : ℕ → Finset Pq
   | 0 => {p₀}
   | n + 1 => ball bd p₀ n ∪ Finset.univ.filter (fun q => ∃ p ∈ ball bd p₀ n, Touch bd p q)
@@ -2800,7 +2833,11 @@ theorem mem_ball_succ_of_touch (bd : Pq → List (Lk × Bool)) (p₀ : Pq) {p q 
   refine Finset.mem_union_right _ ?_
   exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, ⟨p, hp, ht⟩⟩
 
-/-- Reaching inside any `V` is reaching in the geometry: a chain confined to `V` is still a chain. -/
+/-- **A reach inside any `V` lands in some ball**: `Reach bd V a b` gives an `n` with
+`b ∈ ball bd a n`. A chain confined to `V` is still a chain in the geometry of `bd`. The `n` is
+existential — no bound on it is claimed here.
+
+DERIVED: no numeral. -/
 theorem exists_mem_ball_of_reach (bd : Pq → List (Lk × Bool)) {V : Finset Pq} {a b : Pq}
     (h : Reach bd V a b) : ∃ n, b ∈ ball bd a n := by
   induction h with
@@ -2810,11 +2847,13 @@ theorem exists_mem_ball_of_reach (bd : Pq → List (Lk × Bool)) {V : Finset Pq}
       exact ⟨n + 1, mem_ball_succ_of_touch bd a n hn hbc.2.2⟩
 
 open scoped Classical in
-/-- The touch-distance from `p₀`, with a value off the component that no lemma below reads.
+/-- The touch-distance from `p₀`: the least `n` with `p ∈ ball bd p₀ n` when one exists, and a
+sentinel value otherwise.
 
-DERIVED: `Fintype.card Pq + 1` is a SENTINEL, not a bound. Every reachable plaquette lies in a ball of
-radius below `Fintype.card Pq`, so this value is attained only off the component, where no lemma reads
-it; `+1` merely puts it past every attainable distance. -/
+DERIVED: `Fintype.card Pq + 1` is that sentinel, not a bound on any distance. Every reachable
+plaquette lies in a ball of radius below `Fintype.card Pq`, so the sentinel is attained only off
+`p₀`'s component; the `1` puts it past every attainable distance, which is what
+`touchLvl_lipschitz` needs in its off-component case. -/
 noncomputable def touchLvl (bd : Pq → List (Lk × Bool)) (p₀ p : Pq) : ℕ :=
   if h : ∃ n, p ∈ ball bd p₀ n then Nat.find h else Fintype.card Pq + 1
 
@@ -2830,8 +2869,12 @@ theorem mem_ball_touchLvl (bd : Pq → List (Lk × Bool)) (p₀ p : Pq)
   rw [touchLvl, dif_pos hex]
   exact Nat.find_spec hex
 
-/-- **The level rises by at most one across a touch.** Off the component both sides take the same
-constant, and a touch cannot cross from the component to its outside — that is `touch_symm`. -/
+/-- **`touchLvl` rises by at most one across a touch**: `Touch bd p q` gives
+`touchLvl bd p₀ q ≤ touchLvl bd p₀ p + 1`. On `p₀`'s component this is the ball recursion; off it
+both sides take the sentinel value, since by `touch_symm` a touch cannot cross from the component to
+its outside.
+
+DERIVED: the `1` is one touch-step, the increment of the ball recursion. -/
 theorem touchLvl_lipschitz (bd : Pq → List (Lk × Bool)) (p₀ : Pq) :
     ∀ p q : Pq, Touch bd p q → touchLvl bd p₀ q ≤ touchLvl bd p₀ p + 1 := by
   classical
@@ -2855,9 +2898,12 @@ theorem lt_touchLvl_of_not_mem_ball (bd : Pq → List (Lk × Bool)) (p₀ p : Pq
   by_contra hcon
   exact hk (ball_mono bd p₀ (Nat.le_of_not_lt hcon) (Nat.find_spec hex))
 
-/-- **A reaching chain realises every intermediate level.** The level starts at `0`, ends at
-`lvl b`, and moves by at most `+1`, so it cannot skip a value. Each witness is `p₀` itself or lies in
-the ambient set. -/
+/-- **A reaching chain realises every level up to its endpoint's.** For any `lvl` that is `0` at `a`
+and rises by at most one across a touch, a `Reach bd V a b` gives, for each `j ≤ lvl b`, some `c`
+with `lvl c = j` and `c = a` or `c ∈ V`. `lvl` is an arbitrary function here, not `touchLvl`.
+
+DERIVED: the `0` is the hypothesis `lvl a = 0`; the `1` is the Lipschitz step
+`lvl q ≤ lvl p + 1`. -/
 theorem exists_of_level_le (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (lvl : Pq → ℕ) (a : Pq)
     (hlip : ∀ p q : Pq, Touch bd p q → lvl q ≤ lvl p + 1) (h0 : lvl a = 0) {b : Pq}
     (h : Reach bd V a b) : ∀ j ≤ lvl b, ∃ c, (c = a ∨ c ∈ V) ∧ lvl c = j := by
@@ -2875,8 +2921,12 @@ theorem exists_of_level_le (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (lvl 
       · exact ih j (by omega)
       · exact ⟨c', Or.inr hcV, by omega⟩
 
-/-- **SEPARATION FORCES SIZE, in the level form.** If the level of `b` exceeds `k`, any chain from
-`a` to `b` inside `V` forces `k` distinct members of `V` other than `a` and `b`. -/
+/-- **Separation forces size, in the level form.** For `lvl` with `lvl a = 0` and the Lipschitz
+property, `k < lvl b` and `Reach bd V a b` give `k ≤ ((V.erase a).erase b).card`: the chain forces
+`k` distinct members of `V` other than `a` and `b`, one per level in `Finset.Icc 1 k`.
+
+DERIVED: the `0` is `lvl a = 0`; the `1` is the Lipschitz step, and also the lower end of the
+interval `Finset.Icc 1 k` of levels the witnesses realise. -/
 theorem card_ge_of_reach_of_lvl (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (lvl : Pq → ℕ)
     (a b : Pq) (k : ℕ) (hlip : ∀ p q : Pq, Touch bd p q → lvl q ≤ lvl p + 1) (h0 : lvl a = 0)
     (hk : k < lvl b) (hreach : Reach bd V a b) :
@@ -2902,13 +2952,15 @@ theorem card_ge_of_reach_of_lvl (bd : Pq → List (Lk × Bool)) (V : Finset Pq) 
 
 #print axioms card_ge_of_reach_of_lvl
 
-/-- **SEPARATION FORCES SIZE — the statement the expansion needs.** If `p_d` is more than `k`
-touch-steps from `p₀`, every pair of activated subsets that BRIDGES them has `k ≤ |E| + |F|`.
+/-- **A bridging pair at separation more than `k` has at least `k` activated plaquettes.** If
+`pd ∉ ball bd p₀ k` and `Reach bd (E ∪ F ∪ {p₀, pd}) p₀ pd`, then `k ≤ E.card + F.card`.
 
-Together with `wilsonCorrConn_eq_bridging_sum` this is what puts the lag in the exponent: at
-separation `d` (`p_d ∉ ball p₀ (d−1)`) every surviving pair carries at least `d − 1` activated
-plaquettes, each costing `e^{2|β|} − 1` (`subset_weight_bound`). It supplies the `qᵈ`; it does not
-supply the `Kⁿ`. -/
+`card_ge_of_reach_of_lvl` at `lvl = touchLvl bd p₀`, with the `k` witnesses placed inside `E ∪ F` by
+erasing `p₀` and `pd` from the ambient set. Together with `wilsonCorrConn_eq_bridging_sum` this is
+what puts the separation in the exponent: each of those plaquettes costs `e^{2|β|} − 1` by
+`subset_weight_bound`. The count of bridging configurations is separate, in `card_connSets_le`.
+
+DERIVED: no numeral. -/
 theorem card_ge_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F : Finset Pq) (k : ℕ)
     (hk : pd ∉ ball bd p₀ k)
     (hreach : Reach bd (E ∪ F ∪ {p₀, pd}) p₀ pd) :
@@ -2931,11 +2983,13 @@ theorem card_ge_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F 
 
 #print axioms card_ge_of_bridging
 
-/-- **NEGATIVE CONTROL — the bound is EXACT, with no slack.** A bridging pair always puts `p_d`
-within `|E| + |F| + 1` touch-steps of `p₀`, so the hypothesis `p_d ∉ ball p₀ k` of
-`card_ge_of_bridging` is FALSE for every `k ≥ |E| + |F| + 1`. The largest `k` the hypothesis can
-carry is exactly `|E| + |F|`, which is what the conclusion returns: strengthening it to
-`k + 1 ≤ |E| + |F|` would make it unsatisfiable rather than stronger. -/
+/-- **A bridging pair puts `pd` within `E.card + F.card + 1` touch-steps of `p₀`.** The converse of
+`card_ge_of_bridging`: its hypothesis `pd ∉ ball bd p₀ k` is false for every
+`k ≥ E.card + F.card + 1`, so `k ≤ E.card + F.card` is the strongest conclusion that hypothesis
+admits, and `k + 1 ≤ E.card + F.card` would be unsatisfiable rather than stronger.
+
+DERIVED: the `1` is the last touch-step, the one from the chain's final intermediate plaquette to
+`pd` itself, which lies outside `E ∪ F`. -/
 theorem mem_ball_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F : Finset Pq)
     (hreach : Reach bd (E ∪ F ∪ {p₀, pd}) p₀ pd) :
     pd ∈ ball bd p₀ (E.card + F.card + 1) := by
@@ -2945,33 +2999,37 @@ theorem mem_ball_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F
 
 #print axioms mem_ball_of_bridging
 
-/-- **NEGATIVE CONTROL — touching kills the hypothesis at once.** At separation one there is nothing
-to prove and the lemma says nothing: `p_d ∈ ball p₀ 1`, so `card_ge_of_bridging` can only be used
-with `k = 0`. -/
+/-- **Touching plaquettes are one step apart**: `Touch bd p₀ pd` gives `pd ∈ ball bd p₀ 1`. So
+`card_ge_of_bridging`'s hypothesis `pd ∉ ball bd p₀ k` fails there for every `k ≥ 1`, leaving only
+`k = 0`.
+
+DERIVED: the `1` is the ball radius one touch-step reaches, `mem_ball_succ_of_touch` at `n = 0`. -/
 theorem mem_ball_one_of_touch (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (ht : Touch bd p₀ pd) :
     pd ∈ ball bd p₀ 1 :=
   mem_ball_succ_of_touch bd p₀ 0 (self_mem_ball bd p₀ 0) ht
 
 #print axioms mem_ball_one_of_touch
 
-/-! ### The connectivity constant, DERIVED from `bd`
+/-! ### The connectivity constant, read off `bd`
 
-The connectivity constant `K` of the expansion is a property of the lattice and must be computed from
-the geometry, never chosen. Everything below reads it off `bd`: `linkMult` counts how many plaquettes
-name a given link, `touchNbrs` is the set of plaquettes touching a given one, and `touchDeg` is the
-largest such set. No numeral appears in any of them.
+The connectivity constant `K` of the expansion is read off the geometry: `linkMult` counts how many
+plaquettes name a given link, `touchNbrs` is the set of plaquettes touching a given one, and
+`touchDeg` is the largest such set's cardinality. No numeral appears in any of these definitions.
 
-`ball_card_le` is what makes the constant do work: the number of plaquettes within `n` touch-steps
-grows at most like `(touchDeg + 1)ⁿ`, with no reference to the lattice's size. That is the
-volume-independence a chain bound needs, on the geometric side. -/
+`ball_card_le` is the statement they are for: the number of plaquettes within `n` touch-steps is at
+most `(touchDeg bd + 1) ^ n`, with the lattice extent in neither side. -/
 
 open scoped Classical in
-/-- How many plaquettes name the link `l` in their boundary word. -/
+/-- How many plaquettes name the link `l` in their boundary word.
+
+DERIVED: no numeral. -/
 noncomputable def linkMult (bd : Pq → List (Lk × Bool)) (l : Lk) : ℕ :=
   (Finset.univ.filter (fun q : Pq => l ∈ linkSupp bd q)).card
 
 open scoped Classical in
-/-- The plaquettes touching `p`. -/
+/-- The plaquettes touching `p`, `p` itself included when it touches itself.
+
+DERIVED: no numeral. -/
 noncomputable def touchNbrs (bd : Pq → List (Lk × Bool)) (p : Pq) : Finset Pq :=
   Finset.univ.filter (fun q => Touch bd p q)
 
@@ -2982,9 +3040,12 @@ theorem mem_touchNbrs {bd : Pq → List (Lk × Bool)} {p q : Pq} :
   simp
 
 open scoped Classical in
-/-- **THE DEGREE IS A SUM OVER THE PLAQUETTE'S OWN LINKS.** A plaquette can only touch through a link
-it names, so its neighbour count is at most the total multiplicity of its own links. Both sides are
-read off `bd`; nothing is chosen. -/
+/-- **A plaquette's touch-neighbours number at most the total multiplicity of its own links**:
+`(touchNbrs bd p).card ≤ ∑ l ∈ linkSupp bd p, linkMult bd l`. A touch goes through a link `p` names,
+so `touchNbrs bd p` sits inside the union over those links of the plaquettes naming each. Both sides
+are read off `bd`.
+
+DERIVED: no numeral. -/
 theorem touchNbrs_card_le (bd : Pq → List (Lk × Bool)) (p : Pq) :
     (touchNbrs bd p).card ≤ ∑ l ∈ linkSupp bd p, linkMult bd l := by
   classical
@@ -2998,7 +3059,10 @@ theorem touchNbrs_card_le (bd : Pq → List (Lk × Bool)) (p : Pq) :
 #print axioms touchNbrs_card_le
 
 open scoped Classical in
-/-- The largest number of plaquettes any one plaquette touches — the connectivity constant of `bd`. -/
+/-- The largest number of plaquettes any one plaquette touches: the supremum of `touchNbrs` cards
+over all of `Pq`, and the connectivity constant `K` the rate is built from.
+
+DERIVED: no numeral. -/
 noncomputable def touchDeg (bd : Pq → List (Lk × Bool)) : ℕ :=
   Finset.univ.sup (fun p => (touchNbrs bd p).card)
 
@@ -3008,9 +3072,12 @@ theorem touchNbrs_card_le_touchDeg (bd : Pq → List (Lk × Bool)) (p : Pq) :
   Finset.le_sup (f := fun p => (touchNbrs bd p).card) (Finset.mem_univ p)
 
 open scoped Classical in
-/-- **THE GEOMETRY GROWS AT MOST GEOMETRICALLY.** The `n`-step ball has at most `(touchDeg + 1)ⁿ`
-plaquettes, whatever the size of the lattice. This is the volume-independent input a chain bound
-needs from the geometry, and `touchDeg` in it is derived from `bd` by `touchNbrs_card_le`. -/
+/-- **The `n`-step touch-ball has at most `(touchDeg bd + 1) ^ n` plaquettes**, at every `n`. The
+lattice extent appears on neither side. Induction on `n`: the ball at `n + 1` sits inside the ball at
+`n` together with its plaquettes' neighbourhoods, and each contributes at most `touchDeg bd`.
+
+DERIVED: the `1` added to `touchDeg bd` is the plaquette itself, kept alongside its at most
+`touchDeg bd` neighbours at each step. -/
 theorem ball_card_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) :
     ∀ n : ℕ, (ball bd p₀ n).card ≤ (touchDeg bd + 1) ^ n := by
   classical
@@ -3047,11 +3114,12 @@ theorem ball_card_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) :
 #print axioms ball_card_le
 
 open scoped Classical in
-/-- **A SET IS CARRIED BY AT MOST `4^{|S|}` PAIRS.** Each side of a pair whose union is `S` is a
-subset of `S`, so the pair sum over a fixed union costs at most `4^{|S|}` — a factor that a chain
-bound absorbs into its own constant. This is the bridge from the double sum over PAIRS to a sum over
-their unions, and it is the only part of the counting obligation that is volume-free without further
-input. -/
+/-- **At most `4 ^ S.card` pairs have union `S`.** Each component of such a pair is a subset of `S`,
+so the pairs inject into `S.powerset ×ˢ S.powerset`. This is what turns a double sum over pairs into
+a sum over their unions.
+
+DERIVED: the `4` is `2 * 2`, one factor of `2 ^ S.card` per component of the pair, each ranging over
+the subsets of `S`. -/
 theorem card_pairs_with_union_le (S : Finset Pq) :
     ((Finset.univ : Finset (Finset Pq × Finset Pq)).filter (fun q => q.1 ∪ q.2 = S)).card
       ≤ 4 ^ S.card := by
@@ -3072,23 +3140,17 @@ theorem card_pairs_with_union_le (S : Finset Pq) :
 
 end ZeroCoupling
 
-/-! ### The constant EVALUATED on the lattice the flagship uses
+/-! ### The constant on the periodic hypercubic lattice
 
-`touchDeg` is derived from `bd` for any geometry. This section computes a bound on it for
-`WilsonHypercubic.bd` — the periodic `dim`-dimensional lattice `WilsonBridge.corrClay` and hence
-`Complete.readYMAt` are built on — and the point of the computation is WHAT IT DOES NOT CONTAIN: the
-extent `n` does not appear. A link is named by at most `4·dim` plaquettes (four word slots times the
-choice of the plane's other direction) and a plaquette names at most four links, so the connectivity
-constant is at most `16·dim`, whatever the volume.
+`touchDeg` is read off `bd` at any geometry. This section bounds it for `WilsonHypercubic.bd`, the
+periodic `dim`-dimensional lattice on `Site dim n`: a link is named by at most `4 * dim` plaquettes
+(four boundary-word slots, each leaving only the plane's other direction free) and a plaquette names
+at most four links, so `touchDeg (bd (d := dim) (n := n)) ≤ 16 * dim`. The extent `n` appears in
+neither bound.
 
-That is the whole reason a cluster expansion can beat the volume on the geometric side, and it is
-DERIVED here rather than chosen: `4` is the length of the plaquette boundary word and `dim` is the
-number of directions a plane's second axis can take.
-
-HOW LOOSE IT IS. Measured by brute force on the actual `bd` (d, n over 2..4 × 3..5): the true
-`touchDeg` is `16·dim − 14` — `18, 34, 50` at `dim = 2, 3, 4` — and independent of `n`, exactly as
-proved. So at `dim = 4` the bound `64` over-counts the truth `50` by a factor `1.28`. It is an upper
-bound and it is not vacuous. -/
+The `4` is the length of the plaquette boundary word and `dim` is the number of directions a plane's
+second axis can take. The bound is not tight: brute force over `dim, n` in `2..4 × 3..5` gives
+`touchDeg = 16 * dim − 14`, that is `18, 34, 50` at `dim = 2, 3, 4`, independent of `n`. -/
 
 section Hypercubic
 
@@ -3096,10 +3158,10 @@ open MassGap.WilsonHypercubic
 
 variable {dim n : ℕ} [NeZero n]
 
-/-- One periodic step back — the left inverse of `WilsonHypercubic.shift`.
+/-- One periodic step back along direction `μ`: `Function.update x μ (x μ - 1)`. `unshift_shift`
+records that it is a left inverse of `WilsonHypercubic.shift`.
 
-DERIVED: `1` is the lattice step, the same one `shift` adds. This is its inverse, so the numeral is
-fixed by that definition and not chosen here. -/
+DERIVED: the `1` is the lattice step, the same one `shift` adds; this subtracts it. -/
 def unshift (μ : Fin dim) (x : Site dim n) : Site dim n :=
   Function.update x μ (x μ - 1)
 
@@ -3110,9 +3172,13 @@ theorem unshift_shift (μ : Fin dim) (x : Site dim n) :
   simp
 
 open scoped Classical in
-/-- **A LINK IS NAMED BY AT MOST `4·dim` PLAQUETTES.** Four word slots, and each slot fixes one of
-the plane's two directions and the site, leaving only the other direction free. The extent `n` does
-not enter. -/
+/-- **A link of the periodic hypercubic lattice is named by at most `4 * dim` plaquettes**:
+`linkMult (bd (d := dim) (n := n)) l ≤ 4 * dim`. The plaquettes naming `l` inject into
+`Fin 4 × Fin dim` — one slot of the boundary word, and the plane's other direction — with the site
+determined by the slot. The extent `n` does not enter either side.
+
+DERIVED: the `4` is the length of `bd`'s boundary word, four links per plaquette; `dim` is the number
+of choices for the plane's second direction. -/
 theorem linkMult_bd_le (l : Link dim n) :
     linkMult (bd (d := dim) (n := n)) l ≤ 4 * dim := by
   classical
@@ -3146,7 +3212,11 @@ theorem linkMult_bd_le (l : Link dim n) :
 
 #print axioms linkMult_bd_le
 
-/-- A hypercubic plaquette names at most four links — the length of its boundary word. -/
+/-- **A hypercubic plaquette names at most four links**:
+`(linkSupp (bd (d := dim) (n := n)) q).card ≤ 4`, since `linkSupp` is the `toFinset` of a four-entry
+boundary word and duplicates can only shrink it.
+
+DERIVED: the `4` is the length of `bd`'s boundary word. -/
 theorem linkSupp_bd_card_le (q : Plaq dim n) :
     (linkSupp (bd (d := dim) (n := n)) q).card ≤ 4 := by
   classical
@@ -3154,9 +3224,14 @@ theorem linkSupp_bd_card_le (q : Plaq dim n) :
   simp [bd]
 
 open scoped Classical in
-/-- **THE CONNECTIVITY CONSTANT OF THE HYPERCUBIC LATTICE, DERIVED AND VOLUME-FREE.** At most
-`16·dim`, with no dependence on the extent `n`. Combined with `ball_card_le` this says the `n`-step
-neighbourhood of a plaquette has at most `(16·dim + 1)ⁿ` members however large the lattice is. -/
+/-- **`touchDeg (bd (d := dim) (n := n)) ≤ 16 * dim`**, with the extent `n` on neither side.
+`touchNbrs_card_le` bounds the degree by the summed multiplicity of a plaquette's own links, then
+`linkSupp_bd_card_le` and `linkMult_bd_le` bound the number of terms and each term. With
+`ball_card_le` this gives at most `(16 * dim + 1) ^ n` plaquettes within `n` touch-steps.
+
+DERIVED: the `16` is `4 * 4` — `linkSupp_bd_card_le`'s four links per plaquette times
+`linkMult_bd_le`'s four boundary-word slots — and `dim` is that lemma's count of second
+directions. -/
 theorem touchDeg_bd_le : touchDeg (bd (d := dim) (n := n)) ≤ 16 * dim := by
   classical
   refine Finset.sup_le (fun p _ => ?_)
@@ -3175,70 +3250,62 @@ end Hypercubic
 
 end MassGap.StrongCoupling
 
-/-! ### THE POLYMER HARD CORE — the constrained outside sum, measured against `Z²`
+/-! ### The constrained outside sum, measured against `Z²`
 
-`pairTerm_eq_core_mul_outside` factorises a surviving pair into a CORE anchored on `p₀` and `p_d`
-and an OUTSIDE that carries no observable. Resumming the surviving double sum by its core turns
+`pairTerm_eq_core_mul_outside` factorises a surviving pair into a core anchored on `p₀` and `p_d` and
+an outside that carries no observable. Resumming the surviving double sum by its core turns
 `wilsonCorrConn_eq_bridging_sum` into
 
     ρ_conn = ∑_{cores A}  (core term)  ·  ( ∑_{E' not touching A} ζ_∅(E') )² / Z²,
 
-because the two outside sets are independent and each is constrained only by not touching `A`. The
-UNCONSTRAINED version of that inner sum is exactly `Z`. So everything turns on one ratio, and it is
-the ratio this section bounds:
+the two outside sets being independent and each constrained only by not touching `A`. The
+unconstrained version of the inner sum is `Z`, so what this section bounds is the ratio
 
     R(A) = ( ∑_{E ⊆ Ω(A)} ζ_∅(E) ) / Z,      Ω(A) = { p : p touches nothing in A }.
 
-WHY IT IS THE WHOLE BALL GAME. `Z = ∫e^{−βS}` is exponentially small in the volume, so an absolute
-bound on the numerator divided by `Z²` blows up with the lattice. The exchange involution removed the
-non-bridging volume; `R(A)` is where the REST of it has to cancel. If `R(A)` grew with the lattice
-the cluster route would give nothing in infinite volume.
+`Z = ∫e^{−βS}` is exponentially small in the volume, so a bound on the numerator alone divided by
+`Z²` would grow with the lattice.
 
-IT CANCELS, AND ELEMENTARILY. The key is that the constrained sum is itself a partition function.
-Summing `ζ_∅` over the subsets of `W` reassembles the product that was split:
+The constrained sum is itself a partition function. Summing `ζ_∅` over the subsets of `W` reassembles
+the product that was split:
 
     ∑_{E ⊆ W} ∫ ∏_{p∈E} w_p  =  ∫ ∏_{p∈W} (1 + w_p)  =  ∫ ∏_{p∈W} e^{−βφ_p}  =  Z_W,
 
-the partition function of the SUB-SYSTEM carrying only `W`'s plaquettes (`subset_sum_eq_subPart`).
-Both `Z_W` and `Z = Z_P` are integrals of strictly positive weights, so no cancellation is involved
-and no absolute values are needed. Writing `S_P = S_W + S_{P∖W}` and using `φ ∈ [0,2]`,
+the partition function of the sub-system carrying only `W`'s plaquettes (`subset_sum_eq_subPart`).
+Both `Z_W` and `Z = Z_P` are integrals of strictly positive weights, so no absolute values are
+needed. Writing `S_P = S_W + S_{P∖W}` and using `φ ∈ [0,2]`,
 
     e^{−2β·|P∖W|} ≤ Z_P / Z_W ≤ 1        (β ≥ 0),
 
-so `1 ≤ Z_W/Z ≤ e^{2β·|P∖W|}`. With `W = Ω(A)` the excluded set `P∖Ω(A)` is exactly the plaquettes
-touching the core, of which there are at most `touchDeg bd · |A|` — a count read off the geometry by
-`touchNbrs_card_le_touchDeg`, with no reference to the lattice's size. Hence
+so `1 ≤ Z_W/Z ≤ e^{2β·|P∖W|}`. With `W = Ω(A)` the excluded set `P∖Ω(A)` is the plaquettes touching
+the core, of which there are at most `touchDeg bd · |A|` by `touchNbrs_card_le_touchDeg`, with the
+lattice extent nowhere in the count. Hence
 
     1 ≤ R(A) ≤ exp(2β · touchDeg(bd) · |A|),
 
-which depends on the CORE SIZE and on the connectivity constant, and NOT on the volume. That is the
-statement `hard_core_ratio_le` and `hard_core_outside_sq_div_partition_sq_le` carry.
+depending on the core size and the connectivity constant and not on the volume. That is
+`hard_core_ratio_le` and `hard_core_outside_sq_div_partition_sq_le`.
 
-WHAT MUST BE ASSUMED ABOUT `β`, LOUDLY. The upper bound needs `β ≥ 0`, and so does the lower bound.
-At `β < 0` each factor `e^{−βφ}` exceeds one, the sub-system's partition function is SMALLER than the
-full one, and `R(A) ≤ 1` while the claimed bound `e^{2βK|A|}` is below one: BOTH inequalities fail,
-and the finite-group control below reports them failing. Nothing beyond `β ≥ 0` is required —
-there is no small-coupling threshold in this ratio, which is why it is stated without one.
+Both inequalities require `0 ≤ β`. At `β < 0` each factor `e^{−βφ}` exceeds one, the sub-system's
+partition function is smaller than the full one, so `R(A) ≤ 1` while `e^{2βK|A|} < 1`, and both
+directions fail. Nothing beyond `0 ≤ β` is required: there is no threshold in this ratio, and it is
+stated without one.
 
-A THRESHOLD APPEARS ONLY WHEN THIS IS COMBINED WITH THE COUNT, and it is derived rather than chosen.
-Each activated plaquette costs `e^{2β} − 1` (`subset_weight_bound`), a connected core of `n`
-plaquettes anchored at `p₀` is one of at most `(touchDeg + 1)ⁿ` (`ball_card_le`), and this section
-contributes `e^{4β·touchDeg}` per core plaquette. The product
+A threshold appears when the ratio is combined with the count. Each activated plaquette costs
+`e^{2β} − 1` (`subset_weight_bound`), a connected core of `n` plaquettes anchored at `p₀` is one of
+at most `(touchDeg + 1)ⁿ` (`ball_card_le`), and this section contributes `e^{4β·touchDeg}` per core
+plaquette. The product
 
     q_eff(β) = (touchDeg + 1) · (e^{2β} − 1) · e^{4β·touchDeg}
 
-is the per-plaquette rate of the core sum, and `hard_core_rate_lt_one_of_small` says it drops below
-one on a neighbourhood of `β = 0` whose existence comes from `q_eff(0) = 0` and continuity — not from
-a number. The core sum itself is NOT summed here: that is the counting obligation, and it is the one
-place the volume could still return.
+is `hardCoreRate`, and `hard_core_rate_lt_one_of_small` gives a neighbourhood of `β = 0` on which it
+is below one, from `q_eff(0) = 0` and continuity rather than from a numeral.
 
-MEASURED. An exact-rational `Z₂` model (product uniform measure = product Haar; block independence
-across link-disjoint sets holds verbatim) confirms all three things a theorem can hide: the
-constrained and unconstrained sums genuinely differ (`Z_Ω/Z = 2.3703…` against `1`), the bound holds
-on every core of every geometry tried, and it FAILS when either hypothesis is dropped — at `β < 0`,
-and when the degree constant is replaced by one smaller than `touchDeg`. `R(A)` at a fixed core was
-measured on rings of 5 to 14 plaquettes and moved from `2.36066` to `2.37037`, converging rather than
-growing: the volume cancels. -/
+Measured on an exact-rational `Z₂` model, where the product uniform measure is product Haar and block
+independence across link-disjoint sets holds unchanged: the constrained and unconstrained sums differ
+(`Z_Ω/Z = 2.3703…` against `1`), the bound holds on every core of every geometry tried, and it fails
+at `β < 0` and when the degree constant is replaced by one smaller than `touchDeg`. `R(A)` at a fixed
+core over rings of 5 to 14 plaquettes moved from `2.36066` to `2.37037`. -/
 
 namespace MassGap.StrongCoupling
 
@@ -3249,14 +3316,19 @@ open MassGap.CompactGauge MassGap.LatticeGauge
 
 variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [DecidableEq Pq]
 
-/-- **The Boltzmann weight of the SUB-SYSTEM carrying only `W`'s plaquettes.** The whole lattice's
-weight is the case `W = univ`; every constrained outside sum is one of these. -/
+/-- The Boltzmann weight of the sub-system carrying only `W`'s plaquettes:
+`∏_{p ∈ W} e^{−βφ_p(U)}`. The whole lattice's weight is the case `W = univ`
+(`subPart_univ_eq_partition`).
+
+DERIVED: no numeral. -/
 noncomputable def subBoltz (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Finset Pq)
     (U : Lk → MassGap.SUN.SU Nc) : ℝ :=
   ∏ p ∈ W, Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U)))
 
-/-- The sub-weight is `e^{−β S_W}` — the product of exponentials is the exponential of the partial
-action. Every bound below is read off this form. -/
+/-- **`subBoltz bd β W U = exp (-(β · S_W(U)))`**, the product of exponentials being the exponential
+of the partial action `∑_{p ∈ W} φ_p(U)`. Every bound below reads this form rather than the product.
+
+DERIVED: no numeral. -/
 theorem subBoltz_eq_exp (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Finset Pq)
     (U : Lk → MassGap.SUN.SU Nc) :
     subBoltz (Nc := Nc) bd β W U
@@ -3277,14 +3349,20 @@ theorem measurable_subBoltz (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Fins
   exact (measurable_const.mul
     (measurable_wilsonDensity.comp (measurable_wilsonHol (G := MassGap.SUN.SU Nc) bd p))).neg
 
-/-- The partial action is nonnegative — each plaquette density is. -/
+/-- **The partial action over `W` is nonnegative**, each plaquette density being so by
+`wilsonDensity_nonneg`, which needs `Nc ≠ 0`.
+
+DERIVED: the first `0` is the hypothesis `Nc ≠ 0`; the second is the lower bound on the sum. -/
 theorem partial_action_nonneg (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (W : Finset Pq)
     (U : Lk → MassGap.SUN.SU Nc) :
     0 ≤ ∑ p ∈ W, wilsonDensity (N := Nc) (wilsonHol bd p U) :=
   Finset.sum_nonneg (fun _ _ => wilsonDensity_nonneg hN _)
 
-/-- The partial action is at most `2·|W|` — the Wilson density's range is `[0,2]`. This `2` is
-`WilsonAction.wilsonDensity_le_two`, not a chosen scale. -/
+/-- **The partial action over `W` is at most `2 * W.card`**, one plaquette at a time. Requires
+`Nc ≠ 0`.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`; the `2` is the upper end of the Wilson density's range,
+`WilsonAction.wilsonDensity_le_two`. -/
 theorem partial_action_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (W : Finset Pq)
     (U : Lk → MassGap.SUN.SU Nc) :
     ∑ p ∈ W, wilsonDensity (N := Nc) (wilsonHol bd p U) ≤ 2 * (W.card : ℝ) := by
@@ -3292,8 +3370,12 @@ theorem partial_action_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (W : F
         Finset.sum_le_sum (fun p _ => wilsonDensity_le_two hN _)
     _ = 2 * (W.card : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul]; ring
 
-/-- **MORE PLAQUETTES, SMALLER WEIGHT** — at `β ≥ 0`. Adding plaquettes only adds nonnegative energy.
-This is the lower half of the ratio bound, and it fails at `β < 0`. -/
+/-- **A larger plaquette set has the smaller sub-weight**: `W ⊆ W'` gives
+`subBoltz bd β W' U ≤ subBoltz bd β W U`, at every configuration. Adding plaquettes adds nonnegative
+action, which at `0 ≤ β` lowers the exponential. This is the lower half of the ratio bound and it
+fails at `β < 0`.
+
+DERIVED: the first `0` is the hypothesis `Nc ≠ 0`; the second is the sign hypothesis `0 ≤ β`. -/
 theorem subBoltz_le_of_subset (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ} (hβ : 0 ≤ β)
     {W W' : Finset Pq} (h : W ⊆ W') (U : Lk → MassGap.SUN.SU Nc) :
     subBoltz (Nc := Nc) bd β W' U ≤ subBoltz (Nc := Nc) bd β W U := by
@@ -3303,8 +3385,12 @@ theorem subBoltz_le_of_subset (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {�
     Finset.sum_le_sum_of_subset_of_nonneg h (fun p _ _ => wilsonDensity_nonneg hN _)
   nlinarith
 
-/-- **AND NOT MUCH SMALLER.** Dropping `n` plaquettes costs at most `e^{2βn}`, because each carries at
-most `2` of action. This is the upper half of the ratio bound; `2` is the density's range. -/
+/-- **And the smaller set's weight exceeds the larger's by at most `e^{2β|W'\W|}`**: for `W ⊆ W'`,
+`subBoltz bd β W U ≤ exp (2 * β * (W' \ W).card) * subBoltz bd β W' U`. The dropped plaquettes carry
+at most `2` of action each (`partial_action_le`). Upper half of the ratio bound, requiring `0 ≤ β`.
+
+DERIVED: the first `0` is `Nc ≠ 0`; the second is `0 ≤ β`; the `2` is the upper end of the Wilson
+density's range, one factor per dropped plaquette. -/
 theorem subBoltz_le_mul (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ} (hβ : 0 ≤ β)
     {W W' : Finset Pq} (h : W ⊆ W') (U : Lk → MassGap.SUN.SU Nc) :
     subBoltz (Nc := Nc) bd β W U
@@ -3316,7 +3402,10 @@ theorem subBoltz_le_mul (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : �
   have hgap := partial_action_le hN bd (W' \ W) U
   nlinarith
 
-/-- **THE SUB-SYSTEM'S PARTITION FUNCTION.** `Z_W = ∫ e^{−βS_W}`; the full `Z` is `W = univ`. -/
+/-- The sub-system's partition function, `Z_W = ∫ subBoltz bd β W` against product Haar. The full
+partition function is the case `W = univ`, by `subPart_univ_eq_partition`.
+
+DERIVED: no numeral. -/
 noncomputable def subPart (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Finset Pq) : ℝ :=
   ∫ U, subBoltz (Nc := Nc) bd β W U ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))
 
@@ -3334,8 +3423,12 @@ theorem integrable_subBoltz (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β 
   have habs : (0 : ℝ) ≤ |β| := abs_nonneg β
   nlinarith
 
-/-- The sub-partition function is strictly positive: the weight is bounded below by a positive
-constant on a probability space. -/
+/-- **`0 < subPart bd β W`** at every `β` and every `W`. The integrand is everywhere positive
+(`subBoltz_pos`) and integrable (`integrable_subBoltz`) against a probability measure, so its support
+is the whole space. No sign condition on `β` is needed.
+
+DERIVED: the first `0` is the hypothesis `Nc ≠ 0`; the second is the strict lower bound on the
+integral. -/
 theorem subPart_pos (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Finset Pq) :
     0 < subPart (Nc := Nc) bd β W := by
   unfold subPart
@@ -3362,8 +3455,12 @@ theorem subPart_le_mul (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ
     (fun U => subBoltz_le_mul hN bd hβ h U)
   rwa [integral_const_mul] at hmono
 
-/-- A product of activated weights is integrable: it is measurable and bounded, and the measure is a
-probability measure. Carried rather than assumed, so no hypothesis reaches the headline. -/
+/-- **A product of activated weights over `E` is integrable** against product Haar: it is measurable
+and bounded, and the measure is a probability measure. Requires `Nc ≠ 0`, which is what puts the
+Wilson density in `[0, 2]` and so bounds each factor. The dominating constant appears in the proof,
+not the statement.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. -/
 theorem integrable_wprod (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ) (E : Finset Pq) :
     Integrable (fun U => ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U)))
       (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) := by
@@ -3389,15 +3486,17 @@ theorem integrable_wprod (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : �
     _ ≤ Real.exp (2 * |β|) ^ (Fintype.card Pq) :=
         pow_le_pow_right₀ hone (Finset.card_le_univ E)
 
-/-- **THE CONSTRAINED OUTSIDE SUM IS A PARTITION FUNCTION.** Summing the activated weight over the
-subsets of `W` reassembles `∏_{p∈W}(1 + w_p) = ∏_{p∈W} e^{−βφ_p}`: the outside sum over `W` IS the
-sub-system's `Z_W`, exactly, at every coupling.
+/-- **The outside sum over the subsets of `W` is the sub-system's partition function**:
+`∑_{E ⊆ W} zw bd β ∅ E = subPart bd β W`, at every `β`. Summing the activated weights over subsets
+reassembles `∏_{p∈W}(1 + w_p) = ∏_{p∈W} e^{−βφ_p}` under `Finset.prod_add`. Requires `Nc ≠ 0`, for
+`integrable_wprod`.
 
-This is the whole reason the hard core is elementary here. `Z_W` is an integral of a strictly
-positive weight, so the ratio `Z_W/Z` involves no cancellation, no Mayer resummation and no
-convergence criterion — only the two pointwise bounds above.
+`subPart` is an integral of an everywhere-positive weight, so the ratio `Z_W/Z` compared below needs
+no absolute values.
 
-DERIVED: the `1` split off each factor is the same `1` as in `boltz_eq_subset_sum`. -/
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `1` split off each factor is the same one as in
+`boltz_eq_subset_sum`; the `∅` is the empty observable set, this sum carrying no plaquette
+observable. -/
 theorem subset_sum_eq_subPart (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ) (W : Finset Pq) :
     ∑ E ∈ W.powerset, zw (Nc := Nc) bd β ∅ E = subPart (Nc := Nc) bd β W := by
   classical
@@ -3424,8 +3523,10 @@ theorem subset_sum_eq_subPart (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (�
 
 #print axioms subset_sum_eq_subPart
 
-/-- The UNCONSTRAINED outside sum is `Z` itself: `subPart` at the full plaquette set is the Wilson
-partition function. -/
+/-- **`subPart bd β Finset.univ` is the Wilson partition function.** The unconstrained outside sum is
+therefore `Z`, by `subset_sum_eq_subPart` at `W = univ`.
+
+DERIVED: no numeral. -/
 theorem subPart_univ_eq_partition (bd : Pq → List (Lk × Bool)) (β : ℝ) :
     subPart (Nc := Nc) bd β Finset.univ
       = (wilsonSystem bd (wilsonDensity (N := Nc))).partition (probHaar (MassGap.SUN.SU Nc)) β := by
@@ -3446,10 +3547,13 @@ theorem subPart_univ_eq_partition (bd : Pq → List (Lk × Bool)) (β : ℝ) :
 
 #print axioms subPart_univ_eq_partition
 
-/-- **THE CONSTRAINED SUM IS AT LEAST THE UNCONSTRAINED ONE** — at `β ≥ 0`. Removing plaquettes
-removes nonnegative energy, so the constrained outside sum can only be larger than `Z`. Recorded
-because it is what makes the upper bound the only thing that has to be proved, and because it is the
-half that fails first at `β < 0`. -/
+/-- **The constrained outside sum is at least `Z`**: for `0 ≤ β` and any `Ω`,
+`1 ≤ (∑_{E ⊆ Ω} zw bd β ∅ E) / Z`. Restricting to `Ω` removes nonnegative action, which raises the
+weight. It fails at `β < 0`.
+
+DERIVED: the first `0` is `Nc ≠ 0`; the second is the sign hypothesis `0 ≤ β`; the `1` is the value
+of the ratio at `Ω = univ`, where numerator and denominator coincide by
+`subPart_univ_eq_partition`. -/
 theorem one_le_outside_sum_div_partition (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ}
     (hβ : 0 ≤ β) (Ω : Finset Pq) :
     1 ≤ (∑ E ∈ Ω.powerset, zw (Nc := Nc) bd β ∅ E)
@@ -3461,15 +3565,15 @@ theorem one_le_outside_sum_div_partition (hN : Nc ≠ 0) (bd : Pq → List (Lk �
 
 #print axioms one_le_outside_sum_div_partition
 
-/-- **THE HARD CORE, BOUNDED BY WHAT THE CONSTRAINT EXCLUDES.** The constrained outside sum divided
-by `Z` is at most `e^{2βn}`, where `n` bounds the number of plaquettes the constraint removes. The
-volume does not appear: only `n` and the coupling.
+/-- **The constrained outside sum divided by `Z` is at most `exp (2βn)`**, where `n` bounds `Ωᶜ.card`,
+the number of plaquettes the constraint removes. Requires `0 ≤ β` and `Nc ≠ 0`. Neither side mentions
+the lattice size; `n` and `β` are all that enter.
 
-This is the general form; `hard_core_ratio_le` instantiates `n` at the core's touch-neighbourhood.
+`hard_core_ratio_le` is this with `n` instantiated at the core's touch-neighbourhood.
 
-DERIVED: `2` is the range of the Wilson plaquette density, so `2βn` is the most action `n` excluded
-plaquettes can carry. `β ≥ 0` is REQUIRED and is not a smallness assumption — see the section
-docstring for what fails without it. -/
+DERIVED: the first `0` is `Nc ≠ 0` and the second is the sign hypothesis `0 ≤ β`, which is required
+and is not a smallness assumption. The `2` is the upper end of the Wilson density's range, so `2βn`
+is the most action `n` excluded plaquettes can carry. -/
 theorem outside_sum_div_partition_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ}
     (hβ : 0 ≤ β) (Ω : Finset Pq) (n : ℕ) (hn : Ωᶜ.card ≤ n) :
     (∑ E ∈ Ω.powerset, zw (Nc := Nc) bd β ∅ E)
@@ -3496,17 +3600,21 @@ theorem outside_sum_div_partition_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bo
 #print axioms outside_sum_div_partition_le
 
 open scoped Classical in
-/-- **THE PLAQUETTES AN OUTSIDE SET MAY DRAW ON**: those touching nothing in the core `A`. This is
-exactly the constraint `pairTerm_eq_core_mul_outside` leaves behind — `compOf_closed` says the core
-is touch-closed in the pair's union, so the outside is confined to `outsideOf`. -/
+/-- The plaquettes touching nothing in `A`: the set an outside plaquette may be drawn from once the
+core `A` is fixed. `compOf_closed` makes the core touch-closed in the pair's union, so the outside
+half of a factorised pair lies here.
+
+DERIVED: no numeral. -/
 noncomputable def outsideOf (bd : Pq → List (Lk × Bool)) (A : Finset Pq) : Finset Pq :=
   Finset.univ.filter (fun p => ∀ a ∈ A, ¬ Touch bd p a)
 
 open scoped Classical in
-/-- **WHAT THE CONSTRAINT EXCLUDES IS THE CORE'S NEIGHBOURHOOD, AND IT IS GEOMETRIC.** At most
-`touchDeg bd · |A|` plaquettes are forbidden: each is a touch-neighbour of some core plaquette, and
-`touchNbrs_card_le_touchDeg` bounds each core plaquette's neighbourhood by a constant read off `bd`.
-The lattice's size does not enter. -/
+/-- **The constraint excludes at most `touchDeg bd * A.card` plaquettes**:
+`(outsideOf bd A)ᶜ.card ≤ touchDeg bd * A.card`. Each excluded plaquette is a touch-neighbour of some
+member of `A`, and `touchNbrs_card_le_touchDeg` bounds each member's neighbourhood. The lattice size
+appears on neither side.
+
+DERIVED: no numeral. -/
 theorem card_compl_outsideOf_le (bd : Pq → List (Lk × Bool)) (A : Finset Pq) :
     (outsideOf bd A)ᶜ.card ≤ touchDeg bd * A.card := by
   classical
@@ -3526,23 +3634,21 @@ theorem card_compl_outsideOf_le (bd : Pq → List (Lk × Bool)) (A : Finset Pq) 
 #print axioms card_compl_outsideOf_le
 
 open scoped Classical in
-/-- **THE POLYMER HARD CORE — THE VOLUME CANCELS.** For every core `A`, the outside sum constrained
-not to touch `A`, divided by the UNCONSTRAINED sum `Z`, lies between `1` and
-`exp(2β · touchDeg(bd) · |A|)`.
+/-- **The constrained outside sum divided by `Z` lies between `1` and `exp (2β · touchDeg bd ·
+A.card)`**, for every core `A`, given `Nc ≠ 0` and `0 ≤ β`. A conjunction of
+`one_le_outside_sum_div_partition` and `outside_sum_div_partition_le` at `Ω = outsideOf bd A`, with
+`card_compl_outsideOf_le` supplying the exclusion count.
 
-Read the bound: it is a function of the CORE SIZE and the lattice's connectivity constant, and there
-is no `Fintype.card Pq` in it. The rest of the volume — everything the exchange involution did not
-already cancel — cancels here, exactly and without any expansion.
+Both bounds are functions of the core size and the connectivity constant; `Fintype.card Pq` appears
+in neither. The hypotheses are `0 ≤ β` and the Wilson density's range `[0, 2]`, and there is no
+smallness assumption on `β`.
 
-WHAT IT RESTS ON, and nothing more: `β ≥ 0`, the Wilson density's range `[0,2]`, and the geometric
-degree. There is NO smallness assumption, no Kotecky–Preiss criterion, and no Mayer resummation; the
-constrained sum is a partition function of a sub-system (`subset_sum_eq_subPart`) and the comparison
-is pointwise.
+This bounds one factor of the core resummation. Summing over cores needs their count at each size,
+which is `card_connSets_le`, and the per-plaquette weight, which is `subset_weight_bound`.
 
-WHAT IT DOES NOT DO. It bounds one factor of the core resummation. It does not sum over cores: that
-needs the count of connected cores of each size (`ball_card_le` bounds the ball, not the cores) and
-the per-plaquette weight (`subset_weight_bound`), and only their product carries a threshold in `β`.
--/
+DERIVED: the first `0` is `Nc ≠ 0` and the second is `0 ≤ β`. The `1` is the value of the ratio when
+the constraint is vacuous. The `2` is the upper end of the Wilson density's range, one factor per
+excluded plaquette. -/
 theorem hard_core_ratio_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ} (hβ : 0 ≤ β)
     (A : Finset Pq) :
     1 ≤ (∑ E ∈ (outsideOf bd A).powerset, zw (Nc := Nc) bd β ∅ E)
@@ -3557,11 +3663,14 @@ theorem hard_core_ratio_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β :
 #print axioms hard_core_ratio_le
 
 open scoped Classical in
-/-- **THE SHAPE THE POLYMER SUM ACTUALLY CONSUMES.** `pairTerm_eq_core_mul_outside` leaves TWO
-outside sets, each constrained by the same core, and the connected correlation carries `Z²` in its
-denominator (`wilsonCorrConn_eq_bridging_sum`). So what multiplies each core term is the SQUARE of
-the ratio above, and it is bounded by `exp(4β · touchDeg · |A|)` — still a function of the core size
-alone. -/
+/-- **The product of the two constrained outside sums, over `Z²`, is at most
+`exp (4β · touchDeg bd · A.card)`.** `pairTerm_eq_core_mul_outside` leaves two outside sets, each
+constrained by the same core, and `wilsonCorrConn_eq_bridging_sum` carries `Z ^ 2` in its
+denominator, so what multiplies each core term is the square of `hard_core_ratio_le`'s ratio.
+Requires `Nc ≠ 0` and `0 ≤ β`.
+
+DERIVED: the `0`s are `Nc ≠ 0` and `0 ≤ β`. The `2` in `Z ^ 2` is the two outside sums, and the `4`
+is `hard_core_ratio_le`'s `2` doubled by squaring that bound. -/
 theorem hard_core_outside_sq_div_partition_sq_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) {β : ℝ}
     (hβ : 0 ≤ β) (A : Finset Pq) :
     ((∑ E ∈ (outsideOf bd A).powerset, zw (Nc := Nc) bd β ∅ E)
@@ -3586,21 +3695,23 @@ theorem hard_core_outside_sq_div_partition_sq_le (hN : Nc ≠ 0) (bd : Pq → Li
 
 #print axioms hard_core_outside_sq_div_partition_sq_le
 
-/-! ### The threshold this creates, derived rather than pinned
+/-! ### The threshold the ratio creates when combined with the count
 
-The ratio bound carries no smallness assumption. A threshold in `β` appears only when it is
-multiplied by the two things the core sum also pays — the per-plaquette Boltzmann weight
-`e^{2β} − 1` (`subset_weight_bound`) and the geometric branching `touchDeg + 1` (`ball_card_le`) —
-and the product is the rate below. It is `0` at `β = 0` and continuous, so it is below one on a
-neighbourhood of zero whose existence is a consequence of the estimate and not a chosen number. -/
+The ratio bound carries no smallness assumption. A threshold in `β` appears when it is multiplied by
+the two other factors the core sum pays: the per-plaquette Boltzmann weight `e^{2β} − 1`
+(`subset_weight_bound`) and the geometric branching `touchDeg + 1` (`ball_card_le`). That product is
+`hardCoreRate`. It is `0` at `β = 0` and continuous, so `hard_core_rate_lt_one_of_small` places it
+below one on a neighbourhood of zero without naming a numeral. -/
 
-/-- **THE EFFECTIVE PER-PLAQUETTE RATE OF THE CORE SUM.** Branching times weight times the hard
-core's own factor. Each of the three is derived: `K + 1` from `ball_card_le`, `e^{2β} − 1` from
-`boltz_factor_bound`, `e^{4βK}` from `hard_core_outside_sq_div_partition_sq_le`.
+/-- The effective per-plaquette rate of the core sum:
+`hardCoreRate K β = (K + 1) · (e^{2β} − 1) · e^{4βK}`, the branching factor times the activated
+weight times the hard core's own factor. `K` is a parameter, instantiated at `touchDeg bd` by the
+callers.
 
-DERIVED: every numeral here is one of those three factors' own. The `+1` is the stay-put step in
-`stepSet`; the `2` in `e^{2β}` is the range `[0,2]` of `wilsonDensity`; the `4` is that same `2`
-doubled by the TWO outside sums the `Z²` denominator carries. Nothing is tuned. -/
+DERIVED: the `1` added to `K` is `stepSet`'s stay-put step, the same one in `ball_card_le`. The `1`
+subtracted is `boltz_factor_bound`'s, the factor at zero coupling. The `2` in `e^{2β}` is the upper
+end of `wilsonDensity`'s range; the `4` is that `2` doubled by the two outside sums of
+`hard_core_outside_sq_div_partition_sq_le`. -/
 noncomputable def hardCoreRate (K : ℕ) (β : ℝ) : ℝ :=
   ((K : ℝ) + 1) * (Real.exp (2 * β) - 1) * Real.exp (4 * β * (K : ℝ))
 
@@ -3611,9 +3722,13 @@ theorem continuous_hardCoreRate (K : ℕ) : Continuous (hardCoreRate K) := by
   unfold hardCoreRate
   fun_prop
 
-/-- **A THRESHOLD EXISTS, AND IT IS THE ESTIMATE'S OWN.** The rate vanishes at `β = 0` and is
-continuous, so some `b > 0` puts it below one on `[0, b)`. No numeral is chosen here and none could
-be: `b` is whatever the geometry's `K` makes it. -/
+/-- **There is a `b > 0` with `hardCoreRate K β < 1` for every `β` in `[0, b)`.** The rate is `0` at
+`β = 0` (`hardCoreRate_at_zero`) and continuous (`continuous_hardCoreRate`), so it is below one on a
+neighbourhood. `b` is existential and depends on `K`; no value for it is named.
+
+DERIVED: the `0`s are the coupling at which the rate vanishes, the lower end of the interval, and the
+strict lower bound on `b`. The `1` is the threshold the rate is compared against, the value at which
+a geometric series stops converging. -/
 theorem hard_core_rate_lt_one_of_small (K : ℕ) :
     ∃ b > 0, ∀ β : ℝ, 0 ≤ β → β < b → hardCoreRate K β < 1 := by
   have hlt : hardCoreRate K 0 < 1 := by rw [hardCoreRate_at_zero]; norm_num
@@ -3627,43 +3742,40 @@ theorem hard_core_rate_lt_one_of_small (K : ℕ) :
 
 #print axioms hard_core_rate_lt_one_of_small
 
-/-! ### What is left, stated so it cannot be mistaken for done
+/-! ### The shape after the hard core is bounded
 
-With the hard core bounded, the surviving sum is
+With the ratio bounded, the surviving sum reads
 
     ρ_conn = ∑_{cores (X,Y)} pairTerm(X,Y) · R(A)²,   1 ≤ R(A) ≤ e^{2β·touchDeg·|A|},
 
-and `|pairTerm(X,Y)| ≤ 4·(e^{2|β|}−1)^{|X|+|Y|}` by `subset_weight_bound` with the two plaquette
-observables bounded by `2` each. Every factor in that expression is now volume-free EXCEPT the number
-of cores at each size, which is the remaining obligation: how many touch-connected sets containing
-`p₀` and `p_d` have `|X| + |Y| = n`. `ball_card_le` bounds the `n`-step BALL by `(touchDeg + 1)ⁿ`,
-which is the right shape but is not the same count.
+and `|pairTerm(X,Y)| ≤ 4·(e^{2|β|}−1)^{|X|+|Y|}` by `subset_weight_bound`, the two plaquette
+observables being bounded by `2` each. The remaining factor is the number of cores at each size:
+how many touch-connected sets containing `p₀` and `p_d` have `|X| + |Y| = n`. `ball_card_le` bounds
+the `n`-step ball, which is a different count; `card_connSets_le` is the one this needs. -/
 
-Nothing below the core count depends on the volume, and nothing above it has been assumed. -/
+/-! ### Where the hard-core bound is consumed
 
-/-! ### Where the hard-core bound plugs in — and the one obligation it leaves
-
-The ratio bound is worth nothing unless something consumes it, so this states exactly what it buys
-and against which missing step. `pairTerm_eq_core_mul_outside` factorises each surviving pair; the
-resummation that turns the double sum over PAIRS into a sum over CORES times the constrained outside
-sum is `CoreResummation`, and it is NOT proved here. Given it, the hard-core bound converts a bound
-on the cores alone into a bound on the connected correlation, with `Z²` fully discharged. -/
+`pairTerm_eq_core_mul_outside` factorises each surviving pair. `CoreResummation` is the statement
+that the double sum over pairs regroups as a sum over cores times the constrained outside sums;
+`coreResummation_holds` proves it at the canonical witnesses. Given it,
+`wilsonCorrConn_abs_le_of_coreResummation` converts a bound on the cores alone into a bound on the
+connected correlation, with `Z²` discharged by `hard_core_outside_sq_div_partition_sq_le`. -/
 
 open scoped Classical in
-/-- **THE OBLIGATION.** `CoreResummation` says the bridging sum regroups by core: some finite family
-of cores, with an assignment `core` naming each one's touch-closed set, reproduces the bridging sum
-with the outside sums factored out.
+/-- The proposition that the bridging sum regroups by core: for a finite family `cores` and an
+assignment `core` naming each one's touch-closed set,
 
-This is the bijection `(E,F) ↦ ((E∩A, F∩A), (E∖A, F∖A))` between bridging pairs and
-cores × (outside pairs confined to `outsideOf A`). `pairTerm_eq_core_mul_outside` supplies the
-summand identity and `compOf_closed` supplies the separator; what is missing is the reindexing of the
-sum, which is a `Finset` bijection and nothing analytic.
+    ∑ over bridging q, pairTerm q = ∑ c ∈ cores, pairTerm c · (outside sum)²,
 
-**NOW PROVED**, at the canonical witnesses `corePairs` and `coreSpan`, by `coreResummation_holds`
-(via `bridging_sum_eq_core_sum`). It remains a `def` because the consumer takes the cores and the core
-map as parameters. It was carried as a hypothesis while only an exact-rational `Z₂` check supported it,
-on the principle that a numerical check is not a proof; that check is now the negative control for a
-theorem rather than the reason to believe one. -/
+the outside sums being taken over the subsets of `outsideOf bd (core c)`.
+
+The underlying map is `(E, F) ↦ ((E ∩ A, F ∩ A), (E \ A, F \ A))` between bridging pairs and cores
+paired with outside pairs confined to `outsideOf A`. `pairTerm_eq_core_mul_outside` gives the summand
+identity and `compOf_closed` the separator; the content is the reindexing of the sum.
+`coreResummation_holds` proves it at `corePairs` and `coreSpan`. It stays a `def` because
+`wilsonCorrConn_abs_le_of_coreResummation` takes the cores and the core map as parameters.
+
+DERIVED: no numeral. -/
 def CoreResummation (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
     (cores : Finset (Finset Pq × Finset Pq)) (core : Finset Pq × Finset Pq → Finset Pq) : Prop :=
   ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
@@ -3674,17 +3786,22 @@ def CoreResummation (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
         * ∑ F ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ F)
 
 open scoped Classical in
-/-- **`Z²` IS DISCHARGED.** Given the resummation, a bound on the CORES alone — each core term times
-`e^{4β·touchDeg·|A|}`, with no partition function in it — bounds the connected correlation itself.
+/-- **A bound on the cores alone bounds the connected correlation.** Given `Nc ≠ 0`, `p₀ ≠ pd`,
+`0 ≤ β`, the integrability condition, a `CoreResummation` at `cores` and `core`, and
 
-This is what the hard core was for. The exponentially small `Z²` that made a naive numerator bound
-blow up with the lattice does not appear in the hypothesis: it has been cancelled against the
-constrained outside sums, core by core, by `hard_core_outside_sq_div_partition_sq_le`.
+    ∑ c ∈ cores, |pairTerm bd p₀ pd β c| · exp (4β · touchDeg bd · (core c).card) ≤ M,
 
-What is left in the hypothesis is volume-free per core — `|pairTerm|` is bounded by
-`subset_weight_bound` and the factor is bounded by the core's own size — so the only way the volume
-can return is through the NUMBER of cores at each size, which is the counting obligation this file
-has said all along is open. -/
+then `|wilsonCorrConn bd p₀ β pd| ≤ M`.
+
+No partition function appears in the hypothesis: `hard_core_outside_sq_div_partition_sq_le` cancels
+the `Z ^ 2` of `wilsonCorrConn_eq_bridging_sum` against the constrained outside sums, core by core.
+Each summand of the hypothesis is bounded per core by `subset_weight_bound` and the core's own size,
+so what the bound depends on is the number of cores at each size.
+
+DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `1` in `hint`'s
+`Real.exp (-(β * φ_p)) - 1` is `boltz_eq_subset_sum`'s activated weight. The `4` is
+`hard_core_outside_sq_div_partition_sq_le`'s, the Wilson density's `2` doubled by the two outside
+sums. -/
 theorem wilsonCorrConn_abs_le_of_coreResummation (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (p₀ pd : Pq) (hne : p₀ ≠ pd) {β : ℝ} (hβ : 0 ≤ β)
     (hint : ∀ D E : Finset Pq, Integrable
@@ -3722,15 +3839,16 @@ theorem wilsonCorrConn_abs_le_of_coreResummation (hN : Nc ≠ 0) (bd : Pq → Li
 #print axioms wilsonCorrConn_abs_le_of_coreResummation
 
 open scoped Classical in
-/-- **NEGATIVE CONTROL — the constraint is REAL, so the ratio is not `Z/Z`.** A core plaquette that
-names at least one link touches itself, so it is excluded from its own outside set. Hence
-`outsideOf bd A` is a proper subset of the plaquettes whenever `A` is nonempty and its plaquettes
-have boundary words, and the constrained and unconstrained sums genuinely differ.
+/-- **A core plaquette with a nonempty link support is excluded from its own outside set**: `a ∈ A`
+and `(linkSupp bd a).Nonempty` give `a ∉ outsideOf bd A`, since `a` touches itself through any of its
+own links.
 
-Without this the whole section could be true and empty: if `outsideOf bd A` were everything, the
-ratio would be `Z/Z = 1` and `hard_core_ratio_le` would say nothing about any lattice. Measured in an
-exact-rational `Z₂` model the two sums differ by a factor `2.37` at `|A| = 1` on a ring, and that
-factor converges rather than growing as the ring is enlarged. -/
+So `outsideOf bd A` is a proper subset whenever `A` is nonempty and its plaquettes have boundary
+words, and the constrained sum of `hard_core_ratio_le` is not the unconstrained one. Measured in an
+exact-rational `Z₂` model, the two sums differ by a factor `2.37` at `A.card = 1` on a ring, and that
+factor converges rather than growing as the ring is enlarged.
+
+DERIVED: no numeral. -/
 theorem not_mem_outsideOf_self (bd : Pq → List (Lk × Bool)) (A : Finset Pq) {a : Pq} (ha : a ∈ A)
     (hne : (linkSupp bd a).Nonempty) : a ∉ outsideOf bd A := by
   classical
@@ -3746,36 +3864,31 @@ end MassGap.StrongCoupling
 
 -- ==== BEGIN connected-set count (lattice animal) ====
 
-/-! ### THE COUNT — connected plaquette sets, counted without the volume
+/-! ### Counting connected plaquette sets
 
-`card_ge_of_bridging` says a surviving pair is BIG; it does not say there are FEW of them, and that
-is the last place `Fintype.card Pq` can re-enter. What is needed is
+`card_ge_of_bridging` says a surviving pair is large; the count of such pairs is separate, and it is
+the last place `Fintype.card Pq` could enter. What `card_connSets_le` gives is
 
-    #{ S : S touch-connected, p₀ ∈ S, |S| = m }  ≤  Kᵐ
+    #{ S : S touch-connected, p₀ ∈ S, |S| = m }  ≤  ((touchDeg bd + 1)^2)^m
 
-with `K` read off the geometry and the volume nowhere in it. Routing this through `ball_card_le`
-does not work: the ball has at most `(touchDeg+1)ᵐ` members and its subsets number
-`2^((touchDeg+1)ᵐ)`, doubly exponential and useless against a geometric series. It needs an
-injection, not a containment.
+with the lattice extent on neither side. Routing it through `ball_card_le` would not do: the ball has
+at most `(touchDeg+1)^m` members and its subsets number `2^((touchDeg+1)^m)`. The argument is an
+injection instead of a containment.
 
-THE INJECTION. A touch-connected set of size `m` rooted at `p₀` is the set of entries of a WALK
-from `p₀` of length `2m − 1`: start at `p₀`, and each time a neighbour of the covered part is still
-uncovered, detour into it and come straight back — two steps per new plaquette, `m − 1` of them.
-Distinct sets have distinct entry sets, so the count is at most the number of such walks; and a walk
-is a sequence of steps, each into a set of at most `touchDeg + 1` plaquettes — the neighbours, plus
-staying put, which is what lets every walk be padded to the same length. So
+A touch-connected set of size `m` rooted at `p₀` is the entry set of a walk from `p₀` of length
+`2m − 1`: start at `p₀`, and whenever a neighbour of the covered part is still uncovered, step into
+it and step back — two steps per new plaquette, `m − 1` of them (`exists_walk_exact`). Distinct sets
+have distinct entry sets, so the count is at most the number of such walks, and a walk is a sequence
+of steps into `stepSet`, of size at most `touchDeg + 1` — the neighbours, plus staying put, which is
+what lets every walk be padded to a common length (`isWalk_pad`). Hence
+`K = (touchDeg bd + 1)^2`.
 
-    K = (touchDeg bd + 1)²,
+`walks` is built by `biUnion` over the step set rather than filtered out of `List Pq`, which is what
+gives `walks_card_le` a cardinality to bound.
 
-derived from `bd` exactly as `touchDeg` is, with no lattice extent in it. `walks` is BUILT rather
-than filtered: a filter over `List Pq` has no cardinality to bound, while a `Finset` assembled by
-`biUnion` over the step set has one by construction.
-
-WHAT CARRIES THE VOLUME IF CONNECTEDNESS IS DROPPED. `card_rooted_pairs_ge` is the control: the
-size-two sets containing `p₀` number `Fintype.card Pq − 1` exactly, which is the whole volume. The
-connectedness hypothesis is not a convenience in the statement — it is the only thing standing
-between this count and the lattice size, and it is supplied by `compOf_mem_connSets`, which is what
-the bridging pairs of `wilsonCorrConn_eq_bridging_sum` actually produce. -/
+`card_rooted_pairs_ge` is the control on the connectedness hypothesis: the size-two sets containing
+`p₀` number `Fintype.card Pq − 1` exactly, so without connectedness the count carries the whole
+volume. `compOf_mem_connSets` is what supplies connectedness from a bridging pair. -/
 
 
 namespace MassGap.StrongCoupling
@@ -3784,8 +3897,11 @@ section AnimalCount
 
 variable {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [DecidableEq Pq]
 
-/-- Where one step of a walk may land: a touch-neighbour of `p`, or `p` itself. Staying put is what
-lets walks of different lengths be compared at a single length, and it costs one in the degree. -/
+/-- Where one step of a walk may land: `insert p (touchNbrs bd p)`, a touch-neighbour of `p` or `p`
+itself. Staying put is what lets walks of different lengths be padded to a common length
+(`isWalk_pad`), and it costs one in the branching factor.
+
+DERIVED: no numeral. -/
 noncomputable def stepSet (bd : Pq → List (Lk × Bool)) (p : Pq) : Finset Pq :=
   insert p (touchNbrs bd p)
 
@@ -3796,7 +3912,11 @@ theorem mem_stepSet_of_touch {bd : Pq → List (Lk × Bool)} {p q : Pq} (h : Tou
     q ∈ stepSet bd p :=
   Finset.mem_insert_of_mem (mem_touchNbrs.mpr h)
 
-/-- **THE BRANCHING FACTOR, DERIVED.** One step has at most `touchDeg bd + 1` destinations. -/
+/-- **One step has at most `touchDeg bd + 1` destinations**:
+`(stepSet bd p).card ≤ touchDeg bd + 1`, from `Finset.card_insert_le` and
+`touchNbrs_card_le_touchDeg`.
+
+DERIVED: the `1` is the stay-put destination `p` itself, inserted into `touchNbrs bd p`. -/
 theorem stepSet_card_le (bd : Pq → List (Lk × Bool)) (p : Pq) :
     (stepSet bd p).card ≤ touchDeg bd + 1 := by
   have h1 := Finset.card_insert_le p (touchNbrs bd p)
@@ -3804,17 +3924,24 @@ theorem stepSet_card_le (bd : Pq → List (Lk × Bool)) (p : Pq) :
   unfold stepSet
   omega
 
-/-- The two-element step of a chain, as an iff. Stated here rather than taken from the library so
-that the proofs below do not carry a library spelling. -/
+/-- **`List.IsChain R (a :: b :: l) ↔ R a b ∧ List.IsChain R (b :: l)`.** The two-element step of a
+chain, stated here so that the proofs below do not carry a library spelling.
+
+DERIVED: no numeral. -/
 theorem ischain_cc {R : Pq → Pq → Prop} {a b : Pq} {l : List Pq} :
     List.IsChain R (a :: b :: l) ↔ R a b ∧ List.IsChain R (b :: l) := by
   simp
 
-/-- One plaquette is a chain. -/
+/-- **A one-element list is a chain**, for any relation `R`.
+
+DERIVED: no numeral. -/
 theorem ischain_one {R : Pq → Pq → Prop} (a : Pq) : List.IsChain R [a] := by
   simp
 
-/-- A plaquette list that starts at `p₀` and moves one step at a time. -/
+/-- A plaquette list whose head is `p₀` and whose consecutive entries are related by `stepSet`:
+each moves to a touch-neighbour or stays put.
+
+DERIVED: no numeral. -/
 def IsWalk (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (w : List Pq) : Prop :=
   w.head? = some p₀ ∧ List.IsChain (fun x y => y ∈ stepSet bd x) w
 
@@ -3839,13 +3966,12 @@ theorem IsWalk.mem_head {bd : Pq → List (Lk × Bool)} {p₀ : Pq} {w : List Pq
   rw [hw]
   simp
 
-/-- **THE WALKS OF A GIVEN LENGTH, AS A FINSET.** Every list of `k + 1` plaquettes that starts at
-`p` and steps. Assembled by `biUnion` over the step set rather than filtered out of `List Pq`,
-because it is the cardinality of this object that carries the bound.
+/-- The lists of `k + 1` plaquettes that start at `p` and step, as a `Finset`. Assembled by `biUnion`
+over `stepSet` rather than filtered out of `List Pq`, which is what gives `walks_card_le` something
+to bound. `mem_walks_of_isWalk` records that every `IsWalk` of that length belongs.
 
-DERIVED: `0` and `1` are the recursion's base and step. A zero-step walk is the single list `[p]`, and
-each further step prepends one plaquette drawn from `stepSet`, so the numerals are the length's own
-induction and carry no choice. -/
+DERIVED: the `0` and the `1` are the recursion's base and step. A zero-step walk is the single list
+`[p]`, and each further step prepends one plaquette drawn from `stepSet`. -/
 noncomputable def walks (bd : Pq → List (Lk × Bool)) : ℕ → Pq → Finset (List Pq)
   | 0, p => {[p]}
   | (k + 1), p => (stepSet bd p).biUnion (fun q => (walks bd k q).image (fun l => p :: l))
@@ -3856,8 +3982,12 @@ theorem walks_succ (bd : Pq → List (Lk × Bool)) (k : ℕ) (p : Pq) :
     walks bd (k + 1) p
       = (stepSet bd p).biUnion (fun q => (walks bd k q).image (fun l => p :: l)) := rfl
 
-/-- **THE WALK COUNT IS VOLUME-FREE.** At most `(touchDeg bd + 1)ᵏ` walks of `k + 1` plaquettes
-from any fixed start, whatever the size of the lattice. -/
+/-- **`(walks bd k p).card ≤ (touchDeg bd + 1) ^ k`**, at every `k` and every start. Induction on
+`k` through `stepSet_card_le`: each step multiplies the count by at most the branching factor. The
+lattice extent appears on neither side.
+
+DERIVED: the `1` added to `touchDeg bd` is `stepSet`'s stay-put destination; the exponent `k` is the
+number of steps, one factor per step. -/
 theorem walks_card_le (bd : Pq → List (Lk × Bool)) (k : ℕ) (p : Pq) :
     (walks bd k p).card ≤ (touchDeg bd + 1) ^ k := by
   induction k generalizing p with
@@ -3876,7 +4006,10 @@ theorem walks_card_le (bd : Pq → List (Lk × Bool)) (k : ℕ) (p : Pq) :
 
 #print axioms walks_card_le
 
-/-- Every stepping list of the right length is one of the counted walks. -/
+/-- **An `IsWalk bd p w` of length `k + 1` belongs to `walks bd k p`.** This is what lets
+`walks_card_le` bound a set of walks described by the predicate rather than by the construction.
+
+DERIVED: the `1` is the walk's own head: a `k`-step walk has `k + 1` entries. -/
 theorem mem_walks_of_isWalk (bd : Pq → List (Lk × Bool)) :
     ∀ (k : ℕ) (p : Pq) (w : List Pq), IsWalk bd p w → w.length = k + 1 → w ∈ walks bd k p := by
   intro k
@@ -3903,11 +4036,11 @@ theorem mem_walks_of_isWalk (bd : Pq → List (Lk × Bool)) :
           rw [walks_succ]
           exact Finset.mem_biUnion.mpr ⟨q, hchain.1, Finset.mem_image.mpr ⟨_, hmem, rfl⟩⟩
 
-/-! #### Padding — every walk can be stretched without moving
+/-! #### Padding
 
-A walk may be shorter than `2m − 1`; the count is over one length. Repeating the start is a legal
-step because `stepSet` contains the plaquette itself, and it changes neither the head nor the set of
-entries. -/
+`walks bd k p` fixes one length, while a covering walk may be shorter than `2m − 1`. Repeating the
+start is a legal step, `stepSet` containing the plaquette itself, and it changes neither the head nor
+the set of entries. `isWalk_pad` is the statement. -/
 
 theorem isWalk_cons_self {bd : Pq → List (Lk × Bool)} {p₀ : Pq} {w : List Pq}
     (h : IsWalk bd p₀ w) : IsWalk bd p₀ (p₀ :: w) := by
@@ -3937,7 +4070,9 @@ theorem isWalk_pad (bd : Pq → List (Lk × Bool)) (p₀ : Pq) :
       · simp only [List.length_cons, hl]
         omega
 
-/-! #### The detour — one new plaquette costs exactly two steps -/
+/-! #### The detour
+
+`isWalk_detour` adds one plaquette to a walk's entry set at a cost of exactly two in length. -/
 
 theorem head?_append_congr {a b c : List Pq} (h : b.head? = c.head?) :
     (a ++ b).head? = (a ++ c).head? := by
@@ -3945,8 +4080,11 @@ theorem head?_append_congr {a b c : List Pq} (h : b.head? = c.head?) :
   | nil => simpa using h
   | cons u a' => simp
 
-/-- Splicing `y, x, y` in for one occurrence of `y` keeps the chain. Proved by induction on the
-prefix rather than through an append lemma, so only the two-element step is needed. -/
+/-- **Splicing `y, x, y` in for one occurrence of `y` keeps a chain a chain**, given `R y x` and
+`R x y`. Proved by induction on the prefix, so only the two-element step `ischain_cc` is needed.
+`R` is an arbitrary relation here, not `stepSet`.
+
+DERIVED: no numeral. -/
 theorem ischain_detour {R : Pq → Pq → Prop} {y x : Pq} (h1 : R y x) (h2 : R x y) :
     ∀ (a b : List Pq), List.IsChain R (a ++ y :: b) → List.IsChain R (a ++ y :: x :: y :: b) := by
   intro a
@@ -3969,9 +4107,12 @@ theorem ischain_detour {R : Pq → Pq → Prop} {y x : Pq} (h1 : R y x) (h2 : R 
           have hstep := ih b (by simpa using hrest)
           simpa using hstep
 
-/-- **ONE NEW PLAQUETTE, TWO STEPS.** A walk that already visits `y` can be made to visit a
-touch-neighbour `x` of `y` as well, at a cost of exactly two in length and with no other change to
-the set of plaquettes it visits. This is the whole content of the `2m − 1`. -/
+/-- **One new plaquette costs two steps.** A walk `w` from `p₀` that visits `y`, with `Touch bd y x`,
+extends to a walk `w'` with `w'.toFinset = insert x w.toFinset` and `w'.length = w.length + 2`. The
+entry set gains `x` and nothing else. Both `Touch bd y x` and its symmetric form are used, by
+`touch_symm`, since the detour steps out and back.
+
+DERIVED: the `2` is the detour's length, one step out to `x` and one back to `y`. -/
 theorem isWalk_detour (bd : Pq → List (Lk × Bool)) (p₀ : Pq) {w : List Pq}
     (hw : IsWalk bd p₀ w) {y x : Pq} (hy : y ∈ w) (ht : Touch bd y x) :
     ∃ w', IsWalk bd p₀ w' ∧ w'.toFinset = insert x w.toFinset ∧ w'.length = w.length + 2 := by
@@ -3988,10 +4129,15 @@ theorem isWalk_detour (bd : Pq → List (Lk × Bool)) (p₀ : Pq) {w : List Pq}
   · simp only [List.length_append, List.length_cons]
     omega
 
-/-! #### Connectedness supplies the next plaquette -/
+/-! #### Connectedness supplies the next plaquette
 
-/-- **A CONNECTED SET HAS NO INTERNAL BOUNDARY.** Anything reachable inside `V` from a point of `W`
-is either in `W` or there is a touch from `W` to a point of `V` outside it. -/
+`exists_boundary_of_reach` turns a reach that leaves `W` into a touch across `W`'s boundary, which
+`isWalk_detour` then consumes; `exists_walk_cover` iterates the two. -/
+
+/-- **A reach out of `W` produces a boundary touch.** If `a ∈ W` and `Reach bd V a b`, then either
+`b ∈ W` or there are `y ∈ W` and `x ∈ V \ W` with `Touch bd y x`.
+
+DERIVED: no numeral. -/
 theorem exists_boundary_of_reach (bd : Pq → List (Lk × Bool)) (V W : Finset Pq) (a : Pq)
     (ha : a ∈ W) {b : Pq} (h : Reach bd V a b) :
     b ∈ W ∨ ∃ y ∈ W, ∃ x ∈ V, x ∉ W ∧ Touch bd y x := by
@@ -4004,8 +4150,13 @@ theorem exists_boundary_of_reach (bd : Pq → List (Lk × Bool)) (V W : Finset P
       · exact (Classical.em _).imp id (fun hc => ⟨_, hb, _, hcV, hc, ht⟩)
       · exact Or.inr hfound
 
-/-- **THE GROWTH STEP, ITERATED.** Any walk inside a connected `S` extends to one that covers `S`,
-paying two in length per plaquette it did not already have. -/
+/-- **A walk inside a connected `S` extends to one covering `S`, at two steps per new plaquette.**
+Given `S` touch-connected from `p₀`, a walk `w` with `w.toFinset ⊆ S` and
+`S.card ≤ w.toFinset.card + j`, there is a `w'` with `w'.toFinset = S` and
+`w'.length + 2 * w.toFinset.card ≤ w.length + 2 * S.card`. The induction runs on the fuel `j`, not
+on `S`.
+
+DERIVED: both `2`s are `isWalk_detour`'s detour length, one detour per plaquette added. -/
 theorem exists_walk_cover (bd : Pq → List (Lk × Bool)) (S : Finset Pq) (p₀ : Pq)
     (hconn : ∀ q ∈ S, Reach bd S p₀ q) :
     ∀ (j : ℕ) (w : List Pq), IsWalk bd p₀ w → w.toFinset ⊆ S → S.card ≤ w.toFinset.card + j →
@@ -4040,7 +4191,11 @@ theorem exists_walk_cover (bd : Pq → List (Lk × Bool)) (S : Finset Pq) (p₀ 
           obtain ⟨w', hw', hfS, hlen⟩ := ih w₁ hw₁ hsub₁ (by omega)
           exact ⟨w', hw', hfS, by omega⟩
 
-/-- A connected set of size `m` is covered by a walk of at most `2m − 1` plaquettes. -/
+/-- **A set touch-connected from `p₀ ∈ S` is the entry set of a walk with
+`w.length + 2 ≤ 1 + 2 * S.card`.** `exists_walk_cover` started from the one-element walk `[p₀]`.
+
+DERIVED: the `2`s are `isWalk_detour`'s detour length; the `1`s are the single starting entry `p₀`,
+which costs no step. -/
 theorem exists_walk_of_connected (bd : Pq → List (Lk × Bool)) (S : Finset Pq) (p₀ : Pq)
     (h0 : p₀ ∈ S) (hconn : ∀ q ∈ S, Reach bd S p₀ q) :
     ∃ w, IsWalk bd p₀ w ∧ w.toFinset = S ∧ w.length + 2 ≤ 1 + 2 * S.card := by
@@ -4058,7 +4213,12 @@ theorem exists_walk_of_connected (bd : Pq → List (Lk × Bool)) (S : Finset Pq)
   simp only [List.length_cons, List.length_nil] at hlen
   omega
 
-/-- A connected set of size `m` is covered by a walk of EXACTLY `2m − 1` plaquettes. -/
+/-- **A set touch-connected from `p₀ ∈ S` is the entry set of a walk of exactly
+`2 * S.card - 1` entries.** `exists_walk_of_connected` followed by `isWalk_pad`, which stretches a
+shorter walk to the common length without changing its entry set. The subtraction is on `ℕ`.
+
+DERIVED: the `2` is `isWalk_detour`'s detour length, two entries per plaquette; the `1` subtracted is
+the start `p₀`, counted once rather than twice. -/
 theorem exists_walk_exact (bd : Pq → List (Lk × Bool)) (S : Finset Pq) (p₀ : Pq)
     (h0 : p₀ ∈ S) (hconn : ∀ q ∈ S, Reach bd S p₀ q) :
     ∃ w, IsWalk bd p₀ w ∧ w.toFinset = S ∧ w.length = 2 * S.card - 1 := by
@@ -4069,8 +4229,10 @@ theorem exists_walk_exact (bd : Pq → List (Lk × Bool)) (S : Finset Pq) (p₀ 
 /-! #### The count -/
 
 open scoped Classical in
-/-- The touch-connected plaquette sets of size `m` rooted at `p₀` — the objects the bridging sum
-ranges over once `compOf` has picked out `p₀`'s component. -/
+/-- The plaquette sets of size `m` containing `p₀` in which every member is touch-reachable from `p₀`
+inside the set itself. `compOf_mem_connSets` is what puts a bridging pair's component here.
+
+DERIVED: no numeral. -/
 noncomputable def connSets (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : ℕ) : Finset (Finset Pq) :=
   Finset.univ.filter (fun S => p₀ ∈ S ∧ (∀ q ∈ S, Reach bd S p₀ q) ∧ S.card = m)
 
@@ -4081,15 +4243,18 @@ theorem mem_connSets {bd : Pq → List (Lk × Bool)} {p₀ : Pq} {m : ℕ} {S : 
   exact and_iff_right (Finset.mem_univ _)
 
 open scoped Classical in
-/-- **THE COUNT, WITH THE VOLUME GONE — the sharp form the walk encoding gives.** The
-touch-connected sets of size `m` containing a fixed plaquette number at most
-`(touchDeg bd + 1)^(2m-2)`.
+/-- **`(connSets bd p₀ m).card ≤ (touchDeg bd + 1) ^ (2 * m - 2)`.** The touch-connected sets of size
+`m` containing `p₀` inject into `walks bd (2 * m - 2) p₀` by `exists_walk_exact` and
+`mem_walks_of_isWalk`, and `walks_card_le` counts those. The `m = 0` case holds because `connSets`
+is empty there, `p₀` belonging to no set of size zero.
 
-The exponent is the number of STEPS: a walk covering `m` plaquettes needs `2(m-1)` of them, two per
-plaquette beyond the root, and each step chooses among at most `touchDeg bd + 1` destinations — the
-touch-neighbours, plus staying put. Both factors are read off `bd`. `Fintype.card Pq` appears
-nowhere in the statement and nowhere in the proof, which is the entire point: the bound is the same
-on a lattice of any extent. -/
+The exponent is the number of steps: a walk covering `m` plaquettes takes `2(m − 1)` of them, and
+each chooses among at most `touchDeg bd + 1` destinations. `Fintype.card Pq` appears neither in the
+statement nor in the proof.
+
+DERIVED: the `1` added to `touchDeg bd` is `stepSet`'s stay-put destination. The `2` multiplying `m`
+is `isWalk_detour`'s two steps per plaquette, and the `2` subtracted removes the root's own, which
+costs none. -/
 theorem card_connSets_le_steps (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : ℕ) :
     (connSets bd p₀ m).card ≤ (touchDeg bd + 1) ^ (2 * m - 2) := by
   classical
@@ -4120,13 +4285,12 @@ theorem card_connSets_le_steps (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : 
 
 #print axioms card_connSets_le_steps
 
-/-- **THE COUNT AS `Kᵐ`.** The same bound in the shape the resummation consumes, with
+/-- **`(connSets bd p₀ m).card ≤ ((touchDeg bd + 1) ^ 2) ^ m`.** `card_connSets_le_steps` with the
+exponent raised from `2m − 2` to `2m`, which weakens it by one factor of `(touchDeg bd + 1) ^ 2` and
+puts it in the `K ^ m` shape the resummation sums.
 
-    K = (touchDeg bd + 1)²
-
-derived from `bd`: `touchDeg` is the largest touch-neighbour count of the geometry, the `+1` is
-staying put, and the `2` is the two steps a detour costs. This is `card_connSets_le_steps` weakened
-by one factor of `K`, which is the price of a single exponent. -/
+DERIVED: the `1` is `stepSet`'s stay-put destination; the `2` is the two steps a detour costs, so
+`K = (touchDeg bd + 1) ^ 2` is the per-plaquette branching. Both are read off `bd`. -/
 theorem card_connSets_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : ℕ) :
     (connSets bd p₀ m).card ≤ ((touchDeg bd + 1) ^ 2) ^ m := by
   calc (connSets bd p₀ m).card
@@ -4137,8 +4301,12 @@ theorem card_connSets_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : ℕ) :
 #print axioms card_connSets_le
 
 open scoped Classical in
-/-- **THE TARGET, AS THE BRIDGING SUM NEEDS IT.** The same bound with `p_d` demanded as well —
-weaker as a count, and it is the one the expansion consumes. -/
+/-- **The same bound with `pd ∈ S` demanded as well.** The extra membership only shrinks the filtered
+set, so `card_connSets_le` applies unchanged. The connectedness required is reach from `p₀`, not from
+`pd`.
+
+DERIVED: the `1` is `stepSet`'s stay-put destination; the `2` is the two steps a detour costs, both
+inherited from `card_connSets_le`. -/
 theorem card_connSets_bridging_le (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (m : ℕ) :
     (Finset.univ.filter (fun S : Finset Pq =>
         p₀ ∈ S ∧ pd ∈ S ∧ (∀ q ∈ S, Reach bd S p₀ q) ∧ S.card = m)).card
@@ -4152,7 +4320,12 @@ theorem card_connSets_bridging_le (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
 #print axioms card_connSets_bridging_le
 
 open scoped Classical in
-/-- The bridging count in the sharp exponent, for a caller that wants the extra factor of `K`. -/
+/-- **The same bound with `pd ∈ S` demanded, at the `2 * m - 2` exponent.**
+`card_connSets_le_steps` in place of `card_connSets_le`, for a caller that wants the factor of `K`
+that `card_connSets_bridging_le` gives away.
+
+DERIVED: the `1` is `stepSet`'s stay-put destination; the `2`s are the two steps per plaquette and
+the root's exemption, both inherited from `card_connSets_le_steps`. -/
 theorem card_connSets_bridging_le_steps (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (m : ℕ) :
     (Finset.univ.filter (fun S : Finset Pq =>
         p₀ ∈ S ∧ pd ∈ S ∧ (∀ q ∈ S, Reach bd S p₀ q) ∧ S.card = m)).card
@@ -4166,14 +4339,14 @@ theorem card_connSets_bridging_le_steps (bd : Pq → List (Lk × Bool)) (p₀ pd
 #print axioms card_connSets_bridging_le_steps
 
 open scoped Classical in
-/-- **THE COUNT THE EXPANSION ACTUALLY NEEDS — over PAIRS, not sets.** The expansion sums over pairs
-`(E, F)` of activated subsets, not over their union, so the set count has to be paid for once more:
-`card_pairs_with_union_le` says a fixed union of size `m` is carried by at most `4ᵐ` pairs. Together
+/-- **The pairs whose union is touch-connected through `p₀` and has size `m` number at most
+`(4 * (touchDeg bd + 1) ^ 2) ^ m`.** The expansion sums over pairs, not over unions, so
+`card_connSets_le` is paid once more against `card_pairs_with_union_le`, which carries a fixed union
+of size `m` by at most `4 ^ m` pairs. Note the filter asks nothing about `pd`.
 
-    #{ (E, F) : E ∪ F touch-connected through p₀, |E ∪ F| = m }  ≤  (4·(touchDeg bd + 1)²)ᵐ
-
-which is the `Kⁿ` the resummation pays, with `K = 4·(touchDeg bd + 1)²`, every factor read off `bd`
-and the lattice extent in none of them. -/
+DERIVED: the `4` is `card_pairs_with_union_le`'s, two subsets of the union per component of the pair.
+The `1` is `stepSet`'s stay-put destination and the `2` is the two steps a detour costs, both from
+`card_connSets_le`. -/
 theorem card_bridging_pairs_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : ℕ) :
     ((Finset.univ : Finset (Finset Pq × Finset Pq)).filter (fun q =>
         p₀ ∈ q.1 ∪ q.2 ∧ (∀ r ∈ q.1 ∪ q.2, Reach bd (q.1 ∪ q.2) p₀ r)
@@ -4204,11 +4377,13 @@ theorem card_bridging_pairs_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (m : 
 
 #print axioms card_bridging_pairs_le
 
-/-! #### What the expansion actually hands the count -/
+/-! #### What the expansion hands the count -/
 
-/-- **A COMPONENT IS CONNECTED IN ITSELF.** `compOf` is defined by reachability inside `V`; the
-chain witnessing it never leaves the component, so the component is connected as a set in its own
-right. That is what `connSets` demands and what `compOf_closed` alone does not give. -/
+/-- **A reach inside `V` to a point of `V` is a reach inside `compOf bd V a`.** The witnessing chain
+never leaves the component, so the component is touch-connected as a set in its own right. That is
+what `connSets` requires and what `compOf_closed` alone does not give.
+
+DERIVED: no numeral. -/
 theorem reach_compOf (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) {p : Pq}
     (h : Reach bd V a p) : p ∈ V → Reach bd (compOf bd V a) a p := by
   classical
@@ -4223,8 +4398,11 @@ theorem reach_compOf (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) {p
 #print axioms reach_compOf
 
 open scoped Classical in
-/-- **THE BRIDGE FROM THE EXPANSION TO THE COUNT.** The component a bridging pair supplies is one of
-the counted sets, so `card_connSets_le` bounds how many of them there can be. -/
+/-- **`compOf bd V p₀ ∈ connSets bd p₀ (compOf bd V p₀).card`**, given `p₀ ∈ V`. The component a
+bridging pair supplies is one of the counted sets, so `card_connSets_le` applies to it. Its size is
+whatever it is; no bound on it is claimed here.
+
+DERIVED: no numeral. -/
 theorem compOf_mem_connSets (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (p₀ : Pq) (h : p₀ ∈ V) :
     compOf bd V p₀ ∈ connSets bd p₀ (compOf bd V p₀).card := by
   classical
@@ -4236,10 +4414,13 @@ theorem compOf_mem_connSets (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (p�
 #print axioms compOf_mem_connSets
 
 open scoped Classical in
-/-- **NEGATIVE CONTROL — DROP CONNECTEDNESS AND THE VOLUME COMES STRAIGHT BACK.** The sets of size
-two containing `p₀` number at least `Fintype.card Pq − 1`: the whole lattice, one term per other
-plaquette. No constant read off `bd` can bound that, which is exactly the finding that killed the
-pair-based statement. The connectedness hypothesis in `card_connSets_le` is load-bearing. -/
+/-- **The sets of size two containing `p₀` number at least `Fintype.card Pq - 1`.** One per other
+plaquette, by the injection `x ↦ {p₀, x}` from `Finset.univ.erase p₀`. No constant read off `bd`
+bounds this, so the connectedness hypothesis of `card_connSets_le` is what keeps the lattice size out
+of that count.
+
+DERIVED: the `2` is the size the filter demands; the `1` subtracted is `p₀` itself, excluded from the
+injection's domain. -/
 theorem card_rooted_pairs_ge (p₀ : Pq) :
     Fintype.card Pq - 1
       ≤ (Finset.univ.filter (fun S : Finset Pq => p₀ ∈ S ∧ S.card = 2)).card := by
@@ -4275,10 +4456,12 @@ open MassGap.WilsonHypercubic
 variable {dim n : ℕ} [NeZero n]
 
 open scoped Classical in
-/-- **THE COUNT ON THE LATTICE THE FLAGSHIP USES.** At most `((16·dim + 1)²)ᵐ` touch-connected
-plaquette sets of size `m` through a fixed plaquette, with the extent `n` nowhere in it. Both
-factors are derived: `16·dim` is `touchDeg_bd_le`, the `+1` is staying put, the `2` is the two steps
-a detour costs. -/
+/-- **`(connSets (bd (d := dim) (n := n)) p₀ m).card ≤ ((16 * dim + 1) ^ 2) ^ m`.**
+`card_connSets_le` with `touchDeg_bd_le` substituted for the degree. The extent `n` appears on
+neither side.
+
+DERIVED: the `16 * dim` is `touchDeg_bd_le`'s bound on the degree; the `1` is `stepSet`'s stay-put
+destination; the `2` is the two steps a detour costs. -/
 theorem card_connSets_le_hypercubic (p₀ : Plaq dim n) (m : ℕ) :
     (connSets (bd (d := dim) (n := n)) p₀ m).card ≤ ((16 * dim + 1) ^ 2) ^ m := by
   classical
@@ -4291,7 +4474,11 @@ theorem card_connSets_le_hypercubic (p₀ : Plaq dim n) (m : ℕ) :
 #print axioms card_connSets_le_hypercubic
 
 open scoped Classical in
-/-- The same on the hypercubic lattice in the sharp exponent: at most `(16·dim + 1)^(2m-2)`. -/
+/-- **`(connSets (bd (d := dim) (n := n)) p₀ m).card ≤ (16 * dim + 1) ^ (2 * m - 2)`.**
+`card_connSets_le_steps` with `touchDeg_bd_le` substituted, keeping the step exponent.
+
+DERIVED: the `16 * dim` is `touchDeg_bd_le`'s bound; the `1` is the stay-put destination; the `2`
+multiplying `m` is the two steps per plaquette and the `2` subtracted is the root's exemption. -/
 theorem card_connSets_le_steps_hypercubic (p₀ : Plaq dim n) (m : ℕ) :
     (connSets (bd (d := dim) (n := n)) p₀ m).card ≤ (16 * dim + 1) ^ (2 * m - 2) := by
   classical
@@ -4310,45 +4497,44 @@ end MassGap.StrongCoupling
 
 -- ==== BEGIN core resummation ====
 
-/-! ### THE CORE RESUMMATION, PROVED — and the per-pair magnitude bound
+/-! ### The core resummation, and the per-pair magnitude bound
 
-`CoreResummation` was stated as a hypothesis because the reindexing of the double sum was missing,
-not because anything in it was analytic. It is a bijection between BRIDGING PAIRS and
-CORES × (outside pairs), and the two halves of the summand identity were already here.
+`CoreResummation` is a reindexing of the double sum: a bijection between bridging pairs and cores
+paired with outside pairs. `bridging_sum_eq_core_sum` proves it at the canonical witnesses and
+`coreResummation_holds` states the result in the form the consumer takes.
 
-THE BIJECTION. For a bridging pair `(E,F)` put `A = compOf bd (E ∪ F ∪ {p₀,p_d}) p₀` — `p₀`'s
+The map. For a bridging pair `(E, F)` put `A = compOf bd (E ∪ F ∪ {p₀, p_d}) p₀`, `p₀`'s
 touch-component of the pair's own union. Then
 
     (E, F)  ↦  ( (E ∩ A, F ∩ A) , (E ∖ A, F ∖ A) ),   inverse  ((X,Y),(X',Y')) ↦ (X ∪ X', Y ∪ Y').
 
-The core `A` DEPENDS on the pair, so this is a fibration and not a product: the sum is regrouped by
-`Finset.sum_fiberwise_of_maps_to` over the fibres of `(E,F) ↦ (E ∩ A, F ∩ A)`, and each fibre is put
-in bijection with `outsideOf(A)`'s powerset squared by `Finset.sum_nbij'`.
+The core `A` depends on the pair, so this is a fibration rather than a product: the sum is regrouped
+by `Finset.sum_fiberwise_of_maps_to` over the fibres of `(E, F) ↦ (E ∩ A, F ∩ A)`, and each fibre is
+put in bijection with the square of `outsideOf A`'s powerset by `Finset.sum_nbij'`.
 
-THREE FACTS MAKE THE FIBRE EXACT, and each is proved below rather than assumed.
+Three facts make the fibre exact, each proved below:
 
-* `A` IS RECOVERABLE FROM THE CORE ALONE. `A ⊆ E ∪ F ∪ {p₀,p_d}` and `p₀, p_d ∈ A`, so
-  `A = (E ∩ A) ∪ (F ∩ A) ∪ {p₀,p_d}` — the core's own SPAN (`coreSpan`). That is what lets the
-  statement's `core` be a function of the core pair, which is what `CoreResummation` demands.
-* THE CORE IS ITS OWN COMPONENT. A reachability chain inside `V` never leaves `p₀`'s component of
-  `V`, so `compOf bd A p₀ = A`. That is `IsCorePair`, and it is exactly the image of the forward
-  map.
-* A CORE AND ITS OUTSIDE ARE DISJOINT. Every plaquette of a core touches another one of the core —
-  `p₀` because the core bridges to `p_d ≠ p₀`, every other because it is reached along a chain — so
-  no core plaquette survives `outsideOf`. Without this the outside data would not be recoverable
-  from the union and the map would not be injective. It is the only place `p₀ ≠ p_d` is used.
+* `A` is recoverable from the core alone. `A ⊆ E ∪ F ∪ {p₀, p_d}` with `p₀, p_d ∈ A` gives
+  `A = (E ∩ A) ∪ (F ∩ A) ∪ {p₀, p_d}`, the core's own span (`coreSpan`, `coreSpan_eq_of_mem_crs`).
+  That is what lets `CoreResummation`'s `core` be a function of the core pair.
+* The core is its own component: a reach chain inside `V` never leaves `p₀`'s component of `V`, so
+  `compOf bd A p₀ = A`. That is `IsCorePair`, and it is the image of the forward map.
+* A core and its outside are disjoint (`not_mem_coreSpan_of_mem_outsideOf_crs`). Every plaquette of a
+  core touches another one — `p₀` because the core bridges to `p_d ≠ p₀`, every other because it is
+  reached along a chain — so none survives `outsideOf`. Without it the outside data would not be
+  recoverable from the union. It is the only place `p₀ ≠ p_d` is used.
 
-THE MAGNITUDE BOUND. `|pairTerm(E,F)| ≤ 8·q^{|E|+|F|}` with `q = e^{2|β|} − 1`. The `8` is DERIVED,
-not pinned: `|zw D E| ≤ 2^{|D|}·q^{|E|}` because each plaquette observable lies in `[0,2]`
-(`wilsonPlaqObs_le_two`) and each activated weight is bounded by `q` (`subset_weight_bound`), and the
-two products of the connected numerator contribute `2²·2⁰ = 4` and `2¹·2¹ = 4`.
+The magnitude bound is `pairTerm_abs_le`: `|pairTerm (E, F)| ≤ 8 · q ^ (|E| + |F|)` with
+`q = e^{2|β|} − 1`. `zw_abs_le` gives `|zw D E| ≤ 2^{|D|} · q^{|E|}`, each plaquette observable lying
+in `[0, 2]` (`wilsonPlaqObs_le_two`) and each activated weight being bounded by `q`
+(`subset_weight_bound`); the two products of the connected numerator contribute `2²·2⁰ = 4` and
+`2¹·2¹ = 4`.
 
-MEASURED, on the exact-rational `Z₂` model (`code/certify/z2_polymer_hard_core.py`), on RINGS — a
-plaquette chain is degenerate there, its holonomies are independent and every connected correlator is
-zero, so a chain check would be vacuous. On rings of 5, 6 and 7 both directions of the bijection are
-exact (`J∘I = id` on every bridging pair, `I∘J = id` on every core-and-outside), the fibres partition
-the bridging pairs (912, 3312 and 12240 of them, against 912, 3312 and 11808 cores), and the two sums
-agree as rationals: `27/16384`, `81/262144`, `243/4194304`, none of them zero. -/
+Measured on the exact-rational `Z₂` model (`code/certify/z2_polymer_hard_core.py`), on rings: a
+plaquette chain is degenerate there, its holonomies independent and every connected correlator zero,
+so a chain check would be vacuous. On rings of 5, 6 and 7 both directions of the bijection are exact,
+the fibres partition the bridging pairs (912, 3312 and 12240 of them, against 912, 3312 and 11808
+cores), and the two sums agree as rationals: `27/16384`, `81/262144`, `243/4194304`, none zero. -/
 
 namespace MassGap.StrongCoupling
 
@@ -4361,7 +4547,9 @@ variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [D
 
 /-! #### The geometry of a core -/
 
-/-- Touch-reachability only grows when the ambient set does. -/
+/-- **`Reach` is monotone in its ambient set**: `V ⊆ W` carries `Reach bd V a b` to `Reach bd W a b`.
+
+DERIVED: no numeral. -/
 theorem reach_mono_crs (bd : Pq → List (Lk × Bool)) {V W : Finset Pq} (hVW : V ⊆ W) {a b : Pq}
     (h : Reach bd V a b) : Reach bd W a b := by
   induction h with
@@ -4371,7 +4559,10 @@ theorem reach_mono_crs (bd : Pq → List (Lk × Bool)) {V W : Finset Pq} (hVW : 
 #print axioms reach_mono_crs
 
 open scoped Classical in
-/-- A chain from `a` never leaves `a`'s component, so the component is its own component. -/
+/-- **`compOf bd (compOf bd V a) a = compOf bd V a`.** A reach chain from `a` inside `V` never leaves
+`a`'s component, so restricting the ambient set to that component loses nothing.
+
+DERIVED: no numeral. -/
 theorem compOf_idem_crs (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq) :
     compOf bd (compOf bd V a) a = compOf bd V a := by
   apply Finset.Subset.antisymm
@@ -4389,9 +4580,11 @@ theorem compOf_idem_crs (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq)
 
 #print axioms compOf_idem_crs
 
-/-- **THE SPAN OF A CORE PAIR** — its two halves together with the two anchors. This is the `core`
-function `CoreResummation` asks for: a set read off the core pair ALONE, with no reference to the
-bridging pair it came from. -/
+/-- The span of a core pair: `c.1 ∪ c.2 ∪ {p₀, pd}`, its two halves together with the two anchors.
+This is the `core` function `CoreResummation` takes — a set read off the core pair alone, with no
+reference to the bridging pair it came from.
+
+DERIVED: no numeral. -/
 def coreSpan (p₀ pd : Pq) (c : Finset Pq × Finset Pq) : Finset Pq :=
   c.1 ∪ c.2 ∪ {p₀, pd}
 
@@ -4407,9 +4600,12 @@ theorem fst_subset_coreSpan (p₀ pd : Pq) (c : Finset Pq × Finset Pq) : c.1 �
 theorem snd_subset_coreSpan (p₀ pd : Pq) (c : Finset Pq × Finset Pq) : c.2 ⊆ coreSpan p₀ pd c := by
   intro x hx; simp [coreSpan, hx]
 
-/-- **THE SEPARATOR IS RECOVERABLE FROM THE CORE.** A set caught between the anchors and the pair's
-union is exactly the span of the pair it cuts down to. Purely a `Finset` identity — this is what
-makes `core` a function of the core pair and not of the bridging pair. -/
+/-- **`coreSpan p₀ pd (E ∩ A, F ∩ A) = A`**, given `A ⊆ E ∪ F ∪ {p₀, pd}`, `p₀ ∈ A` and `pd ∈ A`. A
+set caught between the anchors and the pair's union is the span of the pair it cuts down to. A
+`Finset` identity, with no reachability in it: this is what makes `core` a function of the core pair
+rather than of the bridging pair.
+
+DERIVED: no numeral. -/
 theorem coreSpan_eq_of_mem_crs (A E F : Finset Pq) (p₀ pd : Pq)
     (hAV : A ⊆ E ∪ F ∪ {p₀, pd}) (h0 : p₀ ∈ A) (hd : pd ∈ A) :
     coreSpan p₀ pd (E ∩ A, F ∩ A) = A := by
@@ -4434,7 +4630,11 @@ theorem coreSpan_eq_of_mem_crs (A E F : Finset Pq) (p₀ pd : Pq)
 #print axioms coreSpan_eq_of_mem_crs
 
 open scoped Classical in
-/-- The component of a BRIDGING pair is the span of the core it cuts down to. -/
+/-- **A bridging pair's component is the span of the core it cuts down to.**
+`coreSpan_eq_of_mem_crs` at `A = compOf bd (E ∪ F ∪ {p₀, pd}) p₀`; the bridging hypothesis is what
+puts `pd` in that component.
+
+DERIVED: no numeral. -/
 theorem coreSpan_core_eq_crs (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F : Finset Pq)
     (hbr : Reach bd (E ∪ F ∪ {p₀, pd}) p₀ pd) :
     coreSpan p₀ pd (E ∩ compOf bd (E ∪ F ∪ {p₀, pd}) p₀,
@@ -4448,13 +4648,18 @@ theorem coreSpan_core_eq_crs (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F
 #print axioms coreSpan_core_eq_crs
 
 open scoped Classical in
-/-- **A PAIR IS A CORE** when it is exactly `p₀`'s touch-component of its own span: nothing in it is
-detached from `p₀`, and it reaches `p_d` because `p_d` is in the span. -/
+/-- A pair is a core when its span is exactly `p₀`'s touch-component of that span: nothing in it is
+detached from `p₀`, and `pd` is reached because `pd` lies in the span.
+
+DERIVED: no numeral. -/
 def IsCorePair (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (c : Finset Pq × Finset Pq) : Prop :=
   compOf bd (coreSpan p₀ pd c) p₀ = coreSpan p₀ pd c
 
 open scoped Classical in
-/-- The finite family of cores — the index set `CoreResummation` sums over. -/
+/-- The pairs satisfying `IsCorePair`, as a `Finset`: the index set `coreResummation_holds` sums
+over.
+
+DERIVED: no numeral. -/
 noncomputable def corePairs (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) :
     Finset (Finset Pq × Finset Pq) :=
   Finset.univ.filter (fun c => IsCorePair bd p₀ pd c)
@@ -4466,15 +4671,19 @@ theorem mem_corePairs {bd : Pq → List (Lk × Bool)} {p₀ pd : Pq} {c : Finset
   exact ⟨fun h => h.2, fun h => ⟨Finset.mem_univ _, h⟩⟩
 
 open scoped Classical in
-/-- **THE CORE THIS SUM PRODUCES IS ONE OF THE COUNTED SETS.** The reindexing below lands on
-`compOf bd (E ∪ F ∪ {p₀,p_d}) p₀` — `p₀`'s COMPONENT — and not on a connected union, which is what
-makes it compose with the count: a span is touch-connected as a set in its own right, so
-`card_connSets_le` applies to it with no side condition. A bridging pair's union need NOT be
-connected as a whole, and a count assuming that would not cover this sum.
+/-- **A core pair's span is one of the counted connected sets**:
+`coreSpan p₀ pd c ∈ connSets bd p₀ (coreSpan p₀ pd c).card` for every `IsCorePair`.
+`compOf_mem_connSets` rewritten along the `IsCorePair` equation.
 
-What still separates the two is that a span carries more than one core pair: `c.1` and `c.2` are two
-subsets of it whose union with the anchors is the span, so the count over `corePairs` has to sum over
-those as well as over the spans. That is a count, not a hypothesis, and it IS done: card_connSets_le bounds the spans and card_corePairs_span_le the ordered splits, both volume-free. -/
+The reindexing lands on `p₀`'s component, not on a connected union, which is what lets it compose
+with the count: a span is touch-connected as a set in its own right, so `card_connSets_le` applies
+with no side condition. A bridging pair's union need not be connected as a whole.
+
+One span carries more than one core pair — `c.1` and `c.2` are two subsets whose union with the
+anchors is the span — so counting `corePairs` needs `card_corePairs_span_le` for the ordered splits
+alongside `card_connSets_le` for the spans.
+
+DERIVED: no numeral. -/
 theorem coreSpan_mem_connSets (bd : Pq → List (Lk × Bool)) {p₀ pd : Pq}
     {c : Finset Pq × Finset Pq} (hc : IsCorePair bd p₀ pd c) :
     coreSpan p₀ pd c ∈ connSets bd p₀ (coreSpan p₀ pd c).card := by
@@ -4484,7 +4693,10 @@ theorem coreSpan_mem_connSets (bd : Pq → List (Lk × Bool)) {p₀ pd : Pq}
 #print axioms coreSpan_mem_connSets
 
 open scoped Classical in
-/-- Cutting a bridging pair down to its component produces a CORE. -/
+/-- **Cutting a bridging pair down to `p₀`'s component produces a core pair.** The forward map of the
+resummation lands in `corePairs`, by `coreSpan_core_eq_crs` and `compOf_idem_crs`.
+
+DERIVED: no numeral. -/
 theorem isCorePair_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E F : Finset Pq)
     (hbr : Reach bd (E ∪ F ∪ {p₀, pd}) p₀ pd) :
     IsCorePair bd p₀ pd (E ∩ compOf bd (E ∪ F ∪ {p₀, pd}) p₀,
@@ -4496,12 +4708,15 @@ theorem isCorePair_of_bridging (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (E
 #print axioms isCorePair_of_bridging
 
 open scoped Classical in
-/-- **A CORE AND ITS OUTSIDE ARE DISJOINT.** Every plaquette of a core touches another one of the
-core, so none of them survives the `outsideOf` filter. `p₀` is the only case needing an argument, and
-it is where `p₀ ≠ p_d` is used: a core bridges, so `p₀`'s chain to `p_d` has a first step.
+/-- **A member of a core's outside is not in the core's span.** For an `IsCorePair` with `p₀ ≠ pd`,
+`z ∈ outsideOf bd (coreSpan p₀ pd c)` gives `z ∉ coreSpan p₀ pd c`. Every plaquette of the span
+touches another one — reached along its own chain — so none survives the `outsideOf` filter. `p₀` is
+the case needing `p₀ ≠ pd`: a core reaches `pd`, so `p₀`'s chain to it has a first step.
 
-Without this the union `(c.1 ∪ X)` would not determine `(c.1, X)` and the reindexing below would not
-be injective. -/
+Without this the union `c.1 ∪ X` would not determine `(c.1, X)` and the reindexing in
+`bridging_sum_eq_core_sum` would not be injective.
+
+DERIVED: no numeral. -/
 theorem not_mem_coreSpan_of_mem_outsideOf_crs (bd : Pq → List (Lk × Bool)) {p₀ pd : Pq}
     (hne : p₀ ≠ pd) {c : Finset Pq × Finset Pq} (hc : IsCorePair bd p₀ pd c) {z : Pq}
     (hz : z ∈ outsideOf bd (coreSpan p₀ pd c)) : z ∉ coreSpan p₀ pd c := by
@@ -4524,8 +4739,11 @@ theorem not_mem_coreSpan_of_mem_outsideOf_crs (bd : Pq → List (Lk × Bool)) {p
 #print axioms not_mem_coreSpan_of_mem_outsideOf_crs
 
 open scoped Classical in
-/-- What falls outside the component touches nothing inside it — so it is confined to `outsideOf`,
-which is the constraint the hard-core bound is stated against. -/
+/-- **`W \ compOf bd V a ⊆ outsideOf bd (compOf bd V a)`**, for `W ⊆ V`. What falls outside the
+component touches nothing inside it, by `compOf_closed`, so it is confined to the set the hard-core
+bound is stated against.
+
+DERIVED: no numeral. -/
 theorem sdiff_compOf_subset_outsideOf_crs (bd : Pq → List (Lk × Bool)) (V : Finset Pq) (a : Pq)
     {W : Finset Pq} (hW : W ⊆ V) :
     W \ compOf bd V a ⊆ outsideOf bd (compOf bd V a) := by
@@ -4539,9 +4757,13 @@ theorem sdiff_compOf_subset_outsideOf_crs (bd : Pq → List (Lk × Bool)) (V : F
 #print axioms sdiff_compOf_subset_outsideOf_crs
 
 open scoped Classical in
-/-- **A CORE PLUS AN UNTOUCHING OUTSIDE HAS THE CORE AS ITS COMPONENT.** Adding plaquettes that touch
-nothing in the core cannot extend `p₀`'s reach, so the rebuilt pair lands on the fibre it came from.
-This is the inverse direction of the reindexing. -/
+/-- **A core rebuilt with an untouching outside has the core's span as its component**:
+`compOf bd ((c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ {p₀, pd}) p₀ = coreSpan p₀ pd c` when `X` and `Y` lie in
+`outsideOf bd (coreSpan p₀ pd c)` and `c` is a core pair. Plaquettes touching nothing in the span
+cannot extend `p₀`'s reach, so the rebuilt pair lands on the fibre it came from. This is the inverse
+direction of the reindexing in `bridging_sum_eq_core_sum`.
+
+DERIVED: no numeral. -/
 theorem compOf_union_outside_crs (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     {c : Finset Pq × Finset Pq} (hc : IsCorePair bd p₀ pd c) {X Y : Finset Pq}
     (hX : X ⊆ outsideOf bd (coreSpan p₀ pd c)) (hY : Y ⊆ outsideOf bd (coreSpan p₀ pd c)) :
@@ -4580,8 +4802,11 @@ theorem compOf_union_outside_crs (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
 
 /-! #### The reindexing -/
 
-/-- A scalar times the square of a finite sum is the sum over the PRODUCT of index pairs. The shape
-`Finset.sum_nbij'` needs on the right-hand side. -/
+/-- **`T * ((∑_P w) * (∑_P w)) = ∑_{P ×ˢ P} T * (w x.1 * w x.2)`.** A scalar times the square of a
+finite sum, rewritten as a sum over the product of index pairs — the shape `Finset.sum_nbij'` needs
+on the right-hand side in `bridging_sum_eq_core_sum`. The index type is arbitrary.
+
+DERIVED: the `1` and `2` in `x.1` and `x.2` are projections, not numerals. -/
 theorem mul_sq_sum_eq_sum_product_crs {ι : Type*} (T : ℝ) (P : Finset ι) (w : ι → ℝ) :
     T * ((∑ E ∈ P, w E) * ∑ F ∈ P, w F) = ∑ x ∈ P ×ˢ P, T * (w x.1 * w x.2) := by
   rw [Finset.sum_product]
@@ -4593,11 +4818,14 @@ theorem mul_sq_sum_eq_sum_product_crs {ι : Type*} (T : ℝ) (P : Finset ι) (w 
 #print axioms mul_sq_sum_eq_sum_product_crs
 
 open scoped Classical in
-/-- **THE BRIDGING SUM REGROUPS BY CORE.** The identity `CoreResummation` names, proved: the sum over
-bridging pairs equals the sum over cores of the core's own term times the two constrained outside
-sums. Nothing analytic enters — it is `Finset.sum_fiberwise_of_maps_to` over the fibres of
-`(E,F) ↦ (E ∩ A, F ∩ A)` followed by `Finset.sum_nbij'` on each fibre, with
-`pairTerm_eq_core_mul_outside` as the summand identity and `compOf_closed` as the separator. -/
+/-- **The bridging sum equals the sum over core pairs of the core term times its two constrained
+outside sums**, for `p₀ ≠ pd` and every `β`. `Finset.sum_fiberwise_of_maps_to` over the fibres of
+`(E, F) ↦ (E ∩ A, F ∩ A)`, then `Finset.sum_nbij'` on each fibre against
+`(outsideOf bd (coreSpan p₀ pd c)).powerset ×ˢ` itself, with `pairTerm_eq_core_mul_outside` as the
+summand identity and `compOf_closed` as the separator. Nothing measure-theoretic enters.
+
+DERIVED: the `∅`s are the empty observable set, the outside sums carrying no plaquette observable.
+The `1` and `2` in `q.1`, `q.2`, `c.1`, `c.2` are projections, not numerals. -/
 theorem bridging_sum_eq_core_sum (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd)
     (β : ℝ) :
     ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
@@ -4718,8 +4946,10 @@ theorem bridging_sum_eq_core_sum (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) 
 #print axioms bridging_sum_eq_core_sum
 
 open scoped Classical in
-/-- **`CoreResummation` IS A THEOREM.** The hypothesis `wilsonCorrConn_abs_le_of_coreResummation`
-carried is discharged, at the family `corePairs` with `coreSpan` as the core map. -/
+/-- **`CoreResummation` holds at `corePairs` with `coreSpan` as the core map**, given `p₀ ≠ pd`. This
+is `bridging_sum_eq_core_sum` restated in the form `wilsonCorrConn_abs_le_of_coreResummation` takes.
+
+DERIVED: no numeral. -/
 theorem coreResummation_holds (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd) (β : ℝ) :
     CoreResummation (Nc := Nc) bd p₀ pd β (corePairs bd p₀ pd) (coreSpan p₀ pd) :=
   bridging_sum_eq_core_sum bd p₀ pd hne β
@@ -4728,12 +4958,13 @@ theorem coreResummation_holds (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hn
 
 /-! #### The per-pair magnitude bound -/
 
-/-- **A TERM OF THE EXPANSION IS BOUNDED BY ITS OBSERVABLES AND ITS ACTIVATED SIZE.**
-`|zw D E| ≤ 2^{|D|}·(e^{2|β|}−1)^{|E|}`.
+/-- **`|zw bd β D E| ≤ 2 ^ D.card * (e^{2|β|} − 1) ^ E.card`**, at every `β` and every pair of
+plaquette sets. Requires `Nc ≠ 0`. The integrand is bounded pointwise and the measure is a
+probability measure, so no volume factor appears.
 
-DERIVED: the `2` is the range of the Wilson plaquette density (`wilsonPlaqObs_le_two`), the
-`e^{2|β|}−1` is `subset_weight_bound`, and the measure is a probability measure so no volume factor
-appears. -/
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `2` in the base is the upper end of the Wilson
+plaquette observable's range (`wilsonPlaqObs_le_two`), one factor per member of `D`. The `2` in the
+exponent and the `1` come from `subset_weight_bound`, one factor per member of `E`. -/
 theorem zw_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ) (D E : Finset Pq) :
     |zw (Nc := Nc) bd β D E| ≤ 2 ^ D.card * (Real.exp (2 * |β|) - 1) ^ E.card := by
   have hbound : ∀ U : Lk → MassGap.SUN.SU Nc,
@@ -4765,7 +4996,11 @@ theorem zw_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ) (D 
 
 #print axioms zw_abs_le
 
-/-- The triangle inequality for a difference of two products, with each factor bounded. -/
+/-- **`|a*b − c*d| ≤ A*B + C*D`** when each of `a, b, c, d` is bounded in absolute value by the
+corresponding capital and `0 ≤ A`, `0 ≤ C`. The triangle inequality for a difference of two products.
+No sign condition is needed on `B` or `D`.
+
+DERIVED: the `0`s are the sign hypotheses on `A` and `C`, which `mul_le_mul` needs. -/
 theorem abs_sub_mul_le_crs {a b c d A B C D : ℝ} (ha : |a| ≤ A) (hb : |b| ≤ B) (hc : |c| ≤ C)
     (hd : |d| ≤ D) (hA : 0 ≤ A) (hC : 0 ≤ C) : |a * b - c * d| ≤ A * B + C * D := by
   have h1 : |a * b| ≤ A * B := by
@@ -4779,20 +5014,19 @@ theorem abs_sub_mul_le_crs {a b c d A B C D : ℝ} (ha : |a| ≤ A) (hb : |b| �
   rw [abs_le]
   constructor <;> linarith
 
-/-- **THE PER-PAIR MAGNITUDE BOUND.** `|pairTerm(E,F)| ≤ 8·q^{|E|+|F|}` with `q = e^{2|β|} − 1`.
+/-- **`|pairTerm bd p₀ pd β q| ≤ 8 * (e^{2|β|} − 1) ^ (q.1.card + q.2.card)`**, at every coupling, on
+any lattice, with no separation required between `p₀` and `pd`. Requires `Nc ≠ 0`.
 
-DERIVED, not pinned. `zw_abs_le` gives `2^{|D|}·q^{|E|}` per term, and the connected numerator's two
-products carry `|{p₀,p_d}| ≤ 2` and `|∅| = 0` observables in one, `1` and `1` in the other: `4·1` and
-`2·2`, which the triangle inequality adds to `8`. That is the constant these two inputs produce; it
-is NOT claimed attained, and it is not attained in the finite-group control — the largest ratio
-`|pairTerm|/(8·q^{|E|+|F|})` measured there is `1/8`, on a geometry where `p₀` and `p_d` have the
-same boundary word and so are perfectly correlated, and `1/16` on rings.
+`zw_abs_le` bounds each of the four terms, and `abs_sub_mul_le_crs` adds the two products. The bound
+is not claimed attained: the largest ratio `|pairTerm|/(8·q^{|E|+|F|})` measured in the finite-group
+control is `1/8`, on a geometry where `p₀` and `pd` share a boundary word, and `1/16` on rings.
+`zw_abs_le` itself is attained, its ratio reaching `1` at `D = E = ∅`; dropping its observable factor
+`2 ^ D.card` would make it false by a factor `2` at `D = {p₀, pd}` on that same geometry.
 
-`zw_abs_le` itself IS attained: its ratio reaches `1` exactly, at `D = E = ∅`. Dropping its
-observable factor `2^{|D|}` — claiming `|zw D E| ≤ q^{|E|}` — is false, by a factor `2` at
-`D = {p₀,p_d}` on that same correlated geometry.
-
-This holds at every coupling, on any lattice, and needs no separation between `p₀` and `p_d`. -/
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `2` and the `1` in `e^{2|β|} − 1` are
+`subset_weight_bound`'s. The `8` is `4 + 4`: `zw_abs_le` gives `2 ^ D.card` per observable set, and
+the two products of `pairTerm` carry `{p₀, pd}` against `∅`, so `2² · 2⁰ = 4`, and `{p₀}` against
+`{pd}`, so `2¹ · 2¹ = 4`. The `1` and `2` in `q.1` and `q.2` are projections. -/
 theorem pairTerm_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
     (q : Finset Pq × Finset Pq) :
     |pairTerm (Nc := Nc) bd p₀ pd β q|
@@ -4834,15 +5068,17 @@ theorem pairTerm_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ pd
 
 #print axioms pairTerm_abs_le
 
-/-- **⭐⭐ THE PER-CORE MAGNITUDE BOUND, FOR FINSET SUPPORTS.**
+/-- **`|pairTermF bd Ao Bo β q| ≤ 2 ^ (Ao.card + Bo.card + 1) * (e^{2|β|} − 1) ^ (q.1.card +
+q.2.card)`**, requiring `Nc ≠ 0`.
 
-`pairTerm_abs_le` with the constant `8 = 2³` replaced by `2^(|Ao| + |Bo| + 1)`: `zw_abs_le` pays
-`2^D.card` for the observable finset `D`, and `(Ao ∪ Bo).card ≤ |Ao| + |Bo|`. At `Ao = {p₀}`,
-`Bo = {pd}` the constant is `2³ = 8`, the original.
+`pairTerm_abs_le` with the constant `8` replaced by a power of the observable sizes: `zw_abs_le` pays
+`2 ^ D.card` for the observable finset `D`, and `(Ao ∪ Bo).card ≤ Ao.card + Bo.card`. At
+`Ao = {p₀}`, `Bo = {pd}` the constant is `2 ^ 3 = 8`, which is `pairTerm_abs_le`'s.
 
-DERIVED: the `2` in `2 ^ …` is `zw_abs_le`'s per-observable factor; the `2` in `2 * |β|` is that
-lemma's exponent; the `1` added to the cards is the second of the two products bounded; the `1`
-subtracted from `exp` is `zw_abs_le`'s own; the `0` is the rank `hN` excludes. -/
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `2` in the base is `zw_abs_le`'s per-observable
+factor; the `1` added to the cards is the second of the two products the triangle inequality adds.
+The `2` in `2 * |β|` and the `1` subtracted from the exponential are `subset_weight_bound`'s, through
+`zw_abs_le`. The `1` and `2` in `q.1` and `q.2` are projections. -/
 theorem pairTermF_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (β : ℝ)
     (q : Finset Pq × Finset Pq) :
     |pairTermF (Nc := Nc) bd Ao Bo β q|
@@ -4888,16 +5124,25 @@ theorem pairTermF_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (Ao Bo 
 
 #print axioms pairTermF_abs_le
 
-/-! #### The payoff: `Z²` discharged with no hypothesis left but integrability -/
+/-! #### The bound with `Z²` discharged -/
 
 open scoped Classical in
-/-- **THE CONNECTED CORRELATION, BOUNDED BY ITS CORES ALONE.** `wilsonCorrConn_abs_le_of_core-
-Resummation` with the resummation supplied, so the only side condition left is the integrability
-`corrNum_eq_subset_sum` already carried.
+/-- **The connected correlation is bounded by a sum over `corePairs` alone.** With `Nc ≠ 0`,
+`p₀ ≠ pd`, `0 ≤ β`, the integrability condition, and
 
-`Z²` does not appear. What remains is the NUMBER of cores at each size, which is the counting
-obligation this file has always named — and `pairTerm_abs_le` is the per-core weight that count is
-multiplied by. -/
+    ∑ c ∈ corePairs bd p₀ pd, |pairTerm bd p₀ pd β c| ·
+        exp (4β · touchDeg bd · (coreSpan p₀ pd c).card) ≤ M,
+
+then `|wilsonCorrConn bd p₀ β pd| ≤ M`.
+
+`wilsonCorrConn_abs_le_of_coreResummation` with `coreResummation_holds` supplying the resummation, so
+the only side condition left is the integrability `corrNum_eq_subset_sum` carries. No partition
+function appears. `pairTerm_abs_le` bounds each summand and `card_corePairs_span_le` counts them.
+
+DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `1` in `hint`'s
+`Real.exp (-(β * φ_p)) - 1` is `boltz_eq_subset_sum`'s activated weight. The `4` is
+`hard_core_outside_sq_div_partition_sq_le`'s, the Wilson density's `2` doubled by the two outside
+sums. -/
 theorem wilsonCorrConn_abs_le_core_sum (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (p₀ pd : Pq) (hne : p₀ ≠ pd) {β : ℝ} (hβ : 0 ≤ β)
     (hint : ∀ D E : Finset Pq, Integrable
@@ -4919,58 +5164,48 @@ end MassGap.StrongCoupling
 
 -- ==== BEGIN assembled core sum ====
 
-/-! ### THE ASSEMBLY — the core sum resummed, and the lag put in the exponent
+/-! ### The assembly: the core sum resummed, and the separation put in the exponent
 
-Everything this section needs was already proved. What was missing was the arithmetic that puts the
-pieces together, and that is all this is.
-
-WHAT IS ASSEMBLED, in one line:
+What is assembled:
 
     ∑_{cores} |pairTerm| · e^{4β·K·|span|}  ≤  8·L²·W² · rᵏ / (1 − r),
     L = 4(K+1)²,  W = e^{4βK},  q = e^{2β} − 1,  r = L·q·W,  K = touchDeg bd.
 
-HOW THE THREE INGREDIENTS COMBINE. Group the cores by the SIZE of their span. A core whose span has
-`m` plaquettes carries
+The cores are grouped by the size of their span. A core whose span has `m` plaquettes carries
 
-* a WEIGHT at most `8·q^{|c₁|+|c₂|}` (`pairTerm_abs_le`), and `m ≤ |c₁| + |c₂| + 2` because the span
-  is `c₁ ∪ c₂ ∪ {p₀,p_d}` — so the weight is at most `8·q^{m−2}`;
-* a HARD-CORE factor `e^{4βK·m} = W^m` (`hard_core_outside_sq_div_partition_sq_le`, already folded
-  into `wilsonCorrConn_abs_le_core_sum`);
-* and there are at most `L^m` such cores: `((K+1)²)^m` spans (`card_connSets_le`, via
-  `coreSpan_mem_connSets`) times `4^m` ways to split a span into an ordered pair of subsets.
+* a weight at most `8·q^{|c₁|+|c₂|}` (`pairTerm_abs_le`), and `m ≤ |c₁| + |c₂| + 2` because the span
+  is `c₁ ∪ c₂ ∪ {p₀,p_d}`, so the weight is at most `8·q^{m−2}`;
+* a hard-core factor `e^{4βK·m} = W^m`, from `hard_core_outside_sq_div_partition_sq_le` through
+  `wilsonCorrConn_abs_le_core_sum`;
+* and there are at most `L^m` such cores: `((K+1)²)^m` spans (`card_connSets_le` through
+  `coreSpan_mem_connSets`) times `4^m` ordered splits of a span into a pair of subsets
+  (`card_pairs_with_union_le`).
 
-The product is `8·L^m·q^{m−2}·W^m = 8·L²·W²·(LqW)^{m−2}`, and summing the geometric series in
-`m − 2` gives the bound above. `r < 1` is what makes the partial sums bounded
-(`geom_sum_le_inv_one_sub_asm`), and `geom_sum_ge_of_one_le_asm` shows they are unbounded when it
-fails, so the hypothesis is the series' own and not a convenience.
+The product is `8·L^m·q^{m−2}·W^m = 8·L²·W²·(LqW)^{m−2}` (`assembly_arith`), and summing the
+geometric series in `m − 2` gives the bound. `r < 1` is what bounds the partial sums
+(`geom_sum_le_inv_one_sub_asm`); `geom_sum_ge_of_one_le_asm` shows they grow at least linearly when
+it fails.
 
-`Fintype.card Pq` IS NOT IN IT. The lattice size enters the proof in one place and for one reason —
-the span sizes range over `0 … Fintype.card Pq`, so the geometric sum is finite rather than infinite
-— and it is thrown away immediately, because `∑_{j<n} rʲ ≤ (1−r)⁻¹` holds for every `n`. Read the
-statement of `corePairs_sum_le`: `coreConst` and `coreRate` take `touchDeg bd` and `β` and nothing
-else.
+`Fintype.card Pq` enters the proof only as the range of span sizes, making the geometric sum finite,
+and leaves it again because `∑_{j<n} rʲ ≤ (1−r)⁻¹` holds at every `n`. `corePairs_sum_le`'s
+`coreConst` and `coreRate` take `touchDeg bd` and `β` and nothing else.
 
-THE LAG. `coreSpan_card_ge_of_not_mem_ball` is `card_ge_of_reach_of_lvl` applied to the span itself
-rather than to the activated pair: a core's span is touch-connected, contains both anchors, and so
-realises every intermediate touch-level — hence `|span| ≥ k + 2` whenever `p_d ∉ ball p₀ k`. That
-empties every fibre below `k` and the geometric series starts at `k`, which is `C · rᵏ`.
+`coreSpan_card_ge_of_not_mem_ball` is `card_ge_of_reach_of_lvl` applied to the span rather than to
+the activated pair: a core's span is touch-connected and contains both anchors, so it realises every
+intermediate touch-level, and `|span| ≥ k + 2` whenever `p_d ∉ ball p₀ k`. That empties every fibre
+below `k`, so the geometric series starts there and the bound reads `C · rᵏ`.
 
-THE THRESHOLD IS DERIVED. `core_rate_lt_one_of_small` proves a threshold EXISTS by continuity at
-`β = 0`, exactly as `hard_core_rate_lt_one_of_small` does, and names no numeral.
+`core_rate_lt_one_of_small` establishes a threshold in `β` by continuity at `β = 0`, as
+`hard_core_rate_lt_one_of_small` does, and names no numeral. The prefactor `8·L²·W²` is at least
+`128` (`le_corePrefactor`) and is not claimed sharp; `pairTerm_abs_le` records that its own `8` is
+not attained. It sits in `coreConst` rather than in the rate.
 
-THE PREFACTOR IS REAL, AND IT IS NOT CLAIMED SHARP. The estimate produces `8·L²·W² ≥ 128`, and
-`pairTerm_abs_le` already records that its own `8` is not attained. It sits in `coreConst`, where a
-caller can read it, rather than being absorbed into the rate.
-
-THE LAG INDEX IS BOUNDED, BECAUSE THE LATTICE IS FINITE. A bound demanding a plaquette outside
-`ball p₀ d` at EVERY `d : ℕ` cannot be met here: `no_sep_family_of_reachable` shows no such family
-exists once the plaquettes it names are reachable from `p₀` at all, and
-`wilsonCorrConn_eq_zero_of_no_ball` shows that where they are NOT reachable the correlation is
-exactly zero. `wilsonCorrConn_abs_le_coreConst_mul_rate_pow` fixes `k` instead and asks only
-`p_d ∉ ball p₀ k` — which a `Fintype Pq` can satisfy, and which is the shape the flagship's own entry
-points are stated in, indexing the lag by `Fin (N+1)`. `siteAtHyper_not_mem_ball` and
-`read_p_le_of_corrClay` carry it to that index; what still stands between it and the flagship's
-hypothesis is named in `read_p_le_of_corrClay`'s docstring. -/
+The index `k` is a parameter of `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, whose hypothesis is
+`pd ∉ ball bd p₀ k`. A family demanding such a plaquette at every `d : ℕ` cannot exist here:
+`no_sep_family_of_reachable` rules it out once the plaquettes named are reachable from `p₀`, and
+`wilsonCorrConn_eq_zero_of_no_ball` gives the correlation exactly zero where they are not.
+`siteAtHyper_not_mem_ball` and `read_p_le_of_corrClay` carry the fixed-`k` form to a lag indexed by
+`Fin (N + 1)`. -/
 
 namespace MassGap.StrongCoupling
 
@@ -4983,10 +5218,12 @@ variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [D
 
 /-! #### Arithmetic, proved here rather than named from the library
 
-Each of these is two lines and each would otherwise be a library spelling this file would have to
-track. They carry no content. -/
+Each of these is a few lines and each would otherwise be a library spelling this file would have to
+track. -/
 
-/-- `e^{x·n} = (e^x)ⁿ`. -/
+/-- **`exp (x * n) = (exp x) ^ n`** for `n : ℕ`, by induction on `n`.
+
+DERIVED: no numeral. -/
 theorem exp_mul_nat_asm (x : ℝ) (n : ℕ) : Real.exp (x * (n : ℝ)) = Real.exp x ^ n := by
   induction n with
   | zero => simp
@@ -4994,19 +5231,28 @@ theorem exp_mul_nat_asm (x : ℝ) (n : ℕ) : Real.exp (x * (n : ℝ)) = Real.ex
       have hc : ((m + 1 : ℕ) : ℝ) = (m : ℝ) + 1 := by push_cast; ring
       rw [hc, mul_add, Real.exp_add, ih, mul_one, pow_succ]
 
-/-- A power of something at least one is at least one. -/
+/-- **`1 ≤ a` gives `1 ≤ a ^ n`** at every `n : ℕ`.
+
+DERIVED: both `1`s are the multiplicative unit, the threshold the hypothesis and the conclusion are
+stated against. -/
 theorem one_le_pow_asm {a : ℝ} (h : 1 ≤ a) (n : ℕ) : 1 ≤ a ^ n := by
   induction n with
   | zero => simp
   | succ m ih => rw [pow_succ]; nlinarith
 
-/-- A power of something in `[0,1]` is in `[0,1]`. -/
+/-- **`0 ≤ a ≤ 1` gives `a ^ n ≤ 1`** at every `n : ℕ`.
+
+DERIVED: the `0` and the two `1`s are the endpoints of the unit interval the hypothesis confines `a`
+to, and the bound the conclusion states. -/
 theorem pow_le_one_asm {a : ℝ} (h0 : 0 ≤ a) (h1 : a ≤ 1) (n : ℕ) : a ^ n ≤ 1 := by
   induction n with
   | zero => simp
   | succ m ih => rw [pow_succ]; nlinarith [pow_nonneg h0 m]
 
-/-- On `[0,1]` a bigger exponent is a smaller power. -/
+/-- **On `0 ≤ a ≤ 1` a bigger exponent is a smaller power**: `n ≤ m` gives `a ^ m ≤ a ^ n`.
+
+DERIVED: the `0` and the `1` are the endpoints of the unit interval the hypothesis confines `a`
+to. -/
 theorem pow_le_pow_of_le_one_asm {a : ℝ} (h0 : 0 ≤ a) (h1 : a ≤ 1) {m n : ℕ} (h : n ≤ m) :
     a ^ m ≤ a ^ n := by
   obtain ⟨t, rfl⟩ := Nat.exists_eq_add_of_le h
@@ -5015,8 +5261,11 @@ theorem pow_le_pow_of_le_one_asm {a : ℝ} (h0 : 0 ≤ a) (h1 : a ≤ 1) {m n : 
   have hn := pow_nonneg h0 n
   nlinarith
 
-/-- **THE GEOMETRIC SUM, AT EVERY LENGTH.** The partial sums of `rʲ` are under `(1−r)⁻¹` whatever
-the number of terms — which is how the lattice's size leaves the estimate. -/
+/-- **`∑_{j < n} r ^ j ≤ (1 - r)⁻¹` for `0 ≤ r < 1`, at every `n`.** The bound does not depend on the
+number of terms, which is how the lattice's size leaves the estimate.
+
+DERIVED: the `0` is the sign hypothesis on `r`; the `1`s are the threshold `r < 1` and the numerator
+of the geometric series' value. -/
 theorem geom_sum_le_inv_one_sub_asm {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (n : ℕ) :
     ∑ j ∈ Finset.range n, r ^ j ≤ (1 - r)⁻¹ := by
   have hpos : (0 : ℝ) < 1 - r := by linarith
@@ -5036,22 +5285,35 @@ theorem geom_sum_le_inv_one_sub_asm {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (n :
     _ ≤ (1 - r)⁻¹ * 1 := mul_le_mul_of_nonneg_left hle hinv.le
     _ = (1 - r)⁻¹ := by ring
 
-/-- **NEGATIVE CONTROL — at rate one the geometric sum is unbounded.** The partial sums grow at
-least linearly, so no volume-free constant bounds them and `r < 1` is not a convenience. -/
+/-- **`1 ≤ r` gives `n ≤ ∑_{j < n} r ^ j`.** At rate one or above the partial sums grow at least
+linearly, so no constant independent of `n` bounds them and the hypothesis `r < 1` of
+`geom_sum_le_inv_one_sub_asm` cannot be dropped.
+
+DERIVED: the `1` is the threshold the hypothesis states, and the value of each term it bounds
+below. -/
 theorem geom_sum_ge_of_one_le_asm {r : ℝ} (hr : 1 ≤ r) (n : ℕ) :
     (n : ℝ) ≤ ∑ j ∈ Finset.range n, r ^ j := by
   calc (n : ℝ) = ∑ _j ∈ Finset.range n, (1 : ℝ) := by simp
     _ ≤ ∑ j ∈ Finset.range n, r ^ j :=
         Finset.sum_le_sum (fun j _ => one_le_pow_asm hr j)
 
-/-- The regrouping the core sum performs, as pure algebra: count times weight is prefactor times
-rate to the power. -/
+/-- **`A ^ (n+2) * (8 * q ^ n * W ^ (n+2)) = 8 * A ^ 2 * W ^ 2 * (A * q * W) ^ n`.** The regrouping
+the core sum performs, as algebra over `ℝ` with no hypotheses: count times weight becomes prefactor
+times rate to a power.
+
+DERIVED: the `2`s added to `n` are `two_le_coreSpan_card`'s two anchors, which the count and the
+hard-core factor pay for but the weight does not; they become the `A ^ 2` and `W ^ 2` of the
+prefactor. The `8` is `pairTerm_abs_le`'s constant, carried through unchanged. -/
 theorem assembly_arith (A q W : ℝ) (n : ℕ) :
     A ^ (n + 2) * (8 * q ^ n * W ^ (n + 2)) = 8 * A ^ 2 * W ^ 2 * (A * q * W) ^ n := by
   rw [pow_add, pow_add, mul_pow, mul_pow]
   ring
 
-/-- The hard-core factor as a power of a per-plaquette constant. -/
+/-- **`exp (4β · (touchDeg bd * m)) = (exp (4β · touchDeg bd)) ^ m`.** The hard-core factor rewritten
+as a power of a per-plaquette constant, by `exp_mul_nat_asm`.
+
+DERIVED: both `4`s are `hard_core_outside_sq_div_partition_sq_le`'s, the Wilson density's `2` doubled
+by the two outside sums. -/
 theorem exp_touchDeg_pow (bd : Pq → List (Lk × Bool)) (β : ℝ) (m : ℕ) :
     Real.exp (4 * β * ((touchDeg bd * m : ℕ) : ℝ))
       = Real.exp (4 * β * (touchDeg bd : ℝ)) ^ m := by
@@ -5060,9 +5322,12 @@ theorem exp_touchDeg_pow (bd : Pq → List (Lk × Bool)) (β : ℝ) (m : ℕ) :
   push_cast
   ring
 
-/-! #### The span of a core is big, and gets bigger with the lag -/
+/-! #### The size of a core's span -/
 
-/-- Both anchors sit in every span, so no span is smaller than two. -/
+/-- **`2 ≤ (coreSpan p₀ pd c).card`** for `p₀ ≠ pd`. Both anchors lie in every span, so no span is
+smaller than two, whatever the core pair.
+
+DERIVED: the `2` is the two anchors `p₀` and `pd`, distinct by hypothesis. -/
 theorem two_le_coreSpan_card (p₀ pd : Pq) (hne : p₀ ≠ pd) (c : Finset Pq × Finset Pq) :
     2 ≤ (coreSpan p₀ pd c).card := by
   classical
@@ -5083,12 +5348,16 @@ theorem two_le_coreSpan_card (p₀ pd : Pq) (hne : p₀ ≠ pd) (c : Finset Pq �
 #print axioms two_le_coreSpan_card
 
 open scoped Classical in
-/-- **SEPARATION FORCES THE SPAN, not just the activated pair.** `card_ge_of_bridging` bounds
-`|E| + |F|`, which is not what the count is indexed by; the count is indexed by the SPAN. A span is
-touch-connected and contains both anchors, so the level argument applies to it directly and gives
-`k + 2 ≤ |span|` — two more than the activated bound, because the span carries the anchors too.
+/-- **`pd ∉ ball bd p₀ k` forces `k + 2 ≤ (coreSpan p₀ pd c).card`** for every core pair `c`, given
+`p₀ ≠ pd`.
 
-This is what empties the low fibres of the core sum and so puts the lag in the exponent. -/
+`card_ge_of_bridging` bounds `E.card + F.card`, which is not what the core sum is indexed by; this
+applies `card_ge_of_reach_of_lvl` to the span itself. A span is touch-connected and contains both
+anchors, so it realises every intermediate touch-level. This is what empties the low fibres of the
+core sum.
+
+DERIVED: the `2` added to `k` is the two anchors, which the level argument erases before counting and
+`two_le_coreSpan_card` then restores. -/
 theorem coreSpan_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (hne : p₀ ≠ pd)
     (k : ℕ) (hk : pd ∉ ball bd p₀ k) {c : Finset Pq × Finset Pq}
     (hc : IsCorePair bd p₀ pd c) :
@@ -5113,24 +5382,21 @@ theorem coreSpan_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool)) (p₀ p
 
 #print axioms coreSpan_card_ge_of_not_mem_ball
 
-/-! ### The same geometry for observables supported on FINSETS of plaquettes
+/-! ### The same geometry for observables supported on finsets of plaquettes
 
-`ReflectionHalfSpace.gapAt_of_finite_volume_connected`'s `hfin` quantifies over
-`HalfSpaceAlgebra.halfSpaceAlg` — arbitrary local observables — while every decay theorem here is
-stated at ONE plaquette. Neither of those names is in scope in this file; they are named to say what
-this section is a step toward.
+The decay statements above are anchored at one plaquette on each side. This section carries the same
+constructions with each anchor replaced by a finset of plaquettes: `coreSpanF` and `IsCorePairF` are
+the analogues of `coreSpan` and `IsCorePair`, and the originals are the case `A = {p₀}`,
+`B = {pd}`. -/
 
-These are the finset analogues of `coreSpan` and `IsCorePair`; the originals are the case
-`A = {p₀}`, `B = {pd}`. -/
-
-/-- **The span of a core, for two finsets of plaquettes.** `coreSpan` with `{p₀, pd}` replaced by
-`A ∪ B`.
+/-- The span of a core pair for two finset anchors: `c.1 ∪ c.2 ∪ (A ∪ B)`. `coreSpan` with
+`{p₀, pd}` replaced by `A ∪ B`.
 
 DERIVED: no numeral. -/
 def coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) : Finset Pq :=
   c.1 ∪ c.2 ∪ (A ∪ B)
 
-/-- **A plaquette of `A` is in the span.**
+/-- **`a ∈ A` gives `a ∈ coreSpanF A B c`**, at every core pair `c`.
 
 DERIVED: no numeral. -/
 theorem mem_coreSpanF_left {a : Pq} {A : Finset Pq} (ha : a ∈ A) (B : Finset Pq)
@@ -5139,7 +5405,7 @@ theorem mem_coreSpanF_left {a : Pq} {A : Finset Pq} (ha : a ∈ A) (B : Finset P
 
 #print axioms mem_coreSpanF_left
 
-/-- **And a plaquette of `B`.**
+/-- **`b ∈ B` gives `b ∈ coreSpanF A B c`**, at every core pair `c`.
 
 DERIVED: no numeral. -/
 theorem mem_coreSpanF_right {b : Pq} (A : Finset Pq) {B : Finset Pq} (hb : b ∈ B)
@@ -5148,16 +5414,18 @@ theorem mem_coreSpanF_right {b : Pq} (A : Finset Pq) {B : Finset Pq} (hb : b ∈
 
 #print axioms mem_coreSpanF_right
 
-/-- **A core is one whose span is a single component**, anchored at a plaquette of `A`.
+/-- A pair is a core for the finset anchors when its span is exactly `a`'s touch-component of that
+span. `a` is a parameter and is not required to lie in `A`.
 
 DERIVED: no numeral. -/
 def IsCorePairF (bd : Pq → List (Lk × Bool)) (a : Pq) (A B : Finset Pq)
     (c : Finset Pq × Finset Pq) : Prop :=
   compOf bd (coreSpanF A B c) a = coreSpanF A B c
 
-/-- **Two distinct plaquettes, one from each side, give the span at least two elements.**
+/-- **`2 ≤ (coreSpanF A B c).card`** given `a ∈ A`, `b ∈ B` and `a ≠ b`. The distinctness is a
+hypothesis: `A` and `B` may otherwise overlap.
 
-DERIVED: the `2` is the two plaquettes exhibited. -/
+DERIVED: the `2` is the two plaquettes `a` and `b` exhibited in the span. -/
 theorem two_le_coreSpanF_card {a b : Pq} {A B : Finset Pq} (ha : a ∈ A) (hb : b ∈ B)
     (hne : a ≠ b) (c : Finset Pq × Finset Pq) : 2 ≤ (coreSpanF A B c).card := by
   classical
@@ -5174,17 +5442,16 @@ theorem two_le_coreSpanF_card {a b : Pq} {A B : Finset Pq} (ha : a ∈ A) (hb : 
 
 #print axioms two_le_coreSpanF_card
 
-/-- **⭐ THE SPAN IS LARGE WHEN THE SUPPORTS ARE FAR APART.**
+/-- **`b ∉ ball bd a k` forces `k + 2 ≤ (coreSpanF A B c).card`**, given `a ∈ A`, `b ∈ B`, `a ≠ b`
+and `IsCorePairF bd a A B c`. `coreSpan_card_ge_of_not_mem_ball` with the two anchors replaced by
+members of the two finsets; `card_ge_of_reach_of_lvl` does not mention them, so the proof is the
+same with the memberships supplied rather than definitional.
 
-One plaquette of `A` outside the `k`-ball of one plaquette of `B` forces the span to have at least
-`k + 2` elements. `card_ge_of_reach_of_lvl` is carrier-free in the finset, so the proof is
-`coreSpan_card_ge_of_not_mem_ball`'s with the two membership facts supplied instead of assumed.
+⛔ This is a cardinality bound on the span. The rate's exponent is read off it in the singleton
+chain, by `corePairs_sum_le` and `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`.
 
-**⛔ THIS IS A CARDINALITY BOUND, NOT A DECAY RATE.** In the singleton chain this `k` is what the
-rate's exponent is read off from, but that reading happens in `corePairs_sum_le` and
-`wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, and neither has a finset counterpart yet.
-
-DERIVED: the `2` is `two_le_coreSpanF_card`'s two plaquettes; the `1`s are the two erasures. -/
+DERIVED: the `2` added to `k` is `two_le_coreSpanF_card`'s two plaquettes, which the level argument
+erases before counting; the two erasures each cost a `1` inside the proof. -/
 theorem coreSpanF_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool))
     {a b : Pq} {A B : Finset Pq} (ha : a ∈ A) (hb : b ∈ B) (hne : a ≠ b)
     (k : ℕ) (hk : b ∉ ball bd a k) {c : Finset Pq × Finset Pq}
@@ -5210,7 +5477,7 @@ theorem coreSpanF_card_ge_of_not_mem_ball (bd : Pq → List (Lk × Bool))
 
 #print axioms coreSpanF_card_ge_of_not_mem_ball
 
-/-- **The first half of a core is in its span.**
+/-- **`c.1 ⊆ coreSpanF A B c`**, the span being a union that contains it.
 
 DERIVED: no numeral. -/
 theorem fst_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
@@ -5219,7 +5486,7 @@ theorem fst_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
 
 #print axioms fst_subset_coreSpanF
 
-/-- **And the second.**
+/-- **`c.2 ⊆ coreSpanF A B c`**, likewise.
 
 DERIVED: no numeral. -/
 theorem snd_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
@@ -5228,9 +5495,9 @@ theorem snd_subset_coreSpanF (A B : Finset Pq) (c : Finset Pq × Finset Pq) :
 
 #print axioms snd_subset_coreSpanF
 
-/-- **THE SEPARATOR IS RECOVERABLE FROM THE CORE**, for finset supports.
-
-`coreSpan_eq_of_mem_crs` with `p₀ ∈ A` and `pd ∈ A` replaced by `Ao ∪ Bo ⊆ A`.
+/-- **`coreSpanF Ao Bo (E ∩ A, F ∩ A) = A`**, given `A ⊆ E ∪ F ∪ (Ao ∪ Bo)` and `Ao ∪ Bo ⊆ A`.
+`coreSpan_eq_of_mem_crs` with the two anchor memberships replaced by the single inclusion
+`Ao ∪ Bo ⊆ A`. A `Finset` identity, with no reachability in it.
 
 DERIVED: no numeral. -/
 theorem coreSpanF_eq_of_mem (Ao Bo A E F : Finset Pq)
@@ -5254,9 +5521,9 @@ theorem coreSpanF_eq_of_mem (Ao Bo A E F : Finset Pq)
 #print axioms coreSpanF_eq_of_mem
 
 open scoped Classical in
-/-- **The component of a BRIDGING pair is the span of the core it cuts down to.**
-
-Bridging now means the anchor reaches every plaquette of the support, not just one.
+/-- **A bridging pair's component is the span of the core it cuts down to**, for finset anchors. The
+bridging hypothesis is that `a` reaches every plaquette of `Ao ∪ Bo` inside the pair's union, not
+just one of them.
 
 DERIVED: no numeral. -/
 theorem coreSpanF_core_eq (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (a : Pq)
@@ -5272,7 +5539,8 @@ theorem coreSpanF_core_eq (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (a
 #print axioms coreSpanF_core_eq
 
 open scoped Classical in
-/-- **A bridging pair cuts down to a core.**
+/-- **Cutting a bridging pair down to `a`'s component produces an `IsCorePairF`**, by
+`coreSpanF_core_eq` and `compOf_idem_crs`.
 
 DERIVED: no numeral. -/
 theorem isCorePairF_of_bridging (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq) (a : Pq)
@@ -5287,7 +5555,8 @@ theorem isCorePairF_of_bridging (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset 
 #print axioms isCorePairF_of_bridging
 
 open scoped Classical in
-/-- **The finite family of cores**, for finset supports. `corePairs` with the anchor explicit.
+/-- The pairs satisfying `IsCorePairF bd a Ao Bo`, as a `Finset`. `corePairs` with the anchor `a`
+an explicit argument rather than one of the two singletons.
 
 DERIVED: no numeral. -/
 noncomputable def corePairsF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq) :
@@ -5295,7 +5564,7 @@ noncomputable def corePairsF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : F
   Finset.univ.filter (fun c => IsCorePairF bd a Ao Bo c)
 
 open scoped Classical in
-/-- **Membership in the core family is the core condition.**
+/-- **`c ∈ corePairsF bd a Ao Bo ↔ IsCorePairF bd a Ao Bo c`**, the defining filter unfolded.
 
 DERIVED: no numeral. -/
 theorem mem_corePairsF {bd : Pq → List (Lk × Bool)} {a : Pq} {Ao Bo : Finset Pq}
@@ -5307,10 +5576,12 @@ theorem mem_corePairsF {bd : Pq → List (Lk × Bool)} {a : Pq} {Ao Bo : Finset 
 #print axioms mem_corePairsF
 
 open scoped Classical in
-/-- **What lies outside the span is not in it** — the finset version.
+/-- **A member of a core's outside is not in the core's span**, for finset anchors:
+`z ∈ outsideOf bd (coreSpanF Ao Bo c)` gives `z ∉ coreSpanF Ao Bo c`.
 
-The `refl` branch needs a plaquette of `Bo` distinct from the anchor, which is what the singleton
-version got from `p₀ ≠ pd`.
+The hypotheses `b ∈ Bo` and `a ≠ b` play the part `p₀ ≠ pd` plays in the singleton counterpart
+`not_mem_coreSpan_of_mem_outsideOf_crs`: the reflexive branch needs a plaquette of `Bo` distinct from
+the anchor, to give `a`'s chain a first step.
 
 DERIVED: no numeral. -/
 theorem not_mem_coreSpanF_of_mem_outsideOf (bd : Pq → List (Lk × Bool))
@@ -5336,7 +5607,9 @@ theorem not_mem_coreSpanF_of_mem_outsideOf (bd : Pq → List (Lk × Bool))
 #print axioms not_mem_coreSpanF_of_mem_outsideOf
 
 open scoped Classical in
-/-- **Adding outside plaquettes does not change the component** — the finset version.
+/-- **A core rebuilt with an untouching outside has the core's span as its component**, for finset
+anchors: `compOf bd ((c.1 ∪ X) ∪ (c.2 ∪ Y) ∪ (Ao ∪ Bo)) a = coreSpanF Ao Bo c` when `X` and `Y` lie
+in `outsideOf bd (coreSpanF Ao Bo c)`. Requires `a ∈ Ao`, for the reflexive case.
 
 DERIVED: no numeral. -/
 theorem compOf_union_outsideF (bd : Pq → List (Lk × Bool))
@@ -5376,7 +5649,7 @@ theorem compOf_union_outsideF (bd : Pq → List (Lk × Bool))
 
 #print axioms compOf_union_outsideF
 
-/-- **The support is in the span.**
+/-- **`Ao ∪ Bo ⊆ coreSpanF Ao Bo c`**, at every core pair `c`.
 
 DERIVED: no numeral. -/
 theorem obs_subset_coreSpanF (Ao Bo : Finset Pq) (c : Finset Pq × Finset Pq) :
@@ -5394,7 +5667,8 @@ noncomputable def exchangeF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Fi
   pairFlip (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a) q
 
 open scoped Classical in
-/-- **It preserves the pair's union**, which is what makes the separator survive it.
+/-- **`exchangeF` preserves the union of the pair**, so the separator recomputed from that union
+after the flip is the same set. `pairFlip_union` at the anchor's component.
 
 DERIVED: no numeral. -/
 theorem exchangeF_union (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq)
@@ -5405,7 +5679,8 @@ theorem exchangeF_union (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset
 #print axioms exchangeF_union
 
 open scoped Classical in
-/-- **And it is an involution**, because the separator it is rebuilt from is the same finset.
+/-- **`exchangeF bd a Ao Bo` is an involution.** The separator is a function of the pair's union,
+which `exchangeF_union` says survives the flip, so `pairFlip_pairFlip` applies.
 
 DERIVED: no numeral. -/
 theorem exchangeF_exchangeF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq)
@@ -5421,28 +5696,23 @@ theorem exchangeF_exchangeF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Fi
 #print axioms exchangeF_exchangeF
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE VOLUME CANCELLATION, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
+/-- **The non-bridging sum vanishes, for observables on two finsets of plaquettes.** With
+`Disjoint Ao Bo`, `a ∈ Ao` and `Ao` touch-connected from `a` inside `Ao` itself, the sum of
+`pairTermF bd Ao Bo β q` over the pairs in which no plaquette of `Ao` reaches one of `Bo` inside
+`q.1 ∪ q.2 ∪ (Ao ∪ Bo)` is zero, at every `β`.
 
-`nonbridging_sum_eq_zero` with the two anchors replaced by two finsets: every pair of activated
-subsets across which NO plaquette of `Ao` reaches any plaquette of `Bo` cancels against its own
-flip, so the whole non-bridging sum is exactly zero. No estimate, no volume, no coupling condition.
+`nonbridging_sum_eq_zero` with the two anchors replaced by finsets. `exchangeF_exchangeF` makes the
+flip an involution on the filtered set and `pairTermF_add_pairFlip` negates the summand, so the sum
+equals its own negation.
 
-**The hypothesis that makes this work is `hconn`, and it is deliberately stated on `Ao` ALONE rather
-than on the pair's union.** The separator has to be built pairwise — it is
-`compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a`, which moves with `q` — so a connectivity hypothesis phrased
-at the pair's union would have to be re-supplied for every term of the sum, and there is nothing to
-supply it from. Phrased inside `Ao` it is a property of the OBSERVABLE, checked once:
-`reach_mono_crs` then carries it up into every pair's union, because reach only gets easier in a
-larger set. That is why the sum has one hypothesis instead of one per term.
+`hconn` is stated on `Ao` alone, not on the pair's union. The separator
+`compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a` moves with `q`, so a connectivity hypothesis at the union
+would have to be re-supplied per term; inside `Ao` it is a property of the observable, checked once,
+and `reach_mono_crs` carries it into every pair's union. So the statement covers observables whose
+support is touch-connected. For a support spanning several components the separator would have to be
+`compsMeet`.
 
-So this holds for any observable whose support is touch-connected — Wilson loops — and that is the
-case the `…F` family was written for. For a support spanning several components the separator must
-be `compsMeet` instead, and then `IsCorePairF` no longer normalises the pairs this admits; see the
-scope note on `bridging_sum_eq_core_sumF`.
-
-DERIVED: the `0` is the whole content of the theorem and is EXACT, not a bound — the involution
-pairs each term with its own flip and `pairTermF_add_pairFlip` sends each pair to zero, so the sum
-equals its own negation. Nothing is estimated and no numeral is chosen. -/
+DERIVED: the `0` is the value of the filtered sum. -/
 theorem nonbridging_sum_eq_zeroF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
     (hod : Disjoint Ao Bo) {a : Pq} (ha : a ∈ Ao)
     (hconn : ∀ p ∈ Ao, Reach bd Ao a p) (β : ℝ) :
@@ -5510,30 +5780,23 @@ theorem nonbridging_sum_eq_zeroF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset
 #print axioms nonbridging_sum_eq_zeroF
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE CONNECTED CORRELATOR OF TWO FINSET-SUPPORTED OBSERVABLES IS THE BRIDGING SUM.**
+/-- **`wilsonCorrConnF bd Ao β Bo` is the bridging sum over `Z²`.** The connected correlation of
+`∏ Ao` against `∏ Bo` equals the sum of `pairTermF` over the pairs of activated subsets in which some
+plaquette of `Ao` touch-reaches some plaquette of `Bo` inside `q.1 ∪ q.2 ∪ (Ao ∪ Bo)`, divided by
+`Z ^ 2`. `wilsonCorrConn_eq_bridging_sum` with the two anchor plaquettes replaced by finsets;
+`nonbridging_sum_eq_zeroF` removes the non-reaching pairs.
 
-`wilsonCorrConn_eq_bridging_sum` with the two anchor plaquettes replaced by two disjoint finsets:
-the connected correlation of `∏ Ao` against `∏ Bo` equals the sum of `pairTermF` over exactly those
-pairs of activated subsets in which SOME plaquette of `Ao` touch-reaches SOME plaquette of `Bo`
-inside the pair's union, divided by `Z²`. Every non-reaching pair contributes nothing
-(`nonbridging_sum_eq_zeroF`), which is where the volume goes.
+Scope: `hconn` asks `Ao` to be touch-connected inside itself, so the statement covers a connected
+support. `hod` asks the two supports to be disjoint, which is what `Finset.prod_union` needs to read
+`∏ Ao · ∏ Bo` as `∏ (Ao ∪ Bo)`. `hint` is the integrability side condition, required for every pair
+of finsets. `hN` excludes the empty gauge group.
 
-**THIS IS THE STEP THAT MAKES THE `…F` MACHINERY A STATEMENT ABOUT A CORRELATOR** rather than about
-sums over subsets. Before it, `zw_split`, `pairTermF`, `corePairsF` and `corePairsF_sum_le` bounded
-nothing observable.
-
-Its scope, stated with it: `hconn` asks `Ao` to be touch-connected in ITSELF, so this is the
-Wilson-loop-shaped case. `hod` asks the two supports to be disjoint, which is what
-`Finset.prod_union` needs to read `∏ Ao · ∏ Bo` as `∏ (Ao ∪ Bo)` — the two observables must not
-share a plaquette. `hint` is the same integrability side condition the singleton version carries,
-and `hN` excludes the empty gauge group.
-
-DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per factor of the pair —
-`hprod` turns two sums over `Finset Pq` into one sum over `Finset Pq × Finset Pq`, so each of the
-two Gibbs numerators carries its own partition function. It is forced by the product, not chosen.
-The `0` is `hN : Nc ≠ 0`, excluding the empty gauge group so the partition function is positive
-(`wilsonSystem_partition_pos`) and the division is meaningful. The `1` and `2` in `q.1` and `q.2`
-are projections, not numerals. -/
+DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per component of the pair
+— `hprod` turns two sums over `Finset Pq` into one over `Finset Pq × Finset Pq`, so each of the two
+Gibbs numerators carries its own partition function. The `0` is `hN : Nc ≠ 0`, which makes the
+partition function positive (`wilsonSystem_partition_pos`) so the division is meaningful. The `1` in
+`hint`'s `Real.exp (-(β * φ_p)) - 1` is `boltz_eq_subset_sum`'s activated weight; the `1` and `2` in
+`q.1` and `q.2` are projections. -/
 theorem wilsonCorrConnF_eq_bridging_sumF (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (Ao Bo : Finset Pq) (hod : Disjoint Ao Bo) {a : Pq} (ha : a ∈ Ao)
     (hconn : ∀ p ∈ Ao, Reach bd Ao a p) (β : ℝ)
@@ -5642,57 +5905,30 @@ theorem wilsonCorrConnF_eq_bridging_sumF (hN : Nc ≠ 0) (bd : Pq → List (Lk �
 #print axioms wilsonCorrConnF_eq_bridging_sumF
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE RESUMMATION, FOR OBSERVABLES ON FINSETS OF PLAQUETTES.**
+/-- **The bridging sum regroups by core, for finset anchors.** With `a ∈ Ao`, `b ∈ Bo` and `a ≠ b`,
+the sum of `pairTermF` over the pairs in which `a` reaches every plaquette of `Ao ∪ Bo` inside
+`q.1 ∪ q.2 ∪ (Ao ∪ Bo)` equals the sum over `corePairsF bd a Ao Bo` of the core term times its two
+constrained outside sums. `bridging_sum_eq_core_sum` with the anchors replaced by finsets, by the
+same fibration and `Finset.sum_nbij'`.
 
-`bridging_sum_eq_core_sum` with the two anchors replaced by their finsets. Every bridging pair is
-its core plus an outside; the outside is free, so the sum collapses to a sum over cores times the
-square of the outside partition sum.
+⛔ The filter here is not the complement of `nonbridging_sum_eq_zeroF`'s. This one asks one component
+to contain all of `Ao ∪ Bo`; that one excludes only the pairs in which no component meets both `Ao`
+and `Bo`, and the set between the two is non-empty — for instance `Ao = {x, y}`, `Bo = {z}` with
+components `{x, z}` and `{y}`. So the two do not compose into a numerator identity as they stand.
+For `Ao` and `Bo` each connected in the pair's union the two filters agree, since then a component
+meeting both contains both.
 
-Bridging means the anchor reaches EVERY plaquette of the support — that is what makes the separator
-recoverable from the core (`coreSpanF_core_eq`).
-
-**⛔⛔ THIS FILTER IS NOT THE COMPLEMENT OF THE VANISHING SET, SO THIS DOES NOT YET COMPOSE INTO A
-NUMERATOR IDENTITY.** The involution that kills the other side (`nonbridging_sum_eq_zero`'s argument,
-via `pairTermF_add_pairFlip`) needs a touch-closed separator `A` with `Ao ⊆ A` and `Disjoint Bo A`.
-Such an `A` exists exactly when NO component of the pair's union meets both `Ao` and `Bo`: take `A`
-to be the union of the components meeting `Ao`, which is touch-closed and contains `Ao`, and misses
-`Bo` under that condition; conversely a component meeting both forces every touch-closed `A ⊇ Ao` to
-meet `Bo`. So the natural split is `{some component meets both}` plus a vanishing remainder — and
-that first set is STRICTLY LARGER than this filter, which asks ONE component to contain ALL of
-`Ao ∪ Bo`. Counterexample: `Ao = {x, y}`, `Bo = {z}`, components `{x, z}` and `{y}` — it does not
-vanish, and it is not here.
-
-**⭐ THE SEPARATOR IS BUILT: `compsMeet`.** The anchor's component is the wrong one. The union of
-the components that MEET `Ao` is the right one — touch-closed (`compsMeet_closed`), containing `Ao`
+`compsMeet` is the separator for the wider filter: touch-closed (`compsMeet_closed`), containing `Ao`
 (`subset_compsMeet`), smallest such (`compsMeet_minimal`), and missing `Bo` exactly when no component
-meets both (`disjoint_compsMeet_iff`). It plugs straight into `pairTermF_add_pairFlip`, whose
-`hclosed` is literally `compsMeet_closed`'s shape at `V = coreSpanF Ao Bo (E, F)`. **So the VANISHING
-half is done.**
+meets both (`disjoint_compsMeet_iff`), which is the shape `pairTermF_add_pairFlip`'s `hclosed` takes
+at `V = coreSpanF Ao Bo (E, F)`. Under that wider filter `IsCorePairF` has no witnesses when the
+support is split across components, since `coreSpanF Ao Bo c` then contains components `a` never
+reaches, and `card_corePairsF_span_le` counts through `connSets`, whose members are touch-connected
+sets rooted at one plaquette; `card_rooted_pairs_ge` is the control on that connectedness.
+`coreSpanF_eq_of_mem`'s `hobs : Ao ∪ Bo ⊆ A` and the involution's `Disjoint Bo A` agree only at
+`Bo = ∅`, and `coreSpanF` contains `Ao ∪ Bo` by definition.
 
-**⛔⛔ AND THE COUNTING HALF IS NOT, WHICH IS WHY THIS IS NOT A LOCAL REPAIR.** Widening the
-complement to "some component meets both" admits pairs whose support is split across components. For
-such a pair `coreSpanF Ao Bo c` still contains all of `Ao ∪ Bo`, including components the anchor
-never reaches, so `compOf bd (coreSpanF Ao Bo c) a ≠ coreSpanF Ao Bo c` and **`IsCorePairF` is
-unsatisfiable there** — the forward map has nowhere to send them. Replacing it by
-`compsMeet bd (coreSpanF Ao Bo c) (Ao ∪ Bo) = coreSpanF Ao Bo c` (note `Ao ∪ Bo`, since the isolated
-`Bo` pieces need their own components) then costs `not_mem_coreSpanF_of_mem_outsideOf`,
-`coreSpanF_card_ge_of_not_mem_ball` — whose `b ∉ ball bd a k` must become a separation between the
-two supports — and above all `card_corePairsF_span_le`, which counts through `connSets`,
-touch-CONNECTED sets rooted at ONE plaquette. A multi-component span is not a `connSets` member, so
-that becomes a composition count over how the size splits across components: provable, but a NEW
-counting theorem, not a restatement. `card_rooted_pairs_ge` in this file is the negative control
-saying connectedness is what keeps the volume out.
-
-**And `coreSpanF_eq_of_mem` cannot bridge it.** Its `hobs : Ao ∪ Bo ⊆ A` demands all of `Bo` inside
-the separator, while the involution demands `Disjoint Bo A`; the two meet only at `Bo = ∅`. Nor can
-it be weakened — `coreSpanF` contains `Ao ∪ Bo` by construction, so that hypothesis is forced by the
-definition rather than by the proof.
-
-**⭐ AND THE ANCHOR VERSION IS ALREADY RIGHT WHEN `Ao` AND `Bo` ARE EACH CONNECTED** in the pair's
-union, since then "some component meets both" forces "one component contains both" — which covers
-Wilson-loop-shaped observables, so this filter is not wasted work.
-
-DERIVED: no numeral of its own. -/
+DERIVED: the `∅`s are the empty observable set, the outside sums carrying no plaquette observable. -/
 theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
     {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b) (β : ℝ) :
     ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
@@ -5810,7 +6046,8 @@ theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finse
 #print axioms bridging_sum_eq_core_sumF
 
 open scoped Classical in
-/-- **The span of a core is a connected set at the anchor** — the finset version.
+/-- **`coreSpanF Ao Bo c ∈ connSets bd a (coreSpanF Ao Bo c).card`** for an `IsCorePairF` with
+`a ∈ Ao`. The finset counterpart of `coreSpan_mem_connSets`.
 
 DERIVED: no numeral. -/
 theorem coreSpanF_mem_connSets (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo : Finset Pq}
@@ -5822,18 +6059,17 @@ theorem coreSpanF_mem_connSets (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo :
 #print axioms coreSpanF_mem_connSets
 
 open scoped Classical in
-/-- **⭐⭐ THE COUNT IS UNCHANGED BY THE GENERALISATION.**
+/-- **The core pairs whose span has size `m` number at most `(4 * (touchDeg bd + 1) ^ 2) ^ m`**, for
+finset anchors with `a ∈ Ao`. The same bound as `card_corePairs_span_le`: the count runs over
+connected sets of size `m` containing the anchor and over pairs of their subsets, and `Bo` never
+enters it.
 
-`card_corePairs_span_le` for finset supports, with the SAME bound `(4(K+1)²)^m`. The count runs
-over connected sets of size `m` containing the ANCHOR and pairs of their subsets; the second
-observable never entered it, so replacing `{p₀}`/`{pd}` by `Ao`/`Bo` costs nothing here.
+The generalisation is paid for in the weight, not the count: `pairTermF_abs_le` carries
+`2 ^ (Ao.card + Bo.card + 1)` where `pairTerm_abs_le` carries `8`.
 
-**⛔ THE WEIGHT IS WHERE THE GENERALISATION IS PAID FOR**, not the count: `pairTermF_abs_le` pays
-`2^(|Ao|+|Bo|+1)` against the singleton's `8`.
-
-DERIVED: the `4` is the ordered split of a span into a pair of subsets, as in
-`card_corePairs_span_le`; the `1` is `stepSet`'s stay-put step; the `2` is the two steps a detour
-costs. -/
+DERIVED: the `4` is `card_pairs_with_union_le`'s ordered split of a span into a pair of subsets; the
+`1` is `stepSet`'s stay-put step; the `2` is the two steps a detour costs, both through
+`card_connSets_le`. -/
 theorem card_corePairsF_span_le (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo : Finset Pq}
     (ha : a ∈ Ao) (m : ℕ) :
     ((corePairsF bd a Ao Bo).filter (fun c => (coreSpanF Ao Bo c).card = m)).card
@@ -5868,8 +6104,9 @@ theorem card_corePairsF_span_le (bd : Pq → List (Lk × Bool)) {a : Pq} {Ao Bo 
 
 #print axioms card_corePairsF_span_le
 
-/-- **`assembly_arith` with the constant and the offset free.** The `8` and the `+ 2` of the
-singleton case are `C` and `u` here.
+/-- **`A ^ (n+u) * (C * q ^ n * W ^ (n+u)) = C * A ^ u * W ^ u * (A * q * W) ^ n`**, as algebra over
+`ℝ` with no hypotheses. `assembly_arith` with its constant and its offset made parameters: that
+lemma's `8` is `C` here and its `+ 2` is `u`.
 
 DERIVED: no numeral. -/
 theorem assembly_arith_gen (A q W C : ℝ) (n u : ℕ) :
@@ -5883,12 +6120,14 @@ theorem assembly_arith_gen (A q W C : ℝ) (n u : ℕ) :
 /-! #### The count of cores, indexed by span size -/
 
 open scoped Classical in
-/-- **HOW MANY CORES CARRY A SPAN OF A GIVEN SIZE.** At most `(4(touchDeg + 1)²)^m`, with the volume
-in neither factor: `card_connSets_le` counts the spans, and a span of `m` plaquettes is split into an
-ordered pair of subsets in at most `4^m` ways.
+/-- **The core pairs whose span has size `m` number at most `(4 * (touchDeg bd + 1) ^ 2) ^ m`.**
+`card_connSets_le` counts the spans through `coreSpan_mem_connSets`, and a span of `m` plaquettes is
+split into an ordered pair of subsets in exactly `4 ^ m` ways. The lattice extent appears in neither
+factor.
 
-This is the step `coreSpan_mem_connSets` said was missing — "a span carries more than one core pair,
-so the count over `corePairs` has to sum over those as well as over the spans". It is that sum. -/
+DERIVED: the `4` is the ordered split of a span into a pair of subsets, `2 ^ m` per component; the
+`1` is `stepSet`'s stay-put step and the `2` the two steps a detour costs, both through
+`card_connSets_le`. -/
 theorem card_corePairs_span_le (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (m : ℕ) :
     ((corePairs bd p₀ pd).filter (fun c => (coreSpan p₀ pd c).card = m)).card
       ≤ (4 * (touchDeg bd + 1) ^ 2) ^ m := by
@@ -5924,38 +6163,36 @@ theorem card_corePairs_span_le (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (m
 
 /-! #### The rate, the prefactor, and the threshold they create -/
 
-/-- **THE ASSEMBLED PER-PLAQUETTE RATE.** Count times weight times hard core, each factor derived:
-`4(K+1)²` is `card_corePairs_span_le`, `e^{2β} − 1` is `pairTerm_abs_le`, and `e^{4βK}` is
-`hard_core_outside_sq_div_partition_sq_le`. No numeral in it is chosen: the `4` is the pair split,
-the `+1` is the stay-put step of `stepSet`, the `2` in `(K+1)²` is the two steps a detour costs, the
-`2` in `e^{2β}` is the range `[0,2]` of `wilsonDensity`, and the `4` in `e^{4βK}` is that `2` doubled
-by the two outside sums `Z²` carries.
+/-- The assembled per-plaquette rate of the core sum:
+`coreRate K β = (4 (K+1)²) · (e^{2β} − 1) · e^{4βK}`, count times weight times hard-core factor.
+`hardCoreRate` is the same product with `K + 1` in place of the core count `4 (K+1)²`. `K` is a
+parameter, instantiated at `touchDeg bd` by the callers.
 
-It is `hardCoreRate` with the count corrected: `hardCoreRate` used `K + 1` where the count over
-CORES pays `4(K + 1)²`.
-
-DERIVED: every numeral is named in the paragraph above — the `4` from the ordered split of a span into
-an activated pair, the `+1` from the stay-put step, the squares from the two-step detour and the two
-outside sums, and the `2` in `e^{2β}` from `wilsonDensity`'s range. `K` is `touchDeg bd`, read off the
-boundary word. Nothing here is chosen or tuned. -/
+DERIVED: the `4` in the count is `card_pairs_with_union_le`'s ordered split of a span into a pair of
+subsets; the `1` added to `K` is `stepSet`'s stay-put step and the `2` in `(K+1)²` the two steps a
+detour costs, both through `card_connSets_le`. The `2` in `e^{2β}` is the upper end of
+`wilsonDensity`'s range and the `1` subtracted is `boltz_factor_bound`'s value at zero coupling. The
+`4` in `e^{4βK}` is that same `2` doubled by the two outside sums of
+`hard_core_outside_sq_div_partition_sq_le`. -/
 noncomputable def coreRate (K : ℕ) (β : ℝ) : ℝ :=
   (4 * ((K : ℝ) + 1) ^ 2) * (Real.exp (2 * β) - 1) * Real.exp (4 * β * (K : ℝ))
 
-/-- **THE PREFACTOR.** The two anchors are in the span but not in the activated pair, so a span of
-`m` plaquettes pays the count `L^m` against a weight `q^{m−2}` — two factors of `L·W` that the
-geometric series in `m − 2` does not absorb. The `8` is `pairTerm_abs_le`'s.
+/-- The prefactor of the assembled bound:
+`corePrefactor K β = 8 · (4 (K+1)²)² · (e^{4βK})²`. The two anchors lie in the span but not in the
+activated pair, so a span of `m` plaquettes pays the count and the hard-core factor at `m` against a
+weight at `m − 2`, leaving two factors of each that the geometric series in `m − 2` does not absorb.
 
-DERIVED: the `8` is that lemma's constant (`4·1 + 2·2`), the `2`s are the TWO anchors the span carries
-beyond the activated pair, and `4(K+1)²` is `coreRate`'s own count factor. All four are consequences
-of the two anchors and the count, not parameters. -/
+DERIVED: the `8` is `pairTerm_abs_le`'s constant. The outer `2`s are the two anchors the span carries
+beyond the activated pair, as in `assembly_arith`. The `4`, the `1` and the inner `2` of `4 (K+1)²`,
+and the `4` of `e^{4βK}`, are `coreRate`'s own factors. -/
 noncomputable def corePrefactor (K : ℕ) (β : ℝ) : ℝ :=
   8 * (4 * ((K : ℝ) + 1) ^ 2) ^ 2 * Real.exp (4 * β * (K : ℝ)) ^ 2
 
-/-- **THE ASSEMBLED CONSTANT.** Prefactor over the geometric series' own `1 − r`. `touchDeg bd` and
-`β` are its only inputs — there is no `Fintype.card Pq` in it.
+/-- The assembled constant: `corePrefactor K β / (1 - coreRate K β)`. Its only inputs are `K` and
+`β`; no lattice size enters. It is negative when `1 < coreRate K β`, which
+`coreConst_nonpos_of_one_le` records.
 
-DERIVED: the `1` is the geometric series' `∑ rᵐ = (1 − r)⁻¹`, so it is the sum's own denominator and
-not a cutoff. -/
+DERIVED: the `1` is the geometric series' own denominator in `∑ rᵐ = (1 − r)⁻¹`, not a cutoff. -/
 noncomputable def coreConst (K : ℕ) (β : ℝ) : ℝ :=
   corePrefactor K β / (1 - coreRate K β)
 
@@ -5974,10 +6211,13 @@ theorem coreRate_nonneg (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) : 0 ≤ coreRate K
   unfold coreRate
   exact mul_nonneg (mul_nonneg hA hq0) hW.le
 
-/-- **A THRESHOLD EXISTS, AND IT IS THE ESTIMATE'S OWN.** The rate is `0` at `β = 0` and continuous,
-so it is below one on a neighbourhood of zero. No numeral is named, exactly as in
-`hard_core_rate_lt_one_of_small`, and none could be: the threshold is whatever `touchDeg bd` makes
-it. -/
+/-- **There is a `b > 0` with `coreRate K β < 1` for every `β` in `[0, b)`.** `coreRate_at_zero` and
+`continuous_coreRate`, as in `hard_core_rate_lt_one_of_small`. `b` is existential and depends on `K`;
+no value for it is named.
+
+DERIVED: the `0`s are the coupling at which the rate vanishes, the lower end of the interval, and the
+strict lower bound on `b`. The `1` is the threshold at which a geometric series stops
+converging. -/
 theorem core_rate_lt_one_of_small (K : ℕ) :
     ∃ b > 0, ∀ β : ℝ, 0 ≤ β → β < b → coreRate K β < 1 := by
   have hlt : coreRate K 0 < 1 := by rw [coreRate_at_zero]; norm_num
@@ -5991,8 +6231,11 @@ theorem core_rate_lt_one_of_small (K : ℕ) :
 
 #print axioms core_rate_lt_one_of_small
 
-/-- The prefactor is at least `128`: `8` from the per-pair bound, `16` from the two anchor factors
-of `L`, and `1` from `W ≥ 1`. Recorded because `coreConst`'s positivity is read off it. -/
+/-- **`128 ≤ corePrefactor K β` for `0 ≤ β`**, at every `K`.
+
+DERIVED: the `0` is the sign hypothesis on `β`, which is what makes `e^{4βK} ≥ 1`. The `128` is
+`8 * 16`: `8` from `pairTerm_abs_le` and `16 = 4 ^ 2` from the two anchor factors of `4 (K+1)²` at
+`K = 0`, the hard-core factor contributing at least `1`. -/
 theorem le_corePrefactor (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) : 128 ≤ corePrefactor K β := by
   have hKnn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
   have hexp : (0 : ℝ) ≤ 4 * β * (K : ℝ) :=
@@ -6008,9 +6251,14 @@ theorem one_le_corePrefactor (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) : 1 ≤ coreP
   have := le_corePrefactor K (β := β) hβ
   linarith
 
-/-- The per-plaquette weight is below one whenever the rate is: the count alone contributes at
-least `4`, so `r < 1` forces `q < 1/4`. This is what lets a bigger exponent be traded for a
-smaller one. -/
+/-- **`coreRate K β < 1` and `0 ≤ β` give `e^{2β} − 1 ≤ 1`.** The count factor alone is at least `4`
+and the hard-core factor at least `1`, so a rate below one forces the per-plaquette weight below
+`1/4`. This is the hypothesis `pow_le_pow_of_le_one_asm` needs in the fibre bounds, where a larger
+exponent is traded for a smaller one.
+
+DERIVED: the `0` is the sign hypothesis on `β`. The `2` in `e^{2β}` is `wilsonDensity`'s range; the
+`1` subtracted is `boltz_factor_bound`'s value at zero coupling; the `1`s bounding `coreRate` and the
+conclusion are the geometric threshold and the bound the count's factor of `4` yields. -/
 theorem exp_sub_one_le_one_of_coreRate (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate K β < 1) :
     Real.exp (2 * β) - 1 ≤ 1 := by
   have hKnn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
@@ -6031,8 +6279,18 @@ theorem exp_sub_one_le_one_of_coreRate (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr
 /-! #### The core sum, resummed -/
 
 open scoped Classical in
-/-- **ONE FIBRE OF THE CORE SUM.** The cores whose span has `k + j + 2` plaquettes contribute at
-most `prefactor · r^{k+j}`. Count times weight, and nothing else. -/
+/-- **One fibre of the core sum.** Given `Nc ≠ 0`, `0 ≤ β`, `e^{2β} − 1 ≤ 1`, and `hlow` placing
+every core's span above `k + 2`, the cores whose span has exactly `k + j + 2` plaquettes contribute
+at most `corePrefactor (touchDeg bd) β * coreRate (touchDeg bd) β ^ (k + j)`.
+
+`pairTerm_abs_le` and `exp_touchDeg_pow` bound each summand, `card_corePairs_span_le` counts them,
+and `assembly_arith` regroups the product. The fibre is indexed by
+`(coreSpan p₀ pd c).card - (k + 2) = j` in `ℕ`, so `hlow` is what makes that subtraction faithful.
+
+DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `2` in `e^{2β}` and
+the `1`s are `exp_sub_one_le_one_of_coreRate`'s. The `4` in the hard-core exponent is
+`hard_core_outside_sq_div_partition_sq_le`'s. The `2` added to `k` is `two_le_coreSpan_card`'s two
+anchors. -/
 theorem corePairs_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) (k j : ℕ)
     (hlow : ∀ c ∈ corePairs bd p₀ pd, k + 2 ≤ (coreSpan p₀ pd c).card) :
@@ -6127,30 +6385,32 @@ theorem corePairs_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (
 
 #print axioms corePairs_fiber_sum_le
 
-/-- **THE PREFACTOR, FOR FINSET SUPPORTS.**
+/-- The prefactor for finset anchors:
+`corePrefactorF K β na nb u = 2^(na + nb + 1) · (4 (K+1)²)^u · (e^{4βK})^u`. `corePrefactor` with its
+two fixed numbers made parameters: the per-pair constant becomes `pairTermF_abs_le`'s
+`2^(na + nb + 1)`, and the two anchor factors become `u`, the size of `Ao ∪ Bo`, because a span of
+`m` plaquettes pays the count at `m` against a weight at `m − u`.
 
-`corePrefactor` with its two hard-coded numbers made parameters: the per-pair constant `8` becomes
-`2^(|Ao| + |Bo| + 1)` (`pairTermF_abs_le`), and the two anchor factors become `u = |Ao ∪ Bo|` of
-them, because a span of `m` plaquettes pays the count `L^m` against a weight `q^(m − u)`.
+At `u = 2`, `na = nb = 1` it is `8 · (4(K+1)²)² · (e^{4βK})²`, which is `corePrefactor`.
 
-**At `u = 2` with `|Ao| = |Bo| = 1` this is `8 · (4(K+1)²)² · e^{4βK}²`, which is `corePrefactor`
-verbatim** — that agreement is the check that the arithmetic is right.
-
-DERIVED: the `2` in `2 ^ …` is `pairTermF_abs_le`'s per-observable factor; the `1` added to the
-cards is that lemma's second product; the `4` and the `1` in `4(K+1)²` and the `2` in `(K+1)²` are
-`coreRate`'s, as is the `4` in `4βK`. -/
+DERIVED: the `2` in the base is `pairTermF_abs_le`'s per-observable factor and the `1` added to the
+cards is that lemma's second product. The `4`, the `1` added to `K` and the `2` in `4 (K+1)²`, and
+the `4` in `e^{4βK}`, are `coreRate`'s. -/
 noncomputable def corePrefactorF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
   2 ^ (na + nb + 1) * (4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u
 
 open scoped Classical in
-/-- **⭐⭐ ONE FIBRE OF THE CORE SUM, FOR FINSET SUPPORTS.**
+/-- **One fibre of the core sum, for finset anchors.** Given `Nc ≠ 0`, `a ∈ Ao`, `0 ≤ β` and
+`e^{2β} − 1 ≤ 1`, the cores whose span has exactly `n + (Ao ∪ Bo).card` plaquettes contribute at most
+`corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card * coreRate (touchDeg bd) β ^ n`.
 
-The cores whose span has `n + u` plaquettes contribute at most `corePrefactorF · rⁿ`. Count times
-weight, and nothing else — the same argument as `corePairs_fiber_sum_le`, with `u` in place of the
-two anchors.
+The same argument as `corePairs_fiber_sum_le`, with `(Ao ∪ Bo).card` in place of the two anchors and
+`pairTermF_abs_le` and `card_corePairsF_span_le` in place of their singleton counterparts. The fibre
+is indexed by an equation rather than a subtraction, so no lower bound on the span is needed.
 
-DERIVED: the `2` in `2 * β` is `pairTermF_abs_le`'s exponent; the `1` subtracted from `exp` is
-`zw_abs_le`'s; the `4` in `4 * β` is the hard core's; the `0` is the coupling's sign. -/
+DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `2` in `e^{2β}` and
+the `1`s are `exp_sub_one_le_one_of_coreRate`'s. The `4` in the hard-core exponent is
+`hard_core_outside_sq_div_partition_sq_le`'s. -/
 theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
     {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) (n : ℕ) :
@@ -6231,9 +6491,11 @@ theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
 
 #print axioms corePairsF_fiber_sum_le
 
-/-- **The prefactor is at least one**, which is what the sum's nonnegativity step reads off.
+/-- **`1 ≤ corePrefactorF K β na nb u` for `0 ≤ β`**, at every `K, na, nb, u`. This is what the
+nonnegativity step of `corePairsF_sum_le` reads off.
 
-DERIVED: the `1` is the bound; the `0` is the coupling's sign. -/
+DERIVED: the `1` is the bound; the `0` is the sign hypothesis on `β`, needed because the hard-core
+factor `e^{4βK}` is below one at negative `β`. -/
 theorem one_le_corePrefactorF (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (na nb u : ℕ) :
     1 ≤ corePrefactorF K β na nb u := by
   have hKnn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
@@ -6256,29 +6518,36 @@ theorem one_le_corePrefactorF (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (na nb u : �
 
 #print axioms one_le_corePrefactorF
 
-/-- **THE ASSEMBLED CONSTANT, FOR FINSET SUPPORTS.** `coreConst` with the finset prefactor.
+/-- The assembled constant for finset anchors: `corePrefactorF K β na nb u / (1 - coreRate K β)`.
+`coreConst` with the finset prefactor.
 
-DERIVED: the `1` is the geometric series' own `1 − r`. -/
+DERIVED: the `1` is the geometric series' own denominator in `∑ rᵐ = (1 − r)⁻¹`. -/
 noncomputable def coreConstF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
   corePrefactorF K β na nb u / (1 - coreRate K β)
 
 open scoped Classical in
-/-- **⭐⭐⭐ THE CORE SUM, RESUMMED, FOR FINSET SUPPORTS.**
+/-- **The core sum, resummed, for finset anchors.** Given `Nc ≠ 0`, `a ∈ Ao`, `0 ≤ β`,
+`coreRate (touchDeg bd) β < 1`, `(Ao ∪ Bo).card ≤ k + 2`, and `hlow` placing every core's span above
+`k + 2`,
 
-`corePairs_sum_le` with the two anchors replaced by their finsets.
+    ∑ c ∈ corePairsF bd a Ao Bo, |pairTermF c| · e^{4β·touchDeg·|span c|}
+      ≤ coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card).
 
-**⛔ THE EXPONENT IS `k + 2 − u`, NOT `k`.** The span's guaranteed size is `k + 2`
-(`coreSpanF_card_ge_of_not_mem_ball`) and the support occupies `u = |Ao ∪ Bo|` of it, so the power
-of the rate is reduced by the support's size. `hu` keeps that a real subtraction; it is the regime
-where the observables are small relative to their separation, and it is not removable — a
-connecting path may run THROUGH the support, so `k + u ≤ card` is false in general.
+⛔ The exponent is `k + 2 - (Ao ∪ Bo).card`, not `k`. The span's guaranteed size is `k + 2`
+(`coreSpanF_card_ge_of_not_mem_ball`) and the support occupies `(Ao ∪ Bo).card` of it, so the power
+of the rate is reduced by the support's size. `hu` is what keeps that subtraction in `ℕ` faithful;
+it holds when the supports are small relative to their separation. It cannot be dropped: a
+connecting chain may run through the support, so `k + (Ao ∪ Bo).card ≤ (coreSpanF Ao Bo c).card` is
+false in general. At `(Ao ∪ Bo).card = 2` the exponent is `corePairs_sum_le`'s `k`.
 
-At `u = 2` this is `corePairs_sum_le`'s exponent `k`.
+`Fintype.card Pq` enters only as the number of fibres and leaves again through
+`geom_sum_le_inv_one_sub_asm`.
 
-DERIVED: the `2` added to `k` is the span's two guaranteed plaquettes, as in
-`coreSpanF_card_ge_of_not_mem_ball`; the `1`s are the geometric series' `1 − r` and the rate's
-own bound; the `0`s are the coupling's sign and the rank `hN` excludes; the `4` is the hard
-core's exponent, as in `corePairs_sum_le`. -/
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds `coreRate` at the
+geometric threshold. The `2`s added to `k` are the span's two guaranteed plaquettes, from
+`coreSpanF_card_ge_of_not_mem_ball`. The `4` is the hard-core exponent of
+`hard_core_outside_sq_div_partition_sq_le`. -/
 theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
     {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (touchDeg bd) β < 1) (k : ℕ)
@@ -6376,12 +6645,21 @@ theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
 #print axioms corePairsF_sum_le
 
 open scoped Classical in
-/-- **THE CORE SUM, RESUMMED — AND THE VOLUME IS GONE.** Grouped by span size, bounded fibre by
-fibre, and summed as a geometric series.
+/-- **The core sum, resummed.** Given `Nc ≠ 0`, `0 ≤ β`, `coreRate (touchDeg bd) β < 1` and `hlow`
+placing every core's span above `k + 2`,
 
-`Fintype.card Pq` enters this proof for one reason — it is the number of fibres — and
-`geom_sum_le_inv_one_sub_asm` discards it: the partial sums of `rʲ` are under `(1−r)⁻¹` at every
-length. The statement's right-hand side reads `touchDeg bd`, `β` and `k` and nothing else. -/
+    ∑ c ∈ corePairs bd p₀ pd, |pairTerm c| · e^{4β·touchDeg·|span c|}
+      ≤ coreConst (touchDeg bd) β * coreRate (touchDeg bd) β ^ k.
+
+Grouped by span size, bounded fibre by fibre by `corePairs_fiber_sum_le`, and summed as a geometric
+series. `Fintype.card Pq` enters the proof only as the number of fibres and leaves through
+`geom_sum_le_inv_one_sub_asm`, whose bound holds at every length; the right-hand side reads
+`touchDeg bd`, `β` and `k` alone.
+
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds `coreRate` at the
+geometric threshold. The `2` added to `k` is the span's two anchors, from `two_le_coreSpan_card` and
+`coreSpan_card_ge_of_not_mem_ball`. The `4` is the hard-core exponent of
+`hard_core_outside_sq_div_partition_sq_le`. -/
 theorem corePairs_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq)
     {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (touchDeg bd) β < 1) (k : ℕ)
     (hlow : ∀ c ∈ corePairs bd p₀ pd, k + 2 ≤ (coreSpan p₀ pd c).card) :
@@ -6440,12 +6718,16 @@ theorem corePairs_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ p
 /-! #### The last side condition -/
 
 open scoped Classical in
-/-- **THE INTEGRABILITY SIDE CONDITION, DISCHARGED.** `wilsonCorrConn_abs_le_core_sum` carried
-`hint` as a hypothesis; it is a theorem, by the same two pointwise bounds everything else here uses.
-The observable lies in `[0,2]` (`wilsonPlaqObs_le_two`) and the activated weight within
-`e^{2|β|}` of one (`boltz_factor_bound`), so the integrand is bounded by a constant against a
-PROBABILITY measure. The constant carries `Fintype.card Pq` — integrability is not a quantitative
-claim and nothing downstream reads it. -/
+/-- **A plaquette product times a product of activated weights is integrable** against product Haar,
+for any `β` and any `D`, `E`, given `Nc ≠ 0`. This is the `hint` hypothesis of
+`wilsonCorrConn_abs_le_core_sum` and `wilsonCorrConn_eq_bridging_sum`, proved.
+
+The observable lies in `[0, 2]` (`wilsonPlaqObs_le_two`) and the activated weight within `e^{2|β|}`
+of one (`boltz_factor_bound`), so the integrand is bounded by a constant against a probability
+measure. That constant carries `Fintype.card Pq`; it appears in the proof and not in the statement.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `1` subtracted from the exponential is
+`boltz_eq_subset_sum`'s activated weight. -/
 theorem integrable_obs_mul_wprod (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (D E : Finset Pq) :
     Integrable
@@ -6498,12 +6780,17 @@ theorem integrable_obs_mul_wprod (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
 
 #print axioms integrable_obs_mul_wprod
 
-/-! #### The payoff -/
+/-! #### The assembled bounds -/
 
 open scoped Classical in
-/-- **`hM` DISCHARGED — the connected correlation is bounded by a volume-free constant.**
-`wilsonCorrConn_abs_le_core_sum` wanted a bound on the core sum; this is it, and `Fintype.card Pq`
-is not in it. -/
+/-- **`|wilsonCorrConn bd p₀ β pd| ≤ coreConst (touchDeg bd) β`**, given `Nc ≠ 0`, `p₀ ≠ pd`,
+`0 ≤ β` and `coreRate (touchDeg bd) β < 1`. `corePairs_sum_le` at `k = 0`, where
+`two_le_coreSpan_card` supplies `hlow`, fed to `wilsonCorrConn_abs_le_core_sum` with
+`integrable_obs_mul_wprod` discharging the side condition. The right-hand side mentions only
+`touchDeg bd` and `β`.
+
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds `coreRate` at the
+geometric threshold. -/
 theorem wilsonCorrConn_abs_le_coreConst (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (p₀ pd : Pq) (hne : p₀ ≠ pd) {β : ℝ} (hβ : 0 ≤ β)
     (hr : coreRate (touchDeg bd) β < 1) :
@@ -6520,11 +6807,16 @@ theorem wilsonCorrConn_abs_le_coreConst (hN : Nc ≠ 0) (bd : Pq → List (Lk ×
 #print axioms wilsonCorrConn_abs_le_coreConst
 
 open scoped Classical in
-/-- **DECAY IN THE LAG.** `|ρ_conn| ≤ C·rᵏ` whenever `p_d` is more than `k` touch-steps from `p₀`,
-with `C` and `r` both read off `touchDeg bd` and `β` alone.
+/-- **`|wilsonCorrConn bd p₀ β pd| ≤ coreConst (touchDeg bd) β * coreRate (touchDeg bd) β ^ k`**,
+given `Nc ≠ 0`, `0 ≤ β`, `coreRate (touchDeg bd) β < 1` and `pd ∉ ball bd p₀ k`.
 
-THIS is the statement the clustering argument wanted. The separation empties every fibre of the core
-sum below `k` (`coreSpan_card_ge_of_not_mem_ball`), so the geometric series starts there. -/
+The separation empties every fibre of the core sum below `k`
+(`coreSpan_card_ge_of_not_mem_ball`), so the geometric series starts there. `p₀ ≠ pd` is not a
+hypothesis: it follows from `pd ∉ ball bd p₀ k` through `self_mem_ball`. Both the constant and the
+rate read `touchDeg bd` and `β` alone; `k` is a parameter, not quantified inside.
+
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds `coreRate` at the
+geometric threshold. -/
 theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (p₀ pd : Pq) {β : ℝ} (hβ : 0 ≤ β)
     (hr : coreRate (touchDeg bd) β < 1) (k : ℕ) (hk : pd ∉ ball bd p₀ k) :
@@ -6543,20 +6835,19 @@ theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow (hN : Nc ≠ 0) (bd : Pq �
 
 #print axioms wilsonCorrConn_abs_le_coreConst_mul_rate_pow
 
-/-! #### Negative controls
+/-! #### Controls on the hypotheses
 
-Each of these fails the estimate on purpose, so that the hypotheses can be seen to carry weight. -/
+Each of these exhibits a case in which the hypotheses above fail or the conclusion is vacuous. -/
 
 open scoped Classical in
-/-- **NEGATIVE CONTROL — A SEPARATION FAMILY AT EVERY LAG IS EMPTY ON A CONNECTED LATTICE.** The
-family asks for a plaquette outside `ball p₀ d` at every `d : ℕ`. On a finite `Pq` the touch-levels
-have a largest value `R`, so `ball p₀ R` already contains every reachable plaquette and `pf R` has
-nowhere to be.
+/-- **No family of plaquettes can lie outside `ball bd p₀ d` at every `d`, if each is reachable from
+`p₀`.** On a finite `Pq` the touch-levels have a largest value `R`, so `ball bd p₀ R` already
+contains every reachable plaquette and `pf R` has nowhere to be.
 
-So a bound indexed by `∀ d : ℕ` is an infinite-volume statement this lattice cannot meet, whatever
-estimate stands behind it. The finite-volume content is
-`wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, which fixes `k` and asks only for
-`p_d ∉ ball p₀ k`. -/
+So a bound indexed by `∀ d : ℕ` is unsatisfiable here. `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`
+fixes `k` instead and asks only `pd ∉ ball bd p₀ k`.
+
+DERIVED: no numeral. -/
 theorem no_sep_family_of_reachable (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (pf : ℕ → Pq)
     (hreach : ∀ d : ℕ, ∃ m, pf d ∈ ball bd p₀ m) :
     ¬ (∀ d : ℕ, pf d ∉ ball bd p₀ d) := by
@@ -6571,13 +6862,14 @@ theorem no_sep_family_of_reachable (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (
 #print axioms no_sep_family_of_reachable
 
 open scoped Classical in
-/-- **AND WHERE THE FAMILY DOES EXIST, WHAT IT MEASURES IS ZERO.** A plaquette that no ball reaches
-is outside `p₀`'s touch-component, which is touch-closed, so the connected correlation between them
-is EXACTLY zero — at every coupling, with no rate hypothesis and no expansion.
+/-- **A plaquette in no ball around `p₀` has connected correlation zero with it**, at every `β`. Such
+a plaquette lies outside `compOf bd Finset.univ p₀`, which is touch-closed, so
+`wilsonCorrConn_eq_zero_of_touch_closed` applies. No rate hypothesis and no expansion enter.
 
-Taken with `no_sep_family_of_reachable` this closes the `∀ d : ℕ` route: either the separation family
-fails to exist, or it names a plaquette whose correlation with `p₀` is exactly zero. Neither branch
-carries content the finite-`k` estimate did not already have. -/
+With `no_sep_family_of_reachable`, this covers the two cases of a separation family indexed by
+`∀ d : ℕ`: either no such family exists, or it names a plaquette whose correlation with `p₀` is zero.
+
+DERIVED: the `0` is the value of the connected correlation. -/
 theorem wilsonCorrConn_eq_zero_of_no_ball (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
     (hd : ∀ m : ℕ, pd ∉ ball bd p₀ m) :
     MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ β pd = 0 := by
@@ -6595,10 +6887,14 @@ theorem wilsonCorrConn_eq_zero_of_no_ball (bd : Pq → List (Lk × Bool)) (p₀ 
 
 #print axioms wilsonCorrConn_eq_zero_of_no_ball
 
-/-- **NEGATIVE CONTROL — at rate one or more the constant goes non-positive.** `coreConst` is
-`prefactor/(1−r)` with the prefactor at least `128`, so `1 ≤ r` makes it negative or undefined and
-`|ρ_conn| ≤ coreConst · rᵏ` becomes a claim no nonzero correlation can satisfy. The hypothesis
-`coreRate < 1` in `wilsonCorrConn_abs_le_coreConst_mul_rate_pow` is load-bearing, not decorative. -/
+/-- **`1 ≤ coreRate K β` and `0 ≤ β` give `coreConst K β ≤ 0`.** `coreConst` is
+`corePrefactor / (1 - coreRate)` with the prefactor at least `128` (`le_corePrefactor`), so at rate
+one or above the quotient is non-positive and a bound `|ρ_conn| ≤ coreConst · rᵏ` would force the
+correlation to vanish. The hypothesis `coreRate (touchDeg bd) β < 1` of
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow` therefore carries weight.
+
+DERIVED: the first `0` is the sign hypothesis on `β`; the `1` is the geometric threshold the rate is
+assumed to reach; the second `0` is the upper bound on the constant. -/
 theorem coreConst_nonpos_of_one_le (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr : 1 ≤ coreRate K β) :
     coreConst K β ≤ 0 := by
   have hP := le_corePrefactor K (β := β) hβ
@@ -6608,11 +6904,11 @@ theorem coreConst_nonpos_of_one_le (K : ℕ) {β : ℝ} (hβ : 0 ≤ β) (hr : 1
 
 #print axioms coreConst_nonpos_of_one_le
 
-/-! #### Monotone in the degree — so a BOUND on `touchDeg` is enough
+/-! #### Monotonicity in the degree
 
-`touchDeg bd` is exact and awkward; what a caller has is a bound on it, such as `touchDeg_bd_le`'s
-`16·dim`. Every factor of the estimate grows with the degree, so the bound may be substituted
-throughout. -/
+`touchDeg bd` is exact; what a caller usually has is a bound on it, such as `touchDeg_bd_le`'s
+`16 * dim`. Every factor of the estimate is monotone in the degree, so the bound may be substituted
+throughout. `wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` is the substituted statement. -/
 
 theorem coreRate_mono {β : ℝ} (hβ : 0 ≤ β) {K K' : ℕ} (hK : K ≤ K') :
     coreRate K β ≤ coreRate K' β := by
@@ -6648,8 +6944,11 @@ theorem corePrefactor_mono {β : ℝ} (hβ : 0 ≤ β) {K K' : ℕ} (hK : K ≤ 
   have hsq20 : (0 : ℝ) ≤ Real.exp (4 * β * (K : ℝ)) ^ 2 := by positivity
   nlinarith
 
-/-- A smaller positive denominator gives a bigger reciprocal. Proved here rather than named, for the
-same reason as the other arithmetic in this section. -/
+/-- **`0 < y ≤ x` gives `x⁻¹ ≤ y⁻¹`.** A smaller positive denominator has the bigger reciprocal.
+Proved here rather than named from the library, as with the other arithmetic in this section.
+
+DERIVED: the `0` is the strict positivity of `y`, without which the reciprocals are not
+ordered. -/
 theorem inv_le_inv_asm {x y : ℝ} (hy : 0 < y) (hxy : y ≤ x) : x⁻¹ ≤ y⁻¹ := by
   have hx : (0 : ℝ) < x := lt_of_lt_of_le hy hxy
   have e1 : x⁻¹ * x = 1 := by field_simp
@@ -6670,9 +6969,16 @@ theorem coreConst_mono {β : ℝ} (hβ : 0 ≤ β) {K K' : ℕ} (hK : K ≤ K')
   exact mul_le_mul hple hinv (inv_nonneg.mpr h2.le) (by linarith)
 
 open scoped Classical in
-/-- **DECAY IN THE LAG, AT A BOUND ON THE DEGREE.** The same statement with `touchDeg bd` replaced by
-anything that dominates it. This is what carries the estimate to a named geometry: on the hypercubic
-lattice `touchDeg_bd_le` gives `16·dim`, with the extent `n` in neither the rate nor the constant. -/
+/-- **`|wilsonCorrConn bd p₀ β pd| ≤ coreConst K β * coreRate K β ^ k`** for any `K` with
+`touchDeg bd ≤ K`, given `Nc ≠ 0`, `0 ≤ β`, `coreRate K β < 1` and `pd ∉ ball bd p₀ k`.
+
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow` with `coreRate_mono` and `coreConst_mono` carrying the
+bound across. Note the rate hypothesis is at `K`, which is the stronger one. This is what takes the
+estimate to a named geometry: `touchDeg_bd_le` supplies `K = 16 * dim` on the periodic hypercubic
+lattice.
+
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds `coreRate K β` at the
+geometric threshold. -/
 theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le (hN : Nc ≠ 0)
     (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) {β : ℝ} (hβ : 0 ≤ β)
     (K : ℕ) (hK : touchDeg bd ≤ K) (hr : coreRate K β < 1)
@@ -6707,14 +7013,16 @@ open MassGap.WilsonHypercubic
 variable {Nc dim n : ℕ} [NeZero n]
 
 open scoped Classical in
-/-- **THE BOUND ON THE LATTICE THE FLAGSHIP USES.** `|ρ_conn| ≤ C·rᵏ` on the periodic
-`dim`-dimensional lattice, with
+/-- **`|wilsonCorrConn bd p₀ β pd| ≤ coreConst (16 * dim) β * coreRate (16 * dim) β ^ k`** on the
+periodic `dim`-dimensional lattice `Site dim n`, given `Nc ≠ 0`, `0 ≤ β`,
+`coreRate (16 * dim) β < 1` and `pd ∉ ball bd p₀ k`.
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` at `K = 16 * dim` through `touchDeg_bd_le`. The
+extent `n` appears in neither the rate nor the constant. The index `k` is still a touch-ball radius;
+`siteAtHyper_not_mem_ball` converts it to a lag.
 
-    r = coreRate (16·dim) β,   C = coreConst (16·dim) β,
-
-and the extent `n` in NEITHER. `16·dim` is `touchDeg_bd_le`; every other factor is the assembly's.
-This is the statement `Complete.confinement_of_lag_decay` wants the shape of — it is not that
-hypothesis, and `read_p_le_of_corrClay`'s docstring names what still stands between them. -/
+DERIVED: the `0`s are `Nc ≠ 0` and the sign hypothesis `0 ≤ β`. The `1` bounds the rate at the
+geometric threshold. The `16 * dim` is `touchDeg_bd_le`'s bound on the degree, four boundary links
+times four word slots times the choices of second direction. -/
 theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic (hN : Nc ≠ 0)
     (p₀ pd : Plaq dim n) {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (16 * dim) β < 1)
     (k : ℕ) (hk : pd ∉ ball (bd (d := dim) (n := n)) p₀ k) :
@@ -6725,10 +7033,13 @@ theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic (hN : Nc ≠ 0)
 
 #print axioms wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic
 
-/-- **THE HYPOTHESIS IS SATISFIABLE ON THE FLAGSHIP GEOMETRY.** `core_rate_lt_one_of_small` at
-`K = 16·dim`, so `coreRate (16·dim) β < 1` holds on a neighbourhood of `β = 0` whose existence is the
-estimate's own. Without this the corollary above would be a conditional nobody had shown could be
-met; with it the only thing left unnamed is the threshold itself, which is what `dim` decides. -/
+/-- **There is a `b > 0` with `coreRate (16 * dim) β < 1` for every `β` in `[0, b)`.**
+`core_rate_lt_one_of_small` at `K = 16 * dim`, so the rate hypothesis of
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic` is satisfiable. `b` is existential and
+depends on `dim`; no value for it is named.
+
+DERIVED: the `0`s are the lower end of the interval and the strict lower bound on `b`. The `1` is the
+geometric threshold. The `16 * dim` is `touchDeg_bd_le`'s bound on the degree. -/
 theorem core_rate_lt_one_of_small_hypercubic (dim : ℕ) :
     ∃ b > 0, ∀ β : ℝ, 0 ≤ β → β < b → coreRate (16 * dim) β < 1 :=
   core_rate_lt_one_of_small (16 * dim)
@@ -6744,45 +7055,49 @@ end MassGap.StrongCoupling
 
 namespace MassGap.StrongCoupling
 
-/-! ## From a LAG on the periodic lattice to a TOUCH-BALL radius
+/-! ## From a lag on the periodic lattice to a touch-ball radius
 
-`wilsonCorrConn_abs_le_coreConst_mul_rate_pow` decays in `k` whenever `p_d ∉ ball bd p₀ k` — a
-TOUCH-distance. The read `Complete.readYMAt` is indexed by a LAG `d : Fin (N+1)` through
-`WilsonBridge.siteAtHyper`. Nothing related the two indices; this section does.
+`wilsonCorrConn_abs_le_coreConst_mul_rate_pow` decays in `k` whenever `pd ∉ ball bd p₀ k`, a
+touch-distance. A `Moment.Read` is indexed by a lag `d : Fin (N+1)`, carried to a plaquette by
+`WilsonBridge.siteAtHyper`. This section relates the two indices.
 
-THE CONVERSION FACTOR IS READ OFF `bd`, NOT ASSUMED. Two plaquettes touch when they share a LINK, so
-the question is how far one shared link can move you along an axis. Every link of the plaquette
-`((a,b), x)` sits at one of the sites `x`, `x + â`, `x + b̂`, so along a fixed axis `τ` its site's `τ`
-coordinate is `x τ` or `x τ + 1` and never anything else (`link_site_coord`). A shared link therefore
-pins the two plaquettes' `τ` coordinates to within ONE lattice step of each other. **The derived
-constant is `1`: one touch-step is at most one lattice step along any axis.** It is not one step per
-plaquette and it is not assumed — `shift_coord` is where it comes from, and `touch_advances_one`
-shows it is attained, so the step constant cannot be improved.
+The conversion factor is read off `bd`. Two plaquettes touch when they share a link, so the question
+is how far one shared link moves a coordinate. Every link of the plaquette `((a,b), x)` sits at one
+of the sites `x`, `x + â`, `x + b̂`, so along a fixed axis `τ` its site's `τ` coordinate is `x τ` or
+`x τ + 1` and nothing else (`link_site_coord`, from `shift_coord`). A shared link therefore pins the
+two plaquettes' `τ` coordinates to within one lattice step. The constant is `1`: one touch-step is at
+most one lattice step along any axis, and `touch_advances_one` exhibits a touch that attains it.
 
-AND THE LATTICE IS A TORUS, WHICH CAPS THE RADIUS. The `τ` coordinate lives in `Fin n`, so the
-distance to be crossed is the CIRCLE distance `circDist a = min a (n − a)` and NOT the raw lag. At
-`n = N + 1` that is `Moment.circLag` definitionally (`circDist_eq_circLag`) — the same distance
-`Complete.confinement_of_geometric_decay` consumes. `lag_last_mem_ball_two` shows the cap is real and
-not a conservatism: the plaquette at RAW lag `N` is two touch-steps from the origin, so a bridge
-stated in the raw lag would be false.
+The lattice is a torus, which caps the radius. The `τ` coordinate lives in `Fin n`, so the distance
+to be crossed is the circle distance `circDist a = min a (n − a)` and not the raw lag. At `n = N + 1`
+that is `Moment.circLag` definitionally (`circDist_eq_circLag`). `lag_last_mem_ball_two` shows the
+cap is not a conservatism: the plaquette at raw lag `N` is two touch-steps from the origin, so a
+bridge stated in the raw lag would be false, which `raw_lag_radius_refuted` records.
 -/
 
 section CircleDistance
 
-/-- The number of lattice steps from the origin to `a` ON THE CIRCLE of `n` sites — the distance the
-periodic lattice actually has, and the one `Moment.circLag` measures.
+/-- The number of lattice steps from the origin to `a` on the circle of `n` sites:
+`min a (n - a)`, the distance the periodic lattice carries and the one `Moment.circLag` measures.
 
-DERIVED: nothing is chosen. `min` is the two ways round the circle and `n − a` is the way that wraps;
-both are forced by the identification `a ∼ a + n` that `Fin n` IS. -/
+DERIVED: no numeral. The `min` is the two ways round the circle and `n - a` is the way that wraps,
+both forced by the identification `a ∼ a + n` that `Fin n` carries. -/
 def circDist {n : ℕ} (a : Fin n) : ℕ := min (a : ℕ) (n - (a : ℕ))
 
-/-- At extent `N + 1` the circle distance IS `Moment.circLag`, by definition and not by a lemma. -/
+/-- **`circDist d = Moment.circLag d` on `Fin (N + 1)`**, by `rfl`: the two definitions agree, and
+nothing is converted.
+
+DERIVED: the `1` in `Fin (N + 1)` is `Moment.circLag`'s index type, whose extent is `N + 1`. -/
 theorem circDist_eq_circLag {N : ℕ} (d : Fin (N + 1)) : circDist d = Moment.circLag d := rfl
 
 theorem circDist_zero {n : ℕ} [NeZero n] : circDist (0 : Fin n) = 0 := by
   simp [circDist]
 
-/-- The successor's value, in the only two shapes it has: one on, or wrapped to zero. -/
+/-- **The value of `a + 1` in `Fin n` is either `a + 1` or `0` with `a + 1 = n`.** The two cases of
+the wrap, needed because `circDist` is defined on the underlying natural number.
+
+DERIVED: the `1`s are one lattice step, the increment being taken. The `0` is the wrapped value at
+the top of `Fin n`. -/
 theorem val_add_one_cases {n : ℕ} [NeZero n] (a : Fin n) :
     ((a + 1 : Fin n) : ℕ) = (a : ℕ) + 1 ∨
       (((a + 1 : Fin n) : ℕ) = 0 ∧ (a : ℕ) + 1 = n) := by
@@ -6795,19 +7110,28 @@ theorem val_add_one_cases {n : ℕ} [NeZero n] (a : Fin n) :
   · have he : (a : ℕ) + 1 = n := by omega
     exact Or.inr ⟨by rw [hval, he, Nat.mod_self], he⟩
 
-/-- One step forward costs at most one on the circle. -/
+/-- **`circDist (a + 1) ≤ circDist a + 1`**: one step forward costs at most one on the circle,
+including across the wrap.
+
+DERIVED: the `1`s are one lattice step, forward and in the bound. -/
 theorem circDist_succ_le {n : ℕ} [NeZero n] (a : Fin n) :
     circDist (a + 1) ≤ circDist a + 1 := by
   have hlt : (a : ℕ) < n := a.isLt
   rcases val_add_one_cases a with h | ⟨h, hn⟩ <;> · unfold circDist; rw [h]; omega
 
-/-- And one step back costs at most one on the circle. -/
+/-- **`circDist a ≤ circDist (a + 1) + 1`**: one step back costs at most one on the circle. The
+companion of `circDist_succ_le`, needed because a touch can move a coordinate either way.
+
+DERIVED: the `1`s are one lattice step, forward and in the bound. -/
 theorem circDist_le_succ {n : ℕ} [NeZero n] (a : Fin n) :
     circDist a ≤ circDist (a + 1) + 1 := by
   have hlt : (a : ℕ) < n := a.isLt
   rcases val_add_one_cases a with h | ⟨h, hn⟩ <;> · unfold circDist; rw [h]; omega
 
-/-- The successor is injective on the circle — wrapping does not merge two sites. -/
+/-- **`a + 1 = b + 1` gives `a = b` in `Fin n`**: the successor is injective, and the wrap does not
+merge two sites. `NeZero n` is required, `Fin 0` having no elements to speak of.
+
+DERIVED: the `1`s are the lattice step added to each side. -/
 theorem fin_add_one_inj {n : ℕ} [NeZero n] {a b : Fin n} (h : a + 1 = b + 1) : a = b := by
   have hva := val_add_one_cases a
   have hvb := val_add_one_cases b
@@ -6823,9 +7147,13 @@ section BallLevel
 
 variable {Lk Pq : Type} [Fintype Lk] [DecidableEq Lk] [Fintype Pq] [DecidableEq Pq]
 
-/-- **A LEVEL FUNCTION BOUNDS THE BALL.** Any `ℕ`-valued function that is zero at `p₀` and rises by at
-most one across a touch is at most `k` on the `k`-step ball. This is the only thing a radius argument
-needs from the geometry, and it is where `ball`'s recursion is used. -/
+/-- **A level function is at most `k` on the `k`-step ball.** Any `lvl : Pq → ℕ` with `lvl p₀ = 0`
+that rises by at most one across a touch satisfies `lvl q ≤ k` for every `q ∈ ball bd p₀ k`. The
+converse direction to `card_ge_of_reach_of_lvl`, and the form a radius argument takes; the induction
+is on `ball`'s recursion.
+
+DERIVED: the `0` is the hypothesis `lvl p₀ = 0`; the `1` is the Lipschitz step
+`lvl q ≤ lvl p + 1`. -/
 theorem lvl_le_of_mem_ball (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (lvl : Pq → ℕ)
     (h0 : lvl p₀ = 0) (hlip : ∀ p q : Pq, Touch bd p q → lvl q ≤ lvl p + 1) :
     ∀ (k : ℕ) (q : Pq), q ∈ ball bd p₀ k → lvl q ≤ k := by
@@ -6853,17 +7181,21 @@ open MassGap.WilsonHypercubic
 
 variable {dim n : ℕ} [NeZero n]
 
-/-- **ONE LATTICE STEP, AND THE CONSTANT COMES FROM HERE.** A shift moves ONE coordinate by one, so
-along any axis `τ` the shifted site's `τ` coordinate is the original or its successor. -/
+/-- **`shift μ x τ = x τ` or `x τ + 1`.** A shift moves one coordinate by one, so along any axis `τ`
+the shifted site's `τ` coordinate is the original or its successor, according as `τ = μ`.
+
+DERIVED: the `1` is the lattice step `shift` adds. -/
 theorem shift_coord (τ μ : Fin dim) (x : Site dim n) :
     shift μ x τ = x τ ∨ shift μ x τ = x τ + 1 := by
   by_cases h : τ = μ
   · subst h; exact Or.inr (by simp [shift])
   · exact Or.inl (by simp [shift, h])
 
-/-- **A PLAQUETTE'S LINKS LIE IN A ONE-STEP WINDOW ALONG EVERY AXIS.** The boundary word names the
-sites `x`, `x + â`, `x + b̂` and no others, so along `τ` every link it names sits at `x τ` or
-`x τ + 1`. This is the whole geometric input of the bridge. -/
+/-- **A link of the plaquette `((a, b), x)` sits at `x τ` or `x τ + 1` along every axis `τ`.** The
+boundary word names the sites `x`, `shift a x` and `shift b x` and no others, so `shift_coord`
+applies to each. This is the geometric input of the lag-to-ball bridge.
+
+DERIVED: the `1` is `shift_coord`'s lattice step. -/
 theorem link_site_coord (τ a b : Fin dim) (x : Site dim n) (ld : Fin dim) (ls : Site dim n)
     (hl : (ld, ls) ∈ linkSupp (bd (d := dim) (n := n)) ((a, b), x)) :
     ls τ = x τ ∨ ls τ = x τ + 1 := by
@@ -6876,13 +7208,18 @@ theorem link_site_coord (τ a b : Fin dim) (x : Site dim n) (ld : Fin dim) (ls :
   · rw [h]; exact shift_coord τ a x
   · rw [h]; exact shift_coord τ b x
 
-/-- The level of a plaquette along an axis: the circle distance of its site's `τ` coordinate from the
-origin. -/
+/-- The level of a plaquette along an axis: `circDist` of its site's `τ` coordinate. The plane the
+plaquette spans does not enter.
+
+DERIVED: the `2` in `q.2` is a projection, not a numeral. -/
 def axisLvl (τ : Fin dim) (q : Plaq dim n) : ℕ := circDist (q.2 τ)
 
-/-- **ONE TOUCH-STEP IS AT MOST ONE LATTICE STEP.** The shared link sits within one step of each
-plaquette's own site, and the only way both can hold is for the two sites to be within one step of
-each other on the circle. -/
+/-- **`Touch bd p q` gives `axisLvl τ q ≤ axisLvl τ p + 1`.** The shared link sits within one step of
+each plaquette's site (`link_site_coord`), so the two sites are within one step of each other on the
+circle. Four cases, closed by `circDist_succ_le`, `circDist_le_succ` and `fin_add_one_inj`. This is
+the Lipschitz hypothesis `lvl_le_of_mem_ball` takes.
+
+DERIVED: the `1` is one lattice step, `link_site_coord`'s. -/
 theorem axisLvl_lipschitz (τ : Fin dim) (p q : Plaq dim n)
     (h : Touch (bd (d := dim) (n := n)) p q) : axisLvl τ q ≤ axisLvl τ p + 1 := by
   obtain ⟨⟨a, b⟩, x⟩ := p
@@ -6905,25 +7242,23 @@ theorem axisLvl_lipschitz (τ : Fin dim) (p q : Plaq dim n)
     have hxy : x τ = y τ := fin_add_one_inj (by rw [← hP, ← hQ])
     rw [hxy]; omega
 
-/-- **THE BRIDGE — the plaquette at LAG `lag` is outside the touch-ball of radius below the CIRCLE
-distance.** With the plane spanned by `(μ, ν)` and the lag running along `τ`, the plaquette
-`WilsonBridge.siteAtHyper` puts at lag `lag` is more than `k` touch-steps from the plaquette at lag
-zero for every `k < circDist lag`.
+/-- **The plaquette at lag `lag` lies outside `ball bd p₀ k` for every `k < circDist lag`.** With the
+plane spanned by `(μ, ν)` and the lag running along `τ`, `((μ, ν), siteAtHyper τ lag)` is not in the
+`k`-step touch-ball of `((μ, ν), fun _ => 0)`.
 
-THE RADIUS IS `circDist lag − 1` AND THAT IS DERIVED. The level `axisLvl τ` is zero at the origin
-plaquette, equals `circDist lag` at the lag-`lag` plaquette, and rises by at most one per touch
-(`axisLvl_lipschitz`) — one touch-step is one lattice step, the constant read off `bd`. So a ball of
-radius `k` cannot contain a plaquette of level above `k`.
+`axisLvl τ` is zero at the origin plaquette, equals `circDist lag` at the lag-`lag` plaquette, and
+rises by at most one per touch (`axisLvl_lipschitz`), so `lvl_le_of_mem_ball` forbids a ball of
+radius `k` from containing a plaquette of level above `k`.
 
-THE CAP IS THE CIRCLE DISTANCE, NOT THE LAG. On a torus the two plaquettes are `min lag (n − lag)`
-steps apart, and `lag_last_mem_ball_two` exhibits a lag for which the raw index would give a false
-statement (`raw_lag_radius_refuted`).
+The index is the circle distance, not the raw lag: `lag_last_mem_ball_two` and
+`raw_lag_radius_refuted` exhibit a lag at which the raw index would make the statement false. The
+step constant is attained (`touch_advances_one`). The radius is short by at most one, the level
+argument permitting only `k < circDist lag` while both endpoint plaquettes span `(μ, ν)` and so name
+links at a single `τ` coordinate; `lag_last_mem_ball_two` bounds that slack, the true touch-distance
+there being `2` against a circle distance of `1`.
 
-WHAT IS SHARP AND WHAT IS NOT. The step constant is sharp: `touch_advances_one` attains one lattice
-step per touch. The RADIUS is short by at most one — the level argument permits `k < circDist lag`,
-while both endpoint plaquettes span `(μ, ν)` and so name links at a single `τ` coordinate rather than
-two, which a finer argument could spend. `lag_last_mem_ball_two` bounds the slack: there the true
-touch-distance is `2` and the circle distance is `1`. -/
+DERIVED: the `0` is the origin site, the base point the lag is measured from and the one at which
+`axisLvl τ` vanishes. -/
 theorem siteAtHyper_not_mem_ball (μ ν τ : Fin dim) (lag : Fin n) (k : ℕ)
     (hk : k < circDist lag) :
     (((μ, ν), MassGap.WilsonBridge.siteAtHyper τ lag) : Plaq dim n)
@@ -6939,21 +7274,24 @@ theorem siteAtHyper_not_mem_ball (μ ν τ : Fin dim) (lag : Fin n) (k : ℕ)
 
 #print axioms siteAtHyper_not_mem_ball
 
-/-! ### Negative controls for the bridge -/
+/-! ### Controls on the bridge -/
 
-/-- **NON-VACUITY — the derived constant `1` IS ATTAINED, so it cannot be improved.** A plaquette in
-a plane CONTAINING `τ` shares its `μ`-link at `x + τ̂` with the plaquette one lattice step along `τ`,
-so a single touch really does move one step along the axis. Were the true rate two touch-steps per
-lattice step the exponent above would double, and this says it is not. -/
+/-- **`Touch bd ((μ, τ), x) ((μ, ν), shift τ x)`**: a plaquette in a plane containing `τ` shares its
+`μ`-link at `shift τ x` with the plaquette one lattice step along `τ`. So one touch moves one step
+along the axis, and `axisLvl_lipschitz`'s constant is attained.
+
+DERIVED: no numeral. -/
 theorem touch_advances_one (μ ν τ : Fin dim) (x : Site dim n) :
     Touch (bd (d := dim) (n := n)) ((μ, τ), x) ((μ, ν), shift τ x) :=
   ⟨(μ, shift τ x), by simp [linkSupp, bd], by simp [linkSupp, bd]⟩
 
 #print axioms touch_advances_one
 
-/-- **AND THE STEP IT TAKES IS A REAL LEVEL INCREASE.** At the origin the touch of
-`touch_advances_one` raises `axisLvl` from `0` to `1`, so the level function is not constant along
-the chain the bound is about. -/
+/-- **At the origin, `touch_advances_one`'s touch raises `axisLvl τ` from `0` to `1`**, given
+`2 ≤ n`. The level function is not constant along the chain the bound is about.
+
+DERIVED: the `2` is the hypothesis `2 ≤ n`, without which `0 + 1` wraps back to `0` on `Fin n`. The
+`0`s are the origin site and the level there; the `1` is the level after one step. -/
 theorem axisLvl_origin_step (μ ν τ : Fin dim) (hn : 2 ≤ n) :
     axisLvl τ (((μ, τ), fun _ => 0) : Plaq dim n) = 0 ∧
       axisLvl τ (((μ, ν), shift τ (fun _ => 0)) : Plaq dim n) = 1 := by
@@ -6980,12 +7318,15 @@ open MassGap.WilsonHypercubic
 
 variable {dim N : ℕ}
 
-/-- **NEGATIVE CONTROL — THE PERIODIC WRAP REALLY DOES CAP THE RADIUS.** At raw lag `N` on an extent
-of `N + 1` sites the plaquette is TWO touch-steps from the origin, whatever `N` is: the plaquette
-`((μ, τ), x₋₁)` shares its `μ`-link at the origin with `p₀` and its `μ`-link at `x₋₁` with `p_d`.
+/-- **The plaquette at raw lag `N` on `N + 1` sites is within two touch-steps of the origin**, at
+every `N`. The intermediate plaquette `((μ, τ), y)`, with `y` the lag-`N` site, shares its `μ`-link
+at the origin with the origin plaquette and its `μ`-link at `y` with the lag-`N` one.
 
-So a bridge indexed by the RAW lag — `p_d ∉ ball p₀ (lag − 1)` — is FALSE for every `N ≥ 4`, and the
-circle distance in `siteAtHyper_not_mem_ball` is forced rather than cautious. -/
+So a bridge indexed by the raw lag would be false, which is why `siteAtHyper_not_mem_ball` is indexed
+by `circDist`. `raw_lag_radius_refuted` states that refutation.
+
+DERIVED: the `2` is the ball radius the two touches reach; the `1` in `N + 1` is the extent, one more
+than the largest raw lag; the `0` is the origin site. -/
 theorem lag_last_mem_ball_two (μ ν τ : Fin dim) :
     (((μ, ν), MassGap.WilsonBridge.siteAtHyper τ (Fin.last N)) : Plaq dim (N + 1))
       ∈ ball (bd (d := dim) (n := N + 1)) ((μ, ν), fun _ => 0) 2 := by
@@ -7011,20 +7352,28 @@ theorem lag_last_mem_ball_two (μ ν τ : Fin dim) :
 
 #print axioms lag_last_mem_ball_two
 
-/-- The circle distance the wrap leaves: at raw lag `N + 1` on `N + 2` sites it is `1`, against a raw
-lag that grows without bound. This is the quantity `siteAtHyper_not_mem_ball` is indexed by. -/
+/-- **`Moment.circLag (Fin.last (N + 1)) = 1`.** The circle distance at the largest raw lag is one,
+whatever `N`, against a raw lag that grows without bound. This is the quantity
+`siteAtHyper_not_mem_ball` is indexed by.
+
+DERIVED: the `1` in `N + 1` makes `Fin.last` the top of `Fin (N + 2)`; the `1` on the right is the
+circle distance `min (N + 1) ((N + 2) - (N + 1))`. -/
 theorem circLag_last (N : ℕ) : Moment.circLag (Fin.last (N + 1)) = 1 := by
   unfold Moment.circLag
   simp [Fin.val_last]
 
 #print axioms circLag_last
 
-/-- **AND THE RAW-LAG RADIUS IS REFUTED, not merely unproved.** On `N + 4` sites the plaquette at raw
-lag `N + 3` IS inside the ball of radius `N + 2` — the radius a bridge indexed by the raw lag would
-have claimed it was outside — because `lag_last_mem_ball_two` puts it two touch-steps from the
-origin. Its CIRCLE distance is `1` (`circLag_last`), so `siteAtHyper_not_mem_ball` claims only
-`∉ ball p₀ 0` there, and the two statements are consistent. This is the case the torus makes, and it
-is why the bridge is indexed by `Moment.circLag`. -/
+/-- **On `N + 4` sites the plaquette at raw lag `N + 3` lies inside the ball of radius `N + 2`.**
+That is the radius a bridge indexed by the raw lag would have placed it outside of;
+`lag_last_mem_ball_two` puts it two touch-steps from the origin and `ball_mono` widens to `N + 2`.
+
+Its circle distance is `1` (`circLag_last`), so `siteAtHyper_not_mem_ball` claims only
+`∉ ball p₀ 0` there, and the two statements agree.
+
+DERIVED: the `3` and the `4` are the smallest extent at which the raw-lag radius `N + 2` exceeds the
+touch-distance `2`; the `2` is that touch-distance, from `lag_last_mem_ball_two`; the `0` is the
+origin site. -/
 theorem raw_lag_radius_refuted (dim N : ℕ) (μ ν τ : Fin dim) :
     (((μ, ν), MassGap.WilsonBridge.siteAtHyper τ (Fin.last (N + 3))) : Plaq dim (N + 4))
       ∈ ball (bd (d := dim) (n := N + 4)) ((μ, ν), fun _ => 0) (N + 2) :=
@@ -7038,15 +7387,17 @@ section LagDecay
 
 open MassGap.WilsonHypercubic
 
-/-- **DECAY IN THE CIRCLE DISTANCE, AT THE CORRELATION THE READ ACTUALLY USES.**
-`WilsonBridge.corrClay` is the four-dimensional `SU(3)` connected plaquette correlation at lag `d`;
-this bounds it by `C·r^k` for every `k` below the circle distance of the lag, with `C` and `r` read
-off `16·4` (the degree bound `touchDeg_bd_le` gives at `dim = 4`) and `β` alone — the extent `N + 1`
-is in neither.
+/-- **`|corrClay (N + 1) β d| ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ k`** for every
+`k < Moment.circLag d`, given `0 ≤ β` and `coreRate (16 * 4) β < 1`.
 
-It is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic` composed with
-`siteAtHyper_not_mem_ball`, and the composition is exactly what was missing: the estimate was indexed
-by a touch-ball and the read by a lag. -/
+`WilsonBridge.corrClay` is the four-dimensional `SU(3)` connected plaquette correlation at lag `d`.
+This is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic` composed with
+`siteAtHyper_not_mem_ball`, which converts the touch-ball index into the lag. The extent `N + 1`
+appears in neither the constant nor the rate.
+
+DERIVED: the `0` is the sign hypothesis on `β` and the `1` bounds the rate at the geometric
+threshold. The `16 * 4` is `touchDeg_bd_le` at `dim = 4`, the dimension `corrClay` fixes. The `1`s
+in `Fin (N + 1)` and `corrClay (N + 1)` are the lattice extent, one more than the largest lag. -/
 theorem corrClay_abs_le_coreConst_mul_rate_pow (N : ℕ) {β : ℝ} (hβ : 0 ≤ β)
     (hr : coreRate (16 * 4) β < 1) (d : Fin (N + 1)) (k : ℕ) (hk : k < Moment.circLag d) :
     |MassGap.WilsonBridge.corrClay (N + 1) β d|
@@ -7059,45 +7410,37 @@ theorem corrClay_abs_le_coreConst_mul_rate_pow (N : ℕ) {β : ℝ} (hβ : 0 ≤
 
 #print axioms corrClay_abs_le_coreConst_mul_rate_pow
 
-/-- **THE READ'S WEIGHTS DECAY IN `Moment.circLag` — CONDITIONALLY, AND THE CONDITIONS ARE NAMED.**
+/-- **A read whose `ρ` is `corrClay` has weights decaying in `Moment.circLag`.** For `R : Moment.Read
+N` with `R.ρ d = corrClay (N + 1) β d` at every lag, `0 < m ≤ ∑ d', R.ρ d'`, `0 < β` and
+`coreRate (16 * 4) β < 1`,
 
-This is the shape `Complete.confinement_of_geometric_decay` consumes, `p d ≤ C·r^{circLag d}`, for
-any read whose `ρ` is the Wilson correlation `WilsonBridge.corrClay`.
+    R.p d ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
+              * coreRate (16 * 4) β ^ Moment.circLag d.
 
-`hρ` IS CARRIED, NOT DISCHARGED HERE. `Complete.readYMAt N β` is such a read — `readYMAt` is
-`readA (wilsonCorrAt N β) _` and `wilsonCorrAt N β d` is `corrClay (N+1) β d`, so `hρ` should be
-`fun _ => rfl` at it. That instantiation is NOT checked by this file: `MassGap.StrongCoupling` does
-not import `MassGap.Complete` (the import would be acyclic, but it does not exist), so what is proved
-here is the statement about an arbitrary `Moment.Read` and nothing more.
+`corrClay_abs_le_coreConst_mul_rate_pow` at exponent `circLag d - 1`, divided by the total mass. The
+`circLag d = 0` case is separate: there the estimate says nothing and the read's own normalisation
+`∑ p = 1` gives `R.p d ≤ 1`.
 
-`read_decay_of_correlation_decay` above is the same normalisation step in the RAW lag; this one is
-the circle-distance form, and the two are not interchangeable — `r < 1` makes the smaller exponent
-the weaker bound.
+`read_decay_of_correlation_decay` above is the same normalisation step in the raw lag; the two are
+not interchangeable, since at `r < 1` the smaller exponent is the weaker bound.
 
-WHAT IT DOES NOT GIVE, AND THIS IS NOT A QUIBBLE.
+Scope, all of it visible in the statement:
 
-* `m` IS A HYPOTHESIS HERE, AND PER-`N`. `Moment.Read.p` is `ρ/∑ρ`, so the constant carries `1/m`
-  for a lower bound `m ≤ ∑ρ`. Reflection positivity (`Complete.wilson_reflection_positive_at`) gives
-  `0 < ∑ρ` at each `N` SEPARATELY; it does not give one `m` good for every `N`, and this file has no
-  access to one — `MassGap.StrongCoupling` does not import `MassGap.ContactFloor`.
-  **⭐ THE TREE SUPPLIES IT.** `ContactFloor.read_p_le_aperture_uniform` discharges this hypothesis
-  with the contact floor, which is ONE number below `wilsonCorrAt N β 0` at every aperture
-  (`ContactFloor.contactFloor_holds`), and `∑ρ ≥ ρ 0` because `ρ` is nonnegative. Use that theorem
-  rather than this one when the constant has to be aperture-uniform.
-* `C` AND `r` DEPEND ON `β`, and `confinement_of_geometric_decay` quantifies over EVERY `β` with `C`
-  and `r` fixed outside. `coreRate (16·4) β < 1` holds only on a neighbourhood of `β = 0`
-  (`core_rate_lt_one_of_small_hypercubic`), and `coreRate → ∞` as `β` grows, so no choice of `C, r`
-  meets the all-`β` quantifier from this estimate. The bound below is a STRONG-COUPLING bound and
-  says nothing at large `β`.
+* `m` is a hypothesis and is bound outside nothing — it may depend on `N`. `Moment.Read.p` is
+  `ρ/∑ρ`, so the constant carries `1/m` for a lower bound `m ≤ ∑ρ`. A bound giving `0 < ∑ρ` at each
+  `N` separately does not supply one `m` good for every `N`.
+* `C` and `r` both depend on `β`. `coreRate (16 * 4) β < 1` holds only near `β = 0`
+  (`core_rate_lt_one_of_small_hypercubic`) and the rate grows without bound as `β` does, so the
+  statement is at a fixed `N` and a fixed small `β`.
+* `hρ` is carried rather than discharged: the statement is about an arbitrary `Moment.Read N` whose
+  `ρ` agrees with `corrClay`, and this file names no particular such read.
 
-So this is the composition, stated at fixed `N` and fixed `β`, and it is not the hypothesis of
-`confinement_of_geometric_decay`.
-
-DERIVED: the `+ 1` in the constant is the lag-zero term, where the estimate says nothing (at `d = 0`
-the two plaquettes coincide) and the read's own normalisation `∑ p = 1` gives `p 0 ≤ 1` instead. The
-division by `coreRate` is the one step of exponent the ball bound loses — it is indexed by
-`circLag d − 1`, and `r^{L−1} = r^L/r` — and it is why `0 < β` is needed, `coreRate` being zero at
-`β = 0`. -/
+DERIVED: the `0`s are the strict positivity of `m` and of `β`; the `1` bounding `coreRate` is the
+geometric threshold; the `1`s in `Fin (N + 1)` and `corrClay (N + 1)` are the lattice extent. The
+`16 * 4` is `touchDeg_bd_le` at `dim = 4`. The `+ 1` in the constant covers the lag-zero term, where
+the estimate is silent and `∑ p = 1` gives `p 0 ≤ 1` instead. The division by `coreRate` is the one
+step of exponent the ball bound loses, being indexed by `circLag d - 1` with `r^{L−1} = r^L/r`; it is
+why `0 < β` is needed, `coreRate` vanishing at `β = 0`. -/
 theorem read_p_le_of_corrClay {N : ℕ} (R : Moment.Read N) {β m : ℝ}
     (hρ : ∀ d : Fin (N + 1), R.ρ d = MassGap.WilsonBridge.corrClay (N + 1) β d)
     (hm : 0 < m) (hmass : m ≤ ∑ d', R.ρ d')
@@ -7165,9 +7508,12 @@ theorem read_p_le_of_corrClay {N : ℕ} (R : Moment.Read N) {β m : ℝ}
 
 #print axioms read_p_le_of_corrClay
 
-/-- **THE RATE IS BELOW ONE WHERE THE ESTIMATE LIVES.** The other two hypotheses
-`Complete.confinement_of_geometric_decay` asks of the rate, at the constant this section produces.
-`coreRate (16·4) β < 1` is `core_rate_lt_one_of_small_hypercubic` at `dim = 4`. -/
+/-- **`0 ≤ coreRate (16 * 4) β` for `0 ≤ β`.** `coreRate_nonneg` at `K = 16 * 4`. The companion
+upper bound `coreRate (16 * 4) β < 1` is `core_rate_lt_one_of_small_hypercubic` at `dim = 4`, and
+holds only near `β = 0`.
+
+DERIVED: the `0`s are the sign hypothesis on `β` and the lower bound on the rate; the `16 * 4` is
+`touchDeg_bd_le` at `dim = 4`. -/
 theorem read_decay_rate_nonneg {β : ℝ} (hβ : 0 ≤ β) : (0 : ℝ) ≤ coreRate (16 * 4) β :=
   coreRate_nonneg _ hβ
 

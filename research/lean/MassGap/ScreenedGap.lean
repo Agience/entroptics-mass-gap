@@ -5,74 +5,69 @@ import MassGap.ZeroMode
 # The gap at a fixed screen: spacing-independent, with the open inputs in one place
 
 This file composes results proved elsewhere and adds no mathematics of its own. Its purpose is that
-the statement a reader has to check, and the list of things still assumed, should sit together on one
-screen rather than being reassembled from six modules.
+the statement a reader has to check, and the list of things assumed, sit together rather than being
+reassembled from six modules.
 
 ## What composes
 
 `Model.mass_gap_rate_of_model` gives a rate at one spacing: `Δ = κ₀ − μ β > 0`, with `‖C(τ)‖` bounded
-by a geometric series in `e^{−Δ}`. That rate is in LATTICE units, so on its own it says nothing about
-a continuum theory — halving the spacing halves it.
+by a geometric series in `e^{−Δ}`. That rate is in LATTICE units, so halving the spacing halves it.
 
-`ZeroMode.gap_phys_of_fixed_screen` is what makes it a physical statement. The screen has a physical
-extent `L = (N+1)a` — that is what an observer's boundary IS, and it does not change because the
-lattice used to compute through it got finer. Holding it fixed, the spacing cancels:
+`ZeroMode.gap_phys_of_fixed_screen` converts it. The screen has a physical extent `L = (N+1)a`;
+holding that fixed makes the spacing cancel:
 
     Δ_lat ≥ κ/(N+1)  and  (N+1)a = L   ⟹   Δ_phys = Δ_lat/a ≥ κ/L
 
-`Measure.continuum_of_family` supplies the other half, a tight subsequential limit satisfying OS0–OS3.
+`Measure.continuum_of_family` supplies a tight subsequential limit satisfying OS0–OS3.
 
-## The screen is the MECHANISM, not a lens placed in front of one
+## What the screen excludes
 
-The aperture does not reveal a gap that was there anyway; it is why there is one. A screen of finite
-information capacity band-limits, a band-limit has a diffraction limit, and the limit cannot host the
-infinitely-extended mode a massless theory requires. What the screen can host therefore decays, and
-the rate it decays at is the gap.
+A screen of finite information capacity band-limits, a band-limit has a diffraction limit, and the
+limit cannot host the infinitely-extended mode a massless theory requires.
 
-That exclusion is quantitative here, not rhetorical. A free MASSLESS field, whose lowest mode on a
-periodic screen of `N+1` sites is `2π/(N+1)`, reads `⟨cos⟩ = 0.5452` against the entropy floor
-`3^{−1/4} = 0.7598`. Its tension is therefore `μ = 0.6065 > κ₀ = 0.2747`: the massless configuration
-VIOLATES the floor and is inadmissible on the screen. The margin of exclusion is the critical scaling
-variable `a⋆ = 1.7489`, so an admissible mode decays at least `1.75×` faster than the massless box
-mode — at every aperture, since `a⋆ > 1` independently of `N`.
+`code/certify/aperture_cap_of_floor.py` computes that exclusion. A free MASSLESS field, whose lowest
+mode on a periodic screen of `N+1` sites is `2π/(N+1)`, reads `⟨cos⟩ = 0.5452` against the entropy
+floor `3^{−1/4} = 0.7598`, so its tension is `μ = 0.6065 > κ₀ = 0.2747` and the massless
+configuration is inadmissible on the screen. The margin of exclusion is the critical scaling variable
+`a⋆ = 1.7489`, which does not depend on `N`, so an admissible mode decays at least `1.75×` faster
+than the massless box mode at every aperture. A `1.7` GeV glueball on the same screens reads `0.8067`
+to `0.9345`, clearing the floor, while the massless field fails on every one of them; the script
+refuses to report if that ordering reverses.
 
-This is also what makes the screen a physical mechanism rather than a blurring artefact: it
-DISCRIMINATES. A blur would push everything toward looking gapped. This does the opposite for the
-massless case and admits the gapped one — a `1.7` GeV glueball on the same screens reads `0.8067` to
-`0.9345`, comfortably clearing the floor, while the massless field fails on every one of them.
-Computed with its refusals in `code/certify/aperture_cap_of_floor.py`, which stops if that ordering
-ever reverses.
+## What is assumed, and where it enters
 
-## What is still assumed, and where it enters
-
-Stated as hypotheses of `screened_gap_and_continuum` rather than buried, because this is the list that
-decides what the result is worth:
+These are hypotheses — fields of `Screened`, or arguments of `screened_gap_and_continuum` — rather
+than facts proved in this development:
 
 * `hrate` — the lattice gap at each spacing is at least `κ/(N+1)`. For an ARBITRARY mode family this
-  is the measured mode decay (`hdom`); it is what `Capacity.modelOfJunction` reduces to the two named
-  residuals `κ−μ ≤ c` and `c ≤ Δ`, of which the first is proved from the directed-cube count
+  is the measured mode decay; `Capacity.modelOfJunction` reduces it to the two named residuals
+  `κ−μ ≤ c` and `c ≤ Δ`, of which the first follows from the directed-cube count
   (`Capacity.junction_of_scale_duality`) given the count injection and the cited scale duality.
-  It is NOT supplied by the tension: `ZeroMode.correlation_gap_of_tension` yields `∃ρ<1` and no more,
+  The tension does not supply it: `ZeroMode.correlation_gap_of_tension` yields `∃ρ<1` and no more,
   because the tension is a weighted average and a mode arbitrarily close to `1` carrying arbitrarily
-  little weight does not move it. `no_zero_mode_of_tension_lt_floor` kills weight exactly AT one, not
-  near it. So the size of the gap is an input here, and only its existence comes from the aperture.
-* `hscreen` — the aperture is held at fixed physical extent. This is the entroptics reading of what
-  an aperture IS: a property of the extraction boundary, not of the lattice used to compute through
-  it. It is assumed rather than derived, and it is the assumption the framing exists to make.
-* the `LatticeYMFamily` fields — Osterwalder–Seiler reflection positivity at each spacing, and the
-  spacing-independent resolved-dimension bound `c = k⋆L/(2π)`.
+  little weight does not move it, while `ZeroMode.no_zero_mode_of_tension_lt_floor` removes weight
+  at one rather than near it. So the size of the gap is an input, and its existence is what the
+  aperture gives.
+* `hscreen` — the aperture is held at fixed physical extent, a property of the extraction boundary
+  rather than of the lattice used to compute through it.
+* the `Measure.LatticeYMFamily` fields — Osterwalder–Seiler reflection positivity at each spacing,
+  and the spacing-independent resolved-dimension bound `c = k⋆L/(2π)`.
 -/
 
 namespace MassGap.ScreenedGap
 
 open MassGap Filter Topology
 
-/-- **A lattice Yang–Mills family read through a screen of fixed physical extent.**
+/-- A lattice Yang–Mills family read through a screen of fixed physical extent.
 
-The index is the SPACING, and `hscreen` is the whole content of the structure: the aperture grows as
-the spacing falls so that their product — the screen's physical size — does not move. A family that
-instead held the aperture at a fixed number of SITES would have a shrinking screen, and one that held
-the box fixed would have a growing one; neither gives a spacing-independent bound. -/
+The index is the SPACING. `hscreen` is what distinguishes the structure: the aperture grows as the
+spacing falls so that their product, the screen's physical size `L`, does not move. A family holding
+the aperture at a fixed number of SITES would have a shrinking screen, and one holding the box fixed
+a growing one; neither gives a spacing-independent bound.
+
+`gap i` is `LatticeYM` reduction data at each index, with confinement `h1` assumed there; `hrate`
+assumes a lattice gap of at least `κ / (aperture i + 1)` at every index and every coupling. Both are
+fields, so a caller supplies them. -/
 structure Screened where
   /-- Reduction data at each spacing. -/
   gap : ℕ → LatticeYM
@@ -86,7 +81,7 @@ structure Screened where
   /-- The screen's physical extent, the same at every spacing. -/
   L : ℝ
   hL : 0 < L
-  /-- **The screen is fixed.** -/
+  /-- The screen's extent is the same at every spacing. -/
   hscreen : ∀ i, ((aperture i : ℝ) + 1) * spacing i = L
   /-- The lattice rate constant. -/
   κ : ℝ
@@ -94,11 +89,12 @@ structure Screened where
   /-- The lattice gap at each spacing clears `κ/(aperture+1)`. -/
   hrate : ∀ i β, κ / ((aperture i : ℝ) + 1) ≤ (gap i).κ₀ - (gap i).μ β
 
-/-- **The physical gap does not depend on the spacing.**
+/-- The physical gap does not depend on the spacing:
+`S.κ / S.L ≤ ((S.gap i).κ₀ - (S.gap i).μ β) / S.spacing i` at every index `i`. The right-hand side is
+the lattice rate divided by the spacing; the left-hand side is fixed before the family is indexed,
+so the members share a lower bound rather than each merely having one.
 
-`κ/L` is one number, fixed before the family is indexed, and every member clears it. This is the
-statement a continuum limit needs: not that each lattice has a gap, which is compatible with the gap
-closing as `a → 0`, but that the gaps share a positive lower bound. -/
+Proved by `ZeroMode.gap_phys_of_fixed_screen` from the structure's `hrate` and `hscreen`. -/
 theorem uniform_physical_gap (S : Screened) (β : ℝ) :
     ∀ i, S.κ / S.L ≤ ((S.gap i).κ₀ - (S.gap i).μ β) / S.spacing i :=
   ZeroMode.gap_phys_of_fixed_screen S.aperture S.spacing
@@ -107,26 +103,36 @@ theorem uniform_physical_gap (S : Screened) (β : ℝ) :
 
 #print axioms uniform_physical_gap
 
-/-- **And it is positive**, so the family has a mass gap in physical units that no member can erode. -/
+/-- The bound of `uniform_physical_gap` is positive: there is a `δ` with `0 < δ` below
+`((S.gap i).κ₀ - (S.gap i).μ β) / S.spacing i` at every `i`. The witness is `S.κ / S.L`, positive by
+the structure's `hκ` and `hL`.
+
+DERIVED: `0` is the strict positivity of `δ`. The value is `S.κ / S.L`, two fields of `Screened`;
+nothing is chosen here. -/
 theorem uniform_physical_gap_pos (S : Screened) (β : ℝ) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ i, δ ≤ ((S.gap i).κ₀ - (S.gap i).μ β) / S.spacing i :=
   ⟨S.κ / S.L, div_pos S.hκ S.hL, uniform_physical_gap S β⟩
 
 #print axioms uniform_physical_gap_pos
 
-/-- **THE COMPOSITION: a spacing-independent gap with a rate, and an OS continuum measure.**
+/-- The composition: a spacing-independent gap with a rate, and an OS continuum measure.
 
-Everything this development proves about the gap, assembled. For a screened family together with the
-finite-spacing Osterwalder–Schrader data:
+For a `Screened` family `S`, a `Measure.LatticeYMFamily` `F` and a coupling `β`, the conjunction of
+three statements:
 
-* **a physical gap `δ = κ/L > 0`** that every spacing clears (`uniform_physical_gap_pos`);
-* **geometric decay at each spacing** at the rate `κ₀ − μ`, the margin between the proved entropy
-  floor and the measured tension (`mass_gap_rate_of_model`);
-* **a tight continuum limit satisfying OS0–OS3** (`continuum_of_family`).
+* a physical gap `δ = S.κ / S.L > 0` cleared at every spacing (`uniform_physical_gap_pos`);
+* at each spacing, `‖∑ k ∈ (S.gap i).s β, P β k * m β k ^ τ‖ ≤ (∑ k, ‖P β k‖) * exp (−(κ₀ − μ β)) ^ τ`
+  (`Model.mass_gap_rate_of_model`, second component);
+* a subsequential limit `q` of `F.Q` along a `StrictMono φ`, bounded by `⌈F.c⌉₊ * F.B`, nonnegative,
+  and invariant under `F.actE` and `F.actP` (`Measure.continuum_of_family`).
 
-Foundational axioms only. The open inputs are the structure's fields, listed in this file's header;
-the Osterwalder–Schrader reconstruction of `q` into a Wightman theory, and OS4 clustering from the
-gap, are the two remaining citations. -/
+`S` and `F` are independent arguments: the third conjunct is about `F` alone and mentions neither `S`
+nor `β`, so the gap half and the measure half are statements about different objects, conjoined. The
+open inputs are the fields of `Screened` and of `Measure.LatticeYMFamily`, listed in this file's
+header.
+
+DERIVED: `0` is the strict positivity of `δ` and the nonnegativity `0 ≤ q j`; every other quantity
+in the statement is a field of `S` or of `F`. -/
 theorem screened_gap_and_continuum (S : Screened) (F : Measure.LatticeYMFamily) (β : ℝ) :
     (∃ δ : ℝ, 0 < δ ∧ ∀ i, δ ≤ ((S.gap i).κ₀ - (S.gap i).μ β) / S.spacing i) ∧
       (∀ i, ∀ τ : ℕ, ‖∑ k ∈ (S.gap i).s β, (S.gap i).P β k * ((S.gap i).m β k) ^ τ‖
@@ -144,33 +150,43 @@ theorem screened_gap_and_continuum (S : Screened) (F : Measure.LatticeYMFamily) 
 
 #print axioms screened_gap_and_continuum
 
-/-- **THE WHOLE THING: a measured tension at a fixed screen gives a spacing-independent mass gap.**
+/-- A measured tension at a fixed screen gives a spacing-independent gap bound.
 
-No rate, no cutoff and no margin is assumed. Every hypothesis is either a measurement or the frame.
+The hypotheses: the read `R i` at aperture `2 * kk i + 1` is a single geometric mode,
+`(R i).ρ d = lam i ^ (Moment.circLag d)` with `0 < lam i` and `lam i ≤ 1` (`hρ`, `hlam0`, `hlam1`);
+its cosine average is positive (`hcos`); its tension clears the entropy floor,
+`(R i).tension < (1 / 4) * Real.log 3` (`htens`); and the screen has a fixed physical extent,
+`((2 * kk i + 1 : ℕ) + 1) * spacing i = L` (`hscreen`). The conclusion, at every `i`:
 
-    μ < κ₀ at every spacing      (measured: the tension clears the entropy floor)
-    (nᵢ + 1) · aᵢ = L              (the frame: the screen has a fixed physical extent)
-    ──────────────────────────────
-    Δ_phys  ≥  2.0419 / L         at EVERY spacing, the same number
+    (-2 * log (12 * ((1 - 3 ^ (-1/4)) / 8))) / L  ≤  (-log (lam i)) / spacing i
 
-THE ROUTE, all of it machine-checked and none of it assumed:
+The left-hand side is one expression in `L` alone, the same at every spacing. Numerically its
+numerator is about `2.0419`; the statement carries the symbolic form, not that decimal.
+
+The route, by name:
 
   `Moment.Read.substrate_lt_of_tension_lt_floor`   the tension caps the circular second moment
   `ZeroMode.substrate_ge_of_slow_decay`            a slowly-decaying mode has a large one
-  `ZeroMode.lam_pow_lt_of_tension`                 so `λ^{n/2} < 0.3602`
-  `ZeroMode.rate_gt_of_tension`                    equivalently `nΔ > 2.0419`
+  `ZeroMode.lam_pow_lt_of_tension`                 so `lam ^ (k + 1) < 12 * ((1 - 3 ^ (-1/4)) / 8)`
+  `ZeroMode.rate_gt_of_tension`                    equivalently `(k + 1) * (-log lam)` exceeds
+                                                   `-log (12 * ((1 - 3 ^ (-1/4)) / 8))`
   `ZeroMode.gap_phys_of_fixed_screen`              and at a fixed screen the spacing cancels
 
-WHAT IS ASSUMED: the screen. `hscreen` says the aperture is a property of the extraction boundary and
-not of the lattice used to compute through it. That is the entroptics reading, assumed rather than
-derived, and it is the assumption the framing exists to make. Everything else is measured or proved.
+The doubling between `rate_gt_of_tension`'s constant and the one in this conclusion is the lag count
+`2 * (kk i + 1)`, which is the aperture `2 * kk i + 1` plus one.
 
-WHAT IS NOT CLAIMED: the correlation here is a SINGLE transfer mode.
-`ZeroMode.substrate_ge_of_subset_share` carries the multi-mode statement, where the bound degrades by
-the weight share -- correctly, since a screen of finite capacity should say less about a fainter mode.
+`hscreen` is a hypothesis: the aperture is a property of the extraction boundary rather than of the
+lattice computed through. The correlation is a SINGLE transfer mode, `hρ` being an equation rather
+than a bound; `ZeroMode.substrate_ge_of_subset_share` carries the multi-mode statement, where the
+bound degrades by the weight share.
 
-DERIVED: `2.0419` is `-2 log(12(1-e^{-κ₀})/8)`, descending from the entropy floor proved in
-`Floor.lean` and the circle geometry. Nothing is fitted and no constant is chosen. -/
+DERIVED: the conclusion's constant is `-2 * log (12 * ((1 - 3 ^ (-1/4)) / 8))`. The `12` is
+`ZeroMode.six_mul_sum_sq`'s denominator and the `8` is `Moment.Read.cos_avg_le_circ`'s; `3 ^ (-1/4)`
+is `e^{-κ₀}` for the entropy floor `κ₀ = (1 / 4) * Real.log 3`, whose positivity is `Floor.floor_pos`
+and which is also the bound in `htens`; the `2` is the lag count `2 * (kk i + 1)` against
+`rate_gt_of_tension`'s `kk i + 1`, and the `1` of `2 * kk i + 1` makes the aperture odd. `0 < L`,
+`0 < spacing i` and `0 < lam i` are the positivity the divisions and the logarithm need. Nothing is
+fitted and no constant is chosen. -/
 theorem physical_gap_of_tension_at_screen
     (kk : ℕ → ℕ) (spacing : ℕ → ℝ) (lam : ℕ → ℝ) (L : ℝ) (hL : 0 < L)
     (hspacing : ∀ i, 0 < spacing i)
@@ -224,39 +240,35 @@ theorem physical_gap_of_tension_at_screen
 
 /-! ## The box, made explicit
 
-The aperture and the box are different things, and until now only the aperture appeared. A `Read N`
-carries `N+1` lags and says nothing about how large a system those lags were read from. That silence
-is not the same as box-independence -- it is the absence of any statement at all -- so this section
-makes the box a parameter and proves what the silence was standing in for.
+The aperture and the box are different things, and elsewhere in this tree only the aperture appears.
+A `Moment.Read N` carries `N+1` lags and says nothing about how large a system those lags were read
+from. This section makes the box a parameter and states what follows.
 
-WHY THE TWO MUST BE SEPARATE. Mass is a property of the theory, not of the instrument reading it. A
-wider window does not create a heavier particle; it reads the same one with a different resolving
-power. So a family of reads at DIFFERENT box sizes but the SAME aperture must return the same bound,
-and the bound must survive the box growing without limit. That is what `gap_bound_box_independent`
-says, and it is a theorem rather than an omission.
+The two are separate because a family of reads at DIFFERENT box sizes but the SAME aperture returns
+the same bound, and that bound survives the box growing without limit:
+`gap_bound_box_independent` carries `box` as an argument and never uses it.
 
-WHY THE APERTURE CANNOT ALSO GROW. The bound is `2 pi a* / L_ap`. Letting the APERTURE grow without
-limit destroys it, and nothing in the mathematics forbids that -- what forbids it is that the aperture
-is the observer's, its size is the observer's capacity, and the observer is part of the substrate it
-reads. A finite observer in an infinite substrate has a finite window. The substrate may be taken to
-infinity; the window may not follow it.
+The aperture is not treated the same way. The bound is `kappa / L`, with `L` the screen's extent, so
+letting the APERTURE grow without limit while `hscreen` holds drives `L` up and the bound down.
+Nothing in these statements forbids that; what fixes the aperture is the reading that its size is
+the observer's capacity.
 
-AND THE CRITERION POLICES THE OTHER DIRECTION. A window too SMALL cannot be used to manufacture a
-large gap, because it simply fails the criterion: at aperture `n` the test passes only when
-`n * Delta > C`, so a window that cannot resolve the decay returns no verdict rather than a flattering
-one. The sharpest bound comes from the smallest window that still passes, and there the bound is the
-gap itself.
+In the other direction the criterion refuses a window too SMALL to resolve the decay: at aperture
+`n` it passes only when `n * Delta > C`, so such a window returns no verdict rather than a
+flattering one. The sharpest bound comes from the smallest window that still passes.
 -/
 
-/-- **The gap bound does not depend on the box.**
+/-- The gap bound does not depend on the box.
 
-A family of reads taken at the same aperture from systems of any sizes -- `box` is carried and never
-used, which is the point -- yields one bound, the same for every member. The theorem is the
-quantifier: `Delta_phys >= kappa / L_ap` holds for ALL `i`, with a right-hand side that mentions
-neither `box i` nor the spacing.
+`box` is an argument of the theorem and appears nowhere in its conclusion: `κ / L ≤ Δlat i / spacing i`
+holds at every `i`, with a right-hand side mentioning neither `box i` nor the box at any other index.
+The hypotheses are the same as `uniform_physical_gap`'s, stated on bare functions rather than on a
+`Screened`: a fixed screen `hscreen`, a positive spacing, and a lattice rate clearing
+`κ / (N i + 1)`.
 
-DERIVED: nothing new. `kappa` and `L` are the caller's, and the conclusion is
-`gap_phys_of_fixed_screen` with the box carried alongside to show it does not enter. -/
+DERIVED: `0 < κ`, `0 < L` and `0 < spacing i` are the positivity `ZeroMode.gap_phys_of_fixed_screen`
+needs for its divisions, and the `+ 1` of `N i + 1` is the lag count at aperture `N i`. `κ` and `L`
+are the caller's, and no constant is introduced. -/
 theorem gap_bound_box_independent
     (N : ℕ → ℕ) (spacing : ℕ → ℝ) (box : ℕ → ℝ) (Δlat : ℕ → ℝ) (κ L : ℝ)
     (hκ : 0 < κ) (hL : 0 < L)
@@ -268,14 +280,14 @@ theorem gap_bound_box_independent
 
 #print axioms gap_bound_box_independent
 
-/-- **And it survives the thermodynamic limit.**
+/-- The same bound, with the boxes growing without bound.
 
-If the boxes grow without bound while the aperture is held fixed, the bound is unchanged: it was
-never a function of the box, so no limit needs to be taken to keep it. This is the statement the
-Clay problem's `R^4` requires and the one the earlier formulation left implicit.
+`hgrow : Tendsto box atTop atTop` is an argument and the conclusion does not mention `box`, so the
+statement is `gap_bound_box_independent` packaged as `∃ δ > 0` with `hgrow` recording which limit is
+being taken. No limit is computed; the witness is `κ / L`, the same number as without `hgrow`.
 
-The physics input is `hgrow` only in the sense that it records what limit is being taken; the
-conclusion does not depend on it, which is exactly the content. -/
+DERIVED: `0 < κ`, `0 < L`, `0 < spacing i` and `0 < δ` are the positivity conditions, and the `+ 1`
+of `N i + 1` is the lag count at aperture `N i`. -/
 theorem gap_survives_thermodynamic_limit
     (N : ℕ → ℕ) (spacing : ℕ → ℝ) (box : ℕ → ℝ) (Δlat : ℕ → ℝ) (κ L : ℝ)
     (hκ : 0 < κ) (hL : 0 < L)
@@ -289,57 +301,55 @@ theorem gap_survives_thermodynamic_limit
 
 #print axioms gap_survives_thermodynamic_limit
 
-/-! ## The noise edge belongs to the RESIDUAL, not to the raw spectrum
+/-! ## The noise edge taken on the residual rather than the raw spectrum
 
 `ZeroMode.resolved_count_le_of_subset` bounds the number of resolved modes by the measured tension,
-and that bound DIVIDES BY `edge`. So the edge is not a spectator: take it too high and the bound
-comes out tighter than the data supports. This section proves where "too high" comes from, and which
-way the error runs.
+and that bound DIVIDES BY `edge`, so the edge's value moves the bound. This section states where the
+two candidate edges differ and which way the difference runs.
 
-A transfer spectrum carries a near-unit component -- the vacuum, `lam` close to `1` -- and that
-component carries most of the weight. An edge set as a share of the TOTAL weight therefore inherits a
-share of the vacuum's weight, while the modes a gap argument is about live in what is left once the
-vacuum is removed. Three steps:
+A transfer spectrum carries a near-unit component, `lam` close to `1`, holding most of the weight.
+An edge set as a share `theta` of the TOTAL weight therefore includes a share of that component's
+weight, while a gap argument concerns the modes left once it is removed. Three steps:
 
-* the two edges differ by EXACTLY the vacuum's share (`edge_raw_sub_residual`);
+* the two edges differ by exactly the removed component's share (`edge_raw_sub_residual`);
 * so the raw edge is the larger of the two (`edge_residual_le_raw`);
 * and a larger edge resolves no more modes (`resolvedDim_antitone_edge`).
 
-Composing them: reading the edge off the raw spectrum UNDER-reports the resolved count
-(`resolved_count_under_reported_of_raw_edge`), so a count bound computed from it is not a bound on
-the modes that are actually present. The direction matters -- an under-reported count makes the gap
-argument look STRONGER than it is, which is the failure mode worth a theorem.
+Composing them, the raw edge yields the smaller resolved count
+(`resolved_count_under_reported_of_raw_edge`), so a count bound computed against it is smaller than
+the modes present justify. `under_report_is_strict` gives the condition under which the inequality
+is strict: a mode sitting between the two edges.
 
-And the gap between them is not vacuous: `under_report_is_strict` exhibits the condition under which
-a mode is counted by the residual edge and missed by the raw one, namely that it sits between them.
-
-`entroptics-jlens` reports this empirically, on reads where the near-unit component inflates the
-floor. Here it is proved, with no constant introduced: `theta` is whatever share the caller's floor
-takes, and every other quantity is the read's own.
+`entroptics-jlens` reports this from measurement, on reads where the near-unit component inflates
+the floor. No constant is introduced here: `theta` is whatever share the caller's floor takes and
+every other quantity is the read's own.
 -/
 
-/-- **A lower edge resolves a superset of modes.** The filter defining `resolvedDim` is antitone in
-the edge, as a set and not merely in cardinality -- which is what the strict form below needs. -/
+/-- A lower edge resolves a superset of modes: `s.filter (e₂ < ev ·) ⊆ s.filter (e₁ < ev ·)` when
+`e₁ ≤ e₂`. Stated as a set inclusion rather than a cardinality inequality, which is what
+`under_report_is_strict` needs. `ev` and `s` are arbitrary; no order on `ι` is used. -/
 theorem resolved_subset_of_edge_le {ι : Type*} (s : Finset ι) (ev : ι → ℝ) {e₁ e₂ : ℝ} (h : e₁ ≤ e₂) :
     s.filter (fun k => e₂ < ev k) ⊆ s.filter (fun k => e₁ < ev k) := by
   intro k hk
   rw [Finset.mem_filter] at hk ⊢
   exact ⟨hk.1, lt_of_le_of_lt h hk.2⟩
 
-/-- **The resolved dimension is antitone in the edge.** Raising the noise floor cannot reveal a mode.
+/-- `MassGap.Measure.resolvedDim s ev` is antitone in the edge: raising the noise floor cannot
+reveal a mode. The cardinality form of `resolved_subset_of_edge_le`.
 
-DERIVED: nothing numeric. This is monotonicity of a filter's cardinality. -/
+DERIVED: the statement carries no numeral. It is monotonicity of a filtered set's cardinality. -/
 theorem resolvedDim_antitone_edge {ι : Type*} (s : Finset ι) (ev : ι → ℝ) {e₁ e₂ : ℝ} (h : e₁ ≤ e₂) :
     MassGap.Measure.resolvedDim s ev e₂ ≤ MassGap.Measure.resolvedDim s ev e₁ :=
   Finset.card_le_card (resolved_subset_of_edge_le s ev h)
 
 #print axioms resolvedDim_antitone_edge
 
-/-- **The raw edge exceeds the residual edge by exactly the vacuum's share.**
+/-- The raw edge exceeds the residual edge by exactly the removed component's share:
+`theta * ∑ i ∈ s, w i - theta * ∑ i ∈ s.erase v, w i = theta * w v`.
 
-`theta` is whatever fraction of the aggregate weight the read takes as its floor; `v` is the index of
-the near-unit component. The identity is exact -- no estimate, no inequality -- so the inflation is
-named rather than bounded. -/
+`theta` is whatever fraction of the aggregate weight the read takes as its floor and `v` is the
+index removed. An identity, not an estimate: `w` is an arbitrary function and no sign condition on
+it or on `theta` is required. -/
 theorem edge_raw_sub_residual {ι : Type*} [DecidableEq ι] (s : Finset ι) (v : ι) (hv : v ∈ s)
     (w : ι → ℝ) (theta : ℝ) :
     theta * (∑ i ∈ s, w i) - theta * (∑ i ∈ s.erase v, w i) = theta * w v := by
@@ -348,8 +358,12 @@ theorem edge_raw_sub_residual {ι : Type*} [DecidableEq ι] (s : Finset ι) (v :
 
 #print axioms edge_raw_sub_residual
 
-/-- **So the residual edge is the smaller one**, given only that the vacuum's weight is nonnegative
--- which it is, being a weight. -/
+/-- The residual edge is the smaller one:
+`theta * ∑ i ∈ s.erase v, w i ≤ theta * ∑ i ∈ s, w i`. The only hypotheses beyond `v ∈ s` are that
+the removed weight and `theta` are nonnegative.
+
+DERIVED: `0 ≤ w v` and `0 ≤ theta` are those two sign conditions; the statement carries no other
+numeral. -/
 theorem edge_residual_le_raw {ι : Type*} [DecidableEq ι] (s : Finset ι) (v : ι) (hv : v ∈ s)
     (w : ι → ℝ) (hwv : 0 ≤ w v) (theta : ℝ) (htheta : 0 ≤ theta) :
     theta * (∑ i ∈ s.erase v, w i) ≤ theta * ∑ i ∈ s, w i := by
@@ -359,11 +373,15 @@ theorem edge_residual_le_raw {ι : Type*} [DecidableEq ι] (s : Finset ι) (v : 
 
 #print axioms edge_residual_le_raw
 
-/-- **Reading the edge off the raw spectrum under-reports the resolved count.**
+/-- Reading the edge off the raw spectrum gives the smaller resolved count:
+`resolvedDim s ev (theta * ∑ i ∈ s, w i) ≤ resolvedDim s ev (theta * ∑ i ∈ s.erase v, w i)`.
 
-The composition, and the statement `entroptics-jlens` reports from measurement. Note the direction:
-the raw edge yields the SMALLER count, so a bound divided by it looks tighter than the modes present
-justify. The residual edge is the one a count bound may be computed against. -/
+`edge_residual_le_raw` composed with `resolvedDim_antitone_edge`. The direction is the content: the
+raw edge under-reports, so a count bound computed against it is smaller than the modes present
+justify.
+
+DERIVED: `0 ≤ w v` and `0 ≤ theta` are `edge_residual_le_raw`'s sign conditions, carried
+unchanged. -/
 theorem resolved_count_under_reported_of_raw_edge {ι : Type*} [DecidableEq ι]
     (s : Finset ι) (v : ι) (hv : v ∈ s) (ev w : ι → ℝ) (hwv : 0 ≤ w v)
     (theta : ℝ) (htheta : 0 ≤ theta) :
@@ -373,13 +391,15 @@ theorem resolved_count_under_reported_of_raw_edge {ι : Type*} [DecidableEq ι]
 
 #print axioms resolved_count_under_reported_of_raw_edge
 
-/-- **And the under-report is real, not a vacuous inequality.**
+/-- The under-report is strict when a mode sits between the two edges.
 
-A mode sitting between the two edges -- above the residual floor, not above the raw one -- is counted
-by the first and missed by the second, so the inequality is STRICT. This is the negative case: without
-it, "the raw edge under-reports" would be compatible with the two counts always agreeing.
+`hlo` and `hhi` place `ev m` above the residual edge and at or below the raw one, for some `m ∈ s`.
+Then `resolvedDim s ev (theta * ∑ i ∈ s, w i) < resolvedDim s ev (theta * ∑ i ∈ s.erase v, w i)`.
+Without this, `resolved_count_under_reported_of_raw_edge` would be compatible with the two counts
+always agreeing.
 
-The hypotheses are the definition of "between the edges" and nothing else. -/
+DERIVED: `0 ≤ w v` and `0 ≤ theta` are the sign conditions `edge_residual_le_raw` needs inside the
+proof; the two bracketing hypotheses carry no numeral of their own. -/
 theorem under_report_is_strict {ι : Type*} [DecidableEq ι]
     (s : Finset ι) (v : ι) (hv : v ∈ s) (ev w : ι → ℝ) (hwv : 0 ≤ w v)
     (theta : ℝ) (htheta : 0 ≤ theta) (m : ι) (hm : m ∈ s)
@@ -397,41 +417,41 @@ theorem under_report_is_strict {ι : Type*} [DecidableEq ι]
 
 #print axioms under_report_is_strict
 
-/-! ## The resolved count as an explicit ceiling, and the shape `os_gap` consumes
+/-! ## The resolved count as an explicit ceiling
 
-`ZeroMode.resolved_count_le_of_subset` is stated as a product inequality: the count appears multiplied
-by everything it is bounded against. That is the form the proof produces, and it is not the form a
-continuum limit consumes -- `Measure.familyOfSortedCount` asks for `resolvedDim ... <= c`, a count on
-one side and a number on the other.
+`ZeroMode.resolved_count_le_of_subset` is stated as a product inequality: the count appears
+multiplied by everything it is bounded against. `Measure.familyOfSortedCount` asks instead for
+`resolvedDim ... ≤ c`, a count on one side and a number on the other.
 
-This section performs that rearrangement once, so no caller does it by hand. Nothing is added: the
-content is the same inequality divided through by a quantity proved positive, and the positivity
-hypotheses are exactly the ones that make the division legal -- a positive noise floor, a positive
-`lam0`, and a correlation with some weight in it.
+This section performs that rearrangement. The content is the same inequality divided through by a
+quantity proved positive, and the added hypotheses are the ones that make the division legal: a
+positive noise floor, a positive `lam0`, and a correlation with some weight in it.
 
-WHAT THE CEILING IS MADE OF. Reading the right-hand side:
+Reading the right-hand side:
 
     12 * W * M / (edge * lam0^(k+1) * (2(k+1))^2 * S)
 
-`W = sum w` is the read's total weight, `edge` its noise floor, `lam0` the lower edge of the band the
-resolved modes occupy, and `M / S` is the weighted mean of `clag^2` -- the SUBSTRATE. Every factor is
-the read's own; nothing is chosen here, and `12` is the sum-of-squares denominator carried through
-from `six_mul_sum_sq`.
+`W = ∑ w` is the read's total weight, `edge` its noise floor, `lam0` the lower edge of the band the
+resolved modes occupy, and `M / S` is the weighted mean of `clag^2`, the SUBSTRATE. Every factor is
+the read's own, and `12` is `ZeroMode.six_mul_sum_sq`'s denominator carried through.
 
-WHY THIS IS THE BRIDGE. The substrate is what the tension bounds
-(`Moment.Read.substrate_lt_of_tension_lt_floor`), so a cap on the count follows from `mu < kappa_0`
-through this ceiling -- the count `os_gap` needs, obtained from the correlation rather than asserted
-about it. And `edge` in the denominator is why `ScreenedGap`'s edge lemmas above matter: an inflated
-floor makes this ceiling SMALLER, which is the wrong direction for a bound.
+The substrate is what the tension bounds (`Moment.Read.substrate_lt_of_tension_lt_floor`), so a cap
+on the count follows from `mu < kappa_0` through this ceiling — that is
+`resolvedDim_le_of_tension` below. `edge` sits in the denominator, which is where the edge lemmas
+above bear: a floor inflated by the near-unit component's share makes this ceiling smaller.
 -/
 
-/-- **The resolved count, divided out into an explicit ceiling.**
+/-- The resolved count, divided out into an explicit ceiling: `ZeroMode.resolved_count_le_of_subset`
+with `(A.card : ℝ)` alone on the left.
 
-`ZeroMode.resolved_count_le_of_subset` with the count alone on the left. The hypotheses gain three
-strict positivities -- the noise floor, the band edge `lam0`, and the aggregate correlation `S` --
-which is precisely what makes the division legal and nothing more.
+`A ⊆ s` is the resolved set, supplied by the caller. Beyond that lemma's hypotheses this one adds
+three strict positivities — the noise floor `edge`, the band edge `lam0`, and the aggregate
+correlation `S` — which is what makes the division legal.
 
-DERIVED: no new literal. `12` is `six_mul_sum_sq`'s denominator, carried through unchanged. -/
+DERIVED: `12` is `ZeroMode.six_mul_sum_sq`'s denominator, carried through unchanged; `2 * (k + 1)`
+is the even lag count the `ZeroMode.clag` sums run over and `^ 2` its square in the same lemma;
+`lam0 ^ (k + 1)` is the antipodal power. `0 ≤ w i`, `lam i ≤ 1`, `0 < lam0`, `lam0 ≤ 1`, `0 < edge`
+and `0 < S` are the range and positivity conditions. No new literal enters. -/
 theorem resolved_count_ceiling {ι : Type*} (k : ℕ) (s A : Finset ι) (w lam : ι → ℝ)
     (hAs : A ⊆ s)
     (hw : ∀ i ∈ s, 0 ≤ w i) (hlam0 : ∀ i ∈ s, 0 ≤ lam i) (hlam1 : ∀ i ∈ s, lam i ≤ 1)
@@ -472,16 +492,17 @@ theorem resolved_count_ceiling {ι : Type*} (k : ℕ) (s A : Finset ι) (w lam :
 
 #print axioms resolved_count_ceiling
 
-/-- **The same ceiling, on `resolvedDim` itself** -- the quantity `Measure.familyOfSortedCount`
-consumes, rather than on the cardinality of a set the caller has to produce.
+/-- The same ceiling on `MassGap.Measure.resolvedDim s w edge`, the quantity
+`Measure.familyOfSortedCount` consumes, rather than on the cardinality of a set the caller produces.
 
-The resolved set IS the filter: a mode is resolved when its weight clears the noise floor. So the
-only hypothesis left that is not about positivity is `hband` -- that every resolved mode sits at or
-above `lam0`. That is the band restriction the count bound is about, and it is stated rather than
-smuggled: the theorem bounds the modes NEAR `lam0`, not all modes, because a mode far below `lam0`
-decays fast and is not what a gap argument has to exclude.
+`resolved_count_ceiling` with `A` instantiated at `s.filter (fun i => edge < w i)`: a mode is
+resolved when its weight clears the noise floor. The only hypothesis left that is not a positivity
+or range condition is `hband`, that every resolved mode sits at or above `lam0`. The theorem
+therefore bounds the modes in that band, not all modes.
 
-DERIVED: nothing new; this is `resolved_count_ceiling` with `A` instantiated at the filter. -/
+DERIVED: nothing new. `12`, `2 * (k + 1)`, `^ 2` and `lam0 ^ (k + 1)` are `resolved_count_ceiling`'s,
+and `0 ≤ w i`, `lam i ≤ 1`, `0 < lam0`, `lam0 ≤ 1`, `0 < edge` and `0 < S` are its range and
+positivity conditions. -/
 theorem resolvedDim_ceiling {ι : Type*} [DecidableEq ι] (k : ℕ) (s : Finset ι) (w lam : ι → ℝ)
     (hw : ∀ i ∈ s, 0 ≤ w i) (hlam0 : ∀ i ∈ s, 0 ≤ lam i) (hlam1 : ∀ i ∈ s, lam i ≤ 1)
     (lam0 : ℝ) (hlam00 : 0 < lam0) (hlam01 : lam0 ≤ 1)
@@ -512,39 +533,43 @@ theorem resolvedDim_ceiling {ι : Type*} [DecidableEq ι] (k : ℕ) (s : Finset 
 
 #print axioms resolvedDim_ceiling
 
-/-! ## The count from the tension, with nothing left in between
+/-! ## The count from the tension
 
-`resolvedDim_ceiling` bounds the resolved count by an expression containing `M / S` -- the weighted
-mean of `clag^2` over the correlation. That IS the substrate, and the substrate is exactly what the
-tension bounds (`Moment.Read.substrate_lt_of_tension_lt_floor`: `mu < kappa_0` forces it below
-`(1 - 3^{-1/4})/8`). Composing the two removes the last quantity that was neither a theorem nor a
-measurement:
+`resolvedDim_ceiling` bounds the resolved count by an expression containing `M / S`, the weighted
+mean of `clag^2` over the correlation. That is the substrate, and the substrate is what the tension
+bounds: `Moment.Read.substrate_lt_of_tension_lt_floor` takes `mu < kappa_0` and forces it below
+`(1 - 3^{-1/4})/8`. Composing the two:
 
     mu < kappa_0   =>   resolvedDim  <=  12 * (1 - 3^{-1/4})/8 * W / (edge * lam0^(k+1))
 
-The right-hand side is `0.360246 * W / (edge * lam0^(k+1))`, and every symbol in it is the read's own:
-`W` its total weight, `edge` its noise floor, `lam0` the lower edge of the band the resolved modes
-occupy. The `12` is `six_mul_sum_sq`'s denominator and `(1 - 3^{-1/4})/8` is the composition of the
-entropy floor with `cos_avg_le_circ`. Nothing is chosen.
+The right-hand side is about `0.360246 * W / (edge * lam0^(k+1))`, and every symbol in it is the
+read's own: `W` its total weight, `edge` its noise floor, `lam0` the lower edge of the band the
+resolved modes occupy. The `12` is `ZeroMode.six_mul_sum_sq`'s denominator and `(1 - 3^{-1/4})/8` is
+the entropy floor composed with `Moment.Read.cos_avg_le_circ`. Nothing is chosen.
 
-THIS IS THE `hcount` OF `ym_continuum_gauge_counted`. That family asks for a cap on the resolved count
-at every spacing and derives `os_gap` from it; this derives the cap from the measured tension. What
-remains between here and a fully sourced OS-measure is the per-spacing instantiation -- a read at each
-spacing whose tension clears the floor -- not another inequality.
+This is the shape of the count hypothesis `WilsonGauge.ym_continuum_gauge_counted` takes: that
+family asks for a cap on the resolved count at every spacing, and this derives such a cap from the
+measured tension at one. The per-spacing instantiation — a read at each spacing whose tension clears
+the floor — is a hypothesis a caller supplies.
 
-AND `edge` IS IN THE DENOMINATOR, which is why the edge lemmas above are load-bearing rather than
-commentary: a floor inflated by the vacuum's share makes this ceiling SMALLER, and a smaller ceiling
-is a stronger claim than the data supports.
+`edge` is in the denominator, which is where the edge lemmas above bear: a floor inflated by the
+near-unit component's share makes this ceiling smaller.
 -/
 
-/-- **The resolved count, bounded by the measured tension.**
+/-- The resolved count, bounded by the measured tension:
+`resolvedDim s w edge ≤ 12 * ((1 - 3 ^ (-1/4)) / 8) * (∑ i ∈ s, w i) / (edge * lam0 ^ (k + 1))`.
 
-`resolvedDim_ceiling` composed with `Moment.Read.substrate_lt_of_tension_lt_floor`. The read `R` is
-the correlation the weights and rates generate (`hR`), so the substrate appearing in the ceiling is
-the one the tension bounds -- not a similar quantity.
+`resolvedDim_ceiling` composed with `Moment.Read.substrate_lt_of_tension_lt_floor`. `hR` ties the
+read `R : Moment.Read (2 * k + 1)` to the weights and rates — `R.ρ d = ∑ i ∈ s, w i * lam i ^ circLag d`
+— so the substrate appearing in the ceiling is the one the tension bounds rather than a similar
+quantity. The aperture is odd, `2 * k + 1`, so the lag count `2 * (k + 1)` is even.
 
-DERIVED: `12` is the sum-of-squares denominator; `(1 - 3^{-1/4})/8` is `cos_avg_le_circ`'s constant
-composed with `e^{-kappa_0}`, `kappa_0` proved in `Floor.lean`. No third constant enters. -/
+DERIVED: `12` is `ZeroMode.six_mul_sum_sq`'s denominator and `8` is `Moment.Read.cos_avg_le_circ`'s;
+`3 ^ (-1/4)` is `e^{-kappa_0}` for the entropy floor `(1 / 4) * Real.log 3`, whose positivity is
+`Floor.floor_pos` and which is also the bound in `htens`. The `2` of `2 * k + 1` is the even lag
+count the `ZeroMode.clag` sums run over, and `lam0 ^ (k + 1)` is the antipodal power. `0 ≤ w i`,
+`lam i ≤ 1`, `0 < lam0`, `lam0 ≤ 1`, `0 < edge` and `0 < ∑ d, R.p d * cos (R.θ d)` are the range and
+positivity conditions. No third constant enters. -/
 theorem resolvedDim_le_of_tension {ι : Type*} [DecidableEq ι] (k : ℕ) (s : Finset ι) (w lam : ι → ℝ)
     (R : Moment.Read (2 * k + 1))
     (hR : ∀ d, R.ρ d = ∑ i ∈ s, w i * lam i ^ (Moment.circLag d))

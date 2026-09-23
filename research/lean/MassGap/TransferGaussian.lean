@@ -2,65 +2,117 @@ import Mathlib
 import MassGap.SliceTransferSelfAdjoint
 
 /-!
-# MassGap.TransferGaussian — the slice transfer kernel IS a Gaussian kernel
+# MassGap.TransferGaussian — the slice transfer kernel as a Gaussian, its positivity, and
+injectivity of `transferCLM`
 
-`SliceTransferSelfAdjoint.transferCLM` is the tree's one candidate for C1's Hamiltonian: bounded,
-self-adjoint and nonzero on `L²` of a slice, and NOT a lattice translation, so
-`FiniteOrderTransfer.moves_something_forces_infinite_order` does not reach it — its own docstring
-says so, *"nothing here has finite order"*. Three things stand between it and `H`: POSITIVITY,
-injectivity, and a carrier on `ymH`. **This file settles the first two.** Positivity is §4. For
-injectivity the quadratic form is expanded exactly (§13), every order is a sum of squares, the form
-vanishes only if every monomial coefficient does (§15), the monomials span the coordinate algebra
-(§16), and the algebra is dense in `L²` (§8) — so `transferCLM_injective`, §18.
+`SliceTransferSelfAdjoint.transferCLM` is a bounded self-adjoint operator on `L²` of a slice. This
+module proves its kernel positive definite and the operator injective.
 
-⚠ **Injectivity is NOT `0 ∉ spectrum T`, and `-log T` needs the latter.** `ClayAssembly`'s own note on
-`TransferMovesSomething` says so: on an infinite-dimensional space an injective operator can still
-have `0` in its spectrum, and then the logarithm does not exist. So §18 closes a named obstacle
-without, by itself, producing the Hamiltonian. The carrier on `ymH` remains open too.
+## Sections 1-3: the kernel in Gaussian form
 
-## What the kernel turns out to be
+`SliceTransfer.transferKernel b s V W = exp (-s V / 2) * exp (b * sliceForm V W) * exp (-s W / 2)`,
+with `sliceForm V W = ∑ l, Re trace (V l * (W l)ᴴ)`. `CharacterExpansion.hsRe_eq_sum` presents each
+`Re trace (A Bᴴ)` as the Euclidean inner product of the two matrices' `2 * N ^ 2` real coordinates.
+On `SU N` every configuration has the same norm — `hsRe V V = Re trace 1 = N`
+(`hsRe_self_of_su`) — so polarisation turns the inner product into a distance
+(`sliceForm_eq_gaussian`):
 
-    T(V, W) = e^{-s(V)/2} · e^{b · sliceForm V W} · e^{-s(W)/2},
-    sliceForm V W = ∑_l Re tr (V l · (W l)ᴴ)
+    sliceForm V W = Fintype.card ι * N - sqDist V W / 2
 
-and `CharacterExpansion.hsRe_eq_sum` already presents `Re tr(A Bᴴ)` as the Euclidean inner product of
-the two matrices' real coordinates in `ℝ^{2N²}`. On `SU(N)` every configuration has the SAME norm —
-`hsRe V V = Re tr(V Vᴴ) = Re tr 1 = N` — so polarisation turns that inner product into a distance:
+and therefore (`transferKernel_gaussian`)
 
-    sliceForm V W  =  |ι|·N  −  ‖V − W‖² / 2
+    transferKernel b s V W
+      = exp (b * Fintype.card ι * N) * (exp (-s V / 2) * exp (-(b / 2) * sqDist V W) * exp (-s W / 2)).
 
-and therefore
+`transferKernel_gaussian_factors` states the same as `c * (f V * G V W * f W)` with `0 < c` and
+`0 < f`.
 
-    T(V, W)  =  e^{b|ι|N} · e^{-s(V)/2} · **e^{-(b/2)‖V−W‖²}** · e^{-s(W)/2}.
+Scope: `-(b / 2) ≤ 0` is what makes the middle factor a decaying Gaussian. At `b < 0` the identity
+still holds and the factor is `exp ((|b| / 2) * sqDist V W)`.
 
-**The middle factor is a Gaussian in the ambient matrix space, restricted to the group.** The
-constant is a scalar and the end factors are a diagonal conjugation; neither can change the sign of a
-quadratic form.
+## Section 4: positive definiteness
 
-## Why it matters, and exactly how far it gets
+`CharacterExpansion.wilson_kernel_nonneg` proves `exp (β * hsRe A B)` positive semidefinite for
+`β ≥ 0` at one link, by expanding the exponential and writing each order as a sum of squares. Its
+proof uses only that `hsRe A B = ∑ p, coord p A * coord p B` is a Gram form over a finite index, so
+`gram_pow`, `gram_quadform_pow_eq_sum_sq` and `gram_exp_kernel_nonneg` restate it for an arbitrary
+coordinate family. `sliceForm_eq_gram` writes the slice form as a Gram form over `ι × Coord N`, so
+`sliceWeight_nonneg` and `transferKernel_posDef` follow at the slice, with no Schur product theorem.
 
-Positivity of an integral operator IS positive-definiteness of its kernel, and `e^{-c‖x−y‖²}` with
-`c ≥ 0` is the standard positive-definite kernel — by Bochner, its Fourier transform is a positive
-measure. Diagonal conjugation `f(V)K(V,W)f(W)` preserves positive-definiteness and so does a positive
-scalar.
+`0 ≤ b` cannot be dropped: `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the form
+on two `SU 3` elements and it is nonnegative exactly when `β ≥ 0`.
 
-**So positivity of `transferCLM` stops being an open property of a complicated kernel and becomes a
-citable fact about Gaussians plus two sign-preserving operations.** What is machine-checked here is
-the REDUCTION — the identity. Carrying Mathlib's Gaussian positive-definiteness across is NOT done
-here, because Mathlib does not state it in this form; that step is named and not taken.
+## Sections 5-6: strict positive definiteness on finite families
 
-**The restriction to the group costs nothing.** A positive-definite kernel stays positive-definite on
-any subset, the defining inequality being over finitely supported weights, so
-`SU(N)^ι ⊆ (ℝ^{2N²})^ι` is free.
+`coords_separate` shows the coordinates separate slice configurations.
+`MonomialsSeparateFinitely` states that a linear functional killing every monomial in the
+coordinates kills every weight, and `transferKernel_strictly_posDef` reduces strict positive
+definiteness to it. `monomials_separate_of_separating` proves that statement for any separating
+coordinate family, by peeling one affine factor per configuration rather than expanding a Lagrange
+product — `monomial_hyp_stable` is the stability of the hypothesis under that peeling, which rests
+on `gmono_cons`. `monomialsSeparateFinitely_holds` instantiates it, and
+`transferKernel_strictly_posDef'` is the unconditional form.
+`monomialsSeparateFinitely_at_one` and `monomialsSeparateFinitely_at_two` are the first two cases.
 
-## The sign of the coupling is where it would fail
+Scope: this is strict positive definiteness of the kernel — every Gram matrix it forms on distinct
+configurations is nonsingular — not yet `ker T = 0` on `L²`.
 
-`-(b/2) ≤ 0` is what makes the middle factor a decaying Gaussian. At `b < 0` the identity still holds
-and the factor is `e^{+(|b|/2)‖V−W‖²}`, which is NOT positive-definite. So positivity is a statement
-about the sign of `b = β/N`, and it fails only for the unphysical sign.
+## Sections 7-8: density
 
-DERIVED: no numeral is a magnitude. `2` is the `2` of polarisation and the `2` the intra-slice action
-is split between; `N` is the dimension the identity matrix traces to; `b` is the caller's coupling.
+`continuous_sliceCoord` makes each coordinate continuous, `coordAlgebra` is the subalgebra they
+generate, `coordAlgebra_separatesPoints` is `coords_separate` bundled, and `coordAlgebra_dense` is
+Stone–Weierstrass on the compact Hausdorff configuration space
+(`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints`, present at this pin;
+`ContinuousMap.polynomialFunctions_closure_eq_top` is not, so the route goes through the general
+subalgebra version). `coordAlgebra_dense_in_L2` carries that to `L²` through
+`ContinuousMap.toLp_denseRange` and continuity of `ContinuousMap.toLp`.
+
+## Sections 9-15: the integral expansion
+
+`inner_transferCLM_eq_double_integral` writes `⟪T z, z⟫` as a double integral against the kernel.
+`integral_integral_mul_self` turns a separable double integral into a square,
+`sliceForm_pow_separates` and `abs_sliceForm_pow_le` supply the separation and the domination, and
+`integral_exp_mul_eq_tsum` moves the exponential series through an integral for any bounded exponent
+against an integrable function. Section 12 assembles the order-`k` double integral as
+`∑ α, (gramCoeff μ φ f α) ^ 2` (`integral_integral_gram_pow`), section 13 sums the orders
+(`integral_integral_exp_gram_eq_tsum`), and section 14 gives nonnegativity
+(`integral_integral_exp_gram_nonneg`) and the vanishing case
+(`gramCoeff_eq_zero_of_quadform_eq_zero`), the latter needing `summable_gram_orders` because `∑'` of
+a non-summable family is `0` by convention. Section 15 instantiates all of it at the slice:
+`abs_sliceCoord_le_one`, `sliceCoeff`, `slice_quadform_eq_tsum`, `slice_gramCoeff_eq_zero`.
+
+The integrals here are iterated and never reordered, so no Fubini enters; `integral_const_mul` does
+that work. The domination constant used at the slice is `Fintype.card ι * 2 * N ^ 2` from
+`|coord| ≤ 1`, cruder than the `Fintype.card ι * N` of
+`SliceTransferSelfAdjoint.abs_sliceForm_le` by a factor `2 * N`; only convergence is used and both
+converge.
+
+## Sections 16-18: `ker T = 0`
+
+`sliceMonoCM_mul` makes a product of monomials a monomial, so their span is a subalgebra
+(`monoSpan`) containing `coordAlgebra` (`coordAlgebra_le_monoSpan`).
+`integral_mul_eq_zero_of_mem_span` and `integral_mul_eq_zero_of_mem_coordAlgebra` extend a vanishing
+coefficient from monomials to the algebra, and `lp_eq_zero_of_sliceCoeff_eq_zero` and
+`ae_eq_zero_of_sliceCoeff_eq_zero` conclude from density. `weighted` absorbs the kernel's diagonal
+factors, `kernelFun_mul_eq_weighted` moves them onto `z`, `memLp_weighted` keeps the result in `L²`,
+and `transferCLM_eq_zero` and `transferCLM_injective` are the conclusions, at every `b > 0`.
+
+## Scope
+
+* Injectivity is not `0 ∉ spectrum T`. On an infinite-dimensional space an injective operator whose
+  inverse is unbounded has `0` in its spectrum, and `Reconstruction.hamiltonian`, which is
+  `cfc (fun x => -Real.log x) T`, needs `-Real.log` continuous on the spectrum.
+  `Reconstruction.reconstruct_qm_core` takes `1 ∈ spectrum T` and
+  `spectrum T ⊆ {1} ∪ [ε, exp (-Δ)]` with `0 < ε` and returns the operator-theoretic conclusions on
+  foundational axioms; that spectral hypothesis comes from decay through
+  `MomentSupport.le_of_positive_weight_decay`.
+* A carrier for this operator on `GNSHilbert.ymH` is not constructed here.
+* `transferKernel_posDef` is positive definiteness of the kernel in the sense positivity of an
+  integral operator means. Carrying Mathlib's Gaussian positive-definiteness across instead is not
+  done here; Mathlib does not state it in this form.
+* A positive-definite kernel stays positive-definite on any subset, the defining inequality being
+  over finitely supported weights, so restricting from `(ℝ ^ (2 * N ^ 2)) ^ ι` to `(SU N) ^ ι` costs
+  nothing.
 -/
 
 namespace MassGap.TransferGaussian
@@ -71,9 +123,11 @@ variable {N : ℕ} {ι : Type} [Fintype ι] [DecidableEq ι]
 
 /-! ## 1. Every `SU(N)` matrix has the same Hilbert–Schmidt norm -/
 
-/-- **`Re tr(V Vᴴ) = N` for `V ∈ SU(N)`**, because `V Vᴴ = 1` and the identity traces to the
-dimension. This is what turns the cross form into a distance rather than merely an inner product:
-every configuration lies on one sphere. -/
+/-- `hsRe V V = N` for `V : SU N`, since `V * Vᴴ = 1` and the identity matrix traces to the
+dimension. Every configuration therefore has the same Hilbert–Schmidt norm, which is what lets
+polarisation turn the cross form into a distance.
+
+DERIVED: no numeral occurs in the statement; the value is the matrix size `N`, which is what the identity matrix traces to. -/
 theorem hsRe_self_of_su (V : MassGap.SUN.SU N) :
     hsRe ((V : Matrix (Fin N) (Fin N) ℂ)) ((V : Matrix (Fin N) (Fin N) ℂ)) = (N : ℝ) := by
   have hu0 := Matrix.mem_unitaryGroup_iff.mp (Matrix.mem_specialUnitaryGroup_iff.mp V.2).1
@@ -83,7 +137,9 @@ theorem hsRe_self_of_su (V : MassGap.SUN.SU N) :
 
 #print axioms hsRe_self_of_su
 
-/-- The aggregate over the slice's links. -/
+/-- The aggregate over the slice's links.
+
+DERIVED: no numeral occurs; the value is the link count times the matrix size. -/
 theorem sum_hsRe_self (V : ι → MassGap.SUN.SU N) :
     (∑ l : ι, hsRe ((V l : Matrix (Fin N) (Fin N) ℂ)) ((V l : Matrix (Fin N) (Fin N) ℂ)))
       = (Fintype.card ι : ℝ) * (N : ℝ) := by
@@ -92,7 +148,9 @@ theorem sum_hsRe_self (V : ι → MassGap.SUN.SU N) :
 
 #print axioms sum_hsRe_self
 
-/-- The cross form on the diagonal: `|ι|·N`, at every configuration. -/
+/-- The cross form on the diagonal: `|ι|·N`, at every configuration.
+
+DERIVED: no numeral occurs; the value is the link count times the matrix size. -/
 theorem sliceForm_self (V : ι → MassGap.SUN.SU N) :
     sliceForm V V = (Fintype.card ι : ℝ) * (N : ℝ) :=
   sum_hsRe_self V
@@ -111,7 +169,9 @@ noncomputable def sqDist (V W : ι → MassGap.SUN.SU N) : ℝ :=
 
 #print axioms sqDist
 
-/-- Polarisation, one link at a time. -/
+/-- Polarisation, one link at a time.
+
+DERIVED: `2` is the exponent of the squared difference and the cross-term coefficient a square of a difference produces. -/
 theorem sq_dist_link (A B : Matrix (Fin N) (Fin N) ℂ) :
     (∑ p : Coord N, (coord p A - coord p B) ^ 2)
       = hsRe A A - 2 * hsRe A B + hsRe B B := by
@@ -121,11 +181,13 @@ theorem sq_dist_link (A B : Matrix (Fin N) (Fin N) ℂ) :
 
 #print axioms sq_dist_link
 
-/-- **THE CROSS FORM IS A DISTANCE.** `sliceForm V W = |ι|·N − ‖V−W‖²/2`.
+/-- `sliceForm V W = Fintype.card ι * N - sqDist V W / 2`. Polarisation link by link
+(`sq_dist_link`), with `sum_hsRe_self` supplying both diagonal terms.
 
-Polarisation, with `sum_hsRe_self` supplying both diagonal terms. The whole content is that `SU(N)`
-configurations all have the same norm; on a group where they did not, the cross form would not
-reduce to a distance and the kernel would not be Gaussian. -/
+Scope: the reduction to a distance uses that all `SU N` configurations have the same norm; on a
+group where they did not, the cross form would remain an inner product and not become a distance.
+
+DERIVED: `2` is the halving in `sqDist V W / 2`, which is the `2` of the polarisation identity. -/
 theorem sliceForm_eq_gaussian (V W : ι → MassGap.SUN.SU N) :
     sliceForm V W = (Fintype.card ι : ℝ) * (N : ℝ) - sqDist V W / 2 := by
   have hsum : sqDist V W
@@ -141,15 +203,19 @@ theorem sliceForm_eq_gaussian (V W : ι → MassGap.SUN.SU N) :
 
 /-! ## 3. The kernel, in Gaussian form -/
 
-/-- **THE SLICE TRANSFER KERNEL IS A GAUSSIAN KERNEL**, times a positive constant, conjugated by the
-intra-slice action:
+/-- The slice transfer kernel written as a Gaussian:
 
-    T(V, W) = e^{b|ι|N} · e^{-s(V)/2} · e^{-(b/2)‖V−W‖²} · e^{-s(W)/2}
+    transferKernel b s V W
+      = exp (b * (Fintype.card ι * N)) * (exp (-s V / 2) * exp (-(b / 2) * sqDist V W) * exp (-s W / 2)).
 
-The middle factor is the only one that depends on both arguments, and it is a Gaussian. Positivity of
-the operator therefore reduces to positive-definiteness of the Gaussian kernel — a standard fact —
-together with a positive scalar and a diagonal conjugation, neither of which can change the sign of a
-quadratic form. -/
+`sliceForm_eq_gaussian` substituted into the definition and the exponents split.
+
+Scope: only the middle factor depends on both arguments. The leading constant is a positive scalar
+and the outer factors are a diagonal conjugation, neither of which changes the sign of a quadratic
+form.
+
+DERIVED: `2` appears as the even split of the intra-slice action between the two ends,
+`-(s V) / 2` and `-(s W) / 2`, and as the halving `-(b / 2)` the polarisation identity produces. -/
 theorem transferKernel_gaussian (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
     (V W : ι → MassGap.SUN.SU N) :
     transferKernel b s V W
@@ -163,8 +229,12 @@ theorem transferKernel_gaussian (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ
 
 #print axioms transferKernel_gaussian
 
-/-- **THE GAUSSIAN FACTOR IS THE ONLY PLACE THE TWO ARGUMENTS MEET**, stated so the reduction is
-explicit: the kernel is `c · f(V) · G(V,W) · f(W)` with `c > 0`, `f > 0` and `G` the Gaussian. -/
+/-- The same in the shape `c * (f V * exp (-(b / 2) * sqDist V W) * f W)` with `0 < c` and
+`0 < f X` at every `X`: the two arguments meet only in the Gaussian factor.
+
+DERIVED: `0` is the strict lower bound on the scalar `c` and on the diagonal factor `f`; `2` is the
+even split of the intra-slice action and the halving from polarisation, as in
+`transferKernel_gaussian`. -/
 theorem transferKernel_gaussian_factors (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
     (V W : ι → MassGap.SUN.SU N) :
     ∃ c : ℝ, 0 < c ∧ ∃ f : (ι → MassGap.SUN.SU N) → ℝ, (∀ X, 0 < f X) ∧
@@ -175,37 +245,37 @@ theorem transferKernel_gaussian_factors (b : ℝ) (s : (ι → MassGap.SUN.SU N)
 
 #print axioms transferKernel_gaussian_factors
 
-/-! ## 4. The kernel is POSITIVE DEFINITE, and the tree's own machinery proves it
+/-! ## 4. The kernel is positive definite
 
-`CharacterExpansion.wilson_kernel_nonneg` already proves `exp(β · hsRe A B)` is a positive
-semidefinite kernel for `β ≥ 0`, by expanding the exponential and writing each order as an explicit
-SUM OF SQUARES (`quadform_pow_eq_sum_sq`). That is one LINK. The slice form is a sum over links, so
-the slice weight is a PRODUCT of those kernels — and a product of positive kernels needs the Schur
-product theorem, which the tree does not carry.
+`CharacterExpansion.wilson_kernel_nonneg` proves `exp (β * hsRe A B)` positive semidefinite for
+`β ≥ 0` at one link, by expanding the exponential and writing each order as an explicit sum of
+squares (`quadform_pow_eq_sum_sq`). The slice form is a sum over links, so the slice weight is a
+product of those kernels, and a product of positive kernels would need the Schur product theorem,
+which this tree does not carry.
 
-**It does not need it.** The proof of `wilson_kernel_nonneg` uses nothing about matrices: it uses
-only that `hsRe A B = ∑_p coord p A * coord p B` is a GRAM FORM over a finite index. The slice form
-is a Gram form too — over `ι × Coord N` instead of `Coord N` — so the same argument runs verbatim at
-the slice. The three lemmas below are that argument, stated once for an arbitrary Gram form, and the
-single-link case is now the special case rather than the only case.
-
-This closes the POSITIVITY half of what `transferCLM` was missing. Injectivity and a carrier on
-`ymH` remain.
+It is not needed. The proof of `wilson_kernel_nonneg` uses nothing about matrices, only that
+`hsRe A B = ∑ p, coord p A * coord p B` is a Gram form over a finite index. The slice form is a Gram
+form as well, over `ι × Coord N` in place of `Coord N`, so the same argument applies at the slice.
+The three lemmas below are that argument stated for an arbitrary Gram form, with the single-link
+case as an instance.
 -/
 
 /-- A degree-`k` monomial of a Gram form's coordinate functions. The analogue of
-`CharacterExpansion.mono`, for an arbitrary coordinate family. -/
+`CharacterExpansion.mono`, for an arbitrary coordinate family.
+
+DERIVED: no numeral occurs; `k` is the monomial's degree. -/
 noncomputable def gmono {P X : Type*} (φ : P → X → ℝ) {k : ℕ} (α : Fin k → P) (x : X) : ℝ :=
   ∏ t, φ (α t) x
 
 #print axioms gmono
 
-/-- **THE EXPANSION AT EVERY ORDER, FOR ANY GRAM FORM.** Exactly
-`CharacterExpansion.hsRe_pow` with the coordinate family abstracted: a power of a Gram form is a
-finite sum of PAIRED products, each a function of `x` times the SAME function of `y`, every
-coefficient `1`.
+/-- `(∑ p, φ p x * φ p y) ^ k = ∑ α : Fin k → P, gmono φ α x * gmono φ α y`:
+a power of a Gram form is a finite sum of terms each separating `x` from `y`, with the same function
+on both sides. `CharacterExpansion.hsRe_pow` with the coordinate family abstracted, via
+`Fintype.sum_pow`.
 
-DERIVED: the `1` coefficients are what multiplying out a power of a sum gives, as in `hsRe_pow`. -/
+DERIVED: no numeral occurs in the statement. Multiplying out the power of a sum gives every paired
+product with coefficient one, which is why no coefficient appears. -/
 theorem gram_pow {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ) (k : ℕ) (x y : X) :
     (∑ p, φ p x * φ p y) ^ k = ∑ α : Fin k → P, gmono φ α x * gmono φ α y := by
   rw [Fintype.sum_pow]
@@ -215,7 +285,11 @@ theorem gram_pow {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ) (k :
 
 #print axioms gram_pow
 
-/-- **THE ORDER-`k` QUADRATIC FORM IS A SUM OF SQUARES.** `quadform_pow_eq_sum_sq`, abstracted. -/
+/-- `∑ α, (∑ i, z i * gmono φ α (A i)) ^ 2 = ∑ i, ∑ j, z i * z j * (∑ p, φ p (A i) * φ p (A j)) ^ k`:
+the order-`k` quadratic form of a Gram form is a sum of squares.
+`CharacterExpansion.quadform_pow_eq_sum_sq` with the coordinate family abstracted.
+
+DERIVED: `2` is the square on the left-hand side, which is what pairing a term with itself produces. -/
 theorem gram_quadform_pow_eq_sum_sq {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ)
     (k m : ℕ) (A : Fin m → X) (z : Fin m → ℝ) :
     (∑ α : Fin k → P, (∑ i, z i * gmono φ α (A i)) ^ 2)
@@ -237,16 +311,18 @@ theorem gram_quadform_pow_eq_sum_sq {P : Type*} [Fintype P] {X : Type*} (φ : P 
 
 #print axioms gram_quadform_pow_eq_sum_sq
 
-/-- **THE EXPONENTIAL OF ANY GRAM FORM IS A POSITIVE SEMIDEFINITE KERNEL, for `β ≥ 0`.**
-
+/-- `0 ≤ ∑ i, ∑ j, z i * z j * exp (β * ∑ p, φ p (A i) * φ p (A j))` for `0 ≤ β`:
+the exponential of any Gram form is a positive semidefinite kernel.
 `CharacterExpansion.wilson_kernel_nonneg` with the coordinate family abstracted. Each order is
-`β^k/k!` times a sum of squares and the series converges to the weight, so the whole is a limit of
-nonnegative partial sums.
+`β ^ k / k !` times `gram_quadform_pow_eq_sum_sq`'s sum of squares, and the series converges to the
+weight.
 
-The hypothesis `0 ≤ β` cannot be dropped: `CharacterExpansion.NegControl.su3_kernel_nonneg_iff`
-computes the form on two genuine `SU(3)` elements and it is nonnegative IF AND ONLY IF `β ≥ 0`.
+Scope: `0 ≤ β` cannot be dropped —
+`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the form on two `SU 3` elements and
+it is nonnegative exactly when `β ≥ 0`.
 
-DERIVED: the only numeral is the `0` of `0 ≤ …`, which IS positive semidefiniteness. -/
+DERIVED: the one numeral is `0`, the lower bound on `β` and the lower bound asserted, which is the
+content of positive semidefiniteness. -/
 theorem gram_exp_kernel_nonneg {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ)
     {β : ℝ} (hβ : 0 ≤ β) {m : ℕ} (A : Fin m → X) (z : Fin m → ℝ) :
     0 ≤ ∑ i, ∑ j, z i * z j * Real.exp (β * ∑ p, φ p (A i) * φ p (A j)) := by
@@ -292,7 +368,9 @@ theorem gram_exp_kernel_nonneg {P : Type*} [Fintype P] {X : Type*} (φ : P → X
 
 /-- The slice form written as a single Gram form over `ι × Coord N`. This is the one step that
 carries `CharacterExpansion`'s single-link machinery to the whole slice, and it is bookkeeping:
-`hsRe_eq_sum` on each link, then `Fintype.sum_prod_type` to merge the two indices. -/
+`hsRe_eq_sum` on each link, then `Fintype.sum_prod_type` to merge the two indices.
+
+DERIVED: no numeral occurs in the statement; the index type `ι × Coord N` is what merges the per-link and per-coordinate sums. -/
 theorem sliceForm_eq_gram (V W : ι → MassGap.SUN.SU N) :
     sliceForm V W
       = ∑ q : ι × Coord N,
@@ -303,10 +381,11 @@ theorem sliceForm_eq_gram (V W : ι → MassGap.SUN.SU N) :
 
 #print axioms sliceForm_eq_gram
 
-/-- **THE SLICE WILSON WEIGHT IS A POSITIVE SEMIDEFINITE KERNEL, for `b ≥ 0`.**
+/-- `0 ≤ ∑ i, ∑ j, z i * z j * exp (b * sliceForm (V i) (V j))` for `0 ≤ b`:
+`gram_exp_kernel_nonneg` at `P := ι × Coord N`, through `sliceForm_eq_gram`. The slice form is
+itself a Gram form, so no Schur product theorem is needed to pass from one link to the slice.
 
-`gram_exp_kernel_nonneg` at `P := ι × Coord N`. No Schur product theorem is needed: the slice form is
-itself a Gram form, so the single-link argument runs at the slice unchanged. -/
+DERIVED: `0` is the lower bound on the coupling and the lower bound asserted on the form. -/
 theorem sliceWeight_nonneg {b : ℝ} (hb : 0 ≤ b) {m : ℕ}
     (V : Fin m → (ι → MassGap.SUN.SU N)) (z : Fin m → ℝ) :
     0 ≤ ∑ i, ∑ j, z i * z j * Real.exp (b * sliceForm (V i) (V j)) := by
@@ -317,16 +396,13 @@ theorem sliceWeight_nonneg {b : ℝ} (hb : 0 ≤ b) {m : ℕ}
 
 #print axioms sliceWeight_nonneg
 
-/-- **AND THEREFORE THE TRANSFER KERNEL IS POSITIVE DEFINITE, for `b ≥ 0`.**
+/-- `0 ≤ ∑ i, ∑ j, z i * z j * transferKernel b s (V i) (V j)` for `0 ≤ b`. The diagonal factors
+`exp (-s (V i) / 2)` are absorbed into the weights, which is all a diagonal conjugation does to a
+quadratic form, and `sliceWeight_nonneg` finishes.
 
-The diagonal conjugation `e^{-s(V)/2}` is absorbed into the weights — that is all a diagonal
-conjugation ever does to a quadratic form, and it is why it cannot change the sign.
-
-**This is the positivity `transferCLM` was missing**, in the form positivity of an integral operator
-means: the kernel is positive definite. What remains for C1 is injectivity and a carrier on `ymH`.
-
-DERIVED: the `2` is the two arguments the intra-slice action is split between, as in
-`transferKernel`. -/
+DERIVED: `0` is the lower bound on `b`, inherited from `sliceWeight_nonneg`, and the lower bound
+asserted on the form. The even split of the intra-slice action lives in `transferKernel` and is
+absorbed into the weights in the proof. -/
 theorem transferKernel_posDef {b : ℝ} (hb : 0 ≤ b) (s : (ι → MassGap.SUN.SU N) → ℝ) {m : ℕ}
     (V : Fin m → (ι → MassGap.SUN.SU N)) (z : Fin m → ℝ) :
     0 ≤ ∑ i, ∑ j, z i * z j * transferKernel b s (V i) (V j) := by
@@ -342,35 +418,29 @@ theorem transferKernel_posDef {b : ℝ} (hb : 0 ≤ b) (s : (ι → MassGap.SUN.
 
 #print axioms transferKernel_posDef
 
-/-! ## 5. Towards injectivity: separation, and what is left
+/-! ## 5. Separation, and strict positivity on finite families
 
-`transferKernel_posDef` is positivity. C1 also needs INJECTIVITY — `ker T = 0` — for `H = -log T` to
-exist as a self-adjoint operator. (Not `0 ∉ spectrum T`: that would force `H` BOUNDED, which no
-lattice gauge theory has. Injectivity is what the spectral theorem needs and all it needs.)
+Strict positivity of the quadratic form is what the expansion gives a criterion for. Writing
+`w i = z i * exp (-s (V i) / 2)`, the form is
 
-Injectivity is strict positivity of the quadratic form, and the expansion says exactly when the form
-vanishes. Writing `w i = z i · e^{-s(V i)/2}`, the form is
+    ∑ k, (b ^ k / k !) * ∑ α, (∑ i, w i * gmono φ α (V i)) ^ 2
 
-    ∑ₖ (bᵏ/k!) · ∑_α (∑ᵢ wᵢ · gmono φ α (Vᵢ))²
+so at `0 < b` it vanishes exactly when every coefficient `∑ i, w i * gmono φ α (V i)` does, that is,
+when the functional `q ↦ ∑ i, w i * q (V i)` kills every monomial in the coordinates.
 
-so at `b > 0` it is zero precisely when EVERY paired coefficient `∑ᵢ wᵢ gmono φ α (Vᵢ)` vanishes —
-that is, when the linear functional `p ↦ ∑ᵢ wᵢ p(Vᵢ)` kills every monomial in the coordinates.
+`coords_separate` supplies the geometric input: two distinct slice configurations differ at some
+link, hence in some matrix entry, hence in that entry's real or imaginary part. That is also the
+input Stone–Weierstrass consumes in section 7.
 
-**The geometric input is that the coordinates SEPARATE configurations**, and `coords_separate` below
-proves it: two distinct slice configurations differ at some link, hence in some matrix entry, hence
-in that entry's real or imaginary part. That is what makes the monomials a separating algebra, and it
-is the same input Stone–Weierstrass would need for the `L²` statement.
-
-**What is not proved here is the interpolation step.** From separation, a Lagrange-style product of
-affine functions of coordinates gives `pⱼ(Vᵢ) = δᵢⱼ`, which forces `w = 0`; the span of the monomials
-is closed under products (`gmono α · gmono β` is `gmono` of the concatenation) so those products lie
-in it. `MonomialsSeparateFinitely` names that statement, and `strictly_posDef_of_separation` proves
-strict positivity FROM it — so the remaining obligation is one named Prop rather than a gap in prose.
+`MonomialsSeparateFinitely` names the step from that to `w = 0`, and
+`transferKernel_strictly_posDef` proves strict positivity from it. Section 6 discharges it.
 -/
 
-/-- **THE COORDINATES SEPARATE SLICE CONFIGURATIONS.** Two distinct configurations differ at some
-link, hence in some matrix entry, hence in that entry's real or imaginary part — which is one of the
-`coord` functions the Gram form is built from. -/
+/-- Two distinct slice configurations differ at some coordinate: they differ at some link, hence in
+some matrix entry, hence in that entry's real or imaginary part, which is one of the `coord`
+functions the Gram form is built from.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem coords_separate {V W : ι → MassGap.SUN.SU N} (h : V ≠ W) :
     ∃ q : ι × Coord N,
       coord q.2 ((V q.1 : Matrix (Fin N) (Fin N) ℂ))
@@ -391,18 +461,12 @@ theorem coords_separate {V W : ι → MassGap.SUN.SU N} (h : V ≠ W) :
 
 #print axioms coords_separate
 
-/-- **THE REMAINING OBLIGATION FOR INJECTIVITY, NAMED.**
+/-- The proposition: for an injective family of configurations `V` and weights `w`, if
+`∑ i, w i * gmono φ α (V i) = 0` at every monomial `α`, then every `w i` is `0`. A `Prop`;
+`monomialsSeparateFinitely_holds` proves it below, and `transferKernel_strictly_posDef` consumes it.
 
-A linear functional that kills every monomial in the coordinates kills every weight, provided the
-configurations are distinct. This is the Lagrange-interpolation step: separation (`coords_separate`)
-gives, for each pair, a coordinate telling them apart, and the corresponding product of affine
-functions is `1` at one configuration and `0` at the others. The span of the monomials is closed
-under products — `gmono α · gmono β` is `gmono` of the concatenation — so that product lies in it.
-
-Stated as a `Prop` rather than proved, so that `strictly_posDef_of_separation` below is a machine
--checked REDUCTION and the gap is one named statement.
-
-DERIVED: `0` is the vanishing the hypothesis and conclusion both assert. -/
+DERIVED: the one numeral is `0`, the value of every monomial coefficient in the hypothesis and of
+every weight in the conclusion. -/
 def MonomialsSeparateFinitely (ι : Type) [Fintype ι] (N : ℕ) : Prop :=
   ∀ {m : ℕ} (V : Fin m → (ι → MassGap.SUN.SU N)) (w : Fin m → ℝ),
     Function.Injective V →
@@ -413,9 +477,10 @@ def MonomialsSeparateFinitely (ι : Type) [Fintype ι] (N : ℕ) : Prop :=
 
 #print axioms MonomialsSeparateFinitely
 
-/-- **IT IS NOT VACUOUS: the single-configuration case is immediate.** The degree-zero monomial is
-the empty product `1`, so the hypothesis at `k = 0` reads `w 0 = 0` outright. Recorded because a
-named obligation nothing can satisfy would be worse than no obligation. -/
+/-- The one-configuration case, directly: the degree-zero monomial is the empty product, so the
+hypothesis at `k = 0` reads `w 0 = 0`.
+
+DERIVED: `1` is the number of configurations, `Fin 1`; `0` is the value of every monomial coefficient in the hypothesis and of every weight in the conclusion. -/
 theorem monomialsSeparateFinitely_at_one
     (V : Fin 1 → (ι → MassGap.SUN.SU N)) (w : Fin 1 → ℝ)
     (hmono : ∀ (k : ℕ) (α : Fin k → ι × Coord N),
@@ -428,11 +493,11 @@ theorem monomialsSeparateFinitely_at_one
 
 #print axioms monomialsSeparateFinitely_at_one
 
-/-- **WHERE THE QUADRATIC FORM VANISHES: every paired coefficient does.**
+/-- From a vanishing quadratic form at `0 < b`, every paired coefficient vanishes: each order
+contributes `b ^ k / k !` times a sum of squares, all nonnegative, so a total of zero forces every
+order, every square in it, and hence every `∑ i, w i * gmono φ α (A i)` to zero.
 
-At `b > 0` each order contributes `bᵏ/k!` times a sum of squares, all nonnegative, so a total of zero
-forces every order to zero, every square in it to zero, and hence every paired coefficient
-`∑ᵢ wᵢ gmono φ α (Aᵢ)` to zero. This is the extraction the injectivity argument runs on. -/
+DERIVED: `0` is the strict lower bound on `b`, the value of the vanishing quadratic form, and the value of each extracted coefficient. -/
 theorem gram_exp_kernel_eq_zero_coeffs {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ)
     {b : ℝ} (hb : 0 < b) {m : ℕ} (A : Fin m → X) (w : Fin m → ℝ)
     (hzero : (∑ i, ∑ j, w i * w j * Real.exp (b * ∑ p, φ p (A i) * φ p (A j))) = 0) :
@@ -493,14 +558,12 @@ theorem gram_exp_kernel_eq_zero_coeffs {P : Type*} [Fintype P] {X : Type*} (φ :
 
 #print axioms gram_exp_kernel_eq_zero_coeffs
 
-/-- **THE TRANSFER KERNEL IS STRICTLY POSITIVE DEFINITE, GIVEN `MonomialsSeparateFinitely`.**
+/-- Given `MonomialsSeparateFinitely ι N`, `0 < b`, an injective family of configurations and a
+vanishing quadratic form, every weight is zero. The diagonal factors are absorbed into the weights
+and `gram_exp_kernel_eq_zero_coeffs` extracts the coefficients, which the hypothesis then kills.
+With `transferKernel_posDef` this is strict positive definiteness on finite families.
 
-The reduction, machine-checked: at distinct configurations and positive coupling, a vanishing
-quadratic form forces every weight to zero. With `transferKernel_posDef` that is strict positive
-definiteness, and strict positive definiteness is what `ker T = 0` asks of a kernel.
-
-So C1's injectivity rests on ONE named statement rather than on prose, and that statement is the
-Lagrange-interpolation step `coords_separate` supplies the input for. -/
+DERIVED: `0` is the strict lower bound on `b`, the value of the vanishing quadratic form, and the value of each weight concluded. -/
 theorem transferKernel_strictly_posDef (hsep : MonomialsSeparateFinitely ι N)
     {b : ℝ} (hb : 0 < b) (s : (ι → MassGap.SUN.SU N) → ℝ) {m : ℕ}
     (V : Fin m → (ι → MassGap.SUN.SU N)) (hV : Function.Injective V) (z : Fin m → ℝ)
@@ -530,15 +593,14 @@ theorem transferKernel_strictly_posDef (hsep : MonomialsSeparateFinitely ι N)
 
 #print axioms transferKernel_strictly_posDef
 
-/-- **AND IT HOLDS AT TWO CONFIGURATIONS**, which is the first case with content and exhibits the
-mechanism the general proof needs.
+/-- The two-configuration case. `coords_separate` gives one coordinate `q` telling the two apart;
+the degree-zero monomial gives `w 0 + w 1 = 0`, the degree-one monomial at `q` gives
+`w 0 * φ q (V 0) + w 1 * φ q (V 1) = 0`, and substituting the first into the second leaves
+`w 0 * (φ q (V 0) - φ q (V 1)) = 0` with a nonzero difference.
 
-Separation gives ONE coordinate `q` telling the two apart. Degree zero says `w₀ + w₁ = 0`; degree one
-at `q` says `w₀·φ_q(V₀) + w₁·φ_q(V₁) = 0`; substituting the first into the second gives
-`w₀·(φ_q(V₀) − φ_q(V₁)) = 0`, and the difference is nonzero. That is a two-point Vandermonde, and the
-general case is the same argument with a functional separating all the configurations at once.
-
-DERIVED: `0` and `1` are the two configurations and the two monomial degrees used; no magnitude. -/
+DERIVED: `2` is the number of configurations, `Fin 2`; `0` is the value of every monomial
+coefficient in the hypothesis and of every weight in the conclusion. The degrees `0` and `1` the
+proof uses are the empty monomial and a single coordinate. -/
 theorem monomialsSeparateFinitely_at_two
     (V : Fin 2 → (ι → MassGap.SUN.SU N)) (hV : Function.Injective V) (w : Fin 2 → ℝ)
     (hmono : ∀ (k : ℕ) (α : Fin k → ι × Coord N),
@@ -570,21 +632,22 @@ theorem monomialsSeparateFinitely_at_two
 
 #print axioms monomialsSeparateFinitely_at_two
 
-/-! ## 6. The separation theorem, in general
+/-! ## 6. The separation theorem
 
-The obvious proof of `MonomialsSeparateFinitely` builds a Lagrange polynomial and expands it into
-monomials, which needs the multinomial expansion and an enumeration of subsets. **None of that is
-necessary.** The hypothesis — that the functional `p ↦ ∑ᵢ wᵢ p(Vᵢ)` kills every monomial — is STABLE
-under replacing the weights `wᵢ` by `wᵢ·(φ_q(Vᵢ) − c)`, for any coordinate `q` and constant `c`,
-because `φ_q · gmono α` is itself a monomial (prepend `q` to `α`) and the rest is two applications of
-linearity.
+A Lagrange polynomial expanded into monomials would need the multinomial expansion and an
+enumeration of subsets. Instead, the hypothesis — that the functional `q ↦ ∑ i, w i * q (V i)` kills
+every monomial — is stable under replacing the weights `w i` by `w i * (φ q (V i) - c)` at any
+coordinate `q` and constant `c`, because `φ q * gmono α` is the monomial at `Fin.cons q α` and the
+rest is linearity (`monomial_hyp_stable`).
 
-So instead of expanding a product of affine factors, apply one factor at a time to the WEIGHTS. After
-peeling off one factor for each configuration other than `j` — each chosen to vanish at its own
-configuration — only the `j`-th weight survives, and the degree-zero monomial reads it off.
+So the affine factors are applied one at a time to the weights rather than multiplied out. After one
+factor for each configuration other than `j`, each vanishing at its own configuration, only the
+`j`-th weight survives and the degree-zero monomial reads it off.
 -/
 
-/-- Prepending an index to a monomial multiplies it by that coordinate. -/
+/-- Prepending an index to a monomial multiplies it by that coordinate.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem gmono_cons {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ) {k : ℕ} (q : P)
     (α : Fin k → P) (x : X) :
     gmono φ (Fin.cons q α) x = φ q x * gmono φ α x := by
@@ -592,9 +655,12 @@ theorem gmono_cons {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ) {k
 
 #print axioms gmono_cons
 
-/-- **THE HYPOTHESIS IS STABLE UNDER PEELING OFF AN AFFINE FACTOR.** If the functional kills every
-monomial with weights `w`, it kills every monomial with weights `wᵢ·(φ_q(Vᵢ) − c)` as well. This is
-the whole of what replaces the multinomial expansion. -/
+/-- If the functional with weights `w` kills every monomial, so does the functional with weights
+`w i * (φ q (V i) - c)`, at any coordinate `q` and constant `c`. The proof splits each term using
+`gmono_cons`, which makes `φ q * gmono α` the monomial at `Fin.cons q α`, and uses linearity for the
+rest.
+
+DERIVED: `0` is the value the functional takes on every monomial, in both hypothesis and conclusion. -/
 theorem monomial_hyp_stable {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ) {m : ℕ}
     (V : Fin m → X) (w : Fin m → ℝ) (q : P) (c : ℝ)
     (h : ∀ (k : ℕ) (α : Fin k → P), ∑ i, w i * gmono φ α (V i) = 0) :
@@ -612,13 +678,17 @@ theorem monomial_hyp_stable {P : Type*} [Fintype P] {X : Type*} (φ : P → X �
 
 #print axioms monomial_hyp_stable
 
-/-- **THE SEPARATION THEOREM, for any coordinate family that separates the configurations.**
+/-- For any coordinate family separating the configurations, a functional killing every monomial
+kills every weight. The proof peels one affine factor per configuration other than `j` — each
+vanishing at its own configuration and, by separation, not at `V j` — using `monomial_hyp_stable`
+each time; after all of them only the `j`-th weight survives, and the degree-zero monomial reads it
+off.
 
-Peel one affine factor per configuration other than `j`, each vanishing at its own configuration and
-— by separation — not at `V j`. After all of them the weights are zero except at `j`, and the
-degree-zero monomial reads `w j` off directly.
+Scope: no multinomial expansion or enumeration of subsets is used; the factors are applied to the
+weights one at a time.
 
-DERIVED: `0` is the vanishing asserted throughout; no magnitude. -/
+DERIVED: the one numeral is `0`, the value of every monomial coefficient in the hypothesis and of
+every weight in the conclusion. -/
 theorem monomials_separate_of_separating {P : Type*} [Fintype P] {X : Type*} (φ : P → X → ℝ)
     {m : ℕ} (V : Fin m → X) (w : Fin m → ℝ)
     (hsep : ∀ i j : Fin m, i ≠ j → ∃ q, φ q (V i) ≠ φ q (V j))
@@ -684,11 +754,11 @@ theorem monomials_separate_of_separating {P : Type*} [Fintype P] {X : Type*} (φ
 
 #print axioms monomials_separate_of_separating
 
-/-- **AND THEREFORE `MonomialsSeparateFinitely` HOLDS.** The separation input is `coords_separate`;
-injectivity of `V` turns index distinctness into configuration distinctness.
+/-- `MonomialsSeparateFinitely ι N`, by `monomials_separate_of_separating` with `coords_separate`
+as the separation input; injectivity of `V` turns index distinctness into configuration
+distinctness.
 
-So C1's injectivity no longer rests on a named open statement: `transferKernel_strictly_posDef` can
-be applied unconditionally. -/
+DERIVED: no numeral occurs in the statement; the vanishing conditions live inside `MonomialsSeparateFinitely`. -/
 theorem monomialsSeparateFinitely_holds : MonomialsSeparateFinitely ι N := by
   intro m V w hV hmono
   refine monomials_separate_of_separating _ V w (fun i j hij => ?_) hmono
@@ -698,32 +768,16 @@ theorem monomialsSeparateFinitely_holds : MonomialsSeparateFinitely ι N := by
 
 #print axioms monomialsSeparateFinitely_holds
 
-/-- **THE TRANSFER KERNEL IS STRICTLY POSITIVE DEFINITE, unconditionally.**
+/-- `transferKernel_strictly_posDef` with its hypothesis discharged by
+`monomialsSeparateFinitely_holds`: at distinct configurations and `0 < b`, a vanishing quadratic
+form forces every weight to zero.
 
-`transferKernel_strictly_posDef` with its hypothesis discharged. At distinct configurations and
-positive coupling, a vanishing quadratic form forces every weight to zero.
+Scope: this is strict positive definiteness of the kernel on finite families — every Gram matrix it
+forms on distinct configurations is nonsingular. It is a statement about sums over `Fin m`, with no
+integral in it. `ker T = 0` for the operator on `L²` needs in addition the density of sections 7-8
+and the integral expansion of sections 9-15; `transferCLM_injective` is where the three meet.
 
-**WHAT THIS IS AND IS NOT.** This is strict positive definiteness of the KERNEL: every Gram matrix
-the kernel forms on distinct configurations is nonsingular. It is NOT yet `ker T = 0` for the
-operator on `L²`, which additionally needs that the monomials are DENSE. That step is not taken here.
-
-**BUT IT IS REACHABLE AT THIS PIN, and the two citations were checked rather than assumed.** Mathlib
-v4.31.0 carries `ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints` —
-Stone–Weierstrass for a real subalgebra on a compact Hausdorff space — and
-`MeasureTheory.Lp.boundedContinuousFunction_dense`, continuous functions dense in `Lᵖ`. Chained,
-they take the monomial subalgebra to dense in `C(X)` to dense in `L²`, and `coords_separate` is
-exactly the `Subalgebra.SeparatesPoints` input the first one consumes; `SUN.isCompact_coe` supplies
-compactness. What is NOT present at this pin is
-`ContinuousMap.polynomialFunctions_closure_eq_top`, so the route must go through the general
-subalgebra version rather than the polynomial one.
-
-**AND THE GAP TO THE OPERATOR IS NOT ONLY DENSITY.** Going from here to `ker T = 0` needs the
-INTEGRAL analogue of `gram_exp_kernel_eq_zero_coeffs`: that `⟪T z, z⟫ = 0` forces
-`∫ gmono α · e^{-s/2} · z dμ = 0` for every `α`. The theorem above is the FINITE version — sums over
-`Fin m`, no integral anywhere in this file — and the integral version is Fubini on the double
-integral plus dominated convergence to interchange the exponential's series with it, with
-`SliceTransferSelfAdjoint.abs_transferKernel_le` supplying the domination. That is analysis, not a citation, and
-it is not done here. -/
+DERIVED: `0` is the strict lower bound on `b`, the value of the vanishing quadratic form, and the value of each weight concluded. -/
 theorem transferKernel_strictly_posDef' {b : ℝ} (hb : 0 < b)
     (s : (ι → MassGap.SUN.SU N) → ℝ) {m : ℕ}
     (V : Fin m → (ι → MassGap.SUN.SU N)) (hV : Function.Injective V) (z : Fin m → ℝ)
@@ -735,21 +789,22 @@ theorem transferKernel_strictly_posDef' {b : ℝ} (hb : 0 < b)
 
 /-! ## 7. The coordinate subalgebra is dense in `C(X, ℝ)`
 
-`transferKernel_strictly_posDef'` is strict positive definiteness of the KERNEL. Lifting it to
-`ker T = 0` for the operator needs the coordinate functions to generate a DENSE subalgebra of the
-continuous functions, after which `MeasureTheory.Lp.boundedContinuousFunction_dense` carries it to
-`L²`. This section takes the first step.
+Lifting strict positive definiteness of the kernel to `ker T = 0` for the operator needs the
+coordinate functions to generate a dense subalgebra of the continuous functions. This section is the
+first step.
 
-Everything it needs is already here. `SUN`'s `CompactSpace` and `IsTopologicalGroup` instances —
-both anonymous, so they have no citable name — make `SU N` compact and Hausdorff, and the
-configuration space `ι → SU N` is then compact Hausdorff as a product. `OddLagSplit.continuous_su_entry` makes each matrix entry continuous, and
-`coord` is a real or imaginary part of one. `coords_separate` is the separating-points input.
-`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints` is Stone–Weierstrass, present
-at this pin — checked, not assumed.
+`SUN`'s `CompactSpace` and `IsTopologicalGroup` instances, both anonymous, make `SU N` compact
+Hausdorff, and `ι → SU N` is then compact Hausdorff as a product.
+`OddLagSplit.continuous_su_entry` makes each matrix entry continuous and `coord` is a real or
+imaginary part of one. `coords_separate` is the separating-points input, and
+`ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints` is Stone–Weierstrass,
+present at this Mathlib pin.
 -/
 
 /-- Each coordinate function is continuous on the configuration space: evaluation at a link, then a
-matrix entry, then a real or imaginary part. -/
+matrix entry, then a real or imaginary part.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_sliceCoord (q : ι × Coord N) :
     Continuous (fun U : ι → MassGap.SUN.SU N =>
       coord q.2 ((U q.1 : Matrix (Fin N) (Fin N) ℂ))) := by
@@ -775,7 +830,9 @@ theorem continuous_sliceCoord (q : ι × Coord N) :
 
 #print axioms continuous_sliceCoord
 
-/-- A coordinate function as a bundled continuous map. -/
+/-- A coordinate function as a bundled continuous map.
+
+DERIVED: no numeral occurs. -/
 noncomputable def sliceCoordCM (q : ι × Coord N) :
     C(ι → MassGap.SUN.SU N, ℝ) :=
   ⟨fun U => coord q.2 ((U q.1 : Matrix (Fin N) (Fin N) ℂ)), continuous_sliceCoord q⟩
@@ -784,14 +841,18 @@ noncomputable def sliceCoordCM (q : ι × Coord N) :
 
 /-- **THE COORDINATE SUBALGEBRA** of `C(X, ℝ)` — everything the coordinates generate. Its elements
 are exactly the polynomial combinations of the `coord` functions, which is the span of the monomials
-`gmono` ranges over. -/
+`gmono` ranges over.
+
+DERIVED: no numeral occurs. -/
 noncomputable def coordAlgebra (ι : Type) [Fintype ι] [DecidableEq ι] (N : ℕ) :
     Subalgebra ℝ C(ι → MassGap.SUN.SU N, ℝ) :=
   Algebra.adjoin ℝ (Set.range (sliceCoordCM (ι := ι) (N := N)))
 
 #print axioms coordAlgebra
 
-/-- **IT SEPARATES POINTS**, which is `coords_separate` bundled. -/
+/-- **IT SEPARATES POINTS**, which is `coords_separate` bundled.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem coordAlgebra_separatesPoints :
     (coordAlgebra ι N).SeparatesPoints := by
   intro x y hxy
@@ -806,7 +867,9 @@ theorem coordAlgebra_separatesPoints :
 
 Stone–Weierstrass on a compact Hausdorff space, with `coordAlgebra_separatesPoints` as the input.
 This is the first half of the density step `ker T = 0` needs; the second is
-`MeasureTheory.Lp.boundedContinuousFunction_dense`, carrying it from `C(X, ℝ)` to `L²`. -/
+`MeasureTheory.Lp.boundedContinuousFunction_dense`, carrying it from `C(X, ℝ)` to `L²`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem coordAlgebra_dense :
     (coordAlgebra ι N).topologicalClosure = ⊤ :=
   ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints _
@@ -814,33 +877,27 @@ theorem coordAlgebra_dense :
 
 #print axioms coordAlgebra_dense
 
-/-! ## 8. …and dense in `L²`, which completes the density step
+/-! ## 8. …and dense in `L²`
 
-`coordAlgebra_dense` is sup-norm density in `C(X, ℝ)`. Carrying it to `L²` needs two Mathlib results,
-both probe-checked as present at this pin and both with every instance resolving for `sliceHaar`:
-`ContinuousMap.toLp_denseRange` (continuous functions dense in `Lᵖ`) and the continuity of
-`ContinuousMap.toLp` itself, which is a continuous linear map.
-
-The argument is the standard one: a continuous map sends a dense set to a set whose closure contains
-the whole range, and the range is already dense.
+`coordAlgebra_dense` is sup-norm density in `C(X, ℝ)`. Carrying it to `L²` uses
+`ContinuousMap.toLp_denseRange`, which makes the continuous functions dense in `Lᵖ`, and continuity
+of `ContinuousMap.toLp`, which is a continuous linear map. Both are present at this Mathlib pin with
+every instance resolving for `sliceHaar`. A continuous map sends a dense set to one whose closure
+contains the whole range, and that range is already dense.
 -/
 
-/-- **THE COORDINATE SUBALGEBRA IS DENSE IN `L²`.**
+/-- The image of the coordinate subalgebra under `ContinuousMap.toLp` is dense in `L²`.
+`coordAlgebra_dense` gives sup-norm density in `C(X, ℝ)`, and continuity of `ContinuousMap.toLp`
+together with `ContinuousMap.toLp_denseRange` carries it across.
 
-This is the SECOND of the three things `ker T = 0` needs, and all three are now in the file:
+This is one of the three ingredients `transferCLM_injective` combines: strict positive definiteness
+on finite families (`transferKernel_strictly_posDef'`, section 6), this density, and the integral
+expansion `slice_gramCoeff_eq_zero` (section 15), which is what connects a vanishing quadratic form
+to vanishing monomial integrals. The integrals in that expansion are iterated and never reordered,
+so `integral_const_mul` suffices and no Fubini enters; what it does use is the series interchange of
+section 11.
 
-1. **strict positive definiteness on finite families** — `transferKernel_strictly_posDef'`, §6;
-2. **density of the monomials in `L²`** — this theorem;
-3. **the integral expansion** — that a vanishing quadratic form forces every monomial coefficient to
-   vanish. `slice_gramCoeff_eq_zero`, §15.
-
-(1) is about finitely many configurations and (2) about the ambient space; (3) is what connects a
-vanishing quadratic FORM to vanishing monomial INTEGRALS, and without it the other two do not meet.
-They meet in `transferCLM_injective`, §18.
-
-**No Fubini enters (3).** An earlier reading of this step expected it, and the expectation was wrong:
-the double integral is ITERATED, never reordered, so `integral_const_mul` does the work Fubini was
-expected to do. What the step does need is a series interchange, and that is §11. -/
+DERIVED: the one numeral is `2`, the exponent of the `Lᵖ` space, which is the one an inner product lives on. -/
 theorem coordAlgebra_dense_in_L2 :
     Dense ((ContinuousMap.toLp (E := ℝ) 2 (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N) ℝ) ''
       (coordAlgebra ι N : Set C(ι → MassGap.SUN.SU N, ℝ))) := by
@@ -870,23 +927,23 @@ theorem coordAlgebra_dense_in_L2 :
 
 /-! ## 9. The quadratic form as a double integral
 
-The third thing `ker T = 0` needs is the INTEGRAL analogue of `gram_exp_kernel_eq_zero_coeffs`, and
-it has two steps: write `⟪T z, z⟫` as a double integral against the kernel, then expand the
-exponential inside it. This section is the first step, which is bookkeeping over
-`SlabKernelOperator`'s own API rather than analysis: `L2.inner_def` turns the inner product into an
-integral and `coeFn_kernelCLM` identifies the operator's value with `kernelFun` almost everywhere.
+The integral analogue of `gram_exp_kernel_eq_zero_coeffs` has two steps: write `⟪T z, z⟫` as a
+double integral against the kernel, then expand the exponential inside it. This section is the
+first, through `SlabKernelOperator`'s API: `L2.inner_def` turns the inner product into an integral
+and `coeFn_kernelCLM` identifies the operator's value with `kernelFun` almost everywhere.
 
-The second step — interchanging the exponential's series with the double integral — is the analysis,
-and the domination is in hand: `|sliceForm V W| ≤ |ι|·N` because each link contributes
-`|Re tr(V_l W_lᴴ)| ≤ N`, so the terms are dominated by `(b|ι|N)^k/k!` times an integrable function,
-summing to `e^{b|ι|N}`.
+The domination the second step needs is `|sliceForm V W| ≤ Fintype.card ι * N`, since each link
+contributes `|Re trace (V l * (W l)ᴴ)| ≤ N`, so the order-`k` terms are bounded by
+`(b * Fintype.card ι * N) ^ k / k !` times an integrable function.
 -/
 
 /-- **THE QUADRATIC FORM IS THE DOUBLE INTEGRAL AGAINST THE KERNEL.**
 
 `⟪T z, z⟫ = ∫ V (∫ W, K(V,W)·z(W)) · z(V)`, which is what the expansion has to be performed inside.
 No analysis here — `L2.inner_def` and `coeFn_kernelCLM`, and an `integral_congr_ae` to move between
-the operator's value and the kernel action. -/
+the operator's value and the kernel action.
+
+DERIVED: the one numeral is `2`, the `Lᵖ` exponent the operator acts on. -/
 theorem inner_transferCLM_eq_double_integral (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs)
     (z : MeasureTheory.Lp ℝ 2 (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N)) :
@@ -937,7 +994,9 @@ coordinate bound `|coord| ≤ 1` instead, because only convergence is used and b
 
 `∫∫ F(V)·F(W) = (∫F)²`, by pulling `F V` out of the inner integral and the resulting constant out of
 the outer one. Unconditional: where `F` is not integrable both sides are zero, which is the Bochner
-convention and is why no integrability hypothesis appears. -/
+convention and is why no integrability hypothesis appears.
+
+DERIVED: the one numeral is the exponent `2`, which is what pairing `F` with itself produces. -/
 theorem integral_integral_mul_self {X : Type*} [MeasurableSpace X] (μ : MeasureTheory.Measure X)
     (F : X → ℝ) :
     (∫ V, (∫ W, F V * F W ∂μ) ∂μ) = (∫ V, F V ∂μ) ^ 2 := by
@@ -954,7 +1013,9 @@ theorem integral_integral_mul_self {X : Type*} [MeasurableSpace X] (μ : Measure
 `gram_pow` at the slice: the `k`-th power of the cross form is `∑_α gmono α V · gmono α W`, so the
 order-`k` contribution to the quadratic form is `∑_α (∫ gmono α · f · z)²` once
 `integral_integral_mul_self` is applied termwise. Stated on the integrand so the shape is explicit
-before any integral is taken. -/
+before any integral is taken.
+
+DERIVED: no numeral occurs in the statement; `k` is the order. -/
 theorem sliceForm_pow_separates (k : ℕ) (V W : ι → MassGap.SUN.SU N) :
     (sliceForm V W) ^ k
       = ∑ α : Fin k → ι × Coord N,
@@ -972,7 +1033,9 @@ theorem sliceForm_pow_separates (k : ℕ) (V W : ι → MassGap.SUN.SU N) :
 
 `|sliceForm V W|^k ≤ (|ι|·N)^k`, so the order-`k` term of `e^{b·sliceForm}` is bounded by
 `(b|ι|N)^k/k!` uniformly in both arguments — a summable bound independent of the configurations,
-which is what dominated convergence needs. `SliceTransferSelfAdjoint.abs_sliceForm_le` is the input. -/
+which is what dominated convergence needs. `SliceTransferSelfAdjoint.abs_sliceForm_le` is the input.
+
+DERIVED: no numeral occurs in the statement; the bound is the link count times the matrix size, raised to the order `k`. -/
 theorem abs_sliceForm_pow_le (k : ℕ) (V W : ι → MassGap.SUN.SU N) :
     |sliceForm V W| ^ k ≤ ((Fintype.card ι : ℝ) * (N : ℝ)) ^ k :=
   pow_le_pow_left₀ (abs_nonneg _)
@@ -1100,7 +1163,9 @@ theorem abs_gmono_le {P X : Type*} {φ : P → X → ℝ} {B : ℝ}
 /-- **AND THE GRAM FORM ITSELF BY `|P|·B²`** — the domination `integral_exp_mul_eq_tsum` consumes.
 
 `0 ≤ B` is not assumed: it is available inside the sum, where a `p` is in hand and `hφ p x` supplies
-it. Outside the sum there need be no `p` at all, and then both sides are `0`. -/
+it. Outside the sum there need be no `p` at all, and then both sides are `0`.
+
+DERIVED: `2` is the exponent on the coordinate bound `B`, since each term of the Gram form is a product of two coordinates; `Fintype.card P` is the number of terms. -/
 theorem abs_gram_le {P : Type*} [Fintype P] {X : Type*} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (x y : X) :
     |∑ p, φ p x * φ p y| ≤ (Fintype.card P : ℝ) * B ^ 2 := by
@@ -1116,7 +1181,9 @@ theorem abs_gram_le {P : Type*} [Fintype P] {X : Type*} {φ : P → X → ℝ} {
 
 #print axioms abs_gram_le
 
-/-- A monomial is measurable as soon as the coordinates are. -/
+/-- A monomial is measurable as soon as the coordinates are.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem aestronglyMeasurable_gmono {P X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ}
     (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ) {k : ℕ} (α : Fin k → P) :
@@ -1130,14 +1197,18 @@ theorem aestronglyMeasurable_gmono {P X : Type*} [MeasurableSpace X]
 
 This is the object the whole injectivity argument turns on. `⟪T z, z⟫` will be a nonnegative
 combination of its SQUARES, so the form vanishing forces every one of these to vanish — and a
-function orthogonal to every monomial is orthogonal to their closed span. -/
+function orthogonal to every monomial is orthogonal to their closed span.
+
+DERIVED: no numeral occurs. -/
 noncomputable def gramCoeff {P X : Type*} [MeasurableSpace X] (μ : MeasureTheory.Measure X)
     (φ : P → X → ℝ) (f : X → ℝ) {k : ℕ} (α : Fin k → P) : ℝ :=
   ∫ x, gmono φ α x * f x ∂μ
 
 #print axioms gramCoeff
 
-/-- and it is a genuine number: a bounded measurable factor against an integrable one. -/
+/-- and it is a genuine number: a bounded measurable factor against an integrable one.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem integrable_gmono_mul {P X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1154,7 +1225,9 @@ theorem integrable_gmono_mul {P X : Type*} [MeasurableSpace X]
 
 `∫ (∑ₚ φₚ(V)φₚ(W))^k f(W) dW = ∑_α gmono φ α V · c_α`. The point is that the dependence on `V` is
 now through the monomials alone — finitely many CONTINUOUS functions — so the outer integral needs no
-parametric-integral measurability. That is what makes the second expansion cheap. -/
+parametric-integral measurability. That is what makes the second expansion cheap.
+
+DERIVED: no numeral occurs in the statement; `k` is the order. -/
 theorem integral_gram_pow_mul_eq_sum {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1177,7 +1250,9 @@ theorem integral_gram_pow_mul_eq_sum {P : Type*} [Fintype P] {X : Type*} [Measur
 /-- **AND THE ORDER-`k` DOUBLE INTEGRAL IS A SUM OF SQUARES.**
 
 The integral analogue of `gram_quadform_pow_eq_sum_sq`, and the reason every order of the expansion
-is nonnegative. No hypothesis on the sign of anything: squares are squares. -/
+is nonnegative. No hypothesis on the sign of anything: squares are squares.
+
+DERIVED: the one numeral is the exponent `2`, which is what `integral_integral_mul_self` produces from a separable term. -/
 theorem integral_integral_gram_pow {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1216,7 +1291,9 @@ does. That is the integral statement `gram_exp_kernel_eq_zero_coeffs` was the fi
 it is the third of the three things `ker T = 0` needs.
 -/
 
-/-- One row of the Gram form, as a function of the second argument. -/
+/-- One row of the Gram form, as a function of the second argument.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem aestronglyMeasurable_gramRow {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ}
     (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ) (V : X) :
@@ -1225,7 +1302,9 @@ theorem aestronglyMeasurable_gramRow {P : Type*} [Fintype P] {X : Type*} [Measur
 
 #print axioms aestronglyMeasurable_gramRow
 
-/-- **THE INNER INTEGRAL AT ORDER `k`**, named so the outer expansion has something to talk about. -/
+/-- **THE INNER INTEGRAL AT ORDER `k`**, named so the outer expansion has something to talk about.
+
+DERIVED: no numeral occurs. -/
 noncomputable def gramInner {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     (μ : MeasureTheory.Measure X) (φ : P → X → ℝ) (f : X → ℝ) (k : ℕ) (V : X) : ℝ :=
   ∫ W, (∑ p, φ p V * φ p W) ^ k * f W ∂μ
@@ -1236,7 +1315,9 @@ noncomputable def gramInner {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace
 
 Note where this differs from §11's: there the bound was on the integrand, here on an integral, and it
 is the `L¹` norm of `f` rather than `f` itself that appears. That is why no boundedness of `f` is
-ever required. -/
+ever required.
+
+DERIVED: the one numeral is the exponent `2` on the coordinate bound `B`, inherited from `abs_gram_le`; the order `k` and the link-coordinate count are the caller's. -/
 theorem abs_gramInner_le {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1269,7 +1350,9 @@ theorem abs_gramInner_le {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
 
 #print axioms abs_gramInner_le
 
-/-- and it is measurable in `V`, because §12 wrote it as a FINITE sum of monomials. -/
+/-- and it is measurable in `V`, because §12 wrote it as a FINITE sum of monomials.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem aestronglyMeasurable_gramInner {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1403,7 +1486,9 @@ This is `gram_exp_kernel_eq_zero_coeffs` for an integral rather than a finite co
 it is the last of the three things `ker T = 0` needs.
 -/
 
-/-- **THE ORDERS ARE BOUNDED**, which is what makes the series summable rather than merely formal. -/
+/-- **THE ORDERS ARE BOUNDED**, which is what makes the series summable rather than merely formal.
+
+DERIVED: `2` is the square on each coefficient and the exponent on the coordinate bound `B` inherited from `abs_gram_le`. -/
 theorem sum_sq_gramCoeff_le {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1440,7 +1525,9 @@ theorem sum_sq_gramCoeff_le {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace
 #print axioms sum_sq_gramCoeff_le
 
 /-- **SO THE SERIES CONVERGES.** Without this the vanishing case proves nothing: `∑'` of a
-non-summable family is `0` by convention, and that `0` would carry no information. -/
+non-summable family is `0` by convention, and that `0` would carry no information.
+
+DERIVED: `0` is the lower bound on `b`, which is what makes the orders nonnegative; `2` is the square on each coefficient. -/
 theorem summable_gram_orders {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1469,7 +1556,9 @@ theorem summable_gram_orders {P : Type*} [Fintype P] {X : Type*} [MeasurableSpac
 #print axioms summable_gram_orders
 
 /-- **THE FORM IS NONNEGATIVE** — the integral `gram_exp_kernel_nonneg`, now a corollary rather than
-an argument of its own. -/
+an argument of its own.
+
+DERIVED: `0` is the lower bound on `b` and the lower bound asserted on the form. -/
 theorem integral_integral_exp_gram_nonneg {P : Type*} [Fintype P] {X : Type*} [MeasurableSpace X]
     {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1485,7 +1574,9 @@ theorem integral_integral_exp_gram_nonneg {P : Type*} [Fintype P] {X : Type*} [M
 
 `⟪T f, f⟫ = 0 → ∫ gmono φ α · f = 0` at every monomial. The strict positivity of `b` is what makes
 every order carry weight; at `b = 0` the kernel is the constant `1` and only the order-zero
-coefficient is seen, which is exactly `gram_exp_kernel_eq_zero_coeffs`' own hypothesis. -/
+coefficient is seen, which is exactly `gram_exp_kernel_eq_zero_coeffs`' own hypothesis.
+
+DERIVED: `0` is the strict lower bound on `b`, the value of the vanishing quadratic form, and the value of the coefficient concluded. -/
 theorem gramCoeff_eq_zero_of_quadform_eq_zero {P : Type*} [Fintype P] {X : Type*}
     [MeasurableSpace X] {μ : MeasureTheory.Measure X} {φ : P → X → ℝ} {B : ℝ}
     (hφ : ∀ p x, |φ p x| ≤ B) (hφm : ∀ p, MeasureTheory.AEStronglyMeasurable (φ p) μ)
@@ -1539,7 +1630,9 @@ theorem abs_sliceCoord_le_one (q : ι × Coord N) (U : ι → MassGap.SUN.SU N) 
 /-- **THE COEFFICIENT AT THE SLICE**, named so the statements below do not carry the lambda.
 
 `sliceCoeff f α = ∫ gmono α · f` over the slice's Haar measure: the integral of `f` against one
-monomial in the link coordinates. -/
+monomial in the link coordinates.
+
+DERIVED: no numeral occurs. -/
 noncomputable def sliceCoeff (f : (ι → MassGap.SUN.SU N) → ℝ) {k : ℕ}
     (α : Fin k → ι × Coord N) : ℝ :=
   gramCoeff (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N)
@@ -1549,7 +1642,9 @@ noncomputable def sliceCoeff (f : (ι → MassGap.SUN.SU N) → ℝ) {k : ℕ}
 #print axioms sliceCoeff
 
 /-- **THE SLICE QUADRATIC FORM, EXPANDED.** `§13` at `P := ι × Coord N`, with `sliceForm_eq_gram`
-turning the slice form into the Gram form the general theorem is stated over. -/
+turning the slice form into the Gram form the general theorem is stated over.
+
+DERIVED: the one numeral is the square `2` on each coefficient; `k !` is the exponential series' own denominator and `b` the caller's coupling. -/
 theorem slice_quadform_eq_tsum {b : ℝ} {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf : MeasureTheory.Integrable f (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N)) :
     (∫ V, (∫ W, Real.exp (b * sliceForm V W) * f W
@@ -1568,7 +1663,9 @@ theorem slice_quadform_eq_tsum {b : ℝ} {f : (ι → MassGap.SUN.SU N) → ℝ}
 
 This is the integral `gram_exp_kernel_eq_zero_coeffs`, at the slice. Everything the rest of the
 injectivity argument needs from the kernel is in this one line: a function whose quadratic form
-against the slice weight vanishes is orthogonal to every monomial in the link coordinates. -/
+against the slice weight vanishes is orthogonal to every monomial in the link coordinates.
+
+DERIVED: `0` is the strict lower bound on `b`, the value of the vanishing quadratic form, and the value of the coefficient concluded. -/
 theorem slice_gramCoeff_eq_zero {b : ℝ} (hb : 0 < b) {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf : MeasureTheory.Integrable f (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N))
     (h0 : (∫ V, (∫ W, Real.exp (b * sliceForm V W) * f W
@@ -1599,14 +1696,18 @@ algebra is a finite linear combination of monomials, never that every such combi
 algebra.
 -/
 
-/-- A monomial in the link coordinates, as a bundled continuous map. -/
+/-- A monomial in the link coordinates, as a bundled continuous map.
+
+DERIVED: no numeral occurs. -/
 noncomputable def sliceMonoCM {k : ℕ} (α : Fin k → ι × Coord N) :
     C(ι → MassGap.SUN.SU N, ℝ) :=
   ∏ t, sliceCoordCM (α t)
 
 #print axioms sliceMonoCM
 
-/-- and its value is the `gmono` the expansion produces — the two descriptions agree pointwise. -/
+/-- and its value is the `gmono` the expansion produces — the two descriptions agree pointwise.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem sliceMonoCM_apply {k : ℕ} (α : Fin k → ι × Coord N) (U : ι → MassGap.SUN.SU N) :
     sliceMonoCM α U
       = gmono (fun q : ι × Coord N => fun U : ι → MassGap.SUN.SU N =>
@@ -1619,7 +1720,9 @@ theorem sliceMonoCM_apply {k : ℕ} (α : Fin k → ι × Coord N) (U : ι → M
 
 /-- **A PRODUCT OF MONOMIALS IS A MONOMIAL** — concatenate the two index families.
 
-This is the whole reason the span is an algebra, and `Fin.append` is the concatenation. -/
+This is the whole reason the span is an algebra, and `Fin.append` is the concatenation.
+
+DERIVED: no numeral occurs in the statement; `Fin.append` concatenates the two index families. -/
 theorem sliceMonoCM_mul {k m : ℕ} (α : Fin k → ι × Coord N) (β : Fin m → ι × Coord N) :
     sliceMonoCM α * sliceMonoCM β = sliceMonoCM (Fin.append α β) := by
   unfold sliceMonoCM
@@ -1630,14 +1733,18 @@ theorem sliceMonoCM_mul {k m : ℕ} (α : Fin k → ι × Coord N) (β : Fin m �
 
 #print axioms sliceMonoCM_mul
 
-/-- The set of all monomials, at every degree. -/
+/-- The set of all monomials, at every degree.
+
+DERIVED: no numeral occurs. -/
 def monoSet (ι : Type) [Fintype ι] [DecidableEq ι] (N : ℕ) :
     Set C(ι → MassGap.SUN.SU N, ℝ) :=
   {g | ∃ (k : ℕ) (α : Fin k → ι × Coord N), g = sliceMonoCM α}
 
 #print axioms monoSet
 
-/-- `1` is the degree-ZERO monomial: the empty product. -/
+/-- `1` is the degree-ZERO monomial: the empty product.
+
+DERIVED: the one numeral is `1`, the unit of the algebra, which is the empty product of coordinates. -/
 theorem one_mem_monoSet : (1 : C(ι → MassGap.SUN.SU N, ℝ)) ∈ monoSet ι N :=
   ⟨0, Fin.elim0, by simp [sliceMonoCM]⟩
 
@@ -1647,7 +1754,9 @@ theorem one_mem_monoSet : (1 : C(ι → MassGap.SUN.SU N, ℝ)) ∈ monoSet ι N
 
 `Submodule.mul_mem_mul` puts the product in the submodule product, `Submodule.span_mul_span`
 identifies that with the span of the setwise product, and `sliceMonoCM_mul` says the setwise product
-lands back in the monomials. -/
+lands back in the monomials.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem mul_mem_span_monoSet {x y : C(ι → MassGap.SUN.SU N, ℝ)}
     (hx : x ∈ Submodule.span ℝ (monoSet ι N)) (hy : y ∈ Submodule.span ℝ (monoSet ι N)) :
     x * y ∈ Submodule.span ℝ (monoSet ι N) := by
@@ -1661,7 +1770,9 @@ theorem mul_mem_span_monoSet {x y : C(ι → MassGap.SUN.SU N, ℝ)}
 
 #print axioms mul_mem_span_monoSet
 
-/-- so it is a subalgebra. -/
+/-- so it is a subalgebra.
+
+DERIVED: no numeral occurs. -/
 noncomputable def monoSpan (ι : Type) [Fintype ι] [DecidableEq ι] (N : ℕ) :
     Subalgebra ℝ C(ι → MassGap.SUN.SU N, ℝ) :=
   (Submodule.span ℝ (monoSet ι N)).toSubalgebra
@@ -1671,7 +1782,9 @@ noncomputable def monoSpan (ι : Type) [Fintype ι] [DecidableEq ι] (N : ℕ) :
 #print axioms monoSpan
 
 /-- **AND IT CONTAINS THE COORDINATE ALGEBRA.** `Algebra.adjoin_le`, with the generators as the
-degree-ONE monomials. -/
+degree-ONE monomials.
+
+DERIVED: no numeral occurs in the statement; the generators are the degree-one monomials. -/
 theorem coordAlgebra_le_monoSpan : coordAlgebra ι N ≤ monoSpan ι N := by
   refine Algebra.adjoin_le ?_
   rintro g ⟨q, rfl⟩
@@ -1691,7 +1804,9 @@ supplies it from a vanishing quadratic form.
 -/
 
 /-- A continuous function times an integrable one is integrable: the space is compact, so `‖g U‖` is
-bounded by the sup norm `‖g‖` and `Integrable.bdd_mul` applies. -/
+bounded by the sup norm `‖g‖` and `Integrable.bdd_mul` applies.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem integrable_continuousMap_mul (g : C(ι → MassGap.SUN.SU N, ℝ))
     {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf : MeasureTheory.Integrable f (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N)) :
@@ -1706,7 +1821,9 @@ theorem integrable_continuousMap_mul (g : C(ι → MassGap.SUN.SU N, ℝ))
 
 `Submodule.span_induction`: the base case is a monomial, where the integral IS `sliceCoeff`, and the
 two closure cases are linearity of the integral. Integrability is available at every step because
-every element of the span is a continuous function on a compact space. -/
+every element of the span is a continuous function on a compact space.
+
+DERIVED: `0` is the value of every monomial coefficient in the hypothesis and of the integral in the conclusion. -/
 theorem integral_mul_eq_zero_of_mem_span {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf : MeasureTheory.Integrable f (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N))
     (hzero : ∀ (k : ℕ) (α : Fin k → ι × Coord N), sliceCoeff f α = 0)
@@ -1743,7 +1860,9 @@ theorem integral_mul_eq_zero_of_mem_span {f : (ι → MassGap.SUN.SU N) → ℝ}
 
 #print axioms integral_mul_eq_zero_of_mem_span
 
-/-- and therefore to every element of the coordinate algebra, by §16. -/
+/-- and therefore to every element of the coordinate algebra, by §16.
+
+DERIVED: `0` is the value of every monomial coefficient in the hypothesis and of the integral in the conclusion. -/
 theorem integral_mul_eq_zero_of_mem_coordAlgebra {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf : MeasureTheory.Integrable f (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N))
     (hzero : ∀ (k : ℕ) (α : Fin k → ι × Coord N), sliceCoeff f α = 0)
@@ -1757,7 +1876,9 @@ theorem integral_mul_eq_zero_of_mem_coordAlgebra {f : (ι → MassGap.SUN.SU N) 
 
 The functional `h ↦ ⟪F, h⟫` is continuous and vanishes on the image of the coordinate algebra, which
 `coordAlgebra_dense_in_L2` says is dense. A continuous function agreeing with `0` on a dense set
-agrees with it everywhere, so it vanishes at `F`, and `⟪F, F⟫ = 0` is `F = 0`. -/
+agrees with it everywhere, so it vanishes at `F`, and `⟪F, F⟫ = 0` is `F = 0`.
+
+DERIVED: `2` is the `Lᵖ` exponent; `0` is the value of every coefficient in the hypothesis and of the element in the conclusion. -/
 theorem lp_eq_zero_of_sliceCoeff_eq_zero
     (F : MeasureTheory.Lp ℝ 2 (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N))
     (hzero : ∀ (k : ℕ) (α : Fin k → ι × Coord N), sliceCoeff (F : _ → ℝ) α = 0) :
@@ -1802,7 +1923,9 @@ theorem lp_eq_zero_of_sliceCoeff_eq_zero
 #print axioms lp_eq_zero_of_sliceCoeff_eq_zero
 
 /-- The same, for a raw function rather than an `Lp` element — which is the form §18 needs, because
-the function the expansion runs on is `e^{-s/2}·z` and that is not an `Lp` element on the nose. -/
+the function the expansion runs on is `e^{-s/2}·z` and that is not an `Lp` element on the nose.
+
+DERIVED: `2` is the `Lᵖ` exponent; `0` is the value of every coefficient in the hypothesis and the function the conclusion equates to almost everywhere. -/
 theorem ae_eq_zero_of_sliceCoeff_eq_zero {f : (ι → MassGap.SUN.SU N) → ℝ}
     (hf2 : MeasureTheory.MemLp f 2 (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N))
     (hzero : ∀ (k : ℕ) (α : Fin k → ι × Coord N), sliceCoeff f α = 0) :
@@ -1868,7 +1991,9 @@ noncomputable def weighted (s z : (ι → MassGap.SUN.SU N) → ℝ)
 
 /-- **THE DIAGONAL FACTORS MOVE ONTO `z`.** Pointwise in `V`, and it is `integral_const_mul` twice:
 `e^{-s(V)/2}` is constant in `W` so it leaves the inner integral, and `e^{-s(W)/2}` pairs with `z W`
-inside it. -/
+inside it.
+
+DERIVED: no numeral occurs in the statement; the halving of the intra-slice action lives in `weighted` and in `transferKernel`. -/
 theorem kernelFun_mul_eq_weighted (b : ℝ) (s z : (ι → MassGap.SUN.SU N) → ℝ)
     (V : ι → MassGap.SUN.SU N) :
     MassGap.SlabKernelOperator.kernelFun (transferKernel b s)
@@ -1893,7 +2018,9 @@ theorem kernelFun_mul_eq_weighted (b : ℝ) (s z : (ι → MassGap.SUN.SU N) →
 
 #print axioms kernelFun_mul_eq_weighted
 
-/-- **THE WEIGHTED FUNCTION IS STILL IN `L²`** — the weight is bounded by `e^{Cs/2}`. -/
+/-- **THE WEIGHTED FUNCTION IS STILL IN `L²`** — the weight is bounded by `e^{Cs/2}`.
+
+DERIVED: the one numeral is `2`, the `Lᵖ` exponent carried from `Z` to the weighted function. -/
 theorem memLp_weighted {s : (ι → MassGap.SUN.SU N) → ℝ} {Cs : ℝ} (hs : Continuous s)
     (hsb : ∀ V, |s V| ≤ Cs)
     (Z : MeasureTheory.Lp ℝ 2 (MassGap.SliceTransferSelfAdjoint.sliceHaar ι N)) :
@@ -1955,7 +2082,9 @@ theorem transferCLM_eq_zero {b : ℝ} (hb : 0 < b) {s : (ι → MassGap.SUN.SU N
 
 #print axioms transferCLM_eq_zero
 
-/-- **and therefore injective**, since it is linear. -/
+/-- **and therefore injective**, since it is linear.
+
+DERIVED: `0` is the strict lower bound on `b`; `2` is the `Lᵖ` exponent the operator acts on. -/
 theorem transferCLM_injective {b : ℝ} (hb : 0 < b) {s : (ι → MassGap.SUN.SU N) → ℝ} {Cs : ℝ}
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     Function.Injective (MassGap.SliceTransferSelfAdjoint.transferCLM b s Cs hs hsb) := by

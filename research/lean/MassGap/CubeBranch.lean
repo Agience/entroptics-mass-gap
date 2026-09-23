@@ -1,73 +1,66 @@
 import MassGap.CubeClosed
 
 /-!
-# A RICHER counted family: the entropy floor above `¼ log 3`
+# MassGap.CubeBranch — a branched family of cube configurations, counted and measured
 
-**WHY THIS FILE EXISTS.** `Floor` + `CubeArea` bound the centre-vortex surface entropy density by
-exhibiting DIRECTED CUBE-PATHS: `3ᵏ` of them (`Floor.directed_paths_card`), each bounding a distinct
-closed surface (`CubeArea.boundaryFaces_cubeConfig_injective`) of area exactly `4k+6`
-(`CubeArea.boundary_card_eq`). That gives `κ₀ ≥ (¼) log 3 = 0.274653`.
+`CubeArea` counts directed cube-paths: `3 ^ k` of them, each bounding a distinct face-set of
+cardinality `4k + 6`. This module counts a larger family and measures it on the same scale.
 
-Paths are not the only surfaces of that area, and `κ₀` is a limsup over ALL closed connected
-surfaces, so counting a STRICTLY RICHER subfamily gives a strictly larger lower bound on the SAME
-quantity. This file counts one.
+## The family
 
-**THE FAMILY: a path with one extra cube per block.** Take a directed cube-path (the SPINE) of
-`(d+1)k+1` steps and, in each of the `k` blocks of `d+1` consecutive steps, hang ONE extra cube off a
-spine cube of the block — `d` choices of which cube inside the block, in an axis forced by the
-construction. The counted set is then
+`config d k σ τ` is a spine of `(d+1)k + 1` steps, given by the direction sequence `σ`, together with
+one extra cube per block: in each of the `k` blocks of `d + 1` consecutive spine steps, the extra cube
+hangs off the spine cube at position `τ m < d` inside the block, on the axis `branchDir` forces. The
+parameter set is `(Fin ((d+1)k+1) → Fin 3) × (Fin k → Fin d)`, of cardinality
+`3 ^ ((d+1)k+1) · d ^ k`.
 
-    (spine directions) × (block positions)   of cardinality   `3^((d+1)k+1) · d^k`,
+`card_config` gives `(d+2)k + 2` cubes per member and `boundary_card_config` gives
+`4((d+2)k+2) + 2` boundary faces.
 
-every member has `(d+2)k+2` cubes, and every member's boundary has `4((d+2)k+2)+2` faces.
+## Why the area is `4n + 2`
 
-**WHY THE AREA IS STILL `4n+2`.** Every cube but the origin has EXACTLY ONE face-neighbour below it
-(`config_isTree`), so the configuration is a TREE and the shared-face count is `n−1`. The double
-count `CubeArea.boundary_card_of_shared` — which was already stated for an arbitrary `Finset Cube` —
-then reads `6n = |∂C| + 2(n−1)`, i.e. `|∂C| = 4n+2`. For a path `n = k+1` and this is `4k+6`, so the
-two families are measured on one and the same scale.
+`config_isTree` shows every cube but the origin is reached by exactly one step from exactly one other
+cube of the configuration, so the configuration is an `IsCubeTree` and `card_sharedFaces_tree` makes
+the shared-face count `n − 1`. `boundary_card_tree` then runs `CubeArea.boundary_card_of_shared`,
+which is already stated for an arbitrary `Finset Cube`, giving `6n = |∂C| + 2(n−1)`, that is
+`|∂C| = 4n + 2`. At a path, `n = k + 1` and this is `CubeArea.boundary_card_eq`'s `4k + 6`, so the
+two families sit on the same area scale.
 
-**WHAT THE EXTRA CUBE BUYS.** Per block the family has `3^(d+1)·d` members costing `d+2` cubes, i.e.
-`4(d+2)` of area, against the path's `3^(d+2)` members at the same cost. The density is therefore
+## The forced axis
 
-    `((d+1)·log 3 + log d) / (4(d+2))`   against   `(d+2)·log 3 / (4(d+2)) = ¼ log 3`,
+`branchDir σ i` is `rot1 (spineDir σ i)` unless that equals `spineDir σ (i+1)`, in which case it is
+`rot2 (spineDir σ i)`. The two facts the tree property needs follow with no case analysis on the
+directions: `branchDir_ne_self` (from `rot1_ne`, `rot2_ne`) keeps the extra cube off the spine, and
+`branchDir_ne_next` (from `rot1_ne_rot2`) stops the next spine cube from acquiring a second parent.
+`branch_child_not_mem` and `no_two_parents` are where those are spent.
 
-and the first exceeds the second exactly when `log d > log 3`, i.e. when `d > 3`
-(`branch_density_gt_floor`). At `d = 10` — where the density is largest — this is
+## Injectivity and the density
 
-    `κ₀ ≥ (11 log 3 + log 10)/48 = 0.2997358…  >  0.2746531… = ¼ log 3`.
+`eq_of_boundaryFaces_eq` shows the boundary map is injective on arbitrary configurations, with no
+hypothesis — `CubeArea.boundaryFaces_cubeConfig_injective` freed of the path. `config_injective` then
+recovers the parameters from the configuration, spine first (`top_unique`, `spine_eq_of_eq`,
+`sigma_eq_of_eq`) and block positions second (`tau_eq_of_eq`), so
+`branched_surfaces_count_and_area` counts distinct face-sets.
 
-`d ≤ 3` is the negative control and it fails as it must: at `d = 3` the count `3^(d+1)·d = 3^(d+2)`
-is EXACTLY the path count over the same cubes, and the density is exactly `¼ log 3`.
+`branch_density_limit` computes `log(count)/area → ((d+1)log 3 + log d)/(4(d+2))` through
+`tendsto_affine_ratio` and `log_branch_count`. `branch_density_gt_floor` proves that limit exceeds
+`(1/4) log 3` exactly when `3 < d`; `branch_density_eq_floor_at_three` is the equality at `d = 3`,
+and `branch_floor_ten` the instance at `d = 10`.
 
-**THE FORCED AXIS.** The extra cube at spine index `i` is `stepᵦ` of the spine cube, with
-`β = rot1 (sᵢ)` unless that equals `sᵢ₊₁`, in which case `β = rot2 (sᵢ)`. Both facts the tree
-property needs — `β ≠ sᵢ` and `β ≠ sᵢ₊₁` — are then immediate from `rot1_ne`, `rot2_ne` and
-`rot1_ne_rot2`, with no case analysis on the directions. `β ≠ sᵢ` keeps the extra cube off the spine;
-`β ≠ sᵢ₊₁` is what stops the NEXT spine cube from acquiring a second parent, and dropping it really
-does break the tree (checked by `certify/floor_branch_family.py`'s negative control).
+## Scope
 
-**WHAT IS PROVED HERE AND WHAT IS NOT.** `branched_surfaces_count_and_area` (the count and the area)
-and `branched_surfaces_closed` (closed) are proved; CONNECTEDNESS of these boundaries is NOT.
-`CubeConnected.boundary_connected` descends on the path's own indexing — a directed path holds
-exactly ONE cube at each coordinate sum, which is the fact its whole argument runs on — and a tree
-holds two at the layers carrying an extra cube. Every boundary this family produces IS connected
-(checked over the whole parameter set at small `(d,k)` and by sampling at `d = 10`, `k ≤ 8`, in
-`certify/floor_branch_family.py`), so the missing piece is the Lean and not the geometry. Until it is
-written this raises the COUNTED floor and does not yet replace `CubeConnected`'s input to
-`VortexFamily`.
+`branched_surfaces_count_and_area` (count and cardinality), `branched_surfaces_closed` (every edge
+lies in an even number of boundary faces) and `branched_origin_face_mem_boundary` are proved.
+Connectedness of these face-sets is not: `CubeConnected.boundary_connected` descends on a path's own
+indexing, which holds exactly one cube at each coordinate sum, and these configurations hold two at
+the layers carrying an extra cube.
 
-**WHAT IT DOES NOT REACH.** The front-capped transfer-matrix certificate
-(`certify/floor_ladder_exact.py`) puts the true floor at `κ₀ ≥ 0.455483`, and an exactly-solvable
-ceiling on the same tree family — free ternary trees, `w = (1+x⁴w)³`, critical at `x⁴ = 4/27` — is
-`(3log 3 − 2log 2)/4 = 0.477386`. So `0.2997358` is a fifth of the way from the path floor to what
-the ladder already certifies numerically, and the remaining distance is a COUNTING problem: directed
-lattice site-trees have the same `4n+2` area law (`boundary_card_tree`, proved here for ALL of them)
-and are measured to grow like `5.2ⁿ`, but no closed form counts them.
+Everything is `Finset` combinatorics over `Fin 3 → ℕ`, plus real limits. No statement mentions a
+vortex, an entropy density or a gap.
 
 DERIVED throughout: `3` is the dimension and the step alphabet's arity, `6` the faces of a cube, `2`
-the owners of a face, `4 = 6 − 2` the area a one-parent cube adds. `d` is a free parameter of the
-family, not a fitted constant: every `d` gives a theorem and `d > 3` gives one that beats the path.
+the owners of a shared face, and `4 = 6 − 2` the area a one-parent cube adds. `d` and `k` are free
+parameters: every `d` gives a theorem, and `3 < d` gives one whose density exceeds `(1/4) log 3`.
 -/
 
 namespace MassGap.CubeBranch
@@ -76,14 +69,19 @@ open Finset MassGap MassGap.CubeArea
 
 /-! ### The boundary determines the configuration
 
-`CubeArea.mem_of_boundary_eq_aux` recovers a cube-PATH from its boundary by an induction that uses
-the path's own indexing. The same recovery holds for an ARBITRARY finite configuration and needs no
-indexing at all: `CubeClosed.mem_boundaryFaces_iff_floor` decides membership on the floor `y 0 = 0`,
-and `CubeClosed.mem_boundaryFaces_iff_xor` propagates it one step at a time. So two configurations
-with the same boundary are the same configuration, and any family whatever is counted by its
-surfaces as soon as it is counted by its cubes. -/
+`CubeArea.mem_of_boundary_eq_aux` recovers a cube-path from its boundary by an induction on the
+path's own indexing. The same recovery holds for an arbitrary finite configuration and needs no
+indexing: `CubeClosed.mem_boundaryFaces_iff_floor` decides membership on the floor `y 0 = 0`, and
+`CubeClosed.mem_boundaryFaces_iff_xor` propagates it one step at a time. So two configurations with
+the same boundary are equal, and any family counted by its cubes is counted by its boundaries. -/
 
-/-- Membership at height `n` along axis `0`, decided by the boundary. -/
+/-- If two configurations have the same boundary, they agree on every cube of height `n` along axis
+`0`. Induction on `n`: at `0` the two boundary criteria on the floor coincide, and at `n + 1` the
+cube is a step along axis `0` from one of height `n`, where `mem_boundaryFaces_iff_xor` relates the
+two memberships to the same boundary face.
+
+DERIVED: `0` is the axis the induction runs along and the height of the base case; which axis is a
+naming freedom. `3` is the dimension, carried by `Cube`. -/
 theorem mem_iff_of_boundary_eq {C D : Finset Cube} (h : boundaryFaces C = boundaryFaces D) :
     ∀ n : ℕ, ∀ y : Cube, y 0 = n → (y ∈ C ↔ y ∈ D) := by
   intro n
@@ -109,8 +107,12 @@ theorem mem_iff_of_boundary_eq {C D : Finset Cube} (h : boundaryFaces C = bounda
     have hb : ((0 : Fin 3), y) ∈ boundaryFaces C ↔ ((0 : Fin 3), y) ∈ boundaryFaces D := by rw [h]
     tauto
 
-/-- **THE BOUNDARY MAP IS INJECTIVE ON CONFIGURATIONS**, with no hypothesis on the configurations.
-This is `CubeArea.boundaryFaces_cubeConfig_injective` freed of the path. -/
+/-- `boundaryFaces C = boundaryFaces D → C = D`, for arbitrary `Finset Cube`s.
+`mem_iff_of_boundary_eq` at each cube's own height along axis `0`.
+
+No hypothesis on the configurations: `CubeArea.boundaryFaces_cubeConfig_injective` freed of the path.
+
+DERIVED: `0` is the axis `mem_iff_of_boundary_eq` runs along; `3` is the dimension. -/
 theorem eq_of_boundaryFaces_eq {C D : Finset Cube} (h : boundaryFaces C = boundaryFaces D) :
     C = D := by
   ext y
@@ -120,9 +122,14 @@ theorem eq_of_boundaryFaces_eq {C D : Finset Cube} (h : boundaryFaces C = bounda
 
 /-! ### Trees, and why a tree's area is `4n+2` -/
 
-/-- **A DIRECTED CUBE-TREE rooted at `r`.** Every cube but `r` is reached by exactly one step from
-exactly one other cube of the configuration, and nothing steps into `r`. A directed cube-PATH is the
-special case with one leaf. -/
+/-- A `Prop`-valued structure on a `Finset Cube` and a cube `r`: `r` is in the configuration, nothing
+in the configuration steps into `r`, every other cube of it is stepped into from inside it, and a
+cube of it has at most one parent in it.
+
+A directed cube-path is the case with a single leaf; `config_isTree` proves the branched family
+satisfies it.
+
+DERIVED: `3` is the dimension, the range of the step axes; no other numeral. -/
 structure IsCubeTree (C : Finset Cube) (r : Cube) : Prop where
   /-- the root is in the configuration -/
   root_mem : r ∈ C
@@ -130,18 +137,25 @@ structure IsCubeTree (C : Finset Cube) (r : Cube) : Prop where
   root_no_parent : ∀ (a : Fin 3) (p : Cube), p ∈ C → step a p ≠ r
   /-- every other cube is stepped into from inside the configuration -/
   parent_exists : ∀ c ∈ C, c ≠ r → ∃ (a : Fin 3) (p : Cube), p ∈ C ∧ step a p = c
-  /-- and only once: a cube OF the configuration has at most one parent in it -/
+  /-- and only once: a cube of the configuration has at most one parent in it -/
   parent_unique : ∀ (a b : Fin 3) (p q : Cube), p ∈ C → q ∈ C → step a p ∈ C →
       step a p = step b q → a = b ∧ p = q
 
-/-- The faces of `C` carried by two cubes — the interior ones.
+/-- The faces of `C` carried by exactly two cubes: the interior ones. The same filter
+`CubeArea.sharedFaces_eq_crossFaces` uses, named here for an arbitrary configuration.
 
-DERIVED: `2` is the number of cubes a face can belong to (`CubeArea.card_cubes_with_face_le_two`),
-so "two owners" is the complement of "on the boundary" and not a chosen cut. -/
+DERIVED: `2` is the number of cubes a face can belong to
+(`CubeArea.card_cubes_with_face_le_two`), so "two owners" is the complement of "on the boundary" and
+not a chosen cut. `3` is the dimension. -/
 noncomputable def sharedFaces (C : Finset Cube) : Finset Face :=
   (C.biUnion faces).filter (fun f => (C.filter (fun x => f ∈ faces x)).card = 2)
 
-/-- A shared face carries its corner AND a cube one step behind it — both in `C`. -/
+/-- A shared face has both of its possible owners in `C`: the corner `f.2` itself, and some `p ∈ C`
+with `step f.1 p = f.2`. Each half by contradiction — without one of them the owner set would have at
+most one element, against the shared face's count of two.
+
+DERIVED: `2` is the owner count of a shared face, `sharedFaces`'s; `1` is the bound the contradiction
+derives. `3` is the dimension, and the `1`, `2` in `f.1`, `f.2` are `Face`'s projections. -/
 theorem shared_owners {C : Finset Cube} {f : Face} (hf : f ∈ sharedFaces C) :
     f.2 ∈ C ∧ ∃ p ∈ C, step f.1 p = f.2 := by
   classical
@@ -174,10 +188,16 @@ theorem shared_owners {C : Finset Cube} {f : Face} (hf : f ∈ sharedFaces C) :
     rw [Finset.card_singleton] at hle
     omega
 
-/-- **A TREE HAS `n−1` SHARED FACES.** The map `f ↦ f.2` is a bijection from the shared faces onto
-the non-root cubes: a shared face names a cube of `C` together with its parent (`shared_owners`), the
-cube determines the face because `parent_unique` fixes the axis, and every non-root cube names one
-because `parent_exists` gives it a parent. -/
+/-- For an `IsCubeTree C r`, `(sharedFaces C).card + 1 = C.card`.
+
+The map `f ↦ f.2` is a bijection from the shared faces onto `C.erase r`: a shared face names a cube
+of `C` together with its parent (`shared_owners`), and `root_no_parent` keeps it off the root; the
+cube determines the face because `parent_unique` fixes the axis; and every non-root cube is hit
+because `parent_exists` gives it a parent, whose shared face has two owners by
+`card_cubes_with_face_le_two` and `ne_step`.
+
+DERIVED: `1` is the single cube — the root — that the shared faces do not name, so the count is one
+short of the cube count. `2` is the owner count of a shared face; `3` is the dimension. -/
 theorem card_sharedFaces_tree {C : Finset Cube} {r : Cube} (h : IsCubeTree C r) :
     (sharedFaces C).card + 1 = C.card := by
   classical
@@ -215,11 +235,18 @@ theorem card_sharedFaces_tree {C : Finset Cube} {r : Cube} (h : IsCubeTree C r) 
   have hpos : 1 ≤ C.card := Finset.card_pos.mpr ⟨r, h.root_mem⟩
   omega
 
-/-- **THE AREA OF A TREE'S BOUNDARY IS `4n+2`.** The double count
-`CubeArea.boundary_card_of_shared` gives `6n = |B| + (n−1)` and the boundary drops the shared faces
-once more, so `|∂C| = |B| − (n−1) = 6n − 2(n−1) = 4n+2`. For a directed path `n = k+1` and this is
-`CubeArea.boundary_card_eq`'s `4k+6`: the two families sit on the same area scale, which is what
-makes their densities comparable. -/
+/-- For an `IsCubeTree C r`, `(boundaryFaces C).card = 4 * C.card + 2`.
+
+`CubeArea.boundary_card_of_shared` gives `6n = |B| + (n−1)` using `card_sharedFaces_tree`, and
+splitting `B` into one-owner and two-owner faces drops the shared ones once more, so
+`|∂C| = |B| − (n−1) = 6n − 2(n−1) = 4n + 2`.
+
+At a directed path `n = k + 1` and this is `CubeArea.boundary_card_eq`'s `4k + 6`, so the two
+families sit on the same area scale.
+
+DERIVED: `4` is `6 − 2`, the faces of a cube less twice the one shared with its parent; `2` is
+`2 · 1`, twice the root's missing parent, so it is `card_sharedFaces_tree`'s `1` doubled. Neither is
+chosen. `3` is the dimension. -/
 theorem boundary_card_tree {C : Finset Cube} {r : Cube} (h : IsCubeTree C r) :
     (boundaryFaces C).card = 4 * C.card + 2 := by
   classical
@@ -254,17 +281,26 @@ theorem boundary_card_tree {C : Finset Cube} {r : Cube} (h : IsCubeTree C r) :
 
 /-! ### Reading one coordinate of a step -/
 
-/-- A step raises exactly its own coordinate, by one. -/
+/-- `step a x c = x c + (if c = a then 1 else 0)`: a step raises exactly its own coordinate, by one.
+Case split on `c = a`.
+
+DERIVED: `1` is the unit lattice step, `step`'s increment, and `0` the increment on every other
+coordinate. `3` is the dimension. -/
 theorem step_val (a : Fin 3) (x : Cube) (c : Fin 3) :
     step a x c = x c + (if c = a then 1 else 0) := by
   by_cases h : c = a
   · subst h; simp [step_self]
   · simp [step_other h, h]
 
-/-- **THE TWO-STEP CLASH.** If a cube is reached both by stepping `a` from `step u x` and by
-stepping `b` from `step w x`, with `w ≠ u`, then the two steps are forced: `a = w` and `b = u`, so
-the cube is `x + e_u + e_w`. This is the only way a cube of the tree could acquire a second parent,
-and `branch_child_not_mem` shows that cube is not in the configuration. -/
+/-- If `step a (step u x) = step b (step w x)` with `w ≠ u`, then `a = w` and `b = u`, so the common
+cube is `x` raised by one on each of the two axes. Reading the `w` and `u` coordinates of both sides
+through `step_val` forces each equality in turn.
+
+This is the only shape in which a cube could be reached from two different parents two steps from a
+common cube; `branch_child_not_mem` shows that cube is absent from the configuration.
+
+DERIVED: `3` is the dimension; the unit steps are inside `step` and the statement carries no
+literal. -/
 theorem step_pair_eq {x : Cube} {u w a b : Fin 3} (hwu : w ≠ u)
     (h : step a (step u x) = step b (step w x)) : a = w ∧ b = u := by
   have hw : x w + (if w = a then 1 else 0) = x w + 1 + (if w = b then 1 else 0) := by
@@ -292,26 +328,37 @@ theorem step_pair_eq {x : Cube} {u w a b : Fin 3} (hwu : w ≠ u)
 
 /-! ### The family: a spine with one extra cube per block -/
 
-/-- The spine direction at step `j`, total in `j`.
+/-- The spine direction at step `j`, total in `j`: `σ ⟨j, h⟩` when `j < N`, and `0` otherwise.
 
-DERIVED: the value past the end is junk and never read — `spineDir_lt` is the only fact used and it
-speaks about indices inside the range. `0` is `Fin 3`'s own first element, not a magnitude. -/
+The value past the end is never read — `spineDir_lt` is the only fact used of it and speaks about
+indices inside the range.
+
+DERIVED: `0` is `Fin 3`'s first element, standing in past the end of the range, not a magnitude. `3`
+is the dimension, the arity of the step alphabet. -/
 def spineDir {N : ℕ} (σ : Fin N → Fin 3) (j : ℕ) : Fin 3 :=
   if h : j < N then σ ⟨j, h⟩ else 0
 
+/-- `spineDir σ j = σ ⟨j, h⟩` when `j < N`: the `dif_pos` branch of the definition.
+
+DERIVED: `3` is the dimension; no numeral of this declaration's own. -/
 theorem spineDir_lt {N : ℕ} (σ : Fin N → Fin 3) {j : ℕ} (h : j < N) :
     spineDir σ j = σ ⟨j, h⟩ := dif_pos h
 
-/-- **THE FORCED AXIS OF THE EXTRA CUBE.** `rot1` of the spine's own direction, unless that is the
-NEXT spine direction, in which case `rot2`. Both facts the tree property needs follow with no case
-analysis on the directions: `branchDir_ne_self` keeps the extra cube off the spine and
-`branchDir_ne_next` stops the next spine cube from acquiring a second parent.
+/-- The axis the extra cube hangs on at spine index `i`: `rot1 (spineDir σ i)`, unless that equals
+`spineDir σ (i+1)`, in which case `rot2 (spineDir σ i)`.
 
-DERIVED: `1` is one spine step ahead — the extra cube and the next spine cube are the two cubes of
-the same coordinate sum, so "the next direction" is what the axis must avoid. -/
+The two facts the tree property needs follow with no case analysis on the directions:
+`branchDir_ne_self` from `rot1_ne` and `rot2_ne`, `branchDir_ne_next` from `rot1_ne_rot2`.
+
+DERIVED: `1` is one spine step ahead — the extra cube and the next spine cube share a coordinate sum,
+so the next direction is what this axis must avoid. `3` is the dimension. -/
 def branchDir {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) : Fin 3 :=
   if rot1 (spineDir σ i) = spineDir σ (i + 1) then rot2 (spineDir σ i) else rot1 (spineDir σ i)
 
+/-- `branchDir σ i ≠ spineDir σ i`: the extra cube's axis differs from the spine's own, by `rot1_ne`
+on one branch and `rot2_ne` on the other. This is what keeps the extra cube off the spine.
+
+DERIVED: `3` is the dimension; no numeral of this declaration's own. -/
 theorem branchDir_ne_self {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) :
     branchDir σ i ≠ spineDir σ i := by
   rw [branchDir]
@@ -319,6 +366,11 @@ theorem branchDir_ne_self {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) :
   · exact rot2_ne _
   · exact rot1_ne _
 
+/-- `branchDir σ i ≠ spineDir σ (i + 1)`: the extra cube's axis differs from the next spine
+direction. On the `rot2` branch this is `rot1_ne_rot2`; on the other it is the branch condition
+itself. This is what stops the next spine cube from acquiring a second parent.
+
+DERIVED: `1` is one spine step ahead, `branchDir`'s own; `3` is the dimension. -/
 theorem branchDir_ne_next {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) :
     branchDir σ i ≠ spineDir σ (i + 1) := by
   rw [branchDir]
@@ -326,53 +378,75 @@ theorem branchDir_ne_next {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) :
   · rw [← h]; exact (rot1_ne_rot2 _).symm
   · exact h
 
-/-- The extra cube hung on the spine at index `i`: one step off the spine cube, on the forced axis.
+/-- The extra cube hung on the spine at index `i`: `step (branchDir σ i) (cubePos σ i)`, one step off
+the spine cube on the forced axis.
 
-DERIVED: `3` is `Cube`'s dimension — the step alphabet `Floor.directed_paths_card` counts over — and
-one step is the lattice unit, the same one `CubeArea.step` already names. -/
+DERIVED: `3` is `Cube`'s dimension, the step alphabet `Floor.directed_paths_card` counts over. The
+unit step is `CubeArea.step`'s; this definition introduces no numeral. -/
 noncomputable def branchCube {N : ℕ} (σ : Fin N → Fin 3) (i : ℕ) : Cube :=
   step (branchDir σ i) (cubePos σ i)
 
-/-- The spine index the `m`-th block's extra cube hangs on.
+/-- The spine index the `m`-th block's extra cube hangs on: `(d + 1) * m + τ m`.
 
-DERIVED: `d+1` is the block's length in spine steps, so the `m`-th block starts at `(d+1)m`; the
-position `τ m < d` inside it is the family's own choice, and `d` of them is what the count `d^k`
-counts. -/
+DERIVED: `1` makes the block's length `d + 1` spine steps, so the `m`-th block starts at `(d+1)m`;
+the extra `+1` step is what leaves the top layer to the spine alone (`top_unique`). The position
+`τ m < d` inside the block is the family's parameter, and the `d` choices are what `d ^ k` counts. -/
 def branchIdx (d : ℕ) {k : ℕ} (τ : Fin k → Fin d) (m : Fin k) : ℕ :=
   (d + 1) * (m : ℕ) + (τ m : ℕ)
 
-/-- **THE CONFIGURATION.** The spine's `(d+1)k+2` cubes together with one extra cube per block.
+/-- The configuration: the spine `cubeConfig σ`, which has `(d+1)k + 2` cubes, united with the image
+of the `k` extra cubes, one per block. `card_config` evaluates the total as `(d+2)k + 2`.
 
-DERIVED: `3` is `Cube`'s dimension; `d+1` is the block's length in spine steps, so `k` blocks take
-`(d+1)k` of them and the `+1` is the one further step that leaves the top layer to the spine alone
-(`top_unique`), which is what makes the spine recoverable. `2` is nothing chosen — it is the arity of
-the parameter pair (directions, positions). -/
+DERIVED: `3` is `Cube`'s dimension. `1` appears twice in `(d + 1) * k + 1`: as the block length
+`d + 1` in spine steps, so that `k` blocks take `(d+1)k` of them, and as the one further step that
+leaves the top layer to the spine alone (`top_unique`), which is what makes the spine recoverable. -/
 noncomputable def config (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     Finset Cube :=
   cubeConfig σ ∪ (Finset.univ.image (fun m => branchCube σ (branchIdx d τ m)))
 
 /-! ### Where the extra cubes sit -/
 
-/-- The extra cube of a block, and the one after it, still leave two spine steps at the top. -/
+/-- For `a < k` and `u < d`, `(d + 1) * a + u + 2 ≤ (d + 1) * k`: the extra cube of a block, and the
+spine cube after it, still leave room below the top.
+
+DERIVED: `1` is the block length's `+1`, `branchIdx`'s; `2` is the extra cube plus the spine cube
+one step on, the two positions that must stay below the top. -/
 theorem idx_top (d : ℕ) {k a u : ℕ} (ha : a < k) (hu : u < d) :
     (d + 1) * a + u + 2 ≤ (d + 1) * k := by
   have h1 : (d + 1) * (a + 1) ≤ (d + 1) * k := Nat.mul_le_mul (le_refl _) ha
   rw [Nat.mul_succ] at h1
   omega
 
-/-- **EXTRA CUBES ARE AT LEAST TWO SPINE STEPS APART**, which is what keeps each block's cube from
-interfering with the next block's. -/
+/-- For `u < d` and `a < b`, `(d + 1) * a + u + 2 ≤ (d + 1) * b + v`: two extra cubes in different
+blocks are at least two spine steps apart, whatever position `v` the later one takes.
+
+This is what keeps one block's extra cube from interfering with the next block's.
+
+DERIVED: `1` is the block length's `+1`; `2` is the gap in spine steps the block structure
+guarantees, which is what `branch_child_not_mem` spends. -/
 theorem idx_gap (d a b u v : ℕ) (hu : u < d) (hab : a < b) :
     (d + 1) * a + u + 2 ≤ (d + 1) * b + v := by
   have h1 : (d + 1) * (a + 1) ≤ (d + 1) * b := Nat.mul_le_mul (le_refl _) hab
   rw [Nat.mul_succ] at h1
   omega
 
+/-- `branchIdx d τ m + 2 ≤ (d + 1) * k`: every extra cube's spine index leaves two steps below the
+top. `idx_top` at `m.2` and `(τ m).2`.
+
+DERIVED: `2` is the extra cube plus the spine cube one step on, `idx_top`'s; `1` is the block
+length's `+1`. -/
 theorem branchIdx_top (d : ℕ) {k : ℕ} (τ : Fin k → Fin d) (m : Fin k) :
     branchIdx d τ m + 2 ≤ (d + 1) * k :=
   idx_top d m.2 (τ m).2
 
-/-- The block index and the position inside it are both recoverable from the spine index. -/
+/-- Equal spine indices force equal block indices and equal positions inside the block. Trichotomy on
+the block indices, with `idx_gap` ruling out both strict cases and `omega` splitting the remaining
+equality.
+
+So the block and the position are recoverable from `branchIdx`, which is what `branchCube_inj` and
+`tau_eq_of_eq` consume.
+
+DERIVED: `1` is the block length's `+1`, `branchIdx`'s; no other numeral. -/
 theorem branchIdx_eq (d : ℕ) {k : ℕ} (τ τ' : Fin k → Fin d) {m m' : Fin k}
     (h : branchIdx d τ m = branchIdx d τ' m') : m = m' ∧ (τ m : ℕ) = (τ' m' : ℕ) := by
   rw [branchIdx, branchIdx] at h
@@ -385,18 +459,29 @@ theorem branchIdx_eq (d : ℕ) {k : ℕ} (τ τ' : Fin k → Fin d) {m m' : Fin 
 
 /-! ### Levels: the coordinate sum names the layer -/
 
+/-- `∑ a, branchCube σ i a = i + 1`: the extra cube at spine index `i` sits one layer above the spine
+cube there. `sum_step` on `Floor.cubePos_sum_le`.
+
+DERIVED: `1` is the one step the extra cube hangs by, `sum_step`'s; `3` is the dimension. -/
 theorem sum_branchCube {N : ℕ} (σ : Fin N → Fin 3) {i : ℕ} (hi : i ≤ N) :
     ∑ a, branchCube σ i a = i + 1 := by
   rw [branchCube, sum_step, cubePos_sum_le σ hi]
 
-/-- The spine cube one step on, written as a step. -/
+/-- `cubePos σ (j + 1) = step (spineDir σ j) (cubePos σ j)` for `j < N`: the spine cube one step on,
+written as a step. `spineDir_lt` followed by `CubeArea.cubePos_succ_eq_step`.
+
+DERIVED: `1` is the index increment, one spine step; `3` is the dimension. -/
 theorem spine_succ {N : ℕ} (σ : Fin N → Fin 3) {j : ℕ} (h : j < N) :
     cubePos σ (j + 1) = step (spineDir σ j) (cubePos σ j) := by
   rw [spineDir_lt σ h]
   exact cubePos_succ_eq_step σ ⟨j, h⟩
 
-/-- **AN EXTRA CUBE IS NEVER A SPINE CUBE.** Both sit one step from the same spine cube, on
-different axes (`branchDir_ne_self`). -/
+/-- `branchCube σ i ≠ cubePos σ j`: no extra cube is a spine cube. The coordinate sums force
+`j = i + 1`, and both cubes are then one step from `cubePos σ i` on axes that
+`branchDir_ne_self` separates, so `step_axis_inj` gives the contradiction.
+
+DERIVED: `1` is the layer the extra cube sits above its spine cube, from `sum_branchCube`; `3` is the
+dimension. -/
 theorem branchCube_ne_cubePos {N : ℕ} (σ : Fin N → Fin 3) {i j : ℕ} (hi : i + 1 ≤ N) (hj : j ≤ N) :
     branchCube σ i ≠ cubePos σ j := by
   intro hEq
@@ -409,6 +494,12 @@ theorem branchCube_ne_cubePos {N : ℕ} (σ : Fin N → Fin 3) {i j : ℕ} (hi :
   rw [branchCube, spine_succ σ (Nat.lt_of_succ_le hi)] at hEq
   exact branchDir_ne_self σ i (step_axis_inj hEq)
 
+/-- Membership in `config d k σ τ` unfolded: `y` is a spine cube at some index at most
+`(d+1)k + 1`, or the extra cube of some block. `Finset.mem_union` and `Finset.mem_image` on both
+sides.
+
+DERIVED: `1` is the block length's `+1` and the extra top spine step, `config`'s; `3` is the
+dimension. -/
 theorem mem_config_iff (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d)
     (y : Cube) :
     y ∈ config d k σ τ ↔
@@ -424,8 +515,15 @@ theorem mem_config_iff (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : 
     · exact Or.inl ⟨j, Finset.mem_range.mpr (Nat.lt_succ_iff.mpr hj), hy⟩
     · exact Or.inr ⟨m, Finset.mem_univ m, hy⟩
 
-/-- **EVERY CUBE IS NAMED BY ITS OWN COORDINATE SUM**: it is either the spine cube of that layer or
-the block cube hung one step below it. -/
+/-- Every cube of the configuration has coordinate sum at most `(d+1)k + 1`, and is either the spine
+cube at that sum or the extra cube of some block hanging one step above its spine index.
+`mem_config_iff` with the coordinate sum evaluated by `Floor.cubePos_sum_le` or `sum_branchCube`.
+
+The coordinate sum names the layer, which is what `config_isTree` and `top_unique` use to compare
+cubes without an indexing.
+
+DERIVED: `1` is the block length's `+1` and the extra top spine step, and separately the one layer
+the extra cube sits above its spine index; `3` is the dimension. -/
 theorem config_cases (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) {y : Cube}
     (hy : y ∈ config d k σ τ) :
     (∑ a, y a) ≤ (d + 1) * k + 1 ∧
@@ -442,10 +540,15 @@ theorem config_cases (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fi
     rw [hs]
     exact ⟨by omega, Or.inr ⟨m, hym, rfl⟩⟩
 
-/-- **THE CUBE THAT WOULD HAVE TWO PARENTS IS NOT THERE.** The only way a cube of this configuration
-could be reached both from the spine and from a block's extra cube is `x + e_u + e_w`
-(`step_pair_eq`); it is not the next spine cube because `branchDir_ne_next` separates the axes, and
-it is not another block's extra cube because blocks are two steps apart (`idx_gap`). -/
+/-- `step (branchDir σ (branchIdx d τ m)) (cubePos σ (branchIdx d τ m + 1)) ∉ config d k σ τ`: the
+cube that would be reachable both from the spine and from a block's extra cube is absent.
+
+Its coordinate sum is `branchIdx d τ m + 2`, so `config_cases` leaves two possibilities: the spine
+cube at that layer, which `branchDir_ne_next` and `step_axis_inj` exclude, or another block's extra
+cube, which `idx_gap` excludes because blocks are two spine steps apart.
+
+DERIVED: `2` is the layer above the extra cube's spine index and the block gap, `idx_gap`'s; `1` is
+the block length's `+1` and the single spine step; `3` is the dimension. -/
 theorem branch_child_not_mem (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d)
     (m : Fin k) :
     step (branchDir σ (branchIdx d τ m)) (cubePos σ (branchIdx d τ m + 1)) ∉ config d k σ τ := by
@@ -474,14 +577,23 @@ theorem branch_child_not_mem (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) 
 
 /-! ### The configuration is a tree -/
 
-/-- The origin cube is in every member of the family: every spine starts there. -/
+/-- `cubePos σ 0 ∈ config d k σ τ`: the origin cube is in every member of the family, being the spine
+cube at index `0`.
+
+DERIVED: `0` is the spine index of the origin, `Floor.cubePos`'s base point; `1` is `config`'s block
+length and top step; `3` is the dimension. -/
 theorem config_root_mem (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     cubePos σ 0 ∈ config d k σ τ := by
   rw [mem_config_iff]
   exact Or.inl ⟨0, Nat.zero_le _, rfl⟩
 
-/-- **NO CUBE HAS TWO PARENTS**, stated at the one pair that could: a spine cube and the extra cube
-hung one step below it. -/
+/-- The one pair of cubes that could share a child — the spine cube one step past a block's index and
+that block's extra cube — does not: if their steps agree and the common child is in the
+configuration, `step_pair_eq` and `branchDir_ne_self` identify the child as
+`branch_child_not_mem`'s, which is absent.
+
+DERIVED: `1` is the single spine step past the block index, and `config`'s block length and top step;
+`3` is the dimension. -/
 theorem no_two_parents (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d)
     (m : Fin k) {a b : Fin 3}
     (heq : step a (cubePos σ (branchIdx d τ m + 1)) = step b (branchCube σ (branchIdx d τ m)))
@@ -494,9 +606,18 @@ theorem no_two_parents (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : 
   rw [haw] at hin
   exact branch_child_not_mem d k σ τ m hin
 
-/-- **THE COUNTED CONFIGURATION IS A DIRECTED CUBE-TREE.** This is the whole geometric content of
-the construction: the forced axis (`branchDir_ne_self`, `branchDir_ne_next`) and the two-step gap
-between blocks (`idx_gap`) are exactly what stop any cube from acquiring a second parent. -/
+/-- `IsCubeTree (config d k σ τ) (cubePos σ 0)`: all four fields.
+
+The root has no parent because a step raises the coordinate sum above `0`. Every other cube has one:
+a spine cube from the previous spine cube, an extra cube from its own spine cube. Uniqueness splits
+on `config_cases` for both candidate parents — two spine cubes coincide by layer, two extra cubes by
+`branchIdx`, and the mixed cases are `no_two_parents`.
+
+The forced axis (`branchDir_ne_self`, `branchDir_ne_next`) and the two-step block gap (`idx_gap`) are
+what the mixed cases spend.
+
+DERIVED: `0` is the root's spine index and the coordinate sum there; `1` is `config`'s block length
+and top step; `3` is the dimension. -/
 theorem config_isTree (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     IsCubeTree (config d k σ τ) (cubePos σ 0) := by
   refine ⟨config_root_mem d k σ τ, ?_, ?_, ?_⟩
@@ -550,6 +671,11 @@ theorem config_isTree (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : F
 
 /-! ### How many cubes, and how much area -/
 
+/-- `fun m => branchCube σ (branchIdx d τ m)` is injective on `Fin k`: equal extra cubes have equal
+coordinate sums, hence equal spine indices by `sum_branchCube`, hence equal blocks by
+`branchIdx_eq`.
+
+DERIVED: `1` is `config`'s block length and top step; `3` is the dimension. -/
 theorem branchCube_inj (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     Function.Injective (fun m : Fin k => branchCube σ (branchIdx d τ m)) := by
   intro m m' hmm
@@ -561,7 +687,13 @@ theorem branchCube_inj (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : 
   rw [hmm, h2] at h1
   exact (branchIdx_eq d τ τ (show branchIdx d τ m = branchIdx d τ m' by omega)).1
 
-/-- **THE CUBE COUNT**: `(d+1)k+2` spine cubes and `k` extra ones. -/
+/-- `(config d k σ τ).card = (d + 2) * k + 2`: the `(d+1)k + 2` spine cubes and the `k` extra ones,
+the union disjoint by `branchCube_ne_cubePos` and the second summand counted by `branchCube_inj`.
+
+DERIVED: `2` in `(d + 2)` is `(d + 1) + 1`, the block's spine cubes plus its extra cube, so it is
+`branchIdx`'s block length raised by the one extra cube. The trailing `2` is `config`'s two spine
+cubes above the last block — the top step and its endpoint. `1` is the block length's `+1`; `3` is
+the dimension. -/
 theorem card_config (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     (config d k σ τ).card = (d + 2) * k + 2 := by
   classical
@@ -580,14 +712,26 @@ theorem card_config (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin
     Fintype.card_fin]
   ring
 
-/-- **THE AREA OF EVERY MEMBER**: `4n+2` at `n = (d+2)k+2`. -/
+/-- `(boundaryFaces (config d k σ τ)).card = 4 * ((d + 2) * k + 2) + 2`: `boundary_card_tree` at
+`config_isTree`, with the cube count from `card_config`.
+
+DERIVED: `4` and the trailing `2` are `boundary_card_tree`'s — six faces per cube less twice the one
+shared with a parent, and twice the root's missing parent. `(d + 2) * k + 2` is `card_config`'s cube
+count. `1` is `config`'s block length; `3` is the dimension. -/
 theorem boundary_card_config (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) :
     (boundaryFaces (config d k σ τ)).card = 4 * ((d + 2) * k + 2) + 2 := by
   rw [boundary_card_tree (config_isTree d k σ τ), card_config]
 
 /-! ### Distinct parameters give distinct surfaces -/
 
-/-- The top layer holds only the spine: every extra cube sits at least two steps below it. -/
+/-- A cube of the configuration whose coordinate sum is `(d+1)k + 1` is the top spine cube: by
+`config_cases` the only alternative is an extra cube, and `branchIdx_top` puts every one of those at
+least two layers lower.
+
+This is what makes the spine recoverable from the cube set, top down.
+
+DERIVED: `1` is `config`'s block length and its top spine step, the latter being what leaves this
+layer to the spine alone; `3` is the dimension. -/
 theorem top_unique (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d) {y : Cube}
     (hy : y ∈ config d k σ τ) (hlvl : (∑ a, y a) = (d + 1) * k + 1) :
     y = cubePos σ ((d + 1) * k + 1) := by
@@ -599,9 +743,17 @@ theorem top_unique (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin 
     have := branchIdx_top d τ m
     omega
 
-/-- **THE SPINE IS RECOVERED FROM THE TOP DOWN.** The unique cube of the top layer is the spine's
-last, and every cube of the tree has a unique parent, so the whole spine is determined by the cube
-set — the step `CubeArea.mem_of_boundary_eq_aux` does for a path. -/
+/-- If two configurations are equal, their spine cubes agree at every depth `i` below the top:
+`cubePos σ ((d+1)k + 1 - i) = cubePos σ' ((d+1)k + 1 - i)`.
+
+Induction on `i`. At `0` both are the unique top-layer cube (`top_unique`). At `i + 1` the two
+candidates step to the same already-identified cube, so `config_isTree`'s `parent_unique` identifies
+them.
+
+The counterpart for the branched family of what `CubeArea.mem_of_boundary_eq_aux` does for a path.
+
+DERIVED: `1` is `config`'s block length and top step, and the induction's step; `3` is the
+dimension. -/
 theorem spine_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) (τ τ' : Fin k → Fin d)
     (h : config d k σ τ = config d k σ' τ') :
     ∀ i : ℕ, i ≤ (d + 1) * k + 1 →
@@ -638,6 +790,10 @@ theorem spine_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) (�
       exact hih
     exact ((config_isTree d k σ τ).parent_unique _ _ _ _ hpin hqin hcin heq).2
 
+/-- `spine_eq_of_eq` reindexed from depth to spine index: equal configurations have equal spine cubes
+at every index up to `(d+1)k + 1`.
+
+DERIVED: `1` is `config`'s block length and top step; `3` is the dimension. -/
 theorem cubePos_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) (τ τ' : Fin k → Fin d)
     (h : config d k σ τ = config d k σ' τ') :
     ∀ j, j ≤ (d + 1) * k + 1 → cubePos σ j = cubePos σ' j := by
@@ -646,6 +802,12 @@ theorem cubePos_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) 
   have hrw : (d + 1) * k + 1 - ((d + 1) * k + 1 - j) = j := by omega
   rwa [hrw] at hds
 
+/-- Equal configurations have equal spine direction sequences. At each index the spine cubes agree
+there and one step on (`cubePos_eq_of_eq`), so `spine_succ` and `step_axis_inj` identify the
+directions.
+
+DERIVED: `1` is `config`'s block length and top step, and the single spine step; `3` is the
+dimension. -/
 theorem sigma_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) (τ τ' : Fin k → Fin d)
     (h : config d k σ τ = config d k σ' τ') : σ = σ' := by
   funext jj
@@ -656,6 +818,11 @@ theorem sigma_eq_of_eq (d k : ℕ) (σ σ' : Fin ((d + 1) * k + 1) → Fin 3) (�
   rw [spineDir_lt σ jj.2, spineDir_lt σ' jj.2] at h3
   simpa using h3
 
+/-- At a fixed spine, equal configurations have equal block positions. Each extra cube of one lies in
+the other; it is not a spine cube (`branchCube_ne_cubePos`), so it is an extra cube there, and
+`sum_branchCube` with `branchIdx_eq` identifies the block and the position.
+
+DERIVED: `1` is `config`'s block length and top step; `3` is the dimension. -/
 theorem tau_eq_of_eq (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ τ' : Fin k → Fin d)
     (h : config d k σ τ = config d k σ τ') : τ = τ' := by
   funext m
@@ -673,7 +840,12 @@ theorem tau_eq_of_eq (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ τ' 
     subst hmm
     exact Fin.ext hval
 
-/-- **DISTINCT PARAMETERS GIVE DISTINCT CONFIGURATIONS.** -/
+/-- `fun p => config d k p.1 p.2` is injective on
+`(Fin ((d+1)k+1) → Fin 3) × (Fin k → Fin d)`: `sigma_eq_of_eq` recovers the spine and
+`tau_eq_of_eq` the block positions.
+
+DERIVED: `1` is `config`'s block length and top step; `3` is the dimension. The `1` and `2` in `p.1`,
+`p.2` are the projections of the parameter pair, not numbers. -/
 theorem config_injective (d k : ℕ) :
     Function.Injective
       (fun p : (Fin ((d + 1) * k + 1) → Fin 3) × (Fin k → Fin d) => config d k p.1 p.2) := by
@@ -685,7 +857,11 @@ theorem config_injective (d k : ℕ) :
   subst ht
   rfl
 
-/-- **DISTINCT PARAMETERS GIVE DISTINCT SURFACES**, by `eq_of_boundaryFaces_eq`. -/
+/-- `fun p => boundaryFaces (config d k p.1 p.2)` is injective: `eq_of_boundaryFaces_eq` turns equal
+boundaries into equal configurations, and `config_injective` into equal parameters.
+
+DERIVED: `1` is `config`'s block length and top step; `3` is the dimension; the `1` and `2` in `p.1`,
+`p.2` are the parameter pair's projections. -/
 theorem boundary_config_injective (d k : ℕ) :
     Function.Injective
       (fun p : (Fin ((d + 1) * k + 1) → Fin 3) × (Fin k → Fin d) =>
@@ -694,10 +870,17 @@ theorem boundary_config_injective (d k : ℕ) :
 
 /-! ### The count, and the area, together -/
 
-/-- **THE BRANCHED ANALOGUE OF `CubeArea.directed_surfaces_count_and_area`.** There are
-`3^((d+1)k+1) · d^k` distinct surfaces, each of area exactly `4((d+2)k+2)+2`. At `d = 3` the count is
-`3^((d+2)k+1)` over exactly that area — the directed-path density, which is the negative control. At
-`d > 3` it is strictly larger. -/
+/-- There is a `Finset (Finset Face)` of cardinality `3 ^ ((d+1)k+1) * d ^ k` every member of which
+has cardinality `4 * ((d+2)k + 2) + 2`. The witness is the image of
+`fun p => boundaryFaces (config d k p.1 p.2)`, counted by `boundary_config_injective` and measured by
+`boundary_card_config`.
+
+The branched counterpart of `CubeArea.directed_surfaces_count_and_area`. At `d = 3` the count is
+`3 ^ ((d+2)k+1)` over the same cardinality, which is the path count at the path density.
+
+DERIVED: `3` is the dimension and the base of the direction count — the same number, since the step
+alphabet is `Fin 3`. `1` in the exponent is `config`'s block length and top step. `4` and the
+trailing `2` are `boundary_card_tree`'s; `(d+2)k + 2` is `card_config`'s cube count. -/
 theorem branched_surfaces_count_and_area (d k : ℕ) :
     ∃ S : Finset (Finset Face),
       S.card = 3 ^ ((d + 1) * k + 1) * d ^ k ∧ ∀ F ∈ S, F.card = 4 * ((d + 2) * k + 2) + 2 := by
@@ -711,19 +894,28 @@ theorem branched_surfaces_count_and_area (d k : ℕ) :
     obtain ⟨p, -, rfl⟩ := Finset.mem_image.mp hF
     exact boundary_card_config d k p.1 p.2
 
-/-- **AND EVERY ONE OF THEM IS CLOSED.** `CubeClosed.edge_parity_all` was already stated for an
-arbitrary configuration, so nothing new is needed: every edge lies in an even number of the
-boundary's faces. -/
+/-- Every edge lies in an even number of the boundary's faces:
+`((boundaryFaces (config d k σ τ)).filter (fun f => (c, w) ∈ faceEdges f)).card % 2 = 0`. The body is
+`CubeClosed.edge_parity_all`, which is already stated for an arbitrary configuration.
+
+This is closedness in the edge-parity sense. Connectedness is a separate property and is not proved
+for this family.
+
+DERIVED: `2` is the modulus — an edge is shared by two faces of a closed surface — and `0` the
+residue asserted. `1` is `config`'s block length and top step; `3` is the dimension. -/
 theorem branched_surfaces_closed (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3) (τ : Fin k → Fin d)
     (c : Fin 3) (w : Cube) :
     ((boundaryFaces (config d k σ τ)).filter (fun f => (c, w) ∈ faceEdges f)).card % 2 = 0 :=
   edge_parity_all (config d k σ τ) c w
 
-/-- **AND EVERY ONE OF THEM PASSES THROUGH THE SAME FIXED PLAQUETTE.** The origin cube is in every
-member (`config_root_mem`) and its low faces sit on the floor of `ℕ³`, so
-`CubeClosed.mem_boundaryFaces_iff_floor` puts all three of them on every boundary. This is
-`CubeClosed.origin_face_mem_boundary` for the branched family — the third of the four properties
-Theorem 7.1's `N(A)` asks of each surface, the fourth being connectedness. -/
+/-- Each of the origin cube's three low faces lies on every member's boundary:
+`((a, cubePos σ 0) : Face) ∈ boundaryFaces (config d k σ τ)`. The origin is in every member
+(`config_root_mem`) and its coordinates are `0`, so `CubeClosed.mem_boundaryFaces_iff_floor` applies.
+
+So all the boundaries in the family share those three faces.
+
+DERIVED: `0` is the origin's spine index and the value of each of its coordinates; `1` is `config`'s
+block length and top step; `3` is the dimension, hence the number of low faces. -/
 theorem branched_origin_face_mem_boundary (d k : ℕ) (σ : Fin ((d + 1) * k + 1) → Fin 3)
     (τ : Fin k → Fin d) (a : Fin 3) :
     ((a, cubePos σ 0) : Face) ∈ boundaryFaces (config d k σ τ) := by
@@ -736,8 +928,15 @@ theorem branched_origin_face_mem_boundary (d k : ℕ) (σ : Fin ((d + 1) * k + 1
 
 /-! ### The density, and the floor it raises -/
 
-/-- An affine ratio converges to the ratio of its leading coefficients. `Floor.density_ratio` is the
-case `A = 1, B = −1, C = 4, D = 2`; here both coefficients carry logarithms. -/
+/-- For reals `A`, `B`, `C`, `D` with `0 < C` and `0 ≤ D`, the sequence
+`k ↦ (A·k + B)/(C·k + D)` converges to `A / C`. Rewritten, eventually in `k`, as
+`A/C + (BC − AD)/(C(Ck + D))`, whose second term tends to `0`.
+
+`Floor.density_ratio` is the case `A = 1`, `B = −1`, `C = 4`, `D = 2`; here the coefficients carry
+logarithms.
+
+DERIVED: `0` is the strict lower bound on `C`, which the division requires, and the lower bound on
+`D`, which keeps the denominator eventually positive. `A`, `B`, `C`, `D` are the caller's. -/
 theorem tendsto_affine_ratio {A B C D : ℝ} (hC : 0 < C) (hD : 0 ≤ D) :
     Filter.Tendsto (fun k : ℕ => (A * (k : ℝ) + B) / (C * (k : ℝ) + D)) Filter.atTop
       (nhds (A / C)) := by
@@ -758,7 +957,14 @@ theorem tendsto_affine_ratio {A B C D : ℝ} (hC : 0 < C) (hD : 0 ≤ D) :
   rw [Filter.tendsto_congr' hcongr]
   simpa using tendsto_const_nhds.add hz
 
-/-- The log of the family's count, evaluated. -/
+/-- For `0 < d`, `log (3 ^ ((d+1)k+1) * d ^ k) = ((d + 1) log 3 + log d) · k + log 3`. `Real.log_mul`
+and `Real.log_pow`, then `ring`.
+
+The numerator of the density, as an affine function of `k`.
+
+DERIVED: `0` is the strict lower bound on `d` in `hd`, needed so `log d` is the logarithm of a
+positive number. `3` is the direction count and `1` is `config`'s block length and top step, both
+carried from `branched_surfaces_count_and_area`'s cardinality. -/
 theorem log_branch_count (d k : ℕ) (hd : 0 < d) :
     Real.log ((3 ^ ((d + 1) * k + 1) * d ^ k : ℕ) : ℝ)
       = (((d : ℝ) + 1) * Real.log 3 + Real.log d) * (k : ℝ) + Real.log 3 := by
@@ -768,7 +974,16 @@ theorem log_branch_count (d k : ℕ) (hd : 0 < d) :
   push_cast
   ring
 
-/-- **THE DENSITY OF THE BRANCHED FAMILY.** `log(count) / area → ((d+1)log 3 + log d)/(4(d+2))`. -/
+/-- `(((d+1) log 3 + log d)·k + log 3) / (4(d+2)·k + 10) → ((d+1) log 3 + log d)/(4(d+2))`.
+`tendsto_affine_ratio` at `A = (d+1) log 3 + log d`, `B = log 3`, `C = 4(d+2)`, `D = 10`.
+
+The numerator is `log_branch_count`'s and the denominator is `area_eq`'s, so this is the limit of
+`log(count)/area` along `k`. It holds at every `d`, including `d = 0`, where `log 0 = 0` in Mathlib's
+convention.
+
+DERIVED: `1` and `3` in the numerator are `log_branch_count`'s. `4` and `2` in `4(d+2)` are
+`boundary_card_config`'s coefficient and the `+2` of the cube count. `10` is `4 * 2 + 2`, the
+constant term of `4((d+2)k+2)+2`, so it is those same numerals and not a chosen value. -/
 theorem branch_density_limit (d : ℕ) :
     Filter.Tendsto
       (fun k : ℕ => ((((d : ℝ) + 1) * Real.log 3 + Real.log d) * (k : ℝ) + Real.log 3)
@@ -779,15 +994,27 @@ theorem branch_density_limit (d : ℕ) :
   exact tendsto_affine_ratio (A := ((d : ℝ) + 1) * Real.log 3 + Real.log d) (B := Real.log 3)
     (C := 4 * ((d : ℝ) + 2)) (D := 10) hC (by norm_num)
 
-/-- The area the density is taken over, as a real number: `4n+2` at `n = (d+2)k+2`. -/
+/-- `((4 * ((d+2)k + 2) + 2 : ℕ) : ℝ) = 4(d+2)·k + 10`: the boundary cardinality cast to `ℝ` and
+expanded as an affine function of `k`. `push_cast` and `ring`.
+
+DERIVED: `4` and the trailing `2` are `boundary_card_config`'s, and the inner `2`s are
+`card_config`'s. `10` is `4 * 2 + 2`, the constant term, so it is those numerals combined. -/
 theorem area_eq (d k : ℕ) :
     ((4 * ((d + 2) * k + 2) + 2 : ℕ) : ℝ) = 4 * ((d : ℝ) + 2) * (k : ℝ) + 10 := by
   push_cast
   ring
 
-/-- **THE BRANCHED FLOOR BEATS `¼ log 3` EXACTLY WHEN `d > 3`.** The whole comparison reduces to
-`log 3 < log d`: the extra cube costs `4` of area, the same as a spine step, and buys `log d` of
-entropy against the spine step's `log 3`. `d ≤ 3` is the negative control. -/
+/-- For `3 < d`, `(1/4) log 3 < ((d+1) log 3 + log d) / (4(d+2))`. Clearing the positive denominator,
+the inequality reduces by `nlinarith` to `log 3 < log d`, which is `Real.log_lt_log`.
+
+The comparison turns on `log 3 < log d` alone: the extra cube adds `4` to the area, the same as a
+spine step, and `log d` to the count against a spine step's `log 3`.
+`branch_density_eq_floor_at_three` is the boundary case.
+
+DERIVED: `3` is the strict lower bound on `d` in `hd`, and the direction count inside both
+logarithms; the two coincide, which is why `d = 3` is the boundary. `1` and `4` on the left spell the
+constant `(1/4) log 3`; `1` in `(d+1)` and `4`, `2` in `4(d+2)` are the density's, from
+`log_branch_count` and `area_eq`. -/
 theorem branch_density_gt_floor (d : ℕ) (hd : 3 < d) :
     (1 / 4 : ℝ) * Real.log 3
       < (((d : ℝ) + 1) * Real.log 3 + Real.log d) / (4 * ((d : ℝ) + 2)) := by
@@ -797,18 +1024,29 @@ theorem branch_density_gt_floor (d : ℕ) (hd : 3 < d) :
   rw [lt_div_iff₀ hC]
   nlinarith [hlog]
 
-/-- **AT `d = 3` THE TWO DENSITIES ARE EQUAL** — the negative control, in Lean. The family is then
-`3^((d+1)k+1)·3^k = 3^((d+2)k+1)` surfaces over the same `4((d+2)k+2)+2` of area, which is the
-directed-path count at the directed-path density. Nothing is gained, and nothing should be. -/
+/-- `(1/4) log 3 = ((3 + 1) log 3 + log 3) / (4 * (3 + 2))`: at `d = 3` the two densities coincide.
+By `ring`, since `(4 log 3 + log 3)/20 = 5 log 3 / 20`.
+
+The boundary case of `branch_density_gt_floor`, and the negative control: at `d = 3` the family has
+`3^((d+1)k+1)·3^k = 3^((d+2)k+1)` members over the same cardinality, which is the path count at the
+path density, so nothing is gained.
+
+DERIVED: `3` is the value of `d` substituted, which equals the direction count, and the argument of
+every logarithm — that coincidence is what makes the two sides equal. `1` and `4` on the left spell
+`(1/4) log 3`; `1` in `(3 + 1)` and `4`, `2` in `4 * (3 + 2)` are the density's, at `d = 3`. -/
 theorem branch_density_eq_floor_at_three :
     (1 / 4 : ℝ) * Real.log 3 = ((3 + 1) * Real.log 3 + Real.log 3) / (4 * (3 + 2)) := by
   ring
 
-/-- **THE NEW FLOOR, AT THE BEST `d`.** `d = 10` maximises `((d+1)log 3 + log d)/(4(d+2))`, giving
+/-- `(1/4) log 3 < (11 log 3 + log 10) / 48`: `branch_density_gt_floor` at `d = 10`, with `norm_num`
+evaluating `d + 1 = 11` and `4(d + 2) = 48`.
 
-    `κ₀ ≥ (11 log 3 + log 10)/48 = 0.29973583…`,
+An inequality between two real numbers. The instance at `d = 10`; no statement here says that value
+of `d` maximises the density.
 
-against `Floor`'s `¼ log 3 = 0.27465307…`. -/
+DERIVED: `10` is the value of `d` substituted, so `11` is `d + 1` and `48` is `4(d + 2)`; neither is
+chosen independently, and `10` inside the logarithm is the same `d`. `1` and `4` on the left spell
+`(1/4) log 3`, and `3` is the direction count. -/
 theorem branch_floor_ten :
     (1 / 4 : ℝ) * Real.log 3 < (11 * Real.log 3 + Real.log 10) / 48 := by
   have h := branch_density_gt_floor 10 (by norm_num)

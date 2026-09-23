@@ -4,59 +4,82 @@ import MassGap.Capacity
 import MassGap.CubeArea
 
 /-!
-# MassGap.VortexCount — the count-injection at the Floor-EXACT constant (dynamical face, brick 3 / B)
+# MassGap.VortexCount — the counted weight `3^k * exp (-μ (4k+6))` and the bound it yields
 
-`Capacity.junction_of_scale_duality` closes the entropy-bound half of the self-sourcing junction
-(`κ₀−μ ≤ c`) from a hypothesis `hZ : vortexTerm μ n ≤ Z n` with `vortexTerm μ n = 3ⁿ·e^{−μ(4n+2)}`. But
-the PROVED Floor count is `directed_surface_count : #{directed cube surfaces} = 3ᵏ` at area
-`A = 4(k+1)+2 = 4k+6` — i.e. `3^{n−1}` at area `4n+2`, a factor of 3 below `vortexTerm`'s `3ⁿ`. So `hZ`
-with the loose `vortexTerm` is NOT dischargeable from the count; forcing it would overclaim.
+`floorTerm μ k = (3 : ℝ) ^ k * exp (-μ * (4 * k + 6))` pairs two facts about the same object, a
+directed cube path `s : Fin k → Fin 3`. `Floor.directed_surface_count` says there are `3 ^ k` such
+paths; `CubeArea.boundary_card_eq` says the boundary of the cube configuration each one bounds has
+exactly `4 * k + 6` faces. `floor_count_injection` and `floorTerm_exponent_is_the_area` state those
+two ties in this file's own terms.
 
-This module closes the entropy-bound half **at the exact Floor constant**: a physical vortex weight `Z`
-that dominates the counted weight `3ᵏ·e^{−μ(4k+6)}` (the `directed_surface_count` surfaces, each of area
-`4k+6`) has free-energy density `≥ κ₀−μ`. The count `3ᵏ` is the machine-checked `directed_surface_count`;
-the density limit `(k·log3)/(4k+6) → ¼log3 = κ₀` is proved here. So the junction `κ₀−μ ≤ c` follows from
-the PROVED count + the cited scale-duality `hdual`, with no constant fudge.
+`log_floorTerm` gives `log (floorTerm μ k) = k log 3 - μ (4k + 6)`, and `floor_ratio_tendsto` gives
+`k log 3 / (4k + 6) - μ → (1/4) log 3 - μ`. `kappa0_is_the_surface_entropy_density` restates that
+limit with the denominator written as the boundary cardinality of an arbitrary family of paths, so
+the ratio does not depend on which path is taken at each `k`.
 
-`floor_count_injection` exhibits the injection's LHS as exactly `directed_surface_count`'s weight, tying
-the abstract hypothesis to the machine-checked count; `floorTerm_exponent_is_the_area` ties the exponent
-to `CubeArea.boundary_card_eq`, so the `4k+6` is a theorem about the same object the count is about.
-Foundational footprint only.
-Build: `lake build MassGap.VortexCount`.
+`junction_of_floor_count` takes `floorTerm μ k ≤ Z k` at every `k` together with
+`log (Z k) / (4k + 6) ≤ c` for `k > 0`, and concludes `(1/4) log 3 - μ ≤ c` by passing to the limit.
+`floorTerm_le_weighted` discharges the first hypothesis from `3 ^ k ≤ M k`, and
+`junction_of_physical_count`, `selfSourcingJunction_of_physical_count` and
+`junction_of_entropy_density` are that composition in three hypothesis shapes.
+`three_pow_le_card_of_embeds` and `three_pow_le_card_of_directed_surfaces` supply `3 ^ k ≤ M k` from
+an injection of the directed paths into a `Finset`, with injectivity discharged by
+`CubeArea.boundaryFaces_cubeConfig_injective`. `directed_surfaces_all_have_area` records that every
+member of such a family has `4 * k + 6` faces.
+
+`existence_and_gap_of_floor_count` feeds the junction to `Capacity.existence_and_gap_of_junction`,
+and `floor_count_gap_demo` instantiates every hypothesis at `M k = 3 ^ k`, `μ ≡ 0`,
+`c = Δ ≡ (1/4) log 3`.
+
+Scope: `CubeArea.Face` is `Fin 3 × (Fin 3 → ℕ)`, a face of a three-dimensional sublattice, so the
+family `V` in the containment statements is a family of three-dimensional surfaces; no embedding into
+four-dimensional plaquettes is constructed here. The scale-duality hypotheses `hdual` and `hdens` are
+supplied by the caller in every theorem that uses them. Axiom footprints are printed at the end of
+the file.
 -/
 
 namespace MassGap.VortexCount
 
 open Filter Topology
 
-/-- The Floor-exact counted vortex weight at `k` steps: `3ᵏ` directed surfaces
-(`directed_surface_count`), each of area `4k+6 = 4(k+1)+2`, action weight `e^{−μ·area}`.
+/-- The counted weight at `k` steps: `(3 : ℝ) ^ k * Real.exp (-μ * (4 * k + 6))`. The first factor is
+the number of directed cube paths `Fin k → Fin 3`, which `Floor.directed_surface_count` computes; the
+second is `exp (-μ * A)` at `A` the common boundary area of the surfaces those paths bound, which
+`CubeArea.boundary_card_eq` computes. `floor_count_injection` and `floorTerm_exponent_is_the_area`
+state those two identifications.
 
-**BOTH FACTORS ARE PROVED.** `3ᵏ` is `MassGap.directed_surface_count`. `4k+6` is
-`CubeArea.boundary_card_eq`: the boundary of the cube configuration — the faces owned by exactly one
-of its cubes — has cardinality `4k+6`, by the double count `6(k+1) = |B| + k` and the shared count
-`CubeArea.card_sharedFaces`. `floorTerm_exponent_is_the_area` below states the tie in this file's own
-terms, so the exponent here is not a literal standing on prose.
+Scope: `μ` is an arbitrary real, of either sign; `floorTerm μ k` is strictly positive at every `μ`
+and `k`.
 
-DERIVED: `3` is the branching of a directed cube-path (`Floor.directed_surface_count`). `4` and `6`
-are the area `4k+6 = 4(k+1)+2` (`CubeArea.boundary_card_eq`), which is `6` faces per cube for `k+1`
-cubes less `2` per shared face for the `k` shared ones. `1` and `2` are that arithmetic's own.
-Nothing is fitted and nothing is chosen. -/
+DERIVED: `3` is the branching factor of a directed cube path, the cardinality of `Fin 3` at each of
+the `k` steps. `4` and `6` are the boundary area `4 * k + 6`, equal to `4 * (k + 1) + 2`: six faces
+per cube over `k + 1` cubes, less two per shared face over the `k` shared ones. -/
 noncomputable def floorTerm (μ : ℝ) (k : ℕ) : ℝ := (3 : ℝ) ^ k * Real.exp (-μ * (4 * (k : ℝ) + 6))
 
-/-- **THE EXPONENT IS THE AREA.** For every directed cube-path, the surface whose weight `floorTerm`
-carries — the boundary of the path's cube configuration — has exactly `4k+6` faces. This is what lets
-`floorTerm`'s exponent be read as `−μ · area` rather than as a literal: the count `3ᵏ` and the area
-`4k+6` are now statements about the SAME object, `MassGap.cubeConfig s`. -/
+/-- For every directed cube path `s : Fin k → Fin 3`,
+`(CubeArea.boundaryFaces (cubeConfig s)).card = 4 * k + 6` as a real. It is
+`CubeArea.boundary_card_eq` cast to `ℝ`, which is the form `floorTerm`'s exponent is written in.
+
+Scope: the equality holds for EVERY `s` — the area does not depend on which path is taken — which is
+what makes a single exponent correct for the whole family of `3 ^ k` surfaces.
+
+DERIVED: `3` is the branching factor, the cardinality of `Fin 3` at each step; `4` and `6` are the
+boundary area `4 * k + 6`, from `CubeArea.boundary_card_eq`. -/
 theorem floorTerm_exponent_is_the_area {k : ℕ} (s : Fin k → Fin 3) :
     ((MassGap.CubeArea.boundaryFaces (MassGap.cubeConfig s)).card : ℝ) = 4 * (k : ℝ) + 6 := by
   rw [MassGap.CubeArea.boundary_card_eq s]
   push_cast
   ring
 
-/-- **The injection LHS is exactly the machine-checked `directed_surface_count` weight.** The counted
-weight `3ᵏ·e^{−μ(4k+6)}` equals `(#directed surfaces)·e^{−μ(4k+6)}`, since the count is `3ᵏ`. So a
-physical vortex weight `Z` dominating the directed sub-family's weight dominates `floorTerm`. -/
+/-- `floorTerm μ k = (Finset.univ.image (@cubeConfig k)).card * Real.exp (-μ * (4 * k + 6))`: the
+first factor of `floorTerm` is the cardinality of the image of `cubeConfig`, by
+`MassGap.directed_surface_count`. So a weight dominating the counted family's weight dominates
+`floorTerm`.
+
+Scope: an identity, holding at every real `μ` and every `k`.
+
+DERIVED: `4` and `6` are the boundary area `4 * k + 6`, carried over from `floorTerm`. The `3` is
+not written here — it has been replaced by the cardinality expression this theorem equates it to. -/
 theorem floor_count_injection (μ : ℝ) (k : ℕ) :
     floorTerm μ k
       = ((Finset.univ.image (@MassGap.cubeConfig k)).card : ℝ) * Real.exp (-μ * (4 * (k : ℝ) + 6)) := by
@@ -65,7 +88,12 @@ theorem floor_count_injection (μ : ℝ) (k : ℕ) :
   push_cast
   ring
 
-/-- The log of the counted weight: `log(floorTerm μ k) = k·log3 − μ(4k+6)`. -/
+/-- `Real.log (floorTerm μ k) = k * Real.log 3 - μ * (4 * k + 6)`. Both factors of `floorTerm` are
+nonzero — a power of `3` and an exponential — so `Real.log_mul` applies, and `Real.log_pow` and
+`Real.log_exp` evaluate the two pieces.
+
+DERIVED: `3` is the base of the counted factor, whose logarithm appears; `4` and `6` are the
+boundary area `4 * k + 6`, carried over from `floorTerm`. -/
 theorem log_floorTerm {μ : ℝ} (k : ℕ) :
     Real.log (floorTerm μ k) = (k : ℝ) * Real.log 3 - μ * (4 * (k : ℝ) + 6) := by
   unfold floorTerm
@@ -73,7 +101,15 @@ theorem log_floorTerm {μ : ℝ} (k : ℕ) :
       Real.log_pow, Real.log_exp]
   ring
 
-/-- The Floor-exact density ratio `(k·log3)/(4k+6) − μ` converges to `κ₀ − μ = ¼log3 − μ`. -/
+/-- `fun k : ℕ => k * Real.log 3 / (4 * k + 6) - μ` tends to `1 / 4 * Real.log 3 - μ` along
+`Filter.atTop`. The proof rewrites `k / (4k + 6)` as `1 / (4 + 6/k)` eventually, sends `6/k → 0`, and
+multiplies the resulting limit `1/4` by `Real.log 3` before subtracting the constant `μ`.
+
+Scope: the limit is over the natural-number index `k`; `μ` is a constant real subtracted throughout.
+
+DERIVED: `3` is the base of the logarithm, the branching factor of a directed cube path, appearing in
+both the sequence and the limit; `4` and `6` are the boundary area `4 * k + 6` in the denominator;
+`1` and the second `4` are the limit `1 / 4` of `k / (4 * k + 6)`, the reciprocal area per step. -/
 theorem floor_ratio_tendsto {μ : ℝ} :
     Tendsto (fun k : ℕ => (k : ℝ) * Real.log 3 / (4 * (k : ℝ) + 6) - μ) atTop
       (𝓝 (1 / 4 * Real.log 3 - μ)) := by
@@ -101,21 +137,20 @@ theorem floor_ratio_tendsto {μ : ℝ} :
     simpa using this
   simpa using hmain.sub_const μ
 
-/-- **`κ₀ = ¼log3` IS THE SURFACE ENTROPY DENSITY — both halves proved, nothing chosen.**
+/-- For any family of directed cube paths `s : ∀ k : ℕ, Fin k → Fin 3`,
 
-    log(#surfaces at k steps) / (area of one)  =  k·log3 / (4k+6)  →  ¼·log3
+    Real.log (3 ^ k) / (CubeArea.boundaryFaces (cubeConfig (s k))).card  →  1 / 4 * Real.log 3
 
-The numerator is `Floor.directed_paths_card` carried along `CubeArea.boundaryFaces_cubeConfig_injective`
-(distinct paths, distinct surfaces); the denominator is `CubeArea.boundary_card_eq` (`4k+6` faces,
-whichever path is taken — so the family's area is one number and the ratio is well posed). The limit
-`¼log3` is the value `Complete.κ₀YM` is defined to be.
+along `Filter.atTop`. The numerator is `Real.log_pow`, giving `k * log 3`; the denominator is
+`CubeArea.boundary_card_eq`, giving `4 * k + 6`; the limit is `floor_ratio_tendsto` at `μ = 0`.
 
-This is the statement that makes the entropy floor constant-free. `log 3` is the branching of a
-directed cube-path and `¼` is the reciprocal area per step; neither is fitted, measured or chosen,
-and a mass gap resting on `κ₀` therefore rests on a counting number rather than a smuggled scale.
+Scope: the family `s` is arbitrary and unused beyond typing — the ratio is the same whichever path
+is taken at each `k`, because every one of them bounds a surface of the same area. The numerator is
+the logarithm of the count `3 ^ k` rather than of a cardinality expression.
 
-The path family `s` is arbitrary: the ratio does not depend on WHICH path is taken at each `k`,
-because every one of them bounds a surface of the same area. -/
+DERIVED: the first `3` is the branching factor, the cardinality of `Fin 3` at each step; the second
+`3` is the base of the counted family `3 ^ k`; `1` and `4` are the limiting reciprocal area per
+step, and the final `3` is the base of the logarithm in the limit. -/
 theorem kappa0_is_the_surface_entropy_density (s : ∀ k : ℕ, Fin k → Fin 3) :
     Tendsto (fun k : ℕ => Real.log ((3 : ℝ) ^ k)
         / ((MassGap.CubeArea.boundaryFaces (MassGap.cubeConfig (s k))).card : ℝ))
@@ -132,11 +167,20 @@ theorem kappa0_is_the_surface_entropy_density (s : ∀ k : ℕ, Fin k → Fin 3)
 
 #print axioms kappa0_is_the_surface_entropy_density
 
-/-- **The self-sourcing junction `κ₀−μ ≤ c` from the Floor-EXACT count.** Given (i) a physical vortex
-weight `Z` dominating the counted weight `floorTerm μ k = 3ᵏ·e^{−μ(4k+6)}` at each scale (`hZ`, the count
-injection — with `3ᵏ` the machine-checked `directed_surface_count`, `floor_count_injection`), and (ii)
-the cited condensation⟹contraction scale-duality `∀ k>0, log(Z k)/(4k+6) ≤ c`, the entropy-floor margin
-satisfies `κ₀−μ ≤ c`. No constant fudge: the `3ᵏ` is exactly what the Floor proves at area `4k+6`. -/
+/-- Given `floorTerm μ k ≤ Z k` at every `k`, and `Real.log (Z k) / (4 * k + 6) ≤ c` at every `k > 0`,
+it follows that `1 / 4 * Real.log 3 - μ ≤ c`.
+
+The proof takes the limit of `floor_ratio_tendsto` against the eventual bound: at `k > 0`,
+`log (floorTerm μ k) ≤ log (Z k)` by monotonicity of the logarithm (`floorTerm μ k` is strictly
+positive), `log_floorTerm` expands the left side, and dividing by the positive `4 * k + 6` gives
+`k log 3 / (4k+6) - μ ≤ log (Z k) / (4k+6) ≤ c`.
+
+Scope: `Z` need not be positive or monotone; only the domination `floorTerm μ k ≤ Z k` is used, and
+it forces `Z k > 0`. `hdual` is required only at `k > 0`, which is all the `atTop` filter needs.
+
+DERIVED: `0` is the lower bound on `k` in `hdual`, excluding the degenerate index; `4` and `6` are
+the boundary area `4 * k + 6` in the denominator; `1` and the second `4` are the limiting reciprocal
+area per step; `3` is the base of the logarithm, the branching factor. -/
 theorem junction_of_floor_count {μ c : ℝ} {Z : ℕ → ℝ}
     (hZ : ∀ k, floorTerm μ k ≤ Z k)
     (hdual : ∀ k, 0 < k → Real.log (Z k) / (4 * (k : ℝ) + 6) ≤ c) :
@@ -156,23 +200,33 @@ theorem junction_of_floor_count {μ c : ℝ} {Z : ℕ → ℝ}
     rwa [hrw] at hstep
   exact le_trans hdiv (hdual k hk)
 
-/-! ### Discharging `hZ` from the physical count via the sub-family containment -/
+/-! ### Supplying `hZ` from a cardinality bound `3 ^ k ≤ M k` -/
 
-/-- **The count injection for a dominating physical count.** If the physical vortex count `M k` at area
-`4k+6` dominates the directed count `3ᵏ` (`hM` — the sub-family containment "directed surfaces ⊆ all
-vortex surfaces"), then the physical vortex weight `M k · e^{−μ(4k+6)}` dominates `floorTerm`, so the
-count-injection hypothesis of `junction_of_floor_count` holds. -/
+/-- If `3 ^ k ≤ M k` at every `k`, then `floorTerm μ k ≤ M k * Real.exp (-μ * (4 * k + 6))`. The
+exponential factor is common to both sides and nonnegative, so the inequality reduces to the cast of
+`hM`.
+
+Scope: `M : ℕ → ℕ`, so the bound is on a natural-number count; `μ` may have either sign, since only
+nonnegativity of the exponential is used.
+
+DERIVED: `3` is the branching factor of a directed cube path, the count `floorTerm` carries; `4` and
+`6` are the boundary area `4 * k + 6` in the shared exponential. -/
 theorem floorTerm_le_weighted {μ : ℝ} {M : ℕ → ℕ} (hM : ∀ k, 3 ^ k ≤ M k) (k : ℕ) :
     floorTerm μ k ≤ (M k : ℝ) * Real.exp (-μ * (4 * (k : ℝ) + 6)) := by
   unfold floorTerm
   refine mul_le_mul_of_nonneg_right ?_ (Real.exp_nonneg _)
   exact_mod_cast hM k
 
-/-- **`3ᵏ ≤ (physical count)` from the machine-checked directed count.** If the `3ᵏ` directed cube-paths
-(`Fin k → Fin 3`) embed injectively into the physical vortex-surface set `V` (what is actually being assumed by
-"directed surfaces are a sub-family of all closed vortex surfaces"), then the physical count `#V ≥ 3ᵏ` —
-so the domination hypothesis `hM` above is exactly `directed_surface_count` carried into the physical
-ensemble. -/
+/-- If `ι : (Fin k → Fin 3) → S` is injective and lands in a `Finset S` called `V`, then
+`3 ^ k ≤ V.card`. The image of `Finset.univ` under `ι` is a subset of `V` with cardinality
+`Fintype.card (Fin k → Fin 3) = 3 ^ k`, by `Finset.card_image_of_injective` and
+`MassGap.directed_paths_card`.
+
+Scope: `S` is an arbitrary type with decidable equality; nothing ties it to surfaces, faces or a
+lattice. Both injectivity and the containment are hypotheses.
+
+DERIVED: the first `3` is the cardinality of `Fin 3`, the branching at each step of the domain
+`Fin k → Fin 3`; the second `3` is the resulting count `3 ^ k`. -/
 theorem three_pow_le_card_of_embeds {k : ℕ} {S : Type} [DecidableEq S]
     (V : Finset S) (ι : (Fin k → Fin 3) → S) (hι : Function.Injective ι)
     (hsub : ∀ p, ι p ∈ V) : 3 ^ k ≤ V.card := by
@@ -184,29 +238,19 @@ theorem three_pow_le_card_of_embeds {k : ℕ} {S : Type} [DecidableEq S]
         rw [Finset.card_image_of_injective _ hι, Finset.card_univ, MassGap.directed_paths_card]
     _ ≤ V.card := Finset.card_le_card himg
 
-/-- **`hM` REDUCED TO THE CONTAINMENT ALONE** — the injection and its injectivity are discharged.
+/-- `three_pow_le_card_of_embeds` at the map `CubeArea.boundaryFaces ∘ cubeConfig`: if every directed
+cube path's boundary surface belongs to a `Finset (Finset CubeArea.Face)` called `V`, then
+`3 ^ k ≤ V.card`. Injectivity of the map is discharged internally by
+`CubeArea.boundaryFaces_cubeConfig_injective`, which recovers each cube from the boundary through the
+face its step crosses, so the only hypothesis left to the caller is the containment `hsub`.
 
-`three_pow_le_card_of_embeds` asks for three things: a map `ι`, a proof that it is injective, and a
-proof that its image lands in the physical family `V`. Two of the three are already theorems of this
-development and need not be supplied by anyone:
+Scope: `V` is a family of SURFACES — sets of faces — not of cube positions.
+`CubeArea.Face` is `Fin 3 × (Fin 3 → ℕ)`, a face of a three-dimensional sublattice, so `hsub` is a
+statement about three-dimensional surfaces; no embedding into four-dimensional plaquettes appears
+here.
 
-* the map is `CubeArea.boundaryFaces ∘ Floor.cubeConfig`, sending a directed cube-path to the SURFACE
-  bounding its `k+1` cubes — a construction, not a choice;
-* its injectivity is `CubeArea.boundaryFaces_cubeConfig_injective`, proved by recovering each cube
-  from the boundary through the face its step crosses.
-
-The third, the containment, is where the physics enters, and it is stated at the type the physical
-family actually has: **SURFACES**, sets of faces, not sets of cube positions. The map is
-`CubeArea.boundaryFaces ∘ cubeConfig` and its injectivity is
-`CubeArea.boundaryFaces_cubeConfig_injective` — distinct directed paths bound distinct surfaces,
-proved by recovering each cube from the boundary through the crossed face. So `hsub` here says what
-the sub-family containment is supposed to say: each of the `3ᵏ` directed boundaries is one of the
-closed vortex surfaces `V` collects.
-
-WHAT REMAINS is the dimension. `Face = Fin 3 × (Fin 3 → ℕ)` is a face of the 3-D sublattice the
-cube-path lives in; the physical vortex family lives on 4-D plaquettes. An embedding of the former
-into the latter — fixing the sublattice and the base plaquette — is not built here, so `V` is a
-family of 3-D surfaces and `hsub` is a statement about those. -/
+DERIVED: the first `3` is the cardinality of `Fin 3`, the branching at each step of the directed
+path `s : Fin k → Fin 3`; the second `3` is the resulting count `3 ^ k`. -/
 theorem three_pow_le_card_of_directed_surfaces {k : ℕ}
     (V : Finset (Finset MassGap.CubeArea.Face))
     (hsub : ∀ s : Fin k → Fin 3,
@@ -216,10 +260,19 @@ theorem three_pow_le_card_of_directed_surfaces {k : ℕ}
 
 #print axioms three_pow_le_card_of_directed_surfaces
 
-/-- **AND EVERY SURFACE THE CONTAINMENT SUPPLIES HAS THE AREA THE WEIGHT ASSUMES.** A count is only
-worth `3ᵏ·e^{−μA}` if all `3ᵏ` counted objects carry the same area `A`; otherwise the weight is a
-mixture and the density limit is not `(k log3)/(4k+6)`. Here they do, by `CubeArea.boundary_card_eq`,
-so the two halves of `floorTerm` are simultaneously true of one family. -/
+/-- If every member of `V : Finset (Finset CubeArea.Face)` is the boundary surface of some directed
+cube path `s : Fin k → Fin 3`, then every member has cardinality `4 * k + 6`. The proof destructures
+the hypothesis and applies `CubeArea.boundary_card_eq`.
+
+This is what makes a single exponent `exp (-μ * (4 * k + 6))` correct for the whole family rather
+than a mixture over different areas.
+
+Scope: the hypothesis is that every member of `V` arises from some path — the converse containment of
+`three_pow_le_card_of_directed_surfaces`'s `hsub`. The two together say `V` is exactly the family of
+directed boundaries.
+
+DERIVED: `3` is the branching factor, the cardinality of `Fin 3` at each step; `4` and `6` are the
+boundary area `4 * k + 6`. -/
 theorem directed_surfaces_all_have_area {k : ℕ}
     (V : Finset (Finset MassGap.CubeArea.Face))
     (hV : ∀ F ∈ V, ∃ s : Fin k → Fin 3, F = MassGap.CubeArea.boundaryFaces (MassGap.cubeConfig s)) :
@@ -230,11 +283,18 @@ theorem directed_surfaces_all_have_area {k : ℕ}
 
 #print axioms directed_surfaces_all_have_area
 
-/-- **The self-sourcing junction `κ₀−μ ≤ c` from a physical vortex count.** Reducing the two inputs to
-their cleanest form: (i) `hM`, the sub-family containment `3ᵏ ≤ M k` (directed ⊆ all, from
-`three_pow_le_card_of_embeds` + `directed_surface_count`); (ii) `hdual`, the cited scale-duality bounding
-the physical vortex free-energy density by the contraction rate `c`. The count injection itself is now
-PROVED (`floorTerm_le_weighted`), not assumed. -/
+/-- `junction_of_floor_count` with the domination hypothesis replaced by the cardinality bound
+`3 ^ k ≤ M k`: given that, and
+`Real.log (M k * Real.exp (-μ * (4 * k + 6))) / (4 * k + 6) ≤ c` at every `k > 0`, it follows that
+`1 / 4 * Real.log 3 - μ ≤ c`. The first hypothesis is converted by `floorTerm_le_weighted`.
+
+Scope: `hdual` is a hypothesis on the caller — it bounds the weighted count's logarithmic density by
+`c` and is not derived anywhere in this file.
+
+DERIVED: `3` is the branching factor in `3 ^ k ≤ M k`, and appears again as the base of the
+logarithm in the conclusion; `0` is the lower bound on `k` in `hdual`; `4` and `6` appear twice, as
+the boundary area `4 * k + 6` inside the exponential and again as the denominator; `1` and the final
+`4` are the limiting reciprocal area per step. -/
 theorem junction_of_physical_count {μ c : ℝ} {M : ℕ → ℕ}
     (hM : ∀ k, 3 ^ k ≤ M k)
     (hdual : ∀ k, 0 < k →
@@ -242,12 +302,17 @@ theorem junction_of_physical_count {μ c : ℝ} {M : ℕ → ℕ}
     1 / 4 * Real.log 3 - μ ≤ c :=
   junction_of_floor_count (fun k => floorTerm_le_weighted hM k) hdual
 
-/-- **The flagship self-sourcing junction, discharged from the Floor-EXACT count.** The Floor-exact
-count injection feeds `Capacity.SelfSourcingJunction κ₀ μ c` (`κ₀ = ¼log3`) — the `hfe` residual of the
-contraction-margin — with the count injection PROVED (`floorTerm_le_weighted`) rather than assumed. The
-two remaining inputs are the cleanest possible: the sub-family cardinality `hM` (directed ⊆ all,
-machine-checked count via `three_pow_le_card_of_embeds`) and the cited scale-duality `hdual`. This is
-the Floor-exact, no-constant-fudge companion to `Capacity.junction_of_scale_duality`. -/
+/-- `junction_of_physical_count` restated as `Capacity.SelfSourcingJunction (1 / 4 * Real.log 3) μ c`.
+That structure unfolds to the same inequality, so the proof is the previous theorem unchanged; the
+difference is the form in which the conclusion is offered to `Capacity`'s consumers.
+
+Scope: the first argument of `SelfSourcingJunction` is fixed at `1 / 4 * Real.log 3`; this does not
+state the junction at any other value.
+
+DERIVED: `3` is the branching factor in `3 ^ k ≤ M k`, and again the base of the logarithm in the
+conclusion; `0` is the lower bound on `k` in `hdual`; `4` and `6` appear twice, as the boundary area
+`4 * k + 6` inside the exponential and again as the denominator; `1` and the final `4` are the
+limiting reciprocal area per step. -/
 theorem selfSourcingJunction_of_physical_count {μ c : ℝ} {M : ℕ → ℕ}
     (hM : ∀ k, 3 ^ k ≤ M k)
     (hdual : ∀ k, 0 < k →
@@ -255,12 +320,18 @@ theorem selfSourcingJunction_of_physical_count {μ c : ℝ} {M : ℕ → ℕ}
     MassGap.Capacity.SelfSourcingJunction (1 / 4 * Real.log 3) μ c :=
   junction_of_physical_count hM hdual
 
-/-- **The junction in the transparent entropy-density form.** The cited input `hdual` is exactly "the
-vortex free-energy density is at most the tension plus the contraction rate":
-`(log M k)/(4k+6) ≤ μ + c`. Given that (and the sub-family count `hM`), the self-sourcing junction
-`κ₀−μ ≤ c` holds — since `κ₀ = lim (k·log3)/(4k+6) ≤ lim (log M k)/(4k+6) ≤ μ + c`. This is the
-statement of the cited condensation–contraction scale-duality (Tomboulis–Yaffe / Chatterjee): the counted
-vortex entropy density is bounded by the physical contraction rate. -/
+/-- The same conclusion `1 / 4 * Real.log 3 - μ ≤ c` from the hypothesis in unweighted form:
+`3 ^ k ≤ M k` at every `k`, and `Real.log (M k) / (4 * k + 6) ≤ μ + c` at every `k > 0`. The proof
+splits `log (M k * exp (-μ (4k+6)))` with `Real.log_mul` — legitimate because `3 ^ k ≤ M k` makes
+`M k` positive — evaluates the exponential's logarithm, and cancels the `-μ` term to reach
+`junction_of_physical_count`'s hypothesis.
+
+Scope: `hdens` is a hypothesis on the caller. It bounds the logarithmic density of the count itself,
+with the tension `μ` moved to the right-hand side.
+
+DERIVED: `3` is the branching factor in `3 ^ k ≤ M k`, and again the base of the logarithm in the
+conclusion; `0` is the lower bound on `k` in `hdens`; `4` and `6` are the boundary area `4 * k + 6`
+in the denominator; `1` and the final `4` are the limiting reciprocal area per step. -/
 theorem junction_of_entropy_density {μ c : ℝ} {M : ℕ → ℕ}
     (hM : ∀ k, 3 ^ k ≤ M k)
     (hdens : ∀ k, 0 < k → Real.log (M k : ℝ) / (4 * (k : ℝ) + 6) ≤ μ + c) :
@@ -274,13 +345,26 @@ theorem junction_of_entropy_density {μ c : ℝ} {M : ℕ → ℕ}
     show (-μ * (4 * (k : ℝ) + 6)) / (4 * (k : ℝ) + 6) = -μ by field_simp]
   linarith [hdens k hk]
 
-/-- **Mass gap from the Floor-exact count-injection, via the junction route.** Composing
-`selfSourcingJunction_of_physical_count` (entropy-bound half `κ₀−μ≤c`, from the machine-checked count)
-with the contraction `hgap : c≤Δ` (`CellSpectrum.gap_ge_of_uniform_contraction`, the abstract half) and
-the free modes' decay, `Capacity.existence_and_gap_of_junction` delivers the mass gap: clustering
-`‖∑ₖ Pₖ mₖ^τ‖ → 0`, non-triviality `μ − κ₀ < 0`, and `SO(4)`. So the count-injection route reaches the
-gap with the count injection PROVED — its physical inputs reduced to the sub-family cardinality (`hM`),
-the cited scale-duality (`hdual`), the contraction (`hgap`), confinement (`hconf`), and isotropy. -/
+/-- `Capacity.existence_and_gap_of_junction` with its junction hypothesis supplied by
+`selfSourcingJunction_of_physical_count`. Given, at every coupling `β`: a mode bound
+`‖m β k‖ ≤ exp (-Δ β)` on the index set `s β`; the cardinality bound `3 ^ k ≤ M β k`; the
+scale-duality `hdual`; `c β ≤ Δ β`; `μ β < 1 / 4 * Real.log 3`; and isotropy `R d = R d'` — the
+conclusion conjoins three statements:
+
+* `‖∑ k ∈ s β, P β k * (m β k) ^ τ‖ → 0` as `τ → atTop`, at every `β`;
+* `μ β - 1 / 4 * Real.log 3 < 0` at every `β`, which is `hconf` rearranged;
+* `R d = R d'` for all `d`, `d'`, which is `hiso` unchanged.
+
+Scope: `Idx` and `Dir` are arbitrary types and `P`, `m`, `R`, `s` are arbitrary functions — nothing
+here ties them to a lattice, a spectrum or a rotation group. Both `κ₀` arguments of
+`existence_and_gap_of_junction` are instantiated at `1 / 4 * Real.log 3`, with `le_refl` supplying
+their comparison. The second and third conjuncts are restatements of hypotheses.
+
+DERIVED: `3` is the branching factor in `3 ^ k ≤ M β k`, and appears again as the base of the
+logarithm in `hconf` and in the second conjunct; `0` is the lower bound on `k` in `hdual`, the limit
+in the first conjunct, and the comparison point in the second; `4` and `6` appear twice, as the
+boundary area `4 * k + 6` inside the exponential and again as the denominator; `1` and `4` appear
+twice more, as the reciprocal area per step in `hconf` and in the second conjunct. -/
 theorem existence_and_gap_of_floor_count {Idx Dir : Type}
     (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (R : Dir → ℝ)
     (μ Δ c : ℝ → ℝ) {M : ℝ → ℕ → ℕ}
@@ -296,10 +380,25 @@ theorem existence_and_gap_of_floor_count {Idx Dir : Type}
     μ Δ c (le_refl _) hdom
     (fun β => selfSourcingJunction_of_physical_count (hM β) (hdual β)) hgap hconf hiso
 
-/-- **Non-vacuousness of the count-injection gap route.** A concrete witness discharging every input of
-`existence_and_gap_of_floor_count`: the tight physical count `M k = 3ᵏ`, tension `μ ≡ 0 < κ₀`, contraction
-`c = Δ = κ₀`, free modes at the ceiling `e^{−κ₀} = 3^{−1/4} < 1`. The capstone fires, yielding clustering,
-non-triviality, and `SO(4)` — the count-injection → gap route bottoms out. -/
+/-- An instance of `existence_and_gap_of_floor_count` with every parameter fixed, so the statement
+has no hypotheses. The instantiation is: index and direction types `Unit`, index set
+`Finset.univ : Finset Unit`, projections `P ≡ 1`, modes `m ≡ exp (-(1/4 * log 3))`, radii `R ≡ 0`,
+tension `μ ≡ 0`, contraction and gap `c = Δ ≡ 1/4 * log 3`, and count `M k = 3 ^ k` — the tight case
+of `hM`. The six side goals are discharged by `rfl`, `le_refl`, positivity of `log 3`, and one
+`nlinarith` for the scale-duality at `μ = 0`.
+
+The conclusion conjoins: the norm of the one-term sum tends to `0`; `0 - 1/4 * log 3 < 0`; and
+`(0 : ℝ) = 0` for all pairs of `Unit`. It is a witness that the hypotheses of
+`existence_and_gap_of_floor_count` are jointly satisfiable.
+
+Scope: every quantity is constant in `β`, and the index set has one element, so the sum has one
+term. The third conjunct is trivially true and carries no content beyond typing.
+
+DERIVED: `1` occurs twice, as the projection coefficient `(1 : ℂ)` and as the numerator of
+`1 / 4 * Real.log 3`; `4` occurs twice and `3` occurs twice, as the denominator and the logarithm's
+base in each copy of `1 / 4 * Real.log 3`; `0` occurs five times — the limit of the norm, the
+tension value `(0 : ℝ)`, the comparison point of the second conjunct, and the two sides of the
+isotropy equation `(0 : ℝ) = 0`. -/
 theorem floor_count_gap_demo :
     (∀ _β : ℝ, Filter.Tendsto (fun τ => ‖∑ _k ∈ (Finset.univ : Finset Unit),
         (1 : ℂ) * ((Real.exp (-(1 / 4 * Real.log 3)) : ℝ) : ℂ) ^ τ‖) Filter.atTop (nhds 0)) ∧

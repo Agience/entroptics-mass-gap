@@ -2,42 +2,51 @@ import Mathlib
 import MassGap.Aperture
 
 /-!
-# The six faces of forgetting at a finite aperture (PAPER §4, §6)
+# MassGap.Forgetting — equivalent conditions on a finite exponential sum
 
-Through a finite aperture the propagator has finitely many modes, so the autocorrelation is a finite
-exponential sum `C τ = ∑_{k∈s} P k (μ k)^τ` ([E, §9]). "The flow forgets" has several equivalent
-faces; the load-bearing ones are:
+Throughout, `C τ = ∑_{k ∈ s} P k · (μ k)^τ` for a `Finset ι` and two functions `P`, `μ : ι → ℂ`. The
+conditions compared are:
 
-  (i)   Λ            the Cesàro quadratic mean `(1/N) ∑_{τ<N} ‖C τ‖² → 0` (weakest, read directly)
-  (ii)  `C τ → 0`    the reach-freeze monotone (`finite_flow_decays`, `Aperture.lean`)
-  (iii) margin       the weight-carrying radius is `< 1`
-  (iv)  exp decay    `‖C τ‖ ≤ (∑‖P‖) ρ^τ`, `ρ < 1` (`finite_sum_margin_bound`)
-  (v)   summable     `∑_τ ‖C τ‖ < ∞` (finite correlation length)
+  (i)   `Forgets C`  the Cesàro quadratic mean `(1/N) ∑_{τ<N} ‖C τ‖² → 0`
+  (ii)  `C τ → 0`    (`Aperture.finite_flow_decays`)
+  (iii) margin       `∃ ρ < 1, ∀ k ∈ s, ‖μ k‖ ≤ ρ`
+  (iv)  exp decay    `‖C τ‖ ≤ (∑‖P‖) ρ^τ` (`Aperture.finite_sum_margin_bound`)
+  (v)   summable     `∑_τ ‖C τ‖ < ∞`
 
-This module states Λ and proves the forward cycle `margin ⟹ (C → 0) ∧ summable ∧ Λ`
-(`bridge_forward`), together with the foil that a persistent unit-circle mode fails Λ
-(`persistent_not_forgets`): the abelian massless current is the unique violation.
+## The forward direction
 
-## THE CONVERSE IS PROVED HERE, and it needed no instrument
+`flow_summable` and `forgets_of_margin` derive (v) and (i) from (iii), and `bridge_forward` packages
+them with (ii). `persistent_not_forgets` is the negative case: a single mode of unit modulus with
+nonzero weight has constant `‖C τ‖`, so its Cesàro mean is `‖P‖² > 0` and (i) fails.
 
-`Λ` is the WEAKEST face — a Cesàro average, not a pointwise bound at every coupling — so the converse
-is what makes it sufficient rather than merely necessary.
+## The converse
 
-`forgets_forces_zero_net_weight` is that converse: **if the flow forgets, then at every `ζ` on the
-unit circle the modes sitting at `ζ` sum to zero.** Modes may lie on the circle, but only in
-cancelling combinations; a single uncancelled one is `persistent_not_forgets`, which the general
-statement contains as the one-mode case.
+`forgets_forces_zero_net_weight`: if (i) holds then at every `ζ` of unit modulus the modes sitting at
+`ζ` have weights summing to zero. Modes may lie on the unit circle, but only in cancelling
+combinations; `persistent_not_forgets` is the one-mode case.
 
-**It is finite-dimensional algebra plus one application of Cauchy–Schwarz**, and it is proved in this
-file with a foundational-only footprint. An earlier note in this header said the converse was
-"supplied by the companion instrument"; it is not, and does not need to be.
+The route does not compute the Cesàro limit of `‖C τ‖²`. `cesaro_extract` averages `C` against
+`ζ^{-τ}` and converges to the net weight at `ζ`; `cesaro_norm_sq_le` bounds that average's squared
+norm by the Cesàro mean of `‖C‖²`, which (i) sends to zero. `ζ⁻¹` is used rather than the conjugate:
+on the unit circle they agree, and the inverse keeps every step in field algebra, since
+`μ · ζ⁻¹ = 1 ↔ μ = ζ` needs only `ζ ≠ 0`.
 
-**The route is not the Wiener mean-square one.** That route expands `‖C τ‖²` as a double sum and
-computes its Cesàro limit exactly. `forgets_forces_zero_net_weight` never computes that limit:
-`cesaro_extract` averages `C` against `ζ^{-τ}` to converge on the net weight at `ζ`, and
-`cesaro_norm_sq_le` bounds that average's squared norm by the very Cesàro mean of `‖C‖²` that `Λ`
-sends to zero. The two limits meet at zero. A previous version of this note described the Wiener
-route as the proof; it was a description of a different, longer argument.
+## Closing the cycle
+
+`norm_lt_one_of_forgets` and `margin_of_forgets` turn the cancellation statement into (iii), under
+two hypotheses on the presentation: the modes are distinct (`hinj`) and the weights nonzero (`hP`).
+`forgets_iff_margin`, `decay_iff_forgets`, `decay_iff_margin`, `bridge_from_forgets` and
+`bridge_from_decay` are the resulting equivalences; `forgets_of_decay` supplies (ii) ⟹ (i) with no
+structure on `C` at all.
+
+## Removing the presentation hypotheses
+
+`collectedWeight` and `collect_modes` rewrite the sum over the image of `μ`, collecting weights at
+equal modes; `decay_iff_effective_margin` is the equivalence with no hypothesis on the presentation,
+stated about the values carrying nonzero collected weight rather than about the written `μ k`. It
+cannot be stated about the written ones: `cancelling_modes_decay_on_the_circle` exhibits
+`P = (1, −1)` at `μ = (1, 1)`, where `C` is identically zero while both written modes have unit
+modulus.
 -/
 
 open Filter Topology
@@ -46,14 +55,26 @@ namespace MassGap
 
 variable {ι : Type*}
 
-/-- **Face (i), Axiom Λ (forgetting).** The Cesàro quadratic mean of the autocorrelation vanishes:
-`(1/N) ∑_{τ<N} ‖C τ‖² → 0`. The weakest face, read straight off the screen. -/
+/-- Condition (i) as a `Prop` on an arbitrary sequence `C : ℕ → ℂ`: the Cesàro mean of `‖C τ‖²`
+converges to `0` along `atTop`.
+
+A statement about an average, so it permits `‖C τ‖` to be large on a set of density zero; it does not
+imply `C τ → 0` for an arbitrary `C`, and the converse direction below needs the exponential-sum
+form.
+
+DERIVED: the exponent `2` is the square whose average is taken, which is what makes the Cauchy–Schwarz
+step of `cesaro_norm_sq_le` available. `0` is the limit point. -/
 def Forgets (C : ℕ → ℂ) : Prop :=
   Tendsto (fun N : ℕ => (∑ τ ∈ Finset.range N, ‖C τ‖ ^ 2) / (N : ℝ)) atTop (𝓝 0)
 
-/-- **Face (v): margin ⟹ summable (finite correlation length).** A finite exponential sum whose modes
-share a margin `ρ < 1` is absolutely summable: `∑_τ ‖C τ‖ < ∞`, a finite integral correlation
-length. -/
+/-- If every mode satisfies `‖μ k‖ ≤ ρ` with `0 ≤ ρ < 1`, then `τ ↦ ‖∑ₖ P k (μ k)^τ‖` is summable.
+`Aperture.finite_sum_margin_bound` dominates it by `(∑ₖ ‖P k‖) · ρ^τ`, which is summable as a
+geometric series.
+
+`P` is unconstrained: no sign, no bound, and the empty `s` is allowed.
+
+DERIVED: `0` is the lower bound on `ρ` in `hρ0`, which the geometric series needs, and `1` is its
+strict upper bound, which is what makes the series converge. -/
 theorem flow_summable (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
     (hμ : ∀ k ∈ s, ‖μ k‖ ≤ ρ) :
     Summable (fun τ => ‖∑ k ∈ s, P k * (μ k) ^ τ‖) := by
@@ -62,10 +83,13 @@ theorem flow_summable (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 : 0 �
   exact Summable.of_nonneg_of_le (fun τ => norm_nonneg _)
     (fun τ => finite_sum_margin_bound s P μ ρ hμ τ) hgeo
 
-/-- **Face (i) from (iii): margin ⟹ Λ (the flow forgets).** With a spectral margin `ρ < 1` the
-Cesàro quadratic mean of the autocorrelation vanishes: the gap is the read-level forgetting. The
-squared correlator is dominated by a geometric series in `ρ²`, whose partial sums are bounded, so the
-Cesàro average tends to zero. -/
+/-- If every mode satisfies `‖μ k‖ ≤ ρ` with `0 ≤ ρ < 1`, then `Forgets (fun τ => ∑ₖ P k (μ k)^τ)`.
+The squared norm is dominated by `(∑ₖ ‖P k‖)² · (ρ²)^τ`, a geometric series in `ρ² < 1`, so the
+partial sums converge; dividing a convergent sequence by `N → ∞` sends it to `0`.
+
+DERIVED: `0` is the lower bound on `ρ` and the limit point in `Forgets`. `1` is the strict upper
+bound on `ρ`; the proof squares it to `ρ² < 1`, which is the same bound applied to the square
+`Forgets` averages. -/
 theorem forgets_of_margin (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
     (hμ : ∀ k ∈ s, ‖μ k‖ ≤ ρ) :
     Forgets (fun τ => ∑ k ∈ s, P k * (μ k) ^ τ) := by
@@ -87,9 +111,12 @@ theorem forgets_of_margin (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 :
     Summable.of_nonneg_of_le (fun τ => sq_nonneg _) hle hgeo
   exact hsq.hasSum.tendsto_sum_nat.div_atTop tendsto_natCast_atTop_atTop
 
-/-- **The forward cycle of the bridge.** A spectral margin `ρ < 1` (face (iii)) delivers the weaker
-faces at once: the flow decays (`C τ → 0`, face (ii)), has a finite correlation length (summable,
-face (v)), and forgets (Λ, face (i)). -/
+/-- From a margin `0 ≤ ρ < 1` on the modes, the three conclusions at once: `‖C τ‖ → 0`, summability
+of `τ ↦ ‖C τ‖`, and `Forgets C`. The conjunction of `Aperture.finite_flow_decays`, `flow_summable`
+and `forgets_of_margin` at the same hypotheses.
+
+DERIVED: `0` is the lower bound on `ρ` and the limit point of the first conjunct; `1` is the strict
+upper bound on `ρ`. All are the three components'. -/
 theorem bridge_forward (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
     (hμ : ∀ k ∈ s, ‖μ k‖ ≤ ρ) :
     Tendsto (fun τ => ‖∑ k ∈ s, P k * (μ k) ^ τ‖) atTop (𝓝 0) ∧
@@ -98,10 +125,16 @@ theorem bridge_forward (s : Finset ι) (P μ : ι → ℂ) (ρ : ℝ) (hρ0 : 0 
   ⟨finite_flow_decays s P μ ρ hρ0 hρ1 hμ, flow_summable s P μ ρ hρ0 hρ1 hμ,
    forgets_of_margin s P μ ρ hρ0 hρ1 hμ⟩
 
-/-- **The foil: a persistent unit-circle mode fails Λ.** A single mode `C τ = P μ^τ` on the unit
-circle (`‖μ‖ = 1`, `P ≠ 0`) has constant magnitude `‖C τ‖ = ‖P‖`, so its Cesàro mean is `‖P‖² > 0`:
-the flow does not forget. This is the abelian foil, the massless persistent current, the unique
-violation of Λ. -/
+/-- For `‖μ‖ = 1` and `P ≠ 0`, `¬ Forgets (fun τ => P * μ ^ τ)`. Every term has
+`‖P μ^τ‖² = ‖P‖²`, so the Cesàro mean is the constant `‖P‖²`; uniqueness of limits would force
+`‖P‖² = 0`, contradicting `hP`.
+
+A single mode, not a sum: `forgets_forces_zero_net_weight` is the general statement, of which this is
+the one-mode case.
+
+DERIVED: `1` is the modulus `μ` is required to have — the unit circle, where the powers neither grow
+nor decay. `0` is the value `P` is required to differ from, without which the constant mean would be
+`0` and `Forgets` would hold. -/
 theorem persistent_not_forgets (P μ : ℂ) (hμ : ‖μ‖ = 1) (hP : P ≠ 0) :
     ¬ Forgets (fun τ => P * μ ^ τ) := by
   intro h
@@ -118,33 +151,33 @@ theorem persistent_not_forgets (P μ : ℂ) (hμ : ‖μ‖ = 1) (hP : P ≠ 0) 
   exact hP (norm_eq_zero.mp ((pow_eq_zero_iff (by norm_num : (2 : ℕ) ≠ 0)).mp hP0))
 
 
-/-! ## The converse, and it is algebra rather than a read
+/-! ## The converse
 
-`persistent_not_forgets` refutes Λ for ONE mode on the unit circle. The general converse is the
-statement that Λ forces every unit-circle value to carry zero NET weight — modes may sit on the
-circle, but only in cancelling combinations. The module docstring deferred this to the companion
-instrument; it does not need one.
+`persistent_not_forgets` refutes (i) for one mode of unit modulus. The general converse is
+`forgets_forces_zero_net_weight`: (i) forces every value of unit modulus to carry zero net weight, so
+modes may sit on the unit circle only in cancelling combinations.
 
-**The usual route computes the Cesàro limit of `‖C τ‖²` exactly (the finite Wiener mean-square
-theorem). This does not.** Instead it extracts the weight at a single value `ζ` by averaging `C`
-against `ζ^{-τ}`, and bounds that average by Cauchy–Schwarz against the very quantity Λ says goes to
-zero:
+The route extracts the weight at a single `ζ` by averaging `C` against `ζ^{-τ}` and bounds that
+average by Cauchy–Schwarz against the quantity (i) sends to zero:
 
     ‖(1/N) ∑_{τ<N} C τ · ζ^{-τ}‖²  ≤  (1/N) ∑_{τ<N} ‖C τ‖²  →  0,
 
-while the left-hand side converges to the net weight at `ζ`. So the net weight is zero, and no limit
-of `‖C‖²` ever has to be computed.
+while the left-hand side converges to the net weight at `ζ`. No Cesàro limit of `‖C‖²` is computed.
 
 `ζ⁻¹` is used rather than the conjugate throughout. On the unit circle they agree, and the inverse
-keeps every step inside field algebra: `μ · ζ⁻¹ = 1 ↔ μ = ζ` needs only `ζ ≠ 0`.
+keeps every step in field algebra: `μ · ζ⁻¹ = 1 ↔ μ = ζ` needs only `ζ ≠ 0`.
 -/
 
-/-- **A CESÀRO GEOMETRIC MEAN VANISHES OFF ONE.** For `‖z‖ ≤ 1` with `z ≠ 1` the partial sums
-`∑_{τ<N} z^τ` are BOUNDED — `geom_sum_eq` puts them at `(z^N − 1)/(z − 1)`, of norm at most
-`2/‖z − 1‖` — so their Cesàro average tends to zero.
+/-- For `‖z‖ ≤ 1` with `z ≠ 1`, the Cesàro average `(∑_{τ<N} z^τ)/N` converges to `0`. `geom_sum_eq`
+puts the partial sum at `(z^N − 1)/(z − 1)`, whose norm is at most `2/‖z − 1‖` because
+`‖z^N‖ ≤ 1`; dividing a bounded quantity by `N → ∞` sends it to zero.
 
-DERIVED: the `2` is `‖z^N‖ + ‖1‖ ≤ 1 + 1`, the triangle inequality at `‖z‖ ≤ 1`. Not a chosen
-constant. -/
+`z ≠ 1` is essential: at `z = 1` the partial sum is `N` and the average is the constant `1`.
+
+DERIVED: `1` is the upper bound on `‖z‖`, the value `z` is required to differ from, and the unit in
+`z - 1`; the three are the same number, and it is the only point of the closed disc where the
+conclusion fails. `0` is the limit point. The bound `2` appears in the proof, as
+`‖z^N‖ + ‖1‖ ≤ 1 + 1` by the triangle inequality, and not in the statement. -/
 theorem cesaro_geom_tendsto_zero {z : ℂ} (hz1 : ‖z‖ ≤ 1) (hz : z ≠ 1) :
     Tendsto (fun N : ℕ => (∑ τ ∈ Finset.range N, z ^ τ) / (N : ℂ)) atTop (𝓝 0) := by
   have hsub : z - 1 ≠ 0 := sub_ne_zero.mpr hz
@@ -168,7 +201,11 @@ theorem cesaro_geom_tendsto_zero {z : ℂ} (hz1 : ‖z‖ ≤ 1) (hz : z ≠ 1) 
 
 #print axioms cesaro_geom_tendsto_zero
 
-/-- On the unit circle, `μ · ζ⁻¹ = 1` says exactly `μ = ζ`. Field algebra, no conjugation. -/
+/-- For `ζ ≠ 0`, `μ * ζ⁻¹ = 1 ↔ μ = ζ`. Field algebra in both directions; no conjugation and no
+condition on `‖ζ‖`.
+
+DERIVED: `0` is the value `ζ` is required to differ from, which is what makes `ζ⁻¹` a genuine
+inverse; `1` is the product's value, the multiplicative identity of `ℂ`. -/
 theorem mul_inv_eq_one_iff_eq {μ ζ : ℂ} (hζ : ζ ≠ 0) : μ * ζ⁻¹ = 1 ↔ μ = ζ := by
   constructor
   · intro h
@@ -180,10 +217,19 @@ theorem mul_inv_eq_one_iff_eq {μ ζ : ℂ} (hζ : ζ ≠ 0) : μ * ζ⁻¹ = 1 
 #print axioms mul_inv_eq_one_iff_eq
 
 open scoped Classical in
-/-- **THE WEIGHT AT ONE VALUE IS EXTRACTED BY A CESÀRO AVERAGE.**
+/-- For modes inside the closed unit disc and `‖ζ‖ = 1`,
 
-`(1/N) ∑_{τ<N} C τ · ζ^{-τ} → ∑_{k : μ k = ζ} P k`. Every mode off `ζ` contributes a geometric
-average that dies (`cesaro_geom_tendsto_zero`); every mode at `ζ` contributes `1` at every `τ`. -/
+    (1/N) ∑_{τ<N} (∑ₖ P k (μ k)^τ) · (ζ⁻¹)^τ  →  ∑_{k ∈ s, μ k = ζ} P k.
+
+Swapping the two sums turns each term into `P k · (μ k ζ⁻¹)^τ`. A mode at `ζ` has
+`μ k ζ⁻¹ = 1` (`mul_inv_eq_one_iff_eq`) and contributes `P k` at every `N`; a mode off `ζ` has
+`‖μ k ζ⁻¹‖ ≤ 1` and `μ k ζ⁻¹ ≠ 1`, so `cesaro_geom_tendsto_zero` sends its contribution to `0`.
+
+The limit is the net weight at `ζ`, a sum over the fibre, so cancelling modes contribute nothing.
+
+DERIVED: `1` is the upper bound on each `‖μ k‖`, the modulus `ζ` is required to have, and the value
+`μ k ζ⁻¹` takes exactly at the modes sitting at `ζ`; the second is what makes `‖ζ⁻¹‖ = 1` and hence
+keeps `‖μ k ζ⁻¹‖ ≤ 1`. -/
 theorem cesaro_extract (s : Finset ι) (P μ : ι → ℂ) (hμ : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     {ζ : ℂ} (hζ : ‖ζ‖ = 1) :
     Tendsto (fun N : ℕ =>
@@ -235,10 +281,19 @@ theorem cesaro_extract (s : Finset ι) (P μ : ι → ℂ) (hμ : ∀ k ∈ s, �
 
 #print axioms cesaro_extract
 
-/-- **THE AVERAGE IS CONTROLLED BY THE QUANTITY Λ SENDS TO ZERO.** Cauchy–Schwarz on the range:
-`‖(1/N)∑ C·w‖² ≤ (1/N)∑‖C‖²` whenever `‖w‖ ≤ 1`.
+/-- For any `C`, `w : ℕ → ℂ` with `‖w τ‖ ≤ 1` at every `τ`, and any `N`,
 
-DERIVED: the `2`s are squares; `sq_sum_le_card_mul_sum_sq` supplies the `N`. -/
+    ‖(∑_{τ<N} C τ · w τ)/N‖²  ≤  (∑_{τ<N} ‖C τ‖²)/N.
+
+The triangle inequality drops `w`, and `sq_sum_le_card_mul_sum_sq` — Cauchy–Schwarz against the
+constant one — supplies `(∑‖C τ‖)² ≤ N · ∑‖C τ‖²`. The case `N = 0` is closed by `simp`, both sides
+being `0`.
+
+`C` and `w` are arbitrary; no exponential-sum structure is used.
+
+DERIVED: `1` is the bound on each `‖w τ‖`, which is what lets `w` be dropped. The two exponents `2`
+are the squares Cauchy–Schwarz relates, and the `N` dividing both sides is the range's cardinality,
+supplied by `sq_sum_le_card_mul_sum_sq`. -/
 theorem cesaro_norm_sq_le (C w : ℕ → ℂ) (hw : ∀ τ, ‖w τ‖ ≤ 1) (N : ℕ) :
     ‖(∑ τ ∈ Finset.range N, C τ * w τ) / (N : ℂ)‖ ^ 2
       ≤ (∑ τ ∈ Finset.range N, ‖C τ‖ ^ 2) / (N : ℝ) := by
@@ -267,17 +322,18 @@ theorem cesaro_norm_sq_le (C w : ℕ → ℂ) (hw : ∀ τ, ‖w τ‖ ≤ 1) (N
 #print axioms cesaro_norm_sq_le
 
 open scoped Classical in
-/-- **THE CONVERSE: Λ FORCES EVERY UNIT-CIRCLE VALUE TO CARRY ZERO NET WEIGHT.**
+/-- For modes inside the closed unit disc, `‖ζ‖ = 1`, and `Forgets (fun τ => ∑ₖ P k (μ k)^τ)`, the
+weights at `ζ` sum to zero: `∑_{k ∈ s, μ k = ζ} P k = 0`.
 
-If the flow forgets, then at every `ζ` on the unit circle the modes sitting at `ζ` sum to zero. Modes
-may lie on the circle, but only in cancelling combinations — a single uncancelled one is
-`persistent_not_forgets`, which this contains as the case of one mode.
+`cesaro_extract` makes the squared norm of the averaged sequence converge to `‖L‖²`, where `L` is
+that sum; `cesaro_norm_sq_le` at `w τ = (ζ⁻¹)^τ` bounds it termwise by the Cesàro mean of `‖C‖²`,
+which the hypothesis sends to `0`. Comparing the two limits gives `‖L‖² ≤ 0`.
 
-**No Wiener mean-square limit is computed.** `cesaro_extract` converges to the net weight,
-`cesaro_norm_sq_le` bounds it by what Λ sends to zero, and the two limits meet at zero.
+The conclusion is about the fibre sum, not about individual weights: a mode of unit modulus is
+permitted when another cancels it.
 
-This is the step this file's header once deferred to a companion instrument. It does not need one:
-it is finite-dimensional algebra plus one application of Cauchy–Schwarz. -/
+DERIVED: `1` is the upper bound on each `‖μ k‖` and the modulus `ζ` is required to have; `0` is the
+value the fibre sum is shown to take, and the limit point inside `Forgets`. -/
 theorem forgets_forces_zero_net_weight (s : Finset ι) (P μ : ι → ℂ)
     (hμ : ∀ k ∈ s, ‖μ k‖ ≤ 1) {ζ : ℂ} (hζ : ‖ζ‖ = 1)
     (h : Forgets (fun τ => ∑ k ∈ s, P k * (μ k) ^ τ)) :
@@ -307,27 +363,27 @@ theorem forgets_forces_zero_net_weight (s : Finset ι) (P μ : ι → ℂ)
 #print axioms forgets_forces_zero_net_weight
 
 
-/-! ## Closing the cycle: Λ ⟺ margin
+/-! ## Closing the cycle
 
-`forgets_forces_zero_net_weight` says the unit-circle weight CANCELS. To turn that into a margin the
-cancellation has to be ruled out, and two conditions do it: the modes are DISTINCT, so each
-unit-circle value is carried by at most one of them, and the weights are NONZERO, so that one cannot
-cancel against itself.
+`forgets_forces_zero_net_weight` says the weight at a unit-modulus value cancels. Ruling out the
+cancellation takes two hypotheses: the modes are distinct (`hinj`), so each value is carried by at
+most one of them, and the weights are nonzero (`hP`), so that one cannot cancel against itself.
 
-Both are conditions on the presentation rather than on the flow. A finite exponential sum can always
-be put in this form by collecting equal modes and discarding zero weights — the sum is unchanged, so
-nothing is assumed about the flow at all. They are stated as hypotheses rather than performed as a
-normalisation because performing it would add a construction and prove the same thing.
-
-With them, `bridge_forward` and `margin_of_forgets` close the cycle at the WEAKEST face:
-`forgets_iff_margin`. Λ is not merely implied by a spectral margin — for a finite exponential sum it
-IS one.
+Both are conditions on the presentation rather than on the sum. Any finite exponential sum can be put
+in this form by collecting equal modes and discarding zero weights, which
+`decay_iff_effective_margin` does; here they are hypotheses.
 -/
 
 open scoped Classical in
-/-- **EVERY MODE IS STRICTLY INSIDE THE DISC.** If the flow forgets and the modes are distinct with
-nonzero weights, none of them can sit on the unit circle: the converse would make its weight the
-whole net weight at that value, and the net weight is zero. -/
+/-- Under `Forgets`, distinct modes (`hinj`) and nonzero weights (`hP`), every mode of `s` satisfies
+`‖μ k₀‖ < 1`.
+
+If `‖μ k₀‖ = 1` then `forgets_forces_zero_net_weight` applies at `ζ = μ k₀`; distinctness makes the
+fibre the singleton `{k₀}`, so the net weight is `P k₀`, which `hP` says is nonzero.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict bound concluded —
+the boundary case `‖μ k₀‖ = 1` is exactly what the two presentation hypotheses exclude. `0` is the
+value each weight is required to differ from. -/
 theorem norm_lt_one_of_forgets (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -351,10 +407,18 @@ theorem norm_lt_one_of_forgets (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms norm_lt_one_of_forgets
 
-/-- **AND THEREFORE THEY SHARE A MARGIN.** Finitely many moduli, each below one, have a maximum below
-one — `Finset.sup'` on a nonempty index set, and the empty case is vacuous at `ρ = 0`.
+/-- Under the same hypotheses, there is a `ρ` with `0 ≤ ρ < 1` and `‖μ k‖ ≤ ρ` at every `k ∈ s`. The
+witness is `s.sup' hne (fun k => ‖μ k‖)`; finitely many moduli each below `1`, by
+`norm_lt_one_of_forgets`, have a maximum below `1`. For empty `s` the witness is `0` and the
+universal condition is vacuous.
 
-DERIVED: `1` is the unit circle and `0` is the vacuous witness; neither is a chosen level. -/
+Finiteness of `s` is what makes the supremum attained and therefore strictly below `1`; an infinite
+family of moduli each below `1` need have no such margin.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict upper bound
+concluded of `ρ`. `0` is the value each weight is required to differ from, the lower bound asserted
+of `ρ`, and the witness taken when `s` is empty; that last choice is arbitrary among nonnegative
+reals below `1`, the condition on it being vacuous. -/
 theorem margin_of_forgets (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -372,14 +436,15 @@ theorem margin_of_forgets (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms margin_of_forgets
 
-/-- **Λ ⟺ MARGIN.** The cycle of faces, closed at the weakest one.
+/-- For a finite exponential sum with modes in the closed unit disc, distinct, and with nonzero
+weights: `Forgets C ↔ ∃ ρ, 0 ≤ ρ < 1 ∧ ∀ k ∈ s, ‖μ k‖ ≤ ρ`. `margin_of_forgets` one way,
+`forgets_of_margin` the other.
 
-`bridge_forward` gives the forward direction and `margin_of_forgets` the converse, so for a finite
-exponential sum with distinct modes and nonzero weights, forgetting is not merely implied by a
-spectral margin — **it IS one**.
+The two presentation hypotheses are used only in the forward direction; `forgets_of_margin` needs
+neither.
 
-That is what makes Λ worth having as a criterion: it is a Cesàro average, the weakest thing one can
-read off a flow, and it is equivalent to the strongest thing one can say about its spectrum. -/
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict upper bound on `ρ`.
+`0` is the value each weight is required to differ from and the lower bound on `ρ`. -/
 theorem forgets_iff_margin (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -393,8 +458,13 @@ theorem forgets_iff_margin (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms forgets_iff_margin
 
-/-- **AND THE WHOLE CYCLE FROM Λ.** Forgetting delivers decay, summability — a finite correlation
-length — and the margin itself. Every face of the bridge from the weakest one. -/
+/-- From `Forgets` and the two presentation hypotheses: `‖C τ‖ → 0`, summability of `τ ↦ ‖C τ‖`, and
+the margin. `margin_of_forgets` produces the margin, then `Aperture.finite_flow_decays` and
+`flow_summable` at it.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict upper bound on `ρ`.
+`0` is the value each weight is required to differ from, the limit point of the first conjunct, and
+the lower bound on `ρ`. -/
 theorem bridge_from_forgets (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -410,31 +480,26 @@ theorem bridge_from_forgets (s : Finset ι) (P μ : ι → ℂ)
 #print axioms bridge_from_forgets
 
 
-/-! ## The cycle is complete: decay ⟺ Λ ⟺ margin
+/-! ## The remaining arrow
 
-`bridge_forward` runs margin ⟹ decay ⟹ … one way round. With `margin_of_forgets` the return arrow
-exists, and one more step closes it at the remaining face: **a decaying flow forgets**, because the
-Cesàro mean of a null sequence is null (`Filter.Tendsto.cesaro`). So for a finite exponential sum
-with distinct modes and nonzero weights the three faces are the SAME statement.
+`forgets_of_decay` closes the cycle at the last condition: (ii) ⟹ (i), because the Cesàro mean of a
+null sequence is null. With `margin_of_forgets` the three conditions (i), (ii), (iii) are then
+equivalent for a finite exponential sum with distinct modes and nonzero weights
+(`decay_iff_forgets`, `decay_iff_margin`).
 
-**Why that matters beyond bookkeeping.** `Complete.ym_mass_gap_of_substrate` concludes, as its first
-conjunct, exactly
-
-    ∀ β, Tendsto (fun τ => ‖∑ k ∈ (ymModelAt N).s β, (ymModelAt N).P β k * ((ymModelAt N).m β k)^τ‖)
-      atTop (𝓝 0)
-
-— a finite exponential sum over `(ymModelAt N).s β`, tending to zero. That is face (ii). Under the
-two presentation conditions it upgrades to a spectral MARGIN, hence to summability, hence to a finite
-correlation length. **The flagship's own conclusion is therefore stronger than it reads**: decay of
-the correlator is not weaker than a gap, it is a gap.
-
-The conditions are on the presentation, not the physics — collect equal modes, discard zero weights —
-but they are not discharged here for `ymModelAt`, because nothing in the tree establishes that its
-modes are distinct or its weights nonzero. That is stated, not assumed.
+`Complete.ym_mass_gap_of_substrate`'s first conjunct has the form of (ii) at
+`(ymModelAt N).s β`, so `decay_iff_margin` would upgrade it to a margin — under the two presentation
+hypotheses, which nothing in the tree establishes for `ymModelAt`.
 -/
 
-/-- **A DECAYING FLOW FORGETS.** The Cesàro mean of a null sequence is null, and `‖C τ‖ → 0` gives
-`‖C τ‖² → 0`. Face (ii) ⟹ face (i), with no structure on `C` at all. -/
+/-- `Tendsto (fun τ => ‖C τ‖) atTop (𝓝 0) → Forgets C`, for an arbitrary `C : ℕ → ℂ`. Squaring
+preserves the limit, and `Filter.Tendsto.cesaro` averages it; the `congr` step reconciles `cesaro`'s
+`n⁻¹ * ∑` with `Forgets`'s `∑ / n`.
+
+No structure on `C` is used: no exponential-sum form, no finiteness, no hypothesis on any mode.
+
+DERIVED: `0` is the limit point, in the hypothesis and inside `Forgets`; the exponent `2` is
+`Forgets`'s own square. -/
 theorem forgets_of_decay {C : ℕ → ℂ} (h : Tendsto (fun τ => ‖C τ‖) atTop (𝓝 0)) :
     Forgets C := by
   have hsq : Tendsto (fun τ => ‖C τ‖ ^ 2) atTop (𝓝 0) := by
@@ -444,8 +509,14 @@ theorem forgets_of_decay {C : ℕ → ℂ} (h : Tendsto (fun τ => ‖C τ‖) a
 
 #print axioms forgets_of_decay
 
-/-- **DECAY IS EQUIVALENT TO FORGETTING**, for any flow at all in one direction and for a finite
-exponential sum in the other. -/
+/-- For a finite exponential sum with modes in the closed unit disc, distinct, and with nonzero
+weights: `‖C τ‖ → 0 ↔ Forgets C`. `forgets_of_decay` one way — which holds for any `C` — and
+`margin_of_forgets` followed by `Aperture.finite_flow_decays` the other.
+
+The three hypotheses are used only in the reverse direction.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy; `0` is the value each weight is
+required to differ from and the limit point on the left. -/
 theorem decay_iff_forgets (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -460,10 +531,16 @@ theorem decay_iff_forgets (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms decay_iff_forgets
 
-/-- **AND TO THE MARGIN.** The three faces collapse to one statement.
+/-- Under the same hypotheses, `‖C τ‖ → 0 ↔ ∃ ρ, 0 ≤ ρ < 1 ∧ ∀ k ∈ s, ‖μ k‖ ≤ ρ`.
+`decay_iff_forgets` composed with `forgets_iff_margin`.
 
-`Complete.ym_mass_gap_of_substrate`'s first conjunct is the left-hand side at the genuine Wilson
-model, so under the two presentation conditions that conclusion already carries a spectral margin. -/
+`Complete.ym_mass_gap_of_substrate`'s first conjunct has the form of the left-hand side; applying
+this to it requires the two presentation hypotheses, which are not discharged anywhere in this
+module.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict upper bound on `ρ`;
+`0` is the value each weight is required to differ from, the limit point on the left, and the lower
+bound on `ρ`. -/
 theorem decay_iff_margin (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -474,8 +551,13 @@ theorem decay_iff_margin (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms decay_iff_margin
 
-/-- **THE WHOLE BRIDGE, FROM DECAY.** What the flagship concludes, upgraded: decay of the correlator
-delivers summability — a finite integral correlation length — and the spectral margin itself. -/
+/-- From `‖C τ‖ → 0` and the two presentation hypotheses: summability of `τ ↦ ‖C τ‖`, `Forgets C`,
+and the margin. `decay_iff_margin` produces the margin, then `flow_summable` at it and
+`forgets_of_decay` directly.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict upper bound on `ρ`;
+`0` is the value each weight is required to differ from, the limit point in the hypothesis, and the
+lower bound on `ρ`. -/
 theorem bridge_from_decay (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1)
     (hinj : ∀ k ∈ s, ∀ l ∈ s, μ k = μ l → k = l)
@@ -490,31 +572,38 @@ theorem bridge_from_decay (s : Finset ι) (P μ : ι → ℂ)
 #print axioms bridge_from_decay
 
 
-/-! ## Removing the presentation conditions
+/-! ## Removing the presentation hypotheses
 
-`decay_iff_margin` assumes the modes are distinct and the weights nonzero. Those are conditions on
-how the sum is WRITTEN, and any finite exponential sum can be rewritten to satisfy them: collect the
-weights sharing a mode, then drop the modes whose collected weight is zero. The sum is unchanged, so
-nothing is assumed about the flow.
+`decay_iff_margin` assumes the modes distinct and the weights nonzero. Those are conditions on how
+the sum is written, and any finite exponential sum can be rewritten to satisfy them: collect the
+weights sharing a mode (`collect_modes`), then drop the values whose collected weight is zero. The
+sum is unchanged.
 
-**The conclusion has to change, and that is the point.** After collecting, the margin is about the
-EFFECTIVE modes — the values carrying nonzero collected weight. It cannot be about the original `μ k`,
-and the reason is the cancellation the converse already exposed: `P = (1, −1)` with `μ = (1, 1)` has
-`C τ = 0` at every `τ`, so it decays, forgets, and has every face — while both its modes sit ON the
-unit circle. A margin over the original modes would be FALSE there.
+The conclusion changes with the rewriting. After collecting, the margin is about the values carrying
+nonzero collected weight, not about the written `μ k`:
+`cancelling_modes_decay_on_the_circle` has `C` identically zero while both written modes have unit
+modulus, so a margin over the written modes would be false there.
 
-So the unconditional statement is `decay_iff_effective_margin`, and the earlier hypothesis-carrying
-forms are the special case where collecting changes nothing.
+`decay_iff_effective_margin` is the form with no hypothesis on the presentation.
 -/
 
 open scoped Classical in
-/-- The weight the presentation puts at one value. -/
+/-- The total weight the presentation places at a value `ζ`: `∑_{k ∈ s, μ k = ζ} P k`. Zero when no
+mode sits at `ζ`, and possibly zero when several cancel.
+
+DERIVED: no numeral. `s`, `P`, `μ` and `ζ` are the caller's. -/
 noncomputable def collectedWeight (s : Finset ι) (P μ : ι → ℂ) (ζ : ℂ) : ℂ :=
   ∑ k ∈ s.filter (fun k => μ k = ζ), P k
 
 open scoped Classical in
-/-- **COLLECTING EQUAL MODES LEAVES THE SUM ALONE.** Fibrewise summation over the image, with `μ k`
-replaced by `ζ` inside each fibre because that is what the fibre says. -/
+/-- `∑_{k ∈ s} P k (μ k)^τ = ∑_{ζ ∈ s.image μ} collectedWeight s P μ ζ · ζ^τ`, at every `τ`.
+`Finset.sum_fiberwise_of_maps_to` over the image, with `μ k` rewritten to `ζ` inside each fibre
+because membership in the fibre says exactly that.
+
+An identity, so the sum is unchanged by the rewriting; the index set changes from `s` to the image of
+`μ`.
+
+DERIVED: no numeral. -/
 theorem collect_modes (s : Finset ι) (P μ : ι → ℂ) (τ : ℕ) :
     ∑ k ∈ s, P k * (μ k) ^ τ
       = ∑ ζ ∈ s.image μ, collectedWeight s P μ ζ * ζ ^ τ := by
@@ -528,7 +617,15 @@ theorem collect_modes (s : Finset ι) (P μ : ι → ℂ) (τ : ℕ) :
 
 #print axioms collect_modes
 
-/-- A finite set of moduli all below one has a common margin, and conversely. -/
+/-- For a `Finset ℂ`: `(∃ ρ, 0 ≤ ρ < 1 ∧ ∀ ζ ∈ T, ‖ζ‖ ≤ ρ) ↔ ∀ ζ ∈ T, ‖ζ‖ < 1`. Forward by
+transitivity; backward by `Finset.sup'` on a nonempty `T`, with `0` as the witness when `T` is
+empty.
+
+Finiteness is what makes the two equivalent; for an infinite set of complex numbers the right side
+does not give the left.
+
+DERIVED: `1` is the strict upper bound on each modulus and on `ρ`; `0` is the lower bound on `ρ` and
+the witness taken when `T` is empty, where the condition on it is vacuous. -/
 theorem margin_iff_all_lt_one (T : Finset ℂ) :
     (∃ ρ : ℝ, 0 ≤ ρ ∧ ρ < 1 ∧ ∀ ζ ∈ T, ‖ζ‖ ≤ ρ) ↔ ∀ ζ ∈ T, ‖ζ‖ < 1 := by
   constructor
@@ -547,14 +644,21 @@ theorem margin_iff_all_lt_one (T : Finset ℂ) :
 #print axioms margin_iff_all_lt_one
 
 open scoped Classical in
-/-- **THE EQUIVALENCE, WITH NO CONDITION ON THE PRESENTATION.**
+/-- For modes in the closed unit disc and no other hypothesis:
 
-A finite exponential sum inside the closed disc decays **iff every value carrying nonzero collected
-weight is strictly inside it**. No distinctness and no nonvanishing is assumed; collecting supplies
-both, and the conclusion is about the effective modes because it cannot be about the written ones.
+    ‖∑ₖ P k (μ k)^τ‖ → 0  ↔  ∀ ζ ∈ s.image μ, collectedWeight s P μ ζ ≠ 0 → ‖ζ‖ < 1.
 
-This is the form that applies to `Complete.ym_mass_gap_of_substrate`'s first conjunct without any
-unproved assumption about how `ymModelAt` presents its spectrum. -/
+`collect_modes` rewrites the sum over the filtered image `T` of values with nonzero collected weight,
+where the index is `id` and so distinct by construction and the weights nonzero by the filter, so
+`decay_iff_margin` applies; `margin_iff_all_lt_one` converts the margin into the pointwise form.
+
+No distinctness and no nonvanishing is assumed of the written presentation. The conclusion is about
+the values carrying nonzero collected weight, which is what it must be:
+`cancelling_modes_decay_on_the_circle` refutes the same statement about the written modes.
+
+DERIVED: `1` is the upper bound each `‖μ k‖` is assumed to satisfy and the strict bound on each
+effective mode; `0` is the limit point on the left and the value a collected weight must differ from
+for its value to be constrained. -/
 theorem decay_iff_effective_margin (s : Finset ι) (P μ : ι → ℂ)
     (hμ1 : ∀ k ∈ s, ‖μ k‖ ≤ 1) :
     Tendsto (fun τ => ‖∑ k ∈ s, P k * (μ k) ^ τ‖) atTop (𝓝 0)
@@ -589,11 +693,16 @@ theorem decay_iff_effective_margin (s : Finset ι) (P μ : ι → ℂ)
 
 #print axioms decay_iff_effective_margin
 
-/-- **THE CANCELLING FOIL, EXHIBITED.** `P = (1, −1)` at `μ = (1, 1)`: the flow is identically zero,
-so it decays and forgets, while BOTH modes sit on the unit circle. The margin cannot be about the
-written modes, and this is why.
+/-- At `P = ![1, -1]` and `μ = ![1, 1]` over `Fin 2`, the sum is `0` at every `τ`, so
+`‖∑ₖ P k (μ k)^τ‖ → 0`.
 
-DERIVED: `1` and `−1` are the two weights and `1` the shared mode; nothing is a magnitude. -/
+Both written modes have modulus `1`, so a margin over the written modes would be false here. This is
+why `decay_iff_effective_margin` is stated about collected weights, and why `decay_iff_margin` needs
+its nonvanishing hypothesis.
+
+DERIVED: `2` in `Fin 2` is the number of modes, the fewest that can cancel. `1` and `-1` are the two
+weights, chosen to sum to zero, and `1` is the shared mode, chosen on the unit circle so that the
+powers neither grow nor decay. `0` is the limit point. Nothing is a magnitude. -/
 theorem cancelling_modes_decay_on_the_circle :
     Tendsto (fun τ => ‖∑ k ∈ (Finset.univ : Finset (Fin 2)),
         (![(1 : ℂ), -1] k) * (![(1 : ℂ), 1] k) ^ τ‖) atTop (𝓝 0) := by

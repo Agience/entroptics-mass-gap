@@ -2,98 +2,101 @@ import Mathlib
 import MassGap.CharacterExpansion
 
 /-!
-# MassGap.CrossingIntegration — the odd-lag crossing integration
+# MassGap.CrossingIntegration — two obstructions to a pointwise pairing, and an integration
+that avoids them
 
-`CharacterExpansion` supplies the paired expansion of the Wilson weight and the mechanism that
-consumes it (`crossweight_pairing_nonneg`), and leaves one case open: a plaquette straddling a
-LINK-reflection plane, whose boundary word `G · F · G'⁻¹ · (ΘF)⁻¹` carries two distinct fixed axis
-links, both inverted by the reflection. The open question was whether that word is nonetheless
-`X · (ΘX)ᴴ` for some `X` — in which case the odd lags would close with no representation theory at
-all.
+## Part 1 — the straddling word is not a paired form
 
-## The answer: it is not, and no argument of that shape can exist
+`CharacterExpansion.crossweight_pairing_nonneg` consumes a weight of the form
+`∑ k, c k * hsRe (X k U) (X k (Θ U))` with `c k ≥ 0`. `paired_sum_nonneg_at_fixed` observes that any
+such sum is nonnegative at a reflection-fixed configuration, since the two arguments coincide there
+and each term is a coefficient times `hsRe A A`, which `hsRe_self_nonneg` makes a sum of squares.
+`no_paired_expansion_of_neg_at_fixed`, `no_paired_word_of_neg_at_fixed` and
+`no_half_paired_of_neg_at_fixed` are the contrapositives, for the trace, for the matrix word
+`W = X * (ΘX)ᴴ`, and for an `X` reading only one half.
 
-`straddling_word_not_paired_at_odd_lag` is the machine-checked refutation. The proof is one
-observation and one witness:
+The witness is `cfgWitness l₀`: the identity on every link except one reflection-fixed axis link,
+which carries `gNeg = diag (1, -1, -1)`. That element lies in `SU 3` (`NegControl.cA_mem_SU`) and is
+its own inverse (`gNeg_inv`), which is what makes the configuration `reflConf`-fixed
+(`reflConf_cfgWitness`), since the reflection inverts that link. The straddling plaquette through it
+has holonomy `gNeg` (`hol_cfgWitness`), whose `Re trace` is `-1` (`trace_gNeg`).
 
-* **The observation.** A paired form is a SQUARE at a reflection-FIXED configuration. If `Θ U₀ = U₀`
-  then `hsRe (X U₀) (X (Θ U₀)) = hsRe (X U₀) (X U₀) = ‖X U₀‖²_F ≥ 0`
-  (`paired_sum_nonneg_at_fixed`). This holds for `X` reading ANYTHING — the whole configuration, the
-  plane links included — and for any finite sum of such forms with nonnegative coefficients. What it
-  is about is ONE straddling plaquette's word, which is what the question asked; the scope note below
-  says what it is not about.
+`straddling_word_not_paired_at_odd_lag` and `straddling_word_not_matrix_paired_at_odd_lag` are the
+conclusions at even extent and odd reflection constant.
+`straddling_not_paired_four_dim` instantiates the first at `d = 4`, extent `4`, axis `0`, transverse
+direction `1`, constant `1`.
 
-* **The witness.** `cfgWitness` is the configuration that is the identity on every link except one
-  reflection-fixed axis link, where it is `diag(1, −1, −1)`. That element is a genuine `SU(3)`
-  matrix (`NegControl.cA_mem_SU`) and is its own inverse (`gNeg_inv`), which is exactly what makes
-  the configuration `reflConf`-fixed (`reflConf_cfgWitness`) — the reflection INVERTS that link, and
-  inverting it changes nothing. The straddling plaquette through it has holonomy `diag(1, −1, −1)`
-  (`hol_cfgWitness`), whose `Re tr` is `−1` (`trace_gNeg`).
+`no_paired_after_equivariant_reparam` repeats the argument after a reparametrisation commuting with
+the reflection; the commutation is a hypothesis and is not discharged here. `invLink` is the
+substitution `g ↦ g⁻¹` on a chosen set of links, which `Reflect.isInvInvariant_probHaar` licenses,
+and `invLink_cfgWitness` shows it fixes this witness, since every link of the witness carries a
+self-inverse element.
 
-A negative number is not a square. So the straddling word is not `X · (ΘX)ᴴ`, and is not a
-nonnegative combination of paired forms — now as a theorem rather than as a failure to find one.
+## Part 2 — the straddling word is not a function of the two halves
 
-## A second obstruction, and it is the one that closes the mechanism
+`crossweight_pairing_nonneg` reads its word through `X : (S → Ω) → Matrix`, a function of the
+positive half's restriction. A reflection-fixed axis link lies in neither half, since `S` and `T`
+are disjoint and the reflection carries `S` into `T` while fixing that link.
+`straddling_word_not_determined_by_halves` exhibits two configurations agreeing on `S` and whose
+reflections agree on `S`, with different `Re trace` at one straddling plaquette, and
+`no_half_function_for_straddling_word` refutes every `Φ : (S → SU 3) → (S → SU 3) → ℝ`, which
+includes `Φ u v = κ + c * hsRe (X u) (X v)` with any constant and any rescaling.
 
-`straddling_word_not_determined_by_halves` is independent of the first and immune to rescaling and to
-additive constants. `crossweight_pairing_nonneg` reads its word through `X : (S → Ω) → Matrix`, a
-function of the POSITIVE HALF alone, and a fixed axis link lies in NEITHER half — it cannot, since the
-reflection fixes it while `S` and `T` are disjoint. Moving one moves the word and leaves both
-half-restrictions untouched, so `no_half_function_for_straddling_word` refutes every `Φ` of that
-type — `κ + c · hsRe (X ·) (X ·)` included.
+## Part 3 — the crossing-link integration
 
-## SCOPE — what is NOT proved about the sum
+The plane links act on the transverse links beside them as a gauge field acts on link variables,
+`(F^G)_x = G_x * F_x * G_{x+ν̂}⁻¹`, so a straddling plaquette word is `hsRe (X (act g x)) (X y)`.
+`gaugeAvg lam act a x = ∫ g, a (act g x)` is the average over the plane links; `gaugeAvg_act` shows
+it is gauge-invariant, using right invariance of the plane measure, and
+`integral_gaugeAvg_mul_invariant` moves it from one factor of a pairing to another against an
+invariant partner. `kernel_arg_shift` moves a gauge from the kernel's first argument onto the
+integration variable, using measure-preservation of the action and invariance of the kernel.
+`crossing_gauge_integral_eq` is the resulting identity
 
-Both obstructions are about ONE straddling plaquette. The Boltzmann weight's straddling factor is the
-exponential of a SUM over all straddling plaquettes and both fixed planes, and neither theorem here
-rules out that the SUM is a paired form. At `cfgWitness` the sum is in fact positive: only the few
-plaquettes through the one modified link read `−1` and every other straddling plaquette reads `+3`,
-so this witness does not lift to the sum. A witness that should lift is known and not built here —
-set `gNeg` on every fixed axis link whose transverse coordinates have even sum, so that each
-straddling plaquette reads exactly one of them and every straddling word becomes `gNeg`.
+    ∫ g ∫ x ∫ y, a x * a y * K (act g x) y  =  ∫ x ∫ y, (P a) x * (P a) y * K x y,
 
-**A change of variables.** `no_paired_after_equivariant_reparam` is the same statement after any
-reparametrisation commuting with the reflection — commutation assumed, not discharged here.
-`invLink_cfgWitness` records that the substitution `Reflect.isInvInvariant_probHaar` licenses,
-inversion of the plane links, leaves this witness exactly where it is; that says the witness is blind
-to it, not that the substitution cannot help.
+and `crossing_gauge_pairing_nonneg` concludes nonnegativity from a positive-semidefiniteness
+hypothesis on `K`.
 
-## The crossing integration, and it needs no representation theory
+That hypothesis is discharged for the Wilson kernel by `wilson_kernel_integral_psd`:
+`0 ≤ ∫∫ f x * f y * exp (β * hsRe (X x) (X y))` for `0 ≤ β`, bounded measurable `f`, and a word
+whose coordinates are bounded by `1`. The proof is `hasSum_wilsonWeight_paired` order by order,
+`MeasureTheory.integral_prod_mul` turning each order into a square, and dominated convergence
+summing them. `wilson_crossing_pairing_nonneg` composes the two.
 
-The refutation does NOT say reflection positivity fails at odd lags. It says the positivity is not
-POINTWISE: it can appear only after the fixed axis links are integrated out. Osterwalder and Seiler
-do that integration with Schur orthogonality of matrix coefficients, which is Peter-Weyl, which
-Mathlib v4.31 does not have in any form (`RepresentationTheory.Character.char_orthonormal` is stated
-for a FINITE group and the library carries no compact-group representation theory).
+`hsRe_coe_eq` identifies `hsRe a b` with `Re trace (a * b⁻¹)` for unitary arguments, and
+`hsRe_conj` proves `hsRe (g a h⁻¹) (g b h⁻¹) = hsRe a b` by cyclicity of the trace, which is the
+invariance hypothesis the integration consumes.
+`negctl_hsRe_one_sided_not_invariant` shows the two-sided shape is required.
 
-The second half of this file does the same integration without it. The plane links act on the
-transverse links beside them exactly as a gauge field acts on link variables, and the straddling
-word is the Wilson cross form of that gauge-transformed half against the other,
-`hsRe (X (act g x)) (X y)`. Two facts then suffice, and both are elementary here:
+## Scope
 
-* the cross form does not see the plane gauge (`hsRe_conj` — cyclicity of the trace); and
-* the Wilson weight is a positive-semidefinite kernel against any probability measure
-  (`wilson_kernel_integral_psd` — the coordinate expansion of `CharacterExpansion`, an explicit sum
-  of squares, dominated convergence).
-
-Averaging over the plane links is then a projection onto gauge-invariant observables, and
-`crossing_gauge_integral_eq` moves it onto BOTH factors of the pairing, which is exactly the shape a
-positive-semidefinite kernel accepts. `wilson_crossing_pairing_nonneg` is the conclusion for the
-actual Wilson weight, with no positivity assumed.
-
-## What is still open
-
-`wilson_crossing_pairing_nonneg` is the crossing integration, not a discharge of
-`Complete.wilson_reflection_positive_at`. Pointing it at the lattice needs the ODD-LAG ACTION SPLIT,
-which is not in this file and is not small: that at a link-reflection plane every plaquette reads the
-closed positive half, its mirror, or straddles; that the straddling ones contribute exactly the
-gauge-transformed cross form above, aggregated over all of them at once; and that the reflected
-half's weight is the same function of the transported variables. `ActionSplit` does the analogous
-even-lag work in two thousand lines. So what changed here is the KIND of work left: lattice
-bookkeeping rather than a representation-theory development.
-
-Foundational footprint only (`#print axioms` at the end).
-Build: `python code/lean_build.py build MassGap.CrossingIntegration`.
+* Both obstructions in Parts 1 and 2 are about one straddling plaquette. The Boltzmann weight's
+  straddling factor is the exponential of a sum over all straddling plaquettes and both fixed
+  planes, and neither theorem rules out that the sum is a paired form. At `cfgWitness` the sum is
+  positive: only the plaquettes through the one modified link read `-1` and every other straddling
+  plaquette reads `3`, so this witness does not lift to the sum. A witness intended to lift — `gNeg`
+  on every fixed axis link whose transverse coordinates have even sum — is not built here.
+* Neither obstruction says reflection positivity fails at odd lags; they say it is not pointwise.
+* Part 3 is stated for an abstract half `Ω`, plane group `Γ` and word `X`. Nothing ties `X` to
+  `wilsonHol`, ties `Γ` to the fixed axis links, or discharges `hXinv` on the lattice.
+  `hsRe_conj` is one matrix pair under one gauge pair; the direct-sum form needed when several
+  straddling plaquettes are read together is not proved here. The odd-lag action split — that at a
+  link-reflection plane every plaquette reads one half, the other, or straddles, that the straddling
+  ones aggregate to the gauge-transformed cross form, and that the reflected half's weight is the
+  same function of the transported variables — is not in this module; `ActionSplit` does the
+  even-lag counterpart.
+* `crossing_gauge_pairing_nonneg`'s `hPSD` cannot be dropped:
+  `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` refutes it for the `SU 3` Wilson kernel at
+  `β < 0` on two explicit group elements.
+* Mathlib v4.31 carries no compact-group representation theory —
+  `RepresentationTheory.Character.char_orthonormal` is stated for a finite group — so Schur
+  orthogonality is not available; the route here does not use it.
+  `MassGap.HaarMoments` computes the `SU 2` fundamental's second moment exactly
+  (`haar_su2_second_moment`) and reaches order four only as bounds
+  (`haar_su2_fourth_moment_diag_bounds`); the crossing weight is of every order in the plane links,
+  so that route would need balanced moments at all orders. The argument here expands in the plane
+  links at no order.
 -/
 
 namespace MassGap.CrossingIntegration
@@ -103,7 +106,7 @@ open MassGap MassGap.ActionSplit MassGap.CharacterExpansion
 open MassGap.WilsonLattice MassGap.WilsonHypercubic
 open MassGap.CompactGauge MassGap.Reflect
 
-/-! ## A paired form is a square at a reflection-fixed configuration -/
+/-! ## Part 1 — a paired form is a square at a reflection-fixed configuration -/
 
 /-- **`hsRe A A` is a sum of squares.** `hsRe` is the Euclidean inner product of the `2N²` real
 coordinates (`hsRe_eq_sum`), so its diagonal is `‖A‖²_F`.
@@ -113,11 +116,14 @@ theorem hsRe_self_nonneg {N : ℕ} (A : Matrix (Fin N) (Fin N) ℂ) : 0 ≤ hsRe
   rw [hsRe_eq_sum]
   exact Finset.sum_nonneg fun _ _ => mul_self_nonneg _
 
-/-- **A nonnegative combination of paired forms is nonnegative at a reflection-fixed point.**
+/-- `0 ≤ ∑ k, c k * hsRe (X k U₀) (X k (Θ U₀))` whenever `Θ U₀ = U₀` and `0 ≤ c k` at every `k`.
+Rewriting by the fixed-point hypothesis makes both arguments of each `hsRe` equal, so each term is a
+nonnegative coefficient times `hsRe_self_nonneg`.
 
-This is the whole obstruction. `X` may read the ENTIRE configuration — the two halves and the
-reflection plane alike — and `K` may be any finite index; at a configuration the reflection fixes,
-the two arguments of every `hsRe` coincide and each term is a coefficient times a square. -/
+Scope: `X` may read the entire configuration, including the reflection plane, and `K` may be any
+finite index type.
+
+DERIVED: the one numeral is `0`, the lower bound on each coefficient and on the sum. -/
 theorem paired_sum_nonneg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     {K : Type} [Fintype K] {Nc : ℕ} (c : K → ℝ) (hc : ∀ k, 0 ≤ c k)
     (X : K → γ → Matrix (Fin Nc) (Fin Nc) ℂ) :
@@ -125,8 +131,12 @@ theorem paired_sum_nonneg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfi
   rw [hfix]
   exact Finset.sum_nonneg fun k _ => mul_nonneg (hc k) (hsRe_self_nonneg _)
 
-/-- **The contrapositive — the shape of every statement below.** A word whose `Re tr` is NEGATIVE at
-a reflection-fixed configuration admits no paired expansion whatsoever. -/
+/-- The contrapositive of `paired_sum_nonneg_at_fixed`: if `(trace (W U₀)).re < 0` at a
+reflection-fixed `U₀`, then `(trace (W U)).re` is not `∑ k, c k * hsRe (X k U) (X k (Θ U))` for any
+finite family `X` and nonnegative coefficients `c`.
+
+DERIVED: the one numeral is `0`, the upper bound on the trace at the fixed point and the lower bound
+on each coefficient. -/
 theorem no_paired_expansion_of_neg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     {N : ℕ} (W : γ → Matrix (Fin N) (Fin N) ℂ) (hW : (Matrix.trace (W U₀)).re < 0)
     {K : Type} [Fintype K] {Nc : ℕ} (c : K → ℝ) (hc : ∀ k, 0 ≤ c k)
@@ -137,8 +147,11 @@ theorem no_paired_expansion_of_neg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ :
   rw [← h U₀] at h0
   exact absurd hW (not_lt.mpr h0)
 
-/-- **The same at the level of the matrix word**: `W = X · (ΘX)ᴴ` is impossible for the same
-reason, and this is the literal form the question was asked in. -/
+/-- The same at the level of the matrix word: with `(trace (W U₀)).re < 0` at a reflection-fixed
+`U₀`, no `X` satisfies `W U = X U * (X (Θ U))ᴴ` at every `U`, since at `U₀` the right-hand side's
+trace would be `hsRe (X U₀) (X U₀) ≥ 0`.
+
+DERIVED: the one numeral is `0`, the upper bound on the trace at the fixed point. -/
 theorem no_paired_word_of_neg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     {N : ℕ} (W : γ → Matrix (Fin N) (Fin N) ℂ) (hW : (Matrix.trace (W U₀)).re < 0)
     (X : γ → Matrix (Fin N) (Fin N) ℂ) :
@@ -148,10 +161,11 @@ theorem no_paired_word_of_neg_at_fixed {γ : Type} (Θ : γ → γ) {U₀ : γ} 
   rw [hfix] at heq
   exact absurd hW (not_lt.mpr (heq ▸ hsRe_self_nonneg (X U₀)))
 
-/-- **And in the exact shape `crossweight_pairing_nonneg` consumes**, where `X` reads only the
-restriction of the configuration to one half `S`. A half-reading `X` is a special case of an
-arbitrary one, so this follows; it is stated separately so the refutation can be read off against
-the theorem it refutes. -/
+/-- The same with `X` reading only the restriction of the configuration to one half `S`, which is
+the shape `CharacterExpansion.crossweight_pairing_nonneg` consumes. A half-reading `X` is a special
+case of an arbitrary one, so this follows from `no_paired_expansion_of_neg_at_fixed`.
+
+DERIVED: the one numeral is `0`, the upper bound on the trace at the fixed point. -/
 theorem no_half_paired_of_neg_at_fixed {ι : Type} [Fintype ι] {Ω : Type} (S : Finset ι)
     (Θ : (ι → Ω) → (ι → Ω)) {U₀ : ι → Ω} (hfix : Θ U₀ = U₀)
     {N : ℕ} (W : (ι → Ω) → Matrix (Fin N) (Fin N) ℂ)
@@ -165,13 +179,15 @@ theorem no_half_paired_of_neg_at_fixed {ι : Type} [Fintype ι] {Ω : Type} (S :
     rw [h U₀, hfix]
   exact absurd hW (not_lt.mpr (h0 ▸ hsRe_self_nonneg _))
 
-/-- **No reparametrisation commuting with the reflection can rescue it.**
+/-- The same refutation after a reparametrisation `T : Equiv.Perm γ` commuting with the involution:
+`(trace (W (T U))).re` is not a nonnegative combination of paired forms either. At `T.symm U₀` the
+commutation makes the configuration reflection-fixed and the reparametrised word takes the same
+negative value.
 
-The obstruction is a property of the integrand RELATIVE to the involution, so it survives every
-change of variables that commutes with the involution. The commutation is a HYPOTHESIS here (`hTΘ`);
-this file does not discharge it for any particular substitution. The reparametrised configuration
-`T.symm U₀` is reflection-fixed for the same reason `U₀` is, and the reparametrised word takes the
-same negative value there. -/
+Scope: the commutation `hTΘ` is a hypothesis and is not discharged here for any substitution.
+
+DERIVED: the one numeral is `0`, the upper bound on the trace at the fixed point and the lower bound
+on each coefficient. -/
 theorem no_paired_after_equivariant_reparam {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     (T : Equiv.Perm γ) (hTΘ : ∀ U, T (Θ U) = Θ (T U))
     {N : ℕ} (W : γ → Matrix (Fin N) (Fin N) ℂ) (hW : (Matrix.trace (W U₀)).re < 0)
@@ -200,10 +216,13 @@ variable {d n : ℕ}
 /-- `diag(1, −1, −1)` as an element of the group `SU(3)` — `NegControl.cA 1` with its membership
 proof, which `NegControl.cA_mem_SU` already supplies.
 
-DERIVED: `3` is SU(3)'s rank; `1` selects the non-identity control element, whose square is the identity -- which is exactly why a configuration carrying it on a fixed axis link is reflection-fixed. -/
+DERIVED: `3` is the degree of `SU(3)`, its matrix dimension; `1` selects the non-identity control element, whose square is the identity -- which is exactly why a configuration carrying it on a fixed axis link is reflection-fixed. -/
 noncomputable def gNeg : MassGap.SUN.SU 3 := ⟨NegControl.cA 1, NegControl.cA_mem_SU 1⟩
 
-/-- **It is an involution.** `diag(1, −1, −1)² = 1`, entrywise. -/
+/-- `gNeg * gNeg = 1`, checked entrywise on the diagonal matrix.
+
+DERIVED: `1` is the group identity on the right and the index selecting `NegControl.cA 1` on the
+left; the squared entries are `1` and `(-1) ^ 2`. -/
 theorem gNeg_mul_self : gNeg * gNeg = 1 := by
   refine Subtype.ext ?_
   rw [Submonoid.coe_mul, Submonoid.coe_one]
@@ -214,12 +233,17 @@ theorem gNeg_mul_self : gNeg * gNeg = 1 := by
   funext i
   fin_cases i <;> norm_num [NegControl.dvec]
 
-/-- **So the reflection's dagger does not move it.** -/
+/-- `gNeg⁻¹ = gNeg`, from `gNeg_mul_self` through `inv_eq_of_mul_eq_one_right`. This is what makes
+a configuration carrying `gNeg` on a reflection-fixed axis link invariant under the reflection's
+dagger.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem gNeg_inv : gNeg⁻¹ = gNeg := inv_eq_of_mul_eq_one_right gNeg_mul_self
 
-/-- **And its `Re tr` is negative**: `1 + (−1) + (−1) = −1`.
+/-- `(trace gNeg).re = -1`, computed as `1 + (-1) + (-1)` over the diagonal.
 
-DERIVED: `−1` is the computed value of `Re tr diag(1, −1, −1)`, not a chosen magnitude. -/
+DERIVED: `3` is the matrix size, so the diagonal has three entries; `1` is the index selecting
+`NegControl.cA 1`; `-1` is the computed value of the trace's real part, not a chosen magnitude. -/
 theorem trace_gNeg : (Matrix.trace (gNeg : Matrix (Fin 3) (Fin 3) ℂ)).re = -1 := by
   show (Matrix.trace (NegControl.cA 1)).re = -1
   simp only [NegControl.cA, Matrix.trace_diagonal, Complex.re_sum]
@@ -227,7 +251,7 @@ theorem trace_gNeg : (Matrix.trace (gNeg : Matrix (Fin 3) (Fin 3) ℂ)).re = -1 
 
 /-- **The witness configuration**: the identity on every link but `l₀`, where it is `gNeg`.
 
-DERIVED: `3` is SU(3)'s rank, `1` the identity on every link but one. The single exceptional link is the argument; nothing about it is a tunable. -/
+DERIVED: `3` is the degree of `SU(3)`, its matrix dimension, `1` the identity on every link but one. The single exceptional link is the argument; nothing about it is a tunable. -/
 noncomputable def cfgWitness [NeZero n] (l₀ : Link d n) : Link d n → MassGap.SUN.SU 3 :=
   Function.update (fun _ => 1) l₀ gNeg
 
@@ -237,8 +261,11 @@ noncomputable def cfgWitness [NeZero n] (l₀ : Link d n) : Link d n → MassGap
 theorem cfgWitness_of_ne [NeZero n] {l₀ l : Link d n} (h : l ≠ l₀) : cfgWitness l₀ l = 1 := by
   simp [cfgWitness, Function.update_of_ne h]
 
-/-- **THE WITNESS IS REFLECTION-FIXED.** On `l₀` the reflection inverts, and `gNeg⁻¹ = gNeg`; every
-other link carries the identity and the reflection permutes those among themselves. -/
+/-- `reflConf τ c (cfgWitness l₀) = cfgWitness l₀`, given that `l₀` is an axis link (`l₀.1 = τ`)
+fixed by `reflLink τ c`. On `l₀` the reflection inverts and `gNeg_inv` makes that inert; every other
+link carries the identity, which the reflection permutes among the identities.
+
+DERIVED: no numeral occurs in the statement; the group elements are inside `cfgWitness`. -/
 theorem reflConf_cfgWitness [NeZero n] {τ : Fin d} {c : Fin n} {l₀ : Link d n}
     (h1 : l₀.1 = τ) (hfix : reflLink τ c l₀ = l₀) :
     reflConf τ c (cfgWitness l₀) = cfgWitness l₀ := by
@@ -255,10 +282,12 @@ theorem reflConf_cfgWitness [NeZero n] {τ : Fin d} {c : Fin n} {l₀ : Link d n
     rw [cfgWitness_of_ne hl, cfgWitness_of_ne h2]
     simp
 
-/-- **The straddling plaquette's holonomy at the witness is `gNeg`.** Three of its four links carry
-the identity: the two transverse ones because their direction is not `τ`, and the second axis link
-because it is a DIFFERENT fixed axis link from `l₀` — which is exactly the two-fixed-link geometry
-`CharacterExpansion.odd_lag_straddling_plaq_two_fixed_axis_links` establishes. -/
+/-- `wilsonHol bd ((τ, ν), x) (cfgWitness (τ, x)) = gNeg`. Three of the plaquette's four links
+carry the identity: the two transverse ones because their direction is not `τ`, and the second axis
+link because it is a different fixed axis link from `l₀` — the two-fixed-link geometry
+`CharacterExpansion.odd_lag_straddling_plaq_two_fixed_axis_links` establishes.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem hol_cfgWitness [NeZero n] {τ ν : Fin d} (hν : ν ≠ τ) {x : Site d n}
     (hne : ((τ, x) : Link d n) ≠ (τ, WilsonHypercubic.shift ν x)) :
     wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) (cfgWitness ((τ, x) : Link d n))
@@ -273,24 +302,23 @@ theorem hol_cfgWitness [NeZero n] {τ ν : Fin d} (hν : ν ≠ τ) {x : Site d 
 
 end Witness
 
-/-! ## The answer -/
+/-! ## The refutation, on the lattice -/
 
 section Answer
 
 variable {d n : ℕ}
 
-/-- **THE ALGEBRAIC QUESTION, SETTLED NEGATIVELY.**
+/-- At even extent `n` with `2 ≤ n` and an odd reflection constant, there is a plaquette `q₀` whose
+`Re trace` is not `∑ k, cf k * hsRe (X k U) (X k (reflConf τ c U))` at every `U`, for any finite
+family `X` with nonnegative coefficients. The witness is `cfgWitness` at a fixed axis link, where
+the holonomy is `gNeg` and the trace's real part is `-1`, while any paired form is a square there.
 
-At even extent and ODD reflection constant there is a straddling plaquette whose boundary word is
-NOT a nonnegative combination of paired forms `hsRe (X ·) (X (Θ ·))` — for any finite family `X`,
-reading anything, with any nonnegative coefficients. So the odd lags cannot be closed by pointing
-`CharacterExpansion.crossweight_pairing_nonneg` at the straddling weight, however `X` is chosen.
+Scope: this is about one straddling plaquette's word. It does not say the sum over all straddling
+plaquettes fails to be a paired form; see the module header.
 
-The proof exhibits the configuration and the number: a reflection-FIXED configuration at which the
-word's `Re tr` is `−1`, where any paired form would be a square.
-
-DERIVED: `2 ≤ n` is what makes a transverse step move the site, `−1` is the computed trace of
-`diag(1, −1, −1)`, and `0` is the sign a square has. -/
+DERIVED: `2` is the lower bound on the extent, which is what makes a transverse step move the site;
+`3` is the gauge group's matrix size, `SU 3`; `0` is the lower bound on each coefficient. The value
+`-1` is the computed trace of `gNeg` and appears in the proof. -/
 theorem straddling_word_not_paired_at_odd_lag [NeZero n] (hn : Even n) (h2 : 2 ≤ n)
     {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} (hc : ¬ Even c.val)
     {K : Type} [Fintype K] {Nc : ℕ} (cf : K → ℝ) (hcf : ∀ k, 0 ≤ cf k)
@@ -314,8 +342,10 @@ theorem straddling_word_not_paired_at_odd_lag [NeZero n] (hn : Even n) (h2 : 2 �
     (fun U => ((wilsonHol (bd (d := d) (n := n)) (((τ, ν), x) : Plaq d n) U : MassGap.SUN.SU 3)
       : Matrix (Fin 3) (Fin 3) ℂ)) hneg cf hcf X
 
-/-- **The same for a single word**, which is the literal question `CharacterExpansion` posed: the
-straddling word is not `X · (ΘX)ᴴ` for any `X`. -/
+/-- The same for a single matrix word: at even extent with `2 ≤ n` and an odd reflection constant
+there is a plaquette whose holonomy is not `X U * (X (reflConf τ c U))ᴴ` at every `U`, for any `X`.
+
+DERIVED: `2` is the lower bound on the extent; `3` is the gauge group's matrix size. -/
 theorem straddling_word_not_matrix_paired_at_odd_lag [NeZero n] (hn : Even n) (h2 : 2 ≤ n)
     {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} (hc : ¬ Even c.val)
     (X : (Link d n → MassGap.SUN.SU 3) → Matrix (Fin 3) (Fin 3) ℂ) :
@@ -357,14 +387,14 @@ section NotAHalfFunction
 
 variable {d n : ℕ}
 
-/-- **THE STRADDLING WORD IS NOT DETERMINED BY THE TWO HALF-RESTRICTIONS.**
+/-- For disjoint `S, T` with `reflLink τ c` carrying `S` into `T`, at even extent with `2 ≤ n` and
+an odd reflection constant, there are a plaquette `q₀` and configurations `U, U'` agreeing on `S`,
+whose reflections also agree on `S`, with different `Re trace` at `q₀`. The two are the all-identity
+configuration and `cfgWitness` at a fixed axis link, which lies in neither half because the
+reflection fixes it while `S` and `T` are disjoint.
 
-Two configurations that agree on the positive half AND whose reflections agree on the positive half,
-whose straddling plaquette words nonetheless have different `Re tr`. They differ only at one fixed
-axis link, which neither half contains.
-
-DERIVED: the values `3` and `−1` are computed traces (`Re tr 1` in `SU(3)`, and `Re tr` of
-`diag(1, −1, −1)`); nothing here is a chosen magnitude. -/
+DERIVED: `2` is the lower bound on the extent; `3` is the gauge group's matrix size. The two traces
+compared in the proof are `3` for the identity and `-1` for `gNeg`, both computed. -/
 theorem straddling_word_not_determined_by_halves [NeZero n] (hn : Even n) (h2 : 2 ≤ n)
     {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} (hc : ¬ Even c.val)
     (S T : Finset (Link d n)) (hST : Disjoint S T)
@@ -410,12 +440,14 @@ theorem straddling_word_not_determined_by_halves [NeZero n] (hn : Even n) (h2 : 
     rw [Submonoid.coe_one, Matrix.trace_one]
     norm_num
 
-/-- **SO NO FUNCTION OF THE TWO HALVES REPRESENTS IT** — for any `Φ` whatsoever, and in particular
-for `Φ u v = κ + c · hsRe (X u) (X v)`, which is every form
-`CharacterExpansion.crossweight_pairing_nonneg` can consume, constants and rescalings included.
+/-- No `Φ : (S → SU 3) → (S → SU 3) → ℝ` represents the straddling word: for any such `Φ` there is a
+plaquette whose `Re trace` is not `Φ (U|_S) ((reflConf τ c U)|_S)` at every `U`. Immediate from
+`straddling_word_not_determined_by_halves`.
 
-This is the statement that the mechanism cannot be pointed at a straddling plaquette. It does not
-depend on the paired form at all, only on where the fixed axis links sit. -/
+Scope: `Φ` is arbitrary, so this includes `Φ u v = κ + c * hsRe (X u) (X v)` with any constant and
+rescaling. It depends only on where the fixed axis links sit, not on the paired form.
+
+DERIVED: `2` is the lower bound on the extent; `3` is the gauge group's matrix size. -/
 theorem no_half_function_for_straddling_word [NeZero n] (hn : Even n) (h2 : 2 ≤ n)
     {τ ν : Fin d} (hν : ν ≠ τ) {c : Fin n} (hc : ¬ Even c.val)
     (S T : Finset (Link d n)) (hST : Disjoint S T)
@@ -439,7 +471,7 @@ theorem no_half_function_for_straddling_word [NeZero n] (hn : Even n) (h2 : 2 �
 
 end NotAHalfFunction
 
-/-! ## Non-vacuity: the refuted case occurs at the physical dimension -/
+/-! ## An instance at `d = 4` -/
 
 section NonVacuous
 
@@ -476,8 +508,11 @@ section InvChange
 
 variable {d n : ℕ}
 
-/-- Invert the configuration on a chosen set of links — the `g ↦ g⁻¹` change of variables, as a
-permutation of configurations. It is its own inverse. -/
+/-- The change of variables `g ↦ g⁻¹` on a chosen `Finset` of links, as a permutation of
+configurations. It is its own inverse, which is what makes both `left_inv` and `right_inv` the same
+computation.
+
+DERIVED: no numeral occurs. -/
 def invLink [NeZero n] {G : Type} [Group G] [DecidableEq (Link d n)] (R : Finset (Link d n)) :
     Equiv.Perm (Link d n → G) where
   toFun U := fun l => if l ∈ R then (U l)⁻¹ else U l
@@ -485,9 +520,14 @@ def invLink [NeZero n] {G : Type} [Group G] [DecidableEq (Link d n)] (R : Finset
   left_inv := by intro U; funext l; by_cases h : l ∈ R <;> simp [h]
   right_inv := by intro U; funext l; by_cases h : l ∈ R <;> simp [h]
 
-/-- **It fixes the witness outright**: every link of the witness carries either `1` or `gNeg`, and
-both are their own inverses. So the witness cannot tell the substituted problem from the original —
-a limitation of the witness, not a proof that the substitution is useless. -/
+/-- `invLink R (cfgWitness l₀) = cfgWitness l₀` for any `R`: every link of the witness carries
+either the identity or `gNeg`, and both are self-inverse.
+
+Scope: this says the witness is blind to the substitution, not that the substitution cannot help.
+Whether `invLink` commutes with `reflConf`, which is what
+`no_paired_after_equivariant_reparam` would need, is not proved here.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem invLink_cfgWitness [NeZero n] [DecidableEq (Link d n)] (R : Finset (Link d n))
     (l₀ : Link d n) : invLink R (cfgWitness l₀) = cfgWitness l₀ := by
   funext l
@@ -513,22 +553,24 @@ section NegControls
 
 variable {d n : ℕ}
 
-/-- **NEGATIVE CONTROL 1 — the test does not fire on a genuinely paired word.** For a word that IS
-`X · (ΘX)ᴴ`, the quantity the obstruction looks at is nonnegative at every reflection-fixed
-configuration, so `no_paired_word_of_neg_at_fixed` has no hypothesis to consume. The refutation
-detects the absence of the paired form, not the presence of a reflection. -/
+/-- `0 ≤ (trace (X U₀ * (X (Θ U₀))ᴴ)).re` at any reflection-fixed `U₀`: on a word that is a paired
+form, the quantity the refutations look at is nonnegative, so
+`no_paired_word_of_neg_at_fixed` has no hypothesis to consume. The obstruction detects the absence
+of a paired form, not the presence of a reflection.
+
+DERIVED: the one numeral is `0`, the lower bound asserted. -/
 theorem negctl_paired_word_is_nonneg {γ : Type} (Θ : γ → γ) {U₀ : γ} (hfix : Θ U₀ = U₀)
     {N : ℕ} (X : γ → Matrix (Fin N) (Fin N) ℂ) :
     0 ≤ (Matrix.trace (X U₀ * Matrix.conjTranspose (X (Θ U₀)))).re := by
   rw [hfix]
   exact hsRe_self_nonneg (X U₀)
 
-/-- **NEGATIVE CONTROL 2 — the sign comes from the group element the plane link carries.** The
-all-identity configuration is reflection-fixed for every `τ` and `c`, and the SAME straddling
-plaquette has holonomy `1` there, with `Re tr = 3 > 0`. So the obstruction is a fact about
-`diag(1, −1, −1)` sitting on a fixed axis link, not about the straddling geometry on its own.
+/-- The all-identity configuration is reflection-fixed at every `τ` and `c`, and every plaquette
+has holonomy `1` there with `Re trace = 3`. So the negative value the obstructions use comes from
+`gNeg` sitting on a fixed axis link, not from the straddling geometry alone.
 
-DERIVED: `3` is `Re tr 1` in `SU(3)`, which is the rank. -/
+DERIVED: `3` is the matrix size and, equal to it, the value of `Re trace` at the identity; `1` is
+the group identity carried on every link. -/
 theorem negctl_identity_config [NeZero n] (τ : Fin d) (c : Fin n) (q : Plaq d n) :
     reflConf τ c (fun _ : Link d n => (1 : MassGap.SUN.SU 3)) = (fun _ => 1)
       ∧ (Matrix.trace ((wilsonHol (bd (d := d) (n := n)) q (fun _ => (1 : MassGap.SUN.SU 3))
@@ -618,9 +660,10 @@ section Crossing
 
 variable {Γ Ω : Type} [Group Γ] [MeasurableSpace Γ] [MeasurableSpace Ω]
 
-/-- **The gauge average** `(P a)(x) = ∫ a(x^g) dg` — integrating the plane links out of an
-observable of the half. It is the projection onto gauge-invariant observables, and the whole
-crossing argument is that the kernel commutes with it. -/
+/-- The gauge average `gaugeAvg lam act a x = ∫ g, a (act g x) ∂lam`: the plane links integrated
+out of an observable of the half.
+
+DERIVED: no numeral occurs. -/
 noncomputable def gaugeAvg (lam : Measure Γ) (act : Γ → Ω → Ω) (a : Ω → ℝ) : Ω → ℝ :=
   fun x => ∫ g, a (act g x) ∂lam
 
@@ -636,8 +679,10 @@ theorem abs_gaugeAvg_le (lam : Measure Γ) [IsProbabilityMeasure lam] {act : Γ 
   have h := norm_integral_le_of_norm_le_const hb
   simpa [gaugeAvg, Real.norm_eq_abs, probReal_univ] using h
 
-/-- **The gauge average is gauge-invariant** — `P` lands in the invariants. This is the one step
-that spends RIGHT invariance of the plane measure. -/
+/-- `gaugeAvg lam act a (act h x) = gaugeAvg lam act a x`: the gauge average is invariant under the
+action. The proof rewrites `act h (act g x)` as `act (h * g) x` and uses right invariance of `lam`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem gaugeAvg_act (lam : Measure Γ) [MeasurableMul Γ] [IsProbabilityMeasure lam]
     [lam.IsMulRightInvariant]
     {act : Γ → Ω → Ω} (hactm : Measurable (Function.uncurry act))
@@ -652,9 +697,11 @@ theorem gaugeAvg_act (lam : Measure Γ) [MeasurableMul Γ] [IsProbabilityMeasure
   simp only [hmul]
   exact hshift
 
-/-- **The gauge moves from one argument of the kernel to the other.** The gauge action preserves the
-measure on the half and the kernel is gauge-invariant, so a gauge sitting on the kernel's first
-argument can be pushed onto the integration variable. -/
+/-- `∫ y, f y * K (act g x) y = ∫ y, f (act g y) * K x y`: a gauge on the kernel's first argument
+moves onto the integration variable. Uses measure-preservation of `act g` on `nu` and invariance of
+`K` under the action.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem kernel_arg_shift (nu : Measure Ω) {act : Γ → Ω → Ω}
     (hmp : ∀ g, MeasurePreserving (act g) nu nu)
     {K : Ω → Ω → ℝ} (hKsec : ∀ x : Ω, Measurable (K x))
@@ -668,8 +715,11 @@ theorem kernel_arg_shift (nu : Measure Ω) {act : Γ → Ω → Ω}
   show f (act g y) * K (act g x) (act g y) = f (act g y) * K x y
   rw [hKinv]
 
-/-- **The projection is self-adjoint against its own invariants**: with `H` gauge-invariant,
-`⟨P a, H⟩ = ⟨a, H⟩`. -/
+/-- `∫ x, gaugeAvg lam act a x * H x = ∫ x, a x * H x` when `H` is invariant under the action: the
+gauge average may be dropped from one factor against an invariant partner.
+
+DERIVED: the one numeral is `0`, the lower bound on the constant `Ca` bounding `a`, which the
+integrability estimates use. -/
 theorem integral_gaugeAvg_mul_invariant (lam : Measure Γ) [IsProbabilityMeasure lam]
     (nu : Measure Ω) [IsProbabilityMeasure nu]
     {act : Γ → Ω → Ω} (hactm : Measurable (Function.uncurry act))
@@ -705,14 +755,18 @@ theorem integral_gaugeAvg_mul_invariant (lam : Measure Γ) [IsProbabilityMeasure
   rw [integral_congr_ae (Filter.Eventually.of_forall hfib), integral_const]
   simp
 
-/-- **THE CROSSING-LINK INTEGRATION, as an identity.**
+/-- The crossing-link integration as an identity:
 
-Integrating the plane links out of the pairing replaces the observable by its gauge average on BOTH
-sides. The right-hand side is the pairing of `P a` with itself, which is the shape a
-positive-semidefinite kernel accepts — and getting into that shape is the whole job Schur
-orthogonality does in the Osterwalder-Seiler argument.
+    ∫ g ∫ x ∫ y, a x * a y * K (act g x) y  =  ∫ x ∫ y, (P a) x * (P a) y * K x y
 
-DERIVED: no numeral of its own. -/
+with `P = gaugeAvg lam act`. Integrating the plane links out replaces the observable by its gauge
+average on both factors. The proof builds the invariant partner `x ↦ ∫ y, (P a) y * K x y`, uses
+`kernel_arg_shift` to move the gauge, and `integral_gaugeAvg_mul_invariant` to move the average
+across. It does not go through idempotence of `P` or commutation of operators, neither of which is
+proved here.
+
+DERIVED: the one numeral is `0`, the lower bound on the constant `Ca` bounding `a`. The bounds `CK`
+and `Ca` are the caller's. -/
 theorem crossing_gauge_integral_eq
     (lam : Measure Γ) [MeasurableMul Γ] [IsProbabilityMeasure lam] [lam.IsMulRightInvariant]
     (nu : Measure Ω) [IsProbabilityMeasure nu]
@@ -819,14 +873,17 @@ theorem crossing_gauge_integral_eq
   -- STEP 5: and the projection moves across an invariant partner
   exact (integral_gaugeAvg_mul_invariant lam nu hactm hmp ham hCa hab hHm hHb hHinv).symm
 
-/-- **THE CROSSING-LINK INTEGRATION, as positivity.**
+/-- `0 ≤ ∫ g ∫ x ∫ y, a x * a y * K (act g x) y`, given that `K` is invariant under the action and
+positive-semidefinite in the integral sense (`hPSD`). `crossing_gauge_integral_eq` followed by
+`hPSD` at the gauge average.
 
-Given only that the crossing kernel is positive-semidefinite in the integral sense and invariant
-under the plane gauge action, the pairing integrated over the plane links is nonnegative. No
-irreducible representation, no matrix coefficient, no orthogonality relation.
+Scope: `hPSD` is a hypothesis here; `wilson_kernel_integral_psd` discharges it for the Wilson
+kernel. It cannot be dropped —
+`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` refutes it for the `SU 3` Wilson kernel at
+`β < 0` on two explicit group elements.
 
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` shows the positive-semidefiniteness hypothesis
-cannot be dropped: at `β < 0` the `SU(3)` Wilson kernel fails it on two explicit group elements. -/
+DERIVED: `0` is the lower bound on `Ca`, the lower bound in `hPSD`, and the lower bound
+asserted. -/
 theorem crossing_gauge_pairing_nonneg
     (lam : Measure Γ) [MeasurableMul Γ] [IsProbabilityMeasure lam] [lam.IsMulRightInvariant]
     (nu : Measure Ω) [IsProbabilityMeasure nu]
@@ -866,11 +923,13 @@ over an abstract half `Ω`, plane group `Γ` and word `X`; nothing here ties `X`
 
 section WilsonPSD
 
-/-- **The cross form is bounded by the number of real coordinates**, for arguments whose coordinates
-are bounded by one — which is every `SU(N)` element (`SUN.unitary_entry_norm_le_one`).
+/-- `|hsRe A B| ≤ Fintype.card (Coord N)` when every real coordinate of `A` and of `B` has absolute
+value at most one, which holds for every `SU N` element by `SUN.unitary_entry_norm_le_one`. Each of
+the `Fintype.card (Coord N)` terms of `hsRe_eq_sum` is bounded by one.
 
-DERIVED: the bound is the coordinate count `Fintype.card (Coord N)`, which is `2N²`; it is a count,
-not a chosen constant. -/
+DERIVED: `1` is the bound on each coordinate, so each product of two coordinates is bounded by `1`
+and the sum by the coordinate count `Fintype.card (Coord N)`, which is `2 * N ^ 2`. That count is
+read off the type, not chosen. -/
 theorem abs_hsRe_le_card {N : ℕ} {A B : Matrix (Fin N) (Fin N) ℂ}
     (hA : ∀ p : Coord N, |coord p A| ≤ 1) (hB : ∀ p : Coord N, |coord p B| ≤ 1) :
     |hsRe A B| ≤ (Fintype.card (Coord N) : ℝ) := by
@@ -883,20 +942,17 @@ theorem abs_hsRe_le_card {N : ℕ} {A B : Matrix (Fin N) (Fin N) ℂ}
         exact (mul_le_mul (hA q) (hB q) (abs_nonneg _) zero_le_one).trans_eq (one_mul 1)
     _ = (Fintype.card (Coord N) : ℝ) := by simp
 
-/-- **THE WILSON KERNEL IS POSITIVE-SEMIDEFINITE AGAINST ANY PROBABILITY MEASURE.**
+/-- `0 ≤ ∫ x ∫ y, f x * f y * exp (β * hsRe (X x) (X y))` against any probability measure, for
+`0 ≤ β`, bounded measurable `f`, and a matrix-valued `X` whose real coordinates are bounded by one.
+The proof takes `hasSum_wilsonWeight_paired` order by order, turns each order into a square by
+`MeasureTheory.integral_prod_mul`, and sums by dominated convergence. This is the integral form of
+`CharacterExpansion.wilson_kernel_nonneg` and the hypothesis `crossing_gauge_pairing_nonneg`
+consumes.
 
-    0 ≤ ∫∫ f(x) f(y) exp (β · Re tr (X(x) X(y)ᴴ))
+Scope: `NegControl.su3_kernel_nonneg_iff` shows `0 ≤ β` cannot be dropped.
 
-for `β ≥ 0`, any bounded measurable `f`, and any matrix-valued word `X` whose coordinates are
-bounded by one. This is the integral form of `CharacterExpansion.wilson_kernel_nonneg`, and it is
-the hypothesis `crossing_gauge_pairing_nonneg` consumes.
-
-No representation theory: each order of the expansion is `∫∫ g(x) g(y)` for an explicit monomial `g`,
-which factorises into a square by `MeasureTheory.integral_prod_mul`.
-
-`NegControl.su3_kernel_nonneg_iff` shows `0 ≤ β` cannot be dropped.
-
-DERIVED: the only numerals are the `0` of `0 ≤ ·` and the `1` bounding a unitary matrix entry. -/
+DERIVED: `0` is the lower bound on `β`, on the bound `C` for `f`, and the lower bound asserted; `1`
+is the bound on each coordinate of `X`, which holds for unitary matrices. -/
 theorem wilson_kernel_integral_psd {γ : Type} [MeasurableSpace γ] (m : Measure γ)
     [IsProbabilityMeasure m] {Nc : ℕ} (X : γ → Matrix (Fin Nc) (Fin Nc) ℂ)
     (hXm : ∀ p : Coord Nc, Measurable (fun v => coord p (X v)))
@@ -1034,21 +1090,17 @@ section WilsonCrossing
 
 variable {Γ Ω : Type} [Group Γ] [MeasurableSpace Γ] [MeasurableSpace Ω]
 
-/-- **THE CROSSING-LINK INTEGRATION, FOR THE WILSON WEIGHT, WITH NOTHING ASSUMED ABOUT POSITIVITY.**
+/-- `0 ≤ ∫ g ∫ x ∫ y, a x * a y * exp (β * hsRe (X (act g x)) (X y))`: the crossing-link
+integration for a cross weight of the Wilson functional form, with positivity proved rather than
+assumed. `crossing_gauge_pairing_nonneg` at `K x y = exp (β * hsRe (X x) (X y))`, whose
+positive-semidefiniteness comes from `wilson_kernel_integral_psd` and whose invariance is the
+hypothesis `hXinv`.
 
-Pairing an observable of the half against its reflection through a cross weight
-`exp (β · Re tr (X(x^g) X(y)ᴴ))` — the straddling plaquette's own weight, with the plane links `g`
-inside it — and integrating the plane links out, gives a nonnegative number.
+Scope: stated over an abstract half `Ω`, plane group `Γ` and word `X`. Nothing here ties `X` to
+`wilsonHol` or discharges `hXinv` on the lattice.
 
-Every hypothesis is geometric or measure-theoretic: the plane links act measure-preservingly on the
-half, the action is an action, the word's coordinates are bounded by one (unitarity), and the cross
-form does not see the plane gauge (`hsRe_conj`, cyclicity of the trace). The positivity is not
-assumed — `wilson_kernel_integral_psd` proves it from the coordinate expansion.
-
-This is the statement Osterwalder-Seiler prove with Schur orthogonality, proved without it.
-
-DERIVED: the only numerals are the `0` of `0 ≤ β` and `0 ≤ ·`, and the `1` bounding a unitary
-matrix entry. -/
+DERIVED: `0` is the lower bound on `β`, on the bound `Ca` for `a`, and the lower bound asserted;
+`1` is the bound on each coordinate of `X`, which holds for unitary matrices. -/
 theorem wilson_crossing_pairing_nonneg
     (lam : Measure Γ) [MeasurableMul Γ] [IsProbabilityMeasure lam] [lam.IsMulRightInvariant]
     (nu : Measure Ω) [IsProbabilityMeasure nu]
@@ -1094,7 +1146,10 @@ section GaugeInvariance
 
 variable {N : ℕ}
 
-/-- The group inverse of an `SU(N)` element is its conjugate transpose. -/
+/-- `(u⁻¹ : SU N) = (u : Matrix _ _ ℂ)ᴴ`: the group inverse of a special unitary element is its
+conjugate transpose, from `Matrix.mem_unitaryGroup_iff'`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem coe_inv_eq_conjTranspose (u : MassGap.SUN.SU N) :
     ((u⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
       = Matrix.conjTranspose (u : Matrix (Fin N) (Fin N) ℂ) := by
@@ -1120,22 +1175,25 @@ theorem coe_inv_eq_conjTranspose (u : MassGap.SUN.SU N) :
           rw [← Matrix.mul_assoc, h1]
     _ = Matrix.conjTranspose (u : Matrix (Fin N) (Fin N) ℂ) := by rw [h3, Matrix.mul_one]
 
-/-- **`hsRe` reads the group element `a * b⁻¹`.** For unitary arguments the cross form is the
-`Re tr` of the word the straddling plaquette contributes. -/
+/-- `hsRe a b = (trace (a * b⁻¹)).re` for `a b : SU N`, by `coe_inv_eq_conjTranspose`. So the cross
+form is the real trace of the word a straddling plaquette contributes.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem hsRe_coe_eq (a b : MassGap.SUN.SU N) :
     hsRe (a : Matrix (Fin N) (Fin N) ℂ) (b : Matrix (Fin N) (Fin N) ℂ)
       = (Matrix.trace ((a * b⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re := by
   unfold hsRe
   rw [← coe_inv_eq_conjTranspose b, ← Submonoid.coe_mul]
 
-/-- **THE INVARIANCE HYPOTHESIS IS SATISFIABLE**, for one link's worth of gauge. The plane links act
-on the transverse link beside them by `F ↦ g · F · h⁻¹`, and the Wilson cross form does not see it:
-the two `h`'s cancel and the two `g`'s are a conjugation, which the trace is blind to. Cyclicity of
-the trace, not representation theory.
+/-- `hsRe (g * a * h⁻¹) (g * b * h⁻¹) = hsRe a b` at every `g, h, a, b` in `SU N`. Through
+`hsRe_coe_eq` the word becomes `g * (a * b⁻¹) * g⁻¹`, the two `h`s having cancelled, and the trace
+is invariant under conjugation.
 
-This is ONE matrix pair under ONE gauge pair. `wilson_crossing_pairing_nonneg`'s `hXinv` quantifies
-over the whole half at once, and the direct-sum version needed when several straddling plaquettes are
-read together is not proved here. -/
+Scope: one matrix pair under one gauge pair. `wilson_crossing_pairing_nonneg`'s `hXinv` quantifies
+over the whole half at once, and the direct-sum form needed when several straddling plaquettes are
+read together is not proved here.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem hsRe_conj (g h a b : MassGap.SUN.SU N) :
     hsRe ((g * a * h⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
         ((g * b * h⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
@@ -1155,12 +1213,13 @@ theorem hsRe_conj (g h a b : MassGap.SUN.SU N) :
     rw [Submonoid.coe_mul, Submonoid.coe_mul]
   rw [hcoe3, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hinv, Matrix.one_mul]
 
-/-- **NEGATIVE CONTROL for the invariance.** Invariance is a property of the CONJUGATION, not of
-multiplication: multiplying only one side changes the cross form. On the two control elements of
-`CharacterExpansion.NegControl` it moves the value from `3` to `−1`, so `hsRe_conj`'s two-sided shape
-is load-bearing and not an accident of `hsRe`.
+/-- `hsRe (cA 1 * cA 0) (cA 0) ≠ hsRe (cA 0) (cA 0)`: multiplying only one argument changes the
+cross form, so `hsRe_conj`'s two-sided shape is required. On these two control elements the value
+moves from `3` to `-1`.
 
-DERIVED: `3` and `−1` are the computed values `NegControl` already establishes. -/
+DERIVED: `1` and `0` are the two indices of `NegControl.cA`, selecting the non-identity control
+element and the identity; the values `3` and `-1` are the computed traces and appear in the
+proof. -/
 theorem negctl_hsRe_one_sided_not_invariant :
     hsRe (NegControl.cA 1 * NegControl.cA 0) (NegControl.cA 0)
       ≠ hsRe (NegControl.cA 0) (NegControl.cA 0) := by

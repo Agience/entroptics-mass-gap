@@ -1,58 +1,55 @@
 import MassGap.CellPerturb
 
 /-!
-# MassGap.CellCouple — the coupled-cell residual `δ`, and the volume it cannot reach
+# MassGap.CellCouple — quadratic-form bounds for a coupling written as a sum over bonds
 
-## The scalar this file is about
+`CellSpectrum.gap_of_form_perturbation` takes a decoupled `A` with gap `μ` and a residual bound
 
-`CellSpectrum.gap_of_form_perturbation` reduces "the coupled transfer is gapped" to ONE inequality:
-given a decoupled `A` with gap `μ` and
+    hδ : ∀ v, |v ⬝ᵥ (B *ᵥ v) - v ⬝ᵥ (A *ᵥ v)| ≤ δ * (v ⬝ᵥ v)      hδμ : 2 * δ < μ
 
-    hδμ : 2 * δ < μ        hδ : ∀ v, |v ⬝ᵥ (B *ᵥ v) - v ⬝ᵥ (A *ᵥ v)| ≤ δ * (v ⬝ᵥ v)
+and gives `B` the gap `μ - 2δ`. This file bounds such residuals when `B - A = ∑ b ∈ s, V b` is a sum
+of per-bond matrices, in two families of shapes.
 
-the coupled `B` keeps a gap `μ - 2δ`. Its own docstring says the development does not supply `δ`, and
-that "that bound IS the coupled-cell residual". This file supplies it, and the answer is negative for
-the volume-uniform statement: `δ` is bounded, by the elementary technique the cell already uses, and
-the bound is EXTENSIVE in the number of cells while the budget `μ/2` is a fixed number.
+## Absolute bounds: the cost is charged against `v ⬝ᵥ v`
 
-## What the coupling is
+`straddle_form_bound` bounds one bond's form by `2 * |lam| * (v ⬝ᵥ v)`, by `CellPerturb.adj_form_bound`
+applied to `(-lam) • Adj jmax`. `dotProduct_sum_mulVec` splits a sum's form into per-bond forms, and
+`coupling_form_le_bondCount` sums the per-bond bounds to `s.card * q * (v ⬝ᵥ v)`.
+`coupling_form_extensive` is the converse direction: if a single vector lowers every bond's form by
+at least `a`, every admissible `δ` satisfies `s.card * a ≤ δ`. `bondCount_lt_of_budget` and
+`form_perturbation_reaches_finitely_many` then combine `s.card * a ≤ δ` with `2 * δ < μ` to bound
+`s.card` by `μ / (2 * a)` when `0 < a`. `gap_of_bond_coupling` is
+`gap_of_form_perturbation` with the residual supplied by `coupling_form_le_bondCount`.
 
-Kogut–Susskind is `∑_links E² − λ ∑_plaquettes tr U_p`. Partition the links into cells. The electric
-term is one-link, so any such partition decouples it exactly. What is left is the plaquettes whose
-four links do not all lie in one cell, and in the character basis `tr U_p` is the nearest-neighbour
-hopping on that plaquette's own flux — `CellPerturb.Adj`, the very path-graph adjacency the single
-cell is built from. So the residual is
+## Relative bounds: the cost is charged against a local part
 
-    B − A = −λ ∑_{p straddling} Adj_p ,
+`relative_coupling_form_sum` sums per-bond bounds of the form `-c * (v ⬝ᵥ (A b *ᵥ v)) ≤ v ⬝ᵥ (V b *ᵥ v)`
+with the same `c` on both sides, so no `s.card` appears. `relative_of_absolute_form_bound` converts an
+absolute cost `q` plus a margin `m` into such a bound at `c = q / m`; `relative_of_local_bound` does
+the same charging against an arbitrary nominated quantity `loc`. `relative_sum_of_absolute_bonds` and
+`relative_sum_of_local_bonds` are the summed forms, `relative_of_dominated_locals` transports a bound
+against `∑ A b` to one against a dominating `Afull`, and `relative_full_of_absolute_bonds` /
+`relative_full_of_local_bonds` compose the two. `gap_of_relative_bonds` feeds the result to
+`CellSpectrum.coupled_gap_of_relative_coupling_bound`, concluding the gap `(1 - q / m) * mform`.
 
-a sum of LOCAL terms, one per bond of the cell adjacency graph.
+`shared_locals_force_shrinking_margin` is the constraint on the relative route: if every bond is
+charged against the SAME local part `A₀` and the sum is dominated by an `Afull` of form at most
+`M * (v ⬝ᵥ v)`, then `s.card * m ≤ M`, so a uniform `m` shrinks like `1 / s.card`.
 
-## The two halves, and why they close the question
+## The chain instance
 
-* `straddle_form_bound`: one straddling plaquette costs `2|λ|` in quadratic form — `adj_form_bound`
-  verbatim, the same AM–GM against the row and column sums, no spectral input. So `δ` CAN be bounded
-  by that technique. It is not a Weyl inequality and it is not a measurement.
-* `coupling_form_le_bondCount`: `n` bonds cost at most `n·q`. That is the whole of what summing gives.
-* `coupling_form_extensive`: the summed bound is NOT slack. If one vector lowers every bond by `a`,
-  then `δ ≥ n·a` for every admissible `δ`. Attaining the sum needs only a single configuration that
-  is extremal on each bond at once, which any diagonal (shared-link) coupling has and a product of
-  per-bond extremal states supplies in general.
-* `form_perturbation_reaches_finitely_many` / `chain_budget_fails`: `n·a ≤ δ` and `2δ < μ` force
-  `n < μ/(2a)`. The bond count is therefore BOUNDED, and a volume-uniform gap needs it unbounded.
+`flux2` is the two-state flux label, `bondCouple N a b` the diagonal cross term `-a * flux * flux` on
+bond `b` of a chain of `N + 1` cells, and `allExc N` the all-excited configuration.
+`bondCouple_form` evaluates one bond's form at that configuration to `-a`, `chain_coupling_extensive`
+concludes `N * a ≤ δ` for any `δ` bounding the summed form, and `chain_budget_fails` combines that
+with `form_perturbation_reaches_finitely_many`.
 
-So the route closes at a finite volume for every `μ` and every nonzero per-bond depth. That is not a
-defect of the bound: `coupling_form_extensive` shows the linear growth is real, not an artifact of the
-triangle inequality. What fails is norm perturbation applied to a many-body operator, which is the
-classical reason a spectral gap in the volume needs a cluster expansion rather than an operator-norm
-estimate — `CellSpectrum.coupling_form_add` already names this and stops one step short of proving it.
-
-`chain_coupling_extensive` makes it non-vacuous on a concrete chain: `N+1` two-state cells with the
-shared-link cross term on each of the `N` bonds, where the all-excited configuration is extremal on
-every bond simultaneously and `δ ≥ N·a` follows with no hypothesis beyond `a ≥ 0`.
-
-WHAT THIS DOES NOT SAY. It says nothing against the gap itself. `δ` extensive means the METHOD cannot
-see the gap, not that the gap is absent; measured on the same chain (`certify/cell_chain_coupling.py`)
-the coupled spectral gap stays at the single-cell value while `δ` grows linearly in the cell count.
+Scope: everything here is about quadratic forms of real matrices at a single vector or on a
+subspace; no operator norms, spectra or eigenvalues appear except in `gap_of_relative_bonds` and
+`gap_of_bond_coupling`, which pass them straight to `CellSpectrum`. The identification of `V b` with
+a straddling plaquette's magnetic term is a reading, not a theorem here: the matrices are arguments.
+In `relative_full_of_local_bonds` and `relative_full_of_absolute_bonds` the apportionment
+`∑ A b ≤ Afull` is a hypothesis.
 -/
 
 namespace MassGap.CellEnclosure
@@ -60,13 +57,17 @@ namespace MassGap.CellEnclosure
 open scoped Matrix
 open Matrix
 
-/-! ### One bond: the form bound, by the cell's own AM–GM -/
+/-! ### One bond: an absolute form bound from `CellPerturb.adj_form_bound` -/
 
-/-- **A straddling plaquette costs `2|λ|` in quadratic form.** The magnetic term of a plaquette whose
-links are split between two cells is `−λ · Adj` in the character basis, and `adj_form_bound` — pure
-AM–GM against the row and column sums of the 0/1 path-graph adjacency — bounds its form by
-`2|λ|‖v‖²`. So the answer to "can `δ` be bounded by the same technique as `CellPerturb`" is yes, per
-bond, with the same constant `2` and no spectral input. -/
+/-- `|v ⬝ᵥ (((-lam) • Adj jmax) *ᵥ v)| ≤ 2 * |lam| * (v ⬝ᵥ v)` for any real `lam` and any vector.
+The scalar is pulled out of the form, and `CellPerturb.adj_form_bound` — AM–GM against the row and
+column sums of the `0`/`1` path-graph adjacency — supplies the remaining factor.
+
+Scope: `lam` is unconstrained in sign, and the bound uses no spectral information about `Adj jmax`.
+This is one matrix, not a sum.
+
+DERIVED: `2` is `adj_form_bound`'s own constant, the maximum degree of the path-graph adjacency —
+two neighbours per interior vertex. -/
 theorem straddle_form_bound (jmax : ℕ) (lam : ℝ) (v : Fin (dim jmax) → ℝ) :
     |v ⬝ᵥ (((-lam) • Adj jmax) *ᵥ v)| ≤ 2 * |lam| * (v ⬝ᵥ v) := by
   have hvv : 0 ≤ v ⬝ᵥ v := Finset.sum_nonneg (fun i _ => mul_self_nonneg (v i))
@@ -77,13 +78,16 @@ theorem straddle_form_bound (jmax : ℕ) (lam : ℝ) (v : Fin (dim jmax) → ℝ
   have hb := adj_form_bound jmax v
   nlinarith [abs_nonneg lam, abs_nonneg (v ⬝ᵥ (Adj jmax *ᵥ v))]
 
-/-! ### Many bonds: the sum, and that the sum is attained -/
+/-! ### Sums over bonds: the upper bound, and when it is attained -/
 
 section BondDecomposition
 
 variable {ι : Type*} [Fintype ι] {β : Type*} [DecidableEq β]
 
-/-- The quadratic form of a sum of couplings is the sum of their forms. -/
+/-- `v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) = ∑ b ∈ s, v ⬝ᵥ (V b *ᵥ v)`: the quadratic form is additive in the
+matrix. Proved by induction on the `Finset`, using `Matrix.add_mulVec` and `dotProduct_add`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem dotProduct_sum_mulVec (s : Finset β) (V : β → Matrix ι ι ℝ) (v : ι → ℝ) :
     v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) = ∑ b ∈ s, v ⬝ᵥ (V b *ᵥ v) := by
   classical
@@ -92,9 +96,15 @@ theorem dotProduct_sum_mulVec (s : Finset β) (V : β → Matrix ι ι ℝ) (v :
   · intro b s' hb ih
     rw [Finset.sum_insert hb, Matrix.add_mulVec, dotProduct_add, ih, Finset.sum_insert hb]
 
-/-- **Upper bound: `n` bonds at form cost `q` each give `δ ≤ n·q`.** The triangle inequality applied
-to the bond decomposition — the whole of what the per-bond technique yields at the volume, and the
-number `gap_of_form_perturbation` would have to fit inside `μ/2`. -/
+/-- If `|v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v)` at every `b ∈ s`, then
+`|v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)| ≤ s.card * q * (v ⬝ᵥ v)`. The form is split by
+`dotProduct_sum_mulVec`, the triangle inequality applied, and the constant sum evaluated.
+
+Scope: the bound is proportional to the number of bonds. `coupling_form_extensive` gives the
+matching lower bound when one vector is extremal on every bond at once.
+
+DERIVED: no numeral appears in the statement; `s.card` is the bond count and `q` the caller's
+per-bond cost. -/
 theorem coupling_form_le_bondCount (s : Finset β) (V : β → Matrix ι ι ℝ) (q : ℝ) (v : ι → ℝ)
     (hq : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v)) :
     |v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)| ≤ (s.card : ℝ) * q * (v ⬝ᵥ v) := by
@@ -104,15 +114,16 @@ theorem coupling_form_le_bondCount (s : Finset β) (V : β → Matrix ι ι ℝ)
     _ ≤ ∑ _b ∈ s, q * (v ⬝ᵥ v) := Finset.sum_le_sum hq
     _ = (s.card : ℝ) * q * (v ⬝ᵥ v) := by rw [Finset.sum_const, nsmul_eq_mul]; ring
 
-/-- **Lower bound: the summed cost is not slack.** If ONE vector lowers every bond's form by at least
-`a`, then every `δ` admissible in `gap_of_form_perturbation`'s `hδ` satisfies `δ ≥ n·a` with `n` the
-bond count. So the linear growth in `coupling_form_le_bondCount` is a property of the coupling, not of
-the triangle inequality: no sharper form bound can avoid it. `a ≥ 0` is NOT assumed and is not needed:
-at a negative depth both the hypothesis and the conclusion weaken together.
+/-- Given a single vector `v` with `0 < v ⬝ᵥ v` such that `v ⬝ᵥ (V b *ᵥ v) ≤ -a * (v ⬝ᵥ v)` at every
+`b ∈ s`, any `δ` with `|v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)| ≤ δ * (v ⬝ᵥ v)` satisfies `s.card * a ≤ δ`. The
+per-bond bounds sum to `-(s.card * a * (v ⬝ᵥ v))`, which `neg_le_abs` compares with the assumed
+bound; dividing by `v ⬝ᵥ v` finishes.
 
-A single vector extremal on every bond at once is what a coupling diagonal in a product basis always
-has — the shared-link electric term is of that kind — and what a product of per-bond extremal states
-supplies whenever the bond terms act on distinct factors, which is the straddling-plaquette case. -/
+Scope: `a` is not assumed nonnegative — at a negative `a` both hypothesis and conclusion weaken
+together. The hypothesis needs ONE vector extremal on every bond simultaneously, which a coupling
+diagonal in a product basis has and `bondCouple_form` supplies for the chain.
+
+DERIVED: `0` is the strict lower bound on `v ⬝ᵥ v`, required so it can be divided out. -/
 theorem coupling_form_extensive (s : Finset β) (V : β → Matrix ι ι ℝ) {a δ : ℝ}
     (v : ι → ℝ) (hv : 0 < v ⬝ᵥ v)
     (hbond : ∀ b ∈ s, v ⬝ᵥ (V b *ᵥ v) ≤ -a * (v ⬝ᵥ v))
@@ -127,18 +138,17 @@ theorem coupling_form_extensive (s : Finset β) (V : β → Matrix ι ι ℝ) {a
   have h2 : (s.card : ℝ) * a * (v ⬝ᵥ v) ≤ δ * (v ⬝ᵥ v) := by linarith
   exact le_of_mul_le_mul_right h2 hv
 
-/-- **⭐ THE RELATIVE BOUND DOES NOT COUNT BONDS.** If every bond's coupling is bounded below by
-`−c` times the form of its OWN unperturbed part — rather than by `−c` times the global `‖x‖²` — then
-the sum obeys the same bound against the summed unperturbed part, **with the same `c`**. There is no
-`s.card` on the right.
+/-- If `-c * (v ⬝ᵥ (A b *ᵥ v)) ≤ v ⬝ᵥ (V b *ᵥ v)` at every `b ∈ s`, then
+`-c * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)`. Both sides are split by
+`dotProduct_sum_mulVec` and the per-bond inequalities added.
 
-This is the non-extensive companion of `CellSpectrum.coupling_form_add`, and the contrast is the
-point: `coupling_form_le_bondCount` gives `n·q` because each bond is charged against the whole
-vector, while here each bond is charged against the energy it sits on and the charges add on both
-sides. `coupling_form_extensive` shows the `n·a` growth is real for the ABSOLUTE bound; it says
-nothing about this one.
+The same `c` appears on both sides and `s.card` does not occur, because each bond's cost is charged
+against its own `A b` rather than against a quantity shared between bonds.
 
-DERIVED: no numeral. The sign of `c` is not used — the inequality sums whatever it is. -/
+Scope: the sign of `c` is not used; the inequality is summed as given. The `A b` are arbitrary
+matrices supplied by the caller.
+
+DERIVED: no numeral appears in the statement. -/
 theorem relative_coupling_form_sum (s : Finset β) (V A : β → Matrix ι ι ℝ) {c : ℝ} (v : ι → ℝ)
     (hrel : ∀ b ∈ s, -c * (v ⬝ᵥ (A b *ᵥ v)) ≤ v ⬝ᵥ (V b *ᵥ v)) :
     -c * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v) := by
@@ -147,14 +157,18 @@ theorem relative_coupling_form_sum (s : Finset β) (V A : β → Matrix ι ι �
 
 #print axioms relative_coupling_form_sum
 
-/-- **⭐ AN ABSOLUTE BOND BOUND PLUS A LOCAL MARGIN IS A RELATIVE BOND BOUND**, with `c = q / m`.
+/-- From an absolute bound `|v ⬝ᵥ (V *ᵥ v)| ≤ q * (v ⬝ᵥ v)` with `0 ≤ q`, and a margin
+`m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A *ᵥ v)` with `0 < m`, it follows that
+`-(q / m) * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v)`. The coefficient `-(q / m)` is nonpositive, so applying
+it to the margin reverses that inequality, and the result is exactly the lower half of the absolute
+bound.
 
-This is the conversion the cell already has both halves of: `straddle_form_bound` supplies the
-absolute cost `q` per bond by AM–GM with no spectral input, and `CellSpectrum.diag_form_margin`
-supplies the local margin `m` from the excited Casimir. Nothing new is measured.
+`straddle_form_bound` is one source of `q`; `CellSpectrum.diag_form_margin` is one source of `m`.
+Both are hypotheses here.
 
-DERIVED: `q / m` is the ratio of the two supplied constants, not a choice; the `0`s are the
-sign conditions those constants must meet for the division to run the right way. -/
+DERIVED: `0` occurs twice, as the lower bound on the cost `q` and the strict lower bound on the
+margin `m`; the latter is what allows division by `m`. The constant `q / m` is the ratio of the two
+supplied quantities. -/
 theorem relative_of_absolute_form_bound {V A : Matrix ι ι ℝ} {q m : ℝ} (hq : 0 ≤ q)
     (hm : 0 < m) (v : ι → ℝ)
     (habs : |v ⬝ᵥ (V *ᵥ v)| ≤ q * (v ⬝ᵥ v))
@@ -171,18 +185,18 @@ theorem relative_of_absolute_form_bound {V A : Matrix ι ι ℝ} {q m : ℝ} (hq
 
 #print axioms relative_of_absolute_form_bound
 
-/-- **⭐ THE SAME, AGAINST THE BOND'S OWN LOCAL MASS.** `relative_of_absolute_form_bound` charges the
-cost against the global `v ⊙ v`; this charges it against any quantity `loc` the caller nominates.
-The proof never uses what the mass is, so the generalisation is free — and it is the one that
-matters, because `shared_locals_force_shrinking_margin` says the relative route degenerates exactly
-when every bond is charged against the same thing.
+/-- `relative_of_absolute_form_bound` with `v ⬝ᵥ v` replaced by an arbitrary real `loc`: from
+`|v ⬝ᵥ (V *ᵥ v)| ≤ q * loc` with `0 ≤ q`, and `δ * loc ≤ v ⬝ᵥ (A *ᵥ v)` with `0 < δ`, it follows that
+`-(q / δ) * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v)`.
 
-For a straddling plaquette `loc` is the mass carried on its OWN four links. Its cost vanishes with
-that mass — the magnetic term is off-diagonal in the flux basis, so on a definite-flux state with no
-flux on those links both sides are `0` — where a global margin `m > 0` would be false there.
+The proof never uses what `loc` is, so the caller may nominate any quantity — for instance the mass
+carried on one bond's own links, which lets the cost vanish where that mass does. A bound charged
+against a shared quantity is the case `shared_locals_force_shrinking_margin` constrains.
 
-DERIVED: `q / δ` is the ratio of the two supplied constants; the `0`s are the sign conditions that
-make the division run the right way. -/
+Scope: `loc` is unconstrained, including in sign.
+
+DERIVED: `0` occurs twice, as the lower bound on the cost `q` and the strict lower bound on the
+margin `δ`, the latter allowing division by `δ`. -/
 theorem relative_of_local_bound {V A : Matrix ι ι ℝ} {q δ loc : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ)
     (v : ι → ℝ)
     (habs : |v ⬝ᵥ (V *ᵥ v)| ≤ q * loc)
@@ -199,22 +213,15 @@ theorem relative_of_local_bound {V A : Matrix ι ι ℝ} {q δ loc : ℝ} (hq : 
 
 #print axioms relative_of_local_bound
 
-/-- **⭐⭐ AND SUMMING THEM KEEPS ONE CONSTANT, WITH THE MASSES ALL DIFFERENT.**
+/-- With a per-bond quantity `loc : β → ℝ`, given `|v ⬝ᵥ (V b *ᵥ v)| ≤ q * loc b` and
+`δ * loc b ≤ v ⬝ᵥ (A b *ᵥ v)` at every `b ∈ s`, with `0 ≤ q` and `0 < δ`, the summed bound is
+`-(q / δ) * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)`. It is
+`relative_of_local_bound` per bond, summed by `relative_coupling_form_sum`.
 
-Each bond carries its own `loc b`: its cost is `q·loc b` and its margin `δ·loc b`. The summed bound
-is `−(q/δ)` against the summed local parts — **no `s.card`, and no single mass shared between
-bonds.** This is the hypothesis shape `shared_locals_force_shrinking_margin` leaves open, and the
-one the lattice presents.
+`s.card` does not appear, and the `loc b` may differ from bond to bond — the case
+`shared_locals_force_shrinking_margin` leaves open.
 
-Set the three side by side, all from per-bond data:
-
-* `coupling_form_le_bondCount` — global mass, absolute: `n·q`. Extensive, and
-  `coupling_form_extensive` shows that is real.
-* `relative_sum_of_absolute_bonds` — global mass, relative: `q/m`, but `m` must hold on every bond
-  against the whole vector, which `shared_locals_force_shrinking_margin` collapses to `M/n`.
-* **this one** — own mass, relative: `q/δ`, and the masses differ, so nothing collapses.
-
-DERIVED: the `0`s are the sign conditions on `q` and `δ`; no other numeral. -/
+DERIVED: `0` occurs twice, as the lower bound on `q` and the strict lower bound on `δ`. -/
 theorem relative_sum_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) (loc : β → ℝ)
     {q δ : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ) (v : ι → ℝ)
     (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * loc b)
@@ -226,24 +233,23 @@ theorem relative_sum_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι �
 #print axioms relative_sum_of_local_bonds
 
 
-/-- **⭐⭐ SO THE SUMMED COST CARRIES NO BOND COUNT.** From the SAME per-bond inputs that
-`coupling_form_le_bondCount` consumes — an absolute cost `q` on each bond — together with a local
-margin `m` on each bond, the summed coupling obeys
+/-- From the same per-bond costs `coupling_form_le_bondCount` consumes — `|v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v)`
+with `0 ≤ q` — together with per-bond margins `m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A b *ᵥ v)` with `0 < m`, the
+summed bound is
 
-    −(q/m) · ⟨v, (∑ A_b) v⟩ ≤ ⟨v, (∑ V_b) v⟩
+    -(q / m) * (v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v).
 
-and **`s.card` does not appear**. Set beside `coupling_form_le_bondCount`'s `n·q·⟨v,v⟩`, the two
-differ only in what the cost is charged against: the global vector, or the energy each bond sits on.
+It is `relative_of_absolute_form_bound` per bond, summed by `relative_coupling_form_sum`. `s.card`
+does not appear; the difference from `coupling_form_le_bondCount` is what the cost is charged
+against.
 
-`coupling_form_extensive` shows the `n·a` growth of the ABSOLUTE bound is real and not an artifact of
-the triangle inequality. It is equally not a statement about this one — and
-`form_perturbation_reaches_finitely_many` caps the bond count only for the absolute route.
+Scope: here every bond's margin is against the same `v ⬝ᵥ v`, which is the hypothesis shape
+`shared_locals_force_shrinking_margin` constrains. The `A b` are whatever matrices the caller
+supplies; nothing here identifies them with the local parts of a particular operator, and nothing
+here proves `∑ b ∈ s, A b` is dominated by any full operator.
 
-**⛔ WHAT IS STILL MISSING.** The `A b` here are whatever local parts the caller supplies, and for
-the physical Kogut–Susskind coupling they must (i) be the electric terms of the bond's own links and
-(ii) sum to at most the full electric term. Links are shared between plaquettes, so (ii) needs each
-link's energy apportioned among the plaquettes containing it — a factor set by the COORDINATION
-NUMBER, not by the volume. That apportionment is not proved here. -/
+DERIVED: `0` occurs twice, as the lower bound on the cost `q` and the strict lower bound on the
+margin `m`. -/
 theorem relative_sum_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) {q m : ℝ}
     (hq : 0 ≤ q) (hm : 0 < m) (v : ι → ℝ)
     (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v))
@@ -254,20 +260,16 @@ theorem relative_sum_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι �
 
 #print axioms relative_sum_of_absolute_bonds
 
-/-- **⭐ LOCAL PARTS THAT DO NOT OVER-COUNT CARRY THE BOUND TO THE FULL OPERATOR.** A relative bound
-against the summed local parts becomes one against the whole unperturbed operator as soon as the
-locals are dominated by it in form. The coefficient is negative, so domination pushes the left side
-DOWN and the inequality survives.
+/-- Given `0 ≤ c`, a relative bound `-c * (v ⬝ᵥ (Aloc *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v)` and a domination
+`v ⬝ᵥ (Aloc *ᵥ v) ≤ v ⬝ᵥ (A *ᵥ v)`, it follows that `-c * (v ⬝ᵥ (A *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v)`. The
+coefficient `-c` is nonpositive, so domination moves the left side down and the inequality survives.
 
-This is the apportionment link, and it is where the lattice's incidence enters rather than its size.
-For Kogut–Susskind, giving each plaquette a sixth of the electric energy of its own four links makes
-the sum over ALL plaquettes return each link exactly once — in four dimensions a link lies in six
-plaquettes — so the sum over the STRADDLING ones is at most the full electric term. The factor is the
-COORDINATION NUMBER and does not move with the volume, which is the whole difference from
-`coupling_form_le_bondCount`, whose factor is the bond count.
+Scope: `hdom` is a hypothesis at the single vector `v`. Nothing here constructs `Aloc` or proves it
+is dominated by `A`; for a physical coupling that would be an apportionment of each link's energy
+among the plaquettes containing it.
 
-DERIVED: the `0` is the sign condition on `c`, which is what makes domination push the left
-side down rather than up. No other numeral. -/
+DERIVED: `0` is the lower bound on `c`, which is what makes the coefficient nonpositive and so fixes
+the direction of the final step. -/
 theorem relative_of_dominated_locals {V A Aloc : Matrix ι ι ℝ} {c : ℝ} (hc : 0 ≤ c) (v : ι → ℝ)
     (hrel : -c * (v ⬝ᵥ (Aloc *ᵥ v)) ≤ v ⬝ᵥ (V *ᵥ v))
     (hdom : v ⬝ᵥ (Aloc *ᵥ v) ≤ v ⬝ᵥ (A *ᵥ v)) :
@@ -278,15 +280,18 @@ theorem relative_of_dominated_locals {V A Aloc : Matrix ι ι ℝ} {c : ℝ} (hc
 
 #print axioms relative_of_dominated_locals
 
-/-- **⭐⭐⭐ AND TO THE FULL OPERATOR.** With the apportionment `∑ A_b ≤ A`, the per-bond local data
-bounds the whole coupling relative to the whole unperturbed operator by `q/δ`.
+/-- `relative_sum_of_local_bonds` followed by `relative_of_dominated_locals`: with per-bond costs
+`q * loc b`, per-bond margins `δ * loc b`, `0 ≤ q`, `0 < δ`, and the domination
+`v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v) ≤ v ⬝ᵥ (Afull *ᵥ v)`, the conclusion is
+`-(q / δ) * (v ⬝ᵥ (Afull *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)`.
 
-**This is the statement the straddling plaquette has to meet**, and every quantity in it is local:
-`q` is the bond's cost coefficient, `δ` its margin coefficient, `loc b` the mass on its own links,
-and the apportionment is the coordination count. Feed the result to
-`CellSpectrum.coupled_gap_of_relative_coupling_bound` for the gap `(1 − q/δ)·mform`.
+The constant is `q / δ` and carries no bond count. `CellSpectrum.coupled_gap_of_relative_coupling_bound`
+consumes a bound of exactly this shape.
 
-DERIVED: the `0`s are the sign conditions on `q` and `δ`; no other numeral. -/
+Scope: `loc`, the `A b` and `Afull` are all the caller's, and the domination `hdom` is a hypothesis
+at the single vector `v`.
+
+DERIVED: `0` occurs twice, as the lower bound on `q` and the strict lower bound on `δ`. -/
 theorem relative_full_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ) (loc : β → ℝ)
     (Afull : Matrix ι ι ℝ) {q δ : ℝ} (hq : 0 ≤ q) (hδ : 0 < δ) (v : ι → ℝ)
     (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * loc b)
@@ -298,19 +303,19 @@ theorem relative_full_of_local_bonds (s : Finset β) (V A : β → Matrix ι ι 
 
 #print axioms relative_full_of_local_bonds
 
-/-- **⭐⭐ THE WHOLE NON-EXTENSIVE CHAIN, IN ONE STATEMENT.** From the per-bond inputs the cell
-already supplies — an absolute cost `q` on each bond and a local margin `m` on each bond — together
-with the apportionment `∑ A_b ≤ A`, the full coupling is bounded relative to the full unperturbed
-operator by `q/m`. **No bond count occurs anywhere**, in the statement or the proof.
+/-- `relative_sum_of_absolute_bonds` followed by `relative_of_dominated_locals`: with per-bond costs
+`q * (v ⬝ᵥ v)`, per-bond margins `m * (v ⬝ᵥ v)`, `0 ≤ q`, `0 < m`, and the domination
+`v ⬝ᵥ ((∑ b ∈ s, A b) *ᵥ v) ≤ v ⬝ᵥ (Afull *ᵥ v)`, the conclusion is
+`-(q / m) * (v ⬝ᵥ (Afull *ᵥ v)) ≤ v ⬝ᵥ ((∑ b ∈ s, V b) *ᵥ v)`.
 
-Set against `coupling_form_le_bondCount` (`n·q`) and `coupling_form_extensive` (`n·a` is attained),
-this is the same per-bond data yielding a volume-independent constant, because the cost is charged
-against the energy each bond sits on instead of against the global vector.
+Neither the statement nor the proof mentions `s.card`. It is the input
+`CellSpectrum.coupled_gap_of_relative_coupling_bound` takes, and `gap_of_relative_bonds` makes that
+composition.
 
-Feed the result to `CellSpectrum.coupled_gap_of_relative_coupling_bound`, which needs `q/m < 1` and
-returns the gap `(1 − q/m)·m` — again with no bond count.
+Scope: every bond's margin is against the same `v ⬝ᵥ v`, the case
+`shared_locals_force_shrinking_margin` constrains. `hdom` is a hypothesis at the single vector `v`.
 
-DERIVED: the `0`s are the sign conditions on `q` and `m`; no other numeral. -/
+DERIVED: `0` occurs twice, as the lower bound on `q` and the strict lower bound on `m`. -/
 theorem relative_full_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι ι ℝ)
     (Afull : Matrix ι ι ℝ) {q m : ℝ} (hq : 0 ≤ q) (hm : 0 < m) (v : ι → ℝ)
     (habs : ∀ b ∈ s, |v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v))
@@ -322,20 +327,17 @@ theorem relative_full_of_absolute_bonds (s : Finset β) (V A : β → Matrix ι 
 
 #print axioms relative_full_of_absolute_bonds
 
-/-- **⛔⭐ THE CONTROL: SHARED LOCALS PUT THE BOND COUNT BACK.**
+/-- Suppose every bond is charged against the SAME local part `A₀`: `m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A₀ *ᵥ v)`,
+the constant sum `∑ _b ∈ s, A₀` is dominated in form by `Afull`, and `v ⬝ᵥ (Afull *ᵥ v) ≤ M * (v ⬝ᵥ v)`.
+Then `s.card * m ≤ M`. The constant sum evaluates to `s.card` copies of `A₀`'s form, and dividing by
+`0 < v ⬝ᵥ v` gives the bound.
 
-If every bond is charged against the SAME local part `A₀`, the apportionment forces
-`s.card · m ≤ M`, so a uniform margin `m` shrinks like `1/n` and `q/m` is extensive again. **The
-relative bound is therefore not automatically non-extensive**: it buys nothing unless the local
-parts are genuinely different from one another.
+So a uniform margin over bonds sharing one local part is at most `M / s.card`, and `q / m` in
+`relative_sum_of_absolute_bonds` then grows with the bond count. The hypotheses of the relative route
+are satisfiable at a bond-count-independent `q / m` only when the local parts differ between bonds,
+which is the case `relative_sum_of_local_bonds` covers.
 
-That is the requirement the lattice meets and the reason the route can work there — each straddling
-plaquette is charged against the electric energy of ITS OWN four links, and distinct plaquettes
-charge distinct links up to the fixed coordination multiplicity. It is a fact about the incidence,
-to be proved rather than assumed, and this theorem is what makes the requirement explicit.
-
-DERIVED: the `0` is the sign condition on the vector's own form, needed to divide it out at
-the end. No other numeral. -/
+DERIVED: `0` is the strict lower bound on `v ⬝ᵥ v`, required so it can be divided out. -/
 theorem shared_locals_force_shrinking_margin (s : Finset β) (A₀ Afull : Matrix ι ι ℝ) {m M : ℝ}
     (v : ι → ℝ) (hv : 0 < v ⬝ᵥ v)
     (hmar : m * (v ⬝ᵥ v) ≤ v ⬝ᵥ (A₀ *ᵥ v))
@@ -351,23 +353,26 @@ theorem shared_locals_force_shrinking_margin (s : Finset β) (A₀ Afull : Matri
 
 #print axioms shared_locals_force_shrinking_margin
 
-/-- **⭐⭐⭐ THE VOLUME-UNIFORM GAP FROM PER-BOND DATA.** The chain, composed: per-bond costs `q`,
-per-bond local margins `m`, the apportionment `∑ A_b ≤ H₀`, and `q/m < 1` give the spectral gap
+/-- `CellSpectrum.coupled_gap_of_relative_coupling_bound` with its coupling bound supplied by
+`relative_full_of_absolute_bonds`. Given per-bond costs `q` and margins `m` on a subspace `W` of
+codimension at most one, a form floor `mform` for `H₀` on `W`, the domination
+`∑ b ∈ s, A b ≤ H₀` on `W`, `0 ≤ q`, `0 < m`, `q / m < 1` and `0 < (1 - q / m) * mform`, the
+Hermitian `H₀ + ∑ b ∈ s, V b` satisfies
+`(1 - q / m) * mform ≤ hH.eigenvalues i - hH.eigenvalues i₀` for every `i ≠ i₀`, where `i₀` indexes a
+nonpositive eigenvalue.
 
-    (1 − q/m) · mform
+The bond set appears in the hypotheses and not in the conclusion's constant.
 
-for the COUPLED operator `H₀ + ∑ V_b`. **The bond set occurs in the hypotheses and nowhere in the
-conclusion's constant.** Contrast `bondCount_lt_of_budget`, which caps the bond count for the
-absolute route at `μ/(2a)`.
+Scope: `hmar` requires the margin `m` against the same `x ⬝ᵥ x` at every bond, which is the shape
+`shared_locals_force_shrinking_margin` bounds by `M / s.card` when the local parts coincide. The
+subspace condition `N ≤ Module.finrank ℝ W + 1` and the existence of a nonpositive eigenvalue are
+hypotheses.
 
-**⛔ Read `shared_locals_force_shrinking_margin` before instantiating.** A uniform `m` over bonds
-sharing one local part collapses to `M/s.card`, which puts the bond count straight back into `q/m`.
-The hypotheses here are satisfiable at a volume-independent `q/m` only when the local parts are
-genuinely distinct.
-
-DERIVED: `1` is `coupled_gap_of_relative_coupling_bound`'s threshold, forced there rather than
-chosen here; the `0`s are the sign conditions on `q`, `m` and the gap. No numeral of this
-theorem's own. -/
+DERIVED: `0` occurs four times — the lower bound on `q`, the strict lower bound on `m`, the strict
+lower bound on the gap `(1 - q / m) * mform`, and the upper bound on the eigenvalue at `i₀`. `1`
+occurs four times — the threshold `q / m < 1`, the `1 -` in the gap hypothesis, the `+ 1` in the
+codimension condition, and the `1 -` in the conclusion; all four are
+`coupled_gap_of_relative_coupling_bound`'s own. -/
 theorem gap_of_relative_bonds {N : ℕ} (s : Finset β) (V A : β → Matrix (Fin N) (Fin N) ℝ)
     (H₀ : Matrix (Fin N) (Fin N) ℝ) (hH : (H₀ + ∑ b ∈ s, V b).IsHermitian)
     {q m mform : ℝ} (hq : 0 ≤ q) (hm : 0 < m) (hlt : q / m < 1)
@@ -390,21 +395,32 @@ theorem gap_of_relative_bonds {N : ℕ} (s : Finset β) (V A : β → Matrix (Fi
 
 end BondDecomposition
 
-/-! ### The budget is a fixed number, so the bond count it admits is finite -/
+/-! ### Combining an extensive lower bound on `δ` with the budget `2 * δ < μ` -/
 
-/-- **The budget caps the bond count.** At a STRICTLY POSITIVE per-bond depth `a` — load-bearing, and the conclusion is false without it — an extensive residual `n·a ≤ δ` and the hypothesis `2δ < μ`
-of `gap_of_form_perturbation` together force `n < μ/(2a)`. Nothing about the lattice enters: this is
-the arithmetic of the two hypotheses, and it is where the route ends. -/
+/-- For `0 < a`, `n * a ≤ δ` and `2 * δ < μ`, it follows that `(n : ℝ) < μ / (2 * a)`. Multiplying
+out the division by the positive `2 * a` reduces it to `2 * (n * a) ≤ 2 * δ < μ`.
+
+Scope: `0 < a` is required — at `a = 0` the hypothesis `n * a ≤ δ` constrains nothing and the
+division is undefined. This is arithmetic on the two hypotheses; no matrix or lattice appears.
+
+DERIVED: `0` is the strict lower bound on `a`; `2` occurs twice, as the factor in the budget
+`2 * δ < μ` and in the resulting divisor `2 * a`, both inherited from
+`CellSpectrum.gap_of_form_perturbation`'s hypothesis shape. -/
 theorem bondCount_lt_of_budget {n : ℕ} {a δ μ : ℝ} (ha : 0 < a)
     (hext : (n : ℝ) * a ≤ δ) (hbud : 2 * δ < μ) : (n : ℝ) < μ / (2 * a) := by
   have h : (n : ℝ) * (2 * a) = 2 * ((n : ℝ) * a) := by ring
   rw [lt_div_iff₀ (by linarith : (0 : ℝ) < 2 * a), h]
   linarith
 
-/-- **The form-perturbation route reaches only finitely many volumes.** For every gap `μ` and every
-strictly positive per-bond depth `a` there is a bond count `N₀` past which NO `δ` consistent with the
-extensive lower bound satisfies `2δ < μ`. A volume-uniform gap needs the hypothesis at every volume,
-so this closes `gap_of_form_perturbation` as a route to `product_volume_gap`'s coupled counterpart. -/
+/-- For every real `μ` and every `a` with `0 < a`, there is an `N₀ : ℕ` such that for all `n ≥ N₀`
+and every `δ` with `n * a ≤ δ`, the budget `2 * δ < μ` fails. `N₀` is any natural above
+`μ / (2 * a)`, and `bondCount_lt_of_budget` supplies the contradiction.
+
+Scope: a statement about the two numerical hypotheses; it says nothing about any operator's
+spectrum. `0 < a` is required, and `μ` is unconstrained in sign.
+
+DERIVED: `0` is the strict lower bound on `a`; `2` is the factor in the budget `2 * δ < μ`,
+inherited from `CellSpectrum.gap_of_form_perturbation`. -/
 theorem form_perturbation_reaches_finitely_many (a μ : ℝ) (ha : 0 < a) :
     ∃ N₀ : ℕ, ∀ n : ℕ, N₀ ≤ n → ∀ δ : ℝ, (n : ℝ) * a ≤ δ → ¬ (2 * δ < μ) := by
   obtain ⟨N₀, hN₀⟩ := exists_nat_gt (μ / (2 * a))
@@ -413,40 +429,49 @@ theorem form_perturbation_reaches_finitely_many (a μ : ℝ) (ha : 0 < a) :
   have hcast : (N₀ : ℝ) ≤ (n : ℝ) := Nat.cast_le.mpr hn
   linarith
 
-/-! ### A concrete chain, so the negative is not vacuous
+/-! ### A chain instance satisfying the extensive lower bound
 
-`N+1` two-state cells in a row (the `j = 0, 1/2` truncation `CellSpectrum.Hcell2` already uses), with
-the shared-link electric cross term on each of the `N` bonds. The all-excited configuration is
-extremal on every bond at once, which is what `coupling_form_extensive` asks for. -/
+`N + 1` two-state cells in a row — the `j = 0, 1/2` truncation `CellSpectrum.Hcell2` uses — with a
+diagonal cross term on each of the `N` bonds. The all-excited configuration is extremal on every bond
+at once, which is the hypothesis `coupling_form_extensive` consumes. -/
 
-/-- The flux label of a two-state cell: `0` at the vacuum `j = 0`, `1` at the excited `j = 1/2`.
+/-- `flux2 : Fin 2 → ℝ`, sending index `0` to `0` and index `1` to `1`: the flux label of a two-state
+cell, `0` at the vacuum `j = 0` and `1` at the excited `j = 1/2`.
 
-DERIVED: these are the character indices themselves (`i = 2j ∈ {0, 1}` in `CellEnclosure.dim 0 + 1`),
-not a parametrisation. The shared-link energy is a function of the fluxes, so the flux is what the
-coupling reads. -/
+DERIVED: `2` is the number of states in the truncation, the size of the index type; the index `0` is
+the vacuum state and its value `0` the vacuum flux; `1` is the flux at the other state. These are the
+character indices themselves, not a parametrisation. -/
 def flux2 : Fin 2 → ℝ := fun i => if i = 0 then 0 else 1
 
 lemma flux2_one : flux2 1 = 1 := by
   unfold flux2
   rw [if_neg (by decide : ¬ ((1 : Fin 2) = 0))]
 
-/-- The shared-link cross term on bond `b` of a chain of `N+1` two-state cells, at depth `a`.
+/-- The diagonal matrix on configurations `Fin (N + 1) → Fin 2` whose entry at `s` is
+`-a * (flux2 (s b.castSucc) * flux2 (s b.succ))`: the cross term on bond `b`, coupling the two cells
+it joins through their fluxes.
 
-DERIVED: the SHAPE is the cross term of the shared link's electric energy. A link carried by two
-neighbouring plaquettes has energy `(n_c − n_{c+1})² = n_c² + n_{c+1}² − 2 n_c n_{c+1}`; the squares
-are one-cell and belong to the decoupled part, so the entire two-cell content is `−2 n_c n_{c+1}`.
-`a` carries that `2` together with the electric scale rather than fixing a unit here, so the theorems
-below hold at whatever depth the group and the coupling produce. `Fin 2` is the two-state truncation
-`Hcell2`, `Fin (N+1)` the cells and `Fin N` the bonds between them. -/
+The shape is that of a shared link's electric cross term: a link carried by two neighbouring cells
+contributes `(n_c - n_{c+1}) ^ 2 = n_c ^ 2 + n_{c+1} ^ 2 - 2 * n_c * n_{c+1}`, whose squares are
+one-cell and belong to the decoupled part, leaving `-2 * n_c * n_{c+1}`. The depth `a` carries that
+factor together with the electric scale, so no unit is fixed here.
+
+Scope: the matrix is diagonal, so every configuration is an eigenvector and `bondCouple_form`
+evaluates its form exactly.
+
+DERIVED: `2` occurs twice, as the two-state truncation `Fin 2` in the domain and codomain of a
+configuration; `1` occurs twice, as the `+ 1` in the cell count `Fin (N + 1)` in each of those, which
+makes `N` bonds join `N + 1` cells. -/
 noncomputable def bondCouple (N : ℕ) (a : ℝ) (b : Fin N) :
     Matrix (Fin (N + 1) → Fin 2) (Fin (N + 1) → Fin 2) ℝ :=
   Matrix.diagonal fun s => -a * (flux2 (s b.castSucc) * flux2 (s b.succ))
 
-/-- The all-excited configuration: every cell at the first excited character state.
+/-- The configuration `fun _ => 1` on `Fin (N + 1) → Fin 2`: every cell at the excited state. Since
+each bond term is a product of two fluxes and `flux2` is largest at index `1`, this configuration is
+extremal on every bond at once, which is what `coupling_form_extensive` requires of a single vector.
 
-DERIVED: `flux2` is largest at `1` and each bond term is a product of two fluxes, so putting every
-cell at `1` extremises every bond AT ONCE. That simultaneity, not the value, is what
-`coupling_form_extensive` consumes — and it is why the bond costs add instead of competing. -/
+DERIVED: `1` is the excited index every cell is put at; `1` also appears as the `+ 1` in the cell
+count `Fin (N + 1)`, and `2` is the size of the two-state truncation. -/
 def allExc (N : ℕ) : Fin (N + 1) → Fin 2 := fun _ => 1
 
 lemma single_dotProduct_self {ι : Type*} [Fintype ι] [DecidableEq ι] (x : ι) :
@@ -465,7 +490,15 @@ lemma single_diagonal_form {ι : Type*} [Fintype ι] [DecidableEq ι] (d : ι �
     (fun h => absurd (Finset.mem_univ x) h)]
   rw [Matrix.mulVec_diagonal, Pi.single_eq_same]; ring
 
-/-- Every bond is lowered by exactly `a` at the all-excited configuration. -/
+/-- `(Pi.single (allExc N) 1) ⬝ᵥ (bondCouple N a b *ᵥ (Pi.single (allExc N) 1)) = -a` at every bond
+`b`. `single_diagonal_form` reads off the diagonal entry at `allExc N`, where both fluxes are `1` by
+`flux2_one`, leaving `-a * (1 * 1)`.
+
+The value does not depend on `b`, which is what makes the configuration extremal on every bond
+simultaneously.
+
+DERIVED: `1` occurs twice, as the scalar of the basis vector `Pi.single (allExc N) 1` on each side of
+the quadratic form. -/
 theorem bondCouple_form (N : ℕ) (a : ℝ) (b : Fin N) :
     (Pi.single (allExc N) (1 : ℝ)) ⬝ᵥ
         (bondCouple N a b *ᵥ (Pi.single (allExc N) (1 : ℝ))) = -a := by
@@ -473,10 +506,16 @@ theorem bondCouple_form (N : ℕ) (a : ℝ) (b : Fin N) :
   simp only [allExc, flux2_one]
   ring
 
-/-- **The chain's residual is extensive: `δ ≥ N·a` at `N` bonds.** The all-excited configuration
-lowers all `N` bonds at once, so any `δ` bounding the coupled form must carry the whole sum — with no
-hypothesis on the depth at all. Together with `form_perturbation_reaches_finitely_many` this is the
-negative result: the residual grows with the volume while the budget `μ/2` does not. -/
+/-- If `δ` bounds the summed coupling's form at every vector —
+`|v ⬝ᵥ ((∑ b : Fin N, bondCouple N a b) *ᵥ v)| ≤ δ * (v ⬝ᵥ v)` — then `(N : ℝ) * a ≤ δ`. It is
+`coupling_form_extensive` at the vector `Pi.single (allExc N) 1`, whose own form is `1` by
+`single_dotProduct_self` and which lowers every bond by exactly `a` by `bondCouple_form`.
+
+Scope: no hypothesis on the sign of `a` or `δ`. The hypothesis `hδ` is required at every vector, but
+only one is used.
+
+DERIVED: `1` is the `+ 1` in the cell count `Fin (N + 1)`; `2` is the size of the two-state
+truncation `Fin 2`. -/
 theorem chain_coupling_extensive (N : ℕ) {a δ : ℝ}
     (hδ : ∀ v : (Fin (N + 1) → Fin 2) → ℝ,
       |v ⬝ᵥ ((∑ b : Fin N, bondCouple N a b) *ᵥ v)| ≤ δ * (v ⬝ᵥ v)) :
@@ -488,10 +527,17 @@ theorem chain_coupling_extensive (N : ℕ) {a δ : ℝ}
     (hδ _)
   simpa using h
 
-/-- **No fixed budget survives the chain.** For every gap `μ` and every strictly positive per-bond
-depth `a`, there is a cell count past which `gap_of_form_perturbation`'s hypothesis `2δ < μ` is
-unsatisfiable for the chain coupling. The coupled volume gap does not follow from a quadratic-form
-perturbation of the decoupled product, at any budget. -/
+/-- For every real `μ` and every `a` with `0 < a`, there is an `N₀ : ℕ` such that for all `N ≥ N₀`,
+no `δ` bounding the chain coupling's form at every vector satisfies `2 * δ < μ`. It composes
+`chain_coupling_extensive` with `form_perturbation_reaches_finitely_many`.
+
+Scope: the conclusion is about the hypothesis `2 * δ < μ` of
+`CellSpectrum.gap_of_form_perturbation` for this particular coupling; it makes no statement about the
+spectrum of the coupled operator.
+
+DERIVED: `0` is the strict lower bound on `a`; `1` is the `+ 1` in the cell count `Fin (N + 1)`; `2`
+occurs twice, as the size of the two-state truncation `Fin 2` and as the factor in the budget
+`2 * δ < μ`. -/
 theorem chain_budget_fails (μ a : ℝ) (ha : 0 < a) :
     ∃ N₀ : ℕ, ∀ N : ℕ, N₀ ≤ N → ∀ δ : ℝ,
       (∀ v : (Fin (N + 1) → Fin 2) → ℝ,
@@ -499,12 +545,21 @@ theorem chain_budget_fails (μ a : ℝ) (ha : 0 < a) :
   obtain ⟨N₀, hN₀⟩ := form_perturbation_reaches_finitely_many a μ ha
   exact ⟨N₀, fun N hN δ hδ => hN₀ N hN δ (chain_coupling_extensive N hδ)⟩
 
-/-! ### The positive half, stated so the two can be compared at one glance -/
+/-! ### The gap from the absolute bond bound -/
 
-/-- **The coupled gap from a bond decomposition.** `gap_of_form_perturbation` with the residual
-supplied by the bond bound: `n` bonds at form cost `q` each give the coupled matrix a gap
-`μ − 2nq`, provided `2nq < μ`. This is the theorem the route wanted, with the missing scalar filled
-in — and `bondCount_lt_of_budget` says its hypothesis holds for only finitely many `n`. -/
+/-- `CellSpectrum.gap_of_form_perturbation` with its residual supplied by
+`coupling_form_le_bondCount`. Given a Hermitian `B` split as `A + ∑ b ∈ s, V b`, per-bond costs
+`|v ⬝ᵥ (V b *ᵥ v)| ≤ q * (v ⬝ᵥ v)`, the budget `2 * (s.card * q) < μ`, a form floor `t` for `A` on a
+subspace `W` of codimension at most one, and a vector `ψ ≠ 0` with `ψ ⬝ᵥ (A *ᵥ ψ) ≤ (t - μ) * (ψ ⬝ᵥ ψ)`,
+there is an index `i₀` with
+`hB.eigenvalues i₀ + (μ - 2 * (s.card * q)) ≤ hB.eigenvalues i` for every `i ≠ i₀`.
+
+The gap in the conclusion decreases with the bond count `s.card`, and
+`bondCount_lt_of_budget` bounds the `s.card` for which the budget hypothesis can hold.
+
+DERIVED: `2` occurs twice, as the factor in the budget hypothesis and again in the gap
+`μ - 2 * (s.card * q)`, both `gap_of_form_perturbation`'s own; `1` is the `+ 1` in the codimension
+condition `N ≤ Module.finrank ℝ W + 1`; `0` is the value `ψ` is assumed to differ from. -/
 theorem gap_of_bond_coupling {N : ℕ} {A B : Matrix (Fin N) (Fin N) ℝ} (hB : B.IsHermitian)
     {β : Type*} [DecidableEq β] (s : Finset β) (V : β → Matrix (Fin N) (Fin N) ℝ)
     {q t μ : ℝ} (hsplit : B = A + ∑ b ∈ s, V b)

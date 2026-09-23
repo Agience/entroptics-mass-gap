@@ -2,60 +2,43 @@ import Mathlib
 import MassGap.TransferGaussian
 
 /-!
-# MassGap.SmallCouplingGap — a gap that is DERIVED rather than assumed, and how far it reaches
-
-`TransferGap.GapAt` is a hypothesis, and **⛔ THIS FILE DOES NOT DISCHARGE IT.** No declaration here
-concludes `GapAt`; the name occurs in this header and nowhere else in the file. What the file does is
-exhibit the MECHANISM on a different carrier and then measure how wide its regime is — because a sufficient condition nobody can meet is worth nothing, and the only way to
-find out is to evaluate the constant.
+# MassGap.SmallCouplingGap — an L² contraction for a kernel near a centre, and its regime
 
 ## The mechanism
 
-On a PROBABILITY measure the constant kernel `1` is the orthogonal projection onto constants:
-`(1 ⋆ f)(V) = ∫ f`. So if a kernel is uniformly within `δ` of `1`, it differs from that projection by
-at most `δ`, and on functions of MEAN ZERO — where the projection gives nothing — the whole of what
-is left is the `δ`:
+On a probability measure, a mean-zero `f` annihilates any function of `V` alone, since it leaves the
+`W` integral as a constant: `∫ c(V)·f(W) dW = c(V)·∫f = 0`. So only the deviation of each row
+`K V ·` from its centre `c V` survives:
 
-    ∫ f = 0  ⟹  |∫ K(V,W) f(W) dW| = |∫ (K(V,W) − 1) f(W) dW| ≤ δ · ∫|f| ≤ δ · ‖f‖₂.
+    ∫ f = 0  ⟹  |∫ K(V,W) f(W) dW| = |∫ (K(V,W) − c(V)) f(W) dW| ≤ δ · ∫|f| ≤ δ · ‖f‖₂.
 
-**And `1` is not the only thing that may be subtracted.** Mean zero annihilates ANY function of `V`
-alone, because it comes out of the `W` integral as a constant: `∫ c(V)·f(W) dW = c(V)·∫f = 0`. So the
-lemmas are stated against an arbitrary centre `c : X → ℝ`, and the constant `1` is one instance of
-it. That matters for the size of `δ`: the sharp constant is the deviation of each ROW of the kernel
-from its own centre, not from a global one, and the best centre is the row's own mean. Stating it
-against `1` would fix a centre the argument never needed.
+That is `kernel_contracts_on_mean_zero`; squaring and integrating gives `integral_sq_contracts`,
+`(∫ V, (∫ W, K V W · f W)^2) ≤ δ^2 · ∫ f^2`. The centre `c : X → ℝ` is a free argument, so `c = 1`
+(the projection onto constants on a probability measure) and the row's own midrange are both
+instances. No spectral theory enters: mean zero is a condition on `f` that does not require knowing
+the kernel's top eigenvector.
 
-That is `kernel_contracts_on_mean_zero`, and squaring and integrating gives the `L²` statement
-`integral_sq_contracts`. No spectral theory, no compactness, no Perron–Frobenius: the top eigenvector
-is not constructed, it is bypassed, because mean zero is a condition one can check without knowing
-it.
+These are statements about an integral kernel on a probability space. Nothing here constructs a
+`Transfer.TransferData` or concludes `TransferGap.GapAt`.
 
-## The regime, and it is the point of the file
+## The regime
 
-For the slice weight `K = e^{b·sliceForm}`, `abs_sliceForm_le` gives `|sliceForm| ≤ |ι|·N`, so
+For the slice weight `K = e^{b·sliceForm}`, `SliceTransferSelfAdjoint.abs_sliceForm_le` gives
+`|sliceForm| ≤ |ι|·N`, so `abs_sliceWeight_sub_one_le` puts the deviation from the centre `1` at
+`δ = e^{b·|ι|·N} − 1`, and `deviation_lt_one_iff` is the exact equivalence
+`δ < 1 ⟺ b·|ι|·N < log 2`.
 
-    δ = e^{b·|ι|·N} − 1,     and    δ < 1  ⟺  b·|ι|·N < log 2.
+`reach_is_inverse_in_slice_size` rewrites the condition at `b = β/N`: for any threshold constant `L`,
+`(β/N)·(|ι|·N) < L ↔ β·|ι| < L`. The `N` cancels, so the admissible coupling is `β < L/|ι|`, inversely
+proportional to the slice size, whatever `L` is.
 
-**Evaluate it.** With `b = β/N` this is `β·|ι| < log 2`, so the derived gap holds for
+## The best centre
 
-    β < log 2 / |ι| ≈ 0.693 / |ι|.
-
-**The threshold SHRINKS AS THE SLICE GROWS, and that is a negative result.** At any fixed coupling
-the window closes once the slice has enough links, so this bound does not survive the
-infinite-volume limit and cannot reach the physical coupling. It is recorded because the mechanism
-looks like it should work — a kernel close to one, a contraction on the complement of constants — and
-computing the constant is what shows it does not. `CLAY-GOAL`'s standing rule: an existential
-constant is not a number until it is evaluated.
-
-**⛔ WHAT IT DOES NOT ESTABLISH**, stated plainly because the file is easy to over-read: it does not
-show `TransferGap.GapAt` is satisfiable. The strongest result below, `integral_sq_contracts`, reads
-`(∫ V, (∫ W, K V W * f W ∂μ)^2 ∂μ) ≤ δ^2 * ∫ x, f x^2 ∂μ` — an L² statement about an integral kernel
-on a probability space, which is NOT a `Transfer.TransferData` and has no bridge to one anywhere in
-the tree. `RatioGap` says the same from the other side: nothing there concludes `TransferGap.GapAt`,
-and neither does this file.
-
-What it DOES establish is that the contraction shape is met by a concrete kernel at a named coupling,
-which is evidence about the mechanism and not about the hypothesis.
+§4 measures how much a different centre buys. `two_point_spread_le` bounds any centre from below by
+half the spread of two points; `abs_sliceWeight_sub_cosh_le` takes the midrange centre `cosh M` with
+half-range `sinh M` for `M = b·|ι|·N`; and `sinh_lt_exp_sub_one` shows `sinh x < e^x − 1` for `x > 0`,
+so the midrange centre is strictly the better of the two. By `reach_is_inverse_in_slice_size` this
+changes `L` and leaves the `L/|ι|` shape of the reach unchanged.
 -/
 
 namespace MassGap.SmallCouplingGap
@@ -64,13 +47,14 @@ open MeasureTheory
 
 /-! ## 1. Cauchy–Schwarz against the constant -/
 
-/-- **`(∫f)² ≤ ∫f²` on a probability measure.** The variance is nonnegative, and that is the whole
-proof: expand `∫(f − ∫f)²` and use `μ univ = 1`.
+/-- `(∫ f)^2 ≤ ∫ f^2` on a probability measure, for `f` with `f` and `f^2` integrable. The proof
+expands `∫ (f − ∫f)^2` as `∫f^2 − (∫f)^2` using `integral_const` at total mass `1`, and reads off
+nonnegativity of the variance. Stated with explicit integrability hypotheses rather than through a
+Hölder form.
 
-Proved here rather than cited because it is three lines and the cited forms at this pin carry Hölder
-hypotheses this does not need.
-
-DERIVED: the `2`s are squares; no magnitude is chosen. -/
+DERIVED: all three `2`s are the same square — `f^2` in the integrability hypothesis and on the right,
+and the square of the integral on the left; the inequality is the nonnegativity of the second central
+moment. -/
 theorem sq_integral_le_integral_sq {X : Type*} [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] {f : X → ℝ} (hf : Integrable f μ)
     (hf2 : Integrable (fun x => f x ^ 2) μ) :
@@ -95,14 +79,16 @@ theorem sq_integral_le_integral_sq {X : Type*} [MeasurableSpace X] {μ : Measure
 
 /-! ## 2. A kernel within `δ` of one contracts on mean-zero functions -/
 
-/-- **THE CONTRACTION, POINTWISE.** A mean-zero function integrates any function of `V` alone to
-nothing, so only the deviation of the row `K V ·` from its centre `c V` survives.
+/-- For a mean-zero integrable `f` and a kernel whose rows stay within `δ` of a centre `c`,
+`|∫ W, K V W · f W| ≤ δ · ∫ W, |f W|`, at every `V`. The mean-zero hypothesis removes the `c V` term
+from the integral, leaving the deviation, which is bounded pointwise by `δ · |f W|`.
 
-The centre is arbitrary. Taking `c = 1` recovers the projection onto constants, which is what a
-probability measure makes the constant kernel; taking `c V` to be the row's own mean is sharper, and
-nothing in the proof prefers either.
+The centre `c : X → ℝ` is a free argument: `c = 1` recovers the projection onto constants on a
+probability measure, and the row's own midrange is another instance. `δ` is not required nonnegative
+here; `hK` forces it so whenever `X` is inhabited.
 
-DERIVED: no numeral. `c` is the caller's centre and `δ` the caller's bound. -/
+DERIVED: `0` is the mean of `f`, the value that makes `∫ c V * f W ∂μ` vanish and so removes the
+centre from the bound. `c` is the caller's centre and `δ` the caller's row bound. -/
 theorem kernel_contracts_on_mean_zero {X : Type*} [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] {K : X → X → ℝ} {c : X → ℝ} {δ : ℝ}
     (hK : ∀ V W, |K V W - c V| ≤ δ)
@@ -136,11 +122,15 @@ theorem kernel_contracts_on_mean_zero {X : Type*} [MeasurableSpace X] {μ : Meas
 
 #print axioms kernel_contracts_on_mean_zero
 
-/-- **AND IN `L²`.** Squaring the pointwise bound and integrating: the right-hand side is a CONSTANT,
-so `integral_mono_of_nonneg` applies and no measurability of the parametric integral is needed —
-which is the step that would otherwise cost a Fubini-style hypothesis.
+/-- The `L²` form: under the same hypotheses plus `0 ≤ δ` and integrability of `f^2`,
+`(∫ V, (∫ W, K V W · f W)^2) ≤ δ^2 · ∫ x, f x^2`. The pointwise bound of
+`kernel_contracts_on_mean_zero` is squared, integrated against a constant right-hand side (so
+`integral_mono_of_nonneg` suffices and no measurability of the parametric integral is needed), and
+`sq_integral_le_integral_sq` converts the `L¹` norm of `f` into its `L²` norm.
 
-DERIVED: `δ ^ 2` is the square of the pointwise factor; nothing is chosen. -/
+DERIVED: `0` in `hδ` is what lets the pointwise bound be squared in the right direction; `0` in
+`hmean` is the mean of `f`; the `2`s are all the same square — the squared inner integral, the squared
+row bound `δ^2`, and `f^2` on the right. -/
 theorem integral_sq_contracts {X : Type*} [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] {K : X → X → ℝ} {c : X → ℝ} {δ : ℝ} (hδ : 0 ≤ δ)
     (hK : ∀ V W, |K V W - c V| ≤ δ)
@@ -180,13 +170,14 @@ theorem integral_sq_contracts {X : Type*} [MeasurableSpace X] {μ : Measure X}
 
 variable {N : ℕ} {ι : Type} [Fintype ι]
 
-/-- **THE SLICE WEIGHT IS WITHIN `e^{b|ι|N} − 1` OF ONE.**
+/-- For `0 ≤ b`, the slice weight stays within `e^{M} − 1` of `1`, where `M = b·|ι|·N`:
+`|exp (b · sliceForm V W) − 1| ≤ exp (b · (|ι| · N)) − 1`. `|sliceForm| ≤ |ι|·N` is
+`SliceTransferSelfAdjoint.abs_sliceForm_le`, and the upper excursion dominates the lower because
+`e^M + e^{−M} ≥ 2`. This supplies `hK` for `kernel_contracts_on_mean_zero` at the centre `1`.
 
-`|sliceForm| ≤ |ι|·N` is `SliceTransferSelfAdjoint.abs_sliceForm_le`, and `|e^t − 1| ≤ e^{M} − 1` for
-`|t| ≤ M` because `e^M + e^{-M} ≥ 2` makes the upper excursion the larger of the two.
-
-DERIVED: `1` is the value the weight takes at zero coupling, which is what the deviation is measured
-from; `M = b|ι|N` is the form's own bound. -/
+DERIVED: `0` in `hb` is the sign `b` needs for the form's bound to survive multiplication; both `1`s
+are the same centre, the value `exp (b · sliceForm)` takes when the form vanishes, so the statement
+measures the row's deviation from it. -/
 theorem abs_sliceWeight_sub_one_le {b : ℝ} (hb : 0 ≤ b) (V W : ι → MassGap.SUN.SU N) :
     |Real.exp (b * MassGap.SliceTransfer.sliceForm V W) - 1|
       ≤ Real.exp (b * ((Fintype.card ι : ℝ) * (N : ℝ))) - 1 := by
@@ -222,12 +213,13 @@ theorem abs_sliceWeight_sub_one_le {b : ℝ} (hb : 0 ≤ b) (V W : ι → MassGa
 
 #print axioms abs_sliceWeight_sub_one_le
 
-/-- **AND THE DEVIATION IS BELOW ONE EXACTLY BELOW `log 2`.**
+/-- `exp (b · (|ι| · N)) − 1 < 1 ↔ b · (|ι| · N) < Real.log 2`, for every real `b`, positive or not.
+Both directions by `Real.exp_lt_exp` with `Real.exp_log` at `2`. An exact equivalence, not a rounded
+threshold.
 
-`e^{b|ι|N} − 1 < 1` iff `b·|ι|·N < log 2`. This is the whole reach of the mechanism.
-
-DERIVED: `log 2` is not a chosen threshold. It is where `e^x − 1 = 1`, and `1` is the contraction
-factor a gap requires. Rounding is not in question: the statement is an iff at the exact value. -/
+DERIVED: the first `1` is the centre the deviation is measured from; the second `1` is the ceiling the
+deviation must clear for `integral_sq_contracts` to contract; `2` is `exp` of the resulting threshold,
+i.e. the solution of `e^x − 1 = 1`. -/
 theorem deviation_lt_one_iff {b : ℝ} :
     Real.exp (b * ((Fintype.card ι : ℝ) * (N : ℝ))) - 1 < 1
       ↔ b * ((Fintype.card ι : ℝ) * (N : ℝ)) < Real.log 2 := by
@@ -243,20 +235,15 @@ theorem deviation_lt_one_iff {b : ℝ} :
 
 #print axioms deviation_lt_one_iff
 
-/-- **THE REACH, EVALUATED — and it closes as the slice grows, WHATEVER the constant.**
+/-- At `b = β/N`, the threshold condition loses its `N`:
+`(β / N) · (|ι| · N) < L ↔ β · |ι| < L`, for any real `L` and any `N` with `(N : ℝ) ≠ 0`. The left
+side is rewritten by `field_simp`, so the equivalence is an identity of the two sides rather than an
+inequality argument. Read as a bound on `β`, it reads `β < L / |ι|` for whatever threshold constant
+`L` a centre produces: the admissible coupling is inversely proportional to the slice size, and
+changing the centre changes `L` without changing that shape.
 
-With `b = β/N` the condition `b·|ι|·N < L` is `β·|ι| < L`, so a derived contraction with threshold
-constant `L` holds only for `β < L / |ι|`. **The bound on the coupling is INVERSELY proportional to
-the number of links in the slice**, so at any fixed coupling it fails once the slice is large enough,
-and it does not survive the infinite-volume limit.
-
-**`L` is left free on purpose.** `deviation_lt_one_iff` gives `L = log 2` for the centre `1`, and §4
-gives a larger `L` for the best centre. Neither changes this: improving the constant moves the
-threshold, it does not change what the threshold is proportional to. So there is nothing to be gained
-by optimising the centre, and that is worth knowing before anyone tries.
-
-DERIVED: no numeral — `L` is the caller's. The `N` cancels exactly: it is the `N` of `b = β/N`
-against the `N` of `|sliceForm| ≤ |ι|N`, not a coincidence and not a choice. -/
+DERIVED: `0` in `hN` is what `field_simp` needs to cancel the `N` of `b = β/N` against the `N` of
+`|sliceForm| ≤ |ι|·N`. `L` is the caller's threshold. -/
 theorem reach_is_inverse_in_slice_size {β L : ℝ} (hN : (N : ℝ) ≠ 0) :
     (β / (N : ℝ)) * ((Fintype.card ι : ℝ) * (N : ℝ)) < L
       ↔ β * (Fintype.card ι : ℝ) < L := by
@@ -270,13 +257,13 @@ theorem reach_is_inverse_in_slice_size {β L : ℝ} (hN : (N : ℝ) ≠ 0) :
 
 /-! ## 4. The best centre, and how little it buys -/
 
-/-- **NO CENTRE BEATS HALF THE SPREAD OF ANY TWO POINTS.**
+/-- `|a − b| ≤ 2 · max |a − c| |b − c|`, for all reals `a`, `b`, `c`. Triangle inequality on
+`a − b = (a − c) − (b − c)`, with each term bounded by the maximum. Read as a lower bound on any
+centre `c`: it cannot be closer than half the spread to both points at once. Stated on two points, so
+it is an inequality rather than an existence claim over a supremum.
 
-`|a − b| ≤ 2·max |a − c| |b − c|`, for every `c`. Stated on two points rather than on a supremum, so
-it is an inequality rather than an existence claim — and two points is all that is needed to bound a
-centre from below.
-
-DERIVED: the `2` is the two points; no magnitude. -/
+DERIVED: `2` is the number of terms the triangle inequality splits into, one per point, each bounded
+by the same maximum. -/
 theorem two_point_spread_le (a b c : ℝ) : |a - b| ≤ 2 * max |a - c| |b - c| := by
   have h1 : |a - c| ≤ max |a - c| |b - c| := le_max_left _ _
   have h2 : |b - c| ≤ max |a - c| |b - c| := le_max_right _ _
@@ -288,11 +275,14 @@ theorem two_point_spread_le (a b c : ℝ) : |a - b| ≤ 2 * max |a - c| |b - c| 
 
 #print axioms two_point_spread_le
 
-/-- **THE MIDRANGE CENTRE FOR THE SLICE WEIGHT.** The row lies in `[e^{−M}, e^{M}]` with
-`M = b·|ι|·N`, whose midpoint is `cosh M` and whose half-range is `sinh M`.
+/-- For `0 ≤ b`, the slice weight stays within `sinh M` of `cosh M`, where `M = b·|ι|·N`:
+`|exp (b · sliceForm V W) − cosh M| ≤ sinh M`. The row lies in `[e^{−M}, e^{M}]` by
+`abs_sliceForm_le`, and that interval has midpoint `cosh M` and half-range `sinh M` by
+`Real.cosh_eq` and `Real.sinh_eq`. This is the alternative `hK` for `kernel_contracts_on_mean_zero`,
+at the midrange centre rather than at `1`.
 
-DERIVED: `cosh` and `sinh` are the midpoint and half-range of `[e^{−M}, e^{M}]` by definition, not
-chosen values. -/
+DERIVED: `0` in `hb` is the sign `b` needs for the form's bound to survive multiplication. `cosh` and
+`sinh` are the midpoint and half-range of `[e^{−M}, e^{M}]` by definition. -/
 theorem abs_sliceWeight_sub_cosh_le {b : ℝ} (hb : 0 ≤ b) (V W : ι → MassGap.SUN.SU N) :
     |Real.exp (b * MassGap.SliceTransfer.sliceForm V W)
         - Real.cosh (b * ((Fintype.card ι : ℝ) * (N : ℝ)))|
@@ -316,14 +306,13 @@ theorem abs_sliceWeight_sub_cosh_le {b : ℝ} (hb : 0 ≤ b) (V W : ι → MassG
 
 #print axioms abs_sliceWeight_sub_cosh_le
 
-/-- **AND IT IS STRICTLY BETTER THAN CENTRING ON ONE.** `sinh x < e^x − 1` for `x > 0`, because
-`e^x + e^{−x} > 2`.
+/-- `Real.sinh x < Real.exp x − 1` for `0 < x`, since `e^x + e^{−x} > 2` there. So at any positive
+`M` the midrange half-range of `abs_sliceWeight_sub_cosh_le` is strictly smaller than the deviation
+from `1` that `abs_sliceWeight_sub_one_le` gives: the midrange centre is the better of the two, and
+raises the threshold constant `L` that `reach_is_inverse_in_slice_size` divides by `|ι|`.
 
-So the midrange centre raises the threshold from `log 2 ≈ 0.6931` to `arcsinh 1 = log(1+√2) ≈ 0.8814`
-— about `27%`. **And `reach_is_inverse_in_slice_size` says that buys nothing structurally**: the
-reach is `L/|ι|` for whatever `L`, so a better constant moves the wall without removing it.
-
-DERIVED: the `1` is the contraction factor a gap requires; `2` is the value `e^x + e^{−x}` exceeds. -/
+DERIVED: `0` in `hx` is what makes `e^x > 1` and hence the strict inequality; `1` is the centre
+`abs_sliceWeight_sub_one_le` uses, so `exp x − 1` is that lemma's bound at `x = M`. -/
 theorem sinh_lt_exp_sub_one {x : ℝ} (hx : 0 < x) : Real.sinh x < Real.exp x - 1 := by
   have hprod : Real.exp x * Real.exp (-x) = 1 := by
     rw [← Real.exp_add]

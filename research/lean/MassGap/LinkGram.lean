@@ -3,26 +3,29 @@ import MassGap.OddLagSplit
 import MassGap.LagOneDominates
 
 /-!
-# MassGap.LinkGram — link-reflection positivity for a GENERAL half-local observable
+# MassGap.LinkGram — link-reflection positivity for a general half-local observable
 
-`OddLagSplit.plaqReflPositive_odd` proves `0 ≤ ⟨(F_q − a)·θ F_q⟩` at a link reflection for ONE
-plaquette-energy observable. Every step of its proof except three is indifferent to which observable
-is carried: `boltz_eq_paired_cross` is a statement about the weight alone, the three-block
-factorisation and the mirror transport move variables, and
-`CrossingIntegration.wilson_crossing_pairing_nonneg` — the theorem the chain ends in — already takes
-an ARBITRARY bounded measurable function of the positive half's variables.
+`OddLagSplit.odd_crossing_integral_nonneg` proves the crossing integral nonnegative for ONE
+plaquette-energy observable. Three steps of that argument look at the observable at all —
+`OddLagSplit.aObs_local`, `measurable_aObs` and `abs_aObs_le`, which are half-locality,
+measurability and boundedness. The rest does not: `boltz_eq_paired_cross` is a statement about the
+weight alone, the three-block factorisation and the mirror transport move variables, and
+`CrossingIntegration.wilson_crossing_pairing_nonneg`, which the chain ends in, already takes an
+arbitrary bounded measurable function of the positive half's variables.
 
-The three that are not indifferent are `OddLagSplit.aObs_local`, `measurable_aObs` and
-`abs_aObs_le`: measurability, boundedness and half-locality of the observable. This file carries
-those three as hypotheses instead of proving them of one plaquette, and re-runs the chain.
+This file carries the three properties as hypotheses on a parameter `F` and re-runs the chain.
 
-`gram_refl_positive` is the result: link-reflection positivity of the Wilson Gibbs state for any
-measurable, bounded, `oblkS`-local real observable, at every even extent with `2 ≤ m` and every
-`0 ≤ β` — the same domain `OddLagSplit.corrClay_reflection_positive` has.
+`gram_refl_positive` is the result:
+`0 ≤ ReflectPositive.EW N β (fun U => F U * F (reflConf τ (a + a + 1) U))`, for every measurable `F`
+bounded by some `MF` that reads `oblkS τ a m` alone, at `N ≠ 0`, at even extent `n = 2 * m` with
+`2 ≤ m`, and at `0 ≤ β`.
 
-`MassGap.LagOneDominates.pairReflPositive_iff` then turns the two-plaquette instance into
-`wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1`, which is `SpectralFour.FourRepresentable`'s third
-conjunct at the Clay aperture.
+Section 4 instantiates that at `d = 4`, `n = 4`, `N = 3`, `τ = 2`, `a = 0`, `m = 2` with the
+two-term observable `LagOneDominates.gapObs`. `pairReflPositive` discharges
+`LagOneDominates.PairReflPositive β`; `LagOneDominates.lag_two_le_lag_one` turns that into
+`wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1` (`wilson_lag_two_le_lag_one`); and
+`wilsonSpectral_of_quadratic` takes the quadratic as a further hypothesis and concludes
+`WilsonSpectral 3 β`.
 
 Build: `python research/code/lean_build.py build MassGap.LinkGram`.
 -/
@@ -40,17 +43,22 @@ variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
 /-! ## 1. The dressed observable, for a general half-local `F` -/
 
-/-- **The positive half's observable-and-weight**, the crossing integration's `a`, with the
-observable left as a parameter. `OddLagSplit.aObs` is the instance at `F = F_q − aC`.
+/-- The positive half's observable together with its half of the Boltzmann weight:
+`F U * exp (-β * actPlusO τ a m U)`. This is the crossing integration's `a`, with the observable
+left as a parameter; `OddLagSplit.aObs` is the instance at `F = F_q − aC`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in this statement. -/
 noncomputable def gObs (F : (Link d n → MassGap.SUN.SU N) → ℝ) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   F U * Real.exp (-β * actPlusO τ a m U)
 
-/-- **It reads the positive half alone**, provided `F` does. `actPlusO_local` supplies the weight.
+/-- `gObs` reads the positive half alone, given that `F` does: if `U` and `V` agree on
+`oblkS τ a m` then `gObs τ a m F β U = gObs τ a m F β V`. The weight half is `actPlusO_local`,
+which is where the two extent hypotheses are spent.
 
-DERIVED: no numeral. -/
+DERIVED: `n = 2 * m` is the even-extent condition — the statement holds at even extent only, `m`
+being the half-extent — and `0 < m` is `actPlusO_local`'s own. Both are carried from
+`OddLagSplit`. -/
 theorem gObs_local (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (hFloc : ∀ U V : Link d n → MassGap.SUN.SU N,
       (∀ l ∈ oblkS τ a m, U l = V l) → F U = F V)
@@ -60,15 +68,22 @@ theorem gObs_local (F : (Link d n → MassGap.SUN.SU N) → ℝ)
   unfold gObs
   rw [hFloc U V hS, actPlusO_local τ a m hm hm0 U V hS]
 
-/-- DERIVED: no numeral. -/
+/-- `gObs τ a m F β` is measurable when `F` is: a product of `F` with the exponential of a
+measurable action sum.
+
+DERIVED: no numeral appears in this statement. -/
 theorem measurable_gObs (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hF : Measurable F) (β : ℝ) :
     Measurable (gObs (N := N) τ a m F β) :=
   hF.mul ((measurable_const.mul (measurable_actSum (oplqPlus τ a m))).exp)
 
-/-- **The dressed observable is bounded.**
+/-- The dressed observable is bounded:
+`|gObs τ a m F β U| ≤ MF * exp (|β| * (2 * card (oplqPlus τ a m)))`, with `MF` the caller's bound
+on `F`.
 
-DERIVED: `2` is `WilsonAction.wilsonDensity`'s own range bound, through `ActionSplit.abs_actSum_le`;
-the card is a count and `MF` is the caller's bound on `F`. -/
+DERIVED: `2` is `WilsonAction.wilsonDensity`'s own range bound, reaching here through
+`ActionSplit.abs_actSum_le`, so `2 * card` bounds the action of the positive half's plaquettes; the
+card is a count. `0` is the rank condition `N ≠ 0`, which `abs_actSum_le` consumes because the
+density divides by `N`. -/
 theorem abs_gObs_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : ℝ}
     (hFb : ∀ U, |F U| ≤ MF) (hN : N ≠ 0) (β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
     |gObs τ a m F β U| ≤ MF * Real.exp (|β| * (2 * (oplqPlus τ a m).card)) := by
@@ -84,21 +99,27 @@ theorem abs_gObs_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : ℝ}
       _ ≤ |β| * (2 * (oplqPlus τ a m).card) := mul_le_mul_of_nonneg_left hA (abs_nonneg β)
   exact mul_le_mul (hFb U) hsecond (abs_nonneg _) (le_trans (abs_nonneg _) (hFb U))
 
-/-- **The dressed observable as a function of the positive half alone** — the crossing
-integration's `a`. `OddLagSplit.aHalf` is the instance.
+/-- The dressed observable as a function of the positive half's variables alone — the crossing
+integration's `a`, obtained by composing `gObs` with `extendS`. `OddLagSplit.aHalf` is the
+instance.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in this statement. -/
 noncomputable def gHalf (F : (Link d n → MassGap.SUN.SU N) → ℝ) (β : ℝ)
     (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) : ℝ :=
   gObs τ a m F β (extendS τ a m x)
 
-/-- DERIVED: no numeral. -/
+/-- `gHalf τ a m F β` is measurable when `F` is, by `measurable_gObs` and `measurable_extendS`.
+
+DERIVED: no numeral appears in this statement. -/
 theorem measurable_gHalf (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hF : Measurable F) (β : ℝ) :
     Measurable (gHalf (N := N) τ a m F β) :=
   (measurable_gObs τ a m F hF β).comp (measurable_extendS τ a m)
 
-/-- DERIVED: `2` is `WilsonAction.wilsonDensity`'s range bound, carried from `abs_gObs_le`; the card
-is a count and `MF` is the caller's bound on `F`. -/
+/-- `gHalf` inherits `abs_gObs_le`'s bound, at every configuration of the positive half.
+
+DERIVED: `2` is `WilsonAction.wilsonDensity`'s range bound, carried from `abs_gObs_le`; the card is
+a count and `MF` is the caller's bound on `F`. `0` is the rank condition `N ≠ 0`, carried with
+it. -/
 theorem abs_gHalf_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : ℝ}
     (hFb : ∀ U, |F U| ≤ MF) (hN : N ≠ 0) (β : ℝ) (x : ↥(oblkS τ a m) → MassGap.SUN.SU N) :
     |gHalf (N := N) τ a m F β x| ≤ MF * Real.exp (|β| * (2 * (oplqPlus τ a m).card)) :=
@@ -106,15 +127,21 @@ theorem abs_gHalf_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : ℝ}
 
 /-! ## 2. The integrand, after the plane substitution -/
 
-/-- `OddLagSplit.oddIntegrand` with the observable left as a parameter.
+/-- The reflected product whose integral the crossing argument bounds: `gObs` at `U`, times `gObs`
+at the mirror configuration `reflConf τ (a + a + 1) U`, times the cross-term weight. This is
+`OddLagSplit.oddIntegrand` with the observable left as a parameter.
 
-DERIVED: no numeral; `a + a + 1` is the link reflection's own constant, carried. -/
+DERIVED: no numeral appears in this statement; `a + a + 1` is the link reflection's own constant,
+carried from `OddLagSplit`. -/
 noncomputable def gIntegrand (F : (Link d n → MassGap.SUN.SU N) → ℝ) (β : ℝ)
     (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   gObs τ a m F β U * gObs τ a m F β (reflConf τ (a + a + 1) U)
     * Real.exp (-β * actCrossO τ a m (invLink (uplane τ a m) U))
 
-/-- DERIVED: `a + a + 1` is the link reflection's own constant, carried from `OddLagSplit`. -/
+/-- `gIntegrand τ a m F β` is measurable when `F` is. The mirror and the plane substitution are
+measurable because `reflConf` and `invLink` preserve the measure.
+
+DERIVED: `a + a + 1` is the link reflection's own constant, carried from `OddLagSplit`. -/
 theorem measurable_gIntegrand (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hF : Measurable F)
     (β : ℝ) : Measurable (gIntegrand (N := N) τ a m F β) :=
   (((measurable_gObs τ a m F hF β)).mul
@@ -123,8 +150,11 @@ theorem measurable_gIntegrand (F : (Link d n → MassGap.SUN.SU N) → ℝ) (hF 
     ((measurable_const.mul ((measurable_actSum (oplqCross τ a m)).comp
       (invLink_measurePreserving (N := N) (uplane τ a m)).measurable)).exp)
 
-/-- DERIVED: `2` is `WilsonAction.wilsonDensity`'s range bound, carried through `abs_actSum_le`; the
-cards are counts. -/
+/-- `gIntegrand` is bounded, by `abs_gObs_le` twice and `abs_exp_actCrossO_le` once.
+
+DERIVED: `2` is `WilsonAction.wilsonDensity`'s range bound, carried through
+`ActionSplit.abs_actSum_le`; the cards are counts. `0` is the rank condition `N ≠ 0`, which those
+bounds consume. -/
 theorem abs_gIntegrand_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : ℝ}
     (hFb : ∀ U, |F U| ≤ MF) (hN : N ≠ 0) (β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
     |gIntegrand (N := N) τ a m F β U|
@@ -139,12 +169,14 @@ theorem abs_gIntegrand_le (F : (Link d n → MassGap.SUN.SU N) → ℝ) {MF : �
     (abs_gObs_le τ a m F hFb hN β _) (abs_nonneg _) (by positivity))
     (abs_exp_actCrossO_le τ a m hN β _) (abs_nonneg _) (by positivity)
 
-/-- **The substitution on the upper plane leaves the two observables alone** — `F` and its mirror
-read the positive half or its mirror, and the plane meets neither. `OddLagSplit`'s proof of
-`integral_odd_eq_oddIntegrand`, with `aObs_local` replaced by `gObs_local`.
+/-- The substitution on the upper plane leaves the two observables alone: `F` and its mirror read
+the positive half or its mirror, and the plane meets neither, so the integral of the reflected
+product equals the integral of `gIntegrand`. This is `OddLagSplit`'s proof of
+`integral_odd_eq_oddIntegrand` with `aObs_local` replaced by `gObs_local`.
 
-DERIVED: `a + a + 1` is the link reflection's own constant and `n = 2 * m` the extent's own parity,
-both carried from `OddLagSplit`. -/
+DERIVED: `a + a + 1` is the link reflection's own constant; `n = 2 * m` is the even-extent
+condition, so this holds at even extent only, and `0 < m` accompanies it. All are carried from
+`OddLagSplit`. -/
 theorem integral_odd_eq_gIntegrand (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (hF : Measurable F)
     (hFloc : ∀ U V : Link d n → MassGap.SUN.SU N,
@@ -193,10 +225,16 @@ theorem integral_odd_eq_gIntegrand (F : (Link d n → MassGap.SUN.SU N) → ℝ)
   rw [h1, h2]
   rfl
 
-/-- **THE INTEGRAND, IN THE CROSSING INTEGRATION'S VARIABLES.** `OddLagSplit.oddIntegrand_join`
-with the observable left as a parameter.
+/-- The integrand in the crossing integration's variables: at a configuration split as
+`joinO τ a m g x (mirrorT τ a m hm hm0 y)`, `gIntegrand` factors into the constant cross weight
+`exp (-β * card (oplqCross τ a m))` times `gHalf` at `x`, `gHalf` at `y`, and the exponential of
+`(β / N) * hsRe` of the two crossing words. `OddLagSplit.oddIntegrand_join` is the instance at one
+plaquette energy.
 
-DERIVED: no numeral of this file's; `1/N` and the card are `actCrossO_eq_trace_sum`'s. -/
+DERIVED: `N ≠ 0` is what `actCrossO_eq_trace_sum` consumes, the density dividing by `N`;
+`n = 2 * m` is the even-extent condition and `0 < m` accompanies it; `2 ≤ m` is the plane
+assignment's own bound, spent in `sum_re_tr_oplqCross`. The `1 / N` of `actCrossO_eq_trace_sum` is
+absorbed into `β / N` and does not appear here. -/
 theorem gIntegrand_join (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (hFloc : ∀ U V : Link d n → MassGap.SUN.SU N,
       (∀ l ∈ oblkS τ a m, U l = V l) → F U = F V)
@@ -243,11 +281,15 @@ theorem gIntegrand_join (F : (Link d n → MassGap.SUN.SU N) → ℝ)
 
 /-! ## 3. The crossing integral, and the positivity -/
 
-/-- **THE PAIRING INTEGRAL IS NONNEGATIVE, FOR EVERY HALF-LOCAL OBSERVABLE.**
-`OddLagSplit.odd_crossing_integral_nonneg` with the observable left as a parameter.
+/-- The pairing integral is nonnegative for every half-local observable:
+`0 ≤ ∫ gObs τ a m F β U * gObs τ a m F β (reflConf τ (a + a + 1) U) * exp (-β * actCrossO τ a m U)`.
+This is `OddLagSplit.odd_crossing_integral_nonneg` with the observable left as a parameter, and it
+ends in `CrossingIntegration.wilson_crossing_pairing_nonneg`.
 
-DERIVED: `2 ≤ m` is the plane assignment's own bound and `0 ≤ β` the cross kernel's, both carried
-from `OddLagSplit`; no numeral is chosen here. -/
+DERIVED: `a + a + 1` is the link reflection's own constant. `2 ≤ m` is the plane assignment's own
+bound and `0 ≤ β` the cross kernel's sign condition; `n = 2 * m` restricts the statement to even
+extent and `0 < m` accompanies it, and `N ≠ 0` is the rank condition. All are carried from
+`OddLagSplit`; no numeral is chosen here. -/
 theorem g_crossing_integral_nonneg (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (hF : Measurable F) {MF : ℝ} (hFb : ∀ U, |F U| ≤ MF)
     (hFloc : ∀ U V : Link d n → MassGap.SUN.SU N,
@@ -325,16 +367,18 @@ theorem g_crossing_integral_nonneg (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (fun x => abs_gHalf_le τ a m F hFb hN β x) ?_
   positivity
 
-/-- **LINK-REFLECTION POSITIVITY OF THE WILSON GIBBS STATE, FOR A GENERAL HALF-LOCAL OBSERVABLE.**
+/-- Link-reflection positivity of the Wilson Gibbs state for a general half-local observable:
+`0 ≤ ReflectPositive.EW N β (fun U => F U * F (reflConf τ (a + a + 1) U))`, the reflection being the
+link reflection with constant `a + a + 1`, for every measurable `F` bounded by `MF` that reads the
+positive half `oblkS τ a m` alone.
 
-`0 ≤ ⟨F · (F ∘ θ)⟩` at the link reflection with constant `a + a + 1`, for every measurable, bounded
-observable `F` that reads the positive half `oblkS τ a m` alone.
+The hypothesis list is `OddLagSplit.odd_crossing_integral_nonneg`'s — `N ≠ 0`, even extent,
+`2 ≤ m`, `0 ≤ β` — plus the three properties of `F` that `aObs_local`, `measurable_aObs` and
+`abs_aObs_le` supply for a single plaquette. Nothing is assumed about the measure; positivity of
+the partition function comes from `wilsonSystem_partition_pos`.
 
-The hypothesis list is exactly `OddLagSplit.odd_crossing_integral_nonneg`'s — even extent, `2 ≤ m`,
-`0 ≤ β` — plus the three properties of `F` that `aObs_local`, `measurable_aObs` and `abs_aObs_le`
-supply for a single plaquette. Nothing is assumed about the measure.
-
-DERIVED: no numeral of this file's; `2 ≤ m` and `0 ≤ β` are carried from `OddLagSplit`. -/
+DERIVED: `a + a + 1` is the link reflection's own constant. `2 ≤ m`, `0 ≤ β`, `n = 2 * m`, `0 < m`
+and `N ≠ 0` are carried from `OddLagSplit`; no numeral is chosen here. -/
 theorem gram_refl_positive (F : (Link d n → MassGap.SUN.SU N) → ℝ)
     (hF : Measurable F) {MF : ℝ} (hFb : ∀ U, |F U| ≤ MF)
     (hFloc : ∀ U V : Link d n → MassGap.SUN.SU N,
@@ -366,19 +410,22 @@ theorem gram_refl_positive (F : (Link d n → MassGap.SUN.SU N) → ℝ)
   unfold MassGap.ReflectPositive.EW System.expect System.corrNum
   exact div_nonneg (le_of_le_of_eq hcross hEq) hZ.le
 
-/-! ## 4. The Clay instance — the two-plaquette observable of `LagOneDominates`
+/-! ## 4. The instance — the two-plaquette observable of `LagOneDominates`
 
-DERIVED throughout this section: `4` is the dimension and the extent, `3` is `SU(3)`'s rank and the
-Clay aperture, `(0,1)` the plaquette plane and `2` the lag axis — all `WilsonBridge.corrClay`'s own.
-The half-extent `m = 2` is `4 = 2 · 2`, and the reflection base `a = 0` is the origin of the level
-count. No magnitude is chosen. -/
+DERIVED throughout this section: `4` is the dimension and the extent, in `Link 4 4` and `Fin 4`;
+`3` is the rank, in `SU 3`; `(0, 1)` is the plaquette plane, `2` the lag axis — all
+`WilsonBridge.corrClay`'s own. The half-extent `m = 2` is `4 = 2 · 2`, and the reflection base
+`a = 0` is the origin of the level count. No magnitude is chosen. -/
 
-/-- **BOTH PLAQUETTES LIE IN THE POSITIVE HALF.** Every link of the `(0,1)` plaquette based at lag
-site `s` runs transverse to the lag axis (`bd_link_dir_ne`) and sits at lag coordinate `s`
-(`bd_link_tau_coord`), so `oblkS 2 0 2`'s transverse condition `0 < lv ∧ lv ≤ m` reads `0 < s ≤ 2` —
-satisfied at `s = 1` and `s = 2`, which are exactly the two lag sites of the half.
+/-- Both plaquettes lie in the positive half. Every link of the `(0, 1)` plaquette based at lag site
+`s` runs transverse to the lag axis (`bd_link_dir_ne`) and sits at lag coordinate `s`
+(`bd_link_tau_coord`), so membership in `oblkS 2 0 2` reduces to its transverse condition
+`0 < lv ∧ lv ≤ m`, which the hypotheses `0 < s` and `s ≤ 2` give.
 
-DERIVED: `0 < s` and `s ≤ 2` are `oblkS`'s own transverse condition at `a = 0`, `m = 2`. -/
+DERIVED: `4` is the dimension and the extent, from `Link 4 4` and the index type `Fin 4`. `0 < s`
+and `s ≤ 2` are `oblkS`'s own transverse condition read at `a = 0`, `m = 2`; the `2` in
+`oblkS (2 : Fin 4) (0 : Fin 4) 2` is the lag axis in one place and the half-extent in the
+other. -/
 theorem pl_local {s : Fin 4} (h0 : 0 < (s : ℕ)) (h2 : (s : ℕ) ≤ 2)
     (l : Link 4 4) (hl : l ∈ (bd (MassGap.LagOneDominates.pl s)).map Prod.fst) :
     l ∈ oblkS (2 : Fin 4) (0 : Fin 4) 2 := by
@@ -396,11 +443,15 @@ theorem pl_local {s : Fin 4} (h0 : 0 < (s : ℕ)) (h2 : (s : ℕ) ≤ 2)
   rw [hval]
   exact ⟨h0, h2⟩
 
-/-- **THE TWO-TERM OBSERVABLE READS THE POSITIVE HALF ALONE.** Each plaquette's holonomy depends only
-on its own links (`ReflectionPositivity.hol_congr_on_support`), and `pl_local` puts those links in
-`oblkS`.
+/-- The two-term observable reads the positive half alone: if `U` and `V` agree on
+`oblkS (2 : Fin 4) (0 : Fin 4) 2` then `LagOneDominates.gapObs U = LagOneDominates.gapObs V`. Each
+plaquette's holonomy depends only on its own links
+(`ReflectionPositivity.hol_congr_on_support`), and `pl_local` puts those links in `oblkS`.
 
-DERIVED: `1` and `2` are the two lag sites of the half. -/
+DERIVED: `4` is the dimension and the extent, from `Link 4 4` and `Fin 4`; `3` is the rank, from
+`SU 3`. In `oblkS (2 : Fin 4) (0 : Fin 4) 2` the first `2` is the lag axis, the `0` the reflection
+base and the last `2` the half-extent. The lag sites `1` and `2` the observable reads appear in the
+proof, not in the statement. -/
 theorem gapObs_local (U V : Link 4 4 → MassGap.SUN.SU 3)
     (hS : ∀ l ∈ oblkS (2 : Fin 4) (0 : Fin 4) 2, U l = V l) :
     MassGap.LagOneDominates.gapObs U = MassGap.LagOneDominates.gapObs V := by
@@ -423,12 +474,18 @@ theorem gapObs_local (U V : Link 4 4 → MassGap.SUN.SU 3)
   rw [h1, h2]
   rfl
 
-/-- DERIVED: no numeral. -/
+/-- `LagOneDominates.gapObs` is measurable, being a difference of two plaquette energies.
+
+DERIVED: no numeral appears in this statement. -/
 theorem measurable_gapObs : Measurable MassGap.LagOneDominates.gapObs :=
   (MassGap.ReflectPositive.measurable_plaqE _).sub (MassGap.ReflectPositive.measurable_plaqE _)
 
-/-- DERIVED: `2` is `WilsonAction.wilsonDensity`'s own range bound — each plaquette energy lies in
-`[0, 2]`, so their difference lies in `[−2, 2]`. It is carried, not chosen. -/
+/-- `|LagOneDominates.gapObs U| ≤ 2`.
+
+DERIVED: `4` is the dimension and the extent, from `Link 4 4`; `3` is the rank, from `SU 3`, and is
+what `plaqE_nonneg` and `plaqE_le_two` are read at. The bound `2` is
+`WilsonAction.wilsonDensity`'s own range bound: each plaquette energy lies in `[0, 2]`, so their
+difference lies in `[−2, 2]`. It is carried, not chosen. -/
 theorem abs_gapObs_le (U : Link 4 4 → MassGap.SUN.SU 3) :
     |MassGap.LagOneDominates.gapObs U| ≤ 2 := by
   have h1 := MassGap.ReflectPositive.plaqE_nonneg (Nc := 3) (by norm_num)
@@ -444,14 +501,16 @@ theorem abs_gapObs_le (U : Link 4 4 → MassGap.SUN.SU 3) :
   rw [abs_le]
   exact ⟨by linarith, by linarith⟩
 
-/-- **THE NAMED HYPOTHESIS OF `LagOneDominates`, DISCHARGED.**
+/-- `LagOneDominates.PairReflPositive β` at every `0 ≤ β`.
 
-`gram_refl_positive` at `d = 4`, `n = 4`, `N = 3`, `τ = 2`, `a = 0`, `m = 2`, with `F` the two-term
-observable `F₁ − F₂`. The reflection constant `a + a + 1` is `1`, the link reflection whose positive
-half is the pair of lag sites `{1, 2}`.
+This is `gram_refl_positive` at `d = 4`, `n = 4`, `N = 3`, `τ = 2`, `a = 0`, `m = 2`, with `F` the
+two-term observable `LagOneDominates.gapObs`, whose three hypotheses are `measurable_gapObs`,
+`abs_gapObs_le` and `gapObs_local`. The reflection constant `a + a + 1` evaluates to `1` in
+`Fin 4`, the link reflection whose positive half is the pair of lag sites `1` and `2`.
 
-DERIVED: `4 = 2 · 2` is the extent and its half; `2 ≤ 2` is `OddLagSplit`'s own plane-assignment
-bound met at the smallest extent that meets it; `0 ≤ β` is the cross kernel's sign condition. -/
+DERIVED: `0 ≤ β` is the cross kernel's sign condition and the only numeral in the statement. The
+ instance values are `4 = 2 · 2`, the extent and its half, and `2 ≤ 2`, `OddLagSplit`'s
+plane-assignment bound met at the smallest extent that meets it. -/
 theorem pairReflPositive {β : ℝ} (hβ : 0 ≤ β) : MassGap.LagOneDominates.PairReflPositive β := by
   have h := gram_refl_positive (2 : Fin 4) (0 : Fin 4) 2 MassGap.LagOneDominates.gapObs
     measurable_gapObs abs_gapObs_le gapObs_local (by norm_num) (by norm_num) (by norm_num)
@@ -461,34 +520,33 @@ theorem pairReflPositive {β : ℝ} (hβ : 0 ≤ β) : MassGap.LagOneDominates.P
   exact le_of_le_of_eq h
     (congrArg (MassGap.ReflectPositive.EW 3 β) (funext fun U => mul_comm _ _))
 
-/-- **`ρ(2) ≤ ρ(1)` FOR THE SU(3) WILSON CORRELATION AT THE CLAY APERTURE, AT EVERY `β ≥ 0`.**
+/-- `wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1` at every `0 ≤ β`.
 
-The third conjunct of `SpectralFour.FourRepresentable` at extent four, which
-`SpectralFour.tripleFacts_not_ordered` shows does NOT follow from `TailRatio.TripleFacts`, and which
-`SpectralFour.ordered_is_what_nonneg_lam_buys` identifies with positivity of the transfer spectrum.
+It is proved here as reflection positivity at a LINK plane for a two-term half-space observable:
+`pairReflPositive` supplies `LagOneDominates.PairReflPositive β`, and
+`LagOneDominates.lag_two_le_lag_one` converts it. The link-reflection positivity itself is
+`gram_refl_positive`, which is `OddLagSplit`'s crossing integration run with the observable left as
+a parameter. This inequality is the ordering conjunct of `SpectralFour.FourRepresentable`.
 
-It is proved here as reflection positivity at a LINK plane for a two-term half-space observable —
-`LagOneDominates.pairReflPositive_iff` makes that identification exact — with the link-reflection
-positivity supplied by `gram_refl_positive`, which is `OddLagSplit`'s crossing integration run with
-the observable left as a parameter.
-
-DERIVED: `3` is the Clay aperture; `1` and `2` are lag indices; `0 ≤ β` is the cross kernel's own
-sign condition, carried from `OddLagSplit`. -/
+DERIVED: `3` is the first argument of `wilsonCorrAt`, carried unchanged from `pairReflPositive`,
+where it is the rank in `SU 3`; `1` and `2` are the two lags being compared; `0 ≤ β` is the cross
+kernel's own sign condition, carried from `OddLagSplit`. -/
 theorem wilson_lag_two_le_lag_one {β : ℝ} (hβ : 0 ≤ β) :
     MassGap.wilsonCorrAt 3 β 2 ≤ MassGap.wilsonCorrAt 3 β 1 :=
   MassGap.LagOneDominates.lag_two_le_lag_one (pairReflPositive hβ)
 
-/-- **THE EXTENT-FOUR REGION, WITH ONLY THE QUADRATIC LEFT.**
+/-- `WilsonSpectral 3 β`, from `0 ≤ β` and the quadratic
+`2 * ρ(1)² ≤ ρ(2)² + ρ(0) * ρ(2)` taken as a hypothesis, where `ρ(l)` is `wilsonCorrAt 3 β l`.
 
-Three of `SpectralFour.FourRepresentable`'s four conjuncts now hold of the Wilson triple at every
-`0 ≤ β`: `0 ≤ ρ(0)` and `0 ≤ ρ(2)` from `TailRatio.triple_wilsonCorrAt`, and `ρ(2) ≤ ρ(1)` from
-`wilson_lag_two_le_lag_one`. The remaining hypothesis is the quadratic
-`2ρ(1)² ≤ ρ(2)² + ρ(0)·ρ(2)`, which `SpectralFour.tripleFacts_not_quadratic` shows is independent of
-everything else the tree proves. This file does not touch it; `MassGap.SlabQuadratic.wilson_quadratic`
-supplies it, at every real coupling.
+The other conjuncts of `SpectralFour.FourRepresentable` are supplied inside
+`LagOneDominates.wilsonSpectral_of_pair_and_quadratic`: nonnegativity of `ρ(0)` and `ρ(2)` from
+`TailRatio.triple_wilsonCorrAt`, and the ordering from `pairReflPositive`. The quadratic is not
+proved here; it is a hypothesis of this statement.
 
-DERIVED: `3` is the Clay aperture; `0, 1, 2` are lag indices; `2` in `2ρ(1)²` is
-`SpectralFour.FourRepresentable`'s own coefficient. -/
+DERIVED: `3` is the first argument of `wilsonCorrAt` and of `WilsonSpectral`, carried from
+`pairReflPositive`, where it is the rank in `SU 3`; `0`, `1` and `2` are lag indices; the `2` in
+`2 * ρ(1)²` and the exponents `2` are `SpectralFour.FourRepresentable`'s own coefficient and
+powers; `0 ≤ β` is the cross kernel's sign condition. -/
 theorem wilsonSpectral_of_quadratic {β : ℝ} (hβ : 0 ≤ β)
     (hquad : 2 * MassGap.wilsonCorrAt 3 β 1 ^ 2
       ≤ MassGap.wilsonCorrAt 3 β 2 ^ 2

@@ -3,19 +3,30 @@ import MassGap.ReflectionHalfSpace
 import MassGap.ContactValue
 
 /-!
-# MassGap.BoxNumericFloor — turning the box's reflection floor into a NUMBER
+# MassGap.BoxNumericFloor — an explicit lower bound for the box's reflection form
 
-`ReflectionHalfSpace.irefl_box_pairing_pos_and_floor` bounds the box's Wilson reflection form below
-by the weight's floor times the conditional half-integral's VARIANCE. That is a positive quantity
-but it is an INTEGRAL, and `hfin` is a ratio, which needs a number.
+`ReflectionHalfSpace.irefl_box_pairing_ge_variance` bounds the box's Wilson reflection form below by
+the weight's floor times the variance of the conditional half-integral. That variance is an
+integral; this module replaces it by an explicit number.
 
-`ActionSplit.variance_ge_sq_div_of_mean_zero` converts a variance into a number as soon as there is
-a test function with COMPUTED moments and a floor on the correlation. `ContactValue` supplies the
-moments at `SU(3)`: `haar_re_chi_zero` reads `0` and `haar_re_chi_sq` reads `1/2`.
+The test function is `linkTr ℓ`, the real trace at one shared-block link.
+`ActionSplit.variance_ge_sq_mul_of_factor_floor` converts a variance into a number given computed
+first and second moments for such a function together with a floor on the other factor.
+`ContactValue` supplies the moments at `SU(3)`: `haar_re_chi_zero` gives mean `0` and
+`haar_re_chi_sq` gives second moment `1 / 2`. The floor on the dressing is
+`ReflectionHalfSpace.ihalfBoltz_lower_bound` through `ActionSplit.le_halfIntegral`.
 
-**⛔ THIS FILE IS `SU(3)` ONLY.** `ContactValue`'s evaluation is `SU(3)`-specific — the centre
-argument it runs on is vacuous at `SU(2)` — and `ColourGeneral` records what carrying it to other
-ranks costs. Nothing here is stated at a general rank.
+Scope: colour group `SU(3)` throughout, since the value `1 / 2` is `ContactValue`'s, whose
+evaluation is `SU(3)`-specific — the centre argument it runs on is vacuous at `SU(2)` — and
+`ColourGeneral` records what carrying it to other ranks costs. Nothing here is stated at a general
+rank. The bounds are for one box, one shared-block link and one observable; they bound a single
+pairing below and do not compare two pairings at different reflection distances.
+
+DERIVED: `3` is the rank `ContactValue` evaluates at; `4` is the dimension; `1 / 2` is the plane
+trace's computed second moment; `0` is its computed mean and the lower bound on the Wilson density;
+the `2` multiplying a plaquette count is the range of the Wilson density, as in
+`iplaneWeight_abs_le`, and the `2` in `2 * p` is the even reflection constant; an exponent `2` is a
+square; `1` is the all-identity `base` passed to `glue`.
 -/
 
 namespace MassGap.BoxNumericFloor
@@ -23,29 +34,29 @@ namespace MassGap.BoxNumericFloor
 open MeasureTheory
 open MassGap.CompactGauge
 
-/-- **`ContactValue`'s character and `HaarVariance`'s real trace are the same function at `SU(3)`.**
+/-- `(ContactValue.chi g).re = HaarVariance.reTr g` at `SU(3)`, by `rfl`: both are the real part of
+the matrix trace. It lets the two modules' lemmas compose.
 
-Both are the real part of the matrix trace. Stated so the two files' lemmas compose.
-
-DERIVED: the `3` is the rank `ContactValue` evaluates at. -/
+DERIVED: `3` is the rank `ContactValue` evaluates at. -/
 theorem re_chi_eq_reTr (g : MassGap.SUN.SU 3) :
     (MassGap.ContactValue.chi g).re = MassGap.HaarVariance.reTr g := rfl
 
 #print axioms re_chi_eq_reTr
 
-/-- **The real trace has mean zero against Haar at `SU(3)`.** `ContactValue.haar_re_chi_zero`.
+/-- `∫ g : SU 3, reTr g ∂(probHaar (SU 3)) = 0`: the real trace has Haar mean zero at `SU(3)`. It is
+`ContactValue.haar_re_chi_zero` rewritten through `re_chi_eq_reTr`.
 
-DERIVED: the `0` is the mean; the `3` is the rank. -/
+DERIVED: `0` is the computed mean; `3` is the rank. -/
 theorem haar_reTr_zero :
     (∫ g : MassGap.SUN.SU 3, MassGap.HaarVariance.reTr g ∂(probHaar (MassGap.SUN.SU 3))) = 0 := by
   simpa only [re_chi_eq_reTr] using MassGap.ContactValue.haar_re_chi_zero
 
 #print axioms haar_reTr_zero
 
-/-- **And second moment `1/2`.** `ContactValue.haar_re_chi_sq`.
+/-- `∫ g : SU 3, (reTr g) ^ 2 ∂(probHaar (SU 3)) = 1 / 2`: the real trace's Haar second moment at
+`SU(3)`. It is `ContactValue.haar_re_chi_sq` rewritten through `re_chi_eq_reTr`.
 
-DERIVED: the `1/2` is the computed second moment; the `2` in `^ 2` is the square; the `3` is the
-rank. -/
+DERIVED: `1 / 2` is the computed second moment; the `2` in `^ 2` is the square; `3` is the rank. -/
 theorem haar_reTr_sq :
     (∫ g : MassGap.SUN.SU 3, (MassGap.HaarVariance.reTr g) ^ 2
       ∂(probHaar (MassGap.SUN.SU 3))) = 1 / 2 := by
@@ -53,10 +64,11 @@ theorem haar_reTr_sq :
 
 #print axioms haar_reTr_sq
 
-/-- **The real trace is bounded**, by compactness. `SU(3)` is compact and `reTr` is continuous, so
-a bound exists; no eigenvalue argument is needed and none is available here.
+/-- There is a `C` with `|reTr g| ≤ C` for every `g : SU 3`. From compactness of `SU(3)` and
+continuity of `reTr` through `IsCompact.exists_isMaxOn`; the bound is existential and no value is
+computed.
 
-DERIVED: the `3` is the rank. -/
+DERIVED: `3` is the rank. -/
 theorem exists_bound_reTr :
     ∃ C : ℝ, ∀ g : MassGap.SUN.SU 3, |MassGap.HaarVariance.reTr g| ≤ C := by
   obtain ⟨x, -, hx⟩ := isCompact_univ.exists_isMaxOn (Set.univ_nonempty)
@@ -65,26 +77,29 @@ theorem exists_bound_reTr :
 
 #print axioms exists_bound_reTr
 
-/-- **The test function on configurations**: the real trace at one link.
+/-- The test function on configurations over a finite link set `Λ`: the real trace of the
+configuration's value at one link `ℓ`.
 
-DERIVED: the `3` is the rank. -/
+DERIVED: `3` is the rank. -/
 noncomputable def linkTr {Λ : Finset MassGap.InfiniteLattice.ILink}
     (ℓ : ↥Λ) (U : ↥Λ → MassGap.SUN.SU 3) : ℝ :=
   MassGap.HaarVariance.reTr (U ℓ)
 
-/-- **It is continuous**, hence measurable.
+/-- `Continuous (linkTr ℓ)`, as `continuous_reTr` composed with evaluation at `ℓ`. Measurability
+follows and is what the integrals below use.
 
-DERIVED: the `3` is the rank. -/
+DERIVED: `3` is the rank. -/
 theorem continuous_linkTr {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥Λ) :
     Continuous (linkTr ℓ) :=
   MassGap.HaarVariance.continuous_reTr.comp (continuous_apply ℓ)
 
 #print axioms continuous_linkTr
 
-/-- **Its mean against the configuration measure is `0`** — the single-link moment, carried by
-`ActionSplit.integral_eval_cvol`.
+/-- `∫ U, linkTr ℓ U ∂(ActionSplit.cvol ↥Λ (probHaar (SU 3))) = 0`. The product measure's
+single-link marginal is Haar, by `ActionSplit.integral_eval_cvol`, so the integral is
+`haar_reTr_zero`.
 
-DERIVED: the `0` is the mean; the `3` is the rank. -/
+DERIVED: `0` is the computed mean; `3` is the rank. -/
 theorem integral_linkTr {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥Λ) :
     (∫ U, linkTr ℓ U
       ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU 3)))) = 0 := by
@@ -96,10 +111,11 @@ theorem integral_linkTr {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥Λ
 
 #print axioms integral_linkTr
 
-/-- **And its second moment is `1/2`.**
+/-- `∫ U, (linkTr ℓ U) ^ 2 ∂(ActionSplit.cvol ↥Λ (probHaar (SU 3))) = 1 / 2`, by the same
+single-link reduction applied to `haar_reTr_sq`.
 
-DERIVED: the `1/2` is `ContactValue`'s computed second moment; the `2` in `^ 2` is the square; the
-`3` is the rank. -/
+DERIVED: `1 / 2` is `ContactValue`'s computed second moment; the `2` in `^ 2` is the square; `3` is
+the rank. -/
 theorem integral_linkTr_sq {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : ↥Λ) :
     (∫ U, (linkTr ℓ U) ^ 2
       ∂(MassGap.ActionSplit.cvol ↥Λ (probHaar (MassGap.SUN.SU 3)))) = 1 / 2 := by
@@ -112,9 +128,11 @@ theorem integral_linkTr_sq {Λ : Finset MassGap.InfiniteLattice.ILink} (ℓ : �
 
 #print axioms integral_linkTr_sq
 
-/-- **The dressed plane-trace observable.** `Re tr` at one shared-block link, times the dressing.
+/-- The dressed observable: `linkTr ℓ U` times `ReflectionHalfSpace.ihalfBoltz φ β τ p Λ ω U`, the
+real trace at one shared-block link multiplied by the half-space Boltzmann dressing. `φ`, `β`, `ω`
+and the box data are all arguments.
 
-DERIVED: the `3` is the rank; `4` is the dimension. -/
+DERIVED: `3` is the rank; `4` is the dimension the reflection axis `τ` ranges over. -/
 noncomputable def traceDressed (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ℓ : ↥(MassGap.ReflectionHalfSpace.boxR τ p Λ))
@@ -123,9 +141,13 @@ noncomputable def traceDressed (τ : Fin 4) (p : ℤ)
     (U : ↥Λ → MassGap.SUN.SU 3) : ℝ :=
   linkTr (ℓ : ↥Λ) U * MassGap.ReflectionHalfSpace.ihalfBoltz φ β τ p Λ ω U
 
-/-- **Its half-integral factorises**: the plane trace pulls out, the dressing's `S`-integral stays.
+/-- The half-integral of `traceDressed` factorises: it equals `linkTr ℓ U` times the half-integral
+of the dressing alone. Since `ℓ` lies in `boxR`, `ActionSplit.glue_agree_R` shows the trace factor
+depends only on the `R`-component and is therefore constant under the `S`-integration, so
+`ActionSplit.halfIntegral_mul_R_left` pulls it out.
 
-DERIVED: the `1` is the all-identity `base`; the `3` is the rank; `4` is the dimension. -/
+DERIVED: `1` is the all-identity `base` passed to `glue`; `3` is the rank; `4` is the dimension the
+reflection axis ranges over. -/
 theorem halfIntegral_traceDressed (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ℓ : ↥(MassGap.ReflectionHalfSpace.boxR τ p Λ))
@@ -164,16 +186,24 @@ theorem halfIntegral_traceDressed (τ : Fin 4) (p : ℤ)
 
 #print axioms halfIntegral_traceDressed
 
-/-- **⭐⭐⭐ THE HALF-INTEGRAL'S VARIANCE IS AT LEAST A NUMBER.**
+/-- The variance of the half-integral of `traceDressed` is at least
+`exp (-(|β| * (card (iplqPlus τ p Λ) * Cφ))) ^ 2 * (1 / 2)`, for any measurable `φ` bounded by `Cφ`,
+any real `β` and any boundary condition `ω`.
 
-The plane trace has mean `0` and second moment `1/2` (`integral_linkTr`, `integral_linkTr_sq`), the
-dressing's `S`-integral has the floor `exp(-|β|·card(iplqPlus)·Cφ)` (`le_halfIntegral` on
-`ihalfBoltz_lower_bound`), and `halfIntegral_traceDressed` says the half-integral is their product.
-`ActionSplit.variance_ge_sq_mul_of_factor_floor` then reads off the number.
+`halfIntegral_traceDressed` makes the half-integral the product of `linkTr ℓ` with the dressing's
+half-integral. The trace factor has mean `0` and second moment `1 / 2` (`integral_linkTr`,
+`integral_linkTr_sq`); the dressing's half-integral is bounded below by
+`exp (-(|β| * (card (iplqPlus τ p Λ) * Cφ)))` by `ActionSplit.le_halfIntegral` on
+`ihalfBoltz_lower_bound`, and above by the corresponding positive exponential, which supplies the
+integrability side conditions through `exists_bound_reTr`.
+`ActionSplit.variance_ge_sq_mul_of_factor_floor` then produces the number.
 
-DERIVED: the `1/2` is the plane trace's computed second moment; the `2`s in `^ 2` are the squares;
-the `1` is the all-identity `base`; the `3` is the rank; `4` is the dimension. `φ`'s bound `Cφ` is
-generic and carries no literal. -/
+The bound depends on `Λ` through the plaquette count, and on `β` and `Cφ`; it is not uniform in
+those.
+
+DERIVED: `1 / 2` is the plane trace's computed second moment; the exponents `2` are squares; `1` is
+the all-identity `base` passed to `glue`; `3` is the rank; `4` is the dimension the reflection axis
+ranges over. `Cφ` is the caller's bound and carries no literal. -/
 theorem variance_halfIntegral_traceDressed_ge (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (ℓ : ↥(MassGap.ReflectionHalfSpace.boxR τ p Λ))
@@ -329,30 +359,28 @@ theorem variance_halfIntegral_traceDressed_ge (τ : Fin 4) (p : ℤ)
 
 #print axioms variance_halfIntegral_traceDressed_ge
 
-/-- **⭐⭐⭐ THE BOX'S WILSON REFLECTION FORM IS AT LEAST A NUMBER.**
+/-- The box's Wilson reflection pairing is bounded below by
 
-    exp(-|β|·card(iplqZero)·2) · exp(-|β|·card(iplqPlus)·2)² · (1/2)
+    exp(-(|β| * (card (iplqZero τ p Λ) * 2)))
+      * (exp(-(|β| * (card (iplqPlus τ p Λ) * 2))) ^ 2 * (1 / 2))
 
-at every `k`, at every `β`, on any reflection-closed `Λ` with a shared-block link. The observable is
-`Re tr` at that link times the dressing.
+for every centring constant `k`, every real `β`, every boundary condition `ω`, and every
+reflection-closed `Λ` — `hΛ` — carrying a shared-block link `ℓ`. The observable paired is
+`traceDressed τ p Λ ℓ φ β ω`, with `φ` measurable and taking values in `[0, 2]`.
 
-`ReflectionHalfSpace.irefl_box_pairing_ge_variance` supplies the weight's floor times the
-half-integral's variance; `variance_halfIntegral_traceDressed_ge` replaces that variance by the
+`ReflectionHalfSpace.irefl_box_pairing_ge_variance` gives the weight's floor times the
+half-integral's variance, and `variance_halfIntegral_traceDressed_ge` replaces that variance by the
 number.
 
-**⛔ IT IS ONE BOX AND ONE OBSERVABLE.** `hfin` quantifies over all of `halfSpaceAlg` and lives at a
-limit state; nothing here reaches either, and nothing routes this into
-`gapAt_of_finite_volume_connected`.
-
-**⛔ AND IT IS NOT A RATIO.** `hfin` compares two pairings at different reflection distances. This
-bounds ONE of them below; the numerator is untouched.
-
-**⛔ SU(3) ONLY**, because the `1/2` is `ContactValue`'s.
+This bounds one pairing below, at one box, one shared-block link and one observable. It does not
+compare pairings at two reflection distances, and it says nothing about a quotient of two such
+pairings. The value `1 / 2` is `ContactValue`'s, so the statement is at `SU(3)`.
 
 DERIVED: the `2` in `2 * p` is the even reflection constant; the `2`s multiplying the plaquette
-counts are the range of the Wilson density, as in `iplaneWeight_abs_le`; the `2` in `^ 2` is the
-square of the dressing's floor; the `1/2` is the plane trace's computed second moment; the `0` is
-the density's lower sign hypothesis; the `3` is the rank; `4` is the dimension. -/
+counts are the range of the Wilson density, as in `iplaneWeight_abs_le`, and also the upper bound
+`hφ2` imposes on `φ`; the exponent `2` is the square of the dressing's floor; `1 / 2` is the plane
+trace's computed second moment; `0` is the lower bound `hφ0` imposes on `φ`; `3` is the rank; `4` is
+the dimension. -/
 theorem box_reflection_form_ge_number (τ : Fin 4) (p : ℤ)
     (Λ : Finset MassGap.InfiniteLattice.ILink)
     (hΛ : ∀ l ∈ Λ, MassGap.LatticeReflection.ireflLink τ (2 * p) l ∈ Λ)
@@ -406,19 +434,21 @@ theorem box_reflection_form_ge_number (τ : Fin 4) (p : ℤ)
 
 #print axioms box_reflection_form_ge_number
 
-/-- **⭐⭐⭐ AND THE HYPOTHESES ARE SATISFIABLE**, so the number bounds something that exists.
+/-- The hypotheses of `box_reflection_form_ge_number` are met at concrete data: for `ν ≠ τ` and
+`-(n : ℤ) ≤ p ≤ (n : ℤ)` there exists an observable `O` on configurations over
+`symCube τ (2 * p) n` satisfying the same lower bound, with the Wilson density itself as `φ`.
 
-`symCube τ (2p) n` is reflection-closed (`ReflectionHalfSpace.symCube_refl_stable`), its shared
-block contains `planeLink ν p` whenever `-n ≤ p ≤ n` (`planeLink_mem_symCube`,
-`planeLink_mem_boxR`), and the Wilson density is bounded in `[0, 2]`. So
-`box_reflection_form_ge_number` applies at concrete data.
+The witness is `traceDressed` at the link `planeLink ν p`, which lies in the cube by
+`planeLink_mem_symCube` and in its shared block by `planeLink_mem_boxR`;
+`symCube_refl_stable` supplies reflection closure, and `wilsonDensity_nonneg` with
+`wilsonDensity_le_two` supply the `[0, 2]` bounds on `φ`.
 
-**⛔ IT IS STILL ONE BOX AND ONE OBSERVABLE**, and nothing routes it into `hfin`.
+It is still one box, one link and one observable, and it bounds a single pairing below.
 
 DERIVED: the `2` in `2 * p` is the even reflection constant; the `2`s multiplying the plaquette
-counts are the range of the Wilson density; the `2` in `^ 2` is the square of the dressing's floor;
-the `1/2` is the plane trace's computed second moment; the `3` is the rank; `4` is the dimension.
-The radius condition carries no literal. -/
+counts are the range of the Wilson density; the exponent `2` is the square of the dressing's floor;
+`1 / 2` is the plane trace's computed second moment; `3` is the rank; `4` is the dimension. The
+radius condition `-(n : ℤ) ≤ p ≤ (n : ℤ)` carries no literal. -/
 theorem exists_box_reflection_form_ge_number (τ ν : Fin 4) (hν : ν ≠ τ) (p : ℤ) {n : ℕ}
     (hlo : -(n : ℤ) ≤ p) (hhi : p ≤ (n : ℤ)) (β : ℝ)
     (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU 3)) (k : ℝ) :

@@ -1,44 +1,49 @@
 import Mathlib
 
 /-!
-# MassGap.LatticeGauge — Euclidean/permutation invariance of lattice-gauge correlations,
-DERIVED from Haar-invariance (Residual A of the ledger, step A1)
+# MassGap.LatticeGauge — invariance of Gibbs expectations under a lattice symmetry
 
-This is the first increment of the **physical-fidelity lift**. In `WilsonInstance.lean` the
-Osterwalder–Schrader invariances `os_euc`/`os_perm` are discharged by `rfl`: the reflected form
-factors through an inert label that the `Perm (Fin 4)` actions leave fixed, so invariance holds for
-*any* form reading that label — it is *modelled*, not *derived* from the gauge measure.
+A finite lattice gauge system over an abstract measurable gauge group, and a derivation that its
+Gibbs expectations are unchanged when an observable is composed with a symmetry that permutes links
+and plaquettes compatibly.
 
-Here we build a genuine finite lattice gauge measure over a compact gauge group `G` (as a measurable
-space with a left-invariant probability Haar measure `μ`) and **derive** the invariance of Gibbs
-correlations from two real facts:
+`System G` carries a finite link type, a finite plaquette type, a holonomy
+`hol : Plaq → (Link → G) → G` and a plaquette density `φ : G → ℝ`. Built on those: `action` sums
+`φ ∘ hol` over the plaquettes, `boltz β` is `exp (-β * action)`, `vol μ` is the product measure with
+`μ` on every link, `corrNum` and `partition` are the two integrals, and `expect` is their quotient.
 
-* the product Haar measure over links is preserved by relabelling links
-  (`reindex_measurePreserving`, via `MeasureTheory.measurePreserving_piCongrLeft`); and
-* the Wilson action is invariant under a lattice symmetry because that symmetry permutes plaquettes
-  (`action_invariant`, from the `Symmetry.compat` datum — a checkable combinatorial property of a
-  real lattice, *not* a physics axiom and *not* a `rfl` dodge on the correlation).
+`Symmetry sys` is a permutation of links and a permutation of plaquettes with the compatibility
+field `compat : hol p (fun l => U (onLink l)) = hol (onPlaq p) U`. That field is a combinatorial
+property of a particular lattice, and everything below is what it buys.
 
-The payoff, `expect_invariant : ⟨O ∘ reindex⟩ = ⟨O⟩`, is `os_euc`/`os_perm` DERIVED rather than asserted.
+The chain. `reindex_measurePreserving` — a product measure with identical factors is preserved by
+relabelling the index, via `MeasureTheory.measurePreserving_piCongrLeft`. `action_invariant` —
+reindex the plaquette sum along `onPlaq`, using `compat`. `boltz_invariant`, `corrNum_invariant` (a
+measure-preserving change of variables) and `expect_invariant` follow, the last giving
+`expect (O ∘ reindex onLink) = expect O`. `expect_invariant_of_mp` states the same mechanism for any
+measure-preserving equivalence of configuration space whose Boltzmann weight it leaves fixed.
 
-Deliberately abstract over the gauge group: the derivation needs only a measurable space with a
-probability measure and a symmetry that permutes links/plaquettes compatibly. Instantiating `G` at
-`Matrix.specialUnitaryGroup n ℂ` (supplying its compactness/topology/Haar instances) is the separate
-step A2; wiring `wilsonCorr` to `expect` and retiring the `rfl` invariances is step A3.
+Scope. `G` is a measurable space and nothing more: no group structure, topology, compactness or
+invariance of `μ` is used, and `μ` is required to be a probability measure only where the reindexing
+ lemma needs it. The holonomy is a parameter — the ordered product of link variables around a
+plaquette is one instantiation of it, not an assumption made here. `partition` is untouched by every
+invariance proof, and none of them requires it to be nonzero, so `expect` is a quotient that may
+divide by zero without affecting the equalities.
 
-Foundational footprint only (`#print axioms` at the end). Build on the remote box:
-`lake build MassGap.LatticeGauge`.
+Foundational footprint only (`#print axioms` at the end).
 -/
 
 namespace MassGap.LatticeGauge
 
 open MeasureTheory
 
-/-- A finite lattice gauge system over a measurable gauge group `G`: a finite set of links, a finite
-set of plaquettes, a holonomy reading each plaquette's group element from a configuration, and a
-plaquette action density `φ` (a class function of the holonomy). The holonomy is left abstract at
-this step — any map satisfying the symmetry compatibility below yields the invariance; the concrete
-"ordered product of link variables around the plaquette" is supplied when a real lattice is built. -/
+/-- A finite lattice gauge system over a measurable gauge group `G`: a finite link type, a finite
+plaquette type, a holonomy `hol` reading each plaquette's group element off a configuration, and a
+plaquette action density `φ : G → ℝ`.
+
+`hol` is a field, so any map at all may be supplied; the results below need only the compatibility
+recorded in `Symmetry`. The ordered product of link variables around a plaquette is one choice of
+`hol`. `φ` is an arbitrary real-valued function on `G` — being a class function is not imposed. -/
 structure System (G : Type) [MeasurableSpace G] where
   Link : Type
   [linkFin : Fintype Link]
@@ -80,11 +85,15 @@ noncomputable def partition (sys : System G) (μ : Measure G) (β : ℝ) : ℝ :
 noncomputable def expect (sys : System G) (μ : Measure G) (β : ℝ) (O : sys.Config → ℝ) : ℝ :=
   sys.corrNum μ β O / sys.partition μ β
 
-/-- **The invariance mechanism, in general.** For ANY measure-preserving equivalence `T` of the
-configuration space whose Boltzmann weight is invariant (`boltz β (T U) = boltz β U`), the Gibbs
-expectation is invariant under transporting the observable: `⟨O ∘ T⟩ = ⟨O⟩`. This is the measure-
-theoretic core shared by the geometric symmetry (`T = reindex`) and the gauge symmetry (`T = conj`);
-the partition function is untouched, and the numerator is a measure-preserving change of variables. -/
+/-- For a measurable equivalence `T` of configuration space that preserves `vol μ` and leaves the
+Boltzmann weight fixed, `expect (fun U => O (T U)) = expect O`.
+
+The proof rewrites the numerator's integrand by `hw`, then applies `hT.integral_comp'`. The
+denominator is not touched, so no integrability, positivity or nonvanishing of `partition` is
+needed, and the observable `O` is an arbitrary real-valued function.
+
+This is the mechanism `corrNum_invariant` and `expect_invariant` specialise to `T = reindex onLink`;
+a gauge transformation acting on configurations would be another instance. -/
 theorem expect_invariant_of_mp (sys : System G) (μ : Measure G) (β : ℝ) (O : sys.Config → ℝ)
     (T : sys.Config ≃ᵐ sys.Config) (hT : MeasurePreserving T (sys.vol μ) (sys.vol μ))
     (hw : ∀ U, sys.boltz β (T U) = sys.boltz β U) :
@@ -102,11 +111,13 @@ theorem expect_invariant_of_mp (sys : System G) (μ : Measure G) (β : ℝ) (O :
 
 end System
 
-/-- A geometric symmetry of a lattice gauge system: a permutation of the links together with the
-induced permutation of the plaquettes, **compatible** with the holonomy — relabelling the links by
-`onLink` sends the holonomy of a plaquette `p` to the holonomy of the permuted plaquette `onPlaq p`.
-This is what "the symmetry permutes plaquettes" amounts to: a finite, checkable combinatorial
-property of a real lattice, carrying no physics axiom and no `rfl` on the correlation. -/
+/-- A permutation `onLink` of the links, a permutation `onPlaq` of the plaquettes, and the field
+`compat` tying them to the holonomy: relabelling a configuration's links by `onLink` sends the
+holonomy at `p` to the holonomy at `onPlaq p`.
+
+`compat` is a finite combinatorial condition on a given system; it is a field, not a consequence, so
+the structure is inhabited exactly when such a pair of permutations exists. Both permutations are
+arbitrary otherwise — no order, orientation or fixed-point condition is imposed. -/
 structure Symmetry (sys : System G) where
   onLink : Equiv.Perm sys.Link
   onPlaq : Equiv.Perm sys.Plaq
@@ -117,17 +128,24 @@ namespace Symmetry
 
 variable {sys : System G}
 
-/-- The measurable relabelling of configurations induced by a link permutation `e`:
-`reindex e U l = U (e l)`. Realised as the inverse of `MeasurableEquiv.piCongrLeft`, whose symmetric
-apply reduces with no dependent cast (constant fibres). -/
+/-- The measurable equivalence of configurations induced by a link permutation `e`, acting by
+`reindex e U l = U (e l)`.
+
+Built as the inverse of `MeasurableEquiv.piCongrLeft`. Because the fibres are constant — every link
+carries the same `G` — its symmetric direction reduces without a dependent cast, which is what makes
+`reindex_apply` hold by `rfl`. -/
 noncomputable def reindex (e : Equiv.Perm sys.Link) : sys.Config ≃ᵐ sys.Config :=
   (MeasurableEquiv.piCongrLeft (fun _ : sys.Link => G) e).symm
 
 @[simp] theorem reindex_apply (e : Equiv.Perm sys.Link) (U : sys.Config) (l : sys.Link) :
     reindex e U l = U (e l) := rfl
 
-/-- Relabelling links preserves the product Haar measure (identical factors), from
-`MeasureTheory.measurePreserving_piCongrLeft` and closure of measure-preservation under `symm`. -/
+/-- `reindex e` preserves `vol μ` in both directions, for any link permutation `e` and any
+probability measure `μ` on `G`.
+
+From `MeasureTheory.measurePreserving_piCongrLeft` together with closure of measure preservation
+under `symm`. The factors of the product are identical, which is why no invariance property of `μ`
+itself is required; `IsProbabilityMeasure μ` is, because the product-measure lemma needs it. -/
 theorem reindex_measurePreserving (μ : Measure G) [IsProbabilityMeasure μ]
     (e : Equiv.Perm sys.Link) :
     MeasurePreserving (reindex (sys := sys) e) (sys.vol μ) (sys.vol μ) := by
@@ -137,8 +155,10 @@ theorem reindex_measurePreserving (μ : Measure G) [IsProbabilityMeasure μ]
     simpa [System.vol] using hmp
   exact MeasurePreserving.symm (MeasurableEquiv.piCongrLeft (fun _ : sys.Link => G) e) h
 
-/-- **The Wilson action is invariant under the symmetry** — DERIVED from `compat` by reindexing the
-plaquette sum along `onPlaq`. -/
+/-- `action (reindex sym.onLink U) = action U` for every configuration `U`.
+
+Rewriting each summand by `sym.compat` turns the sum over plaquettes into the sum of the same terms
+at `sym.onPlaq p`, and `Equiv.sum_comp` removes that permutation. No property of `φ` is used. -/
 theorem action_invariant (sym : Symmetry sys) (U : sys.Config) :
     sys.action (reindex sym.onLink U) = sys.action U := by
   have hcfg : (reindex sym.onLink U) = (fun l => U (sym.onLink l)) :=
@@ -151,13 +171,18 @@ theorem action_invariant (sym : Symmetry sys) (U : sys.Config) :
     _ = ∑ p, sys.φ (sys.hol p U) := Equiv.sum_comp sym.onPlaq (fun p => sys.φ (sys.hol p U))
     _ = sys.action U := rfl
 
-/-- The Boltzmann weight is invariant under the symmetry (from `action_invariant`). -/
+/-- `boltz β (reindex sym.onLink U) = boltz β U`, at every coupling `β` and configuration `U`.
+Immediate from `action_invariant`, since `boltz` depends on `U` only through `action`. -/
 theorem boltz_invariant (sym : Symmetry sys) (β : ℝ) (U : sys.Config) :
     sys.boltz β (reindex sym.onLink U) = sys.boltz β U := by
   unfold System.boltz; rw [action_invariant]
 
-/-- **The correlation numerator is invariant under the symmetry** — DERIVED: the measure-preserving
-change of variables `U ↦ reindex U` (Haar-invariance) composed with weight invariance. -/
+/-- `corrNum μ β (fun U => O (reindex sym.onLink U)) = corrNum μ β O`, for every observable `O`.
+
+The integrand is rewritten by `boltz_invariant` so that the symmetry acts on both factors, then
+`reindex_measurePreserving` supplies the change of variables. `O` is arbitrary and no integrability
+hypothesis is imposed — Mathlib's integral is zero on non-integrable functions, and the rewriting
+is pointwise. -/
 theorem corrNum_invariant (sys : System G) (μ : Measure G) [IsProbabilityMeasure μ]
     (sym : Symmetry sys) (β : ℝ) (O : sys.Config → ℝ) :
     sys.corrNum μ β (fun U => O (reindex sym.onLink U)) = sys.corrNum μ β O := by
@@ -170,10 +195,12 @@ theorem corrNum_invariant (sys : System G) (μ : Measure G) [IsProbabilityMeasur
     _ = ∫ U, O U * sys.boltz β U ∂(sys.vol μ) :=
         hmp.integral_comp' (fun U => O U * sys.boltz β U)
 
-/-- **The Gibbs expectation is invariant under the symmetry** — `⟨O ∘ reindex⟩ = ⟨O⟩`. This is the
-DERIVED form of the Osterwalder–Schrader invariances `os_euc` / `os_perm`: not a `rfl`
-through an inert label, but a consequence of Haar-invariance of the measure and plaquette-permutation
-invariance of the action. -/
+/-- `expect μ β (fun U => O (reindex sym.onLink U)) = expect μ β O`.
+
+`corrNum_invariant` rewrites the numerator; the denominator `partition μ β` does not depend on the
+observable, so it is untouched and is not required to be nonzero. The equality therefore holds for
+every system, symmetry, coupling and observable, resting only on `sym.compat` and on `μ` being a
+probability measure. -/
 theorem expect_invariant (sys : System G) (μ : Measure G) [IsProbabilityMeasure μ]
     (sym : Symmetry sys) (β : ℝ) (O : sys.Config → ℝ) :
     sys.expect μ β (fun U => O (reindex sym.onLink U)) = sys.expect μ β O := by

@@ -3,43 +3,26 @@ import MassGap.GNSHilbert
 import MassGap.Reconstruction
 
 /-!
-# MassGap.OpTBridge — placing the transfer operator where the reconstruction theorem can see it
+# MassGap.OpTBridge — `Reconstruction.reconstruct_qm_core` applied at `GNSHilbert.opT`
 
-## The break this addresses
+`Reconstruction.reconstruct_qm_core` is stated for an arbitrary element `T` of an abstract
+`CStarAlgebra A`. `GNSHilbert.opT D` is a continuous linear endomorphism of the GNS completion
+`H D.toReflForm`. Bounded operators on a complex Hilbert space form a C\*-algebra, and
+`GNSHilbert.complete_H` supplies the completeness instance, so the application needs no construction
+— only that Lean sees the algebra structure.
 
-`Reconstruction.reconstruct_qm_core` is stated over `variable {A : Type*} [CStarAlgebra A]` and takes
-an arbitrary element `T : A`. `GNSHilbert.opT D` is a continuous linear map on the GNS completion.
-**Nothing in the tree connected the two**, and nothing stated anything about
-`spectrum ℝ (GNSHilbert.opT D)` — so even a complete `Transfer.TransferData` did not reach the
-reconstruction theorem.
+`cstar_of_gns` records that instance. `reconstruct_from_opT` performs the application, discharging
+the self-adjointness hypothesis from `GNSHilbert.isSelfAdjoint_opT` (itself derived from
+`TransferData`'s `T_symm`) and leaving the two spectral hypotheses — `1 ∈ spectrum ℝ (opT D)` and
+`spectrum ℝ (opT D) ⊆ {1} ∪ [ε, e^{-Δ}]` — as premises on the caller.
 
-## What closes it, and what does not
+`spectral_hypothesis_fails_at_identity` is a real-arithmetic incompatibility: for `0 < Δ`, the value
+`1` cannot lie in `Set.Icc ε (Real.exp (-Δ))`, since `Real.exp (-Δ) < 1`.
 
-Bounded operators on a complex Hilbert space form a C\*-algebra, and `GNSHilbert.complete_H` makes
-the GNS completion one. So the bridge is an INSTANCE, not a construction: `reconstruct_qm_core`
-applies to `opT D` directly once Lean is shown the algebra.
-
-`reconstruct_from_opT` does that, and discharges `hT` from `GNSHilbert.isSelfAdjoint_opT`, which is
-already proved unconditionally from `TransferData`'s own `T_symm`.
-
-**⚠ The two spectral hypotheses remain, and they are the whole content.** `h1` (that `1` is in the
-spectrum) and `hsp` (that the rest of the spectrum sits in `[ε, e^{−Δ}]`) are exactly the mass gap in
-operator form. Nothing here proves either, and nothing in the tree does. What changes is the KIND of
-gap: C1's remainder was "there is no bridge at all"; it is now "the bridge is there and the spectral
-input is open", which is the same obligation the rest of the development already names.
-
-**And it says nothing about which `D`.** The instances the tree carries are
-`GNSHilbert.trivialTransfer` (whose `T` is the identity), the slab ones, whose surviving premise
-`SlabShiftStable` forces the identity too, and `WilsonState.wilsonTransferData`, which is the
-infinite-volume one and rests on three facts about the state that nothing supplies. At the identity
-the spectrum is `{1}` and `hsp` fails for every `ε`, `Δ` — correctly, since a trivial operator has
-no gap.
-
-**⛔ AND `hsp` IS NOT A HYPOTHESIS THE PHYSICAL OPERATOR CAN MEET.**
-`TransferInvertibility.isUnit_of_spectral_hypothesis` shows `0 < ε` with this `hsp` is exactly
-`IsUnit T`, so this endpoint asks the transfer operator to be invertible.
-`GapToOperator.norm_opT_le_of_orth` is the alternative: the same decay conclusion from
-`TransferGap.GapAt`, with no spectrum, no logarithm and no invertibility.
+Scope: `D` ranges over `TransferData A` for `A` an `ℝ`-module; nothing here constructs a `D`, proves
+a spectral containment, or says which operators `opT D` can be. With `0 < ε`, the hypothesis `hsp`
+of `reconstruct_from_opT` keeps `0` out of `spectrum ℝ (opT D)`, so it applies only to invertible
+transfer operators.
 -/
 
 namespace MassGap.OpTBridge
@@ -48,26 +31,32 @@ open MassGap.Transfer MassGap.GNSHilbert MassGap.Reconstruction
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- **THE GNS COMPLETION'S BOUNDED OPERATORS ARE A C\*-ALGEBRA.** Recorded as a theorem rather than
-left to instance search at the use site, so that the bridge is visible and its failure would be
-visible too.
+/-- The C\*-algebra structure on the continuous linear endomorphisms of the GNS completion,
+`H D.toReflForm →L[ℂ] H D.toReflForm`, for a `TransferData A`. The body introduces
+`GNSHilbert.complete_H D.toReflForm` and then defers to instance search, so this is a named handle on
+an instance rather than a construction. Marked `@[reducible]`, so it unfolds during elaboration.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 @[reducible] noncomputable def cstar_of_gns (D : TransferData A) :
     CStarAlgebra (H D.toReflForm →L[ℂ] H D.toReflForm) := by
   haveI := complete_H D.toReflForm
   infer_instance
 
-/-- **⭐ THE RECONSTRUCTION THEOREM, APPLIED TO THE TRANSFER OPERATOR.**
+/-- `Reconstruction.reconstruct_qm_core` instantiated at `A := H D.toReflForm →L[ℂ] H D.toReflForm`
+and `T := opT D`. Given `0 < ε`, `0 < Δ`, `(1 : ℝ) ∈ spectrum ℝ (opT D)` and
+`spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))`, it concludes that `hamiltonian (opT D)` is
+self-adjoint, is `≥ 0`, has `(0 : ℝ)` in its spectrum, and has spectrum inside
+`{0} ∪ Set.Ici Δ`.
 
-`reconstruct_qm_core` at `A := H →L[ℂ] H` and `T := opT D`, with self-adjointness discharged by
-`GNSHilbert.isSelfAdjoint_opT`.
+Self-adjointness of `opT D` is discharged internally from `GNSHilbert.isSelfAdjoint_opT`; `h1` and
+`hsp` are premises the caller supplies. Scope: `h1` and `hsp` together with `0 < ε` require
+`spectrum ℝ (opT D)` to avoid `0`, so `opT D` must be invertible for the hypotheses to be
+satisfiable.
 
-**The spectral hypotheses are the mass gap.** `h1` and `hsp` are not discharged here and are not
-discharged anywhere in the tree; they are the obligation, stated in operator form.
-
-DERIVED: the `1` is the vacuum eigenvalue, `reconstruct_qm_core`'s own; `0` is the ground-state
-energy. Nothing is chosen. -/
+DERIVED: `0` is the positivity threshold of `ε`, the positivity threshold of `Δ`, the lower bound in
+`0 ≤ hamiltonian (opT D)`, the spectral point asserted present, and the singleton in the concluded
+union; `1` is the spectral value of `opT D` assumed present in `h1` and the singleton in `hsp`. Both
+are inherited from `reconstruct_qm_core`; nothing is chosen here. -/
 theorem reconstruct_from_opT (D : TransferData A) {ε Δ : ℝ} (hε : 0 < ε) (hΔ : 0 < Δ)
     (h1 : (1 : ℝ) ∈ spectrum ℝ (opT D))
     (hsp : spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))) :
@@ -79,13 +68,18 @@ theorem reconstruct_from_opT (D : TransferData A) {ε Δ : ℝ} (hε : 0 < ε) (
 
 #print axioms reconstruct_from_opT
 
-/-- **⛔ AND AT THE IDENTITY THE SPECTRAL HYPOTHESIS FAILS**, which is the negative control: the only
-transfer operators the tree carries are trivial, and a trivial operator correctly admits no gap.
+/-- A real-arithmetic incompatibility, stated over reals `ε`, `Δ`: from `0 < Δ`, the membership
+`(1 : ℝ) ∈ ({1} : Set ℝ) ∪ Set.Icc ε (Real.exp (-Δ))` and the non-membership
+`(1 : ℝ) ∉ ({1} : Set ℝ)`, it derives `False`. The proof splits the union; the singleton branch
+contradicts `hne`, and the interval branch gives `1 ≤ Real.exp (-Δ)` against `Real.exp (-Δ) < 1`.
 
-If `T = 1` then `1 ∈ spectrum` holds but every point of the spectrum is `1`, so `hsp` would force
-`1 ∈ Set.Icc ε (exp (-Δ))`, i.e. `1 ≤ exp (-Δ)`, contradicting `0 < Δ`.
+Scope, and it is a strong one: `hne` says `(1 : ℝ) ∉ ({1} : Set ℝ)`, which is false outright, so no
+caller can supply it and the theorem cannot be instantiated. The statement mentions no operator, no
+spectrum and no `TransferData`; the content that survives is the interval branch, namely that `1` is
+not in `Set.Icc ε (Real.exp (-Δ))` when `0 < Δ`.
 
-DERIVED: the `1` is the identity's only spectral value; `0` is the sign of `Δ`. -/
+DERIVED: `0` is the positivity threshold of `Δ`. `1` appears four times — as the element and as the
+singleton in `hmem`, and again as the element and as the singleton in `hne`. -/
 theorem spectral_hypothesis_fails_at_identity {ε Δ : ℝ} (hΔ : 0 < Δ)
     (hmem : (1 : ℝ) ∈ ({1} : Set ℝ) ∪ Set.Icc ε (Real.exp (-Δ)))
     (hne : (1 : ℝ) ∉ ({1} : Set ℝ)) : False := by

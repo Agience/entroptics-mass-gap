@@ -1,34 +1,45 @@
 import MassGap.CubeClosed
 
 /-!
-# The boundary of a cube-path is CONNECTED
+# MassGap.CubeConnected — the boundary of a cube-path is connected
 
-**WHY THIS FILE EXISTS.** `VortexFamily` defines the counted family by four conditions, and three of
-them are theorems already: closed, of area `4k+6`, through a fixed plaquette. The fourth is
-connectedness, and it is not decoration. Without it the family admits a union of unit-cube boundaries
-— closed, since every link lies in two or four of them — whose pieces may sit anywhere in the box. At
-area `4k+6` that is one anchored piece plus about `2k/3` floating ones in a box of about `k⁴` sites,
-so `log N / (4k+6)` grows like `(log k)/2`. `hdual` asks for a FIXED bound on that density, so against
-the larger family it is unsatisfiable and every theorem taking it is vacuous. Connectedness is what
-makes the density bounded, and it is what Theorem 7.1's `N(A)` always meant.
+`boundary_connected` states that for every directed cube-path `s : Fin k → Fin 3`, every face of
+`boundaryFaces (cubeConfig s)` is reachable from the face `((0 : Fin 3), cubePos s 0)` under
+`Relation.ReflTransGen (FaceAdj (boundaryFaces (cubeConfig s)))`, where two faces are adjacent when
+they share an edge and both lie in the boundary.
 
-**THE PROOF, and it is a descent on the path's own index.** A directed path visits exactly one cube
-at each coordinate sum `0 … k` (`cubePos_sum`), which is the fact the whole argument runs on:
+Connectedness is the fourth of the four conditions `VortexFamily` uses to define its counted family;
+the other three — closed, of area `4k+6`, through a fixed plaquette — are established elsewhere.
+Without it a family of that area admits unions of unit-cube boundaries, each closed because every
+link lies in two or four of them, whose components may sit anywhere in the box, and the count `N(A)`
+then grows faster in `k` than `hdual`'s fixed density bound allows.
 
-* A face of `xᵢ` has at most one other owner, and that owner has coordinate sum `i ± 1`, so it can
-  only be `xᵢ₋₁` or `xᵢ₊₁`. Hence AT MOST TWO of a cube's six faces are off the boundary — the one it
-  was entered through and the one it leaves by.
-* Two faces of one cube with DIFFERENT normals share an edge, whatever their corners
-  (`faceAdj_of_ne_axis`). So the boundary faces of one cube are connected to each other: four or more
-  of six remain, spread over three axes, so two different axes are always represented.
+## How the descent runs
+
+A directed path visits exactly one cube at each coordinate sum `0 … k` (`cubePos_sum_le`,
+restated here as `mem_cubeConfig_iff`), and each step advances the whole cube by one `step`
+(`cubePos_step`). Three consequences carry the argument:
+
+* A face of `xᵢ` has at most one other owner, whose coordinate sum is `i ± 1`, so that owner can only
+  be `xᵢ₋₁` or `xᵢ₊₁`. Hence at most two of a cube's six faces are off the boundary — the one it was
+  entered through and the one it leaves by. `high_mem_boundary` and `low_mem_boundary` are the two
+  membership statements.
+* Two faces of one cube with different normals share an edge, whatever their corners
+  (`sharesEdge_low_low`, `sharesEdge_low_high`, `sharesEdge_high_high`), so any boundary face of a
+  cube reaches a chosen low face of that cube in at most two hops (`reach_low_of_mem_faces`); the
+  two-hop case is the opposite face, the only pair of a cube's faces sharing no edge.
 * The low face of `xᵢ` on axis `a` and the low face of `xᵢ₋₁` on the same axis share an edge whenever
-  `a` is not the axis of the step between them (`faceAdj_ladder`). Two axes are not, and at most one
-  of those is the axis of the PREVIOUS step, so at least one rung always exists.
+  `a` is not the axis of the step between them (`sharesEdge_ladder`). Two axes are not, and at most
+  one of those is the previous step's axis, so a rung always exists.
 
-Descending rung by rung reaches `x₀`, whose low face on axis `0` is the fixed plaquette's preimage.
+`reach_origin_face` is the strong induction on the path index that descends rung by rung to `x₀`,
+whose low face on axis `0` is the fixed plaquette's preimage; `boundary_connected` is that statement
+with the relation reversed, by `reflTransGen_faceAdj_symm`.
 
-DERIVED: `3` is the dimension and the number of axes; `6 = 2 × 3` the faces of a cube; `2` the owners
-a face can have and the faces of a cube that can be off the boundary. None is chosen.
+DERIVED: `3` is the dimension and the number of axes; `6 = 2 * 3` is the number of faces of a cube;
+`2` is the number of owners a face can have and the number of a cube's faces that can be off the
+boundary; `1` is the index increment along the path; `0` is the origin index and the origin face's
+axis. None is chosen.
 -/
 
 namespace MassGap.CubeArea
@@ -37,11 +48,12 @@ open Finset
 
 /-! ### The third axis -/
 
-/-- The axis that is neither `a` nor `d`. The `% 3` only makes the definition total; at `a ≠ d` the
-subtraction already lands in range, because the three axes sum to `3`.
+/-- The axis that is neither `a` nor `d`, as `(3 - a - d) % 3` on `Fin 3`. The `% 3` only makes the
+definition total; when `a ≠ d` the natural subtraction already lands in range, because the three axis
+indices sum to `3`. At `a = d` the value is unconstrained and the lemmas below all carry `a ≠ d`.
 
-DERIVED: every `3` here is `Cube`'s dimension. `0 + 1 + 2 = 3` is why the remaining axis is the
-difference, so the formula is forced by the dimension and is not a fitted expression. -/
+DERIVED: every `3` is `Cube`'s dimension — the axis count, the sum `0 + 1 + 2` of the three indices,
+and the modulus. The formula is forced by the dimension. -/
 def third (a d : Fin 3) : Fin 3 := ⟨(3 - (a : ℕ) - (d : ℕ)) % 3, Nat.mod_lt _ (by norm_num)⟩
 
 theorem third_ne_left {a d : Fin 3} (h : a ≠ d) : third a d ≠ a := by
@@ -53,7 +65,10 @@ theorem third_ne_right {a d : Fin 3} (h : a ≠ d) : third a d ≠ d := by
 theorem third_comm (a d : Fin 3) : third a d = third d a := by
   revert a d; decide
 
-/-- Naming the third axis twice returns the one you started from. -/
+/-- `third a (third a d) = d` when `a ≠ d`: naming the third axis twice returns the axis started
+from. By `decide` over the finitely many pairs.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem third_third {a d : Fin 3} (h : a ≠ d) : third a (third a d) = d := by
   revert h; revert a d; decide
 
@@ -72,11 +87,16 @@ theorem eq_rot_of_ne {a d : Fin 3} (h : d ≠ a) : d = rot1 a ∨ d = rot2 a := 
 
 /-! ### Which edges a face carries, uniformly in the axis -/
 
-/-- **A FACE'S EDGES, WITHOUT NAMING A ROTATION.** A face with normal `a` carries, along each axis
-`d ≠ a`, exactly two edges: the one at its own corner and the one a step along the remaining axis.
-`mem_faceEdges_rot1` and `mem_faceEdges_rot2` are the two halves of this; saying it with `third`
-removes the choice of which rotation is which, which is what lets the adjacency lemmas below be
-stated once instead of per case. -/
+/-- For `d ≠ a`, an edge `(d, w)` lies in `faceEdges (a, y)` exactly when `w = y` or
+`w = step (third a d) y`: a face with normal `a` carries, along each axis other than `a`, exactly two
+edges — the one at its own corner and the one a step along the remaining axis. Proved by splitting
+`d` into the two rotations of `a` via `eq_rot_of_ne` and applying `mem_faceEdges_rot1` and
+`mem_faceEdges_rot2`.
+
+Stating it through `third` rather than through a named rotation is what lets the four adjacency
+lemmas below be proved once each rather than per rotation case.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem mem_faceEdges_iff {a d : Fin 3} (hd : d ≠ a) (y w : Cube) :
     ((d, w) : Fin 3 × Cube) ∈ faceEdges (a, y) ↔ w = y ∨ w = step (third a d) y := by
   rcases eq_rot_of_ne hd with rfl | rfl
@@ -96,22 +116,32 @@ theorem mem_faceEdges_iff {a d : Fin 3} (hd : d ≠ a) (y w : Cube) :
 Four shapes are needed and each is witnessed by ONE named edge, along the axis that is neither of the
 two in play. Nothing here is a case analysis on position: the witness is written down and checked. -/
 
-/-- Two faces share an edge. This is `SurfAdj` read in three dimensions. -/
+/-- Two faces share an edge: `(faceEdges f ∩ faceEdges g).Nonempty`. This is `VortexFamily.SurfAdj`
+read in three dimensions.
+
+DERIVED: no numeral appears in the statement. -/
 def SharesEdge (f g : Face) : Prop := (faceEdges f ∩ faceEdges g).Nonempty
 
 theorem SharesEdge.symm {f g : Face} (h : SharesEdge f g) : SharesEdge g f := by
   obtain ⟨e, he⟩ := h
   exact ⟨e, by rw [Finset.mem_inter] at he ⊢; exact ⟨he.2, he.1⟩⟩
 
-/-- **THE TWO LOW FACES OF A CUBE ON DIFFERENT AXES SHARE AN EDGE** — the one at the shared corner
-running along the axis that is neither. -/
+/-- The two low faces of a cube on different axes share an edge. The witness is `(third a b, x)`,
+the edge at the shared corner running along the axis that is neither `a` nor `b`; membership on both
+sides is `mem_faceEdges_iff` with `w = y`.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem sharesEdge_low_low {a b : Fin 3} (h : a ≠ b) (x : Cube) :
     SharesEdge ((a, x) : Face) ((b, x) : Face) := by
   refine ⟨(third a b, x), Finset.mem_inter.mpr ⟨?_, ?_⟩⟩
   · exact (mem_faceEdges_iff (third_ne_left h) x x).mpr (Or.inl rfl)
   · exact (mem_faceEdges_iff (third_ne_right h) x x).mpr (Or.inl rfl)
 
-/-- **A LOW FACE AND A HIGH FACE ON DIFFERENT AXES SHARE AN EDGE.** -/
+/-- A cube's low face on axis `a` and its high face on a different axis `b` share an edge. The
+witness is `(third a b, step b x)`, reached from the first face by `third_third` and lying at the
+second face's own corner.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem sharesEdge_low_high {a b : Fin 3} (h : a ≠ b) (x : Cube) :
     SharesEdge ((a, x) : Face) ((b, step b x) : Face) := by
   refine ⟨(third a b, step b x), Finset.mem_inter.mpr ⟨?_, ?_⟩⟩
@@ -119,8 +149,10 @@ theorem sharesEdge_low_high {a b : Fin 3} (h : a ≠ b) (x : Cube) :
     rw [third_third h]
   · exact (mem_faceEdges_iff (third_ne_right h) _ _).mpr (Or.inl rfl)
 
-/-- **THE TWO HIGH FACES OF A CUBE ON DIFFERENT AXES SHARE AN EDGE** — the far corner's, which the
-two steps reach in either order. -/
+/-- The two high faces of a cube on different axes share an edge: the one at the far corner
+`step a (step b x)`, which the two steps reach in either order, by `step_comm` and `third_comm`.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem sharesEdge_high_high {a b : Fin 3} (h : a ≠ b) (x : Cube) :
     SharesEdge ((a, step a x) : Face) ((b, step b x) : Face) := by
   refine ⟨(third a b, step a (step b x)), Finset.mem_inter.mpr ⟨?_, ?_⟩⟩
@@ -129,9 +161,12 @@ theorem sharesEdge_high_high {a b : Fin 3} (h : a ≠ b) (x : Cube) :
   · refine (mem_faceEdges_iff (third_ne_right h) _ _).mpr (Or.inr ?_)
     rw [third_comm a b, third_third (Ne.symm h)]
 
-/-- **THE RUNG.** The low face on axis `a` of a cube, and the low face on the SAME axis of the cube
-one step along `b ≠ a`, share an edge. This is what carries the descent from `xᵢ` to `xᵢ₋₁`: the two
-faces are parallel and offset within their own plane, so they meet along the edge between them. -/
+/-- The rung: the low face on axis `a` of a cube and the low face on the same axis of the cube one
+step along `b ≠ a` share an edge, the witness being `(third a b, step b x)`. The two faces are
+parallel and offset within their own plane, so they meet along the edge between them. This is the
+step `reach_origin_face` uses to descend from `xᵢ` to `xᵢ₋₁`.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem sharesEdge_ladder {a b : Fin 3} (h : a ≠ b) (x : Cube) :
     SharesEdge ((a, x) : Face) ((a, step b x) : Face) := by
   refine ⟨(third a b, step b x), Finset.mem_inter.mpr ⟨?_, ?_⟩⟩
@@ -146,14 +181,22 @@ theorem sharesEdge_ladder {a b : Fin 3} (h : a ≠ b) (x : Cube) :
 
 /-! ### One cube per coordinate sum
 
-The single fact the whole descent runs on. `cubePos_sum_le` says the `i`-th cube has coordinate sum
-exactly `i`, so the configuration meets each sum once — and therefore a cube's neighbour in the
-configuration, which differs in sum by one, can only be its predecessor or its successor on the path.
+`cubePos_sum_le` says the `i`-th cube of the path has coordinate sum exactly `i`, so the
+configuration meets each sum once. A cube's neighbour in the configuration differs in sum by one and
+can therefore only be its predecessor or its successor on the path. `mem_cubeConfig_iff` states
+membership in those terms, and `cubePos_step` states that one step of the path is one `step` of the
+whole cube.
+
+DERIVED: `3` is `Cube`'s dimension; `1` is the index increment along the path.
 -/
 
 variable {k : ℕ}
 
-/-- The path advances by one `step`, as a whole cube rather than coordinatewise. -/
+/-- `cubePos s ((j : ℕ) + 1) = step (s j) (cubePos s j)`: one index of the path advances the whole
+cube by one `step` along the axis `s j`. Proved coordinatewise from `cubePos_succ`, splitting on
+whether the coordinate is the step axis.
+
+DERIVED: `3` is `Cube`'s dimension; `1` is the index increment. -/
 theorem cubePos_step (s : Fin k → Fin 3) (j : Fin k) :
     MassGap.cubePos s ((j : ℕ) + 1) = step (s j) (MassGap.cubePos s (j : ℕ)) := by
   funext a
@@ -163,7 +206,10 @@ theorem cubePos_step (s : Fin k → Fin 3) (j : Fin k) :
   · rw [if_neg hja, step_other (fun h => hja h.symm)]
     omega
 
-/-- Membership in the configuration is decided by the coordinate sum alone. -/
+/-- `y ∈ cubeConfig s` exactly when `∑ b, y b ≤ k` and `cubePos s (∑ b, y b) = y`: membership is
+decided by the coordinate sum, which identifies the one index of the path that could carry `y`.
+
+DERIVED: `3` is `Cube`'s dimension. -/
 theorem mem_cubeConfig_iff (s : Fin k → Fin 3) (y : Cube) :
     y ∈ MassGap.cubeConfig s ↔ (∑ b, y b) ≤ k ∧ MassGap.cubePos s (∑ b, y b) = y := by
   classical
@@ -191,9 +237,19 @@ theorem sum_step_cubePos (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fin
 /-! ### Which faces of the path are on the boundary
 
 At most two of a cube's six faces are off the boundary: the one it was entered through and the one it
-leaves by. Everything else is on the boundary, and that is what the descent has to walk on. -/
+leaves by. The two theorems below give the corresponding membership statements, each conditional on
+the relevant step's axis differing from the face's normal.
 
-/-- **THE HIGH FACES.** `(a, step a xᵢ)` is on the boundary unless the path leaves `xᵢ` along `a`. -/
+DERIVED: `2` is the number of faces that can be off the boundary, one per adjacent cube on the path;
+`6 = 2 * 3` is a cube's face count; `3` is `Cube`'s dimension. -/
+
+/-- `(a, step a (cubePos s i))` is in `boundaryFaces (cubeConfig s)` provided no step of the path
+leaving index `i` is along `a`. Through `mem_boundaryFaces_iff_xor`, the cube `cubePos s i` is in
+the configuration while `step a (cubePos s i)` is not: any member with that coordinate sum would have
+to be `cubePos s (i+1)`, and `cubePos_step` with `step_axis_inj` would then make `a` the step axis,
+contradicting `hne`.
+
+DERIVED: `3` is `Cube`'s dimension. -/
 theorem high_mem_boundary (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fin 3)
     (hne : ∀ j : Fin k, (j : ℕ) = i → s j ≠ a) :
     ((a, step a (MassGap.cubePos s i)) : Face) ∈ boundaryFaces (MassGap.cubeConfig s) := by
@@ -211,8 +267,15 @@ theorem high_mem_boundary (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fi
     exact hne ⟨i, hik⟩ rfl (step_axis_inj heq)
   exact ⟨fun _ => hout, fun _ => hin⟩
 
-/-- **THE LOW FACES.** `(a, xᵢ)` is on the boundary unless the path entered `xᵢ` along `a`. At `i = 0`
-it is always on the boundary, because nothing sits one step back from the floor of `ℕ³`. -/
+/-- `(a, cubePos s i)` is in `boundaryFaces (cubeConfig s)` provided no step of the path arriving at
+index `i` is along `a`. The proof splits on whether the `a`-coordinate is `0`: if it is,
+`mem_boundaryFaces_iff_floor` applies, since nothing sits one step back from the floor of `ℕ³`;
+otherwise the cube one step back exists and is shown not to be in the configuration, by the same sum
+argument as `high_mem_boundary`.
+
+At `i = 0` the hypothesis `hne` is vacuous, so every low face of the origin cube is on the boundary.
+
+DERIVED: `3` is `Cube`'s dimension; `1` is the index decrement to the previous cube. -/
 theorem low_mem_boundary (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fin 3)
     (hne : ∀ j : Fin k, (j : ℕ) + 1 = i → s j ≠ a) :
     ((a, MassGap.cubePos s i) : Face) ∈ boundaryFaces (MassGap.cubeConfig s) := by
@@ -253,11 +316,18 @@ theorem low_mem_boundary (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fin
 
 /-! ### The descent
 
-Two faces of the boundary are adjacent when they share an edge. Every boundary face of `x_i` reaches
-the low face of `x_i` on a chosen axis in at most two hops, that low face steps down the rung to
-`x_{i-1}`, and the descent ends at `x_0`, whose low face on axis `0` is the fixed plaquette. -/
+Two boundary faces are adjacent when they share an edge and both lie in the boundary, which is
+`FaceAdj`. Every boundary face of `xᵢ` reaches the low face of `xᵢ` on a chosen axis in at most two
+hops, that low face crosses the rung to `xᵢ₋₁`, and the descent ends at `x₀`, whose low face on axis
+`0` is the fixed plaquette's preimage.
 
-/-- Adjacency inside a set of faces. This is `VortexFamily.SurfAdj` read in three dimensions. -/
+DERIVED: `2` is the hop bound inside one cube; `0` is the origin index and the origin face's axis;
+`3` is `Cube`'s dimension. -/
+
+/-- Adjacency inside a set of faces: both faces lie in `B` and they share an edge. This is
+`VortexFamily.SurfAdj` read in three dimensions.
+
+DERIVED: no numeral appears in the statement. -/
 def FaceAdj (B : Finset Face) (f g : Face) : Prop := f ∈ B ∧ g ∈ B ∧ SharesEdge f g
 
 theorem FaceAdj.symm {B : Finset Face} {f g : Face} (h : FaceAdj B f g) : FaceAdj B g f :=
@@ -269,9 +339,13 @@ theorem reflTransGen_faceAdj_symm {B : Finset Face} {f g : Face}
   | refl => exact Relation.ReflTransGen.refl
   | tail _ hstep ih => exact Relation.ReflTransGen.head hstep.symm ih
 
-/-- **ANY BOUNDARY FACE OF A CUBE REACHES A CHOSEN LOW FACE OF THAT CUBE**, in at most two hops. One
-hop if the normals differ; two through the other low face if the face is the one OPPOSITE the target,
-which is the only pair of a cube's faces that does not share an edge. -/
+/-- Any face of the cube `x` that lies in `B` reaches `(a, x)` under `ReflTransGen (FaceAdj B)`,
+given that both `(a, x)` and `(d, x)` are in `B` for some `d ≠ a`. The proof splits `f` by
+`mem_faces` into a low or high face with some normal `c`: zero hops if it is `(a, x)` itself, one hop
+by `sharesEdge_low_low` or `sharesEdge_low_high` if `c ≠ a`, and two hops through `(d, x)` if `f` is
+`(a, step a x)`, the face opposite the target and the only one sharing no edge with it.
+
+DERIVED: `3` is `Cube`'s dimension, the axis count. -/
 theorem reach_low_of_mem_faces {B : Finset Face} {x : Cube} {a d : Fin 3} (had : a ≠ d)
     (hA : ((a, x) : Face) ∈ B) (hD : ((d, x) : Face) ∈ B)
     {f : Face} (hfB : f ∈ B) (hf : f ∈ faces x) :
@@ -292,8 +366,13 @@ theorem reach_low_of_mem_faces {B : Finset Face} {x : Cube} {a d : Fin 3} (had :
 
 #print axioms reach_low_of_mem_faces
 
-/-- The low face of `x_i` on axis `a` is on the boundary as soon as the path did not ENTER `x_i`
-along `a`, and that condition only ever looks at the single step that arrives. -/
+/-- Converts the arriving-step condition from the single index `i - 1` to the quantified form
+`low_mem_boundary` takes: from `∀ hk, 0 < i → s ⟨i - 1, hk⟩ ≠ a` it produces
+`∀ j : Fin k, (j : ℕ) + 1 = i → s j ≠ a`. Only the one step that arrives at `i` is ever examined,
+since `(j : ℕ) + 1 = i` pins `j` to `i - 1`.
+
+DERIVED: `3` is `Cube`'s dimension; `1` is the index decrement to the arriving step; `0` is the
+lower bound on `i` that makes `i - 1` a genuine predecessor. -/
 theorem low_hne_of (s : Fin k → Fin 3) {i : ℕ} {a : Fin 3}
     (h : ∀ (hk : i - 1 < k), 0 < i → s ⟨i - 1, hk⟩ ≠ a) :
     ∀ j : Fin k, (j : ℕ) + 1 = i → s j ≠ a := by
@@ -303,10 +382,18 @@ theorem low_hne_of (s : Fin k → Fin 3) {i : ℕ} {a : Fin 3}
   have hres := h h3 (by omega)
   rwa [show (⟨i - 1, h3⟩ : Fin k) = j from Fin.ext h2] at hres
 
-/-- **EVERY BOUNDARY FACE REACHES THE ORIGIN CUBE'S LOW FACE ON AXIS `0`.** Strong induction on the
-index of a cube carrying the face: inside the cube, reach a low face whose axis is not the one the
-path entered by; then cross the rung to the same low face of the previous cube, which exists because
-two axes are not the entry axis and at most one of those is the previous entry axis. -/
+/-- Every boundary face of a cube on the path reaches `((0 : Fin 3), cubePos s 0)` under
+`ReflTransGen (FaceAdj (boundaryFaces (cubeConfig s)))`. Strong induction on the cube's index `i`.
+
+At `i = 0` every low face of the origin cube is on the boundary, by `low_mem_boundary` with a vacuous
+hypothesis, and `reach_low_of_mem_faces` at axes `0` and `1` finishes. At `i' + 1`, the two axes
+other than the entry axis give boundary low faces; one of them is also not the previous step's axis,
+by `rot1_ne_rot2`, and that axis `a` is the rung. `reach_low_of_mem_faces` reaches `(a, cubePos s
+(i'+1))` inside the cube, `sharesEdge_ladder` crosses to `(a, cubePos s i')`, and the inductive
+hypothesis applies there.
+
+DERIVED: `3` is `Cube`'s dimension; `0` is the origin index and the origin face's axis; `1` is the
+index increment and the second axis used at the origin. -/
 theorem reach_origin_face (s : Fin k → Fin 3) :
     ∀ i, i ≤ k → ∀ f ∈ boundaryFaces (MassGap.cubeConfig s), f ∈ faces (MassGap.cubePos s i) →
       Relation.ReflTransGen (FaceAdj (boundaryFaces (MassGap.cubeConfig s))) f
@@ -375,7 +462,12 @@ theorem reach_origin_face (s : Fin k → Fin 3) :
 
 #print axioms reach_origin_face
 
-/-- **THE BOUNDARY OF A CUBE-PATH IS CONNECTED**, from the origin cube's low face on axis `0`. -/
+/-- Every face of `boundaryFaces (cubeConfig s)` is reachable from `((0 : Fin 3), cubePos s 0)` under
+`ReflTransGen (FaceAdj (boundaryFaces (cubeConfig s)))`, so the boundary of a cube-path is connected
+from that face. A boundary face belongs to some cube of the configuration, `reach_origin_face` runs
+the descent, and `reflTransGen_faceAdj_symm` reverses it.
+
+DERIVED: `3` is `Cube`'s dimension; `0` is the origin index and the origin face's axis. -/
 theorem boundary_connected (s : Fin k → Fin 3) :
     ∀ f ∈ boundaryFaces (MassGap.cubeConfig s),
       Relation.ReflTransGen (FaceAdj (boundaryFaces (MassGap.cubeConfig s)))

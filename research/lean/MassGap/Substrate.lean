@@ -4,63 +4,58 @@ import MassGap.ZeroMode
 import MassGap.Spectral
 
 /-!
-# The substrate hypothesis: what bounds it, and what cannot
+# MassGap.Substrate — bounds on the circular second moment of a read, and reads that attain them
 
-`MassGap.ym_mass_gap_of_substrate` reduces the Clay statement to one hypothesis,
+`MassGap.ym_mass_gap_of_substrate` takes the hypothesis `∃ B, ∀ N β, d2At N β ≤ B`, where
+`d2At N β = ∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2` is the second moment of the read's
+probability vector about the circle distance. This module bounds that moment for an arbitrary
+`Moment.Read`, and constructs reads showing the bound is attained and the moment unbounded in the
+aperture.
 
-    h : ∃ B : ℝ, ∀ N β, d2At N β ≤ B
+## The unconditional bound
 
-where `d2At N β = ∑ d, (readYMAt N β).p d * (Moment.circLag d : ℝ)^2` is the second moment of the
-read's own probability vector about the CIRCLE distance. This file establishes what is true about
-that hypothesis unconditionally, and closes the routes that cannot reach it.
+`circ_moment_le_quarter_sq` gives `∑ d, R.p d * circLag d ^ 2 ≤ ((N : ℝ) + 1) ^ 2 / 4` for every
+`Moment.Read N`, from `Moment.Read.p_sum` and `circLag_le_half`. `d2At_le_quarter_sq` is that at the
+Wilson read, and `substrateRatio_le_quarter` divides the aperture out to give
+`substrateRatio N β ≤ 1 / 4`.
 
-## What is unconditionally true
+`quarter_ratio_fails_aperture_criterion` shows `1 / 4` does not satisfy
+`ym_mass_gap_of_ratio`'s condition `(2 * π) ^ 2 * c / 2 < 1 - 3 ^ (-1/4)`: the left side exceeds
+`4.9` and the right side is below `1`. `quarter_bound_grows_without_bound` shows
+`((N : ℝ) + 1) ^ 2 / 4` admits no `N`-independent bound.
 
-`d2At N β ≤ ((N:ℝ)+1)^2/4` at every aperture and every coupling (`d2At_le_quarter_sq`), equivalently
-`substrateRatio N β ≤ 1/4` (`substrateRatio_le_quarter`). This needs nothing beyond
-`Moment.Read.p_sum` and `circLag d ≤ (N+1)/2`: a probability distribution on a circle of `N+1` sites
-cannot have a second moment larger than the squared half-period.
+## Reads attaining and exceeding it
 
-## What this file does NOT claim
+`antipodeRead k` puts all weight at the antipode of a circle of even period `2 * (k + 1)`. It
+satisfies `ρ ≥ 0` and `∑ ρ > 0` — the two clauses `wilson_reflection_positive_at` asserts — and
+`antipodeRead_moment_eq_quarter_sq` computes its moment as exactly `((N : ℝ) + 1) ^ 2 / 4`.
+`rp_alone_leaves_moment_unbounded` uses it to exceed any `B`.
 
-It does not refute `∃ B, ∀ N β, d2At N β ≤ B`. That statement is about the CONSTRUCTED correlation
-`wilsonCorrAt`, and no family of other reads can refute it. What the reads below establish is the
-weaker and different claim that the hypothesis is not DERIVABLE from what the tree assumes about
-that correlation.
+`flatRead k` is `ρ ≡ 1`. `flatSpectral` exhibits it as a `Spectral.PeriodicSpectralForm` with a
+single mode at `lam = 1`, so it satisfies the periodic transfer form
+`ρ d = ∑ₖ wₖ (λₖ ^ d + λₖ ^ (n - d))` with `wₖ ≥ 0` and `λₖ ∈ [0, 1]`. `flatRead_moment` computes
+its moment as `(n ^ 2 + 2) / 12` at period `n = 2 * (k + 1)`, `flatRead_exceeds_ceiling` puts its
+ratio above `(1 - 3 ^ (-1/4)) / 8`, and `spectral_form_alone_leaves_moment_unbounded` shows the
+moment exceeds any `B`.
 
-## Why the tree's assumptions cannot reach it
+`substrate_bound_needs_more_than_positivity` states the two facts together: the read interface gives
+`((N : ℝ) + 1) ^ 2 / 4`, and over all apertures the moment exceeds every constant.
 
-The aperture argument (`Moment.Read.tension_lt_floor_of_circ_moment`) needs the substrate ratio below
-`(1 - 3^{-1/4})/(2π²) = 0.0121…`; its converse (`Moment.Read.substrate_lt_of_tension_lt_floor`) says
-a tension below the floor forces it below `(1 - 3^{-1/4})/8 = 0.0300…`. The unconditional bound is
-`1/4`, which is `8.3×` above even the necessary ceiling.
+## A bounded moment does not give a decay rate
 
-That gap cannot be closed by any argument reading only what `wilson_reflection_positive_at` asserts.
-The axiom asserts exactly `0 ≤ ρ d` and `0 < ∑ ρ d`; `antipodeRead` is a `Moment.Read` meeting both
-whose circular second moment is EXACTLY `((N:ℝ)+1)^2/4` (`antipodeRead_moment_eq_quarter_sq`), so
-`1/4` is attained and is the best constant the axiom supports. Letting the aperture grow, the moment
-is unbounded (`rp_alone_leaves_moment_unbounded`).
+`confinement_of_geometric_decay` consumes `p d ≤ C * r ^ circLag d` with one `r < 1` across all `N`
+and `β`. `tailRead k` carries weight `1` at lag zero and `tailWeight k = 1 / (k + 1) ^ 3` at the
+antipode. `tailRead_moment_le_one` bounds its moment by `1` at every aperture, and
+`bounded_moment_does_not_give_geometric_decay` shows no such `(C, r)` exists for the family, since
+`(k + 1) ^ 3 * r ^ (k + 1) → 0`.
 
-Nor can it be closed by the fuller content reflection positivity is cited for — the periodic transfer
-form `ρ(d) = ∑ₖ wₖ(λₖ^d + λₖ^{n−d})` with `wₖ ≥ 0` and `λₖ ∈ [0,1]`
-(`Spectral.PeriodicSpectralForm`). At `λ = 1` that form is the FLAT correlation, whose substrate
-ratio is `1/12 + 1/(6n²)` (`flatRead_moment`), above the ceiling `(1 - 3^{-1/4})/8` at every aperture
-(`flatRead_exceeds_ceiling`) and unbounded as a moment
-(`spectral_form_alone_leaves_moment_unbounded`). `λ ≤ 1` is contractivity, not a gap, so the spectral
-form on its own leaves the flat read in.
+## Scope
 
-`substrate_bound_needs_more_than_positivity` states the closure: the moment bound is not a
-consequence of the read interface, so any proof of `h` must evaluate `wilsonCorrAt` — a property of
-the Wilson Gibbs measure that no theorem in this tree supplies.
-
-## The hypothesis is strictly weaker than a uniform decay rate
-
-`confinement_of_geometric_decay` consumes `p d ≤ C·r^{circLag d}` with ONE `r < 1` for all `N`, `β`.
-`tailRead` is a family of reads whose circular second moment is at most `1` at every aperture and
-which admits no such `(C, r)` (`bounded_moment_does_not_give_geometric_decay`): a far tail of
-polynomially small weight costs the moment nothing and breaks every geometric bound. So the substrate
-hypothesis is genuinely the weaker of the two, and a route that discharges it need not produce a
-rate.
+None of these results refutes `∃ B, ∀ N β, d2At N β ≤ B`, which is a statement about the constructed
+correlation `wilsonCorrAt`. What the witness reads establish is that the bound does not follow from
+the `Moment.Read` interface, nor from the two clauses of `wilson_reflection_positive_at`, nor from
+`Spectral.PeriodicSpectralForm`. The bound `λ ≤ 1` in that form is contractivity, not a gap, which
+is why the flat read satisfies it.
 -/
 
 namespace MassGap.Substrate
@@ -69,13 +64,19 @@ open MassGap.Moment
 
 /-! ### The unconditional aperture bound -/
 
-/-- The circle lag never exceeds half the period — the arithmetic of `min d (N+1−d)`. -/
+/-- `2 * Moment.circLag d ≤ N + 1` for every `d : Fin (N + 1)`: the circle lag, being
+`min d (N + 1 - d)`, never exceeds half the period. By `omega`.
+
+DERIVED: `1` is the `+ 1` giving the period `N + 1` from the index bound; `2` is the doubling that
+turns the half-period bound into an integer inequality. -/
 theorem two_mul_circLag_le {N : ℕ} (d : Fin (N + 1)) : 2 * Moment.circLag d ≤ N + 1 := by
   have h := d.isLt
   unfold Moment.circLag
   omega
 
-/-- The same, as a real inequality. -/
+/-- `(circLag d : ℝ) ≤ ((N : ℝ) + 1) / 2`, the previous inequality cast to the reals.
+
+DERIVED: `1` is the `+ 1` giving the period; `2` is the halving of it. -/
 theorem circLag_le_half {N : ℕ} (d : Fin (N + 1)) :
     ((Moment.circLag d : ℕ) : ℝ) ≤ ((N : ℝ) + 1) / 2 := by
   have h : 2 * Moment.circLag d ≤ N + 1 := two_mul_circLag_le d
@@ -83,13 +84,14 @@ theorem circLag_le_half {N : ℕ} (d : Fin (N + 1)) :
   push_cast at hR
   linarith
 
-/-- **Every read's circular second moment is at most the squared half-period.**
+/-- `∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ ((N : ℝ) + 1) ^ 2 / 4` for every `Moment.Read N`. Bounds
+each term using `circLag_le_half` and nonnegativity of `p`, then sums using `Moment.Read.p_sum`.
 
-No hypothesis beyond the read interface: `p` is a probability vector (`Moment.Read.p_sum`) and the
-circle lag is at most `(N+1)/2`, so the moment is at most `((N+1)/2)²`. This is the whole of what
-reflection positivity, as axiomatised, can say about the substrate.
+Scope: no hypothesis beyond the `Moment.Read` interface. The bound carries the aperture `N`.
 
-DERIVED: the `4` is `2²`, the square of the two halves of the period. Nothing is chosen. -/
+DERIVED: `2` is the moment's order and the square it induces on the half-period; `1` is the `+ 1`
+giving the period `N + 1`; `4` is `2 ^ 2`, the square of the halving in `circLag_le_half`. Nothing
+is chosen. -/
 theorem circ_moment_le_quarter_sq {N : ℕ} (R : Moment.Read N) :
     ∑ d, R.p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2 ≤ ((N : ℝ) + 1) ^ 2 / 4 := by
   have key : ∀ d : Fin (N + 1),
@@ -105,16 +107,26 @@ theorem circ_moment_le_quarter_sq {N : ℕ} (R : Moment.Read N) :
 
 #print axioms circ_moment_le_quarter_sq
 
-/-- **The substrate moment of the Wilson read, bounded unconditionally.** At every aperture and every
-coupling — no hypothesis, no measurement. The bound carries the aperture, which is exactly why it
-does not discharge `ym_mass_gap_of_substrate`. -/
+/-- `d2At N β ≤ ((N : ℝ) + 1) ^ 2 / 4` at every aperture and coupling: `circ_moment_le_quarter_sq`
+at `readYMAt N β`.
+
+Scope: the bound depends on `N`, so it is not of the form `∃ B, ∀ N β, d2At N β ≤ B` that
+`ym_mass_gap_of_substrate` consumes; `quarter_bound_grows_without_bound` records that the right-hand
+side has no `N`-independent bound.
+
+DERIVED: `2` is the moment's order, `1` the `+ 1` giving the period, `4` the square of the halving,
+all inherited from `circ_moment_le_quarter_sq`. -/
 theorem d2At_le_quarter_sq (N : ℕ) (β : ℝ) : MassGap.d2At N β ≤ ((N : ℝ) + 1) ^ 2 / 4 := by
   unfold MassGap.d2At
   exact circ_moment_le_quarter_sq (MassGap.readYMAt N β)
 
 #print axioms d2At_le_quarter_sq
 
-/-- The same with the aperture divided out: the substrate ratio never exceeds `1/4`. -/
+/-- `substrateRatio N β ≤ 1 / 4` at every aperture and coupling: `d2At_le_quarter_sq` with the
+aperture divided out, through `substrateRatio_le_iff`.
+
+DERIVED: `1 / 4` is the previous bound's `((N : ℝ) + 1) ^ 2 / 4` divided by `((N : ℝ) + 1) ^ 2`, so
+the `4` is still the square of the halving in `circLag_le_half` and the `1` its numerator. -/
 theorem substrateRatio_le_quarter (N : ℕ) (β : ℝ) : MassGap.substrateRatio N β ≤ 1 / 4 := by
   rw [MassGap.substrateRatio_le_iff]
   have := d2At_le_quarter_sq N β
@@ -141,9 +153,13 @@ theorem quarter_ratio_fails_aperture_criterion :
 
 #print axioms quarter_ratio_fails_aperture_criterion
 
-/-- **And it cannot be fed to `confinement_of_substrate_bound` either**, because it is not a bound:
-`((N:ℝ)+1)²/4` grows without limit in the aperture, and the hypothesis there is ONE `B` good at every
-aperture. Stated so that `d2At_le_quarter_sq` cannot be mistaken for progress toward the flagship. -/
+/-- `¬ ∃ B, ∀ N, ((N : ℝ) + 1) ^ 2 / 4 ≤ B`: the right-hand side of `d2At_le_quarter_sq` has no
+bound independent of the aperture. Given a candidate `B`, `exists_nat_gt` supplies `k > B` and the
+ instance at `N = 4 * k` exceeds it.
+
+DERIVED: `2` is the moment's order, `1` the `+ 1` giving the period, `4` the square of the halving —
+all carried from `d2At_le_quarter_sq`'s right-hand side. The `4 * k` of the proof is a convenient
+instance. -/
 theorem quarter_bound_grows_without_bound :
     ¬ ∃ B : ℝ, ∀ N : ℕ, ((N : ℝ) + 1) ^ 2 / 4 ≤ B := by
   rintro ⟨B, hB⟩
@@ -166,7 +182,11 @@ returns there. Neither is a magnitude — both are forced by the requirement tha
 antipode. -/
 def antipode (k : ℕ) : Fin (2 * k + 1 + 1) := ⟨k + 1, by omega⟩
 
-/-- The circle lag of the antipode is half the period. -/
+/-- `Moment.circLag (antipode k) = k + 1`: the circle lag of the antipode is half the period
+`2 * (k + 1)`, since `min (k + 1) ((2 * k + 2) - (k + 1))` is `k + 1`.
+
+DERIVED: `1` is the `+ 1` in `k + 1`, half the even period `2 * k + 2`, which is what `min` returns
+at the antipode. -/
 theorem circLag_antipode (k : ℕ) : Moment.circLag (antipode k) = k + 1 := by
   have hv : ((antipode k : Fin (2 * k + 1 + 1)) : ℕ) = k + 1 := rfl
   unfold Moment.circLag
@@ -188,8 +208,16 @@ theorem antipodeRead_sum (k : ℕ) : ∑ d, (antipodeRead k).ρ d = 1 := by
   show ∑ d, (if d = antipode k then (1 : ℝ) else 0) = 1
   simp
 
-/-- **The quarter bound is attained.** The antipodal read's circular second moment is exactly
-`((N:ℝ)+1)²/4` at `N = 2k+1`, so no constant smaller than `1/4` follows from the read interface. -/
+/-- `∑ d, (antipodeRead k).p d * (circLag d : ℝ) ^ 2 = (((2 * k + 1 : ℕ) : ℝ) + 1) ^ 2 / 4`: the
+antipodal read attains the bound of `circ_moment_le_quarter_sq` exactly, at aperture `2 * k + 1`.
+The sum collapses by `Finset.sum_ite_eq'` and `circLag_antipode` gives the lag.
+
+Scope: attainment means no constant smaller than `1 / 4` follows from the `Moment.Read` interface
+alone.
+
+DERIVED: `2` is the moment's order and the doubling in the even aperture `2 * k + 1`; `1` is the
+`+ 1` in that aperture and the `+ 1` giving the period; `4` is the square of the halving, as in
+`circ_moment_le_quarter_sq`. -/
 theorem antipodeRead_moment_eq_quarter_sq (k : ℕ) :
     ∑ d, (antipodeRead k).p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2
       = (((2 * k + 1 : ℕ) : ℝ) + 1) ^ 2 / 4 := by
@@ -212,11 +240,15 @@ theorem antipodeRead_moment_eq_quarter_sq (k : ℕ) :
 
 #print axioms antipodeRead_moment_eq_quarter_sq
 
-/-- **Reflection positivity alone leaves the substrate moment unbounded.**
+/-- For every `B : ℝ` there are an aperture `N` and a `Moment.Read N` whose circular second moment
+exceeds `B`. The witness is `antipodeRead k` at `N = 2 * k + 1` for any `k > B`, whose moment is
+`((k : ℝ) + 1) ^ 2` by `antipodeRead_moment_eq_quarter_sq`.
 
-For every `B` there is an aperture and a read meeting exactly the axiom's two clauses whose circular
-second moment exceeds `B`. So `∃ B, ∀ N β, d2At N β ≤ B` is not a consequence of
-`wilson_reflection_positive_at`: any proof of it must look at what `wilsonCorrAt` actually is. -/
+Scope: the witness satisfies exactly the two clauses `wilson_reflection_positive_at` asserts, so the
+moment bound does not follow from those clauses. This says nothing about the moment of the
+constructed `wilsonCorrAt`.
+
+DERIVED: the one numeral in the statement is the exponent `2`, the moment's order. -/
 theorem rp_alone_leaves_moment_unbounded (B : ℝ) :
     ∃ (N : ℕ) (R : Moment.Read N), B < ∑ d, R.p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2 := by
   obtain ⟨k, hk⟩ := exists_nat_gt B
@@ -270,8 +302,13 @@ theorem flatRead_sum (k : ℕ) :
     _ = ((2 * k + 1 + 1 : ℕ) : ℝ) := hcard
     _ = ((2 * (k + 1) : ℕ) : ℝ) := by push_cast; ring
 
-/-- **The flat read's circular second moment is `(n² + 2)/12` at period `n = 2(k+1)`** — through
-`ZeroMode.sum_clag_sq`, which computes `12·∑ clag² = n³ + 2n` exactly. -/
+/-- `∑ d, (flatRead k).p d * (circLag d : ℝ) ^ 2 = (((2 * (k + 1) : ℕ) : ℝ) ^ 2 + 2) / 12` at period
+`n = 2 * (k + 1)`. The uniform weight factors out, `ZeroMode.sum_circLag_eq_range` reindexes the sum,
+and `ZeroMode.sum_clag_sq` evaluates it as `12 * ∑ clag ^ 2 = n ^ 3 + 2 * n`.
+
+DERIVED: `2` is the moment's order, the doubling in the even period `2 * (k + 1)`, and the additive
+term in `n ^ 2 + 2` that comes from `n ^ 3 + 2 * n` divided by `n`; `1` is the `+ 1` in `k + 1`;
+`12` is the denominator `ZeroMode.sum_clag_sq` produces. All are computed. -/
 theorem flatRead_moment (k : ℕ) :
     ∑ d, (flatRead k).p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2
       = (((2 * (k + 1) : ℕ) : ℝ) ^ 2 + 2) / 12 := by
@@ -303,7 +340,11 @@ theorem flatRead_moment (k : ℕ) :
 
 #print axioms flatRead_moment
 
-/-- `3^{-1/4} > 1/3`, because `3 > 1` and `-1/4 > -1`. -/
+/-- `(1 : ℝ) / 3 < (3 : ℝ) ^ (-(1 : ℝ) / 4)`. Since the base exceeds one, `Real.rpow` is increasing
+in the exponent, and `-1/4 > -1` with `3 ^ (-1) = 1 / 3`.
+
+DERIVED: `3` is the base, which is the entropy floor's own; `1` and `4` are the exponent `-1/4`, and
+`1 / 3` is `3 ^ (-1)`, the value at the comparison exponent `-1`. -/
 theorem one_third_lt_rpow : (1 : ℝ) / 3 < (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
   have hbase : (1 : ℝ) < 3 := by norm_num
   have hlt : (3 : ℝ) ^ (-(1 : ℝ)) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
@@ -315,20 +356,28 @@ theorem one_third_lt_rpow : (1 : ℝ) / 3 < (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
   rw [hone] at hlt
   exact hlt
 
-/-- **The ceiling a tension below the floor forces is below `1/12`.**
+/-- `(1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8 < 1 / 12`, by `linarith` from `one_third_lt_rpow`. The left
+side is the ceiling `Moment.Read.substrate_lt_of_tension_lt_floor` places on the substrate ratio;
+`1 / 12` is the value the flat read's ratio approaches from above.
 
-`Moment.Read.substrate_lt_of_tension_lt_floor` caps the substrate ratio at `(1 − 3^{-1/4})/8`. That
-number is smaller than `1/12`, which is what the flat read's ratio approaches from above — so a flat
-correlation is excluded, and so is every constant bound the read interface can prove. -/
+DERIVED: `3`, `1` and `4` are the floor `3 ^ (-1/4)`, as above; `8` is the divisor
+`substrate_lt_of_tension_lt_floor` carries; `12` is `flatRead_moment`'s denominator. -/
 theorem ceiling_lt_twelfth : (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8 < 1 / 12 := by
   have h := one_third_lt_rpow
   linarith
 
 #print axioms ceiling_lt_twelfth
 
-/-- **The flat read is above the ceiling at every aperture.** Its substrate ratio is
-`1/12 + 1/(6n²) > 1/12 > (1 − 3^{-1/4})/8`, so the correlation the periodic spectral form permits at
-`λ = 1` is exactly one the entropy floor refuses — and the spectral form does not refuse it. -/
+/-- At every `k`, `(1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8` is strictly below the flat read's substrate
+ratio. Rewriting by `flatRead_moment`, that ratio is `1 / 12 + (2 / 12) / n ^ 2` with
+`n = 2 * (k + 1)`, which exceeds `1 / 12`, which exceeds the left side by `ceiling_lt_twelfth`.
+
+Scope: the flat read satisfies `Spectral.PeriodicSpectralForm` via `flatSpectral`, so that form does
+not exclude a correlation whose ratio is above this ceiling.
+
+DERIVED: `3`, `1` and `4` are the floor `3 ^ (-1/4)`; `8` is the ceiling's divisor; `2` is the
+moment's order and the doubling in the aperture `2 * k + 1`; the `1`s are the `+ 1`s of the period
+and the aperture. `12` appears in the proof, from `flatRead_moment`. -/
 theorem flatRead_exceeds_ceiling (k : ℕ) :
     (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8
       < (∑ d, (flatRead k).p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2)
@@ -345,12 +394,17 @@ theorem flatRead_exceeds_ceiling (k : ℕ) :
 
 #print axioms flatRead_exceeds_ceiling
 
-/-- **The periodic spectral form alone leaves the substrate moment unbounded too.**
+/-- For every `B : ℝ` there is a `k`, a `Spectral.PeriodicSpectralForm (2 * k + 1 + 1) (fun _ => 1)`,
+and the read `flatRead k` agreeing with that constant correlation, whose circular second moment
+exceeds `B`. The witness is `flatSpectral k` for any `k > 12 * B`, using `flatRead_moment`.
 
-For every `B` there is an aperture, a correlation of the exact shape `Spectral.PeriodicSpectralForm`
-carries, and a read built from it, whose circular second moment exceeds `B`. So the fuller content
-reflection positivity is cited for — nonnegative transfer weights and `λ ∈ [0,1]` — is also not
-enough. What is missing is `λ` bounded away from `1`, which is the gap itself. -/
+Scope: the witness carries the full periodic transfer form — nonnegative weights and `λ ∈ [0, 1]` —
+so that form does not bound the moment either. It has `λ = 1`; a bound `λ` strictly below one is not
+part of the form.
+
+DERIVED: `2` is the moment's order and the doubling in the period `2 * k + 1 + 1`; the `1`s are the
+two `+ 1`s of that period and the constant value of the correlation. The `12 * B` of the proof comes
+from `flatRead_moment`'s denominator. -/
 theorem spectral_form_alone_leaves_moment_unbounded (B : ℝ) :
     ∃ (k : ℕ) (_S : MassGap.Spectral.PeriodicSpectralForm (2 * k + 1 + 1) (fun _ => (1 : ℝ))),
       (∀ d, (flatRead k).ρ d = (fun _ => (1 : ℝ)) d) ∧
@@ -365,16 +419,16 @@ theorem spectral_form_alone_leaves_moment_unbounded (B : ℝ) :
 
 #print axioms spectral_form_alone_leaves_moment_unbounded
 
-/-- **THE CLOSURE.** The substrate hypothesis is not a consequence of the read interface.
+/-- The two facts together: every `Moment.Read N` has circular second moment at most
+`((N : ℝ) + 1) ^ 2 / 4`, and for every `B` there is an aperture and a read whose moment exceeds `B`.
+The conjunction of `circ_moment_le_quarter_sq` and `rp_alone_leaves_moment_unbounded`.
 
-Stated as the two facts that together close the route: the unconditional bound the interface gives is
-`1/4` and it is ATTAINED, and letting the aperture grow the moment exceeds any `B`. Both witnessing
-reads satisfy exactly the two clauses `wilson_reflection_positive_at` asserts, and the flat one
-additionally carries the periodic transfer form. So `∃ B, ∀ N β, d2At N β ≤ B` cannot be derived from
-that axiom, however it is combined with the rest of this development: a proof must evaluate the
-Wilson Gibbs measure at some lag, which no theorem in this tree does.
+Scope: both quantify over arbitrary `Moment.Read`, not over `readYMAt`. The statement is about what
+the interface alone yields; it leaves `∃ B, ∀ N β, d2At N β ≤ B` untouched, since that is a claim
+about the constructed correlation.
 
-This is a statement about DERIVABILITY, not about truth. It leaves `∃ B, ∀ N β, d2At N β ≤ B` open. -/
+DERIVED: `2` is the moment's order, `1` the `+ 1` giving the period, `4` the square of the halving,
+all inherited from `circ_moment_le_quarter_sq`. -/
 theorem substrate_bound_needs_more_than_positivity :
     (∀ (N : ℕ) (R : Moment.Read N),
         ∑ d, R.p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2 ≤ ((N : ℝ) + 1) ^ 2 / 4) ∧
@@ -384,15 +438,12 @@ theorem substrate_bound_needs_more_than_positivity :
 
 #print axioms substrate_bound_needs_more_than_positivity
 
-/-! ### The substrate bound is strictly weaker than a uniform decay rate
+/-! ### A bounded moment does not give a uniform decay rate
 
-`confinement_of_geometric_decay` reaches the same conclusion from `p d ≤ C·r^{circLag d}` with ONE
-`r < 1`. That is a STRICTLY stronger demand: the reads below have a circular second moment at most
-`1` at every aperture and satisfy no geometric bound at all. A far tail whose weight falls off
-polynomially in the aperture contributes nothing to the moment and defeats every `r < 1`.
-
-Whoever plans to discharge the substrate hypothesis should therefore not route through a decay rate:
-doing so asks for more than the flagship needs. -/
+`confinement_of_geometric_decay` reaches its conclusion from `p d ≤ C * r ^ circLag d` with one
+`r < 1`. The reads below have circular second moment at most `1` at every aperture and satisfy no
+such bound: a far atom whose weight falls off polynomially in the aperture contributes a vanishing
+amount to the moment while defeating every geometric bound. -/
 
 /-- The far-tail weight: the reciprocal cube of the half-period.
 
@@ -450,16 +501,24 @@ theorem tailRead_sum (k : ℕ) : ∑ d, (tailRead k).ρ d = 1 + tailWeight k := 
     Finset.sum_ite_eq' Finset.univ (antipode k) (fun _ => tailWeight k)]
   simp
 
-/-- The circle lag at the origin is zero, so the contact term contributes nothing to the moment. -/
+/-- `Moment.circLag (0 : Fin (2 * k + 1 + 1)) = 0`: the circle lag at the origin is zero, so the
+contact term contributes nothing to a second moment.
+
+DERIVED: `2` is the doubling in the period `2 * k + 1 + 1`; the `1`s are its two increments; `0` is
+the index and the resulting lag. -/
 theorem circLag_zero (k : ℕ) : Moment.circLag (0 : Fin (2 * k + 1 + 1)) = 0 := by
   have hv : ((0 : Fin (2 * k + 1 + 1)) : ℕ) = 0 := rfl
   unfold Moment.circLag
   rw [hv]
   omega
 
-/-- **The tail read's circular second moment is at most `1`, at every aperture.** The far atom
-carries weight `(k+1)^{-3}` at squared distance `(k+1)²`, so it contributes `1/(k+1)` and the contact
-term contributes nothing. -/
+/-- `∑ d, (tailRead k).p d * (circLag d : ℝ) ^ 2 ≤ 1` at every `k`. The contact term sits at lag
+zero and contributes nothing (`circLag_zero`); the far atom carries `tailWeight k = 1 / (k + 1) ^ 3`
+at squared distance `(k + 1) ^ 2`, so the unnormalised moment is `1 / (k + 1)`, and dividing by the
+total mass, which is at least `1`, keeps it at or below `1`.
+
+DERIVED: `2` is the moment's order; `1` is the bound asserted, which is also the contact weight the
+total mass is at least. The exponent `3` of `tailWeight` appears in the proof. -/
 theorem tailRead_moment_le_one (k : ℕ) :
     ∑ d, (tailRead k).p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2 ≤ 1 := by
   have hS := tailRead_sum k
@@ -507,7 +566,12 @@ theorem tailRead_moment_le_one (k : ℕ) :
 
 #print axioms tailRead_moment_le_one
 
-/-- The tail read's weight at the antipode is at least half the tail weight. -/
+/-- `tailWeight k / 2 ≤ (tailRead k).p (antipode k)`. The unnormalised weight at the antipode is
+exactly `tailWeight k`, and the total mass `1 + tailWeight k` is at most `2` by
+`tailWeight_le_one`, so dividing loses at most a factor of two.
+
+DERIVED: the one numeral is `2`, the upper bound on the total mass `1 + tailWeight k`, which is what
+the division by that total can cost. -/
 theorem tailRead_p_antipode (k : ℕ) : tailWeight k / 2 ≤ (tailRead k).p (antipode k) := by
   have hS := tailRead_sum k
   have hne : antipode k ≠ (0 : Fin (2 * k + 1 + 1)) := by
@@ -526,16 +590,20 @@ theorem tailRead_p_antipode (k : ℕ) : tailWeight k / 2 ≤ (tailRead k).p (ant
   rw [hrho, div_le_div_iff₀ (by norm_num : (0 : ℝ) < 2) hSpos]
   nlinarith [(tailWeight_pos k).le]
 
-/-- **A BOUNDED SUBSTRATE MOMENT DOES NOT GIVE A DECAY RATE.**
+/-- A conjunction: the `tailRead` family has circular second moment at most `1` at every `k`, and
+there is no pair `(C, r)` with `0 ≤ r < 1` such that `(tailRead k).p d ≤ C * r ^ circLag d` holds at
+every `k` and every `d`. The second part evaluates the candidate bound at the antipode, where
+`tailRead_p_antipode` forces `1 / 2 ≤ C * ((k + 1) ^ 3 * r ^ (k + 1))`, and
+`summable_pow_mul_geometric_of_norm_lt_one` sends the right-hand side to `0`.
 
-The `tailRead` family has circular second moment at most `1` at every aperture — so it satisfies the
-hypothesis of `confinement_of_substrate_bound` with `B = 1` — and there is no `(C, r)` with `r < 1`
-for which `p d ≤ C·r^{circLag d}` holds across the family. The far atom's weight falls off like
-`(k+1)^{-3}`, which no geometric sequence stays above.
+Scope: the family satisfies `confinement_of_substrate_bound`'s hypothesis at `B = 1` while failing
+`confinement_of_geometric_decay`'s, so the two hypotheses are not interchangeable. This is a
+statement about these reads, not about `readYMAt`.
 
-So `confinement_of_geometric_decay` asks for strictly more than `confinement_of_substrate_bound`, and
-the two open residuals are NOT the same residual. Discharging the substrate hypothesis does not
-require producing a rate, and a route that produces one is solving a harder problem. -/
+DERIVED: `2` is the moment's order; `1` is the moment bound asserted and the strict upper bound on
+the geometric ratio `r`, which is what makes a geometric sequence decay; `0` is the lower bound on
+`r`. The exponent `3` and the factor `1 / 2` are `tailWeight`'s and `tailRead_p_antipode`'s, and
+appear in the proof. -/
 theorem bounded_moment_does_not_give_geometric_decay :
     (∀ k : ℕ, ∑ d, (tailRead k).p d * ((Moment.circLag d : ℕ) : ℝ) ^ 2 ≤ 1) ∧
       ¬ ∃ C r : ℝ, 0 ≤ r ∧ r < 1 ∧

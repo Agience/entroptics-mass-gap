@@ -1,30 +1,50 @@
 import Mathlib
 
 /-!
-# C-2: the leading character ratio `r = I₂/I₁ > 0` from the modified-Bessel series
+# MassGap.Bessel — the integer-order modified Bessel series and the ratio `I₂/I₁`
 
-Mathlib carries no modified Bessel `Iν`, so we give the elementary power series for integer order,
+Mathlib carries no modified Bessel function `Iν`, so this module defines the integer-order power
+series directly,
 
-    `I_n(x) = Σ_{k≥0} (x/2)^{2k+n} / (k! (k+n)!)`,
+    I_n(x) = ∑_{k ≥ 0} (x/2)^(2k+n) / (k! (k+n)!),
 
-prove it is **summable** (termwise comparison with the exponential series `Σ ((x/2)²)^k/k! = exp((x/2)²)`)
-and **strictly positive** for `x > 0` (every term is positive), hence `r = I₂/I₁ > 0` (`ym_ratio_pos`, a
-theorem); the only input is that the Bessel argument (a coupling scale) is positive.
+as `besselI n x := ∑' k, besselTerm n x k`, and establishes:
 
-**AND BOUNDED ABOVE BY `x/4`** (`ratio_le_quarter`), termwise and with no numeric input, which is what
-makes the strong-coupling threshold `β² < ½ log 3` a theorem rather than a certified interval.
+* `besselI_summable` — the series is summable for `0 ≤ x`, by comparison with
+  `(x/2)^n * ((x/2)^2)^k / k!`, whose sum is `(x/2)^n * exp ((x/2)^2)`.
+* `besselI_pos` — `0 < besselI n x` for `0 < x`, since every term is positive.
+* `ratio_pos` — `0 < besselI 2 x / besselI 1 x` for `0 < x`.
+* `besselTerm_two_le_quarter`, `besselI_two_le_quarter`, `ratio_le_quarter` — a termwise bound and
+  its sum, giving `besselI 2 x / besselI 1 x ≤ x / 4` for `0 < x`.
+* `two_mul_ratio_lt_kappa0` and `strong_coupling_below_threshold` — the consequence of that ratio
+  bound for `2 * β * (besselI 2 β / besselI 1 β)` against `(1 / 4) * Real.log 3`, under the
+  hypothesis `β ^ 2 < (1 / 2) * Real.log 3`.
+
+Scope: everything here is about the real power series as defined. No identification of `besselI`
+with Mathlib's or with any analytic characterisation of `Iν` is made or used, and no theorem here
+asserts a lower bound on the ratio beyond positivity. `strong_coupling_below_threshold` takes the
+character bound `μ β ≤ 2 * β * (besselI 2 β / besselI 1 β)` as a hypothesis.
 -/
 
 namespace MassGap.Bessel
 
 open scoped BigOperators Nat
 
-/-- The `k`-th term of the modified Bessel series `I_n(x)`: `(x/2)^{2k+n} / (k! (k+n)!)`. -/
+/-- The `k`-th term of the integer-order modified Bessel series:
+`(x / 2) ^ (2 * k + n) / (k! * (k + n)!)`, with the factorials cast to `ℝ`. Defined for every real
+`x`, including negative ones, where odd powers make the term negative.
+
+DERIVED: both numerals are `2`. The first is the halving of the argument in the series' own variable
+`x / 2`; the second is the step of the exponent, which advances by two per term because the series
+runs over even powers of `x / 2` offset by the order `n`. -/
 noncomputable def besselTerm (n : ℕ) (x : ℝ) (k : ℕ) : ℝ :=
   (x / 2) ^ (2 * k + n) / ((k.factorial : ℝ) * ((k + n).factorial : ℝ))
 
-/-- The modified Bessel function of the first kind at integer order `n`,
-`I_n(x) = Σ_k (x/2)^{2k+n}/(k!(k+n)!)`. -/
+/-- The modified Bessel function of the first kind at integer order `n`, as the `tsum` of
+`besselTerm n x`. A `tsum`, so it is `0` by definition wherever the family is not summable;
+`besselI_summable` supplies summability for `0 ≤ x`.
+
+DERIVED: no numeral occurs; the numerals of the series live in `besselTerm`. -/
 noncomputable def besselI (n : ℕ) (x : ℝ) : ℝ := ∑' k, besselTerm n x k
 
 theorem besselTerm_nonneg (n : ℕ) (x : ℝ) (k : ℕ) (hx : 0 ≤ x) : 0 ≤ besselTerm n x k := by
@@ -39,8 +59,14 @@ theorem besselTerm_pos (n : ℕ) (x : ℝ) (k : ℕ) (hx : 0 < x) : 0 < besselTe
   · exact pow_pos (by linarith) _
   · exact mul_pos (by exact_mod_cast k.factorial_pos) (by exact_mod_cast (k + n).factorial_pos)
 
-/-- Each term is bounded by the corresponding term of `(x/2)^n · exp((x/2)²)` (drop the `(k+n)!` factor,
-which is `≥ 1`). -/
+/-- Termwise comparison with an exponential series. For `0 ≤ x`,
+`besselTerm n x k ≤ (x / 2) ^ n * ((x / 2) ^ 2) ^ k / k!`. The proof splits the exponent
+`2 * k + n` into `n` and `2 * k`, then applies `div_le_self`, using that `(k + n)!` is at least one
+so dropping it only increases the quotient.
+
+DERIVED: `0` is the sign hypothesis on `x`, needed because the bound relies on nonnegative powers;
+the two `2`s are the halving `x / 2` and the even exponent step of the series, both inherited from
+`besselTerm`. -/
 theorem besselTerm_le (n : ℕ) (x : ℝ) (k : ℕ) (hx : 0 ≤ x) :
     besselTerm n x k ≤ (x / 2) ^ n * ((x / 2) ^ 2) ^ k / (k.factorial : ℝ) := by
   have hx2 : (0 : ℝ) ≤ x / 2 := by linarith
@@ -61,32 +87,40 @@ theorem besselI_summable (n : ℕ) (x : ℝ) (hx : 0 ≤ x) : Summable (besselTe
   exact Summable.of_nonneg_of_le (fun k => besselTerm_nonneg n x k hx)
     (fun k => besselTerm_le n x k hx) hg
 
-/-- **The modified Bessel `I_n` is strictly positive for a positive argument.** Every series term is
-positive (`besselTerm_pos`) and the series is summable, so its `tsum` is positive. -/
+/-- `0 < besselI n x` for every order `n` and every `0 < x`. The proof feeds `besselI_summable`,
+termwise nonnegativity and strict positivity of the `k = 0` term to `Summable.tsum_pos`.
+
+DERIVED: the one numeral is `0`, the strict lower bound on the argument and on the sum. The index
+`0` that `Summable.tsum_pos` is applied at lives in the proof, not the statement. -/
 theorem besselI_pos (n : ℕ) {x : ℝ} (hx : 0 < x) : 0 < besselI n x := by
   unfold besselI
   exact (besselI_summable n x hx.le).tsum_pos
     (fun k => besselTerm_nonneg n x k hx.le) 0 (besselTerm_pos n x 0 hx)
 
-/-- **The leading character ratio `I₂/I₁` is positive** for a positive argument — the C-2 content. -/
+/-- `0 < besselI 2 x / besselI 1 x` for `0 < x`, by `div_pos` on two instances of `besselI_pos`.
+
+DERIVED: `0` is the strict lower bound on the argument and on the ratio; `2` and `1` are the two
+Bessel orders being compared, the ratio of the first two characters. None is a magnitude. -/
 theorem ratio_pos {x : ℝ} (hx : 0 < x) : 0 < besselI 2 x / besselI 1 x :=
   div_pos (besselI_pos 2 hx) (besselI_pos 1 hx)
 
-/-! ### The leading character ratio is at most `x/4`, and the strong-coupling threshold is exact
+/-! ### An upper bound `x / 4` on the ratio, and the threshold it yields
 
-`Apriori.apriori_A1_strong` gives `μ β < κ₀` below a threshold `β⋆` defined by `2 β⋆ r(β⋆) = κ₀`, and
-until now that threshold's VALUE came from a numeric certificate: `r(β⋆) ∈ [0.182, 0.184]` computed in
-Python, with Lean checking only the interval arithmetic around it. The bound below removes the
-certificate. It is termwise and elementary, and it makes the threshold an exact inequality between
-`β` and `log 3` with no numeral in it at all. -/
+The three results below bound `besselI 2 x / besselI 1 x` by `x / 4`, termwise and then summed, and
+substitute that bound into `2 * β * (besselI 2 β / besselI 1 β)`. The resulting threshold is stated
+as the inequality `β ^ 2 < (1 / 2) * Real.log 3` against the floor `(1 / 4) * Real.log 3`; no
+numerical interval for the ratio is used. -/
 
-/-- **TERMWISE: the `I₂` term is at most `x/4` times the `I₁` term.** The two terms differ by one factor
-of `x/2` upstairs and one factor of `k+2` downstairs, and `k + 2 ≥ 2`. That `2` is the ORDER GAP
-between `I₂` and `I₁` — the two leading characters the expansion compares — so the `4` below is
-`2 · 2`: one from the Bessel argument's own halving, one from the order gap.
+/-- Termwise: `besselTerm 2 x k ≤ (x / 4) * besselTerm 1 x k` for `0 ≤ x` and every `k`. The proof
+establishes the exact identity `besselTerm 2 x k = ((x / 2) / (k + 2)) * besselTerm 1 x k` — the
+order-two term carries one extra factor `x / 2` in the numerator and one extra factor `k + 2` in the
+denominator, from `(k + 2)! = (k + 2) * (k + 1)!` — and then bounds `(x / 2) / (k + 2)` by `x / 4`
+using `k ≥ 0`.
 
-DERIVED: `2` is the order gap `2 - 1 + 1` between the two characters, which is what `(k+n)!` advances
-by; `4` is that `2` times the `2` of `x/2` in the series' own argument. Neither is chosen. -/
+DERIVED: `2` and `1` are the two Bessel orders compared, so their difference is what `(k + n)!`
+advances by; `4` is the product of the `2` in the series' own `x / 2` with the smallest value of
+`k + 2`, namely `2` at `k = 0`; `0` is the sign hypothesis on `x`, which is what lets the inequality
+survive multiplication by the order-one term. No numeral is chosen. -/
 theorem besselTerm_two_le_quarter (x : ℝ) (hx : 0 ≤ x) (k : ℕ) :
     besselTerm 2 x k ≤ (x / 4) * besselTerm 1 x k := by
   have hx2 : (0 : ℝ) ≤ x / 2 := by linarith
@@ -105,7 +139,13 @@ theorem besselTerm_two_le_quarter (x : ℝ) (hx : 0 ≤ x) (k : ℕ) :
   rw [div_le_iff₀ hk2]
   nlinarith [Nat.cast_nonneg (α := ℝ) k]
 
-/-- **`I₂(x) ≤ (x/4) · I₁(x)`.** Summed termwise. -/
+/-- `besselI 2 x ≤ (x / 4) * besselI 1 x` for `0 ≤ x`. The termwise bound
+`besselTerm_two_le_quarter` summed with `Summable.tsum_le_tsum`, after pulling the scalar out with
+`tsum_mul_left`; summability of both sides comes from `besselI_summable`.
+
+DERIVED: `2` and `1` are the Bessel orders; `4` is the constant of `besselTerm_two_le_quarter`,
+carried unchanged through the sum; `0` is the sign hypothesis on `x`, required by both the termwise
+bound and the summability lemma. -/
 theorem besselI_two_le_quarter (x : ℝ) (hx : 0 ≤ x) :
     besselI 2 x ≤ (x / 4) * besselI 1 x := by
   unfold besselI
@@ -113,8 +153,12 @@ theorem besselI_two_le_quarter (x : ℝ) (hx : 0 ≤ x) :
   exact Summable.tsum_le_tsum (fun k => besselTerm_two_le_quarter x hx k)
     (besselI_summable 2 x hx) ((besselI_summable 1 x hx).mul_left _)
 
-/-- **THE LEADING CHARACTER RATIO IS AT MOST `x/4`**, with no numeric input. It is tight as `x → 0`,
-which is the regime the strong-coupling bound is used in. -/
+/-- `besselI 2 x / besselI 1 x ≤ x / 4` for `0 < x`. Clearing the denominator with `div_le_iff₀`,
+which needs `0 < besselI 1 x` from `besselI_pos`, reduces this to `besselI_two_le_quarter`. Strict
+positivity of `x` is used only for that denominator; the underlying inequality holds at `0 ≤ x`.
+
+DERIVED: `0` is the strict lower bound on `x`; `2` and `1` are the Bessel orders; `4` is the
+constant of `besselI_two_le_quarter`, unchanged. -/
 theorem ratio_le_quarter {x : ℝ} (hx : 0 < x) : besselI 2 x / besselI 1 x ≤ x / 4 := by
   rw [div_le_iff₀ (besselI_pos 1 hx)]
   exact besselI_two_le_quarter x hx.le
@@ -123,14 +167,18 @@ theorem ratio_le_quarter {x : ℝ} (hx : 0 < x) : besselI 2 x / besselI 1 x ≤ 
 #print axioms besselI_two_le_quarter
 #print axioms ratio_le_quarter
 
-/-- **THE CHARACTER BOUND IS BELOW THE FLOOR EXACTLY WHEN `β² < ½ log 3`.** Substituting
-`r(β) ≤ β/4` into the strong-coupling bound `2 β r(β)` gives `β²/2`, so it sits under
-`κ₀ = ¼ log 3` precisely when `β² < ½ log 3`.
+/-- For `0 < β` with `β ^ 2 < (1 / 2) * Real.log 3`,
+`2 * β * (besselI 2 β / besselI 1 β) < (1 / 4) * Real.log 3`. Substituting `ratio_le_quarter` gives
+`2 * β * (β / 4) = β ^ 2 / 2`, and the hypothesis then places that below `(1 / 4) * Real.log 3`;
+`nlinarith` closes it.
 
-**THE THRESHOLD IS NOW A THEOREM AND CARRIES NO NUMERAL.** It is an inequality between the coupling
-and the entropy floor's own `log 3` — not a certified interval, not a fitted constant, and nothing to
-regenerate. The `½` and `¼` are the `2` and `4` of `ratio_le_quarter` and `κ₀` respectively, both
-already derived. -/
+Scope: the implication runs one way. Nothing here states that the left-hand side equals any physical
+tension, nor that the threshold is attained.
+
+DERIVED: `0` is the strict lower bound on `β`; `2` and `1` inside `besselI` are the Bessel orders;
+the leading `2` is the coefficient of the supplied character bound; the `2` in `β ^ 2` is the square produced by multiplying `β` into the bound `β / 4`; `1 / 2` is that coefficient
+against the `4` of `ratio_le_quarter`, since `2 * (1 / 4) = 1 / 2`; `1 / 4` and `3` are the floor
+`(1 / 4) * Real.log 3` as written in the conclusion. -/
 theorem two_mul_ratio_lt_kappa0 {β : ℝ} (hβ : 0 < β)
     (hlt : β ^ 2 < (1 / 2) * Real.log 3) :
     2 * β * (besselI 2 β / besselI 1 β) < (1 / 4) * Real.log 3 := by
@@ -139,12 +187,18 @@ theorem two_mul_ratio_lt_kappa0 {β : ℝ} (hβ : 0 < β)
     mul_le_mul_of_nonneg_left hr (by linarith)
   nlinarith [h1, hlt]
 
-/-- **A1, STRONG-COUPLING SIDE, WITH THE THRESHOLD DERIVED.** Given the character bound
-`μ β ≤ 2 β r(β)` — the cited cluster expansion, still the one input here — the tension is below the
-counting floor for EVERY coupling with `β² < ½ log 3`. No certificate, no interval, no numeral.
+/-- For an arbitrary `μ : ℝ → ℝ` and `0 ≤ β` with `β ^ 2 < (1 / 2) * Real.log 3`, the character
+bound `hbound : μ β ≤ 2 * β * (besselI 2 β / besselI 1 β)` gives `μ β < (1 / 4) * Real.log 3`. The
+proof splits on `β = 0`, where `hbound` collapses to `μ 0 ≤ 0` and `Real.log 3 > 0` finishes, and
+`0 < β`, where it chains `hbound` with `two_mul_ratio_lt_kappa0`.
 
-What remains cited on this side is `hbound` alone, and it is the same character expansion the
-reflection-positivity axiom needs, so proving it once serves both. -/
+Scope: `μ` is any real function — nothing identifies it with a tension read. `hbound` is a
+hypothesis and is not established here.
+
+DERIVED: `0` is the lower bound on `β`; `2` and `1` inside `besselI` are the Bessel orders; the
+leading `2` is the coefficient of `hbound` as the caller states it; the `2` in `β ^ 2` is the square arising when `β` multiplies the ratio bound; `1 / 2` is the threshold on
+`β ^ 2` and `1 / 4` the floor coefficient, the two related by that same `2`; `3` is the argument of
+the logarithm in both. -/
 theorem strong_coupling_below_threshold {μ : ℝ → ℝ} {β : ℝ}
     (hβ : 0 ≤ β) (hlt : β ^ 2 < (1 / 2) * Real.log 3)
     (hbound : μ β ≤ 2 * β * (besselI 2 β / besselI 1 β)) :

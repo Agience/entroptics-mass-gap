@@ -5,60 +5,105 @@ import MassGap.ApertureRoute
 import MassGap.ContactDominance
 
 /-!
-# MassGap.MomentArms — the substrate bound, split into the arms it would be paid for in
+# MassGap.MomentArms — the substrate bound assembled from bounds on pieces of the coupling line
 
-`Complete.ym_mass_gap_of_substrate` consumes ONE input, `∃ B, ∀ N β, d2At N β ≤ B`, and its docstring
-says why that is the right shape: a frozen window reaches `∀ β` only by splitting the coupling line
-into arms, and with the window fixed there is no aperture to widen.
+`Complete.ym_mass_gap_of_substrate` consumes `∃ B, ∀ N β, d2At N β ≤ B`, a bound on the circular
+second moment uniform in the aperture and the coupling.
+`CompactBeta.d2At_jointUniform_on_Icc_of_equicontinuous` supplies such a bound on a compact interval.
+This file assembles a bound on the whole line out of bounds on pieces of it, weakens the hypothesis
+in three further ways, and supplies two envelope-shaped sufficient conditions.
 
-**That is an argument about what the hypothesis MEANS, not about how it gets discharged.** Whoever
-discharges it still has to cover the whole coupling line, and `CompactBeta` already covers exactly
-one piece of it: `d2At_jointUniform_on_Icc_of_equicontinuous` gives the bound on a COMPACT interval
-`[a,b]` from pointwise-in-β bounds plus equicontinuity. Nothing assembles that with the two
-unbounded ends.
+## §1 Three arms, on `d2At`
 
-This file does the assembly, so the remaining obligation is three named arms rather than one
-unquantified statement:
+`circLag_zero` and `d2At_at_zero` compute the moment at zero coupling: the correlation vanishes at
+every lag of nonzero circle distance (`PowerTail.wilsonCorrAt_at_zero_coupling`) and the contact
+value stays positive, so the read is a point mass at lag zero, where `circLag` is `0`. `d2At_nonneg`
+is the other sign. `d2At_bound_of_three_arms` takes bounds on `(-∞, a]`, `[a, b]` and `[b, ∞)` and
+returns their maximum; `confinement_of_three_arms` and `ym_mass_gap_of_three_arms` feed it to
+`MassGap.confinement_of_bounded_substrate` and `MassGap.ym_mass_gap_of_substrate`.
 
-| arm | what it needs |
-|---|---|
-| `(−∞, a]` | anchored at `d2At_at_zero`, which is proved here |
-| `[a, b]` | `CompactBeta.d2At_jointUniform_on_Icc_of_equicontinuous`, conditional on equicontinuity |
-| `[b, ∞)` | open |
+## §2 Two arms, on `d2Even`
 
-**The assembly itself is trivial — a maximum of three bounds — and that is the point.** It costs
-nothing, and without it the middle arm's conditional result has nowhere to go.
+`EvenAperture.d2Even` is built from `readEven`, whose positivity comes from
+`Complete.wilson_reflection_positive_at_even`, a theorem at even extent, so nothing in this section
+mentions `readYMAt`. `readEven` reads the correlation at `max β 0`, so
+`readEven_eq_zero_of_nonpos`, `d2Even_at_zero` and `d2Even_eq_zero_of_nonpos` give
+`d2Even a β = 0` for every `β ≤ 0`. `d2Even_bound_of_two_arms` therefore needs bounds on `[0, b]`
+and `[b, ∞)` only; `confines_of_two_arms` and `flagship_of_two_arms` carry it to
+`ApertureRoute.ConfinesAtAnAperture` and `ApertureRoute.FlagshipAt`.
 
-## What is actually new here
+## §3 The bound asked only from some aperture onwards
 
-`d2At_at_zero`: the moment is exactly `0` at zero coupling, at every aperture. It is the exact
-analogue of `ConfinesZero.cosAvgEven_at_zero` for the moment route and rests on the same two facts —
-`PowerTail.wilsonCorrAt_at_zero_coupling` kills every lag of nonzero circle distance and
-`contact_value_pos_at_zero_coupling` keeps the normalisation alive, so the read is a point mass at
-lag zero, where `circLag` is `0`.
+`ApertureRoute.confinement_at_an_aperture_of_substrate` quantifies over every even aperture but uses
+the bound at the single aperture `EvenAperture.exists_evenAp_of_eventually` picks out.
+`confines_of_large_aperture_bound` re-proves it with the hypothesis restricted to apertures of extent
+at least `N₀`, choosing the aperture to satisfy the window condition and exceed `N₀` — both are
+eventual in the extent. `large_aperture_bound_of_substrate_bound` derives the weaker hypothesis from
+the stronger one at `N₀ = 0`. `confines_of_two_arms_at_large_apertures` and
+`flagship_of_two_arms_at_large_apertures` combine §2 and §3.
 
-That anchors the low arm at one point. It does not discharge it: a bound at a point is not a bound on
-a half-line, and nothing here claims otherwise.
+## §4–§5 Far-share envelopes
+
+`ContactDominance.farShare R m` is the probability a read puts beyond circle distance `m`.
+`ContactDominance.circ_moment_le_of_envelope` bounds the circular second moment by
+`∑' m, (2 m + 1) a m` when `farShare ≤ a m` at every `m`; the weight `2 m + 1` is `(m+1)² - m²`, the
+number of lags at distance `m`. `substrate_even_of_share_envelope` and its `large_aperture`,
+`confines` and `flagship` corollaries are that at `readEven`.
+`ContactDominance.circ_moment_le_of_tail_envelope` asks for the envelope only from a cut `m₀`
+upward, paying `m₀ ^ 2` for the near block, and `substrate_even_of_tail_envelope` and its corollaries
+are that version. `summable_cubic_weight` and `flagship_of_cubic_tail_share` instantiate at
+`a m = C / (m + 1) ^ 3`.
+
+## §6 Geometric envelopes
+
+`summable_geometric_weight` gives convergence for `a m = C * r ^ m` with `0 ≤ r < 1`, splitting
+`(2 m + 1) r ^ m` into `2 * (m r ^ m)` and `r ^ m` and applying
+`summable_pow_mul_geometric_of_norm_lt_one` to each. `confines_of_geometric_far_share` and
+`flagship_of_geometric_far_share` run the §5 chain at that envelope.
+
+## Scope
+
+* The arms other than the negative half-line are hypotheses in every theorem here. `d2At_at_zero`
+  and `d2Even_at_zero` bound the moment at one coupling, which is not a bound on a half-line.
+* `ContactDominance`'s exponent threshold: a power envelope `C (m+1) ^ (-s)` has weighted total
+  `∑ (2m+1) C (m+1) ^ (-s)`, convergent exactly when `s > 2`. At `s = 2` the sum is harmonic, and
+  `ContactDominance.square_share_is_not_enough` exhibits reads whose far share stays under
+  `(4/3)(m+1) ^ (-2)` at every aperture with unbounded moments. `3` is the first integer exponent
+  for which `summable_cubic_weight` holds.
+* What `ApertureRoute.FlagshipAt` asserts is limited, and `MassGap.FlagshipScope` — not imported
+  here — measures it: `FlagshipScope.flagship_for_bogus` proves the whole flagship conclusion for
+  `bogusWilson`, an object with no read, correlation, gauge group or lattice;
+  `gap_summand_is_manufactured` shows the gap clause's summand is `exp (-(κ₀ - μ)) ^ τ`, whose
+  magnitude is its own bound; `flagship_measure_half_needs_no_hypothesis` shows the measure half
+  takes no hypothesis; and `Q_is_constant_in_the_test_configuration` shows OS1 and OS3 hold because
+  the reflected form does not depend on the components those actions move. The statement in these
+  chains that is about the Wilson correlation is `ApertureRoute.ConfinesAtAnAperture`, which is about
+  `cosAvgEven` of `readEven`; each `flagship_of_…` is its packaging.
 -/
 
 namespace MassGap.MomentArms
 
-/-- The circle distance at lag zero is zero — `min 0 (N+1)`. -/
+/-- `Moment.circLag (0 : Fin (N + 1)) = 0`: the circular distance from the origin to itself, which is
+`min 0 ((N + 1) - 0)`. Closed by `simp` on the definition.
+
+DERIVED: the first `0` is the lag whose distance is taken; `1` is the `+ 1` in the lag index type
+`Fin (N + 1)`, one index per lag including contact; the final `0` is the resulting distance. -/
 theorem circLag_zero {N : ℕ} : Moment.circLag (0 : Fin (N + 1)) = 0 := by
   simp [Moment.circLag]
 
 #print axioms circLag_zero
 
-/-- **THE MOMENT VANISHES AT ZERO COUPLING**, at every aperture.
+/-- `MassGap.d2At N 0 = 0` at every aperture `N`.
 
-The exact analogue of `ConfinesZero.cosAvgEven_at_zero`, and by the same mechanism: at `β = 0` the
-state is product Haar, the two plaquettes read disjoint link sets, so the connected correlation
-vanishes at every lag of nonzero circle distance while the contact value stays positive. The read is
-a point mass at lag zero and `circLag 0 = 0`.
+`PowerTail.wilsonCorrAt_at_zero_coupling` makes the raw correlation vanish at every lag of nonzero
+circle distance, so the normalised read is a point mass at lag zero, and `circLag_zero` makes the
+weight there zero. The sum is therefore termwise zero.
 
-No estimate is made and no aperture is preferred.
+Scope: one coupling. A value at a point is not a bound on an interval, and none is claimed. This is
+stated through `readYMAt`, so it carries whatever axiom that read does;
+`d2Even_at_zero` is the `readEven` counterpart.
 
-DERIVED: the `0`s are the coupling, the lag and the value — none is a level or a cut. -/
+DERIVED: `0` occurs twice — the coupling at which the moment is taken, and the value it takes. -/
 theorem d2At_at_zero (N : ℕ) : MassGap.d2At N 0 = 0 := by
   have hp : ∀ d : Fin (N + 1), d ≠ 0 → (MassGap.readYMAt N 0).p d = 0 := by
     intro d hd
@@ -78,7 +123,10 @@ theorem d2At_at_zero (N : ℕ) : MassGap.d2At N 0 = 0 := by
 
 #print axioms d2At_at_zero
 
-/-- and it is never negative, at any coupling: a probability weight against a square. -/
+/-- `0 ≤ MassGap.d2At N β` at every aperture and every real coupling. Each summand is a probability
+weight (`Moment.Read.p_nonneg`) times a square, so `Finset.sum_nonneg` applies.
+
+DERIVED: `0` is the lower bound on the moment. -/
 theorem d2At_nonneg (N : ℕ) (β : ℝ) : 0 ≤ MassGap.d2At N β := by
   unfold MassGap.d2At
   exact Finset.sum_nonneg (fun d _ =>
@@ -86,15 +134,16 @@ theorem d2At_nonneg (N : ℕ) (β : ℝ) : 0 ≤ MassGap.d2At N β := by
 
 #print axioms d2At_nonneg
 
-/-! ## The assembly -/
+/-! ## §1 Assembling a bound on the line from bounds on three pieces of it -/
 
-/-- **THREE ARMS MAKE THE SUBSTRATE BOUND.** A maximum of three constants, and nothing else.
+/-- Given bounds on `MassGap.d2At`, uniform in the aperture, on `(-∞, a]`, on `Set.Icc a b` and on
+`[b, ∞)`, there is one bound serving every aperture and every real coupling. The witness is the
+maximum of the three, and the proof splits `β` against `a` and then against `b`.
 
-Trivial, and worth having: `CompactBeta` proves the middle arm conditionally and there is otherwise
-nothing to feed it into. Stating the split explicitly is what turns "bound the moment uniformly"
-into three obligations a reader can check off separately.
+Scope: all three bounds are hypotheses; `CompactBeta.d2At_jointUniform_on_Icc_of_equicontinuous` is
+one source of the middle one, itself conditional.
 
-DERIVED: no numeral. `a` and `b` are the caller's cut points and `B` the caller's bounds. -/
+DERIVED: no numeral appears in the statement; `a` and `b` are the caller's cut points. -/
 theorem d2At_bound_of_three_arms {a b : ℝ}
     (hlow : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ≤ a, MassGap.d2At N β ≤ B)
     (hmid : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc a b, MassGap.d2At N β ≤ B)
@@ -112,8 +161,11 @@ theorem d2At_bound_of_three_arms {a b : ℝ}
 
 #print axioms d2At_bound_of_three_arms
 
-/-- **AND THEREFORE CONFINEMENT AT EVERY LARGE ENOUGH APERTURE.** `confinement_of_bounded_substrate`,
-reached through the three arms. -/
+/-- `MassGap.confinement_of_bounded_substrate` with its hypothesis supplied by
+`d2At_bound_of_three_arms`: from the three arm bounds, `μYMAt N β < κ₀YM` at every coupling, for
+eventually every aperture.
+
+DERIVED: no numeral appears in the statement; `a` and `b` are the caller's cut points. -/
 theorem confinement_of_three_arms {a b : ℝ}
     (hlow : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ≤ a, MassGap.d2At N β ≤ B)
     (hmid : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc a b, MassGap.d2At N β ≤ B)
@@ -123,8 +175,12 @@ theorem confinement_of_three_arms {a b : ℝ}
 
 #print axioms confinement_of_three_arms
 
-/-- **AND THE FLAGSHIP.** The same three arms carry `ym_mass_gap_of_substrate` — forgetting,
-summability and the gap, at every large enough aperture. -/
+/-- `MassGap.ym_mass_gap_of_substrate` with its hypothesis supplied by `d2At_bound_of_three_arms`.
+For eventually every aperture, the conclusion conjoins: the mode sum of `MassGap.ymModelAt N` tends
+to `0` at every coupling; `μ β - κ < 0` at every coupling; and `R` is constant.
+
+DERIVED: `0` occurs twice — the limit point of the mode sum, and the comparison point in
+`μ β - κ < 0`. -/
 theorem ym_mass_gap_of_three_arms {a b : ℝ}
     (hlow : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ≤ a, MassGap.d2At N β ≤ B)
     (hmid : ∃ B : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc a b, MassGap.d2At N β ≤ B)
@@ -141,27 +197,24 @@ theorem ym_mass_gap_of_three_arms {a b : ℝ}
 #print axioms ym_mass_gap_of_three_arms
 
 
-/-! ## 2. The same split at an EVEN aperture, where the low arm is DISCHARGED
+/-! ## §2 The same split on `d2Even`, where the nonpositive arm is computed
 
-`d2At` goes through `readYMAt`, which is where the named axiom enters. The even-aperture route has an
-axiom-free counterpart already — `EvenAperture.d2Even` is built from `readEven`, whose positivity
-comes from `Complete.wilson_reflection_positive_at_even`, a THEOREM at even extent `≥ 4` — and
-`ApertureRoute.confinement_at_an_aperture_of_substrate` consumes exactly
-`∃ B, ∀ a β, d2Even a β ≤ B`.
+`d2At` goes through `readYMAt`. `EvenAperture.d2Even` goes through `readEven`, whose positivity comes
+from `Complete.wilson_reflection_positive_at_even`, a theorem at even extent at least four, and
+`ApertureRoute.confinement_at_an_aperture_of_substrate` consumes `∃ B, ∀ a β, d2Even a β ≤ B`.
 
-**Two things improve at once.**
-
-1. **The footprint.** Nothing below mentions `readYMAt`, so the named axiom does not appear.
-2. **The low arm stops being an assumption.** `readEven` reads the correlation at `max β 0`, so
-   below zero coupling it reads it at zero — and at zero the profile is a point mass, so the moment
-   is exactly `0`. The negative half-line is FREE, exactly as
-   `ConfinesZero.cosAvgEven_eq_one_of_nonpos` makes it free for the cosine average.
-
-So the three arms of §1 become **two**, and the remaining obligation is `[0,b]` — which `CompactBeta`
-addresses conditionally — and `[b,∞)`.
+Nothing below mentions `readYMAt`, so `wilson_reflection_positive_at` does not enter. `readEven`
+reads the correlation at `max β 0`, so below zero coupling it reads it at zero, where the profile is
+a point mass and the moment is `0` — `ConfinesZero.cosAvgEven_eq_one_of_nonpos` is the same fact for
+the cosine average. The three arms of §1 become two, on `[0, b]` and `[b, ∞)`.
 -/
 
-/-- Below zero coupling the read does not move: `readEven` reads at `max β 0`. -/
+/-- `EvenAperture.readEven a β = EvenAperture.readEven a 0` for every `β ≤ 0`. `readEven` reads the
+correlation at `max β 0`, which is `0` on the nonpositive half-line, and `readA_congr` transports the
+equality of arguments to the reads.
+
+DERIVED: `0` occurs twice — the upper bound on `β`, and the coupling the read is shown to be taken
+at. -/
 theorem readEven_eq_zero_of_nonpos (a : MassGap.EvenAperture.EvenAp) {β : ℝ} (hβ : β ≤ 0) :
     MassGap.EvenAperture.readEven a β = MassGap.EvenAperture.readEven a 0 := by
   unfold MassGap.EvenAperture.readEven
@@ -170,11 +223,15 @@ theorem readEven_eq_zero_of_nonpos (a : MassGap.EvenAperture.EvenAp) {β : ℝ} 
 
 #print axioms readEven_eq_zero_of_nonpos
 
-/-- **THE EVEN-APERTURE MOMENT VANISHES AT ZERO COUPLING.** The axiom-free counterpart of
-`d2At_at_zero`: the same point-mass argument, read through `readEven`, so
-`wilson_reflection_positive_at` never appears.
+/-- `EvenAperture.d2Even a 0 = 0` at every even aperture. The same point-mass argument as
+`d2At_at_zero`, read through `readEven`: `NonnegArm.readEven_rho` with `max_self` identifies the raw
+profile with `wilsonCorrAt`, which `PowerTail.wilsonCorrAt_at_zero_coupling` kills off contact, and
+`circLag_zero` kills the weight at contact.
 
-DERIVED: the `0`s are the coupling, the lag and the value. -/
+Scope: stated through `readEven`, whose positivity comes from
+`Complete.wilson_reflection_positive_at_even`, so `wilson_reflection_positive_at` does not appear.
+
+DERIVED: `0` occurs twice — the coupling at which the moment is taken, and the value it takes. -/
 theorem d2Even_at_zero (a : MassGap.EvenAperture.EvenAp) :
     MassGap.EvenAperture.d2Even a 0 = 0 := by
   have hp : ∀ d : Fin (a.1 + 1), d ≠ 0 → (MassGap.EvenAperture.readEven a 0).p d = 0 := by
@@ -194,7 +251,10 @@ theorem d2Even_at_zero (a : MassGap.EvenAperture.EvenAp) :
 
 #print axioms d2Even_at_zero
 
-/-- **AND THEREFORE ON THE WHOLE NEGATIVE HALF-LINE.** Not assumed — computed. -/
+/-- `EvenAperture.d2Even a β = 0` for every `β ≤ 0`, by `readEven_eq_zero_of_nonpos` followed by
+`d2Even_at_zero`. The nonpositive half-line carries no separate hypothesis in the theorems below.
+
+DERIVED: `0` occurs twice — the upper bound on `β`, and the value the moment takes there. -/
 theorem d2Even_eq_zero_of_nonpos (a : MassGap.EvenAperture.EvenAp) {β : ℝ} (hβ : β ≤ 0) :
     MassGap.EvenAperture.d2Even a β = 0 := by
   unfold MassGap.EvenAperture.d2Even
@@ -203,12 +263,15 @@ theorem d2Even_eq_zero_of_nonpos (a : MassGap.EvenAperture.EvenAp) {β : ℝ} (h
 
 #print axioms d2Even_eq_zero_of_nonpos
 
-/-- **TWO ARMS MAKE THE EVEN SUBSTRATE BOUND**, because the third is discharged.
+/-- Given bounds on `EvenAperture.d2Even`, uniform in the even aperture, on `Set.Icc 0 b` and on
+`[b, ∞)`, there is one bound serving every even aperture and every real coupling. The witness is
+`max 0 (max B₁ B₂)`, and the nonpositive branch is closed by `d2Even_eq_zero_of_nonpos` rather than
+by a hypothesis.
 
-Compare `d2At_bound_of_three_arms`: there the low arm is a hypothesis, here it is a theorem. The
-`max 0` in the witness is what carries the negative half-line, where the moment is exactly `0`.
+Scope: two arms rather than the three of `d2At_bound_of_three_arms`, because the third is computed.
 
-DERIVED: no numeral but the `0` that the moment equals below zero coupling, which is computed. -/
+DERIVED: `0` is the lower endpoint of the middle interval `Set.Icc 0 b`, which is where the computed
+half-line ends. -/
 theorem d2Even_bound_of_two_arms {b : ℝ}
     (hmid : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp), ∀ β ∈ Set.Icc (0 : ℝ) b,
       MassGap.EvenAperture.d2Even a β ≤ B)
@@ -228,7 +291,10 @@ theorem d2Even_bound_of_two_arms {b : ℝ}
 
 #print axioms d2Even_bound_of_two_arms
 
-/-- **AND CONFINEMENT AT AN APERTURE FROM THEM.** -/
+/-- `ApertureRoute.confinement_at_an_aperture_of_substrate` with its hypothesis supplied by
+`d2Even_bound_of_two_arms`: the two arm bounds give `ApertureRoute.ConfinesAtAnAperture`.
+
+DERIVED: `0` is the lower endpoint of the middle interval `Set.Icc 0 b`. -/
 theorem confines_of_two_arms {b : ℝ}
     (hmid : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp), ∀ β ∈ Set.Icc (0 : ℝ) b,
       MassGap.EvenAperture.d2Even a β ≤ B)
@@ -240,7 +306,11 @@ theorem confines_of_two_arms {b : ℝ}
 
 #print axioms confines_of_two_arms
 
-/-- **AND THE CLAY FLAGSHIP.** Two arms, and the negative half-line free. -/
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at `confines_of_two_arms`:
+`ApertureRoute.FlagshipAt` for that confinement witness. See the module header for what `FlagshipAt`
+asserts.
+
+DERIVED: `0` is the lower endpoint of the middle interval `Set.Icc 0 b`. -/
 theorem flagship_of_two_arms {b : ℝ}
     (hmid : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp), ∀ β ∈ Set.Icc (0 : ℝ) b,
       MassGap.EvenAperture.d2Even a β ≤ B)
@@ -252,29 +322,24 @@ theorem flagship_of_two_arms {b : ℝ}
 #print axioms flagship_of_two_arms
 
 
-/-! ## 3. The bound is needed only at LARGE apertures
+/-! ## §3 The bound asked only at large apertures
 
 `ApertureRoute.confinement_at_an_aperture_of_substrate` asks for `∀ (a : EvenAp) (β : ℝ),
-d2Even a β ≤ B` — every even aperture. **Its proof uses that at exactly one aperture**, the one
-`exists_evenAp_of_eventually` picks out of the window condition. Extent four is never consulted
-unless the chooser happens to land there.
+d2Even a β ≤ B`, but consumes it at the single aperture
+`EvenAperture.exists_evenAp_of_eventually` picks out of the window condition. The hypothesis can
+therefore be restricted to apertures of extent at least `N₀`, with the aperture chosen to satisfy
+the window condition and exceed `N₀` — both conditions are eventual in the extent.
 
-So the hypothesis can be weakened to a bound holding only from some aperture onwards, and the proof
-is the original with one extra conjunct carried through the choice. That is a real weakening:
-knowing nothing whatever about small extents is enough.
-
-**Why it is the right shape.** `Moment.lean` postulates that `⟨d²⟩` is substrate-intrinsic — bounded
-independently of the window — and the tree's SU(3) aperture scan refutes the competing reading (see
-`ApertureRoute`'s note). A quantity that is aperture-stable is bounded at large apertures for the
-same reason it is bounded at any; but a hypothesis that also reaches down to extent four asks about
-windows too narrow to resolve the correlation, and nothing needs it.
-
-Nothing is lost: `large_aperture_bound_of_substrate_bound` derives the weak hypothesis from the
-strong one, so every consequence of the old hypothesis is still a consequence.
+`large_aperture_bound_of_substrate_bound` derives the restricted hypothesis from the unrestricted
+one, so every consequence of the latter remains a consequence.
 -/
 
-/-- The old hypothesis gives the new one, with `N₀ = 0`. Stated so the weakening is known to be a
-weakening rather than a change of subject. -/
+/-- A bound on `EvenAperture.d2Even` at every even aperture gives one holding from some extent
+onwards, with `N₀ := 0`. So the hypothesis of `confines_of_large_aperture_bound` is implied by the
+hypothesis of `confines_of_two_arms`, and the restriction is a weakening rather than a different
+statement.
+
+DERIVED: no numeral appears in the statement; the `N₀ = 0` used as the witness lives in the proof. -/
 theorem large_aperture_bound_of_substrate_bound
     (h : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp) (β : ℝ),
       MassGap.EvenAperture.d2Even a β ≤ B) :
@@ -285,15 +350,20 @@ theorem large_aperture_bound_of_substrate_bound
 
 #print axioms large_aperture_bound_of_substrate_bound
 
-/-- **CONFINEMENT AT AN APERTURE, FROM A BOUND AT LARGE APERTURES ONLY.**
+/-- `ApertureRoute.ConfinesAtAnAperture` from a bound on `EvenAperture.d2Even` holding only at even
+apertures of extent at least `N₀`.
 
-`ApertureRoute.confinement_at_an_aperture_of_substrate` with the hypothesis restricted to apertures
-of extent at least `N₀`. The proof is the original one; the only change is that the aperture is
-chosen to satisfy the window condition AND to exceed `N₀`, which is possible because both are
-eventual in the extent.
+The proof re-runs `ApertureRoute.confinement_at_an_aperture_of_substrate`: the window condition
+`(2π/(N+1))² B / 2 < 1 - 3 ^ (-1/4)` is eventual in the extent by
+`Moment.aperture_factor_tendsto_zero`, so conjoining it with `Filter.eventually_ge_atTop N₀` lets
+`EvenAperture.exists_evenAp_of_eventually` pick an aperture meeting both, and
+`Moment.Read.cos_avg_ge_circ` closes it there.
 
-DERIVED: `N₀` is the caller's, `2` is the form's degree and `3^{−1/4}` is the entropy floor
-`e^{−κ₀}` — no magnitude is chosen here. -/
+Scope: the original quantifies over every even aperture but consumes the bound at the single
+aperture it chooses, which is why restricting to large extents costs nothing.
+
+DERIVED: no numeral appears in the statement; `N₀` and `B` are existentially bound. The `2`, `3` and
+`4` of the window condition and the floor `3 ^ (-1/4)` are inside the proof. -/
 theorem confines_of_large_aperture_bound
     (h : ∃ B : ℝ, ∃ N₀ : ℕ, ∀ (a : MassGap.EvenAperture.EvenAp), N₀ ≤ a.1 → ∀ (β : ℝ),
       MassGap.EvenAperture.d2Even a β ≤ B) :
@@ -322,7 +392,9 @@ theorem confines_of_large_aperture_bound
 
 #print axioms confines_of_large_aperture_bound
 
-/-- **AND THE CLAY FLAGSHIP FROM IT.** -/
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at `confines_of_large_aperture_bound`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem flagship_of_large_aperture_bound
     (h : ∃ B : ℝ, ∃ N₀ : ℕ, ∀ (a : MassGap.EvenAperture.EvenAp), N₀ ≤ a.1 → ∀ (β : ℝ),
       MassGap.EvenAperture.d2Even a β ≤ B) :
@@ -331,9 +403,11 @@ theorem flagship_of_large_aperture_bound
 
 #print axioms flagship_of_large_aperture_bound
 
-/-- **THE TWO ARMS, AT LARGE APERTURES ONLY.** The weakest form in this file: the negative half-line
-is discharged, small extents are not consulted, and what remains is `[0,b]` and `[b,∞)` from some
-aperture onwards. -/
+/-- `confines_of_large_aperture_bound` with its hypothesis assembled from two arms: bounds on
+`Set.Icc 0 b` and on `[b, ∞)`, each asked only at even apertures of extent at least `N₀`. The
+nonpositive branch is closed by `d2Even_eq_zero_of_nonpos`, so the witness is `max 0 (max B₁ B₂)`.
+
+DERIVED: `0` is the lower endpoint of the middle interval `Set.Icc 0 b`. -/
 theorem confines_of_two_arms_at_large_apertures {b : ℝ} {N₀ : ℕ}
     (hmid : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp), N₀ ≤ a.1 → ∀ β ∈ Set.Icc (0 : ℝ) b,
       MassGap.EvenAperture.d2Even a β ≤ B)
@@ -353,7 +427,10 @@ theorem confines_of_two_arms_at_large_apertures {b : ℝ} {N₀ : ℕ}
 
 #print axioms confines_of_two_arms_at_large_apertures
 
-/-- **AND THE CLAY FLAGSHIP FROM THE WEAKEST FORM.** -/
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at
+`confines_of_two_arms_at_large_apertures`.
+
+DERIVED: `0` is the lower endpoint of the middle interval `Set.Icc 0 b`. -/
 theorem flagship_of_two_arms_at_large_apertures {b : ℝ} {N₀ : ℕ}
     (hmid : ∃ B : ℝ, ∀ (a : MassGap.EvenAperture.EvenAp), N₀ ≤ a.1 → ∀ β ∈ Set.Icc (0 : ℝ) b,
       MassGap.EvenAperture.d2Even a β ≤ B)
@@ -365,30 +442,26 @@ theorem flagship_of_two_arms_at_large_apertures {b : ℝ} {N₀ : ℕ}
 #print axioms flagship_of_two_arms_at_large_apertures
 
 
-/-! ## 4. The input side, also axiom-free: the far-share envelope
+/-! ## §4 The far-share envelope, at `readEven`
 
-`ContactDominance.substrate_of_share_envelope` turns a summable envelope on the FAR SHARE into the
-substrate bound. It is stated on `readYMAt` and `d2At`, so it carries the named axiom — and §2–§3
-built the consequence side on `readEven` and `d2Even`, which do not. That left the route split: an
-axiom-free conclusion fed by an axiom-carrying input.
+`ContactDominance.substrate_of_share_envelope` turns a summable envelope on the far share into the
+substrate bound, stated on `readYMAt` and `d2At`. `ContactDominance.farShare` and
+`circ_moment_le_of_envelope` are stated for an arbitrary `Moment.Read`, so the same terms apply at
+`readEven`, whose positivity comes from `wilson_reflection_positive_at_even`.
 
-**Nothing in the envelope argument needs the axiom.** `ContactDominance.farShare` and
-`circ_moment_le_of_envelope` are stated for an arbitrary `Moment.Read`, so the port is the same term
-with `readEven` in place of `readYMAt`. What the axiom was doing in the original is supplying the
-read's positivity, and at an even aperture `wilson_reflection_positive_at_even` supplies it as a
-THEOREM.
-
-**What the envelope is.** `farShare R m` is the probability the read puts beyond circle distance `m`.
-An envelope `a` bounding it uniformly, with `∑ (2m+1)·a m` convergent, bounds the circular second
-moment by that sum — layer by layer, `2m+1` being the count of lags at distance `m`. It is the
-finite-correlation-length hypothesis in the form the moment consumes.
-
-**The whole chain is now foundational-only**: envelope → moment bound → confinement at an aperture →
-Clay flagship, with the negative half-line discharged (§2) and small extents never consulted (§3).
+`farShare R m` is the probability the read puts beyond circle distance `m`. An envelope `a` bounding
+it uniformly, with `∑ (2 * m + 1) * a m` convergent, bounds the circular second moment by that sum,
+layer by layer, `2 * m + 1` being the number of lags at distance `m`.
 -/
 
-/-- **THE SUBSTRATE BOUND FROM A FAR-SHARE ENVELOPE, at even apertures.**
-`ContactDominance.substrate_of_share_envelope` with `readEven` in place of `readYMAt`. -/
+/-- If `a : ℕ → ℝ` is nonnegative, `fun m => (2 * m + 1) * a m` is summable, and
+`ContactDominance.farShare (readEven p β) m ≤ a m` at every even aperture, coupling and `m`, then
+`EvenAperture.d2Even` is bounded by `∑' m, (2 * m + 1) * a m`. It is
+`ContactDominance.circ_moment_le_of_envelope`, which is stated for an arbitrary `Moment.Read`,
+applied at `readEven p β`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`, the
+number of lags at circle distance `m`, which is `(m + 1) ^ 2 - m ^ 2`. -/
 theorem substrate_even_of_share_envelope (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -402,7 +475,10 @@ theorem substrate_even_of_share_envelope (a : ℕ → ℝ)
 
 #print axioms substrate_even_of_share_envelope
 
-/-- **AND THE SAME, ASKED ONLY AT LARGE APERTURES** — §3's weakening on the input side. -/
+/-- `substrate_even_of_share_envelope` with the envelope asked only at even apertures of extent at
+least `N₀`, and the conclusion in the matching restricted form with `N₁ := N₀`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem large_aperture_bound_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -416,7 +492,11 @@ theorem large_aperture_bound_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
 
 #print axioms large_aperture_bound_of_share_envelope
 
-/-- **CONFINEMENT AT AN APERTURE, FROM AN ENVELOPE AT LARGE APERTURES.** -/
+/-- `confines_of_large_aperture_bound` with its hypothesis supplied by
+`large_aperture_bound_of_share_envelope`: a summable-weighted far-share envelope at large apertures
+gives `ApertureRoute.ConfinesAtAnAperture`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem confines_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -427,8 +507,11 @@ theorem confines_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
 
 #print axioms confines_of_share_envelope
 
-/-- **AND THE CLAY FLAGSHIP.** One summable envelope on the far share, asked only from some aperture
-onwards, and the entire chain to the flagship is `{propext, Classical.choice, Quot.sound}`. -/
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at `confines_of_share_envelope`. The
+hypothesis is one summable-weighted far-share envelope, asked only from extent `N₀` onwards, and the
+axiom footprint of the chain is the foundational three.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem flagship_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -440,30 +523,31 @@ theorem flagship_of_share_envelope {N₀ : ℕ} (a : ℕ → ℝ)
 #print axioms flagship_of_share_envelope
 
 
-/-! ## 5. Only the TAIL is constrained, and a concrete envelope that meets it
+/-! ## §5 The envelope asked only beyond a cut, and a power instance
 
-§4 asks for the envelope at every `m`. It does not need to.
-`ContactDominance.circ_moment_le_of_tail_envelope` assumes it only from a cut `m₀` upward and pays
-`m₀²` for the near block, which `farShare ≤ 1` caps on its own. **An envelope is always a statement
-about large lags, and the cut may be chosen after the fact** — the near block costs a constant, and a
-constant is all the substrate bound ever wanted.
+`ContactDominance.circ_moment_le_of_tail_envelope` assumes the envelope only from a cut `m₀` upward
+and pays `m₀ ^ 2` for the near block, which `farShare ≤ 1` caps on its own. It is stated for an
+arbitrary `Moment.Read`, so it applies at `readEven` as §4's lemma does.
 
-That lemma is stated for an arbitrary `Moment.Read`, so it ports to `readEven` the same way §4 did.
-
-## The exponent is not a choice
-
-`ContactDominance`'s header derives it: `(2m+1)` is `(m+1)² − m²`, the second moment's own layer
-weight, so a power envelope `C(m+1)^{-s}` has weighted total `∑ (2m+1)C(m+1)^{-s}`, convergent
-exactly when `s > 2`. At `s = 2` it is the harmonic series — and `square_share_is_not_enough` shows
-`s = 2` is not merely out of reach but FALSE, exhibiting reads whose far share stays under
-`(4/3)(m+1)^{-2}` at every aperture and whose moments exceed every bound.
-
-So `s = 3` is the first integer exponent that works, and `flagship_of_cubic_tail_share` runs it: one
-constant `C`, one cut `m₀`, one aperture floor `N₀`, and the Clay flagship — foundational-only.
+The exponent: `2 * m + 1` is `(m + 1) ^ 2 - m ^ 2`, the second moment's layer weight, so a power
+envelope `C * (m + 1) ^ (-s)` has weighted total `∑ (2 * m + 1) * C * (m + 1) ^ (-s)`, convergent
+exactly when `s > 2`. At `s = 2` that sum is harmonic, and
+`ContactDominance.square_share_is_not_enough` exhibits reads whose far share stays under
+`(4/3) * (m + 1) ^ (-2)` at every aperture with unbounded moments. `s = 3` is the first integer
+exponent for which `summable_cubic_weight` holds, and `flagship_of_cubic_tail_share` runs the chain
+there.
 -/
 
-/-- **THE SUBSTRATE BOUND FROM A TAIL ENVELOPE, at even apertures.** Strictly weaker than
-`substrate_even_of_share_envelope`: nothing is asked below the cut. -/
+/-- `substrate_even_of_share_envelope` with the envelope required only from a cut `m₀` upward. The
+bound becomes `m₀ ^ 2 + ∑' m, (2 * m + 1) * a m`, the first term paying for the near block, which
+`farShare ≤ 1` caps on its own. It is `ContactDominance.circ_moment_le_of_tail_envelope` at
+`readEven p β`.
+
+Scope: nothing is asked of the envelope below `m₀`, so the hypothesis is weaker than
+`substrate_even_of_share_envelope`'s.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. The
+`m₀ ^ 2` paid for the near block appears in the witness, not in the statement. -/
 theorem substrate_even_of_tail_envelope (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -477,7 +561,10 @@ theorem substrate_even_of_tail_envelope (m₀ : ℕ) (a : ℕ → ℝ)
 
 #print axioms substrate_even_of_tail_envelope
 
-/-- **AND ASKED ONLY AT LARGE APERTURES** — §3's weakening, on the tail envelope. -/
+/-- `substrate_even_of_tail_envelope` with the envelope asked only at even apertures of extent at
+least `N₀`, and the conclusion in the matching restricted form with `N₁ := N₀`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem large_aperture_bound_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -491,7 +578,11 @@ theorem large_aperture_bound_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ
 
 #print axioms large_aperture_bound_of_tail_envelope
 
-/-- **CONFINEMENT AT AN APERTURE, FROM A TAIL ENVELOPE AT LARGE APERTURES.** -/
+/-- `confines_of_large_aperture_bound` with its hypothesis supplied by
+`large_aperture_bound_of_tail_envelope`: a summable-weighted far-share envelope, asked only beyond a
+cut and only at large apertures, gives `ApertureRoute.ConfinesAtAnAperture`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem confines_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -502,7 +593,9 @@ theorem confines_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
 
 #print axioms confines_of_tail_envelope
 
-/-- **AND THE CLAY FLAGSHIP.** -/
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at `confines_of_tail_envelope`.
+
+DERIVED: `0` is the lower bound on the envelope; `2` and `1` are the layer weight `2 * m + 1`. -/
 theorem flagship_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
     (ha0 : ∀ m, 0 ≤ a m)
     (hs : Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * a m))
@@ -513,13 +606,19 @@ theorem flagship_of_tail_envelope {N₀ : ℕ} (m₀ : ℕ) (a : ℕ → ℝ)
 
 #print axioms flagship_of_tail_envelope
 
-/-! ### The cubic instance -/
+/-! ### The instance `a m = C / (m + 1) ^ 3` -/
 
-/-- The cubic envelope's layer-weighted total converges, because `2m+1 ≤ 2(m+1)` turns the cube into
-a square and the squares sum.
+/-- For `0 ≤ C`, `fun m => (2 * m + 1) * (C / (m + 1) ^ 3)` is summable. The bound
+`2 * m + 1 ≤ 2 * (m + 1)` reduces the cube to a square, and
+`ContactDominance.summable_inv_succ_sq` scaled by `2 * C` dominates it.
 
-DERIVED: `3` is the first integer exponent above the derived threshold `2`; `2` itself is the
-harmonic series and is proved FALSE by `ContactDominance.square_share_is_not_enough`. -/
+Scope: the exponent `3` is what makes the weighted series converge. With `2` in its place the
+weighted series is harmonic, and `ContactDominance.square_share_is_not_enough` exhibits reads whose
+far share stays under a square envelope at every aperture with unbounded moments.
+
+DERIVED: `0` is the lower bound on `C`; the leading `2` and the first `1` are the layer weight
+`2 * m + 1`; the second `1` is the `+ 1` in `(m + 1)` keeping the denominator nonzero at `m = 0`;
+`3` is the exponent, the first integer for which the weighted series converges. -/
 theorem summable_cubic_weight {C : ℝ} (hC : 0 ≤ C) :
     Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (C / ((m : ℝ) + 1) ^ 3)) := by
   have hnn : ∀ m : ℕ, (0 : ℝ) ≤ C / ((m : ℝ) + 1) ^ 3 :=
@@ -537,15 +636,18 @@ theorem summable_cubic_weight {C : ℝ} (hC : 0 ≤ C) :
 
 #print axioms summable_cubic_weight
 
-/-- **THE WEAKEST CONCRETE FORM IN THIS FILE.**
+/-- `flagship_of_tail_envelope` at the envelope `a m = C / (m + 1) ^ 3`, with nonnegativity from
+`div_nonneg` and summability from `summable_cubic_weight`. The hypothesis is one constant `C`, one
+cut `m₀` and one aperture floor `N₀`: the far share is at most `C / (m + 1) ^ 3` beyond the cut, at
+every coupling, from that extent onwards.
 
-One constant `C`, one cut `m₀`, one aperture floor `N₀`: if the far share is at most
-`C/(m+1)³` beyond the cut, at every coupling, from that aperture onwards, then the Clay flagship
-holds — and the whole chain is `{propext, Classical.choice, Quot.sound}`.
+Scope: the nonpositive half-line, extents below `N₀` and circle distances below `m₀` are all outside
+the hypothesis.
 
-Everything else is discharged: the negative half-line by §2, small extents by §3, small lags by §5.
-
-DERIVED: `3` is `summable_cubic_weight`'s, which is the first integer above the derived threshold. -/
+DERIVED: `0` is the lower bound on `C`; `1` occurs twice, as the `+ 1` in each copy of `(m + 1)`,
+keeping the denominator nonzero at `m = 0`; `3` occurs twice, as the exponent in each copy of the
+envelope — `summable_cubic_weight`'s exponent, the first integer for which the weighted series
+converges. -/
 theorem flagship_of_cubic_tail_share {N₀ m₀ : ℕ} {C : ℝ} (hC : 0 ≤ C)
     (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
       MassGap.ContactDominance.farShare (MassGap.EvenAperture.readEven p β) m
@@ -558,36 +660,29 @@ theorem flagship_of_cubic_tail_share {N₀ m₀ : ℕ} {C : ℝ} (hC : 0 ≤ C)
 #print axioms flagship_of_cubic_tail_share
 
 
-/-! ## 6. Exponential decay reaches the flagship
+/-! ## §6 The geometric envelope
 
-§5's envelope is a power, `C(m+1)^{-s}` with `s > 2`. **A mass gap gives something much stronger — a
-GEOMETRIC far share** — and that is the form every other statement of the gap in this workspace takes:
+§5's envelope is a power. A geometric envelope `C * r ^ m` with `r < 1` is the shape a decay rate
+supplies: `‖C τ‖ ≤ M * exp (-Δ * τ)` with `Δ > 0` is `r = exp (-Δ)`.
+`Infer.Horizon` in `entroptics-infer` assumes `z n ≤ M * r ^ n` with `r < 1`;
+`Forgetting.forgets_of_margin` consumes a margin `r < 1` on the modes; and
+`CertifiedGap.ratio_lt_one_of_certified` produces such an `r` from a numerical band.
 
-* `entroptics-infer/lean/Infer/Horizon.lean` assumes `z n ≤ M * r ^ n` with `r < 1` and says in so
-  many words that this is "the reading of Yang–Mills in `entroptics-mass-gap`, where the mass gap
-  *is* `‖C(τ)‖ ≤ M e^{−Δτ}` with `Δ > 0`", with `r = e^{−Δ}`.
-* `Forgetting.forgets_of_margin` consumes exactly a margin `r < 1` on the modes.
-* `CertifiedGap.ratio_lt_one_of_certified` produces exactly such an `r` from a numerical band.
-
-So the geometric case deserves its own statement rather than being reached by checking that a
-geometric sequence happens to be dominated by a cubic. `summable_geometric_weight` is the one new
-fact, and `summable_pow_mul_geometric_of_norm_lt_one` supplies it: `(2m+1)r^m` splits into `m r^m`
-and `r^m`, both summable below one.
-
-**What this completes.** The chain now runs
-
-    margin r < 1  ⟹  geometric far share  ⟹  d2Even bounded  ⟹  ConfinesAtAnAperture  ⟹  FlagshipAt
-
-end to end, foundational-only, with the negative half-line discharged, small extents never consulted
-and small lags never consulted. Every step is a theorem; what remains outside it is the measurement
-that the far share really is geometric.
+`summable_geometric_weight` is the one new fact: `(2 * m + 1) * r ^ m` splits into `2 * (m * r ^ m)`
+and `r ^ m`, and `summable_pow_mul_geometric_of_norm_lt_one` gives both at `‖r‖ < 1`.
+`confines_of_geometric_far_share` and `flagship_of_geometric_far_share` run §5's chain there. The
+geometric far share is a hypothesis in both.
 -/
 
-/-- **A GEOMETRIC ENVELOPE HAS A CONVERGENT LAYER-WEIGHTED TOTAL.** `(2m+1)r^m` is `2·m r^m` plus
-`r^m`, and `summable_pow_mul_geometric_of_norm_lt_one` gives both below one.
+/-- For `0 ≤ r < 1`, `fun m => (2 * m + 1) * (C * r ^ m)` is summable. The summand is
+`2 * C * (m ^ 1 * r ^ m) + C * (m ^ 0 * r ^ m)`, and
+`summable_pow_mul_geometric_of_norm_lt_one` gives both pieces at `‖r‖ < 1`.
 
-DERIVED: the `2` and `1` are the layer weight `(m+1)² − m²`, not chosen constants; `r` is the
-caller's decay factor. -/
+Scope: `C` is unconstrained in sign, since summability is preserved by scaling.
+
+DERIVED: `0` is the lower bound on `r`, needed to identify `‖r‖` with `r`; `1` is the upper bound on
+`r`, the convergence threshold for a geometric series; `2` and the second `1` are the layer weight
+`2 * m + 1`, which is `(m + 1) ^ 2 - m ^ 2`. -/
 theorem summable_geometric_weight {C r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
     Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * (C * r ^ m)) := by
   have hnorm : ‖r‖ < 1 := by
@@ -602,8 +697,11 @@ theorem summable_geometric_weight {C r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) :
 
 #print axioms summable_geometric_weight
 
-/-- **CONFINEMENT FROM A GEOMETRIC FAR SHARE.** The mass gap's own shape — `C·r^m` with `r < 1` —
-beyond a cut, from some aperture onwards. -/
+/-- `confines_of_tail_envelope` at the envelope `a m = C * r ^ m`, with `0 ≤ C`, `0 ≤ r < 1`,
+nonnegativity from `mul_nonneg` and `pow_nonneg`, and summability from `summable_geometric_weight`.
+
+DERIVED: `0` occurs twice, as the lower bound on `C` and on `r`; `1` is the upper bound on `r`, the
+convergence threshold for a geometric series. -/
 theorem confines_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
     (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
     (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
@@ -614,15 +712,16 @@ theorem confines_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
 
 #print axioms confines_of_geometric_far_share
 
-/-- **AND THE CLAY FLAGSHIP FROM EXPONENTIAL DECAY.**
+/-- `ApertureRoute.flagship_of_confinement_at_an_aperture` at `confines_of_geometric_far_share`: a
+geometric far-share envelope `C * r ^ m` with `0 ≤ r < 1`, beyond a cut and from some extent onwards,
+gives `ApertureRoute.FlagshipAt`.
 
-`‖C(τ)‖ ≤ M e^{−Δτ}` with `Δ > 0`, written as `r = e^{−Δ} < 1` on the far share, delivers
-`ApertureRoute.FlagshipAt` — foundational-only, with the negative half-line discharged, small extents
-never consulted and small lags never consulted.
+Writing `r = exp (-Δ)` puts the hypothesis in the form a decay rate `Δ > 0` supplies.
+`Forgetting.forgets_iff_margin` characterises such a margin and
+`CertifiedGap.ratio_lt_one_of_certified` produces one from a numerical band; neither is used here.
 
-**This is the statement that joins the instrument to the proof.** A margin is what
-`Forgetting.forgets_iff_margin` characterises, what `CertifiedGap.ratio_lt_one_of_certified` produces
-from a numerical band, and what `entroptics.Dynamics.rates` measures as `α_k = −log|μ_k| > 0`. -/
+DERIVED: `0` occurs twice, as the lower bound on `C` and on `r`; `1` is the upper bound on `r`, the
+convergence threshold for a geometric series. -/
 theorem flagship_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
     (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r < 1)
     (ha : ∀ (p : MassGap.EvenAperture.EvenAp), N₀ ≤ p.1 → ∀ (β : ℝ) (m : ℕ), m₀ ≤ m →
@@ -633,27 +732,23 @@ theorem flagship_of_geometric_far_share {N₀ m₀ : ℕ} {C r : ℝ}
 #print axioms flagship_of_geometric_far_share
 
 
-/-! ## ⚠ WHAT `FlagshipAt` IS WORTH, AND IT IS LESS THAN ITS NAME
+/-! ## The scope of `ApertureRoute.FlagshipAt`
 
-Every `flagship_of_…` in this file ends at `ApertureRoute.flagship_of_confinement_at_an_aperture`, and
-`MassGap.FlagshipScope` — the tree's own adversarial audit, deliberately not imported — shows what
-that endpoint does and does not say:
+Every `flagship_of_…` here ends at `ApertureRoute.flagship_of_confinement_at_an_aperture`.
+`MassGap.FlagshipScope`, not imported here, measures what that endpoint asserts:
 
-* **`flagship_for_bogus`** proves the WHOLE flagship conclusion — mass gap, non-triviality
-  (`μ − κ < 0`), `SO(4)`, and the OS0–OS3 continuum measure — for `bogusWilson`, an object with **no
-  read, no correlation, no gauge group and no lattice in it**, whose tension is the constant `0`.
-* **`gap_summand_is_manufactured`**: the "correlation" the gap clause is about is
-  `exp(−(κ₀ − μ))^τ` — one mode, weight `1`, and **its magnitude DEFINED as its own bound**.
-* **`flagship_measure_half_needs_no_hypothesis`**: the measure half takes no hypothesis at all.
-* **`Q_is_constant_in_the_test_configuration`**: OS1 and OS3 hold because the reflected form is
-  independent of the components those actions move.
+* `flagship_for_bogus` proves the whole flagship conclusion — the gap clause, `μ - κ < 0`, the
+  isotropy clause and the OS0–OS3 continuum measure — for `bogusWilson`, an object containing no
+  read, correlation, gauge group or lattice, whose tension is the constant `0`.
+* `gap_summand_is_manufactured`: the summand the gap clause is about is `exp (-(κ₀ - μ)) ^ τ` — one
+  mode, weight `1`, magnitude equal to its own bound.
+* `flagship_measure_half_needs_no_hypothesis`: the measure half takes no hypothesis.
+* `Q_is_constant_in_the_test_configuration`: OS1 and OS3 hold because the reflected form does not
+  depend on the components those actions move.
 
-**So "reaches the Clay flagship" is not the claim it sounds like.** What carries content in these
-chains is the step BEFORE it — `ApertureRoute.ConfinesAtAnAperture`, which is a statement about
-`cosAvgEven` of `readEven`, hence about the genuine `wilsonCorrAt` at an even aperture. The
-`FlagshipAt` corollaries add the manufactured clauses and nothing else.
-
-Each `confines_of_…` here is therefore the theorem; each `flagship_of_…` is its packaging, kept
-because the packaging is what the assembly consumes, and labelled so it is not mistaken for more.
+The statement in these chains that is about the Wilson correlation is
+`ApertureRoute.ConfinesAtAnAperture`: it is about `cosAvgEven` of `readEven`, hence about
+`wilsonCorrAt` at an even aperture. Each `confines_of_…` here is that statement; each
+`flagship_of_…` is the packaging the assembly consumes.
 -/
 end MassGap.MomentArms

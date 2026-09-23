@@ -2,49 +2,56 @@ import MassGap.ReachFreeze
 import MassGap.Certify
 
 /-!
-# MassGap.Mixing — the A1 resolution route via `ρ'(1)` (single-cut maximal correlation)
+# MassGap.Mixing — geometric decay and a Lipschitz-grid ceiling for a single-cut maximal correlation
 
-A1 reduces to the junction `κ − μ ≤ c`, equivalently `ρ'(1) < 1` (Dobrushin–Shlosman complete analyticity;
-notes §8–§9). Reflection positivity makes the Euclidean-time transfer operator self-adjoint (reversible), so
-the single-cut maximal correlation equals the dominant sub-vacuum eigenvalue, `ρ'(1) = m_hi`, and
-`ρ'(n) = ρ'(1)^n` **exactly**: one cut controls every SEPARATION.
+Two real-analysis facts, phrased for a single-cut maximal correlation `ρ'(1)`:
 
-**⛔ IT DOES NOT CONTROL THE VOLUME.** `ρ'(n) = ρ'(1)^n` is a statement about `n` time-cuts, and
-`gap_of_maximal_correlation` below is a statement about ONE sequence `σ : ℕ → ℝ` dominated by a
-geometric one. No volume index occurs in it, or anywhere in this module. Carrying `ρ'(1)` from one
-volume to another is a SEPARATE statement — the intensive bound `∀ F, m_hi(F) ≤ r`, which
-`Certify.gap_uniform_in_volume_of_intensive` takes as a premise and nothing in the tree supplies.
-Reflection positivity buys the time direction; the spatial direction is untouched by it.
+* `gap_of_maximal_correlation` — a nonnegative sequence dominated by `σ 0 * ρ₁ ^ n` with `ρ₁ < 1`
+  converges to `0`.
+* `interior_mixing_of_analytic_grid` — an `L`-Lipschitz function on `Set.Icc a b` whose value is
+  certified at or below `(1 - ε) - L * δ` on a `δ`-net of the interval stays strictly below `1` on
+  the whole interval.
 
-This module implements the two Lean pieces of the resolution plan (§9):
-* **S1** — `ρ'(1) < 1 ⇒ the correlator forgets` (`gap_of_maximal_correlation`);
-* **S3** — interior `ρ'(1) < 1` from finite-volume analyticity + a finite grid
-  (`interior_mixing_of_analytic_grid`).
+Each is a wrapper: the first around `ReachFreeze.excess_tendsto_zero_of_geom`, the second around
+`Certify.le_of_lipschitz_grid`.
 
-Both reduce to already-proved lemmas (`ReachFreeze.excess_tendsto_zero_of_geom`,
-`Certify.le_of_lipschitz_grid`). Imported by the `MassGap` aggregate (`MassGap.lean`).
+Scope: the index quantified over is a separation `n` in the first statement and a parameter
+`β ∈ [a, b]` in the second. No volume index occurs in either, so neither constrains behaviour as the
+volume grows; the intensive premise `∀ F, m_hi F ≤ r` that
+`Certify.gap_uniform_in_volume_of_intensive` consumes is a separate statement.
 -/
 
 namespace MassGap
 
 open Filter
 
-/-- **S1 — `ρ'(1) < 1 ⇒ the correlator forgets.** With the reach-freeze excess bounded by the single-cut
-maximal correlation, `σ n ≤ σ 0 · ρ'(1)^n` (the geometric domination is the HYPOTHESIS `hsub`, not something reflection positivity supplies here), a strict `ρ'(1) < 1`
-sends `σ → 0`: the gap. Uniform in the SEPARATION `n`, NOT in the volume — no volume index occurs in this statement or anywhere in this module, as the header above says. Wraps
-`excess_tendsto_zero_of_geom`. -/
+/-- A nonnegative real sequence dominated by a geometric one converges to zero. Takes `0 ≤ ρ₁`,
+`ρ₁ < 1`, nonnegativity of `σ` at every index, and the domination `σ n ≤ σ 0 * ρ₁ ^ n` at every
+index; concludes `Tendsto σ atTop (nhds 0)`. The domination `hsub` is a hypothesis supplied by the
+caller, not derived here. The index `n` is a separation; the statement carries no volume index.
+Wraps `ReachFreeze.excess_tendsto_zero_of_geom`.
+
+DERIVED: `0` is the lower bound on `ρ₁` and on each `σ n`, the initial index in `σ 0`, and the
+limit point; `1` is the strict ceiling on `ρ₁` that makes `ρ₁ ^ n` decay. Both come from the
+sequence's own arithmetic, not from the model. -/
 theorem gap_of_maximal_correlation {σ : ℕ → ℝ} {ρ₁ : ℝ}
     (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1) (hσnn : ∀ n, 0 ≤ σ n)
     (hsub : ∀ n, σ n ≤ σ 0 * ρ₁ ^ n) :
     Tendsto σ atTop (nhds 0) :=
   excess_tendsto_zero_of_geom hρ0 hρ1 hσnn hsub
 
-/-- **S3 — interior `ρ'(1) < 1` from finite-volume analyticity + a finite grid.** If the single-cut maximal
-correlation `ρ'(1)(·)` is `L`-Lipschitz on `[a,b]` (finite-volume analyticity — a bounded connected-correlator
-modulus, the §5.1 argument applied to the maximal-correlation functional) and a `δ`-grid certifies
-`ρ'(1)(γ) ≤ (1−ε) − L·δ` with strict margin `ε > 0`, then `ρ'(1)(β) < 1` throughout. Reuses
-`le_of_lipschitz_grid` (`B = 1 − ε`). The analog of `Interior.interior_confinement_of_analytic_grid` with
-`ρ'(1)` in place of `⟨d²⟩`; carrying that across volumes is the separate intensive bound, which this module does not supply. -/
+/-- A Lipschitz function certified below a margin on a net stays strictly below `1` on the whole
+interval. Takes `0 ≤ L`, `0 < ε`, the `L`-Lipschitz estimate `|ρ₁ x - ρ₁ y| ≤ L * |x - y|` on
+`Set.Icc a b`, and a covering hypothesis giving every `β ∈ [a, b]` some `γ ∈ [a, b]` with
+`|β - γ| ≤ δ` and `ρ₁ γ ≤ (1 - ε) - L * δ`; concludes `ρ₁ β < 1` for every `β ∈ [a, b]`. The proof
+applies `Certify.le_of_lipschitz_grid` at `B = 1 - ε` to get `ρ₁ β ≤ 1 - ε`, then uses `0 < ε` for
+strictness. Quantifies over `β` in the interval only; no volume index appears, so the bound is not
+transported between volumes. Companion of `Interior.interior_confinement_of_analytic_grid`, with
+`ρ₁` in place of the squared-displacement functional.
+
+DERIVED: `0` is the lower bound on the Lipschitz constant `L` and the strict lower bound on the
+margin `ε`; `1` is the ceiling in the conclusion and the base of the certified value `(1 - ε)`.
+`L`, `δ` and `ε` are all the caller's; no numeral is a model constant. -/
 theorem interior_mixing_of_analytic_grid {ρ₁ : ℝ → ℝ} {a b L δ ε : ℝ} (hL : 0 ≤ L) (hε : 0 < ε)
     (hlip : ∀ x ∈ Set.Icc a b, ∀ y ∈ Set.Icc a b, |ρ₁ x - ρ₁ y| ≤ L * |x - y|)
     (hcover : ∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧ ρ₁ γ ≤ (1 - ε) - L * δ) :

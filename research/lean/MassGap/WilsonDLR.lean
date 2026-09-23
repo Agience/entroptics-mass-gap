@@ -6,72 +6,90 @@ import MassGap.SUN
 import MassGap.WilsonAction
 
 /-!
-# MassGap.WilsonDLR — the infinite-volume Gibbs measure OF THE WILSON SPECIFICATION
+# MassGap.WilsonDLR — the Feller property of the Wilson specification, and the limit it unlocks
 
-`GibbsSpec` builds the finite-volume Wilson kernel `spec φ β Λ μ f ω` with a genuine boundary
-condition and proves it DLR-consistent (`GibbsSpec.dlr_consistent`, instantiated at the real
-`WilsonAction.wilsonDensity` on `SU(N)` by `GibbsSpec.wilson_dlr_consistent`). `DLRLimit` builds an
-infinite-volume state and measure out of ANY specification presented as a family of maps
-`γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ)`. The type of `γ` is what the two modules did not
-share: it demands that the kernel carry CONTINUOUS observables to CONTINUOUS observables — the Feller
-property — and `GibbsSpec` proves measurability in the boundary condition and nothing stronger.
+`GibbsSpec` builds the finite-volume kernel `spec φ β Λ μ f ω` with a boundary condition and proves
+it DLR-consistent (`GibbsSpec.dlr_consistent`, instantiated at `WilsonAction.wilsonDensity` on `SU N`
+by `GibbsSpec.wilson_dlr_consistent`). `DLRLimit` builds an infinite-volume state and measure from
+any specification presented as `γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ)`, whose type demands
+that the kernel carry continuous observables to continuous ones. `GibbsSpec` proves measurability in
+the boundary condition. This file proves the continuity and applies `DLRLimit`.
 
-This file proves the Feller property and closes the join.
+## Parts 0–6: continuity, locality, linearity
 
-## What is proved
+`bounded_of_continuous` uses compactness of `IConf G`. `continuous_splice_right`,
+`continuous_stepListProd`, `continuous_ihol`, `continuous_actionOn` and `continuous_wt_right` are the
+continuity mirrors of `GibbsSpec`'s measurability lemmas. `continuous_num_right` and
+`continuous_part_right` apply `MeasureTheory.continuous_of_dominated`, the domination being by a
+constant because the observable is bounded and the weight is bounded by
+`exp (|β| * (#boundaryPlaqs Λ * 2))`; `GibbsSpec.part_pos` keeps the quotient continuous, giving
+`continuous_spec_right`.
 
-* `continuous_spec_right` — for a continuous density `φ` with values in `[0,2]`, a fixed finite
-  volume `Λ` and a continuous observable `f`, the map `ω ↦ spec φ β Λ μ f ω` is continuous. The
-  numerator and the partition function are integrals over the finitely many links of `Λ` of an
-  integrand continuous in `ω` and dominated by a constant, so `MeasureTheory.continuous_of_dominated`
-  applies to each; `GibbsSpec.part_pos` keeps the quotient continuous. The domination is a constant
-  because `IConf G` is compact, so a continuous observable on it is bounded.
-* `spec_mem_localAlg` — the kernel preserves locality: if `f` is local on `S` then
-  `spec φ β Λ μ f` is local on `S ∪ bdLinks Λ`, where `bdLinks Λ` is the finite set of links read by
-  the plaquettes of `boundaryPlaqs Λ`. With continuity this is membership in
-  `InfiniteLattice.localAlg`, so `specCM` lands in `C(IConf G, ℝ)` as a local observable and not by
-  fiat.
-* `specCM` / `specState` — the kernel as a map on continuous observables, and the finite-volume state
-  obtained by freezing one boundary configuration `ω₀`. Its four `State` fields come from
-  `spec_add`, `spec_smul`, `spec_nonneg` and `GibbsSpec.spec_one`.
-* `dlr_general` — `GibbsSpec.dlr_consistent` freed of its `|f| ≤ 1` restriction by the exact
-  homogeneity `spec_smul`, which is what an arbitrary `f : C(IConf G, ℝ)` needs.
-* `exists_infinite_volume_gibbs_measure_of_density` — a probability measure `P` on `IConf G`
-  satisfying the DLR equation `∫ spec φ β Λ μ f dP = ∫ f dP` at EVERY finite volume `Λ` and every
-  continuous observable `f`.
-* `exists_wilson_infinite_volume_gibbs_measure` — the same at `φ = WilsonAction.wilsonDensity` on
-  `SU(N)` against `CompactGauge.probHaar`, at every real `β`. The Clay row A6 object for the Wilson
-  theory rather than for an abstract specification.
+`bdLinks Λ` is the finite set of links the plaquettes of `boundaryPlaqs Λ` read. `isLocalOn_spec`
+shows the kernel of an observable local on `S` is local on `S ∪ bdLinks Λ`, and
+`spec_mem_localAlg` packages that with continuity as membership in `InfiniteLattice.localAlg`.
+`spec_smul`, `spec_add` and `spec_nonneg` are the three algebraic facts a state needs, and
+`dlr_general` is `GibbsSpec.dlr_consistent` with its `|f| ≤ 1` restriction removed by scaling.
 
-## What is not proved
+## Part 7: what `DLRLimit` consumes
 
-Uniqueness, translation invariance, and non-degeneracy. The limit is subsequential: it is taken along
-an ultrafilter refining `atTop` on `Finset ILink`, and nothing here shows the net itself converges,
-nor that the result is independent of the frozen boundary configuration `ω₀`.
-`DLRLimit.not_isPointMass_of_uniform_variance` rules out a point mass only when handed a variance
-floor uniform in the volume.
+`specCM` is the kernel as a map on continuous observables; `specState` freezes a boundary
+configuration `ω₀` and reads it as a `DLRLimit.State`; `hcons_specState` is `dlr_general` in the
+index direction `DLRLimit.exists_dlr_state` takes.
 
-**Such a floor DOES exist**: `InfiniteVolume.exists_uniform_contact_floor` fixes one `δ₀ > 0` BEFORE
-the aperture with `exp(−128β)·δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
-`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette VARIANCE.
-`ClayNontriviality.clay_nontriviality_of_wilson_variance` composes it with the non-degeneracy
-theorem.
+## Part 7b: coupling zero
 
-**What is genuinely missing is the BRIDGE between the two volume indexings.** The floor is stated for
-`wilsonCorrAt N β 0` on `WilsonHypercubic.bd (d := 4) (n := N+1)` — a finite PERIODIC lattice indexed
-by an aperture. `specState` is indexed by a `Finset ILink` of `ℤ⁴` with a FROZEN boundary. Relating a
-variance in one indexing to a variance in the other is the open step, and it is not a rewriting.
+At `β = 0` the Boltzmann weight is `1` (`wt_at_zero`), the partition function is `1`
+(`part_at_zero`), and the kernel is the plain product-Haar average (`spec_at_zero`). An observable
+local on `S ⊆ Λ` reads the spliced configuration only inside `S`, where the splice takes the
+integration variable, so `spec_at_zero_const` makes the kernel constant in the boundary condition.
+`dlr_apply_at_zero`, `dlr_eq_of_isDLR_at_zero` and `dlr_unique_at_zero` turn that into uniqueness of
+the DLR state, through `DLRLimit.State.eq_of_eqOn_localObs`; `dlr_unique_at_zero_eq` states it as
+equality of states and `tendsto_specState_at_zero` feeds it to `DLRLimit.tendsto_of_unique_dlr`, so
+the finite-volume states converge along `atTop` rather than along an ultrafilter.
+`dlr_mul_at_zero` is factorisation on disjoint local supports, from
+`spec_at_zero_mul_of_disjoint`.
 
-The DLR equation delivered HERE is tested against CONTINUOUS observables, so `IsGibbsMeasure` is not
-claimed in this file. `GibbsSpec.IsGibbsMeasure` asks for the equation against every bounded
-MEASURABLE observable, and `MassGap.WilsonGibbs` carries it there: not by approximating an
-observable — the kernel is bounded by the sup norm, not the `L¹(P)` norm, so an `L¹` approximation
-does not pass under it — but by exhibiting the kernel applied to `P` as a measure and using that two
-finite Borel measures agreeing on continuous observables are equal.
-`MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure` is the result.
+`permConf`, `twistConf` and their volume-level companions `volReindex`, `coordTwist`, `volTwist`
+carry a link bijection, optionally with a coordinatewise twist, through the splice and the product
+measure. `spec_at_zero_permConf` and `spec_at_zero_twistConf` show the kernel commutes with them at
+`β = 0`; `permState`, `twistState`, `isDLR_permState_at_zero` and `isDLR_twistState_at_zero` lift
+that to states, and uniqueness collapses each onto the original in `dlr_permCM_at_zero` and
+`dlr_twistCM_at_zero`.
 
-DERIVED: `4` is the problem's dimension, `2` the proved upper bound on the Wilson density (`WilsonAction.wilsonDensity_le_two`; nothing shows it attained or least, and at `SU(3)` the true supremum of `1 − Re tr g / 3` is `3/2`), `1` the normalisation of
-a probability state. No constant is chosen here and none is fitted.
+## Parts 8–9: the measure
+
+`exists_infinite_volume_gibbs_measure_of_density` applies
+`DLRLimit.exists_infinite_volume_gibbs_measure` to the genuine kernel, giving a probability measure
+`P` on `IConf G` with `∫ spec φ β Λ μ f dP = ∫ f dP` at every finite volume and every continuous
+observable. `wilson_continuous_spec_right` and `exists_wilson_infinite_volume_gibbs_measure`
+instantiate at `wilsonDensity` on `SU N` against `CompactGauge.probHaar`, at every real `β`, with the
+boundary configuration anchored at the identity.
+
+## Scope
+
+* The limit is subsequential except at `β = 0`: `exists_infinite_volume_gibbs_measure_of_density`
+  goes through an ultrafilter refining `atTop` on `Finset ILink`, and nothing shows the net itself
+  converges or that the result is independent of `ω₀`. `tendsto_specState_at_zero` is the exception,
+  and its argument runs through `spec_at_zero_const`, which holds only at zero coupling.
+* Uniqueness, translation invariance and non-degeneracy are not proved at general coupling.
+  `DLRLimit.not_isPointMass_of_uniform_variance` needs a variance floor uniform in the volume.
+  `InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0` with
+  `exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
+  `PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
+  `ClayNontriviality.clay_nontriviality_of_wilson_variance` composes the two. That floor is stated
+  for `wilsonCorrAt N β 0` on a finite periodic lattice indexed by an aperture, while `specState` is
+  indexed by a `Finset ILink` of `ℤ⁴` with a frozen boundary; relating a variance in one indexing to
+  a variance in the other is not done here.
+* The DLR equation delivered here is tested against CONTINUOUS observables, so
+  `GibbsSpec.IsGibbsMeasure` — which asks for it against every bounded measurable observable — is not
+  claimed. `MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure` carries it there, by exhibiting the
+  kernel applied to `P` as a measure and using that two finite Borel measures agreeing on continuous
+  observables are equal; an `L¹` approximation would not pass under the kernel, which is bounded in
+  the sup norm rather than the `L¹(P)` norm.
+* `φ` is a general density with `0 ≤ φ ≤ 2` throughout. `WilsonAction.wilsonDensity_nonneg` and
+  `wilsonDensity_le_two` discharge those two at the Wilson instance; the upper bound `2` is proved,
+  not attained — at `SU 3` the supremum of `1 - Re tr g / 3` is `3 / 2`.
 
 Build: `python research/code/lean_build.py build MassGap.WilsonDLR`.
 -/
@@ -83,16 +101,19 @@ open MassGap.GibbsSpec MassGap.WilsonLattice
 
 /-! ## Part 0 — boundedness on the compact configuration space
 
-`IConf G` is a product of copies of a compact group, so it is compact by Tychonoff and every
-continuous observable on it is bounded. This is where the domination in Part 2 comes from: the bound
-is a constant, and a constant is integrable against the probability measure `vol μ Λ`. -/
+`IConf G` is a product of copies of a compact group, hence compact, so every continuous observable
+on it is bounded. That is where the domination in Part 4 comes from: the bound is a constant, and a
+constant is integrable against the probability measure `vol μ Λ`. -/
 
 section Bounded
 
 variable {G : Type} [TopologicalSpace G] [CompactSpace G]
 
-/-- **A continuous function on the configuration space is bounded.** Compactness, not a hypothesis;
-`InfiniteLattice.bounded_of_continuous` says the same thing in its own namespace. -/
+/-- `∃ C, ∀ U, |F U| ≤ C` for a continuous `F : IConf G → ℝ`. The range is compact, hence bounded
+above and below, and `|a| + |b|` at those two bounds serves.
+`InfiniteLattice.bounded_of_continuous` is the same statement in its own namespace.
+
+DERIVED: no numeral appears in the statement. -/
 theorem bounded_of_continuous {F : IConf G → ℝ} (hF : Continuous F) : ∃ C : ℝ, ∀ U, |F U| ≤ C := by
   obtain ⟨b, hb⟩ := (isCompact_range hF).bddAbove
   obtain ⟨a, ha⟩ := (isCompact_range hF).bddBelow
@@ -111,11 +132,15 @@ end Bounded
 
 /-! ## Part 1 — the links a finite volume's plaquettes read
 
-`boundaryPlaqs Λ` is the plaquettes with AT LEAST ONE link in `Λ`, so some of their links lie outside
-`Λ` and the kernel reads the boundary condition there. That set is finite, which is what makes the
-kernel of a local observable local. -/
+`GibbsSpec.boundaryPlaqs Λ` collects the plaquettes with at least one link in `Λ`, so some of their
+links lie outside `Λ` and the kernel reads the boundary condition there. That set of links is
+finite, which is what makes the kernel of a local observable local. -/
 
-/-- **The links a finite volume's plaquettes read**, inside and outside `Λ` alike. -/
+/-- `(boundaryPlaqs Λ).biUnion (fun q => (ilinks q).toFinset)`: the links read by the plaquettes of
+`boundaryPlaqs Λ`, inside and outside `Λ` alike. Finite, being a `biUnion` of finitely many finite
+lists.
+
+DERIVED: no numeral appears in the statement. -/
 def bdLinks (Λ : Finset ILink) : Finset ILink :=
   (boundaryPlaqs Λ).biUnion (fun q => (ilinks q).toFinset)
 
@@ -129,9 +154,9 @@ theorem mem_bdLinks {Λ : Finset ILink} {q : IPlaq} (hq : q ∈ boundaryPlaqs Λ
 
 /-! ## Part 2 — the working context
 
-One instance block for the whole development: a compact, second-countable, Borel topological group.
-`SU(N)` carries every one of these (`MassGap.SUN`), and `GibbsSpec`'s kernel is defined over exactly
-the measurable half of them. -/
+One instance block for the rest of the file: a compact, second-countable, Borel topological group
+with measurable multiplication and inversion. `MassGap.SUN.SU N` carries all of them, and
+`GibbsSpec`'s kernel is defined over the measurable ones. -/
 
 variable {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
   [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
@@ -139,12 +164,15 @@ variable {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Compa
 
 /-! ## Part 3 — continuity of the pieces in the boundary condition
 
-The splice, the holonomy, the action and the Boltzmann weight, each continuous in `ω` with the inside
-configuration `u` held fixed. These are the continuity mirrors of `GibbsSpec.measurable_splice_right`,
+The splice, the holonomy, the action and the Boltzmann weight, each continuous in `ω` with the
+inside configuration `u` held fixed. These mirror `GibbsSpec.measurable_splice_right`,
 `GibbsSpec.measurable_ihol`, `GibbsSpec.measurable_actionOn` and `GibbsSpec.measurable_wt_left`. -/
 
-/-- **The splice is continuous in the boundary configuration.** Coordinatewise: inside `Λ` it is a
-constant, outside it is an evaluation. -/
+/-- `fun ω => splice Λ u ω` is continuous, for a fixed inside configuration `u`. Checked
+coordinatewise: at a link of `Λ` the value is the constant `u`, and at a link outside it is
+evaluation of `ω`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_splice_right (Λ : Finset ILink) (u : VConf G Λ) :
     Continuous (fun ω : IConf G => splice Λ u ω) := by
   refine continuous_pi (fun l => ?_)
@@ -158,8 +186,12 @@ theorem continuous_splice_right (Λ : Finset ILink) (u : VConf G Λ) :
 
 #print axioms continuous_splice_right
 
-/-- The ordered product of link-dependent step factors is continuous — the continuity mirror of
-`WilsonLattice.measurable_stepListProd`, by the same list induction. -/
+/-- `fun U => (w.map (fun lo => if lo.2 then U lo.1 else (U lo.1)⁻¹)).prod` is continuous, for a
+fixed word `w : List (ILink × Bool)`. Induction on the list, with continuity of multiplication,
+evaluation and inversion at each step. It mirrors `WilsonLattice.measurable_stepListProd`.
+
+DERIVED: no numeral appears in the statement; `.1` and `.2` are projections and `true`/`false` are
+orientation flags. -/
 theorem continuous_stepListProd (w : List (ILink × Bool)) :
     Continuous
       (fun U : IConf G => (w.map (fun lo => if lo.2 then U lo.1 else (U lo.1)⁻¹)).prod) := by
@@ -178,14 +210,20 @@ theorem continuous_stepListProd (w : List (ILink × Bool)) :
 
 #print axioms continuous_stepListProd
 
-/-- **The plaquette holonomy is continuous** in the configuration. -/
+/-- `fun U => ihol q U` is continuous, at every plaquette `q`: it unfolds to `wilsonHol` at the
+boundary word `ibd q`, which `continuous_stepListProd` handles.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_ihol (q : IPlaq) : Continuous (fun U : IConf G => ihol q U) := by
   unfold ihol wilsonHol
   exact continuous_stepListProd (ibd q)
 
 #print axioms continuous_ihol
 
-/-- **The energy of a finite plaquette set is continuous** when the density is. -/
+/-- `fun U => actionOn φ S U` is continuous for a continuous density `φ` and a `Finset IPlaq` `S`:
+it is a finite sum of `φ` composed with `continuous_ihol`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_actionOn {φ : G → ℝ} (hφc : Continuous φ) (S : Finset IPlaq) :
     Continuous (fun U : IConf G => actionOn φ S U) := by
   unfold actionOn
@@ -193,8 +231,11 @@ theorem continuous_actionOn {φ : G → ℝ} (hφc : Continuous φ) (S : Finset 
 
 #print axioms continuous_actionOn
 
-/-- **The Boltzmann weight is continuous in the boundary condition**, the inside configuration held
-fixed. -/
+/-- `fun ω => wt φ β Λ u ω` is continuous for a continuous density, with the inside configuration
+`u` held fixed: `Real.exp` composed with a constant multiple of `continuous_actionOn` composed with
+`continuous_splice_right`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_wt_right {φ : G → ℝ} (hφc : Continuous φ) (β : ℝ) (Λ : Finset ILink)
     (u : VConf G Λ) : Continuous (fun ω : IConf G => wt φ β Λ u ω) := by
   unfold wt
@@ -204,15 +245,23 @@ theorem continuous_wt_right {φ : G → ℝ} (hφc : Continuous φ) (β : ℝ) (
 
 #print axioms continuous_wt_right
 
-/-! ## Part 4 — THE FELLER PROPERTY
+/-! ## Part 4 — continuity of the kernel in the boundary condition
 
 Both the numerator and the partition function are integrals over the finite product `VConf G Λ` of an
 integrand continuous in `ω` and bounded by a constant uniformly in `ω`, so
-`MeasureTheory.continuous_of_dominated` applies: `IConf G` is a countable product of second-countable
-spaces, hence first countable, which is the hypothesis that lemma places on the parameter space.
-`GibbsSpec.part_pos` makes the quotient continuous. -/
+`MeasureTheory.continuous_of_dominated` applies — `IConf G` is a countable product of
+second-countable spaces, hence first countable, which is what that lemma requires of the parameter
+space. `GibbsSpec.part_pos` keeps the quotient continuous. -/
 
-/-- **The unnormalised expectation is continuous in the boundary condition.** -/
+/-- `fun ω => num φ β Λ μ f ω` is continuous, for a continuous density with `0 ≤ φ ≤ 2`, a
+continuous observable `f` bounded by `C`, and a probability measure `μ`.
+`MeasureTheory.continuous_of_dominated` applies with the constant dominating function
+`C * exp (|β| * (#boundaryPlaqs Λ * 2))`, from `GibbsSpec.wt_le`; measurability comes from
+`measurable_splice_left` and `measurable_wt_left`, and continuity of the integrand from
+`continuous_splice_right` and `continuous_wt_right`.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound, which is
+what `GibbsSpec.wt_le` needs to bound the weight. -/
 theorem continuous_num_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     {f : IConf G → ℝ} (hfc : Continuous f) {C : ℝ} (hC : ∀ U, |f U| ≤ C) :
@@ -239,7 +288,11 @@ theorem continuous_num_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀
 
 #print axioms continuous_num_right
 
-/-- **The partition function is continuous in the boundary condition.** -/
+/-- `fun ω => part φ β Λ μ ω` is continuous, for a continuous density with `0 ≤ φ ≤ 2` and a
+probability measure `μ`. Same argument as `continuous_num_right` without the observable factor, the
+dominating constant being `exp (|β| * (#boundaryPlaqs Λ * 2))`.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. -/
 theorem continuous_part_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ] :
     Continuous (fun ω : IConf G => part φ β Λ μ ω) := by
@@ -259,11 +312,15 @@ theorem continuous_part_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : �
 
 #print axioms continuous_part_right
 
-/-- **THE FELLER PROPERTY.** The specification kernel of a finite volume carries a continuous
-observable to a function of the boundary condition that is again continuous. This is the one
-obligation `DLRLimit` records in the type of its `γ` and `GibbsSpec` does not discharge:
-`GibbsSpec.measurable_spec_right` gives measurability, and measurability is not enough to evaluate a
-weak-* limit of states. -/
+/-- `fun ω => spec φ β Λ μ f ω` is continuous, for a continuous density with `0 ≤ φ ≤ 2` and a
+continuous observable `f`. The observable is bounded by `bounded_of_continuous`, so
+`continuous_num_right` and `continuous_part_right` apply, and `GibbsSpec.part_pos` makes the
+denominator nonvanishing.
+
+This is the property `DLRLimit` records in the type of its `γ`;
+`GibbsSpec.measurable_spec_right` gives measurability of the same map.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. -/
 theorem continuous_spec_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     {f : IConf G → ℝ} (hfc : Continuous f) :
@@ -278,11 +335,15 @@ theorem continuous_spec_right {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : �
 /-! ## Part 5 — the kernel preserves locality
 
 A finite volume's kernel reads its boundary condition through two windows: the observable `f`, and
-the plaquettes of `boundaryPlaqs Λ` whose links stick out of `Λ`. Both are finite, so the image of a
+the plaquettes of `boundaryPlaqs Λ` whose links lie outside `Λ`. Both are finite, so the image of a
 local observable is local. -/
 
-/-- **The kernel of a local observable is local.** `InfiniteLattice.IsLocalOn S F` is the statement
-that `F` is unchanged by any modification of the configuration off `S`. -/
+/-- If `f` is local on `S`, then `fun ω => spec φ β Λ μ f ω` is local on `S ∪ bdLinks Λ`. Two
+boundary conditions agreeing on that union give the same spliced configuration at every link of `S`
+and the same energy on `boundaryPlaqs Λ` (by `GibbsSpec.actionOn_congr` and `mem_bdLinks`), so the
+numerator and the partition function agree.
+
+DERIVED: no numeral appears in the statement. -/
 theorem isLocalOn_spec (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     {S : Finset ILink} {f : IConf G → ℝ} (hf : MassGap.InfiniteLattice.IsLocalOn S f) :
     MassGap.InfiniteLattice.IsLocalOn (S ∪ bdLinks Λ) (fun ω => spec φ β Λ μ f ω) := by
@@ -320,10 +381,11 @@ theorem isLocalOn_spec (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Mea
 
 #print axioms isLocalOn_spec
 
-/-- **The kernel maps the local algebra into the local algebra.** Continuity from
-`continuous_spec_right`, locality from `isLocalOn_spec`; together they are exactly membership in
-`InfiniteLattice.localAlg`, which is what makes `specCM` below a legitimate element of
-`C(IConf G, ℝ)` rather than a function declared continuous by fiat. -/
+/-- If `f ∈ InfiniteLattice.localAlg S`, then `fun ω => spec φ β Λ μ f ω` is in
+`InfiniteLattice.localAlg (S ∪ bdLinks Λ)`: continuity from `continuous_spec_right` and locality
+from `isLocalOn_spec`, which is what membership in `localAlg` is.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. -/
 theorem spec_mem_localAlg {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     {S : Finset ILink} {f : IConf G → ℝ} (hf : f ∈ MassGap.InfiniteLattice.localAlg S) :
@@ -332,13 +394,16 @@ theorem spec_mem_localAlg {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g,
 
 #print axioms spec_mem_localAlg
 
-/-! ## Part 6 — the kernel is linear and positive in the observable
+/-! ## Part 6 — linearity and positivity of the kernel in the observable
 
-The three algebraic facts a state needs. `spec_smul` is exact homogeneity and needs no integrability
-at all; `spec_add` needs the integrands to be integrable, which `GibbsSpec.integrable_num` supplies
-from boundedness. -/
+The three algebraic facts a state needs. `spec_smul` is exact homogeneity and needs no integrability;
+`spec_add` needs the integrands integrable, which `GibbsSpec.integrable_num` supplies from
+boundedness. -/
 
-/-- **The kernel is homogeneous in the observable.** -/
+/-- `spec φ β Λ μ (fun U => c * f U) ω = c * spec φ β Λ μ f ω`, by pulling the constant out of the
+numerator's integral. No integrability, boundedness or measurability hypothesis is needed.
+
+DERIVED: no numeral appears in the statement. -/
 theorem spec_smul (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     (c : ℝ) (f : IConf G → ℝ) (ω : IConf G) :
     spec φ β Λ μ (fun U => c * f U) ω = c * spec φ β Λ μ f ω := by
@@ -352,7 +417,12 @@ theorem spec_smul (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure 
 
 #print axioms spec_smul
 
-/-- **The kernel is additive in the observable.** -/
+/-- `spec φ β Λ μ (fun U => f U + g U) ω = spec φ β Λ μ f ω + spec φ β Λ μ g ω` for measurable `f`,
+`g` bounded by `Cf` and `Cg`. `MeasureTheory.integral_add` splits the numerator, its two
+integrability hypotheses supplied by `GibbsSpec.integrable_num`.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. The
+bounds `Cf` and `Cg` are the caller's. -/
 theorem spec_add {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     {f g : IConf G → ℝ} (hf : Measurable f) {Cf : ℝ} (hCf : ∀ U, |f U| ≤ Cf)
@@ -370,7 +440,12 @@ theorem spec_add {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ 
 
 #print axioms spec_add
 
-/-- **The kernel is positive in the observable.** -/
+/-- `0 ≤ spec φ β Λ μ f ω` for a pointwise nonnegative `f`: the numerator is an integral of a product
+of nonnegatives and the partition function is positive by `GibbsSpec.part_pos`.
+
+DERIVED: `0` occurs four times — the pointwise lower bound on the density, the pointwise lower bound
+on `f`, and the lower bound on the kernel's value; the remaining `0` is the lower bound in
+`hφ0 : ∀ g, 0 ≤ φ g`. `2` is the density's pointwise upper bound. -/
 theorem spec_nonneg {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     {f : IConf G → ℝ} (hf : ∀ U, 0 ≤ f U) (ω : IConf G) : 0 ≤ spec φ β Λ μ f ω := by
@@ -381,10 +456,15 @@ theorem spec_nonneg {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ 
 
 #print axioms spec_nonneg
 
-/-- **DLR consistency at ANY bound on the observable.** A bound `hC : ∀ U, |f U| ≤ C` is still taken; what is removed is its being fixed at `1`. `GibbsSpec.dlr_consistent` is stated for
-`|f| ≤ 1`; an arbitrary continuous observable on a compact space is bounded but not by `1`, so the
-restriction is removed by scaling — exact homogeneity of `spec` in the observable lets the scale be
-cancelled from both sides. -/
+/-- `spec φ β Λ' μ (fun v => spec φ β Λ μ f v) ω = spec φ β Λ' μ f ω` for `Λ ⊆ Λ'` and a measurable
+`f` bounded by any `C`. `GibbsSpec.dlr_consistent` is stated for `|f| ≤ 1`; here `f` is scaled by
+`(C + 1)⁻¹` to meet that, and `spec_smul` — exact homogeneity in the observable — cancels the scalar
+from both sides.
+
+Scope: a bound `hC` is still taken; what is removed is its being fixed at `1`.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. The
+scaling constant `(C + 1)⁻¹` is built in the proof. -/
 theorem dlr_general {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
     {Λ Λ' : Finset ILink} (hsub : Λ ⊆ Λ') {f : IConf G → ℝ} (hf : Measurable f)
@@ -408,23 +488,22 @@ theorem dlr_general {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ 
 
 #print axioms dlr_general
 
-/-! ## Part 7 — the specification as `DLRLimit` consumes it
+/-! ## Part 7 — the specification in the shape `DLRLimit` consumes
 
-`specCM` is the kernel packaged as a map `C(IConf G, ℝ) → C(IConf G, ℝ)`, which the Feller property
-makes well defined. `specState` freezes one boundary configuration and reads the kernel as a state.
-`hcons_specState` is `dlr_general` at that configuration, with the index directions matched to
-`DLRLimit.exists_dlr_state`. -/
+`specCM` is the kernel as a map `C(IConf G, ℝ) → C(IConf G, ℝ)`, which `continuous_spec_right` makes
+well defined. `specState` freezes one boundary configuration and reads the kernel as a
+`DLRLimit.State`. `hcons_specState` is `dlr_general` at that configuration, with the index directions
+matched to `DLRLimit.exists_dlr_state`. -/
 
-/-- **The specification kernel on continuous observables.** The continuity field is
-`continuous_spec_right`; this is the map whose existence was the whole gap between `GibbsSpec` and
-`DLRLimit`.
+/-- The kernel as a map `C(IConf G, ℝ) → C(IConf G, ℝ)`: the underlying function is
+`fun ω => spec φ β Λ μ f ω` and the continuity field is `continuous_spec_right`. This is the type
+`DLRLimit`'s `γ` has.
 
-DERIVED: `0` and `2` are the PROVED range of the plaquette density, not a chosen window. For
-`wilsonDensity g = 1 − Re tr g / N` on `SU(N)` the trace ratio has modulus at most one, so the
-density lies in `[0, 2]` — exactly `WilsonAction.wilsonDensity_nonneg` and
-`wilsonDensity_le_two`, which are what discharge these two hypotheses at the Wilson instance. They
-are hypotheses on `φ` rather than facts about it only because this development is stated for a
-general density. -/
+DERIVED: `0` and `2` are the pointwise lower and upper bounds on the density. At
+`wilsonDensity g = 1 - Re tr g / N` on `SU N` the trace ratio has modulus at most one, so the density
+lies in `[0, 2]`; `WilsonAction.wilsonDensity_nonneg` and `wilsonDensity_le_two` discharge the two
+hypotheses there. They are hypotheses here because the development is stated for a general
+density. -/
 noncomputable def specCM {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ]
     (Λ : Finset ILink) (f : C(IConf G, ℝ)) : C(IConf G, ℝ) :=
@@ -439,29 +518,23 @@ theorem specCM_apply {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 �
 
 #print axioms specCM_apply
 
-/-! ## Part 7b — zero coupling, where obligation II closes end to end
+/-! ## Part 7b — coupling zero
 
-Obligation II is uniqueness of the DLR state. Its general half is `DLRLimit.State.eq_of_eqOn_localObs`:
-two states agreeing on the LOCAL observables are equal, with no density and no separation hypothesis
-left. Its Wilson half — that the specification PINS a DLR state on those local observables — is open
-at general coupling and is proved here at coupling ZERO.
+At `β = 0` the Boltzmann weight is `Real.exp 0 = 1`, so the partition function is `1` and the kernel
+is the plain product-Haar average over the volume. An observable local on `S` reads the spliced
+configuration only inside `S`, and for `S ⊆ Λ` the splice takes the integration variable there, never
+the boundary condition, so the kernel of a local observable is constant in the boundary. A DLR state
+is unmoved by the kernel, so it reads that observable as that one constant, the same number for every
+DLR state; `DLRLimit.State.eq_of_eqOn_localObs` then gives equality of states.
 
-At zero coupling the Boltzmann weight is `Real.exp 0 = 1`, so the partition function is `1` and the
-kernel is the plain product-Haar average over the volume. An observable local on `S` reads the
-spliced configuration only inside `S`, and inside `S ⊆ Λ` the splice takes the INTEGRATION variable,
-never the boundary condition — so the kernel of a local observable is a CONSTANT function of the
-boundary. A DLR state is unmoved by the kernel, so it reads that observable as that one constant,
-which is the same number for every DLR state. The general half then gives equality outright.
-
-Nothing here is a limit, a cluster expansion or a Dobrushin condition; the boundary dependence is
-not small, it is absent. That is exactly why this is the instance where the chain can be seen to
-close, and not an approach to the general case.
+The boundary dependence at this coupling is absent rather than small, so no limit, cluster expansion
+or Dobrushin condition enters, and the argument does not extend to nonzero coupling.
 -/
 
-/-- **AT ZERO COUPLING THE BOLTZMANN WEIGHT IS ONE.**
+/-- `wt φ 0 Λ u ω = 1` at every volume, inside configuration and boundary condition: unfolding the
+weight leaves `Real.exp (0 * _)`, which `simp` evaluates.
 
-DERIVED: the `0` is the coupling at which the statement is read, and the `1` is `Real.exp 0`.
-Neither is chosen. -/
+DERIVED: `0` is the coupling at which the statement is read; `1` is the value `Real.exp 0`. -/
 theorem wt_at_zero (φ : G → ℝ) (Λ : Finset ILink) (u : VConf G Λ) (ω : IConf G) :
     wt φ 0 Λ u ω = 1 := by
   unfold wt
@@ -469,9 +542,10 @@ theorem wt_at_zero (φ : G → ℝ) (Λ : Finset ILink) (u : VConf G Λ) (ω : I
 
 #print axioms wt_at_zero
 
-/-- **SO THE PARTITION FUNCTION IS ONE**, the product Haar measure being a probability measure.
+/-- `part φ 0 Λ μ ω = 1`: the partition function is the integral of `wt_at_zero`'s constant `1`
+against `vol μ Λ`, which is a probability measure.
 
-DERIVED: the `0` is the coupling; the `1` is the total mass of a probability measure. -/
+DERIVED: `0` is the coupling; `1` is the value, which is the total mass of a probability measure. -/
 theorem part_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (ω : IConf G) : part φ 0 Λ μ ω = 1 := by
   unfold part
@@ -479,9 +553,10 @@ theorem part_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) [IsPr
 
 #print axioms part_at_zero
 
-/-- **AND THE NUMERATOR IS THE PLAIN PRODUCT-HAAR AVERAGE.**
+/-- `num φ 0 Λ μ f ω = ∫ u, f (splice Λ u ω) ∂(vol μ Λ)`: at zero coupling the weight is `1` by
+`wt_at_zero`, so the numerator is the plain average of the spliced observable.
 
-DERIVED: the `0` is the coupling. -/
+DERIVED: `0` is the coupling. -/
 theorem num_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) (f : IConf G → ℝ)
     (ω : IConf G) : num φ 0 Λ μ f ω = ∫ u, f (splice Λ u ω) ∂(vol μ Λ) := by
   unfold num
@@ -489,9 +564,13 @@ theorem num_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) (f : I
 
 #print axioms num_at_zero
 
-/-- **THE KERNEL AT ZERO COUPLING IS THE PRODUCT-HAAR AVERAGE**, the normalisation being trivial.
+/-- `spec φ 0 Λ μ f ω = ∫ u, f (splice Λ u ω) ∂(vol μ Λ)`: `num_at_zero` over `part_at_zero`, the
+denominator being `1`.
 
-DERIVED: the `0` is the coupling. -/
+Scope: the right side does not depend on the density `φ` at all, which is what the rest of Part 7b
+rests on.
+
+DERIVED: `0` is the coupling. -/
 theorem spec_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (f : IConf G → ℝ) (ω : IConf G) :
     spec φ 0 Λ μ f ω = ∫ u, f (splice Λ u ω) ∂(vol μ Λ) := by
@@ -503,31 +582,33 @@ theorem spec_at_zero (φ : G → ℝ) (Λ : Finset ILink) (μ : Measure G) [IsPr
 /-! ### Relabelling the links
 
 A bijection of the links acts on configurations by precomposition. At zero coupling the kernel
-COMMUTES with that action, once the volume is relabelled along with everything else. This is the
-measure-theoretic core of all three state facts `transferData_of_state_facts` needs, in the case
-where no group inversion enters — which is exactly the case the SHIFT presents. -/
+commutes with that action, once the volume is relabelled along with it. This is the measure-theoretic
+input of `WilsonTransferReduction.transferData_of_state_facts`'s state facts in the case where no
+group inversion enters, which is the case the shift presents. -/
 
-/-- **RELABEL A CONFIGURATION** along a bijection of the links. `InfiniteShift.ishiftConf` is this
-at `e = ishiftLink`.
+/-- `fun l => U (e l)`: a configuration relabelled along a bijection `e` of the links.
+`InfiniteShift.ishiftConf` is this at `e = ishiftLink`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def permConf (e : ILink ≃ ILink) (U : IConf G) : IConf G := fun l => U (e l)
 
 #print axioms permConf
 
-/-- The relabelling is continuous: it is a reindexing of a product.
+/-- `permConf e` is continuous: coordinatewise it is evaluation at `e l`, so `continuous_pi` and
+`continuous_apply` suffice.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_permConf (e : ILink ≃ ILink) :
     Continuous (permConf (G := G) e) :=
   continuous_pi (fun l => continuous_apply (e l))
 
 #print axioms continuous_permConf
 
-/-- **THE INDEX EQUIVALENCE A LINK BIJECTION INDUCES** between a volume and its image. Injectivity
-is what makes the inverse land back inside `Λ`.
+/-- The equivalence `↑Λ ≃ ↑(Λ.image e)` induced by a link bijection `e`, sending `l` to `e l`. The
+inverse sends `m` to `e.symm m`, which lands back in `Λ` because `m` is in the image; injectivity of
+`e` is what makes that recovery well defined.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def imgEquiv (e : ILink ≃ ILink) (Λ : Finset ILink) : ↑Λ ≃ ↑(Λ.image e) where
   toFun l := ⟨e l.1, Finset.mem_image_of_mem _ l.2⟩
   invFun m := ⟨e.symm m.1, by
@@ -539,10 +620,10 @@ def imgEquiv (e : ILink ≃ ILink) (Λ : Finset ILink) : ↑Λ ≃ ↑(Λ.image 
 
 #print axioms imgEquiv
 
-/-- Relabelling a volume configuration, as a measurable equivalence. Same construction as
-`GibbsSpec.toIn`, along `imgEquiv` instead of `subEquivIn`.
+/-- `VConf G (Λ.image e) ≃ᵐ VConf G Λ`, as the inverse of `MeasurableEquiv.piCongrLeft` along
+`imgEquiv e Λ`. Same construction as `GibbsSpec.toIn`, along `imgEquiv` instead of `subEquivIn`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 noncomputable def volReindex (e : ILink ≃ ILink) (Λ : Finset ILink) :
     VConf G (Λ.image e) ≃ᵐ VConf G Λ :=
   (MeasurableEquiv.piCongrLeft (fun _ : ↑(Λ.image ⇑e) => G) (imgEquiv e Λ)).symm
@@ -554,10 +635,11 @@ theorem volReindex_apply (e : ILink ≃ ILink) (Λ : Finset ILink) (w : VConf G 
 
 #print axioms volReindex_apply
 
-/-- **AND IT PRESERVES THE PRODUCT MEASURE.** `measurePreserving_piCongrLeft` along the index
-equivalence, taken backwards — the same move as `GibbsSpec.measurePreserving_toIn`.
+/-- `volReindex e Λ` is measure-preserving from `vol μ (Λ.image e)` to `vol μ Λ`. It is
+`measurePreserving_piCongrLeft` along `imgEquiv e Λ`, taken backwards by
+`MeasurePreserving.symm` — the same move as `GibbsSpec.measurePreserving_toIn`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem measurePreserving_volReindex (e : ILink ≃ ILink) (Λ : Finset ILink) (μ : Measure G)
     [IsProbabilityMeasure μ] :
     MeasurePreserving (volReindex (G := G) e Λ) (vol μ (Λ.image e)) (vol μ Λ) := by
@@ -570,11 +652,12 @@ theorem measurePreserving_volReindex (e : ILink ≃ ILink) (Λ : Finset ILink) (
 
 #print axioms measurePreserving_volReindex
 
-/-- **THE SPLICE COMMUTES WITH THE RELABELLING**, once the volume is relabelled too. Inside the
-volume both sides read the integration variable at the same relabelled index; outside it both read
-the boundary condition at the relabelled link.
+/-- `permConf e (splice (Λ.image e) w U) = splice Λ (volReindex e Λ w) (permConf e U)`. Checked
+link by link: inside `Λ` both sides read the integration variable at the relabelled index, and
+outside it both read the boundary condition at the relabelled link. Injectivity of `e` is what makes
+`l ∉ Λ` give `e l ∉ Λ.image e`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem permConf_splice (e : ILink ≃ ILink) (Λ : Finset ILink) (w : VConf G (Λ.image e))
     (U : IConf G) :
     permConf e (splice (Λ.image e) w U) = splice Λ (volReindex e Λ w) (permConf e U) := by
@@ -593,13 +676,14 @@ theorem permConf_splice (e : ILink ≃ ILink) (Λ : Finset ILink) (w : VConf G (
 
 #print axioms permConf_splice
 
-/-- **⭐ SO AT ZERO COUPLING THE KERNEL COMMUTES WITH A LINK RELABELLING.**
+/-- `spec φ 0 (Λ.image e) μ (fun V => f (permConf e V)) U = spec φ 0 Λ μ f (permConf e U)`:
+relabelling the observable and the volume together, and evaluating at the relabelled boundary
+condition, gives the same number. `spec_at_zero` turns both sides into integrals,
+`permConf_splice` matches the integrands, and `measurePreserving_volReindex` matches the measures.
 
-Relabelling the observable and the volume together, and evaluating at the relabelled boundary
-condition, gives the same number. Nothing here is special to the shift or the reflection; it is the
-relabelling alone.
+Scope: `e` is an arbitrary link bijection — nothing here is specific to a shift or a reflection.
 
-DERIVED: the `0` is the coupling. -/
+DERIVED: `0` occurs twice, as the coupling on each side. -/
 theorem spec_at_zero_permConf (φ : G → ℝ) (e : ILink ≃ ILink) (Λ : Finset ILink)
     (μ : Measure G) [IsProbabilityMeasure μ] (f : IConf G → ℝ) (U : IConf G) :
     spec φ 0 (Λ.image e) μ (fun V => f (permConf e V)) U
@@ -627,31 +711,36 @@ end ProbeInv
 
 /-! ### Relabelling with a coordinatewise twist
 
-`ireflConf` is not a pure relabelling: it INVERTS the group element on `τ`-links. So the action that
-`hinv` needs is a relabelling followed by a map applied coordinate by coordinate. The measure
-argument gains exactly one factor — a coordinatewise map preserves a product measure when each
+`LatticeReflection.ireflConf` is not a pure relabelling: it inverts the group element on `τ`-links.
+So the action needed there is a relabelling followed by a map applied coordinate by coordinate. The
+measure argument gains one factor: a coordinatewise map preserves a product measure when each
 coordinate does. -/
 
-/-- **RELABEL AND TWIST.** `permConf` is the case where every `σ l` is the identity.
+/-- `fun l => σ l (U (e l))`: a configuration relabelled along `e` and then acted on coordinatewise
+by the measurable equivalences `σ`. `permConf` is the case where every `σ l` is the identity.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def twistConf (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (U : IConf G) : IConf G :=
   fun l => σ l (U (e l))
 
 #print axioms twistConf
 
-/-- The twisted relabelling is continuous when each coordinate map is.
+/-- `twistConf e σ` is continuous when every `σ l` is: coordinatewise it is `σ l` composed with
+evaluation at `e l`.
 
-DERIVED: no numeral. -/
+Scope: `σ l` is a `MeasurableEquiv`, so continuity is a separate hypothesis `hσc`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_twistConf (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G)
     (hσc : ∀ l, Continuous (σ l)) : Continuous (twistConf (G := G) e σ) :=
   continuous_pi (fun l => (hσc l).comp (continuous_apply (e l)))
 
 #print axioms continuous_twistConf
 
-/-- The coordinatewise part, as a measurable equivalence of volume configurations.
+/-- `MeasurableEquiv.piCongrRight (fun l : ↑Λ => σ l.1)`: the coordinatewise part of the twist, as a
+measurable equivalence of `VConf G Λ` with itself.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def coordTwist (Λ : Finset ILink) (σ : ILink → G ≃ᵐ G) : VConf G Λ ≃ᵐ VConf G Λ :=
   MeasurableEquiv.piCongrRight (fun l : ↑Λ => σ l.1)
 
@@ -662,11 +751,11 @@ theorem coordTwist_apply (Λ : Finset ILink) (σ : ILink → G ≃ᵐ G) (v : VC
 
 #print axioms coordTwist_apply
 
-/-- **A COORDINATEWISE MAP PRESERVES THE PRODUCT MEASURE** when each coordinate does. This is
-`Measure.pi_map_pi`, the same move `ActionSplit.twist_measurePreserving` makes for a full index
-type; here the index type is a volume's links.
+/-- `coordTwist Λ σ` is measure-preserving for `vol μ Λ` when every `σ l` is measure-preserving for
+`μ`. It is `Measure.pi_map_pi`, the same move `ActionSplit.twist_measurePreserving` makes for a full
+index type; here the index is a volume's links.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem measurePreserving_coordTwist (Λ : Finset ILink) (σ : ILink → G ≃ᵐ G) (μ : Measure G)
     [IsProbabilityMeasure μ] (hσ : ∀ l, MeasurePreserving (σ l) μ μ) :
     MeasurePreserving (coordTwist (G := G) Λ σ) (vol μ Λ) (vol μ Λ) := by
@@ -680,9 +769,10 @@ theorem measurePreserving_coordTwist (Λ : Finset ILink) (σ : ILink → G ≃�
 
 #print axioms measurePreserving_coordTwist
 
-/-- Relabelling a volume configuration AND twisting it, as a measurable equivalence.
+/-- `(volReindex e Λ).trans (coordTwist Λ σ)`: relabelling a volume configuration and then twisting
+it coordinatewise, as a measurable equivalence `VConf G (Λ.image e) ≃ᵐ VConf G Λ`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 noncomputable def volTwist (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (Λ : Finset ILink) :
     VConf G (Λ.image e) ≃ᵐ VConf G Λ :=
   (volReindex e Λ).trans (coordTwist Λ σ)
@@ -695,9 +785,10 @@ theorem volTwist_apply (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (Λ : F
 
 #print axioms volTwist_apply
 
-/-- **AND IT PRESERVES THE PRODUCT MEASURE**, being a relabelling after a coordinatewise twist.
+/-- `volTwist e σ Λ` is measure-preserving from `vol μ (Λ.image e)` to `vol μ Λ`, as the composition
+of `measurePreserving_volReindex` with `measurePreserving_coordTwist`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem measurePreserving_volTwist (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (Λ : Finset ILink)
     (μ : Measure G) [IsProbabilityMeasure μ] (hσ : ∀ l, MeasurePreserving (σ l) μ μ) :
     MeasurePreserving (volTwist (G := G) e σ Λ) (vol μ (Λ.image e)) (vol μ Λ) :=
@@ -705,10 +796,10 @@ theorem measurePreserving_volTwist (e : ILink ≃ ILink) (σ : ILink → G ≃�
 
 #print axioms measurePreserving_volTwist
 
-/-- **THE SPLICE COMMUTES WITH THE TWISTED RELABELLING.** Same case split as `permConf_splice`, with
-the coordinate map applied on both sides of it.
+/-- `twistConf e σ (splice (Λ.image e) w U) = splice Λ (volTwist e σ Λ w) (twistConf e σ U)`. The
+same case split as `permConf_splice`, with `σ l` applied on both sides of it.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem twistConf_splice (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (Λ : Finset ILink)
     (w : VConf G (Λ.image e)) (U : IConf G) :
     twistConf e σ (splice (Λ.image e) w U) = splice Λ (volTwist e σ Λ w) (twistConf e σ U) := by
@@ -727,9 +818,11 @@ theorem twistConf_splice (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (Λ :
 
 #print axioms twistConf_splice
 
-/-- **⭐ SO AT ZERO COUPLING THE KERNEL COMMUTES WITH A TWISTED RELABELLING TOO.**
+/-- `spec φ 0 (Λ.image e) μ (fun V => f (twistConf e σ V)) U = spec φ 0 Λ μ f (twistConf e σ U)`,
+when every `σ l` preserves `μ`. Same argument as `spec_at_zero_permConf`, with `twistConf_splice`
+and `measurePreserving_volTwist` in place of their untwisted counterparts.
 
-DERIVED: the `0` is the coupling. -/
+DERIVED: `0` occurs twice, as the coupling on each side. -/
 theorem spec_at_zero_twistConf (φ : G → ℝ) (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G)
     (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
     (hσ : ∀ l, MeasurePreserving (σ l) μ μ) (f : IConf G → ℝ) (U : IConf G) :
@@ -751,21 +844,23 @@ theorem spec_at_zero_twistConf (φ : G → ℝ) (e : ILink ≃ ILink) (σ : ILin
 
 
 
-/-- A bundled local observable is local unbundled. The two statements are the same Pi type; this
-names the step rather than leaving it to defeq at each use site.
+/-- `DLRLimit.IsLocalOnC S F → InfiniteLattice.IsLocalOn S (⇑F)`, by `rfl`: the two statements are
+the same Pi type. Named so the step is not left to definitional unfolding at each use site.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem isLocalOn_of_isLocalOnC {S : Finset ILink} {F : C(IConf G, ℝ)}
     (hF : MassGap.DLRLimit.IsLocalOnC S F) : MassGap.InfiniteLattice.IsLocalOn S (⇑F) := hF
 
 #print axioms isLocalOn_of_isLocalOnC
 
-/-- **⭐ AT ZERO COUPLING THE KERNEL OF A LOCAL OBSERVABLE DOES NOT SEE THE BOUNDARY.**
+/-- For `S ⊆ Λ` and `f` local on `S`, `spec φ 0 Λ μ f ω = spec φ 0 Λ μ f ω'` at every pair of
+boundary conditions. `spec_at_zero` turns both sides into integrals, and at every link of `S` the
+splice takes the integration variable, so the integrands coincide.
 
-For `S ⊆ Λ` the splice takes the integration variable at every link of `S`, so the integrand does
-not move when the boundary condition does. This is the whole of obligation II(a) at this coupling.
+Scope: `S ⊆ Λ` is what makes the splice ignore the boundary on `f`'s support; without it the kernel
+does move with the boundary.
 
-DERIVED: the `0` is the coupling. -/
+DERIVED: `0` occurs twice, as the coupling on each side. -/
 theorem spec_at_zero_const {φ : G → ℝ} {S Λ : Finset ILink} (hSΛ : S ⊆ Λ) (μ : Measure G)
     [IsProbabilityMeasure μ] {f : IConf G → ℝ}
     (hf : MassGap.InfiniteLattice.IsLocalOn S f) (ω ω' : IConf G) :
@@ -781,13 +876,12 @@ theorem spec_at_zero_const {φ : G → ℝ} {S Λ : Finset ILink} (hSΛ : S ⊆ 
 
 #print axioms spec_at_zero_const
 
-/-- **⭐ A DISJOINT LOCAL FACTOR PULLS OUT OF THE KERNEL.**
+/-- For `S` and `T` disjoint and `H` local on `T`,
+`spec φ 0 S μ (fun U => F U * H U) ω = spec φ 0 S μ F ω * H ω`. The kernel at volume `S` splices
+only the links of `S`, so `H` reads the same configuration whatever the integration variable does
+and leaves the integral by `integral_mul_const`.
 
-The kernel at volume `S` splices only the links of `S`. An observable local on a `T` disjoint from
-`S` therefore reads the SAME configuration whatever the integration variable does, so it is a
-constant of the integration and leaves the integral.
-
-DERIVED: the `0` is the coupling. -/
+DERIVED: `0` occurs twice, as the coupling on each side. -/
 theorem spec_at_zero_mul_of_disjoint (φ : G → ℝ) {S T : Finset ILink} (hST : Disjoint S T)
     (μ : Measure G) [IsProbabilityMeasure μ] {H : IConf G → ℝ}
     (hH : MassGap.InfiniteLattice.IsLocalOn T H) (F : IConf G → ℝ) (ω : IConf G) :
@@ -807,14 +901,13 @@ theorem spec_at_zero_mul_of_disjoint (φ : G → ℝ) {S T : Finset ILink} (hST 
 
 #print axioms spec_at_zero_mul_of_disjoint
 
-/-- **⭐ THE VALUE OF A DLR STATE AT A LOCAL OBSERVABLE, AT ZERO COUPLING.**
+/-- For a state `ν` satisfying `IsDLR (specCM … 0 μ)` and an `F` local on `S`,
+`ν F = spec φ 0 S μ F ω` at EVERY boundary configuration `ω`. Taking the volume to be `S` itself,
+`spec_at_zero_const` makes the kernel the constant observable `spec φ 0 S μ F ω • 1`, and the DLR
+equation with `State.map_smul` and `State.map_one` reads the value off it.
 
-The kernel at the observable's own support is constant in the boundary condition, so the DLR
-equation reads the state's value straight off it — at ANY boundary configuration, the answer being
-the same for all of them.
-
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`; the `1` is the unit observable. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density, the coupling in
+`specCM`, and the coupling in `spec`. `2` is the density's pointwise upper bound. -/
 theorem dlr_apply_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     {ν : MassGap.DLRLimit.State (IConf G)}
@@ -832,15 +925,12 @@ theorem dlr_apply_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g,
 #print axioms dlr_apply_at_zero
 
 
-/-- **⭐ EVERY DLR STATE AT ZERO COUPLING READS A LOCAL OBSERVABLE AS THE SAME CONSTANT.**
+/-- Two states satisfying `IsDLR (specCM … 0 μ)` agree at every `F` local on some `S`: both equal
+`spec φ 0 S μ F ω₀` by `dlr_apply_at_zero`, at a base configuration `ω₀` obtained from
+`DLRLimit.State.nonempty`.
 
-Take the volume to be the observable's own support. The kernel is then constant in the boundary
-condition, so it is `c • 1` for a number `c` that does not depend on the state; the DLR equation
-turns `ν F` into `ν (c • 1) = c`. The base configuration needed to name `c` comes from
-`State.nonempty` — a state cannot exist on an empty space.
-
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range
-(`WilsonAction.wilsonDensity_le_two`), as at `specCM`; the `1` is the unit observable. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in each
+of the two `specCM` hypotheses. `2` is the density's pointwise upper bound. -/
 theorem dlr_eq_of_isDLR_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     {ν₁ ν₂ : MassGap.DLRLimit.State (IConf G)}
@@ -854,20 +944,16 @@ theorem dlr_eq_of_isDLR_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : 
 
 #print axioms dlr_eq_of_isDLR_at_zero
 
-/-- **⭐⭐ AT ZERO COUPLING THE STATE FACTORISES ON DISJOINT LOCAL SUPPORTS.**
+/-- For a state satisfying `IsDLR (specCM … 0 μ)` and observables `F`, `H` local on disjoint `S`,
+`T`, `ν (F * H) = ν F * ν H`. Applying the kernel at `S`, `spec_at_zero_mul_of_disjoint` takes `H`
+out of the integral and `dlr_apply_at_zero` evaluates the rest as `ν F`, leaving `(ν F) • H`; the
+DLR equation and `State.map_smul` finish.
 
-`ν (F · H) = ν F · ν H` whenever `F` and `H` read disjoint finite sets of links. Apply the kernel at
-`F`'s own support: `H` does not read those links, so it leaves the integral
-(`spec_at_zero_mul_of_disjoint`), and what remains is `ν F` times `H`
-(`dlr_apply_at_zero`). The DLR equation then reads off both factors.
+For an observable supported on one half of the lattice and its reflection on the other, the two
+supports are disjoint, so the pairing is `ν F * ν F` at this coupling.
 
-**This is the input reflection positivity needs at this coupling.** For an observable on the
-positive half of the lattice, its reflection lives on the negative half; the two supports are
-disjoint, so the pairing is `ν F · ν F` and is nonnegative for that reason alone. No cluster
-expansion and no Cauchy–Schwarz enter.
-
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`. -/
+DERIVED: `0` occurs twice — the pointwise lower bound on the density and the coupling in `specCM`.
+`2` is the density's pointwise upper bound. -/
 theorem dlr_mul_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     {ν : MassGap.DLRLimit.State (IConf G)}
@@ -889,19 +975,15 @@ theorem dlr_mul_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0
 #print axioms dlr_mul_at_zero
 
 
-/-- **⭐⭐⭐ THE DLR STATE AT ZERO COUPLING IS UNIQUE — OBLIGATION II, CLOSED AT THIS COUPLING.**
+/-- Two states satisfying `IsDLR (specCM … 0 μ)` agree at every continuous observable, for `G`
+compact Hausdorff. `dlr_eq_of_isDLR_at_zero` gives agreement on the local observables and
+`DLRLimit.State.eq_of_eqOn_localObs` carries it everywhere.
 
-The Wilson half pins every DLR state on the local observables (`dlr_eq_of_isDLR_at_zero`); the
-general half carries agreement there to agreement everywhere
-(`DLRLimit.State.eq_of_eqOn_localObs`). Nothing is assumed beyond the gauge group being compact
-Hausdorff, which `SU N` is.
+Scope: coupling zero only — the argument runs through `spec_at_zero_const`, where the kernel of a
+local observable is constant in the boundary condition.
 
-This is the first instance in which obligation II closes, and it is what shows the II interfaces
-compose rather than merely typecheck. It does NOT bear on general coupling: at zero coupling the
-boundary dependence is absent, not small.
-
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in each
+of the two `specCM` hypotheses. `2` is the density's pointwise upper bound. -/
 theorem dlr_unique_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     {ν₁ ν₂ : MassGap.DLRLimit.State (IConf G)}
@@ -915,14 +997,13 @@ theorem dlr_unique_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (
 #print axioms dlr_unique_at_zero
 
 
-/-- **The finite-volume state with the boundary configuration `ω₀` frozen.** Linearity and positivity
-are `spec_add`, `spec_smul` and `spec_nonneg`; normalisation is `GibbsSpec.spec_one`.
+/-- The `DLRLimit.State (IConf G)` given by `fun f => spec φ β Λ μ f ω₀`, the kernel at volume `Λ`
+evaluated at the frozen boundary configuration `ω₀`. Additivity is `spec_add` with the two bounds
+from `bounded_of_continuous`, homogeneity is `spec_smul`, positivity is `spec_nonneg`, and
+normalisation is `GibbsSpec.spec_one`.
 
-DERIVED: `0` and `2` are the proved range of the plaquette density, as at `specCM` —
-`WilsonAction.wilsonDensity_nonneg` and `wilsonDensity_le_two` for `1 − Re tr g / N`. `1` is the
-unit of `C(IConf G, ℝ)`, the constant-one observable, together with the value the state must take on
-it: `one'` is `spec φ β Λ μ 1 ω₀ = 1`, which is what makes this a STATE rather than an arbitrary
-positive functional, and it is proved by `spec_one`, not imposed. -/
+DERIVED: `0` and `2` are the pointwise lower and upper bounds on the density, as at `specCM`. The
+`1` of the `one'` field — `spec φ β Λ μ 1 ω₀ = 1`, proved by `spec_one` — is in the body. -/
 noncomputable def specState {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ] (ω₀ : IConf G)
     (Λ : Finset ILink) : MassGap.DLRLimit.State (IConf G) where
@@ -958,9 +1039,12 @@ theorem specState_apply {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0
 
 #print axioms specState_apply
 
-/-- **The consistency hypothesis of `DLRLimit.exists_dlr_state`, discharged.** The outer volume is
-`Λ`, the inner one `Λ'`, and the equation is `GibbsSpec.dlr_consistent` read at the frozen boundary
-configuration with the `|f| ≤ 1` restriction removed by `dlr_general`. -/
+/-- `specState … Λ (specCM … Λ' f) = specState … Λ f` for `Λ' ≤ Λ` and every continuous `f`: the
+consistency hypothesis `DLRLimit.exists_dlr_state` takes, with the outer volume `Λ` and the inner
+`Λ'`. It is `dlr_general` at the frozen boundary configuration, the observable's bound coming from
+`bounded_of_continuous`.
+
+DERIVED: `0` and `2` are the pointwise lower and upper bounds on the density. -/
 theorem hcons_specState {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G) [IsProbabilityMeasure μ] (ω₀ : IConf G) :
     ∀ Λ Λ' : Finset ILink, Λ' ≤ Λ → ∀ f : C(IConf G, ℝ),
@@ -973,17 +1057,17 @@ theorem hcons_specState {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0
 
 #print axioms hcons_specState
 
-/-! ### The zero-coupling payoff: `htend`, proved
+/-! ### Convergence along `atTop` at coupling zero
 
 `dlr_unique_at_zero` gives agreement at every observable; `DLRLimit.tendsto_of_unique_dlr` asks for
-equality of STATES. `DLRLimit.State.eq_of_apply_eq` closes that gap, and the finite-volume states
-then converge along `atTop` rather than merely along some ultrafilter — which is exactly the
-hypothesis `htend` that obligation II exists to supply. -/
+equality of states, and `DLRLimit.State.eq_of_apply_eq` bridges the two. The finite-volume states
+then converge along `atTop` rather than along an ultrafilter. -/
 
-/-- **THE DLR STATE AT ZERO COUPLING IS UNIQUE, AS A STATE.**
+/-- `ν₁ = ν₂` for two states satisfying `IsDLR (specCM … 0 μ)`: `dlr_unique_at_zero` followed by
+`DLRLimit.State.eq_of_apply_eq`. This is the form `DLRLimit.tendsto_of_unique_dlr` takes.
 
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in each
+of the two `specCM` hypotheses. `2` is the density's pointwise upper bound. -/
 theorem dlr_unique_at_zero_eq [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     {ν₁ ν₂ : MassGap.DLRLimit.State (IConf G)}
@@ -993,16 +1077,17 @@ theorem dlr_unique_at_zero_eq [T2Space G] {φ : G → ℝ} (hφc : Continuous φ
 
 #print axioms dlr_unique_at_zero_eq
 
-/-! ### The zero-coupling state is invariant under EVERY link bijection
+/-! ### Invariance of the zero-coupling state under a link bijection
 
-`spec_at_zero_permConf` says the kernel commutes with a relabelling. So the relabelled state solves
-the same DLR equation, and uniqueness collapses it onto the original. This is the tool all three of
-`transferData_of_state_facts`'s state facts want; `hnu` is the case it settles outright. -/
+`spec_at_zero_permConf` says the kernel commutes with a relabelling, so the relabelled state solves
+the same DLR equation and uniqueness collapses it onto the original. This is the shape
+`WilsonTransferReduction.transferData_of_state_facts`'s `hnu` asks for. -/
 
-/-- **RELABEL AN OBSERVABLE** along a link bijection, as a linear map. `ReflectionShift.ishiftObsL`
-is this at the shift.
+/-- Precomposition with `permConf e`, as an `ℝ`-linear endomorphism of `C(IConf G, ℝ)`. Additivity
+and homogeneity are `rfl`, precomposition being pointwise. `ReflectionShift.ishiftObsL` is this at
+the shift.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def permCM (e : ILink ≃ ILink) : C(IConf G, ℝ) →ₗ[ℝ] C(IConf G, ℝ) where
   toFun F := F.comp ⟨permConf e, continuous_permConf e⟩
   map_add' _ _ := rfl
@@ -1015,10 +1100,12 @@ def permCM (e : ILink ≃ ILink) : C(IConf G, ℝ) →ₗ[ℝ] C(IConf G, ℝ) w
 
 #print axioms permCM_apply
 
-/-- **RELABEL A STATE.** Positivity and normalisation survive because the relabelling is
-precomposition with a map of the configuration space, so it moves no values.
+/-- The state `fun F => ν (permCM e F)`. Additivity and homogeneity come from `permCM` being linear
+and `ν` a state; positivity because precomposition moves no values; normalisation because
+`permCM e 1 = 1`.
 
-DERIVED: the `1` is the unit observable, which precomposition fixes. -/
+DERIVED: no numeral appears in the statement. The `1` of the `one'` field is the unit observable,
+which precomposition fixes. -/
 noncomputable def permState (e : ILink ≃ ILink) (ν : MassGap.DLRLimit.State (IConf G)) :
     MassGap.DLRLimit.State (IConf G) where
   toFun F := ν (permCM e F)
@@ -1039,11 +1126,11 @@ noncomputable def permState (e : ILink ≃ ILink) (ν : MassGap.DLRLimit.State (
 
 #print axioms permState
 
-/-- **THE KERNEL COMMUTES WITH THE RELABELLING**, bundled. `spec_at_zero_permConf` with the volume
-carried along.
+/-- `permCM e (specCM … 0 μ Λ f) = specCM … 0 μ (Λ.image e) (permCM e f)`: the bundled form of
+`spec_at_zero_permConf`, with the volume relabelled on the right.
 
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in each
+of the two `specCM` applications. `2` is the density's pointwise upper bound. -/
 theorem specCM_permCM_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     (Λ : Finset ILink) (f : C(IConf G, ℝ)) :
@@ -1057,10 +1144,12 @@ theorem specCM_permCM_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : �
 
 #print axioms specCM_permCM_at_zero
 
-/-- **SO THE RELABELLED STATE IS AGAIN A DLR STATE**, for the same specification and the same
-volumes — the volume relabelling is absorbed by the quantifier over volumes.
+/-- `IsDLR (specCM … 0 μ) (permState e ν)` whenever `IsDLR (specCM … 0 μ) ν`. The kernel commutes
+with the relabelling by `specCM_permCM_at_zero`, and the relabelled volume `Λ.image e` is absorbed
+by the quantifier over volumes in `IsDLR`.
 
-DERIVED: the `0` is the coupling; the `2` is the plaquette density's proved upper end. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in the
+hypothesis's and the conclusion's `specCM`. `2` is the density's pointwise upper bound. -/
 theorem isDLR_permState_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     {ν : MassGap.DLRLimit.State (IConf G)}
@@ -1073,14 +1162,15 @@ theorem isDLR_permState_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : 
 
 #print axioms isDLR_permState_at_zero
 
-/-- **⭐⭐ AND UNIQUENESS COLLAPSES IT: THE ZERO-COUPLING STATE IS INVARIANT UNDER EVERY LINK
-BIJECTION.**
+/-- `ν (permCM e F) = ν F` at every continuous observable, for a state satisfying
+`IsDLR (specCM … 0 μ)` and `G` compact Hausdorff. `isDLR_permState_at_zero` makes `permState e ν` a
+DLR state and `dlr_unique_at_zero_eq` identifies it with `ν`.
 
-Nothing is assumed of the bijection — not that it is a shift, not that it preserves any geometry.
-The whole content is that at zero coupling the kernel is a product-Haar average, which does not
-know one link from another.
+Scope: `e` is an arbitrary link bijection — no geometric property of it is assumed. At zero coupling
+the kernel is a product-Haar average, which does not distinguish links.
 
-DERIVED: the `0` is the coupling; the `2` is the plaquette density's proved upper end. -/
+DERIVED: `0` occurs twice — the pointwise lower bound on the density and the coupling in `specCM`.
+`2` is the density's pointwise upper bound. -/
 theorem dlr_permCM_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     {ν : MassGap.DLRLimit.State (IConf G)}
@@ -1094,14 +1184,15 @@ theorem dlr_permCM_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (
 
 /-! ### The same, with the coordinate twist
 
-`hnu` needed only the relabelling. `hinv` needs the twist as well, and the state-level argument is
-unchanged: the twisted state solves the same DLR equation, so uniqueness collapses it. -/
+The state-level argument is unchanged: the twisted state solves the same DLR equation, so uniqueness
+collapses it onto the original. This is the shape a reflection asks for, the twist carrying the group
+inversion on the reflected links. -/
 
-/-- **RELABEL AND TWIST AN OBSERVABLE**, as a linear map. `permCM` is the case where every `σ l` is
-the identity; `LatticeReflection.ireflObs` is the case where `σ l` is the group inversion on
-`τ`-links.
+/-- Precomposition with `twistConf e σ`, as an `ℝ`-linear endomorphism of `C(IConf G, ℝ)`, given
+continuity of each `σ l`. `permCM` is the case where every `σ l` is the identity;
+`LatticeReflection.ireflObs` the case where `σ l` is the group inversion on `τ`-links.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def twistCM (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (hσc : ∀ l, Continuous (σ l)) :
     C(IConf G, ℝ) →ₗ[ℝ] C(IConf G, ℝ) where
   toFun F := F.comp ⟨twistConf e σ, continuous_twistConf e σ hσc⟩
@@ -1116,9 +1207,11 @@ def twistCM (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G) (hσc : ∀ l, Con
 
 #print axioms twistCM_apply
 
-/-- **RELABEL AND TWIST A STATE.**
+/-- The state `fun F => ν (twistCM e σ hσc F)`, the twisted counterpart of `permState`. The four
+fields are proved the same way, normalisation because `twistCM e σ hσc 1 = 1`.
 
-DERIVED: the `1` is the unit observable, which precomposition fixes. -/
+DERIVED: no numeral appears in the statement. The `1` of the `one'` field is the unit observable,
+which precomposition fixes. -/
 noncomputable def twistState (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G)
     (hσc : ∀ l, Continuous (σ l)) (ν : MassGap.DLRLimit.State (IConf G)) :
     MassGap.DLRLimit.State (IConf G) where
@@ -1140,9 +1233,11 @@ noncomputable def twistState (e : ILink ≃ ILink) (σ : ILink → G ≃ᵐ G)
 
 #print axioms twistState
 
-/-- **THE KERNEL COMMUTES WITH THE TWISTED RELABELLING**, bundled.
+/-- `twistCM e σ hσc (specCM … 0 μ Λ f) = specCM … 0 μ (Λ.image e) (twistCM e σ hσc f)`, given that
+every `σ l` preserves `μ`: the bundled form of `spec_at_zero_twistConf`.
 
-DERIVED: the `0` is the coupling; the `2` is the plaquette density's proved upper end. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in each
+of the two `specCM` applications. `2` is the density's pointwise upper bound. -/
 theorem specCM_twistCM_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     (σ : ILink → G ≃ᵐ G) (hσc : ∀ l, Continuous (σ l))
@@ -1157,9 +1252,11 @@ theorem specCM_twistCM_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : �
 
 #print axioms specCM_twistCM_at_zero
 
-/-- **SO THE TWISTED STATE IS AGAIN A DLR STATE.**
+/-- `IsDLR (specCM … 0 μ) (twistState e σ hσc ν)` whenever `IsDLR (specCM … 0 μ) ν` and every `σ l`
+preserves `μ`, by `specCM_twistCM_at_zero` and the quantifier over volumes.
 
-DERIVED: the `0` is the coupling; the `2` is the plaquette density's proved upper end. -/
+DERIVED: `0` occurs three times — the pointwise lower bound on the density and the coupling in the
+hypothesis's and the conclusion's `specCM`. `2` is the density's pointwise upper bound. -/
 theorem isDLR_twistState_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     (σ : ILink → G ≃ᵐ G) (hσc : ∀ l, Continuous (σ l))
@@ -1174,13 +1271,15 @@ theorem isDLR_twistState_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 :
 
 #print axioms isDLR_twistState_at_zero
 
-/-- **⭐⭐ AND THE ZERO-COUPLING STATE IS INVARIANT UNDER EVERY TWISTED RELABELLING** whose
-coordinate maps preserve the single-link measure.
+/-- `ν (twistCM e σ hσc F) = ν F` at every continuous observable, for a state satisfying
+`IsDLR (specCM … 0 μ)`, `G` compact Hausdorff, and every `σ l` continuous and measure-preserving for
+`μ`. `isDLR_twistState_at_zero` and `dlr_unique_at_zero_eq`, as in `dlr_permCM_at_zero`.
 
-This is what `hinv` consumes: the lattice reflection is a relabelling of the links together with a
-group inversion on the `τ`-links, and Haar on a compact group preserves inversion.
+A lattice reflection is a relabelling of the links together with the group inversion on the
+reflected ones, and Haar on a compact group preserves inversion, so it is an instance.
 
-DERIVED: the `0` is the coupling; the `2` is the plaquette density's proved upper end. -/
+DERIVED: `0` occurs twice — the pointwise lower bound on the density and the coupling in `specCM`.
+`2` is the density's pointwise upper bound. -/
 theorem dlr_twistCM_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
     (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (e : ILink ≃ ILink)
     (σ : ILink → G ≃ᵐ G) (hσc : ∀ l, Continuous (σ l))
@@ -1197,18 +1296,18 @@ theorem dlr_twistCM_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ) 
 
 
 
-/-- **⭐⭐⭐ AT ZERO COUPLING THE FINITE-VOLUME STATES CONVERGE ALONG `atTop` — `htend`, PROVED.**
+/-- There is a state `ν` with `IsDLR (specCM … 0 μ) ν` such that
+`specState … 0 μ ω₀ Λ f → ν f` along `Filter.atTop` on `Finset ILink`, at every continuous
+observable. `DLRLimit.exists_infinite_volume_gibbs_state` produces the DLR state and
+`DLRLimit.tendsto_of_unique_dlr` upgrades the ultrafilter limit, its uniqueness hypothesis supplied
+by `dlr_unique_at_zero_eq`.
 
-Existence supplies a DLR state along SOME ultrafilter; uniqueness upgrades that to convergence along
-`atTop` itself, for every continuous observable. No subsequence and no choice of ultrafilter remains
-in the conclusion.
+Scope: no subsequence or ultrafilter remains in the conclusion. It is stated at coupling zero only —
+the argument runs through `spec_at_zero_const`, where the kernel of a local observable is constant
+in the boundary condition.
 
-This is obligation II delivering what it was for. It holds at coupling ZERO only: the argument runs
-through `spec_at_zero_const`, where the kernel of a local observable is constant in the boundary
-condition, and at general coupling that constancy is false.
-
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`. -/
+DERIVED: `0` occurs four times — the pointwise lower bound on the density, and the coupling in
+`specCM` and in the two uses of `specState`. `2` is the density's pointwise upper bound. -/
 theorem tendsto_specState_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuous φ)
     (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ]
     (ω₀ : IConf G) :
@@ -1234,23 +1333,25 @@ theorem tendsto_specState_at_zero [T2Space G] {φ : G → ℝ} (hφc : Continuou
 #print axioms tendsto_specState_at_zero
 
 
-/-! ## Part 8 — the infinite-volume Gibbs measure of the specification
+/-! ## Part 8 — the measure, at a general density
 
-`DLRLimit.exists_infinite_volume_gibbs_measure` is now applied to the genuine kernel rather than to
-an abstract `γ`. The conclusion is stated without mentioning `State` or `IsDLR`: a probability
-measure on the full configuration space whose integral is unmoved by every finite volume's kernel.
-That equation, `∫ spec φ β Λ μ f dP = ∫ f dP`, is the DLR equation for a measure, tested on
-continuous observables. -/
+`DLRLimit.exists_infinite_volume_gibbs_measure` applied to `specCM` rather than to an abstract `γ`.
+The conclusion mentions neither `State` nor `IsDLR`: it is a probability measure on the full
+configuration space whose integral is unmoved by every finite volume's kernel, which is the DLR
+equation for a measure, tested on continuous observables. -/
 
-/-- **THE INFINITE-VOLUME GIBBS MEASURE OF A BOUNDED CONTINUOUS PLAQUETTE DENSITY.** For a compact
-gauge group, a continuous plaquette density with values in `[0,2]`, a single-link probability measure
-and any real `β`, there is a probability measure on the configuration space of the FULL infinite
-four-dimensional lattice satisfying the DLR equation at every finite volume and every continuous
-observable.
+/-- For a compact Hausdorff `G`, a continuous density with `0 ≤ φ ≤ 2`, a single-link probability
+measure `μ`, any real `β` and any boundary configuration `ω₀`, there is a probability measure `P` on
+`IConf G` with `∫ U, spec φ β Λ μ f U ∂P = ∫ U, f U ∂P` at every finite volume `Λ` and every
+continuous observable `f`.
 
-The boundary configuration `ω₀` is the one the finite-volume family is anchored at; the limit is
-taken along an ultrafilter refining `atTop` on the finite volumes, so it is subsequential and the
-limiting measure may depend on `ω₀`. -/
+`DLRLimit.exists_infinite_volume_gibbs_measure` at `specCM` and `specState`, with consistency from
+`hcons_specState`; the DLR equation for the state is then transported through the representation.
+
+Scope: the limit is taken along an ultrafilter refining `atTop` on the finite volumes, so it is
+subsequential and `P` may depend on `ω₀`. The equation is tested on continuous observables only.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its pointwise upper bound. -/
 theorem exists_infinite_volume_gibbs_measure_of_density [T2Space G] {φ : G → ℝ}
     (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (μ : Measure G)
     [IsProbabilityMeasure μ] (ω₀ : IConf G) :
@@ -1271,18 +1372,22 @@ theorem exists_infinite_volume_gibbs_measure_of_density [T2Space G] {φ : G → 
 
 #print axioms exists_infinite_volume_gibbs_measure_of_density
 
-/-! ## Part 9 — the Wilson theory
+/-! ## Part 9 — the instantiation at the Wilson density
 
-The density is `WilsonAction.wilsonDensity`, the genuine `1 − Re tr U / N`; the single-link measure is
-`CompactGauge.probHaar` on `SU(N)`; the plaquette set of a finite volume is `GibbsSpec.boundaryPlaqs`,
-so the conditioning is a real boundary condition and not a free one. -/
+The density is `WilsonAction.wilsonDensity`, that is `1 - Re tr U / N`; the single-link measure is
+`CompactGauge.probHaar` on `SU N`; and the plaquette set of a finite volume is
+`GibbsSpec.boundaryPlaqs`, so the conditioning reads a boundary condition rather than a free
+one. -/
 
 section Wilson
 
 open MassGap.CompactGauge MassGap.WilsonAction
 
-/-- **The Wilson specification has the Feller property on `SU(N)`** — the statement that was the gap,
-at the genuine density and the genuine measure. -/
+/-- `continuous_spec_right` at `φ := wilsonDensity (N := N)` and `μ := probHaar (SUN.SU N)`, with the
+two range hypotheses discharged by `WilsonAction.wilsonDensity_nonneg` and `wilsonDensity_le_two`.
+
+DERIVED: `0` is the value `N` is assumed to differ from, which is what makes the density
+`1 - Re tr U / N` defined. -/
 theorem wilson_continuous_spec_right (N : ℕ) (hN : N ≠ 0) (β : ℝ) (Λ : Finset ILink)
     {f : IConf (MassGap.SUN.SU N) → ℝ} (hfc : Continuous f) :
     Continuous (fun ω : IConf (MassGap.SUN.SU N) =>
@@ -1292,20 +1397,22 @@ theorem wilson_continuous_spec_right (N : ℕ) (hN : N ≠ 0) (β : ℝ) (Λ : F
 
 #print axioms wilson_continuous_spec_right
 
-/-- **THE INFINITE-VOLUME GIBBS MEASURE OF THE WILSON SPECIFICATION ON `SU(N)`.**
+/-- For every `N ≠ 0` and every real `β`, there is a probability measure `P` on
+`IConf (SUN.SU N) = ILink → SUN.SU N` with
 
-For every `N ≠ 0` and every real `β` there is a probability measure `P` on the configuration space of
-the infinite four-dimensional lattice `IConf (SU N) = ILink → SU N` such that, for every finite
-volume `Λ` and every continuous observable `f`,
+    ∫ U, spec wilsonDensity β Λ probHaar f U ∂P = ∫ U, f U ∂P
 
-    ∫ spec wilsonDensity β Λ probHaar f dP = ∫ f dP,
+at every finite volume `Λ` and every continuous observable `f`. It is
+`exists_infinite_volume_gibbs_measure_of_density` at the Wilson density, with the range hypotheses
+from `wilsonDensity_nonneg` and `wilsonDensity_le_two` and the boundary configuration anchored at
+`fun _ => 1`, the identity configuration.
 
-which is the DLR equation for the Wilson specification. The object Clay row A6 asks for, carried by
-the Wilson action rather than by an abstract specification.
+Scope: the only hypotheses are `N ≠ 0` and `β : ℝ` arbitrary — no coupling regime, volume bound or
+smallness condition. As in the general statement, the limit is subsequential and `P` may depend on
+the anchor; the equation is tested on continuous observables.
 
-Hypotheses, in full: `N ≠ 0` (so the density `1 − Re tr U / N` is defined and lies in `[0,2]`) and
-`β : ℝ` arbitrary. No coupling regime, no volume bound, no smallness condition. The boundary
-configuration the family is anchored at is the identity configuration. -/
+DERIVED: `0` is the value `N` is assumed to differ from, which makes the density `1 - Re tr U / N`
+defined and places it in `[0, 2]`. -/
 theorem exists_wilson_infinite_volume_gibbs_measure (N : ℕ) (hN : N ≠ 0) (β : ℝ) :
     ∃ P : Measure (IConf (MassGap.SUN.SU N)), IsProbabilityMeasure P ∧
       ∀ (Λ : Finset ILink) (f : C(IConf (MassGap.SUN.SU N), ℝ)),

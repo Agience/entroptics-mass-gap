@@ -12,43 +12,36 @@ of field operators on a dense common domain indexed by Schwartz test functions o
 `os_reconstruction_wightman` is the reconstruction stated between the two, and it is the tree's only
 reconstruction axiom.
 
-**What this is NOT.** It is not a proof of Osterwalder–Schrader reconstruction, and `WightmanQFT` is not
-the Wightman axioms. Read `WightmanQFT`'s field list for exactly what is carried; the omissions are listed
-in its docstring and none of them is claimed here.
+Both sides are stated as data rather than as propositions, and the structures are checked at both
+ends. `osData_test_nontrivial` derives `Nontrivial D.Test` from bilinearity together with
+`os_nontriv`, and `osData_S_ne_zero` that the form is not the zero map; `reconstructed_space_nontrivial`,
+`reconstructed_vacuum_energy_zero` and `reconstructed_ham_not_injective` read facts back out of the
+conclusion. `trivialOSData` and `trivialWightmanQFT` are one-dimensional inhabitants of the two
+structures, and `wightmanQFTData_nonempty` records that the axiom's target type is not empty, so the
+axiom cannot on its own prove `False`.
 
-**Why both sides are stated as data.** A reconstruction whose conclusion is an opaque `Prop` is met by a
-proof term that reads nothing from its hypotheses, and a reconstruction whose reflection positivity is
-nonnegativity of a real-valued function on a structureless index set is met by the zero function on a
-one-point set. Both are ruled out here, and ruled out by proof rather than by assertion:
-`osData_test_nontrivial` derives `Nontrivial D.Test` from bilinearity together with `os_nontriv`, and
-`osData_S_ne_zero` that the form is not the zero map; on the other side `reconstructed_space_nontrivial`,
-`reconstructed_vacuum_energy_zero` and `reconstructed_ham_not_injective` read facts back OUT of the
-conclusion.
-
-**And the limit of that claim, also checked.** `trivialOSData` and `trivialWightmanQFT` are one-dimensional
-witnesses with no physics in them: `OSData` and `WightmanQFT` are both inhabited. So the statement refuses a
-subsingleton and nothing stronger, and `wightmanQFTData_nonempty` is the check a DATA-valued axiom needs —
-its target type is not empty, so it cannot on its own prove `False`.
-
-**What the tree does not yet feed it, named exactly.** No `OSData` is constructed anywhere in the tree,
-and the two routes that come closest miss different parts of it.
-
-* `Measure.continuum_of_family` produces `q : J → ℝ` over a bare countable index set. Of `OSData`'s
-  thirteen fields it supplies the index type and nothing else. `Test`'s normed-space structure, the
-  reflection `theta`, the bilinear `S` and the `ℝ⁴` action `transl` have no source there, and `os1`,
-  `os2`, `os3` and `os_nontriv` are all statements about `S`: `LatticeYMFamily`'s `os_rp` is
-  nonnegativity of a real-valued function, and `os_euc`/`os_perm` are invariance of that function under
-  an abstract group action, instantiated at the finite `Equiv.Perm (Fin 4)` in every family built.
-  Those are different statements, not weaker forms of the same one.
-* `Transfer.ReflForm` IS a symmetric bilinear positive-semidefinite form on a real module, and
-  `ReflectionStrong.wilsonGibbsReflForm` builds one on the Wilson Gibbs slab algebra with `form_nonneg`
-  PROVED at every real `β`, while `wilsonGibbsReflForm_vac_norm` gives it the nonzero value `1` at the
-  constant observable. That is `S`, `os2`, `os3` and `os_nontriv` in substance. What it lacks is the
-  norm — `ReflForm` asks only for `AddCommGroup` and `Module ℝ` — and `transl`, which is structural
-  rather than merely unbuilt: `ReflectionStrong` shows that even a ONE-STEP time translation fails to be
-  an endomorphism of the slab algebra, since the shift carries a transverse link out of the module.
-
-So this axiom is consumed only by the declarations below, which are about it.
+Scope.
+* This module does not prove Osterwalder–Schrader reconstruction; `os_reconstruction_wightman` is an
+  axiom.
+* `WightmanQFT` is not the Wightman axioms. Its docstring lists what it carries and what it omits.
+* The axiom's type is `OSData → WightmanQFTData` and mentions `D` once, so nothing in it relates the
+  input to the output. `reconstruction_type_is_inhabited` exhibits `fun _ => trivialWightmanQFTData`
+  at that exact type. A consumer of the axiom learns that some `WightmanQFTData` exists, not that a
+  particular Euclidean datum yields a particular quantum theory; a linking clause relating `D.S` to
+  the output's expectation values would change that, and would make
+  `reconstruction_type_is_inhabited` stop typechecking.
+* `reconstructed_vacuum_energy_zero` and `reconstructed_space_nontrivial` are theorems about an
+  arbitrary `WightmanQFTData`, so they hold of the constant term as well.
+* No `OSData` is constructed anywhere in the tree. `Measure.continuum_of_family` supplies an index
+  type and none of the other twelve fields; `LatticeYMFamily`'s `os_rp` is nonnegativity of a
+  real-valued function and its `os_euc`/`os_perm` are invariance of that function under a group
+  action instantiated at the finite `Equiv.Perm (Fin 4)`, which are different statements from `os2`,
+  `os1` and `os3`. `ReflectionStrong.wilsonGibbsReflForm` is a symmetric positive-semidefinite
+  bilinear form on a real module with `form_nonneg` proved at every real `β`, and
+  `wilsonGibbsReflForm_vac_norm` gives it the value `1` at the constant observable, but
+  `Transfer.ReflForm` carries no norm, and `ReflectionStrong` shows a one-step time translation is
+  not an endomorphism of the slab algebra, since the shift carries a transverse link out of the
+  module.
 -/
 
 namespace MassGap.WightmanData
@@ -64,7 +57,10 @@ is instantiated at (`bd (d := 4)` in `AreaLaw`). It is the number of coordinates
 resolution; `EuclideanSpace ℝ (Fin 4)` is all of `ℝ⁴`. -/
 abbrev E4 : Type := EuclideanSpace ℝ (Fin 4)
 
-/-- Real Schwartz test functions on `ℝ⁴` — the index set of the smeared field operators. -/
+/-- Real Schwartz test functions on `E4`, the index set of the smeared field operators of
+`WightmanQFT`.
+
+DERIVED: no numeral occurs; the dimension is inside `E4`. -/
 abbrev TestFn : Type := SchwartzMap E4 ℝ
 
 /-- **Euclidean Osterwalder–Schrader data.** What a reconstruction consumes, as data rather than as four
@@ -78,8 +74,12 @@ that bound back out.
 is a Gram condition because `S` is bilinear — a condition on a FORM, which a one-argument real-valued
 function on an index set cannot express.
 
-`os_nontriv` is the non-degeneracy that makes the whole structure refuse a trivial instance
-(`osData_test_nontrivial`). -/
+`os_nontriv` is the non-degeneracy that makes the structure refuse a subsingleton instance
+(`osData_test_nontrivial`).
+
+DERIVED: the one numeral is `0`, appearing three times: as the vector at which `transl` is required
+to act as the identity (`transl_zero`), as the lower bound in the reflection-positivity field `os2`,
+and as the value the reflected form is required to avoid in `os_nontriv`. -/
 structure OSData where
   /-- Test configurations: smeared field arrangements, a real normed space. -/
   Test : Type
@@ -106,16 +106,24 @@ structure OSData where
   /-- **Non-degeneracy**: the theory is not the zero theory. -/
   os_nontriv : ∃ f, S (theta f) f ≠ 0
 
-/-- The test space of an `OSData` is a normed group. The projection of an instance-implicit field is not
-picked up by instance resolution on its own, so it is registered here. -/
+/-- `NormedAddCommGroup D.Test`, from the instance-implicit field `D.normedTest`. Registered as an
+ instance because the projection of an instance-implicit structure field is not found by instance
+resolution on its own.
+
+DERIVED: no numeral occurs. -/
 instance instNormedAddCommGroupOSDataTest (D : OSData) : NormedAddCommGroup D.Test := D.normedTest
 
-/-- The test space of an `OSData` is a real normed space. -/
+/-- `NormedSpace ℝ D.Test`, from the instance-implicit field `D.spaceTest`, registered for the same
+reason as the previous instance.
+
+DERIVED: no numeral occurs. -/
 instance instNormedSpaceOSDataTest (D : OSData) : NormedSpace ℝ D.Test := D.spaceTest
 
-/-- **OS0, read back out of the structure.** The reflected form is bounded by the operator norm of `S` —
-temperedness is a consequence of `S` being a continuous bilinear form, not a separate hypothesis about an
-arbitrary function. -/
+/-- `|D.S (D.theta f) f| ≤ ‖D.S‖ * ‖D.theta f‖ * ‖f‖`: the reflected form is bounded by the operator
+norm of `S`. Two applications of `ContinuousLinearMap.le_opNorm`, one in each argument. The bound is
+a consequence of `S` being a continuous bilinear map, so it is not a separate field of the structure.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem osData_bounded (D : OSData) (f : D.Test) :
     |D.S (D.theta f) f| ≤ ‖D.S‖ * ‖D.theta f‖ * ‖f‖ := by
   have h1 : ‖D.S (D.theta f) f‖ ≤ ‖D.S (D.theta f)‖ * ‖f‖ :=
@@ -125,25 +133,34 @@ theorem osData_bounded (D : OSData) (f : D.Test) :
     _ ≤ ‖D.S (D.theta f)‖ * ‖f‖ := h1
     _ ≤ ‖D.S‖ * ‖D.theta f‖ * ‖f‖ := mul_le_mul_of_nonneg_right h2 (norm_nonneg f)
 
-/-- **The Schwinger form of any `OSData` is not the zero map.** -/
+/-- `D.S ≠ 0` for every `OSData D`. If `S` were zero, the reflected form would vanish at every test
+function, contradicting `os_nontriv`.
+
+DERIVED: the one numeral is `0`, the zero continuous bilinear map the form is shown to differ
+from. -/
 theorem osData_S_ne_zero (D : OSData) : D.S ≠ 0 := by
   intro h
   obtain ⟨f, hf⟩ := D.os_nontriv
   exact hf (by rw [h]; simp)
 
-/-- **Every `OSData` has a test space with at least two elements** — so no `OSData` can be built on `Unit`,
-on any subsingleton, or on the zero module.
+/-- `Nontrivial D.Test` for every `OSData D`: the test space has at least two elements, so no
+`OSData` is built on `Unit`, on a subsingleton, or on the zero module. Bilinearity gives
+`S (θ 0) 0 = 0`, while `os_nontriv` supplies an `f` at which the reflected form is nonzero, so that
+`f` differs from `0`.
 
-The proof is the whole point: `S` is bilinear, so `S (θ 0) 0 = 0`, and `os_nontriv` supplies an `f` at which
-the reflected form is nonzero. That `f` is therefore not `0`. -/
+DERIVED: no numeral occurs in the statement; the `0` the proof compares against is the zero of
+`D.Test`. -/
 theorem osData_test_nontrivial (D : OSData) : Nontrivial D.Test := by
   obtain ⟨f, hf⟩ := D.os_nontriv
   refine ⟨⟨f, 0, ?_⟩⟩
   rintro rfl
   exact hf (by simp)
 
-/-- **No `OSData` on a subsingleton.** The same fact in the form that names what a trivial instantiation
-would have had to supply: an `f` with `S (θ f) f ≠ 0` inside a type all of whose elements are equal. -/
+/-- `¬ Subsingleton D.Test`: the previous fact in the form that names what a subsingleton
+instantiation would have to supply, an `f` with `S (θ f) f ≠ 0` inside a type all of whose elements
+are equal.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem osData_test_not_subsingleton (D : OSData) : ¬ Subsingleton D.Test := by
   intro h
   obtain ⟨f, hf⟩ := D.os_nontriv
@@ -179,7 +196,10 @@ noncomputable def trivialOSData : OSData where
   os3 := fun f g => by show f * g = g * f; exact mul_comm f g
   os_nontriv := ⟨1, by show (1 : ℝ) * 1 ≠ 0; norm_num⟩
 
-/-- `OSData` has an inhabitant, so the reconstruction axiom's hypothesis is satisfiable. -/
+/-- `Nonempty OSData`, witnessed by `trivialOSData`: the reconstruction axiom's hypothesis type is
+inhabited.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem osData_nonempty : Nonempty OSData := ⟨trivialOSData⟩
 
 /-- **Gårding–Wightman data on a fixed Hilbert space `H`**, at the fidelity Mathlib v4.31 supports, in the
@@ -201,7 +221,12 @@ function but not stated ℝ-linear, not stated symmetric, not stated covariant u
 are absent, as are the Wightman distributions themselves and their positivity and spectral conditions.
 
 So this is a Hilbert space with a vacuum, a translation representation, a nonnegative Hamiltonian and fields
-on a dense domain. It is not the Wightman axioms. -/
+on a dense domain. It is not the Wightman axioms.
+
+DERIVED: two numerals. `1` is the norm of the vacuum in `vac_norm`, which is what makes it a unit
+vector. `0` is the translation vector at which `U` acts as the identity (`U_zero`), the value of
+`ham vac` (`ham_vac`), and the lower bound on the real part of every spectral value
+(`ham_spectrum_nonneg`). -/
 structure WightmanQFT (H : Type) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H] where
   /-- The vacuum vector. -/
   vac : H
@@ -235,8 +260,11 @@ structure WightmanQFT (H : Type) [NormedAddCommGroup H] [InnerProductSpace ℂ H
   /-- The fields are additive in the test function. -/
   field_add : ∀ f g, field (f + g) = field f + field g
 
-/-- **A Wightman theory with its Hilbert space bundled** — what a reconstruction has to PRODUCE, since the
-Hilbert space is an output of the construction and not an input to it. -/
+/-- A `WightmanQFT` with its Hilbert space bundled as a field, so the space is part of the value
+rather than a parameter. This is the form a reconstruction produces, since the Hilbert space is an
+output of the construction.
+
+DERIVED: no numeral occurs. -/
 structure WightmanQFTData where
   /-- The Hilbert space of states. -/
   Space : Type
@@ -246,16 +274,22 @@ structure WightmanQFTData where
   /-- The theory on it. -/
   qft : WightmanQFT Space
 
-/-- The state space of a `WightmanQFTData` is a normed group. As with `OSData`, the instance-implicit
-field's projection has to be registered to be found. -/
+/-- `NormedAddCommGroup Q.Space`, from the instance-implicit field `Q.normed`, registered so that
+ instance resolution finds it.
+
+DERIVED: no numeral occurs. -/
 instance instNormedAddCommGroupWightmanSpace (Q : WightmanQFTData) :
     NormedAddCommGroup Q.Space := Q.normed
 
-/-- The state space is a complex inner product space. -/
+/-- `InnerProductSpace ℂ Q.Space`, from the instance-implicit field `Q.hilb`.
+
+DERIVED: no numeral occurs. -/
 instance instInnerProductSpaceWightmanSpace (Q : WightmanQFTData) :
     InnerProductSpace ℂ Q.Space := Q.hilb
 
-/-- The state space is complete. -/
+/-- `CompleteSpace Q.Space`, from the instance-implicit field `Q.complete`.
+
+DERIVED: no numeral occurs. -/
 instance instCompleteSpaceWightmanSpace (Q : WightmanQFTData) : CompleteSpace Q.Space := Q.complete
 
 /-- **`WightmanQFT` is inhabited**, by the one-dimensional theory on `ℂ`: vacuum `1`, trivial translation
@@ -296,14 +330,17 @@ noncomputable def trivialWightmanQFT : WightmanQFT ℂ where
   field := fun _ => 0
   field_add := by simp
 
-/-- The bundled form of `trivialWightmanQFT`. -/
+/-- `trivialWightmanQFT` bundled with its space `ℂ` as a `WightmanQFTData`.
+
+DERIVED: no numeral occurs. -/
 noncomputable def trivialWightmanQFTData : WightmanQFTData where
   Space := ℂ
   qft := trivialWightmanQFT
 
-/-- **The reconstruction axiom's target type is inhabited.** So `os_reconstruction_wightman` is an
-assumption about which Euclidean data yields which quantum theory, not a way of asserting a proposition that
-has no model. -/
+/-- `Nonempty WightmanQFTData`, witnessed by `trivialWightmanQFTData`: the axiom's target type is
+inhabited, so `os_reconstruction_wightman` cannot on its own prove `False`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem wightmanQFTData_nonempty : Nonempty WightmanQFTData := ⟨trivialWightmanQFTData⟩
 
 /-! ## Part 2 — the reconstruction -/
@@ -322,10 +359,12 @@ states, on each side:
   field domain can be read (`reconstructed_vacuum_energy_zero`, `reconstructed_space_nontrivial`), rather
   than an opaque `Prop`.
 
-It is not dischargeable from nothing: producing a term of this type requires producing a Hilbert space with
-a unit vector, a translation representation fixing it, and a self-adjoint operator annihilating it whose
-spectrum lies in the closed right half-plane — and `reconstructed_space_nontrivial` shows that space cannot
-be the zero space.
+Scope. The type `(D : OSData) : WightmanQFTData` mentions `D` once, so nothing in it relates the
+input to the output. `trivialWightmanQFTData` is a term of the conclusion's type, so
+`fun _ => trivialWightmanQFTData` has this exact type; `reconstruction_type_is_inhabited` below
+exhibits it. `wightmanQFTData_nonempty` is the corresponding soundness check for a data-valued
+axiom, and it passes. A field or hypothesis relating `D.S` to the output's expectation values would
+be what ties the two ends together; none is present.
 
 DERIVED: bibliographic. The statement `(D : OSData) : WightmanQFTData` contains no numeral at all.
 Every digit in this doc comment — `31`, `1973`, `83`, `42`, `1975`, `281`, `1987` — is part of the
@@ -334,35 +373,63 @@ year of the Glimm–Jaffe edition. They are not constants, nothing is decided by
 left in ordinary citation form because a reader needs to be able to follow them to the papers. -/
 axiom os_reconstruction_wightman (D : OSData) : WightmanQFTData
 
-/-- The vacuum of a reconstructed theory is a nonzero vector — it is a unit vector by `vac_norm`. -/
+/-- A term of `os_reconstruction_wightman`'s exact type, `OSData → WightmanQFTData`, built as the
+constant function at `trivialWightmanQFTData`.
+
+Scope: this bounds what the axiom can deliver — nothing in `OSData → WightmanQFTData` relates the
+input to the output. It is not a statement about the axiom's soundness, for which
+`wightmanQFTData_nonempty` is the check. Stated as a declaration rather than a remark so that adding
+a field tying `D.S` to the output's expectation values would make this term stop typechecking.
+
+DERIVED: no numeral occurs. -/
+noncomputable def reconstruction_type_is_inhabited : OSData → WightmanQFTData :=
+  fun _ => trivialWightmanQFTData
+
+#print axioms reconstruction_type_is_inhabited
+
+
+/-- `Q.qft.vac ≠ 0` for every `WightmanQFTData Q`: the vacuum is nonzero, since `vac_norm` makes its
+norm `1` and the zero vector has norm `0`.
+
+DERIVED: `0` is the vector the vacuum is shown to differ from; the `1` of `vac_norm` and the `0` of
+`norm_zero` are in the proof. -/
 theorem reconstructed_vac_ne_zero (Q : WightmanQFTData) : Q.qft.vac ≠ 0 := by
   intro h
   have hn : ‖Q.qft.vac‖ = 1 := Q.qft.vac_norm
   rw [h, norm_zero] at hn
   exact zero_ne_one hn
 
-/-- **The reconstructed Hilbert space is not the zero space** — a fact about the conclusion, available
-because the conclusion is data. -/
+/-- `Nontrivial Q.Space` for every `WightmanQFTData Q`, witnessed by the vacuum and `0` through
+`reconstructed_vac_ne_zero`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem reconstructed_space_nontrivial (Q : WightmanQFTData) : Nontrivial Q.Space :=
   ⟨⟨Q.qft.vac, 0, reconstructed_vac_ne_zero Q⟩⟩
 
-/-- **The reconstructed Hamiltonian has a kernel vector — the vacuum, at energy zero.** Read straight out of
-the axiom's conclusion. -/
+/-- `(os_reconstruction_wightman D).qft.ham (os_reconstruction_wightman D).qft.vac = 0`, the
+`ham_vac` field of the axiom's output read back out.
+
+DERIVED: the one numeral is `0`, the value of the Hamiltonian on the vacuum. -/
 theorem reconstructed_vacuum_energy_zero (D : OSData) :
     (os_reconstruction_wightman D).qft.ham (os_reconstruction_wightman D).qft.vac = 0 :=
   (os_reconstruction_wightman D).qft.ham_vac
 
-/-- **The reconstructed Hamiltonian is not injective.** The spectral condition plus a genuine vacuum: `ham`
-kills a nonzero vector, so `0` is an eigenvalue and the bottom of the spectrum is attained. -/
+/-- `¬ Function.Injective Q.qft.ham` for every `WightmanQFTData Q`: the Hamiltonian annihilates the
+vacuum (`ham_vac`) and the vacuum is nonzero (`reconstructed_vac_ne_zero`), so it is not injective.
+The `ham_spectrum_nonneg` field is not used.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem reconstructed_ham_not_injective (Q : WightmanQFTData) :
     ¬ Function.Injective Q.qft.ham := by
   intro hinj
   refine reconstructed_vac_ne_zero Q (hinj ?_)
   rw [Q.qft.ham_vac, map_zero]
 
-/-- **Both ends of the reconstruction are non-degenerate.** The input's test space is provably not a
-subsingleton and the output's Hilbert space is provably not the zero space, so neither end of this axiom can
-be met by a one-point object. -/
+/-- Both ends of the axiom are non-degenerate: `Nontrivial D.Test` and
+`Nontrivial (os_reconstruction_wightman D).Space`, from `osData_test_nontrivial` and
+`reconstructed_space_nontrivial`. Neither end is met by a one-point object.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem os_reconstruction_wightman_is_not_vacuous (D : OSData) :
     Nontrivial D.Test ∧ Nontrivial (os_reconstruction_wightman D).Space :=
   ⟨osData_test_nontrivial D, reconstructed_space_nontrivial _⟩

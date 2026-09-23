@@ -1,34 +1,43 @@
 import Mathlib
 
 /-!
-# The reach-freeze reduction (PAPER Sec 6)
+# MassGap.ReachFreeze — decay of a sequence satisfying a one-step contraction
 
-The gap reduces to a positive per-step contraction of the entropy-rate excess. Let `sigma : ℕ → ℝ`
-be the excess along the reach axis (nonnegative, PAPER Sec 6), and suppose the finite self-sourcing
-screen supplies a fixed positive contraction: for some `c` with `0 < c ≤ 1`,
+Elementary real analysis about a sequence `sigma : ℕ → ℝ` obeying
 
-    sigma (n+1) ≤ (1 - c) * sigma n   for every reach step n.
+    sigma (n + 1) ≤ (1 - c) * sigma n   for every n,
 
-From that hypothesis alone this file certifies:
+for a fixed real `c`. Nothing in this file mentions a lattice, a gauge group or a transfer operator;
+`sigma` and `c` are arbitrary and every hypothesis is supplied by the caller.
 
-* `excess_geometric`         : `sigma n ≤ (1 - c)^n * sigma 0`      (geometric decay)
-* `excess_exp_bound`         : `sigma n ≤ exp (-c * n) * sigma 0`   (decay at rate ≥ c)
-* `excess_tendsto_zero`      : `sigma ⟶ 0`                          (a_IR = 0)
-* `gap_from_contraction`     : the three together, so `Delta ≥ c > 0`.
-* `excess_tendsto_zero_of_geom` : the DMD-spectral form (`sigma n ≤ C ρⁿ`, `ρ < 1`).
-* `confines_of_tension_lt_floor` : tension below the floor gives negative vortex free energy.
+* `excess_geometric` — with `c ≤ 1`, the contraction gives `sigma n ≤ (1 - c)^n * sigma 0`.
+* `excess_exp_bound` — with `c ≤ 1` and `0 ≤ sigma 0`, it gives `sigma n ≤ exp (-c * n) * sigma 0`,
+  by `1 - c ≤ exp (-c)`.
+* `excess_tendsto_zero` — with `0 < c ≤ 1` and `sigma` nonnegative termwise, `sigma` converges to `0`.
+* `gap_from_contraction` — the conjunction of the exponential bound, the limit, and `0 < c`.
+* `excess_tendsto_zero_of_geom` — the same limit from a direct domination `σ n ≤ C * ρ^n` with
+  `0 ≤ ρ < 1`, with no one-step contraction assumed.
+* `confines_of_tension_lt_floor` — for reals `μ`, `κ`, `κ₀`, from `κ₀ ≤ κ` and `μ < κ₀` it follows
+  that `μ - κ < 0`.
 
-The single input is `0 < c`, supplied by the self-sourcing tiling (PAPER Sec 5) when the
-centre-vortex tension stays below the floor, `μ < κ₀` (`Floor.lean` certifies `κ₀ = (1/4) log 3`).
-Downstream of `c > 0` the gap is elementary real analysis, recorded here.
+Every result is conditional on the hypotheses written into its statement. In particular `0 < c` is a
+hypothesis throughout and is established nowhere in this file.
 -/
 
 namespace MassGap
 
 variable {sigma : ℕ → ℝ} {c : ℝ}
 
-/-- **Geometric decay from a one-step contraction.** If `sigma (n+1) ≤ (1-c) sigma n` and
-`c ≤ 1`, then `sigma n ≤ (1-c)^n * sigma 0`. -/
+/-- From the one-step bound `sigma (n + 1) ≤ (1 - c) * sigma n` for every `n`, together with
+`c ≤ 1`, every term obeys `sigma n ≤ (1 - c)^n * sigma 0`. Proved by induction on `n`; `c ≤ 1` is
+what makes `1 - c` nonnegative, so multiplying the inductive bound by it preserves the inequality.
+
+No lower bound on `c` is assumed here, and `sigma` is not assumed nonnegative.
+
+DERIVED: `1` is the successor step in `n + 1` and the unit from which `c` is subtracted to form the
+contraction ratio `1 - c`, which appears in the hypothesis and in the conclusion; `c ≤ 1` is the same
+unit, bounding the ratio below by zero. `0` indexes the initial term `sigma 0`. `c` is a variable of
+the section, fixed by the caller. -/
 theorem excess_geometric (hc1 : c ≤ 1)
     (hstep : ∀ n, sigma (n + 1) ≤ (1 - c) * sigma n) :
     ∀ n, sigma n ≤ (1 - c) ^ n * sigma 0 := by
@@ -42,8 +51,17 @@ theorem excess_geometric (hc1 : c ≤ 1)
               exact mul_le_mul_of_nonneg_left ih h1c
         _ = (1 - c) ^ (k + 1) * sigma 0 := by ring
 
-/-- **Decay at rate at least `c`.** The geometric ratio `1-c` is below `exp (-c)`, so the excess is
-bounded by `exp (-c n) * sigma 0`: the exponential decay rate is `≥ c`, i.e. `Delta ≥ c`. -/
+/-- The geometric bound of `excess_geometric` restated exponentially: with `c ≤ 1`, the one-step
+contraction, and `0 ≤ sigma 0`, every term obeys `sigma n ≤ exp (-c * n) * sigma 0`.
+
+The step is `1 - c ≤ exp (-c)` (from `Real.add_one_le_exp`), raised to the `n`-th power and then
+multiplied through by `sigma 0`, which is why the nonnegativity of `sigma 0` is required — it is the
+factor the inequality is multiplied by. Only `sigma 0` need be nonnegative; later terms are
+unconstrained.
+
+DERIVED: `1` is the successor step `n + 1` and the unit in `c ≤ 1` and in the ratio `1 - c`. `0`
+indexes the initial term `sigma 0` and is its asserted lower bound in `hσ0`. The exponent `-c * n`
+contains no literal; `c` is a section variable. -/
 theorem excess_exp_bound (hc1 : c ≤ 1)
     (hstep : ∀ n, sigma (n + 1) ≤ (1 - c) * sigma n) (hσ0 : 0 ≤ sigma 0) :
     ∀ n, sigma n ≤ Real.exp (-c * n) * sigma 0 := by
@@ -59,8 +77,15 @@ theorem excess_exp_bound (hc1 : c ≤ 1)
   calc sigma n ≤ (1 - c) ^ n * sigma 0 := hgeo
     _ ≤ Real.exp (-c * n) * sigma 0 := by exact mul_le_mul_of_nonneg_right hle hσ0
 
-/-- **The excess tends to zero (`a_IR = 0`).** A positive contraction sends the excess to `0`, so the
-aperture is band-limited and the reach freezes. -/
+/-- With `0 < c ≤ 1`, the one-step contraction, and `sigma` nonnegative at every index, `sigma`
+converges to `0` along `atTop`.
+
+The proof squeezes `sigma` between the constant `0` and the bound of `excess_geometric`: `0 < c` puts
+the ratio `1 - c` strictly below `1`, so `(1 - c)^n * sigma 0` converges to `0`, and termwise
+nonnegativity supplies the lower side.
+
+DERIVED: `0` is the strict lower bound on `c`, the termwise lower bound on `sigma`, and the limit
+point. `1` is the unit in `c ≤ 1`, in `1 - c`, and the successor step `n + 1`. -/
 theorem excess_tendsto_zero (hc0 : 0 < c) (hc1 : c ≤ 1)
     (hstep : ∀ n, sigma (n + 1) ≤ (1 - c) * sigma n)
     (hσnn : ∀ n, 0 ≤ sigma n) :
@@ -73,10 +98,17 @@ theorem excess_tendsto_zero (hc0 : 0 < c) (hc1 : c ≤ 1)
     simpa using hz.mul_const (sigma 0)
   exact squeeze_zero hσnn hub hpow
 
-/-- **The reduction (PAPER Sec 6), assembled.** Given a nonnegative entropy-rate excess and a
-positive per-step contraction `c`, the excess decays exponentially at rate `≥ c`, tends to zero
-(`a_IR = 0`), and `c > 0`. Hence the gap `Delta ≥ c > 0`. The hypotheses are the sole inputs; `c > 0`
-is supplied by the self-sourcing screen (`μ < κ₀`). -/
+/-- The three preceding results packaged as one conjunction. From `0 < c ≤ 1`, termwise
+nonnegativity of `sigma`, and the one-step contraction, it returns: the exponential bound
+`sigma n ≤ exp (-c * n) * sigma 0` for every `n`, convergence of `sigma` to `0`, and `0 < c` itself.
+
+The third conjunct is the hypothesis `hc0` returned unchanged, so it adds no information beyond what
+the caller supplied. The conclusion is a statement about `sigma` and `c` only; no operator, spectrum
+or gap appears in it.
+
+DERIVED: `0` is the strict lower bound on `c` (as hypothesis and as third conjunct), the termwise
+lower bound on `sigma`, the index of `sigma 0`, and the limit point. `1` is the unit in `c ≤ 1`, in
+`1 - c`, and the successor step `n + 1`. -/
 theorem gap_from_contraction (hc0 : 0 < c) (hc1 : c ≤ 1)
     (hσnn : ∀ n, 0 ≤ sigma n)
     (hstep : ∀ n, sigma (n + 1) ≤ (1 - c) * sigma n) :
@@ -85,17 +117,30 @@ theorem gap_from_contraction (hc0 : 0 < c) (hc1 : c ≤ 1)
   ⟨excess_exp_bound hc1 hstep (hσnn 0),
    excess_tendsto_zero hc0 hc1 hstep hσnn, hc0⟩
 
-/-- **Floor and tension give confinement.** The centre-vortex free-energy density is `F_v = μ - κ`
-(tension minus entropy). With the floor `κ₀ ≤ κ` (`Floor.lean`) and the tension below the floor,
-`μ < κ₀`, the free energy is negative, so vortices condense and the theory confines. -/
+/-- For reals `μ`, `κ`, `κ₀`: if `κ₀ ≤ κ` and `μ < κ₀` then `μ - κ < 0`. Transitivity of the two
+orderings, discharged by `linarith`.
+
+The three variables are arbitrary reals. The intended reading is `μ` a centre-vortex tension, `κ` an
+entropy density, `κ₀` a lower bound on it from `Floor.lean`, and `μ - κ` a free-energy density, but
+no such interpretation enters the statement or the proof, and nothing about vortices, condensation or
+confinement is asserted by it.
+
+DERIVED: `0` is the sign asserted of the difference `μ - κ`; it is the only numeral. `μ`, `κ` and
+`κ₀` are implicit arguments. -/
 theorem confines_of_tension_lt_floor {μ κ κ₀ : ℝ} (hfloor : κ₀ ≤ κ) (htension : μ < κ₀) :
     μ - κ < 0 := by linarith
 
-/-- **Spectral (DMD-native) form of the decay.** If the excess is dominated by a geometric sequence
-`σ n ≤ C ρⁿ` with `0 ≤ ρ < 1`, it tends to zero (`a_IR = 0`). Here `ρ` is the DMD/Koopman spectral
-radius on the excess (`ρ = e^{-Δ}`, so `ρ < 1 ↔ Δ > 0`), which is what `rates().dominant` reads. It
-asks only for the spectral radius, so it is insensitive to non-normal transients (the constant `C`
-absorbs them). -/
+/-- A nonnegative sequence `σ` dominated termwise by a geometric sequence, `σ n ≤ C * ρ^n` with
+`0 ≤ ρ < 1`, converges to `0` along `atTop`. Squeeze between the constant `0` and `C * ρ^n`.
+
+The domination is assumed, not derived, and no one-step contraction is required: this is the form to
+use when only a geometric envelope is available. `C` is an arbitrary real and is not assumed
+positive; the hypothesis `hbound` together with `hσnn` forces it to be nonnegative whenever `σ` is
+not identically zero, but the statement asserts nothing about it.
+
+DERIVED: `0` is the lower bound on the ratio `ρ`, the termwise lower bound on `σ`, and the limit
+point. `1` is the strict upper bound on `ρ` that makes `ρ^n` a null sequence. `C` and `ρ` are
+implicit arguments. -/
 theorem excess_tendsto_zero_of_geom {σ : ℕ → ℝ} {C ρ : ℝ}
     (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
     (hσnn : ∀ n, 0 ≤ σ n) (hbound : ∀ n, σ n ≤ C * ρ ^ n) :

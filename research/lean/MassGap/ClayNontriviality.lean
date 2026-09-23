@@ -1,94 +1,71 @@
 import Mathlib
 import MassGap.DLRLimit
 import MassGap.InfiniteVolume
+import MassGap.WilsonDLR
 
 /-!
-# MassGap.ClayNontriviality — C4's variance floor is already proved, and aperture-uniform
+# MassGap.ClayNontriviality — a non-degenerate DLR limit from the Wilson contact floor
 
-## The Clay row
+Composes two results of the tree:
 
-C4 asks that the theory be **non-trivial**. The goal document carries it as OPEN with nothing behind
-it. That is not where it stands.
+* `DLRLimit.exists_infinite_volume_gibbs_state_nondegenerate`, which produces a normalised DLR state
+  that is not a point mass, given a family of finite-volume states, the DLR consistency relation,
+  and a positive constant bounding the variance of one observable below, uniformly in the volume.
+* `InfiniteVolume.exists_uniform_contact_floor`, which supplies such a constant for the Wilson
+  contact value: `∃ δ₀ > 0, ∀ N β, 0 ≤ β → exp (-(128 * β)) * δ₀ ≤ wilsonCorrAt N β 0`, with `δ₀`
+  bound outside the quantifier over apertures `N`.
 
-`DLRLimit.exists_infinite_volume_gibbs_state_nondegenerate` already delivers the conclusion —
-an infinite-volume DLR state that is normalised and **provably not a point mass** — from a family of
-finite-volume states, the DLR consistency relation, and one input its own docstring flags:
+`PlaqVariance.corrClay_zero_eq` identifies `wilsonCorrAt N β 0` with the connected correlation of a
+plaquette observable with itself, so the floor is a variance floor.
 
-> CONDITIONAL: this floor is an input, not a result.
+Contents:
+* `clay_nontriviality_of_wilson_variance` — the composition, for an abstract kernel `γ`, family `μ`
+  and consistency relation `hcons`, with the floor discharged rather than assumed.
+* `clay_nontriviality_of_wilson_bridge` — the same, with `γ`, `μ` and `hcons` instantiated at
+  `WilsonDLR.specCM`, `WilsonDLR.specState` and `WilsonDLR.hcons_specState`, leaving `hbridge` as the
+  only substantive hypothesis.
+* `uniform_variance_floor_exists` — the floor restated with its positivity alongside it.
+* `floor_is_independent_of_any_family` — a positive lower bound on `wilsonCorrAt N β 0` with no
+  family, kernel or consistency relation in the statement.
 
-That input is a variance floor at a single observable, holding uniformly over the volumes.
-
-## ⭐ And the floor is a theorem
-
-`InfiniteVolume.exists_uniform_contact_floor` proves
-
-    ∃ δ₀ > 0, ∀ N β, 0 ≤ β → exp(−128β)·δ₀ ≤ wilsonCorrAt N β 0,
-
-**one `δ₀` fixed before the aperture is chosen**, at every aperture and every non-negative coupling.
-And `PlaqVariance.corrClay_zero_eq` identifies `wilsonCorrAt N β 0` as
-`wilsonCorrConn (clayPlaq) β (clayPlaq)` — the connected correlation of a plaquette observable with
-ITSELF, which is its variance. So the floor is a **variance floor, uniform in the volume**, which is
-precisely the shape the non-degeneracy theorem asks for.
-
-The `exp(−128β)` degrades with the coupling, and elsewhere in the tree that degradation is fatal —
-it is what caps the contact-relative arm at `β ≈ 2.9e−5`. **Here it costs nothing.** C4 is a
-statement at a coupling, not uniformly in the coupling, so a constant that depends on `β` and not on
-the volume is exactly the right shape. The `128` is `16·dim` at `dim = 4` doubled — the count of
-plaquettes sharing a link with the one being read (`StrongCoupling.touchDeg_bd_le`), which carries no
-extent, and that is why the floor is aperture-uniform at all.
-
-## What `clay_nontriviality_of_wilson_variance` does
-
-It composes the two: given a DLR-consistent family whose variance at `f₀` is at least the Wilson
-contact value, the floor is discharged from `exists_uniform_contact_floor` and the conclusion follows.
-**Neither `hc` nor `hvar` is a hypothesis of the result** — both are supplied.
-
-## ⛔ What remains, named exactly
-
-**`hbridge` alone. `μ` and `hcons` are ALREADY BUILT.**
-
-`WilsonDLR.specState` is the finite-volume Wilson state as a `DLRLimit.State (IConf (SU N))` indexed
-by `Finset ILink`, and `WilsonDLR.hcons_specState` is its consistency relation — both foundational-only,
-resting on `GibbsSpec.wilson_dlr_consistent` (the DLR compatibility of the genuine Wilson kernel on
-infinite `ℤ⁴`) and `WilsonDLR.continuous_spec_right` (the Feller property). So this file's `μ` and
-`hcons` are supplied by the tree, not open.
-
-**What is genuinely open is `hbridge`, and it is a mismatch of VOLUME INDEXINGS.** The floor is
-stated for `wilsonCorrAt N β 0` on `WilsonHypercubic.bd (d := 4) (n := N+1)` — a finite PERIODIC
-lattice indexed by an aperture. `specState` is indexed by a `Finset ILink` of `ℤ⁴` with a FROZEN
-boundary `ω₀`. Relating a variance in one indexing to a variance in the other is the open step.
-`hbridge` is an INEQUALITY rather than an equality so that whoever builds it owes only the direction
-used.
-
-So C4's precondition stands at: **one comparison between two volume indexings**, with the family, the
-consistency relation and the variance floor all proved.
-
-## ⚠ And it is non-triviality in the DLR sense, not the full Clay sense
-
-`¬IsPointMass` says the limit state is not concentrated at a single configuration. Clay §4 asks for a
-theory whose correlations are not those of a generalised free field, which is a stronger and
-different statement. **Nothing here addresses that.** What is closed is the weakest defensible reading of
-"non-trivial" — that the object is not the vacuous witness — which is the reading
-`exists_infinite_volume_gibbs_state_nondegenerate` was written for.
+Scope, stated for both main theorems.
+* The conclusion is `¬ IsPointMass ν`: the limit state is not concentrated at a single
+  configuration. It is not a statement that the correlations differ from a generalised free field.
+* The constant `exp (-(128 * β)) * δ₀` degrades with `β` and is therefore not uniform in the
+  coupling; it is uniform in the aperture, because `128` is `16 * dim` at `dim = 4` doubled — the
+  plaquette-touch count of `StrongCoupling.touchDeg_bd_le`, which carries no extent.
+* `hbridge` compares two different volume indexings: `wilsonCorrAt` is a variance on a finite
+  periodic lattice indexed by an aperture, while `specState` is indexed by a `Finset ILink` of `ℤ⁴`
+  with a frozen boundary `ω₀`. It is stated as an inequality, so only one direction of the
+  comparison is required.
 -/
 
 namespace MassGap.ClayNontriviality
 
 open MassGap.DLRLimit
 
-/-- **⭐ C4'S VARIANCE FLOOR IS DISCHARGED FROM A PROVED THEOREM.**
+/-- A non-degenerate infinite-volume DLR state, with the variance floor discharged. Takes a compact
+topological space `G`, a specification kernel `γ`, a family `μ` of states indexed by `Finset ILink`,
+the DLR consistency relation `hcons`, an observable `f₀`, a coupling `β` with `0 ≤ β`, an aperture
+assignment `ap : Finset ILink → ℕ`, and `hbridge`, which bounds `wilsonCorrAt (ap Λ) β 0` above by
+the variance `μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2` at every `Λ`. Produces
+`∃ ν : State (IConf G), IsDLR γ ν ∧ ν 1 = 1 ∧ ¬ IsPointMass ν`.
 
-Given a DLR-consistent family of finite-volume states whose variance at one observable is at least
-the Wilson contact value at some aperture, the limit is a normalised DLR state that is **not a point
-mass** — with no floor assumed, because `InfiniteVolume.exists_uniform_contact_floor` supplies it.
+The proof takes `δ₀` from `InfiniteVolume.exists_uniform_contact_floor`, uses
+`Real.exp (-(128 * β)) * δ₀` as the floor constant for
+`exists_infinite_volume_gibbs_state_nondegenerate`, and chains that floor through `hbridge`. The
+floor is therefore not a hypothesis of this theorem.
 
-`ap` is the caller's assignment of an aperture to each finite volume. It is unconstrained on purpose:
-the floor holds at EVERY aperture, so no relation between `Λ` and `ap Λ` is needed, and demanding one
-would import an obligation the proof does not use.
+Scope. `ap` is unconstrained: no relation between `Λ` and `ap Λ` is required, because the floor
+holds at every aperture. The conclusion is non-degeneracy in the sense of `¬ IsPointMass`, not a
+statement about the form of the correlations. `hbridge` remains a hypothesis and relates two
+different volume indexings.
 
-DERIVED: `128` is `exists_uniform_contact_floor`'s own exponent — `16·dim` at `dim = 4`, doubled —
-which is `StrongCoupling.touchDeg_bd_le`'s plaquette-touch count and carries no extent. `0` is the
-contact lag and the sign of `β`. Nothing is chosen here. -/
+DERIVED: `0` is the lower bound on `β` and the contact lag in `wilsonCorrAt (ap Λ) β 0`; `2` is the
+square of the first moment in the variance `μ Λ (f₀ * f₀) - (μ Λ f₀) ^ 2`; `1` is the unit
+observable and the normalisation `ν 1 = 1`. The `128` of the floor occurs in the proof term only —
+it is `exists_uniform_contact_floor`'s own exponent, `16 * dim` at `dim = 4` doubled — and does not
+appear in the statement. -/
 theorem clay_nontriviality_of_wilson_variance (G : Type) [TopologicalSpace G] [CompactSpace G]
     (γ : Finset ILink → C(IConf G, ℝ) → C(IConf G, ℝ))
     (μ : Finset ILink → State (IConf G))
@@ -104,14 +81,64 @@ theorem clay_nontriviality_of_wilson_variance (G : Type) [TopologicalSpace G] [C
 
 #print axioms clay_nontriviality_of_wilson_variance
 
-/-- **THE FLOOR, RESTATED AS A VARIANCE FLOOR**, so the shape the non-degeneracy theorem consumes is
-visible without unfolding `wilsonCorrAt`.
+/-- The same conclusion with the kernel, the family and the consistency relation instantiated at the
+Wilson objects. For a compact second-countable Borel topological group `G`, a continuous plaquette
+density `φ : G → ℝ` with `0 ≤ φ g` and `φ g ≤ 2` at every `g`, a coupling `β` with `0 ≤ β`, a
+probability measure `μ` on `G`, a frozen boundary `ω₀`, an observable `f₀` and an aperture
+assignment `ap`, together with `hbridge` bounding `wilsonCorrAt (ap Λ) β 0` above by the variance of
+`f₀` under `WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀ Λ`, the conclusion is a state `ν` that is DLR for
+`WilsonDLR.specCM hφc hφ0 hφ2 β μ`, satisfies `ν 1 = 1`, and is not a point mass.
 
-`PlaqVariance.corrClay_zero_eq` identifies the contact value as the connected correlation of a
-plaquette observable with itself. This records the consequence that matters: **one positive constant,
-chosen before the aperture, bounds that variance below at every aperture.**
+The proof applies `clay_nontriviality_of_wilson_variance` with
 
-DERIVED: `128` and `0` are `exists_uniform_contact_floor`'s, as above. -/
+* `γ := WilsonDLR.specCM hφc hφ0 hφ2 β μ`,
+* the family `WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀`,
+* `hcons := WilsonDLR.hcons_specState hφc hφ0 hφ2 β μ ω₀`,
+
+so `hbridge` is the only hypothesis of the composition not instantiated from the tree.
+
+Scope. `hbridge` compares a variance on the finite periodic lattice that `wilsonCorrAt` is defined
+on with a variance of `specState`, which is indexed by a `Finset ILink` of `ℤ⁴` at a frozen
+boundary. The conclusion is `¬ IsPointMass ν`, not a statement about the correlations' functional
+form.
+
+DERIVED: `0` is the lower bound on `φ` and on `β`, and the contact lag in `wilsonCorrAt (ap Λ) β 0`;
+`2` appears twice, once as the upper bound `φ g ≤ 2` on the plaquette density (matching
+`WilsonAction.wilsonDensity_le_two`) and once as the square of the first moment in the variance;
+`1` is the unit observable and the normalisation `ν 1 = 1`. Every one is inherited, from the theorem
+being instantiated or from `specCM`'s own hypotheses. -/
+theorem clay_nontriviality_of_wilson_bridge {G : Type} [Group G] [TopologicalSpace G]
+    [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+    [SecondCountableTopology G] [MeasurableMul₂ G] [MeasurableInv G]
+    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (β : ℝ) (hβ : 0 ≤ β) (μ : MeasureTheory.Measure G) [MeasureTheory.IsProbabilityMeasure μ]
+    (ω₀ : IConf G) (f₀ : C(IConf G, ℝ)) (ap : Finset ILink → ℕ)
+    (hbridge : ∀ Λ : Finset ILink,
+      MassGap.wilsonCorrAt (ap Λ) β 0 ≤
+        MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀ Λ (f₀ * f₀)
+          - (MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀ Λ f₀) ^ 2) :
+    ∃ ν : State (IConf G),
+      IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 β μ) ν ∧ ν 1 = 1 ∧ ¬ IsPointMass ν :=
+  clay_nontriviality_of_wilson_variance G (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 β μ)
+    (MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀)
+    (MassGap.WilsonDLR.hcons_specState hφc hφ0 hφ2 β μ ω₀) f₀ β hβ ap hbridge
+
+#print axioms clay_nontriviality_of_wilson_bridge
+
+
+/-- The contact floor with its positivity attached: there is `δ₀` with `0 < δ₀` such that for every
+aperture `N` and every `β` with `0 ≤ β`, the constant `Real.exp (-(128 * β)) * δ₀` is positive and
+at most `wilsonCorrAt N β 0`. Unpacks `InfiniteVolume.exists_uniform_contact_floor` and pairs each
+ instance with `mul_pos (Real.exp_pos _) hδ₀`.
+
+Scope: `δ₀` is bound outside the quantifier over `N`, so the constant is uniform in the aperture.
+It depends on `β` through the exponential factor, so it is not uniform in the coupling. By
+`PlaqVariance.corrClay_zero_eq` the quantity bounded below is the connected correlation of a
+plaquette observable with itself.
+
+DERIVED: `0` is the strict lower bound on `δ₀` and on the product, the lower bound on `β`, and the
+contact lag in `wilsonCorrAt N β 0`; `128` is `exists_uniform_contact_floor`'s own exponent,
+`16 * dim` at `dim = 4` doubled, transcribed unchanged. -/
 theorem uniform_variance_floor_exists :
     ∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
       0 < Real.exp (-(128 * β)) * δ₀ ∧
@@ -121,15 +148,18 @@ theorem uniform_variance_floor_exists :
 
 #print axioms uniform_variance_floor_exists
 
-/-- **⛔ AND THE FLOOR ALONE DOES NOT GIVE C4.** Stated so the file cannot be read as closing the row:
-the conclusion above is reached only from a family `μ` and the consistency relation `hcons`, neither
-of which the tree provides for the Wilson measure.
+/-- The floor with the witness existentially quantified and no family in sight: for every aperture
+`N` and every `β` with `0 ≤ β`, there is `c` with `0 < c` and `c ≤ wilsonCorrAt N β 0`. The witness
+is `Real.exp (-(128 * β)) * δ₀` from `InfiniteVolume.exists_uniform_contact_floor`.
 
-This is the negative control for `clay_nontriviality_of_wilson_variance` — it exhibits the fact that
-the interesting hypotheses are the ones about the family, by showing the floor is available
-unconditionally and independently of any family.
+Scope: the statement mentions no state family, no kernel and no consistency relation, so it records
+what the floor gives on its own. It is a lower bound at a fixed aperture and coupling; unlike
+`uniform_variance_floor_exists` the witness `c` is bound inside the quantifiers over `N` and `β`, so
+this form carries no uniformity.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the one numeral is `0`, the lower bound on `β`, the strict lower bound on `c`, and the
+contact lag in `wilsonCorrAt N β 0`. The `128` of the witness is in the proof term, not the
+statement. -/
 theorem floor_is_independent_of_any_family (N : ℕ) (β : ℝ) (hβ : 0 ≤ β) :
     ∃ c : ℝ, 0 < c ∧ c ≤ MassGap.wilsonCorrAt N β 0 := by
   obtain ⟨δ₀, hδ₀, hfloor⟩ := MassGap.InfiniteVolume.exists_uniform_contact_floor

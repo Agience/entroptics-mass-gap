@@ -2,31 +2,71 @@ import MassGap.FullModel
 import MassGap.Complete
 
 /-!
-# MassGap.WilsonInstance — a CONSTRUCTED SU(N) FullModel
+# MassGap.WilsonInstance — a constructed `SU(N)` `FullModel` and `WilsonRealization`
 
-Residual A of the proof ledger. The existence half's theorem `existence_and_gap_of_model` was stated over
-ABSTRACT structure variables — no `LatticeYMFamily`/`FullModel` value was ever constructed. This file constructs
-one on the RP/gap axis at the SAME fidelity as `ymModel`, so the existence-and-gap theorem
-lands on a CONCRETE object. Footprint of the existence-and-gap theorem (gap + OS0–OS3 measure): the three
-foundational axioms and the one named cited axiom `wilson_reflection_positive_at`, which reaches it
-through the gap side's `μYMAt`/`ymModelAt` alone — the measure side `ymFamily` is foundational-only.
-The OS→Wightman
-reconstruction is NOT composed here and no declaration in this file carries it: `ymFamily`'s reflected form is
-`QYM (N : ℕ) (j : JYM) (a : ℕ) : ℝ`, a value per test configuration, while
-`WightmanData.os_reconstruction_wightman` consumes a continuous bilinear form on a normed test space. NO new axiom, NO `sorry`.
+`existence_and_gap_of_model` is stated over abstract structure variables. This module constructs
+values of `LatticeYMFamily`, `LatticeYM`, `FullModel`, `WilsonParams` and `WilsonRealization` at
+rank `N`, so that `existence_and_gap_of_wilson` can be applied to a concrete object; that
+application is `ym_existence_and_gap_of_junction`.
 
-Fidelity boundary (stated exactly): the reflected form `Q` is built from the SAME opaque Wilson ensemble
-`wilsonCorr` the gap side uses (clamped into `[0,1]`), so the `FullModel` is ONE physical model on the RP axis;
-its nonnegativity `os_rp` is `Complete.wilson_reflection_positive_at_even`, the PROVED reflection
-positivity, which is why the family carries the extent hypothesis `hev`. The Euclidean/permutation actions are GENUINE non-trivial
-`Equiv.Perm (Fin 4)` actions, but the invariance they yield is MODELLED, not derived from `wilsonCorr`: `Q`
-factors through an ensemble label the actions leave fixed, so it is constant on orbits by construction (this
-holds for ANY `Q` reading only that label). The finite aperture is likewise a single hardwired supra-edge mode
-(`resolvedDim ≡ 1 = c`) — a MINIMAL OS-family witness realising the `LatticeYMFamily` interface, tied to the
-ensemble only through `Q`/`os_rp`, NOT an aperture/invariance parity with `ymModel`. A1 for the gap side is
-the hypothesis `hconf` on the physical half-line `β ≥ 0`, clamped below the floor on the inert `β < 0` branch. What is
-modeled (not derived from gauge theory): the clamp/aperture and that `wilsonCorr` supplies the OS-data — the
-§2–§3 identification, cited.
+## The measure side
+
+`ymFamily N hev` is a `LatticeYMFamily` on test configurations
+`JYM = Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ`. Its reflected form `QYM N j a` is the Wilson
+ensemble correlation `wilsonCorrAt N (a : ℝ)` at the lag `j.2.2 % (N + 1)`, truncated above by `1`.
+The fields are discharged as follows:
+
+* `os_rp` — nonnegativity, from `Complete.wilson_reflection_positive_at_even`. This is why the
+  family carries `hev : ∃ k, N + 1 = 2 * k ∧ 2 ≤ k`: that theorem holds at even extent at least
+  four. Its coupling hypothesis is met because `wilsonCorrAt` is read at the spacing `a : ℕ` cast to
+  `ℝ`, which is nonnegative.
+* `os_gap` — from `evYM`, which places every mode but `n = 0` below the edge.
+* `os_form` — from `QYM ≤ 1` and `resolvedDim ≥ 1 = c`, a single hardwired supra-edge mode.
+* `os_euc` and `os_perm` — by `rfl`. `actEYM` acts on `j.1` and `actPYM` on `j.2.1`, while `QYM`
+  reads `j` only through `j.2.2`, so the invariances hold because the actions do not move the
+  component the form reads. Any `Q` reading only that component would satisfy them.
+
+The coupling slot of `wilsonCorrAt` is occupied here by the cast spacing `a`, whereas on the gap
+side it is the coupling `β`.
+
+## The gap side
+
+`μClampAt N β` is `μYMAt N β` for `0 ≤ β` and `0` otherwise. `gapModelOf` is
+`Capacity.modelOfJunction` at the floor `κ₀YM` and that tension, over a mode family `s`, `P`, `m`
+and functions `Δ`, `c` that are all arguments, with `hread` derived from three hypotheses: `hdom`,
+`‖m β k‖ ≤ exp (-Δ β)`; `hfe`, `κ₀YM - μClampAt N β ≤ c β`; and `hgap`, `c β ≤ Δ β`. `gapModelOf_A1`
+and `gapModelOf_A2` discharge `A1_YM` and `A2_YM`, the first from `hconf` on `0 ≤ β` and `κ₀YM_pos`
+on the clamped branch, the second as `ym_A2_at N`.
+
+At `κ = κ₀` the three hypotheses recombine to `‖m β k‖ ≤ exp (-(κ₀YM - μClampAt N β))`, with `c`
+cancelling, so taking the mode family as an argument makes the assumption appear in the statement
+rather than in a definition.
+
+## Scope
+
+`hfe` and `hgap` are hypotheses of every gap-side declaration here. `hconf` is a hypothesis on the
+half-line `0 ≤ β`. What `Measure.continuum_of_family` supplies on the measure side is a bounded,
+nonnegative, invariance-preserving subsequential pointwise limit `q : JYM → ℝ` over a countable
+index set, obtained by a diagonal Bolzano–Weierstrass argument: not a measure, not on `ℝ⁴`, and with
+no Schwinger function, reflection positivity of the limit as a quadratic form, clustering or
+regularity. The OS-to-Wightman reconstruction is not composed anywhere in this module, and no
+declaration carries it: `QYM` is a value per test configuration, while
+`WightmanData.os_reconstruction_wightman` consumes a continuous bilinear form on a normed test
+space. `ymFamily` realises the `LatticeYMFamily` interface with one supra-edge mode and is tied to
+the ensemble through `QYM` and `os_rp` alone; it does not match `ymModel`'s aperture. No new axiom
+and no `sorry`.
+
+Footprint of `ym_existence_and_gap_of_junction`: the three foundational axioms and the named cited
+axiom `wilson_reflection_positive_at`, which reaches it through the gap side's `μYMAt` and
+`ymModelAt`; `ymFamily` is foundational-only.
+
+DERIVED: `4` is the spacetime dimension in `Equiv.Perm (Fin 4)`; `2` in `hev` is the even extent
+divisor, `2 ≤ k` is `4 ≤ N + 1`, and `2 ≤ N` is the smallest rank at which `SU(N)` is non-abelian —
+the first two read off `wilson_reflection_positive_at_even`'s hypotheses; `1` is the lag arity
+offset in `N + 1`, the family's `c` and `B`, the unit box `L`, and the clamp's upper truncation; `0`
+is the boundary of the physical half-line, the family's `edge`, the clamped tension, and the mode
+index above the edge; `2 * Real.pi` is the confinement scale `k⋆`, fixed so that
+`k⋆ * L / (2 * Real.pi) = 1` equals the family's `c`.
 -/
 
 namespace MassGap
@@ -34,47 +74,78 @@ open MassGap.Measure Filter
 
 /-! ## The measure side: a constructed `LatticeYMFamily` -/
 
-/-- Test configs: Euclidean element × permutation × Euclidean-invariant label. -/
+/-- The test-configuration type: a Euclidean element, a permutation, and a natural-number label,
+`Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ`. `actEYM` acts on the first component, `actPYM` on the
+second, and `QYM` reads the third.
+
+DERIVED: `4` is the spacetime dimension the permutation groups act on. -/
 abbrev JYM : Type := Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ
 
-/-- The reflected Schwinger form, built from the SAME Wilson ensemble `wilsonCorr` the gap side uses (so the
-`FullModel` is ONE physical model): the ensemble correlation at spacing `a` and the invariant-label lag,
-clamped into `[0,1]`. Nonnegative by reflection positivity (`wilson_reflection_positive_at_even`, at the
-extent hypothesis `ymFamily` carries); depends on `j` only
-through the Euclidean-invariant label `j.2.2`. (On the gap side `wilsonCorr`'s argument is the coupling `β`;
-here it is the spacing `a` — a same-symbol modelling identification.) -/
+/-- The reflected form: `min (wilsonCorrAt N (a : ℝ) ⟨j.2.2 % (N + 1), _⟩) 1`. It reads the Wilson
+ensemble correlation at rank `N`, with the spacing `a` cast to `ℝ` in `wilsonCorrAt`'s coupling slot
+and with lag `j.2.2 % (N + 1)`, and truncates the value above by `1`. Nonnegativity is supplied by
+`Complete.wilson_reflection_positive_at_even` in `ymFamily`'s `os_rp` field.
+
+`QYM` depends on the test configuration `j` only through its third component `j.2.2`; the first two
+components do not appear.
+
+DERIVED: `4` reaches the statement through `JYM`'s permutation groups; `2` appears as the product
+projections in `j.2.2`; `1` in `N + 1` is the lag arity offset, `Fin (N + 1)` indexing lags `0 … N`,
+and the trailing `1` is the upper truncation. -/
 noncomputable def QYM (N : ℕ) (j : JYM) (a : ℕ) : ℝ :=
   min (wilsonCorrAt N (a : ℝ) ⟨j.2.2 % (N + 1), Nat.mod_lt _ (Nat.succ_pos N)⟩) 1
 
-/-- Genuine Euclidean action (left multiplication on the first component). -/
+/-- The Euclidean action on test configurations: left multiplication by `g` on the first component,
+leaving the other two fixed. It is a non-trivial group action of `Equiv.Perm (Fin 4)`, and it does
+not move the component `QYM` reads.
+
+DERIVED: `4` is the spacetime dimension the permutation group acts on; `1` and `2` are the product
+projections `j.1`, `j.2.1` and `j.2.2`. -/
 def actEYM (g : Equiv.Perm (Fin 4)) (j : JYM) : JYM := (g * j.1, j.2.1, j.2.2)
 
-/-- Genuine permutation action (on the second component). -/
+/-- The permutation action on test configurations: left multiplication by `σ` on the second
+component, leaving the other two fixed. Like `actEYM`, it is non-trivial and does not move the
+component `QYM` reads.
+
+DERIVED: `4` is the spacetime dimension the permutation group acts on; `1` and `2` are the product
+projections `j.1`, `j.2.1` and `j.2.2`. -/
 def actPYM (σ : Equiv.Perm (Fin 4)) (j : JYM) : JYM := (j.1, σ * j.2.1, j.2.2)
 
-/-- Correlation eigenvalues: only the lowest mode is above the noise edge (finite aperture). -/
+/-- The family's eigenvalue field: `1` at mode `n = 0` and `-1` elsewhere, at every spacing. With
+the family's `edge := 0`, exactly one mode lies above the edge, which is what makes the aperture a
+single supra-edge mode and discharges `os_gap`.
+
+DERIVED: `0` is the index of the one supra-edge mode and the value `n` is compared against; `1` and
+`-1` are the two eigenvalues, placed on either side of the family's `edge := 0`. -/
 def evYM (_a n : ℕ) : ℝ := if n = 0 then 1 else -1
 
-/-- Mode count per spacing (grows as `a → 0`). -/
+/-- The mode count at spacing index `a`: `a + 1`, so the range `Finset.range (NaYM a)` is nonempty
+at every `a` and grows with `a`.
+
+DERIVED: `1` makes the mode count positive at `a = 0`, so mode `0` is always present. -/
 def NaYM (a : ℕ) : ℕ := a + 1
 
-/-- **The constructed SU(N) OS-data family (a MINIMAL interface witness).** All fields discharged: RP by
-nonnegativity of the Gram form (the real tie to `wilsonCorr`); the aperture by a single hardwired supra-edge
-mode (`resolvedDim ≡ 1 = c`); the bound by `sin² ≤ 1`; and Euclidean/permutation invariance that holds because
-`Q` factors through an inert label the genuine `Perm (Fin 4)` actions leave fixed (modelled, not derived). No
-new axiom, no `sorry`.
+/-- A `LatticeYMFamily` at rank `N`, with `J := JYM`, both group fields `Equiv.Perm (Fin 4)`,
+`Q := QYM N`, `ev := evYM`, `Na := NaYM`, `edge := 0`, and `c = B = 1`.
 
-**NO NAMED AXIOM.** `os_rp` used to be the reflection-positivity AXIOM at an arbitrary extent. It is now
-the THEOREM `Complete.wilson_reflection_positive_at_even`, at the price of the extent hypotheses
-`N + 1 = 2 * m` and `2 ≤ m`. The coupling hypothesis it also carries costs nothing here: the slot
-`wilsonCorrAt` is read at is the SPACING `a : ℕ` cast to `ℝ`, which is nonnegative for free. The
-`SU(3)` instantiation `WilsonGauge.ym_wilson_gauge_su3` runs at `N = NYM = 3`, whose extent is
-`4 = 2 * 2`, so the restriction is met there.
+The fields are discharged thus. `os_rp` is `Complete.wilson_reflection_positive_at_even` combined
+with `zero_le_one` through `le_min`; it consumes `hev`, and its coupling hypothesis is met because
+`wilsonCorrAt`'s coupling slot holds the cast spacing `(a : ℝ)`, which is nonnegative. `os_gap` is a
+case split on `n = 0`, the only mode `evYM` puts above `edge := 0`. `os_form` uses `QYM ≤ 1` from
+the truncation together with `1 ≤ resolvedDim`, mode `0` being in range at every spacing. `os_euc`
+and `os_perm` are `rfl`, since `actEYM` and `actPYM` move `j.1` and `j.2.1` while `QYM` reads
+`j.2.2`.
 
-DERIVED: `2 * k` is the even extent and `2 ≤ k` is `4 ≤ N + 1`, both read off
-`Complete.wilson_reflection_positive_at_even`'s hypotheses. Neither is chosen here. Carried as one
-existential — `EvenAperture.EvenAp`'s membership predicate — so downstream signatures grow by one
-argument rather than three. -/
+The family realises the interface with one supra-edge mode and is tied to the Wilson ensemble
+through `QYM` and `os_rp` alone. No named axiom is used: `os_rp` is a theorem, at the price of the
+extent hypothesis `hev`. The `SU(3)` instantiation runs at `N = NYM = 3`, whose extent is
+`4 = 2 * 2`, so `hev` is met there.
+
+DERIVED: `4` is the spacetime dimension in the group fields; in `hev`, `2 * k` is the even extent
+and `2 ≤ k` is `4 ≤ N + 1`, both read off `wilson_reflection_positive_at_even`'s hypotheses and
+carried as one existential, which is `EvenAperture.EvenAp`'s membership predicate; `1` in `N + 1` is
+the lag arity offset, and `c := 1`, `B := 1` are the single supra-edge mode and the truncation
+bound; `0` is the noise `edge`, set below the one supra-edge eigenvalue. -/
 noncomputable def ymFamily (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) : LatticeYMFamily where
   J := JYM
   G := Equiv.Perm (Fin 4)
@@ -111,34 +182,42 @@ noncomputable def ymFamily (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤
 
 /-! ## The gap side: `A1_YM` discharged on the physical half-line -/
 
-/-- `μ` clamped below the floor on the inert unphysical branch `β < 0`, so A1 holds for ALL `β`. -/
--- DERIVED: the inert branch carries no physics and needs only SOME value below the floor. Zero is the
--- additive identity of the tension (a read with no dispersion), and `κ₀YM_pos` is what puts it below
--- the floor. The previous `κ₀YM - 1` chose a distance of one below the floor, which nothing supplies.
+/-- The tension at rank `N`, clamped on the unphysical branch: `μYMAt N β` when `0 ≤ β`, and `0`
+otherwise. The clamp is what lets `A1_YM`, which quantifies over all real `β`, follow from a
+confinement hypothesis stated only on the half-line.
+-/
+-- DERIVED: `0` is the boundary of the physical half-line in the branch condition, and the value the
+-- unphysical branch takes. That branch needs only some value below the floor, and `κ₀YM_pos` is what
+-- puts zero below it.
 noncomputable def μClampAt (N : ℕ) (β : ℝ) : ℝ := if 0 ≤ β then μYMAt N β else 0
 
-/-- **The gap model over an ARBITRARY mode family, from the two named residuals.** `Capacity.modelOfJunction`
-at the YM floor and the clamped tension: the modes `m`, their index type `Idx`, the active sets `s`, the
-weights `P` and the gap function `Δ` are all FREE, and `hread` is derived from
+/-- A `LatticeYM` over an arbitrary mode family: `Capacity.modelOfJunction` at floor `κ₀YM`, both
+`κ₀` and `κ` set to `κ₀YM`, tension `μClampAt N`, and the direction profile `(ymModelAt N).R`. The
+index type `Idx`, the active sets `s`, the weights `P`, the modes `m` and the functions `Δ`, `c` are
+all arguments, and the structure's `hread` field is derived from three hypotheses:
 
-* `hdom : ‖m β k‖ ≤ e^{−Δ β}` — the modes decay at the transfer gap,
-* `hfe  : κ₀ − μ β ≤ c β` — the centre-vortex free-energy junction ('t Hooft 1978 / Greensite 2003), OPEN,
-* `hgap : c β ≤ Δ β` — the contraction rate lower-bounds the transfer gap, OPEN.
+* `hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β)`,
+* `hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β`,
+* `hgap : ∀ β, c β ≤ Δ β`.
 
-WHAT THIS BUYS AND WHAT IT DOES NOT. It makes the mode family an input rather than a definition, so the
-assumption is visible in the statement instead of hidden in a `def`. It is NOT logically lighter: at `κ = κ₀`
-the trio `hdom ∧ hfe ∧ hgap` recombines to exactly `‖m β k‖ ≤ e^{−(κ₀−μ)}`, the free `c` cancelling
-(`Capacity.hread_of_junction`'s own scope note). The gain is legibility, which is the point — a reader can now
-see which box each statement is in. -/
+Taking the mode family as an argument puts the assumption in the signature rather than in a
+definition. It is not a weaker assumption: at `κ = κ₀` the three recombine to
+`‖m β k‖ ≤ Real.exp (-(κ₀YM - μClampAt N β))`, with `c` cancelling, as
+`Capacity.hread_of_junction`'s own scope note records.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def gapModelOf (N : ℕ) {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ)
     (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) : LatticeYM :=
   Capacity.modelOfJunction s P m (ymModelAt N).R κ₀YM κ₀YM (μClampAt N) Δ c (le_refl _) hdom hfe hgap
 
-/-- **A1 for the junction model — confinement, unconditional.** A1 reads only `μ` and `κ₀`, which
-`gapModelOf` fixes to `μClamp` and `κ₀YM` regardless of the mode family, so the proof is independent of
-`m`, `Δ` and `c`: `hconf` on the physical half-line, the clamp below. -/
+/-- `A1_YM (gapModelOf N s P m Δ c hdom hfe hgap)` from `hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM`.
+`A1_YM` reads only the `μ` and `κ₀` fields, which `gapModelOf` fixes to `μClampAt N` and `κ₀YM`
+whatever the mode family, so the proof splits on `0 ≤ β`: `hconf` on the physical branch, `κ₀YM_pos`
+on the clamped one. It does not use `m`, `Δ`, `c`, `hdom`, `hfe` or `hgap`.
+
+DERIVED: `0` is the boundary of the physical half-line, both in `hconf` and in the case split. -/
 theorem gapModelOf_A1 (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
@@ -150,7 +229,10 @@ theorem gapModelOf_A1 (N : ℕ) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ�
   · simp only [μClampAt, if_pos h]; exact hconf β h
   · simp only [μClampAt, if_neg h]; have := κ₀YM_pos; linarith
 
-/-- **A2 for the junction model — isotropy.** `gapModelOf` keeps `(ymModelAt N).R`, so this is `ym_A2_at N` unchanged. -/
+/-- `A2_YM (gapModelOf N s P m Δ c hdom hfe hgap)`, which is `ym_A2_at N` unchanged: `gapModelOf`
+keeps `(ymModelAt N).R` as its direction profile, so the isotropy clause is the same statement.
+
+DERIVED: no numeral appears in the statement. -/
 theorem gapModelOf_A2 (N : ℕ) {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
     (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
     (hfe : ∀ β, κ₀YM - μClampAt N β ≤ c β) (hgap : ∀ β, c β ≤ Δ β) :
@@ -158,13 +240,18 @@ theorem gapModelOf_A2 (N : ℕ) {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ
 
 /-! ### The collapsed instance
 
-`gapModel` is `gapModelOf` at the one mode family for which the two residuals hold by `le_refl`: the single
-mode DEFINED as `e^{−(κ₀−μ)}`. It is kept because the collapsed case is the anti-vacuity witness for the
-junction form, and for nothing else — see its docstring. -/
+`gapModel` is `gapModelOf` at the one mode family for which `hfe` and `hgap` hold by `le_refl`: a
+single mode defined to be `exp (-(κ₀YM - μClampAt N β))`. In that instance the two hypotheses carry
+no content, which is what its own docstring records. -/
 
-/-- **The constructed SU(N) full model over an ARBITRARY mode family** — the junction gap data (with A1/A2
-discharged) and the OS-data family. The mode family and the two residuals `hfe`, `hgap` are inputs. -/
--- DERIVED: the `0` below is the hypothesis `0 ≤ β`, the boundary of the physical half-line.
+/-- A `FullModel` at rank `N`: the `gap` field is `gapModelOf` over the caller's mode family, `h1`
+and `h2` are `gapModelOf_A1` and `gapModelOf_A2`, and the `measure` field is `ymFamily N hev`. The
+mode family and the hypotheses `hdom`, `hfe`, `hgap`, `hconf`, `hev` are all arguments; the two
+fields are independent, nothing in `FullModel` relating the gap datum to the measure family.
+-/
+-- DERIVED: `0` is the boundary of the physical half-line in `hconf`; in `hev`, `2 * k` is the even
+-- extent and `2 ≤ k` is `4 ≤ N + 1`, both read off `wilson_reflection_positive_at_even`; the `1` in
+-- `N + 1` is the lag arity offset.
 noncomputable def ymFullModelOf (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k)
     (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
@@ -177,16 +264,16 @@ noncomputable def ymFullModelOf (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 
 
 /-! ## The existence-and-gap problem, for an SU(N) Wilson realisation with named physical parameters -/
 
-/-- Physical parameters at rank `N`: unit box `L = 1`, confinement scale `k⋆ = 2π` (so the infrared
-cutoff `c = k⋆L/(2π) = 1` matches the family's `c`).
+/-- `WilsonParams` at rank `N`: box size `L := 1`, confinement scale `kstar := 2 * Real.pi`, so the
+derived infrared cutoff `irCutoff = kstar * L / (2 * Real.pi)` is `1`, matching `ymFamily`'s `c`.
+`ym_hc` states that match.
 
-THE RANK IS A PARAMETER, not a numeral. It was `2` here while the gap side was read at its own `N` and
-the OS measure was built at `3` — three ranks in one record, none tied to the others. Taking `N` as an
-argument means a realisation is read at ONE rank throughout, and `ym_wilson_gauge_su3` below is the
-instantiation where that rank is the Clay problem's.
+The rank is the argument `N`, with `hN : 2 ≤ N`, so a realisation built from this record is read at
+one rank throughout.
 
-DERIVED: `1` is the unit box and `2π` the confinement scale `k⋆` chosen so `k⋆L/(2π) = 1` matches the
-family's infrared cutoff exactly — an identity between two named quantities, not a magnitude. -/
+DERIVED: `2` in `hN` is the smallest rank at which `SU(N)` is non-abelian; `1` is the unit box `L`;
+`2 * Real.pi` is the confinement scale `k⋆`, fixed so that `k⋆ * L / (2 * Real.pi) = 1` equals the
+family's infrared cutoff — an identity between two named quantities, not a magnitude. -/
 noncomputable def ymParams (N : ℕ) (hN : 2 ≤ N) : WilsonParams where
   N := N
   hN := hN
@@ -195,17 +282,25 @@ noncomputable def ymParams (N : ℕ) (hN : 2 ≤ N) : WilsonParams where
   kstar := 2 * Real.pi
   hk := by positivity
 
-/-- The infrared-cutoff match `c = k⋆L/(2π)`, shared by every realisation below (it is a fact about
-`ymParams` and `ymFamily`, independent of the gap side's mode family). -/
+/-- `(ymFamily N hev).c = (ymParams N hN).irCutoff`: both sides are `1`, the right after
+`2 * Real.pi * 1 / (2 * Real.pi)` is reduced by `div_self`. It is the `hc` field every
+`WilsonRealization` below needs, and it involves neither the gap side nor any mode family.
+
+DERIVED: `1` is the family's `c` and the box size `L`; `2 * Real.pi` is `k⋆` and the divisor in
+`irCutoff`; in `hev`, `2 * k` is the even extent and `2 ≤ k` is `4 ≤ N + 1`; `2 ≤ N` is the smallest
+non-abelian rank. -/
 theorem ym_hc (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) (hN : 2 ≤ N) :
     ((ymFamily N hev).c) = (ymParams N hN).irCutoff := by
   show (1 : ℝ) = 2 * Real.pi * 1 / (2 * Real.pi)
   rw [mul_one, div_self (show (0 : ℝ) < 2 * Real.pi by positivity).ne']
 
-/-- **The SU(N) Wilson realisation over an ARBITRARY mode family.** Physical parameters + the junction full
-model, with the infrared cutoff matched to the physical `k⋆L/(2π)`. -/
--- DERIVED: `0` is the physical half-line boundary `0 ≤ β`; `2` in `hN` is the arity of a special
--- unitary group, the smallest rank at which `SU(N)` is non-abelian, not a size.
+/-- A `WilsonRealization` at rank `N`: `params := ymParams N hN`, `model := ymFullModelOf ...` over
+the caller's mode family, and `hc := ym_hc N hev hN`, which matches the family's infrared cutoff to
+`k⋆ * L / (2 * Real.pi)`.
+-/
+-- DERIVED: `0` is the physical half-line boundary in `hconf`; `2` in `hN` is the smallest rank at
+-- which `SU(N)` is non-abelian, not a size; in `hev`, `2 * k` is the even extent and `2 ≤ k` is
+-- `4 ≤ N + 1`; the `1` in `N + 1` is the lag arity offset.
 noncomputable def ym_wilson_of (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k) (hN : 2 ≤ N)
     (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)
@@ -215,23 +310,29 @@ noncomputable def ym_wilson_of (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2
   model := ymFullModelOf N hev hconf s P m Δ c hdom hfe hgap
   hc := ym_hc N hev hN
 
-/-- **The existence-and-gap statement for an SU(N) Wilson realisation, over an ARBITRARY mode family.** For
-any mode family meeting the three junction inputs (`hdom`, and the two OPEN residuals `hfe`, `hgap`): the gap
-conjunct `C(τ) → 0`, non-triviality, `SO(4)`, and the measure side's limit object.
+/-- `existence_and_gap_of_wilson` applied to `ym_wilson_of`, for any mode family satisfying `hdom`,
+`hfe` and `hgap`. The conclusion is a conjunction of two independent parts.
 
-THE TWO SIDES ARE NOT THE SAME STRENGTH, and the conjunction hides that. Stated plainly:
+The gap part: at every `β`, `‖∑ k ∈ s β, P β k * m β k ^ τ‖ → 0` as `τ → ∞`; non-triviality
+`μClampAt N β - κ₀YM < 0`; and `(ymModelAt N).R d = (ymModelAt N).R d'` for all directions. It is
+conditional on `hfe` and `hgap`, which are hypotheses supplied by the caller, and on `hconf`.
 
-* **Gap side** — conditional on `hfe`/`hgap`, which are open. Footprint = the 4 named cited axioms
-  (`wilson_reflection_positive_at`).
-* **Measure side** — what `Measure.continuum_of_family` proves is a bounded, nonnegative, invariance-preserving
-  SUBSEQUENTIAL POINTWISE LIMIT `q : J → ℝ` over a countable index set, by a diagonal Bolzano–Weierstrass
-  argument. It is not a measure, not on `ℝ⁴`, and not OS0–OS4: there is no Schwinger function, no reflection
-  positivity of the limit as a quadratic form, no clustering and no regularity. Its invariance is inherited
-  because it was built in — `(ymFamily N hev).os_euc` is `rfl`, since `QYM` reads only the label `j.2.2` that the
-  `Perm (Fin 4)` actions leave fixed, and the same holds for any `Q` reading only that label.
+The measure part: a subsequence `φ` and a pointwise limit `q : JYM → ℝ` of the reflected forms, with
+`|q j| ≤ ⌈c⌉₊ * B`, `0 ≤ q j`, and invariance under both actions. What
+`Measure.continuum_of_family` supplies is that limit — obtained by a diagonal Bolzano–Weierstrass
+argument over a countable index set — and not a measure, not one on `ℝ⁴`, and not OS0–OS4: there is
+no Schwinger function, no reflection positivity of the limit as a quadratic form, no clustering and
+no regularity. The invariance holds by `rfl`, since `QYM` reads only `j.2.2` and the
+`Equiv.Perm (Fin 4)` actions move `j.1` and `j.2.1`.
 
-`ymFamily` is a MINIMAL interface witness (one hardwired supra-edge mode, `Q` clamped into `[0,1]`), tied to
-the ensemble only through `QYM`/`os_rp`. Read this theorem as the interface composition it is. -/
+`ymFamily` realises the `LatticeYMFamily` interface with one supra-edge mode and `QYM` truncated
+above by `1`, tied to the Wilson ensemble through `QYM` and `os_rp` alone.
+
+DERIVED: `4` is the spacetime dimension in the permutation groups; in `hev`, `2 * k` is the even
+extent and `2 ≤ k` is `4 ≤ N + 1`, and `2 ≤ N` is the smallest non-abelian rank; `1` in `N + 1` is
+the lag arity offset; `0` is the boundary of the physical half-line in `hconf`, the limit point of
+the `Tendsto` clauses, the level non-triviality compares against, and the lower bound asserted on
+`q`. -/
 theorem ym_existence_and_gap_of_junction (N : ℕ) (hev : ∃ k : ℕ, N + 1 = 2 * k ∧ 2 ≤ k)
     (hN : 2 ≤ N) (hconf : ∀ β, 0 ≤ β → μYMAt N β < κ₀YM)
     {Idx : Type} (s : ℝ → Finset Idx) (P m : ℝ → Idx → ℂ) (Δ c : ℝ → ℝ)

@@ -2,28 +2,31 @@ import Mathlib
 import MassGap.WilsonHypercubic
 
 /-!
-# MassGap.PlaqCount — the plaquette type is ORDERED, so the action counts every plane twice
+# MassGap.PlaqCount — the ordered plaquette type and the factor of two in the coupling
 
-`WilsonHypercubic.Plaq d n = (Fin d × Fin d) × Site d n` carries an ORDERED pair of directions, so
-`((μ,ν),x)` and `((ν,μ),x)` are two distinct elements of the type and `System.action` — a sum over
-`Finset.univ : Finset (Plaq d n)` — visits both. Their boundary words are inverse to each other
-(`hol_swap`) and `Re tr` does not see inversion on `SU(N)` (`re_trace_inv`), so the two contribute the
-SAME Wilson density. The degenerate pairs `μ = ν` contribute nothing (`hol_diag`).
+`WilsonHypercubic.Plaq d n = (Fin d × Fin d) × Site d n` carries an ordered pair of directions, so
+`((μ,ν),x)` and `((ν,μ),x)` are distinct elements and `System.action` — a sum over
+`Finset.univ : Finset (Plaq d n)` — visits both. This module proves that the two contribute equally
+and that the diagonal contributes nothing, so the sum over the ordered type is twice the sum over
+`μ < ν`.
 
-Hence `plaq_ordered_double_counts`: the action density summed over `Plaq` is exactly TWICE the sum
-over the planes with `μ < ν`, which is the range the standard Wilson action sums over. The
-consequence for the coupling is `boltz_eq_std`:
+The chain: `hol_word` writes the plaquette holonomy as the explicit four-letter product;
+`hol_swap` shows the swapped ordering gives the inverse word; `coe_inv_eq_conjTranspose` and
+`re_trace_inv` show `Re tr` is unchanged by inversion on `SU(N)`; `wilsonDensity_hol_swap` combines
+them. `hol_diag` and `wilsonDensity_hol_diag` handle `μ = ν`. `sum_pair_eq_two_mul_lt` is the
+`Finset` combinatorics for any symmetric function vanishing on the diagonal, and
+`plaq_ordered_double_counts` applies it.
+
+The consequence for the Boltzmann weight is `boltz_eq_std`:
 
     (sysWilson N d n).boltz β U = exp (-(2β) · Σ_{μ<ν} φ_W)
 
-so this system's `β` at the Lean normalisation is HALF the standard Wilson `β`:
+so the `β` this system carries stands where a source summing each plane once writes `2β`. The
+conversion is a theorem here rather than an inference, so a number quoted against the once-per-plane
+normalisation can be moved without re-deriving it.
 
-    β_lean = β_std / 2 .
-
-Nothing downstream changes: every theorem in the development quantifies over `β` (or takes an
-interval of it as a hypothesis), and `β ↦ 2β` is a bijection of `[0,∞)` fixing `0`. What the file
-supplies is the conversion as a theorem rather than an inference, so that any number read against a
-source using the standard normalisation can be converted without re-deriving it.
+Scope: `wilsonDensity_hol_diag` and everything downstream of it require `N ≠ 0`. Nothing here
+constrains `d`, `n` or `β`, and `boltz_eq_std` holds at every real coupling including negative ones.
 
 Build: `python research/code/lean_build.py build MassGap.PlaqCount`.
 -/
@@ -37,8 +40,14 @@ variable {d n N : ℕ} [NeZero n]
 
 /-! ### The boundary word, and what swapping the two directions does to it -/
 
-/-- **The plaquette holonomy, as the explicit ordered word.** `wilsonHol` is the product of the
-boundary word, and `bd` is the four-letter word of the hypercubic plaquette. -/
+/-- The holonomy of the hypercubic plaquette `((μ, ν), x)` written out:
+`U (μ, x) * U (ν, shift μ x) * (U (μ, shift ν x))⁻¹ * (U (ν, x))⁻¹`. The boundary word `bd` has four
+letters, so unfolding `wilsonHol` gives this product up to associativity and the trailing unit, which
+`group` clears.
+
+Holds for every `μ`, `ν` including `μ = ν`, and for every site and configuration.
+
+DERIVED: no numeral. The `⁻¹` is the group inverse of `SU N`. -/
 theorem hol_word (μ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonHol (bd (d := d) (n := n)) (((μ, ν), x) : Plaq d n) U
       = U (μ, x) * U (ν, shift μ x) * (U (μ, shift ν x))⁻¹ * (U (ν, x))⁻¹ := by
@@ -47,22 +56,33 @@ theorem hol_word (μ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU
   rw [h]
   group
 
-/-- **The two orderings of one plane have inverse holonomies.** Reading the loop with the directions
-swapped traverses the same four links in the opposite order and with opposite orientations, which is
-exactly the inverse of the word. -/
+/-- The holonomy at `((ν, μ), x)` is the group inverse of the holonomy at `((μ, ν), x)`: swapping the
+two directions reverses the order of the four letters and flips each orientation. Both sides are
+expanded by `hol_word` and the identity is closed by `group`.
+
+DERIVED: no numeral. The `⁻¹` is the group inverse. -/
 theorem hol_swap (μ ν : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonHol (bd (d := d) (n := n)) (((ν, μ), x) : Plaq d n) U
       = (wilsonHol (bd (d := d) (n := n)) (((μ, ν), x) : Plaq d n) U)⁻¹ := by
   rw [hol_word, hol_word]
   group
 
-/-- **A degenerate pair retraces itself**, so its holonomy is the identity. -/
+/-- The holonomy of a degenerate plaquette `((μ, μ), x)` is the group identity: the four-letter word
+becomes `U (μ, x) * U (μ, shift μ x) * (U (μ, shift μ x))⁻¹ * (U (μ, x))⁻¹`, which cancels.
+
+DERIVED: `1` is the identity element of `SU N`, the value the holonomy takes; it is a group element
+and not a number. -/
 theorem hol_diag (μ : Fin d) (x : Site d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonHol (bd (d := d) (n := n)) (((μ, μ), x) : Plaq d n) U = 1 := by
   rw [hol_word]
   group
 
-/-- The group inverse of an `SU(N)` element is its conjugate transpose. -/
+/-- The matrix underlying `u⁻¹`, for `u : SU N`, is the conjugate transpose of the matrix underlying
+`u`. Membership in `specialUnitaryGroup` gives membership in `unitaryGroup`, hence both one-sided
+identities `uᴴu = 1` and `uuᴴ = 1`; the inverse is then pinned by associativity.
+
+DERIVED: no numeral. `N` is the section variable and `Fin N` the matrix index type; the statement has
+no literal. -/
 theorem coe_inv_eq_conjTranspose (u : MassGap.SUN.SU N) :
     ((u⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)
       = Matrix.conjTranspose (u : Matrix (Fin N) (Fin N) ℂ) := by
@@ -90,17 +110,27 @@ theorem coe_inv_eq_conjTranspose (u : MassGap.SUN.SU N) :
           * Matrix.conjTranspose (u : Matrix (Fin N) (Fin N) ℂ) := by rw [Matrix.mul_assoc]
     _ = Matrix.conjTranspose (u : Matrix (Fin N) (Fin N) ℂ) := by rw [h2, Matrix.one_mul]
 
-/-- **`Re tr` does not see inversion on `SU(N)`**: the inverse is the conjugate transpose, whose
-trace is the conjugate of the trace, and conjugation fixes the real part. -/
+/-- The real part of the trace is unchanged by inversion on `SU N`:
+`(tr u⁻¹).re = (tr u).re`. By `coe_inv_eq_conjTranspose` and `Matrix.trace_conjTranspose`, the trace
+of the inverse is the complex conjugate of the trace, and conjugation fixes the real part.
+
+The imaginary parts differ by a sign; the statement is about the real part only.
+
+DERIVED: no numeral. -/
 theorem re_trace_inv (u : MassGap.SUN.SU N) :
     (Matrix.trace ((u⁻¹ : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
       = (Matrix.trace ((u : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re := by
   rw [coe_inv_eq_conjTranspose, Matrix.trace_conjTranspose]
   simp
 
-/-- **THE TWO ORDERINGS OF ONE PLANE CARRY THE SAME WILSON DENSITY.** This is what makes the ordered
-plaquette type a double count rather than a different theory: both copies of a geometric plaquette
-contribute the same energy. -/
+/-- The Wilson density at `((ν, μ), x)` equals the Wilson density at `((μ, ν), x)`: `hol_swap` turns
+one holonomy into the inverse of the other, and `re_trace_inv` shows `wilsonDensity`, which reads
+only the real part of the trace, cannot tell them apart.
+
+So the two orderings of a plane carry the same energy, which is what makes the ordered type a
+repetition rather than a different action.
+
+DERIVED: no numeral. -/
 theorem wilsonDensity_hol_swap (μ ν : Fin d) (x : Site d n)
     (U : Link d n → MassGap.SUN.SU N) :
     wilsonDensity (wilsonHol (bd (d := d) (n := n)) (((ν, μ), x) : Plaq d n) U)
@@ -109,7 +139,14 @@ theorem wilsonDensity_hol_swap (μ ν : Fin d) (x : Site d n)
   unfold wilsonDensity
   rw [re_trace_inv]
 
-/-- **A degenerate pair costs nothing**, so the diagonal of the plaquette type is inert in the sum. -/
+/-- The Wilson density at a degenerate plaquette `((μ, μ), x)` is `0`, for `N ≠ 0`: `hol_diag` sends
+the holonomy to the identity and `wilsonDensity_one` evaluates the density there.
+
+`N ≠ 0` is required because `wilsonDensity` normalises by `N`, so the value at the identity is only
+`0` when there is a colour index to divide by.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`, and the value of the density on the
+diagonal — which is what makes the diagonal inert in a sum. -/
 theorem wilsonDensity_hol_diag (hN : N ≠ 0) (μ : Fin d) (x : Site d n)
     (U : Link d n → MassGap.SUN.SU N) :
     wilsonDensity (wilsonHol (bd (d := d) (n := n)) (((μ, μ), x) : Plaq d n) U) = 0 := by
@@ -118,9 +155,17 @@ theorem wilsonDensity_hol_diag (hN : N ≠ 0) (μ : Fin d) (x : Site d n)
 
 /-! ### The double count, as a statement about sums -/
 
-/-- **A symmetric function vanishing on the diagonal sums over ORDERED pairs to twice its sum over
-`μ < ν`.** Pure `Finset` combinatorics: the `¬(a < b)` half is the `b < a` half plus a diagonal that
-contributes nothing, and `Prod.swap` is a bijection from `{a < b}` onto `{b < a}`. -/
+/-- For `g : Fin d × Fin d → ℝ` invariant under `Prod.swap` and vanishing on the diagonal, the sum
+over all ordered pairs equals twice the sum over the pairs with `p.1 < p.2`.
+
+`Finset` combinatorics only: `Prod.swap` is an injection from `{p.1 < p.2}` onto `{p.2 < p.1}`, and
+the complement of `{p.1 < p.2}` is `{p.2 < p.1}` together with a diagonal on which `g` is `0`.
+Nothing about a lattice, a group or a holonomy enters; `g` is any real function with those two
+properties.
+
+DERIVED: `0` is the value `g` takes on the diagonal, which is what lets the two strict halves be
+compared without a correction. `2` is the number of ordered pairs lying over each unordered pair
+`{μ, ν}` with `μ ≠ ν`, so it is the size of the `Prod.swap` orbit and not a chosen coefficient. -/
 theorem sum_pair_eq_two_mul_lt {d : ℕ} (g : Fin d × Fin d → ℝ)
     (hsymm : ∀ p : Fin d × Fin d, g p.swap = g p)
     (hdiag : ∀ a : Fin d, g (a, a) = 0) :
@@ -164,9 +209,16 @@ theorem sum_pair_eq_two_mul_lt {d : ℕ} (g : Fin d × Fin d → ℝ)
   rw [← hsplit, hnot, hTS]
   ring
 
-/-- **THE ORDERED PLAQUETTE TYPE DOUBLE-COUNTS EVERY PLANE.** The Wilson action density summed over
-`Plaq d n` — which is what `System.action` sums, since `Finset.univ` ranges over the whole type — is
-exactly twice the sum over the planes with `μ < ν`, the range the standard Wilson action uses. -/
+/-- For `N ≠ 0`, the Wilson density summed over all of `Plaq d n` is twice its sum over the
+plaquettes with `q.1.1 < q.1.2`. The filtered set factors as a product of the direction filter with
+all of `Site d n`, so the statement reduces by `Finset.sum_product` to `sum_pair_eq_two_mul_lt` at
+the site-summed density, whose symmetry and diagonal-vanishing are `wilsonDensity_hol_swap` and
+`wilsonDensity_hol_diag`.
+
+The `<` is the order on `Fin d`, so the filtered range is the planes counted once each.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`, inherited from
+`wilsonDensity_hol_diag`. `2` is `sum_pair_eq_two_mul_lt`'s, the number of orderings of a plane. -/
 theorem plaq_ordered_double_counts (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N) :
     ∑ q : Plaq d n, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
       = 2 * ∑ q ∈ Finset.univ.filter (fun q : Plaq d n => q.1.1 < q.1.2),
@@ -183,21 +235,35 @@ theorem plaq_ordered_double_counts (hN : N ≠ 0) (U : Link d n → MassGap.SUN.
     (fun p => Finset.sum_congr rfl (fun x _ => wilsonDensity_hol_swap p.1 p.2 x U))
     (fun a => Finset.sum_eq_zero (fun x _ => wilsonDensity_hol_diag hN a x U))
 
-/-- The system's action is the sum of the density over the ordered plaquette type. -/
+/-- `(sysWilson N d n).action U` unfolds definitionally to the sum of `wilsonDensity` over the whole
+ordered plaquette type `Plaq d n`. Proved by `rfl`; it records which range `System.action` sums over.
+
+DERIVED: no numeral. -/
 theorem sysWilson_action (U : Link d n → MassGap.SUN.SU N) :
     (sysWilson N d n).action U
       = ∑ q : Plaq d n, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U) := rfl
 
-/-- **The action at the Lean normalisation is twice the standard Wilson action.** -/
+/-- For `N ≠ 0`, `(sysWilson N d n).action U` equals twice the Wilson density summed over the
+plaquettes with `q.1.1 < q.1.2`. `sysWilson_action` followed by `plaq_ordered_double_counts`.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`; `2` is the number of orderings of a
+plane, carried from `plaq_ordered_double_counts`. -/
 theorem sysWilson_action_eq_two_mul (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N) :
     (sysWilson N d n).action U
       = 2 * ∑ q ∈ Finset.univ.filter (fun q : Plaq d n => q.1.1 < q.1.2),
           wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U) := by
   rw [sysWilson_action, plaq_ordered_double_counts hN U]
 
-/-- **`β_lean = β_std / 2`, AS A THEOREM.** The Boltzmann weight this system carries at coupling `β`
-is the STANDARD Wilson weight — the one summing each plane once — at coupling `2β`. So a number
-quoted against a source using the standard normalisation is `2β` where this tree writes `β`. -/
+/-- For `N ≠ 0` and any real `β`, the Boltzmann weight of `sysWilson N d n` at coupling `β` is
+`exp (-(2 * β) * Σ_{q.1.1 < q.1.2} wilsonDensity …)` — the weight built from the once-per-plane sum,
+but at coupling `2 * β`. Unfolds `System.boltz` and rewrites by `sysWilson_action_eq_two_mul`.
+
+The conversion as an equation: where this system writes `β`, a formulation summing each plane once
+writes `2 * β`. `β` is unrestricted in sign.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`. `2` is the number of orderings of a
+plane, carried from `sysWilson_action_eq_two_mul` and appearing here inside the exponent, where it
+multiplies `β`. -/
 theorem boltz_eq_std (hN : N ≠ 0) (β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
     (sysWilson N d n).boltz β U
       = Real.exp (-(2 * β) * ∑ q ∈ Finset.univ.filter (fun q : Plaq d n => q.1.1 < q.1.2),

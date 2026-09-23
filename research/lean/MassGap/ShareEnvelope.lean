@@ -2,168 +2,125 @@ import Mathlib
 import MassGap.ContactDominance
 
 /-!
-# The far share, condensed onto a geometric sequence of cuts
+# MassGap.ShareEnvelope — condensed far shares, and a contact-relative power law
 
-`ContactDominance.substrate_of_share_envelope` discharges the substrate hypothesis from a profile
-`a : ℕ → ℝ` with `farShare ≤ a` and `∑ (2m+1)·a m < ∞` — a statement about EVERY cut. This file cuts
-that down to a geometric sequence of cuts, exactly, and then reads the resulting condition as a
-ratio, which removes the read's normalisation from it entirely.
+Two sufficient conditions for `∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B`, and one equivalence.
 
-## The main result: an EQUIVALENCE
+## The condensation
 
-`farShare` is antitone in the cut (`farShare_antitone`) with no hypothesis beyond `p ≥ 0`, which the
-read interface already gives. That alone makes the layer cake comparable, in BOTH directions, to its
-condensation onto the cuts `cut m₀ j` — `m₀`, `2m₀+1`, `4m₀+3`, … , the cuts at which `m+1` has
-doubled `j` times:
+`farShare R m` is the probability a read puts beyond circle distance `m`. It is antitone in the cut
+with no hypothesis beyond `Moment.Read`'s own nonnegativity (`farShare_antitone`), which brackets the
+layer cake from both sides by its condensation onto the cuts `cut m₀ j` — `m₀`, `2 * m₀ + 1`,
+`4 * m₀ + 3`, … , the cuts at which `m + 1` has doubled `j` times:
 
-    3(m₀+1)²·∑_{j<J} 4^j·farShare R (cut m₀ (j+1))          (`condensed_le_layer`)
-      ≤ ∑_{m ≤ cut m₀ J} (2m+1)·farShare R m
-      ≤ (m₀+1)²·(1 + 3·∑_{j<J} 4^j·farShare R (cut m₀ j))   (`layer_le_condensed`)
+    3 * (m₀+1)^2 * ∑_{j<J} 4^j * farShare R (cut m₀ (j+1))          (`condensed_le_layer`)
+      ≤ ∑_{m ≤ cut m₀ J} (2m+1) * farShare R m
+      ≤ (m₀+1)^2 * (1 + 3 * ∑_{j<J} 4^j * farShare R (cut m₀ j))    (`layer_le_condensed`)
 
-so for every `m₀`
+`substrate_iff_dyadic_shares` reads off the equivalence: for every `m₀`,
 
-    (∃ B, ∀ N β, d2At N β ≤ B)  ↔  (∃ S, ∀ N β J, ∑_{j<J} 4^j·farShare (readYMAt N β) (cut m₀ j) ≤ S)
+    (∃ B, ∀ N β, d2At N β ≤ B) ↔ (∃ S, ∀ N β J, ∑_{j<J} 4^j * farShare (readYMAt N β) (cut m₀ j) ≤ S).
 
-(`substrate_iff_dyadic_shares`). Nothing is given away in either direction: the whole content of the
-substrate hypothesis is that those `4^j`-weighted shares stay bounded, and every cut off that
-sequence is already controlled by antitonicity. The `4^j` is the weight of one block of cuts over the
-block before it, `((m₀+1)2^{j+1})² − ((m₀+1)2^j)²` over `3(m₀+1)²`; it is Cauchy condensation for the
-weight `2m+1`, and it is exact because that weight IS the discrete derivative of the square.
+This is Cauchy condensation for the weight `2m + 1`, exact because that weight is the discrete
+derivative of the square: `4^j` is `((m₀+1)2^{j+1})^2 - ((m₀+1)2^j)^2` over `3 (m₀+1)^2`.
 
-## The sufficient ratio form
+## The doubling contraction
 
-Bounding the condensed sum by a geometric series gives the criterion the rest of the file is about:
+Bounding the condensed sum by a geometric series gives `circ_moment_le_of_share_doubling`:
 
-    farShare R (2m+1) ≤ θ · farShare R m  for m ≥ m₀,  with 0 ≤ θ < 1/4
-      ⟹  ∑ d, p d · circLag(d)² ≤ (m₀+1)² · (1 + 3/(1 − 4θ))
+    farShare R (2m+1) ≤ θ * farShare R m  for m ≥ m₀, with 0 ≤ θ < 1/4
+      ⟹  ∑ d, p d * circLag d ^ 2 ≤ (m₀+1)^2 * (1 + 3/(1 - 4θ))
 
-(`circ_moment_le_of_share_doubling`), uniformly in the aperture, hence `substrate_of_share_doubling`
-and `yang_mills_of_share_doubling`.
+uniformly in the aperture, hence `substrate_of_share_doubling`, `confinement_of_share_doubling` and
+`yang_mills_of_share_doubling`. Nothing is assumed below `m₀`: `farShare ≤ 1` caps the near block at
+`(m₀+1)^2` on its own, and `layer_partial_le` runs the finite induction in one pass.
 
-`1/4` is DERIVED, not chosen, and the correspondence with the exponent threshold of
-`ContactDominance` is EXACT rather than asymptotic: on a power profile `a m = C (m+1)^{-s}` the ratio
-`a (2m+1) / a m` is identically `2^{-s}`, so `θ < 1/4` says exactly `s > 2`. The `4` is the square
-weight's own doubling, `((2m+2)/(m+1))² = 4`; the `3` is `4 − 1`, the weight of one block of cuts as
-a multiple of the block before it.
+The threshold `1/4` corresponds exactly to `ContactDominance`'s exponent threshold `s > 2`: on a
+power profile `a m = C (m+1)^(-s)` the ratio `a (2m+1) / a m` is identically `2^(-s)`. That exactness
+is what fixes the step as `m ↦ 2m + 1` rather than `m ↦ 2m`; under the latter the contraction of a
+power would be `((m+1)/(2m+1))^s`, larger than `2^(-s)` at every finite `m`.
 
-Nothing is assumed below `m₀`: as in `ContactDominance.circ_moment_le_of_tail_envelope`, the near
-block is capped by `farShare ≤ 1` on its own, here at `(m₀+1)²`. That near-block bound is restated
-rather than reused: `circ_moment_le_of_tail_envelope` reaches it through a `Summable` envelope and a
-`tsum`, and the envelope this criterion implies is indexed by `⌊log₂((m+1)/(m₀+1))⌋`, whose tsum is a
-detour. The finite induction `layer_partial_le` runs the whole thing in one pass.
+`farShare_doubling_iff_tail_mass` divides the normalisation out of both sides, so
+`substrate_of_tail_mass_doubling` states the same condition on `wilsonCorrAt` alone, with no
+normalisation, envelope or lower bound on `∑ d, wilsonCorrAt N β d`. `scaleRead`,
+`farShare_scale_invariant`, `circ_moment_scale_invariant` and `mass_floor_is_not_scale_free` compare
+that with `ContactDominance.circ_moment_le_of_rho_envelope`, which carries a floor `c ≤ ∑ ρ` with
+`c > 0`: the conclusion and the share are invariant under `ρ ↦ t * ρ` and the floor is not.
 
-## Why the step is `m ↦ 2m+1` and not `m ↦ 2m`
+## The contact-relative power law
 
-The cut variable that matters is `m+1`, because the near block below `m` weighs `m²` while the first
-lag beyond it weighs `(m+1)²`, and `ContactDominance`'s envelopes are powers of `m+1`. Under
-`m ↦ 2m` a power `(m+1)^{-s}` contracts by `((m+1)/(2m+1))^s`, which exceeds `2^{-s}` at every finite
-`m` — the criterion would then be strictly stronger than the exponent threshold it is meant to
-match, and `ContactDominance.squareRead` would NOT witness sharpness at `1/4`. Under `m ↦ 2m+1` the
-contraction is identically `2^{-s}` and `squareRead` saturates `1/4` exactly
-(`squareRead_quarter_doubling`). The parametrisation is forced by the weight, not chosen.
+`substrate_of_contact_relative_decay` takes
 
-## Why the ratio form matters
+    wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d) ^ 4   for circLag d ≥ m₀
 
-`farShare R m = (∑_{circLag > m} ρ d) / (∑_d ρ d)`, so the normalisation divides out of BOTH sides of
-`farShare R (2m+1) ≤ θ · farShare R m`, and the criterion is EQUIVALENT to the same inequality on the
-raw tail masses (`farShare_doubling_iff_tail_mass`). `substrate_of_tail_mass_doubling` states it that
-way: a condition on `wilsonCorrAt` alone — no normalisation, no envelope, and no lower bound on
-`∑ d, wilsonCorrAt N β d`.
+uniformly in aperture and coupling. No normalisation, total mass, floor or rate appears in it:
+`contact_le_total` gives `ρ 0 ≤ ∑ ρ` from nonnegativity alone, so the contact term normalises from
+inside, and `contact_relative_scale_invariant` makes the condition invariant under `ρ ↦ t * ρ`
+exactly as the conclusion is. `p_le_one` caps the near lags, so nothing is assumed below the cut.
+`substrate_of_inverse_eighth_decay` is the same at exponent `8`, the exponent the short-distance form
+of the connected `F²` correlation carries; `ρ(0)` and `ρ(d)` carry the same power of the coupling, so
+the ratio has no coupling in it at leading order.
 
-That last point is the reason for stating it. `ContactDominance.circ_moment_le_of_rho_envelope` needs
-a floor `c ≤ ∑ ρ` with `c > 0` alongside its envelope, and `mass_floor_is_not_scale_free` shows that
-pair is strictly stronger than the conclusion it is used for: the conclusion is invariant under
-`ρ ↦ t·ρ` (`farShare_scale_invariant`, `circ_moment_scale_invariant`) and the pair is not.
+`farShare_le_of_contact_relative` converts the law into the far-share envelope
+`farShare R m ≤ (2C/3)/m^3`, summed by telescoping (`quartic_step`, `inv_quartic_tail`) rather than
+by an integral comparison, so the constant is exact at every finite aperture. `cubicShare` and
+`substrate_of_contact_relative_share` route the same reduction through
+`ContactDominance.substrate_of_tail_envelope`.
 
-## What it does NOT do, and where each form sits
+## Scope and the sharpness statements
 
-It does not discharge the substrate hypothesis. `substrate_iff_dyadic_shares` is an equivalence, so it
-moves the obligation rather than reducing it; the doubling contraction is a SUFFICIENT special case
-of that equivalence and is STRICTLY STRONGER than `ContactDominance.substrate_of_tail_envelope` —
-a uniformly summable share envelope does not imply a uniform contraction, because a family of
-profiles may be flat across a doubling at a scale that runs off to infinity with the aperture while
-staying under one envelope. So the order is
-
-    doubling contraction  ⟹  condensed bound  ⟺  substrate hypothesis  ⟸  summable share envelope
-
-and only the middle link is an equivalence. Where the doubling form earns its place is that it is the
-only one of the four that mentions neither the size of the share nor the total mass.
-
-Like every other criterion in this tree it still has to be met by the Wilson measure at every
-coupling, and `ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity` applies
-verbatim: a contraction holding at each coupling with `θ` depending on `β` says nothing. What the
-form buys is that the hypothesis is a POWER law rather than a rate — `θ < 1/4` forces
-`farShare m ≲ (m+1)^{-log₂(1/θ)}` and nothing exponential — which is the side of
-`Substrate.bounded_moment_does_not_give_geometric_decay` the substrate hypothesis actually needs.
-
-## The correlator form: a power law against the read's own contact term
-
-The second half of the file leaves the share entirely. `substrate_of_contact_relative_decay` takes
-
-    wilsonCorrAt N β d ≤ C · wilsonCorrAt N β 0 / (circLag d)⁴   for  circLag d ≥ m₀
-
-— uniformly in aperture and coupling — and discharges the substrate hypothesis. No normalisation, no
-total mass, no floor and no rate appear in it: `ρ 0 ≤ ∑ ρ` holds from nonnegativity alone
-(`contact_le_total`), so the contact term normalises the read from inside, and the condition is
-scale-free under `ρ ↦ t·ρ` (`contact_relative_scale_invariant`) exactly as the conclusion is.
-`substrate_of_inverse_eighth_decay` is the same statement at the exponent the short-distance form of
-the connected `F²` correlation carries; since `ρ(0)` and `ρ(d)` carry the same power of the coupling,
-that ratio has no coupling in it at leading order, and `8` is five above the threshold.
-
-The threshold exponent here is EXACTLY `3` — one above the share's `2`, because the share has already
-absorbed a summation — and `cubic_contact_relative_gives_no_bound` shows that at `3` there is no
-bound at all. What the quartic law leaves, after one summation, is a CUBIC far-share envelope
-`(2C/3)/m³` (`farShare_le_of_contact_relative`, `cubicShare`), which is one full power above the
-share threshold `square_share_is_not_enough` shows is FALSE; the tail is summed by telescoping
-(`quartic_step`, `inv_quartic_tail`), so the constant is exact at every finite aperture rather than
-asymptotic.
-
-This is a SUFFICIENT condition and it gives something away: `contact_relative_is_strictly_stronger`
-exhibits `Substrate.tailRead`, whose moment is at most `1` at every aperture and which admits no
-`(C, m₀)` at exponent `4` at all. What remains open is what the first half of the file says it is —
-that ONE constant `C` covers every coupling.
-
-## Negative controls
-
-* `doubling_nonvacuous` — the contact read meets the hypothesis at `θ = 0` and its moment is `0`, so
-  the criterion is not an implication out of an unsatisfiable hypothesis.
-* `doubling_load_bearing` — `ContactDominance.midRead` satisfies exactly the two clauses
-  `wilson_reflection_positive_at` asserts, its far share is `1` at every cut below the antipode so it
-  admits NO `θ < 1` at any cut `m₀`, and its moments exceed every `B`. Drop the contraction and the
-  conclusion is false, not merely unproved.
-* `quarter_doubling_is_not_enough` — the threshold is EXACTLY `1/4`, and AT it the statement is
-  FALSE. `ContactDominance.squareRead` satisfies the contraction with `θ = 1/4` at every cut and
-  every aperture (`squareRead_quarter_doubling`) and its moments exceed every `B`. It is the same
-  family `ContactDominance.square_share_is_not_enough` uses: the two sharpness statements are one
-  fact in two parametrisations, which is what makes `θ = 1/4` and `s = 2` the same threshold.
-* `contact_relative_nonvacuous` — the contact read meets the correlator condition at `C = 0` and its
-  moment is `0`.
-* `contact_relative_load_bearing` — `ContactDominance.midRead` puts no weight at lag zero, so its
-  contact value is `0` and NO constant works at any cut, and its moments exceed every `B`. Drop the
-  condition and the conclusion is false, not merely unproved. It also says what the condition asks
-  for that a share condition does not: contact dominance.
-* `cubic_contact_relative_is_not_enough` / `cubic_contact_relative_gives_no_bound` — the threshold
-  exponent is EXACTLY `3`, and AT it there is no bound whatsoever: `cubeRead` obeys the condition at
-  exponent `3` with the constant `1` at every aperture and its moments exceed every `B`.
-* `contact_relative_is_strictly_stronger` — `Substrate.tailRead` satisfies the substrate hypothesis
-  with `B = 1` and admits no `(C, m₀)` at exponent `4`, so the correlator form is a sufficient
-  condition and not a restatement.
+* `substrate_iff_dyadic_shares` is an equivalence; the doubling contraction and the contact-relative
+  law are sufficient conditions. The contraction is strictly stronger than
+  `ContactDominance.substrate_of_tail_envelope`, and `contact_relative_is_strictly_stronger`
+  exhibits `Substrate.tailRead`, whose moment is at most `1` at every aperture and which admits no
+  `(C, m₀)` at exponent `4`.
+* Both conditions still have to hold uniformly in the coupling:
+  `ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity` applies, and a contraction
+  or a constant depending on `β` does not give the hypothesis. What each form fixes is the shape —
+  a power law with no rate in it, which is the side of
+  `Substrate.bounded_moment_does_not_give_geometric_decay` the substrate hypothesis uses.
+* `doubling_nonvacuous` and `contact_relative_nonvacuous`: `contactRead` meets each condition at
+  `θ = 0` and `C = 0` with moment zero, so neither is an implication out of an unsatisfiable
+  hypothesis.
+* `doubling_load_bearing` and `contact_relative_load_bearing`: `ContactDominance.midRead` admits no
+  `θ < 1` at any cut and no `C` at any cut, and its moments exceed every `B`. The second also shows
+  what the contact-relative condition asks for that a share condition does not — weight at short
+  lags.
+* `quarter_doubling_is_not_enough` and `quarter_doubling_gives_no_bound`: `squareRead` contracts by
+  exactly `1/4` at every cut and aperture with unbounded moments, so `θ < 1/4` is the hypothesis and
+  not a margin. It is the same family as `ContactDominance.square_share_is_not_enough`, since
+  `(m+1)^(-s)` contracts by exactly `2^(-s)` across `m ↦ 2m + 1`.
+* `cubic_contact_relative_is_not_enough` and `cubic_contact_relative_gives_no_bound`: `cubeRead`
+  obeys the contact-relative condition at exponent `3` with constant `1` at every aperture and has
+  unbounded moments. The threshold exponent is `3` — the moment weights by `k ^ 2` and the circle lag
+  has multiplicity two, so the weighted total is `∑ k^2 * C / k^s`, convergent exactly when `s > 3`.
+  It is one above the share's threshold `2` because the share has already absorbed a summation.
+* The axiom footprint of the `readYMAt` statements carries `wilson_reflection_positive_at`, from
+  which that read is constructed.
 -/
 
 namespace MassGap.ShareEnvelope
 
 open MassGap.Moment MassGap.ContactDominance
 
-/-! ### The far share is antitone in the cut, for free -/
+/-! ### The far share is antitone in the cut -/
 
-/-- Raising the cut shrinks the far set. -/
+/-- `farSet N m' ⊆ farSet N m` whenever `m ≤ m'`: raising the cut shrinks the far set. Both are
+filters of `Finset.univ` by `m < Moment.circLag d`, so `omega` settles the membership.
+
+DERIVED: no numeral appears in the statement. -/
 theorem farSet_subset {N : ℕ} {m m' : ℕ} (h : m ≤ m') : farSet N m' ⊆ farSet N m := by
   intro d hd
   simp only [farSet, Finset.mem_filter, Finset.mem_univ, true_and] at hd ⊢
   omega
 
-/-- **The far share is antitone in the cut.** No hypothesis beyond the read interface: `p ≥ 0` and
-the far sets nest. This is what lets a criterion read the profile along a sparse sequence of cuts. -/
+/-- `farShare R m' ≤ farShare R m` whenever `m ≤ m'`, by `Finset.sum_le_sum_of_subset_of_nonneg` on
+`farSet_subset` with `Moment.Read.p_nonneg`.
+
+Scope: no hypothesis beyond the `Moment.Read` interface. It is what lets the condensation below read
+the profile along a sparse sequence of cuts.
+
+DERIVED: no numeral appears in the statement. -/
 theorem farShare_antitone {N : ℕ} (R : Moment.Read N) {m m' : ℕ} (h : m ≤ m') :
     farShare R m' ≤ farShare R m :=
   Finset.sum_le_sum_of_subset_of_nonneg (farSet_subset h) (fun d _ _ => R.p_nonneg d)
@@ -172,18 +129,25 @@ theorem farShare_antitone {N : ℕ} (R : Moment.Read N) {m m' : ℕ} (h : m ≤ 
 
 /-! ### The cut sequence
 
-`cut m₀ j` doubles `m + 1` from `m₀`: `cut m₀ 0 = m₀`, `cut m₀ (j+1) = 2·cut m₀ j + 1`, so
-`cut m₀ j + 1 = (m₀ + 1)·2^j`. Everything is stated against `cut` so that no natural subtraction
-appears anywhere. -/
+`cut m₀ j` doubles `m + 1` starting from `m₀`: `cut m₀ 0 = m₀` and `cut m₀ (j+1) = 2 * cut m₀ j + 1`,
+so `cut m₀ j + 1 = (m₀ + 1) * 2 ^ j`. Everything below is stated against `cut`, so no natural
+subtraction appears. -/
 
-/-- The cut sequence: the `j`-th doubling of `m₀ + 1`, less one.
+/-- The sequence with `cut m₀ 0 = m₀` and `cut m₀ (j + 1) = 2 * cut m₀ j + 1`, so that
+`cut m₀ j + 1 = (m₀ + 1) * 2 ^ j` (`cut_succ_cast`): the `j`-th doubling of `m₀ + 1`, less one.
 
-DERIVED: `2m+1` is the cut at which `m+1` has doubled — `(2m+1)+1 = 2(m+1)`. Nothing is chosen. -/
+DERIVED: no numeral appears in the type. In the body, `0` is the base index and `1` its value's
+offset; `2` and the trailing `1` are the step `m ↦ 2 * m + 1`, the cut at which `m + 1` doubles,
+since `(2 * m + 1) + 1 = 2 * (m + 1)`. -/
 def cut (m₀ : ℕ) : ℕ → ℕ
   | 0 => m₀
   | j + 1 => 2 * cut m₀ j + 1
 
-/-- `cut m₀ j + 1 = (m₀ + 1)·2^j`, in `ℝ`. -/
+/-- `(cut m₀ j : ℝ) + 1 = ((m₀ : ℝ) + 1) * 2 ^ j`, by induction on `j`. This is the identity the
+name `cut` refers to: the successor of the cut doubles at each step.
+
+DERIVED: `1` occurs twice, as the successor on each side — the quantity that doubles; `2` is the
+base of the doubling. -/
 theorem cut_succ_cast (m₀ : ℕ) (j : ℕ) :
     ((cut m₀ j : ℕ) : ℝ) + 1 = ((m₀ : ℝ) + 1) * 2 ^ j := by
   induction j with
@@ -197,7 +161,9 @@ theorem cut_succ_cast (m₀ : ℕ) (j : ℕ) :
       push_cast
       nlinarith [ih]
 
-/-- The cut sequence never falls below its start. -/
+/-- `m₀ ≤ cut m₀ j` at every `j`: the sequence never falls below its start.
+
+DERIVED: no numeral appears in the statement. -/
 theorem le_cut (m₀ : ℕ) (j : ℕ) : m₀ ≤ cut m₀ j := by
   induction j with
   | zero => exact le_refl _
@@ -205,12 +171,18 @@ theorem le_cut (m₀ : ℕ) (j : ℕ) : m₀ ≤ cut m₀ j := by
       have hval : cut m₀ (i + 1) = 2 * cut m₀ i + 1 := rfl
       omega
 
-/-- The cut sequence is strictly increasing. -/
+/-- `cut m₀ j < cut m₀ (j + 1)`: the sequence is strictly increasing, since the successor step is
+`m ↦ 2 * m + 1`.
+
+DERIVED: `1` is the index step. -/
 theorem cut_lt_succ (m₀ : ℕ) (j : ℕ) : cut m₀ j < cut m₀ (j + 1) := by
   have hval : cut m₀ (j + 1) = 2 * cut m₀ j + 1 := rfl
   omega
 
-/-- The cut sequence outruns its own index, so every aperture is covered by some cut. -/
+/-- `j ≤ cut m₀ j` at every `j`: the sequence outruns its own index, so every aperture is passed by
+some cut. `layer_le_full` uses this to reduce a partial layer cake to the full one.
+
+DERIVED: no numeral appears in the statement. -/
 theorem self_le_cut (m₀ : ℕ) (j : ℕ) : j ≤ cut m₀ j := by
   induction j with
   | zero => exact Nat.zero_le _
@@ -218,7 +190,11 @@ theorem self_le_cut (m₀ : ℕ) (j : ℕ) : j ≤ cut m₀ j := by
       have hval : cut m₀ (i + 1) = 2 * cut m₀ i + 1 := rfl
       omega
 
-/-- A profile contracting across each doubling is geometric along the cut sequence. -/
+/-- If `0 ≤ θ` and `a (2 * m + 1) ≤ θ * a m` at every `m ≥ m₀`, then `a (cut m₀ j) ≤ θ ^ j * a m₀`.
+Induction on `j`, the contraction applying at `cut m₀ j` because `le_cut` puts it above `m₀`.
+
+DERIVED: `0` is the lower bound on the contraction factor `θ`, which is what lets the induction
+multiply by it; `2` and `1` are the doubling step `m ↦ 2 * m + 1`. -/
 theorem le_pow_of_doubling {a : ℕ → ℝ} {m₀ : ℕ} {θ : ℝ} (hθ0 : 0 ≤ θ)
     (hdb : ∀ m, m₀ ≤ m → a (2 * m + 1) ≤ θ * a m) (j : ℕ) :
     a (cut m₀ j) ≤ θ ^ j * a m₀ := by
@@ -234,27 +210,41 @@ theorem le_pow_of_doubling {a : ℕ → ℝ} {m₀ : ℕ} {θ : ℝ} (hθ0 : 0 �
         _ ≤ θ * (θ ^ i * a m₀) := mul_le_mul_of_nonneg_left ih hθ0
         _ = θ ^ (i + 1) * a m₀ := by ring
 
-/-! ### The weight of a block of cuts -/
+/-! ### The weight `2m + 1` summed over a block -/
 
-/-- `∑_{A ≤ m < B} (2m+1) = B² − A²`, the telescoping of the square. -/
+/-- `∑ m ∈ Finset.Ico A B, (2 * m + 1) = B ^ 2 - A ^ 2` for `A ≤ B`: the weight `2 * m + 1` is the
+discrete derivative of the square, so a block's weight telescopes exactly.
+
+DERIVED: `2` occurs three times — the coefficient in the weight, and the exponent on each of the two
+endpoints; `1` is the offset in the weight. -/
 theorem sum_Ico_odd {A B : ℕ} (h : A ≤ B) :
     ∑ m ∈ Finset.Ico A B, (2 * (m : ℝ) + 1) = (B : ℝ) ^ 2 - (A : ℝ) ^ 2 := by
   rw [Finset.sum_Ico_eq_sub _ h, sum_range_odd, sum_range_odd]
 
-/-- `(2^j)² = 4^j`. -/
+/-- `((2 : ℝ) ^ j) ^ 2 = (4 : ℝ) ^ j`: squaring the doubling gives the block weight's growth factor.
+
+DERIVED: `2` occurs twice, as the base of the doubling and as the exponent squaring it; `4` is the
+resulting base, which is what the condensed sums below weight by. -/
 theorem two_pow_sq (j : ℕ) : ((2 : ℝ) ^ j) ^ 2 = (4 : ℝ) ^ j := by
   rw [← pow_mul, mul_comm, pow_mul]
   norm_num
 
-/-! ### The partial layer cake under a doubling contraction -/
+/-! ### The layer cake bracketed by its condensation -/
 
-/-- **The layer cake up to the `J`-th cut, under a doubling contraction.**
+/-- For an antitone profile bounded by `1`,
 
-The near block `m ≤ m₀` costs `(m₀+1)²` from `a ≤ 1` alone; the block between consecutive cuts costs
-`3(m₀+1)²(4θ)^j`, because its weight is EXACTLY `3(m₀+1)²4^j` and the profile on it is at most `θ^j`.
+    ∑ m ∈ Finset.range (cut m₀ J + 1), (2 * m + 1) * a m
+      ≤ (m₀ + 1) ^ 2 * (1 + 3 * ∑ j ∈ Finset.range J, 4 ^ j * a (cut m₀ j)).
 
-DERIVED: `(m₀+1)²` is `∑_{m ≤ m₀}(2m+1)` and `3·4^j` is `((m₀+1)2^{j+1})² − ((m₀+1)2^j)²` over
-`(m₀+1)²` — both are the square weight's own arithmetic, not allowances. -/
+The near block `m ≤ m₀` costs `(m₀ + 1) ^ 2` from `a ≤ 1` alone (`sum_Ico_odd`); the block between
+consecutive cuts has weight exactly `3 * (m₀ + 1) ^ 2 * 4 ^ j` and profile at most `a (cut m₀ j)`
+there, by antitonicity.
+
+DERIVED: `1` occurs five times — the bound on `a`, the `+ 1` making the range inclusive, the offset
+in the weight `2 * m + 1`, the successor in `(m₀ + 1)`, and the near block's share of the bracket.
+`2` occurs twice, as the coefficient in the weight and as the exponent on `(m₀ + 1)`, both from
+`sum_Ico_odd`. `3` is `4 - 1`, the weight of one block as a multiple of the block before it; `4` is
+that growth factor, `two_pow_sq`'s. -/
 theorem layer_le_condensed {a : ℕ → ℝ} {m₀ : ℕ}
     (ha1 : ∀ m, a m ≤ 1) (hanti : ∀ m m' : ℕ, m ≤ m' → a m' ≤ a m) (J : ℕ) :
     ∑ m ∈ Finset.range (cut m₀ J + 1), (2 * (m : ℝ) + 1) * a m
@@ -322,10 +312,23 @@ theorem layer_le_condensed {a : ℕ → ℝ} {m₀ : ℕ}
       rw [hsplit, hgeom]
       nlinarith [ih, hblock]
 
-/-- **The condensed sum bounds the layer cake from BELOW too**, so the two are comparable in both
-directions and the criterion below is an equivalence rather than a sufficient condition. On the
-`j`-th block every cut is at most `cut m₀ (j+1)`, so antitonicity bounds the profile there from
-below by its value at the block's far end. -/
+/-- For a nonnegative antitone profile,
+
+    3 * (m₀ + 1) ^ 2 * ∑ j ∈ Finset.range J, 4 ^ j * a (cut m₀ (j + 1))
+      ≤ ∑ m ∈ Finset.range (cut m₀ J + 1), (2 * m + 1) * a m.
+
+On the `j`-th block every index is at most `cut m₀ (j + 1)`, so antitonicity bounds the profile there
+from below by its value at the block's far end; the block's weight is exactly
+`3 * (m₀ + 1) ^ 2 * 4 ^ j`.
+
+With `layer_le_condensed` this brackets the layer cake by the same condensed sum from both sides,
+which is what makes `substrate_iff_dyadic_shares` an equivalence.
+
+DERIVED: `0` is the lower bound on the profile. `3` is `4 - 1`, the weight of one block as a multiple
+of the block before it, and `4` is that growth factor. `1` occurs four times — the successor in
+`(m₀ + 1)`, the shift `j + 1` to the block's far end, the `+ 1` making the range inclusive, and the
+offset in the weight `2 * m + 1`. `2` occurs twice, as the exponent on `(m₀ + 1)` and as the
+coefficient in the weight. -/
 theorem condensed_le_layer {a : ℕ → ℝ} {m₀ : ℕ}
     (ha0 : ∀ m, 0 ≤ a m) (hanti : ∀ m m' : ℕ, m ≤ m' → a m' ≤ a m) (J : ℕ) :
     3 * ((m₀ : ℝ) + 1) ^ 2 * ∑ j ∈ Finset.range J, (4 : ℝ) ^ j * a (cut m₀ (j + 1))
@@ -378,7 +381,21 @@ theorem condensed_le_layer {a : ℕ → ℝ} {m₀ : ℕ}
       rw [hsplit, hgeom]
       nlinarith [ih, hblock]
 
-/-- The doubling contraction, fed through the condensed bound: `a (cut m₀ j) ≤ θ^j`. -/
+/-- `layer_le_condensed` with the condensed sum evaluated under a doubling contraction: for an
+antitone profile bounded by `1` with `0 ≤ θ` and `a (2 * m + 1) ≤ θ * a m` above `m₀`,
+
+    ∑ m ∈ Finset.range (cut m₀ J + 1), (2 * m + 1) * a m
+      ≤ (m₀ + 1) ^ 2 * (1 + 3 * ∑ j ∈ Finset.range J, (4 * θ) ^ j).
+
+`le_pow_of_doubling` supplies `a (cut m₀ j) ≤ θ ^ j * a m₀ ≤ θ ^ j`, so each condensed term is at
+most `(4 * θ) ^ j`.
+
+DERIVED: `1` occurs six times — the bound on `a`, the offset in the contraction step `2 * m + 1`,
+the `+ 1` making the range inclusive, the offset in the weight `2 * m + 1`, the successor in
+`(m₀ + 1)`, and the near block's share of the bracket. `0` is the lower bound on `θ`. `2` occurs
+three times — the coefficient in the contraction step, the coefficient in the weight, and the
+exponent on `(m₀ + 1)`. `3` is `4 - 1`, the block-weight ratio, and `4` is the growth factor the
+contraction is measured against. -/
 theorem layer_partial_le {a : ℕ → ℝ} {m₀ : ℕ} {θ : ℝ}
     (ha1 : ∀ m, a m ≤ 1) (hanti : ∀ m m' : ℕ, m ≤ m' → a m' ≤ a m) (hθ0 : 0 ≤ θ)
     (hdb : ∀ m, m₀ ≤ m → a (2 * m + 1) ≤ θ * a m) (J : ℕ) :
@@ -399,9 +416,12 @@ theorem layer_partial_le {a : ℕ → ℝ} {m₀ : ℕ} {θ : ℝ}
   have hM : (0 : ℝ) ≤ ((m₀ : ℝ) + 1) ^ 2 := by positivity
   nlinarith [hup, hcmp, hM]
 
-/-! ### The moment bound -/
+/-! ### The moment bound from a doubling contraction -/
 
-/-- A partial geometric sum is under `1/(1−r)`. -/
+/-- `∑ j ∈ Finset.range J, r ^ j ≤ 1 / (1 - r)` for `0 ≤ r < 1`, at every finite `J`.
+
+DERIVED: `0` is the lower bound on the ratio `r`; `1` occurs three times — the upper bound on `r`,
+which is the convergence threshold, and the numerator and the `1 -` of the geometric total. -/
 theorem geom_partial_le {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (J : ℕ) :
     ∑ j ∈ Finset.range J, r ^ j ≤ 1 / (1 - r) := by
   have hne : r ≠ 1 := ne_of_lt hr1
@@ -418,13 +438,23 @@ theorem geom_partial_le {r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1) (J : ℕ) :
   rw [heq, div_le_div_iff₀ h1 h1]
   nlinarith [hp, h1]
 
-/-- **THE MOMENT BOUND FROM A DOUBLING CONTRACTION.**
+/-- If `0 ≤ θ < 1 / 4` and `farShare R (2 * m + 1) ≤ θ * farShare R m` at every `m ≥ m₀`, then
 
-`farShare R (2m+1) ≤ θ·farShare R m` for `m ≥ m₀`, with `0 ≤ θ < 1/4`, bounds the circular second
-moment by `(m₀+1)²·(1 + 3/(1−4θ))` — at every aperture, with nothing assumed below `m₀`.
+    ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 ≤ (m₀ + 1) ^ 2 * (1 + 3 / (1 - 4 * θ)).
 
-DERIVED: `(m₀+1)²` is the near block's own worst case, `3·4^j` the weight of the `j`-th block, and
-`1/(1−4θ)` the geometric total those two produce. No constant is introduced. -/
+`layer_partial_le` bounds the layer cake by `(m₀ + 1) ^ 2 * (1 + 3 * ∑ (4 * θ) ^ j)` and
+`geom_partial_le` sums the geometric series, which converges because `4 * θ < 1`.
+
+Scope: nothing is assumed below `m₀` — `farShare ≤ 1` caps the near block on its own. The bound is
+uniform in the aperture `N`.
+
+DERIVED: `0` is the lower bound on `θ`. `1` occurs five times — the numerator of the threshold
+`1 / 4`, the offset in the doubling step `2 * m + 1`, the successor in `(m₀ + 1)`, the near block's
+share of the bracket, and the `1 -` of the geometric total. `4` occurs twice, as the denominator of
+the threshold and as the factor multiplying `θ` in the geometric total; both are the block-weight
+growth factor `two_pow_sq` produces. `2` occurs three times — the coefficient in the doubling step,
+the exponent on the circle lag, and the exponent on `(m₀ + 1)`. `3` is `4 - 1`, the block-weight
+ratio. -/
 theorem circ_moment_le_of_share_doubling {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) (θ : ℝ)
     (hθ0 : 0 ≤ θ) (hθ : θ < 1 / 4)
     (hdb : ∀ m, m₀ ≤ m → farShare R (2 * m + 1) ≤ θ * farShare R m) :
@@ -471,15 +501,22 @@ weight of the `j`-th block over the block before it. What it buys is that only a
 of cuts has to be estimated — `O(log N)` numbers per `(N, β)` instead of `N` — and it gives away
 nothing, because it is an equivalence rather than a sufficient condition. -/
 
-/-- Beyond the aperture there is nothing left: `circLag` never reaches `N+1`. -/
+/-- `farShare R m = 0` for `N ≤ m`: `Moment.circLag` never exceeds the aperture, so the far set is
+empty past it.
+
+DERIVED: `0` is the value of the share beyond the aperture. -/
 theorem farShare_eq_zero {N : ℕ} (R : Moment.Read N) {m : ℕ} (hm : N ≤ m) : farShare R m = 0 := by
   classical
   refine Finset.sum_eq_zero (fun d hd => ?_)
   simp only [farSet, Finset.mem_filter, Finset.mem_univ, true_and] at hd
   exact absurd hd (by have hlt := circLag_lt_succ d; omega)
 
-/-- The layer cake over any range is under the full one, because the profile vanishes beyond the
-aperture. -/
+/-- `∑ m ∈ Finset.range K, (2 * m + 1) * farShare R m ≤ ∑ m ∈ Finset.range (N + 1), (2 * m + 1) * farShare R m`
+at every `K`: the terms past the aperture vanish by `farShare_eq_zero`, so no range exceeds the full
+one.
+
+DERIVED: `2` occurs twice and `1` three times — the coefficient and offset of the weight `2 * m + 1`
+on each side, and the `+ 1` making the full range inclusive of the aperture. -/
 theorem layer_le_full {N : ℕ} (R : Moment.Read N) (K : ℕ) :
     ∑ m ∈ Finset.range K, (2 * (m : ℝ) + 1) * farShare R m
       ≤ ∑ m ∈ Finset.range (N + 1), (2 * (m : ℝ) + 1) * farShare R m := by
@@ -495,7 +532,13 @@ theorem layer_le_full {N : ℕ} (R : Moment.Read N) (K : ℕ) :
       simp only [Finset.mem_range] at hx hnx
       rw [farShare_eq_zero R (by omega), mul_zero]
 
-/-- **The moment from the condensed sum.** -/
+/-- If `∑ j ∈ Finset.range J, 4 ^ j * farShare R (cut m₀ j) ≤ S` at every `J`, then
+`∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ (m₀ + 1) ^ 2 * (1 + 3 * S)`. It is `layer_le_condensed` with the
+condensed sum bounded by `S`, and `layer_le_full` to reach the whole layer cake.
+
+DERIVED: `4` is the block-weight growth factor; `2` occurs twice, as the exponent on the circle lag
+and on `(m₀ + 1)`; `1` occurs twice, as the successor in `(m₀ + 1)` and the near block's share of the
+bracket; `3` is `4 - 1`, the block-weight ratio. -/
 theorem circ_moment_le_of_dyadic_shares {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) (S : ℝ)
     (hS : ∀ J : ℕ, ∑ j ∈ Finset.range J, (4 : ℝ) ^ j * farShare R (cut m₀ j) ≤ S) :
     ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 ≤ ((m₀ : ℝ) + 1) ^ 2 * (1 + 3 * S) := by
@@ -519,8 +562,16 @@ theorem circ_moment_le_of_dyadic_shares {N : ℕ} (R : Moment.Read N) (m₀ : �
 
 #print axioms circ_moment_le_of_dyadic_shares
 
-/-- **The condensed sum from the moment** — the converse, which is what makes the criterion an
-equivalence. -/
+/-- If `∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ B`, then
+`3 * (m₀ + 1) ^ 2 * ∑ j ∈ Finset.range J, 4 ^ j * farShare R (cut m₀ (j + 1)) ≤ B` at every `J`. It is
+`condensed_le_layer` followed by `layer_le_full` and the hypothesis.
+
+This is the converse of `circ_moment_le_of_dyadic_shares`, and what makes
+`substrate_iff_dyadic_shares` an equivalence.
+
+DERIVED: `2` occurs twice, as the exponent on the circle lag and on `(m₀ + 1)`; `3` is the
+block-weight ratio `4 - 1` and `4` the growth factor; `1` occurs twice, as the successor in
+`(m₀ + 1)` and as the shift `j + 1` to the block's far end. -/
 theorem dyadic_shares_le_of_circ_moment {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) (B : ℝ)
     (hB : ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 ≤ B) (J : ℕ) :
     3 * ((m₀ : ℝ) + 1) ^ 2 * ∑ j ∈ Finset.range J, (4 : ℝ) ^ j * farShare R (cut m₀ (j + 1))
@@ -533,7 +584,13 @@ theorem dyadic_shares_le_of_circ_moment {N : ℕ} (R : Moment.Read N) (m₀ : �
 
 #print axioms dyadic_shares_le_of_circ_moment
 
-/-- Peeling the first cut off the condensed sum. -/
+/-- `∑ j ∈ Finset.range (J + 1), 4 ^ j * a (cut m₀ j) = 4 * (∑ i ∈ Finset.range J, 4 ^ i * a (cut m₀ (i + 1))) + a (cut m₀ 0)`:
+the condensed sum with its first term peeled off, so that
+`dyadic_shares_le_of_circ_moment`'s shifted sum can be reassembled.
+
+DERIVED: `1` occurs twice, as the `+ 1` extending the range and the shift `i + 1`; `4` occurs three
+times, as the growth factor in each of the two sums and as the factor pulled out; `0` is the index of
+the peeled term. -/
 theorem dyadic_sum_shift {a : ℕ → ℝ} {m₀ : ℕ} (J : ℕ) :
     ∑ j ∈ Finset.range (J + 1), (4 : ℝ) ^ j * a (cut m₀ j)
       = 4 * (∑ i ∈ Finset.range J, (4 : ℝ) ^ i * a (cut m₀ (i + 1))) + a (cut m₀ 0) := by
@@ -546,7 +603,11 @@ theorem dyadic_sum_shift {a : ℕ → ℝ} {m₀ : ℕ} (J : ℕ) :
   rw [Finset.sum_congr rfl hterm]
   norm_num
 
-/-- The substrate hypothesis from the condensed sums. -/
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from a bound `S` on the condensed sums
+`∑ j ∈ Finset.range J, 4 ^ j * farShare (readYMAt N β) (cut m₀ j)`, uniform in the aperture, the
+coupling and `J`. It is `circ_moment_le_of_dyadic_shares` at `readYMAt N β`.
+
+DERIVED: `4` is the block-weight growth factor. -/
 theorem substrate_of_dyadic_shares (m₀ : ℕ) (S : ℝ)
     (hS : ∀ (N : ℕ) (β : ℝ) (J : ℕ),
       ∑ j ∈ Finset.range J, (4 : ℝ) ^ j * farShare (MassGap.readYMAt N β) (cut m₀ j) ≤ S) :
@@ -556,7 +617,11 @@ theorem substrate_of_dyadic_shares (m₀ : ℕ) (S : ℝ)
 
 #print axioms substrate_of_dyadic_shares
 
-/-- The condensed sums from the substrate hypothesis. -/
+/-- The converse: a bound `B` on `d2At` gives a bound `S` on the condensed sums, uniform in the
+aperture, the coupling and `J`. `dyadic_shares_le_of_circ_moment` bounds the shifted sum and
+`dyadic_sum_shift` reassembles the unshifted one, the peeled term being at most `1`.
+
+DERIVED: `4` is the block-weight growth factor. -/
 theorem dyadic_shares_of_substrate (m₀ : ℕ) (h : ∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B) :
     ∃ S : ℝ, ∀ (N : ℕ) (β : ℝ) (J : ℕ),
       ∑ j ∈ Finset.range J, (4 : ℝ) ^ j * farShare (MassGap.readYMAt N β) (cut m₀ j) ≤ S := by
@@ -588,16 +653,17 @@ theorem dyadic_shares_of_substrate (m₀ : ℕ) (h : ∃ B : ℝ, ∀ N β, Mass
 
 #print axioms dyadic_shares_of_substrate
 
-/-- **THE SUBSTRATE HYPOTHESIS IS EXACTLY A BOUND AT A GEOMETRIC SEQUENCE OF CUTS.**
+/-- At every starting cut `m₀`,
 
-An EQUIVALENCE, at every starting cut `m₀`. The forward direction loses nothing and the reverse
-direction loses nothing, so this is a restatement of the open hypothesis and not a strengthening of
-it: the whole content of `∃ B, ∀ N β, d2At N β ≤ B` is that the `4^j`-weighted far shares at the
-cuts `m₀, 2m₀+1, 4m₀+3, …` stay uniformly bounded.
+    (∃ B, ∀ N β, d2At N β ≤ B) ↔ (∃ S, ∀ N β J, ∑ j ∈ Finset.range J, 4 ^ j * farShare (readYMAt N β) (cut m₀ j) ≤ S).
 
-What it removes from the obligation is every cut that is not on that sequence. `farShare` is antitone
-for free (`farShare_antitone`), so the cuts in between are already controlled by their block's left
-endpoint, and nothing has to be said about them. -/
+The two directions are `substrate_of_dyadic_shares` and `dyadic_shares_of_substrate`.
+
+Scope: an equivalence, so it restates the hypothesis rather than weakening or strengthening it. The
+cuts off the sequence `m₀, 2 * m₀ + 1, 4 * m₀ + 3, …` need no separate treatment because
+`farShare_antitone` controls each block by its left endpoint.
+
+DERIVED: `4` is the block-weight growth factor, the square of the doubling. -/
 theorem substrate_iff_dyadic_shares (m₀ : ℕ) :
     (∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B)
       ↔ (∃ S : ℝ, ∀ (N : ℕ) (β : ℝ) (J : ℕ),
@@ -606,15 +672,20 @@ theorem substrate_iff_dyadic_shares (m₀ : ℕ) :
 
 #print axioms substrate_iff_dyadic_shares
 
-/-! ### The substrate hypothesis, and the whole statement -/
+/-! ### The doubling contraction as a sufficient condition -/
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM A DOUBLING CONTRACTION OF THE FAR SHARE.**
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from one cut `m₀` and one ratio `θ` with `0 ≤ θ < 1 / 4` such that
+`farShare (readYMAt N β) (2 * m + 1) ≤ θ * farShare (readYMAt N β) m` at every aperture, coupling and
+`m ≥ m₀`. The witness is `(m₀ + 1) ^ 2 * (1 + 3 / (1 - 4 * θ))` from
+`circ_moment_le_of_share_doubling`.
 
-One cut `m₀` and one ratio `θ < 1/4`, good at every aperture and every coupling, discharge
-`∃ B, ∀ N β, d2At N β ≤ B`. `B` is `(m₀+1)²(1 + 3/(1−4θ))`; nothing is fitted.
+Scope: the contraction is required uniformly in the aperture and the coupling; one holding at each
+coupling with `θ` depending on `β` does not satisfy it. The axiom footprint carries
+`wilson_reflection_positive_at`, from which `readYMAt` is constructed.
 
-The axiom footprint carries `wilson_reflection_positive_at` because `readYMAt` is constructed from
-it. -/
+DERIVED: `0` is the lower bound on `θ`; `1` occurs twice, as the numerator of the threshold `1 / 4`
+and the offset in the doubling step `2 * m + 1`; `4` is the threshold's denominator, the block-weight
+growth factor; `2` is the coefficient in the doubling step. -/
 theorem substrate_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (hθ : θ < 1 / 4)
     (hdb : ∀ (N : ℕ) (β : ℝ) (m : ℕ), m₀ ≤ m →
       farShare (MassGap.readYMAt N β) (2 * m + 1) ≤ θ * farShare (MassGap.readYMAt N β) m) :
@@ -624,7 +695,12 @@ theorem substrate_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (h
 
 #print axioms substrate_of_share_doubling
 
-/-- **Confinement at every large enough aperture, from the doubling contraction.** -/
+/-- `∀ᶠ N in atTop, ∀ β, μYMAt N β < κ₀YM` from the same doubling contraction, by
+`MassGap.confinement_of_bounded_substrate` at `substrate_of_share_doubling`.
+
+DERIVED: `0` is the lower bound on `θ`; `1` occurs twice, as the numerator of the threshold `1 / 4`
+and the offset in the doubling step; `4` is the threshold's denominator; `2` is the coefficient in
+the doubling step. -/
 theorem confinement_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (hθ : θ < 1 / 4)
     (hdb : ∀ (N : ℕ) (β : ℝ) (m : ℕ), m₀ ≤ m →
       farShare (MassGap.readYMAt N β) (2 * m + 1) ≤ θ * farShare (MassGap.readYMAt N β) m) :
@@ -633,12 +709,15 @@ theorem confinement_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) 
 
 #print axioms confinement_of_share_doubling
 
-/-- **THE WHOLE STATEMENT, FROM A DOUBLING CONTRACTION OF THE FAR SHARE.**
+/-- `WilsonModel.existence_and_gap_of_substrate` with its hypothesis supplied by
+`substrate_of_share_doubling`: from the doubling contraction there is a substrate witness `h` such
+that the model `WilsonModel.wilsonOfSubstrate h` has its mode sum tending to `0` at every coupling,
+`gap.μ β - gap.κ < 0` at every coupling, and `gap.R` constant.
 
-`WilsonModel.existence_and_gap_of_substrate` takes exactly `∃ B, ∀ N β, d2At N β ≤ B`, so the mass
-gap, non-triviality, `SO(4)` invariance and the continuum measure all follow from one ratio: the
-share of the connected plaquette correlation beyond a cut contracts by better than four when the cut
-doubles. -/
+DERIVED: `0` occurs three times — the lower bound on `θ`, the limit point of the mode sum, and the
+comparison point in `gap.μ β - gap.κ < 0`. `1` occurs twice, as the numerator of the threshold
+`1 / 4` and the offset in the doubling step; `4` is the threshold's denominator; `2` is the
+coefficient in the doubling step. -/
 theorem yang_mills_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (hθ : θ < 1 / 4)
     (hdb : ∀ (N : ℕ) (β : ℝ) (m : ℕ), m₀ ≤ m →
       farShare (MassGap.readYMAt N β) (2 * m + 1) ≤ θ * farShare (MassGap.readYMAt N β) m) :
@@ -657,12 +736,17 @@ theorem yang_mills_of_share_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (
 
 #print axioms yang_mills_of_share_doubling
 
-/-! ### The same condition on the RAW correlator: no normalisation, no mass floor -/
+/-! ### The same condition on the unnormalised correlator -/
 
-/-- **The contraction is scale-free: it is the same statement on the unnormalised tail masses.**
+/-- `farShare R (2 * m + 1) ≤ θ * farShare R m` if and only if
+`∑ d ∈ farSet N (2 * m + 1), R.ρ d ≤ θ * ∑ d ∈ farSet N m, R.ρ d`. The total mass `∑ d, R.ρ d`
+divides both sides of the share form and cancels, so the contraction never reads it — neither its
+value nor a floor under it.
 
-An equivalence, not a sufficient condition. `∑ d, ρ d` appears on both sides of the share form and
-cancels, so the criterion never needs the total mass — neither its value nor a floor under it. -/
+Scope: an equivalence, at every cut and every `θ`.
+
+DERIVED: `2` occurs twice and `1` twice, as the coefficient and offset of the doubling step
+`2 * m + 1` on each side of the equivalence. -/
 theorem farShare_doubling_iff_tail_mass {N : ℕ} (R : Moment.Read N) (m : ℕ) (θ : ℝ) :
     (farShare R (2 * m + 1) ≤ θ * farShare R m)
       ↔ (∑ d ∈ farSet N (2 * m + 1), R.ρ d ≤ θ * ∑ d ∈ farSet N m, R.ρ d) := by
@@ -678,18 +762,26 @@ theorem farShare_doubling_iff_tail_mass {N : ℕ} (R : Moment.Read N) (m : ℕ) 
 
 #print axioms farShare_doubling_iff_tail_mass
 
-/-- The Wilson read's weights ARE the constructed correlation. -/
+/-- `(readYMAt N β).ρ d = wilsonCorrAt N β d`, by `rfl`: the read's unnormalised profile is the
+constructed correlation.
+
+DERIVED: `1` is the `+ 1` in the lag index type `Fin (N + 1)`, one index per lag including
+contact. -/
 theorem readYMAt_rho (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
     (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N β d := rfl
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM A CONDITION ON THE RAW CORRELATOR.**
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from a contraction on the unnormalised tail masses:
+`∑ d ∈ farSet N (2 * m + 1), wilsonCorrAt N β d ≤ θ * ∑ d ∈ farSet N m, wilsonCorrAt N β d` at every
+aperture, coupling and `m ≥ m₀`, with `0 ≤ θ < 1 / 4`. It is `substrate_of_share_doubling` through
+`farShare_doubling_iff_tail_mass` and `readYMAt_rho`.
 
-No normalisation, no envelope, and no lower bound on `∑ d, wilsonCorrAt N β d`: only that the mass
-the connected plaquette correlation places beyond a cut contracts by a factor below `1/4` when the
-cut's successor index doubles, uniformly in aperture and coupling.
+Scope: no normalisation, envelope or lower bound on `∑ d, wilsonCorrAt N β d` appears. The
+hypothesis is invariant under `ρ ↦ t * ρ`, as the conclusion is — the property
+`mass_floor_is_not_scale_free` shows an envelope-plus-floor pair does not have.
 
-This is the form `mass_floor_is_not_scale_free` says the unnormalised route should take. The
-hypothesis is invariant under `ρ ↦ t·ρ`, exactly as the conclusion is. -/
+DERIVED: `0` is the lower bound on `θ`; `1` occurs twice, as the numerator of the threshold `1 / 4`
+and the offset in the doubling step; `4` is the threshold's denominator, the block-weight growth
+factor; `2` is the coefficient in the doubling step. -/
 theorem substrate_of_tail_mass_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ) (hθ : θ < 1 / 4)
     (h : ∀ (N : ℕ) (β : ℝ) (m : ℕ), m₀ ≤ m →
       ∑ d ∈ farSet N (2 * m + 1), MassGap.wilsonCorrAt N β d
@@ -702,13 +794,13 @@ theorem substrate_of_tail_mass_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ
 
 #print axioms substrate_of_tail_mass_doubling
 
-/-! ### Why the unnormalised route must not carry a mass floor -/
+/-! ### Rescaling: the share and the moment are invariant, a mass floor is not -/
 
-/-- The read rescaled, `ρ ↦ t·ρ`.
+/-- The read with its unnormalised profile multiplied by `t`, for `0 < t`. The normalised weights
+`p` are unchanged, since the factor cancels between numerator and total.
 
-DERIVED: `0` is the strict positivity the rescaling factor must have for `Moment.Read`'s own
-`hpos` field to survive it — a nonpositive `t` would not give a read at all. It is the structure's
-requirement, not a threshold. -/
+DERIVED: `0` is the strict lower bound on `t`, which `Moment.Read`'s `hpos` field requires — at
+`t ≤ 0` the total mass would not be positive and the result would not be a read. -/
 noncomputable def scaleRead {N : ℕ} (R : Moment.Read N) {t : ℝ} (ht : 0 < t) : Moment.Read N where
   ρ := fun d => t * R.ρ d
   hρ := fun d => mul_nonneg ht.le (R.hρ d)
@@ -729,28 +821,34 @@ theorem scaleRead_p {N : ℕ} (R : Moment.Read N) {t : ℝ} (ht : 0 < t) (d : Fi
   rw [scaleRead_sum R ht]
   exact mul_div_mul_left _ _ (ne_of_gt ht)
 
-/-- **The far share is scale-free.** -/
+/-- `farShare (scaleRead R ht) m = farShare R m` at every cut: the rescaling factor cancels between
+the far mass and the total.
+
+DERIVED: `0` is the strict lower bound on the rescaling factor `t`. -/
 theorem farShare_scale_invariant {N : ℕ} (R : Moment.Read N) {t : ℝ} (ht : 0 < t) (m : ℕ) :
     farShare (scaleRead R ht) m = farShare R m :=
   Finset.sum_congr rfl (fun d _ => scaleRead_p R ht d)
 
-/-- **So is the circular second moment.** -/
+/-- `∑ d, (scaleRead R ht).p d * (circLag d : ℝ) ^ 2 = ∑ d, R.p d * (circLag d : ℝ) ^ 2`: the
+normalised weights are unchanged by the rescaling, so the moment is too.
+
+DERIVED: `0` is the strict lower bound on `t`; the exponent `2` occurs twice, once in each circular
+second moment. -/
 theorem circ_moment_scale_invariant {N : ℕ} (R : Moment.Read N) {t : ℝ} (ht : 0 < t) :
     ∑ d, (scaleRead R ht).p d * (Moment.circLag d : ℝ) ^ 2
       = ∑ d, R.p d * (Moment.circLag d : ℝ) ^ 2 :=
   Finset.sum_congr rfl (fun d _ => by rw [scaleRead_p R ht d])
 
-/-- **A MASS FLOOR IS NOT SCALE-FREE — the unnormalised envelope route is strictly stronger than
-what it is used to prove.**
+/-- For every read and every `c > 0` there is a `t > 0` such that `scaleRead R ht` has the same far
+share at every cut and the same circular second moment, and fails `c ≤ ∑ d, ρ d`.
 
-`ContactDominance.circ_moment_le_of_rho_envelope` consumes an envelope on `ρ` AND a floor `c ≤ ∑ ρ`
-with `c > 0`. Its conclusion — a bound on `∑ p d · circLag(d)²` — is invariant under `ρ ↦ t·ρ`, and
-so is the far share; the floor is not. For every read and every `c > 0` there is a rescaling that
-leaves the share and the moment EXACTLY unchanged and breaks the floor.
+`ContactDominance.circ_moment_le_of_rho_envelope` consumes an envelope on `ρ` together with such a
+floor. Its conclusion is invariant under `ρ ↦ t * ρ`, as is the far share; the floor is not. So that
+pair constrains one degree of freedom the conclusion does not see, which
+`substrate_of_tail_mass_doubling` — mentioning no total mass — does not.
 
-So the pair (envelope, floor) is strictly stronger than the hypothesis it discharges, by one whole
-scale degree of freedom, and `substrate_of_tail_mass_doubling` — which mentions no total mass at all
-— is the form the unnormalised route should take. -/
+DERIVED: `0` occurs twice, as the strict lower bound on `c` and on the rescaling factor `t`; the
+exponent `2` occurs twice, once in each circular second moment. -/
 theorem mass_floor_is_not_scale_free {N : ℕ} (R : Moment.Read N) (c : ℝ) (hc : 0 < c) :
     ∃ (t : ℝ) (ht : 0 < t),
       (∀ m, farShare (scaleRead R ht) m = farShare R m) ∧
@@ -770,11 +868,16 @@ theorem mass_floor_is_not_scale_free {N : ℕ} (R : Moment.Read N) (c : ℝ) (hc
 
 #print axioms mass_floor_is_not_scale_free
 
-/-! ### Negative control: the criterion is not vacuous -/
+/-! ### A read satisfying the contraction -/
 
-/-- **NON-VACUITY.** The contact read satisfies the two clauses `wilson_reflection_positive_at`
-asserts, meets the contraction at `θ = 0` and every cut, and has moment zero. So
-`circ_moment_le_of_share_doubling` is not an implication out of an unsatisfiable hypothesis. -/
+/-- `ContactDominance.contactRead N` satisfies the contraction at `θ = 0` and every cut, and its
+circular second moment is `0`. All its weight sits at lag zero, so every far share vanishes.
+
+So the hypothesis of `circ_moment_le_of_share_doubling` is satisfiable.
+
+DERIVED: `2` occurs twice, as the coefficient in the doubling step and as the exponent on the circle
+lag; `1` is the offset in the doubling step; `0` occurs twice, as the contraction factor at which
+the read meets the hypothesis and as the value of its moment. -/
 theorem doubling_nonvacuous (N : ℕ) :
     (∀ m : ℕ, farShare (contactRead N) (2 * m + 1) ≤ (0 : ℝ) * farShare (contactRead N) m) ∧
       ∑ d, (contactRead N).p d * (Moment.circLag d : ℝ) ^ 2 = 0 :=
@@ -783,9 +886,13 @@ theorem doubling_nonvacuous (N : ℕ) :
 
 #print axioms doubling_nonvacuous
 
-/-! ### Negative control: the contraction is load-bearing -/
+/-! ### A read failing the contraction, with unbounded moments -/
 
-/-- The mid-lag read's far share is `1` at every cut below half the period. -/
+/-- `farShare (midRead N) m = 1` for `m < (N + 1) / 2`: all of `midRead`'s weight sits at the
+antipode, so every cut below half the period leaves the whole of it in the far set.
+
+DERIVED: `1` occurs twice, as the `+ 1` making the period `N + 1` and as the value of the share; `2`
+is the halving that locates the antipode. -/
 theorem midRead_farShare (N m : ℕ) (hm : m < (N + 1) / 2) : farShare (midRead N) m = 1 := by
   classical
   have hmem : midLag N ∈ farSet N m := by
@@ -804,12 +911,19 @@ theorem midRead_farShare (N m : ℕ) (hm : m < (N + 1) / 2) : farShare (midRead 
   show (if midLag N = midLag N then (1 : ℝ) else 0) = 1
   rw [if_pos rfl]
 
-/-- **THE CONTRACTION IS LOAD-BEARING.**
+/-- Two facts about `ContactDominance.midRead`, conjoined: at every `θ < 1` and every cut `m₀` there
+are an aperture and an `m ≥ m₀` with `θ * farShare (midRead N) m < farShare (midRead N) (2 * m + 1)`;
+and its circular second moments exceed every `B`.
 
-`midRead` meets exactly the two clauses `wilson_reflection_positive_at` asserts. Its far share is `1`
-at every cut below the antipode, so at every cut `m₀` and every `θ < 1` there is an aperture at which
-the contraction FAILS — and its moments exceed every `B`. Remove the contraction from
-`circ_moment_le_of_share_doubling` and the conclusion is false, not merely unproved. -/
+The first holds because `midRead_farShare` makes both shares `1` below the antipode, so the
+contraction would need `θ ≥ 1`.
+
+So the contraction hypothesis of `circ_moment_le_of_share_doubling` is used: without it the
+conclusion does not hold for this family.
+
+DERIVED: `1` occurs twice, as the upper bound on `θ` — the value both shares take — and as the offset
+in the doubling step; `2` occurs twice, as the coefficient in the doubling step and as the exponent
+on the circle lag. -/
 theorem doubling_load_bearing :
     (∀ θ : ℝ, θ < 1 → ∀ m₀ : ℕ, ∃ N m : ℕ, m₀ ≤ m ∧
         θ * farShare (midRead N) m < farShare (midRead N) (2 * m + 1)) ∧
@@ -836,13 +950,19 @@ theorem doubling_load_bearing :
 
 #print axioms doubling_load_bearing
 
-/-! ### Sharpness: the threshold ratio is exactly one quarter
+/-! ### The threshold ratio is exactly one quarter
 
-`ContactDominance.squareRead` is the family whose far share saturates a square envelope. Read in this
-parametrisation it saturates the contraction at `θ = 1/4` EXACTLY — at every cut and every aperture —
-and its moments are unbounded. So `θ < 1/4` is not a margin: at `1/4` the statement is false. -/
+`ContactDominance.squareRead` is the family whose far share saturates a square envelope. In this
+parametrisation it meets the contraction at `θ = 1 / 4` exactly, at every cut and every aperture, and
+its moments are unbounded. So the strict inequality `θ < 1 / 4` in
+`circ_moment_le_of_share_doubling` is the hypothesis rather than a margin around it. -/
 
-/-- The far `ρ`-mass of `squareRead`, collapsed onto the telescoping profile. -/
+/-- `∑ d ∈ farSet (2 * k + 1) m, (squareRead k).ρ d = ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then 1 else 0)`:
+the far mass collapses onto the telescoping weights, the indicator selecting the lags beyond the cut.
+
+DERIVED: `2` occurs twice, as the coefficient in the aperture `2 * k + 1` and as the `+ 2` bounding
+the telescoping range at the antipode; `1` occurs twice, as the offset in the aperture and as the
+indicator's value; `0` is the indicator's value off the far set. -/
 theorem squareRead_farMass (k m : ℕ) :
     ∑ d ∈ farSet (2 * k + 1) m, (squareRead k).ρ d
       = ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then (1 : ℝ) else 0) := by
@@ -857,7 +977,14 @@ theorem squareRead_farMass (k m : ℕ) :
     · simp [hc]
   rw [hrw, squareRead_sum_eq k (fun j : ℕ => if m < j then (1 : ℝ) else 0)]
 
-/-- The telescoping far mass, EXACTLY, below the aperture's own reach. -/
+/-- For `m + 1 ≤ k + 2`, the telescoping far mass equals `1 / (m + 1) ^ 2 - 1 / (k + 2) ^ 2`
+exactly. The weights telescope, so the partial sum from `m + 1` to the antipode is the difference of
+the two endpoints' reciprocal squares.
+
+DERIVED: `1` occurs five times — the successor in the hypothesis `m + 1`, the indicator's value, the
+numerator of each of the two fractions, and the `+ 1` in `(m + 1)`. `2` occurs five times — the `+ 2`
+in the hypothesis, the `+ 2` bounding the telescoping range, the exponent on `(m + 1)`, the `+ 2` in
+`(k + 2)`, and the exponent on it. `0` is the indicator's value off the far set. -/
 theorem tel_far_eq_of_le (k m : ℕ) (h : m + 1 ≤ k + 2) :
     ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then (1 : ℝ) else 0)
       = 1 / ((m : ℝ) + 1) ^ 2 - 1 / ((k : ℝ) + 2) ^ 2 := by
@@ -883,20 +1010,35 @@ theorem tel_far_eq_of_le (k m : ℕ) (h : m + 1 ≤ k + 2) :
     ring
   linarith [hsplit, h1', h2]
 
-/-- Beyond the aperture's reach the far mass is zero. -/
+/-- For `k + 2 ≤ m + 1` the telescoping far mass is `0`: the cut is past the antipode, so the
+indicator selects nothing.
+
+DERIVED: `2` occurs twice, as the `+ 2` in the hypothesis and the `+ 2` bounding the telescoping
+range; `1` occurs twice, as the successor in the hypothesis and the indicator's value; `0` occurs
+twice, as the indicator's value off the far set and as the resulting mass. -/
 theorem tel_far_eq_of_gt (k m : ℕ) (h : k + 2 ≤ m + 1) :
     ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then (1 : ℝ) else 0) = 0 := by
   refine Finset.sum_eq_zero (fun j hj => ?_)
   simp only [Finset.mem_range] at hj
   rw [if_neg (by omega), mul_zero]
 
-/-- The far mass is nonnegative. -/
+/-- The telescoping far mass is nonnegative: a sum of nonnegative weights times an indicator.
+
+DERIVED: `0` occurs twice, as the lower bound and as the indicator's value off the far set; `2` is
+the `+ 2` bounding the telescoping range; `1` is the indicator's value on it. -/
 theorem tel_far_nonneg (k m : ℕ) :
     0 ≤ ∑ j ∈ Finset.range (k + 2), telWeight j * (if m < j then (1 : ℝ) else 0) :=
   Finset.sum_nonneg (fun j _ => mul_nonneg (telWeight_nonneg j) (by split <;> norm_num))
 
-/-- **The telescoping family contracts by EXACTLY one quarter across each doubling**, on the raw
-tail masses — so also on the shares, by `farShare_doubling_iff_tail_mass`. -/
+/-- `∑ d ∈ farSet (2*k+1) (2*m+1), (squareRead k).ρ d ≤ (1/4) * ∑ d ∈ farSet (2*k+1) m, (squareRead k).ρ d`
+at every `k` and `m`: the telescoping family contracts by exactly one quarter across each doubling,
+on the unnormalised tail masses. The three cases of `tel_far_eq_of_le`, `tel_far_eq_of_gt` and
+`tel_far_nonneg` cover the cut being below, at or past the antipode.
+
+DERIVED: `2` occurs three times, as the coefficient in the aperture `2 * k + 1` on each side and in
+the doubling step `2 * m + 1`; `1` occurs four times, as the offset in each aperture, the offset in
+the doubling step, and the numerator of `1 / 4`; `4` is the contraction's denominator, the square of
+the doubling. -/
 theorem squareRead_tail_mass_quarter (k m : ℕ) :
     ∑ d ∈ farSet (2 * k + 1) (2 * m + 1), (squareRead k).ρ d
       ≤ (1 / 4 : ℝ) * ∑ d ∈ farSet (2 * k + 1) m, (squareRead k).ρ d := by
@@ -917,22 +1059,27 @@ theorem squareRead_tail_mass_quarter (k m : ℕ) :
     have := tel_far_nonneg k m
     linarith
 
-/-- The contraction at `θ = 1/4`, on the shares. -/
+/-- `farShare (squareRead k) (2 * m + 1) ≤ (1 / 4) * farShare (squareRead k) m`:
+`squareRead_tail_mass_quarter` transported to the shares by `farShare_doubling_iff_tail_mass`.
+
+DERIVED: `2` and the first `1` are the coefficient and offset of the doubling step `2 * m + 1`; the
+second `1` and `4` are the numerator and denominator of the contraction factor. -/
 theorem squareRead_quarter_doubling (k m : ℕ) :
     farShare (squareRead k) (2 * m + 1) ≤ (1 / 4 : ℝ) * farShare (squareRead k) m :=
   (farShare_doubling_iff_tail_mass (squareRead k) m (1 / 4)).mpr
     (squareRead_tail_mass_quarter k m)
 
-/-- **SHARPNESS: A CONTRACTION BY ONE QUARTER IS NOT ENOUGH.**
+/-- Two facts about `ContactDominance.squareRead`, conjoined: it contracts by `1 / 4` across every
+doubling at every aperture, and its circular second moments exceed every `B`.
 
-`squareRead` satisfies the two clauses of `wilson_reflection_positive_at`, contracts by exactly `1/4`
-across every doubling at every aperture, and its circular second moments exceed every `B`. So the
-threshold in `circ_moment_le_of_share_doubling` is exactly `1/4`: below it the contraction discharges
-the substrate hypothesis, at it the hypothesis is FALSE.
+So the strict inequality `θ < 1 / 4` in `circ_moment_le_of_share_doubling` cannot be relaxed to `≤`.
+It is the same family as `ContactDominance.square_share_is_not_enough`, since `(m + 1) ^ (-s)`
+contracts by exactly `2 ^ (-s)` across `m ↦ 2 * m + 1`, which makes `θ = 1 / 4` and the envelope
+exponent `s = 2` the same threshold.
 
-It is the same family, and the same failure, as `ContactDominance.square_share_is_not_enough` — which
-is the point: `θ = 1/4` and the envelope exponent `s = 2` are one threshold, since
-`(m+1)^{-s}` contracts by exactly `2^{-s}` across `m ↦ 2m+1`. -/
+DERIVED: `2` occurs twice, as the coefficient in the doubling step and as the exponent on the circle
+lag; `1` occurs twice, as the offset in the doubling step and as the numerator of the contraction
+factor; `4` is its denominator. -/
 theorem quarter_doubling_is_not_enough :
     (∀ k m : ℕ, farShare (squareRead k) (2 * m + 1) ≤ (1 / 4 : ℝ) * farShare (squareRead k) m) ∧
       (∀ B : ℝ, ∃ k : ℕ, B < ∑ d, (squareRead k).p d * (Moment.circLag d : ℝ) ^ 2) :=
@@ -940,13 +1087,16 @@ theorem quarter_doubling_is_not_enough :
 
 #print axioms quarter_doubling_is_not_enough
 
-/-- **At `θ = 1/4` there is NO bound at all** — not a weaker one, none.
+/-- There is no `B` bounding the circular second moment of every read contracting by `1 / 4` across
+every doubling: for each candidate `B`, `quarter_doubling_is_not_enough` supplies a `squareRead k`
+exceeding it.
 
-Stated without the criterion's own constant so that nothing turns on how `3/(1−4θ)` evaluates at
-`θ = 1/4`: for EVERY `B` whatsoever, some read satisfying the two clauses
-`wilson_reflection_positive_at` asserts contracts by `1/4` across every doubling from the cut `0`
-upward and has moment above `B`. So `θ < 1/4` in `circ_moment_le_of_share_doubling` is the hypothesis
-doing the work, not a margin around it. -/
+Stated without the criterion's own constant, so nothing turns on how `3 / (1 - 4 * θ)` evaluates at
+`θ = 1 / 4`.
+
+DERIVED: `2` occurs twice, as the coefficient in the doubling step and as the exponent on the circle
+lag; `1` occurs twice, as the offset in the doubling step and as the numerator of the contraction
+factor; `4` is its denominator. -/
 theorem quarter_doubling_gives_no_bound :
     ¬ ∃ B : ℝ, ∀ (N : ℕ) (R : Moment.Read N),
         (∀ m : ℕ, farShare R (2 * m + 1) ≤ (1 / 4 : ℝ) * farShare R m) →
@@ -960,65 +1110,73 @@ theorem quarter_doubling_gives_no_bound :
 
 /-! ### Contact-relative decay: a power law measured against the read's own contact term
 
-Everything above is a condition on the SHARE, which carries the normalisation `∑ ρ` inside it. The
-condition in this section is a condition on the correlation itself, measured against its value at
-lag zero:
+The conditions above are on the share, which carries the normalisation `∑ ρ` inside it. The condition
+in this section is on the correlation itself, measured against its value at lag zero:
 
-    ρ d ≤ C · ρ 0 / (circLag d)⁴   whenever   circLag d ≥ m₀.
+    ρ d ≤ C * ρ 0 / (circLag d) ^ 4   whenever   circLag d ≥ m₀.
 
-Three properties follow from the shape alone, before any estimate of the Wilson measure:
+Three properties follow from its shape:
 
-* it is SCALE-FREE (`contact_relative_scale_invariant`). `ρ ↦ t·ρ` multiplies both sides by `t`, so
-  the condition is invariant exactly as the conclusion is — which is what
-  `mass_floor_is_not_scale_free` says the unnormalised route has to be. No mass floor appears,
-  because `ρ 0 ≤ ∑ ρ` holds for free from nonnegativity (`contact_le_total`): the contact term
-  normalises the read from inside, and `circ_moment_le_of_rho_envelope`'s extra hypothesis `c ≤ ∑ ρ`
-  is not needed.
-* it is a POWER, not a RATE. `Substrate.bounded_moment_does_not_give_geometric_decay` says a bounded
+* It is scale-free (`contact_relative_scale_invariant`): `ρ ↦ t * ρ` multiplies both sides by `t`, so
+  the condition is invariant exactly as the conclusion is. No mass floor appears, because
+  `contact_le_total` gives `ρ 0 ≤ ∑ ρ` from nonnegativity alone, so
+  `ContactDominance.circ_moment_le_of_rho_envelope`'s extra hypothesis `c ≤ ∑ ρ` is not needed.
+* It is a power, not a rate. `Substrate.bounded_moment_does_not_give_geometric_decay` says a bounded
   moment does not give a geometric bound, and asymptotic freedom denies a decay rate uniform in the
-  coupling; neither bears on a power law, which has no rate in it.
-* nothing is assumed below the cut `m₀`, because `p ≤ 1` caps the near lags on its own
-  (`p_le_one`) — the same structure as `ContactDominance.circ_moment_le_of_tail_envelope`.
+  coupling; neither bears on a power law.
+* Nothing is assumed below the cut `m₀`, because `p_le_one` caps the near lags — the same structure
+  as `ContactDominance.circ_moment_le_of_tail_envelope`.
 
-THE THRESHOLD EXPONENT IS EXACTLY `3`, and `4` is the smallest integer above it. The moment weights
-by `k²` and the circle lag has multiplicity two (`Moment.sum_circLag_le_two_mul`), so the envelope's
-weighted total is `∑ k²·C/kˢ`, which converges exactly when `s > 3`. It is one above the share's
-threshold `2` because the share has already absorbed a summation.
-`cubic_contact_relative_is_not_enough` and `cubic_contact_relative_gives_no_bound` show `3` is not
-merely out of reach but FALSE: at `s = 3` with `C = 1` there is no bound whatsoever.
+The threshold exponent is `3`, and `4` is the smallest integer above it: the moment weights by
+`k ^ 2` and the circle lag has multiplicity two (`Moment.sum_circLag_le_two_mul`), so the envelope's
+weighted total is `∑ k ^ 2 * C / k ^ s`, convergent exactly when `s > 3`. That is one above the
+share's threshold `2` because the share has already absorbed a summation.
+`cubic_contact_relative_is_not_enough` and `cubic_contact_relative_gives_no_bound` show that at
+`s = 3` with `C = 1` there is no bound.
 
-WHAT THIS IS, STATED PLAINLY. It is a SUFFICIENT condition, and a strictly stronger one than the
-substrate hypothesis — `contact_relative_is_strictly_stronger` exhibits `Substrate.tailRead`, whose
-moment is at most `1` at every aperture and which admits no `(C, m₀)` at exponent `4` at all. So
-this moves the obligation to a power-law bound on the connected plaquette correlation relative to
-its own contact value, uniform in the aperture AND in the coupling. The coupling direction is where
-the content is, exactly as `ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity`
-says; what the form buys is that the thing to be shown uniform is one dimensionless constant `C` in
-front of a fixed power, with no rate, no normalisation and no total mass in it.
+Scope: a sufficient condition, strictly stronger than the substrate hypothesis —
+`contact_relative_is_strictly_stronger` exhibits `Substrate.tailRead`, whose moment is at most `1` at
+every aperture and which admits no `(C, m₀)` at exponent `4`. The condition is required uniformly in
+the aperture and the coupling; `ContactDominance.aperture_uniformity_does_not_give_coupling_uniformity`
+applies to it as to the others. What the form fixes is the shape: one dimensionless constant `C` in
+front of a fixed power, with no rate, normalisation or total mass in it.
 -/
 
-/-- The circle lag at the origin is zero, at every aperture. -/
+/-- `Moment.circLag (0 : Fin (N + 1)) = 0` at every aperture: the circular distance from the origin
+to itself.
+
+DERIVED: `0` occurs twice, as the lag whose distance is taken and as the distance; `1` is the `+ 1`
+in the lag index type `Fin (N + 1)`. -/
 theorem circLag_origin (N : ℕ) : Moment.circLag (0 : Fin (N + 1)) = 0 := by
   have hv : ((0 : Fin (N + 1)) : ℕ) = 0 := rfl
   unfold Moment.circLag
   rw [hv]
   omega
 
-/-- Every weight is at most one, since the weights sum to one. This is what caps the near lags when
-a decay condition is only assumed beyond a cut. -/
+/-- `R.p d ≤ 1` at every lag, since the normalised weights are nonnegative and sum to one. This is
+what caps the near lags when a decay condition is assumed only beyond a cut.
+
+DERIVED: `1` occurs twice, as the `+ 1` in the lag index type `Fin (N + 1)` and as the bound, which
+is the total the weights sum to. -/
 theorem p_le_one {N : ℕ} (R : Moment.Read N) (d : Fin (N + 1)) : R.p d ≤ 1 := by
   have h := Finset.single_le_sum (f := fun d' : Fin (N + 1) => R.p d')
     (fun d' _ => R.p_nonneg d') (Finset.mem_univ d)
   rwa [R.p_sum] at h
 
-/-- **The contact weight is at most the total mass.** Nonnegativity alone; no hypothesis beyond the
-read interface. This is the whole reason a contact-relative bound needs no mass floor. -/
+/-- `R.ρ 0 ≤ ∑ d, R.ρ d`: the contact weight is at most the total mass, from nonnegativity of the
+profile alone. This is why a contact-relative bound needs no mass floor — the contact term
+normalises the read from inside.
+
+DERIVED: `0` is the contact lag index. -/
 theorem contact_le_total {N : ℕ} (R : Moment.Read N) : R.ρ 0 ≤ ∑ d, R.ρ d :=
   Finset.single_le_sum (f := fun d : Fin (N + 1) => R.ρ d) (fun d _ => R.hρ d)
     (Finset.mem_univ (0 : Fin (N + 1)))
 
-/-- **A bound relative to the contact term is a bound on the normalised weight, with the same
-constant.** `p d = ρ d / ∑ ρ ≤ A · (ρ 0 / ∑ ρ) ≤ A`, since `ρ 0 ≤ ∑ ρ`. -/
+/-- If `0 ≤ A` and `R.ρ d ≤ A * R.ρ 0`, then `R.p d ≤ A`: dividing by the total mass gives
+`p d ≤ A * (ρ 0 / ∑ ρ)`, and `contact_le_total` makes the bracket at most `1`.
+
+DERIVED: `1` is the `+ 1` in the lag index type `Fin (N + 1)`; `0` occurs twice, as the lower bound
+on `A` and as the contact lag index. -/
 theorem p_le_of_contact_relative {N : ℕ} (R : Moment.Read N) {d : Fin (N + 1)} {A : ℝ}
     (hA : 0 ≤ A) (h : R.ρ d ≤ A * R.ρ 0) : R.p d ≤ A := by
   have hS : (0 : ℝ) < ∑ d', R.ρ d' := R.hpos
@@ -1027,9 +1185,12 @@ theorem p_le_of_contact_relative {N : ℕ} (R : Moment.Read N) {d : Fin (N + 1)}
   calc R.ρ d ≤ A * R.ρ 0 := h
     _ ≤ A * ∑ d', R.ρ d' := mul_le_mul_of_nonneg_left (contact_le_total R) hA
 
-/-- **The contact-relative condition is scale-free.** Both sides carry one factor of the rescaling,
-so `ρ ↦ t·ρ` leaves it unchanged — exactly as it leaves the far share and the moment unchanged
-(`farShare_scale_invariant`, `circ_moment_scale_invariant`). An equivalence, not an implication. -/
+/-- `((scaleRead R ht).ρ d ≤ A * (scaleRead R ht).ρ 0) ↔ (R.ρ d ≤ A * R.ρ 0)`: both sides carry one
+factor of the rescaling, so `ρ ↦ t * ρ` leaves the condition unchanged, as it leaves the far share
+and the moment unchanged (`farShare_scale_invariant`, `circ_moment_scale_invariant`).
+
+DERIVED: `0` occurs three times — the strict lower bound on the rescaling factor `t`, and the contact
+lag index on each side of the equivalence; `1` is the `+ 1` in the lag index type `Fin (N + 1)`. -/
 theorem contact_relative_scale_invariant {N : ℕ} (R : Moment.Read N) {t : ℝ} (ht : 0 < t)
     (d : Fin (N + 1)) (A : ℝ) :
     ((scaleRead R ht).ρ d ≤ A * (scaleRead R ht).ρ 0) ↔ (R.ρ d ≤ A * R.ρ 0) := by
@@ -1044,14 +1205,14 @@ theorem contact_relative_scale_invariant {N : ℕ} (R : Moment.Read N) {t : ℝ}
 
 #print axioms contact_relative_scale_invariant
 
-/-- The weight envelope a contact-relative tail bound produces: nothing below the cut, `C/k⁴` beyond
-it.
+/-- `if k < m₀ + 1 then 1 else C / k ^ 4`: the weight envelope a contact-relative tail bound
+produces — the trivial bound below the cut, and `C / k ^ 4` beyond it.
 
-DERIVED: the `1` below the cut is the read's own normalisation — `p ≤ ∑ p = 1` holds for every read
-(`p_le_one`), so it is not an assumption about the correlation there. The `4` is the smallest
-INTEGER above the threshold exponent `3`, which is where `∑ k²·b k` stops converging and which
-`cubic_contact_relative_is_not_enough` shows is FALSE. The cut is written `m₀ + 1` rather than `m₀`
-so that the tail branch is never evaluated at `k = 0`. `C` and `m₀` are the caller's. -/
+DERIVED: no numeral appears in the type. In the body, the first `1` is the `+ 1` writing the cut as
+`m₀ + 1`, so the tail branch is never evaluated at `k = 0`; the second `1` is the value below the
+cut, which `p_le_one` gives for every read rather than assuming anything about the correlation
+there; `4` is the exponent, the smallest integer above the threshold `3` at which `∑ k ^ 2 * b k`
+stops converging. `C` and `m₀` are the caller's. -/
 noncomputable def quarticWeight (m₀ : ℕ) (C : ℝ) (k : ℕ) : ℝ :=
   if k < m₀ + 1 then 1 else C / (k : ℝ) ^ 4
 
@@ -1062,7 +1223,11 @@ theorem quarticWeight_nonneg (m₀ : ℕ) {C : ℝ} (hC : 0 ≤ C) (k : ℕ) :
   · norm_num
   · exact div_nonneg hC (by positivity)
 
-/-- The envelope's squared-lag total converges: beyond the cut the terms are `C/k²`. -/
+/-- `Summable (fun k => (k : ℝ) ^ 2 * quarticWeight m₀ C k)` for `0 ≤ C`: below the cut there are
+finitely many terms, and beyond it the terms are `C / k ^ 2`.
+
+DERIVED: `0` is the lower bound on `C`; the exponent `2` is the moment's own weight, which is what
+the envelope has to beat. -/
 theorem quarticWeight_summable (m₀ : ℕ) {C : ℝ} (hC : 0 ≤ C) :
     Summable (fun k : ℕ => (k : ℝ) ^ 2 * quarticWeight m₀ C k) := by
   refine (summable_nat_add_iff (m₀ + 1)).mp ?_
@@ -1088,19 +1253,23 @@ theorem quarticWeight_summable (m₀ : ℕ) {C : ℝ} (hC : 0 ≤ C) :
   have hsq : ((n : ℝ) + 1) ^ 2 ≤ ((n : ℝ) + (m₀ : ℝ) + 1) ^ 2 := by nlinarith [hm, hn]
   exact mul_le_mul_of_nonneg_left hsq hC
 
-/-- **THE MOMENT BOUND FROM A CONTACT-RELATIVE POWER LAW.**
+/-- If `0 ≤ C` and `R.ρ d ≤ C * R.ρ 0 / (circLag d : ℝ) ^ 4` at every lag with `m₀ ≤ circLag d`, then
+`∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ 2 * ∑' k, (k : ℝ) ^ 2 * quarticWeight m₀ C k`.
 
-`ρ d ≤ C·ρ 0 / (circLag d)⁴` beyond a cut `m₀` bounds the circular second moment by
-`2·∑' k, k²·quarticWeight m₀ C k` — at every aperture, with nothing assumed below the cut, no
-normalisation and no lower bound on the total mass.
+`p_le_of_contact_relative` turns the hypothesis into a bound on the normalised weights and
+`p_le_one` caps the near lags, so the whole profile is under `quarticWeight m₀ C`;
+`Moment.sum_circLag_le_two_mul` then costs a factor of two.
 
-DERIVED: the `2` is the circle lag's multiplicity (`Moment.sum_circLag_le_two_mul`) and the sum is
-the envelope's own. No constant is introduced.
+Scope: nothing is assumed below the cut, and no normalisation or lower bound on the total mass
+appears. The proof invokes the hypothesis only at `circLag d ≥ m₀ + 1`, so its lag-zero instance is
+never used — which matters at `m₀ = 0`, where the hypothesis as written covers `circLag d = 0` and
+the fourth power vanishes there, degenerating to `ρ 0 ≤ 0`. The intended cut is `m₀ ≥ 1`, and the
+conclusion does not depend on which.
 
-THE CUT IS READ AS `m₀ + 1`. The proof invokes the hypothesis only at `circLag d ≥ m₀ + 1`, so the
-lag-zero instance is never consumed — which matters, because at `m₀ = 0` the hypothesis as written
-covers `circLag d = 0`, where the fourth power vanishes and the inequality degenerates to
-`ρ 0 ≤ 0`. The intended cut is `m₀ ≥ 1`, and nothing in the conclusion depends on which. -/
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` is the `+ 1`
+in the lag index type `Fin (N + 1)`; `4` is the envelope's exponent; `2` occurs three times — the
+exponent on the circle lag in the moment, the circle lag's multiplicity from
+`Moment.sum_circLag_le_two_mul`, and the exponent in the envelope's own weighted sum. -/
 theorem circ_moment_le_of_contact_relative {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) {C : ℝ}
     (hC : 0 ≤ C)
     (h : ∀ d : Fin (N + 1), m₀ ≤ Moment.circLag d →
@@ -1127,18 +1296,18 @@ theorem circ_moment_le_of_contact_relative {N : ℕ} (R : Moment.Read N) (m₀ :
 
 #print axioms circ_moment_le_of_contact_relative
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM A CONTACT-RELATIVE POWER LAW ON THE RAW CORRELATOR.**
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from one cut `m₀` and one constant `C ≥ 0` such that
+`wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d : ℝ) ^ 4` at every aperture, coupling and
+lag with `m₀ ≤ circLag d`. The witness is `2 * ∑' k, k ^ 2 * quarticWeight m₀ C k`, from
+`circ_moment_le_of_contact_relative`.
 
-One cut `m₀` and one dimensionless constant `C`, good at every aperture and every coupling, discharge
-`∃ B, ∀ N β, d2At N β ≤ B`. `B` is `2·∑' k, k²·quarticWeight m₀ C k`; nothing is fitted.
+Scope: the hypothesis mentions no normalisation, total mass or rate, only the correlation relative
+to its own value at lag zero. The cut is meant at `m₀ ≥ 1`; see
+`circ_moment_le_of_contact_relative` for why the lag-zero instance is never used. The axiom
+footprint carries `wilson_reflection_positive_at`, from which `readYMAt` is constructed.
 
-The hypothesis mentions no normalisation, no total mass and no rate: only that the connected
-plaquette correlation at circle lag `d` is under `C/d⁴` times its own value at lag zero. The cut is
-meant at `m₀ ≥ 1`; see `circ_moment_le_of_contact_relative` for why the lag-zero instance of the
-hypothesis is never consumed.
-
-The axiom footprint carries `wilson_reflection_positive_at` because `readYMAt` is constructed from
-it. -/
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` is the `+ 1`
+in the lag index type `Fin (N + 1)`; `4` is the exponent of the power law. -/
 theorem substrate_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1150,7 +1319,11 @@ theorem substrate_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C
 
 #print axioms substrate_of_contact_relative_decay
 
-/-- **Confinement at every large enough aperture, from the contact-relative power law.** -/
+/-- `∀ᶠ N in atTop, ∀ β, μYMAt N β < κ₀YM` from the same contact-relative power law, by
+`MassGap.confinement_of_bounded_substrate` at `substrate_of_contact_relative_decay`.
+
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` is the `+ 1`
+in the lag index type; `4` is the exponent of the power law. -/
 theorem confinement_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1160,13 +1333,14 @@ theorem confinement_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤
 
 #print axioms confinement_of_contact_relative_decay
 
-/-- **THE WHOLE STATEMENT, FROM A CONTACT-RELATIVE POWER LAW.**
+/-- `WilsonModel.existence_and_gap_of_substrate` with its hypothesis supplied by
+`substrate_of_contact_relative_decay`: from the power law there is a substrate witness `hsub` such
+that `WilsonModel.wilsonOfSubstrate hsub` has its mode sum tending to `0` at every coupling,
+`gap.μ β - gap.κ < 0` at every coupling, and `gap.R` constant.
 
-`WilsonModel.existence_and_gap_of_substrate` takes exactly `∃ B, ∀ N β, d2At N β ≤ B`, so the mass
-gap, non-triviality, `SO(4)` invariance and the continuum measure all follow from one inequality on
-the connected plaquette correlation: beyond a fixed lag it is under a fixed multiple of its own
-contact value divided by the fourth power of the circle distance, uniformly in aperture and
-coupling. -/
+DERIVED: `0` occurs four times — the lower bound on `C`, the contact lag index, the limit point of
+the mode sum, and the comparison point in `gap.μ β - gap.κ < 0`; `1` is the `+ 1` in the lag index
+type; `4` is the exponent of the power law. -/
 theorem yang_mills_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1187,20 +1361,23 @@ theorem yang_mills_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ 
 
 #print axioms yang_mills_of_contact_relative_decay
 
-/-! ### The eighth power: the same statement at the exponent the short-distance form carries
+/-! ### The same statement at exponent eight
 
-The perturbative short-distance form of the connected `F²` correlation is `ρ(d) ∼ g⁴/d⁸`, and `ρ(0)`
-carries the same `g⁴`, so the RATIO `ρ(d)/ρ(0)` is a power law with NO leading coupling dependence.
-That is the shape the criterion above consumes, and `8` is five above the threshold `3` — so the
-margin is not marginal. The reduction below makes the exponent explicit: it is enough to have the
-eighth power with SOME constant, uniform in aperture and coupling. -/
+The perturbative short-distance form of the connected `F²` correlation is `ρ d ∼ g ^ 4 / d ^ 8`, and
+`ρ 0` carries the same `g ^ 4`, so the ratio `ρ d / ρ 0` is a power law with no leading coupling
+dependence. `8` is five above the threshold `3`. The two statements below make the exponent explicit:
+the eighth power with some constant, uniform in aperture and coupling, suffices. -/
 
-/-- **THE SUBSTRATE HYPOTHESIS FROM AN INVERSE-EIGHTH CONTACT-RELATIVE BOUND.**
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from `wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d) ^ 8`
+beyond a cut. Beyond a lag of one the eighth power exceeds the fourth, so the hypothesis implies the
+one `substrate_of_contact_relative_decay` takes.
 
-`ρ d ≤ C·ρ 0 / (circLag d)⁸` beyond a cut is enough, because beyond a lag of one the eighth power is
-above the fourth. The exponent is not the point — any exponent above `3` would do, and this is the
-one the short-distance form of the connected plaquette correlation carries, with a constant that is
-coupling-free at leading order. What remains open is that ONE constant covers every coupling. -/
+Scope: any exponent above `3` would serve; `8` is the one the short-distance form of the connected
+plaquette correlation carries, with a constant that is coupling-free at leading order. The
+hypothesis still requires one `C` covering every coupling.
+
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` is the `+ 1`
+in the lag index type `Fin (N + 1)`; `8` is the exponent. -/
 theorem substrate_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1227,7 +1404,13 @@ theorem substrate_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
 
 #print axioms substrate_of_inverse_eighth_decay
 
-/-- **THE WHOLE STATEMENT, FROM THE INVERSE-EIGHTH BOUND.** -/
+/-- `WilsonModel.existence_and_gap_of_substrate` with its hypothesis supplied by
+`substrate_of_inverse_eighth_decay`: the same three conclusions as
+`yang_mills_of_contact_relative_decay`, from the exponent-eight form of the power law.
+
+DERIVED: `0` occurs four times — the lower bound on `C`, the contact lag index, the limit point of
+the mode sum, and the comparison point in `gap.μ β - gap.κ < 0`; `1` is the `+ 1` in the lag index
+type; `8` is the exponent. -/
 theorem yang_mills_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1248,27 +1431,31 @@ theorem yang_mills_of_inverse_eighth_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
 
 #print axioms yang_mills_of_inverse_eighth_decay
 
-/-! ### The share envelope the law produces: exactly cubic, one full power above the threshold
+/-! ### The far-share envelope the law produces
 
-The criterion above runs through the weight envelope, which is the parametrisation the hypothesis is
-stated in. The same hypothesis also produces an explicit FAR-SHARE envelope, which is the
-parametrisation `ContactDominance` states the threshold in, and it is worth writing down because it
-says how much margin the law carries: a quartic contact-relative law gives
+The reduction above runs through the weight envelope. The same hypothesis also produces an explicit
+far-share envelope, the parametrisation `ContactDominance` states its threshold in: a quartic
+contact-relative law gives
 
-    farShare R m ≤ (2C/3)/m³        for `m` above the cut and above `1`
+    farShare R m ≤ (2 * C / 3) / m ^ 3        for `m` above the cut and above `1`
 
-(`farShare_le_of_contact_relative`), and `3` is one full power above the share threshold `2` that
-`ContactDominance.square_share_is_not_enough` shows is FALSE. The `1/3` is the tail integral of the
-fourth power and the `2` is the circle lag's multiplicity; neither is an allowance.
+(`farShare_le_of_contact_relative`), and `3` is one power above the share threshold `2` that
+`ContactDominance.square_share_is_not_enough` shows does not suffice. The `1 / 3` is the telescoped
+total of the fourth power and the `2` is the circle lag's multiplicity.
 
 The tail sum is bounded by telescoping rather than by an integral comparison, so the constant is
-exact at every finite aperture: `1/(u+1)⁴ ≤ 1/(3u³) − 1/(3(u+1)³)` (`quartic_step`), whose surplus is
-`(6u²+4u+1)/(3u³(u+1)⁴)`. -/
+exact at every finite aperture: `1 / (u+1) ^ 4 ≤ 1 / (3 * u ^ 3) - 1 / (3 * (u+1) ^ 3)`
+(`quartic_step`), whose surplus is `(6u^2 + 4u + 1) / (3 u^3 (u+1)^4)`. -/
 
-/-- One step of the quartic tail telescope: `1/(u+1)⁴ ≤ 1/(3u³) − 1/(3(u+1)³)`.
+/-- `1 / (u + 1) ^ 4 ≤ 1 / (3 * u ^ 3) - 1 / (3 * (u + 1) ^ 3)` for `0 < u`: one step of the
+telescope for the quartic tail. The surplus `(6 * u ^ 2 + 4 * u + 1) / (3 * u ^ 3 * (u + 1) ^ 4)` is
+exhibited in the proof.
 
-DERIVED: `3` is the exponent the fourth power telescopes to — `d/du (−1/(3u³)) = 1/u⁴` — and the
-surplus `(6u²+4u+1)/(3u³(u+1)⁴)` is exhibited in the proof rather than assumed. -/
+DERIVED: `0` is the strict lower bound on `u`. `1` occurs five times — the numerator of each of the
+three fractions, and the `+ 1` in each of the two copies of `(u + 1)`. `4` is the exponent being
+telescoped. `3` occurs four times — the coefficient and the exponent in each of the two terms of the
+telescope, and it is the exponent the fourth power integrates to, since
+`d/du (-1 / (3 * u ^ 3)) = 1 / u ^ 4`. -/
 theorem quartic_step {u : ℝ} (hu : 0 < u) :
     1 / (u + 1) ^ 4 ≤ 1 / (3 * u ^ 3) - 1 / (3 * (u + 1) ^ 3) := by
   have hu1 : (0 : ℝ) < u + 1 := by linarith
@@ -1287,8 +1474,13 @@ theorem quartic_step {u : ℝ} (hu : 0 < u) :
     mul_pos (mul_pos (by norm_num) h3) h4
   exact div_nonneg hnum hden.le
 
-/-- **The quartic tail, summed exactly.** `∑_{i<K} 1/(x+1+i)⁴ ≤ 1/(3x³)` at every finite `K`, by
-telescoping `quartic_step`. No integral comparison and no limit. -/
+/-- `∑ i ∈ Finset.range K, 1 / (x + 1 + i) ^ 4 ≤ 1 / (3 * x ^ 3)` at every finite `K`, for `0 < x`,
+by telescoping `quartic_step`. No integral comparison and no limit is taken, so the bound holds at
+every finite `K` rather than in the limit.
+
+DERIVED: `0` is the strict lower bound on `x`. `1` occurs three times — the numerator on each side
+and the `+ 1` in the summand's argument. `4` is the exponent being summed; `3` occurs twice, as the
+coefficient and the exponent of the telescoped total. -/
 theorem inv_quartic_tail {x : ℝ} (hx : 0 < x) (K : ℕ) :
     ∑ i ∈ Finset.range K, 1 / (x + 1 + (i : ℝ)) ^ 4 ≤ 1 / (3 * x ^ 3) := by
   have hgen : ∀ J : ℕ, ∑ i ∈ Finset.range J, 1 / (x + 1 + (i : ℝ)) ^ 4
@@ -1315,13 +1507,15 @@ theorem inv_quartic_tail {x : ℝ} (hx : 0 < x) (K : ℕ) :
     linarith
   linarith [hgen K]
 
-/-- **THE FAR-SHARE ENVELOPE A CONTACT-RELATIVE QUARTIC LAW PRODUCES.**
+/-- If `0 ≤ C` and `R.ρ d ≤ C * R.ρ 0 / (circLag d : ℝ) ^ 4` beyond the cut `m₀`, then
+`farShare R m ≤ (2 * C / 3) / m ^ 3` at every `m` with `m₀ ≤ m` and `1 ≤ m`.
+`Moment.sum_circLag_le_two_mul` costs the factor of two and `inv_quartic_tail` sums the tail.
 
-`farShare R m ≤ (2C/3)/m³` at every cut above the law's own cut and above `1`, at every aperture.
-
-DERIVED: the `2` is the circle lag's multiplicity (`Moment.sum_circLag_le_two_mul`) and the `1/3` is
-the quartic tail's telescoped total (`inv_quartic_tail`). Neither is an allowance, and the exponent
-`3` is what the quartic law leaves after one summation. -/
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` occurs twice,
+as the `+ 1` in the lag index type `Fin (N + 1)` and as the lower bound on the cut `m`, which keeps
+the denominator nonzero; `4` is the law's exponent; `2` is the circle lag's multiplicity; `3` occurs
+twice, as the denominator of the constant — the quartic tail's telescoped total — and as the
+resulting exponent, which is what one summation leaves of a quartic law. -/
 theorem farShare_le_of_contact_relative {N : ℕ} (R : Moment.Read N) (m₀ : ℕ) {C : ℝ}
     (hC : 0 ≤ C)
     (h : ∀ d : Fin (N + 1), m₀ ≤ Moment.circLag d →
@@ -1388,20 +1582,24 @@ theorem farShare_le_of_contact_relative {N : ℕ} (R : Moment.Read N) (m₀ : �
 
 #print axioms farShare_le_of_contact_relative
 
-/-- The cubic far-share envelope a quartic contact-relative law produces.
+/-- `(2 * C / 3) / m ^ 3`: the far-share envelope `farShare_le_of_contact_relative` produces from a
+quartic contact-relative law. At `m = 0` the value is `0`;
+`ContactDominance.substrate_of_tail_envelope`, which consumes it, reads it only above the cut.
 
-DERIVED: `2` is the circle lag's multiplicity, `3` in the numerator is the quartic tail's telescoped
-total (`inv_quartic_tail`), and the exponent `3` is what one summation leaves of a quartic law. At
-`m = 0` the value is `0`, which is below nothing the envelope is used for — the criterion consuming
-it (`ContactDominance.substrate_of_tail_envelope`) reads it only above the cut. -/
+DERIVED: no numeral appears in the type. In the body, `2` is the circle lag's multiplicity, the `3`
+in the denominator of the constant is the quartic tail's telescoped total (`inv_quartic_tail`), and
+the exponent `3` is what one summation leaves of a quartic law. -/
 noncomputable def cubicShare (C : ℝ) (m : ℕ) : ℝ := (2 * C / 3) / (m : ℝ) ^ 3
 
 theorem cubicShare_nonneg {C : ℝ} (hC : 0 ≤ C) (m : ℕ) : 0 ≤ cubicShare C m := by
   unfold cubicShare
   exact div_nonneg (by linarith) (by positivity)
 
-/-- **The envelope's weighted total converges** — `(2m+1)·m^{-3}` is `O(m^{-2})`, which is what the
-threshold exponent `2` means. -/
+/-- `Summable (fun m => (2 * m + 1) * cubicShare C m)` for `0 ≤ C`: the summand is `O(m ^ (-2))`,
+which is what the share's threshold exponent `2` means.
+
+DERIVED: `0` is the lower bound on `C`; `2` and `1` are the coefficient and offset of the layer
+weight `2 * m + 1`. -/
 theorem cubicShare_summable {C : ℝ} (hC : 0 ≤ C) :
     Summable (fun m : ℕ => (2 * (m : ℝ) + 1) * cubicShare C m) := by
   refine (summable_nat_add_iff 1).mp ?_
@@ -1422,12 +1620,17 @@ theorem cubicShare_summable {C : ℝ} (hC : 0 ≤ C) :
   rw [hexp]
   exact div_nonneg (mul_nonneg (by linarith) hn) (by positivity)
 
-/-- **THE SUBSTRATE HYPOTHESIS THROUGH THE SHARE ENVELOPE.**
+/-- `∃ B, ∀ N β, d2At N β ≤ B` from the same contact-relative power law as
+`substrate_of_contact_relative_decay`, routed through `ContactDominance.substrate_of_tail_envelope`
+with the explicit profile `cubicShare C`, whose weighted total converges by
+`cubicShare_summable`.
 
-The same reduction as `substrate_of_contact_relative_decay`, routed through the far share instead of
-the weights, so that what discharges `ContactDominance.substrate_of_tail_envelope` is an explicit
-profile `a m = (2C/3)/m³` with `∑ (2m+1)·a m` convergent — the object the criterion of this tree is
-stated in, one full power above the threshold `square_share_is_not_enough` shows is FALSE. -/
+Scope: the same hypothesis and the same conclusion as `substrate_of_contact_relative_decay`, in a
+different parametrisation. The envelope's exponent `3` is one above the share threshold `2` that
+`ContactDominance.square_share_is_not_enough` shows does not suffice.
+
+DERIVED: `0` occurs twice, as the lower bound on `C` and as the contact lag index; `1` is the `+ 1`
+in the lag index type `Fin (N + 1)`; `4` is the law's exponent. -/
 theorem substrate_of_contact_relative_share (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C)
     (h : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d
@@ -1442,11 +1645,18 @@ theorem substrate_of_contact_relative_share (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C
 
 #print axioms substrate_of_contact_relative_share
 
-/-! ### Negative control: the criterion is not vacuous, and the condition is load-bearing -/
+/-! ### A read satisfying the contact-relative condition, and one failing it -/
 
-/-- **NON-VACUITY.** The contact read satisfies the two clauses `wilson_reflection_positive_at`
-asserts, meets the contact-relative condition at `C = 0` beyond lag one, and has moment zero. So
-`circ_moment_le_of_contact_relative` is not an implication out of an unsatisfiable hypothesis. -/
+/-- `ContactDominance.contactRead N` meets the contact-relative condition at `C = 0` beyond lag one,
+and its circular second moment is `0`. All its weight sits at lag zero, so every other weight
+vanishes.
+
+So the hypothesis of `circ_moment_le_of_contact_relative` is satisfiable.
+
+DERIVED: `1` occurs twice, as the `+ 1` in the lag index type `Fin (N + 1)` and as the cut beyond
+which the condition is asked; `0` occurs three times — the constant `C` at which the read meets the
+condition, the contact lag index, and the value of the moment; `4` is the condition's exponent; `2`
+is the exponent on the circle lag in the moment. -/
 theorem contact_relative_nonvacuous (N : ℕ) :
     (∀ d : Fin (N + 1), 1 ≤ Moment.circLag d →
         (contactRead N).ρ d
@@ -1465,17 +1675,19 @@ theorem contact_relative_nonvacuous (N : ℕ) :
 
 #print axioms contact_relative_nonvacuous
 
-/-- **THE CONTACT-RELATIVE CONDITION IS LOAD-BEARING.**
+/-- Two facts about `ContactDominance.midRead`, conjoined: at every constant `C` and every cut `m₀`
+there are an aperture and a lag beyond the cut at which
+`C * (midRead N).ρ 0 / (circLag d) ^ 4 < (midRead N).ρ d`; and its circular second moments exceed
+every `B`.
 
-`midRead` meets exactly the two clauses `wilson_reflection_positive_at` asserts. It puts ALL its
-weight at the antipode and NONE at lag zero, so its contact value is `0` and the right-hand side of
-the condition vanishes while the left-hand side is `1`: at every cut `m₀` and every constant `C`
-whatsoever there is an aperture and a lag at which the condition FAILS. Its moments exceed every `B`.
-Remove the condition from `circ_moment_le_of_contact_relative` and the conclusion is false, not
-merely unproved.
+`midRead` puts all its weight at the antipode and none at lag zero, so its contact value is `0` and
+the right side vanishes while the left is `1`, whatever `C` is.
 
-This also says what the condition is really asking for, which a share condition does not: CONTACT
-DOMINANCE. A correlation with no weight at short lags admits no contact-relative bound at all. -/
+So the contact-relative hypothesis of `circ_moment_le_of_contact_relative` is used, and it asks for
+something a share condition does not: weight at short lags.
+
+DERIVED: `1` is the `+ 1` in the lag index type `Fin (N + 1)`; `0` is the contact lag index; `4` is
+the condition's exponent; `2` is the exponent on the circle lag in the moment. -/
 theorem contact_relative_load_bearing :
     (∀ (C : ℝ) (m₀ : ℕ), ∃ (N : ℕ) (d : Fin (N + 1)), m₀ ≤ Moment.circLag d ∧
         C * (midRead N).ρ 0 / (Moment.circLag d : ℝ) ^ 4 < (midRead N).ρ d) ∧
@@ -1502,22 +1714,24 @@ theorem contact_relative_load_bearing :
 
 #print axioms contact_relative_load_bearing
 
-/-! ### Negative control: the threshold exponent is exactly three
+/-! ### The threshold exponent is exactly three
 
-The family below satisfies the contact-relative condition at exponent `3` with the constant `1` — the
-smallest constant there is — at every aperture and every cut, and its moments are unbounded. So the
-`4` in `circ_moment_le_of_contact_relative` cannot be lowered to `3`: AT the threshold the statement
-is false, not merely unproved. It is the exponent-`3` counterpart of
-`ContactDominance.square_share_is_not_enough`, one exponent up, because the share has absorbed a
-summation. -/
+The family below meets the contact-relative condition at exponent `3` with constant `1` at every
+aperture and every cut, and its moments are unbounded. So the exponent `4` in
+`circ_moment_le_of_contact_relative` cannot be lowered to `3`. It is the counterpart of
+`ContactDominance.square_share_is_not_enough` one exponent up, because the share has already absorbed
+a summation. -/
 
-/-- The cubic contact profile: weight `1/(j+1)³` at lag `j`, out to the antipode, and nothing beyond.
+/-- The read on `Fin (2 * k + 1 + 1)` with profile `1 / (d + 1) ^ 3` at every lag `d ≤ k + 1` and `0`
+beyond. Its total mass is under `2` (`cubeRead_mass_le`) and its circular second moments are
+unbounded (`cubeRead_moment_unbounded`).
 
-DERIVED: `3` is the threshold exponent itself — the exponent at which `∑ k²·b k` stops converging.
-The `1` in the numerator is the contact value the profile is measured against, which `p` normalises
-away, so it fixes no scale; `k + 1` is the antipode of the period `2k+2`, the largest lag at which
-the circle distance still equals the index; `2 * k + 1` is the even-period aperture that antipode
-needs. Nothing is chosen. -/
+DERIVED: `2` and `1` in the type are the aperture `2 * k + 1`, the even period the antipode needs.
+In the body, `1` in the numerator is the contact value the profile is measured against, which `p`
+normalises away; the `+ 1` in `(d + 1)` keeps the denominator nonzero at `d = 0`; `k + 1` is the
+antipode of the period `2 * k + 2`, the largest lag at which the circle distance equals the index;
+`3` is the threshold exponent, at which `∑ k ^ 2 * b k` stops converging; `0` is the weight beyond
+the antipode. -/
 noncomputable def cubeRead (k : ℕ) : Moment.Read (2 * k + 1) where
   ρ := fun d => if (d : ℕ) ≤ k + 1 then 1 / (((d : ℕ) : ℝ) + 1) ^ 3 else 0
   hρ := fun d => by
@@ -1545,7 +1759,13 @@ noncomputable def cubeRead (k : ℕ) : Moment.Read (2 * k + 1) where
       (if (d : ℕ) ≤ k + 1 then 1 / (((d : ℕ) : ℝ) + 1) ^ 3 else 0)
     linarith
 
-/-- Every sum against the circle lag collapses to the near range, where the lag is the index. -/
+/-- `∑ d, (cubeRead k).ρ d * g (circLag d) = ∑ j ∈ Finset.range (k + 2), 1 / (j + 1) ^ 3 * g j` at
+every `g`: the profile vanishes past the antipode, and on the near range the circle lag equals the
+index, so every sum against the circle lag collapses to a sum over `Finset.range (k + 2)`.
+
+DERIVED: `2` occurs twice, as the coefficient in the aperture `2 * k + 1` and as the `+ 2` bounding
+the collapsed range at the antipode; `1` occurs three times — the offset in the aperture, the `+ 1`
+in the index type, and the numerator of the profile; `3` is the profile's exponent. -/
 theorem cubeRead_sum_eq (k : ℕ) (g : ℕ → ℝ) :
     ∑ d : Fin (2 * k + 1 + 1), (cubeRead k).ρ d * g (Moment.circLag d)
       = ∑ j ∈ Finset.range (k + 2), 1 / ((j : ℝ) + 1) ^ 3 * g j := by
@@ -1574,7 +1794,9 @@ theorem cubeRead_sum_eq (k : ℕ) (g : ℕ → ℝ) :
   have hmin : min j (2 * k + 1 + 1 - j) = j := by omega
   rw [hmin]
 
-/-- The cubic profile's total mass is under `2`, by comparison with the telescoping weight. -/
+/-- `∑ d, (cubeRead k).ρ d ≤ 2`, by comparing `1 / (j + 1) ^ 3` with the telescoping weight.
+
+DERIVED: `2` is the bound on the total mass. -/
 theorem cubeRead_mass_le (k : ℕ) : ∑ d, (cubeRead k).ρ d ≤ 2 := by
   have hsum := cubeRead_sum_eq k (fun _ => 1)
   simp only [mul_one] at hsum
@@ -1613,7 +1835,15 @@ theorem cubeRead_mass_le (k : ℕ) : ∑ d, (cubeRead k).ρ d ≤ 2 := by
     linarith
   linarith [Finset.sum_le_sum hcmp, hsum2]
 
-/-- The cubic profile's squared-lag total dominates a quarter of the harmonic tail. -/
+/-- `((∑ j ∈ Finset.range (k + 2), 1 / (j + 1)) - 1) / 8 ≤ ∑ d, (cubeRead k).p d * (circLag d) ^ 2`:
+the normalised squared-lag total dominates an eighth of the harmonic partial sum, less its first
+term. The weight `j ^ 2 / (j + 1) ^ 3` is at least `1 / (4 * (j + 1))` for `j ≥ 1`, and the total
+mass is at most `2` by `cubeRead_mass_le`.
+
+DERIVED: `2` occurs twice, as the `+ 2` bounding the collapsed range at the antipode and as the
+exponent on the circle lag; `1` occurs three times — the numerator of the harmonic term, the `+ 1` in
+its denominator, and the first term subtracted off; `8` is the product of the weight's factor `4`
+with the mass bound `2`. -/
 theorem cubeRead_moment_ge (k : ℕ) :
     ((∑ j ∈ Finset.range (k + 2), 1 / ((j : ℝ) + 1)) - 1) / 8
       ≤ ∑ d, (cubeRead k).p d * (Moment.circLag d : ℝ) ^ 2 := by
@@ -1664,7 +1894,10 @@ theorem cubeRead_moment_ge (k : ℕ) :
   rw [hmomeq, le_div_iff₀ hmasspos]
   nlinarith [hlow, hmass, hmasspos, hH]
 
-/-- The cubic profile's moments exceed every bound: the harmonic series again. -/
+/-- `∃ k, B < ∑ d, (cubeRead k).p d * (circLag d) ^ 2` at every `B`: the harmonic partial sums in
+`cubeRead_moment_ge` are unbounded.
+
+DERIVED: `2` is the exponent on the circle lag. -/
 theorem cubeRead_moment_unbounded (B : ℝ) :
     ∃ k : ℕ, B < ∑ d, (cubeRead k).p d * (Moment.circLag d : ℝ) ^ 2 := by
   have htend : Filter.Tendsto
@@ -1686,16 +1919,19 @@ theorem cubeRead_moment_unbounded (B : ℝ) :
   have hge := cubeRead_moment_ge n
   linarith
 
-/-- **SHARPNESS: THE THRESHOLD EXPONENT IS EXACTLY THREE.**
+/-- Two facts about `cubeRead`, conjoined: it obeys the contact-relative condition at exponent `3`
+with constant `1` beyond every lag of one, at every aperture; and its circular second moments exceed
+every `B`.
 
-`cubeRead` satisfies the two clauses of `wilson_reflection_positive_at`, obeys the contact-relative
-condition at exponent `3` with constant `1` beyond every lag of one, and its circular second moments
-exceed every `B`. So the exponent `4` in `circ_moment_le_of_contact_relative` is not a margin: at `3`
-the statement is FALSE.
+So the exponent `4` in `circ_moment_le_of_contact_relative` cannot be lowered to `3`. It is the same
+mechanism as `ContactDominance.square_share_is_not_enough` one exponent up: a profile `1 / k ^ s` has
+squared-lag total `∑ k ^ 2 / k ^ s`, harmonic at `s = 3`, exactly as a square share has weighted
+total `∑ (2m+1) / (m+1) ^ 2` at `s = 2`.
 
-It is the same mechanism as `ContactDominance.square_share_is_not_enough` one exponent up — a profile
-`1/kˢ` has squared-lag total `∑ k²/kˢ`, which is the harmonic series at `s = 3` exactly as a square
-share has weighted total `∑ (2m+1)/(m+1)²` at `s = 2`. -/
+DERIVED: `2` occurs twice, as the coefficient in the aperture `2 * k + 1` and as the exponent on the
+circle lag; `1` occurs four times — the offset in the aperture, the `+ 1` in the index type, the cut
+beyond which the condition is asked, and the constant `C`; `0` is the contact lag index; `3` is the
+exponent at which the condition is met. -/
 theorem cubic_contact_relative_is_not_enough :
     (∀ (k : ℕ) (d : Fin (2 * k + 1 + 1)), 1 ≤ Moment.circLag d →
         (cubeRead k).ρ d
@@ -1733,12 +1969,16 @@ theorem cubic_contact_relative_is_not_enough :
 
 #print axioms cubic_contact_relative_is_not_enough
 
-/-- **At exponent three there is NO bound at all** — not a weaker one, none.
+/-- There is no `B` bounding the circular second moment of every read obeying the contact-relative
+condition at exponent `3` with constant `1` from lag one upward: for each candidate `B`,
+`cubic_contact_relative_is_not_enough` supplies a `cubeRead k` exceeding it.
 
-Stated without the criterion's own constant, so that nothing turns on how
-`∑' k, k²·quarticWeight m₀ C k` evaluates at the threshold: for EVERY `B` whatsoever, some read
-satisfying the two clauses `wilson_reflection_positive_at` asserts obeys the contact-relative
-condition at exponent `3` with constant `1` from lag one upward and has moment above `B`. -/
+Stated without the criterion's own constant, so nothing turns on how
+`∑' k, k ^ 2 * quarticWeight m₀ C k` evaluates at the threshold.
+
+DERIVED: `1` occurs three times — the `+ 1` in the lag index type `Fin (N + 1)`, the cut beyond which
+the condition is asked, and the constant `C`; `0` is the contact lag index; `3` is the exponent at
+which the condition is stated; `2` is the exponent on the circle lag in the moment. -/
 theorem cubic_contact_relative_gives_no_bound :
     ¬ ∃ B : ℝ, ∀ (N : ℕ) (R : Moment.Read N),
         (∀ d : Fin (N + 1), 1 ≤ Moment.circLag d →
@@ -1751,16 +1991,18 @@ theorem cubic_contact_relative_gives_no_bound :
 
 #print axioms cubic_contact_relative_gives_no_bound
 
-/-! ### Negative control: the condition is STRICTLY STRONGER than the substrate hypothesis
+/-! ### A read satisfying the substrate hypothesis and failing the contact-relative condition
 
-`Substrate.tailRead` has circular second moment at most `1` at every aperture — so it satisfies the
-substrate hypothesis with `B = 1` — and admits no contact-relative bound at exponent `4` with any
-constant, because its far atom's weight falls off like `(k+1)^{-3}` while the condition would ask for
-`(k+1)^{-4}`. So the reduction above gives away something, and this is what: the criterion is a
-sufficient condition and not a restatement. `substrate_iff_dyadic_shares` remains the only
-equivalence in the file. -/
+`Substrate.tailRead` has circular second moment at most `1` at every aperture, so it satisfies the
+substrate hypothesis with `B = 1`, and admits no contact-relative bound at exponent `4` with any
+constant: its far atom's weight falls off like `(k+1) ^ (-3)` while the condition asks for
+`(k+1) ^ (-4)`. So the contact-relative reduction is a sufficient condition and not a restatement;
+`substrate_iff_dyadic_shares` is the file's one equivalence. -/
 
-/-- The tail read's contact weight is `1`. -/
+/-- `(Substrate.tailRead k).ρ 0 = 1`: the tail read's unnormalised weight at lag zero.
+
+DERIVED: `0` is the contact lag index; `2` and the first `1` are the aperture `2 * k + 1`; the second
+`1` is the `+ 1` in the index type `Fin (2 * k + 1 + 1)`; the final `1` is the weight's value. -/
 theorem tailRead_rho_zero (k : ℕ) : (MassGap.Substrate.tailRead k).ρ (0 : Fin (2 * k + 1 + 1)) = 1 := by
   have hne : (0 : Fin (2 * k + 1 + 1)) ≠ MassGap.Substrate.antipode k := by
     intro hz
@@ -1776,7 +2018,10 @@ theorem tailRead_rho_zero (k : ℕ) : (MassGap.Substrate.tailRead k).ρ (0 : Fin
   rw [if_pos rfl, if_neg hne]
   ring
 
-/-- The tail read's weight at the antipode is the tail weight. -/
+/-- `(Substrate.tailRead k).ρ (Substrate.antipode k) = Substrate.tailWeight k`: the tail read's
+unnormalised weight at the antipode.
+
+DERIVED: no numeral appears in the statement. -/
 theorem tailRead_rho_antipode (k : ℕ) :
     (MassGap.Substrate.tailRead k).ρ (MassGap.Substrate.antipode k)
       = MassGap.Substrate.tailWeight k := by
@@ -1794,16 +2039,18 @@ theorem tailRead_rho_antipode (k : ℕ) :
   rw [if_neg hne, if_pos rfl]
   ring
 
-/-- **THE CONTACT-RELATIVE CONDITION IS STRICTLY STRONGER THAN THE SUBSTRATE HYPOTHESIS.**
+/-- Two facts about `Substrate.tailRead`, conjoined: its circular second moment is at most `1` at
+every aperture; and no pair `(C, m₀)` makes it obey the contact-relative condition at exponent `4`.
+At the antipode the condition reads `(k+1) ^ (-3) ≤ C * (k+1) ^ (-4)`, which forces `k + 1 ≤ C`.
 
-`Substrate.tailRead` satisfies the two clauses `wilson_reflection_positive_at` asserts, its moment is
-at most `1` at every aperture, and no `(C, m₀)` makes it obey the contact-relative condition at
-exponent `4`: at the antipode the condition reads `(k+1)^{-3} ≤ C·(k+1)^{-4}`, which forces
-`k + 1 ≤ C`.
+So `substrate_of_contact_relative_decay` is a sufficient condition and not a restatement: a
+correlation may satisfy the substrate hypothesis while its far weight falls off one power too slowly
+for the condition to hold.
 
-So `substrate_of_contact_relative_decay` is a SUFFICIENT condition that gives something away, and
-what it gives away is exactly this: a correlation may satisfy the substrate hypothesis while its far
-weight falls off one power too slowly for the criterion to see it. -/
+DERIVED: `2` occurs twice, as the exponent on the circle lag and as the coefficient in the aperture
+`2 * k + 1`; `1` occurs three times — the bound on the moment, the offset in the aperture, and the
+`+ 1` in the index type; `0` is the contact lag index; `4` is the exponent at which the condition is
+denied. -/
 theorem contact_relative_is_strictly_stronger :
     (∀ k : ℕ, ∑ d, (MassGap.Substrate.tailRead k).p d * (Moment.circLag d : ℝ) ^ 2 ≤ 1) ∧
       ¬ ∃ (C : ℝ) (m₀ : ℕ), ∀ (k : ℕ) (d : Fin (2 * k + 1 + 1)), m₀ ≤ Moment.circLag d →

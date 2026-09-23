@@ -3,62 +3,37 @@ import MassGap.Transfer
 import MassGap.InfiniteReflection
 
 /-!
-# MassGap.SchwarzIteration — `T_contract` is a theorem, not a hypothesis
+# MassGap.SchwarzIteration — form symmetry for a shift, and contraction from a bounded orbit
 
-## What this closes, stated exactly
+Two sections, on two different carriers.
 
-`Transfer.TransferData` has six fields. Two concern the time translation's relation to the form, and
-this file is about those two:
+## Section 1, on `C(X, ℝ)` for a compact `X`
 
-| field | what it needs | this file |
-|---|---|---|
-| `T_symm` | `⟨Tx, y⟩ = ⟨x, Ty⟩` | `form_shift_symm` proves the corresponding identity ON `C(X, ℝ)`, from `ShiftCompat` |
-| `T_contract` | `⟨Tx, Tx⟩ ≤ ⟨x, x⟩` | `contract_of_bounded_orbit` DERIVES it from `T_symm` plus a bounded orbit |
+`ShiftCompat R ν` bundles a forward shift `T`, a backward shift `S`, multiplicativity of `T`,
+`T ∘ S = id`, the conjugation `θ ∘ T = S ∘ θ`, and invariance of the state `ν` under `T`. From it,
+`form_shift_symm` proves `ν (θ (T f) · g) = ν (θ f · T g)` for all `f, g : C(X, ℝ)`: the identity in
+the shape `Transfer.TransferData.T_symm` asks for, stated for `ν` on the whole of `C(X, ℝ)` rather
+than for a `form` on a submodule carrier. Restricting to a carrier is `MassGap.TransferAssembly`'s
+work.
 
-**`T_symm` is not eliminated — it is consumed.** `orbit_log_convex`,
-`contract_of_bounded_orbit` and `null_is_preserved` each take it as the hypothesis `hsym`, which is
-character-for-character `TransferData.T_symm`. What is shown is that `T_contract` need not be assumed
-BESIDE it: symmetry plus a bounded orbit is enough.
+`norm_iterate_le` and `orbit_bounded_of_state` supply the uniform orbit bound used in section 2:
+if neither `T` nor `θ` increases the supremum norm, then `ν (θ (Tⁿf) · Tⁿf) ≤ ‖f‖²` for every `n`,
+using `State.le_norm` and submultiplicativity of the sup norm.
 
-**And boundedness is genuinely needed, not decoration.** On `A = ℝ` with `form x y = x·y` and
-`T x = 2x`, the form is symmetric and positive semidefinite and `⟨Tx,Tx⟩ = 4x² > x²`. So "follows
-from symmetry alone" would be false; `orbit_bounded_of_state` is what supplies the missing input in
-the intended instance.
+## Section 2, on an abstract `ℝ`-module `A` with a `Transfer.ReflForm`
 
-**Neither delivers `TransferData.T_symm` directly.** That field is about `form : A → A → ℝ` on a
-carrier; `form_shift_symm` concludes an identity about `ν` on all of `C(X, ℝ)`. Restricting the shift
-to a submodule and unfolding `stateReflForm` is `MassGap.TransferAssembly`'s work, not this file's.
+Writing `aₙ = P.form (Tⁿx) (Tⁿx)`, moving one `T` across the form by `hsym` turns
+`aₙ₊₁ = P.form (Tⁿx) (Tⁿ⁺²x)`, and Cauchy–Schwarz gives `aₙ₊₁² ≤ aₙ aₙ₊₂` (`orbit_log_convex`).
+`contract_of_bounded_orbit` runs that forward: with a uniform bound `M` on the whole orbit, `a₁ ≤ a₀`,
+i.e. `P.form (Tx) (Tx) ≤ P.form x x`. The boundedness hypothesis is used, not decorative — on `A = ℝ`
+with `form x y = x·y` and `T x = 2x` the form is symmetric and positive semidefinite while
+`⟨Tx,Tx⟩ = 4x² > x²`.
 
-## The Schwarz iteration
+`null_is_preserved` covers the degenerate case separately: `P.form x x = 0` gives
+`P.form (Tx) (Tx) = 0`, from Cauchy–Schwarz and `hsym`, with no boundedness hypothesis.
 
-Write `aₙ = ⟨Tⁿx, Tⁿx⟩`. Moving one `T` across the form gives `aₙ₊₁ = ⟨Tⁿx, Tⁿ⁺²x⟩`, and
-Cauchy–Schwarz on that turns into
-
-    aₙ₊₁² ≤ aₙ · aₙ₊₂,
-
-so `log a` is midpoint-convex. A convex sequence whose increments ever increase runs away: if
-`a₁ > a₀` then the ratios `aₙ₊₁/aₙ` are non-decreasing, so `aₙ ≥ a₀·(a₁/a₀)ⁿ`, which is unbounded.
-The orbit is bounded, so `a₁ ≤ a₀`. **That is `T_contract`.**
-
-Every step is cross-multiplied rather than divided, so no positivity side condition is needed to
-STATE the inequalities. Two case splits remain in the proof and are unavoidable: `aₙ₊₁ = 0` inside the
-ratio induction, where the conclusion holds without the inductive hypothesis, and `a₀ = 0`, where the
-assumption `a₀ < a₁` is contradicted outright.
-
-## What this does NOT close
-
-**The form.** `contract_of_bounded_orbit` takes a `Transfer.ReflForm`, so it consumes positivity
-rather than supplying it; on the infinite lattice that is still
-`InfiniteReflection.ReflPositiveOn` for a state nobody has exhibited.
-
-**The carrier.** The theorems are about an abstract `A`. Instantiating them needs the shift and the
-form on the same carrier, which `MassGap.TransferAssembly.restrictT` supplies, using
-`HalfSpaceAlgebra.halfSpaceAlg_shift_stable`.
-
-**The boundedness hypothesis is real.** `contract_of_bounded_orbit` needs a uniform `M` over the
-WHOLE orbit. `orbit_bounded_of_state` supplies it for a form built from a state, and that is the only
-place the state's boundedness is used — but a form not of that shape would have to supply it
-separately, and nothing here proves every reflection form does.
+`T` is a bare function throughout section 2; linearity is never used, only `hsym`. Positivity of the
+form is consumed from the `ReflForm` structure, not established here.
 -/
 
 namespace MassGap.SchwarzIteration
@@ -73,18 +48,15 @@ open MassGap.InfiniteReflection MassGap.DLRLimit
 
 variable {X : Type*} [TopologicalSpace X] [CompactSpace X]
 
-/-- **WHAT A TIME TRANSLATION MUST SATISFY** for the reflection form to see it as symmetric.
+/-- The compatibility a time translation needs for `form_shift_symm`, relative to a reflection `R`
+and a state `ν` on `C(X, ℝ)`. It carries two `ℝ`-linear maps, the forward shift `T` and the backward
+shift `S`, and four conditions: `T` is multiplicative (`T_mul`), `T ∘ S = id` (`T_S`), the reflection
+conjugates forward to backward (`theta_T`), and `ν` is `T`-invariant (`nu_T`).
 
-`T` is the forward shift and `S` the backward one. The four conditions are the physics: a translation
-of a product is the product of the translations, translating back then forward is nothing, the
-reflection turns a forward translation into a backward one, and the state does not see a translation.
-
-**`T_S` asks only `T ∘ S = id`, but it gets more than it asks.** Applying `θ` to `theta_T` and using
-involutivity gives `T = θ ∘ S ∘ θ`, and chasing once more gives `S ∘ T = id` — proved as
-`TransferAssembly.shift_inverse_is_two_sided`. **So `ShiftCompat` forces the translation to be
-invertible**, which is satisfiable on `ℤ` (`InfiniteShift.ishiftConf` is a bijection) and NOT on a
-half-line of `ℕ`. Writing the weaker-looking field buys nothing and the stronger consequence should
-be visible.
+`T_S` states only the one-sided inverse, but the structure implies the other: applying `θ` to
+`theta_T` and using involutivity gives `T = θ ∘ S ∘ θ`, hence `S ∘ T = id`, proved as
+`TransferAssembly.shift_inverse_is_two_sided`. So the translation is invertible — satisfiable on `ℤ`,
+where `InfiniteShift.ishiftConf` is a bijection, and not on a half-line of `ℕ`.
 
 DERIVED: no numeral. -/
 structure ShiftCompat (R : Reflection X) (ν : State X) where
@@ -101,16 +73,16 @@ structure ShiftCompat (R : Reflection X) (ν : State X) where
   /-- The state is translation-invariant. -/
   nu_T : ∀ f : C(X, ℝ), ν (T f) = ν f
 
-/-- **⭐ `T_symm`, PROVED.** Four rewrites:
+/-- `ν (θ (T f) · g) = ν (θ f · T g)` for all `f, g : C(X, ℝ)`, given a `ShiftCompat R ν`. Four
+rewrites, one per field:
 
-    ν(θ(Tf)·g) = ν(S(θf)·g)          the reflection conjugates
-               = ν(T(S(θf)·g))       the state is translation-invariant
-               = ν(T(S(θf))·T g)     a translation is multiplicative
-               = ν(θf·T g)           translating back then forward is nothing.
+    ν(θ(Tf)·g) = ν(S(θf)·g)          theta_T
+               = ν(T(S(θf)·g))       nu_T
+               = ν(T(S(θf))·T g)     T_mul
+               = ν(θf·T g)           T_S.
 
-This is where reflection positivity earns its keep: the form is symmetric for the transfer operator
-*because* the reflection reverses time, which is the whole reason Osterwalder–Schrader pairs a
-reflection with a translation.
+The conclusion is about `ν` on all of `C(X, ℝ)`, not about a `form` on a carrier; producing
+`TransferData.T_symm` from it is a separate restriction step.
 
 DERIVED: no numeral. -/
 theorem form_shift_symm {R : Reflection X} {ν : State X} (C : ShiftCompat R ν)
@@ -137,16 +109,13 @@ theorem norm_iterate_le {T : C(X, ℝ) → C(X, ℝ)} (hT : ∀ f, ‖T f‖ ≤
 
 #print axioms norm_iterate_le
 
-/-- **⭐ AND THE ORBIT IS BOUNDED** — the other hypothesis `contract_of_bounded_orbit` needs, supplied
-rather than assumed.
+/-- `ν (θ (T^[n] f) · T^[n] f) ≤ ‖f‖ * ‖f‖`, for every `n`, given that neither `T` nor `R.θ`
+increases the supremum norm. `State.le_norm` bounds the state by the norm, `norm_mul_le` splits the
+product, and `norm_iterate_le` bounds each factor by `‖f‖`. The bound is uniform in `n`, which is the
+shape `contract_of_bounded_orbit` consumes as its `M`.
 
-A state is bounded by the supremum norm (`State.le_norm`), the sup norm is submultiplicative on
-`C(X, ℝ)`, and neither the reflection nor the translation increases it — both are precompositions by
-a map of the configuration space, which cannot enlarge a supremum. So `‖f‖²` is a bound good for
-every power at once, which is the form the contraction theorem consumes.
-
-DERIVED: `‖f‖ * ‖f‖` is the two copies of `f` in the form, derived from `State.le_norm` and
-submultiplicativity rather than chosen. No exponent appears in the statement. -/
+DERIVED: `‖f‖ * ‖f‖` is the two copies of `f` in the form, from `State.le_norm` and
+submultiplicativity. No numeral appears in the statement. -/
 theorem orbit_bounded_of_state (ν : State X) (R : Reflection X) {T : C(X, ℝ) → C(X, ℝ)}
     (hT : ∀ f, ‖T f‖ ≤ ‖f‖) (hθ : ∀ f, ‖R.θ f‖ ≤ ‖f‖) (f : C(X, ℝ)) (n : ℕ) :
     ν (R.θ (T^[n] f) * T^[n] f) ≤ ‖f‖ * ‖f‖ := by
@@ -161,19 +130,19 @@ theorem orbit_bounded_of_state (ν : State X) (R : Reflection X) {T : C(X, ℝ) 
 
 end Symm
 
-/-! ## 2. ⭐ `T_contract`, from Cauchy–Schwarz alone -/
+/-! ## 2. Contraction, from Cauchy–Schwarz and a bounded orbit -/
 
 section Contract
 
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
-/-- **ONE `T` MOVES ACROSS, AND CAUCHY–SCHWARZ CLOSES.** `aₙ₊₁² ≤ aₙ·aₙ₊₂` — midpoint log-convexity
-of the orbit's diagonal.
+/-- Midpoint log-convexity of the orbit diagonal: with `a n = P.form (T^[n] x) (T^[n] x)`,
+`a (n+1) ^ 2 ≤ a n * a (n+2)`. One `T` moves across the form by `hsym`, turning `a (n+1)` into
+`P.form (T^[n] x) (T^[n+2] x)`, and `P.cauchy_schwarz` closes it. `T` is a bare function; linearity
+is never used, only `hsym`.
 
-`T` is a bare function: linearity is never used, only the symmetry of the form for it.
-
-DERIVED: the exponent `2` is the square Cauchy–Schwarz produces; the `1` and `2` in the indices are
-one and two translation steps. -/
+DERIVED: the exponent `2` is the square Cauchy–Schwarz produces; the `1` and the `2` in the iterate
+indices are one and two translation steps, the spacing `hsym` creates. -/
 theorem orbit_log_convex (P : ReflForm A) (T : A → A)
     (hsym : ∀ y z, P.form (T y) z = P.form y (T z)) (x : A) (n : ℕ) :
     P.form (T^[n + 1] x) (T^[n + 1] x) ^ 2
@@ -187,20 +156,19 @@ theorem orbit_log_convex (P : ReflForm A) (T : A → A)
 
 #print axioms orbit_log_convex
 
-/-- **⭐ `T_contract`, PROVED FROM SYMMETRY AND A BOUNDED ORBIT.**
+/-- `P.form (T x) (T x) ≤ P.form x x`, from the form's symmetry for `T` and a uniform bound `M` on
+the whole orbit diagonal. By contradiction: if `a 1 > a 0`, `orbit_log_convex` makes the ratios
+non-decreasing, so `a n` grows at least like `(a 1 / a 0)^n`, and `pow_unbounded_of_one_lt`
+contradicts `hM`. Every step is cross-multiplied rather than divided, so the intermediate inequalities
+need no positivity side condition.
 
-`T_contract` reads like a second assumption about the operator and is not one. On a positive
-semidefinite form, symmetry alone forces `aₙ₊₁² ≤ aₙ·aₙ₊₂`; if `a₁` ever exceeded `a₀` the ratios
-would be non-decreasing from there on and `aₙ` would grow geometrically, which a bounded orbit
-forbids.
+`hM` must hold at every `n`, not merely eventually. The hypothesis cannot be dropped: on `A = ℝ` with
+`form x y = x·y` and `T x = 2x` the form is symmetric and positive semidefinite while
+`⟨Tx,Tx⟩ = 4x² > x²`. Positivity of the form comes from the `ReflForm` structure, which this theorem
+consumes rather than supplies.
 
-**The boundedness hypothesis is where the state enters** — `|ν(g)| ≤ ‖g‖_∞`, and a translation does
-not change a supremum. It is genuinely needed: the conclusion is false for an unbounded orbit, which
-is why it is a hypothesis and not folded into the statement.
-
-DERIVED: the `0` and `1` are the orbit's first two terms; the `2`s in `a (n+2)`, `a (k+2)` and the
-squares are Cauchy–Schwarz's own and the two-step lag `orbit_log_convex` produces; `M` is the
-caller's bound. Nothing is chosen. -/
+DERIVED: no numeral. `M` is the caller's orbit bound, and the numerals in the proof's index arithmetic
+do not reach the statement. -/
 theorem contract_of_bounded_orbit (P : ReflForm A) (T : A → A)
     (hsym : ∀ y z, P.form (T y) z = P.form y (T z)) (x : A) (M : ℝ)
     (hM : ∀ n, P.form (T^[n] x) (T^[n] x) ≤ M) :
@@ -254,13 +222,13 @@ theorem contract_of_bounded_orbit (P : ReflForm A) (T : A → A)
 
 #print axioms contract_of_bounded_orbit
 
-/-- **THE DEGENERATE CASE IS NOT AN EXCEPTION.** A null vector stays null: if `⟨x,x⟩ = 0` then
-`⟨Tx,Tx⟩ = 0` too, by Cauchy–Schwarz and symmetry, with no boundedness needed.
+/-- A null vector stays null: `P.form x x = 0` gives `P.form (T x) (T x) = 0`. Cauchy–Schwarz at
+`(x, T (T x))` has its right side killed by `hx`, so `P.form x (T (T x))` squares to at most zero and
+vanishes; `hsym` identifies it with `P.form (T x) (T x)`. No boundedness hypothesis is needed, in
+contrast to `contract_of_bounded_orbit`.
 
-Worth separating because `contract_of_bounded_orbit`'s proof has to survive `a₀ = 0`, and this says
-the conclusion there is not merely an inequality between zeros by accident.
-
-DERIVED: the `0` is the null value; the exponent `2` is Cauchy–Schwarz's square. Nothing is chosen. -/
+DERIVED: the `0` in the hypothesis is the null value of the form at `x`, and the `0` in the
+conclusion is the same value one step along. -/
 theorem null_is_preserved (P : ReflForm A) (T : A → A)
     (hsym : ∀ y z, P.form (T y) z = P.form y (T z)) {x : A} (hx : P.form x x = 0) :
     P.form (T x) (T x) = 0 := by

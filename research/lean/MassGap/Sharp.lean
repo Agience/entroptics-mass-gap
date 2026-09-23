@@ -1,43 +1,50 @@
 import MassGap.Moment
 
 /-!
-# The sharp cosine-moment bound
+# MassGap.Sharp — a tangent-line lower bound on the cosine average
 
-The confinement criterion reaches the entropy floor through a lower bound on the cosine average in
-terms of the second moment of the lag angle. Everywhere else in the development that step is taken
-with `Real.one_sub_sq_div_two_le_cos` — `1 − x²/2 ≤ cos x` — which is a THEOREM but not the SHARP
-bound, and the slack it inserts is the one quantity in the whole chain that was chosen rather than
-derived.
+Lower bounds on `⟨cos θ⟩` in terms of the second moment `⟨θ²⟩`, for a `Moment.Read N`.
 
-This file removes the choice. Given only the second moment `m = ⟨θ²⟩`, the largest lower bound on
-`⟨cos θ⟩` that any argument can supply is
+The chain is elementary real analysis. `mul_cos_lt_sin` proves `x·cos x < sin x` on `(0, π)`;
+`sinc_strictAntiOn` turns it into strict antitonicity of `sin x / x` on `Ioc 0 π`; `cos_ge_tangent`
+uses that to prove the pointwise inequality
 
-    ⟨cos θ⟩  ≥  cos √m                                     (`cos_avg_ge_cos_rms`)
+    cos A + (sin A / (2A))·(A² − x²)  ≤  cos x        for `x ∈ [0, π]`, `A ∈ (0, π)`,
 
-and it is attained, by the point mass at `θ = √m`. So no further sharpening is possible at
-second-moment order; what is lost beyond this is information the second moment does not carry.
+which is the tangent line to `t ↦ cos √t` at `t = A²`, written in `x`. `circ_angle_le_pi` shows the
+lag angle stays in `[0, π]`, so the pointwise bound can be averaged termwise. `cos_avg_ge_tangent` is
+that average, and `cos_avg_ge_cos_rms` is its specialisation to `A = √⟨θ²⟩`, where the correction
+term vanishes:
 
-THE ROUTE. `t ↦ cos √t` is convex on `[0, π²]`, so Jensen applies in the variable `t = θ²`. Convexity
-is taken through the tangent line rather than the second derivative, which keeps `√` out of every
-differentiation: the tangent at `A` is a lower bound for `cos` exactly when `sin x / x` is decreasing,
-and that is `x·cos x < sin x`, which is `Real.lt_tan` on the first half-turn and a sign check on the
-second.
+    cos √⟨θ²⟩  ≤  ⟨cos θ⟩.
 
-DERIVED: nothing in this file is a magnitude. `π` is the half-turn the lag angle lives on
-(`Moment.circLag` bounds `circLag d ≤ (N+1)/2`, so `θ_d ≤ π`), and the `2` in `sin A / (2A)` is the
-derivative of `x ↦ x²`.
+Equality in `cos_ge_tangent` holds pointwise at `x = A`. No declaration in this file exhibits a
+distribution attaining `cos_avg_ge_cos_rms`, and none states that a larger lower bound is
+unavailable; both theorems are one-directional inequalities.
+
+`cos_avg_ge_cos_rms` requires the second moment to be nonnegative and strictly below `π²`, supplied
+as the hypotheses `hnn` and `hlt`.
+
+DERIVED: no numeral in this file is a magnitude. `π` is the half-turn the lag angle lives on —
+`circ_angle_le_pi` proves `θ_d ≤ π` from `circLag d` being at most half the periodic extent — and
+the `2` in `sin A / (2A)` is the derivative of `x ↦ x²`, the chain-rule factor of the substitution
+`t = x²`. The `2` in `2π/(N+1)` is the full turn, and the `1` in `N + 1` is the number of lags, the
+cardinality of `Fin (N + 1)`.
 -/
 
 namespace MassGap.Sharp
 
 open Real Set
 
-/-- **`x·cos x < sin x` on the open half-turn.** The inequality behind the monotonicity of
-`sin x / x`, and the only analytic input this file takes.
+/-- `x * Real.cos x < Real.sin x` for `0 < x < π`. A trichotomy on `x` against `π/2`: below it,
+`Real.lt_tan` gives `x < tan x` and `cos x > 0` clears the denominator; at it, the left side is `0`
+and the right is `1`; above it, `cos x < 0` while `sin x > 0`.
 
-On `(0, π/2)` it is `Real.lt_tan` cleared of its denominator; at `π/2` the left side is `0` and the
-right is `1`; on `(π/2, π)` the cosine has turned negative while the sine has not, so the left side
-is negative and the right positive. No estimate is made anywhere. -/
+Strict throughout, and stated on the open interval — it fails at `x = 0`, where both sides are `0`.
+No numeric estimate is used.
+
+DERIVED: `0` is the strict lower bound on `x`; it is the only numeral. `π` is the half-turn and the
+upper endpoint, beyond which the sine changes sign and the inequality fails. -/
 theorem mul_cos_lt_sin {x : ℝ} (hx : 0 < x) (hxπ : x < π) : x * Real.cos x < Real.sin x := by
   rcases lt_trichotomy x (π / 2) with h | h | h
   · -- first quarter-turn: `x < tan x`, and `cos x > 0` clears the denominator
@@ -58,8 +65,15 @@ theorem mul_cos_lt_sin {x : ℝ} (hx : 0 < x) (hxπ : x < π) : x * Real.cos x <
     have hsin : 0 < Real.sin x := Real.sin_pos_of_pos_of_lt_pi hx hxπ
     nlinarith
 
-/-- **`sin x / x` is strictly decreasing across the half-turn** — the monotone form of
-`mul_cos_lt_sin`, since `(sin x / x)' = (x·cos x − sin x)/x²`. -/
+/-- `fun x => Real.sin x / x` is strictly antitone on `Set.Ioc 0 π`. From
+`strictAntiOn_of_deriv_neg`: the derivative is `(cos x · x − sin x)/x²`, whose numerator is negative
+by `mul_cos_lt_sin` and whose denominator is positive.
+
+Stated on the half-open interval, so `0` is excluded — the quotient is not defined there — while `π`
+is included.
+
+DERIVED: `0` is the excluded left endpoint of `Ioc 0 π`; `π` is the included right endpoint, the
+half-turn on which `mul_cos_lt_sin` holds. -/
 theorem sinc_strictAntiOn : StrictAntiOn (fun x => Real.sin x / x) (Ioc 0 π) := by
   refine strictAntiOn_of_deriv_neg (convex_Ioc 0 π) ?_ ?_
   · refine ContinuousOn.div Real.continuous_sin.continuousOn continuousOn_id ?_
@@ -80,15 +94,22 @@ theorem sinc_strictAntiOn : StrictAntiOn (fun x => Real.sin x / x) (Ioc 0 π) :=
 
 #print axioms sinc_strictAntiOn
 
-/-- **The tangent line to `cos` in the variable `x²`, as a pointwise lower bound.**
+/-- For `0 < A < π` and `0 ≤ x ≤ π`,
 
-    cos A + (sin A / (2A)) · (A² − x²)  ≤  cos x        for `x ∈ [0, π]`, `A ∈ (0, π)`
+    cos A + (sin A / (2A)) · (A² − x²)  ≤  cos x.
 
-This is convexity of `t ↦ cos √t` stated where it is used, and it is what makes the second-moment
-bound sharp: equality holds at `x = A`, so the bound cannot be raised.
+The tangent line to `t ↦ cos √t` at `t = A²`, written in the variable `x`. Proof: `f y = cos y + λy²`
+with `λ = sin A/(2A)` has `f' y = y·(sin A/A − sin y/y)`, and `sinc_strictAntiOn` makes that
+nonpositive below `A` and nonnegative above it, so `f` is antitone on `[0, A]` and monotone on
+`[A, π]` and attains its minimum over `[0, π]` at `A`.
 
-The proof is that `φ(x) = cos x + λx²` with `λ = sin A/(2A)` has `φ'(x) = x·(sin A/A − sin x/x)`, and
-`sin x / x` is decreasing by `mul_cos_lt_sin`, so `φ` falls to `A` and rises after it. -/
+Equality holds at `x = A`, where the correction term vanishes. The hypothesis `A < π` is strict
+because `sin A > 0` is needed for `λ > 0`; `x` may be either endpoint.
+
+DERIVED: `0` is the strict lower bound on `A` and the lower bound on `x`. `2` in `sin A / (2A)` is
+the derivative of `y ↦ y²`, the chain-rule factor of the substitution `t = y²`, and the two
+exponents `2` are that substitution's squares. `π` is the half-turn, the range on which
+`sinc_strictAntiOn` holds and hence the widest interval this argument covers. -/
 theorem cos_ge_tangent {A x : ℝ} (hA : 0 < A) (hAπ : A < π)
     (hx : 0 ≤ x) (hxπ : x ≤ π) :
     Real.cos A + (Real.sin A / (2 * A)) * (A ^ 2 - x ^ 2) ≤ Real.cos x := by
@@ -152,9 +173,17 @@ theorem cos_ge_tangent {A x : ℝ} (hA : 0 < A) (hAπ : A < π)
 
 open MassGap.Moment
 
-/-- **The lag angle never leaves the half-turn.** `circLag d = min d (N+1−d)` is at most half the
-periodic extent, so `θ = 2π·circLag d/(N+1) ≤ π`. This is what lets `cos_ge_tangent` be applied
-termwise without a side condition to discharge at the caller. -/
+/-- For every `d : Fin (N + 1)`, `2 * π * circLag d / ((N : ℝ) + 1) ≤ π`. The natural-number fact
+`2 * circLag d ≤ N + 1` — which is `Moment.circLag` being the minimum of `d` and `N + 1 − d`, closed
+by `omega` — cast to `ℝ` and divided through.
+
+This is what lets `cos_ge_tangent` be applied termwise in `cos_avg_ge_tangent`, with no side
+condition left for the caller.
+
+DERIVED: `2` is the full turn in `2π`, the circumference the lag angle is measured on. `1` is the
+`+1` of `Fin (N + 1)`, the number of lags, appearing in the type of `d` and as the denominator's
+offset; the bound `π` is half the turn, which is why the factor `2` and the minimum in `circLag`
+cancel. -/
 theorem circ_angle_le_pi {N : ℕ} (d : Fin (N + 1)) :
     2 * Real.pi * (circLag d : ℝ) / ((N : ℝ) + 1) ≤ π := by
   have hNpos : (0 : ℝ) < (N : ℝ) + 1 := by positivity
@@ -166,18 +195,24 @@ theorem circ_angle_le_pi {N : ℕ} (d : Fin (N + 1)) :
   rw [div_le_iff₀ hNpos]
   nlinarith [Real.pi_pos]
 
-/-- **THE SHARP COSINE-MOMENT BOUND.**
+/-- For a `Moment.Read N` and any `0 < A < π`,
 
-    cos A + (sin A/(2A))·(A² − ⟨θ²⟩)  ≤  ⟨cos θ⟩        for every `A ∈ (0, π)`
+    cos A + (sin A/(2A))·(A² − ⟨θ²⟩)  ≤  ⟨cos θ⟩,
 
-`Moment.Read.cos_avg_ge_circ` is the case of this bound in the limit `A → 0`, where the tangent to
-`t ↦ cos √t` at the origin is `1 − t/2`. Every other `A` gives a strictly better bound at moments
-near `A²`, and taking `A = √⟨θ²⟩` gives the best one available from the second moment at all:
-`⟨cos θ⟩ ≥ cos √⟨θ²⟩`, which is attained by the point mass at `θ = √⟨θ²⟩`.
+where `⟨θ²⟩` is `(2π/(N+1))² · ∑_d p d · circLag d ²` and `⟨cos θ⟩` is `∑_d p d · cos (θ d)`.
 
-So this is where the second-moment route stops. What is lost past this point is information the
-second moment does not carry, not slack in the argument — and the comparison constant the confinement
-criterion carries is, after this, the sharp one rather than a chosen one. -/
+`cos_ge_tangent` is applied to each lag, using `circ_angle_le_pi` for the range condition and
+`R.p_nonneg` to keep the inequality under multiplication by the weight; summing and using `R.p_sum`
+(the weights sum to `1`) collects the constant term and pulls the common factor `(2π/(N+1))²` out of
+the moment.
+
+The bound holds simultaneously for every admissible `A`; the statement quantifies over `A` and
+selects none.
+
+DERIVED: `0` is the strict lower bound on `A`. `2` in `sin A / (2A)` is the chain-rule factor from
+`cos_ge_tangent`, and the exponents `2` are that lemma's squares and the square of the lag. `2` in
+`2π/(N + 1)` is the full turn, and `1` is the `+1` of `Fin (N + 1)`, the number of lags, appearing
+in the summation index type and in the denominator. `π` is the half-turn, the upper limit on `A`. -/
 theorem cos_avg_ge_tangent {N : ℕ} (R : Read N) {A : ℝ} (hA : 0 < A) (hAπ : A < π) :
     Real.cos A + (Real.sin A / (2 * A))
         * (A ^ 2 - (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2))
@@ -210,17 +245,24 @@ theorem cos_avg_ge_tangent {N : ℕ} (R : Read N) {A : ℝ} (hA : 0 < A) (hAπ :
 
 #print axioms cos_avg_ge_tangent
 
-/-- **THE BEST BOUND THE SECOND MOMENT CAN GIVE.**
+/-- For a `Moment.Read N` whose second moment `⟨θ²⟩ = (2π/(N+1))² · ∑_d p d · circLag d ²` is
+nonnegative (`hnn`) and strictly below `π²` (`hlt`),
 
-    cos √⟨θ²⟩  ≤  ⟨cos θ⟩
+    cos √⟨θ²⟩  ≤  ⟨cos θ⟩.
 
-Take the tangent at the root-mean-square angle itself: there `A² = ⟨θ²⟩`, the correction term in
-`cos_avg_ge_tangent` vanishes identically, and what is left is Jensen's inequality for the convex
-function `t ↦ cos √t`.
+`cos_avg_ge_tangent` at `A = √⟨θ²⟩`, where `A² = ⟨θ²⟩` and the correction term is exactly `0`. The
+proof splits on whether the moment vanishes: at `0` the conclusion reads `1 ≤ ⟨cos θ⟩`, which
+`Moment.Read.cos_avg_ge_circ` already gives and which needs no tangent; above `0`, `hlt` supplies
+`A < π` through `Real.sqrt_lt_sqrt`.
 
-This is the end of the line for second-moment arguments. The bound is attained — by the point mass at
-`θ = √⟨θ²⟩` — so it cannot be raised by any argument that reads the distribution only through its
-second moment. Anything sharper must read something else. -/
+Both hypotheses are about the moment, not about the distribution: `hlt` is what keeps `A` inside the
+interval `cos_ge_tangent` is proved on. The statement is a lower bound; nothing here exhibits a read
+attaining it.
+
+DERIVED: `0` is the lower bound on the moment in `hnn`. `2` in `2π/(N + 1)` is the full turn, `1` is
+the `+1` of `Fin (N + 1)`, the number of lags, and the exponents `2` square the lag and the moment's
+prefactor. `π ^ 2` in `hlt` is the square of the half-turn, so the hypothesis says the
+root-mean-square lag angle stays inside the half-turn, which is the range `cos_ge_tangent` covers. -/
 theorem cos_avg_ge_cos_rms {N : ℕ} (R : Read N)
     (hnn : 0 ≤ (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2))
     (hlt : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2) < π ^ 2) :

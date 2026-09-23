@@ -1,29 +1,41 @@
 import Mathlib
 
 /-!
-# Moment-support lemma — the `C(τ)→0` ⟹ spectral-support bridge (finite-dim core, PAPER §11/§13)
+# Moment-support lemma for positive-weight exponential sums (PAPER §11/§13)
 
-Closes the reduction-core gap: it connects the PROVED decay of the connected correlator to the transfer
-operator's spectral-support bound `hsp` (the hypothesis `Complete.ym_reconstructed_gap` currently assumes).
+One theorem over an arbitrary index type: a finite nonnegative-weight exponential sum
+`∑_{k ∈ s} w_k λ_k^τ` that is dominated by `M ρ^τ` at *every* `τ : ℕ` has every positively-weighted
+base `λ_k` at or below `ρ`.
 
-Reflection positivity (Osterwalder–Seiler) gives a self-adjoint transfer operator `T`, `0 ≤ T ≤ 1`, on the
-finite-volume physical Hilbert space, and the connected correlator is a **positive-weight** exponential sum
-`C_conn(τ) = ∑_k w_k λ_k^τ` with `w_k = |⟨v, e_k⟩|² ≥ 0` and `λ_k ∈ [0,1)` the excited transfer eigenvalues.
-The proof already delivers `C_conn(τ) ≤ M ρ^τ` with `ρ = e^{-Δ} < 1`.
+The intended reading is spectral: with `w_k = |⟨v, e_k⟩|²` the overlaps of a vector with a transfer
+operator's eigenbasis and `λ_k` the eigenvalues, a geometric bound on the correlator `∑_k w_k λ_k^τ`
+confines the eigenvalues the vector sees to `[0, ρ]`. Nothing in this file constructs a transfer
+operator, a Hilbert space or a correlator: the weights, bases and bound are all hypotheses.
 
-This file proves the elementary, load-bearing step: **a positive-weight exponential sum bounded by a decaying
-total forces every weighted mode below the decay rate.** Positivity of the weights is essential — it makes each
-term a lower bound on the sum. With `ρ = e^{-Δ}` this places every excited eigenvalue carrying nonzero overlap
-in `[0, e^{-Δ}]`, the support half of `hsp`.
+Scope: the sum is over a `Finset`, so the statement is finite-dimensional; the exponent `τ` ranges
+over all of `ℕ`, and a bound holding only up to some finite `τ` does not satisfy the hypothesis.
+The conclusion is conditional on `0 < w k` and says nothing about zero-weight indices.
 -/
 
 namespace MassGap
 
 open Finset Filter
 
-/-- **Moment-support lemma (positive-weight core).** If `∑_{k∈s} w_k λ_k^τ ≤ M ρ^τ` for every `τ ∈ ℕ`, with
-`w_k ≥ 0`, `λ_k ≥ 0`, `ρ > 0`, then every mode carrying positive weight sits at or below the decay rate:
-`w_k > 0 ⟹ λ_k ≤ ρ`. (Reflection positivity supplies `w_k ≥ 0`; the proof supplies the decaying bound.) -/
+/-- Moment-support lemma. Over a `Finset s` in any index type, given weights `w` and bases `lam`
+that are nonnegative on `s`, a real `ρ > 0`, a real `M`, and the hypothesis that
+`∑ k ∈ s, w k * lam k ^ τ ≤ M * ρ ^ τ` holds for *every* `τ : ℕ`, each `k ∈ s` with `0 < w k`
+satisfies `lam k ≤ ρ`.
+
+Nonnegativity of the weights is what makes a single term a lower bound for the whole sum; dividing
+the resulting `w k * lam k ^ τ ≤ M * ρ ^ τ` by `ρ ^ τ` bounds `w k * (lam k / ρ) ^ τ` by `M` at every
+`τ`, which a ratio above `1` cannot sustain.
+
+Scope: `M` is not assumed nonnegative and `ρ` is not assumed below `1`; the bound is required at all
+natural `τ`, and indices with `w k = 0` are unconstrained.
+
+DERIVED: `0` occurs four times, as the lower bound on the weights `w k`, the lower bound on the bases
+`lam k`, the positivity threshold of `ρ`, and the positivity threshold on `w k` selecting which
+indices the conclusion covers. No other numeral appears. -/
 theorem le_of_positive_weight_decay {ι : Type*} (s : Finset ι) (w lam : ι → ℝ) (M ρ : ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hρ : 0 < ρ)
     (hbound : ∀ τ : ℕ, (∑ k ∈ s, w k * lam k ^ τ) ≤ M * ρ ^ τ) :
@@ -53,27 +65,18 @@ theorem le_of_positive_weight_decay {ι : Type*} (s : Finset ι) (w lam : ι →
   rw [mul_comm] at hle                                 -- `hle : r^n * w k ≤ M`
   linarith [hn, hle]
 
-/-- **Assembling `hsp` (interface).** `le_of_positive_weight_decay` gives the spectral bound *as seen by the
-observable* `v`: every excited eigenvalue with `⟨v,e_k⟩ ≠ 0` is `≤ ρ = e^{-Δ}`. To lift "seen by `v`" to a
-statement about `T` itself (`spectrum ⊆ {1} ∪ [ε, e^{-Δ}]`, the `ym_reconstructed_gap` input) the
-assembly needs three companion facts (independently reviewed):
-* **R1 (cyclicity/totality — load-bearing).** The decay bound holds for a family `{v_a}` total in `Ω^⊥`
-  (equivalently every excited `e_k` has nonzero overlap with some `v_a`). This closes the zero-overlap hole — a
-  single correlator can *overestimate* the gap — and in particular covers the slowest excited mode. Reeh–Schlieder
-  / vacuum-cyclicity for the local algebra supplies it.
-* **R3 (vacuum eigenspace).** The subtracted vacuum is exactly the full `λ=1` eigenspace `Ω` (the decay itself
-  forces `v`'s connected part `⊥ Ω`). With `ρ<1` this gives isolation (no spectrum in `(ρ,1)`) — the gap. Vacuum
-  *simplicity* (`dim Ω = 1`) is an extra input (Perron–Frobenius/clustering), needed only if a *unique* vacuum is
-  claimed, not for `H ≥ Δ` on `Ω^⊥`.
-* **R2 (ε>0) — optional.** Needed only if the assembly routes through `H = -log T` via CFC (log is discontinuous
-  at 0); then `ε = λ_min > 0` comes from strict positivity `T = e^{-aH_latt} > 0` (bounded action), NOT from the
-  decay. Otherwise drop `ε` and target `{1} ∪ [0, ρ]`, i.e. the norm bound `‖T|_{Ω^⊥}‖ ≤ ρ`, which is all the gap needs.
+/-- Call-site form of `le_of_positive_weight_decay`, with the index `k`, its membership `hk` and its
+positive weight `hwk` moved from the conclusion into the binders. Given the same nonnegativity,
+`0 < ρ` and all-`τ` domination hypotheses, it concludes `lam k ≤ ρ` for that single `k`. The proof is
+the lemma applied to its arguments, so this fixes the argument order a caller uses and adds no
+content.
 
-Setting check: `τ` must range over `ℕ` (the OS/GNS half-infinite reconstructed time — finite spatial volume, time
-unbounded), NOT a finite time-torus (where `C(τ)` is a KMS trace and the clean `∑ w_k λ_k^τ` at unbounded `τ` is
-unavailable). Continuum limit: the finite-dim lemma is the correct per-volume target; the measure-theoretic port
-`∫ λ^τ dμ_v ≤ Mρ^τ ⟹ supp μ_v ⊆ [0,ρ]` is a straightforward re-run, and volume/spacing UNIFORMITY of `(M,ρ)` is
-the separate obligation of the estimates / existence half. -/
+Scope: the conclusion is about one index. Bounding the whole family requires the weights `w k` to be
+positive at every index of interest — an index the sum happens to miss, or one whose weight vanishes,
+is not covered.
+
+DERIVED: `0` occurs four times — the lower bounds on `w k` and `lam k`, the positivity threshold of
+`ρ`, and, now as a binder, the positivity of the selected weight `w k`. No other numeral appears. -/
 example {ι : Type*} (s : Finset ι) (w lam : ι → ℝ) (M ρ : ℝ)
     (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hρ : 0 < ρ)
     (hbound : ∀ τ : ℕ, (∑ k ∈ s, w k * lam k ^ τ) ≤ M * ρ ^ τ)

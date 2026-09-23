@@ -4,31 +4,38 @@ import MassGap.CubeConnected
 import MassGap.VortexCount
 
 /-!
-# The vortex family, and `N(A) ≥ 3ᵏ` without a containment hypothesis
+# MassGap.VortexFamily — an intrinsically defined vortex family, and `3^k ≤ N(4k+6)`
 
-**WHAT IS MISSING WITHOUT THIS FILE.** `SurfaceEmbed` puts the directed surfaces on the physical
-lattice's plaquette type and `three_pow_le_card_of_plaq_subfamily` counts them — but only inside a
-family `V` the caller supplies, with a hypothesis that the surfaces belong to it. Theorem 7.1's `N(A)`
-is not a supplied family: it is the number of closed surfaces of area `A` through a fixed plaquette,
-an intrinsic count. So the containment has to stop being a hypothesis and become a check against a
-DEFINITION.
+`SurfaceEmbed` places the directed surfaces on the physical lattice's plaquette type and
+`three_pow_le_card_of_plaq_subfamily` counts them inside a family `V` the caller supplies, under a
+hypothesis that the surfaces belong to it. This module defines the family instead —
+`vortexFamily n k`, the connected closed plaquette surfaces of area `4k+6` through the fixed
+plaquette `basePlaq n` — and discharges the containment as four theorems, so
+`three_pow_le_vortexCount` states `3 ^ k ≤ (vortexFamily (boxOf k) k).card` with no hypothesis.
 
-**CLOSED IS THE WILSON ACTION'S OWN BOUNDARY MAP, not a new notion.** `WilsonHypercubic.bd` sends a
-plaquette to its four oriented links — it is what the Wilson holonomy is taken around. A set of
-plaquettes is closed when every link lies in an EVEN number of their boundaries, which is `∂∂ = 0`
-over `Z₂` stated in the development's own terms rather than in terms invented here. Nothing about
-`edgesOf` below is a second geometry: it is `bd` with the orientations forgotten, because parity does
-not see them.
+Closedness is stated through the Wilson action's own boundary map: `WilsonHypercubic.bd` sends a
+plaquette to its four oriented links, `edgesOf` is that map with the orientations dropped, since a
+parity count does not see them, and `IsClosedSurface F` says every link lies in an even number of
+`F`'s boundaries — `∂∂ = 0` over `Z₂`. `SurfAdj` uses the same `edgesOf`.
 
-**WHY THE SURFACES ARE CLOSED IN 4-D, given that `CubeClosed` proves it in 3-D.** Every plaquette of
-an embedded surface spans two of the first three directions and sits in the time-zero slice
-(`SurfaceEmbed.faceToPlaq`). So a link along the time direction lies in NONE of them, and a link
-outside the slice lies in none either; both cases are even by being empty. What remains is links
-inside the slice, where the plaquettes containing one correspond exactly to the 3-D faces containing
-the matching 3-D edge, and `CubeClosed.edge_parity_all` is that count.
+`plaqSurface_closed` transports `CubeClosed.edge_parity_all` from three dimensions to four. Every
+plaquette of an embedded surface spans two of the first three directions and sits in the time-zero
+slice (`SurfaceEmbed.faceToPlaq`), so a link along the time direction lies in none of them
+(`not_mem_edgesOf_time`) and a link off the slice in none either (`not_mem_edgesOf_offslice`); both
+counts are even by being zero. For the remaining links, `mem_edgesOf_faceToPlaq` matches the
+plaquettes carrying a link with the faces carrying the corresponding 3-D edge.
 
-DERIVED THROUGHOUT: `4` is the physical dimension, `3` the sublattice the cube-path lives in, `2` the
-directions a plane has and the owners a face can have. Each is the arity of something already fixed.
+`plaqSurface_connected` transports `CubeConnected.boundary_connected` the same way, forward only.
+
+The box condition tightens from `k + 1 < n` to `k + 2 < n` here: `siteOf` reduces modulo `n` and so
+is injective only on corners below `n`, and the corners of a face's edges reach one step beyond the
+face's own corner (`faceEdges_corner_lt`). `boxOf k = k + 3` is the smallest `n` meeting it.
+
+DERIVED throughout: `4` is the physical dimension, `3` the dimension of the sublattice the cube-path
+lives in, `2` the number of directions a plane spans, the number of owners a face can have, and the
+modulus of `Z₂`; `0` is its identity, the origin, and the time-zero slice; `6` is the face count of a
+cube and `4k+6` the area `CubeArea.boundary_card_eq` gives. Each is the arity of something already
+fixed.
 -/
 
 namespace MassGap.VortexFamily
@@ -37,21 +44,22 @@ open Finset MassGap.CubeArea MassGap.SurfaceEmbed MassGap.WilsonHypercubic
 
 variable {n : ℕ}
 
-/-- The four links a plaquette's boundary word runs along, as a set and without orientation.
-
-`WilsonHypercubic.bd` is the boundary map the Wilson holonomy is taken around; this is that map with
-the `Bool` dropped, because a parity count does not see orientation. Using `bd` rather than writing
-the four links again is the point: closedness is then a statement about the development's own
-boundary, not about a re-description of it.
+/-- The four links a plaquette's boundary word runs along, as a `Finset` and without orientation:
+`WilsonHypercubic.bd q` with the `Bool` dropped. It is the boundary map the Wilson holonomy is taken
+around, so closedness below is a condition on that map rather than on a separate description of the
+geometry.
 
 DERIVED: `4` is the physical dimension, which is what `Plaq 4 n` and `Link 4 n` are indexed by. -/
 def edgesOf [NeZero n] (q : Plaq 4 n) : Finset (Link 4 n) :=
   ((bd q).map Prod.fst).toFinset
 
-/-- **CLOSED: every link lies in an even number of the surface's plaquettes.** `∂∂ = 0` over `Z₂`.
+/-- A set of plaquettes is closed when every link of the lattice lies in an even number of their
+boundaries: `(F.filter (fun q => e ∈ edgesOf q)).card % 2 = 0` at every `e`. This is `∂∂ = 0` over
+`Z₂`.
 
-DERIVED: `4` is the physical dimension. `2` is the modulus of `Z₂` — the group the centre-vortex flux
-takes values in, and the `2` owners a face can have; `0` is its identity. None is a magnitude. -/
+DERIVED: `4` is the physical dimension; `2` is the modulus of `Z₂`, the group the centre-vortex flux
+takes values in, and equally the number of owners a face can have; `0` is its identity. None is a
+magnitude. -/
 def IsClosedSurface [NeZero n] (F : Finset (Plaq 4 n)) : Prop :=
   ∀ e : Link 4 n, (F.filter (fun q => e ∈ edgesOf q)).card % 2 = 0
 
@@ -69,13 +77,19 @@ theorem mem_edgesOf [NeZero n] {q : Plaq 4 n} {e : Link 4 n} :
 
 /-! ### The two directions an embedded surface does not occupy -/
 
-/-- Every plaquette of an embedded surface spans two of the first three directions: `planeOf` names
-axes of the cube-path's sublattice, and there are three of those. -/
+/-- Both directions `planeOf a` names are below `3`: they are axes of the cube-path's sublattice, of
+which there are three. By `simp` and `omega`.
+
+DERIVED: `3` is the dimension of the sublattice, so it bounds both axis indices; `1` and `2` are the
+product projections. -/
 theorem planeOf_lt_three (a : Fin 3) : ((planeOf a).1 : ℕ) < 3 ∧ ((planeOf a).2 : ℕ) < 3 := by
   constructor <;> · simp [planeOf]; omega
 
-/-- Every site an embedded surface's links carry is in the time-zero slice: `siteOf` puts `0` in the
-fourth coordinate and a step along one of the first three leaves it there. -/
+/-- `siteOf n x (3 : Fin 4) = 0`: the embedding places every cube at time zero, since `siteOf` sets
+the fourth coordinate to `0`.
+
+DERIVED: `3` is the index of the fourth coordinate, the time direction, in `Fin 4`; `4` is the
+physical dimension; `0` is the time-zero slice. -/
 theorem siteOf_time_zero [NeZero n] (x : Cube) :
     siteOf n x (3 : Fin 4) = (⟨0, NeZero.pos n⟩ : Fin n) := by
   simp [siteOf]
@@ -83,13 +97,20 @@ theorem siteOf_time_zero [NeZero n] (x : Cube) :
 #print axioms planeOf_lt_three
 #print axioms siteOf_time_zero
 
-/-- A step along one of the first three directions leaves the time coordinate alone. -/
+/-- `shift μ x (3 : Fin 4) = x (3 : Fin 4)` whenever `μ ≠ 3`: a step along any direction but the
+time direction leaves the time coordinate unchanged.
+
+DERIVED: `4` is the physical dimension; `3` is the index of the time direction in `Fin 4`. -/
 theorem shift_time [NeZero n] {μ : Fin 4} (hμ : μ ≠ (3 : Fin 4)) (x : Site 4 n) :
     shift μ x (3 : Fin 4) = x (3 : Fin 4) := by
   simp [shift, Function.update_apply, (Ne.symm hμ)]
 
-/-- **AN EMBEDDED PLAQUETTE CARRIES NO LINK ALONG THE TIME DIRECTION.** Its two spanning directions
-are axes of the cube-path's sublattice, and there are three of those. -/
+/-- A link whose direction is the time direction lies in no `edgesOf (faceToPlaq n f)`. The
+plaquette's two spanning directions are `planeOf f.1`, both below `3` by `planeOf_lt_three`, and
+`mem_edgesOf` gives the four links' directions as those two.
+
+DERIVED: `4` is the physical dimension; `3` is the index of the time direction; `1` is the product
+projection selecting a link's direction. -/
 theorem not_mem_edgesOf_time [NeZero n] (f : Face) (e : Link 4 n) (he : e.1 = (3 : Fin 4)) :
     e ∉ edgesOf (faceToPlaq n f) := by
   intro hmem
@@ -100,9 +121,12 @@ theorem not_mem_edgesOf_time [NeZero n] (f : Face) (e : Link 4 n) (he : e.1 = (3
       simp [faceToPlaq] at this
       omega
 
-/-- **AND NO LINK OUTSIDE THE TIME-ZERO SLICE.** The corner is placed at time zero and the steps that
-reach the other three links move only within the slice, so every link an embedded plaquette carries
-sits at time zero. -/
+/-- Every link of `edgesOf (faceToPlaq n f)` has time coordinate `0`. The plaquette's corner is
+placed at time zero by `siteOf_time_zero`, and the steps reaching the other three links are along
+directions other than the time one, so `shift_time` leaves the coordinate alone.
+
+DERIVED: `4` is the physical dimension; `3` is the index of the time direction; `0` is the time-zero
+slice; `2` is the product projection selecting a link's site. -/
 theorem edgesOf_site_time [NeZero n] {f : Face} {e : Link 4 n}
     (h : e ∈ edgesOf (faceToPlaq n f)) :
     e.2 (3 : Fin 4) = (⟨0, NeZero.pos n⟩ : Fin n) := by
@@ -142,9 +166,11 @@ theorem emb_ne_three (a : Fin 3) : emb a ≠ (3 : Fin 4) := by
   simp [emb] at this
   omega
 
-/-- **A STEP COMMUTES WITH THE EMBEDDING**, with no bound on the coordinate: both sides reduce the
-same coordinate modulo `n`, so the periodic box's wrap is not an obstruction here — it is only an
-obstruction to INJECTIVITY, which is where `k + 1 < n` earns its place. -/
+/-- `shift (emb a) (siteOf n y) = siteOf n (step a y)`: a step commutes with the embedding. No bound
+on the coordinate is needed, since both sides reduce the same coordinate modulo `n`; the periodic
+wrap obstructs injectivity of `siteOf`, not this identity.
+
+DERIVED: `3` is the sublattice dimension the axis `a` ranges over. -/
 theorem shift_siteOf [NeZero n] (a : Fin 3) (y : Cube) :
     shift (emb a) (siteOf n y) = siteOf n (step a y) := by
   have ha3 : ((emb a : Fin 4) : ℕ) < 3 := by simpa [emb] using a.isLt
@@ -158,7 +184,7 @@ theorem shift_siteOf [NeZero n] (a : Fin 3) (y : Cube) :
     apply Fin.ext
     simp only [siteOf, dif_pos ha3, Fin.add_def]
     rw [hcoe, step_self]
-    -- `(y a % n + 1 % n) % n = (y a + 1) % n`: the two reductions agree, which is the whole content
+    -- `(y a % n + 1 % n) % n = (y a + 1) % n`: the two modular reductions agree
     conv_rhs => rw [Nat.add_mod]
     simp [Fin.val_one']
   · have hl : shift (emb a) (siteOf n y) ν = siteOf n y ν := by
@@ -183,24 +209,29 @@ theorem emb_injective : Function.Injective emb := by
   simp only [emb] at hv
   exact Fin.ext hv
 
-/-- The plane a face spans IS the pair of embedded rotations of its normal — which is why the 4-D
-plaquette's two directions are the two axes the 3-D face's edges run along, with nothing to choose. -/
+/-- `planeOf a = (emb (rot1 a), emb (rot2 a))`: the plane a face with normal `a` spans is the pair of
+embedded rotations of `a`, so the plaquette's two directions are the two axes the face's edges run
+along.
+
+DERIVED: `3` is the sublattice dimension; `1` and `2` label the two rotations and the two product
+components. -/
 theorem planeOf_eq_emb (a : Fin 3) : planeOf a = (emb (rot1 a), emb (rot2 a)) := by
   refine Prod.ext ?_ ?_ <;> apply Fin.ext <;> simp [planeOf, emb, rot1, rot2]
 
 /-- A 3-D edge, embedded as a link of the physical lattice.
 
-DERIVED: `3` is the cube-path's sublattice dimension, `4` the physical dimension, exactly as in
-`emb`. -/
+DERIVED: `3` is the cube-path's sublattice dimension and `4` the physical dimension, exactly as in
+`emb`; `1` and `2` are the product projections selecting the edge's axis and its corner. -/
 def linkEmb (n : ℕ) [NeZero n] (d : Fin 3 × Cube) : Link 4 n := (emb d.1, siteOf n d.2)
 
 #print axioms emb_injective
 #print axioms planeOf_eq_emb
 
-/-- **THE LINKS OF AN EMBEDDED PLAQUETTE ARE THE EMBEDDINGS OF THE FACE'S OWN EDGES**, one for one
-and in the same order. `bd`'s four links and `faceEdges`' four edges correspond because
-`planeOf_eq_emb` matches the directions and `shift_siteOf` matches the corners — the Wilson boundary
-map and the 3-D one are the same map read in two places. -/
+/-- `e ∈ edgesOf (faceToPlaq n f) ↔ ∃ d ∈ faceEdges f, linkEmb n d = e`: the links of an embedded
+plaquette are exactly the embeddings of the face's own edges. `bd`'s four links match `faceEdges`'
+four edges one for one, `planeOf_eq_emb` matching the directions and `shift_siteOf` the corners.
+
+DERIVED: `4` is the physical dimension the links live in. -/
 theorem mem_edgesOf_faceToPlaq [NeZero n] (f : Face) (e : Link 4 n) :
     e ∈ edgesOf (faceToPlaq n f) ↔ ∃ d ∈ faceEdges f, linkEmb n d = e := by
   classical
@@ -234,9 +265,13 @@ edge. That is where the periodic box cuts into the argument — `siteOf` reduces
 injective only on corners below `n`, and the corners of a face's EDGES reach one step further than
 the face's own corner. Hence `k + 2 < n` here where the area count needed only `k + 1 < n`. -/
 
-/-- Every corner of every edge of a boundary face of a `k`-step path lies below `n`, given
-`k + 2 < n`: the face's corner is at most `k + 1` (`face_corner_le`) and an edge's far corner is one
-step beyond it. -/
+/-- Every coordinate of every corner of every edge of a boundary face of a `k`-step path is below
+`n`, given `k + 2 < n`. The face's own corner is at most `k + 1` by `face_corner_le`, and an edge's
+far corner is one `step` beyond it, hence at most `k + 2`.
+
+DERIVED: `2` is how far an edge's far corner reaches beyond the path's cubes — one step to the
+face's corner and one more to the edge's; `3` is the sublattice dimension; `1` and `2` are also the
+product projections on `Fin 3 × Cube`. -/
 theorem faceEdges_corner_lt {n k : ℕ} (hk : k + 2 < n) (s : Fin k → Fin 3)
     {f : Face} (hf : f ∈ boundaryFaces (MassGap.cubeConfig s))
     {d : Fin 3 × Cube} (hd : d ∈ faceEdges f) (a : Fin 3) : d.2 a < n := by
@@ -260,15 +295,20 @@ theorem faceEdges_corner_lt {n k : ℕ} (hk : k + 2 < n) (s : Fin k → Fin 3)
 
 #print axioms faceEdges_corner_lt
 
-/-- **THE EMBEDDED SURFACE IS CLOSED.** `CubeClosed.edge_parity_all` transported along the
-correspondence, with the three kinds of link handled separately and none of them by hand:
+/-- `IsClosedSurface (plaqSurface n s)` for every `k`-step path `s`, given `k + 2 < n`. It is
+`CubeClosed.edge_parity_all` transported along `mem_edgesOf_faceToPlaq`, the count upstairs matching
+the count downstairs because `faceToPlaq_inj_on` applies under `k + 1 < n`. Three kinds of link are
+treated:
 
 * a link along the time direction lies in no plaquette of the surface (`not_mem_edgesOf_time`);
 * a link off the time-zero slice likewise (`not_mem_edgesOf_offslice`);
-* any other link IS `linkEmb` of a unique 3-D edge, and the plaquettes carrying it correspond exactly
-  to the boundary faces carrying that edge — so its count is the 3-D one, which is even.
+* any other link is `linkEmb` of a 3-D edge, unique by `emb_injective` and `siteOf_inj_of_lt`, and
+  the plaquettes carrying it correspond to the boundary faces carrying that edge.
 
-The first two are even by being zero, so no case is argued from a picture. -/
+The first two counts are zero, hence even.
+
+DERIVED: `2` in `k + 2 < n` is how far an edge's far corner reaches beyond the path's cubes; `3` is
+the sublattice dimension. -/
 theorem plaqSurface_closed {n k : ℕ} [NeZero n] (hk : k + 2 < n) (s : Fin k → Fin 3) :
     IsClosedSurface (plaqSurface n s) := by
   classical
@@ -344,32 +384,30 @@ theorem plaqSurface_closed {n k : ℕ} [NeZero n] (hk : k + 2 < n) (s : Fin k �
 
 /-! ### The family, defined rather than supplied
 
-Everything Theorem 7.1 asks of the surfaces it counts is a CHECK: closed (`plaqSurface_closed`), of
-area `4k+6` (`card_plaqSurface`), through one fixed plaquette (`base_mem_plaqSurface`), and CONNECTED.
-So the family can be DEFINED by those conditions and the count made against the definition, with no
-containment hypothesis for a caller to discharge.
+Each of the four conditions Theorem 7.1 asks of the surfaces it counts is a check the embedded
+surfaces pass: closed (`plaqSurface_closed`), connected (`plaqSurface_connected`), of area `4k+6`
+(`card_plaqSurface`), and through one fixed plaquette (`base_mem_plaqSurface`). `vortexFamily` is
+defined by those conditions, so the count is made against a definition rather than against a
+supplied family.
 
-**WHY CONNECTEDNESS IS PART OF THE DEFINITION AND NOT AN EXTRA.** Without it the family is too large
-for the junction to say anything. A union of unit-cube boundaries is closed -- every link lies in two
-or four of them -- each costs area `6`, and the pieces may sit anywhere in the box. At area `4k+6`
-that is one anchored piece plus about `2k/3` floating ones placed in a box of about `k^4` sites, so
+Connectedness is one of the four. Dropping it admits unions of unit-cube boundaries, each closed
+because every link lies in two or four of them and each of area `6`, with components placed anywhere
+in the box; at area `4k+6` that is one anchored component plus about `2k/3` unanchored ones in a box
+of about `k^4` sites, giving
 
-    log N / A  >=  (2k/3)(3 log k) / (4k)  =  (log k)/2  -> infinity.
+    log N / A  ≥  (2k/3)(3 log k) / (4k)  =  (log k)/2,
 
-`hdual` asks for a FIXED `c` with `log N_k / (4k+6) - mu <= c` at every `k`. Against a diverging
-density no such `c` exists, so the junction would be VACUOUSLY true and would prove nothing.
-Connectedness is what makes the density bounded, and it is also what Theorem 7.1's `N(A)` always
-meant: the count of connected closed surfaces of a given area through a fixed plaquette. -/
+which grows with `k`, whereas `hdual` asks for a fixed `c` with `log N_k / (4k+6) - μ ≤ c` at every
+`k`. -/
 
-/-- **THE FIXED PLAQUETTE.** Theorem 7.1 counts surfaces "through a fixed plaquette"; this is it — the
-embedding of the origin cube's low face on the first axis. It is on the boundary of every directed
-path's configuration because `ℕ³` has a floor: nothing sits one step back from zero, so that face has
-exactly one owner, whatever the path does afterwards.
+/-- The fixed plaquette the family's surfaces pass through: the embedding of the origin cube's low
+face on axis `0`. It lies on the boundary of every directed path's configuration, since nothing sits
+one step back from zero in `ℕ³`, so that face has exactly one owner whatever the path does after.
 
-DERIVED: `3` is the sublattice dimension and `4` the physical one. Both `0`s are the ORIGIN — the
-corner every directed path starts from (`cubePos s 0`) and the axis index the floor argument is run
-on; the choice of axis is immaterial, since `origin_face_mem_boundary` holds for all three and any of
-them fixes the same plaquette up to relabelling the axes. -/
+DERIVED: `3` is the sublattice dimension and `4` the physical one. Both `0`s are the origin — the
+corner every directed path starts from, `cubePos s 0`, and the axis index the floor argument runs
+on. `origin_face_mem_boundary` holds for all three axes, and any of them fixes the same plaquette up
+to relabelling. -/
 noncomputable def basePlaq (n : ℕ) [NeZero n] : Plaq 4 n :=
   faceToPlaq n ((0 : Fin 3), (fun _ => 0 : Cube))
 
@@ -385,21 +423,27 @@ theorem base_mem_plaqSurface {n k : ℕ} [NeZero n] (s : Fin k → Fin 3) :
 
 #print axioms base_mem_plaqSurface
 
-/-- Two plaquettes of a surface are adjacent when they share a link — the same `edgesOf` the
-closedness condition counts, so adjacency is not a second geometry either.
+/-- Two plaquettes of `F` are adjacent when both lie in `F` and `edgesOf a ∩ edgesOf b` is nonempty —
+the same `edgesOf` the closedness condition counts, so adjacency uses no second geometry.
 
 DERIVED: `4` is the physical dimension. -/
 def SurfAdj [NeZero n] (F : Finset (Plaq 4 n)) (a b : Plaq 4 n) : Prop :=
   a ∈ F ∧ b ∈ F ∧ (edgesOf a ∩ edgesOf b).Nonempty
 
-/-- **CONNECTED: every plaquette is reachable from the fixed one along shared links.**
+/-- A set of plaquettes is connected when every member is reachable from `basePlaq n` under
+`Relation.ReflTransGen (SurfAdj F)`, that is along shared links inside `F`.
 
 DERIVED: `4` is the physical dimension. -/
 def IsConnectedSurface [NeZero n] (F : Finset (Plaq 4 n)) : Prop :=
   ∀ q ∈ F, Relation.ReflTransGen (SurfAdj F) (basePlaq n) q
 
-/-- A 3-D edge shared by two boundary faces embeds to a link shared by their plaquettes. Only the
-FORWARD map is used, so no injectivity and no box condition enter here. -/
+/-- A 3-D edge shared by two boundary faces embeds to a link shared by their plaquettes: from
+`FaceAdj (boundaryFaces C) f g` follows
+`SurfAdj ((boundaryFaces C).image (faceToPlaq n)) (faceToPlaq n f) (faceToPlaq n g)`, with witness
+`linkEmb n e`. Only the forward direction of `mem_edgesOf_faceToPlaq` is used, so no injectivity and
+no box condition enter.
+
+DERIVED: no numeral appears in the statement; the physical dimension `4` is inside `SurfAdj`. -/
 theorem surfAdj_of_faceAdj [NeZero n] {C : Finset Cube} {f g : Face}
     (h : FaceAdj (boundaryFaces C) f g) :
     SurfAdj ((boundaryFaces C).image (faceToPlaq n)) (faceToPlaq n f) (faceToPlaq n g) := by
@@ -419,9 +463,12 @@ theorem reflTransGen_faceToPlaq [NeZero n] {C : Finset Cube} {f g : Face}
   | refl => exact Relation.ReflTransGen.refl
   | tail _ hstep ih => exact ih.tail (surfAdj_of_faceAdj hstep)
 
-/-- **THE EMBEDDED SURFACE IS CONNECTED.** `CubeConnected.boundary_connected` carried along the
-embedding: every boundary face reaches the origin cube's low face on axis `0` by shared edges, and
-each shared edge embeds to a shared link. The fixed plaquette IS the image of that face. -/
+/-- `IsConnectedSurface (plaqSurface n s)` for every path `s`, with no box condition. It is
+`CubeConnected.boundary_connected` carried along the embedding by `reflTransGen_faceToPlaq`: every
+boundary face is reachable from the origin cube's low face on axis `0`, each shared edge embeds to a
+shared link, and `basePlaq n` is the image of that face since `cubePos s 0` is the origin.
+
+DERIVED: `3` is the sublattice dimension the path's steps range over. -/
 theorem plaqSurface_connected {n k : ℕ} [NeZero n] (s : Fin k → Fin 3) :
     IsConnectedSurface (plaqSurface n s) := by
   classical
@@ -439,21 +486,25 @@ theorem plaqSurface_connected {n k : ℕ} [NeZero n] (s : Fin k → Fin 3) :
 #print axioms plaqSurface_connected
 
 open scoped Classical in
-/-- **THE VORTEX FAMILY, INTRINSIC.** The connected closed plaquette surfaces of area `4k+6` through
-the fixed plaquette — those conditions and nothing else. `N(A)` in Theorem 7.1 is the cardinality of
-this, so the entropy floor's count is a count of a DEFINED set rather than of whatever family a
-caller happened to name.
+/-- The vortex family: the subsets of `Plaq 4 n` that are closed (`IsClosedSurface`), connected
+(`IsConnectedSurface`), of cardinality `4 * k + 6`, and contain `basePlaq n`. `N(A)` of Theorem 7.1
+is the cardinality of this set, so the count below is against a definition rather than a supplied
+family.
 
-DERIVED: `4` is the physical dimension. `4 * k + 6` is the AREA, and it is `CubeArea.boundary_card_eq`
-— `6` faces per cube for `k+1` cubes less `2` per shared face for the `k` shared ones. Neither
-literal is fitted; both are theorems about the same object the count is about. -/
+DERIVED: `4` is the physical dimension. `4 * k + 6` is the area, and it is
+`CubeArea.boundary_card_eq` — `6` faces per cube for `k+1` cubes, less `2` per shared face for the
+`k` shared ones. Neither literal is fitted. -/
 noncomputable def vortexFamily (n : ℕ) [NeZero n] (k : ℕ) : Finset (Finset (Plaq 4 n)) :=
   (univ : Finset (Plaq 4 n)).powerset.filter
     (fun F => IsClosedSurface F ∧ IsConnectedSurface F ∧ F.card = 4 * k + 6 ∧ basePlaq n ∈ F)
 
-/-- **EVERY DIRECTED SURFACE IS IN THE FAMILY**, and all FOUR conditions are discharged by theorems:
-closed (`plaqSurface_closed`), connected (`plaqSurface_connected`), of area `4k+6`
-(`card_plaqSurface`), through the fixed plaquette (`base_mem_plaqSurface`). Nothing is supplied. -/
+/-- `plaqSurface n s ∈ vortexFamily n k` for every `k`-step path `s`, given `k + 2 < n`. All four
+membership conditions are theorems: `plaqSurface_closed`, `plaqSurface_connected`,
+`card_plaqSurface` for the area, and `base_mem_plaqSurface` for the fixed plaquette. No containment
+is assumed.
+
+DERIVED: `2` in `k + 2 < n` is how far an edge's far corner reaches beyond the path's cubes, the
+condition `plaqSurface_closed` needs; `3` is the sublattice dimension. -/
 theorem mem_vortexFamily {n k : ℕ} [NeZero n] (hk : k + 2 < n) (s : Fin k → Fin 3) :
     plaqSurface n s ∈ vortexFamily n k := by
   classical
@@ -464,20 +515,26 @@ theorem mem_vortexFamily {n k : ℕ} [NeZero n] (hk : k + 2 < n) (s : Fin k → 
 
 #print axioms mem_vortexFamily
 
-/-- **`N(A) ≥ 3ᵏ` WITH NO HYPOTHESIS.** The entropy floor's count, against the definition of the
-family rather than against a supplied one. The `3ᵏ` is `MassGap.directed_paths_card` — three choices
-of axis at each of `k` steps — and the injection is `plaqSurface_injective`.
+/-- `3 ^ k ≤ (vortexFamily n k).card` given `k + 2 < n`, with no containment hypothesis. It is
+`three_pow_le_card_of_plaq_subfamily` at `vortexFamily n k`, the membership supplied by
+`mem_vortexFamily`. The count `3 ^ k` is `MassGap.directed_paths_card` — three choices of axis at
+each of `k` steps — and the surfaces are distinct by `plaqSurface_injective`.
 
-This is what `Floor`'s `log 3` and `CubeArea`'s `¼` were always counting, now said about an object
-defined by its own properties: `κ₀ = ¼ log 3` is one unit of `log 3` of directional entropy per four
-units of area, over the closed surfaces of that area through a fixed plaquette. -/
+This is the count behind `κ₀YM = ¼ log 3`: one unit of `log 3` of directional entropy per four units
+of area, over the connected closed surfaces of that area through a fixed plaquette.
+
+DERIVED: `3` is the sublattice dimension, hence the number of axis choices per step; `2` in
+`k + 2 < n` is the box condition `mem_vortexFamily` needs. -/
 theorem three_pow_le_card_vortexFamily {n k : ℕ} [NeZero n] (hk : k + 2 < n) :
     3 ^ k ≤ (vortexFamily n k).card :=
   three_pow_le_card_of_plaq_subfamily (by omega) (vortexFamily n k)
     (fun s => mem_vortexFamily hk s)
 
-/-- The same along a growing sequence of boxes, which is the form the free-energy density needs: the
-bound holds at EVERY `k`, each in a box large enough to hold its own path. -/
+/-- `3 ^ k ≤ (vortexFamily (n k) k).card` at every `k`, for any sequence of box sizes `n` with
+`k + 2 < n k`. This is the form the free-energy density consumes, each `k` read in a box large
+enough for its own path.
+
+DERIVED: `3` is the number of axis choices per step; `2` in `k + 2 < n k` is the box condition. -/
 theorem three_pow_le_card_vortexFamily_along_boxes (n : ℕ → ℕ) [∀ k, NeZero (n k)]
     (hn : ∀ k, k + 2 < n k) :
     ∀ k, 3 ^ k ≤ (vortexFamily (n k) k).card :=
@@ -493,35 +550,42 @@ the free-energy density it extracts is a `k → ∞` limit. The embedding is fai
 and its edges fit in the box, so `M` is read in a box that grows with `k`. Naming that box removes the
 last free parameter: `hM` then holds with no hypothesis whatever. -/
 
-/-- **THE BOX A `k`-STEP SURFACE NEEDS.** Not a choice: a `k`-step path's cubes reach coordinate `k`
-(`cubePos_coord_le`), a face of one of them reaches `k+1` (`face_corner_le`), an edge of that face
-reaches `k+2` (`faceEdges_corner_lt`), and `k+3` is the first `n` with all of those below `n`. It is
-the successor of the largest coordinate the construction produces.
+/-- The box a `k`-step surface needs: `k + 3`. A `k`-step path's cubes reach coordinate `k`
+(`cubePos_coord_le`), a face of one reaches `k + 1` (`face_corner_le`), an edge of that face reaches
+`k + 2` (`faceEdges_corner_lt`), and `k + 3` is the smallest `n` with all of those below `n`.
 
-DERIVED: `3` is `1 + 2`, where `2` is how far an edge's far corner reaches beyond the path's own cubes
-(one step to the face's corner, one more to the edge's) and `1` makes it the SUCCESSOR, which is what
-`siteOf` needs to stay injective. Not chosen. -/
+DERIVED: `3` is `1 + 2`, where `2` is how far an edge's far corner reaches beyond the path's cubes —
+one step to the face's corner, one more to the edge's — and `1` makes it the successor, which is what
+`siteOf` needs to stay injective. -/
 def boxOf (k : ℕ) : ℕ := k + 3
 
 instance instNeZeroBoxOf (k : ℕ) : NeZero (boxOf k) := ⟨by simp [boxOf]⟩
 
-/-- **`hM`, AS A THEOREM WITH NO HYPOTHESIS.** `3ᵏ ≤ N(4k+6)` where `N` counts the closed plaquette
-surfaces of that area through the fixed plaquette — the intrinsic family, in the box that area needs.
+/-- `3 ^ k ≤ (vortexFamily (boxOf k) k).card` at every `k`, with no hypothesis: the box condition
+`k + 2 < k + 3` holds by `simp`. This is the shape `VortexCount.junction_of_physical_count` takes as
+`hM`.
 
-This is the entropy floor's count standing on its own. Everything it used to ask of a caller is now
-discharged: the surfaces exist (`plaqSurface`), are closed (`plaqSurface_closed`), are connected
-(`plaqSurface_connected`), have area exactly `4k+6` (`card_plaqSurface`, whose `4` is
-`CubeArea.boundary_card_eq`), pass through one fixed plaquette (`base_mem_plaqSurface`), are pairwise
-distinct (`plaqSurface_injective`), and number `3ᵏ` (`MassGap.directed_paths_card`). -/
+Every condition is discharged by a theorem: the surfaces exist (`plaqSurface`), are closed
+(`plaqSurface_closed`), are connected (`plaqSurface_connected`), have cardinality `4k+6`
+(`card_plaqSurface`, whose `4` is `CubeArea.boundary_card_eq`), contain the fixed plaquette
+(`base_mem_plaqSurface`), are pairwise distinct (`plaqSurface_injective`), and number `3 ^ k`
+(`MassGap.directed_paths_card`).
+
+DERIVED: `3` is the number of axis choices per step of the path. -/
 theorem three_pow_le_vortexCount (k : ℕ) :
     3 ^ k ≤ (vortexFamily (boxOf k) k).card :=
   three_pow_le_card_vortexFamily (by simp [boxOf])
 
 #print axioms three_pow_le_vortexCount
 
-/-- **THE JUNCTION WITH `hM` GONE.** `VortexCount.junction_of_physical_count` took two physical
-inputs; one of them is now a theorem of this file, so the junction `κ₀ − μ ≤ c` rests on the scale
-duality `hdual` ALONE, stated about the intrinsic family's own count rather than an abstract `M`. -/
+/-- `1 / 4 * Real.log 3 - μ ≤ c` from `hdual` alone: for every `k > 0`,
+`log ((vortexFamily (boxOf k) k).card * exp (-μ * (4k + 6))) / (4k + 6) ≤ c`. It is
+`VortexCount.junction_of_physical_count` with `three_pow_le_vortexCount` supplying its count
+hypothesis, so `hdual` is the only input, stated about this family's own cardinality.
+
+DERIVED: `0` is the lower bound on `k` the scale duality is asserted above; `4 * k + 6` is the area,
+`CubeArea.boundary_card_eq`'s; `1 / 4 * log 3` is `κ₀YM`, one unit of `log 3` of directional entropy
+per four units of area. -/
 theorem junction_of_vortexFamily {μ c : ℝ}
     (hdual : ∀ k, 0 < k →
       Real.log (((vortexFamily (boxOf k) k).card : ℝ) * Real.exp (-μ * (4 * (k : ℝ) + 6)))
@@ -529,8 +593,11 @@ theorem junction_of_vortexFamily {μ c : ℝ}
     1 / 4 * Real.log 3 - μ ≤ c :=
   MassGap.VortexCount.junction_of_physical_count three_pow_le_vortexCount hdual
 
-/-- The same in the transparent entropy-density form: the counted vortex entropy density is at most
-the tension plus the contraction rate. -/
+/-- The same conclusion `1 / 4 * Real.log 3 - μ ≤ c` from the entropy-density form of the
+hypothesis: `log ((vortexFamily (boxOf k) k).card) / (4k + 6) ≤ μ + c` for every `k > 0`. It is
+`VortexCount.junction_of_entropy_density` with `three_pow_le_vortexCount`.
+
+DERIVED: `0` is the lower bound on `k`; `4 * k + 6` is the area; `1 / 4 * log 3` is `κ₀YM`. -/
 theorem junction_of_vortexFamily_density {μ c : ℝ}
     (hdens : ∀ k, 0 < k →
       Real.log (((vortexFamily (boxOf k) k).card : ℝ)) / (4 * (k : ℝ) + 6) ≤ μ + c) :

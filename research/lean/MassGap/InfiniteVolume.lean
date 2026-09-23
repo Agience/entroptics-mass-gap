@@ -44,16 +44,23 @@ extent-`(N+1)` lattice.
   number fixed before the extent is chosen, and its lag-`k` value decays geometrically. That is a
   non-degenerate infinite-volume two-point function with exponential clustering.
 
-## What is NOT proved
+## Scope
 
-Full convergence. Boundedness plus compactness gives a subsequence; nothing here supplies the
-monotonicity, Cauchy estimate or volume-difference bound that would make the limit unique. The
-gapped statement is also confined to `[0,b)`: `coreRate` is unbounded in the coupling
-(`StrongCoupling.coreRate_exceeds`), so the geometric factor is not available at large `β`.
+The convergence is subsequential. Boundedness plus compactness gives a subsequence; no
+monotonicity, Cauchy estimate or volume-difference bound appears here, so the limit function `L` is
+not claimed to be unique or to be the limit of the full sequence. The gapped statement holds on
+`[0, b)` only: `coreRate` is unbounded in the coupling (`StrongCoupling.coreRate_exceeds`), so the
+geometric factor is unavailable at large `β`. `confinement_at_strong_coupling` is uniform in the
+aperture at a fixed coupling, not uniform in the coupling.
 
-DERIVED: `4` is the problem's dimension, `3` is `SU(3)`, `2` is the range of the Wilson plaquette
-density and `4 = 2·2` its square, `128 = 2·16·4` is `ContactFloor.corrClay_zero_ge`'s own exponent,
-`16 = 4·4` is `WilsonHypercubic.card_plaq` at `d = 4`. No constant is chosen here and none is fitted.
+DERIVED: `4` is the problem's dimension and the bound on the connected correlation, `4 = 2 * 2`
+being the square of the plaquette density's range; `3` is `SU(3)`'s rank; `2` is the range of the
+Wilson plaquette density, the exponent in the aperture window, and the factor in `2 * k ≤ N`;
+`128 = 2 * 16 * 4` is `ContactFloor.corrClay_zero_ge`'s own exponent; `16 = 4 * 4` is
+`WilsonHypercubic.card_plaq` at `d = 4`, and `16 * 4` is `StrongCoupling.touchDeg_bd_le` there; `1`
+is the extent offset in `N + 1`, the level a rate is compared against, and the lag offset `k - 1`;
+`0` is the origin site, the contact lag, and the lower end of the coupling range. No constant is
+chosen here and none is fitted.
 -/
 
 namespace MassGap.InfiniteVolume
@@ -66,16 +73,23 @@ open MassGap.WilsonReal MassGap.WilsonBridge
 
 /-! ### The geometry: one variable, every direction -/
 
-/-- The Clay lattice's site type at aperture `N` is `Fin 4 → Fin (N + 1)` — extent `N + 1` in every
-one of the four directions, set by the single variable `N`. -/
+/-- `WilsonHypercubic.Site 4 (N + 1) = (Fin 4 → Fin (N + 1))`, by `rfl`: at aperture `N` the site
+type has extent `N + 1` in each of the four directions, set by the single variable `N`, so there is
+no separate spatial or temporal extent.
+
+DERIVED: `4` is the problem's dimension; `1` is the extent offset in `N + 1`. -/
 theorem clay_site_def (N : ℕ) :
     MassGap.WilsonHypercubic.Site 4 (N + 1) = (Fin 4 → Fin (N + 1)) := rfl
 
 #print axioms clay_site_def
 
-/-- The correlation the read consumes, written out on that lattice: `wilsonCorrAt N β d` is the
-connected Wilson correlation between the plane-`(0,1)` plaquette at the origin and the one displaced
-`d` steps along direction `2`, on the periodic four-dimensional `SU(3)` lattice of extent `N + 1`. -/
+/-- `wilsonCorrAt N β d` unfolds, by `rfl`, to the connected Wilson correlation on the periodic
+four-dimensional `SU(3)` lattice of extent `N + 1` between the plane-`(0,1)` plaquette at the origin
+and the plaquette displaced `d` steps along direction `2`.
+
+DERIVED: `3` is `SU(3)`'s rank; `4` is the dimension; `1` is the extent offset in `N + 1`; `(0, 1)`
+is the plaquette plane; `0` is the origin site; `2` is the direction the displacement runs
+along. -/
 theorem wilsonCorrAt_eq_wilsonCorrConn (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
     MassGap.wilsonCorrAt N β d
       = wilsonCorrConn (Nc := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := N + 1))
@@ -83,15 +97,23 @@ theorem wilsonCorrAt_eq_wilsonCorrConn (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
 
 #print axioms wilsonCorrAt_eq_wilsonCorrConn
 
-/-- The plaquette count at aperture `N`. -/
+/-- `Fintype.card (WilsonHypercubic.Plaq 4 (N + 1)) = 16 * (N + 1) ^ 4`: the plaquette count of the
+lattice at aperture `N`.
+
+DERIVED: `4` is the dimension, both as the lattice's and as the exponent on the extent;
+`16 = 4 * 4` is the plaquette count per site at `d = 4`, from `WilsonHypercubic.card_plaq`; `1` is
+the extent offset in `N + 1`. -/
 theorem clay_plaq_card (N : ℕ) :
     Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (N + 1)) = 16 * (N + 1) ^ 4 := by
   simp
 
 #print axioms clay_plaq_card
 
-/-- **`N → ∞` IS the infinite-volume limit.** The lattice's plaquette count diverges as the single
-aperture variable grows, so there is no second extent left to send to infinity. -/
+/-- The plaquette count, as a real-valued function of the aperture, tends to infinity along
+`atTop`. Since `clay_site_def` makes `N` the extent in every direction at once, the divergence of
+this single variable is the divergence of the volume, and no second extent remains.
+
+DERIVED: `4` is the dimension; `1` is the extent offset in `N + 1`. -/
 theorem clay_volume_tendsto_atTop :
     Tendsto (fun N : ℕ => (Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (N + 1)) : ℝ))
       atTop atTop := by
@@ -114,13 +136,21 @@ theorem clay_volume_tendsto_atTop :
 
 /-! ### The extent-free bound
 
-The constant is `4` at every extent, every real coupling and every lag, and the extent appears
-nowhere in its derivation: the observable's range and the normalisation of the Gibbs state are all
-that enter. -/
+The bound is `4` at every extent, every real coupling and every lag. Its derivation uses only the
+range of the plaquette observable and the normalisation of the Gibbs state, so no extent enters.
 
-/-- **The connected Wilson correlation is bounded by `4`, at any geometry.** The unconnected
-correlation lies in `[0,4]` (`WilsonBridge.wilsonCorr_nonneg`, `wilsonCorr_le_four`) and each
-one-point function lies in `[0,2]`, so their difference lies in `[-4,4]`. -/
+DERIVED: `4 = 2 * 2` is the square of the plaquette density's range `[0, 2]`. -/
+
+/-- `|wilsonCorrConn bd p₀ β p| ≤ 4` for any finite link and plaquette types, any boundary map, any
+base plaquette, any real coupling and any plaquette, given `Nc ≠ 0`. The unconnected correlation lies
+in `[0, 4]` by `wilsonCorr_nonneg` and `wilsonCorr_le_four`, and each one-point function lies in
+`[0, 2]` because `wilsonPlaqObs` does and the Gibbs state is a probability state; the difference
+therefore lies in `[-4, 4]`.
+
+No geometry enters: `bd` is an arbitrary boundary map and the bound does not mention it.
+
+DERIVED: `0` is the rank value excluded by `hN`; `4 = 2 * 2` is the bound, the square of the
+plaquette density's range `[0, 2]`. -/
 theorem wilsonCorrConn_abs_le_four {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
     (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀ : Pq) (β : ℝ) (p : Pq) :
     |wilsonCorrConn (Nc := Nc) bd p₀ β p| ≤ 4 := by
@@ -145,9 +175,12 @@ theorem wilsonCorrConn_abs_le_four {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [Finty
 
 #print axioms wilsonCorrConn_abs_le_four
 
-/-- **The Clay correlation is bounded by `4`, uniformly in the extent.** No hypothesis: every
-aperture, every real coupling, every lag. This is the aperture-uniform control a thermodynamic limit
-needs, and the constant carries no extent. -/
+/-- `|wilsonCorrAt N β d| ≤ 4` at every aperture `N`, every real `β` and every lag `d`, with no
+hypothesis. It is `wilsonCorrConn_abs_le_four` at `Nc = 3` through
+`wilsonCorrAt_eq_wilsonCorrConn`. The constant does not depend on `N`.
+
+DERIVED: `4 = 2 * 2` is the bound, the square of the plaquette density's range; `1` is the extent
+offset in `N + 1`. -/
 theorem wilsonCorrAt_abs_le_four (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
     |MassGap.wilsonCorrAt N β d| ≤ 4 := by
   rw [wilsonCorrAt_eq_wilsonCorrConn]
@@ -157,15 +190,22 @@ theorem wilsonCorrAt_abs_le_four (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
 
 /-! ### Following one lag across extents -/
 
-/-- The correlation at the FIXED natural lag `k`, as a function of the aperture. The index is
-clamped to the aperture so that the sequence is total in `N`; once `k ≤ N` the clamp does nothing
-(`corrLag_index_val`), which is the only regime the estimates below use. -/
+/-- The correlation at a fixed natural lag `k`, as a function of the aperture: `wilsonCorrAt N β`
+evaluated at the index `min k N` of `Fin (N + 1)`. Naming the lag by a natural number is what lets
+one lag be followed across extents, since `Fin (N + 1)` changes with `N`; the clamp `min k N` makes
+the definition total in `N`, and `corrLag_index_val` shows it does nothing once `k ≤ N`, which is
+the regime every estimate below uses.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def corrLag (k : ℕ) (β : ℝ) (N : ℕ) : ℝ :=
   MassGap.wilsonCorrAt N β ⟨min k N, Nat.lt_succ_of_le (min_le_right k N)⟩
 
 #print axioms corrLag
 
-/-- Once the aperture reaches the lag, the index really is the lag. -/
+/-- For `k ≤ N`, the underlying natural number of the clamped index is `k`: the clamp in `corrLag`
+has no effect once the aperture reaches the lag.
+
+DERIVED: `1` is the extent offset in `N + 1`. -/
 theorem corrLag_index_val {k N : ℕ} (h : k ≤ N) :
     ((⟨min k N, Nat.lt_succ_of_le (min_le_right k N)⟩ : Fin (N + 1)) : ℕ) = k := by
   show min k N = k
@@ -173,15 +213,23 @@ theorem corrLag_index_val {k N : ℕ} (h : k ≤ N) :
 
 #print axioms corrLag_index_val
 
-/-- At lag zero the index is the zero of `Fin (N+1)`. -/
+/-- `corrLag 0 β N = wilsonCorrAt N β 0`: at lag zero the clamped index is the zero of
+`Fin (N + 1)`.
+
+DERIVED: `0` is the contact lag, as the argument of `corrLag` and as the index of
+`wilsonCorrAt`. -/
 theorem corrLag_zero (β : ℝ) (N : ℕ) : corrLag 0 β N = MassGap.wilsonCorrAt N β 0 := by
   unfold corrLag
   congr 1
 
 #print axioms corrLag_zero
 
-/-- Once the extent is at least twice the lag, the circle distance of the index IS the lag: the
-periodic wrap has not yet shortened it. -/
+/-- For `2 * k ≤ N`, the circle distance `Moment.circLag` of the clamped index is `k`: the periodic
+wrap has not shortened it. This is what lets a lag-`k` estimate stated in terms of `circLag` be read
+as an estimate at lag `k`.
+
+DERIVED: `2` is the factor in the condition `2 * k ≤ N`, the point at which the wrap would begin to
+shorten the distance; `1` is the extent offset in `N + 1`. -/
 theorem circLag_cast {k N : ℕ} (h : 2 * k ≤ N) :
     Moment.circLag (⟨min k N, Nat.lt_succ_of_le (min_le_right k N)⟩ : Fin (N + 1)) = k := by
   show min (min k N) (N + 1 - min k N) = k
@@ -189,7 +237,12 @@ theorem circLag_cast {k N : ℕ} (h : 2 * k ≤ N) :
 
 #print axioms circLag_cast
 
-/-- The sequence lives in a fixed compact interval. -/
+/-- `corrLag k β N ∈ Set.Icc (-4 : ℝ) 4` at every lag, coupling and aperture, from
+`wilsonCorrAt_abs_le_four`. The interval does not depend on `N`, which is what the compactness
+arguments below use.
+
+DERIVED: `4` is the extent-free bound of `wilsonCorrAt_abs_le_four`, appearing as both
+endpoints. -/
 theorem corrLag_mem_Icc (k : ℕ) (β : ℝ) (N : ℕ) : corrLag k β N ∈ Set.Icc (-4 : ℝ) 4 :=
   Set.mem_Icc.mpr (abs_le.mp (wilsonCorrAt_abs_le_four N β _))
 
@@ -200,7 +253,12 @@ theorem corrLag_mem_Icc (k : ℕ) (β : ℝ) (N : ℕ) : corrLag k β N ∈ Set.
 Bolzano–Weierstrass on the extent-free bound. This is the first `Filter.Tendsto` in the development
 whose index is the lattice extent. -/
 
-/-- **A convergent subsequence at each lag.** -/
+/-- At each lag `k` and coupling `β` there is an `L` with `|L| ≤ 4` and a strictly monotone
+`φ : ℕ → ℕ` along which `corrLag k β (φ j)` converges to `L`. It is
+`IsCompact.tendsto_subseq` on `Set.Icc (-4) 4` applied to `corrLag_mem_Icc`. The subsequence depends
+on the lag.
+
+DERIVED: `4` is the extent-free bound inherited from `corrLag_mem_Icc`. -/
 theorem exists_subseq_tendsto (k : ℕ) (β : ℝ) :
     ∃ L : ℝ, |L| ≤ 4 ∧ ∃ φ : ℕ → ℕ, StrictMono φ ∧
       Tendsto (fun j => corrLag k β (φ j)) atTop (𝓝 L) := by
@@ -210,9 +268,12 @@ theorem exists_subseq_tendsto (k : ℕ) (β : ℝ) :
 
 #print axioms exists_subseq_tendsto
 
-/-- **Every lag converges along ONE filter.** An ultrafilter refining `atTop` converges in each
-compact interval, and the same ultrafilter serves every lag, so the whole correlation function has a
-limit along it. -/
+/-- One filter serving every lag: there is a `NeBot` filter `l ≤ atTop` and a function
+`L : ℕ → ℝ` with `|L k| ≤ 4` such that `corrLag k β` tends to `L k` along `l` for every `k`. The
+filter is `Ultrafilter.of atTop`, which converges in each compact interval by
+`IsCompact.ultrafilter_le_nhds`, and the same ultrafilter serves every lag.
+
+DERIVED: `4` is the extent-free bound inherited from `corrLag_mem_Icc`. -/
 theorem exists_filter_tendsto_all_lags (β : ℝ) :
     ∃ l : Filter ℕ, l.NeBot ∧ l ≤ atTop ∧ ∃ L : ℕ → ℝ, (∀ k, |L k| ≤ 4) ∧
       ∀ k, Tendsto (fun N => corrLag k β N) l (𝓝 (L k)) := by
@@ -239,9 +300,11 @@ theorem exists_filter_tendsto_all_lags (β : ℝ) :
 
 #print axioms exists_filter_tendsto_all_lags
 
-/-- The diagonal extraction: start at `F 0 0` and feed each extent back into the next choice.
+/-- The diagonal extraction of a two-argument choice function: `diagSeq F 0 = F 0 0` and
+`diagSeq F (n + 1) = F (n + 1) (diagSeq F n)`, so each extent already chosen is fed back into the
+next choice. Defined by `Nat.rec`.
 
-DERIVED: `0` is the recursion's base index and `1` the successor step. Both are the shape of
+DERIVED: `0` is the recursion's base index and `1` the successor step; both are the shape of
 `Nat.rec`, not quantities. -/
 def diagSeq (F : ℕ → ℕ → ℕ) : ℕ → ℕ :=
   fun n => Nat.rec (motive := fun _ => ℕ) (F 0 0) (fun m ih => F (m + 1) ih) n
@@ -257,7 +320,10 @@ theorem diagSeq_succ (F : ℕ → ℕ → ℕ) (n : ℕ) :
 
 #print axioms diagSeq_succ
 
-/-- A strictly monotone map of `ℕ` into itself dominates the identity. -/
+/-- `j ≤ φ j` for every `j`, when `φ : ℕ → ℕ` is strictly monotone. By induction on `j`. It is used
+to turn an eventual condition on the aperture into one on the subsequence index.
+
+DERIVED: no numeral appears in the statement. -/
 theorem self_le_of_strictMono {φ : ℕ → ℕ} (hφ : StrictMono φ) : ∀ j, j ≤ φ j := by
   intro j
   induction j with
@@ -266,8 +332,17 @@ theorem self_le_of_strictMono {φ : ℕ → ℕ} (hφ : StrictMono φ) : ∀ j, 
 
 #print axioms self_le_of_strictMono
 
-/-- **ONE subsequence of extents along which EVERY lag converges.** The finite-volume correlation
-functions converge pointwise, as functions of the lag, to a single limit function `L`. -/
+/-- One strictly monotone sequence of apertures `φ` along which `corrLag k β (φ j)` converges to
+`L k` for every lag `k`, with `|L k| ≤ 4`. The finite-volume correlation functions therefore converge
+pointwise in the lag to a single function `L : ℕ → ℝ`.
+
+The construction is a diagonal argument: `exists_filter_tendsto_all_lags` gives a filter, `hstep`
+extracts from it one aperture past any given one at which all lags up to `n` are within
+`1 / (n + 1)` of their limits, and `diagSeq` chains those choices.
+
+Convergence along `φ` is what is proved; the full sequence is not shown to converge.
+
+DERIVED: `4` is the extent-free bound inherited from `corrLag_mem_Icc`. -/
 theorem exists_subseq_tendsto_all_lags (β : ℝ) :
     ∃ (L : ℕ → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧ (∀ k, |L k| ≤ 4) ∧
       ∀ k, Tendsto (fun j => corrLag k β (φ j)) atTop (𝓝 (L k)) := by
@@ -329,9 +404,16 @@ theorem exists_subseq_tendsto_all_lags (β : ℝ) :
 
 /-! ### The limit is not trivial, and it decays -/
 
-/-- **A positive contact value, uniform in the extent.** `ContactFloor.corrClay_zero_ge` against
-`ContactFloor.exists_haar_floor`: one `δ₀ > 0`, fixed before the aperture is chosen, with
-`e^{−128β}·δ₀ ≤ ρ_N(β,0)` at every aperture and every `β ≥ 0`. -/
+/-- There is a `δ₀ > 0`, fixed before any aperture is chosen, with
+`Real.exp (-(128 * β)) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture `N` and every `β ≥ 0`. It
+combines `ContactFloor.exists_haar_floor`, which supplies `δ₀` and bounds `corrClay (N+1) 0 0`
+below by it at every `N`, with `ContactFloor.corrClay_zero_ge`.
+
+The order of quantifiers is the content: `δ₀` is outside the quantifier over `N`, so the contact
+value does not collapse as the extent grows. The bound holds on the half-line `0 ≤ β` only.
+
+DERIVED: `0` is the positivity threshold on `δ₀`, the lower end of the coupling range, and the
+contact lag; `128 = 2 * 16 * 4` is `ContactFloor.corrClay_zero_ge`'s own exponent, inherited. -/
 theorem exists_uniform_contact_floor :
     ∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ (N : ℕ) (β : ℝ), 0 ≤ β →
       Real.exp (-(128 * β)) * δ₀ ≤ MassGap.wilsonCorrAt N β 0 := by
@@ -346,10 +428,17 @@ theorem exists_uniform_contact_floor :
 
 #print axioms exists_uniform_contact_floor
 
-/-- **Geometric decay in the lag, uniformly in the extent.**
-`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` at the cast lag, with `circLag_cast`
-identifying the circle distance for `N ≥ 2k`. Neither `coreConst` nor `coreRate` carries an
-extent. -/
+/-- `|corrLag k β N| ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ (k - 1)` for `1 ≤ k`,
+`2 * k ≤ N`, `0 ≤ β` and `coreRate (16 * 4) β < 1`. It is
+`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` at the clamped index, with `circLag_cast`
+identifying that index's circle distance as `k`.
+
+Neither factor on the right depends on `N`, so the bound is uniform in the extent above `2 * k`.
+
+DERIVED: `1` is the lower bound on the lag and the offset in the exponent `k - 1`, and the level
+`coreRate` is required to fall below; `2` is the factor in `2 * k ≤ N`, the point below which the
+periodic wrap would shorten the lag; `0` is the lower end of the coupling range; `16 * 4` is
+`StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited and not chosen. -/
 theorem corrLag_abs_le_geometric {k N : ℕ} (hk : 1 ≤ k) (hN : 2 * k ≤ N) {β : ℝ} (hβ : 0 ≤ β)
     (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1) :
     |corrLag k β N| ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
@@ -369,19 +458,27 @@ theorem corrLag_abs_le_geometric {k N : ℕ} (hk : 1 ≤ k) (hN : 2 * k ≤ N) {
 
 /-! ### The assembly -/
 
-/-- **THE INFINITE-VOLUME CORRELATION FUNCTION EXISTS AND IS GAPPED, ON A DERIVED COUPLING
-INTERVAL.**
+/-- The assembly. There are `b > 0` and `δ₀ > 0` such that for every `β` with `0 ≤ β < b`:
+`coreRate (16 * 4) β < 1`, and there exist a limit function `L : ℕ → ℝ` and a strictly monotone
+sequence of apertures `φ` with
 
-On `[0, b)` — `b` from `StrongCoupling.core_rate_lt_one_of_small`, carrying no numeral — there is a
-strictly increasing sequence of apertures `φ` along which the finite-volume correlation converges at
-EVERY lag to a limit function `L`, and the limit satisfies
+* `corrLag k β (φ j) → L k` as `j → ∞`, at every lag `k`;
+* `Real.exp (-(128 * β)) * δ₀ ≤ L 0`, so the contact value of the limit is positive;
+* `|L k| ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ (k - 1)` for `1 ≤ k`, with
+  `coreRate (16 * 4) β < 1`, so the limit decays geometrically in the lag.
 
-* `e^{−128β}·δ₀ ≤ L 0` with `δ₀ > 0` fixed before the coupling and the aperture are chosen, so the
-  contact term does not collapse in the limit;
-* `|L k| ≤ coreConst · coreRate^{k−1}` with `coreRate < 1`, so the limit clusters exponentially.
+`b` comes from `StrongCoupling.core_rate_lt_one_of_small`, `δ₀` from `exists_uniform_contact_floor`,
+`φ` and `L` from `exists_subseq_tendsto_all_lags`, and the two bounds pass to the limit by
+`ge_of_tendsto'` and `le_of_tendsto` with `corrLag_abs_le_geometric` eventually in `j`.
 
-The subsequence is genuinely indexed by the lattice extent and `φ` occurs in the conclusion. What is
-NOT claimed is uniqueness of the limit: this is subsequential convergence. -/
+Both `b` and `δ₀` are bound outside the quantifier over `β` and over the aperture. The convergence
+is along `φ` only; the limit is not claimed to be unique or to be the limit of the full sequence,
+and the statement is confined to `[0, b)`.
+
+DERIVED: `0` is the positivity threshold on `b` and `δ₀`, the lower end of the coupling range, and
+the contact lag; `1` is the level `coreRate` falls below, the lower bound on the lag, and the offset
+in `k - 1`; `128 = 2 * 16 * 4` is `ContactFloor.corrClay_zero_ge`'s own exponent; `16 * 4` is
+`StrongCoupling.touchDeg_bd_le` at `dim = 4`. -/
 theorem exists_infinite_volume_gapped_limit :
     ∃ b : ℝ, 0 < b ∧ ∃ δ₀ : ℝ, 0 < δ₀ ∧
       ∀ β : ℝ, 0 ≤ β → β < b →
@@ -411,34 +508,28 @@ theorem exists_infinite_volume_gapped_limit :
 
 #print axioms exists_infinite_volume_gapped_limit
 
-/-- **⭐⭐⭐ CONFINEMENT AT EVERY LARGE APERTURE, AT A FIXED STRONG COUPLING.**
+/-- `μYMAt N β < κ₀YM` for all large enough `N`, at a fixed `β` with `0 < β` and
+`coreRate (16 * 4) β < 1`. The conclusion is `∀ᶠ N in atTop`, so the aperture is quantified
+eventually while the coupling is fixed by the hypotheses.
 
-At any `β > 0` whose core rate clears one, the entroptics tension sits below the entropy floor,
-`μ < κ₀`, for every large enough aperture. Nothing is measured and nothing is assumed: the bound
-comes from the cluster expansion, and the read carries it.
+The chain: `ContactFloor.read_p_le_aperture_uniform` bounds the read's weights by
+`C * r ^ circLag d` with `C` and `r` free of the aperture, the contact floor `δ` replacing the
+per-aperture `m` that `StrongCoupling.read_p_le_of_corrClay` would carry;
+`Moment.circ_moment_le_of_geometric` turns those weights into the bound
+`B = 2 * C * ∑' k, k^2 * r^k` on `d2At N β`, a convergent series with no aperture in it;
+`Moment.aperture_factor_tendsto_zero` drives the `(2 * π / (N + 1))^2` window below the floor gap
+eventually; and `Read.tension_lt_floor_of_circ_moment` closes it.
 
-**THE CHAIN, AND WHY IT CLOSES ONLY HERE.** `StrongCoupling.read_p_le_of_corrClay` bounds the read's
-weights by `C·r^{circLag d}` but its `C` carries `1/m` for a hypothesised `m ≤ ∑ρ`, per-aperture;
-`ContactFloor.read_p_le_aperture_uniform` replaces that `m` by the contact floor, which is ONE number
-at every aperture. Then `Moment.circ_moment_le_of_geometric` turns geometric weights into a bounded
-circle moment `2C·∑' k²rᵏ` — a convergent series with NO aperture in it — and
-`Moment.aperture_factor_tendsto_zero` says the `(2π/(N+1))²` window drives any fixed bound under the
-floor gap eventually. `Read.tension_lt_floor_of_circ_moment` closes it.
+The strict hypothesis `0 < β` is used to make `r` strictly positive, since `coreRate` vanishes at
+zero and the weight bound divides by it. `coreConst` and `coreRate` both depend on `β`, and
+`coreRate (16 * 4) β < 1` holds only near zero
+(`StrongCoupling.core_rate_lt_one_of_small_hypercubic`), so this is not
+`Complete.confinement_of_geometric_decay`, which quantifies over every `β` with one `C` and one `r`.
+What is uniform here is the aperture.
 
-`InfiniteVolume` is the only module that imports both `Complete` (which owns `readYMAt` and `d2At`)
-and `ContactFloor` (which owns the floor), which is why the composition lives here rather than in
-either.
-
-**⛔ THE COUPLING IS FIXED, AND THAT IS THE LIMITATION.** `coreConst` and `coreRate` both depend on
-`β`, and `coreRate (16·4) β < 1` holds only on a neighbourhood of zero
-(`StrongCoupling.core_rate_lt_one_of_small_hypercubic`), with `coreRate → ∞` as `β` grows. So this
-does NOT give `Complete.confinement_of_geometric_decay`, which quantifies over EVERY `β` with one
-`C` and one `r`. What is uniform here is the APERTURE, not the coupling — and the aperture is the
-one this programme is about.
-
-DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited and not chosen. The
-`2` and the `1` in the moment bound are `circ_moment_le_of_geometric`'s own. The `0` in `0 < β` is
-strict because `coreRate` vanishes at zero and the weight bound divides by it. -/
+DERIVED: `0` is the strict lower bound on `β`; `1` is the level `coreRate` falls below; `16 * 4` is
+`StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited and not chosen. The `2` and the `1`
+appearing in the moment bound inside the proof are `circ_moment_le_of_geometric`'s own. -/
 theorem confinement_at_strong_coupling {β : ℝ} (hβ : 0 < β)
     (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1) :
     ∀ᶠ N : ℕ in Filter.atTop, MassGap.μYMAt N β < MassGap.κ₀YM := by

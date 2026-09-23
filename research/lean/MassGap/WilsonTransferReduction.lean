@@ -8,53 +8,67 @@ import MassGap.HalfSpaceAlgebra
 /-!
 # MassGap.WilsonTransferReduction — the transfer operator, reduced to three facts about the state
 
-## What this does
+## What this module builds
 
-`TransferAssembly.assembleTransferData` takes nine inputs. **Six of them are about the lattice and
-the maps, and all six are discharged here**; the three that survive are about the MEASURE.
+`TransferAssembly.assembleTransferData` takes nine inputs. Six are discharged here from facts about
+the lattice and the maps:
 
 | input | discharged by |
 |---|---|
-| `C : ShiftCompat R ν` | `shiftCompat_of_nu_T` — from `nu_T` alone; the other three fields are `ReflectionShift`'s |
+| `C : ShiftCompat R ν` | `shiftCompat_of_nu_T`, from `nu_T` alone; the other three fields come from `ReflectionShift` |
 | `hstable` | `HalfSpaceAlgebra.halfSpaceAlg_shift_stable` |
 | `hone` | `HalfSpaceAlgebra.one_mem_halfSpaceAlg` |
-| `hTone` | `ishiftObsL_one` — precomposition fixes the constant |
-| `hTnorm` | `norm_comp_le` — precomposition cannot enlarge a supremum |
+| `hTone` | `ishiftObsL_one` |
+| `hTnorm` | `norm_comp_le` |
 | `hθnorm` | `norm_comp_le` |
 
-**What remains is exactly three**, and each is a property of the infinite-volume state:
+The three that remain are properties of the state:
 
-    hinv : IsReflectionInvariant (latticeReflection τ (2*p)) ν
-    hpos : ReflPositiveOn (latticeReflection τ (2*p)) (halfSpaceAlg τ p) ν
+    hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν
+    hpos : ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg τ p) ν
     hnu  : ∀ f, ν (ishiftObsL τ f) = ν f
 
-**The `2*p` is forced.** `halfSpaceAlg` is indexed by the PLANE and `latticeReflection` by the
-reflection CONSTANT, whose plane sits at half of it, so the reflection exchanging the halves at plane
-`p` is the one at constant `2p` — `ReflectionHalfSpace.reflection_exchanges_halves`. Pairing `c` with
-`c` is the reflection pairing only at `c = 0`.
+`halfSpaceAlg` is indexed by the plane and `latticeReflection` by the reflection constant, whose
+plane sits at half of it, so the reflection exchanging the halves at plane `p` is the one at
+constant `2 * p` (`ReflectionHalfSpace.reflection_exchanges_halves`). Pairing `c` with `c` is the
+reflection pairing only at `c = 0`.
 
-`transferData_of_state_facts` is the statement: given those three, a full `Transfer.TransferData` on
-the half-space algebra, and hence — through `GNSHilbert` and `OpTBridge.reconstruct_from_opT` — a
-Hilbert space, a vacuum, a bounded self-adjoint operator and `H = −log T`.
+`transferData_of_state_facts` assembles a `Transfer.TransferData` on the half-space algebra from
+those three.
 
-## ⚠ What it does not do
+The remaining declarations rewrite the operator-side predicates as statements about reflection
+pairings of the state:
+* `positiveTransfer_pairing_eq` — `ν (θ_c F · T F) = ν (θ_{c-1} F · F)`, at every state satisfying
+  `hnu`.
+* `positiveTransfer_pairing_nonneg`, `positiveTransfer_of_state_facts`,
+  `positiveTransfer_iff_odd_reflPositive` — `GNSHilbert.PositiveTransfer` of the assembled data
+  holds exactly when the state is reflection positive at the odd constant `2 * p - 1` on the same
+  algebra.
+* `gapAt_pairing_eq`, `gapAt_iff_pairing`, `gapAt_iff_pairing_of_mean_zero`,
+  `gapAt_iff_subtracted_pairing` — `TransferGap.GapAt` of the assembled data holds exactly when
+  `ν (θ_{2p-2} F' · F') ≤ r ^ 2 * ν (θ_{2p} F' · F')` at the mean-subtracted `F' = F - ν F • 1`, for
+  every `F` in the algebra.
+* `gapAt_of_subtracted_pairing_nondegenerate` — it suffices to check that inequality where the
+  lag-zero subtracted pairing is strictly positive.
 
-**It supplies none of the three here.** `WilsonDLR` builds an infinite-volume Gibbs MEASURE, not a
-`DLRLimit.State` carrying these properties.
-
-**⛔ BUT TWO OF THE THREE ARE DISCHARGED DOWNSTREAM.**
-`ReflectionHalfSpace.wilson_reflPositive_limit_exists` gives `ReflPositiveOn` at `2 * p` on
-`halfSpaceAlg τ p` for a Wilson limit state, at every real `β` and with no structural hypothesis
-left; `reflection_facts_on_halfSpaceAlg` adds `IsReflectionInvariant` alongside it. What remains is
-`hnu`, and `ReflectionShift.reflection_invariant_succ_iff_nu_T` shows it is equivalent to reflection
-invariance at the adjacent constant.
-
-**And it does not give a gap.** Even with all three, `OpTBridge.reconstruct_from_opT` still needs the
-two spectral hypotheses, which are the mass gap in operator form. This reduction is about the
-CONSTRUCTION of the operator, not about its spectrum.
-
-So the reading is: C1's operator half was a list of nine obligations of two different kinds, and
-it is now a list of three, all of one kind.
+Scope.
+* None of `hinv`, `hpos`, `hnu` is supplied here. `WilsonDLR` builds an infinite-volume Gibbs
+  measure, not a `DLRLimit.State` carrying them.
+  `ReflectionHalfSpace.wilson_reflPositive_limit_exists` gives `ReflPositiveOn` at `2 * p` on
+  `halfSpaceAlg τ p` for a Wilson limit state at every real `β`, and
+  `reflection_facts_on_halfSpaceAlg` adds `IsReflectionInvariant`;
+  `ReflectionShift.reflection_invariant_succ_iff_nu_T` relates `hnu` to reflection invariance at the
+  adjacent constant.
+* `hposOdd` in `positiveTransfer_of_state_facts` is reflection positivity at an odd constant, the
+  link reflection. `ReflectionHalfSpace`'s positivity chain is stated at `2 * p` throughout and its
+  analogue of `boxR_ne_tau` hardwires that constant, so it has no odd instantiation. At an even
+  constant the shared block is the transverse links on the plane with the dagger trivial; at an odd
+  one it is the axis links with the dagger inverting.
+  `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an iff on the cross kernel, so the route
+  through that kernel is refuted below `β = 0`.
+* Nothing here proves a gap. `OpTBridge.reconstruct_from_opT` takes two spectral hypotheses beyond
+  the assembled data, and `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` takes a Rayleigh bound
+  on a completion; neither is supplied.
 -/
 
 namespace MassGap.WilsonTransferReduction
@@ -66,13 +80,13 @@ open MassGap.HalfSpaceAlgebra
 
 /-! ## 1. Precomposition cannot enlarge a supremum -/
 
-/-- **A CONTINUOUS OBSERVABLE PULLED BACK IS NO LARGER.** `‖F ∘ g‖ ≤ ‖F‖`, because the supremum over
-the image is a supremum over a subset.
+/-- `‖F.comp g‖ ≤ ‖F‖` for `F : C(X, ℝ)` and `g : C(X, X)` on a nonempty compact space: the supremum
+over the image is a supremum over a subset. Via `ContinuousMap.norm_le` and
+`ContinuousMap.norm_coe_le_norm`.
 
-Surjectivity of `g` is not needed and is not assumed — the inequality runs in the one direction the
-assembly consumes.
+Scope: `g` is not assumed surjective, so the inequality holds in one direction only.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral occurs in the statement. -/
 theorem norm_comp_le {X : Type*} [TopologicalSpace X] [CompactSpace X] [Nonempty X]
     (F : C(X, ℝ)) (g : C(X, X)) : ‖F.comp g‖ ≤ ‖F‖ :=
   (ContinuousMap.norm_le _ (norm_nonneg F)).mpr
@@ -87,28 +101,39 @@ section Lattice
 variable {G : Type} [Group G] [TopologicalSpace G] [ContinuousInv G] [CompactSpace G]
   [Nonempty G]
 
-/-- **`hTone`** — the shift fixes the constant observable, because precomposition does.
+/-- `ishiftObsL τ 1 = 1`, by `rfl`: precomposition fixes the constant observable. This is
+`assembleTransferData`'s `hTone`.
 
-DERIVED: the `1` is the constant observable. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `1` is the constant observable, on both sides
+of the equation. -/
 theorem ishiftObsL_one (τ : Fin 4) : ishiftObsL (G := G) τ 1 = 1 := rfl
 
-/-- **`hTnorm`** — the shift does not enlarge the supremum norm. -/
+/-- `‖ishiftObsL τ f‖ ≤ ‖f‖`: the shift does not enlarge the supremum norm, since it is
+precomposition with the continuous `ishiftConf τ`. This is `assembleTransferData`'s `hTnorm`.
+
+DERIVED: the one numeral is the `4` of `Fin 4`, the spacetime dimension `τ` indexes. -/
 theorem norm_ishiftObsL_le (τ : Fin 4) (f : C(IConf G, ℝ)) :
     ‖ishiftObsL (G := G) τ f‖ ≤ ‖f‖ :=
   norm_comp_le f ⟨ishiftConf τ, continuous_ishiftConf τ⟩
 
 #print axioms norm_ishiftObsL_le
 
-/-- **`hθnorm`** — nor does the reflection. -/
+/-- `‖ireflObs τ c f‖ ≤ ‖f‖`: the reflection does not enlarge the supremum norm either, being
+precomposition with `ireflConfCM τ c`. This is `assembleTransferData`'s `hθnorm`.
+
+DERIVED: the one numeral is the `4` of `Fin 4`, the spacetime dimension `τ` indexes; `c` is the
+caller's reflection constant. -/
 theorem norm_ireflObs_le (τ : Fin 4) (c : ℤ) (f : C(IConf G, ℝ)) :
     ‖ireflObs (G := G) τ c f‖ ≤ ‖f‖ :=
   norm_comp_le f (ireflConfCM τ c)
 
 #print axioms norm_ireflObs_le
 
-/-- **⭐ `ShiftCompat` FROM `nu_T` ALONE.** The other three fields are `ReflectionShift`'s:
-`ishiftObsL_mul` is `T_mul`, `ishiftObsL_iunshiftObs` is `T_S`, and `ireflObs_ishiftObs` is
-`theta_T` — the reflection carrying the forward shift to the backward one.
+/-- A `ShiftCompat (latticeReflection τ c) ν` built from the single hypothesis
+`hnu : ∀ f, ν (ishiftObsL τ f) = ν f`. The other three fields come from `ReflectionShift`:
+`ishiftObsL_mul` supplies `T_mul`, `ishiftObsL_iunshiftObs` supplies `T_S`, and
+`ireflObs_ishiftObs` supplies `theta_T`, the reflection carrying the forward shift to the backward
+one.
 
 DERIVED: `4` is the spacetime dimension; no other numeral. -/
 def shiftCompat_of_nu_T (τ : Fin 4) (c : ℤ) (ν : MassGap.DLRLimit.State (IConf G))
@@ -121,44 +146,28 @@ def shiftCompat_of_nu_T (τ : Fin 4) (c : ℤ) (ν : MassGap.DLRLimit.State (ICo
   theta_T := ireflObs_ishiftObs τ c
   nu_T := hnu
 
-/-! ## 2′. ⭐⭐ The half-step: positivity of the transfer operator -/
+/-! ## 2′. The transfer operator's positivity, as a reflection pairing -/
 
-/-- **⭐⭐⭐ THE TRANSFER OPERATOR'S POSITIVITY IS REFLECTION POSITIVITY AT THE PRECEDING CONSTANT.**
+/-- `ν (ireflObs τ c F * ishiftObsL τ F) = ν (ireflObs τ (c - 1) F * F)`, for any state `ν`
+satisfying `hnu` and any `F`. The chain is
 
-`GNSHilbert.PositiveTransfer` asks `0 ≤ ν (θ_c F · T F)`. That quantity IS the reflection pairing at
-`c - 1`:
+    θ_c F = T (θ_{c-1} F)          `ReflectionShift.ireflObs_succ_eq_shiftObs_ireflObs`
+    θ_c F · T F = T (θ_{c-1} F · F)   `ishiftObsL_mul`
+    ν (T G) = ν G                  `hnu`.
 
-    θ_c F = T (θ_{c-1} F)                    `ReflectionShift.ireflObs_succ_eq_shiftObs_ireflObs`
-    θ_c F · T F = T (θ_{c-1} F · F)          `ishiftObsL_mul`
-    ν (T G) = ν G                           `hnu`
+The left-hand side is the quantity `GNSHilbert.PositiveTransfer` asserts nonnegative.
 
-**⛔ SO THE "HALF-STEP" IS THE ODD REFLECTION, AND THAT IS WHY IT IS A SEPARATE PROBLEM.** With `c`
-even, `c - 1` is odd: the LINK reflection, whose mirror sits at the half-integer `p - 1/2`. That
-mirror carries `{x_τ ≥ p}` INTO `{x_τ ≤ p - 1}`, which is exactly the set-complement of
-`posHalf τ p`, so the pairing is the geometrically correct one and nothing has to be re-indexed. Into
-rather than onto: a `τ`-link based at `p - 1` straddles the mirror and is in the complement without
-being in the image.
+Scope. The identity is an equality of reals holding at every state with `hnu` and mentions no
+coupling. With `c` even, `c - 1` is odd — the link reflection, whose mirror sits at the half-integer
+`p - 1/2` and carries `{x_τ ≥ p}` into `{x_τ ≤ p - 1}`, the set-complement of `posHalf τ p`. Into
+rather than onto: a `τ`-link based at `p - 1` straddles the mirror and lies in the complement
+without being in the image. The constant `2 * p + 1` does not exchange the halves at all — it sends
+a link based at `p` to `p + 1` or fixes it, both inside `posHalf τ p` — and pairs with
+`halfSpaceAlg τ (p + 1)` instead. `halfSpaceAlg τ p` serves both the mirror at `p` and the mirror at
+`p - 1/2`; the half-integer appears in the mirror, not in the algebra's index.
 
-**⛔ `2p + 1` WOULD BE THE WRONG CONSTANT**, and not by a little: it sends a link based at `p` to
-`p + 1` or fixes it, both still inside `posHalf τ p`, so it does not exchange the halves at all. It
-pairs with `halfSpaceAlg τ (p + 1)`. `HalfSpaceAlgebra`'s remark that `posHalf` cannot express a
-half-integer plane is about the MIRROR, not the algebra — `halfSpaceAlg τ p` serves both the mirror
-at `p` and the mirror at `p - 1/2`.
-
-**⛔ THE THEOREM ITSELF IS COUPLING-FREE; DISCHARGING `hposOdd` IS NOT.** This identity holds for
-every state and mentions no `β`, and `hposOdd` is satisfiable coupling-free — evaluation at the
-all-identity configuration satisfies it at every constant. What needs `0 ≤ β` is discharging
-`hposOdd` for the `SU(3)` WILSON measure through the cross kernel:
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an IFF on the kernel that argument
-integrates, so it refutes that route below zero. It refutes the kernel's nonnegativity, not
-reflection positivity itself.
-
-**What this buys:** `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` takes `PositiveTransfer` plus a
-Rayleigh bound and returns `TransferGap.GapAt`. This supplies the first of the two. The Rayleigh
-bound is the gap itself and is untouched.
-
-DERIVED: the `1` is the mirror separation, which is the half-step; the `0` is the sign asserted; `4`
-is the dimension. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `1` is the mirror separation, one step back
+from `c`, which is what the shift contributes. `c` is the caller's constant. -/
 theorem positiveTransfer_pairing_eq (τ : Fin 4) (c : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hnu : ∀ f : C(IConf G, ℝ), ν (ishiftObsL τ f) = ν f)
@@ -171,13 +180,15 @@ theorem positiveTransfer_pairing_eq (τ : Fin 4) (c : ℤ)
 
 #print axioms positiveTransfer_pairing_eq
 
-/-- **⭐⭐ AND SO `PositiveTransfer` FOLLOWS FROM THE ODD REFLECTION POSITIVITY.**
+/-- `0 ≤ ν (ireflObs τ c F * ishiftObsL τ F)` for `F` in a submodule `A`, given `hnu` and
+`ReflPositiveOn (latticeReflection τ (c - 1)) A ν`. The previous identity followed by the positivity
+hypothesis at `c - 1`.
 
-Stated on the pairing rather than on a `TransferData`, so it can be used before the data is
-assembled. `A` is the same algebra on both sides — no re-indexing — because the mirror at `c - 1`
-exchanges exactly the halves the mirror at `c` does not.
+Scope: stated on the pairing rather than on a `TransferData`, so it applies before the data is
+assembled. `A` is the same submodule on both sides; no re-indexing occurs.
 
-DERIVED: the `1` is the mirror separation; the `0` is the sign asserted; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `1` is the mirror separation between `c` and
+the constant the positivity hypothesis is stated at; `0` is the lower bound asserted. -/
 theorem positiveTransfer_pairing_nonneg (τ : Fin 4) (c : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G)) (A : Submodule ℝ C(IConf G, ℝ))
     (hnu : ∀ f : C(IConf G, ℝ), ν (ishiftObsL τ f) = ν f)
@@ -189,26 +200,15 @@ theorem positiveTransfer_pairing_nonneg (τ : Fin 4) (c : ℤ)
 
 #print axioms positiveTransfer_pairing_nonneg
 
-/-- **⭐⭐⭐ AND THE GAP CONDITION IS THE PAIRING TWO CONSTANTS BACK.**
+/-- `ν (ireflObs τ c (ishiftObsL τ F) * ishiftObsL τ F) = ν (ireflObs τ (c - 2) F * F)`, given
+`hnu`. One step further than `positiveTransfer_pairing_eq`: `theta_T` turns `θ_c (T F)` into
+`S (θ_c F) = θ_{c-1} F`, and the half-step identity drops the constant again to `c - 2`.
 
-The same computation one step further. `theta_T` turns `θ_c (T F)` into `S (θ_c F)`, which is
-`θ_{c-1} F`, and the half-step identity then drops it to `c - 2`:
+Applied at `c = 2 * p`, both constants are even and two apart, so the left-hand side of the gap
+inequality is a reflection pairing at `2 * p - 2`.
 
-    ν (θ_c (T F) · T F) = ν (θ_{c-2} F · F).
-
-**⛔ SO `TransferGap.GapAt` ON THE ASSEMBLED DATA READS**
-
-    ν (θ_{2p-2} F · F)  ≤  r² · ν (θ_{2p} F · F)
-
-for every `F` in the algebra with `ν (θ_{2p} F · 1) = 0`. **Both constants are EVEN and they are TWO
-apart** — the lag-two ratio the gap side measures, written in the operator side's own objects. It is
-a ratio of two reflection pairings and nothing else: no spectrum, no operator norm, no Hilbert space.
-
-This is a restatement, not a proof. What it buys is that the remaining spectral obligation is now a
-statement about the SAME kind of quantity the rest of this development already produces, rather than
-about `Tq` on a completion.
-
-DERIVED: the `1` is the mirror separation and the `2` twice it; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `2` is the separation between the two
+constants, two applications of the one-step drop that `positiveTransfer_pairing_eq` performs. -/
 theorem gapAt_pairing_eq (τ : Fin 4) (c : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hnu : ∀ f : C(IConf G, ℝ), ν (ishiftObsL τ f) = ν f)
@@ -223,18 +223,20 @@ theorem gapAt_pairing_eq (τ : Fin 4) (c : ℤ)
 #print axioms gapAt_pairing_eq
 
 
-/-! ## 3. ⭐ The reduction -/
+/-! ## 3. The assembled data -/
 
-/-- **⭐ A FULL `TransferData` FROM THREE FACTS ABOUT THE STATE.**
+/-- A `Transfer.TransferData ↥(halfSpaceAlg τ p)` from three facts about the state: reflection
+invariance at `2 * p`, reflection positivity at `2 * p` on the half-space algebra, and shift
+invariance `hnu`. Every other input of `TransferAssembly.assembleTransferData` is supplied here —
+`shiftCompat_of_nu_T` for the compatibility data, `halfSpaceAlg_shift_stable` for stability,
+`one_mem_halfSpaceAlg` and `ishiftObsL_one` for the constant, and `norm_ishiftObsL_le` and
+`norm_ireflObs_le` for the norm bounds.
 
-Every lattice-side input of `TransferAssembly.assembleTransferData` is discharged: the shift is an
-endomorphism of the half-space algebra (`halfSpaceAlg_shift_stable`), the constant is in it
-(`one_mem_halfSpaceAlg`) and is fixed by the shift, and neither the shift nor the reflection enlarges
-the supremum norm.
+Scope: the three state hypotheses are taken, not proved.
 
-**The three that remain are all about the measure**, and none is supplied anywhere in the tree.
-
-DERIVED: `4` is the spacetime dimension; no other numeral. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `2` converts the plane `p` to the reflection
+constant `2 * p`, since `latticeReflection` is indexed by the constant whose mirror plane sits at
+half of it. -/
 noncomputable def transferData_of_state_facts (τ : Fin 4) (p : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν)
@@ -251,26 +253,18 @@ noncomputable def transferData_of_state_facts (τ : Fin 4) (p : ℤ)
 
 #print axioms transferData_of_state_facts
 
-/-- **⭐⭐⭐ THE ASSEMBLED DATA IS A POSITIVE TRANSFER, GIVEN THE ODD REFLECTION POSITIVITY.**
-
+/-- `GNSHilbert.PositiveTransfer (transferData_of_state_facts τ p ν hinv hpos hnu)`, given in
+addition `hposOdd : ReflPositiveOn (latticeReflection τ (2 * p - 1)) (halfSpaceAlg τ p) ν`.
 `assembleTransferData` sets `form := stateFormFun` and `T := restrictT`, so `D.form x (D.T x)` is
-literally `ν (θ_{2p} x · T x)` — the pairing `positiveTransfer_pairing_nonneg` bounds. This lands the
-odd-constant reflection positivity on the predicate
-`GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` consumes.
+`ν (θ_{2p} x · T x)`, which `positiveTransfer_pairing_nonneg` bounds below by `0`.
 
-**⛔ WHAT IS NOW BETWEEN HERE AND A GAP.** That lemma takes `PositiveTransfer` AND a Rayleigh bound
-`⟨Tᵨ y, y⟩ ≤ Λ ‖y‖²` on the vacuum complement, and returns `TransferGap.GapAt D Λ`. This supplies the
-first. **The Rayleigh bound is the mass gap itself and nothing here touches it.**
-
-**⛔ AND `hposOdd` IS NOT FREE.** It is reflection positivity at an ODD constant — the link
-reflection — which is an INEQUALITY and therefore does need `0 ≤ β`:
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` refutes the kernel's nonnegativity below zero.
-`ReflectionHalfSpace`'s positivity chain is built at `2 * p` throughout and does not produce it. Its
-ANALOGUE of `boxR_ne_tau` fails at an odd constant — the theorem itself hardwires `2 * p`, so it has
-no odd instantiation — and that is why the chain cannot simply be re-indexed the way the invariance
-chain was. The deeper reason is that the shared block flips: at an even constant it is the TRANSVERSE
-links on the plane with the dagger trivial, at an odd one the AXIS links with the dagger inverting,
-which `OddLagSplit` calls the whole difference from the even-lag case.
+Scope. `hposOdd` is a hypothesis at an odd reflection constant, the link reflection, and is not
+supplied here; `ReflectionHalfSpace`'s positivity chain is stated at `2 * p` and its analogue of
+`boxR_ne_tau` hardwires that constant, so it has no odd instantiation. The blocks differ: at an even
+constant the shared block is the transverse links on the plane with the dagger trivial, at an odd
+one the axis links with the dagger inverting, which is `OddLagSplit`'s subject.
+`GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` consumes `PositiveTransfer` together with a
+Rayleigh bound `⟨T y, y⟩ ≤ Λ ‖y‖ ^ 2` on the vacuum complement; only the first is supplied here.
 
 DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is the half-step; `4` is the
 dimension. -/
@@ -288,15 +282,10 @@ theorem positiveTransfer_of_state_facts (τ : Fin 4) (p : ℤ)
 
 #print axioms positiveTransfer_of_state_facts
 
-/-- **⭐⭐⭐ AND THE TWO ARE THE SAME FACT.**
-
-`positiveTransfer_pairing_eq` is an EQUALITY of reals, so the implication runs both ways: the
-assembled data is a positive transfer **exactly when** the state is reflection positive at the odd
-constant, on the same algebra.
-
-That is the strongest available certificate that `hposOdd` is not an overshoot and not a
-re-indexing — an overshoot would give only one direction. Whatever discharges either side discharges
-the other, and anything that refutes one refutes the other.
+/-- `GNSHilbert.PositiveTransfer (transferData_of_state_facts τ p ν hinv hpos hnu)` holds if and
+only if `ReflPositiveOn (latticeReflection τ (2 * p - 1)) (halfSpaceAlg τ p) ν`. Both directions go
+through `positiveTransfer_pairing_eq`, which is an equality of reals, so neither side is stronger
+than the other.
 
 DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is the half-step; `4` is the
 dimension. -/
@@ -317,33 +306,26 @@ theorem positiveTransfer_iff_odd_reflPositive (τ : Fin 4) (p : ℤ)
 
 #print axioms positiveTransfer_iff_odd_reflPositive
 
-/-- **⭐⭐⭐ THE GAP CONDITION, AS AN INEQUALITY BETWEEN TWO REFLECTION PAIRINGS.**
+/-- `TransferGap.GapAt` on the assembled data, unfolded into reflection pairings:
+`GapAt (transferData_of_state_facts τ p ν hinv hpos hnu) r` holds if and only if, for every `F` in
+`halfSpaceAlg τ p` with `ν (ireflObs τ (2 * p) F * 1) = 0`,
 
-`TransferGap.GapAt` on the assembled data, unfolded. For every `F` in the half-space algebra whose
-reflection pairing with the vacuum vanishes:
+    ν (ireflObs τ (2 * p - 2) F * F) ≤ r ^ 2 * ν (ireflObs τ (2 * p) F * F).
 
-    ν (θ_{2p-2} F · F)  ≤  r² · ν (θ_{2p} F · F)
+Both directions rewrite by `gapAt_pairing_eq` at `c = 2 * p`.
 
-**⛔ WHY THIS IS THE STATEMENT TO ATTACK.** `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` is a
-SUFFICIENT route to `GapAt`, not the obligation: its Rayleigh hypothesis lives on
-`GNS D.toReflForm`, a COMPLETION, and every consumer of the gap takes `GapAt` itself. This form lives
-on the ALGEBRA, before any completion, and mentions no spectrum, no operator norm and no Hilbert
-space — only the state and two reflections.
+Scope. This is a statement on the algebra, before any completion; it mentions no spectrum, no
+operator norm and no Hilbert space, only the state and two reflections. It is about a particular
+state `ν`, not about a profile, so the flat-profile results such as `FlatProfileAllApertures` are
+different statements. The carrier is `ℤ⁴`, where
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` gives the shift infinite order, so the
+periodic-shift obstruction `HalfLineTransfer.no_rate_of_shift_transfer` does not apply. The
+equivalence gives no bound on `r`; nothing here proves either side.
 
-It is an `↔`, so nothing is given up by working with it.
-
-**⛔ WHAT IT IS NOT.** It is not a shape fact: the flat profile arguments
-(`FlatProfileAllApertures`) cap shape and representability arguments at `1`, and this is a statement
-about the actual limit state rather than about a profile. It is not a compression, so the argument
-that a measured spectrum can only LOWER-bound the top eigenvalue does not apply. And it is not the
-periodic-shift statement `HalfLineTransfer.no_rate_of_shift_transfer` refutes, because the carrier is
-`ℤ⁴`, where `HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` shows the shift has infinite
-order.
-
-**⛔ IT IS STILL UNPROVED, AND IT IS STILL THE MASS GAP.** Nothing here makes it true.
-
-DERIVED: the `2`s are the plane-to-constant conversion and the two-step separation; `4` is the
-dimension. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `2` appears three times — as the plane-to-constant
+conversion in `2 * p`, as the separation `2 * p - 2` between the two reflection constants, and as
+the exponent on `r`, which is `GapAt`'s own degree. `1` is the constant observable in the side
+condition, and `0` the value that side condition asserts. -/
 theorem gapAt_iff_pairing (τ : Fin 4) (p : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν)
@@ -365,11 +347,13 @@ theorem gapAt_iff_pairing (τ : Fin 4) (p : ℤ)
 
 #print axioms gapAt_iff_pairing
 
-/-- **THE SIDE CONDITION IS ORDINARY VACUUM SUBTRACTION.** `θ F · 1` is `θ F`, and `hinv` says the
-state does not see the reflection, so `ν (θ_{2p} F · 1) = ν F`. The premise was never about the
-reflection.
+/-- The same equivalence with the side condition written as `ν F = 0`. Multiplying by the constant
+is the identity and `hinv` says the state does not see the reflection, so
+`ν (ireflObs τ (2 * p) F * 1) = ν F`.
 
-DERIVED: the `2` is the plane-to-constant conversion; `4` is the dimension. -/
+DERIVED: `4` is the spacetime dimension `τ` indexes; `2` is the plane-to-constant conversion in
+`2 * p`, the separation in `2 * p - 2`, and the exponent on `r`; `0` is the value of `ν F` in the
+side condition. -/
 theorem gapAt_iff_pairing_of_mean_zero (τ : Fin 4) (p : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν)
@@ -391,18 +375,20 @@ theorem gapAt_iff_pairing_of_mean_zero (τ : Fin 4) (p : ℤ)
 
 #print axioms gapAt_iff_pairing_of_mean_zero
 
-/-- **⭐⭐⭐ AND WITH THE SUBTRACTION BUILT IN, THERE IS NO SIDE CONDITION AT ALL.**
+/-- The same equivalence with the subtraction built in and no side condition: `GapAt … r` holds if
+and only if, for every `F ∈ halfSpaceAlg τ p`,
 
-`F - ν F • 1` lies in the algebra — a submodule containing `1` — and has zero expectation; at
-`ν F = 0` it IS `F`. So the gap condition is equivalent to the inequality holding at the SUBTRACTED
-observable, for every `F` in the algebra, with no premise to lose track of.
+    ν (θ_{2p-2} F' · F') ≤ r ^ 2 * ν (θ_{2p} F' · F'),   where `F' = F - ν F • 1`.
 
-**⛔ THIS IS THE FORM TO ATTACK.** The object is the CONNECTED two-point function by construction
-rather than by hypothesis, so the `F = 1` collapse that makes the unsubtracted statement
-contradictory cannot occur: at `F = 1` the subtracted observable is `0` and both sides are `0`.
+`F'` lies in the algebra, which is a submodule containing `1`, and has `ν F' = 0`; at `ν F = 0` it
+is `F` itself.
 
-DERIVED: the `2`s are the plane-to-constant conversion and the two-step separation; `4` is the
-dimension. -/
+Scope: the quantity bounded is the connected pairing by construction rather than by hypothesis. At
+`F = 1` the subtracted observable is `0` and both sides are `0`.
+
+DERIVED: `4` is the spacetime dimension `τ` indexes; `2` is the plane-to-constant conversion, the
+separation `2 * p - 2` between the two reflection constants, and the exponent on `r`; `1` is the
+constant observable subtracted against. -/
 theorem gapAt_iff_subtracted_pairing (τ : Fin 4) (p : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hinv : IsReflectionInvariant (latticeReflection τ (2 * p)) ν)
@@ -433,25 +419,18 @@ theorem gapAt_iff_subtracted_pairing (τ : Fin 4) (p : ℤ)
 
 #print axioms gapAt_iff_subtracted_pairing
 
-/-- **⭐⭐⭐ AND THE OBLIGATION IS ONLY ABOUT THE OBSERVABLES THE FORM SEES.**
+/-- It suffices to check the pairing inequality where the lag-zero subtracted pairing is strictly
+positive: if the inequality of `gapAt_iff_subtracted_pairing` holds at every `F ∈ halfSpaceAlg τ p`
+with `0 < ν (ireflObs τ (2 * p) (F - ν F • 1) * (F - ν F • 1))`, then `GapAt … r` holds. In the
+degenerate branch `form_nonneg` and `T_contract` put both sides at `0`, so the inequality holds at
+every `r`.
 
-`gapAt_iff_subtracted_pairing` asks for the inequality at every member of the half-space algebra.
-This asks for it only where the lag-zero subtracted pairing is POSITIVE. At a member the form
-annihilates, `T_contract` and `form_nonneg` squeeze both sides to `0`, so the inequality holds at
-every `r`, including `r < 1` where it is otherwise the whole content. That is
-`TransferGap.gapAt_of_nondegenerate`'s argument REPEATED in these coordinates rather than called:
-translating between a carrier element and a mean-subtracted observable is what
-`gapAt_iff_subtracted_pairing` performs, and routing through it would not be shorter.
-
-**⛔ THE DISCARDED CASES WERE CARRYING NOTHING.** An observable with vanishing lag-zero subtracted
-pairing is one the GNS quotient cannot see; it is the same null space that separates `T ≠ 1` from
-`ClayAssembly.TransferMovesSomething`. Neither the gap nor the motion of the transfer operator is a
-statement about it.
-
-**⛔ AND NOTHING HERE MAKES THE GAP EASIER.** The content at a non-degenerate observable is untouched.
-The converse is immediate — drop the positivity argument — so this weakens a hypothesis rather than
-proving anything, and the degenerate cases were subsumed rather than prior: a proof of the
-unrestricted inequality would not have had to treat them separately.
+Scope. The content at a non-degenerate observable is unchanged, and the reverse implication is
+immediate, so this weakens a hypothesis rather than establishing a bound. The observables removed
+are those the form annihilates, the same null space that separates `D.T ≠ 1` from
+`ClayAssembly.TransferMovesSomething`. The argument is `TransferGap.gapAt_of_nondegenerate`'s,
+repeated in these coordinates rather than invoked, because the translation between a carrier element
+and a mean-subtracted observable is what `gapAt_iff_subtracted_pairing` performs.
 
 DERIVED: the `2`s are the plane-to-constant conversion, the two-step separation and the form's own
 degree, as in `gapAt_iff_subtracted_pairing`; the `0` is the sign asserted and the mean subtracted;

@@ -3,79 +3,70 @@ import MassGap.StrongArm
 import MassGap.PlaqVariance
 
 /-!
-# MassGap.ContactFloor — the aperture-uniform floor on the contact term
+# MassGap.ContactFloor — an aperture-uniform floor on the contact term
 
-`StrongArm.contact_relative_on_strong_arm` is conditional on exactly one statement,
-`StrongArm.ContactFloor b`: ONE positive number below `wilsonCorrAt N β 0` at EVERY aperture `N` and
-every coupling in `[0, b]`. This file proves it, so the strong-coupling arm closes unconditionally.
+`StrongArm.contact_relative_on_strong_arm` takes one hypothesis, `StrongArm.ContactFloor b`: a
+single positive number below `wilsonCorrAt N β 0` at every aperture `N` and every coupling in
+`[0, b]`. `contactFloor_holds` proves that statement at every real `b`, and
+`contact_relative_unconditional` restates the strong-arm conclusion with the hypothesis discharged.
 
 ## The quantity
 
 `wilsonCorrAt N β 0 = corrClay (N+1) β 0` is the connected correlation at zero lag, which is the
-VARIANCE of the plaquette-energy observable `φ_p` under the `SU(3)` Wilson Gibbs measure on the
-periodic four-dimensional lattice. So the target is `Var_β(φ_p) ≥ δ > 0`, uniform in the extent.
+variance of the plaquette-energy observable `φ_p` under the `SU(3)` Wilson Gibbs measure on the
+periodic four-dimensional lattice. The target is therefore `Var_β(φ_p) ≥ δ > 0`, uniform in the
+extent.
 
-## The route, and why it is aperture-free
+## The general step
 
-`wilsonCorrConn_self_ge_haar` is the general step and carries the whole idea:
+`wilsonCorrConn_self_ge_haar` states
 
     Var_β(φ_p) ≥ e^{−2β·|touchNbrs bd p|} · Var_0(φ_p)
 
-at every geometry, every `SU(Nc)` and every `β ≥ 0`. The exponent counts the plaquettes that TOUCH
-`p` and nothing else. It is proved by splitting the action along that set — `S = S_touch + S_rest` —
-where the split is legitimate because a plaquette that does not touch `p` reads none of `p`'s links
+at every geometry, every `SU(Nc)` with `Nc ≠ 0` and every `β ≥ 0`. The exponent counts the
+plaquettes that touch `p`. The proof splits the action along that set — `S = S_touch + S_rest` —
+which is legitimate because a plaquette that does not touch `p` reads none of `p`'s links
 (`ReflectionPositivity.action_on_congr_of_support`). Then
 
 * `e^{−βS_touch} ∈ [e^{−2β|touch|}, 1]` because each plaquette density lies in `[0, 2]`, so the
   numerator loses at most `e^{−2β|touch|}` and the partition function is at most `∫ e^{−βS_rest}`;
-* `(φ_p − c)²` and `e^{−βS_rest}` read DISJOINT link blocks, so they factor under product Haar
-  (`WilsonReal.block_integral_factor`), and the common factor `∫ e^{−βS_rest}` cancels;
-* `∫ (φ_p − c)² dHaar ≥ ∫ (φ_p − ⟨φ_p⟩_Haar)² dHaar` for every `c` (`haar_centred_le`), which is what
-  lets the Gibbs mean — which depends on both the coupling and the aperture — be discarded.
+* `(φ_p − c)²` and `e^{−βS_rest}` read disjoint link blocks, so they factor under product Haar
+  (`WilsonReal.block_integral_factor`) and the common factor `∫ e^{−βS_rest}` cancels;
+* `∫ (φ_p − c)² dHaar ≥ ∫ (φ_p − ⟨φ_p⟩_Haar)² dHaar` for every `c` (`haar_centred_le`), which lets
+  the Gibbs mean — a function of both the coupling and the aperture — be discarded.
 
-`StrongCoupling.touchDeg_bd_le` bounds `|touchNbrs|` by `16·dim`, with NO extent in it. That is the
-whole reason this is uniform in the aperture — the trap being `WilsonReal.wilsonSystem_partition_pos`
-and `WilsonRead.expect_ge_haar_of_nonneg`, whose exponents are proportional to the PLAQUETTE COUNT
-and therefore degrade as the lattice grows.
+`StrongCoupling.touchDeg_bd_le` bounds `|touchNbrs|` by `16·dim`, a quantity with no extent in it,
+and that is what makes the factor aperture-free. `WilsonReal.wilsonSystem_partition_pos` and
+`WilsonRead.expect_ge_haar_of_nonneg` carry exponents proportional to the plaquette count instead.
 
-## What remained after that, and how it closes
+## The Haar variance
 
-The bound reduces an `(N, β)`-uniform floor to an `N`-uniform floor on the pure Haar variance
-`corrClay n 0 0` — no coupling left in it. That is closed by a pushforward:
+The step reduces an `(N, β)`-uniform floor to an `N`-uniform floor on the pure Haar variance
+`corrClay n 0 0`, which has no coupling in it. That is closed by a pushforward:
 
-* at extent `n ≥ 2` the four links of the plaquette are distinct, so translating the LAST link on the
-  left carries the holonomy to `hol · g` (`hol_linkTranslate_clay`); averaging over `g` and swapping
-  the order of integration (Fubini on two probability measures) shows the holonomy pushes product
-  Haar forward to Haar on `SU(3)` — `integral_hol_clay`. Hence `corrClay n 0 0` is the SAME NUMBER at
-  every `n ≥ 2`, namely `∫ φ² dHaar − (∫ φ dHaar)²`;
-* at extent `n = 1` the four links are NOT distinct (`shift μ x = x`), the holonomy is a commutator
-  and the pushforward argument has no starting point. But `n = 1` is ONE lattice, so its Haar
-  variance is one number, and `PlaqVariance.corrClay_zero_pos` says it is positive.
+* at extent `n ≥ 2` the four links of the plaquette are distinct, so translating the last link on
+  the left carries the holonomy to `hol · g` (`hol_linkTranslate_clay`); averaging over `g` and
+  swapping the order of integration (Fubini on two probability measures) shows the holonomy pushes
+  product Haar forward to Haar on `SU(3)` — `integral_hol_clay`. So `corrClay n 0 0` is the same
+  number at every `n ≥ 2`, namely `∫ φ² dHaar − (∫ φ dHaar)²`;
+* at extent `n = 1` the four links are not distinct (`shift μ x = x`), the holonomy is a commutator
+  and the pushforward has no starting point. `n = 1` is one lattice, so its Haar variance is one
+  number, and `PlaqVariance.corrClay_zero_pos` gives its positivity.
 
-So the floor is `min` of two numbers, neither carrying an extent, times `e^{−128b}`.
+`exists_haar_floor` is the `min` of the two, and neither carries an extent.
 
-## Where each constant comes from — none is chosen
+## Scope of the constants
 
-* `16·dim` is `StrongCoupling.touchDeg_bd_le`, derived from `bd`'s own boundary word. At `dim = 4`
-  that is `64`, and the exponent is `2·β·64`, so `e^{−128β}` on `[0, b]` is at least `e^{−128b}`. The
-  `2` is `WilsonAction.wilsonDensity_le_two`, itself `|Re tr U| ≤ N`.
-* `haarSecond − haarMean²` and `corrClay 1 0 0` are Haar integrals. Their POSITIVITY is
-  non-constructive (`PlaqVariance.corrClay_zero_pos`, which runs `Continuous.ae_eq_iff_eq` against an
-  `IsOpenPosMeasure` and yields no rate). That is harmless and it is the point: each is a single
-  universal number with no aperture and no coupling in it. What has to be uniform is the exponential
-  factor, and `touchDeg_bd_le` makes it so.
-
-## What this does NOT do
-
-It does not discharge `ShareEnvelope.substrate_of_contact_relative_decay`, whose hypothesis
-quantifies over EVERY coupling. `StrongArm`'s cut `b` is still a cut: `contact_relative_unconditional`
-says nothing on `[b, ∞)`. What changes is that the arm below the cut now carries no hypothesis.
-
-`ShareEnvelope.mass_floor_is_not_scale_free` remains the right caveat about the SHAPE of the
-composite; nothing here weakens it. And the floor DEGRADES as `b` grows — `e^{−128b}` — which is the
-same behaviour as the caveat recorded in `GibbsPositive`, that the plaquette variance is expected to
-vanish as the links go to the identity. This proves the floor exists on each bounded coupling
-interval, not that one number serves the whole half-line.
+* `16·dim` is `StrongCoupling.touchDeg_bd_le`, read off `bd`'s own boundary word. At `dim = 4` that
+  is `64`, so the exponent is `2·β·64` and the factor on `[0, b]` is at least `e^{−128b}`. The `2`
+  is `WilsonAction.wilsonDensity_le_two`, itself `|Re tr U| ≤ N`.
+* `haarSecond − haarMean²` and `corrClay 1 0 0` are Haar integrals. Their positivity is
+  non-constructive (`PlaqVariance.corrClay_zero_pos` runs `Continuous.ae_eq_iff_eq` against an
+  `IsOpenPosMeasure` and yields no rate), so no numerical value for either appears anywhere in this
+  file. Each is a single universal number with no aperture and no coupling in it.
+* The floor shrinks as `b` grows, by the factor `e^{−128b}`. `contactFloor_holds` and
+  `contact_relative_unconditional` are statements about a bounded coupling interval `[0, b]`; they
+  quantify over no coupling above `b`.
 
 Foundational footprint only (`#print axioms` after every declaration).
 Build: `python code/lean_build.py build MassGap.ContactFloor`.
@@ -87,7 +78,8 @@ open MeasureTheory
 open MassGap MassGap.CompactGauge MassGap.LatticeGauge MassGap.WilsonLattice
 open MassGap.WilsonAction MassGap.WilsonReal MassGap.WilsonBridge
 
-/-! ### Toolchain probes — names this file depends on, checked rather than trusted -/
+/-! ### Toolchain probes — the names this file depends on, elaborated here so a missing or
+renamed declaration fails at this point rather than inside a proof -/
 
 section Probes
 
@@ -114,7 +106,7 @@ example (m : ℕ) : (1 : Fin (m + 2)) ≠ 0 := by simp
 
 example (m : ℕ) : (((0 : Fin (m + 2)) + 1) : Fin (m + 2)).val = 1 := by simp
 
-/-- the boundary word of the Clay plaquette, spelled out -/
+/-- The boundary word of the Clay plaquette, spelled out and checked by `simp`. -/
 example (m : ℕ) (U : MassGap.WilsonHypercubic.Link 4 (m + 2) → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2))
         (MassGap.PlaqVariance.clayPlaq (m + 2)) U
@@ -128,8 +120,8 @@ end Probes
 
 /-! ### A bounded measurable function is integrable against a probability measure -/
 
-/-- Bounded plus measurable gives integrable when the measure is a probability measure. Used
-everywhere below; the Wilson observables are all bounded by explicit constants. -/
+/-- A measurable real function bounded in absolute value by `M` is integrable against a
+probability measure. The Wilson observables used below are all bounded by explicit constants. -/
 theorem integrable_of_bounded {α : Type*} [MeasurableSpace α] {μ : Measure α}
     [IsProbabilityMeasure μ] {f : α → ℝ} (hm : Measurable f) (M : ℝ) (hb : ∀ x, |f x| ≤ M) :
     Integrable f μ :=
@@ -138,7 +130,10 @@ theorem integrable_of_bounded {α : Type*} [MeasurableSpace α] {μ : Measure α
 
 #print axioms integrable_of_bounded
 
-/-- A probability measure's total real mass is `1`. -/
+/-- The total real mass of a probability measure.
+
+DERIVED: `1` is the mass `measure_univ` assigns to the whole space under `IsProbabilityMeasure`; it
+is the definition of the class, not a normalisation chosen here. -/
 theorem measureReal_univ_one {α : Type*} [MeasurableSpace α] (μ : Measure α)
     [IsProbabilityMeasure μ] : μ.real Set.univ = 1 := by
   change (μ Set.univ).toReal = 1
@@ -153,7 +148,8 @@ theorem integral_const_prob {α : Type*} [MeasurableSpace α] (μ : Measure α)
 
 #print axioms integral_const_prob
 
-/-- The triangle inequality in the shape the centred-square bounds need. -/
+/-- `|a - b| ≤ |a| + |b|` on `ℝ`, the form in which the centred-square bounds below use the
+triangle inequality. -/
 theorem abs_sub_le_add (a b : ℝ) : |a - b| ≤ |a| + |b| := by
   rcases abs_cases a with ⟨ha, _⟩ | ⟨ha, _⟩ <;> rcases abs_cases b with ⟨hb, _⟩ | ⟨hb, _⟩ <;>
     rcases abs_cases (a - b) with ⟨hc, _⟩ | ⟨hc, _⟩ <;> rw [ha, hb, hc] <;> linarith
@@ -166,11 +162,15 @@ variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq] [DecidableEq Lk] [D
 
 /-! ### The connected self-correlation in centred form
 
-`PlaqVariance.wilsonCorrConn_self_pos` establishes this identity inside its own proof and does not
-export it. It is the shape every bound below needs, so it is a theorem here. -/
+`PlaqVariance.wilsonCorrConn_self_pos` uses this identity inside its own proof without exporting it.
+It is stated as a theorem here because every bound below is applied to it. -/
 
-/-- **`ρ_p(β) = (∫ (φ_p − ⟨φ_p⟩)² e^{−βS}) / Z`** — the connected self-correlation IS the centred
-second moment, at every coupling and every geometry. -/
+/-- The connected self-correlation equals the centred second moment,
+`ρ_p(β) = (∫ (φ_p − ⟨φ_p⟩_β)² e^{−βS}) / Z`, at every coupling `β` and every geometry `bd`.
+
+DERIVED: `0` is in `hN : Nc ≠ 0`, the rank being nonzero, which is what
+`WilsonReal.wilsonSystem_partition_pos` needs to give `Z > 0` before the division is legitimate.
+`2` is the exponent of the centred second moment the identity is about. -/
 theorem wilsonCorrConn_self_eq_centred (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq)
     (β : ℝ) :
     wilsonCorrConn (Nc := Nc) bd p β p
@@ -271,8 +271,11 @@ theorem wilsonCorrConn_self_eq_centred (hN : Nc ≠ 0) (bd : Pq → List (Lk × 
 
 /-! ### The Haar variance, and that it is the smallest centred second moment -/
 
-/-- At zero coupling the connected self-correlation is the bare Haar variance: the Boltzmann weight
-is the constant `1` and the partition function is `1`. -/
+/-- At coupling `0` the connected self-correlation is the bare Haar variance of `φ_p`: the
+Boltzmann weight is constant and the partition function is `1`.
+
+DERIVED: `0` is both the coupling the identity is stated at and the `Nc ≠ 0` of `hN`; `2` is the
+exponent of the centred square. -/
 theorem wilsonCorrConn_self_at_zero (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq) :
     wilsonCorrConn (Nc := Nc) bd p 0 p
       = ∫ W, (wilsonPlaqObs (N := Nc) bd p W
@@ -301,9 +304,14 @@ theorem wilsonCorrConn_self_at_zero (hN : Nc ≠ 0) (bd : Pq → List (Lk × Boo
 
 #print axioms wilsonCorrConn_self_at_zero
 
-/-- **The Haar variance is the SMALLEST centred second moment.** Shifting away from the Haar mean
-costs exactly `(mean − c)²`. This is what lets the Gibbs mean `⟨φ⟩_β` — which depends on the coupling
-AND on the aperture — be replaced by a bound that depends on neither. -/
+/-- The Haar variance is the smallest centred second moment: for every real `c`, the zero-coupling
+connected self-correlation is at most `∫ (φ_p − c)² dHaar`. The conclusion is an inequality; the
+proof establishes the exact gap `(mean − c)²` and then discards it. This is how the Gibbs mean
+`⟨φ⟩_β` — a function of both the coupling and the aperture — is replaced by a bound depending on
+neither.
+
+DERIVED: `0` is the coupling on the left-hand side and the `Nc ≠ 0` of `hN`; `2` is the exponent of
+the centred square. `c` is universally quantified and carries no numeral. -/
 theorem haar_centred_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq) (c : ℝ) :
     wilsonCorrConn (Nc := Nc) bd p 0 p
       ≤ ∫ W, (wilsonPlaqObs (N := Nc) bd p W - c) ^ 2
@@ -360,8 +368,11 @@ theorem haar_centred_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq)
 
 #print axioms haar_centred_le
 
-/-- At zero coupling the connected self-correlation is the plain difference of Haar moments. Stated
-separately from `wilsonCorrConn_self_at_zero` because it is the form the `SU(3)` pushforward feeds. -/
+/-- At coupling `0` the connected self-correlation is the difference of the Haar moments,
+`∫ φ_p² − (∫ φ_p)²`. Stated separately from `wilsonCorrConn_self_at_zero` because this is the form
+the `SU(3)` pushforward feeds, and unlike its siblings it carries no `Nc ≠ 0` hypothesis.
+
+DERIVED: `0` is the coupling the identity is stated at; `2` is the exponent on the mean. -/
 theorem wilsonCorrConn_self_at_zero_moments (bd : Pq → List (Lk × Bool)) (p : Pq) :
     wilsonCorrConn (Nc := Nc) bd p 0 p
       = (∫ U, wilsonPlaqObs (N := Nc) bd p U * wilsonPlaqObs (N := Nc) bd p U
@@ -377,24 +388,25 @@ theorem wilsonCorrConn_self_at_zero_moments (bd : Pq → List (Lk × Bool)) (p :
 
 /-! ### Splitting the action at a plaquette
 
-`touchNbrs bd p` is the set of plaquettes sharing a link with `p`; its complement reads none of `p`'s
-links, so the complement's contribution to the action is a function of the OTHER links alone. -/
+`StrongCoupling.touchNbrs bd p` is the set of plaquettes sharing a link with `p`. Its complement
+reads none of `p`'s links, so the complement's contribution to the action is a function of the other
+links alone. -/
 
-/-- The Boltzmann weight of the plaquettes NOT touching `p`. -/
+/-- The Boltzmann weight of the plaquettes outside `StrongCoupling.touchNbrs bd p`: `exp` of
+`-β` times the action density summed over that complement. -/
 noncomputable def restWeight (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ)
     (U : Lk → MassGap.SUN.SU Nc) : ℝ :=
   Real.exp (-β * ∑ q ∈ (MassGap.StrongCoupling.touchNbrs bd p)ᶜ,
     wilsonDensity (N := Nc) (wilsonHol bd q U))
 
-/-- The Boltzmann weight of the plaquettes that DO touch `p` — at most `2` per plaquette, and there
-are at most `touchDeg bd` of them, which is where the aperture-freedom comes from.
+/-- The Boltzmann weight of the plaquettes that touch `p`: `exp` of `-β` times the action density
+summed over `StrongCoupling.touchNbrs bd p`.
 
-DERIVED: the definition itself carries no numeral; the `2` is in the prose and is
-`WilsonAction.wilsonDensity_le_two`'s cap on a single plaquette's action density. That cap is the
-group's: `φ_W g = 1 − Re tr g / N` and `|Re tr g| ≤ N`, so `φ_W` lands in `[0, 2]` at every rank and
-`2` is not a chosen ceiling. How MANY plaquettes are summed is `StrongCoupling.touchNbrs bd p`,
-bounded by `touchDeg bd` — a property of the incidence map, with no extent in it, which is why the
-resulting bound is aperture-free. -/
+DERIVED: the declaration carries no numeral. The `2` per plaquette quoted below is
+`WilsonAction.wilsonDensity_le_two`'s cap on a single plaquette's action density, which is the
+group's own: `φ_W g = 1 − Re tr g / N` with `|Re tr g| ≤ N`, so `φ_W` lands in `[0, 2]` at every
+rank. The number of plaquettes summed is `(StrongCoupling.touchNbrs bd p).card`, bounded by
+`touchDeg bd`, a property of the incidence map with no extent in it. -/
 noncomputable def touchWeight (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ)
     (U : Lk → MassGap.SUN.SU Nc) : ℝ :=
   Real.exp (-β * ∑ q ∈ MassGap.StrongCoupling.touchNbrs bd p,
@@ -403,7 +415,9 @@ noncomputable def touchWeight (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ
 #print axioms restWeight
 #print axioms touchWeight
 
-/-- **The weight splits at `p`'s touch-neighbourhood.** -/
+/-- The Boltzmann weight factorises at `p`'s touch-neighbourhood: `boltz β U` is
+`touchWeight bd p β U * restWeight bd p β U`, by splitting the action sum over
+`StrongCoupling.touchNbrs bd p` and its complement. -/
 theorem boltz_eq_touch_mul_rest (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ)
     (U : Lk → MassGap.SUN.SU Nc) :
     (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
@@ -423,7 +437,9 @@ theorem boltz_eq_touch_mul_rest (bd : Pq → List (Lk × Bool)) (p : Pq) (β : �
 
 #print axioms boltz_eq_touch_mul_rest
 
-/-- **A plaquette not touching `p` names no link of `p`.** The combinatorial content of the split. -/
+/-- A plaquette outside `StrongCoupling.touchNbrs bd p` names no link of
+`StrongCoupling.linkSupp bd p`. This is the combinatorial content that makes the split of
+`boltz_eq_touch_mul_rest` a split into disjoint link blocks. -/
 theorem rest_support (bd : Pq → List (Lk × Bool)) (p : Pq) :
     ∀ q ∈ (MassGap.StrongCoupling.touchNbrs bd p)ᶜ, ∀ l ∈ (bd q).map Prod.fst,
       l ∈ (MassGap.StrongCoupling.linkSupp bd p)ᶜ := by
@@ -436,14 +452,14 @@ theorem rest_support (bd : Pq → List (Lk × Bool)) (p : Pq) :
 
 #print axioms rest_support
 
-/-- Extend a block tuple to a full configuration, junk `1` outside the block.
+/-- Extend a tuple indexed by a block `S : Finset Lk` to a total configuration on `Lk`, filling
+the links outside `S` with the group identity.
 
-DERIVED: `1` is the GROUP IDENTITY of `SU Nc`, not a numeric value — a total function on links is
-needed before `WilsonReal.block_integral_factor` can be applied, so the links outside `S` must carry
-something, and the identity is the only element available without picking one. Nothing downstream can
-see it: `blockExt` is only ever composed with `wilsonHol bd p`, and `blockExt_restrict` together with
-`ReflectionPositivity.hol_congr_on_support` shows that composite depends on the links of `S` alone.
-Any other fixed element would give the same theorems. -/
+DERIVED: the declaration carries no numeral. The `1` in the body is the group identity of
+`SUN.SU Nc`, not a numeric value: `WilsonReal.block_integral_factor` needs a total function on
+links, so the links outside `S` must carry something. `blockExt_restrict` together with
+`ReflectionPositivity.hol_congr_on_support` shows the composite `wilsonHol bd p ∘ blockExt S`
+depends on the links of `S` alone, so any other fixed element gives the same theorems. -/
 noncomputable def blockExt (S : Finset Lk) (v : S → MassGap.SUN.SU Nc) :
     Lk → MassGap.SUN.SU Nc :=
   fun l => if h : l ∈ S then v ⟨l, h⟩ else 1
@@ -467,11 +483,17 @@ theorem blockExt_restrict (S : Finset Lk) (U : Lk → MassGap.SUN.SU Nc) {l : Lk
 
 /-! ### The factorisation
 
-`(φ_p − c)²` reads only `linkSupp bd p`; `restWeight` reads only its complement. Disjoint blocks, so
-`WilsonReal.block_integral_factor` applies and the `restWeight` integral comes out as a common factor
-that later cancels against the partition function. -/
+`(φ_p − c)²` reads only `StrongCoupling.linkSupp bd p` and `restWeight` only its complement. The
+blocks are disjoint, so `WilsonReal.block_integral_factor` applies and the `restWeight` integral
+comes out as a common factor that cancels against the partition function in
+`wilsonCorrConn_self_ge_haar`. -/
 
-/-- **The centred square and the rest-weight factor under product Haar.** -/
+/-- The centred square and the rest-weight factor under product Haar: the integral of
+`(φ_p − c)² * restWeight bd p β` is the product of the two integrals. `(φ_p − c)²` reads only
+`StrongCoupling.linkSupp bd p` and `restWeight` only its complement, so
+`WilsonReal.block_integral_factor` applies.
+
+DERIVED: `2` is the exponent of the centred square. `c` and `β` are universally quantified. -/
 theorem block_factor (bd : Pq → List (Lk × Bool)) (p : Pq) (β c : ℝ) :
     (∫ U, (wilsonPlaqObs (N := Nc) bd p U - c) ^ 2 * restWeight (Nc := Nc) bd p β U
         ∂((wilsonSystem bd (wilsonDensity (N := Nc))).vol (probHaar (MassGap.SUN.SU Nc))))
@@ -557,13 +579,16 @@ theorem block_factor (bd : Pq → List (Lk × Bool)) (p : Pq) (β c : ℝ) :
 
 /-! ### The estimate -/
 
-/-- **THE GIBBS VARIANCE IS AT LEAST `e^{−2β·|touch(p)|}` TIMES THE HAAR VARIANCE.**
+/-- The Gibbs connected self-correlation at coupling `β` is at least
+`exp (-(2 * β * (touchNbrs bd p).card))` times the one at coupling `0`, at every geometry, every
+`SU(Nc)` with `Nc ≠ 0` and every `β ≥ 0`. The exponent counts the plaquettes sharing a link with
+`p`, not the plaquettes of the lattice; `StrongCoupling.touchDeg_bd_le` bounds that card by `16·dim`
+with no extent in it, whereas `WilsonReal.wilsonSystem_partition_pos` and
+`WilsonRead.expect_ge_haar_of_nonneg` carry exponents proportional to the plaquette count.
 
-At every geometry, every `SU(Nc)` with `Nc ≠ 0` and every `β ≥ 0`. The exponent counts the
-plaquettes sharing a link with `p` — NOT the plaquettes of the lattice — which is the whole point:
-`StrongCoupling.touchDeg_bd_le` bounds it by `16·dim` with no extent in it, whereas
-`WilsonReal.wilsonSystem_partition_pos` and `WilsonRead.expect_ge_haar_of_nonneg` carry exponents
-proportional to the plaquette count and degrade as the lattice grows. -/
+DERIVED: `0` is the `Nc ≠ 0` of `hN`, the `0 ≤ β` of `hβ`, and the coupling on the left-hand side.
+`2` is the factor in the exponent, one per unit of `WilsonAction.wilsonDensity_le_two`'s cap `[0, 2]`
+on a plaquette density. -/
 theorem wilsonCorrConn_self_ge_haar (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq)
     {β : ℝ} (hβ : 0 ≤ β) :
     Real.exp (-(2 * β * ((MassGap.StrongCoupling.touchNbrs bd p).card : ℝ)))
@@ -698,8 +723,9 @@ end General
 
 /-! ### The single-link translation, on an arbitrary link set
 
-`WilsonRead`'s `linkTranslate` is typed on `Fin 8` for the two-plaquette system; the same three
-lemmas at an arbitrary finite link type are what the hypercubic argument needs. -/
+`WilsonRead`'s `linkTranslate` is typed on `Fin 8` for the two-plaquette system. The same three
+lemmas are restated here at an arbitrary finite link type, which is what the hypercubic argument
+below consumes. -/
 
 section Translate
 
@@ -731,8 +757,8 @@ theorem linkTranslate_coord_mp (g : MassGap.SUN.SU Nc) (i₀ l : Lk) :
   · simp only [if_neg h]
     exact MeasurePreserving.id (probHaar (MassGap.SUN.SU Nc))
 
-/-- **Translating one link preserves the product Haar measure** — left-invariance in that factor,
-the identity in the others, assembled coordinatewise by `Measure.pi_map_pi`. -/
+/-- `linkTranslate g i₀` preserves the product Haar measure on `Lk → SU Nc`: left-invariance in
+the `i₀` factor and the identity in the others, assembled coordinatewise by `Measure.pi_map_pi`. -/
 theorem linkTranslate_measurePreserving (g : MassGap.SUN.SU Nc) (i₀ : Lk) :
     MeasurePreserving (linkTranslate (Nc := Nc) g i₀)
       (Measure.pi fun _ : Lk => probHaar (MassGap.SUN.SU Nc))
@@ -755,8 +781,9 @@ theorem linkTranslate_measurePreserving (g : MassGap.SUN.SU Nc) (i₀ : Lk) :
 #print axioms linkTranslate_coord_mp
 #print axioms linkTranslate_measurePreserving
 
-/-- The single-link translation as a measurable equivalence — `MeasurePreserving.integral_comp'`
-transports an integral only along an `≃ᵐ`. -/
+/-- The single-link translation packaged as a measurable equivalence, with `linkTranslate g⁻¹ i₀`
+as its inverse. `MeasurePreserving.integral_comp'` transports an integral only along an `≃ᵐ`, which
+is why this form is needed. -/
 noncomputable def linkTranslateEquiv (g : MassGap.SUN.SU Nc) (i₀ : Lk) :
     (Lk → MassGap.SUN.SU Nc) ≃ᵐ (Lk → MassGap.SUN.SU Nc) where
   toFun := linkTranslate (Nc := Nc) g i₀
@@ -777,7 +804,8 @@ theorem linkTranslateEquiv_measurePreserving (g : MassGap.SUN.SU Nc) (i₀ : Lk)
 #print axioms linkTranslateEquiv
 #print axioms linkTranslateEquiv_measurePreserving
 
-/-- **Translating one link leaves every product-Haar integral unchanged.** -/
+/-- Translating one link leaves every product-Haar integral unchanged: `∫ F (linkTranslate g i₀ U)`
+equals `∫ F U`, for an arbitrary `F : (Lk → SU Nc) → ℝ`. -/
 theorem integral_comp_linkTranslate (g : MassGap.SUN.SU Nc) (i₀ : Lk)
     (F : (Lk → MassGap.SUN.SU Nc) → ℝ) :
     (∫ U, F (linkTranslate (Nc := Nc) g i₀ U)
@@ -795,8 +823,12 @@ section Clay
 
 open MassGap.PlaqVariance
 
-/-- At extent `n ≥ 2` a single periodic step moves the origin. This is the ONLY place the extent
-enters the pushforward, and it is exactly what fails at `n = 1`. -/
+/-- At extent `m + 2` a single periodic step in any direction moves the origin. This is where the
+extent enters the pushforward below, and the corresponding statement is false at extent `1`.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index `μ`. `2` is in the extent
+`m + 2`, which is how "at least two" is written so that the successor structure is available; `0`
+is the origin site, `fun _ => 0`. -/
 theorem shift_ne (m : ℕ) (μ : Fin 4) :
     MassGap.WilsonHypercubic.shift (d := 4) (n := m + 2) μ (fun _ => 0) ≠ (fun _ => 0) := by
   intro h
@@ -808,7 +840,12 @@ theorem shift_ne (m : ℕ) (μ : Fin 4) :
 
 #print axioms shift_ne
 
-/-- The Clay plaquette's holonomy, with the boundary word spelled out. -/
+/-- The ordered holonomy of `PlaqVariance.clayPlaq` at extent `m + 2`, with the boundary word
+spelled out as `V(0,x) · V(1, x+0̂) · V(0, x+1̂)⁻¹ · V(1,x)⁻¹` at the origin.
+
+DERIVED: `4` is the spacetime dimension, `3` the rank of `SUN.SU 3` carried from
+`WilsonBridge.corrClay`, `0` and `1` the two direction indices spanning the plaquette's plane and
+the origin site, and `2` the extent `m + 2` at which the statement is made. -/
 theorem hol_clay_eq (m : ℕ) (V : MassGap.WilsonHypercubic.Link 4 (m + 2) → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2)) (clayPlaq (m + 2)) V
       = V ((0 : Fin 4), (fun _ => 0))
@@ -819,9 +856,13 @@ theorem hol_clay_eq (m : ℕ) (V : MassGap.WilsonHypercubic.Link 4 (m + 2) → M
 
 #print axioms hol_clay_eq
 
-/-- **The last link is left-translated, the holonomy is right-multiplied.** The last entry of the
-boundary word carries orientation `false`, so `(g⁻¹·U)⁻¹ = U⁻¹·g`; the other three entries are
-different links, which is where extent at least two is used. -/
+/-- Left-translating the link `(1, origin)` by `g⁻¹` right-multiplies the Clay plaquette's
+holonomy by `g`. The last entry of the boundary word carries orientation `false`, so
+`(g⁻¹·U)⁻¹ = U⁻¹·g`; the other three entries are different links, which is where extent `m + 2`
+rather than `1` is used, through `shift_ne`.
+
+DERIVED: `4` is the spacetime dimension, `3` the rank carried from `WilsonBridge.corrClay`, `0` and
+`1` the direction indices of the plaquette's plane and the origin site, and `2` the extent. -/
 theorem hol_linkTranslate_clay (m : ℕ) (g : MassGap.SUN.SU 3)
     (U : MassGap.WilsonHypercubic.Link 4 (m + 2) → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2)) (clayPlaq (m + 2))
@@ -851,10 +892,15 @@ theorem hol_linkTranslate_clay (m : ℕ) (g : MassGap.SUN.SU 3)
 
 #print axioms hol_linkTranslate_clay
 
-/-- **The plaquette holonomy pushes product Haar forward to Haar**, at extent at least two. The
-translation makes the integral independent of a right shift; averaging over the shift and swapping
-the order of integration (both measures are probability measures, the integrand bounded and
-measurable) turns the inner integral into a plain left translation of Haar. -/
+/-- At extent `m + 2` the Clay plaquette's holonomy pushes product Haar forward to Haar on
+`SU(3)`: for `f` measurable and bounded by `M`, the product-Haar integral of `f ∘ hol` equals the
+Haar integral of `f`. `hol_linkTranslate_clay` makes the integral independent of a right shift;
+averaging over the shift and swapping the order of integration (both measures are probability
+measures, the integrand bounded and measurable) turns the inner integral into a left translation of
+Haar.
+
+DERIVED: `4` is the spacetime dimension, `3` the rank of `SUN.SU 3`, and `2` the extent `m + 2`. The
+bound `M` is a variable; no numerical bound is fixed here. -/
 theorem integral_hol_clay (m : ℕ) (f : MassGap.SUN.SU 3 → ℝ) (hf : Measurable f)
     (M : ℝ) (hb : ∀ g, |f g| ≤ M) :
     (∫ U, f (wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2)) (clayPlaq (m + 2)) U)
@@ -908,30 +954,33 @@ theorem integral_hol_clay (m : ℕ) (f : MassGap.SUN.SU 3 → ℝ) (hf : Measura
 
 /-! ### The Haar variance of the Clay plaquette is one number -/
 
-/-- The `SU(3)` Haar mean of the Wilson plaquette density.
+/-- The `SU(3)` Haar mean of the Wilson plaquette density `wilsonDensity (N := 3)`.
 
-DERIVED: `3` is the RANK OF THE GAUGE GROUP, carried from `WilsonBridge.corrClay` — the Clay problem
-is stated for `SU(3)` and this file's contact value is `corrClay`'s at zero coupling, so the rank
-arrives with the object rather than being selected for it. The VALUE of the integral is not named
-anywhere: `corrClay_zero_at_zero_eq` gives the contact value as `haarSecond − haarMean ^ 2` and
-`HaarVariance` shows only that it is strictly positive, never how large. -/
+DERIVED: the declaration carries no numeral in its type, `ℝ`. The `3` in the body is the rank of the
+gauge group, carried from `WilsonBridge.corrClay`, whose zero-coupling contact value this file
+computes. No numerical value for this integral is stated anywhere in the file:
+`corrClay_zero_at_zero_eq` gives the contact value as `haarSecond − haarMean ^ 2`, and the only
+further fact used is strict positivity. -/
 noncomputable def haarMean : ℝ :=
   ∫ g, wilsonDensity (N := 3) g ∂(probHaar (MassGap.SUN.SU 3))
 
 /-- The `SU(3)` Haar second moment of the Wilson plaquette density.
 
-DERIVED: `3` is the rank of the gauge group, `WilsonBridge.corrClay`'s own, exactly as in `haarMean`;
-the exponent is the definition of a SECOND moment, which is what the variance
-`haarSecond − haarMean ^ 2` subtracts the squared mean from. Neither is a magnitude, and no value of
-this integral is named. -/
+DERIVED: the declaration carries no numeral in its type, `ℝ`. The `3` in the body is the rank of the
+gauge group, `WilsonBridge.corrClay`'s own, exactly as in `haarMean`; the product of the density
+with itself is what makes this a second moment, the quantity `haarSecond − haarMean ^ 2` subtracts
+the squared mean from. No numerical value for this integral is stated. -/
 noncomputable def haarSecond : ℝ :=
   ∫ g, wilsonDensity (N := 3) g * wilsonDensity (N := 3) g ∂(probHaar (MassGap.SUN.SU 3))
 
 #print axioms haarMean
 #print axioms haarSecond
 
-/-- **The zero-coupling contact value at extent at least two is `∫φ² − (∫φ)²` on `SU(3)`** — a single
-number, with NO extent in it. -/
+/-- At extent `m + 2` and coupling `0`, the lag-zero Clay correlation equals
+`haarSecond - haarMean ^ 2`, a single `SU(3)` Haar quantity with no extent in it.
+
+DERIVED: `0` is the coupling and the lag at which `corrClay` is read; `2` is the extent `m + 2`,
+which is the range `integral_hol_clay` covers, and the exponent on `haarMean`. -/
 theorem corrClay_zero_at_zero_eq (m : ℕ) :
     corrClay (m + 2) 0 0 = haarSecond - haarMean ^ 2 := by
   classical
@@ -971,17 +1020,24 @@ theorem corrClay_zero_at_zero_eq (m : ℕ) :
 
 #print axioms corrClay_zero_at_zero_eq
 
-/-- **The zero-coupling contact value is the SAME at every extent at least two.** -/
+/-- The lag-zero, coupling-`0` Clay correlation takes the same value at every extent `m + 2` as it
+does at extent `2`.
+
+DERIVED: `0` is the coupling and the lag; `2` is the extent `m + 2` on the left and the base extent
+`2` on the right. The statement says nothing about extent `1`; `exists_haar_floor` handles that
+case separately. -/
 theorem corrClay_zero_at_zero_const (m : ℕ) : corrClay (m + 2) 0 0 = corrClay 2 0 0 := by
   rw [corrClay_zero_at_zero_eq m, corrClay_zero_at_zero_eq 0]
 
 #print axioms corrClay_zero_at_zero_const
 
-/-- **THE APERTURE-UNIFORM HAAR FLOOR.** The `min` of two numbers — the `n = 1` lattice's variance
-and the common value at every `n ≥ 2` — is positive and below every `corrClay (N+1) 0 0`. Neither
-number carries an extent; their positivity is `PlaqVariance.corrClay_zero_pos`, which is
-non-constructive and does not need to be otherwise, because a single universal constant is all the
-final statement consumes. -/
+/-- There is a positive `δ₀` below `corrClay (N + 1) 0 0` at every `N`. The witness is the `min`
+of two numbers — the extent-`1` lattice's Haar variance and the common value at every extent at
+least `2` (`corrClay_zero_at_zero_const`) — neither of which carries an extent. Their positivity is
+`PlaqVariance.corrClay_zero_pos`, which is non-constructive, so `δ₀` is not given numerically.
+
+DERIVED: `0` is the strict lower bound in `0 < δ₀`, and the coupling and lag at which `corrClay` is
+read. `1` is the successor in the aperture-to-extent map `N ↦ N + 1`, `corrClay`'s own indexing. -/
 theorem exists_haar_floor :
     ∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ N : ℕ, δ₀ ≤ corrClay (N + 1) 0 0 := by
   have hone : 0 < corrClay 1 0 0 := MassGap.PlaqVariance.corrClay_zero_pos 0 0
@@ -1000,12 +1056,20 @@ end Clay
 
 /-! ### The floor
 
-`touchDeg_bd_le` supplies `16·dim = 64` at `dim = 4`, with no extent, so the exponential factor is at
-least `e^{−128β}` at every aperture; `exists_haar_floor` supplies the rest. -/
+`StrongCoupling.touchDeg_bd_le` supplies `16·dim = 64` at `dim = 4`, with no extent in it, so the
+exponential factor is at least `e^{−128β}` at every aperture; `exists_haar_floor` supplies the
+extent-free Haar value. -/
 
 open MassGap.PlaqVariance
 
-/-- **THE CONTACT VALUE AT ANY COUPLING, RELATIVE TO ITS OWN APERTURE'S HAAR VALUE.** The FACTOR `e^{−128β}` carries no extent; the bound itself still does, `corrClay (N + 1) 0 0` being indexed by `N`. `exists_haar_floor` is the declaration that removes the remaining `N`. -/
+/-- The contact value at coupling `β ≥ 0` is at least `e^{−128β}` times the contact value of the
+same aperture at coupling `0`. The factor carries no extent; the right-hand side still does, since
+`corrClay (N + 1) 0 0` is indexed by `N`. `exists_haar_floor` removes that remaining `N`.
+
+DERIVED: `128 = 2 · 16 · 4` — `StrongCoupling.touchDeg_bd_le` bounds the touch count by `16 * dim`,
+which is `64` at `dim = 4`, and `WilsonAction.wilsonDensity_le_two`'s cap `[0, 2]` contributes the
+factor `2` in `wilsonCorrConn_self_ge_haar`'s exponent. `0` is the `0 ≤ β` of `hβ`, the coupling and
+the lag on the right-hand side. `1` is the successor in `corrClay (N + 1)`. -/
 theorem corrClay_zero_ge (N : ℕ) {β : ℝ} (hβ : 0 ≤ β) :
     Real.exp (-(128 * β)) * corrClay (N + 1) 0 0 ≤ corrClay (N + 1) β 0 := by
   classical
@@ -1046,10 +1110,13 @@ theorem corrClay_zero_ge (N : ℕ) {β : ℝ} (hβ : 0 ≤ β) :
 
 #print axioms corrClay_zero_ge
 
-/-- **`StrongArm.ContactFloor b` IS PROVED**, at every real `b` — no sign condition is needed, since
-a negative `b` makes the inner quantifier empty. The floor is `e^{−128b}` times the
-aperture-free Haar floor; `128 = 2·16·4` is `StrongCoupling.touchDeg_bd_le` at `dim = 4` against
-`WilsonAction.wilsonDensity_le_two`, and nothing in it is chosen. -/
+/-- `StrongArm.ContactFloor b` holds at every real `b`. No sign condition on `b` is needed, since
+a negative `b` makes the inner quantifier over `β ∈ [0, b]` empty. The witness is `e^{−128b}` times
+`exists_haar_floor`'s extent-free constant, where `128 = 2 · 16 · 4` comes from
+`StrongCoupling.touchDeg_bd_le` at `dim = 4` against `WilsonAction.wilsonDensity_le_two`.
+
+DERIVED: the statement carries no numeral; `b : ℝ` is the only argument and `ContactFloor` is a
+named predicate. The constants quoted above sit in the proof and in `corrClay_zero_ge`. -/
 theorem contactFloor_holds (b : ℝ) : MassGap.StrongArm.ContactFloor b := by
   obtain ⟨δ₀, hδ₀, hfloor⟩ := exists_haar_floor
   refine ⟨Real.exp (-(128 * b)) * δ₀, by positivity, fun N β hβ0 hβb => ?_⟩
@@ -1066,13 +1133,17 @@ theorem contactFloor_holds (b : ℝ) : MassGap.StrongArm.ContactFloor b := by
 
 #print axioms contactFloor_holds
 
-/-- **THE STRONG ARM, UNCONDITIONAL.** `StrongArm.contact_relative_on_strong_arm` with its one
-hypothesis discharged: on a derived coupling interval `[0, b]` there is ONE constant `C` with
-`ρ_N(β,d) ≤ C·ρ_N(β,0)/circLag(d)⁴` at EVERY aperture, EVERY coupling in the interval and EVERY lag
-with `circLag d ≥ 1`. No hypothesis is carried.
+/-- `StrongArm.contact_relative_on_strong_arm` with its `ContactFloor` hypothesis discharged: there
+is a `b > 0` with `StrongCoupling.coreRate (16 * 4) b < 1` and a single `C ≥ 0` such that
+`wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d) ^ 4` at every aperture `N`, every
+coupling `β ∈ [0, b]` and every lag `d` with `circLag d ≥ 1`. The `b` is the one
+`contact_relative_on_strong_arm` produces; the statement quantifies over no coupling above it.
 
-What is still open is `[b, ∞)`, so this does NOT discharge
-`ShareEnvelope.substrate_of_contact_relative_decay`. -/
+DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le`'s bound `16 * dim` at `dim = 4`, inherited from
+`contact_relative_on_strong_arm` and not chosen here. `4` is also the exponent on `circLag d`, that
+theorem's own decay power. `0` is the strict bound in `0 < b`, the sign condition `0 ≤ C` and
+`0 ≤ β`, and the contact lag in `wilsonCorrAt N β 0`. `1` is the floor on `circLag d` and the bound
+`coreRate … b < 1`. -/
 theorem contact_relative_unconditional :
     ∃ b : ℝ, 0 < b ∧ MassGap.StrongCoupling.coreRate (16 * 4) b < 1 ∧
       ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), 0 ≤ β → β ≤ b →
@@ -1084,33 +1155,28 @@ theorem contact_relative_unconditional :
 
 #print axioms contact_relative_unconditional
 
-/-- **⭐⭐⭐ THE READ'S WEIGHT BOUND, WITH ITS CONSTANT APERTURE-UNIFORM.**
+/-- The Entroptics read's weight bound with its constant uniform in the aperture: one `δ > 0`
+such that for every aperture `N`, every read `R` whose `ρ` is `corrClay (N + 1) β`, and every
+coupling `β ∈ (0, b]` with `StrongCoupling.coreRate (16 * 4) β < 1`,
 
-`StrongCoupling.read_p_le_of_corrClay` bounds the Entroptics read's weights,
-`p d ≤ C · r^{circLag d}`, but its `C` carries `1/m` for a hypothesised lower bound `m ≤ ∑ρ`, and
-its own scope note says: *"Reflection positivity gives `0 < ∑ρ` at each `N` SEPARATELY; it does not
-give one `m` good for every `N`. Nothing here supplies that."*
+    R.p d ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * δ) + 1) * coreRate (16 * 4) β ^ circLag d
 
-**THIS SUPPLIES IT.** `ContactFloor b` is exactly one `δ > 0` below `wilsonCorrAt N β 0` at EVERY
-aperture and every coupling in `[0, b]`, and `contactFloor_holds` proves it unconditionally. The
-read's `ρ` is nonnegative, so `∑ρ ≥ ρ 0`, and `ρ 0` IS that contact term. So `δ` serves as `m` at
-every aperture at once, and the `∃ δ` below sits OUTSIDE the `∀ N`.
+at every lag `d`. The `∃ δ` binds outside the `∀ N`, so one `δ` serves every aperture.
 
-The two files never met only because `StrongCoupling` does not import `ContactFloor`; the chain runs
-`StrongCoupling → StrongArm → ContactFloor`, so this composition needs no new import.
+`StrongCoupling.read_p_le_of_corrClay` supplies the bound at a per-read lower bound on `∑ρ`; here
+that bound is `contactFloor_holds`, whose `δ` does not depend on `N`. The read's `ρ` is nonnegative,
+so `∑ρ ≥ ρ 0`, and `ρ 0` is the contact term `wilsonCorrAt N β 0`.
 
-**⛔ WHAT THIS STILL DOES NOT GIVE.** The SECOND obstruction that scope note names is untouched:
-`coreConst` and `coreRate` both depend on `β`, and the hypothesis `coreRate (16·4) β < 1` holds only
-on a neighbourhood of zero (`StrongCoupling.core_rate_lt_one_of_small_hypercubic`), with
-`coreRate → ∞` as `β` grows. `Complete.confinement_of_geometric_decay` quantifies over EVERY `β`
-with `C` and `r` fixed outside, so this is still a STRONG-COUPLING statement and is still not its
-hypothesis. What has moved is the aperture, not the coupling.
+Scope. `coreConst` and `coreRate` both depend on `β`, and the hypothesis `coreRate (16 * 4) β < 1`
+is an assumption of this statement rather than a consequence; it is available near zero coupling by
+`StrongCoupling.core_rate_lt_one_of_small_hypercubic`. The conclusion is quantified over
+`β ∈ (0, b]` only.
 
-DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le` at `dim = 4`, inherited from
-`read_p_le_of_corrClay` and not chosen here. The `+ 1` in the constant and the division by
-`coreRate` are that theorem's own, documented there. The `0` in `0 < δ` and `0 < β` are
-positivity, and the `0` in `ρ 0` / `wilsonCorrAt N β 0` is the contact lag, where the two plaquettes
-coincide. -/
+DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`, inherited from
+`read_p_le_of_corrClay`. The `+ 1` in the constant and the division by `coreRate` are that
+theorem's own. `0` is the strict bound in `0 < δ` and `0 < β`, and the contact lag in `R.ρ 0` and
+`wilsonCorrAt N β 0`, where the two plaquettes coincide. `1` is the successor in `corrClay (N + 1)`
+and in `Fin (N + 1)`, the `+ 1` of the constant, and the bound in `coreRate … β < 1`. -/
 theorem read_p_le_aperture_uniform (b : ℝ) :
     ∃ δ : ℝ, 0 < δ ∧ ∀ (N : ℕ) (R : Moment.Read N) (β : ℝ),
       (∀ d : Fin (N + 1), R.ρ d = MassGap.WilsonBridge.corrClay (N + 1) β d) →
@@ -1122,7 +1188,7 @@ theorem read_p_le_aperture_uniform (b : ℝ) :
   obtain ⟨δ, hδ, hfloor⟩ := contactFloor_holds b
   refine ⟨δ, hδ, fun N R β hρ hβ hb hr d => ?_⟩
   refine MassGap.StrongCoupling.read_p_le_of_corrClay R hρ hδ ?_ hβ hr d
-  -- the contact term is the read's lag-zero weight, and the sum dominates one term.
+  -- the contact term is the read's lag-zero weight, and the sum dominates that one term.
   have h0 : δ ≤ R.ρ 0 := by
     rw [hρ 0, ← MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β 0]
     exact hfloor N β hβ.le hb

@@ -3,71 +3,40 @@ import MassGap.EvenAperture
 import MassGap.Substrate
 
 /-!
-# MassGap.ReadLayer — the read layer's certified intervals, imported rather than cited
+# MassGap.ReadLayer — certified intervals and entropy bounds for `Moment.Read`
 
-`Certify.lean`'s header cites three theorems by name — `attenuation_weyl_certified`,
-`resolved_count_certified`, `separated_of_disjoint_intervals` — and says "those are read-layer facts,
-so they live with the read layer". They live in a companion Lean development that this tree has never
-imported, so the citation was prose. This file carries them across.
+Three interval theorems — `attenuation_weyl_certified`, `resolved_count_certified`,
+`separated_of_disjoint_intervals` — two monotonicity statements, two entropy bounds and two
+congruence-invariance statements, joined to `Moment.Read` and to `EvenAperture.μEven`.
 
-**THE PORT IS VERBATIM AND COSTS NOTHING.** Both developments pin `leanprover/lean4:v4.31.0` and
-mathlib `v4.31.0` at the same revision, so no statement or proof needed adapting. No cross-project
-dependency is introduced: the proofs are copied, not required.
+## Sections
 
-## What the read layer supplies, and what it does not
+1. The interval layer. `attenuation_interval_bounds` propagates two-sided brackets on `λ₁` and `r`
+   through `log λ₁ − log r`; `attenuation_weyl_certified` composes that with a two-sided error bar
+   `ε` on each read value; `resolved_count_certified` does the same for the count above an edge; and
+   `separated_of_disjoint_intervals` orders two means whose certified intervals do not overlap.
+   `noise_floor_monotone` and `resolved_dim_antitone` are the two monotonicity facts a count above a
+   floor is read with.
+2. The entropy layer, stated for an arbitrary probability vector on `Fin n`: `ratio_bounds`,
+   `entropy_nonneg_le_log` and `fill_fraction_entropy_bounds`. `spectral_read_congruence` and
+   `spectral_read_orthogonal` say that an arbitrary function of the characteristic polynomial is
+   unchanged under the corresponding congruence of matrices over a commutative ring.
+3. The join. `Moment.Read.tension` is `−log ⟨cos θ⟩_p` and `p` is `ρ` normalised, so
+   `tension_eq_log_sub` rewrites the tension as `log (Σ ρ) − log (Σ ρ cos θ)` under the guard
+   `0 < Σ ρ cos θ`. Writing `S(0) = Σ ρ` and `S(2π/(N+1)) = Σ ρ cos θ`, that is the attenuation
+   `attenuation_weyl_certified` brackets, and `tension_certified_interval` is the composition.
+4. The landing. `μEven a β` is `(readEven a β).tension` definitionally, so
+   `confines_at_an_aperture_of_certified` produces `∃ a : EvenAp, ∀ β, μEven a β < κ₀YM` from two
+   read functions of the coupling, one error bar `ε` bound outside the quantifier over couplings, and
+   a certified upper endpoint below `κ₀YM` at every coupling.
+5. The read's own entropy: `0 ≤ H(p) ≤ log (N+1)` and the fill fraction
+   `2^{H₂}/(N+1) ∈ [1/(N+1), 1]`, both from `Moment.Read.p`'s `p_nonneg` and `p_sum`.
+6. `Real.log` is even, so `Moment.Read.tension` is `−log |⟨cos θ⟩_p|` (`tension_eq_neg_log_abs`).
+   A read with `⟨cos θ⟩_p < −3^{−1/4}` therefore satisfies `tension < κ₀YM`
+   (`reads_confined_of_cosAvg_lt_neg`), and `Substrate.antipodeRead` is such a read: cosine average
+   `−1`, tension `0` and entropy `0`.
 
-It supplies **certified intervals**: given a read-side quantity and an error bar, it encloses the true
-quantity. It supplies **no absolute mode bound**. Every spectral statement below is about a RATIO
-(`log λ₁ − log r`) or a COUNT (`#{λ > edge}`) relative to a read. There is no theorem here — and none
-in the development this ports from — of the form `‖eigenvalue‖ ≤ ρ < 1`.
-
-That matters for `Aperture.lean`. `finite_flow_decays`, `gap_at_finite_F` and `gap_of_confinement`
-take `∀ k ∈ s, ‖μ k‖ ≤ exp(−κ)` as a HYPOTHESIS, and nothing here discharges it. The dichotomy those
-theorems name — a mode on the unit circle, or a strict margin — is not decided by this layer. What
-this layer does decide is the OTHER open input, `μ < κ₀`, and it decides it as an interval.
-
-## The join, and it is one identity
-
-`Moment.Read.tension` is DEFINED as `−log ⟨cos θ⟩_p`. Since `p = ρ/Σρ`, that is
-
-    tension = log (Σ ρ) − log (Σ ρ cos θ) = log S(0) − log S(2π/(N+1)),
-
-which is exactly the shape `attenuation_interval_bounds` propagates a Weyl band through, with
-`λ₁ := S(0)` and `r := S(2π/(N+1))`. The identity is asserted in `Moment.Read.tension`'s docstring
-("`= log(S(0)/S(2π/N))`") and was not proved anywhere; `tension_eq_log_sub` proves it, and
-`tension_certified_interval` is the composition. `confines_at_an_aperture_of_certified` lands the
-result on `∃ a : EvenAp, ∀ β, μEven a β < κ₀YM` — which is `ApertureRoute.ConfinesAtAnAperture`
-unfolded, the hypothesis the flagship actually consumes.
-
-**WHAT THAT DOES AND DOES NOT ESTABLISH.** It converts a read of two structure-factor values, with an
-error bar, into confinement. The error bar is supplied by the caller. Nothing here measures anything,
-and nothing here proves the bar is small enough at any coupling. It replaces an opaque hypothesis
-with a hypothesis about two numbers the read reports, which is a change in what has to be measured,
-not a discharge.
-
-## The sign is not read, and that is a defect in the definition
-
-`Real.log` is even (`Real.log_abs`), so `tension` reads the MAGNITUDE of the cosine average. A read
-that is maximally ANTI-correlated at the probed wavenumber therefore reports tension `0` — the most
-confined value available. `reads_confined_of_cosAvg_lt_neg` proves that for any such read, and
-`antipodeRead_reads_confined` proves it of `Substrate.antipodeRead`, the very read this tree exhibits
-as the extremal obstruction to the second-moment route. That read satisfies `μ < κ₀`.
-
-This is not a defect in the intended route: `Moment.Read.tension_lt_floor_of_cosAvg` requires
-`⟨cos θ⟩ > 3^{−1/4}`, which excludes it. It IS a defect in `ConfinesAtAnAperture`, which is stated on
-`μEven a β < κ₀YM` with no positivity guard, and is therefore satisfiable by a degenerate read.
-`cosAvg_pos_of_certified` records that the certified route below never produces one, because its
-`0 < Ŝ₁ − ε` hypothesis forces the cosine average positive.
-
-## The entropy layer joins, and it does not bound the tension
-
-`Moment.Read.p` is a probability vector with both field lemmas proved, so the entropy bound applies
-verbatim: `0 ≤ H(p) ≤ log(N+1)`, and the fill fraction `φ = 2^H/(N+1) ∈ [1/(N+1), 1]`, derived from
-the read's own distribution with no supplied constant. It bounds the aperture's fill and NOT the
-tension: `antipodeRead` has entropy exactly `0`, the minimum, and cosine average `−1`. Entropy is
-blind to WHERE the mass sits, and the tension is a statement about exactly that.
-
-All theorems are machine-checked; `#print axioms` follows every declaration.
+`#print axioms` follows every declaration, and §7 repeats the whole list.
 -/
 
 namespace MassGap.ReadLayer
@@ -77,14 +46,17 @@ open MassGap.EvenAperture
 
 /-! ## 1. The certified-interval layer
 
-Ported verbatim. These are the three theorems `Certify.lean` cites, plus the two monotonicity
-statements the noise floor and the resolved dimension rest on. -/
+Three interval statements, plus the two monotonicity statements a noise floor and a count above it
+are read with. All five are stated over arbitrary index types and carry no lattice content. -/
 
-/-- **Weyl-certified attenuation, monotone-propagation step.**
-Given eigenvalue bounds `λ₁ ∈ [lo1, hi1]`, `r ∈ [lor, hir]` (all positive), the attenuation
-`log λ₁ − log r`, increasing in `λ₁` and decreasing in `r`, lies in
-`[log lo1 − log hir, log hi1 − log lor]`. Weyl's inequality supplies the eigenvalue bounds; this
-propagates them through the read. -/
+/-- Monotone propagation of two-sided brackets through an attenuation.
+Given `lo1 ≤ lam1 ≤ hi1` and `lor ≤ r ≤ hir` with `lo1` and `lor` positive, the difference
+`log lam1 − log r`, increasing in `lam1` and decreasing in `r`, lies between `log lo1 − log hir` and
+`log hi1 − log lor`. Positivity of `lam1` and of `r` follows from the two hypotheses and the lower
+brackets, so `hi1` and `hir` need no sign hypothesis of their own. The brackets are arguments: the
+statement propagates them and produces none.
+
+DERIVED: `0` appears twice, as the sign condition on the two lower brackets `lo1` and `lor`. -/
 theorem attenuation_interval_bounds {lo1 hi1 lor hir lam1 r : ℝ}
     (hlo1 : 0 < lo1) (hlor : 0 < lor)
     (h1 : lo1 ≤ lam1) (h1' : lam1 ≤ hi1) (hr : lor ≤ r) (hr' : r ≤ hir) :
@@ -102,11 +74,14 @@ theorem attenuation_interval_bounds {lo1 hi1 lor hir lam1 r : ℝ}
 
 #print axioms attenuation_interval_bounds
 
-/-- **The Weyl estimate for the top eigenvalue.**
-The top of a supremum of Rayleigh quotients moves by at most the perturbation. In Courant–Fischer
-form `λ₁ = ⨆ x, ⟪C x, x⟫` over the unit sphere; if `|⟪(Ĉ − C) x, x⟫| ≤ ε` at every test point (in
-particular `ε = ‖Ĉ − C‖₂`), then `|λ̂₁ − λ₁| ≤ ε`. Proved at the level of the two suprema, over any
-nonempty index of bounded Rayleigh values. -/
+/-- Two suprema of pointwise-close families are close.
+For `rhat r : ι → ℝ` over a nonempty index, both with bounded range, `|rhat i − r i| ≤ ε` at every
+`i` gives `|(⨆ i, rhat i) − (⨆ i, r i)| ≤ ε`. This is the Weyl estimate for a top eigenvalue
+presented in Courant–Fischer form as a supremum of Rayleigh quotients, but the statement is about
+the two suprema only: `ι` is an arbitrary nonempty type, and no matrix, inner product or sphere
+occurs in it. Both `BddAbove` hypotheses are used, one for each direction.
+
+DERIVED: no numeral appears in the statement. -/
 theorem weyl_top_of_rayleigh {ι : Type*} [Nonempty ι] (rhat r : ι → ℝ) (ε : ℝ)
     (hbr : BddAbove (Set.range r)) (hbrhat : BddAbove (Set.range rhat))
     (h : ∀ i, |rhat i - r i| ≤ ε) :
@@ -120,13 +95,16 @@ theorem weyl_top_of_rayleigh {ι : Type*} [Nonempty ι] (rhat r : ι → ℝ) (�
 
 #print axioms weyl_top_of_rayleigh
 
-/-- **The certified attenuation interval, end-to-end.**
-Composing the Weyl eigenvalue bound `|λ̂₁ − λ₁| ≤ ε`, `|r̂ − r| ≤ ε` with the monotone propagation
-certifies the attenuation from the READ eigenvalues: the true `log λ₁ − log r` lies in
-`[log(λ̂₁ − ε) − log(r̂ + ε), log(λ̂₁ + ε) − log(r̂ − ε)]`.
+/-- The certified attenuation interval, from read values and one error bar.
+From `|lam1hat − lam1| ≤ ε`, `|rhat − r| ≤ ε` and positivity of `lam1hat − ε` and of `rhat − ε`, the
+true `log lam1 − log r` lies between `log (lam1hat − ε) − log (rhat + ε)` and
+`log (lam1hat + ε) − log (rhat − ε)`. A single `ε` serves both read values, and no hypothesis
+constrains its size. `attenuation_interval_bounds` is the propagation step; the four brackets are
+read off the two absolute-value hypotheses. Its upper half is the endpoint
+`MassGap.confinement_of_certified` compares against.
 
-This is the theorem `Certify.lean` cites as `[E, Lem 6.2]` and is what
-`Certify.confinement_of_certified` consumes as its `μ ≤ α_hi`. -/
+DERIVED: `0` appears twice, as the sign condition on the two lower endpoints `lam1hat − ε` and
+`rhat − ε`. -/
 theorem attenuation_weyl_certified {lam1hat rhat lam1 r ε : ℝ}
     (hlo1 : 0 < lam1hat - ε) (hlor : 0 < rhat - ε)
     (h1 : |lam1hat - lam1| ≤ ε) (hr : |rhat - r| ≤ ε) :
@@ -138,18 +116,14 @@ theorem attenuation_weyl_certified {lam1hat rhat lam1 r ε : ℝ}
 
 #print axioms attenuation_weyl_certified
 
-/-- **The certified resolved count.**
-The count analogue. Read eigenvalues `lamhat` differ from the true `lam` by at most `ε` (Weyl), and
-the noise edge is a fixed function of the shape. Then the count of TRUE eigenvalues above the edge is
-enclosed by the two read-side counts, `K_lo ≤ K_true ≤ K_hi`.
+/-- The certified count above an edge.
+On a finset `s` over which the read values satisfy `|lamhat k − lam k| ≤ ε`, the number of true
+values strictly above `edge` is enclosed by the two read-side counts, with the edge shifted by `ε`
+each way. Both `lam` and `lamhat` are arguments, so the statement bounds the cardinality of a
+supplied family and constructs none. `ι` carries no `Fintype` or `DecidableEq` instance; the filters
+are formed classically, and `edge` and `ε` are unconstrained reals.
 
-**IT COUNTS A SUPPLIED FAMILY.** Both `lam` and `lamhat` are arguments, so this bounds the
-cardinality of a mode set only once such a set exists; it cannot be used to derive one. The family
-itself is what `Complete.WilsonSpectral` provides, and at the Clay extent that is now proved —
-`SlabQuadratic.wilsonSpectral (hβ : 0 ≤ β)` gives a `Spectral.PeriodicSpectralForm 4 (wilsonCorrAt 3 β)`,
-whose `Idx`, `w` and `lam` are exactly such a family. What it does not give is a COUNT: the form's
-index is whatever the construction supplies, and `SpectralFour` shows two modes always suffice at
-this extent. -/
+DERIVED: no numeral appears in the statement. -/
 theorem resolved_count_certified {ι : Type*} (s : Finset ι) (lam lamhat : ι → ℝ) (ε edge : ℝ)
     (hband : ∀ k ∈ s, |lamhat k - lam k| ≤ ε) :
     (s.filter (fun k => edge < lamhat k - ε)).card ≤ (s.filter (fun k => edge < lam k)).card ∧
@@ -169,10 +143,13 @@ theorem resolved_count_certified {ι : Type*} (s : Finset ι) (lam lamhat : ι �
 
 #print axioms resolved_count_certified
 
-/-- **Certified separation.**
-Two ensemble means lie in their certified intervals. If the intervals do not overlap, the true means
-are ordered: the two populations are distinct. The two-sided form of
-`Certify.confinement_of_certified`, which is its one-sided special case at a constant. -/
+/-- Non-overlapping certified intervals order the two true means.
+From `|Ec − mc| ≤ tc`, `|Ed − md| ≤ td` and the strict separation `mc + tc < md − td`, the conclusion
+is `Ec < Ed`. The two-sided form of a comparison whose one-sided case puts a constant in place of the
+second interval; `tc` and `td` are unconstrained, and the separation hypothesis carries all of the
+content.
+
+DERIVED: no numeral appears in the statement. -/
 theorem separated_of_disjoint_intervals {Ec Ed mc tc md td : ℝ}
     (hEc : |Ec - mc| ≤ tc) (hEd : |Ed - md| ≤ td) (hgap : mc + tc < md - td) :
     Ec < Ed := by
@@ -182,11 +159,13 @@ theorem separated_of_disjoint_intervals {Ec Ed mc tc md td : ℝ}
 
 #print axioms separated_of_disjoint_intervals
 
-/-- **The noise floor rises with the significance quantile.**
-The Johnstone/Tracy–Widom floor `Φ(q) = sqrt(σ²·(μ + q·ς_J))` is monotone in `q`: a stricter
-false-alarm rate gives a higher floor. This is the floor `Certify.confinement_iff_contrast_lt_rpow`
-divides by — its `contrast = λ₁/Φ` — so a stricter `q` lowers the contrast and makes the confinement
-criterion easier, which is the direction a certificate must be read in. -/
+/-- The floor `sqrt (σ2 · (μ + q · ςJ))` is monotone in the quantile `q`.
+For `0 ≤ σ2`, `0 ≤ ςJ` and `q₁ ≤ q₂`, `sqrt (σ2 * (μ + q₁ * ςJ)) ≤ sqrt (σ2 * (μ + q₂ * ςJ))`. The
+shape is the Johnstone/Tracy–Widom noise floor, with `μ` the centring and `ςJ` the scale. No sign
+hypothesis is placed on `μ`, so the inner arguments may be negative, where `Real.sqrt` is zero.
+
+DERIVED: `0` appears twice, as the sign condition on `σ2` and on `ςJ`; the subscripts of `q₁` and
+`q₂` are parts of names. -/
 theorem noise_floor_monotone {σ2 μ ςJ q₁ q₂ : ℝ}
     (hσ : 0 ≤ σ2) (hς : 0 ≤ ςJ) (hq : q₁ ≤ q₂) :
     Real.sqrt (σ2 * (μ + q₁ * ςJ)) ≤ Real.sqrt (σ2 * (μ + q₂ * ςJ)) := by
@@ -196,8 +175,11 @@ theorem noise_floor_monotone {σ2 μ ςJ q₁ q₂ : ℝ}
 
 #print axioms noise_floor_monotone
 
-/-- **The resolved dimension is antitone in the floor.**
-`K_signal = #{k : sₖ > Φ}` is nonincreasing in `Φ`, by monotonicity of the counting filter. -/
+/-- The count above a floor is antitone in the floor.
+For `s : Fin n → ℝ` and `Φ₁ ≤ Φ₂`, the cardinality of `{k | Φ₂ < s k}` is at most that of
+`{k | Φ₁ < s k}`, by inclusion of the two filters. `n` is arbitrary and `s` is unconstrained.
+
+DERIVED: no numeral appears in the statement; the subscripts of `Φ₁` and `Φ₂` are parts of names. -/
 theorem resolved_dim_antitone {n : ℕ} (s : Fin n → ℝ) {Φ₁ Φ₂ : ℝ} (h : Φ₁ ≤ Φ₂) :
     (Finset.univ.filter (fun k => Φ₂ < s k)).card
       ≤ (Finset.univ.filter (fun k => Φ₁ < s k)).card := by
@@ -211,12 +193,17 @@ theorem resolved_dim_antitone {n : ℕ} (s : Fin n → ℝ) {Φ₁ Φ₂ : ℝ} 
 
 /-! ## 2. The entropy layer
 
-Also ported verbatim. These apply to `Moment.Read.p` directly, because it is a probability vector
-with `p_nonneg` and `p_sum` already proved. -/
+Stated for an arbitrary probability vector on `Fin n`. `Moment.Read.p` is one, with `p_nonneg` and
+`p_sum` proved, so §5 instantiates these at `n := N + 1`. -/
 
-/-- **A dominating weight's share lies in `[1/n, 1]`.**
-Taking `w` the singular-value power spectrum bounds the fill fraction; taking `w` the ordered
-correlation spectrum bounds the Strehl ratio. -/
+/-- A maximal weight's share of the total lies between `1/n` and `1`.
+For nonnegative `w : Fin n → ℝ` with `0 < n`, an index `k` maximal in the sense `∀ i, w i ≤ w k`, and
+a positive total, `1 / n ≤ w k / (∑ i, w i)` and `w k / (∑ i, w i) ≤ 1`. The lower bound uses
+maximality through `∑ i, w i ≤ n * w k`; the upper bound uses only `w k ≤ ∑ i, w i`. Nothing orders
+`w`, and `k` need not be unique.
+
+DERIVED: `0` is the sign condition in `0 < n`, in `0 ≤ w i` and on the total; `1` is the numerator of
+the lower endpoint `1 / n` and the upper endpoint itself. -/
 theorem ratio_bounds {n : ℕ} (hn : 0 < n) (w : Fin n → ℝ)
     (hw : ∀ i, 0 ≤ w i) (k : Fin n) (htop : ∀ i, w i ≤ w k)
     (hpos : 0 < ∑ i, w i) :
@@ -242,10 +229,14 @@ theorem ratio_bounds {n : ℕ} (hn : 0 < n) (w : Fin n → ℝ)
 
 #print axioms ratio_bounds
 
-/-- **The entropy bound.**
-For a probability vector `q` on `Fin n` (`n ≥ 1`) the natural-log Shannon entropy
-`H q = ∑ negMulLog (q i)` obeys `0 ≤ H q ≤ log n`. The lower bound is termwise; the upper bound is
-Gibbs/Jensen, concavity of `negMulLog` on `[0,∞)` against the uniform weights `1/n`. -/
+/-- The Shannon entropy of a probability vector on `Fin n` lies between `0` and `log n`.
+For `0 < n` and `q` nonnegative with `∑ i, q i = 1`, `0 ≤ ∑ i, Real.negMulLog (q i)` and that sum is
+at most `Real.log n`. The lower bound is termwise from `Real.negMulLog_nonneg`, using `q i ≤ 1` read
+off the normalisation; the upper bound is Jensen against the uniform weights `(n : ℝ)⁻¹`, through
+`Real.concaveOn_negMulLog`. The logarithm is natural, as is the `negMulLog` in the entropy.
+
+DERIVED: `0` is the sign condition in `0 < n`, in `0 ≤ q i` and at the left end of the conclusion;
+`1` is the normalisation `∑ i, q i = 1`. -/
 theorem entropy_nonneg_le_log {n : ℕ} (hn : 0 < n) (q : Fin n → ℝ)
     (hq : ∀ i, 0 ≤ q i) (hsum : ∑ i, q i = 1) :
     0 ≤ ∑ i, Real.negMulLog (q i) ∧ ∑ i, Real.negMulLog (q i) ≤ Real.log n := by
@@ -274,10 +265,17 @@ theorem entropy_nonneg_le_log {n : ℕ} (hn : 0 < n) (q : Fin n → ℝ)
 
 #print axioms entropy_nonneg_le_log
 
-/-- **The fill fraction, from the signal's own entropy.**
-Exponentiating the entropy bound: with the bit-entropy `H₂ = H/log 2`, `2^{H₂} ∈ [1, n]` and the fill
-fraction `φ = 2^{H₂}/n ∈ [1/n, 1]`. No constant is supplied — the resolution is read off the
-distribution. -/
+/-- The exponentiated entropy and the fill fraction.
+Under the hypotheses of `entropy_nonneg_le_log`, with `H` the natural-log entropy of `q`, the four
+conjuncts are `1 ≤ 2 ^ (H / Real.log 2)`, `2 ^ (H / Real.log 2) ≤ n`, `1 / n ≤ 2 ^ (H / Real.log 2) / n`
+and `2 ^ (H / Real.log 2) / n ≤ 1`. Dividing by `Real.log 2` converts the natural-log entropy to
+bits, and `Real.rpow` is the exponential. No constant enters from outside: both endpoints are `n` and
+its reciprocal.
+
+DERIVED: `0` is the sign condition in `0 < n` and in `0 ≤ q i`; `1` is the normalisation
+`∑ i, q i = 1`, the lower endpoint of the exponential, the numerator of `1 / n` and the upper
+endpoint of the fraction; `2` is the base of the exponential and the base of the logarithm it is
+divided by. -/
 theorem fill_fraction_entropy_bounds {n : ℕ} (hn : 0 < n) (q : Fin n → ℝ)
     (hq : ∀ i, 0 ≤ q i) (hsum : ∑ i, q i = 1) :
     1 ≤ (2 : ℝ) ^ ((∑ i, Real.negMulLog (q i)) / Real.log 2) ∧
@@ -303,10 +301,13 @@ theorem fill_fraction_entropy_bounds {n : ℕ} (hn : 0 < n) (q : Fin n → ℝ)
 
 #print axioms fill_fraction_entropy_bounds
 
-/-- **A spectral read is a congruence invariant.**
-A read `f` depending only on the operator's characteristic polynomial is unchanged by conjugation by
-an inverse pair. This is the spectral form of "entropy is coordinate-free" that `Apriori.lean`'s A2
-discussion cites; A2 itself is proved in this tree without it. -/
+/-- A function of the characteristic polynomial is a congruence invariant.
+For square matrices over a commutative ring and an arbitrary `f : Polynomial R → α`, the single
+hypothesis `Q * P = 1` gives `f ((P * C * Q).charpoly) = f (C.charpoly)`. `f` carries no continuity,
+measurability or symmetry assumption, and the ring is arbitrary. `Matrix.charpoly_mul_comm` does the
+work; the index type is finite with decidable equality.
+
+DERIVED: `1` is the identity matrix of `Matrix n n R` in the hypothesis `Q * P = 1`. -/
 theorem spectral_read_congruence {n : Type*} [Fintype n] [DecidableEq n]
     {R : Type*} [CommRing R] {α : Type*}
     (f : Polynomial R → α) (P C Q : Matrix n n R) (hQP : Q * P = 1) :
@@ -317,8 +318,12 @@ theorem spectral_read_congruence {n : Type*} [Fintype n] [DecidableEq n]
 
 #print axioms spectral_read_congruence
 
-/-- **And under an orthogonal congruence**, the action of a rotation: every spectral read is isotropic
-under `O(n)` and its rotation subgroup, the hypercubic point group being the special case. -/
+/-- The same under a transpose congruence.
+`Pᵀ * P = 1` gives `f ((P * C * Pᵀ).charpoly) = f (C.charpoly)`, immediately from
+`spectral_read_congruence` at `Q := Pᵀ`. The entries lie in an arbitrary commutative ring rather than
+in `ℝ`, the hypothesis is the single equation `Pᵀ * P = 1`, and no determinant condition is imposed.
+
+DERIVED: `1` is the identity matrix in the hypothesis `Pᵀ * P = 1`. -/
 theorem spectral_read_orthogonal {n : Type*} [Fintype n] [DecidableEq n]
     {R : Type*} [CommRing R] {α : Type*}
     (f : Polynomial R → α) (P C : Matrix n n R) (hP : Pᵀ * P = 1) :
@@ -327,12 +332,17 @@ theorem spectral_read_orthogonal {n : Type*} [Fintype n] [DecidableEq n]
 
 #print axioms spectral_read_orthogonal
 
-/-! ## 3. The join: the tension IS an attenuation
+/-! ## 3. The join: the tension as an attenuation
 
-One identity, and the certified interval follows from it. -/
+One identity between `Moment.Read.tension` and a difference of logarithms, and the certified interval
+that follows from it. -/
 
-/-- **The cosine average is a ratio of structure factors.** `⟨cos θ⟩_p = S(2π/(N+1)) / S(0)`, because
-`p` is `ρ` normalised. Pure algebra of the definition of `Moment.Read.p`. -/
+/-- The cosine average is a ratio of `ρ`-sums:
+`∑ d, R.p d * cos (R.θ d) = (∑ d, R.ρ d * cos (R.θ d)) / (∑ d, R.ρ d)`, since `Moment.Read.p` is `ρ`
+divided by its own sum. Written as structure factors, `⟨cos θ⟩_p = S(2π/(N+1)) / S(0)`. Term-by-term
+algebra of the division; no positivity hypothesis is taken.
+
+DERIVED: no numeral appears in the statement. -/
 theorem cosAvg_eq_ratio {N : ℕ} (R : Moment.Read N) :
     ∑ d, R.p d * Real.cos (R.θ d)
       = (∑ d, R.ρ d * Real.cos (R.θ d)) / (∑ d, R.ρ d) := by
@@ -343,13 +353,16 @@ theorem cosAvg_eq_ratio {N : ℕ} (R : Moment.Read N) :
 
 #print axioms cosAvg_eq_ratio
 
-/-- **THE TENSION IS AN ATTENUATION.** `μ = log S(0) − log S(2π/(N+1))`, the identity
-`Moment.Read.tension`'s docstring asserts and nothing proved. With it, the tension is exactly the
-quantity `attenuation_interval_bounds` propagates a Weyl band through, at `λ₁ := S(0)` and
-`r := S(2π/(N+1))`.
+/-- The tension as a difference of logarithms.
+Under `0 < ∑ d, R.ρ d * cos (R.θ d)`,
+`R.tension = log (∑ d, R.ρ d) − log (∑ d, R.ρ d * cos (R.θ d))` — in structure-factor notation,
+`log S(0) − log S(2π/(N+1))`, the attenuation `attenuation_interval_bounds` propagates brackets
+through at `λ₁ := S(0)` and `r := S(2π/(N+1))`. `cosAvg_eq_ratio` supplies the ratio and
+`Real.log_div` splits it, taking the two nonzero arguments from the hypothesis and from `R.hpos`.
+The hypothesis is load-bearing: `Real.log` is even, so without it the left side reads an absolute
+value (`tension_eq_neg_log_abs`).
 
-The hypothesis `0 < Σ ρ cos θ` is the guard that makes the identity meaningful rather than merely
-true: `Real.log` is even, so below it the left side reads a magnitude (see §5). -/
+DERIVED: `0` is the sign condition on the cosine-weighted sum. -/
 theorem tension_eq_log_sub {N : ℕ} (R : Moment.Read N)
     (hc : 0 < ∑ d, R.ρ d * Real.cos (R.θ d)) :
     R.tension = Real.log (∑ d, R.ρ d) - Real.log (∑ d, R.ρ d * Real.cos (R.θ d)) := by
@@ -359,9 +372,12 @@ theorem tension_eq_log_sub {N : ℕ} (R : Moment.Read N)
 
 #print axioms tension_eq_log_sub
 
-/-- **The certified read never produces a degenerate one.** The hypothesis `0 < Ŝ₁ − ε` together with
-the error bar forces the true `S(2π/(N+1))` positive, hence the cosine average positive. So the
-vacuity of §5 cannot arise on this route. -/
+/-- A positive lower endpoint forces the cosine-weighted sum positive.
+From `0 < S1hat − ε` and `|S1hat − ∑ d, R.ρ d * cos (R.θ d)| ≤ ε`, the sum
+`∑ d, R.ρ d * cos (R.θ d)` is positive. This is exactly the guard `tension_eq_log_sub` requires, so
+the certified statements below supply it from their own hypotheses rather than assuming it.
+
+DERIVED: `0` appears twice, as the sign condition on `S1hat − ε` and on the cosine-weighted sum. -/
 theorem cosAvg_pos_of_certified {N : ℕ} (R : Moment.Read N) {S1hat ε : ℝ}
     (h1 : 0 < S1hat - ε)
     (hr1 : |S1hat - ∑ d, R.ρ d * Real.cos (R.θ d)| ≤ ε) :
@@ -371,14 +387,15 @@ theorem cosAvg_pos_of_certified {N : ℕ} (R : Moment.Read N) {S1hat ε : ℝ}
 
 #print axioms cosAvg_pos_of_certified
 
-/-- **THE CERTIFIED INTERVAL ON THE TENSION.** Given a read of the two structure factors with a Weyl
-error bar `ε`, the true tension of the read is enclosed:
+/-- The certified interval on `Moment.Read.tension`.
+Given read values `S0hat` for `∑ d, R.ρ d` and `S1hat` for `∑ d, R.ρ d * cos (R.θ d)`, each within
+`ε`, and with both lower endpoints positive, `R.tension` lies between
+`log (S0hat − ε) − log (S1hat + ε)` and `log (S0hat + ε) − log (S1hat − ε)`.
+`tension_eq_log_sub` rewrites the tension, `cosAvg_pos_of_certified` discharges its guard, and
+`attenuation_weyl_certified` supplies the two endpoints. One `ε` serves both reads, and no hypothesis
+bounds it.
 
-    log(Ŝ₀ − ε) − log(Ŝ₁ + ε)  ≤  μ  ≤  log(Ŝ₀ + ε) − log(Ŝ₁ − ε).
-
-`attenuation_weyl_certified` composed with `tension_eq_log_sub`. This is what `Certify.lean`'s header
-promised the read layer would supply, said about `Moment.Read.tension` rather than about an abstract
-attenuation. -/
+DERIVED: `0` appears twice, as the sign condition on `S0hat − ε` and on `S1hat − ε`. -/
 theorem tension_certified_interval {N : ℕ} (R : Moment.Read N) {S0hat S1hat ε : ℝ}
     (h0 : 0 < S0hat - ε) (h1 : 0 < S1hat - ε)
     (hr0 : |S0hat - ∑ d, R.ρ d| ≤ ε)
@@ -390,8 +407,12 @@ theorem tension_certified_interval {N : ℕ} (R : Moment.Read N) {S0hat S1hat ε
 
 #print axioms tension_certified_interval
 
-/-- **A certified upper endpoint below the floor gives confinement of the read.**
-`Certify.confinement_of_certified` with the enclosure now proved rather than assumed. -/
+/-- A certified upper endpoint below `κ₀YM` gives `R.tension < MassGap.κ₀YM`.
+The right half of `tension_certified_interval` composed with `MassGap.confinement_of_certified`. The
+strict comparison is made against the endpoint `log (S0hat + ε) − log (S1hat − ε)`, so the conclusion
+costs the four read hypotheses plus that inequality; the left endpoint plays no part.
+
+DERIVED: `0` appears twice, as the sign condition on `S0hat − ε` and on `S1hat − ε`. -/
 theorem tension_lt_floor_of_certified {N : ℕ} (R : Moment.Read N) {S0hat S1hat ε : ℝ}
     (h0 : 0 < S0hat - ε) (h1 : 0 < S1hat - ε)
     (hr0 : |S0hat - ∑ d, R.ρ d| ≤ ε)
@@ -402,10 +423,14 @@ theorem tension_lt_floor_of_certified {N : ℕ} (R : Moment.Read N) {S0hat S1hat
 
 #print axioms tension_lt_floor_of_certified
 
-/-! ## 4. Landing it on the hypothesis the flagship consumes -/
+/-! ## 4. Landing the interval on `EvenAperture.μEven` -/
 
-/-- **The tension at an even aperture, from a certified read.** `μEven` is `(readEven a β).tension` by
-definition, so the certified interval applies to it unchanged. -/
+/-- The tension at one even aperture and one coupling, from a certified read.
+`μEven a β` is `(readEven a β).tension` definitionally, so `tension_lt_floor_of_certified` applies
+with the read taken at `readEven a β`. The aperture `a` and the coupling `β` are fixed throughout,
+and the two read values are those of that aperture at that coupling.
+
+DERIVED: `0` appears twice, as the sign condition on `S0hat − ε` and on `S1hat − ε`. -/
 theorem μEven_lt_floor_of_certified (a : EvenAp) (β : ℝ) {S0hat S1hat ε : ℝ}
     (h0 : 0 < S0hat - ε) (h1 : 0 < S1hat - ε)
     (hr0 : |S0hat - ∑ d, (readEven a β).ρ d| ≤ ε)
@@ -417,20 +442,18 @@ theorem μEven_lt_floor_of_certified (a : EvenAp) (β : ℝ) {S0hat S1hat ε : �
 
 #print axioms μEven_lt_floor_of_certified
 
-/-- **CONFINEMENT AT ONE APERTURE, FROM A CERTIFIED READ.** The conclusion is
-`ApertureRoute.ConfinesAtAnAperture` unfolded — the hypothesis
-`ApertureRoute.flagship_of_confinement_at_an_aperture` consumes, and through it the whole flagship.
+/-- `∃ a : EvenAp, ∀ β : ℝ, μEven a β < MassGap.κ₀YM`, from a certified read at one aperture.
+The inputs are one even aperture `a`, two read functions `S0hat S1hat : ℝ → ℝ` of the coupling, and a
+single error bar `ε`, followed by four conditions each holding at every coupling: the two
+positivities `0 < S0hat β − ε` and `0 < S1hat β − ε`, the two error bounds, and the certified upper
+endpoint below `κ₀YM`. `μEven_lt_floor_of_certified` supplies each instance.
 
-The inputs are: one even extent `a`; read-side structure factors `Ŝ₀ β`, `Ŝ₁ β` at every coupling;
-one error bar `ε` valid at every coupling; and the certified endpoint below the floor at every
-coupling.
+`ε` is bound outside the quantifier over couplings, so it is one bar for the whole half-line, and no
+hypothesis constrains its size. The bound `a` in the conclusion shadows the argument `a`, which is
+the witness supplied. `β` ranges over all of `ℝ`, so `h1` is a condition on the read at negative
+couplings too.
 
-**WHAT IS AND IS NOT DISCHARGED.** The opaque quantity `μEven a β` is replaced by two numbers the
-read reports and an error bar on them. Nothing here establishes any of the four hypotheses, and in
-particular nothing here bounds `ε`. The `∀ β` is unrestricted, so the `β → ∞` end that
-`ApertureRoute`'s "WHERE THE DIFFICULTY MOVES TO" identifies is untouched: as the correlation
-flattens, `Ŝ₁ β → 0` and `h1 : 0 < Ŝ₁ β − ε` fails. That is the same obstruction, now visible as a
-positivity condition on a measured number rather than as a moment bound. -/
+DERIVED: `0` appears twice, as the sign condition on `S0hat β − ε` and on `S1hat β − ε`. -/
 theorem confines_at_an_aperture_of_certified
     (a : EvenAp) (S0hat S1hat : ℝ → ℝ) (ε : ℝ)
     (h0 : ∀ β, 0 < S0hat β - ε) (h1 : ∀ β, 0 < S1hat β - ε)
@@ -443,11 +466,16 @@ theorem confines_at_an_aperture_of_certified
 
 #print axioms confines_at_an_aperture_of_certified
 
-/-! ## 5. The entropy of the read, and what it does not bound -/
+/-! ## 5. The entropy of the read -/
 
-/-- **The read's own entropy bound.** `Moment.Read.p` is a probability vector, so `0 ≤ H(p) ≤ log(N+1)`
-with no supplied constant: the aperture's resolution is read off the correlation's own distribution
-over lags. -/
+/-- The entropy of `Moment.Read.p` lies between `0` and `log ((N : ℝ) + 1)`.
+`entropy_nonneg_le_log` at `n := N + 1`, with `R.p_nonneg` and `R.p_sum` as its two hypotheses and
+the cast `((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1` rewritten. `Moment.Read N` indexes its lags by
+`Fin (N + 1)`, so the upper endpoint is the logarithm of the number of lags. No constant is supplied
+from outside: both endpoints come from the index type.
+
+DERIVED: `0` is the left endpoint; `1` is the offset in `(N : ℝ) + 1`, the cardinality of the index
+`Fin (N + 1)`. -/
 theorem read_entropy_bounds {N : ℕ} (R : Moment.Read N) :
     0 ≤ ∑ d, Real.negMulLog (R.p d) ∧
       ∑ d, Real.negMulLog (R.p d) ≤ Real.log ((N : ℝ) + 1) := by
@@ -458,9 +486,15 @@ theorem read_entropy_bounds {N : ℕ} (R : Moment.Read N) :
 
 #print axioms read_entropy_bounds
 
-/-- **The read's fill fraction.** `φ = 2^{H₂}/(N+1) ∈ [1/(N+1), 1]`, derived from the same entropy.
-This is the finite aperture measured in the read's own coordinates — and it is a statement about the
-aperture, not about the gap (see `antipodeRead_entropy_eq_zero`). -/
+/-- The fill fraction of `Moment.Read.p` lies between `1 / ((N : ℝ) + 1)` and `1`.
+The third and fourth conjuncts of `fill_fraction_entropy_bounds` at `n := N + 1`. The quantity is
+`2 ^ (H / Real.log 2) / ((N : ℝ) + 1)` with `H` the natural-log entropy of `R.p`. It is a statement
+about how the read's weight is spread over its lags; `R.θ` does not occur in it, so it says nothing
+about where that weight sits (`antipodeRead_entropy_eq_zero`).
+
+DERIVED: `1` is the offset in `(N : ℝ) + 1`, the cardinality of `Fin (N + 1)`, the numerator of the
+lower endpoint and the upper endpoint itself; `2` is the base of the exponential and the base of the
+logarithm dividing the entropy. -/
 theorem read_fill_fraction_bounds {N : ℕ} (R : Moment.Read N) :
     1 / ((N : ℝ) + 1)
         ≤ (2 : ℝ) ^ ((∑ d, Real.negMulLog (R.p d)) / Real.log 2) / ((N : ℝ) + 1) ∧
@@ -472,12 +506,15 @@ theorem read_fill_fraction_bounds {N : ℕ} (R : Moment.Read N) :
 
 #print axioms read_fill_fraction_bounds
 
-/-! ## 6. NEGATIVE CONTROLS: the sign is not read
+/-! ## 6. The tension reads an absolute value
 
-`Real.log` is even, so `Moment.Read.tension` reports the MAGNITUDE of the cosine average. Everything
-below is a consequence of that one fact. -/
+`Real.log` is even, so `Moment.Read.tension` is `−log |⟨cos θ⟩_p|`. The statements below are
+consequences of that, ending with `Substrate.antipodeRead` as a worked case. -/
 
-/-- **The tension reads a magnitude.** `μ = −log |⟨cos θ⟩_p|`, by `Real.log_abs`. -/
+/-- `R.tension = −log |∑ d, R.p d * cos (R.θ d)|`, by `Real.log_abs`. Unconditional: no sign
+hypothesis is taken on the cosine average, and the equation holds for every `R : Moment.Read N`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem tension_eq_neg_log_abs {N : ℕ} (R : Moment.Read N) :
     R.tension = - Real.log |∑ d, R.p d * Real.cos (R.θ d)| := by
   show - Real.log (∑ d, R.p d * Real.cos (R.θ d)) = _
@@ -485,13 +522,15 @@ theorem tension_eq_neg_log_abs {N : ℕ} (R : Moment.Read N) :
 
 #print axioms tension_eq_neg_log_abs
 
-/-- **A read anti-correlated at the probed wavenumber reads CONFINED.** If the cosine average is below
-`−3^{−1/4}` — anti-correlated by more than the confinement threshold's own magnitude — then
-`μ < κ₀YM`.
+/-- A read whose cosine average is below `−3 ^ (−1/4)` satisfies `R.tension < MassGap.κ₀YM`.
+The hypothesis is one-sided and negative: `∑ d, R.p d * cos (R.θ d) < −(3 ^ (−1/4))`. Through
+`tension_eq_neg_log_abs` the absolute value then exceeds `3 ^ (−1/4)`, and unfolding `MassGap.κ₀YM`
+closes the comparison. `Moment.Read.tension_lt_floor_of_cosAvg` reaches the same conclusion from the
+opposite-sign hypothesis `⟨cos θ⟩ > 3 ^ (−1/4)`, which this hypothesis excludes; the conclusion here
+is about `tension` alone and says nothing about decay.
 
-This is not a route to the gap; it is a defect in the criterion. `Moment.Read.tension_lt_floor_of_cosAvg`
-guards against it by requiring `⟨cos θ⟩ > 3^{−1/4}`. `ApertureRoute.ConfinesAtAnAperture` does not,
-so that hypothesis is satisfiable by a read with no decay at all. -/
+DERIVED: `3` is the base of the constant `3 ^ (−1/4)` the hypothesis negates, and `1` and `4` are the
+numerator and denominator of its exponent `−1/4`. -/
 theorem reads_confined_of_cosAvg_lt_neg {N : ℕ} (R : Moment.Read N)
     (h : ∑ d, R.p d * Real.cos (R.θ d) < -((3 : ℝ) ^ (-(1 : ℝ) / 4))) :
     R.tension < MassGap.κ₀YM := by
@@ -508,8 +547,13 @@ theorem reads_confined_of_cosAvg_lt_neg {N : ℕ} (R : Moment.Read N)
 
 #print axioms reads_confined_of_cosAvg_lt_neg
 
-/-- **The antipodal read's cosine average is exactly `−1`.** `Substrate.antipodeRead k` puts all its
-weight at lag `k+1` of a period `2k+2`, where `θ = π`. -/
+/-- `Substrate.antipodeRead k` has phase `π` at the lag `Substrate.antipode k`.
+The read's phases are `θ d = 2π d / (N + 1)` at `N = 2 * k + 1`, and `Substrate.antipode k` is the
+element of `Fin (2 * k + 1 + 1)` whose value is `k + 1`, half the period. The proof casts that value
+and cancels.
+
+DERIVED: no numeral appears in the statement; `k` is the only argument, and the period is fixed
+inside `Substrate.antipodeRead`'s own definition. -/
 theorem antipodeRead_theta_eq_pi (k : ℕ) :
     (MassGap.Substrate.antipodeRead k).θ (MassGap.Substrate.antipode k) = Real.pi := by
   have hk : ((k : ℝ) + 1) ≠ 0 := by positivity
@@ -524,7 +568,12 @@ theorem antipodeRead_theta_eq_pi (k : ℕ) :
 
 #print axioms antipodeRead_theta_eq_pi
 
-/-- The antipodal read's cosine average, computed. -/
+/-- The cosine average of `Substrate.antipodeRead k` is `−1`.
+`Substrate.antipodeRead_sum` makes `p` equal to `ρ`, which is the indicator of
+`Substrate.antipode k`, so the sum collapses to a single term and
+`antipodeRead_theta_eq_pi` evaluates the cosine there through `Real.cos_pi`.
+
+DERIVED: `1` is the value of `cos π` taken with its sign, the right-hand side `−1`. -/
 theorem antipodeRead_cosAvg_eq_neg_one (k : ℕ) :
     ∑ d, (MassGap.Substrate.antipodeRead k).p d
         * Real.cos ((MassGap.Substrate.antipodeRead k).θ d) = -1 := by
@@ -550,14 +599,14 @@ theorem antipodeRead_cosAvg_eq_neg_one (k : ℕ) :
 
 #print axioms antipodeRead_cosAvg_eq_neg_one
 
-/-- **THE EXTREMAL OBSTRUCTION IS A CONFINEMENT WITNESS.** `Substrate.antipodeRead` is the read this
-tree exhibits to show the second-moment route's constant cannot be improved
-(`antipodeRead_moment_eq_quarter_sq`) and that reflection positivity alone leaves the substrate moment
-unbounded (`rp_alone_leaves_moment_unbounded`). Its tension is `−log|−1| = 0`, so it satisfies
-`μ < κ₀YM`.
+/-- `(Substrate.antipodeRead k).tension < MassGap.κ₀YM`, for every `k`.
+Its cosine average is `−1` (`antipodeRead_cosAvg_eq_neg_one`) and `Real.log` is even, so the tension
+is `−log |−1| = 0`; `MassGap.κ₀YM_pos` closes it. The same read fails the hypothesis
+`⟨cos θ⟩ > 3 ^ (−1/4)` of `Moment.Read.tension_lt_floor_of_cosAvg`, and is the read
+`antipodeRead_moment_eq_quarter_sq` uses on the second-moment side, so the two criteria disagree on
+it.
 
-So the tension criterion and the moment criterion disagree on this read, and the disagreement is not
-conservative: the read that maximally violates the sufficient condition passes the necessary one. -/
+DERIVED: no numeral appears in the statement. -/
 theorem antipodeRead_reads_confined (k : ℕ) :
     (MassGap.Substrate.antipodeRead k).tension < MassGap.κ₀YM := by
   have h0 : (MassGap.Substrate.antipodeRead k).tension = 0 := by
@@ -570,12 +619,14 @@ theorem antipodeRead_reads_confined (k : ℕ) :
 
 #print axioms antipodeRead_reads_confined
 
-/-- **AND ITS ENTROPY IS THE MINIMUM.** The antipodal read is a point mass, so `H(p) = 0` — the fill
-fraction is `1/(N+1)`, the smallest the aperture admits. Together with
-`antipodeRead_reads_confined`: minimum entropy and "confined", and with
-`antipodeRead_moment_eq_quarter_sq`: maximum second moment. Entropy is blind to WHERE the mass sits;
-the tension is a statement about exactly that, so the entropy layer of §2 bounds the aperture's fill
-and bounds the tension in neither direction. -/
+/-- The entropy of `Substrate.antipodeRead k` is `0`.
+Its `p` takes only the values `0` and `1`, and `Real.negMulLog` vanishes at both, so every term of
+the sum vanishes. Read against `read_fill_fraction_bounds`, this read sits at the lower endpoint
+`1 / ((N : ℝ) + 1)` of the fill fraction, while `antipodeRead_reads_confined` puts its tension below
+`κ₀YM`: the entropy records how the weight is spread over lags and the tension records where it
+sits, so neither bounds the other.
+
+DERIVED: `0` is the value of the entropy sum, the left endpoint of `read_entropy_bounds`. -/
 theorem antipodeRead_entropy_eq_zero (k : ℕ) :
     ∑ d, Real.negMulLog ((MassGap.Substrate.antipodeRead k).p d) = 0 := by
   classical

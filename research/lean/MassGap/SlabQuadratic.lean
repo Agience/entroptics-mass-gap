@@ -5,43 +5,53 @@ import MassGap.LinkGram
 /-!
 # MassGap.SlabQuadratic — the extent-four quadratic, from the slab Gram form
 
-`SpectralFour.four_iff` leaves two inequalities open at the Clay aperture. `LinkGram` closes
-`ρ(2) ≤ ρ(1)`. This file closes the other one,
+`wilson_quadratic` states
 
-    2·ρ(1)² ≤ ρ(2)² + ρ(0)·ρ(2),
+    2 * ρ(1)^2 ≤ ρ(2)^2 + ρ(0) * ρ(2),      ρ(d) = MassGap.wilsonCorrAt 3 β d
 
-as one instance of Cauchy–Schwarz in `ReflectionStrong.wilsonGibbsReflForm` — the `Transfer.ReflForm`
-the tree already builds on the slab algebra `LogConvex.localObs (blkS τ a m) (blkR τ a m)`, whose
-`form_nonneg` holds at EVERY REAL coupling.
+at every real `β`, as one instance of Cauchy–Schwarz in `ReflectionStrong.wilsonGibbsReflForm`, the
+`Transfer.ReflForm` on the slab algebra `LogConvex.localObs (blkS τ a m) (blkR τ a m)`. That form's
+`form_nonneg` carries no sign condition on the coupling, which is why `wilson_quadratic` does not
+either.
 
-## The two vectors
+## The two vectors and the six entries
 
-At `τ = 2`, `a = 0`, `m = 2`, `n = 4` the reflection constant is `a + a = 0`: the SITE reflection
-`s ↦ −s`, whose two fixed lag sites are `0` and `2` and whose halves are the single sites `1` and
-`3`. Write `F_s` for the centred `(0,1)`-plaquette energy at lag site `s`. Then
+`RF β` is the form at `τ = 2`, `a = 0`, `m = 2`, `n = 4`, where the reflection constant `a + a` is
+`0`, so the reflection acts on lag sites by `s ↦ -s`. Its fixed lag sites are `0` and `2`, and the
+two halves are the single sites `1` and `3`. Writing `F_s` for `cObs β s`, the centred
+`(0,1)`-plaquette energy at lag site `s`, the vectors are
 
     x = F₁,     y = F₀ + F₂,
 
-and the form's six entries are read off `ReflectPositive.EW_pair_sub_const` and the reflection's
-action `s ↦ −s`:
+and `RF_entry` with the fold `EW_fold` gives the six entries as
 
     ⟨x,x⟩ = ρ(2),   ⟨x,F₀⟩ = ⟨x,F₂⟩ = ρ(1),   ⟨F₀,F₀⟩ = ⟨F₂,F₂⟩ = ρ(0),   ⟨F₀,F₂⟩ = ρ(2),
 
-so `⟨x,y⟩ = 2ρ(1)`, `⟨y,y⟩ = 2ρ(0) + 2ρ(2)`, and `⟨x,y⟩² ≤ ⟨x,x⟩⟨y,y⟩` reads
-`4ρ(1)² ≤ 2ρ(2)(ρ(0) + ρ(2))`, which is the quadratic exactly.
+which are the theorems `entry_one_one` through `entry_two_two`. Hence `⟨x,y⟩ = 2ρ(1)` and
+`⟨y,y⟩ = 2ρ(0) + 2ρ(2)`, and `⟨x,y⟩^2 ≤ ⟨x,x⟩⟨y,y⟩` reads `4ρ(1)^2 ≤ 2ρ(2)(ρ(0) + ρ(2))`, which is
+the quadratic.
 
-## What had to be added
+## Membership at the far plane
 
 `ReflectionStrong.plaqObs_sub_const_mem` carries `hlv : lv a (q.2 τ) < m`, which admits lag sites `0`
-and `1` but NOT site `2` — and `y` needs site `2`. That bound is stricter than the geometry: a
-plaquette spanning two directions TRANSVERSE to the lag axis has all four of its links transverse and
-at its own lag level (`ReflectPositive.bd_link_dir_ne`, `bd_link_tau_coord`), and
-`ActionSplit.mem_blkS_union_blkR` puts a transverse link in `blkS ∪ blkR` at every level `≤ m`.
-`transverse_plaq_links_le` and `cObs_mem` are that one step, and they are the only thing this file
-adds to the slab machinery.
+and `1` but not site `2`, and `y` uses site `2`. `transverse_plaq_links_le` supplies the weaker
+condition the geometry allows: a plaquette spanning two directions transverse to the lag axis has all
+four links transverse (`ReflectPositive.bd_link_dir_ne`) and at its own lag coordinate
+(`ReflectPositive.bd_link_tau_coord`), and `ActionSplit.mem_blkS_union_blkR` admits a transverse link
+at every level `≤ m`, the far plane `lv = m` included. `cObs_mem` is that step applied to the centred
+observable, and the two together are what this module adds to the slab machinery.
 
-Composed with `LinkGram.wilson_lag_two_le_lag_one`, `wilsonSpectral` is
-`Complete.WilsonSpectral 3 β` at every `0 ≤ β`, with no hypothesis left.
+## What the final theorem needs
+
+`wilsonSpectral` combines `wilson_quadratic` with `LinkGram.wilson_lag_two_le_lag_one` through
+`LinkGram.wilsonSpectral_of_quadratic` to give `MassGap.WilsonSpectral 3 β` at every `0 ≤ β`. The
+hypothesis `0 ≤ β` is consumed by the link-reflection half alone, not by `wilson_quadratic`.
+
+DERIVED: `4` is the spacetime dimension and the extent; `3` is `SU(3)`'s rank and the Clay aperture,
+whose lag type is `Fin (3 + 1)`; `2` is the lag axis, the half-extent `m`, the exponent in the
+squares, and the term count in `y = F₀ + F₂`; `0` is the level origin `a`, the reflection constant
+`a + a`, the contact lag, and the lower end of the coupling range; `1` is the other plaquette
+direction and a lag index. No magnitude is chosen.
 
 Build: `python research/code/lean_build.py build MassGap.SlabQuadratic`.
 -/
@@ -54,23 +64,24 @@ open MassGap.LatticeGauge MassGap.WilsonLattice MassGap.WilsonAction
 open MassGap.CompactGauge MassGap.WilsonReal MassGap.WilsonHypercubic MassGap.WilsonBridge
 open MeasureTheory
 
-/-! ## 1. A transverse plaquette at the FAR plane is still a slab observable
+/-! ## 1. A transverse plaquette at the far plane is still a slab observable
 
-DERIVED throughout: `4` is the dimension and the extent, `3` is `SU(3)`'s rank and the Clay aperture,
-`(0,1)` the plaquette plane and `2` the lag axis — all `WilsonBridge.corrClay`'s own. `m = 2` is half
-the extent and `a = 0` the level origin. No magnitude is chosen. -/
+DERIVED throughout this module: `4` is the dimension and the extent, `3` is `SU(3)`'s rank and the
+Clay aperture, `(0, 1)` is the plaquette plane and `2` the lag axis — all `WilsonBridge.corrClay`'s
+own. `m = 2` is half the extent and `a = 0` the level origin. No magnitude is chosen. -/
 
-/-- **EVERY LINK OF A TRANSVERSE PLAQUETTE AT LEVEL `≤ m` LIES IN `blkS ∪ blkR`.**
+/-- Every link of a plaquette spanning two directions transverse to the axis `τ`, at a site with
+`lv a (x τ) ≤ m`, lies in `blkS τ a m ∪ blkR τ a m`. The hypotheses are `μ ≠ τ` and `ν ≠ τ`, so the
+plaquette does not step along the axis: `ReflectPositive.bd_link_dir_ne` makes each boundary link
+transverse and `bd_link_tau_coord` puts it at the plaquette's own lag coordinate, after which
+`ActionSplit.mem_blkS_union_blkR` admits it at every level `≤ m`.
 
-`ActionSplit.plaq_links_le` carries `lv < m` because it also covers plaquettes with one direction
-ALONG the axis, whose second link steps to the next level. A plaquette spanning two directions
-transverse to the axis does not step: all four of its links are transverse
-(`ReflectPositive.bd_link_dir_ne`) and sit at its own lag coordinate
-(`ReflectPositive.bd_link_tau_coord`), and `ActionSplit.mem_blkS_union_blkR` admits a transverse link
-at every level `≤ m`. So the far plane `lv = m` is included.
+The condition is `≤ m` rather than `< m`, so the far plane `lv = m` is included.
+`ActionSplit.plaq_links_le` carries `< m` because it also covers plaquettes with one direction along
+the axis, whose second link steps to the next level.
 
-DERIVED: `m` is the caller's half-extent; `≤ m` is `mem_blkS_union_blkR`'s own transverse condition,
-read off rather than chosen. -/
+DERIVED: no numeral appears in the statement; `m` is the caller's half-extent and `≤ m` is
+`mem_blkS_union_blkR`'s own transverse condition. -/
 theorem transverse_plaq_links_le {d n : ℕ} [NeZero n] {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ)
     (a : Fin n) (m : ℕ) (x : Site d n) (hlv : lv a (x τ) ≤ m) :
     ∀ l ∈ (bd (((μ, ν), x) : Plaq d n)).map Prod.fst, l ∈ blkS τ a m ∪ blkR τ a m := by
@@ -82,23 +93,28 @@ theorem transverse_plaq_links_le {d n : ℕ} [NeZero n] {μ ν τ : Fin d} (hμ 
 
 /-! ## 2. The Clay slab, its three vectors and its six entries -/
 
-/-- The mean plaquette energy — the centring constant, the same at every lag site
-(`ReflectPositive.EW_plaqE_lag`).
+/-- The centring constant: the Gibbs expectation `EW 3 β` of the `(0,1)`-plaquette energy at lag
+site `0`. `EW_plaqE_pl` states that the same value is obtained at every lag site, so the choice of
+site `0` here fixes no extra content.
 
 DERIVED: `3` is `SU(3)`'s rank; `0` is the base lag site. -/
 noncomputable def mean (β : ℝ) : ℝ := EW 3 β (plaqE 3 (MassGap.LagOneDominates.pl 0))
 
-/-- The centred plaquette energy at lag site `s`.
+/-- The centred `(0,1)`-plaquette energy at lag site `s`, as a function of a link configuration:
+`plaqE 3 (pl s) U - mean β`. Membership in the slab algebra is `cObs_mem`, not part of this
+definition.
 
 DERIVED: `3` is `SU(3)`'s rank and `4` the dimension and extent, both `corrClay`'s own; `s` is the
 caller's lag site. -/
 noncomputable def cObs (β : ℝ) (s : Fin 4) : (Link 4 4 → MassGap.SUN.SU 3) → ℝ :=
   fun U => plaqE 3 (MassGap.LagOneDominates.pl s) U - mean β
 
-/-- **THE ONE-POINT FUNCTION IS THE SAME AT EVERY LAG SITE.** `ReflectPositive.EW_plaqE_lag`, which
-is reflection invariance of the Gibbs state, not translation invariance.
+/-- `EW 3 β (plaqE 3 (pl p)) = mean β` at every lag site `p : Fin 4`: the one-point function does
+not depend on the lag site. It is `ReflectPositive.EW_plaqE_lag`, which comes from reflection
+invariance of the Gibbs state rather than from translation invariance.
 
-DERIVED: `3` is `SU(3)`'s rank; `p` is the caller's lag site. -/
+DERIVED: `3` is `SU(3)`'s rank, `4` the extent the lag site ranges over; `p` is the caller's lag
+site. -/
 theorem EW_plaqE_pl (β : ℝ) (p : Fin 4) :
     EW 3 β (plaqE 3 (MassGap.LagOneDominates.pl p)) = mean β := by
   have h := MassGap.ReflectPositive.EW_plaqE_lag (d := 4) (n := 4) 3
@@ -106,13 +122,17 @@ theorem EW_plaqE_pl (β : ℝ) (p : Fin 4) :
   rw [mean, MassGap.LagOneDominates.pl_zero]
   exact h
 
-/-- **THE CENTRED OBSERVABLE AT LAG SITE `s ≤ 2` IS A SLAB OBSERVABLE.**
+/-- `cObs β s ∈ localObs (blkS 2 0 2) (blkR 2 0 2)` for every lag site `s` with `(s : ℕ) ≤ 2`. The
+three `mem_localObs` obligations are discharged by measurability of `plaqE`, the bound
+`|plaqE - mean β| ≤ 2 + |mean β|` from `plaqE_nonneg` and `plaqE_le_two`, and locality, which uses
+`transverse_plaq_links_le` at `hlv` to see that the plaquette's links lie in the union.
 
-`ReflectionStrong.plaqObs_sub_const_mem` gives sites `0` and `1`; `transverse_plaq_links_le` adds the
-far plane, site `2`. All three are needed: `y` is `F₀ + F₂`.
+The bound `s ≤ 2` admits all three sites `0`, `1`, `2` that the vectors `x = F₁` and `y = F₀ + F₂`
+use; `ReflectionStrong.plaqObs_sub_const_mem` alone would give only `s < 2`.
 
-DERIVED: `2` is the half-extent `m`, so `s ≤ 2` is `mem_blkS_union_blkR`'s transverse condition at
-this geometry, not a chosen cut. -/
+DERIVED: `4` is the extent the lag site ranges over; `2` is the lag axis, the half-extent `m`, and
+hence the bound `s ≤ 2`, which is `mem_blkS_union_blkR`'s transverse condition at this geometry
+rather than a chosen cut; `0` is the level origin. -/
 theorem cObs_mem (β : ℝ) {s : Fin 4} (hs : (s : ℕ) ≤ 2) :
     cObs β s ∈ localObs (blkS (2 : Fin 4) (0 : Fin 4) 2) (blkR (2 : Fin 4) (0 : Fin 4) 2) := by
   have hlv : lv (0 : Fin 4) ((MassGap.LagOneDominates.pl s).2 (2 : Fin 4)) ≤ 2 := by
@@ -145,10 +165,14 @@ theorem cObs_mem (β : ℝ) {s : Fin 4} (hs : (s : ℕ) ≤ 2) :
         MassGap.LagOneDominates.plane_ne.1 MassGap.LagOneDominates.plane_ne.2
         (0 : Fin 4) 2 _ hlv l hl))]
 
-/-- **THE SLAB REFLECTION FORM AT THE CLAY GEOMETRY.** `ReflectionStrong.wilsonGibbsReflForm` at
-`τ = 2`, `a = 0`, `m = 2`, `n = 4` — reflection constant `a + a = 0`, the site reflection `s ↦ −s`.
+/-- The slab reflection form at the Clay geometry: `ReflectionStrong.wilsonGibbsReflForm` with
+`N = 3`, `d = 4`, `n = 4`, axis `τ = 2`, level origin `a = 0` and half-extent `m = 2`. The
+reflection constant is `a + a = 0`, so the induced action on lag sites is `s ↦ -s`.
 
-DERIVED: `4 = 2 · 2` is the extent and its half; `0` is the level origin. -/
+Its `form_nonneg` field holds at every real `β`; no sign condition on the coupling enters here.
+
+DERIVED: `3` is `SU(3)`'s rank; `4 = 2 * 2` is the extent and its half; `2` is also the lag axis;
+`0` is the level origin. -/
 noncomputable def RF (β : ℝ) :
     MassGap.Transfer.ReflForm
       ↥(localObs (Ω := MassGap.SUN.SU 3)
@@ -156,11 +180,17 @@ noncomputable def RF (β : ℝ) :
   wilsonGibbsReflForm (N := 3) (d := 4) (n := 4) (by norm_num) (2 : Fin 4) (0 : Fin 4) 2
     (by norm_num) (by norm_num) β
 
-/-- **THE REFLECTION FOLDS A TWO-POINT FUNCTION.** `Reflect.expect_reflect_invariant` at constant
-`c`, which sends lag site `s` to `c − s`; the general form of `LagOneDominates.EW_pair_fold`.
+/-- The two-point function is invariant under the lag reflection at any constant `c : Fin 4`:
+`EW 3 β (plaqE(pl (c - s)) * plaqE(pl (c - t))) = EW 3 β (plaqE(pl s) * plaqE(pl t))`. It is
+`Reflect.expect_reflect_invariant` together with
+`LagOneDominates.plaqE_siteAtHyper_reflConf`, which identifies the reflected plaquette at site `s`
+with the plaquette at site `c - s`.
 
-DERIVED: `3` is `SU(3)`'s rank, `4` the dimension and extent, `2` the lag axis — all
-`corrClay`'s own. `c`, `s` and `t` are the caller's and no magnitude is chosen. -/
+`c`, `s` and `t` are all arguments; `LagOneDominates.EW_pair_fold` is the instance at a fixed
+constant.
+
+DERIVED: `3` is `SU(3)`'s rank, `4` the dimension and extent, `2` the lag axis — all `corrClay`'s
+own. -/
 theorem EW_fold (β : ℝ) (c s t : Fin 4) :
     EW 3 β (fun U => plaqE 3 (MassGap.LagOneDominates.pl (c - s)) U
         * plaqE 3 (MassGap.LagOneDominates.pl (c - t)) U)
@@ -183,10 +213,15 @@ theorem EW_fold (β : ℝ) (c s t : Fin 4) :
         MassGap.LagOneDominates.plane_ne.1 MassGap.LagOneDominates.plane_ne.2]
   exact (congrArg (EW 3 β) hpt).trans h
 
-/-- **AN ENTRY OF THE GRAM MATRIX.** The form pairs `F_s` with `F_t` as the centred two-point
-function at lag sites `−s` and `t`, because the reflection at constant `0` sends `s` to `−s`.
+/-- A general entry of the Gram matrix: for lag sites `s`, `t` with `(s : ℕ) ≤ 2` and `(t : ℕ) ≤ 2`,
+`(RF β).form ⟨cObs β s, _⟩ ⟨cObs β t, _⟩` equals the two-point function at sites `0 - s` and `t`
+minus `mean β * mean β`. The reflection at constant `0` sends `s` to `-s`, which is where the first
+argument acquires its sign; `ReflectPositive.EW_pair_sub_const` and `EW_plaqE_pl` expand the centring.
 
-DERIVED: `0` is the reflection constant `a + a` at `a = 0`; `3` is `SU(3)`'s rank. -/
+The entries `entry_one_one` through `entry_two_two` are the instances of this at the specific sites.
+
+DERIVED: `4` is the extent the lag sites range over; `2` bounds them, being the half-extent; `0` is
+the reflection constant `a + a` at `a = 0`; `3` is `SU(3)`'s rank. -/
 theorem RF_entry (β : ℝ) {s t : Fin 4} (hs : (s : ℕ) ≤ 2) (ht : (t : ℕ) ≤ 2) :
     (RF β).form ⟨cObs β s, cObs_mem β hs⟩ ⟨cObs β t, cObs_mem β ht⟩
       = EW 3 β (fun U => plaqE 3 (MassGap.LagOneDominates.pl (0 - s)) U
@@ -210,9 +245,11 @@ theorem RF_entry (β : ℝ) {s t : Fin 4} (hs : (s : ℕ) ≤ 2) (ht : (t : ℕ)
 
 /-! ## 3. The six entries, in the correlation's own terms -/
 
-/-- `⟨F₁, F₁⟩ = ρ(2)` — the reflection carries lag site `1` to `3`, and `⟨F₃F₁⟩` folds onto `⟨F₀F₂⟩`.
+/-- `⟨F₁, F₁⟩ = wilsonCorrAt 3 β 2`. The reflection carries lag site `1` to `3`, and `EW_fold` at
+constant `3` folds `⟨F₃ F₁⟩` onto `⟨F₀ F₂⟩`, which `LagOneDominates.wilsonCorrAt_eq` identifies with
+the correlation at lag `2`.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: `3` is the Clay aperture; the remaining numerals `1`, `2` are lag indices. -/
 theorem entry_one_one (β : ℝ) :
     (RF β).form ⟨cObs β 1, cObs_mem β (by norm_num)⟩ ⟨cObs β 1, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 2 := by
@@ -224,10 +261,11 @@ theorem entry_one_one (β : ℝ) :
   rw [e1, e2] at hfold
   rw [h01, hfold, MassGap.LagOneDominates.wilsonCorrAt_eq β 2, mean]
 
-/-- `⟨F₁, F₀⟩ = ρ(1)` — `⟨F₃F₀⟩` folds onto `⟨F₀F₃⟩`, and `ρ(3) = ρ(1)`
-(`SpectralFour.wilson_lag_three`).
+/-- `⟨F₁, F₀⟩ = wilsonCorrAt 3 β 1`. `⟨F₃ F₀⟩` folds onto `⟨F₀ F₃⟩`, which is the correlation at lag
+`3`, and `SpectralFour.wilson_lag_three` gives `ρ(3) = ρ(1)` at extent four.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: the first `3` is the Clay aperture; the remaining numerals `0`, `1`, `3` are lag
+indices. -/
 theorem entry_one_zero (β : ℝ) :
     (RF β).form ⟨cObs β 1, cObs_mem β (by norm_num)⟩ ⟨cObs β 0, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 1 := by
@@ -240,9 +278,10 @@ theorem entry_one_zero (β : ℝ) :
   rw [h01, hfold, ← MassGap.SpectralFour.wilson_lag_three β,
     MassGap.LagOneDominates.wilsonCorrAt_eq β 3, mean]
 
-/-- `⟨F₁, F₂⟩ = ρ(1)` — `⟨F₃F₂⟩` folds onto `⟨F₀F₁⟩`.
+/-- `⟨F₁, F₂⟩ = wilsonCorrAt 3 β 1`. `⟨F₃ F₂⟩` folds onto `⟨F₀ F₁⟩` under `EW_fold` at constant `3`,
+which is the correlation at lag `1`.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: `3` is the Clay aperture; the remaining numerals `1`, `2` are lag indices. -/
 theorem entry_one_two (β : ℝ) :
     (RF β).form ⟨cObs β 1, cObs_mem β (by norm_num)⟩ ⟨cObs β 2, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 1 := by
@@ -254,10 +293,11 @@ theorem entry_one_two (β : ℝ) :
   rw [e1, e2] at hfold
   rw [h01, hfold, MassGap.LagOneDominates.wilsonCorrAt_eq β 1, mean]
 
-/-- `⟨F₀, F₀⟩ = ρ(0)` — lag site `0` is fixed by the reflection, so this is the plaquette-energy
-variance.
+/-- `⟨F₀, F₀⟩ = wilsonCorrAt 3 β 0`. Lag site `0` is fixed by the reflection, so `0 - 0 = 0` and no
+fold is needed; the entry is the centred plaquette-energy variance, which is the correlation at lag
+`0`.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: `3` is the Clay aperture; the remaining `0`s are lag indices. -/
 theorem entry_zero_zero (β : ℝ) :
     (RF β).form ⟨cObs β 0, cObs_mem β (by norm_num)⟩ ⟨cObs β 0, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 0 := by
@@ -265,9 +305,10 @@ theorem entry_zero_zero (β : ℝ) :
   have h00 : (0 : Fin 4) - 0 = 0 := by decide
   rw [h00, MassGap.LagOneDominates.wilsonCorrAt_eq β 0, mean]
 
-/-- `⟨F₀, F₂⟩ = ρ(2)` — both lag sites are fixed by the reflection.
+/-- `⟨F₀, F₂⟩ = wilsonCorrAt 3 β 2`. Lag site `0` is fixed by the reflection, so `0 - 0 = 0` and the
+entry is the two-point function at sites `0` and `2`, the correlation at lag `2`.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: `3` is the Clay aperture; the remaining numerals `0`, `2` are lag indices. -/
 theorem entry_zero_two (β : ℝ) :
     (RF β).form ⟨cObs β 0, cObs_mem β (by norm_num)⟩ ⟨cObs β 2, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 2 := by
@@ -275,10 +316,10 @@ theorem entry_zero_two (β : ℝ) :
   have h00 : (0 : Fin 4) - 0 = 0 := by decide
   rw [h00, MassGap.LagOneDominates.wilsonCorrAt_eq β 2, mean]
 
-/-- `⟨F₂, F₂⟩ = ρ(0)` — lag site `2` is the OTHER fixed site of the reflection, so this is again the
-variance; `⟨F₂F₂⟩` folds onto `⟨F₀F₀⟩`.
+/-- `⟨F₂, F₂⟩ = wilsonCorrAt 3 β 0`. Site `2` is the second fixed site of the reflection, `0 - 2 = 2`
+in `Fin 4`, and `EW_fold` at constant `2` folds `⟨F₂ F₂⟩` onto `⟨F₀ F₀⟩`, the correlation at lag `0`.
 
-DERIVED: the numerals are lag indices. -/
+DERIVED: `3` is the Clay aperture; the remaining numerals `0`, `2` are lag indices. -/
 theorem entry_two_two (β : ℝ) :
     (RF β).form ⟨cObs β 2, cObs_mem β (by norm_num)⟩ ⟨cObs β 2, cObs_mem β (by norm_num)⟩
       = MassGap.wilsonCorrAt 3 β 0 := by
@@ -291,25 +332,25 @@ theorem entry_two_two (β : ℝ) :
 
 /-! ## 4. Cauchy–Schwarz, and the quadratic -/
 
-/-- **THE QUADRATIC, AT EVERY REAL COUPLING.**
+/-- `2 * ρ(1)^2 ≤ ρ(2)^2 + ρ(0) * ρ(2)` at every real `β`, where `ρ(d) = wilsonCorrAt 3 β d`.
 
-    2·ρ(1)² ≤ ρ(2)² + ρ(0)·ρ(2)
+It is `Transfer.ReflForm.cauchy_schwarz` on `RF β` at `x = F₁` and `y = F₀ + F₂`. Bilinearity gives
+`⟨x, y⟩ = 2ρ(1)` and `⟨y, y⟩ = 2ρ(0) + 2ρ(2)` from `entry_one_zero`, `entry_one_two`,
+`entry_zero_zero`, `entry_zero_two` and `entry_two_two`, and `⟨x, x⟩ = ρ(2)` is `entry_one_one`; the
+Cauchy–Schwarz inequality then reads `4ρ(1)^2 ≤ ρ(2)(2ρ(0) + 2ρ(2))`, which `nlinarith` rearranges.
 
-is `Transfer.ReflForm.cauchy_schwarz` applied to `x = F₁` and `y = F₀ + F₂` in the slab algebra of
-the site reflection at constant `0`. The form's `form_nonneg` — which is what Cauchy–Schwarz consumes
-— is `ReflectionStrong.wilsonGibbsReflForm`'s, and carries NO sign condition on `β`.
+No hypothesis on `β` is required: what Cauchy–Schwarz consumes is the `form_nonneg` field of
+`ReflectionStrong.wilsonGibbsReflForm`, which holds at every real coupling.
 
-This is `SpectralFour.FourRepresentable`'s fourth conjunct, which
-`SpectralFour.tripleFacts_not_quadratic` shows does not follow from `TailRatio.TripleFacts`, and
-which `SpectralFour.missing_inequalities_independent` shows does not follow from `ρ(2) ≤ ρ(1)`
-either.
+This is the fourth conjunct of `SpectralFour.FourRepresentable`.
+`SpectralFour.tripleFacts_not_quadratic` shows it does not follow from `TailRatio.TripleFacts`, and
+`SpectralFour.missing_inequalities_independent` shows it does not follow from `ρ(2) ≤ ρ(1)`. It also
+does not follow from `ρ(1)^2 ≤ ρ(0)ρ(2)` together with `ρ(2) ≤ ρ(1)`, which give only
+`2ρ(1)^2 ≤ 2ρ(0)ρ(2)`, since `ρ(0)ρ(2) ≤ ρ(2)^2` does not hold in general.
 
-It is also not a consequence of the two facts now available beside it: `ρ(1)² ≤ ρ(0)ρ(2)` together
-with `ρ(2) ≤ ρ(1)` gives only `2ρ(1)² ≤ 2ρ(0)ρ(2)`, and `ρ(0)ρ(2) ≤ ρ(2)²` is false in general.
-
-DERIVED: `2` in `2ρ(1)²` is `FourRepresentable`'s own coefficient, and it arrives here as the number
-of terms in `y = F₀ + F₂` — the two fixed lag sites of the reflection; the exponent is a square. `0`,
-`1`, `2` are lag indices and `3` is the Clay aperture. -/
+DERIVED: the coefficient `2` is `FourRepresentable`'s own, arriving here as the number of terms in
+`y = F₀ + F₂`, the two fixed lag sites of the reflection; the exponents `2` are squares; `0`, `1`
+and `2` are lag indices; `3` is the Clay aperture. -/
 theorem wilson_quadratic (β : ℝ) :
     2 * MassGap.wilsonCorrAt 3 β 1 ^ 2
       ≤ MassGap.wilsonCorrAt 3 β 2 ^ 2
@@ -338,22 +379,22 @@ theorem wilson_quadratic (β : ℝ) :
   rw [hxy, hxx, hyy] at hcs
   nlinarith [hcs]
 
-/-- **`Complete.WilsonSpectral 3 β`, AT EVERY NONNEGATIVE COUPLING, WITH NO HYPOTHESIS LEFT.**
+/-- `MassGap.WilsonSpectral 3 β` at every `β` with `0 ≤ β`. It is
+`LinkGram.wilsonSpectral_of_quadratic` applied to `hβ` and `wilson_quadratic β`.
 
-All four conjuncts of `SpectralFour.FourRepresentable` now hold of the Wilson triple:
+The four conjuncts of `SpectralFour.FourRepresentable` that `SpectralFour.wilsonSpectral_iff`
+identifies with `WilsonSpectral 3 β` are supplied as follows: `0 ≤ ρ(0)` and `0 ≤ ρ(2)` by
+`TailRatio.triple_wilsonCorrAt`; `ρ(2) ≤ ρ(1)` by `LinkGram.wilson_lag_two_le_lag_one`, from
+link-reflection positivity for a two-term half-space observable; and
+`2ρ(1)^2 ≤ ρ(2)^2 + ρ(0)ρ(2)` by `wilson_quadratic`.
 
-* `0 ≤ ρ(0)` and `0 ≤ ρ(2)` — `TailRatio.triple_wilsonCorrAt`;
-* `ρ(2) ≤ ρ(1)` — `LinkGram.wilson_lag_two_le_lag_one`, link-reflection positivity for a two-term
-  half-space observable;
-* `2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)` — `wilson_quadratic` above, Cauchy–Schwarz in the slab form.
+The hypothesis `0 ≤ β` is consumed only by the link-reflection conjunct.
+`OddLagSplit.negctl_odd_discharge_needs_nonneg_coupling` is an iff stating that the `SU(3)` cross
+kernel that argument integrates is positive semidefinite exactly on `0 ≤ β`, so that conjunct's
+proof is unavailable at negative coupling; it makes no claim about `ρ(2) ≤ ρ(1)` there.
 
-`SpectralFour.wilsonSpectral_iff` makes those four together equivalent to `WilsonSpectral 3 β`, so
-this is the whole statement. `0 ≤ β` is consumed only by the link-reflection half, and
-`OddLagSplit.negctl_odd_discharge_needs_nonneg_coupling` is what stands behind it: an IFF saying the
-SU(3) cross kernel that argument integrates is positive semidefinite exactly on `0 ≤ β`. That refutes
-the ROUTE at negative coupling; it does not say `ρ(2) ≤ ρ(1)` fails there.
-
-DERIVED: `3` is the Clay aperture; `0 ≤ β` is the cross kernel's own sign condition. -/
+DERIVED: `3` is the Clay aperture; `0` is the lower end of the coupling range, the cross kernel's
+own sign condition. -/
 theorem wilsonSpectral {β : ℝ} (hβ : 0 ≤ β) : MassGap.WilsonSpectral 3 β :=
   MassGap.LinkGram.wilsonSpectral_of_quadratic hβ (wilson_quadratic β)
 

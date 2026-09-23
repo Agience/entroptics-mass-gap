@@ -1,60 +1,55 @@
 import MassGap.CellCouple
 
 /-!
-# MassGap.LocalGap — the Knabe local-gap criterion, its derived threshold, and a saturating control
+# MassGap.LocalGap — the Knabe local-gap criterion, its threshold, and a saturating control
 
-## What this module is for
+Three groups of statements about a nearest-neighbour chain of Hermitian idempotents indexed by
+`ZMod L`, acting on `Fin N → ℝ`.
 
-`CellCouple` closes the operator-norm route: the residual between a coupled chain Hamiltonian and a
-product reference is EXTENSIVE in the bond count, so a fixed budget `μ/2` admits only finitely many
-volumes. The surviving route is the local-gap (Knabe / Gosset–Mozgunov) criterion, where the bound on
-the bulk gap is produced by a window of FIXED size and therefore carries no bond count at all.
+## The criterion
 
-`CellSpectrum` already carries the abstract Gosset–Mozgunov assembly for the plain-window chain
-(`gm_eq23_c1`, `gm_gap_c1`). What it does NOT carry is the step that makes it the Knabe criterion:
-`gm_gap_c1` takes the per-window bound as a bare hypothesis `hlem4`. This module supplies it from the
-window's own spectrum, states the criterion in its canonical form, derives the threshold instead of
-choosing it, and exhibits a family that saturates the threshold exactly.
+`win h m k` is the window `∑ j ∈ Finset.range m, (1 : ℝ) • h (k + j)`, the `m` consecutive bond terms
+starting at bond `k`. `knabe_chain_gap` states: if every bond term is a Hermitian idempotent, every
+far-separated pair sum `∑ b, h b * h (b + δ)` with `δ ∉ {0, 1, -1}` is positive semidefinite,
+`2 ≤ m`, `2 * m ≤ L`, and every window satisfies `ε * ⟪x, W x⟫ ≤ ⟪W x, W x⟫`, then every positive
+eigenvalue of `H = ∑ b, h b` is at least `(m * ε - 1) / (m - 1)`. The bound does not mention `L`.
+`knabe_chain_gap_of_local_spectrum` takes the local input in spectral form — every window eigenvalue
+is `0` or at least `ε` — through `operator_sq_ge_of_gap`, with positive semidefiniteness of the
+windows supplied by `win_posSemidef`.
 
-## The three statements
+`knabe_bound_pos_iff` locates the zero of that bound: `0 < (m * ε - 1) / (m - 1)` if and only if
+`1 / m < ε`. `knabe_gap_volume_independent` packages the criterion as a single `g > 0` serving every
+`L` and every `N`.
 
-* `knabe_chain_gap` / `knabe_chain_gap_of_local_spectrum` — the criterion. A nearest-neighbour chain of Hermitian idempotents
-  nearest-neighbour projector chain on `ZMod L` whose every `m`-bond window has spectrum in
-  `{0} ∪ [ε,∞)` has every positive eigenvalue of `H = ∑ h_b` bounded below by `(m·ε − 1)/(m − 1)`.
-  `L` does not occur in that bound, which is the whole point: `knabe_gap_volume_independent` says one
-  constant serves every volume and every dimension of the state space at once.
+`sum_win`, `sum_eq_zero_of_win_eq_zero` and `no_positive_eigenvalue_of_win_eq_zero` close the
+degenerate case: the windows sum to `m • H`, so windows that all vanish force `H = 0` and no
+eigenvalue is positive. `knabe_witness` exhibits a family meeting every hypothesis at `ε = 1`:
+`siteProj L b` is the rank-one projector onto the basis direction `e_{b.val}` in `ℝ^(L+1)`, distinct
+bonds are orthogonal, and every window is itself a projector (`win_siteProj_idem`).
 
-* `knabe_bound_pos_iff` — the threshold is DERIVED. `(m·ε − 1)/(m − 1) > 0` holds exactly when
-  `ε > 1/m`. The number `1/m` is the zero of the bound, not a chosen constant; `m` is the window size
-  and is the only parameter.
+## The control
 
-* `laplace_never_clears_threshold` / `laplace_no_uniform_gap` — the control. The discrete-Laplacian
-  chain (bond `b` carries the rank-one projector onto `e_b − e_{b+1}`) is a frustration-free projector
-  chain meeting every structural hypothesis, and on it the linear ramp `r i = i` forces `ε ≤ 1/m` on
-  every window: the criterion's hypothesis is unsatisfiable there at every window size. The same ramp
-  applied to the whole chain forces any bulk gap to satisfy `g ≤ 1/L`, so no positive constant serves
-  every volume. The threshold is exactly the line between the two.
+`dproj L b` is the rank-one projector onto `dvec L b = e_{b.val} - e_{b.val+1}`, so
+`Hlap L = ∑ b, dproj L b` is half the path-graph Laplacian on `L + 1` sites.
+`laplace_meets_structure` records that it satisfies every structural hypothesis of the criterion, and
+`laplace_ground_state` that the constant vector is a common zero of every bond term.
 
-## What the ramp computes
+`ramp L i = i` is the linear ramp. For a block of `n` consecutive bonds, `block_sum` telescopes the
+bond vectors to `e_0 - e_n` and `blockOp_ramp` gives `blockOp L n *ᵥ ramp L = -(1/2) • (e_0 - e_n)`,
+so `⟪B r, B r⟫ = 1/2` while `⟪r, B r⟫ = n / 2`. Reading `B ^ 2 ⪰ g * B` at `r` therefore gives
+`g ≤ 1 / n` (`block_ramp_bound`). At `n = m` that is `laplace_window_gap_le` and
+`laplace_never_clears_threshold`; at `n = L` it is `laplace_chain_gap_le`, and
+`laplace_no_uniform_gap` follows. `laplace_local_spectrum_le` and `laplace_spectrum_le` restate the
+two in the spectral currency of `knabe_chain_gap_of_local_spectrum`.
 
-For a block of `n` consecutive bonds, `B = ∑_{j<n} h_j` acts on `r i = i` as a discrete second
-difference, which vanishes on a linear function except at the two ends of the block. Concretely
-`B r = −(1/2)(e_0 − e_n)`, so `⟨Br, Br⟩ = 1/2` while `⟨r, Br⟩ = n/2`. The operator inequality
-`B² ⪰ ε B` read at `r` is then `ε·(n/2) ≤ 1/2`, i.e. `ε ≤ 1/n`. At `n = m` that is the window bound;
-at `n = L` it is the bulk bound. One computation, both halves, and it lands on `1/n` — the same number
-`knabe_bound_pos_iff` produces from the criterion. `laplace_ground_state` records that this chain is
-frustration-free, so `1/L` really is a bound on its gap and not an artifact of a missing zero mode.
+## Scope
 
-## The structural hypothesis, and whether Yang–Mills meets it
-
-Every theorem here is about a chain of PROJECTORS (`h b * h b = h b`) whose far-separated terms
-commute. Frustration-freeness is a restriction on the physics and not a normalisation: it says the
-ground state minimises each local term separately. `Transfer.TransferData` builds the Yang–Mills
-object as a self-adjoint contraction on a GNS quotient — a positive contraction, not a sum of
-projectors — and the Kogut–Susskind Hamiltonian `(g²/2)∑E² − (1/g²)∑Re tr U_p` has an electric and a
-magnetic term that do not commute, so its ground state does not minimise both. Nothing in this module
-supplies that presentation, and the criterion does not apply to the physical transfer operator until
-something does.
+Every theorem here is about a chain of Hermitian idempotents whose far-separated terms commute.
+Frustration-freeness — the ground state minimising each local term separately — is a restriction on
+the family, not a normalisation. `Transfer.TransferData` carries a self-adjoint contraction on a GNS
+quotient rather than a sum of projectors, and the Kogut–Susskind Hamiltonian
+`(g²/2) ∑ E² - (1/g²) ∑ Re tr U_p` has an electric and a magnetic term that do not commute. Nothing
+here supplies a projector-chain presentation of either.
 -/
 
 namespace MassGap.LocalGap
@@ -63,48 +58,70 @@ open scoped Matrix
 open Matrix
 open MassGap.CellEnclosure
 
-/-! ### The Knabe window -/
+/-! ### The window, and its elementary properties -/
 
-/-- The Knabe window: the `m` consecutive bond terms starting at bond `k`. Written with the explicit
-`(1 : ℝ) •` so that it is the same term as the deformed window of `gm_gap_c1` at unit weights.
+/-- `∑ j ∈ Finset.range m, (1 : ℝ) • h (k + j)`: the `m` consecutive bond terms starting at bond `k`.
+The scalar is written explicitly so that this is the same term as the deformed window of
+`CellSpectrum.gm_gap_c1` at unit weights.
 
-DERIVED: the weight `1` is the Gosset–Mozgunov deformation coefficient `c_j` at its undeformed value.
-It is not a tuning knob here — it is what makes the window autocorrelation `A_x = m − x`, which is the
-only input `hnn_c1` accepts, and it is what turns the bound of `gm_gap_c1` into `(m·ε − 1)/(m − 1)`. A
-different weight would be a different criterion with a different threshold. -/
+Scope: the sum is over `Finset.range m` with the index added in `ZMod L`, so it wraps when
+`m` exceeds `L`.
+
+DERIVED: no numeral appears in the type. In the body, `1` is the Gosset–Mozgunov deformation
+coefficient at its undeformed value; it is what makes the window autocorrelation `A_x = m - x`, the
+input `CellSpectrum.hnn_c1` accepts, and what turns `gm_gap_c1`'s bound into `(m * ε - 1)/(m - 1)`. -/
 noncomputable def win {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ) (m : ℕ)
     (k : ZMod L) : Matrix (Fin N) (Fin N) ℝ :=
   ∑ j ∈ Finset.range m, (1 : ℝ) • h (k + (j : ZMod L))
 
-/-- A Hermitian idempotent is positive semidefinite: `P = Pᴴ P`. -/
+/-- A Hermitian idempotent is positive semidefinite. `Matrix.posSemidef_conjTranspose_mul_self`
+gives `Pᴴ * P` positive semidefinite, and the two hypotheses rewrite that to `P`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem proj_posSemidef {N : ℕ} {P : Matrix (Fin N) (Fin N) ℝ} (hP : P.IsHermitian)
     (hPi : P * P = P) : P.PosSemidef := by
   have hs := Matrix.posSemidef_conjTranspose_mul_self P
   rwa [hP.eq, hPi] at hs
 
-/-- A window of Hermitian bond terms is Hermitian. -/
+/-- `(win h m k).IsHermitian` when every bond term is Hermitian: a finite sum of Hermitian matrices,
+with the unit scalar removed by `one_smul`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem win_isHermitian {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (m : ℕ) (k : ZMod L) : (win h m k).IsHermitian :=
   isHermitian_sum _ _ (fun j _ => by rw [one_smul]; exact hherm _)
 
-/-- A window of projectors is positive semidefinite, so its eigenvalues are nonnegative without any
-extra hypothesis: idempotence and Hermiticity already supply the `hpsd` input of `operator_sq_ge_of_gap`. -/
+/-- `(win h m k).PosSemidef` when every bond term is a Hermitian idempotent: a finite sum of positive
+semidefinite matrices by `proj_posSemidef`. Its eigenvalues are therefore nonnegative, which is the
+`hpsd` input `CellSpectrum.operator_sq_ge_of_gap` takes, so that hypothesis need not be assumed
+separately.
+
+DERIVED: no numeral appears in the statement. -/
 theorem win_posSemidef {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (hproj : ∀ b, h b * h b = h b) (m : ℕ) (k : ZMod L) :
     (win h m k).PosSemidef :=
   Matrix.posSemidef_sum _ (fun j _ => by
     rw [one_smul]; exact proj_posSemidef (hherm _) (hproj _))
 
-/-! ### The criterion -/
+/-! ### The criterion, its threshold, and the degenerate case -/
 
-/-- **Knabe local-gap criterion, operator-inequality form (foundational).** For a chain of Hermitian idempotents — frustration-freeness is NOT among the hypotheses —
-nearest-neighbour projector chain on `ZMod L` whose far-separated pair sums are positive semidefinite,
-if every `m`-bond window satisfies the operator inequality `W² ⪰ ε W`, then every positive eigenvalue
-`lam` of `H = ∑_b h_b` obeys `lam ≥ (m·ε − 1)/(m − 1)`.
+/-- For a chain `h : ZMod L → Matrix (Fin N) (Fin N) ℝ` of Hermitian idempotents whose far-separated
+pair sums `∑ b, h b * h (b + δ)` are positive semidefinite for every `δ` outside `{0, 1, -1}`, with
+`2 ≤ m` and `2 * m ≤ L`: if every `m`-bond window satisfies
+`ε * (x ⬝ᵥ (W *ᵥ x)) ≤ (W *ᵥ x) ⬝ᵥ (W *ᵥ x)` at every `x`, then every eigenvalue `lam > 0` of
+`∑ b, h b` satisfies `(m * ε - 1) / (m - 1) ≤ lam`.
 
-The bound does not mention `L`. That is the property the operator-norm route of `CellCouple` cannot
-have: there the residual carried a bond count, here the constant is produced by a window of fixed
-size `m` and the chain length only has to be long enough (`2m ≤ L`) for the windows to fit twice. -/
+The proof is `CellSpectrum.gm_gap_c1` at unit weights, with the bound rewritten by `field_simp`.
+
+Scope: frustration-freeness is not among the hypotheses. The bound does not mention `L`; the chain
+length enters only through `2 * m ≤ L`, which makes the windows fit twice. `ε` is not assumed
+positive, and the conclusion is about positive eigenvalues only.
+
+DERIVED: `2` occurs twice, as the lower bound on the window size `m` and as the factor in
+`2 * m ≤ L`. `0` occurs three times — the offset excluded in `hfar`, the value `ψ ⬝ᵥ ψ` is assumed to
+differ from, and the strict lower bound on the eigenvalue. `1` occurs four times — the two offsets
+`1` and `-1` excluded in `hfar`, and the `- 1` in the numerator and in the denominator of the bound,
+both of which come from `gm_gap_c1`'s own shape. -/
 theorem knabe_chain_gap {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (hproj : ∀ b, h b * h b = h b)
     (m : ℕ) (hm2 : 2 ≤ m) (hmL : 2 * m ≤ L)
@@ -125,11 +142,17 @@ theorem knabe_chain_gap {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (F
   rw [hrw]
   exact h0
 
-/-- **Knabe local-gap criterion, spectral form (foundational).** The same statement with the local
-input in the shape a finite-size diagonalisation actually produces: every eigenvalue of every window
-is `0` or at least `ε`. Positive semidefiniteness of the windows is not assumed — it follows from the
-bond terms being projectors (`win_posSemidef`) — and `operator_sq_ge_of_gap` turns the spectral
-condition into the operator inequality the assembly consumes. -/
+/-- `knabe_chain_gap` with the local hypothesis in spectral form: every eigenvalue of every `m`-bond
+window is `0` or at least `ε`. `win_posSemidef` supplies the nonnegativity and
+`CellSpectrum.operator_sq_ge_of_gap` converts the spectral condition to the operator inequality.
+
+Scope: as `knabe_chain_gap`; the window's positive semidefiniteness is derived from the bond terms
+being Hermitian idempotents rather than assumed.
+
+DERIVED: `2` occurs twice, as the lower bound on `m` and as the factor in `2 * m ≤ L`. `0` occurs
+four times — the offset excluded in `hfar`, the eigenvalue alternative in `hgap`, the value `ψ ⬝ᵥ ψ`
+differs from, and the strict lower bound on `lam`. `1` occurs four times — the offsets `1` and `-1`
+in `hfar`, and the `- 1` in the numerator and denominator of the bound. -/
 theorem knabe_chain_gap_of_local_spectrum {N L : ℕ} [NeZero L]
     (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (hherm : ∀ b, (h b).IsHermitian) (hproj : ∀ b, h b * h b = h b)
@@ -146,9 +169,14 @@ theorem knabe_chain_gap_of_local_spectrum {N L : ℕ} [NeZero L]
   exact operator_sq_ge_of_gap (win_isHermitian h hherm m k)
     (fun i => (win_posSemidef h hherm hproj m k).eigenvalues_nonneg i) (hgap k)
 
-/-- **The threshold is derived, not chosen (foundational).** The bound `(m·ε − 1)/(m − 1)` produced by
-`knabe_chain_gap` is strictly positive exactly when the local gap exceeds `1/m`. Nothing selects the
-number `1/m`: it is the zero of the bound, and the only parameter is the window size `m`. -/
+/-- For `2 ≤ m`, `0 < (m * ε - 1) / (m - 1) ↔ 1 / m < ε`. The denominator is positive by `2 ≤ m`, so
+`div_pos_iff` leaves only the numerator, and `div_lt_iff₀` rearranges it.
+
+So `1 / m` is the zero of `knabe_chain_gap`'s bound, with the window size `m` the only parameter.
+
+DERIVED: `2` is the lower bound on `m`, which makes the denominator `m - 1` positive; `0` is the
+comparison point on the left; `1` occurs three times — the `- 1` in the numerator, the `- 1` in the
+denominator, and the numerator of the threshold `1 / m`. -/
 theorem knabe_bound_pos_iff (m : ℕ) (hm2 : 2 ≤ m) (ε : ℝ) :
     0 < ((m : ℝ) * ε - 1) / ((m : ℝ) - 1) ↔ 1 / (m : ℝ) < ε := by
   have hm2R : (2 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm2
@@ -165,11 +193,20 @@ theorem knabe_bound_pos_iff (m : ℕ) (hm2 : 2 ≤ m) (ε : ℝ) :
     rw [div_lt_iff₀ hm0] at hε
     nlinarith
 
-/-- **One constant for every volume (foundational).** Fix a window size `m` and a local gap `ε` above
-the threshold. Then there is a single `g > 0` — namely `(m·ε − 1)/(m − 1)` — that bounds the positive
-spectrum of EVERY chain satisfying the hypotheses, at every chain length `L` and every state-space
-dimension `N`. This is the statement the extensive residual of `CellCouple.chain_budget_fails` denies
-to the operator-norm route, and the reason a local-gap argument survives where that one does not. -/
+/-- For a window size `m ≥ 2` and a local gap `ε` with `1 / m < ε`, there is a single `g > 0` — the
+value `(m * ε - 1) / (m - 1)` — bounding every positive eigenvalue of `∑ b, h b` for EVERY chain
+satisfying the hypotheses, at every chain length `L` and every state-space dimension `N`. Positivity
+of `g` is `knabe_bound_pos_iff`; the bound is `knabe_chain_gap`.
+
+Scope: `g` is chosen before `N` and `L` are quantified, which is the content. `CellCouple`'s
+`chain_budget_fails` is the corresponding statement for the operator-norm route, where the residual
+carries a bond count.
+
+DERIVED: `2` occurs twice, as the lower bound on `m` and as the factor in `2 * m ≤ L`. `1` occurs
+three times — the numerator of the threshold `1 / m`, and the offsets `1` and `-1` excluded in the
+far-separation hypothesis. `0` occurs four times — the strict lower bound on `g`, the offset `0`
+excluded in that hypothesis, the value `ψ ⬝ᵥ ψ` differs from, and the strict lower bound on `lam`.
+The two `- 1`s of the witness bound appear in the proof, not in the statement. -/
 theorem knabe_gap_volume_independent {m : ℕ} (hm2 : 2 ≤ m) {ε : ℝ} (hthr : 1 / (m : ℝ) < ε) :
     ∃ g : ℝ, 0 < g ∧
       ∀ (N L : ℕ) [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ),
@@ -184,21 +221,26 @@ theorem knabe_gap_volume_independent {m : ℕ} (hm2 : 2 ≤ m) {ε : ℝ} (hthr 
   intro N L _ h hherm hproj hmL hfar hwin lam ψ hψ hψ0 hlam
   exact knabe_chain_gap h hherm hproj m hm2 hmL hfar hwin hψ hψ0 hlam
 
-/-! ### The statement cannot be satisfied by a degenerate window family
+/-! ### The degenerate case: vanishing windows
 
-The window hypothesis `hwin` holds for EVERY `ε` when the windows are zero, so a statement of this
-shape has to be checked against that escape. It is closed: the windows sum to `m·H`, so windows that
-all vanish force `H = 0`, and then no eigenvalue is positive and `hlam` fails. -/
+The window hypothesis holds for every `ε` when the windows are zero. The three theorems below close
+that case: the windows sum to `m • H`, so windows that all vanish force `H = 0`, and then no
+eigenvalue is positive and `knabe_chain_gap`'s hypothesis `0 < lam` cannot be met. -/
 
-/-- The windows sum to `m · H`: every bond term lies in exactly `m` of them. -/
+/-- `(∑ k : ZMod L, win h m k) = (m : ℝ) • (∑ b, h b)`: every bond term lies in exactly `m` windows.
+It is `CellSpectrum.weighted_window_sum` at unit weights, with the constant sum evaluated.
+
+DERIVED: no numeral appears in the statement. -/
 theorem sum_win {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ) (m : ℕ) :
     (∑ k : ZMod L, win h m k) = (m : ℝ) • (∑ b, h b) := by
   have hw := weighted_window_sum h m (fun _ => (1 : ℝ))
   simpa [win, Finset.sum_const, Finset.card_range, nsmul_eq_mul] using hw
 
-/-- **A vanishing window family kills the chain (foundational).** If every window is `0` then
-`H = ∑_b h_b = 0`. So the window hypothesis of `knabe_chain_gap` cannot be met vacuously by trivial
-windows while the conclusion still says anything. -/
+/-- If `0 < m` and every window `win h m k` is `0`, then `∑ b, h b = 0`. `sum_win` makes the left
+side `(m : ℝ) • ∑ b, h b`, and `m` is nonzero as a real.
+
+DERIVED: `0` occurs three times — the strict lower bound on `m`, the value every window is assumed to
+take, and the value the chain sum is shown to take. -/
 theorem sum_eq_zero_of_win_eq_zero {N L : ℕ} [NeZero L] (h : ZMod L → Matrix (Fin N) (Fin N) ℝ)
     (m : ℕ) (hm : 0 < m) (hzero : ∀ k, win h m k = 0) : (∑ b, h b) = 0 := by
   have hsum := sum_win h m
@@ -207,10 +249,15 @@ theorem sum_eq_zero_of_win_eq_zero {N L : ℕ} [NeZero L] (h : ZMod L → Matrix
   have := hsum.symm
   simpa [smul_eq_zero, hmne] using this
 
-/-- **No positive eigenvalue survives a vanishing window family (foundational).** Together with
-`sum_eq_zero_of_win_eq_zero` this is the non-triviality check: the hypothesis `0 < lam` of
-`knabe_chain_gap` is unsatisfiable exactly when the window family is degenerate, so the criterion
-never delivers a positive bound from an empty statement. -/
+/-- If `0 < m`, every window is `0`, and `(∑ b, h b) *ᵥ ψ = lam • ψ` with `ψ ⬝ᵥ ψ ≠ 0`, then
+`lam = 0`. `sum_eq_zero_of_win_eq_zero` makes the left side zero, so `lam • ψ = 0`; `ψ` is nonzero by
+`hψ0`, hence `lam` is.
+
+Together with the previous theorem this rules out satisfying `knabe_chain_gap`'s window hypothesis
+vacuously: with degenerate windows its hypothesis `0 < lam` cannot be met.
+
+DERIVED: `0` occurs four times — the strict lower bound on `m`, the value every window takes, the
+value `ψ ⬝ᵥ ψ` differs from, and the value concluded for `lam`. -/
 theorem no_positive_eigenvalue_of_win_eq_zero {N L : ℕ} [NeZero L]
     (h : ZMod L → Matrix (Fin N) (Fin N) ℝ) (m : ℕ) (hm : 0 < m) (hzero : ∀ k, win h m k = 0)
     {lam : ℝ} {ψ : Fin N → ℝ} (hψ : (∑ b, h b) *ᵥ ψ = lam • ψ) (hψ0 : ψ ⬝ᵥ ψ ≠ 0) : lam = 0 := by
@@ -224,19 +271,24 @@ theorem no_positive_eigenvalue_of_win_eq_zero {N L : ℕ} [NeZero L]
     · exact h1
   rw [hz]; simp
 
-/-- The window index type is inhabited and each window carries `m ≥ 1` terms, so the family quantified
-over in `knabe_chain_gap` is never empty. -/
+/-- `Nonempty (ZMod L)` for `L` nonzero, witnessed by `0`. The window index type of
+`knabe_chain_gap` is therefore inhabited.
+
+DERIVED: no numeral appears in the statement; the witness `0` is in the proof term. -/
 theorem win_family_nonempty {L : ℕ} [NeZero L] : Nonempty (ZMod L) :=
   ⟨0⟩
 
-/-! ### A witness above the threshold, so the criterion is not vacuous
+/-! ### A family satisfying the criterion's hypotheses
 
-`siteProj` is the chain of rank-one projectors onto distinct basis directions: bond `b` projects onto
-`e_{b.val}` in `ℝ^{L+1}`. Its bond terms are genuinely different from one another, all the structural
-hypotheses hold, every window is itself a projector (so `ε = 1` with equality), and `1 > 1/m` clears
-the threshold for every `m ≥ 2`. -/
+`siteProj L b` is the rank-one projector onto the basis direction `e_{b.val}` in `ℝ^(L+1)`. Its bond
+terms are pairwise distinct and pairwise orthogonal, all the structural hypotheses hold, every window
+is itself a projector — so the window inequality holds at `ε = 1` with equality — and `1 / m < 1` for
+every `m ≥ 2`. -/
 
-/-- Distinct residues have distinct values. -/
+/-- Distinct elements of `ZMod L` have distinct `val`s, since `ZMod.natCast_rightInverse` recovers
+each from its value.
+
+DERIVED: no numeral appears in the statement. -/
 theorem zmod_val_ne {L : ℕ} [NeZero L] {b c : ZMod L} (hbc : b ≠ c) : b.val ≠ c.val := by
   intro hv
   apply hbc
@@ -244,7 +296,11 @@ theorem zmod_val_ne {L : ℕ} [NeZero L] {b c : ZMod L} (hbc : b ≠ c) : b.val 
     _ = ((c.val : ℕ) : ZMod L) := by rw [hv]
     _ = c := ZMod.natCast_rightInverse c
 
-/-- A sum of pairwise orthogonal projectors is a projector. -/
+/-- If the `P i` for `i ∈ s` are idempotent and pairwise orthogonal (`P i * P j = 0` for `i ≠ j`),
+then `(∑ i ∈ s, P i)` is idempotent. Expanding by `Finset.sum_mul_sum`, each row collapses to its
+diagonal term.
+
+DERIVED: `0` is the value of each off-diagonal product, which is what orthogonality means here. -/
 theorem sum_proj_idem {N : ℕ} {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (P : ι → Matrix (Fin N) (Fin N) ℝ) (hidem : ∀ i ∈ s, P i * P i = P i)
     (horth : ∀ i ∈ s, ∀ j ∈ s, i ≠ j → P i * P j = 0) :
@@ -255,10 +311,14 @@ theorem sum_proj_idem {N : ℕ} {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (fun hns => absurd hi hns)]
   exact hidem i hi
 
-/-- Bond `b` of the witness chain: the rank-one projector onto the basis direction `e_{b.val}`.
+/-- The diagonal matrix on `Fin (L + 1)` with entry `1` at index `b.val` and `0` elsewhere: the
+rank-one projector onto the basis direction `e_{b.val}`. `siteProj_isHermitian`, `siteProj_idem` and
+`siteProj_orth` record that it is Hermitian, idempotent, and orthogonal to `siteProj L c` for
+`c ≠ b`.
 
-DERIVED: `0` and `1` are the only diagonal entries an idempotent diagonal matrix can carry, so they
-are forced by `siteProj_idem`, not selected. The entry is `1` exactly on the one site the bond reads. -/
+DERIVED: `1` occurs twice in the type, as the `+ 1` in the site count `Fin (L + 1)` at each index; in
+the body, `1` and `0` are the two diagonal entries an idempotent diagonal matrix can carry, with `1`
+on the single site the bond reads. -/
 noncomputable def siteProj (L : ℕ) [NeZero L] (b : ZMod L) :
     Matrix (Fin (L + 1)) (Fin (L + 1)) ℝ :=
   Matrix.diagonal (fun i => if i.val = b.val then (1 : ℝ) else 0)
@@ -286,8 +346,14 @@ theorem siteProj_orth (L : ℕ) [NeZero L] {b c : ZMod L} (hbc : b ≠ c) :
   rw [siteProj, siteProj, Matrix.diagonal_mul_diagonal, hfun]
   exact Matrix.diagonal_zero
 
-/-- Every window of the witness chain is itself a projector: the `m` bonds it covers are distinct
-residues, so the rank-one terms are pairwise orthogonal. -/
+/-- For `m ≤ L`, every window of `siteProj L` is itself idempotent. The `m` bond indices it covers
+are distinct residues — `add_left_cancel` plus `ZMod.val_natCast` under `m ≤ L` — so the rank-one
+terms are pairwise orthogonal and `sum_proj_idem` applies.
+
+Scope: `m ≤ L` is what makes the indices distinct; without it the window would revisit a bond and the
+sum would not be idempotent.
+
+DERIVED: no numeral appears in the statement. -/
 theorem win_siteProj_idem (L m : ℕ) [NeZero L] (hmL : m ≤ L) (k : ZMod L) :
     win (siteProj L) m k * win (siteProj L) m k = win (siteProj L) m k := by
   have hinj : ∀ j₁ ∈ Finset.range m, ∀ j₂ ∈ Finset.range m, j₁ ≠ j₂ →
@@ -306,7 +372,12 @@ theorem win_siteProj_idem (L m : ℕ) [NeZero L] (hmL : m ≤ L) (k : ZMod L) :
   exact sum_proj_idem _ _ (fun j _ => siteProj_idem L _)
     (fun j₁ h₁ j₂ h₂ hne => siteProj_orth L (hinj j₁ h₁ j₂ h₂ hne))
 
-/-- A symmetric projector satisfies the window operator inequality at `ε = 1`, with equality. -/
+/-- For a Hermitian idempotent `W`, `(1 : ℝ) * (x ⬝ᵥ (W *ᵥ x)) ≤ (W *ᵥ x) ⬝ᵥ (W *ᵥ x)` at every `x`,
+with equality: moving `W` across the inner product by `CellSpectrum.sadj` turns the right side into
+`x ⬝ᵥ ((W * W) *ᵥ x)`, which idempotence collapses.
+
+DERIVED: `1` is the value of `ε` at which the window inequality holds, forced by idempotence rather
+than chosen. -/
 theorem op_sq_ge_one_of_proj {N : ℕ} {W : Matrix (Fin N) (Fin N) ℝ} (hW : W.IsHermitian)
     (hWi : W * W = W) (x : Fin N → ℝ) :
     (1 : ℝ) * (x ⬝ᵥ (W *ᵥ x)) ≤ (W *ᵥ x) ⬝ᵥ (W *ᵥ x) := by
@@ -314,10 +385,24 @@ theorem op_sq_ge_one_of_proj {N : ℕ} {W : Matrix (Fin N) (Fin N) ℝ} (hW : W.
     rw [sadj hW, mulVec_mulVec]
   rw [h1, hWi, one_mul]
 
-/-- **The criterion is not vacuous (foundational).** For every window size `m ≥ 2` and every chain
-length `L ≥ 2m` the hypotheses of `knabe_chain_gap` are jointly satisfiable, with a local gap `ε = 1`
-strictly above the derived threshold `1/m`, a positive eigenvalue, and a strictly positive bound. The
-bond terms are pairwise distinct projectors, not a single term repeated. -/
+/-- For every `m ≥ 2` and `L ≥ 2 * m`, the hypotheses of `knabe_chain_gap` are jointly satisfiable:
+there are a chain `h`, a vector `ψ`, an eigenvalue `lam` and a local gap `ε` with all the structural
+conditions, `1 / m < ε`, `(∑ b, h b) *ᵥ ψ = lam • ψ`, `ψ ⬝ᵥ ψ ≠ 0`, `0 < lam`, and a strictly
+positive bound `(m * ε - 1) / (m - 1)`.
+
+The witness is `h := siteProj L`, `ψ := Pi.single ⟨0, _⟩ 1`, `lam := 1` and `ε := 1`. Far-separated
+pair sums vanish by `siteProj_orth`, the window inequality is `op_sq_ge_one_of_proj` at
+`win_siteProj_idem`, and the eigenvector computation isolates the bond at residue `0`.
+
+Scope: the bond terms are pairwise distinct projectors, not one term repeated.
+
+DERIVED: `2` occurs twice, as the lower bound on `m` and as the factor in `2 * m ≤ L`. `1` occurs
+nine times — four as the `+ 1` in the site count `Fin (L + 1)` (in the matrix type twice, in `ψ`'s
+type, and in the window hypothesis's vector type), the offsets `1` and `-1` excluded in the
+far-separation hypothesis, the numerator of the threshold `1 / m`, and the `- 1` in the numerator and
+in the denominator of the final bound. `0` occurs four times — the offset `0` excluded in the
+far-separation hypothesis, the value `ψ ⬝ᵥ ψ` differs from, the strict lower bound on `lam`, and the
+strict lower bound on the final bound. -/
 theorem knabe_witness (L m : ℕ) [NeZero L] (hm2 : 2 ≤ m) (hmL : 2 * m ≤ L) :
     ∃ (h : ZMod L → Matrix (Fin (L + 1)) (Fin (L + 1)) ℝ) (ψ : Fin (L + 1) → ℝ) (lam ε : ℝ),
       (∀ b, (h b).IsHermitian) ∧ (∀ b, h b * h b = h b) ∧
@@ -383,45 +468,53 @@ theorem knabe_witness (L m : ℕ) [NeZero L] (hm2 : 2 ≤ m) (hmL : 2 * m ≤ L)
     · linarith
     · linarith
 
-/-! ### The control: the discrete-Laplacian chain saturates the threshold
+/-! ### The discrete-Laplacian chain, which sits at the threshold
 
-Bond `b` carries the rank-one projector onto `e_{b.val} − e_{b.val+1}` in `ℝ^{L+1}`, so `H = ∑_b h_b`
-is half the path-graph Laplacian on `L+1` sites. This is a frustration-free projector chain meeting
-every structural hypothesis of `knabe_chain_gap`: the terms are Hermitian idempotents, far-separated
-terms annihilate one another, and the constant vector is a common zero.
+Bond `b` carries the rank-one projector onto `e_{b.val} - e_{b.val+1}` in `ℝ^(L+1)`, so
+`Hlap L = ∑ b, dproj L b` is half the path-graph Laplacian on `L + 1` sites. It meets every
+structural hypothesis of `knabe_chain_gap`: Hermitian idempotent terms, far-separated terms
+annihilating one another, and the constant vector a common zero.
 
 The linear ramp `r i = i` is annihilated by the second difference in the interior of any block of
-consecutive bonds, so the block operator sends it to a fixed two-site vector no matter how long the
-block is. That is the whole content: the numerator of the Rayleigh quotient stays at `1/2` while the
-denominator grows like the block length. -/
+consecutive bonds, so the block operator sends it to a fixed two-site vector whatever the block
+length. The numerator of the Rayleigh quotient therefore stays at `1/2` while the denominator grows
+like the block length. -/
 
-/-- The two-site vector `e_p − e_q`.
+/-- The two-site vector `e_p - e_q` on `Fin (L + 1)`, as
+`fun i => (if i = p then 1 else 0) - (if i = q then 1 else 0)`. `pair_self` computes its self-product
+as `2` for `p ≠ q`, which is what fixes the coefficient in `dproj` by idempotence.
 
-DERIVED: the coefficients `+1` and `−1` are what make `pairVec ⊙ pairVec = 2` (`pair_self`), which is
-in turn what fixes the `1/2` in `dproj` by idempotence. `0` is the value off the two sites, i.e. the
-statement that the bond term reads only its own two sites. -/
+DERIVED: `1` occurs twice in the type, as the `+ 1` in the site count `Fin (L + 1)` at the domain and
+at the index type. In the body, the two `1`s are the coefficients at `p` and at `q` (the latter
+negated), and the two `0`s are the value at every other site — the statement that the vector reads
+only those two sites. -/
 noncomputable def pairVec (L : ℕ) (p q : Fin (L + 1)) : Fin (L + 1) → ℝ :=
   fun i => (if i = p then (1 : ℝ) else 0) - (if i = q then (1 : ℝ) else 0)
 
-/-- Left end of bond `b`.
+/-- The left end of bond `b`, as the index `b.val` in `Fin (L + 1)`. The bound `ZMod.val_lt` places
+it in range.
 
-DERIVED: `L + 1` sites carry `L` bonds, so `b.val < L` places `b.val` and `b.val + 1` in range. -/
+DERIVED: `1` is the `+ 1` in the site count `Fin (L + 1)`: `L + 1` sites carry `L` bonds, so
+`b.val < L` puts both `b.val` and `b.val + 1` in range. -/
 def bs (L : ℕ) [NeZero L] (b : ZMod L) : Fin (L + 1) :=
   ⟨b.val, by have := ZMod.val_lt b; omega⟩
 
-/-- Right end of bond `b`.
+/-- The right end of bond `b`, as the index `b.val + 1` in `Fin (L + 1)`.
 
-DERIVED: the offset `+1` is what nearest-neighbour means; the criterion's `hfar` hypothesis is stated
-about offsets outside `{0, ±1}`, so any other offset would not be the chain the criterion is about. -/
+DERIVED: `1` in the type is the `+ 1` in the site count `Fin (L + 1)`; the `+ 1` in the body is the
+offset that makes the bond nearest-neighbour, matching the offsets `knabe_chain_gap`'s `hfar`
+hypothesis excludes. -/
 def bt (L : ℕ) [NeZero L] (b : ZMod L) : Fin (L + 1) :=
   ⟨b.val + 1, by have := ZMod.val_lt b; omega⟩
 
 theorem bs_val (L : ℕ) [NeZero L] (b : ZMod L) : (bs L b).val = b.val := rfl
 theorem bt_val (L : ℕ) [NeZero L] (b : ZMod L) : (bt L b).val = b.val + 1 := rfl
 
-/-- The bond vector of bond `b`.
+/-- `pairVec L (bs L b) (bt L b)`: the two-site vector at the two ends of bond `b`, that is
+`e_{b.val} - e_{b.val+1}`. `dvec_self` computes its self-product as `2`.
 
-DERIVED: the literals come from `bs`/`bt` (the `L + 1` sites) and from `pairVec`. -/
+DERIVED: `1` is the `+ 1` in the site count `Fin (L + 1)`; the remaining literals are inside `bs`,
+`bt` and `pairVec`. -/
 noncomputable def dvec (L : ℕ) [NeZero L] (b : ZMod L) : Fin (L + 1) → ℝ :=
   pairVec L (bs L b) (bt L b)
 
@@ -445,11 +538,12 @@ theorem pair_self (L : ℕ) {p q : Fin (L + 1)} (hpq : p ≠ q) :
   simp only [Finset.mem_univ, if_true]
   norm_num
 
-/-- The ramp `r i = i`.
+/-- `fun i => (i.val : ℝ)` on `Fin (L + 1)`: the linear ramp. Its discrete second difference
+vanishes, which is why `blockOp_ramp` leaves only the two ends of a block.
 
-DERIVED: `L + 1` is the site count. The ramp itself is not a fitted trial vector: it is the unique
-shape (up to affine changes, which the operator kills) whose discrete second difference vanishes, and
-that is precisely why `blockOp_ramp` leaves only the two ends of the block. -/
+DERIVED: `1` is the `+ 1` in the site count `Fin (L + 1)`. The ramp is not a fitted trial vector —
+up to affine changes, which the block operator annihilates, it is the shape whose second difference
+vanishes. -/
 noncomputable def ramp (L : ℕ) : Fin (L + 1) → ℝ := fun i => (i.val : ℝ)
 
 theorem pair_ramp (L : ℕ) (p q : Fin (L + 1)) :
@@ -473,11 +567,13 @@ theorem dvec_ramp (L : ℕ) [NeZero L] (b : ZMod L) : (dvec L b) ⬝ᵥ (ramp L)
   push_cast
   ring
 
-/-- The bond projector of bond `b`: the rank-one projector onto `e_{b.val} − e_{b.val+1}`.
+/-- `Matrix.of fun i j => (1 / 2 : ℝ) * (dvec L b i * dvec L b j)`: the rank-one projector onto
+`dvec L b = e_{b.val} - e_{b.val+1}`. `dproj_isHermitian`, `dproj_idem` and `dproj_orth` record
+Hermiticity, idempotence, and orthogonality for bonds whose vectors are orthogonal.
 
-DERIVED: the `1/2` is forced. `dvec_self` gives `dvec ⊙ dvec = 2`, so `c·v vᵀ` is idempotent exactly at
-`c = 1/2` — any other coefficient breaks `dproj_idem` and the chain would not be a projector chain at
-all. The `1` is the site-count offset `L + 1`. -/
+DERIVED: `1` occurs twice in the type, as the `+ 1` in the site count `Fin (L + 1)` at each index. In
+the body, `1` and `2` are the coefficient `1 / 2`, which is forced: `dvec_self` gives
+`dvec ⬝ᵥ dvec = 2`, so `c • (v vᵀ)` is idempotent exactly at `c = 1 / 2`. -/
 noncomputable def dproj (L : ℕ) [NeZero L] (b : ZMod L) :
     Matrix (Fin (L + 1)) (Fin (L + 1)) ℝ :=
   Matrix.of fun i j => (1 / 2 : ℝ) * (dvec L b i * dvec L b j)
@@ -532,7 +628,12 @@ theorem dproj_orth (L : ℕ) [NeZero L] (b c : ZMod L) (hd : (dvec L b) ⬝ᵥ (
     show (∑ j, dvec L b j * dvec L c j) = 0 from hd]
   ring
 
-/-- Bonds whose site pairs are two apart carry orthogonal vectors. -/
+/-- `(dvec L b) ⬝ᵥ (dvec L c) = 0` when the two bonds' left ends are at least two apart in either
+direction. Each site index is handled in turn: at the two ends of bond `b` the vector of bond `c`
+vanishes, and elsewhere so does that of bond `b`.
+
+DERIVED: `2` occurs twice, as the separation in each disjunct of the hypothesis — two apart is what
+makes the two-site supports disjoint; `0` is the value of the inner product. -/
 theorem dvec_orth_far (L : ℕ) [NeZero L] (b c : ZMod L)
     (hfar : b.val + 2 ≤ c.val ∨ c.val + 2 ≤ b.val) : (dvec L b) ⬝ᵥ (dvec L c) = 0 := by
   refine Finset.sum_eq_zero (fun i _ => ?_)
@@ -557,7 +658,12 @@ theorem dvec_orth_far (L : ℕ) [NeZero L] (b c : ZMod L)
     · have : dvec L b i = 0 := by simp [dvec, pairVec, h1, h2]
       rw [this]; ring
 
-/-- A cyclic offset outside `{0, ±1}` separates the two bonds by at least two sites. -/
+/-- For `2 ≤ L` and an offset `δ` outside `{0, 1, -1}` in `ZMod L`, the bonds `b` and `b + δ` have
+left ends at least two apart in one direction or the other. The proof converts the three exclusions
+into `δ.val ∉ {0, 1, L - 1}` and splits on whether `b.val + δ.val` wraps.
+
+DERIVED: `2` occurs three times — the lower bound on `L`, and the separation in each disjunct of the
+conclusion; `0` and `1` are two of the three excluded offsets, the third being `-1`. -/
 theorem far_val (L : ℕ) [NeZero L] (hL : 2 ≤ L) (b δ : ZMod L)
     (h0 : δ ≠ 0) (h1 : δ ≠ 1) (hm1 : δ ≠ -1) :
     b.val + 2 ≤ (b + δ).val ∨ (b + δ).val + 2 ≤ b.val := by
@@ -582,8 +688,12 @@ theorem far_val (L : ℕ) [NeZero L] (hL : 2 ≤ L) (b δ : ZMod L)
     rw [hadd, hmod]
     omega
 
-/-- **The control chain meets every structural hypothesis (foundational).** Far-separated pair sums
-vanish, hence are positive semidefinite: the control is not excluded by `hfar`. -/
+/-- For `2 ≤ L` and an offset `δ` outside `{0, 1, -1}`, `∑ b : ZMod L, dproj L b * dproj L (b + δ)`
+is positive semidefinite — in fact zero, by `far_val`, `dvec_orth_far` and `dproj_orth`. So the
+discrete-Laplacian chain satisfies `knabe_chain_gap`'s far-separation hypothesis.
+
+DERIVED: `2` is the lower bound on `L`; `0` and `1` are two of the three excluded offsets, the third
+being `-1`. -/
 theorem dproj_far_psd (L : ℕ) [NeZero L] (hL : 2 ≤ L) (δ : ZMod L)
     (h0 : δ ≠ 0) (h1 : δ ≠ 1) (hm1 : δ ≠ -1) :
     (∑ b : ZMod L, dproj L b * dproj L (b + δ)).PosSemidef := by
@@ -593,24 +703,30 @@ theorem dproj_far_psd (L : ℕ) [NeZero L] (hL : 2 ≤ L) (δ : ZMod L)
   rw [hz]
   exact ⟨Matrix.isHermitian_zero, fun x => by simp⟩
 
-/-! #### The block operator and the ramp -/
+/-! #### The block operator, the ramp, and the bound they give -/
 
-/-- A block of `n` consecutive bonds starting at bond `0`.
+/-- `∑ j ∈ Finset.range n, dproj L (j : ZMod L)`: the block of `n` consecutive bond terms starting at
+bond `0`. `win_dproj_eq_blockOp` identifies it with the window at `k = 0`, and `Hlap_eq_blockOp` with
+the whole chain at `n = L`.
 
-DERIVED: `0` is the start of the block and is the only start needed, because the window hypothesis of
-the criterion is quantified over every `k` and one window suffices to refute it. `L + 1` is the site
-count. -/
+Scope: only the block starting at `0` is needed, because the criterion's window hypothesis is
+quantified over every `k` and one window bounds `ε`.
+
+DERIVED: `1` occurs twice in the type, as the `+ 1` in the site count `Fin (L + 1)` at each index.
+The start index `0` is in the body. -/
 noncomputable def blockOp (L : ℕ) [NeZero L] (n : ℕ) : Matrix (Fin (L + 1)) (Fin (L + 1)) ℝ :=
   ∑ j ∈ Finset.range n, dproj L ((j : ℕ) : ZMod L)
 
 theorem cast_val (L : ℕ) [NeZero L] {j : ℕ} (hj : j < L) : (((j : ℕ) : ZMod L)).val = j := by
   rw [ZMod.val_natCast, Nat.mod_eq_of_lt hj]
 
-/-- The two-site vector at the two ends of a block of `n` bonds, written at the level of site
-indices so that the telescoping induction does not have to carry a bound on `n`.
+/-- `fun i => (if i.val = 0 then 1 else 0) - (if i.val = n then 1 else 0)`: the two-site vector at the
+ends of a block of `n` bonds, written on site indices so that the induction in `block_sum` carries no
+bound on `n`. `endVec_eq_pairVec` identifies it with `pairVec L 0 n` when `n ≤ L`.
 
-DERIVED: the two sites `0` and `n` are the output of the telescoping in `block_sum`, not a choice —
-the interior of the block cancels term by term. The `±1` coefficients are inherited from `pairVec`. -/
+DERIVED: `1` in the type is the `+ 1` in the site count `Fin (L + 1)`. In the body, the two sites
+`0` and `n` are what the telescoping in `block_sum` leaves — the interior cancels term by term — and
+the two `1`s and two `0`s are the coefficients at and off those sites, inherited from `pairVec`. -/
 noncomputable def endVec (L n : ℕ) : Fin (L + 1) → ℝ :=
   fun i => (if i.val = 0 then (1 : ℝ) else 0) - (if i.val = n then (1 : ℝ) else 0)
 
@@ -624,8 +740,11 @@ theorem endVec_eq_pairVec (L n : ℕ) (hn : n ≤ L) :
     ⟨fun h => by rw [h], fun h => Fin.val_injective h⟩
   simp only [e1, e2]
 
-/-- **Block telescoping.** A block of `n` consecutive bond vectors sums to `e_0 − e_n`: the interior
-cancels and only the two ends of the block survive, whatever `n` is. -/
+/-- For `n ≤ L`, `∑ j ∈ Finset.range n, dvec L (j : ZMod L) i = endVec L n i` at every site `i`:
+the block of `n` consecutive bond vectors telescopes to `e_0 - e_n`. Induction on `n`, with the
+index identities `cast_val`, `bs_val` and `bt_val` at each step.
+
+DERIVED: `1` is the `+ 1` in the site count `Fin (L + 1)`. -/
 theorem block_sum (L : ℕ) [NeZero L] :
     ∀ n : ℕ, n ≤ L → ∀ i : Fin (L + 1),
       (∑ j ∈ Finset.range n, dvec L ((j : ℕ) : ZMod L) i) = endVec L n i := by
@@ -662,10 +781,20 @@ theorem blockOp_ramp (L : ℕ) [NeZero L] (n : ℕ) (hn : n ≤ L) :
   rw [Finset.sum_congr rfl hterm, ← Finset.mul_sum, block_sum L n hn i]
   rfl
 
-/-- **The ramp bound — the control's single computation (foundational).** For a block of `n`
-consecutive bonds, the operator inequality `B² ⪰ g·B` read at the linear ramp gives `g·(n/2) ≤ 1/2`,
-hence `g ≤ 1/n`. The right side does not grow with `n` because the second difference of a linear
-function vanishes except at the two ends of the block. -/
+/-- For `0 < n ≤ L`, any `g` satisfying
+`g * (x ⬝ᵥ (blockOp L n *ᵥ x)) ≤ (blockOp L n *ᵥ x) ⬝ᵥ (blockOp L n *ᵥ x)` at every `x` satisfies
+`g ≤ 1 / n`.
+
+Read at the ramp: `blockOp_ramp` gives `blockOp L n *ᵥ ramp L = -(1/2) • (e_0 - e_n)`, so
+`pair_self` makes the right side `1 / 2` and `pair_ramp` makes the left side `g * (n / 2)`.
+The right side does not grow with `n`, because the second difference of a linear function vanishes
+away from the two ends of the block.
+
+Scope: the hypothesis is required at every `x`, but only the ramp is used.
+
+DERIVED: `0` is the strict lower bound on the block length `n`; `1` occurs twice, as the `+ 1` in the
+site count `Fin (L + 1)` and as the numerator of the bound `1 / n`. The `1 / 2` of the computation
+lives in the proof. -/
 theorem block_ramp_bound (L : ℕ) [NeZero L] (n : ℕ) (hn0 : 0 < n) (hnL : n ≤ L) {g : ℝ}
     (hop : ∀ x : Fin (L + 1) → ℝ,
       g * (x ⬝ᵥ (blockOp L n *ᵥ x)) ≤ (blockOp L n *ᵥ x) ⬝ᵥ (blockOp L n *ᵥ x)) :
@@ -689,14 +818,21 @@ theorem block_ramp_bound (L : ℕ) [NeZero L] (n : ℕ) (hn0 : 0 < n) (hnL : n �
   rw [le_div_iff₀ hnR]
   linarith
 
-/-! #### The two instantiations -/
+/-! #### The bound at `n = m` and at `n = L` -/
 
-/-- The window at bond `0` of the control chain is the block of its first `m` bonds. -/
+/-- `win (dproj L) m 0 = blockOp L m`: the window at bond `0` is the block of the first `m` bonds, by
+`simp` on both definitions.
+
+DERIVED: `0` is the window's starting bond. -/
 theorem win_dproj_eq_blockOp (L m : ℕ) [NeZero L] :
     win (dproj L) m 0 = blockOp L m := by
   simp [win, blockOp]
 
-/-- The whole control chain is the block of all `L` of its bonds; `val` is the bijection. -/
+/-- The equivalence `ZMod L ≃ Fin L` sending `b` to `⟨b.val, ZMod.val_lt b⟩`, with inverse the
+natural-number cast. It is what `sum_zmod_range` uses to rewrite a sum over `ZMod L` as a sum over
+`Finset.range L`, and hence `Hlap_eq_blockOp`.
+
+DERIVED: no numeral appears in the statement. -/
 def zmodEquivFin_aux (L : ℕ) [NeZero L] : ZMod L ≃ Fin L where
   toFun b := ⟨b.val, ZMod.val_lt b⟩
   invFun j := ((j : ℕ) : ZMod L)
@@ -713,28 +849,39 @@ theorem sum_zmod_range {M : Type*} [AddCommMonoid M] (L : ℕ) [NeZero L] (f : Z
   congr 1
   exact (ZMod.natCast_rightInverse b).symm
 
-/-- The control chain Hamiltonian: half the path-graph Laplacian on `L + 1` sites.
+/-- `∑ b : ZMod L, dproj L b`: the chain Hamiltonian, which is half the path-graph Laplacian on
+`L + 1` sites. `Hlap_eq_blockOp` identifies it with `blockOp L L`.
 
-DERIVED: `L + 1` is the site count that `L` bonds require. The factor of a half is not written here —
-it is already inside `dproj`, where idempotence forces it. -/
+DERIVED: `1` occurs twice in the type, as the `+ 1` in the site count `Fin (L + 1)` at each index:
+`L` bonds require `L + 1` sites. The factor of a half is inside `dproj`, where idempotence forces
+it. -/
 noncomputable def Hlap (L : ℕ) [NeZero L] : Matrix (Fin (L + 1)) (Fin (L + 1)) ℝ :=
   ∑ b : ZMod L, dproj L b
 
 theorem Hlap_eq_blockOp (L : ℕ) [NeZero L] : Hlap L = blockOp L L := by
   rw [Hlap, blockOp, sum_zmod_range L (fun b => dproj L b)]
 
-/-- **The control chain is frustration-free (foundational).** The constant vector is a common zero of
-every bond term, so `Hlap` has a zero ground state and `1/L` really does bound its gap. -/
+/-- `Hlap L *ᵥ (fun _ => 1) = 0`: the constant vector is annihilated by every bond term, since
+`pair_const` makes `dvec L b ⬝ᵥ 1` vanish. So `Hlap L` has a zero eigenvalue, which is what makes
+`laplace_chain_gap_le`'s bound a bound on a gap above a ground state rather than on a spectrum with
+no zero in it.
+
+DERIVED: `1` is the value of the constant vector; `0` is the value of the product. -/
 theorem laplace_ground_state (L : ℕ) [NeZero L] : Hlap L *ᵥ (fun _ => (1 : ℝ)) = 0 := by
   rw [Hlap, Matrix.sum_mulVec]
   refine Finset.sum_eq_zero (fun b _ => ?_)
   rw [dproj_mulVec, dvec, pair_const]
   simp
 
-/-- **The control chain's windows never clear the Knabe threshold (foundational).** On the
-discrete-Laplacian chain, any `ε` satisfying the window operator inequality at every window satisfies
-`ε ≤ 1/m`. The hypothesis `1/m < ε` of `knabe_gap_volume_independent` is therefore unsatisfiable on
-this family, at every window size. -/
+/-- For `0 < m ≤ L`, any `ε` satisfying the window operator inequality at every window of
+`dproj L` satisfies `ε ≤ 1 / m`. It is `block_ramp_bound` at `n := m`, with
+`win_dproj_eq_blockOp` identifying the window at bond `0` with the block.
+
+So the hypothesis `1 / m < ε` of `knabe_gap_volume_independent` cannot be met on this family, at any
+window size. `laplace_never_clears_threshold` states that directly.
+
+DERIVED: `0` is the strict lower bound on `m`; `1` occurs twice, as the `+ 1` in the site count
+`Fin (L + 1)` and as the numerator of the bound `1 / m`. -/
 theorem laplace_window_gap_le (L m : ℕ) [NeZero L] (hm0 : 0 < m) (hmL : m ≤ L) {ε : ℝ}
     (hwin : ∀ k : ZMod L, ∀ x : Fin (L + 1) → ℝ,
       ε * (x ⬝ᵥ (win (dproj L) m k *ᵥ x)) ≤ (win (dproj L) m k *ᵥ x) ⬝ᵥ (win (dproj L) m k *ᵥ x)) :
@@ -749,9 +896,15 @@ theorem laplace_never_clears_threshold (L m : ℕ) [NeZero L] (hm0 : 0 < m) (hmL
     ¬ (1 / (m : ℝ) < ε) :=
   not_lt.mpr (laplace_window_gap_le L m hm0 hmL hwin)
 
-/-- **The control chain's bulk gap collapses with the volume (foundational).** Any `g` satisfying the
-operator inequality `Hlap² ⪰ g·Hlap` — which by `gap_of_operator_sq_ge` is exactly a spectral gap `g`
-above the zero ground state — obeys `g ≤ 1/L`. -/
+/-- Any `g` satisfying `g * (x ⬝ᵥ (Hlap L *ᵥ x)) ≤ (Hlap L *ᵥ x) ⬝ᵥ (Hlap L *ᵥ x)` at every `x`
+satisfies `g ≤ 1 / L`. It is `block_ramp_bound` at `n := L`, with `Hlap_eq_blockOp` identifying the
+whole chain with the block of all its bonds.
+
+`CellSpectrum.gap_of_operator_sq_ge` makes that operator inequality a spectral gap `g` above the zero
+ground state, which `laplace_ground_state` supplies.
+
+DERIVED: `1` occurs twice, as the `+ 1` in the site count `Fin (L + 1)` and as the numerator of the
+bound `1 / L`. -/
 theorem laplace_chain_gap_le (L : ℕ) [NeZero L] {g : ℝ}
     (hop : ∀ x : Fin (L + 1) → ℝ,
       g * (x ⬝ᵥ (Hlap L *ᵥ x)) ≤ (Hlap L *ᵥ x) ⬝ᵥ (Hlap L *ᵥ x)) :
@@ -761,11 +914,14 @@ theorem laplace_chain_gap_le (L : ℕ) [NeZero L] {g : ℝ}
   have h := hop x
   rwa [Hlap_eq_blockOp] at h
 
-/-- **No volume-independent gap for the control family (foundational).** There is no positive constant
-that bounds the gap of `Hlap L` for every `L`. Together with `laplace_never_clears_threshold` this is
-the control: a chain that satisfies every structural hypothesis of `knabe_chain_gap` but sits at or
-below the derived threshold has no volume-independent gap, so the threshold is not slack bookkeeping —
-dropping it would make the criterion false. -/
+/-- There is no `g > 0` satisfying the operator inequality for `Hlap L` at every `L`. Taking `L`
+above `1 / g`, `laplace_chain_gap_le` gives `g ≤ 1 / L < g`.
+
+Together with `laplace_never_clears_threshold`, this chain satisfies every structural hypothesis of
+`knabe_chain_gap` and has no volume-independent gap, so the threshold `1 / m` cannot be dropped from
+the criterion.
+
+DERIVED: `0` is the strict lower bound on `g`; `1` is the `+ 1` in the site count `Fin (L + 1)`. -/
 theorem laplace_no_uniform_gap :
     ¬ ∃ g : ℝ, 0 < g ∧ ∀ (L : ℕ) (_ : NeZero L),
       ∀ x : Fin (L + 1) → ℝ, g * (x ⬝ᵥ (Hlap L *ᵥ x)) ≤ (Hlap L *ᵥ x) ⬝ᵥ (Hlap L *ᵥ x) := by
@@ -785,12 +941,12 @@ theorem laplace_no_uniform_gap :
   rw [le_div_iff₀ hLR] at hb
   linarith
 
-/-! #### The control read against the criterion's own spectral hypothesis
+/-! #### The same bounds in spectral form
 
-`laplace_window_gap_le` and `laplace_chain_gap_le` are stated with the operator inequality, which is
-what the assembly consumes. `gap_of_operator_sq_ge` and `operator_sq_ge_of_gap` make that equivalent
-to the spectral condition, so the same bounds can be read directly against the hypothesis and the
-conclusion of `knabe_chain_gap_of_local_spectrum`. -/
+`laplace_window_gap_le` and `laplace_chain_gap_le` are stated with the operator inequality.
+`CellSpectrum.gap_of_operator_sq_ge` and `operator_sq_ge_of_gap` relate that to the spectral
+condition, so the same bounds read directly against the hypothesis and the conclusion of
+`knabe_chain_gap_of_local_spectrum`. -/
 
 theorem dproj_posSemidef (L : ℕ) [NeZero L] (b : ZMod L) : (dproj L b).PosSemidef :=
   proj_posSemidef (dproj_isHermitian L b) (dproj_idem L b)
@@ -801,9 +957,18 @@ theorem Hlap_isHermitian (L : ℕ) [NeZero L] : (Hlap L).IsHermitian :=
 theorem Hlap_posSemidef (L : ℕ) [NeZero L] : (Hlap L).PosSemidef :=
   Matrix.posSemidef_sum _ (fun b _ => dproj_posSemidef L b)
 
-/-- **The control chain meets every structural hypothesis of the criterion (foundational).** Hermitian
-idempotent bond terms, far-separated pair sums positive semidefinite, and a zero ground state. The
-criterion does not apply to it for exactly one reason: the local gap never clears the threshold. -/
+/-- Four facts about `dproj L`, conjoined, for `2 ≤ L`: every bond term is Hermitian; every bond term
+is idempotent; every far-separated pair sum is positive semidefinite; and the constant vector is
+annihilated by `Hlap L`. These are `dproj_isHermitian`, `dproj_idem`, `dproj_far_psd` and
+`laplace_ground_state`.
+
+So the family satisfies every structural hypothesis of `knabe_chain_gap`; what it does not satisfy is
+the local-gap hypothesis, by `laplace_window_gap_le`.
+
+DERIVED: `2` is the lower bound on `L`, inherited from `dproj_far_psd`; `0` occurs twice, as the
+excluded offset in the far-separation clause and as the value of `Hlap L` on the constant vector; `1`
+occurs three times — two of the three excluded offsets (`1` and `-1`) and the value of the constant
+vector. -/
 theorem laplace_meets_structure (L : ℕ) [NeZero L] (hL : 2 ≤ L) :
     (∀ b : ZMod L, (dproj L b).IsHermitian) ∧ (∀ b : ZMod L, dproj L b * dproj L b = dproj L b) ∧
       (∀ δ : ZMod L, δ ≠ 0 → δ ≠ 1 → δ ≠ -1 →
@@ -811,10 +976,16 @@ theorem laplace_meets_structure (L : ℕ) [NeZero L] (hL : 2 ≤ L) :
       (Hlap L *ᵥ (fun _ => (1 : ℝ)) = 0) :=
   ⟨dproj_isHermitian L, dproj_idem L, dproj_far_psd L hL, laplace_ground_state L⟩
 
-/-- **The criterion's local hypothesis is unsatisfiable on the control, in spectral form
-(foundational).** If every eigenvalue of every `m`-bond window of the control chain is `0` or at least
-`ε`, then `ε ≤ 1/m`. So `knabe_chain_gap_of_local_spectrum` can never be applied to this family with a
-threshold-clearing `ε`. -/
+/-- For `0 < m ≤ L`, if every eigenvalue of every `m`-bond window of `dproj L` is `0` or at least
+`ε`, then `ε ≤ 1 / m`. `CellSpectrum.operator_sq_ge_of_gap` converts the spectral condition to the
+operator inequality — the windows are positive semidefinite by `win_posSemidef` — and
+`laplace_window_gap_le` bounds it.
+
+So `knabe_chain_gap_of_local_spectrum` cannot be applied to this family with an `ε` above `1 / m`.
+
+DERIVED: `0` occurs twice, as the strict lower bound on `m` and as the eigenvalue alternative in
+`hgap`; `1` occurs twice, as the `+ 1` in the site count `Fin (L + 1)` inside the window's matrix
+type and as the numerator of the bound `1 / m`. -/
 theorem laplace_local_spectrum_le (L m : ℕ) [NeZero L] (hm0 : 0 < m) (hmL : m ≤ L) {ε : ℝ}
     (hgap : ∀ k : ZMod L, ∀ i,
       (win_isHermitian (dproj L) (dproj_isHermitian L) m k).eigenvalues i = 0 ∨
@@ -825,9 +996,13 @@ theorem laplace_local_spectrum_le (L m : ℕ) [NeZero L] (hm0 : 0 < m) (hmL : m 
     (fun i => (win_posSemidef (dproj L) (dproj_isHermitian L) (dproj_idem L) m k).eigenvalues_nonneg i)
     (hgap k)
 
-/-- **The control chain's spectral gap is at most `1/L` (foundational).** The conclusion of the
-criterion in the same spectral currency: if every eigenvalue of `Hlap L` is `0` or at least `g`, then
-`g ≤ 1/L`. With `laplace_ground_state` supplying the zero eigenvalue, that is the gap. -/
+/-- If every eigenvalue of `Hlap L` is `0` or at least `g`, then `g ≤ 1 / L`. It is
+`CellSpectrum.operator_sq_ge_of_gap` — with nonnegativity from `Hlap_posSemidef` — followed by
+`laplace_chain_gap_le`.
+
+`laplace_ground_state` supplies the zero eigenvalue, so this bounds the gap above a ground state.
+
+DERIVED: `0` is the eigenvalue alternative in `hgap`; `1` is the numerator of the bound `1 / L`. -/
 theorem laplace_spectrum_le (L : ℕ) [NeZero L] {g : ℝ}
     (hgap : ∀ i, (Hlap_isHermitian L).eigenvalues i = 0 ∨ g ≤ (Hlap_isHermitian L).eigenvalues i) :
     g ≤ 1 / (L : ℝ) :=

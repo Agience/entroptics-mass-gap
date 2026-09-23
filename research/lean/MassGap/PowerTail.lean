@@ -3,88 +3,53 @@ import MassGap.ContactFloor
 import MassGap.WeakArm
 
 /-!
-# MassGap.PowerTail — the zero-coupling endpoint, and two things that cannot reach `[b, ∞)`
+# MassGap.PowerTail — the connected correlation at zero coupling, and two consequences
 
-`ContactFloor.contact_relative_unconditional` proves the contact-relative quartic law
+## The zero-coupling value
 
-    ρ_N(β, d) ≤ C · ρ_N(β, 0) / circLag(d)⁴      (circLag d ≥ 1, every aperture)
+`corrClay_at_zero_coupling`: `corrClay (m + 2) 0 lag = 0` at every lag other than `0`. At `β = 0` the
+Gibbs measure is product Haar (`WilsonReal.wilsonSystem_expect_at_zero`), and the two plaquettes
+`clayPlaq` and `lagPlaq` read disjoint link sets when the lag is nonzero, so the joint average
+factorises and the connected part vanishes.
 
-on a derived interval `[0, b]`. `ShareEnvelope.substrate_of_contact_relative_decay` consumes the same
-law at EVERY coupling. What is open is `[b, ∞)`. This file measures the two objects a reader is most
-likely to reach for there, and proves one new fact about the other end of the line.
+The factorisation is `integral_prod_hol_factor`. Its handle is `handle`, the direction-`1` link at
+the lag plaquette's base site: `hol_linkTranslate_lag` shows translating it right-multiplies that
+plaquette's holonomy, because it is the last letter of the boundary word, and
+`hol_linkTranslate_clay_fixed` shows the base plaquette's holonomy does not move, because the handle
+is none of its four links. Averaging over the handle and swapping the order of integration then sends
+the lag plaquette's holonomy through Haar. No independence lemma for product measures is used; the
+content is the single-link left-invariance of `ContactFloor.linkTranslate_measurePreserving`.
 
-## The new fact: at zero coupling the correlation is a pure contact term
+`wilsonCorrAt_at_zero_coupling` restates it on `wilsonCorrAt`, at every aperture including `N = 0`,
+where the only lag has circle distance `0` and the hypothesis `1 ≤ circLag d` is empty.
+`contact_relative_at_zero_coupling` reads it as the contact-relative quartic law at `C = 0`, and
+`contact_value_pos_at_zero_coupling` records that the value at lag `0` is strictly positive, so the
+profile is supported at the origin rather than identically zero.
 
-`corrClay_at_zero_coupling` — `ρ_0(d) = 0` at every lag `d ≠ 0` and every extent `≥ 2`. At `β = 0`
-the state is product Haar; the base plaquette and the lag plaquette read DISJOINT link sets, because
-the lag displaces along direction `2` and neither plaquette's boundary word leaves the `(0,1)` plane;
-so the joint average factorizes and the connected part is zero.
+## Two consequences
 
-The proof is `ContactFloor.integral_hol_clay`'s argument with a second plaquette present. The handle
-is the direction-`1` link at the LAG plaquette's own base site: it is the last letter of that
-plaquette's word, so translating it right-multiplies that holonomy, and it is none of the base
-plaquette's four links, so that holonomy does not move. Averaging the handle over the group and
-swapping the order of integration sends the lag plaquette's holonomy through Haar and leaves the base
-plaquette alone — `integral_prod_hol_factor`. No independence lemma for product measures is used; the
-content is the single-link left-invariance `ContactFloor.linkTranslate_measurePreserving` already
-carries, and `PlaqVariance.corrClay_zero_pos_at_zero_coupling` keeps the statement from being the
-whole function vanishing (`contact_value_pos_at_zero_coupling`).
+`haar_comparison_forces_vanishing`: for any multiplier `K : ℕ → ℝ → ℕ → ℝ`, a comparison
+`ρ_β(d) ≤ K N β d · ρ_0(d)` at every lag with circle distance at least one forces `ρ_β(d) ≤ 0` there,
+because the right-hand side is a multiple of zero. `substrate_of_haar_comparison` feeds that into
+`ShareEnvelope.substrate_of_contact_relative_decay` at `C = 0`, `m₀ = 1`, giving
+`∃ B, ∀ N β, d2At N β ≤ B`.
 
-Consequences: `wilsonCorrAt_at_zero_coupling` puts it on the object the substrate read consumes, at
-every aperture including `N = 0`, whose only lag has circle distance `0` and is therefore outside the
-hypothesis rather than an exception to it; and `contact_relative_at_zero_coupling` reads it as the
-target law holding at `β = 0` WITH `C = 0` — the strongest constant there is.
+`contactFloor_explicit` writes `ContactFloor.contactFloor_holds`'s floor as `e^{−128b}·δ₀` with the
+`b`-dependence visible. `contactFloor_below_every_level` shows that family goes below every positive
+level as `b` grows, and `floor_route_constant_unbounded` shows that any `C : ℝ → ℝ` satisfying
+`A ≤ C(b)·e^{−128b}·δ₀` for a fixed `A > 0` is unbounded. `floor_route_nonvacuous` exhibits such a
+`C`, so the hypothesis is satisfiable.
 
-## The Haar comparison has no reverse, at any rate
+## Scope
 
-`ContactFloor.wilsonCorrConn_self_ge_haar` bounds the coupled variance BELOW by `e^{−2β·touch}` times
-the Haar one. An upper bound of the same shape at the lag, `ρ_β(d) ≤ K(β)·ρ_0(d)`, would turn the
-endpoint above into a bound at every coupling.
+`corrClay_at_zero_coupling` is about `β = 0` and asserts nothing at any other coupling. Nothing here
+states that the contact-relative law fails at large coupling, and nothing here produces a bound there.
 
-`haar_comparison_forces_vanishing` — for ANY multiplier `K` depending on the aperture, the coupling
-and the lag, however fast it grows in any of them, such a comparison forces `ρ_β(d) ≤ 0` at every
-aperture, every coupling and every lag with circle distance at least one. The right-hand side is a
-multiple of zero.
-
-`substrate_of_haar_comparison` — and it then yields `∃ B, ∀ N β, d2At N β ≤ B` outright, through
-`ShareEnvelope.substrate_of_contact_relative_decay` at `C = 0`, `m₀ = 1`. So a reversed comparison is
-not a step towards the open statement: it is strictly stronger than it, and it additionally asserts
-that the connected plaquette correlation is a contact term at every coupling. Either no reversed
-comparison exists at any rate, or the correlation vanishes off contact everywhere; there is no third
-case, and neither branch is a route.
-
-## The floor route does not survive `b → ∞`
-
-`StrongArm.contact_relative_on_strong_arm` reaches a RATIO by dividing an ABSOLUTE bound by a floor
-under the contact value, and that floor is `e^{−128b}·δ₀` (`contactFloor_explicit`, the same proof as
-`ContactFloor.contactFloor_holds` with the `b`-dependence written out rather than existentially
-hidden). Two measurements:
-
-* `contactFloor_below_every_level` — the floor family's infimum over cuts is zero.
-* `floor_route_constant_unbounded` — for any fixed positive numerator `A` and any assignment `C` of a
-  constant to a cut that the route's own inequality `A ≤ C(b)·e^{−128b}·δ₀` certifies, `C` is
-  unbounded. `floor_route_nonvacuous` exhibits the witness, so this is not an implication out of an
-  empty hypothesis.
-
-The numerator in the actual route is `coreConst(16·4, b)·S`, which `StrongArm.coreConst_mono_beta`
-makes monotone increasing in `b`, so holding it fixed at a positive constant gives the route the
-benefit of the doubt and the constant still diverges at least like `e^{128b}`. Enlarging the proved
-interval therefore does not approach the half-line. This is a statement about the ROUTE — divide an
-absolute bound by a floor — and it is the arithmetic behind `StrongArm.ContactFloor`'s own note that
-any argument for `[b, ∞)` must never bound `ρ(0)` below.
-
-## What is NOT claimed
-
-Nothing here says the quartic law fails on `[b, ∞)`; nothing in the tree says that. Nothing here
-produces a power tail at large coupling. `corrClay_at_zero_coupling` is a fact about `β = 0` alone and
-is silent at every other coupling: it is the endpoint that shows the strong arm is a statement about
-how fast the correlation TURNS ON, and it is the object that makes the one-directionality of the Haar
-comparison a theorem rather than a remark.
-
-DERIVED: `128` is `2·16·4` carried in from `ContactFloor`; `4` is the problem's dimension, `3` is
-`SU(3)`, the directions `0, 1` span the plaquette's plane and `2` is the lag axis transverse to it,
-all fixed by `WilsonBridge.corrClay`. The extent `m + 2` is where a single periodic step moves a site,
-which is the same threshold `ContactFloor.shift_ne` runs into. No numeral here is a magnitude.
+DERIVED: `128` is `2·16·4` carried in from `ContactFloor`; `4` is the lattice dimension, `3` is the
+colour rank of `SU(3)`, the directions `0` and `1` span the plaquette's plane and `2` is the lag axis
+transverse to it, all fixed by `WilsonBridge.corrClay`. The extent is written `m + 2` because a
+single periodic step must move a site, the same threshold `ContactFloor.shift_ne` requires. No
+numeral here is a magnitude.
 -/
 namespace MassGap.PowerTail
 
@@ -95,20 +60,24 @@ open MeasureTheory
 
 /-! ### The two plaquettes `corrClay` reads -/
 
-/-- The plaquette `corrClay` reads at lag `lag`: the `(0,1)` plane, displaced `lag` steps along
-direction `2`. `clayPlaq` is its `lag = 0` instance.
+/-- The plaquette `corrClay` reads at lag `lag`: the ordered plane `(0, 1)` based at
+`siteAtHyper 2 lag`, the origin displaced `lag` steps along direction `2`. `WilsonBridge.clayPlaq` is
+the `lag = 0` case.
 
-DERIVED: every index here is `corrClay`'s own, not a choice of this definition. `4` is the lattice
-dimension `WilsonBridge.corrClay` is built at; `(0,1)` is the plane its plaquette spans and `2` the
-axis its lag runs along, both read off `WilsonBridge.clayPlaq`, whose `lag = 0` case this generalises.
-Changing any of them would describe a different correlation, not a differently-tuned one. -/
+DERIVED: every index is `corrClay`'s own, not a choice of this definition. `4` is the lattice
+dimension `WilsonBridge.corrClay` is built at; `0` and `1` are the two directions its plaquette spans
+and `2` the axis its lag runs along, all read off `WilsonBridge.clayPlaq`. Changing any of them
+describes a different correlation. -/
 def lagPlaq (n : ℕ) [NeZero n] (lag : Fin n) : MassGap.WilsonHypercubic.Plaq 4 n :=
   ((0, 1), siteAtHyper 2 lag)
 
 #print axioms lagPlaq
 
-/-- `corrClay` IS the connected correlation of those two plaquettes — by `rfl`, checked here rather
-than read off a docstring. -/
+/-- `corrClay n β lag = wilsonCorrConn bd (clayPlaq n) β (lagPlaq n lag)`, by `rfl`: the definitional
+identification of `corrClay` with the connected correlation of the two named plaquettes.
+
+DERIVED: `4` is the lattice dimension and `3` the colour rank, both `corrClay`'s; the plane and lag
+indices are inside `clayPlaq` and `lagPlaq`. This declaration introduces no numeral. -/
 theorem corrClay_eq_conn (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
     corrClay n β lag
       = wilsonCorrConn (Nc := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := n))
@@ -116,7 +85,14 @@ theorem corrClay_eq_conn (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
 
 #print axioms corrClay_eq_conn
 
-/-- The boundary word of a hypercubic plaquette, spelled out as an ordered product. -/
+/-- The holonomy of the hypercubic plaquette `((μ, ν), x)` written out as the ordered product
+`U (μ, x) * (U (ν, shift μ x) * ((U (μ, shift ν x))⁻¹ * (U (ν, x))⁻¹))`, by `simp` on `wilsonHol`
+and `bd`. Bracketed to the right, which is the shape the `linkTranslate` rewrites below consume.
+
+Holds for every `μ`, `ν`, including `μ = ν`.
+
+DERIVED: `4` is the lattice dimension and `3` the colour rank; `⁻¹` is the group inverse. No numeral
+of this declaration's own. -/
 theorem hol_plaq_eq {n : ℕ} [NeZero n] (μ ν : Fin 4) (x : MassGap.WilsonHypercubic.Site 4 n)
     (U : MassGap.WilsonHypercubic.Link 4 n → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := n)) ((μ, ν), x) U
@@ -151,15 +127,14 @@ theorem siteAtHyper_apply_of_ne {n : ℕ} [NeZero n] (μ : Fin 4) (lag : Fin n) 
 #print axioms siteAtHyper_apply_self
 #print axioms siteAtHyper_apply_of_ne
 
-/-- **THE TRANSLATION HANDLE.** The direction-`1` link at the LAG plaquette's own base site. It is
-the last letter of that plaquette's boundary word, carried with orientation `false`, and — when the
-lag is nonzero — it belongs to no link of the base plaquette.
+/-- The direction-`1` link at the lag plaquette's own base site `siteAtHyper 2 lag`. It is the last
+letter of that plaquette's boundary word, carried with orientation `false`, and when the lag is
+nonzero it is none of the base plaquette's four links.
 
-DERIVED: `1` is forced, not picked. `WilsonHypercubic.bd` writes a plaquette's boundary word as
-`[(mu,x,true), (nu,shift mu x,true), (mu,shift nu x,false), (nu,x,false)]`, so for the `(0,1)` plane
-the LAST letter is the direction-`1` link at the base site — and the last letter is the one a right
-translation acts on. `4` is the lattice dimension and `2` the lag axis, both inherited from `lagPlaq`.
-The whole argument needs exactly this link and no other. -/
+DERIVED: `1` is the direction, forced rather than picked. `WilsonHypercubic.bd` writes a boundary
+word as `[(μ,x,true), (ν,shift μ x,true), (μ,shift ν x,false), (ν,x,false)]`, so at the `(0, 1)`
+plane the last letter is the direction-`1` link at the base site, and the last letter is the one a
+right translation acts on. `4` is the lattice dimension and `2` the lag axis, both from `lagPlaq`. -/
 def handle (n : ℕ) [NeZero n] (lag : Fin n) : MassGap.WilsonHypercubic.Link 4 n :=
   ((1 : Fin 4), siteAtHyper 2 lag)
 
@@ -167,9 +142,16 @@ def handle (n : ℕ) [NeZero n] (lag : Fin n) : MassGap.WilsonHypercubic.Link 4 
 
 /-! ### The handle moves the lag plaquette and leaves the base plaquette alone -/
 
-/-- **The handle right-multiplies the LAG plaquette's holonomy.** The three other letters of its
-boundary word are different links: two by direction, one because a single periodic step moves the
-site, which is where extent at least two is used. -/
+/-- Translating the handle by `g⁻¹` right-multiplies the lag plaquette's holonomy by `g`:
+`wilsonHol bd (lagPlaq lag) (linkTranslate g⁻¹ (handle lag) U) = wilsonHol bd (lagPlaq lag) U * g`.
+
+The three other letters of the boundary word are different links: two by direction (`0 ≠ 1`), and
+one because a single periodic step moves the site. That last step is where the extent being at least
+two is used — at extent one every shift is the identity.
+
+DERIVED: `2` in `m + 2` is the least extent at which a unit shift moves a site, which the proof
+needs. `3` is the colour rank and `4` the lattice dimension. `0` and `1` are the plane directions and
+`2` the lag axis, all from `lagPlaq` and `handle`; `⁻¹` is the group inverse. -/
 theorem hol_linkTranslate_lag (m : ℕ) (lag : Fin (m + 2)) (g : MassGap.SUN.SU 3)
     (U : MassGap.WilsonHypercubic.Link 4 (m + 2) → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2)) (lagPlaq (m + 2) lag)
@@ -216,11 +198,19 @@ theorem hol_linkTranslate_lag (m : ℕ) (lag : Fin (m + 2)) (g : MassGap.SUN.SU 
 
 #print axioms hol_linkTranslate_lag
 
-/-- **The handle leaves the BASE plaquette's holonomy alone**, when the lag is nonzero. Each of the
-four letters of the base plaquette's word differs from the handle: two by direction, and two because
-their sites carry coordinate `2` equal to `0` while the handle's site carries `lag`. This is the one
-place the lag being nonzero is used, and it is the whole geometric content: at lag zero the two
-plaquettes coincide and no handle of this kind exists. -/
+/-- For `lag ≠ 0`, translating the handle leaves the base plaquette's holonomy unchanged:
+`wilsonHol bd (clayPlaq) (linkTranslate g⁻¹ (handle lag) U) = wilsonHol bd (clayPlaq) U`.
+
+Each of the four letters of the base plaquette's word differs from the handle: two by direction, and
+two because their sites have coordinate `2` equal to `0` while the handle's site has coordinate `2`
+equal to `lag`.
+
+`hlag` is used exactly here, and it is the whole geometric content: at `lag = 0` the two plaquettes
+coincide and no such handle exists.
+
+DERIVED: `0` is the lag value excluded by `hlag` and the coordinate the base plaquette's sites carry
+on the lag axis. `2` in `m + 2` is the extent bound and `2` in the coordinate index is the lag axis.
+`3` is the colour rank, `4` the lattice dimension, and `0`, `1` the plane directions. -/
 theorem hol_linkTranslate_clay_fixed (m : ℕ) {lag : Fin (m + 2)} (hlag : lag ≠ 0)
     (g : MassGap.SUN.SU 3) (U : MassGap.WilsonHypercubic.Link 4 (m + 2) → MassGap.SUN.SU 3) :
     wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := m + 2)) (clayPlaq (m + 2))
@@ -270,20 +260,31 @@ theorem hol_linkTranslate_clay_fixed (m : ℕ) {lag : Fin (m + 2)} (hlag : lag �
 
 #print axioms hol_linkTranslate_clay_fixed
 
-/-! ### The factorization at zero coupling
+/-! ### The factorisation under product Haar
 
-The argument of `ContactFloor.integral_hol_clay`, run with a SECOND plaquette present. The handle
-belongs to the lag plaquette and to nothing the base plaquette reads, so averaging over it sends the
-lag plaquette's holonomy through Haar while the base plaquette's is untouched — and the joint
-integral factorizes. No independence lemma for product measures is needed: the whole content is the
-single-link left-invariance that `linkTranslate_measurePreserving` already carries. -/
+`ContactFloor.integral_hol_clay`'s argument with a second plaquette present. The handle belongs to
+the lag plaquette and to none of the links the base plaquette reads, so averaging over it sends the
+lag plaquette's holonomy through Haar while the base plaquette's is untouched, and the joint integral
+factorises. No independence lemma for product measures is used; the content is the single-link
+left-invariance of `linkTranslate_measurePreserving`. -/
 
-/-- **THE JOINT INTEGRAL FACTORIZES AT ZERO COUPLING**, for every nonzero lag:
+/-- For `lag ≠ 0` and bounded measurable `f`, `h : SU 3 → ℝ`,
 
-    ∫ f(hol_base) · h(hol_lag) dπ  =  (∫ f(hol_base) dπ) · (∫ h dHaar)
+    ∫ f(hol_base) · h(hol_lag) dπ  =  (∫ f(hol_base) dπ) · (∫ h dHaar),
 
-`π` is product Haar over the links — which IS the `β = 0` Gibbs measure
-(`WilsonReal.wilsonSystem_expect_at_zero`). -/
+where `π` is the product Haar measure over the links.
+
+`hol_linkTranslate_clay_fixed` and `hol_linkTranslate_lag` make the integrand invariant under
+translating the handle by `g⁻¹`, so the integral is unchanged when `hol_lag` is replaced by
+`hol_lag * g`; averaging that over `g`, swapping the order by `integral_integral_swap` — for which
+the bounds `Mf`, `Mh` supply integrability — and using left-invariance of Haar inside gives the
+product.
+
+`f` and `h` are arbitrary bounded measurable functions; the boundedness hypotheses are what the
+Fubini step consumes.
+
+DERIVED: `0` is the lag value excluded by `hlag`. `2` in `m + 2` is the extent bound, `3` the colour
+rank and `4` the lattice dimension; `Mf` and `Mh` are the caller's bounds. -/
 theorem integral_prod_hol_factor (m : ℕ) {lag : Fin (m + 2)} (hlag : lag ≠ 0)
     (f h : MassGap.SUN.SU 3 → ℝ) (hf : Measurable f) (hh : Measurable h)
     (Mf Mh : ℝ) (hfb : ∀ g, |f g| ≤ Mf) (hhb : ∀ g, |h g| ≤ Mh) :
@@ -368,14 +369,19 @@ theorem integral_prod_hol_factor (m : ℕ) {lag : Fin (m + 2)} (hlag : lag ≠ 0
 
 /-! ### The zero-coupling endpoint -/
 
-/-- **AT ZERO COUPLING THE CONNECTED CORRELATION VANISHES AT EVERY NONZERO LAG.**
+/-- `corrClay (m + 2) 0 lag = 0` for every `lag ≠ 0`, at every extent of the form `m + 2`.
 
-    ρ_0(d) = 0   for every `d ≠ 0`, at every extent `≥ 2`.
+At `β = 0` the Gibbs measure is product Haar (`wilsonSystem_expect_at_zero`), so both the joint
+expectation and the lag marginal are plain integrals; `integral_prod_hol_factor` factorises the first
+and evaluates the second, and the connected part — the joint minus the product of the marginals —
+cancels by `ring`. The bound `2` on `|wilsonDensity|` supplies the boundedness hypotheses.
 
-At `β = 0` the state is product Haar, and the two plaquettes read disjoint link sets, so the joint
-average factorizes (`integral_prod_hol_factor`) and the connected part — which is exactly the joint
-minus the product of the marginals — is zero. The correlation at zero coupling is a pure CONTACT
-term. -/
+About `β = 0` only. Nothing here is asserted at any other coupling.
+
+DERIVED: `0` is the coupling the statement is at, the lag value excluded by `hlag`, and the value
+concluded. `2` in `m + 2` is the least extent at which the argument's shift is nontrivial. `3` is the
+colour rank and `4` the lattice dimension; the `2` bounding `|wilsonDensity|` is
+`wilsonDensity_le_two`'s and appears in the proof. -/
 theorem corrClay_at_zero_coupling (m : ℕ) {lag : Fin (m + 2)} (hlag : lag ≠ 0) :
     corrClay (m + 2) 0 lag = 0 := by
   classical
@@ -420,9 +426,16 @@ theorem corrClay_at_zero_coupling (m : ℕ) {lag : Fin (m + 2)} (hlag : lag ≠ 
 
 /-! ### What the endpoint gives -/
 
-/-- **The correlation the substrate read consumes vanishes at zero coupling, at every lag with
-circle distance at least one, at every aperture.** The aperture `N = 0` is covered and not excluded:
-there the only lag is `0`, whose circle distance is `0`, so the hypothesis is empty. -/
+/-- `wilsonCorrAt N 0 d = 0` at every aperture `N` and every lag `d` with `1 ≤ circLag d`.
+`StrongArm.wilsonCorrAt_eq_corrClay` transports `corrClay_at_zero_coupling`; the hypothesis forces
+`d ≠ 0` and `N ≥ 1`, which is what lets `N` be written `m + 1`.
+
+`N = 0` is covered rather than excluded: there the only lag is `0`, whose circle distance is `0`, so
+the hypothesis is unsatisfiable and the statement is vacuous at that aperture.
+
+DERIVED: `1` is the lower bound on the circle distance, which excludes the contact lag, and the `+1`
+of `Fin (N + 1)`, the number of lags. `0` is the coupling, the lag index excluded, and the value
+concluded. -/
 theorem wilsonCorrAt_at_zero_coupling (N : ℕ) (d : Fin (N + 1)) (hd : 1 ≤ Moment.circLag d) :
     MassGap.wilsonCorrAt N 0 d = 0 := by
   have hdv : 1 ≤ (d : ℕ) := le_trans hd (min_le_left _ _)
@@ -437,10 +450,14 @@ theorem wilsonCorrAt_at_zero_coupling (N : ℕ) (d : Fin (N + 1)) (hd : 1 ≤ Mo
 
 #print axioms wilsonCorrAt_at_zero_coupling
 
-/-- **THE CONTACT-RELATIVE POWER LAW HOLDS AT ZERO COUPLING WITH `C = 0`** — the strongest constant
-there is. The law is not merely true at the free end, it is true there with nothing to spare, which
-is what makes `[0, b]` a statement about how fast the correlation TURNS ON rather than about how fast
-it decays. -/
+/-- `wilsonCorrAt N 0 d ≤ 0 * wilsonCorrAt N 0 0 / (circLag d)^4` at every aperture and every lag with
+`1 ≤ circLag d`. Immediate from `wilsonCorrAt_at_zero_coupling`: both sides are `0`.
+
+The contact-relative quartic law at the constant `C = 0`, at the coupling `β = 0` only.
+
+DERIVED: `1` is the lower bound on the circle distance. `0` is the coupling, the contact lag in the
+denominator's reference value, and the constant `C` in front — which is `0` because the left side
+vanishes, not by a choice. `4` is the exponent of the quartic law, `ContactFloor`'s. -/
 theorem contact_relative_at_zero_coupling (N : ℕ) (d : Fin (N + 1)) (hd : 1 ≤ Moment.circLag d) :
     MassGap.wilsonCorrAt N 0 d
       ≤ 0 * MassGap.wilsonCorrAt N 0 0 / (Moment.circLag d : ℝ) ^ 4 := by
@@ -449,33 +466,35 @@ theorem contact_relative_at_zero_coupling (N : ℕ) (d : Fin (N + 1)) (hd : 1 �
 
 #print axioms contact_relative_at_zero_coupling
 
-/-- **NON-VACUITY: the zero-coupling correlation is a CONTACT TERM, not the zero function.** The
-value at lag `0` is strictly positive at every aperture (`PlaqVariance.corrClay_zero_pos_at_zero_coupling`),
-so `wilsonCorrAt_at_zero_coupling` says the profile is supported at the origin and not that there is
-nothing there. -/
+/-- `0 < wilsonCorrAt N 0 0` at every aperture. The body is
+`PlaqVariance.corrClay_zero_pos_at_zero_coupling`.
+
+Together with `wilsonCorrAt_at_zero_coupling` this says the zero-coupling profile is supported at the
+contact lag and is not the zero function.
+
+DERIVED: `0` is the coupling, the contact lag, and the strict lower bound asserted; it is the only
+numeral. -/
 theorem contact_value_pos_at_zero_coupling (N : ℕ) : 0 < MassGap.wilsonCorrAt N 0 0 :=
   MassGap.PlaqVariance.corrClay_zero_pos_at_zero_coupling N
 
 #print axioms contact_value_pos_at_zero_coupling
 
-/-! ### The Haar comparison has no reverse
+/-! ### Comparison against the zero-coupling value
 
-`ContactFloor.wilsonCorrConn_self_ge_haar` bounds the coupled variance BELOW by `e^{−2β·touch}` times
-the Haar one. The obvious hope is a matching UPPER bound at the lag — `ρ_β(d) ≤ K(β)·ρ_0(d)` for some
-rate `K` — which would turn the zero-coupling endpoint into a bound at every coupling. The two
-theorems below say what that costs. -/
+`ContactFloor.wilsonCorrConn_self_ge_haar` bounds the coupled variance below by `e^{−2β·touch}` times
+the Haar one. The two theorems below concern an upper bound of the matching shape at the lag,
+`ρ_β(d) ≤ K·ρ_0(d)`, and what follows from one. -/
 
-/-- **A REVERSED HAAR COMPARISON, AT ANY RATE WHATEVER, FORCES THE CORRELATION TO VANISH OFF
-CONTACT.**
+/-- For any `K : ℕ → ℝ → ℕ → ℝ`: if `wilsonCorrAt N β d ≤ K N β d * wilsonCorrAt N 0 d` at every
+aperture, coupling and lag with `1 ≤ circLag d`, then `wilsonCorrAt N β d ≤ 0` at all of them.
 
-`K` is an arbitrary multiplier depending on the APERTURE, the COUPLING and the LAG — it may grow as
-fast as it likes in any of the three, `e^{+cβ}` or anything else. The conclusion does not weaken,
-because the object being compared against is ZERO at every lag with circle distance at least one
-(`wilsonCorrAt_at_zero_coupling`), and any multiple of zero is zero.
+`wilsonCorrAt_at_zero_coupling` makes the right-hand side `K N β d * 0 = 0`.
 
-So the asymmetry noted in `ContactFloor` is not a gap in the proof there and is not removable by
-choosing a better rate. The `β = 0` object cannot be a majorant at ANY rate unless the correlation it
-majorises is itself nonpositive at every coupling and every lag off contact. -/
+`K` may depend on all three arguments and grow arbitrarily fast in each; the conclusion does not
+weaken, because a multiple of zero is zero regardless.
+
+DERIVED: `1` is the lower bound on the circle distance and the `+1` of `Fin (N + 1)`. `0` is the
+coupling the comparison is against and the upper bound concluded. -/
 theorem haar_comparison_forces_vanishing (K : ℕ → ℝ → ℕ → ℝ)
     (hcmp : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), 1 ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d ≤ K N β (d : ℕ) * MassGap.wilsonCorrAt N 0 d)
@@ -486,23 +505,21 @@ theorem haar_comparison_forces_vanishing (K : ℕ → ℝ → ℕ → ℝ)
 
 #print axioms haar_comparison_forces_vanishing
 
-/-- **AND IT IMMEDIATELY GIVES THE WHOLE SUBSTRATE BOUND, WITH `C = 0`.**
+/-- The same hypothesis yields `∃ B : ℝ, ∀ N β, d2At N β ≤ B`.
+`haar_comparison_forces_vanishing` supplies the contact-relative law at `C = 0`, `m₀ = 1`, and
+`ShareEnvelope.substrate_of_contact_relative_decay` consumes it.
 
-This is the sharp form of the no-go: a reversed Haar comparison is not a step towards the open
-statement, it is already strictly stronger than it. Anyone who produces one has not reduced the
-problem — they have solved it, and along the way proved that the connected plaquette correlation is a
-pure contact term at every coupling, which is what the interacting theory is not
-(`WilsonBridge.wilsonCorrConn`'s whole reason for existing is that the disconnected floor has been
-subtracted and something is left).
+So a comparison of that shape implies the uniform bound on `d2At`, and also implies the connected
+plaquette correlation is nonpositive off contact at every coupling.
 
-Read as a dichotomy: either no reversed comparison exists at any rate, or the correlation vanishes
-off contact at every coupling. There is no third case, and neither branch leaves a route through the
-`β = 0` object.
+Scope: this is the one declaration in the file whose `#print axioms` carries
+`wilson_reflection_positive_at`, inherited from
+`ShareEnvelope.substrate_of_contact_relative_decay`. `haar_comparison_forces_vanishing`, which is
+the arithmetic, does not.
 
-FOOTPRINT. This is the one declaration in the file whose `#print axioms` carries
-`wilson_reflection_positive_at`, and it carries it from
-`ShareEnvelope.substrate_of_contact_relative_decay`, not from anything proved here.
-`haar_comparison_forces_vanishing`, which is the mathematical content, is foundational only. -/
+DERIVED: `1` is the lower bound on the circle distance in `hcmp`, the `+1` of `Fin (N + 1)`, and the
+`m₀` passed to `substrate_of_contact_relative_decay`. `0` is the coupling the comparison is against
+and the constant `C` passed to that lemma. -/
 theorem substrate_of_haar_comparison (K : ℕ → ℝ → ℕ → ℝ)
     (hcmp : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), 1 ≤ Moment.circLag d →
       MassGap.wilsonCorrAt N β d ≤ K N β (d : ℕ) * MassGap.wilsonCorrAt N 0 d) :
@@ -514,16 +531,23 @@ theorem substrate_of_haar_comparison (K : ℕ → ℝ → ℕ → ℝ)
 
 #print axioms substrate_of_haar_comparison
 
-/-! ### The floor route does not survive `b → ∞`
+/-! ### The floor as a function of the cut
 
-`StrongArm.contact_relative_on_strong_arm` reaches the ratio by dividing an ABSOLUTE bound by a floor
-under the contact value, and `ContactFloor.contactFloor_holds` supplies that floor as
-`e^{−128b}·δ₀`. The obvious next move — push the cut `b` out and take a limit — is measured here. -/
+`StrongArm.contact_relative_on_strong_arm` reaches a ratio by dividing an absolute bound by a floor
+under the contact value, and `ContactFloor.contactFloor_holds` supplies that floor as `e^{−128b}·δ₀`.
+The three theorems below measure that family as `b` grows. -/
 
-/-- **THE TREE'S FLOOR, WITH ITS SHAPE VISIBLE.** `contactFloor_holds` states the floor existentially;
-this is the same proof with `e^{−128b}·δ₀` written out, so that the `b`-dependence is a term a later
-theorem can quantify over rather than a remark. `δ₀` is `ContactFloor.exists_haar_floor`'s
-aperture-free Haar floor and carries no `b`. -/
+/-- There is a `δ₀ > 0` with `exp (-(128 * b)) * δ₀ ≤ wilsonCorrAt N β 0` at every cut `b`, aperture
+`N`, and coupling `β ∈ [0, b]`. `ContactFloor.exists_haar_floor` supplies `δ₀`, monotonicity of `exp`
+replaces `β` by `b` in the exponent, and `ContactFloor.corrClay_zero_ge` closes it.
+
+`ContactFloor.contactFloor_holds` states the same floor existentially; here the `b`-dependence is
+written out, so that `contactFloor_below_every_level` and `floor_route_constant_unbounded` can
+quantify over it. `δ₀` is aperture-free and carries no `b`.
+
+DERIVED: `0` is the strict lower bound on `δ₀` and the lower end of the coupling interval, and the
+contact lag the floor is under. `128` is `2 · 16 · 4`, carried in from `ContactFloor` — twice the
+touch degree at dimension four — and is not chosen here. -/
 theorem contactFloor_explicit :
     ∃ δ₀ : ℝ, 0 < δ₀ ∧ ∀ (b : ℝ) (N : ℕ) (β : ℝ), 0 ≤ β → β ≤ b →
       Real.exp (-(128 * b)) * δ₀ ≤ MassGap.wilsonCorrAt N β 0 := by
@@ -542,14 +566,16 @@ theorem contactFloor_explicit :
 
 #print axioms contactFloor_explicit
 
-/-- **THE FLOOR'S INFIMUM OVER CUTS IS ZERO.** For every positive level there is a cut at which the
-floor is below it. So no single positive number is a floor on the whole half-line by way of this
-family, and the failure is not a matter of a poor constant: the exponent is `2·touchDeg` and the
-whole family is exponentially small in the cut.
+/-- For every `ε > 0` there is a cut `b > 0` with `exp (-(128 * b)) * δ₀ < ε`. The witness is
+`max 1 (δ₀ / ε)`, using `Real.add_one_le_exp` to put `exp (128 * b)` above `δ₀ / ε`.
 
-The positivity of `δ₀` is carried so the statement reads against the floor and is UNDERSCORED because
-it is not consumed: at `δ₀ ≤ 0` the conclusion is immediate, so the no-go is wider than the object it
-is stated about. -/
+So no positive number is a lower bound for the whole family `b ↦ exp (-(128*b)) * δ₀`.
+
+`_hδ₀` is spelled with an underscore because it is unused: at `δ₀ ≤ 0` the conclusion is immediate,
+so the statement is wider than the floor it is phrased against.
+
+DERIVED: `0` is the strict lower bound on `δ₀`, on `ε`, and on the cut `b`. `128` is
+`contactFloor_explicit`'s exponent, carried from `ContactFloor`. -/
 theorem contactFloor_below_every_level {δ₀ : ℝ} (_hδ₀ : 0 < δ₀) {ε : ℝ} (hε : 0 < ε) :
     ∃ b : ℝ, 0 < b ∧ Real.exp (-(128 * b)) * δ₀ < ε := by
   refine ⟨max 1 (δ₀ / ε), lt_of_lt_of_le one_pos (le_max_left _ _), ?_⟩
@@ -568,22 +594,21 @@ theorem contactFloor_below_every_level {δ₀ : ℝ} (_hδ₀ : 0 < δ₀) {ε :
 
 #print axioms contactFloor_below_every_level
 
-/-- **THE CONSTANT THE FLOOR ROUTE PRODUCES IS UNBOUNDED IN THE CUT.**
+/-- For `δ₀ > 0`, `A > 0`, and any `C : ℝ → ℝ` satisfying `A ≤ C b * (exp (-(128 * b)) * δ₀)` at
+every `b ≥ 0`: for every level `M` there is a cut `b > 0` with `M < C b`. So `C` is unbounded.
 
-Let `A > 0` be any fixed positive numerator — in `StrongArm.contact_relative_on_strong_arm` it is
-`coreConst(16·4, b)·S`, which is MONOTONE INCREASING in `b`
-(`StrongArm.coreConst_mono_beta`), so bounding it below by its value at any cut is giving the route
-the benefit of the doubt. If `C : ℝ → ℝ` assigns to each cut a constant that the route's own
-inequality `A ≤ C(b)·δ(b)` certifies against the floor `δ(b) = e^{−128b}·δ₀`, then `C` is unbounded:
-for every level there is a cut whose constant exceeds it.
+The witness is `max 1 (|M| δ₀ / A)`, with `Real.add_one_le_exp` again supplying the growth.
 
-So the proved interval cannot be grown into the half-line. The statement
-`contact_relative_unconditional` produces is not a family converging to anything as `b → ∞`; its
-constant diverges at least like `e^{128b}`, which is the floor's own exponent. That is a property of
-the ROUTE — dividing an absolute bound by a floor — and it is why `[b, ∞)` needs an argument that
-never bounds `ρ(0)` below, as `StrongArm.ContactFloor`'s own docstring says.
+`A` is a fixed positive number. In `StrongArm.contact_relative_on_strong_arm` the corresponding
+numerator is `coreConst(16·4, b)·S`, which `StrongArm.coreConst_mono_beta` makes monotone increasing
+in `b`, so holding it fixed bounds it below by its value at any cut.
 
-DERIVED: `128` is `2·16·4` carried in from the floor; no numeral here is a magnitude. -/
+The statement is about any `C` meeting that inequality; `floor_route_nonvacuous` exhibits one, so the
+hypothesis is satisfiable.
+
+DERIVED: `0` is the strict lower bound on `δ₀`, on `A`, on the cut in `hC`'s quantifier, and on the
+witness `b`. `128` is the floor's exponent, `2 · 16 · 4` carried in from `ContactFloor`; `M` is the
+caller's level. No numeral here is a magnitude. -/
 theorem floor_route_constant_unbounded {δ₀ A : ℝ} (hδ₀ : 0 < δ₀) (hA : 0 < A)
     (C : ℝ → ℝ) (hC : ∀ b : ℝ, 0 ≤ b → A ≤ C b * (Real.exp (-(128 * b)) * δ₀)) (M : ℝ) :
     ∃ b : ℝ, 0 < b ∧ M < C b := by
@@ -617,10 +642,18 @@ theorem floor_route_constant_unbounded {δ₀ A : ℝ} (hδ₀ : 0 < δ₀) (hA 
 
 #print axioms floor_route_constant_unbounded
 
-/-- **NON-VACUITY OF THE ROUTE NO-GO.** The hypothesis of `floor_route_constant_unbounded` is
-satisfiable — the smallest constant the route's own inequality admits is `A/(e^{−128b}·δ₀)` — so the
-no-go is not an implication out of an empty hypothesis. Stated so the divergence is exhibited on a
-witness and not only asserted of an abstract family. -/
+/-- For `δ₀ > 0` and `A > 0` there is a `C : ℝ → ℝ` satisfying
+`A ≤ C b * (exp (-(128 * b)) * δ₀)` at every `b ≥ 0` and unbounded above on the positive cuts.
+
+The witness is `C b = A / (exp (-(128*b)) * δ₀)`, the smallest constant the inequality admits, for
+which the inequality is an equality; its unboundedness is `floor_route_constant_unbounded` applied to
+itself.
+
+So `floor_route_constant_unbounded`'s hypothesis is satisfiable, and the divergence is exhibited on a
+witness rather than only asserted of an abstract family.
+
+DERIVED: `0` is the strict lower bound on `δ₀` and on `A`, the lower bound on the cut, and the strict
+lower bound on the witness. `128` is the floor's exponent, carried from `ContactFloor`. -/
 theorem floor_route_nonvacuous {δ₀ A : ℝ} (hδ₀ : 0 < δ₀) (hA : 0 < A) :
     ∃ C : ℝ → ℝ, (∀ b : ℝ, 0 ≤ b → A ≤ C b * (Real.exp (-(128 * b)) * δ₀)) ∧
       ∀ M : ℝ, ∃ b : ℝ, 0 < b ∧ M < C b := by

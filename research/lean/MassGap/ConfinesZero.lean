@@ -59,17 +59,16 @@ shows by vanishing at it. `WeakArm.corrClay_le_at_zero` and `MomentShape.corrCla
 DO NOT apply here: both carry `3 ≤ m`, which is extent six and above. At extent four the only shape
 facts available are nonnegativity, circle symmetry and log-convexity.
 
-## What remains, as one Prop
+## The restatement as a non-equality
 
-`MissesTheFloor` — at some even aperture the cosine average is never EQUAL to `3^{−1/4}`. With
-continuity and the value `1` at zero coupling this is EQUIVALENT to `ConfinesAtAnAperture`
-(`confinesAtAnAperture_iff_missesTheFloor`), by the intermediate value theorem: the average starts
-above the floor, so if it were ever below it, it would have to cross. So what is open is exactly
+`MissesTheFloor` says that at some even aperture the cosine average is never equal to `3^(-1/4)`.
+`confinesAtAnAperture_iff_missesTheFloor` proves it equivalent to `ConfinesAtAnAperture`: the
+forward direction is trivial, and the reverse is the intermediate value theorem against
+`cosAvgEven_at_zero` and `continuous_cosAvgEven`, since a coupling at which the average fell below
+the floor would force one at which it equalled the floor. So the inequality at every coupling and
+the non-equality at every coupling are the same statement.
 
-  **the cosine average staying off the floor `3^{−1/4}` away from zero coupling** —
-
-an inequality everywhere has become a non-equality everywhere, and nothing else is left on this side.
-This file does not close it and claims no bound on `cosAvgEven` at large `β`.
+No declaration here bounds `cosAvgEven` at large `β`.
 
 DERIVED: `3^{−1/4} = e^{−κ₀YM}` with `κ₀YM = ¼ log 3` counted off directed cube paths in `Floor.lean`;
 `4` is the smallest even extent with `2 ≤ m`, read off `Complete.wilson_reflection_positive_at_even`'s
@@ -85,8 +84,11 @@ open MeasureTheory
 
 /-! ## 0. Two small facts about the read -/
 
-/-- A lag other than the origin has circle distance at least one. `circLag d = min d (N+1−d)`, and
-both entries are at least one exactly when `d ≠ 0`. -/
+/-- `1 ≤ Moment.circLag d` for every lag `d ≠ 0`. `circLag d` is `min d (N + 1 - d)`, and both
+entries are at least one exactly when `d ≠ 0`.
+
+DERIVED: `1` is the least circle distance a lag other than the origin can have; `0` is the origin
+lag the hypothesis excludes; `N + 1` is the lag arity, `Fin (N + 1)` indexing lags `0 … N`. -/
 theorem one_le_circLag {N : ℕ} {d : Fin (N + 1)} (hd : d ≠ 0) : 1 ≤ Moment.circLag d := by
   have hv : (d : ℕ) ≠ 0 := by
     intro h
@@ -97,28 +99,42 @@ theorem one_le_circLag {N : ℕ} {d : Fin (N + 1)} (hd : d ≠ 0) : 1 ≤ Moment
 
 #print axioms one_le_circLag
 
-/-- The read's raw profile is the Wilson correlation at the CLAMPED coupling, by definition. -/
+/-- `(readEven a β).ρ d = wilsonCorrAt a.1 (max β 0) d`, by `rfl`: the read's raw profile is the
+Wilson correlation at the clamped coupling.
+
+DERIVED: `1` in `a.1` is the `EvenAp` projection to the extent index and in `Fin (a.1 + 1)` the lag
+arity offset; `0` is the clamp's lower end. -/
 theorem readEven_rho (a : EvenAp) (β : ℝ) (d : Fin (a.1 + 1)) :
     (readEven a β).ρ d = MassGap.wilsonCorrAt a.1 (max β 0) d := rfl
 
 #print axioms readEven_rho
 
-/-- The lag angle does not see the coupling: `Moment.Read.θ` discards its read and is `2π d /(N+1)`.
-Stated so the numerator of the cosine average can be split into a `β`-dependent profile and a
-constant weight. -/
+/-- `(readEven a β).θ d = (readEven a 0).θ d`, by `rfl`: the lag angle does not depend on the
+coupling, `Moment.Read.θ` being `2π d / (N + 1)`. It lets the numerator of the cosine average split
+into a `β`-dependent profile and a constant weight.
+
+DERIVED: `1` in `a.1` is the `EvenAp` projection and in `Fin (a.1 + 1)` the lag arity offset; `0` is
+the coupling the angle is compared at. -/
 theorem readEven_theta (a : EvenAp) (β : ℝ) (d : Fin (a.1 + 1)) :
     (readEven a β).θ d = (readEven a 0).θ d := rfl
 
 #print axioms readEven_theta
 
-/-- The floor is below one. `3 > 1` and the exponent is negative, so the power is a proper fraction —
-which is what makes a point mass at lag zero clear it with room. -/
+/-- `(3 : ℝ) ^ (-(1 : ℝ) / 4) < 1`, by `Real.rpow_lt_one_of_one_lt_of_neg`: the base exceeds one and
+the exponent is negative. This is what lets a point mass at lag zero, whose cosine average is `1`,
+clear the floor.
+
+DERIVED: `3`, `1` and `4` form the entropy floor `3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)` with
+`κ₀YM = ¼ log 3`; the final `1` is the level it is shown to fall below. -/
 theorem floor_lt_one : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 :=
   Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
 
 #print axioms floor_lt_one
 
-/-- The floor is positive. -/
+/-- `0 < (3 : ℝ) ^ (-(1 : ℝ) / 4)`, by `Real.rpow_pos_of_pos`.
+
+DERIVED: `0` is the level the floor is shown to exceed; `3`, `1` and `4` form the entropy floor
+`3 ^ (-(1 : ℝ) / 4) = e^(-κ₀YM)`. -/
 theorem floor_pos : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
   Real.rpow_pos_of_pos (by norm_num) _
 
@@ -132,8 +148,13 @@ correlation vanishes at every lag of nonzero circle distance
 (`PowerTail.contact_value_pos_at_zero_coupling`). The normalised read is therefore a point mass at
 lag zero, where the angle is zero and the cosine is one. -/
 
-/-- **THE COSINE AVERAGE AT ZERO COUPLING IS ONE**, at every even aperture. No estimate is made: the
-profile is a contact term, so the probability vector is the indicator of lag zero. -/
+/-- `cosAvgEven a 0 = 1` at every even aperture `a`. `PowerTail.wilsonCorrAt_at_zero_coupling` makes
+the profile vanish at every lag of nonzero circle distance, which by `one_le_circLag` is every lag
+but `0`, and `PowerTail.contact_value_pos_at_zero_coupling` keeps the contact value strictly
+positive. The probability vector is therefore the indicator of lag `0`, where `θ 0 = 0` and
+`cos 0 = 1`. No estimate is made.
+
+DERIVED: `0` is the coupling and the contact lag; `1` is `cos 0`, the value the average takes. -/
 theorem cosAvgEven_at_zero (a : EvenAp) : cosAvgEven a 0 = 1 := by
   have hzero : ∀ d : Fin (a.1 + 1), d ≠ 0 → (readEven a 0).ρ d = 0 := by
     intro d hd
@@ -160,18 +181,25 @@ theorem cosAvgEven_at_zero (a : EvenAp) : cosAvgEven a 0 = 1 := by
 
 #print axioms cosAvgEven_at_zero
 
-/-- **AND THEREFORE THE HYPOTHESIS HOLDS AT ZERO COUPLING**, at every even aperture. -/
+/-- `3 ^ (-(1 : ℝ) / 4) < cosAvgEven a 0` at every even aperture, from `cosAvgEven_at_zero` and
+`floor_lt_one`.
+
+DERIVED: `3`, `1` and `4` form the entropy floor; `0` is the coupling. -/
 theorem confines_at_zero (a : EvenAp) : (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven a 0 := by
   rw [cosAvgEven_at_zero]
   exact floor_lt_one
 
 #print axioms confines_at_zero
 
-/-- **THE NEGATIVE HALF-LINE IS THE CLAMP, NOT A RESULT.** `readEven` reads the ensemble at
-`max β 0`, so at every nonpositive coupling it is the `β = 0` read and the cosine average is the same
-`1`. `EvenAperture.readEven_eq_at_zero` already names this as the price of the restriction; it is
-recorded here so that `confines_near_zero` below is not read as symmetric evidence about the
-coupling line. -/
+/-- `cosAvgEven a β = 1` at every `β ≤ 0`. `readEven` reads the ensemble at `max β 0`, so at a
+nonpositive coupling it is the `β = 0` read (`EvenAperture.readEven_eq_at_zero`) and
+`cosAvgEven_at_zero` applies.
+
+The value on the negative half-line is therefore the clamp's, not a property of the ensemble at
+negative coupling.
+
+DERIVED: `0` is the upper end of the coupling range and the clamp's lower end; `1` is the value the
+average takes. -/
 theorem cosAvgEven_eq_one_of_nonpos (a : EvenAp) {β : ℝ} (hβ : β ≤ 0) : cosAvgEven a β = 1 := by
   show ∑ d, (readEven a β).p d * Real.cos ((readEven a β).θ d) = 1
   rw [readEven_eq_at_zero a hβ]
@@ -189,9 +217,11 @@ expectations, so it inherits continuity; the clamp `max β 0` is continuous; and
 the read is the second clause of `Complete.wilson_reflection_positive_at_even`, which is strictly
 positive at every nonnegative coupling and therefore at every clamped one. -/
 
-/-- The Gibbs expectation of a bounded measurable observable is continuous in the coupling.
-`WilsonAnalytic.wilsonSystem_expect_hasDerivAt` gives more — it is differentiable — and this is the
-consequence the read needs. -/
+/-- The Gibbs expectation of a measurable observable bounded by `M` is continuous in the coupling,
+on any Wilson system with `N ≠ 0`. It is the `continuousAt` of
+`WilsonAnalytic.wilsonSystem_expect_hasDerivAt`, which gives differentiability.
+
+DERIVED: `0` is the colour count value the hypothesis `hN` excludes. -/
 theorem continuous_wilsonSystem_expect {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
     [DecidableEq Pq] (bd : Pq → List (Lk × Bool))
     (O : (wilsonSystem bd (wilsonDensity (N := N))).Config → ℝ)
@@ -203,8 +233,14 @@ theorem continuous_wilsonSystem_expect {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [
 
 #print axioms continuous_wilsonSystem_expect
 
-/-- The CONNECTED plaquette correlation is continuous in the coupling, on any Wilson system. Three
-expectations, each of an observable bounded by the plaquette density's own bound. -/
+/-- The connected plaquette correlation `wilsonCorrConn bd p₀ · p` is continuous in the coupling, on
+any Wilson system with `Nc ≠ 0`. It is a difference of a product expectation and a product of two
+expectations, each continuous by `continuous_wilsonSystem_expect`; the bounds `2` on a single
+plaquette observable and `4` on the product come from `wilsonPlaqObs_nonneg` and
+`wilsonPlaqObs_le_two`.
+
+DERIVED: `0` is the colour count value the hypothesis `hNc` excludes. The bounds `2` and `4` appear
+in the proof, where `2` is `wilsonPlaqObs_le_two` and `4` its square. -/
 theorem continuous_wilsonCorrConn {Nc : ℕ} (hNc : Nc ≠ 0) {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
     [DecidableEq Pq] (bd : Pq → List (Lk × Bool)) (p₀ p : Pq) :
     Continuous (fun β : ℝ => MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ β p) := by
@@ -228,9 +264,13 @@ theorem continuous_wilsonCorrConn {Nc : ℕ} (hNc : Nc ≠ 0) {Lk Pq : Type} [Fi
 
 #print axioms continuous_wilsonCorrConn
 
-/-- **THE CORRELATION THE SUBSTRATE READ CONSUMES IS CONTINUOUS IN THE COUPLING**, at every aperture
-and every lag, with no hypothesis. `wilsonCorrAt N β = corrClay (N+1) β` by definition, and that is
-the connected correlation of two explicit plaquettes of the four-dimensional `SU(3)` lattice. -/
+/-- `fun β => wilsonCorrAt N β d` is continuous, at every aperture `N` and every lag `d`, with no
+hypothesis. `wilsonCorrAt N β` is `corrClay (N + 1) β` by definition, the connected correlation of
+two explicit plaquettes of the four-dimensional `SU(3)` lattice, so
+`continuous_wilsonCorrConn` at `Nc = 3` applies.
+
+DERIVED: `1` in `Fin (N + 1)` is the lag arity offset. The `3`, `4`, `(0, 1)` and `2` of the
+instantiation appear in the proof term and are `wilsonCorrAt`'s own. -/
 theorem continuous_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) :
     Continuous (fun β : ℝ => MassGap.wilsonCorrAt N β d) := by
   have h := continuous_wilsonCorrConn (Nc := 3) (by norm_num)
@@ -241,9 +281,369 @@ theorem continuous_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) :
 
 #print axioms continuous_wilsonCorrAt
 
-/-- **THE COSINE AVERAGE IS CONTINUOUS IN THE COUPLING**, at every even aperture, on all of `ℝ`. A
-ratio of finite sums of continuous functions whose denominator is the total mass, strictly positive
-by the second clause of the PROVED reflection positivity at every clamped coupling. -/
+/-- **The CONNECTED plaquette correlation is DIFFERENTIABLE in the coupling**, on any Wilson system.
+
+The strict upgrade of `continuous_wilsonCorrConn`, by the same three expectations: the Gibbs
+expectation of a bounded measurable observable has a derivative in `β`
+(`WilsonAnalytic.wilsonSystem_expect_hasDerivAt`, whose derivative is minus the connected correlation
+with the action), and `wilsonCorrConn` is a difference of a product expectation and a product of
+expectations.
+
+DERIVED: `0` is the colour count value the hypothesis `hNc` excludes, the only numeral in the
+statement. The `2` and `4` of the proof are `wilsonPlaqObs_le_two`'s bound on a single plaquette
+density and its square, the bound on a product of two, read exactly as
+`continuous_wilsonCorrConn` reads them. Neither is chosen here. -/
+theorem differentiable_wilsonCorrConn {Nc : ℕ} (hNc : Nc ≠ 0) {Lk Pq : Type} [Fintype Lk]
+    [Fintype Pq] [DecidableEq Pq] (bd : Pq → List (Lk × Bool)) (p₀ p : Pq) :
+    Differentiable ℝ (fun β : ℝ => MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ β p) := by
+  have hb : ∀ (q : Pq) (U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config),
+      |wilsonPlaqObs (N := Nc) bd q U| ≤ 2 := fun q U =>
+    abs_le.mpr ⟨by linarith [wilsonPlaqObs_nonneg hNc bd q U], wilsonPlaqObs_le_two hNc bd q U⟩
+  have hprod : ∀ U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config,
+      |wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U| ≤ 4 := by
+    intro U
+    rw [abs_mul]
+    nlinarith [hb p₀ U, hb p U, abs_nonneg (wilsonPlaqObs (N := Nc) bd p₀ U),
+      abs_nonneg (wilsonPlaqObs (N := Nc) bd p U)]
+  intro β
+  have h1 := (MassGap.WilsonAnalytic.wilsonSystem_expect_hasDerivAt hNc bd β
+      (fun U => wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U)
+      ((measurable_wilsonPlaqObs bd p₀).mul (measurable_wilsonPlaqObs bd p)) 4
+      hprod).differentiableAt
+  have h2 := (MassGap.WilsonAnalytic.wilsonSystem_expect_hasDerivAt hNc bd β
+      (wilsonPlaqObs (N := Nc) bd p₀) (measurable_wilsonPlaqObs bd p₀) 2 (hb p₀)).differentiableAt
+  have h3 := (MassGap.WilsonAnalytic.wilsonSystem_expect_hasDerivAt hNc bd β
+      (wilsonPlaqObs (N := Nc) bd p) (measurable_wilsonPlaqObs bd p) 2 (hb p)).differentiableAt
+  exact h1.sub (h2.mul h3)
+
+#print axioms differentiable_wilsonCorrConn
+
+/-- `fun β => wilsonCorrAt N β d` is differentiable on `ℝ`, at every aperture `N` and every lag `d`,
+with no hypothesis. It is `differentiable_wilsonCorrConn` at `Nc = 3` on the Clay lattice's boundary
+map, and strengthens `continuous_wilsonCorrAt`.
+
+DERIVED: `1` in `Fin (N + 1)` is the lag arity offset, the only numeral in the statement. In the
+proof term, `3` is `SU(3)`'s rank and `4` the dimension, both the Clay problem's own data, `(0, 1)`
+is the plaquette's plane and `2` the transverse direction the lag runs along; all are
+`wilsonCorrAt`'s, inherited through `corrClay`, and identical to `continuous_wilsonCorrAt`'s. -/
+theorem differentiable_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) :
+    Differentiable ℝ (fun β : ℝ => MassGap.wilsonCorrAt N β d) :=
+  differentiable_wilsonCorrConn (Nc := 3) (by norm_num)
+    (MassGap.WilsonHypercubic.bd (d := 4) (n := N + 1))
+    ((0, 1), (fun _ => 0 : MassGap.WilsonHypercubic.Site 4 (N + 1)))
+    ((0, 1), MassGap.WilsonBridge.siteAtHyper 2 d)
+
+#print axioms differentiable_wilsonCorrAt
+
+/-- `Differentiable ℝ (d2At N)` at every aperture, on all of `ℝ`. This is the shape
+`Interior.d2_lipschitz_of_deriv_bound` and `Interior.d2_le_of_analytic_grid` take as their `hdiff`
+hypothesis.
+
+`d2At N β` is `∑ d, (readYMAt N β).p d * (circLag d) ^ 2`, where `p d` is
+`wilsonCorrAt N β d / ∑ d', wilsonCorrAt N β d'` and `circLag d` is a natural number not depending
+on `β`. Numerator and denominator are finite sums of `differentiable_wilsonCorrAt`, and the
+denominator is nonzero by `Moment.Read.hpos`.
+
+The proof uses `(readYMAt N β).hpos`, so this declaration carries
+`wilson_reflection_positive_at`, which `readYMAt` is the entry point for;
+`differentiable_wilsonCorrConn` and `differentiable_wilsonCorrAt` do not.
+
+DERIVED: no numeral appears in the statement. The `2` inside `d2At` is the exponent of the circle
+distance, the second moment, fixed by that definition. -/
+theorem differentiable_d2At (N : ℕ) : Differentiable ℝ (MassGap.d2At N) := by
+  intro β
+  have hden : DifferentiableAt ℝ
+      (fun x : ℝ => ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d') β := by
+    have hfn : (fun x : ℝ => ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d')
+        = ∑ d' : Fin (N + 1), (fun x : ℝ => MassGap.wilsonCorrAt N x d') := by
+      funext x
+      simp only [Finset.sum_apply]
+    rw [hfn]
+    exact DifferentiableAt.sum (fun d' _ => differentiable_wilsonCorrAt N d' β)
+  have hne : (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N β d') ≠ 0 :=
+    ne_of_gt (MassGap.readYMAt N β).hpos
+  have hterm : ∀ d : Fin (N + 1),
+      DifferentiableAt ℝ (fun x : ℝ => (MassGap.readYMAt N x).p d) β := by
+    intro d
+    show DifferentiableAt ℝ
+      (fun x : ℝ =>
+        MassGap.wilsonCorrAt N x d / ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d') β
+    exact (differentiable_wilsonCorrAt N d β).div hden hne
+  show DifferentiableAt ℝ
+    (fun x : ℝ =>
+      ∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2) β
+  have hfn : (fun x : ℝ =>
+        ∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2)
+      = ∑ d : Fin (N + 1),
+        (fun x : ℝ => (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2) := by
+    funext x
+    simp only [Finset.sum_apply]
+  rw [hfn]
+  exact DifferentiableAt.sum (fun d _ => (hterm d).mul_const _)
+
+#print axioms differentiable_d2At
+
+/-- The Gibbs expectation of a measurable observable bounded by `M` is Lipschitz in the coupling
+with constant `4 * M * Fintype.card Pq`, on any Wilson system with `N ≠ 0`. The derivative is minus
+the connected correlation with the action (`wilsonSystem_expect_hasDerivAt`),
+`cov_bound_extensive` bounds it by `4 * M * #Plaq` with no further hypothesis, and
+`Convex.norm_image_sub_le_of_norm_deriv_le` on `Set.univ` turns that into the Lipschitz bound.
+
+The constant is extensive: it carries `Fintype.card Pq`, so it grows with the volume.
+`WilsonAnalytic.expect_lipschitz_local` is the version without that factor, under a clustering
+hypothesis. `WilsonAnalytic.expect_lipschitz` is the same statement for `sysReal` alone.
+
+DERIVED: `0` is the colour count value the hypothesis `hN` excludes; `4` is
+`cov_bound_extensive`'s own factor, from the plaquette density's range `[0, 2]` doubled. Neither is
+chosen here. -/
+theorem wilsonSystem_expect_lipschitz {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fintype Lk]
+    [Fintype Pq] (bd : Pq → List (Lk × Bool))
+    (O : (wilsonSystem bd (wilsonDensity (N := N))).Config → ℝ)
+    (hmeas : Measurable O) (M : ℝ) (hbound : ∀ U, |O U| ≤ M) (x y : ℝ) :
+    |(wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) x O
+        - (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) y O|
+      ≤ (4 * M * (Fintype.card Pq : ℝ)) * |x - y| := by
+  have hdiff : ∀ z ∈ (Set.univ : Set ℝ),
+      DifferentiableAt ℝ (fun s : ℝ => (wilsonSystem bd (wilsonDensity (N := N))).expect
+        (probHaar (MassGap.SUN.SU N)) s O) z :=
+    fun z _ => (MassGap.WilsonAnalytic.wilsonSystem_expect_hasDerivAt hN bd z O hmeas M
+      hbound).differentiableAt
+  have hbnd : ∀ z ∈ (Set.univ : Set ℝ),
+      ‖deriv (fun s : ℝ => (wilsonSystem bd (wilsonDensity (N := N))).expect
+        (probHaar (MassGap.SUN.SU N)) s O) z‖ ≤ 4 * M * (Fintype.card Pq : ℝ) := by
+    intro z _
+    rw [(MassGap.WilsonAnalytic.wilsonSystem_expect_hasDerivAt hN bd z O hmeas M hbound).deriv,
+      Real.norm_eq_abs, abs_neg]
+    exact MassGap.WilsonAnalytic.cov_bound_extensive hN bd z O hmeas M hbound
+  have h := (convex_univ (𝕜 := ℝ)).norm_image_sub_le_of_norm_deriv_le hdiff hbnd
+    (Set.mem_univ y) (Set.mem_univ x)
+  rw [Real.norm_eq_abs, Real.norm_eq_abs] at h
+  exact h
+
+#print axioms wilsonSystem_expect_lipschitz
+
+/-- **The CONNECTED plaquette correlation is LIPSCHITZ in the coupling**, with an explicit constant.
+
+`wilsonCorrConn = ⟨φ₀φ⟩ − ⟨φ₀⟩⟨φ⟩`, three expectations. Each is Lipschitz by
+`wilsonSystem_expect_lipschitz`, and the product of two is handled by
+`|f(x)g(x) − f(y)g(y)| ≤ |f(x)|·|g(x)−g(y)| + |g(y)|·|f(x)−f(y)|`, the magnitudes coming from
+`wilsonSystem_expect_abs_le`.
+
+DERIVED: `0` is the colour count value the hypothesis `hNc` excludes; `48` is not chosen — it is
+`16 + 2·8 + 2·8` read off the three terms, where `16 = 4·4` is the product observable's Lipschitz
+constant, `8 = 4·2` each single plaquette's, and the two `2`s are the magnitudes
+`wilsonPlaqObs_le_two` supplies. In the proof, `4` is the product's bound and `2` a single
+plaquette's. -/
+theorem lipschitz_wilsonCorrConn {Nc : ℕ} (hNc : Nc ≠ 0) {Lk Pq : Type} [Fintype Lk]
+    [Fintype Pq] [DecidableEq Pq] (bd : Pq → List (Lk × Bool)) (p₀ p : Pq) (x y : ℝ) :
+    |MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ x p
+        - MassGap.WilsonBridge.wilsonCorrConn (Nc := Nc) bd p₀ y p|
+      ≤ (48 * (Fintype.card Pq : ℝ)) * |x - y| := by
+  have hb : ∀ (q : Pq) (U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config),
+      |wilsonPlaqObs (N := Nc) bd q U| ≤ 2 := fun q U =>
+    abs_le.mpr ⟨by linarith [wilsonPlaqObs_nonneg hNc bd q U], wilsonPlaqObs_le_two hNc bd q U⟩
+  have hprod : ∀ U : (wilsonSystem bd (wilsonDensity (N := Nc))).Config,
+      |wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U| ≤ 4 := by
+    intro U
+    rw [abs_mul]
+    nlinarith [hb p₀ U, hb p U, abs_nonneg (wilsonPlaqObs (N := Nc) bd p₀ U),
+      abs_nonneg (wilsonPlaqObs (N := Nc) bd p U)]
+  set V : ℝ := (Fintype.card Pq : ℝ) with hV
+  have hV0 : 0 ≤ V := by positivity
+  have hxy : 0 ≤ |x - y| := abs_nonneg _
+  -- the three Lipschitz bounds
+  have L1 := wilsonSystem_expect_lipschitz hNc bd
+      (fun U => wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U)
+      ((measurable_wilsonPlaqObs bd p₀).mul (measurable_wilsonPlaqObs bd p)) 4 hprod x y
+  have L2 := wilsonSystem_expect_lipschitz hNc bd (wilsonPlaqObs (N := Nc) bd p₀)
+      (measurable_wilsonPlaqObs bd p₀) 2 (hb p₀) x y
+  have L3 := wilsonSystem_expect_lipschitz hNc bd (wilsonPlaqObs (N := Nc) bd p)
+      (measurable_wilsonPlaqObs bd p) 2 (hb p) x y
+  -- the two magnitudes
+  have M2 := wilsonSystem_expect_abs_le hNc bd x (wilsonPlaqObs (N := Nc) bd p₀)
+      (measurable_wilsonPlaqObs bd p₀) 2 (hb p₀)
+  have M3 := wilsonSystem_expect_abs_le hNc bd y (wilsonPlaqObs (N := Nc) bd p)
+      (measurable_wilsonPlaqObs bd p) 2 (hb p)
+  set A : ℝ → ℝ := fun s => (wilsonSystem bd (wilsonDensity (N := Nc))).expect
+    (probHaar (MassGap.SUN.SU Nc)) s
+      (fun U => wilsonPlaqObs (N := Nc) bd p₀ U * wilsonPlaqObs (N := Nc) bd p U) with hA
+  set F : ℝ → ℝ := fun s => (wilsonSystem bd (wilsonDensity (N := Nc))).expect
+    (probHaar (MassGap.SUN.SU Nc)) s (wilsonPlaqObs (N := Nc) bd p₀) with hF
+  set G : ℝ → ℝ := fun s => (wilsonSystem bd (wilsonDensity (N := Nc))).expect
+    (probHaar (MassGap.SUN.SU Nc)) s (wilsonPlaqObs (N := Nc) bd p) with hG
+  have habs : ∀ u v : ℝ, |u + v| ≤ |u| + |v| := by
+    intro u v
+    first
+      | exact abs_add u v
+      | exact abs_add_le u v
+      | exact abs_add' u v
+  show |(A x - F x * G x) - (A y - F y * G y)| ≤ (48 * V) * |x - y|
+  have hsplit : (A x - F x * G x) - (A y - F y * G y)
+      = (A x - A y) + (-(F x * (G x - G y) + G y * (F x - F y))) := by ring
+  rw [hsplit]
+  have hstep : |(A x - A y) + (-(F x * (G x - G y) + G y * (F x - F y)))|
+      ≤ |A x - A y| + (|F x| * |G x - G y| + |G y| * |F x - F y|) := by
+    refine le_trans (habs _ _) ?_
+    rw [abs_neg]
+    gcongr
+    refine le_trans (habs _ _) ?_
+    rw [abs_mul, abs_mul]
+  refine le_trans hstep ?_
+  have h1 : |A x - A y| ≤ (4 * 4 * V) * |x - y| := by simpa [hA] using L1
+  have h2 : |G x - G y| ≤ (4 * 2 * V) * |x - y| := by simpa [hG] using L3
+  have h3 : |F x - F y| ≤ (4 * 2 * V) * |x - y| := by simpa [hF] using L2
+  have h4 : |F x| ≤ 2 := by simpa [hF] using M2
+  have h5 : |G y| ≤ 2 := by simpa [hG] using M3
+  nlinarith [abs_nonneg (A x - A y), abs_nonneg (F x - F y), abs_nonneg (G x - G y),
+    abs_nonneg (F x), abs_nonneg (G y), hxy, hV0]
+
+#print axioms lipschitz_wilsonCorrConn
+
+/-- `|wilsonCorrAt N x d - wilsonCorrAt N y d| ≤ 48 * Fintype.card (Plaq 4 (N + 1)) * |x - y|`, at
+every aperture `N` and every lag `d`, with no hypothesis. It is `lipschitz_wilsonCorrConn` at
+`Nc = 3` on the Clay lattice's boundary map.
+
+The constant is extensive: it carries the plaquette count of the extent-`(N + 1)` lattice, so it
+grows with the aperture.
+
+DERIVED: `48` is `lipschitz_wilsonCorrConn`'s constant, derived there; `4` in `Plaq 4 (N + 1)` is
+the dimension and `1` the lag arity offset in `N + 1`. In the proof term, `3` is `SU(3)`'s rank,
+`(0, 1)` the plaquette's plane and `2` the transverse direction, all `wilsonCorrAt`'s own, exactly
+as in `differentiable_wilsonCorrAt`. -/
+theorem lipschitz_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) (x y : ℝ) :
+    |MassGap.wilsonCorrAt N x d - MassGap.wilsonCorrAt N y d|
+      ≤ (48 * (Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (N + 1)) : ℝ)) * |x - y| :=
+  lipschitz_wilsonCorrConn (Nc := 3) (by norm_num)
+    (MassGap.WilsonHypercubic.bd (d := 4) (n := N + 1))
+    ((0, 1), (fun _ => 0 : MassGap.WilsonHypercubic.Site 4 (N + 1)))
+    ((0, 1), MassGap.WilsonBridge.siteAtHyper 2 d) x y
+
+#print axioms lipschitz_wilsonCorrAt
+
+/-- On a compact coupling range `Icc a b` with `0 ≤ a`, there is an `m > 0` with
+`m ≤ ∑ d : Fin (N + 1), wilsonCorrAt N β d` at every aperture `N` and every `β ∈ Icc a b`. The
+witness is `exp (-(128 * b)) * δ₀`: every `wilsonCorrAt N β d` is nonnegative, so the sum is at
+least the contact term, `InfiniteVolume.exists_uniform_contact_floor` bounds that below by
+`exp (-(128 * β)) * δ₀`, and the exponential is decreasing, so the value at `b` serves throughout.
+
+`m` is bound outside the quantifier over `N` and over `β`. `Moment.Read.hpos` gives `0 < ∑ ρ` with
+no constant, which a quotient estimate cannot use.
+
+DERIVED: `0` is the sign condition on `a`, the strict positivity asserted of `m`, and the contact
+lag; `1` is the lag arity offset in `Fin (N + 1)`. In the proof, `128` is
+`exists_uniform_contact_floor`'s own exponent — `16·dim` at `dim = 4`, doubled, which is
+`StrongCoupling.touchDeg_bd_le`'s plaquette-touch count. None is chosen here. -/
+theorem exists_profile_sum_floor {a b : ℝ} (ha : 0 ≤ a) :
+    ∃ m : ℝ, 0 < m ∧ ∀ (N : ℕ), ∀ β ∈ Set.Icc a b,
+      m ≤ ∑ d : Fin (N + 1), MassGap.wilsonCorrAt N β d := by
+  obtain ⟨δ₀, hδ₀, hfloor⟩ := MassGap.InfiniteVolume.exists_uniform_contact_floor
+  refine ⟨Real.exp (-(128 * b)) * δ₀, mul_pos (Real.exp_pos _) hδ₀, ?_⟩
+  intro N β hβ
+  obtain ⟨hab, hbb⟩ := hβ
+  have hβ0 : 0 ≤ β := le_trans ha hab
+  have hmono : Real.exp (-(128 * b)) ≤ Real.exp (-(128 * β)) := by
+    apply Real.exp_le_exp.mpr
+    linarith
+  have hcontact : Real.exp (-(128 * β)) * δ₀ ≤ MassGap.wilsonCorrAt N β 0 :=
+    hfloor N β hβ0
+  have hterm : Real.exp (-(128 * b)) * δ₀ ≤ MassGap.wilsonCorrAt N β 0 :=
+    le_trans (mul_le_mul_of_nonneg_right hmono hδ₀.le) hcontact
+  refine le_trans hterm ?_
+  refine Finset.single_le_sum (f := fun d : Fin (N + 1) => MassGap.wilsonCorrAt N β d) ?_
+    (Finset.mem_univ (0 : Fin (N + 1)))
+  intro d _
+  exact (MassGap.readYMAt N β).hρ d
+
+#print axioms exists_profile_sum_floor
+
+/-- **The zero-coupling profile is a DELTA at lag zero, at every aperture.**
+
+`PowerTail.wilsonCorrAt_at_zero_coupling` kills every weight whose circle distance is at least one,
+and `one_le_circLag` says that is exactly the lags other than `0`. No parity condition enters, so
+this holds where the `EvenAp` family cannot reach — in particular at `nCorrYM = 16`, whose extent
+`17` is odd and which is therefore **not** an `EvenAp`.
+
+DERIVED: `0` is the lag the hypothesis excludes, the coupling, and the value the profile takes;
+`1` is the lag arity offset in `Fin (N + 1)`. In the proof, `1` is also `one_le_circLag`'s
+threshold. Nothing is chosen. -/
+theorem profile_at_zero_coupling_eq_zero (N : ℕ) {d : Fin (N + 1)} (hd : d ≠ 0) :
+    (MassGap.readYMAt N 0).ρ d = 0 :=
+  MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d (one_le_circLag hd)
+
+#print axioms profile_at_zero_coupling_eq_zero
+
+/-- `cosAvgYMAt N 0 = 1` at every aperture `N`, with no parity condition.
+`profile_at_zero_coupling_eq_zero` makes the profile a delta at lag zero, so `p 0 = 1` by
+`Moment.Read.p_sum` and `p d = 0` elsewhere, while `θ 0 = 2π · 0 / (N + 1) = 0` and `cos 0 = 1`.
+
+`cosAvgEven_at_zero` is the same statement for an `EvenAp`. This version applies at every `N`,
+including apertures of odd extent such as the pinned `nCorrYM = 16`, which is not an `EvenAp`.
+
+DERIVED: `0` is the coupling; `1` is `cos 0`, the value the average takes. Nothing is chosen. -/
+theorem cosAvgYMAt_at_zero_coupling (N : ℕ) : MassGap.cosAvgYMAt N 0 = 1 := by
+  have hsum : ∀ d : Fin (N + 1), d ≠ 0 →
+      (MassGap.readYMAt N 0).p d * Real.cos ((MassGap.readYMAt N 0).θ d) = 0 := by
+    intro d hd
+    have hρ : (MassGap.readYMAt N 0).ρ d = 0 := profile_at_zero_coupling_eq_zero N hd
+    have hp : (MassGap.readYMAt N 0).p d = 0 := by
+      show (MassGap.readYMAt N 0).ρ d / _ = 0
+      rw [hρ, zero_div]
+    rw [hp, zero_mul]
+  have hone : (MassGap.readYMAt N 0).p 0 = 1 := by
+    have h := (MassGap.readYMAt N 0).p_sum
+    rw [Finset.sum_eq_single (0 : Fin (N + 1))] at h
+    · exact h
+    · intro d _ hd
+      show (MassGap.readYMAt N 0).ρ d / _ = 0
+      rw [profile_at_zero_coupling_eq_zero N hd, zero_div]
+    · intro hmem
+      exact absurd (Finset.mem_univ (0 : Fin (N + 1))) hmem
+  have hθ0 : (MassGap.readYMAt N 0).θ 0 = 0 := by
+    show 2 * Real.pi * ((0 : Fin (N + 1)) : ℝ) / ((N : ℝ) + 1) = 0
+    simp
+  show ∑ d, (MassGap.readYMAt N 0).p d * Real.cos ((MassGap.readYMAt N 0).θ d) = 1
+  rw [Finset.sum_eq_single (0 : Fin (N + 1))]
+  · rw [hone, hθ0, Real.cos_zero, mul_one]
+  · intro d _ hd
+    exact hsum d hd
+  · intro hmem
+    exact absurd (Finset.mem_univ (0 : Fin (N + 1))) hmem
+
+#print axioms cosAvgYMAt_at_zero_coupling
+
+/-- `μYMAt N 0 < κ₀YM` at every aperture `N`, with no parity restriction.
+`μYMAt N 0 = -log (cosAvgYMAt N 0) = -log 1 = 0` by `cosAvgYMAt_at_zero_coupling`, and `κ₀YM_pos`
+puts the floor above zero.
+
+The statement is at the single coupling `0`. `A1_YM ymModel` quantifies over all of `ℝ`, `ymModel.μ`
+being `μYM` with no clamp.
+
+DERIVED: `0` is the coupling and the resulting tension. In the proof, `1` is the cosine average it
+comes from. Nothing is chosen. -/
+theorem confines_at_zero_coupling (N : ℕ) : MassGap.μYMAt N 0 < MassGap.κ₀YM := by
+  have hμ : MassGap.μYMAt N 0 = 0 := by
+    show -Real.log (∑ d, (MassGap.readYMAt N 0).p d
+      * Real.cos ((MassGap.readYMAt N 0).θ d)) = 0
+    rw [show (∑ d, (MassGap.readYMAt N 0).p d * Real.cos ((MassGap.readYMAt N 0).θ d))
+        = MassGap.cosAvgYMAt N 0 from rfl, cosAvgYMAt_at_zero_coupling N, Real.log_one, neg_zero]
+  rw [hμ]
+  exact MassGap.κ₀YM_pos
+
+#print axioms confines_at_zero_coupling
+
+
+
+
+
+/-- `Continuous (cosAvgEven a)` at every even aperture, on all of `ℝ`. The average is a ratio of
+finite sums: the numerator is `∑ d, wilsonCorrAt a.1 (max β 0) d * cos ((readEven a 0).θ d)` — the
+angles not depending on `β`, by `readEven_theta` — and the denominator the same sum of profiles.
+Both are continuous by `continuous_wilsonCorrAt` composed with the continuous clamp, and the
+denominator never vanishes by the second clause of
+`Complete.wilson_reflection_positive_at_even`, which applies because the clamped coupling is
+nonnegative.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_cosAvgEven (a : EvenAp) : Continuous (cosAvgEven a) := by
   have hclamp : Continuous (fun β : ℝ => max β 0) := continuous_id.max continuous_const
   have hden : Continuous (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt a.1 (max β 0) d) :=
@@ -271,9 +671,12 @@ theorem continuous_cosAvgEven (a : EvenAp) : Continuous (cosAvgEven a) := by
 
 #print axioms continuous_cosAvgEven
 
-/-- **CONFINEMENT HOLDS ON A NEIGHBOURHOOD OF ZERO COUPLING**, at every even aperture. The radius is
-existential and nothing names a value for it: it is whatever the continuity of the Wilson expectation
-supplies at the point where the cosine average is exactly one. -/
+/-- There is a `b > 0` with `3 ^ (-(1 : ℝ) / 4) < cosAvgEven a β` for every `β` with `|β| < b`, at
+every even aperture. It is `continuous_cosAvgEven` and `confines_at_zero` through
+`Metric.eventually_nhds_iff`. The radius `b` is existential and no value is named for it.
+
+DERIVED: `0` is the positivity threshold on the radius; `3`, `1` and `4` form the entropy floor
+`3 ^ (-(1 : ℝ) / 4)`. -/
 theorem confines_near_zero (a : EvenAp) :
     ∃ b > 0, ∀ β : ℝ, |β| < b → (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven a β := by
   have hev : ∀ᶠ β in nhds (0 : ℝ), (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven a β :=
@@ -285,9 +688,11 @@ theorem confines_near_zero (a : EvenAp) :
 
 #print axioms confines_near_zero
 
-/-- **AND ON A WHOLE HALF-LINE BELOW A CUT.** The negative side is the clamp
-(`cosAvgEven_eq_one_of_nonpos`), so what `confines_near_zero` gives on `(−b, 0]` is already free; the
-content of the cut is entirely on `[0, b)`. -/
+/-- There is a `b > 0` with `3 ^ (-(1 : ℝ) / 4) < cosAvgEven a β` for every `β < b`, at every even
+aperture. Below zero the value is `1` by `cosAvgEven_eq_one_of_nonpos`, which is the clamp; above
+zero it is `confines_near_zero`. The content of the cut is therefore on `[0, b)`.
+
+DERIVED: `0` is the positivity threshold on the cut; `3`, `1` and `4` form the entropy floor. -/
 theorem confines_below_a_cut (a : EvenAp) :
     ∃ b > 0, ∀ β : ℝ, β < b → (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven a β := by
   obtain ⟨b, hb, h⟩ := confines_near_zero a
@@ -314,13 +719,17 @@ abbrev ap4 : EvenAp := ⟨3, 2, rfl, le_refl 2⟩
 
 #print axioms ap4
 
-/-- **THE CLOSED FORM AT EXTENT FOUR.** With `ρ = wilsonCorrAt 3 (max β 0)`,
+/-- The closed form at extent four. With `ρ = wilsonCorrAt 3 (max β 0)`,
 
-    cosAvgEven ap4 β = (ρ(0) − ρ(2)) / (ρ(0) + 2ρ(1) + ρ(2)).
+    cosAvgEven ap4 β = (ρ 0 - ρ 2) / (ρ 0 + 2 * ρ 1 + ρ 2).
 
-The first lag contributes `cos(π/2) = 0` to the numerator and its full weight to the denominator, so
-it can only lower the ratio; the whole hypothesis at this aperture is that the contact value exceeds
-the antipodal one by enough to carry the first lag's mass. -/
+The four lag angles are `2πd/4`, with cosines `1, 0, -1, 0`, and circle symmetry
+(`MomentShape.wilsonCorrAt_neg`) identifies lag `3` with lag `1`. Lag `1` therefore contributes
+nothing to the numerator and its full weight to the denominator.
+
+DERIVED: `3` is the aperture index, with `3 + 1 = 4` the extent; `0`, `1`, `2` are lag indices and
+`0` is also the clamp's lower end; the coefficient `2` on `ρ 1` is the number of lags circle
+symmetry identifies with lag `1`, namely `1` and `3`. -/
 theorem cosAvgEven_extent_four (β : ℝ) :
     cosAvgEven ap4 β
       = (MassGap.wilsonCorrAt 3 (max β 0) 0 - MassGap.wilsonCorrAt 3 (max β 0) 2)
@@ -362,25 +771,29 @@ theorem cosAvgEven_extent_four (β : ℝ) :
 
 #print axioms cosAvgEven_extent_four
 
-/-- **WHAT THE PROVED SHAPE FACTS DO TO THE RATIO AT EXTENT FOUR.**
+/-- From a bound on the second lag alone, confinement at extent four: given
 
-The tree proves, at this extent and with no further hypothesis, that the profile is nonnegative
-(`Complete.wilson_reflection_positive_at_even`), that it is circle-symmetric
-(`MomentShape.wilsonCorrAt_neg`), and that it is log-convex
-(`LogConvex.corrClay_log_convex_at_extent_four`: `ρ(1)² ≤ ρ(0)ρ(2)`). Those three reduce the whole
-hypothesis at extent four to a bound on the SECOND lag alone.
+    (1 + c)^2 * ρ 2 < (1 - c)^2 * ρ 0,     c = 3 ^ (-(1 : ℝ) / 4),  ρ = wilsonCorrAt 3 (max β 0),
 
-**THE THRESHOLD IS EXACT, NOT FITTED.** With `c = 3^{−1/4}` the identity
+the conclusion is `c < cosAvgEven ap4 β`. The other inputs are nonnegativity of the profile
+(`Complete.wilson_reflection_positive_at_even`) and log-convexity
+(`LogConvex.corrClay_log_convex_at_extent_four`, giving `ρ 1 ^ 2 ≤ ρ 0 * ρ 2`), both available at
+this extent with no further hypothesis; circle symmetry enters through
+`cosAvgEven_extent_four`.
 
-    ((1−c)ρ₀ − (1+c)ρ₂)² − 4c²ρ₀ρ₂ = ((1−c)²ρ₀ − (1+c)²ρ₂)(ρ₀ − ρ₂)
+The threshold is the exact one log-convexity can carry: the `ring` identity
 
-is a `ring` identity, and its right factorisation vanishes exactly at `(1+c)²ρ₂ = (1−c)²ρ₀`. So this
-hypothesis is the weakest one that log-convexity can carry: at equality the route gives nothing, and
-the constant is read off the floor rather than chosen to clear anything.
+    ((1-c) ρ₀ - (1+c) ρ₂)^2 - 4 c^2 ρ₀ ρ₂ = ((1-c)^2 ρ₀ - (1+c)^2 ρ₂)(ρ₀ - ρ₂)
 
-**WHAT DOES NOT APPLY HERE.** `WeakArm.corrClay_le_at_zero` and `MomentShape.corrClay_even_antitone`
-both carry `3 ≤ m`, which is extent six and above. Neither is available at extent four, and this
-statement does not use them. -/
+has its right factorisation vanish exactly at `(1+c)^2 ρ₂ = (1-c)^2 ρ₀`.
+
+`WeakArm.corrClay_le_at_zero` and `MomentShape.corrClay_even_antitone` both carry `3 ≤ m`, which is
+extent six and above, and are not used here.
+
+DERIVED: `3`, `1` and `4` form the entropy floor `c = 3 ^ (-(1 : ℝ) / 4)`; the `1`s in `1 + c` and
+`1 - c` are the endpoints the floor is measured from; the exponents `2` are squares; `0`, `1` and
+`2` are lag indices and `0` is also the clamp's lower end; the aperture index is `3`, with
+`3 + 1 = 4` the extent. -/
 theorem confines_extent_four_of_lag_two_small (β : ℝ)
     (h : (1 + (3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 * MassGap.wilsonCorrAt 3 (max β 0) 2
         < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 * MassGap.wilsonCorrAt 3 (max β 0) 0) :
@@ -445,14 +858,21 @@ abbrev ap6 : EvenAp := ⟨5, 3, rfl, by norm_num⟩
 
 #print axioms ap6
 
-/-- **THE CLOSED FORM AT EXTENT SIX.** With `ρ = wilsonCorrAt 5 (max β 0)`,
+/-- The closed form at extent six. With `ρ = wilsonCorrAt 5 (max β 0)`,
 
-    cosAvgEven ap6 β = (ρ(0) + ρ(1) − ρ(2) − ρ(3)) / (ρ(0) + 2ρ(1) + 2ρ(2) + ρ(3)).
+    cosAvgEven ap6 β = (ρ 0 + ρ 1 - ρ 2 - ρ 3) / (ρ 0 + 2 * ρ 1 + 2 * ρ 2 + ρ 3).
 
-Compare `cosAvgEven_extent_four`: there `ρ(1)` appears only in the denominator, here it appears in
-the numerator with weight `+1`. So the aperture is not a free parameter that the bar ignores — what
-`Complete.surplus_ge` makes aperture-free is the substrate route's LOWER BOUND on the cosine average,
-not the cosine average. -/
+The six lag angles are `2πd/6`, with cosines `1, ½, -½, -1, -½, ½`, and circle symmetry identifies
+lag `5` with lag `1` and lag `4` with lag `2`.
+
+Compared with `cosAvgEven_extent_four`, `ρ 1` enters the numerator here with a positive coefficient
+where at extent four its cosine is zero and it enters the denominator alone, so the two closed forms
+differ. What `Complete.surplus_ge` makes aperture-free is the substrate route's lower bound on the
+cosine average, not the cosine average itself.
+
+DERIVED: `5` is the aperture index, with `5 + 1 = 6` the extent; `0`, `1`, `2`, `3` are lag indices
+and `0` is also the clamp's lower end; each coefficient `2` is the number of lags circle symmetry
+identifies with the lag it multiplies — `1` with `5`, and `2` with `4`. -/
 theorem cosAvgEven_extent_six (β : ℝ) :
     cosAvgEven ap6 β
       = (MassGap.wilsonCorrAt 5 (max β 0) 0 + MassGap.wilsonCorrAt 5 (max β 0) 1
@@ -515,19 +935,19 @@ Everything above is about a neighbourhood of zero coupling. `ConfinesAtAnApertur
 coupling, and that is the whole of what is left. Because the cosine average is continuous and starts
 strictly above the floor, the remaining obligation can be stated without an inequality at all. -/
 
-/-- **THE REMAINING OBLIGATION.** At some even aperture the cosine average is never EQUAL to the
-entropy floor `3^{−1/4}`.
+/-- At some even aperture the cosine average is never equal to the entropy floor
+`3 ^ (-(1 : ℝ) / 4)`: `∃ a : EvenAp, ∀ β : ℝ, cosAvgEven a β ≠ 3 ^ (-(1 : ℝ) / 4)`.
 
-This is the whole of what is open on this side, and it is EQUIVALENT to `ConfinesAtAnAperture`
-(`confinesAtAnAperture_iff_missesTheFloor`), not merely sufficient for it. The equivalence is the
-intermediate value theorem against `cosAvgEven_at_zero`: the average is `1` at zero coupling, so a
-coupling at which it fell below the floor would force a coupling at which it equalled the floor.
+`confinesAtAnAperture_iff_missesTheFloor` proves this equivalent to
+`ApertureRoute.ConfinesAtAnAperture`, not merely sufficient for it: the reverse direction is the
+intermediate value theorem against `cosAvgEven_at_zero` and `continuous_cosAvgEven`, since the
+average is `1` at zero coupling, so a coupling at which it fell below the floor would force one at
+which it equalled the floor.
 
-What it says in words: **the cosine average must stay off the floor away from zero coupling.** It is
-not proved here and nothing in this file bounds `cosAvgEven` at large `β`. The obstruction is
-visible in `cosAvgEven_extent_four` — as the profile flattens, `ρ(2)` approaches `ρ(0)` and the ratio
-goes to zero — and `confines_extent_four_of_lag_two_small` is the sharp form of what the tree's
-proved shape facts can still carry against it.
+It is a non-equality at every coupling where `ConfinesAtAnAperture` is an inequality. No
+declaration in this module bounds `cosAvgEven` at large `β`. `cosAvgEven_extent_four` shows the
+ratio at extent four approaching zero as `ρ(2)` approaches `ρ(0)`, and
+`confines_extent_four_of_lag_two_small` is the bound the module's shape facts do carry.
 
 DERIVED: `3^{−1/4} = e^{−κ₀YM}` with `κ₀YM = ¼ log 3`, counted off directed cube paths in
 `Floor.lean`; it is `ApertureRoute.ConfinesAtAnAperture`'s own constant, carried through unchanged. -/
@@ -536,8 +956,12 @@ def MissesTheFloor : Prop :=
 
 #print axioms MissesTheFloor
 
-/-- **MISSING THE FLOOR IS ENOUGH.** By the intermediate value theorem on the continuous
-`cosAvgEven`, together with its value `1` at zero coupling. -/
+/-- `ConfinesAtAnAperture` from `MissesTheFloor`. At the aperture the hypothesis supplies, a
+coupling with `cosAvgEven a β` below the floor would, with `confines_at_zero` above it and
+`continuous_cosAvgEven` between, give a coupling at which the average equalled the floor by
+`intermediate_value_uIcc`, contradicting `MissesTheFloor`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem confinesAtAnAperture_of_missesTheFloor (h : MissesTheFloor) : ConfinesAtAnAperture := by
   obtain ⟨a, ha⟩ := h
   refine ⟨a, fun β => ?_⟩
@@ -555,24 +979,32 @@ theorem confinesAtAnAperture_of_missesTheFloor (h : MissesTheFloor) : ConfinesAt
 
 #print axioms confinesAtAnAperture_of_missesTheFloor
 
-/-- And it is NECESSARY, trivially — so nothing is strengthened by stating the remainder this way. -/
+/-- `MissesTheFloor` from `ConfinesAtAnAperture`: a strict inequality is in particular a
+non-equality, by `ne_of_gt`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem missesTheFloor_of_confinesAtAnAperture (h : ConfinesAtAnAperture) : MissesTheFloor := by
   obtain ⟨a, ha⟩ := h
   exact ⟨a, fun β => ne_of_gt (ha β)⟩
 
 #print axioms missesTheFloor_of_confinesAtAnAperture
 
-/-- **THE OPEN HYPOTHESIS, RESTATED EXACTLY.** `ConfinesAtAnAperture` and `MissesTheFloor` are the
-same statement. The inequality at every coupling has become a non-equality at every coupling, and the
-difference is paid for by the continuity of the Wilson expectation and the point mass at zero
-coupling — both proved above, both foundational-only. -/
+/-- `ConfinesAtAnAperture ↔ MissesTheFloor`, the two implications above combined. The inequality at
+every coupling and the non-equality at every coupling are the same statement, the reverse direction
+using `continuous_cosAvgEven` and `cosAvgEven_at_zero`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem confinesAtAnAperture_iff_missesTheFloor : ConfinesAtAnAperture ↔ MissesTheFloor :=
   ⟨missesTheFloor_of_confinesAtAnAperture, confinesAtAnAperture_of_missesTheFloor⟩
 
 #print axioms confinesAtAnAperture_iff_missesTheFloor
 
-/-- **THE FLAGSHIP FROM THE REMAINING OBLIGATION.** `ApertureRoute.FlagshipAt` — the gap,
-non-triviality, `SO(4)` and the continuum object — follows from `MissesTheFloor` alone. -/
+/-- `ApertureRoute.FlagshipAt` at the realisation `MissesTheFloor` produces: the mode sum tending
+to zero, non-triviality, direction-independence of `R`, and the OS0–OS3 subsequential limit. It is
+`flagship_of_confinement_at_an_aperture` applied to
+`confinesAtAnAperture_of_missesTheFloor h`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem flagship_of_missesTheFloor (h : MissesTheFloor) :
     FlagshipAt (confinesAtAnAperture_of_missesTheFloor h) :=
   flagship_of_confinement_at_an_aperture _

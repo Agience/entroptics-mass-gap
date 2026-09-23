@@ -2,26 +2,41 @@ import Mathlib
 import MassGap.Existence
 
 /-!
-# The continuum measure via the entropy-matched read (reading A) — PAPER §11
+# MassGap.Measure — counting resolved modes, and subsequential limits of bounded real families
 
-Existence on `ℝ⁴` is the `a→0` limit of the finite-spacing Schwinger functions; it needs a uniform-in-`a`
-bound to be **tight** (so a limit point exists) plus that each Osterwalder–Schrader condition, being closed,
-survives the limit (`Existence.rp_survives_limit`, `Existence.tight_limit_rp`).
+Two pieces of arithmetic, combined.
 
-**Reading A (the entropy-matched construction).** The read keeps only the *resolved* modes — the
-`K_signal = #{eigenvalue > noise edge}` correlation modes standing above the Tracy–Widom floor — and treats
-the ultraviolet as sub-edge noise (asymptotic freedom puts the UV modes below the edge, §11). So the object
-constructed is the measure on the finite **signal** content, and its dimension is `K_signal`, NOT the lattice
-mode count. The gap supplies the uniform bound: in a gapped theory at fixed physical volume the coherent
-(signal) states below the read scale are a **finite family whose size `K` is fixed by the gap and the volume,
-independent of the spacing `a`**. Hence `K_signal(a) ≤ K` uniformly, the reflected forms are uniformly
-bounded, and tightness follows with **no ultraviolet renormalisation — only the gap.**
+**The count.** `resolvedDim s ev edge` is the number of indices `k ∈ s` with `edge < ev k`, as a
+`Finset.card`. `resolvedDim_le_of_signal` bounds it by the size of any set covering those indices;
+`ir_count_spacing_indep` bounds the number of naturals `n < N` with `(n : ℝ) < c` by `⌈c⌉₊`,
+independently of `N`; `resolvedDim_le_of_gap` combines the two, and `uniform_resolvedDim` and
+`uniform_resolvedDim_of_gap` state them over a family indexed by `a`. `index_lt_of_sorted_count` and
+`os_gap_of_sorted_count` run the implication the other way, from a bound on the count to a bound on
+the index, using the hypothesis `hsorted` that `ev` is nonincreasing.
 
-This module proves the count/tightness logic (no axiom beyond the standard three); the physics inputs — a
-signal set of bounded size `K` covering the supra-edge modes, and the reflected form built from the resolved
-modes with bounded per-mode contribution — are stated as hypotheses, the reading-A modelling supplied like the
-character bound on the strong side. Identifying the tight limit as a Wightman theory is Osterwalder–Schrader
-reconstruction (cited).
+**The limit.** `tight_of_uniform_resolved` takes a real sequence `Q` with `0 ≤ Q n` and
+`Q n ≤ resolvedDim … * B`, and a uniform bound on that dimension, and produces a convergent
+subsequence with limit in `[0, K * B]`, through `Existence.tight_limit_rp`. `tight_of_gap_signal`,
+`tight_of_gap_ir` and `tight_vector_of_gap_ir` are the same over the two count routes and over a
+countable family of sequences; `continuum_limit_of_gap` adds two invariance hypotheses `hEuc` and
+`hPerm` and carries them to the limit through `Existence.invariant_limit_of_action`.
+
+`LatticeYMFamily` bundles the hypotheses of `continuum_limit_of_gap` as a structure;
+`continuum_of_family` applies it. `familyOfSortedCount` builds such a structure from `hsorted` and a
+count bound instead of from the index bound `os_gap`, and `continuum_of_sorted_count` is the
+composition.
+
+## Scope
+
+Every statement is about `Finset.card`, real sequences and filters. No statement mentions a lattice,
+a gauge group, a correlation function, a spacing, a spectral gap, a Schwinger function or a
+renormalisation; `ev`, `edge`, `c`, `B`, `Q`, `Na`, `actE` and `actP` are arbitrary, and the
+intended readings — eigenvalues, a noise edge, an infrared cutoff, a per-mode bound, reflected forms,
+a mode count, and Euclidean and permutation actions — enter only through the names.
+
+The limits obtained are subsequential: a strictly monotone `φ` and a limit along it. Nothing asserts
+convergence of the full sequence, and `actE`, `actP` are arbitrary functions with no group structure
+required of `G` or `P`.
 -/
 
 namespace MassGap.Measure
@@ -29,15 +44,22 @@ namespace MassGap.Measure
 open MassGap Filter
 open scoped Classical
 
-/-- The **resolved dimension** `K_signal`: the number of correlation eigenvalues (over the index set `s`)
-standing strictly above the noise edge. -/
+/-- The number of indices `k` in the `Finset` `s` with `edge < ev k`, as a `Finset.card`. `ι` is any
+type, `ev : ι → ℝ` any function and `edge` any real; the strict inequality means an index at exactly
+`edge` is not counted.
+
+DERIVED: no numeral. `s`, `ev` and `edge` are the caller's. -/
 noncomputable def resolvedDim {ι : Type*} (s : Finset ι) (ev : ι → ℝ) (edge : ℝ) : ℕ :=
   (s.filter (fun k => edge < ev k)).card
 
-/-- **The resolved dimension is at most any signal set that covers the supra-edge modes.** If a set `sig`
-of size `≤ K` contains every mode above the edge (the rest being sub-edge bulk), then `K_signal ≤ K`. In the
-gapped theory `sig` is the finite family of physical states below the read scale — a count fixed by the gap
-and the volume, not by the spacing. -/
+/-- If a `Finset` `sig` of cardinality at most `K` contains every `k ∈ s` with `edge < ev k`, then
+`resolvedDim s ev edge ≤ K`. The filtered set is a subset of `sig` by `hcover`, so
+`Finset.card_le_card` applies.
+
+`sig` is supplied by the caller and may be much larger than the filtered set; the bound is by `K`,
+not by the count of covered indices.
+
+DERIVED: no numeral. `K` is the caller's bound, a variable. -/
 theorem resolvedDim_le_of_signal {ι : Type*} (s : Finset ι) (ev : ι → ℝ) (edge : ℝ)
     {K : ℕ} (sig : Finset ι) (hcard : sig.card ≤ K)
     (hcover : ∀ k ∈ s, edge < ev k → k ∈ sig) :
@@ -47,10 +69,13 @@ theorem resolvedDim_le_of_signal {ι : Type*} (s : Finset ι) (ev : ι → ℝ) 
   rw [Finset.mem_filter] at hk
   exact hcover k hk.1 hk.2
 
-/-- **Uniform-in-`a` resolved dimension from the gap.** If at every spacing `aₙ` the supra-edge modes are
-covered by a signal set of size `≤ K` (the gap fixes the physical mode count, independent of the spacing),
-the resolved dimension is uniformly bounded. This is the uniform estimate the continuum limit needs, sourced
-from the gap rather than from ultraviolet control. -/
+/-- `resolvedDim_le_of_signal` applied at every index `n` of a family: if at each `n` the set `sig n`
+has cardinality at most `K` and covers the supra-edge indices of `s n`, then
+`resolvedDim (s n) (ev n) (edge n) ≤ K` for every `n`.
+
+The same `K` at every `n`, which is what makes the bound uniform; the sets `sig n` may differ.
+
+DERIVED: no numeral. `K` is the caller's uniform bound. -/
 theorem uniform_resolvedDim {ι : Type*} {K : ℕ}
     (s : ℕ → Finset ι) (ev : ℕ → ι → ℝ) (edge : ℕ → ℝ)
     (sig : ℕ → Finset ι) (hcard : ∀ n, (sig n).card ≤ K)
@@ -58,18 +83,21 @@ theorem uniform_resolvedDim {ι : Type*} {K : ℕ}
     ∀ n, resolvedDim (s n) (ev n) (edge n) ≤ K :=
   fun n => resolvedDim_le_of_signal (s n) (ev n) (edge n) (sig n) (hcard n) (hcover n)
 
-/-! ### The signal count discharged from the gap (a momentum-space count fixed by the physical volume)
+/-! ### A count that does not depend on the range
 
-The resolved modes are the correlation eigenvalues above the edge; index them by momentum. On a physical
-torus of size `L` the modes are `k_n = (2π/L)·n`, so the **infrared momentum spacing `2π/L` is set by the
-physical volume, not the lattice spacing `a`**. As `a→0` the number of lattice modes `N` grows, but the
-number of modes below a fixed physical cutoff `c` (the correlation scale the gap fixes) does not: it is
-`⌈c⌉`, independent of `N`. So the signal set (the IR modes the gap keeps above the edge) has a spacing-
-independent size — the `K` of `uniform_resolvedDim`, derived rather than assumed. -/
+When the index set is `Finset.range N` and the covering condition is an index cutoff `(n : ℝ) < c`,
+the covering set can be taken to be the indices below `c`, whose cardinality is at most `⌈c⌉₊`
+whatever `N` is. That supplies the uniform `K` of `uniform_resolvedDim` without the caller choosing
+one. -/
 
-/-- **The infrared mode count is spacing-independent.** The number of indices `n < N` with `(n:ℝ) < c` is at
-most `⌈c⌉₊`, whatever the total mode count `N`. (Momenta below a physical cutoff `c = k⋆L/2π` number `⌈c⌉₊`,
-independent of the lattice spacing.) -/
+/-- The number of `n < N` with `(n : ℝ) < c` is at most `⌈c⌉₊`, for every `N`. Every such `n` lies in
+`Finset.range ⌈c⌉₊` by `Nat.le_ceil`, so `Finset.card_le_card` against that range gives the bound.
+
+The bound does not mention `N`, which is what makes it uniform over a family of ranges in
+`uniform_resolvedDim_of_gap`.
+
+DERIVED: no numeral. `c` is the caller's cutoff and `⌈c⌉₊` the least natural at or above it, so the
+ceiling is what makes a real cutoff into a cardinality bound. -/
 theorem ir_count_spacing_indep {c : ℝ} (N : ℕ) :
     ((Finset.range N).filter (fun n : ℕ => (n : ℝ) < c)).card ≤ ⌈c⌉₊ := by
   rw [← Finset.card_range ⌈c⌉₊]
@@ -77,20 +105,20 @@ theorem ir_count_spacing_indep {c : ℝ} (N : ℕ) :
   rw [Finset.mem_filter] at hn
   rw [Finset.mem_range]
   exact_mod_cast lt_of_lt_of_le hn.2 (Nat.le_ceil c)
-/-- **From a COUNT of resolved modes to the INDEX form `os_gap` consumes** -- the converse of
-`resolvedDim_le_of_gap`, and the direction a bound derived from the read travels in.
+/-- From a bound on the count to a bound on the index. If `ev` is nonincreasing (`hsorted`) and at
+most `c` of its first `N` values exceed `edge` (`hcount`), then every `n < N` with `edge < ev n`
+satisfies `(n : ℝ) < c`.
 
-`resolvedDim_le_of_gap` goes from "every supra-edge mode is infrared" to "few modes are resolved".
-A bound obtained from the correlation itself arrives the other way round: it caps the NUMBER of
-resolved modes (`ZeroMode.resolved_count_le_of_subset` caps it by the tension) and says nothing
-about indices. The two are the same statement only when the spectrum is ORDERED, which is the one
-hypothesis here: `hsorted` says a later mode is never larger than an earlier one, as an eigenvalue
-list sorted descending is.
+The ordering is what connects the two. A value above `edge` at index `n` forces every earlier index
+to be above `edge` as well, so `Finset.range (n + 1)` embeds in the filtered set and the count is at
+least `n + 1`; `linarith` against `hcount` then gives `(n : ℝ) < c`.
 
-Given that, a supra-edge mode at index `n` forces every index below it to be supra-edge too, so
-`n+1` modes are resolved and the count bounds the index.
+This runs in the opposite direction to `resolvedDim_le_of_gap`, which goes from an index bound to a
+count bound. Without `hsorted` the two are not interchangeable.
 
-DERIVED: the `1` is the successor -- index `n` means `n+1` modes at or before it. Nothing chosen. -/
+DERIVED: no numeral. `c`, `edge` and `N` are the caller's, and `hcount` casts a `ℕ`-valued
+cardinality into `ℝ` to compare it with `c`. The successor `n + 1` appears in the proof, where it is
+the number of indices at or before `n`, and not in the statement. -/
 theorem index_lt_of_sorted_count {ev : ℕ → ℝ} {edge c : ℝ} (N : ℕ)
     (hsorted : ∀ m n : ℕ, m ≤ n → ev n ≤ ev m)
     (hcount : ((resolvedDim (Finset.range N) ev edge : ℕ) : ℝ) ≤ c) :
@@ -112,8 +140,13 @@ theorem index_lt_of_sorted_count {ev : ℕ → ℝ} {edge c : ℝ} (N : ℕ)
 
 #print axioms index_lt_of_sorted_count
 
-/-- The same, uniformly over a family of spacings -- the exact shape of
-`LatticeYMFamily.os_gap`. -/
+/-- `index_lt_of_sorted_count` applied at every index `a` of a family: from `ev a` nonincreasing and
+its supra-edge count bounded by `c` at each `a`, the index bound `(n : ℝ) < c` holds at each `a`.
+
+The same shape as the `os_gap` field of `LatticeYMFamily`, which is how `familyOfSortedCount` uses
+it. The bound `c` and the edge are the same at every `a`; the ranges `Na a` may differ.
+
+DERIVED: no numeral. `c`, `edge` and `Na` are the caller's. -/
 theorem os_gap_of_sorted_count {ev : ℕ → ℕ → ℝ} {edge c : ℝ} (Na : ℕ → ℕ)
     (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
     (hcount : ∀ a, ((resolvedDim (Finset.range (Na a)) (ev a) edge : ℕ) : ℝ) ≤ c) :
@@ -123,11 +156,15 @@ theorem os_gap_of_sorted_count {ev : ℕ → ℕ → ℝ} {edge c : ℝ} (Na : �
 #print axioms os_gap_of_sorted_count
 
 
-/-- **Resolved dimension bounded by the gap's infrared cutoff.** If the gap keeps every supra-edge mode in
-the infrared — `edge < ev n → (n:ℝ) < c`, the resolved content below the physical cutoff `c` — then the
-resolved dimension is `≤ ⌈c⌉₊`, a count fixed by the physical volume and the gap scale, INDEPENDENT of the
-lattice mode count `N` (the spacing `a`). This discharges the signal-set hypothesis of `uniform_resolvedDim`
-from the gap: finite correlation length ⟹ the resolved content is infrared ⟹ a spacing-independent count. -/
+/-- If every `n < N` with `edge < ev n` satisfies `(n : ℝ) < c`, then
+`resolvedDim (Finset.range N) ev edge ≤ ⌈c⌉₊`. `resolvedDim_le_of_signal` with the covering set taken
+to be the indices below `c`, whose cardinality `ir_count_spacing_indep` bounds.
+
+The bound does not mention `N`, so it is the same at every range. `hir` is a hypothesis: nothing here
+establishes that any particular `ev` satisfies it.
+
+DERIVED: no numeral. `c` is the caller's cutoff and `⌈c⌉₊` the ceiling that turns it into a
+cardinality bound, both carried from `ir_count_spacing_indep`. -/
 theorem resolvedDim_le_of_gap {ev : ℕ → ℝ} {edge c : ℝ} (N : ℕ)
     (hir : ∀ n ∈ Finset.range N, edge < ev n → (n : ℝ) < c) :
     resolvedDim (Finset.range N) ev edge ≤ ⌈c⌉₊ :=
@@ -135,21 +172,31 @@ theorem resolvedDim_le_of_gap {ev : ℕ → ℝ} {edge c : ℝ} (N : ℕ)
     ((Finset.range N).filter (fun n : ℕ => (n : ℝ) < c)) (ir_count_spacing_indep N)
     (fun k hk hedge => Finset.mem_filter.mpr ⟨hk, hir k hk hedge⟩)
 
-/-- **Uniform-in-`a` resolved dimension from the gap.** For a family of lattices with `Na a` modes
-(`Na a → ∞` as `a→0`), if the gap keeps the supra-edge modes below the fixed physical cutoff `c` at every
-spacing, the resolved dimension is uniformly `≤ ⌈c⌉₊`. The bound `K = ⌈c⌉₊` is set by the physical volume and
-the gap scale, not the spacing — the uniform estimate the continuum limit needs, sourced from the gap. -/
+/-- `resolvedDim_le_of_gap` at every index `a` of a family: from the index bound `hir` at each `a`,
+`resolvedDim (Finset.range (Na a)) (ev a) edge ≤ ⌈c⌉₊` at each `a`.
+
+The bound is the same natural number at every `a`, independent of `Na a`, which is the uniformity
+`tight_of_gap_ir` consumes.
+
+DERIVED: no numeral. `c` and `⌈c⌉₊` are `resolvedDim_le_of_gap`'s, carried unchanged. -/
 theorem uniform_resolvedDim_of_gap {ev : ℕ → ℕ → ℝ} {edge c : ℝ} (Na : ℕ → ℕ)
     (hir : ∀ a, ∀ n ∈ Finset.range (Na a), edge < ev a n → (n : ℝ) < c) :
     ∀ a, resolvedDim (Finset.range (Na a)) (ev a) edge ≤ ⌈c⌉₊ :=
   fun a => resolvedDim_le_of_gap (Na a) (hir a)
 
-/-- **Tightness from a uniformly bounded resolved dimension (reading A).** The reflected Schwinger form at
-spacing `aₙ` is reflection-positive (`0 ≤ Q n`) and built from the resolved modes, each contributing at most
-`B ≥ 0`, so `Q n ≤ K_signal(aₙ) · B`; with `K_signal(aₙ) ≤ K` uniformly (`uniform_resolvedDim`, from the
-gap) the forms are uniformly bounded `Q n ≤ K · B`, hence the family is **tight**: a subsequence converges
-to a reflection-positive limit within the bound (`Existence.tight_limit_rp`). No ultraviolet renormalisation
-enters — the resolved dimension is controlled by the gap alone. -/
+/-- For a real sequence `Q` with `0 ≤ Q n`, `0 ≤ B`, `Q n ≤ resolvedDim (s n) (ev n) (edge n) * B`,
+and that dimension bounded by `K` at every `n`, there exist `q ∈ [0, K * B]`, a strictly monotone
+`φ : ℕ → ℕ`, and convergence of `Q ∘ φ` to `q`.
+
+The two bounds compose to `Q n ≤ K * B` uniformly, and `Existence.tight_limit_rp` extracts the
+convergent subsequence from a bounded nonnegative sequence.
+
+Subsequential: `Q` itself need not converge. The index type `ι` and the data `s`, `ev`, `edge` enter
+only through `hQ` and `hres`.
+
+DERIVED: `0` is the lower bound on each `Q n` in `hrp`, on `B` in `hB`, and on the limit `q` in the
+conclusion — the last is inherited from the first, since a limit of nonnegatives is nonnegative. `K`
+and `B` are the caller's. -/
 theorem tight_of_uniform_resolved {ι : Type*} {Q : ℕ → ℝ} {K : ℕ} {B : ℝ}
     (s : ℕ → Finset ι) (ev : ℕ → ι → ℝ) (edge : ℕ → ℝ)
     (hrp : ∀ n, 0 ≤ Q n) (hB : 0 ≤ B)
@@ -160,11 +207,15 @@ theorem tight_of_uniform_resolved {ι : Type*} {Q : ℕ → ℝ} {K : ℕ} {B : 
   refine tight_limit_rp hrp (fun n => le_trans (hQ n) ?_)
   exact mul_le_mul_of_nonneg_right (by exact_mod_cast hres n) hB
 
-/-- **The reading-A tightness endpoint, from the gap-sourced signal bound.** Composing the two: a signal set
-of size `≤ K` covering the supra-edge modes at every spacing (the gap-fixed physical mode count) plus the
-reflected form built from the resolved modes (`0 ≤ Q n ≤ K_signal · B`) gives a tight family — a subsequence
-of reflected forms converging to a reflection-positive limit `0 ≤ q ≤ K·B`. The continuum measure's tightness
-reduces to the gap (finite physical mode count), with no ultraviolet renormalisation. -/
+/-- `tight_of_uniform_resolved` with its `hres` hypothesis supplied by `uniform_resolvedDim`: given
+covering sets `sig n` of cardinality at most `K`, the same conclusion — a limit `q ∈ [0, K * B]` along
+a strictly monotone subsequence.
+
+The covering route to the uniform bound; `tight_of_gap_ir` is the index-cutoff route to the same
+shape.
+
+DERIVED: `0` is the lower bound on each `Q n`, on `B`, and on the limit. `K` and `B` are the
+caller's. -/
 theorem tight_of_gap_signal {ι : Type*} {Q : ℕ → ℝ} {K : ℕ} {B : ℝ}
     (s : ℕ → Finset ι) (ev : ℕ → ι → ℝ) (edge : ℕ → ℝ) (sig : ℕ → Finset ι)
     (hcard : ∀ n, (sig n).card ≤ K)
@@ -176,15 +227,15 @@ theorem tight_of_gap_signal {ι : Type*} {Q : ℕ → ℝ} {K : ℕ} {B : ℝ}
   tight_of_uniform_resolved s ev edge hrp hB hQ
     (uniform_resolvedDim s ev edge sig hcard hcover)
 
-/-- **Tightness from the gap alone (reading A, capstone).** The signal count is *derived* from the gap,
-not assumed: the gap keeps the supra-edge modes below a fixed physical infrared cutoff `c` at every spacing
-(`hir`), so the resolved dimension is uniformly `≤ ⌈c⌉₊` (`uniform_resolvedDim_of_gap`), a bound set by the
-physical volume and the gap scale — independent of the lattice mode count `Na a` (the spacing). With the
-reflected forms reflection-positive (`0 ≤ Q a`) and built from the resolved modes (`Q a ≤ K_signal · B`), the
-family is **tight**: a subsequence converges to a reflection-positive limit `0 ≤ q ≤ ⌈c⌉₊·B`. So the continuum
-limit's tightness follows from the gap (finite correlation length ⟹ finite infrared mode count), with no
-ultraviolet renormalisation — the reading-A construction, with its one modelling input `hir` the physical
-content of the gap. -/
+/-- `tight_of_uniform_resolved` with its `hres` hypothesis supplied by `uniform_resolvedDim_of_gap`:
+from the index cutoff `hir`, nonnegativity of `Q` and `B`, and `hQ`, there is a limit
+`q ∈ [0, ⌈c⌉₊ * B]` along a strictly monotone subsequence.
+
+Here the uniform bound is `⌈c⌉₊`, computed from `c` rather than supplied by the caller; `hir` is the
+only input that constrains `ev`.
+
+DERIVED: `0` is the lower bound on each `Q a`, on `B`, and on the limit. `c` is the caller's index
+cutoff, and `⌈c⌉₊` the ceiling carried from `uniform_resolvedDim_of_gap`. -/
 theorem tight_of_gap_ir {Q : ℕ → ℝ} {ev : ℕ → ℕ → ℝ} {edge c B : ℝ} (Na : ℕ → ℕ)
     (hir : ∀ a, ∀ n ∈ Finset.range (Na a), edge < ev a n → (n : ℝ) < c)
     (hrp : ∀ a, 0 ≤ Q a) (hB : 0 ≤ B)
@@ -194,14 +245,19 @@ theorem tight_of_gap_ir {Q : ℕ → ℝ} {ev : ℕ → ℕ → ℝ} {edge c B :
   tight_of_uniform_resolved (fun a => Finset.range (Na a)) ev (fun _ => edge) hrp hB hQ
     (uniform_resolvedDim_of_gap Na hir)
 
-/-- **The full Schwinger vector is jointly tight, from the gap (reading A, vector capstone).** Every reflected
-Schwinger form `Q j` (test-configuration `j`, over a countable dense set) is reflection-positive (`0 ≤ Q j a`)
-and built from the resolved modes, bounded by the gap-fixed infrared count `Q j a ≤ K_signal(a)·B ≤ ⌈c⌉₊·B`
-(`uniform_resolvedDim_of_gap`, `⌈c⌉₊` spacing-independent). So the whole family is uniformly bounded and
-**jointly tight**: a single subsequence along which *every* Schwinger form converges to a reflection-positive
-limit `0 ≤ q j ≤ ⌈c⌉₊·B` (`tight_limit_vector`, `rp_of_tight_limit_vector`). This is the joint convergence of
-the full Schwinger vector that Osterwalder–Schrader reconstruction consumes — the continuum measure's tightness
-and RP, sourced from the gap alone, with no ultraviolet renormalisation. -/
+/-- The vector form: for a countable index type `J` and a family of real sequences `Q j`, each
+nonnegative and bounded by `resolvedDim … * B`, with the index cutoff `hir`, there is a single
+strictly monotone `φ` along which every `Q j` converges, to a limit `q j ∈ [0, ⌈c⌉₊ * B]`.
+
+`uniform_resolvedDim_of_gap` supplies `|Q j a| ≤ ⌈c⌉₊ * B` uniformly in both `j` and `a`;
+`Existence.tight_limit_vector` diagonalises over the countable `J` to get one subsequence for all of
+them, and `Existence.rp_of_tight_limit_vector` carries nonnegativity to each limit.
+
+`Countable J` is what makes a single common subsequence available; the statement gives no rate and no
+uniformity of convergence in `j`.
+
+DERIVED: `0` is the lower bound on each `Q j a`, on `B`, and on each limit `q j`. `c` and `⌈c⌉₊` are
+`uniform_resolvedDim_of_gap`'s. -/
 theorem tight_vector_of_gap_ir {J : Type*} [Countable J] {Q : J → ℕ → ℝ}
     {ev : ℕ → ℕ → ℝ} {edge c B : ℝ} (Na : ℕ → ℕ)
     (hir : ∀ a, ∀ n ∈ Finset.range (Na a), edge < ev a n → (n : ℝ) < c)
@@ -219,21 +275,26 @@ theorem tight_vector_of_gap_ir {J : Type*} [Countable J] {Q : J → ℕ → ℝ}
   obtain ⟨q, hq, φ, hmono, htend⟩ := tight_limit_vector (Q := Q) (C := (⌈c⌉₊ : ℝ) * B) hbnd
   exact ⟨q, rp_of_tight_limit_vector hrp htend, fun j => (abs_le.mp (hq j)).2, φ, hmono, htend⟩
 
-/-- **Step 2 capstone (reading A): the gap + finite-spacing OS structure give a tight, OS-satisfying continuum
-limit.** All inputs are at finite spacing: the gap keeps supra-edge modes below the physical cutoff `c`
-(`hir`); the reflected forms are reflection-positive (`hrp`) and built from the resolved modes (`hQ`, so
-bounded by the gap's infrared count); and they carry the Euclidean (`hEuc`) and permutation (`hPerm`)
-symmetries (Osterwalder–Seiler / `Apriori.A2_hypercubic_holds` at each spacing). Then a single subsequence `φ`
-and a limit `q` exist with, for every test configuration `j`:
-* **joint convergence** `Q j (φ k) → q j` — tightness, from the gap alone (no ultraviolet renormalisation);
-* **OS0** (regularity) `|q j| ≤ ⌈c⌉₊·B`, the temperedness bound;
-* **OS2** (reflection positivity) `0 ≤ q j`;
-* **OS1** (Euclidean invariance) `q (actE g j) = q j`;
-* **OS3** (permutation symmetry) `q (actP σ j) = q j`.
-The continuum limit inherits every closed OS condition from its finite-spacing version, the one analytic input
-being the gap (finite infrared mode count = finite correlation scale). OS4 clustering is the gap at the
-correlator level (`Forgetting.bridge_forward`); reconstructing `q` into a Wightman theory is the cited OS theorem.
-No axiom beyond the standard three. -/
+/-- `tight_vector_of_gap_ir` with two invariance hypotheses added and carried to the limit. Given
+`hir`, `hrp`, `hB`, `hQ` as before, plus `hEuc : Q (actE g j) a = Q j a` and
+`hPerm : Q (actP σ j) a = Q j a` at every index, there are a strictly monotone `φ` and a limit `q`
+with, for every `j`:
+
+* `Q j (φ k) → q j`;
+* `|q j| ≤ ⌈c⌉₊ * B`;
+* `0 ≤ q j`;
+* `q (actE g j) = q j` for every `g`;
+* `q (actP σ j) = q j` for every `σ`.
+
+The two invariances transfer by `Existence.invariant_limit_of_action`: an equality holding along the
+whole sequence holds of its limit.
+
+`G` and `P` are bare types and `actE`, `actP` bare functions — no group structure, no composition
+law and no continuity is required or used, so the invariance transferred is exactly the pointwise
+equality assumed.
+
+DERIVED: `0` is the lower bound on each `Q j a`, on `B`, and on each limit `q j`. `c` and `⌈c⌉₊` are
+carried from `uniform_resolvedDim_of_gap`. -/
 theorem continuum_limit_of_gap {G P J : Type*} [Countable J]
     {Q : J → ℕ → ℝ} {ev : ℕ → ℕ → ℝ} {edge c B : ℝ} (Na : ℕ → ℕ)
     (actE : G → J → J) (actP : P → J → J)
@@ -258,76 +319,73 @@ theorem continuum_limit_of_gap {G P J : Type*} [Countable J]
   exact ⟨q, φ, hmono, htend, hq, rp_of_tight_limit_vector hrp htend,
     invariant_limit_of_action htend actE hEuc, invariant_limit_of_action htend actP hPerm⟩
 
-/-! ### The construction for the concrete model
+/-! ### The hypotheses as a structure
 
-`continuum_limit_of_gap` takes the finite-spacing inputs loose. `LatticeYMFamily` names them as one structure
-— as `Model.LatticeYM` names the reduction inputs — separating the cited standard results (Osterwalder–Seiler
-reflection positivity, the confinement gap, `Apriori.A2_hypercubic_holds` invariance, bosonic symmetry) from
-the machine-checked construction. `continuum_of_family` is then the reading-A continuum limit for the model,
-in one line. -/
+`continuum_limit_of_gap` takes its inputs loose. `LatticeYMFamily` bundles exactly the same data and
+hypotheses into one structure, and `continuum_of_family` applies the theorem to a value of it. The
+field names record the intended reading; the structure itself is a tuple of types, functions, reals
+and inequalities. -/
 
-/-- **A lattice Yang–Mills family across spacings.** The finite-spacing Osterwalder–Schrader inputs the
-reading-A construction consumes, bundled as one structure: the reflected Schwinger forms `Q` (test
-configuration `j`, spacing index `a`), the correlation eigenvalues `ev`, the noise edge / infrared cutoff /
-per-mode bound, and the group actions. Its hypotheses are the cited finite-spacing facts — reflection
-positivity (`os_rp`, Osterwalder–Seiler), the confinement gap keeping the resolved modes infrared (`os_gap`,
-A1), the forms built from the resolved modes (`os_form`), and the Euclidean and permutation symmetries
-(`os_euc`, `Apriori.A2_hypercubic_holds` at finite spacing; `os_perm`, bosonic). -/
+/-- The data and hypotheses of `continuum_limit_of_gap`, as a structure: a countable type `J`, two
+bare types `G` and `P` with actions on `J`, a range function `Na : ℕ → ℕ`, values `ev : ℕ → ℕ → ℝ`,
+a family of real sequences `Q : J → ℕ → ℝ`, three reals `edge`, `c`, `B`, and the six hypotheses
+`hB`, `os_rp`, `os_gap`, `os_form`, `os_euc`, `os_perm`.
+
+Nothing in the structure is a lattice, a gauge field or a Schwinger function; every field is one of
+the objects just listed, and every hypothesis is an inequality or an equality between reals. In
+particular `os_gap` is assumed, not derived — `familyOfSortedCount` is the alternative constructor
+that derives it from a count bound.
+
+DERIVED: `0` is the lower bound on `B` in `hB` and on each `Q j a` in `os_rp`; it is the only
+numeral in the structure. -/
 structure LatticeYMFamily where
-  /-- Test configurations — a countable dense set of smeared field arrangements. -/
+  /-- The index type of the family of sequences. -/
   J : Type
-  /-- `J` is countable (the joint tightness is sequential compactness of a countable product). -/
+  /-- `J` is countable, which is what lets one subsequence serve every `j`. -/
   [countable : Countable J]
-  /-- Euclidean group and its action on the test configurations. -/
+  /-- A type and an action of it on `J`, whose invariance `os_euc` asserts. No group structure. -/
   G : Type
   actE : G → J → J
-  /-- Permutation group on the arguments and its action. -/
+  /-- A second type and action on `J`, whose invariance `os_perm` asserts. No group structure. -/
   P : Type
   actP : P → J → J
-  /-- Lattice mode count at spacing index `a` (`→ ∞` as `a → 0`). -/
+  /-- The upper end of the index range counted at each `a`. -/
   Na : ℕ → ℕ
-  /-- Correlation eigenvalues at each spacing. -/
+  /-- The values compared against `edge` at each `a`. -/
   ev : ℕ → ℕ → ℝ
-  /-- The reflected Schwinger forms. -/
+  /-- The family of real sequences whose limit is taken. -/
   Q : J → ℕ → ℝ
-  /-- Noise edge, physical infrared cutoff, per-mode bound. -/
+  /-- The threshold `ev` is compared against, the index cutoff, and the per-index factor. -/
   edge : ℝ
   c : ℝ
   B : ℝ
   hB : 0 ≤ B
-  /-- **Reflection positivity** at every spacing (Osterwalder–Seiler). -/
+  /-- Every `Q j a` is nonnegative. -/
   os_rp : ∀ j a, 0 ≤ Q j a
-  /-- **The confinement gap keeps the resolved modes infrared**: supra-edge ⟹ below the physical cutoff `c`
-  (A1 / finite correlation length). -/
+  /-- The index cutoff: an index below `Na a` whose value exceeds `edge` is below `c`. Assumed, not
+  derived; `familyOfSortedCount` builds it from an ordering and a count instead. -/
   os_gap : ∀ a, ∀ n ∈ Finset.range (Na a), edge < ev a n → (n : ℝ) < c
-  /-- The reflected form is built from the resolved modes (bounded by the resolved dimension). -/
+  /-- Each `Q j a` is bounded by the resolved dimension at `a` times `B`. -/
   os_form : ∀ j a, Q j a ≤ (resolvedDim (Finset.range (Na a)) (ev a) edge : ℝ) * B
-  /-- **Euclidean invariance** at every spacing (`Apriori.A2_hypercubic_holds`; continuum `SO(4)` the sampling
-  isometry). -/
+  /-- `Q` is invariant under `actE` in its first argument, at every index. -/
   os_euc : ∀ g j a, Q (actE g j) a = Q j a
-  /-- **Permutation symmetry** at every spacing (bosonic Euclidean fields). -/
+  /-- `Q` is invariant under `actP` in its first argument, at every index. -/
   os_perm : ∀ σ j a, Q (actP σ j) a = Q j a
 
-/-- **A family built from a COUNTED spectrum rather than an assumed infrared bound.**
+/-- Builds a `LatticeYMFamily` whose `os_gap` field is derived rather than supplied. In place of the
+index cutoff it takes
 
-`LatticeYMFamily.os_gap` asks that every supra-edge mode sit below a spacing-independent index
-cutoff. Supplying that directly means asserting where the resolved modes are. This constructor asks
-instead for the two things a read actually produces:
+* `hsorted` — each `ev a` is nonincreasing;
+* `hcount` — at most `c` of the first `Na a` values exceed `edge`, at every `a`;
 
-* `hsorted` -- the spectrum is ordered (an eigenvalue list sorted descending);
-* `hcount`  -- at most `c` modes clear the noise edge, at every spacing.
+and fills `os_gap` with `os_gap_of_sorted_count Na hsorted hcount`. Every other field is passed
+through unchanged.
 
-and derives `os_gap` from them through `os_gap_of_sorted_count`. The point is where `hcount` can come
-from: `ZeroMode.resolved_count_le_of_subset` bounds exactly that count by the measured TENSION, so a
-family assembled this way has its infrared input sourced from the correlation rather than asserted
-about it.
+So a caller who can bound the count, rather than locate the indices, can still build the structure.
+`hsorted` is what makes the two interchangeable and is required.
 
-Everything else is passed through unchanged -- reflection positivity, the aperture bound, and the two
-invariances are properties of the reflected form `Q` and are not touched by how the spectrum is
-counted.
-
-DERIVED: no literal in this definition decides anything. The `0` is the nonnegativity of the
-per-mode bound `B`, carried through from the caller unchanged. -/
+DERIVED: `0` is the lower bound on `B` in `hB` and on each `Q j a` in `os_rp`, both carried from the
+caller into the corresponding fields; the definition introduces no numeral of its own. -/
 noncomputable def familyOfSortedCount
     (J : Type) [Countable J] (G : Type) (actE : G → J → J) (P : Type) (actP : P → J → J)
     (Na : ℕ → ℕ) (ev : ℕ → ℕ → ℝ) (Q : J → ℕ → ℝ) (edge c B : ℝ) (hB : 0 ≤ B)
@@ -355,13 +413,14 @@ noncomputable def familyOfSortedCount
   os_euc := os_euc
   os_perm := os_perm
 
-/-- **The continuum limit of a lattice Yang–Mills family (Step 2 for the model).** Every `LatticeYMFamily`
-has a tight continuum limit satisfying OS0–OS3 jointly: a subsequence `φ` and a limit `q` with joint
-convergence, the temperedness bound (OS0), reflection positivity (OS2), Euclidean invariance (OS1), and
-permutation symmetry (OS3). This is `continuum_limit_of_gap` applied to the family's named finite-spacing
-inputs — the reading-A construction for the concrete model, the inputs cited (Osterwalder–Seiler, A1, A2), the
-construction machine-checked, no axiom beyond the standard three. OS4 clustering is the gap
-(`Forgetting.bridge_forward`); the Osterwalder–Schrader reconstruction of `q` into a Wightman theory is cited. -/
+/-- `continuum_limit_of_gap` applied to the fields of a `LatticeYMFamily`. For any `F` there are a
+strictly monotone `φ` and a limit `q : F.J → ℝ` with joint convergence of every `F.Q j` along `φ`,
+`|q j| ≤ ⌈F.c⌉₊ * F.B`, `0 ≤ q j`, and invariance of `q` under `F.actE` and `F.actP`.
+
+The `Countable F.J` instance is taken from the structure's own field.
+
+DERIVED: `0` is the lower bound on each limit `q j`, inherited from the `os_rp` field. `F.c` and its
+ceiling are the structure's, as is `F.B`. -/
 theorem continuum_of_family (F : LatticeYMFamily) :
     ∃ (q : F.J → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧
       (∀ j, Tendsto (fun k => F.Q j (φ k)) atTop (nhds (q j))) ∧
@@ -372,14 +431,16 @@ theorem continuum_of_family (F : LatticeYMFamily) :
   haveI := F.countable
   continuum_limit_of_gap F.Na F.actE F.actP F.os_gap F.os_rp F.hB F.os_form F.os_euc F.os_perm
 
-/-- **The continuum limit, from a counted spectrum.**
+/-- `continuum_of_family` composed with `familyOfSortedCount`: from `hsorted`, `hcount`, `os_rp`,
+`os_form`, `os_euc` and `os_perm`, there are a strictly monotone `φ` and a limit `q` with joint
+convergence, `|q j| ≤ ⌈c⌉₊ * B`, `0 ≤ q j`, and invariance under `actE` and `actP`.
 
-`continuum_of_family` on `familyOfSortedCount`: given an ordered spectrum, a bound on how many of its
-modes clear the noise edge, and the reflected form's own properties, there is a tight subsequential
-limit satisfying OS0–OS3. No axiom beyond the foundational three.
+The same conclusion as `continuum_limit_of_gap`, reached from a count bound and an ordering instead
+of from the index cutoff `hir`.
 
-This is the shape the measurement chain delivers. The count bound is the one quantity that was
-previously asserted as an infrared cutoff and is now derivable from the tension. -/
+DERIVED: `0` is the lower bound on `B` in `hB`, on each `Q j a` in `os_rp`, and on each limit `q j`.
+`c` is the caller's count bound and `⌈c⌉₊` its ceiling, carried through
+`os_gap_of_sorted_count` and `uniform_resolvedDim_of_gap`. -/
 theorem continuum_of_sorted_count
     (J : Type) [Countable J] (G : Type) (actE : G → J → J) (P : Type) (actP : P → J → J)
     (Na : ℕ → ℕ) (ev : ℕ → ℕ → ℝ) (Q : J → ℕ → ℝ) (edge c B : ℝ) (hB : 0 ≤ B)

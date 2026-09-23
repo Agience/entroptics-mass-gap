@@ -1,73 +1,77 @@
 import Mathlib
 
 /-!
-# MassGap.ColourGeneral — whether `ContactValue`'s method reaches `SU(N)`
+# MassGap.ColourGeneral — the parity arithmetic behind `SU(N)` analogues of three `SU(3)` elements
 
-`ContactValue` evaluates the zero-coupling contact value on `SU(3)` by **invariant projection on
-explicit group elements**, because Mathlib at this pin has no Peter–Weyl and no Schur orthogonality:
+`ContactValue` evaluates the zero-coupling contact value on `SU(3)` by invariant projection on
+explicit group elements, Mathlib at this pin having neither Peter–Weyl nor Schur orthogonality:
 translating by a fixed `h` multiplies the integrand by a fixed scalar `λ`, and `c = λc` with `λ ≠ 1`
-forces `c = 0`. Three elements carry that file:
+forces `c = 0`. Three elements carry that file: the central `ω·1`, the diagonal
+`diag(1, ω, ω²)`, and the three-cycle permutation matrix, which lies in `SU(3)` because a
+three-cycle is an even permutation.
 
-* `Zg = ω·1`, central, in the group because `ω³ = 1`;
-* `Dg = diag(1, ω, ω²)`;
-* `Pg`, the three-cycle permutation matrix, in `SU(3)` **because a three-cycle is EVEN**.
+This module contains five arithmetic facts that bear on whether the analogous elements can be formed
+at general `N`. Every statement here is about natural numbers or complex numbers; no matrix, no
+determinant, no permutation and no Haar integral occurs in any statement, and no group element is
+constructed.
 
-The question C3 turns on is whether those three have `SU(N)` analogues. This file settles the
-arithmetic half of it, which is the half that decides whether the elements EXIST.
+## What the declarations state
 
-## What the arithmetic says
+Write `ζ` for a primitive `N`-th root of unity, so that
+`det diag(1, ζ, …, ζ^{N-1}) = ζ^{0+1+⋯+(N-1)}` and the determinant is `1` exactly when
+`N ∣ ∑_{i < N} i`.
 
-Write `ζ` for a primitive `N`-th root of unity.
+* `diag_det_exponent_two` states `(∑ i : Fin N, i) * 2 = N * (N - 1)`, Gauss's sum with the division
+  cleared.
+* `diag_in_SU_of_odd` states `N ∣ ∑ i : Fin N, i` for odd `N`.
+* `diag_not_in_SU_of_even` states the negation for even `N` with `2 ≤ N`. The hypothesis `2 ≤ N` is
+  needed: at `N = 0` the sum is `0` and `0 ∣ 0` holds.
+* `cycle_even_iff_odd` states `Even (N - 1) ↔ Odd N` for `1 ≤ N`. An `N`-cycle has sign
+  `(-1)^{N-1}`, so this is the exponent's parity; the sign itself is not formalised here.
+* `unit_scalar_cancels_in_ratio` states that for `c : ℂ` with `c * star c = 1`,
+  `(c * z) * star (c * w) = z * star w` in `ℂ`. The invariant projection sees its element only
+  through products of the form `g_{ii} * conj(g_{kk})`, so a scalar inserted to fix a determinant
+  leaves every such product unchanged, whatever its value.
 
-**The centre element works for every `N ≥ 3` and fails at `N = 2`.** `χ(ζU) = ζχ(U)` gives
-`∫χ = ζ∫χ`, hence `∫χ = 0` whenever `ζ ≠ 1`; and `∫χ² = ζ²∫χ²` gives `∫χ² = 0` whenever `ζ² ≠ 1`,
-which is exactly `N ≥ 3`. At `N = 2` the centre is `{±1}`, the square is `1`, the projection is
-vacuous, and `∫χ² = 1` rather than `0` — which is why `SU(2)` and `SU(3)` have genuinely different
-answers and not merely different bookkeeping.
+Two facts about the centre element are described in this comment but are not declared in this file:
+that `∫χ = 0` whenever `ζ ≠ 1`, and that `∫χ² = 0` whenever `ζ² ≠ 1`, the latter requiring `N ≥ 3`.
+At `N = 2` the centre is `{±1}`, its square is `1`, and the projection argument is vacuous; the
+tree's `SU(2)` contact value (`HaarMoments.haar_su2_second_moment`) is obtained by another route.
 
-**The diagonal element is in `SU(N)` exactly when `N` is ODD.**
-`det diag(1, ζ, …, ζ^{N-1}) = ζ^{0+1+⋯+(N-1)} = ζ^{N(N-1)/2}`, so it lies in `SU(N)` iff
-`N ∣ N(N-1)/2`. `diag_in_SU_of_odd` and `diag_not_in_SU_of_even` below prove that is odd `N` exactly.
-
-**The `N`-cycle is an even permutation exactly when `N` is ODD**, its sign being `(-1)^{N-1}` — the
-same parity condition, and the reason `ContactValue` can say "a three-cycle is EVEN".
-
-**So for odd `N ≥ 3` all three elements exist unchanged, and for even `N` two of them need a unit
-scalar correction.** That correction is FREE, and `unit_scalar_cancels_in_ratio` is why: the
-projection only ever sees `g_{ii}·conj(g_{kk})`, and multiplying the element by a unit scalar `c`
-sends that to `|c|²·g_{ii}·conj(g_{kk})`, which is the same number. So a scalar chosen purely to fix
-the determinant cannot disturb the projection it is inserted into.
-
-## What this does and does not settle
-
-It settles that the ELEMENTS exist at every `N ≥ 3`, with the parity obstruction identified and its
-repair shown harmless. It does NOT carry `ContactValue`'s 134 pinnings across, nor the 176 in the
-other eleven modules, and it does not evaluate any Haar integral at `N ≠ 3`. **The correction to
-record is that `SU(N)` is reachable by this method for every `N ≥ 3`, not out of its reach** — what
-it costs is the per-`N` work, not a new idea.
-
-`N = 2` stays genuinely outside: the centre argument is vacuous there, and the tree's `SU(2)` answer
-(`HaarMoments.haar_su2_second_moment`) was obtained by a different route for that reason.
-
-DERIVED: no numeral is a magnitude. `2` is the order the centre argument needs `ζ` to exceed and the
-divisor in `N(N-1)/2`; `1` is the determinant `SU` asks for; `3` is `SU(3)`, the instance the tree
-has done.
+DERIVED: `2` is the multiplier that clears the division in `N(N-1)/2`, and the lower bound on `N`
+that excludes `N = 0` from the even case; `1` is the value `star`-multiplication is pinned to, the
+`N - 1` offset in Gauss's sum and in the cycle's sign exponent, and the lower bound on `N` in
+`cycle_even_iff_odd`. No numeral in any statement is a magnitude.
 -/
 
 namespace MassGap.ColourGeneral
 
 /-! ## 1. The determinant exponent -/
 
-/-- The exponent in `det diag(1, ζ, …, ζ^{N-1}) = ζ^{∑ i}`, doubled so no division appears.
-Gauss's sum, on `Fin N`. -/
+/-- Gauss's sum on `Fin N`, doubled so that no division appears:
+`(∑ i : Fin N, (i : ℕ)) * 2 = N * (N - 1)`. Proved by transporting the sum to `Finset.range N` and
+applying `Finset.sum_range_id_mul_two`. The subtraction is truncated natural subtraction, so the
+statement also holds at `N = 0`.
+
+This sum is the exponent in `det diag(1, ζ, …, ζ^{N-1}) = ζ^{∑ i}`, but no determinant appears in
+the statement.
+
+DERIVED: `2` is the doubling that clears the division in `N(N-1)/2`; `1` is the offset in the
+largest index, `N - 1`. -/
 theorem diag_det_exponent_two (N : ℕ) : (∑ i : Fin N, (i : ℕ)) * 2 = N * (N - 1) := by
   rw [Fin.sum_univ_eq_sum_range (fun i => i) N]
   exact Finset.sum_range_id_mul_two N
 
 #print axioms diag_det_exponent_two
 
-/-- **THE DIAGONAL ELEMENT IS IN `SU(N)` WHEN `N` IS ODD.** `N ∣ ∑ i`, so the determinant
-`ζ^{∑ i}` is `1`. At `N = 2k+1` the sum is `(2k+1)k`, visibly a multiple of `N`. -/
+/-- For odd `N`, `N` divides `∑ i : Fin N, (i : ℕ)`. Writing `N = 2k + 1`, `diag_det_exponent_two`
+gives `(∑ i) * 2 = N * 2k`, so `∑ i = N * k`. Since `ζ^{∑ i}` is the determinant of
+`diag(1, ζ, …, ζ^{N-1})`, divisibility here is what makes that determinant `1`; the statement
+itself is a divisibility fact about naturals and mentions no matrix.
+
+Holds at `N = 1` as well, where the sum is `0`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem diag_in_SU_of_odd {N : ℕ} (hodd : Odd N) : N ∣ ∑ i : Fin N, (i : ℕ) := by
   obtain ⟨k, hk⟩ := hodd
   have h2 := diag_det_exponent_two N
@@ -79,9 +83,14 @@ theorem diag_in_SU_of_odd {N : ℕ} (hodd : Odd N) : N ∣ ∑ i : Fin N, (i : �
 
 #print axioms diag_in_SU_of_odd
 
-/-- **AND IT IS NOT, WHEN `N` IS EVEN.** At `N = 2k` with `k ≥ 1` the sum is `k(2k-1)`, and
-`2k ∤ k(2k-1)` because `2k-1` is odd. So the natural diagonal element has determinant `ζ^{N/2} ≠ 1`
-and a unit scalar correction is needed — which `unit_scalar_cancels_in_ratio` shows is free. -/
+/-- For even `N` with `2 ≤ N`, `N` does not divide `∑ i : Fin N, (i : ℕ)`. A divisor `m` would give
+`m * 2 = N - 1` through `diag_det_exponent_two`, which `omega` refutes because `N - 1` is odd.
+
+The hypothesis `2 ≤ N` is required and not decorative: `Even 0` holds, the sum over `Fin 0` is `0`,
+and `0 ∣ 0`. Combined with `diag_in_SU_of_odd`, divisibility of the index sum by `N` is exactly the
+odd case among `N ≥ 1`.
+
+DERIVED: `2` is the lower bound on `N` that excludes the degenerate case `N = 0`. -/
 theorem diag_not_in_SU_of_even {N : ℕ} (hev : Even N) (hN : 2 ≤ N) :
     ¬ N ∣ ∑ i : Fin N, (i : ℕ) := by
   obtain ⟨k, hk⟩ := hev
@@ -95,8 +104,15 @@ theorem diag_not_in_SU_of_even {N : ℕ} (hev : Even N) (hN : 2 ≤ N) :
 
 #print axioms diag_not_in_SU_of_even
 
-/-- The same parity governs the permutation: an `N`-cycle has sign `(-1)^{N-1}`, so it is EVEN
-exactly when `N` is odd. Stated on the exponent, which is the part that decides it. -/
+/-- `Even (N - 1) ↔ Odd N` for `1 ≤ N`, by `omega` in both directions on the witness. An `N`-cycle
+has sign `(-1)^{N-1}`, so this is the parity of that exponent; neither the permutation nor its sign
+occurs in the statement, which is arithmetic on naturals.
+
+The hypothesis `1 ≤ N` is required: at `N = 0`, truncated subtraction makes `N - 1 = 0`, so the left
+side holds while `Odd 0` does not.
+
+DERIVED: `1` is the offset in the sign exponent `N - 1`, and the lower bound on `N` that excludes
+`N = 0`. -/
 theorem cycle_even_iff_odd (N : ℕ) (hN : 1 ≤ N) : Even (N - 1) ↔ Odd N := by
   constructor
   · rintro ⟨k, hk⟩
@@ -108,14 +124,17 @@ theorem cycle_even_iff_odd (N : ℕ) (hN : 1 ≤ N) : Even (N - 1) ↔ Odd N := 
 
 /-! ## 2. Why the repair at even `N` is free -/
 
-/-- **A UNIT SCALAR CANCELS IN THE PROJECTION'S RATIO.**
+/-- A unit-modulus scalar cancels out of a product of the form `z · conj w`. For `c : ℂ` with
+`c * star c = 1` and any `z w : ℂ`, `(c * z) * star (c * w) = z * star w`. Proved by regrouping with
+`star_mul` and `ring`, then rewriting by the hypothesis.
 
-The invariant projection only ever sees `g_{ii} · conj(g_{kk})`. Multiplying the translating element
-by a scalar `c` with `c · conj c = 1` sends that to `(c g_{ii}) · conj(c g_{kk}) = g_{ii} conj(g_{kk})`
-— the same number. So the scalar chosen purely to fix a determinant at even `N` cannot disturb the
-projection it is inserted into, and the phases `ζ^{i-k}` the argument runs on are unchanged.
+The invariant projection sees its translating element only through products `g_{ii} * conj(g_{kk})`,
+so this says a scalar inserted to fix a determinant leaves every such product, and hence the phases
+`ζ^{i-k}` the argument runs on, unchanged. The statement quantifies over all `z` and `w` in `ℂ` and
+involves no matrix or group.
 
-DERIVED: `1` is the unit-modulus condition, not a magnitude. -/
+DERIVED: `1` is the value `c * star c` is pinned to — the unit-modulus condition, not a
+magnitude. -/
 theorem unit_scalar_cancels_in_ratio {c : ℂ} (hc : c * star c = 1) (z w : ℂ) :
     (c * z) * star (c * w) = z * star w := by
   have h : (c * z) * star (c * w) = (c * star c) * (z * star w) := by
@@ -125,12 +144,12 @@ theorem unit_scalar_cancels_in_ratio {c : ℂ} (hc : c * star c = 1) (z w : ℂ)
 
 #print axioms unit_scalar_cancels_in_ratio
 
-/-! ### One step deliberately not taken
+/-! ### Scope of the scalar lemma
 
-The existence of the correcting scalar itself — every unit-modulus complex number has `N`-th roots —
-is standard and is NOT proved here. Nothing above needs it: `unit_scalar_cancels_in_ratio` already
-shows that ANY such scalar is harmless to the projection, so the repair's soundness does not depend
-on exhibiting one. Recorded so the omission is deliberate rather than overlooked.
+`unit_scalar_cancels_in_ratio` is stated for an arbitrary `c : ℂ` satisfying `c * star c = 1`. No
+such `c` is constructed anywhere in this module, and in particular the existence of `N`-th roots of
+a unit-modulus complex number is not formalised here. Nothing above depends on it, since the lemma
+is universally quantified over `c`.
 -/
 
 end MassGap.ColourGeneral

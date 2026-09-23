@@ -2,62 +2,39 @@ import Mathlib
 import MassGap.FiniteOrderTransfer
 
 /-!
-# MassGap.TransferGap — what a gap buys, with no logarithm and no spectral theorem
+# MassGap.TransferGap — a contraction hypothesis on a bilinear form, and what follows from it
 
-`ClayAssembly` states C1's remaining operator input as `TransferMovesSomething` — a transfer operator
-on `ymH` that is not the identity — and notes that the Hamiltonian itself wants more:
+`Transfer.TransferData A` is a symmetric, nonnegative bilinear form on a real module together with a
+self-adjoint contraction `T` fixing a normalised vacuum vector. This module states a gap as a
+property of that form — `GapAt D r` — and derives exponential clustering, incompatibility with
+finite order, and the non-triviality of `T`, entirely within the form's arithmetic: no Hilbert space
+completion, no functional calculus and no logarithm appears in any statement here.
 
-> `-log T` needs `0 ∉ spectrum T` rather than injectivity, so this predicate is necessary and not
-> sufficient.
+Contents:
+* `GapAt D r` — `∀ x, D.form x D.vac = 0 → D.form (D.T x) (D.T x) ≤ r ^ 2 * D.form x x`.
+* `gapAt_of_one_le_sq` — every `TransferData` satisfies `GapAt D r` whenever `1 ≤ r ^ 2`, from the
+  structure fields `T_contract` and `form_nonneg` alone.
+* `gapAt_of_nondegenerate` — it suffices to check `GapAt` where `0 < D.form x x`.
+* `orth_invariant`, `pow_vac`, `gap_pow` — the vacuum's orthogonal complement is `T`-invariant,
+  every power fixes the vacuum, and the contraction iterates to `r ^ (2 * n)`.
+* `vacProj`, `vacProj_orth`, `vacProj_add` — the vacuum component of `x`, removed and reassembled.
+* `clustering_sq` — the squared connected correlation is bounded by
+  `r ^ (2 * n) * (D.form y y * D.form (vacProj D x) (vacProj D x))`.
+* `identity_fails_gap`, `finite_order_fails_gap` — with `r < 1`, an operator equal to the identity,
+  or of finite order `m ≥ 1`, forces `D.form x x = 0` on the vacuum's complement. The finite-order
+  route assumes no operator positivity.
+* `gap_moves_something` — with `r < 1`, an `x` orthogonal to the vacuum with `D.form x x ≠ 0` has
+  `D.form (D.T x - x) (D.T x - x) ≠ 0`, so `T` is not the identity.
+* Section `Witness` — `diagStep`, `diagTransfer`, `gapAt_diagTransfer`, `exists_gapAt_lt_one`: a
+  two-dimensional `TransferData` satisfying `GapAt` at any `lam` with `lam ^ 2 ≤ 1`, and hence an
+  instance below rate one.
 
-That is right about `-log T`, and it is worth being exact about what follows from it.
-
-**`-log T` is already built in this tree.** `Reconstruction.hamiltonian` is
-`cfc (fun x => -Real.log x) T`, and `Reconstruction.reconstruct_qm_core` gives the whole
-operator-theoretic output — self-adjoint, `H ≥ 0`, vacuum at `0`, `spectrum H ⊆ {0} ∪ [Δ, ∞)` — from
-`spectrum T ⊆ {1} ∪ [ε, e^{−Δ}]` with `0 < ε`, on foundational axioms alone. That spectral
-hypothesis comes from DECAY via `MomentSupport.le_of_positive_weight_decay`.
-
-**So this file is not a workaround for a missing construction.** What it adds is a route that reaches
-exponential CLUSTERING — the physical content — without passing through the spectral theorem at all,
-which is useful because `TransferData` is a bilinear form rather than a Hilbert-space operator and has
-no functional calculus to call.
-
-## What the mass gap actually says about correlations
-
-The physical content of a gap `Δ` is that connected correlations decay like `e^{-Δ·n}`:
-
-    ⟨y, Tⁿ x⟩ − ⟨y, Ω⟩⟨Ω, x⟩  →  0  exponentially.
-
-Written that way it is a statement about the FORM, and it needs no Hilbert space completion, no
-functional calculus and no logarithm. What it needs is one hypothesis — that `T` contracts by a
-factor `r < 1` on the vacuum's orthogonal complement — and two facts already in `Transfer`:
-`ReflForm.cauchy_schwarz` and `TransferData.T_vac`.
-
-`clustering_sq` is that statement and its proof is four steps: split `x` into its vacuum component
-and the rest, note the rest stays orthogonal under `T`, iterate the contraction, and apply
-Cauchy–Schwarz once.
-
-## Why this is not a detour around the open item
-
-**A gap IMPLIES `TransferMovesSomething`.** `gap_moves_something`: if anything orthogonal to the
-vacuum has nonzero form, an operator with a gap moves it. So the open item is not an extra obligation
-alongside the gap — it is a consequence of it, and an attempt to exhibit motion first is an attempt
-to prove something weaker on the way to something stronger.
-
-**And a gap is incompatible with finite order, with NO positivity hypothesis.**
-`FiniteOrderTransfer.positive_finite_order_transfer_is_identity` reaches that wall using operator
-positivity `0 ≤ form (T z) z`. `finite_order_fails_gap` reaches it using the gap instead and assumes
-no positivity at all. The two are independent routes to the same conclusion, which is why the
-translation route stays closed however the operator is built.
-
-## What is NOT claimed
-
-Nothing here produces an operator, and nothing here produces a gap. `GapAt` is a hypothesis, stated
-so that what it buys can be seen before anyone pays for it. The `TransferData` the tree can currently
-build unconditionally — `ClayAssembly.trivialTransfer` — has `T = 1`, and `identity_fails_gap` says
-exactly what that costs: the identity satisfies `GapAt D r` with `r < 1` only on a space where the
-form sees nothing off the vacuum.
+Scope. `GapAt` is a hypothesis everywhere it appears; no declaration here constructs a
+`TransferData` from a gauge theory or derives a gap for one. Above rate one the predicate follows
+from the structure fields (`gapAt_of_one_le_sq`), so only `r < 1` carries content. The witness in
+section `Witness` is two-dimensional and has no gauge content; it establishes that `GapAt` is
+satisfiable below rate one and nothing further. `clustering_sq` is stated squared, which is the form
+Cauchy–Schwarz delivers and needs no square root or norm.
 -/
 
 namespace MassGap.TransferGap
@@ -66,28 +43,29 @@ variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 /-! ## 1. The hypothesis -/
 
-/-- **THE GAP, STATED ON THE FORM.** `T` contracts by `r` on the vacuum's orthogonal complement.
+/-- The gap, stated on the form: `∀ x, D.form x D.vac = 0 → D.form (D.T x) (D.T x) ≤ r ^ 2 * D.form x x`.
+`T` contracts by `r` on the vacuum's orthogonal complement. A `Prop`-valued definition; it asserts
+nothing on its own and carries no hypothesis that `r < 1`.
 
-This is the transfer-operator form of a mass gap `Δ = −log r`, and it is stated as a contraction
-rather than as a logarithm precisely so that `−log T` — which needs `0 ∉ spectrum T` — never has to
-exist.
+Written as a contraction of the form rather than as a spectral condition, so nothing downstream
+needs `0 ∉ spectrum T` or a logarithm of an operator.
 
-DERIVED: the `2` is the form's own degree. `form (T x) (T x)` is a squared length, so a contraction
-by `r` on lengths is a contraction by `r²` on it. No magnitude is chosen here; `r` is the caller's. -/
+DERIVED: `0` is the value of `D.form x D.vac` that selects the vacuum's orthogonal complement — the
+subspace the contraction is asserted on. `2` is the form's own degree: `form (T x) (T x)` is a
+squared length, so a contraction by `r` on lengths reads as `r ^ 2` here. `r` is the caller's. -/
 def GapAt (D : Transfer.TransferData A) (r : ℝ) : Prop :=
   ∀ x : A, D.form x D.vac = 0 → D.form (D.T x) (D.T x) ≤ r ^ 2 * D.form x x
 
 #print axioms GapAt
 
-/-- **⛔ AND AT `1 ≤ r²` IT IS FREE.** `T_contract` and `form_nonneg` give it for EVERY
-`TransferData`, with no hypothesis at all.
+/-- At `1 ≤ r ^ 2`, `GapAt D r` holds for every `TransferData D`, with no further hypothesis. The
+proof chains the structure field `T_contract` with `le_mul_of_one_le_left` on `form_nonneg`.
 
-Stated so that no statement downstream has to hedge about it: a `GapAt D r` carrying no `r < 1` says
-nothing, and any reduction whose hypothesis forces `1 ≤ r²` has reduced nothing. Both mistakes are
-easy to make, because the `r²` hides the sign and the contraction bound is already in the structure.
+Scope: this fixes the range of `r` in which `GapAt` has content. A `GapAt D r` whose `r` is not
+constrained below one asserts nothing beyond the structure fields.
 
-DERIVED: the `1` is the threshold above which the statement is empty; the `2` is `GapAt`'s own
-exponent. -/
+DERIVED: `1` is the threshold on `r ^ 2` at or above which the property is automatic; `2` is
+`GapAt`'s own exponent, the form's degree. -/
 theorem gapAt_of_one_le_sq {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) {r : ℝ} (hr : 1 ≤ r ^ 2) : GapAt D r := by
   intro x _
@@ -96,26 +74,16 @@ theorem gapAt_of_one_le_sq {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 #print axioms gapAt_of_one_le_sq
 
-/-- **⭐⭐ THE DEGENERATE OBSERVABLES ARE ALREADY DISCHARGED**, so `GapAt` need only be checked where
-the form is positive.
+/-- It suffices to check the gap inequality where the form is strictly positive: if the inequality
+holds at every `x` with `D.form x D.vac = 0` and `0 < D.form x x`, then `GapAt D r` holds. The proof
+splits on `form_nonneg`; in the degenerate branch `T_contract` puts `D.form (D.T x) (D.T x)` at or
+below `0` and `form_nonneg` at or above, so both sides are `0` and the inequality holds at any `r`.
 
-At an `x` with `form x x = 0`, `T_contract` puts `form (T x) (T x)` at or below `0` and `form_nonneg`
-at or above it, so both sides of the gap inequality are `0` and it holds at EVERY `r` — including
-`r < 1`, where the statement is otherwise the whole content.
+Scope: the content at a non-degenerate `x` is unchanged; this only removes the null space of the
+form from what a caller must check. The reverse implication is immediate.
 
-**THE CONVERSE IS ONE LINE**, by dropping the positivity argument, so this is an iff whose whole
-content is the degenerate branch. What it buys a caller is the right to assume `0 < form x x`; that
-is real and it is small.
-
-**⛔ AND IT DOES NOT MAKE THE GAP EASIER.** `GapAt`'s content at a non-degenerate `x` is untouched.
-`GNSCompare.gapAt_of_opT_contracts` and `gapAt_of_tq_contracts` handle the same null space more
-strongly, by passing to the quotient where it is `0` outright.
-
-The `x` the form annihilates are the ones the GNS quotient cannot see — the same null space that
-separates `T ≠ 1` from `ClayAssembly.TransferMovesSomething`.
-
-DERIVED: the `0` is the degenerate value of the form and the vacuum-orthogonality it is checked
-against; the `2` is `GapAt`'s own degree, as there. -/
+DERIVED: `0` is the value of `D.form x D.vac` selecting the vacuum's complement, and the strict
+lower bound on `D.form x x` in the hypothesis; `2` is `GapAt`'s own exponent. -/
 theorem gapAt_of_nondegenerate {A : Type*} [AddCommGroup A] [Module ℝ A]
     (D : Transfer.TransferData A) {r : ℝ}
     (h : ∀ x : A, D.form x D.vac = 0 → 0 < D.form x x →
@@ -135,8 +103,12 @@ theorem gapAt_of_nondegenerate {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 /-! ## 2. The complement is invariant, and the contraction iterates -/
 
-/-- **THE VACUUM'S ORTHOGONAL COMPLEMENT IS `T`-INVARIANT.** Two fields and nothing else:
-self-adjointness moves `T` across the form, and `T` fixes the vacuum. -/
+/-- The vacuum's orthogonal complement is `T`-invariant: `D.form x D.vac = 0` gives
+`D.form (D.T x) D.vac = 0`. Two structure fields: `T_symm` moves `T` across the form and `T_vac`
+fixes the vacuum.
+
+DERIVED: the one numeral is `0`, the value of the form against the vacuum, in both the hypothesis
+and the conclusion. -/
 theorem orth_invariant (D : Transfer.TransferData A) {x : A} (hx : D.form x D.vac = 0) :
     D.form (D.T x) D.vac = 0 := by
   rw [D.T_symm, D.T_vac]
@@ -144,7 +116,10 @@ theorem orth_invariant (D : Transfer.TransferData A) {x : A} (hx : D.form x D.va
 
 #print axioms orth_invariant
 
-/-- Every power fixes the vacuum. -/
+/-- `(D.T ^ n) D.vac = D.vac` at every `n : ℕ`, by induction on `n` from the structure field
+`T_vac`.
+
+DERIVED: no numeral occurs in the statement; `n` is the caller's power. -/
 theorem pow_vac (D : Transfer.TransferData A) (n : ℕ) : (D.T ^ n) D.vac = D.vac := by
   induction n with
   | zero => simp
@@ -153,9 +128,14 @@ theorem pow_vac (D : Transfer.TransferData A) (n : ℕ) : (D.T ^ n) D.vac = D.va
 
 #print axioms pow_vac
 
-/-- **AND THE CONTRACTION ITERATES.** `n` steps contract the squared form by `r^{2n}`.
+/-- The contraction iterates: from `0 ≤ r` and `GapAt D r`, at every `n : ℕ` and every `x` with
+`D.form x D.vac = 0`,
+`D.form ((D.T ^ n) x) ((D.T ^ n) x) ≤ r ^ (2 * n) * D.form x x`. By induction on `n`, using
+`orth_invariant` to keep the iterate in the complement.
 
-DERIVED: `2 * n` is `n` applications of the `2` in `GapAt`, which is the form's degree. -/
+DERIVED: `0` is the lower bound on `r`, needed so the accumulated factor `r ^ (2 * k)` stays
+nonnegative when multiplying through, and the value of the form against the vacuum; `2 * n` is `n`
+applications of `GapAt`'s exponent `2`, the form's degree. -/
 theorem gap_pow (D : Transfer.TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
     ∀ (n : ℕ) (x : A), D.form x D.vac = 0 →
       D.form ((D.T ^ n) x) ((D.T ^ n) x) ≤ r ^ (2 * n) * D.form x x := by
@@ -181,13 +161,19 @@ theorem gap_pow (D : Transfer.TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : Gap
 
 /-! ## 3. The vacuum component, removed -/
 
-/-- The part of `x` the vacuum does not account for. `vac_norm` is what makes the coefficient simply
-`form x vac` rather than a ratio. -/
+/-- `vacProj D x = x - (D.form x D.vac) • D.vac`, the part of `x` the vacuum does not account for.
+The coefficient is `D.form x D.vac` rather than a ratio because the structure field `vac_norm`
+normalises the vacuum.
+
+DERIVED: no numeral occurs. -/
 def vacProj (D : Transfer.TransferData A) (x : A) : A := x - (D.form x D.vac) • D.vac
 
 #print axioms vacProj
 
-/-- It is orthogonal to the vacuum, which is the point of it. -/
+/-- `D.form (vacProj D x) D.vac = 0`: the projection is orthogonal to the vacuum. Expands the
+subtraction with `FiniteOrderTransfer.form_sub_left` and `form_smul_left`, then uses `vac_norm`.
+
+DERIVED: the one numeral is `0`, the value of the form against the vacuum. -/
 theorem vacProj_orth (D : Transfer.TransferData A) (x : A) :
     D.form (vacProj D x) D.vac = 0 := by
   unfold vacProj
@@ -197,7 +183,10 @@ theorem vacProj_orth (D : Transfer.TransferData A) (x : A) :
 
 #print axioms vacProj_orth
 
-/-- and it reassembles. -/
+/-- `(D.form x D.vac) • D.vac + vacProj D x = x`: the two pieces reassemble, by `abel` after
+unfolding.
+
+DERIVED: no numeral occurs. -/
 theorem vacProj_add (D : Transfer.TransferData A) (x : A) :
     (D.form x D.vac) • D.vac + vacProj D x = x := by
   unfold vacProj
@@ -207,19 +196,22 @@ theorem vacProj_add (D : Transfer.TransferData A) (x : A) :
 
 /-! ## 4. A gap is exponential clustering -/
 
-/-- **A GAP IS EXPONENTIAL CLUSTERING.**
+/-- Exponential clustering of the connected correlation. From `0 ≤ r` and `GapAt D r`, at every
+`n : ℕ` and all `x y : A`,
 
-`(⟨y, Tⁿx⟩ − ⟨y,Ω⟩⟨Ω,x⟩)² ≤ r^{2n} · ⟨y,y⟩ · ⟨x⊥,x⊥⟩`. The connected correlation falls off like
-`r^n`, which is `e^{−Δn}` for `Δ = −log r`.
+    (D.form y ((D.T ^ n) x) - D.form y D.vac * D.form D.vac x) ^ 2
+      ≤ r ^ (2 * n) * (D.form y y * D.form (vacProj D x) (vacProj D x)).
 
-Stated SQUARED, because that is the form Cauchy–Schwarz delivers and it needs no square root — the
-statement is then an identity of the form's own arithmetic rather than a statement about a norm that
-would have to be constructed.
+Four steps: split `x` by `vacProj_add`, push `T ^ n` through using `pow_vac` so the vacuum term is
+exactly the subtracted product, apply `ReflForm.cauchy_schwarz` once, and finish with `gap_pow`.
 
-**No spectral theorem, no completion, no logarithm.** Four steps: split `x`, note the complement is
-`T`-invariant, iterate, apply `ReflForm.cauchy_schwarz` once.
+Scope: stated squared, so no square root or norm is required; the right-hand side involves the
+form of the vacuum-orthogonal part of `x`, not of `x` itself. No spectral theorem, completion or
+logarithm enters.
 
-DERIVED: the `2`s are the form's degree, as in `GapAt`; nothing is a magnitude. -/
+DERIVED: `0` is the lower bound on `r`; the exponent `2` on the left is the square Cauchy–Schwarz
+produces, and the `2` in `r ^ (2 * n)` is `GapAt`'s exponent iterated `n` times. No numeral is a
+magnitude. -/
 theorem clustering_sq (D : Transfer.TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     (n : ℕ) (x y : A) :
     (D.form y ((D.T ^ n) x) - D.form y D.vac * D.form D.vac x) ^ 2
@@ -246,14 +238,14 @@ theorem clustering_sq (D : Transfer.TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg
 
 /-! ## 5. What a gap rules out, and what it forces -/
 
-/-- **THE IDENTITY FAILS THE GAP** — unless the form sees nothing off the vacuum.
+/-- If `D.T` is the identity and `GapAt D r` holds with `0 ≤ r < 1`, then `D.form x x = 0` at every
+`x` orthogonal to the vacuum: the form sees nothing off the vacuum. Substituting `hT` into the gap
+inequality gives `D.form x x ≤ r ^ 2 * D.form x x` with `r ^ 2 < 1`, which `nlinarith` closes
+against `form_nonneg`.
 
-This is the counterpart of `ClayAssembly.ym_target_discharged_trivially`: `trivialTransfer` satisfies
-every clause of the transfer target with `T = 1`, and it satisfies `GapAt` too, but only by being
-blind off the vacuum. On a space where something orthogonal to the vacuum has positive form, `T = 1`
-is refuted outright.
-
-DERIVED: `r < 1` is what a gap MEANS — `r = 1` is no decay — not a cut. -/
+DERIVED: `0` is the lower bound on `r`, the value of the form against the vacuum in the hypothesis,
+and the value of `D.form x x` in the conclusion; `1` is the strict upper bound on `r`, the point at
+which the contraction stops contracting. -/
 theorem identity_fails_gap (D : Transfer.TransferData A) (hT : ∀ z : A, D.T z = z)
     {r : ℝ} (hr0 : 0 ≤ r) (hr : r < 1) (hg : GapAt D r)
     (x : A) (hx : D.form x D.vac = 0) : D.form x x = 0 := by
@@ -265,16 +257,18 @@ theorem identity_fails_gap (D : Transfer.TransferData A) (hT : ∀ z : A, D.T z 
 
 #print axioms identity_fails_gap
 
-/-- **AND SO DOES ANY OPERATOR OF FINITE ORDER — with NO positivity hypothesis.**
+/-- The same conclusion for an operator of finite order. Given `1 ≤ m`, periodicity
+`hper : ∀ y, (fun z => D.T z)^[m] y = y`, and `GapAt D r` with `0 ≤ r < 1`, every `x` orthogonal to
+the vacuum has `D.form x x = 0`. The proof applies `gap_pow` at `n = m`, rewrites the iterate back
+to `x` by `hper`, and uses `r ^ (2 * m) < 1`.
 
-`FiniteOrderTransfer.positive_finite_order_transfer_is_identity` reaches the same wall through
-operator positivity `0 ≤ form (T z) z`. This route pays with the gap instead and assumes no
-positivity at all, so the translation route to `I4` is closed twice over, by independent means.
+Scope: no operator positivity is assumed. `FiniteOrderTransfer.positive_finite_order_transfer_is_identity`
+reaches a comparable conclusion instead through `0 ≤ D.form (D.T z) z`; the two hypotheses are
+independent.
 
-A torus gives finite order exactly: translation by one step along a direction of extent `m` has
-`T^m = 1`. So no lattice translation can carry a gap, whatever else is assumed of it.
-
-DERIVED: `1 ≤ m` is the smallest order with a step; `r < 1` is what a gap means. -/
+DERIVED: `1` is the least order that involves at least one step, `1 ≤ m`, and the strict upper bound
+on `r`; `0` is the lower bound on `r`, the value of the form against the vacuum, and the value of
+`D.form x x` concluded. -/
 theorem finite_order_fails_gap (D : Transfer.TransferData A) (m : ℕ) (hm : 1 ≤ m)
     (hper : ∀ y : A, (fun z => D.T z)^[m] y = y)
     {r : ℝ} (hr0 : 0 ≤ r) (hr : r < 1) (hg : GapAt D r)
@@ -290,17 +284,17 @@ theorem finite_order_fails_gap (D : Transfer.TransferData A) (m : ℕ) (hm : 1 �
 
 #print axioms finite_order_fails_gap
 
-/-- **A GAP FORCES THE OPERATOR TO MOVE SOMETHING.**
+/-- A gap forces `T` to move something. Given `GapAt D r` with `0 ≤ r < 1`, an `x` with
+`D.form x D.vac = 0` and `D.form x x ≠ 0` satisfies `D.form (D.T x - x) (D.T x - x) ≠ 0`. The proof
+assumes the displacement null, derives from Cauchy–Schwarz that it is form-orthogonal to everything,
+concludes `D.form (D.T x) (D.T x) = D.form x x`, and contradicts the gap inequality with
+`r ^ 2 < 1`.
 
-`ClayAssembly.TransferMovesSomething` asks for `∃ x, T x ≠ x`, stated through the form as
-`form (T x − x) (T x − x) ≠ 0`. This proves it is not an extra obligation alongside a gap but a
-CONSEQUENCE of one: on any vector orthogonal to the vacuum that the form sees, an operator with a gap
-must move it.
+This is the shape of `ClayAssembly.TransferMovesSomething`, expressed through the form, so that
+predicate follows from a gap rather than standing beside it.
 
-So exhibiting motion first is proving something weaker on the way to something stronger. The
-displacement being null would make `T x` the same form-length as `x`, and a gap forbids that.
-
-DERIVED: `r < 1` is what a gap means. -/
+DERIVED: `0` is the lower bound on `r` and the value of the form against the vacuum; the two `≠ 0`s
+are the non-degeneracy hypothesis and the conclusion. `1` is the strict upper bound on `r`. -/
 theorem gap_moves_something (D : Transfer.TransferData A) {r : ℝ} (hr0 : 0 ≤ r) (hr : r < 1)
     (hg : GapAt D r) (x : A) (hx : D.form x D.vac = 0) (hnz : D.form x x ≠ 0) :
     D.form (D.T x - x) (D.T x - x) ≠ 0 := by
@@ -327,19 +321,20 @@ theorem gap_moves_something (D : Transfer.TransferData A) {r : ℝ} (hr0 : 0 ≤
 
 #print axioms gap_moves_something
 
-/-! ## ⭐ A witness: `GapAt` is satisfiable below rate one
+/-! ## A witness: `GapAt` is satisfiable below rate one
 
-Every occurrence of `GapAt` in this tree is a HYPOTHESIS, and above rate one it is free
-(`bound_is_free_of_one_le`). Nothing exhibited one below rate one, so every theorem downstream of it
-— `GNSCompare`, `GapToOperator`, `B2Locality` — ran on a predicate with no instance. This section
-supplies one.
+`GapAt` is a hypothesis wherever it appears, and above rate one it follows from the structure fields
+(`gapAt_of_one_le_sq`). This section builds a two-dimensional `TransferData` satisfying it at any
+`lam` with `lam ^ 2 ≤ 1`, including `lam < 1`, so the predicate and the theorems that consume it —
+`GNSCompare`, `GapToOperator`, `B2Locality` — are about something inhabited.
 
-It is finite-dimensional and has no gauge content. It witnesses that the definitions are
-satisfiable, nothing more, in the same spirit as `FlagshipScope.flagship_for_bogus`. -/
+The model is finite-dimensional and carries no gauge field; it settles satisfiability and nothing
+about the Wilson transfer. -/
 
 section Witness
 
-/-- **One time step on a two-dimensional model: fix the vacuum, scale its complement by `lam`.**
+/-- One time step on a two-dimensional model: the linear map on `Fin 2 → ℝ` fixing coordinate `0`
+and scaling coordinate `1` by `lam`.
 
 DERIVED: the `2` in `Fin 2` is the smallest dimension that has both a vacuum and a complement, which
 is all a witness needs; `0` and `1` are those two coordinates, `0` carrying the vacuum. `lam` is the
@@ -353,11 +348,10 @@ def diagStep (lam : ℝ) : (Fin 2 → ℝ) →ₗ[ℝ] (Fin 2 → ℝ) where
     funext i
     by_cases h : i = 0 <;> simp [h] <;> ring
 
-/-- **⭐ A `TransferData` WHOSE STEP CONTRACTS THE VACUUM'S COMPLEMENT BY `lam`.**
-
-The standard form on `Fin 2 → ℝ`, the vacuum at coordinate `0`, and `diagStep lam`. Reflection
-positivity is the sum of two squares, self-adjointness is the diagonal, and contractivity is
-`lam² ≤ 1`.
+/-- A `TransferData (Fin 2 → ℝ)` whose step contracts the vacuum's complement by `lam`: the standard
+inner product as the form, the vacuum at coordinate `0`, and `diagStep lam` as `T`. `form_nonneg` is
+a sum of two squares, `T_symm` holds because the map is diagonal, and `T_contract` is the
+hypothesis `lam ^ 2 ≤ 1`.
 
 DERIVED: the `2` in `Fin 2` is the model's dimension, as in `diagStep`, and the `2` in `lam ^ 2` is
 the form's degree — `T_contract` compares `form (T x) (T x)` with `form x x`, so the rate enters
@@ -382,11 +376,9 @@ noncomputable def diagTransfer (lam : ℝ) (hlam : lam ^ 2 ≤ 1) :
     by_cases h : i = 0 <;> simp [diagStep, h]
   vac_norm := by norm_num
 
-/-- **⭐⭐ AND IT SATISFIES `GapAt` AT `lam`, WITH EQUALITY.**
-
-Orthogonality to the vacuum is `x 0 = 0`, and then both sides read `lam² * (x 1)²`. So the rate is
-attained rather than merely bounded, and `GapAt` is satisfiable at every `lam` with `lam² ≤ 1` — in
-particular below one, where the predicate has content.
+/-- `GapAt (diagTransfer lam hlam) lam` for every `lam` with `lam ^ 2 ≤ 1`. Orthogonality to the
+vacuum is `x 0 = 0`, and then both sides of the gap inequality read `lam ^ 2 * (x 1) ^ 2`, so the
+rate is attained rather than merely bounded.
 
 DERIVED: the `2` in `Fin 2` is the model's dimension and the `2` in `lam ^ 2` is the form's degree,
 both as in `diagTransfer`; the `1` is that hypothesis's contractivity bound. The `0` is the vacuum
@@ -401,15 +393,16 @@ theorem gapAt_diagTransfer (lam : ℝ) (hlam : lam ^ 2 ≤ 1) :
 
 #print axioms gapAt_diagTransfer
 
-/-- **⭐⭐⭐ SO A GAP BELOW RATE ONE EXISTS.** The predicate every theorem downstream of `GapAt`
-assumes is satisfiable with room to spare, and not only in the free regime `1 ≤ r²`.
+/-- There is a `TransferData (Fin 2 → ℝ)` and a rate `r` with `0 ≤ r`, `r < 1` and `GapAt D r`. The
+witnesses are `diagTransfer (1 / 2) _` and `r = 1 / 2`, via `gapAt_diagTransfer`.
 
-**⛔ IT IS A WITNESS, NOT A PHYSICAL RESULT.** The model is two-dimensional and carries no gauge
-field. What it settles is that `GapAt`, `GNSCompare`'s equivalences and `GapToOperator`'s bounds are
-not vacuously about nothing; what produces a gap for the WILSON transfer is untouched.
+Scope: the model is two-dimensional and carries no gauge field, so this establishes that `GapAt`
+below rate one is inhabited and nothing about the Wilson transfer.
 
-DERIVED: `1` is the free-regime boundary this rate sits strictly below; `1/2` is a witness value,
-chosen only to be between `0` and `1`, and any other would do. -/
+DERIVED: `2` is the dimension `Fin 2` of the witness module, the least that has both a vacuum
+coordinate and a complement; `0` and `1` bracket the rate, `1` being the boundary above which
+`gapAt_of_one_le_sq` makes the predicate automatic. The rate `1 / 2` occurs in the proof term only,
+chosen to sit strictly between those two bounds; any such value serves. -/
 theorem exists_gapAt_lt_one :
     ∃ (D : MassGap.Transfer.TransferData (Fin 2 → ℝ)) (r : ℝ), 0 ≤ r ∧ r < 1 ∧ GapAt D r :=
   ⟨diagTransfer (1 / 2) (by norm_num), 1 / 2, by norm_num, by norm_num,

@@ -3,62 +3,44 @@ import MassGap.LogConvex
 import MassGap.Substrate
 
 /-!
-# MassGap.MomentShape — circle symmetry of the lag correlation, and the shape log-convexity earns
+# MassGap.MomentShape — circle symmetry of the lag correlation, and the shape log-convexity gives
 
-Two facts about `ρ = corrClay`, both new here:
+Two facts about `ρ = corrClay`:
 
-* **CIRCLE SYMMETRY**, `ρ(d) = ρ(−d)`, at EVERY extent and EVERY real coupling, with no hypothesis
-  at all (`corrHyper_neg`, `corrClay_neg`, `wilsonCorrAt_neg`). Its useful form is
-  `wilsonCorrAt_circLag_congr`: the correlation depends on the lag ONLY through `Moment.circLag`.
-* **THE EVEN-LAG SHAPE.** At even extent `n = 2m` with `m ≥ 3`, and given nonnegativity, `ρ`
-  restricted to the EVEN lags is non-increasing in `Moment.circLag` (`corrClay_even_antitone`), and
-  the odd lags are bounded ABOVE by their two even neighbours (`corrClay_odd_le`).
+* **Circle symmetry**, `ρ(d) = ρ(−d)`, at every extent and every real coupling, with no further
+  hypothesis (`corrHyper_neg`, `corrClay_neg`, `wilsonCorrAt_neg`). Its useful form is
+  `wilsonCorrAt_circLag_congr`: the correlation depends on the lag only through `Moment.circLag`.
+* **The even-lag shape.** At even extent `n = 2m` with `m ≥ 3`, and given nonnegativity, `ρ`
+  restricted to the even lags is non-increasing in `Moment.circLag` (`corrClay_even_antitone`), and
+  the odd lags are bounded above by their two even neighbours (`corrClay_odd_le`).
 
-## Why circle symmetry was worth proving
+## Where circle symmetry comes from
 
-`Moment.circLag d = min d (n − d)` is built as if `ρ(d) = ρ(n − d)` held, and `Complete`'s docstrings
-record it as ASSUMED — "no theorem in the tree asserts it of `wilsonCorrAt`, `corrClay`, `corrHyper`
-or `wilsonCorrConn`". It is now a theorem, and it costs one line of geometry:
-`LogConvex.EW_plaqE_pair_shift` at `P = 0`, `Q = d` reads `⟨φ₀ φ_d⟩ = ⟨φ₀ φ_{0−d}⟩` directly, and the
-one-point term `corrHyper` subtracts does not move with the lag (`ReflectPositive.EW_plaqE_lag`). No
-commutativity argument, no evenness, no sign condition on the coupling.
+`Moment.circLag d = min d (n − d)` is built as if `ρ(d) = ρ(n − d)` held. `corrHyper_neg` is that
+statement, and it costs one line of geometry: `LogConvex.EW_plaqE_pair_shift` at `P = 0`, `Q = d`
+reads `⟨φ₀ φ_d⟩ = ⟨φ₀ φ_{0−d}⟩`, and the one-point term `corrHyper` subtracts does not move with the
+lag (`ReflectPositive.EW_plaqE_lag`). No commutativity argument, no evenness, no sign condition on
+the coupling.
 
-## What the log-convexity actually earns, and what it cannot
+## What the log-convexity gives
 
 `LogConvex.corrClay_log_convex` gives `ρ(e₁+e₂)² ≤ ρ(2e₁)·ρ(2e₂)` for `e₁.val, e₂.val < m`. Writing
 `g c = ρ(2c)`, the decomposition `(c−1) + (c+1) = 2c` turns that into `g(c)² ≤ g(c−1)·g(c+1)` — log
-convexity of `g` — and circle symmetry makes `g` symmetric about `m/2`. A convex function with equal
-endpoints is non-increasing on its first half, which is `corrClay_even_antitone`.
+convexity of `g` — and circle symmetry makes `g` symmetric about `m/2`. A log-convex function with
+equal endpoints is non-increasing on its first half, which is `corrClay_even_antitone`.
 
-**THE ODD LAGS ARE BOUNDED ABOVE AND NEVER BELOW, AND THAT IS STRUCTURAL.** Every right-hand lag the
-theorem produces is `2e`, hence EVEN. So the admissible set is closed under `ρ(d) ↦ t·ρ(d)` at the
-ODD lags alone, for any `t ∈ [0,1]`: that scales the left side of an odd-midpoint constraint by `t²`
-and leaves every right side untouched, and it preserves nonnegativity and circle symmetry, because on
-an even period `d` and `n − d` have the same parity. `odd_scaling_admissible` proves exactly this.
-
-The consequence is a no-go, not a gap to be filled later: NO theorem derived from log-convexity,
-circle symmetry and nonnegativity can lower-bound `ρ` at an odd lag. `Moment.circLag = 1` is odd, so
-`ρ(1) ≥ ρ(2)` is unreachable from this premise set, and `ρ` is NOT non-increasing in `circLag` as a
-whole profile. `not_antitone_circLag_of_shape` exhibits the failure concretely at extent eight.
-
-## This route does not reach the confinement criterion
-
-`confinement_of_growth_ratio` needs `substrateRatio` below `(1 − 3^{−1/4})/(2π²) = 0.0121…`; the
-unconditional bound is `Substrate.substrateRatio_le_quarter`. Nothing here improves that bound, and
-this file proves no bound on `substrateRatio` at all — deliberately. Two reasons, either sufficient:
-
-* at extent four the constraints are vacuous for the purpose. Only `ρ(1)² ≤ ρ(0)·ρ(2)` survives, and
-  the antipodal point mass satisfies it while attaining `substrateRatio = 1/4` exactly
-  (`Substrate.antipodeRead_moment_eq_quarter_sq`), so the theorem buys nothing over
-  `substrateRatio_le_quarter` there;
-* the best case this shape could ever describe is the FLAT correlation, and
-  `Substrate.flatRead_exceeds_ceiling` already proves the flat read's ratio is above the ceiling at
-  every aperture. A route whose best case was proved insufficient before the route was attempted has
-  no payoff for the mass gap.
+Every right-hand lag that inequality produces is `2e`, hence even. So the premise set is closed under
+`ρ(d) ↦ t·ρ(d)` at the odd lags alone, for any `t ∈ [0,1]`: that scales the left side of an
+odd-midpoint constraint by `t²` and leaves every right side untouched, and it preserves nonnegativity
+and circle symmetry, because on an even period `d` and `n − d` have the same parity.
+`odd_scaling_admissible` is that statement, and with `t → 0` it shows nonnegativity, circle symmetry
+and log-convexity together bound `ρ` below at no odd lag. `Moment.circLag = 1` is odd, so `ρ(1) ≥
+ρ(2)` does not follow from them, and `ρ` is not non-increasing in `circLag` as a whole profile;
+`not_antitone_circLag_of_shape` exhibits a conforming profile that is not, at extent eight.
 
 Foundational footprint only (`#print axioms` at the end). Nonnegativity is carried as an explicit
 hypothesis rather than taken from `Complete.wilson_reflection_positive_at`, so no named axiom enters;
-`corrClay_even_antitone_of_nonneg_coupling` discharges it from the PROVED
+`corrClay_even_antitone_of_nonneg_coupling` discharges it from
 `Complete.wilson_reflection_positive_at_even` at nonnegative coupling.
 
 Build: `python code/lean_build.py build MassGap.MomentShape`.
@@ -81,16 +63,18 @@ section Symmetry
 
 variable {d n Nc : ℕ} [NeZero n]
 
-/-- **THE CONNECTED LAG CORRELATION IS EVEN IN THE LAG.** `ρ(−d) = ρ(d)` on the periodic lattice, at
-every extent and every real coupling.
+/-- **The connected lag correlation is even in the lag.** `corrHyper` at `-lag` equals `corrHyper` at
+`lag`, on the periodic lattice, at every dimension, extent, gauge rank and real coupling. The two
+hypotheses are that both plane directions `μ`, `ν` differ from the lag axis `τ`; there is no
+hypothesis on the extent's parity or on the sign of the coupling.
 
-`EW_plaqE_pair_shift hμ hν β 0 d` says `⟨φ₀ · φ_d⟩ = ⟨φ₀ · φ_{0−d}⟩` — the reflection at constant
-zero carries the pair `(0, d)` to the pair `(0, −d)` — and `EW_plaqE_lag` says the one-point function
-`corrHyper` subtracts is the same at `d`, at `−d` and at the origin. Subtracting the same number from
-both sides of the first identity is the whole proof.
+`LogConvex.EW_plaqE_pair_shift hμ hν β 0 lag` says `⟨φ₀ · φ_lag⟩ = ⟨φ₀ · φ_{0−lag}⟩` — the reflection
+at constant zero carries the pair `(0, lag)` to the pair `(0, −lag)` — and
+`ReflectPositive.EW_plaqE_lag` says the one-point function `corrHyper` subtracts is the same at
+`lag`, at `−lag` and at the origin. Subtracting the same number from both sides of the first identity
+is the whole proof.
 
-DERIVED: no numeral enters. The `0` is the base of the reflection, which is the origin because
-`corrHyper` is based there. -/
+DERIVED: no numeral. -/
 theorem corrHyper_neg {μ ν τ : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ) (lag : Fin n) :
     corrHyper (d := d) Nc n μ ν τ β (-lag) = corrHyper (d := d) Nc n μ ν τ β lag := by
   have hpair := EW_plaqE_pair_shift (n := n) (Nc := Nc) hμ hν β (0 : Fin n) lag
@@ -104,27 +88,39 @@ end Symmetry
 
 section SymmetryClay
 
-/-- **Circle symmetry of the Clay correlation** — `SU(3)`, four dimensions, every extent, every real
-coupling, no hypothesis.
+/-- **Circle symmetry of the Clay correlation**: `corrClay n β (-lag) = corrClay n β lag`, at every
+extent and every real coupling, with no hypothesis. `corrHyper_neg` at `Nc = 3`, `d = 4`, plane
+`(0,1)` and lag axis `2`, with the two plane conditions discharged by `decide`.
 
-DERIVED: `3` is the gauge group's rank and `4` the dimension, both `WilsonBridge.corrClay`'s own. -/
+The `3` of `SU(3)`, the `4` of the dimension and the plane and axis indices are supplied in the proof
+and sit inside `WilsonBridge.corrClay`; none of them appears in this statement.
+
+DERIVED: no numeral. -/
 theorem corrClay_neg (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) :
     MassGap.WilsonBridge.corrClay n β (-lag) = MassGap.WilsonBridge.corrClay n β lag :=
   corrHyper_neg (Nc := 3) (d := 4) (n := n) (by decide) (by decide) β lag
 
 #print axioms corrClay_neg
 
-/-- The same on the aperture-carrying correlation the substrate read consumes.
-`wilsonCorrAt N β = corrClay (N+1) β` by definition. -/
+/-- The same on the aperture-carrying correlation the substrate read consumes:
+`wilsonCorrAt N β (-lag) = wilsonCorrAt N β lag`, since `wilsonCorrAt N β = corrClay (N+1) β` by
+definition.
+
+DERIVED: the `1` in `N + 1` is the lag arity at aperture `N` — one index per lag, the extra `1` being
+the contact lag `0` — and it is also the period of the circle the lags live on. -/
 theorem wilsonCorrAt_neg (N : ℕ) (β : ℝ) (lag : Fin (N + 1)) :
     MassGap.wilsonCorrAt N β (-lag) = MassGap.wilsonCorrAt N β lag :=
   corrClay_neg (N + 1) β lag
 
 #print axioms wilsonCorrAt_neg
 
-/-- **Equal circle lags come from equal or opposite lags.** `circLag d = min d (n − d)`, so the fibre
-over a value is `{d, −d}` and nothing else — the arithmetic behind `Moment.sum_circLag_le_two_mul`,
-here as an identification rather than a count. -/
+/-- **Equal circle lags come from equal or opposite lags.** If `Moment.circLag d₁ = Moment.circLag
+d₂` in `Fin (N + 1)` then `d₁ = d₂` or `d₁ = -d₂`. `circLag d = min d (n − d)`, so the fibre over a
+value is `{d, −d}` and nothing else — the arithmetic behind `Moment.sum_circLag_le_two_mul`, here as
+an identification rather than a count.
+
+DERIVED: the `1` in `N + 1` is the lag arity at aperture `N`, and the same `N + 1` is the modulus the
+negation is taken in. -/
 theorem eq_or_eq_neg_of_circLag_eq {N : ℕ} {d₁ d₂ : Fin (N + 1)}
     (h : Moment.circLag d₁ = Moment.circLag d₂) : d₁ = d₂ ∨ d₁ = -d₂ := by
   have h1 := d₁.isLt
@@ -142,13 +138,15 @@ theorem eq_or_eq_neg_of_circLag_eq {N : ℕ} {d₁ d₂ : Fin (N + 1)}
 
 #print axioms eq_or_eq_neg_of_circLag_eq
 
-/-- **THE CORRELATION READS THE LAG ONLY THROUGH THE CIRCLE DISTANCE.**
+/-- **The correlation reads the lag only through the circle distance.**
 
     circLag d₁ = circLag d₂  ⟹  ρ(d₁) = ρ(d₂)
 
-This is the statement `Moment.circLag` is BUILT as if it held, and which `Complete`'s docstrings
-record as ASSUMED. It is now proved, at every aperture and every real coupling, from circle symmetry
-alone. -/
+for `ρ = wilsonCorrAt N β`, at every aperture and every real coupling, with no further hypothesis.
+It is `eq_or_eq_neg_of_circLag_eq` followed by `wilsonCorrAt_neg`, so circle symmetry is the whole
+input. This is the property `Moment.circLag` is built as if it had.
+
+DERIVED: the `1` in `N + 1` is the lag arity at aperture `N`, the index type both lags live in. -/
 theorem wilsonCorrAt_circLag_congr (N : ℕ) (β : ℝ) {d₁ d₂ : Fin (N + 1)}
     (h : Moment.circLag d₁ = Moment.circLag d₂) :
     MassGap.wilsonCorrAt N β d₁ = MassGap.wilsonCorrAt N β d₂ := by
@@ -164,14 +162,21 @@ end SymmetryClay
 
 A nonnegative `g : ℕ → ℝ` that is log-convex on `[1, m−2]` and symmetric under `c ↦ m − c` is
 non-increasing on the first half. Zeros are the only delicacy and they are handled by a dichotomy:
-log-convexity propagates a zero UPWARD (`shape_zero_step`), and symmetry then pulls it back, so
+log-convexity propagates a zero upward (`shape_zero_step`), and symmetry then pulls it back, so
 either `g` is strictly positive throughout or it vanishes on the whole interior. -/
 
 section Shape
 
 variable {m : ℕ}
 
-/-- **A zero propagates outward.** `g(c+1)² ≤ g(c)·g(c+2) = 0` forces `g(c+1) = 0`. -/
+/-- **A zero propagates upward.** If `g` is nonnegative and log-convex on the range `hconv` supplies,
+then `g c = 0` forces `g (c + 1) = 0` whenever `c + 2 ≤ m`: the instance of `hconv` at `c + 1` reads
+`g(c+1)² ≤ g(c)·g(c+2) = 0`.
+
+DERIVED: the statement's numerals are the `0` of nonnegativity, the `1` and `2` in `hconv`'s range
+`1 ≤ c`, `c + 1 ≤ m` and its neighbours `c - 1`, `c + 1`, the exponent `2` of the square, the `2` in
+`c + 2 ≤ m` — which is the room the step at `c + 1` needs inside `hconv`'s range — and the two `0`s
+of the hypothesis and conclusion, which are the value being propagated. -/
 theorem shape_zero_step (g : ℕ → ℝ) (hg : ∀ c, 0 ≤ g c)
     (hconv : ∀ c, 1 ≤ c → c + 1 ≤ m → g c ^ 2 ≤ g (c - 1) * g (c + 1))
     {c : ℕ} (hc : c + 2 ≤ m) (h0 : g c = 0) : g (c + 1) = 0 := by
@@ -182,9 +187,15 @@ theorem shape_zero_step (g : ℕ → ℝ) (hg : ∀ c, 0 ≤ g c)
 
 #print axioms shape_zero_step
 
-/-- **Log-convexity extends to the last interior point, through symmetry.** The theorem supplies
-`g(c)² ≤ g(c−1)·g(c+1)` for `c + 2 ≤ m` directly; at `c = m − 1` the same inequality reads
-`g(1)² ≤ g(2)·g(0)` once symmetry is applied to all three terms, which is the case `c = 1`. -/
+/-- **Log-convexity extends to the last interior point, through symmetry.** Log-convexity given on
+`1 ≤ c`, `c + 2 ≤ m` extends to `1 ≤ c`, `c + 1 ≤ m`, provided `3 ≤ m` and `g` is symmetric under
+`c ↦ m − c` on `[0, m]`. The one new case is `c = m − 1`, where the inequality reads
+`g(1)² ≤ g(2)·g(0)` once symmetry is applied to all three terms, and that is the supplied case
+`c = 1`.
+
+DERIVED: `3 ≤ m` is the smallest `m` for which the new case `c = m − 1` and the supplied case `c = 1`
+are both inside the ranges written. The `1`s and `2`s are the range bounds and the neighbour offsets
+`c - 1`, `c + 1`; the exponent `2` is a square. -/
 theorem shape_conv_top (hm : 3 ≤ m) (g : ℕ → ℝ)
     (hsym : ∀ c, c ≤ m → g c = g (m - c))
     (hconv : ∀ c, 1 ≤ c → c + 2 ≤ m → g c ^ 2 ≤ g (c - 1) * g (c + 1)) :
@@ -206,14 +217,20 @@ theorem shape_conv_top (hm : 3 ≤ m) (g : ℕ → ℝ)
 
 #print axioms shape_conv_top
 
-/-- **CONVEX PLUS SYMMETRIC IS NON-INCREASING ON THE FIRST HALF**, one step at a time.
+/-- **Log-convex plus symmetric is non-increasing on the first half**, one step at a time:
+`g (c + 1) ≤ g c` whenever `2 * c + 1 ≤ m`, given `3 ≤ m`, nonnegativity, symmetry under `c ↦ m − c`
+on `[0, m]`, and log-convexity on `1 ≤ c`, `c + 2 ≤ m`.
 
 Log-convexity makes the ratios `g(c+1)/g(c)` non-decreasing; symmetry makes the ratio at `c` the
 reciprocal of the ratio at `m − 1 − c`. Below the midpoint the first is at most the second, so it is
-at most its own reciprocal, hence at most one. Zeros are handled by the dichotomy above.
+at most its own reciprocal, hence at most one. Zeros are handled by `shape_zero_step`: a vanishing
+value propagates up and symmetry pulls it back, so either `g` is strictly positive on `[0, m]` or it
+vanishes on the whole interior.
 
-DERIVED: nothing is chosen. `m` is half the extent, carried in from the reflection geometry, and
-`2c + 1 ≤ m` is exactly "below the midpoint". -/
+DERIVED: `3 ≤ m` is `shape_conv_top`'s bound, carried. The `0` is the sign of `g`. The `1`s and `2`s
+in `hconv` are its range bounds and neighbour offsets, and its `2` in exponent position is a square.
+`2 * c + 1 ≤ m` is exactly "`c` is below the midpoint of `[0, m]`". `m` is a section variable here;
+Part 3 instantiates it at half the extent. -/
 theorem shape_step (hm : 3 ≤ m) (g : ℕ → ℝ) (hg : ∀ c, 0 ≤ g c)
     (hsym : ∀ c, c ≤ m → g c = g (m - c))
     (hconv : ∀ c, 1 ≤ c → c + 2 ≤ m → g c ^ 2 ≤ g (c - 1) * g (c + 1))
@@ -285,7 +302,13 @@ theorem shape_step (hm : 3 ≤ m) (g : ℕ → ℝ) (hg : ∀ c, 0 ≤ g c)
 
 #print axioms shape_step
 
-/-- The step statement chained: non-increasing across the whole first half. -/
+/-- `shape_step` chained: `g c₂ ≤ g c₁` for any `c₁ ≤ c₂` with `2 * c₂ ≤ m`, under the same
+hypotheses. Non-increasing across the whole first half, by induction on `c₂`.
+
+DERIVED: `3 ≤ m` is `shape_step`'s bound, carried; the `0` is the sign of `g`; the `1`s and `2`s in
+`hconv` are its range bounds, neighbour offsets and the exponent of a square. `2 * c₂ ≤ m` is "`c₂`
+is in the first half of `[0, m]`", one step stronger than `shape_step`'s `2 * c + 1 ≤ m` because the
+chain must reach `c₂` itself. -/
 theorem shape_antitone (hm : 3 ≤ m) (g : ℕ → ℝ) (hg : ∀ c, 0 ≤ g c)
     (hsym : ∀ c, c ≤ m → g c = g (m - c))
     (hconv : ∀ c, 1 ≤ c → c + 2 ≤ m → g c ^ 2 ≤ g (c - 1) * g (c + 1))
@@ -311,12 +334,11 @@ variable {Nap m : ℕ}
 /-- The lag `c`, reduced into `Fin (Nap + 1)`. Written out rather than as a numeral cast because
 `Fin (Nap + 1)` carries its additive group but no `NatCast` instance.
 
-DERIVED: `Nap + 1` is the LAG ARITY at aperture `Nap` — `wilsonCorrAt`'s own index type, one index
+DERIVED: `Nap + 1` is the lag arity at aperture `Nap` — `wilsonCorrAt`'s own index type, one index
 per lag with the extra `1` being the contact lag `0` — so the `+ 1` counts a lag rather than shifting
-a scale. The same `Nap + 1` is the modulus because that arity IS the period of the circle the lags
+a scale. The same `Nap + 1` is the modulus, because that arity is the period of the circle the lags
 live on: `finOf_period` records `finOf Nap (Nap + 1) = 0`, and `finOf_add` that reduction commutes
-with addition, which is the whole reason the reduction is written at all. `Nat.succ_pos` is what
-makes it total. No magnitude. -/
+with addition. `Nat.succ_pos` is what makes the definition total. No magnitude. -/
 def finOf (Nap c : ℕ) : Fin (Nap + 1) := ⟨c % (Nap + 1), Nat.mod_lt _ (Nat.succ_pos Nap)⟩
 
 @[simp] theorem finOf_val (Nap c : ℕ) : (finOf Nap c : ℕ) = c % (Nap + 1) := rfl
@@ -340,8 +362,8 @@ DERIVED: the only numeral in the definition is `finOf`'s `Nap + 1`, the lag arit
 unchanged. The doubling is written as `finOf Nap c + finOf Nap c` in `Fin (Nap + 1)`'s own additive
 group rather than as a numeral, and `ev_eq` proves it equals `finOf Nap (2 * c)`. The step of `2` is
 not chosen here either: `LogConvex.corrClay_log_convex` produces its right-hand lags as `2e₁` and
-`2e₂`, always even, so the even sublattice is the set of lags the constraint actually reaches —
-`odd_scaling_admissible` below turns that observation into a theorem. -/
+`2e₂`, always even, so the even lags are the ones that appear on the right of a constraint —
+`odd_scaling_admissible` below states what follows from that. -/
 def ev (Nap c : ℕ) : Fin (Nap + 1) := finOf Nap c + finOf Nap c
 
 theorem ev_eq (Nap c : ℕ) : ev Nap c = finOf Nap (2 * c) := by
@@ -349,9 +371,14 @@ theorem ev_eq (Nap c : ℕ) : ev Nap c = finOf Nap (2 * c) := by
   congr 1
   ring
 
-/-- **The even lag `2c` really does sit at circle distance `2c`**, while it is inside the half range.
-Recorded so that "non-increasing in `circLag`" below is a statement about the circle distance and not
-about the raw index. -/
+/-- **The even lag `2c` sits at circle distance `2c`**, while it is inside the half range: at even
+extent `Nap + 1 = 2 * m` and `2 * c ≤ m`, `Moment.circLag (ev Nap c) = 2 * c`. Recorded so that
+"non-increasing in `circLag`" below is a statement about the circle distance and not about the raw
+index.
+
+DERIVED: the `1` in `Nap + 1` is the lag arity and the period; the `2` in `2 * m` says that period is
+even; the `2` in `2 * c` is `ev`'s own doubling, and `2 * c ≤ m` is the range in which `min d (n − d)`
+selects `d` rather than `n − d`. -/
 theorem circLag_ev (hm : Nap + 1 = 2 * m) (c : ℕ) (hc : 2 * c ≤ m) :
     Moment.circLag (ev Nap c) = 2 * c := by
   have hv : ((ev Nap c : Fin (Nap + 1)) : ℕ) = 2 * c := by
@@ -361,23 +388,26 @@ theorem circLag_ev (hm : Nap + 1 = 2 * m) (c : ℕ) (hc : 2 * c ≤ m) :
 
 #print axioms circLag_ev
 
-/-- **THE EVEN LAGS ARE NON-INCREASING IN THE CIRCLE DISTANCE.**
+/-- **The even lags are non-increasing in the circle distance.**
 
     2c₂ ≤ m  and  c₁ ≤ c₂   ⟹   ρ(2c₂) ≤ ρ(2c₁)
 
-at even extent `n = 2m` with `m ≥ 3`, for every real coupling, given nonnegativity. `circLag_ev`
-says the indices sit at circle distances `2c₁ ≤ 2c₂`, so this is exactly "non-increasing in
-`Moment.circLag`, over the even lags".
+for `ρ = corrClay (Nap + 1) β` at even extent `Nap + 1 = 2 * m` with `3 ≤ m`, at every real coupling,
+given nonnegativity of `ρ` at every lag as an explicit hypothesis. `circLag_ev` says the two indices
+sit at circle distances `2c₁ ≤ 2c₂`, so this is "non-increasing in `Moment.circLag`" read over the
+even lags.
 
-WHY ONLY THE EVEN LAGS. The right-hand lags `LogConvex.corrClay_log_convex` produces are `2e₁` and
-`2e₂`, always even, so the odd lags never appear on the right of any constraint and are bounded above
-only — see `odd_scaling_admissible`, which turns that observation into a theorem. This is NOT a
-partial result on the way to a monotone profile: the whole profile is not monotone in `circLag` and
-`not_antitone_circLag_of_shape` shows it.
+The statement is about the even lags only. The right-hand lags `LogConvex.corrClay_log_convex`
+produces are `2e₁` and `2e₂`, always even, so the odd lags do not appear on the right of any
+constraint; `corrClay_odd_le` bounds them above and `odd_scaling_admissible` states what that leaves.
+The whole profile is not non-increasing in `circLag` — `not_antitone_circLag_of_shape` exhibits a
+conforming profile that is not.
 
-DERIVED: `m` is half the extent, the reflection geometry's own bound, carried in from
-`corrClay_log_convex`. `m ≥ 3` is where the hypotheses stop being vacuous — at `m = 2` the only
-surviving constraint is `ρ(1)² ≤ ρ(0)·ρ(2)`, which says nothing about the even lags at all. No
+DERIVED: the `1` in `Nap + 1` is the lag arity and the extent; the `2` in `2 * m` says that extent is
+even, which the reflection geometry behind `corrClay_log_convex` requires; the `0` in the
+nonnegativity hypothesis is a sign; the `2` in `2 * c₂ ≤ m` is `ev`'s doubling, and `2 * c₂ ≤ m` is
+`shape_antitone`'s first-half range. `3 ≤ m` is `shape_conv_top`'s bound: at `m = 2` the only
+constraint `corrClay_log_convex` supplies is `ρ(1)² ≤ ρ(0)·ρ(2)`, which relates no two even lags. No
 constant is introduced. -/
 theorem corrClay_even_antitone (hm : Nap + 1 = 2 * m) (hm3 : 3 ≤ m) (β : ℝ)
     (hρ : ∀ d : Fin (Nap + 1), 0 ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β d)
@@ -419,15 +449,21 @@ theorem corrClay_even_antitone (hm : Nap + 1 = 2 * m) (hm3 : 3 ≤ m) (β : ℝ)
 
 #print axioms corrClay_even_antitone
 
-/-- **THE ODD LAGS ARE BOUNDED ABOVE BY THEIR TWO EVEN NEIGHBOURS.**
+/-- **The odd lags are bounded above by their two even neighbours.**
 
     ρ(2c+1)²  ≤  ρ(2c) · ρ(2c+2)
 
-immediate from `corrClay_log_convex` at `e₁ = c`, `e₂ = c + 1`. This is the ONLY thing the proved
-log-convexity says about an odd lag, and it is an upper bound. There is no companion lower bound and
-none is derivable — `odd_scaling_admissible`.
+at even extent `Nap + 1 = 2 * m` with `0 < m` and `c + 1 < m`, at every real coupling and with no
+nonnegativity hypothesis. It is `LogConvex.corrClay_log_convex` at `e₁ = c`, `e₂ = c + 1`, with the
+left-hand lag written as `finOf Nap c + finOf Nap (c + 1)`.
 
-DERIVED: `m` is half the extent. No constant. -/
+The bound is an upper one: `ρ` at an odd lag appears only on the left. `odd_scaling_admissible`
+states what follows about lower bounds.
+
+DERIVED: the `1` in `Nap + 1` is the lag arity and the extent; the `2` in `2 * m` says that extent is
+even; the `0` in `0 < m` says the half is nonempty; the `1`s in `c + 1` step from one even lag to the
+next; the exponent `2` is the square `corrClay_log_convex` produces. `c + 1 < m` is that theorem's
+own bound on both lags. No constant. -/
 theorem corrClay_odd_le (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ) (c : ℕ) (hc : c + 1 < m) :
     MassGap.WilsonBridge.corrClay (Nap + 1) β (finOf Nap c + finOf Nap (c + 1)) ^ 2
       ≤ MassGap.WilsonBridge.corrClay (Nap + 1) β (ev Nap c)
@@ -440,11 +476,18 @@ theorem corrClay_odd_le (hm : Nap + 1 = 2 * m) (hm0 : 0 < m) (β : ℝ) (c : ℕ
 
 #print axioms corrClay_odd_le
 
-/-- **The even-lag shape with nonnegativity discharged**, at nonnegative coupling.
+/-- **The even-lag shape with nonnegativity discharged**, at nonnegative coupling:
+`wilsonCorrAt Nap β (ev Nap c₂) ≤ wilsonCorrAt Nap β (ev Nap c₁)` under
+`corrClay_even_antitone`'s extent hypotheses and `0 ≤ β`.
 
-`Complete.wilson_reflection_positive_at_even` PROVES `0 ≤ wilsonCorrAt N β d` at even extent with
-`m ≥ 2` and `0 ≤ β`, with a foundational footprint, so the hypothesis above is carried by a theorem
-rather than by the named axiom. -/
+`Complete.wilson_reflection_positive_at_even` gives `0 ≤ wilsonCorrAt Nap β d` at even extent with
+`2 ≤ m` and `0 ≤ β`, with a foundational footprint, so the nonnegativity hypothesis is supplied by a
+ theorem rather than by a named axiom. Its `2 ≤ m` follows from this statement's `3 ≤ m`.
+
+DERIVED: the `1` in `Nap + 1` is the lag arity and the extent; the `2` in `2 * m` says that extent is
+even; `3 ≤ m` is `corrClay_even_antitone`'s bound, carried; the `0` in `0 ≤ β` restricts to
+nonnegative coupling, which is what the nonnegativity input requires; the `2` in `2 * c₂ ≤ m` is
+`ev`'s doubling inside the first-half range. -/
 theorem corrClay_even_antitone_of_nonneg_coupling (hm : Nap + 1 = 2 * m) (hm3 : 3 ≤ m)
     {β : ℝ} (hβ : 0 ≤ β) (c₁ c₂ : ℕ) (h12 : c₁ ≤ c₂) (hc : 2 * c₂ ≤ m) :
     MassGap.wilsonCorrAt Nap β (ev Nap c₂) ≤ MassGap.wilsonCorrAt Nap β (ev Nap c₁) :=
@@ -453,10 +496,14 @@ theorem corrClay_even_antitone_of_nonneg_coupling (hm : Nap + 1 = 2 * m) (hm3 : 
 
 #print axioms corrClay_even_antitone_of_nonneg_coupling
 
-/-- **NON-VACUITY — the smallest extent that meets the hypotheses, with a pair that is not the
-diagonal.** At extent six the half is three, so `c₁ = 0` and `c₂ = 1` are both admissible and the
-statement reads `ρ(2) ≤ ρ(0)`: a genuine two-lag statement about the even sublattice, at circle
-distances `0` and `2` by `circLag_ev`. -/
+/-- **Non-vacuity: the smallest extent that meets the hypotheses, with a pair that is not the
+diagonal.** `3 ≤ m` and `Nap + 1 = 2 * m` force extent at least six; at extent six the half is
+three, so `c₁ = 0` and `c₂ = 1` are both admissible and the statement reads `ρ(2) ≤ ρ(0)` — two
+distinct even lags, at circle distances `0` and `2` by `circLag_ev`.
+
+DERIVED: `5` is `Nap` at extent six, since `Nap + 1 = 6 = 2 * 3` is the smallest even extent with
+`3 ≤ m`. `1` and `0` are `c₂` and `c₁`, the smallest pair with `c₁ < c₂` satisfying `2 * c₂ ≤ 3`.
+The `0` in `0 ≤ β` is the coupling restriction the nonnegativity input carries. -/
 theorem corrClay_even_antitone_at_extent_six {β : ℝ} (hβ : 0 ≤ β) :
     MassGap.wilsonCorrAt 5 β (ev 5 1) ≤ MassGap.wilsonCorrAt 5 β (ev 5 0) :=
   corrClay_even_antitone_of_nonneg_coupling (Nap := 5) (m := 3) (by norm_num) (by norm_num) hβ
@@ -466,28 +513,39 @@ theorem corrClay_even_antitone_at_extent_six {β : ℝ} (hβ : 0 ≤ β) :
 
 end EvenShape
 
-/-! ## Part 4 — why the odd lags cannot be reached, as a theorem
+/-! ## Part 4 — the odd lags, as a theorem about the premise set
 
 Every constraint `corrClay_log_convex` produces has the form `ρ(e₁+e₂)² ≤ ρ(2e₁)·ρ(2e₂)`, so every
-right-hand lag is EVEN. Shrinking `ρ` at the ODD lags alone therefore shrinks left-hand sides and
+right-hand lag is even. Shrinking `ρ` at the odd lags alone therefore shrinks left-hand sides and
 leaves right-hand sides fixed, and on an even period it preserves circle symmetry too. So the premise
-set admits an arbitrarily small value at every odd lag, and no lower bound on one can follow from it.
+set admits an arbitrarily small value at every odd lag, and no lower bound on one follows from it.
 -/
 
 section NoGo
 
-/-- The premise set this file works from, as a predicate: nonnegative, symmetric under the circle
-reflection, and log-convex in the lag below half the extent. -/
+/-- The premise set this file works from, as a predicate on `ρ : Fin n → ℝ`: nonnegative at every
+lag, invariant under the circle reflection `d ↦ -d`, and log-convex in the lag for both lags strictly
+below `m`.
+
+DERIVED: the `0` in `nonneg` is a sign; the exponent `2` in `logConvex` is the square
+`LogConvex.corrClay_log_convex` produces. `m` is a parameter of the structure, instantiated at half
+the extent by `shape_wilsonCorrAt`. -/
 structure Shape (n m : ℕ) [NeZero n] (ρ : Fin n → ℝ) : Prop where
   nonneg : ∀ d, 0 ≤ ρ d
   symm : ∀ d, ρ (-d) = ρ d
   logConvex : ∀ e₁ e₂ : Fin n, (e₁ : ℕ) < m → (e₂ : ℕ) < m →
     ρ (e₁ + e₂) ^ 2 ≤ ρ (e₁ + e₁) * ρ (e₂ + e₂)
 
-/-- **THE WILSON CORRELATION SATISFIES `Shape`.** So the premise set the no-go below is stated about
-is exactly what this tree proves — nonnegativity from `Complete.wilson_reflection_positive_at_even`,
-circle symmetry from `wilsonCorrAt_neg` above, log-convexity from `LogConvex.corrClay_log_convex` —
-and not an invented predicate that happens to be weak. -/
+/-- **The Wilson correlation satisfies `Shape`.** At even extent `Nap + 1 = 2 * m` with `2 ≤ m` and
+`0 ≤ β`, `wilsonCorrAt Nap β` has all three fields: `nonneg` from
+`Complete.wilson_reflection_positive_at_even`, `symm` from `wilsonCorrAt_neg` above, `logConvex` from
+`LogConvex.corrClay_log_convex`. So the predicate `odd_scaling_admissible` is stated about is one
+this tree establishes of the Wilson correlation, not a weaker invented one.
+
+DERIVED: the `1` in `Nap + 1` is the lag arity and the extent; the `2` in `2 * m` says that extent is
+even; `2 ≤ m` is `wilson_reflection_positive_at_even`'s own bound, and it also supplies
+`corrClay_log_convex`'s `0 < m`; the `0` in `0 ≤ β` is the coupling restriction the nonnegativity
+input carries. -/
 theorem shape_wilsonCorrAt (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm2 : 2 ≤ m) {β : ℝ} (hβ : 0 ≤ β) :
     Shape (Nap + 1) m (MassGap.wilsonCorrAt Nap β) where
   nonneg := (MassGap.wilson_reflection_positive_at_even Nap m hm hm2 hβ).1
@@ -497,7 +555,11 @@ theorem shape_wilsonCorrAt (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm2 : 2 ≤ m) 
 
 #print axioms shape_wilsonCorrAt
 
-/-- Doubling lands on an even residue, because the period is even. -/
+/-- Doubling lands on an even residue, because the period is even: at `n = 2 * m`, the underlying
+natural of `e + e` in `Fin n` is even for every `e`.
+
+DERIVED: the `2` in `n = 2 * m` says the period is even, which is what makes the reduction mod `n`
+preserve parity; without it the claim fails. -/
 theorem even_val_add_self {n m : ℕ} [NeZero n] (hn : n = 2 * m) (e : Fin n) :
     Even ((e + e : Fin n) : ℕ) := by
   subst hn
@@ -506,7 +568,11 @@ theorem even_val_add_self {n m : ℕ} [NeZero n] (hn : n = 2 * m) (e : Fin n) :
   rw [hv, Nat.mul_mod_mul_left]
   exact ⟨(e : ℕ) % m, by ring⟩
 
-/-- The circle reflection preserves parity, because the period is even. -/
+/-- The circle reflection preserves parity, because the period is even: at `n = 2 * m`, the
+underlying natural of `-d` is even exactly when that of `d` is.
+
+DERIVED: the `2` in `n = 2 * m` says the period is even. On an odd period `d` and `n − d` have
+opposite parity and the equivalence fails. -/
 theorem even_val_neg {n m : ℕ} [NeZero n] (hn : n = 2 * m) (d : Fin n) :
     Even ((-d : Fin n) : ℕ) ↔ Even ((d : Fin n) : ℕ) := by
   have hlt := d.isLt
@@ -518,21 +584,20 @@ theorem even_val_neg {n m : ℕ} [NeZero n] (hn : n = 2 * m) (d : Fin n) :
     · rintro ⟨k, hk⟩; exact ⟨m - k, by omega⟩
     · rintro ⟨k, hk⟩; exact ⟨m - k, by omega⟩
 
-/-- **THE ODD LAGS CAN BE SCALED DOWN FREELY, AND THE PREMISES STILL HOLD.**
+/-- **Scaling down the odd lags preserves `Shape`.** On an even period `n = 2 * m`, multiplying `ρ`
+by any `t ∈ [0,1]` at the odd lags while leaving the even lags alone again satisfies `Shape n m`.
+`nonneg` survives because `t ≥ 0`; `symm` survives because `even_val_neg` makes `d` and `-d` share a
+parity; `logConvex` survives because `even_val_add_self` makes every right-hand lag `e + e` even, so
+only left-hand sides can be scaled, and they are scaled by `t² ≤ 1`.
 
-Shrinking `ρ` at the odd lags by any factor `t ∈ [0,1]` — leaving the even lags alone — preserves
-nonnegativity, circle symmetry and log-convexity. Both because every lag
-`LogConvex.corrClay_log_convex` puts on the RIGHT of an inequality is `2e`, hence even, and because
-on an even period `d` and `−d` share a parity.
+Since `t` ranges down to `0`, the three premises together bound `ρ` below at no odd lag.
+`Moment.circLag = 1` is odd, so `ρ(1) ≥ ρ(2)` does not follow from them, and neither does
+monotonicity of the whole profile in the circle distance.
 
-**THIS IS A NO-GO.** Taking `t → 0` drives `ρ` at every odd lag to zero while the premises still
-hold, so no theorem with these premises can lower-bound `ρ` at an odd lag. `Moment.circLag = 1` is
-odd, so `ρ(1) ≥ ρ(2)` is not derivable here, and neither is monotonicity of the whole profile in the
-circle distance.
-
-DERIVED: nothing is chosen. `t` is quantified over, the parity is the lattice's — the period `2m` is
-even because the reflection argument needs a midpoint — and `2e` is the theorem's own right-hand
-lag. -/
+DERIVED: the `2` in `n = 2 * m` is the even period `even_val_neg` and `even_val_add_self` both need.
+The `0` and `1` in `0 ≤ t`, `t ≤ 1` are the endpoints of the interval on which scaling can only
+shrink a square: below `0` nonnegativity would fail, above `1` the scaled left-hand side would grow.
+Nothing else is chosen; `t` is quantified over. -/
 theorem odd_scaling_admissible {n m : ℕ} [NeZero n] (hn : n = 2 * m) (ρ : Fin n → ℝ)
     (hshape : Shape n m ρ) {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
     Shape n m (fun d => if Even ((d : Fin n) : ℕ) then ρ d else t * ρ d) := by
@@ -561,17 +626,21 @@ theorem odd_scaling_admissible {n m : ℕ} [NeZero n] (hn : n = 2 * m) (ρ : Fin
 
 #print axioms odd_scaling_admissible
 
-/-- **THE WHOLE PROFILE IS NOT NON-INCREASING IN THE CIRCLE DISTANCE, AND THE PREMISES CANNOT MAKE IT
-SO.** At extent eight the profile that is `1` at every lag except the two at circle distance three,
-where it is `1/2`, satisfies every premise — and it DIPS at circle distance three and rises again at
-circle distance four.
+/-- **A `Shape` profile that is not non-increasing in the circle distance.** There exists
+`ρ : Fin 8 → ℝ` with `Shape 8 4 ρ` for which `circLag d₁ ≤ circLag d₂` does not imply `ρ d₂ ≤ ρ d₁`.
+The witness is `1` at every lag except lags `3` and `5`, the two at circle distance three, where it
+is `1/2`: it dips at circle distance three and rises again at circle distance four, and the
+refutation is read at `d₁ = 3`, `d₂ = 4`.
 
-The reason is the scaling above: every right-hand lag is even, `1/2` appears only at the odd distance
-three, and every constraint whose left side sits there has an untouched right side equal to `1`.
+It conforms for the reason `odd_scaling_admissible` gives: every right-hand lag is even, `1/2`
+appears only at the odd distance three, and every constraint whose left side sits there has an
+untouched right side equal to `1`.
 
-DERIVED: `8 = 2·4` is the smallest extent with an interior odd distance to exhibit; `1/2` is any
-value strictly between `0` and `1` and `0` would do as well — `odd_scaling_admissible` quantifies
-over all of them. Nothing here is fitted. -/
+DERIVED: `8` is the extent and `4 = 8 / 2` its half, the `m` of `Shape`; `7` is the `N` of
+`Moment.circLag`'s index type `Fin (N + 1)` at that extent. `3` and `4` are the two circle distances
+the refutation compares. CHOSEN: the witness's `1/2` is any value strictly below `1` — `0` would
+serve equally, and `odd_scaling_admissible` quantifies over all of them — and `1` is any positive
+value, since only the ratio matters. -/
 theorem not_antitone_circLag_of_shape :
     ∃ ρ : Fin 8 → ℝ, Shape 8 4 ρ ∧
       ¬ (∀ d₁ d₂ : Fin 8,

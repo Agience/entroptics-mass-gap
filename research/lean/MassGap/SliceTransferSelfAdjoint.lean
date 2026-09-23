@@ -2,78 +2,46 @@ import Mathlib
 import MassGap.SlabTransferAdjoint
 
 /-!
-# MassGap.SliceTransferSelfAdjoint — a CONCRETE self-adjoint bounded operator on `L²`, from the
-tree's own Osterwalder–Seiler slice kernel
+# MassGap.SliceTransferSelfAdjoint — the operator on `L²` induced by `SliceTransfer.transferKernel`
 
-`SlabTransferAdjoint` proved the criterion — a symmetric bounded measurable kernel on one
-probability space induces a self-adjoint bounded operator on `L²` — and then could not apply it to
-`SliceTrace.slabKernel`, whose symmetry the tree neither proves nor refutes. This file applies it to
-the kernel the tree DOES prove symmetric.
+Builds a bounded self-adjoint endomorphism of `Lp ℝ 2 (sliceHaar ι N)` from the slice-to-slice kernel
+`SliceTransfer.transferKernel b s V W = exp (-s V / 2) * exp (b * sliceForm V W) * exp (-s W / 2)`,
+by supplying the boundedness and measurability that `SlabKernelOperator.kernelCLM` requires and the
+symmetry that `SlabTransferAdjoint.isSelfAdjoint_kernelCLM_of_symm` consumes.
 
-`SliceTransfer.transferKernel b s V W = e^{-s(V)/2} · e^{b · sliceForm V W} · e^{-s(W)/2}` is the
-Osterwalder–Seiler slice-to-slice kernel in temporal gauge, and `SliceTransfer.transferKernel_symm`
-proves `T(V,W) = T(W,V)` with no hypothesis at all — the intra-slice factor is split evenly between
-the two arguments, which is exactly what `slabKernel` does not do.
+## Part 1 — the cross form
 
-## What is proved
+`abs_hsRe_le` bounds `|hsRe A B|` by `N` for two `SU N` elements, through
+`CrossingIntegration.hsRe_coe_eq` (which rewrites it as `Re tr (A B⁻¹)`) and
+`WilsonAction.abs_re_trace_le`. `continuous_reTrace` and `continuous_hsRe_pair` give joint
+continuity of the same expression, `continuous_sliceForm` sums it over the slice, and
+`abs_sliceForm_le` bounds the sum by `Fintype.card ι * N`.
 
-* `abs_hsRe_le` — `|Re tr (A Bᴴ)| ≤ N` for two `SU N` elements. `CrossingIntegration.hsRe_coe_eq`
-  rewrites the cross form as `Re tr (A B⁻¹)` and `WilsonAction.abs_re_trace_le` is the bound. This
-  is the only genuinely new estimate here.
-* `continuous_hsRe_pair`, `continuous_sliceForm`, `continuous_transferKernel_uncurry` — joint
-  continuity, hence joint measurability, on the compact group. The cross form is continuous because
-  it is `Re ∘ trace` of a group word, and `WilsonAction.continuous_wilsonDensity`'s own proof is the
-  template.
-* `abs_transferKernel_le` — `|T(V,W)| ≤ transferCap ι N b Cs`, uniform, given only a bound `Cs` on
-  the intra-slice function `s`.
-* **`transferCLM` and `isSelfAdjoint_transferCLM`** — the induced operator on `L²` of one slice's
-  configurations against the product Haar probability measure, and **it is self-adjoint**. It is a
-  genuine `ContinuousLinearMap` on a genuine Hilbert space, with `norm_transferCLM_le`.
+## Part 2 — the kernel
 
-## What this does NOT claim, named exactly
+`transferCap ι N b Cs = exp Cs * exp (|b| * (card ι * N))`, positive by `transferCap_pos`.
+`abs_transferKernel_le` bounds the kernel by it uniformly in both arguments, given only
+`|s V| ≤ Cs`. `continuous_transferKernel_uncurry` and `measurable_transferKernel_uncurry` give joint
+continuity and measurability when `s` is continuous.
 
-* **It is not the Wilson partition function's kernel.** `SliceTrace`'s header lists THREE
-  differences between `slabKernel` and `transferKernel` — the axis links, the unsplit intra-slice
-  weight, and the plaquette-count constant with the ordered-`Plaq` double counting — and removing
-  the first is a change of variables in temporal gauge, which is `SliceTransfer`'s hypothesis `hg`
-  and is discharged nowhere in the tree. **So this self-adjoint operator is not yet known to be the
-  one whose trace is `Z`.** `SliceTrace.partition_eq_cycleIntegral` is about `slabKernel`, not this.
-* **`s` is the caller's.** The intra-slice function is a parameter with two hypotheses (continuous,
-  bounded). Instantiating it at `SliceTransfer.intraSliceAction` restricted to a slice is not done
-  here; `SliceTransfer.intra_links_mem` is what says the restriction is well defined.
-* **NOT POSITIVE.** `SliceTransfer.transferKernel_psd` proves the FINITE positive-semidefiniteness
-  `0 ≤ ∑ᵢⱼ zᵢzⱼ T(Vᵢ,Vⱼ)` at `0 ≤ b`, which is positive-definiteness of the kernel as a function.
-  That is NOT `0 ≤ ⟨f, T f⟩` for `f ∈ L²`: passing from finite families to an integral is a limit,
-  and no limit is taken here. `SlabTransferAdjoint.FiniteGram` is the form that DOES give the
-  integral statement with no limit, and `transferKernel` is not of that form — it is an infinite
-  series of them. **The route is named and sized rather than walked:**
-  `CharacterExpansion.hsRe_pow` writes `hsRe A B ^ k` as a FINITE sum of paired products
-  `∑_α mono α A · mono α B`, and `CharacterExpansion.hasSum_wilsonWeight_paired` sums those with
-  coefficients `b^k/k!`, nonnegative at `0 ≤ b`. Each partial sum is therefore a
-  `SlabTransferAdjoint.FiniteGram` kernel, so `inner_kernelCLM_self_nonneg_of_finiteGram` applies to
-  it; what is missing is (i) a uniform bound on `|mono α|` over `SU N`, and (ii) a uniform tail
-  estimate for the exponential series on the bounded range `|sliceForm| ≤ card ι · N`, after which
-  positivity passes to the limit because the quadratic form is continuous in the kernel's sup norm
-  on a probability space. Neither is proved here.
-* **No spectrum, no gap, no Hamiltonian.** Self-adjointness and a norm bound are not spectral
-  statements, and `SlabTransferAdjoint`'s Part 4 is the proof that a Doeblin bound will not close
-  that gap either.
+## Part 3 — the operator
 
-## The degenerate regimes
+`sliceHaar ι N` is the product Haar probability measure on one slice's configurations.
+`transferCLM b s Cs hs hsb` is `kernelCLM` at that kernel and cap, an endomorphism of
+`Lp ℝ 2 (sliceHaar ι N)` — the same space at both ends, unlike
+`SlabKernelOperator.slabTransfer`. `norm_transferCLM_le` bounds its norm by `transferCap`,
+`isSelfAdjoint_transferCLM` and `adjoint_transferCLM` record self-adjointness (unconditionally, from
+`SliceTransfer.transferKernel_symm`), and `transferCLM_ne_zero` rules out the zero operator by
+bounding the kernel below by `(transferCap ι N b Cs)⁻¹`.
 
-* **`b = 0` and `s` constant** — the kernel is constant, so the operator is the rank-one averaging
-  map and self-adjointness is `SlabTransferAdjoint.finiteGram_one`'s regime again. Self-adjointness
-  here is NOT evidence against that: `transferKernel_symm` holds at every `b` and every `s`, so the
-  theorem is not true only because of degeneracy — but neither does it rule degeneracy out.
-* **`N = 1`** — `SU 1` is trivial, `hsRe` is constant and `L²` is one dimensional.
-* **`ι` empty** — `sliceForm` is the empty sum, the configuration space is a point, `L²` is one
-  dimensional and every operator on it is self-adjoint.
-
-Self-adjointness is a property of the KERNEL's symmetry and is stated for every `b`, `s`, `ι`, `N`;
-it does not distinguish the degenerate regimes from the others and is not claimed to.
-
-No `sorry`, no new axioms. Foundational footprint only (`#print axioms` at the end).
-Build: `python research/code/lean_build.py build MassGap.SliceTransferSelfAdjoint`.
+Scope: `b` is an arbitrary real — no sign hypothesis is used anywhere, so self-adjointness holds at
+every `b`. The intra-slice function `s` is a parameter with two hypotheses, continuity and the
+uniform bound `Cs`; no statement instantiates it at `SliceTransfer.intraSliceAction`. The results
+are about `transferKernel`, not about `SliceTrace.slabKernel`, and nothing here relates the operator
+to a partition function. Positivity of the operator, its spectrum, and any Hamiltonian are outside
+the file: `SliceTransfer.transferKernel_psd` is a finite-family statement and is not used here.
+Degenerate parameters are admitted — `N = 1`, `ι` empty, `b = 0` with constant `s` all satisfy every
+hypothesis. Axiom footprints are printed at the end of the file.
 -/
 
 namespace MassGap.SliceTransferSelfAdjoint
@@ -86,28 +54,36 @@ section Slice
 
 variable {N : ℕ} {ι : Type} [Fintype ι] [DecidableEq ι]
 
-/-! ## Part 1 — the cross form is bounded and continuous on the group -/
+/-! ## Part 1 — bounds and continuity for `hsRe` and `sliceForm` -/
 
-/-- **`Re tr (A Bᴴ)` IS BOUNDED BY THE RANK.** `hsRe_coe_eq` says the cross form of two `SU N`
-elements is the `Re tr` of the group word `A B⁻¹`, and `abs_re_trace_le` bounds that by `N`.
+/-- `|hsRe a b| ≤ N` for `a b : MassGap.SUN.SU N`, read through their matrix coercions.
+`CrossingIntegration.hsRe_coe_eq` rewrites the cross form as `Re (trace (a * b⁻¹))`, and
+`WilsonAction.abs_re_trace_le` bounds the real trace of an `SU N` element by `N`.
 
-DERIVED: `N` is the rank, from `WilsonAction.abs_re_trace_le`; nothing is chosen. -/
+Scope: the bound is the rank `N` itself, attained at `a = b`; it is not strict.
+
+DERIVED: no numeral appears in the statement. `N` is the group's rank, a bound variable, and the
+bound comes from `WilsonAction.abs_re_trace_le`. -/
 theorem abs_hsRe_le (a b : MassGap.SUN.SU N) :
     |hsRe ((a : Matrix (Fin N) (Fin N) ℂ)) ((b : Matrix (Fin N) (Fin N) ℂ))| ≤ (N : ℝ) := by
   rw [MassGap.CrossingIntegration.hsRe_coe_eq]
   exact MassGap.WilsonAction.abs_re_trace_le _
 
-/-- `Re tr` is continuous on the group — `WilsonAction.continuous_wilsonDensity`'s own step.
+/-- `fun g : MassGap.SUN.SU N => (Matrix.trace g).re` is continuous: the subtype inclusion is
+continuous, `Matrix.trace` is continuous, and `Complex.re` is continuous. This is the step
+`WilsonAction.continuous_wilsonDensity` also takes.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_reTrace :
     Continuous (fun g : MassGap.SUN.SU N => (Matrix.trace (g : Matrix (Fin N) (Fin N) ℂ)).re) :=
   Complex.continuous_re.comp continuous_subtype_val.matrix_trace
 
-/-- **THE CROSS FORM IS JOINTLY CONTINUOUS.** Through `hsRe_coe_eq` it is `Re tr` of a group word,
-and the group is topological.
+/-- `fun p => hsRe p.1 p.2` is continuous on `MassGap.SUN.SU N × MassGap.SUN.SU N` — jointly, not
+separately. The proof rewrites it through `CrossingIntegration.hsRe_coe_eq` as
+`fun p => (trace (p.1 * p.2⁻¹)).re` and composes `continuous_reTrace` with continuity of
+multiplication and inversion in the topological group.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_hsRe_pair :
     Continuous (fun p : MassGap.SUN.SU N × MassGap.SUN.SU N =>
       hsRe ((p.1 : Matrix (Fin N) (Fin N) ℂ)) ((p.2 : Matrix (Fin N) (Fin N) ℂ))) := by
@@ -120,9 +96,13 @@ theorem continuous_hsRe_pair :
   rw [h]
   exact continuous_reTrace.comp (continuous_fst.mul (continuous_inv.comp continuous_snd))
 
-/-- **THE AGGREGATED CROSS FORM IS JOINTLY CONTINUOUS.**
+/-- `fun p => sliceForm p.1 p.2` is jointly continuous on
+`(ι → MassGap.SUN.SU N) × (ι → MassGap.SUN.SU N)`. `sliceForm` unfolds to a `Finset` sum over `ι` of
+`hsRe` at the two configurations' values at each link, so `continuous_finsetSum` reduces it to
+`continuous_hsRe_pair` composed with the coordinate projections. `[Fintype ι]` is what makes the sum
+finite.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_sliceForm :
     Continuous (fun p : ((ι → MassGap.SUN.SU N) × (ι → MassGap.SUN.SU N)) =>
       sliceForm p.1 p.2) := by
@@ -135,10 +115,14 @@ theorem continuous_sliceForm :
   exact h
 
 omit [DecidableEq ι] in
-/-- **THE AGGREGATED CROSS FORM IS BOUNDED BY THE SLICE SIZE TIMES THE RANK.**
+/-- `|sliceForm V W| ≤ Fintype.card ι * N` at every pair of slice configurations. The triangle
+inequality `Finset.abs_sum_le_sum_abs` reduces it to `abs_hsRe_le` at each link, and the resulting
+constant sum is `Fintype.card ι * N`.
 
-DERIVED: `Fintype.card ι` is the slice's own link count and `N` is the rank, from `abs_hsRe_le`.
-Neither is chosen. -/
+Scope: the bound is uniform in `V` and `W` and grows linearly in both the link count and the rank.
+
+DERIVED: no numeral appears in the statement. `Fintype.card ι` is the slice's link count and `N` the
+group's rank; both are determined by the parameters, neither is chosen. -/
 theorem abs_sliceForm_le (V W : ι → MassGap.SUN.SU N) :
     |sliceForm V W| ≤ (Fintype.card ι : ℝ) * (N : ℝ) := by
   unfold sliceForm
@@ -151,32 +135,46 @@ theorem abs_sliceForm_le (V W : ι → MassGap.SUN.SU N) :
 
 end Slice
 
-/-! ## Part 2 — the transfer kernel is bounded and continuous -/
+/-! ## Part 2 — a uniform cap on `transferKernel`, and its continuity -/
 
 section Kernel
 
 variable {N : ℕ} {ι : Type} [Fintype ι] [DecidableEq ι]
 
-/-- **THE UNIFORM BOUND ON THE TRANSFER KERNEL.**
+/-- The constant `Real.exp Cs * Real.exp (|b| * (Fintype.card ι * N))`, used as the uniform cap on
+`transferKernel b s` when `|s V| ≤ Cs`. The first factor absorbs the two intra-slice exponentials,
+whose exponents are each at least `-Cs / 2`; the second absorbs the cross term through
+`abs_sliceForm_le`.
 
-DERIVED: the `2` inside `transferKernel` is its own even split of the intra-slice factor between the
-two arguments, and the two halves recombine to `Cs`; `Fintype.card ι` and `N` are the slice's link
-count and the rank, from `abs_sliceForm_le`. `Cs` is the caller's bound on `s`. Nothing is chosen
-here. -/
+Scope: `Cs` is the caller's bound on `s`, not derived here, and `b` may have either sign — the cap
+uses `|b|`.
+
+DERIVED: no numeral appears in the definition or its type. `Cs`, `b`, `Fintype.card ι` and `N` are
+all parameters. -/
 noncomputable def transferCap (ι : Type) [Fintype ι] (N : ℕ) (b Cs : ℝ) : ℝ :=
   Real.exp Cs * Real.exp (|b| * ((Fintype.card ι : ℝ) * (N : ℝ)))
 
 omit [DecidableEq ι] in
-/-- The cap is positive, hence nonnegative.
+/-- `0 < transferCap ι N b Cs` at every `b` and `Cs`: a product of two exponentials, closed by
+`positivity`. Used to supply the nonnegativity `kernelCLM` requires of its bound, and the reciprocal
+lower bound in `transferCLM_ne_zero`.
 
-DERIVED: the `0` is the sign asserted; `Real.exp_pos` supplies it. -/
+DERIVED: `0` is the lower bound asserted; `Real.exp_pos` supplies it. No other numeral appears in
+the statement. -/
 theorem transferCap_pos (b Cs : ℝ) : 0 < transferCap ι N b Cs := by
   unfold transferCap
   positivity
 
-/-- **THE TRANSFER KERNEL IS BOUNDED, UNIFORMLY IN BOTH ARGUMENTS.**
+/-- Given `|s V| ≤ Cs` at every configuration, `|transferKernel b s V W| ≤ transferCap ι N b Cs`
+uniformly in `V` and `W`. The absolute value is removed by `SliceTransfer.transferKernel_pos`, the
+two intra-slice exponentials are combined and bounded by `exp Cs`, and the cross exponential is
+bounded using `abs_sliceForm_le`.
 
-DERIVED: the `2` is `transferKernel`'s own even split; `Cs` is the caller's bound on `s`. -/
+Scope: `s` is only assumed bounded here — continuity is not needed for this statement. `b` may have
+either sign.
+
+DERIVED: no numeral appears in the statement. `Cs` is the caller's bound on `s`; the halving of the
+intra-slice weight lives inside `transferKernel`'s own definition, not in this statement. -/
 theorem abs_transferKernel_le (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hsb : ∀ V, |s V| ≤ Cs) (V W : ι → MassGap.SUN.SU N) :
     |transferKernel b s V W| ≤ transferCap ι N b Cs := by
@@ -200,9 +198,14 @@ theorem abs_transferKernel_le (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) 
     _ ≤ Real.exp Cs * Real.exp (|b| * ((Fintype.card ι : ℝ) * (N : ℝ))) :=
         mul_le_mul h1 h2 (Real.exp_pos _).le (Real.exp_pos _).le
 
-/-- **THE TRANSFER KERNEL IS JOINTLY CONTINUOUS** whenever the intra-slice function is.
+/-- `fun p => transferKernel b s p.1 p.2` is jointly continuous whenever `s` is continuous. The
+kernel unfolds to a product of three exponentials; the outer two are `Real.exp` composed with `s`
+halved on each argument, and the middle one with `continuous_sliceForm`.
 
-DERIVED: the `2` is `transferKernel`'s own even split of the intra-slice factor. -/
+Scope: continuity of `s` is the only hypothesis — no bound on `s` is needed for this statement.
+
+DERIVED: no numeral appears in the statement. The division by two of each intra-slice exponent lives
+inside `transferKernel`'s definition. -/
 theorem continuous_transferKernel_uncurry (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
     (hs : Continuous s) :
     Continuous (fun p : ((ι → MassGap.SUN.SU N) × (ι → MassGap.SUN.SU N)) =>
@@ -212,9 +215,11 @@ theorem continuous_transferKernel_uncurry (b : ℝ) (s : (ι → MassGap.SUN.SU 
       (Real.continuous_exp.comp (continuous_const.mul continuous_sliceForm))).mul
     (Real.continuous_exp.comp (((hs.comp continuous_snd).neg).div_const 2))
 
-/-- **THE TRANSFER KERNEL IS JOINTLY MEASURABLE.**
+/-- `Function.uncurry (transferKernel b s)` is measurable whenever `s` is continuous — the
+measurability of `continuous_transferKernel_uncurry`. This is the hypothesis
+`SlabKernelOperator.kernelCLM` consumes.
 
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral appears in the statement. -/
 theorem measurable_transferKernel_uncurry (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ)
     (hs : Continuous s) :
     Measurable (Function.uncurry (transferKernel b s)) :=
@@ -222,29 +227,41 @@ theorem measurable_transferKernel_uncurry (b : ℝ) (s : (ι → MassGap.SUN.SU 
 
 end Kernel
 
-/-! ## Part 3 — the operator, and it is self-adjoint -/
+/-! ## Part 3 — the induced operator on `L²`, its norm, adjoint and non-vanishing -/
 
 section Operator
 
 variable {N : ℕ} {ι : Type} [Fintype ι] [DecidableEq ι]
 
-/-- **THE PRODUCT HAAR MEASURE ON ONE SLICE'S CONFIGURATIONS.**
+/-- The product Haar measure on one slice's configurations `ι → MassGap.SUN.SU N`, as
+`Measure.pi (fun _ => probHaar (MassGap.SUN.SU N))`. This is the measure both `L²` spaces of
+`transferCLM` are taken against.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 noncomputable def sliceHaar (ι : Type) [Fintype ι] (N : ℕ) :
     Measure (ι → MassGap.SUN.SU N) := Measure.pi fun _ => probHaar (MassGap.SUN.SU N)
 
-/-- It is a probability measure: a finite product of probability Haar measures.
+/-- `sliceHaar ι N` is a probability measure: a finite product of probability measures, resolved by
+ instance search after unfolding. This is what lets constants sit in `L²` and what
+`SlabKernelOperator.kernelCLM` needs of both measures.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement; total mass one is inside `IsProbabilityMeasure`. -/
 instance isProbabilityMeasure_sliceHaar : IsProbabilityMeasure (sliceHaar ι N) := by
   unfold sliceHaar; infer_instance
 
-/-- **THE SLICE TRANSFER OPERATOR.** A bounded linear ENDOMORPHISM of `L²` of one slice's
-configurations — unlike `SlabKernelOperator.slabTransfer`, whose two spaces differ. The intra-slice
-function `s` is the caller's, with the two hypotheses `hs` (continuous) and `hsb` (bounded).
+/-- The continuous linear endomorphism of `Lp ℝ 2 (sliceHaar ι N)` induced by
+`transferKernel b s`, as `SlabKernelOperator.kernelCLM` at that kernel with bound
+`transferCap ι N b Cs`. Measurability comes from `measurable_transferKernel_uncurry`,
+nonnegativity of the bound from `transferCap_pos`, and the pointwise bound from
+`abs_transferKernel_le`.
 
-DERIVED: the `2`s are the `L²` exponent; the cap is `abs_transferKernel_le`'s. -/
+Scope: domain and codomain are the SAME space, since both measures passed to `kernelCLM` are
+`sliceHaar ι N`. The intra-slice function `s` is the caller's, carrying the hypotheses `hs`
+(continuous) and `hsb` (bounded by `Cs`); both appear in the term, so operators built from different
+proofs of the same facts are distinct terms.
+
+DERIVED: `2` occurs twice, as the exponent of the `Lp` space at the domain and at the codomain. No
+other numeral appears in the statement. -/
 noncomputable def transferCLM (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     Lp ℝ 2 (sliceHaar ι N) →L[ℝ] Lp ℝ 2 (sliceHaar ι N) :=
@@ -252,36 +269,41 @@ noncomputable def transferCLM (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) 
     (measurable_transferKernel_uncurry b s hs) (le_of_lt (transferCap_pos b Cs))
     (abs_transferKernel_le b s Cs hsb) (sliceHaar ι N) (sliceHaar ι N)
 
-/-- **THE SLICE TRANSFER OPERATOR IS BOUNDED, WITH AN EXPLICIT NORM BOUND.**
+/-- `‖transferCLM b s Cs hs hsb‖ ≤ transferCap ι N b Cs`: the operator norm is bounded by the same
+uniform cap as the kernel, by `SlabKernelOperator.norm_kernelCLM_le`. That bound is available
+because `sliceHaar` is a probability measure.
 
-DERIVED: as `transferCLM`'s. -/
+Scope: an upper bound only — no lower bound on the norm is stated here, and
+`transferCLM_ne_zero` is the separate statement that the operator is nonzero.
+
+DERIVED: no numeral appears in the statement. -/
 theorem norm_transferCLM_le (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     ‖transferCLM b s Cs hs hsb‖ ≤ transferCap ι N b Cs :=
   norm_kernelCLM_le _ _ _ _ _ _ _
 
-/-- **THE SLICE TRANSFER OPERATOR IS SELF-ADJOINT.** This is the statement `SlabKernelOperator`
-refused for `slabTransfer` and `SlabTransferAdjoint` could only make conditional on kernel symmetry:
-here the symmetry is a theorem (`SliceTransfer.transferKernel_symm`, no hypothesis), so the
-conclusion is unconditional.
+/-- `IsSelfAdjoint (transferCLM b s Cs hs hsb)`, at every real `b`, every bounded continuous `s` and
+every `ι`, `N`. It is `SlabTransferAdjoint.isSelfAdjoint_kernelCLM_of_symm` fed with
+`SliceTransfer.transferKernel_symm b s`, which holds with no hypothesis because `transferKernel`
+splits the intra-slice weight evenly between its two arguments.
 
-It holds at EVERY real `b` — the sign condition `0 ≤ b` that `transferKernel_psd` needs is a
-POSITIVITY hypothesis and self-adjointness does not use it.
+Scope: no sign condition on `b` is used — the hypothesis `0 ≤ b` that
+`SliceTransfer.transferKernel_psd` requires is about positivity and plays no part here. This is
+self-adjointness of the operator induced by `transferKernel`; it says nothing about
+`SliceTrace.slabKernel` or about any partition function. It is also not a spectral statement: no
+spectrum, eigenvalue or gap is asserted.
 
-**It is self-adjointness of THIS kernel, which is not `SliceTrace.slabKernel` and is not yet known
-to be the kernel whose cyclic trace is `Z`.** The three differences are `SliceTrace`'s and the
-first of them needs temporal gauge, a hypothesis in `SliceTransfer` and a theorem nowhere.
-
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral appears in the statement. -/
 theorem isSelfAdjoint_transferCLM (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     IsSelfAdjoint (transferCLM b s Cs hs hsb) :=
   isSelfAdjoint_kernelCLM_of_symm _ _ _ _ _ _ (transferKernel_symm b s)
 
-/-- **THE ADJOINT, IDENTIFIED CONCRETELY**: the operator is its own adjoint, not merely equal to
-some adjoint.
+/-- `ContinuousLinearMap.adjoint (transferCLM b s Cs hs hsb) = transferCLM b s Cs hs hsb`: the
+adjoint is the operator itself, as an equation between continuous linear maps. It is
+`isSelfAdjoint_transferCLM` transported across `ContinuousLinearMap.star_eq_adjoint`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral appears in the statement. -/
 theorem adjoint_transferCLM (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     ContinuousLinearMap.adjoint (transferCLM b s Cs hs hsb) = transferCLM b s Cs hs hsb := by
@@ -289,12 +311,15 @@ theorem adjoint_transferCLM (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (C
   rw [← ContinuousLinearMap.star_eq_adjoint]
   exact h
 
-/-- **THE OPERATOR IS NOT THE ZERO OPERATOR.** The kernel is bounded below by the reciprocal cap, so
-`SlabKernelOperator.kernelCLM_ne_zero` applies. Anti-vacuity for the domain as well: the zero space
-admits only the zero operator.
+/-- `transferCLM b s Cs hs hsb ≠ 0`. The proof supplies `SlabKernelOperator.kernelCLM_ne_zero` with
+the strictly positive lower bound `(transferCap ι N b Cs)⁻¹` on the kernel: each intra-slice
+exponential is at least `exp (-Cs / 2)` and the cross exponential at least
+`exp (-(|b| * (card ι * N)))`, and those reciprocate the cap exactly.
 
-DERIVED: the `0` is the operator excluded; the lower bound is `abs_transferKernel_le`'s cap read in
-the other direction, via strict positivity of `transferKernel`. -/
+Scope: this also rules out the degenerate reading in which the `L²` space is zero, since a zero space
+admits only the zero operator. It is a non-vanishing statement, not a lower bound on the norm.
+
+DERIVED: `0` is the operator the conclusion excludes. No other numeral appears in the statement. -/
 theorem transferCLM_ne_zero (b : ℝ) (s : (ι → MassGap.SUN.SU N) → ℝ) (Cs : ℝ)
     (hs : Continuous s) (hsb : ∀ V, |s V| ≤ Cs) :
     transferCLM b s Cs hs hsb ≠ 0 := by

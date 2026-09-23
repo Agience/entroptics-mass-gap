@@ -8,7 +8,7 @@ import MassGap.SchwarzIteration
 
 `Transfer.TransferData` is the object `GNSHilbert` turns into a Hilbert space with a bounded
 self-adjoint transfer operator fixing the vacuum, and `Reconstruction` turns into `H = −log T`. It has
-six fields. This file builds one, `assembleTransferData`, and **every field is discharged** from:
+six fields. `assembleTransferData` constructs one, discharging every field from these inputs:
 
 | input | what it is |
 |---|---|
@@ -21,33 +21,33 @@ six fields. This file builds one, `assembleTransferData`, and **every field is d
 | `hone`, `hTone` | the constant is in `A` and the shift fixes it |
 | `hTnorm`, `hθnorm` | neither map increases the supremum norm |
 
-**`T_symm` and `T_contract` are not among the inputs.** They are proved, by `form_shift_symm` and
-`contract_of_bounded_orbit`.
+`T_symm` and `T_contract` are not inputs: they are proved inside the construction, by
+`form_shift_symm` and by `contract_of_bounded_orbit` fed by `orbit_bounded_of_state`.
 
-## ⚠ The one input that is not available
+## Scope of the inputs
 
-**`hpos` — reflection positivity of an infinite-volume Wilson state on the half-space algebra.**
-Everything else on that list is either built in the tree or is a routine property of precomposition.
-`hpos` is not, and `LatticeReflection`'s header says why the gap is wider than a change of lattice:
-the tree's finite-volume positivity is about a correlation SEQUENCE, on a SLAB, of a PERIODIC
-lattice, at the EVEN reflection constant, and needs `0 ≤ β`.
+`assembleTransferData` takes every item above as a hypothesis; it constructs none of them. `hpos` in
+particular — reflection positivity of the state on `A` — is supplied by the caller. The tree's own
+reflection-positivity results are of a different shape: as `LatticeReflection`'s header records, they
+are about a correlation sequence, on a slab, of a periodic lattice, at the even reflection constant,
+and under `0 ≤ β`. Given all the inputs, the output is a `Transfer.TransferData`, and `GNSHilbert`
+and `Reconstruction` apply to it.
 
-So this file does not prove the Yang–Mills transfer operator exists. **What it does is reduce that
-claim to one hypothesis**, with the rest of the assembly machine-checked, so that anyone supplying
-`hpos` gets the Hilbert space, the operator and the Hamiltonian without further work.
-
-## ⚠ And `ShiftCompat` forces the shift to be invertible
+## `ShiftCompat` forces the shift to be invertible
 
 `T_S` gives `T ∘ S = id`; applying `θ` to `theta_T` and using involutivity gives `T = θ ∘ S ∘ θ`, and
-chasing once more gives `S ∘ T = id`. **So `S` is a two-sided inverse and `T` is bijective on
-`C(X,ℝ)`.** That is not in tension with `HalfSpaceAlgebra`: the shift is invertible on the FULL
-algebra of `IConf G` (because `ishiftConf` is a bijection, `ℤ` having no boundary), while the
-half-space algebra is only FORWARD-stable. `assembleTransferData` uses both facts, in different
-places — invertibility for `T_symm`, forward stability for the carrier — and they are consistent
-precisely because the lattice is infinite. On a half-line of `ℕ` the shift would not be invertible and
-`ShiftCompat` would be unsatisfiable.
+chasing once more gives `S ∘ T = id`. `shift_inverse_is_two_sided` states that second identity, so
+`S` is a two-sided inverse of `T` on `C(X, ℝ)`.
 
-`shift_inverse_is_two_sided` proves the derivation rather than leaving it as a remark.
+Invertibility on the full algebra and forward stability of the half-space algebra are separate
+conditions, and `assembleTransferData` uses each in its own place: invertibility through `T_symm`,
+forward stability through `hstable` as the carrier's closure property. For `IConf G` the shift is
+invertible on the full algebra because `ishiftConf` is a bijection, `ℤ` having no boundary, while
+`HalfSpaceAlgebra` is forward-stable only. On a half-line indexed by `ℕ` the shift has no inverse, so
+`ShiftCompat` has no instance there.
+
+DERIVED: the only numeral in any statement below is the `1` of `C(X, ℝ)` — the constant function
+taken as the vacuum vector and fixed by the shift.
 -/
 
 namespace MassGap.TransferAssembly
@@ -58,14 +58,14 @@ variable {X : Type*} [TopologicalSpace X] [CompactSpace X]
 
 /-! ## 1. What `ShiftCompat` already forces -/
 
-/-- **THE BACKWARD SHIFT IS A TWO-SIDED INVERSE.** `T_S` only asks `T ∘ S = id`; together with
-`theta_T` and involutivity of `θ` it gives `S ∘ T = id` as well.
+/-- `C.S (C.T f) = f` for every `f : C(X, ℝ)`, given a `ShiftCompat R ν`. The structure field `T_S`
+asks only for `T ∘ S = id`; combined with `theta_T` and involutivity of `R.θ`, this gives the other
+composite as well, so `C.S` is a two-sided inverse of `C.T` and both are bijections of `C(X, ℝ)`.
 
-Proved rather than remarked, because it is the fact that makes `ShiftCompat` unsatisfiable on a
-half-LINE and satisfiable on `ℤ`: the hypotheses quietly demand an invertible translation, and that
-demand should be visible.
+`ShiftCompat` therefore implies an invertible translation, which is a condition on the index set: it
+holds for `ℤ` and has no instance on a half-line indexed by `ℕ`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem shift_inverse_is_two_sided {R : Reflection X} {ν : State X} (C : ShiftCompat R ν)
     (f : C(X, ℝ)) : C.S (C.T f) = f := by
   have hTf : ∀ g : C(X, ℝ), C.T g = R.θ (C.S (R.θ g)) := by
@@ -86,10 +86,13 @@ theorem shift_inverse_is_two_sided {R : Reflection X} {ν : State X} (C : ShiftC
 
 /-! ## 2. The shift, restricted to the half-space algebra -/
 
-/-- The forward shift as an endomorphism of the half-space algebra. `hstable` is exactly
+/-- The forward shift `C.T` restricted to a submodule `A` that it preserves, as an `ℝ`-linear
+endomorphism of `↥A`. `hstable : ∀ f ∈ A, C.T f ∈ A` is the only property of `A` used; additivity and
+homogeneity are inherited from `C.T` through `Subtype.ext`. For the half-space algebra, `hstable` is
 `HalfSpaceAlgebra.halfSpaceAlg_shift_stable`.
 
-DERIVED: no numeral. -/
+DERIVED: the only numeral is the `2` of `f.2` in the construction, the projection selecting a
+subtype element’s membership proof. -/
 def restrictT {R : Reflection X} {ν : State X} (C : ShiftCompat R ν)
     (A : Submodule ℝ C(X, ℝ)) (hstable : ∀ f ∈ A, C.T f ∈ A) : ↥A →ₗ[ℝ] ↥A where
   toFun f := ⟨C.T (f : C(X, ℝ)), hstable _ f.2⟩
@@ -104,10 +107,12 @@ def restrictT {R : Reflection X} {ν : State X} (C : ShiftCompat R ν)
     (A : Submodule ℝ C(X, ℝ)) (hstable : ∀ f ∈ A, C.T f ∈ A) (f : ↥A) :
     ((restrictT C A hstable f : ↥A) : C(X, ℝ)) = C.T (f : C(X, ℝ)) := rfl
 
-/-- **ITERATING THE RESTRICTION IS RESTRICTING THE ITERATE**, which is what lets the orbit bound —
-stated on `C(X, ℝ)` — be read on the submodule.
+/-- The `n`-th iterate of `restrictT C A hstable` agrees with the `n`-th iterate of `C.T` under the
+coercion `↥A → C(X, ℝ)`, for every `f : ↥A` and every `n : ℕ`. Proved by induction on `n` using
+`restrictT_coe`. This is what lets `orbit_bounded_of_state`, which is stated on `C(X, ℝ)`, be applied
+to orbits of the restricted map.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement; `n` is universally quantified. -/
 theorem restrictT_iterate {R : Reflection X} {ν : State X} (C : ShiftCompat R ν)
     (A : Submodule ℝ C(X, ℝ)) (hstable : ∀ f ∈ A, C.T f ∈ A) (f : ↥A) (n : ℕ) :
     (((⇑(restrictT C A hstable))^[n] f : ↥A) : C(X, ℝ)) = (⇑C.T)^[n] (f : C(X, ℝ)) := by
@@ -119,22 +124,29 @@ theorem restrictT_iterate {R : Reflection X} {ν : State X} (C : ShiftCompat R �
 
 #print axioms restrictT_iterate
 
-/-! ## 3. ⭐ The assembly -/
+/-! ## 3. The assembly -/
 
-/-- **⭐ A FULL `Transfer.TransferData`, EVERY FIELD DISCHARGED.**
+/-- A `Transfer.TransferData ↥A` built from a reflection `R`, a state `ν`, a submodule `A` and the
+shift data `C`, with all six fields discharged.
 
-`T_symm` is `form_shift_symm`; `T_contract` is `contract_of_bounded_orbit` fed by
-`orbit_bounded_of_state`; the form and `vac_norm` are `InfiniteReflection`'s. Nothing is assumed
-about the operator beyond what `ShiftCompat` states, and nothing about the form beyond `hpos`.
+The inputs are: `hinv`, invariance of `ν` under `R.θ`; `hpos`, reflection positivity of `ν` on `A`;
+`C : ShiftCompat R ν`, the forward and backward shifts with their compatibility with `R.θ` and `ν`;
+`hstable`, closure of `A` under `C.T`; `hone`, membership of the constant function `1` in `A`;
+`hTone : C.T 1 = 1`; and `hTnorm`, `hθnorm`, stating that neither `C.T` nor `R.θ` increases the
+supremum norm.
 
-**So `GNSHilbert` and `Reconstruction` apply**: this yields a Hilbert space, a unit vacuum, a bounded
-self-adjoint `T` fixing it, and hence `H = −log T` with `H ≥ 0` once a spectral gap is supplied.
+The fields are filled as follows. `toReflForm` and `vac_norm` are `stateReflForm` and
+`stateReflForm_vac_norm`; `T` is `restrictT C A hstable`; `vac` is the constant function `1`, in `A`
+by `hone`; `T_vac` is `hTone`; `T_symm` is `form_shift_symm`; and `T_contract` is
+`contract_of_bounded_orbit`, whose orbit bound is supplied by `orbit_bounded_of_state` through
+`restrictT_iterate`. Since the result is a `TransferData`, `GNSHilbert` and `Reconstruction` apply
+to it.
 
-**`hpos` is the one input the tree cannot currently supply** — see the module header. This is a
-reduction, not a construction.
+Every item in the argument list is a hypothesis; none is constructed here, `hpos` included.
 
-DERIVED: no numeral. The bound `‖1‖ * ‖1‖` fed to `contract_of_bounded_orbit` is
-`orbit_bounded_of_state`'s, computed from the caller's vector rather than chosen. -/
+DERIVED: `1` is the constant function of `C(X, ℝ)`, taken as the vacuum vector and required by
+`hTone` to be fixed by the shift. The orbit bound `‖1‖ * ‖1‖` appears only in the construction, where
+it is `orbit_bounded_of_state`'s value at the caller's vector rather than a chosen level. -/
 noncomputable def assembleTransferData (R : Reflection X) (ν : State X)
     (A : Submodule ℝ C(X, ℝ))
     (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)

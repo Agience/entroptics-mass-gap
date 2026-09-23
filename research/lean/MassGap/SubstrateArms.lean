@@ -4,61 +4,55 @@ import MassGap.ClayAssembly
 import MassGap.NonnegArm
 import MassGap.ConfinesZero
 import MassGap.MomentArms
+import MassGap.WilsonInstance
 
 /-!
-# MassGap.SubstrateArms — the substrate bound from THREE arms, with the middle by COMPACTNESS
+# MassGap.SubstrateArms — substrate bounds from three coupling ranges
 
-## What this changes
+`EvenAperture.existence_and_gap_of_substrate_even` consumes `∃ B, ∀ a β, d2Even a β ≤ B`, a
+substrate bound uniform in both the aperture and the coupling. `NonnegArm.substrate_even_of_two_arm`
+reaches that from `LawAbove b`, a quartic decay law `ρ(d) ≤ C·ρ(0)/circLag(d)⁴` holding at every
+coupling above the cut with one constant.
 
-`EvenAperture.existence_and_gap_of_substrate_even` consumes `∃ B, ∀ a β, d2Even a β ≤ B` — the
-substrate bound, uniform in BOTH the aperture and the coupling. The route to it on record runs
-through `NonnegArm.substrate_even_of_two_arm`, which needs `LawAbove b`: a QUARTIC DECAY LAW
-`ρ(d) ≤ C·ρ(0)/circLag(d)⁴` holding at every coupling above the cut, with ONE constant. That is the
-hard estimate, and it is open.
+The theorems here split `[0, ∞)` at two points instead:
 
-**This file replaces the middle of that obligation with compactness.** Split `[0, ∞)` at two points:
+    [0, b]     the strong-coupling range
+    [b, B]     `CompactBeta.d2At_jointUniform_on_Icc_of_uniform_lipschitz`
+    [B, ∞)     the weak-coupling range
 
-    [0, b]     the strong-coupling arm
-    [b, B]     COMPACT — `CompactBeta.d2At_jointUniform_on_Icc_of_uniform_lipschitz`
-    [B, ∞)     the weak-coupling arm
+On the middle range the hypotheses are a bound uniform in the aperture at each coupling separately
+(`hmid`), and one Lipschitz constant in the coupling, uniform in the aperture (`hlip`). `hlip` has
+the shape of `ClayAssembly.ClayRemaining.I2_clustering`, and several theorems below take it from a
+`ClayRemaining` record.
 
-and the middle then asks for two things that are not a decay law:
-
-* a bound uniform in the APERTURE at EACH coupling separately (`hmid`), and
-* one Lipschitz constant in the coupling, uniform in the aperture (`hlip`).
-
-`hlip` is exactly `ClayAssembly.ClayRemaining.I2_clustering`, which until now **had no consumer
-anywhere in the tree** — it was carried in the remaining-obligations structure and read by nothing.
-This is what reads it.
-
-## ⛔ What this does NOT do
-
-It does not discharge the three arms. All three are hypotheses here, and the file proves an
-implication, not the substrate bound.
-
-What it does is change the SHAPE of what the middle interval needs. A decay law at every coupling in
-`(b, B)` with one constant is a statement about the correlation's tail; an aperture-uniform bound at
-each coupling plus equicontinuity is a statement about how the moment MOVES with the coupling. They
-are different obligations, and `CompactBeta` proves the second suffices on a compact interval.
-
-**Both hypotheses of the compactness step are load-bearing and `CompactBeta` exhibits both failures**
-(`equicontinuity_is_load_bearing`, `compactness_is_load_bearing`), so neither can be dropped and the
-interval really must be bounded — which is why the two arms are still needed at the ends.
+The three ranges enter as hypotheses, so the statements are implications. Both hypotheses of the
+compactness step are used: `CompactBeta.equicontinuity_is_load_bearing` and
+`CompactBeta.compactness_is_load_bearing` exhibit a failure for each, so the middle interval must be
+bounded and the two end ranges are handled separately.
 -/
 
 namespace MassGap.SubstrateArms
 
 open MassGap.EvenAperture
 
-/-- **⭐ THE SUBSTRATE BOUND FROM THREE ARMS.** The ends by whatever supplies them, the middle by
-compactness.
+/-- A bound on `d2Even a β` uniform in the aperture `a : EvenAp` and the coupling `β`, from four
+hypotheses covering `[0, b]`, `[b, B]` and `[B, ∞)`.
 
-`hmid` is weaker than a decay law: it asks for an aperture-uniform bound at EACH coupling of the
-middle interval, one coupling at a time, with no relation between the constants. `hlip` supplies the
-relation, and it is one constant for the whole family.
+`hlip` asks for one Lipschitz constant `L` for `fun β => d2At N β`, holding at every aperture `N`
+and every pair of couplings. `hlow` asks for a single constant bounding `d2At N β` on
+`Set.Icc 0 b`, uniform in `N`. `hmid` asks, at each `β` of `Set.Icc b B` separately, for a bound
+uniform in `N`, with no relation between the constants across `β`. `hhigh` asks for a single bound
+for all `β ≥ B`, uniform in `N`.
 
-DERIVED: no numeral of its own. `b` and `B` are the caller's cut points, `L` the caller's Lipschitz
-constant, and the `0` is the lower end of the physical coupling domain. -/
+The middle range is discharged by
+`CompactBeta.d2At_jointUniform_on_Icc_of_uniform_lipschitz`, which turns `hmid`'s pointwise bounds
+together with `hlip`'s equicontinuity into one constant over `Set.Icc b B`. The witness is the
+maximum of the three constants, and `d2Even_eq` sends each `β` to `d2At a.1 (max β 0)`, which falls
+in one of the three ranges.
+
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant; the `0` in
+`Set.Icc (0 : ℝ) b` is the lower endpoint of the range `hlow` covers. `b`, `B` and `L` are the
+caller's. -/
 theorem substrate_even_of_three_arms
     (b B : ℝ) {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (N : ℕ) (x y : ℝ), |MassGap.d2At N x - MassGap.d2At N y| ≤ L * |x - y|)
@@ -83,13 +77,18 @@ theorem substrate_even_of_three_arms
 
 #print axioms substrate_even_of_three_arms
 
-/-- **⭐⭐ AND THE FLAGSHIP FROM THE SAME THREE ARMS**, through
-`EvenAperture.existence_and_gap_of_substrate_even`.
+/-- The same four hypotheses, carried through `EvenAperture.existence_and_gap_of_substrate_even`.
 
-So the middle interval's obligation has been moved off a decay law and onto a modulus of continuity,
-all the way to the conclusion rather than only to the substrate bound.
+The conclusion is a dependent pair: a proof `h` of the substrate bound
+`∃ Bd, ∀ a β, d2Even a β ≤ Bd`, together with the statement that for every `β` the norm of the
+mode sum of `wilsonEven h` tends to `0` along `Filter.atTop` in the lag `τ`.
 
-DERIVED: no numeral of its own; the cut points and the Lipschitz constant are the caller's. -/
+`substrate_even_of_three_arms` supplies `h` from `hlip`, `hlow`, `hmid` and `hhigh`; the second
+component is the first clause of `existence_and_gap_of_substrate_even`'s conclusion at that witness.
+
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant; the `0` in
+`Set.Icc (0 : ℝ) b` is the lower endpoint of `hlow`'s range; the `0` in `nhds 0` is the limit the
+mode sum tends to. -/
 theorem substrate_of_three_arms_reaches_flagship
     (b B : ℝ) {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (N : ℕ) (x y : ℝ), |MassGap.d2At N x - MassGap.d2At N y| ≤ L * |x - y|)
@@ -105,17 +104,15 @@ theorem substrate_of_three_arms_reaches_flagship
 
 #print axioms substrate_of_three_arms_reaches_flagship
 
-/-- **⭐⭐ AND THIS IS THE FIRST CONSUMER OF `ClayRemaining.I2_clustering`.**
+/-- The substrate bound with the Lipschitz data taken from a `ClayAssembly.ClayRemaining` record
+rather than supplied directly.
 
-`I2_clustering` has been carried in the remaining-obligations structure and read by NOTHING — the
-flagship route went through `I1_lagTwo` alone. The root's own note already records the dependency
-("I2 is upstream of I1, because B5's middle coupling range is the grid route"); what was missing was
-a theorem that consumes it. This is that theorem.
+`R.I2_clustering` yields a constant `L` with `0 ≤ L` and the aperture-uniform Lipschitz estimate on
+`d2At`, which are exactly `substrate_even_of_three_arms`'s `hL` and `hlip`. `hlow`, `hmid` and
+`hhigh` remain hypotheses, covering `Set.Icc 0 b`, each point of `Set.Icc b B`, and `[B, ∞)`.
 
-It says: **given the clustering modulus, the middle coupling interval needs no decay law.** The two
-ends still do.
-
-DERIVED: no numeral of its own; `b` and `B` are the caller's cut points. -/
+DERIVED: the `0` in `Set.Icc (0 : ℝ) b` is the lower endpoint of `hlow`'s coupling range. `b` and
+`B` are the caller's cut points. -/
 theorem substrate_even_of_clayRemaining_and_ends
     (R : MassGap.ClayAssembly.ClayRemaining) (b B : ℝ)
     (hlow : ∃ B₁ : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc (0 : ℝ) b, MassGap.d2At N β ≤ B₁)
@@ -127,12 +124,13 @@ theorem substrate_even_of_clayRemaining_and_ends
 
 #print axioms substrate_even_of_clayRemaining_and_ends
 
-/-! ## ⭐ `d2At` is a ratio of continuous functions with a nonvanishing denominator -/
+/-! ## `d2At` as a ratio of continuous functions with a nonvanishing denominator -/
 
-/-- **`d2At` IS THE RATIO OF TWO FINITE SUMS**, which is what makes every analytic statement about it
-a statement about `wilsonCorrAt`.
+/-- `d2At N β` as a ratio of two finite sums of `wilsonCorrAt`: the circle-lag second moment of the
+correlation over its total mass. The proof unfolds `Moment.Read.p` on `readYMAt N β` and distributes
+the division across the sum.
 
-DERIVED: the `2` is the moment's own exponent. -/
+DERIVED: the `2` is the exponent on the circle lag, the moment's own power. -/
 theorem d2At_eq_div (N : ℕ) (β : ℝ) :
     MassGap.d2At N β
       = (∑ d, MassGap.wilsonCorrAt N β d * (Moment.circLag d : ℝ) ^ 2)
@@ -144,20 +142,17 @@ theorem d2At_eq_div (N : ℕ) (β : ℝ) :
 
 #print axioms d2At_eq_div
 
-/-- **⭐ `d2At` IS CONTINUOUS IN THE COUPLING**, at every aperture, with NO hypothesis.
+/-- `fun β => d2At N β` is continuous, at every aperture `N`, with no hypothesis.
 
-This was missing from the tree, and its absence is why the modulus of continuity could read as
-unknown territory. Every ingredient is unconditional and already proved: `wilsonCorrAt` is continuous
-in `β` at every aperture and lag (`ConfinesZero.continuous_wilsonCorrAt`), and the normalising
-denominator is bounded away from zero by `wilson_reflection_positive_at`'s SECOND clause at every
-aperture and coupling.
+Numerator and denominator of `d2At_eq_div` are finite sums of `wilsonCorrAt N · d`, each continuous
+in `β` by `ConfinesZero.continuous_wilsonCorrAt`. The denominator is nonzero at every `β` by the
+second clause of `wilson_reflection_positive_at`, which gives `0 < ∑ d, wilsonCorrAt N β d`, so
+`Continuous.div` applies.
 
-**⛔ IT DOES NOT GIVE A LIPSCHITZ CONSTANT, let alone an aperture-uniform one.** Continuity at fixed
-`N` is a much weaker statement than `I2_clustering`, which asks for ONE constant across all
-apertures. What it does establish is that the object is analytically well behaved, so the remaining
-obligation is about the SIZE of the modulus and not about its existence.
+`N` is fixed in the statement, so this yields no Lipschitz constant and nothing uniform across
+apertures; `ClayRemaining.I2_clustering` asks for one constant covering all of them.
 
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_d2At (N : ℕ) : Continuous (fun β : ℝ => MassGap.d2At N β) := by
   have hnum : Continuous
       (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt N β d * (Moment.circLag d : ℝ) ^ 2) :=
@@ -175,9 +170,10 @@ theorem continuous_d2At (N : ℕ) : Continuous (fun β : ℝ => MassGap.d2At N �
 
 #print axioms continuous_d2At
 
-/-- **AND SO IS THE EVEN-APERTURE MOMENT**, which is the one the flagship route reads.
+/-- `fun β => d2Even a β` is continuous at every `a : EvenAp`. `d2Even_eq` rewrites it as
+`d2At a.1 (max β 0)`, and `continuous_d2At` composes with the continuity of `fun β => max β 0`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_d2Even (a : EvenAp) : Continuous (fun β : ℝ => d2Even a β) := by
   have h : (fun β : ℝ => d2Even a β) = fun β : ℝ => MassGap.d2At a.1 (max β 0) := by
     funext β; exact d2Even_eq a β
@@ -186,22 +182,24 @@ theorem continuous_d2Even (a : EvenAp) : Continuous (fun β : ℝ => d2Even a β
 
 #print axioms continuous_d2Even
 
-/-! ## ⭐ The strong-coupling arm, DISCHARGED -/
+/-! ## The strong-coupling range -/
 
-/-- **⭐⭐ THE STRONG-COUPLING ARM IS NOT A HYPOTHESIS. IT IS A THEOREM.**
+/-- There is a cut `b > 0` and a constant `B₁` bounding `d2At N β` at every aperture `N` and every
+`β ∈ Set.Icc 0 b`, with no hypothesis.
 
-`ContactFloor.contact_relative_unconditional` gives the quartic contact-relative law
-`ρ(d) ≤ C·ρ(0)/circLag(d)⁴` on a DERIVED `[0, b]`, at every aperture, with no hypothesis — the
-`ContactFloor b` premise is discharged inside it by `contactFloor_holds`. Carrying that across
-`ShareEnvelope.circ_moment_le_of_contact_relative` turns it into a bound on the circle second moment,
-which is `d2At`.
+`ContactFloor.contact_relative_unconditional` supplies `b` together with the quartic
+contact-relative estimate `ρ(d) ≤ C·ρ(0)/circLag(d)⁴` on that range at every aperture; its own
+`ContactFloor b` premise is discharged internally by `contactFloor_holds`.
+`ShareEnvelope.circ_moment_le_of_contact_relative` carries that estimate to the circle second
+moment, which is `d2At`.
 
-**⛔ `b` IS EXISTENTIAL AND IS NOT CHOSEN HERE.** It is `contact_relative_unconditional`'s own, and
-no numeral is ever named for it — the chain bottoms out in a continuity argument at `β = 0`. The only
-property it carries out is `coreRate (16·4) b < 1`.
+`b` is existential and no value is named for it: it is `contact_relative_unconditional`'s, reached
+there by a continuity argument at `β = 0`, and the property carried out alongside it is
+`coreRate (16·4) b < 1`.
 
-DERIVED: the `1` is the lag cut `m₀` (it excludes the contact lag and nothing else), the `2` is the
-moment's own exponent, and the `0` is the lower end of the physical coupling domain. -/
+DERIVED: the `0` in `0 < b` is a sign condition on the cut, and the `0` in `Set.Icc (0 : ℝ) b` is
+the lower endpoint of the range. The `1` passed to `quarticWeight` as the lag cut and the `2` in the
+tail sum's exponent occur in the proof term, not in the statement. -/
 theorem d2At_bounded_on_strong_arm :
     ∃ b : ℝ, 0 < b ∧
       ∃ B₁ : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc (0 : ℝ) b, MassGap.d2At N β ≤ B₁ := by
@@ -215,9 +213,13 @@ theorem d2At_bounded_on_strong_arm :
 
 #print axioms d2At_bounded_on_strong_arm
 
-/-- The same, keyed off `NonnegArm.LawBelow` so it composes with the existing two-arm vocabulary.
+/-- The same bound on `Set.Icc 0 b`, taking `NonnegArm.LawBelow b` as a hypothesis instead of
+producing the cut, so that it composes with the two-arm vocabulary. `LawBelow b` unfolds to a
+constant `C ≥ 0` and the quartic contact-relative estimate below the cut, and
+`ShareEnvelope.circ_moment_le_of_contact_relative` turns that into the moment bound.
 
-DERIVED: as `d2At_bounded_on_strong_arm`. -/
+DERIVED: the `0` in `Set.Icc (0 : ℝ) b` is the lower endpoint of the coupling range. `b` is the
+caller's. -/
 theorem d2At_bounded_of_lawBelow {b : ℝ} (hb : MassGap.NonnegArm.LawBelow b) :
     ∃ B₁ : ℝ, ∀ (N : ℕ), ∀ β ∈ Set.Icc (0 : ℝ) b, MassGap.d2At N β ≤ B₁ := by
   obtain ⟨C, hC, h⟩ := hb
@@ -229,14 +231,16 @@ theorem d2At_bounded_of_lawBelow {b : ℝ} (hb : MassGap.NonnegArm.LawBelow b) :
 
 #print axioms d2At_bounded_of_lawBelow
 
-/-- **THE WEAK END ASKS STRICTLY LESS THAN THE OBLIGATION ALREADY ON THE BOOKS.** `hhigh` follows from
-`NonnegArm.LawAbove` at any strictly smaller cut, so the three-arm route cannot be harder at that end
-than `NonnegArm.substrate_even_of_two_arm` already is.
+/-- `NonnegArm.LawAbove b` gives a constant `B₃` bounding `d2At N β` at every aperture `N` for all
+`β ≥ B`, whenever `b < B`.
 
-It does NOT discharge `hhigh`: `LawAbove` is itself open. What it records is the direction of the
-implication.
+`LawAbove b` unfolds to a constant `C ≥ 0` and the quartic contact-relative estimate at every
+coupling strictly above `b`; `hbB : b < B` places `Set.Ici B` inside that range, and
+`ShareEnvelope.circ_moment_le_of_contact_relative` carries the estimate to the moment. This is the
+shape `hhigh` takes in `substrate_even_of_three_arms`. `LawAbove` is a hypothesis here.
 
-DERIVED: as `d2At_bounded_on_strong_arm`. -/
+DERIVED: no numeral appears in the statement; the `1` naming `quarticWeight`'s lag cut and the `2`
+in the tail sum's exponent occur in the proof term. -/
 theorem d2At_bounded_of_lawAbove {b B : ℝ} (hbB : b < B) (ha : MassGap.NonnegArm.LawAbove b) :
     ∃ B₃ : ℝ, ∀ (N : ℕ), ∀ β : ℝ, B ≤ β → MassGap.d2At N β ≤ B₃ := by
   obtain ⟨C, hC, h⟩ := ha
@@ -249,10 +253,16 @@ theorem d2At_bounded_of_lawAbove {b B : ℝ} (hbB : b < B) (ha : MassGap.NonnegA
 
 #print axioms d2At_bounded_of_lawAbove
 
-/-- **⭐⭐ THE SUBSTRATE BOUND WITH THE STRONG ARM CLOSED.** Two hypotheses remain, not three, and the
-cut `b` is returned rather than taken — it is `contact_relative_unconditional`'s own.
+/-- The substrate bound with the strong-coupling range supplied internally by
+`d2At_bounded_on_strong_arm`. The cut `b` is returned rather than taken, so it is
+`ContactFloor.contact_relative_unconditional`'s.
 
-DERIVED: no numeral of its own. -/
+`hL` and `hlip` give the aperture-uniform Lipschitz data. Inside the returned quantifier, for each
+`B`, the caller still supplies the pointwise aperture-uniform bounds on `Set.Icc b B` and the bound
+for `β ≥ B`; `substrate_even_of_three_arms` assembles the three.
+
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant, and the `0` in
+`0 < b` is a sign condition on the returned cut. -/
 theorem substrate_even_of_two_remaining_arms
     {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (N : ℕ) (x y : ℝ), |MassGap.d2At N x - MassGap.d2At N y| ≤ L * |x - y|) :
@@ -266,10 +276,11 @@ theorem substrate_even_of_two_remaining_arms
 
 #print axioms substrate_even_of_two_remaining_arms
 
-/-- **⭐⭐ AND FROM `ClayRemaining` DIRECTLY.** Given the clustering modulus, what is left of the
-substrate bound is the middle interval and the weak end — the strong end is gone.
+/-- The same, with the Lipschitz data read off `ClayAssembly.ClayRemaining.I2_clustering` instead of
+supplied. What remains inside the returned quantifier, for each `B`, is the pointwise
+aperture-uniform bound on `Set.Icc b B` and the bound for `β ≥ B`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `0` in `0 < b` is a sign condition on the returned cut. -/
 theorem substrate_even_of_clayRemaining_and_weak_end
     (R : MassGap.ClayAssembly.ClayRemaining) :
     ∃ b : ℝ, 0 < b ∧ ∀ B : ℝ,
@@ -281,17 +292,17 @@ theorem substrate_even_of_clayRemaining_and_weak_end
 
 #print axioms substrate_even_of_clayRemaining_and_weak_end
 
-/-! ## ⭐⭐ The same route, AXIOM-FREE, on the even aperture -/
+/-! ## The same route on the even aperture -/
 
-/-- **THE READ DOES NOT SEE A NEGATIVE COUPLING**, and saying so WITHOUT the bridge to `readYMAt` is
-what keeps the chain axiom-free.
+/-- `readEven a (max β 0) = readEven a β`: clamping the coupling at zero leaves the even-aperture
+read unchanged.
 
-`readEven a β` is `readA (wilsonCorrAt a.1 (max β 0)) _`, and `max (max β 0) 0 = max β 0`, so the
-clamp is `readA_congr` on the correlation alone.
+`readEven a β` is `readA (wilsonCorrAt a.1 (max β 0)) _`, and `max (max β 0) 0 = max β 0`, so both
+sides are reads of the same correlation and `readA_congr` closes it. The proof mentions
+`wilsonCorrAt` only, not `readYMAt`, so it does not report the named reflection-positivity axiom;
+`d2Even_eq` is the bridge to `d2At` and does mention `readYMAt`.
 
-**⛔ GOING VIA `d2Even_eq` WOULD LEAK THE AXIOM.** That lemma is the bridge to `d2At`, hence to
-`readYMAt`, hence to `wilson_reflection_positive_at` — `EvenAperture`'s own docstring says the bridge
-"mentions `readYMAt` and therefore reports the axiom; that is the point of stating it separately". -/
+DERIVED: the `0` is the clamp point, the lower end of the physical coupling range. -/
 theorem readEven_clamp (a : EvenAp) (β : ℝ) : readEven a (max β 0) = readEven a β :=
   readA_congr (congrArg (MassGap.wilsonCorrAt a.1) (max_eq_left (le_max_right β 0)))
 
@@ -300,12 +311,14 @@ theorem d2Even_clamp (a : EvenAp) (β : ℝ) : d2Even a β = d2Even a (max β 0)
     = ∑ d, (readEven a (max β 0)).p d * (Moment.circLag d : ℝ) ^ 2
   rw [readEven_clamp a β]
 
-/-- **⭐⭐ THE STRONG ARM, AXIOM-FREE.** The same content as `d2At_bounded_on_strong_arm` on the even
-aperture, where `NonnegArm.d2Even_le_of_contact_relative` lands directly and `readEven` carries no
-named axiom.
+/-- The strong-range bound stated on `d2Even` over `EvenAp`, rather than on `d2At` at an arbitrary
+aperture. `ContactFloor.contact_relative_unconditional` supplies the cut `b` and the quartic
+contact-relative estimate, and `NonnegArm.d2Even_le_of_contact_relative` lands on `d2Even`
+directly. The chain reads `readEven`, so it does not report the named axiom.
 
-DERIVED: the `1` is the lag cut `m₀`, the `2` is the moment's own exponent, and the `0` is the lower
-end of the physical coupling domain. -/
+DERIVED: the `0` in `0 < b` is a sign condition on the returned cut, and the `0` in
+`Set.Icc (0 : ℝ) b` is the lower endpoint of the range. The `1` passed to `quarticWeight` and the
+`2` in the tail sum's exponent occur in the proof term only. -/
 theorem d2Even_bounded_on_strong_arm :
     ∃ b : ℝ, 0 < b ∧
       ∃ B₁ : ℝ, ∀ (a : EvenAp), ∀ β ∈ Set.Icc (0 : ℝ) b, d2Even a β ≤ B₁ := by
@@ -318,14 +331,18 @@ theorem d2Even_bounded_on_strong_arm :
 
 #print axioms d2Even_bounded_on_strong_arm
 
-/-- **⭐⭐ THE SUBSTRATE BOUND FROM THREE ARMS, AXIOM-FREE.**
+/-- The three-range substrate bound stated throughout on `d2Even` and `EvenAp`.
 
-`CompactBeta.jointUniform_on_Icc` is polymorphic in the index type, so the compactness step runs on
-`EvenAp` unchanged. Everything here reads `d2Even`, hence `readEven`, hence the PROVED
+`hlip` asks for one Lipschitz constant in the coupling, uniform over `EvenAp`; `hlow`, `hmid` and
+`hhigh` are the bound on `Set.Icc 0 b`, the pointwise bounds at each `β ∈ Set.Icc b B`, and the
+bound for `β ≥ B`. `CompactBeta.jointUniform_on_Icc` is polymorphic in the index type, so the
+compactness step runs on `EvenAp` unchanged, with
+`CompactBeta.equicontinuousInBeta_of_uniform_lipschitz` converting `hlip`. The reduction to
+`max β 0` uses `d2Even_clamp`, so the proof reads `d2Even`, hence `readEven`, hence
 `wilson_reflection_positive_at_even` rather than the named axiom.
 
-DERIVED: no numeral of its own; `b` and `B` are the caller's cut points and the `0` is the lower end
-of the coupling domain. -/
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant, and the `0` in
+`Set.Icc (0 : ℝ) b` is the lower endpoint of `hlow`'s range. `b` and `B` are the caller's. -/
 theorem substrate_even_of_three_even_arms
     (b B : ℝ) {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (a : EvenAp) (x y : ℝ), |d2Even a x - d2Even a y| ≤ L * |x - y|)
@@ -351,10 +368,13 @@ theorem substrate_even_of_three_even_arms
 
 #print axioms substrate_even_of_three_even_arms
 
-/-- **⭐⭐ AND WITH THE STRONG ARM CLOSED, AXIOM-FREE.** Two hypotheses remain: the middle interval's
-pointwise aperture-uniformity, and the weak end. The cut `b` is returned, not chosen.
+/-- The even-aperture substrate bound with the strong range supplied by
+`d2Even_bounded_on_strong_arm`, whose cut `b` is what this returns. Inside the returned quantifier,
+for each `B`, the caller supplies the pointwise aperture-uniform bound on `Set.Icc b B` and the
+bound for `β ≥ B`.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant, and the `0` in
+`0 < b` is a sign condition on the returned cut. -/
 theorem substrate_even_of_two_remaining_even_arms
     {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (a : EvenAp) (x y : ℝ), |d2Even a x - d2Even a y| ≤ L * |x - y|) :
@@ -368,20 +388,19 @@ theorem substrate_even_of_two_remaining_even_arms
 
 #print axioms substrate_even_of_two_remaining_even_arms
 
-/-! ## ⭐⭐ The clustering modulus alone kills the strong arm AND the middle -/
+/-! ## The clustering modulus over the strong and middle ranges -/
 
-/-- **⭐⭐ THE MODULUS IS ANCHORED AT A POINT WHERE THE MOMENT IS KNOWN EXACTLY.**
+/-- An aperture-uniform Lipschitz constant bounds the even-aperture moment linearly above zero
+coupling: `d2Even a β ≤ L * β` at every `a : EvenAp` and every `β ≥ 0`.
 
-`MomentArms.d2Even_at_zero` proves `d2Even a 0 = 0` — at zero coupling the read is a point mass at
-the contact lag, so the circle second moment vanishes. An aperture-uniform Lipschitz constant
-therefore bounds the moment LINEARLY from that point, at every aperture at once:
+`MomentArms.d2Even_at_zero` gives `d2Even a 0 = 0` — at zero coupling the read is a point mass at
+the contact lag, so the circle second moment vanishes. `hlip` at the pair `β, 0` then reads
+`|d2Even a β| ≤ L * |β|`, and `hβ` strips both absolute values.
 
-    d2Even a β ≤ L · β   for every `a` and every `β ≥ 0`.
+`hlip` and `L` are the caller's, and `L`'s nonnegativity is not among the hypotheses.
 
-**This is not a new estimate.** It is the observation that the modulus has a known anchor, and the
-tree already proved the anchor.
-
-DERIVED: the `0` is the coupling at which the moment vanishes, and `L` is the caller's constant. -/
+DERIVED: the `0` in `hβ : 0 ≤ β` is the sign condition on the coupling. The anchor `d2Even a 0 = 0`
+enters through the proof and is not part of the statement. -/
 theorem d2Even_le_lipschitz_linear {L : ℝ}
     (hlip : ∀ (a : EvenAp) (x y : ℝ), |d2Even a x - d2Even a y| ≤ L * |x - y|)
     (a : EvenAp) {β : ℝ} (hβ : 0 ≤ β) : d2Even a β ≤ L * β := by
@@ -392,15 +411,17 @@ theorem d2Even_le_lipschitz_linear {L : ℝ}
 
 #print axioms d2Even_le_lipschitz_linear
 
-/-- **⭐⭐⭐ THE SUBSTRATE BOUND FROM THE CLUSTERING MODULUS AND THE WEAK ARM ALONE.**
+/-- The substrate bound from aperture-uniform Lipschitz data and a bound above one cut.
 
-Both the strong arm and the middle interval are gone: `d2Even_le_lipschitz_linear` bounds the moment
-by `L·β` on the whole of `[0, B]` at once, uniformly in the aperture. What survives is the weak end,
-where `L·β` grows without bound and the linear bound says nothing.
+On `[0, B]`, `d2Even_le_lipschitz_linear` bounds `d2Even a β` by `L * β`, and `hL` carries that to
+`L * B` at every aperture at once. Above `B`, `hhigh` supplies `B₃`. The witness is
+`max (L * B) B₃`, with `d2Even_clamp` sending each `β` to the nonnegative `max β 0`.
 
-So the obligation is **two things, not three**: the clustering modulus, and a bound above some cut.
+`hhigh` is a hypothesis: the linear bound grows without limit in `β`, so it constrains nothing above
+a cut. No separate hypothesis covers the middle range.
 
-DERIVED: the `0` is the lower end of the coupling domain; `B` and `L` are the caller's. -/
+DERIVED: the `0` in `hL : 0 ≤ L` is a sign condition on the Lipschitz constant. `B` and `L` are the
+caller's. -/
 theorem substrate_even_of_clustering_and_weak_arm
     {L : ℝ} (hL : 0 ≤ L)
     (hlip : ∀ (a : EvenAp) (x y : ℝ), |d2Even a x - d2Even a y| ≤ L * |x - y|)
@@ -418,12 +439,15 @@ theorem substrate_even_of_clustering_and_weak_arm
 
 #print axioms substrate_even_of_clustering_and_weak_arm
 
-/-- `ClayRemaining.I2_clustering` is stated on `d2At`; this is the same content on `d2Even`.
+/-- `ClayAssembly.ClayRemaining.I2_clustering` is stated on `d2At` at an arbitrary aperture; this
+restates the same constant on `d2Even` over `EvenAp`.
 
-It mentions `d2Even_eq`, the bridge to `d2At`, so it reports the named axiom — which costs nothing
-here because `ClayRemaining` carries it anyway.
+`d2Even_eq` rewrites both sides as `d2At a.1 (max · 0)`, and `abs_max_sub_max_le_abs` shows the
+clamp is nonexpansive, so the same `L` serves. The proof uses `d2Even_eq`, the bridge to `d2At` and
+hence to `readYMAt`, so it reports the named axiom; `ClayRemaining` carries that axiom already.
 
-DERIVED: no numeral of its own; the `0` is the clamp. -/
+DERIVED: the `0` in `0 ≤ L` is a sign condition on the returned Lipschitz constant, inherited from
+`I2_clustering`. The clamp `max x 0` is in the proof, not the statement. -/
 theorem d2Even_lipschitz_of_clayRemaining (R : MassGap.ClayAssembly.ClayRemaining) :
     ∃ L : ℝ, 0 ≤ L ∧
       ∀ (a : EvenAp) (x y : ℝ), |d2Even a x - d2Even a y| ≤ L * |x - y| := by
@@ -435,12 +459,13 @@ theorem d2Even_lipschitz_of_clayRemaining (R : MassGap.ClayAssembly.ClayRemainin
 
 #print axioms d2Even_lipschitz_of_clayRemaining
 
-/-- **⭐⭐⭐ AND SO, FROM `ClayRemaining`, THE SUBSTRATE BOUND NEEDS ONLY THE WEAK ARM.**
+/-- The substrate bound from a `ClayRemaining` record together with a bound above one cut.
 
-`I2_clustering` plus a bound above one cut. The strong arm and the whole middle interval are
-consequences, not hypotheses.
+`d2Even_lipschitz_of_clayRemaining` turns `R.I2_clustering` into the even-aperture Lipschitz data,
+and `substrate_even_of_clustering_and_weak_arm` covers `[0, B]` linearly and `[B, ∞)` by `hhigh`.
+Neither a strong-range nor a middle-range bound appears as a hypothesis.
 
-DERIVED: no numeral of its own; `B` is the caller's cut. -/
+DERIVED: no numeral appears in the statement. `B` is the caller's cut. -/
 theorem substrate_even_of_clayRemaining_and_weak_arm_only
     (R : MassGap.ClayAssembly.ClayRemaining) (B : ℝ)
     (hhigh : ∃ B₃ : ℝ, ∀ (a : EvenAp), ∀ β : ℝ, B ≤ β → d2Even a β ≤ B₃) :
@@ -450,26 +475,26 @@ theorem substrate_even_of_clayRemaining_and_weak_arm_only
 
 #print axioms substrate_even_of_clayRemaining_and_weak_arm_only
 
-/-! ## ⭐⭐ The modulus, reduced from the MOMENT to the CORRELATION -/
+/-! ## The modulus reduced from the moment to the correlation -/
 
-/-- **⭐⭐ A WEIGHTED AVERAGE'S VARIATION IS THE PROFILE'S VARIATION OVER THE TOTAL MASS.**
+/-- The difference of two normalised weighted averages, bounded by the profiles' `L¹` difference
+over the first read's total mass.
 
-`d2Even` is a ratio `A/B` of finite sums of the profile, so for two reads
+`Moment.Read.p` is `ρ d / ∑ ρ`, so each side is a ratio, and
 
     A/B - A'/B' = (A - A')/B + (A'/B')·(B' - B)/B
 
-which bounds the moment's variation by the profile's `L¹` variation — weighted by the lag weight in
-the first term, unweighted in the second, both divided by the first read's own total mass.
+splits the difference into a weighted term and an unweighted term, both divided by `∑ d, R.ρ d`.
+`Moment.Read.hpos` makes the two total masses positive, and `Moment.Read.hρ` together with `hw`
+supplies the nonnegativity the comparison steps need.
 
-**⛔ THIS IS PURE ALGEBRA ON NONNEGATIVE READS.** No analysis, no measure, no Yang–Mills. It is
-stated on an arbitrary `Moment.Read` and an arbitrary nonnegative weight precisely so that what it
-uses is visible: only `hρ` and `hpos`.
+The statement is over an arbitrary `Moment.Read N` and an arbitrary nonnegative weight `w`, so it
+uses only `hρ` and `hpos`. Nothing about the Yang-Mills correlation enters. It converts a statement
+about `d2Even` into two statements about the correlation, with the denominator available from
+`ContactFloor.contactFloor_holds`.
 
-What it buys is that the clustering modulus stops being a statement about `d2Even` and becomes two
-statements about the CORRELATION, which is where the Gibbs machinery lives. The denominator is then
-bounded below, uniformly in the aperture, by `ContactFloor.contactFloor_holds` at every real cut.
-
-DERIVED: no numeral of its own; `w` is the caller's weight. -/
+DERIVED: the `1` in `Fin (N + 1)` is the index offset, the number of lags a read of aperture `N`
+carries. The `0` in `hw : ∀ d, 0 ≤ w d` is a sign condition on the weight. `w` is the caller's. -/
 theorem moment_diff_le_profile_diff {N : ℕ} (R S : Moment.Read N) (w : Fin (N + 1) → ℝ)
     (hw : ∀ d, 0 ≤ w d) :
     |(∑ d, R.p d * w d) - (∑ d, S.p d * w d)|
@@ -527,11 +552,972 @@ theorem moment_diff_le_profile_diff {N : ℕ} (R S : Moment.Read N) (w : Fin (N 
 
 #print axioms moment_diff_le_profile_diff
 
-/-! ## ⭐⭐ The substrate bound with the division performed -/
+/-- A Lipschitz constant for the raw lag second moment of `readYMAt N` on `Set.Icc a b`, produced
+rather than assumed. This is the shape `ym_crossover_confinement_of_grid` takes as its `hlip`.
 
-/-- `d2Even` as a ratio of two finite sums of the CORRELATION.
+Four ingredients combine, and no derivative bound is used:
 
-DERIVED: the `2` is the moment's own exponent; the `0` is the clamp. -/
+* `moment_diff_le_profile_diff` bounds this quantity for any nonnegative weight, by the profile
+  differences over the profile sum;
+* `ConfinesZero.lipschitz_wilsonCorrAt` bounds each profile difference by `K * |x - y|`, where
+  `K = 48 * Fintype.card (WilsonHypercubic.Plaq 4 (N + 1))`;
+* `ConfinesZero.exists_profile_sum_floor` bounds the denominator below by a positive `m` on the
+  interval, which `Moment.Read.hpos` cannot do — it gives `0 < ∑ ρ` with no constant;
+* `Moment.Read.p_sum` and `p_nonneg` make the weighted average at most the largest weight
+  `W = (N : ℝ) ^ 2`.
+
+The witness is `2 * ((N : ℝ) + 1) * K * W / m`. The constant is not uniform in the aperture: `K`
+carries `Fintype.card Plaq` and `W` carries `N ^ 2`. `ym_crossover_confinement_of_grid` is applied
+at the pinned aperture `nCorrYM = 16`, where `μYM_is_μYMAt` holds by `rfl`. A volume-uniform
+argument would take a different route, `expect_lipschitz_local`, which carries a clustering
+hypothesis.
+
+DERIVED: the `0` in `ha : 0 ≤ a` is the sign condition on the left endpoint, and the `0` in `0 ≤ L`
+is a sign condition on the returned constant. The `1` in `Fin (N + 1)` is the index offset, since
+`readYMAt N` reads `N + 1` lags. The `2` in `(d : ℝ) ^ 2` is the lag moment's own power. The factor
+`2` in the witness and the `48` in `K` appear in the proof only — the first from the two terms
+`moment_diff_le_profile_diff` produces, the second from
+`ConfinesZero.lipschitz_wilsonCorrConn`. -/
+theorem exists_lipschitz_lag_moment {a b : ℝ} (ha : 0 ≤ a) (N : ℕ) :
+    ∃ L : ℝ, 0 ≤ L ∧ ∀ x ∈ Set.Icc a b, ∀ y ∈ Set.Icc a b,
+      |(∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (d : ℝ) ^ 2)
+        - (∑ d : Fin (N + 1), (MassGap.readYMAt N y).p d * (d : ℝ) ^ 2)| ≤ L * |x - y| := by
+  classical
+  obtain ⟨m, hm, hfloor⟩ := MassGap.ConfinesZero.exists_profile_sum_floor (a := a) (b := b) ha
+  set K : ℝ := 48 * (Fintype.card (MassGap.WilsonHypercubic.Plaq 4 (N + 1)) : ℝ) with hK
+  have hK0 : 0 ≤ K := by positivity
+  set W : ℝ := (N : ℝ) ^ 2 with hW
+  have hW0 : 0 ≤ W := by positivity
+  have hwle : ∀ d : Fin (N + 1), ((d : ℝ)) ^ 2 ≤ W := by
+    intro d
+    have hd : ((d : ℝ)) ≤ (N : ℝ) := by
+      have := Nat.lt_succ_iff.mp d.isLt
+      exact_mod_cast this
+    have hd0 : (0 : ℝ) ≤ (d : ℝ) := by positivity
+    nlinarith [hd, hd0]
+  have hw0 : ∀ d : Fin (N + 1), (0 : ℝ) ≤ ((d : ℝ)) ^ 2 := fun d => by positivity
+  refine ⟨2 * ((N : ℝ) + 1) * K * W / m, div_nonneg (by positivity) hm.le, ?_⟩
+  intro x hx y hy
+  have hden : m ≤ ∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d := hfloor N x hx
+  have hdenpos : (0 : ℝ) < ∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d :=
+    lt_of_lt_of_le hm hden
+  have hxy : (0 : ℝ) ≤ |x - y| := abs_nonneg _
+  -- each profile difference
+  have hdiffle : ∀ d : Fin (N + 1),
+      |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| ≤ K * |x - y| :=
+    fun d => MassGap.ConfinesZero.lipschitz_wilsonCorrAt N d x y
+  -- the weighted sum of differences
+  have hnum1 : (∑ d : Fin (N + 1),
+      |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| * (d : ℝ) ^ 2)
+      ≤ ((N : ℝ) + 1) * (K * |x - y|) * W := by
+    have hbd : ∀ d ∈ (Finset.univ : Finset (Fin (N + 1))),
+        |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| * (d : ℝ) ^ 2
+          ≤ (K * |x - y|) * W := by
+      intro d _
+      exact mul_le_mul (hdiffle d) (hwle d) (hw0 d) (by positivity)
+    refine le_trans (Finset.sum_le_sum hbd) (le_of_eq ?_)
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    push_cast
+    ring
+  -- the unweighted sum of differences
+  have hnum2 : (∑ d : Fin (N + 1),
+      |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d|)
+      ≤ ((N : ℝ) + 1) * (K * |x - y|) := by
+    refine le_trans (Finset.sum_le_sum (fun d _ => hdiffle d)) ?_
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    have : ((N + 1 : ℕ) : ℝ) = (N : ℝ) + 1 := by push_cast; ring
+    rw [this]
+  -- the weighted average is at most the largest weight
+  have havg : (∑ d : Fin (N + 1), (MassGap.readYMAt N y).p d * (d : ℝ) ^ 2) ≤ W := by
+    have hbd : ∀ d ∈ (Finset.univ : Finset (Fin (N + 1))),
+        (MassGap.readYMAt N y).p d * (d : ℝ) ^ 2 ≤ (MassGap.readYMAt N y).p d * W :=
+      fun d _ => mul_le_mul_of_nonneg_left (hwle d) ((MassGap.readYMAt N y).p_nonneg d)
+    refine le_trans (Finset.sum_le_sum hbd) ?_
+    rw [← Finset.sum_mul, (MassGap.readYMAt N y).p_sum, one_mul]
+  refine le_trans (moment_diff_le_profile_diff _ _ _ hw0) ?_
+  have hA : (∑ d : Fin (N + 1),
+        |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| * (d : ℝ) ^ 2)
+        / (∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d)
+      ≤ (((N : ℝ) + 1) * (K * |x - y|) * W) / m := by
+    first
+      | exact div_le_div (by positivity) hnum1 hm hden
+      | exact div_le_div₀ (by positivity) hnum1 hm hden
+      | exact div_le_div_of_le_left (by positivity) hm hden
+  have hBnum : (∑ d : Fin (N + 1),
+        |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d|)
+        / (∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d)
+      ≤ (((N : ℝ) + 1) * (K * |x - y|)) / m := by
+    first
+      | exact div_le_div (by positivity) hnum2 hm hden
+      | exact div_le_div₀ (by positivity) hnum2 hm hden
+      | exact div_le_div_of_le_left (by positivity) hm hden
+  have hBpos : (0 : ℝ) ≤ ∑ d : Fin (N + 1), (MassGap.readYMAt N y).p d * (d : ℝ) ^ 2 :=
+    Finset.sum_nonneg (fun d _ => mul_nonneg ((MassGap.readYMAt N y).p_nonneg d) (hw0 d))
+  have hB : (∑ d : Fin (N + 1), (MassGap.readYMAt N y).p d * (d : ℝ) ^ 2)
+        * ((∑ d : Fin (N + 1),
+            |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d|)
+          / (∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d))
+      ≤ W * ((((N : ℝ) + 1) * (K * |x - y|)) / m) := by
+    refine mul_le_mul havg hBnum (by positivity) hW0
+  have hsum := add_le_add hA hB
+  refine le_trans hsum (le_of_eq ?_)
+  have hm0 : m ≠ 0 := ne_of_gt hm
+  field_simp
+  ring
+
+#print axioms exists_lipschitz_lag_moment
+
+/-- `ym_crossover_confinement_of_grid` with its Lipschitz modulus supplied instead of assumed.
+
+That theorem concludes `∀ β ∈ Set.Icc a b, μYM β < κ₀YM` from four inputs, one of which, `hlip`, is
+a Lipschitz modulus for the lag second moment. `exists_lipschitz_lag_moment` at `nCorrYM` supplies
+it, so the statement returns a constant `L` with `0 ≤ L` and an implication: if every `β` in
+`Set.Icc a b` has some `γ` in the same interval within `δ` whose lag second moment is at most
+`B - L * δ`, then `μYM β < κ₀YM` throughout the interval.
+
+`haperture` stays a hypothesis; it is arithmetic in `B` once `B` is fixed, and fixing `B` belongs to
+the grid data. `pcorrYM` matches `exists_lipschitz_lag_moment`'s `(readYMAt nCorrYM ·).p`
+definitionally, since `readYM_is_readYMAt` is `rfl` and `pcorrYM β = (readYM β).p`.
+
+The conclusion covers `Set.Icc a b` only. `ym_A1_of_grid` additionally takes `hstrong` and `hweak`.
+`Apriori.apriori_A1_strong` is stated over an abstract `μ : ℝ → ℝ` and is not instantiated at `μYM`.
+The `EvenAp` family requires `N` odd, and `nCorrYM = 16` is even, so it does not reach this read.
+
+DERIVED: the `0` in `ha : 0 ≤ a` is the sign condition on the left endpoint, and the `0` in `0 ≤ L`
+a sign condition on the returned constant. In `haperture`, `2 * Real.pi` is the full turn, the `1`
+in `nCorrYM + 1` is the aperture's index offset, the outer `2` squares the aperture factor, the `2`
+in `B / 2` is the halving carried by `Moment.Read.cos_avg_ge_circ`, and `1`, `3`, `1`, `4` are the
+entropy floor's transfer read `3 ^ (-1/4) = e ^ (-κ₀)` subtracted from one. The `2` in `(d : ℝ) ^ 2`
+is the lag moment's exponent. All are `ym_crossover_confinement_of_grid`'s, restated verbatim so the
+caller discharges them by arithmetic. -/
+theorem exists_lipschitz_interior_of_grid {a b B δ : ℝ} (ha : 0 ≤ a)
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * B / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
+    ∃ L : ℝ, 0 ≤ L ∧
+      ((∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧
+          (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ B - L * δ)
+        → ∀ β ∈ Set.Icc a b, MassGap.μYM β < MassGap.κ₀YM) := by
+  obtain ⟨L, hL, hlip⟩ := exists_lipschitz_lag_moment ha MassGap.nCorrYM
+  exact ⟨L, hL, fun hcover =>
+    MassGap.ym_crossover_confinement_of_grid hL haperture hlip hcover⟩
+
+#print axioms exists_lipschitz_interior_of_grid
+
+/-- `A1_YM ymModel`, which unfolds to `∀ β, μYM β < κ₀YM`, from three coupling ranges with both cut
+points free.
+
+`hstrong` covers `β < blo`, `hinterior` covers `Set.Icc blo bhi`, and `hweak` covers `bhi ≤ β`. The
+proof is a trichotomy on `β` against the two cuts and reads neither cut's value.
+
+`ym_A1_of_grid` pins the lower cut at `βloYM = βcYM - 1`; here both cuts are the caller's variables,
+so the interior interval can be matched to the grid data.
+
+DERIVED: no numeral appears in the statement. The two cuts are the caller's. -/
+theorem ym_A1_of_split {blo bhi : ℝ}
+    (hstrong : ∀ β, β < blo → MassGap.μYM β < MassGap.κ₀YM)
+    (hinterior : ∀ β ∈ Set.Icc blo bhi, MassGap.μYM β < MassGap.κ₀YM)
+    (hweak : ∀ β, bhi ≤ β → MassGap.μYM β < MassGap.κ₀YM) :
+    MassGap.A1_YM MassGap.ymModel := by
+  show ∀ β, MassGap.μYM β < MassGap.κ₀YM
+  intro β
+  rcases lt_or_ge β blo with h | h
+  · exact hstrong β h
+  · rcases le_or_gt β bhi with h2 | h2
+    · exact hinterior β ⟨h, h2⟩
+    · exact hweak β (le_of_lt h2)
+
+#print axioms ym_A1_of_split
+
+/-- A definite weak-coupling cut, from a limit of `μYM` strictly below the floor.
+
+`Apriori.apriori_A1_weak` turns `hL : L < κ₀YM` and `hlim` into `∀ᶠ β in atTop, μYM β < κ₀YM`, and
+`Filter.eventually_atTop` restates that as a cut `bhi` with `∀ β, bhi ≤ β → μYM β < κ₀YM` — the
+shape `ym_A1_of_split`'s `hweak` takes, which is available because that cut is a variable there.
+
+`hlim` is a hypothesis; nothing in the tree produces it. `FreeField.muInf_lt_floor` is the
+arithmetic `0.0326 < ¼ · log 3` and concerns no property of `μYM`, so it can discharge `hL` once a
+limit value is in hand but not `hlim`.
+
+DERIVED: no numeral appears in the statement. -/
+theorem exists_bhi_of_weak_limit {L : ℝ} (hL : L < MassGap.κ₀YM)
+    (hlim : Filter.Tendsto MassGap.μYM Filter.atTop (nhds L)) :
+    ∃ bhi : ℝ, ∀ β, bhi ≤ β → MassGap.μYM β < MassGap.κ₀YM := by
+  have h := MassGap.apriori_A1_weak hL hlim
+  rw [Filter.eventually_atTop] at h
+  exact h
+
+#print axioms exists_bhi_of_weak_limit
+
+/-- A definite weak-coupling cut, from an eventual inequality on the cosine average rather than a
+limit.
+
+`Filter.eventually_atTop` turns `h` into a cut `bhi` beyond which `3 ^ (-1/4) < cosAvgYMAt N β`, and
+`Complete.confinement_at_of_cosAvg` converts each such inequality pointwise into
+`μYMAt N β < κ₀YM`.
+
+Where `exists_bhi_of_weak_limit` takes `Tendsto μYM atTop (nhds L)` with `L < κ₀YM`, this takes no
+convergence, no limit value and no identification of a limiting profile. The conclusion has the
+shape `ym_A1_of_split` and `WilsonInstance.gapModelOf_A1` consume either way.
+
+DERIVED: `3`, `1` and `4` are the entropy floor's own, since `κ₀YM = ¼ · log 3` and its transfer
+read is `3 ^ (-1/4) = e ^ (-κ₀)`. -/
+theorem exists_bhi_of_eventual_cosAvg {N : ℕ}
+    (h : ∀ᶠ β in Filter.atTop, (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt N β) :
+    ∃ bhi : ℝ, ∀ β, bhi ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM := by
+  rw [Filter.eventually_atTop] at h
+  obtain ⟨bhi, hbhi⟩ := h
+  exact ⟨bhi, fun β hβ => MassGap.confinement_at_of_cosAvg (hbhi β hβ)⟩
+
+#print axioms exists_bhi_of_eventual_cosAvg
+
+/-- A bound on the substrate moment, together with an arithmetic condition on that bound, puts the
+cosine average strictly above the entropy floor.
+
+`Moment.Read.cos_avg_ge_circ` is `1 - (2π/(N+1))² · ⟨d²⟩ / 2 ≤ ⟨cos θ⟩`. `hb` bounds `d2At N β`,
+which is the circle second moment of `readYMAt N β` by definition, and `hscale` places the resulting
+subtraction strictly above `3 ^ (-1/4)`; `linarith` closes the two together.
+
+This is the inequality `Moment.Read.tension_lt_floor_of_circ_moment` runs on, stopped at the cosine
+average instead of carried on to the tension, which is the form `exists_bhi_of_eventual_cosAvg`
+consumes.
+
+DERIVED: in `hscale`, `2 * Real.pi` is the full turn, the `1` in `(N : ℝ) + 1` is the aperture's
+index offset, the outer `2` squares the aperture factor, the `2` in `B₃ / 2` is `cos_avg_ge_circ`'s
+halving, and the leading `1` is what the floor is subtracted from. `3`, `1` and `4`, in `hscale` and
+again in the conclusion, are the entropy floor's transfer read `3 ^ (-1/4) = e ^ (-κ₀)` with
+`κ₀YM = ¼ · log 3`. -/
+theorem cosAvg_gt_floor_of_substrate {N : ℕ} {B₃ β : ℝ}
+    (hb : MassGap.d2At N β ≤ B₃)
+    (hscale : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B₃ / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
+    (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt N β := by
+  have hge := (MassGap.readYMAt N β).cos_avg_ge_circ
+  have hA : (0 : ℝ) ≤ (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 := sq_nonneg _
+  have hmono : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * MassGap.d2At N β
+      ≤ (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B₃ := mul_le_mul_of_nonneg_left hb hA
+  show (3 : ℝ) ^ (-(1 : ℝ) / 4)
+    < ∑ d, (MassGap.readYMAt N β).p d * Real.cos ((MassGap.readYMAt N β).θ d)
+  have hd2 : MassGap.d2At N β
+      = ∑ d, (MassGap.readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
+  rw [hd2] at hmono
+  linarith
+
+#print axioms cosAvg_gt_floor_of_substrate
+
+/-- `NonnegArm.LawAbove b` produces a constant `B₃` and, under an arithmetic condition on it, the
+eventual inequality `∀ᶠ β in atTop, 3 ^ (-1/4) < cosAvgYMAt nCorrYM β`.
+
+`d2At_bounded_of_lawAbove` turns `LawAbove b` into `d2At N β ≤ B₃` for every `β ≥ B` at every
+aperture, and `cosAvg_gt_floor_of_substrate` converts that bound plus the arithmetic condition into
+the inequality at each such `β`; `Filter.eventually_atTop` packages it at the cut `B`.
+
+`LawAbove` is a hypothesis and the arithmetic condition is the antecedent of the returned
+implication, so both are visible to the caller. The aperture is pinned at `nCorrYM = 16`, where the
+factor `(2π/17)²` does not shrink, so the condition constrains `B₃`.
+
+`LawAbove` is a quartic tail law relative to the contact term with one constant above a cut; it is a
+named `Prop` with a matching `NonnegArm.LawBelow` and a two-arm composition
+(`NonnegArm.substrate_even_of_two_arm`). Its exponent `4` is fixed in its own definition, not here:
+`∑ k² · C / kˢ` converges exactly when `s > 3`, and
+`ShareEnvelope.cubic_contact_relative_gives_no_bound` refutes `s = 3`.
+
+DERIVED: `2 * Real.pi` is the full turn, the `1` in `(nCorrYM : ℝ) + 1` is the aperture's index
+offset, the outer `2` squares the aperture factor, the `2` in `B₃ / 2` is
+`Moment.Read.cos_avg_ge_circ`'s halving, the leading `1` is what the floor is subtracted from, and
+`3`, `1`, `4` are the entropy floor's transfer read — in the antecedent and again in the
+conclusion. -/
+theorem exists_B3_eventual_cosAvg_of_lawAbove {b B : ℝ} (hbB : b < B)
+    (ha : MassGap.NonnegArm.LawAbove b) :
+    ∃ B₃ : ℝ,
+      ((2 * Real.pi / ((MassGap.nCorrYM : ℝ) + 1)) ^ 2 * B₃ / 2
+          < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)
+        → ∀ᶠ β in Filter.atTop,
+            (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt MassGap.nCorrYM β) := by
+  obtain ⟨B₃, hB₃⟩ := d2At_bounded_of_lawAbove hbB ha
+  refine ⟨B₃, fun hscale => ?_⟩
+  rw [Filter.eventually_atTop]
+  exact ⟨B, fun β hβ => cosAvg_gt_floor_of_substrate (hB₃ MassGap.nCorrYM β hβ) hscale⟩
+
+#print axioms exists_B3_eventual_cosAvg_of_lawAbove
+
+
+
+/-- `A1_YM ymModel` from the two end ranges and a grid over the interior, with the Lipschitz
+constant supplied rather than assumed.
+
+The hypotheses are `hstrong`, confinement strictly below `a`; `hLw` and `hlim`, a limit of `μYM`
+along `Filter.atTop` strictly below the floor; and `haperture`, arithmetic in `B` at `nCorrYM`. The
+conclusion returns a cut `bhi` and a constant `L` with `0 ≤ L`, together with the implication that a
+`δ`-grid of reads on `Set.Icc a bhi` clearing `B - L * δ` gives `A1_YM ymModel`.
+
+`exists_bhi_of_weak_limit` supplies `bhi` and the weak range from `hLw` and `hlim`,
+`exists_lipschitz_interior_of_grid` supplies `L` and the interior, and `ym_A1_of_split` joins the
+three ranges. The Lipschitz constant is not among the hypotheses:
+`exists_lipschitz_lag_moment` produces it from `ConfinesZero.lipschitz_wilsonCorrAt` and
+`ConfinesZero.exists_profile_sum_floor`.
+
+`hstrong` and `hlim` are hypotheses with no producer in the tree.
+`Apriori.apriori_A1_strong` is stated over an abstract `μ : ℝ → ℝ` and is not instantiated at `μYM`,
+and `FreeField.muInf_lt_floor` is the arithmetic `0.0326 < ¼ · log 3`, which concerns no property of
+`μYM`.
+
+DERIVED: the `0` in `ha : 0 ≤ a` is the sign condition on the left endpoint and the `0` in `0 ≤ L`
+a sign condition on the returned constant. In `haperture`, `2 * Real.pi` is the full turn, the `1`
+in `nCorrYM + 1` is the aperture's index offset, the outer `2` squares the aperture factor, the `2`
+in `B / 2` is `Moment.Read.cos_avg_ge_circ`'s halving, and `1`, `3`, `1`, `4` are the entropy
+floor's transfer read `3 ^ (-1/4) = e ^ (-κ₀)` with `κ₀YM = ¼ · log 3`. The `2` in `(d : ℝ) ^ 2` is
+the lag moment's exponent. All are `ym_crossover_confinement_of_grid`'s, restated verbatim so the
+caller discharges them by arithmetic. -/
+theorem exists_L_ym_A1_of_grid_and_ends {a B δ Lw : ℝ} (ha : 0 ≤ a)
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * B / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (hstrong : ∀ β, β < a → MassGap.μYM β < MassGap.κ₀YM)
+    (hLw : Lw < MassGap.κ₀YM)
+    (hlim : Filter.Tendsto MassGap.μYM Filter.atTop (nhds Lw)) :
+    ∃ bhi L : ℝ, 0 ≤ L ∧
+      ((∀ β ∈ Set.Icc a bhi, ∃ γ ∈ Set.Icc a bhi, |β - γ| ≤ δ ∧
+          (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ B - L * δ)
+        → MassGap.A1_YM MassGap.ymModel) := by
+  obtain ⟨bhi, hweak⟩ := exists_bhi_of_weak_limit hLw hlim
+  obtain ⟨L, hL, hint⟩ :=
+    exists_lipschitz_interior_of_grid (a := a) (b := bhi) (B := B) (δ := δ) ha haperture
+  exact ⟨bhi, L, hL, fun hcover => ym_A1_of_split hstrong (hint hcover) hweak⟩
+
+#print axioms exists_L_ym_A1_of_grid_and_ends
+
+/-- The model conjunction for `ymModel`, from the same hypotheses as
+`exists_L_ym_A1_of_grid_and_ends`.
+
+`Model.mass_gap_of_model` takes `A1_YM ymModel` and `ym_A2`, the second already proved, and
+concludes the three clauses restated here: at every `β` the norm of `ymModel`'s mode sum tends to
+`0` along `Filter.atTop` in `τ`; at every `β`, `ymModel.μ β - ymModel.κ < 0`; and `ymModel.R` takes
+the same value at any two directions.
+
+`hstrong` and `hlim` are hypotheses with no producer in the tree.
+`Apriori.apriori_A1_strong` is stated over an abstract `μ : ℝ → ℝ` with hypothesis `μ β ≤ 2βr` and
+is not instantiated at `μYM`; `FreeField.muInf_lt_floor` is the arithmetic `0.0326 < ¼ · log 3` and
+concerns no property of `μYM`. The Lipschitz constant is not a hypothesis:
+`exists_lipschitz_lag_moment` supplies it from `ConfinesZero.lipschitz_wilsonCorrAt` and
+`ConfinesZero.exists_profile_sum_floor`.
+
+The conclusion is about `ymModel`, the lattice model, and concerns clustering, the tension against
+the floor, and directional invariance.
+
+DERIVED: the `0` in `ha : 0 ≤ a` and the `0` in `0 ≤ L` are sign conditions on the left endpoint and
+the returned constant. In `haperture`, `2 * Real.pi` is the full turn, the `1` in `nCorrYM + 1` is
+the aperture's index offset, the outer `2` squares the aperture factor, the `2` in `B / 2` is
+`Moment.Read.cos_avg_ge_circ`'s halving, and `1`, `3`, `1`, `4` are the entropy floor's transfer
+read. The `2` in `(d : ℝ) ^ 2` is the lag moment's exponent. In the conclusion the `0` in `nhds 0`
+is the limit of the mode sum and the `0` in `μ β - κ < 0` is the strict sign. All are
+`ym_crossover_confinement_of_grid`'s and `mass_gap_of_model`'s. -/
+theorem exists_L_ym_mass_gap_of_grid_and_ends {a B δ Lw : ℝ} (ha : 0 ≤ a)
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * B / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (hstrong : ∀ β, β < a → MassGap.μYM β < MassGap.κ₀YM)
+    (hLw : Lw < MassGap.κ₀YM)
+    (hlim : Filter.Tendsto MassGap.μYM Filter.atTop (nhds Lw)) :
+    ∃ bhi L : ℝ, 0 ≤ L ∧
+      ((∀ β ∈ Set.Icc a bhi, ∃ γ ∈ Set.Icc a bhi, |β - γ| ≤ δ ∧
+          (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ B - L * δ)
+        → (∀ β, Filter.Tendsto
+              (fun τ => ‖∑ k ∈ MassGap.ymModel.s β,
+                MassGap.ymModel.P β k * (MassGap.ymModel.m β k) ^ τ‖)
+              Filter.atTop (nhds 0))
+            ∧ (∀ β, MassGap.ymModel.μ β - MassGap.ymModel.κ < 0)
+            ∧ (∀ d d', MassGap.ymModel.R d = MassGap.ymModel.R d')) := by
+  obtain ⟨bhi, L, hL, hA1⟩ :=
+    exists_L_ym_A1_of_grid_and_ends (B := B) (δ := δ) ha haperture hstrong hLw hlim
+  exact ⟨bhi, L, hL, fun hcover =>
+    MassGap.mass_gap_of_model MassGap.ymModel (hA1 hcover) MassGap.ym_A2⟩
+
+#print axioms exists_L_ym_mass_gap_of_grid_and_ends
+
+/-- The raw lag second moment of `readYMAt N 0` is zero, at every aperture.
+
+At zero coupling the profile is a point mass at lag `0` —
+`ConfinesZero.profile_at_zero_coupling_eq_zero` annihilates every other lag — and the surviving term
+carries the factor `(0 : ℝ) ^ 2 = 0`.
+
+`MomentArms.d2At_at_zero` is the same fact at the circle weight. `circ_moment_le_lag_moment` runs
+from the raw moment to the circle moment only, so the circle statement does not yield this one. The
+raw weight is what `ym_crossover_confinement_of_grid`'s `hlip` and `exists_lipschitz_lag_moment` are
+stated at.
+
+DERIVED: the `1` in `Fin (N + 1)` is the index offset, the number of lags `readYMAt N` carries; the
+`0` in `readYMAt N 0` is the coupling; the `2` is the lag moment's own exponent; the `0` on the
+right is the value. -/
+theorem lag_moment_at_zero (N : ℕ) :
+    (∑ d : Fin (N + 1), (MassGap.readYMAt N 0).p d * (d : ℝ) ^ 2) = 0 := by
+  refine Finset.sum_eq_zero (fun d _ => ?_)
+  rcases eq_or_ne d 0 with rfl | hd
+  · norm_num
+  · have hp : (MassGap.readYMAt N 0).p d = 0 := by
+      show (MassGap.readYMAt N 0).ρ d / _ = 0
+      rw [MassGap.ConfinesZero.profile_at_zero_coupling_eq_zero N hd, zero_div]
+    rw [hp, zero_mul]
+
+#print axioms lag_moment_at_zero
+
+/-- A cut `blo > 0` below which `μYM` stays strictly under the entropy floor on the nonnegative
+couplings. No constant is supplied by the caller.
+
+At the pinned aperture `nCorrYM`, four tree results chain:
+
+* the raw lag moment is `0` at zero coupling (`lag_moment_at_zero`);
+* it is `L`-Lipschitz on `Set.Icc 0 1` with `L` produced by `exists_lipschitz_lag_moment`, itself
+  from `ConfinesZero.lipschitz_wilsonCorrAt` and `ConfinesZero.exists_profile_sum_floor`;
+* so it is at most `L * β`, and `circ_moment_le_lag_moment` carries that to the circle moment;
+* `Moment.Read.tension_lt_floor_of_circ_moment` turns a circle-moment bound plus the aperture
+  condition into `tension < ¼ · log 3`, which is `κ₀YM` by definition.
+
+The witness is `min 1 (c / (A * L + 1))`, where `A` is the aperture factor and `c = 1 - 3 ^ (-1/4)`
+is positive by `ConfinesZero.floor_lt_one`; the `+ 1` keeps the quotient defined when `A * L = 0`.
+
+The statement covers `0 ≤ β` only. `WilsonInstance.gapModelOf_A1` takes
+`∀ β, 0 ≤ β → μYMAt N β < κ₀YM` at an arbitrary aperture, since `μClampAt` is `0` on the negative
+branch, and the quantitative lemmas in the tree are gated at `0 ≤ β`.
+
+DERIVED: the `0` in `0 < blo` is a sign condition on the returned cut and the `0` in `0 ≤ β` is the
+sign condition on the coupling. Every other numeral — the aperture factor's `2` and `Real.pi`, the
+floor's `3`, `1` and `4`, the interval endpoint `1`, and the `+ 1` guarding the denominator — occurs
+in the proof term and not in the statement. -/
+theorem exists_blo_ym_confines_on_Ico :
+    ∃ blo : ℝ, 0 < blo ∧ ∀ β : ℝ, 0 ≤ β → β < blo → MassGap.μYM β < MassGap.κ₀YM := by
+  obtain ⟨L, hL0, hlip⟩ :=
+    exists_lipschitz_lag_moment (a := 0) (b := 1) le_rfl MassGap.nCorrYM
+  set A : ℝ := (2 * Real.pi / ((MassGap.nCorrYM : ℝ) + 1)) ^ 2 with hAdef
+  set c : ℝ := 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) with hcdef
+  have hcpos : 0 < c := by
+    rw [hcdef, sub_pos]; exact MassGap.ConfinesZero.floor_lt_one
+  have hA0 : 0 ≤ A := by rw [hAdef]; positivity
+  have hden : 0 < A * L + 1 := by positivity
+  refine ⟨min 1 (c / (A * L + 1)), lt_min one_pos (div_pos hcpos hden), ?_⟩
+  intro β hβ0 hβlt
+  have hβ1 : β ≤ 1 := le_of_lt (lt_of_lt_of_le hβlt (min_le_left _ _))
+  have hβc : β < c / (A * L + 1) := lt_of_lt_of_le hβlt (min_le_right _ _)
+  have hlin : (∑ d : Fin (MassGap.nCorrYM + 1),
+      (MassGap.readYMAt MassGap.nCorrYM β).p d * (d : ℝ) ^ 2) ≤ L * β := by
+    have h := hlip β ⟨hβ0, hβ1⟩ 0 ⟨le_rfl, zero_le_one⟩
+    rw [lag_moment_at_zero, sub_zero, sub_zero, abs_of_nonneg hβ0] at h
+    exact le_trans (le_abs_self _) h
+  have hB : (∑ d, (MassGap.readYM β).p d * (Moment.circLag d : ℝ) ^ 2) ≤ L * β :=
+    le_trans (MassGap.circ_moment_le_lag_moment (MassGap.readYM β)) hlin
+  have hscale : A * (L * β) / 2 < c := by
+    have h1 : β * (A * L + 1) < c := by rwa [lt_div_iff₀ hden] at hβc
+    nlinarith [hβ0, hcpos, mul_nonneg hA0 hL0]
+  show (MassGap.readYM β).tension < 1 / 4 * Real.log 3
+  exact (MassGap.readYM β).tension_lt_floor_of_circ_moment hB hscale
+
+#print axioms exists_blo_ym_confines_on_Ico
+
+/-- Confinement on the whole nonnegative coupling half-line at the pinned aperture, from the
+eventual weak-coupling inequality `hweakev` and a grid over the interior.
+
+| range | source |
+|---|---|
+| `[0, blo)` | `exists_blo_ym_confines_on_Ico` |
+| `[blo, bhi]` | `exists_lipschitz_interior_of_grid`, under the grid in the antecedent |
+| `[bhi, ∞)` | `exists_bhi_of_eventual_cosAvg` applied to `hweakev` |
+
+`μYM = μYMAt nCorrYM` by `rfl`, so pieces stated about either discharge goals about the other. The
+returned `blo`, `bhi` and `L` come from those three lemmas.
+
+`hweakev` is a hypothesis, stated as an eventual inequality on the cosine average rather than a
+limit. Nothing in the tree produces it: `FreeField.muInf_lt_floor` is the arithmetic
+`0.0326 < ¼ · log 3` and concerns no property of `μYM`, and `FreeField`'s limit theorem is over the
+lattice extent, for abstract sequences, concluding `nhds 0`.
+
+DERIVED: the `0` in `0 < blo` is a sign condition on the lower cut, the `0` in `0 ≤ L` one on the
+Lipschitz constant, and the `0` in `0 ≤ β` the sign condition on the coupling. In `haperture`,
+`2 * Real.pi` is the full turn, the `1` in `nCorrYM + 1` is the aperture's index offset, the outer
+`2` squares the aperture factor, the `2` in `B / 2` is `Moment.Read.cos_avg_ge_circ`'s halving, and
+the leading `1` is what the floor is subtracted from. `3`, `1`, `4` in `haperture` and again in
+`hweakev` are the entropy floor's transfer read `3 ^ (-1/4) = e ^ (-κ₀)`. The `2` in `(d : ℝ) ^ 2`
+is the lag moment's exponent. -/
+theorem exists_grid_confines_on_nonneg {B δ : ℝ}
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * B / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (hweakev : ∀ᶠ β in Filter.atTop,
+      (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt MassGap.nCorrYM β) :
+    ∃ blo bhi L : ℝ, 0 < blo ∧ 0 ≤ L ∧
+      ((∀ β ∈ Set.Icc blo bhi, ∃ γ ∈ Set.Icc blo bhi, |β - γ| ≤ δ ∧
+          (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ B - L * δ)
+        → ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt MassGap.nCorrYM β < MassGap.κ₀YM) := by
+  obtain ⟨blo, hblo, hstrong⟩ := exists_blo_ym_confines_on_Ico
+  obtain ⟨bhi, hweak⟩ := exists_bhi_of_eventual_cosAvg (N := MassGap.nCorrYM) hweakev
+  obtain ⟨L, hL, hint⟩ :=
+    exists_lipschitz_interior_of_grid (a := blo) (b := bhi) (B := B) (δ := δ) hblo.le haperture
+  refine ⟨blo, bhi, L, hblo, hL, fun hcover β hβ0 => ?_⟩
+  rcases lt_or_ge β blo with h | h
+  · exact hstrong β hβ0 h
+  · rcases le_or_gt β bhi with h2 | h2
+    · exact hint hcover β ⟨h, h2⟩
+    · exact hweak β (le_of_lt h2)
+
+#print axioms exists_grid_confines_on_nonneg
+
+/-- The model conjunction for the clamped model `gapModelOf nCorrYM`, from the eventual
+weak-coupling inequality and a grid over the interior.
+
+`exists_grid_confines_on_nonneg` supplies `∀ β, 0 ≤ β → μYMAt nCorrYM β < κ₀YM` inside the arrow,
+which is what `WilsonInstance.gapModelOf_A1` consumes: that theorem asks for the nonnegative
+half-line only, at an arbitrary aperture, because `μClampAt` is `0` on the negative branch.
+`gapModelOf_A2` is `ym_A2_at nCorrYM`, already proved, and `Model.mass_gap_of_model` is generic in
+`M : LatticeYM`.
+
+The caller supplies `hweakev`, which has no producer in the tree; `haperture`, arithmetic in `B` at
+`nCorrYM`; the grid inside the arrow, finitely many deterministic reads; and `hdom`, `hfe`, `hgap`,
+which are `gapModelOf`'s own mode-family inputs, passed through unchanged.
+
+The conclusion is about `gapModelOf nCorrYM s Pw m Δ cf hdom hfe hgap`: at every `β` the norm of its
+mode sum tends to `0` along `Filter.atTop`, its `μ β` stays strictly under its `κ`, and its `R`
+agrees at any two directions.
+
+DERIVED: the `0` in `0 < blo` is a sign condition on the lower cut and the `0` in `0 ≤ L` one on the
+Lipschitz constant; the `0` in `nhds 0` is the limit of the mode sum and the `0` in `μ β - κ < 0`
+the strict sign. In `haperture`, `2 * Real.pi` is the full turn, the `1` in `nCorrYM + 1` is the
+aperture's index offset, the outer `2` squares the aperture factor, the `2` in `B / 2` is
+`Moment.Read.cos_avg_ge_circ`'s halving, and the leading `1` is what the floor is subtracted from.
+`3`, `1`, `4` in `haperture` and again in `hweakev` are the entropy floor's transfer read
+`3 ^ (-1/4) = e ^ (-κ₀)` with `κ₀YM = ¼ · log 3`. The `2` in `(d : ℝ) ^ 2` is the lag moment's
+exponent. All are `ym_crossover_confinement_of_grid`'s and `mass_gap_of_model`'s. -/
+theorem exists_grid_mass_gap_clamped {B δ : ℝ} {Idx : Type}
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * B / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4))
+    (hweakev : ∀ᶠ β in Filter.atTop,
+      (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt MassGap.nCorrYM β)
+    (s : ℝ → Finset Idx) (Pw m : ℝ → Idx → ℂ) (Δ cf : ℝ → ℝ)
+    (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β))
+    (hfe : ∀ β, MassGap.κ₀YM - MassGap.μClampAt MassGap.nCorrYM β ≤ cf β)
+    (hgap : ∀ β, cf β ≤ Δ β) :
+    ∃ blo bhi L : ℝ, 0 < blo ∧ 0 ≤ L ∧
+      ((∀ β ∈ Set.Icc blo bhi, ∃ γ ∈ Set.Icc blo bhi, |β - γ| ≤ δ ∧
+          (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ B - L * δ)
+        → (∀ β, Filter.Tendsto
+              (fun τ => ‖∑ k ∈ (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).s β,
+                (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).P β k
+                  * ((MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).m β k) ^ τ‖)
+              Filter.atTop (nhds 0))
+            ∧ (∀ β, (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).μ β
+                - (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).κ < 0)
+            ∧ (∀ d d', (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).R d
+                = (MassGap.gapModelOf
+                  MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap).R d')) := by
+  obtain ⟨blo, bhi, L, hblo, hL, hconf⟩ :=
+    exists_grid_confines_on_nonneg (B := B) (δ := δ) haperture hweakev
+  refine ⟨blo, bhi, L, hblo, hL, fun hcover => ?_⟩
+  exact MassGap.mass_gap_of_model _
+    (MassGap.gapModelOf_A1 MassGap.nCorrYM (hconf hcover) s Pw m Δ cf
+      hdom hfe hgap)
+    (MassGap.gapModelOf_A2 MassGap.nCorrYM s Pw m Δ cf hdom hfe hgap)
+
+#print axioms exists_grid_mass_gap_clamped
+
+/-- Confinement on the nonnegative half-line with the weak range resting on `NonnegArm.LawAbove`
+rather than on an eventual inequality.
+
+`exists_B3_eventual_cosAvg_of_lawAbove` turns `LawAbove b` plus an arithmetic condition on the
+constant `B₃` it returns into the inequality `exists_grid_confines_on_nonneg` takes as `hweakev`.
+The ranges are:
+
+| range | source |
+|---|---|
+| `[0, blo)` | `exists_blo_ym_confines_on_Ico` |
+| `[blo, bhi]` | `exists_lipschitz_interior_of_grid`, under the grid in the antecedent |
+| `[bhi, ∞)` | `LawAbove b` with the arithmetic condition on its constant |
+
+`LawAbove` is a quartic tail law relative to the contact term with one constant above a cut, a named
+`Prop` with a matching `NonnegArm.LawBelow` and the two-arm composition
+`NonnegArm.substrate_even_of_two_arm`; its exponent is fixed by convergence of `∑ k² · C / kˢ` for
+`s > 3`, with `ShareEnvelope.cubic_contact_relative_gives_no_bound` refuting `s = 3`.
+
+`LawAbove` is a hypothesis with no producer. The aperture is pinned at `nCorrYM = 16`, so the factor
+`(2π/17)²` does not shrink and both arithmetic conditions constrain their bounds; both appear as
+explicit antecedents rather than side conditions inside a proof.
+
+DERIVED: the `0` in `0 < blo` is a sign condition on the lower cut, the `0` in `0 ≤ L` one on the
+Lipschitz constant, and the `0` in `0 ≤ β` the sign condition on the coupling. In `haperture` and in
+the returned condition on `B₃`, `2 * Real.pi` is the full turn, the `1` in `nCorrYM + 1` is the
+aperture's index offset, the outer `2` squares the aperture factor, the `2` in the division is
+`Moment.Read.cos_avg_ge_circ`'s halving, the leading `1` is what the floor is subtracted from, and
+`3`, `1`, `4` are the entropy floor's transfer read. The `2` in `(d : ℝ) ^ 2` is the lag moment's
+exponent. -/
+theorem exists_B3_confines_on_nonneg_of_lawAbove {b B Bgrid δ : ℝ} (hbB : b < B)
+    (ha : MassGap.NonnegArm.LawAbove b)
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * Bgrid / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
+    ∃ B₃ : ℝ,
+      ((2 * Real.pi / ((MassGap.nCorrYM : ℝ) + 1)) ^ 2 * B₃ / 2
+          < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)
+        → ∃ blo bhi L : ℝ, 0 < blo ∧ 0 ≤ L ∧
+            ((∀ β ∈ Set.Icc blo bhi, ∃ γ ∈ Set.Icc blo bhi, |β - γ| ≤ δ ∧
+                (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ Bgrid - L * δ)
+              → ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt MassGap.nCorrYM β < MassGap.κ₀YM)) := by
+  obtain ⟨B₃, hB₃⟩ := exists_B3_eventual_cosAvg_of_lawAbove hbB ha
+  refine ⟨B₃, fun hfloor => ?_⟩
+  exact exists_grid_confines_on_nonneg (B := Bgrid) (δ := δ) haperture (hB₃ hfloor)
+
+#print axioms exists_B3_confines_on_nonneg_of_lawAbove
+
+/-! ## The flat-profile no-go and `LawAbove`
+
+`ClayAssembly.flat_profile_admits_no_uniform_quartic_constant` proves
+`¬ ∃ C ≥ 0, ∀ m ≥ 1, 1 ≤ C / m⁴`. For a flat profile (`ρ d = ρ 0` at every lag)
+`NonnegArm.LawAbove` demands exactly that, so a flat profile satisfies `LawAbove` for no constant.
+
+That is a statement about the flat profile. What it rules out is an argument establishing `LawAbove`
+without using the profile's decay, since such an argument would apply to the flat profile too. It
+constrains the method, not the statement.
+
+The pinned variant below asks for the law at one aperture, which is all the chain uses:
+`ShareEnvelope.circ_moment_le_of_contact_relative` works one aperture at a time.
+`lawAboveAt_of_lawAbove` shows the aperture-uniform law implies the pinned one. -/
+
+/-- The quartic tail law at one fixed aperture: a constant `C ≥ 0` such that at every coupling above
+`b` and every lag `d` with `1 ≤ Moment.circLag d`,
+`wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (Moment.circLag d : ℝ) ^ 4`.
+
+This is `NonnegArm.LawAbove` with the aperture fixed rather than universally quantified; everything
+else is identical, so `lawAboveAt_of_lawAbove` below is immediate.
+
+DERIVED: the `0` in `0 ≤ C` is a sign condition on the constant. The `1` in `Fin (N + 1)` is the
+index offset, the number of lags aperture `N` carries. The `1` in `1 ≤ Moment.circLag d` is the lag
+cut, excluding the contact lag. The `0` in `wilsonCorrAt N β 0` is the contact lag the law is stated
+relative to. The `4` is `LawAbove`'s exponent, fixed by convergence of `∑ k² · C / kˢ` for `s > 3`,
+with `ShareEnvelope.cubic_contact_relative_gives_no_bound` refuting `s = 3`. All are `LawAbove`'s,
+kept identical so the two compose. -/
+def LawAboveAt (N : ℕ) (b : ℝ) : Prop :=
+  ∃ C : ℝ, 0 ≤ C ∧ ∀ (β : ℝ) (d : Fin (N + 1)), b < β → 1 ≤ Moment.circLag d →
+    MassGap.wilsonCorrAt N β d
+      ≤ C * MassGap.wilsonCorrAt N β 0 / (Moment.circLag d : ℝ) ^ 4
+
+/-- The aperture-uniform `NonnegArm.LawAbove b` implies `LawAboveAt N b` at every aperture `N`. The
+proof instantiates the universal quantifier and keeps the same constant, so pinning weakens nothing
+that was already available.
+
+DERIVED: no numeral appears in the statement; both sides carry `LawAbove`'s inside their own
+definitions. -/
+theorem lawAboveAt_of_lawAbove (N : ℕ) {b : ℝ} (h : MassGap.NonnegArm.LawAbove b) :
+    LawAboveAt N b := by
+  obtain ⟨C, hC, hlaw⟩ := h
+  exact ⟨C, hC, fun β d hβ hd => hlaw N β d hβ hd⟩
+
+#print axioms lawAboveAt_of_lawAbove
+
+/-- The substrate bound above a cut from the pinned law: `LawAboveAt N b` with `b < B` gives a
+constant `B₃` bounding `d2At N β` for every `β ≥ B`.
+
+The proof is `d2At_bounded_of_lawAbove`'s verbatim.
+`ShareEnvelope.circ_moment_le_of_contact_relative` already works one aperture at a time, so the
+universal quantifier over apertures was never used.
+
+DERIVED: no numeral appears in the statement. The `2` from the two sides of the circle and the `1`
+passed to `quarticWeight` as the lag cut occur in the proof term. -/
+theorem d2At_bounded_of_lawAboveAt {N : ℕ} {b B : ℝ} (hbB : b < B) (ha : LawAboveAt N b) :
+    ∃ B₃ : ℝ, ∀ β : ℝ, B ≤ β → MassGap.d2At N β ≤ B₃ := by
+  obtain ⟨C, hC, h⟩ := ha
+  exact ⟨2 * ∑' k : ℕ, (k : ℝ) ^ 2 * MassGap.ShareEnvelope.quarticWeight 1 C k,
+    fun β hβ =>
+      MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1 hC
+        (fun d hd => by
+          simpa only [MassGap.ShareEnvelope.readYMAt_rho] using
+            h β d (lt_of_lt_of_le hbB hβ) hd)⟩
+
+#print axioms d2At_bounded_of_lawAboveAt
+
+/-- The weak-range eventual inequality from the pinned law.
+
+`d2At_bounded_of_lawAboveAt` turns `LawAboveAt nCorrYM b` with `b < B` into `d2At nCorrYM β ≤ B₃`
+for every `β ≥ B`, and `cosAvg_gt_floor_of_substrate` converts that bound plus the arithmetic
+condition into `3 ^ (-1/4) < cosAvgYMAt nCorrYM β` at each such `β`; `Filter.eventually_atTop`
+packages it at the cut `B`.
+
+`exists_B3_eventual_cosAvg_of_lawAbove` asks for the aperture-uniform `NonnegArm.LawAbove`; this
+asks for the law at `nCorrYM` alone, which is what the chain uses.
+
+DERIVED: `2 * Real.pi` is the full turn, the `1` in `(nCorrYM : ℝ) + 1` is the aperture's index
+offset, the outer `2` squares the aperture factor, the `2` in `B₃ / 2` is
+`Moment.Read.cos_avg_ge_circ`'s halving, the leading `1` is what the floor is subtracted from, and
+`3`, `1`, `4` are the entropy floor's transfer read `3 ^ (-1/4) = e ^ (-κ₀)` — in the antecedent and
+again in the conclusion. -/
+theorem exists_B3_eventual_cosAvg_of_lawAboveAt {b B : ℝ} (hbB : b < B)
+    (ha : LawAboveAt MassGap.nCorrYM b) :
+    ∃ B₃ : ℝ,
+      ((2 * Real.pi / ((MassGap.nCorrYM : ℝ) + 1)) ^ 2 * B₃ / 2
+          < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)
+        → ∀ᶠ β in Filter.atTop,
+            (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.cosAvgYMAt MassGap.nCorrYM β) := by
+  obtain ⟨B₃, hB₃⟩ := d2At_bounded_of_lawAboveAt hbB ha
+  refine ⟨B₃, fun hscale => ?_⟩
+  rw [Filter.eventually_atTop]
+  exact ⟨B, fun β hβ => cosAvg_gt_floor_of_substrate (hB₃ β hβ) hscale⟩
+
+#print axioms exists_B3_eventual_cosAvg_of_lawAboveAt
+
+/-- Confinement on the nonnegative half-line with the weak range resting on the pinned law
+`LawAboveAt nCorrYM b`.
+
+The same chain as `exists_B3_confines_on_nonneg_of_lawAbove`, with
+`exists_B3_eventual_cosAvg_of_lawAboveAt` supplying the `hweakev` that
+`exists_grid_confines_on_nonneg` takes. The pinned law is what the chain uses;
+`lawAboveAt_of_lawAbove` derives it from the aperture-uniform `NonnegArm.LawAbove`.
+
+`LawAboveAt` is a hypothesis with no producer, and both arithmetic conditions remain constraints at
+the pinned aperture. The flat-profile no-go says a flat profile satisfies the law for no constant,
+which bears on how the law may be proved rather than on whether it holds.
+
+DERIVED: the `0` in `0 < blo` is a sign condition on the lower cut, the `0` in `0 ≤ L` one on the
+Lipschitz constant, and the `0` in `0 ≤ β` the sign condition on the coupling. In `haperture` and in
+the returned condition on `B₃`, `2 * Real.pi` is the full turn, the `1` in `nCorrYM + 1` is the
+aperture's index offset, the outer `2` squares the aperture factor, the `2` in the division is
+`Moment.Read.cos_avg_ge_circ`'s halving, the leading `1` is what the floor is subtracted from, and
+`3`, `1`, `4` are the entropy floor's transfer read. The `2` in `(d : ℝ) ^ 2` is the lag moment's
+exponent. -/
+theorem exists_B3_confines_on_nonneg_of_lawAboveAt {b B Bgrid δ : ℝ} (hbB : b < B)
+    (ha : LawAboveAt MassGap.nCorrYM b)
+    (haperture : (2 * Real.pi / (MassGap.nCorrYM + 1)) ^ 2 * Bgrid / 2
+      < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
+    ∃ B₃ : ℝ,
+      ((2 * Real.pi / ((MassGap.nCorrYM : ℝ) + 1)) ^ 2 * B₃ / 2
+          < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)
+        → ∃ blo bhi L : ℝ, 0 < blo ∧ 0 ≤ L ∧
+            ((∀ β ∈ Set.Icc blo bhi, ∃ γ ∈ Set.Icc blo bhi, |β - γ| ≤ δ ∧
+                (∑ d, MassGap.pcorrYM γ d * (d : ℝ) ^ 2) ≤ Bgrid - L * δ)
+              → ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt MassGap.nCorrYM β < MassGap.κ₀YM)) := by
+  obtain ⟨B₃, hB₃⟩ := exists_B3_eventual_cosAvg_of_lawAboveAt hbB ha
+  refine ⟨B₃, fun hfloor => ?_⟩
+  exact exists_grid_confines_on_nonneg (B := Bgrid) (δ := δ) haperture (hB₃ hfloor)
+
+#print axioms exists_B3_confines_on_nonneg_of_lawAboveAt
+
+/-- `NonnegArm.LawAbove b` with `b < B` gives confinement on `Set.Ici B` at every sufficiently large
+aperture, with no arithmetic condition in the statement.
+
+Two halves compose. `d2At_bounded_of_lawAbove` turns `LawAbove b` into
+`∀ N β, B ≤ β → d2At N β ≤ B₃`, uniform in the aperture because `LawAbove` quantifies over `N`.
+`Complete.confinement_on_of_substrate_bound` consumes that shape and concludes confinement at every
+sufficiently wide aperture, discharging the aperture condition internally from
+`Moment.aperture_factor_tendsto_zero`: the aperture factor `(2π/(N+1))²` tends to zero, so no bound
+on the size of `B₃` is needed. The pinned-aperture routes carry such conditions — `B₃` small enough,
+`Bgrid` small enough — because `N` is fixed there at `nCorrYM`.
+
+`LawAbove` is a hypothesis with no producer.
+
+DERIVED: no numeral appears in the statement. `B` is the caller's cut and `B₃` is
+`d2At_bounded_of_lawAbove`'s; the aperture condition is discharged inside
+`confinement_on_of_substrate_bound` and is not restated here. -/
+theorem confines_at_wide_aperture_of_lawAbove {b B : ℝ} (hbB : b < B)
+    (ha : MassGap.NonnegArm.LawAbove b) :
+    ∀ᶠ N : ℕ in Filter.atTop,
+      ∀ β ∈ Set.Ici B, MassGap.μYMAt N β < MassGap.κ₀YM := by
+  obtain ⟨B₃, hB₃⟩ := d2At_bounded_of_lawAbove hbB ha
+  exact MassGap.confinement_on_of_substrate_bound (B := B₃) (S := Set.Ici B)
+    (fun N β hβ => hB₃ N β hβ)
+
+#print axioms confines_at_wide_aperture_of_lawAbove
+
+/-- `NonnegArm.LawBelow b` and `NonnegArm.LawAbove b` at the same cut bound `d2At N β` on the whole
+nonnegative half-line, at every aperture `N`.
+
+`NonnegArm.substrate_even_of_two_arm` merges the two laws but lands on `d2Even` at an `EvenAp`,
+which the aperture argument cannot consume. Both laws are stated at general `N`, so merging them
+directly avoids that restriction: at any `β ≥ 0` one law or the other applies, and `max C₁ C₂`
+serves both because the contact value `wilsonCorrAt N β 0` is nonnegative.
+`ShareEnvelope.circ_moment_le_of_contact_relative` carries the merged estimate to the moment.
+
+DERIVED: the `0` in `0 ≤ β` is the sign condition on the coupling. The `2` from the two sides of the
+circle, the `1` passed to `quarticWeight` as the lag cut, the contact lag `0`, and the `4` shared by
+the two laws all occur in the proof term or inside the laws' own definitions, not in this
+statement. -/
+theorem substrate_bounded_of_two_arms {b : ℝ}
+    (hbelow : MassGap.NonnegArm.LawBelow b) (habove : MassGap.NonnegArm.LawAbove b) :
+    ∃ B : ℝ, ∀ (N : ℕ) (β : ℝ), 0 ≤ β → MassGap.d2At N β ≤ B := by
+  obtain ⟨C₁, hC₁, h₁⟩ := hbelow
+  obtain ⟨C₂, hC₂, h₂⟩ := habove
+  refine ⟨2 * ∑' k : ℕ, (k : ℝ) ^ 2
+      * MassGap.ShareEnvelope.quarticWeight 1 (max C₁ C₂) k, fun N β hβ0 => ?_⟩
+  refine MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1
+    (le_trans hC₁ (le_max_left _ _)) ?_
+  intro d hd
+  rw [MassGap.ShareEnvelope.readYMAt_rho]
+  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.readYMAt N β).hρ 0
+  have hL1 : (1 : ℝ) ≤ (Moment.circLag d : ℝ) := by exact_mod_cast hd
+  have hL : (0 : ℝ) < (Moment.circLag d : ℝ) ^ 4 := by positivity
+  have hstep : ∀ C : ℝ, C ≤ max C₁ C₂ →
+      C * MassGap.wilsonCorrAt N β 0 / (Moment.circLag d : ℝ) ^ 4
+        ≤ max C₁ C₂ * MassGap.wilsonCorrAt N β 0 / (Moment.circLag d : ℝ) ^ 4 := by
+    intro C hCm
+    have hnum : C * MassGap.wilsonCorrAt N β 0
+        ≤ max C₁ C₂ * MassGap.wilsonCorrAt N β 0 :=
+      mul_le_mul_of_nonneg_right hCm hρ0
+    have := mul_le_mul_of_nonneg_right hnum (le_of_lt (inv_pos.mpr hL))
+    simpa only [div_eq_mul_inv] using this
+  rcases le_or_gt β b with hle | hgt
+  · exact le_trans (h₁ N β d hβ0 hle hd) (hstep C₁ (le_max_left _ _))
+  · exact le_trans (h₂ N β d hgt hd) (hstep C₂ (le_max_right _ _))
+
+#print axioms substrate_bounded_of_two_arms
+
+/-- Given that `NonnegArm.LawAbove` holds at every cut where `NonnegArm.LawBelow` does, there is an
+aperture `N` at which `μYMAt N` stays strictly under the entropy floor on the whole nonnegative
+half-line.
+
+`NonnegArm.lawBelow_holds : ∃ b > 0, LawBelow b` is a theorem on the foundational axioms, so
+`habove` applied at that cut gives both laws there. `substrate_bounded_of_two_arms` then bounds
+`d2At` on `0 ≤ β` at every aperture, and `Complete.confinement_on_of_substrate_bound` turns that
+aperture-uniform bound into confinement at every sufficiently wide aperture, discharging the
+aperture condition internally from `Moment.aperture_factor_tendsto_zero`.
+`Filter.Eventually.exists` names one such aperture.
+
+The conclusion `∀ β, 0 ≤ β → μYMAt N β < κ₀YM` is what `WilsonInstance.gapModelOf_A1` consumes;
+`μClampAt` is `0` on the negative branch, so nothing below zero is required. `habove` is the only
+hypothesis: no grid, no arithmetic side condition and no pinned aperture enter. The quartic exponent
+is fixed inside `LawAbove`, by convergence of `∑ k² · C / kˢ` for `s > 3` with
+`ShareEnvelope.cubic_contact_relative_gives_no_bound` refuting `s = 3`.
+
+DERIVED: the `0` in `0 ≤ β` is the sign condition on the coupling. Every other numeral lives inside
+the lemmas composed here and none is restated. -/
+theorem exists_aperture_A1_of_lawAbove
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
+    ∃ N : ℕ, ∀ β : ℝ, 0 ≤ β → MassGap.μYMAt N β < MassGap.κ₀YM := by
+  obtain ⟨b, _, hbelow⟩ := MassGap.NonnegArm.lawBelow_holds
+  obtain ⟨B, hB⟩ := substrate_bounded_of_two_arms hbelow (habove b hbelow)
+  have hev := MassGap.confinement_on_of_substrate_bound (B := B) (S := Set.Ici (0 : ℝ))
+    (fun N β hβ => hB N β hβ)
+  obtain ⟨N, hN⟩ := hev.exists
+  exact ⟨N, fun β hβ0 => hN β hβ0⟩
+
+#print axioms exists_aperture_A1_of_lawAbove
+
+/-- The model conjunction for `gapModelOf N`, at an aperture the theorem chooses, from `habove`
+alone.
+
+`exists_aperture_A1_of_lawAbove` supplies `gapModelOf_A1`'s hypothesis at one aperture `N`;
+`gapModelOf_A2` is `ym_A2_at N`, already proved; and `Model.mass_gap_of_model` is generic in
+`M : LatticeYM`. The conclusion is about `gapModelOf N s Pw m Δ cf hdom hfe hgap`: at every `β` the
+norm of its mode sum tends to `0` along `Filter.atTop`, its `μ β` stays strictly under its `κ`, and
+its `R` agrees at any two directions.
+
+The hypotheses are `habove` — `LawAbove` at any cut where `LawBelow` holds — together with
+`gapModelOf`'s own mode-family inputs `hdom`, and `hfe` and `hgap` under the returned aperture.
+`LawBelow` is proved, the aperture is chosen by the theorem rather than pinned, and no grid or
+arithmetic side condition enters.
+
+DERIVED: the `0` in `nhds 0` is the limit of the mode sum and the `0` in `μ β - κ < 0` is the strict
+sign; both are `mass_gap_of_model`'s conclusion restated here. -/
+theorem exists_aperture_mass_gap_of_lawAbove {Idx : Type}
+    (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b)
+    (s : ℝ → Finset Idx) (Pw m : ℝ → Idx → ℂ) (Δ cf : ℝ → ℝ)
+    (hdom : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-Δ β)) :
+    ∃ N : ℕ,
+      ∀ (hfe : ∀ β, MassGap.κ₀YM - MassGap.μClampAt N β ≤ cf β)
+        (hgap : ∀ β, cf β ≤ Δ β),
+        (∀ β, Filter.Tendsto
+            (fun τ => ‖∑ k ∈ (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).s β,
+              (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).P β k
+                * ((MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).m β k) ^ τ‖)
+            Filter.atTop (nhds 0))
+          ∧ (∀ β, (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).μ β
+              - (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).κ < 0)
+          ∧ (∀ d d', (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d
+              = (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d') := by
+  obtain ⟨N, hconf⟩ := exists_aperture_A1_of_lawAbove habove
+  refine ⟨N, fun hfe hgap => ?_⟩
+  exact MassGap.mass_gap_of_model _
+    (MassGap.gapModelOf_A1 N hconf s Pw m Δ cf hdom hfe hgap)
+    (MassGap.gapModelOf_A2 N s Pw m Δ cf hdom hfe hgap)
+
+#print axioms exists_aperture_mass_gap_of_lawAbove
+
+/-- A geometric tail in the lag, uniform in the aperture and in the coupling above the cut, gives
+`NonnegArm.LawAbove b`.
+
+`hdecay` asks for `ρ d ≤ ρ 0 * r ^ circLag d` with `0 ≤ r` and `r < 1`, at every aperture `N`, every
+`β > b`, and every lag past the contact lag. `StrongArm.exists_geom_quartic_bound` supplies a
+constant `S` dominating `(m + 1) ^ 4 * r ^ m` at every `m` — a geometric sequence dominates a
+quartic outright, not eventually. Multiplying `hdecay` through by `circLag d ^ 4` and dividing back
+gives `LawAbove`'s conclusion with constant `S`.
+
+`ClayAssembly.flat_profile_admits_no_uniform_quartic_constant` concerns the aperture rather than the
+coupling: `circLag d ≤ (N+1)/2` grows without bound, so what the quartic law asserts is decay of the
+whitened profile in the lag, uniform in the volume. That is the object
+`Certify.gap_uniform_in_volume_of_intensive` takes as its intensive premise, and nothing in the tree
+produces it. A flat profile has no such rate.
+
+`hdecay` is a hypothesis.
+
+DERIVED: the `0` in `hr0 : 0 ≤ r` and the `1` in `hr1 : r < 1` bound the contraction ratio. The `1`
+in `Fin (N + 1)` is the index offset, the number of lags aperture `N` carries. The `1` in
+`1 ≤ Moment.circLag d` is the lag cut, excluding the contact lag. The `0` in `wilsonCorrAt N β 0` is
+the contact lag the decay is stated relative to. The exponent `4` is inside `LawAbove`'s own
+definition and does not appear in this statement; `(L + 1) ^ 4` occurs in the proof. -/
+theorem lawAbove_of_geometric_tail {b r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1)
+    (hdecay : ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), b < β → 1 ≤ Moment.circLag d →
+      MassGap.wilsonCorrAt N β d
+        ≤ MassGap.wilsonCorrAt N β 0 * r ^ (Moment.circLag d)) :
+    MassGap.NonnegArm.LawAbove b := by
+  obtain ⟨S, hS0, hS⟩ := MassGap.StrongArm.exists_geom_quartic_bound hr0 hr1
+  refine ⟨S, hS0, fun N β d hβ hd => ?_⟩
+  set L : ℕ := Moment.circLag d with hLdef
+  have hL1 : (1 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hd
+  have hLpos : (0 : ℝ) < (L : ℝ) ^ 4 := by positivity
+  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.readYMAt N β).hρ 0
+  have hrL : (0 : ℝ) ≤ r ^ L := pow_nonneg hr0 L
+  -- `L⁴·r^L ≤ (L+1)⁴·r^L ≤ S`
+  have hmono : ((L : ℝ)) ^ 4 * r ^ L ≤ (((L : ℝ)) + 1) ^ 4 * r ^ L := by
+    have h0 : (0 : ℝ) ≤ (L : ℝ) := by positivity
+    have hsucc : (L : ℝ) ≤ (L : ℝ) + 1 := by linarith
+    have hbase : ((L : ℝ)) ^ 4 ≤ (((L : ℝ)) + 1) ^ 4 := by gcongr
+    exact mul_le_mul_of_nonneg_right hbase hrL
+  have hquart : ((L : ℝ)) ^ 4 * r ^ L ≤ S := le_trans hmono (hS L)
+  -- `ρ d · L⁴ ≤ ρ 0 · S`
+  have hstep : MassGap.wilsonCorrAt N β d * ((L : ℝ)) ^ 4
+      ≤ MassGap.wilsonCorrAt N β 0 * S := by
+    have h1 := mul_le_mul_of_nonneg_right (hdecay N β d hβ hd) (le_of_lt hLpos)
+    have h2 : MassGap.wilsonCorrAt N β 0 * r ^ L * ((L : ℝ)) ^ 4
+        ≤ MassGap.wilsonCorrAt N β 0 * S := by
+      have hmul := mul_le_mul_of_nonneg_left hquart hρ0
+      calc MassGap.wilsonCorrAt N β 0 * r ^ L * ((L : ℝ)) ^ 4
+          = MassGap.wilsonCorrAt N β 0 * (((L : ℝ)) ^ 4 * r ^ L) := by ring
+        _ ≤ MassGap.wilsonCorrAt N β 0 * S := hmul
+    exact le_trans h1 h2
+  -- divide by `L⁴`
+  have hinv := mul_le_mul_of_nonneg_right hstep (le_of_lt (inv_pos.mpr hLpos))
+  have hleft : MassGap.wilsonCorrAt N β d * ((L : ℝ)) ^ 4 * (((L : ℝ)) ^ 4)⁻¹
+      = MassGap.wilsonCorrAt N β d := by
+    field_simp
+  rw [hleft] at hinv
+  simpa only [div_eq_mul_inv, mul_comm] using hinv
+
+#print axioms lawAbove_of_geometric_tail
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/-! ## The substrate bound with the division performed -/
+
+/-- `d2Even a β` as a ratio of two finite sums of `wilsonCorrAt a.1 (max β 0)`: the circle-lag
+second moment over the total mass. The proof unfolds `Moment.Read.p` on `readEven a β` through
+`NonnegArm.readEven_rho`, so it stays on `wilsonCorrAt` and does not mention `readYMAt`.
+
+DERIVED: the `0` in each `max β 0` is the clamp point, the lower end of the physical coupling range;
+the `2` is the exponent on the circle lag, the moment's own power. The `1`
+in `a.1` is the `EvenAp` projection to the extent index. -/
 theorem d2Even_eq_div (a : EvenAp) (β : ℝ) :
     d2Even a β
       = (∑ d, MassGap.wilsonCorrAt a.1 (max β 0) d * (Moment.circLag d : ℝ) ^ 2)
@@ -543,8 +1529,14 @@ theorem d2Even_eq_div (a : EvenAp) (β : ℝ) :
 
 #print axioms d2Even_eq_div
 
-/-- The total mass is strictly positive at every aperture and coupling — the SECOND clause of the
-reflection-positivity statement, which at even extent is a theorem rather than the named axiom. -/
+/-- The total mass `∑ d, wilsonCorrAt a.1 (max β 0) d` is strictly positive at every even aperture
+and every coupling. It is `Moment.Read.hpos` of `readEven a β`, transported along
+`NonnegArm.readEven_rho`: the second clause of the reflection-positivity statement, which at even
+extent is a theorem rather than the named axiom.
+
+DERIVED: the `0` in `0 < ∑ …` is the strict sign of the total mass; the `0` in `max β 0` is the
+clamp point, the lower end of the physical coupling range. The `1` in `a.1` is the `EvenAp`
+projection to the extent index. -/
 theorem sum_wilsonCorrAt_pos (a : EvenAp) (β : ℝ) :
     0 < ∑ d, MassGap.wilsonCorrAt a.1 (max β 0) d := by
   have h := (readEven a β).hpos
@@ -552,17 +1544,18 @@ theorem sum_wilsonCorrAt_pos (a : EvenAp) (β : ℝ) :
 
 #print axioms sum_wilsonCorrAt_pos
 
-/-- **⭐⭐ THE SUBSTRATE BOUND, WITH THE DIVISION PERFORMED.**
+/-- The substrate bound on `d2Even` is equivalent to the same bound with the division cleared: the
+weighted sum of `wilsonCorrAt` at most `B` times the total mass.
 
-An EQUIVALENCE, not a weakening: `Den > 0` at every aperture and coupling, so `Num/Den ≤ B` and
-`Num ≤ B·Den` say the same thing.
+`sum_wilsonCorrAt_pos` makes the denominator strictly positive at every aperture and coupling, so
+`div_le_iff` runs in both directions, with `d2Even_eq_div` supplying the ratio form. The two sides
+carry the same content; what the right-hand side removes is the ratio, leaving two finite sums of
+`wilsonCorrAt`, which is the form `WilsonAnalytic`'s covariance identity and `ContactFloor`'s floor
+act on.
 
-**⛔ THIS DOES NOT MAKE THE ESTIMATE EASIER**, and saying otherwise would be the mistake this
-statement exists to avoid. What it does is remove the ratio, leaving two finite sums of
-`wilsonCorrAt` — the form `WilsonAnalytic`'s covariance identity and `ContactFloor`'s floor both act
-on. The obligation is the same one, stated where the Gibbs machinery can reach it.
-
-DERIVED: the `2` is the moment's own exponent; the `0` is the clamp. -/
+DERIVED: the `0` in each `max β 0` is the clamp point, the lower end of the physical coupling range;
+the `2` is the exponent on the circle lag, the moment's own power. The `1`
+in `a.1` is the `EvenAp` projection to the extent index. -/
 theorem substrate_even_iff_weighted_sum :
     (∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ), d2Even a β ≤ B)
       ↔ (∃ B : ℝ, ∀ (a : EvenAp) (β : ℝ),

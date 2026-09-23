@@ -3,90 +3,75 @@ import MassGap.InfiniteVolume
 import MassGap.Hankel
 
 /-!
-# MassGap.Schwinger — the infinite-volume two-point function as a BOUNDED MOMENT SEQUENCE
+# MassGap.Schwinger — the infinite-volume two-point function as a bounded moment sequence
 
-## What the object is, and what it is not
+## The object
 
 `InfiniteVolume.exists_infinite_volume_gapped_limit` produces `L : ℕ → ℝ`: one real number per
 natural-number lag, the pointwise limit of the finite-extent Clay correlation along a subsequence of
-extents. That is a SEQUENCE OF NUMBERS. A Schwinger function is a distribution — a continuous linear
-functional on a space of test functions on `ℝ⁴` — and the distance between the two is three named
-things:
+extents. This file records the conditions `L` satisfies as a sequence.
+
+`L` is a sequence of numbers, not a distribution. Three things separate it from a Schwinger
+function:
 
 1. the lag variable is `ℕ`, a lattice separation along direction `2`, not a point of `ℝ⁴`;
 2. `L` is a function on that index, not a functional on test functions;
-3. nothing exhibits `L` as the moments, or the Fourier coefficients, of any measure.
+3. no measure is exhibited here of which `L` is the moment sequence.
 
-This file closes (3) as far as it can be closed without the Hamburger construction itself, and states
-(1) and (2) exactly rather than papering over them. Nothing here is a measure on a space of
-distributions, and nothing here is an Osterwalder–Schrader measure.
+Nothing here is a measure on a space of distributions, and nothing here is an
+Osterwalder–Schrader measure.
 
 ## What is proved
 
 * `exists_subseq_tendsto_all` — the diagonal extraction of `InfiniteVolume`, stated for an arbitrary
   uniformly bounded double sequence rather than for `corrLag` alone.
-* `exists_even_extent_limit` — the same limit as `InfiniteVolume.exists_subseq_tendsto_all_lags`, but
-  taken along the apertures `2j+1`, so that the lattice extent `2j+2` is EVEN at every member of the
-  sequence. The reflection geometry of `Hankel.corrClay_hankel_psd` requires `n = 2m`; no
-  finite-extent Hankel statement is available at an odd extent, so the parity has to be chosen before
-  the limit is taken. The bound `|L k| ≤ 4`, the contact floor and the decay are unaffected.
-* `hankel_psd_at_even_extent` — the finite-extent Hankel form written in the NATURAL-NUMBER lag: at
-  aperture `2J+1` and lags `a i ≤ J`, `0 ≤ ∑ᵢ∑ⱼ cᵢcⱼ ρ(aᵢ+aⱼ)`. This is
+* `exists_even_extent_limit` — a limit taken along the apertures `2j+1`, so that the lattice extent
+  `2j+2` is even at every member of the sequence, with `|L k| ≤ 4` at every lag. The reflection
+  geometry of `Hankel.corrClay_hankel_psd` requires `n = 2m`, so the parity is fixed before the
+  limit is taken.
+* `hankel_psd_at_even_extent` — the finite-extent Hankel form written in the natural-number lag: at
+  aperture `2J+1` and lags `a i ≤ J`, `0 ≤ ∑ᵢ∑ⱼ cᵢcⱼ corrLag (aᵢ+aⱼ)`. This is
   `Hankel.corrClay_hankel_psd` with the `Fin n` arithmetic discharged — the sum does not wrap
   (`Nat.mod_eq_of_lt`) and `corrLag`'s clamp does nothing.
-* `limit_hankel_psd` — **the limit sequence is a positive-semidefinite Hankel sequence at EVERY
-  finite family of lags, with no bound on the lags at all.** The finite-extent statement is confined
-  to lags below half the extent; in the limit that confinement is gone, because any fixed finite
-  family of lags is admissible at all large extents. This is the hypothesis of the FULL (not
-  truncated) Hamburger moment problem. The extent-6 witness recorded in `Hankel`'s header does not
-  bear on it: that witness is a statement about the six lags of one finite lattice, not about a
-  sequence defined at every lag.
-* `limit_abs_le_pow` — `|L k| ≤ B·R^k` at every `k`, from the geometric clustering, at every rate `R`
-  with `coreRate (16·4) β ≤ R < 1`.
+* `limit_hankel_psd` — `0 ≤ ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ)` at every finite family of lags, with no bound on the
+  lags. The finite-extent statement is confined to lags below half the extent; in the limit that
+  confinement is gone, because a fixed finite family of lags is admissible at all large extents.
+* `limit_abs_le_pow` — `|L k| ≤ B·R^k` at every `k`, with `B = max 4 (coreConst (16·4) β / R)`, at
+  every rate `R` with `coreRate (16·4) β ≤ R < 1`.
 * `sq_le_of_quad_nonneg`, `ratio_le_of_geometric` — the two elementary engines. The first is the
   discriminant; the second says a nonnegative log-convex sequence whose growth is `O(r^p)` has
   `Q 1 ≤ r · Q 0`.
-* `shiftForm_one_le` / `shift_two_le` — **the shifted Hankel matrix is positive semidefinite**:
+* `shiftForm_one_le` / `shift_two_le` — the Hankel form shifted by one lag is bounded by `R²` times
+  the unshifted one:
 
       ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ+2) ≤ R² · ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ)
 
-  at every finite family of lags and coefficients. Together with `limit_hankel_psd` this is the
-  hypothesis of the BOUNDED Hamburger problem — the condition under which the classical construction
-  places a representing measure on `[−R, R]` rather than on all of `ℝ`. The proof is elementary and
-  uses no operator theory: positive semidefiniteness at the doubled family `ι × Bool` gives
-  log-convexity of `p ↦ ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ+2p)` by the discriminant, the geometric bound caps that
-  sequence by `D·(R²)^p`, and a log-convex sequence cannot be capped by a rate below its own first
-  ratio.
-* `even_moment_le` — `L(2k) ≤ R^{2k}·L 0`, the visible consequence.
+  at every finite family of lags and coefficients, given positive semidefiniteness of the unshifted
+  form at every family and the single geometric bound `|L k| ≤ B·R^k`. Positive semidefiniteness of
+  the shifted form itself is the separate `shiftForm_nonneg`. The proof uses no operator theory:
+  positive semidefiniteness at the doubled family `ι × Bool` gives log-convexity of
+  `p ↦ ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ+2p)` by the discriminant, the geometric bound caps that sequence by
+  `D·(R²)^p`, and a log-convex sequence cannot be capped by a rate below its own first ratio.
+* `even_moment_le` — `L(2k) ≤ (R²)^k·L 0`, an upper bound on the even entries.
 * `exists_infinite_volume_bounded_moment_data` — the assembly, on the derived interval `[0,b)`.
 
-## What this does NOT give
+## Scope
 
-A measure. Hamburger's theorem — a positive-semidefinite Hankel sequence is the moment sequence of a
-positive measure on `ℝ` — is not in Mathlib v4.31, and neither is the truncated nor the bounded
-version. Constructing one here means the classical route: the semi-inner product `⟨p,q⟩ = Λ(pq)` on
-`ℝ[X]`, its Hausdorff completion, multiplication by `X` as a BOUNDED self-adjoint operator — bounded
-by `shiftForm_one_le`, which is exactly what the shifted form buys and what bare positive
-semidefiniteness never gives — the continuous functional calculus, and Riesz–Markov on the spectrum.
-Those pieces exist in Mathlib; the assembly does not, and it is not attempted here.
-
-So `L` is still a sequence of numbers. What has changed is that it is now a sequence of numbers
-carrying both Hankel conditions of a compactly supported moment sequence, at every lag, where the
-tree previously had one condition at lags below half of a finite extent.
+No measure is constructed. Hamburger's theorem — a positive-semidefinite Hankel sequence is the
+moment sequence of a positive measure on `ℝ` — is not in Mathlib v4.31, in its full, truncated or
+bounded form, and this file does not build it. What the file states about `L` are the two Hankel
+conditions, the geometric bound and summability, all as inequalities on the sequence.
 
 ## The test-function side
 
 `summable_of_geometric` gives `Summable L`, and `summable_mul_of_bounded` gives that the pairing
-`f ↦ ∑ₖ L k · f k` converges absolutely for every bounded `f : ℕ → ℝ`. That is a bounded linear
-functional on the bounded sequences in content, but it is NOT bundled as a `ContinuousLinearMap`
-here, and its index is the lattice lag, so it is not a distribution on `ℝ⁴` and must not be read as
-one.
+`f ↦ ∑ₖ L k · f k` converges absolutely for every bounded `f : ℕ → ℝ`. The pairing is not bundled as
+a `ContinuousLinearMap` here, and its index is the lattice lag, not a point of `ℝ⁴`.
 
 DERIVED: `2` in `2j+1` is the reflection geometry's own — `Hankel.corrClay_hankel_psd` requires
 `n = 2m` — and `2` in the shift is the lag the doubled family reaches, `(p+1)+(p+1) − 2p = 2`. `4` is
 `InfiniteVolume.wilsonCorrAt_abs_le_four`'s bound, `128` and `16·4` are `InfiniteVolume`'s. No
-constant is chosen here, none is fitted, and the rate `R` is universally quantified rather than
-picked.
+constant is chosen here, and the rate `R` is universally quantified rather than picked.
 
 Build: `python code/lean_build.py build MassGap.Schwinger`.
 -/
@@ -99,13 +84,16 @@ open MassGap.InfiniteVolume
 
 /-! ## Part 0 — two elementary engines
 
-Neither mentions the lattice. The first is the discriminant of a nonnegative quadratic; the second is
-the only genuinely new estimate in the file. -/
+Neither mentions the lattice. The first is the discriminant of a nonnegative quadratic; the second
+bounds the first ratio of a log-convex sequence by its growth rate. -/
 
-/-- **The discriminant.** If `t²·A + 2t·B + C ≥ 0` at every real `t`, then `B² ≤ A·C`. At `A > 0` the
-vertex `t = −B/A` gives it; at `A = 0` a nonzero `B` makes the affine function unbounded below.
+/-- The discriminant. If `0 ≤ A` and `t²·A + 2t·B + C ≥ 0` at every real `t`, then `B² ≤ A·C`. At
+`A > 0` the vertex `t = −B/A` gives it; at `A = 0` a nonzero `B` makes the affine function unbounded
+below, and the evaluation at `t = −(C+1)/(2B)` exhibits that.
 
-DERIVED: the `2` is the cross term's own and `−B/A` is the parabola's vertex. Nothing chosen. -/
+DERIVED: the `0`s are the signs tested in `hA : 0 ≤ A` and in the quadratic's nonnegativity; the
+`2` on `t ^ 2` and the `2` in the cross term are the quadratic's own shape, and the `2` on `B ^ 2`
+is the conclusion's. `−B/A` is the parabola's vertex. Nothing chosen. -/
 theorem sq_le_of_quad_nonneg {A B C : ℝ} (hA : 0 ≤ A)
     (h : ∀ t : ℝ, 0 ≤ t ^ 2 * A + 2 * t * B + C) : B ^ 2 ≤ A * C := by
   rcases eq_or_lt_of_le hA with hA0 | hApos
@@ -133,7 +121,11 @@ theorem sq_le_of_quad_nonneg {A B C : ℝ} (hA : 0 ≤ A)
 
 #print axioms sq_le_of_quad_nonneg
 
-/-- Bernoulli's inequality, by induction, so that nothing here depends on Mathlib's spelling. -/
+/-- Bernoulli's inequality at a nonnegative `u`: `1 + m·u ≤ (1 + u)^m` at every natural `m`. It is
+proved here by induction on `m` rather than taken from Mathlib.
+
+DERIVED: the `0` is the sign tested in `hu : 0 ≤ u`; the two `1`s are the unit — the constant term
+of the linear lower bound and the base of the power. Nothing chosen. -/
 theorem one_add_mul_le_pow_self {u : ℝ} (hu : 0 ≤ u) :
     ∀ m : ℕ, 1 + (m : ℝ) * u ≤ (1 + u) ^ m := by
   intro m
@@ -151,7 +143,12 @@ theorem one_add_mul_le_pow_self {u : ℝ} (hu : 0 ≤ u) :
 
 #print axioms one_add_mul_le_pow_self
 
-/-- A ratio above one has unbounded powers. -/
+/-- A ratio above one has unbounded powers: at `1 < θ` and any real `M` there is a natural `m` with
+`M < θ ^ m`. It comes from `one_add_mul_le_pow_self` at `u = θ − 1` and an integer above
+`(M − 1)/(θ − 1)`. No upper bound on `M` and no sign condition on it.
+
+DERIVED: the statement's only numeral is the `1` of `hθ : 1 < θ`, the unit the ratio must exceed.
+Nothing chosen. -/
 theorem exists_pow_gt {θ : ℝ} (hθ : 1 < θ) (M : ℝ) : ∃ m : ℕ, M < θ ^ m := by
   obtain ⟨m, hm⟩ := exists_nat_gt ((M - 1) / (θ - 1))
   refine ⟨m, ?_⟩
@@ -169,18 +166,19 @@ theorem exists_pow_gt {θ : ℝ} (hθ : 1 < θ) (M : ℝ) : ∃ m : ℕ, M < θ 
 
 #print axioms exists_pow_gt
 
-/-- **A nonnegative log-convex sequence cannot beat its own growth rate.**
+/-- A nonnegative log-convex sequence cannot beat its own growth rate. If `0 ≤ Q p` at every `p`,
+`Q(p+1)² ≤ Q p · Q(p+2)` at every `p`, and `Q p ≤ D·r^p` at every `p` with `r > 0`, then
+`Q 1 ≤ r · Q 0`.
 
-If `Q p ≥ 0`, `Q(p+1)² ≤ Q p · Q(p+2)` and `Q p ≤ D·r^p` with `r > 0`, then `Q 1 ≤ r · Q 0`.
+The ratios of a log-convex sequence are nondecreasing, so `Q m ≥ Q 0 · (Q 1/Q 0)^m`; if
+`Q 1 > r·Q 0` that lower bound outgrows `D·r^m` by `exists_pow_gt`, which the geometric hypothesis
+forbids. The `Q 0 = 0` case is separate: log-convexity then forces `Q 1 = 0` as well. No sign
+condition is placed on `D`; it is constrained only through the geometric hypothesis.
 
-The ratios `Q(p+1)/Q p` of a log-convex sequence are nondecreasing, so `Q m ≥ Q 0 · (Q 1/Q 0)^m`; if
-`Q 1 > r·Q 0` that lower bound outgrows `D·r^m`, which the hypothesis forbids. The `Q 0 = 0` case is
-separate and immediate: log-convexity then forces `Q 1 = 0` as well.
-
-This is the one place where the geometric decay does work that positive semidefiniteness alone
-cannot.
-
-DERIVED: no constant. `r`, `D` and `Q` are the caller's. -/
+DERIVED: the `0`s are the sign tested in `hr : 0 < r`, the sign tested in `hQ0`, and the index `0`
+in the conclusion's `Q 0`. The `1`s are the index shifts `p + 1` and the index `1` in the
+conclusion's `Q 1`. The `2`s are the square in the log-convexity hypothesis and the index shift
+`p + 2` it pairs with. `r`, `D` and `Q` are the caller's. -/
 theorem ratio_le_of_geometric {Q : ℕ → ℝ} {D r : ℝ} (hr : 0 < r)
     (hQ0 : ∀ p, 0 ≤ Q p)
     (hlc : ∀ p, Q (p + 1) ^ 2 ≤ Q p * Q (p + 2))
@@ -263,7 +261,11 @@ theorem ratio_le_of_geometric {Q : ℕ → ℝ} {D r : ℝ} (hr : 0 < r)
 restated here for a general `f` because the sequence this file needs is `corrLag` composed with the
 even-extent apertures, which is not `corrLag` itself. -/
 
-/-- Every row converges along one ultrafilter refining `atTop`. -/
+/-- Every row of a double sequence taking values in `Set.Icc (-C) C` converges along one filter
+refining `atTop`, to a limit sequence `L` with `|L k| ≤ C`. The filter is `Ultrafilter.of atTop`,
+and compactness of `Set.Icc (-C) C` supplies each row's limit.
+
+DERIVED: no numeral. `C` is the caller's bound. -/
 theorem exists_filter_tendsto_all (f : ℕ → ℕ → ℝ) {C : ℝ}
     (hb : ∀ k N, f k N ∈ Set.Icc (-C) C) :
     ∃ l : Filter ℕ, l.NeBot ∧ l ≤ atTop ∧ ∃ L : ℕ → ℝ, (∀ k, |L k| ≤ C) ∧
@@ -290,8 +292,12 @@ theorem exists_filter_tendsto_all (f : ℕ → ℕ → ℝ) {C : ℝ}
 
 #print axioms exists_filter_tendsto_all
 
-/-- **One subsequence along which every row converges.** `InfiniteVolume.diagSeq`'s diagonal
-extraction, for an arbitrary uniformly bounded double sequence. -/
+/-- One strictly monotone `φ : ℕ → ℕ` along which every row of a uniformly bounded double sequence
+converges, with the limits bounded by the same `C`. It is `InfiniteVolume.diagSeq`'s diagonal
+extraction applied to `exists_filter_tendsto_all`, stated for an arbitrary double sequence rather
+than for `corrLag`.
+
+DERIVED: no numeral. `C` is the caller's bound. -/
 theorem exists_subseq_tendsto_all (f : ℕ → ℕ → ℝ) {C : ℝ}
     (hb : ∀ k N, f k N ∈ Set.Icc (-C) C) :
     ∃ (L : ℕ → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧ (∀ k, |L k| ≤ C) ∧
@@ -350,12 +356,20 @@ theorem exists_subseq_tendsto_all (f : ℕ → ℕ → ℝ) {C : ℝ}
 
 #print axioms exists_subseq_tendsto_all
 
-/-! ## Part 2 — the limit along EVEN extents
+/-! ## Part 2 — the limit along even extents
 
 The aperture `2j+1` carries the lattice extent `2j+2 = 2(j+1)`, even at every `j`. That is what
-`Hankel.corrClay_hankel_psd` requires, and therefore what the limit has to be taken along. -/
+`Hankel.corrClay_hankel_psd` requires, and therefore what the limit is taken along. -/
 
-/-- **The correlation converges at every lag along a subsequence of EVEN extents.** -/
+/-- At every real `β` there is a strictly monotone `φ` and an `L : ℕ → ℝ` with `|L k| ≤ 4` such that
+`corrLag k β (2·φ j + 1)` converges to `L k` at every lag `k`. It is `exists_subseq_tendsto_all`
+applied to `fun k j => corrLag k β (2*j + 1)`, whose uniform bound is
+`InfiniteVolume.corrLag_mem_Icc`. Every aperture in the sequence is odd, so every lattice extent is
+even. No hypothesis is placed on `β`.
+
+DERIVED: `4` is `corrLag_mem_Icc`'s bound, itself `InfiniteVolume.wilsonCorrAt_abs_le_four`'s. The
+`2` and the `1` in `2 * φ j + 1` make the aperture odd and hence the extent even, which is what
+`Hankel.corrClay_hankel_psd`'s `n = 2m` requires. Nothing chosen. -/
 theorem exists_even_extent_limit (β : ℝ) :
     ∃ (L : ℕ → ℝ) (φ : ℕ → ℕ), StrictMono φ ∧ (∀ k, |L k| ≤ 4) ∧
       ∀ k, Tendsto (fun j => corrLag k β (2 * φ j + 1)) atTop (𝓝 (L k)) :=
@@ -366,16 +380,19 @@ theorem exists_even_extent_limit (β : ℝ) :
 
 /-! ## Part 3 — the Hankel form in the natural-number lag -/
 
-/-- **The finite-extent Hankel form, written in the natural-number lag.**
+/-- The finite-extent Hankel form, written in the natural-number lag:
+`0 ≤ ∑ᵢ∑ᵢ' cᵢcᵢ' corrLag (aᵢ + aᵢ') β (2J+1)` for any finite family of lags bounded by `J`.
 
-At aperture `2J+1` — lattice extent `2J+2 = 2(J+1)`, even, half-extent `J+1` — every family of lags
+At aperture `2J+1` — lattice extent `2J+2 = 2(J+1)`, even, half-extent `J+1` — every family with
 `a i ≤ J` is admissible, the `Fin` addition of two such lags does not wrap (`Nat.mod_eq_of_lt`), and
 `corrLag`'s clamp `min (a i + a i') (2J+1)` does nothing because `a i + a i' ≤ 2J`. So
 `Hankel.corrClay_hankel_psd` reads as a statement about the natural-number lag function directly.
+The hypothesis `hJ : ∀ i, a i ≤ J` is what confines this to lags below half the extent; no
+hypothesis is placed on `β` or on the coefficients `c`.
 
-DERIVED: `2J+1` is the aperture whose extent is even and `J+1` is half of it; both are forced by
-`Hankel.corrClay_hankel_psd`'s `n = 2m` and by `LogConvex.obsPlus_mem`'s requirement that a level lie
-strictly below the reflection plane. Nothing chosen. -/
+DERIVED: the `0` is the sign asserted of the form. `2J+1` is the aperture whose extent is even,
+forced by `Hankel.corrClay_hankel_psd`'s `n = 2m` and by `LogConvex.obsPlus_mem`'s requirement that
+a level lie strictly below the reflection plane. Nothing chosen. -/
 theorem hankel_psd_at_even_extent {ι : Type} [Fintype ι] (a : ι → ℕ) (c : ι → ℝ) (β : ℝ)
     (J : ℕ) (hJ : ∀ i, a i ≤ J) :
     0 ≤ ∑ i, ∑ i', c i * c i' * corrLag (a i + a i') β (2 * J + 1) := by
@@ -419,19 +436,20 @@ theorem hankel_psd_at_even_extent {ι : Type} [Fintype ι] (a : ι → ℕ) (c :
 
 #print axioms hankel_psd_at_even_extent
 
-/-- **THE LIMIT SEQUENCE IS A POSITIVE-SEMIDEFINITE HANKEL SEQUENCE, AT EVERY FINITE FAMILY OF
-LAGS.**
+/-- The limit sequence is a positive-semidefinite Hankel sequence:
 
-    0 ≤ ∑ᵢ ∑ⱼ cᵢ cⱼ L(aᵢ + aⱼ)
+    0 ≤ ∑ᵢ ∑ᵢ' cᵢ cᵢ' L(aᵢ + aᵢ')
 
-with NO constraint on the lags `a : ι → ℕ` and none on the coefficients. The finite-extent statement
-`Hankel.corrClay_hankel_psd` is confined to lags below half the extent; that confinement disappears
+with no constraint on the lags `a : ι → ℕ` and none on the coefficients `c`. The hypotheses are that
+`φ` is strictly monotone and that `corrLag k β (2·φ j + 1)` converges to `L k` at every `k`; `L`
+itself is otherwise unconstrained, so the conclusion is about whatever sequence those limits define.
+`hankel_psd_at_even_extent` is confined to lags below half the extent; that confinement disappears
 in the limit, because a fixed finite family of lags is admissible at every large enough extent
-(`Finset.univ.sup a ≤ j ≤ φ j`) and the inequality is closed under pointwise limits.
+(`Finset.univ.sup a ≤ j ≤ φ j`) and the inequality is closed under pointwise limits (`ge_of_tendsto`).
+`ι` is required to be a `Fintype` in `Type`.
 
-This is the hypothesis of the full Hamburger moment problem: a statement about a sequence defined at
-every lag, which is why the extent-6 witness in `Hankel`'s header — a statement about the six lags of
-one finite lattice — does not bear on it. -/
+DERIVED: the `0` is the sign asserted of the form; the `2` and the `1` in `2 * φ j + 1` are the odd
+aperture, inherited from `exists_even_extent_limit`. Nothing chosen. -/
 theorem limit_hankel_psd {β : ℝ} {L : ℕ → ℝ} {φ : ℕ → ℕ} (hφ : StrictMono φ)
     (htend : ∀ k, Tendsto (fun j => corrLag k β (2 * φ j + 1)) atTop (𝓝 (L k)))
     {ι : Type} [Fintype ι] (a : ι → ℕ) (c : ι → ℝ) :
@@ -451,8 +469,13 @@ theorem limit_hankel_psd {β : ℝ} {L : ℕ → ℝ} {φ : ℕ → ℕ} (hφ : 
 
 #print axioms limit_hankel_psd
 
-/-- **Non-vacuity — the `2 × 2` minor of the limit.** A one-parameter family of constraints on the
-three lowest lags of the limit sequence, with no reference to any extent. -/
+/-- The `2 × 2` minor of the limit, written out: `0 ≤ t²·L 0 + 2t·L 1 + L 2` at every real `t`. It
+is `limit_hankel_psd` at `ι = Fin 2` with lags `(0, 1)` and coefficients `(t, 1)`, so it constrains
+the three lowest lags of `L` and refers to no extent.
+
+DERIVED: the `2` in `t ^ 2` and the `2` in the cross term are the quadratic's own shape; `L 0`,
+`L 1` and `L 2` are the three lowest lags the `2 × 2` minor reaches; the `0` is the sign asserted;
+the `2` and `1` in `2 * φ j + 1` are the odd aperture. Nothing chosen. -/
 theorem limit_hankel_psd_two {β : ℝ} {L : ℕ → ℝ} {φ : ℕ → ℕ} (hφ : StrictMono φ)
     (htend : ∀ k, Tendsto (fun j => corrLag k β (2 * φ j + 1)) atTop (𝓝 (L k))) (t : ℝ) :
     0 ≤ t ^ 2 * L 0 + 2 * t * L 1 + L 2 := by
@@ -466,7 +489,14 @@ theorem limit_hankel_psd_two {β : ℝ} {L : ℕ → ℝ} {φ : ℕ → ℕ} (h�
 
 /-! ## Part 4 — the limit's floor and its decay, as one geometric bound -/
 
-/-- The contact floor survives the limit. -/
+/-- The contact floor survives the limit: `exp (−128β)·δ₀ ≤ L 0`. The floor `hfloor` is a hypothesis
+supplied by the caller, uniform in the extent `N` and holding at every nonnegative coupling; at lag
+zero `corrLag_zero` identifies `corrLag 0 β` with `wilsonCorrAt`, and `ge_of_tendsto'` carries the
+bound through the limit. `δ₀` is fixed before `β` is chosen.
+
+DERIVED: `128` is `InfiniteVolume.exists_uniform_contact_floor`'s exponent, not a choice here; the
+`0`s are the sign tested in `hβ` and in `hfloor`'s hypothesis, and the lag `0` at which the floor is
+read; the `2` and `1` in `2 * φ j + 1` are the odd aperture. -/
 theorem limit_zero_ge {β : ℝ} (hβ : 0 ≤ β) {δ₀ : ℝ}
     (hfloor : ∀ (N : ℕ) (β' : ℝ), 0 ≤ β' →
       Real.exp (-(128 * β')) * δ₀ ≤ MassGap.wilsonCorrAt N β' 0)
@@ -480,7 +510,15 @@ theorem limit_zero_ge {β : ℝ} (hβ : 0 ≤ β) {δ₀ : ℝ}
 
 #print axioms limit_zero_ge
 
-/-- The geometric clustering survives the limit. -/
+/-- The geometric clustering survives the limit: at `1 ≤ k`,
+`|L k| ≤ coreConst (16·4) β · coreRate (16·4) β ^ (k−1)`. `InfiniteVolume.corrLag_abs_le_geometric`
+holds at every large enough extent, and `Tendsto.abs` with `le_of_tendsto` carries it across. It is
+stated at `1 ≤ k` only; lag zero is covered separately in `limit_abs_le_pow`.
+
+DERIVED: `16 * 4` is `InfiniteVolume`'s argument to `coreConst` and `coreRate`; the `1` in `hr` is
+the unit the rate must fall below; the `1` in `hk` and in `k - 1` is the lowest lag the clustering
+estimate reaches; the `0` is the sign tested in `hβ`; the `2` and `1` in `2 * φ j + 1` are the odd
+aperture. -/
 theorem limit_abs_le_geometric {β : ℝ} (hβ : 0 ≤ β)
     (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
     {L : ℕ → ℝ} {φ : ℕ → ℕ} (hφ : StrictMono φ)
@@ -496,14 +534,17 @@ theorem limit_abs_le_geometric {β : ℝ} (hβ : 0 ≤ β)
 
 #print axioms limit_abs_le_geometric
 
-/-- **ONE geometric bound at every lag, lag zero included.**
+/-- One geometric bound at every lag, lag zero included: `|L k| ≤ B·R^k` with
+`B = max 4 (coreConst (16·4) β / R)`. The rate `R` is universally quantified over
+`coreRate (16·4) β ≤ R < 1` with `0 < R`, so the bound holds simultaneously at every admissible `R`.
+Lag zero uses the hypothesis `hL4 : ∀ k, |L k| ≤ 4`; the remaining lags use
+`limit_abs_le_geometric`, whose `coreConst·R^{k−1}` is rewritten as `(coreConst/R)·R^k`, which is
+where `0 < R` is needed. `hC : 0 ≤ coreConst (16·4) β` is a hypothesis, not derived here.
 
-`|L k| ≤ B·R^k` with `B = max 4 (coreConst/R)`, at every rate `R` between the estimate's own
-`coreRate (16·4) β` and one. The rate is the caller's: nothing is chosen here, and the statement
-holds simultaneously at every admissible `R`.
-
-DERIVED: `4` is `InfiniteVolume.wilsonCorrAt_abs_le_four`'s bound, which is what covers lag zero; the
-division by `R` is what turns `coreConst·R^{k−1}` into `(coreConst/R)·R^k`. -/
+DERIVED: `4` is `InfiniteVolume.wilsonCorrAt_abs_le_four`'s bound, appearing twice — as the
+hypothesis covering lag zero and inside the `max`; `16 * 4` is `InfiniteVolume`'s argument to
+`coreConst` and `coreRate`; the `0`s are the signs tested in `hβ`, `hC` and `hR0`; the `1` is the
+unit `R` must fall below; the `2` and `1` in `2 * φ j + 1` are the odd aperture. -/
 theorem limit_abs_le_pow {β R : ℝ} (hβ : 0 ≤ β)
     (hC : 0 ≤ MassGap.StrongCoupling.coreConst (16 * 4) β)
     (hrate : MassGap.StrongCoupling.coreRate (16 * 4) β ≤ R) (hR0 : 0 < R) (hR1 : R < 1)
@@ -548,11 +589,16 @@ theorem limit_abs_le_pow {β R : ℝ} (hβ : 0 ≤ β)
 
 /-! ## Part 5 — the shifted Hankel form
 
-The point of the file. Positive semidefiniteness alone says nothing about where a representing
-measure would live; the shifted form is the localisation condition, and it follows from the geometric
-decay by an entirely elementary argument. -/
+The shifted form is the Hankel form read at lags moved up by a fixed amount. This part derives a
+bound on the shifted form in terms of the unshifted one from the geometric decay, by an elementary
+argument. -/
 
-/-- Splitting a double sum over the doubled index `ι × Bool` into its four blocks. -/
+/-- Splitting a double sum over the doubled index `ι × Bool` into its four blocks, for an arbitrary
+`Lf : ℕ → ℝ`, lag assignment `A` and coefficient assignment `Cf` on `ι × Bool`. It is
+`Fintype.sum_prod_type` and `Fintype.sum_bool` with the four terms grouped as
+`(true,true) + (true,false)` and `(false,true) + (false,false)`.
+
+DERIVED: no numeral. -/
 theorem sum_prod_bool_split {ι : Type} [Fintype ι] (Lf : ℕ → ℝ) (A : ι × Bool → ℕ)
     (Cf : ι × Bool → ℝ) :
     ∑ x, ∑ y, Cf x * Cf y * Lf (A x + A y)
@@ -570,10 +616,11 @@ section Shift
 
 variable {L : ℕ → ℝ}
 
-/-- The Hankel quadratic form of `L` at a family of lags, shifted by `p`.
+/-- The Hankel quadratic form of `L` at a family of lags `a` with coefficients `c`, shifted by `p`:
+`∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ + aᵢ' + 2p)`. No hypothesis on `L`, `a` or `c`.
 
 DERIVED: the `2` is the Hankel index's own arithmetic — entry `(i,i')` reads `L (a i + a i')`, so
-shifting BOTH indices by `p` shifts the entry by `2p`. It is the shape of the matrix, not a step
+shifting both indices by `p` shifts the entry by `2p`. It is the shape of the matrix, not a step
 size: the shift is by `p`, and `2 * p` is where that lands. -/
 noncomputable def shiftForm (L : ℕ → ℝ) {ι : Type} [Fintype ι] (a : ι → ℕ) (c : ι → ℝ)
     (p : ℕ) : ℝ :=
@@ -581,7 +628,14 @@ noncomputable def shiftForm (L : ℕ → ℝ) {ι : Type} [Fintype ι] (a : ι �
 
 #print axioms shiftForm
 
-/-- The shifted form is nonnegative: it is the Hankel form at the shifted family of lags. -/
+/-- The shifted form is nonnegative at every `p`, given positive semidefiniteness `hpsd` of the
+unshifted Hankel form at every finite family of lags. It is `hpsd` at the family `fun i => a i + p`,
+since `(a i + p) + (a i' + p) = a i + a i' + 2p`. The hypothesis quantifies over `ι : Type` with a
+`Fintype` instance, so `hpsd` must be available at the shifted family too, which is why it is taken
+in that universally quantified form rather than at one fixed `ι`.
+
+DERIVED: the `0`s are the sign asserted of the unshifted form in `hpsd` and of the shifted form in
+the conclusion. The `2` reaching the statement sits inside `shiftForm`. -/
 theorem shiftForm_nonneg
     (hpsd : ∀ (ι : Type) [Fintype ι] (a : ι → ℕ) (c : ι → ℝ),
       0 ≤ ∑ i, ∑ i', c i * c i' * L (a i + a i'))
@@ -596,11 +650,17 @@ theorem shiftForm_nonneg
 
 #print axioms shiftForm_nonneg
 
-/-- **The doubled family.** Positive semidefiniteness at the family carrying the lags `a i + p` with
-coefficients `t·c` and the lags `a i + p + 2` with coefficients `c` is a nonnegative quadratic in `t`
-whose three coefficients are the shifted forms at `p`, `p+1` and `p+2`.
+/-- The doubled family. Positive semidefiniteness at the index `ι × Bool` carrying the lags
+`a i + p` with coefficients `t·c` on the `true` half and the lags `a i + p + 2` with coefficients
+`c` on the `false` half gives
+`0 ≤ t²·shiftForm p + 2t·shiftForm (p+1) + shiftForm (p+2)` at every real `t`. The two cross blocks
+are equal and each contributes `t·shiftForm (p+1)`, which is where the `2t` comes from;
+`sum_prod_bool_split` is what separates the four blocks.
 
-DERIVED: the shift `2` between the two halves is what puts the cross term at `p+1`. -/
+DERIVED: the `0`s are the sign asserted of the unshifted form in `hpsd` and of the quadratic in the
+conclusion. The `2` on `t ^ 2` is the quadratic's own shape and the `2` in the cross term counts the
+two equal off-diagonal blocks. The index shifts `p + 1` and `p + 2` are where the doubled family's
+lag offset of `2` lands: two halves separated by `2` put the cross term at `p + 1`. -/
 theorem shiftForm_quad
     (hpsd : ∀ (ι : Type) [Fintype ι] (a : ι → ℕ) (c : ι → ℝ),
       0 ≤ ∑ i, ∑ i', c i * c i' * L (a i + a i'))
@@ -664,7 +724,14 @@ theorem shiftForm_quad
 
 #print axioms shiftForm_quad
 
-/-- The shifted form is capped by the geometric bound, with a constant free of `p`. -/
+/-- The shifted form is capped geometrically in `p`: `shiftForm L a c p ≤ ((∑ᵢ|cᵢ|)²·B)·(R²)^p`,
+with a constant free of `p`. It is the triangle inequality on the double sum together with
+`|L k| ≤ B·R^k` at `k = 2p`, and `R ≤ 1` is what lets `R^(a i + a i' + 2p)` be replaced by `R^(2p)`.
+The hypotheses are `0 < R`, `R ≤ 1` and `0 ≤ B`; no positivity is assumed of `L` or of `c`.
+
+DERIVED: the `0`s are the signs tested in `hR0` and `hB`; the `1` is the unit `R` must not exceed;
+the `2` in `R ^ 2` and in `(∑ᵢ|cᵢ|) ^ 2` are the doubling of the shift and the square of the
+coefficient sum, both forced by the Hankel index reading `a i + a i' + 2p`. -/
 theorem shiftForm_le_geometric {B R : ℝ} (hR0 : 0 < R) (hR1 : R ≤ 1) (hB : 0 ≤ B)
     (hb : ∀ k, |L k| ≤ B * R ^ k)
     {ι : Type} [Fintype ι] (a : ι → ℕ) (c : ι → ℝ) (p : ℕ) :
@@ -696,23 +763,23 @@ theorem shiftForm_le_geometric {B R : ℝ} (hR0 : 0 < R) (hR1 : R ≤ 1) (hB : 0
 
 #print axioms shiftForm_le_geometric
 
-/-- **THE SHIFTED HANKEL MATRIX IS POSITIVE SEMIDEFINITE.**
+/-- The Hankel form shifted by one lag is at most `R²` times the unshifted one:
+`shiftForm L a c 1 ≤ R² · shiftForm L a c 0`, at every finite family of lags and coefficients. The
+hypotheses are positive semidefiniteness of the unshifted form at every family, `0 < R ≤ 1`, and the
+single geometric bound `|L k| ≤ B·R^k`; `0 ≤ B` is not assumed but read off `hb` at `k = 0`.
 
-    ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ+2) ≤ R² · ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ)
+The proof: `shiftForm_quad` and `sq_le_of_quad_nonneg` give log-convexity of
+`p ↦ shiftForm L a c p`, `shiftForm_le_geometric` caps that sequence by `D·(R²)^p`, and
+`ratio_le_of_geometric` says a nonnegative log-convex sequence capped by `D·r^p` has first ratio at
+most `r`. No operator theory, no completion, no spectral theorem.
 
-at every finite family of lags and coefficients, given positive semidefiniteness of the unshifted
-form at every family together with the single geometric bound `|L k| ≤ B·R^k`, `0 < R ≤ 1`.
+This is a bound relating two forms; positive semidefiniteness of the shifted form itself is the
+separate `shiftForm_nonneg`.
 
-This is the localisation condition of the moment problem. With it, the classical construction places
-a representing measure on `[−R, R]`; without it, positive semidefiniteness says nothing about where
-one would live, and for a truncated sequence there may be none at all.
-
-The proof: the doubled family gives log-convexity of `p ↦ shiftForm L a c p` through the
-discriminant, the geometric bound caps that sequence by `D·(R²)^p`, and `ratio_le_of_geometric` says
-a nonnegative log-convex sequence capped by `D·r^p` has first ratio at most `r`. No operator theory,
-no completion, no spectral theorem.
-
-DERIVED: the shift `2` is the doubled family's own; `R` and `B` are the caller's. -/
+DERIVED: the `0`s are the sign asserted in `hpsd`, the sign tested in `hR0`, and the shift index in
+`shiftForm L a c 0`; the `1`s are the unit `R` must not exceed and the shift index in
+`shiftForm L a c 1`; the `2` in `R ^ 2` is the doubling of a one-lag shift, since shifting both
+Hankel indices by `1` moves the entry by `2`. `R` and `B` are the caller's. -/
 theorem shiftForm_one_le
     (hpsd : ∀ (ι : Type) [Fintype ι] (a : ι → ℕ) (c : ι → ℝ),
       0 ≤ ∑ i, ∑ i', c i * c i' * L (a i + a i'))
@@ -733,7 +800,12 @@ theorem shiftForm_one_le
 
 #print axioms shiftForm_one_le
 
-/-- `shiftForm_one_le` with both shifts written out. -/
+/-- `shiftForm_one_le` with both shifts unfolded to sums:
+`∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ+aᵢ'+2) ≤ R² · ∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ+aᵢ')`. Same hypotheses, same content.
+
+DERIVED: the `0` is the sign asserted in `hpsd` and the `0` of `hR0`; the `1` is the unit `R` must
+not exceed; the `2` in the lag `a i + a i' + 2` is a one-lag shift read at both Hankel indices, and
+the `2` in `R ^ 2` is the matching power. -/
 theorem shift_two_le
     (hpsd : ∀ (ι : Type) [Fintype ι] (a : ι → ℕ) (c : ι → ℝ),
       0 ≤ ∑ i, ∑ i', c i * c i' * L (a i + a i'))
@@ -747,10 +819,14 @@ theorem shift_two_le
 
 #print axioms shift_two_le
 
-/-- **The even moments decay at the rate.** `L(2k) ≤ (R²)^k·L 0`, from the shifted form at the single
-lag `k`. Recorded because it is the cleanest visible consequence: the moment sequence has exponential
-order at most `R`, which is Carleman's condition with room to spare, so the moment problem for `L` is
-determinate as well as compactly supported. -/
+/-- An upper bound on the even entries: `L (2k) ≤ (R²)^k · L 0` at every `k`. The induction step is
+`shift_two_le` at `ι = Fin 2`, the constant lag family `fun _ => n` and the coefficients `(1, 0)`,
+which reduces the double sum to `L (2n+2) ≤ R²·L (2n)`. It is a one-sided bound on `L` at even lags;
+no lower bound and no statement about odd lags follows from it.
+
+DERIVED: the `2` in `L (2 * k)` and in `R ^ 2` is the Hankel doubling, as in `shift_two_le`; the
+`0`s are the sign asserted in `hpsd`, the sign tested in `hR0`, and the lag `0` in `L 0`; the `1` is
+the unit `R` must not exceed. -/
 theorem even_moment_le
     (hpsd : ∀ (ι : Type) [Fintype ι] (a : ι → ℕ) (c : ι → ℝ),
       0 ≤ ∑ i, ∑ i', c i * c i' * L (a i + a i'))
@@ -779,12 +855,17 @@ theorem even_moment_le
 
 end Shift
 
-/-! ## Part 6 — the test-function side, stated for what it is
+/-! ## Part 6 — the test-function side
 
 `L` is summable, so the pairing with any bounded sequence converges absolutely. The index is the
-lattice lag `ℕ`; this is not a distribution on `ℝ⁴` and not an Osterwalder–Schrader object. -/
+lattice lag `ℕ`, not a point of `ℝ⁴`. -/
 
-/-- A geometrically bounded sequence is summable. -/
+/-- A geometrically bounded sequence is summable: `|L k| ≤ B·R^k` with `0 ≤ R < 1` gives
+`Summable L`, by comparison with `summable_geometric_of_lt_one` scaled by `B`. Absolute
+summability is what the comparison gives, and `Summable.of_norm` converts it.
+
+DERIVED: the `0` is the sign tested in `hR0` and the `1` is the unit `R` must fall strictly below,
+which is what makes the geometric series converge. `B` and `R` are the caller's. -/
 theorem summable_of_geometric {L : ℕ → ℝ} {B R : ℝ} (hR0 : 0 ≤ R) (hR1 : R < 1)
     (hb : ∀ k, |L k| ≤ B * R ^ k) : Summable L := by
   have hgeo : Summable (fun k : ℕ => B * R ^ k) :=
@@ -797,10 +878,14 @@ theorem summable_of_geometric {L : ℕ → ℝ} {B R : ℝ} (hR0 : 0 ≤ R) (hR1
 
 #print axioms summable_of_geometric
 
-/-- **The pairing with a bounded test sequence converges absolutely.** `f ↦ ∑ₖ L k · f k` is a
-bounded linear functional on the bounded sequences in content — the majorant is `(∑ₖ|L k|)·M`. It is
-NOT bundled as a `ContinuousLinearMap` here, and its index is the lattice lag, so it is not a
-distribution on `ℝ⁴`. -/
+/-- The pairing with a bounded test sequence converges absolutely: at `|L k| ≤ B·R^k` with
+`0 ≤ R < 1` and `|f k| ≤ M` at every `k`, both `fun k => |L k * f k|` and `fun k => L k * f k` are
+summable, the majorant being `|L k|·M`. The statement is summability of the termwise product; the
+sum is not bundled as a linear functional here, and the index is the lattice lag, not a point
+of `ℝ⁴`.
+
+DERIVED: the `0` is the sign tested in `hR0` and the `1` is the unit `R` must fall strictly below.
+`B`, `R` and `M` are the caller's. -/
 theorem summable_mul_of_bounded {L : ℕ → ℝ} {B R : ℝ} (hR0 : 0 ≤ R) (hR1 : R < 1)
     (hb : ∀ k, |L k| ≤ B * R ^ k) (f : ℕ → ℝ) {M : ℝ} (hf : ∀ k, |f k| ≤ M) :
     Summable (fun k => |L k * f k|) ∧ Summable (fun k => L k * f k) := by
@@ -824,27 +909,28 @@ theorem summable_mul_of_bounded {L : ℕ → ℝ} {B R : ℝ} (hR0 : 0 ≤ R) (h
 
 /-! ## Part 7 — the assembly -/
 
-/-- **THE INFINITE-VOLUME TWO-POINT FUNCTION IS A BOUNDED MOMENT SEQUENCE, ON A DERIVED COUPLING
-INTERVAL.**
+/-- The assembly. There is a `b > 0` and a `δ₀ > 0` such that at every `β` in `[0, b)` the rate
+`coreRate (16·4) β` is below one and there is a strictly increasing sequence of apertures
+`2·φ j + 1`, each carrying an even lattice extent, along which `corrLag k β` converges at every lag
+`k` to `L : ℕ → ℝ` satisfying
 
-On `[0,b)` — `b` from `StrongCoupling.core_rate_lt_one_of_small`, carrying no numeral — there is a
-strictly increasing sequence of apertures `2·φ j + 1`, each carrying an EVEN lattice extent, along
-which the Clay correlation converges at every lag to `L : ℕ → ℝ`, and `L` satisfies
+* the contact term `e^{−128β}·δ₀ ≤ L 0`, with `δ₀` fixed before `β` is chosen;
+* `0 ≤ ∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ+aᵢ')` at every finite family of lags and coefficients, with no bound on the
+  lags;
+* at every rate `R` with `coreRate (16·4) β ≤ R < 1` and `0 < R`: the geometric bound
+  `|L k| ≤ max 4 (coreConst (16·4) β / R) · R^k`, the shift bound
+  `∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ+aᵢ'+2) ≤ R²·∑ᵢ∑ᵢ' cᵢcᵢ' L(aᵢ+aᵢ')`, and `Summable L`.
 
-* a positive contact term `e^{−128β}·δ₀ ≤ L 0`, with `δ₀ > 0` fixed before the coupling and the
-  extent are chosen;
-* `0 ≤ ∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ)` at EVERY finite family of lags and coefficients — full Hankel
-  positivity, with no bound on the lags;
-* at every rate `R` with `coreRate (16·4) β ≤ R < 1`: the geometric bound `|L k| ≤ B·R^k`, the
-  SHIFTED Hankel positivity `∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ+2) ≤ R²·∑ᵢ∑ⱼ cᵢcⱼ L(aᵢ+aⱼ)`, and `Summable L`.
+`b` comes from `StrongCoupling.core_rate_lt_one_of_small (16·4)` and `δ₀` from
+`InfiniteVolume.exists_uniform_contact_floor`. The conclusion is a conjunction of inequalities on
+the sequence `L`; no measure is constructed and none is claimed.
 
-Those are jointly the hypothesis of the BOUNDED Hamburger moment problem: a sequence with both Hankel
-conditions is the moment sequence of a positive measure supported in `[−R,R]`. The measure itself is
-NOT constructed — Mathlib v4.31 has no moment problem — so what this theorem delivers is the complete
-hypothesis and not the conclusion.
-
-DERIVED: `2·φ j + 1` is the aperture whose extent is even, forced by the reflection geometry; `128`
-and `16·4` are `InfiniteVolume`'s; the shift `2` is the doubled family's. No constant is chosen. -/
+DERIVED: the `0`s are the signs tested in `0 < b`, `0 < δ₀`, `0 ≤ β` and `0 < R`, the sign asserted
+of the Hankel form, and the lag `0` in `L 0`. The `1`s are the unit that `coreRate` and `R` fall
+below, and the `1` in the aperture `2 * φ j + 1`, whose `2` makes the extent even. `4` is
+`InfiniteVolume.wilsonCorrAt_abs_le_four`'s bound inside the `max`; `128` and `16 * 4` are
+`InfiniteVolume`'s and `StrongCoupling`'s; the `2` in the lag `a i + a i' + 2` and in `R ^ 2` is the
+Hankel doubling of a one-lag shift. No constant is chosen. -/
 theorem exists_infinite_volume_bounded_moment_data :
     ∃ b : ℝ, 0 < b ∧ ∃ δ₀ : ℝ, 0 < δ₀ ∧
       ∀ β : ℝ, 0 ≤ β → β < b →

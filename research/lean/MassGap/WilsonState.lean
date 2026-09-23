@@ -5,58 +5,69 @@ import MassGap.HalfSpaceAlgebra
 import MassGap.ReflectionHalfSpace
 
 /-!
-# MassGap.WilsonState — the infinite-volume Wilson measure, as a `State`
+# MassGap.WilsonState — a probability measure as a `DLRLimit.State`, and what follows at zero coupling
 
-## The gap this fills
+## From measure to state
 
-`WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` produces a probability MEASURE `P` on
-`IConf (SU N)` satisfying the DLR equation for the Wilson specification.
-`WilsonTransferReduction.transferData_of_state_facts` consumes a `DLRLimit.State`. **The tree carried
-only the other direction** — `DLRLimit.gibbsMeasure` takes a state to a measure — so the Wilson object
-and the transfer machinery could not meet.
+`stateOfMeasure P` is integration against `P`: `ν f = ∫ f dP`. On a compact configuration space a
+continuous observable is bounded (`integrable_of_continuousMap`) and a probability measure is finite,
+so the integral exists; the four `State` fields are then `integral_add`, `integral_const_mul`,
+`integral_nonneg` and `measure_univ`. `DLRLimit.gibbsMeasure` goes the other way, from a state to a
+measure.
 
-`stateOfMeasure` is the missing direction, and it is integration: `ν f = ∫ f dP`. On a compact
-configuration space a continuous observable is bounded, and a probability measure is finite, so it is
-integrable; the four `State` fields are then `integral_add`, `integral_smul`, `integral_nonneg` and
-`measure_univ`.
+`exists_wilson_infinite_volume_state` applies this to the measure
+`WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` produces, carrying the DLR equation through
+unchanged. `wilsonTransferData` feeds such a state to
+`WilsonTransferReduction.transferData_of_state_facts`, which additionally takes three facts about the
+state as hypotheses:
 
-## What this closes, and what it emphatically does not
-
-**Closes:** the Wilson infinite-volume object is now a `State`, so
-`transferData_of_state_facts` can be applied to it. The chain
-
-    Wilson measure → State → TransferData → GNSHilbert.opT → OpTBridge.reconstruct_from_opT
-
-has no missing link of type.
-
-**Does not close:** `transferData_of_state_facts` still needs its three hypotheses, and
-`wilsonStateAt` is not shown to satisfy ANY of them.
-
-⛔ A DIFFERENT state does satisfy two of them: the limit state of
-`ReflectionHalfSpace.wilson_reflPositive_limit_exists` carries `ReflPositiveOn`, and
-`reflection_facts_on_halfSpaceAlg` carries `IsReflectionInvariant` beside it. That state is a limit
-of free-boundary states along an ultrafilter, not `wilsonStateAt`, so it does not discharge anything
-here — but it means the list below is outstanding for THIS state, not for every state.
-
-    IsReflectionInvariant (latticeReflection τ (2 * p)) ν
-    ReflPositiveOn (latticeReflection τ (2 * p)) (halfSpaceAlg τ p) ν
+    IsReflectionInvariant (latticeReflection τ (2 * c)) ν
+    ReflPositiveOn (latticeReflection τ (2 * c)) (halfSpaceAlg τ c) ν
     ∀ f, ν (ishiftObsL τ f) = ν f
 
-⛔ The constant is `2 * p` where the algebra's plane is `p`, and not `c` with `c`:
-`ReflectionHalfSpace`'s header shows that at `c ≠ 2p` the two half-spaces are not mirror images about
-a common plane, so the `c`-with-`c` form asks for positivity of a pairing that is not the reflection
-pairing.
+The reflection constant is `2 * c` where the half-space algebra's plane is `c`. At any other constant
+the two half-spaces are not mirror images about a common plane, so the pairing that would be asked
+about is not the reflection pairing.
 
-and `reconstruct_from_opT` still needs the two spectral hypotheses, which are the mass gap.
+`wilsonTransferData` also crosses two independently built copies of the lattice skeleton: `WilsonDLR`
+is written against `GibbsSpec`'s and `WilsonTransferReduction` against `InfiniteLattice`'s. Both are
+`abbrev IConf G := ILink → G` over the same `ISite`, so they are definitionally equal, and the
+typechecking of that declaration is what records it.
 
-**So this is the last piece of plumbing, not a step toward the gap.** Every remaining obligation is
-now a statement about what the Wilson state DOES, none about what object it IS.
+## At zero coupling
 
-## ⚠ The limit is subsequential
+Four results hold at the zero-coupling specification `WilsonDLR.specCM … 0 μ`:
 
-`exists_wilson_infinite_volume_gibbs_measure` extracts along an ultrafilter refining `atTop`. Nothing
-shows the net converges, nor that the result is independent of the frozen boundary. `wilsonStateAt`
-inherits that: it is *a* state satisfying the DLR equation, not *the* infinite-volume state.
+* `refl_pairing_at_zero_eq_zero` — for every observable `F` of the half-space algebra, the pairing
+  `ν (ireflObs τ (2 * p - 2) (F - ν F • 1) * (F - ν F • 1))` is exactly `0`. The reflection at
+  `2 * p - 2` carries the support clear of itself, the state factorises across the gap
+  (`WilsonDLR.dlr_mul_at_zero`), and the unreflected factor is the mean-subtracted observable, whose
+  mean is zero. Reflection invariance is not used.
+* `gapAt_zero_at_zero_coupling` — hence `GapAt D 0` for the `TransferData` built from that state, via
+  `WilsonTransferReduction.gapAt_iff_subtracted_pairing` at `r = 0`.
+* `hnu_at_zero` — the third state fact is a theorem here: the shift is a bijection of the links
+  (`shiftLinkEquiv`) and `WilsonDLR.dlr_permCM_at_zero` makes the zero-coupling state invariant under
+  every relabelling.
+* `hinv_at_zero` — the first state fact is a theorem here: the lattice reflection is a twisted
+  relabelling (`ireflConf_eq_twistConf`), and `WilsonDLR.dlr_twistCM_at_zero` applies once the
+  single-link measure is inversion-invariant.
+
+## Scope
+
+`gapAt_zero_at_zero_coupling` takes `hinv`, `hpos` and `hnu` as hypotheses, because
+`transferData_of_state_facts` needs them to build the data it is stated about; `hnu_at_zero` and
+`hinv_at_zero` establish two of the three at this coupling but are not composed into it.
+`ReflPositiveOn` at `2 * p` concerns supports that meet on the reflection plane, so the factorisation
+behind `refl_pairing_at_zero_eq_zero` does not apply to it.
+
+The infinite-volume measure is extracted along an ultrafilter refining `atTop`. Nothing here shows
+the net converges or that the result is independent of the frozen boundary, so
+`exists_wilson_infinite_volume_state` asserts the existence of a state satisfying the DLR equation,
+not the uniqueness of one.
+
+`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces;
+`ReflectionHalfSpace.gibbs_iunshift_eq` proves them equal by `rfl`, and a lemma about one does not
+apply to the other. `shiftLinkEquiv`'s two inverse laws are taken one from each namespace.
 -/
 
 namespace MassGap.WilsonState
@@ -67,10 +78,13 @@ open MeasureTheory MassGap.DLRLimit
 
 variable {X : Type*} [TopologicalSpace X] [CompactSpace X] [MeasurableSpace X] [BorelSpace X]
 
-/-- A continuous observable on a compact space is integrable against a finite measure: it is
-bounded by its own supremum norm, and the constant is integrable.
+/-- A continuous observable on a compact space is integrable against any finite measure.
 
-DERIVED: no numeral. -/
+The bound is the observable's own supremum norm, and a constant is integrable against a finite
+measure. `X` is required to be a compact, second-countable Borel space by the section variables; `P`
+need only be finite, not a probability measure.
+
+DERIVED: the statement carries no numeral. -/
 theorem integrable_of_continuousMap (P : Measure X) [IsFiniteMeasure P] (f : C(X, ℝ)) :
     Integrable (fun x => f x) P :=
   (integrable_const ‖f‖).mono' f.continuous.measurable.aestronglyMeasurable
@@ -78,12 +92,17 @@ theorem integrable_of_continuousMap (P : Measure X) [IsFiniteMeasure P] (f : C(X
 
 #print axioms integrable_of_continuousMap
 
-/-- **⭐ A PROBABILITY MEASURE IS A `State`.** `ν f = ∫ f dP`.
+/-- A probability measure as a `DLRLimit.State`: `ν f = ∫ f dP` on continuous observables.
 
-The four fields are `integral_add` (on the integrability above), `integral_smul`, `integral_nonneg`
-and `measure_univ`. This is `DLRLimit.gibbsMeasure`'s missing converse.
+The four fields are `integral_add` (using `integrable_of_continuousMap`), `integral_const_mul`,
+`integral_nonneg` and, for the unit, `measure_univ`. It runs in the other direction from
+`DLRLimit.gibbsMeasure`, which takes a state to a measure.
 
-DERIVED: the `1` is the total mass of a probability measure; `0` is the sign in positivity. -/
+Scope: `X` must be compact for the integrability, and `P` must be a probability measure for the unit
+field.
+
+DERIVED: the statement carries no numeral — the total mass and the positivity sign appear in the
+fields, not in the type. -/
 noncomputable def stateOfMeasure (P : Measure X) [IsProbabilityMeasure P] : State X where
   toFun f := ∫ x, f x ∂P
   map_add' f g := by
@@ -102,23 +121,26 @@ noncomputable def stateOfMeasure (P : Measure X) [IsProbabilityMeasure P] : Stat
 
 #print axioms stateOfMeasure
 
-/-! ## 2. ⭐ The Wilson infinite-volume state -/
+/-! ## 2. The Wilson infinite-volume state -/
 
 section Wilson
 
 open MassGap.GibbsSpec
 
-/-- **⭐ THE INFINITE-VOLUME WILSON STATE EXISTS**, at every real coupling.
+/-- At every gauge order `N ≠ 0` and every real coupling `β`, there is a `DLRLimit.State` on
+`IConf (SU N)` of the form `stateOfMeasure P` for a probability measure `P` that satisfies the DLR
+equation for the Wilson specification at every finite link set `Λ` and every continuous observable.
 
-`WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` supplies the measure and `stateOfMeasure`
-turns it into the object `WilsonTransferReduction.transferData_of_state_facts` consumes. The DLR
-equation is carried through unchanged.
+`WilsonDLR.exists_wilson_infinite_volume_gibbs_measure` supplies `P` and its DLR property;
+`stateOfMeasure` turns it into the type `WilsonTransferReduction.transferData_of_state_facts`
+consumes.
 
-**⚠ It is not shown to be reflection-positive, reflection-invariant or translation-invariant**, and
-those three are exactly what the transfer construction still needs. What this theorem removes is a
-mismatch of TYPES, not any of those obligations.
+Scope: the conclusion asserts existence, not uniqueness, and the measure is obtained as a limit along
+an ultrafilter. Nothing in the statement says the state is reflection-positive,
+reflection-invariant or translation-invariant.
 
-DERIVED: no numeral. `N` and `β` are the caller's. -/
+DERIVED: `0` is the excluded gauge order in `hN : N ≠ 0`. It is the only numeral in the statement;
+`N` and `β` are parameters. -/
 theorem exists_wilson_infinite_volume_state (N : ℕ) (hN : N ≠ 0) (β : ℝ) :
     ∃ ν : State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)),
       ∃ P : Measure (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)), ∃ _ : IsProbabilityMeasure P,
@@ -136,22 +158,25 @@ theorem exists_wilson_infinite_volume_state (N : ℕ) (hN : N ≠ 0) (β : ℝ) 
 end Wilson
 
 
-/-! ## 3. ⭐ The chain, across the two lattice skeletons -/
+/-! ## 3. The chain, across the two lattice skeletons -/
 
-/-- **⭐ THE WILSON STATE FEEDS THE TRANSFER CONSTRUCTION.**
+/-- A `Transfer.TransferData` on the half-space algebra `halfSpaceAlg τ c`, from a probability
+measure `P` on `GibbsSpec.IConf (SU N)` together with three facts about `stateOfMeasure P`:
+reflection invariance at `2 * c`, reflection positivity on the half-space algebra at the same
+constant, and invariance under the shift `ishiftObsL τ`.
 
-`WilsonDLR` is written against `GibbsSpec`'s copy of the lattice skeleton and
-`WilsonTransferReduction` against `InfiniteLattice`'s. Both are `abbrev IConf (G) := ILink → G` over
-the same `ISite`, so they are definitionally equal — **and this theorem is what checks that**, rather
-than asserting it. Three modules in this tree each rebuild the skeleton independently; that the
-chain crosses them is a fact about `abbrev` reducibility and is worth having machine-checked.
+`WilsonTransferReduction.transferData_of_state_facts` applied to `stateOfMeasure P`. The declaration
+also crosses two independently built copies of the lattice skeleton — `GibbsSpec`'s, which `P` is
+stated over, and `InfiniteLattice`'s, which the reflection and shift are stated over. Both are
+`abbrev IConf G := ILink → G` over the same site type, so they are definitionally equal and this
+declaration typechecks.
 
-Given the three state facts, the Wilson infinite-volume state yields a full `Transfer.TransferData`
-on the half-space algebra.
+Scope: `hinv`, `hpos` and `hnu` are hypotheses. Nothing here supplies them, and no property of `P`
+beyond being a probability measure is used.
 
-**⚠ The three facts are hypotheses and are supplied nowhere.** This composes types, not content.
-
-DERIVED: `4` is the spacetime dimension; no other numeral. -/
+DERIVED: `4` is the spacetime dimension, the range of the direction index `τ : Fin 4`. `2` is the
+factor in the reflection constant `2 * c`: the reflection that mirrors the half-space at plane `c`
+onto its complement is the one about twice that plane. -/
 noncomputable def wilsonTransferData {N : ℕ} (τ : Fin 4) (c : ℤ)
     (P : MeasureTheory.Measure (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
     [MeasureTheory.IsProbabilityMeasure P]
@@ -167,27 +192,32 @@ noncomputable def wilsonTransferData {N : ℕ} (τ : Fin 4) (c : ℤ)
 
 #print axioms wilsonTransferData
 
-/-! ## ⭐ The subtracted pairing vanishes at zero coupling
+/-! ## The subtracted pairing at zero coupling
 
-`WilsonTransferReduction.gapAt_iff_subtracted_pairing` reads `GapAt D r` as an inequality between two pairings,
-the left one reflected about `2p-2` and the right about `2p`. At coupling ZERO the left one is
-exactly zero for every half-space observable, because the reflection carries its support two full
-steps clear of itself and the state factorises across the gap.
+`WilsonTransferReduction.gapAt_iff_subtracted_pairing` reads `GapAt D r` as an inequality between two
+pairings, the left reflected about `2p - 2` and the right about `2p`. At zero coupling the left one
+is exactly zero for every half-space observable: the reflection about `2p - 2` carries the support
+two steps clear of itself and the state factorises across the gap.
 
-**Reflection invariance is not used.** The factorisation gives `ν(θG) · ν(G)`, and it is `ν(G)` that
-vanishes — `G` is the observable with its own mean subtracted. Which of the two factors is the mean
-matters, and it is the unreflected one. -/
+Reflection invariance is not used. The factorisation gives `ν (θ G) * ν G`, and the factor that
+vanishes is `ν G`, the mean of the mean-subtracted observable — the unreflected one. -/
 
-/-- **⭐⭐ AT ZERO COUPLING THE SUBTRACTED PAIRING IS EXACTLY ZERO.**
+/-- For a state `ν` satisfying the DLR equation of the zero-coupling specification, and any
+observable `F` of the half-space algebra `halfSpaceAlg τ p`, the pairing
+`ν (ireflObs τ (2 * p - 2) (F - ν F • 1) * (F - ν F • 1))` is exactly `0`.
 
-This is the numerator of the gap inequality, at this coupling, for every observable of the
-half-space algebra. Together with nonnegativity of the denominator it is `GapAt D 0`: at zero
-coupling there is no dynamics, so the gap is not merely positive but infinite.
+The subtracted observable is local on the same support as `F`; its reflection about `2 * p - 2` is
+local on the reflected support, which `disjoint_image_ireflLink_posHalf` shows is disjoint from it.
+`WilsonDLR.dlr_mul_at_zero` then factorises the state across the gap into
+`ν (reflected) * ν (subtracted)`, and the second factor is zero because the mean has been subtracted.
 
-DERIVED: the `0` is the coupling; the `2` in `hφ2` is the proved upper end of the plaquette
-density's range, as at `specCM`; `2 * p - 2` is the reflection constant
-`gapAt_iff_subtracted_pairing` puts on the left of the gap inequality; the `1` is the unit
-observable, carrying the mean that is subtracted; `4` is the dimension. -/
+Scope: equality to `0`, at this coupling only, on this algebra. Reflection invariance of `ν` is not
+a hypothesis and is not used. The reflection constant is `2 * p - 2`, not `2 * p`.
+
+DERIVED: `0` is the coupling in `specCM … 0 μ`, the lower bound in `hφ0 : 0 ≤ φ g`, and the value of
+the pairing. `2` is the upper end of the plaquette density's range in `hφ2 : φ g ≤ 2`, and the factor
+and offset in the reflection constant `2 * p - 2`. `1` is the unit observable carrying the subtracted
+mean. `4` is the spacetime dimension, the range of `τ : Fin 4`. -/
 theorem refl_pairing_at_zero_eq_zero {G : Type} [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
     [SecondCountableTopology G] {φ : G → ℝ}
@@ -219,28 +249,24 @@ theorem refl_pairing_at_zero_eq_zero {G : Type} [Group G] [TopologicalSpace G]
 
 #print axioms refl_pairing_at_zero_eq_zero
 
-/-- **⭐⭐⭐ AT ZERO COUPLING THE WILSON TRANSFER OPERATOR HAS `GapAt D 0`.**
+/-- `GapAt D 0` for the `TransferData` that `transferData_of_state_facts` builds from a
+zero-coupling DLR state, given the three state facts `hinv`, `hpos` and `hnu`.
 
-`gapAt_iff_subtracted_pairing` at `r = 0` asks for `ν(θ_{2p-2} G · G) ≤ 0` with `G` the
-mean-subtracted observable, and `refl_pairing_at_zero_eq_zero` computes that pairing to be exactly
-`0`. So the gap condition holds at `r = 0`: no dynamics, and therefore not merely a positive gap but
-an infinite one.
+`WilsonTransferReduction.gapAt_iff_subtracted_pairing` at `r = 0` reduces the goal to
+`ν (θ_{2p-2} G * G) ≤ 0` for the mean-subtracted `G`, and `refl_pairing_at_zero_eq_zero` evaluates
+that pairing to `0`.
 
-**THE `TransferData` IS THE GENUINE ONE**, `transferData_of_state_facts` at the Wilson
-specification's own DLR state — not `TransferGap.diagTransfer`, which witnesses only that `GapAt`
-is satisfiable by something.
+Scope. The data is the one `transferData_of_state_facts` produces at this state, not a constructed
+witness such as `TransferGap.diagTransfer`. `hinv`, `hpos` and `hnu` are hypotheses, since the data
+the conclusion is about cannot be formed without them; `hnu_at_zero` and `hinv_at_zero` below prove
+two of them at this coupling but are not composed into this statement. `hpos` is reflection
+positivity at `2 * p`, where the two supports meet on the reflection plane, so the disjoint-support
+factorisation used above does not apply to it.
 
-**⚠ WHAT THIS STILL TAKES.** `hinv`, `hpos` and `hnu` are hypotheses here, exactly as in
-`wilsonTransferData`, because `transferData_of_state_facts` cannot build `D` without them. So the
-statement of obligation I at this coupling is sharp: **there is no analysis left between here and
-the gap, only those three facts.** `hpos` is the hard one — it is reflection positivity at `2p`,
-where the two supports MEET on the reflection plane, so the factorisation that proves the `2p-2`
-pairing does not reach it.
-
-DERIVED: the `0` in `specCM … 0 μ` is the coupling and the `0` in `GapAt … 0` is the gap ratio,
-which is forced rather than chosen — the pairing it is compared against is zero. The `2` in `hφ2` is
-the proved upper end of the plaquette density's range, as at `specCM`; `2 * p` is the reflection
-constant of the half-space at `p`; `4` is the dimension. -/
+DERIVED: `0` is the coupling in `specCM … 0 μ`, the lower bound in `hφ0 : 0 ≤ φ g`, and the ratio in
+`GapAt … 0`, which is forced by the pairing being zero. `2` is the upper end of the plaquette
+density's range in `hφ2 : φ g ≤ 2`, and the factor in the reflection constant `2 * p`. `4` is the
+spacetime dimension, the range of `τ : Fin 4`. -/
 theorem gapAt_zero_at_zero_coupling {G : Type} [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
     [SecondCountableTopology G] {φ : G → ℝ} (hφc : Continuous φ)
@@ -264,20 +290,25 @@ theorem gapAt_zero_at_zero_coupling {G : Type} [Group G] [TopologicalSpace G]
 #print axioms gapAt_zero_at_zero_coupling
 
 
-/-! ## ⭐ `hnu`, discharged at zero coupling
+/-! ## `hnu` at zero coupling
 
-The shift is a bijection of the links, and `WilsonDLR.dlr_permCM_at_zero` says the zero-coupling
-state is invariant under every one of those. So the third of
-`transferData_of_state_facts`'s state facts is a theorem at this coupling rather than a hypothesis.
+The shift is a bijection of the links, and `WilsonDLR.dlr_permCM_at_zero` makes the zero-coupling
+state invariant under every link relabelling, so the third of `transferData_of_state_facts`'s state
+facts holds at this coupling.
 
-**The two `iunshift`s.** `GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in
-isolated namespaces — `ReflectionHalfSpace.gibbs_iunshift_eq` proves them `rfl`-equal, and a lemma
-about one is inert on the other. The two inverse laws below come from the two namespaces
-deliberately. -/
+`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces;
+`ReflectionHalfSpace.gibbs_iunshift_eq` proves them equal by `rfl`, and a lemma about one does not
+apply to the other. The two inverse laws below are taken one from each namespace. -/
 
-/-- **THE SHIFT, AS A BIJECTION OF THE LINKS.** `ishiftLink` forward, `iunshiftLink` back.
+/-- The link shift as an `Equiv` of `InfiniteLattice.ILink`: `InfiniteShift.ishiftLink τ` forward,
+`ReflectionShift.iunshiftLink τ` back.
 
-DERIVED: `4` is the spacetime dimension. -/
+The left inverse comes from `GibbsSpec.iunshift_ishift` and the right inverse from
+`ReflectionShift.ishiftLink_iunshiftLink`, the two namespaces carrying separate copies of the same
+map.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index `τ : Fin 4`. It is the only
+numeral in the statement. -/
 def shiftLinkEquiv (τ : Fin 4) :
     MassGap.InfiniteLattice.ILink ≃ MassGap.InfiniteLattice.ILink where
   toFun := MassGap.InfiniteShift.ishiftLink τ
@@ -291,11 +322,18 @@ def shiftLinkEquiv (τ : Fin 4) :
 
 #print axioms shiftLinkEquiv
 
-/-- **⭐⭐ `hnu` AT ZERO COUPLING.** The DLR state is unmoved by the time shift, because it is
-unmoved by every relabelling of the links.
+/-- `ν (ishiftObsL τ f) = ν f` for every continuous observable `f`, when `ν` satisfies the DLR
+equation of the zero-coupling specification.
 
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`; `4` is the dimension. -/
+`shiftLinkEquiv τ` presents the shift as a link permutation, and `WilsonDLR.dlr_permCM_at_zero` makes
+the zero-coupling state invariant under every such permutation. This is the third of the state facts
+`transferData_of_state_facts` takes.
+
+Scope: at zero coupling only, and `G` additionally requires `T2Space` here.
+
+DERIVED: `0` is the coupling in `specCM … 0 μ` and the lower bound in `hφ0 : 0 ≤ φ g`. `2` is the
+upper end of the plaquette density's range in `hφ2 : φ g ≤ 2`. `4` is the spacetime dimension, the
+range of `τ : Fin 4`. -/
 theorem hnu_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
     {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
@@ -314,30 +352,36 @@ theorem hnu_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGrou
 
 #print axioms hnu_at_zero
 
-/-! ## ⭐ `hinv`, discharged at zero coupling
+/-! ## `hinv` at zero coupling
 
-`ireflConf` relabels the links and INVERTS the group element on the `τ`-links. The relabelling is
-`ReflectionHalfSpace.ireflPerm`, which already packages `ireflLink_involutive` as a permutation; the
-inversion is a coordinatewise measure-preserving map as soon as the single-link measure is
-inversion-invariant. So `WilsonDLR.dlr_twistCM_at_zero` applies, and the second of
-`transferData_of_state_facts`'s state facts is a theorem at this coupling.
+`ireflConf` relabels the links and inverts the group element on the `τ`-links. The relabelling is
+`ReflectionHalfSpace.ireflPerm`, which packages `ireflLink_involutive` as a permutation; the
+inversion is a coordinatewise measure-preserving map once the single-link measure is
+inversion-invariant. `WilsonDLR.dlr_twistCM_at_zero` then applies, giving the first of
+`transferData_of_state_facts`'s state facts at this coupling.
 
-`Reflect.isInvInvariant_probHaar` is an instance, so at the Wilson measure the hypothesis
-`[μ.IsInvInvariant]` discharges itself. -/
+`Reflect.isInvInvariant_probHaar` is an instance, so at Haar measure the `[μ.IsInvInvariant]`
+hypothesis is found by instance search. -/
 
-/-- **THE REFLECTION'S COORDINATE MAPS**: inversion on the `τ`-links, the identity elsewhere.
+/-- The reflection's coordinatewise maps: group inversion on the links in direction `τ`, the
+identity on the rest. Each is a `MeasurableEquiv` of `G`.
 
-DERIVED: `4` is the spacetime dimension. -/
+DERIVED: `4` is the spacetime dimension, the range of the direction index `τ : Fin 4`. It is the only
+numeral in the statement. -/
 def ireflSigma {G : Type} [Group G] [MeasurableSpace G] [MeasurableInv G] (τ : Fin 4)
     (l : MassGap.InfiniteLattice.ILink) : G ≃ᵐ G :=
   if l.1 = τ then MeasurableEquiv.inv G else MeasurableEquiv.refl G
 
 #print axioms ireflSigma
 
-/-- **THE LATTICE REFLECTION IS A TWISTED RELABELLING.** Case split on the direction; each branch is
-`ireflConf`'s own.
+/-- `ireflConf τ c U = twistConf (ireflPerm τ c) (ireflSigma τ) U`: the lattice reflection is the
+link relabelling `ireflPerm τ c` twisted by the coordinatewise maps `ireflSigma τ`.
 
-DERIVED: `4` is the spacetime dimension. -/
+Proved by case split on whether the link's direction is `τ`; each branch unfolds to `ireflConf`'s own
+definition. The constant `c` is arbitrary.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index `τ : Fin 4`. It is the only
+numeral in the statement. -/
 theorem ireflConf_eq_twistConf {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [MeasurableSpace G] [MeasurableInv G] (τ : Fin 4) (c : ℤ)
     (U : MassGap.InfiniteLattice.IConf G) :
@@ -351,10 +395,21 @@ theorem ireflConf_eq_twistConf {G : Type} [Group G] [TopologicalSpace G] [IsTopo
 
 #print axioms ireflConf_eq_twistConf
 
-/-- **⭐⭐ `hinv` AT ZERO COUPLING.** The DLR state does not see the lattice reflection.
+/-- `IsReflectionInvariant (latticeReflection τ c) ν` at every constant `c`, when `ν` satisfies the
+DLR equation of the zero-coupling specification and the single-link measure is inversion-invariant.
 
-DERIVED: the `0` is the coupling; the `2` is the proved upper end of the plaquette density's range,
-as at `specCM`; `4` is the dimension. -/
+`ireflConf_eq_twistConf` presents the reflection as a twisted relabelling, the coordinatewise maps
+are continuous and measure-preserving (inversion on the `τ`-links, the identity elsewhere), and
+`WilsonDLR.dlr_twistCM_at_zero` gives the invariance. This is the first of the state facts
+`transferData_of_state_facts` takes.
+
+Scope: at zero coupling only, at every `c` rather than only at the `2 * p` the transfer construction
+uses, and with `[μ.IsInvInvariant]` and `T2Space G` required in addition to the surrounding
+hypotheses.
+
+DERIVED: `0` is the coupling in `specCM … 0 μ` and the lower bound in `hφ0 : 0 ≤ φ g`. `2` is the
+upper end of the plaquette density's range in `hφ2 : φ g ≤ 2`. `4` is the spacetime dimension, the
+range of `τ : Fin 4`. -/
 theorem hinv_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
     {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)

@@ -3,69 +3,61 @@ import MassGap.GNSHilbert
 import MassGap.TransferGap
 
 /-!
-# MassGap.GapToOperator — the gap, carried to the Hilbert space, WITHOUT inverting anything
+# MassGap.GapToOperator — carrying `TransferGap.GapAt` to the completed Hilbert space
 
-## The endpoint this replaces
+`TransferGap.GapAt D r` is a contraction bound stated on the pre-Hilbert form `A`: every vector of
+`A` orthogonal to the vacuum has its image under the step map bounded by `r` times its norm.
+`GNSHilbert.opT` is the induced operator on the completion `H`. This module carries the bound
+across, derives powers, clustering and a rate from it, and reads it as a bound on the real spectrum
+of `opT`.
 
-Chain B reached its conclusion through `Reconstruction.reconstruct_qm_core`, which needs
+## Contents
 
-    0 < ε   and   spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-Δ))
+* `vacPre`, `inner_vacPre_re`, `inner_vacPre_im`, `orth_components`, `inner_vacPre_self` — the
+  vacuum as a vector of `Pre`, the two components of the pairing with it, and orthogonality to it
+  restated as the pair of real conditions `GapAt` consumes.
+* `norm_cT_le_of_orth` — `GapAt` contracts the complexified step on the vacuum's complement in
+  `Pre`, both components at once.
+* `norm_opT_le_of_orth` — the same bound for every `x` in the completion orthogonal to the vacuum,
+  not only for `x` in the dense image of `Pre`. `GapAt` constrains `A`, and a bound on a dense
+  subspace is not a bound on the space until continuity is used; the argument runs on the projected
+  vector `y ↦ y - ⟪Ω, y⟫ • Ω`, so the inequality is between two continuous functions of `y` and
+  extends from the dense range of the coercion by `IsClosed.closure_subset_iff`.
+* `orth_invariant_opT`, `norm_opT_pow_le`, `clustering_opT`, `clustering_opT_general` — invariance
+  of the complement, the `rⁿ` decay of powers on it, and the two clustering forms. The same results
+  on the real GNS quotient are `VolumeRate.inner_vac_Tq`, `SecondEigenvalue.vacPerp_invariant`,
+  `VolumeRate.norm_Tq_pow_le`, `SecondEigenvalue.Tq_pow_norm_le_of_rayleigh` and
+  `PeriodicRayleigh.inner_pow_le_of_rayleigh`; `GNSCompare` relates the two constructions on the
+  real component but does not bundle the map as a `LinearIsometry`, so neither side's theorems apply
+  to the other.
+* `bound_is_free_of_one_le` — at `1 ≤ r` the contraction bound follows from
+  `GNSHilbert.norm_opT_le_one` for every vector, with no `GapAt` and no orthogonality. Every
+  conclusion in the file is therefore empty unless `r < 1`.
+* `forgets_at_one_rate`, `tendsto_zero_of_intensive_radius` — the same decay written as
+  `e^{-κ n}` with `κ = -log r`, and its limit form. Both take an index family, and in both the index
+  is inert: `r` and `κ` are fixed before the index is introduced, so quantifying over it is
+  arithmetic and not volume uniformity. Every `D F` lives on one fixed algebra `A`, where the
+  tree's Wilson transfer data `OSPositivity.wilsonSlabTransfer` has a type that varies with the slab
+  geometry.
+* `vacPerpH`, `opTperp`, `norm_opTperp_le` — the vacuum's orthogonal complement as a submodule, the
+  compression of `opT` to it, and the operator-norm bound `‖opTperp D‖ ≤ r`.
+* `vacProjH`, `opTgap`, `norm_opTgap_le`, `isUnit_sub_opTgap`, `isUnit_one_sub_smul_vacProjH`,
+  `spectrum_opT_subset` — the vacuum's rank-one projection and the complementary block as elements
+  of `H →L[ℂ] H`, the factorisation
+  `μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)`, and the conclusion
+  `spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc (-r) r`.
 
-and `TransferInvertibility.isUnit_of_spectral_hypothesis` shows what that costs: keeping `0` out of
-the spectrum is exactly `IsUnit T`. `OpTBridge.reconstruct_from_opT` is the declaration that routes
-`opT D` into that endpoint, and so is what this module offers an alternative to.
+## Scope
 
-**⚠ WHY THAT ENDPOINT IS BELIEVED UNREACHABLE IS CITED, AND PROVED NOWHERE.** A compact operator on
-an infinite-dimensional space is never invertible, and the Euclidean transfer operator of a lattice
-gauge theory is described as compact on an infinite-dimensional slice space with energies unbounded
-above, so that `0` lies in its spectrum. **No part of that is formalised, here or anywhere in this
-tree** — `TransferInvertibility`'s own header says so in those words, and repeating it without the
-warning would launder it. So this module is MOTIVATED by a citation and JUSTIFIED by none: what it
-proves stands on its own, and the case that the ε-form had to be replaced does not.
+`GapAt D r` is a hypothesis throughout; nothing here produces one, and `r` is never constrained
+below `1` except where a statement says so.
 
-`TransferGap.GapAt` is already the form that avoids this — its own docstring says it is "stated as a
-contraction rather than as a logarithm precisely so that `-log T` … never has to exist". What was
-missing is the bridge from `GapAt`, which lives on the PRE-Hilbert form `A`, to the completed
-operator `GNSHilbert.opT` on `H`. This module is that bridge.
-
-## ⭐ What is new, and what is a second copy
-
-**NEW: `norm_opT_le_of_orth`** — `GapAt D r` gives `‖opT D x‖ ≤ r * ‖x‖` for every `x` in the
-COMPLETION orthogonal to the vacuum, not merely for `x` in the dense image of `A`. This is the only
-new mathematics in the file. `GapAt` constrains `A`; `opT` is defined on the completion, and a bound
-on a dense subspace is not a bound on the space until continuity is used. The argument runs on the
-PROJECTED vector `y ↦ y - ⟪Ω, y⟫ • Ω`, so the inequality being extended is between two continuous
-functions of `y` and holds on the dense range of the coercion. Nothing in the tree linked `GapAt` to
-`opT` before it; the only prior norm bound on `opT` is the unconditional `GNSHilbert.norm_opT_le_one`.
-
-**A SECOND COPY: `orth_invariant_opT`, `norm_opT_pow_le`, `clustering_opT`.** Each is the
-complex-completion counterpart of a result the tree already proves on the REAL GNS quotient, by the
-same argument: `VolumeRate.inner_vac_Tq` and `SecondEigenvalue.vacPerp_invariant` for the first,
-`VolumeRate.norm_Tq_pow_le` and `SecondEigenvalue.Tq_pow_norm_le_of_rayleigh` for the second,
-`PeriodicRayleigh.inner_pow_le_of_rayleigh` for the third.
-
-**⛔ AND THAT IS A DEFECT IN THE TREE, NOT A FEATURE OF THIS MODULE.** Two Hilbert constructions
-descend from the same `Transfer.TransferData` — the real quotient (`Transfer.GNS`, `Tq`), which
-`VolumeRate`, `SecondEigenvalue`, `PeriodicRayleigh` and `HalfLineTransfer` consume, and
-the complex completion (`GNSHilbert.H`, `opT`), which `OpTBridge` consumes — and each carries its
-own copy of the vacuum-complement decay law.
-
-`GNSCompare` relates them on the real component: same norm, same inner product, same step map, and
-the embedding kills exactly the null space the quotient divides by. **That is not yet enough to
-delete the duplication**, because the map is not bundled as a `LinearIsometry` and so no theorem
-proved on one side can be APPLIED on the other; what remains there is packaging rather than
-mathematics.
-
-## ⛔ What is NOT here
-
-**No spectrum, no functional calculus, no logarithm, and no invertibility.** Nothing below asks
-`0 ∉ spectrum (opT D)`, which is the whole point: contrast
-`TransferInvertibility.isUnit_of_spectral_hypothesis`.
-
-**And no gap is produced.** `GapAt D r` is a hypothesis throughout. `TransferGap`'s own header says
-nothing there produces one, and nothing here does either — `CLAY-GOAL`'s B5 is untouched. What
-changes is that the conclusion B5 would buy is now stated on an operator the physical theory could
-supply, instead of on one it cannot.
+`spectrum_opT_subset` bounds the real spectrum of a self-adjoint operator and admits `0`. It is not
+`OpTBridge.reconstruct_from_opT`'s `hsp`, which additionally asks for
+`Set.Icc ε (Real.exp (-Δ))` with `0 < ε` — that `0` stay out of the spectrum —
+and which `TransferInvertibility.isUnit_of_spectral_hypothesis` identifies with `IsUnit (opT D)`.
+No functional calculus and no logarithm of `opT` is built anywhere below; `forgets_at_one_rate`
+takes the logarithm of the real number `r`, not of an operator.
 -/
 
 namespace MassGap.GapToOperator
@@ -76,37 +68,48 @@ variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 /-! ## 1. The vacuum, and orthogonality to it -/
 
-/-- **THE VACUUM BEFORE COMPLETION.** `D.vac` in the real component and `0` in the imaginary one.
+/-- The vacuum as a vector of `Pre D.toReflForm`, before completion: `D.vac` in the real component
+and `0` in the imaginary one, assembled by `Pre.ofPair`.
 
 DERIVED: the `0` is the imaginary component of a real observable, as in `GNSHilbert.Omega`. -/
 noncomputable def vacPre (D : TransferData A) : Pre D.toReflForm :=
   Pre.ofPair D.toReflForm D.vac 0
 
-/-- The vacuum of `H` is the class of `vacPre`. -/
+/-- The vacuum of the completion is the image of `vacPre` under the coercion:
+`(vacPre D : H D.toReflForm) = Omega D.toReflForm D.vac`. The proof is `rfl`.
+
+DERIVED: no numeral. The `0` reaching this statement sits inside `vacPre`. -/
 theorem coe_vacPre (D : TransferData A) :
     ((vacPre D : Pre D.toReflForm) : H D.toReflForm) = Omega D.toReflForm D.vac := rfl
 
-/-- **THE REAL PART OF THE PAIRING WITH THE VACUUM IS THE FORM ON THE REAL COMPONENT.** The cross
-term drops because the vacuum's imaginary component is `0`.
+/-- The real part of the pairing with the vacuum is the reflection form applied to `D.vac` and the
+real component of `z`. The cross term drops through `Transfer.PreForm.form_zero_left`, because the
+vacuum's imaginary component is `0`. A `simp` lemma.
 
-DERIVED: the `0`s are the vacuum's imaginary component and the form's value on it. -/
+DERIVED: no numeral of its own. The `0` this turns on is `vacPre`'s imaginary component, and
+`(z : A × A).1` is the first projection of the pair, not a literal. -/
 @[simp] theorem inner_vacPre_re (D : TransferData A) (z : Pre D.toReflForm) :
     (inner ℂ (vacPre D) z).re = D.form D.vac (z : A × A).1 := by
   rw [Pre.inner_def]
   simp [vacPre, Transfer.PreForm.form_zero_left]
 
-/-- **AND THE IMAGINARY PART IS THE FORM ON THE IMAGINARY COMPONENT.**
+/-- The imaginary part of the pairing with the vacuum is the reflection form applied to `D.vac` and
+the imaginary component of `z`, by the same cancellation. A `simp` lemma.
 
-DERIVED: as above. -/
+DERIVED: no numeral of its own. The `0` this turns on is `vacPre`'s imaginary component, and
+`(z : A × A).2` is the second projection of the pair, not a literal. -/
 @[simp] theorem inner_vacPre_im (D : TransferData A) (z : Pre D.toReflForm) :
     (inner ℂ (vacPre D) z).im = D.form D.vac (z : A × A).2 := by
   rw [Pre.inner_def]
   simp [vacPre, Transfer.PreForm.form_zero_left]
 
-/-- **ORTHOGONALITY TO THE VACUUM IS ORTHOGONALITY OF BOTH COMPONENTS**, which is the hypothesis
-`TransferGap.GapAt` consumes.
+/-- A vector of `Pre` orthogonal to the vacuum in the complex pairing has both its real and its
+imaginary component orthogonal to `D.vac` in the reflection form. These two conditions are what
+`TransferGap.GapAt` takes as hypotheses. The implication is stated in one direction only.
+`D.form_symm` puts the arguments in the order `GapAt` wants.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `0`s are the vanishing pairing assumed of `z` and the two vanishing form values
+concluded of its components; all three are the orthogonality being asserted, not levels. -/
 theorem orth_components (D : TransferData A) {z : Pre D.toReflForm}
     (h : inner ℂ (vacPre D) z = (0 : ℂ)) :
     D.form (z : A × A).1 D.vac = 0 ∧ D.form (z : A × A).2 D.vac = 0 := by
@@ -116,7 +119,11 @@ theorem orth_components (D : TransferData A) {z : Pre D.toReflForm}
     rw [← inner_vacPre_im D z, h, Complex.zero_im]
   exact ⟨by rw [D.form_symm]; exact hre, by rw [D.form_symm]; exact him⟩
 
-/-- The vacuum is a unit vector already before completion. -/
+/-- The vacuum is a unit vector already before completion:
+`inner ℂ (vacPre D) (vacPre D) = 1`. The real part is `D.vac_norm` and the imaginary part vanishes
+by `Transfer.PreForm.form_zero_right`.
+
+DERIVED: the `1` is `D.vac_norm`'s normalisation of the vacuum, not a level chosen here. -/
 theorem inner_vacPre_self (D : TransferData A) :
     inner ℂ (vacPre D) (vacPre D) = (1 : ℂ) := by
   apply Complex.ext
@@ -127,10 +134,15 @@ theorem inner_vacPre_self (D : TransferData A) :
 
 /-! ## 2. The contraction on the pre-Hilbert space -/
 
-/-- **`GapAt` CONTRACTS THE COMPLEXIFIED STEP ON THE VACUUM'S COMPLEMENT.** Both components are
-orthogonal to the vacuum, `GapAt` contracts each, and the seminorm is their sum.
+/-- `GapAt D r` contracts the complexified step on the vacuum's complement in `Pre`:
+`‖cT D z‖ ≤ r * ‖z‖` whenever `z` pairs to zero with `vacPre D`. Both components of `z` are
+orthogonal to `D.vac` by `orth_components`, `GapAt` contracts each, and `Pre.norm_mul_norm` writes
+the squared seminorm as the sum of the two component contributions. The hypothesis `0 ≤ r` is what
+lets the squared inequality be taken back to the norms.
 
-DERIVED: the `2`s are the form's degree, as in `GapAt`; `r` is the caller's. -/
+DERIVED: the `0`s are the sign tested in `hr : 0 ≤ r` and the vanishing pairing in `hz`. `r` is
+`GapAt`'s rate and is the caller's. The squaring in the proof is the form's degree, as in `GapAt`,
+and does not appear in the statement. -/
 theorem norm_cT_le_of_orth (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     {z : Pre D.toReflForm} (hz : inner ℂ (vacPre D) z = (0 : ℂ)) :
     ‖cT D z‖ ≤ r * ‖z‖ := by
@@ -144,19 +156,21 @@ theorem norm_cT_le_of_orth (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : G
     nlinarith
   nlinarith [norm_nonneg (cT D z), norm_nonneg z, mul_nonneg hr (norm_nonneg z)]
 
-/-! ## 3. ⭐ The bound on the completion -/
+/-! ## 3. The bound on the completion -/
 
-/-- **⭐ THE GAP HOLDS ON THE WHOLE VACUUM COMPLEMENT OF `H`, not only on the dense image of `A`.**
+/-- `GapAt D r` gives `‖opT D x‖ ≤ r * ‖x‖` for every `x` in the completion `H` orthogonal to the
+vacuum, not only for `x` in the dense image of `Pre`.
 
-The extension is where the work is. `GapAt` constrains `A`; `opT` lives on the completion. The
-inequality is carried by running it on the PROJECTED vector `y ↦ y - ⟪Ω, y⟫ • Ω`, which makes both
-sides continuous functions of `y` that agree with the pre-Hilbert bound on the dense range of the
-coercion; the projected form then specialises to `x` itself when `x ⊥ Ω`.
+`GapAt` constrains `A`; `opT` lives on the completion. The inequality is carried by running it on
+the projected vector `y ↦ y - ⟪Ω, y⟫ • Ω`, which makes both sides continuous functions of `y`; that
+set is closed, contains the range of the coercion by `norm_cT_le_of_orth`, and the range is dense,
+so it is everything. The projected form specialises to `x` itself when `x ⊥ Ω`.
 
-**No spectrum and no invertibility.** Contrast `TransferInvertibility.isUnit_of_spectral_hypothesis`,
-which is what the ε-form of this conclusion costs.
+The conclusion is a norm bound on the vacuum's complement. It says nothing about the spectrum or
+about invertibility.
 
-DERIVED: no numeral of its own; `r` is `GapAt`'s. -/
+DERIVED: the `0`s are the sign tested in `hr : 0 ≤ r` and the vanishing pairing in `hx`. `r` is
+`GapAt`'s rate and is the caller's. -/
 theorem norm_opT_le_of_orth (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     (x : H D.toReflForm) (hx : inner ℂ (Omega D.toReflForm D.vac) x = (0 : ℂ)) :
     ‖opT D x‖ ≤ r * ‖x‖ := by
@@ -200,10 +214,13 @@ theorem norm_opT_le_of_orth (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : 
 
 /-! ## 4. The rate, and clustering -/
 
-/-- **THE COMPLEMENT IS `opT`-INVARIANT.** Self-adjointness moves `opT` across the pairing and the
-vacuum is fixed — the completion's copy of `TransferGap.orth_invariant`.
+/-- The vacuum's complement is `opT`-invariant: if `x` pairs to zero with `Ω` then so does
+`opT D x`. `isSelfAdjoint_opT` moves `opT` across the pairing and `opT_Omega` fixes the vacuum. No
+hypothesis on `r` and no `GapAt`. It is the completion's counterpart of
+`TransferGap.orth_invariant`.
 
-DERIVED: no numeral. -/
+DERIVED: the `0`s are the vanishing pairing assumed of `x` and the same vanishing concluded of
+`opT D x`. -/
 theorem orth_invariant_opT (D : TransferData A) {x : H D.toReflForm}
     (hx : inner ℂ (Omega D.toReflForm D.vac) x = (0 : ℂ)) :
     inner ℂ (Omega D.toReflForm D.vac) (opT D x) = (0 : ℂ) := by
@@ -213,9 +230,13 @@ theorem orth_invariant_opT (D : TransferData A) {x : H D.toReflForm}
   rw [← this, opT_Omega]
   exact hx
 
-/-- **⭐ THE MASS GAP AS A DECAY RATE.** `n` steps contract by `rⁿ` on the vacuum's complement.
+/-- `n` steps contract by `rⁿ` on the vacuum's complement: `‖(opT D ^ n) x‖ ≤ r ^ n * ‖x‖` at every
+`n : ℕ` and every `x` orthogonal to `Ω`. The induction uses `norm_opT_le_of_orth` for one step and
+`orth_invariant_opT` to keep the image in the complement; `0 ≤ r` is what makes `r ^ k` a
+nonnegative multiplier.
 
-DERIVED: `n` is the caller's step count; `r` is `GapAt`'s. -/
+DERIVED: the `0`s are the sign tested in `hr : 0 ≤ r` and the vanishing pairing assumed of `x`. `n`
+is the caller's step count and `r` is `GapAt`'s rate. -/
 theorem norm_opT_pow_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
     ∀ (n : ℕ) (x : H D.toReflForm), inner ℂ (Omega D.toReflForm D.vac) x = (0 : ℂ) →
       ‖(opT D ^ n) x‖ ≤ r ^ n * ‖x‖ := by
@@ -237,14 +258,16 @@ theorem norm_opT_pow_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapA
             exact mul_le_mul_of_nonneg_left hstep (pow_nonneg hr k)
         _ = r ^ (k + 1) * ‖x‖ := by ring
 
-/-- **DECAY OF THE PAIRING WHEN THE RIGHT ARGUMENT IS ORTHOGONAL TO THE VACUUM.** Cauchy–Schwarz on
-`norm_opT_pow_le`; the completion's counterpart of `PeriodicRayleigh.inner_pow_le_of_rayleigh`.
+/-- Decay of the pairing when the right argument is orthogonal to the vacuum:
+`‖⟪x, (opT D ^ n) y⟫‖ ≤ rⁿ · (‖x‖ · ‖y‖)`. It is `norm_inner_le_norm` on `norm_opT_pow_le`, and it
+is the completion's counterpart of `PeriodicRayleigh.inner_pow_le_of_rayleigh`.
 
-`x` carries no hypothesis, and that is a strength rather than an omission: with `y ⊥ Ω` the
-disconnected term `⟪x, Ω⟫⟪Ω, y⟫` vanishes on its own, so the left side already IS the connected
-pairing. `clustering_opT_general` is the form with neither argument restricted.
+`x` carries no hypothesis. With `y ⊥ Ω` the disconnected term `⟪x, Ω⟫⟪Ω, y⟫` vanishes, so the left
+side is already the connected pairing; `clustering_opT_general` is the form with neither argument
+restricted.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `0`s are the sign tested in `hr : 0 ≤ r` and the vanishing pairing assumed of `y`. `n`
+is the caller's step count and `r` is `GapAt`'s rate. -/
 theorem clustering_opT (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     (n : ℕ) (x y : H D.toReflForm)
     (hy : inner ℂ (Omega D.toReflForm D.vac) y = (0 : ℂ)) :
@@ -258,7 +281,10 @@ theorem clustering_opT (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt
 
 /-! ## 5. The general clustering statement, and what the gap buys -/
 
-/-- Every power fixes the vacuum — the completion's `TransferGap.pow_vac`. -/
+/-- Every power of `opT` fixes the vacuum: `(opT D ^ n) Ω = Ω` at every `n : ℕ`, by induction on
+`opT_Omega`. No hypothesis on `r`. It is the completion's counterpart of `TransferGap.pow_vac`.
+
+DERIVED: no numeral. -/
 theorem opT_pow_Omega (D : TransferData A) (n : ℕ) :
     (opT D ^ n) (Omega D.toReflForm D.vac) = Omega D.toReflForm D.vac := by
   induction n with
@@ -271,14 +297,17 @@ theorem opT_pow_Omega (D : TransferData A) (n : ℕ) :
 
 #print axioms opT_pow_Omega
 
-/-- **⭐ EXPONENTIAL CLUSTERING, NEITHER ARGUMENT RESTRICTED** — the disconnected part subtracted
-explicitly, which is the shape `TransferGap.clustering_sq` has on the form and the physical content
-of a mass gap `Δ = -log r`.
+/-- Exponential clustering with neither argument restricted, the disconnected part subtracted
+explicitly:
 
-Split `y` into its vacuum component and the rest: `opT ^ n` fixes the first, which contributes
-exactly `⟪x, Ω⟫⟪Ω, y⟫`, and `norm_opT_pow_le` decays the second.
+    ‖⟪x, (opT D ^ n) y⟫ − ⟪x, Ω⟫·⟪Ω, y⟫‖ ≤ rⁿ · (‖x‖ · ‖y − ⟪Ω, y⟫ • Ω‖)
 
-DERIVED: no numeral of its own. -/
+`y` is split into its vacuum component and the rest; `opT_pow_Omega` fixes the first, which
+contributes exactly `⟪x, Ω⟫⟪Ω, y⟫`, and `norm_opT_pow_le` decays the second. The right-hand norm is
+the projected `y`, not `y` itself. This is the shape `TransferGap.clustering_sq` has on the form.
+
+DERIVED: the `0` is the sign tested in `hr : 0 ≤ r`. `n` is the caller's step count and `r` is
+`GapAt`'s rate. -/
 theorem clustering_opT_general (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     (n : ℕ) (x y : H D.toReflForm) :
     ‖inner ℂ x ((opT D ^ n) y)
@@ -308,12 +337,10 @@ theorem clustering_opT_general (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg
 
 #print axioms clustering_opT_general
 
-/-- **⛔ THE NEGATIVE CONTROL: AT `1 ≤ r` THE BOUND IS FREE.** `GNSHilbert.norm_opT_le_one` gives it
-for EVERY vector, with no `GapAt` and no orthogonality, so every conclusion above is empty unless
-`r < 1`.
-
-Stated because the module otherwise never mentions `r < 1` and a reader could take the theorems to
-say more than they do — the counterpart of `TransferGap.identity_fails_gap` and
+/-- The negative control. At `1 ≤ r`, `‖opT D x‖ ≤ r * ‖x‖` holds for every vector of `H`, with no
+`GapAt` hypothesis and no orthogonality, because `GNSHilbert.norm_opT_le_one` already bounds the
+operator norm by `1`. The conclusions above are therefore empty unless `r < 1`, which none of them
+assumes. It is the counterpart of `TransferGap.identity_fails_gap` and
 `OpTBridge.spectral_hypothesis_fails_at_identity`.
 
 DERIVED: the `1` is `norm_opT_le_one`'s contraction constant, not a level chosen here. -/
@@ -330,34 +357,27 @@ theorem bound_is_free_of_one_le (D : TransferData A) {r : ℝ} (hr : 1 ≤ r)
 
 /-! ## 6. The radius, read as a rate -/
 
-/-- **THE CONTRACTION RADIUS AS AN EXPONENTIAL RATE.** `r < 1` gives `κ = -log r > 0` with
-`‖Tⁿ x‖ ≤ e^{-κ n}‖x‖` on the vacuum's complement — a bound, not merely a limit.
+/-- The contraction radius read as an exponential rate. At `0 < r < 1` and a family
+`hg : ∀ F, GapAt (D F) r`, there is a `κ > 0` — namely `-Real.log r` — such that
+`‖(opT (D F) ^ n) x‖ ≤ e^{-κ n}·‖x‖` at every index `F`, every `n` and every `x` orthogonal to that
+index's vacuum. It is `norm_opT_pow_le` with `rⁿ` rewritten through `Real.exp_log`, so it is a
+bound at every `n`, not a limit.
 
-**⛔ AND IT IS NOT A VOLUME-UNIFORMITY RESULT, despite the shape of the hypothesis.** `r` is a
-PARAMETER, so the single rate is handed in by `hg` rather than derived; `κ` is a function of `r`
-alone and is fixed before the index is introduced, so `∃κ ∀F` and `∀F ∃κ` have the same proof here.
-The index type carries no volume structure — no extent, no dimension, no inclusions — and every
-`D F` lives on ONE fixed algebra `A`, while the tree's only Wilson transfer data
-(`OSPositivity.wilsonSlabTransfer`) has a TYPE that varies with the slab geometry. **A genuine volume
-family cannot be substituted here.** `CellSpectrum.cell_volume_bar_nonvacuous` and `VolumeRate`'s
-header make the same point about their own statements: quantifying a constant over an index is
-arithmetic, not uniformity.
+The index is inert. `r` is a parameter, so `κ` is a function of `r` alone and is fixed before `F` is
+introduced; `∃κ ∀F` and `∀F ∃κ` have the same proof here. `ι` carries no volume structure — no
+extent, no dimension, no inclusions — and every `D F` lives on one fixed algebra `A`, where the
+tree's Wilson transfer data `OSPositivity.wilsonSlabTransfer` has a type that varies with the slab
+geometry, so a volume family cannot be substituted for `ι`.
+`CellSpectrum.cell_volume_bar_nonvacuous` and `VolumeRate`'s header record the same about their own
+statements. `VolumeRate.gap_rate_uniform_in_volume_of_intensive` has the same hypotheses and the
+same rate-form conclusion on the mode family.
 
-**The closest prior art is `VolumeRate.gap_rate_uniform_in_volume_of_intensive`**, which has the same
-hypotheses and the same rate-form conclusion on the mode family. Note that
-`Certify.gap_uniform_in_volume_of_intensive` is NOT the right citation: its `κ` does not occur after
-the conjunction, which is the vacuous shape `VolumeRate` was written to repair and says it
-supersedes.
+`hg` is a hypothesis; this theorem consumes it and produces nothing of the kind.
 
-**⚠ The hypothesis is the whole content and is supplied nowhere.** `hg : ∀ F, GapAt (D F) r` is B5.
-This theorem spends it; it does not earn it. And at `r = 3^{-1/4}` the rate is `κ₀` exactly — but
-`CellSpectrum.gap_uniform_of_cell_intensive`, which names that radius, carries its OWN flag that the
-input `∀F, m_hi(F) ≤ 3^{-1/4}` is **OPEN** and that its operator is the two-state truncation of the
-single-plaquette Hamiltonian at `V = 1`, not the finite-volume Wilson transfer. Repeating the radius
-without those two facts would launder them.
-
-DERIVED: `κ := -Real.log r` is forced by `rⁿ = e^{-κ n}`, not chosen. `0` and `1` bracket `r` because
-`log` needs positivity and a contraction needs `r < 1`. -/
+DERIVED: `κ := -Real.log r` is forced by `rⁿ = e^{-κ n}`, not chosen. The `0` of `hr0` and the `1`
+of `hr1` bracket `r` because `Real.exp_log` needs positivity and `Real.log_neg` needs `r < 1` to
+make `κ` positive; the `0` of `0 < κ` is that positivity, and the `0` in `hx` is the vanishing
+pairing with the vacuum. -/
 theorem forgets_at_one_rate {ι : Type*} (D : ι → TransferData A) {r : ℝ}
     (hr0 : 0 < r) (hr1 : r < 1) (hg : ∀ F, GapAt (D F) r) :
     ∃ κ : ℝ, 0 < κ ∧ ∀ (F : ι) (n : ℕ) (x : H (D F).toReflForm),
@@ -374,13 +394,17 @@ theorem forgets_at_one_rate {ι : Type*} (D : ι → TransferData A) {r : ℝ}
 
 #print axioms forgets_at_one_rate
 
-/-- **AND THE CORRELATION FORGETS** — the limit form of `forgets_at_one_rate`.
+/-- The limit form: `‖(opT (D F) ^ n) x‖ → 0` as `n → ∞`, for `x` orthogonal to the vacuum. It is
+`norm_opT_pow_le` majorised by `r ^ n * ‖x‖` and `squeeze_zero` against
+`tendsto_pow_atTop_nhds_zero_of_lt_one`. Unlike `forgets_at_one_rate` it takes `0 ≤ r` rather than
+`0 < r`, since no logarithm is formed.
 
-**⚠ The index family here is decorative.** `D` is used only as `D F` and `hg` only as `hg F`, so
-this holds verbatim for a single `TransferData` with no index at all. It is `norm_opT_pow_le` plus
-`squeeze_zero`.
+The index family is inert here too: `D` is used only as `D F` and `hg` only as `hg F`, so the
+statement holds verbatim for a single `TransferData` with no index.
 
-DERIVED: no numeral of its own. -/
+DERIVED: the `0`s are the sign tested in `hr0`, the vanishing pairing in `hx`, and the limit value
+the norms tend to; the `1` of `hr1` is the unit `r` must fall strictly below for the powers to
+vanish. -/
 theorem tendsto_zero_of_intensive_radius {ι : Type*} (D : ι → TransferData A) {r : ℝ}
     (hr0 : 0 ≤ r) (hr1 : r < 1) (hg : ∀ F, GapAt (D F) r)
     (F : ι) (x : H (D F).toReflForm)
@@ -413,33 +437,36 @@ end Audit
 
 /-! ## The vacuum's complement as an operator
 
-`hsp` in `OpTBridge.reconstruct_from_opT` is a statement about `spectrum ℝ (opT D)`, and nothing in
-the tree proves any spectral fact about `opT`. The block structure is what a spectral argument needs:
-`opT` fixes `Ω` and preserves `Ωᗮ`, and `GapAt` bounds it there. A bound ON a subspace is not a
-statement about an operator until that subspace carries one, which is what this section builds. -/
+`opT` fixes `Ω` and preserves `Ωᗮ`, and `GapAt` bounds it on the complement. This section packages
+that complement as a `Submodule ℂ` and the restriction as a `ContinuousLinearMap` on it, so the
+bound becomes a statement about an operator norm rather than about each vector separately. -/
 
 section VacPerp
 
 open ComplexConjugate
 
-/-- **The vacuum's orthogonal complement in the completion.**
-
-`SecondEigenvalue.vacPerp` is the same idea on the REAL GNS quotient; this is the one `opT` acts on.
+/-- The vacuum's orthogonal complement in the completion, as a `Submodule ℂ (H D.toReflForm)`: the
+orthogonal of the span of `Omega D.toReflForm D.vac`. `SecondEigenvalue.vacPerp` is the same
+construction on the real GNS quotient.
 
 DERIVED: no numeral. -/
 noncomputable def vacPerpH (D : TransferData A) : Submodule ℂ (H D.toReflForm) :=
   (ℂ ∙ Omega D.toReflForm D.vac)ᗮ
 
-/-- **Membership is the orthogonality equation** the rest of the file states its hypotheses in.
+/-- Membership of `vacPerpH D` is the orthogonality equation the rest of the file states its
+hypotheses in: `x ∈ vacPerpH D ↔ ⟪Ω, x⟫ = 0`. It is
+`Submodule.mem_orthogonal_singleton_iff_inner_right`, and it is an iff in both directions.
 
-DERIVED: the `0` is orthogonality. -/
+DERIVED: the `0` is the vanishing pairing, which is what orthogonality means here. -/
 theorem mem_vacPerpH (D : TransferData A) {x : H D.toReflForm} :
     x ∈ vacPerpH D ↔ inner ℂ (Omega D.toReflForm D.vac) x = (0 : ℂ) :=
   Submodule.mem_orthogonal_singleton_iff_inner_right
 
 #print axioms mem_vacPerpH
 
-/-- **`opT` maps the complement into itself** — `orth_invariant_opT` in the form `codRestrict` wants.
+/-- `opT` maps `vacPerpH D` into itself: applied to the inclusion of a member, the image is again a
+member. It is `orth_invariant_opT` restated through `mem_vacPerpH`, in the form
+`ContinuousLinearMap.codRestrict` takes.
 
 DERIVED: no numeral. -/
 theorem opT_mem_vacPerpH (D : TransferData A) (x : vacPerpH D) :
@@ -449,17 +476,17 @@ theorem opT_mem_vacPerpH (D : TransferData A) (x : vacPerpH D) :
 
 #print axioms opT_mem_vacPerpH
 
-/-- **⭐ THE COMPRESSION OF `opT` TO THE VACUUM'S COMPLEMENT.**
-
-The operator a spectral argument runs on. `opT` itself has `1` in its spectrum — it fixes `Ω`
-(`opT_Omega`) — so no contraction bound can hold for it globally; the decay lives entirely on this
-complement, and this is that restriction as an operator in its own right.
+/-- The compression of `opT` to the vacuum's complement, as a `ContinuousLinearMap`
+`vacPerpH D →L[ℂ] vacPerpH D`. It is `(opT D).comp (vacPerpH D).subtypeL` corestricted along
+`opT_mem_vacPerpH`. `opT` itself fixes `Ω` (`opT_Omega`), so no contraction bound below `1` can hold
+for it on all of `H`; this is the restriction on which one can.
 
 DERIVED: no numeral. -/
 noncomputable def opTperp (D : TransferData A) : vacPerpH D →L[ℂ] vacPerpH D :=
   ((opT D).comp (vacPerpH D).subtypeL).codRestrict (vacPerpH D) (opT_mem_vacPerpH D)
 
-/-- **What it does, read in the completion.**
+/-- `opTperp` read back in the completion: the inclusion of `opTperp D x` is `opT D` applied to the
+inclusion of `x`. A `simp` lemma, unfolding the corestriction.
 
 DERIVED: no numeral. -/
 @[simp] theorem coe_opTperp_apply (D : TransferData A) (x : vacPerpH D) :
@@ -469,28 +496,21 @@ DERIVED: no numeral. -/
 
 #print axioms coe_opTperp_apply
 
-/-- **⭐⭐ AND `GapAt D r` BOUNDS ITS OPERATOR NORM BY `r`.**
+/-- `GapAt D r` bounds the operator norm of the compression: `‖opTperp D‖ ≤ r`. It is
+`norm_opT_le_of_orth` fed to `ContinuousLinearMap.opNorm_le_bound`, with `mem_vacPerpH` supplying
+each vector's orthogonality.
 
-`norm_opT_le_of_orth` gives `‖opT D x‖ ≤ r‖x‖` for each `x ⊥ Ω`. This is that bound as a statement
-about `‖opTperp D‖`, which is what a resolvent argument can consume: for `‖opTperp D‖ ≤ r < 1` and
-`r < |μ|`, `μ - opTperp D` is invertible by the Neumann series, and the only spectral value left is
-the vacuum's `1`.
+This is a bound on an operator on a submodule; it is not a statement about `spectrum ℝ (opT D)`,
+which `spectrum_opT_subset` below reaches by a different route. It is also not
+`OpTBridge.reconstruct_from_opT`'s `hsp`, which asks for `Set.Icc ε (exp (-Δ))` with `ε > 0`, that
+is, for `0` to stay out of the spectrum;
+`TransferInvertibility.isUnit_of_spectral_hypothesis` identifies that with `IsUnit T`,
+`spectral_hypothesis_fails_for_compact` shows it unsatisfiable for a compact operator in infinite
+dimensions, and `energies_bounded_of_spectral_hypothesis` shows it bounds every energy above by
+`max 0 (-log ε)`.
 
-**⛔ AND IT IS NOT A STEP TOWARD `hsp`, WHICH IS THE POINT.** `hsp` asks for
-`Set.Icc ε (exp (-Δ))` with `ε > 0`, i.e. that the spectrum stay away from `0`, and
-`TransferInvertibility.isUnit_of_spectral_hypothesis` shows that is exactly `IsUnit T`.
-`spectral_hypothesis_fails_for_compact` then makes it UNSATISFIABLE for a compact operator in
-infinite dimensions, and `energies_bounded_of_spectral_hypothesis` shows it forces every energy
-below `max 0 (-log ε)` — a Hamiltonian bounded ABOVE, which a quantum field theory's is not. So the
-lower cut is not a gap to be closed; it is a hypothesis this route exists to avoid.
-
-What a norm bound on `opTperp` IS good for is the contraction form: `‖opTperp D‖ ≤ r < 1` gives decay
-on the vacuum's complement with no logarithm anywhere, which is what `norm_opT_pow_le` and
-`clustering_opT` below consume. Assembling `spectrum ℝ (opT D)` itself would still need `ℂ ∙ Ω` and
-`vacPerpH` as complementary subspaces, and no theorem here needs that.
-
-DERIVED: the `0` is `0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound` requires of any bound on
-an operator norm; `r` itself is `GapAt`'s rate and is the caller's. No numeral is chosen here. -/
+DERIVED: the `0` is the sign tested in `hr : 0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound`
+requires of any bound on an operator norm; `r` is `GapAt`'s rate and is the caller's. -/
 theorem norm_opTperp_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
     ‖opTperp D‖ ≤ r := by
   refine ContinuousLinearMap.opNorm_le_bound _ hr (fun x => ?_)
@@ -503,11 +523,10 @@ end VacPerp
 
 /-! ## The spectrum of `opT`
 
-A norm bound ON a subspace is still not a statement about an operator, and `norm_opTperp_le` is
-where that gap shows. What closes it is that `ℂ ∙ Ω` and `vacPerpH D` are complementary and `opT`
-preserves both, so a resolvent can be assembled block by block. The route below does that without
-naming either subspace as a type: `vacProjH` is the rank-one projection onto the vacuum written as an
-operator, `opTgap` is what is left of `opT` once that block is removed, and the factorisation
+`norm_opTperp_le` bounds an operator on a submodule. The section below works instead inside the
+algebra `H →L[ℂ] H`, so that a resolvent can be assembled: `vacProjH` is the rank-one projection
+onto the vacuum written as an operator, `opTgap` is what is left of `opT` once that block is
+removed, and the factorisation
 
     μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)
 
@@ -516,8 +535,8 @@ and `μ` lies outside `[-r, r]` — and the inversion of an idempotent, which ne
 
 section Spectrum
 
-/-- **THE VACUUM IS A UNIT VECTOR IN THE COMPLEX PAIRING.** `GNSHilbert.norm_Omega_vac` read
-through `inner_self_eq_norm_sq_to_K`.
+/-- The vacuum is a unit vector in the complex pairing: `⟪Ω, Ω⟫ = 1`. It is
+`GNSHilbert.norm_Omega_vac` read through `inner_self_eq_norm_sq_to_K`.
 
 DERIVED: the `1` is `norm_Omega_vac`'s, which is `D.vac_norm`; nothing is chosen here. -/
 theorem inner_Omega_self (D : TransferData A) :
@@ -525,50 +544,52 @@ theorem inner_Omega_self (D : TransferData A) :
   rw [inner_self_eq_norm_sq_to_K, norm_Omega_vac]
   norm_num
 
-/-- **THE VACUUM'S RANK-ONE PROJECTION, AS AN OPERATOR.** `x ↦ ⟪Ω, x⟫ • Ω` is the orthogonal
-projection onto `ℂ ∙ Ω`; bundling it as a `ContinuousLinearMap` is what lets it be MULTIPLIED inside
-the algebra `H →L[ℂ] H`, which is where a resolvent argument has to happen.
+/-- The vacuum's rank-one projection as an operator: `x ↦ ⟪Ω, x⟫ • Ω`, built as
+`(innerSL ℂ Ω).smulRight Ω`. Bundling it as a `ContinuousLinearMap` is what lets it be multiplied
+inside the algebra `H →L[ℂ] H`, which is where the factorisation below happens.
 
 DERIVED: no numeral. -/
 noncomputable def vacProjH (D : TransferData A) : H D.toReflForm →L[ℂ] H D.toReflForm :=
   (innerSL ℂ (Omega D.toReflForm D.vac)).smulRight (Omega D.toReflForm D.vac)
 
-/-- What it does.
+/-- `vacProjH D x = ⟪Ω, x⟫ • Ω`, by `rfl`. A `simp` lemma.
 
 DERIVED: no numeral. -/
 @[simp] theorem vacProjH_apply (D : TransferData A) (x : H D.toReflForm) :
     vacProjH D x = (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac := rfl
 
-/-- It fixes the vacuum.
+/-- `vacProjH` fixes the vacuum, since `inner_Omega_self` makes the scalar `1`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. The `1` the proof passes through is `inner_Omega_self`'s and does not appear in
+the statement. -/
 theorem vacProjH_Omega (D : TransferData A) :
     vacProjH D (Omega D.toReflForm D.vac) = Omega D.toReflForm D.vac := by
   rw [vacProjH_apply, inner_Omega_self, one_smul]
 
-/-- **AND IT IS IDEMPOTENT**, which is the whole content of the two-by-two inversion below.
+/-- `vacProjH` is idempotent as an element of the operator algebra:
+`vacProjH D * vacProjH D = vacProjH D`. It is what
+`isUnit_one_sub_smul_vacProjH` runs on.
 
 DERIVED: no numeral. -/
 theorem vacProjH_mul_vacProjH (D : TransferData A) : vacProjH D * vacProjH D = vacProjH D := by
   ext x
   rw [mul_apply_eq_comp, vacProjH_apply, vacProjH_apply, inner_smul_right, inner_Omega_self, mul_one]
 
-/-- **⭐ `opT` WITH THE VACUUM'S BLOCK SUBTRACTED.**
-
-`opT D` fixes `Ω`, so no contraction bound can hold for it globally — `1` is an eigenvalue. Removing
-the projection removes exactly that eigenvalue, and what is left is bounded by `r` on the WHOLE
-space rather than only on `vacPerpH D`. That is what makes a Neumann series available.
+/-- `opT` with the vacuum's block subtracted: `opTgap D = opT D - vacProjH D`, as an element of
+`H →L[ℂ] H`. `opT D` fixes `Ω`, so `1` is an eigenvalue and no contraction bound below `1` can hold
+for it on all of `H`. `norm_opTgap_le` bounds this difference by `r` on the whole space rather than
+only on `vacPerpH D`, which is what makes the Neumann series of `isUnit_sub_opTgap` available.
 
 DERIVED: no numeral. -/
 noncomputable def opTgap (D : TransferData A) : H D.toReflForm →L[ℂ] H D.toReflForm :=
   opT D - vacProjH D
 
-/-- The definition, as a rewrite.
+/-- `opTgap D = opT D - vacProjH D`, by `rfl`, for rewriting.
 
 DERIVED: no numeral. -/
 theorem opTgap_def (D : TransferData A) : opTgap D = opT D - vacProjH D := rfl
 
-/-- What it does.
+/-- `opTgap D x = opT D x - ⟪Ω, x⟫ • Ω`, the pointwise form.
 
 DERIVED: no numeral. -/
 theorem opTgap_apply (D : TransferData A) (x : H D.toReflForm) :
@@ -576,16 +597,17 @@ theorem opTgap_apply (D : TransferData A) (x : H D.toReflForm) :
       = opT D x - (inner ℂ (Omega D.toReflForm D.vac) x) • Omega D.toReflForm D.vac := by
   rw [opTgap_def, sub_apply, vacProjH_apply]
 
-/-- The two blocks reassemble `opT`.
+/-- The two blocks reassemble the operator: `opTgap D + vacProjH D = opT D`.
 
 DERIVED: no numeral. -/
 theorem opTgap_add_vacProjH (D : TransferData A) : opTgap D + vacProjH D = opT D := by
   rw [opTgap_def]
   abel
 
-/-- **THE TWO BLOCKS ANNIHILATE EACH OTHER.** `opTgap D` kills `Ω`, and the projection's range is
-the vacuum line, so the composite is zero — this is what makes the factorisation below exact rather
-than approximate.
+/-- The blocks annihilate in one order: `opTgap D * vacProjH D = 0`. The projection's range is the
+vacuum line and `opTgap D` kills `Ω`, since `opT_Omega` and `inner_Omega_self` make the two terms of
+`opTgap` agree there. The reverse product is not stated. This is what makes the factorisation in
+`spectrum_opT_subset` exact.
 
 DERIVED: the `0` is the zero operator. -/
 theorem opTgap_mul_vacProjH (D : TransferData A) : opTgap D * vacProjH D = 0 := by
@@ -593,16 +615,16 @@ theorem opTgap_mul_vacProjH (D : TransferData A) : opTgap D * vacProjH D = 0 := 
   rw [mul_apply_eq_comp, vacProjH_apply, opTgap_apply, ContinuousLinearMap.map_smul, opT_Omega,
     inner_smul_right, inner_Omega_self, mul_one, sub_self, zero_apply]
 
-/-- **⭐⭐ AND `GapAt D r` BOUNDS IT ON THE WHOLE SPACE.**
+/-- `GapAt D r` bounds `opTgap` on the whole space: `‖opTgap D‖ ≤ r`.
 
 `norm_opT_le_of_orth` bounds `opT` only on the vacuum's complement. Here the projection is
 subtracted first, so an arbitrary `x` is carried to `opT` of its projected part: `opTgap D x` equals
-`opT D (x - ⟪Ω,x⟫ • Ω)`, the argument is orthogonal to `Ω` by construction, and Pythagoras gives
-`‖x - ⟪Ω,x⟫ • Ω‖ ≤ ‖x‖`. Contrast `norm_opTperp_le`, which is the same bound confined to a submodule
-and therefore says nothing about any element of the operator algebra.
+`opT D (x - ⟪Ω,x⟫ • Ω)` by `opT_Omega`, that argument is orthogonal to `Ω` by construction, and
+`norm_add_sq_eq_norm_sq_add_norm_sq_of_inner_eq_zero` gives `‖x - ⟪Ω,x⟫ • Ω‖ ≤ ‖x‖`. Unlike
+`norm_opTperp_le`, this bounds an element of the operator algebra `H →L[ℂ] H`.
 
-DERIVED: the `0` is `0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound` requires of any bound on an
-operator norm; `r` is `GapAt`'s rate and is the caller's. -/
+DERIVED: the `0` is the sign tested in `hr : 0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound`
+requires of any bound on an operator norm; `r` is `GapAt`'s rate and is the caller's. -/
 theorem norm_opTgap_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
     ‖opTgap D‖ ≤ r := by
   refine ContinuousLinearMap.opNorm_le_bound _ hr (fun x => ?_)
@@ -632,16 +654,18 @@ theorem norm_opTgap_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt
         norm_opT_le_of_orth D hr hg _ hwperp
     _ ≤ r * ‖x‖ := mul_le_mul_of_nonneg_left hnw hr
 
-/-- **THE GAP BLOCK'S RESOLVENT, BY NEUMANN SERIES.**
+/-- The gap block's resolvent, by Neumann series: for a real `μ` with `r < |μ|`,
+`algebraMap ℝ _ μ - opTgap D` is a unit of `H →L[ℂ] H`.
 
-`‖opTgap D‖ ≤ r < |μ|` makes `μ⁻¹ • opTgap D` a strict contraction, so `Units.oneSub` inverts
-`1 - μ⁻¹ • opTgap D`, and multiplying by the unit `algebraMap ℝ _ μ` gives `μ - opTgap D`.
+`norm_opTgap_le` with `r < |μ|` makes `μ⁻¹ • opTgap D` a strict contraction, so `Units.oneSub`
+inverts `1 - μ⁻¹ • opTgap D`; `r < |μ|` also forces `μ ≠ 0`, so `algebraMap ℝ _ μ` is a unit, and
+the product of the two is `μ - opTgap D`.
 
-**⛔ THIS IS NOT `TransferInvertibility`'s HYPOTHESIS.** Nothing here asks `opT D` itself to be
-invertible, and `μ` ranges over the values EXCLUDED from the conclusion, never over the spectrum.
+The statement is about `opTgap D`, not about `opT D`, and `μ` ranges over values excluded from
+`spectrum_opT_subset`'s conclusion.
 
-DERIVED: the `0` is `0 ≤ r`; `r` and `μ` are the caller's, and the interval `|μ| > r` is what
-`Units.oneSub`'s contraction hypothesis becomes after the scalar is divided out. -/
+DERIVED: the `0` is the sign tested in `hr : 0 ≤ r`; `r` and `μ` are the caller's, and `r < |μ|` is
+what `Units.oneSub`'s contraction hypothesis becomes after the scalar is divided out. -/
 theorem isUnit_sub_opTgap (D : TransferData A) {r μ : ℝ} (hr : 0 ≤ r) (hg : GapAt D r)
     (hrμ : r < |μ|) :
     IsUnit (algebraMap ℝ (H D.toReflForm →L[ℂ] H D.toReflForm) μ - opTgap D) := by
@@ -669,15 +693,17 @@ theorem isUnit_sub_opTgap (D : TransferData A) {r μ : ℝ} (hr : 0 ≤ r) (hg :
   rw [hfac]
   exact hUa.mul hUn
 
-/-- **THE VACUUM BLOCK'S RESOLVENT, INVERTED BY HAND.**
+/-- The vacuum block's resolvent, inverted by hand: for a real `μ` with `μ ≠ 0` and `μ ≠ 1`,
+`1 - μ⁻¹ • vacProjH D` is a unit of `H →L[ℂ] H`.
 
-For an idempotent `e`, `(1 - t • e) * (1 + s • e) = 1 + (s - t - s*t) • e`, so the inverse exists as
-soon as `s(1 - t) = t` can be solved. At `t = μ⁻¹` the solution is `s = (μ - 1)⁻¹`, and the only
-thing that can obstruct it is `μ = 1` — the vacuum's own eigenvalue.
+For an idempotent `e`, `(1 - t • e) * (1 + s • e) = 1 + (s - t - s·t) • e`, so the inverse exists as
+soon as `s(1 - t) = t` can be solved. At `t = μ⁻¹` the solution is `s = (μ - 1)⁻¹`, which needs
+`μ ≠ 1`; the inverse is exhibited explicitly and both products are checked. Idempotence is
+`vacProjH_mul_vacProjH`. No `GapAt` and no `r` appear.
 
-DERIVED: the `1`s are the unit of the operator algebra and the vacuum's eigenvalue `opT D Ω = Ω`,
-which is what `μ ≠ 1` excludes; the `0` is `μ ≠ 0`, needed because `μ⁻¹` is the contraction scale.
-Both are forced by the factorisation, not chosen. -/
+DERIVED: the `1`s are the unit of the operator algebra and the value `μ` must avoid, which is the
+vacuum's eigenvalue `opT D Ω = Ω`; the `0` is the value `μ` must avoid for `μ⁻¹` to exist. Both are
+forced by the factorisation, not chosen. -/
 theorem isUnit_one_sub_smul_vacProjH (D : TransferData A) {μ : ℝ} (hμ0 : μ ≠ 0) (hμ1 : μ ≠ 1) :
     IsUnit ((1 : H D.toReflForm →L[ℂ] H D.toReflForm) - (μ⁻¹ : ℝ) • vacProjH D) := by
   have he2 : vacProjH D * vacProjH D = vacProjH D := vacProjH_mul_vacProjH D
@@ -696,32 +722,27 @@ theorem isUnit_one_sub_smul_vacProjH (D : TransferData A) {μ : ℝ} (hμ0 : μ 
     abel
   exact ⟨⟨_, _, hA, hB⟩, rfl⟩
 
-/-- **⭐⭐⭐ THE SPECTRUM OF THE TRANSFER OPERATOR, FROM `GapAt` ALONE.**
-
-Every real spectral value of `opT D` is either the vacuum's `1` or within `r` of zero. This is the
-first spectral fact about `opT` anywhere in the tree: `OpTBridge.reconstruct_from_opT` takes a
-spectral hypothesis and discharges none of it, and `norm_opTperp_le` bounds a compression rather
-than saying anything about `spectrum ℝ (opT D)`.
+/-- From `GapAt D r` alone: `spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc (-r) r`. Every real spectral value
+of `opT D` is either the vacuum's `1` or within `r` of zero.
 
 The proof is the factorisation named in this section's header. For `μ` outside `{1} ∪ [-r, r]`,
-`μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)`, whose first factor is a unit by
-`isUnit_sub_opTgap` (Neumann, on `r < |μ|`) and whose second is a unit by
-`isUnit_one_sub_smul_vacProjH` (idempotent, on `μ ≠ 1`). `spectrum.mem_iff` turns that into
-non-membership.
+`μ - opT D = (μ - opTgap D) * (1 - μ⁻¹ • vacProjH D)` by `opTgap_mul_vacProjH` and
+`opTgap_add_vacProjH`; the first factor is a unit by `isUnit_sub_opTgap` (Neumann, on `r < |μ|`) and
+the second by `isUnit_one_sub_smul_vacProjH` (idempotent, on `μ ≠ 1`). `spectrum.mem_iff` turns that
+into non-membership.
 
-**⛔ WHAT THIS IS NOT.** It is NOT `OpTBridge`'s `hsp`, which additionally asks
-`Set.Icc ε (exp (-Δ))` with `0 < ε`, i.e. that `0` stay OUT of the spectrum —
-`TransferInvertibility.isUnit_of_spectral_hypothesis` shows that is exactly `IsUnit (opT D)`, and
-this conclusion permits `0` deliberately. It is also NOT a gap: `GapAt D r` is a hypothesis, nothing
-in the tree supplies one, and at `1 ≤ r` the right-hand side already contains every value
-`norm_opT_le_one` allows, so the statement is empty unless `r < 1` — the same caveat
-`bound_is_free_of_one_le` records for the norm bounds. And it is a bound on `spectrum ℝ`, the REAL
-spectrum of a self-adjoint operator, which is where `isSelfAdjoint_opT` is doing its work.
+Scope. The conclusion is about `spectrum ℝ`, the real spectrum of a self-adjoint operator, which is
+what `isSelfAdjoint_opT` supports. It permits `0`, so it is not
+`OpTBridge.reconstruct_from_opT`'s `hsp`, which additionally asks for `Set.Icc ε (exp (-Δ))` with
+`0 < ε`; `TransferInvertibility.isUnit_of_spectral_hypothesis` identifies that with
+`IsUnit (opT D)`. `GapAt D r` is a hypothesis, and at `1 ≤ r` the right-hand side already contains
+every value `norm_opT_le_one` allows, so the statement is empty unless `r < 1`, which it does not
+assume — the same caveat `bound_is_free_of_one_le` records for the norm bounds.
 
 DERIVED: the `1` is the vacuum's eigenvalue, fixed by `GNSHilbert.opT_Omega`, not a level chosen
-here; the `0` is `0 ≤ r`, which `norm_opTgap_le` requires of any operator-norm bound. `r` is
-`GapAt`'s rate and the interval `[-r, r]` is its symmetric reach, since `spectrum ℝ` of a
-self-adjoint operator is not sign-constrained. -/
+here; the `0` is the sign tested in `hr : 0 ≤ r`, which `norm_opTgap_le` requires of any
+operator-norm bound. `r` is `GapAt`'s rate and `[-r, r]` is its symmetric reach, since `spectrum ℝ`
+of a self-adjoint operator is not sign-constrained. -/
 theorem spectrum_opT_subset (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapAt D r) :
     spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc (-r) r := by
   intro μ hμ

@@ -2,76 +2,74 @@ import MassGap.Model
 import MassGap.Measure
 
 /-!
-# Existence and the gap for one model: mass gap AND continuum measure
+# MassGap.FullModel — the gap statement and the continuum-measure statement, conjoined
 
-`Model.mass_gap_of_model` gives the **mass gap** (`C(τ)→0`), non-triviality, and `SO(4)` from the reduction data
-`LatticeYM` and its two obligations `A1_YM`, `A2_YM`. `Measure.continuum_of_family` gives the **OS-satisfying
-continuum measure** (a tight limit with OS0–OS3) from the finite-spacing data `LatticeYMFamily`. This file is
-the bridge: a `FullModel` is a single `SU(N)` lattice theory realised as BOTH — the reduction data at each
-coupling and the finite-spacing Osterwalder–Schrader data across spacings, the two the *same* physical model
-(the modelling identification of §2–§3, cited to Osterwalder–Seiler and the A1/A2 discharge). `existence_and_gap_of_model` then
-delivers both parts of the existence-and-gap problem at once.
+A `FullModel` bundles two structures: `gap : LatticeYM` with its obligations `h1 : A1_YM gap` and
+`h2 : A2_YM gap`, which `Model.mass_gap_of_model` and `Model.mass_gap_rate_of_model` consume, and
+`measure : LatticeYMFamily`, which `Measure.continuum_of_family` consumes. The three theorems here
+conjoin the two results at three strengths:
 
-Everything here is machine-checked modulo its cited inputs: for the gap, A1 and A2 (`Complete.lean` discharges
-them to the four named standard results); for the measure, reflection positivity, the confinement gap, and A2
-invariance at finite spacing (the `LatticeYMFamily` fields). The Osterwalder–Schrader reconstruction of the
-tight limit into a Wightman theory is the classical cited step; it is stated in `MassGap.WightmanData`, over a
-bilinear Schwinger form on a normed test space, and nothing in this file composes with it — `continuum_of_family`
-produces `q : J → ℝ`, a value per test configuration on a bare countable index set, which is not that form.
-`existence_and_gap_of_model` itself uses no axiom beyond
-the standard three — it is the composition; the physics enters through the two structures' fields.
+* `mass_gap_rate_and_continuum` — `0 < κ₀ - μ β` with the geometric bound
+  `‖C(τ)‖ ≤ (∑ ‖P k‖) · exp (-(κ₀ - μ β)) ^ τ`, paired with the measure half;
+* `existence_and_gap_of_model` — `C(τ) → 0` at every coupling, `μ β - κ < 0`, and constancy of `R`,
+  paired with the measure half;
+* `existence_and_gap_of_wilson` — the same conjunction for the `FullModel` inside a
+  `WilsonRealization`.
+
+The measure half is the same existential in all three: a strictly monotone `φ : ℕ → ℕ` and a limit
+`q : J → ℝ` with `Q j (φ k) → q j` at every `j`, the bound `|q j| ≤ ⌈c⌉₊ · B`, non-negativity, and
+invariance of `q` under the two actions `actE` and `actP`.
+
+Scope. The structures' fields are data supplied by whoever builds a `FullModel`; no theorem here
+discharges `A1_YM`, `A2_YM` or any `LatticeYMFamily` field. The rate in the first theorem is at the
+single coupling `β` in its binder and carries no lattice spacing. The two halves share no variable:
+nothing in any statement relates `q` to the mode data. `q` is a real-valued function on the index
+type `J`, with no bilinear form and no test space, so it is not the `OSData` that
+`WightmanData.os_reconstruction_wightman` consumes, and no theorem here composes with that axiom.
+
+The last section records physical parameters: `WilsonParams` (`N`, `L`, `kstar` with their
+positivity), `WilsonParams.irCutoff` (`kstar · L / (2π)`), and `WilsonRealization`, which pairs a
+`FullModel` with parameters under `measure.c = irCutoff`.
 -/
 
 namespace MassGap
 
 open MassGap.Measure Filter
 
-/-- **A full model.** One `SU(N)` lattice gauge theory presented as both parts of the argument: the reduction
-data `gap : LatticeYM` with its two obligations (`h1 : A1_YM`, `h2 : A2_YM`), and the finite-spacing
-Osterwalder–Schrader data `measure : LatticeYMFamily`. The identification that these are the same physical
-model is the §2–§3 modelling statement (cited); given it, both parts below follow. -/
+/-- Four fields: the reduction data `gap : LatticeYM`, its two obligations `h1 : A1_YM gap` and
+`h2 : A2_YM gap`, and the finite-spacing data `measure : LatticeYMFamily`.
+
+Bundling them is what lets one theorem state both conclusions. No field of the structure relates
+`gap` to `measure`; that they describe one theory is an identification the builder of the structure
+makes, and nothing in the type records it. -/
 structure FullModel where
   /-- The reduction data at each coupling (for the mass gap). -/
   gap : LatticeYM
-  /-- A1 (confinement) for the reduction data — discharged in `Complete.lean` to the character bound,
-  asymptotic freedom, and the §8.4 entropy-response identification. -/
+  /-- A1 (confinement) for the reduction data. `MassGap.Complete` supplies instances of it from the
+  character bound, asymptotic freedom, and the entropy-response identification. -/
   h1 : A1_YM gap
-  /-- A2 (isotropy) for the reduction data — discharged to the Nyquist sampling isometry. -/
+  /-- A2 (isotropy) for the reduction data: equality of the direction responses `R d`. -/
   h2 : A2_YM gap
   /-- The finite-spacing Osterwalder–Schrader data across spacings (for the continuum measure). -/
   measure : LatticeYMFamily
 
-/-- **MASS GAP WITH A RATE, AND THE CONTINUUM MEASURE, FROM ONE MODEL.**
+/-- Two conclusions for one `FullModel` at one coupling `β`, conjoined.
 
-`existence_and_gap_of_model` pairs a decay-to-zero with the OS limit. This pairs the RATE with it, so
-the two halves of the problem are stated together at the strength each is proved at:
+The gap half, `Model.mass_gap_rate_of_model` applied to `M.gap` and `M.h1`: the rate is positive,
+`0 < M.gap.κ₀ - M.gap.μ β`, and at every `τ : ℕ` the correlator obeys
+`‖∑_{k ∈ s β} P β k * (m β k) ^ τ‖ ≤ (∑_{k ∈ s β} ‖P β k‖) * exp (-(κ₀ - μ β)) ^ τ`.
 
-* **the gap** -- `Δ = κ₀ - μ β > 0` and `‖C(τ)‖ ≤ (∑‖P_k‖)·e^{-Δτ}`, geometric decay at a rate that
-  is the margin between the proved entropy floor and the measured tension;
-* **the measure** -- a tight subsequential limit `q` satisfying OS0 (temperedness), OS1 (Euclidean
-  invariance), OS2 (reflection positivity) and OS3 (permutation symmetry).
+The measure half, `Measure.continuum_of_family` applied to `M.measure`: a strictly monotone
+`φ : ℕ → ℕ` and a `q : M.measure.J → ℝ` with `Q j (φ k) → q j` at every `j`,
+`|q j| ≤ ⌈M.measure.c⌉₊ * M.measure.B`, `0 ≤ q j`, and `q` fixed by `actE g` and by `actP σ`.
 
-No axiom beyond the foundational three: A1, A2 and the `LatticeYMFamily` fields are the structure's
-DATA, supplied by whoever builds the model, not assumptions of this theorem.
+Scope. The rate is for the single coupling in the binder: it is not uniform in `β`, and it is a
+lattice quantity with no spacing appearing in the statement. `M.h2` is not used by this theorem. The
+prefactor is the sum of the amplitude norms, so the bound is geometric but not normalised at `τ = 0`
+to anything smaller. The two halves are independent statements sharing no variable.
 
-WHAT REMAINS BETWEEN THIS AND THE PROBLEM'S STATEMENT, named here because a capstone that hid them
-would be worse than no capstone:
-
-1. `Δ` is a rate at ONE spacing. The problem wants one gap for the continuum theory. The bound becomes
-   spacing-independent when the aperture is held at fixed physical extent
-   (`ZeroMode.gap_phys_of_fixed_screen`: `Δ_phys ≥ κ/L`, the spacing cancels), but that composition is
-   not performed here because it needs the family indexed by spacing, which `FullModel` is not.
-2. `LatticeYM.hread` -- that the active mode magnitudes clear the free-energy margin -- is the
-   structure's hypothesis. `Apriori.hread_of_dominant` reduces it to the DOMINANT magnitude and
-   `Apriori.margin_of_dominant_rate` shows it is exactly `Δ_measured ≥ κ₀ - μ`: an empirical statement
-   about the read, checkable against the ensembles, and cited rather than derived.
-3. OS4 (clustering) is the gap itself (`Forgetting.bridge_forward`). The Osterwalder-Schrader
-   reconstruction into a Wightman theory is a classical result, entered as the named axiom
-   `WightmanData.os_reconstruction_wightman`. It is NOT applied to `q`: that axiom consumes an
-   `OSData` — a continuous bilinear form on a normed test space, with a reflection — and `q` is a
-   real-valued function on an index set with no structure.
-
-DERIVED: nothing is introduced. Every constant belongs to the model. -/
+DERIVED: `0` is the strict lower bound on the rate `κ₀ - μ β` and the lower bound on the limit values
+`q j`. It is the only numeral in the statement; `κ₀`, `μ`, `c` and `B` are fields of the model. -/
 theorem mass_gap_rate_and_continuum (M : FullModel) (β : ℝ) :
     (0 < M.gap.κ₀ - M.gap.μ β ∧
       ∀ τ : ℕ, ‖∑ k ∈ M.gap.s β, M.gap.P β k * (M.gap.m β k) ^ τ‖
@@ -87,18 +85,22 @@ theorem mass_gap_rate_and_continuum (M : FullModel) (β : ℝ) :
 
 #print axioms mass_gap_rate_and_continuum
 
-/-- **The full result for a model: mass gap AND OS-satisfying continuum measure.** From a `FullModel`:
-* **Mass gap** (`mass_gap_of_model`, Step 1) — the autocorrelation forgets `C(τ)→0` at every coupling,
-  non-triviality `μ − κ < 0`, and Euclidean `SO(4)` invariance;
-* **Continuum measure** (`continuum_of_family`, Step 2) — a subsequence `φ` and a limit `q` with joint
-  convergence and OS0 (temperedness bound), OS2 (reflection positivity), OS1 (Euclidean invariance), OS3
-  (permutation symmetry) for every test configuration.
-Both machine-checked modulo their cited inputs. `#print axioms existence_and_gap_of_model` returns the three foundational axioms
-only: `existence_and_gap_of_model` is the composition, and A1/A2 (for the gap) and the `LatticeYMFamily` fields (for the
-measure) enter as the structures' data, not as axioms of this theorem. OS4 clustering is the gap
-(`Forgetting.bridge_forward`). The Osterwalder–Schrader reconstruction into a Wightman theory is cited, as
-`WightmanData.os_reconstruction_wightman`; it consumes a bilinear form on a normed test space, so it is not
-composed with `q`, which is a function on a bare index set. -/
+/-- Two conclusions for one `FullModel`, the gap half quantified over all couplings.
+
+The gap half, `Model.mass_gap_of_model` applied to `M.gap`, `M.h1` and `M.h2`: at every `β` the
+correlator norm `‖∑_{k ∈ s β} P β k * (m β k) ^ τ‖` tends to `0` as `τ → ∞`; at every `β`,
+`μ β - κ < 0`; and `R d = R d'` for every pair of directions.
+
+The measure half, `Measure.continuum_of_family` applied to `M.measure`: the subsequence `φ`, the
+limit `q`, the bound `|q j| ≤ ⌈c⌉₊ * B`, `0 ≤ q j`, and invariance of `q` under `actE` and `actP`.
+
+Scope. The gap half gives convergence with no rate; `mass_gap_rate_and_continuum` is the version that
+carries one, at a fixed coupling. `A1_YM`, `A2_YM` and the `LatticeYMFamily` fields are the structure's
+data, so they are obligations on whoever supplies `M` rather than hypotheses of this theorem. The
+third conjunct of the gap half is `A2_YM` restated. The two halves share no variable.
+
+DERIVED: `0` is the limit of the correlator norm, the strict upper bound in `μ β - κ < 0`, and the
+lower bound on `q j`. It is the only numeral in the statement. -/
 theorem existence_and_gap_of_model (M : FullModel) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ M.gap.s β, M.gap.P β k * (M.gap.m β k) ^ τ‖) atTop (nhds 0)) ∧
         (∀ β, M.gap.μ β - M.gap.κ < 0) ∧ (∀ d d', M.gap.R d = M.gap.R d')) ∧
@@ -110,21 +112,26 @@ theorem existence_and_gap_of_model (M : FullModel) :
         (∀ σ j, q (M.measure.actP σ j) = q j)) :=
   ⟨mass_gap_of_model M.gap M.h1 M.h2, continuum_of_family M.measure⟩
 
--- The docstring above has asserted this theorem's footprint since it was written, but the command was
--- only ever QUOTED in that prose and never issued, so the claim was never checked by anything. It is
--- issued here, which is also what puts the declaration into `data/13_dat_axiom_footprints.csv`.
+-- Issuing the command, rather than quoting it in prose, is what makes the build report this
+-- declaration's axiom footprint and what records it in `data/13_dat_axiom_footprints.csv`.
 #print axioms existence_and_gap_of_model
 
-/-! ### The §2–§3 modelling identification, as a typed obligation
+/-! ### Physical parameters and the infrared cutoff
 
-`existence_and_gap_of_model` needs a `FullModel`. The remaining physical input is the identification that the `SU(N)` Wilson
-ensemble *provides* one (§2–§3, cited to Osterwalder–Seiler and the A1/A2 discharge). The genuinely gauge-
-theoretic content is small and named here: the physical parameters `N, L, k⋆`, and that the construction's
-infrared cutoff is the physical `c = k⋆L/(2π)` — set by the box size `L` and the confinement scale `k⋆` (finite
-by A1), NOT by the spacing, and `N`-independent. Given a realisation, the existence-and-gap problem follows. -/
+`WilsonParams` records the gauge order `N`, the box size `L` and the confinement momentum scale
+`kstar`, each with its positivity as a field. `WilsonParams.irCutoff` is `kstar * L / (2 * π)`.
+`WilsonRealization` pairs a `FullModel` with such parameters under the single constraint
+`model.measure.c = params.irCutoff`.
 
-/-- **Physical parameters of an SU(N) Wilson realisation.** Gauge order `N ≥ 2`, physical box size `L > 0`, and
-the confinement momentum scale `k⋆ > 0` (the correlation scale, finite by A1). -/
+The cutoff is built from the box size and the confinement scale alone: no lattice spacing and no `N`
+appear in it, which is what makes `⌈c⌉₊` — the resolved-dimension bound carried by
+`LatticeYMFamily` — independent of both. -/
+
+/-- Three physical parameters with their positivity: the gauge order `N` with `2 ≤ N`, the box size
+`L` with `0 < L`, and the confinement momentum scale `kstar` with `0 < kstar`.
+
+The three proofs are fields, so the structure cannot be built without them. Nothing else is imposed:
+`N` is a natural number and `L`, `kstar` are reals in no particular units. -/
 structure WilsonParams where
   /-- Gauge group order (`SU(N)`, `N ≥ 2`). -/
   N : ℕ
@@ -136,30 +143,37 @@ structure WilsonParams where
   kstar : ℝ
   hk : 0 < kstar
 
-/-- The infrared cutoff `c = k⋆·L/(2π)` — the physical origin of the `LatticeYMFamily`'s spacing-independent
-resolved-dimension bound `⌈c⌉₊`, set by the box size and the confinement scale. -/
+/-- `kstar * L / (2 * Real.pi)`, the infrared cutoff.
+
+It is a function of the box size and the confinement scale only. No lattice spacing and no `N` enters,
+so `⌈irCutoff⌉₊` is independent of both. -/
 noncomputable def WilsonParams.irCutoff (W : WilsonParams) : ℝ := W.kstar * W.L / (2 * Real.pi)
 
 theorem WilsonParams.irCutoff_pos (W : WilsonParams) : 0 < W.irCutoff :=
   div_pos (mul_pos W.hk W.hL) (by positivity)
 
-/-- **An SU(N) Wilson realisation** (the §2–§3 identification, cited). Physical parameters `params` together
-with a `FullModel` whose finite-spacing infrared cutoff is the physical `k⋆L/(2π)` (`hc`). The identification
-that the `SU(N)` Wilson ensemble supplies such data — its entropy-matched reads giving the reduction data
-`LatticeYM` (with A1, A2) and its finite-spacing reflected forms the `LatticeYMFamily` (with Osterwalder–Seiler
-RP, the confinement gap, and A2 invariance) — is the modelling statement of §2–§3, cited, the one physical
-input to the whole argument. -/
+/-- A `FullModel` together with `WilsonParams`, constrained by `hc : model.measure.c =
+params.irCutoff`.
+
+That equation is the only link between the parameters and the model: no field derives any part of the
+`FullModel` from `N`, `L` or `kstar`, and the structure records no relation between the gauge order and
+the reduction data. -/
 structure WilsonRealization where
   params : WilsonParams
   model : FullModel
   /-- The construction's infrared cutoff is the physical `k⋆L/(2π)`. -/
   hc : model.measure.c = params.irCutoff
 
-/-- **The existence-and-gap problem for an SU(N) Wilson realisation.** Given the §2–§3 identification (a
-`WilsonRealization`), the SU(N) Wilson theory has BOTH the mass gap (`C(τ)→0`, non-triviality, `SO(4)`) and the
-OS0–OS3-satisfying continuum measure — `existence_and_gap_of_model` applied to the realisation's `FullModel`. The sole
-remaining input is that identification (cited). The Osterwalder–Schrader reconstruction of the tight limit into a
-Wightman theory is NOT an input to this theorem and is not claimed by it. No axiom beyond the standard three. -/
+/-- `existence_and_gap_of_model` restated for the `FullModel` carried by a `WilsonRealization`: the
+correlator norms tend to `0` at every coupling, `μ β - κ < 0`, `R` is constant across directions, and
+the measure half holds for `W.model.measure`.
+
+Scope. The proof is `existence_and_gap_of_model W.model`, so `W.params` and `W.hc` are not used. The
+physical parameters therefore constrain nothing in the conclusion; they are available to a reader of
+`W`, not to this statement.
+
+DERIVED: `0` is the limit of the correlator norm, the strict upper bound in `μ β - κ < 0`, and the
+lower bound on `q j`. It is the only numeral in the statement. -/
 theorem existence_and_gap_of_wilson (W : WilsonRealization) :
     ((∀ β, Tendsto (fun τ => ‖∑ k ∈ W.model.gap.s β,
           W.model.gap.P β k * (W.model.gap.m β k) ^ τ‖) atTop (nhds 0)) ∧

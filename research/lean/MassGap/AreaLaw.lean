@@ -2,71 +2,44 @@ import MassGap.PlaqVariance
 import MassGap.WilsonAnalytic
 
 /-!
-# MassGap.AreaLaw — the rectangular Wilson loop, and coupling-dependence of the Wilson measure
+# MassGap.AreaLaw — the rectangular Wilson loop, and the coupling dependence of the Wilson measure
 
-Two independent things live here, and the second is NOT the first.
+The file has two independent halves.
 
 ## Part 1: the rectangular Wilson loop
 
-`WilsonHypercubic.bd` gives the boundary word of a single plaquette — the `1 × 1` Wilson loop.
-`rectWord` generalises it to the `R × T` rectangle in the `(μ, ν)` coordinate plane based at a site
-`x`, as an ordered list of `(link, orientation)` pairs in the same format, so `WilsonLattice.wilsonHol`
-turns it into the ordered loop product with no new machinery. `rectWord_one_one` checks the
-generalisation against the tree's own convention: at `R = T = 1` the word IS `bd`, on the nose.
+`WilsonHypercubic.bd` gives the boundary word of a single plaquette. `rectWord` generalises it to
+the `R × T` rectangle in the `(μ, ν)` coordinate plane based at a site `x`, as an ordered list of
+`(link, orientation)` pairs in the same format, so `WilsonLattice.wilsonHol` turns it into the
+ordered loop product with no new machinery. `rectWord_one_one` states that at `R = T = 1` the word
+is `bd` applied to the plaquette `((μ, ν), x)`.
 
-What is proved about the loop is elementary structure: its length is the perimeter `2(R+T)`, a
-zero-width rectangle retraces itself and has trivial holonomy, the holonomy conjugates under a global
-gauge transformation, the normalised loop observable is bounded by `1` and is continuous.
+What is proved about the loop is structural. The word has `2 * (R + T)` letters
+(`rectWord_length`); a rectangle of zero width has identity holonomy (`loopHol_zero_width`); the
+holonomy conjugates under a global gauge transformation (`loopHol_conj`); the normalised loop
+observable `loopObs` is continuous (`continuous_loopObs`), measurable (`measurable_loopObs`), equal
+to `1` at the all-identity configuration (`loopObs_one`) and bounded in absolute value by `1`
+uniformly in `R`, `T` and the configuration (`abs_loopObs_le_one`). That uniform bound is the only
+bound on `loopObs` stated in this file.
 
-## Part 2: the Wilson measure moves with the coupling
+## Part 2: the coupling dependence of the mean Wilson action
 
-For the four-dimensional `SU(3)` system on the periodic lattice — the Clay problem's dimension and
-group — the mean Wilson action is a strictly decreasing function of `β`, at every real `β`:
+For the four-dimensional `SU(3)` system on the periodic lattice, the mean Wilson action is a
+strictly decreasing function of `β` at every real `β`:
 
     d/dβ ⟨S⟩_β = −(⟨S²⟩_β − ⟨S⟩_β²)  <  0.
 
-The derivative is `WilsonAnalytic.wilsonSystem_expect_hasDerivAt` at the observable `O = S`, where it
-is exactly minus the variance of the action. `action_var_pos` gives the strict inequality from two
-configurations with different total action: the all-identity configuration has `S = 0`, and the
-configuration carrying `PlaqVariance.gA` on one axis and `gB` on the others has `S ≥ 4/3`, because
-those two `SU(3)` elements do not commute. Hence `clay_mean_action_strictAnti`, and therefore
-`clay_mean_action_ne_of_ne`: no two couplings give the same theory.
+`action_hasDerivAt` is `WilsonAnalytic.wilsonSystem_expect_hasDerivAt` at the observable `O = S`,
+where the right-hand side is minus the variance of the action; `abs_action_le` supplies the uniform
+bound that lemma requires. `expect_var_pos` gives strict positivity of that variance from two
+configurations at which the observable takes different values, and `clay_action_var_pos` feeds it
+`PlaqVariance.confOne` and `PlaqVariance.confAB` together with `action_confOne` and
+`action_confAB_pos`. Hence `clay_mean_action_deriv_neg`, `clay_mean_action_strictAnti`, and
+`clay_mean_action_ne_of_ne`: distinct couplings give distinct mean actions.
 
-Unconditional. No smallness hypothesis, no bound on `β`, no carried input. The negative control
-`su_one_mean_action_deriv_zero` shows the derivative is exactly zero for the trivial gauge group, so
-the strict inequality is not a formality of the Gibbs construction.
-
-## WHAT PART 2 IS NOT
-
-It is **not an area law**, and nothing in this file is. An area law is a statement about the
-`R × T` Wilson loop of Part 1 —
-
-    ∃ σ > 0, ∀ R T, |⟨W(R,T)⟩_β| ≤ exp(−σ · R · T),
-
-with `σ` derived — and no such bound is proved here, at any coupling. Part 1 defines `W(R,T)` and
-proves elementary facts about it; Part 2 is about the action `S`, a different observable, and bounds
-nothing exponentially in anything.
-
-It is also not a string tension, not confinement, and not a mass gap. What it is: a property of the
-constructed `SU(3)` Wilson Gibbs measure that distinguishes it from the product-Haar theory at every
-coupling, derived from the measure rather than assumed of it.
-
-### The distance to an area law, named
-
-The exact cluster expansion in `StrongCoupling.lean` is stated for the two-plaquette connected
-correlator `WilsonBridge.wilsonCorrConn`. Its two general components — `boltz_eq_subset_sum` and
-`corrNum_eq_subset_sum` — are general in the observable, but the vanishing theorem the decay rests on
-(`nonbridging_sum_eq_zero`) and every bound downstream of it (`pairTerm`, `corePairs`, `coreRate`,
-`corrClay_abs_le_coreConst_mul_rate_pow`) are built on the pair `(p₀, p_d)` and on
-`WilsonReal.wilsonPlaqObs`. A Wilson loop is not a product of plaquette densities, so none of them
-applies to `loopObs` as stated.
-
-Beyond re-stating those for a loop observable, an area law needs one thing this tree does not have:
-the lower bound `|E| ≥ R · T` on the size of an activated set that can contribute — the statement
-that a discrete surface spanning the rectangle has at least `R · T` faces. That is the discrete
-Plateau problem. The covering condition alone (every loop link met by some activated plaquette)
-yields only `|E| ≥ (R + T)/2`, which is a perimeter bound, and a perimeter law is the non-confining
-behaviour.
+The Part 2 statements carry no smallness hypothesis and no bound on `β`. They are stated for the
+periodic torus of extent `n` with `NeZero n`, not for `ℤ⁴`. `su_one_mean_action_deriv_zero` is the
+control at rank `N = 1`: there the same derivative is zero at every `β` and on every geometry.
 
 Foundational footprint only (`#print axioms` throughout).
 Build: `python code/lean_build.py build MassGap.AreaLaw`.
@@ -82,10 +55,12 @@ open MeasureTheory
 
 variable {d n : ℕ}
 
-/-- The `k`-fold unit shift in direction `μ`. `shiftN μ 1 = shift μ`, which is what ties the loop
-below to `WilsonHypercubic.bd`'s own step.
+/-- The `k`-fold unit shift in direction `μ`, by recursion on `k`: zero steps is the identity on
+sites, and `k + 1` steps applies `LatticeGauge.shift μ` to the `k`-step shift. `shiftN μ 1` is
+`shift μ`, which is the step `WilsonHypercubic.bd` uses.
 
-DERIVED: `k` is a number of lattice steps, not a length; the lattice spacing never appears. -/
+DERIVED: the `0` is the base case of the recursion, no steps taken; the `1` in `k + 1` is the
+successor pattern, one further step. `k` counts lattice steps; no lattice spacing enters. -/
 def shiftN [NeZero n] (μ : Fin d) : ℕ → Site d n → Site d n
   | 0, x => x
   | (k + 1), x => shift μ (shiftN μ k x)
@@ -94,52 +69,65 @@ def shiftN [NeZero n] (μ : Fin d) : ℕ → Site d n → Site d n
 
 @[simp] theorem shiftN_one [NeZero n] (μ : Fin d) (x : Site d n) : shiftN μ 1 x = shift μ x := rfl
 
-/-- **The boundary word of the `R × T` rectangular Wilson loop** in the `(μ, ν)` plane at site `x`.
+/-- The boundary word of the `R × T` rectangular Wilson loop in the `(μ, ν)` plane at site `x`.
 
-The four sides in cyclic order: `R` steps along `μ` forwards, `T` steps along `ν` forwards at the far
-end, `R` steps back along `μ` inverted (traversed in reverse), `T` steps back along `ν` inverted.
-The `Bool` is the orientation, exactly as in `WilsonHypercubic.bd` — `true` is the link, `false` its
-inverse — so `WilsonLattice.wilsonHol` reads it as the ordered loop product with no new machinery.
+The four sides in cyclic order: `R` steps along `μ` forwards, `T` steps along `ν` forwards at the
+far end, `R` steps back along `μ` inverted (the range reversed), `T` steps back along `ν` inverted.
+The `Bool` is the orientation in `WilsonHypercubic.bd`'s convention — `true` is the link, `false`
+its inverse — so `WilsonLattice.wilsonHol` reads the list as an ordered loop product.
 
-DERIVED: `R` and `T` are the caller's side lengths in lattice steps. The two directions are what a
-plane has (`WilsonHypercubic.Plaq`); the orientations are forced by traversing a closed loop. -/
+`R` and `T` are the caller's side lengths in lattice steps, and nothing requires `μ ≠ ν`.
+
+DERIVED: no numeral appears in the statement. -/
 def rectWord [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ) : List (Link d n × Bool) :=
   ((List.range R).map (fun i => ((μ, shiftN μ i x), true)))
     ++ ((List.range T).map (fun j => ((ν, shiftN ν j (shiftN μ R x)), true)))
     ++ ((List.range R).reverse.map (fun i => ((μ, shiftN μ i (shiftN ν T x)), false)))
     ++ ((List.range T).reverse.map (fun j => ((ν, shiftN ν j x), false)))
 
-/-- **The `1 × 1` rectangle IS the plaquette.** The generalisation agrees with the tree's own
-boundary word on the nose, so the index conventions below are `bd`'s and not a second set. -/
+/-- At `R = T = 1` the rectangular word is `WilsonHypercubic.bd ((μ, ν), x)`, with the same letters
+in the same order, so the index conventions below are `bd`'s.
+
+DERIVED: the two `1`s are the side lengths `R` and `T`, one lattice step each. -/
 theorem rectWord_one_one [NeZero n] (μ ν : Fin d) (x : Site d n) :
     rectWord μ ν x 1 1 = bd ((μ, ν), x) := by
   simp [rectWord, bd, List.range_one]
 
-/-- **The word's length is the perimeter `2(R+T)`** — a loop traverses `2(R+T)` links, not `R·T` of
-them. Recorded because it is the quantity an area law is NOT about. -/
+/-- The word has `2 * (R + T)` letters: the four sides contribute `R`, `T`, `R` and `T`, the two
+reversed sides having the same length as the sides they retrace.
+
+DERIVED: the `2` counts the two traversals of each side length, forwards and back; it is a
+multiplicity, not a magnitude. -/
 theorem rectWord_length [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ) :
     (rectWord μ ν x R T).length = 2 * (R + T) := by
   simp only [rectWord, List.length_append, List.length_map, List.length_range,
     List.length_reverse]
   ring
 
-/-- **The holonomy of the rectangular Wilson loop**: the ordered product of the link variables around
-the loop, inverses where the loop runs backwards. This is `WilsonLattice.wilsonHol` on the one-element
-index type, so every general fact about `wilsonHol` applies to it. -/
+/-- The holonomy of the rectangular Wilson loop: `WilsonLattice.wilsonHol` applied to the constant
+family `fun _ : Unit => rectWord μ ν x R T` at its single index, which is the ordered product of the
+link variables around the loop with inverses where the word runs backwards. Every general fact about
+`wilsonHol` applies to it.
+
+DERIVED: no numeral appears in the statement. -/
 noncomputable def loopHol {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ)
     (U : Link d n → MassGap.SUN.SU N) : MassGap.SUN.SU N :=
   wilsonHol (fun _ : Unit => rectWord μ ν x R T) () U
 
-/-- **The normalised Wilson loop observable** `W(R,T) = (1/N)·Re tr` of the loop holonomy. At
-`R = T = 1` it is `1 − φ_W`, the plaquette density's complement (`loopObs_one_one`).
+/-- The normalised Wilson loop observable `(1 / N) * Re tr` of the loop holonomy, valued in `ℝ`.
+At `R = T = 1` it is the complement of the plaquette energy (`loopObs_one_one`).
 
-DERIVED: the `1` is the numerator of the character normalisation `1/N`, which is what makes `loopObs` equal `1` at the identity configuration for every rank. It is not a scale. -/
+DERIVED: the `1` is the numerator of the character normalisation `1 / N`, which makes the value `1`
+at the identity holonomy for every rank `N`. It is not a scale. -/
 noncomputable def loopObs {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ)
     (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   (1 / (N : ℝ))
     * (Matrix.trace ((loopHol μ ν x R T U : MassGap.SUN.SU N) : Matrix (Fin N) (Fin N) ℂ)).re
 
-/-- The `1 × 1` loop holonomy is the plaquette holonomy. -/
+/-- The `1 × 1` loop holonomy is the plaquette holonomy: `loopHol μ ν x 1 1 U` is
+`wilsonHol bd ((μ, ν), x) U`, by rewriting with `rectWord_one_one`.
+
+DERIVED: the two `1`s are the side lengths `R` and `T`. -/
 theorem loopHol_one_one {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n)
     (U : Link d n → MassGap.SUN.SU N) :
     loopHol μ ν x 1 1 U = wilsonHol (bd (d := d) (n := n)) ((μ, ν), x) U := by
@@ -147,30 +135,40 @@ theorem loopHol_one_one {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n)
   rw [rectWord_one_one]
   rfl
 
-/-- **The loop observable is the complement of the Wilson density of the loop holonomy.** The same
-relation `φ_W = 1 − (1/N)·Re tr` the plaquette action already uses, at the loop's own holonomy — so
-every bound on `wilsonDensity` transfers to the loop. -/
+/-- The loop observable is the complement of the Wilson density of the loop holonomy:
+`loopObs μ ν x R T U = 1 - wilsonDensity (loopHol μ ν x R T U)`. Both sides unfold to the same
+expression in `Re tr`, so bounds on `wilsonDensity` transfer to `loopObs`.
+
+DERIVED: the `1` is the value `wilsonDensity` subtracts its normalised trace from, the observable's
+value at the identity holonomy. -/
 theorem loopObs_eq {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ)
     (U : Link d n → MassGap.SUN.SU N) :
     loopObs μ ν x R T U = 1 - wilsonDensity (N := N) (loopHol μ ν x R T U) := by
   unfold loopObs wilsonDensity
   ring
 
-/-- The `1 × 1` loop observable is the complement of the plaquette energy: `W(1,1) = 1 − φ_W`. -/
+/-- The `1 × 1` loop observable is the complement of the plaquette energy:
+`loopObs μ ν x 1 1 U = 1 - wilsonDensity (wilsonHol bd ((μ, ν), x) U)`. Composed from `loopObs_eq`
+and `loopHol_one_one`.
+
+DERIVED: the first two `1`s are the side lengths `R` and `T`; the third is the value the Wilson
+density is subtracted from. -/
 theorem loopObs_one_one {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n)
     (U : Link d n → MassGap.SUN.SU N) :
     loopObs μ ν x 1 1 U
       = 1 - wilsonDensity (N := N) (wilsonHol (bd (d := d) (n := n)) ((μ, ν), x) U) := by
   rw [loopObs_eq, loopHol_one_one]
 
-/-! ### A closed loop that retraces itself
+/-! ### Retracing
 
-The word is a genuine closed loop, not a list of links that happens to have the right length: a
-rectangle of zero width traverses each of its links forwards and then backwards, and its ordered
-product collapses to the identity. The two lemmas below are the group-theoretic content, proved by
-list induction so nothing depends on a library spelling. -/
+The two lemmas below are the list-level group identities behind `loopHol_zero_width`: a word
+followed by its own reversal with every letter inverted has identity product. Both go by
+induction on the list, so neither depends on a particular library spelling. -/
 
-/-- The reversed word with every letter inverted has the inverse product. -/
+/-- For a map `f` into a group, the reversed list with every letter inverted has product
+`((l.map f).prod)⁻¹`. Induction on `l`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem prod_rev_inv {G : Type*} [Group G] {α : Type*} (f : α → G) (l : List α) :
     (l.reverse.map (fun a => (f a)⁻¹)).prod = ((l.map f).prod)⁻¹ := by
   induction l with
@@ -179,15 +177,22 @@ theorem prod_rev_inv {G : Type*} [Group G] {α : Type*} (f : α → G) (l : List
       simp only [List.reverse_cons, List.map_append, List.prod_append, ih, List.map_cons,
         List.map_nil, List.prod_cons, List.prod_nil, mul_one, mul_inv_rev]
 
-/-- **A word followed by its own retracing has trivial product.** -/
+/-- A word followed by its own retracing has identity product:
+`((l.map f) ++ (l.reverse.map (fun a => (f a)⁻¹))).prod = 1`, from `prod_rev_inv` and
+`mul_inv_cancel`.
+
+DERIVED: the `1` is the group identity, the value of the product. -/
 theorem prod_retrace {G : Type*} [Group G] {α : Type*} (f : α → G) (l : List α) :
     ((l.map f) ++ (l.reverse.map (fun a => (f a)⁻¹))).prod = 1 := by
   rw [List.prod_append, prod_rev_inv f l, mul_inv_cancel]
 
-/-- **A zero-width rectangle has trivial holonomy.** With `R = 0` the loop runs `T` steps along `ν`
-and immediately retraces them, so every link is traversed once forwards and once backwards and the
-ordered product is the identity — whatever the configuration. This is the check that `rectWord` is a
-closed loop rather than an arbitrary list. -/
+/-- A rectangle of zero width has identity holonomy: `loopHol μ ν x 0 T U = 1` for every
+configuration, every `T` and every pair of directions. With `R = 0` the word is `T` steps along `ν`
+followed by their retracing, so `prod_retrace` applies. This is the check that `rectWord` is a
+closed loop rather than an arbitrary list.
+
+DERIVED: the `0` is the side length `R`, no steps along `μ`; the `1` is the identity of
+`MassGap.SUN.SU N`. -/
 theorem loopHol_zero_width {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (T : ℕ)
     (U : Link d n → MassGap.SUN.SU N) :
     loopHol μ ν x 0 T U = 1 := by
@@ -208,20 +213,29 @@ theorem loopHol_zero_width {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (
   rw [hf, hg]
   exact prod_retrace (fun j : ℕ => U (ν, shiftN ν j x)) (List.range T)
 
-/-- **The loop holonomy conjugates under a global gauge transformation** — `wilsonHol_conj` at the
-loop's own word, so the loop observable `loopObs` is gauge-invariant by trace cyclicity. -/
+/-- Replacing `U` by `fun l => g * U l * g⁻¹` conjugates the loop holonomy by `g`. This is
+`WilsonLattice.wilsonHol_conj` at the loop's own word. The transformation is global — `g` does not
+depend on the site — so the statement is about a constant gauge rotation, not a site-dependent one.
+
+DERIVED: no numeral appears in the statement. -/
 theorem loopHol_conj {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ)
     (g : MassGap.SUN.SU N) (U : Link d n → MassGap.SUN.SU N) :
     loopHol μ ν x R T (fun l => g * U l * g⁻¹) = g * loopHol μ ν x R T U * g⁻¹ :=
   wilsonHol_conj (fun _ : Unit => rectWord μ ν x R T) g () U
 
-/-- The loop holonomy is continuous in the configuration. -/
+/-- The loop holonomy is continuous in the configuration, from
+`PlaqVariance.continuous_wilsonHol` at the loop's own word.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_loopHol {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ) :
     Continuous (loopHol (N := N) μ ν x R T) :=
   MassGap.PlaqVariance.continuous_wilsonHol (fun _ : Unit => rectWord μ ν x R T) ()
 
-/-- The loop observable is continuous, hence measurable — so it is a legitimate observable of the
-Gibbs measure. -/
+/-- The loop observable is continuous in the configuration, hence measurable
+(`measurable_loopObs`) and usable as an observable of the Gibbs measure. From `loopObs_eq`,
+`continuous_wilsonDensity` and `continuous_loopHol`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem continuous_loopObs {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ) :
     Continuous (loopObs (N := N) μ ν x R T) := by
   have h : loopObs (N := N) μ ν x R T
@@ -234,8 +248,12 @@ theorem measurable_loopObs {N : ℕ} [NeZero n] (μ ν : Fin d) (x : Site d n) (
     Measurable (loopObs (N := N) μ ν x R T) :=
   (continuous_loopObs μ ν x R T).measurable
 
-/-- **The loop observable is bounded by `1`**, uniformly in `R`, `T` and the configuration: it is a
-normalised character of a unitary matrix. This is the trivial bound an area law has to improve on. -/
+/-- `|loopObs μ ν x R T U| ≤ 1`, uniformly in `R`, `T`, the site, the directions and the
+configuration: the observable is a normalised character of a unitary matrix. From
+`wilsonDensity_nonneg` and `wilsonDensity_le_two` through `loopObs_eq`. The rank hypothesis `N ≠ 0`
+is what those two bounds require.
+
+DERIVED: the `0` is the rank condition `N ≠ 0`; the `1` is the bound on the absolute value. -/
 theorem abs_loopObs_le_one {N : ℕ} (hN : N ≠ 0) [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ)
     (U : Link d n → MassGap.SUN.SU N) : |loopObs μ ν x R T U| ≤ 1 := by
   have h0 := wilsonDensity_nonneg hN (loopHol μ ν x R T U)
@@ -243,7 +261,11 @@ theorem abs_loopObs_le_one {N : ℕ} (hN : N ≠ 0) [NeZero n] (μ ν : Fin d) (
   rw [loopObs_eq, abs_le]
   constructor <;> linarith
 
-/-- The loop observable at the all-identity configuration is `1` — the maximum. -/
+/-- At the all-identity configuration the loop observable is `1`, for every `R`, `T`, site and pair
+of directions. The loop holonomy is a product of identities, and `wilsonDensity_one` needs `N ≠ 0`.
+
+DERIVED: the `0` is the rank condition `N ≠ 0`; the `1` in `fun _ => 1` is the identity of
+`MassGap.SUN.SU N` assigned to every link; the final `1` is the value of the observable. -/
 theorem loopObs_one {N : ℕ} (hN : N ≠ 0) [NeZero n] (μ ν : Fin d) (x : Site d n) (R T : ℕ) :
     loopObs (N := N) μ ν x R T (fun _ => 1) = 1 := by
   have h1 : loopHol (N := N) μ ν x R T (fun _ => 1) = 1 := by
@@ -269,28 +291,28 @@ theorem loopObs_one {N : ℕ} (hN : N ≠ 0) [NeZero n] (μ ν : Fin d) (x : Sit
 #print axioms abs_loopObs_le_one
 #print axioms loopObs_one
 
-/-! ## Part 2: the Wilson measure moves with the coupling
+/-! ## Part 2: the coupling dependence of the mean Wilson action
 
-Nothing below concerns the Wilson loop. The observable is the total Wilson action `S = ∑_p φ_W(hol p)`,
-and the statement is that its Gibbs mean is strictly decreasing in `β`.
+The observable below is the total Wilson action `S = ∑_p φ_W(hol p)`, not the Wilson loop of Part 1.
+The statement is that its Gibbs mean is strictly decreasing in `β`.
 
-The mechanism is one identity and one inequality. The identity is
-`WilsonAnalytic.wilsonSystem_expect_hasDerivAt`, which at an observable `O` gives
-`d⟨O⟩/dβ = −(⟨O·S⟩ − ⟨O⟩⟨S⟩)`; taken at `O = S` the right-hand side is exactly minus the variance of
-the action. The inequality is that this variance is strictly positive, which needs only two
-configurations at which `S` differs.
+Two inputs. `WilsonAnalytic.wilsonSystem_expect_hasDerivAt` gives, for an observable `O`,
+`d⟨O⟩/dβ = −(⟨O·S⟩ − ⟨O⟩⟨S⟩)`; at `O = S` the right-hand side is minus the variance of the action.
+`expect_var_pos` gives strict positivity of that variance from two configurations at which the
+observable takes different values.
 -/
 
 section Variance
 
 variable {N : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
 
-/-- **The total Wilson action is bounded by `2·|plaquettes|`**, since each plaquette density lies in
-`[0, 2]` (`WilsonAction.wilsonDensity_nonneg`, `wilsonDensity_le_two`). This is the bound
-`wilsonSystem_expect_hasDerivAt` asks for at the observable `S`.
+/-- The total Wilson action is bounded in absolute value by `2 * Fintype.card Pq`, since each
+plaquette density lies in `[0, 2]` (`WilsonAction.wilsonDensity_nonneg`, `wilsonDensity_le_two`).
+This is the uniform bound `WilsonAnalytic.wilsonSystem_expect_hasDerivAt` asks for at the observable
+`S`. Stated for an arbitrary boundary-word family `bdw` over finite link and plaquette types.
 
-DERIVED: the `2` is `wilsonDensity`'s own range and the cardinality is the lattice's own plaquette
-count. Neither is chosen. -/
+DERIVED: the `0` is the rank condition `N ≠ 0`; the `2` is the upper end of `wilsonDensity`'s range,
+and `Fintype.card Pq` is the plaquette count of whatever geometry the caller supplies. -/
 theorem abs_action_le (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool))
     (U : (wilsonSystem bdw (wilsonDensity (N := N))).Config) :
     |(wilsonSystem bdw (wilsonDensity (N := N))).action U| ≤ 2 * (Fintype.card Pq : ℝ) := by
@@ -306,16 +328,20 @@ theorem abs_action_le (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool))
         rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
         ring
 
-/-- **The Gibbs variance of a continuous bounded observable is strictly positive as soon as the
-observable takes two different values.**
+/-- The Gibbs variance of a continuous bounded observable is strictly positive as soon as the
+observable takes different values at two configurations.
 
-`PlaqVariance.wilsonCorrConn_self_pos` is this statement for the plaquette-energy observable. The
-argument uses nothing specific to that observable: the Gibbs weight is positive and continuous at
-every real coupling, so an integrand `(O − ⟨O⟩)²·e^{−βS}` that integrates to zero and is continuous
-and nonnegative must vanish identically, forcing `O` to be constant. Stated here for a general `O`
-because the observable Part 2 needs is the ACTION, not a plaquette.
+The hypotheses are `N ≠ 0`, continuity of `O`, a uniform bound `M` with `|O U| ≤ M` for every `U`,
+and two configurations `U`, `V` with `O U ≠ O V`. The conclusion is `0 < ⟨O²⟩_β - ⟨O⟩_β²` at the
+given `β`. The Gibbs weight is positive and continuous at every real coupling, so a nonnegative
+continuous integrand `(O - ⟨O⟩)² · e^{−βS}` with zero integral vanishes identically, which would
+force `O` constant.
 
-No smallness, no sign condition and no bound on `β`. -/
+`O` is an arbitrary observable, not a plaquette density; the instance Part 2 uses is the action
+itself. There is no smallness hypothesis, no sign condition and no bound on `β`.
+
+DERIVED: the first `0` is the rank condition `N ≠ 0`; the second is the lower bound in the
+conclusion, the strict positivity of the variance. -/
 theorem expect_var_pos (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool)) (β : ℝ)
     (O : (wilsonSystem bdw (wilsonDensity (N := N))).Config → ℝ)
     (hcont : Continuous O) (M : ℝ) (hb : ∀ U, |O U| ≤ M)
@@ -453,12 +479,13 @@ theorem expect_var_pos (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool)) (β : ℝ
 #print axioms abs_action_le
 #print axioms expect_var_pos
 
-/-- **The derivative of the mean action is minus the variance of the action.**
+/-- The mean action has derivative `−(⟨S·S⟩_β − ⟨S⟩_β⟨S⟩_β)` in the coupling at the given `β`: the
+instance `O = S` of `WilsonAnalytic.wilsonSystem_expect_hasDerivAt`, with
+`PlaqVariance.continuous_wilsonSystem_action` supplying measurability and `abs_action_le` the
+uniform bound. Holds for any boundary-word family over finite link and plaquette types, any geometry
+and any `N ≠ 0`. The sign of that derivative comes from `expect_var_pos`, not from here.
 
-`WilsonAnalytic.wilsonSystem_expect_hasDerivAt` at the observable `O = S`. Stated separately because
-`O = S` is the one instance where the general covariance `⟨O·S⟩ − ⟨O⟩⟨S⟩` is a variance, hence signed.
-
-Holds at every real `β`, on any geometry and any `N ≠ 0`. -/
+DERIVED: the `0` is the rank condition `N ≠ 0`. -/
 theorem action_hasDerivAt (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool)) (β : ℝ) :
     HasDerivAt (fun x : ℝ => (wilsonSystem bdw (wilsonDensity (N := N))).expect
         (probHaar (MassGap.SUN.SU N)) x (wilsonSystem bdw (wilsonDensity (N := N))).action)
@@ -476,26 +503,31 @@ theorem action_hasDerivAt (hN : N ≠ 0) (bdw : Pq → List (Lk × Bool)) (β : 
 
 #print axioms action_hasDerivAt
 
-/-! ### Negative control: the trivial gauge group does not move
+/-! ### The trivial gauge group
 
-`action_hasDerivAt` holds for every `N ≠ 0`, so on its own it says nothing about whether the theory
-depends on the coupling — the derivative it names could be zero. For `SU(1)` it IS zero: the
-determinant condition pins the single entry, every holonomy is the identity, the action vanishes
-identically, and the mean action is constant in `β` at every geometry.
+`action_hasDerivAt` names a derivative for every `N ≠ 0` without signing it. At `N = 1` that
+derivative is zero: the determinant condition pins the single entry, every holonomy is the identity,
+the action vanishes identically, and the mean action is constant in `β` at every geometry. The
+strict inequality in `clay_mean_action_deriv_neg` therefore rests on the strict positivity of the
+variance, and that in turn on the non-commutation of two `SU(3)` elements. -/
 
-So `clay_mean_action_deriv_neg` below is not a formality of the Gibbs construction. What carries it
-is the strict positivity of the variance, and what carries that is the non-commutation of two
-`SU(3)` elements. -/
+/-- At rank `N = 1` the Wilson action vanishes at every configuration: each plaquette density is
+zero (`PlaqVariance.wilsonDensity_su_one`) and the action is their sum.
 
-/-- The Wilson action of the trivial gauge group vanishes identically. -/
+DERIVED: the `1`s are the rank at which `wilsonDensity` and `wilsonSystem` are taken; the `0` is the
+value of the action. -/
 theorem action_su_one (bdw : Pq → List (Lk × Bool))
     (U : (wilsonSystem bdw (wilsonDensity (N := 1))).Config) :
     (wilsonSystem bdw (wilsonDensity (N := 1))).action U = 0 := by
   show (∑ _p : Pq, wilsonDensity (N := 1) (wilsonHol bdw _p U)) = 0
   exact Finset.sum_eq_zero (fun p _ => MassGap.PlaqVariance.wilsonDensity_su_one _)
 
-/-- **NEGATIVE CONTROL.** For the trivial gauge group the mean action has derivative exactly zero in
-the coupling, at every `β` and on every geometry — the theory really is `β`-independent there. -/
+/-- At rank `N = 1` the derivative of the mean action in the coupling is zero, at every `β` and for
+every boundary-word family over finite link and plaquette types. From `action_su_one`, which makes
+both `⟨S⟩` and `⟨S²⟩` zero, together with `action_hasDerivAt`.
+
+DERIVED: the `1`s are the rank at which `wilsonDensity`, `wilsonSystem` and `probHaar (SU 1)` are
+taken; the `0` is the value of the derivative. -/
 theorem su_one_mean_action_deriv_zero (bdw : Pq → List (Lk × Bool)) (β : ℝ) :
     deriv (fun x : ℝ => (wilsonSystem bdw (wilsonDensity (N := 1))).expect
         (probHaar (MassGap.SUN.SU 1)) x
@@ -525,12 +557,12 @@ theorem su_one_mean_action_deriv_zero (bdw : Pq → List (Lk × Bool)) (β : ℝ
 
 end Variance
 
-/-! ### The Clay instance: four dimensions, `SU(3)`
+/-! ### The four-dimensional `SU(3)` instance
 
-`PlaqVariance` builds the two configurations this needs and proves the one non-commutation fact they
-rest on. `confOne` carries the identity on every link; `confAB` carries `gA` on every direction-`0`
-link and `gB` on the others, and `gA`, `gB` are the two `SU(3)` elements whose commutator gives
-plaquette energy `4/3` rather than `0`. -/
+`PlaqVariance` supplies the two configurations the section uses and the non-commutation fact they
+rest on. `confOne` carries the identity on every link; `confAB` is built from the two `SU(3)`
+elements `gA` and `gB`, and `PlaqVariance.obs_confAB` gives its plaquette energy `4/3` at the
+plaquette `PlaqVariance.clayPlaq n`. -/
 
 section Clay
 
@@ -538,7 +570,11 @@ open MassGap.PlaqVariance
 
 variable {n : ℕ}
 
-/-- The all-identity configuration has holonomy `1` on every plaquette. -/
+/-- Every plaquette holonomy of the all-identity configuration is the identity: the ordered loop is
+a product of identities and their inverses.
+
+DERIVED: the `4`s are the lattice dimension, fixed here rather than general; the `1` is the group
+identity, the value of the holonomy. -/
 theorem wilsonHol_confOne [NeZero n] (p : Plaq 4 n) :
     wilsonHol (bd (d := 4) (n := n)) p (confOne n) = 1 := by
   show (((bd (d := 4) (n := n) p).map (fun lo => if lo.2 then (1 : MassGap.SUN.SU 3)
@@ -549,7 +585,11 @@ theorem wilsonHol_confOne [NeZero n] (p : Plaq 4 n) :
   obtain ⟨lo, _, rfl⟩ := hg
   cases lo.2 <;> simp
 
-/-- **The all-identity configuration has zero total action** — no flux anywhere. -/
+/-- The all-identity configuration has total Wilson action zero: every plaquette holonomy is the
+identity (`wilsonHol_confOne`) and `wilsonDensity_one` sends the identity to zero.
+
+DERIVED: the `4` is the lattice dimension and the `3` the rank `N` at which `wilsonDensity` is
+taken; the `0` is the value of the action. -/
 theorem action_confOne [NeZero n] :
     (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).action (confOne n) = 0 := by
   show (∑ p : Plaq 4 n, wilsonDensity (N := 3)
@@ -558,9 +598,13 @@ theorem action_confOne [NeZero n] :
   rw [wilsonHol_confOne p]
   exact wilsonDensity_one (by norm_num)
 
-/-- **The commutator configuration has strictly positive total action.** Every plaquette contributes
-nonnegatively, and the `(0,1)` plaquette at the origin contributes `4/3`, because `gA` and `gB` do
-not commute (`PlaqVariance.wilsonDensity_comm`). -/
+/-- The configuration `confAB` has strictly positive total Wilson action. Every plaquette
+contributes nonnegatively (`wilsonDensity_nonneg`), and the single plaquette
+`PlaqVariance.clayPlaq n` contributes `4/3` by `PlaqVariance.obs_confAB`, so `Finset.single_le_sum`
+bounds the sum below by that one term.
+
+DERIVED: the `0` is the lower bound in the conclusion; the `4` is the lattice dimension and the `3`
+the rank `N`. -/
 theorem action_confAB_pos [NeZero n] :
     0 < (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).action (confAB n) := by
   have hterm : wilsonDensity (N := 3)
@@ -578,9 +622,16 @@ theorem action_confAB_pos [NeZero n] :
   rw [hterm] at hle
   linarith
 
-/-- **The action of four-dimensional `SU(3)` lattice gauge theory has strictly positive variance at
-every coupling.** Two configurations, one with `S = 0` and one with `S ≥ 4/3`, are all
-`expect_var_pos` needs. The non-commutation of `gA` and `gB` is the whole input. -/
+/-- The Gibbs variance of the Wilson action of the four-dimensional `SU(3)` theory is strictly
+positive at every real `β`.
+
+`expect_var_pos` applied to the two configurations `PlaqVariance.confOne` and `PlaqVariance.confAB`,
+whose actions differ by `action_confOne` and `action_confAB_pos`, with
+`PlaqVariance.continuous_wilsonSystem_action` for continuity and `abs_action_le` for the uniform
+bound. Stated on the periodic lattice for any extent `n` with `NeZero n`.
+
+DERIVED: the `0` is the lower bound in the conclusion; the `4` is the lattice dimension and the `3`
+the rank of the gauge group, appearing both in `wilsonDensity (N := 3)` and in `probHaar (SU 3)`. -/
 theorem clay_action_var_pos [NeZero n] (β : ℝ) :
     0 < (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect
           (probHaar (MassGap.SUN.SU 3)) β
@@ -600,8 +651,11 @@ theorem clay_action_var_pos [NeZero n] (β : ℝ) :
   rw [action_confOne]
   exact ne_of_lt action_confAB_pos
 
-/-- **The mean action of the four-dimensional `SU(3)` Wilson theory has strictly negative derivative
-in the coupling, at every real `β`.** -/
+/-- The derivative of the mean action of the four-dimensional `SU(3)` theory in the coupling is
+strictly negative at every real `β`, from `action_hasDerivAt` and `clay_action_var_pos`.
+
+DERIVED: the `4` is the lattice dimension and the `3` the rank of the gauge group; the `0` is the
+upper bound in the conclusion, the sign of the derivative. -/
 theorem clay_mean_action_deriv_neg [NeZero n] (β : ℝ) :
     deriv (fun x : ℝ => (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect
       (probHaar (MassGap.SUN.SU 3)) x
@@ -609,23 +663,27 @@ theorem clay_mean_action_deriv_neg [NeZero n] (β : ℝ) :
   rw [(action_hasDerivAt (by norm_num) (bd (d := 4) (n := n)) β).deriv]
   linarith [clay_action_var_pos (n := n) β]
 
-/-- **THE STATEMENT: the mean Wilson action is a strictly decreasing function of the coupling.**
+/-- The mean Wilson action of the four-dimensional `SU(3)` theory is a strictly decreasing function
+of `β` on all of `ℝ`: `strictAnti_of_deriv_neg` applied to `clay_mean_action_deriv_neg`.
 
-Four dimensions, `SU(3)`, the genuine Wilson action, product Haar over links, ordered-loop holonomy —
-and the map `β ↦ ⟨S⟩_β` is strictly decreasing on all of `ℝ`. Unconditional: no smallness hypothesis,
-no carried input, no restriction on the periodic extent.
+The measure is the Wilson Gibbs measure built on product Haar over the links with the ordered-loop
+holonomy. There is no smallness hypothesis and no bound on `β`; the extent `n` is arbitrary subject
+to `NeZero n`, and the geometry is the periodic torus rather than `ℤ⁴`.
 
-This is NOT an area law and NOT a string tension. What it says is that the constructed measure
-genuinely depends on the coupling — the theory is not the `β`-independent product-Haar theory, and
-the dependence is derived from the measure rather than asserted of it. -/
+DERIVED: the `4` is the lattice dimension, and the `3` is the rank of the gauge group, appearing
+both as `wilsonDensity (N := 3)` and as `probHaar (SU 3)`. -/
 theorem clay_mean_action_strictAnti [NeZero n] :
     StrictAnti (fun β : ℝ => (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect
       (probHaar (MassGap.SUN.SU 3)) β
       (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).action) :=
   strictAnti_of_deriv_neg (fun β => clay_mean_action_deriv_neg β)
 
-/-- **No two couplings give the same theory.** An immediate consequence of strict monotonicity, and
-the form in which "the theory is not `β`-independent" is checkable. -/
+/-- Distinct couplings give distinct mean actions: from `β₁ ≠ β₂` the two means differ. This is the
+injectivity of `clay_mean_action_strictAnti`.
+
+DERIVED: the `4` is the lattice dimension and the `3` the rank of the gauge group, in
+`wilsonDensity (N := 3)` and `probHaar (SU 3)`. The subscripts of `β₁` and `β₂` are part of those
+identifiers. -/
 theorem clay_mean_action_ne_of_ne [NeZero n] {β₁ β₂ : ℝ} (h : β₁ ≠ β₂) :
     (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect
         (probHaar (MassGap.SUN.SU 3)) β₁
@@ -635,9 +693,11 @@ theorem clay_mean_action_ne_of_ne [NeZero n] {β₁ β₂ : ℝ} (h : β₁ ≠ 
         (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).action :=
   fun heq => h ((clay_mean_action_strictAnti (n := n)).injective heq)
 
-/-- **The theory at any nonzero coupling differs from the free theory.** The `β = 0` instance of the
-statement above, written out because "product Haar" is the free theory and this is the corner that
-names it. -/
+/-- At any nonzero coupling the mean action differs from the mean action at `β = 0`, which is the
+one taken against product Haar. The `β₂ = 0` instance of `clay_mean_action_ne_of_ne`.
+
+DERIVED: the `4` is the lattice dimension and the `3` the rank of the gauge group; the first `0` is
+the hypothesis `β ≠ 0`, and the second is the coupling the comparison is made against. -/
 theorem clay_not_free [NeZero n] {β : ℝ} (hβ : β ≠ 0) :
     (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).expect
         (probHaar (MassGap.SUN.SU 3)) β
@@ -647,8 +707,12 @@ theorem clay_not_free [NeZero n] {β : ℝ} (hβ : β ≠ 0) :
         (wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3))).action :=
   clay_mean_action_ne_of_ne hβ
 
-/-- The system Part 2 is about is `WilsonHypercubic.sysWilson 3 4 n` — the four-dimensional `SU(3)`
-Wilson lattice gauge system, not a relabelling of one. -/
+/-- The system the section is stated about is definitionally `WilsonHypercubic.sysWilson 3 4 n`, the
+four-dimensional `SU(3)` Wilson lattice gauge system; proved by `rfl`.
+
+DERIVED: in `sysWilson 3 4 n` the `3` is the rank `N` and the `4` the dimension `d`, in that
+argument order; on the right-hand side they reappear as `bd (d := 4)` and
+`wilsonDensity (N := 3)`. -/
 theorem sysWilson_clay (n : ℕ) [NeZero n] :
     sysWilson 3 4 n = wilsonSystem (bd (d := 4) (n := n)) (wilsonDensity (N := 3)) := rfl
 

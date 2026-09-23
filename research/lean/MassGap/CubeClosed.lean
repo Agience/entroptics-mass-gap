@@ -1,49 +1,48 @@
 import MassGap.CubeArea
 
 /-!
-# The boundary of a cube configuration is CLOSED
+# `Z₂`-closedness of the boundary of a cube configuration
 
-**WHY THIS FILE EXISTS.** Theorem 7.1 begins "boundaries of cube-paths are closed vortex surfaces",
-and `CubeArea` proves everything about those boundaries EXCEPT that word: they are distinct
-(`boundaryFaces_cubeConfig_injective`) and each has exactly `4k+6` faces (`boundary_card_eq`), but
-nothing said the face set has no edge of its own. A surface with a free edge is not a vortex
-worldsheet, so the entropy floor's count would be over the wrong objects.
+The file's endpoint is `edge_parity_all`: for any `C : Finset Cube`, any axis `c : Fin 3` and any
+cube `w`, the number of faces of `boundaryFaces C` whose edge set contains `(c, w)` is even. That is
+the `Z₂` condition `∂∂ = 0` — a parity statement about edges, not a topological one — and it holds
+with no hypothesis on where `C` sits in `ℕ³`.
 
-**WHAT CLOSED MEANS HERE, and it is a parity statement, not a topological one.** The boundary is
-closed when every edge lies in an EVEN number of the boundary's faces — the `Z₂` condition
-`∂∂ = 0`, which is what a centre-vortex surface needs and all it needs.
+The proof is a double count over incident (cube, face) pairs, set up by
+`incidence_double_count_filter`. Counting by cube, every term is even: `cube_edge_even` says an edge
+lies in exactly two of a cube's six faces, or in none. Counting by face, each face contributes its
+owner count, which `CubeArea.owners_one_or_two` puts at one or two, so modulo two the face sum counts
+exactly the one-owner faces — which is `boundaryFaces C` by definition. Summing over cubes rather
+than around the edge is what removes any need for absent neighbours to exist: a cube not in `C`
+simply does not appear in the sum.
 
-**THE PROOF IS A DOUBLE COUNT, AND IT HOLDS AT EVERY EDGE** — `edge_parity_all`, with no interior
-hypothesis and no case on where the configuration sits in `ℕ³`.
+The supporting geometry: `rot1` and `rot2` name the two axes a face spans, as `+1` and `+2` modulo
+three, and are mutually inverse (`rot1_rot2`, `rot2_rot1`), distinct from their argument (`rot1_ne`,
+`rot2_ne`) and from each other (`rot1_ne_rot2`); `univ_eq_rot` says `c`, `rot1 c`, `rot2 c` exhaust
+the axes. `faceEdges f` lists a face's four edges, `mem_faceEdges_rot1` and `mem_faceEdges_rot2`
+identify which of them run along `c`, and `not_mem_faceEdges_axis` rules out faces whose normal is
+neither rotation. `corners_distinct` separates the four corners an edge along `c` can sit at.
 
-Fix an edge and count the incident (cube, face) pairs of `C` whose face carries that edge, two ways.
+The file also carries three membership results for `boundaryFaces` itself:
+`mem_boundaryFaces_iff_floor` (a face whose own coordinate is zero is on the boundary exactly when
+its single possible owner is in `C`), `mem_boundaryFaces_iff_xor` (a face between two cubes is on
+the boundary exactly when exactly one of them is in `C`), and `origin_face_mem_boundary` (all three
+low faces of the origin cube lie on the boundary of every directed path's configuration).
 
-* **By cube.** Each cube contributes an EVEN number, because each of a cube's twelve edges lies in
-  exactly two of its six faces and every other edge in none (`cube_edge_even`). That needs no
-  picture: a face spans the two axes its normal is NOT, so the faces carrying an edge along `c` are
-  the two with normal `rot1 c` and the two with normal `rot2 c`; of each pair exactly one carries the
-  edge, since the pair sits at opposite ends of that normal.
-* **By face.** Each face contributes its owner count, which is one or two (`owners_one_or_two`). So
-  modulo two the face sum counts exactly the ONE-owner faces — and those are `∂C` by definition.
-
-Hence `|∂C ∩ {faces carrying the edge}|` is even. Written the short way: `∂C` is the `Z₂` sum of the
-cubes' own boundaries, so `∂∂C = Σ_x ∂∂x`, and each single cube's boundary is closed.
-
-**WHY IT IS SUMMED THIS WAY.** Summing AROUND an edge instead needs the four cubes surrounding it to
-exist, and against the floor of `ℕ³` some of them do not. Summing over cubes never mentions a cube
-that is absent — it simply does not appear in the sum. There is no second route here and no interior
-case: the earlier four-cycle proof was superseded by this one and removed.
-
-DERIVED: `2` is the number of faces of one cube meeting one of its edges, and the number of owners a
-face can have; `6` is `2` sides times the `3` axes; `3` is the dimension. None is chosen.
+Scope: `Cube` is indexed by `Fin 3`, so everything here is three-dimensional. `step` raises a
+coordinate, which is why the floor `ℕ³` has no cube behind a zero coordinate.
 -/
 
 namespace MassGap.CubeArea
 
 open Finset
 
-/-- Steps along two axes commute: they update different coordinates, and along the same axis both
-sides are the same term. -/
+/-- `step a (step b x) = step b (step a x)` for axes `a b : Fin 3` and a cube `x`. If `a = b` the two
+sides are the same term; otherwise the two updates touch different coordinates and the result is
+checked coordinatewise.
+
+DERIVED: `3` appears twice, as the axis type of `a` and of `b` — the dimension `Cube` is indexed
+by. -/
 theorem step_comm (a b : Fin 3) (x : Cube) : step a (step b x) = step b (step a x) := by
   by_cases hab : a = b
   · subst hab; rfl
@@ -59,15 +58,20 @@ theorem step_comm (a b : Fin 3) (x : Cube) : step a (step b x) = step b (step a 
 
 #print axioms step_comm
 
-/-! ### The fixed plaquette -/
+/-! ### Boundary membership: the floor case, the two-cube case, and the origin -/
 
 
-/-- **A FACE ON THE FLOOR HAS EXACTLY ONE POSSIBLE OWNER.** `origin_face_mem_boundary` generalised
-from the origin to any point whose coordinate along the face's own axis is zero: nothing sits one
-step back from there, because a step RAISES that coordinate and `0` is not a successor. So such a
-face is on the boundary exactly when its one owner is in the configuration.
+/-- For a cube `y` whose coordinate along the axis `a` is zero, `(a, y) ∈ boundaryFaces C` if and
+only if `y ∈ C`. Such a face has only one possible owner: the other candidate would be a cube one
+step back along `a`, and `step` raises that coordinate, so nothing maps to `y` there. The proof
+shows the owner filter is `{y}` when `y ∈ C`, giving cardinality one, and conversely extracts `y`
+from the `biUnion`.
 
-This is what fixes the plaquette every counted surface passes through. -/
+Scope: the hypothesis `y a = 0` is what makes the owner unique — at a positive coordinate the face
+has two candidate owners and `mem_boundaryFaces_iff_xor` applies instead.
+
+DERIVED: `3` is the axis type `Fin 3`, the dimension; `0` is the coordinate value along `a` that
+puts the face on the floor. -/
 theorem mem_boundaryFaces_iff_floor (C : Finset Cube) (a : Fin 3) (y : Cube) (hy : y a = 0) :
     ((a, y) : Face) ∈ boundaryFaces C ↔ y ∈ C := by
   classical
@@ -95,13 +99,15 @@ theorem mem_boundaryFaces_iff_floor (C : Finset Cube) (a : Fin 3) (y : Cube) (hy
 
 #print axioms mem_boundaryFaces_iff_floor
 
-/-- **A FACE IS ON THE BOUNDARY EXACTLY WHEN ITS TWO CUBES DISAGREE.** The face between `p` and
-`step a p` has those two as its only possible owners (`owners_subset_pair`), and they are distinct
-(`ne_step`), so it has one owner precisely when one of them is in `C` and the other is not.
+/-- `(a, step a p) ∈ boundaryFaces C` if and only if `p ∈ C ↔ ¬ (step a p ∈ C)` — that is, exactly
+one of the two cubes is in `C`. `CubeArea.owners_subset_pair` limits the owners to `{p, step a p}`
+and `CubeArea.ne_step` says they are distinct, so the owner count is one precisely in the exclusive
+case; the proof enumerates the four combinations.
 
-This is the bridge from the `Finset` definition of `boundaryFaces` to a two-valued statement. With
-`mem_boundaryFaces_iff_floor` for the faces that have no cube behind them, it decides boundary
-membership for every face of a configuration. -/
+Scope: this covers a face written as the low face of `step a p`, so the cube behind it exists.
+`mem_boundaryFaces_iff_floor` covers the faces on the floor, where it does not.
+
+DERIVED: `3` is the axis type `Fin 3`, the dimension. -/
 theorem mem_boundaryFaces_iff_xor (C : Finset Cube) (a : Fin 3) (p : Cube) :
     ((a, step a p) : Face) ∈ boundaryFaces C ↔ ((p ∈ C) ↔ ¬ (step a p ∈ C)) := by
   classical
@@ -162,15 +168,16 @@ theorem mem_boundaryFaces_iff_xor (C : Finset Cube) (a : Fin 3) (p : Cube) :
 
 #print axioms mem_boundaryFaces_iff_xor
 
-/-- **EVERY DIRECTED SURFACE PASSES THROUGH THE SAME THREE FACES.** Theorem 7.1 counts closed
-surfaces "through a fixed plaquette", and this is that fixedness: the three low faces of the origin
-cube are on the boundary of EVERY directed path's configuration, whatever the path does afterwards.
+/-- For every directed cube path `s : Fin k → Fin 3` and every axis `a : Fin 3`, the face
+`(a, cubePos s 0)` lies in `boundaryFaces (cubeConfig s)`. `cubePos s 0` is the origin cube, all of
+whose coordinates are zero, so `mem_boundaryFaces_iff_floor` applies at each axis; membership of the
+origin in `cubeConfig s` follows from `Nat.succ_pos`.
 
-It is `mem_boundaryFaces_iff_floor` at the origin, whose every coordinate is zero, together with the
-fact that every path starts at the origin cube.
+Since `a` ranges over all three axes, the same three faces lie on the boundary whatever the path
+does after its start.
 
-Together with `edge_parity_all` (closed) and `boundary_card_eq` (area `4k+6`), this is the third and
-last property Theorem 7.1's family asks of each surface. -/
+DERIVED: the first `3` is the branching factor of the path `s : Fin k → Fin 3`; the second is the
+axis type of `a`, the same dimension; `0` is the index of the path's starting cube in `cubePos`. -/
 theorem origin_face_mem_boundary {k : ℕ} (s : Fin k → Fin 3) (a : Fin 3) :
     ((a, MassGap.cubePos s 0) : Face) ∈ boundaryFaces (MassGap.cubeConfig s) := by
   classical
@@ -181,26 +188,29 @@ theorem origin_face_mem_boundary {k : ℕ} (s : Fin k → Fin 3) (a : Fin 3) :
 
 #print axioms origin_face_mem_boundary
 
-/-! ### Closedness at EVERY edge, by summing over cubes rather than around edges
+/-! ### Closedness at every edge, by summing over cubes
 
-`∂C` is the `Z₂` sum of the cubes' own boundaries: a face of the configuration has one or two owners
-(`owners_one_or_two`), and modulo two the two-owner ones cancel, leaving exactly the boundary. So
-`∂∂C = Σ_x ∂∂x`, and a SINGLE CUBE's boundary is closed for a reason with no geometry in it — each of
-its twelve edges lies in exactly two of its six faces. Every cube in the sum is a whole cube, so
-nothing is ever missing, wherever the configuration sits. -/
+`boundaryFaces C` is the `Z₂` sum of the cubes' own boundaries: a face of the configuration has one
+or two owners (`CubeArea.owners_one_or_two`), and modulo two the two-owner faces cancel, leaving
+exactly the boundary. A single cube's boundary is closed because each of its twelve edges lies in
+exactly two of its six faces (`cube_edge_even`). Every cube appearing in the sum is a whole cube, so
+no absent neighbour has to be assumed, wherever the configuration sits. -/
 
-/-- The next axis round, and the one after. `rot1` and `rot2` are mutually inverse, which is what
-makes "the two axes a face spans" nameable without choosing an order.
+/-- The next axis round: `rot1 c = (c + 1) % 3`, as an element of `Fin 3`. Together with `rot2` it
+names the two axes a face with normal `c` spans; `rot2_rot1` and `rot1_rot2` make the two mutually
+inverse, so neither order is preferred.
 
-DERIVED: `3` is `Cube`'s dimension, so it is the modulus of "the next axis round" and not a
-magnitude. `1` and `2` are the only two offsets that are neither `0` nor a multiple of `3` — i.e. the
-two axes a face with this normal spans. Nothing is chosen: the pair `(rot1, rot2)` exhausts them. -/
+DERIVED: `3` occurs three times — as the argument type, as the result type, and as the modulus of the
+rotation; all three are `Cube`'s dimension. `1` is the offset, the smaller of the two offsets that
+are neither `0` nor a multiple of the dimension. -/
 def rot1 (c : Fin 3) : Fin 3 := ⟨((c : ℕ) + 1) % 3, by omega⟩
 
-/-- The axis two steps round.
+/-- The axis two steps round: `rot2 c = (c + 2) % 3`, as an element of `Fin 3`. It is inverse to
+`rot1` by `rot2_rot1` and `rot1_rot2`.
 
-DERIVED: `3` is `Cube`'s dimension and so the modulus; `2` is the second of the only two offsets that
-are neither `0` nor a multiple of it, `rot1` being the first. -/
+DERIVED: `3` occurs three times — argument type, result type and modulus — all `Cube`'s dimension.
+`2` is the offset, the larger of the two offsets that are neither `0` nor a multiple of the
+dimension. -/
 def rot2 (c : Fin 3) : Fin 3 := ⟨((c : ℕ) + 2) % 3, by omega⟩
 
 theorem rot2_rot1 (c : Fin 3) : rot2 (rot1 c) = c := by
@@ -218,11 +228,16 @@ theorem rot2_ne (c : Fin 3) : rot2 c ≠ c := by
 theorem rot1_ne_rot2 (c : Fin 3) : rot1 c ≠ rot2 c := by
   intro h; have := c.isLt; have := congrArg Fin.val h; simp [rot1, rot2] at this; omega
 
-/-- **THE FOUR EDGES OF A FACE.** A face spans the two axes its normal is not; its edges run along
-those two, one pair at the corner and one pair a step along the other axis.
+/-- The four edges of a face `f`, as a `Finset (Fin 3 × Cube)`: the two along `rot1 f.1` (at `f.2`
+and a step along `rot2 f.1`) and the two along `rot2 f.1` (at `f.2` and a step along `rot1 f.1`). An
+edge is recorded as its axis together with the cube corner it starts from.
 
-DERIVED: `3` is `Cube`'s dimension. The four edges are `2` axes times the `2` sides along each — an
-arity, and the same `4` that `card_faces` and `boundary_card_eq` are built from. -/
+Scope: the face's own normal `f.1` never appears as an edge axis — a face spans the two axes its
+normal is not, which `not_mem_faceEdges_axis` records.
+
+DERIVED: `3` is `Cube`'s dimension, the axis component of an edge. The four listed entries are two
+axes times the two positions along the other axis; the count is an arity of the construction, not a
+literal in the statement. -/
 def faceEdges (f : Face) : Finset (Fin 3 × Cube) :=
   {(rot1 f.1, f.2), (rot2 f.1, step (rot1 f.1) f.2),
    (rot1 f.1, step (rot2 f.1) f.2), (rot2 f.1, f.2)}
@@ -243,12 +258,21 @@ theorem rot1_rot1 (c : Fin 3) : rot1 (rot1 c) = rot2 c := by
 theorem rot2_rot2 (c : Fin 3) : rot2 (rot2 c) = rot1 c := by
   apply Fin.ext; have := c.isLt; simp [rot1, rot2]; omega
 
-/-- The three axes ARE `c` and its two rotations — which is why an edge along `c` meets exactly the
-faces whose normal is one of the other two. -/
+/-- `(univ : Finset (Fin 3)) = {c, rot1 c, rot2 c}` for every `c`, by `decide`. The three axes are
+exhausted by `c` and its two rotations, which is what lets `cube_edge_even` split a sum over axes
+into exactly three named terms.
+
+DERIVED: `3` appears twice, as the axis type of `c` and as the type of the `Finset` being
+described — `Cube`'s dimension both times. -/
 theorem univ_eq_rot (c : Fin 3) : (univ : Finset (Fin 3)) = {c, rot1 c, rot2 c} := by
   revert c; decide
 
-/-- The four corners of the cube `x` at which an edge along `c` can sit. -/
+/-- The four cubes `x`, `step (rot1 c) x`, `step (rot2 c) x` and `step (rot1 c) (step (rot2 c) x)`
+are pairwise distinct, stated as a six-fold conjunction — one inequality per unordered pair. These
+are the four corners at which an edge along `c` can sit relative to `x`. The proof uses
+`CubeArea.ne_step`, `CubeArea.sum_step`, `CubeArea.step_injective` and `rot1_ne_rot2`.
+
+DERIVED: `3` is the axis type of `c`, `Cube`'s dimension. -/
 theorem corners_distinct (c : Fin 3) (x : Cube) :
     x ≠ step (rot1 c) x ∧ x ≠ step (rot2 c) x
       ∧ x ≠ step (rot1 c) (step (rot2 c) x)
@@ -274,9 +298,16 @@ theorem corners_distinct (c : Fin 3) (x : Cube) :
 #print axioms rot1_rot1
 #print axioms corners_distinct
 
-/-- **A FACE WHOSE NORMAL IS NEITHER ROTATION OF `c` CARRIES NO `c`-EDGE.** A face's edges run along
-the two axes its normal is not; if the normal is `a`, those are `rot1 a` and `rot2 a`, and asking one
-of them to be `c` forces `a` to be a rotation of `c`. -/
+/-- If `a ≠ rot1 c` and `a ≠ rot2 c`, then `(c, w) ∉ faceEdges (a, y)` for any cubes `y`, `w`. The
+edges of a face with normal `a` run along `rot1 a` and `rot2 a`; if one of those equalled `c` then
+applying `rot2_rot1` or `rot1_rot2` would make `a` a rotation of `c`, contradicting a hypothesis. The
+proof splits on the four entries of `faceEdges`.
+
+Scope: the conclusion is for every `y` and `w` — the position of the face is irrelevant, only its
+normal.
+
+DERIVED: `3` appears twice, as the axis type of `c` and `a` and as the axis component of the edge
+pair — `Cube`'s dimension both times. -/
 theorem not_mem_faceEdges_axis {c a : Fin 3} (h1 : a ≠ rot1 c) (h2 : a ≠ rot2 c) (y w : Cube) :
     ((c, w) : Fin 3 × Cube) ∉ faceEdges (a, y) := by
   intro hm
@@ -290,23 +321,36 @@ theorem not_mem_faceEdges_axis {c a : Fin 3} (h1 : a ≠ rot1 c) (h2 : a ≠ rot
   · exact h1 (by have hc : c = rot2 a := congrArg Prod.fst h
                  rw [hc, rot1_rot2])
 
-/-- The two `c`-edges of a face with normal `rot1 c`: the near one and the one a step along `rot2 c`.
--/
+/-- `(c, w) ∈ faceEdges (rot1 c, y)` if and only if `w = step (rot2 c) y` or `w = y`: a face with
+normal `rot1 c` carries exactly two edges along `c`, at `y` and one step along `rot2 c`. The proof
+unfolds `faceEdges` using `rot1_rot1` and `rot2_rot1` and discards the two entries whose axis is
+`rot2 c`, which differs from `c`.
+
+DERIVED: `3` appears twice, as the axis type of `c` and as the axis component of the edge pair. -/
 theorem mem_faceEdges_rot1 (c : Fin 3) (y w : Cube) :
     ((c, w) : Fin 3 × Cube) ∈ faceEdges (rot1 c, y) ↔ w = step (rot2 c) y ∨ w = y := by
   classical
   have h3 : ¬ (c = rot2 c) := fun h => (rot2_ne c) h.symm
   simp [faceEdges, rot1_rot1, rot2_rot1, Prod.ext_iff, h3]
 
-/-- The two `c`-edges of a face with normal `rot2 c`: the near one and the one a step along `rot1 c`.
--/
+/-- `(c, w) ∈ faceEdges (rot2 c, y)` if and only if `w = y` or `w = step (rot1 c) y`: a face with
+normal `rot2 c` carries exactly two edges along `c`, at `y` and one step along `rot1 c`. The proof
+unfolds `faceEdges` using `rot2_rot2` and `rot1_rot2`.
+
+DERIVED: `3` appears twice, as the axis type of `c` and as the axis component of the edge pair. -/
 theorem mem_faceEdges_rot2 (c : Fin 3) (y w : Cube) :
     ((c, w) : Fin 3 × Cube) ∈ faceEdges (rot2 c, y) ↔ w = y ∨ w = step (rot1 c) y := by
   classical
   have h3 : ¬ (c = rot1 c) := fun h => (rot1_ne c) h.symm
   simp [faceEdges, rot2_rot2, rot1_rot2, Prod.ext_iff, h3]
 
-/-- Faces on different axes are disjoint families, in their normal alone. -/
+/-- The families `fun a => {(a, x), (a, step a x)}` are pairwise disjoint as `a` ranges over the
+axes: every face in the `a`-family has first component `a`, so two families with different normals
+share nothing. This is what lets `Finset.sum_biUnion` split a sum over `faces x` into three
+per-axis terms.
+
+DERIVED: `3` appears three times, as the index type of the pairwise-disjointness, its coercion to a
+`Set`, and the axis type of `a` — `Cube`'s dimension each time. -/
 theorem faces_pairwiseDisjoint (x : Cube) :
     Set.PairwiseDisjoint (↑(univ : Finset (Fin 3)) : Set (Fin 3))
       (fun a : Fin 3 => ({(a, x), (a, step a x)} : Finset Face)) := by
@@ -332,14 +376,20 @@ theorem sum_pair_faces (a : Fin 3) (x : Cube) (F : Face → ℕ) :
 #print axioms mem_faceEdges_rot2
 #print axioms faces_pairwiseDisjoint
 
-/-- **A SINGLE CUBE'S BOUNDARY IS CLOSED**, and this is the whole geometric content of `∂∂ = 0`.
+/-- For any cube `x`, axis `c` and cube `w`, the number of faces of `x` whose edge set contains
+`(c, w)` is even: `((faces x).filter (fun f => (c, w) ∈ faceEdges f)).card % 2 = 0`.
 
-Each of the cube's twelve edges lies in exactly TWO of its six faces, and every other edge in none.
-The reason needs no picture: a face spans the two axes its normal is not, so the faces carrying an
-edge along `c` are the two with normal `rot1 c` and the two with normal `rot2 c`; of each pair exactly
-one carries the edge, because the pair's two faces sit at opposite ends of that normal and their
-`c`-edges are disjoint. So the count is `2` when the edge belongs to the cube and `0` otherwise —
-even either way, with no case on where the cube sits. -/
+The proof splits `faces x` over the three axes by `faces_pairwiseDisjoint` and `univ_eq_rot`. The
+two faces with normal `c` contribute nothing (`not_mem_faceEdges_axis`); of the two with normal
+`rot1 c` exactly one carries the edge, and likewise for `rot2 c`, by `mem_faceEdges_rot1` and
+`mem_faceEdges_rot2` together with `corners_distinct`. The count is therefore two when the edge
+belongs to the cube and zero otherwise.
+
+Scope: the conclusion is a parity, not the exact count; and it holds for every `w`, including cubes
+far from `x`, with no case on where `x` sits.
+
+DERIVED: `3` appears twice, as the axis type of `c` and as the axis component of the edge pair; `2`
+is the modulus of the parity; `0` is the residue asserted. -/
 theorem cube_edge_even (x : Cube) (c : Fin 3) (w : Cube) :
     ((faces x).filter (fun f => ((c, w) : Fin 3 × Cube) ∈ faceEdges f)).card % 2 = 0 := by
   classical
@@ -370,9 +420,16 @@ theorem cube_edge_even (x : Cube) (c : Fin 3) (w : Cube) :
 
 #print axioms cube_edge_even
 
-/-- **THE DOUBLE COUNT, RESTRICTED TO THE FACES THAT MATTER.** `incidence_double_count` counts every
-incident (cube, face) pair; this counts only the pairs whose face satisfies `P`. Same bookkeeping,
-same proof, and it is what turns a per-cube parity into a parity of the boundary. -/
+/-- For a decidable predicate `P` on faces,
+`∑ x ∈ C, ((faces x).filter P).card = ∑ f ∈ (C.biUnion faces).filter P, (C.filter (fun x => f ∈ faces x)).card`.
+Both sides count the incident (cube, face) pairs of `C` whose face satisfies `P`, the left by cube
+and the right by face. The proof rewrites each left-hand term as a sum of indicators over the
+right-hand index set and swaps the order with `Finset.sum_comm`.
+
+Scope: this is `CubeArea.incidence_double_count` restricted by `P`; with `P` trivially true it
+reduces to that statement.
+
+DERIVED: no numeral appears in the statement. -/
 theorem incidence_double_count_filter (C : Finset Cube) (P : Face → Prop) [DecidablePred P] :
     ∑ x ∈ C, ((faces x).filter P).card
       = ∑ f ∈ (C.biUnion faces).filter P, (C.filter (fun x => f ∈ faces x)).card := by
@@ -394,17 +451,21 @@ theorem incidence_double_count_filter (C : Finset Cube) (P : Face → Prop) [Dec
 
 #print axioms incidence_double_count_filter
 
-/-- **`∂C` IS CLOSED AT EVERY EDGE.** No interior hypothesis, no four-cycle, no case on where the
-configuration sits in `ℕ³`.
+/-- For any `C : Finset Cube`, axis `c` and cube `w`,
+`((boundaryFaces C).filter (fun f => (c, w) ∈ faceEdges f)).card % 2 = 0`: every edge lies in an even
+number of the boundary's faces. This is the `Z₂` condition `∂∂ = 0`.
 
-The argument is `∂∂ = 0` read as a double count. Fix an edge and count the incident (cube, face)
-pairs of `C` whose face carries that edge, two ways. By cube, each contributes an EVEN number
-(`cube_edge_even`: two of its six faces, or none). By face, each face contributes its owner count,
-which `owners_one_or_two` puts at one or two — so modulo two the face sum counts exactly the faces
-with ONE owner, and those are precisely `∂C`. An even number equals `|∂C ∩ {faces carrying the
-edge}|` mod two, which is the statement.
+The proof counts the incident (cube, face) pairs of `C` whose face carries `(c, w)` in two ways,
+using `incidence_double_count_filter`. By cube, every term is even by `cube_edge_even`, so the total
+is even. By face, each term is the owner count, which `CubeArea.owners_one_or_two` puts at one or
+two; modulo two only the one-owner faces survive, and those are exactly `boundaryFaces C`.
 
-Nothing is assumed to exist: the cubes that are absent simply do not appear in the sum. -/
+Scope: there is no hypothesis on `C` — no interior condition, no assumption that neighbouring cubes
+exist, and no case on where `C` sits in `ℕ³`. Absent cubes simply do not appear in the sum. The
+conclusion is a parity, not the exact number of incident boundary faces.
+
+DERIVED: `3` appears twice, as the axis type of `c` and as the axis component of the edge pair; `2`
+is the modulus of the parity; `0` is the residue asserted. -/
 theorem edge_parity_all (C : Finset Cube) (c : Fin 3) (w : Cube) :
     ((boundaryFaces C).filter
       (fun f => ((c, w) : Fin 3 × Cube) ∈ faceEdges f)).card % 2 = 0 := by

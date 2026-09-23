@@ -3,73 +3,47 @@ import MassGap.Complete
 import MassGap.PowerTail
 
 /-!
-# MassGap.Spectral2 — the first `Complete.WilsonSpectral`
+# MassGap.Spectral2 — a `Spectral.PeriodicSpectralForm` for `wilsonCorrAt (M+1) 0`
 
-`Complete.WilsonSpectral N β` is `Nonempty (Spectral.PeriodicSpectralForm (N+1) (wilsonCorrAt N β))`
-— a `def ... : Prop` that, until this file, nothing in the tree produced. Its own docstring records
-that it is assumed. This file produces one, at `β = 0`, and says precisely how far that reaches.
+`Complete.WilsonSpectral N β` unfolds to
+`Nonempty (Spectral.PeriodicSpectralForm (N+1) (wilsonCorrAt N β))`. This file constructs one
+inhabitant of that type, at coupling `β = 0` and at every extent parameter `M`, and applies
+`Complete.ym_wilson_decay_to_half_period` to it.
 
-## What is proved
+`contactForm M` is the witness: one mode (`Idx := Unit`), weight the lag-zero correlation value
+`wilsonCorrAt (M+1) 0 0`, and decay factor `lam = 0`. Its `hrep` obligation splits on `d = 0`: at
+lag zero `0 ^ 0 = 1` reproduces the weight, and at every other lag `0 ^ d = 0` matches
+`PowerTail.wilsonCorrAt_at_zero_coupling`, which gives `wilsonCorrAt (M+1) 0 d = 0` whenever
+`1 ≤ Moment.circLag d`. Nonnegativity of the weight comes from
+`PlaqVariance.corrClay_zero_pos (M+1) 0`, restated as `contactForm_weight_pos`.
 
-`wilsonSpectral_at_zero_coupling`: `WilsonSpectral (M+1) 0` at every aperture `M`, with the
-foundational axioms only. The witness is `contactForm`: `Idx := Unit`, `w = ρ(0)`, `λ = 0`.
+`one_le_circLag_of_ne_zero` is the arithmetic the split needs: a nonzero `d : Fin (M+2)` has circular
+lag at least one. `wilsonSpectral_at_zero_coupling` wraps `contactForm` in `Nonempty`.
+`wilson_decay_at_zero_coupling` feeds `contactForm M` to
+`MassGap.ym_wilson_decay_to_half_period`, discharging that theorem's mode-gap hypothesis from
+`Real.exp_pos`, and obtains a bound on `wilsonCorrAt (M+1) 0 d` for `2 * d ≤ M + 2`.
 
-* `PowerTail.wilsonCorrAt_at_zero_coupling` — at `β = 0` the connected correlation VANISHES at every
-  lag but zero, because the state is product Haar and the two plaquettes read disjoint link sets;
-* `PlaqVariance.corrClay_zero_pos` — the lag-zero value is strictly positive at every real coupling
-  and every extent, so the weight is nonnegative and not zero;
-* `λ = 0` reproduces both: `0^0 = 1` carries the contact term and `0^d = 0` kills every other lag.
-
-`wilson_decay_at_zero_coupling` then discharges `Complete.ym_wilson_decay_to_half_period` outright at
-`β = 0`: a bound on the genuine `wilsonCorrAt` with NO remaining hypothesis, which is the first time
-that theorem has been applied to the Wilson correlation rather than stated about a supplied form.
-
-## What this does NOT do, stated because the surrounding docstrings are easy to over-read
-
-It is the FREE point. `λ = 0` is a pure contact term with no transfer dynamics, so this witness
-carries no gap and no coupling dependence. What it settles is that `WilsonSpectral` is a satisfiable
-property of the real correlation rather than an empty one, and — the other way round — that holding
-`WilsonSpectral` at a coupling is on its own worth nothing: a correlation with no structure at all
-has it. The content of the obligation is `WilsonSpectral N β` at `β > 0`, which at the Clay aperture `N = 3` is now PROVED (`SlabQuadratic.wilsonSpectral`) and at other apertures remains open, and nothing here
-moves it.
-
-It is also not a transfer-operator construction. `Transfer.periodicSpectralForm_of_transfer` is the
-route that would produce these forms from an operator; this witness is built by evaluating the
-correlation, not by diagonalising anything. What separates the two routes is neither of the two
-things it is easy to name:
-
-* The time translation EXISTS. `WilsonTransfer.shiftObs` is the `ℝ`-linear endomorphism of the Wilson
-  observables, `WilsonTransfer.reflForm_shiftObs_symm` is `TransferData.T_symm` for the genuine Gibbs
-  reflection form, and `OSPositivity.wilsonSlabTransfer` assembles a full `Transfer.TransferData` on
-  the slab algebra from exactly two named premises, `SlabShiftStable` and `SlabShiftContractive`.
-* Finite dimension of the GNS space is not a missing lemma. `SliceTrace` records — in prose, not as a
-  formalised theorem — that a slab configuration is a point of a compact group of positive dimension,
-  so the operator acts on `L²` of a continuum. `PeriodicRayleigh.periodic_decay_of_rayleigh` reaches
-  `periodic_decay_of_transfer`'s conclusion without it, from a Rayleigh bound; the spectral FORM
-  itself still needs it, because `PeriodicSpectralForm.hrep` is an exact finite expansion and a
-  Rayleigh bound is an inequality.
-
-What is left between the two routes is `SlabShiftStable`, and it is worse than open:
-`PeriodicRayleigh.const_of_slabShiftStable` proves that at `2 ≤ m` it makes every slab observable
-CONSTANT, so the operator it unlocks is the identity. Past it,
-`HalfLineTransfer.no_rate_of_shift_transfer`: the lattice shift has order `n`, so no per-step factor
-below one is available on a lattice periodic in `τ`, on any module.
-
-Axiom footprint (`#print axioms` after each declaration). `contactForm`,
-`wilsonSpectral_at_zero_coupling` and `contactForm_weight_pos` are foundational-only.
-`wilson_decay_at_zero_coupling` additionally carries `wilson_reflection_positive_at`, inherited from
-`Complete.ym_wilson_decay_to_half_period`, which is the open reflection-positivity axiom and not
-anything this file assumes.
-Build: `python research/code/lean_build.py build MassGap.Spectral2`.
+Scope: every statement here fixes the coupling at `0`. Nothing is stated at nonzero `β`, and the
+witness has a single mode at decay factor `0`, so the bound in `wilson_decay_at_zero_coupling` is
+not a measurement of any decay rate. No transfer operator is constructed or diagonalised; the form
+is built by evaluating the correlation. Axiom footprint is recorded by the `#print axioms` line
+after each declaration.
 -/
 
 namespace MassGap.Spectral2
 
 open MassGap
 
-/-- **At zero coupling every lag but zero has circle distance at least one.** The arithmetic behind
-the case split below: `circLag d = min d (n − d)`, and a nonzero `d : Fin (M+2)` has both entries at
-least one. -/
+/-- For `d : Fin (M + 2)` with `d ≠ 0`, `1 ≤ Moment.circLag d`. Unfolding `circLag` as a `min` and
+using `le_min_iff`, the two branches are `1 ≤ d` (from `d ≠ 0`) and `1 ≤ M + 2 - d` (from
+`d < M + 2`), both closed by `omega`.
+
+Scope: the extent is `M + 2`, so it is at least two and the modulus is never degenerate; the
+hypothesis `d ≠ 0` is equality in `Fin (M + 2)`, not on the underlying natural number.
+
+DERIVED: `2` is the `+ 2` in the index type `Fin (M + 2)`, which forces the extent to be at least
+two; `0` is the value `d` is assumed to differ from; `1` is the lower bound concluded for
+`Moment.circLag d`. -/
 theorem one_le_circLag_of_ne_zero {M : ℕ} {d : Fin (M + 2)} (hd : d ≠ 0) :
     1 ≤ Moment.circLag d := by
   have hlt : (d : ℕ) < M + 2 := d.isLt
@@ -80,15 +54,24 @@ theorem one_le_circLag_of_ne_zero {M : ℕ} {d : Fin (M + 2)} (hd : d ≠ 0) :
   simp only [Moment.circLag, le_min_iff]
   omega
 
-/-- **THE CONTACT SPECTRAL FORM OF THE FREE WILSON CORRELATION.**
+/-- A `Spectral.PeriodicSpectralForm (M + 2) (MassGap.wilsonCorrAt (M + 1) 0)`: one mode indexed by
+`Unit`, weight the lag-zero correlation `wilsonCorrAt (M + 1) 0 0`, and decay factor `lam = 0`.
 
-At `β = 0` the four-dimensional `SU(3)` Wilson correlation is a pure contact term, and a contact term
-IS a periodic spectral form: all the weight on one mode, at decay factor zero.
+The four side conditions are discharged as follows. `hw` is
+`PlaqVariance.corrClay_zero_pos (M + 1) 0` weakened to `≤`. `hlam0` and `hlam1` are `0 ≤ 0` and
+`0 ≤ 1`. `hrep` splits on `d = 0`: at lag zero `simp` closes it via `0 ^ 0 = 1`, and at `d ≠ 0`
+`PowerTail.wilsonCorrAt_at_zero_coupling` gives `wilsonCorrAt (M + 1) 0 d = 0` while `zero_pow`
+kills both `lam ^ d` and `lam ^ (M + 2 - d)`.
 
-DERIVED: no numeral is chosen. `Unit` is one mode because the correlation has one nonzero lag; the
-weight is the correlation's own lag-zero value, not a level; and `λ = 0` is forced — it is the only
-decay factor for which `λ^d + λ^{n−d}` vanishes at every lag the correlation vanishes at, since
-`0^0 = 1` and `0^d = 0` for `d ≠ 0`. -/
+Scope: the coupling is fixed at `0`. With `lam = 0` the form has no mode at a positive decay factor,
+so it exhibits no exponential tail; it is a contact term. `M` is unconstrained, so this exists at
+every extent of the form `M + 2`.
+
+DERIVED: `2` is the period `M + 2` of the spectral form; `1` is the aperture argument `M + 1` of
+`wilsonCorrAt`; `0` is the coupling at which the correlation is taken. Inside the body, `Unit` gives
+one mode; the weight is the correlation's own lag-zero value; and `lam = 0` is the only decay factor
+for which `lam ^ d + lam ^ (M + 2 - d)` vanishes at every nonzero lag while still reproducing the
+weight at lag zero. -/
 noncomputable def contactForm (M : ℕ) :
     Spectral.PeriodicSpectralForm (M + 2) (MassGap.wilsonCorrAt (M + 1) 0) where
   Idx := Unit
@@ -114,36 +97,48 @@ noncomputable def contactForm (M : ℕ) :
 
 #print axioms contactForm
 
-/-- **THE FIRST `Complete.WilsonSpectral`.**
+/-- `MassGap.WilsonSpectral (M + 1) 0` holds at every `M`, witnessed by `contactForm M`. The proof is
+the anonymous constructor of `Nonempty`.
 
-`WilsonSpectral` has been a `def ... : Prop` with no producer since it was written, and its own
-docstring says it is assumed. This is a producer, at the free point, with the foundational axioms
-only and at every aperture. -/
+Scope: the coupling argument is the literal `0`. Nothing here is stated at a nonzero coupling.
+
+DERIVED: `1` is the aperture argument `M + 1` of `WilsonSpectral`; `0` is the coupling. -/
 theorem wilsonSpectral_at_zero_coupling (M : ℕ) : MassGap.WilsonSpectral (M + 1) 0 :=
   ⟨contactForm M⟩
 
 #print axioms wilsonSpectral_at_zero_coupling
 
-/-- **The witness is not the degenerate one.** Its single weight is strictly positive, so the form is
-not the zero form and `hrep` is a real identity rather than `0 = 0` at every lag. -/
+/-- The single weight of `contactForm M` is strictly positive: `0 < (contactForm M).w ()`. It is
+definitionally `wilsonCorrAt (M + 1) 0 0`, so the proof is
+`PlaqVariance.corrClay_zero_pos (M + 1) 0` unchanged. Consequently the form is not the zero form and
+its `hrep` identity is not `0 = 0` at lag zero.
+
+DERIVED: `0` is the lower bound in the strict inequality; the arguments `M + 1` and `0` inside
+`contactForm M` are not part of this statement, which names only `contactForm M` and `()`. -/
 theorem contactForm_weight_pos (M : ℕ) : 0 < (contactForm M).w () :=
   MassGap.PlaqVariance.corrClay_zero_pos (M + 1) 0
 
 #print axioms contactForm_weight_pos
 
-/-- **`Complete.ym_wilson_decay_to_half_period`, DISCHARGED AT `β = 0`.**
+/-- `MassGap.ym_wilson_decay_to_half_period` applied to `contactForm M`. For `d : Fin (M + 2)` with
+`2 * d ≤ M + 2`,
+`wilsonCorrAt (M + 1) 0 d ≤ 2 * (∑ k, (contactForm M).w k) * exp (-(κ₀YM - μYMAt (M + 1) 0)) ^ d`.
 
-That theorem bounds the genuine `wilsonCorrAt` out to half the period, given a periodic spectral form
-and a gap on its contributing modes. Both are now available at the free point: the form is
-`contactForm`, and its only mode sits at `λ = 0`, which clears any nonnegative bound. So the
-conclusion holds with no hypothesis left.
+The mode-gap hypothesis of that theorem is discharged by `fun _ _ => (Real.exp_pos _).le`, since
+`contactForm`'s only decay factor is `0` and an exponential is positive. The lag restriction
+`2 * d ≤ M + 2` is carried through from the theorem being applied and confines `d` to at most half
+the period.
 
-What it is worth: the first application of that theorem to the Wilson correlation rather than a
-statement about a form someone supplies. What it is not worth: at `λ = 0` the bound is slack by an
-unbounded margin and the correlation is zero off contact anyway, so no decay rate is being measured.
+Scope: the coupling is `0` throughout, and the left-hand side vanishes at every `d ≠ 0`, so the
+inequality is slack away from contact and measures no decay rate. The exponent base
+`exp (-(κ₀YM - μYMAt (M + 1) 0))` is whatever `Complete` defines those two constants to be; nothing
+here evaluates or bounds it.
 
-DERIVED: nothing numeric is chosen. The `2` and the exponent are `Spectral.periodic_decay_le`'s — the
-two terms of the periodic shape and the lag — and `κ₀YM`, `μYMAt` are `Complete`'s own. -/
+DERIVED: `2` occurs four times — the period `M + 2` in the index type, the factor `2` and the bound
+`M + 2` in `hhalf`, and the leading factor `2` in the conclusion, which is
+`ym_wilson_decay_to_half_period`'s own two-term periodic shape. `1` occurs twice, as the aperture
+argument `M + 1` of `wilsonCorrAt` and of `μYMAt`. `0` occurs twice, as the coupling argument of
+each. Nothing numeric is chosen here. -/
 theorem wilson_decay_at_zero_coupling (M : ℕ) (d : Fin (M + 2))
     (hhalf : 2 * (d : ℕ) ≤ M + 2) :
     MassGap.wilsonCorrAt (M + 1) 0 d

@@ -2,100 +2,91 @@ import Mathlib
 import MassGap.LagTwoBound
 
 /-!
-# MassGap.FreeFieldLagTwo — the weak-coupling lag-two arm, reduced to ONE named open hypothesis
+# MassGap.FreeFieldLagTwo — an effective weak-coupling lag-two bound with an explicit constant
 
-`LagTwoBound.LagTwoRatio` asks for `ρ(2) ≤ K·ρ(0)` at every `β ≥ 0` with `K < lagTwoThreshold`, and
-`LagTwoBound.exists_cut_lag_two_ratio` supplies it on a derived interval `[0, b]` from the strong
-side. This file builds the OTHER end: an EFFECTIVE weak-coupling form,
+`LagTwoBound.LagTwoRatio` asks for `ρ(2) ≤ K·ρ(0)` at every `β ≥ 0` with `K < lagTwoThreshold`.
+`effective_lag_two_bound` supplies the half of that from a coupling `B` upward,
 
-    ∃ B, ∀ β ≥ B,  wilsonCorrAt 3 β 2  ≤  K · wilsonCorrAt 3 β 0,     K < lagTwoThreshold,
+    ∃ B, ∀ β ≥ B,  wilsonCorrAt 3 β 2  ≤  lagTwoConstant ε · wilsonCorrAt 3 β 0,
 
-with `K` an explicit rational and `B` whatever the one named hypothesis supplies. A bare
-`Tendsto (fun β => ρ(2)/ρ(0)) atTop _` would not do: it gives no `B`, so it cannot meet an interval
-coming the other way.
+with `lagTwoConstant ε` an explicit rational multiple of `(1+ε)/(1−ε)` and `B` the one supplied by
+the hypothesis `EffectiveGaussianLagTwo ε`. The bound is effective in `B`: it names the coupling
+from which it holds, which a statement of the form `Tendsto (fun β => ρ(2)/ρ(0)) atTop _` would not.
 
-## What is PROVED here, with no hypothesis
+## The free-field propagator data, computed
 
-**The free-field field-strength correlation on the periodic `4⁴` torus, exactly.** At extent four the
-momenta are `p_μ = πk_μ/2`, so the lattice momentum square `p̂_μ² = 2 − 2cos p_μ` takes the INTEGER
-values `0, 2, 4, 2` and the lag phase `cos(p₂d)` takes the values `0, ±1`. The Feynman-gauge
-field-strength two-point function
+At extent four the momenta are `p_μ = πk_μ/2`, so the lattice momentum square `p̂_μ² = 2 − 2cos p_μ`
+takes the integer values `0, 2, 4, 2` (`hatSq`) and the lag phase `cos(p₂d)` takes `1, 0, −1, 0`
+(`lagPhase`). The Feynman-gauge field-strength two-point function
 
     D(d) = (1/V) ∑_k cos(p₂ d) · (p̂₀² + p̂₁²) / p̂²
 
-is therefore a finite sum of RATIONALS, not an analysis problem. `fsCorr` is `V·1680·D` as an
-integer — `1680` is the least common multiple of the even numbers up to `16`, which are the only
-values `p̂²` takes, and `clearDen_exact` machine-checks that it clears every one of them. The three
-values are decided by the kernel:
+is therefore a finite sum of rationals. `fsCorr d` is `V·1680·D(d)` as an integer, `1680`
+(`clearDen`) being the least common multiple of the even numbers up to `16`, which are the only
+nonzero values `p̂²` takes; `clearDen_exact` checks by `decide` that it clears every one. The values
+are decided:
 
     fsCorr 0 = 214200,   fsCorr 1 = 29640,   fsCorr 2 = 8760,   fsCorr 3 = fsCorr 1,
 
-so `D(2)/D(0) = 73/1785` exactly and `freeRatio = (73/1785)² = 5329/3186225` (`freeRatio_eq`).
+so `D(2)/D(0) = 73/1785` and `freeRatio = (73/1785)² = 5329/3186225` (`freeRatio_eq`).
 
-**No zero mode is subtracted, because none can contribute.** At `k = 0` the NUMERATOR `p̂₀² + p̂₁²`
-vanishes with the denominator, so the `k = 0` term is `0` under any convention
-(`zero_momentum_term_vanishes`). The usual `∑_{k≠0}` prescription for a gauge propagator is not a
-choice being made here, and the gauge-fixing worry that attaches to it does not arise for this
-observable.
+`zero_momentum_term_vanishes` shows the numerator `p̂₀² + p̂₁²` vanishes wherever `p̂²` does, so the
+`k = 0` term is `0` whatever convention is used and no zero-mode subtraction is performed.
 
-**Gauge fixing does not arise for this observable, and not by a cancellation either.**
-`fieldStrength_pure_gauge_orthogonal` proves that the field-strength vertex contracted with the
-pure-gauge direction is zero AS A POLYNOMIAL IDENTITY in two free complex variables — it is the
-antisymmetry of `F` in its indices, with no condition on the momenta at all. Every covariant gauge
-differs from Feynman gauge by a term carrying that contraction, so `D(d)` is gauge-independent at
-every momentum and the gauge choice is not an input to the numbers above.
+`fieldStrength_pure_gauge_orthogonal` is the identity `(a−1)(−(b−1)) + (b−1)(a−1) = 0` in two free
+complex variables, the antisymmetry of `F` in its two indices, with no condition on `a` or `b`. A
+covariant gauge's propagator differs from Feynman gauge by a term built from the longitudinal
+projector, which meets the field-strength vertex through exactly that contraction, so `D(d)` is the
+same in every covariant gauge. `fsCorr_zero_ne_zero` states that the surviving transverse part is
+not zero.
 
-## What is ASSUMED, ONCE
+## The hypothesis
 
-`EffectiveGaussianLagTwo ε` — that beyond some coupling `B` there is ONE positive scale `R` with
-`ρ(d) ≤ (1+ε)·R·D(d)²` at EVERY lag and `ρ(0) ≥ (1−ε)·R·D(0)²` at the contact lag. That is the
-effective form of "the `β → ∞` measure concentrates on the flat connections and Wick's theorem
-applies". It is OPEN. Nothing in this tree proves it, nothing here proves it, and no measurement may
-be substituted for it.
+`EffectiveGaussianLagTwo ε` states that beyond some coupling `B` there is one positive scale `R`
+with `ρ(d) ≤ (1+ε)·R·D(d)²` at every lag and `(1−ε)·R·D(0)² ≤ ρ(0)` at the contact lag. `R` may
+depend on `β`, so the content is about the ratio. Nothing in this module or this tree proves it.
 
-**AND THE IMPLICATION IT FEEDS IS AN UNWRAPPING, NOT A DERIVATION.** Eliminating the free `R` turns
-the hypothesis into the family of bounds `ρ(d) ≤ ((1+ε)/(1−ε))·(D(d)/D(0))²·ρ(0)`, and the
-conclusion is its `d = 2` member. `effective_lag_two_bound` therefore does no analytic work: it
-carries the constant. What this file contributes is §§1–3 and §5b — the exact constant, the
-gauge-independence of the object it is a constant OF, and the proof that no coupling-uniform
-argument can produce any constant below one — together with the statement of the remaining
-obligation in the currency a weak-coupling analysis actually produces: a relative error on a
-remainder.
+The upper bound ranges over every lag rather than over lags `0` and `2` alone.
+`two_lag_form_collapses` proves that the restricted version, with `R` free and constrained at only
+two lags, is equivalent to the ratio bound it would be used to derive. Lag `3` costs nothing beyond
+lag `1`, since `fsCorr_three` gives `fsCorr 3 = fsCorr 1`.
 
-It IS strictly stronger than its conclusion (it bounds lags `1` and `3` as well), and it asserts no
-positivity beyond `ρ(0) > 0`, which `PlaqVariance.corrClay_zero_pos` proves. Both of those are
-deliberate: `two_lag_form_collapses` shows that the two-lag version would be equivalent to its own
-conclusion, and an earlier two-sided-at-every-lag version additionally asserted `ρ(2) > 0`, which
-nothing in this tree supports.
+The hypothesis is one-sided except at the contact lag: only `ρ(0) > 0` is asserted, which
+`PlaqVariance.corrClay_zero_pos` proves. A two-sided sandwich at every lag would additionally assert
+`ρ(2) > 0` and `ρ(1) > 0`.
 
-## The number that matters: how wrong the Gaussian remainder may be
+Eliminating `R` turns the hypothesis into `ρ(d) ≤ ((1+ε)/(1−ε))·(D(d)/D(0))²·ρ(0)`, and the
+conclusion of `effective_lag_two_bound` is its `d = 2` member, so that theorem carries the constant
+rather than deriving a bound.
 
-`lagTwoConstant ε = ((1+ε)/(1−ε))·(73/1785)²` is what the hypothesis delivers, and
-`lagTwoConstant_lt_threshold` proves it is below `lagTwoThreshold` for every `ε ≤ 5/6`. So the
-leading-order calculation may be wrong by **83% relatively, at every lag, in the worst direction at
-each**, and the extent-four obligation still closes. The free-field value is `11.13×` under the
-threshold; `5/6` spends `11×` of that, leaving `1.2%`. `5/6` is a CAP, not a recommendation — the
-theorem holds at every smaller `ε`, and a smaller `ε` is a stronger assumption, so nothing is gained
-by not taking the largest one provable. `MassGap.FreeFieldLagTwoSix` runs the same argument at
-extent six, where the room is `65.6×` and the cap is `24/25`.
+## The admissible relative error
 
-That is the useful output: the margin does not remove the need for the leading term, it removes the
-need for a SHARP remainder.
+`lagTwoConstant ε = ((1+ε)/(1−ε))·(8760/214200)²`, and `lagTwoConstant_lt_threshold` proves it is
+below `LagTwoBound.lagTwoThreshold` for every `ε ≤ 5/6` (`epsMax`). `inflation_le` bounds
+`(1+ε)/(1−ε)` by `11` there, and `11 · (5329/3186225) = 58619/3186225 ≈ 0.0183977` sits below the
+bracket `0.018623` that `LagTwoBound.lagTwoThreshold_gt` gives. The theorem holds at every smaller
+`ε`, and a smaller `ε` is a stronger hypothesis. `MassGap.FreeFieldLagTwoSix` runs the same argument
+at extent six with cap `24/25`.
 
-## What this does NOT do
+## Scope
 
-It does not give `LagTwoBound.LagTwoRatio`, which is quantified over ALL `β ≥ 0`.
-`MiddleIntervalLagTwo` names exactly what is missing — the same bound on `[0, B]` — and
-`confines_of_arms` assembles the two into `ApertureRoute.ConfinesAtAnAperture`. Today the strong arm
-reaches `b_Lean = 3.34933686e−18` — the figure `certify/lag_two_strong_arm_reach.py` prints, in the
-Lean coupling convention, not the `b_std = 6.70e−18` of the standard one — and nothing covers the
-interval between; that is a statement about the two arms, not about this file.
+The conclusion covers `β ≥ B` only. `MiddleIntervalLagTwo K B` states the same bound on `[0, B]`,
+and `confines_of_arms` joins the two at a shared `B` and a shared constant to give
+`ApertureRoute.ConfinesAtAnAperture`. The `B` is shared: quantifying `MiddleIntervalLagTwo` over
+every `B` would cover the whole half-line on its own.
 
-Foundational footprint on EVERY declaration, the assembly corollary included (`#print axioms`, §6):
-a subset of `propext`, `Classical.choice`, `Quot.sound`, with no cited axiom anywhere. The purely
+§5b records what a coupling-uniform argument can reach:
+`flat_profile_meets_every_uniform_fact` exhibits `r ≡ 1` on `Fin 4` satisfying nonnegativity,
+positive total mass, circle symmetry `r 3 = r 1`, log-convexity `r 1 ^ 2 ≤ r 0 * r 2`, contact
+dominance `r 2 ≤ r 0`, `r 2 ≤ r 1`, and the quadratic `2 * r 1 ^ 2 ≤ r 2 ^ 2 + r 0 * r 2` with
+equality, while refuting `r 2 ≤ K * r 0` for every `K < 1`.
+`flat_profile_fails_the_threshold` adds that this profile fails the criterion at
+`lagTwoThreshold` itself.
+
+Foundational footprint on every declaration, the assembly corollary included (`#print axioms`, §6):
+a subset of `propext`, `Classical.choice`, `Quot.sound`, with no cited axiom. The purely
 computational declarations print `propext` alone.
 
-The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python research/code/lean_build.py build MassGap.FreeFieldLagTwo`.
 Numerals produced and cross-checked by `research/code/certify/free_field_lag_two_ratio.py`.
 -/
@@ -111,84 +102,104 @@ extent `wilsonCorrAt 3` runs on (`3 + 1 = 4`); the two coincide and neither is c
 indices `0, 1` name the plaquette plane and `2` the transverse direction the lag runs along, exactly
 as `WilsonBridge.corrClay` fixes them — a naming freedom on a periodic lattice, not a magnitude. -/
 
-/-- **The lattice momentum square** `p̂² = 2 − 2cos(2πk/4)` at extent four, as a natural number.
+/-- The lattice momentum square `p̂² = 2 − 2cos(2πk/4)` at extent four, tabulated as a natural
+number over `Fin 4`: `![0, 2, 4, 2]`.
 
-DERIVED: `2 − 2cos` is the momentum square of the nearest-neighbour lattice Laplacian and
-`2πk/4` is the periodic momentum; evaluating gives `0, 2, 4, 2`. Every entry is a value of that
-expression, and none is chosen. -/
+DERIVED: `2 − 2cos` is the momentum square of the nearest-neighbour lattice Laplacian and `2πk/4`
+the periodic momentum; evaluating at `k = 0, 1, 2, 3` gives the four entries. `4` is the extent.
+Every entry is a value of that expression and none is chosen. -/
 def hatSq : Fin 4 → ℕ := ![0, 2, 4, 2]
 
-/-- **The lag phase** `cos(2πkd/4)`, as an integer.
+/-- The lag phase `cos(2πkd/4)` as an integer: `![1, 0, -1, 0]` evaluated at `k * d`, the product
+taken in `Fin 4`, which is the reduction of `k·d` modulo the extent.
 
-DERIVED: `cos(2πm/4)` is `1, 0, −1, 0` at `m = 0, 1, 2, 3`, and the argument is `k·d` reduced mod the
-extent — which is what `Fin 4` multiplication is. No entry is chosen. -/
+DERIVED: `cos(2πm/4)` is `1, 0, −1, 0` at `m = 0, 1, 2, 3`, so the four entries are values of that
+expression; `4` is the extent. No entry is chosen. -/
 def lagPhase (k d : Fin 4) : ℤ := ![1, 0, -1, 0] (k * d)
 
-/-- **The common denominator.** `1680 = lcm{2,4,6,8,10,12,14,16}`.
+/-- The common denominator `1680`, used to clear every `p̂²` appearing in `fsTerm`.
 
-DERIVED: `p̂²` is a sum of four values from `{0,2,4}`, so its nonzero values are exactly the even
-numbers from `2` to `16`, and `1680` is their least common multiple. `clearDen_exact` checks that it
-divides every one of them, so this is a fact about the value set rather than a choice. -/
+DERIVED: `p̂²` is a sum of four entries of `hatSq`, each in `{0, 2, 4}`, so its nonzero values are
+exactly the even numbers from `2` to `16`, and `1680` is their least common multiple.
+`clearDen_exact` checks by `decide` that it is divisible by every one of them, so the value is a
+fact about that value set rather than a choice. -/
 def clearDen : ℕ := 1680
 
-/-- `p̂² = ∑_μ p̂_μ²` at the momentum `(a, b, c, e)`.
+/-- `p̂² = ∑_μ p̂_μ²` at the momentum labelled `(a, b, c, e)`: the sum of the four `hatSq` entries.
 
-DERIVED: the `4` is `Fin 4`, the extent of the torus, so `a b c e` are momentum INDICES. There are
-four of them because the problem is four-dimensional, and the sum runs over all of them because that
-is what `∑_μ` means. -/
+DERIVED: `4` is `Fin 4`, the extent of the torus, so `a b c e` are momentum indices. There are four
+of them because the problem is four-dimensional, and the sum runs over all of them because that is
+what `∑_μ` means. -/
 def momSq (a b c e : Fin 4) : ℕ := hatSq a + hatSq b + hatSq c + hatSq e
 
-/-- The plaquette-plane numerator `p̂₀² + p̂₁²` — the transverse contraction of the field-strength
+/-- The plaquette-plane numerator `p̂₀² + p̂₁²`, the transverse contraction of the field-strength
 vertex with the Feynman-gauge propagator.
 
-DERIVED: the `4` is `Fin 4`, the extent, so `a` and `b` are momentum indices. Two of them because a
-plaquette spans a PLANE, and `WilsonBridge.corrClay` fixes that plane to be `0, 1`. -/
+DERIVED: `4` is `Fin 4`, the extent, so `a` and `b` are momentum indices. There are two of them
+because a plaquette spans a plane, and `WilsonBridge.corrClay` fixes that plane to be `0, 1`. -/
 def planeNum (a b : Fin 4) : ℕ := hatSq a + hatSq b
 
-/-- One momentum's contribution to `V·1680·D(d)`. The `k = 0` momentum is sent to `0`; it would be
-`0` anyway (`zero_momentum_term_vanishes`).
+/-- One momentum's contribution to `V·1680·D(d)`:
+`lagPhase c d * (planeNum a b * (clearDen / momSq a b c e))`, with the branch `momSq = 0` sent to
+`0`. `zero_momentum_term_vanishes` shows `planeNum a b` is `0` on that branch, so the other branch
+would also give `0` there.
 
-DERIVED: the `4` is `Fin 4`, the extent, so `d a b c e` are indices. The `1680` is `clearDen`, the
-lcm derived there, and the `0` is a GUARD on the zero momentum, not a value — it selects the branch,
-and `zero_momentum_term_vanishes` proves the other branch would return `0` there in any case. -/
+DERIVED: `4` is `Fin 4`, the extent, so `d a b c e` are indices; `clearDen` supplies the `1680`; the
+`0` in the guard selects the branch and the `0` it returns is the value both branches give. -/
 def fsTerm (d a b c e : Fin 4) : ℤ :=
   if momSq a b c e = 0 then 0
   else lagPhase c d * (planeNum a b * (clearDen / momSq a b c e) : ℕ)
 
-/-- **THE FREE-FIELD FIELD-STRENGTH CORRELATION AT LAG `d`**, as the exact integer `V·1680·D(d)`.
+/-- The free-field field-strength correlation at lag `d`, as the exact integer `V·1680·D(d)`: the
+four-fold sum of `fsTerm d` over all momentum labels.
 
-DERIVED: no numeral. The sum runs over the four momentum components of the four-dimensional torus;
-the overall `V·1680` is a lag-independent scale, so it cancels in every ratio this file forms. -/
+DERIVED: `4` is `Fin 4`, the extent, so `d` is a lag index. The sum runs over the four momentum
+components of the four-dimensional torus; the overall factor `V·1680` is lag-independent and
+cancels in every ratio formed below. -/
 def fsCorr (d : Fin 4) : ℤ := ∑ a, ∑ b, ∑ c, ∑ e, fsTerm d a b c e
 
-/-- **`1680` really does clear every denominator.** At every momentum with `p̂² ≠ 0`,
-`p̂² · (1680 / p̂²) = 1680`, so `fsCorr` is an exact rescaling of `D` and not a truncation. Decided
-over all `256` momenta. -/
+/-- `momSq a b c e * (clearDen / momSq a b c e) = clearDen` at every momentum with `momSq ≠ 0`, so
+the natural-number division in `fsTerm` is exact and `fsCorr` is a rescaling of `D` rather than a
+truncation. By `decide` over all `256` momentum labels.
+
+DERIVED: `4` is the extent, so the arguments are momentum indices; `0` is the value the hypothesis
+excludes. -/
 theorem clearDen_exact (a b c e : Fin 4) (h : momSq a b c e ≠ 0) :
     momSq a b c e * (clearDen / momSq a b c e) = clearDen := by
   revert h; revert a b c e; decide
 
-/-- **The zero momentum contributes nothing, numerator and denominator alike.** Its plane numerator
-`p̂₀² + p̂₁²` vanishes exactly where `p̂²` does, so no zero-mode subtraction is being performed and
-none is available to be got wrong. -/
+/-- `planeNum a b = 0` wherever `momSq a b c e = 0`: the plane numerator vanishes at every momentum
+where the denominator does. By `decide`. The `momSq = 0` branch of `fsTerm` therefore returns the
+same value the other branch would, and no zero-mode subtraction is being performed.
+
+DERIVED: `4` is the extent, so the arguments are momentum indices; the two `0`s are the vanishing
+denominator and the vanishing numerator. -/
 theorem zero_momentum_term_vanishes (a b c e : Fin 4) (h : momSq a b c e = 0) :
     planeNum a b = 0 := by
   revert h; revert a b c e; decide
 
 /-! ### The three values, decided -/
 
-/-- `V·1680·D(0) = 214200`, i.e. `D(0) = 255/512`. -/
+/-- `fsCorr 0 = 214200`, by `decide`: the contact value of `V·1680·D`, so `D(0) = 255/512`.
+
+DERIVED: `0` is the contact lag; `214200` is the decided value of the sum. -/
 theorem fsCorr_zero : fsCorr 0 = 214200 := by decide
 
-/-- `V·1680·D(1) = 29640`, i.e. `D(1) = 247/3584`. -/
+/-- `fsCorr 1 = 29640`, by `decide`, so `D(1) = 247/3584`.
+
+DERIVED: `1` is the lag; `29640` is the decided value of the sum. -/
 theorem fsCorr_one : fsCorr 1 = 29640 := by decide
 
-/-- `V·1680·D(2) = 8760`, i.e. `D(2) = 73/3584`. -/
+/-- `fsCorr 2 = 8760`, by `decide`, so `D(2) = 73/3584`.
+
+DERIVED: `2` is the lag the ratio is about; `8760` is the decided value of the sum. -/
 theorem fsCorr_two : fsCorr 2 = 8760 := by decide
 
-/-- **CIRCLE SYMMETRY, MACHINE-CHECKED.** `D(3) = D(1)` on the extent-four torus, because lags `3`
-and `1` are the same distance apart on a circle of circumference four. The lag-three constraint in
-`EffectiveGaussianLagTwo` therefore costs nothing beyond the lag-one one. -/
+/-- `fsCorr 3 = fsCorr 1`, by `decide`: lags `3` and `1` are the same circle distance apart on a
+torus of extent four. The lag-three constraint in `EffectiveGaussianLagTwo` therefore adds nothing
+beyond the lag-one one.
+
+DERIVED: `3` and `1` are the two lags, which are equidistant on a circle of circumference four. -/
 theorem fsCorr_three : fsCorr 3 = fsCorr 1 := by decide
 
 /-! ## 2. The ratio the Wilson observable inherits
@@ -198,26 +209,33 @@ By Wick, the connected plaquette correlation of a Gaussian fluctuation field is 
 the lag. `sq_ratio_of_square_law` is that cancellation, and it is all the Wick step contributes to a
 RATIO. -/
 
-/-- **THE FREE-FIELD LAG-TWO RATIO**, `(D(2)/D(0))²`, as a rational.
+/-- The free-field lag-two ratio `(D(2)/D(0))^2`, as a rational, formed from `fsCorr` so that the
+common factor `V·1680` cancels.
 
-DERIVED: `2` and `0` are LAGS, not magnitudes — the lag the claim is about and the contact lag it is
-normalised against, exactly the pair `LagTwoBound.LagTwoRatio` relates. The outer `2` is the square
-Wick's theorem puts on the propagator. The value is `fsCorr`'s, decided above. -/
+DERIVED: `2` and `0` inside `fsCorr` are lags — the lag the claim is about and the contact lag it is
+normalised against, the pair `LagTwoBound.LagTwoRatio` relates. The outer `2` is the square Wick's
+ theorem puts on the propagator. The values are `fsCorr`'s, decided above. -/
 def freeRatio : ℚ := ((fsCorr 2 : ℚ) / (fsCorr 0 : ℚ)) ^ 2
 
-/-- `freeRatio = (73/1785)² = 5329/3186225 = 0.00167251…`.
+/-- `freeRatio = 5329 / 3186225`, which is `(73/1785)^2` and approximately `0.00167251`. From
+`fsCorr_two` and `fsCorr_zero` by `norm_num`.
 
-DERIVED: the two numerals are `fsCorr 2` and `fsCorr 0`, both decided above; the `2` is the square
-Wick's theorem puts on the propagator. Nothing is chosen and nothing is measured. -/
+DERIVED: `5329 = 73^2` and `3186225 = 1785^2` are the squares of `fsCorr 2 / fsCorr 0` in lowest
+terms, both values decided above. Nothing is chosen and nothing is measured. -/
 theorem freeRatio_eq : freeRatio = 5329 / 3186225 := by
   rw [freeRatio, fsCorr_two, fsCorr_zero]; norm_num
 
 theorem freeRatio_pos : 0 < freeRatio := by rw [freeRatio_eq]; norm_num
 
-/-- **The lag-independent scale cancels.** If `ρ d = R · (G d)²` with `R > 0`, the lag-two ratio is
-`(G 2 / G 0)²` and carries no `R`. This is the entirety of what the Gaussian reduction contributes
-to a RATIO; the fourth-moment identity behind `ρ ∝ G²` is NOT proved here and is folded into
-`EffectiveGaussianLagTwo`. -/
+/-- If `ρ d = R * (G d) ^ 2` at every `d` with `0 < R` and `G 0 ≠ 0`, then `ρ 2 / ρ 0 = (G 2 / G 0) ^ 2`:
+the lag-independent scale cancels out of the ratio.
+
+The square law `ρ d = R * (G d) ^ 2` is a hypothesis; the fourth-moment identity that would produce
+it is not proved here and is part of `EffectiveGaussianLagTwo`.
+
+DERIVED: `0` is the positivity threshold on `R`, the contact lag, and the lag at which `G` is
+required nonzero; `2` is the lag the ratio is about and the exponent Wick's theorem puts on the
+propagator. -/
 theorem sq_ratio_of_square_law {ρ G : ℕ → ℝ} {R : ℝ} (hR : 0 < R) (hG0 : G 0 ≠ 0)
     (h : ∀ d, ρ d = R * (G d) ^ 2) : ρ 2 / ρ 0 = (G 2 / G 0) ^ 2 := by
   rw [h 2, h 0, div_pow]
@@ -229,36 +247,28 @@ The propagator in §1 is written in Feynman gauge with the zero mode dropped, an
 is that a gauge-invariant observable has been read off a gauge-dependent object. It has not, and the
 reason is stronger than a cancellation between terms. -/
 
-/-- **THE FIELD STRENGTH IS ORTHOGONAL TO THE PURE-GAUGE DIRECTION, AS A POLYNOMIAL IDENTITY.**
+/-- `(a - 1) * (-(b - 1)) + (b - 1) * (a - 1) = 0` for all `a b : ℂ`, by `ring`.
 
 A gauge transformation moves `A_μ(x)` by `ω(x+μ̂) − ω(x)`, whose momentum-space direction is
-`g_μ = e^{ip_μ} − 1`; writing `a = e^{ip₀}` and `b = e^{ip₁}` that is `g₀ = a − 1`, `g₁ = b − 1`. The
-vertex of the lattice field strength `F₀₁ = Δ₀A₁ − Δ₁A₀` is `v₀ = −(b − 1)`, `v₁ = a − 1`. Their
-contraction is
+`g_μ = e^{ip_μ} − 1`; with `a = e^{ip₀}` and `b = e^{ip₁}` that is `g₀ = a − 1`, `g₁ = b − 1`. The
+vertex of the lattice field strength `F₀₁ = Δ₀A₁ − Δ₁A₀` is `v₀ = −(b − 1)`, `v₁ = a − 1`, and the
+statement is `g₀·v₀ + g₁·v₁ = 0`.
 
-    g₀·v₀ + g₁·v₁ = (a−1)·(−(b−1)) + (b−1)·(a−1) = 0,
-
-by `ring` — an identity in two FREE complex variables, with no condition on `a` or `b` whatever. It
-is the antisymmetry of `F` in its two indices and nothing else.
-
-**WHAT THAT SETTLES.** A covariant gauge's propagator differs from Feynman gauge by a term
-proportional to the longitudinal projector built from `g`, and every such term meets the vertex
-through this contraction. So `D(d)` is the same in every covariant gauge at every momentum, and the
-gauge choice is not an input to §1. The zero-mode prescription is likewise not an input
-(`zero_momentum_term_vanishes`).
-
-**AND THERE IS NOTHING HERE TO GUARD.** An earlier version of this file claimed the cancellation
-depended on the lattice phases and offered a negative control for it. That was wrong: unit modulus
-is never used, and no substitution into the gauge direction can make this contraction nonzero. The
-guard that does have teeth is that the surviving TRANSVERSE part is not itself zero, which is
+The identity holds in two free complex variables, with no condition on `a` or `b`: unit modulus is
+not used. It is the antisymmetry of `F` in its two indices. A covariant gauge's propagator differs
+from Feynman gauge by a term proportional to the longitudinal projector built from `g`, and every
+such term meets the vertex through this contraction, so `D(d)` is the same in every covariant gauge
+at every momentum. That the surviving transverse part is not itself zero is
 `fsCorr_zero_ne_zero`.
 
-DERIVED: no numeral. Each `1` is the `1` of `e^{ip} − 1`. -/
+DERIVED: each `1` is the `1` of `e^{ip} − 1`; `0` is the value of the contraction. -/
 theorem fieldStrength_pure_gauge_orthogonal (a b : ℂ) :
     (a - 1) * (-(b - 1)) + (b - 1) * (a - 1) = 0 := by ring
 
-/-- **THE TRANSVERSE PART IS NOT ZERO.** Without this, §1 could be computing an identically
-vanishing object and every ratio in it would be meaningless. -/
+/-- `fsCorr 0 ≠ 0`, from `fsCorr_zero`. The object §1 computes is not identically zero, so the
+ratios formed from it are well defined.
+
+DERIVED: `0` is the contact lag and the value excluded. -/
 theorem fsCorr_zero_ne_zero : fsCorr 0 ≠ 0 := by rw [fsCorr_zero]; norm_num
 
 /-! ## 4. The named open hypothesis, and the effective bound it buys
@@ -267,73 +277,72 @@ DERIVED in this section: `2` and `0` are lag indices; `3` is the extent index wi
 extent `LagTwoBound` works at. `5/6` is the one CHOSEN numeral and it is chosen conservatively — see
 its note. -/
 
-/-- **THE ONE OPEN HYPOTHESIS — the effective Gaussian approximation at the two lags that matter.**
+/-- The effective Gaussian hypothesis at relative error `ε`: there is a coupling `B` such that for
+every `β ≥ B` there is one `R > 0` with
 
-Beyond an explicit coupling `B` there is ONE positive scale `R` such that the connected correlation
-is at most `(1+ε)·R·D(d)²` at EVERY lag, and at least `(1−ε)·R·D(0)²` at the contact lag. The scale
-`R` absorbs the colour factor, the coupling normalisation and the lattice spacing; it is allowed to
-depend on `β`, which is what makes this a statement about the RATIO and nothing else.
+* `wilsonCorrAt 3 β d ≤ (1 + ε) * (R * (fsCorr d)^2)` at every lag `d : Fin 4`, and
+* `(1 - ε) * (R * (fsCorr 0)^2) ≤ wilsonCorrAt 3 β 0` at the contact lag.
 
-This is the effective form of three things at once: that the `β → ∞` measure concentrates on the
-flat connections, that the fluctuation determinant makes the plaquette correlation the SQUARE of the
-field-strength propagator by Wick, and that the `O(1/β)` remainder is uniform enough to survive
-passing to the ratio. It is OPEN. Nothing in this tree proves it, this file does not, and no
-measurement may be substituted for it.
+`R` is quantified inside the quantifier over `β`, so it may depend on the coupling; it absorbs the
+colour factor, the coupling normalisation and the lattice spacing, and the content of the hypothesis
+is about the ratio.
 
-**THE UPPER BOUND RANGES OVER EVERY LAG, AND THAT IS NOT DECORATION.** Restricted to the two lags
-the conclusion names — upper at `2`, lower at `0` — this hypothesis is EQUIVALENT to the conclusion,
-and the theorem below would be a tautology wearing a propagator: with `R` free and only two
-constraints on it, `R` can be chosen exactly when the ratio bound already holds.
-`two_lag_form_collapses` proves that equivalence, so the strengthening is machine-checked as
-NECESSARY rather than asserted as prudent. Lag `3` costs nothing extra: `fsCorr 3 = fsCorr 1` by
-circle symmetry (`fsCorr_three`).
+The upper bound ranges over every lag. `two_lag_form_collapses` proves that restricting it to lags
+`0` and `2` alone makes the hypothesis equivalent to the ratio bound `effective_lag_two_bound`
+derives from it, since `R` is free and would be constrained at only two lags. Lag `3` adds nothing
+beyond lag `1`, by `fsCorr_three`.
 
-**IT IS ONE-SIDED EVERYWHERE BUT THE CONTACT LAG, DELIBERATELY.** A two-sided sandwich at every lag
-would assert `ρ(2) > 0` and `ρ(1) > 0`, which nothing in this tree supports and which — if the
-connected correlation were a pure contact term — would be FALSE, making every conclusion drawn from
-it empty. Only `ρ(0) > 0` is asserted here, and `PlaqVariance.corrClay_zero_pos` proves it. The
-hypothesis remains strictly stronger than the conclusion, because it also bounds lags `1` and `3`.
+The hypothesis is one-sided except at the contact lag: only `ρ(0) > 0` is implied, which
+`PlaqVariance.corrClay_zero_pos` proves. A two-sided sandwich at every lag would also assert
+`ρ(2) > 0` and `ρ(1) > 0`.
 
-**AND IT IMPLIES ITS CONCLUSION BY ELIMINATION OF `R`, NOT BY ANALYSIS.** See the header. The
-theorem below carries the constant; it does not derive the bound.
+Nothing in this module or this tree proves the hypothesis.
 
-DERIVED: nothing. `1 + ε` and `1 − ε` are the two ends of a symmetric relative error and `ε` is the
-caller's. -/
+DERIVED: `1 + ε` and `1 − ε` are the two ends of a symmetric relative error and `ε` is the caller's;
+`0` is the positivity threshold on `R` and the contact lag; `2` is the exponent Wick's theorem puts
+on the propagator; `3` is the aperture, whose lag type is `Fin (3 + 1) = Fin 4`; `4` is the extent
+the lag ranges over. -/
 def EffectiveGaussianLagTwo (ε : ℝ) : Prop :=
   ∃ B : ℝ, ∀ β : ℝ, B ≤ β → ∃ R : ℝ, 0 < R ∧
     (∀ d : Fin 4, MassGap.wilsonCorrAt 3 β d ≤ (1 + ε) * (R * ((fsCorr d : ℝ)) ^ 2)) ∧
     (1 - ε) * (R * ((fsCorr 0 : ℝ)) ^ 2) ≤ MassGap.wilsonCorrAt 3 β 0
 
-/-- **THE CONSTANT THE HYPOTHESIS DELIVERS** — the free-field ratio inflated by the worst-case
-relative error at each end.
+/-- The constant the hypothesis delivers: `((1 + ε)/(1 - ε)) * ((fsCorr 2)/(fsCorr 0))^2`, the
+free-field ratio inflated by the worst-case relative error at each end.
 
-DERIVED: `(1+ε)/(1−ε)` is the worst case of `(1+ε)·ρ_free(2)` over `(1−ε)·ρ_free(0)`, and the square
-is Wick's. No numeral is chosen. -/
+DERIVED: `(1 + ε)/(1 - ε)` is the worst case of `(1 + ε)·ρ_free(2)` over `(1 - ε)·ρ_free(0)`; `2`
+and `0` inside `fsCorr` are lags and the outer `2` is Wick's square. No numeral is chosen. -/
 noncomputable def lagTwoConstant (ε : ℝ) : ℝ :=
   ((1 + ε) / (1 - ε)) * ((fsCorr 2 : ℝ) / (fsCorr 0 : ℝ)) ^ 2
 
-/-- **THE ADMISSIBLE RELATIVE ERROR.**
+/-- The admissible relative error, `5 / 6`.
 
-CHOSEN, and rounded DOWN — away from the claim `lagTwoConstant ε < lagTwoThreshold`, so the rounding
-cannot manufacture the inequality. The exact supremum against `LagTwoBound.lagTwoThreshold_gt`'s
-bracket `0.018623` is `0.83518…`, where `(1+ε)/(1−ε)` reaches `0.018623/0.00167251 = 11.135…`.
-`5/6` is the largest sixth below it and spends only `11` of that `11.135`. It decides nothing that
-the closed form does not: `lagTwoConstant_lt_threshold` is proved from `freeRatio_eq` and
-`lagTwoThreshold_gt`, and any `ε` below `0.83518` would serve. -/
+CHOSEN: the value `5 / 6`, rounded down — away from the claim `lagTwoConstant ε < lagTwoThreshold`, so the rounding
+cannot manufacture the inequality. The supremum against `LagTwoBound.lagTwoThreshold_gt`'s bracket
+`0.018623` is `0.83518…`, where `(1 + ε)/(1 - ε)` reaches `0.018623 / 0.00167251 = 11.135…`; `5 / 6`
+is the largest sixth below it and uses `11` of that `11.135`. `lagTwoConstant_lt_threshold` is
+proved from `freeRatio_eq` and `lagTwoThreshold_gt`, and any `ε` below `0.83518` would serve. -/
 def epsMax : ℚ := 5 / 6
 
-/-- `(1+ε)/(1−ε) ≤ 11` for `ε ≤ 5/6`. Nonnegativity of `ε` is not needed here — `ε ≤ 5/6` alone
-puts `1 − ε` above `1/6` — and is carried by the callers that do need it. -/
+/-- `(1 + ε) / (1 - ε) ≤ 11` for `ε ≤ epsMax = 5 / 6`. Nonnegativity of `ε` is not required:
+`ε ≤ 5 / 6` alone puts `1 - ε` at or above `1 / 6`, which is what `div_le_iff₀` needs. Callers that
+need `0 ≤ ε` carry it separately.
+
+DERIVED: the two `1`s are the ends of the symmetric relative error `1 ± ε`; `11` is the value
+`(1 + ε)/(1 - ε)` attains at `ε = 5 / 6`, so the bound is exact at the cap. -/
 theorem inflation_le {ε : ℝ} (hε : ε ≤ (epsMax : ℝ)) : (1 + ε) / (1 - ε) ≤ 11 := by
   have he : ε ≤ 5 / 6 := by rw [epsMax] at hε; norm_num at hε; linarith
   have hden : (0 : ℝ) < 1 - ε := by linarith
   rw [div_le_iff₀ hden]
   linarith [he]
 
-/-- **THE CONSTANT CLEARS THE EXTENT-FOUR THRESHOLD** for every admissible `ε`.
+/-- `lagTwoConstant ε < LagTwoBound.lagTwoThreshold` for every `ε ≤ epsMax`. `inflation_le` bounds
+the inflation factor by `11`, `fsCorr_two` and `fsCorr_zero` make the squared ratio `5329 / 3186225`,
+and `11 * (5329 / 3186225) = 58619 / 3186225 ≈ 0.0183977` falls below the bracket `0.018623` that
+`LagTwoBound.lagTwoThreshold_gt` supplies.
 
-`11 · (8760/214200)² = 58619/3186225 = 0.0183977…`, and `LagTwoBound.lagTwoThreshold_gt` puts the
-threshold above `0.018623`. -/
+DERIVED: no numeral appears in the statement; the `11`, `5329 / 3186225` and `0.018623` occur in the
+proof and are `inflation_le`'s, `freeRatio_eq`'s and `lagTwoThreshold_gt`'s respectively. -/
 theorem lagTwoConstant_lt_threshold {ε : ℝ} (hε : ε ≤ (epsMax : ℝ)) :
     lagTwoConstant ε < MassGap.LagTwoBound.lagTwoThreshold := by
   have hinf := inflation_le hε
@@ -347,14 +356,21 @@ theorem lagTwoConstant_lt_threshold {ε : ℝ} (hε : ε ≤ (epsMax : ℝ)) :
   have : (11 : ℝ) * (5329 / 3186225) < 0.018623 := by norm_num
   linarith
 
-/-- **THE TWO-LAG FORM WOULD BE THE CONCLUSION ITSELF.** With one free positive scale `R` and
-constraints at exactly two lags, `R` can be chosen precisely when the ratio bound already holds. So
-a version of `EffectiveGaussianLagTwo` restricted to lags `0` and `2` assumes what it concludes, and
-the four-lag form is not a convenience. Kept as a theorem so the weaker statement cannot quietly
-come back.
+/-- The two-lag form is equivalent to the ratio bound it would be used to derive. For `0 ≤ ε < 1`
+and `s0, s2, r0` positive,
 
-DERIVED: no numeral. `s0`, `s2` stand for the free-field values at the two lags and `r0`, `r2` for
-the correlation's. -/
+    (∃ R > 0, r2 ≤ (1 + ε) * (R * s2 ^ 2) ∧ (1 - ε) * (R * s0 ^ 2) ≤ r0)
+      ↔ r2 ≤ ((1 + ε) / (1 - ε)) * (s2 / s0) ^ 2 * r0.
+
+Forward, the lower constraint caps `R` at `r0 / ((1 - ε) * s0 ^ 2)`; backward, that cap is the
+witness. So a version of `EffectiveGaussianLagTwo` restricted to lags `0` and `2` would assume its
+own conclusion, which is why the hypothesis bounds every lag.
+
+The statement is about four real numbers and refers to no lattice.
+
+DERIVED: `0` is the positivity threshold on `ε`, `R`, `s0`, `s2` and `r0`; the `1`s are the ends of
+the symmetric relative error `1 ± ε` and the upper bound on `ε`; the exponents `2` are squares.
+`s0`, `s2` stand for the free-field values at the two lags and `r0`, `r2` for the correlation's. -/
 theorem two_lag_form_collapses {ε s0 s2 r0 r2 : ℝ} (hε0 : 0 ≤ ε) (hε : ε < 1) (hs0 : 0 < s0)
     (hs2 : 0 < s2) (hr0 : 0 < r0) :
     (∃ R : ℝ, 0 < R ∧ r2 ≤ (1 + ε) * (R * s2 ^ 2) ∧ (1 - ε) * (R * s0 ^ 2) ≤ r0)
@@ -383,12 +399,17 @@ theorem two_lag_form_collapses {ε s0 s2 r0 r2 : ℝ} (hε0 : 0 ≤ ε) (hε : �
   · intro hb
     exact ⟨r0 / ((1 - ε) * s0 ^ 2), hcap, by rw [hval]; exact hb, hfix.le⟩
 
-/-- **THE DELIVERABLE — an EFFECTIVE weak-coupling lag-two bound with an explicit constant.**
+/-- From `EffectiveGaussianLagTwo ε` with `0 ≤ ε ≤ epsMax`: there is a `B` with
+`lagTwoConstant ε < LagTwoBound.lagTwoThreshold` and
+`wilsonCorrAt 3 β 2 ≤ lagTwoConstant ε * wilsonCorrAt 3 β 0` for every `β ≥ B`.
 
-From the one open hypothesis at any admissible relative error, the lag-two ratio bound holds for
-every `β ≥ B` with the EXPLICIT constant `lagTwoConstant ε`, proved strictly below
-`LagTwoBound.lagTwoThreshold`. The `B` is the hypothesis's own, so it is as effective as the
-hypothesis is — which is the point of stating the hypothesis effectively rather than as a limit. -/
+`B` is the hypothesis's own, so the bound is effective exactly to the extent that the hypothesis is.
+The proof eliminates the hypothesis's `R` between its upper bound at lag `2` and its lower bound at
+lag `0`; it performs no analysis and carries the constant `lagTwoConstant_lt_threshold` supplies.
+The conclusion covers `β ≥ B` only.
+
+DERIVED: `0` is the lower bound on `ε` and the contact lag; `2` is the lag the ratio is about; `3`
+is the aperture, whose lag type is `Fin (3 + 1)`. -/
 theorem effective_lag_two_bound {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (epsMax : ℝ))
     (h : EffectiveGaussianLagTwo ε) :
     ∃ B : ℝ, lagTwoConstant ε < MassGap.LagTwoBound.lagTwoThreshold ∧
@@ -415,34 +436,37 @@ theorem effective_lag_two_bound {ε : ℝ} (hε0 : 0 ≤ ε) (hε : ε ≤ (epsM
     _ ≤ lagTwoConstant ε * MassGap.wilsonCorrAt 3 β 0 :=
         mul_le_mul_of_nonneg_left hlower hcnn
 
-/-! ## 5. What is still missing, named
+/-! ## 5. The complementary interval, and the join
 
-The bound above is effective but it starts at `B`. `LagTwoBound.LagTwoRatio` needs every `β ≥ 0`, so
-exactly one interval is unaccounted for. -/
+`effective_lag_two_bound` covers `β ≥ B`, while `LagTwoBound.LagTwoRatio` is quantified over every
+`β ≥ 0`. `MiddleIntervalLagTwo` names the same bound on `[0, B]`, and `confines_of_arms` joins the
+two at a shared `B` and a shared constant. -/
 
-/-- **THE SECOND OPEN PIECE — the middle interval.** The same lag-two bound on `[0, B]`, which is
-what `LagTwoBound.exists_cut_lag_two_ratio` supplies from the strong side but only out to a derived
-cut. Naming it makes the remaining obligation exactly two propositions rather than a gap in prose.
+/-- The lag-two bound at constant `K` on the coupling interval `[0, B]`:
+`wilsonCorrAt 3 β 2 ≤ K * wilsonCorrAt 3 β 0` for every `β` with `0 ≤ β ≤ B`.
+`LagTwoBound.exists_cut_lag_two_ratio` supplies this from the strong side out to a derived cut.
 
-DERIVED: no numeral here is a magnitude. `3` is the APERTURE — `wilsonCorrAt 3` is the extent-four
-torus (`3 + 1 = 4`) this file's propagator data is computed on. `2` and `0` are the LAGS the ratio
-relates. The `0` in `0 ≤ β` is the bottom of the coupling range, which is where the half-line the
-weak arm does not reach begins; `B` is a variable and is deliberately not a number. -/
+DERIVED: no numeral here is a magnitude. `3` is the aperture — `wilsonCorrAt 3` is the extent-four
+torus, `3 + 1 = 4`, this module's propagator data is computed on. `2` and `0` are the lags the ratio
+relates; the `0` in `0 ≤ β` is the bottom of the coupling range. `K` and `B` are variables. -/
 def MiddleIntervalLagTwo (K B : ℝ) : Prop :=
   ∀ β : ℝ, 0 ≤ β → β ≤ B → MassGap.wilsonCorrAt 3 β 2 ≤ K * MassGap.wilsonCorrAt 3 β 0
 
-/-- **THE TWO ARMS ASSEMBLE.** The effective weak-coupling bound FROM `B` ON and the middle interval
-UP TO THE SAME `B`, at the same constant, give the content of `LagTwoBound.LagTwoRatio` and hence
-`ApertureRoute.ConfinesAtAnAperture`. Stated so that the join is a theorem and what is missing is a
-hypothesis rather than a remark.
+/-- The two intervals join. Given `ε ≤ epsMax`, the bound at constant `lagTwoConstant ε` from `B`
+upward (`hfar`) and the same bound on `[0, B]` (`hmid`), the conclusion is
+`ApertureRoute.ConfinesAtAnAperture`, through
+`LagTwoBound.confines_of_lag_two_ratio` at that constant with
+`lagTwoConstant_lt_threshold` for its strictness. The case split is `le_total β B`.
 
-The `B` is shared and explicit on purpose. Quantifying the middle interval over EVERY `B` would have
-made it the whole half-line and the weak arm redundant — the same failure mode
-`two_lag_form_collapses` records one level down.
+`B` is shared between the two hypotheses and appears in both: quantifying `hmid` over every `B`
+would make it cover the half-line by itself.
 
-Its footprint is foundational: `LagTwoBound.confines_of_lag_two_ratio` reaches
+The footprint is foundational: `LagTwoBound.confines_of_lag_two_ratio` reaches
 `ConfinesZero.confines_extent_four_of_lag_two_small`, which does not consume
-`Complete.wilson_reflection_positive_at`, so the assembly carries no cited axiom either. -/
+`Complete.wilson_reflection_positive_at`.
+
+DERIVED: `3` is the aperture, whose lag type is `Fin (3 + 1)`; `2` is the lag the ratio is about and
+`0` the contact lag. -/
 theorem confines_of_arms {ε B : ℝ} (hε : ε ≤ (epsMax : ℝ))
     (hfar : ∀ β : ℝ, B ≤ β →
       MassGap.wilsonCorrAt 3 β 2 ≤ lagTwoConstant ε * MassGap.wilsonCorrAt 3 β 0)
@@ -454,40 +478,33 @@ theorem confines_of_arms {ε B : ℝ} (hε : ε ≤ (epsMax : ℝ))
   · exact hmid β hβ hle
   · exact hfar β hge
 
-/-! ## 5b. Why the constant must come from the coupling, and not from positivity
+/-! ## 5b. What a coupling-uniform argument can reach
 
-The question this section answers is whether the factor-eleven room above the threshold lets a CRUDE
-argument — one that never mentions `β` — reach it. It does not, and the reason is a single profile. -/
+The two theorems below exhibit a single profile satisfying every coupling-uniform fact this tree
+proves of the extent-four correlation while refuting any ratio bound below one. -/
 
-/-- **EVERY COUPLING-UNIFORM FACT THIS TREE PROVES OF THE EXTENT-FOUR CORRELATION IS SATISFIED BY THE
-FLAT PROFILE, WHICH HAS RATIO EXACTLY ONE.**
+/-- There is an `r : Fin 4 → ℝ` satisfying seven coupling-uniform facts and refuting every ratio
+bound below one. The witness is the constant profile `r ≡ 1`, and the seven conjuncts are:
+nonnegativity `0 ≤ r d`; positive total mass `0 < ∑ d, r d` (both from
+`Complete.wilson_reflection_positive_at_even`); circle symmetry `r 3 = r 1`; log-convexity
+`r 1 ^ 2 ≤ r 0 * r 2` (`LogConvex.corrClay_log_convex`); contact dominance `r 2 ≤ r 0`;
+`r 2 ≤ r 1` (`LinkGram.wilson_lag_two_le_lag_one`); and the quadratic
+`2 * r 1 ^ 2 ≤ r 2 ^ 2 + r 0 * r 2` (`SlabQuadratic.wilson_quadratic`), which the flat profile meets
+with equality. The eighth conjunct is `∀ K < 1, ¬ (r 2 ≤ K * r 0)`.
 
-The list is everything currently available at extent four that holds at every `β ≥ 0`:
-nonnegativity and positive total mass (`Complete.wilson_reflection_positive_at_even`), circle
-symmetry, log-convexity (`LogConvex.corrClay_log_convex`), contact dominance `ρ(2) ≤ ρ(0)`,
-`LinkGram.wilson_lag_two_le_lag_one`'s `ρ(2) ≤ ρ(1)`, and `SlabQuadratic.wilson_quadratic`'s
-`2ρ(1)² ≤ ρ(2)² + ρ(0)ρ(2)`. The last two are genuinely DYNAMICAL inputs, proved from reflection
-positivity rather than from the shape cone, and the quadratic is INDEPENDENT of the rest —
-`SpectralFour.missing_inequalities_independent` — so it has to be carried explicitly rather than
-inferred.
+The last two facts in the list are proved from reflection positivity rather than from the shape
+cone, and the quadratic does not follow from the others
+(`SpectralFour.missing_inequalities_independent`), so it is carried explicitly.
 
-`ρ ≡ 1` meets all seven, the quadratic with EQUALITY at `2 ≤ 2`, and defeats every `K < 1`. So no
-combination of them — and no crude argument built only from them, however the pieces are assembled —
-yields any constant below one, let alone one below `lagTwoThreshold ≈ 0.0186`. This sharpens
-`TailRatio.no_strict_lag_bound_with_contact`, whose premise set stops before `LinkGram`'s bound, by
-adding the two facts that were not in it.
+Since one profile satisfies all seven, no consequence of them alone gives a ratio constant below
+one. This extends `TailRatio.no_strict_lag_bound_with_contact`, whose premise set stops before
+`LinkGram`'s bound, by the two facts that were not in it.
 
-That the quadratic is met with equality rather than slack is the reason this theorem survived the
-quadratic landing after it was written: a profile meeting the binding constraint exactly is the
-hardest case for a completeness claim, not the easiest.
-
-**WHAT THAT MEANS FOR THE MARGIN.** The room between the free-field value and the threshold is a
-factor of eleven, and it is entirely room for a REMAINDER. The leading term is not optional: the
-lag-two ratio tends to a nonzero constant as `β → ∞`, so the bound must resolve a constant rather
-than an order, and every coupling-uniform route resolves it only as far as one.
-
-DERIVED: no numeral. `1` is the flat profile's constant value and the `2` is the square in
-log-convexity. -/
+DERIVED: `4` is the extent the lag index ranges over; `0`, `1`, `2`, `3` are lag indices, and `0` is
+also the sign asserted of each entry and the level the total mass exceeds; `1` is in addition the
+flat profile's constant value and the level the refuted constant `K` falls below; the exponents `2`
+are squares, from log-convexity and from the quadratic, and the coefficient `2` is the quadratic's
+own, the term count in `y = F₀ + F₂` that `SlabQuadratic` records. -/
 theorem flat_profile_meets_every_uniform_fact :
     ∃ r : Fin 4 → ℝ,
       (∀ d, 0 ≤ r d) ∧ 0 < ∑ d, r d ∧
@@ -503,13 +520,13 @@ theorem flat_profile_meets_every_uniform_fact :
     simp only [mul_one] at h
     linarith
 
-/-- **AND THE FLAT PROFILE IS NOT NEAR THE TARGET.** It fails the criterion at the very constant the
-route needs: `lagTwoThreshold · ρ(0) < ρ(2)` on it. So the distance from what coupling-uniform
-positivity carries to what the route asks is not a margin to be tightened — it is the whole of the
-`β`-dependence.
+/-- `¬ ((1 : ℝ) ≤ LagTwoBound.lagTwoThreshold * 1)`: the flat profile of
+`flat_profile_meets_every_uniform_fact` fails the lag-two criterion at the threshold itself, since
+`LagTwoBound.lagTwoThreshold_lt` places the threshold below `1`.
 
-DERIVED: no numeral; `lagTwoThreshold` is a closed form and `LagTwoBound.lagTwoThreshold_lt` is what
-places it under one. -/
+DERIVED: the two `1`s are the flat profile's values at lags `2` and `0`;
+`lagTwoThreshold` is a closed form and `LagTwoBound.lagTwoThreshold_lt` is what places it under
+one. -/
 theorem flat_profile_fails_the_threshold :
     ¬ ((1 : ℝ) ≤ MassGap.LagTwoBound.lagTwoThreshold * 1) := by
   have h := MassGap.LagTwoBound.lagTwoThreshold_lt

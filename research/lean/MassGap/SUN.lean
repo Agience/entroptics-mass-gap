@@ -2,32 +2,39 @@ import Mathlib
 import MassGap.CompactGauge
 
 /-!
-# MassGap.SUN — the compact topological-group instances for `SU(N)` (step A2b)
+# MassGap.SUN — topological, compactness and Borel instances for `SU(N)`
 
-Discharges the topological hypotheses that `CompactGauge` (step A2a) leaves open for the concrete
-gauge group `Matrix.specialUnitaryGroup (Fin n) ℂ`. Mathlib v4.31 gives `specialUnitaryGroup` only
-its *algebraic* structure (`Group`); here we supply the missing topological instances so that the
-canonical probability Haar measure `CompactGauge.probHaar` exists on `SU(N)`, and hence the derived
-correlation invariance `CompactGauge.expect_invariant_haar` lands on the actual gauge group:
+Mathlib supplies `Matrix.specialUnitaryGroup (Fin n) ℂ` with algebraic structure only. This module
+adds the topological and measure-theoretic instances that `MassGap.CompactGauge` requires of a gauge
+group, so that `CompactGauge.probHaar` and `CompactGauge.expect_invariant_haar` apply at
+`SU n := Matrix.specialUnitaryGroup (Fin n) ℂ`:
 
-* `Nonempty` — the identity is special-unitary;
-* `IsTopologicalGroup` — `ContinuousMul` is free (`Submonoid.continuousMul`), `ContinuousInv` is the
-  continuity of the conjugate transpose (group inverse `= star = ᴴ`);
-* `CompactSpace` — `SU(N)` is closed in `Matrix` (`M * Mᴴ = 1 ∧ det = 1` are closed conditions) and
-  contained in the product of unit balls (each unitary entry has `‖M i j‖ ≤ 1`), hence compact by
-  Tychonoff + Heine–Borel-free closed-subset-of-compact;
-* `MeasurableSpace`/`BorelSpace` — the Borel σ-algebra of the subspace topology (no competing
-  instance on `Matrix`, so no diamond).
+* `Nonempty (SU n)` — witnessed by the identity matrix.
+* `IsTopologicalGroup (SU n)` — multiplication from the induced topology on the subtype;
+  inversion from continuity of the conjugate transpose, since the group inverse is `star`.
+* `CompactSpace (SU n)` — via `isCompact_coe`: the carrier is closed in `Matrix (Fin n) (Fin n) ℂ`
+  as the intersection of `{M | M * star M = 1}` and `{M | M.det = 1}`, and is contained in a product
+  of closed unit balls, which is compact by `isCompact_univ_pi`.
+* `MeasurableSpace` and `BorelSpace` — the Borel σ-algebra of the subspace topology, defined as
+  `borel _` with `BorelSpace` witnessed by `rfl`.
+* `SecondCountableTopology`, `MeasurableInv`, `MeasurableMul₂` — inherited from the product topology
+  on `Fin n → Fin n → ℂ` and from continuity.
 
-With these, `A1`'s Haar-derived Osterwalder–Schrader invariances hold on a genuine `SU(N)` measure.
-Foundational footprint only. Build: `lake build MassGap.SUN`.
+`su_expect_invariant` is the one theorem: `CompactGauge.expect_invariant_haar` instantiated at
+`SU n`.
+
+Scope: `n` is an arbitrary natural number, so `SU 0` and `SU 1` are included; no lower bound on the
+rank is imposed anywhere in this module.
 -/
 
 namespace MassGap.SUN
 
 open Matrix MeasureTheory
 
-/-- Shorthand for `SU(N)` over `ℂ`. -/
+/-- Abbreviation for `Matrix.specialUnitaryGroup (Fin n) ℂ`, the `n × n` complex special unitary
+group. Reducible, so instances stated for either name apply to both.
+
+DERIVED: no numeral occurs; `n` is the caller's matrix size. -/
 abbrev SU (n : ℕ) : Type := Matrix.specialUnitaryGroup (Fin n) ℂ
 
 variable (n : ℕ)
@@ -43,8 +50,14 @@ instance : IsTopologicalGroup (SU n) where
 
 /-! ### Compactness -/
 
-/-- Every entry of a unitary matrix has norm `≤ 1`: from `star M * M = 1`, the `j`-th diagonal gives
-`∑ₖ ‖M k j‖² = 1`, so each `‖M i j‖² ≤ 1`. -/
+/-- Every entry of a unitary matrix has norm at most one: for `M ∈ Matrix.unitaryGroup (Fin n) ℂ`
+and indices `i j`, `‖M i j‖ ≤ 1`. The proof reads the `(j, j)` entry of `star M * M = 1` as
+`∑ k, ‖M k j‖ ^ 2 = 1`, bounds the single term by the sum with `Finset.single_le_sum`, and removes
+the square by `nlinarith`.
+
+DERIVED: the `1` is the value of the diagonal entry of the identity matrix, which is what the sum of
+squared column norms equals; the bound on a single entry is that same `1` because every other term
+of the sum is nonnegative. -/
 theorem unitary_entry_norm_le_one {M : Matrix (Fin n) (Fin n) ℂ}
     (hM : M ∈ Matrix.unitaryGroup (Fin n) ℂ) (i j : Fin n) : ‖M i j‖ ≤ 1 := by
   have hMM : star M * M = 1 := Matrix.mem_unitaryGroup_iff'.mp hM
@@ -64,8 +77,14 @@ theorem unitary_entry_norm_le_one {M : Matrix (Fin n) (Fin n) ℂ}
       (fun k _ => sq_nonneg (‖M k j‖)) (Finset.mem_univ i)
   nlinarith [hle, norm_nonneg (M i j), sq_nonneg (‖M i j‖ - 1)]
 
-/-- The carrier of `SU(N)` is compact in `Matrix`: closed (unitary + `det = 1`) and inside the
-compact product of unit balls. -/
+/-- The carrier of `Matrix.specialUnitaryGroup (Fin n) ℂ`, as a subset of
+`Matrix (Fin n) (Fin n) ℂ`, is compact. The proof rewrites the carrier as
+`{M | M * star M = 1} ∩ {M | M.det = 1}`, shows each factor closed as a preimage of a point under a
+continuous map, exhibits the set of matrices with every entry in `Metric.closedBall (0 : ℂ) 1` as an
+iterated `Set.univ.pi` and hence compact, and applies `IsCompact.of_isClosed_subset`. The inclusion
+uses `unitary_entry_norm_le_one`.
+
+DERIVED: no numeral appears in the statement — it names a set and asserts `IsCompact` of it. -/
 theorem isCompact_coe :
     IsCompact (↑(Matrix.specialUnitaryGroup (Fin n) ℂ) : Set (Matrix (Fin n) (Fin n) ℂ)) := by
   -- closed: intersection of `{M | M * Mᴴ = 1}` and `{M | det M = 1}`
@@ -117,26 +136,36 @@ instance : CompactSpace (SU n) :=
 noncomputable instance : MeasurableSpace (SU n) := borel _
 instance : BorelSpace (SU n) := ⟨rfl⟩
 
-/-- `Matrix` (a finite product of `ℂ`) is second-countable — so `SU(N) ⊂ Matrix` is too
-(`Subtype.secondCountableTopology`). -/
+/-- `Matrix (Fin n) (Fin n) ℂ` is second-countable, by transfer from the product type
+`Fin n → Fin n → ℂ`. The instance below it carries this to the subtype `SU n` along the inducing
+subtype inclusion.
+
+DERIVED: no numeral occurs; `n` is the caller's matrix size. -/
 instance : SecondCountableTopology (Matrix (Fin n) (Fin n) ℂ) :=
   inferInstanceAs (SecondCountableTopology (Fin n → Fin n → ℂ))
 
 instance : SecondCountableTopology (SU n) :=
   Topology.IsInducing.subtypeVal.secondCountableTopology
 
-/-- `SU(N)` has measurable multiplication and inversion (continuity + Borel structure) — needed for the
-measurability of the Wilson holonomy. -/
+/-- `MeasurableInv` and `MeasurableMul₂` for `SU n`, each obtained as the measurability of the
+corresponding continuous map against the Borel structure declared above.
+
+DERIVED: no numeral occurs; `n` is the caller's matrix size. -/
 instance : MeasurableInv (SU n) := ⟨continuous_inv.measurable⟩
 instance : MeasurableMul₂ (SU n) := ⟨(continuous_fst.mul continuous_snd).measurable⟩
 
-/-! ### The Haar-derived invariance lands on `SU(N)` -/
+/-! ### Haar invariance at `SU(N)` -/
 
-/-- **The Osterwalder–Schrader invariance, derived on the actual `SU(N)` gauge measure.** With all
-topological instances now in place, `CompactGauge.probHaar (SU(N))` is the canonical probability Haar
-measure, and A1's derived invariance `⟨O ∘ reindex⟩ = ⟨O⟩` holds for the Gibbs expectation of any
-`SU(N)` lattice gauge system against it. This is step A's invariance face, discharged on the physical
-gauge group rather than an inert label. -/
+/-- Reindexing invariance of the Gibbs expectation at `SU n`. For a lattice gauge system
+`sys : LatticeGauge.System (SU n)`, a symmetry `sym` of it, a coupling `β` and an observable
+`O : sys.Config → ℝ`, the expectation of `O ∘ Symmetry.reindex sym.onLink` against
+`CompactGauge.probHaar (SU n)` equals the expectation of `O`. The proof is
+`CompactGauge.expect_invariant_haar` applied at `SU n`; the instances declared above are what make
+that application typecheck.
+
+Scope: `n` is arbitrary; `sym` and `sys` are the caller's.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem su_expect_invariant {n : ℕ} {sys : MassGap.LatticeGauge.System (SU n)}
     (sym : MassGap.LatticeGauge.Symmetry sys) (β : ℝ) (O : sys.Config → ℝ) :
     sys.expect (MassGap.CompactGauge.probHaar (SU n)) β

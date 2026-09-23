@@ -3,54 +3,45 @@ import MassGap.ConfinesEight
 import MassGap.Spectral
 
 /-!
-# MassGap.FlatProfileAllApertures — no choice of aperture rescues the shape-facts route
+# MassGap.FlatProfileAllApertures — the constant profile, at every even aperture
 
-`ApertureRoute.ConfinesAtAnAperture` is `∃ a : EvenAp, ∀ β, c < cosAvgEven a β` — EXISTENTIAL over
-apertures. That quantifier is the route's one degree of freedom, and the threshold table invites the
-thought that it can be spent well:
+The constant function `ρ ≡ 1` and what it satisfies. Every theorem here is about that one profile,
+and each is stated uniformly over the even apertures `EvenAp` rather than at a fixed extent.
 
-    extent      4         6         8        10        12
-    threshold   0.0186240 0.0337959 0.0354567 0.0302593 0.0250940
+## The arithmetic
 
-The relief rises to extent eight and falls after (`LagTwoEight.bEight_pos` says why). Reading that
-table it is natural to ask what happens at extent 100, or 10^6 — whether some far aperture makes the
-obligation easy. **This file answers it once, for every even aperture at the same time: it does
-not.**
+`cos_half_turn_shift` — shifting the index by `m` at extent `2 * m` shifts the angle by `π`, so the
+cosine changes sign. `cos_circle_sum_eq_zero` — the cosines over a full turn therefore cancel in
+antipodal pairs and sum to `0`. This is where the extent being even is used: the pairing needs an
+exact antipode. `cos_circLag_eq` — folding a lag through `Moment.circLag` does not change its
+cosine, because a full turn is a period. `flat_cosAvg_eq_zero` assembles the three: with equal
+weights `1 / (2m)` at every lag, the cosine average of the constant profile is exactly `0` at every
+even aperture.
 
-## What is proved
+## The statements about the profile
 
-`LagTwoBound`, `LagTwoSix` and `LagTwoEight` each exhibit a profile at their own extent, sitting
-exactly at their own threshold, that fails their own criterion — that is what makes those thresholds
-SHARP. Three extents, three witnesses, three separate arguments. The statement here is one witness
-that works at EVERY even aperture, and it is the simplest one there is:
+`flat_profile_defeats_the_criterion_at_every_even_aperture` exhibits `ρ ≡ 1` as satisfying seven
+conjuncts at once — strict positivity, contact maximality, antitonicity, the Cauchy–Schwarz
+inequality `ρ j ^ 2 ≤ ρ 0 * ρ (2 * j)`, the slab quadratic `2 * ρ j ^ 2 ≤ ρ k ^ 2 + ρ 0 * ρ k`, a
+positive normalisation, and a cosine average strictly below `3 ^ (-1/4)`. The first five hold with
+equality. `flat_profile_margin_is_aperture_independent` records that the shortfall is the whole of
+`3 ^ (-1/4)` at every aperture, since the average is `0`.
 
-    ρ ≡ 1
+`flat_profile_hankel_psd` is the Hankel form evaluated on the constant profile: `0 ≤ ∑ᵢⱼ cᵢcⱼ`, which
+is a square. `flatSpectralForm` and `flat_profile_is_spectral` give `ρ ≡ 1` a
+`Spectral.PeriodicSpectralForm` with a single mode at `λ = 1` and weight `1/2`.
 
-The constant profile satisfies every shape fact the tree states — nonnegativity, strict contact
-positivity, contact maximality, antitonicity in the circle distance, reflection symmetry, and both
-the Cauchy–Schwarz and slab-quadratic inequalities — with EQUALITY throughout. And its cosine
-average is exactly `0` at every even aperture, because the cosines of a full turn cancel in
-antipodal pairs (`cos_circle_sum_eq_zero`). Since `0 < 3^{-1/4}`, it fails the criterion at every
-aperture, by a margin that does not shrink with the extent.
+## Scope
 
-## Why this is the right no-go, and what it does NOT say
+Reflection symmetry is not a conjunct of the main theorem: the profile is read through
+`Moment.circLag`, and `circLag d = circLag (n - d)` holds by that definition, so there is nothing to
+state. The quantified conjuncts are stated at all pairs of lags, whereas `SlabQuadratic` states its
+quadratic at one pair.
 
-It does not say the mass gap is false — the constant profile is not a Wilson correlation at any
-coupling. `ConfinesZero.cosAvgEven_at_zero` proves the actual Wilson profile is a point mass at zero
-coupling, cosine average exactly `1`, and `continuous_cosAvgEven` carries that onto a neighbourhood.
-What it says is that **no assembly of the tree's β-uniform shape facts can decide the criterion at
-any aperture**, so the aperture existential cannot be spent to avoid a dynamical estimate. The
-obligation is β-dependence, and it is β-dependence at every extent equally.
-
-This is the aperture-indexed companion to `ClayAssembly.flat_profile_admits_no_uniform_quartic_constant`
-(which closes the same door on the substrate route) and to
-`FreeFieldLagTwo.flat_profile_meets_every_uniform_fact` (which establishes the premise set at extent
-four). Together the three say: the flat profile defeats BOTH routes at EVERY aperture.
-
-DERIVED: no numeral in this file is a magnitude. `2 * m` is the even extent, `2` and `≤` in `2 ≤ m`
-are `EvenAp`'s own membership condition, `0` is the contact lag and the value the cosine average
-takes, `1` is the constant profile's single value, and `2 * π` is one turn of the circle. The floor
-`3 ^ (-(1:ℝ)/4)` is `ApertureRoute`'s constant, carried through unchanged.
+The constant profile is not a Wilson correlation at any coupling:
+`ConfinesZero.cosAvgEven_at_zero` gives cosine average exactly `1` for the Wilson profile at zero
+coupling. Nothing here is a statement about `wilsonCorrAt`, and no theorem below takes a coupling as
+an argument.
 -/
 
 namespace MassGap.FlatProfileAllApertures
@@ -59,10 +50,14 @@ open MassGap MassGap.EvenAperture MassGap.ApertureRoute MassGap.ConfinesZero
 
 /-! ## 1. The cosines of a full turn cancel -/
 
-/-- **A half-turn flips the cosine.** `cos(2π(m+i)/(2m)) = −cos(2πi/(2m))`, because the shift by `m`
-of `2m` is a shift of the angle by exactly `π`.
+/-- Shifting the index by `m` at extent `2 * m` negates the cosine:
+`cos (2π (m + i) / (2m)) = -cos (2π i / (2m))`, for every natural `i`.
 
-DERIVED: `m` is half the extent and `2 * m` the extent; `2 * π` is one turn. -/
+The shift moves the angle by exactly `π`. `i` is unrestricted — it may exceed the extent, since the
+identity is about the real-valued cosine and not about a residue.
+
+DERIVED: `2 * m` is the extent, `m` being half of it; `2 * Real.pi` is one turn of the circle. `0` is
+the strict lower bound in `hm : 0 < m`, which the division needs. -/
 theorem cos_half_turn_shift (m : ℕ) (hm : 0 < m) (i : ℕ) :
     Real.cos (2 * Real.pi * ((m + i : ℕ) : ℝ) / (2 * m))
       = - Real.cos (2 * Real.pi * (i : ℝ) / (2 * m)) := by
@@ -78,11 +73,15 @@ theorem cos_half_turn_shift (m : ℕ) (hm : 0 < m) (i : ℕ) :
 
 #print axioms cos_half_turn_shift
 
-/-- **THE FULL TURN SUMS TO ZERO**, at every even extent. The circle splits at its midpoint and the
-upper half is the lower half negated, term by term, by `cos_half_turn_shift`.
+/-- The cosines over a full turn at extent `2 * m` sum to `0`:
+`∑_{d < 2m} cos (2π d / (2m)) = 0`, for every `m > 0`.
 
-This is the one arithmetic fact the no-go needs, and it is where the EVENNESS of the extent is used:
-an odd extent has no exact antipode and the pairing does not close. -/
+The range splits at the midpoint and `cos_half_turn_shift` negates the upper half term by term. The
+extent is `2 * m` by construction, so the statement is about even extents only — an odd extent has no
+exact antipode and this pairing does not close.
+
+DERIVED: `2 * m` is the extent and the summation range; `2 * Real.pi` is one turn. `0` is the strict
+lower bound in `hm : 0 < m` and the value of the sum. -/
 theorem cos_circle_sum_eq_zero (m : ℕ) (hm : 0 < m) :
     ∑ d ∈ Finset.range (2 * m), Real.cos (2 * Real.pi * (d : ℝ) / (2 * m)) = 0 := by
   set F : ℕ → ℝ := fun d => Real.cos (2 * Real.pi * (d : ℝ) / (2 * m)) with hFdef
@@ -101,11 +100,15 @@ theorem cos_circle_sum_eq_zero (m : ℕ) (hm : 0 < m) :
 
 #print axioms cos_circle_sum_eq_zero
 
-/-- **The circle distance does not change the cosine.** `cos(2π·circLag d/(N+1)) = cos(2πd/(N+1))`,
-because `circLag d` is either `d` itself or `N+1-d`, and a full turn is a period.
+/-- Folding a lag through the circle distance leaves its cosine unchanged:
+`cos (2π · circLag d / (N + 1)) = cos (2π · d / (N + 1))` for every `d : Fin (N + 1)`.
 
-The tree proves this inside `Moment.Read.cos_theta_circ`, which needs a `Read` to state it on. This
-is the same arithmetic with no read attached, so it can be applied to a bare index. -/
+`Moment.circLag d` is the smaller of `d` and `N + 1 - d`, and replacing one by the other reflects the
+angle through a full turn. `Moment.cos_theta_circ` states the same arithmetic attached to a `Read`;
+this version takes a bare index, so it applies wherever a lag is in hand.
+
+DERIVED: `1` is the offset in the aperture size `N + 1`, the number of lags on the circle. `2` is the
+`2 * Real.pi` of one turn. -/
 theorem cos_circLag_eq {N : ℕ} (d : Fin (N + 1)) :
     Real.cos (2 * Real.pi * (MassGap.Moment.circLag d : ℝ) / ((N : ℝ) + 1))
       = Real.cos (2 * Real.pi * ((d : ℕ) : ℝ) / ((N : ℝ) + 1)) := by
@@ -126,8 +129,17 @@ theorem cos_circLag_eq {N : ℕ} (d : Fin (N + 1)) :
 
 #print axioms cos_circLag_eq
 
-/-- **THE COSINE AVERAGE OF THE FLAT PROFILE IS EXACTLY ZERO**, at every even aperture. The weights
-are `1/(2m)` at every lag, so the average is the full-turn sum divided by the extent. -/
+/-- The equal-weight cosine average over an even aperture is `0`.
+
+The weights are `1 / (∑ 1) = 1 / (2m)` at every lag, so the sum factors as the full-turn cosine sum
+times that constant, and `cos_circLag_eq` followed by `cos_circle_sum_eq_zero` makes the sum vanish.
+
+Scope: the aperture is an `EvenAp`, whose membership condition supplies the `m` with extent `2 * m`;
+the statement does not hold at odd extent. The profile does not appear as a variable — the weights
+are the constant ones, which is what `ρ ≡ 1` gives.
+
+DERIVED: `1` is the constant numerator of each weight and the offset in the aperture size `a.1 + 1`.
+`2` is the `2 * Real.pi` of one turn. `0` is the value of the average. -/
 theorem flat_cosAvg_eq_zero (a : EvenAp) :
     ∑ d : Fin (a.1 + 1),
         ((1 : ℝ) / (∑ _d' : Fin (a.1 + 1), (1 : ℝ)))
@@ -148,29 +160,24 @@ theorem flat_cosAvg_eq_zero (a : EvenAp) :
 
 /-! ## 2. The no-go -/
 
-/-- **NO EVEN APERTURE IS RESCUED BY THE SHAPE FACTS.**
+/-- At every even aperture there is a profile `ρ : ℕ → ℝ` satisfying seven conjuncts at once:
+`0 < ρ j`; `ρ j ≤ ρ 0`; `ρ k ≤ ρ j` whenever `j ≤ k`; `ρ j ^ 2 ≤ ρ 0 * ρ (2 * j)`;
+`2 * ρ j ^ 2 ≤ ρ k ^ 2 + ρ 0 * ρ k`; a strictly positive normalisation
+`0 < ∑ d, ρ (circLag d)`; and a cosine average strictly below `3 ^ (-1/4)`.
 
-At EVERY even aperture there is a profile satisfying every `β`-uniform shape fact the tree states —
-strict positivity, contact maximality, antitonicity in the circle distance, the Cauchy–Schwarz
-inequality `ρ(j)² ≤ ρ(0)·ρ(2j)`, and the slab quadratic `2ρ(j)² ≤ ρ(k)² + ρ(0)·ρ(k)` — whose cosine
-average is exactly `0`, hence strictly BELOW the entropy floor `3^{-1/4}`.
+The witness supplied is the constant `fun _ => 1`. The first five conjuncts then hold with equality,
+and the last is `flat_cosAvg_eq_zero` together with positivity of `3 ^ (-1/4)`.
 
-Reflection symmetry `ρ(d) = ρ(n-d)` is not listed as a conjunct because it holds by CONSTRUCTION
-here: the profile is read through `circLag`, and `circLag d = circLag (n-d)` is what `circLag`
-means. Stating it would add nothing to check.
+Scope. The fourth and fifth conjuncts are quantified over all lags `j` and all pairs `j, k`, which is
+more than `SlabQuadratic` states — that module fixes one pair. Reflection symmetry is not a conjunct:
+the profile is read through `Moment.circLag`, so `circLag d = circLag (n - d)` holds by definition and
+there is nothing to assert. No coupling appears anywhere in the statement, and `ρ` is an arbitrary
+function on `ℕ`, not a Wilson correlation.
 
-The two quantified conjuncts are STRONGER than the tree's own facts, not weaker: `SlabQuadratic`
-states its quadratic at the single pair of lags `(1, 2)` and this witness meets it at every pair, so
-no reading of the premise set makes the no-go easier than the tree's obligation.
-
-So the existential over apertures in `ApertureRoute.ConfinesAtAnAperture` cannot be spent to avoid a
-dynamical estimate: there is no far aperture at which the obligation becomes a consequence of shape.
-The three per-extent sharpness results (`LagTwoBound`, `LagTwoSix.lagTwoThresholdSix_sharp`,
-`LagTwoEight.lagTwoThresholdEight_sharp`) are the same conclusion at three extents; this is all of
-them, with one witness.
-
-DERIVED: every conjunct is a fact the tree proves of the Wilson profile with no coupling hypothesis;
-the `1` is the constant profile's value and the `0` its cosine average. -/
+DERIVED: `0` is the contact lag `ρ 0` and the strict lower bound in the positivity conjuncts. `1` is
+the offset in the aperture size `a.1 + 1`. `2` is the lag doubling in `ρ (2 * j)`, the exponent in
+`ρ j ^ 2`, the coefficient in the slab quadratic, and the `2 * Real.pi` of one turn. `3` and `4` are
+the base and the root in `3 ^ (-(1 : ℝ) / 4)`, the constant `ApertureRoute` carries. -/
 theorem flat_profile_defeats_the_criterion_at_every_even_aperture (a : EvenAp) :
     ∃ ρ : ℕ → ℝ,
       (∀ j, 0 < ρ j) ∧
@@ -196,10 +203,17 @@ theorem flat_profile_defeats_the_criterion_at_every_even_aperture (a : EvenAp) :
 
 #print axioms flat_profile_defeats_the_criterion_at_every_even_aperture
 
-/-- **AND THE MARGIN DOES NOT SHRINK WITH THE EXTENT.** The failure is by the full floor
-`3^{-1/4} = 0.7598…` at every even aperture, not by an amount that decays as the aperture grows.
-So there is no sense in which a large aperture is "nearly enough" and a sharper shape fact would
-close the remaining distance — the distance is the same at every extent. -/
+/-- At every even aperture, `3 ^ (-1/4)` minus the equal-weight cosine average equals `3 ^ (-1/4)`.
+
+Immediate from `flat_cosAvg_eq_zero`: subtracting `0` changes nothing. The content is that the
+difference does not depend on the aperture, so it neither shrinks nor grows with the extent.
+
+Scope: the average here is the equal-weight one, written out rather than taken from a profile
+variable, and the aperture must be an `EvenAp`.
+
+DERIVED: `3` and `4` are the base and root of the constant `3 ^ (-(1 : ℝ) / 4)`. `1` is the numerator
+of each weight, the offset in `a.1 + 1`, and the numerator of the exponent. `2` is the `2 * Real.pi`
+of one turn. -/
 theorem flat_profile_margin_is_aperture_independent (a : EvenAp) :
     (3 : ℝ) ^ (-(1 : ℝ) / 4)
       - ∑ d : Fin (a.1 + 1),
@@ -211,27 +225,20 @@ theorem flat_profile_margin_is_aperture_independent (a : EvenAp) :
 
 #print axioms flat_profile_margin_is_aperture_independent
 
-/-! ## ⭐ And it satisfies the HANKEL condition, which is the strongest shape input the tree has -/
+/-! ## The Hankel form on the constant profile -/
 
-/-- **⭐ THE CONSTANT PROFILE IS HANKEL POSITIVE SEMIDEFINITE**, at every extent and every family of
-levels, with no hypothesis at all.
+/-- `0 ≤ ∑ i, ∑ j, c i * c j * 1` for any real coefficient family `c` on any `Fintype`.
 
-`Hankel.corrClay_hankel_psd` proves `0 ≤ ∑ᵢⱼ cᵢcⱼ ρ(eᵢ+eⱼ)` for the Wilson correlation at EVERY even
-extent and every real coupling — strictly stronger than the `2 × 2` Cauchy–Schwarz
-`ρ(j)² ≤ ρ(0)ρ(2j)` this file's other theorems quantify over. It was the one shape input that might
-have separated the flat profile from the genuine correlation.
+This is the Hankel form `∑ᵢⱼ cᵢ cⱼ ρ (eᵢ + eⱼ)` with `ρ ≡ 1` substituted, so the profile value is the
+literal `1` and the sum collapses to `(∑ c) ^ 2`.
 
-It does not. On `ρ ≡ 1` the form is `∑ᵢⱼ cᵢcⱼ = (∑ c)²`, a square, for every coefficient family.
+Scope. The statement carries no profile, no extent and no level family: the levels `eᵢ` have been
+substituted away along with `ρ`, so `0 ≤ ∑ᵢⱼ cᵢcⱼ` is what is asserted and nothing in the statement
+refers to `Hankel.corrClay_hankel_psd` or to a Wilson correlation. The index type is arbitrary and
+may be empty, in which case both sides are `0`.
 
-**So the shape route is closed against its strongest available premise.** No set of shape facts the
-tree proves — nonnegativity, circle symmetry, log-convexity, the slab quadratic, or full Hankel
-positivity — distinguishes the constant profile, whose lag ratio is `1` and whose cosine average is
-`0` at every even aperture (`flat_cosAvg_eq_zero`). With
-`WeakArm.no_strict_lag_bound_from_shape` that settles it: no factor below one is derivable from
-shape, at any lag, any extent, or any premise set of this kind. The distance to
-`lagTwoThresholdSix` is entirely dynamics.
-
-DERIVED: the `1` is the constant profile's value and the `2` is the square; neither is a level. -/
+DERIVED: `1` is the constant profile's value, standing in the position the Hankel form reads `ρ` at.
+`0` is the lower bound. Neither is a level index. -/
 theorem flat_profile_hankel_psd {ι : Type*} [Fintype ι] (c : ι → ℝ) :
     0 ≤ ∑ i, ∑ j, c i * c j * (1 : ℝ) := by
   have h : ∑ i, ∑ j, c i * c j * (1 : ℝ) = (∑ i, c i) * (∑ j, c j) := by
@@ -242,26 +249,20 @@ theorem flat_profile_hankel_psd {ι : Type*} [Fintype ι] (c : ι → ℝ) :
 
 #print axioms flat_profile_hankel_psd
 
-/-! ## ⭐ And it is a spectral form, so representability separates nothing either -/
+/-! ## A periodic spectral form for the constant profile -/
 
-/-- **⭐ THE CONSTANT PROFILE IS PERIODIC-SPECTRALLY REPRESENTABLE**, at every extent, by ONE mode at
-`λ = 1` with weight `½`.
+/-- A `Spectral.PeriodicSpectralForm n (fun _ => 1)` at every `n`: one mode, indexed by `Unit`, with
+decay factor `lam = 1` and weight `w = 1 / 2`.
 
-`w · (λ^d + λ^{n-d}) = ½(1 + 1) = 1` at every lag, and `λ = 1` satisfies `PeriodicSpectralForm`'s
-`hlam1 : λ ≤ 1` on the nose.
+The representation clause holds because `w * (lam ^ d + lam ^ (n - d)) = (1/2) * (1 + 1) = 1` at every
+lag, and `hlam1 : lam ≤ 1` holds with equality.
 
-**So spectral representability is not what the spectral route buys.** `Complete.WilsonSpectral N β`
-is `Nonempty (PeriodicSpectralForm (N+1) (wilsonCorrAt N β))`, and the flat profile has one — with lag
-ratio `1` and cosine average `0` at every even aperture (`flat_cosAvg_eq_zero`). The whole content of
-`SpectralBound.SpectralAt β Λ` is therefore the BOUND `|λ| ≤ Λ < 1` on the decay factors, which is
-dynamics, and which `SpectralBound`'s own header records is established nowhere in this tree.
+Scope: `lam = 1` sits at the top of the range `PeriodicSpectralForm` permits, so this form exhibits no
+decay. The structure imposes no strict bound `lam < 1`; that is what a separate `SpectralBound.SpectralAt`
+would add.
 
-Together with `flat_profile_hankel_psd` this closes both sides: neither the strongest shape premise
-the tree proves nor spectral representability distinguishes the constant profile from the genuine
-correlation.
-
-DERIVED: `1` is the constant profile's value and the mode's decay factor; `½` is forced by
-`w(λ^d + λ^{n-d}) = 1` at `λ = 1`. Nothing is chosen. -/
+DERIVED: `1` is the constant profile's value, and it is the only numeral in the statement — the mode's
+decay factor and the weight `1 / 2` are fields of the term, not part of the type. -/
 noncomputable def flatSpectralForm (n : ℕ) :
     MassGap.Spectral.PeriodicSpectralForm n (fun _ => (1 : ℝ)) where
   Idx := Unit
@@ -274,7 +275,11 @@ noncomputable def flatSpectralForm (n : ℕ) :
 
 #print axioms flatSpectralForm
 
-/-- The same as an existence statement, in the shape `Complete.WilsonSpectral` is stated in. -/
+/-- `Nonempty (Spectral.PeriodicSpectralForm n (fun _ => 1))` at every `n`, witnessed by
+`flatSpectralForm`. This is the shape `Complete.WilsonSpectral` is stated in, with the constant
+profile in place of `wilsonCorrAt`.
+
+DERIVED: `1` is the constant profile's value, and is the only numeral in the statement. -/
 theorem flat_profile_is_spectral (n : ℕ) :
     Nonempty (MassGap.Spectral.PeriodicSpectralForm n (fun _ => (1 : ℝ))) :=
   ⟨flatSpectralForm n⟩

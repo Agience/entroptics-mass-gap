@@ -2,15 +2,12 @@ import Mathlib
 import MassGap.WilsonBridge
 
 /-!
-# MassGap.PlaqVariance — the plaquette energy is not almost surely constant
+# MassGap.PlaqVariance — strict positivity of the plaquette variance
 
-`ReflectPositive.corrClay_rp_of` reduces `Complete.wilson_reflection_positive_at` to two inputs. One
-is the Osterwalder–Seiler pairing inequality. The other is
-
-    0 < corrClay (N + 1) β 0
-
-and it is NOT reflection positivity: the identically zero correlation satisfies every pairing
-inequality and fails this. This file supplies it.
+Proves `0 < corrClay (N + 1) β 0` at every natural `N` and every real `β`. This is one of the two
+inputs `ReflectPositive.corrClay_rp_of` consumes; the other is the Osterwalder–Seiler pairing
+inequality. It is a separate statement from reflection positivity: the identically zero correlation
+satisfies every pairing inequality and fails this one.
 
 ## What the quantity is
 
@@ -38,28 +35,24 @@ coupling. Three facts drive it:
   zero (`Continuous.ae_eq_iff_eq`), which would force `φ` to take one single value at EVERY
   configuration.
 
-So the only remaining obligation is to exhibit two configurations on which `φ_q` differs, and
-`obs_confOne` / `obs_confAB` do that with the plaquette holonomy `1` and the holonomy
-`gA·gB·gA⁻¹·gB⁻¹ = diag(−1,−1,1)`. The two `SU(3)` elements are real involutions, so no inverse has
-to be computed, and the commutator is nontrivial because `SU(3)` is non-abelian — which is where the
-gauge group enters and the only place it does.
+The remaining obligation is two configurations at which `φ_q` differs. `obs_confOne` and
+`obs_confAB` supply them: the all-identity configuration gives holonomy `1` and density `0`, and
+`confAB` gives the commutator `gA * gB * gA⁻¹ * gB⁻¹ = diag(-1, -1, 1)` and density `4 / 3`. The two
+`SU(3)` elements `gA` and `gB` are real involutions, so the inverses in the boundary word need no
+computation.
 
-## Where it is NOT true, and why that matters
+## Scope
 
-`wilsonCorrConn_self_eq_zero_of_trivial` proves the SAME connected correlation is EXACTLY ZERO for
-`SU(1)`, the trivial group: there every holonomy is the identity, `φ ≡ 0`, and the variance vanishes.
-So `0 <` here is not a formality that any Wilson system satisfies — it fails for a degenerate gauge
-group, and the proof above genuinely consumes the existence of two non-commuting group elements.
-
-## Range of validity
-
-`corrClay_zero_pos` holds for EVERY `β : ℝ` — positive, zero and negative — and for every periodic
-extent `N + 1 ≥ 1`. Nothing in the argument is perturbative and nothing needs `β` small or large. At
-`β = 0` the measure is bare product Haar and the argument is unchanged, since the weight is then the
-constant `1`, which is still strictly positive.
-
-Foundational footprint only (`#print axioms` at the end).
-Build: `python code/lean_build.py build MassGap.PlaqVariance`.
+* The hypothesis of `wilsonCorrConn_self_pos` is load-bearing, not a formality.
+  `wilsonCorrConn_self_eq_zero_of_trivial` proves the same connected correlation is exactly `0` for
+  `SU 1`, where the determinant condition makes every holonomy the identity, and
+  `su_one_has_no_two_values` shows the hypothesis cannot be met there.
+* `corrClay_zero_pos` holds at every real `β`, positive, zero and negative, and at every periodic
+  extent `N + 1`. Nothing in the argument is perturbative or requires `β` small or large; at `β = 0`
+  the weight is the constant `1` and the measure is bare product Haar.
+  `corrClay_zero_pos_at_zero_coupling` and `corrClay_zero_pos_smallest_lattice` record the two
+  endpoint instances.
+* This module states nothing about reflection positivity itself.
 -/
 
 namespace MassGap.PlaqVariance
@@ -75,8 +68,11 @@ below needs the stronger CONTINUITY, because the step that converts "integrates 
 "vanishes at every configuration" is `Continuous.ae_eq_iff_eq`. The proofs mirror the measurability
 ones line for line. -/
 
-/-- The ordered product of link-dependent step factors is continuous (list induction) — the
-continuity counterpart of `WilsonLattice.measurable_stepListProd`. -/
+/-- The ordered product of link-dependent step factors is continuous in the configuration, for any
+list of link-orientation pairs. By induction on the list, splitting on the orientation flag. The
+continuity counterpart of `WilsonLattice.measurable_stepListProd`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_stepListProd {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     {L : Type} (l : List (L × Bool)) :
     Continuous (fun U : L → G => (l.map (fun lo => if lo.2 then U lo.1 else (U lo.1)⁻¹)).prod) := by
@@ -93,7 +89,10 @@ theorem continuous_stepListProd {G : Type} [Group G] [TopologicalSpace G] [IsTop
         funext fun U => if_neg ha
       rw [he]; exact (continuous_apply a.1).inv
 
-/-- The Wilson plaquette holonomy is continuous in the configuration. -/
+/-- `Continuous (wilsonHol bd p)`: the Wilson plaquette holonomy is continuous in the
+configuration, being `continuous_stepListProd` at the boundary word `bd p`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_wilsonHol {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     {L P : Type} (bd : P → List (L × Bool)) (p : P) :
     Continuous (wilsonHol (G := G) bd p) := by
@@ -101,18 +100,27 @@ theorem continuous_wilsonHol {G : Type} [Group G] [TopologicalSpace G] [IsTopolo
 
 variable {N : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
 
-/-- The plaquette-energy observable is continuous. -/
+/-- `Continuous (wilsonPlaqObs bd p)`: the plaquette-energy observable is continuous, as
+`continuous_wilsonDensity` composed with `continuous_wilsonHol`.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_wilsonPlaqObs (bd : Pq → List (Lk × Bool)) (p : Pq) :
     Continuous (wilsonPlaqObs (N := N) bd p) := by
   exact continuous_wilsonDensity.comp (continuous_wilsonHol bd p)
 
-/-- The Wilson action is continuous. -/
+/-- The Wilson action `fun U => ∑ p, wilsonDensity (wilsonHol bd p U)` is continuous, as a finite
+sum of continuous terms.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_wilsonSystem_action (bd : Pq → List (Lk × Bool)) :
     Continuous (wilsonSystem bd (wilsonDensity (N := N))).action := by
   show Continuous fun U => ∑ p : Pq, wilsonDensity (wilsonHol bd p U)
   exact continuous_finsetSum _ (fun p _ => continuous_wilsonDensity.comp (continuous_wilsonHol bd p))
 
-/-- The Boltzmann weight is continuous. -/
+/-- The Boltzmann weight `fun U => Real.exp (-β * action U)` is continuous, as `Real.exp` composed
+with a continuous function.
+
+DERIVED: no numeral occurs in the statement. -/
 theorem continuous_wilsonSystem_boltz (bd : Pq → List (Lk × Bool)) (β : ℝ) :
     Continuous ((wilsonSystem bd (wilsonDensity (N := N))).boltz β) := by
   show Continuous fun U => Real.exp (-β * (wilsonSystem bd (wilsonDensity (N := N))).action U)
@@ -120,14 +128,25 @@ theorem continuous_wilsonSystem_boltz (bd : Pq → List (Lk × Bool)) (β : ℝ)
 
 /-! ### The variance is strictly positive as soon as the observable moves at all -/
 
-/-- **The connected correlation of a plaquette with ITSELF is its variance, and it is strictly
-positive unless the plaquette energy is constant on the whole configuration space.**
+/-- `0 < wilsonCorrConn bd p β p` — the connected correlation of a plaquette with itself, which is
+its variance — given `N ≠ 0`, a boundary-word geometry `bd`, a plaquette `p`, a coupling `β`, and
+two configurations `U V` with `wilsonPlaqObs bd p U ≠ wilsonPlaqObs bd p V`.
 
-The hypothesis is the weakest possible: TWO configurations at which the observable differs. It is
-also necessary — `wilsonCorrConn_self_eq_zero_of_trivial` shows the conclusion is false without it.
+The proof rewrites the connected correlation as
+`(∫ (φ - m) ^ 2 * boltz β) / partition` with `m` the expectation, using integrability of the three
+moments and positivity of the partition function; then shows the centred integral is nonzero. If it
+were zero, `integral_eq_zero_iff_of_nonneg` would make the integrand almost everywhere zero,
+`Continuous.ae_eq_iff_eq` against the open-positive product Haar measure would make it zero
+everywhere, and strict positivity of the Boltzmann weight would force `φ` constant, contradicting
+`hUV`.
 
-No smallness, no sign condition and no bound on `β`: the Gibbs weight is positive and continuous for
-every real coupling, which is all the argument uses. -/
+Scope: no smallness, sign condition or bound on `β` is assumed; the Boltzmann weight is positive and
+continuous at every real coupling. The two-configuration hypothesis is necessary —
+`wilsonCorrConn_self_eq_zero_of_trivial` gives a case where the conclusion fails.
+
+DERIVED: `0` is the value `N` is required to differ from, so the gauge group is nontrivial and the
+partition function positive, and the strict lower bound asserted on the variance. The `2` and `4`
+bounding the moments appear in the proof, from `wilsonPlaqObs_le_two`. -/
 theorem wilsonCorrConn_self_pos (hN : N ≠ 0) (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ)
     (U V : (wilsonSystem bd (wilsonDensity (N := N))).Config)
     (hUV : wilsonPlaqObs (N := N) bd p U ≠ wilsonPlaqObs (N := N) bd p V) :
@@ -283,7 +302,11 @@ identically `0`, and the connected self-correlation is EXACTLY `0`, not merely s
 This is what makes the hypothesis of `wilsonCorrConn_self_pos` load-bearing, and it is why the
 Clay instance below has to produce two `SU(3)` elements that do not commute. -/
 
-/-- In `SU(1)` the determinant condition fixes the only entry, so the Wilson density vanishes. -/
+/-- `wilsonDensity g = 0` for every `g : SU 1`. In a `1 × 1` special unitary matrix the determinant
+condition fixes the single entry to `1`, so the trace is `1` and the density vanishes.
+
+DERIVED: `1` is the matrix size in `SU 1`, which is what makes `det` and `trace` the same single
+entry; `0` is the resulting density. -/
 theorem wilsonDensity_su_one (g : MassGap.SUN.SU 1) : wilsonDensity g = 0 := by
   have hdet : (g : Matrix (Fin 1) (Fin 1) ℂ).det = 1 :=
     (Matrix.mem_specialUnitaryGroup_iff.mp g.2).2
@@ -294,9 +317,15 @@ theorem wilsonDensity_su_one (g : MassGap.SUN.SU 1) : wilsonDensity g = 0 := by
   rw [htr]
   norm_num
 
-/-- **The negative control.** For the trivial gauge group the connected self-correlation is exactly
-zero at every coupling and on every geometry: the plaquette energy is constant, so its variance
-vanishes. `0 <` in `wilsonCorrConn_self_pos` therefore genuinely uses the structure of `SU(3)`. -/
+/-- `wilsonCorrConn (Nc := 1) bd p β p = 0` at every boundary-word geometry, plaquette and coupling.
+At `SU 1` the plaquette energy is identically zero by `wilsonDensity_su_one`, so both moments vanish
+and so does the connected correlation.
+
+Scope: this is an exact equality, not a smallness bound, and it holds at every `β`. It shows the
+conclusion of `wilsonCorrConn_self_pos` is not automatic.
+
+DERIVED: `1` is the matrix size of the trivial gauge group; `0` is the value of the connected
+correlation. -/
 theorem wilsonCorrConn_self_eq_zero_of_trivial (bd : Pq → List (Lk × Bool)) (p : Pq) (β : ℝ) :
     wilsonCorrConn (Nc := 1) bd p β p = 0 := by
   have hobs : ∀ W : (wilsonSystem bd (wilsonDensity (N := 1))).Config,
@@ -304,11 +333,12 @@ theorem wilsonCorrConn_self_eq_zero_of_trivial (bd : Pq → List (Lk × Bool)) (
   unfold wilsonCorrConn wilsonCorr System.expect System.corrNum
   simp only [hobs, zero_mul, mul_zero, integral_zero, zero_div, sub_zero]
 
-/-- **Why the two are consistent**, and what that says about the hypothesis. For the trivial group
-the hypothesis of `wilsonCorrConn_self_pos` cannot be met at all: every pair of configurations
-carries the same plaquette energy. Were it ever met there, the general theorem would deliver
-`0 < 0` against `wilsonCorrConn_self_eq_zero_of_trivial`. So the two-values hypothesis is not
-decoration — it is the entire gauge-group content of the positivity. -/
+/-- `wilsonPlaqObs (N := 1) bd p U = wilsonPlaqObs (N := 1) bd p V` for every pair of
+configurations: at `SU 1` every plaquette energy is `0`, so the hypothesis of
+`wilsonCorrConn_self_pos` cannot be met there. This is what reconciles that theorem with
+`wilsonCorrConn_self_eq_zero_of_trivial`.
+
+DERIVED: the one numeral is `1`, the matrix size of the trivial gauge group. -/
 theorem su_one_has_no_two_values (bd : Pq → List (Lk × Bool)) (p : Pq)
     (U V : (wilsonSystem bd (wilsonDensity (N := 1))).Config) :
     wilsonPlaqObs (N := 1) bd p U = wilsonPlaqObs (N := 1) bd p V := by
@@ -327,14 +357,21 @@ the identity, so the boundary word's two INVERSE entries need no inverse compute
 
 whose real trace is `−1`, not `3`. That single inequality is the whole of the gauge-group input. -/
 
-/-- `diag(1, −1, −1)`: real, symmetric, orthogonal, determinant one.
+/-- The matrix `diag(1, -1, -1)` over `ℂ`: real, symmetric, orthogonal, of determinant one. Shown
+below to lie in `Matrix.specialUnitaryGroup (Fin 3) ℂ` and to square to the identity.
 
-DERIVED: `diag(1, -1, -1)`: determinant 1 puts it in SU(3), so the entries are the group's. `3` is the rank. -/
+DERIVED: `3` is the matrix size, `SU(3)`'s rank. The entries `1`, `0` and `-1` are the diagonal and
+off-diagonal values of a real involution whose determinant is `1`, which is what special unitary
+membership requires; two signs must be negative for the determinant to come out positive. -/
 def matA : Matrix (Fin 3) (Fin 3) ℂ := !![1, 0, 0; 0, -1, 0; 0, 0, -1]
 
-/-- The transposition of the first two axes with the third reflected, so the determinant is one.
+/-- The matrix swapping the first two basis vectors with the third reflected: `!![0,1,0; 1,0,0; 0,0,-1]`.
+Also a real involution in `Matrix.specialUnitaryGroup (Fin 3) ℂ`, and it does not commute with
+`matA`.
 
-DERIVED: a real involution in SU(3): the off-diagonal `1`s swap two basis vectors and the `-1` restores determinant 1. Forced by the group, and chosen to NOT commute with `matA` -- the commutator is the whole content of the non-constancy proof. -/
+DERIVED: `3` is the matrix size. The off-diagonal `1`s perform the transposition, the `0`s are the
+remaining entries, and the `-1` is what makes the determinant `1` after the swap, which flips its
+sign. -/
 def matB : Matrix (Fin 3) (Fin 3) ℂ := !![0, 1, 0; 1, 0, 0; 0, 0, -1]
 
 theorem matA_star : star matA = matA := by
@@ -369,14 +406,14 @@ theorem matB_mem : matB ∈ Matrix.specialUnitaryGroup (Fin 3) ℂ := by
   · rw [Matrix.mem_unitaryGroup_iff, matB_star]; exact matB_mul_self
   · simp [matB, Matrix.det_fin_three]
 
-/-- `diag(1,−1,−1)` as an element of `SU(3)`.
+/-- `matA` as an element of `MassGap.SUN.SU 3`, paired with its membership proof.
 
-DERIVED: `3` is SU(3)'s rank; `1` is the membership coercion. -/
+DERIVED: the one numeral is `3`, the matrix size; the entries live in `matA`. -/
 noncomputable def gA : MassGap.SUN.SU 3 := ⟨matA, matA_mem⟩
 
-/-- The sign-corrected axis transposition as an element of `SU(3)`.
+/-- `matB` as an element of `MassGap.SUN.SU 3`, paired with its membership proof.
 
-DERIVED: `3` is SU(3)'s rank. -/
+DERIVED: the one numeral is `3`, the matrix size; the entries live in `matB`. -/
 noncomputable def gB : MassGap.SUN.SU 3 := ⟨matB, matB_mem⟩
 
 @[simp] theorem gA_coe : (gA : Matrix (Fin 3) (Fin 3) ℂ) = matA := rfl
@@ -396,7 +433,12 @@ theorem gB_mul_self : gB * gB = 1 := by
 
 @[simp] theorem gB_inv : gB⁻¹ = gB := inv_eq_of_mul_eq_one_right gB_mul_self
 
-/-- **The commutator is nontrivial**: `(gA·gB)² = diag(−1,−1,1)`. -/
+/-- `(gA * (gB * (gA * gB)) : SU 3)` has underlying matrix `!![-1,0,0; 0,-1,0; 0,0,1]`. Since `gA`
+and `gB` are involutions this product is the commutator `gA * gB * gA⁻¹ * gB⁻¹`, and it is not the
+identity. Proved entrywise by `fin_cases` and `simp`.
+
+DERIVED: `3` is the matrix size; the entries `-1`, `0` and `1` are the computed product, not chosen
+values. -/
 theorem comm_coe : ((gA * (gB * (gA * gB)) : MassGap.SUN.SU 3) : Matrix (Fin 3) (Fin 3) ℂ)
     = !![-1, 0, 0; 0, -1, 0; 0, 0, 1] := by
   rw [Submonoid.coe_mul, Submonoid.coe_mul, Submonoid.coe_mul, gA_coe, gB_coe]
@@ -404,7 +446,11 @@ theorem comm_coe : ((gA * (gB * (gA * gB)) : MassGap.SUN.SU 3) : Matrix (Fin 3) 
   fin_cases i <;> fin_cases j <;>
     simp [matA, matB, Matrix.mul_apply, Fin.sum_univ_succ]
 
-/-- The Wilson density of the commutator is `4/3`, not `0`. -/
+/-- `wilsonDensity (gA * (gB * (gA * gB))) = 4 / 3`. The commutator's trace has real part `-1`
+against `3` for the identity, and `wilsonDensity` turns that difference into `4 / 3`.
+
+DERIVED: `4 / 3` is the computed value: `wilsonDensity` normalises `N - Re (trace)` by `N`, which at
+`N = 3` and `Re (trace) = -1` gives `(3 - (-1)) / 3`. Neither numeral is chosen. -/
 theorem wilsonDensity_comm : wilsonDensity (gA * (gB * (gA * gB))) = 4 / 3 := by
   unfold wilsonDensity
   rw [comm_coe]
@@ -412,18 +458,29 @@ theorem wilsonDensity_comm : wilsonDensity (gA * (gB * (gA * gB))) = 4 / 3 := by
 
 /-! ### The Clay instance: `0 < corrClay (N+1) β 0` -/
 
-/-- At lag zero the displaced site IS the origin, so `corrHyper` pairs a plaquette with itself. -/
+/-- `siteAtHyper τ 0 = fun _ => 0`: at lag zero the displaced site is the origin, so `corrHyper`
+pairs a plaquette with itself.
+
+DERIVED: the `0`s are the lag and the origin's coordinates; displacing by zero leaves the base
+site. -/
 theorem siteAtHyper_zero {d n : ℕ} [NeZero n] (τ : Fin d) :
     siteAtHyper (d := d) (n := n) τ 0 = (fun _ => 0) := by
   funext i
   simp [siteAtHyper, Function.update_apply]
 
-/-- The plaquette `corrClay` is about: the `(0,1)` plane at the origin of the periodic 4-D lattice.
+/-- The plaquette `corrClay` is stated about: the `(0, 1)` coordinate plane based at the origin of
+the periodic four-dimensional lattice of extent `n`.
 
 DERIVED: `4` is the Clay problem's dimension and `(0, 1)` the first two axes, which span the plaquette's plane. `0` is the base site. The lattice fixes all three. -/
 def clayPlaq (n : ℕ) [NeZero n] : MassGap.WilsonHypercubic.Plaq 4 n := ((0, 1), fun _ => 0)
 
-/-- **`corrClay` at lag zero is a VARIANCE**, not a reflection pairing: the two plaquettes coincide. -/
+/-- `corrClay (N + 1) β 0 = wilsonCorrConn (Nc := 3) (bd (d := 4) (n := N + 1)) (clayPlaq (N + 1)) β (clayPlaq (N + 1))`:
+unfolding `corrClay` and `corrHyper`, and rewriting by `siteAtHyper_zero`, the two plaquettes
+coincide, so the lag-zero value is the variance of one observable rather than a pairing of two.
+
+DERIVED: `1` is the `+ 1` giving the periodic extent from the aperture `N`; `0` is the lag; `3` is
+the gauge group's degree, its matrix dimension, and `4` the lattice dimension, both fixed by `corrClay`'s own
+definition. -/
 theorem corrClay_zero_eq (N : ℕ) (β : ℝ) :
     corrClay (N + 1) β 0
       = wilsonCorrConn (Nc := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := N + 1))
@@ -431,7 +488,8 @@ theorem corrClay_zero_eq (N : ℕ) (β : ℝ) :
   unfold corrClay corrHyper clayPlaq
   rw [siteAtHyper_zero]
 
-/-- The all-identity configuration.
+/-- The configuration carrying the group identity on every link of the four-dimensional lattice of
+extent `n`.
 
 DERIVED: `4` is the dimension, `3` the rank, `1` the group identity carried on every link. -/
 noncomputable def confOne (n : ℕ) : MassGap.WilsonHypercubic.Link 4 n → MassGap.SUN.SU 3 :=
@@ -443,7 +501,7 @@ It depends only on the DIRECTION, never on the site, which is what makes the hol
 commutator at every periodic extent `n` — including `n = 1`, where the four links of the plaquette
 are not distinct.
 
-DERIVED: `4` is the Clay problem's dimension, `3` SU(3)'s rank, `0` the direction whose links carry
+DERIVED: `4` is the Clay problem's dimension, `3` the degree of `SU(3)`, its matrix dimension, `0` the direction whose links carry
 `gA`, and `1` the membership coercions. The split by DIRECTION rather than site is the content, as
 the paragraph above says; no numeral here is tunable. -/
 noncomputable def confAB (n : ℕ) : MassGap.WilsonHypercubic.Link 4 n → MassGap.SUN.SU 3 :=
@@ -471,13 +529,17 @@ theorem obs_confAB (n : ℕ) [NeZero n] :
   rw [h]
   exact wilsonDensity_comm
 
-/-- **THE THEOREM.** The strict-positivity input of `ReflectPositive.corrClay_rp_of`, discharged:
-the connected Wilson correlation at lag zero is strictly positive at EVERY real coupling and every
-periodic extent.
+/-- `0 < corrClay (N + 1) β 0` at every natural `N` and every real `β`. Rewrites by
+`corrClay_zero_eq` and applies `wilsonCorrConn_self_pos` with `confOne (N + 1)` and
+`confAB (N + 1)`, whose plaquette energies are `0` and `4 / 3` by `obs_confOne` and `obs_confAB`.
 
-What it says physically is that the plaquette-energy observable of four-dimensional `SU(3)` lattice
-gauge theory is not almost surely constant. What it is NOT is reflection positivity: the identically
-zero correlation satisfies every pairing inequality and fails this. -/
+The content is that the plaquette-energy observable of four-dimensional `SU(3)` lattice gauge theory
+is not almost surely constant. This is the strict-positivity input of
+`ReflectPositive.corrClay_rp_of`; it is not a reflection-positivity statement, since the identically
+zero correlation satisfies every pairing inequality and fails this.
+
+DERIVED: `1` is the `+ 1` giving the periodic extent, so the extent is at least one; `0` is the lag
+and the strict lower bound asserted. `β` is unrestricted. -/
 theorem corrClay_zero_pos (N : ℕ) (β : ℝ) : 0 < corrClay (N + 1) β 0 := by
   rw [corrClay_zero_eq]
   refine wilsonCorrConn_self_pos (by norm_num) _ (clayPlaq (N + 1)) β
@@ -487,21 +549,30 @@ theorem corrClay_zero_pos (N : ℕ) (β : ℝ) : 0 < corrClay (N + 1) β 0 := by
 
 #print axioms corrClay_zero_pos
 
-/-- **The `β = 0` corner, machine-checked rather than asserted.** At zero coupling the Gibbs weight
-is the constant `1` and the measure is bare product Haar; the plaquette energy still fluctuates, so
-the variance is still strictly positive. This is a literal instance of `corrClay_zero_pos`, recorded
-because "all `β`" is the kind of claim that deserves its endpoints written down. -/
+/-- `0 < corrClay (N + 1) 0 0`: the previous theorem at zero coupling, where the Boltzmann weight is
+the constant `1` and the measure is bare product Haar. A literal instance of `corrClay_zero_pos`,
+recorded as one endpoint of its range of `β`.
+
+DERIVED: `1` is the `+ 1` giving the periodic extent; the three `0`s are the coupling, the lag, and
+the strict lower bound asserted. -/
 theorem corrClay_zero_pos_at_zero_coupling (N : ℕ) : 0 < corrClay (N + 1) 0 0 :=
   corrClay_zero_pos N 0
 
-/-- **The smallest lattice corner.** At `n = 1` the four links of the plaquette are NOT distinct —
-`shift μ x = x` — so a configuration that updated a single link would give the identity holonomy.
-`confAB` depends only on the DIRECTION, which is why the holonomy is the commutator at every extent
-including this one. -/
+/-- `0 < corrClay 1 β 0`: `corrClay_zero_pos` at aperture `0`, so periodic extent `1`. At that
+extent `shift μ x = x` and the four links of the plaquette are not distinct, so a configuration
+distinguishing a single link would give the identity holonomy; `confAB` depends only on the
+direction, which is why its holonomy is the commutator here as at every other extent.
+
+DERIVED: `1` is the periodic extent, the smallest possible; `0` is the lag and the strict lower
+bound asserted. -/
 theorem corrClay_zero_pos_smallest_lattice (β : ℝ) : 0 < corrClay 1 β 0 :=
   corrClay_zero_pos 0 β
 
-/-- The same statement in the shape `ReflectPositive.corrClay_rp_of` consumes it. -/
+/-- `0 < WilsonBridge.corrClay (N + 1) β 0`, the same statement written with the qualified name, in
+the shape `ReflectPositive.corrClay_rp_of` consumes.
+
+DERIVED: `1` is the `+ 1` giving the periodic extent; `0` is the lag and the strict lower bound
+asserted. -/
 theorem wilson_reflection_positive_input (N : ℕ) (β : ℝ) :
     0 < WilsonBridge.corrClay (N + 1) β 0 := corrClay_zero_pos N β
 

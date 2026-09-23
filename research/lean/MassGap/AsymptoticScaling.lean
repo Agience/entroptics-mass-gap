@@ -3,75 +3,67 @@ import MassGap.ClayAssembly
 import MassGap.Running
 
 /-!
-# MassGap.AsymptoticScaling — writing the statement C2 is missing
+# MassGap.AsymptoticScaling — a fixed two-loop running spacing, and the predicates built on it
 
-`ClayAssembly.scaling_as_stated_is_vacuous` proves the naive form of asymptotic scaling — "a spacing,
-positive, tending to zero" — is discharged by `exp(−β)`, which knows nothing about `SU(3)`, the
-lattice or the beta function. Its docstring says the real statement is **absent** and that writing it
-is the first step rather than the last. This file writes it.
+## A form of the statement that every witness satisfies
 
-## The obvious repair is ALSO vacuous, and that is the first thing to record
+`free_spacing_scaling_is_also_vacuous`: for any positive `m` tending to zero there exists a positive
+spacing `a` tending to zero with `m β / a β` converging to a positive limit — witnessed by `a := m`
+itself. So existentially quantifying the spacing makes the statement discharge for every such `m`,
+whatever `m` is.
 
-The natural fix is to demand that the physical mass converge: `∃ a`, positive, tending to zero, with
-`m_lat(β)/a(β) → m_phys ∈ (0,∞)`. **That is discharged by `a := m_lat`**, whatever `m_lat` is, giving
-a ratio identically `1`. `free_spacing_scaling_is_also_vacuous` is the one-line proof. So quantifying
-the spacing existentially fails for the same reason the naive form does, and the repair must remove
-that quantifier.
+## The spacing this file fixes instead
 
-## What pins the spacing: the beta function
-
-`a(β)` is not a free function. Asymptotic freedom determines it up to the overall scale `Λ`, and
-`Running.lean` already carries the two coefficients that do so — `b₀ = 11N/3` and `b₁ = 34N²/3`,
-both proved positive. The two-loop running spacing is
+`aRun N β = ((3β)/(22N²))^{−51/121} · exp(−3β/(44N²))`, the two-loop running spacing with the overall
+scale `Λ` set to `1`. The exponents come from `Running`'s coefficients `b₀ = 11N/3` and `b₁ = 34N²/3`
+via
 
     a(β)·Λ  =  (b₀ g²)^{−b₁/(2b₀²)} · exp(−1/(2b₀ g²)),        g² = 2N/β
 
-and both exponents collapse to pure numbers once `b₀` and `b₁` are substituted:
+and the three identities `b1_over_two_b0_sq`, `one_over_four_N_b0` and `b0_g_sq` check the numerals in
+`aRun` against those coefficients. The colour count cancels from `b₁/(2b₀²) = 51/121`, so that
+exponent is the same for every `SU(N)`. `aRun_pos` gives positivity for `1 ≤ N` and `0 < β`.
 
-    b₁/(2b₀²) = (34N²/3) / (2·(11N/3)²) = 306/726 = 51/121        — independent of N
-    1/(2b₀g²) = β/(4N·b₀)               = 3β/(44N²)
+## The predicates
 
-so `aRun N β = ((3β)/(22N²))^{−51/121} · exp(−3β/(44N²))`, with `Λ` set to one because an overall
-scale cancels from every ratio below. **Nothing here is chosen.** `51/121` and `3/44` are `b₀` and
-`b₁` multiplied out, and `Running.b0_pos` and `Running.b1_pos` are what make them positive.
+`AsymptoticScalingAt N m` says `m β / aRun N β` converges to a positive limit. With `aRun` fixed
+rather than existential the predicate is a constraint on `m` alone:
+`asymptotic_scaling_is_satisfiable` gives `m = c · aRun N` as a witness, and
+`asymptotic_scaling_has_content` shows `m = aRun N · exp(−β)` refutes it;
+`asymptotic_scaling_is_a_real_constraint` states both together.
 
-## The statement, with the spacing FIXED
+`decayAt` and `mLatAt` are the lag-one decay ratio `ρ(1)/ρ(0)` and `−log` of it.
+`mLatAt_at_zero_coupling_is_junk` records `mLatAt 5 0 = 0`, a consequence of `Real.log 0 = 0` together
+with `ρ(1) = 0` at zero coupling, so statements about `mLatAt` are guarded by `0 < decayAt`.
+`mLatAt_nonneg` gives `0 ≤ mLatAt N β` at even extent `N + 1 = 2m` with `3 ≤ m`.
 
-`AsymptoticScalingAt N m` says the lattice mass `m` tracks that running spacing: the ratio converges
-to a finite NONZERO limit. Because `aRun` is a fixed function rather than an existential, the
-statement can fail — `asymptotic_scaling_has_content` exhibits a positive lattice mass for which it
-does, which is precisely what `scaling_as_stated_is_vacuous` could not do for the naive form.
+`fixed_extent_pins_the_spacing`: if `AsymptoticScalingAt N m` holds and `m` is eventually at least a
+positive constant, then `aRun N` is eventually at least a positive constant, so the spacing does not
+approach zero along that sequence. `AsymptoticScalingJoint Nof` is the corresponding statement with
+the extent a function of the coupling; it is a definition, and nothing in this file proves it.
 
-## What this does NOT do
+No declaration here supplies a lattice mass as a function of the coupling.
 
-It does not prove asymptotic scaling, and it does not supply `m_lat`. The tree still has no
-correlation length in lattice units as a function of the coupling — `Complete.ym_physical_gap_uniform`
-and its siblings take the spacing as a PARAMETER and never relate it to `β`. What is now present is a
-target that a proof could be aimed at and that a bogus witness cannot satisfy, which is the thing
-that was missing.
-
-DERIVED: every numeral traces to `Running`. `51/121` is `b₁/(2b₀²)`, `3/44` is `1/(4N b₀)` with the
-`N²` carried separately, `22` and `3` are `b₀ g²` multiplied out, and `2N/β` is the standard `SU(N)`
-relation between the lattice coupling and `g²`. `0` is positivity and the limit the naive form
-settles for; `1` is the ratio the vacuous repair produces.
+DERIVED: every numeral in `aRun` traces to `Running`. `51/121` is `b₁/(2b₀²)`, `3/44` is `1/(4N b₀)`
+with the `N²` carried separately, `22` and `3` are `b₀ g²` multiplied out, and `2N/β` is the `SU(N)`
+relation between the lattice coupling and `g²`. `0` is positivity, and the lags `1` and `0` in
+`decayAt` are the nearest-neighbour and contact separations.
 -/
 
 namespace MassGap.AsymptoticScaling
 
 open Filter Topology
 
-/-! ## 1. The obvious repair is vacuous too -/
+/-! ## 1. Quantifying the spacing existentially -/
 
-/-- **DEMANDING A CONVERGENT PHYSICAL MASS DOES NOT HELP, so long as the spacing is existential.**
+/-- For any `m : ℝ → ℝ` that is everywhere positive and tends to `0`, there exists a positive `a`
+tending to `0` and a positive `mphys` with `m β / a β → mphys`. The witness is `a := m` and
+`mphys := 1`, the ratio being constantly `1` by `div_self`. So adding a convergence clause to an
+existentially quantified spacing leaves the statement satisfied by every such `m`.
 
-For ANY positive lattice mass tending to zero there is a spacing making the ratio converge to a
-positive limit: take the spacing to BE the lattice mass. The ratio is identically `1`.
-
-This is the companion to `ClayAssembly.scaling_as_stated_is_vacuous` and it closes the obvious
-repair. The quantifier on `a` is the defect, not the absence of a convergence clause, so the fix must
-PIN the spacing rather than constrain it further.
-
-DERIVED: `1` is what `m/m` is, not a magnitude. -/
+DERIVED: the `0`s are the pointwise positivity asked of `m` and of the produced `a`, the limit both
+are asked to reach, and the positivity of `mphys`. The witness `mphys = 1` appears in the proof, not
+in the statement. -/
 theorem free_spacing_scaling_is_also_vacuous (m : ℝ → ℝ) (hm : ∀ β, 0 < m β)
     (h0 : Tendsto m atTop (nhds 0)) :
     ∃ a : ℝ → ℝ, (∀ β, 0 < a β) ∧ Tendsto a atTop (nhds 0) ∧
@@ -86,14 +78,15 @@ theorem free_spacing_scaling_is_also_vacuous (m : ℝ → ℝ) (hm : ∀ β, 0 <
 
 /-! ## 2. The running spacing, from the beta function -/
 
-/-- **THE TWO-LOOP RUNNING LATTICE SPACING**, with `Λ` set to one.
+/-- The two-loop running lattice spacing at extent `N` and coupling `β`, with `Λ` set to one:
+`((3β)/(22N²))^(51/121) · exp(−(3β)/(44N²))`. An `rpow` times an exponential; no hypothesis on `N` or
+`β`, so the base may be zero or negative and `aRun_pos` is stated separately.
 
-DERIVED, and CHECKED rather than retyped: `51/121 = b₁/(2b₀²)` is `b1_over_two_b0_sq`,
-`3/(44N²) = 1/(4N b₀)` is `one_over_four_N_b0`, and `22N²/(3β) = b₀g²` at `g² = 2N/β` is `b0_g_sq`,
-all at `b₀ = 11N/3` and `b₁ = 34N²/3` — the coefficients `Running.b0_pos` and `Running.b1_pos` are
-stated for. The colour count CANCELS from the first, so that exponent is the same for every `SU(N)`.
-The overall scale `Λ` cancels from every ratio this file forms, so setting it to one is a choice of
-units and not of a magnitude. -/
+DERIVED: `51/121` is `b₁/(2b₀²)`, checked by `b1_over_two_b0_sq`; `3` and `44` are `1/(4N b₀)` with
+the `N²` carried separately, checked by `one_over_four_N_b0`; `3` and `22` are `b₀ g²` at `g² = 2N/β`
+multiplied out, checked by `b0_g_sq`; both `2`s are the `N²` those identities produce. All at
+`b₀ = 11N/3` and `b₁ = 34N²/3`, the coefficients `Running.b0_pos` and `Running.b1_pos` are stated
+for. CHOSEN: `Λ = 1`, a unit, which cancels from every ratio this file forms. -/
 noncomputable def aRun (N : ℕ) (β : ℝ) : ℝ :=
   ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ) * Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2))
 
@@ -108,8 +101,13 @@ in `aRun` IS the corresponding expression in `b₀ = 11N/3` and `b₁ = 34N²/3`
 checked against `Running` and not merely consistent with it.
 -/
 
-/-- **`b₁/(2b₀²) = 51/121`**, and the colour count CANCELS — the exponent is the same for every
-`SU(N)`. `(34N²/3)/(2·(11N/3)²) = 306/726 = 51/121`. -/
+/-- `(34N²/3) / (2·(11N/3)²) = 51/121` for `N ≠ 0`, by `field_simp; ring`. The colour count cancels,
+so the value is independent of `N`. This checks `aRun`'s rpow exponent against `Running`'s
+coefficients.
+
+DERIVED: `0` in `hN` is what `field_simp` needs to clear `N` from the denominators; `34`, `2` and `3`
+are `b₁ = 34N²/3`; `11`, `3` and `2` are `b₀ = 11N/3` squared and doubled; `51/121` is
+`306/726` in lowest terms, which is `aRun`'s exponent. -/
 theorem b1_over_two_b0_sq {N : ℝ} (hN : N ≠ 0) :
     (34 * N ^ 2 / 3) / (2 * (11 * N / 3) ^ 2) = 51 / 121 := by
   field_simp
@@ -117,7 +115,12 @@ theorem b1_over_two_b0_sq {N : ℝ} (hN : N ≠ 0) :
 
 #print axioms b1_over_two_b0_sq
 
-/-- **`1/(4N·b₀) = 3/(44N²)`**, the exponent of the exponential factor. -/
+/-- `1/(4N·(11N/3)) = 3/(44N²)` for `N ≠ 0`, by `field_simp; ring`. This checks the argument of
+`aRun`'s exponential factor against `Running`'s `b₀`.
+
+DERIVED: `0` in `hN` is what `field_simp` needs to clear `N`; `1` and `4` are `1/(4N b₀)`, the
+two-loop exponent at `g² = 2N/β`; `11` and `3` are `b₀ = 11N/3`; `3`, `44` and `2` are the same
+quantity multiplied out, which is what `aRun` carries. -/
 theorem one_over_four_N_b0 {N : ℝ} (hN : N ≠ 0) :
     1 / (4 * N * (11 * N / 3)) = 3 / (44 * N ^ 2) := by
   field_simp
@@ -125,8 +128,12 @@ theorem one_over_four_N_b0 {N : ℝ} (hN : N ≠ 0) :
 
 #print axioms one_over_four_N_b0
 
-/-- **`b₀g² = 22N²/(3β)`** at the standard `SU(N)` relation `g² = 2N/β`, which is the base `aRun`
-raises to `-51/121`. -/
+/-- `(11N/3)·(2N/β) = 22N²/(3β)` for `β ≠ 0`, by `field_simp; ring`. This checks `aRun`'s rpow base
+against `b₀ g²` at the `SU(N)` relation `g² = 2N/β`.
+
+DERIVED: `0` in `hβ` is what `field_simp` needs to clear `β`; `11` and `3` are `b₀ = 11N/3`; `2` is
+the `SU(N)` relation `g² = 2N/β`; `22`, `2` and `3` are the product multiplied out, the reciprocal of
+`aRun`'s base. -/
 theorem b0_g_sq {N β : ℝ} (hβ : β ≠ 0) :
     (11 * N / 3) * (2 * N / β) = 22 * N ^ 2 / (3 * β) := by
   field_simp
@@ -135,7 +142,12 @@ theorem b0_g_sq {N β : ℝ} (hβ : β ≠ 0) :
 #print axioms b0_g_sq
 
 
-/-- The running spacing is positive at every positive coupling. -/
+/-- `0 < aRun N β` for `1 ≤ N` and `0 < β`. The rpow base `(3β)/(22N²)` is positive by `positivity`
+under both hypotheses, so `Real.rpow_pos_of_pos` applies, and the exponential factor is positive
+unconditionally. `1 ≤ N` is what keeps `(N : ℝ)` away from zero.
+
+DERIVED: `1` in `hN` is the least extent at which `N²` is nonzero, so the rpow base is defined and
+positive; the `0`s are the positivity of `β` and the positivity concluded of `aRun`. -/
 theorem aRun_pos {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β) : 0 < aRun N β := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
   have hbase : (0 : ℝ) < (3 * β) / (22 * (N : ℝ) ^ 2) := by positivity
@@ -145,25 +157,26 @@ theorem aRun_pos {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β) : 0 < aRun N
 
 /-! ## 3. The statement -/
 
-/-- **ASYMPTOTIC SCALING AT APERTURE `N`.**
+/-- The predicate `∃ mphys, 0 < mphys ∧ Tendsto (fun β => m β / aRun N β) atTop (nhds mphys)`: the
+ratio of `m` to the running spacing converges to a finite positive limit as `β → ∞`.
 
-The lattice mass `m` tracks the running spacing: `m(β)/aRun(N,β)` converges to a finite NONZERO
-limit as `β → ∞`. That limit is the physical mass in units of `Λ`, and its being nonzero and finite
-is what makes the limit a CONTINUUM limit rather than a relabelling.
+`aRun N` is a fixed function, not an existential, so the predicate constrains `m`:
+`asymptotic_scaling_is_satisfiable` and `asymptotic_scaling_has_content` exhibit an `m` on each side.
+The limit's finiteness is carried by `Tendsto` into `nhds mphys` with `mphys : ℝ`.
 
-`aRun` is FIXED here. That is the whole difference from the two vacuous forms: with the spacing
-determined by the beta function there is nothing left to choose, so the statement can be false — and
-`asymptotic_scaling_has_content` shows it is false for a lattice mass that decays at the wrong rate.
-
-DERIVED: `0 < mphys` is the nonzero clause; nothing else is numeric. -/
+DERIVED: `0` is the strict positivity demanded of the limit, which is what rules out a ratio tending
+to zero. -/
 def AsymptoticScalingAt (N : ℕ) (m : ℝ → ℝ) : Prop :=
   ∃ mphys : ℝ, 0 < mphys ∧ Tendsto (fun β => m β / aRun N β) atTop (nhds mphys)
 
 #print axioms AsymptoticScalingAt
 
-/-- **IT IS SATISFIABLE** — by a lattice mass that is the running spacing times a constant, which is
-what asymptotic scaling asserts the true one is. Recorded so the statement is not accidentally
-unsatisfiable, the opposite failure from vacuity. -/
+/-- `AsymptoticScalingAt N (fun β => c * aRun N β)` for `1 ≤ N` and `0 < c`, with limit `c`. The
+ratio is eventually constantly `c`, by `field_simp` against `aRun_pos`, which needs `β > 0` — hence
+the `eventually_gt_atTop` filter.
+
+DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis; `0` in `hc` is what makes `c` a legal value
+for the predicate's `mphys`. -/
 theorem asymptotic_scaling_is_satisfiable {N : ℕ} (hN : 1 ≤ N) {c : ℝ} (hc : 0 < c) :
     AsymptoticScalingAt N (fun β => c * aRun N β) := by
   refine ⟨c, hc, ?_⟩
@@ -174,18 +187,12 @@ theorem asymptotic_scaling_is_satisfiable {N : ℕ} (hN : 1 ≤ N) {c : ℝ} (hc
 
 #print axioms asymptotic_scaling_is_satisfiable
 
-/-- **AND IT CAN FAIL — which is what the naive and the repaired forms could not do.**
+/-- `¬ AsymptoticScalingAt N (fun β => aRun N β * Real.exp (-β))` for `1 ≤ N`. The ratio is
+eventually `exp(−β)`, which tends to `0`, and `tendsto_nhds_unique` against a positive `mphys` is a
+contradiction. So the predicate is refutable, by a lattice mass that decays faster than the running
+spacing by the factor `exp(−β)`.
 
-A lattice mass decaying FASTER than the running spacing, by any factor tending to zero, has ratio
-tending to zero, and zero is not a positive limit. So `AsymptoticScalingAt` is a real constraint on
-the lattice mass rather than a clause any witness discharges.
-
-The witness is `aRun N β · exp(−β)`: positive everywhere `aRun` is, and its ratio to `aRun` is
-`exp(−β)`, the very function `ClayAssembly.scaling_as_stated_is_vacuous` uses to defeat the naive
-form. The same witness that made the old statement vacuous refutes the new one, which is the sharpest
-way to say the two are different statements.
-
-DERIVED: `exp(−β)` is a witness, not a magnitude, as in `scaling_as_stated_is_vacuous`. -/
+DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis, needed to divide by `aRun N β`. -/
 theorem asymptotic_scaling_has_content {N : ℕ} (hN : 1 ≤ N) :
     ¬ AsymptoticScalingAt N (fun β => aRun N β * Real.exp (-β)) := by
   rintro ⟨mphys, hpos, hlim⟩
@@ -200,10 +207,11 @@ theorem asymptotic_scaling_has_content {N : ℕ} (hN : 1 ≤ N) :
 
 #print axioms asymptotic_scaling_has_content
 
-/-- **THE STATEMENT IS NEITHER VACUOUS NOR EMPTY**, stated once so both halves are checkable
-together: there is a lattice mass satisfying it and a lattice mass refuting it. That pair is what
-`scaling_as_stated_is_vacuous` shows the naive form does not have — every positive function tending
-to zero satisfies that one. -/
+/-- Both sides at once, for `1 ≤ N`: some `m` satisfies `AsymptoticScalingAt N` and some `m` does
+not. The witnesses are `fun β => 1 * aRun N β` (via `asymptotic_scaling_is_satisfiable`) and
+`fun β => aRun N β * Real.exp (-β)` (via `asymptotic_scaling_has_content`).
+
+DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis, inherited from both witnesses. -/
 theorem asymptotic_scaling_is_a_real_constraint {N : ℕ} (hN : 1 ≤ N) :
     (∃ m : ℝ → ℝ, AsymptoticScalingAt N m) ∧ (∃ m : ℝ → ℝ, ¬ AsymptoticScalingAt N m) :=
   ⟨⟨fun β => 1 * aRun N β, asymptotic_scaling_is_satisfiable hN one_pos⟩,
@@ -213,35 +221,39 @@ theorem asymptotic_scaling_is_a_real_constraint {N : ℕ} (hN : 1 ≤ N) :
 
 /-! ## 4. The lattice mass, and why the extent must grow with the coupling -/
 
-/-- **THE LAG-ONE DECAY RATIO** `ρ(1)/ρ(0)` at aperture `N` and coupling `β`. The elementary
-correlation-length observable the tree can actually form.
+/-- The lag-one decay ratio `wilsonCorrAt N β 1 / wilsonCorrAt N β 0` at extent `N` and coupling
+`β`. A quotient of two correlation values at fixed separations; no hypothesis guards the denominator,
+so `Real.div` returns `0` where `ρ(0) = 0`.
 
-DERIVED: `1` and `0` are the two LAGS the ratio relates — the nearest neighbour against the contact
-value — and neither is a magnitude. Lag one is CHOSEN among the available lags because it is the only
-odd lag the tree bounds (`WeakArm.wilsonCorrAt_le_at_zero_at_extent_six`), every right-hand lag
-`LogConvex.corrClay_log_convex` produces being even; the cost of that choice is that the ratio is an
-effective mass at one separation rather than an asymptotic decay rate. -/
+DERIVED: `1` and `0` are the two LAGS the ratio relates, the nearest neighbour against the contact
+value; neither is a magnitude. CHOSEN: lag one among the available lags, because it is the only odd
+lag the tree bounds (`WeakArm.wilsonCorrAt_le_at_zero_at_extent_six`), every right-hand lag
+`LogConvex.corrClay_log_convex` produces being even. The ratio is then an effective mass at one
+separation rather than an asymptotic decay rate. -/
 noncomputable def decayAt (N : ℕ) (β : ℝ) : ℝ :=
   MassGap.wilsonCorrAt N β 1 / MassGap.wilsonCorrAt N β 0
 
 #print axioms decayAt
 
-/-- **THE LATTICE MASS AT LAG ONE**, `m_lat = −log(ρ(1)/ρ(0))`.
+/-- `- Real.log (decayAt N β)`, the lattice mass read at lag one.
 
-**A JUNK VALUE TO KNOW ABOUT BEFORE USING THIS.** Mathlib's `Real.log 0 = 0`, and
-`PowerTail.wilsonCorrAt_at_zero_coupling` puts `ρ(1) = 0` at zero coupling, so `mLatAt N 0 = 0` —
-which reads as "the lattice mass vanishes at zero coupling" and is the exact opposite of the truth,
-where the correlation length is zero and the mass infinite. Every statement below is therefore
-guarded by `0 < decayAt`, and nothing here should be read at or near `β = 0`.
+Mathlib's `Real.log 0 = 0`, and `PowerTail.wilsonCorrAt_at_zero_coupling` puts `ρ(1) = 0` at zero
+coupling, so `mLatAt N 0 = 0` — the value recorded by `mLatAt_at_zero_coupling_is_junk`. The
+statements below are therefore guarded by `0 < decayAt N β`, which fails there.
 
-DERIVED: `1` and `0` are the two LAGS the ratio relates, not magnitudes. -/
+DERIVED: no numeral. The lags `1` and `0` sit inside `decayAt`, not in this definition. -/
 noncomputable def mLatAt (N : ℕ) (β : ℝ) : ℝ := - Real.log (decayAt N β)
 
 #print axioms mLatAt
 
-/-- The junk value, recorded as a theorem so it cannot be walked into. Stated at extent six, the
-live aperture, where the circle distance of lag one is checkable by `decide`; the same holds at every
-aperture of at least two, for the same reason. -/
+/-- `mLatAt 5 0 = 0`: at extent five (period six) and zero coupling, the lattice mass evaluates to
+zero, because `ρ(1) = 0` there (`PowerTail.wilsonCorrAt_at_zero_coupling`, whose hypothesis
+`1 ≤ circLag 1` is checked by `decide`) and `Real.log 0 = 0`. Recorded so the value is not mistaken
+for a vanishing mass; the same computation applies at every extent whose period is at least two.
+
+DERIVED: `5` is the extent `N`, chosen so `Fin 6` makes `circLag 1 = 1` decidable; the first `0` is
+the coupling at which `ρ(1)` vanishes, and the second is the resulting value of `mLatAt`, which comes
+from `Real.log 0 = 0` rather than from any decay. -/
 theorem mLatAt_at_zero_coupling_is_junk : mLatAt 5 0 = 0 := by
   have hc : Moment.circLag (1 : Fin 6) = 1 := by decide
   have hz : MassGap.wilsonCorrAt 5 0 1 = 0 :=
@@ -250,8 +262,15 @@ theorem mLatAt_at_zero_coupling_is_junk : mLatAt 5 0 = 0 := by
 
 #print axioms mLatAt_at_zero_coupling_is_junk
 
-/-- **THE LATTICE MASS IS NONNEGATIVE** wherever the decay ratio is positive, because the ratio is at
-most one — `WeakArm.wilsonCorrAt_le_at_zero`, the contact bound. -/
+/-- `0 ≤ mLatAt N β` at even extent `N + 1 = 2m` with `3 ≤ m`, for `0 ≤ β` and where the decay ratio
+is positive. `WeakArm.wilsonCorrAt_le_at_zero` bounds `ρ(1) ≤ ρ(0)` and
+`PlaqVariance.corrClay_zero_pos` makes `ρ(0)` positive, so `decayAt N β ≤ 1` and `Real.log_nonpos`
+applies. Stated at even extent only, and at nonnegative coupling only.
+
+DERIVED: `1` in `hm` and `2` in `2 * m` are the even-extent condition `N + 1 = 2m` that
+`WeakArm.wilsonCorrAt_le_at_zero` requires; `3` in `hm3` is that lemma's own least half-extent; `0` in
+`hβ` is the nonnegative coupling it is stated on; `0` in `hpos` is what `Real.log_nonpos` needs of the
+ratio, and `0` in the conclusion is the resulting lower bound on `−log`. -/
 theorem mLatAt_nonneg {N m : ℕ} (hm : N + 1 = 2 * m) (hm3 : 3 ≤ m) {β : ℝ} (hβ : 0 ≤ β)
     (hpos : 0 < decayAt N β) : 0 ≤ mLatAt N β := by
   have hle := MassGap.WeakArm.wilsonCorrAt_le_at_zero N m hm hm3 hβ 1
@@ -267,24 +286,17 @@ theorem mLatAt_nonneg {N m : ℕ} (hm : N + 1 = 2 * m) (hm3 : 3 ≤ m) {β : ℝ
 
 /-! ### Fixed extent cannot carry the continuum limit -/
 
-/-- **A LATTICE MASS THAT DOES NOT VANISH FORBIDS A VANISHING SPACING.**
+/-- At a fixed extent `N` with `1 ≤ N`: if `AsymptoticScalingAt N m` holds and `c ≤ m β` eventually
+for some `c > 0`, then there is a `c' > 0` with `c' ≤ aRun N β` eventually. The witness is
+`c' = c / (mphys + 1)`, obtained by bounding the ratio `m β / aRun N β` above near its limit.
 
-If `AsymptoticScalingAt N m` holds and `m` is eventually bounded below by a positive constant, then
-`aRun` is eventually bounded below by a positive constant too — so the spacing does NOT go to zero
-and the limit is not a continuum limit.
+So a lattice mass that stays away from zero forces the spacing to stay away from zero along the same
+filter. The statement is about `aRun N` at a single fixed `N`.
 
-This is the obstruction at FIXED extent, and it is why the aperture has to grow with the coupling.
-At a fixed aperture the lag-one decay ratio tends to the free-field value — `0.018856` at extent
-six, the number `NonnegArm`'s positive control settles on and the shape entry
-`CosAvgStability.freeRefSix` carries — so the lattice mass tends to `−log 0.018856`, a positive
-CONSTANT rather than zero. Feed that in and the spacing is pinned away from zero.
-
-So `AsymptoticScalingAt N (mLatAt N)` at a single `N` is not the statement to aim at: a correlation
-length measured in lattice units cannot grow while the lattice stays the same size. **C2's remaining
-half is a JOINT limit, `N → ∞` with `β → ∞`, not a limit in `β` at fixed `N`.**
-
-DERIVED: `1` in `m + 1` is one step above the limit, used only to get an eventual upper bound out of
-convergence. No magnitude. -/
+DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis; `0` in `hc` is the positivity of the assumed
+lower bound on `m`, and `0` in the conclusion is the positivity of the produced bound on `aRun N`.
+The `mphys + 1` used to turn convergence into an eventual upper bound occurs in the proof, not in the
+statement. -/
 theorem fixed_extent_pins_the_spacing {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ} {c : ℝ} (hc : 0 < c)
     (hbdd : ∀ᶠ β in atTop, c ≤ m β)
     (hscal : AsymptoticScalingAt N m) :
@@ -302,18 +314,15 @@ theorem fixed_extent_pins_the_spacing {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ}
 
 #print axioms fixed_extent_pins_the_spacing
 
-/-- **THE STATEMENT C2 ACTUALLY NEEDS: a JOINT limit.**
+/-- The joint-limit predicate, for a trajectory `Nof : ℝ → ℕ`: `Nof β → ∞` as `β → ∞`, and
+`mLatAt (Nof β) β / aRun (Nof β) β` converges to a positive limit. The extent moves with the coupling,
+so the lattice mass and the spacing are both read at the growing extent.
 
-The aperture is a function of the coupling and goes to infinity with it, and the lattice mass is read
-at that growing aperture. This is the form `fixed_extent_pins_the_spacing` says is forced — a
-correlation length in lattice units cannot grow while the lattice stays the same size.
+`Nof` is a parameter rather than existentially quantified; `∃ Nof, AsymptoticScalingJoint Nof` would
+admit the same kind of witness `free_spacing_scaling_is_also_vacuous` supplies for the spacing. This
+is a definition, and nothing in this file proves or refutes it for any `Nof`.
 
-It is written here and not proved. What it needs beyond this file is the behaviour of
-`decayAt (Nof β) β` along a joint trajectory, and the tree has no result of that shape: every bound
-it carries is at a fixed aperture, and `Complete.ym_physical_gap_uniform` and its siblings take the
-spacing as a PARAMETER and never relate it to `β`.
-
-DERIVED: nothing numeric. `Nof` and the limit are variables. -/
+DERIVED: `0` is the strict positivity demanded of the limit. `Nof` and the limit are variables. -/
 def AsymptoticScalingJoint (Nof : ℝ → ℕ) : Prop :=
   Tendsto (fun β => (Nof β : ℝ)) atTop atTop ∧
     ∃ mphys : ℝ, 0 < mphys ∧
@@ -321,26 +330,25 @@ def AsymptoticScalingJoint (Nof : ℝ → ℕ) : Prop :=
 
 #print axioms AsymptoticScalingJoint
 
-/-! ### The trajectory is a steering handle, so `Nof` must stay a PARAMETER
+/-! ### How `aRun` depends on the extent
 
-`AsymptoticScalingJoint` takes `Nof` as an argument, and that is deliberate. Writing the obligation
-as `∃ Nof, AsymptoticScalingJoint Nof` would reintroduce exactly the freedom
-`free_spacing_scaling_is_also_vacuous` warns about, with the trajectory in place of the spacing.
+`aRun N β` increases with `N` at fixed positive `β`: the rpow base `(3β)/(22N²)` falls while its
+exponent `51/121` is applied to a reciprocal, and the exponential's argument `−3β/(44N²)` rises
+toward zero. Both factors move the same way. At `β = 1` the spacing evaluates to
+`2.163, 4.084, 8.969, 16.12, 62.65` across `N = 1, 2, 5, 10, 50`, a factor of about `29` over that
+range. `aRun_exp_factor_increasing_in_extent` proves the monotonicity of the exponential factor; the
+rpow factor's monotonicity is not proved here.
 
-**The handle is real and large.** `aRun N β` depends on `N`, and increases with it: the rpow base
-`(3β)/(22N²)` falls while its exponent `-51/121` is negative, and the exponential's argument
-`-3β/(44N²)` rises toward zero. Both factors move the same way. Evaluated, at `β = 1` the spacing
-runs `2.163, 4.084, 8.969, 16.12, 62.65` across `N = 1, 2, 5, 10, 50` — a factor of `29` from
-choosing the trajectory alone, before any physics. `aRun_exp_factor_increasing_in_extent` proves the
-monotonicity of the second factor, which is the elementary half of that.
+DERIVED: the figures are `aRun` evaluated at `β = 1` and those five extents. -/
 
-So a continuum limit is taken ALONG A TRAJECTORY the physics fixes, not along one chosen to make the
-ratio converge. `Nof` being a parameter is what keeps that distinction.
+/-- `exp(−(3β)/(44M²)) < exp(−(3β)/(44N²))` for `0 < β`, `0 < M` and `M < N`: the exponential factor
+of `aRun` is strictly increasing in the extent at fixed positive coupling. By `Real.exp_lt_exp` and
+`div_lt_div_iff₀` on the two positive denominators. Only this factor of `aRun` is covered; the rpow
+factor is not.
 
-DERIVED: the figures are `aRun` evaluated, not chosen. -/
-
-/-- The exponential factor of `aRun` increases with the extent at fixed positive coupling — the
-elementary half of the steering handle above. -/
+DERIVED: `0` in `hβ` and `0` in `hM` are what make both denominators and the numerator positive, so
+the quotient comparison is in the stated direction; `3`, `44` and `2` are `aRun`'s own exponential
+argument `−3β/(44N²)`, from `one_over_four_N_b0`. -/
 theorem aRun_exp_factor_increasing_in_extent {β : ℝ} (hβ : 0 < β) {M N : ℕ}
     (hM : 0 < M) (h : M < N) :
     Real.exp (-(3 * β) / (44 * (M : ℝ) ^ 2)) < Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2)) := by

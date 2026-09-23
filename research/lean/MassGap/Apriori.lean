@@ -2,57 +2,60 @@ import Mathlib
 import MassGap.Certify
 
 /-!
-# THE A PRIORI
+# MassGap.Apriori — two named propositions, and what follows from them
 
-The whole construction reduces, in the framework's own objects (the deterministic entropy-matched
-read), to **two** a priori propositions, `A1` and `A2`. Given these two, the construction meets the
-requirements of the Yang-Mills existence-and-mass-gap problem. This file states the two, labels them, and
-discharges the requirements from them. `#print axioms` returns the standard three: the discharge is
-closed.
+This file names two propositions on the framework's own objects and derives consequences from them as
+hypotheses. Neither is proved here.
 
-Each a priori is in turn reduced, by machine-checked lemmas, to one input. **A1**: its two coupling ends
-rest on the Osterwalder-Seiler character bound and asymptotic freedom; its crossover interior reduces to
-one aperture-independent bound on the substrate's lag moment (`Complete.confinement_of_bounded_substrate`),
-and its uniform-in-`a` continuum to refinement-invariance. (The `χ_v ≥ 0` disorder response is a
-*different*, convex Rényi-1 object — PAPER §8.4 — off the interior route.) **A2** reduces to the Nyquist-Shannon sampling isometry: its discrete point
-group and spatial rotations are proved outright, and its continuum axis-role `SO(4)` reduces, through the
-correlation Gram, to that isometry.
+`A1 μ κ₀` is `∀ β, μ β < κ₀`: the tension read stays below the counting floor at every coupling.
 
-**A1 (confinement).** `∀ β, μ β < κ₀` — the aperture's tension read stays below the counting floor at
-every coupling. Delivers the mass gap and non-triviality (confinement ⇒ area law ⇒ interacting).
+`A2 R` is `∀ d d', R d = R d'` for a read `R : D → ℝ` on an arbitrary type `D` of orientations: the
+read takes the same value in every direction.
 
-**A2 (isotropy).** The continuum entropy-matched read `R` of an observable is direction-independent,
-`∀ d d', R d = R d'`. Delivers Euclidean `SO(4)` invariance. Framework-native: entropy is
-coordinate-free, so its `a → 0` read carries no residual lattice anisotropy (the continuous form of
-the discrete relabeling invariance, [E, Prop 3.5]).
+What the file contains:
 
-Discharged from A1, A2, and the proved / cited layer:
+* consequences of `A1` — decay of a finite sum of powers to zero (`gap_of_A1`), and the sign
+  statement `μ β - κ < 0` for any `κ` at or above the floor (`nontrivial_of_A1`);
+* the restatement of `A2` as direction-independence (`euclidean_of_A2`), and
+  `existence_and_gap_from_apriori`, which assembles the three conclusions from the two hypotheses;
+* a real-number identity `-(s/δ)·log(m^{1/s}) = -(1/δ)·log m` (`continuum_well_defined`), quantified
+  over a bare positive real `m`;
+* partial results towards `A1`: an arithmetic threshold lemma at strong coupling
+  (`apriori_A1_strong`), a limit argument at weak coupling (`apriori_A1_weak`), and two lemmas
+  relating the read hypothesis to a dominant-magnitude bound;
+* partial results towards `A2`: invariance of a symmetric functional of per-axis reads under axis
+  permutations (`read_hypercubic_invariant`), invariance of a spectral functional under orthogonal
+  congruence (`read_orthogonal_invariant`), and a chain reducing `A2` for a Gram-valued correlation to
+  the orthogonality of a resample-after-rotation operator (`A2_continuum_of_sampling`).
 
-| requirement | source | status |
-|---|---|---|
-| mass gap `Δ>0` | A1 ⇒ `gap_of_confinement_read` | from A1 |
-| non-triviality | A1 ⇒ `confines_of_tension_lt_floor` (area law, interacting) | from A1 |
-| Euclidean `SO(4)` | A2 | from A2 |
-| continuum well-defined | `gap_refinement_invariant` (Prop 4.5, identity) | proved |
-| short distance | asymptotic freedom (`b₀>0`); gives A1's weak end | cited |
-| A2 continuum `SO(4)` | Nyquist-Shannon sampling isometry | cited |
+Scope. The matrix results are stated over an arbitrary finite index type, and no rotation group
+appears in any statement: what is proved of an orthogonal `P` is proved of every orthogonal `P`.
+Several declarations cite external results by name; nothing here proves them.
 -/
 
 namespace MassGap
 
 open scoped Matrix
 
-/-- **A1 — the first a priori: confinement.** The aperture's tension read `μ` stays below the counting
-floor `κ₀` at every coupling. -/
+/-- A1, confinement, as a proposition about a function `μ : ℝ → ℝ` and a real `κ₀`: `μ β < κ₀` at
+every `β`. The coupling ranges over all of `ℝ`, with no restriction to a half-line.
+
+DERIVED: no numeral. -/
 def A1 (μ : ℝ → ℝ) (κ₀ : ℝ) : Prop := ∀ β, μ β < κ₀
 
-/-- **A2 — the second a priori: isotropy.** The continuum entropy-matched read `R` of an observable is
-direction-independent (`D` the orientation): no residual lattice anisotropy, the read-level form of
-Euclidean `SO(4)` invariance. -/
+/-- A2, isotropy, as a proposition about a read `R : D → ℝ`: `R d = R d'` for every pair of
+orientations. `D` is an arbitrary type and carries no group structure, so the statement is
+constancy of `R`.
+
+DERIVED: no numeral. -/
 def A2 {D : Type*} (R : D → ℝ) : Prop := ∀ d d', R d = R d'
 
-/-- **Mass gap from A1.** With the finite-aperture read at each coupling, A1 gives the gap at every
-coupling: the correlator forgets, `C(τ) → 0`. -/
+/-- From `A1 μ κ₀` and a per-mode bound `‖m β k‖ ≤ exp(-(κ₀ - μ β))` on the finite index set `s β`, the
+norm `‖∑_{k ∈ s β} P β k · (m β k)^τ‖` tends to zero as `τ → ∞`, at every coupling. It is
+`gap_of_confinement_read`; `A1` is what makes the exponent negative, so each `‖m β k‖` is below one.
+The conclusion is convergence to zero, not a rate.
+
+DERIVED: the `0` is the limit the norm converges to. -/
 theorem gap_of_A1 {ι : Type*} (s : ℝ → Finset ι) (P m : ℝ → ι → ℂ) (κ₀ : ℝ) (μ : ℝ → ℝ)
     (h1 : A1 μ κ₀)
     (hread : ∀ β, ∀ k ∈ s β, ‖m β k‖ ≤ Real.exp (-(κ₀ - μ β))) :
@@ -60,29 +63,42 @@ theorem gap_of_A1 {ι : Type*} (s : ℝ → Finset ι) (P m : ℝ → ι → ℂ
       (fun τ => ‖∑ k ∈ s β, P β k * (m β k) ^ τ‖) Filter.atTop (nhds 0) :=
   gap_of_confinement_read s P m κ₀ μ h1 hread
 
-/-- **Non-triviality from A1.** A1 makes the centre-vortex free energy negative at every coupling
-(`μ β - κ < 0` for the floor `κ₀ ≤ κ`): the vortices condense, the flux confines to an area law, and
-the theory is interacting, not free (a free theory has a perimeter law). -/
+/-- From `A1 μ κ₀` and any `κ` at or above the floor, `μ β - κ < 0` at every coupling. It is
+`confines_of_tension_lt_floor` applied pointwise: the content is the transitivity
+`μ β < κ₀ ≤ κ`. The statement is about the sign of a difference of reals and mentions no observable.
+
+DERIVED: the `0` is the sign asserted of `μ β - κ`. -/
 theorem nontrivial_of_A1 {κ₀ κ : ℝ} {μ : ℝ → ℝ} (hfloor : κ₀ ≤ κ) (h1 : A1 μ κ₀) :
     ∀ β, μ β - κ < 0 :=
   fun β => confines_of_tension_lt_floor hfloor (h1 β)
 
-/-- **Euclidean invariance from A2.** A2 is the direction-independence of the continuum read: the
-observable is the same in every orientation, the read-level Euclidean `SO(4)` invariance. -/
+/-- `A2 R` unfolded: the hypothesis and the conclusion are the same proposition, and the proof is the
+hypothesis itself. It records the definitional content of `A2` and adds nothing to it.
+
+DERIVED: no numeral. -/
 theorem euclidean_of_A2 {D : Type*} (R : D → ℝ) (h2 : A2 R) : ∀ d d', R d = R d' := h2
 
-/-- **Continuum well-defined (proved).** The physical rate is refinement-invariant, so
-the continuum value equals the finite-spacing value by identity (Prop 4.5). -/
+/-- A real-number identity: `-(s/δ)·log(m^{1/s}) = -(1/δ)·log m` for positive `δ`, `s` and `m`. It is
+`gap_refinement_invariant`. The quantification is over bare positive reals; `m` is not tied to the
+spectrum of anything, and `hδ` and `hs` enter as side conditions on the division.
+
+DERIVED: the three `0`s are the positivity conditions on `δ`, `s` and `m`; the `1` in `m ^ (1/s)` is
+the numerator of the refinement exponent and the `1` in `1/δ` is the single step the rate is read
+per. -/
 theorem continuum_well_defined {δ m s : ℝ} (hδ : 0 < δ) (hs : 0 < s) (hm : 0 < m) :
     -(s / δ) * Real.log (m ^ ((1 : ℝ) / s)) = -(1 / δ) * Real.log m :=
   gap_refinement_invariant hδ hs hm
 
-/-- **The result from THE a priori (conditional main theorem).** Given the two a priori inputs
-`A1` (confinement) and `A2` (isotropy), plus the finite-aperture read, the correlator's decay to zero (`C(τ) → 0`; for the RATE, which is what a mass gap asserts, see `MassGap.mass_gap_rate_of_model`), non-triviality,
-and Euclidean `SO(4)` invariance all follow. Reflection positivity (Osterwalder-Seiler), the continuum
-identity (`continuum_well_defined`), and short distance (asymptotic freedom) are established
-separately. `A1` and `A2` are the two open a priori propositions; everything here is discharged from
-them. -/
+/-- The three conclusions together, from `A1`, `A2`, the floor comparison `κ₀ ≤ κ` and the per-mode
+bound `hread`: the correlator norm tends to zero at every coupling, `μ β - κ < 0` at every coupling,
+and `R` is direction-independent. The proof is the triple of `gap_of_A1`, `nontrivial_of_A1` and
+`euclidean_of_A2`.
+
+The decay conclusion is convergence to zero; a rate is a different statement, proved elsewhere as
+`MassGap.mass_gap_rate_of_model`.
+
+DERIVED: the `0` in `nhds 0` is the limit of the correlator norm and the `0` in `μ β - κ < 0` is the
+sign of that difference. -/
 theorem existence_and_gap_from_apriori
     {ι D : Type*} (s : ℝ → Finset ι) (P m : ℝ → ι → ℂ) (κ₀ κ : ℝ) (μ : ℝ → ℝ) (R : D → ℝ)
     (hfloor : κ₀ ≤ κ) (h1 : A1 μ κ₀) (h2 : A2 R)
@@ -93,79 +109,79 @@ theorem existence_and_gap_from_apriori
       (∀ d d', R d = R d') :=
   ⟨gap_of_A1 s P m κ₀ μ h1 hread, nontrivial_of_A1 hfloor h1, euclidean_of_A2 R h2⟩
 
-/-! ## Advancing A1 and A2 to their next step
+/-! ## Partial results towards A1 and A2
 
-`existence_and_gap_from_apriori` discharges the requirements from `A1` and `A2`. The sections below discharge each
-a priori down to one established input, as machine-checked lemmas. **A1** reduces to a finite correlation
-length: its strong- and weak-coupling ends are proved (below), its crossover interior reduces to
-one aperture-independent bound on the lag moment, and its uniform-in-`a` continuum to refinement-invariance.
-**A2** reduces to the Nyquist-Shannon sampling isometry: its discrete point group is
-proved (below) and its spatial and continuum rotations reduce, through the correlation Gram, to that
-isometry. Both remaining inputs are established results. The named parts:
+The sections below prove statements that bear on `A1` and `A2` without proving either.
 
-* **A1, strong-coupling side.** The character / cluster expansion of the Wilson action bounds the
-  aperture tension linearly, `μ β ≤ 2 β r` with `r` the leading character ratio `I₂(β)/I₁(β)`
-  (Osterwalder-Seiler) — the one input still cited on this side. Below the threshold coupling
-  `β_c = κ₀ / (2 r)` this bound sits under the counting floor, so `μ β < κ₀`: confinement on the
-  strong-coupling side, as an inequality (`apriori_A1_strong`). The THRESHOLD itself is derived, not
-  certified: `Bessel.ratio_le_quarter` gives `r(β) ≤ β/4` termwise, so the range is exactly
-  `β² < ½ log 3` (`Bessel.strong_coupling_below_threshold`). The weak end (`apriori_A1_weak`) and the crossover interior (reflection
-  positivity, `Certify.lean`) close the range `β ≥ β_⋆`.
-* **A2, hypercubic side.** A read that is a symmetric functional of the per-axis reads is invariant
-  under the hypercubic axis-permutation group (`read_hypercubic_invariant`, `A2_hypercubic_holds`):
-  the finite point group of the lattice, the discrete subgroup of `SO(4)`. The continuum restoration,
-  the full continuous `SO(4)`, reduces to the sampling isometry (below).
+* A1, strong coupling. Taking as given the character bound `μ β ≤ 2 β r`, with `r` the leading
+  character ratio `I₂(β)/I₁(β)` cited to Osterwalder-Seiler, `apriori_A1_strong` gives `μ β < κ₀` for
+  every coupling below the threshold `β_c` defined by `2 β_c r = κ₀`. The content is an inequality
+  between reals; the character bound itself is a hypothesis of the theorem.
+* A1, weak coupling. `apriori_A1_weak` gives `μ β < κ₀` eventually in `β`, from convergence of `μ` to
+  a limit strictly below the floor.
+* A2, axis permutations. A read that is a functional of the multiset of per-axis reads is unchanged
+  when the axes are permuted (`read_hypercubic_invariant`, `A2_hypercubic_holds`). The permutation
+  group is `Equiv.Perm (Fin d)` for an arbitrary `d`.
 -/
 
-/-- **A1, strong-coupling side: below the threshold the character bound is sub-floor.** With `r > 0`
-the leading character ratio and `β_c` the threshold coupling defined by `2 β_c r = κ₀`, every
-coupling `β < β_c` has its linear character bound below the counting floor: `2 β r < κ₀`. -/
+/-- With `r > 0` and `βc` defined by `2·βc·r = κ₀`, every `β < βc` satisfies `2·β·r < κ₀`. An
+inequality between reals: multiplying a strict inequality by the positive `2r` and rewriting by `hc`.
+
+DERIVED: the `0` is the sign required of `r`, which is what lets the product keep the inequality's
+direction; the two `2`s are the factor the character bound carries and are the same factor on both
+sides of `hc`. -/
 theorem strong_below_threshold {r κ₀ β βc : ℝ} (hr : 0 < r)
     (hc : 2 * βc * r = κ₀) (hlt : β < βc) : 2 * β * r < κ₀ := by
   rw [← hc]; nlinarith
 
-/-- **A1, strong-coupling side (discharged).** Given the strong-coupling character bound
-`μ β ≤ 2 β r` (the cited cluster expansion) and a coupling below the threshold `β_c = κ₀ / (2 r)`,
-the tension sits below the counting floor: `μ β < κ₀`. This is the strong-coupling part of `A1`, as
-an inequality. Its input `μ β ≤ 2 β r` is the character expansion; the threshold is Kramers-Wannier.
-The part of `A1` this does not reach is the range `β ≥ β_c`. -/
+/-- Given the character bound `μ β ≤ 2·β·r` as a hypothesis, a positive `r`, and a coupling below the
+threshold `βc` defined by `2·βc·r = κ₀`, the tension is below the floor: `μ β < κ₀`. It is
+`strong_below_threshold` composed with `hbound`.
+
+The statement is at one coupling and requires `β < βc`; it says nothing at or above the threshold, and
+it does not prove the character bound it consumes.
+
+DERIVED: the `0` is the sign required of `r`; the two `2`s are the factor the character bound carries,
+the same factor that defines `βc` in `hc`. -/
 theorem apriori_A1_strong {μ : ℝ → ℝ} {r κ₀ β βc : ℝ} (hr : 0 < r)
     (hc : 2 * βc * r = κ₀) (hlt : β < βc) (hbound : μ β ≤ 2 * β * r) : μ β < κ₀ :=
   lt_of_le_of_lt hbound (strong_below_threshold hr hc hlt)
 
-/-! ### A1, weak-coupling side, and the read that supplies the confinement input
+/-! ### A1 at weak coupling, and the per-mode bound `hread`
 
-`apriori_A1_strong` closes `μ < κ₀` for `β < β_⋆`. The weak-coupling end closes from asymptotic freedom:
-the running is one-signed (`Running.lean`), so the tension in lattice units vanishes, `μ β → 0`, and a
-vanishing tension is eventually below the positive floor (`apriori_A1_weak`). The interior range is closed
-by an aperture-independent bound on the lag moment (`Complete.confinement_of_bounded_substrate`).
+`apriori_A1_weak` takes convergence of `μ` to a limit below the floor and returns `μ β < κ₀` eventually
+in `β`. The limit and its position below the floor are both hypotheses.
 
-The confinement input `hread` (`‖m k‖ ≤ e^{-(κ₀-μ)}`) is not an independent assumption: it is a bound on
-the DMD dominant magnitude the aperture returns. `rates().dominant` is `Δ = -log r` with `r` the dominant
-magnitude, and the read hypothesis is exactly `Δ ≥ κ₀ - μ`, the measured gap clearing the free-energy
-margin (`hread_of_dominant`, `margin_of_dominant_rate`). -/
+`hread` (`‖m k‖ ≤ e^{-(κ₀-μ)}`) is related below to a bound on a single dominant magnitude:
+`hread_of_dominant` derives the per-mode bound from a bound `r` on every mode together with
+`r ≤ e^{-(κ₀-μ)}`, and `margin_of_dominant_rate` restates that second inequality as
+`κ₀ - μ ≤ -log r`. -/
 
-/-- **A1, weak-coupling side (discharged).** With the tension converging at weak coupling to a limit `L`
-**below the floor** (`μ β → L`, `L < κ₀`) — the free-field plateau `μ∞ ≈ 0.033 < κ₀` of `FreeField.lean`,
-the read tension, which plateaus — the tension is eventually below the floor:
-`μ β < κ₀` for all large `β`. The part
-A1 does not reach is the interior between the two ends. -/
+/-- If `μ` converges along `atTop` to a limit `L` with `L < κ₀`, then `μ β < κ₀` holds eventually in
+`β`. It is convergence into the open set `Iio κ₀`. Both the limit and the strict inequality `L < κ₀`
+are hypotheses, and the conclusion is eventual, so it names no coupling from which it holds.
+
+DERIVED: no numeral. -/
 theorem apriori_A1_weak {μ : ℝ → ℝ} {κ₀ L : ℝ} (hL : L < κ₀)
     (hlim : Filter.Tendsto μ Filter.atTop (nhds L)) :
     ∀ᶠ β in Filter.atTop, μ β < κ₀ :=
   hlim.eventually (isOpen_Iio.mem_nhds hL)
 
-/-- **The read margin is a bound on the DMD dominant magnitude.** If the dominant mode magnitude
-`r = max_k ‖m k‖` clears the free-energy margin, `r ≤ e^{-(κ₀-μ)}`, then every mode does: the read
-hypothesis `hread` of `gap_of_confinement` is exactly this dominant-magnitude bound (`rates().dominant`). -/
+/-- If every mode magnitude on `s` is at most `r`, and `r ≤ e^{-(κ₀-μ)}`, then every mode magnitude is
+at most `e^{-(κ₀-μ)}`, which is the `hread` that `gap_of_confinement` consumes. The proof is
+transitivity. `r` is any upper bound, not necessarily the maximum.
+
+DERIVED: no numeral. -/
 theorem hread_of_dominant {ι : Type*} (s : Finset ι) (m : ι → ℂ) {κ₀ μ r : ℝ}
     (hdom : ∀ k ∈ s, ‖m k‖ ≤ r) (hr : r ≤ Real.exp (-(κ₀ - μ))) :
     ∀ k ∈ s, ‖m k‖ ≤ Real.exp (-(κ₀ - μ)) :=
   fun k hk => le_trans (hdom k hk) hr
 
-/-- **The read hypothesis is the measured gap clearing the margin.** With `r` the DMD dominant magnitude
-(so the read rate is `Δ = -log r`), the margin bound `r ≤ e^{-(κ₀-μ)}` is equivalent to `Δ ≥ κ₀ - μ`: the
-read `hread` says the measured gap clears the free-energy deficit. -/
+/-- For positive `r`, the bound `r ≤ e^{-(κ₀-μ)}` and the inequality `κ₀ - μ ≤ -log r` are equivalent.
+Taking logarithms in one direction and exponentials in the other. Read with `-log r` as a rate, it
+says a bound on a magnitude and a lower bound on the corresponding rate are the same statement.
+
+DERIVED: the `0` is the positivity of `r`, which is what makes `log r` and `exp (log r)` behave. -/
 theorem margin_of_dominant_rate {κ₀ μ r : ℝ} (hr : 0 < r) :
     r ≤ Real.exp (-(κ₀ - μ)) ↔ κ₀ - μ ≤ -Real.log r := by
   constructor
@@ -177,33 +193,23 @@ theorem margin_of_dominant_rate {κ₀ μ r : ℝ} (hr : 0 < r) :
     calc r = Real.exp (Real.log r) := (Real.exp_log hr).symm
       _ ≤ Real.exp (-(κ₀ - μ)) := Real.exp_le_exp.mpr hlog
 
-/-! ### T3a: the strong-coupling threshold
+/-! ### The strong-coupling threshold
 
-`apriori_A1_strong` uses the threshold `β⋆` with `2 β⋆ r = κ₀`, i.e. `β⋆ = κ₀/(2r)`, where `r = I₂/I₁`
-is the leading character ratio and `κ₀ = ¼ log 3`.
+`apriori_A1_strong` takes the threshold `βc` as a hypothesis, through `2·βc·r = κ₀` with `r = I₂/I₁`
+the leading character ratio and `κ₀ = ¼ log 3`.
 
-**THE THRESHOLD IS A THEOREM, and the route through it carries no numeral.**
-`Bessel.strong_coupling_below_threshold` gives `μ β < κ₀` for every `β` with
+`Bessel.strong_coupling_below_threshold`, in another file, gives `μ β < κ₀` for every `β` with
+`β² < ½ log 3`. It rests on `Bessel.ratio_le_quarter` (`r(x) ≤ x/4`), which is termwise: the `I₂` and
+`I₁` terms differ by one factor of `x/2` in the numerator and one factor of `k+2 ≥ 2` in the
+denominator. Substituted into `2·β·r(β)` that gives `β²/2`, which is below `¼ log 3` exactly when
+`β² < ½ log 3`. The bound is tight as `β → 0`. -/
 
-    β² < ½ log 3
+/-- A read `R : Multiset ℝ → ℝ` applied to the multiset of per-axis values `a : Fin d → ℝ` is unchanged
+when the axes are permuted by any `σ : Equiv.Perm (Fin d)`. The content is that permuting a `Fin d`
+leaves `Finset.univ.val` alone as a multiset, so the two arguments of `R` are equal before `R` is
+applied. `d` is arbitrary and no rotation group appears.
 
-and nothing else — no interval, no certificate, no fitted constant. It rests on
-`Bessel.ratio_le_quarter` (`r(x) ≤ x/4`), which is termwise and elementary: the `I₂` and `I₁` terms
-differ by one factor of `x/2` upstairs and one factor of `k+2 ≥ 2` downstairs. Substituting it into
-`2 β r(β)` gives `β²/2`, below `¼ log 3` exactly when `β² < ½ log 3`. The bound is tight as `β → 0`,
-which is the regime it is used in.
-
-The bound is tight as `β → 0`, which is the regime it is used in, and it is the only route here:
-the exact-rational Bessel/log certificate that used to supply `β⋆ ∈ [0.746, 0.755]` is retired, along
-with the interval-arithmetic lemma that consumed it. It reached about 1.1% more coupling and cost a
-numeral and a certificate to do it; the crossover argument has to cover everything above the
-threshold either way, so the range was not load-bearing. -/
-
-/-- **A2, hypercubic side: a symmetric read is axis-permutation invariant.** A read `R` that depends
-only on the MULTISET of the per-axis reads `a : Fin d → ℝ` (a spectral / symmetric functional) is
-unchanged when the axes are permuted by any `σ ∈ S_d`. A hypercubic rotation permutes the axes, so
-`R` is invariant under the hypercubic subgroup of `SO(4)`. Extends the relabeling invariance
-[E, Prop 3.5] to the full axis-permutation group. -/
+DERIVED: no numeral. -/
 theorem read_hypercubic_invariant {d : ℕ} (R : Multiset ℝ → ℝ) (a : Fin d → ℝ)
     (σ : Equiv.Perm (Fin d)) :
     R (Finset.univ.val.map (fun i => a (σ i))) = R (Finset.univ.val.map a) := by
@@ -216,52 +222,52 @@ theorem read_hypercubic_invariant {d : ℕ} (R : Multiset ℝ → ℝ) (a : Fin 
     rw [← Multiset.map_map, hperm]
   rw [key]
 
-/-- The product read over axes (étendue `φ_F φ_T`, space-bandwidth `n_F n_T`) is a symmetric read,
-so it is hypercubic-invariant outright. -/
+/-- The product over axes is unchanged by permuting them: `∏ i, a (σ i) = ∏ i, a i`. It is
+`Equiv.prod_comp`, and it is the product read (étendue `φ_F φ_T`, space-bandwidth `n_F n_T`) stated
+directly rather than through `read_hypercubic_invariant`.
+
+DERIVED: no numeral. -/
 theorem etendue_hypercubic_invariant {d : ℕ} (a : Fin d → ℝ) (σ : Equiv.Perm (Fin d)) :
     ∏ i, a (σ i) = ∏ i, a i := Equiv.prod_comp σ a
 
-/-- **The discrete (hypercubic) part of A2.** For a symmetric read `R`, `A2` restricted to the
-axis-permutation group of the lattice. -/
+/-- `A2` restricted to axis permutations, as a proposition about a read `R : Multiset ℝ → ℝ` and
+per-axis values `a : Fin d → ℝ`: `R` takes the same value on the permuted and unpermuted multisets,
+for every `σ : Equiv.Perm (Fin d)`.
+
+DERIVED: no numeral. -/
 def A2_hypercubic {d : ℕ} (R : Multiset ℝ → ℝ) (a : Fin d → ℝ) : Prop :=
   ∀ σ : Equiv.Perm (Fin d),
     R (Finset.univ.val.map (fun i => a (σ i))) = R (Finset.univ.val.map a)
 
-/-- **A2 holds on the hypercubic subgroup (proved, no a priori).** The symmetric read is invariant
-under every axis permutation: the discrete point-group part of `A2` is a theorem. The part A2 still
-carries is the continuum `SO(4)` restoration. -/
+/-- `A2_hypercubic` holds for every `R` and every `a`, with no hypothesis: it is
+`read_hypercubic_invariant` at each `σ`. It is a statement about axis permutations only.
+
+DERIVED: no numeral. -/
 theorem A2_hypercubic_holds {d : ℕ} (R : Multiset ℝ → ℝ) (a : Fin d → ℝ) :
     A2_hypercubic R a := fun σ => read_hypercubic_invariant R a σ
 
-/-- **A2 axis-role, discrete: a symmetric read is invariant under the T↔F swap.** The ordered↔feature
-(time↔feature) exchange is the axis transposition `Equiv.swap i j ∈ S_d`, so a read `R` that is a
-symmetric functional of the per-axis reads (e.g. `R = ∏ᵢ aᵢ`, `étendue_hypercubic_invariant`) is
-invariant under it outright, by `read_hypercubic_invariant`. This removes the axis-role asymmetry from
-`A2`: on the lattice the T↔F exchange is a hypercubic permutation, a theorem here. What `A2` still
-carries is only the *continuous* `SO(4)` restoration (an arbitrary-angle T↔F rotation) in the `a → 0`
-limit, the generic restoration of rotational invariance. -/
+/-- `read_hypercubic_invariant` at a transposition: exchanging two axes `i` and `j` leaves the read
+unchanged. The exchange of the ordered and feature axes is such a transposition, so it is covered;
+a rotation through an arbitrary angle is not a permutation and is not covered.
+
+DERIVED: no numeral. -/
 theorem A2_axis_role_swap {d : ℕ} (R : Multiset ℝ → ℝ) (a : Fin d → ℝ) (i j : Fin d) :
     R (Finset.univ.val.map (fun k => a (Equiv.swap i j k))) = R (Finset.univ.val.map a) :=
   read_hypercubic_invariant R a (Equiv.swap i j)
 
-/-! ### A2 continuum side: the read is invariant under orthogonal congruence
+/-! ### Invariance of a spectral read under orthogonal congruence
 
-`A2_hypercubic_holds` gives direction-independence under the finite axis-permutation group. The
-continuum part of `A2` is the full rotation group `SO(4)`. A rotation acts on the correlation operator
-by an orthogonal congruence `C ↦ P C Pᵀ` (`Pᵀ P = 1`), and a spectral read (a function of the
-operator's characteristic polynomial, hence of its eigenvalue multiset) is invariant under any such
-congruence ([E, Prop 3.5], spectral form, `Entroptics.spectral_read_orthogonal`). So the continuum
-part of `A2` reduces to the single geometric input that the `a → 0` rotation acts by orthogonal
-congruence on the correlation operator; the invariance of the read is then a theorem. The hypercubic
-point group is the special case of permutation matrices, so this subsumes the discrete part at the
-spectral level. -/
+`A2_hypercubic_holds` covers axis permutations. The lemmas below cover any congruence `C ↦ P C Pᵀ`
+with `Pᵀ P = 1`: a read that is a function of the characteristic polynomial, hence of the eigenvalue
+multiset, takes the same value on the two operators. Permutation matrices are one case, so this
+subsumes the permutation statement at the spectral level. The reading of the congruence as a rotation
+is not part of the statements. -/
 
-/-- **A2 continuum vehicle: the spectral read is invariant under orthogonal congruence.** A read `f`
-that depends only on the correlation operator's characteristic polynomial is unchanged by an
-orthogonal congruence `C ↦ P C Pᵀ` (`Pᵀ P = 1`). A rotation acts this way, so a spectral read is
-isotropic under `SO(4)`; what `A2` still carries on the continuum side is the geometric input that the
-`a → 0` rotation acts by such a congruence on the operator. Extends `read_hypercubic_invariant`
-(permutation matrices) to the full orthogonal group; [E, Prop 3.5], spectral form. -/
+/-- A read `f` of the characteristic polynomial takes the same value on `P C Pᵀ` as on `C`, whenever
+`Pᵀ P = 1`. The content is `Matrix.charpoly_mul_comm`: the two operators have the same characteristic
+polynomial, so `f` cannot distinguish them. `P` is any orthogonal matrix over a finite index type.
+
+DERIVED: the `1` is the identity matrix, the value of `Pᵀ * P` that makes `P` orthogonal. -/
 theorem read_orthogonal_invariant {n : Type*} [Fintype n] [DecidableEq n]
     (f : Polynomial ℝ → ℝ) (P C : Matrix n n ℝ) (hP : Pᵀ * P = 1) :
     f ((P * C * Pᵀ).charpoly) = f (C.charpoly) := by
@@ -269,30 +275,28 @@ theorem read_orthogonal_invariant {n : Type*} [Fintype n] [DecidableEq n]
     rw [Matrix.charpoly_mul_comm, ← Matrix.mul_assoc, hP, Matrix.one_mul]
   rw [hcong]
 
-/-! ### A2 continuum: reducing the full `SO(4)` to one geometric input
+/-! ### The congruence hypothesis, and A2 from it
 
-`read_orthogonal_invariant` shows a spectral read is invariant under any orthogonal congruence. The
-continuum part of A2 is then a single named geometric input: that between any two orientations the
-`a → 0` rotation acts on the correlation operator by such a congruence. Given it, A2's continuum core is
-a theorem. This mirrors A1's treatment: the open core is one explicit hypothesis with a machine-checked
-downstream. -/
+`read_orthogonal_invariant` gives invariance under any orthogonal congruence. Naming the hypothesis
+that the orientation dependence of the correlation operator is by such a congruence,
+`A2_continuum_of_congruence` then gives `A2` for every spectral read. The hypothesis is discharged in
+turn by `continuumRotationCongruence_of_gram` for a Gram-valued correlation, and by
+`A2_continuum_of_sampling` when the congruence is a product of isometries. -/
 
-/-- **A2 continuum, the orthogonal-congruence input.** Between any two orientations `d, d'` the `a → 0`
-rotation carries the correlation operator by an orthogonal congruence, `C d' = P (C d) Pᵀ` with
-`Pᵀ P = 1`. This is discharged below: structurally by `continuumRotationCongruence_of_gram` (a coordinate
-rotation of the correlation Gram exhibits it) and then from the sampling isometry by
-`A2_continuum_of_sampling`, reducing A2's continuum to the Nyquist-Shannon sampling isometry. -/
+/-- The hypothesis that the correlation operator's dependence on orientation is by orthogonal
+congruence: for every pair `d, d'` there is a `P` with `Pᵀ P = 1` and `C d' = P (C d) Pᵀ`. The
+orientation type `D` is arbitrary; `P` may depend on both orientations.
+
+DERIVED: the `1` is the identity matrix, the value of `Pᵀ * P` that makes `P` orthogonal. -/
 def ContinuumRotationCongruence {D n : Type*} [Fintype n] [DecidableEq n]
     (C : D → Matrix n n ℝ) : Prop :=
   ∀ d d', ∃ P : Matrix n n ℝ, Pᵀ * P = 1 ∧ C d' = P * C d * Pᵀ
 
-/-- **A2 continuum from the geometric input.** If the orientation dependence of the correlation operator
-is by orthogonal congruence (`ContinuumRotationCongruence`), every spectral read `f ∘ charpoly` is
-direction-independent, so `A2` holds. This discharges A2's continuum core from the single geometric
-input; the read invariance itself is `read_orthogonal_invariant`. The congruence input is discharged
-below, structurally by `continuumRotationCongruence_of_gram` (a coordinate rotation of the correlation
-Gram exhibits it) and then from the sampling isometry by `A2_continuum_of_sampling`, so A2's continuum
-reduces to the Nyquist-Shannon sampling isometry. -/
+/-- Given `ContinuumRotationCongruence C`, the read `fun d => f (C d).charpoly` satisfies `A2`: it takes
+the same value at every orientation. The proof takes the congruence at the two orientations and
+applies `read_orthogonal_invariant`. It holds for every `f`, with no condition on `f`.
+
+DERIVED: no numeral. -/
 theorem A2_continuum_of_congruence {D n : Type*} [Fintype n] [DecidableEq n]
     (f : Polynomial ℝ → ℝ) (C : D → Matrix n n ℝ)
     (h : ContinuumRotationCongruence C) :
@@ -302,32 +306,31 @@ theorem A2_continuum_of_congruence {D n : Type*} [Fintype n] [DecidableEq n]
   show f (C d).charpoly = f (C d').charpoly
   rw [hC, read_orthogonal_invariant f P (C d) hP]
 
-/-! ### A2 continuum is structural: the read is a Gram spectral functional
+/-! ### The congruence hypothesis for a Gram-valued correlation
 
-The remaining input `ContinuumRotationCongruence` is not a separate geometric assumption. Every
-load-bearing read is a spectral functional of a correlation GRAM `C = Xᵀ X` ([E, §3, §10]: `φ`, étendue,
-Strehl, `a_δ`, contrast, dominance are functions of the eigenvalue multiset of a correlation operator).
-Under a coordinate rotation of the field, `X ↦ X Q` with `Qᵀ Q = 1`, the Gram transforms by orthogonal
-congruence, `(X Q)ᵀ (X Q) = Qᵀ (Xᵀ X) Q`, so the congruence hypothesis is exhibited (`P = Qᵀ`), not
-granted. What A2 still carries is only that the continuum correlation operator is such a Gram and that
-orientations relate by a coordinate rotation of one field (the Euclidean covariance of the action) plus
-the existence of the `a → 0` limit, the same limit every read needs. This is the precise form of
-"entropy is coordinate-free" ([E, Prop 3.5], spectral form): a spectral read cannot introduce anisotropy
-the field does not have. -/
+When the correlation operator is a Gram `C = Xᵀ X` and orientations relate by `X ↦ X Q` with
+`Qᵀ Q = 1`, the congruence hypothesis is exhibited rather than assumed, with `P = Qᵀ`: the Gram
+transforms as `(X Q)ᵀ (X Q) = Qᵀ (Xᵀ X) Q`. The reads cited in [E, §3, §10] (`φ`, étendue, Strehl,
+`a_δ`, contrast, dominance) are functions of the eigenvalue multiset of a correlation operator; that
+they are is not proved here. What remains as hypothesis is that the correlation operator is such a
+Gram and that orientations relate by a coordinate change of one field. -/
 
-/-- **The correlation Gram of a rotated field is an orthogonal congruence of the original.** Rotating the
-field's coordinates `X ↦ X Q` sends the Gram `Xᵀ X ↦ Qᵀ (Xᵀ X) Q`. Pure matrix algebra, no hypothesis on
-`Q`. -/
+/-- Rotating a field's coordinates sends its Gram to an orthogonal congruence of the original:
+`(X Q)ᵀ (X Q) = Qᵀ (Xᵀ X) Q`. Matrix algebra, with no hypothesis on `Q` at all — the identity holds
+for every `Q`.
+
+DERIVED: no numeral. -/
 theorem gram_rotation_congruence {m n : Type*} [Fintype m] [Fintype n]
     (X : Matrix m n ℝ) (Q : Matrix n n ℝ) :
     (X * Q)ᵀ * (X * Q) = Qᵀ * (Xᵀ * X) * Q := by
   rw [Matrix.transpose_mul]
   simp only [Matrix.mul_assoc]
 
-/-- **A Gram spectral read is rotation-invariant.** A read `f ∘ charpoly` of the correlation Gram `Xᵀ X`
-is unchanged when the field's coordinates are rotated, `X ↦ X Q` (`Qᵀ Q = 1`): the Gram transforms by
-orthogonal congruence and a spectral read sees only the spectrum. Isotropy is structural, from the read
-being a spectral functional of a Gram, not a separate input. -/
+/-- A read `f ∘ charpoly` of the Gram `Xᵀ X` is unchanged under `X ↦ X Q` for orthogonal `Q`. The proof
+rewrites by `gram_rotation_congruence` and applies `read_orthogonal_invariant` at `Qᵀ`, which is
+orthogonal because `Qᵀ Q = 1` gives `Q Qᵀ = 1`.
+
+DERIVED: the `1` is the identity matrix, the value of `Qᵀ * Q` that makes `Q` orthogonal. -/
 theorem gram_read_rotation_invariant {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
     (f : Polynomial ℝ → ℝ) (X : Matrix m n ℝ) (Q : Matrix n n ℝ) (hQ : Qᵀ * Q = 1) :
     f (((X * Q)ᵀ * (X * Q)).charpoly) = f ((Xᵀ * X).charpoly) := by
@@ -338,12 +341,13 @@ theorem gram_read_rotation_invariant {m n : Type*} [Fintype m] [Fintype n] [Deci
   rw [Matrix.transpose_transpose] at key
   exact key
 
-/-- **`ContinuumRotationCongruence` is automatic for a Gram-valued correlation.** If the correlation
-operator in orientation `d` is the Gram of the field read in that orientation, `C d = (F d)ᵀ (F d)`, and
-orientations are related by a coordinate rotation of one field, `F d' = (F d) (Q d d')` with
-`(Q d d')ᵀ (Q d d') = 1`, then `ContinuumRotationCongruence` holds outright: A2's continuum input is a
-consequence of the read being a correlation Gram, not a separate geometric assumption. Composing with
-`A2_continuum_of_congruence` discharges A2's continuum core from Euclidean covariance of the field. -/
+/-- If the correlation operator at orientation `d` is the Gram `(F d)ᵀ (F d)`, and the fields relate by
+`F d' = (F d) (Q d d')` with each `Q d d'` orthogonal, then `ContinuumRotationCongruence` holds for
+that Gram-valued correlation, with `P = (Q d d')ᵀ`. Both the Gram form and the relation between fields
+are hypotheses.
+
+DERIVED: the `1` is the identity matrix, the value of `(Q d d')ᵀ * (Q d d')` that makes each `Q d d'`
+orthogonal. -/
 theorem continuumRotationCongruence_of_gram {D m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
     (F : D → Matrix m n ℝ) (Q : D → D → Matrix n n ℝ)
     (hQ : ∀ d d', (Q d d')ᵀ * (Q d d') = 1)
@@ -355,40 +359,42 @@ theorem continuumRotationCongruence_of_gram {D m n : Type*} [Fintype m] [Fintype
   · show (F d')ᵀ * F d' = (Q d d')ᵀ * ((F d)ᵀ * F d) * ((Q d d')ᵀ)ᵀ
     rw [hrot d d', gram_rotation_congruence, Matrix.transpose_transpose]
 
-/-! ### A2 continuum: the sampling-theorem bridge (exact below Nyquist)
+/-! ### The congruence as a product of isometries
 
 `continuumRotationCongruence_of_gram` needs the orientations to relate by an orthogonal `Q`. The
-deterministic system identification (probe P4) shows the read's directional anisotropy is exactly zero
-below the Nyquist threshold, with `a⋆ k₀ = 0.364` constant across wavenumber and grid: below the
-threshold the discrete samples reconstruct the band-limited field exactly (Nyquist-Shannon), so the
-sampling map `Sm` and the reconstruction map `Rc` are isometries, and a coordinate rotation `Um` is an
-isometry. The rotation acts on the samples by `Q = Rc Um Sm`, orthogonal as a product of orthogonals,
-so the sampled field's orientations relate by an orthogonal `Q` outright and A2's continuum holds. What
-A2 still carries on the continuum side is only the sampling isometry itself (Nyquist-Shannon), which the
-system identification confirms is exact below the threshold, not merely asymptotic. -/
+lemmas below build one as a product: if a reconstruction map `Rc`, a coordinate change `Um` and a
+sampling map `Sm` are each orthogonal, then so is `Rc Um Sm`, and `A2` follows for every Gram spectral
+read. Orthogonality of the three factors is a hypothesis in every statement here; the appeal to the
+Nyquist-Shannon sampling theorem is what would supply it, and is not formalised. -/
 
-/-- **A product of orthogonal matrices is orthogonal.** -/
+/-- A product of two orthogonal matrices is orthogonal.
+
+DERIVED: the `1`s are the identity matrix, the value of `Mᵀ * M` that makes a matrix `M` orthogonal —
+twice as hypothesis and once as conclusion. -/
 theorem orthogonal_mul {n : Type*} [Fintype n] [DecidableEq n] {P Q : Matrix n n ℝ}
     (hP : Pᵀ * P = 1) (hQ : Qᵀ * Q = 1) : (P * Q)ᵀ * (P * Q) = 1 := by
   rw [Matrix.transpose_mul, Matrix.mul_assoc, ← Matrix.mul_assoc Pᵀ P Q, hP, Matrix.one_mul, hQ]
 
-/-- **The resample-after-rotation operator is orthogonal (the sampling-theorem bridge).** Below the
-Nyquist threshold the reconstruction map `Rc` and the sampling map `Sm` are isometries (`Rcᵀ Rc = 1`,
-`Smᵀ Sm = 1`: the discrete samples carry the continuum inner product exactly, Nyquist-Shannon) and a
-coordinate rotation `Um` is an isometry (`Umᵀ Um = 1`). The rotation acts on the samples by the operator
-`Q = Rc Um Sm`, orthogonal as a product of orthogonals. -/
+/-- If `Rc`, `Um` and `Sm` are each orthogonal, so is `Rc Um Sm`. Two applications of
+`orthogonal_mul`. Read as reconstruction, coordinate change and sampling, it says the
+resample-after-rotation operator is orthogonal; the orthogonality of the three factors is supplied by
+the caller.
+
+DERIVED: the `1`s are the identity matrix, the value of `Mᵀ * M` that makes a matrix `M` orthogonal —
+three times as hypothesis and once as conclusion. -/
 theorem resampling_orthogonal {n : Type*} [Fintype n] [DecidableEq n] {Rc Um Sm : Matrix n n ℝ}
     (hR : Rcᵀ * Rc = 1) (hU : Umᵀ * Um = 1) (hS : Smᵀ * Sm = 1) :
     (Rc * Um * Sm)ᵀ * (Rc * Um * Sm) = 1 :=
   orthogonal_mul (orthogonal_mul hR hU) hS
 
-/-- **A2 continuum from the sampling isometry.** If below Nyquist the orientations of the sampled field
-relate by the resample-after-rotation operator `Q = Rc Um Sm` (reconstruction, rotation, sampling, each
-an isometry), then every Gram spectral read `fread ∘ charpoly ∘ (Xᵀ X)` is direction-independent: `A2`
-holds. This discharges A2's continuum core from the single remaining analytic input, the Nyquist-Shannon
-sampling isometry, which the deterministic system identification (probe P4, `a⋆ k₀` constant, anisotropy
-at machine zero below the threshold) confirms is exact below the threshold. Composes
-`resampling_orthogonal`, `continuumRotationCongruence_of_gram`, and `A2_continuum_of_congruence`. -/
+/-- If the fields at two orientations relate by `F d' = F d · (Rc d d' · Um d d' · Sm d d')` with the
+three factors orthogonal at every pair, then the Gram spectral read `fread ∘ charpoly ∘ (Fᵀ F)`
+satisfies `A2`. It composes `resampling_orthogonal`, `continuumRotationCongruence_of_gram` and
+`A2_continuum_of_congruence`. The orthogonality of `Rc`, `Um` and `Sm`, and the relation `hrot`
+between the fields, are the hypotheses; nothing here establishes them.
+
+DERIVED: the `1`s are the identity matrix, the value of `Mᵀ * M` that makes each of the three factors
+orthogonal. -/
 theorem A2_continuum_of_sampling {D m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
     (fread : Polynomial ℝ → ℝ) (F : D → Matrix m n ℝ) (Rc Um Sm : D → D → Matrix n n ℝ)
     (hR : ∀ d d', (Rc d d')ᵀ * (Rc d d') = 1)
@@ -400,12 +406,12 @@ theorem A2_continuum_of_sampling {D m n : Type*} [Fintype m] [Fintype n] [Decida
     (continuumRotationCongruence_of_gram F (fun d d' => Rc d d' * Um d d' * Sm d d')
       (fun d d' => resampling_orthogonal (hR d d') (hU d d') (hS d d')) hrot)
 
-/-- **An inner-product-preserving matrix is orthogonal.** If `Q` preserves the Euclidean inner product of
-every pair of vectors, `(Q *ᵥ x) ⬝ᵥ (Q *ᵥ y) = x ⬝ᵥ y`, then `Qᵀ Q = 1`. This is the matrix content of an
-isometry: the reconstruction, rotation, and sampling maps of the sampling-theorem bridge preserve the
-sample inner product (Nyquist-Shannon), hence are orthogonal, feeding `resampling_orthogonal` and
-`A2_continuum_of_sampling`. The A2 counterpart of A1 bottoming out at `real_inner_self_nonneg`: A2's
-sampling isometry bottoms out at this inner-product characterisation. -/
+/-- If `Q` preserves the Euclidean dot product of every pair of vectors, `(Q *ᵥ x) ⬝ᵥ (Q *ᵥ y) = x ⬝ᵥ y`,
+then `Qᵀ Q = 1`. The entries are recovered by testing on the standard basis vectors. This is the form
+in which a map that preserves the sample inner product can be fed to `resampling_orthogonal` and
+`A2_continuum_of_sampling`.
+
+DERIVED: the `1` is the identity matrix, the conclusion's value for `Qᵀ * Q`. -/
 theorem orthogonal_of_preserves_dotProduct {n : Type*} [Fintype n] [DecidableEq n] {Q : Matrix n n ℝ}
     (h : ∀ x y : n → ℝ, (Q *ᵥ x) ⬝ᵥ (Q *ᵥ y) = x ⬝ᵥ y) :
     Qᵀ * Q = 1 := by

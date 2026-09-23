@@ -2,51 +2,59 @@ import MassGap.CubeArea
 import MassGap.WilsonHypercubic
 
 /-!
-# The directed surfaces, as plaquettes of the 4-D lattice
+# MassGap.SurfaceEmbed — directed cube surfaces as plaquettes of the 4-D lattice
 
-**WHY THIS FILE EXISTS.** `CubeArea` counts `3ᵏ` distinct surfaces of area `4k+6`, but they are
-surfaces of the 3-D sublattice: a `CubeArea.Face` is `(axis, corner)` in `ℕ³`. The vortex family the
-entropy floor is a statement about lives on the 4-D lattice, where a surface is a set of
-`WilsonHypercubic.Plaq 4 n`. Until the two are the same type, "the directed surfaces are a sub-family
-of the closed vortex surfaces" cannot be written down, let alone assumed — which is what
-`VortexCount`'s count injection needed and did not have.
+`CubeArea` counts `3ᵏ` distinct surfaces of area `4k+6`, over a 3-D sublattice: a `CubeArea.Face` is
+a pair `(axis, corner)` with the corner in `ℕ³`. A surface on the physical lattice is a
+`Finset (Plaq 4 n)`. This module supplies a map between the two types and transports both counts
+along it.
 
-**WHAT IS PROVED HERE.** An embedding `faceToPlaq` of 3-D faces into 4-D plaquettes — the plane
-spanned by the two axes the face's normal is not, at the face's corner, in the time-zero slice — and
-its injectivity on any region fitting inside the box. Transporting `CubeArea`'s two results along it:
+The map. `planeOf` sends a face normal in `Fin 3` to the pair of remaining axes, taken in cyclic
+order and read inside `Fin 4`. `siteOf` places a cube corner in the box, reducing the three cube
+coordinates mod `n` and setting the fourth to `0`. `faceToPlaq` pairs them, and `plaqSurface` is the
+image of a directed path's boundary faces under it.
 
-* `plaqSurface_injective` — distinct directed paths give distinct PLAQUETTE surfaces;
-* `card_plaqSurface` — each carries exactly `4k+6` plaquettes.
+The transported results:
 
-So `3ᵏ` distinct surfaces of area `4k+6`, stated over the physical lattice's own plaquette
-type (`directed_plaq_surfaces_count_and_area`).
+* `card_plaqSurface` — a `k`-step path's plaquette surface has exactly `4 * k + 6` plaquettes;
+* `plaqSurface_injective` — distinct paths give distinct plaquette surfaces;
+* `directed_plaq_surfaces_count_and_area` — both together, as a family of `3 ^ k` surfaces each of
+  that size;
+* `three_pow_le_card_of_plaq_subfamily` — any family containing all of them has at least `3 ^ k`
+  members;
+* `three_pow_le_card_along_boxes` — the same bound at every `k`, along a sequence of boxes.
 
-**WHAT THE BOX COSTS, and it is the only hypothesis.** `Site 4 n` is periodic: coordinates live in
-`Fin n`. A cube-path of `k` steps reaches coordinate `k`, and its faces reach `k+1`, so the embedding
-is injective exactly while `k + 1 < n` — the path must fit in the box without wrapping. That is not a
-tuning parameter: it is the statement that the surfaces being counted are distinct AS SUBSETS OF THIS
-BOX, and it fails only when they are wrapped onto each other. Every theorem below carries it
-explicitly.
+Scope: the box. `Site 4 n` is periodic, with coordinates in `Fin n`. A `k`-step cube path reaches
+coordinate `k` and its faces reach `k + 1`, so `siteOf` is faithful, and the embedding injective,
+while `k + 1 < n`. Every theorem below carries that hypothesis explicitly. One fixed `n` therefore
+covers only the `k` below it, which is why `three_pow_le_card_along_boxes` indexes the box by `k`:
+that is the shape a `k → ∞` consumer such as `VortexCount.junction_of_physical_count` takes.
 
-DERIVED THROUGHOUT: `3` is the dimension of the cube-path's sublattice, `4` the dimension of the
-physical lattice, `2` the number of directions a plane needs. The `+1` and `+2` in `planeOf` are the
-two axes other than the normal, taken in cyclic order so the pair is a plane and not a degenerate
-one. None is a magnitude.
+Scope: the slice. `siteOf` sets the fourth coordinate to `0`, so every surface built here lies in one
+time slice and the plaquettes it contains all have a plane drawn from the first three axes.
+
+Scope: containment. `three_pow_le_card_of_plaq_subfamily` takes the containment of the directed
+surfaces in `V` as a hypothesis; nothing here proves that a physical vortex family contains them.
 -/
 
 namespace MassGap.SurfaceEmbed
 
 open MassGap.CubeArea MassGap.WilsonHypercubic
 
-/-- The 4-D plane a 3-D face's normal names: the two axes the normal is not, in cyclic order.
+/-- The plane a face normal names: the two axes the normal is not, in cyclic order, as a pair in
+`Fin 4 × Fin 4`.
 
-DERIVED: `3` is the sublattice dimension the cyclic order runs in; `1` and `2` are the two OTHER
-axes, which is what a plane perpendicular to the third consists of. `4` is the physical dimension the
-result is read in — the directions are the same three, viewed inside it. -/
+Both components land in the first three axes, since the offsets are reduced mod `3`; the fourth axis
+is never produced.
+
+DERIVED: `3` is the sublattice dimension, and the modulus the cyclic order runs in. `1` and `2` are
+the two offsets from the normal, which pick out the other two axes of that sublattice. `4` is the
+physical dimension the pair is read inside. -/
 def planeOf (a : Fin 3) : Fin 4 × Fin 4 :=
   (⟨((a : ℕ) + 1) % 3, by omega⟩, ⟨((a : ℕ) + 2) % 3, by omega⟩)
 
-/-- The normal is recoverable from the plane, so distinct normals give distinct planes. -/
+/-- `planeOf` is injective: the normal is recoverable from the first component of the plane, since
+`a ↦ (a + 1) % 3` is injective on `Fin 3`. -/
 theorem planeOf_injective : Function.Injective planeOf := by
   intro a b hab
   have h1 : ((a : ℕ) + 1) % 3 = ((b : ℕ) + 1) % 3 := congrArg (fun p => (p.1 : ℕ)) hab
@@ -54,16 +62,26 @@ theorem planeOf_injective : Function.Injective planeOf := by
   have hb := b.isLt
   exact Fin.ext (by omega)
 
-/-- The corner of a face, placed in the time-zero slice of the 4-D box.
+/-- A cube corner placed in the box: the first three coordinates are the cube coordinates reduced
+mod `n`, the fourth is `0`.
 
-DERIVED: `3` is the sublattice dimension — the first three directions carry the cube-path's
-coordinates and the fourth is the time slice the surface sits in, which is `0` because the
-construction fixes one slice rather than choosing among them. -/
+The reduction is what makes this total on all of `Cube`; it is faithful only below `n`, which is what
+`siteOf_inj_of_lt` requires. `NeZero n` is needed for the box to be inhabited.
+
+DERIVED: `3` is the sublattice dimension, the number of coordinates carried over. `4` is the physical
+dimension of the target `Site 4 n`. `0` is the fourth coordinate: the construction fixes one time
+slice rather than choosing among them. -/
 def siteOf (n : ℕ) [NeZero n] (x : Cube) : Site 4 n :=
   fun μ => if h : (μ : ℕ) < 3 then ⟨x ⟨(μ : ℕ), h⟩ % n, Nat.mod_lt _ (NeZero.pos n)⟩
            else ⟨0, NeZero.pos n⟩
 
-/-- Inside the box the placement is faithful: coordinates below `n` survive the periodic reduction. -/
+/-- `siteOf n` is injective on cube corners whose every coordinate is below `n`: under that
+hypothesis the periodic reduction is the identity, so equal placements have equal coordinates.
+
+Both corners must satisfy the bound; the conclusion is equality in `Cube`, the full three-coordinate
+function, not just on the coordinates the site records.
+
+DERIVED: `n` is the box extent and the modulus; the statement carries no numeral of its own. -/
 theorem siteOf_inj_of_lt {n : ℕ} [NeZero n] {x y : Cube}
     (hx : ∀ a, x a < n) (hy : ∀ a, y a < n) (h : siteOf n x = siteOf n y) : x = y := by
   funext a
@@ -74,14 +92,17 @@ theorem siteOf_inj_of_lt {n : ℕ} [NeZero n] {x y : Cube}
   rw [Nat.mod_eq_of_lt (hx _), Nat.mod_eq_of_lt (hy _)] at hval
   simpa using hval
 
-/-- **A 3-D FACE AS A 4-D PLAQUETTE.**
+/-- A face becomes a plaquette: its normal becomes the plane `planeOf f.1`, its corner the site
+`siteOf n f.2`.
 
-DERIVED: `4` is the dimension of the physical lattice the Wilson action is written on
-(`WilsonHypercubic`), and `3` is the sublattice the cube-path lives in. Neither is chosen here —
-both are already fixed by the objects this map runs between. -/
+DERIVED: `4` is the dimension of the physical lattice, fixed by the target type `Plaq 4 n`. It is the
+only numeral in the statement; the sublattice dimension enters through `Face` and `planeOf`. -/
 def faceToPlaq (n : ℕ) [NeZero n] (f : Face) : Plaq 4 n := (planeOf f.1, siteOf n f.2)
 
-/-- The embedding is faithful on faces whose corners fit in the box. -/
+/-- `faceToPlaq n` is injective on faces whose corners have every coordinate below `n`.
+
+The two components separate: `planeOf_injective` recovers the normal, `siteOf_inj_of_lt` recovers
+the corner. The bound is required of both faces, and it is a hypothesis about the corners only. -/
 theorem faceToPlaq_inj_on {n : ℕ} [NeZero n] {f g : Face}
     (hf : ∀ a, f.2 a < n) (hg : ∀ a, g.2 a < n)
     (h : faceToPlaq n f = faceToPlaq n g) : f = g := by
@@ -91,8 +112,13 @@ theorem faceToPlaq_inj_on {n : ℕ} [NeZero n] {f g : Face}
 
 /-! ### The path stays in the box -/
 
-/-- Each coordinate of the `i`-th cube is at most `i`: the coordinate SUM is `i`
-(`Floor.cubePos_sum_le`) and the other coordinates are not negative. -/
+/-- Every coordinate of the `i`-th cube on a path is at most `i`, for `i ≤ k`.
+
+The coordinate sum is exactly `i` (`Floor.cubePos_sum_le`), and a single term of a sum of naturals is
+at most the sum. The bound is on each coordinate separately, not on their sum.
+
+DERIVED: `3` is the step alphabet `Fin 3` of the cube path; it is the only numeral in the
+statement. -/
 theorem cubePos_coord_le {k : ℕ} (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k) (a : Fin 3) :
     MassGap.cubePos s i a ≤ i := by
   classical
@@ -102,8 +128,15 @@ theorem cubePos_coord_le {k : ℕ} (s : Fin k → Fin 3) {i : ℕ} (hi : i ≤ k
       (fun b _ => Nat.zero_le _) (Finset.mem_univ a)
   omega
 
-/-- Every corner the configuration's faces use is at most `k+1` from the origin, so a box with
-`k + 1 < n` holds the whole surface without wrapping. -/
+/-- Every coordinate of every corner used by a face of a `k`-step path's configuration is at most
+`k + 1`.
+
+A cube of the configuration sits at coordinates at most `k` by `cubePos_coord_le`, and a face is
+either that cube's own corner or the corner one step along an axis, which adds at most one. The bound
+is uniform over the path, the cube index and the axis.
+
+DERIVED: `3` is the step alphabet `Fin 3`. `1` is the single step a face's corner may sit beyond its
+cube's, which is where the `k + 1` comes from. -/
 theorem face_corner_le {k : ℕ} (s : Fin k → Fin 3) {f : Face} {x : Cube}
     (hx : x ∈ MassGap.cubeConfig s) (hf : f ∈ faces x) (a : Fin 3) :
     f.2 a ≤ k + 1 := by
@@ -125,15 +158,26 @@ theorem face_corner_le {k : ℕ} (s : Fin k → Fin 3) {f : Face} {x : Cube}
 
 /-! ### The surfaces, over plaquettes -/
 
-/-- **THE DIRECTED SURFACE, AS A SET OF PLAQUETTES OF THE 4-D LATTICE.**
+/-- The image of a directed path's boundary faces under `faceToPlaq n`, as a
+`Finset (Plaq 4 n)`.
 
-DERIVED: `3` is the step alphabet of the path (`Fin 3`, `Floor.directed_paths_card`'s own) and `4`
-the physical dimension. Both are inherited from `faceToPlaq`; nothing is chosen at this definition. -/
+Taking an image can collapse elements; `card_plaqSurface` is what recovers the size, and it needs the
+box hypothesis. `noncomputable` because the image is taken classically.
+
+DERIVED: `3` is the step alphabet `Fin k → Fin 3` of the path, and `4` is the physical dimension of
+the target plaquettes. Both are inherited from `faceToPlaq` and the path type; neither is chosen
+here. -/
 noncomputable def plaqSurface (n : ℕ) [NeZero n] {k : ℕ} (s : Fin k → Fin 3) :
     Finset (Plaq 4 n) :=
   (boundaryFaces (MassGap.cubeConfig s)).image (faceToPlaq n)
 
-/-- The boundary's faces all fit in a box with `k + 1 < n`. -/
+/-- Under `hk : k + 1 < n`, every coordinate of every boundary face's corner is below `n`.
+
+`face_corner_le` bounds the corner by `k + 1`, and `hk` puts that below `n`. This is the hypothesis
+`faceToPlaq_inj_on` consumes, produced for the faces a surface actually uses.
+
+DERIVED: `1` is the single step in `k + 1`, the reach of a face beyond its cube. `3` is the step
+alphabet `Fin 3` of the path. -/
 theorem boundary_corner_lt {n k : ℕ} (hk : k + 1 < n) (s : Fin k → Fin 3)
     {f : Face} (hf : f ∈ boundaryFaces (MassGap.cubeConfig s)) (a : Fin 3) :
     f.2 a < n := by
@@ -143,8 +187,16 @@ theorem boundary_corner_lt {n k : ℕ} (hk : k + 1 < n) (s : Fin k → Fin 3)
   have := face_corner_le s hx hfx a
   omega
 
-/-- **THE AREA SURVIVES THE EMBEDDING.** `4k+6` plaquettes, because the embedding is injective on
-exactly the faces this surface uses. -/
+/-- A `k`-step path's plaquette surface has exactly `4 * k + 6` elements, given `k + 1 < n`.
+
+The image has the same size as the source because `faceToPlaq n` is injective on the boundary faces
+(`boundary_corner_lt` supplies the bound, `faceToPlaq_inj_on` the injectivity), and
+`CubeArea.boundary_card_eq` gives the source's size. The box hypothesis is what rules out two faces
+wrapping onto the same plaquette.
+
+DERIVED: `4` and `6` are the boundary-face count of a `k`-step cube path, carried over from
+`CubeArea.boundary_card_eq`, and `4` is also the physical dimension in `Plaq 4 n`. `1` is the step in
+`k + 1`. `3` is the step alphabet `Fin 3`. -/
 theorem card_plaqSurface {n k : ℕ} [NeZero n] (hk : k + 1 < n) (s : Fin k → Fin 3) :
     (plaqSurface n s).card = 4 * k + 6 := by
   classical
@@ -152,9 +204,13 @@ theorem card_plaqSurface {n k : ℕ} [NeZero n] (hk : k + 1 < n) (s : Fin k → 
   intro f hf g hg h
   exact faceToPlaq_inj_on (boundary_corner_lt hk s hf) (boundary_corner_lt hk s hg) h
 
-/-- **DISTINCT PATHS GIVE DISTINCT PLAQUETTE SURFACES.** `CubeArea.boundaryFaces_cubeConfig_injective`
-transported along the embedding: the images differ because the embedding is faithful on the faces
-either surface uses, so a common image would force a common boundary. -/
+/-- `plaqSurface n` is injective on `Fin k → Fin 3`, given `k + 1 < n`.
+
+`CubeArea.boundaryFaces_cubeConfig_injective` transported along the embedding: equal images force
+equal boundary-face sets, because `faceToPlaq_inj_on` is available on both sides under the box
+hypothesis, and distinct boundaries come from distinct paths.
+
+DERIVED: `1` is the step in `k + 1`, and `3` is the step alphabet `Fin 3` of the paths. -/
 theorem plaqSurface_injective {n k : ℕ} [NeZero n] (hk : k + 1 < n) :
     Function.Injective (fun s : Fin k → Fin 3 => plaqSurface n s) := by
   classical
@@ -177,9 +233,18 @@ theorem plaqSurface_injective {n k : ℕ} [NeZero n] (hk : k + 1 < n) :
     have := faceToPlaq_inj_on (boundary_corner_lt hk s hg) (boundary_corner_lt hk t hf) hgf
     exact this ▸ hg
 
-/-- **THEOREM 7.1 OVER THE PHYSICAL LATTICE.** In any 4-D box large enough to hold a `k`-step path,
-there are `3ᵏ` distinct surfaces of plaquettes, each of area exactly `4k+6`. This is the
-statement `VortexCount`'s count injection needs, at the type the vortex family has. -/
+/-- Given `k + 1 < n`, there is a `Finset (Finset (Plaq 4 n))` of size `3 ^ k` whose every member
+has exactly `4 * k + 6` elements.
+
+The witness is the image of the path space under `plaqSurface n`: `plaqSurface_injective` gives its
+size via `Floor.directed_paths_card`, and `card_plaqSurface` gives each member's.
+
+Scope: this is an existence statement about one box, at a `k` the box is large enough for. It does
+not say the family is unique, maximal, or contained in any physical vortex family.
+
+DERIVED: `3` is the step alphabet `Fin 3` of the paths, so `3 ^ k` is the path count. `4` and `6` are
+the boundary-face count of a `k`-step path, and `4` is also the physical dimension in `Plaq 4 n`. `1`
+is the step in `k + 1`. -/
 theorem directed_plaq_surfaces_count_and_area {n k : ℕ} [NeZero n] (hk : k + 1 < n) :
     ∃ S : Finset (Finset (Plaq 4 n)),
       S.card = 3 ^ k ∧ ∀ F ∈ S, F.card = 4 * k + 6 := by
@@ -191,10 +256,17 @@ theorem directed_plaq_surfaces_count_and_area {n k : ℕ} [NeZero n] (hk : k + 1
     obtain ⟨s, -, rfl⟩ := Finset.mem_image.mp hF
     exact card_plaqSurface hk s
 
-/-- **AND THE COUNT INJECTION, OVER PLAQUETTES.** If the physical vortex family `V` contains the
-directed surfaces, it has at least `3ᵏ` members. Both of the hypotheses
-`VortexCount.three_pow_le_card_of_embeds` could not previously discharge — the map and its
-injectivity — are theorems here; what is left is the containment, which is the physics. -/
+/-- If a family `V` of plaquette sets contains `plaqSurface n s` for every `k`-step path `s`, and
+`k + 1 < n`, then `3 ^ k ≤ V.card`.
+
+The image of the path space is a subset of `V` and has size `3 ^ k` by `plaqSurface_injective` and
+`Floor.directed_paths_card`, so `Finset.card_le_card` finishes.
+
+Scope: the containment `hsub` is a hypothesis. Nothing here shows that a family of physical vortex
+surfaces contains the directed ones, and `V` is otherwise arbitrary.
+
+DERIVED: `3` is the step alphabet `Fin 3` of the paths, so `3 ^ k` is their count. `4` is the physical
+dimension in `Plaq 4 n`. `1` is the step in `k + 1`. -/
 theorem three_pow_le_card_of_plaq_subfamily {n k : ℕ} [NeZero n] (hk : k + 1 < n)
     (V : Finset (Finset (Plaq 4 n)))
     (hsub : ∀ s : Fin k → Fin 3, plaqSurface n s ∈ V) :
@@ -209,19 +281,19 @@ theorem three_pow_le_card_of_plaq_subfamily {n k : ℕ} [NeZero n] (hk : k + 1 <
           MassGap.directed_paths_card]
     _ ≤ V.card := Finset.card_le_card himg
 
-/-- **THE COUNT INJECTION NEEDS THE BOX TO GROW, AND THIS IS WHERE THAT BECOMES VISIBLE.**
+/-- The count bound at every `k` at once, along a `k`-indexed sequence of boxes: given extents `n k`
+with `k + 1 < n k`, and families `V k` each containing the `k`-step directed surfaces in its own box,
+`3 ^ k ≤ (V k).card` for every `k`.
 
-`VortexCount.junction_of_physical_count` consumes `hM : ∀ k, 3^k ≤ M k` — a bound at EVERY `k`,
-because the free-energy density it extracts is a `k → ∞` limit. The embedding above is injective only
-while `k + 1 < n`. No fixed box satisfies both: at `k = n` the surfaces wrap and stop being distinct
-subsets.
+`three_pow_le_card_of_plaq_subfamily` applied at each `k`.
 
-So the count injection is stated along a SEQUENCE of boxes, one per `k`, each large enough to hold
-its own path. That is not a weakening introduced here — the vortex free-energy density is a
-thermodynamic-limit quantity, so a `k`-indexed family of boxes is what the physical statement was
-always about. It does mean the junction's `hM` cannot be discharged inside one finite volume, which
-is the same wall the infinite-volume question hits elsewhere in this development, reached here from
-the combinatorial side. -/
+Scope: the box is indexed by `k`, and it has to be — the embedding is injective only while
+`k + 1 < n`, so no single extent supports the bound at every `k`. Each `V k` lives in its own box and
+the statement relates none of them to any other; `hsub` is a hypothesis at every `k`. This is the
+shape `hM : ∀ k, 3 ^ k ≤ M k` takes for a consumer that passes to a `k → ∞` limit.
+
+DERIVED: `3` is the step alphabet `Fin 3` of the paths. `4` is the physical dimension in
+`Plaq 4 (n k)`. `1` is the step in `k + 1 < n k`. -/
 theorem three_pow_le_card_along_boxes (n : ℕ → ℕ) [∀ k, NeZero (n k)]
     (hn : ∀ k, k + 1 < n k)
     (V : ∀ k, Finset (Finset (Plaq 4 (n k))))

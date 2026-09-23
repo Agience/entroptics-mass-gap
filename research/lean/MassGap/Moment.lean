@@ -1,74 +1,79 @@
 import Mathlib
 
 /-!
-# C-1: the crossover tension from a bounded correlation moment (the analytic half, machine-checked)
+# MassGap.Moment — a read on a lag correlation, and the cosine bounds on its tension
 
-The min-entropy tension the gap reads is `μ = log(S(0)/S(2π/L))` of the whitened :F²: correlation, where
-`S(k) = Σ_d ρ(d) cos(2πkd/L)`. With reflection positivity (`ρ ≥ 0`, so `λ₁ = S(0)` and `λ₂ ≥ S(2π/L)`,
-`FreeField.structure_factor_peak_at_zero`), `μ ≤ log(S(0)/S(2π/L)) = -log ⟨cos θ⟩_ρ`. This module proves the
-purely analytic step that turns a **bounded correlation second moment** into confinement `μ < κ₀`:
+A `Read N` is a nonnegative function `ρ : Fin (N + 1) → ℝ` with positive total mass. From it the
+module derives the probability vector `p d = ρ d / ∑ ρ`, the lag angle
+`θ d = 2 * π * d / (N + 1)`, and the tension `tension = -log (∑ d, p d * cos (θ d))`. Everything
+else here is an inequality between those.
 
-    ⟨cos θ⟩_ρ ≥ 1 - ⟨θ²⟩_ρ/2   (cos x ≥ 1 - x²/2),   and   ⟨cos θ⟩ > 3^{-1/4} ⟹ -log⟨cos θ⟩ < ¼log3 = κ₀,
+## The two cosine bounds
 
-so `μ < κ₀` whenever `⟨θ²⟩_ρ/2 < 1 - 3^{-1/4}`, i.e. `M₂ < (1-3^{-1/4})L²/(2π²)` (a bounded correlation
-length). This is the machine-checked half of C-1; the measured input — that the :F²: correlation moment IS bounded
-across the crossover (finite specific heat / SU(N) no bulk transition) — is the cited physical content
-.
+Over one half-turn, `1 - x ^ 2 / 2 ≤ cos x ≤ 1 - (2 / π ^ 2) * x ^ 2`. The lower bound gives
+`cos_avg_ge`, `Read.cos_avg_ge_circ` and the route from a bounded second moment to a tension below
+`(1/4) * log 3`; the upper bound gives `Read.cos_avg_le_circ` and the route back.
+`neg_log_lt_floor` is the scalar step: `3 ^ (-1/4) < c` gives `-log c < (1/4) * log 3`.
 
-## THE APERTURE POSTULATE — an assumption of this program, stated rather than smuggled
+Both directions are stated about the circle distance `circLag d = min d (N + 1 - d)` rather than the
+raw index. `Read.cos_theta_circ` proves `cos (θ d) = cos (2 * π * circLag d / (N + 1))`, so the
+cosine average never sees the raw index; `thetaMoment_eq` gives the raw-index factorisation
+`∑ p d * θ d ^ 2 = (2π/(N + 1)) ^ 2 * ∑ p d * d ^ 2` for comparison.
 
-The read factors into a window part and a substrate part:
+`Read.substrate_lt_of_tension_lt_floor` and `Read.tension_ge_floor_of_substrate` are the two
+directions of the substrate-ratio bound:
 
-    ⟨cos θ⟩ ≥ 1 − (2π/(N+1))² · ⟨dist²⟩ / 2      (`Read.cos_avg_ge_circ`)
+    tension < (1/4) * log 3   ⟺   (∑ p d * circLag d ^ 2) / (N + 1) ^ 2  <  (1 - 3 ^ (-1/4)) / 8,
 
-where `dist` is the separation ON THE CIRCLE of `N+1` sites (`circLag`). That bound is a theorem and
-needs no assumption. What this program ASSUMES is how to READ its two factors:
+the forward direction requiring a positive cosine average, since a non-positive average has no
+logarithm.
 
-  * `(2π/(N+1))²` is the **aperture** — the finite, discrete window the measurement is taken through.
-  * `⟨dist²⟩` is a property of the **substrate**, carrying no reference to the window.
+## From a decay rate to an aperture-independent moment
 
-IT MUST BE THE CIRCLE DISTANCE. `thetaMoment_eq` gives the same factorisation with the RAW lag index,
-`⟨θ²⟩ = (2π/(N+1))²⟨d²⟩`, and that version is useless. On a periodic extent the correlation obeys
-`ρ(N) = ρ(−1) = ρ(1)` — asserted here as a fact about periodicity when this was written, and now a
-THEOREM of the genuine correlation, `MomentShape.wilsonCorrAt_neg` (every extent, every real
-coupling, no hypothesis), with `MomentShape.wilsonCorrAt_circLag_congr` saying the correlation reads
-the lag ONLY through `circLag`. So weighting the far half of the lag range by `d²` makes the moment grow like
-`N²` even when the correlation length is FIXED — for `ρ(d) = e^{−dist/1.5}` the raw moment runs
-14.5, 68.9, 307, 1305, 5384 across extents 8 to 128, while the circle moment settles at 3.28. A
-hypothesis bounding the raw moment is satisfiable by no physical correlation at all, gapped or not.
-`cos` is even and 2π-periodic, so the read never saw the raw index in the first place
-(`Read.cos_theta_circ`); using it was a bookkeeping error, not a modelling choice.
-  * `κ₀ = ¼log3` also belongs to the substrate: `Floor.lean` derives it by counting directed cube
-    paths (`3^k` of them) as an `n → ∞` per-area density, with no aperture in it anywhere.
+`tension_tendsto_zero_of_bounded_circ_moment` and `Complete.confinement_of_bounded_substrate` both
+take one bound holding at every aperture. `sum_circLag_le_two_mul` shows `circLag` is at most
+two-to-one on lags, and `circ_moment_le_of_geometric` converts a geometric bound
+`p d ≤ C * r ^ circLag d` with `r < 1` into the aperture-independent
+`2 * C * ∑' k, k ^ 2 * r ^ k`. `circ_decay_of_lag_decay` carries a geometric bound in the raw index
+to one in the circle distance, which is the direction `r ≤ 1` allows.
 
-So the gap statement `μ < κ₀` is a comparison ACROSS these two ledgers: an aperture-suppressed
-reading against a substrate density. The margin grows like the aperture squared because that is the
-exchange rate between the books, not because anything physical changes.
+## Scope
 
-WHY IT IS AN ASSUMPTION AND NOT A THEOREM. Nothing here derives that `⟨d²⟩` is substrate-intrinsic;
-that is an interpretive commitment about what the objects mean, and writing it as a Lean `axiom` would
-manufacture a theorem out of an interpretation. It is recorded here in prose instead, so a reader can
-reject it without having to reverse-engineer it from the definitions.
-
-WHAT IT COSTS, AND HOW IT CAN FAIL. The postulate is not free: it predicts that `⟨d²⟩` is INVARIANT
-under changing the aperture, for any theory whose substrate correlation is finite. That is testable
-and is being tested — `⟨d²⟩` against a growing aperture, a gapped arm against a gapless one, matched
-sampling. If both arms scale the same way, the factorisation carries no physics and this reading is
-wrong.
-
-THE ERROR IT NAMES. A quantity read off one aperture may not be set beside the same quantity read off
-a different aperture without converting. This effort has made that mistake three times — `m_hi`
-compared across unmatched sampling ratio, the clustering total `K` across unmatched couplings, and
-`⟨d²⟩` itself across unmatched apertures — each time treating a measured value as a substrate fact.
-Under this postulate those are one error, not three.
+* The factorisation `⟨cos θ⟩ ≥ 1 - (2π/(N + 1)) ^ 2 * ⟨circLag ^ 2⟩ / 2` (`Read.cos_avg_ge_circ`) is
+  a theorem. Reading its first factor as an aperture and its second as a property of a substrate
+  carrying no reference to the window is an interpretation of the two factors, not a theorem, and
+  nothing here derives it. It predicts that `⟨circLag ^ 2⟩` is invariant under changing the
+  aperture.
+* The bound must be stated about `circLag`, not the raw index. On a periodic extent
+  `ρ N = ρ (-1) = ρ 1` (`MomentShape.wilsonCorrAt_neg`, proved at every extent and every real
+  coupling), and `MomentShape.wilsonCorrAt_circLag_congr` says the correlation reads the lag only
+  through `circLag`. Weighting the far half of the lag range by `d ^ 2` makes the raw moment grow
+  like `N ^ 2` at fixed correlation length: for `ρ d = exp (-circLag d / 1.5)` the raw moment runs
+  `14.5, 68.9, 307, 1305, 5384` across extents `8` to `128` while the circle moment settles at
+  `3.28`.
+* `Read` carries two fields and no more. It does not carry whitening, entropy matching or
+  translation invariance. Whitening in the certificate path is the scalar division `ρ / ρ 0`, which
+  cancels out of `p = ρ / ∑ ρ`; translation invariance is proved separately of the concrete
+  correlator.
+* `Read` is inhabited by the flat correlation `ρ ≡ 1`. That profile satisfies the five
+  coupling-uniform facts `ShapeNoGo` collects, with equality in each, so no constraint of that kind
+  excludes it. In the spectral form `ρ d = ∑ w n * exp (-E n * d)` the flat profile is the `E 0 = 0`
+  term.
+* `κ₀ = (1/4) * log 3` is derived in `Floor.lean` by counting directed cube paths as an `n → ∞`
+  per-area density; no aperture enters it.
 -/
 
 namespace MassGap.Moment
 
 open scoped BigOperators
 
-/-- **The cos-moment bound.** For a probability vector `p` over a finite index and angles `θ`, the
-`p`-average of `cos θ` is at least `1 - ⟨θ²⟩/2` (termwise `cos x ≥ 1 - x²/2`). -/
+/-- For a probability vector `p` over a `Fintype` and angles `θ`,
+`1 - (∑ d, p d * θ d ^ 2) / 2 ≤ ∑ d, p d * cos (θ d)`. Termwise from
+`Real.one_sub_sq_div_two_le_cos`, then summed using `hsum`.
+
+DERIVED: `0` is the lower bound on each weight; `1` is the total mass of `p` and the leading term of
+the quadratic bound, which is `cos 0`; `2` is the exponent on the angle and the divisor in
+`1 - x ^ 2 / 2`, both from the second-order Taylor bound on cosine. -/
 theorem cos_avg_ge {ι : Type*} [Fintype ι] (p θ : ι → ℝ)
     (hp : ∀ d, 0 ≤ p d) (hsum : ∑ d, p d = 1) :
     1 - (∑ d, p d * (θ d) ^ 2) / 2 ≤ ∑ d, p d * Real.cos (θ d) := by
@@ -80,7 +85,12 @@ theorem cos_avg_ge {ι : Type*} [Fintype ι] (p θ : ι → ℝ)
     rw [Finset.sum_congr rfl (fun d _ => hpt d), Finset.sum_sub_distrib, hsum, ← Finset.sum_div]
   rwa [expand] at key
 
-/-- **-log of a value above `3^{-1/4}` is below the floor `κ₀ = ¼log3`.** -/
+/-- `(3 : ℝ) ^ (-(1 : ℝ) / 4) < c` gives `-Real.log c < (1 / 4) * Real.log 3`. Uses
+`Real.log_rpow` to evaluate `log (3 ^ (-1/4)) = -(1/4) * log 3` and monotonicity of the logarithm.
+
+DERIVED: `3` is the base, the entropy floor's own; `1` and `4` are the exponent `-1/4` on the left
+and the coefficient `1/4` on the right, the same number in two positions, since
+`3 ^ (-1/4) = exp (-(1/4) * log 3)`. -/
 theorem neg_log_lt_floor {c : ℝ} (hc : (3 : ℝ) ^ (-(1 : ℝ) / 4) < c) :
     - Real.log c < (1 / 4) * Real.log 3 := by
   have h3 : (0 : ℝ) < (3 : ℝ) ^ (-(1 : ℝ) / 4) := Real.rpow_pos_of_pos (by norm_num) _
@@ -90,11 +100,17 @@ theorem neg_log_lt_floor {c : ℝ} (hc : (3 : ℝ) ^ (-(1 : ℝ) / 4) < c) :
   rw [hlog] at hmono
   linarith
 
-/-- **The crossover tension is below the floor from a bounded moment (the analytic half of C-1).**
-If the `p`-weighted angular second moment satisfies `⟨θ²⟩/2 < 1 - 3^{-1/4}`, then the min-entropy tension
-`μ = -log ⟨cos θ⟩` is strictly below the entropy floor `κ₀ = ¼ log 3`. Combined with reflection positivity
-(`μ ≤ -log⟨cos θ⟩`, `λ₁=S(0)`, `λ₂ ≥ S(2π/L)`) this is `μ < κ₀`; the measured input is that the moment IS bounded
-(finite correlation length / no bulk transition), the cited physical content. -/
+/-- For a probability vector `p` and angles `θ`, if `(∑ d, p d * θ d ^ 2) / 2 < 1 - 3 ^ (-1/4)` then
+`-Real.log (∑ d, p d * cos (θ d)) < (1 / 4) * Real.log 3`. `cos_avg_ge` puts the cosine average above
+`3 ^ (-1/4)`, and `neg_log_lt_floor` finishes.
+
+Scope: the moment bound is a hypothesis. The conclusion is about `-log` of the cosine average, which
+is what `Read.tension` is defined to be.
+
+DERIVED: `0` is the lower bound on each weight; `1` is the total mass of `p`, the leading term of the
+quadratic bound, and the exponent numerator in `3 ^ (-1/4)` and `1/4`; `2` is the exponent on the
+angle and the divisor of the quadratic bound; `3` is the base of the floor and `4` its exponent's
+denominator. -/
 theorem tension_lt_floor_of_moment {ι : Type*} [Fintype ι] (p θ : ι → ℝ)
     (hp : ∀ d, 0 ≤ p d) (hsum : ∑ d, p d = 1)
     (hmom : (∑ d, p d * (θ d) ^ 2) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
@@ -105,41 +121,37 @@ theorem tension_lt_floor_of_moment {ι : Type*} [Fintype ι] (p θ : ι → ℝ)
     linarith
   exact neg_log_lt_floor hc_gt
 
-/-! ## The concrete entropy-matched read: `μ`, `p`, `θ` derived from a nonnegative correlation
+/-! ## The read: `p`, `θ` and the tension, derived from a nonnegative correlation
 
-A translation-invariant whitened correlation `ρ ≥ 0` over the lag index determines the read outright: the
-probability vector `p = ρ/Σρ`, the angles `θ_d = 2π d /(N+1)`, and the min-entropy tension
-`μ = -log ⟨cos θ⟩_p = log(S(0)/S(2π/N))`. So `p`'s vector properties and the tension identity are
-THEOREMS; the only inputs are `ρ ≥ 0` (reflection positivity) and the bounded moment (finite
-correlation length / no bulk transition). -/
+A nonnegative correlation `ρ` over the lag index with positive total mass determines the probability
+vector `p = ρ / ∑ ρ`, the angles `θ d = 2 * π * d / (N + 1)`, and the tension
+`-log (∑ p d * cos (θ d))`. The vector properties of `p` and the inequalities below are consequences
+of the two structure fields. -/
 
-/-- A correlation over the lag index: `ρ ≥ 0` with positive total mass, and nothing else.
-Everything the gap uses (`p`, `θ`, the tension `μ`) is derived from it.
+/-- A correlation over the lag index: a function `ρ : Fin (N + 1) → ℝ` together with `0 ≤ ρ d` at
+every lag and `0 < ∑ d, ρ d`. The derived quantities `p`, `θ` and `tension` are defined from these
+two fields alone.
 
-**⛔ THE TWO FIELDS ARE THE WHOLE CONTENT, and it is worth saying what they are NOT.** They do not
-carry entropy-matching, whitening or translation invariance. Whitening, in the certificate path, is
-the single scalar division `ρ/ρ(0)`, which cancels identically out of `p = ρ / ∑ρ` and therefore
-constrains nothing. Translation invariance is proved separately OF the concrete correlator
-(`MomentShape.wilsonCorrAt_neg`), not assumed here. And the instrument's entropy-matched resolution
-folds the FEATURE axis while leaving the ordered/lag axis at native resolution, so it imposes nothing
-on a lag distribution — `p` is a normalised measured autocorrelation, not a maximum-entropy
-distribution and not an exponential family.
+Scope: the structure carries no whitening, entropy matching or translation invariance. Whitening in
+the certificate path is the scalar division `ρ / ρ 0`, which cancels out of `p = ρ / ∑ ρ`;
+translation invariance of the concrete correlator is `MomentShape.wilsonCorrAt_neg`, proved
+elsewhere. `readA` is a transparent wrapper — `ShareEnvelope.readYMAt_rho` is `rfl` — so a consumer
+may unfold to `corrClay` and use facts about the Wilson measure directly.
 
-**⛔ AND CARRYING MORE WOULD NOT HELP, which is the real reason to leave it thin.** `readA` is a
-transparent wrapper — `ShareEnvelope.readYMAt_rho` is `rfl` — so any proof may unfold to `corrClay`
-and use anything provable of the Wilson measure. `ShapeNoGo` does exactly that: it proves the five
-strongest β-uniform facts OF `wilsonCorrAt` and then proves them insufficient, because the FLAT
-PROFILE satisfies every one with equality. That is not a hole in this abstraction. In the spectral
-form `ρ(d) = ∑ w_n e^{-E_n d}` the flat profile IS the `E_0 = 0` term, so any β-uniform constraint
-strong enough to exclude it is already the mass gap (`ZeroMode`). The obligation is genuinely
-dynamical: how `wilsonCorrAt N β` moves with `β`. -/
+DERIVED: `1` is the `+ 1` in the index type `Fin (N + 1)`, the number of lags on a periodic extent
+of `N + 1` sites; `0` is the lower bound on each value and the strict lower bound on the total
+mass. -/
 structure Read (N : ℕ) where
   ρ : Fin (N + 1) → ℝ
   hρ : ∀ d, 0 ≤ ρ d
   hpos : 0 < ∑ d, ρ d
 
-/-- A read always exists (the flat correlation `ρ ≡ 1`), so any opaque ensemble data valued in `Read N` is
-well-formed. (The proof's read is the concrete `Complete.readYMAt`.) -/
+/-- `Read N` is inhabited, by the flat correlation `ρ ≡ 1` with nonnegativity from `zero_le_one` and
+positive mass from `Finset.sum_pos` over the nonempty index type.
+
+DERIVED: `1` is the constant value of the flat correlation, and `0` the lower bound its
+nonnegativity field discharges. Since `p` normalises, any positive constant gives the same
+derived read. -/
 instance (N : ℕ) : Inhabited (Read N) where
   default :=
     { ρ := fun _ => 1
@@ -150,12 +162,23 @@ namespace Read
 
 variable {N : ℕ} (R : Read N)
 
-/-- The correlation as a probability vector `p_d = ρ_d / Σρ`. -/
+/-- The correlation normalised to a probability vector: `p d = ρ d / ∑ d', ρ d'`. Well defined
+because the `hpos` field makes the denominator nonzero.
+
+DERIVED: the one numeral is the `1` in the index type `Fin (N + 1)`, the number of lags. -/
 noncomputable def p (d : Fin (N + 1)) : ℝ := R.ρ d / ∑ d', R.ρ d'
-/-- The lag angle `θ_d = 2π d /(N+1)` (the `k=1` structure-factor phase). Carries `R` so `R.θ` reads as a
-field of the concrete read even though the angle depends only on the lattice index. -/
+/-- The lag angle `θ d = 2 * π * d / (N + 1)`, the phase of the first structure-factor mode. The
+read argument is unused — the angle depends only on the lattice index — and is carried so that `R.θ`
+reads as a projection alongside `R.p` and `R.ρ`.
+
+DERIVED: `2` is the `2π` of a full turn, so the `N + 1` lags divide the circle evenly; `1` is the
+`+ 1` giving the number of lags and the mode index the phase belongs to. -/
 noncomputable def θ (_R : Read N) (d : Fin (N + 1)) : ℝ := 2 * Real.pi * (d : ℝ) / (N + 1)
-/-- The min-entropy tension `μ = -log ⟨cos θ⟩_p = log(S(0)/S(2π/N))`. -/
+/-- The tension `-Real.log (∑ d, R.p d * Real.cos (R.θ d))`, the negative logarithm of the read's
+cosine average. Total as written; `Real.log` is `0` on non-positive arguments, so a non-positive
+cosine average gives `0` rather than an error.
+
+DERIVED: no numeral occurs. -/
 noncomputable def tension : ℝ := - Real.log (∑ d, R.p d * Real.cos (R.θ d))
 
 theorem p_nonneg (d : Fin (N + 1)) : 0 ≤ R.p d := div_nonneg (R.hρ d) R.hpos.le
@@ -164,19 +187,34 @@ theorem p_sum : ∑ d, R.p d = 1 := by
   unfold Read.p
   rw [← Finset.sum_div, div_self (ne_of_gt R.hpos)]
 
-/-- **The concrete tension is below the floor from a bounded moment** (via `tension_lt_floor_of_moment`):
-`μ = -log⟨cos θ⟩ < κ₀ = ¼log3` when `⟨θ²⟩/2 < 1 - 3^{-1/4}`. -/
+/-- `R.tension < (1 / 4) * Real.log 3` when `(∑ d, R.p d * R.θ d ^ 2) / 2 < 1 - 3 ^ (-1/4)`.
+`tension_lt_floor_of_moment` at `R.p` and `R.θ`, with `p_nonneg` and `p_sum` discharging the
+probability-vector hypotheses.
+
+DERIVED: `2` is the exponent on the angle and the divisor of the quadratic cosine bound; `1` is the
+leading term of that bound and the numerator of both `-1/4` and `1/4`; `3` is the base of the floor
+and `4` its exponent's denominator. -/
 theorem tension_lt_floor
     (hmom : (∑ d, R.p d * (R.θ d) ^ 2) / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
     R.tension < (1 / 4) * Real.log 3 :=
   tension_lt_floor_of_moment R.p R.θ (fun d => R.p_nonneg d) R.p_sum hmom
 
-/-- The lag angle squared factors the `1/L²` aperture scaling out of the lag index: `θ_d² = (2π/(N+1))² d²`. -/
+/-- `R.θ d ^ 2 = (2 * π / (N + 1)) ^ 2 * (d : ℝ) ^ 2`, by `ring` after unfolding: the squared lag
+angle factors into a squared window scale and a squared raw index.
+
+DERIVED: `2` is the `2π` of a full turn and the exponent of the square; `1` is the `+ 1` giving the
+number of lags. -/
 theorem theta_sq (d : Fin (N + 1)) : (R.θ d) ^ 2 = (2 * Real.pi / (N + 1)) ^ 2 * (d : ℝ) ^ 2 := by
   unfold Read.θ; ring
 
-/-- The angular second moment factors as `⟨θ²⟩ = (2π/(N+1))² ⟨d²⟩`: the correlation's angular spread is its
-lag second moment (a squared correlation length) times the explicit `1/L²` aperture scaling. -/
+/-- `∑ d, R.p d * R.θ d ^ 2 = (2 * π / (N + 1)) ^ 2 * ∑ d, R.p d * (d : ℝ) ^ 2`: the angular second
+moment factors into the squared window scale and the raw-index second moment. `theta_sq` summed.
+
+Scope: this is the factorisation in the raw index. The corresponding statement about the circle
+distance is `Read.cos_avg_ge_circ`, and the two differ — see the module header.
+
+DERIVED: `2` is the `2π` of a full turn and the exponent of both squares; `1` is the `+ 1` giving
+the number of lags. -/
 theorem thetaMoment_eq :
     ∑ d, R.p d * (R.θ d) ^ 2 = (2 * Real.pi / (N + 1)) ^ 2 * ∑ d, R.p d * (d : ℝ) ^ 2 := by
   rw [Finset.mul_sum]
@@ -184,13 +222,21 @@ theorem thetaMoment_eq :
 
 end Read
 
-/-- `3^(-1/4) < 1`, so the aperture condition has room on the right. -/
+/-- `0 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)`, from `Real.rpow_lt_one_of_one_lt_of_neg`: the floor's
+exponential is strictly below one, so the right-hand side of the aperture condition is positive.
+
+DERIVED: `0` is the lower bound asserted; `3` is the base and `1`, `4` its exponent `-1/4`; the
+`1` being subtracted is the value `3 ^ 0`, which the negative exponent puts the term below. -/
 theorem floor_rhs_pos : (0 : ℝ) < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) := by
   have h : (3 : ℝ) ^ (-(1 : ℝ) / 4) < 1 :=
     Real.rpow_lt_one_of_one_lt_of_neg (by norm_num) (by norm_num)
   linarith
 
-/-- The tension is nonnegative: `⟨cos θ⟩ ≤ 1` for a probability vector, so `−log⟨cos θ⟩ ≥ 0`. -/
+/-- `0 ≤ R.tension`. The cosine average has absolute value at most the total mass `1`, so its
+logarithm is non-positive and the negated logarithm is nonnegative.
+
+DERIVED: the one numeral in the statement is `0`, the lower bound asserted. The `1` bounding the
+cosine average is `p_sum`'s, and appears in the proof. -/
 theorem Read.tension_nonneg {N : ℕ} (R : Read N) : 0 ≤ R.tension := by
   have hcos : ∀ d, |R.p d * Real.cos (R.θ d)| ≤ R.p d := by
     intro d
@@ -204,14 +250,15 @@ theorem Read.tension_nonneg {N : ℕ} (R : Read N) : 0 ≤ R.tension := by
   show 0 ≤ - Real.log (∑ d, R.p d * Real.cos (R.θ d))
   linarith
 
-/-- **The tension is below the floor exactly when the read's own cosine average clears `3^{-1/4}`.**
+/-- `R.tension < (1 / 4) * Real.log 3` when `3 ^ (-1/4) < ∑ d, R.p d * cos (R.θ d)`. This is
+`neg_log_lt_floor` applied directly, since `tension` is defined as the negated logarithm of that
+average; no quadratic bound on cosine is used.
 
-DERIVED, not a new hypothesis: `tension` is DEFINED as `-log ⟨cos θ⟩_p`, so this is the definitional
-comparison and nothing more. It is stated because it is the route a measurement can certify. The
-second-moment routes below reach the same conclusion through `1 - x²/2 ≤ cos x`, a SUFFICIENT
-condition: they are what to use when the substrate is characterised by a correlation length, and
-this is what to use when the ensemble is in hand. Certifying this needs ONE scalar -- the ratio
-`S(2π/L)/S(0)` -- where the moment route needs every lag ratio separately. -/
+Scope: the hypothesis is a single scalar comparison on the cosine average. The second-moment routes
+reach the same conclusion through `1 - x ^ 2 / 2 ≤ cos x`, which is sufficient but not necessary.
+
+DERIVED: `3` is the base of the floor; `1` and `4` are the exponent `-1/4` on the left and the
+coefficient `1/4` on the right, the same number in two positions. -/
 theorem Read.tension_lt_floor_of_cosAvg {N : ℕ} (R : Read N)
     (hc : (3 : ℝ) ^ (-(1 : ℝ) / 4) < ∑ d, R.p d * Real.cos (R.θ d)) :
     R.tension < (1 / 4) * Real.log 3 :=
@@ -219,9 +266,15 @@ theorem Read.tension_lt_floor_of_cosAvg {N : ℕ} (R : Read N)
 
 #print axioms Read.tension_lt_floor_of_cosAvg
 
-/-- The contrapositive direction, so the two are known to be the same statement rather than one
-implying the other: a tension below the floor forces the cosine average above `3^{-1/4}`, PROVIDED
-the average is positive (a nonpositive average has no logarithm and the tension is not a read). -/
+/-- The converse of `tension_lt_floor_of_cosAvg`: given `0 < ∑ d, R.p d * cos (R.θ d)` and
+`R.tension < (1 / 4) * Real.log 3`, the cosine average exceeds `3 ^ (-1/4)`. Via
+`Real.log_lt_log_iff`, which needs both arguments positive.
+
+Scope: the positivity hypothesis is required — `Real.log` is `0` on non-positive arguments, so
+without it the tension does not determine the average.
+
+DERIVED: `0` is the strict lower bound on the cosine average; `3` is the base of the floor, and `1`
+and `4` its exponent `-1/4` and the coefficient `1/4`. -/
 theorem Read.cosAvg_gt_of_tension_lt_floor {N : ℕ} (R : Read N)
     (hpos : 0 < ∑ d, R.p d * Real.cos (R.θ d))
     (h : R.tension < (1 / 4) * Real.log 3) :
@@ -237,7 +290,11 @@ theorem Read.cosAvg_gt_of_tension_lt_floor {N : ℕ} (R : Read N)
 
 #print axioms Read.cosAvg_gt_of_tension_lt_floor
 
-/-- The aperture factor `(2π/(N+1))²·B/2` tends to zero, at any fixed `B`. -/
+/-- `(2 * π / ((N : ℝ) + 1)) ^ 2 * B / 2 → 0` along `atTop` in `N`, at any fixed real `B`. The
+window scale tends to zero and the rest is constant.
+
+DERIVED: `2` is the `2π` of a full turn, the exponent of the square, and the divisor from the
+quadratic cosine bound; `1` is the `+ 1` giving the number of lags; `0` is the limit. -/
 theorem aperture_factor_tendsto_zero (B : ℝ) :
     Filter.Tendsto (fun N : ℕ => (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2)
       Filter.atTop (nhds 0) := by
@@ -247,12 +304,21 @@ theorem aperture_factor_tendsto_zero (B : ℝ) :
     Filter.Tendsto.div_atTop tendsto_const_nhds hN
   simpa using ((h0.pow 2).mul_const B).div_const 2
 
-/-- The distance from lag `d` to the origin ON THE CIRCLE of `N+1` sites. -/
--- DERIVED: `N + 1` is the periodic extent the lag index runs over, so `N + 1 - d` is the same
--- separation measured the other way round the circle. Neither is a magnitude.
+/-- The distance from lag `d` to the origin on the circle of `N + 1` sites:
+`min d (N + 1 - d)`, a natural number.
+
+DERIVED: the one numeral is `1`, the `+ 1` giving the periodic extent `N + 1` that the lag index
+runs over; `N + 1 - d` is the same separation measured the other way round the circle. -/
+-- The `min` is what makes the two directions round the circle interchangeable; `Read.cos_theta_circ`
+-- is where that is used.
 def circLag {N : ℕ} (d : Fin (N + 1)) : ℕ := min (d : ℕ) (N + 1 - (d : ℕ))
 
-/-- **The lag angle sees only the circle distance.** `cos θ_d = cos(2π·circLag d/(N+1))`. -/
+/-- `Real.cos (R.θ d) = Real.cos (2 * π * (circLag d : ℝ) / (N + 1))`: the cosine of the lag angle
+depends on the lag only through the circle distance. Splits on which side of the circle `d` lies and,
+in the far case, uses `cos (2π - x) = cos x`.
+
+DERIVED: `2` is the `2π` of a full turn; `1` is the `+ 1` giving the periodic extent, which is what
+the angle is measured against. -/
 theorem Read.cos_theta_circ {N : ℕ} (R : Read N) (d : Fin (N + 1)) :
     Real.cos (R.θ d) = Real.cos (2 * Real.pi * (circLag d : ℝ) / (N + 1)) := by
   have hN : (0 : ℝ) < (N : ℝ) + 1 := by positivity
@@ -271,18 +337,21 @@ theorem Read.cos_theta_circ {N : ℕ} (R : Read N) (d : Fin (N + 1)) :
     unfold Read.θ
     ring
 
-/-- **The cos-moment bound on the circle, the OTHER way.** `cos_avg_ge_circ` bounds the cosine
-average from BELOW by the circular second moment, which is the direction that lets a short
-correlation length SATISFY the aperture condition. This bounds it from ABOVE, which is the direction
-that lets the condition, once satisfied, SAY something.
+/-- `∑ d, R.p d * cos (R.θ d) ≤ 1 - 8 / ((N : ℝ) + 1) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2)`:
+the cosine average bounded from above by the circular second moment.
 
-The two use the two elementary bounds on cosine over one half-turn: `1 - x^2/2 <= cos x` there, and
-`cos x <= 1 - (2/pi^2) x^2` here, the latter tight at both `x = 0` and `x = pi`. The hypothesis
-`|x| <= pi` is not a restriction to check separately -- on the circle `circLag d <= (N+1)/2` by
-construction, so the lag angle never leaves the half-turn where the bound holds.
+The proof rewrites each cosine by `cos_theta_circ`, applies
+`Real.cos_le_one_sub_mul_cos_sq` — the bound `cos x ≤ 1 - (2 / π ^ 2) * x ^ 2`, tight at `x = 0` and
+`x = π` — and sums. Its hypothesis `|x| ≤ π` holds without a side condition, because
+`2 * circLag d ≤ N + 1` by construction of `circLag`, so the lag angle stays within a half-turn.
 
-DERIVED: `8` is `(2/pi^2) * (2 pi)^2`, the two constants of the cosine bound and the lag angle
-multiplied out. Nothing is chosen. -/
+Scope: this is the opposite direction from `cos_avg_ge_circ`, which uses the lower bound
+`1 - x ^ 2 / 2 ≤ cos x` over the same range.
+
+DERIVED: `8` is `(2 / π ^ 2) * (2π) ^ 2`, the constant of the cosine upper bound multiplied by the
+square of the full turn in the lag angle; the `π`s cancel, which is why no `π` survives in the
+statement. `1` is the total mass of `p` and the `+ 1` giving the periodic extent; `2` is the
+exponent on the extent and on the circle distance. Nothing is chosen. -/
 theorem Read.cos_avg_le_circ {N : ℕ} (R : Read N) :
     ∑ d, R.p d * Real.cos (R.θ d)
       ≤ 1 - 8 / ((N : ℝ) + 1) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2) := by
@@ -322,22 +391,23 @@ theorem Read.cos_avg_le_circ {N : ℕ} (R : Read N) :
 
 #print axioms Read.cos_avg_le_circ
 
-/-- **THE APERTURE CONDITION, MADE EXPLICIT.** A tension below the entropy floor does not merely
-imply that *some* gap exists: it caps the SUBSTRATE RATIO -- the circular second moment of the lag
-distribution, divided by the squared aperture -- at a number derived from the floor alone.
+/-- A tension below the floor caps the substrate ratio. Given `0 < ∑ d, R.p d * cos (R.θ d)` and
+`R.tension < (1 / 4) * Real.log 3`,
 
-    μ < κ₀   ⟹   (∑ p(d) circLag(d)^2) / (N+1)^2  <  (1 - 3^{-1/4}) / 8  =  0.0300…
+    (∑ d, R.p d * (circLag d : ℝ) ^ 2) / ((N : ℝ) + 1) ^ 2  <  (1 - 3 ^ (-1/4)) / 8  ≈ 0.0300.
 
-This is the converse of `tension_lt_floor_of_circ_moment`, which travels from a bounded moment to a
-tension below the floor. Having both means the aperture condition and a bounded substrate ratio are
-each other's consequences rather than one being a sufficient proxy for the other, and it is the
-direction that turns a measured tension into a checkable number about the correlation.
+`cosAvg_gt_of_tension_lt_floor` puts the cosine average above `3 ^ (-1/4)` and `cos_avg_le_circ`
+puts it below `1 - 8 / (N + 1) ^ 2 * S`; the two squeeze `S`.
 
-The positivity hypothesis is the same one `cosAvg_gt_of_tension_lt_floor` carries and for the same
-reason: a nonpositive cosine average has no logarithm, so the tension is not a read there at all.
+Scope: the converse direction is `tension_lt_floor_of_circ_moment`, so the two statements are each
+other's consequences. The positivity hypothesis is required for the same reason as in
+`cosAvg_gt_of_tension_lt_floor`: `Real.log` is `0` on non-positive arguments.
 
-DERIVED: `8` is the constant of `cos_avg_le_circ`; `3^{-1/4}` is `e^{-κ₀}` with `κ₀` proved in
-`Floor.lean`. The bound is a composition of those two and contains nothing else. -/
+DERIVED: `0` is the strict lower bound on the cosine average; `1` and `4` are the coefficient `1/4`
+of the floor and the exponent `-1/4` of `3 ^ (-1/4)`, which is `exp (-κ₀)` with `κ₀` derived in
+`Floor.lean`; `3` is that base; `2` is the exponent on the circle distance and on the extent; `8` is
+`cos_avg_le_circ`'s constant, carried through. The bound is a composition of those and nothing
+else. -/
 theorem Read.substrate_lt_of_tension_lt_floor {N : ℕ} (R : Read N)
     (hpos : 0 < ∑ d, R.p d * Real.cos (R.θ d))
     (h : R.tension < (1 / 4) * Real.log 3) :
@@ -359,31 +429,24 @@ theorem Read.substrate_lt_of_tension_lt_floor {N : ℕ} (R : Read N)
   linarith [h8S]
 
 #print axioms Read.substrate_lt_of_tension_lt_floor
-/-- **THE DIFFRACTION LIMIT, AS A THEOREM: a spread-out correlation cannot clear the floor.**
+/-- The contrapositive of `substrate_lt_of_tension_lt_floor`: given a positive cosine average, a
+substrate ratio at or above `(1 - 3 ^ (-1/4)) / 8` gives `¬ (R.tension < (1 / 4) * Real.log 3)`.
 
-The contrapositive of `substrate_lt_of_tension_lt_floor`, and the mechanism the whole reading rests
-on. A correlation whose circular second moment reaches the ceiling `(1 - 3^{-1/4})/8` has a tension AT
-OR ABOVE the entropy floor: the screen cannot host it.
+Applied to a free massless field on a periodic screen of `n` sites, whose lowest mode at `2π/n`
+gives `ρ d = exp (-2π * circLag d / n)`: its substrate ratio is `0.0321808`, computed in
+`code/certify/aperture_cap_of_floor.py`, constant in `n` to seven digits from `n = 64` upward and
+approached from below, against the ceiling `0.0300205`. That profile therefore falls under this
+ theorem at every aperture.
 
-WHY THIS IS THE MASSLESS EXCLUSION. A free massless field on a periodic screen of `n` sites has its
-lowest mode at `2π/n`, giving `ρ(d) = e^{-2π·circLag(d)/n}` and a substrate ratio of `0.0321808` —
-computed in `code/certify/aperture_cap_of_floor.py`, constant in `n` to seven digits from `n = 64`
-upward and rising to that value from below. The ceiling is `0.0300205`. The massless configuration
-therefore exceeds it by a factor `1.072`, at EVERY aperture, and this theorem excludes it.
+Scope: the ceiling comes from the bound `cos x ≤ 1 - (2 / π ^ 2) * x ^ 2`, which gives away a factor
+`π ^ 2 / 4 = 2.467` against the exact criterion; the exact criterion separates the massless profile
+by `a⋆ = 1.7489` in the scaling variable. Those two figures are computed, not proved here.
 
-That is the diffraction limit stated arithmetically: a band-limited screen cannot carry the
-infinitely-extended mode a gapless theory requires, because carrying it would put more of the
-correlation's weight at large lag than the entropy floor permits. What the screen CAN carry is
-therefore concentrated, and a concentrated correlation decays — at a positive rate, which is the gap.
-
-THE MARGIN IS NOT TIGHT, AND THAT MATTERS. `(1 - 3^{-1/4})/8` comes from the elementary bound
-`cos x ≤ 1 - (2/π²)x²`, which gives away a factor of `π²/4 = 2.467` against the exact criterion. The
-exact criterion excludes the massless mode by the far wider margin `a⋆ = 1.7489` in the scaling
-variable. So masslessness is excluded even after the lossy step — the conclusion does not depend on
-the sharpness of the inequality used to reach it.
-
-DERIVED: the ceiling is `(1 - e^{-κ₀})/8` with `κ₀` proved in `Floor.lean`; the `8` is the constant of
-`cos_avg_le_circ`. Nothing is chosen, and the massless value is computed, not fitted. -/
+DERIVED: `0` is the strict lower bound on the cosine average; `1` and `4` are the floor's
+coefficient `1/4` and the exponent `-1/4`; `3` is the base, so the ceiling is `(1 - exp (-κ₀)) / 8`
+with `κ₀` derived in `Floor.lean`; `2` is the exponent on the circle distance and on the extent; `8`
+is `cos_avg_le_circ`'s constant. Nothing is chosen, and the massless value quoted above is computed,
+not fitted. -/
 theorem Read.tension_ge_floor_of_substrate {N : ℕ} (R : Read N)
     (hpos : 0 < ∑ d, R.p d * Real.cos (R.θ d))
     (hsub : (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8
@@ -395,8 +458,13 @@ theorem Read.tension_ge_floor_of_substrate {N : ℕ} (R : Read N)
 #print axioms Read.tension_ge_floor_of_substrate
 
 
-/-- **The cos-moment bound on the circle.** Sharper than `cos_avg_ge` composed with `thetaMoment_eq`,
-and stated in the quantity a finite correlation length bounds. -/
+/-- `1 - (2 * π / ((N : ℝ) + 1)) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2) / 2 ≤ ∑ d, R.p d * cos (R.θ d)`.
+The termwise bound `Real.one_sub_sq_div_two_le_cos` applied after `cos_theta_circ`, then summed.
+Stated about the circle distance rather than the raw index, so it is sharper than `cos_avg_ge`
+composed with `thetaMoment_eq`.
+
+DERIVED: `1` is the total mass of `p` and the `+ 1` giving the periodic extent; `2` is the `2π` of a
+full turn, the exponent of both squares, and the divisor of the quadratic cosine bound. -/
 theorem Read.cos_avg_ge_circ {N : ℕ} (R : Read N) :
     1 - (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * (∑ d, R.p d * (circLag d : ℝ) ^ 2) / 2
       ≤ ∑ d, R.p d * Real.cos (R.θ d) := by
@@ -418,12 +486,17 @@ theorem Read.cos_avg_ge_circ {N : ℕ} (R : Read N) :
     rw [← Finset.sum_div, ← Finset.mul_sum]
   rwa [hexp] at hsum
 
-/-- **Confinement from a bounded CIRCLE moment** — the hypothesis a gapped theory can actually
-satisfy. The moment is taken about `circLag`, the separation on the circle, and not about the raw lag
-index: on a periodic extent the far half of the lag range is the near half reflected, so a raw-index
-moment grows like `N²` at any FIXED correlation length and no physical correlation bounds it
-uniformly in the aperture. A raw bound is the stronger hypothesis and implies this one
-(`Complete.circ_moment_le_lag_moment`), which is how the grid certificates feed this route. -/
+/-- `R.tension < (1 / 4) * Real.log 3`, given `∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ B` and
+`(2 * π / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - 3 ^ (-1/4)`. `cos_avg_ge_circ` puts the cosine average
+above `3 ^ (-1/4)`, and `neg_log_lt_floor` finishes.
+
+Scope: the moment is about `circLag`, not the raw index. A bound on the raw-index moment is the
+stronger hypothesis and implies this one through `Complete.circ_moment_le_lag_moment`.
+
+DERIVED: `2` is the `2π` of a full turn, the exponent of the squares, and the divisor of the
+quadratic cosine bound; `1` is the `+ 1` giving the periodic extent, the leading term of that bound,
+and the numerator of `1/4` and `-1/4`; `3` is the base of the floor and `4` its exponent's
+denominator. -/
 theorem Read.tension_lt_floor_of_circ_moment {N : ℕ} (R : Read N) {B : ℝ}
     (hB : ∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ B)
     (hscale : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) :
@@ -438,7 +511,13 @@ theorem Read.tension_lt_floor_of_circ_moment {N : ℕ} (R : Read N) {B : ℝ}
 #print axioms Read.tension_lt_floor_of_circ_moment
 
 
-/-- The tension is at most `−log(1 − (2π/(N+1))²·B/2)` when the CIRCLE moment is bounded by `B`. -/
+/-- `R.tension ≤ -Real.log (1 - (2 * π / ((N : ℝ) + 1)) ^ 2 * B / 2)` when the circle moment is at
+most `B` and that expression is positive. `cos_avg_ge_circ` followed by monotonicity of the
+logarithm.
+
+DERIVED: `2` is the `2π` of a full turn, the exponent of the square, and the divisor of the
+quadratic cosine bound; `1` is the `+ 1` giving the periodic extent and the leading term of that
+bound, which is also the upper bound the hypothesis places on the subtracted term. -/
 theorem Read.tension_le_of_circ_moment {N : ℕ} (R : Read N) {B : ℝ}
     (hB : ∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ B)
     (hlt : (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1) :
@@ -453,11 +532,15 @@ theorem Read.tension_le_of_circ_moment {N : ℕ} (R : Read N) {B : ℝ}
   show - Real.log (∑ d, R.p d * Real.cos (R.θ d)) ≤ _
   linarith
 
-/-- **THE TENSION VANISHES AS THE WINDOW OPENS**, from a bounded CIRCLE moment.
+/-- For a family of reads `R : (N : ℕ) → Read N` whose circle second moments are bounded by a
+single `B`, `(R N).tension → 0` along `atTop`. The tension is squeezed between `tension_nonneg` and
+`tension_le_of_circ_moment`, whose upper bound tends to `0` because the window factor does
+(`aperture_factor_tendsto_zero`).
 
-The hypothesis is the one a gapped theory can meet: a correlation with a finite correlation length
-has a bounded second moment about the circle distance, at every extent. Bounding the RAW lag moment
-instead asks for something no periodic correlation satisfies. -/
+Scope: the bound `B` must hold at every `N`; a bound at one aperture says nothing here.
+
+DERIVED: `2` is the exponent on the circle distance; `0` is the limit. The window factor's numerals
+are `aperture_factor_tendsto_zero`'s. -/
 theorem tension_tendsto_zero_of_bounded_circ_moment (B : ℝ) (R : (N : ℕ) → Read N)
     (hmom : ∀ N, ∑ d, (R N).p d * (circLag d : ℝ) ^ 2 ≤ B) :
     Filter.Tendsto (fun N => (R N).tension) Filter.atTop (nhds 0) := by
@@ -479,20 +562,17 @@ theorem tension_tendsto_zero_of_bounded_circ_moment (B : ℝ) (R : (N : ℕ) →
 
 #print axioms tension_tendsto_zero_of_bounded_circ_moment
 
-/-! ### From a decay RATE to an aperture-independent moment
+/-! ### From a decay rate to an aperture-independent moment
 
-`tension_tendsto_zero_of_bounded_circ_moment` and `Complete.confinement_of_bounded_substrate` both
-consume ONE bound holding at EVERY aperture, and that uniformity is their whole content: a moment
-bound proved at a single `N` says nothing, because the moment may grow with the window — about the
-raw lag index it always does.
+`tension_tendsto_zero_of_bounded_circ_moment` and `Complete.confinement_of_bounded_substrate` each
+take one bound holding at every aperture. The results below convert a geometric decay rate into such
+a bound: the aperture enters only as the range of a sum, and the bound is the whole series, so it
+does not depend on where the sum stops. -/
 
-The two theorems below convert a DECAY RATE into that uniform bound. The aperture then appears only
-as the range of a sum, and the bound is the whole series, so it cannot depend on where the sum stops.
-This is what "a finite correlation length" has to mean for the aperture argument to apply. -/
-
-/-- **The circle distance is at most 2-to-1.** `circLag d = min d (N+1−d)` takes each value at no more
-than two lags — one from each way round the circle — so a sum over lags is at most twice the
-corresponding sum over distances.
+/-- `∑ d : Fin (N + 1), g (circLag d) ≤ 2 * ∑ k ∈ Finset.range (N + 2), g k` for nonnegative `g`.
+`circLag d = min d (N + 1 - d)` takes each value at no more than two lags — `d = k` and
+`d = N + 1 - k` — so fibrewise each value is counted at most twice. The proof fibres the sum with
+`Finset.sum_fiberwise_of_maps_to` and bounds each fibre's cardinality by `2`.
 
 DERIVED: the `2` is that multiplicity and nothing else; `N + 2` is the range `circLag` lands in,
 since `min d (N+1−d) ≤ N+1`. -/
@@ -534,16 +614,13 @@ theorem sum_circLag_le_two_mul {N : ℕ} (g : ℕ → ℝ) (hg : ∀ k, 0 ≤ g 
   have h2 : (S.card : ℝ) ≤ 2 := by exact_mod_cast hcard
   exact mul_le_mul_of_nonneg_right h2 (hg k)
 
-/-- **A geometric bound on the weights caps the circle moment, UNIFORMLY IN THE APERTURE.**
+/-- Given `0 ≤ C`, `0 ≤ r < 1` and `R.p d ≤ C * r ^ circLag d` at every lag,
+`∑ d, R.p d * (circLag d : ℝ) ^ 2 ≤ 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k`. The right-hand side has
+no `N` in it, so the bound is uniform in the aperture. The proof bounds each term, applies
+`sum_circLag_le_two_mul`, and compares the partial sum with the whole series, which is summable by
+`summable_pow_mul_geometric_of_norm_lt_one`.
 
-If the read's weights decay geometrically in the CIRCLE distance, `p d ≤ C r^{circLag d}` with
-`r < 1`, then the circle second moment is at most `2C · ∑' k, k² rᵏ` — a constant with no `N` in it.
-
-This is the bridge the aperture argument needs: it turns "the substrate has a finite correlation
-length", which is a statement about a RATE, into the single aperture-independent bound `B` that
-`Complete.confinement_of_bounded_substrate` takes as its hypothesis. The series converges for every
-`r < 1` (`summable_pow_mul_geometric_of_norm_lt_one`), so no condition beyond `r < 1` is needed and no
-threshold on the aperture is introduced.
+Scope: no condition beyond `r < 1` is needed, and no threshold on the aperture is introduced.
 
 DERIVED: the `2` is the circle distance's multiplicity (`sum_circLag_le_two_mul`); the exponent `2` is
 the second moment's own; `C` and `r` are the caller's. Nothing here is chosen. -/
@@ -579,17 +656,17 @@ theorem circ_moment_le_of_geometric {N : ℕ} (R : Read N) {C r : ℝ}
         exact mul_le_mul_of_nonneg_left hpart (by norm_num)
     _ = 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k := by ring
 
-/-- **Decay in the raw lag is decay in the circle distance.** The circle distance never exceeds the
-raw index, so a geometric bound in the index is already a geometric bound in the distance — the
-inequality runs this way and not the other, because `r < 1` makes the smaller exponent the weaker
-bound.
+/-- Given `0 ≤ C`, `0 ≤ r ≤ 1` and `R.p d ≤ C * r ^ (d : ℕ)` at every lag, the same bound holds with
+`circLag d` in the exponent. Since `circLag d ≤ d` by `min_le_left` and `r ≤ 1`, lowering the
+exponent raises `r ^ ·`, so the bound weakens in the right direction.
 
-This is the connector the spectral route needs. Reflection positivity's transfer form
-`ρ(d) = ∑ₙ wₙλₙᵈ` decays in the RAW lag `d` — that is what a power of the transfer operator gives —
-while the aperture argument consumes decay in the CIRCLE distance. Without this the two halves do not
-meet, and the mismatch is invisible because both are called "exponential decay".
+Scope: the implication runs from the raw index to the circle distance only. The transfer form
+`ρ d = ∑ₙ wₙ * λₙ ^ d` decays in the raw lag, while the results above consume decay in the circle
+distance, and this is the step between them.
 
-DERIVED: nothing numeric. `circLag d ≤ d` is `min_le_left`. -/
+DERIVED: `0` is the lower bound on `C` and on `r`; `1` is the upper bound on `r`, which is what
+makes a smaller exponent the weaker bound, and the `+ 1` in the index type `Fin (N + 1)`. The step
+`circLag d ≤ d` is `min_le_left` and introduces no numeral. -/
 theorem circ_decay_of_lag_decay {N : ℕ} (R : Read N) {C r : ℝ}
     (hC : 0 ≤ C) (hr0 : 0 ≤ r) (hr1 : r ≤ 1)
     (hdecay : ∀ d : Fin (N + 1), R.p d ≤ C * r ^ (d : ℕ)) :

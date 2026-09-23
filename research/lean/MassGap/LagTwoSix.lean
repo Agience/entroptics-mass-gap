@@ -2,109 +2,61 @@ import MassGap.ConfinesSharp
 import MassGap.LagTwoBound
 
 /-!
-# MassGap.LagTwoSix — the lag-two obligation is STRICTLY WEAKER at extent six than at extent four
+# MassGap.LagTwoSix — the lag-two threshold at six lags
 
-`ApertureRoute.ConfinesAtAnAperture` is EXISTENTIAL in the aperture: `∃ a : EvenAp, ∀ β, …`, and
-`EvenAperture.EvenAp` admits every even extent at least four. Extent four has been used throughout
-only because it is the smallest. This file asks what the SAME obligation costs at extent six and
-answers it with a number.
+`ApertureRoute.ConfinesAtAnAperture` is existential in the aperture, and `EvenAperture.EvenAp` admits
+every even extent at least four. This module works at six, where `wilsonCorrAt 5` has lag index type
+`Fin 6`, and produces a threshold on the lag-two ratio `ρ(2)/ρ(0)` in the same currency as
+`LagTwoBound.lagTwoThreshold` at four.
 
-## The comparison, in one currency
+## The reduction
 
-Both extents reduce, through log-convexity alone, to a bound on the LAG-TWO RATIO `ρ(2)/ρ(0)` — the
-quantity `TailRatio.RatioBelowThreshold` and `PeriodicLagTwo.confines_of_periodic_rate` are already
-stated in. The two thresholds are
-
-* extent four, `LagTwoBound.lagTwoThreshold = ((1−c)/(1+c))²`, bracketed in `(0.018623, 0.018625)`;
-* extent six, `lagTwoThresholdSix` below, bracketed by `lagTwoThresholdSix_gt` above `0.0337`.
-
-`lagTwoThreshold_lt_lagTwoThresholdSix` is those two facts composed: **the extent-six threshold is
-strictly larger**, by a factor of `0.03379588…/0.01862399… = 1.8146…`.
-
-**WHAT IS AND IS NOT BEING COMPARED.** `wilsonCorrAt 3` and `wilsonCorrAt 5` are different functions
-and nothing in this tree relates their values, so this is NOT a statement that an extent-four bound
-transports to extent six. It compares the OBLIGATION each extent imposes, in one common currency: the
-CONSTANT a lag-two ratio bound must beat. `admissible_at_six_of_admissible_at_four` is exactly that
-much and no more — a constant admissible at extent four is admissible at extent six; the bound itself
-still has to be proved of the extent-six correlation.
-
-## Why extent six reduces at all
-
-`ConfinesSharp.confines_extent_six_iff` puts the criterion at
+`ConfinesSharp.confines_extent_six_iff` states the criterion as
 
     (2c−1)·ρ(1) + (1+2c)·ρ(2) + (1+c)·ρ(3) < (1−c)·ρ(0),     c = 3^{−1/4},
 
-with every coefficient positive (`ConfinesSharp.two_c_sub_one_pos` for the first), so all three
-non-contact lags need UPPER bounds and none needs a lower one. That matters: `LogConvex`'s
-right-hand lags are all of the form `2e`, hence EVEN, so — as `MomentShape` records — nothing in that
-premise set can lower-bound `ρ` at an ODD lag. A criterion needing a lower bound on `ρ(1)` would be
-unreachable from the shape facts; this one does not need it.
+with every coefficient positive (`ConfinesSharp.two_c_sub_one_pos` for the first), so each
+non-contact lag needs an upper bound and none needs a lower one.
 
-At half-extent `m = 3` the two instances of `LogConvex.corrClay_log_convex` this file uses are
-`(e₁,e₂) = (0,1)`, giving `ρ(1)² ≤ ρ(0)ρ(2)`, and `(e₁,e₂) = (1,2)`, giving `ρ(3)² ≤ ρ(2)ρ(4)` which
-is `ρ(3) ≤ ρ(2)` once `ConfinesSharp.sym_six_two` folds lag `4` onto lag `2`. The second is not
-available at extent four, where `m = 2` leaves `(0,1)` as the only non-diagonal pair. Substituting
-both leaves
+Two instances of `LogConvex.corrClay_log_convex` at half-extent `m = 3` supply those bounds.
+`logConvex_six_lag_one` is `(e₁,e₂) = (0,1)`, giving `ρ(1)² ≤ ρ(0)ρ(2)`; `logConvex_six_lag_three` is
+`(1,2)`, giving `ρ(3)² ≤ ρ(2)ρ(4)`, which `lag_three_le_lag_two` turns into `ρ(3) ≤ ρ(2)` using
+`ConfinesSharp.sym_six_two` to fold lag `4` onto lag `2`. The second pair is unavailable at four,
+where `m = 2` leaves `(0,1)` as the only non-diagonal choice.
 
-    (2c−1)·√(ρ(0)ρ(2)) + (2+3c)·ρ(2) < (1−c)·ρ(0),
+Substituting both and writing `v = √(ρ(2)/ρ(0))` gives
 
-one quadratic in `√(ρ(2)/ρ(0))` whose positive root is `vSix`.
+    (2 + 3c)·v² + (2c − 1)·v − (1 − c) < 0,
 
-## The trend, and where it turns — NOT MACHINE-CHECKED IN THIS FILE
+whose positive root is `vSix` (`vSix_root`, `vSix_pos`, `vSix_lt_one`), and the threshold on the
+ratio is `lagTwoThresholdSix = vSix ^ 2`.
 
-Extent six is not the end of the line, and larger is not monotonically better. At even extent `2m`
-the cosines are `cos(πd/m)`, circle symmetry folds `d` onto `2m − d`, and the criterion is
+## What is proved
 
-    ∑_{d=1}^{m−1} 2(c − cos(πd/m))·ρ(d) + (1+c)·ρ(m) < (1−c)·ρ(0),
+* `lagTwoThresholdSix_gt` — the threshold exceeds `0.0337`, and
+  `lagTwoThreshold_lt_lagTwoThresholdSix` composes that with `LagTwoBound.lagTwoThreshold_lt` to give
+  the strict inequality between the two closed forms. `admissible_at_six_of_admissible_at_four` is
+  the transitivity consequence.
+* `confines_extent_six_of_lag_two_ratio` — a lag-two ratio bounded by any `K` strictly below the
+  threshold gives the criterion at six lags.
+* `lagTwoThresholdSix_sharp` — a profile satisfying every non-diagonal log-convexity instance
+  available at half-extent three, sitting at exactly the threshold, and failing the criterion. So no
+  larger constant is carried by this reduction and the strict `<` cannot be weakened to `≤`.
+* `LagTwoRatioSix`, `confines_of_lagTwoRatioSix` — the hypothesis named as a `Prop`, and the
+  reduction of `ApertureRoute.ConfinesAtAnAperture` to it with `ConfinesZero.ap6` as witness.
+* `circLag_two_six`, `exists_cut_lag_two_ratio_six` — for every `K > 0` an interval `[0, b]` on which
+  the lag-two ratio is under `K`.
 
-which is `ConfinesSharp.confines_extent_four_iff` at `m = 2` and `confines_extent_six_iff` at
-`m = 3`. Reducing it against `LogConvex.corrClay_log_convex`'s cone as above gives, on `ρ(2)/ρ(0)`:
+## Scope
 
-    extent  4 → 0.0186240      extent 10 → 0.0302593
-    extent  6 → 0.0337959      extent 12 → 0.0250940
-    extent  8 → 0.0354567
+The comparison is between two constants. `wilsonCorrAt 3` and `wilsonCorrAt 5` are different
+functions and no statement here relates their values, so nothing transports a bound from one extent
+to the other; `admissible_at_six_of_admissible_at_four` compares admissible constants, not bounds.
 
-**The relief peaks at extent eight and then reverses.** Two things move against each other: the
-coefficient of `ρ(1)` is `2(c − cos(π/m))`, which falls with `m` and turns NEGATIVE at `m = 5`, while
-the number of deep lags — each of which the cone bounds only by `ρ(2)`, linearly — grows with `m`.
-Past `m = 4` the second wins. The sign change buys nothing FROM THE SHAPE FACTS, because a negative
-coefficient wants `ρ(1)` LARGE and that cone can only bound `ρ` at an odd lag from above: every
-right-hand lag `corrClay_log_convex` produces is `2e`, hence even, so `ρ(1) → 0` stays admissible
-(`MomentShape.odd_scaling_admissible`, a theorem and general in the extent), and dropping that term is
-the exact worst case rather than a concession.
+No statement bounds `ρ(2)/ρ(0)` at either extent without a hypothesis. `LagTwoRatioSix` asks for one
+`K < lagTwoThresholdSix` valid at every `β ≥ 0`; `exists_cut_lag_two_ratio_six` gives every `K > 0`
+but only on an interval `[0, b]` whose `b` depends on `K`.
 
-That is premise-set-relative, not structural, and the distinction is worth keeping: a lower bound on
-an odd lag DOES exist outside the cone. `LinkGram.wilson_lag_two_le_lag_one` proves `ρ(2) ≤ ρ(1)` of
-the Wilson correlation at every `0 ≤ β`, from link-reflection positivity rather than from `Shape`. It
-is hard-wired to extent four today. Were it generalized, the extent-ten entry above would move from
-`0.0302593` to `0.0306390` — so the peak at extent eight survives that too, and the trend's direction
-does not depend on the odd-lag no-go.
-
-Only the extent-four and extent-six entries are machine-checked, here and in `LagTwoBound`. The other
-three are stated as what the same construction yields, not as theorems.
-
-## What this does NOT claim
-
-It does not bound `ρ(2)/ρ(0)` at either extent. What is delivered is a REDUCTION with a strictly
-larger threshold, and `LagTwoRatioSix` names the remaining obligation.
-
-**AND THE EXTENT-FOUR NO-GO DOES NOT TRANSFER VERBATIM — the extent-six one is weaker.**
-`TailRatio.no_lag_two_bound_from_triple` gives no bound AT ALL at extent four, and its witness is
-`(r₀,r₁,r₂) = (ε,ε,4)` with `r₂ > r₀`. That witness is NOT admissible here: at half-extent three the
-instance `(e₁,e₂) = (0,2)` reads `ρ(2)² ≤ ρ(0)ρ(4) = ρ(0)ρ(2)`, so `ρ(2) ≤ ρ(0)` IS derivable at
-extent six where it is not at extent four. What survives is the constant profile,
-`TailRatio.no_strict_lag_bound_with_contact`, which defeats every `K < 1`. So the correct statement at
-extent six is that the shape facts carry `K = 1` and nothing under it — still far above
-`lagTwoThresholdSix`, so `LagTwoRatioSix` is open for the same reason, but by the weaker of the two
-no-gos.
-
-It also does not carry the spectral decomposition across. `SlabQuadratic.wilsonSpectral` proves
-`Complete.WilsonSpectral 3 β` at extent four and nothing in this tree proves it at extent six, so
-`PeriodicLagTwo.confines_of_periodic_rate` has no extent-six counterpart yet. The relief proved here
-is available to any route that bounds the lag-two ratio directly.
-
-Foundational footprint only (`#print axioms` on every declaration, in the audit section).
-The module is in the library root's import list, so repository-wide sweeps cover it.
 Build: `python research/code/lean_build.py build MassGap.LagTwoSix`.
 -/
 
@@ -114,13 +66,22 @@ open MassGap MassGap.EvenAperture MassGap.ApertureRoute MassGap.ConfinesZero
 
 /-! ## 1. The two log-convexity instances available at half-extent three
 
-DERIVED throughout this section: `5` is `N` with `N + 1 = 6 = 2 * 3`, `ConfinesZero.ap6`'s own
-extent; `3` is the half-extent `m`, read off `LogConvex.corrClay_log_convex`'s hypothesis
-`Nap + 1 = 2 * m`; the lag indices `0, 1, 2, 3, 4` are index values, not magnitudes. -/
+DERIVED throughout this section: `5` is the `N` of `wilsonCorrAt N`, with `N + 1 = 6 = 2 * 3`, which
+is `ConfinesZero.ap6`'s extent; `3` is the half-extent `m`, read off
+`LogConvex.corrClay_log_convex`'s hypothesis `Nap + 1 = 2 * m`; the lag literals `0, 1, 2, 3, 4` are
+index values in `Fin 6`, not magnitudes; and each exponent `2` is the square of the log-convexity
+inequality. -/
 
-/-- **`ρ(1)² ≤ ρ(0)·ρ(2)` at extent six.** `LogConvex.corrClay_log_convex` at `(e₁, e₂) = (0, 1)`,
-both below the half-extent `3`. This is the same pair that is the ONLY non-diagonal one at extent
-four. -/
+/-- `wilsonCorrAt 5 β 1 ^ 2 ≤ wilsonCorrAt 5 β 0 * wilsonCorrAt 5 β 2`, at every real `β`.
+`LogConvex.corrClay_log_convex` at `N = 5`, `m = 3`, `(e₁, e₂) = (0, 1)`, with the three `Fin 6` sums
+`0+1`, `0+0` and `1+1` evaluated by `decide`.
+
+Both indices are below the half-extent `3`. This is the same pair that is the only non-diagonal one
+available at four lags.
+
+DERIVED: `5` is the `N` of `wilsonCorrAt N` and `3` the half-extent supplied to
+`corrClay_log_convex`; the lag literals `0`, `1`, `2` index `Fin 6`, and the exponent `2` is the
+square of the log-convexity inequality. -/
 theorem logConvex_six_lag_one (β : ℝ) :
     MassGap.wilsonCorrAt 5 β 1 ^ 2
       ≤ MassGap.wilsonCorrAt 5 β 0 * MassGap.wilsonCorrAt 5 β 2 := by
@@ -132,9 +93,16 @@ theorem logConvex_six_lag_one (β : ℝ) :
   rw [e01, e00, e11] at hh
   exact hh
 
-/-- **`ρ(3)² ≤ ρ(2)·ρ(4)` at extent six.** `LogConvex.corrClay_log_convex` at `(e₁, e₂) = (1, 2)`,
-both below the half-extent `3`. NOT available at extent four: there `m = 2` and `e₂ = 2` is not
-below it. -/
+/-- `wilsonCorrAt 5 β 3 ^ 2 ≤ wilsonCorrAt 5 β 2 * wilsonCorrAt 5 β 4`, at every real `β`.
+`LogConvex.corrClay_log_convex` at `(e₁, e₂) = (1, 2)`, with `1+2`, `1+1` and `2+2` evaluated in
+`Fin 6`.
+
+Both indices are below the half-extent `3`. Unavailable at four lags, where `m = 2` and `e₂ = 2` is
+not below it — which is the one input `lag_three_le_lag_two` has that the extent-four reduction does
+not.
+
+DERIVED: `5` is the `N` of `wilsonCorrAt N` and `3` the half-extent; the lag literals `2`, `3`, `4`
+index `Fin 6`, and the exponent `2` is the square of the log-convexity inequality. -/
 theorem logConvex_six_lag_three (β : ℝ) :
     MassGap.wilsonCorrAt 5 β 3 ^ 2
       ≤ MassGap.wilsonCorrAt 5 β 2 * MassGap.wilsonCorrAt 5 β 4 := by
@@ -146,12 +114,18 @@ theorem logConvex_six_lag_three (β : ℝ) :
   rw [e12, e11, e22] at hh
   exact hh
 
-/-- **THE ANTIPODAL LAG IS BELOW THE LAG-TWO VALUE AT EXTENT SIX**, `ρ(3) ≤ ρ(2)`.
-
+/-- `wilsonCorrAt 5 (max β 0) 3 ≤ wilsonCorrAt 5 (max β 0) 2`, at every real `β`.
 `logConvex_six_lag_three` with `ConfinesSharp.sym_six_two` folding lag `4` onto lag `2` reads
-`ρ(3)² ≤ ρ(2)²`, and both are nonnegative by `Complete.wilson_reflection_positive_at_even`. This is
-what removes the third lag from the criterion, and it has no extent-four analogue — at extent four
-the antipodal lag IS lag two. -/
+`ρ(3)² ≤ ρ(2)²`; both values are nonnegative by
+`Complete.wilson_reflection_positive_at_even`, so `nlinarith` descends to the values themselves.
+
+At six lags the antipodal lag is `3` and lag `2` is distinct from it, which is what makes this a
+relation between two different values; at four lags the antipodal lag is lag `2` itself and there is
+no analogue.
+
+DERIVED: `5` is the `N` of `wilsonCorrAt N` and `3` the half-extent passed to
+`wilson_reflection_positive_at_even`; `0` is the lower clamp on the coupling; the lag literals `2`
+and `3` index `Fin 6`, `3` being the antipodal lag at six. -/
 theorem lag_three_le_lag_two (β : ℝ) :
     MassGap.wilsonCorrAt 5 (max β 0) 3 ≤ MassGap.wilsonCorrAt 5 (max β 0) 2 := by
   have hrp := MassGap.wilson_reflection_positive_at_even 5 3 (by norm_num) (by norm_num)
@@ -175,42 +149,63 @@ two definitions below is one of those coefficients: `2c−1`, `1+2c` and `1+c` a
 performs, `9` and `8` are the discriminant's, and the outer `2` in the denominator and the outer
 square are the quadratic formula's. Nothing is chosen. -/
 
-/-- The positive root of the reduced extent-six quadratic, in `v = √(ρ(2)/ρ(0))`.
+/-- The positive root of the reduced quadratic, in the variable `v = √(ρ(2)/ρ(0))`:
+
+    vSix = (√(9 − 8c²) − (2c − 1)) / (2(2 + 3c)),   c = 3^{−1/4}.
+
+A closed form with no parameter. `vSix_root` is the identity that makes it a root, `vSix_pos` and
+`vSix_lt_one` bracket it.
 
 DERIVED: every literal is a coefficient of `ConfinesSharp.confines_extent_six_iff` or of the
-quadratic formula applied to it, and none is chosen. `2c−1`, `1+2c` and `1+c` are the criterion
-own coefficients; `2 + 3c = (1+2c) + (1+c)` is the collapse `lag_three_le_lag_two` performs;
-`9` and `8` are the discriminant `(2c−1)² + 4(2+3c)(1−c) = 9 − 8c²`, which is a `ring` identity
-rather than a computed number; the outer `2` is the quadratic formula denominator; and the `4`
-and `1` inside `3^(−1/4)` are the floor `c`, carried in by name from `Floor.lean`. -/
+quadratic formula applied to it, and none is chosen. `2c − 1` is the criterion's own coefficient on
+`ρ(1)`, and `2 + 3c = (1 + 2c) + (1 + c)` is what its coefficients on `ρ(2)` and `ρ(3)` collapse to
+once `lag_three_le_lag_two` replaces `ρ(3)` by `ρ(2)`. `9` and `8` are the discriminant
+`(2c−1)² + 4(2+3c)(1−c) = 9 − 8c²`, a `ring` identity rather than a computed number, and the
+exponent `2` there squares `c`. The outer `2` in the denominator is the quadratic formula's. `3` is
+the base of `c` and the exponent `-(1)/4` its exponent, so the `1` and `4` at each of `c`'s four
+occurrences are that one exponent, carried in by name from the floor constant. -/
 noncomputable def vSix : ℝ :=
   (Real.sqrt (9 - 8 * ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2) - (2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - 1))
     / (2 * (2 + 3 * (3 : ℝ) ^ (-(1 : ℝ) / 4)))
 
-/-- **THE THRESHOLD ON THE LAG-TWO RATIO AT EXTENT SIX** — `vSix` squared, because the criterion is a
-bound on `√(ρ(2)/ρ(0))`. The extent-six counterpart of `LagTwoBound.lagTwoThreshold`, in the SAME
-currency.
+/-- `vSix ^ 2`: the threshold on the ratio `ρ(2)/ρ(0)` at six lags, in the same currency as
+`LagTwoBound.lagTwoThreshold` at four.
 
-Sufficient by `confines_extent_six_of_lag_two_ratio`, and BEST POSSIBLE by
-`lagTwoThresholdSix_sharp`, which exhibits a profile meeting every extent-six log-convexity instance
-at exactly this ratio and failing the criterion. So it is the threshold, not a margin.
+Sufficient by `confines_extent_six_of_lag_two_ratio`. `lagTwoThresholdSix_sharp` exhibits a profile
+meeting every log-convexity instance available at half-extent three, sitting at exactly this ratio,
+and failing the criterion, so this reduction carries no larger constant.
 
-DERIVED: the `2` is the squaring, because `vSix` is the root in `v = √(ρ(2)/ρ(0))` while the
-criterion is stated on the RATIO. No numeral of this declaration is a level. -/
+DERIVED: `2` is the squaring, because `vSix` is the root in `v = √(ρ(2)/ρ(0))` while the criterion is
+stated on the ratio. Every other constant is `vSix`'s. No numeral here is a measured level. -/
 noncomputable def lagTwoThresholdSix : ℝ := vSix ^ 2
 
-/-- `9 − 8c² > 0`, so the discriminant has a real square root. From `LagTwoBound.floor_sq_bounds`. -/
+/-- `0 < 9 - 8c²` at `c = 3^{−1/4}`, so the discriminant has a real square root. `linarith` from the
+upper half of `LagTwoBound.floor_sq_bounds`, the numeric bracket on `c²`.
+
+DERIVED: `0` is the sign asserted. `9` and `8` are the discriminant's coefficients, `vSix`'s, and the
+exponent `2` squares `c`; `3` and the exponent `-(1)/4` spell `c`. -/
 theorem disc_pos : 0 < 9 - 8 * ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 := by
   have h := (MassGap.LagTwoBound.floor_sq_bounds).2
   linarith
 
-/-- The square root squared, as the root identity needs it. -/
+/-- `√(9 - 8c²) ^ 2 = 9 - 8c²`. `Real.sq_sqrt` at `disc_pos.le`; the nonnegativity of the radicand is
+what it needs.
+
+The form `vSix_root` and `lagTwoThresholdSix_gt` consume, since they must clear the square root.
+
+DERIVED: `9`, `8` and the exponent `2` squaring `c` are the discriminant's, `vSix`'s; the outer
+exponent `2` undoes the square root. `3` and `-(1)/4` spell `c`. -/
 theorem disc_sq : Real.sqrt (9 - 8 * ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2) ^ 2
     = 9 - 8 * ((3 : ℝ) ^ (-(1 : ℝ) / 4)) ^ 2 :=
   Real.sq_sqrt disc_pos.le
 
-/-- `vSix > 0`: the numerator is positive because `9 − 8c² > (2c−1)²`, which is
-`8 + 4c − 12c² > 0` at `c < 0.76`. -/
+/-- `0 < vSix`. The denominator `2(2 + 3c)` is positive because `c` is, and the numerator
+`√(9 − 8c²) − (2c − 1)` is positive because `9 − 8c² > (2c − 1)²`, which rearranges to
+`8 + 4c − 12c² > 0` and follows from the numeric brackets `LagTwoBound.floor_bounds` and
+`floor_sq_bounds`.
+
+DERIVED: `0` is the sign asserted; it is the only numeral in the statement, every other constant
+being `vSix`'s. -/
 theorem vSix_pos : 0 < vSix := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hsq := MassGap.LagTwoBound.floor_sq_bounds
@@ -224,8 +219,15 @@ theorem vSix_pos : 0 < vSix := by
   rw [vSix]
   exact div_pos hnum hden
 
-/-- **THE ROOT IDENTITY.** `(2+3c)·vSix² + (2c−1)·vSix = 1 − c`: `vSix` is exactly the positive root
-of the reduced criterion, so the threshold is the criterion's own and not a cut. -/
+/-- `(2 + 3c)·vSix² + (2c − 1)·vSix = 1 − c` at `c = 3^{−1/4}`: `vSix` is exactly a root of the
+reduced quadratic. Substituting the definition and clearing denominators reduces the left side to
+`(D² − (2c−1)²) / (4(2+3c))` with `D = √(9 − 8c²)`; `disc_sq` replaces `D²`, and `ring` closes it.
+
+Equality, not an inequality: the threshold is the quadratic's own root, not a value taken below it.
+This is what `confines_extent_six_of_lag_two_ratio` uses to turn a ratio bound into the criterion.
+
+DERIVED: `2 + 3c` and `2c − 1` are the reduced quadratic's coefficients, `vSix`'s, and `1 − c` is the
+criterion's right-hand coefficient. The exponent `2` squares `vSix`. `3` and `-(1)/4` spell `c`. -/
 theorem vSix_root :
     (2 + 3 * (3 : ℝ) ^ (-(1 : ℝ) / 4)) * vSix ^ 2
         + (2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - 1) * vSix
@@ -244,12 +246,16 @@ theorem vSix_root :
   rw [div_eq_iff (by linarith : (4 : ℝ) * (2 + 3 * c) ≠ 0)]
   ring
 
-/-- **THE THRESHOLD IS ABOVE `0.0337`.**
+/-- `0.0337 < lagTwoThresholdSix`. The proof first brackets `0.1837 < vSix` by clearing the
+denominator and applying `nlinarith` to `disc_sq` and the numeric brackets on `c` and `c²`, then
+squares.
 
-CHOSEN, both numerals, and both rounded DOWN — away from the claim
-`lagTwoThreshold < lagTwoThresholdSix`, so neither rounding can manufacture the strict inequality:
-`0.1837` is below `vSix = 0.18383656…` and `0.0337` is below `lagTwoThresholdSix = 0.03379588…`. They
-decide nothing; the closed form does, and `vSix_root` is what makes it the criterion's own root. -/
+CHOSEN: `0.0337` is a rational lower bound on the closed form, rounded down so that it lies below
+the true value — the direction a lower bound requires, and away from the claim
+`lagTwoThreshold < lagTwoThresholdSix`, so the rounding cannot manufacture that strict inequality.
+`0.1837`, the intermediate bound on `vSix`, is rounded down for the same reason and appears in the
+proof only. Neither decides anything; the closed form does, and `vSix_root` is what makes it the
+quadratic's root. -/
 theorem lagTwoThresholdSix_gt : 0.0337 < lagTwoThresholdSix := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hsq := MassGap.LagTwoBound.floor_sq_bounds
@@ -263,14 +269,16 @@ theorem lagTwoThresholdSix_gt : 0.0337 < lagTwoThresholdSix := by
   rw [lagTwoThresholdSix]
   nlinarith [hv, hv0]
 
-/-- **THE RELIEF, MACHINE-CHECKED.** The extent-six threshold on the lag-two ratio is STRICTLY LARGER
-than the extent-four one. `LagTwoBound.lagTwoThreshold_lt` puts the extent-four threshold below
-`0.018625`; `lagTwoThresholdSix_gt` puts the extent-six one above `0.0337`.
+/-- `LagTwoBound.lagTwoThreshold < lagTwoThresholdSix`. A `calc` through the two decimal brackets:
+`LagTwoBound.lagTwoThreshold_lt` puts the left side below `0.018625`, `norm_num` compares the two
+rationals, and `lagTwoThresholdSix_gt` puts the right side above `0.0337`.
 
-This compares the two CONSTANTS, not the two correlations: `wilsonCorrAt 3` and `wilsonCorrAt 5` are
-different functions and nothing here transports a bound from one to the other. What it says is that
-the obligation does not change SHAPE with the aperture — it is a lag-two ratio bound at both — and
-that the number it has to beat is larger at extent six. -/
+A comparison of two real constants. `wilsonCorrAt 3` and `wilsonCorrAt 5` are different functions and
+no statement here relates their values, so this transports no bound from one extent to the other.
+
+DERIVED: no numeral in the statement; both sides are closed forms. The intermediate decimals
+`0.018625` and `0.0337` belong to the bracketing theorems the `calc` cites, each of which carries its
+own note. -/
 theorem lagTwoThreshold_lt_lagTwoThresholdSix :
     MassGap.LagTwoBound.lagTwoThreshold < lagTwoThresholdSix := by
   calc MassGap.LagTwoBound.lagTwoThreshold
@@ -278,28 +286,39 @@ theorem lagTwoThreshold_lt_lagTwoThresholdSix :
     _ < 0.0337 := by norm_num
     _ < lagTwoThresholdSix := lagTwoThresholdSix_gt
 
-/-- `vSix < 1`, from the root identity alone: `(2+3c)·vSix² < 1 − c < 1` and `2 + 3c > 4`. -/
+/-- `vSix < 1`. From `vSix_root` and `vSix_pos` by `nlinarith`: the identity forces
+`(2 + 3c)·vSix² < 1 − c < 1` while `2 + 3c > 4`, so `vSix² < 1/4`.
+
+Together with `vSix_pos` this brackets the root in `(0, 1)`, which is what
+`lagTwoThresholdSix_sharp` needs to make its profile admissible.
+
+DERIVED: `1` is the upper bound asserted; it is the only numeral in the statement, every other
+constant being `vSix`'s. -/
 theorem vSix_lt_one : vSix < 1 := by
   have hc := MassGap.LagTwoBound.floor_bounds
   have hroot := vSix_root
   have hv0 := vSix_pos
   nlinarith [hroot, hv0, hc.1, hc.2]
 
-/-- **THE THRESHOLD IS THE BEST ONE THE PROVED SHAPE FACTS CARRY AT EXTENT SIX** — it is not a cut
-with margin left in it.
+/-- There are reals `r₀ > 0`, `r₁, r₂, r₃ ≥ 0` satisfying `r₁² ≤ r₀r₂`, `r₂² ≤ r₀r₂` and
+`r₃² ≤ r₂²` — the three non-diagonal log-convexity instances available at half-extent three, read
+through circle symmetry — with `r₂ = lagTwoThresholdSix · r₀` exactly, and for which the extent-six
+criterion FAILS.
 
-The profile `ρ = (1, vSix, vSix², vSix²)`, extended by circle symmetry to `ρ(4) = ρ(2)` and
-`ρ(5) = ρ(1)`, satisfies EVERY non-diagonal instance of `LogConvex.corrClay_log_convex` available at
-half-extent three — `(0,1)`, `(0,2)` and `(1,2)`, the first and third with EQUALITY — and it sits at
-`ρ(2) = lagTwoThresholdSix · ρ(0)` exactly, where `vSix_root` puts the criterion at equality and hence
-NOT strictly below. So no constant above `lagTwoThresholdSix` can be carried by this reduction, and
-`confines_extent_six_of_lag_two_ratio`'s strict `<` cannot be weakened to `≤`.
+The witness is `(1, vSix, vSix², vSix²)`, extended by circle symmetry to `ρ(4) = ρ(2)` and
+`ρ(5) = ρ(1)`. The first and third instances hold with equality, and `vSix_root` puts the criterion
+at equality, hence not strictly below.
 
-This is the extent-six counterpart of `ConfinesSharp.shape_admits_failure`, sharpened from the flat
-profile to the boundary one.
+So no constant above `lagTwoThresholdSix` is carried by this reduction, and
+`confines_extent_six_of_lag_two_ratio`'s strict `<` cannot be weakened to `≤`. The statement is about
+four arbitrary reals meeting those inequalities; it says nothing about `wilsonCorrAt`.
 
-DERIVED: no numeral. The four components are `1`, `vSix`, `vSix²`, `vSix²`; the exponent `2` is the
-square in the log-convexity statement and in `lagTwoThresholdSix = vSix ^ 2`. -/
+DERIVED: `0` is the strict lower bound on `r₀` and the lower bound on each of `r₁`, `r₂`, `r₃`. The
+exponents `2` are the squares of the log-convexity instances and of
+`lagTwoThresholdSix = vSix ^ 2`. In the failed criterion, `2c − 1`, `1 + 2c`, `1 + c` and `1 − c` are
+`ConfinesSharp.confines_extent_six_iff`'s coefficients, and `3` with the exponent `-(1)/4` spells
+`c`. The witness's components are `1`, `vSix`, `vSix²`, `vSix²`; the leading `1` is the contact
+value, free by homogeneity. -/
 theorem lagTwoThresholdSix_sharp :
     ∃ r₀ r₁ r₂ r₃ : ℝ, 0 < r₀ ∧ 0 ≤ r₁ ∧ 0 ≤ r₂ ∧ 0 ≤ r₃ ∧
       r₁ ^ 2 ≤ r₀ * r₂ ∧ r₂ ^ 2 ≤ r₀ * r₂ ∧ r₃ ^ 2 ≤ r₂ ^ 2 ∧
@@ -321,14 +340,20 @@ theorem lagTwoThresholdSix_sharp :
 
 /-! ## 3. The sufficient condition at extent six -/
 
-/-- **A LAG-TWO RATIO BELOW `lagTwoThresholdSix` CLEARS THE FLOOR AT EXTENT SIX.**
+/-- If `K < lagTwoThresholdSix` and `wilsonCorrAt 5 (max β 0) 2 ≤ K * wilsonCorrAt 5 (max β 0) 0`,
+then `3^{−1/4} < cosAvgEven ap6 β`.
 
-The extent-six counterpart of `ConfinesZero.confines_extent_four_of_lag_two_small` composed with
-`LagTwoBound.lag_two_criterion_of_ratio`, and strictly weaker in hypothesis by
-`lagTwoThreshold_lt_lagTwoThresholdSix`.
+`ConfinesSharp.confines_extent_six_iff` turns the conclusion into the linear criterion. The ratio
+bound gives `ρ(2) < vSix²·ρ(0)`; `logConvex_six_lag_one` then gives `ρ(1) < vSix·ρ(0)`, using
+`PlaqVariance.corrClay_zero_pos` for `ρ(0) > 0`; `lag_three_le_lag_two` collapses the `ρ(3)` term
+into the `ρ(2)` one; and `vSix_root` evaluates the resulting bound to exactly `(1 − c)·ρ(0)`.
 
-Nothing is spent that is not proved: `ConfinesSharp.confines_extent_six_iff` is an equivalence, and
-the two substitutions are `logConvex_six_lag_one` and `lag_three_le_lag_two`. -/
+Every step is an equivalence or a proved inequality: `confines_extent_six_iff` is an `iff`, and the
+two substitutions are the log-convexity instances above.
+
+DERIVED: `5` is the `N` of `wilsonCorrAt N`; `0` is the lower clamp on the coupling and the contact
+lag; `2` is the lag whose ratio is bounded. `3` and the exponent `-(1)/4` spell the constant the
+cosine average must clear. `K` is the caller's. -/
 theorem confines_extent_six_of_lag_two_ratio {β K : ℝ} (hK : K < lagTwoThresholdSix)
     (h : MassGap.wilsonCorrAt 5 (max β 0) 2 ≤ K * MassGap.wilsonCorrAt 5 (max β 0) 0) :
     (3 : ℝ) ^ (-(1 : ℝ) / 4) < cosAvgEven ap6 β := by
@@ -370,67 +395,72 @@ theorem confines_extent_six_of_lag_two_ratio {β K : ℝ} (hK : K < lagTwoThresh
 
 /-! ## 4. The reduction -/
 
-/-- **THE REMAINING OBLIGATION AT EXTENT SIX.** One real constant strictly below
-`lagTwoThresholdSix`, bounding the lag-two ratio of the extent-six correlation at every NONNEGATIVE
-coupling.
+/-- The `Prop`: there is a real `K` strictly below `lagTwoThresholdSix` with
+`wilsonCorrAt 5 β 2 ≤ K * wilsonCorrAt 5 β 0` at every `β ≥ 0`.
 
-OPEN. Nothing in this tree proves it, and the shape facts cannot. The no-go that applies AT THIS
-EXTENT is `TailRatio.no_strict_lag_bound_with_contact`, whose witness is the constant profile: it
-conforms to nonnegativity, circle symmetry, log-convexity and `ρ(2) ≤ ρ(0)`, and it defeats every
-`K < 1`. The stronger `no_lag_two_bound_from_triple` does NOT apply here — its witness has
-`ρ(2) > ρ(0)`, which half-extent three rules out. Either way `lagTwoThresholdSix` is far under one, so
-what closes `LagTwoRatioSix` must come from the dynamics.
+One constant for the whole nonnegative half-line, not one per coupling. The negative half-line is
+not quantified over, and `EvenAperture.readEven` clamps at `max β 0`, so nothing is lost by that.
 
-The negative half-line is free: `EvenAperture.readEven` clamps at `max β 0`, so the hypothesis is
-only ever read at a nonnegative coupling.
+`confines_of_lagTwoRatioSix` is what consumes it. No statement in this module establishes it.
 
-DERIVED: `5` is `ConfinesZero.ap6`'s extent index and `2`, `0` are lag indices. The only magnitude is
+DERIVED: `5` is the `N` of `wilsonCorrAt N`, `ConfinesZero.ap6`'s extent index; `2` and `0` are lag
+indices in `Fin 6`, and `0` is also the lower bound on the coupling. The only magnitude is
 `lagTwoThresholdSix`, which is a closed form. -/
 def LagTwoRatioSix : Prop :=
   ∃ K : ℝ, K < lagTwoThresholdSix ∧
     ∀ β : ℝ, 0 ≤ β → MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0
 
-/-- **THE REDUCTION.** `LagTwoRatioSix` gives `ApertureRoute.ConfinesAtAnAperture` outright, with
-`ConfinesZero.ap6` as the witness. The extent-six counterpart of
-`LagTwoBound.confines_of_lag_two_ratio`, and it consumes a strictly weaker hypothesis. -/
+/-- `LagTwoRatioSix → ApertureRoute.ConfinesAtAnAperture`, with `ConfinesZero.ap6` as the existential
+witness. `confines_extent_six_of_lag_two_ratio` at every `β`, the hypothesis read at `max β 0` so the
+clamp discharges its nonnegativity side condition.
+
+DERIVED: no numeral. Every constant is `LagTwoRatioSix`'s or `confines_extent_six_of_lag_two_ratio`'s,
+and the aperture witness is named rather than written out. -/
 theorem confines_of_lagTwoRatioSix (h : LagTwoRatioSix) : ApertureRoute.ConfinesAtAnAperture := by
   obtain ⟨K, hK, hb⟩ := h
   exact ⟨MassGap.ConfinesZero.ap6, fun β =>
     confines_extent_six_of_lag_two_ratio hK (hb (max β 0) (le_max_right β 0))⟩
 
-/-! ## The strong-coupling cut at extent six
+/-! ## The cut interval at six lags
 
-`LagTwoBound.exists_cut_lag_two_ratio` proves the lag-two bound on `[0, b]` for EVERY `K > 0` at
-extent four, and `LagTwoEight.exists_cut_lag_two_ratio_eight` does the same at extent eight. **Extent
-six had no such theorem**, and extent six is the extent `LagTwoRatioSix` and
-`ClayAssembly.ClayRemaining.I1_lagTwo` are stated at — so the `[0, b]` half of the obligation the
-Clay assembly actually names was the one half nobody had written down.
+`exists_cut_lag_two_ratio_six` is the six-lag counterpart of
+`LagTwoBound.exists_cut_lag_two_ratio` and `LagTwoEight.exists_cut_lag_two_ratio_eight`.
 
-The proof is extent-generic: `PlaqVariance.corrClay_zero_pos`, `ContactFloor.corrClay_zero_ge` and
-`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` are stated at every `N`, and the only
-extent-sensitive step is `circLag (2 : Fin 6) = 2`, which `decide` settles. It is therefore the
-extent-eight proof with the extent changed, and nothing else.
+The inputs are extent-generic — `PlaqVariance.corrClay_zero_pos`, `ContactFloor.corrClay_zero_ge` and
+`StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` are stated at every `N` — and the only
+extent-sensitive step is `circLag (2 : Fin 6) = 2`, which `decide` settles.
 
-**⚠ This does not close the lag-two obligation.** `LagTwoRatioSix` asks for the bound at EVERY
-`β ≥ 0` with a single `K < lagTwoThresholdSix`; this gives every `K > 0` on a cut interval `[0, b]`
-whose `b` depends on `K` and shrinks as `K` does. The open part is `β > b`, exactly as at the other
-two extents.
--/
+What it gives is weaker than `LagTwoRatioSix`, which asks for a single `K < lagTwoThresholdSix`
+valid at every `β ≥ 0`. This gives every `K > 0` on an interval `[0, b]` whose `b` depends on `K`. -/
 
+/-- `Moment.circLag (2 : Fin (5 + 1)) = 2`, by `decide`: at six lags the circular distance of lag
+`2` is `2`, since `2 ≤ 6 - 2`.
+
+The one extent-sensitive input to `exists_cut_lag_two_ratio_six`; it is what admits the power `k = 1`
+in `corrClay_abs_le_coreConst_mul_rate_pow`.
+
+DERIVED: `5` is the `N` of `Fin (N + 1)` and `1` the `+1`, so the lag type has six elements. `2` is
+the lag whose circular distance is taken, and the value `2` is that distance — they coincide because
+`2` is at most half of six. -/
 theorem circLag_two_six : Moment.circLag (2 : Fin (5 + 1)) = 2 := by decide
 
-/-- **THE STRONG-COUPLING CUT AT EXTENT SIX.** For EVERY `K > 0` there is an interval `[0, b]` on
-which the extent-six lag-two ratio is under `K`.
+/-- For every `K > 0` there is a `b > 0` such that
+`wilsonCorrAt 5 β 2 ≤ K * wilsonCorrAt 5 β 0` for every `β ∈ [0, b]`.
 
-The transcription of `LagTwoBound.exists_cut_lag_two_ratio` at `N = 5`. The numerator is
-`corrClay_abs_le_coreConst_mul_rate_pow` at `k = 1`, admissible because `circLag 2 = 2` at extent
-six as at extent four — that is `circLag_two_six` above; the denominator is `ContactFloor.corrClay_zero_ge`'s
-`e^{−128β}·ρ(0)|₀ ≤ ρ(0)`. No numeral is named for `b`, and none could be: `ρ(0)|₀` enters through
-`PlaqVariance.corrClay_zero_pos`, which is non-constructive.
+The numerator is bounded by `StrongCoupling.corrClay_abs_le_coreConst_mul_rate_pow` at the power
+`k = 1`, admissible because `circLag_two_six`; the denominator below by
+`ContactFloor.corrClay_zero_ge`'s `e^{−128β}·ρ(0)|₀ ≤ ρ(0)`. The two are compared by continuity of
+`β ↦ A · coreRate β · e^{128β}` at `0`, where `coreRate 0 = 0`, so `b` is obtained from a
+neighbourhood rather than written down.
 
-DERIVED: `16 * 4` is `StrongCoupling`'s touch degree at `dim = 4`, `128 = 2·64` is
-`ContactFloor.corrClay_zero_ge`'s own exponent, `1` is the power `k` admitted by `circLag 2 = 2`, and
-`2`, `0` are lag indices. Nothing is chosen. -/
+`b` is not named and depends on `K`, shrinking with it. `ρ(0)|₀` enters through
+`PlaqVariance.corrClay_zero_pos`, which is non-constructive, so no numeral for `b` is available.
+
+DERIVED: `0` is the strict lower bound on `K` and on `b`, the lower endpoint of the interval, and the
+contact lag. `5` is the `N` of `wilsonCorrAt N` and `2` the lag whose ratio is bounded. The
+constants appearing in the proof are not the statement's: `16 * 4` is `StrongCoupling`'s touch degree
+at `dim = 4`, `128 = 2 · 64` is `ContactFloor.corrClay_zero_ge`'s exponent, and `1` is the power `k`
+admitted by `circLag_two_six`. -/
 theorem exists_cut_lag_two_ratio_six (K : ℝ) (hK : 0 < K) :
     ∃ b : ℝ, 0 < b ∧ ∀ β : ℝ, 0 ≤ β → β ≤ b →
       MassGap.wilsonCorrAt 5 β 2 ≤ K * MassGap.wilsonCorrAt 5 β 0 := by
@@ -512,9 +542,13 @@ theorem exists_cut_lag_two_ratio_six (K : ℝ) (hK : 0 < K) :
 #print axioms circLag_two_six
 #print axioms exists_cut_lag_two_ratio_six
 
-/-- **A CONSTANT ADMISSIBLE AT EXTENT FOUR IS ADMISSIBLE AT EXTENT SIX.** The direction check on
-`lagTwoThreshold_lt_lagTwoThresholdSix`: the relief cannot be pointing the wrong way, because the
-extent-four admissible set is contained in the extent-six one. -/
+/-- `K < LagTwoBound.lagTwoThreshold → K < lagTwoThresholdSix`. Transitivity through
+`lagTwoThreshold_lt_lagTwoThresholdSix`.
+
+The direction check: the set of constants admissible at four lags is contained in the set admissible
+at six. It relates the two admissible SETS, not the two correlations, and supplies no `K`.
+
+DERIVED: no numeral. `K` is the caller's and both thresholds are closed forms. -/
 theorem admissible_at_six_of_admissible_at_four {K : ℝ}
     (hK : K < MassGap.LagTwoBound.lagTwoThreshold) : K < lagTwoThresholdSix :=
   lt_trans hK lagTwoThreshold_lt_lagTwoThresholdSix

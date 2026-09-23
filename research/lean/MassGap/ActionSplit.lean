@@ -3,94 +3,91 @@ import MassGap.Reflect
 import MassGap.ReflectPositive
 
 /-!
-# MassGap.ActionSplit — the shared block, integrated OUTSIDE the square
+# MassGap.ActionSplit — the shared block, integrated outside the square
 
-`ReflectionPositivity.pairing_with_reflection_nonneg` proves that an observable paired with its own
-reflection integrates to a SQUARE, and it needs `Disjoint S T`: the positive half and its mirror must
-read disjoint coordinates. Under a reflection of the Wilson lattice they do not. The links lying in
-the reflection plane — the transverse links at a fixed site-plane, and, when the extent is odd, the
-axis link whose midpoint is fixed — are read by BOTH halves. `WilsonReal.block_integral_factor`, the
-tree's only decomposition, is two-block and requires disjointness, so neither lemma applies.
+`ReflectionPositivity.pairing_with_reflection_nonneg` pairs an observable with its own reflection and
+concludes a square. It takes `Disjoint S T`: the positive half and its mirror read disjoint
+coordinates. A reflection of the Wilson lattice does not satisfy that. The links lying in the
+reflection plane — the transverse links at a fixed site-plane, and, at odd extent, the axis link
+whose midpoint is fixed — are read by both halves. `WilsonReal.block_integral_factor`, the tree's
+other decomposition, is two-block and also requires disjointness.
 
-## What is here
+## The three-block form
 
-The three-block form. Split the index set into `S` (one side), `T` (its mirror) and `R` (the shared
-block), and condition on `R`:
+Split the index set into `S` (one side), `T` (its mirror) and `R` (the shared block), and condition
+on `R`:
 
     ∫ w(U|R) · O(U) · O(ΘU) dU  =  ∫ over U|R of  w(U|R) · ( ∫ over U|S of O )²
 
-— the shared block integrated OUTSIDE the square, with a weight `w` of the shared block riding along.
-`pairing_eq_weighted_square` is that identity; `pairing_nonneg_of_shared_block` is the inequality it
+The shared block integrated outside the square, against a weight `w` reading `R`.
+`pairing_eq_weighted_square` is that identity, and `pairing_nonneg_of_shared_block` the inequality it
 gives once `w ≥ 0`, proved directly and with weaker hypotheses. Neither requires `S ∪ T ∪ R` to
-exhaust the index set, and neither is available from `pairing_with_reflection_nonneg`.
+exhaust the index set.
 
-The reflection is allowed to TWIST each coordinate, not merely relabel it (`twist`), because the
-Osterwalder–Seiler time reflection daggers the axis links: `Reflect.reflConf` is exactly
+The reflection may twist each coordinate rather than merely relabel it (`twist`), because the
+Osterwalder–Seiler time reflection daggers the axis links: `Reflect.reflConf` is
 `twist (reflLinkPerm τ c) (axisDagger τ)` (`reflConf_eq_twist`), and
-`wilson_pairing_nonneg_of_shared_block` is the weld stated on the Wilson lattice.
+`wilson_pairing_nonneg_of_shared_block` states the weld on the Wilson lattice.
 
-## Where the plane is, and which cases have a cross term
+## Where the plane is
 
 `reflSite τ c` fixes the sites with `2x = c` (`reflSite_fixed_iff`); `reflLink τ c` fixes a
 transverse link when `2 x_τ = c` (`reflLink_fixed_iff_transverse`) and an axis link when
-`2 x_τ = c − 1` (`reflLink_fixed_iff_axis`). On `Fin n` that is a parity question and it splits three
-ways:
+`2 x_τ = c − 1` (`reflLink_fixed_iff_axis`). On `Fin n` that is a parity question, and it splits
+three ways:
 
-* **`n` even, `c` even** — `2x = c` has a solution (`exists_fixed_site`) and `2x = c − 1` has none
-  (`no_fixed_axis_link`). Site-planes only: the shared block `R` is made of transverse links,
-  `reflLink` fixes each one and `reflConf` does not invert it, so the two geometric hypotheses of
-  `wilson_pairing_nonneg_of_shared_block` (`hR`, `hRτ`) are available, and
-  `exists_fixed_transverse_link` shows `R` is genuinely nonempty. What is still NOT supplied in this
-  case is the PLAQUETTE partition — that every plaquette reads `S ∪ R`, `T ∪ R` or `R` alone — which
-  the weld takes as its hypotheses `hO` and `hW`.
-* **`n` even, `c` odd** — no fixed site, and fixed AXIS links, which `reflConf` INVERTS. The shared
-  block is acted on nontrivially, so `hσR` fails and the conditional argument does not close. This is
-  link reflection.
-* **`n` odd** — `2` is a unit, so for EVERY `c` there is a fixed site AND a fixed axis link. Proved
-  here at the PINNED extent only, by evaluation: `Complete.wilsonCorr` runs the lag over
-  `Fin (nCorrYM + 1)` with `nCorrYM = 16`, so `n = 17`, and `pinned_exists_half`,
-  `pinned_exists_half_sub_one`, `pinned_half_unique` and `exists_fixed_axis_link_pinned` settle that
-  extent. `reflConf_inverts_fixed_axis_link` is then the exact blocker.
+* `n` even, `c` even — `2x = c` has a solution (`exists_fixed_site`) and `2x = c − 1` has none
+  (`no_fixed_axis_link`). Site-planes only: the shared block `R` consists of transverse links,
+  `reflLink` fixes each one and `reflConf` does not invert it, so the geometric hypotheses `hR` and
+  `hRτ` of `wilson_pairing_nonneg_of_shared_block` are available, and
+  `exists_fixed_transverse_link` shows `R` is nonempty. The plaquette partition — that every
+  plaquette reads `S ∪ R`, `T ∪ R` or `R` alone — is separate, and is what the weld takes as its
+  hypotheses `hO` and `hW`.
+* `n` even, `c` odd — no fixed site, and fixed axis links, which `reflConf` inverts. The shared block
+  is acted on nontrivially, so `hσR` fails. This is a link reflection.
+* `n` odd — `2` is a unit, so every `c` has both a fixed site and a fixed axis link. Stated here at
+  extent `17` only, by evaluation: `Complete.wilsonCorr` runs the lag over `Fin (nCorrYM + 1)` with
+  `nCorrYM = 16`, so `n = 17`, and `pinned_exists_half`, `pinned_exists_half_sub_one`,
+  `pinned_half_unique` and `exists_fixed_axis_link_pinned` settle that extent.
+  `reflConf_inverts_fixed_axis_link` is what fails there.
 
 ## The negative control
 
-Moving the shared block INSIDE the square is not a harmless rearrangement. `coin_pairing_ne_sq`
-computes both sides on a fair coin: the conditional form (shared block outside) gives `1/2`, which is
-the true value of the pairing; the two-block form (shared block inside) gives `1/4`.
-`shared_block_inside_square_false` turns that into a refutation of the two-block identity applied to
-a shared coordinate — so the `Disjoint` hypothesis of `pairing_with_reflection_nonneg` is not
-decoration.
+`coin_pairing_ne_sq` computes both arrangements on a fair coin: the conditional form, with the shared
+block outside the square, gives `1/2`, the value of the pairing; the two-block form, with the shared
+block inside, gives `1/4`. `shared_block_inside_square_false` turns that into a refutation of the
+two-block identity applied to a shared coordinate, so the `Disjoint` hypothesis of
+`pairing_with_reflection_nonneg` is load-bearing.
 
-## The Wilson weight, in that case, is put into the paired form — and the pairing inequality holds
+## The Wilson weight in the paired form
 
 At even extent the plaquettes partition four ways: degenerate (`μ = ν = τ`, identity holonomy, zero
-contribution), inside a plane, reading `S ∪ R`, reading `T ∪ R` (`sum_plaq_split`, `plaq_links_le`,
-`plaq_links_ge`, `plaq_links_plane`). The reflection EXCHANGES the last two
+contribution), inside a plane, reading `S ∪ R`, and reading `T ∪ R` (`sum_plaq_split`,
+`plaq_links_le`, `plaq_links_ge`, `plaq_links_plane`). The reflection exchanges the last two
 (`sum_plqMinus_eq_plus_refl`), so `exp(−βS)` becomes `w(U|R) · h(U) · h(ΘU)`
 (`integrand_eq_paired`), and `wilson_pairing_nonneg_even` is the Osterwalder–Seiler pairing
-inequality for the `SU(N)` plaquette-energy observable — proved, not cited.
+inequality for the `SU(N)` plaquette-energy observable.
 
-`plaqReflPositive_of_even_lag` discharges `ReflectPositive.PlaqReflPositive` outright at even extent
-and even lag, and `corrHyper_nonneg_even_lag` gives `0 ≤ corrHyper` there with no hypothesis at all.
+`plaqReflPositive_of_even_lag` gives `ReflectPositive.PlaqReflPositive` at even extent and even lag,
+and `corrHyper_nonneg_even_lag` gives `0 ≤ corrHyper` there.
 
-## Choosing the aperture so that this applies
+## Choosing the aperture
 
 `Complete.confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop`, and
 `exists_even_extent_aperture` intersects that cofinal set with the cofinal set of `N` whose extent
-`N + 1` is even. So the even case is reachable without changing any pinned constant.
+`N + 1` is even, so the even case is reached without changing a pinned constant.
 
-## What this still does NOT discharge
+## Scope
 
-`Complete.wilson_reflection_positive_at`, because `ReflectPositive.corrClay_rp_of` needs
-`PlaqReflPositive` at EVERY lag and only the even lags are covered — half of them at even extent, and
-NONE at the pinned extent `17`, which is odd so `n = 2 * m` never holds there.
+The results here are stated at even extent and even lag. `ReflectPositive.corrClay_rp_of` takes
+`PlaqReflPositive` at every lag: at even extent that is half the lags, and at extent `17`, which is
+odd, `n = 2 * m` never holds.
 
-An ODD lag at even extent fixes an AXIS link (`odd_lag_has_fixed_axis_link`) which `reflConf`
-INVERTS (`reflConf_inverts_fixed_axis_link`), so `hσR` of the weld fails and the conditional square
-has nothing to condition on. That is the link-reflection cross term, and closing it is the
-Osterwalder–Seiler character expansion: `ReflectionPositivity.reflection_positive_of_expansion` is
-proved and foundational-only and consumes exactly such an expansion, so what is missing is the
-expansion's nonnegative coefficients for the `SU(3)` Wilson weight, not the mechanism.
+An odd lag at even extent fixes an axis link (`odd_lag_has_fixed_axis_link`) which `reflConf` inverts
+(`reflConf_inverts_fixed_axis_link`), so `hσR` of the weld fails and the conditional square has
+nothing to condition on. `ReflectionPositivity.reflection_positive_of_expansion` consumes a character
+expansion with nonnegative coefficients; those coefficients for the `SU(3)` Wilson weight are not
+supplied here.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python code/lean_build.py build MassGap.ActionSplit`.
@@ -105,14 +102,23 @@ open MassGap.CompactGauge
 
 /-! ## Small measure-theoretic tools -/
 
-/-- A bounded measurable real function is integrable against a finite measure. -/
+/-- A measurable `g : γ → ℝ` with `|g z| ≤ C` everywhere is integrable against a finite measure.
+`MeasureTheory.Integrable` from the constant dominating function.
+
+`C` is the caller's bound and is not required nonnegative; the hypothesis forces it so when `γ` is
+nonempty.
+
+DERIVED: no numeral. `C` is the caller's. -/
 theorem integrable_of_bounded {γ : Type} [MeasurableSpace γ] (m : Measure γ) [IsFiniteMeasure m]
     {g : γ → ℝ} (hg : Measurable g) {C : ℝ} (hC : ∀ z, |g z| ≤ C) : Integrable g m :=
   Integrable.mono' (integrable_const C) hg.aestronglyMeasurable
     (Filter.Eventually.of_forall fun z => by simpa [Real.norm_eq_abs] using hC z)
 
-/-- Change of variables along a measure-preserving MAP (not necessarily an equivalence) — the twist
-below need not be invertible. -/
+/-- `∫ x, G (f x) ∂m = ∫ y, G y ∂m'` for a measure-preserving `f : α → β` and measurable `G`.
+
+Stated for a map rather than an equivalence, since `twist` below need not be invertible.
+
+DERIVED: no numeral. -/
 theorem integral_comp_of_mp {α β : Type} [MeasurableSpace α] [MeasurableSpace β]
     {m : Measure α} {m' : Measure β} {f : α → β} (hf : MeasurePreserving f m m')
     {G : β → ℝ} (hG : Measurable G) : (∫ x, G (f x) ∂m) = ∫ y, G y ∂m' := by
@@ -120,8 +126,14 @@ theorem integral_comp_of_mp {α β : Type} [MeasurableSpace α] [MeasurableSpace
     integral_map hf.measurable.aemeasurable hG.aestronglyMeasurable
   rw [← h1, hf.map_eq]
 
-/-- **Fubini in the form this file uses**: a product integral is nonnegative as soon as every INNER
-integral is. Getting the pairing into this shape is the whole point of the three-block split. -/
+/-- A product integral is nonnegative as soon as every inner integral is: for measurable `f` bounded
+by `C` with `0 ≤ ∫ y, f (x, y) ∂m'` at every `x`, `0 ≤ ∫ z, f z ∂(m.prod m')`.
+
+Both measures are probability measures, which with the bound `C` supplies the integrability Fubini
+needs.
+
+DERIVED: `0` is the lower bound assumed of each inner integral and concluded of the product one; `C`
+is the caller's bound. -/
 theorem prod_integral_nonneg {α β : Type} [MeasurableSpace α] [MeasurableSpace β]
     (m : Measure α) (m' : Measure β) [IsProbabilityMeasure m] [IsProbabilityMeasure m']
     {f : α × β → ℝ} (hf : Measurable f) {C : ℝ} (hC : ∀ z, |f z| ≤ C)
@@ -129,8 +141,13 @@ theorem prod_integral_nonneg {α β : Type} [MeasurableSpace α] [MeasurableSpac
   rw [integral_prod _ (integrable_of_bounded _ hf hC)]
   exact integral_nonneg (fun x => hpos x)
 
-/-- The companion of `prod_integral_nonneg`: two product integrals agree as soon as every pair of
-INNER integrals does. -/
+/-- Two product integrals agree as soon as every pair of inner integrals does: for measurable `f`,
+`g` each bounded by `C`, with `∫ y, f (x, y) ∂m' = ∫ y, g (x, y) ∂m'` at every `x`, the two product
+integrals are equal.
+
+The companion of `prod_integral_nonneg`, with the same integrability inputs.
+
+DERIVED: no numeral. `C` is the caller's common bound. -/
 theorem prod_integral_congr_inner {α β : Type} [MeasurableSpace α] [MeasurableSpace β]
     (m : Measure α) (m' : Measure β) [IsProbabilityMeasure m] [IsProbabilityMeasure m']
     {f g : α × β → ℝ} (hf : Measurable f) (hg : Measurable g) {C : ℝ}
@@ -143,16 +160,26 @@ theorem prod_integral_congr_inner {α β : Type} [MeasurableSpace α] [Measurabl
 
 /-! ## Configurations, relabelling, twisting -/
 
-/-- The product measure on configurations `ι → Ω`. -/
+/-- `Measure.pi (fun _ : ι => μ)`: the product of identical copies of `μ`, one per index. The
+measure every configuration integral in this file is taken against.
+
+`ι` must be a `Fintype`, which is what `Measure.pi` needs.
+
+DERIVED: no numeral. -/
 noncomputable abbrev cvol (ι : Type) [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
     (μ : Measure Ω) : Measure (ι → Ω) := Measure.pi (fun _ : ι => μ)
 
-/-- **Relabel the coordinates by `e` and twist each coordinate by `σ`.**
+/-- Relabel the coordinates by a permutation `e` and apply a per-coordinate map `σ i` to each
+value.
 
-A bare permutation of the index set is not enough for a reflection: the Osterwalder–Seiler time
-reflection inverts the gauge variable on every link running along the reflection axis, and that
-dagger is the `σ`. With `σ = id` this is `ReflectionPositivity.relabel`; with the axis inversion it
-is `Reflect.reflConf` (`reflConf_eq_twist`). -/
+A bare permutation of the index set does not express a reflection: the Osterwalder–Seiler time
+reflection inverts the gauge variable on every link along the reflection axis, and `σ` carries that.
+At `σ = id` this is `ReflectionPositivity.relabel`; with the axis inversion it is `Reflect.reflConf`
+(`reflConf_eq_twist`).
+
+`σ i` need not be invertible, which is why `integral_comp_of_mp` is stated for a map.
+
+DERIVED: no numeral. `e` and `σ` are the caller's. -/
 def twist {ι Ω : Type} (e : Equiv.Perm ι) (σ : ι → Ω → Ω) (U : ι → Ω) : ι → Ω :=
   fun i => σ i (U (e i))
 
@@ -168,8 +195,13 @@ section Generic
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- **The twist preserves the product measure** when every coordinate map does: relabelling is a
-symmetry of a product of identical factors, and the coordinate maps act one factor at a time. -/
+/-- `twist e σ` is measure-preserving for `cvol ι μ` when every `σ i` is measure-preserving for `μ`.
+Relabelling is a symmetry of a product of identical factors, and the coordinate maps act one factor
+at a time.
+
+The factors must be identical copies of one `μ`; a product of differing measures is not covered.
+
+DERIVED: no numeral. -/
 theorem twist_measurePreserving (e : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (hσ : ∀ i, MeasurePreserving (σ i) μ μ) :
     MeasurePreserving (twist e σ) (cvol ι μ) (cvol ι μ) := by
@@ -185,10 +217,14 @@ theorem twist_measurePreserving (e : Equiv.Perm ι) (σ : ι → Ω → Ω)
     exact congrArg Measure.pi (funext fun i => (hσ i).map_eq)
   exact hco.comp hrel
 
-/-- **Disjoint blocks factorise**, for any product of identical probability factors. The generic form
-of `WilsonReal.block_integral_factor`; the three-block argument applies it on the COMPLEMENT of the
-shared block, whose coordinate type is a subtype, which is why the `SU(N)`-specific statement in the
-tree could not be reused. -/
+/-- For disjoint `S`, `T` and measurable `φ`, `ψ` reading only those blocks, the integral of the
+product factorises into the product of the integrals.
+
+The generic form of `WilsonReal.block_integral_factor`. The three-block argument applies it on the
+complement of the shared block, whose coordinate type is a subtype, which the `SU(N)`-specific
+statement does not cover.
+
+DERIVED: no numeral. `S`, `T`, `φ` and `ψ` are the caller's; disjointness is the hypothesis `hST`. -/
 theorem block_factor (S T : Finset ι) (hST : Disjoint S T)
     (φ : (S → Ω) → ℝ) (ψ : (T → Ω) → ℝ) (hφ : Measurable φ) (hψ : Measurable ψ) :
     (∫ U, φ (fun i : S => U (i : ι)) * ψ (fun i : T => U (i : ι)) ∂(cvol ι μ))
@@ -206,7 +242,10 @@ theorem block_factor (S T : Finset ι) (hST : Disjoint S T)
 
 end Generic
 
-/-- A block of the index set, seen inside the complement of the shared block `R`. -/
+/-- The image of `S` inside the subtype `{i // i ∉ R}`: the part of a block that lies off the shared
+block. The index type the factorisation is run on after `R` is conditioned out.
+
+DERIVED: no numeral. `R` and `S` are the caller's. -/
 def offBlock {ι : Type} [Fintype ι] [DecidableEq ι] (R S : Finset ι) :
     Finset {i : ι // i ∉ R} :=
   Finset.univ.filter (fun j => (j : ι) ∈ S)
@@ -220,29 +259,29 @@ theorem offBlock_disjoint {ι : Type} [Fintype ι] [DecidableEq ι] (R S T : Fin
   Finset.disjoint_left.mpr fun j hj hj' =>
     Finset.disjoint_left.mp hST ((mem_offBlock R S j).mp hj) ((mem_offBlock R T j).mp hj')
 
-/-! ## THE WELD: the shared block, integrated outside the square -/
+/-! ## The weld: the shared block, integrated outside the square -/
 
 section Weld
 
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- **Reflection positivity with a SHARED block.**
+/-- **Reflection positivity with a shared block.**
 
 `S` is one side of the reflection, `T` its mirror, `R` the block both sides read — the reflection
 plane. `Θ = twist θ σ` relabels by `θ` and twists coordinatewise; it must fix `R` (`hθR`, `hσR`) and
 carry `S` into `T` (`hθST`). `O` reads `S` and `R` only (`hO`); `W` reads `R` only (`hW`) and is
 nonnegative (`hw`) — that is where `exp(−β S₀)`, the plane's own share of the Boltzmann weight, goes.
 
-The proof is the three-block conditional Fubini: condition on `R`, and for each FIXED configuration
+The proof is the three-block conditional Fubini: condition on `R`, and for each fixed configuration
 of the plane the remaining integral factorises over the two disjoint halves (`block_factor`) into two
-EQUAL factors (`twist_measurePreserving`, on the complement of the plane), i.e. into a square. The
-shared block is integrated OUTSIDE that square, against the nonnegative weight. Moving it inside is
+equal factors (`twist_measurePreserving`, on the complement of the plane), i.e. into a square. The
+shared block is integrated outside that square, against the nonnegative weight. Moving it inside is
 false — `coin_pairing_ne_sq`.
 
 Nothing here needs `S ∪ T ∪ R` to exhaust the index set: coordinates no one reads come along.
 
-DERIVED: the only numeral is the `0` of `0 ≤ …`, which IS the property asserted. -/
+DERIVED: the only numeral is the `0` of `0 ≤ …`, which is the property asserted. -/
 theorem pairing_nonneg_of_shared_block
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -291,7 +330,7 @@ theorem pairing_nonneg_of_shared_block
   have hΨm : Measurable Ψ :=
     (hmS x).comp (measurable_pi_lambda _
       (fun i => ((hσ (i : ι)).measurable).comp (measurable_pi_apply _)))
-  -- the inner integrand, rewritten into a paired product over two DISJOINT blocks
+  -- the inner integrand, rewritten into a paired product over two disjoint blocks
   have hrw : ∀ y : {i : ι // i ∉ R} → Ω,
       F ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) (fun i => i ∈ R)).symm (x, y))
         = w x * (Φ (fun j : offBlock R S => y (j : {i : ι // i ∉ R}))
@@ -347,9 +386,13 @@ theorem pairing_nonneg_of_shared_block
   rw [hstep, hmir]
   exact mul_nonneg (hw x) (mul_self_nonneg _)
 
-/-- **The conditional half-integral.** Integrate the observable over one side of the plane with the
-shared block held FIXED at `U|R`; it depends on `U` only through `U|R`. This is the `∫` that gets
-squared in `pairing_eq_weighted_square`, with the plane integral outside it. -/
+/-- Integrate `h` over the block `S` with the shared block held fixed at `U|R`. The result depends
+on `U` only through `U|R`, which is what makes it the quantity `pairing_eq_weighted_square` squares,
+with the plane integral outside it.
+
+`hSR : Disjoint S R` is what lets the two restrictions be varied independently.
+
+DERIVED: no numeral. `S`, `R` and `h` are the caller's. -/
 noncomputable def halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
     (h : (S → Ω) → (R → Ω) → ℝ) (U : ι → Ω) : ℝ :=
   ∫ y : {i : ι // i ∉ R} → Ω,
@@ -397,19 +440,17 @@ theorem abs_halfIntegral_le (S R : Finset ι) (hSR : Disjoint S R)
     exact Filter.Eventually.of_forall (fun y => by simpa [Real.norm_eq_abs] using hCh _ _)
   simpa [Real.norm_eq_abs] using hb
 
-/-- **⭐ A FLOOR ON THE OBSERVABLE IS A FLOOR ON ITS HALF-INTEGRAL.**
+/-- A pointwise lower bound on `h` is a lower bound on `halfIntegral`: from `c ≤ h u v` everywhere,
+`c ≤ halfIntegral μ S R hSR h U`. The half-integral is taken against a probability measure, so it
+lies between the observable's bounds.
 
-The half-integral is taken against a PROBABILITY measure, so it cannot fall below the observable's
-own lower bound. That is the whole content.
+The upper bound `hCh` is part of the statement, not only of the proof: the Bochner integral of a
+non-integrable function is `0` by convention, so an unbounded `h` would give `halfIntegral = 0` and
+refute any positive `c`.
 
-**⛔ THE UPPER BOUND IS LOAD-BEARING FOR THE STATEMENT**, not merely for the tactic: the Bochner
-integral of a non-integrable function is `0` by convention, so without `hCh` an unbounded `h` gives
-`halfIntegral = 0` and any positive floor REFUTES the conclusion.
+The companion of `abs_halfIntegral_le`, which bounds above.
 
-**⛔ NOTHING CONSUMES THIS.** It is recorded as the companion to `abs_halfIntegral_le` — that one
-bounds above, this one below — and because the Bochner convention above is worth writing down once.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral. `c` is the caller's floor and `Ch` the caller's bound. -/
 theorem le_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
     (h : (S → Ω) → (R → Ω) → ℝ)
     (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
@@ -432,17 +473,17 @@ theorem le_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
       (fun i : R => U (i : ι)) ∂(cvol {i : ι // i ∉ R} μ)
   simpa using hmono
 
-/-- **⭐ A CONSTANT COMES OUT OF THE HALF-INTEGRAL.**
+/-- Subtracting a constant from the observable subtracts it from the half-integral:
+`halfIntegral μ S R hSR (fun v w => h v w - k) U = halfIntegral μ S R hSR h U - k`. The half-integral
+is against a probability measure, so a constant integrates to itself.
 
-The half-integral is against a PROBABILITY measure, so subtracting a constant from the observable
-subtracts it from the half-integral.
+This is what applies the vanishing criterion to a mean-subtracted observable, which is the form
+`TransferGap.GapAt` sees: the form at `O - k` vanishes exactly when `O`'s conditional half-integral
+is a.e. `k`, a condition on `O`'s dependence on the shared block rather than on `O` being constant.
 
-**WHY IT IS WANTED.** It is what makes the vanishing criterion usable on a MEAN-SUBTRACTED
-observable — the only kind `TransferGap.GapAt` sees. With it, the form at `O - k` vanishes exactly
-when `O`'s conditional half-integral is a.e. `k`, which is a statement about `O`'s dependence on the
-SHARED block and not about `O` being constant.
+`hCh` supplies the integrability that lets the constant be split off.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. `k` is the caller's constant and `Ch` the caller's bound. -/
 theorem halfIntegral_sub_const (S R : Finset ι) (hSR : Disjoint S R)
     (h : (S → Ω) → (R → Ω) → ℝ)
     (hmj : Measurable (fun p : ((S → Ω) × (R → Ω)) => h p.1 p.2))
@@ -469,9 +510,11 @@ theorem halfIntegral_sub_const (S R : Finset ι) (hSR : Disjoint S R)
 
 
 
-/-- **A factor reading the shared block alone pulls out of the half-integral.**
+/-- A factor reading the shared block alone comes out of the half-integral:
+`halfIntegral μ S R hSR (fun v w => f w * k v w) U = f (U|R) * halfIntegral μ S R hSR k U`, by
+`integral_const_mul`, since the `S`-integral holds `U|R` fixed.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. `f` and `k` are the caller's. -/
 theorem halfIntegral_mul_R_left (S R : Finset ι) (hSR : Disjoint S R)
     (f : (R → Ω) → ℝ) (k : (S → Ω) → (R → Ω) → ℝ) (U : ι → Ω) :
     halfIntegral μ S R hSR (fun v w => f w * k v w) U
@@ -481,12 +524,15 @@ theorem halfIntegral_mul_R_left (S R : Finset ι) (hSR : Disjoint S R)
 
 #print axioms halfIntegral_mul_R_left
 
-/-- **TWO VALUES of the half-integral, from a shared-block factor with a zero.**
+/-- The half-integral of `fun v w => f w * k v w` takes different values at two configurations `a`,
+`b` when the shared-block factor `f` vanishes at `a` and is positive at `b`, and `k` has a positive
+uniform floor `c`.
 
-`f` vanishing at one plane configuration and positive at another suffices, because the remaining
-`S`-integral is strictly positive whenever the integrand has a positive lower bound.
+`halfIntegral_mul_R_left` pulls `f` out and `le_halfIntegral` makes the remaining `S`-integral at
+least `c`, so the product is `0` at `a` and positive at `b`.
 
-DERIVED: the `0`s are `f`'s value at `a` and the lower bounds; no other numeral. -/
+DERIVED: `0` is `f`'s value at `a` in `ha`, the strict lower bound on `c` in `hc0`, and the strict
+lower bound on `f`'s value at `b` in `hb`. `Ck` is the caller's bound on `k`. -/
 theorem halfIntegral_two_values_of_R_factor (S R : Finset ι) (hSR : Disjoint S R)
     (f : (R → Ω) → ℝ) (k : (S → Ω) → (R → Ω) → ℝ)
     (hkm : Measurable (fun q : ((S → Ω) × (R → Ω)) => k q.1 q.2))
@@ -503,16 +549,15 @@ theorem halfIntegral_two_values_of_R_factor (S R : Finset ι) (hSR : Disjoint S 
 
 #print axioms halfIntegral_two_values_of_R_factor
 
-/-- **THE VARIANCE IS BELOW EVERY CENTRED SECOND MOMENT.** The quadratic in `k` is minimised at the
-mean, so subtracting the WRONG constant can only increase the integral.
+/-- `∫ g² - (∫ g)² ≤ ∫ (g - k)²` at every real `k`, for `g` and `g²` integrable against a
+probability measure. The right-hand side is a quadratic in `k` minimised at the mean, so subtracting
+any other constant only increases it.
 
-A lower bound built on this holds at EVERY `k`, so a caller need not identify the constant being
+A lower bound built on this holds at every `k`, so a caller need not identify the constant being
 subtracted.
 
-**⛔ NOTHING ROUTES THAT INTO `hfin` YET.** `gapAt_of_finite_volume_connected` is discharged
-through `WilsonTransferReduction.gapAt_iff_subtracted_pairing`, which does not mention this.
-
-DERIVED: the `2`s are the squares; no other numeral. -/
+DERIVED: the `2`s are the squares — the second moment, the square of the mean, and the centred
+square. `k` is the caller's constant. -/
 theorem variance_le_integral_sub_const_sq {X : Type} [MeasurableSpace X] (ν : Measure X)
     [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
     (hg2 : Integrable (fun x => g x ^ 2) ν) (k : ℝ) :
@@ -530,13 +575,14 @@ theorem variance_le_integral_sub_const_sq {X : Type} [MeasurableSpace X] (ν : M
 
 #print axioms variance_le_integral_sub_const_sq
 
-/-- **THE VARIANCE IS THE SECOND MOMENT ABOUT THE MEAN.**
+/-- `∫ g² - (∫ g)² = ∫ (g - ∫ g)²` against a probability measure, for `g` and `g²` integrable.
 
-**⛔ THIS IS NOT NEW CONTENT.** Mathlib's `ProbabilityTheory.variance` carries the same identity
-for `MemLp 2`; this states it for the `∫f² − (∫f)²` difference that
-`pairing_ge_weight_min_mul_variance` writes, with `Integrable` hypotheses instead.
+Mathlib's `ProbabilityTheory.variance` carries the same identity under `MemLp 2`. This states it for
+the difference `∫ g² - (∫ g)²` that `pairing_ge_weight_min_mul_variance` writes, taking `Integrable`
+hypotheses instead.
 
-DERIVED: the `2`s are the squares; no other numeral. -/
+DERIVED: the `2`s are the squares — the second moment, the square of the mean, and the centred
+square. -/
 theorem variance_eq_integral_sub_mean_sq {X : Type} [MeasurableSpace X] (ν : Measure X)
     [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
     (hg2 : Integrable (fun x => g x ^ 2) ν) :
@@ -558,19 +604,18 @@ theorem variance_eq_integral_sub_mean_sq {X : Type} [MeasurableSpace X] (ν : Me
 
 #print axioms variance_eq_integral_sub_mean_sq
 
-/-- **⭐ AND IT IS POSITIVE EXACTLY WHEN `g` IS NOT A.E. ITS OWN MEAN.**
+/-- `0 < ∫ g² - (∫ g)²` when `g` is not a.e. equal to its own mean, for `g` and `g²` integrable
+against a probability measure. `variance_eq_integral_sub_mean_sq` rewrites the difference as the
+integral of a square, which vanishes only on an a.e.-constant `g`.
 
-This is what makes `pairing_ge_weight_min_mul_variance` say more than `pairing_nonneg_of_local`:
-without it the bound is `0 ≤ pairing`, which is already known.
-`not_ae_eq_const_of_two_values` discharges the hypothesis from two values.
+This is what makes `pairing_ge_weight_min_mul_variance` a strict bound rather than `0 ≤ pairing`.
+`not_ae_eq_const_of_two_values` discharges `hne` from two values.
 
-**⛔ DO NOT ADD A `variance_pos_of_two_values` HERE.**
-`HaarVariance.variance_pos_of_two_values` proves the EQUIVALENT fact, independently: it cannot be
-this composition, since `HaarVariance` does not import `ActionSplit`. It works in Mathlib's
-`variance`, applies `Continuous.ae_eq_iff_eq` directly, and takes its integrability from
-`CompactSpace` rather than as a hypothesis. Compose the two here at the call site instead.
+`HaarVariance.variance_pos_of_two_values` proves the equivalent fact independently: `HaarVariance`
+does not import `ActionSplit`, works in Mathlib's `variance`, applies `Continuous.ae_eq_iff_eq`, and
+takes its integrability from `CompactSpace` rather than as a hypothesis.
 
-DERIVED: the `2`s are the squares; the `0` is the positivity concluded. -/
+DERIVED: the `2`s are the squares; `0` is the strict lower bound concluded of the variance. -/
 theorem variance_pos_of_not_ae_const {X : Type} [MeasurableSpace X] (ν : Measure X)
     [IsProbabilityMeasure ν] (g : X → ℝ) (hg : Integrable g ν)
     (hg2 : Integrable (fun x => g x ^ 2) ν)
@@ -598,17 +643,18 @@ theorem variance_pos_of_not_ae_const {X : Type} [MeasurableSpace X] (ν : Measur
 
 #print axioms variance_pos_of_not_ae_const
 
-/-- **⭐⭐ A NUMERIC FLOOR FOR THE VARIANCE, FROM A TEST FUNCTION WITH KNOWN MOMENTS.**
+/-- `(∫ f·g)² / ∫ g² ≤ ∫ f² - (∫ f)²` for a test function `g` of mean zero and positive second
+moment: correlating `f` against `g` bounds `f`'s variance below.
 
-Cauchy–Schwarz: correlating `f` against any mean-zero `g` bounds `f`'s variance below by
-`(∫f·g)² / ∫g²`. When `g`'s moments are COMPUTED and `∫f·g` has a floor, the right-hand side is a
-number.
+When `g`'s moments are known and `∫ f·g` has a floor, the left-hand side is a number.
 
-Proved by instantiating `0 ≤ ∫((f − mean) − λ·g)²` at the optimal `λ = ∫f·g / ∫g²`, rather than
-through a discriminant lemma: `Schwinger.sq_le_of_quad_nonneg` is this tree's discriminant lemma and
+Proved by instantiating `0 ≤ ∫ ((f - ∫ f) - λ·g)²` at `λ = ∫ f·g / ∫ g²` rather than through a
+discriminant lemma: `Schwinger.sq_le_of_quad_nonneg` is this tree's discriminant lemma and
 `ActionSplit` does not import `Schwinger`.
 
-DERIVED: the `2`s are the squares; the `0`s are `g`'s mean and the sign of its second moment. -/
+DERIVED: the `2`s are the squares — the two second moments, the square of the mean, and the square of
+the correlation. `0` is `g`'s mean in `hg0` and the strict lower bound on its second moment in
+`hgpos`. -/
 theorem variance_ge_sq_div_of_mean_zero {X : Type} [MeasurableSpace X] (ν : Measure X)
     [IsProbabilityMeasure ν] (f g : X → ℝ)
     (hf : Integrable f ν) (hf2 : Integrable (fun x => f x ^ 2) ν)
@@ -675,10 +721,10 @@ theorem variance_ge_sq_div_of_mean_zero {X : Type} [MeasurableSpace X] (ν : Mea
 
 #print axioms variance_ge_sq_div_of_mean_zero
 
-/-- **A FUNCTION OF ONE COORDINATE INTEGRATES AS IF THE OTHERS WERE NOT THERE.**
+/-- **A function of one coordinate integrates as if the others were not there.**
 
 `cvol` is `Measure.pi` of copies of one probability measure, so evaluation at a coordinate is
-measure preserving (`MeasureTheory.measurePreserving_eval`). This is what carries a COMPUTED
+measure preserving (`MeasureTheory.measurePreserving_eval`). This is what carries a computed
 single-link Haar moment to the configuration measure.
 
 DERIVED: no numeral. -/
@@ -697,19 +743,18 @@ theorem integral_eval_cvol {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace
 
 #print axioms integral_eval_cvol
 
-/-- **⭐⭐ OBSERVABLES ON DISJOINT BLOCKS FACTORISE**, in the LOCALITY form.
+/-- `∫ F·G = (∫ F)·(∫ G)` against `cvol ι μ` when `F` reads `R` and `G` reads its complement,
+stated in the locality form: the hypotheses are that `F` and `G` take equal values at configurations
+agreeing on their block. `block_factor` supplies the independence, after presenting each observable
+as a function of its block's coordinates through `base`.
 
-`block_factor` states this for observables presented as functions of a block's coordinates. What a
-caller holds is a READING statement, so this restates it for `F` reading `R` and `G` reading the
-complement, and obtains it from `block_factor` rather than re-deriving the independence.
+The measure is the product measure `cvol ι μ`, not a Gibbs measure. At non-zero coupling the
+Boltzmann weight couples the blocks and the identity does not hold.
 
-**⛔ THIS IS THE FREE MEASURE**, not a Gibbs measure. At non-zero coupling the Boltzmann weight
-couples the blocks and this is false; bounding that coupling is what a cluster expansion is for.
+`F` and `G` are arbitrary bounded measurable observables, which is the generality `hfin` quantifies
+over; `StrongCoupling`'s decay is stated for one plaquette.
 
-**⭐ IT IS STATED FOR ARBITRARY BOUNDED MEASURABLE OBSERVABLES**, which is the generality `hfin`
-quantifies over. `StrongCoupling`'s decay is stated for ONE PLAQUETTE.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral. `R`, `base`, `F` and `G` are the caller's. -/
 theorem integral_mul_of_indep_blocks (R : Finset ι) (base : ι → Ω)
     (F G : (ι → Ω) → ℝ) (hFm : Measurable F) (hGm : Measurable G)
     (hFloc : ∀ U V : ι → Ω, (∀ i ∈ R, U i = V i) → F U = F V)
@@ -758,10 +803,12 @@ theorem integral_mul_of_indep_blocks (R : Finset ι) (base : ι → Ω)
 
 
 
-/-- **A UNIFORM LOWER BOUND ON THE WEIGHT PASSES THROUGH THE INTEGRAL**, for a nonnegative
-integrand.
+/-- A uniform lower bound on the weight passes through the integral of a nonnegative integrand:
+from `Wmin ≤ W x` and `0 ≤ q x` everywhere, `Wmin * ∫ q ≤ ∫ W·q`, by `integral_mono`.
 
-DERIVED: the `0` is the integrand's sign; no other numeral. -/
+The measure `ν` is arbitrary; integrability of `q` and of `W·q` are hypotheses.
+
+DERIVED: `0` is the lower bound assumed of the integrand in `hq`. `Wmin` is the caller's floor. -/
 theorem integral_weight_ge {X : Type} [MeasurableSpace X] (ν : Measure X) (W q : X → ℝ)
     {Wmin : ℝ} (hW : ∀ x, Wmin ≤ W x) (hq : ∀ x, 0 ≤ q x)
     (hqi : Integrable q ν) (hWqi : Integrable (fun x => W x * q x) ν) :
@@ -772,16 +819,17 @@ theorem integral_weight_ge {X : Type} [MeasurableSpace X] (ν : Measure X) (W q 
 
 #print axioms integral_weight_ge
 
-/-- **A CEILING ON THE THREE-BLOCK PAIRING**, from boundedness alone.
+/-- `|∫ W·(O - k)·(O∘twist θ σ - k)| ≤ Cw * (Ch + |k|) * (Ch + |k|)` from the pointwise bounds
+`|O| ≤ Ch` and `|W| ≤ Cw` alone, against a probability measure.
 
-The twin of the floor: `pairing_ge_weight_min_mul_variance` bounds the pairing below, this bounds it
-above, and `hfin` needs both because it is a RATIO of two pairings.
+The ceiling to `pairing_ge_weight_min_mul_variance`'s floor; `hfin` is a ratio of two pairings and
+takes both.
 
-**⛔ THERE IS NO DECAY IN THIS.** It is the product of the three bounding constants and nothing
-else, so a ratio formed from it and a floor measures how much decay is MISSING — it does not supply
-any.
+The right-hand side is the product of the bounding constants, with no dependence on `θ`, `σ` or the
+separation between the blocks.
 
-DERIVED: the `0`s are the signs of the two bounding constants; no other numeral. -/
+DERIVED: the `0`s are the lower bounds assumed of `Ch` in `hCh0` and of `Cw` in `hCw0`. `k` is the
+caller's subtracted constant. -/
 theorem abs_pairing_le
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω)
     (O : (ι → Ω) → ℝ) (Ch : ℝ) (hCh0 : 0 ≤ Ch) (hOb : ∀ U, |O U| ≤ Ch)
@@ -804,15 +852,18 @@ theorem abs_pairing_le
 
 #print axioms abs_pairing_le
 
-/-- **⭐⭐⭐ A NUMBER FOR THE VARIANCE OF `g · D`**, from `g`'s computed moments and a floor on `D`.
+/-- `c² * v ≤ ∫ (g·D)² - (∫ g·D)²`, for `g` of mean zero and second moment `v > 0` and a factor `D`
+with uniform floor `c > 0`.
 
-Correlating against `g` itself makes the correlation `∫ D·g²`, which the floor bounds below by
-`c·v`; `variance_ge_sq_div_of_mean_zero` then gives `Var ≥ (c·v)²/v = c²·v`.
+Correlating `g·D` against `g` makes the correlation `∫ D·g²`, which `integral_weight_ge` bounds below
+by `c·v`; `variance_ge_sq_div_of_mean_zero` then gives `(c·v)²/v = c²·v`.
 
-**⛔ IT NEEDS `∫ g = 0`.** Against a `g` with a mean the correlation is not the second moment and
-the floor does not pass through.
+`hg0 : ∫ g = 0` is part of the statement: against a `g` with a mean the correlation is not the second
+moment and the floor does not pass through.
 
-DERIVED: the `2`s are the squares; the `0`s are `g`'s mean and the signs of `c` and `v`. -/
+DERIVED: the `2`s are the squares — `c²`, the second moment of `g·D`, and the square of its mean.
+`0` is the strict lower bound on `c` in `hc0`, `g`'s mean in `hg0`, and the strict lower bound on `v`
+in `hvpos`. -/
 theorem variance_ge_sq_mul_of_factor_floor {X : Type} [MeasurableSpace X] (ν : Measure X)
     [IsProbabilityMeasure ν] (g D : X → ℝ)
     {c : ℝ} (hc0 : 0 < c) (hD : ∀ x, c ≤ D x)
@@ -845,23 +896,27 @@ theorem variance_ge_sq_mul_of_factor_floor {X : Type} [MeasurableSpace X] (ν : 
 #print axioms variance_ge_sq_mul_of_factor_floor
 
 
-/-- **THE THREE-BLOCK CONDITIONAL IDENTITY.**
+/-- The three-block conditional identity:
 
-    ∫ W·O·(O∘Θ)  =  ∫ W · (half-integral)²
+    ∫ W·O·(O∘Θ)  =  ∫ W · (halfIntegral)²
 
-with the shared block integrated OUTSIDE the square: the right-hand side is an integral of the SQUARE
-of the conditional half-integral, and the weight `W` and the half-integral both read the shared block
-only, so the whole right-hand side is a plane integral of `w · (∫ over the half)²`.
+For disjoint `S`, `T`, `R`, a measure-preserving twist `(θ, σ)` fixing `R` pointwise (`hθR`, `hσR`)
+and carrying `S` into `T` (`hθST`), an observable `O` presented as `h` of the `S` and `R` coordinates
+(`hO`) and bounded by `Ch`, and a weight `W` presented as `w` of the `R` coordinates (`hW`) and
+bounded by `Cw`.
 
-This is the identity `pairing_nonneg_of_shared_block` runs on, stated rather than merely used. No
-sign hypothesis on `w` is needed — this is an equation. Positivity follows the moment `w ≥ 0`, which
-is `pairing_nonneg_of_shared_block`.
+The shared block is integrated outside the square: the integrand on the right is the square of the
+conditional half-integral, times a weight, both reading `R` alone.
 
-The negative control says what changes if the shared block is moved inside the square:
-`NegControl.coin_pairing_ne_sq` computes `1/2` here against `1/4` there.
+This is an equation, so no sign hypothesis on `w` appears; `pairing_nonneg_of_shared_block` adds
+`w ≥ 0` to get the inequality.
 
-DERIVED: the `2` is the square the identity asserts; the `0`s are the signs of the two bounding
-constants `Ch` and `Cw`; the `1`s, `2` and `4` of the control are that control's own values. -/
+`NegControl.coin_pairing_ne_sq` computes both arrangements on a fair coin, `1/2` here against `1/4`
+with the shared block inside the square.
+
+DERIVED: the `2` is the square the identity asserts. The `0`s are the lower bounds assumed of `Ch`
+in `hCh0` and of `Cw` in `hCw0`; the `1` and `2` in `p.1`, `p.2`, `q.1`, `q.2` are the product's
+projections. `1/2` and `1/4` belong to the control cited, not to this statement. -/
 theorem pairing_eq_weighted_square
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1035,20 +1090,21 @@ theorem integrable_weighted_halfIntegral_sq (S R : Finset ι) (hSR : Disjoint S 
         mul_le_mul (hCw U) hsq (mul_nonneg (abs_nonneg _) (abs_nonneg _)) hCw0
     _ = Cw * Ch ^ 2 := by ring
 
-/-- **⭐⭐ THE REFLECTION FORM IS BOUNDED BELOW BY THE HALF-INTEGRAL'S VARIANCE, UNIFORMLY IN `k`.**
+/-- `Wmin * (∫ halfIntegral² - (∫ halfIntegral)²) ≤ ∫ W·(O - k)·(O∘twist θ σ - k)`, at every real
+`k`, on the hypotheses of `pairing_eq_weighted_square` together with a nonnegative uniform floor
+`Wmin` on the weight.
 
-`pairing_eq_weighted_square` at `h - k` writes the pairing as `∫ W·(halfIntegral - k)²`;
-`variance_le_integral_sub_const_sq` drops the `k`; `integral_weight_ge` drops the weight to its
-floor.
+`pairing_eq_weighted_square` at `h - k` writes the pairing as `∫ W·(halfIntegral - k)²`,
+`halfIntegral_sub_const` moves the shift onto the half-integral,
+`variance_le_integral_sub_const_sq` replaces the shifted square by the variance, and
+`integral_weight_ge` drops the weight to `Wmin`.
 
-**⛔ IT IS NOT A NUMBER.** The right-hand side is still an integral, and a ratio needs a value.
+The left-hand side does not depend on `k`, so a caller need not identify the constant being
+subtracted. It is an integral, not a number.
 
-What it removes is the dependence on `k`. `hfin` subtracts the state's mean and no lemma
-identifies that constant, so a bound holding at every `k` is the shape that could be used —
-**⛔ but no term in the tree connects this to `hfin`.**
-
-DERIVED: the `2`s are the squares; the `0`s are the signs of `Ch`, `Cw` and `Wmin`; no other
-numeral. -/
+DERIVED: the `2`s are the squares — the second moment of the half-integral and the square of its
+mean. The `0`s are the lower bounds assumed of `Ch`, `Cw` and `Wmin` in `hCh0`, `hCw0` and
+`hWmin0`. -/
 theorem pairing_ge_weight_min_mul_variance
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1075,7 +1131,7 @@ theorem pairing_ge_weight_min_mul_variance
     calc |h u v - k| ≤ |h u v| + |k| := abs_sub _ _
       _ ≤ Ch + |k| := by linarith [hCh u v]
   have hCh0' : (0 : ℝ) ≤ Ch + |k| := by linarith [abs_nonneg k]
-  -- the pairing IS the weighted square of the shifted half-integral
+  -- the pairing is the weighted square of the shifted half-integral
   have hsq := pairing_eq_weighted_square μ S T R hST hSR hTR θ σ hσ hθR hσR hθST
     (fun u v => h u v - k) (fun v => (hmS v).sub measurable_const) hmj'
     (Ch + |k|) hCh0' hCh' w Cw hCw0 hCw
@@ -1126,34 +1182,26 @@ theorem pairing_ge_weight_min_mul_variance
 
 #print axioms pairing_ge_weight_min_mul_variance
 
-/-- **⭐⭐ EXACTLY WHEN THE REFLECTION PAIRING VANISHES.**
+/-- `∫ W·O·(O∘Θ) = 0` exactly when `fun U => W U * (halfIntegral … U)²` vanishes a.e., on the
+hypotheses of `pairing_eq_weighted_square` together with `w` nonnegative.
 
-    INT W·O·(O∘Θ) = 0   ↔   W · (half-integral)² = 0 almost everywhere
+`pairing_eq_weighted_square` makes the pairing an integral of a nonnegative function, and
+`integral_eq_zero_iff_of_nonneg` turns its vanishing into the a.e. statement; the boundedness
+hypotheses supply the integrability that requires. No smallness, no condition on the coupling and no
+topology on `Ω` enters.
 
-`pairing_eq_weighted_square` is an EQUATION, so the pairing is an integral of a nonnegative function
-the moment the weight is nonnegative, and a nonnegative integrand integrates to zero exactly when it
-vanishes a.e. What enters beyond the identity is BOUNDEDNESS, which is what supplies the
-integrability `integral_eq_zero_iff_of_nonneg` requires. There is no smallness, no condition on the
-coupling and no topology on `Ω`.
+`pairing_nonneg_of_shared_block` gives `0 ≤`; this is an equivalence, so the vanishing of the pairing
+is a property of the integrand rather than an unknown.
 
-**WHY THIS IS THE ONE WORTH HAVING.** `pairing_nonneg_of_shared_block` gives `0 ≤`. A ratio needs its
-denominator bounded BELOW, and `0 ≤` does not bound anything below. This replaces the inequality by
-an equivalence, so the denominator's vanishing becomes a checkable property of the observable rather
-than an unknown.
+The right-hand side constrains the conditional half-integral — `O` integrated over one side with the
+shared block held fixed — and not `O` itself. `NegControl.coin_pairing_ne_sq` is not a witness of an
+`O` that varies while its half-integral vanishes: its half-integral is `1/2`.
 
-**⛔ THE RIGHT-HAND SIDE IS NOT "`O` IS CONSTANT".** What it constrains is the CONDITIONAL
-half-integral — `O` integrated over one side with the shared block held fixed — and not `O` itself.
-No witness is recorded here for an `O` that varies while its half-integral vanishes;
-`NegControl.coin_pairing_ne_sq` is NOT one, being a control on where the shared block sits (its
-half-integral is `1/2`, not `0`).
+The statement is about one finite index set `ι` carrying the product measure `cvol ι μ`.
 
-**⛔ AND IT SAYS NOTHING ABOUT A LIMIT STATE.** This is one finite index set `ι` with the product
-measure. Transporting it to the thermodynamic limit is a separate step and the tree does not take it
-here.
-
-DERIVED: the `0`s are the vanishing asserted on each side, the weight's sign in `hwnn`, and the
-signs of the two bounding constants in `hCh0` and `hCw0`; the `2` is the square of
-`pairing_eq_weighted_square`, as there. -/
+DERIVED: the `0`s are the value the pairing is compared with, the a.e. value on the right, the lower
+bound on the weight in `hwnn`, and the lower bounds on `Ch` and `Cw` in `hCh0` and `hCw0`. The `2` is
+the square of `pairing_eq_weighted_square`; `1/2` belongs to the control cited. -/
 theorem pairing_eq_zero_iff_halfIntegral
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1179,24 +1227,22 @@ theorem pairing_eq_zero_iff_halfIntegral
     Ch hCh0 hCh w Cw hCw0 hCw O hOm hO W hWm hW]
   exact integral_eq_zero_iff_of_nonneg hnn hint
 
-/-- **⭐⭐⭐ AND SO THE PAIRING IS STRICTLY POSITIVE**, given the one thing that can make it vanish.
+/-- `0 < ∫ W·O·(O∘Θ)` on the hypotheses of `pairing_eq_weighted_square`, together with `w`
+nonnegative and `hne`: the weighted square of the half-integral is not a.e. zero. The contrapositive
+of `pairing_eq_zero_iff_halfIntegral` against the nonnegativity the same identity gives.
 
-This is the shape a ratio bound consumes: a lower bound on the DENOMINATOR, at a fixed finite index
-set, on the hypotheses of `pairing_eq_weighted_square` plus the weight's nonnegativity and the
-failure of the a.e. identity above. Those hypotheses include a UNIFORM BOUND on the observable,
-which is a restriction on it and not bookkeeping.
+The hypotheses include a uniform bound `Ch` on the observable, which restricts `O`.
 
-**⛔ THE HYPOTHESIS IS NOT DISCHARGED HERE**, and it is NOT the same proposition as the
-non-degeneracy guards on the GNS side. `TransferGap.gapAt_of_nondegenerate` guards on `0 < form x x`
-and `WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate` on a pairing of the
-MEAN-SUBTRACTED observable against a `DLRLimit.State`; `hne` has no subtraction, ranges over no
-algebra, and lives on `cvol ι μ` at a finite index set. It plays the same ROLE and nothing in the
-tree connects the two. What this theorem does is convert `hne` from a statement about an unknown
-pairing into a statement about an explicit integrand; it does not supply it.
+`hne` is a hypothesis here, not a conclusion. It is a different proposition from the non-degeneracy
+guards on the GNS side: `TransferGap.gapAt_of_nondegenerate` guards on `0 < form x x` and
+`WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate` on a pairing of the
+mean-subtracted observable against a `DLRLimit.State`, while `hne` has no subtraction, ranges over no
+algebra, and lives on `cvol ι μ` at a finite index set. What this converts is the form of the
+condition: from the vanishing of a pairing to the vanishing of an explicit integrand.
 
-DERIVED: the `0`s are the vanishing denied, the positivity asserted, the weight's sign in `hwnn`,
-and the signs of the two bounding constants in `hCh0` and `hCw0`; the `2` is the square of
-`pairing_eq_weighted_square`, as there. -/
+DERIVED: the `0`s are the a.e. value denied in `hne`, the strict lower bound concluded of the
+pairing, the lower bound on the weight in `hwnn`, and the lower bounds on `Ch` and `Cw`. The `2` is
+the square of `pairing_eq_weighted_square`. -/
 theorem pairing_pos_of_halfIntegral_ne
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1226,10 +1272,10 @@ theorem pairing_pos_of_halfIntegral_ne
 
 end Weld
 
-/-! ## The weld in the form a caller actually has it: LOCALITY instead of a factorisation
+/-! ## The weld in the form a caller actually has it: locality instead of a factorisation
 
 `pairing_nonneg_of_shared_block` asks for the observable already written as `h (U|S) (U|R)`. What a
-caller has is the weaker and far more checkable statement that the observable READS only `S ∪ R` —
+caller has is the weaker and far more checkable statement that the observable reads only `S ∪ R` —
 which on the Wilson lattice is `hol_congr_on_support` applied to a plaquette partition. `glue`
 converts one into the other.
 -/
@@ -1239,7 +1285,12 @@ section Localised
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 variable {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
-/-- Rebuild a configuration from its `S` and `R` parts, with a fixed base configuration elsewhere. -/
+/-- Rebuild a configuration from its `S` and `R` parts, taking the values of `base` at every index
+in neither block. The inverse of restriction, up to what happens off `S ∪ R`.
+
+`base` is arbitrary; nothing here requires the two blocks disjoint.
+
+DERIVED: no numeral. `S`, `R`, `base`, `v` and `w` are the caller's. -/
 def glue (S R : Finset ι) (base : ι → Ω) (v : S → Ω) (w : R → Ω) : ι → Ω :=
   fun i => if hs : i ∈ S then v ⟨i, hs⟩ else if hr : i ∈ R then w ⟨i, hr⟩ else base i
 
@@ -1252,7 +1303,7 @@ theorem glue_agree_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω) (
   have hs : i ∉ S := fun hc => Finset.disjoint_left.mp hSR hc hi
   simp only [glue, dif_neg hs, dif_pos hi]
 
-/-- **The `R`-restriction of a glue IS the `R`-part.** `glue_agree_R` pointwise, as a function.
+/-- **The `R`-restriction of a glue is the `R`-part.** `glue_agree_R` pointwise, as a function.
 
 DERIVED: no numeral. -/
 theorem glue_restrict_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω) (v : S → Ω)
@@ -1262,9 +1313,9 @@ theorem glue_restrict_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω
 
 #print axioms glue_restrict_R
 
-/-- **`O` CANNOT SEE `base`.** Two glues differing only in `base` agree on `S` and on `R`, so a
+/-- **`O` cannot see `base`.** Two glues differing only in `base` agree on `S` and on `R`, so a
 reading hypothesis equates the observable on them. The `base` in `glue` is scaffolding: it fills the
-coordinates the observable is blind to, and every VALUE built from it is independent of the filling,
+coordinates the observable is blind to, and every value built from it is independent of the filling,
 not merely every vanishing.
 
 DERIVED: no numeral. -/
@@ -1277,7 +1328,7 @@ theorem glue_base_congr (S R : Finset ι) (hSR : Disjoint S R) (b b' : ι → Ω
     (fun i hi => by rw [glue_agree_S S R b v w hi, glue_agree_S S R b' v w hi])
     (fun i hi => by rw [glue_agree_R S R hSR b v w hi, glue_agree_R S R hSR b' v w hi])
 
-/-- **`glue` is JOINTLY measurable**, which the square identity needs because it integrates over both
+/-- **`glue` is jointly measurable**, which the square identity needs because it integrates over both
 blocks. `measurable_glue_left` is the specialisation at a fixed `w`.
 
 DERIVED: no numeral. -/
@@ -1297,7 +1348,7 @@ theorem measurable_glue_left (S R : Finset ι) (base : ι → Ω) (w : R → Ω)
     Measurable (fun v : S → Ω => glue S R base v w) :=
   (measurable_glue S R base).comp (measurable_id.prodMk measurable_const)
 
-/-- **Reflection positivity from LOCALITY.** `O` need only READ `S ∪ R` and `W` read `R`; the
+/-- **Reflection positivity from locality.** `O` need only read `S ∪ R` and `W` read `R`; the
 factorised form the previous theorem wants is built here by `glue`.
 
 This is the shape the Wilson lattice supplies: a plaquette partition plus
@@ -1332,37 +1383,28 @@ theorem pairing_nonneg_of_local
         (fun i : R => U (i : ι)) hi).symm)
 
 
-/-- **⭐⭐ EXACTLY WHEN THE PAIRING VANISHES, FROM LOCALITY.**
+/-- `∫ W·O·(O∘Θ) = 0` exactly when the weighted square of the glued half-integral vanishes a.e.,
+stated from reading hypotheses: `hOloc` says `O` reads `S ∪ R` and `hWloc` that `W` reads `R`.
 
-`pairing_nonneg_of_local` gives `0 ≤` from the reading statement a caller has;
-`pairing_eq_zero_iff_halfIntegral` gives the EQUIVALENCE from a factorisation no caller of the
-SHARED-BLOCK weld has. This is the equivalence from the reading statement, `glue` supplying the
-factorisation exactly as there.
+`pairing_eq_zero_iff_halfIntegral` takes a factorisation of `O` and `W` through the blocks; `glue`
+supplies it from the reading statements, as in `pairing_nonneg_of_local`. `base` appears on the right
+but the glued observable's value does not depend on it, by `glue_base_congr` under `hOloc`.
 
-`base` APPEARS ON THE RIGHT AND CHANGES NOTHING: `glue_base_congr` shows `hOloc` makes the glued
-observable's VALUE independent of it, not merely its vanishing.
+Two bounds are needed, `Ch` on the observable and `Cw` on the weight, because the half-integral is
+bounded before it is squared; `pairing_nonneg_of_local` takes one bound on the product.
+`wilson_pairing_nonneg_even` and `ReflectionHalfSpace.irefl_box_wilson_pairing_nonneg` both hold the
+separate bounds and build the product bound from them.
 
-**⛔ IT COSTS TWO BOUNDS WHERE `pairing_nonneg_of_local` COSTS ONE**, because the half-integral is
-bounded before it is squared. That cost is nominal in this tree: both caller families —
-`wilson_pairing_nonneg_even` and `ReflectionHalfSpace.irefl_box_wilson_pairing_nonneg` — already hold
-separate bounds and CONSTRUCT the single product bound from them.
+`ReflectionHalfSpace.irefl_box_pairing_eq_zero_iff` instantiates this at the box's three blocks with
+`base` the all-identity configuration.
 
-`ReflectionHalfSpace.irefl_box_pairing_eq_zero_iff` is the consumer: the same instantiation
-`irefl_box_pairing_nonneg` makes, at the box's three blocks, with `base` the all-identity
-configuration.
+`pairing_pos_iff_half_ne_const` below is this statement with a constant subtracted and the weight
+strictly positive, adding `halfIntegral_sub_const` and the sign.
 
-**⛔ THE WELD SIBLINGS STILL HAVE NONE.** `pairing_eq_zero_iff_halfIntegral` and
-`pairing_pos_of_halfIntegral_ne` are reached only through this theorem. And a vanishing CRITERION is
-not a lower BOUND: the shape `TransferGap.GapAt`'s denominator and row 13's null space want is a
-proof that the half-integral does NOT vanish, which nothing supplies.
-
-`pairing_pos_iff_half_ne_const` below is this theorem with a constant subtracted and the weight
-strictly positive, stated as an equivalence. It adds `halfIntegral_sub_const` and the sign, and no
-content beyond them — with `0 < W` its two sides are the same proposition.
-
-DERIVED: the `0`s are the vanishing asserted on each side and the weight's sign in `hWnn`; the `2`
-is the square, as in `pairing_eq_weighted_square`. The two bounding constants carry no sign
-hypothesis — `base` is already a hypothesis, so `abs_nonneg` supplies it. -/
+DERIVED: the `0`s are the value the pairing is compared with, the a.e. value on the right, and the
+lower bound on the weight in `hWnn`. The `2` is the square, as in `pairing_eq_weighted_square`.
+`Ch` and `Cw` carry no sign hypothesis: `base` is a hypothesis, so `abs_nonneg` supplies their
+nonnegativity. -/
 theorem pairing_eq_zero_iff_local
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1398,34 +1440,29 @@ theorem pairing_eq_zero_iff_local
 
 
 
-/-- **⭐⭐ POSITIVITY OF THE CONSTANT-SUBTRACTED FORM, AS AN EQUIVALENCE.**
+/-- `0 < ∫ W·(O - k)·(O∘Θ - k)` exactly when `O`'s conditional half-integral is not a.e. `k`, for a
+strictly positive weight `W` reading `R` and an observable `O` reading `S ∪ R`, both bounded.
 
-The form at `O - k` is positive exactly when `O`'s conditional half-integral is NOT almost everywhere
-`k`.
+`pairing_eq_zero_iff_local` is the same equivalence under `0 ≤ W`; with `0 < W` the weight drops out
+of `W·x² = 0`, and `halfIntegral_sub_const` moves the subtracted constant onto the half-integral, so
+non-vanishing becomes positivity.
 
-**⛔ THE TWO SIDES ARE THE SAME PROPOSITION, AND THAT IS WHY THIS IS AN `↔`.**
-`pairing_eq_zero_iff_local` is already an equivalence and assumes only `0 ≤ W`; with `0 < W` the
-factor `W` drops out of `W·x² = 0`, so the right-hand side is the form's non-vanishing rewritten. No
-difficulty is moved and none is removed. What is added over `pairing_eq_zero_iff_local` is exactly
-`halfIntegral_sub_const` — the constant coming out — and the sign, which turns non-vanishing into
-positivity.
+`k` is a free real, not a mean. At `O ≡ 5` and `k = 0` the right-hand side holds while `O` is
+constant, so the right-hand side is not "the half-integral is non-constant"; it reads that way only
+when `k` is `O`'s own conditional mean.
 
-**⛔ `k` IS NOT A MEAN.** It is a free real. At `O ≡ 5` and `k = 0` the right-hand side holds while
-`O` is constant, so this is NOT the statement "the half-integral is non-constant", and the two are
-incomparable rather than ordered. Only when `k` is `O`'s own conditional mean does the right-hand
-side read "the half-integral is non-constant".
+`WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate` guards a `DLRLimit.State` on
+`C(IConf G, ℝ)` at infinite volume with the subtracted constant pinned to `ν F`; this statement is
+over `cvol ι μ` at a finite index set, over no algebra, with `k` free.
 
-**⛔ AND IT IS NOT THE GNS NON-DEGENERACY.** `WilsonTransferReduction.gapAt_of_subtracted_pairing_nondegenerate`
-guards a `DLRLimit.State` on `C(IConf G, ℝ)` at infinite volume with the subtracted constant pinned
-to `ν F`. This is `cvol ι μ` at a finite index set, over no algebra, with `k` free. It plays the same
-ROLE; nothing in the tree connects the two.
+`HaarVariance.variance_pos_of_two_values` discharges a hypothesis of this shape from continuity, an
+open-positive measure and two values, and `PlaqVariance.wilsonCorrConn_self_pos` is the Wilson
+instance. Neither applies in this section, where `Ω` carries no topology; `pairing_pos_of_half_two_values`
+is the version stated with one.
 
-**HOW SUCH A HYPOTHESIS GETS DISCHARGED ELSEWHERE.** `HaarVariance.variance_pos_of_two_values` does
-it with continuity, an open-positive measure and two values, and `PlaqVariance.wilsonCorrConn_self_pos`
-is the Wilson instance. That route is NOT available here: `Ω` carries no topology in this section.
-
-DERIVED: the `0`s are the positivity asserted, the weight's sign and the a.e. vanishing denied; the
-`2` of the proof is the square, as in `pairing_eq_weighted_square`. -/
+DERIVED: the `0`s are the strict lower bound concluded of the form, the strict lower bound on the
+weight in `hWpos`, and the a.e. value denied on the right. No `2` appears in the statement; the
+square is in the proof, through `pairing_eq_zero_iff_local`. -/
 theorem pairing_pos_iff_half_ne_const
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1490,13 +1527,15 @@ theorem pairing_pos_iff_half_ne_const
     simp only [Pi.zero_apply]
     exact pow_eq_zero_iff (n := 2) (by norm_num) |>.mp hsq
 
-/-- **⭐⭐ THE VARIANCE BOUND IN THE SHAPE A BOX CALLER HAS.**
+/-- `pairing_ge_weight_min_mul_variance` stated from reading hypotheses: `hOloc` says `O` reads
+`S ∪ R`, `hWloc` that `W` reads `R`, and `glue` supplies the factorisation through the blocks that
+the underlying lemma takes, as in `pairing_nonneg_of_local`.
 
-`pairing_ge_weight_min_mul_variance` asks for a FACTORISATION of `O` and `W` through the blocks;
-what a caller of the shared-block weld holds is the READING statement. `glue` supplies the
-factorisation, exactly as in `pairing_nonneg_of_local`.
+The half-integral on the left is the glued one, and the bound holds at every `k`.
 
-DERIVED: the `2`s are the squares; the `0` is `Wmin`'s sign; no other numeral. -/
+DERIVED: the `2`s are the squares — the second moment of the half-integral and the square of its
+mean. `0` is the lower bound assumed of `Wmin` in `hWmin0`. `Ch` and `Cw` carry no sign hypothesis,
+`abs_nonneg` at `base` supplying it. -/
 theorem pairing_ge_variance_of_local
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1534,13 +1573,13 @@ theorem pairing_ge_variance_of_local
 
 #print axioms pairing_ge_variance_of_local
 
-/-- **⭐⭐ AN OBSERVABLE THAT DOES NOT READ THE SHARED BLOCK HAS A CONSTANT HALF-INTEGRAL.**
+/-- An observable reading `S` alone has a half-integral independent of the configuration: the glued
+half-integral takes the same value at every `U` and `U'`.
 
-`glue S R base v w` and `glue S R base v w'` agree on `S` whatever `w` and `w'` are, so an observable
-blind to `R` cannot tell them apart and its conditional half-integral does not depend on the
-configuration at all.
+`glue S R base v w` and `glue S R base v w'` agree on `S` whatever `w` and `w'` are, so `hOS` cannot
+distinguish them.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral. `base`, `O`, `U` and `U'` are the caller's. -/
 theorem halfIntegral_const_of_indep_R (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω)
     (O : (ι → Ω) → ℝ)
     (hOS : ∀ U V : ι → Ω, (∀ i ∈ S, U i = V i) → O U = O V) (U U' : ι → Ω) :
@@ -1551,11 +1590,12 @@ theorem halfIntegral_const_of_indep_R (S R : Finset ι) (hSR : Disjoint S R) (ba
   exact hOS _ _ (fun i hi => by
     rw [glue_agree_S S R base _ _ hi, glue_agree_S S R base _ _ hi])
 
-/-- **⭐⭐ AN OBSERVABLE THAT READS THE SHARED BLOCK ALONE IS ITS OWN HALF-INTEGRAL.**
+/-- An observable reading `R` alone is its own half-integral:
+`halfIntegral μ S R hSR (fun v w => O (glue S R base v w)) U = O U`.
 
-The dual of the previous theorem. `glue S R base v w` agrees with the configuration on `R` whatever
-`v` is, so an observable reading `R` alone does not depend on the integration variable, and against a
-PROBABILITY measure the integral of a constant is that constant.
+`glue S R base v w` agrees with the configuration on `R` whatever `v` is, so the integrand is
+constant in the integration variable, and against a probability measure the integral of a constant is
+that constant. The dual of `halfIntegral_const_of_indep_R`.
 
 DERIVED: no numeral. -/
 theorem halfIntegral_of_indep_S (S R : Finset ι) (hSR : Disjoint S R) (base : ι → Ω)
@@ -1607,7 +1647,7 @@ theorem halfIntegral_eq_integral_of_reparam (S R : Finset ι) (hSR : Disjoint S 
 
 #print axioms halfIntegral_eq_integral_of_reparam
 
-/-- **Hence such a half-integral takes ONE value**, so the two-values route cannot start from it.
+/-- **Hence such a half-integral takes one value**, so the two-values route cannot start from it.
 
 DERIVED: no numeral. -/
 theorem halfIntegral_const_of_reparam (S R : Finset ι) (hSR : Disjoint S R)
@@ -1625,34 +1665,24 @@ theorem halfIntegral_const_of_reparam (S R : Finset ι) (hSR : Disjoint S R)
 
 #print axioms halfIntegral_const_of_reparam
 
-/-- **⭐⭐⭐ THE REFLECTION FORM ANNIHILATES EVERY MEAN-SUBTRACTED OBSERVABLE BLIND TO THE SHARED
-BLOCK.**
+/-- For an observable `O` reading `S` alone (`hOS`), subtracting the constant value of its
+half-integral makes the form vanish: `∫ W·(O - k)·(O∘Θ - k) = 0`, with `k` that value.
 
-Subtract from such an observable the value its half-integral constantly takes and the form is
-exactly `0` — not bounded, not small, zero.
+`halfIntegral_const_of_indep_R` makes the half-integral constant, so the subtracted half-integral is
+a.e. zero and `pairing_eq_zero_iff_local` gives the vanishing. The condition is computed here rather
+than assumed, for the class of observables `hOS` names.
 
-**THIS IS A DISCHARGE, NOT A RESTATEMENT.** Everything else in this family says the form vanishes
-IF some condition holds. This computes the condition and finds it holds, for a class named by a
-reading statement a caller can check.
+`hOS` is a hypothesis about the observable this theorem is applied to. The Wilson instantiation
+applies it to the dressed observable `ReflectionHalfSpace.idressed = F · e^{-βA₊}`, not to `F`, and
+`ReflectionHalfSpace.idressed_depends_on_boxR` refutes `hOS` for the dressed observable on a
+one-plaquette carrier at every `β ≠ 0`, with the bare observable constant. That carrier is not
+reflection-closed.
 
-**WHAT IT MEANS.** The even reflection form is degenerate precisely on the strictly-interior
-observables, so whatever the GNS quotient sees must COUPLE TO THE SHARED BLOCK. That is the
-transfer-matrix picture — the live observables sit on the time slice — and it is a term here rather
-than folklore.
+Observables that read `R` are outside the statement: their half-integral may or may not be constant.
 
-**⛔ AND IT DOES NOT SAY THE WILSON FORM IS DEGENERATE ON THE HALF-SPACE ALGEBRA.** `hOS` is about
-the observable THIS theorem is applied to, and the Wilson instantiation applies it to the DRESSED
-observable `ReflectionHalfSpace.idressed = F · e^{-βA₊}`, not to `F`. `ReflectionHalfSpace.idressed_depends_on_boxR` refutes `hOS` for the
-dressed observable on a one-plaquette carrier at every `β ≠ 0`, with the bare observable CONSTANT.
-
-**⛔ SO A BARE OBSERVABLE'S BLINDNESS TO `R` DOES NOT PUT IT IN THE WILSON FORM'S NULL SPACE.** That
-carrier is not reflection-closed, so no particular box is settled either way.
-
-**⛔ AND IT DOES NOT SAY THE FORM IS DEGENERATE ANYWHERE ELSE.** An observable that reads `R`
-may or may not have a constant half-integral; this says nothing about it.
-
-DERIVED: the `0` is the vanishing proved; the constant subtracted is the half-integral's own value,
-evaluated at `base` because `halfIntegral_const_of_indep_R` makes the point irrelevant. -/
+DERIVED: `0` is the value the form is shown to equal, and the lower bound on the weight in `hWnn`.
+The subtracted constant is the half-integral's own value, evaluated at `base`, which
+`halfIntegral_const_of_indep_R` shows is the value at every configuration. -/
 theorem pairing_eq_zero_of_indep_R
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1693,26 +1723,21 @@ theorem pairing_eq_zero_of_indep_R
   rw [hsub U, halfIntegral_const_of_indep_R μ S R hSR base O hOS U base, ← hk, sub_self]
   ring
 
-/-- **⭐⭐⭐ ON THE SHARED BLOCK, NON-DEGENERATE IS EXACTLY NON-CONSTANT.**
+/-- For an observable `O` reading `R` alone (`hOR`) and a strictly positive weight,
+`0 < ∫ W·(O - k)·(O∘Θ - k)` exactly when `O` is not a.e. `k`.
 
-For an observable reading the shared block ALONE, `halfIntegral_of_indep_S` collapses
-`pairing_pos_iff_half_ne_const` completely: no half-integral survives, and the form at `O - k` is
-strictly positive exactly when `O` itself is not almost everywhere `k`.
+`halfIntegral_of_indep_S` collapses the half-integral in `pairing_pos_iff_half_ne_const` to `O`
+itself, so the criterion is stated on the observable rather than on a conditional integral. Against
+an open-positive measure, `Continuous.ae_eq_iff_eq` turns "not a.e. `k`" into "takes two values",
+which is the form `HaarVariance.variance_pos_of_two_values` and
+`PlaqVariance.wilsonCorrConn_self_pos` use.
 
-**WHY THIS IS THE ONE WORTH HAVING.** Every other criterion in this family states non-degeneracy in
-terms of a conditional integral, which is a thing one must compute. This states it in terms of the
-observable, which is a thing one can EXHIBIT — and `Continuous.ae_eq_iff_eq` against an
-open-positive measure turns "not a.e. `k`" into "takes two values", which is how
-`HaarVariance.variance_pos_of_two_values` and `PlaqVariance.wilsonCorrConn_self_pos` discharge the
-same shape elsewhere.
+The opposite case to `pairing_eq_zero_of_indep_R`, where the observable is blind to `R` and the form
+vanishes. An observable reading both blocks is covered by neither: the Wilson instantiation's dressed
+observable is of that kind, since `e^{-βA₊}` reads the shared block.
 
-**⛔ IT IS THE OPPOSITE POLE FROM `pairing_eq_zero_of_indep_R`, NOT A GENERAL ANSWER.** That one has
-the observable blind to `R` and the form vanishes; this one has it blind to `S` and the form is
-positive iff non-constant. An observable reading BOTH blocks — which is what the Wilson instantiation
-supplies, since the dressing `e^{-βA₊}` reads the shared block — is covered by neither, and that is
-the case the mass gap is about.
-
-DERIVED: the `0`s are the positivity asserted, the weight's sign and the a.e. vanishing denied. -/
+DERIVED: the `0`s are the strict lower bound concluded of the form, the strict lower bound on the
+weight in `hWpos`, and the a.e. value denied on the right. -/
 theorem pairing_pos_iff_ne_const_of_indep_S
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (θ : Equiv.Perm ι) (σ : ι → Ω → Ω) (hσ : ∀ i, MeasurePreserving (σ i) μ μ)
@@ -1782,9 +1807,9 @@ theorem continuous_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
 
 #print axioms continuous_halfIntegral
 
-/-- **`glue` is JOINTLY CONTINUOUS.** The twin of `measurable_glue`.
+/-- **`glue` is jointly continuous.** The twin of `measurable_glue`.
 
-`pairing_pos_of_half_two_values`'s `hcj` is continuity of the GLUED observable, so continuity of the
+`pairing_pos_of_half_two_values`'s `hcj` is continuity of the glued observable, so continuity of the
 observable alone does not reach it.
 
 DERIVED: no numeral. -/
@@ -1821,12 +1846,15 @@ theorem not_ae_eq_const_of_two_values {X : Type*} [TopologicalSpace X] [Measurab
 #print axioms not_ae_eq_const_of_two_values
 
 
-/-- **⭐⭐⭐ TWO VALUES OF THE HALF-INTEGRAL MAKE THE FORM POSITIVE.**
+/-- `0 < ∫ W·(O - k)·(O∘Θ - k)` when the glued half-integral takes two different values, at
+configurations `a` and `b`.
 
-`pairing_pos_iff_half_ne_const` with its a.e. hypothesis discharged by `continuous_halfIntegral` and
-`not_ae_eq_const_of_two_values`.
+`pairing_pos_iff_half_ne_const` with its a.e. hypothesis discharged by `continuous_halfIntegral`,
+which needs the joint continuity `hcj`, and `not_ae_eq_const_of_two_values`, which needs
+`(cvol ι μ).IsOpenPosMeasure`.
 
-DERIVED: the `0`s are the positivity asserted and the weight's sign. -/
+DERIVED: the `0`s are the strict lower bound concluded of the form and the strict lower bound on the
+weight in `hWpos`. `k`, `a` and `b` are the caller's. -/
 theorem pairing_pos_of_half_two_values
     [(cvol ι μ).IsOpenPosMeasure]
     (S T R : Finset ι) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
@@ -1854,14 +1882,16 @@ theorem pairing_pos_of_half_two_values
 
 end WeldContinuity
 
-/-! ## NEGATIVE CONTROL: the shared block may not move inside the square -/
+/-! ## Negative control: the shared block may not move inside the square -/
 
 namespace NegControl
 
-/-- A fair coin. Two points is the smallest space on which a function is not almost surely
-constant, which is exactly what the two-block identity needs the shared block not to be.
+/-- A fair coin: `1/2` on each of the two outcomes of `Bool`. Two points is the smallest space on
+which a function is not almost surely constant, which is what the control needs of the shared block.
 
-DERIVED: a fair coin: `1/2` on each of the two outcomes, and `2` is the number of outcomes. The control needs only that the measure is not a point mass; equal weights are the simplest such choice and make the arithmetic `1/2` against `1/4` exact rather than approximate. -/
+CHOSEN: `1/2` is the weight on each outcome and `2` the number of outcomes. The control needs only a
+measure that is not a point mass; equal weights are the simplest such choice and make the arithmetic
+`1/2` against `1/4` exact. -/
 noncomputable def coin : Measure Bool :=
   (1 / 2 : ℝ≥0∞) • Measure.dirac true + (1 / 2 : ℝ≥0∞) • Measure.dirac false
 
@@ -1887,7 +1917,7 @@ theorem integral_coin (f : Bool → ℝ) : (∫ b, f b ∂coin) = (f true + f fa
     smul_eq_mul, smul_eq_mul]
   ring
 
-/-- The observable: read the single coordinate, which is ENTIRELY inside the shared block.
+/-- The observable: read the single coordinate, which is entirely inside the shared block.
 
 DERIVED: the indicator of one outcome: `1` and `0` are its values, which is what makes the pairing `1/2` and the square of the mean `1/4`. -/
 noncomputable def gCoin (U : Fin 1 → Bool) : ℝ := if U default then 1 else 0
@@ -1899,7 +1929,12 @@ theorem integral_gCoin : (∫ U, gCoin U ∂(cvol (Fin 1) coin)) = 1 / 2 := by
       = ∫ b, (if b then (1 : ℝ) else 0) ∂coin := h
     _ = 1 / 2 := by rw [integral_coin]; norm_num
 
-/-- **The TRUE value of the pairing**: the shared block integrated outside the square gives `1/2`. -/
+/-- `∫ U, gCoin U * gCoin U ∂(cvol (Fin 1) coin) = 1 / 2`: the value of the pairing when the shared
+coordinate is integrated outside the square.
+
+DERIVED: `1` in `Fin 1` is the single coordinate of the control, and `1 / 2` is the value the fair
+coin gives — the indicator squared is the indicator, whose mean is the coin's own weight on one
+outcome. Neither is a chosen level. -/
 theorem integral_gCoin_sq : (∫ U, gCoin U * gCoin U ∂(cvol (Fin 1) coin)) = 1 / 2 := by
   have h := (measurePreserving_funUnique coin (Fin 1)).integral_comp'
     (fun b : Bool => (if b then (1 : ℝ) else 0) * (if b then (1 : ℝ) else 0))
@@ -1907,17 +1942,29 @@ theorem integral_gCoin_sq : (∫ U, gCoin U * gCoin U ∂(cvol (Fin 1) coin)) = 
       = ∫ b, (if b then (1 : ℝ) else 0) * (if b then (1 : ℝ) else 0) ∂coin := h
     _ = 1 / 2 := by rw [integral_coin]; norm_num
 
-/-- **NEGATIVE CONTROL.** The pairing of an observable with its own reflection is NOT the square of
-its integral when the two halves share a coordinate: `1/2 ≠ 1/4`. -/
+/-- `∫ U, gCoin U * gCoin U ≠ (∫ U, gCoin U) ^ 2`: on the one-coordinate coin the pairing is `1/2`
+while the square of the mean is `1/4`.
+
+So the pairing of an observable with itself is not the square of its integral when the two halves
+share a coordinate.
+
+DERIVED: `1` in `Fin 1` is the single shared coordinate. The exponent `2` is the square being
+compared against. The two values `1/2` and `1/4` are the coin's, from `integral_gCoin_sq` and the
+square of `integral_gCoin`; neither is chosen here. -/
 theorem coin_pairing_ne_sq :
     (∫ U, gCoin U * gCoin U ∂(cvol (Fin 1) coin))
       ≠ (∫ U, gCoin U ∂(cvol (Fin 1) coin)) ^ 2 := by
   rw [integral_gCoin, integral_gCoin_sq]; norm_num
 
-/-- **NEGATIVE CONTROL, as a refutation.** `pairing_with_reflection_nonneg`'s conclusion
-`∫ h·(h∘θ) = (∫h)²` is FALSE if the positive half is allowed to contain the shared block — take the
-reflection to be the identity on it. So the `Disjoint S T` hypothesis is load-bearing, and the
-conditional form of `pairing_nonneg_of_shared_block` is not a stylistic variant of it. -/
+/-- There is no `Ω`, `μ`, `ι` and `O` making `∫ O·O = (∫ O)²` hold universally: `coin_pairing_ne_sq`
+refutes it at the one-coordinate coin.
+
+So `pairing_with_reflection_nonneg`'s conclusion fails when the positive half may contain the shared
+block, and the `Disjoint S T` hypothesis there is load-bearing; the conditional form of
+`pairing_nonneg_of_shared_block` is not a restatement of it.
+
+DERIVED: the exponent `2` is the square the refuted identity asserts; no other numeral, the witness's
+constants belonging to `coin_pairing_ne_sq`. -/
 theorem shared_block_inside_square_false :
     ¬ ∀ (Ω : Type) [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
         (ι : Type) [Fintype ι] (O : (ι → Ω) → ℝ),
@@ -1928,7 +1975,10 @@ end NegControl
 
 /-! ## Where the reflection plane is: the parity of the fixed set -/
 
-/-- `a % n` and `a` have the same parity when `n` is even. -/
+/-- `Even (a % n) ↔ Even a` when `n` is even: reducing modulo an even number subtracts a multiple of
+it, which preserves parity.
+
+DERIVED: no numeral. Evenness of `n` is the hypothesis `hn`; `a` and `n` are the caller's. -/
 theorem even_mod_iff_even {n a : ℕ} (hn : Even n) : Even (a % n) ↔ Even a := by
   have hm : Even (n * (a / n)) := hn.mul_right _
   constructor
@@ -1939,18 +1989,30 @@ theorem even_mod_iff_even {n a : ℕ} (hn : Even n) : Even (a % n) ↔ Even a :=
     rw [← Nat.div_add_mod a n] at ha
     exact (Nat.even_add.mp ha).mp hm
 
-/-- **Addition on `Fin n` is parity-additive exactly when the extent is even** — the reason the three
-cases below are three and not one. -/
+/-- On `Fin n` with `n` even, `Even (a + b).val ↔ (Even a.val ↔ Even b.val)`: the wrap-around
+subtracts `n`, which is even, so parity survives it. `even_mod_iff_even` is the step.
+
+Evenness of the extent is essential: at odd `n` the wrap changes parity, which is why the reflection
+cases below split three ways.
+
+DERIVED: no numeral. Evenness of `n` is the hypothesis `hn`. -/
 theorem fin_even_add {n : ℕ} [NeZero n] (hn : Even n) (a b : Fin n) :
     Even (a + b).val ↔ (Even a.val ↔ Even b.val) := by
   rw [Fin.val_add, even_mod_iff_even hn, Nat.even_add]
 
-/-- On an even extent `x + x` is always even, so nothing with odd value is a half. -/
+/-- On an even extent, `x + x ≠ b` whenever `b.val` is odd: `fin_even_add` makes `(x + x).val` even
+at every `x`.
+
+DERIVED: no numeral. Evenness of the extent is `hn` and the parity of `b` is `hb`. -/
 theorem no_half_of_odd_val {n : ℕ} [NeZero n] (hn : Even n) {b : Fin n} (hb : ¬ Even b.val)
     (x : Fin n) : x + x ≠ b := fun hx => hb (hx ▸ (fin_even_add hn x x).mpr Iff.rfl)
 
-/-- On an even extent, `c` and `c − 1` have opposite parity: the site-plane condition `2x = c` and
-the axis-link condition `2x = c − 1` can never both be solvable. -/
+/-- On an even extent of at least two, `c` even makes `(c - 1).val` odd. So the site-plane condition
+`x + x = c` and the axis-link condition `x + x = c - 1` are never both solvable.
+
+DERIVED: `1` is the offset between the two planes, the length of an axis link in lattice steps; `2`
+is the lower bound on the extent in `h2`, which the subtraction in `Fin n` needs to wrap correctly.
+Evenness of `n` and of `c.val` are the hypotheses. -/
 theorem sub_one_odd_of_even {n : ℕ} [NeZero n] (hn : Even n) (h2 : 2 ≤ n) {c : Fin n}
     (hc : Even c.val) : ¬ Even (c - 1 : Fin n).val := by
   intro hodd
@@ -1965,7 +2027,11 @@ theorem sub_one_odd_of_even {n : ℕ} [NeZero n] (hn : Even n) (h2 : 2 ≤ n) {c
   rw [hcc] at hno
   exact hno hc
 
-/-- An element whose value is even has a half — this is what makes the site-plane nonempty. -/
+/-- If `c.val` is even then `x + x = c` has a solution in `Fin n`, namely the class of `c.val / 2`.
+This is what makes the site-plane nonempty.
+
+DERIVED: no numeral in the statement; the halving lives in the proof, and evenness of `c.val` is the
+hypothesis `hc`. -/
 theorem exists_fixed_site {n : ℕ} [NeZero n] {c : Fin n} (hc : Even c.val) :
     ∃ x : Fin n, x + x = c := by
   obtain ⟨k, hk⟩ := hc
@@ -1981,8 +2047,12 @@ theorem exists_fixed_site {n : ℕ} [NeZero n] {c : Fin n} (hc : Even c.val) :
 
 variable {d n : ℕ}
 
-/-- **A site is fixed exactly when `2 x_τ = c`.** The reflection plane sits at `c/2`, which is a site
-only when `c` has a half in `Fin n`. -/
+/-- `reflSite τ c x = x ↔ c = x τ + x τ`: a site is fixed by the reflection exactly when twice its
+`τ` coordinate is the reflection constant. The plane sits at `c/2`, which is a site only when `c` has
+a half in `Fin n`.
+
+DERIVED: no numeral. The doubling `x τ + x τ` is written as a sum rather than with a literal `2`, and
+`c` is the caller's reflection constant. -/
 theorem reflSite_fixed_iff [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
     reflSite τ c x = x ↔ c = x τ + x τ := by
   constructor
@@ -1998,9 +2068,12 @@ theorem reflSite_fixed_iff [NeZero n] (τ : Fin d) (c : Fin n) (x : Site d n) :
       exact sub_eq_iff_eq_add.mpr hc
     · exact reflSite_of_ne hj c x
 
-/-- **A TRANSVERSE link is fixed exactly when `2 x_τ = c`** — it sits in the site-plane, and the
-reflection neither moves it nor (in `reflConf`) inverts it. These are the links of the shared block
-in the case the weld covers. -/
+/-- For a link whose direction is not `τ`, `reflLink τ c l = l ↔ c = l.2 τ + l.2 τ`: a transverse
+link is fixed exactly when its base sits in the site-plane. `reflConf` does not invert such a link,
+so these are the shared-block coordinates the weld's `hσR` covers.
+
+DERIVED: no numeral. The `2` in `l.2` is the projection of `Link` onto its base site, not a number;
+the doubling is written as a sum. -/
 theorem reflLink_fixed_iff_transverse [NeZero n] {τ : Fin d} (c : Fin n)
     (l : Link d n) (hl : l.1 ≠ τ) : reflLink τ c l = l ↔ c = l.2 τ + l.2 τ := by
   constructor
@@ -2013,9 +2086,14 @@ theorem reflLink_fixed_iff_transverse [NeZero n] {τ : Fin d} (c : Fin n)
     show (l.1, if l.1 = τ then reflSite τ (c - 1) l.2 else reflSite τ c l.2) = l
     rw [if_neg hl, (reflSite_fixed_iff τ c l.2).mpr hc]
 
-/-- **An AXIS link is fixed exactly when `2 x_τ = c − 1`** — its MIDPOINT is the plane. `reflConf`
-INVERTS such a link, so it is a shared coordinate the reflection acts on nontrivially, and the
-conditional argument of `pairing_nonneg_of_shared_block` does not apply to it. -/
+/-- For a link whose direction is `τ`, `reflLink τ c l = l ↔ c - 1 = l.2 τ + l.2 τ`: an axis link is
+fixed exactly when its midpoint is the plane. `reflConf` inverts such a link, so it is a shared
+coordinate the reflection acts on nontrivially and `pairing_nonneg_of_shared_block`'s conditional
+argument does not cover it.
+
+DERIVED: `1` is the offset between the two planes, the length of an axis link in lattice steps, which
+is why the condition here differs from `reflLink_fixed_iff_transverse`'s. The `2` in `l.2` is the
+projection onto the base site. -/
 theorem reflLink_fixed_iff_axis [NeZero n] {τ : Fin d} (c : Fin n)
     (l : Link d n) (hl : l.1 = τ) : reflLink τ c l = l ↔ c - 1 = l.2 τ + l.2 τ := by
   constructor
@@ -2028,16 +2106,27 @@ theorem reflLink_fixed_iff_axis [NeZero n] {τ : Fin d} (c : Fin n)
     show (l.1, if l.1 = τ then reflSite τ (c - 1) l.2 else reflSite τ c l.2) = l
     rw [if_pos hl, (reflSite_fixed_iff τ (c - 1) l.2).mpr hc]
 
-/-- **CASE 1 — even extent, even constant: NO axis link is fixed.** The shared block is made of
-transverse links only, `reflLink` fixes each of them and `reflConf` does not invert them, so `hθR`
-and `hσR` of the weld both hold. -/
+/-- At even extent of at least two and even constant, no axis link is fixed:
+`reflLink τ c l ≠ l` whenever `l.1 = τ`. `reflLink_fixed_iff_axis` would need `c - 1` to have a half,
+which `sub_one_odd_of_even` and `no_half_of_odd_val` exclude.
+
+So in this case the shared block consists of transverse links only, which is what lets the weld's
+`hθR` and `hσR` hold.
+
+DERIVED: `2` is the lower bound on the extent in `h2`, needed by `sub_one_odd_of_even`. Evenness of
+`n` and of `c.val` are the hypotheses; the `1` in `l.1` is the projection onto the direction. -/
 theorem no_fixed_axis_link [NeZero n] (hn : Even n) (h2 : 2 ≤ n) {τ : Fin d} {c : Fin n}
     (hc : Even c.val) (l : Link d n) (hl : l.1 = τ) : reflLink τ c l ≠ l := fun hx =>
   no_half_of_odd_val hn (sub_one_odd_of_even hn h2 hc) (l.2 τ)
     ((reflLink_fixed_iff_axis c l hl).mp hx).symm
 
-/-- **The shared block is genuinely nonempty in that case.** There is a fixed site, and every
-transverse link based there is fixed. -/
+/-- At even constant there is a fixed transverse link: `exists_fixed_site` supplies a site with
+`x + x = c`, and `reflLink_fixed_iff_transverse` fixes every link based there in a direction `ν ≠ τ`.
+
+So the shared block is nonempty, not merely free of axis links.
+
+DERIVED: no numeral. Evenness of `c.val` is the hypothesis `hc`; the `1` in `l.1` is the projection
+onto the direction. -/
 theorem exists_fixed_transverse_link [NeZero n] {τ ν : Fin d} (hν : ν ≠ τ)
     {c : Fin n} (hc : Even c.val) :
     ∃ l : Link d n, l.1 = ν ∧ reflLink τ c l = l := by
@@ -2046,24 +2135,39 @@ theorem exists_fixed_transverse_link [NeZero n] {τ ν : Fin d} (hν : ν ≠ τ
   refine (reflLink_fixed_iff_transverse c _ hν).mpr ?_
   simpa using hx.symm
 
-/-! ### CASE 3 — the pinned extent is ODD, and then every constant has a cross term
+/-! ### case 3 — the pinned extent is odd, and then every constant has a cross term
 
 `Complete.wilsonCorr` runs the lag over `Fin (nCorrYM + 1)` and `nCorrYM = 16`, so the reflection
-acts on `Fin 17`. Two is a unit there, so `2x = c` and `2x = c − 1` are BOTH solvable, for every `c`:
+acts on `Fin 17`. Two is a unit there, so `2x = c` and `2x = c − 1` are both solvable, for every `c`:
 one site-plane and one link-plane. The link-plane is the cross term. -/
 
-/-- Every reflection constant on the pinned extent has a half: a fixed SITE-plane always exists. -/
+/-- At extent `17`, every `c : Fin 17` has an `x` with `x + x = c`, by `decide`. So a fixed
+site-plane exists at every reflection constant there.
+
+DERIVED: `17` is the extent this group of `decide` facts is stated at. It is odd, which is why
+both planes exist there, unlike at an even extent. -/
 theorem pinned_exists_half : ∀ c : Fin 17, ∃ x : Fin 17, x + x = c := by decide
 
-/-- Every reflection constant on the pinned extent ALSO fixes an axis-link midpoint. -/
+/-- At extent `17`, every `c : Fin 17` also has an `x` with `x + x = c - 1`, by `decide`. So an
+axis-link midpoint is fixed at every reflection constant there.
+
+DERIVED: `17` is the extent, as in `pinned_exists_half`; `1` is the offset between the two planes. -/
 theorem pinned_exists_half_sub_one : ∀ c : Fin 17, ∃ x : Fin 17, x + x = c - 1 := by decide
 
-/-- And both are unique — one site-plane and one link-plane, never two. -/
+/-- At extent `17` the half is unique: `x + x = c` and `y + y = c` force `x = y`, by `decide`. So
+each reflection constant fixes one site-plane and one link-plane rather than two of either.
+
+DERIVED: `17` is the extent, as above; no other numeral. -/
 theorem pinned_half_unique : ∀ c x y : Fin 17, x + x = c → y + y = c → x = y := by decide
 
-/-- **The pinned case is not covered.** At `n = 17` every reflection constant fixes an AXIS link,
-which `reflConf` inverts; the plaquettes through it are read by both halves. That is the cross term
-`ReflectionPositivity.reflection_positive_of_expansion` is waiting for. -/
+/-- At extent `17`, every reflection constant fixes an axis link: `pinned_exists_half_sub_one`
+supplies the midpoint and `reflLink_fixed_iff_axis` the link. `reflConf` inverts such a link, so the
+plaquettes through it are read by both halves.
+
+The case `no_fixed_axis_link` excludes, stated at an odd extent where it occurs.
+
+DERIVED: `17` is the extent, as in the three `decide` facts above; the `1` in `l.1` is the projection
+onto the direction. -/
 theorem exists_fixed_axis_link_pinned {d : ℕ} (τ : Fin d) (c : Fin 17) :
     ∃ l : Link d 17, l.1 = τ ∧ reflLink τ c l = l := by
   obtain ⟨x, hx⟩ := pinned_exists_half_sub_one c
@@ -2077,12 +2181,20 @@ section Wilson
 
 variable {N : ℕ}
 
-/-- The coordinate twist of the Osterwalder–Seiler reflection: invert on axis links, leave the rest
-alone. This is `Reflect.daggerAxis` read one coordinate at a time. -/
+/-- The per-coordinate map of the Osterwalder–Seiler reflection: the group inverse on links whose
+direction is `τ`, the identity on the rest. `Reflect.daggerAxis` read one coordinate at a time, in
+the shape `twist` consumes.
+
+DERIVED: no numeral. `τ` is the caller's axis; the `⁻¹` is the group inverse. -/
 def axisDagger (τ : Fin d) : Link d n → MassGap.SUN.SU N → MassGap.SUN.SU N :=
   fun l u => if l.1 = τ then u⁻¹ else u
 
-/-- **`reflConf` IS a twist** — definitionally. -/
+/-- `reflConf τ c U = twist (reflLinkPerm τ c) (axisDagger τ) U`, by `rfl`: the Osterwalder–Seiler
+reflection is the relabelling by `reflLinkPerm` together with the coordinate map `axisDagger`.
+
+This is what lets `twist_measurePreserving` apply to `reflConf`.
+
+DERIVED: no numeral. `τ` and `c` are the caller's. -/
 theorem reflConf_eq_twist [NeZero n] (τ : Fin d) (c : Fin n)
     (U : Link d n → MassGap.SUN.SU N) :
     reflConf τ c U = twist (reflLinkPerm τ c) (axisDagger (N := N) τ) U := rfl
@@ -2099,32 +2211,40 @@ theorem axisDagger_measurePreserving (τ : Fin d) (l : Link d n) :
     rw [hid]
     exact MeasurePreserving.id _
 
-/-- **Exactly what blocks the odd extent.** A fixed AXIS link is a coordinate BOTH halves read, and
-`reflConf` does not fix it — it INVERTS it. So `hσR` of `pairing_nonneg_of_shared_block` is false at
-that coordinate, and there is nothing to condition on: the two factors of the would-be square are
-functions of `u` and of `u⁻¹`, not the same function twice.
+/-- On an axis link that the link map fixes, the configuration map inverts the value:
+`reflConf τ c U l = (U l)⁻¹`.
 
-Together with `exists_fixed_axis_link_pinned` this is the precise reason the pinned extent is not
-covered. -/
+Such a link is a coordinate both halves read, and the reflection does not fix it, so `hσR` of
+`pairing_nonneg_of_shared_block` fails there: the two factors of the would-be square are a function
+of `u` and a function of `u⁻¹`. `exists_fixed_axis_link_pinned` shows this occurs at extent `17` for
+every reflection constant, and `no_fixed_axis_link` that it does not occur at even extent and even
+constant.
+
+DERIVED: no numeral. The `1` in `l.1` is the projection onto the direction and the `⁻¹` the group
+inverse; `τ` and `c` are the caller's. -/
 theorem reflConf_inverts_fixed_axis_link [NeZero n] {τ : Fin d} {c : Fin n} (l : Link d n)
     (hl : l.1 = τ) (hfix : reflLink τ c l = l) (U : Link d n → MassGap.SUN.SU N) :
     reflConf τ c U l = (U l)⁻¹ := by
   show (if l.1 = τ then (U (reflLink τ c l))⁻¹ else U (reflLink τ c l)) = (U l)⁻¹
   rw [if_pos hl, hfix]
 
-/-- **THE WELD, ON THE WILSON LATTICE.**
+/-- `0 ≤ ∫ U, W U · O U · O (reflConf τ c U)` on the Wilson lattice, for three pairwise disjoint
+blocks `S`, `T`, `R` with: `reflLink τ c` fixing every link of `R` (`hR`), no link of `R` running
+along the axis (`hRτ`), and `reflLink τ c` carrying `S` into `T` (`hSmap`); an observable `O` reading
+`S ∪ R` (`hO`), a nonnegative weight `W` reading `R` (`hW`, `hw`), and a uniform bound `C` on the
+integrand.
 
-`S` is one side of the reflection plane, `T` its mirror, `R` the links IN the plane. The three
-geometric hypotheses are exactly what the parity analysis above supplies in the even/even case:
-`reflLink` fixes every link of `R` (`hR`), none of them runs along the axis so `reflConf` does not
-invert them (`hRτ`), and the reflection carries `S` into `T` (`hSmap`).
+The parity analysis above supplies `hR` and `hRτ` at even extent and even constant:
+`reflLink_fixed_iff_transverse` fixes the transverse links of the plane, and `no_fixed_axis_link`
+excludes axis links from `R`.
 
-`O` is any observable reading `S ∪ R`, `W` any nonnegative weight reading `R` — the plane's own share
-of the Boltzmann weight. The conclusion is the Osterwalder–Seiler pairing inequality for that pair.
+What is not supplied here is the Wilson weight in this form, which needs every plaquette to read
+`S ∪ R`, `T ∪ R` or `R` alone. `exists_fixed_axis_link_pinned` shows an axis link is fixed at extent
+`17` for every constant.
 
-What is NOT supplied here is the Wilson weight IN this form. That needs every plaquette to read
-`S ∪ R`, `T ∪ R` or `R` alone, which fails as soon as an axis link is fixed —
-`exists_fixed_axis_link_pinned` shows that happens at the pinned extent for every constant. -/
+DERIVED: `0` is the lower bound on the weight in `hw` and the lower bound concluded of the integral.
+The `1` and `2` in `l.1`, `i : Link d n` projections are `Link`'s components; `C` is the caller's
+bound and `τ`, `c` the caller's reflection. -/
 theorem wilson_pairing_nonneg_of_shared_block [NeZero n] (τ : Fin d) (c : Fin n)
     (S T R : Finset (Link d n)) (hST : Disjoint S T) (hSR : Disjoint S R) (hTR : Disjoint T R)
     (hR : ∀ l ∈ R, reflLink τ c l = l) (hRτ : ∀ l ∈ R, l.1 ≠ τ)
@@ -2148,11 +2268,11 @@ theorem wilson_pairing_nonneg_of_shared_block [NeZero n] (τ : Fin d) (c : Fin n
 
 end Wilson
 
-/-! ## Choosing an aperture with EVEN extent
+/-! ## Choosing an aperture with even extent
 
 `Complete.confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop, …`, and `WilsonModel.apertureOf`
 picks a witness from it. An `∀ᶠ … atTop` set is cofinal, and so is the set of `N` with `N + 1` even, so
-the two meet: the aperture may be chosen with EVEN extent without changing any constant and without
+the two meet: the aperture may be chosen with even extent without changing any constant and without
 weakening the eventual statement. That lands in the favourable reflection case below.
 
 `Filter.Eventually.and` cannot do this — `not_eventually_even_succ` shows the even-extent set is not
@@ -2160,41 +2280,69 @@ eventually true — and mere nonemptiness of the second set is not enough either
 (`frequently_is_load_bearing`). Frequency is exactly the right hypothesis.
 -/
 
-/-- **An eventually-true property meets a frequently-true one.** Stated for an arbitrary filter so it
-can be reused wherever a witness has to satisfy a cofinal side condition. -/
+/-- If `P` holds eventually along a filter and `Q` frequently, then some `x` satisfies both.
+`Filter.Frequently.and_eventually` and `Filter.Frequently.exists`.
+
+Stated for an arbitrary filter, so it applies wherever a witness must satisfy a cofinal side
+condition.
+
+DERIVED: no numeral. `f`, `P` and `Q` are the caller's. -/
 theorem exists_of_eventually_of_frequently {α : Type} {f : Filter α} {P Q : α → Prop}
     (hP : ∀ᶠ x in f, P x) (hQ : ∃ᶠ x in f, Q x) : ∃ x, P x ∧ Q x :=
   (hP.and_frequently hQ).exists
 
-/-- The odd naturals are cofinal in `ℕ`, so the EVEN extents `N + 1` are frequently reached. -/
+/-- `∃ᶠ N in atTop, Even (N + 1)`: the odd naturals are cofinal, so an even extent `N + 1` is
+reached at arbitrarily large `N`.
+
+Frequently, not eventually — `not_eventually_even_succ` is the control.
+
+DERIVED: `1` is the `+1` turning an aperture into an extent; evenness is of the extent, not of the
+aperture. -/
 theorem frequently_even_succ : ∃ᶠ N in Filter.atTop, Even (N + 1) := by
   rw [Filter.frequently_atTop]
   intro a
   exact ⟨2 * a + 1, by omega, ⟨a + 1, by omega⟩⟩
 
-/-- **The aperture may be taken with EVEN extent.** -/
+/-- From `P` holding eventually along `atTop`, there is an `N` with `P N` and `N + 1` even.
+`exists_of_eventually_of_frequently` at `frequently_even_succ`.
+
+DERIVED: `1` is the `+1` turning an aperture into an extent. `P` is the caller's. -/
 theorem exists_even_extent_of_eventually {P : ℕ → Prop}
     (hP : ∀ᶠ N in Filter.atTop, P N) : ∃ N, P N ∧ Even (N + 1) :=
   exists_of_eventually_of_frequently hP frequently_even_succ
 
-/-- The same, in the shape the lattice geometry consumes: extent `N + 1 = 2 * m`. -/
+/-- The same conclusion written as `N + 1 = 2 * m`, which is the form the lattice geometry takes its
+half-extent from.
+
+DERIVED: `1` is the `+1` turning an aperture into an extent; `2` is the factor that makes the extent
+even, with `m` its half — the reflection plane and its opposite being half the extent apart. -/
 theorem exists_even_extent_aperture {P : ℕ → Prop}
     (hP : ∀ᶠ N in Filter.atTop, P N) : ∃ N m, P N ∧ N + 1 = 2 * m := by
   obtain ⟨N, hPN, r, hr⟩ := exists_even_extent_of_eventually hP
   exact ⟨N, r, hPN, by omega⟩
 
-/-- **NEGATIVE CONTROL.** `Filter.Eventually.and` cannot produce the even extent: the even-extent set
-is NOT eventually true, only frequently. Reaching for `and` instead of `and_frequently` would have
-been a false step, and this is the theorem that says so. -/
+/-- `¬ (∀ᶠ N in atTop, Even (N + 1))`: the even-extent set is not eventually true, only frequently.
+
+So `Filter.Eventually.and` cannot produce the even extent, and
+`exists_even_extent_of_eventually` has to go through `Filter.Frequently.and_eventually`.
+
+DERIVED: `1` is the `+1` turning an aperture into an extent; it is the only numeral. -/
 theorem not_eventually_even_succ : ¬ (∀ᶠ N in Filter.atTop, Even (N + 1)) := by
   rw [Filter.eventually_atTop]
   rintro ⟨a, ha⟩
   obtain ⟨r, hr⟩ := ha (2 * a) (by omega)
   omega
 
-/-- **NEGATIVE CONTROL.** Frequency is load-bearing in the other direction too: a merely NONEMPTY
-second set does not meet an eventual one. Here `P N := 3 ≤ N` is eventually true, `Q N := N < 3` is
-nonempty, and no `N` satisfies both. -/
+/-- The implication "`P` eventually and `Q` nonempty gives some `N` satisfying both" is false. The
+witnesses are `P N := 3 ≤ N`, eventually true, and `Q N := N < 3`, nonempty at `N = 0`, with no `N`
+satisfying both.
+
+So frequency is load-bearing on the other side too: `exists_of_eventually_of_frequently` cannot be
+weakened to nonemptiness.
+
+CHOSEN: `3` is the cut separating the two witness sets; any positive natural would do, the two being
+`≥ 3` and `< 3` about the same number. `0` is the element witnessing that the second set is
+nonempty. -/
 theorem frequently_is_load_bearing :
     ¬ (∀ {P Q : ℕ → Prop}, (∀ᶠ N in Filter.atTop, P N) → (∃ N, Q N) → ∃ N, P N ∧ Q N) := by
   intro hall
@@ -2204,13 +2352,17 @@ theorem frequently_is_load_bearing :
 
 /-! ## Levels above the reflection plane
 
-Everything about the three blocks is a statement about ONE natural number per link: how far its
+Everything about the three blocks is a statement about one natural number per link: how far its
 `τ`-coordinate sits above the plane. Working with `ℕ`-casts into `Fin n` rather than with `Fin.val`
 of negatives keeps the arithmetic inside `Nat.cast` homomorphism lemmas and `omega`.
 -/
 
-/-- The `Fin n` representative of a natural number. Written out rather than relying on a `Nat.cast`
-coercion so that every step below is `Nat.mod` arithmetic that `omega` can see. -/
+/-- `⟨j % n, _⟩ : Fin n`, the representative of a natural. Written out rather than through a
+`Nat.cast` coercion so that every step below is `Nat.mod` arithmetic `omega` can read.
+
+`[NeZero n]` supplies the positivity `Nat.mod_lt` needs.
+
+DERIVED: no numeral. `n` and `j` are the caller's. -/
 def fcast (n : ℕ) [NeZero n] (j : ℕ) : Fin n := ⟨j % n, Nat.mod_lt _ (NeZero.pos n)⟩
 
 @[simp] theorem fcast_val {n : ℕ} [NeZero n] (x : Fin n) : fcast n x.val = x :=
@@ -2249,7 +2401,10 @@ theorem fcast_inj {n : ℕ} [NeZero n] {i j : ℕ} (hi : i < n) (hj : j < n)
   have := congrArg Fin.val h
   rwa [val_fcast_of_lt hi, val_fcast_of_lt hj] at this
 
-/-- The level of a coordinate above the plane at `a`. -/
+/-- `(p - a).val`: the level of the coordinate `p` above the plane position `a`, as a natural.
+Subtraction is `Fin n`'s, so the level wraps and every coordinate has one.
+
+DERIVED: no numeral. `a` and `p` are the caller's. -/
 def lv {n : ℕ} [NeZero n] (a p : Fin n) : ℕ := (p - a).val
 
 theorem lv_lt {n : ℕ} [NeZero n] (a p : Fin n) : lv a p < n := (p - a).isLt
@@ -2263,8 +2418,11 @@ theorem lv_add_fcast {n : ℕ} [NeZero n] (a : Fin n) (j : ℕ) (hj : j < n) :
   have h : a + fcast n j - a = fcast n j := by abel
   rw [lv, h, val_fcast_of_lt hj]
 
-/-- **The mirror of a TRANSVERSE level.** `c = a + a` is the plane; a coordinate at level `j` is
-reflected to level `n − j`. -/
+/-- `(a + a) - (a + fcast n j) = a + fcast n (n - j)` for `j < n`: at the plane `c = a + a`, a
+coordinate at level `j` reflects to level `n - j`.
+
+DERIVED: no numeral of this declaration's. The doubling `a + a` is the even reflection constant,
+written as a sum rather than with a literal; `n` is the extent and `j` the caller's level. -/
 theorem refl_transverse_level {n : ℕ} [NeZero n] (a : Fin n) (j : ℕ) (hj : j < n) :
     (a + a) - (a + fcast n j) = a + fcast n (n - j) := by
   have hz : fcast n j + fcast n (n - j) = 0 := by
@@ -2275,8 +2433,12 @@ theorem refl_transverse_level {n : ℕ} [NeZero n] (a : Fin n) (j : ℕ) (hj : j
   rw [hy]
   abel
 
-/-- **The mirror of an AXIS level.** An axis link based at level `j` spans `[j, j+1]`; its mirror is
-based at level `n − 1 − j`. That shift by one is `Reflect.reflLink`'s `c − 1`. -/
+/-- `(a + a) - 1 - (a + fcast n j) = a + fcast n (n - 1 - j)` for `j < n`: an axis link based at
+level `j` spans `[j, j+1]`, so its mirror is based at level `n - 1 - j`.
+
+DERIVED: `1` is the length of an axis link in lattice steps, which is `Reflect.reflLink`'s own offset
+`c - 1`; it appears once on each side for that reason. The doubling `a + a` is the even reflection
+constant. -/
 theorem refl_axis_level {n : ℕ} [NeZero n] (a : Fin n) (j : ℕ) (hj : j < n) :
     (a + a) - 1 - (a + fcast n j) = a + fcast n (n - 1 - j) := by
   have hn := NeZero.pos n
@@ -2288,11 +2450,11 @@ theorem refl_axis_level {n : ℕ} [NeZero n] (a : Fin n) (j : ℕ) (hj : j < n) 
   rw [hy]
   abel
 
-/-! ## The three blocks of LINKS, at even extent
+/-! ## The three blocks of links, at even extent
 
 `n = 2 * m` and the plane is at `a` with `a + a = c`. Levels `0` and `m` are the two fixed
 site-planes; `blkS` is everything strictly between them one way, `blkT` the other way, `blkR` the two
-planes. An AXIS link based at level `j` spans `[j, j+1]`, so it is assigned by its base and belongs to
+planes. An axis link based at level `j` spans `[j, j+1]`, so it is assigned by its base and belongs to
 no plane — which is exactly `no_fixed_axis_link`.
 -/
 
@@ -2324,7 +2486,7 @@ theorem reflLink_coord_transverse {τ : Fin d} (c : Fin n) {l : Link d n} (h : l
     (reflLink τ c l).2 τ = c - l.2 τ := by
   simp [reflLink, h, reflSite]
 
-/-- The links IN the reflection plane: transverse links at level `0` or level `m`.
+/-- The links in the reflection plane: transverse links at level `0` or level `m`.
 
 DERIVED: `0` is the plane's own level. A transverse link is fixed exactly when its level is `0` or `m`, the two halves of the reflection constant, so both numerals are read off the reflection. -/
 def blkR (τ : Fin d) (a : Fin n) (m : ℕ) : Finset (Link d n) :=
@@ -2337,7 +2499,10 @@ def blkS (τ : Fin d) (a : Fin n) (m : ℕ) : Finset (Link d n) :=
   Finset.univ.filter (fun l =>
     if l.1 = τ then lv a (l.2 τ) < m else (0 < lv a (l.2 τ) ∧ lv a (l.2 τ) < m))
 
-/-- The mirror side. -/
+/-- The mirror of `blkS τ a m`: the links on the far side of the plane at `a`, at half-extent `m`.
+
+DERIVED: no numeral. `τ`, `a` and `m` are the caller's; `m` is the half-extent, the plane's distance
+from its opposite. -/
 def blkT (τ : Fin d) (a : Fin n) (m : ℕ) : Finset (Link d n) :=
   Finset.univ.filter (fun l => if l.1 = τ then m ≤ lv a (l.2 τ) else m < lv a (l.2 τ))
 
@@ -2359,8 +2524,14 @@ theorem mem_blkT (l : Link d n) :
   rw [blkT, Finset.mem_filter]
   exact ⟨fun h => h.2, fun h => ⟨Finset.mem_univ _, h⟩⟩
 
-/-- **What `S ∪ R` is, in one line**: a transverse link at level at most `m`, or an axis link based
-strictly below `m`. -/
+/-- `l ∈ blkS τ a m ∪ blkR τ a m` exactly when the level of `l`'s base satisfies `lv a (l.2 τ) < m`
+for an axis link and `≤ m` for a transverse one.
+
+The two cases differ by one because an axis link occupies a segment rather than a point, so a link
+based at level `m` would cross the plane.
+
+DERIVED: no numeral. `m` is the half-extent; the `1` and `2` in `l.1`, `l.2` are `Link`'s
+projections onto its direction and its base site. -/
 theorem mem_blkS_union_blkR (l : Link d n) :
     l ∈ blkS τ a m ∪ blkR τ a m ↔
       (if l.1 = τ then lv a (l.2 τ) < m else lv a (l.2 τ) ≤ m) := by
@@ -2377,8 +2548,14 @@ theorem mem_blkS_union_blkR (l : Link d n) :
         · exact Or.inl ⟨h0, h1⟩
         · exact Or.inr ⟨h, Or.inr (by omega)⟩
 
-/-- **What `T ∪ R` is**: level `0` or level at least `m` for a transverse link, level at least `m`
-for an axis link. Level `0` is in because the extent is periodic — the planes are `0` and `m`. -/
+/-- `l ∈ blkT τ a m ∪ blkR τ a m` exactly when the level of `l`'s base is at least `m` for an axis
+link, and is `0` or at least `m` for a transverse one.
+
+Level `0` is included because the extent is periodic: the two planes are at levels `0` and `m`, and
+the transverse links of both belong to `R`.
+
+DERIVED: `0` is the level of the first plane, the base level from which `lv` is measured; `m` is the
+half-extent, the level of the second. The `1` and `2` in `l.1`, `l.2` are `Link`'s projections. -/
 theorem mem_blkT_union_blkR (l : Link d n) :
     l ∈ blkT τ a m ∪ blkR τ a m ↔
       (if l.1 = τ then m ≤ lv a (l.2 τ) else (lv a (l.2 τ) = 0 ∨ m ≤ lv a (l.2 τ))) := by
@@ -2420,7 +2597,11 @@ theorem blkT_disjoint_blkR : Disjoint (blkT τ a m) (blkR τ a m) := by
   rw [mem_blkT, if_neg hne] at hT
   rcases hor with h | h <;> omega
 
-/-- **The plane is fixed by the reflection**, pointwise: `hR` of the weld. -/
+/-- Every link of `blkR τ a m` is fixed by `reflLink τ (a + a)`, at even extent `n = 2 * m`. The
+weld's hypothesis `hR`.
+
+DERIVED: `2` in `hm : n = 2 * m` is the reflection geometry's, with `m` the half-extent; the
+doubling `a + a` is that same evenness, written on the reflection constant. -/
 theorem blkR_fixed (hm : n = 2 * m) {l : Link d n} (hl : l ∈ blkR τ a m) :
     reflLink τ (a + a) l = l := by
   obtain ⟨hne, hor⟩ := (mem_blkR τ a m l).mp hl
@@ -2440,7 +2621,11 @@ theorem blkR_fixed (hm : n = 2 * m) {l : Link d n} (hl : l ∈ blkR τ a m) :
     have hmn : m + m = n := by omega
     rw [hmn, fcast_self]
 
-/-- **The reflection carries one side to the other**: `hSmap` of the weld. -/
+/-- `reflLink τ (a + a)` carries every link of `blkS τ a m` into `blkT τ a m`, at even extent with
+`0 < m`. The weld's hypothesis `hSmap`.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`, which keeps the two sides distinct; `2` in
+`hm : n = 2 * m` is the reflection geometry's, and `a + a` the even reflection constant. -/
 theorem blkS_maps_blkT (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l ∈ blkS τ a m) :
     reflLink τ (a + a) l ∈ blkT τ a m := by
   have hn : 0 < n := NeZero.pos n
@@ -2465,7 +2650,7 @@ theorem blkS_maps_blkT (hm : n = 2 * m) (hm0 : 0 < m) {l : Link d n} (hl : l ∈
     rw [himg, lv_add_fcast a _ (by omega)]
     omega
 
-/-! ### The PLAQUETTE partition
+/-! ### The plaquette partition
 
 Every plaquette that is not the degenerate `μ = ν = τ` one reads links from `S ∪ R` alone or from
 `T ∪ R` alone, and one with both directions transverse and its base on a plane reads `R` alone. That
@@ -2474,10 +2659,19 @@ missing.
 
 The degenerate `μ = ν = τ` plaquette really does straddle — `degenerate_axis_plaquette_straddles`
 exhibits it — and is harmless only because its holonomy is the identity
-(`WilsonHypercubic.bd_diag_hol_one`), which is a statement about the ACTION, not the geometry.
+(`WilsonHypercubic.bd_diag_hol_one`), which is a statement about the action, not the geometry.
 -/
 
-/-- **One side.** A plaquette based strictly below the plane reads `S ∪ R` only. -/
+/-- Every link of a non-degenerate plaquette based strictly below the plane lies in
+`blkS τ a m ∪ blkR τ a m`. The four boundary links sit at levels `lv a (q.2 τ)` or one above, and
+`mem_blkS_union_blkR` admits both.
+
+`hdeg` excludes the plaquette with both directions along the axis, which
+`degenerate_axis_plaquette_straddles` shows genuinely crosses.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's, with `m` the half-extent and the level the plaquette is below. The `1`s and `2`s in
+`q.1.1`, `q.1.2`, `q.2` are `Plaq`'s projections. -/
 theorem plaq_links_le (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) (hlt : lv a (q.2 τ) < m) :
     ∀ l ∈ (bd q).map Prod.fst, l ∈ blkS τ a m ∪ blkR τ a m := by
@@ -2517,7 +2711,12 @@ theorem plaq_links_le (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     · rw [if_pos hν]; omega
     · rw [if_neg hν]; omega
 
-/-- **The other side.** A plaquette based at or above the plane reads `T ∪ R` only. -/
+/-- Every link of a non-degenerate plaquette based at or above the plane lies in
+`blkT τ a m ∪ blkR τ a m`. The mirror of `plaq_links_le`, through `mem_blkT_union_blkR`.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's, with `m` the half-extent and the level the plaquette is at or above. The `1`s and `2`s in
+the projections are `Plaq`'s. -/
 theorem plaq_links_ge (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) (hge : m ≤ lv a (q.2 τ)) :
     ∀ l ∈ (bd q).map Prod.fst, l ∈ blkT τ a m ∪ blkR τ a m := by
@@ -2563,8 +2762,14 @@ theorem plaq_links_ge (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     · rw [if_pos hν]; omega
     · rw [if_neg hν]; omega
 
-/-- **Inside the plane.** A plaquette with both directions transverse and its base ON a plane reads
-`R` alone — this is the part of the action that becomes the weld's plane weight `w`. -/
+/-- A plaquette with both directions transverse and its base at level `0` or level `m` reads
+`blkR τ a m` alone: none of its four links leaves the plane it sits in.
+
+This is the part of the action that becomes the weld's plane weight `w`.
+
+DERIVED: `0` and `m` are the levels of the two planes — `lv`'s base level and the half-extent. The
+`1`s and `2`s in `q.1.1`, `q.1.2`, `q.2` are `Plaq`'s projections, as are the `1` and `2` in the
+hypothesis names. -/
 theorem plaq_links_plane {q : Plaq d n} (h1 : q.1.1 ≠ τ) (h2 : q.1.2 ≠ τ)
     (h0 : lv a (q.2 τ) = 0 ∨ lv a (q.2 τ) = m) :
     ∀ l ∈ (bd q).map Prod.fst, l ∈ blkR τ a m := by
@@ -2581,7 +2786,14 @@ theorem plaq_links_plane {q : Plaq d n} (h1 : q.1.1 ≠ τ) (h2 : q.1.2 ≠ τ)
   · exact ⟨hμ, by rw [lv_shift_of_ne hν]; exact h0'⟩
   · exact ⟨hν, h0'⟩
 
-/-- **EVERY non-degenerate plaquette lies on one side.** The trichotomy, as one statement. -/
+/-- Every non-degenerate plaquette reads `blkS τ a m ∪ blkR τ a m` or `blkT τ a m ∪ blkR τ a m`: the
+disjunction of `plaq_links_le` and `plaq_links_ge`, split on whether the base level is below `m`.
+
+The plaquettes inside a plane fall in both, which is consistent: `plaq_links_plane` places them in
+`blkR` alone.
+
+DERIVED: `0` is the strict lower bound on `m`; `2` in `hm : n = 2 * m` is the reflection geometry's,
+with `m` the half-extent that splits the two cases. The projections are `Plaq`'s. -/
 theorem plaq_side (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hdeg : ¬ (q.1.1 = τ ∧ q.1.2 = τ)) :
     (∀ l ∈ (bd q).map Prod.fst, l ∈ blkS τ a m ∪ blkR τ a m)
@@ -2590,9 +2802,15 @@ theorem plaq_side (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
   · exact Or.inl (plaq_links_le τ a m hm hm0 hdeg h)
   · exact Or.inr (plaq_links_ge τ a m hm hm0 hdeg h)
 
-/-- **NEGATIVE CONTROL: the degenerate plaquette genuinely straddles.** Excluding `μ = ν = τ` from
-`plaq_side` is not tidying. At base level `m − 1` that plaquette reads an axis link at level `m − 1`,
-which is in `S`, and one at level `m`, which is in `T`, so it lies in neither `S ∪ R` nor `T ∪ R`. -/
+/-- There is a plaquette with both directions equal to `τ` reading neither `blkS τ a m ∪ blkR τ a m`
+nor `blkT τ a m ∪ blkR τ a m`. The witness is based at level `m - 1`, where it reads an axis link at
+level `m - 1`, which is in `S`, and one at level `m`, which is in `T`.
+
+So `hdeg` in `plaq_side` is load-bearing rather than tidying.
+
+DERIVED: `0` is the strict lower bound on `m`; `2` in `hm : n = 2 * m` is the reflection geometry's.
+`1` is the lattice step separating the two levels the witness reads, and `m` the half-extent. The
+projections are `Plaq`'s. -/
 theorem degenerate_axis_plaquette_straddles (hm : n = 2 * m) (hm0 : 0 < m) :
     ∃ q : Plaq d n, q.1.1 = τ ∧ q.1.2 = τ ∧
       ¬ ((∀ l ∈ (bd q).map Prod.fst, l ∈ blkS τ a m ∪ blkR τ a m)
@@ -2622,11 +2840,11 @@ theorem degenerate_axis_plaquette_straddles (hm : n = 2 * m) (hm0 : 0 < m) :
 
 end Blocks
 
-/-! ## The ACTION splits at even extent
+/-! ## The action splits at even extent
 
 Four groups of plaquettes: the degenerate `μ = ν = τ` ones (identity holonomy, zero contribution),
-those lying INSIDE a plane, those reading `S ∪ R`, and those reading `T ∪ R`. The reflection permutes
-them: it fixes the plane group setwise and EXCHANGES the other two, which is what makes
+those lying inside a plane, those reading `S ∪ R`, and those reading `T ∪ R`. The reflection permutes
+them: it fixes the plane group setwise and exchanges the other two, which is what makes
 `∑ over T∪R` equal to `∑ over S∪R` composed with the reflection — the step that turns
 `exp(−βS)` into `h(U) · h(θU) · w(U|R)`.
 -/
@@ -2637,20 +2855,36 @@ open MassGap.WilsonLattice MassGap.WilsonAction
 
 variable {d n : ℕ} [NeZero n]
 
-/-- A degenerate plaquette has identity holonomy, in any group. `WilsonHypercubic.bd_diag_hol_one`
-states this for `SU 2` only; the fact is group-generic and the general form is what is needed here. -/
+/-- `wilsonHol bd ((μ, μ), x) U = 1` in any group: the four-letter boundary word of a degenerate
+plaquette retraces itself and cancels.
+
+`WilsonHypercubic.bd_diag_hol_one` states this at `SU 2`; the fact needs no structure beyond a group,
+and the general form is what `sum_plqDeg_zero` uses.
+
+DERIVED: `1` is the group identity, the value of the holonomy; it is a group element rather than a
+number. -/
 theorem hol_diag_one {G : Type} [Group G] (μ : Fin d) (x : Site d n) (U : Link d n → G) :
     wilsonHol (bd (d := d) (n := n)) ((μ, μ), x) U = 1 := by
   rw [hol_bd]
   group
 
-/-- The reflected level of a transverse coordinate. -/
+/-- `lv a ((a + a) - p) = (n - lv a p) % n`: the level of a transverse coordinate after reflection
+about the plane at `a`.
+
+The modulus is there because the extent is periodic: at level `0` the reflected level is `0` again,
+not `n`.
+
+DERIVED: no numeral. The doubling `a + a` is the even reflection constant and `n` the extent. -/
 theorem lv_refl_site (a p : Fin n) : lv a ((a + a) - p) = (n - lv a p) % n := by
   conv_lhs => rw [eq_add_lv a p]
   rw [refl_transverse_level a _ (lv_lt a p), ← fcast_mod,
     lv_add_fcast a _ (Nat.mod_lt _ (NeZero.pos n))]
 
-/-- The reflected level of an axis coordinate. -/
+/-- `lv a ((a + a) - 1 - p) = n - 1 - lv a p`: the level of an axis coordinate after reflection.
+No modulus is needed, the subtraction of `1` keeping the result below `n`.
+
+DERIVED: `1` is the length of an axis link in lattice steps, `Reflect.reflLink`'s offset, appearing
+once on each side for that reason. The doubling `a + a` is the even reflection constant. -/
 theorem lv_refl_site_axis (a p : Fin n) : lv a ((a + a) - 1 - p) = n - 1 - lv a p := by
   have h1 := lv_lt a p
   have h2 := NeZero.pos n
@@ -2659,10 +2893,16 @@ theorem lv_refl_site_axis (a p : Fin n) : lv a ((a + a) - 1 - p) = n - 1 - lv a 
 
 variable (τ : Fin d) (a : Fin n) (m : ℕ)
 
-/-- Plaquettes with both directions along the axis: identity holonomy, zero contribution. -/
+/-- The plaquettes whose two directions are both `τ`. `hol_diag_one` gives them identity holonomy,
+so `sum_plqDeg_zero` makes their contribution to the action zero.
+
+One of the four groups `sum_plaq_split` partitions the plaquettes into.
+
+DERIVED: no numeral. The `1`s in `q.1.1`, `q.1.2` are `Plaq`'s projections onto the two plane
+directions. -/
 def plqDeg : Finset (Plaq d n) := Finset.univ.filter (fun q => q.1.1 = τ ∧ q.1.2 = τ)
 
-/-- Plaquettes lying INSIDE a plane.
+/-- Plaquettes lying inside a plane.
 
 DERIVED: `0` is the plane's level, the level at which a plaquette reads only fixed links. -/
 def plqZero : Finset (Plaq d n) :=
@@ -2713,7 +2953,10 @@ theorem mem_plqMinus (q : Plaq d n) :
   rw [plqMinus, Finset.mem_filter]
   exact ⟨fun h => h.2, fun h => ⟨Finset.mem_univ _, h⟩⟩
 
-/-- **The four groups partition the plaquettes**, so any sum over plaquettes splits. -/
+/-- `∑ q, f q` splits as the sum over `plqDeg`, `plqZero`, `plqPlus` and `plqMinus`, for any `f`
+into an additive commutative monoid: the four filters partition `Finset.univ`.
+
+DERIVED: no numeral. The four groups are the file's own, and `f` is the caller's. -/
 theorem sum_plaq_split {M : Type} [AddCommMonoid M] (f : Plaq d n → M) :
     ∑ q, f q = ((∑ q ∈ plqDeg τ, f q) + (∑ q ∈ plqZero τ a m, f q))
       + ((∑ q ∈ plqPlus τ a m, f q) + (∑ q ∈ plqMinus τ a m, f q)) := by
@@ -2747,7 +2990,12 @@ theorem sum_plaq_split {M : Type} [AddCommMonoid M] (f : Plaq d n → M) :
         · exact Or.inr (Or.inr ⟨h1, h2, h3⟩)
   rw [← huniv, Finset.sum_union hcross, Finset.sum_union hdz, Finset.sum_union hpm]
 
-/-- **The degenerate group contributes nothing.** -/
+/-- The Wilson density summed over `plqDeg τ` is `0`, for `N ≠ 0`: `hol_diag_one` makes every
+holonomy the identity and `wilsonDensity_one` evaluates the density there.
+
+`N ≠ 0` is needed because `wilsonDensity` normalises by `N`.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the value of the sum. -/
 theorem sum_plqDeg_zero {N : ℕ} (hN : N ≠ 0) (U : Link d n → MassGap.SUN.SU N) :
     ∑ q ∈ plqDeg (d := d) (n := n) τ,
       wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U) = 0 := by
@@ -2760,16 +3008,24 @@ theorem sum_plqDeg_zero {N : ℕ} (hN : N ≠ 0) (U : Link d n → MassGap.SUN.S
   rw [show (((μ, ν), x) : Plaq d n) = ((μ, μ), x) by rw [hνμ], hol_diag_one,
     wilsonDensity_one hN]
 
-/-- **A plaquette observable composed with the reflection is the reflected plaquette's.** The
-mirrored holonomy is only CONJUGATE to the image plaquette's (`Reflect.hol_reflConf`) and the Wilson
-density is a class function. -/
+/-- `wilsonDensity` of `q`'s holonomy at the reflected configuration equals `wilsonDensity` of the
+reflected plaquette's holonomy at the original one.
+
+`Reflect.hol_reflConf` gives the two holonomies as conjugates rather than equals, and
+`wilsonDensity_conj` closes the gap because the density is a class function.
+
+DERIVED: no numeral. `c` is the caller's reflection constant and `q` the caller's plaquette. -/
 theorem density_reflConf {N : ℕ} (c : Fin n) (q : Plaq d n) (U : Link d n → MassGap.SUN.SU N) :
     wilsonDensity (wilsonHol (bd (d := d) (n := n)) q (reflConf τ c U))
       = wilsonDensity (wilsonHol (bd (d := d) (n := n)) (reflPlaq τ c q) U) := by
   obtain ⟨g, hg⟩ := hol_reflConf (G := MassGap.SUN.SU N) τ c q U
   rw [hg, wilsonDensity_conj]
 
-/-- **The reflection carries the `S ∪ R` plaquettes onto the `T ∪ R` ones.** -/
+/-- `reflPlaq τ (a + a)` carries `plqPlus τ a m` into `plqMinus τ a m`, at even extent with
+`0 < m`: the plaquettes reading `S ∪ R` map to those reading `T ∪ R`.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's, with `a + a` the even reflection constant. -/
 theorem reflPlaq_plus_mem_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ plqPlus τ a m) : reflPlaq τ (a + a) q ∈ plqMinus τ a m := by
   obtain ⟨⟨μ, ν⟩, x⟩ := q
@@ -2805,7 +3061,12 @@ theorem reflPlaq_plus_mem_minus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
         rw [hlev]
         omega
 
-/-- And back the other way, so the two groups are exchanged. -/
+/-- `reflPlaq τ (a + a)` carries `plqMinus τ a m` back into `plqPlus τ a m`. With
+`reflPlaq_plus_mem_minus` this exchanges the two groups, which is what makes the image of one the
+other.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's. -/
 theorem reflPlaq_minus_mem_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
     (hq : q ∈ plqMinus τ a m) : reflPlaq τ (a + a) q ∈ plqPlus τ a m := by
   obtain ⟨⟨μ, ν⟩, x⟩ := q
@@ -2841,10 +3102,16 @@ theorem reflPlaq_minus_mem_plus (hm : n = 2 * m) (hm0 : 0 < m) {q : Plaq d n}
         rw [hlev]
         omega
 
-/-- **THE MIRROR IDENTITY.** The `T ∪ R` part of the action, evaluated at `U`, is the `S ∪ R` part
-evaluated at the REFLECTED configuration. This is what `pairing_with_reflection_nonneg`'s `hmirror`
-step needs from the WEIGHT rather than from the observable, and it is what makes the Boltzmann factor
-a paired product. -/
+/-- The Wilson density summed over `plqMinus τ a m` at `U` equals the sum over `plqPlus τ a m` at
+`reflConf τ (a + a) U`: the `T ∪ R` part of the action, read at a configuration, is the `S ∪ R` part
+read at its reflection.
+
+`reflPlaq_plus_mem_minus` and `reflPlaq_minus_mem_plus` identify the two index sets and
+`density_reflConf` transports the summand. This is the identity `integrand_eq_paired` uses to make
+the Boltzmann factor a product of one function and its reflection.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's. -/
 theorem sum_plqMinus_eq_plus_refl {N : ℕ} (hm : n = 2 * m) (hm0 : 0 < m)
     (U : Link d n → MassGap.SUN.SU N) :
     ∑ q ∈ plqMinus τ a m, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
@@ -2876,15 +3143,24 @@ theorem sum_plqMinus_eq_plus_refl {N : ℕ} (hm : n = 2 * m) (hm0 : 0 < m)
 
 variable {N : ℕ}
 
-/-- The `S ∪ R` part of the action. -/
+/-- The Wilson density summed over `plqPlus τ a m`: the part of the action carried by the
+plaquettes that read `S ∪ R`.
+
+DERIVED: no numeral. `τ`, `a`, `m` and `U` are the caller's. -/
 noncomputable def actPlus (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ plqPlus τ a m, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
 
-/-- The `T ∪ R` part. -/
+/-- The Wilson density summed over `plqMinus τ a m`: the part of the action carried by the
+plaquettes that read `T ∪ R`.
+
+DERIVED: no numeral. -/
 noncomputable def actMinus (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ plqMinus τ a m, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
 
-/-- The part living inside the planes — this becomes the weld's plane weight. -/
+/-- The Wilson density summed over `plqZero τ a m`: the part of the action carried by the
+plaquettes lying inside the two planes. `wPlane` is its Boltzmann factor, the weld's `W`.
+
+DERIVED: no numeral. -/
 noncomputable def actZero (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   ∑ q ∈ plqZero τ a m, wilsonDensity (wilsonHol (bd (d := d) (n := n)) q U)
 
@@ -2932,18 +3208,31 @@ theorem abs_exp_actSum_le (hN : N ≠ 0) (β : ℝ) (A : Finset (Plaq d n))
     _ ≤ |β| * (2 * A.card) :=
         mul_le_mul_of_nonneg_left (abs_actSum_le hN A U) (abs_nonneg _)
 
-/-- The observable of the positive half: the plaquette observable, centred, times the half-action's
-Boltzmann factor. This is the `O` of the weld. -/
+/-- The plaquette observable at `q₀`, centred at `aC`, times `exp (-β * actPlus)`. The weld's `O`:
+`obsPlus_local` shows it reads `S ∪ R`.
+
+DERIVED: no numeral. `q₀` is the caller's plaquette, `aC` the centring constant and `β` the
+coupling; the sign in `-β` is the Boltzmann convention. -/
 noncomputable def obsPlus (q₀ : Plaq d n) (aC β : ℝ) (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   (wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC)
     * Real.exp (-β * actPlus τ a m U)
 
-/-- The plane weight: the Boltzmann factor of the plaquettes inside the planes. This is the `W` of
-the weld, and it is where `exp(−β S₀)` goes. -/
+/-- `exp (-β * actZero)`: the Boltzmann factor of the plaquettes inside the planes. The weld's `W`,
+nonnegative because it is an exponential, and `wPlane_local` shows it reads `R`.
+
+DERIVED: no numeral. `β` is the caller's coupling and the sign in `-β` the Boltzmann convention. -/
 noncomputable def wPlane (β : ℝ) (U : Link d n → MassGap.SUN.SU N) : ℝ :=
   Real.exp (-β * actZero τ a m U)
 
-/-- **THE FACTORISATION.** The physical integrand IS the weld's paired form. -/
+/-- The centred plaquette observable, times its reflection, times the Boltzmann weight, equals
+`wPlane * obsPlus U * obsPlus (reflConf τ (a + a) U)`.
+
+`action_eq_split` separates the three parts of the action and `sum_plqMinus_eq_plus_refl` turns the
+`T ∪ R` part at `U` into the `S ∪ R` part at the reflected configuration, which is what puts the
+integrand in the weld's paired form.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the strict lower bound on `m` in
+`hm0`; `2` in `hm : n = 2 * m` is the reflection geometry's. `aC` and `β` are the caller's. -/
 theorem integrand_eq_paired (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (q₀ : Plaq d n) (aC β : ℝ) (U : Link d n → MassGap.SUN.SU N) :
     (wilsonDensity (wilsonHol (bd (d := d) (n := n)) q₀ U) - aC)
@@ -2962,7 +3251,15 @@ theorem integrand_eq_paired (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     Real.exp_add, Real.exp_add]
   ring
 
-/-- **The positive-half observable READS `S ∪ R`.** -/
+/-- `obsPlus` takes equal values at two configurations agreeing on `blkS τ a m` and `blkR τ a m`:
+the observable reads `S ∪ R` and nothing else.
+
+`plaq_links_le` supplies the containment for both factors, which needs `q₀` non-degenerate
+(`hq₀deg`) and based strictly below the plane (`hq₀lv`).
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's, with `m` the half-extent bounding `q₀`'s level. The `1`s and `2`s in `q₀.1.1`, `q₀.1.2`,
+`q₀.2` are `Plaq`'s projections. -/
 theorem obsPlus_local (hm : n = 2 * m) (hm0 : 0 < m) (q₀ : Plaq d n)
     (hq₀deg : ¬ (q₀.1.1 = τ ∧ q₀.1.2 = τ)) (hq₀lv : lv a (q₀.2 τ) < m) (aC β : ℝ)
     (U V : Link d n → MassGap.SUN.SU N)
@@ -2985,7 +3282,12 @@ theorem obsPlus_local (hm : n = 2 * m) (hm0 : 0 < m) (q₀ : Plaq d n)
   unfold obsPlus
   rw [h1, h2]
 
-/-- **The plane weight READS `R`.** -/
+/-- `wPlane` takes equal values at two configurations agreeing on `blkR τ a m`: the plane weight
+reads `R` and nothing else, by `plaq_links_plane` on every plaquette of `plqZero`.
+
+No evenness hypothesis is needed here, unlike in `obsPlus_local`.
+
+DERIVED: no numeral. `β`, `U` and `V` are the caller's. -/
 theorem wPlane_local (β : ℝ) (U V : Link d n → MassGap.SUN.SU N)
     (hR : ∀ l ∈ blkR τ a m, U l = V l) :
     wPlane (N := N) τ a m β U = wPlane τ a m β V := by
@@ -2997,13 +3299,20 @@ theorem wPlane_local (β : ℝ) (U V : Link d n → MassGap.SUN.SU N)
   unfold wPlane
   rw [h2]
 
-/-- **THE OSTERWALDER–SEILER PAIRING INEQUALITY FOR THE WILSON WEIGHT, AT EVEN EXTENT.**
+/-- The Osterwalder–Seiler pairing integral for the Wilson weight is nonnegative at even extent:
+`0 ≤ ∫ U, (E q₀ U - aC) * (E q₀ (reflConf τ (a + a) U) - aC) * boltz β U`, for `N ≠ 0`, `n = 2 * m`
+with `0 < m`, and a plaquette `q₀` that is not the degenerate axis one (`hq₀deg`) and is based
+strictly below the plane (`hq₀lv`). No condition is placed on `β` or on the centring constant `aC`.
 
-No hypothesis on the observable beyond where it sits: the plaquette `q₀` must not be the degenerate
-axis one and must be based strictly below the plane. Everything else — the action split, the mirror
-identity, the locality, the conditional square — is proved above.
+`integrand_eq_paired` puts the integrand in the weld's paired form, `obsPlus_local` and
+`wPlane_local` give the two locality hypotheses, `blkR_fixed`, `blkR_axis_free` and `blkS_maps_blkT`
+the three geometric ones, and `abs_actSum_le` the uniform bound `pairing_nonneg_of_local` requires.
 
-This is `ReflectPositive.PlaqReflPositive`'s integral, before dividing by `Z`. -/
+This is `ReflectPositive.PlaqReflPositive`'s integral before division by `Z`.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`, the strict lower bound on `m` in
+`hm0`, and the lower bound concluded of the integral. `2` in `hm : n = 2 * m` is the reflection
+geometry's. The `1`s and `2`s in `q₀.1.1`, `q₀.1.2`, `q₀.2` are `Plaq`'s projections. -/
 theorem wilson_pairing_nonneg_even (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (q₀ : Plaq d n) (hq₀deg : ¬ (q₀.1.1 = τ ∧ q₀.1.2 = τ)) (hq₀lv : lv a (q₀.2 τ) < m)
     (β aC : ℝ) :
@@ -3070,9 +3379,17 @@ theorem wilson_pairing_nonneg_even (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
       (le_trans (abs_nonneg _) (hWbd U))) (hObd _) (abs_nonneg _)
     (mul_nonneg (le_trans (abs_nonneg _) (hWbd U)) hK1nn)
 
-/-- **The Gibbs form**: dividing by `Z > 0`. This is exactly `ReflectPositive.PlaqReflPositive`'s
-statement, unfolded — `EW Nc β O` is `(wilsonSystem bd wilsonDensity).expect (probHaar) β O` and
-`plaqE Nc q` is `fun U => wilsonDensity (wilsonHol bd q U)`. -/
+/-- The same inequality in Gibbs form: `0 ≤ (sysWilson N d n).expect (probHaar) β` of the centred
+plaquette observable paired with its reflection. `wilson_pairing_nonneg_even` for the numerator and
+`wilsonSystem_partition_pos` for `0 < Z`, which needs `N ≠ 0`.
+
+`ReflectPositive.PlaqReflPositive` unfolds to this: `EW Nc β O` is
+`(wilsonSystem bd wilsonDensity).expect (probHaar) β O`, and `plaqE Nc q` is
+`fun U => wilsonDensity (wilsonHol bd q U)`.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`, the strict lower bound on `m` in
+`hm0`, and the lower bound concluded of the expectation. `2` in `hm : n = 2 * m` is the reflection
+geometry's. The `1`s and `2`s in the `q₀` projections are `Plaq`'s. -/
 theorem wilson_expect_pairing_nonneg_even (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     (q₀ : Plaq d n) (hq₀deg : ¬ (q₀.1.1 = τ ∧ q₀.1.2 = τ)) (hq₀lv : lv a (q₀.2 τ) < m)
     (β aC : ℝ) :
@@ -3084,15 +3401,18 @@ theorem wilson_expect_pairing_nonneg_even (hN : N ≠ 0) (hm : n = 2 * m) (hm0 :
   refine div_nonneg ?_ (le_of_lt hZ)
   exact wilson_pairing_nonneg_even τ a m hN hm hm0 q₀ hq₀deg hq₀lv β aC
 
-/-! ### Which lags this covers, and which it does not
+/-! ### The range of lags
 
-A lag `c` is covered exactly when it has a half in `Fin n` — when `c.val` is even. At extent
-`n = 2m` that is half the lags. `odd_lag_has_no_plane` is the negative control: for an odd lag the
-plane is not merely unconstructed, it does not exist, and the reflection is a LINK reflection with a
-fixed axis link that `reflConf` inverts. -/
+A lag `c` admits the site-plane above exactly when `c.val` is even, that is, when `c` has a half in
+`Fin n`; at extent `n = 2 * m` that is half the lags. `odd_lag_has_no_plane` states that no such
+plane exists for the other half, and `odd_lag_has_fixed_axis_link` identifies those lags as link
+reflections with a fixed axis link that `reflConf` inverts. -/
 
-/-- The level seen from the OTHER half of the same reflection constant, which is the first one
-shifted by `m`. -/
+/-- `lv (a + fcast n m) p = (lv a p + m) % n`: the level of `p` measured from the second half of
+the same reflection constant, which sits `m` away from the first.
+
+DERIVED: `2` in `hm : n = 2 * m` is the reflection geometry's; `m` is the half-extent, the distance
+between the two planes of one constant. -/
 theorem lv_other_half (hm : n = 2 * m) (a p : Fin n) :
     lv (a + fcast n m) p = (lv a p + m) % n := by
   have hnm : n - m = m := by omega
@@ -3108,9 +3428,16 @@ theorem lv_other_half (hm : n = 2 * m) (a p : Fin n) :
   rw [lv, h1]
   rfl
 
-/-- **One of the two halves always puts a given site strictly below the plane.** Both halves of the
-same reflection constant are available, and they differ by `m`, so whichever side a site falls on
-there is a choice of plane for which it is on the `S` side. -/
+/-- For `c` with even value and any site coordinate `p`, there is an `a` with `a + a = c` and
+`lv a p < m`: one of the two halves of a reflection constant puts a given coordinate strictly below
+its plane.
+
+`exists_fixed_site` supplies one half and `lv_other_half` the level seen from the other, the two
+differing by `m`. This is what lets `plaqReflPositive_of_even_lag` place an arbitrary plaquette on
+the `S` side.
+
+DERIVED: `0` is the strict lower bound on `m` in `hm0`; `2` in `hm : n = 2 * m` is the reflection
+geometry's, with `m` the half-extent the level is compared against. -/
 theorem exists_half_below (hm : n = 2 * m) (hm0 : 0 < m) {c : Fin n} (hc : Even c.val)
     (p : Fin n) : ∃ a : Fin n, a + a = c ∧ lv a p < m := by
   obtain ⟨a0, ha0⟩ := exists_fixed_site hc
@@ -3130,16 +3457,24 @@ theorem exists_half_below (hm : n = 2 * m) (hm0 : 0 < m) {c : Fin n} (hc : Even 
       rw [lv_other_half m hm, hmod]
       omega
 
-/-- **NEGATIVE CONTROL.** At even extent an ODD lag has no plane at all. The construction does not
-extend to it because the geometry is absent, not because a proof is missing: that case is the LINK
-reflection, whose fixed axis link `reflConf` inverts
-(`reflLink_fixed_iff_axis`, `reflConf_inverts_fixed_axis_link`). -/
+/-- At even extent, a constant of odd value has no half: `¬ ∃ a, a + a = c`. So an odd lag has no
+site-plane, and the construction above has no geometry to run on rather than a missing step.
+
+`odd_lag_has_fixed_axis_link` locates what that case is instead: a link reflection whose fixed axis
+link `reflConf` inverts.
+
+DERIVED: no numeral. Evenness of `n` is `hn` and the parity of `c.val` is `hc`. -/
 theorem odd_lag_has_no_plane (hn : Even n) {c : Fin n} (hc : ¬ Even c.val) :
     ¬ ∃ a : Fin n, a + a = c := by
   rintro ⟨a, ha⟩
   exact no_half_of_odd_val hn hc a ha
 
-/-- At even extent, `c` odd makes `c − 1` even. -/
+/-- At even extent of at least two, `c` of odd value makes `(c - 1).val` even. The converse
+direction of `sub_one_odd_of_even`, through `fin_even_add`.
+
+DERIVED: `1` is the offset between the site-plane and the link-plane, the length of an axis link in
+lattice steps; `2` is the lower bound on the extent in `h2`, which the subtraction in `Fin n`
+needs. -/
 theorem even_sub_one_of_odd (hn : Even n) (h2 : 2 ≤ n) {c : Fin n} (hc : ¬ Even c.val) :
     Even (c - 1 : Fin n).val := by
   by_contra hodd
@@ -3155,11 +3490,17 @@ theorem even_sub_one_of_odd (hn : Even n) (h2 : 2 ≤ n) {c : Fin n} (hc : ¬ Ev
   rw [hcc] at hE
   exact hc hE
 
-/-- **NEGATIVE CONTROL, sharper.** An odd lag at even extent is a LINK reflection: it fixes an AXIS
-link, and `reflConf_inverts_fixed_axis_link` shows `reflConf` sends that link's variable to its
-inverse. So the shared block is acted on nontrivially, `hσR` of the weld fails, and the conditional
-square has nothing to condition on. That case needs the Osterwalder–Seiler character expansion, which
-is not here. -/
+/-- At even extent of at least two, an odd constant fixes an axis link: `∃ l, l.1 = τ ∧
+reflLink τ c l = l`. `even_sub_one_of_odd` makes `c - 1` even and `reflLink_fixed_iff_axis` turns a
+half of it into the link.
+
+`reflConf_inverts_fixed_axis_link` sends that link's variable to its inverse, so `hσR` of the weld
+fails on it and `pairing_nonneg_of_shared_block`'s conditional argument has nothing to condition on.
+An odd lag at even extent is a link reflection, not a site reflection.
+
+DERIVED: `2` is the lower bound on the extent in `h2`, needed by `even_sub_one_of_odd`. The `1` in
+`l.1` is `Link`'s projection onto the direction; evenness of `n` is `hn` and the parity of `c.val`
+is `hc`. -/
 theorem odd_lag_has_fixed_axis_link (hn : Even n) (h2 : 2 ≤ n) {c : Fin n}
     (hc : ¬ Even c.val) : ∃ l : Link d n, l.1 = τ ∧ reflLink τ c l = l := by
   obtain ⟨x, hx⟩ := exists_fixed_site (even_sub_one_of_odd hn h2 hc)
@@ -3167,11 +3508,19 @@ theorem odd_lag_has_fixed_axis_link (hn : Even n) (h2 : 2 ≤ n) {c : Fin n}
   refine (reflLink_fixed_iff_axis c _ rfl).mpr ?_
   simpa using hx.symm
 
-/-- **`ReflectPositive.PlaqReflPositive`, DISCHARGED at even extent and even lag.**
+/-- `MassGap.ReflectPositive.PlaqReflPositive N τ c β q₀` holds for `N ≠ 0`, extent `n = 2 * m` with
+`0 < m`, a lag `c` of even value, and any `q₀` that is not the degenerate axis plaquette (`hq₀deg`).
+No condition is placed on `β`.
 
-No hypothesis remains except the geometry: the extent is even and the lag has a half. The
-Osterwalder–Seiler pairing inequality for the `SU(N)` plaquette-energy observable is a theorem here,
-not a citation. -/
+`exists_half_below` chooses the half of `c` that puts `q₀` strictly below its plane, and
+`wilson_expect_pairing_nonneg_even` supplies the inequality at every centring constant `aC`.
+
+The lag must have even value: `odd_lag_has_no_plane` shows the other half of the lags have no
+site-plane at even extent.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN` and the strict lower bound on `m` in
+`hm0`. `2` in `hm : n = 2 * m` is the reflection geometry's. The `1`s and `2`s in `q₀.1.1`, `q₀.1.2`
+are `Plaq`'s projections. -/
 theorem plaqReflPositive_of_even_lag (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     {c : Fin n} (hc : Even c.val) (q₀ : Plaq d n) (hq₀deg : ¬ (q₀.1.1 = τ ∧ q₀.1.2 = τ))
     (β : ℝ) : MassGap.ReflectPositive.PlaqReflPositive N τ c β q₀ := by
@@ -3180,9 +3529,18 @@ theorem plaqReflPositive_of_even_lag (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < 
   rw [← ha']
   exact wilson_expect_pairing_nonneg_even τ a' m hN hm hm0 q₀ hq₀deg hlv β aC
 
-/-- **The lag correlation is NONNEGATIVE at every even lag of an even-extent lattice** — no
-hypothesis, no citation. This is the first conjunct of `Complete.wilson_reflection_positive_at`,
-proved on the lags the geometry covers. -/
+/-- `0 ≤ MassGap.WilsonBridge.corrHyper N n μ ν τ β lag` for `N ≠ 0`, extent `n = 2 * m` with
+`0 < m`, transverse directions `μ`, `ν` (`hμ`, `hν`), any `β`, and a lag of even value.
+
+`plaqReflPositive_of_even_lag` discharges the reflection positivity hypothesis and
+`ReflectPositive.corrHyper_nonneg_of_reflPositive` converts it to the correlation.
+
+This is the first conjunct of `Complete.wilson_reflection_positive_at`, stated on the even lags; the
+odd ones are outside the geometry `odd_lag_has_no_plane` describes.
+
+DERIVED: `0` is the value `N` is required to differ from in `hN`, the strict lower bound on `m` in
+`hm0`, and the lower bound concluded of the correlation. `2` in `hm : n = 2 * m` is the reflection
+geometry's. -/
 theorem corrHyper_nonneg_even_lag (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < m)
     {μ ν : Fin d} (hμ : μ ≠ τ) (hν : ν ≠ τ) (β : ℝ) {lag : Fin n} (hlag : Even lag.val) :
     0 ≤ MassGap.WilsonBridge.corrHyper (d := d) N n μ ν τ β lag :=

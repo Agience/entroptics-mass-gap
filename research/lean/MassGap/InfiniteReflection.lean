@@ -3,71 +3,71 @@ import MassGap.DLRLimit
 import MassGap.Transfer
 
 /-!
-# MassGap.InfiniteReflection — reflection positivity is not lost in the thermodynamic limit
+# MassGap.InfiniteReflection — reflection positivity on a submodule, and its transport to a limit
 
-## What this is for
+A `Transfer.TransferData` needs a symmetric bilinear form with `form_nonneg`, which is reflection
+positivity. This module states that condition on a submodule, transports it and several related
+inequalities from a family of states to a limit state, and builds the `Transfer.ReflForm` from the
+result.
 
-`InfiniteShift` puts a non-trivial, infinite-order time translation on the infinite lattice's
-quasi-local algebra, which is what every finite carrier was proved to lack. What a
-`Transfer.TransferData` still needs there is the FORM: a symmetric bilinear `⟨·,·⟩` with
-`form_nonneg`, which is reflection positivity.
+## Reflection positivity is asserted on a submodule
 
-At finite volume that is `Complete.wilson_reflection_positive_at`, one of the tree's two named
-axioms. **The question here is whether passing to the infinite volume costs anything beyond it, and
-the answer is no.**
+`0 ≤ ν (θF * F)` is false as a statement about all observables, for any reflection that moves
+anything: `reflection_positivity_fails_off_the_half_space` shows that when `θF = -F` — as for an
+antisymmetric observable such as `σ(x) - σ(θx)` — the quantity is `-ν (F * F)`, strictly negative
+whenever `0 < ν (F * F)`.
 
-## ⚠ FIRST: reflection positivity is a statement about ONE HALF-SPACE
+`ReflPositiveOn R A ν` therefore quantifies over `f ∈ A` for a submodule `A` supplied by the caller.
+`ReflectStrong.wilsonGibbsReflForm` is carried on `localObs (blkS τ a m) (blkR τ a m)` for the same
+reason. The other direction is `trivialReflection_positive_always`: at `θ = id` the condition reads
+`0 ≤ ν (f * f)` and holds for every state on every submodule, so the content lies entirely in which
+submodule is chosen.
 
-`0 ≤ ν(θF · F)` is **false** as a statement about all observables, for any reflection that moves
-anything. `reflection_positivity_fails_off_the_half_space` proves it: whenever `θF = −F` — and an
-antisymmetric observable like `σ(x) − σ(θx)` is one — the quantity is `−ν(F·F) ≤ 0`, and strictly
-negative as soon as `ν(F·F) > 0`.
+## The transport theorems
 
-So the condition is asserted **on a submodule**, and the caller supplies it. That is not a technical
-nicety: it is why `ReflectStrong.wilsonGibbsReflForm` is built on
-`localObs (blkS τ a m) (blkR τ a m)` and not on the whole Wilson algebra. Stating the condition
-unrestricted would make every theorem below vacuous — true of a hypothesis nothing satisfies — and
-`reflection_positivity_fails_off_the_half_space` is here so that cannot happen silently.
+`DLRLimit.le_of_eventually_le` carries a lower bound through a limit: if `c ≤ μ i f` eventually then
+`c ≤ ν f`. `reflPositive_of_eventually_pointwise` applies it at `c = 0` and the observable `θf * f`,
+once per `f ∈ A`, and `reflPositive_of_tendsto` is the uniform form, which factors through the
+pointwise one by `Filter.Eventually.mono`. `isReflectionInvariant_of_tendsto` transports invariance
+by uniqueness of limits.
 
-## The transport, and it is three lines
+The hypotheses are pointwise in `f` rather than uniform because a directed union such as
+`HalfSpaceAlgebra.halfSpaceAlg` has no single volume containing every member's support, while each
+member separately has a fixed finite support and so sits inside every large enough box. The
+submodule `A` is held fixed across the volumes in every statement.
 
-`DLRLimit.le_of_eventually_le` says a uniform lower bound passes to the limit: if `c ≤ μ i f`
-eventually then `c ≤ ν f`. Reflection positivity IS such a bound, at `c = 0` and the observable
-`θF · F`, for each `F` in the half-space submodule. So `reflPositive_of_tendsto` is that lemma
-applied once per observable, and reflection invariance transports through uniqueness of limits.
+`pairing_le_of_eventually_pointwise` and its variant `..._on` transport a ratio inequality
+`ν (S.θ F * F) ≤ r^2 * ν (R.θ F * F)`. In that unsubtracted form, `F = 1` makes both sides `1` and
+`r^2`, so a hypothesis quantified over all of `A` entails `1 ≤ r^2`;
+`WilsonTransferReduction.gapAt_iff_pairing` restricts its inequality to `F` whose pairing with the
+vacuum vanishes, and the `..._on` variant carries an arbitrary side condition `P` for that purpose.
+`state_pairing_subtracted` is the identity
+`ν (θ(F - νF • 1) * (F - νF • 1)) = ν (θF * F) - νF * ν (θF)`, whose right-hand side vanishes at
+`F = 1`, and `connected_pairing_le_of_eventually` uses it to state a transport whose hypothesis
+mentions only the finite-volume states, each subtracting its own mean.
 
-**Nothing there is deep and that is the point.** Positivity is a closed condition and limits preserve
-closed conditions. The reason to write it down is that "does RP survive the limit" was open in the
-goal document, and the answer changes what C1 still needs.
+## The form
 
-## What a reflection has to be
+`Reflection` bundles the four properties the construction consumes: `θ` is `ℝ`-linear,
+multiplicative, unital and involutive. It refers to no lattice and no sites;
+`MassGap.LatticeReflection` builds the instance for the infinite lattice and `MassGap.Reflect` is
+the finite-volume original. `trivialReflection` shows the structure is inhabited.
+`Reflection.theta_prod` extends multiplicativity to a `Finset.prod`.
 
-`Reflection` bundles the four properties the form construction consumes — `θ` is `ℝ`-linear,
-multiplicative, unital and involutive. It is deliberately NOT tied to a lattice: the transport
-argument never looks at what `θ` does to a site. `MassGap.LatticeReflection` builds the instance for
-the infinite lattice; `MassGap.Reflect` is the finite-volume original the convention comes from.
+`stateFormFun` is `⟨F, H⟩ = ν (θF * H)` on `↥A`, `stateFormFun_symm` its symmetry from involutivity,
+multiplicativity and invariance, and `stateReflForm` the `Transfer.ReflForm ↥A` with every field
+discharged from those plus `ReflPositiveOn`. `stateReflForm_vac_norm` gives `⟨1, 1⟩ = 1` when the
+constant lies in `A`, which a submodule need not.
 
-## What is delivered
+## Scope
 
-* `reflection_positivity_fails_off_the_half_space` — the restriction is necessary, not decorative.
-* `reflPositive_of_tendsto` — RP on a submodule passes to any limit state. **No new axiom.**
-* `isReflectionInvariant_of_tendsto` — so does invariance of the state.
-* `stateReflForm` — given both, the state's reflection form is a `Transfer.ReflForm` **on that
-  submodule**, so `GNSHilbert`'s apparatus applies: Hilbert space, vacuum, operator lift.
-* `stateReflForm_vac_norm` — the constant observable is normalised, when it lies in the submodule.
+`A`, `hinv` and `hpos` are hypotheses throughout. No half-space submodule of the infinite lattice is
+constructed here, and no Wilson state is shown to satisfy `ReflPositiveOn` for one. The
+`TransferData` fields `T_symm` and `T_contract` are not addressed in this module.
 
-## ⚠ What is NOT delivered
-
-**No half-space submodule of the infinite lattice is constructed here**, and no Wilson state is shown
-to satisfy `ReflPositiveOn` for one. Until both exist, nothing below applies to Yang–Mills: these are
-theorems about a hypothesis, and supplying the hypothesis is the work that remains.
-
-**And the transfer operator's own fields are untouched.** `TransferData` also needs `T_symm` and
-`T_contract` for `InfiniteShift.ishiftObs` against this form, and `T_symm` is where the reflection
-and the shift must be shown compatible — the step that makes reflection positivity do its work.
-
-So C1's remaining list is more specific, not shorter: the limit is no longer one of its items, and
-the half-space algebra has become one.
+DERIVED: `0` is the sign asserted by `ReflPositiveOn` and the value the failure theorem's conclusion
+falls below; `1` is the unit observable, which `θ_one` fixes and on which a state has value `1`; `2`
+is the exponent on the caller's ratio `r`. No numeral is a magnitude.
 -/
 
 namespace MassGap.InfiniteReflection
@@ -79,13 +79,14 @@ variable {X : Type*} [TopologicalSpace X] [CompactSpace X]
 
 /-! ## 1. What the form construction consumes -/
 
-/-- **A REFLECTION ON THE OBSERVABLES**: linear, multiplicative, unital, involutive.
+/-- A reflection on the observables of a compact space: an `ℝ`-linear map `θ : C(X,ℝ) →ₗ[ℝ] C(X,ℝ)`
+that is multiplicative (`θ_mul`), fixes the constant (`θ_one`) and is involutive (`θ_involutive`).
 
-These four are what `stateReflForm` uses and nothing more. No lattice, no sites and no half-space
-appear — `LatticeReflection.latticeReflection` is the instance, and keeping the shape abstract is
-what lets the transport theorem be proved without any of that.
+These four fields are what `stateReflForm` consumes. No lattice, site or half-space appears in the
+structure; `LatticeReflection.latticeReflection` is the instance for the infinite lattice, and
+`trivialReflection` shows the structure is inhabited.
 
-DERIVED: the `1` is the unit observable, not a magnitude. -/
+DERIVED: `1` is the unit observable that `θ_one` fixes, not a magnitude. -/
 structure Reflection (X : Type*) [TopologicalSpace X] [CompactSpace X] where
   /-- The reflection, as a linear map on observables. -/
   θ : C(X, ℝ) →ₗ[ℝ] C(X, ℝ)
@@ -96,38 +97,34 @@ structure Reflection (X : Type*) [TopologicalSpace X] [CompactSpace X] where
   /-- Reflecting twice is doing nothing. -/
   θ_involutive : ∀ f : C(X, ℝ), θ (θ f) = f
 
-/-- **REFLECTION POSITIVITY, ON A SUBMODULE.** `A` is the half-space algebra: the observables the
-condition is asserted of. It is a parameter because the condition is FALSE without it — see
-`reflection_positivity_fails_off_the_half_space`.
+/-- Reflection positivity of a state on a submodule: `0 ≤ ν (R.θ f * f)` for every `f ∈ A`. The
+submodule is a parameter and not quantified away, since the condition is false when `A` is the whole
+algebra — `reflection_positivity_fails_off_the_half_space`.
 
-DERIVED: the `0` is the sign asserted, not a threshold. -/
+DERIVED: `0` is the sign asserted, not a threshold. -/
 def ReflPositiveOn (R : Reflection X) (A : Submodule ℝ C(X, ℝ)) (ν : State X) : Prop :=
   ∀ f ∈ A, 0 ≤ ν (R.θ f * f)
 
-/-- **THE STATE DOES NOT SEE THE REFLECTION.** Needed for symmetry of the form, and true of any state
-built from a reflection-symmetric measure. Asserted on all observables, where — unlike positivity —
-it is the correct statement.
+/-- Invariance of a state under a reflection: `ν (R.θ f) = ν f` for every `f : C(X, ℝ)`. Unlike
+`ReflPositiveOn`, this is asserted on the whole algebra, not on a submodule. It is what
+`stateFormFun_symm` uses.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def IsReflectionInvariant (R : Reflection X) (ν : State X) : Prop :=
   ∀ f : C(X, ℝ), ν (R.θ f) = ν f
 
-/-! ## 2. ⛔ Why the submodule is not optional -/
+/-! ## 2. Why the condition is stated on a submodule -/
 
-/-- **⛔ UNRESTRICTED REFLECTION POSITIVITY IS FALSE.**
+/-- `ν (R.θ F * F) < 0` whenever `R.θ F = -F` and `0 < ν (F * F)`. Rewriting by `hneg` makes the
+product `(-1 : ℝ) • (F * F)`, and `ν.map_smul` turns the value into `-ν (F * F)`.
 
-If the reflection negates an observable — and an antisymmetric one like `σ(x) − σ(θx)` is negated by
-construction — then `ν(θF · F) = −ν(F·F)`, which is at most zero and is strictly negative as soon as
-`F` has positive second moment.
+An antisymmetric observable such as `σ(x) - σ(θx)` satisfies `hneg` by construction, so
+`∀ f, 0 ≤ ν (R.θ f * f)` over the whole algebra has no instance for a reflection that moves anything
+and a state not concentrated on its fixed set. This is why `ReflPositiveOn` carries a submodule, and
+why `ReflectStrong.wilsonGibbsReflForm` is built on `localObs (blkS τ a m) (blkR τ a m)`.
 
-**So `∀ f, 0 ≤ ν(θf · f)` is not a strong hypothesis; it is an unsatisfiable one**, for every
-reflection that moves anything and every state that is not concentrated on the reflection's fixed
-set. A file asserting it would prove theorems about an empty class, and this is the guard against
-that: reflection positivity is a statement about observables supported in ONE HALF-SPACE, which is
-why `ReflectStrong.wilsonGibbsReflForm` is carried on `localObs (blkS τ a m) (blkR τ a m)` and not on
-the Wilson algebra entire.
-
-DERIVED: the `0` is the sign; the negation is `θF = −F`, the caller's hypothesis. -/
+DERIVED: `0` is the sign in the hypothesis `0 < ν (F * F)` and the level the conclusion falls below.
+The negation `θF = -F` is the caller's hypothesis. -/
 theorem reflection_positivity_fails_off_the_half_space (R : Reflection X) (ν : State X)
     {F : C(X, ℝ)} (hneg : R.θ F = -F) (hpos : 0 < ν (F * F)) :
     ν (R.θ F * F) < 0 := by
@@ -140,18 +137,15 @@ theorem reflection_positivity_fails_off_the_half_space (R : Reflection X) (ν : 
 
 #print axioms reflection_positivity_fails_off_the_half_space
 
-/-- **⭐ REFLECTION DISTRIBUTES OVER A PRODUCT OF BLOCKS.**
+/-- `R.θ (∏ i ∈ s, F i) = ∏ i ∈ s, R.θ (F i)` for any `Finset s` and family `F`. Since `θ_mul` and
+`θ_one` are structure fields, `θ` is a monoid hom for the product on `C(X, ℝ)`; the proof is
+`Finset.induction_on`.
 
-`θ_mul` and `θ_one` are structure FIELDS, so `θ` is a monoid hom for the product on `C(X, ℝ)`;
-this is that fact at a `Finset.prod`.
+A chessboard estimate works with a product over blocks rather than a factorisation `A * θA`, one
+Schwarz step replacing it by quantities over doubled regions in which each block carries either
+`F i` or its reflection; this is the distribution that step uses.
 
-**Why it is wanted.** A chessboard estimate does not factorise an arbitrary observable on a
-symmetric region as `A · θA` — that is a special form a general observable does not have. It works
-with a PRODUCT OVER BLOCKS, and one Schwarz step replaces the product by quantities over DOUBLED
-regions in which each block carries either `F i` or its reflection. So what the argument needs is
-that `θ` distributes over the product, which is this.
-
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem Reflection.theta_prod (R : Reflection X) {ι : Type*} (s : Finset ι)
     (F : ι → C(X, ℝ)) : R.θ (∏ i ∈ s, F i) = ∏ i ∈ s, R.θ (F i) := by
   classical
@@ -163,29 +157,19 @@ theorem Reflection.theta_prod (R : Reflection X) {ι : Type*} (s : Finset ι)
 #print axioms Reflection.theta_prod
 
 
-/-! ## 3. ⭐ Both conditions transport to the limit -/
+/-! ## 3. Transport to the limit state -/
 
-/-- **⭐⭐ REFLECTION POSITIVITY PASSES TO THE LIMIT STATE, ONE OBSERVABLE AT A TIME.**
+/-- `ReflPositiveOn R A ν` from pointwise eventual positivity: given `htend`, convergence of
+`μ i f` to `ν f` for every observable, and `h`, which for each `f ∈ A` gives
+`0 ≤ μ i (R.θ f * f)` eventually along `l`. It is `DLRLimit.le_of_eventually_le` at `c = 0` and the
+observable `R.θ f * f`, once per `f`.
 
-`DLRLimit.le_of_eventually_le` at `c = 0` and the observable `θf · f`, once per `f` in the submodule.
-Positivity is a closed condition and limits preserve closed conditions; there is nothing else in it.
+The hypothesis is pointwise in `f`, which is what a directed union such as
+`HalfSpaceAlgebra.halfSpaceAlg` can supply: no single volume contains every member's support, while
+each member has a fixed finite support and so lies inside every large enough box. The submodule `A`
+is fixed across the volumes, and the only condition on the filter is `NeBot`.
 
-**So the infinite volume costs no new positivity assumption.** Whatever supplies reflection
-positivity at finite volume — at Wilson, `Complete.wilson_reflection_positive_at` — supplies it for
-the limit, with no second axiom and no hypothesis on the filter beyond `NeBot`.
-
-**⛔ THE HYPOTHESIS IS POINTWISE IN `f`, AND THAT IS WHAT REACHES A DIRECTED UNION.** The uniform
-form `∀ᶠ i, ∀ f ∈ A` is `reflPositive_of_tendsto` below, and it is the special case, because this
-proof specialises at `f` immediately and never uses uniformity over `f`.
-`HalfSpaceAlgebra.halfSpaceAlg` is the union over ALL finite supports inside the half-space, so no
-single volume contains every member's support and the uniform hypothesis is unsatisfiable by an
-exhausting family — which is why the union looked unreachable. Each member separately carries a
-FIXED finite support and therefore sits inside every large enough box.
-
-The submodule `A` is held FIXED across the volumes either way: a half-space algebra that GREW with
-the volume would not have a limit to transport to.
-
-DERIVED: the `0` is the sign being transported. -/
+DERIVED: `0` is the sign being transported. -/
 theorem reflPositive_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -196,10 +180,12 @@ theorem reflPositive_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeB
 
 #print axioms reflPositive_of_eventually_pointwise
 
-/-- **⭐ THE UNIFORM FORM**, which is what a family of volumes each positive on all of `A` supplies.
-It factors through the pointwise lemma by `Filter.Eventually.mono`, so the two are one fact.
+/-- `ReflPositiveOn R A ν` from the uniform hypothesis `∀ᶠ i in l, ReflPositiveOn R A (μ i)`. It
+factors through `reflPositive_of_eventually_pointwise` by `Filter.Eventually.mono`, so it is the
+special case in which one eventual set serves every `f ∈ A`.
 
-DERIVED: the `0` is the sign being transported. -/
+DERIVED: no numeral appears in the statement; the sign being transported is inside
+`ReflPositiveOn`. -/
 theorem reflPositive_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -210,23 +196,19 @@ theorem reflPositive_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
 
 #print axioms reflPositive_of_tendsto
 
-/-- **⭐⭐⭐ A PAIRING INEQUALITY PASSES TO THE LIMIT STATE.**
+/-- Transports the ratio inequality `ν (S.θ F * F) ≤ r ^ 2 * ν (R.θ F * F)` to the limit state, for
+every `F ∈ A`, from the same inequality holding eventually at each `F` for the states `μ i`. Both
+sides are the state at a fixed observable, so `le_of_tendsto_of_tendsto` applies.
 
-Both sides are the state evaluated at a fixed observable, so both converge; a `≤` holding eventually
-is a `≤` in the limit. Nothing here is deep — the point is which obligation it moves.
+The quantification is over all of `A`. At `F = 1` the two sides become `1` and `r ^ 2`, so a
+hypothesis of this shape over the whole submodule entails `1 ≤ r ^ 2`, which
+`TransferGap.gapAt_of_one_le_sq` makes a free conclusion;
+`WilsonTransferReduction.gapAt_iff_pairing` restricts its inequality to `F` whose pairing with the
+vacuum vanishes, and `pairing_le_of_eventually_pointwise_on` is the variant carrying such a
+restriction. The hypothesis is pointwise in `F`, as in
+`reflPositive_of_eventually_pointwise`.
 
-**⛔ THIS FORM IS UNUSABLE FOR THE GAP AND THE VARIANT BELOW IS THE ONE TO USE.**
-`WilsonTransferReduction.gapAt_iff_pairing` restricts its inequality to the `F` whose pairing with
-the vacuum VANISHES, and that restriction is not decoration: at `F = 1` both sides collapse to `1`
-and `r²`, so an unrestricted hypothesis of this shape entails `1 ≤ r²` and
-`TransferGap.gapAt_of_one_le_sq` then makes the conclusion free. Quantifying over all of `A` throws
-away the whole content.
-
-The hypothesis is pointwise in `F` for the same reason it is in
-`reflPositive_of_eventually_pointwise`: a directed union has no single volume containing every
-member's support, so a uniform hypothesis would be unsatisfiable by an exhausting family.
-
-DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+DERIVED: `2` is the exponent on the caller's ratio `r`. -/
 theorem pairing_le_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -239,10 +221,11 @@ theorem pairing_le_of_eventually_pointwise {ι : Type*} {l : Filter ι} [l.NeBot
 
 #print axioms pairing_le_of_eventually_pointwise
 
-/-- **⭐ THE SAME, ON A SUBSET OF THE ALGEBRA.** The side condition `P` rides along untouched, which
-is what lets a caller keep the vacuum-orthogonality restriction that makes the statement non-empty.
+/-- `pairing_le_of_eventually_pointwise` with an arbitrary side condition `P : C(X, ℝ) → Prop`
+carried through both hypothesis and conclusion. `P` is not used in the proof, so a caller may keep
+any restriction — the vacuum-orthogonality one, for instance — across the limit.
 
-DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+DERIVED: `2` is the exponent on the caller's ratio `r`. -/
 theorem pairing_le_of_eventually_pointwise_on {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -255,18 +238,18 @@ theorem pairing_le_of_eventually_pointwise_on {ι : Type*} {l : Filter ι} [l.Ne
 
 #print axioms pairing_le_of_eventually_pointwise_on
 
-/-- **⭐⭐ THE VACUUM-SUBTRACTED PAIRING IS THE CONNECTED CORRELATOR.**
+/-- The vacuum-subtracted pairing is the connected correlator:
 
-    ν (θ (F - ν F • 1) · (F - ν F • 1)) = ν (θ F · F) - ν F · ν (θ F)
+    ν (R.θ (F - ν F • 1) * (F - ν F • 1)) = ν (R.θ F * F) - ν F * ν (R.θ F)
 
-An identity, per state, with no limit in it. Expanding the product leaves `- c·νF + c²` with
+for any state, reflection and observable. An identity with no limit in it: `θ_one` and linearity
+push the subtraction through `θ`, expanding the product leaves terms `-c * ν F` and `c ^ 2` with
 `c = ν F`, and those cancel.
 
-**⛔ THIS IS WHY THE SUBTRACTED STATEMENT HAS NO SIDE CONDITION.** The right-hand side is the
-connected two-point function; at `F = 1` it is `1 - 1 · 1 = 0`, so the collapse that makes an
-unsubtracted decay hypothesis contradictory simply does not arise.
+At `F = 1` the right-hand side is `1 - 1 * 1 = 0`, unlike the unsubtracted pairing, which is why
+`connected_pairing_le_of_eventually` needs no side condition.
 
-DERIVED: no numeral is chosen; the `1` is the unit observable. -/
+DERIVED: `1` is the unit observable, scaled by `ν F` and subtracted. -/
 theorem state_pairing_subtracted (ν : State X) (R : Reflection X) (F : C(X, ℝ)) :
     ν (R.θ (F - ν F • (1 : C(X, ℝ))) * (F - ν F • (1 : C(X, ℝ))))
       = ν (R.θ F * F) - ν F * ν (R.θ F) := by
@@ -284,16 +267,17 @@ theorem state_pairing_subtracted (ν : State X) (R : Reflection X) (F : C(X, ℝ
 
 #print axioms state_pairing_subtracted
 
-/-- **⭐⭐⭐ AND SO THE HYPOTHESIS NEED NOT MENTION THE LIMIT STATE AT ALL.**
+/-- Transports the connected ratio inequality to the limit state, with a hypothesis that mentions
+only the finite-volume states: each `μ i` subtracts its own mean, so `h` reads
+`μ i (S.θ F * F) - μ i F * μ i (S.θ F) ≤ r ^ 2 * (μ i (R.θ F * F) - μ i F * μ i (R.θ F))`
+eventually, for each `F ∈ A`. The conclusion is the same inequality for `ν` written in the
+vacuum-subtracted form, via `state_pairing_subtracted`.
 
-Each volume subtracts ITS OWN mean. Both sides are then continuous functions of three convergent
-evaluations, so a `≤` holding eventually is a `≤` between the limits — and by
-`state_pairing_subtracted` those limits are the limit state's subtracted pairings.
+Both sides are continuous functions of three convergent evaluations, so `le_of_tendsto_of_tendsto`
+applies. `ν` does not occur in `h`, so the obligation the caller discharges is a finite-volume one.
 
-**⛔ SO THE OBLIGATION IS PURELY FINITE-VOLUME.** No `ν` appears in `h`. That is what the previous
-form could not do: its side condition selected observables by a property of the limit state.
-
-DERIVED: the `2` is the exponent on the caller's ratio `r`; no numeral is chosen. -/
+DERIVED: `2` is the exponent on the caller's ratio `r`; `1` is the unit observable that the mean
+subtraction scales. -/
 theorem connected_pairing_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -312,10 +296,11 @@ theorem connected_pairing_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot
 
 #print axioms connected_pairing_le_of_eventually
 
-/-- **AND SO DOES INVARIANCE.** An equality rather than an inequality, so uniqueness of limits does
-the work in place of `ge_of_tendsto`.
+/-- `IsReflectionInvariant R ν` from `IsReflectionInvariant R (μ i)` holding eventually along `l`.
+Since the condition is an equality, `tendsto_nhds_unique` does the work: `μ i (R.θ f)` converges to
+`ν (R.θ f)` by `htend`, and eventually equals `μ i f`, which converges to `ν f`.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 theorem isReflectionInvariant_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
     {μ : ι → State X} {ν : State X}
     (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
@@ -331,16 +316,21 @@ theorem isReflectionInvariant_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
 
 /-! ## 4. The form on the half-space algebra, and it is a `Transfer.ReflForm` -/
 
-/-- The reflection form of a state, on the half-space algebra: `⟨F, H⟩ = ν(θF · H)`.
+/-- The reflection form of a state on a submodule: `⟨F, H⟩ = ν (R.θ F * H)`, defined on `↥A` by
+coercing both arguments into `C(X, ℝ)`. No property of `A` beyond being a submodule is used at the
+definition.
 
-DERIVED: no numeral. -/
+DERIVED: no numeral appears in the statement. -/
 def stateFormFun (R : Reflection X) (ν : State X) (A : Submodule ℝ C(X, ℝ))
     (F H : A) : ℝ := ν (R.θ (F : C(X, ℝ)) * (H : C(X, ℝ)))
 
-/-- **THE FORM IS SYMMETRIC**, from involutivity, multiplicativity and invariance together:
-`ν(θF·H) = ν(θ(θF·H)) = ν(F·θH) = ν(θH·F)`, the last step because observables commute.
+/-- `stateFormFun R ν A F H = stateFormFun R ν A H F` under `IsReflectionInvariant R ν`. The chain is
+`ν (θF * H) = ν (θ (θF * H)) = ν (θθF * θH) = ν (F * θH) = ν (θH * F)`, using invariance,
+`θ_mul`, `θ_involutive`, and commutativity of the product on `C(X, ℝ)`.
 
-DERIVED: no numeral. -/
+Invariance is needed and positivity is not; the hypothesis is exactly `hinv`.
+
+DERIVED: no numeral appears in the statement. -/
 theorem stateFormFun_symm (R : Reflection X) {ν : State X} (A : Submodule ℝ C(X, ℝ))
     (hinv : IsReflectionInvariant R ν) (F H : A) :
     stateFormFun R ν A F H = stateFormFun R ν A H F := by
@@ -353,17 +343,17 @@ theorem stateFormFun_symm (R : Reflection X) {ν : State X} (A : Submodule ℝ C
 
 #print axioms stateFormFun_symm
 
-/-- **⭐ THE STATE'S REFLECTION FORM IS A `Transfer.ReflForm` ON THE HALF-SPACE ALGEBRA.**
+/-- A `Transfer.ReflForm ↥A` built from a reflection `R`, a state `ν`, invariance `hinv` and
+positivity `hpos`. `form` is `stateFormFun`, `form_symm` is `stateFormFun_symm`, `form_add_left` and
+`form_smul_left` come from linearity of `θ` and of `ν`, and `form_nonneg` is `hpos` at the coerced
+element together with its membership proof.
 
-Every field is discharged from the four properties of `Reflection` plus invariance and positivity of
-the state. So `GNSHilbert` — the separated completion, the vacuum, `opT` with its contraction and
-self-adjointness — applies to any reflection-positive state on any compact observable space, with no
-lattice in sight.
+The carrier is `↥A`, matching `ReflectStrong.wilsonGibbsReflForm` on
+`↥(localObs (blkS τ a m) (blkR τ a m))`, so `GNSHilbert` applies to the result: separated
+completion, vacuum, and the operator lift. `X` is any compact topological space; no lattice appears.
 
-The carrier is `↥A`, matching `ReflectStrong.wilsonGibbsReflForm`, which is carried on
-`↥(localObs (blkS τ a m) (blkR τ a m))` for exactly this reason.
-
-DERIVED: no numeral. -/
+DERIVED: the only numeral is the `2` of `F.2` in the `form_nonneg` field, the projection selecting a
+subtype element's membership proof. -/
 noncomputable def stateReflForm (R : Reflection X) (ν : State X) (A : Submodule ℝ C(X, ℝ))
     (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν) :
     MassGap.Transfer.ReflForm ↥A where
@@ -381,14 +371,14 @@ noncomputable def stateReflForm (R : Reflection X) (ν : State X) (A : Submodule
 
 #print axioms stateReflForm
 
-/-- **THE VACUUM IS NORMALISED** — `⟨1,1⟩ = 1`, which is `Transfer.TransferData.vac_norm`, settled
-outright rather than assumed, provided the constant lies in the half-space algebra.
+/-- `(stateReflForm R ν A hinv hpos).form ⟨1, hone⟩ ⟨1, hone⟩ = 1`, which is
+`Transfer.TransferData.vac_norm` for this form. The proof is `θ_one`, `mul_one` and `ν.map_one`.
 
-That proviso is real and is why it is a hypothesis: a submodule of observables need not contain the
-constant, and `GNSHilbert`'s vacuum is that constant.
+The hypothesis `hone : (1 : C(X, ℝ)) ∈ A` is required: a submodule of observables need not contain
+the constant, and `GNSHilbert`'s vacuum is that constant.
 
-DERIVED: the `1`s are the constant observable and the total mass of a state, from `θ_one` and
-`State.map_one`. -/
+DERIVED: the `1`s are the unit observable, twice as the form's arguments, and the value a state
+takes on it. -/
 theorem stateReflForm_vac_norm (R : Reflection X) (ν : State X) (A : Submodule ℝ C(X, ℝ))
     (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)
     (hone : (1 : C(X, ℝ)) ∈ A) :
@@ -398,13 +388,14 @@ theorem stateReflForm_vac_norm (R : Reflection X) (ν : State X) (A : Submodule 
 
 #print axioms stateReflForm_vac_norm
 
-/-! ## 5. Anti-vacuity, in both directions -/
+/-! ## 5. The two extremes of the condition -/
 
-/-- **THE IDENTITY IS A REFLECTION**, so `Reflection` is inhabited. It is degenerate — the form it
-gives is `ν(F·H)`, with no half-space structure — and it is here only to show the structure is
-satisfiable.
+/-- The identity map as a `Reflection X`: all four fields hold by `rfl`. It shows the structure is
+inhabited. The form it produces is `ν (F * H)`, with no half-space structure, and
+`trivialReflection_positive_always` shows the positivity condition is then automatic.
 
-DERIVED: the `1` is the unit observable; nothing is chosen. -/
+DERIVED: no numeral appears in the statement; the `1` of `θ_one` is the unit observable, fixed by
+the identity. -/
 def trivialReflection (X : Type*) [TopologicalSpace X] [CompactSpace X] : Reflection X where
   θ := LinearMap.id
   θ_mul _ _ := rfl
@@ -413,15 +404,16 @@ def trivialReflection (X : Type*) [TopologicalSpace X] [CompactSpace X] : Reflec
 
 #print axioms trivialReflection
 
-/-- **AND AT THE TRIVIAL REFLECTION THE CONDITION IS EMPTY.** With `θ = id` it reads `0 ≤ ν(f·f)`,
-which every state satisfies on every submodule — so that instance constrains nothing and is not
-evidence that `ReflPositiveOn` is satisfiable in any useful sense.
+/-- `ReflPositiveOn (trivialReflection X) A ν` for every state `ν` and every submodule `A`. With
+`θ = id` the condition reads `0 ≤ ν (f * f)`, which follows from positivity of the state at the
+pointwise nonnegative `f * f`.
 
-Stated so `trivialReflection` cannot be mistaken for a witness. Read together with
-`reflection_positivity_fails_off_the_half_space`, the two bracket the condition: trivial on one side,
-false on the other, and the content is entirely in which submodule is chosen.
+So this instance constrains neither the state nor the submodule. Together with
+`reflection_positivity_fails_off_the_half_space` it brackets the condition: automatic at the trivial
+reflection, false on the whole algebra for a reflection that moves anything, with the content in
+which submodule is chosen.
 
-DERIVED: the `0` is the sign; nothing is chosen. -/
+DERIVED: no numeral appears in the statement; the sign `0` is inside `ReflPositiveOn`. -/
 theorem trivialReflection_positive_always (ν : State X) (A : Submodule ℝ C(X, ℝ)) :
     ReflPositiveOn (trivialReflection X) A ν := by
   intro f _

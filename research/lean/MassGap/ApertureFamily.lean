@@ -104,6 +104,54 @@ def ConfinesAtEachCoupling : Prop :=
 
 #print axioms ConfinesAtEachCoupling
 
+/-- **`ConfinesAtEachCoupling` from a second-moment bound that may depend on the coupling.**
+
+`ApertureRoute.confinement_at_an_aperture_of_substrate` reaches `ConfinesAtAnAperture` from
+`∃ B, ∀ a β, d2Even a β ≤ B` — one bound serving every aperture AND every coupling. Here the
+coupling is fixed first, so the bound may depend on it:
+
+    ∀ β, ∃ B, ∀ a, d2Even a β ≤ B
+
+and that is enough. The mechanism is the same one, applied at the coupling given:
+`Moment.aperture_factor_tendsto_zero` drives `(2π/(N+1))² · B / 2` below
+`1 - 3^(-1/4)` as the extent grows, `exists_evenAp_of_eventually` takes an even extent past that
+point, and `Moment.Read.cos_avg_ge_circ` — the quadratic lower bound on the cosine average in terms
+of the circular second moment — clears the floor there.
+
+**Why the aperture being free is what makes this work.** `d2Even a β` is the mean squared circle
+distance under the normalised lag profile. The window factor `(2π/(N+1))²` shrinks as the extent
+grows, so ANY bound on that moment at a fixed coupling is eventually small enough. The extent is
+chosen for the coupling, which is what `ConfinesAtEachCoupling` permits and
+`ConfinesAtAnAperture` does not.
+
+`forall_exists_aperture_does_not_give_exists_forall` shows the swap is a genuine weakening, so this
+hypothesis is strictly smaller than the one `confinement_at_an_aperture_of_substrate` takes.
+
+DERIVED: no numeral appears in the statement. The `2`, `1`, `3` and `4` of the window condition and
+the floor live in the proof, as in `confinement_at_an_aperture_of_substrate`. -/
+theorem confinement_at_each_coupling_of_substrate
+    (h : ∀ β : ℝ, ∃ B : ℝ, ∀ a : EvenAp, d2Even a β ≤ B) :
+    ConfinesAtEachCoupling := by
+  intro β
+  obtain ⟨B, hB⟩ := h β
+  have hev : ∀ᶠ N : ℕ in atTop,
+      (2 * Real.pi / ((N : ℝ) + 1)) ^ 2 * B / 2 < 1 - (3 : ℝ) ^ (-(1 : ℝ) / 4) :=
+    (Moment.aperture_factor_tendsto_zero B).eventually_lt_const Moment.floor_rhs_pos
+  obtain ⟨a, ha⟩ := exists_evenAp_of_eventually hev
+  refine ⟨a, ?_⟩
+  have hd2 : d2Even a β
+      = ∑ d, (readEven a β).p d * (Moment.circLag d : ℝ) ^ 2 := rfl
+  have hmul : (2 * Real.pi / ((a.1 : ℝ) + 1)) ^ 2
+        * (∑ d, (readEven a β).p d * (Moment.circLag d : ℝ) ^ 2)
+      ≤ (2 * Real.pi / ((a.1 : ℝ) + 1)) ^ 2 * B := by
+    refine mul_le_mul_of_nonneg_left ?_ (sq_nonneg _)
+    rw [← hd2]; exact hB a
+  have hge := (readEven a β).cos_avg_ge_circ
+  show (3 : ℝ) ^ (-(1 : ℝ) / 4) < ∑ d, (readEven a β).p d * Real.cos ((readEven a β).θ d)
+  linarith
+
+#print axioms confinement_at_each_coupling_of_substrate
+
 /-- The aperture the hypothesis supplies at `β`: `(hc β).choose`. It is `ApertureRoute.apertureOf`
 with the `Classical.choose` inside the coupling binder, so the result is a function `ℝ → EvenAp`
 rather than a single `EvenAp`.

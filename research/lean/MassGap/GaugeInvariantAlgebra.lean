@@ -710,6 +710,39 @@ theorem pairing_eq_connected (τ : Fin 4) (c : ℤ)
 
 #print axioms pairing_eq_connected
 
+/-- **A finite-volume bound on the mean-subtracted pairing reaches the limiting state.**
+
+This closes the box-to-limit step. The obstacle was that the mean-subtracted observable is not
+fixed: its means are taken in the finite-volume state, so it moves with the box and no bound on it
+is a bound on a fixed observable. `pairing_eq_connected` removes that — it rewrites the pairing at
+ANY state into the connected form `state (θ x · y) − state (θ x) · state y`, whose value is a
+convergent combination of one- and two-point functions — and
+`DLRLimit.abs_connected_le_of_eventually` transports exactly that shape.
+
+Stated over an arbitrary family of states along an arbitrary filter, so the `stateFree` family over
+an exhausting sequence of boxes instantiates it; the bound `C` must not depend on the index, which is
+the volume-uniformity `coreConst` and `coreRate` already have.
+
+DERIVED: `4` is the spacetime dimension, indexing the reflection's direction; `1` is the unit
+observable carrying the subtracted means. -/
+theorem nu_pairing_abs_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot]
+    (μ : ι → MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf (MassGap.SUN.SU N)))
+    (ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf (MassGap.SUN.SU N)))
+    (htend : ∀ f : C(MassGap.InfiniteLattice.IConf (MassGap.SUN.SU N), ℝ),
+      Filter.Tendsto (fun i => μ i f) l (nhds (ν f)))
+    (τ : Fin 4) (c : ℤ)
+    (x y : C(MassGap.InfiniteLattice.IConf (MassGap.SUN.SU N), ℝ)) (C : ℝ)
+    (h : ∀ᶠ i in l, |μ i (MassGap.LatticeReflection.ireflObs τ c (x - μ i x • 1)
+        * (y - μ i y • 1))| ≤ C) :
+    |ν (MassGap.LatticeReflection.ireflObs τ c x * y)
+      - ν (MassGap.LatticeReflection.ireflObs τ c x) * ν y| ≤ C := by
+  refine MassGap.DLRLimit.abs_connected_le_of_eventually htend
+    (MassGap.LatticeReflection.ireflObs τ c x) y C ?_
+  filter_upwards [h] with i hi
+  rwa [pairing_eq_connected τ c (μ i) x y] at hi
+
+#print axioms nu_pairing_abs_le_of_eventually
+
 /-- **The reflection of a product of plaquette observables is the product over reflected
 plaquettes.** `ireflObs` is precomposition, so it commutes with a finite product pointwise;
 `ContinuousMap.prod_apply` evaluates the product and `ireflObs_iplaqObs` moves each factor.
@@ -960,6 +993,119 @@ theorem stateFree_pairing_abs_le (hN : N ≠ 0)
   exact MassGap.ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le hN Λ _ q' hβ hr k hk
 
 #print axioms stateFree_pairing_abs_le
+
+/-- **The reflected pairing of a plaquette observable with its own TRANSLATE decays geometrically in
+the translation.**
+
+`stateFree_pairing_abs_le` places no relation between its two plaquettes, so the second may be the
+`m`-fold translate of the first; `ReflectionHalfSpace.not_mem_ball_of_irefl_shift` then discharges
+its separation hypothesis, because a plaquette at `τ`-height at or above the plane reflects to `2p −
+h` and translates to `h + m`, putting the two at axis distance at least `m`.
+
+`hq` is that height condition, and it is what `p` is for: the plaquette must lie in the positive
+half, which is where the half-space algebra's members live.
+
+DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound on the box word's touch degree, transcribed; `2` is
+the reflection plane's spacing in lattice units; `4` is the spacetime dimension; `0` is the
+coupling's lower end; `1` is the unit observable and `coreRate`'s convergence threshold. -/
+theorem stateFree_pairing_shift_abs_le (hN : N ≠ 0)
+    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
+    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
+    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (p : ℤ)
+    (hinv : ∀ f, MassGap.ReflectionHalfSpace.stateFree
+        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+        (MassGap.LatticeReflection.ireflObs τ (2 * p) f)
+      = MassGap.ReflectionHalfSpace.stateFree
+          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω f)
+    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
+    (hq : p ≤ (q : MassGap.GibbsSpec.IPlaq).2 τ)
+    (hrefl : MassGap.LatticeReflection.ireflPlaq τ (2 * p) (q : MassGap.GibbsSpec.IPlaq)
+      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
+    (m : ℕ)
+    (hshift : (MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq)
+      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
+    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
+    (k : ℕ) (hk : k < m) :
+    |MassGap.ReflectionHalfSpace.stateFree
+        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+        (MassGap.LatticeReflection.ireflObs τ (2 * p)
+            (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
+              - MassGap.ReflectionHalfSpace.stateFree
+                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+                  (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
+          * (iplaqObs (N := N)
+                ((MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq))
+              - MassGap.ReflectionHalfSpace.stateFree
+                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+                  (iplaqObs (N := N)
+                    ((MassGap.InfiniteShift.ishiftPlaq τ)^[m]
+                      (q : MassGap.GibbsSpec.IPlaq))) • 1))|
+      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
+        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k :=
+  stateFree_pairing_abs_le hN hφ0 hφ2 hβ Λ ω τ (2 * p) hinv q
+    ⟨(MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq), hshift⟩
+    hrefl hr k
+    (MassGap.ReflectionHalfSpace.not_mem_ball_of_irefl_shift Λ τ p
+      (q : MassGap.GibbsSpec.IPlaq) hq m k hk hrefl hshift)
+
+#print axioms stateFree_pairing_shift_abs_le
+
+/-- **The same bound, with the translate written as an iterated shift observable.**
+
+`ishiftObsL_iterate_iplaqObs` rewrites the translated plaquette's observable as the shift applied
+`m` times to the original's. **This is the shape the obligation has**:
+`ClayCapstone.gaugeInv_clay_gap_of_state_decay` asks for a bound on
+`ν (ireflObs τ (2 * p) x · (ishiftObsL τ)^[2 * n] x)`, and at `x` a plaquette observable this is
+that quantity, at `stateFree` on a box and with the means subtracted.
+
+Two differences from the obligation remain, and neither is closed here: this is at `stateFree` on a
+finite box rather than at the limiting state `ν`, and it carries the means subtracted explicitly
+where the obligation gets them from the vacuum complement.
+`DLRLimit.abs_le_of_eventually_abs_le` is the tool for the first.
+
+DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound on the box word's touch degree, transcribed; `2` is
+the reflection plane's spacing in lattice units; `4` is the spacetime dimension; `0` is the
+coupling's lower end; `1` is the unit observable and `coreRate`'s convergence threshold. All are
+`stateFree_pairing_shift_abs_le`'s, unchanged. -/
+theorem stateFree_pairing_shiftObs_abs_le (hN : N ≠ 0)
+    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
+    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
+    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (p : ℤ)
+    (hinv : ∀ f, MassGap.ReflectionHalfSpace.stateFree
+        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+        (MassGap.LatticeReflection.ireflObs τ (2 * p) f)
+      = MassGap.ReflectionHalfSpace.stateFree
+          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω f)
+    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
+    (hq : p ≤ (q : MassGap.GibbsSpec.IPlaq).2 τ)
+    (hrefl : MassGap.LatticeReflection.ireflPlaq τ (2 * p) (q : MassGap.GibbsSpec.IPlaq)
+      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
+    (m : ℕ)
+    (hshift : (MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq)
+      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
+    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
+    (k : ℕ) (hk : k < m) :
+    |MassGap.ReflectionHalfSpace.stateFree
+        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+        (MassGap.LatticeReflection.ireflObs τ (2 * p)
+            (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
+              - MassGap.ReflectionHalfSpace.stateFree
+                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+                  (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
+          * ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m]
+                (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
+              - MassGap.ReflectionHalfSpace.stateFree
+                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
+                  ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m]
+                    (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))) • 1))|
+      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
+        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k := by
+  rw [ishiftObsL_iterate_iplaqObs τ m (q : MassGap.GibbsSpec.IPlaq)]
+  exact stateFree_pairing_shift_abs_le hN hφ0 hφ2 hβ Λ ω τ p hinv q hq hrefl m hshift hr k hk
+
+#print axioms stateFree_pairing_shiftObs_abs_le
 
 /-! ### The pairing as a connected correlator
 

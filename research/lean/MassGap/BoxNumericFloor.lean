@@ -64,16 +64,14 @@ theorem haar_reTr_sq :
 
 #print axioms haar_reTr_sq
 
-/-- There is a `C` with `|reTr g| ≤ C` for every `g : SU 3`. From compactness of `SU(3)` and
-continuity of `reTr` through `IsCompact.exists_isMaxOn`; the bound is existential and no value is
-computed.
+/-- There is a `C` with `|reTr g| ≤ C` for every `g : SU 3`.
+`ActionSplit.exists_bound_of_continuous` at `X := SU 3` and `f := reTr`; the rank plays no part in
+the argument, and the bound is existential with no value computed.
 
 DERIVED: `3` is the rank. -/
 theorem exists_bound_reTr :
-    ∃ C : ℝ, ∀ g : MassGap.SUN.SU 3, |MassGap.HaarVariance.reTr g| ≤ C := by
-  obtain ⟨x, -, hx⟩ := isCompact_univ.exists_isMaxOn (Set.univ_nonempty)
-    (Continuous.continuousOn (continuous_abs.comp MassGap.HaarVariance.continuous_reTr))
-  exact ⟨|MassGap.HaarVariance.reTr x|, fun g => hx (Set.mem_univ g)⟩
+    ∃ C : ℝ, ∀ g : MassGap.SUN.SU 3, |MassGap.HaarVariance.reTr g| ≤ C :=
+  MassGap.ActionSplit.exists_bound_of_continuous MassGap.HaarVariance.continuous_reTr
 
 #print axioms exists_bound_reTr
 

@@ -627,6 +627,210 @@ theorem tendsto_of_unique_dlr {ι κ : Type*} {l : Filter ι} [l.NeBot]
 
 #print axioms tendsto_of_unique_dlr
 
+/-- **Two subsequential limits agree when the DLR state is unique.**
+
+`isDLR_of_tendsto` makes each limit a DLR state, given the finite-volume consistency, and `huniq`
+identifies them. The two families may have different index types and converge along different
+filters; nothing relates them but the specification `γ`.
+
+**This is the reduction the Wilson route needs.**
+`ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit` takes as a hypothesis
+that the even and odd cube families reach the SAME state, and its own docstring records that nothing
+identifies them: compactness gives each family its own subsequential limit, by `exists_limit_state`,
+and no more. This says what closes that gap — uniqueness of the DLR state for the specification —
+which is the standard condition and is what `WilsonDLR.dlr_unique_at_zero_eq` supplies at coupling
+zero.
+
+It does not prove uniqueness, and uniqueness is not a formality: it is exactly the statement that
+fails in the presence of a phase transition.
+
+DERIVED: no numeral appears in the statement. -/
+theorem limits_eq_of_unique_dlr {ι₁ ι₂ κ : Type*} {l₁ : Filter ι₁} {l₂ : Filter ι₂}
+    [l₁.NeBot] [l₂.NeBot] {γ : κ → C(X, ℝ) → C(X, ℝ)}
+    (μ₁ : ι₁ → State X) (μ₂ : ι₂ → State X) (ν₁ ν₂ : State X)
+    (h₁ : ∀ f : C(X, ℝ), Tendsto (fun i => μ₁ i f) l₁ (𝓝 (ν₁ f)))
+    (h₂ : ∀ f : C(X, ℝ), Tendsto (fun i => μ₂ i f) l₂ (𝓝 (ν₂ f)))
+    (hev₁ : ∀ (k : κ) (f : C(X, ℝ)),
+      (fun i => μ₁ i (γ k f)) =ᶠ[l₁] (fun i => μ₁ i f))
+    (hev₂ : ∀ (k : κ) (f : C(X, ℝ)),
+      (fun i => μ₂ i (γ k f)) =ᶠ[l₂] (fun i => μ₂ i f))
+    (huniq : ∀ ν ν' : State X, IsDLR γ ν → IsDLR γ ν' → ν = ν') :
+    ν₁ = ν₂ :=
+  huniq ν₁ ν₂ (isDLR_of_tendsto μ₁ ν₁ h₁ hev₁) (isDLR_of_tendsto μ₂ ν₂ h₂ hev₂)
+
+#print axioms limits_eq_of_unique_dlr
+
+/-- **Two DLR states agree when the kernel becomes constant in its boundary condition.**
+
+If for each observable and each `ε > 0` some region's kernel is uniformly within `ε` of a constant,
+then any two DLR states take the same value everywhere. Each state reproduces the kernel's value —
+that is what `IsDLR` says — and `State.abs_le_norm` puts a state's value at a function within `ε` of
+a constant within `ε` of that constant, so the two values differ by at most `2 * ε` for every `ε`.
+
+**Why this is worth having.** Uniqueness is the one open input on the transfer route:
+`tendsto_of_unique_dlr` and `limits_eq_of_unique_dlr` both take it, `WilsonDLR.dlr_unique_at_zero_eq`
+supplies it only at coupling zero, and no Dobrushin-style machinery exists here. This replaces it by
+an ESTIMATE about the kernel — decay of the boundary's influence as the region grows — which is the
+shape a strong-coupling argument produces, rather than an abstract hypothesis with no supplier.
+
+It does not prove that estimate for the Wilson specification, and at coupling zero the estimate is
+immediate because the kernel does not read the boundary at all.
+
+Scope: the conclusion is agreement at every observable. `State.eq_of_apply_eq` above turns that into
+equality of the two states, and `unique_dlr_of_kernel_near_const` below is that composition.
+
+DERIVED: `0` is the strict lower bound on `ε`; `2` is the number of states being compared, each
+contributing one `ε` to the gap. -/
+theorem dlr_eq_at_of_kernel_near_const {κ : Type*} {γ : κ → C(X, ℝ) → C(X, ℝ)} {f : C(X, ℝ)}
+    (hnear : ∀ ε : ℝ, 0 < ε → ∃ (k : κ) (c : ℝ), ∀ x, |γ k f x - c| ≤ ε)
+    {ν ν' : State X} (h : IsDLR γ ν) (h' : IsDLR γ ν') :
+    ν f = ν' f := by
+  have key : ∀ ε : ℝ, 0 < ε → |ν f - ν' f| ≤ 2 * ε := by
+    intro ε hε
+    obtain ⟨k, c, hc⟩ := hnear ε hε
+    have hbound : ∀ σ : State X, |σ (γ k f) - c| ≤ ε := by
+      intro σ
+      have hlo : ∀ x, ((c - ε) • (1 : C(X, ℝ))) x ≤ (γ k f) x := by
+        intro x
+        have hx := abs_le.mp (hc x)
+        simp only [ContinuousMap.smul_apply, ContinuousMap.one_apply, smul_eq_mul, mul_one]
+        linarith [hx.1]
+      have hhi : ∀ x, (γ k f) x ≤ ((c + ε) • (1 : C(X, ℝ))) x := by
+        intro x
+        have hx := abs_le.mp (hc x)
+        simp only [ContinuousMap.smul_apply, ContinuousMap.one_apply, smul_eq_mul, mul_one]
+        linarith [hx.2]
+      have h1 := σ.mono hlo
+      have h2 := σ.mono hhi
+      rw [σ.map_smul, σ.map_one, mul_one] at h1
+      rw [σ.map_smul, σ.map_one, mul_one] at h2
+      rw [abs_le]
+      constructor <;> linarith
+    have hν : |ν (γ k f) - c| ≤ ε := hbound ν
+    have hν' : |ν' (γ k f) - c| ≤ ε := hbound ν'
+    rw [h k f] at hν
+    rw [h' k f] at hν'
+    have h1 := abs_le.mp hν
+    have h2 := abs_le.mp hν'
+    rw [abs_le]
+    constructor <;> linarith
+  have hzero : |ν f - ν' f| ≤ 0 := by
+    refine le_of_forall_pos_le_add (fun ε hε => ?_)
+    have := key (ε / 2) (by linarith)
+    linarith
+  have : ν f - ν' f = 0 := by
+    have := abs_nonneg (ν f - ν' f)
+    have heq : |ν f - ν' f| = 0 := le_antisymm hzero this
+    exact abs_eq_zero.mp heq
+  linarith
+
+#print axioms dlr_eq_at_of_kernel_near_const
+
+/-- The same at every observable at once, which is the shape `State.eq_of_apply_eq` consumes.
+
+DERIVED: `0` is the strict lower bound on `ε`. -/
+theorem dlr_eq_of_kernel_near_const {κ : Type*} {γ : κ → C(X, ℝ) → C(X, ℝ)}
+    (hnear : ∀ (f : C(X, ℝ)) (ε : ℝ), 0 < ε → ∃ (k : κ) (c : ℝ), ∀ x, |γ k f x - c| ≤ ε)
+    {ν ν' : State X} (h : IsDLR γ ν) (h' : IsDLR γ ν') :
+    ∀ f : C(X, ℝ), ν f = ν' f :=
+  fun f => dlr_eq_at_of_kernel_near_const (hnear f) h h'
+
+#print axioms dlr_eq_of_kernel_near_const
+
+/-- **The near-constant estimate discharges uniqueness outright.**
+
+`dlr_eq_of_kernel_near_const` concludes agreement at every observable; `State.eq_of_apply_eq` turns
+that into equality of the two states, which is the shape `tendsto_of_unique_dlr` and
+`limits_eq_of_unique_dlr` consume. So the estimate — that for each observable some region's kernel is
+uniformly close to a constant — is enough on its own, with no uniqueness hypothesis anywhere
+downstream.
+
+⚠ `unique_dlr_of_local_kernel_near_const` below needs the estimate only for the LOCAL observables and
+is the one to reach for; this version is the special case where it is assumed for all of them.
+
+**What this changes and what it does not.** It changes the open input on the transfer route from an
+abstract hypothesis with no supplier above coupling zero into a concrete estimate about the kernel,
+which is the shape a strong-coupling argument produces. It does not prove that estimate for the
+Wilson specification, which is the actual remaining mathematics, and the estimate is exactly what
+fails at a phase transition.
+
+⚠ It is NOT immediate at coupling zero in this form. There the kernel is an integral of the
+observable over the inner links with the outer ones frozen at the boundary configuration, so a
+general observable still reads them. What holds at coupling zero is the LOCAL statement, which is
+`WilsonDLR.local_kernel_near_const_at_zero`. -/
+theorem unique_dlr_of_kernel_near_const {κ : Type*} {γ : κ → C(X, ℝ) → C(X, ℝ)}
+    (hnear : ∀ (f : C(X, ℝ)) (ε : ℝ), 0 < ε → ∃ (k : κ) (c : ℝ), ∀ x, |γ k f x - c| ≤ ε)
+    {ν : State X} (h : IsDLR γ ν) :
+    ∀ ν' : State X, IsDLR γ ν' → ν' = ν :=
+  fun _ h' => State.eq_of_apply_eq (dlr_eq_of_kernel_near_const hnear h' h)
+
+#print axioms unique_dlr_of_kernel_near_const
+
+/-- **Uniqueness from the estimate on the LOCAL observables alone.**
+
+`State.eq_of_eqOn_localObs` reduces agreement of two states to agreement on `localObsAlg G`, the
+observables unchanged by the links outside some finite set, by Stone–Weierstrass: those observables
+separate the points of `IConf G` when the gauge group is compact Hausdorff. So the near-constant
+estimate is only ever needed for a LOCAL observable, and `dlr_eq_at_of_kernel_near_const` is stated
+per observable so that it can be applied exactly there.
+
+**Why that matters.** The estimate quantified over ALL continuous observables is not the statement a
+cluster expansion produces. What such an argument gives is that a FIXED local observable stops
+reading the boundary condition once the region separates its support from the boundary — which is
+this hypothesis and not the stronger one. Passing from local observables to all of them is
+Stone–Weierstrass, and it is already done here.
+
+`WilsonDLR.local_kernel_near_const_at_zero` is the witness that this hypothesis is satisfiable: at
+coupling zero the kernel of a local observable is literally constant in the boundary. It does not
+prove the estimate at any positive coupling, and at a phase transition the estimate fails for local
+observables too, so nothing is being smuggled past the obstruction.
+
+DERIVED: `0` is the strict lower bound on `ε`. -/
+theorem unique_dlr_of_local_kernel_near_const {G : Type} [TopologicalSpace G] [CompactSpace G]
+    [T2Space G] {κ : Type*} {γ : κ → C(IConf G, ℝ) → C(IConf G, ℝ)}
+    (hnear : ∀ F ∈ localObsAlg G, ∀ ε : ℝ, 0 < ε →
+      ∃ (k : κ) (c : ℝ), ∀ x, |γ k F x - c| ≤ ε)
+    {ν : State (IConf G)} (h : IsDLR γ ν) :
+    ∀ ν' : State (IConf G), IsDLR γ ν' → ν' = ν :=
+  fun _ h' => State.eq_of_apply_eq
+    (State.eq_of_eqOn_localObs
+      (fun F hF => dlr_eq_at_of_kernel_near_const (hnear F hF) h' h))
+
+#print axioms unique_dlr_of_local_kernel_near_const
+
+/-- **Two families of states with a vanishing difference share their limits.**
+
+If `μ₁ i f → ν f` and `μ₂ i f − μ₁ i f → 0`, then `μ₂ i f → ν f`. Elementary, and it needs no
+filter hypothesis at all.
+
+A generic fact about states, with no Gibbs content.
+
+⛔ IT IS NOT THE RIGHT TOOL FOR THE FREE-VERSUS-FIXED BOUNDARY GAP, and it is recorded here so that
+it is not reached for. Applying it there would mean showing the free- and fixed-boundary families
+have a vanishing difference, and that is a boundary-effect estimate which is FALSE in general:
+distinct boundary conditions give distinct limits exactly when there is a phase transition, which is
+the regime at issue.
+
+What is true, and is the target instead: `ReflectionHalfSpace.wtFree` sums the action over
+`iplqAll Λ`, the plaquettes with ALL links in the box, while `GibbsSpec.spec` sums over
+`boundaryPlaqs Λ`, those with SOME link in the box. Conditioning the free state on the configuration
+outside a region `V` therefore returns the ordinary fixed-boundary kernel at `V`, provided every
+plaquette touching `V` lies inside the box. So the free family is DLR-consistent for interior
+regions against the ordinary kernel, and no comparison between the two families is needed at all.
+That statement is not in the tree.
+
+DERIVED: `0` is the limit of the difference, which is what makes the two families agree. -/
+theorem tendsto_of_sub_tendsto_zero {ι : Type*} {l : Filter ι}
+    {μ₁ μ₂ : ι → State X} {ν : State X}
+    (h1 : ∀ f : C(X, ℝ), Tendsto (fun i => μ₁ i f) l (𝓝 (ν f)))
+    (hdiff : ∀ f : C(X, ℝ), Tendsto (fun i => μ₂ i f - μ₁ i f) l (𝓝 0)) :
+    ∀ f : C(X, ℝ), Tendsto (fun i => μ₂ i f) l (𝓝 (ν f)) := by
+  intro f
+  have h := (hdiff f).add (h1 f)
+  simpa using h
+
+#print axioms tendsto_of_sub_tendsto_zero
+
 
 /-- For a `SemilatticeSup` index `ι` and a family `μ : ι → State X` with `μ i (γ j f) = μ i f` at
 every `j ≤ i`, there are an ultrafilter `u ≤ atTop` and a state `ν` with `μ i f → ν f` along `u` at
@@ -748,6 +952,72 @@ theorem abs_le_of_eventually_abs_le {ι : Type*} {l : Filter ι} [l.NeBot] {μ :
     exact (abs_le.mp hi).2
 
 #print axioms abs_le_of_eventually_abs_le
+
+/-- **A bound on the connected correlator passes to the limit.**
+
+`abs_le_of_eventually_abs_le` needs a single fixed observable. The finite-volume mean-subtracted
+pairing is not one: its means are taken in the finite-volume state, so the observable itself moves
+with the box, and no bound on it is a bound on `μ i f` for fixed `f`.
+
+What is a convergent sequence of reals is the connected combination
+`μ i (f * g) − μ i f · μ i g`, which tends to `ν (f * g) − ν f · ν g` by `Tendsto.sub` and
+`Tendsto.mul`. `variance_ge_of_eventually` uses the same shape for one observable; this is the
+two-observable case, and with the modulus rather than a lower bound.
+
+**This is the transport the strong-coupling route needs.**
+`GaugeInvariantAlgebra.pairing_eq_connected` rewrites a mean-subtracted pairing into exactly this
+connected form, so a finite-volume estimate reaches `ν` through it, provided the bound `c` does not
+depend on the box.
+
+DERIVED: no numeral occurs; `c` is the caller's. -/
+theorem abs_connected_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (f g : C(X, ℝ)) (c : ℝ)
+    (h : ∀ᶠ i in l, |μ i (f * g) - μ i f * μ i g| ≤ c) :
+    |ν (f * g) - ν f * ν g| ≤ c := by
+  have hlim : Tendsto (fun i => μ i (f * g) - μ i f * μ i g) l
+      (𝓝 (ν (f * g) - ν f * ν g)) := (htend (f * g)).sub ((htend f).mul (htend g))
+  rw [abs_le]
+  constructor
+  · refine ge_of_tendsto hlim ?_
+    filter_upwards [h] with i hi
+    exact (abs_le.mp hi).1
+  · refine le_of_tendsto hlim ?_
+    filter_upwards [h] with i hi
+    exact (abs_le.mp hi).2
+
+#print axioms abs_connected_le_of_eventually
+
+/-- **A map the finite-volume states respect only asymptotically is respected exactly by the
+limit.**
+
+`InfiniteReflection.isReflectionInvariant_of_tendsto` transports reflection invariance because that
+invariance holds EXACTLY at each box. Translation invariance is not like that: the finite-volume free
+state is not translation invariant, so there is nothing to transport box by box. What survives
+instead is a defect that vanishes — and that suffices, because `μ i (T f) − μ i f` converges both to
+`ν (T f) − ν f` and, by hypothesis, to zero, and a limit in `ℝ` is unique.
+
+**This does not prove translation invariance of the limit; it says exactly what would.** The
+obligation `hnu : ∀ f, ν (ishiftObsL τ f) = ν f`, which `WilsonTransferReduction` and
+`GaugeInvariantAlgebra` read off the state and which the tree does not assert, is equivalent to the
+finite-volume translation defect tending to zero along the same filter. That is a boundary-effect
+estimate, and no declaration supplies it.
+
+DERIVED: `0` is the limit of the defect, which is what makes the two limits agree. -/
+theorem shift_invariant_of_tendsto {ι : Type*} {l : Filter ι} [l.NeBot]
+    {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (T : C(X, ℝ) →ₗ[ℝ] C(X, ℝ))
+    (hvanish : ∀ f : C(X, ℝ), Tendsto (fun i => μ i (T f) - μ i f) l (𝓝 0)) :
+    ∀ f : C(X, ℝ), ν (T f) = ν f := by
+  intro f
+  have h1 : Tendsto (fun i => μ i (T f) - μ i f) l (𝓝 (ν (T f) - ν f)) :=
+    (htend (T f)).sub (htend f)
+  have h2 := tendsto_nhds_unique h1 (hvanish f)
+  linarith
+
+#print axioms shift_invariant_of_tendsto
 
 /-- `c ≤ ν (f * f) - (ν f) ^ 2` whenever `c ≤ μ i (f * f) - (μ i f) ^ 2` eventually along `l`. The
 variance is built from two convergent sequences by subtraction and squaring, so

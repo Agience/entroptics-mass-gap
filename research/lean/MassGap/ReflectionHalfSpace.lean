@@ -3114,6 +3114,326 @@ noncomputable def wtFree {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
     (u : MassGap.GibbsSpec.VConf G Λ) : ℝ :=
   Real.exp (-β * MassGap.GibbsSpec.actionOn φ (iplqAll Λ) (MassGap.GibbsSpec.splice Λ u ω))
 
+/-- **The reassembled configuration is the box configuration updated on the region.**
+
+The crux identity of the assembly. `ActionSplit.integral_cvol_split_iterated_symm` runs its inner
+integral over the region's block with the outer block fixed; for a fixed outer part, the reassembly
+agrees with ANY box configuration `u₀` extending that outer part, except on the region, where it
+takes the inner variable. That is exactly `GibbsSpec.updateOn`.
+
+So the inner integral is an integral over `updateOn hVΛ u₀ ·`, which `GibbsSpec.splice_updateOn`
+turns into what `GibbsSpec.num` and `GibbsSpec.part` at the region read — and
+`GibbsSpec.spec_splice_off` says the kernel there does not depend on which `u₀` was chosen.
+
+DERIVED: no numeral occurs; `V`, `Λ`, `x`, `y` and `u₀` are the caller's. -/
+theorem symm_eq_updateOn {G : Type} [Group G] [MeasurableSpace G]
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (x : {i : ↥Λ // (i : MassGap.InfiniteLattice.ILink) ∈ V} → G)
+    (y : {i : ↥Λ // ¬ ((i : MassGap.InfiniteLattice.ILink) ∈ V)} → G)
+    (u₀ : MassGap.GibbsSpec.VConf G Λ)
+    (hu₀ : ∀ (i : ↥Λ) (h : ¬ ((i : MassGap.InfiniteLattice.ILink) ∈ V)), u₀ i = y ⟨i, h⟩) :
+    (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ↥Λ => G)
+        (fun i : ↥Λ => (i : MassGap.InfiniteLattice.ILink) ∈ V)).symm (x, y)
+      = MassGap.GibbsSpec.updateOn hVΛ u₀
+          (fun w : ↥V => x ⟨⟨(w : MassGap.InfiniteLattice.ILink), hVΛ w.2⟩, w.2⟩) := by
+  funext i
+  rw [MassGap.ActionSplit.piSubtypeProd_symm_apply]
+  by_cases h : (i : MassGap.InfiniteLattice.ILink) ∈ V
+  · rw [dif_pos h]
+    simp only [MassGap.GibbsSpec.updateOn, dif_pos h]
+  · rw [dif_neg h]
+    simp only [MassGap.GibbsSpec.updateOn, dif_neg h]
+    exact (hu₀ i h).symm
+
+/-- **The free weight factors at a region.** The part of the free action carried by plaquettes
+touching `V`, times the rest.
+
+The split is taken at `iplqAll Λ ∩ GibbsSpec.boundaryPlaqs V`, not at `boundaryPlaqs V` itself.
+`boundaryPlaqs` contains DEGENERATE plaquettes — `GibbsSpec.touching` ranges over every direction,
+including the plaquette's own — and `iplqAll` filters those out, so `boundaryPlaqs V ⊆ iplqAll Λ`
+is false in general and the split would not typecheck. The intersection lies inside `iplqAll Λ` for
+free, so this carries no hypothesis at all.
+
+DERIVED: no numeral occurs; `Λ`, `V`, `ω` and `u` are the caller's. -/
+theorem wtFree_factor {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
+    (Λ V : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u : MassGap.GibbsSpec.VConf G Λ) :
+    wtFree φ β Λ ω u
+      = Real.exp (-β * MassGap.GibbsSpec.actionOn φ
+            (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V)
+            (MassGap.GibbsSpec.splice Λ u ω))
+        * Real.exp (-β * MassGap.GibbsSpec.actionOn φ
+            (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+            (MassGap.GibbsSpec.splice Λ u ω)) := by
+  unfold wtFree
+  rw [MassGap.GibbsSpec.actionOn_sdiff φ Finset.inter_subset_left, mul_add, Real.exp_add]
+
+#print axioms wtFree_factor
+
+/-- **The outer factor does not read the `V`-links.** Changing the configuration only on `V` leaves
+the part of the free action carried by plaquettes away from `V` unchanged.
+
+A plaquette in `iplqAll Λ \ (iplqAll Λ ∩ boundaryPlaqs V)` lies in `iplqAll Λ` but not in
+`boundaryPlaqs V`, so by `GibbsSpec.not_mem_boundaryPlaqs_links` none of its links is in `V`, and
+`GibbsSpec.actionOn_indep_of_avoid` applies. Links outside `Λ` are untouched because both splices
+read `ω` there.
+
+**This is the factorisation the free-boundary DLR consistency turns on**: with the weight split by
+`wtFree_factor`, integrating out the `V`-links leaves the outer factor as a constant, so the
+conditional is the ordinary fixed-boundary kernel at `V`.
+
+DERIVED: no numeral occurs; `Λ`, `V` and `ω` are the caller's. -/
+theorem wtFree_outer_congr {G : Type} [Group G] (φ : G → ℝ) (β : ℝ)
+    (Λ V : Finset MassGap.InfiniteLattice.ILink) (ω : MassGap.GibbsSpec.IConf G)
+    (u u' : MassGap.GibbsSpec.VConf G Λ)
+    (h : ∀ x : ↥Λ, (x : MassGap.InfiniteLattice.ILink) ∉ V → u x = u' x) :
+    MassGap.GibbsSpec.actionOn φ
+        (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+        (MassGap.GibbsSpec.splice Λ u ω)
+      = MassGap.GibbsSpec.actionOn φ
+          (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+          (MassGap.GibbsSpec.splice Λ u' ω) := by
+  refine MassGap.GibbsSpec.actionOn_indep_of_avoid φ _ V ?_ _ _ ?_
+  · intro q hq hb
+    obtain ⟨hqin, hqout⟩ := Finset.mem_sdiff.mp hq
+    exact hqout (Finset.mem_inter.mpr ⟨hqin, hb⟩)
+  · intro l hl
+    by_cases hlΛ : l ∈ Λ
+    · rw [MassGap.GibbsSpec.splice_mem hlΛ, MassGap.GibbsSpec.splice_mem hlΛ]
+      exact h ⟨l, hlΛ⟩ hl
+    · rw [MassGap.GibbsSpec.splice_not_mem hlΛ, MassGap.GibbsSpec.splice_not_mem hlΛ]
+
+#print axioms symm_eq_updateOn
+
+#print axioms wtFree_outer_congr
+
+/-- **The free weight at an updated configuration is the region's own weight times a constant.**
+
+The heart of the factorisation. `wtFree_factor` splits the free weight at
+`iplqAll Λ ∩ boundaryPlaqs V`; `GibbsSpec.splice_updateOn` turns the updated configuration into the
+region spliced over the box; `GibbsSpec.actionOn_drop_degenerate` closes the gap between that
+plaquette set and `boundaryPlaqs V` — the difference being degenerate, given `hside` — so the first
+factor is exactly `GibbsSpec.wt` at `V`; and `GibbsSpec.actionOn_indep_of_avoid` shows the second
+factor does not read the region at all, so it is constant in the update.
+
+**This is what makes the inner integral the region's own numerator and partition function.** Without
+it the inner integral would carry a weight that merely resembles the kernel's.
+
+`hside` is the "`V` well inside `Λ`" condition: every NON-degenerate plaquette touching `V` lies in
+the box. For fixed `V` it holds at all large boxes. `hφ1` is supplied for the Wilson density by
+`WilsonAction.wilsonDensity_one`.
+
+DERIVED: `1` is the identity at which the density vanishes; `0` is the value it takes there. -/
+theorem wtFree_updateOn_eq {G : Type} [Group G] [MeasurableSpace G] [MeasurableMul₂ G]
+    [MeasurableInv G] (φ : G → ℝ) (hφ1 : φ 1 = 0) (β : ℝ)
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (hside : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V, q.1.1 ≠ q.1.2 → q ∈ iplqAll Λ)
+    (u₀ : MassGap.GibbsSpec.VConf G Λ) (v : MassGap.GibbsSpec.VConf G V)
+    (ω : MassGap.GibbsSpec.IConf G) :
+    wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v)
+      = MassGap.GibbsSpec.wt φ β V v (MassGap.GibbsSpec.splice Λ u₀ ω)
+        * Real.exp (-β * MassGap.GibbsSpec.actionOn φ
+            (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+            (MassGap.GibbsSpec.splice Λ u₀ ω)) := by
+  have hdeg : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V \
+      (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V), q.1.1 = q.1.2 := by
+    intro q hq
+    obtain ⟨hqB, hqn⟩ := Finset.mem_sdiff.mp hq
+    by_contra hne
+    exact hqn (Finset.mem_inter.mpr ⟨hside q hqB hne, hqB⟩)
+  have h1 : MassGap.GibbsSpec.actionOn φ (MassGap.GibbsSpec.boundaryPlaqs V)
+        (MassGap.GibbsSpec.splice V v (MassGap.GibbsSpec.splice Λ u₀ ω))
+      = MassGap.GibbsSpec.actionOn φ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V)
+        (MassGap.GibbsSpec.splice V v (MassGap.GibbsSpec.splice Λ u₀ ω)) :=
+    MassGap.GibbsSpec.actionOn_drop_degenerate hφ1 Finset.inter_subset_right hdeg _
+  have hS : ∀ q ∈ iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V),
+      q ∉ MassGap.GibbsSpec.boundaryPlaqs V := by
+    intro q hq hb
+    obtain ⟨hqin, hqout⟩ := Finset.mem_sdiff.mp hq
+    exact hqout (Finset.mem_inter.mpr ⟨hqin, hb⟩)
+  have h2 : MassGap.GibbsSpec.actionOn φ
+        (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+        (MassGap.GibbsSpec.splice V v (MassGap.GibbsSpec.splice Λ u₀ ω))
+      = MassGap.GibbsSpec.actionOn φ
+        (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V))
+        (MassGap.GibbsSpec.splice Λ u₀ ω) :=
+    MassGap.GibbsSpec.actionOn_indep_of_avoid φ _ V hS _ _
+      (fun l hl => MassGap.GibbsSpec.splice_not_mem hl)
+  rw [wtFree_factor φ β Λ V ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v),
+    MassGap.GibbsSpec.splice_updateOn hVΛ u₀ v ω, ← h1, h2]
+  rfl
+
+#print axioms wtFree_updateOn_eq
+
+/-- **The split's inner block, reindexed to the region's own configuration space.**
+
+`ActionSplit.integral_cvol_split_iterated_symm` leaves the inner integral over
+`{i : ↥Λ // (i : ILink) ∈ V} → G`, a subtype of the BOX's links. `GibbsSpec.num` and
+`GibbsSpec.part` at `V` integrate over `GibbsSpec.VConf G V`, that is over `GibbsSpec.vol`. This is
+the change of variables between them: `GibbsSpec.linkSubEquiv` is the index equivalence and
+`ActionSplit.integral_cvol_reindex` transports the measure, with Mathlib's
+`piCongrLeft_apply_apply` collapsing the round trip.
+
+**This is the last structural gap in the free-boundary DLR consistency.** With it the inner integral
+is literally the region's numerator or partition function, not a reindexed lookalike.
+
+DERIVED: no numeral occurs; `V`, `Λ` and `F` are the caller's. -/
+theorem integral_vblock {G : Type} [Group G] [MeasurableSpace G] [MeasurableMul₂ G]
+    [MeasurableInv G] (μ : MeasureTheory.Measure G)
+    [MeasureTheory.IsProbabilityMeasure μ]
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (F : MassGap.GibbsSpec.VConf G V → ℝ) :
+    ∫ x : ({i : ↥Λ // (i : MassGap.InfiniteLattice.ILink) ∈ V} → G),
+        F (fun w : ↥V => x ((MassGap.GibbsSpec.linkSubEquiv hVΛ).symm w))
+        ∂(MassGap.ActionSplit.cvol
+          {i : ↥Λ // (i : MassGap.InfiniteLattice.ILink) ∈ V} μ)
+      = ∫ v : MassGap.GibbsSpec.VConf G V, F v ∂(MassGap.GibbsSpec.vol μ V) := by
+  rw [MassGap.ActionSplit.integral_cvol_reindex μ (MassGap.GibbsSpec.linkSubEquiv hVΛ).symm
+    (fun x => F (fun w : ↥V => x ((MassGap.GibbsSpec.linkSubEquiv hVΛ).symm w)))]
+  congr 1
+
+#print axioms integral_vblock
+
+/-- **The inner-integral identity — the analytic core of the free-boundary DLR consistency.**
+
+Hold the configuration fixed off the region and integrate over the region's own links. The kernel at
+the region does not read those links (`GibbsSpec.spec_splice_off`), so it comes out as a constant;
+the free weight becomes the region's fixed-boundary weight times a factor that also does not read
+them (`wtFree_updateOn_eq`). So the left side is kernel × constant × partition function and the
+right side is constant × numerator — and the kernel is numerator over partition function, which
+`GibbsSpec.part_pos` makes a legitimate division.
+
+No split machinery appears here. This is the analytic step on its own; the splitting and reindexing
+lemmas only put the integrals into this form.
+
+DERIVED: `1` is the identity at which the density vanishes, in `hφ1`; `0` and `2` are the density's
+range, needed by `GibbsSpec.part_pos` for the division. -/
+theorem inner_spec_wtFree_eq {G : Type} [Group G] [MeasurableSpace G] [MeasurableMul₂ G]
+    [MeasurableInv G] (φ : G → ℝ) (hφm : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
+    (hφ2 : ∀ g, φ g ≤ 2) (hφ1 : φ 1 = 0) (β : ℝ)
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (hside : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V, q.1.1 ≠ q.1.2 → q ∈ iplqAll Λ)
+    (μ : MeasureTheory.Measure G) [MeasureTheory.IsProbabilityMeasure μ]
+    (f : MassGap.GibbsSpec.IConf G → ℝ) (ω : MassGap.GibbsSpec.IConf G)
+    (u₀ : MassGap.GibbsSpec.VConf G Λ) :
+    ∫ v, MassGap.GibbsSpec.spec φ β V μ f
+          (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        * wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v)
+        ∂(MassGap.GibbsSpec.vol μ V)
+      = ∫ v, f (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        * wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v)
+        ∂(MassGap.GibbsSpec.vol μ V) := by
+  set X := MassGap.GibbsSpec.splice Λ u₀ ω with hX
+  set E := Real.exp (-β * MassGap.GibbsSpec.actionOn φ
+      (iplqAll Λ \ (iplqAll Λ ∩ MassGap.GibbsSpec.boundaryPlaqs V)) X) with hE
+  have hL : ∀ v : MassGap.GibbsSpec.VConf G V,
+      MassGap.GibbsSpec.spec φ β V μ f
+          (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        = MassGap.GibbsSpec.spec φ β V μ f X :=
+    fun v => MassGap.GibbsSpec.spec_splice_off φ β V Λ μ f
+      (MassGap.GibbsSpec.updateOn hVΛ u₀ v) u₀ ω
+      (fun i hi => MassGap.GibbsSpec.updateOn_eq_off hVΛ u₀ v i hi)
+  have hW : ∀ v : MassGap.GibbsSpec.VConf G V,
+      wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v)
+        = MassGap.GibbsSpec.wt φ β V v X * E :=
+    fun v => wtFree_updateOn_eq φ hφ1 β hVΛ hside u₀ v ω
+  have hF : ∀ v : MassGap.GibbsSpec.VConf G V,
+      f (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        = f (MassGap.GibbsSpec.splice V v X) :=
+    fun v => congrArg f (MassGap.GibbsSpec.splice_updateOn hVΛ u₀ v ω)
+  simp only [hL, hW, hF]
+  have hA : ∀ v : MassGap.GibbsSpec.VConf G V,
+      MassGap.GibbsSpec.spec φ β V μ f X * (MassGap.GibbsSpec.wt φ β V v X * E)
+        = (MassGap.GibbsSpec.spec φ β V μ f X * E) * MassGap.GibbsSpec.wt φ β V v X :=
+    fun v => by ring
+  have hB : ∀ v : MassGap.GibbsSpec.VConf G V,
+      f (MassGap.GibbsSpec.splice V v X) * (MassGap.GibbsSpec.wt φ β V v X * E)
+        = E * (f (MassGap.GibbsSpec.splice V v X) * MassGap.GibbsSpec.wt φ β V v X) :=
+    fun v => by ring
+  simp only [hA, hB]
+  rw [MeasureTheory.integral_const_mul, MeasureTheory.integral_const_mul]
+  have hpart : (0 : ℝ) < MassGap.GibbsSpec.part φ β V μ X :=
+    MassGap.GibbsSpec.part_pos hφm hφ0 hφ2 β V μ X
+  show MassGap.GibbsSpec.spec φ β V μ f X * E * MassGap.GibbsSpec.part φ β V μ X
+      = E * MassGap.GibbsSpec.num φ β V μ f X
+  unfold MassGap.GibbsSpec.spec
+  field_simp
+
+#print axioms inner_spec_wtFree_eq
+
+/-- **The free state's numerator is unchanged by inserting the kernel at an interior region.**
+
+The assembly. `ActionSplit.integral_cvol_split_iterated_symm` cuts the box's links at "lies in `V`",
+putting the region on the inside; `symm_eq_updateOn` rewrites the reassembly as an update of a fixed
+configuration; `integral_vblock` reindexes the inner block to the region's own configuration space;
+and `inner_spec_wtFree_eq` is the identity for each fixed outer configuration.
+
+Dividing both sides by `partFree` gives the free-boundary DLR consistency,
+`stateFree Λ (spec V f) = stateFree Λ f`, which is the `hev` hypothesis that
+`DLRLimit.isDLR_of_tendsto` and `limits_eq_of_unique_dlr` take and that nothing else in the tree
+supplies for the FREE-boundary family.
+
+`hside` is the "`V` well inside `Λ`" condition — every non-degenerate plaquette touching `V` lies in
+the box — which holds for fixed `V` at all large boxes. Measurability and boundedness of the two
+integrands are hypotheses rather than obligations discharged here: they are a separate concern from
+the identity, and `ActionSplit.integrable_split_of_bounded` turns them into what the split needs.
+
+DERIVED: `1` is the identity at which the density vanishes; `0` and `2` are the density's range,
+carried in for `GibbsSpec.part_pos`. -/
+theorem num_free_spec_eq {G : Type} [Group G] [MeasurableSpace G] [MeasurableMul₂ G]
+    [MeasurableInv G] (φ : G → ℝ) (hφm : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
+    (hφ2 : ∀ g, φ g ≤ 2) (hφ1 : φ 1 = 0) (β : ℝ)
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (hside : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V, q.1.1 ≠ q.1.2 → q ∈ iplqAll Λ)
+    (μ : MeasureTheory.Measure G) [MeasureTheory.IsProbabilityMeasure μ]
+    (f : MassGap.GibbsSpec.IConf G → ℝ) (ω : MassGap.GibbsSpec.IConf G) {C : ℝ}
+    (hm1 : Measurable fun u : MassGap.GibbsSpec.VConf G Λ =>
+      MassGap.GibbsSpec.spec φ β V μ f (MassGap.GibbsSpec.splice Λ u ω)
+        * wtFree φ β Λ ω u)
+    (hb1 : ∀ u, |MassGap.GibbsSpec.spec φ β V μ f (MassGap.GibbsSpec.splice Λ u ω)
+        * wtFree φ β Λ ω u| ≤ C)
+    (hm2 : Measurable fun u : MassGap.GibbsSpec.VConf G Λ =>
+      f (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u)
+    (hb2 : ∀ u, |f (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u| ≤ C) :
+    ∫ u, MassGap.GibbsSpec.spec φ β V μ f (MassGap.GibbsSpec.splice Λ u ω)
+        * wtFree φ β Λ ω u ∂(MassGap.ActionSplit.cvol ↥Λ μ)
+      = ∫ u, f (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u
+        ∂(MassGap.ActionSplit.cvol ↥Λ μ) := by
+  classical
+  rw [MassGap.ActionSplit.integral_cvol_split_iterated_symm μ
+      (fun i : ↥Λ => (i : MassGap.InfiniteLattice.ILink) ∈ V) _
+      (MassGap.ActionSplit.integrable_split_of_bounded μ _ _ hm1 hb1),
+    MassGap.ActionSplit.integral_cvol_split_iterated_symm μ
+      (fun i : ↥Λ => (i : MassGap.InfiniteLattice.ILink) ∈ V) _
+      (MassGap.ActionSplit.integrable_split_of_bounded μ _ _ hm2 hb2)]
+  congr 1
+  funext y
+  set u₀ : MassGap.GibbsSpec.VConf G Λ :=
+    (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ↥Λ => G)
+      (fun i : ↥Λ => (i : MassGap.InfiniteLattice.ILink) ∈ V)).symm (fun _ => (1 : G), y)
+    with hu₀def
+  have hu₀ : ∀ (i : ↥Λ) (h : ¬ ((i : MassGap.InfiniteLattice.ILink) ∈ V)),
+      u₀ i = y ⟨i, h⟩ := by
+    intro i h
+    rw [hu₀def, MassGap.ActionSplit.piSubtypeProd_symm_apply, dif_neg h]
+  have hre : ∀ x : {i : ↥Λ // (i : MassGap.InfiniteLattice.ILink) ∈ V} → G,
+      (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ↥Λ => G)
+        (fun i : ↥Λ => (i : MassGap.InfiniteLattice.ILink) ∈ V)).symm (x, y)
+        = MassGap.GibbsSpec.updateOn hVΛ u₀
+            (fun w : ↥V => x ((MassGap.GibbsSpec.linkSubEquiv hVΛ).symm w)) :=
+    fun x => symm_eq_updateOn hVΛ x y u₀ hu₀
+  simp only [hre]
+  rw [integral_vblock μ hVΛ (fun v => MassGap.GibbsSpec.spec φ β V μ f
+      (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        * wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v)),
+    integral_vblock μ hVΛ (fun v => f
+      (MassGap.GibbsSpec.splice Λ (MassGap.GibbsSpec.updateOn hVΛ u₀ v) ω)
+        * wtFree φ β Λ ω (MassGap.GibbsSpec.updateOn hVΛ u₀ v))]
+  exact inner_spec_wtFree_eq φ hφm hφ0 hφ2 hφ1 β hVΛ hside μ f ω u₀
+
+#print axioms num_free_spec_eq
+
+
 /-- The free-boundary weight is strictly positive, being an exponential.
 
 DERIVED: the `0` is the strict lower bound asserted. -/
@@ -3688,6 +4008,103 @@ theorem specFree_at_zero_coupling {φ : MassGap.SUN.SU N → ℝ}
 
 
 #print axioms stateFree_eq_expect_boxBd
+
+/-- **The free-boundary DLR consistency, at the level of the state.**
+
+`num_free_spec_eq` equates the two numerators and `specFree` divides both by the same `partFree`, so
+the states agree:
+
+    stateFree Λ ω (kernel at V applied to f) = stateFree Λ ω f
+
+**This is the `hev` hypothesis that `DLRLimit.isDLR_of_tendsto`, `tendsto_of_unique_dlr` and
+`limits_eq_of_unique_dlr` all take**, and which the tree supplies for the FIXED-boundary family
+through `GibbsSpec.wilson_dlr_consistent` but has not supplied for the FREE-boundary family — the one
+the transfer construction actually consumes, and the one reflection positivity is proved for.
+
+The kernel enters as `hg`, any continuous map agreeing with it pointwise, rather than as
+`WilsonDLR.specCM`; that keeps this file's imports unchanged and lets the caller instantiate.
+
+`hside` is the "`V` well inside `Λ`" condition, true for fixed `V` at all large boxes.
+
+DERIVED: `1` is the identity at which the density vanishes; `0` and `2` are the density's range. -/
+theorem stateFree_spec_eq {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (hφ1 : φ 1 = 0) (β : ℝ)
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (hside : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V, q.1.1 ≠ q.1.2 → q ∈ iplqAll Λ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f g : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))
+    (hg : ∀ ω', g ω' = MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f) ω')
+    {C : ℝ}
+    (hm1 : Measurable fun u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ =>
+      MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f)
+        (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u)
+    (hb1 : ∀ u, |MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f)
+        (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u| ≤ C)
+    (hm2 : Measurable fun u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ =>
+      f (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u)
+    (hb2 : ∀ u, |f (MassGap.GibbsSpec.splice Λ u ω) * wtFree φ β Λ ω u| ≤ C) :
+    stateFree hφm hφ0 hφ2 β Λ ω g = stateFree hφm hφ0 hφ2 β Λ ω f := by
+  show specFree (φ := φ) β Λ ω (fun u => g (MassGap.GibbsSpec.splice Λ u ω))
+      = specFree (φ := φ) β Λ ω (fun u => f (MassGap.GibbsSpec.splice Λ u ω))
+  unfold specFree
+  congr 1
+  have hgu : ∀ u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ,
+      g (MassGap.GibbsSpec.splice Λ u ω)
+        = MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f)
+          (MassGap.GibbsSpec.splice Λ u ω) := fun u => hg _
+  simp only [hgu]
+  exact num_free_spec_eq φ hφm hφ0 hφ2 hφ1 β hVΛ hside (probHaar (MassGap.SUN.SU N)) (⇑f) ω
+    hm1 hb1 hm2 hb2
+
+#print axioms stateFree_spec_eq
+
+/-- **The free-boundary DLR consistency, with its side hypotheses discharged.**
+
+`stateFree_spec_eq` takes measurability and boundedness of the two integrands; for a bounded
+observable they are automatic. `GibbsSpec.abs_spec_le` puts the kernel in `[-1, 1]` and
+`wtFree_le` bounds the weight, so both products are bounded by the weight's own ceiling;
+measurability is `boxObs_measurable` for one integrand and `GibbsSpec.measurable_spec_right`
+composed with `GibbsSpec.measurable_splice_left` for the other, each multiplied by
+`measurable_wtFree`.
+
+**This is the free-boundary `hev` in usable form.** The bound is arbitrary rather than fixed at one,
+which matters: `DLRLimit.IsDLR` quantifies over ALL of `C(IConf G, ℝ)`, and specialising to `|f| ≤ 1`
+would need the kernel's linearity in the observable to rescale — a lemma the tree does not have.
+Every continuous observable on this compact configuration space is bounded, by
+`InfiniteLattice.bounded_of_continuous`.
+
+DERIVED: `1` is the identity at which the density vanishes and the bound assumed on the observable;
+`0` and `2` are the density's range; the `2` in the weight's ceiling is `actionOn`'s own, from
+`wtFree_le`. -/
+theorem stateFree_spec_eq_of_bounded {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (hφ1 : φ 1 = 0) (β : ℝ)
+    {V Λ : Finset MassGap.InfiniteLattice.ILink} (hVΛ : V ⊆ Λ)
+    (hside : ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V, q.1.1 ≠ q.1.2 → q ∈ iplqAll Λ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f g : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))
+    (hg : ∀ ω', g ω' = MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f) ω')
+    {C₀ : ℝ} (hC₀ : 0 ≤ C₀) (hfb : ∀ U, |f U| ≤ C₀) :
+    stateFree hφm hφ0 hφ2 β Λ ω g = stateFree hφm hφ0 hφ2 β Λ ω f := by
+  have hfm : Measurable (⇑f) := f.continuous.measurable
+  have hwm := measurable_wtFree hφm β Λ ω
+  have hspecm : Measurable fun u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ =>
+      MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f)
+        (MassGap.GibbsSpec.splice Λ u ω) :=
+    (MassGap.GibbsSpec.measurable_spec_right hφm β V (probHaar (MassGap.SUN.SU N)) hfm).comp
+      (MassGap.GibbsSpec.measurable_splice_left Λ ω)
+  refine stateFree_spec_eq hφm hφ0 hφ2 hφ1 β hVΛ hside ω f g hg
+    (C := C₀ * Real.exp (|β| * (((iplqAll Λ).card : ℝ) * 2)))
+    (hspecm.mul hwm) ?_ ((boxObs_measurable ω f).mul hwm) ?_
+  · intro u
+    rw [abs_mul]
+    exact mul_le_mul
+      (MassGap.GibbsSpec.abs_spec_le hφm hφ0 hφ2 β V (probHaar (MassGap.SUN.SU N)) hfm hfb _)
+      (wtFree_le hφ0 hφ2 β Λ ω u) (abs_nonneg _) hC₀
+  · intro u
+    rw [abs_mul]
+    exact mul_le_mul (hfb _) (wtFree_le hφ0 hφ2 β Λ ω u) (abs_nonneg _) hC₀
+
+#print axioms stateFree_spec_eq_of_bounded
 
 /-- Reflection positivity of the finite-volume state in `InfiniteReflection`'s own form:
 `ReflPositiveOn (latticeReflection τ (2 * p)) A (stateFree …)`. Built from
@@ -7645,6 +8062,36 @@ theorem stateFree_reflection_invariant {c : ℤ}
 
 #print axioms stateFree_reflection_invariant
 
+/-- **Reflection invariance holds at every symmetric cube, with no hypothesis but the boundary
+condition's own symmetry.**
+
+`stateFree_reflection_invariant` carries three hypotheses and all three have suppliers here:
+`symCube_refl_stable` makes the box closed under the reflection, `WilsonAction.wilsonDensity_conj`
+makes the Wilson density a class function — with no condition on `N` — and `hω` is the caller's
+choice of a reflection-symmetric boundary configuration.
+
+So the `hinv` input that `WilsonTransferReduction` and `GaugeInvariantAlgebra` read off the state is
+not an open assumption at finite volume: it is discharged at each cube, and
+`InfiniteReflection.isReflectionInvariant_of_tendsto` carries it to a limit.
+
+DERIVED: `4` is the spacetime dimension; `0` and `2` are `wilsonDensity`'s range, supplied by
+`wilsonDensity_nonneg` and `wilsonDensity_le_two`. -/
+theorem stateFree_symCube_reflection_invariant (hN : N ≠ 0) (τ : Fin 4) (c : ℤ) (n : ℕ) (β : ℝ)
+    {ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)}
+    (hω : MassGap.LatticeReflection.ireflConf τ c ω = ω) :
+    MassGap.InfiniteReflection.IsReflectionInvariant
+      (MassGap.LatticeReflection.latticeReflection τ c)
+      (stateFree (Λ := symCube τ c n) MassGap.WilsonAction.measurable_wilsonDensity
+        (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+        (MassGap.WilsonAction.wilsonDensity_le_two hN) β ω) :=
+  stateFree_reflection_invariant (symCube_refl_stable τ c n)
+    MassGap.WilsonAction.measurable_wilsonDensity
+    (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+    (MassGap.WilsonAction.wilsonDensity_le_two hN)
+    (fun g h => MassGap.WilsonAction.wilsonDensity_conj g h) β hω
+
+#print axioms stateFree_symCube_reflection_invariant
+
 /-- `IsReflectionInvariant` and `ReflPositiveOn` for the same limit state, along the same
 ultrafilter.
 Invariance comes from `stateFree_reflection_invariant` at each box through
@@ -8034,6 +8481,123 @@ theorem tendsto_mixCube (τ : Fin 4) (p : ℤ) :
   simpa [Finset.le_iff_subset] using mixCube_exhausts τ p S
 
 #print axioms tendsto_mixCube
+
+/-- **The reflected plaquette is non-degenerate.** `ireflPlaq` either transposes the plane with the
+reflection direction or leaves it alone; in the transposing branches the direction that becomes new
+is the one the hypothesis says differs from `τ`.
+
+DERIVED: `4` is the spacetime dimension, the range of the plane and reflection directions. -/
+theorem ireflPlaq_nondeg (τ : Fin 4) (c : ℤ) (q : MassGap.GibbsSpec.IPlaq)
+    (hq : q.1.1 ≠ q.1.2) :
+    (MassGap.LatticeReflection.ireflPlaq τ c q).1.1
+      ≠ (MassGap.LatticeReflection.ireflPlaq τ c q).1.2 := by
+  unfold MassGap.LatticeReflection.ireflPlaq
+  split_ifs with h1 h2
+  · intro h; exact hq (h1.trans h.symm)
+  · intro h; exact h1 h.symm
+  · exact hq
+
+#print axioms ireflPlaq_nondeg
+
+/-- **A translate is non-degenerate.** `ishiftPlaq` moves the corner and leaves the plane alone, so
+the plane directions are unchanged.
+
+DERIVED: `4` is the spacetime dimension; `m` is the caller's. -/
+theorem ishiftPlaq_iterate_nondeg (τ : Fin 4) (m : ℕ) (q : MassGap.GibbsSpec.IPlaq)
+    (hq : q.1.1 ≠ q.1.2) :
+    ((MassGap.InfiniteShift.ishiftPlaq τ)^[m] q).1.1
+      ≠ ((MassGap.InfiniteShift.ishiftPlaq τ)^[m] q).1.2 := by
+  rw [ishiftPlaq_iterate]
+  exact hq
+
+#print axioms ishiftPlaq_iterate_nondeg
+
+/-- **A non-degenerate plaquette eventually lies in the box.** `mixCube_exhausts` at the plaquette's
+own four links, through `GibbsSpec.mem_plaqsIn`.
+
+DERIVED: `4` is the spacetime dimension. -/
+theorem eventually_mem_iplqAll (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
+    (hq : q.1.1 ≠ q.1.2) :
+    ∀ᶠ n : ℕ in Filter.atTop, q ∈ iplqAll (mixCube τ p n) := by
+  filter_upwards [mixCube_exhausts τ p (MassGap.GibbsSpec.ilinks q).toFinset] with n hn
+  refine mem_iplqAll.mpr ⟨MassGap.GibbsSpec.mem_plaqsIn.mpr (fun l hl => ?_), hq⟩
+  exact hn (List.mem_toFinset.mpr hl)
+
+#print axioms eventually_mem_iplqAll
+
+/-- **A plaquette, its reflection and its translate all eventually lie in the box.**
+
+This supplies the box-membership side conditions of
+`GaugeInvariantAlgebra.stateFree_pairing_shift_abs_le` for all large boxes, which is what the
+box-to-limit assembly needs before `DLRLimit.abs_le_of_eventually_abs_le` can be applied: the
+estimate's constants `coreConst` and `coreRate` are already box-free, since `touchDeg_boxBd_le`
+carries no box dependence, so membership was the only remaining obstacle to an eventual hypothesis.
+
+DERIVED: `2` is the reflection plane's spacing in lattice units; `4` is the spacetime dimension;
+`m` is the caller's. -/
+theorem eventually_mem_iplqAll_refl_shift (τ : Fin 4) (p : ℤ)
+    (q : MassGap.GibbsSpec.IPlaq) (hq : q.1.1 ≠ q.1.2) (m : ℕ) :
+    ∀ᶠ n : ℕ in Filter.atTop,
+      q ∈ iplqAll (mixCube τ p n)
+        ∧ MassGap.LatticeReflection.ireflPlaq τ (2 * p) q ∈ iplqAll (mixCube τ p n)
+        ∧ (MassGap.InfiniteShift.ishiftPlaq τ)^[m] q ∈ iplqAll (mixCube τ p n) := by
+  filter_upwards [eventually_mem_iplqAll τ p q hq,
+    eventually_mem_iplqAll τ p (MassGap.LatticeReflection.ireflPlaq τ (2 * p) q)
+      (ireflPlaq_nondeg τ (2 * p) q hq),
+    eventually_mem_iplqAll τ p ((MassGap.InfiniteShift.ishiftPlaq τ)^[m] q)
+      (ishiftPlaq_iterate_nondeg τ m q hq)] with n h1 h2 h3
+  exact ⟨h1, h2, h3⟩
+
+#print axioms eventually_mem_iplqAll_refl_shift
+
+/-- **The interiority side condition holds at all large boxes.**
+
+`stateFree_spec_eq_of_bounded` asks that every NON-degenerate plaquette touching `V` lie in the box.
+For fixed `V` that is a finite set of plaquettes, each with finitely many links, so
+`mixCube_exhausts` puts them all inside eventually.
+
+DERIVED: `4` is the spacetime dimension, indexing the reflection's direction. -/
+theorem eventually_hside (τ : Fin 4) (p : ℤ) (V : Finset MassGap.InfiniteLattice.ILink) :
+    ∀ᶠ n : ℕ in Filter.atTop, ∀ q ∈ MassGap.GibbsSpec.boundaryPlaqs V,
+      q.1.1 ≠ q.1.2 → q ∈ iplqAll (mixCube τ p n) := by
+  filter_upwards [mixCube_exhausts τ p ((MassGap.GibbsSpec.boundaryPlaqs V).biUnion
+    (fun q => (MassGap.GibbsSpec.ilinks q).toFinset))] with n hn q hq hne
+  refine mem_iplqAll.mpr ⟨MassGap.GibbsSpec.mem_plaqsIn.mpr (fun l hl => ?_), hne⟩
+  exact hn (Finset.mem_biUnion.mpr ⟨q, hq, List.mem_toFinset.mpr hl⟩)
+
+#print axioms eventually_hside
+
+/-- **The free-boundary DLR consistency, eventually along the exhausting cube family.**
+
+Both side conditions — the region inside the box, and every non-degenerate plaquette touching it
+inside the box — hold at all large boxes, by `mixCube_exhausts` and `eventually_hside`. So the
+consistency holds eventually, which is exactly the `hev` shape `DLRLimit.isDLR_of_tendsto`,
+`tendsto_of_unique_dlr` and `limits_eq_of_unique_dlr` consume.
+
+**This completes the free-boundary side of the DLR theory.** `GibbsSpec.wilson_dlr_consistent`
+supplies the same for the FIXED-boundary family at every coupling; the free-boundary family is what
+the transfer construction consumes and what reflection positivity is proved for, and it had no such
+supply until now.
+
+What it does NOT supply is uniqueness of the DLR state, which is what
+`limits_eq_of_unique_dlr` additionally requires and what fails at a phase transition.
+
+DERIVED: `4` is the spacetime dimension; `1` is the identity at which the density vanishes and the
+bound on the observable; `0` and `2` are the density's range. -/
+theorem eventually_stateFree_spec_eq {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2) (hφ1 : φ 1 = 0) (β : ℝ) (τ : Fin 4) (p : ℤ)
+    (V : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f g : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))
+    (hg : ∀ ω', g ω' = MassGap.GibbsSpec.spec φ β V (probHaar (MassGap.SUN.SU N)) (⇑f) ω')
+    {C₀ : ℝ} (hC₀ : 0 ≤ C₀) (hfb : ∀ U, |f U| ≤ C₀) :
+    ∀ᶠ n : ℕ in Filter.atTop,
+      stateFree hφm hφ0 hφ2 β (mixCube τ p n) ω g
+        = stateFree hφm hφ0 hφ2 β (mixCube τ p n) ω f := by
+  filter_upwards [mixCube_exhausts τ p V, eventually_hside τ p V] with n hsub hs
+  exact stateFree_spec_eq_of_bounded hφm hφ0 hφ2 hφ1 β hsub hs ω f g hg hC₀ hfb
+
+#print axioms eventually_stateFree_spec_eq
 
 /-- Reflection positivity at the even constant from one convergence hypothesis about the interleaved
 family: the even subsequence of `mixCube` is `symCube τ (2 * p)`

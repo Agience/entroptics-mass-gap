@@ -23,7 +23,8 @@ Contents:
   and consistency relation `hcons`, with the floor discharged rather than assumed.
 * `clay_nontriviality_of_wilson_bridge` — the same, with `γ`, `μ` and `hcons` instantiated at
   `WilsonDLR.specCM`, `WilsonDLR.specState` and `WilsonDLR.hcons_specState`, leaving `hbridge` as the
-  only substantive hypothesis.
+  only substantive hypothesis — and ⛔ `VarianceBridge.wilson_bridge_hypothesis_unsatisfiable` proves
+  that hypothesis FALSE, so this declaration is vacuous. It is kept as the record of a closed route.
 * `uniform_variance_floor_exists` — the floor restated with its positivity alongside it.
 * `floor_is_independent_of_any_family` — a positive lower bound on `wilsonCorrAt N β 0` with no
   family, kernel or consistency relation in the statement.
@@ -36,8 +37,10 @@ Scope, stated for both main theorems.
   plaquette-touch count of `StrongCoupling.touchDeg_bd_le`, which carries no extent.
 * `hbridge` compares two different volume indexings: `wilsonCorrAt` is a variance on a finite
   periodic lattice indexed by an aperture, while `specState` is indexed by a `Finset ILink` of `ℤ⁴`
-  with a frozen boundary `ω₀`. It is stated as an inequality, so only one direction of the
-  comparison is required.
+  with a frozen boundary `ω₀`. ⛔ Do not attempt to supply it: the universal form is refuted at the empty
+  region, where the variance is `0` while `PlaqVariance.corrClay_zero_pos` keeps the torus side
+  positive. Only the eventual form survives, and `SpecVarianceFloor.wilson_eventual_variance_floor`
+  discharges Part IV without any torus comparison at all.
 -/
 
 namespace MassGap.ClayNontriviality

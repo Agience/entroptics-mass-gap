@@ -440,6 +440,53 @@ theorem spec_add {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ 
 
 #print axioms spec_add
 
+/-- **The kernel's variance, centred at its own mean.**
+
+`spec φ β Λ μ ((f - m)²) ω = spec (f * f) - m²` at `m := spec f`, by `spec_add`, `spec_smul` and
+`GibbsSpec.spec_one` — the kernel is a state, so the computation is the usual one.
+
+**Why the centred form is the one to work with.** A lower bound on `∫ (f - c)²` against a reference
+measure holds for EVERY centre `c`, since the two differ by `(mean - c)² ≥ 0`. So a floor proved in
+this form never has to evaluate `m`, which depends on the coupling, the region and the boundary
+condition. That is what `ContactFloor.haar_centred_le` does on the torus, and it is the step that lets
+a region-free floor bound a region-dependent variance.
+
+DERIVED: `0` is the pointwise lower bound on the density; `2` is its ceiling and the exponent of the
+square. The bound `Cf` is the caller's. -/
+theorem spec_variance_centred {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g)
+    (hφ2 : ∀ g, φ g ≤ 2) (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ]
+    {f : IConf G → ℝ} (hf : Measurable f) {Cf : ℝ} (hCf : ∀ U, |f U| ≤ Cf) (ω : IConf G) :
+    spec φ β Λ μ (fun U => (f U - spec φ β Λ μ f ω) ^ 2) ω
+      = spec φ β Λ μ (fun U => f U * f U) ω - (spec φ β Λ μ f ω) ^ 2 := by
+  have hCf0 : (0 : ℝ) ≤ Cf := le_trans (abs_nonneg _) (hCf (fun _ => 1))
+  set m : ℝ := spec φ β Λ μ f ω with hm
+  have hff : Measurable (fun U : IConf G => f U * f U) := hf.mul hf
+  have hffb : ∀ U, |f U * f U| ≤ Cf * Cf := fun U => by
+    rw [abs_mul]; exact mul_le_mul (hCf U) (hCf U) (abs_nonneg _) hCf0
+  have hg : Measurable (fun U : IConf G => -(2 * m) * f U) := hf.const_mul _
+  have hgb : ∀ U, |-(2 * m) * f U| ≤ |2 * m| * Cf := fun U => by
+    rw [abs_mul, abs_neg]; exact mul_le_mul_of_nonneg_left (hCf U) (abs_nonneg _)
+  have hc : Measurable (fun _ : IConf G => m ^ 2) := measurable_const
+  have hcb : ∀ _U : IConf G, |m ^ 2| ≤ m ^ 2 := fun _ => le_of_eq (abs_of_nonneg (sq_nonneg m))
+  have hsum : Measurable (fun U : IConf G => -(2 * m) * f U + m ^ 2) := hg.add hc
+  have hsumb : ∀ U, |-(2 * m) * f U + m ^ 2| ≤ |2 * m| * Cf + m ^ 2 := fun U => by
+    have h1 := abs_le.mp (hgb U)
+    have h2 : (0 : ℝ) ≤ m ^ 2 := sq_nonneg m
+    rw [abs_le]
+    constructor <;> linarith
+  have hconst : spec φ β Λ μ (fun _ : IConf G => m ^ 2) ω = m ^ 2 := by
+    have h := spec_smul φ β Λ μ (m ^ 2) (fun _ : IConf G => (1 : ℝ)) ω
+    rw [MassGap.GibbsSpec.spec_one hφ hφ0 hφ2 β Λ μ ω, mul_one] at h
+    simpa using h
+  have hfun : (fun U : IConf G => (f U - m) ^ 2)
+      = fun U => f U * f U + (-(2 * m) * f U + m ^ 2) := by funext U; ring
+  rw [hfun, spec_add hφ hφ0 hφ2 β Λ μ hff hffb hsum hsumb ω,
+    spec_add hφ hφ0 hφ2 β Λ μ hg hgb hc hcb ω,
+    spec_smul φ β Λ μ (-(2 * m)) f ω, hconst]
+  ring
+
+#print axioms spec_variance_centred
+
 /-- `0 ≤ spec φ β Λ μ f ω` for a pointwise nonnegative `f`: the numerator is an integral of a product
 of nonnegatives and the partition function is positive by `GibbsSpec.part_pos`.
 
@@ -1076,6 +1123,35 @@ theorem dlr_unique_at_zero_eq [T2Space G] {φ : G → ℝ} (hφc : Continuous φ
   MassGap.DLRLimit.State.eq_of_apply_eq (dlr_unique_at_zero hφc hφ0 hφ2 μ h₁ h₂)
 
 #print axioms dlr_unique_at_zero_eq
+
+/-- **The local near-constant estimate holds at coupling zero** — the witness that
+`DLRLimit.unique_dlr_of_local_kernel_near_const`'s hypothesis is satisfiable.
+
+For an observable local on `S`, take the region `S` itself: `spec_at_zero_const` says the kernel is
+then literally CONSTANT in the boundary configuration, so the difference is `0` and any `ε` will do.
+
+⚠ The corresponding statement for an ARBITRARY continuous observable is false, and the difference is
+not a technicality. At coupling zero the kernel is `∫ F (splice Λ u ω) ∂(vol μ Λ)`: the links outside
+`Λ` are still frozen at `ω`, and a general `F` reads them. What stops being read is the boundary's
+influence on a LOCAL observable once the region covers its support. That is why `dlr_unique_at_zero`
+routes through `DLRLimit.State.eq_of_eqOn_localObs` rather than concluding directly, and it is why
+the estimate is stated over `localObsAlg`.
+
+DERIVED: `0` is the coupling, the pointwise lower bound on the density, the strict lower bound on
+`ε` and the value of the difference. `2` is the density's pointwise upper bound. -/
+theorem local_kernel_near_const_at_zero {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g)
+    (hφ2 : ∀ g, φ g ≤ 2) (μ : Measure G) [IsProbabilityMeasure μ] (ω₀ : IConf G) :
+    ∀ F ∈ MassGap.DLRLimit.localObsAlg G, ∀ ε : ℝ, 0 < ε →
+      ∃ (V : Finset ILink) (c : ℝ), ∀ ω, |specCM hφc hφ0 hφ2 0 μ V F ω - c| ≤ ε := by
+  intro F hF ε hε
+  obtain ⟨S, hS⟩ := MassGap.DLRLimit.mem_localObsAlg.mp hF
+  refine ⟨S, spec φ 0 S μ (⇑F) ω₀, fun ω => ?_⟩
+  rw [specCM_apply,
+    spec_at_zero_const (Finset.Subset.refl S) μ (isLocalOn_of_isLocalOnC hS) ω ω₀,
+    sub_self, abs_zero]
+  exact hε.le
+
+#print axioms local_kernel_near_const_at_zero
 
 /-! ### Invariance of the zero-coupling state under a link bijection
 

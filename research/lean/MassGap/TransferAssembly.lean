@@ -46,8 +46,9 @@ invertible on the full algebra because `ishiftConf` is a bijection, `ℤ` having
 `HalfSpaceAlgebra` is forward-stable only. On a half-line indexed by `ℕ` the shift has no inverse, so
 `ShiftCompat` has no instance there.
 
-DERIVED: the only numeral in any statement below is the `1` of `C(X, ℝ)` — the constant function
-taken as the vacuum vector and fixed by the shift.
+DERIVED: two numerals occur in the statements below. `1` is the constant function of `C(X, ℝ)`, taken
+as the vacuum vector and fixed by the shift. `0` is the value of the inner product against that
+vector on the vacuum complement, and hence of the state's one-point function there.
 -/
 
 namespace MassGap.TransferAssembly
@@ -211,5 +212,79 @@ theorem assembleTransferData_form_pow (R : Reflection X) (ν : State X)
   rw [Module.End.pow_apply, restrictT_iterate]
 
 #print axioms assembleTransferData_form_pow
+
+/-- **The inner product against the vacuum vector IS the state's one-point function.**
+
+`vacGNS` is the class of the constant `1`, so the inner product against it is the form at `1`, which
+is `ν (R.θ 1 * x)`; `Reflection.θ_one` fixes the constant and the product collapses.
+
+DERIVED: `1` is the constant observable the vacuum is the class of, and the value `θ` fixes it at. -/
+theorem inner_vacGNS_mk (R : Reflection X) (ν : State X) (A : Submodule ℝ C(X, ℝ))
+    (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)
+    (C : ShiftCompat R ν) (hstable : ∀ f ∈ A, C.T f ∈ A)
+    (hone : (1 : C(X, ℝ)) ∈ A) (hTone : C.T 1 = 1)
+    (hTnorm : ∀ f : C(X, ℝ), ‖C.T f‖ ≤ ‖f‖) (hθnorm : ∀ f : C(X, ℝ), ‖R.θ f‖ ≤ ‖f‖)
+    (x : ↥A) :
+    (inner ℝ
+        (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).vacGNS
+        (MassGap.Transfer.GNS.mk
+          (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).toReflForm
+          x) : ℝ)
+      = ν (x : C(X, ℝ)) := by
+  rw [MassGap.Transfer.TransferData.vacGNS, MassGap.Transfer.GNS.inner_mk]
+  show ν (R.θ (1 : C(X, ℝ)) * (x : C(X, ℝ))) = ν (x : C(X, ℝ))
+  rw [R.θ_one, one_mul]
+
+#print axioms inner_vacGNS_mk
+
+/-- **On the vacuum complement the state's one-point function vanishes.** Immediate from
+`inner_vacGNS_mk`.
+
+DERIVED: `0` is the value of the inner product on the complement, and hence of the one-point
+function; `1` is the constant observable, carried in unchanged from `assembleTransferData`'s `hone`
+and `hTone`. -/
+theorem nu_eq_zero_of_vac_orth (R : Reflection X) (ν : State X) (A : Submodule ℝ C(X, ℝ))
+    (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)
+    (C : ShiftCompat R ν) (hstable : ∀ f ∈ A, C.T f ∈ A)
+    (hone : (1 : C(X, ℝ)) ∈ A) (hTone : C.T 1 = 1)
+    (hTnorm : ∀ f : C(X, ℝ), ‖C.T f‖ ≤ ‖f‖) (hθnorm : ∀ f : C(X, ℝ), ‖R.θ f‖ ≤ ‖f‖)
+    (x : ↥A)
+    (h : (inner ℝ
+        (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).vacGNS
+        (MassGap.Transfer.GNS.mk
+          (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).toReflForm
+          x) : ℝ) = 0) :
+    ν (x : C(X, ℝ)) = 0 :=
+  (inner_vacGNS_mk R ν A hinv hpos C hstable hone hTone hTnorm hθnorm x).symm.trans h
+
+#print axioms nu_eq_zero_of_vac_orth
+
+/-- **On the vacuum complement, subtracting the mean does nothing.**
+
+This is what reconciles the two shapes. The strong-coupling estimates are stated on
+`f - ⟨f⟩ • 1`, with the mean subtracted explicitly; the obligation in
+`ClayCapstone.gaugeInv_clay_gap_of_state_decay` instead restricts to observables whose class lies in
+the vacuum complement. `nu_eq_zero_of_vac_orth` says the mean is already zero there, so the two
+statements are about the same observable.
+
+DERIVED: `0` is the vanishing one-point function; `1` is the unit observable carrying the
+subtraction. -/
+theorem sub_mean_eq_self_of_vac_orth (R : Reflection X) (ν : State X)
+    (A : Submodule ℝ C(X, ℝ))
+    (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)
+    (C : ShiftCompat R ν) (hstable : ∀ f ∈ A, C.T f ∈ A)
+    (hone : (1 : C(X, ℝ)) ∈ A) (hTone : C.T 1 = 1)
+    (hTnorm : ∀ f : C(X, ℝ), ‖C.T f‖ ≤ ‖f‖) (hθnorm : ∀ f : C(X, ℝ), ‖R.θ f‖ ≤ ‖f‖)
+    (x : ↥A)
+    (h : (inner ℝ
+        (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).vacGNS
+        (MassGap.Transfer.GNS.mk
+          (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).toReflForm
+          x) : ℝ) = 0) :
+    (x : C(X, ℝ)) - ν (x : C(X, ℝ)) • (1 : C(X, ℝ)) = (x : C(X, ℝ)) := by
+  rw [nu_eq_zero_of_vac_orth R ν A hinv hpos C hstable hone hTone hTnorm hθnorm x h,
+    zero_smul, sub_zero]
+
+#print axioms sub_mean_eq_self_of_vac_orth
 
 end MassGap.TransferAssembly

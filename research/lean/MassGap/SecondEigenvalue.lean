@@ -334,6 +334,76 @@ theorem le_of_pow_two_pow_le {a b C : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hC : 0
 
 #print axioms le_of_pow_two_pow_le
 
+/-- **One factor of the rate moves an exponent.** `K · r ^ j = (K / r) · r ^ (j + 1)`.
+
+Stated at `j` and `j + 1` rather than at `m - 1` and `m`, so that no natural subtraction appears and
+the caller does the index arithmetic where the positivity is known.
+
+DERIVED: `1` is the single factor of `r` moved across; `0` is the value `r` is required to differ
+from, since the conversion divides by it. -/
+theorem mul_pow_pred_eq (K r : ℝ) (hr : r ≠ 0) (j : ℕ) :
+    K * r ^ j = K / r * r ^ (j + 1) := by
+  rw [pow_succ]
+  field_simp
+
+#print axioms mul_pow_pred_eq
+
+/-- **A bound at the odd exponent, recast at the even one.**
+
+The strong-coupling estimates bound a quantity by `K · r ^ k` for every `k` below the translation, so
+at translation `2 * n` the exponent `2 * n - 1` is available. The gap obligation asks for a bound by
+`r ^ (2 * n)`. One factor of the rate converts between them, at the cost of `K / r` in the constant;
+`hK` is where the caller pays it.
+
+The `n = 0` case is separate because `2 * n - 1` underflows there, so it is supplied by `h0`, a bound
+at the contact value — which is what the obligation compares against anyway.
+
+DERIVED: `0` is the index where the shifted exponent is unavailable and the lower bound on `r`; `1`
+is the single factor of `r` moved across; `2` is the doubling relating the translation to the
+exponent. -/
+theorem le_mul_pow_of_shifted {K B r C : ℝ} (hr : r ≠ 0) (hr0 : 0 ≤ r)
+    (hB : B ≤ C) (hK : K / r ≤ C) (P : ℕ → ℝ) (h0 : |P 0| ≤ B)
+    (hpos : ∀ j : ℕ, |P (j + 1)| ≤ K * r ^ (2 * (j + 1) - 1)) :
+    ∀ n : ℕ, |P n| ≤ C * r ^ (2 * n) := by
+  intro n
+  cases n with
+  | zero => simpa using le_trans h0 hB
+  | succ j =>
+      have hj : 2 * (j + 1) - 1 = 2 * j + 1 := by omega
+      have hj2 : 2 * (j + 1) = 2 * j + 1 + 1 := by omega
+      have hstep := hpos j
+      rw [hj] at hstep
+      rw [hj2]
+      calc |P (j + 1)| ≤ K * r ^ (2 * j + 1) := hstep
+        _ = K / r * r ^ (2 * j + 1 + 1) := mul_pow_pred_eq K r hr (2 * j + 1)
+        _ ≤ C * r ^ (2 * j + 1 + 1) :=
+            mul_le_mul_of_nonneg_right hK (by positivity)
+
+#print axioms le_mul_pow_of_shifted
+
+/-- **The same bound, in the obligation's squared shape.**
+
+`ClayCapstone.clay_gap_of_two_point_decay` asks for a bound by `(C · ρ ^ n) ^ 2`. Taking `ρ` to be
+the rate itself, that is `C ^ 2 · ρ ^ (2 * n)`, so the leading constant is the square root of the one
+`le_mul_pow_of_shifted` produces.
+
+DERIVED: `0` is the lower bound on the constant, needed for the square root to square back, the
+value `r` differs from, and the index at which the shifted exponent is unavailable; `1` is the single
+factor of `r` moved across and the offset placing that index outside the shifted range; `2` is the
+obligation's own exponent, matching the form's quadratic degree. -/
+theorem le_sq_mul_pow_of_shifted {K B r C : ℝ} (hr : r ≠ 0) (hr0 : 0 ≤ r) (hC : 0 ≤ C)
+    (hB : B ≤ C) (hK : K / r ≤ C) (P : ℕ → ℝ) (h0 : |P 0| ≤ B)
+    (hpos : ∀ j : ℕ, |P (j + 1)| ≤ K * r ^ (2 * (j + 1) - 1)) :
+    ∀ n : ℕ, |P n| ≤ (Real.sqrt C * r ^ n) ^ 2 := by
+  intro n
+  have hcomm : (2 : ℕ) * n = n * 2 := Nat.mul_comm 2 n
+  calc |P n| ≤ C * r ^ (2 * n) :=
+        le_mul_pow_of_shifted hr hr0 hB hK P h0 hpos n
+    _ = (Real.sqrt C * r ^ n) ^ 2 := by
+        rw [mul_pow, Real.sq_sqrt hC, ← pow_mul, hcomm]
+
+#print axioms le_sq_mul_pow_of_shifted
+
 /-- **Geometric decay of the iterates bounds the operator in one step.** If
 `‖T ^ n y‖ ≤ C · ρ ^ n · ‖y‖` at every `n`, then `‖T y‖ ≤ ρ · ‖y‖`.
 
@@ -372,6 +442,83 @@ theorem norm_le_of_iterate_bound (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) {C �
     _ = C * (ρ * ‖y‖) ^ (2 ^ k) := by rw [mul_pow]
 
 #print axioms norm_le_of_iterate_bound
+
+/-- **An absolute bound on a submodule forces the operator to vanish there.**
+
+If `‖T y‖ ≤ C` for every `y` in a submodule `V`, with `C` not scaled by `‖y‖`, then `T` is zero on
+`V`. A submodule is closed under scaling, so the bound applies to every dilate of every vector at
+once, and a nonzero value could be scaled past `C`.
+
+**Why this is worth stating.** Every hypothesis on the route to the Clay spectral conclusion is a
+RATIO — `norm_le_of_iterate_bound` asks `‖(T ^ n) y‖ ≤ C * ρ ^ n * ‖y‖`,
+`ClayCapstone.clay_gap_of_form_decay` asks `form ((T ^ n) x) ((T ^ n) x) ≤ (C * ρ ^ n) ^ 2 * form x x`,
+and `TransferGap.GapAt` is relative by definition. It would be natural to hope the factor of `‖y‖`
+could be dropped, since the strong-coupling arm produces bounds with no such factor. This says it
+cannot: the absolute form is not a weaker decay hypothesis but a vacuous one.
+
+The collapse is for ONE constant serving the whole submodule. With the constant allowed per vector,
+an absolute bound at a fixed `y ≠ 0` is the ratio form at `C = K / ‖y‖`, and
+`norm_le_of_absolute_iterate_bound` records that: per-vector absolute decay gives the rate.
+
+DERIVED: `0` is the value `T` takes on `V` and the strict lower bound the proof puts on `‖T y‖`;
+`1` is the amount by which the scaled vector is pushed past `C`. -/
+theorem eq_zero_of_norm_le_const {V : Submodule ℝ E} {T : E →ₗ[ℝ] E} {C : ℝ}
+    (h : ∀ y ∈ V, ‖T y‖ ≤ C) {y : E} (hy : y ∈ V) : T y = 0 := by
+  by_contra hne
+  have hpos : 0 < ‖T y‖ := norm_pos_iff.mpr hne
+  have hne0 : ‖T y‖ ≠ 0 := ne_of_gt hpos
+  have hq : (0 : ℝ) < (C + 1) / ‖T y‖ := by
+    have hC : 0 < C := lt_of_lt_of_le hpos (h y hy)
+    positivity
+  have hmul : (C + 1) / ‖T y‖ * ‖T y‖ = C + 1 := by field_simp
+  have ht := h (((C + 1) / ‖T y‖) • y) (V.smul_mem _ hy)
+  rw [map_smul, norm_smul, Real.norm_eq_abs, abs_of_pos hq, hmul] at ht
+  linarith
+
+#print axioms eq_zero_of_norm_le_const
+
+/-- **An absolute iterate bound on a submodule is vacuous**, at every power.
+
+`eq_zero_of_norm_le_const` at `T ^ n`. This is `norm_le_of_iterate_bound`'s hypothesis with the
+factor of `‖y‖` removed, and removing it collapses the operator to zero on `V` rather than giving a
+rate — so the contraction that `lambdaTwo_le_of_iterate_bound` extracts from the ratio form has no
+counterpart here.
+
+Read together with `HalfLineTransfer.no_rate_of_shift_transfer`, which shows a contraction rate on the
+vacuum complement at finite periodic extent forces that complement to be zero: both are collapses,
+and both say the content of a decay hypothesis lives entirely in what it is measured AGAINST.
+
+DERIVED: `0` is the value each iterate takes on `V`. -/
+theorem eq_zero_of_iterate_norm_le {V : Submodule ℝ E} {T : E →ₗ[ℝ] E} {C ρ : ℝ}
+    (hdec : ∀ y ∈ V, ∀ n : ℕ, ‖(T ^ n) y‖ ≤ C * ρ ^ n) {y : E} (hy : y ∈ V) (n : ℕ) :
+    (T ^ n) y = 0 :=
+  eq_zero_of_norm_le_const (C := C * ρ ^ n) (fun z hz => hdec z hz n) hy
+
+#print axioms eq_zero_of_iterate_norm_le
+
+/-- **Absolute decay of the iterates at one vector bounds `T` at that vector.**
+
+`‖Tⁿ y‖ ≤ K · ρⁿ` with no factor of `‖y‖` is `norm_le_of_iterate_bound`'s hypothesis at
+`C = K / ‖y‖`: the constant is chosen after the vector, so it absorbs the vector's own norm. At
+`n = 0` the bound reads `‖y‖ ≤ K`, which makes that constant positive whenever `y ≠ 0`.
+
+This is what lets an absolute cluster estimate — the form a strong-coupling expansion produces — feed
+the spectral bound directly, one vector at a time, with no lower bound on any pairing.
+
+DERIVED: `0` is the lower bound on `ρ` and the exponent at which the bound reads `‖y‖ ≤ K`. -/
+theorem norm_le_of_absolute_iterate_bound (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) {K ρ : ℝ}
+    (hρ : 0 ≤ ρ) {y : E} (hdec : ∀ n : ℕ, ‖(T ^ n) y‖ ≤ K * ρ ^ n) :
+    ‖T y‖ ≤ ρ * ‖y‖ := by
+  rcases eq_or_ne y 0 with rfl | hy
+  · simp
+  have hy0 : 0 < ‖y‖ := norm_pos_iff.mpr hy
+  have hK : ‖y‖ ≤ K := by simpa using hdec 0
+  have hKpos : 0 < K := lt_of_lt_of_le hy0 hK
+  refine norm_le_of_iterate_bound T hT (C := K / ‖y‖) (div_pos hKpos hy0) hρ (fun n => ?_)
+  calc ‖(T ^ n) y‖ ≤ K * ρ ^ n := hdec n
+    _ = K / ‖y‖ * ρ ^ n * ‖y‖ := by field_simp
+
+#print axioms norm_le_of_absolute_iterate_bound
 
 /-- The set `{r | ∃ y ∈ V, y ≠ 0 ∧ r = ⟪T y, y⟫ / ‖y‖ ^ 2}`: the Rayleigh quotients of `T` at the
 nonzero vectors of `V`. It may be empty (when `V` is the zero submodule) and may be unbounded above;
@@ -421,6 +568,44 @@ theorem lambdaTwo_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 
 #print axioms lambdaTwo_le_of_rayleigh_le
 
+/-- **A contraction's Rayleigh set is bounded above, by one.**
+
+Cauchy–Schwarz gives `⟪T y, y⟫ ≤ ‖T y‖ · ‖y‖`, and a norm-contraction bounds that by `‖y‖ ^ 2`, so
+every quotient is at most one.
+
+This matters because `BddAbove (rayleighSet …)` is carried as a hypothesis by
+`lambdaTwo_le_of_rayleigh_le`'s consumers and by `ClayCapstone.clay_gap_of_lambdaTwo`. For a transfer
+operator it is not an assumption: `Transfer.TransferData`'s `T_contract` field already makes the
+operator a contraction, so the hypothesis is discharged rather than assumed.
+
+DERIVED: `1` is the bound, which is the contraction constant — the operator does not expand, so no
+quotient exceeds it; `2` is the degree of the norm in a Rayleigh quotient; `0` is the vector excluded
+from the index set. -/
+theorem bddAbove_rayleighSet_of_norm_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
+    (hnorm : ∀ y : E, ‖T y‖ ≤ ‖y‖) : BddAbove (rayleighSet T V) := by
+  refine ⟨1, ?_⟩
+  rintro r ⟨y, _, hy0, rfl⟩
+  have hy : ‖y‖ ≠ 0 := norm_ne_zero_iff.mpr hy0
+  have hn : (0 : ℝ) < ‖y‖ ^ 2 := by positivity
+  rw [div_le_one hn]
+  calc (inner ℝ (T y) y : ℝ) ≤ ‖T y‖ * ‖y‖ := real_inner_le_norm _ _
+    _ ≤ ‖y‖ * ‖y‖ := mul_le_mul_of_nonneg_right (hnorm y) (norm_nonneg _)
+    _ = ‖y‖ ^ 2 := by ring
+
+#print axioms bddAbove_rayleighSet_of_norm_le
+
+/-- **The Rayleigh set is nonempty as soon as `V` holds a nonzero vector.**
+
+The other side condition `lambdaTwo_le_of_rayleigh_le` carries. It is a statement about `V` alone,
+not about the operator, and it fails only for `V = ⊥`.
+
+DERIVED: `0` is the vector `V` must contain something other than. -/
+theorem rayleighSet_nonempty (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
+    {y : E} (hyV : y ∈ V) (hy0 : y ≠ 0) : (rayleighSet T V).Nonempty :=
+  ⟨(inner ℝ (T y) y : ℝ) / ‖y‖ ^ 2, y, hyV, hy0, rfl⟩
+
+#print axioms rayleighSet_nonempty
+
 /-- **An operator norm bound bounds `lambdaTwo`.** `rayleigh_le_of_norm_le` then
 `lambdaTwo_le_of_rayleigh_le`.
 
@@ -437,6 +622,62 @@ theorem lambdaTwo_le_of_norm_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
   lambdaTwo_le_of_rayleigh_le T V hne (fun y hy => rayleigh_le_of_norm_le T V hnorm hy)
 
 #print axioms lambdaTwo_le_of_norm_le
+
+/-- **Per-vector absolute decay bounds `lambdaTwo`.** Each `y ∈ V` may carry its own constant.
+
+`norm_le_of_absolute_iterate_bound` at each vector, then `lambdaTwo_le_of_norm_le`.
+
+DERIVED: `0` is the lower bound on `ρ`. -/
+theorem lambdaTwo_le_of_absolute_iterate_bound (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric)
+    (V : Submodule ℝ E) (hne : (rayleighSet T V).Nonempty) {ρ : ℝ} (hρ : 0 ≤ ρ)
+    (hdec : ∀ y ∈ V, ∃ K : ℝ, ∀ n : ℕ, ‖(T ^ n) y‖ ≤ K * ρ ^ n) :
+    lambdaTwo T V ≤ ρ :=
+  lambdaTwo_le_of_norm_le T V hne (fun y hy => by
+    obtain ⟨K, hK⟩ := hdec y hy
+    exact norm_le_of_absolute_iterate_bound T hT hρ hK)
+
+#print axioms lambdaTwo_le_of_absolute_iterate_bound
+
+/-- **The vectors whose iterates decay geometrically at rate `ρ` form a submodule.**
+
+`‖Tⁿ (y + z)‖ ≤ ‖Tⁿ y‖ + ‖Tⁿ z‖` adds the constants, and `‖Tⁿ (c • y)‖ = |c| · ‖Tⁿ y‖` scales one. So decay
+proved on a spanning set holds on its span: a cluster estimate on a generating family of observables
+covers every finite combination of them.
+
+DERIVED: `0` is the zero vector's constant. -/
+def decaySubmodule (T : E →ₗ[ℝ] E) (ρ : ℝ) : Submodule ℝ E where
+  carrier := {y | ∃ K : ℝ, ∀ n : ℕ, ‖(T ^ n) y‖ ≤ K * ρ ^ n}
+  add_mem' := by
+    rintro y z ⟨Ky, hy⟩ ⟨Kz, hz⟩
+    refine ⟨Ky + Kz, fun n => ?_⟩
+    rw [map_add]
+    calc ‖(T ^ n) y + (T ^ n) z‖ ≤ ‖(T ^ n) y‖ + ‖(T ^ n) z‖ := norm_add_le _ _
+      _ ≤ Ky * ρ ^ n + Kz * ρ ^ n := add_le_add (hy n) (hz n)
+      _ = (Ky + Kz) * ρ ^ n := by ring
+  zero_mem' := ⟨0, fun n => by simp⟩
+  smul_mem' := by
+    rintro c y ⟨K, hy⟩
+    refine ⟨|c| * K, fun n => ?_⟩
+    rw [map_smul, norm_smul, Real.norm_eq_abs]
+    calc |c| * ‖(T ^ n) y‖ ≤ |c| * (K * ρ ^ n) := mul_le_mul_of_nonneg_left (hy n) (abs_nonneg c)
+      _ = |c| * K * ρ ^ n := by ring
+
+#print axioms decaySubmodule
+
+/-- **Decay on a spanning set bounds `lambdaTwo`.** If `V` lies in the span of `S` and every element
+of `S` decays at rate `ρ`, then `lambdaTwo T V ≤ ρ`: `Submodule.span_le` puts the span inside
+`decaySubmodule`, and `lambdaTwo_le_of_absolute_iterate_bound` finishes.
+
+DERIVED: `0` is the lower bound on `ρ`. -/
+theorem lambdaTwo_le_of_span_decay (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Submodule ℝ E)
+    (hne : (rayleighSet T V).Nonempty) {ρ : ℝ} (hρ : 0 ≤ ρ) (S : Set E)
+    (hV : V ≤ Submodule.span ℝ S)
+    (hS : ∀ s ∈ S, ∃ K : ℝ, ∀ n : ℕ, ‖(T ^ n) s‖ ≤ K * ρ ^ n) :
+    lambdaTwo T V ≤ ρ := by
+  have hspan : Submodule.span ℝ S ≤ decaySubmodule T ρ := Submodule.span_le.mpr hS
+  exact lambdaTwo_le_of_absolute_iterate_bound T hT V hne hρ (fun y hy => hspan (hV hy))
+
+#print axioms lambdaTwo_le_of_span_decay
 
 /-- **Geometric decay of the iterates, uniform over `V`, bounds `lambdaTwo`.**
 

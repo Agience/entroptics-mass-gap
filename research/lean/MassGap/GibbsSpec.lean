@@ -415,6 +415,86 @@ theorem actionOn_split (φ : G → ℝ) {Λ Λ' : Finset ILink} (hsub : Λ ⊆ �
   rw [add_comm]
   exact (Finset.sum_sdiff (boundaryPlaqs_mono hsub)).symm
 
+/-- **The action splits at any subset of the plaquette set.** `actionOn_split` is this for two
+`boundaryPlaqs` sets; the free-boundary family needs it for `boundaryPlaqs V` inside `iplqAll Λ`,
+which those do not cover.
+
+DERIVED: no numeral occurs; `S` and `T` are the caller's. -/
+theorem actionOn_sdiff (φ : G → ℝ) {S T : Finset IPlaq} (hTS : T ⊆ S) (U : IConf G) :
+    actionOn φ S U = actionOn φ T U + actionOn φ (S \ T) U := by
+  unfold actionOn
+  rw [← Finset.sum_sdiff hTS, add_comm]
+
+/-- **A plaquette outside `boundaryPlaqs V` has no link in `V`.** The contrapositive of
+`mem_boundaryPlaqs`.
+
+`links_not_mem_of_mem_sdiff` is this with the plaquette additionally required to lie in a larger
+`boundaryPlaqs`, which its proof does not use. The free-boundary family needs the version without
+that requirement, since there the outer set is `iplqAll`, not a `boundaryPlaqs`.
+
+This is also where `plaqsIn_split_not_local` does NOT apply, and the contrast is the reason the
+split below works: that refutation is about `plaqsIn` as the inner set — "all links in" — whose
+complement does not give "no link in". `boundaryPlaqs` is "some link in", and its complement does.
+
+DERIVED: no numeral occurs; `V` is the caller's. -/
+theorem not_mem_boundaryPlaqs_links (V : Finset ILink) {q : IPlaq}
+    (h : q ∉ boundaryPlaqs V) : ∀ l ∈ ilinks q, l ∉ V := by
+  intro l hl hlV
+  exact h (mem_boundaryPlaqs.mpr ⟨l, hl, hlV⟩)
+
+/-- **The action over plaquettes avoiding `V` does not read the `V`-links.**
+
+This is the locality step the free-boundary consistency turns on: after `actionOn_sdiff` splits the
+free action at `boundaryPlaqs V`, the remaining plaquettes all lie outside it, so by
+`not_mem_boundaryPlaqs_links` none of their links is in `V` and `actionOn_congr` applies.
+
+Together with the split, this is what makes the free weight factor into a part depending on the
+`V`-links and a part that does not — which is what turns the conditional into the ordinary
+fixed-boundary kernel at `V`.
+
+DERIVED: no numeral occurs; `S` and `V` are the caller's. -/
+theorem actionOn_indep_of_avoid (φ : G → ℝ) (S : Finset IPlaq) (V : Finset ILink)
+    (hS : ∀ q ∈ S, q ∉ boundaryPlaqs V) (U U' : IConf G)
+    (h : ∀ l, l ∉ V → U l = U' l) :
+    actionOn φ S U = actionOn φ S U' :=
+  actionOn_congr φ S U U'
+    (fun q hq l hl => h l (not_mem_boundaryPlaqs_links V (hS q hq) l hl))
+
+/-- **A degenerate plaquette has trivial holonomy.** When the two plane directions coincide, the
+boundary word `ibd` reads the same two links twice, once forward and once backward, so the product
+collapses.
+
+DERIVED: `1` is the group identity the holonomy collapses to. -/
+theorem ihol_degenerate (q : IPlaq) (h : q.1.1 = q.1.2) (U : IConf G) : ihol q U = 1 := by
+  unfold ihol MassGap.WilsonLattice.wilsonHol
+  rw [show ibd q = [((q.1.2, q.2), true), ((q.1.2, ishift q.1.2 q.2), true),
+      ((q.1.2, ishift q.1.2 q.2), false), ((q.1.2, q.2), false)] from by rw [ibd, h]]
+  simp only [List.map_cons, List.map_nil, List.prod_cons, List.prod_nil,
+    Bool.false_eq_true, if_true, if_false]
+  group
+
+/-- **Dropping degenerate plaquettes does not change the action**, for a density vanishing at the
+identity.
+
+This is what reconciles `boundaryPlaqs V` with `iplqAll Λ ∩ boundaryPlaqs V`. The free weight factors
+at the latter, while the ordinary kernel's numerator is built from the former, and the two differ by
+degenerate plaquettes — excluded from `iplqAll` by construction — together with any plaquette
+touching `V` but not lying inside `Λ`, which the caller excludes by keeping `V` well inside.
+
+`WilsonAction.wilsonDensity_one` supplies `hφ1` for the Wilson density, at every `N ≠ 0`.
+
+DERIVED: `0` is the contribution of the dropped plaquettes, which is the value `hφ1` gives them;
+`1` is the identity at which the density vanishes. -/
+theorem actionOn_drop_degenerate {φ : G → ℝ} (hφ1 : φ 1 = 0) {S T : Finset IPlaq}
+    (hTS : T ⊆ S) (hdeg : ∀ q ∈ S \ T, q.1.1 = q.1.2) (U : IConf G) :
+    actionOn φ S U = actionOn φ T U := by
+  rw [actionOn_sdiff φ hTS]
+  have hz : actionOn φ (S \ T) U = 0 := by
+    unfold actionOn
+    refine Finset.sum_eq_zero (fun q hq => ?_)
+    rw [ihol_degenerate q (hdeg q hq) U, hφ1]
+  rw [hz, add_zero]
+
 /-- The energy over `boundaryPlaqs Λ' \ boundaryPlaqs Λ` does not read the inside variables: it
 takes the same value at `splice Λ u v` as at `v`, for every `u`. -/
 theorem actionOn_sdiff_indep (φ : G → ℝ) {Λ Λ' : Finset ILink}
@@ -499,6 +579,142 @@ theorem wt_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g �
     mul_le_mul_of_nonneg_left (actionOn_le hφ2 _ _) (abs_nonneg β)
   linarith
 
+/-- **The Gibbs weight splits at one link**: the plaquettes that touch `l₀`, and the rest.
+
+`boundaryPlaqs {l₀}` is exactly the set of plaquettes having `l₀` among their links, so `actionOn_split`
+at `{l₀} ⊆ Λ` cuts the action into the part that reads `l₀` and a remainder that does not.
+
+**Why split HERE and not at a sub-region.** Every split indexed by a region — `iplqZero`, `iplqPlus`,
+or `boundaryPlaqs` of a smaller box — leaves a factor whose plaquette count grows with the region, and
+a bound on such a factor decays as the region grows. The set `boundaryPlaqs {l₀}` does not depend on
+`Λ` at all once `l₀ ∈ Λ`, so a bound written in its cardinality is uniform in the volume. That is the
+whole point of cutting at a single link.
+
+DERIVED: no numeral appears in the statement. -/
+theorem wt_split_at_link {Λ : Finset ILink} {l₀ : ILink} (hl₀ : l₀ ∈ Λ)
+    (φ : G → ℝ) (β : ℝ) (u : VConf G Λ) (ω : IConf G) :
+    wt φ β Λ u ω
+      = Real.exp (-β * actionOn φ (boundaryPlaqs {l₀}) (splice Λ u ω))
+        * Real.exp (-β * actionOn φ (boundaryPlaqs Λ \ boundaryPlaqs {l₀}) (splice Λ u ω)) := by
+  unfold wt
+  rw [actionOn_split φ (Finset.singleton_subset_iff.mpr hl₀) (splice Λ u ω), mul_add,
+    Real.exp_add]
+
+#print axioms wt_split_at_link
+
+/-- **The remainder does not read the link.** A plaquette outside `boundaryPlaqs {l₀}` has no link
+equal to `l₀`, so `actionOn_indep_of_avoid` at `V := {l₀}` applies.
+
+DERIVED: no numeral appears in the statement. -/
+theorem actionOn_sdiff_singleton_indep (φ : G → ℝ) (Λ : Finset ILink) (l₀ : ILink)
+    (U U' : IConf G) (h : ∀ l, l ≠ l₀ → U l = U' l) :
+    actionOn φ (boundaryPlaqs Λ \ boundaryPlaqs {l₀}) U
+      = actionOn φ (boundaryPlaqs Λ \ boundaryPlaqs {l₀}) U' :=
+  actionOn_indep_of_avoid φ _ {l₀} (fun _ hq => (Finset.mem_sdiff.mp hq).2) U U'
+    (fun l hl => h l (by simpa using hl))
+
+#print axioms actionOn_sdiff_singleton_indep
+
+/-- **The weight factor of any plaquette set is at most one**, at nonnegative coupling, since the
+density is nonnegative.
+
+The matching floor is `ReflectionHalfSpace.exp_neg_actionOn_ge`, which holds at every real `β` with
+`|β|` in the exponent and so is the more general statement; it is not restated here.
+
+DERIVED: `0` is the lower bound on `β` and on the density; `1` is the concluded upper bound. -/
+theorem exp_neg_actionOn_le_one {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) {β : ℝ} (hβ : 0 ≤ β)
+    (S : Finset IPlaq) (U : IConf G) :
+    Real.exp (-β * actionOn φ S U) ≤ 1 := by
+  have h := actionOn_nonneg hφ0 S U
+  rw [Real.exp_le_one_iff]
+  nlinarith
+
+#print axioms exp_neg_actionOn_le_one
+
+/-- Rebuild a volume configuration from the links other than `l₀`, putting the identity at `l₀`.
+
+`ActionSplit.block_factor` factors an integral of a product only when each factor is presented as a
+function of its own block, so the remainder has to be a function of `{l₀}ᶜ`. What sits at `l₀` is
+immaterial — `actionOn_sdiff_singleton_indep` says the remainder does not read that link — and the
+identity is the one element every group has.
+
+DERIVED: the `1` in the body is the group identity, not a numeric value. -/
+noncomputable def fillLink {Λ : Finset ILink} (l₀ : ↑Λ)
+    (w : ↑(({l₀} : Finset ↑Λ)ᶜ) → G) : VConf G Λ :=
+  fun i => if h : i ∈ (({l₀} : Finset ↑Λ)ᶜ) then w ⟨i, h⟩ else 1
+
+#print axioms fillLink
+
+/-- `fillLink` reads its argument at every index of the complement. Term mode, as `splice_mem` is:
+routing through `simp` makes the decidability instance in the goal and in the rewrite fail to match.
+
+DERIVED: no numeral appears in the statement. -/
+theorem fillLink_eq_of_mem {Λ : Finset ILink} (l₀ : ↑Λ)
+    (w : ↑(({l₀} : Finset ↑Λ)ᶜ) → G) {i : ↑Λ} (h : i ∈ (({l₀} : Finset ↑Λ)ᶜ)) :
+    fillLink l₀ w i = w ⟨i, h⟩ := dif_pos h
+
+#print axioms fillLink_eq_of_mem
+
+/-- `fillLink` agrees with the configuration it was restricted from, away from `l₀`.
+
+DERIVED: no numeral appears in the statement. -/
+theorem fillLink_eq_of_ne {Λ : Finset ILink} (l₀ : ↑Λ) (u : VConf G Λ) {i : ↑Λ}
+    (hi : i ≠ l₀) :
+    fillLink l₀ (fun j => u j.val) i = u i :=
+  fillLink_eq_of_mem l₀ _ (by simpa using hi)
+
+#print axioms fillLink_eq_of_ne
+
+/-- `fillLink` is the identity at `l₀`. Term mode, as `fillLink_eq_of_mem` is.
+
+DERIVED: the `1` is the group identity, not a numeric value. -/
+theorem fillLink_eq_of_not_mem {Λ : Finset ILink} (l₀ : ↑Λ)
+    (w : ↑(({l₀} : Finset ↑Λ)ᶜ) → G) {i : ↑Λ} (h : i ∉ (({l₀} : Finset ↑Λ)ᶜ)) :
+    fillLink l₀ w i = 1 := dif_neg h
+
+#print axioms fillLink_eq_of_not_mem
+
+/-- **The refill is measurable**, which `ActionSplit.block_factor` needs of the function it takes on
+the complement block. Each coordinate is either a projection or a constant.
+
+DERIVED: no numeral appears in the statement. -/
+theorem measurable_fillLink {Λ : Finset ILink} (l₀ : ↑Λ) :
+    Measurable (fillLink (G := G) l₀) := by
+  classical
+  refine measurable_pi_lambda _ (fun i => ?_)
+  by_cases h : i ∈ (({l₀} : Finset ↑Λ)ᶜ)
+  · have hfun : (fun w : ↑(({l₀} : Finset ↑Λ)ᶜ) → G => fillLink l₀ w i)
+        = fun w => w ⟨i, h⟩ := by
+      funext w; exact fillLink_eq_of_mem l₀ w h
+    rw [hfun]
+    exact measurable_pi_apply _
+  · have hfun : (fun w : ↑(({l₀} : Finset ↑Λ)ᶜ) → G => fillLink l₀ w i)
+        = fun _ => (1 : G) := by
+      funext w; exact fillLink_eq_of_not_mem l₀ w h
+    rw [hfun]
+    exact measurable_const
+
+#print axioms measurable_fillLink
+
+/-- **The remainder is unchanged by the refill**, so it really is a function of the complement block.
+
+Composes `fillLink_eq_of_ne` with `actionOn_sdiff_singleton_indep` through `splice`: inside `Λ` the
+two configurations agree away from `l₀`, and outside `Λ` both are the boundary condition.
+
+DERIVED: no numeral appears in the statement. -/
+theorem actionOn_sdiff_fillLink {Λ : Finset ILink} {l₀ : ILink} (hl₀ : l₀ ∈ Λ)
+    (φ : G → ℝ) (u : VConf G Λ) (ω : IConf G) :
+    actionOn φ (boundaryPlaqs Λ \ boundaryPlaqs {l₀})
+        (splice Λ (fillLink ⟨l₀, hl₀⟩ (fun j => u j.val)) ω)
+      = actionOn φ (boundaryPlaqs Λ \ boundaryPlaqs {l₀}) (splice Λ u ω) := by
+  refine actionOn_sdiff_singleton_indep φ Λ l₀ _ _ (fun l hl => ?_)
+  by_cases hlΛ : l ∈ Λ
+  · rw [splice_mem hlΛ, splice_mem hlΛ]
+    exact fillLink_eq_of_ne ⟨l₀, hl₀⟩ u (fun hc => hl (congrArg Subtype.val hc))
+  · rw [splice_not_mem hlΛ, splice_not_mem hlΛ]
+
+#print axioms actionOn_sdiff_fillLink
+
 theorem measurable_wt_left {φ : G → ℝ} (hφ : Measurable φ) (β : ℝ) (Λ : Finset ILink)
     (ω : IConf G) : Measurable (fun u : VConf G Λ => wt φ β Λ u ω) := by
   unfold wt
@@ -538,6 +754,138 @@ geometry. -/
 noncomputable def spec (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Measure G)
     (f : IConf G → ℝ) (ω : IConf G) : ℝ :=
   num φ β Λ μ f ω / part φ β Λ μ ω
+
+/-- **The box's links that lie in a region, reindexed to the region's own links.**
+
+`ActionSplit.integral_cvol_split_iterated` cuts a box's links by a predicate, so the block for a
+region `V` is indexed by `{x : ↥Λ // (x : ILink) ∈ V}` — a subtype of the BOX's links. The ordinary
+kernel at `V` integrates over `↥V`. This is the equivalence between the two index types, which
+`ActionSplit.integral_cvol_reindex` transports across the product measure.
+
+Both directions are the identity on the underlying link; only the membership proof changes, which is
+why `hVΛ` is needed in one direction and not the other.
+
+DERIVED: no numeral occurs; `V` and `Λ` are the caller's. -/
+def linkSubEquiv {V Λ : Finset ILink} (hVΛ : V ⊆ Λ) :
+    {x : ↥Λ // (x : ILink) ∈ V} ≃ ↥V where
+  toFun x := ⟨(x.1 : ILink), x.2⟩
+  invFun y := ⟨⟨(y : ILink), hVΛ y.2⟩, y.2⟩
+  left_inv _ := Subtype.ext (Subtype.ext rfl)
+  right_inv _ := Subtype.ext rfl
+
+@[simp] theorem linkSubEquiv_coe {V Λ : Finset ILink} (hVΛ : V ⊆ Λ)
+    (x : {x : ↥Λ // (x : ILink) ∈ V}) :
+    ((linkSubEquiv hVΛ x : ↥V) : ILink) = (x.1 : ILink) := rfl
+
+@[simp] theorem linkSubEquiv_symm_coe {V Λ : Finset ILink} (hVΛ : V ⊆ Λ) (y : ↥V) :
+    (((linkSubEquiv hVΛ).symm y).1 : ILink) = (y : ILink) := rfl
+
+/-- **Splicing a region over a box forgets the box's configuration on that region.** Two box
+configurations agreeing off `V` give the same spliced configuration once `V`'s own links are
+overwritten.
+
+DERIVED: no numeral occurs; `V`, `Λ`, `v` and `ω` are the caller's. -/
+theorem splice_splice_off (V Λ : Finset ILink) (v : VConf G V) (u u' : VConf G Λ)
+    (ω : IConf G) (h : ∀ x : ↥Λ, (x : ILink) ∉ V → u x = u' x) :
+    splice V v (splice Λ u ω) = splice V v (splice Λ u' ω) := by
+  funext l
+  by_cases hV : l ∈ V
+  · rw [splice_mem hV, splice_mem hV]
+  · rw [splice_not_mem hV, splice_not_mem hV]
+    by_cases hΛ : l ∈ Λ
+    · rw [splice_mem hΛ, splice_mem hΛ]
+      exact h ⟨l, hΛ⟩ hV
+    · rw [splice_not_mem hΛ, splice_not_mem hΛ]
+
+/-- **A box configuration updated on a region.** Takes the region's values there and the box's
+elsewhere.
+
+DERIVED: no numeral occurs; `V`, `Λ`, `u` and `v` are the caller's. -/
+def updateOn {V Λ : Finset ILink} (hVΛ : V ⊆ Λ) (u : VConf G Λ) (v : VConf G V) :
+    VConf G Λ :=
+  fun x => if h : (x : ILink) ∈ V then v ⟨(x : ILink), h⟩ else u x
+
+/-- **Updating on a region, then splicing over the boundary, is splicing the region over the
+spliced box.**
+
+The algebraic bridge the assembly needs. `ActionSplit.integral_cvol_split_iterated` writes a box
+configuration as a pair — outside the region, inside it — and reassembling that pair is `updateOn`.
+This says the reassembled configuration, spliced over the boundary condition, is exactly what `num`
+and `part` at the region read, so the inner integral is the region's own numerator and partition
+function rather than something that merely resembles them.
+
+DERIVED: no numeral occurs. -/
+theorem splice_updateOn {V Λ : Finset ILink} (hVΛ : V ⊆ Λ) (u : VConf G Λ) (v : VConf G V)
+    (ω : IConf G) :
+    splice Λ (updateOn hVΛ u v) ω = splice V v (splice Λ u ω) := by
+  funext l
+  by_cases hV : l ∈ V
+  · rw [splice_mem (hVΛ hV), splice_mem hV]
+    simp only [updateOn, dif_pos hV]
+  · rw [splice_not_mem hV]
+    by_cases hΛ : l ∈ Λ
+    · rw [splice_mem hΛ, splice_mem hΛ]
+      simp only [updateOn, dif_neg hV]
+    · rw [splice_not_mem hΛ, splice_not_mem hΛ]
+
+/-- **Updating on a region leaves the box configuration alone off that region.** The hypothesis
+`splice_splice_off`, `wt_splice_off`, `num_splice_off`, `part_splice_off` and `spec_splice_off` all
+take.
+
+DERIVED: no numeral occurs. -/
+theorem updateOn_eq_off {V Λ : Finset ILink} (hVΛ : V ⊆ Λ) (u : VConf G Λ) (v : VConf G V)
+    (x : ↥Λ) (hx : (x : ILink) ∉ V) : updateOn hVΛ u v x = u x := by
+  simp only [updateOn, dif_neg hx]
+
+/-- **The weight at a region does not read that region's own links**, as carried by the box
+configuration underneath.
+
+DERIVED: no numeral occurs. -/
+theorem wt_splice_off (φ : G → ℝ) (β : ℝ) (V Λ : Finset ILink) (v : VConf G V)
+    (u u' : VConf G Λ) (ω : IConf G) (h : ∀ x : ↥Λ, (x : ILink) ∉ V → u x = u' x) :
+    wt φ β V v (splice Λ u ω) = wt φ β V v (splice Λ u' ω) := by
+  unfold wt
+  rw [splice_splice_off V Λ v u u' ω h]
+
+/-- **The numerator at a region does not read that region's own links.**
+
+Both the observable and the weight see the box configuration only through `splice V v`, which
+`splice_splice_off` shows is blind to the region's links, so the integrands agree pointwise.
+
+DERIVED: no numeral occurs. -/
+theorem num_splice_off (φ : G → ℝ) (β : ℝ) (V Λ : Finset ILink) (μ : Measure G)
+    (f : IConf G → ℝ) (u u' : VConf G Λ) (ω : IConf G)
+    (h : ∀ x : ↥Λ, (x : ILink) ∉ V → u x = u' x) :
+    num φ β V μ f (splice Λ u ω) = num φ β V μ f (splice Λ u' ω) := by
+  unfold num
+  congr 1
+  funext v
+  rw [splice_splice_off V Λ v u u' ω h, wt_splice_off φ β V Λ v u u' ω h]
+
+/-- **The partition function at a region does not read that region's own links.**
+
+DERIVED: no numeral occurs. -/
+theorem part_splice_off (φ : G → ℝ) (β : ℝ) (V Λ : Finset ILink) (μ : Measure G)
+    (u u' : VConf G Λ) (ω : IConf G)
+    (h : ∀ x : ↥Λ, (x : ILink) ∉ V → u x = u' x) :
+    part φ β V μ (splice Λ u ω) = part φ β V μ (splice Λ u' ω) := by
+  unfold part
+  congr 1
+  funext v
+  rw [wt_splice_off φ β V Λ v u u' ω h]
+
+/-- **The kernel at a region does not read that region's own links.**
+
+**This is what lets the kernel be pulled out of the inner integral as a constant**, which is the step
+that turns the free state's conditional into the ordinary fixed-boundary kernel.
+
+DERIVED: no numeral occurs. -/
+theorem spec_splice_off (φ : G → ℝ) (β : ℝ) (V Λ : Finset ILink) (μ : Measure G)
+    (f : IConf G → ℝ) (u u' : VConf G Λ) (ω : IConf G)
+    (h : ∀ x : ↥Λ, (x : ILink) ∉ V → u x = u' x) :
+    spec φ β V μ f (splice Λ u ω) = spec φ β V μ f (splice Λ u' ω) := by
+  unfold spec
+  rw [num_splice_off φ β V Λ μ f u u' ω h, part_splice_off φ β V Λ μ u u' ω h]
 
 theorem integrable_wt {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
     (β : ℝ) (Λ : Finset ILink) (μ : Measure G) [IsProbabilityMeasure μ] (ω : IConf G) :

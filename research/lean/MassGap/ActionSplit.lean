@@ -169,6 +169,158 @@ DERIVED: no numeral. -/
 noncomputable abbrev cvol (ι : Type) [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
     (μ : Measure Ω) : Measure (ι → Ω) := Measure.pi (fun _ : ι => μ)
 
+/-- **An integral over a product measure splits at a predicate on the index.**
+
+`block_factor` cannot do this: it factors the integral of a PRODUCT of block functions, whereas here
+the integrand is arbitrary. What does it is Mathlib's measure-preserving equivalence between a
+product over the index and the product of the two sub-products, transported by
+`MeasurePreserving.integral_comp'`.
+
+Wanted for the free-boundary DLR consistency: with the free weight factored at a region — by
+`ReflectionHalfSpace.wtFree_factor`, whose outer factor does not read that region's links
+(`wtFree_outer_congr`) — this turns the integral over a box's links into an integral over the pair
+of blocks, after which Fubini leaves the inner integral as the numerator of the ordinary kernel.
+
+Every binder is explicit rather than inherited from a section, since the file's variable block
+recurs.
+
+DERIVED: no numeral occurs; `p` and `g` are the caller's. -/
+theorem integral_cvol_split {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (p : ι → Prop) [DecidablePred p]
+    (g : (ι → Ω) → ℝ) :
+    ∫ u, g u ∂(cvol ι μ)
+      = ∫ z : ((Subtype p → Ω) × ({i : ι // ¬ p i} → Ω)),
+          g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z)
+          ∂((Measure.pi fun _ : Subtype p => μ).prod
+            (Measure.pi fun _ : {i : ι // ¬ p i} => μ)) := by
+  have h := (MeasureTheory.measurePreserving_piEquivPiSubtypeProd (fun _ : ι => μ) p).integral_comp'
+    (fun z => g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z))
+  simpa using h
+
+#print axioms integral_cvol_split
+
+/-- **How the split's reassembly computes.** At each index the reassembled configuration reads the
+first block if the predicate holds there and the second block otherwise.
+
+`Equiv.piEquivPiSubtypeProd` carries an `@[simps]` rule for this, but the split lemmas here use the
+MEASURABLE version, whose `symm` is not itself a simp lemma. Without this the assembly cannot see
+through the reassembly and every step stalls on an opaque equivalence.
+
+DERIVED: no numeral occurs; `p`, `z` and `i` are the caller's. -/
+@[simp] theorem piSubtypeProd_symm_apply {ι : Type} {Ω : Type} [MeasurableSpace Ω]
+    (p : ι → Prop) [DecidablePred p]
+    (z : ((Subtype p → Ω) × ({i : ι // ¬ p i} → Ω))) (i : ι) :
+    (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z i
+      = if h : p i then z.1 ⟨i, h⟩ else z.2 ⟨i, h⟩ := rfl
+
+#print axioms piSubtypeProd_symm_apply
+
+/-- **The split, as an iterated integral.** `integral_cvol_split` followed by Fubini.
+
+⚠ NOTE THE ORDER. The `p`-block is the FIRST component of the pair, so Fubini puts it on the
+OUTSIDE. A caller who wants a region `V` integrated on the INSIDE — which is what conditioning on
+the configuration outside `V` means — takes the predicate to be "not in `V`", not "in `V`".
+
+`hg` is integrability of the reindexed integrand against the product measure. It is a genuine
+hypothesis: Fubini needs it, and nothing here supplies it.
+
+DERIVED: no numeral occurs; `p` and `g` are the caller's. -/
+theorem integral_cvol_split_iterated {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (p : ι → Prop) [DecidablePred p]
+    (g : (ι → Ω) → ℝ)
+    (hg : Integrable
+      (fun z : ((Subtype p → Ω) × ({i : ι // ¬ p i} → Ω)) =>
+        g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z))
+      ((Measure.pi fun _ : Subtype p => μ).prod
+        (Measure.pi fun _ : {i : ι // ¬ p i} => μ))) :
+    ∫ u, g u ∂(cvol ι μ)
+      = ∫ x : (Subtype p → Ω), ∫ y : ({i : ι // ¬ p i} → Ω),
+          g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm (x, y))
+          ∂(Measure.pi fun _ : {i : ι // ¬ p i} => μ)
+          ∂(Measure.pi fun _ : Subtype p => μ) := by
+  rw [integral_cvol_split μ p g]
+  exact MeasureTheory.integral_prod _ hg
+
+#print axioms integral_cvol_split_iterated
+
+/-- **The split with the predicate's block on the INSIDE.**
+
+`integral_cvol_split_iterated` puts the predicate's block on the outside, so a caller wanting a
+region integrated out had to pass "not in the region" — a double negation that is awkward once the
+region's membership proofs are in play. `integral_prod_symm` gives the other nesting directly, so
+the natural predicate works and the inner integral is over the region.
+
+This is the form the free-boundary DLR consistency uses: the outer variable is the configuration
+away from the region, held fixed, and the inner integral runs over the region's own links, which is
+what `GibbsSpec.num` and `GibbsSpec.part` at that region integrate.
+
+`hg` is the same integrability hypothesis `integral_cvol_split_iterated` takes; Fubini needs it in
+either nesting.
+
+DERIVED: no numeral occurs; `p` and `g` are the caller's. -/
+theorem integral_cvol_split_iterated_symm {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (p : ι → Prop) [DecidablePred p]
+    (g : (ι → Ω) → ℝ)
+    (hg : Integrable
+      (fun z : ((Subtype p → Ω) × ({i : ι // ¬ p i} → Ω)) =>
+        g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z))
+      ((Measure.pi fun _ : Subtype p => μ).prod
+        (Measure.pi fun _ : {i : ι // ¬ p i} => μ))) :
+    ∫ u, g u ∂(cvol ι μ)
+      = ∫ y : ({i : ι // ¬ p i} → Ω), ∫ x : (Subtype p → Ω),
+          g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm (x, y))
+          ∂(Measure.pi fun _ : Subtype p => μ)
+          ∂(Measure.pi fun _ : {i : ι // ¬ p i} => μ) := by
+  rw [integral_cvol_split μ p g]
+  exact MeasureTheory.integral_prod_symm _ hg
+
+#print axioms integral_cvol_split_iterated_symm
+
+/-- **The split's integrability hypothesis, for a bounded measurable integrand.**
+
+`integral_cvol_split_iterated` and `integral_cvol_split_iterated_symm` both carry `hg`:
+integrability of the REINDEXED integrand against the product measure. For a bounded measurable
+integrand it is automatic — the reindexing is a measurable equivalence, so the composite is
+measurable and carries the same bound, and the product of two `Measure.pi`s over a probability
+measure is finite.
+
+This is what discharges `hg` in the free-boundary DLR consistency: the integrand there is an
+observable times `ReflectionHalfSpace.wtFree`, and `wtFree_le` bounds the weight while the observable
+is bounded by hypothesis.
+
+DERIVED: no numeral occurs; `C` is the caller's bound. -/
+theorem integrable_split_of_bounded {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (p : ι → Prop) [DecidablePred p]
+    (g : (ι → Ω) → ℝ) (hgm : Measurable g) {C : ℝ} (hC : ∀ u, |g u| ≤ C) :
+    Integrable
+      (fun z : ((Subtype p → Ω) × ({i : ι // ¬ p i} → Ω)) =>
+        g ((MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm z))
+      ((Measure.pi fun _ : Subtype p => μ).prod
+        (Measure.pi fun _ : {i : ι // ¬ p i} => μ)) :=
+  integrable_of_bounded _
+    (hgm.comp (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : ι => Ω) p).symm.measurable)
+    (fun z => hC _)
+
+#print axioms integrable_split_of_bounded
+
+/-- **Reindexing an integral over a product measure along an equivalence of index types.**
+
+Needed by the free-boundary DLR consistency: after `integral_cvol_split_iterated` cuts the box's
+links at a region, the inner block is indexed by a SUBTYPE of the box's links — those lying in the
+region — while the ordinary kernel's numerator integrates over the region's own links. The two index
+types are equivalent and the product measure does not notice, which is Mathlib's
+`measurePreserving_piCongrLeft`.
+
+DERIVED: no numeral occurs; `e` and `g` are the caller's. -/
+theorem integral_cvol_reindex {ι ι' : Type} [Fintype ι] [Fintype ι'] {Ω : Type}
+    [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (e : ι' ≃ ι)
+    (g : (ι → Ω) → ℝ) :
+    ∫ u, g u ∂(cvol ι μ)
+      = ∫ v, g (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e v) ∂(cvol ι' μ) :=
+  ((MeasureTheory.measurePreserving_piCongrLeft (fun _ : ι => μ) e).integral_comp' g).symm
+
+#print axioms integral_cvol_reindex
+
 /-- Relabel the coordinates by a permutation `e` and apply a per-coordinate map `σ i` to each
 value.
 
@@ -1849,6 +2001,144 @@ theorem not_ae_eq_const_of_two_values {X : Type*} [TopologicalSpace X] [Measurab
   exact hab (by rw [h2])
 
 #print axioms not_ae_eq_const_of_two_values
+
+/-- **Variance transfers along a domination of measures.**
+
+If `δ * ∫ g ∂Q ≤ ∫ g ∂P` for every nonnegative integrable `g`, then `P`'s variance of `f` is at least
+`δ` times `Q`'s. Both are probability measures, so no normalisation is lost.
+
+The proof is two moves. `P`'s variance is `∫ (f - m)² ∂P` at `P`'s own mean `m`, because the measure
+has mass one; the domination applied to `(f - m)²` turns that into `δ * ∫ (f - m)² ∂Q`; and `Q`'s
+variance is the MINIMUM over centres of `∫ (f - c)² ∂Q`, so centring at `m` rather than at `Q`'s own
+mean only increases it. The two means never have to be compared.
+
+**Why this shape.** The hypothesis is stated on integrals rather than as a density bound, so a caller
+needs no Radon–Nikodym derivative — a weight bounded below pointwise gives it directly. That matters
+for the Wilson measure, where the weight is an explicit exponential and the domination is read off
+`0 ≤ φ ≤ 2` without constructing a density.
+
+Nothing here is specific to the lattice: it is a statement about two probability measures.
+
+DERIVED: `0` is the lower bound on `δ` and on `g`; `2` is the square in the variance. -/
+theorem variance_ge_of_integral_ge {X : Type*} [MeasurableSpace X]
+    (P Q : MeasureTheory.Measure X) [MeasureTheory.IsProbabilityMeasure P]
+    [MeasureTheory.IsProbabilityMeasure Q] {δ : ℝ} (hδ : 0 ≤ δ)
+    (hdom : ∀ g : X → ℝ, (∀ x, 0 ≤ g x) → MeasureTheory.Integrable g Q →
+      MeasureTheory.Integrable g P → δ * ∫ x, g x ∂Q ≤ ∫ x, g x ∂P)
+    (f : X → ℝ) (hfP : MeasureTheory.Integrable f P)
+    (hfP2 : MeasureTheory.Integrable (fun x => f x ^ 2) P)
+    (hfQ : MeasureTheory.Integrable f Q)
+    (hfQ2 : MeasureTheory.Integrable (fun x => f x ^ 2) Q)
+    (hcP : MeasureTheory.Integrable (fun x => (f x - ∫ y, f y ∂P) ^ 2) P)
+    (hcQ : MeasureTheory.Integrable (fun x => (f x - ∫ y, f y ∂P) ^ 2) Q) :
+    δ * ((∫ x, f x ^ 2 ∂Q) - (∫ x, f x ∂Q) ^ 2)
+      ≤ (∫ x, f x ^ 2 ∂P) - (∫ x, f x ∂P) ^ 2 := by
+  set m : ℝ := ∫ x, f x ∂P with hm
+  -- centring at `m` expands the same way against any probability measure
+  have expand : ∀ (ν : MeasureTheory.Measure X) [MeasureTheory.IsProbabilityMeasure ν],
+      MeasureTheory.Integrable f ν → MeasureTheory.Integrable (fun x => f x ^ 2) ν →
+      MeasureTheory.Integrable (fun x => (f x - m) ^ 2) ν →
+      ∫ x, (f x - m) ^ 2 ∂ν
+        = (∫ x, f x ^ 2 ∂ν) - 2 * m * (∫ x, f x ∂ν) + m ^ 2 := by
+    intro ν _ hf hf2 _
+    have hfun : (fun x => (f x - m) ^ 2)
+        = fun x => f x ^ 2 - 2 * m * f x + m ^ 2 := by
+      funext x; ring
+    have hA : MeasureTheory.Integrable (fun x => f x ^ 2 - 2 * m * f x) ν :=
+      hf2.sub (hf.const_mul (2 * m))
+    rw [hfun, MeasureTheory.integral_add hA (MeasureTheory.integrable_const _),
+      MeasureTheory.integral_sub hf2 (hf.const_mul (2 * m)),
+      MeasureTheory.integral_const_mul, MeasureTheory.integral_const]
+    simp
+  have hP := expand P hfP hfP2 hcP
+  have hQ := expand Q hfQ hfQ2 hcQ
+  have hnn : ∀ x, 0 ≤ (f x - m) ^ 2 := fun x => sq_nonneg _
+  have hstep : δ * ∫ x, (f x - m) ^ 2 ∂Q ≤ ∫ x, (f x - m) ^ 2 ∂P :=
+    hdom _ hnn hcQ hcP
+  have hmin : (∫ x, f x ^ 2 ∂Q) - (∫ x, f x ∂Q) ^ 2 ≤ ∫ x, (f x - m) ^ 2 ∂Q := by
+    rw [hQ]
+    nlinarith [sq_nonneg ((∫ x, f x ∂Q) - m)]
+  calc δ * ((∫ x, f x ^ 2 ∂Q) - (∫ x, f x ∂Q) ^ 2)
+      ≤ δ * ∫ x, (f x - m) ^ 2 ∂Q := by
+        exact mul_le_mul_of_nonneg_left hmin hδ
+    _ ≤ ∫ x, (f x - m) ^ 2 ∂P := hstep
+    _ = (∫ x, f x ^ 2 ∂P) - (∫ x, f x ∂P) ^ 2 := by rw [hP, ← hm]; ring
+
+#print axioms variance_ge_of_integral_ge
+
+/-- **The centred second moment, expanded.** `∫ (f - c)² = ∫ f² - 2c∫f + c²` against a probability
+measure. Both the variance's minimality and its nonnegativity are this identity at a chosen `c`.
+
+DERIVED: `2` is the exponent of the square and the coefficient of the cross term. `c` is the
+caller's. -/
+theorem integral_centred_eq {X : Type*} [MeasurableSpace X]
+    (ν : MeasureTheory.Measure X) [MeasureTheory.IsProbabilityMeasure ν]
+    (f : X → ℝ) (hf : MeasureTheory.Integrable f ν)
+    (hf2 : MeasureTheory.Integrable (fun x => f x ^ 2) ν) (c : ℝ) :
+    ∫ x, (f x - c) ^ 2 ∂ν = (∫ x, f x ^ 2 ∂ν) - 2 * c * (∫ x, f x ∂ν) + c ^ 2 := by
+  have hA : MeasureTheory.Integrable (fun x => f x ^ 2 - 2 * c * f x) ν :=
+    hf2.sub (hf.const_mul (2 * c))
+  have hfun : (fun x => (f x - c) ^ 2)
+      = fun x => f x ^ 2 - 2 * c * f x + c ^ 2 := by
+    funext x; ring
+  rw [hfun, MeasureTheory.integral_add hA (MeasureTheory.integrable_const _),
+    MeasureTheory.integral_sub hf2 (hf.const_mul (2 * c)),
+    MeasureTheory.integral_const_mul, MeasureTheory.integral_const]
+  simp
+
+#print axioms integral_centred_eq
+
+/-- **The variance is the smallest centred second moment.**
+
+`∫ (f - c)² ∂ν` exceeds the variance by exactly `(∫ f ∂ν - c)²`, so centring anywhere other than the
+mean only costs. Stated as the inequality because that is the direction every caller needs.
+
+**Why it is the load-bearing step in a variance floor.** A floor proved against a reference measure
+is centred at the REFERENCE's mean, while the quantity to be bounded is centred at the Gibbs mean —
+which depends on the coupling, the region and the boundary condition and is not computable. This
+lemma discards that dependence in one move, and is what `ContactFloor.haar_centred_le` does on the
+torus.
+
+DERIVED: `2` is the exponent of the square. `c` is the caller's. -/
+theorem variance_le_integral_centred {X : Type*} [MeasurableSpace X]
+    (ν : MeasureTheory.Measure X) [MeasureTheory.IsProbabilityMeasure ν]
+    (f : X → ℝ) (hf : MeasureTheory.Integrable f ν)
+    (hf2 : MeasureTheory.Integrable (fun x => f x ^ 2) ν) (c : ℝ) :
+    (∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2 ≤ ∫ x, (f x - c) ^ 2 ∂ν := by
+  rw [integral_centred_eq ν f hf hf2 c]
+  nlinarith [sq_nonneg ((∫ x, f x ∂ν) - c)]
+
+#print axioms variance_le_integral_centred
+
+/-- **The variance is nonnegative**, being a centred second moment.
+
+`integral_centred_eq` at `c := ∫ f ∂ν` turns the difference into an integral of a square, which
+`MeasureTheory.integral_nonneg` bounds below.
+
+DERIVED: `0` is the concluded lower bound; `2` is the exponent of the square. -/
+theorem variance_nonneg {X : Type*} [MeasurableSpace X]
+    (ν : MeasureTheory.Measure X) [MeasureTheory.IsProbabilityMeasure ν]
+    (f : X → ℝ) (hf : MeasureTheory.Integrable f ν)
+    (hf2 : MeasureTheory.Integrable (fun x => f x ^ 2) ν) :
+    0 ≤ (∫ x, f x ^ 2 ∂ν) - (∫ x, f x ∂ν) ^ 2 := by
+  have h := integral_centred_eq ν f hf hf2 (∫ x, f x ∂ν)
+  have hnn : (0 : ℝ) ≤ ∫ x, (f x - ∫ y, f y ∂ν) ^ 2 ∂ν :=
+    MeasureTheory.integral_nonneg (fun x => sq_nonneg _)
+  nlinarith
+
+#print axioms variance_nonneg
+
+/-- **A continuous real function on a nonempty compact space is bounded.**
+`IsCompact.exists_isMaxOn` at `|f|`; the bound is existential and no value is computed.
+
+DERIVED: no numeral appears in the statement. -/
+theorem exists_bound_of_continuous {X : Type*} [TopologicalSpace X] [CompactSpace X] [Nonempty X]
+    {f : X → ℝ} (hf : Continuous f) : ∃ C : ℝ, ∀ x, |f x| ≤ C := by
+  obtain ⟨x, -, hx⟩ := isCompact_univ.exists_isMaxOn (Set.univ_nonempty)
+    (Continuous.continuousOn (continuous_abs.comp hf))
+  exact ⟨|f x|, fun g => hx (Set.mem_univ g)⟩
+
+#print axioms exists_bound_of_continuous
 
 
 /-- `0 < ∫ W·(O - k)·(O∘Θ - k)` when the glued half-integral takes two different values, at

@@ -271,6 +271,24 @@ theorem clay_gap_of_lambdaTwo {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 #print axioms clay_gap_of_lambdaTwo
 
+/-- **A transfer operator's Rayleigh set is always bounded above.**
+
+`Transfer.TransferData.Tq_norm_le` makes `Tq` a norm-contraction, from the `T_contract` field, so
+`SecondEigenvalue.bddAbove_rayleighSet_of_norm_le` applies at every `V`.
+
+So the `hbdd` hypothesis carried by `clay_gap_of_lambdaTwo`, `clay_gap_of_form_decay`,
+`clay_gap_of_two_point_decay` and `gaugeInv_clay_gap_of_state_decay` is not an open assumption on
+this route — it is discharged here, for any transfer data and any submodule.
+
+DERIVED: no numeral occurs; `V` is the caller's. -/
+theorem bddAbove_rayleighSet_Tq {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : TransferData A) (V : Submodule ℝ (GNS D.toReflForm)) :
+    BddAbove (MassGap.SecondEigenvalue.rayleighSet D.Tq V) :=
+  MassGap.SecondEigenvalue.bddAbove_rayleighSet_of_norm_le D.Tq V
+    (MassGap.Transfer.TransferData.Tq_norm_le D)
+
+#print axioms bddAbove_rayleighSet_Tq
+
 /-- **The GNS norm of an iterate IS the reflection form at the iterated representative.**
 
 `HalfLineTransfer.Tq_pow_mk` moves the iterate onto the representative and
@@ -289,6 +307,36 @@ theorem norm_Tq_pow_mk_mul {A : Type*} [AddCommGroup A] [Module ℝ A]
   rw [MassGap.HalfLineTransfer.Tq_pow_mk D n x, GNS.norm_mk_mul_norm_mk]
 
 #print axioms norm_Tq_pow_mk_mul
+
+/-- **A bound on the form at even separations bounds the class's iterates.**
+
+`norm_Tq_pow_mk_mul` and `TransferGap.form_pow_diag` give `‖Tqⁿ [x]‖² = form x (T²ⁿ x)`, so
+`form x (T²ⁿ x) ≤ K · r²ⁿ` gives `‖Tqⁿ [x]‖ ≤ √(max K 0) · rⁿ`. This is how a bound on the
+reflected-shifted state pairing, which is what `GaugeInvariantAlgebra.gaugeInv_form_pow` makes the form,
+becomes the per-vector decay `clay_gap_of_absolute_decay` consumes.
+
+DERIVED: `0` is the lower bound on `r` and the floor taken inside the square root; `2` is the
+doubling of the separation and the exponent of the square. -/
+theorem absolute_decay_of_form_decay {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : TransferData A) (x : A) {K r : ℝ} (hr : 0 ≤ r)
+    (h : ∀ n : ℕ, D.form x ((D.T ^ (2 * n)) x) ≤ K * r ^ (2 * n)) :
+    ∃ K' : ℝ, ∀ n : ℕ, ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖ ≤ K' * r ^ n := by
+  refine ⟨Real.sqrt (max K 0), fun n => ?_⟩
+  have ha0 : 0 ≤ ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖ := norm_nonneg _
+  have hsq : ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖ * ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖
+      ≤ max K 0 * (r ^ n) ^ 2 := by
+    rw [norm_Tq_pow_mk_mul, MassGap.TransferGap.form_pow_diag]
+    calc D.form x ((D.T ^ (2 * n)) x) ≤ K * r ^ (2 * n) := h n
+      _ ≤ max K 0 * r ^ (2 * n) := mul_le_mul_of_nonneg_right (le_max_left _ _) (pow_nonneg hr _)
+      _ = max K 0 * (r ^ n) ^ 2 := by ring
+  calc ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖
+      = Real.sqrt (‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖ * ‖(D.Tq ^ n) (GNS.mk D.toReflForm x)‖) :=
+        (Real.sqrt_mul_self ha0).symm
+    _ ≤ Real.sqrt (max K 0 * (r ^ n) ^ 2) := Real.sqrt_le_sqrt hsq
+    _ = Real.sqrt (max K 0) * r ^ n := by
+        rw [Real.sqrt_mul (le_max_right _ _), Real.sqrt_sq (pow_nonneg hr n)]
+
+#print axioms absolute_decay_of_form_decay
 
 /-- **The Clay spectral statement from decay of the reflection form under translation.**
 
@@ -391,6 +439,32 @@ theorem clay_gap_of_two_point_decay {A : Type*} [AddCommGroup A] [Module ℝ A]
       exact hdec x hx n)
 
 #print axioms clay_gap_of_two_point_decay
+
+/-- **The spectral gap from absolute decay of the transfer iterates, one vector at a time.**
+
+Each vector of `V` may carry its own constant: `‖Tqⁿ y‖ ≤ K_y · ρⁿ`. That is the form a cluster
+estimate produces, and `SecondEigenvalue.lambdaTwo_le_of_absolute_iterate_bound` turns it into
+`lambdaTwo ≤ ρ` with no lower bound on any pairing, because the constant is chosen after the vector.
+`bddAbove_rayleighSet_Tq` discharges the boundedness unconditionally, and `clay_gap_of_lambdaTwo`
+gives the spectral conclusion: `opT` self-adjoint, spectrum in `{1} ∪ [0, ρ]`, and `1` the top.
+
+DERIVED: `0` is the lower end of the spectrum and the strict lower bound on `ρ`; `1` is the vacuum
+eigenvalue and the strict upper bound on `ρ`. -/
+theorem clay_gap_of_absolute_decay {A : Type*} [AddCommGroup A] [Module ℝ A]
+    (D : TransferData A) (V : Submodule ℝ (GNS D.toReflForm))
+    (hV : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 → y ∈ V)
+    (hne : (MassGap.SecondEigenvalue.rayleighSet D.Tq V).Nonempty)
+    {ρ : ℝ} (hρ : 0 < ρ) (h1 : ρ < 1) (hP : PositiveTransfer D)
+    (hdec : ∀ y ∈ V, ∃ K : ℝ, ∀ n : ℕ, ‖(D.Tq ^ n) y‖ ≤ K * ρ ^ n) :
+    IsSelfAdjoint (opT D)
+      ∧ 0 < -Real.log ρ
+      ∧ spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log ρ)))
+      ∧ IsGreatest (spectrum ℝ (opT D)) 1 :=
+  clay_gap_of_lambdaTwo D V hV (bddAbove_rayleighSet_Tq D V) hρ h1 hP
+    (MassGap.SecondEigenvalue.lambdaTwo_le_of_absolute_iterate_bound D.Tq D.Tq_isSymmetric V hne
+      hρ.le hdec)
+
+#print axioms clay_gap_of_absolute_decay
 
 /-- **The Clay spectral statement from decay of the state's reflected two-point function.**
 
@@ -579,6 +653,81 @@ noncomputable def wilsonMixCubeData (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : 
 
 #print axioms wilsonMixCubeData
 
+/-- **The gauge-invariant transfer data at the free-boundary limit state.**
+
+`wilsonMixCubeData` above is the same construction on the full half-space algebra;
+`GaugeInvariantAlgebra.gaugeInvTransferData` takes the same three state facts and lands on
+`gaugeInvHalfSpaceAlg`, the observables invariant under a local gauge transformation. That is the
+algebra the physical Hilbert space is built from, so this is the data the mass-gap statement should
+be read on.
+
+The three facts are produced from `htend` exactly as `wilsonMixCubeData` produces them:
+reflection invariance about the plane `2p` from `wilson_reflInvariant_of_tendsto`, reflection
+positivity from `wilson_reflPositive_even_of_tendsto`, and shift invariance from
+`wilson_nu_T_of_tendsto` — the last DERIVED from reflection invariance about two adjacent planes
+rather than assumed.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`; `1` is the
+all-identity boundary configuration `htend` is stated at and the Wilson density's vanishing value;
+`2` is the doubling in the reflection plane and the density's ceiling. All are inherited. -/
+noncomputable def wilsonGaugeInvMixCubeData (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+      Filter.Tendsto (fun n => stateFree (φ := MassGap.WilsonAction.wilsonDensity)
+          MassGap.WilsonAction.measurable_wilsonDensity
+          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+          (MassGap.WilsonAction.wilsonDensity_le_two hN) β (mixCube τ p n) 1 f)
+        Filter.atTop (nhds (ν f))) :
+    TransferData ↥(MassGap.GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg
+      (G := MassGap.SUN.SU N) τ p) :=
+  MassGap.GaugeInvariantAlgebra.gaugeInvTransferData τ p ν
+    (wilson_reflInvariant_of_tendsto τ (2 * p) hN β ν Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend))
+    (wilson_reflPositive_even_of_tendsto τ p hN β 1 ν Filter.atTop le_rfl
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend))
+    (wilson_nu_T_of_tendsto τ p hN β ν Filter.atTop Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend)
+      (tendsto_symCube_odd_of_mixCube τ p hN β ν htend))
+
+#print axioms wilsonGaugeInvMixCubeData
+
+/-- **The gauge-invariant spectral statement from `GapAt` directly.**
+
+`wilson_clay_gap_of_gapAt` on the full half-space algebra, restated on
+`GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg`. `GaugeInvariantAlgebra.positiveTransfer_gaugeInv`
+carries `PositiveTransfer` across, so the only hypotheses are the thermodynamic limit `htend` and the
+gap `hg` at the gauge-invariant data.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`, the lower end of
+`hβ` and `hr`, and the bottom of the spectrum; `1` is the all-identity boundary configuration, the
+vacuum eigenvalue and the contraction threshold; `2` is the doubling in the reflection plane. -/
+theorem wilson_gaugeInv_clay_gap_of_gapAt (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+      Filter.Tendsto (fun n => stateFree (φ := MassGap.WilsonAction.wilsonDensity)
+          MassGap.WilsonAction.measurable_wilsonDensity
+          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+          (MassGap.WilsonAction.wilsonDensity_le_two hN) β (mixCube τ p n) 1 f)
+        Filter.atTop (nhds (ν f)))
+    {r : ℝ} (hr : 0 < r) (h1 : r < 1)
+    (hg : MassGap.TransferGap.GapAt (wilsonGaugeInvMixCubeData τ p hN β ν htend) r) :
+    IsSelfAdjoint (opT (wilsonGaugeInvMixCubeData τ p hN β ν htend))
+      ∧ 0 < -Real.log r
+      ∧ spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN β ν htend))
+          ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log r)))
+      ∧ IsGreatest (spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN β ν htend))) 1 :=
+  gaugeInv_clay_gap_of_gapAt τ p ν
+    (wilson_reflInvariant_of_tendsto τ (2 * p) hN β ν Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend))
+    (wilson_reflPositive_even_of_tendsto τ p hN β 1 ν Filter.atTop le_rfl
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend))
+    (wilson_nu_T_of_tendsto τ p hN β ν Filter.atTop Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν htend)
+      (tendsto_symCube_odd_of_mixCube τ p hN β ν htend))
+    (wilson_positiveTransfer_of_mixCube_limit τ p hN hβ ν htend) hr h1 hg
+
+#print axioms wilson_gaugeInv_clay_gap_of_gapAt
+
 /-- **The mass gap for `SU(N)` Wilson theory on `ℤ⁴`, from one quantitative input.**
 
 `hβ` and `htend` are the thermodynamic limit: convergence of the free-boundary states along one
@@ -725,6 +874,307 @@ theorem wilson_htend_at_zero_coupling (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) :
 
 #print axioms wilson_htend_at_zero_coupling
 
+/-- **A DLR state that is a limit of the FREE-boundary family — at every coupling.**
+
+Two unconditional facts compose. `DLRLimit.exists_limit_state` gives a subsequential limit of the
+cube family by weak-\* compactness, with no coupling restriction;
+`ReflectionHalfSpace.eventually_stateFree_spec_eq` makes the finite-volume states satisfy the DLR
+consistency at every interior region for all large boxes, so `DLRLimit.isDLR_of_tendsto` makes the
+limit a DLR state.
+
+**Why this is new.** DLR states previously came only from the FIXED-boundary family, through
+`GibbsSpec.wilson_dlr_consistent` and `DLRLimit.exists_infinite_volume_gibbs_state`. Reflection
+positivity is proved for the FREE-boundary family, which is what the transfer construction consumes.
+The only declaration relating the two, `WilsonState.stateFree_eq_spec_at_zero_coupling`, holds at
+coupling zero — which is why `wilson_htend_at_zero_coupling` above has no analogue elsewhere. This
+gives a DLR state on the free side directly, at every real coupling.
+
+**What it does not give.** The limit is subsequential and may depend on the boundary configuration
+`ω` and on the ultrafilter. `DLRLimit.limits_eq_of_unique_dlr` needs uniqueness of the DLR state to
+identify two such limits, `WilsonDLR.dlr_unique_at_zero_eq` supplies uniqueness only at coupling
+zero, and no Dobrushin-style machinery exists in the tree. That is the open input, and it is what
+fails at a phase transition.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN` and the lower end of
+the bound on an observable; `1` is the identity at which the Wilson density vanishes; `2` is the
+density's ceiling and the reflection plane's spacing. -/
+theorem exists_dlr_limit_of_free_family (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
+    ∃ (u : Ultrafilter ℕ) (ν : MassGap.DLRLimit.State
+        (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))),
+      (u : Filter ℕ) ≤ Filter.atTop
+      ∧ (∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+          Filter.Tendsto (fun n => MassGap.ReflectionHalfSpace.stateFree
+              MassGap.WilsonAction.measurable_wilsonDensity
+              (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+              (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+              (MassGap.ReflectionHalfSpace.mixCube τ p n) ω f)
+            (u : Filter ℕ) (nhds (ν f)))
+      ∧ MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM
+          (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+          (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+          (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N))) ν := by
+  obtain ⟨u, ν, hle, htend⟩ := MassGap.DLRLimit.exists_limit_state Filter.atTop
+    (fun n => MassGap.ReflectionHalfSpace.stateFree
+      MassGap.WilsonAction.measurable_wilsonDensity
+      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+      (MassGap.ReflectionHalfSpace.mixCube τ p n) ω)
+  refine ⟨u, ν, hle, htend, ?_⟩
+  refine MassGap.DLRLimit.isDLR_of_tendsto _ ν htend ?_
+  intro V f
+  obtain ⟨C₀, hC₀⟩ := MassGap.InfiniteLattice.bounded_of_continuous f.continuous
+  have hC₀0 : (0 : ℝ) ≤ C₀ :=
+    le_trans (abs_nonneg (f (fun _ => (1 : MassGap.SUN.SU N)))) (hC₀ _)
+  refine Filter.Eventually.filter_mono hle ?_
+  exact MassGap.ReflectionHalfSpace.eventually_stateFree_spec_eq
+    MassGap.WilsonAction.measurable_wilsonDensity
+    (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+    (MassGap.WilsonAction.wilsonDensity_le_two hN)
+    (MassGap.WilsonAction.wilsonDensity_one hN) β τ p V ω f _
+    (fun ω' => MassGap.WilsonDLR.specCM_apply _ _ _ β _ V f ω') hC₀0 hC₀
+
+#print axioms exists_dlr_limit_of_free_family
+
+/-- **Uniqueness of the DLR state gives convergence of the free family along `atTop`.**
+
+`DLRLimit.tendsto_of_unique_dlr` upgrades an ultrafilter limit to convergence along the filter
+itself, given the finite-volume consistency and uniqueness. **Before the free-boundary consistency
+existed this could not be applied to the free family at all** — it takes that consistency as a
+hypothesis, and only the fixed-boundary family had one. It now applies, so uniqueness alone gives
+convergence along `atTop`.
+
+**Why that is the whole of the remaining input.** `ReflectionHalfSpace.tendsto_symCube_even_of_mixCube`
+and its odd counterpart extract the two cube families from convergence of the interleaved family
+along `atTop`, and `wilson_positiveTransfer_of_common_subsequential_limit` then produces
+`PositiveTransfer` together with the reflection invariance and translation invariance the transfer
+data needs. So uniqueness feeds the whole of that chain.
+
+⚠ AND THE INTERLEAVING DOES NOT AVOID UNIQUENESS, which is worth stating because it looks as though
+it might. A single ultrafilter limit of the interleaved family gives only ONE of the two
+subsequences: an ultrafilter contains the evens or the odds, not both, so the comap along the other
+is the trivial filter. Convergence along `atTop` is what yields both, and that is what uniqueness
+buys.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`; `1` is the
+all-identity boundary configuration and the identity at which the Wilson density vanishes; `2` is the
+density's ceiling. -/
+theorem tendsto_free_family_of_unique_dlr (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (huniq : ∀ ν' : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)),
+      MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM
+        (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+        (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+        (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+        (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N))) ν' → ν' = ν) :
+    ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+      Filter.Tendsto (fun n => MassGap.ReflectionHalfSpace.stateFree
+          MassGap.WilsonAction.measurable_wilsonDensity
+          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+          (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+          (MassGap.ReflectionHalfSpace.mixCube τ p n) ω f)
+        Filter.atTop (nhds (ν f)) := by
+  refine MassGap.DLRLimit.tendsto_of_unique_dlr _ ν ?_ huniq
+  intro V f
+  obtain ⟨C₀, hC₀⟩ := MassGap.InfiniteLattice.bounded_of_continuous f.continuous
+  have hC₀0 : (0 : ℝ) ≤ C₀ :=
+    le_trans (abs_nonneg (f (fun _ => (1 : MassGap.SUN.SU N)))) (hC₀ _)
+  exact MassGap.ReflectionHalfSpace.eventually_stateFree_spec_eq
+    MassGap.WilsonAction.measurable_wilsonDensity
+    (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+    (MassGap.WilsonAction.wilsonDensity_le_two hN)
+    (MassGap.WilsonAction.wilsonDensity_one hN) β τ p V ω f _
+    (fun ω' => MassGap.WilsonDLR.specCM_apply _ _ _ β _ V f ω') hC₀0 hC₀
+
+#print axioms tendsto_free_family_of_unique_dlr
+
+/-- **Uniqueness of the DLR state and the gap hypothesis give the Clay spectral statement.**
+
+The composite, with both remaining inputs in one signature. `tendsto_free_family_of_unique_dlr`
+turns `huniq` into convergence of the free-boundary family along `atTop`, which is exactly what
+`wilson_clay_gap_of_gapAt` consumes; `hg` is the gap hypothesis itself.
+
+**What this makes visible.** Everything else on the route is proved. The reflection invariance,
+translation invariance and `PositiveTransfer` that the transfer data needs all follow from that
+convergence, through `ReflectionHalfSpace.tendsto_symCube_even_of_mixCube`, its odd counterpart and
+`wilson_positiveTransfer_of_common_subsequential_limit`. The free-boundary DLR consistency that makes
+`tendsto_of_unique_dlr` applicable at all is `ReflectionHalfSpace.eventually_stateFree_spec_eq`.
+
+**The two inputs, plainly.** `huniq` is uniqueness of the DLR state — `WilsonDLR.dlr_unique_at_zero_eq`
+supplies it at coupling zero and nothing supplies it above, no Dobrushin-style machinery exists here,
+and it is what fails at a phase transition. `DLRLimit.dlr_eq_of_kernel_near_const` reduces it to an
+estimate: that the kernel becomes uniformly constant in its boundary condition as the region grows.
+`hg` is `TransferGap.GapAt`, which is the mass gap's quantitative content and which the
+strong-coupling side would supply.
+
+Neither is proved here, and the composite does not make them smaller — it makes them exact.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`, the lower end of
+`hβ` and `hr`, and the bottom of the spectrum; `1` is the all-identity boundary configuration, the
+vacuum eigenvalue and the contraction threshold; `2` is the reflection plane's spacing. -/
+theorem wilson_clay_gap_of_unique_dlr (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (huniq : ∀ ν' : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)),
+      MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM
+        (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+        (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+        (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+        (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N))) ν' → ν' = ν)
+    {r : ℝ} (hr : 0 < r) (h1 : r < 1)
+    (hg : MassGap.TransferGap.GapAt (wilsonMixCubeData τ p hN β ν
+      (tendsto_free_family_of_unique_dlr τ p hN β 1 ν huniq)) r) :
+    IsSelfAdjoint (opT (wilsonMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν huniq)))
+      ∧ 0 < -Real.log r
+      ∧ spectrum ℝ (opT (wilsonMixCubeData τ p hN β ν
+          (tendsto_free_family_of_unique_dlr τ p hN β 1 ν huniq)))
+          ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log r)))
+      ∧ IsGreatest (spectrum ℝ (opT (wilsonMixCubeData τ p hN β ν
+          (tendsto_free_family_of_unique_dlr τ p hN β 1 ν huniq)))) 1 :=
+  wilson_clay_gap_of_gapAt τ p hN hβ ν
+    (tendsto_free_family_of_unique_dlr τ p hN β 1 ν huniq) hr h1 hg
+
+#print axioms wilson_clay_gap_of_unique_dlr
+
+/-- **Clay from a boundary-decay estimate on the Wilson kernel — no uniqueness hypothesis.**
+
+`DLRLimit.unique_dlr_of_local_kernel_near_const` discharges uniqueness from `hnear`, so no
+uniqueness hypothesis appears. What remains is `hnear`, the gap hypothesis `hg`, and the state `ν`
+with its DLR property `hdlr` — and those last two are never an obstruction, because
+`exists_dlr_limit_of_free_family` produces them at every coupling with no hypothesis at all. They
+stay in the signature rather than being existentially bound only because `hg` mentions `ν`.
+
+**What `hnear` says.** For each observable LOCAL on a finite link set, and each `ε > 0`, there is a
+region whose kernel is uniformly within `ε` of a constant: the boundary condition stops being
+readable off the kernel as the region grows. `WilsonDLR.specCM_apply` rewrites it to
+`GibbsSpec.spec`, which is the finite-volume Wilson expectation with the boundary held fixed outside,
+so the estimate is a statement purely about the lattice measure, with no states, limits or filters in
+it.
+
+⚠ Local, not arbitrary, and that is the correct strength rather than a convenience. A cluster
+expansion shows a FIXED local observable stops reading the boundary once the region covers its
+support; it does not give a bound uniform over all continuous observables. Passing from the local
+ones to all of them is Stone–Weierstrass, already done in `DLRLimit.State.eq_of_eqOn_localObs`.
+
+**This is the genuinely open mathematics.** Nothing in the tree supplies `hnear` at any positive
+coupling. `WilsonDLR.local_kernel_near_const_at_zero` supplies it at coupling zero — there the kernel
+of a local observable is literally constant in the boundary — so the hypotheses are known to be
+jointly satisfiable, and `WilsonDLR.dlr_unique_at_zero_eq` is the corresponding uniqueness. It is
+exactly what fails at a phase transition, so no argument that ignores the coupling can give it.
+Strong coupling is where it would come from.
+
+**And the other input is `hg`.** `TransferGap.GapAt` is the mass gap's quantitative content, and the
+strong-coupling side of this development — `StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow`
+through `GaugeInvariantAlgebra.gaugeInv_form_pow` — is what would produce it. Two estimates at small
+coupling, then, and nothing else that is not already supplied.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`, the lower end of
+`hβ`, `hr` and `ε`, and the bottom of the spectrum; `1` is the all-identity boundary configuration,
+the vacuum eigenvalue and the contraction threshold; `2` is the Wilson density's ceiling. -/
+theorem wilson_clay_gap_of_kernel_near_const (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (hdlr : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM
+      (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+      (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N))) ν)
+    (hnear : ∀ F ∈ MassGap.DLRLimit.localObsAlg (MassGap.SUN.SU N), ∀ ε : ℝ, 0 < ε →
+      ∃ (V : Finset MassGap.GibbsSpec.ILink) (c : ℝ),
+        ∀ ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N),
+          |MassGap.WilsonDLR.specCM
+              (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+              (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+              (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+              (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) V F ω - c| ≤ ε)
+    {r : ℝ} (hr : 0 < r) (h1 : r < 1)
+    (hg : MassGap.TransferGap.GapAt (wilsonMixCubeData τ p hN β ν
+      (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+        (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))) r) :
+    IsSelfAdjoint (opT (wilsonMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+      ∧ 0 < -Real.log r
+      ∧ spectrum ℝ (opT (wilsonMixCubeData τ p hN β ν
+          (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+            (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+          ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log r)))
+      ∧ IsGreatest (spectrum ℝ (opT (wilsonMixCubeData τ p hN β ν
+          (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+            (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))) 1 :=
+  wilson_clay_gap_of_unique_dlr τ p hN hβ ν
+    (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr) hr h1 hg
+
+#print axioms wilson_clay_gap_of_kernel_near_const
+
+/-- **The same two estimates give the gap on the GAUGE-INVARIANT algebra.**
+
+`wilson_clay_gap_of_kernel_near_const` states the spectral conclusion on the full half-space algebra.
+This states it on `GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg`, the observables invariant under a
+local gauge transformation — which is the algebra the physical Hilbert space is built from, so this
+is the form the mass-gap statement should be read in. The hypotheses are identical: the same local
+boundary-decay estimate `hnear`, and a gap hypothesis `hg`, here on the gauge-invariant data.
+
+`GaugeInvariantAlgebra.positiveTransfer_gaugeInv` is what carries `PositiveTransfer` across, so
+nothing beyond `wilson_positiveTransfer_of_mixCube_limit` is needed on that side.
+
+⚠ `hg` is NOT the same hypothesis as the one in `wilson_clay_gap_of_kernel_near_const` — it is
+`GapAt` at the gauge-invariant data, a different transfer operator on a smaller space. Neither
+version implies the other here, and nothing in the tree produces either.
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN`, the lower end of
+`hβ`, `hr` and `ε`, and the bottom of the spectrum; `1` is the all-identity boundary configuration,
+the vacuum eigenvalue and the contraction threshold; `2` is the doubling in the reflection plane and
+the Wilson density's ceiling. -/
+theorem wilson_gaugeInv_clay_gap_of_kernel_near_const (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ}
+    (hβ : 0 ≤ β)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (hdlr : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM
+      (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+      (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N))) ν)
+    (hnear : ∀ F ∈ MassGap.DLRLimit.localObsAlg (MassGap.SUN.SU N), ∀ ε : ℝ, 0 < ε →
+      ∃ (V : Finset MassGap.GibbsSpec.ILink) (c : ℝ),
+        ∀ ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N),
+          |MassGap.WilsonDLR.specCM
+              (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+              (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+              (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+              (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) V F ω - c| ≤ ε)
+    {r : ℝ} (hr : 0 < r) (h1 : r < 1)
+    (hg : MassGap.TransferGap.GapAt (wilsonGaugeInvMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))) r) :
+    IsSelfAdjoint (opT (wilsonGaugeInvMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+      ∧ 0 < -Real.log r
+      ∧ spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+          ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log r)))
+      ∧ IsGreatest (spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN β ν
+        (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))) 1 :=
+  gaugeInv_clay_gap_of_gapAt τ p ν
+    (wilson_reflInvariant_of_tendsto τ (2 * p) hN β ν Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+    (wilson_reflPositive_even_of_tendsto τ p hN β 1 ν Filter.atTop le_rfl
+      (tendsto_symCube_even_of_mixCube τ p hN β ν (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+    (wilson_nu_T_of_tendsto τ p hN β ν Filter.atTop Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN β ν (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr)))
+      (tendsto_symCube_odd_of_mixCube τ p hN β ν (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))))
+    (wilson_positiveTransfer_of_mixCube_limit τ p hN hβ ν (tendsto_free_family_of_unique_dlr τ p hN β 1 ν
+          (MassGap.DLRLimit.unique_dlr_of_local_kernel_near_const hnear hdlr))) hr h1 hg
+
+#print axioms wilson_gaugeInv_clay_gap_of_kernel_near_const
+
 /-- **The chain closed at zero coupling, with no open input.**
 
 Every hypothesis of `wilson_clay_gap_of_gapAt` is discharged here:
@@ -780,6 +1230,58 @@ theorem wilson_clay_gap_at_zero_coupling (τ : Fin 4) (p : ℤ) (hN : N ≠ 0)
       (tendsto_symCube_odd_of_mixCube τ p hN 0 ν htend))
 
 #print axioms wilson_clay_gap_at_zero_coupling
+
+/-- **The gauge-invariant statement holds at coupling zero** — the witness that
+`wilson_gaugeInv_clay_gap_of_kernel_near_const`'s hypotheses can hold together.
+
+`WilsonState.gapAt_zero_at_zero_coupling` gives rate `0` on the full half-space data at `β = 0`,
+`GaugeInvariantAlgebra.gapAt_gaugeInv_of_gapAt` restricts that to the invariant subalgebra — the
+quantifier simply runs over fewer observables — and `TransferGap.gapAt_mono` lifts the rate to any
+`r`. The thermodynamic limit is `wilson_htend_at_zero_coupling`.
+
+⚠ This is a non-vacuity witness, not a mass gap. At `β = 0` the theory is the product Haar measure:
+the rate is `0` because the transfer operator annihilates the vacuum complement outright, and every
+`r` in `(0,1)` works because the conclusion is monotone in `r`. What it establishes is that the
+hypotheses are jointly satisfiable, which is the one thing a conditional theorem cannot say about
+itself. `PowerTail.wilsonCorrAt_at_zero_coupling` makes the zero-coupling read a point mass at lag
+zero, so nothing quantitative should be anchored here.
+
+DERIVED: `4` is the spacetime dimension; `0` is the coupling, the excluded gauge rank in `hN`, the
+lower ends of `hr` and of the spectrum, and the rate the witness is proved at; `1` is the
+all-identity boundary configuration, the vacuum eigenvalue and the contraction threshold; `2` is the
+doubling in the reflection plane. -/
+theorem wilson_gaugeInv_clay_gap_at_zero_coupling (τ : Fin 4) (p : ℤ) (hN : N ≠ 0)
+    {r : ℝ} (hr : 0 < r) (h1 : r < 1) :
+    ∃ (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+      (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+        Filter.Tendsto (fun n => stateFree (φ := MassGap.WilsonAction.wilsonDensity)
+            MassGap.WilsonAction.measurable_wilsonDensity
+            (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+            (MassGap.WilsonAction.wilsonDensity_le_two hN) 0 (mixCube τ p n) 1 f)
+          Filter.atTop (nhds (ν f))),
+      IsSelfAdjoint (opT (wilsonGaugeInvMixCubeData τ p hN 0 ν htend))
+        ∧ 0 < -Real.log r
+        ∧ spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN 0 ν htend))
+            ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log r)))
+        ∧ IsGreatest (spectrum ℝ (opT (wilsonGaugeInvMixCubeData τ p hN 0 ν htend))) 1 := by
+  obtain ⟨ν, hdlr, htend⟩ := wilson_htend_at_zero_coupling τ p hN
+  refine ⟨ν, htend, wilson_gaugeInv_clay_gap_of_gapAt τ p hN le_rfl ν htend hr h1 ?_⟩
+  refine MassGap.TransferGap.gapAt_mono (r₁ := 0) (by simpa using sq_nonneg r) ?_
+  refine MassGap.GaugeInvariantAlgebra.gapAt_gaugeInv_of_gapAt τ p ν _ _ _ ?_
+  exact MassGap.WilsonState.gapAt_zero_at_zero_coupling
+    (MassGap.WilsonAction.continuous_wilsonDensity (N := N))
+    (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+    (MassGap.WilsonAction.wilsonDensity_le_two hN)
+    (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) hdlr τ p
+    (wilson_reflInvariant_of_tendsto τ (2 * p) hN 0 ν Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN 0 ν htend))
+    (wilson_reflPositive_even_of_tendsto τ p hN 0 1 ν Filter.atTop le_rfl
+      (tendsto_symCube_even_of_mixCube τ p hN 0 ν htend))
+    (wilson_nu_T_of_tendsto τ p hN 0 ν Filter.atTop Filter.atTop
+      (tendsto_symCube_even_of_mixCube τ p hN 0 ν htend)
+      (tendsto_symCube_odd_of_mixCube τ p hN 0 ν htend))
+
+#print axioms wilson_gaugeInv_clay_gap_at_zero_coupling
 
 end Wilson
 

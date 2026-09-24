@@ -11,12 +11,24 @@ or a `.`, and is not a file name. That deliberately includes BARE names: the dea
 written without its module prefix, so a dotted-only filter would have missed it, which is exactly how
 it survived the first sweep.
 
-WHAT COUNTS AS DEAD. The name's last component appears NOWHERE in the repo's Lean sources or in `research/code`, as
-a whole word, in any position. Not "is not a declaration" -- structure fields, instance names,
-constructors and local abbreviations are all legitimately cited and none of them parse as top-level
-declarations. Matching on mere presence under-reports (a name surviving only in a comment reads as
-live) and that is the right trade: a gate that cries wolf gets ignored, and this one is meant to be
-believed when it fires.
+WHAT COUNTS AS DEAD, in two tiers. Tier one: the name's last component appears NOWHERE in the repo's
+Lean sources or in `research/code`, as a whole word, in any position. Not "is not a declaration" --
+structure fields, instance names, constructors and local abbreviations are all legitimately cited and
+none of them parse as top-level declarations, so matching on presence is the right shape.
+
+Tier two exists because presence alone was NOT enough. `RefinementLaw.refined_isGreatest` -- a
+word-order swap of the real `isGreatest_refined` -- passed tier one, made live by the very docstring
+that cited it. So a name present in the blob but absent once Lean COMMENTS ARE STRIPPED is reported
+PROSE-ONLY: the repo talks about it and defines nothing by that name. A swapped, misremembered or
+half-renamed Lean name lands here, and that is the commonest way to get one wrong.
+
+Tier two is fatal for `DOCS` and advisory for `OPTIONAL_DOCS`. The working documents are held to
+citing this repo, and a genuine external reference belongs in them as a path, not as a backticked
+name; a parked thread is not held to that.
+
+SCOPE LIMIT, stated so it is not mistaken for coverage: only LEAN comments are stripped. A Python
+name occurring solely in a Python docstring still reads live, because stripping Python prose needs
+`tokenize` and is a separate change with its own controls.
 
 ⛔ IT CANNOT TELL YOU A CLAIM IS TRUE. A live name proves the citation resolves, nothing more. The
 declaration may say something else entirely than the document says it says.
@@ -39,9 +51,29 @@ import sys
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean", "MassGap")
-SCRATCH = os.path.join(os.path.dirname(REPO), "_scratch", "CURRENT")
+#: Where a document may live. The working files are in the repo; `_scratch/CURRENT` is kept in the
+#: search path because a thread may still be parked there.
+DOC_DIRS = [
+    os.path.join(REPO, "research"),
+    os.path.join(os.path.dirname(REPO), "_scratch", "CURRENT"),
+]
 
-DOCS = ["CLAY-GOAL.md", "CLAY-ASSEMBLY-FROM-WHAT-EXISTS.md"]
+#: Documents whose citations must resolve. A name here that is NOT found in any of `DOC_DIRS` FAILS
+#: rather than being skipped: these are tracked files, so an absent one means a move left the gate
+#: reading nothing, which is the one outcome a citation gate must not report as clean.
+DOCS = ["CLAY-CHECKLIST.md", "CLAY-DETAIL.md"]
+
+#: Documents to check if present and to pass over if not. A parked thread is allowed to disappear.
+OPTIONAL_DOCS = ["CLAY-GOAL.md"]
+
+
+def _locate(name: str) -> str | None:
+    """The first directory in `DOC_DIRS` holding `name`, or `None`."""
+    for d in DOC_DIRS:
+        path = os.path.join(d, name)
+        if os.path.exists(path):
+            return path
+    return None
 
 # A backticked token that could be a Lean name. Tactics and prose words are excluded by the
 # `_`-or-`.` requirement below, not here.
@@ -89,6 +121,57 @@ def source_blob() -> str:
     return "\n".join(parts)
 
 
+def strip_lean_comments(src: str) -> str:
+    """`src` with Lean block and line comments removed.
+
+    Lean 4 block comments NEST and `/--` opens one, so this scans with a depth counter rather than
+    regexing: a non-nesting `/-.*?-/` would stop at the first `-/` and leave the tail of an outer
+    comment in the code set, which is the direction that hides a dead name.
+    """
+    out: list[str] = []
+    i, depth, n = 0, 0, len(src)
+    while i < n:
+        if src.startswith("/-", i):
+            depth += 1
+            i += 2
+        elif src.startswith("-/", i) and depth:
+            depth -= 1
+            i += 2
+        elif depth:
+            i += 1
+        else:
+            out.append(src[i])
+            i += 1
+    return re.sub(r"--[^\n]*", "", "".join(out))
+
+
+def code_blob() -> str:
+    """`source_blob()` with Lean comments stripped -- what the repo DEFINES, not what it discusses.
+
+    Python is passed through unchanged; see the module docstring's scope limit.
+    """
+    parts = []
+    for fn in sorted(os.listdir(LEAN)):
+        if fn.endswith(".lean"):
+            with open(os.path.join(LEAN, fn), encoding="utf-8", errors="replace") as fh:
+                parts.append(strip_lean_comments(fh.read()))
+    root = os.path.join(os.path.dirname(LEAN), "MassGap.lean")
+    if os.path.exists(root):
+        with open(root, encoding="utf-8", errors="replace") as fh:
+            parts.append(strip_lean_comments(fh.read()))
+    code = os.path.join(REPO, "research", "code")
+    for dirpath, _dirnames, filenames in os.walk(code):
+        if "__pycache__" in dirpath:
+            continue
+        for fn in sorted(filenames):
+            if fn.endswith(".py"):
+                with open(os.path.join(dirpath, fn), encoding="utf-8",
+                          errors="replace") as fh:
+                    parts.append(fh.read())
+                parts.append(fn[:-3])
+    return "\n".join(parts)
+
+
 def live_words(blob: str) -> set[str]:
     """Every identifier the repo defines, Greek starts included.
 
@@ -112,17 +195,28 @@ def main() -> int:
         return 2
     blob = source_blob()
     words = live_words(blob)
+    code_words = live_words(code_blob())
     modules = {fn[:-5] for fn in os.listdir(LEAN) if fn.endswith(".lean")}
 
     total = 0
-    for name in DOCS:
-        path = os.path.join(SCRATCH, name)
-        if not os.path.exists(path):
-            print(f"  (absent, skipped: {name})")
+    missing = [n for n in DOCS if _locate(n) is None]
+    if missing:
+        for n in missing:
+            print(f"  REQUIRED DOCUMENT NOT FOUND: {n}")
+        print(f"\n{len(missing)} required document(s) missing. A move that leaves this gate reading "
+              f"nothing is the one outcome it must not report as clean; searched "
+              f"{', '.join(DOC_DIRS)}.")
+        return 1
+
+    for name in DOCS + OPTIONAL_DOCS:
+        path = _locate(name)
+        if path is None:
+            print(f"  (optional, absent: {name})")
             continue
         with open(path, encoding="utf-8", errors="replace") as fh:
             lines = fh.read().splitlines()
         dead: dict[str, list[int]] = {}
+        prose: dict[str, list[int]] = {}
         for ln, line in enumerate(lines, 1):
             for tok in TOKEN.findall(line):
                 if tok.lower() in NOT_A_NAME:
@@ -137,18 +231,29 @@ def main() -> int:
                     continue
                 if last not in words:
                     dead.setdefault(tok, []).append(ln)
+                elif last not in code_words:
+                    prose.setdefault(tok, []).append(ln)
         if dead:
             print(f"\n{name}: {len(dead)} name(s) cited but absent from the Lean sources")
             for tok, lns in sorted(dead.items()):
                 where = ", ".join(str(x) for x in lns[:6])
                 print(f"    {tok}   (line {where})")
-        else:
+        if prose:
+            verdict = "PROSE-ONLY" if name in DOCS else "prose-only (advisory)"
+            print(f"\n{name}: {len(prose)} name(s) {verdict} -- the repo discusses them and "
+                  "defines nothing by that name")
+            for tok, lns in sorted(prose.items()):
+                where = ", ".join(str(x) for x in lns[:6])
+                print(f"    {tok}   (line {where})")
+        if not dead and not prose:
             print(f"{name}: every cited name resolves.")
-        total += len(dead)
+        total += len(dead) + (len(prose) if name in DOCS else 0)
 
     if total:
-        print(f"\n{total} dead citation(s). A renamed declaration leaves the document pointing at "
-              "nothing; repair the citation or delete the claim.")
+        print(f"\n{total} unresolved citation(s). A renamed declaration leaves the document "
+              "pointing at nothing; repair the citation or delete the claim. A PROSE-ONLY name is "
+              "usually a word-order swap of a real one -- read the declaration before renaming it "
+              "back. If it names something outside this repo, write it as a path.")
         return 1
     return 0
 

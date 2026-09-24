@@ -3786,6 +3786,44 @@ def CoreResummation (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
         * ∑ F ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ F)
 
 open scoped Classical in
+/-- **The resummation identity for a pair of plaquette FAMILIES.**
+
+`CoreResummation` is the same statement for two single plaquettes: the reach-filtered sum of
+`pairTerm` equals a sum over cores of `pairTerm` times the outside partition functions squared. This
+replaces `pairTerm` by `pairTermF` and the two-point reach condition by the one
+`bridging_sum_eq_core_sumF` proves the identity for: every plaquette of `Ao ∪ Bo` reachable from a
+base point `a`, within the configuration together with `Ao ∪ Bo`.
+
+That is not the condition `wilsonCorrConnF_eq_bridging_sumF` produces. That one filters on
+`∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b` — SOME plaquette of `Bo` reachable
+from SOME plaquette of `Ao`, not every plaquette reachable from one base point. The two coincide for
+single plaquettes, where `Ao ∪ Bo` is two points, which is why `coreResummation_holds` composes
+directly and this one does not. `reach_filter_iff_of_connected` supplies the join: the filters are
+equal whenever each anchor family is internally touch-connected, which is the hypothesis
+`wilsonCorrConnF_eq_bridging_sumF` already imposes on `Ao`, plus its mirror for `Bo`.
+
+Why it is wanted. `wilsonCorrConn_abs_le_of_coreResummation` is generic in the core family — it takes
+`cores` and `core` as arguments — but its conclusion is fixed to the single-plaquette
+`wilsonCorrConn` and to `pairTerm`, so the family case cannot reuse it.
+`coreResummationF_holds` proves this predicate in one line over `bridging_sum_eq_core_sumF`;
+`wilsonCorrConnF_abs_le_of_coreResummationF` is the matching bound step; and
+`wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow` composes them with `corePairsF_sum_le`, so the
+strong-coupling estimate reaches products of plaquette observables rather than single ones.
+
+DERIVED: no numeral occurs. `a`, `Ao`, `Bo`, `β`, `cores` and `core` are the caller's. -/
+def CoreResummationF (bd : Pq → List (Lk × Bool)) (a : Pq) (Ao Bo : Finset Pq) (β : ℝ)
+    (cores : Finset (Finset Pq × Finset Pq)) (core : Finset Pq × Finset Pq → Finset Pq) : Prop :=
+  ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+      (fun q => ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p),
+    pairTermF (Nc := Nc) bd Ao Bo β q
+  = ∑ c ∈ cores, pairTermF (Nc := Nc) bd Ao Bo β c
+      * ((∑ E ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ E)
+        * ∑ F ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ F)
+
+#print axioms CoreResummationF
+
+
+open scoped Classical in
 /-- **A bound on the cores alone bounds the connected correlation.** Given `Nc ≠ 0`, `p₀ ≠ pd`,
 `0 ≤ β`, the integrability condition, a `CoreResummation` at `cores` and `core`, and
 
@@ -4557,6 +4595,64 @@ theorem reach_mono_crs (bd : Pq → List (Lk × Bool)) {V W : Finset Pq} (hVW : 
   | tail _ hstep ih => exact ih.tail ⟨hVW hstep.1, hVW hstep.2.1, hstep.2.2⟩
 
 #print axioms reach_mono_crs
+
+/-- **`Reach` is symmetric.** `Touch` is symmetric — `touch_symm`, two plaquettes sharing a link —
+and the ambient membership conditions are symmetric in the two endpoints, so the step relation is
+symmetric and its reflexive-transitive closure inherits that.
+
+DERIVED: no numeral occurs. -/
+theorem reach_symm {bd : Pq → List (Lk × Bool)} {V : Finset Pq} {a b : Pq}
+    (h : Reach bd V a b) : Reach bd V b a := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | tail _ hstep ih =>
+      exact Relation.ReflTransGen.head ⟨hstep.2.1, hstep.1, touch_symm hstep.2.2⟩ ih
+
+#print axioms reach_symm
+
+/-- **The two reach filters agree when both anchor families are internally connected.**
+
+This is the join the family case was missing. `wilsonCorrConnF_eq_bridging_sumF` expresses
+`wilsonCorrConnF` as a sum filtered on *some* plaquette of `Bo` being reachable from *some*
+plaquette of `Ao`; `bridging_sum_eq_core_sumF` resums the sum filtered on *every* plaquette of
+`Ao ∪ Bo` being reachable from the single base point `a`. Those are different conditions, and
+without this lemma the two do not compose.
+
+They agree under the hypothesis `wilsonCorrConnF_eq_bridging_sumF` already imposes on `Ao` —
+internal touch-connectedness — together with its mirror for `Bo`. Backwards is immediate: `a ∈ Ao`
+and `b ∈ Bo` are the witnesses. Forwards is the chain `a → a' → b' → b → p`, whose middle link is
+the existential's witness and whose last two links need `reach_symm`. A connected family is exactly
+what a Wilson loop is, so this asks nothing the intended callers do not already satisfy.
+
+It is invisible in the single-plaquette case: there `Ao ∪ Bo` is two points, both conditions read
+`Reach bd V p₀ pd`, and `coreResummation_holds` composes without any of this.
+
+DERIVED: no numeral occurs. `Ao`, `Bo`, `a`, `b` and `q` are the caller's. -/
+theorem reach_filter_iff_of_connected (bd : Pq → List (Lk × Bool)) {Ao Bo : Finset Pq} {a b : Pq}
+    (ha : a ∈ Ao) (hb : b ∈ Bo)
+    (hconnA : ∀ p ∈ Ao, Reach bd Ao a p) (hconnB : ∀ p ∈ Bo, Reach bd Bo b p)
+    (q : Finset Pq × Finset Pq) :
+    (∃ b' ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b')
+      ↔ ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p := by
+  have hAV : Ao ⊆ q.1 ∪ q.2 ∪ (Ao ∪ Bo) :=
+    fun x hx => Finset.mem_union_right _ (Finset.mem_union_left _ hx)
+  have hBV : Bo ⊆ q.1 ∪ q.2 ∪ (Ao ∪ Bo) :=
+    fun x hx => Finset.mem_union_right _ (Finset.mem_union_right _ hx)
+  constructor
+  · rintro ⟨b', hb', a', ha', hr⟩ p hp
+    rcases Finset.mem_union.mp hp with h | h
+    · exact reach_mono_crs bd hAV (hconnA p h)
+    · have h1 : Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a a' :=
+        reach_mono_crs bd hAV (hconnA a' ha')
+      have h2 : Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) b' b :=
+        reach_symm (reach_mono_crs bd hBV (hconnB b' hb'))
+      have h3 : Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) b p :=
+        reach_mono_crs bd hBV (hconnB p h)
+      exact ((h1.trans hr).trans h2).trans h3
+  · intro h
+    exact ⟨b, hb, a, ha, h b (Finset.mem_union_right _ hb)⟩
+
+#print axioms reach_filter_iff_of_connected
 
 open scoped Classical in
 /-- **`compOf bd (compOf bd V a) a = compOf bd V a`.** A reach chain from `a` inside `V` never leaves
@@ -6043,7 +6139,87 @@ theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finse
       rw [hspan]
       exact hfac
 
+/-- **The resummation holds for a pair of plaquette families.** One line over
+`bridging_sum_eq_core_sumF`, exactly as `coreResummation_holds` is over `bridging_sum_eq_core_sum`.
+
+The cores are `corePairsF bd a Ao Bo` and the span `coreSpanF Ao Bo` — the same families
+`corePairsF_sum_le` bounds, so those two meet.
+
+DERIVED: no numeral occurs. -/
+theorem coreResummationF_holds (bd : Pq → List (Lk × Bool)) {a b : Pq} {Ao Bo : Finset Pq}
+    (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b) (β : ℝ) :
+    CoreResummationF (Nc := Nc) bd a Ao Bo β (corePairsF bd a Ao Bo) (coreSpanF Ao Bo) :=
+  bridging_sum_eq_core_sumF bd Ao Bo ha hb hne β
+
+#print axioms coreResummationF_holds
+
 #print axioms bridging_sum_eq_core_sumF
+
+open scoped Classical in
+/-- **A bound on the cores alone bounds the connected correlation of two plaquette FAMILIES.**
+
+The family counterpart of `wilsonCorrConn_abs_le_of_coreResummation`, and the step that closes the
+`Finset` route. Composing `wilsonCorrConnF_eq_bridging_sumF` with a `CoreResummationF` witness needed
+the two reach filters to agree, which `reach_filter_iff_of_connected` now supplies from the internal
+connectedness of `Ao` and `Bo`.
+
+Everything after the rewrite is shared with the single-plaquette proof, because
+`hard_core_outside_sq_div_partition_sq_le` and `one_le_outside_sum_div_partition` are generic in the
+core set: each outside partition sum over the core's complement is at most
+`exp (4 · β · touchDeg bd · |core|)` times the full one, so the squared ratio is absorbed termwise
+and only `hM`'s core sum remains.
+
+With `coreResummationF_holds` for `hres` and `corePairsF_sum_le` for `hM`, this yields the geometric
+`Finset` bound: products of plaquette observables decay in the separation, not only single ones.
+
+DERIVED: `0` is the coupling's lower end, where `hard_core_outside_sq_div_partition_sq_le` needs
+`β` non-negative; `4` is the exponent's constant, transcribed from that lemma, and is the number of
+links on a plaquette, each counted at both ends of the bound; the `1` subtracted in `hint` is the
+Mayer link `e^(-βS) - 1`, which vanishes at zero coupling and is what makes the expansion connected.
+-/
+theorem wilsonCorrConnF_abs_le_of_coreResummationF (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    (Ao Bo : Finset Pq) (hod : Disjoint Ao Bo) {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo)
+    (hconnA : ∀ p ∈ Ao, Reach bd Ao a p) (hconnB : ∀ p ∈ Bo, Reach bd Bo b p)
+    {β : ℝ} (hβ : 0 ≤ β)
+    (hint : ∀ D E : Finset Pq, Integrable
+      (fun U => (∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U)
+        * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+    (cores : Finset (Finset Pq × Finset Pq)) (core : Finset Pq × Finset Pq → Finset Pq)
+    (hres : CoreResummationF (Nc := Nc) bd a Ao Bo β cores core) (M : ℝ)
+    (hM : ∑ c ∈ cores, |pairTermF (Nc := Nc) bd Ao Bo β c|
+            * Real.exp (4 * β * ((touchDeg bd * (core c).card : ℕ) : ℝ)) ≤ M) :
+    |MassGap.WilsonBridge.wilsonCorrConnF (Nc := Nc) bd Ao β Bo| ≤ M := by
+  classical
+  have hZpos : 0 < (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+      (probHaar (MassGap.SUN.SU Nc)) β := wilsonSystem_partition_pos hN bd β
+  have hfil : (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∃ b' ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b')
+      = (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p) :=
+    Finset.filter_congr fun q _ => reach_filter_iff_of_connected bd ha hb hconnA hconnB q
+  rw [wilsonCorrConnF_eq_bridging_sumF hN bd Ao Bo hod ha hconnA β hint, hfil, hres,
+    Finset.sum_div]
+  refine le_trans (Finset.abs_sum_le_sum_abs _ _) (le_trans (Finset.sum_le_sum ?_) hM)
+  intro c _
+  set S := ∑ E ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ E with hSdef
+  set Z := (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+    (probHaar (MassGap.SUN.SU Nc)) β with hZdef
+  have hsq := hard_core_outside_sq_div_partition_sq_le hN bd hβ (core c)
+  have hone := one_le_outside_sum_div_partition hN bd hβ (outsideOf bd (core c))
+  have hSpos : 0 < S := by
+    have h1 : 1 * Z ≤ S := (le_div_iff₀ hZpos).mp hone
+    rw [one_mul] at h1
+    exact lt_of_lt_of_le hZpos h1
+  have hrnn : 0 ≤ S * S / Z ^ 2 := div_nonneg (by positivity) (by positivity)
+  calc |pairTermF (Nc := Nc) bd Ao Bo β c * (S * S) / Z ^ 2|
+      = |pairTermF (Nc := Nc) bd Ao Bo β c| * (S * S / Z ^ 2) := by
+        rw [mul_div_assoc, abs_mul, abs_of_nonneg hrnn]
+    _ ≤ |pairTermF (Nc := Nc) bd Ao Bo β c|
+          * Real.exp (4 * β * ((touchDeg bd * (core c).card : ℕ) : ℝ)) :=
+        mul_le_mul_of_nonneg_left hsq (abs_nonneg _)
+
+#print axioms wilsonCorrConnF_abs_le_of_coreResummationF
 
 open scoped Classical in
 /-- **`coreSpanF Ao Bo c ∈ connSets bd a (coreSpanF Ao Bo c).card`** for an `IsCorePairF` with
@@ -6230,6 +6406,119 @@ theorem core_rate_lt_one_of_small (K : ℕ) :
   exact hβ
 
 #print axioms core_rate_lt_one_of_small
+
+/-- **`coreRate K β` is below any positive threshold at small enough coupling.**
+`core_rate_lt_one_of_small` at threshold `1`; the proof is the same continuity argument, and the
+only change is that `coreRate K 0 = 0` is below `c` by hypothesis rather than by `norm_num`.
+
+Wanted because `sum_pow_touchLvl_le` needs `((touchDeg bd : ℝ) + 1) * ρ < 1`, which is strictly
+stronger than the `coreRate K β < 1` every existing strong-coupling theorem carries: at threshold
+`c = ((touchDeg bd : ℝ) + 1)⁻¹` this supplies it.
+
+DERIVED: `0` is the coupling at which `coreRate` vanishes, and the lower end of the window. -/
+theorem core_rate_lt_of_small (K : ℕ) {c : ℝ} (hc : 0 < c) :
+    ∃ b > 0, ∀ β : ℝ, 0 ≤ β → β < b → coreRate K β < c := by
+  have hlt : coreRate K 0 < c := by rw [coreRate_at_zero]; exact hc
+  have ht : Filter.Tendsto (coreRate K) (nhds 0) (nhds (coreRate K 0)) :=
+    (continuous_coreRate K).continuousAt
+  have hev : ∀ᶠ x in nhds (0 : ℝ), coreRate K x < c := ht.eventually_lt_const hlt
+  obtain ⟨ε, hε, hball⟩ := Metric.eventually_nhds_iff.mp hev
+  refine ⟨ε, hε, fun β hβ0 hβ => hball ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg hβ0]
+  exact hβ
+
+#print axioms core_rate_lt_of_small
+
+open scoped Classical in
+/-- **A geometric factor summed over a family, indexed by touch distance.**
+
+The counting step the diagonal-dominance route needs. Bounding an off-diagonal entry gives a factor
+geometric in the separation; to compare the SUM of those against a diagonal, the number of family
+members at each separation has to be controlled, and that is what this does.
+
+Fibre `S` over its touch distance to `p₀`. The fibre at distance `m` sits inside `ball bd p₀ m` by
+`mem_ball_touchLvl`, so `ball_card_le` bounds its cardinality by `(touchDeg bd + 1) ^ m` and the
+fibre contributes at most `((touchDeg bd + 1) * ρ) ^ m`. Summing over `m` is then geometric, via
+`geom_sum_le_inv_one_sub_asm`.
+
+`hS` asks every member to be reachable from `p₀`. It is needed and not cosmetic: `touchLvl` takes a
+sentinel value off `p₀`'s component, `mem_ball_touchLvl` does not apply there, and the fibre at the
+sentinel has no ball to inject into.
+
+`m₀` is a uniform minimum separation, and the bound is geometric in it — so a family held away from
+the base point contributes geometrically little, which is the shape the dominance test consumes.
+
+DERIVED: `1` is the increment in `touchDeg bd + 1`, the branching count of the touch graph — a
+plaquette's neighbours plus itself, which is what `ball_card_le` counts per step; `1` is also the
+threshold the ratio must lie below for the geometric series to converge. `0` is the lower bound on
+`ρ`, a modulus factor being non-negative. -/
+theorem sum_pow_touchLvl_le (bd : Pq → List (Lk × Bool)) (p₀ : Pq)
+    {ρ : ℝ} (hρ0 : 0 ≤ ρ) (hu1 : ((touchDeg bd : ℝ) + 1) * ρ < 1)
+    (S : Finset Pq) (hS : ∀ q ∈ S, ∃ n, q ∈ ball bd p₀ n)
+    (m₀ : ℕ) (hm₀ : ∀ q ∈ S, m₀ ≤ touchLvl bd p₀ q) :
+    ∑ q ∈ S, ρ ^ (touchLvl bd p₀ q)
+      ≤ (((touchDeg bd : ℝ) + 1) * ρ) ^ m₀ * (1 - ((touchDeg bd : ℝ) + 1) * ρ)⁻¹ := by
+  classical
+  have hu0 : (0 : ℝ) ≤ ((touchDeg bd : ℝ) + 1) * ρ := by positivity
+  have hmaps : ∀ q ∈ S, touchLvl bd p₀ q ∈ S.image (touchLvl bd p₀) :=
+    fun q hq => Finset.mem_image_of_mem _ hq
+  rw [← Finset.sum_fiberwise_of_maps_to hmaps (fun q => ρ ^ (touchLvl bd p₀ q))]
+  have hfib : ∀ m ∈ S.image (touchLvl bd p₀),
+      (∑ q ∈ S.filter (fun q => touchLvl bd p₀ q = m), ρ ^ (touchLvl bd p₀ q))
+        ≤ (((touchDeg bd : ℝ) + 1) * ρ) ^ m := by
+    intro m _
+    have hconst : ∀ q ∈ S.filter (fun q => touchLvl bd p₀ q = m),
+        ρ ^ (touchLvl bd p₀ q) = ρ ^ m := by
+      intro q hq; rw [(Finset.mem_filter.mp hq).2]
+    rw [Finset.sum_congr rfl hconst, Finset.sum_const, nsmul_eq_mul]
+    have hsub : S.filter (fun q => touchLvl bd p₀ q = m) ⊆ ball bd p₀ m := by
+      intro q hq
+      obtain ⟨hqS, hqm⟩ := Finset.mem_filter.mp hq
+      have hmem := mem_ball_touchLvl bd p₀ q (hS q hqS)
+      rwa [hqm] at hmem
+    have hcard : ((S.filter (fun q => touchLvl bd p₀ q = m)).card : ℝ)
+        ≤ ((touchDeg bd : ℝ) + 1) ^ m := by
+      have hn : (S.filter (fun q => touchLvl bd p₀ q = m)).card ≤ (touchDeg bd + 1) ^ m :=
+        Nat.le_trans (Finset.card_le_card hsub) (ball_card_le bd p₀ m)
+      calc ((S.filter (fun q => touchLvl bd p₀ q = m)).card : ℝ)
+          ≤ (((touchDeg bd + 1) ^ m : ℕ) : ℝ) := by exact_mod_cast hn
+        _ = ((touchDeg bd : ℝ) + 1) ^ m := by push_cast; ring
+    calc ((S.filter (fun q => touchLvl bd p₀ q = m)).card : ℝ) * ρ ^ m
+        ≤ ((touchDeg bd : ℝ) + 1) ^ m * ρ ^ m :=
+          mul_le_mul_of_nonneg_right hcard (by positivity)
+      _ = (((touchDeg bd : ℝ) + 1) * ρ) ^ m := (mul_pow _ _ m).symm
+  refine le_trans (Finset.sum_le_sum hfib) ?_
+  have hsplit : ∀ m ∈ S.image (touchLvl bd p₀), (((touchDeg bd : ℝ) + 1) * ρ) ^ m
+      = (((touchDeg bd : ℝ) + 1) * ρ) ^ m₀ * (((touchDeg bd : ℝ) + 1) * ρ) ^ (m - m₀) := by
+    intro m hm
+    obtain ⟨q, hq, rfl⟩ := Finset.mem_image.mp hm
+    have hge := hm₀ q hq
+    rw [← pow_add]
+    congr 1
+    omega
+  rw [Finset.sum_congr rfl hsplit, ← Finset.mul_sum]
+  refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+  have hinj : Set.InjOn (fun m => m - m₀) (S.image (touchLvl bd p₀) : Finset ℕ) := by
+    intro x hx y hy hxy
+    obtain ⟨qx, hqx, rfl⟩ := Finset.mem_image.mp hx
+    obtain ⟨qy, hqy, rfl⟩ := Finset.mem_image.mp hy
+    have h1 := hm₀ qx hqx
+    have h2 := hm₀ qy hqy
+    simp only at hxy
+    omega
+  rw [← Finset.sum_image (g := fun m => m - m₀)
+    (f := fun j => (((touchDeg bd : ℝ) + 1) * ρ) ^ j) hinj]
+  have hsubr : (S.image (touchLvl bd p₀)).image (fun m => m - m₀)
+      ⊆ Finset.range ((S.image (touchLvl bd p₀)).sup id + 1) := by
+    intro j hj
+    obtain ⟨m, hm, rfl⟩ := Finset.mem_image.mp hj
+    have hle : m ≤ (S.image (touchLvl bd p₀)).sup id := Finset.le_sup (f := id) hm
+    exact Finset.mem_range.mpr (Nat.lt_succ_of_le (le_trans (Nat.sub_le m m₀) hle))
+  exact le_trans
+    (Finset.sum_le_sum_of_subset_of_nonneg hsubr (fun _ _ _ => by positivity))
+    (geom_sum_le_inv_one_sub_asm hu0 hu1 _)
+
+#print axioms sum_pow_touchLvl_le
 
 /-- **`128 ≤ corePrefactor K β` for `0 ≤ β`**, at every `K`.
 
@@ -6643,6 +6932,51 @@ theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
         ring
 
 #print axioms corePairsF_sum_le
+
+open scoped Classical in
+/-- **The connected correlation of two plaquette FAMILIES decays geometrically.** The `Finset` route,
+closed.
+
+Three proved pieces meet here and nothing else is needed. `coreResummationF_holds` witnesses the
+resummation at the cores `corePairsF bd a Ao Bo` with span `coreSpanF Ao Bo`;
+`wilsonCorrConnF_abs_le_of_coreResummationF` turns any bound on that core sum into a bound on
+`wilsonCorrConnF`; and `corePairsF_sum_le` is a bound on precisely that core sum. The only glue is
+`a ≠ b`, which `hod` already gives.
+
+`hconnA` and `hconnB` ask each anchor family to be internally touch-connected — what a Wilson loop
+is — and `reach_filter_iff_of_connected` is where they are spent. `hu` and `hlow` are
+`corePairsF_sum_le`'s geometry: the anchors fit inside the separation, and every core spans at least
+it.
+
+The single-plaquette counterpart is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`. The advance is
+that `Ao` and `Bo` are now families, so the estimate reaches products of plaquette observables, which
+is what a gauge-invariant observable of any extent is built from.
+
+DERIVED: `2` is the two anchor plaquettes `a` and `b`, the smallest separation a core can span, so
+the exponent counts spans beyond them; `0` is the coupling's lower end; `1` is `coreRate`'s
+convergence threshold, below which the geometric series is summable. -/
+theorem wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    (Ao Bo : Finset Pq) (hod : Disjoint Ao Bo) {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo)
+    (hconnA : ∀ p ∈ Ao, Reach bd Ao a p) (hconnB : ∀ p ∈ Bo, Reach bd Bo b p)
+    {β : ℝ} (hβ : 0 ≤ β)
+    (hint : ∀ D E : Finset Pq, Integrable
+      (fun U => (∏ p ∈ D, wilsonPlaqObs (N := Nc) bd p U)
+        * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
+    (hr : coreRate (touchDeg bd) β < 1) (k : ℕ)
+    (hu : (Ao ∪ Bo).card ≤ k + 2)
+    (hlow : ∀ c ∈ corePairsF bd a Ao Bo, k + 2 ≤ (coreSpanF Ao Bo c).card) :
+    |MassGap.WilsonBridge.wilsonCorrConnF (Nc := Nc) bd Ao β Bo|
+      ≤ coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+  have hne : a ≠ b := by
+    rintro rfl
+    exact Finset.disjoint_left.mp hod ha hb
+  exact wilsonCorrConnF_abs_le_of_coreResummationF hN bd Ao Bo hod ha hb hconnA hconnB hβ hint
+    (corePairsF bd a Ao Bo) (coreSpanF Ao Bo) (coreResummationF_holds bd ha hb hne β) _
+    (corePairsF_sum_le hN bd ha hβ hr k hu hlow)
+
+#print axioms wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow
 
 open scoped Classical in
 /-- **The core sum, resummed.** Given `Nc ≠ 0`, `0 ≤ β`, `coreRate (touchDeg bd) β < 1` and `hlow`

@@ -249,6 +249,36 @@ theorem refl_pairing_at_zero_eq_zero {G : Type} [Group G] [TopologicalSpace G]
 
 #print axioms refl_pairing_at_zero_eq_zero
 
+/-- **The two measures agree at zero coupling.** `stateFree` sums the action over `iplqAll Λ` — the
+plaquettes with every link inside the box — and `GibbsSpec.spec` sums it over `boundaryPlaqs Λ`,
+those with at least one link inside. `GibbsSpec.boundaryPlaqs_ne_plaqsIn` shows the two sets differ,
+so the measures differ in general and nothing else in the tree relates them. At `β = 0` the action
+drops out of both and each is the same Haar integral over the box.
+
+Why this is the useful direction. `gapAt_of_finite_volume_connected` states its hypothesis with
+`stateFree`, while the DLR machinery is stated with `spec` — including
+`WilsonDLR.dlr_unique_at_zero`, the tree's only uniqueness result, and
+`WilsonDLR.tendsto_specState_at_zero`, its only `atTop` limit. This identification is what lets those
+speak about the free-boundary family, at the one coupling where they exist.
+
+`ActionSplit.cvol ↑Λ μ` and `GibbsSpec.vol μ Λ` are both `Measure.pi (fun _ : ↑Λ => μ)`, and `cvol`
+is a reducible abbreviation, so the two integrals are the same term.
+
+DERIVED: the `0` is the coupling. The `2` is `stateFree`'s own bound on the class function `φ`,
+transcribed from `ReflectionHalfSpace.stateFree`'s signature and consumed by nothing here. `Λ`, `ω`
+and `f` are the caller's. -/
+theorem stateFree_eq_spec_at_zero_coupling {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
+    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
+    MassGap.ReflectionHalfSpace.stateFree hφm hφ0 hφ2 0 Λ ω f
+      = MassGap.GibbsSpec.spec φ 0 Λ (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) (⇑f) ω := by
+  rw [MassGap.WilsonDLR.spec_at_zero φ Λ (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) (⇑f) ω]
+  exact MassGap.ReflectionHalfSpace.specFree_at_zero_coupling (φ := φ) Λ ω _
+
+#print axioms stateFree_eq_spec_at_zero_coupling
+
 /-- `GapAt D 0` for the `TransferData` that `transferData_of_state_facts` builds from a
 zero-coupling DLR state, given the three state facts `hinv`, `hpos` and `hnu`.
 

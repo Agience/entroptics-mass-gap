@@ -32,16 +32,25 @@ Scope.
   `reconstruction_type_is_inhabited` stop typechecking.
 * `reconstructed_vacuum_energy_zero` and `reconstructed_space_nontrivial` are theorems about an
   arbitrary `WightmanQFTData`, so they hold of the constant term as well.
-* No `OSData` is constructed anywhere in the tree. `Measure.continuum_of_family` supplies an index
-  type and none of the other twelve fields; `LatticeYMFamily`'s `os_rp` is nonnegativity of a
-  real-valued function and its `os_euc`/`os_perm` are invariance of that function under a group
-  action instantiated at the finite `Equiv.Perm (Fin 4)`, which are different statements from `os2`,
-  `os1` and `os3`. `ReflectionStrong.wilsonGibbsReflForm` is a symmetric positive-semidefinite
-  bilinear form on a real module with `form_nonneg` proved at every real `β`, and
-  `wilsonGibbsReflForm_vac_norm` gives it the value `1` at the constant observable, but
-  `Transfer.ReflForm` carries no norm, and `ReflectionStrong` shows a one-step time translation is
-  not an endomorphism of the slab algebra, since the shift carries a transverse link out of the
-  module.
+* `MassGap.WilsonOS` constructs `OSData`: `osDataOfReflForm` from any `Transfer.ReflForm` on a real
+  module evaluated on a finite family, and `wilsonOSData` from that at
+  `ReflectionStrong.wilsonGibbsReflForm`, the `SU(N)` Wilson Gibbs reflected pairing on the slab
+  algebra, at every real `β`. `wilsonOSData_S` and `osDataOfReflForm_S` are `rfl` identities giving
+  `D.S c c' = P.form (combo v c) (combo v c')`, so the Schwinger form IS the Wilson form.
+  `wilson_reconstructed_nontrivial` and `wilson_reconstructed_vacuum_energy_zero` carry that datum
+  through the axiom.
+
+  Two features of `Transfer.ReflForm` shape how: it carries no norm, and `ReflectionStrong` shows a
+  one-step time translation is not an endomorphism of the slab algebra, the shift carrying a
+  transverse link out of the module. `osDataOfReflForm` takes `Test` to be the coefficient space
+  `EuclideanSpace ℝ (Fin k)` of a finite family rather than the module, which supplies the norm, and
+  sets `transl` to the identity, which `LatticeTranslNoGo.transl_eq_id_of_finite_order` shows is
+  forced on a lattice. What is still absent is the linking clause above.
+
+  `Measure.continuum_of_family` supplies an index type and none of the other twelve fields;
+  `LatticeYMFamily`'s `os_rp` is nonnegativity of a real-valued function and its `os_euc`/`os_perm`
+  are invariance of that function under a group action instantiated at the finite
+  `Equiv.Perm (Fin 4)`, which are different statements from `os2`, `os1` and `os3`.
 -/
 
 namespace MassGap.WightmanData

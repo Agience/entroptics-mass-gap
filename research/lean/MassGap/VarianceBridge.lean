@@ -3,6 +3,7 @@ import MassGap.ClayNontriviality
 import MassGap.ClayAssembly
 import MassGap.LagTwoEight
 import MassGap.FreeFieldLagTwoSix
+import MassGap.ConfinesSharp
 import MassGap.SubstrateArms
 import MassGap.WilsonOS
 
@@ -339,6 +340,45 @@ theorem clay_nontriviality_of_eventual_variance_floor {G : Type} [Group G] [Topo
 
 #print axioms clay_nontriviality_of_eventual_variance_floor
 
+/-- **Part IV, repaired in the form the bridge was for.**
+`clay_nontriviality_of_eventual_variance_floor` asks the caller for the floor `c` outright, so it
+never mentions the torus. `ClayNontriviality.clay_nontriviality_of_wilson_bridge` was the form that
+did — compare the variance against `wilsonCorrAt`, which the tree bounds below — and that one is
+vacuous, because it quantifies over every region and the empty region has variance zero. This is the
+bridge form at `atTop`.
+
+`InfiniteVolume.exists_uniform_contact_floor` supplies `c`, so the caller supplies only the
+comparison. The floor is `Real.exp (-(128 * β)) * δ₀`, positive at every `β`, and `0 ≤ β` is
+consumed only there.
+
+What this does not do is discharge `hbridge`. It is still the one hypothesis not instantiated from
+the tree, and it now compares two objects on different lattices — `wilsonCorrAt` on the finite
+periodic torus, the variance on a `Finset ILink` of `ℤ⁴` at a frozen boundary. Restricting to `atTop`
+removes the refutation, not the comparison.
+
+DERIVED: `128` is `StrongCoupling`'s own constant, transcribed through
+`exists_uniform_contact_floor`; `0` is the lower bound on the density, on the coupling, and the
+contact lag in `wilsonCorrAt (ap Λ) β 0`; `2` is the density's upper bound and the square of the
+first moment in the variance; `1` is the unit observable and the normalisation `ν 1 = 1`. -/
+theorem clay_nontriviality_of_eventual_wilson_bridge {G : Type} [Group G] [TopologicalSpace G]
+    [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+    [SecondCountableTopology G] [MeasurableMul₂ G] [MeasurableInv G]
+    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (β : ℝ) (hβ : 0 ≤ β) (μ : MeasureTheory.Measure G) [MeasureTheory.IsProbabilityMeasure μ]
+    (ω₀ : IConf G) (f₀ : C(IConf G, ℝ)) (ap : Finset ILink → ℕ)
+    (hbridge : ∀ᶠ Λ : Finset ILink in atTop,
+      MassGap.wilsonCorrAt (ap Λ) β 0 ≤
+        MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀ Λ (f₀ * f₀)
+          - (MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μ ω₀ Λ f₀) ^ 2) :
+    ∃ ν : State (IConf G),
+      IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 β μ) ν ∧ ν 1 = 1 ∧ ¬ IsPointMass ν := by
+  obtain ⟨δ₀, hδ₀, hfloor⟩ := MassGap.InfiniteVolume.exists_uniform_contact_floor
+  refine clay_nontriviality_of_eventual_variance_floor hφc hφ0 hφ2 β μ ω₀ f₀
+    (Real.exp (-(128 * β)) * δ₀) (mul_pos (Real.exp_pos _) hδ₀) ?_
+  exact hbridge.mono (fun Λ h => le_trans (hfloor (ap Λ) β hβ) h)
+
+#print axioms clay_nontriviality_of_eventual_wilson_bridge
+
 end Repair
 
 /-! ## The four parts in one statement -/
@@ -545,6 +585,89 @@ theorem clay_four_parts_of_lag_two_above_the_cut
     hNsl τ a msl hsl hsl0 βsl ksl v hv hφc hφ0 hφ2 β μG ω₀ f₀ cvar hcvar hvar
 
 #print axioms clay_four_parts_of_lag_two_above_the_cut
+
+/-- **Confinement at an aperture from the sharp linear criterion.**
+
+`ConfinesSharp.confines_extent_six_iff` is an equivalence, at every real coupling:
+
+    c < cosAvgEven ap6 β  ↔  (2c−1)ρ(1) + (1+2c)ρ(2) + (1+c)ρ(3) < (1−c)ρ(0),   c = 3^(−1/4)
+
+with `ρ = wilsonCorrAt 5 (max β 0)`. So confinement at extent six **is** that linear inequality —
+`.mpr` at each coupling, with `ConfinesZero.ap6` as the witness aperture.
+
+**This is the sharp form of the obligation.** The lag-two route is strictly stronger:
+`LagTwoSix.LagTwoRatioSix` asks `ρ(2) ≤ K·ρ(0)` and
+`LagTwoSix.confines_extent_six_of_lag_two_ratio` spends log-convexity to bound `ρ(1)` and `ρ(3)` by
+`ρ(2)`, discarding them. That is a sufficient condition; this is the criterion itself, so stating the
+remaining work this way neither assumes nor loses anything.
+
+DERIVED: `3` is the colour rank inside `c = 3^(−1/4)`, the entropy floor's own; `4` is the root's
+index there; `1`, `2` and the lag indices `0, 1, 2, 3` are positions and coefficients of
+`confines_extent_six_iff`, carried unchanged; `5` is the aperture index, `corrClay` at periodic
+extent six. Nothing is introduced here. -/
+theorem confinesAtAnAperture_of_linear_criterion
+    (h : ∀ β : ℝ,
+      (2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - 1) * MassGap.wilsonCorrAt 5 (max β 0) 1
+          + (1 + 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 2
+          + (1 + (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 3
+        < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 0) :
+    MassGap.ApertureRoute.ConfinesAtAnAperture :=
+  ⟨MassGap.ConfinesZero.ap6, fun β => (MassGap.ConfinesSharp.confines_extent_six_iff β).mpr (h β)⟩
+
+#print axioms confinesAtAnAperture_of_linear_criterion
+
+/-- **THE CLAY STATEMENT FROM THE SHARP CRITERION AND A VARIANCE FLOOR.**
+
+The smallest form of the assembled claim. Parts I and II come from the linear inequality that
+`ConfinesSharp.confines_extent_six_iff` proves EQUIVALENT to confinement at extent six — so this
+hypothesis is exactly what is needed, with no sufficient-condition slack. Part IV comes from the
+eventual variance floor. Part III assumes no hypothesis and is where the cited reconstruction axiom
+enters.
+
+Compare `clay_four_parts_of_lag_two_above_the_cut`, which takes the lag-two ratio bound instead. That
+is a strictly stronger hypothesis: it discards `ρ(1)` and `ρ(3)` by bounding them through
+log-convexity. Both are stated because the lag-two form is the one the refutation probe measures and
+the one the three extents share, while this one is the weakest.
+
+**Scope**, as for `clay_four_parts`: Parts I and II are `SU(3)` in four dimensions, fixed in
+`WilsonBridge.corrClay`'s definition, so the conjunction is an `SU(3)` statement.
+
+DERIVED: every numeral is `clay_four_parts`'s or `confinesAtAnAperture_of_linear_criterion`'s,
+carried unchanged, and this declaration introduces none. `0` — the sign conditions on `msl` and
+`cvar`, the clamp `max β 0`, the contact lag, and the family index pinned to the unit. `1` — the
+offset `ksl + 1`, the unit observable, the normalisation `ν 1 = 1`, and the criterion's coefficients.
+`2` — the lag, the reflection geometry `nsl = 2 * msl`, the density's bound, and the variance's
+square. `3` — the colour rank in `c` and the third lag. `4` — the root index in `c`. `5` — the
+aperture index. -/
+theorem clay_four_parts_of_sharp_criterion
+    (hlin : ∀ β : ℝ,
+      (2 * (3 : ℝ) ^ (-(1 : ℝ) / 4) - 1) * MassGap.wilsonCorrAt 5 (max β 0) 1
+          + (1 + 2 * (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 2
+          + (1 + (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 3
+        < (1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) * MassGap.wilsonCorrAt 5 (max β 0) 0)
+    {dsl nsl Nsl : ℕ} [NeZero nsl] (hNsl : Nsl ≠ 0) (τ : Fin dsl) (a : Fin nsl) (msl : ℕ)
+    (hsl : nsl = 2 * msl) (hsl0 : 0 < msl) (βsl : ℝ) (ksl : ℕ)
+    (v : Fin (ksl + 1) → ↥(MassGap.WilsonOS.slabMod dsl nsl Nsl τ a msl))
+    (hv : v 0 = MassGap.WilsonOS.slabOne dsl nsl Nsl τ a msl)
+    {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+    [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G] [MeasurableMul₂ G]
+    [MeasurableInv G]
+    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
+    (β : ℝ) (μG : MeasureTheory.Measure G) [MeasureTheory.IsProbabilityMeasure μG]
+    (ω₀ : IConf G) (f₀ : C(IConf G, ℝ)) (cvar : ℝ) (hcvar : 0 < cvar)
+    (hvar : ∀ᶠ Λ : Finset ILink in atTop,
+      cvar ≤ MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μG ω₀ Λ (f₀ * f₀)
+        - (MassGap.WilsonDLR.specState hφc hφ0 hφ2 β μG ω₀ Λ f₀) ^ 2) :
+    MassGap.ApertureRoute.FlagshipAt (confinesAtAnAperture_of_linear_criterion hlin)
+    ∧ (Nontrivial (MassGap.WilsonOS.wilsonOSData hNsl τ a msl hsl hsl0 βsl ksl v hv).Test ∧
+        Nontrivial (MassGap.WightmanData.os_reconstruction_wightman
+          (MassGap.WilsonOS.wilsonOSData hNsl τ a msl hsl hsl0 βsl ksl v hv)).Space)
+    ∧ (∃ ν : State (IConf G),
+        IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 β μG) ν ∧ ν 1 = 1 ∧ ¬ IsPointMass ν) :=
+  clay_four_parts (confinesAtAnAperture_of_linear_criterion hlin)
+    hNsl τ a msl hsl hsl0 βsl ksl v hv hφc hφ0 hφ2 β μG ω₀ f₀ cvar hcvar hvar
+
+#print axioms clay_four_parts_of_sharp_criterion
 
 end FourParts
 

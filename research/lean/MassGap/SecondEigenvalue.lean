@@ -174,6 +174,205 @@ theorem norm_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : S
 
 #print axioms norm_le_of_rayleigh_le
 
+/-- **An operator norm bound gives a Rayleigh bound**, the converse of `norm_le_of_rayleigh_le`.
+
+Ordinary Cauchy–Schwarz: `⟪T y, y⟫ ≤ ‖T y‖ · ‖y‖ ≤ Λ ‖y‖ ^ 2`. Note what is NOT needed — no
+symmetry, no invariance of `V`, no non-negativity of the form. Together with
+`norm_le_of_rayleigh_le` this makes the two bounds interchangeable on a submodule where those
+hypotheses do hold, so an estimate may be produced in whichever of the two shapes is convenient.
+
+DERIVED: the exponent `2` is the degree of the norm in a Rayleigh quotient. -/
+theorem rayleigh_le_of_norm_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E) {Λ : ℝ}
+    (hnorm : ∀ y ∈ V, ‖T y‖ ≤ Λ * ‖y‖) {y : E} (hy : y ∈ V) :
+    (inner ℝ (T y) y : ℝ) ≤ Λ * ‖y‖ ^ 2 := by
+  calc (inner ℝ (T y) y : ℝ) ≤ ‖T y‖ * ‖y‖ := real_inner_le_norm _ _
+    _ ≤ (Λ * ‖y‖) * ‖y‖ := mul_le_mul_of_nonneg_right (hnorm y hy) (norm_nonneg _)
+    _ = Λ * ‖y‖ ^ 2 := by ring
+
+#print axioms rayleigh_le_of_norm_le
+
+/-- **`‖T y‖` is log-convex along the orbit**: `‖T y‖ ^ 2 ≤ ‖y‖ · ‖T (T y)‖`, for `T` symmetric.
+
+`⟪T y, T y⟫ = ⟪y, T (T y)⟫` by symmetry, and Cauchy–Schwarz bounds the right side by
+`‖y‖ · ‖T (T y)‖`.
+
+This is the step that lets a MANY-step estimate control a ONE-step one. Iterating it gives
+`‖T y‖ ≤ ‖T ^ (2 ^ k) y‖ ^ (1 / 2 ^ k) · ‖y‖ ^ (1 - 1 / 2 ^ k)`, so a decay bound at large
+separation — which is the shape strong coupling produces, geometric in the separation — bounds the
+single-step Rayleigh quotient, and `lambdaTwo_le_of_norm_le` turns that into the gap. No absolute
+lower bound on the form appears anywhere in that chain, which is the point: the obligation is
+relative.
+
+The iteration itself is not written here; this is its inductive step.
+
+DERIVED: the exponent `2` is the square of the norm, the degree at which Cauchy–Schwarz is applied.
+-/
+theorem norm_map_sq_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (y : E) :
+    ‖T y‖ ^ 2 ≤ ‖y‖ * ‖T (T y)‖ := by
+  have h1 : ‖T y‖ ^ 2 = (inner ℝ y (T (T y)) : ℝ) := by
+    rw [← real_inner_self_eq_norm_sq]
+    exact hT y (T y)
+  rw [h1]
+  exact real_inner_le_norm _ _
+
+#print axioms norm_map_sq_le
+
+/-- **The squaring inequality at an arbitrary power**: `‖T ^ m y‖ ^ 2 ≤ ‖y‖ · ‖T ^ (2 * m) y‖`.
+
+`norm_map_sq_le` is the case `m = 1`, and the general case is that same lemma applied to `T ^ m`,
+which `LinearMap.IsSymmetric.pow` makes symmetric. Composing the operator with itself is `pow_add`,
+and application of a product of endomorphisms is definitional.
+
+DERIVED: the exponent `2` is the square of the norm, and the factor `2` in `2 * m` is the same
+doubling — the lemma compares a power with its double. -/
+theorem norm_pow_sq_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (m : ℕ) (y : E) :
+    ‖(T ^ m) y‖ ^ 2 ≤ ‖y‖ * ‖(T ^ (2 * m)) y‖ := by
+  have h := norm_map_sq_le (T ^ m) (hT.pow m) y
+  have he : (T ^ m) ((T ^ m) y) = (T ^ (2 * m)) y := by
+    rw [two_mul, pow_add]; rfl
+  rwa [he] at h
+
+#print axioms norm_pow_sq_le
+
+/-- **A `2 ^ k`-step bound controls the one-step norm**:
+`‖T y‖ ^ (2 ^ k) ≤ ‖y‖ ^ (2 ^ k - 1) · ‖T ^ (2 ^ k) y‖`.
+
+The dyadic iteration of `norm_pow_sq_le`, by induction on `k`: squaring the inductive hypothesis and
+applying the squaring inequality at `m = 2 ^ k` advances the exponent from `2 ^ k` to `2 ^ (k + 1)`.
+
+**This is the step that lets strong coupling reach the gap without a lower bound.** Suppose the
+`2 ^ k`-step norm decays, `‖T ^ n y‖ ≤ C ρ ^ n ‖y‖` — the shape a geometric correlation estimate
+gives, since `n` is the separation. Then `‖T y‖ ^ (2 ^ k) ≤ C ρ ^ (2 ^ k) ‖y‖ ^ (2 ^ k)`, so
+`‖T y‖ ≤ C ^ (1 / 2 ^ k) ρ ‖y‖`, and letting `k` grow drives the constant to one. `lambdaTwo` is
+then below `ρ` by `lambdaTwo_le_of_norm_le`, and `ClayCapstone.clay_gap_of_lambdaTwo` closes.
+
+Everything in that chain is an upper bound. No absolute lower bound on the form appears, which is
+what distinguishes this route from the Gram and diagonal-dominance one — there the positive diagonal
+is a requirement of the reduction, not of the obligation, and it is where the reflected-pairing
+no-go applies.
+
+The limit `k → ∞` is not taken here; this is the inequality it would be taken in.
+
+DERIVED: `2` is the dyadic base — each step doubles the number of applications of `T`, because the
+inductive step is a squaring; `1` is the single application of `T` on the left, which is the quantity
+being bounded, and the unit subtracted from the exponent of `‖y‖` to account for it. -/
+theorem norm_map_pow_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (y : E) (k : ℕ) :
+    ‖T y‖ ^ (2 ^ k) ≤ ‖y‖ ^ (2 ^ k - 1) * ‖(T ^ (2 ^ k)) y‖ := by
+  induction k with
+  | zero => simp
+  | succ j ih =>
+      have h1 : 1 ≤ 2 ^ j := Nat.one_le_pow _ _ (by norm_num)
+      have h2 : 2 ^ (j + 1) = 2 ^ j * 2 := pow_succ 2 j
+      have hstep := norm_pow_sq_le T hT (2 ^ j) y
+      have hdouble : 2 * 2 ^ j = 2 ^ (j + 1) := by omega
+      rw [hdouble] at hstep
+      calc ‖T y‖ ^ (2 ^ (j + 1)) = (‖T y‖ ^ (2 ^ j)) ^ 2 := by
+            rw [← pow_mul]; congr 1
+        _ ≤ (‖y‖ ^ (2 ^ j - 1) * ‖(T ^ (2 ^ j)) y‖) ^ 2 :=
+            pow_le_pow_left₀ (by positivity) ih 2
+        _ = ‖y‖ ^ ((2 ^ j - 1) * 2) * ‖(T ^ (2 ^ j)) y‖ ^ 2 := by
+            rw [mul_pow, ← pow_mul]
+        _ ≤ ‖y‖ ^ ((2 ^ j - 1) * 2) * (‖y‖ * ‖(T ^ (2 ^ (j + 1))) y‖) :=
+            mul_le_mul_of_nonneg_left hstep (by positivity)
+        _ = ‖y‖ ^ ((2 ^ j - 1) * 2 + 1) * ‖(T ^ (2 ^ (j + 1))) y‖ := by
+            rw [pow_succ]; ring
+        _ = ‖y‖ ^ (2 ^ (j + 1) - 1) * ‖(T ^ (2 ^ (j + 1))) y‖ := by
+            congr 2
+            omega
+
+#print axioms norm_map_pow_le
+
+/-- **A fixed constant cannot hold a geometric comparison open.** If `a ^ (2 ^ k) ≤ C · b ^ (2 ^ k)`
+for every `k`, with `C` not depending on `k`, then `a ≤ b`.
+
+This is the step that washes the constant out. Taking `2 ^ k`-th roots would give
+`a ≤ C ^ (1 / 2 ^ k) · b`, and the root of a fixed constant tends to one — but the statement needs
+no roots and no limit: if `b < a` then `b / a < 1`, and `exists_pow_lt_of_lt_one` produces a power
+below `1 / C` directly, contradicting the hypothesis at that power. Archimedean descent, not
+topology.
+
+DERIVED: `2` is the dyadic base the hypothesis is indexed along, matching `norm_map_pow_le`'s; `1`
+is the multiplicative unit the contradiction is drawn against; `0` is the lower bound on `a` and `b`
+and the strict lower bound on `C`. -/
+theorem le_of_pow_two_pow_le {a b C : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hC : 0 < C)
+    (h : ∀ k : ℕ, a ^ (2 ^ k) ≤ C * b ^ (2 ^ k)) : a ≤ b := by
+  by_contra hcon
+  push_neg at hcon
+  have ha0 : 0 < a := lt_of_le_of_lt hb hcon
+  set r : ℝ := b / a with hr
+  have hr0 : 0 ≤ r := div_nonneg hb ha0.le
+  have hr1 : r < 1 := (div_lt_one ha0).mpr hcon
+  have hba : r * a = b := by rw [hr]; field_simp
+  have hkey : ∀ k : ℕ, 1 ≤ C * r ^ (2 ^ k) := by
+    intro k
+    have hak : (0 : ℝ) < a ^ (2 ^ k) := pow_pos ha0 _
+    have hb' : b ^ (2 ^ k) = r ^ (2 ^ k) * a ^ (2 ^ k) := by rw [← mul_pow, hba]
+    have hh := h k
+    rw [hb'] at hh
+    refine le_of_mul_le_mul_right ?_ hak
+    calc 1 * a ^ (2 ^ k) = a ^ (2 ^ k) := one_mul _
+      _ ≤ C * (r ^ (2 ^ k) * a ^ (2 ^ k)) := hh
+      _ = C * r ^ (2 ^ k) * a ^ (2 ^ k) := by ring
+  have hk2 : ∀ n : ℕ, n ≤ 2 ^ n := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ m ih =>
+        have hm : 1 ≤ 2 ^ m := Nat.one_le_pow _ _ (by norm_num)
+        have hpow : 2 ^ (m + 1) = 2 ^ m + 2 ^ m := by ring
+        omega
+  have hbound : ∀ n : ℕ, 1 ≤ C * r ^ n := by
+    intro n
+    refine le_trans (hkey n) ?_
+    exact mul_le_mul_of_nonneg_left
+      (pow_le_pow_of_le_one hr0 hr1.le (hk2 n)) hC.le
+  obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one (by positivity : (0 : ℝ) < 1 / C) hr1
+  have hlt : C * r ^ n < 1 := by
+    have hmul := mul_lt_mul_of_pos_left hn hC
+    rwa [mul_one_div, div_self hC.ne'] at hmul
+  linarith [hbound n]
+
+#print axioms le_of_pow_two_pow_le
+
+/-- **Geometric decay of the iterates bounds the operator in one step.** If
+`‖T ^ n y‖ ≤ C · ρ ^ n · ‖y‖` at every `n`, then `‖T y‖ ≤ ρ · ‖y‖`.
+
+`norm_map_pow_le` turns the `2 ^ k`-step bound into `‖T y‖ ^ (2 ^ k) ≤ C · (ρ ‖y‖) ^ (2 ^ k)`, and
+`le_of_pow_two_pow_le` washes out `C`.
+
+**This closes the relative route's chain, up to the estimate itself.** A geometric decay bound on the
+iterates — which is what a correlation estimate at growing separation supplies, and it is an UPPER
+bound throughout — now gives `lambdaTwo … ≤ ρ` through `lambdaTwo_le_of_norm_le`, and
+`ClayCapstone.clay_gap_of_lambdaTwo` turns `ρ < 1` into the Clay spectral statement. At no point is a
+lower bound on the form required.
+
+What is not supplied here is `hdec`. The strong-coupling estimates in `StrongCoupling` bound
+connected correlators at separation, not `‖T ^ n y‖` in the GNS space, and no declaration relates
+the two.
+
+DERIVED: `0` is the strict lower bound on `C` and the lower bound on `ρ`; `2` is the dyadic base
+inherited from `norm_map_pow_le`; `1` is the single application of `T` being bounded, and the unit
+subtracted in that lemma's exponent. -/
+theorem norm_le_of_iterate_bound (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) {C ρ : ℝ}
+    (hC : 0 < C) (hρ : 0 ≤ ρ) {y : E}
+    (hdec : ∀ n : ℕ, ‖(T ^ n) y‖ ≤ C * ρ ^ n * ‖y‖) :
+    ‖T y‖ ≤ ρ * ‖y‖ := by
+  refine le_of_pow_two_pow_le (norm_nonneg _) (by positivity) hC (fun k => ?_)
+  refine le_trans (norm_map_pow_le T hT y k) ?_
+  have hone : 1 ≤ 2 ^ k := Nat.one_le_pow _ _ (by norm_num)
+  calc ‖y‖ ^ (2 ^ k - 1) * ‖(T ^ (2 ^ k)) y‖
+      ≤ ‖y‖ ^ (2 ^ k - 1) * (C * ρ ^ (2 ^ k) * ‖y‖) :=
+        mul_le_mul_of_nonneg_left (hdec (2 ^ k)) (by positivity)
+    _ = C * (ρ ^ (2 ^ k) * (‖y‖ ^ (2 ^ k - 1) * ‖y‖)) := by ring
+    _ = C * (ρ ^ (2 ^ k) * ‖y‖ ^ (2 ^ k)) := by
+        congr 2
+        rw [← pow_succ]
+        congr 1
+        omega
+    _ = C * (ρ * ‖y‖) ^ (2 ^ k) := by rw [mul_pow]
+
+#print axioms norm_le_of_iterate_bound
+
 /-- The set `{r | ∃ y ∈ V, y ≠ 0 ∧ r = ⟪T y, y⟫ / ‖y‖ ^ 2}`: the Rayleigh quotients of `T` at the
 nonzero vectors of `V`. It may be empty (when `V` is the zero submodule) and may be unbounded above;
 both are handled by hypotheses on the theorems that use `lambdaTwo`.
@@ -222,6 +421,47 @@ theorem lambdaTwo_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 
 #print axioms lambdaTwo_le_of_rayleigh_le
 
+/-- **An operator norm bound bounds `lambdaTwo`.** `rayleigh_le_of_norm_le` then
+`lambdaTwo_le_of_rayleigh_le`.
+
+This is the form in which the relative route would consume a strong-coupling estimate:
+`ClayCapstone.clay_gap_of_lambdaTwo` takes exactly a `lambdaTwo … ≤ Λ` with `Λ < 1`, and this
+supplies it from a bound on how far the transfer operator contracts, with no absolute lower bound on
+the form anywhere.
+
+DERIVED: no numeral occurs; `Λ` and `V` are the caller's. -/
+theorem lambdaTwo_le_of_norm_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
+    (hne : (rayleighSet T V).Nonempty) {Λ : ℝ}
+    (hnorm : ∀ y ∈ V, ‖T y‖ ≤ Λ * ‖y‖) :
+    lambdaTwo T V ≤ Λ :=
+  lambdaTwo_le_of_rayleigh_le T V hne (fun y hy => rayleigh_le_of_norm_le T V hnorm hy)
+
+#print axioms lambdaTwo_le_of_norm_le
+
+/-- **Geometric decay of the iterates, uniform over `V`, bounds `lambdaTwo`.**
+
+`norm_le_of_iterate_bound` at each `y ∈ V`, then `lambdaTwo_le_of_norm_le`.
+
+This is the interface `ClayCapstone.clay_gap_of_lambdaTwo` consumes: with `ρ < 1` it yields the Clay
+spectral statement. The whole chain from here to the gap is built and axiom-clean, and every step in
+it is an UPPER bound — no lower bound on the reflection form appears anywhere, which is what
+separates this route from the Gram and diagonal-dominance one.
+
+The remaining obligation is `hdec` itself: geometric decay of `‖T ^ n y‖` in the GNS space. The
+strong-coupling estimates bound connected correlators at growing separation, which is the same
+physical statement, but no declaration relates the two objects.
+
+DERIVED: `0` is the strict lower bound on `C` and the lower bound on `ρ`; the numerals in the proof
+are `norm_le_of_iterate_bound`'s. -/
+theorem lambdaTwo_le_of_iterate_bound (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : Submodule ℝ E)
+    (hne : (rayleighSet T V).Nonempty) {C ρ : ℝ} (hC : 0 < C) (hρ : 0 ≤ ρ)
+    (hdec : ∀ y ∈ V, ∀ n : ℕ, ‖(T ^ n) y‖ ≤ C * ρ ^ n * ‖y‖) :
+    lambdaTwo T V ≤ ρ :=
+  lambdaTwo_le_of_norm_le T V hne
+    (fun y hy => norm_le_of_iterate_bound T hT hC hρ (hdec y hy))
+
+#print axioms lambdaTwo_le_of_iterate_bound
+
 /-- If `rayleighSet T V` is bounded above, then `⟪T y, y⟫ ≤ lambdaTwo T V * ‖y‖ ^ 2` at every
 `y ∈ V`. At `y = 0` both sides vanish; otherwise the quotient at `y` belongs to the set, `le_csSup`
 bounds it by the supremum, and multiplying through by the positive `‖y‖ ^ 2` gives the statement.
@@ -244,6 +484,55 @@ theorem rayleigh_le_of_lambdaTwo_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
     exact hle
 
 #print axioms rayleigh_le_of_lambdaTwo_le
+
+/-- **Two forms close at every vector have close subdominant suprema.**
+If `|⟪T₁ y, y⟫ - ⟪T₂ y, y⟫| ≤ d‖y‖²` on `V`, then `|lambdaTwo T₁ V - lambdaTwo T₂ V| ≤ d`.
+
+This is how a bound on a subdominant eigenvalue becomes reachable: the eigenvalue is a SUPREMUM,
+which is hard to bound directly and easy to bound pointwise. `csSup_le` on one side, `le_csSup` on
+the other, and the pointwise hypothesis between them. Nothing here is about transfer operators — it
+is a statement about two suprema of quotients over one index set.
+
+⛔ BOTH OPERATORS ACT ON THE SAME SPACE, and that is a real limit on where this applies. A family of
+`TransferData` indexed by a coupling has a GNS space that varies with the coupling, so the Rayleigh
+suprema at two couplings are suprema over different types and this lemma does not compare them. See
+`ClayCapstone.clay_gap_on_interval`, whose `hlip` is exactly that comparison.
+
+Nonemptiness is stated as `∃ y ∈ V, y ≠ 0` rather than on either `rayleighSet`, because one witness
+serves both: the two sets share `V`, and the quotient is defined at every nonzero vector of it. Both
+`BddAbove`s are load-bearing — `sSup` of a set unbounded above is a junk value on that side.
+
+DERIVED: the exponent `2` is the degree of the norm in a Rayleigh quotient; `0` is the vector
+excluded from the index set, where the quotient is undefined. -/
+theorem lambdaTwo_dist_le (T₁ T₂ : E →ₗ[ℝ] E) (V : Submodule ℝ E)
+    (hne : ∃ y ∈ V, y ≠ 0)
+    (hb₁ : BddAbove (rayleighSet T₁ V)) (hb₂ : BddAbove (rayleighSet T₂ V))
+    {d : ℝ} (hd : ∀ y ∈ V, y ≠ 0 →
+      |(inner ℝ (T₁ y) y : ℝ) - (inner ℝ (T₂ y) y : ℝ)| ≤ d * ‖y‖ ^ 2) :
+    |lambdaTwo T₁ V - lambdaTwo T₂ V| ≤ d := by
+  obtain ⟨w, hwV, hw0⟩ := hne
+  have hstep : ∀ S₁ S₂ : E →ₗ[ℝ] E, BddAbove (rayleighSet S₂ V) →
+      (∀ y ∈ V, y ≠ 0 → (inner ℝ (S₁ y) y : ℝ) - (inner ℝ (S₂ y) y : ℝ) ≤ d * ‖y‖ ^ 2) →
+      lambdaTwo S₁ V ≤ lambdaTwo S₂ V + d := by
+    intro S₁ S₂ hb hle
+    refine csSup_le ⟨_, w, hwV, hw0, rfl⟩ ?_
+    rintro r ⟨y, hyV, hy0, rfl⟩
+    have hn : (0 : ℝ) < ‖y‖ ^ 2 := by
+      have : ‖y‖ ≠ 0 := norm_ne_zero_iff.mpr hy0
+      positivity
+    have h₂ : (inner ℝ (S₂ y) y : ℝ) / ‖y‖ ^ 2 ≤ lambdaTwo S₂ V :=
+      le_csSup hb ⟨y, hyV, hy0, rfl⟩
+    rw [div_le_iff₀ hn] at h₂
+    rw [div_le_iff₀ hn]
+    have hy := hle y hyV hy0
+    nlinarith [h₂, hy, hn]
+  have h₁₂ := hstep T₁ T₂ hb₂ (fun y hy hy0 => (abs_le.mp (hd y hy hy0)).2)
+  have h₂₁ := hstep T₂ T₁ hb₁ (fun y hy hy0 => by
+    have := (abs_le.mp (hd y hy hy0)).1
+    linarith)
+  exact abs_le.mpr ⟨by linarith, by linarith⟩
+
+#print axioms lambdaTwo_dist_le
 
 /-- If the form is nonnegative on `V`, `rayleighSet T V` is bounded above, and `V` contains some
 nonzero `y₀`, then `0 ≤ lambdaTwo T V`. The quotient at `y₀` is nonnegative and lies below the

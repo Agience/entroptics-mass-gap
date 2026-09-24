@@ -195,6 +195,23 @@ theorem State.map_sub (ν : State X) (f g : C(X, ℝ)) : ν (f - g) = ν f - ν 
 
 #print axioms State.map_sub
 
+/-- A state carries a finite sum of observables to the sum of their values.
+
+`State` is a bare structure rather than a bundled `LinearMap`, so Mathlib's `map_sum` does not apply
+to it and this has to be stated. Any argument that expands a state over a finite family needs it —
+a Gram-matrix expansion of a reflected pairing, for instance.
+
+DERIVED: no numeral occurs. -/
+theorem State.map_sum (ν : State X) {ι : Type*} (s : Finset ι) (f : ι → C(X, ℝ)) :
+    ν (∑ i ∈ s, f i) = ∑ i ∈ s, ν (f i) := by
+  classical
+  induction s using Finset.induction with
+  | empty => simpa using ν.map_zero
+  | insert a s ha ih =>
+      rw [Finset.sum_insert ha, ν.map_add, ih, Finset.sum_insert ha]
+
+#print axioms State.map_sum
+
 theorem State.map_neg (ν : State X) (f : C(X, ℝ)) : ν (-f) = -ν f := by
   have h := ν.map_sub 0 f
   rw [zero_sub, ν.map_zero, zero_sub] at h
@@ -694,6 +711,43 @@ theorem le_of_eventually_le {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → 
   ge_of_tendsto (htend f) h
 
 #print axioms le_of_eventually_le
+
+/-- **An upper bound passes to the limit.** `le_of_eventually_le` carries a lower bound; this is the
+other direction, and it is `le_of_tendsto` rather than `ge_of_tendsto`.
+
+DERIVED: no numeral occurs; `c` is the caller's. -/
+theorem ge_of_eventually_ge {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → State X} {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (f : C(X, ℝ)) (c : ℝ) (h : ∀ᶠ i in l, μ i f ≤ c) : ν f ≤ c :=
+  le_of_tendsto (htend f) h
+
+#print axioms ge_of_eventually_ge
+
+/-- **A bound on the modulus passes to the limit.**
+
+This is the shape every strong-coupling estimate has — `|pairing| ≤ constant · rate ^ separation` —
+so it is the form in which a finite-volume decay bound reaches the limiting state. The bound `c`
+must not depend on the index, which is exactly the volume-uniformity the estimates have to supply;
+nothing here checks that, since `c` is a single real.
+
+Split through `abs_le` into the two one-sided bounds rather than routed through a limit lemma for
+`|·|`, so it rests only on `le_of_tendsto` and `ge_of_tendsto`.
+
+DERIVED: no numeral occurs; `c` is the caller's. -/
+theorem abs_le_of_eventually_abs_le {ι : Type*} {l : Filter ι} [l.NeBot] {μ : ι → State X}
+    {ν : State X}
+    (htend : ∀ f : C(X, ℝ), Tendsto (fun i => μ i f) l (𝓝 (ν f)))
+    (f : C(X, ℝ)) (c : ℝ) (h : ∀ᶠ i in l, |μ i f| ≤ c) : |ν f| ≤ c := by
+  rw [abs_le]
+  constructor
+  · refine ge_of_tendsto (htend f) ?_
+    filter_upwards [h] with i hi
+    exact (abs_le.mp hi).1
+  · refine le_of_tendsto (htend f) ?_
+    filter_upwards [h] with i hi
+    exact (abs_le.mp hi).2
+
+#print axioms abs_le_of_eventually_abs_le
 
 /-- `c ≤ ν (f * f) - (ν f) ^ 2` whenever `c ≤ μ i (f * f) - (μ i f) ^ 2` eventually along `l`. The
 variance is built from two convergent sequences by subtraction and squaring, so

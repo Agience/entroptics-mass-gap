@@ -124,6 +124,100 @@ theorem energies_bounded_of_spectral_hypothesis (T : A) {ε Δ : ℝ} (hε : 0 <
   · have hlog : Real.log ε ≤ Real.log x := Real.log_le_log hε h.1
     exact le_max_of_le_right (by linarith)
 
+/-! ### ε restated as a non-membership -/
+
+/-- **A compact set of reals inside `Set.Ici 0` that does not contain `0` has a strictly positive
+lower bound.** Compactness makes the infimum attained, so the bound is a MEMBER of the set: there is
+no constant to choose here, only a minimum to name.
+
+`Aperture.no_interior_transition` is the same minimiser argument on an interval.
+
+The empty case returns `1` and is not slack — the empty set is bounded below by everything and the
+witness still has to be some positive real.
+
+DERIVED: `0` is the excluded point and the lower end of `Set.Ici`; `1` is the empty-case witness,
+where every positive real serves. -/
+theorem exists_pos_lower_bound_of_compact {S : Set ℝ} (hc : IsCompact S)
+    (hpos : S ⊆ Set.Ici 0) (h0 : (0 : ℝ) ∉ S) :
+    ∃ ε : ℝ, 0 < ε ∧ ∀ x ∈ S, ε ≤ x := by
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · exact ⟨1, one_pos, by simp⟩
+  · obtain ⟨m, hmS, hmin⟩ := IsCompact.exists_isMinOn hc hne continuousOn_id
+    refine ⟨m, ?_, fun x hx => by simpa using isMinOn_iff.mp hmin x hx⟩
+    rcases lt_or_eq_of_le (Set.mem_Ici.mp (hpos hmS)) with h | h
+    · exact h
+    · exact absurd (show (0 : ℝ) ∈ S by rw [h]; exact hmS) h0
+
+#print axioms exists_pos_lower_bound_of_compact
+
+/-- **`reconstruct_qm_core`'s spectral hypothesis, assembled from a band and three facts.**
+
+Everything above reads consequences OUT of `hsp`. This puts one together, from the band the transfer
+chain delivers — `GNSCompare.spectrum_opT_subset_of_positiveTransfer_of_rayleigh` gives
+`spectrum ℝ (opT D) ⊆ {1} ∪ Set.Icc (-Λ) Λ` from the Rayleigh ceiling and `PositiveTransfer` — together
+with `hpos`, `h0` and compactness.
+
+`Δ` comes out as `-Real.log Λ`, which `Real.exp_log` returns to `Λ` at the upper endpoint and which
+`gap_pos_of_lt_one` makes positive exactly when `Λ < 1`. So the gap is the band's own width read
+logarithmically; nothing is selected. `Aperture.lean` uses the same `neg_neg`/`Real.exp_log` step.
+
+**THIS IS A RESTATEMENT, NOT PROGRESS ON THE GAP, and the accounting is against it.** In goes one
+obligation and out come three.
+
+* `h0` is equivalent to the thing it replaces. `zero_not_mem_spectrum` derives `h0` FROM `hsp`, so
+  this closes the cycle rather than opening the door: with the band and `hpos` in hand, `hsp`, `h0`
+  and — by `isUnit_of_spectral_hypothesis` and the same `spectrum.mem_iff` rewrite in reverse —
+  `IsUnit T` all say the same thing.
+* `hpos` is open. No declaration in this tree, for any operator, goes from a nonnegative quadratic
+  form to `spectrum ⊆ Set.Ici 0`. `GNSHilbert.re_inner_opT_nonneg` supplies
+  `0 ≤ RCLike.re (inner ℂ x (opT D x))` given `PositiveTransfer D`, and its only consumer reports it
+  as a property rather than feeding it to a spectral lemma. Every declaration wanting spectral
+  positivity takes it as a binder — `RefinementLaw` does so five times.
+* `hc` is open. `spectrum.isCompact` and `spectrum.isClosed` occur nowhere in this tree, so
+  compactness is a hypothesis here. A caller holding closedness could get it from
+  `IsCompact.of_isClosed_subset` against `GNSHilbert.spectrum_opT_subset_unit_interval`.
+
+What it buys is shape: an existential over `ε`, entangled with `Δ`, becomes one non-membership that
+can be attacked directly — by a lower bound `c‖x‖ ≤ ‖opT D x‖`, or by invertibility read off the
+transfer structure. Either would have to avoid routing back through `hsp`.
+
+**The sharp edge.** If `opT D` is ever shown compact as an operator on an infinite-dimensional
+`H D.toReflForm`, `spectral_hypothesis_fails_for_compact` says no `ε` exists, `h0` is false, and this
+theorem is vacuous rather than merely unused. Nothing in the tree decides that.
+
+DERIVED: `0` is the excluded spectral point and the lower end of `Set.Ici`; `1` is the spectral value
+the singleton branch names, `opT`'s vacuum eigenvalue. `Λ` is the caller's and `ε` is the minimum's;
+no numeral is chosen. -/
+theorem spectral_hypothesis_of_band (T : A) {Λ : ℝ} (hΛ : 0 < Λ)
+    (hband : spectrum ℝ T ⊆ {1} ∪ Set.Icc (-Λ) Λ)
+    (hpos : spectrum ℝ T ⊆ Set.Ici 0) (h0 : (0 : ℝ) ∉ spectrum ℝ T)
+    (hc : IsCompact (spectrum ℝ T)) :
+    ∃ ε : ℝ, 0 < ε ∧
+      spectrum ℝ T ⊆ {1} ∪ Set.Icc ε (Real.exp (-(-Real.log Λ))) := by
+  obtain ⟨ε, hε, hmin⟩ := exists_pos_lower_bound_of_compact hc hpos h0
+  refine ⟨ε, hε, ?_⟩
+  rw [neg_neg, Real.exp_log hΛ]
+  intro x hx
+  rcases hband hx with h | h
+  · exact Or.inl h
+  · exact Or.inr ⟨hmin x hx, h.2⟩
+
+#print axioms spectral_hypothesis_of_band
+
+/-- The gap the band buys: `0 < -Real.log Λ` exactly when `0 < Λ < 1`, which is
+`reconstruct_from_opT`'s `hΔ`.
+
+This is where `Λ < 1` is spent. At `Λ = 1` the gap is `0` and above it the gap is negative — the same
+statement as the band saying nothing, since `GNSHilbert.spectrum_opT_subset_unit_interval` already
+confines the spectrum to `[-1, 1]` with no hypothesis at all.
+
+DERIVED: `0` is the positivity threshold; `1` is both the vacuum eigenvalue and the contraction
+constant, and their coinciding is what makes `Λ < 1` the content rather than a choice. -/
+theorem gap_pos_of_lt_one {Λ : ℝ} (hΛ : 0 < Λ) (h1 : Λ < 1) : 0 < -Real.log Λ := by
+  simpa using Real.log_neg hΛ h1
+
+#print axioms gap_pos_of_lt_one
+
 end Abstract
 
 /-! ## 2. Compact operators are not units in infinite dimensions -/
@@ -206,6 +300,9 @@ section Audit
 #print axioms zero_not_mem_spectrum
 #print axioms isUnit_of_spectral_hypothesis
 #print axioms energies_bounded_of_spectral_hypothesis
+#print axioms exists_pos_lower_bound_of_compact
+#print axioms spectral_hypothesis_of_band
+#print axioms gap_pos_of_lt_one
 end Audit
 
 end MassGap.TransferInvertibility

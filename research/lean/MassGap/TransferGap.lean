@@ -74,6 +74,24 @@ theorem gapAt_of_one_le_sq {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 #print axioms gapAt_of_one_le_sq
 
+/-- **`GapAt` is monotone in the rate.** From `GapAt D r₁` and `r₁² ≤ r₂²`, `GapAt D r₂`.
+
+`ReflForm.form_nonneg` is the whole input: the right-hand side is `r²` times a nonnegative number,
+so enlarging `r²` only weakens the bound.
+
+This is what makes the rate-zero results usable. `WilsonState.gapAt_zero_at_zero_coupling` concludes
+`GapAt … 0`, and a consumer wanting a gap `-Real.log r` needs `0 < r`, since `Real.log 0` is a junk
+value. With this, rate zero gives every positive rate, so the gap at zero coupling is unbounded —
+which is the right reading: there the connected pairing vanishes identically and every finite energy
+is admissible.
+
+DERIVED: the exponent `2` is `GapAt`'s own; no other numeral occurs. -/
+theorem gapAt_mono {A : Type*} [AddCommGroup A] [Module ℝ A] {D : Transfer.TransferData A}
+    {r₁ r₂ : ℝ} (h : r₁ ^ 2 ≤ r₂ ^ 2) (hg : GapAt D r₁) : GapAt D r₂ := fun x hx =>
+  le_trans (hg x hx) (mul_le_mul_of_nonneg_right h (D.toReflForm.form_nonneg x))
+
+#print axioms gapAt_mono
+
 /-- It suffices to check the gap inequality where the form is strictly positive: if the inequality
 holds at every `x` with `D.form x D.vac = 0` and `0 < D.form x x`, then `GapAt D r` holds. The proof
 splits on `form_nonneg`; in the degenerate branch `T_contract` puts `D.form (D.T x) (D.T x)` at or
@@ -158,6 +176,47 @@ theorem gap_pow (D : Transfer.TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : Gap
             ring
 
 #print axioms gap_pow
+
+/-- **Every power of `T` moves across the form.** `T_symm` is the case `i = 1`; the induction
+carries it to every power.
+
+DERIVED: no numeral occurs; `i` is the caller's. -/
+theorem form_pow_symm (D : Transfer.TransferData A) : ∀ (i : ℕ) (x y : A),
+    D.form ((D.T ^ i) x) y = D.form x ((D.T ^ i) y) := by
+  intro i
+  induction i with
+  | zero => intro x y; simp only [pow_zero, Module.End.one_apply]
+  | succ k ih =>
+      intro x y
+      rw [pow_succ, Module.End.mul_apply, ih (D.T x) y, D.T_symm, ← Module.End.mul_apply,
+        ← pow_succ', pow_succ]
+
+#print axioms form_pow_symm
+
+/-- **The diagonal at the `n`-th iterate IS the two-point function at separation `2 * n`.**
+
+`form_pow_symm` at `y = (D.T ^ n) x` moves all `n` translations from the left slot to the right,
+leaving `x` against `x` translated `2 * n` steps.
+
+**This is the identification the relative route was missing.** `ClayCapstone.clay_gap_of_form_decay`
+asks for decay of `D.form ((D.T ^ n) x) ((D.T ^ n) x)`, which is a diagonal and so looks like a
+quantity needing a lower bound to compare against. It is not: it equals a reflected two-point
+function at a separation that grows with `n`, which is exactly what a connected-correlation estimate
+bounds, and the comparison is against `D.form x x`, the same observable at separation zero — the
+contact value. That is the shape of a contact-relative decay law.
+
+`gap_pow` runs the other way, deriving the iterated decay from `GapAt`. This is an identity, not an
+inequality, so it carries no hypothesis at all.
+
+DERIVED: `2` is the doubling — the `n` translations in the left slot cross to join the `n` already
+in the right, so a diagonal at iterate `n` is an off-diagonal at separation `2 * n`. -/
+theorem form_pow_diag (D : Transfer.TransferData A) (n : ℕ) (x : A) :
+    D.form ((D.T ^ n) x) ((D.T ^ n) x) = D.form x ((D.T ^ (2 * n)) x) := by
+  have h : (D.T ^ n) ((D.T ^ n) x) = (D.T ^ (2 * n)) x := by
+    rw [two_mul, pow_add]; rfl
+  rw [form_pow_symm D n x ((D.T ^ n) x), h]
+
+#print axioms form_pow_diag
 
 /-! ## 3. The vacuum component, removed -/
 

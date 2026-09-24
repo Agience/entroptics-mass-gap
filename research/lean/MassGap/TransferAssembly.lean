@@ -173,4 +173,43 @@ noncomputable def assembleTransferData (R : Reflection X) (ν : State X)
 
 #print axioms assembleTransferData
 
+/-- **The assembled form at a translated observable IS the state's reflected two-point function.**
+
+`assembleTransferData`'s form is `ν (R.θ F * H)` and its `T` is `restrictT C A hstable`, so
+
+    D.form x ((D.T ^ n) x)  =  ν (R.θ x * (C.T)^[n] x)
+
+with both sides read on the underlying continuous functions. `Module.End.pow_apply` moves from the
+operator power to the function iterate and `restrictT_iterate` strips the submodule coercion.
+
+**This is the identification the relative route needed.**
+`ClayCapstone.clay_gap_of_two_point_decay` reduces the Clay spectral statement to decay of
+`D.form x ((D.T ^ (2 * n)) x)` against `D.form x x`; this says that quantity is the state's pairing
+of `R.θ x` with `x` translated `2 * n` steps — a two-point function at a separation growing with
+`n`, compared against the same pairing at separation zero. Both sides are now objects a correlation
+estimate speaks about, rather than objects of the GNS construction.
+
+What remains is to put a strong-coupling bound on the right-hand side at the Wilson data.
+`GaugeInvariantAlgebra.stateFree_pairing_abs_le` bounds a pairing of exactly this shape for plaquette
+observables, but it is stated at `stateFree` on a box rather than at the limiting state `ν`, and for
+the reflected plaquette rather than for a translate — so the two are not yet the same statement.
+
+DERIVED: `1` is the unit observable, carried in unchanged from `assembleTransferData`'s own `hone`
+and `hTone` — the algebra contains the constants and the translation fixes them. `n` is the
+caller's. -/
+theorem assembleTransferData_form_pow (R : Reflection X) (ν : State X)
+    (A : Submodule ℝ C(X, ℝ))
+    (hinv : IsReflectionInvariant R ν) (hpos : ReflPositiveOn R A ν)
+    (C : ShiftCompat R ν) (hstable : ∀ f ∈ A, C.T f ∈ A)
+    (hone : (1 : C(X, ℝ)) ∈ A) (hTone : C.T 1 = 1)
+    (hTnorm : ∀ f : C(X, ℝ), ‖C.T f‖ ≤ ‖f‖) (hθnorm : ∀ f : C(X, ℝ), ‖R.θ f‖ ≤ ‖f‖)
+    (x : ↥A) (n : ℕ) :
+    (assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).form x
+        (((assembleTransferData R ν A hinv hpos C hstable hone hTone hTnorm hθnorm).T ^ n) x)
+      = ν (R.θ (x : C(X, ℝ)) * (⇑C.T)^[n] (x : C(X, ℝ))) := by
+  show ν (R.θ (x : C(X, ℝ)) * ((((restrictT C A hstable) ^ n) x : ↥A) : C(X, ℝ))) = _
+  rw [Module.End.pow_apply, restrictT_iterate]
+
+#print axioms assembleTransferData_form_pow
+
 end MassGap.TransferAssembly

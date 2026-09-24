@@ -110,6 +110,7 @@ section Abstract
 variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 
 set_option linter.unusedVariables false in
+
 /-- The complexification of the observable module: a type synonym for `A × A` carrying the form as
 a parameter, so that the seminorm below attaches to a type remembering which form produced it.
 
@@ -437,6 +438,94 @@ DERIVED: the `1` is `TransferData.vac_norm`'s. -/
 theorem norm_Omega_vac : ‖Omega D.toReflForm D.vac‖ = 1 :=
   norm_Omega D.toReflForm D.vac_norm
 
+/-- **`(1 : ℝ) ∈ spectrum ℝ (opT D)`** — the vacuum is an eigenvector at eigenvalue one, so one lies
+in the real spectrum of the transfer operator.
+
+This is the premise `h1` of `OpTBridge.reconstruct_from_opT`, and both of its inputs are fields of
+this module: `opT_Omega` fixes the vacuum and `Omega_ne_zero` keeps it off the zero vector.
+
+`SlabTransferAdjoint.zero_mem_spectrum_of_apply_eq_zero` performs the same eigenvector-to-spectrum
+step at eigenvalue zero for a real continuous linear map. This is the eigenvalue-one case on the
+complex completion, with the algebra `H →L[ℂ] H` read as an `ℝ`-algebra, which is the spectrum
+`reconstruct_from_opT` asks about.
+
+The argument: if `algebraMap ℝ _ 1 - opT D` were a unit `u`, then applying `u.inv_mul` to the vacuum
+gives `u.inv 0 = Ω`, so `Ω = 0`.
+
+DERIVED: the `1` is the eigenvalue, `TransferData.vac_norm`'s normalisation carried into the
+spectrum; the `0` is the zero vector `Omega_ne_zero` excludes. -/
+theorem one_mem_spectrum_opT : (1 : ℝ) ∈ spectrum ℝ (opT D) := by
+  rw [spectrum.mem_iff]
+  intro hu
+  obtain ⟨u, hu'⟩ := hu
+  have h2 := congrArg
+    (fun B : H D.toReflForm →L[ℂ] H D.toReflForm => B (Omega D.toReflForm D.vac)) u.inv_mul
+  simp only [ContinuousLinearMap.mul_apply, ContinuousLinearMap.one_apply] at h2
+  rw [hu'] at h2
+  simp only [map_one, ContinuousLinearMap.sub_apply, ContinuousLinearMap.one_apply,
+    opT_Omega, sub_self, map_zero] at h2
+  exact Omega_ne_zero D.toReflForm D.vac_norm h2.symm
+
+#print axioms one_mem_spectrum_opT
+
+/-- **`spectrum ℝ (opT D) ⊆ Set.Icc (-1) 1`** — unconditional on any `TransferData`, with no gap
+hypothesis anywhere. Contractivity is the whole input: `norm_opT_le_one` bounds the operator norm and
+`spectrum.subset_closedBall_norm_mul` turns that into a containment.
+
+`GapToOperator.spectrum_opT_subset` says more — `{1} ∪ Icc (−r) r` — but only under `GapAt D r`, which
+is the open half of the chain. This one holds always, so it is what bounds the spectrum before any
+Rayleigh ceiling is in hand.
+
+`MomentMeasure.spectrum_opX_subset` is the same two steps for `opX D`, with `D.R` in place of the
+contraction constant; that is where this proof comes from and why the Mathlib name is known-good at
+this pin.
+
+DERIVED: the `1`s are `norm_opT_le_one`'s contraction constant, which is `TransferData.T_contract`'s.
+The bound on the identity's norm is in the proof. -/
+theorem spectrum_opT_subset_unit_interval :
+    spectrum ℝ (opT D) ⊆ Set.Icc (-1 : ℝ) 1 := by
+  intro k hk
+  have h1 : |k| ≤ ‖opT D‖ * ‖(1 : H D.toReflForm →L[ℂ] H D.toReflForm)‖ := by
+    have hmem : k ∈ Metric.closedBall (0 : ℝ)
+        (‖opT D‖ * ‖(1 : H D.toReflForm →L[ℂ] H D.toReflForm)‖) :=
+      spectrum.subset_closedBall_norm_mul (𝕜 := ℝ) (opT D) hk
+    rw [Metric.mem_closedBall, Real.dist_eq, sub_zero] at hmem
+    exact hmem
+  have h2 : ‖(1 : H D.toReflForm →L[ℂ] H D.toReflForm)‖ ≤ 1 := by
+    simpa [ContinuousLinearMap.one_def] using
+      ContinuousLinearMap.norm_id_le (𝕜 := ℂ) (E := H D.toReflForm)
+  have h4 : |k| ≤ 1 := by
+    calc |k| ≤ ‖opT D‖ * ‖(1 : H D.toReflForm →L[ℂ] H D.toReflForm)‖ := h1
+      _ ≤ 1 * 1 := mul_le_mul (norm_opT_le_one D) h2 (norm_nonneg _) zero_le_one
+      _ = 1 := mul_one _
+  exact Set.mem_Icc.mpr ⟨(abs_le.mp h4).1, (abs_le.mp h4).2⟩
+
+#print axioms spectrum_opT_subset_unit_interval
+
+/-- **`IsGreatest (spectrum ℝ (opT D)) 1`** — the vacuum eigenvalue is the maximum of the spectrum,
+on any `TransferData`, with no gap hypothesis.
+
+Both halves are unconditional: `one_mem_spectrum_opT` puts `1` in the spectrum, and
+`spectrum_opT_subset_unit_interval` puts everything in the spectrum at or below it. Together they say
+the transfer operator's top is the vacuum and nothing else — which is the statement a gap refines:
+the gap asks how far below `1` the REST of the spectrum sits, and this fixes what it sits below.
+
+`RefinementLaw.isGreatest_refined` is the tree's only hypothesis-position consumer of
+`IsGreatest (spectrum ℝ T) m`, and it is not reachable from here: it also takes
+`hpos : ∀ x ∈ spectrum ℝ T, 0 < x`, where `Set.Icc (-1) 1` admits `0`. Strict positivity of
+`spectrum ℝ (opT D)` is `0 ∉ spectrum ℝ (opT D)`, which
+`TransferInvertibility.isUnit_of_spectral_hypothesis` ties to `IsUnit (opT D)` — the open half of the
+chain. So this states the ceiling; it does not reach past it.
+
+DERIVED: the `1` is the eigenvalue at the vacuum, carried from `TransferData.vac_norm` through
+`one_mem_spectrum_opT`; it coincides with the contraction constant, which is why the containment is
+sharp here rather than merely true. -/
+theorem isGreatest_one_spectrum_opT : IsGreatest (spectrum ℝ (opT D)) 1 :=
+  ⟨one_mem_spectrum_opT D,
+    fun _ hk => (Set.mem_Icc.mp (spectrum_opT_subset_unit_interval D hk)).2⟩
+
+#print axioms isGreatest_one_spectrum_opT
+
 /-- `Nontrivial (H D.toReflForm)` for any `TransferData`, from `nontrivial_H` at the `vac_norm`
 field.
 
@@ -483,6 +572,59 @@ theorem re_inner_opT_nonneg (h : PositiveTransfer D) (x : H D.toReflForm) :
       have h1 := h (z : A × A).1
       have h2 := h (z : A × A).2
       simpa [cform_re, cT_fst, cT_snd] using add_nonneg h1 h2
+
+/-- **`(opT D).IsPositive`** — Mathlib's positivity predicate for a continuous linear operator on an
+inner-product space, which is `IsSelfAdjoint` together with `0 ≤ reApplyInnerSelf`.
+
+Both halves are already here. `isSelfAdjoint_opT` is the first. The second is `re_inner_opT_nonneg`
+up to the order of the inner product's arguments: `reApplyInnerSelf T x` is `re ⟪T x, x⟫` and
+`re_inner_opT_nonneg` is stated on `⟪x, T x⟫`. The two agree because `opT D` is symmetric, which
+`isSelfAdjoint_opT` establishes through `ContinuousLinearMap.isSelfAdjoint_iff_isSymmetric` — so the
+swap is that same symmetry at `(x, x)`, and no conjugation lemma enters.
+
+DERIVED: the `0` is positivity's own threshold, carried from `PositiveTransfer`. -/
+theorem isPositive_opT (h : PositiveTransfer D) : (opT D).IsPositive := by
+  have hsym := ContinuousLinearMap.isSelfAdjoint_iff_isSymmetric.mp (isSelfAdjoint_opT D)
+  refine ⟨hsym, fun x => ?_⟩
+  have hxx := hsym x x
+  simp only [ContinuousLinearMap.reApplyInnerSelf, ContinuousLinearMap.coe_coe] at hxx ⊢
+  rw [hxx]
+  exact re_inner_opT_nonneg D h x
+
+#print axioms isPositive_opT
+
+/-- **`spectrum ℝ (opT D) ⊆ Set.Ici 0`** — the transfer operator's spectrum is nonnegative.
+
+This was an open input of the R2 chain and it is closed here. No declaration in this tree, for any
+operator, previously went from a nonnegative quadratic form to spectral nonnegativity; every
+consumer that wanted it took it as a binder, `RefinementLaw` five times over.
+
+The route is `ContinuousLinearMap.IsPositive.spectrumRestricts`, which needs completeness of the
+space — `complete_H` — followed by `SpectrumRestricts.nnreal_iff`, whose right-hand side is
+literally this containment.
+
+Together with `spectrum_opT_subset_unit_interval` the spectrum sits in `[0, 1]`, and
+`isGreatest_one_spectrum_opT` puts its maximum at the vacuum. So the only question left about it is
+whether `0` belongs, which is `IsUnit (opT D)`.
+
+DERIVED: the `0` is the lower end of `Set.Ici`, which is `SpectrumRestricts.nnreal_iff`'s own
+threshold. -/
+theorem spectrum_opT_nonneg (h : PositiveTransfer D) :
+    spectrum ℝ (opT D) ⊆ Set.Ici 0 := by
+  haveI := complete_H D.toReflForm
+  exact fun x hx => SpectrumRestricts.nnreal_iff.mp (isPositive_opT D h).spectrumRestricts x hx
+
+#print axioms spectrum_opT_nonneg
+
+/-! ### A note on compactness of the spectrum
+
+`spectrum.isCompact` and `spectrum.isClosed` both exist at this pin, but instance search for
+`NormedAlgebra ℝ (H D.toReflForm →L[ℂ] H D.toReflForm)` does not terminate here: it times out at
+`isDefEq` past a million heartbeats, with `OpTBridge.cstar_of_gns` reducible in the path. So
+`TransferInvertibility.spectral_hypothesis_of_band` keeps compactness of the spectrum as a
+hypothesis; it is the one side condition of the ε step that is a library matter rather than a fact
+about Yang-Mills. -/
+
 
 /-- `(∀ x, D.T x = x) → PositiveTransfer D`, since the conclusion is then `D.form_nonneg`, which is
 the structure's reflection positivity.

@@ -97,10 +97,25 @@ The proof applies `clay_nontriviality_of_wilson_variance` with
 
 so `hbridge` is the only hypothesis of the composition not instantiated from the tree.
 
+⛔ **`hbridge` HAS NO WITNESS, SO THIS THEOREM IS VACUOUSLY TRUE.**
+`VarianceBridge.wilson_bridge_hypothesis_unsatisfiable` refutes it: `hbridge` is quantified over
+EVERY finite region, and at the empty one the variance is zero — `variance_at_empty_eq_zero` — while
+`PlaqVariance.corrClay_zero_pos` puts the torus contact value strictly above zero at every extent and
+every real coupling, with no hypotheses. The inequality reads "a positive number is at most zero", at
+every `ap`, `f₀`, `ω₀` and `β`.
+
+Use `VarianceBridge.clay_nontriviality_of_eventual_wilson_bridge` instead. It is this statement with
+`hbridge` at `atTop`, which drops the small regions and in particular the empty one; the conclusion
+is identical, and `DLRLimit.not_isPointMass_of_uniform_variance` takes an `∀ᶠ` hypothesis anyway, so
+the universal form was never spending its extra strength.
+
+That refutes the ROUTE, not non-triviality: the empty region has no observable to be non-trivial
+about.
+
 Scope. `hbridge` compares a variance on the finite periodic lattice that `wilsonCorrAt` is defined
 on with a variance of `specState`, which is indexed by a `Finset ILink` of `ℤ⁴` at a frozen
-boundary. The conclusion is `¬ IsPointMass ν`, not a statement about the correlations' functional
-form.
+boundary — and restricting to `atTop` removes the refutation, not that comparison. The conclusion is
+`¬ IsPointMass ν`, not a statement about the correlations' functional form.
 
 DERIVED: `0` is the lower bound on `φ` and on `β`, and the contact lag in `wilsonCorrAt (ap Λ) β 0`;
 `2` appears twice, once as the upper bound `φ g ≤ 2` on the plaquette density (matching

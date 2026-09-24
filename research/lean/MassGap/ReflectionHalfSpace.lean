@@ -834,6 +834,44 @@ theorem touchDeg_boxBd_le (Λ : Finset MassGap.InfiniteLattice.ILink) :
 
 #print axioms touchDeg_boxBd_le
 
+/-- **The strong-coupling bound, at the box carrier.**
+
+`StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le` is carrier-free over abstract
+link and plaquette types, and `touchDeg_boxBd_le` supplies its combinatorial input for a finite box
+of `ℤ⁴` **with no dependence on the box**. So the connected correlator of two plaquette observables in
+the free-boundary box state decays geometrically in the boundary-word distance, at a rate and
+constant that do not grow with the box.
+
+**Why the box carrier and not the periodic one.** `stateFree_eq_expect_boxBd` identifies `stateFree`
+with the `wilsonSystem (boxBd Λ)` expectation this bounds, and `stateFree` along `mixCube` is what
+`wilson_positiveTransfer_of_mixCube_limit`'s `htend` converges to — so this bounds correlators of the
+very state the transfer data is built from. Routing through the periodic lattice instead would need
+the periodic and free-boundary limits to agree, which is boundary-condition independence and is
+available here only at zero coupling.
+
+`touchDeg_boxBd_le` had no consumers before this.
+
+Scope: this is a bound on a correlator of two SINGLE plaquettes at boundary-word separation `k`. The
+gap obligation is about pairings of general invariant observables under a reflection, so this is an
+entry bound and not yet an entry of `GaugeInvariantAlgebra.gapEntry`.
+
+DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound, transcribed — `16` the link multiplicity of a box
+word and `4` the links in one, so the product is the combinatorial degree and not a chosen constant;
+`0` is the lower end of the coupling range, which the cluster expansion requires; `1` is
+`coreRate`'s own convergence threshold in `hr`, the condition under which the expansion sums,
+and not a chosen bound. -/
+theorem wilsonCorrConn_boxBd_abs_le (hN : N ≠ 0)
+    (Λ : Finset MassGap.InfiniteLattice.ILink) (p₀ pd : ↥(iplqAll Λ)) {β : ℝ} (hβ : 0 ≤ β)
+    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
+    (k : ℕ) (hk : pd ∉ MassGap.StrongCoupling.ball (boxBd Λ) p₀ k) :
+    |MassGap.WilsonBridge.wilsonCorrConn (Nc := N) (boxBd Λ) p₀ β pd|
+      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
+        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k :=
+  MassGap.StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le hN
+    (boxBd Λ) p₀ pd hβ (16 * 4) (touchDeg_boxBd_le Λ) hr k hk
+
+#print axioms wilsonCorrConn_boxBd_abs_le
+
 /-- Along any axis `τ`, every link of a plaquette sits at the plaquette's own coordinate or one
 above it:
 `l.2 τ = q.2 τ ∨ l.2 τ = q.2 τ + 1`. `GibbsSpec.ibd` names the sites `x`, `ishift a x` and
@@ -928,6 +966,90 @@ theorem not_mem_ball_of_axis_gt (Λ : Finset MassGap.InfiniteLattice.ILink) (τ 
   omega
 
 #print axioms not_mem_ball_of_axis_gt
+
+/-- **Translating a plaquette moves its base site along the axis.** `ishiftPlaq` leaves the plane
+directions alone and shifts the corner, so iterating it iterates `ishift` on the corner.
+
+DERIVED: `4` is the spacetime dimension, indexing the translation's direction; `m` is the
+caller's. -/
+theorem ishiftPlaq_iterate (μ : Fin 4) (m : ℕ) (q : MassGap.GibbsSpec.IPlaq) :
+    (MassGap.InfiniteShift.ishiftPlaq μ)^[m] q
+      = (q.1, (MassGap.InfiniteLattice.ishift μ)^[m] q.2) := by
+  induction m with
+  | zero => simp
+  | succ j ih =>
+      rw [Function.iterate_succ_apply', ih, Function.iterate_succ_apply']
+      rfl
+
+#print axioms ishiftPlaq_iterate
+
+/-- The axis coordinate of an `m`-fold translate is `m` above the original.
+
+DERIVED: `4` is the spacetime dimension, indexing the translation's direction; `m` is the
+caller's. -/
+theorem ishiftPlaq_iterate_axis (μ : Fin 4) (m : ℕ) (q : MassGap.GibbsSpec.IPlaq) :
+    ((MassGap.InfiniteShift.ishiftPlaq μ)^[m] q).2 μ = q.2 μ + m := by
+  rw [ishiftPlaq_iterate]
+  exact MassGap.InfiniteShift.ishift_iterate μ m q.2
+
+#print axioms ishiftPlaq_iterate_axis
+
+/-- **The reflected plaquette's axis coordinate**, in either of `ireflPlaq`'s branches. The two
+branches differ by one, because a plaquette spanning the reflection direction has its corner moved
+to the far end of the link.
+
+DERIVED: `1` is `ireflPlaq`'s own offset on the branches where a plane direction is `τ`, transcribed
+rather than chosen; `4` is the spacetime dimension. -/
+theorem ireflPlaq_axis (τ : Fin 4) (c : ℤ) (q : MassGap.GibbsSpec.IPlaq) :
+    (MassGap.LatticeReflection.ireflPlaq τ c q).2 τ = c - q.2 τ
+      ∨ (MassGap.LatticeReflection.ireflPlaq τ c q).2 τ = c - 1 - q.2 τ := by
+  unfold MassGap.LatticeReflection.ireflPlaq
+  split_ifs
+  · right; simp [MassGap.LatticeReflection.ireflSite_axis]
+  · right; simp [MassGap.LatticeReflection.ireflSite_axis]
+  · left; simp [MassGap.LatticeReflection.ireflSite_axis]
+
+#print axioms ireflPlaq_axis
+
+/-- **The separation between a plaquette's reflection and its translate grows with the
+translation.** For a plaquette whose base site lies at or above the reflection plane, the axis
+distance from `ireflPlaq τ (2 * p) q` to the `m`-fold translate of `q` is at least `m`.
+
+Both branches of `ireflPlaq_axis` give `2 * q.2 τ - 2 * p + m` or one more, and `p ≤ q.2 τ` makes
+the leading part non-negative.
+
+**This is what lets a correlation estimate be applied to an observable against its own translate.**
+The estimates in `StrongCoupling` are indexed by a ball radius around one plaquette; this supplies
+the radius, growing with the translation, when the second plaquette is a translate of the first and
+the first is reflected.
+
+DERIVED: `2` is the reflection plane's spacing in lattice units — the plane through `2 * p` sends
+`h` to `2 * p - h`, so the separation carries the factor; `4` is the spacetime dimension. -/
+theorem axis_sep_irefl_shift (τ : Fin 4) (p : ℤ) (q : MassGap.GibbsSpec.IPlaq)
+    (hq : p ≤ q.2 τ) (m : ℕ) :
+    m ≤ (((MassGap.InfiniteShift.ishiftPlaq τ)^[m] q).2 τ
+      - (MassGap.LatticeReflection.ireflPlaq τ (2 * p) q).2 τ).natAbs := by
+  rw [ishiftPlaq_iterate_axis]
+  rcases ireflPlaq_axis τ (2 * p) q with h | h <;> rw [h] <;> omega
+
+#print axioms axis_sep_irefl_shift
+
+/-- **The translate lies outside every ball around the reflection of radius below the
+translation.** `not_mem_ball_of_axis_gt` fed by `axis_sep_irefl_shift`.
+
+DERIVED: `2` is the reflection plane's spacing, carried from `axis_sep_irefl_shift`; `4` is the
+spacetime dimension. -/
+theorem not_mem_ball_of_irefl_shift (Λ : Finset MassGap.InfiniteLattice.ILink) (τ : Fin 4)
+    (p : ℤ) (q : MassGap.GibbsSpec.IPlaq) (hq : p ≤ q.2 τ) (m k : ℕ) (hk : k < m)
+    (hrefl : MassGap.LatticeReflection.ireflPlaq τ (2 * p) q ∈ iplqAll Λ)
+    (hshift : (MassGap.InfiniteShift.ishiftPlaq τ)^[m] q ∈ iplqAll Λ) :
+    (⟨(MassGap.InfiniteShift.ishiftPlaq τ)^[m] q, hshift⟩ : ↥(iplqAll Λ))
+      ∉ MassGap.StrongCoupling.ball (boxBd Λ)
+          ⟨MassGap.LatticeReflection.ireflPlaq τ (2 * p) q, hrefl⟩ k :=
+  not_mem_ball_of_axis_gt Λ τ ⟨_, hrefl⟩ ⟨_, hshift⟩ k
+    (lt_of_lt_of_le hk (axis_sep_irefl_shift τ p q hq m))
+
+#print axioms not_mem_ball_of_irefl_shift
 
 /-- The plaquettes the positive half-action sums over: inside the box by `GibbsSpec.plaqsIn`,
 non-degenerate, not in the plane, and based at or above it. The `ℤ⁴` counterpart of
@@ -3534,6 +3656,36 @@ theorem stateFree_eq_expect_boxBd {φ : MassGap.SUN.SU N → ℝ} (hφm : Measur
           (fun u => f (MassGap.GibbsSpec.splice Λ u ω)) := by
   rw [expect_boxBd φ β Λ ω]
   rfl
+
+/-- At `β = 0` the free-boundary partition function is `1`: the weight is `1` by
+`wtFree_at_zero_coupling` and `cvol` is a probability measure.
+
+DERIVED: the `0` is the coupling; the `1` is the total mass of a probability measure. -/
+theorem partFree_at_zero_coupling {φ : MassGap.SUN.SU N → ℝ}
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
+    partFree (φ := φ) 0 Λ ω = 1 := by
+  unfold partFree
+  simp [wtFree_at_zero_coupling]
+
+#print axioms partFree_at_zero_coupling
+
+/-- At `β = 0` the free-boundary kernel is the plain Haar integral: the weight is `1` and the
+partition function is `1`, so nothing of the box's geometry survives.
+
+DERIVED: the `0` is the coupling; the `1`s are the weight and the partition function. -/
+theorem specFree_at_zero_coupling {φ : MassGap.SUN.SU N → ℝ}
+    (Λ : Finset MassGap.InfiniteLattice.ILink)
+    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
+    (f : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ → ℝ) :
+    specFree (φ := φ) 0 Λ ω f
+      = ∫ u, f u ∂(MassGap.ActionSplit.cvol ↑Λ (probHaar (MassGap.SUN.SU N))) := by
+  unfold specFree
+  rw [partFree_at_zero_coupling (φ := φ) Λ ω, div_one]
+  simp [wtFree_at_zero_coupling]
+
+#print axioms specFree_at_zero_coupling
+
 
 #print axioms stateFree_eq_expect_boxBd
 
@@ -7841,6 +7993,47 @@ theorem tendsto_symCube_odd_of_mixCube (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β
   exact h
 
 #print axioms tendsto_symCube_odd_of_mixCube
+
+/-- **`mixCube` exhausts.** Every finite link set is eventually inside it.
+
+`mixCube` interleaves two box families at two different reflection planes, so it is not monotone and
+exhaustion does not follow from a single `symCube_exhausts`. It follows from both: past the larger
+of the two thresholds, whichever branch the parity selects has already swallowed `S`.
+
+DERIVED: `4` is the spacetime dimension, the `Fin 4` the lattice direction ranges over; `2` is the
+interleaving period and the plane-to-constant conversion; `1` is the offset that puts the index past
+both thresholds on either branch. -/
+theorem mixCube_exhausts (τ : Fin 4) (p : ℤ) (S : Finset MassGap.InfiniteLattice.ILink) :
+    ∀ᶠ n : ℕ in Filter.atTop, S ⊆ mixCube τ p n := by
+  have he := symCube_exhausts τ (2 * p) S
+  have ho := symCube_exhausts τ (2 * p - 1) S
+  rw [Filter.eventually_atTop] at he ho ⊢
+  obtain ⟨Ne, hNe⟩ := he
+  obtain ⟨No, hNo⟩ := ho
+  refine ⟨2 * (max Ne No) + 1, fun n hn => ?_⟩
+  have hdiv : max Ne No ≤ n / 2 := by omega
+  unfold mixCube
+  split
+  · exact hNe _ (le_trans (le_max_left _ _) hdiv)
+  · exact hNo _ (le_trans (le_max_right _ _) hdiv)
+
+#print axioms mixCube_exhausts
+
+/-- `mixCube` is cofinal: it tends to `atTop` in the finite link sets.
+
+This is what lets a limit taken along ALL finite regions be read along the interleaved box sequence.
+`WilsonDLR.tendsto_specState_at_zero` gives the first shape and
+`wilson_positiveTransfer_of_mixCube_limit` wants the second.
+
+DERIVED: `4` is the spacetime dimension, the `Fin 4` the lattice direction ranges over. No other
+numeral occurs. -/
+theorem tendsto_mixCube (τ : Fin 4) (p : ℤ) :
+    Filter.Tendsto (mixCube τ p) Filter.atTop Filter.atTop := by
+  rw [Filter.tendsto_atTop]
+  intro S
+  simpa [Finset.le_iff_subset] using mixCube_exhausts τ p S
+
+#print axioms tendsto_mixCube
 
 /-- Reflection positivity at the even constant from one convergence hypothesis about the interleaved
 family: the even subsequence of `mixCube` is `symCube τ (2 * p)`

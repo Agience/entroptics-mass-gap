@@ -410,6 +410,119 @@ theorem gapAt_of_positiveTransfer_of_rayleigh (D : TransferData A) {Λ : ℝ} (h
 
 #print axioms gapAt_of_positiveTransfer_of_rayleigh
 
+/-- **The chain from positivity to the spectrum, composed.** Every link below is proved elsewhere and
+each one's conclusion supplies the next one's hypotheses; nothing wrote the composition, so the route
+existed as five statements in three modules and as no theorem.
+
+```
+  GNSHilbert.PositiveTransfer D
+    → inner_Tq_nonneg_of_positiveTransfer
+    → SecondEigenvalue.norm_Tq_le_of_rayleigh      [through norm_le_of_rayleigh_le]
+    → gapAt_of_positiveTransfer_of_rayleigh        ⇒ TransferGap.GapAt D Λ
+    → GapToOperator.spectrum_opT_subset
+```
+
+**The two hypotheses are the two open inputs, and naming them together is the point.** `hray` is the
+vacuum Rayleigh ceiling. `hP` is not a consequence of `TransferData`'s fields:
+`GNSHilbert.positiveTransfer_trivial` discharges it only where `T = id`, and for the Wilson data
+`WilsonTransferReduction.positiveTransfer_of_state_facts` needs reflection positivity about the
+**odd** plane, which `WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` shows is not
+merely sufficient but equivalent — so it cannot be weakened away.
+
+Scope: nothing on this chain uses compactness, completeness, finite dimension or the spectral
+theorem; `SecondEigenvalue.norm_le_of_rayleigh_le` is elementary. And it does not reach
+`OpTBridge.reconstruct_from_opT`, whose `hsp` is `{1} ∪ Set.Icc ε (Real.exp (-Δ))` with `0 < ε`:
+`Set.Icc (-Λ) Λ` admits `0`, and excluding `0` is `IsUnit (opT D)` by
+`TransferInvertibility.isUnit_of_spectral_hypothesis`.
+
+DERIVED: `0` is the lower bound in `hΛ` and the value of the orthogonality condition in `hray`; `2`
+is the Rayleigh quotient's exponent; `1` is the vacuum eigenvalue, from `GNSHilbert.opT_Omega`. -/
+theorem spectrum_opT_subset_of_positiveTransfer_of_rayleigh (D : TransferData A) {Λ : ℝ}
+    (hΛ : 0 ≤ Λ) (hP : MassGap.GNSHilbert.PositiveTransfer D)
+    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
+      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2) :
+    spectrum ℝ (MassGap.GNSHilbert.opT D) ⊆ {1} ∪ Set.Icc (-Λ) Λ :=
+  MassGap.GapToOperator.spectrum_opT_subset D hΛ
+    (gapAt_of_positiveTransfer_of_rayleigh D hΛ hP hray)
+
+#print axioms spectrum_opT_subset_of_positiveTransfer_of_rayleigh
+
+/-- The same chain where it carries content: **`Λ < 1`**, with the gap `−log Λ` it buys.
+
+At `1 ≤ Λ` the containment says nothing new — `GNSHilbert.spectrum_opT_subset_unit_interval` already
+puts the spectrum inside `Set.Icc (-1) 1` with no hypothesis at all, and
+`TransferGap.gapAt_of_one_le_sq` makes `GapAt D Λ` automatic there. So `Λ < 1` is the entire content
+of the supply half, and this states the chain in the form that carries it: the spectrum is the vacuum
+eigenvalue, which `isGreatest_one_spectrum_opT` shows is its maximum, together with a band strictly
+inside the unit interval, and the gap `−log Λ` is positive exactly because the band is strict.
+
+`0 < Λ` and not `0 ≤ Λ`: `Real.log 0` is the junk value `0`, so `0 < −Real.log Λ` is false at
+`Λ = 0`. That degenerate case — the vacuum-orthogonal spectrum collapsing to a point — is carried by
+`spectrum_opT_subset_of_positiveTransfer_of_rayleigh`, which holds at every nonnegative `Λ`.
+
+DERIVED: `1` is both the vacuum eigenvalue and the contraction constant — the same number, which is
+why `Λ < 1` is the content rather than a choice; `0` and `2` are as above. -/
+theorem spectrum_opT_strict_band (D : TransferData A) {Λ : ℝ}
+    (hΛ : 0 < Λ) (h1 : Λ < 1) (hP : MassGap.GNSHilbert.PositiveTransfer D)
+    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
+      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2) :
+    spectrum ℝ (MassGap.GNSHilbert.opT D) ⊆ {1} ∪ Set.Icc (-Λ) Λ
+      ∧ 0 < -Real.log Λ
+      ∧ IsGreatest (spectrum ℝ (MassGap.GNSHilbert.opT D)) 1 :=
+  ⟨spectrum_opT_subset_of_positiveTransfer_of_rayleigh D hΛ.le hP hray,
+    by simpa using Real.log_neg hΛ h1,
+    MassGap.GNSHilbert.isGreatest_one_spectrum_opT D⟩
+
+#print axioms spectrum_opT_strict_band
+
+/-- **The gap, in the spectral form Clay asks for, with no `ε`.**
+
+Clay asks for `spectrum ℝ H ⊆ {0} ∪ Set.Ici Δ` at some `Δ > 0`. Under `T = exp (-H)` that is
+`spectrum ℝ T ⊆ {1} ∪ Set.Icc 0 (Real.exp (-Δ))` — **with `0` admitted**, because a theory whose
+energies are unbounded has a transfer spectrum accumulating at zero. This is that statement, and it
+follows from the Rayleigh ceiling and `PositiveTransfer` alone: the band from
+`spectrum_opT_subset_of_positiveTransfer_of_rayleigh` cuts the top, and
+`GNSHilbert.spectrum_opT_nonneg` cuts the bottom, leaving `{1} ∪ Icc 0 Λ`.
+
+**Why this is the right form, and `reconstruct_qm_core`'s `hsp` is not.** That one asks for
+`Set.Icc ε (Real.exp (-Δ))` with `0 < ε`, which excludes `0` from the spectrum — by
+`TransferInvertibility.isUnit_of_spectral_hypothesis`, exactly `IsUnit T`, and by
+`energies_bounded_of_spectral_hypothesis`, exactly a ceiling on the energies. A quantum field theory
+has no such ceiling, so `ε` is not an obligation waiting to be discharged; it is a hypothesis the
+intended model does not satisfy. `TransferInvertibility.spectral_hypothesis_fails_for_compact` says
+the same thing from the other side: on an infinite-dimensional space a compact `T` meets `hsp` at no
+`ε` at all.
+
+The Lean side agrees and says why. `Reconstruction.hamiltonian T := cfc (fun x => -Real.log x) T`
+needs `-Real.log` continuous on the spectrum, and it is not continuous at `0`. So `ε` is what buys
+the bounded-operator functional calculus its continuity — not what buys the gap. An unbounded
+Hamiltonian is outside what `cfc` on a `→L` can express, and stating the gap on `T` avoids needing
+it: `Δ = -Real.log Λ` is a real number either way, and
+`TransferInvertibility.gap_pos_of_lt_one` makes it positive.
+
+Scope: this is the spectral containment, not `MassFinite.clayMass`. Turning it into a statement about
+a Hamiltonian still needs an unbounded functional calculus, and that is a separate development from
+the one `Reconstruction` carries.
+
+DERIVED: `1` is the vacuum eigenvalue and the contraction constant; `0` is the bottom of the
+spectrum, which `spectrum_opT_nonneg` supplies, and the lower end of the coupling range in `hΛ`;
+`Δ = -Real.log Λ` is the band's own width read logarithmically. The `2` is the Rayleigh quotient's exponent in `hray`. Nothing is chosen. -/
+theorem spectrum_opT_gap_form (D : TransferData A) {Λ : ℝ}
+    (hΛ : 0 < Λ) (h1 : Λ < 1) (hP : MassGap.GNSHilbert.PositiveTransfer D)
+    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
+      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2) :
+    0 < -Real.log Λ ∧
+      spectrum ℝ (MassGap.GNSHilbert.opT D)
+        ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(-Real.log Λ))) := by
+  refine ⟨by simpa using Real.log_neg hΛ h1, ?_⟩
+  rw [neg_neg, Real.exp_log hΛ]
+  intro x hx
+  rcases spectrum_opT_subset_of_positiveTransfer_of_rayleigh D hΛ.le hP hray hx with h | h
+  · exact Or.inl h
+  · exact Or.inr ⟨Set.mem_Ici.mp (MassGap.GNSHilbert.spectrum_opT_nonneg D hP hx), h.2⟩
+
+#print axioms spectrum_opT_gap_form
+
 /-! ## Footprints -/
 
 section Audit

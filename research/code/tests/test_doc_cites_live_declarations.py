@@ -56,26 +56,21 @@ def corpus():
 def test_every_cited_name_resolves(corpus):
     """No document may name a declaration the repo does not define.
 
-    THE DOCUMENTS ARE THE POPULATION, so reading none of them is not a clean bill. `gate.DOCS`
-    lives in a SIBLING repository (`_scratch/CURRENT`); with that repository absent, or either
-    document renamed, the loop below `continue`d on every entry and the test reported PASS having
-    scanned nothing — the exact shape this suite exists to refuse. Demonstrated by pointing
-    `gate.SCRATCH` at a directory that does not exist: zero documents read, `bad == {}`, green.
-    So the count of documents actually opened is asserted first, and an absent sibling repository
-    SKIPS visibly rather than passing silently.
+    THE DOCUMENTS ARE THE POPULATION, so reading none of them is not a clean bill: the verdict on an
+    empty corpus is the same word as the verdict on a clean one. Every `gate.DOCS` entry is a tracked
+    file of THIS repository, so a missing one is a failure rather than a skip — a rename or a move
+    that leaves the gate scanning nothing is exactly what this asserts against. `gate._locate`
+    searches every directory in `gate.DOC_DIRS`.
     """
     words, modules = corpus
-    present = [n for n in gate.DOCS if os.path.exists(os.path.join(gate.SCRATCH, n))]
-    if not present:
-        if os.path.isdir(gate.SCRATCH):
-            pytest.fail(
-                f"{gate.SCRATCH} exists but holds none of {gate.DOCS}; the documents have been "
-                "renamed or moved and this gate is scanning nothing. Update `DOCS` in "
-                "`certify/doc_cites_live_declarations.py`.")
-        pytest.skip(f"the sibling planning repository {gate.SCRATCH} is not present")
+    missing = [n for n in gate.DOCS if gate._locate(n) is None]
+    assert not missing, (
+        f"{missing} not found in any of {gate.DOC_DIRS}; the documents have been renamed or moved "
+        "and this gate is scanning nothing. Update `DOCS` in "
+        "`certify/doc_cites_live_declarations.py`.")
     bad: dict[str, list[str]] = {}
-    for name in present:
-        path = os.path.join(gate.SCRATCH, name)
+    for name in gate.DOCS:
+        path = gate._locate(name)
         with open(path, encoding="utf-8", errors="replace") as fh:
             dead = _dead_for(fh.read(), words, modules)
         if dead:
@@ -116,23 +111,74 @@ def test_scanning_no_document_is_not_a_pass(corpus, tmp_path, monkeypatch):
 
     Every other control here plants a name and checks the verdict. None of them could tell that the
     gate had read zero documents, because the verdict on an empty corpus is the same word as the
-    verdict on a clean one. This drives the gate at a directory holding no document and requires it
-    to refuse — and at a missing directory, where a visible skip is the correct answer.
-    """
-    monkeypatch.setattr(gate, "SCRATCH", str(tmp_path))          # exists, holds nothing
-    with pytest.raises(BaseException) as e:
-        test_every_cited_name_resolves(corpus)
-    assert "holds none of" in str(e.value), (
-        f"an empty document directory did not make the gate refuse: {e.value}")
+    verdict on a clean one. This drives the gate at a directory holding no document, and at a
+    directory that does not exist, and requires it to refuse in both cases.
 
-    monkeypatch.setattr(gate, "SCRATCH", str(tmp_path / "absent"))  # not a directory at all
-    with pytest.raises(BaseException) as e:
-        test_every_cited_name_resolves(corpus)
-    assert "is not present" in str(e.value), (
-        f"a missing sibling repository did not raise a visible skip: {e.value}")
+    Both are failures rather than skips because `gate.DOCS` are tracked files of this repository: a
+    checkout always has them, so not finding one means a move went unnoticed.
+    """
+    for where, why in ((str(tmp_path), "a directory holding no document"),
+                       (str(tmp_path / "absent"), "a directory that does not exist")):
+        monkeypatch.setattr(gate, "DOC_DIRS", [where])
+        with pytest.raises(BaseException) as e:
+            test_every_cited_name_resolves(corpus)
+        assert "scanning nothing" in str(e.value), (
+            f"{why} did not make the gate refuse: {e.value}")
 
 
 def test_a_file_name_is_not_a_citation(corpus):
     """`Foo.lean` is a file, not a declaration, and reporting it would drown the real hits."""
     words, modules = corpus
     assert _dead_for("`ReflectionHalfSpace.lean`", words, modules) == []
+
+
+def test_a_name_that_lives_only_in_prose_is_not_live():
+    """PROOF of tier two, on the exact name that got past tier one.
+
+    `RefinementLaw.refined_isGreatest` does not exist -- the declaration is `isGreatest_refined` --
+    and it passed this gate because the docstring citing it put the word into the source blob, and
+    the blob was the live set. A word-order swap is the commonest way to get a Lean name wrong, so
+    that blind spot covered the likeliest failure.
+
+    BOTH directions are asserted. A name planted in a comment must be absent from the code set, AND
+    the real declaration must be present in it: either assertion alone passes vacuously, the first if
+    the stripper ate everything and the second if it stripped nothing.
+    """
+    if not os.path.isdir(gate.LEAN):
+        pytest.skip("Lean sources absent")
+    planted = gate.strip_lean_comments(
+        "/-- see `RefinementLaw." + "refined_isGreatest" + "` for the consumer. -/\n"
+        "theorem isGreatest_refined : True := trivial\n")
+    words = gate.live_words(planted)
+    assert "refined_isGreatest" not in words, (
+        "a name occurring only inside a Lean comment survived the stripper, so tier two cannot "
+        "see the failure it exists for")
+    assert "isGreatest_refined" in words, (
+        "the stripper removed a `theorem` line, which would report every real declaration dead")
+
+
+def test_the_stripper_handles_nested_block_comments():
+    """Lean block comments NEST, and `/--` opens one.
+
+    A non-nesting `/-.*?-/` stops at the first `-/` and leaves the tail of the outer comment in the
+    code set -- the direction that hides a dead name, so it would not be caught by the test above.
+    """
+    src = "/- outer /- inner -/ still_commented -/\ntheorem real_one : True := trivial\n"
+    words = gate.live_words(gate.strip_lean_comments(src))
+    assert "still_commented" not in words, "the scanner closed on the INNER comment's terminator"
+    assert "real_one" in words, "the scanner never closed, and ate the code after it"
+
+
+def test_code_blob_is_smaller_than_source_blob():
+    """POSITIVE CONTROL for the corpus, not the classifier.
+
+    Every assertion above is on a planted string, so all of them would pass if `code_blob` read no
+    files at all -- an empty code set reports every name prose-only, and the verdict on an empty
+    corpus is not distinguishable from a strict one by a planted name.
+    """
+    if not os.path.isdir(gate.LEAN):
+        pytest.skip("Lean sources absent")
+    src = gate.live_words(gate.source_blob())
+    code = gate.live_words(gate.code_blob())
+    assert code, "the code corpus is empty; tier two would report every citation prose-only"
+    assert code < src, "stripping comments removed nothing, so tier two is tier one"

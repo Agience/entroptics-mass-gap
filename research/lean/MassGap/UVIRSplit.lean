@@ -98,7 +98,7 @@ holds with `ε(a) = B(a)`, every conclusion then being a rate at least one. Its 
 together with `VanishingLoss` or a budget `E` below the IR rate, which every forward theorem takes.
 The block factor is `2`, the halving of `GapStep.PhysStep`, where Balaban's block factor `L` is a
 large integer; the composition's argument runs with `L`-adic spacings in place of dyadic ones, which
-this module does not state. `aRun N` rises on `(0, 17N²/(44π²)]` and falls past it
+this module does not state. `aRun N` rises on `(0, 17N²/(88π²)]` and falls past it
 (`AsymptoticScaling.aRun`); the tree proves neither monotonicity, so `LossStep` compares any two couplings
 above `βUV` with spacings one step apart, in either order of coupling, and at `βUV` below the peak it
 pairs a strong coupling with a weak one of the same spacing. `ε` carries no sign condition: at `M = 0`
@@ -309,7 +309,7 @@ def UVInput (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) : Prop :=
 /-- **THE IR INPUT: the gap at one coupling, in physical units.** At the coupling `β₀`, the periodic
 gauge-invariant transfer data has `GapAt` at rate `e^{−M₀·aRun N β₀}`: physical rate `M₀` at spacing
 `aRun N β₀` (`GapStep.phys_rate_le_iff`). One coupling, one lattice spacing, infinite volume.
-`aRun N β₀` reads as a lattice spacing only past its peak at `β = 17N²/(44π²)`
+`aRun N β₀` reads as a lattice spacing only past its peak at `β = 17N²/(88π²)`
 (`AsymptoticScaling.aRun`); below the peak `IRGapAt` holds at the proved strong-coupling rate
 (`irGapAt_of_strong_coupling_chain`, `K = 0`).
 
@@ -653,7 +653,7 @@ theorem fixedWindowDecay_iff_of_uvInput (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (
 composes them.
 
 At small `β` the two-loop formula `aRun N β` is small (it rises to its maximum at
-`β = 17N²/(44π²) ≈ 0.0391·N²`, `AsymptoticScaling.aRun`), so `Ms` measures the strong-coupling rate
+`β = 17N²/(88π²) ≈ 0.0196·N²`, `AsymptoticScaling.aRun`), so `Ms` measures the strong-coupling rate
 in the units of a formula outside its range. The step hypotheses carry both the crossover from strong
 to weak coupling and that change of units; neither is proved here.
 

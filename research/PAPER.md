@@ -610,10 +610,9 @@ orderings traverse the same loop in opposite senses, so their holonomies are mut
 their $\operatorname{Re}\operatorname{tr}$ is equal, and every plane is therefore counted twice
 (`PlaqCount.plaq_ordered_double_counts`). Its coupling is consequently
 $\beta_{\mathrm{Lean}}=\beta/2$: the Lean Boltzmann weight at $\beta_{\mathrm{Lean}}$ **is** the
-standard Wilson weight at $2\beta_{\mathrm{Lean}}$ (`PlaqCount.boltz_eq_std`). No number moves —
-every formal statement is quantified over the coupling or takes an interval of it as a hypothesis,
-and $\beta\mapsto2\beta$ is a bijection of $[0,\infty)$ fixing $0$ — but the factor is stated here
-rather than left to be inferred from the plaquette type.
+standard Wilson weight at $2\beta_{\mathrm{Lean}}$ (`PlaqCount.boltz_eq_std`). The two-loop spacing is read at the same coupling: `AsymptoticScaling.aRun N β` is the standard
+two-loop spacing at $2\beta_{\mathrm{Lean}}$ (`AsymptoticScaling.aRunStd`), so every statement pairing the
+spacing with the Lean Wilson family measures lengths in that family's own lattice units.
 
 **8.2 The two coupling ends.** The action side $\mu<\kappa_0$ holds at both ends. At strong coupling the convergent
 cluster expansion gives the tension bound $\mu\le2\beta I_2/I_1$ directly (Osterwalder–Seiler; the closed-form

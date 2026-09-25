@@ -32,7 +32,8 @@ noncomputable section
 5. **The finite check at box patches.** `BoxLocalGap hN β n γ`: every box patch operator
    `boxOp β n j k = Σ_l boxWeight n k l • (id − torusCondExp l)` has local gap `γ` for `torusForm`,
    at every `j` with `n ≤ j + 1`. `BoxPatchGap hN β n γ`: `2 ≤ n`, `γ > (40n − 36)/n²` and
-   `BoxLocalGap`. `patchGapCheck_of_boxPatchGap`: `BoxPatchGap → KnabeCriterion.PatchGapCheck`.
+   `BoxLocalGap`. `patchGapCheck_of_boxPatchGap`: `BoxPatchGap → KnabeCriterion.PatchGapCheck`;
+   `boxFamily_check` names its family and `c₀ = boxKnabe n γ`.
 
 An independent brute-force count on the tori `(n, L) ∈ {(2,4), (2,5), (2,6), (3,6), (3,7)}`, with the
 pair weight counted box by box and the plaquettes over every ordered pair of directions, agrees with
@@ -1093,6 +1094,28 @@ coefficients; `0` is the excluded rank in `hN`. -/
 def BoxPatchGap (hN : N ≠ 0) (β : ℝ) (n : ℕ) (γ : ℝ) : Prop :=
   2 ≤ n ∧ (40 * (n : ℝ) - 36) / (n : ℝ) ^ 2 < γ ∧ BoxLocalGap hN β n γ
 
+/-- **The box family and its Knabe constant.** Under `BoxPatchGap hN β n γ`, a family of heat-bath
+systems has, for all large `j`, `0 < b`, Knabe constant at least `boxKnabe n γ` and patch gap `γ`: the
+content of `patchGapCheck_of_boxPatchGap` with `c₀ = boxKnabe n γ` named.
+
+DERIVED: `0` is the excluded rank in `hN` and the sign of `b`. -/
+theorem boxFamily_check (hN : N ≠ 0) {β γ : ℝ} {n : ℕ} (h : BoxPatchGap hN β n γ) :
+    ∃ S : ∀ j : ℕ, WilsonHeatBath hN β j, ∀ᶠ j in Filter.atTop,
+      0 < (S j).b ∧ boxKnabe n γ ≤ (S j).toPatchSystem.knabeConst γ ∧
+        (S j).toPatchSystem.LocalGap γ := by
+  obtain ⟨hn2, _, hloc⟩ := h
+  have hn1 : 1 ≤ n := by omega
+  refine ⟨boxFamily hN β n hn1, ?_⟩
+  rw [Filter.eventually_atTop]
+  refine ⟨n, fun j hj => ?_⟩
+  have hj' : n ≤ j + 1 := by omega
+  rw [boxFamily_eq hN β n hn1 j hj']
+  refine ⟨bR_pos hn2, le_of_eq (knabeConst_box hN β n j hn1 hj' γ).symm, ?_⟩
+  intro k x
+  exact hloc j hj' k x
+
+#print axioms boxFamily_check
+
 /-- **The box check gives the finite check.** `BoxPatchGap hN β n γ → PatchGapCheck hN β γ`, with
 the family `boxFamily` and `c₀ = boxKnabe n γ > 0` (`boxKnabe_pos_iff`, `knabe_box_eq`, `bR_pos`):
 from `j ≥ n` on the family is `boxHeatBath`, whose Knabe constant is `c₀` exactly and whose patch gap
@@ -1101,16 +1124,8 @@ is `BoxLocalGap` at `j`.
 DERIVED: `0` is the excluded rank in `hN`. -/
 theorem patchGapCheck_of_boxPatchGap (hN : N ≠ 0) {β γ : ℝ} {n : ℕ}
     (h : BoxPatchGap hN β n γ) : PatchGapCheck hN β γ := by
-  obtain ⟨hn2, hγ, hloc⟩ := h
-  have hn1 : 1 ≤ n := by omega
-  refine ⟨boxFamily hN β n hn1, boxKnabe n γ, (boxKnabe_pos_iff hn2 γ).mpr hγ, ?_⟩
-  rw [Filter.eventually_atTop]
-  refine ⟨n, fun j hj => ?_⟩
-  have hj' : n ≤ j + 1 := by omega
-  rw [boxFamily_eq hN β n hn1 j hj']
-  refine ⟨bR_pos hn2, le_of_eq (knabeConst_box hN β n j hn1 hj' γ).symm, ?_⟩
-  intro k x
-  exact hloc j hj' k x
+  obtain ⟨S, hS⟩ := boxFamily_check hN h
+  exact ⟨S, boxKnabe n γ, (boxKnabe_pos_iff h.1 γ).mpr h.2.1, hS⟩
 
 #print axioms patchGapCheck_of_boxPatchGap
 

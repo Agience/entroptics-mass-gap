@@ -410,15 +410,17 @@ end Window
 section Necessary
 
 /-- **The running spacing is eventually below any positive bound.** At `1 ≤ N` and `0 < b`, for all
-large `β`, `aRun N β ≤ b`: past the base threshold `11N²/(24π²)`,
-`AsymptoticScaling.aRun_le_inv_of_base_ge_one` bounds `aRun N β` by `22N²/(3π²β)`, which is at most `b`
-once `β ≥ 22N²/(3π²b)`.
+large `β`, `aRun N β ≤ b`: `aRun N β = aRunStd N (2β)`, and at a standard coupling `β'` past
+`11N²/(24π²)` `AsymptoticScaling.aRunStd_le_inv_of_base_ge_one` bounds `aRunStd N β'` by `22N²/(3π²β')`,
+which is at most `b` once `β' ≥ 22N²/(3π²b)`; `β' = 2β` runs to infinity with `β`.
 
 DERIVED: `1` is the least colour count, which keeps `N²` non-zero; `0` is the sign of `b`. The `11`,
-`24`, `22`, `3` and the `2`s of `N²` and `π²` in the proof are `aRun`'s own constants, carried from
-`AsymptoticScaling.aRun_le_inv_of_base_ge_one`. -/
+`24`, `22`, `3` and the `2`s of `N²` and `π²` in the proof are `aRunStd`'s own constants, carried from
+`AsymptoticScaling.aRunStd_le_inv_of_base_ge_one`; `2` is `aRun`'s factor. -/
 theorem eventually_aRun_le (hN : 1 ≤ N) {b : ℝ} (hb : 0 < b) :
     ∀ᶠ β in Filter.atTop, MassGap.AsymptoticScaling.aRun N β ≤ b := by
+  suffices hstd : ∀ᶠ β in Filter.atTop, MassGap.AsymptoticScaling.aRunStd N β ≤ b from
+    (Filter.tendsto_id.const_mul_atTop (by norm_num : (0 : ℝ) < 2)).eventually hstd
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
   have hN2 : (0 : ℝ) < 11 * (N : ℝ) ^ 2 := mul_pos (by norm_num) (pow_pos hN0 2)
   have hπ : (0 : ℝ) < Real.pi ^ 2 := pow_pos Real.pi_pos 2
@@ -432,7 +434,7 @@ theorem eventually_aRun_le (hN : 1 ≤ N) {b : ℝ} (hb : 0 < b) :
     rw [div_le_iff₀ h24] at h1
     linarith
   have h3β : (0 : ℝ) < 3 * Real.pi ^ 2 * β := mul_pos (mul_pos (by norm_num) hπ) h3
-  refine le_trans (MassGap.AsymptoticScaling.aRun_le_inv_of_base_ge_one hN h3 hbase) ?_
+  refine le_trans (MassGap.AsymptoticScaling.aRunStd_le_inv_of_base_ge_one hN h3 hbase) ?_
   rw [div_le_iff₀ h3β]
   rw [div_le_iff₀ h3b] at h2
   linarith

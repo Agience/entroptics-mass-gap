@@ -14,7 +14,7 @@ Normalisation. `11N/3` and `34N²/3` are the `SU(N)` coefficients of
 `μ dg/dμ = −(11N/3) g³/(16π²) − (34N²/3) g⁵/(16π²)²`. In the variable `x = g/(4π)` that is
 `μ dx/dμ = −(11N/3) x³ − (34N²/3) x⁵`, so in the `SU(N)` instances below the variable `g` stands for
 the coupling divided by `4π`; written in the gauge coupling itself the coefficients are
-`11N/(3·16π²)` and `34N²/(3·(16π²)²)`, which is how `AsymptoticScaling.aRun` uses them. A positive
+`11N/(3·16π²)` and `34N²/(3·(16π²)²)`, which is how `AsymptoticScaling.aRunStd` uses them. A positive
 rescaling of the coupling or of the coefficients preserves every sign stated here.
 
 Scope: these are inequalities over `ℝ`. Nothing here defines a renormalisation-group flow, a

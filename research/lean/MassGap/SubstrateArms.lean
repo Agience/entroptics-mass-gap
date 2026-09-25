@@ -934,8 +934,8 @@ from the margin to this form is one application of monotonicity. The form is her
 
 The screen spacing `L/(N₀+i+1)` is a convention fixing a physical extent and refining it.
 `physical_gap_at_the_running_spacing` reads the lattice margin against the renormalisation-group
-spacing instead: `AsymptoticScaling.aRun 3`, the two-loop running spacing of `SU(3)` at the Wilson
-coupling `β = 6/g²`, with `Λ = 1`.
+spacing instead: `AsymptoticScaling.aRun 3`, the two-loop running spacing of `SU(3)` at the Lean Wilson
+coupling `β = 3/g²`, with `Λ = 1`.
 
 This is `Complete.ym_physical_gap_uniform_exact` relativised to `Set.Ici 0`, which is the half-line
 the substrate bound is available on and the one `WilsonInstance.gapModelOf_A1` reads; the surplus
@@ -1749,8 +1749,8 @@ refinement index `i`, every nonnegative `β₁` and every target `a` strictly be
 
     aRun 3 β = a    and    c ≤ κ₀YM − μYMAt (N₀+i) β.
 
-`aRun 3` is the two-loop running spacing of `SU(3)` at the Wilson coupling `β = 6/g²`, with
-`Λ = 1`; `SU(3)` is the gauge group of the ensemble `μYMAt` reads
+`aRun 3` is the two-loop running spacing of `SU(3)` at the Lean Wilson coupling `β = 3/g²`,
+with `Λ = 1`; `SU(3)` is the gauge group of the ensemble `μYMAt` reads
 (`wilsonCorrAt N β = WilsonBridge.corrClay (N + 1) β`, and `corrClay` is taken at colour count `3`).
 `aRun`'s first argument is the colour count, so the spacing depends on the coupling alone; the
 aperture `N₀+i` enters only through `μYMAt`.
@@ -1770,8 +1770,8 @@ satisfy `AsymptoticScalingAt` (`AsymptoticScaling.fixed_colours_pins_the_spacing
 
 DERIVED: `0` is the sign of `c`, the lower end of the coupling half-line in `hβ₁`, and the target's
 sign in `ha`, carried from the two theorems composed here. `3` in `aRun 3` is the colour count of
-`WilsonBridge.corrClay`'s ensemble, `SU(3)`, the gauge group whose correlation `μYMAt` reads; `6` in
-`β = 6/g²` is `2N` at that `N`. -/
+`WilsonBridge.corrClay`'s ensemble, `SU(3)`, the gauge group whose correlation `μYMAt` reads; `3` in
+`β = 3/g²` is `N` at that `N`, `g² = N/β` at the Lean coupling. -/
 theorem physical_gap_at_the_running_spacing
     (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
     ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧

@@ -31,6 +31,32 @@ limit of lattice Schwinger functions and reconstructed; **Y** is that limit of v
 spacing with the gap held in physical units; **N** is a connected function of order three or more
 that stays away from zero in the limit — the continuum theory is not a generalised free field.
 
+## Where it stands, in one statement
+
+`ClayRoutes.ClayContinuum` is the gapped part of the continuum statement for `SU(N)`, `2 ≤ N`, on one reconstructed
+Hilbert space: at every dyadic step a spectral gap of physical rate at least `c/L` (`ContinuumClay.GappedAt`) and
+a non-zero vector orthogonal to the vacuum (`ContinuumClay.NontrivialVacuum`). N in the Clay sense, a connected
+function of order three or more away from zero (`ThreePointN.WilsonThreePointSeparation`), and rotation
+invariance off the hypercubic group sit outside it. `ClayRoutes.clay_continuum_of_fixedWindowDecay`,
+`ClayRoutes.clay_continuum_of_boxPatchGap`, `ClayRoutes.clay_continuum_of_irGap` and
+`ClayRoutes.clay_continuum_of_chiForest` prove it from the open inputs, each a named proposition. On the
+finite-size route the box gives the IR gap at `β₀` at the explicit rate
+`HeatBathLocal.boxRate N β₀ n γ = min(boxKnabe n γ, 1)/(508 · aRun N β₀)` (`HeatBathLocal.irGapAt_boxRate`,
+`HeatBathLocal.boxRate_eq`), and the UV step is asked below that rate:
+
+| requirement | open input |
+|---|---|
+| E | `ContinuumSep.UniformBoundSep` at the connected renormalisation |
+| N | `ContinuumNontrivial.KernelConvergesSep` for a field `O` with limit `G` (the non-zero vector) |
+| Y | `ShortDistanceY.AFShortDistance G` |
+| M, the middle | `BoxPatch.BoxPatchGap` at one coupling `β₀` (`ClayRoutes.clay_continuum_of_boxPatchGap`; `HeatBathLocal.heatBathDecay_holds` proves the gap-to-decay step at every coupling). Localised form: `BoxGap.BoxFibreGap` at `β₀`, one box of links under every frozen boundary, with `γ > (40n − 36)/n²` (`BoxGap.boxPatchGap_of_fibreGap`) |
+| M, the UV step | `ClayRoutes.UVBelowIR` at `HeatBathLocal.boxRate N β₀ n γ`: `UVIRSplit.UVLossStep` from `βUV` on, `βUV` past the peak `17N²/(88π²)` of `aRun N`, with non-negative losses, the losses of the dyadic tower summing below `min(boxKnabe n γ, 1)/(508 · aRun N β₀)`. Entropy form: `UVEntropy.EntropyBelowIR` at `boxRate`, `(e^{−boxRate · aRun N β₀})^{m₀} + 4κE < 1`, with `UVEntropy.PeriodicObserverLaws`, `UVEntropy.ClassKappaUV`, `UVEntropy.ObsReadback` and `UVEntropy.UVEntropyBridge` (`UVEntropy.clay_continuum_of_boxPatchGap_entropy`) |
+| M, as one proposition | `WeakCouplingWindow.FixedWindowDecay` (equivalently `ZoomStep.LeftoverInvariant`, and `ConstantPhysics.MassDominates` under `ConstantPhysics.MovesComplement` at large `β`) |
+
+The χ² route replaces the M rows by `ChiForest.ChiForest`, `ClayRoutes.ClassKappa`, `ClayRoutes.LimitFactor` and
+`ClayRoutes.ChiCarrierBridge`. Rotation invariance off the hypercubic group (`ContinuumHypercubic.RotationOpen`)
+sits outside the statement.
+
 ## How we get there
 
 **1. M on the lattice — the transfer gap on ℤ⁴ from cluster decay.**
@@ -226,6 +252,89 @@ from it.
    step, the torus and the configuration, provided every running coupling stays below a small `γ`; it
    motivates the UV step. Open: the UV step as a statement on correlations, in infinite volume, with
    losses summing below the IR rate; and the gap at any single coupling outside strong coupling.
+   **The zoom is the RG step.** `ZoomStep.gabor_product_scale_invariant` is the Entroptics zoom
+   invariance, exact under block repetition; `ZoomStep.literalRepeat_no_gap` shows exact block repetition
+   of the connected profile excludes every gap at the finer spacing once one vacuum-orthogonal observable
+   there is non-null, so the zoom is asked at the even lags, which carry the gap
+   (`ZoomStep.evenEnvelopeAt_iff_gapAt`), and `ZoomStep.zoomInvariantWith_iff_uvLossStep` makes that zoom
+   the UV step. `ZoomStep.gapAt_iff_leftoverNull`: the gap at rate `r` is a null spectral leftover past
+   `r`, `ZoomStep.readsClearWith_iff_leftoverNull` puts that edge at the aperture's, and
+   `ZoomStep.leftoverInvariant_iff_fixedWindowDecay`: that leftover staying null at a fixed physical
+   window is `FixedWindowDecay`.
+   **The same forest at every zoom.** `ZoomForest.ForestAt`: observer laws whose successive
+   total-variation steps are summable converge, every bounded observable at one rate
+   (`ZoomForest.ForestAt.tendsto`), a coarser observer sees the same forest
+   (`ZoomForest.SameForestAt.comp`), and `ZoomForest.tendsto_latSkR_of_sameForestAt` makes `contS` the
+   genuine limit of the lattice Schwinger functions with no `UniformBound`, when one bounded observer
+   observable reads them at every step. The renormalised smeared fields meet that bound at bounded
+   renormalisation data, where successive observer laws are expected to stay at total-variation distance
+   of order one; at growing `Z` the moments need uniform integrability, which follows from `UniformBound` at
+   the doubled family and is open there. In entropy form (`ZoomForest.SameForestKL`, `ZoomForest.ZoomGeometric`,
+   through `ZoomForest.PinskerObs`, proved as `ChiForest.pinskerObs`) the open input is a geometric bound on the change of the
+   observer's log-density between zooms (`ZoomForest.WilsonZoomInput`, stated); along the continuous path
+   it is a finite Fisher–Rao length (`ZoomForest.FiniteZoomLength`, with `ZoomForest.DeafToUV` and
+   `ZoomForest.GibbsObserverSpeed` stated).
+   **A heat-bath gap gives decay.** `HeatBathGapDecay.nrm_Titer_H`: the lazy heat bath contracts the
+   range of its generator at the gap rate; `HeatBathGapDecay.lr_bound`: a Lieb–Robinson bound at each
+   separation level; `HeatBathGapDecay.cov_bound_exp`: covariance decay with no dependence on the volume;
+   `HeatBathGapDecay.heatBathDecay_of_locality` proves `KnabeCriterion.HeatBathDecay` from
+   `HeatBathGapDecay.HeatBathLocality`, bookkeeping about the heat bath's supports and commutation plus one
+   analytic item, fixed-volume ergodicity (`HeatBathGapDecay.ErgodicLimit`); both are proved at every coupling
+   (`HeatBathLocal.heatBathLocality_holds`, `HeatBathLocal.ergodicLimit_wilson`).
+   **The UV step in entropy form.** `UVEntropy.clay_continuum_of_boxPatchGap_entropy` is the capstone with
+   `UVBelowIR` replaced by a χ² step between observer laws at halved spacings (`UVEntropy.UVEntropyStep`), summed
+   by a loss budget `E` with `(e^{−boxRate · aRun N β₀})^{m₀} + 4κE < 1` at the box's rate `HeatBathLocal.boxRate`
+   (`UVEntropy.EntropyBelowIR`). The composition is proved
+   (`UVEntropy.obsFactor_eventually_of_uvEntropy`, `UVEntropy.fixedWindowDecay_of_uvEntropy_ir`). A χ² step moves
+   the window factor additively, so the observer route carries the lattice-scale class through two carrier
+   Props: `UVEntropy.ObsReadback` at `β₀` and `UVEntropy.UVEntropyBridge` at large `β`. A per-region density
+   band shrinking as a power of the spacing (`UVEntropy.LocalRemainderDecay`) gives a summable step
+   (`UVEntropy.uvEntropyStep_of_localRemainderDecay`, `UVEntropy.lossBudget_localRemainder`); an extensive band
+   gives only a constant loss, which has no budget (`UVEntropy.uvEntropyStep_of_extensive`,
+   `UVEntropy.not_lossBudget_const`). `UVEntropy.PeriodicObserverLaws` does not tie the block maps across
+   couplings, and observer laws frozen in `β` satisfy the entropy step at zero loss; in such a model the
+   conclusion comes from `UVEntropy.UVEntropyBridge`, which then restates `FixedWindowDecay` on the observer
+   class. The entropy step carries weight only at block maps of one physical size.
+   **The spacing at the Lean coupling.** The Lean Wilson systems count every plane twice, so their coupling
+   `β` is the standard `2β` (`PlaqCount.boltz_eq_std`), and `AsymptoticScaling.aRun N β` is the two-loop
+   spacing there, `AsymptoticScaling.aRunStd N (2β)`. Every statement that pairs `aRun` with the Wilson family
+   (`WeakCouplingWindow.FixedWindowDecay`, the UV step, the dyadic continuum steps, `ShortDistanceY.af_along_aRun`
+   at `g² = N/β`) reads the spacing of the family it describes.
+   **The box patch gap.** `BoxGap.boxPatchGap_zero`: `BoxPatchGap` holds at `β = 0` with `γ = 1` for every
+   side `n ≥ 40`, a sanity case only, since the capstone takes `0 < β₀`. At a positive coupling,
+   `BoxGap.boxPatchGap_of_fibreGap` localises `BoxPatchGap` to `BoxGap.BoxFibreGap`: one box of links, the rest
+   of the torus frozen at an arbitrary boundary `W`, with the fibre integrals over the box compared at rate
+   `γ > (40n − 36)/n²`. `BoxFibreGap` gives `BoxLocalGap`; it is the same inequality taken fibre by fibre, a localisation rather than
+   a weaker target.
+   Every box local gap is at most `1` at `2 ≤ N` (`BoxCeiling.boxLocalGap_le_one`: a corner plaquette reading
+   one box link), so `BoxPatchGap` needs side at least `40` at every coupling
+   (`BoxCeiling.boxPatchGap_side_ge_forty`), and at `β = 0` gap `1` holds exactly from side `40`
+   (`BoxCeiling.boxPatchGap_zero_one_iff`). A
+   two-link correlation bound linear in `β` (`BoxGap.PairCorrLinear`) gives `BoxPatchGap β 80 (1 − Cβ)` for
+   `β ≤ 1/(2C)` (`BoxGap.boxPatchGap_of_pairCorrLinear`), and it holds: `PairCorr.pairCorrLinear_holds` proves
+   `PairCorrLinear hN 120960 (1/5760)` through the two-link conditional expectation `PairCorr.twoCondExp`, two
+   links sharing a plaquette correlating by at most `5760β` for `0 ≤ β ≤ 1/5760`, uniformly in the volume. So `BoxPatchGap` holds at
+   `β₀ = 1/241920`, side `80`, gap `1/2` (`PairCorr.boxPatchGap_at`), and the finite-size route gives the IR gap
+   there (`PairCorr.irGapAt_small`). The capstone takes the UV step from past the peak `17N²/(88π²)` of
+   `aRun N` (about `0.078` at `N = 2`), so the box is still asked at a larger coupling.
+   **Heat-bath decay, proved.** `HeatBathLocal.heatBathLocality_holds` and
+   `HeatBathLocal.heatBathDecay_holds`: at every coupling a volume-uniform heat-bath gap gives decay of the
+   connected reflected pairings at the periodic state. The analytic core is a fixed-volume Poincaré
+   inequality for the heat bath (`HeatBathErgodic.heat_poincare`, its constant depending on the volume), from a
+   Holley–Stroock comparison with the
+   Haar measure and a sweep bound, which gives ergodicity at a geometric rate
+   (`HeatBathErgodic.ergodicLimit_of_poincare`); the bookkeeping identifies every `WilsonHeatBath` with the heat
+   bath up to null vectors (`HeatBathLocal.condExp_sub_null`). The finite-size route to M rests on
+   `BoxPatch.BoxPatchGap` at one coupling, which supplies the uniform heat-bath gap, and the UV step from
+   there on.
+   **Entropy tools, proved.** `EntropyTools.klDiv_map_le` is data processing for relative entropy between
+   finite measures under any measurable map, and `EntropyTools.abs_integral_sub_le_sqrt_two_mul_klDiv` is Pinsker's inequality with
+   the sharp constant; `ChiForest.pinskerObs` and `ChiForest.klDataProcessing` discharge the two entropy
+   hypotheses of `ZoomForest`. `ChiForest.abs_integral_sub_le_sqrt_chiSq_mul` bounds a mean difference by
+   `√χ²` times the standard deviation, so a summable `√χ²` between zooms (`ChiForest.ChiForest`) gives
+   variance-relative convergence of connected correlations (`ChiForest.ChiForest.abs_conn_sub_le`), and
+   `ChiForest.eventually_factor_of_relative` turns a limit factor `q₀` at one physical window into any step
+   factor `q > q₀` over a class with one constant.
    **Past the crossover by a finite-size criterion.** `KnabeCriterion.knabe_bound` is Knabe's argument in
    weighted form: on a symmetric nonnegative form, self-adjoint idempotents `hᵢ` covered by patches with a
    local gap `γ` above the overlap excess give the global gap `(γa₁ − a₂ + b − e)/b`
@@ -234,9 +343,9 @@ from it.
    `KnabeCriterion.fixedWindowDecay_of_patchGapCheck` gives `FixedWindowDecay` from
    `KnabeCriterion.HeatBathDecay` and `KnabeCriterion.PatchGapCheck` at one coupling `β₀` — a patch gap
    on one box of links under every boundary configuration — with the UV step `UVIRSplit.UVLossStep` only
-   from `β₀` on. The UV step then runs in the weak-coupling regime alone. Open: `HeatBathDecay` (a uniform
-   heat-bath gap gives decay), `PatchGapCheck` at a coupling past the strong-coupling region, and the UV
-   step at weak coupling. **The heat-bath, built:** `HeatBath.heatAvg` is the single-link conditional
+   from `β₀` on; it stays in the weak-coupling regime when `β₀` is past the crossover. `HeatBathDecay` is proved
+   (`HeatBathLocal.heatBathDecay_holds`). Open: `BoxPatchGap` at some `β₀ ≥ 17N²/(88π²)`, and `UVBelowIR` at
+   `boxRate` from `βUV ∈ [17N²/(88π²), β₀]`. **The heat-bath, built:** `HeatBath.heatAvg` is the single-link conditional
    expectation of the Wilson measure, with the DLR identity (`HeatBath.expect_heatAvg`), detailed balance
    (`HeatBath.expect_heatAvg_mul`) and commutation at links sharing no plaquette
    (`HeatBath.heatAvg_comm`); `BoxPatch.boxHeatBath` is a `KnabeCriterion.WilsonHeatBath` with box
@@ -244,6 +353,18 @@ from it.
    `(γn² − 40n + 36)/(n − 1)²` (`BoxPatch.knabeConst_box`), and
    `BoxPatch.patchGapCheck_of_boxPatchGap` makes the finite-size input `BoxPatch.BoxPatchGap`: a local
    gap above `(40n − 36)/n²` for every box patch operator, uniformly in the extent.
+   **The line of constant physics.** `ConstantPhysics.latMassP` is the lattice mass at the periodic state,
+   `−log` of the best gap rate wherever it is positive, and `ConstantPhysics.aPhys` the spacing it sets,
+   `latMassP/mphys`; at every coupling with positive lattice mass the physical gap along it is exactly
+   `mphys` (`ConstantPhysics.constant_physics_gap`). `ConstantPhysics.fixedWindowDecay_iff_massDominates`:
+   where `T` moves the vacuum complement at large `β` (`ConstantPhysics.MovesComplement`),
+   `FixedWindowDecay` holds exactly when the lattice mass dominates `aRun N` at large `β`, and
+   `ConstantPhysics.clay_M_split`: a gap at every coupling (`ConstantPhysics.LatticeGapEvery`, reached
+   from box patch gaps by `ConstantPhysics.latticeGapEvery_of_boxes`) and asymptotic scaling of the
+   lattice mass give the lattice form of M, the periodic Clay gap at every coupling and
+   `FixedWindowDecay` at every window. `ConstantPhysics.dominance_does_not_give_scaling`: as constraints
+   on a mass function, the dominance `FixedWindowDecay` is equivalent to is strictly weaker than
+   asymptotic scaling.
    **Being attacked now:** `FixedWindowDecay` at weak coupling; `E`; `Y`.
 2. **An infinite-volume state at every coupling — built.** `PeriodicState.periodicState`: an
    ultrafilter limit of the `SU(N)` Wilson states on periodic lattices, read on `ℤ⁴`, reflection
@@ -320,6 +441,26 @@ from it.
    (`ContinuumHypercubic.RotationOpen`). Open with them: `UniformBoundSep` at a growing
    `Z`, `ConnectedTwoPointNonzero`, rotation invariance (`ContinuumSchwinger.RotationInvariant`) and
    translation invariance off the dyadic subgroup.
+   **The same forest, by probes.** `Beacon.exists_unique_limit_of_beacon`: when the responses of a family
+   of states to every probe in a point-separating subalgebra converge, the family converges to one state,
+   along the filter itself. `Beacon.eq_periodicState_of_volumeBeacon` and `Beacon.contSAlong_eq_of_beacons`
+   remove both ultrafilter choices from `PeriodicState.periodicState` and `ContinuumSchwinger.contS` under
+   the probe inputs, and `Beacon.tendsto_contS_atTop_of_schwingerBeacon` makes `contS` a limit along the
+   couplings with no `UniformBound`. Open: `Beacon.SchwingerBeacon`, the renormalised Schwinger functions
+   converging along the couplings. Its quantifier includes coincident supports, where a growing
+   field-strength factor is expected to diverge, so the form expected to hold is the separated one,
+   `ConstantPhysics.SignalConvergesSep` at `(dyBeta, dySpacing)`.
+   **Flowed probes.** `ContinuumFlow.Flow` is the interface for a smoothing of the fields over a physical
+   range, covariant under the reflections; the flowed Schwinger functions `ContinuumFlow.contSF` carry OS0 under
+   `ContinuumFlow.UniformBoundF`, OS1 on the dyadic subgroup, OS3, and OS2 beyond the flow's margin
+   (`ContinuumFlow.contSF_gram_nonneg`), and reconstruct (`ContinuumFlow.flow_reconstruction`). At zero flow
+   time they are `ContinuumSchwinger`'s (`ContinuumFlow.contSF_zeroFlow`,
+   `ContinuumFlow.uniformBoundF_zeroFlow_iff`). The flow keeps the canonical factor `a⁻⁴`, so the uniform
+   bound at positive flow time is the named input where it is expected to hold; `ContinuumFlow.FlowBeacon`
+   makes `contSF` the limit along the couplings (`ContinuumFlow.tendsto_atTop_contSF`). The localised
+   gradient flow is not constructed: the one configuration flow in the tree is
+   `ContinuumFlow.ConfFlow.identity`, zero flow time, so the positive-time inputs are read at a flow still
+   to be built.
 4. **N** — the separated three-point statistic. `ThreePointN.sepRatio ν A B C` is the square of the
    connected three-point function of three composites over the product of their connected two-point
    functions; it is invariant under `X ↦ Z·X + b` in each argument (`ThreePointN.sepRatio_affine`), and

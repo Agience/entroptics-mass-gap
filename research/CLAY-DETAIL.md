@@ -323,6 +323,24 @@ at every `0 < β ≤ 1/1400`, where `coreRate' 64 β < 1` (`StrongCouplingSharp.
 interval is more than twenty times every interval on which `coreRate 64 β < 1`
 (`StrongCouplingSharp.periodic_gap_interval_exceeds_old`).
 
+**The line of constant physics.** For transfer data `D`, `ConstantPhysics.rateSet D` holds the rates `m > 0`
+with `GapAt D (e^{−m})` and `ConstantPhysics.latMass D` is their supremum: `GapAt D (e^{−latMass D})`
+always (`ConstantPhysics.gapAt_exp_neg_latMass`), it is positive exactly when the rate set is non-empty and
+bounded (`ConstantPhysics.latMass_pos_iff`), and bounded exactly when `T` moves some vacuum-orthogonal vector
+to one of positive form (`ConstantPhysics.bddAbove_rateSet_iff`). At the periodic state
+`ConstantPhysics.latMassP` is that mass, and the spacing `ConstantPhysics.aPhys = latMassP/mphys` makes the
+physical gap exactly `mphys` at every coupling where `latMassP` is positive
+(`ConstantPhysics.constant_physics_gap`). Along any eventually positive spacing `a`, where `T` moves the
+vacuum complement at large `β`, `ConstantPhysics.uniformPhysGapAlong_iff_massDominates` identifies the
+uniform physical gap with the lattice mass dominating `a`, so `ConstantPhysics.fixedWindowDecay_iff_massDominates` makes `FixedWindowDecay` the
+statement `κ·aRun N β ≤ aPhys β` at large `β` (`ConstantPhysics.fixedWindowDecay_iff_spacing_comparable`);
+asymptotic scaling of the lattice mass is `aPhys/aRun → 1` (`ConstantPhysics.asymptoticScaling_iff_aPhys_ratio`)
+and gives it (`ConstantPhysics.fixedWindowDecay_of_asymptoticScaling`). From continuity, positivity and
+vanishing of the lattice mass, `ConstantPhysics.exists_physFamily` chooses couplings at which `aPhys` hits
+the dyadic spacings, and `ConstantPhysics.contS_of_constantPhysics` makes `contS` of every separated family
+the limit along `dyBeta`, under `ConstantPhysics.SignalConvergesSep` along those couplings and
+`ConstantPhysics.StateShiftInvisibleSep` between them and `dyBeta`.
+
 **The step between couplings.** The algebra and the shift are the same at every coupling; only
 `periodicState hN β` moves, so a step compares two states on one algebra. `GapStep.PhysStep τ p hN β β' M`
 carries `GapAt` at rate `e^{−M·aRun N β}` at `β` to rate `e^{−M·aRun N β'}` at `β'`, `aRun N` the two-loop
@@ -365,11 +383,139 @@ nothing and the gap, and `UVIRSplit.irGapAt_of_strong_coupling_chain` joins the 
 through finitely many crossover steps. The UV step with a loss equal to the largest attainable physical
 rate holds trivially, so its content is carried by `UVIRSplit.VanishingLoss` or a budget below the IR
 rate; and since `UVIRSplit.IRGapAt` is proved at strong coupling at a rate unbounded as `β₀ → 0`, the split
-carries IR content only with `βUV` past the strong-coupling region. Balaban (Commun. Math. Phys. 119
+carries IR content only with `β₀` past the strong-coupling region. Balaban (Commun. Math. Phys. 119
 (1988) 243–285; 122 (1989) 355–392) bounds block-spin effective densities on a finite torus uniformly in
 the number of steps at small running coupling and proves no correlation bound. Open: the UV step on
 correlations in infinite volume with summable losses, and a gap at any single coupling outside strong
 coupling.
+
+**The zoom.** Under `PositiveTransfer` every lag profile is antitone (`ZoomStep.lagProfile_succ_le`) and
+the even lags determine the gap (`ZoomStep.evenEnvelopeAt_iff_gapAt`). A fine profile that repeats the coarse
+one exactly has lag-one ratio `1` at every non-null vacuum-orthogonal observable, which excludes every gap
+below `1` (`ZoomStep.not_gapAt_of_ratio_one`,
+`ZoomStep.literalRepeat_no_gap`); a fine profile matching the coarse one at even lags (`ZoomStep.EvenRepeat`)
+carries the gap at the square-root rate (`ZoomStep.gapAt_sqrt_of_zoomRepeat`), which is the same physical
+rate (`ZoomStep.zoom_keeps_physical_rate`), and gives `GapStep.PhysStep` (`ZoomStep.physStep_of_evenRepeat`).
+`ZoomStep.ZoomInvariantWith` is that matching with a loss, equivalent to `UVIRSplit.UVLossStep`
+(`ZoomStep.zoomInvariantWith_iff_uvLossStep`). On the spectral side `ZoomStep.outWeight` is a vector's
+spectral weight past an edge `s`, the vacuum complement contracts at `s` exactly when that weight is zero
+(`ZoomStep.contraction_iff_leftoverNull`), the reads clear the floor exactly when the weight past the read's
+edge is zero (`ZoomStep.readsClearWith_iff_leftoverNull`), and `ZoomStep.LeftoverInvariant` — the leftover
+null at the window's diffraction rate at every large `β` — is `FixedWindowDecay`
+(`ZoomStep.leftoverInvariant_iff_fixedWindowDecay`).
+
+**The same forest.** `ZoomForest.ObsClose μ ν ε` bounds every measurable observable of size one by `ε`,
+closed under maps (`ZoomForest.ObsClose.map`) and composition (`ZoomForest.ObsClose.trans`).
+`ZoomForest.ForestAt m ε` asks summable steps; then the laws are Cauchy (`ZoomForest.ForestAt.cauchy`) and
+every bounded observable converges with the tail as its rate (`ZoomForest.ForestAt.tendsto`), connected
+correlations included (`ZoomForest.ForestAt.abs_conn_sub_le`). A log-density bound gives a KL bound
+(`ZoomForest.klDiv_le_of_abs_llr_le`); a geometric one gives the forest (`ZoomForest.ZoomGeometric.sameForestKL`,
+then `ZoomForest.SameForestKL.sameForestAt` under the stated `ZoomForest.PinskerObs`). On the continuous path
+a speed bound gives closeness by the path length (`ZoomForest.SpeedBound.obsClose`), proved on finite spaces
+by Cauchy–Schwarz against the Fisher information (`ZoomForest.finitePath_abs_sub_le`), and
+`ZoomForest.FiniteZoomLength.tendsto` gives the limit. `ZoomForest.tendsto_latSkR_of_sameForestAt` reads the
+Schwinger functions through one bounded observer observable; over an arbitrary observer its hypotheses hold
+exactly when the lattice sequence has summable increments, so its content is in exhibiting the Gibbs measures
+and renormalised fields as that observer.
+
+**Gap to decay.** On a patch system the lazy heat bath `T = id − K⁻¹H` (`HeatBathGapDecay.Tstep`) is a
+contraction (`HeatBathGapDecay.nrm_Tstep_le`) and, under `GlobalGap c`, contracts the range of `H` by
+`1 − c/(2K)` (`HeatBathGapDecay.range_gap`, `HeatBathGapDecay.nrm_Titer_H`). A link-resolved commutator
+recursion bounds how far `T` spreads (`HeatBathGapDecay.lr_bound`), and the two combine into a covariance bound
+whose volume factor cancels at `n = sK` steps (`HeatBathGapDecay.cov_bound_exp`). At the periodic state this
+gives `GapAt` from per-vector torus clustering (`HeatBathGapDecay.gapAt_of_torusClusterAt`) and
+`HeatBathDecay` from `HeatBathGapDecay.HeatBathLocality` (`HeatBathGapDecay.heatBathDecay_of_locality`),
+whose one analytic field is fixed-volume ergodicity of the lazy heat bath (`HeatBathGapDecay.ErgodicLimit`).
+
+**The box patch gap.** At `β = 0` each heat bath is the Haar average over its link and any two commute
+(`BoxGap.heatAvg_zero`, `BoxGap.torusCondExp_comm_zero`), so every box patch has local gap `1`
+(`BoxGap.boxLocalGap_zero`), and `BoxPatchGap hN 0 n 1` holds once the threshold `(40n − 36)/n²` is below `1`, that is for `n ≥ 40`
+(`BoxGap.boxPatchGap_zero`). At a positive coupling the weight factors at a box `S` into a local weight on the
+plaquettes meeting `S` and a boundary constant (`BoxGap.action_split_set`, `BoxGap.wt_glue`), so the local-gap
+inequality on every fibre over a frozen boundary gives it on the torus (`BoxGap.fibre_iff_local`,
+`BoxGap.boxLocalGap_of_fibreGap`). `BoxGap.BoxFibreGap` is that fibre statement, and
+`BoxGap.boxPatchGap_of_fibreGap` returns `BoxPatchGap`. The pair route (`BoxGap.pairDefectAt_of_pairCorrAt`,
+`BoxGap.boxPatchGap_of_pairCorrLinear`) supplies the local gap from two-link correlations; its witness
+is the two-link conditional expectation, and pairs sharing no plaquette contribute nothing.
+
+**The box gap is at most one.** The plaquette in the plane `(0, 1)` based one step back from a box corner reads
+exactly one box link; every other box heat bath fixes it up to null vectors, so the box operator acts on it as
+`id − E_l`, an idempotent, and the local-gap inequality reads `γ·v ≤ v` with
+`v = ‖x − E_l x‖² > 0` (`BoxCeiling.torusForm_sub_condExp_pos`, the density moving when that one link moves, at
+`2 ≤ N`). So `BoxCeiling.boxLocalGap_le_one`, and with the threshold `(40n − 36)/n² < γ ≤ 1`,
+`BoxCeiling.boxPatchGap_side_ge_forty`: the box check needs side at least `40` at every coupling.
+
+**The box check at small coupling.** For two links `l ≠ m` sharing a plaquette, the conditional expectation
+given every other link (`PairCorr.twoCondExp`, built from the two-link heat bath `PairCorr.heatAvg2`) is fixed by
+both single-link heat baths. On the `(l, m)` fibre the weight of the at most `512` plaquettes visiting `l` or `m`
+lies in `[e^{−1024β}, 1]` times a boundary constant that cancels (`PairCorr.wt_pair_bounds`), and a product-measure
+comparison bounds the correlation of `E_l f` and `E_m f` by `(κ² − 1)κ ≤ 5760β`, `κ = e^{1024β}`
+(`PairCorr.fibre_corr_le`, `PairCorr.pairCorr_twoCond`). Links sharing no plaquette commute. With at most `21`
+neighbours the defect matrix has sums `120960β` (`PairCorr.pairDelta_defect`), so
+`PairCorr.pairCorrLinear_holds`, `PairCorr.boxPatchGap_at` (`BoxPatchGap` at `β = 1/241920`, side `80`, gap `1/2`)
+and `PairCorr.irGapAt_small` (the IR gap there at `boxRate`). The constants are not optimised.
+
+**The UV step at the box's rate.** `UVIRSplit.IRGapAt` is monotone in the rate (`TransferGap.gapAt_mono`): a
+gap at `M₀` is a gap at every smaller positive rate, so a UV target is only usable at a named rate. The heat-bath
+clustering proof computes its rate: at neighbour bound `z` and heat-bath gap `c` it is
+`HeatBathGapDecay.clusterRate z c = √max(e/3, e^{−min(c,1)/(2(6z+1))})`
+(`HeatBathGapDecay.torusClusterAt_of_localityAt`), and the Wilson heat bath has `z = 21`
+(`HeatBathLocal.localityAt_holds`). A box of side `n` at local gap `γ` has heat-bath gap `boxKnabe n γ`
+(`BoxPatch.boxFamily_check`), so it gives the IR gap at `β₀` at
+`HeatBathLocal.boxRate N β₀ n γ = min(boxKnabe n γ, 1)/(508 · aRun N β₀)` (`HeatBathLocal.irGapAt_boxRate`,
+`HeatBathLocal.boxRate_eq`), a physical mass at most `1/508` in lattice units at `β₀`.
+`ClayRoutes.UVBelowIR τ p hN β₀ βUV M₀` is the UV step against one rate, with non-negative losses (a negative
+loss would assert a gap outright) summing below `M₀`; `ClayRoutes.clay_continuum_of_boxPatchGap` asks it at
+`boxRate`, with every coupling of the step past the peak `17N²/(88π²)` of `aRun N`, where the two-loop spacing
+decreases, so each step of the tower refines the spacing. The peak lies deep in strong coupling (about `0.078`
+at `N = 2`, `0.176` at `N = 3`); the physical crossover lies at larger `β` (standard `β ≈ 2.2` and
+`5.7`, Lean `β ≈ 1.1` and `2.85`) and is inside the UV step unless
+`β₀` is past it; and `ClayRoutes.clay_continuum_of_irGap` takes an IR gap at any stated
+rate. The constant is `508 = 4(2zy + 1)`. `z = 21` bounds the links whose heat baths are not shown to commute
+with a given link's: the link and the links sharing a plaquette with it, at most `1 + 2 + 3 · 6` in four dimensions,
+the `2` being the link's neighbours along its own direction, which share a diagonal plaquette `μ = ν` with it
+(`bdT` includes the diagonal; `HeatBathLocal.card_nbT_le`). `y = 3` is the least integer sweep parameter above
+`e`. A diagonal plaquette's holonomy is the identity, so its two links' conditional laws do not couple; a
+commutation lemma that skips the diagonal would give `z = 19` and the constant `4(6 · 19 + 1) = 460`.
+
+**The UV step in entropy form.** For observer laws `obs β` (image measures of the periodic states under block
+maps, `UVEntropy.PeriodicObserverLaws`), a χ² bound `√χ²(obs β' ‖ obs β) ≤ ε` moves a connected pairing by at
+most `ε` times a variance coefficient (`UVEntropy.abs_obsConn_sub_le`), and a window factor `q` becomes `q + 4η`
+after one step (`UVEntropy.factor_step`, `UVEntropy.factor_chain`). Along the dyadic tower from `β₀` the factor
+stays below `q₀ + 4κE` (`UVEntropy.obsFactor_eventually_of_uvEntropy`). The physical-rate loss of an additive
+step at `q = e^{−Mℓ}` is `4κε·e^{Mℓ}/ℓ` (`UVEntropy.neg_log_add_ge`), which grows with `M`, so this route does not
+give `UVIRSplit.UVLossStep` for the whole lattice class; the class enters through `UVEntropy.ObsReadback` and
+`UVEntropy.UVEntropyBridge`. On the constructive side, a density band `e^{±D}` gives `√χ² ≤ e^D − 1`
+(`UVEntropy.chiStep_of_densityBand`), a power-law width `C a^γ` has a geometric budget
+(`UVEntropy.lossBudget_rpow`) and a constant width has none (`UVEntropy.not_lossBudget_const`).
+`UVEntropy.clay_continuum_of_boxPatchGap_entropy` takes `PeriodicObserverLaws`, `ObsReadback` at `β₀`,
+`ClassKappaUV`, `UVEntropyBridge`, the peak restriction on `βUV` and `EntropyBelowIR` at `boxRate`,
+`(e^{−boxRate · aRun N β₀})^{m₀} + 4κE < 1`. `PeriodicObserverLaws` does not tie `φ β` across couplings, so
+observer laws frozen in `β` meet the step at zero loss and the bridge carries the content.
+
+**Heat-bath locality.** Two `torusForm`-self-adjoint idempotents with values among the observables not reading a
+link, each fixing them up to null vectors, agree up to null vectors (`HeatBathLocal.form_proj_unique`), so every
+`WilsonHeatBath` is the heat bath up to null vectors (`HeatBathLocal.condExp_sub_null`) and commutes off shared
+plaquettes (`HeatBathLocal.condExp_comm_null`, `HeatBathLocal.localCommute_wilson`, at most `21` neighbours). The
+Wilson density lies between `e^{∓2|β||P|}` times the Haar density, the product-Haar variance is bounded by the
+single-link defects through a sweep (`HeatBathErgodic.sweep_energy`), and the Haar average is the best
+single-link approximation, giving a Poincaré inequality at each fixed volume, its constant growing with the
+volume (`HeatBathErgodic.heat_poincare`,
+`HeatBathLocal.torus_poincare`) and the ergodic limit (`HeatBathLocal.ergodicLimit_wilson`). A separation
+potential gives the `Far` levels (`HeatBathLocal.far_of_potential`), and `HeatBathLocal.heatBathLocality_holds`
+assembles `HeatBathGapDecay.HeatBathLocality` at every coupling. `HeatBathLocal.heatBathDecay_holds` then
+gives `KnabeCriterion.HeatBathDecay`: a uniform heat-bath gap gives decay, the gap supplied on the finite-size
+route by `BoxPatch.BoxPatchGap`.
+
+**Entropy tools.** The pushed-forward density pulled back along a map is the conditional expectation of the
+density, so conditional Jensen for `klFun` gives data processing (`EntropyTools.klDiv_map_le`); the pointwise
+bound `3(x − 1)² ≤ (2x + 4)·klFun x` (`EntropyTools.three_mul_sq_le_klFun`) and a linear Cauchy–Schwarz give
+Pinsker (`EntropyTools.abs_integral_sub_le_sqrt_two_mul_klDiv`). The χ² bound
+`|∫h dP − ∫h dQ| ≤ √χ²(P‖Q)·√Var_Q(h)` (`ChiForest.abs_integral_sub_le_sqrt_chiSq_mul`) makes each zoom step
+relative to the observable's own spread (`ChiForest.ChiForest.abs_step_le`), so the connected correlations
+converge with a relative remainder (`ChiForest.ChiForest.abs_conn_sub_le`); the step to
+`WeakCouplingWindow.FixedWindowDecay` then needs one constant bounding that remainder by the lag-zero value
+across the observable class (`ChiForest.eventually_factor_of_relative`).
 
 **The finite-size criterion.** With cover weight `a₁ = Σₖ cₖᵢ`, squared weight `a₂`, pair weights
 `KnabeCriterion.pairWeight` at most `b` on commuting pairs and within `w` of `b` otherwise, and `w` of row
@@ -430,6 +576,34 @@ with `⟪vecOf P, vecOf Q⟫` equal to the Schwinger kernel. `ContinuumCluster.l
 `TransferGap.clustering_sq` at every step, and `ContinuumCluster.contS_cluster_of_fixedWindowDecay` passes
 it to the limit as OS4 in reflected form at physical rate `c/L`.
 
+**The same forest, by probes.** Two states that agree on a point-separating subalgebra are equal
+(`Beacon.state_eq_of_sameSignal`, through `DLRLimit.State.eq_of_eqOn_subalgebra`), so a family whose probe
+responses converge has one limit, reached along the filter (`Beacon.exists_unique_limit_of_beacon`,
+`Beacon.beacon_iff_tendsto`); on measures the same holds in the weak topology
+(`Beacon.exists_unique_tendsto_probabilityMeasure_of_beacon`,
+`Beacon.measure_eq_of_integral_eqOn_subalgebra`). At the lattice, `Beacon.VolumeBeacon` makes every
+periodic limit equal `periodicState` (`Beacon.eq_periodicState_of_volumeBeacon`), `Beacon.ObserverBeacon`
+gives a unique observer-level limit (`Beacon.observer_limit_unique`), and `Beacon.SchwingerBeacon` makes
+`contS` independent of the ultrafilter and a limit along the couplings
+(`Beacon.contSAlong_eq_contS_of_schwingerBeacon`, `Beacon.tendsto_contS_atTop_of_schwingerBeacon`).
+`Beacon.SchwingerBeacon` quantifies over every family, coincident supports included, where a growing
+field-strength factor is expected to diverge; the form expected to hold is the separated one,
+`ConstantPhysics.SignalConvergesSep` at `(dyBeta, dySpacing)`.
+
+**Flowed probes.** A `ContinuumFlow.ConfFlow` is a continuous, gauge- and reflection-covariant configuration
+map of finite range; `ContinuumFlow.Flow.ofConfScaled` composes fields with it and renormalises. The flowed
+lattice functions obey the smearing bound (`ContinuumFlow.eventually_abs_latSF_le`), their ultrafilter limit
+`ContinuumFlow.contSF` is symmetric, dyadically translation invariant and reflection invariant with no
+hypothesis (`ContinuumFlow.contSF_comp_equiv`, `ContinuumFlow.contSF_translate`, `ContinuumFlow.contSF_reflect`),
+a finite physical range keeps positive-time fields in the half-space algebra beyond the margin
+(`ContinuumFlow.Flow.posPreserving_of_physRange`), which gives OS2 there, and a generic reconstruction from any
+symmetric Gram-positive kernel with bounded orbits (`ContinuumFlow.reconstructed_of_positive`) gives
+`ContinuumFlow.flow_reconstruction`. `ContinuumFlow.latKernelF_zeroFlow_connected` identifies the flowed kernel
+at zero flow time with `ContinuumNontrivial.latKernel`. The localised gradient flow is not constructed; the
+one configuration flow in the tree is `ContinuumFlow.ConfFlow.identity`, where the flowed functions are
+`ContinuumSchwinger`'s (`ContinuumFlow.contSF_zeroFlow`), so the margin and the positive-flow-time inputs (`ContinuumFlow.UniformBoundF`,
+`ContinuumFlow.FlowBeacon` over coincident supports at the canonical factor) are read at a flow still to be built.
+
 **The continuum gap, on separated supports.** `ContinuumSep.sepBy d f g` puts the supports of `f` and `g`
 at sup-distance at least `d`, kept by translation and reflection (`ContinuumSep.sepBy_translate`,
 `ContinuumSep.sepBy_reflect`); `ContinuumSep.UniformBoundSep` is the uniform bound over separated families
@@ -478,7 +652,7 @@ canonical dimension of `tr F²` and the square of the log is two insertions of `
 `ShortDistanceY.af_and_free_false` and `ShortDistanceY.not_af_of_scalingForm` exclude the free massless and
 massive forms, `ShortDistanceY.not_af_of_conformal` every power law, and `ShortDistanceY.af_of_const_mul`
 keeps Y under a constant renormalisation. `ShortDistanceY.coupling_mul_neg_log_aRun_tendsto` gives
-`(2N/β)·(−log aRun N β) → 24π²/(11N) = 1/(2b₀)`, the two-loop term entering only through `(log u)/β → 0`,
+`(N/β)·(−log aRun N β) → 24π²/(11N) = 1/(2b₀)` at the Lean coupling, `g² = N/β`, the two-loop term entering only through `(log u)/β → 0`,
 and `ShortDistanceY.af_along_aRun` reads Y at the running spacing. `ShortDistanceY.familyAF_iff` makes the
 lattice form equivalent to Y under convergence of the two-point function, and
 `ShortDistanceY.wilson_yang_mills_separated` joins it with N.

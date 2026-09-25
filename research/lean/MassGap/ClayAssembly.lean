@@ -338,7 +338,7 @@ such field.
 `m_lat(β)/a(β)` to converge to a finite nonzero limit; its
 `free_spacing_scaling_is_also_vacuous` shows that leaving the spacing existential is satisfied by
 taking `a := m_lat`, at ratio identically `1`, and `aRun` pins the spacing to the `SU(N)` two-loop
-spacing at the Wilson coupling `β = 2N/g²` (`Λ = 1`), from `Running`'s `11N/3` and `34N²/3` in the
+spacing at the Lean Wilson coupling `β = N/g²` (`Λ = 1`), from `Running`'s `11N/3` and `34N²/3` in the
 normalisation `μ dg/dμ = −(11N/3)g³/(16π²) − (34N²/3)g⁵/(16π²)²`. `mLatAt` supplies the lattice
 mass, its value at zero coupling being `0` because `Real.log 0 = 0`.
 `fixed_colours_pins_the_spacing` shows that a mass bounded away from zero, read against the `SU(N)`

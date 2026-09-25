@@ -24,7 +24,8 @@ power `1` of the logarithm is the one-loop start `β(g) ∼ −b₀ g³` of the 
 and two insertions square it, which is the exponent `2`. The two-loop coefficient `b₁` changes `ḡ²` by a
 factor `1 + O(log log(1/r) / log(1/r)) → 1` and leaves the exponent and the existence of `C` alone:
 `coupling_mul_neg_log_aRun_tendsto` proves this for the tree's two-loop spacing `aRun N`, whose `b₁`
-term `(51/121)·log u` drops out of `(2N/β)·log(1/aRun N β) → 24π²/(11N) = 1/(2b₀)` (`inv_two_b0`).
+term `(51/121)·log u` drops out of `(N/β)·log(1/aRun N β) → 24π²/(11N) = 1/(2b₀)` at the Lean
+coupling, `g² = N/β` (`inv_two_b0`).
 `(log r)² = (log (1/r))²` (`log_inv_sq`). A constant rescaling of the composite, the only freedom of a
 renormalisation-group invariant operator, rescales `C` and keeps the form (`af_of_const_mul`); an
 additive renormalisation does not enter a connected function.
@@ -38,7 +39,7 @@ bare canonical `F^aF^a` on the lattice has no continuum limit; neither is a fixe
 `latticeTwoPoint` uses the bare `g₀²·tr F²`, a fixed multiple of the invariant composite in the limit.
 
 `af_along_aRun`: along the two-loop spacing, `AFShortDistance G` gives
-`a⁸ G(a) / (g²)² → C·(2b₀)² > 0` at `a = aRun N β`, `g² = 2N/β` — the square of the running coupling at
+`a⁸ G(a) / (g²)² → C·(2b₀)² > 0` at `a = aRun N β`, `g² = N/β` at the Lean coupling — the square of the running coupling at
 the scale of the separation.
 
 ## What it separates
@@ -463,10 +464,10 @@ theorem inv_two_b0 {N : ℝ} (hN : N ≠ 0) :
 
 #print axioms inv_two_b0
 
-/-- `(2N/β)·(12π²β/(11N²)) = 24π²/(11N)` for `N ≠ 0`, `β ≠ 0`: the coupling `g² = 2N/β` times the
-exponential's argument of `aRun`.
+/-- `(2N/β)·(12π²β/(11N²)) = 24π²/(11N)` for `N ≠ 0`, `β ≠ 0`: the standard coupling `g² = 2N/β` times
+the exponential's argument of `aRunStd`.
 
-DERIVED: `2` in `2N` is `g² = 2N/β`; `12`, `11` and the `2`s of `π ^ 2` and `N ^ 2` are `aRun`'s
+DERIVED: `2` in `2N` is `g² = 2N/β`; `12`, `11` and the `2`s of `π ^ 2` and `N ^ 2` are `aRunStd`'s
 exponential argument (`AsymptoticScaling.one_over_four_N_b0`); `24 = 2·12` and `11` on the right are
 the product; `0` in the hypotheses is what `field_simp` needs. -/
 theorem coupling_mul_exponent {N β : ℝ} (hN : N ≠ 0) (hβ : β ≠ 0) :
@@ -495,21 +496,21 @@ theorem tendsto_aRun_nhdsGT_zero {N : ℕ} (hN : 1 ≤ N) :
 
 #print axioms tendsto_aRun_nhdsGT_zero
 
-/-- **The coupling times the logarithm of the spacing tends to `1/(2b₀)`.** For `1 ≤ N`,
+/-- **The standard coupling times the logarithm of the standard spacing tends to `1/(2b₀)`.** For `1 ≤ N`,
 
-    (2N/β) · (−log aRun N β)  →  24π²/(11N)  =  1/(2b₀)        as β → ∞.
+    (2N/β) · (−log MassGap.AsymptoticScaling.aRunStd N β)  →  24π²/(11N)  =  1/(2b₀)        as β → ∞.
 
-With `u = 24π²β/(11N²)`, `log aRun N β = (51/121)·log u − 12π²β/(11N²)` (`Real.log_mul`,
+With `u = 24π²β/(11N²)`, `log aRunStd N β = (51/121)·log u − 12π²β/(11N²)` (`Real.log_mul`,
 `Real.log_rpow`, `Real.log_exp`), so the product is `24π²/(11N) − (102N/121)·(log u)/β`, and
 `(log u)/β → 0` (`Real.isLittleO_log_id_atTop`). The two-loop term `51/121 = b₁/(2b₀²)` enters only
 through `(log u)/β` and drops out: `ḡ²(a) ∼ 1/(2b₀ log(1/a))` at the tree's two-loop spacing.
 
-DERIVED: `2` in `2N` is `g² = 2N/β`; `24`, `11`, `12` and the `2`s of `π ^ 2` and `N ^ 2` are `aRun`'s
-constants (`inv_two_b0`, `coupling_mul_exponent`); `51/121` is `aRun`'s exponent and
+DERIVED: `2` in `2N` is `g² = 2N/β`; `24`, `11`, `12` and the `2`s of `π ^ 2` and `N ^ 2` are `aRunStd`'s
+constants (`inv_two_b0`, `coupling_mul_exponent`); `51/121` is `aRunStd`'s exponent and
 `102/121 = 2·51/121` its product with the `2` of `2N`; `1` is the least colour count; `0` is the sign of
 `β` and the limit of `(log u)/β`. -/
-theorem coupling_mul_neg_log_aRun_tendsto {N : ℕ} (hN : 1 ≤ N) :
-    Tendsto (fun β : ℝ => 2 * (N : ℝ) / β * -Real.log (aRun N β)) atTop
+theorem coupling_mul_neg_log_aRunStd_tendsto {N : ℕ} (hN : 1 ≤ N) :
+    Tendsto (fun β : ℝ => 2 * (N : ℝ) / β * -Real.log (MassGap.AsymptoticScaling.aRunStd N β)) atTop
       (𝓝 (24 * Real.pi ^ 2 / (11 * (N : ℝ)))) := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
   obtain ⟨k, hk⟩ : ∃ k : ℝ, k = 24 * Real.pi ^ 2 / (11 * (N : ℝ) ^ 2) := ⟨_, rfl⟩
@@ -539,11 +540,11 @@ theorem coupling_mul_neg_log_aRun_tendsto {N : ℕ} (hN : 1 ≤ N) :
   have hbase : (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) = k * β := by
     rw [hk]
     ring
-  have hA : aRun N β = (k * β) ^ (51 / 121 : ℝ)
+  have hA : MassGap.AsymptoticScaling.aRunStd N β = (k * β) ^ (51 / 121 : ℝ)
       * Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) := by
-    unfold MassGap.AsymptoticScaling.aRun
+    unfold MassGap.AsymptoticScaling.aRunStd
     rw [hbase]
-  have hlogA : Real.log (aRun N β)
+  have hlogA : Real.log (MassGap.AsymptoticScaling.aRunStd N β)
       = 51 / 121 * Real.log (k * β) + -(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by
     rw [hA, Real.log_mul (Real.rpow_pos_of_pos hu _).ne' (Real.exp_pos _).ne',
       Real.log_rpow hu, Real.log_exp]
@@ -551,36 +552,60 @@ theorem coupling_mul_neg_log_aRun_tendsto {N : ℕ} (hN : 1 ≤ N) :
   rw [hlogA]
   linear_combination (-1 : ℝ) * key
 
+#print axioms coupling_mul_neg_log_aRunStd_tendsto
+
+/-- **The coupling times the logarithm of the spacing tends to `1/(2b₀)`.** For `1 ≤ N`, at the Lean
+coupling, where `g² = N/β`,
+
+    (N/β) · (−log aRun N β)  →  24π²/(11N)  =  1/(2b₀)        as β → ∞
+
+(`coupling_mul_neg_log_aRunStd_tendsto` along `β ↦ 2β`).
+
+DERIVED: `24`, `11` and the `2` of `π ^ 2` are `1/(2b₀)`; `1` is the least colour count; `2` is
+`aRun`'s factor; `0` is the sign of `β`. -/
+theorem coupling_mul_neg_log_aRun_tendsto {N : ℕ} (hN : 1 ≤ N) :
+    Tendsto (fun β : ℝ => (N : ℝ) / β * -Real.log (aRun N β)) atTop
+      (𝓝 (24 * Real.pi ^ 2 / (11 * (N : ℝ)))) := by
+  have h := (coupling_mul_neg_log_aRunStd_tendsto hN).comp
+    (tendsto_id.const_mul_atTop (by norm_num : (0 : ℝ) < 2))
+  refine h.congr' ?_
+  filter_upwards [eventually_gt_atTop (0 : ℝ)] with β _
+  show 2 * (N : ℝ) / (2 * id β) * -Real.log (MassGap.AsymptoticScaling.aRunStd N (2 * id β))
+      = (N : ℝ) / β * -Real.log (aRun N β)
+  simp only [id]
+  rw [mul_div_mul_left _ _ (two_ne_zero)]
+  rfl
+
 #print axioms coupling_mul_neg_log_aRun_tendsto
 
 /-- **Y read along the two-loop spacing: the square of the running coupling.** For `1 ≤ N`,
 `AFShortDistance G` gives a `C' > 0` with
 
-    aRun N β ⁸ · G(aRun N β) / (2N/β)²  →  C'        as β → ∞,
+    aRun N β ⁸ · G(aRun N β) / (N/β)²  →  C'        as β → ∞,
 
 `C' = C·(2b₀)²`, `2b₀ = 11N/(24π²)`: at the separation `a = aRun N β`, `a⁸G(a)` is `C'` times the square
-of the running coupling `g² = 2N/β` at that scale. The proof composes Y with `aRun N β → 0⁺`
-(`tendsto_aRun_nhdsGT_zero`) and divides by the square of `(2N/β)·(−log a) → 1/(2b₀)`
+of the running coupling `g² = N/β` at the Lean coupling. The proof composes Y with `aRun N β → 0⁺`
+(`tendsto_aRun_nhdsGT_zero`) and divides by the square of `(N/β)·(−log a) → 1/(2b₀)`
 (`coupling_mul_neg_log_aRun_tendsto`).
 
-DERIVED: `8` and the square are `AFShortDistance`'s and the square of `g²`; `2` in `2N` is `g² = 2N/β`;
-`24`, `11` and the `2` of `π ^ 2` are `1/(2b₀)` (`inv_two_b0`); `1` is the least colour count and the
+DERIVED: `8` and the square are `AFShortDistance`'s and the square of `g²`, `g² = N/β` at the Lean
+coupling; `24`, `11` and the `2` of `π ^ 2` are `1/(2b₀)` (`inv_two_b0`); `1` is the least colour count and the
 level `aRun N β < 1` below which `log` is negative; `0` is the sign of `C'` and of `β`. CHOSEN: `1/2`,
 a level below `1` that `aRun N β` eventually stays under; any level in `(0, 1)` serves. -/
 theorem af_along_aRun {N : ℕ} (hN : 1 ≤ N) {G : ℝ → ℝ} (hY : AFShortDistance G) :
     ∃ C' : ℝ, 0 < C' ∧
-      Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) / (2 * (N : ℝ) / β) ^ 2) atTop (𝓝 C') := by
+      Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) / ((N : ℝ) / β) ^ 2) atTop (𝓝 C') := by
   obtain ⟨C, hC, hlim⟩ := hY
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
   have hc0 : (0 : ℝ) < 24 * Real.pi ^ 2 / (11 * (N : ℝ)) :=
     div_pos (mul_pos (by norm_num) (pow_pos Real.pi_pos 2)) (mul_pos (by norm_num) hN0)
   have h1 : Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) * Real.log (aRun N β) ^ 2) atTop
       (𝓝 C) := hlim.comp (tendsto_aRun_nhdsGT_zero hN)
-  have h2 : Tendsto (fun β : ℝ => (2 * (N : ℝ) / β * -Real.log (aRun N β)) ^ 2) atTop
+  have h2 : Tendsto (fun β : ℝ => ((N : ℝ) / β * -Real.log (aRun N β)) ^ 2) atTop
       (𝓝 ((24 * Real.pi ^ 2 / (11 * (N : ℝ))) ^ 2)) :=
     (coupling_mul_neg_log_aRun_tendsto hN).pow 2
   have h3 : Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) * Real.log (aRun N β) ^ 2
-      / (2 * (N : ℝ) / β * -Real.log (aRun N β)) ^ 2) atTop
+      / ((N : ℝ) / β * -Real.log (aRun N β)) ^ 2) atTop
       (𝓝 (C / (24 * Real.pi ^ 2 / (11 * (N : ℝ))) ^ 2)) :=
     h1.div h2 (pow_pos hc0 2).ne'
   refine ⟨C / (24 * Real.pi ^ 2 / (11 * (N : ℝ))) ^ 2, div_pos hC (pow_pos hc0 2), h3.congr' ?_⟩
@@ -747,7 +772,7 @@ the free massless value. At `N ≠ 0`, from `WilsonContinuumTwoPoint N hN G`, `W
 2. `G` is not in the free class (`r⁸G → C > 0`);
 3. `G` has no free scaling form `Φ(m r)/r⁸`, massless or massive;
 4. `G` is no pure power law `K r^{−2Δ}`, `K ≠ 0`, on `r > 0`;
-5. along `aRun N`, `a⁸G(a)/(2N/β)² → C' > 0`;
+5. along `aRun N`, `a⁸G(a)/(N/β)² → C' > 0`;
 6. there are `0 < ℓ < D` such that along every `β i → ∞` the three block composites of physical size
    `ℓ` and separation `D` are `ThreePointN.ThreePointSeparated` under the periodic state — the
    normalised statistic `ThreePointN.sepRatio = cum3²/|cov2·cov2·cov2|` is eventually at least one
@@ -759,7 +784,7 @@ At `N = 1` the group is trivial, `latticeTwoPoint` is `0` and `WilsonLatticeAF` 
 hypotheses carry content at `2 ≤ N`.
 
 DERIVED: `8` and the square on the logarithm as in `AFShortDistance`; `2` in `2Δ` is the two
-insertions of a field of dimension `Δ` (`not_af_of_conformal`); `2` in `2N/β` is `g² = 2N/β` and the
+insertions of a field of dimension `Δ` (`not_af_of_conformal`); `N/β` is `g²` at the Lean coupling and the
 square on it is `af_along_aRun`'s; `0` is the excluded amplitude, colour count and sign; `0`, `1`, `2`
 index the three blocks; `1` is the least colour count, from `hN`. -/
 theorem wilson_yang_mills_separated {N : ℕ} (hN : N ≠ 0) {G : ℝ → ℝ}
@@ -767,7 +792,7 @@ theorem wilson_yang_mills_separated {N : ℕ} (hN : N ≠ 0) {G : ℝ → ℝ}
     (hsep : MassGap.ThreePointN.WilsonThreePointSeparation N hN) :
     AFShortDistance G ∧ ¬ FreeShortDistance G ∧ ¬ FreeScalingForm G ∧
       (∀ K Δ : ℝ, K ≠ 0 → ¬ ∀ r : ℝ, 0 < r → G r = K * r ^ (-(2 * Δ))) ∧
-      (∃ C' : ℝ, 0 < C' ∧ Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) / (2 * (N : ℝ) / β) ^ 2)
+      (∃ C' : ℝ, 0 < C' ∧ Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) / ((N : ℝ) / β) ^ 2)
         atTop (𝓝 C')) ∧
       ∃ ℓ D : ℝ, 0 < ℓ ∧ ℓ < D ∧ ∀ β : ℕ → ℝ, Tendsto β atTop atTop →
         MassGap.ThreePointN.ThreePointSeparated

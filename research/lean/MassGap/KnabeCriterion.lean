@@ -781,15 +781,17 @@ def WilsonHeatBath.toPatchSystem {hN : N ≠ 0} {β : ℝ} {j : ℕ} (S : Wilson
 
 /-! ## 5. At the periodic Wilson state -/
 
-/-- **THE OPEN STRUCTURAL INPUT: a uniform heat-bath gap gives decay at the periodic state.** For
+/-- **A uniform heat-bath gap gives decay at the periodic state.** For
 every family `S j` of heat-bath systems of the periodic Wilson measures at `β`, one per extent index
 `j`, and every `c > 0` with `GlobalGap c` at `(S j).toPatchSystem` for all large `j`: some lag
 `m ≠ 0` and rate `0 < r < 1` have `ChessboardRead.TorusLagClear τ p hN β m r`.
 
 `GlobalGap c` at the heat-bath system is a Poincaré inequality for the heat-bath dynamics on
 periodic gauge-invariant observables, uniform in the extent; the implication is a gap-to-decay
-theorem of the kind of Guionnet–Zegarlinski's Theorem 8.8, Remark 5, which is not in the literature
-for lattice gauge theory.
+theorem of the kind of Guionnet–Zegarlinski's Theorem 8.8, Remark 5.
+`MassGap.HeatBathGapDecay.heatBathDecay_of_locality` proves it from
+`MassGap.HeatBathGapDecay.HeatBathLocality`, whose analytic content is fixed-volume ergodicity of the
+heat bath (`MassGap.HeatBathGapDecay.ErgodicLimit`).
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded rank, the excluded lag and the sign of
 `c` and `r`; `1` is the rate the gap must beat. -/

@@ -4580,8 +4580,8 @@ conditions `odd_crossing_integral_nonneg` carries:
 * `0 ≤ β`. `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the Wilson cross kernel's
   quadratic form on two explicit `SU(3)` elements and finds it nonnegative if and only if `β ≥ 0`.
 
-Scope: `Complete.wilson_reflection_positive_at` quantifies over every real `β`, and the composite
-below states the conclusion at `0 ≤ β` only. -/
+Scope: `Complete.wilson_reflection_positive_at` is stated on the same coupling range `0 ≤ β` and at
+every aperture; the composite below states the conclusion at even extent at least four only. -/
 
 section Discharge
 

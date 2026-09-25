@@ -199,12 +199,15 @@ from it.
    `PeriodicStrongCoupling.periodic_tower_base` is the base `GapStep.periodic_clay_tower` takes: at every
    `β ∈ (0, β₀)` and every `M ≤ −log(coreRate 64 β) / aRun N β`, `GapAt` at `e^{−M·aRun N β}`.
    **The interval, sharpened.** Counting touch-connected sets by spanning-tree tours, `(4K)^(m−1)` of
-   them (`StrongCouplingSharp.card_connSets_le_four`), and summing the pair weights exactly
-   (`StrongCouplingSharp.pairCover_le`) gives the rate `StrongCouplingSharp.coreRate'`, and
-   `StrongCouplingSharp.periodic_gapAt_strong_coupling'` the periodic `GapAt` on its interval;
-   `StrongCouplingSharp.periodic_gap_interval_exceeds_old` proves that interval more than twenty times
-   every interval on which `coreRate 64 β < 1` (`StrongCouplingSharp.old_interval_le`,
-   `StrongCouplingSharp.coreRate'_lt_one_of_le`).
+   them (`StrongCouplingSharp.card_connSets_le_four`), and summing the pair weights in place of counting
+   the splits (`StrongCouplingSharp.pairCover_le`) gives the rate
+   `StrongCouplingSharp.coreRate' K β = 4K(e^{4β} − 1)e^{4βK}`, below one at `K = 64` on `[0, 1/1400]`
+   (`StrongCouplingSharp.coreRate'_lt_one_of_le`), and `StrongCouplingSharp.periodic_gapAt_strong_coupling'`
+   the periodic `GapAt` on that interval; `StrongCouplingSharp.periodic_gap_interval_exceeds_old` proves it
+   more than twenty times every interval on which `coreRate 64 β < 1` (`StrongCouplingSharp.old_interval_le`).
+   On it `PeriodicStrongCouplingSharp.periodic_clayGapAt_strong_coupling'` gives `PeriodicClayGapAt`,
+   `PeriodicStrongCouplingSharp.periodic_torusLagClear_strong_coupling'` gives `TorusLagClear` at every lag,
+   and `PeriodicStrongCouplingSharp.periodic_tower_base'` gives the tower's base.
    **The UV/IR split.** `UVIRSplit.UVLossStep`: a step from `β` to a finer `β'` carrying `GapAt` at physical
    rate `M` to rate `M − ε(aRun N β)`; `UVIRSplit.IRGapAt`: the gap at one coupling.
    `UVIRSplit.fixedWindowDecay_of_uv_ir`: the UV step with a loss budget `E` below the IR rate `M₀` gives
@@ -223,6 +226,24 @@ from it.
    step, the torus and the configuration, provided every running coupling stays below a small `γ`; it
    motivates the UV step. Open: the UV step as a statement on correlations, in infinite volume, with
    losses summing below the IR rate; and the gap at any single coupling outside strong coupling.
+   **Past the crossover by a finite-size criterion.** `KnabeCriterion.knabe_bound` is Knabe's argument in
+   weighted form: on a symmetric nonnegative form, self-adjoint idempotents `hᵢ` covered by patches with a
+   local gap `γ` above the overlap excess give the global gap `(γa₁ − a₂ + b − e)/b`
+   (`KnabeCriterion.PatchSystem.globalGap_of_localGap`). `KnabeCriterion.WilsonHeatBath` is the heat-bath of
+   the periodic Wilson measures, the complements of the link conditional expectations, and
+   `KnabeCriterion.fixedWindowDecay_of_patchGapCheck` gives `FixedWindowDecay` from
+   `KnabeCriterion.HeatBathDecay` and `KnabeCriterion.PatchGapCheck` at one coupling `β₀` — a patch gap
+   on one box of links under every boundary configuration — with the UV step `UVIRSplit.UVLossStep` only
+   from `β₀` on. The UV step then runs in the weak-coupling regime alone. Open: `HeatBathDecay` (a uniform
+   heat-bath gap gives decay), `PatchGapCheck` at a coupling past the strong-coupling region, and the UV
+   step at weak coupling. **The heat-bath, built:** `HeatBath.heatAvg` is the single-link conditional
+   expectation of the Wilson measure, with the DLR identity (`HeatBath.expect_heatAvg`), detailed balance
+   (`HeatBath.expect_heatAvg_mul`) and commutation at links sharing no plaquette
+   (`HeatBath.heatAvg_comm`); `BoxPatch.boxHeatBath` is a `KnabeCriterion.WilsonHeatBath` with box
+   patches of side `n`, multiplicities `n⁴`, `n²(n − 1)²`, `n²(38n − 35)`, Knabe constant
+   `(γn² − 40n + 36)/(n − 1)²` (`BoxPatch.knabeConst_box`), and
+   `BoxPatch.patchGapCheck_of_boxPatchGap` makes the finite-size input `BoxPatch.BoxPatchGap`: a local
+   gap above `(40n − 36)/n²` for every box patch operator, uniformly in the extent.
    **Being attacked now:** `FixedWindowDecay` at weak coupling; `E`; `Y`.
 2. **An infinite-volume state at every coupling — built.** `PeriodicState.periodicState`: an
    ultrafilter limit of the `SU(N)` Wilson states on periodic lattices, read on `ℤ⁴`, reflection
@@ -279,7 +300,24 @@ from it.
    `1` the top of its spectrum, spectrum in `{1} ∪ [0, e^{−(c/L)·tₘ}]` and the vacuum complement
    contracted at that rate, `tₘ` the step length: a physical gap of at least `c/L` at every step.
    `ContinuumSep.exists_orth_ne_zero_sep` gives the reconstructed space a non-zero vector orthogonal to
-   the vacuum under `ContinuumSep.ConnectedTwoPointNonzero`, so the space is not spanned by the vacuum. Open with them: `UniformBoundSep` at a growing
+   the vacuum under `ContinuumSep.ConnectedTwoPointNonzero`, so the space is not spanned by the vacuum.
+   **Non-triviality from Y:** `ContinuumNontrivial.connectedTwoPointNonzero_of_af` — for a field `O`
+   whose renormalised connected lattice kernel converges to `G(|p − q|)` on separated points
+   (`ContinuumNontrivial.KernelConvergesSep`) with `ShortDistanceY.AFShortDistance G`, the cube-smeared
+   connected field has a positive connected two-point function, so
+   `ContinuumSep.ConnectedTwoPointNonzero` holds; `ContinuumNontrivial.exists_orth_ne_zero_of_af` gives the
+   non-zero vacuum-orthogonal vector. **The capstone:** `ContinuumClay.continuum_gap_nontrivial` — on one
+   reconstructed Hilbert space, at every dyadic step, the spectral gap of physical rate at least `c/L`
+   and a non-zero vector orthogonal to the vacuum, from `UniformBoundSep`, `FixedWindowDecay`,
+   `KernelConvergesSep` and `AFShortDistance`. **Invariance:** `ContinuumHypercubic.periodicState_axis`
+   and `ContinuumHypercubic.contS_signed` (the hypercubic group W(B₄)),
+   `ContinuumHypercubic.contS_translate_real` (all of `ℝ⁴`, under `ContinuumHypercubic.SupContinuousSep`,
+   uniformly continuous test functions); `N = 1` is vacuous (`NOneVacuity.not_wilsonLatticeAF_one`).
+   Open with them: `KernelConvergesSep` at `ContinuumNontrivial.rhoA` for a local gauge-invariant
+   `tr F²` density (`ShortDistanceY.siteObs`, to be packaged as a `ContinuumField.LField`) and the
+   identification of its limit with that of `ShortDistanceY.latticeTwoPoint`; `SupContinuousSep` and
+   `UniformBoundSep` at a growing `Z`; the rotations off the hypercubic group
+   (`ContinuumHypercubic.RotationOpen`). Open with them: `UniformBoundSep` at a growing
    `Z`, `ConnectedTwoPointNonzero`, rotation invariance (`ContinuumSchwinger.RotationInvariant`) and
    translation invariance off the dyadic subgroup.
 4. **N** — the separated three-point statistic. `ThreePointN.sepRatio ν A B C` is the square of the

@@ -108,10 +108,10 @@ DERIVED: `0` occurs twice — the coupling at which the moment is taken, and the
 theorem d2At_at_zero (N : ℕ) : MassGap.d2At N 0 = 0 := by
   have hp : ∀ d : Fin (N + 1), d ≠ 0 → (MassGap.readYMAt N 0).p d = 0 := by
     intro d hd
-    -- `(readYMAt N β).ρ = wilsonCorrAt N β` holds by definition, which is why
-    -- `ShareEnvelope.readYMAt_rho` proves it by `rfl`; the citation is not in this import closure.
-    have hrho : (MassGap.readYMAt N 0).ρ d = 0 :=
-      MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d
+    -- `(readYMAt N β).ρ = wilsonCorrAt N β` at `0 ≤ β` (`Complete.readYMAt_rho_of_nonneg`).
+    have hrho : (MassGap.readYMAt N 0).ρ d = 0 := by
+      rw [MassGap.readYMAt_rho_of_nonneg N le_rfl]
+      exact MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d
         (MassGap.ConfinesZero.one_le_circLag hd)
     simp [Moment.Read.p, hrho]
   unfold MassGap.d2At

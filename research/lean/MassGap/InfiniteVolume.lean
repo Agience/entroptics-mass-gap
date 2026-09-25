@@ -562,7 +562,9 @@ theorem confinement_at_strong_coupling {β : ℝ} (hβ : 0 < β)
   have hdecay : ∀ (N : ℕ) (d : Fin (N + 1)), (MassGap.readYMAt N β).p d ≤ C * r ^ (Moment.circLag d) := by
     intro N d
     exact hbound N (MassGap.readYMAt N β) β
-      (fun d' => MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β d') hβ le_rfl hr d
+      (fun d' => by
+        rw [MassGap.readYMAt_rho_of_nonneg N hβ.le]
+        exact MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β d') hβ le_rfl hr d
   -- hence a bounded circle moment, with no aperture in the bound
   set B : ℝ := 2 * C * ∑' k : ℕ, (k : ℝ) ^ 2 * r ^ k with hBdef
   have hmom : ∀ N : ℕ, MassGap.d2At N β ≤ B := by

@@ -986,6 +986,10 @@ whose fields lie in `Φ`, composing every test function with `R` leaves the cont
 function unchanged. `Φ` is the caller's set of fields expected to transform as scalars (a single
 plaquette is not one); the lattice supplies only the hypercubic subgroup. The content is set by `Φ`:
 at `Φ = ∅` only families over an empty index type qualify and the statement holds trivially.
+`TestFn` admits discontinuous test functions, for which the lattice Riemann sums need not converge to
+the integral: the indicator of a dyadic grid in `[0,1]⁴` and its rotation by `(3/5, 4/5)` in two
+coordinates read `1` and `1/5`. The form with uniformly continuous test functions and separated
+supports is `ContinuumHypercubic.RotationInvariantSep`.
 
 DERIVED: `0` is the excluded colour count; `4` is the dimension, of `SO(4)`. -/
 def RotationInvariant (hN : N ≠ 0) (ρ : Renorm N) (Φ : Set (LField (MassGap.SUN.SU N))) : Prop :=

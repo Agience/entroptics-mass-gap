@@ -1697,7 +1697,7 @@ sharp for a different reason: at $m=1$ the two straddling families read the same
 the group action cannot be defined coordinatewise.
 
 What remains cited to Osterwalder–Seiler is therefore strictly smaller than the statement itself: odd
-extents, extent two, and negative coupling.
+extents and extent two, at $\beta\ge0$.
 
 **Theorem 11.1d (The correlation is symmetric on the lag circle — PROVED, and it was previously
 assumed).** For the $SU(3)$ Wilson ensemble at **every** extent and **every real** coupling, with no
@@ -2056,8 +2056,8 @@ development). The read layer and its certification are the companion paper [E].
 
 On these, the gap flagship reduces to four established inputs, **one of which is no longer merely cited**:
 reflection positivity — now proved outright for the whitened correlation at even extent $\ge4$ and
-$\beta\ge0$ (§11.1b), and cited to Osterwalder–Seiler only outside that domain (odd extents, extent two,
-negative coupling) — and the strong-coupling character bound (Osterwalder–Seiler), the asymptotic-freedom plateau $\mu_\infty<\kappa_0$
+$\beta\ge0$ (§11.1b), and cited to Osterwalder–Seiler only outside that domain (odd extents and extent two,
+at $\beta\ge0$) — and the strong-coupling character bound (Osterwalder–Seiler), the asymptotic-freedom plateau $\mu_\infty<\kappa_0$
 (Gross–Wilczek–Politzer, the below-floor value proved by Wick), and the finite interior correlation length
 $\langle d^2\rangle\le1$ (a finite-sample statistical certificate at 99.9999%, not an enclosure). The single-plaquette aperture margin $\Delta\ge\kappa_0$ is a
 deterministic certificate; its spatial-volume carry to $V\to\infty$ is the open intensive bound, which
@@ -2095,8 +2095,8 @@ field is total, so the read is built at $\max(\beta,0)$. On the nonnegative half
 *the same object*, nothing approximated (`readEven_eq_readYMAt`); below it the model's column is the
 $\beta=0$ column relabelled rather than a claim about a negative-coupling ensemble
 (`readEven_eq_at_zero`). That is exactly the domain on which the Wilson cross kernel is *not*
-positive-semidefinite, so there was no claim to be had there — but the two flagships are therefore not
-the same statement, and this one should not be read as covering $\beta<0$. The aperture is any even
+positive-semidefinite, so there was no claim to be had there — and both flagships read the correlation at
+$\max(\beta,0)$, so below zero each states its $\beta=0$ content; they differ only in the aperture. The aperture is any even
 extent $\ge4$, drawn from the same eventual set the original draws from, which is cofinal either way.
 
 **The theorem.** The top-level theorem is the reduction with A1 and A2 discharged to the named inputs below: for the
@@ -2286,9 +2286,10 @@ by a different route than the character expansion: an action split into reflecte
 Haar factorisation holding the shared block outside the square, mirror transport, and the handedness
 reconciliation the link reflection forces, with no representation theory
 (`OddLagSplit.corrClay_reflection_positive`, surfaced as `wilson_reflection_positive_at_even`). The
-Osterwalder--Seiler theorem is what the development cites **outside** that domain -- odd extents,
-extent two, and negative coupling, where `CharacterExpansion.su3_kernel_nonneg_iff` shows the Wilson
-cross kernel is not positive-semidefinite at all.
+Osterwalder--Seiler theorem is what the development cites **outside** that domain -- odd extents
+and extent two, at $\beta\ge0$. Negative coupling is not asserted: there
+`CharacterExpansion.su3_kernel_nonneg_iff` shows the Wilson cross kernel is not positive-semidefinite,
+and `readYMAt` reads the correlation at $\max(\beta,0)$.
 
 The separation is worth drawing because the two halves are easy to conflate, and conflating them is a
 known failure mode elsewhere: `entroptics-positivity` finds in a different setting that an

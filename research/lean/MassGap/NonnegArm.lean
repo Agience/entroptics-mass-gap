@@ -18,7 +18,7 @@ and a law assumed on `0 ≤ β` supplies it, because the only coupling ever fed 
 `max β 0`. That is `substrate_of_contact_relative_decay_nonneg`.
 
 `substrate_at_nonneg_of_contact_relative_decay_nonneg` is the alternative: the same hypothesis with
-the conclusion carrying the side condition `0 ≤ β` on the unclamped `d2At`. It is stated for the
+the conclusion carrying the side condition `0 ≤ β` on `d2At`. It is stated for the
 record and is not used below; it mentions `d2At`, hence `readYMAt`, so its `#print axioms` differs
 from the rest of the file's, which is why its audit line sits in its own section.
 
@@ -132,12 +132,12 @@ theorem substrate_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : ℝ) (hC : 
 
 #print axioms substrate_of_contact_relative_decay_nonneg
 
-/-- The same hypothesis with the conclusion stated on the unclamped moment and carrying the side
+/-- The same hypothesis with the conclusion stated on `d2At`, the moment of `readYMAt`, and carrying the side
 condition: `∃ B, ∀ N β, 0 ≤ β → d2At N β ≤ B`. Proved directly from
 `ShareEnvelope.circ_moment_le_of_contact_relative` at `readYMAt N β`, with the same witness.
 
-The side condition is not removable: `d2At N β` at `β < 0` is a real number built from
-`readYMAt N β`, about which the hypothesis says nothing, and
+`readYMAt` clamps at `max β 0`, so `d2At N β` at `β < 0` is `d2At N 0` and the side condition
+excludes no content; it is kept so that the conclusion is stated on the hypothesis's own domain.
 `WilsonModel.existence_and_gap_of_substrate` asks for the bound with no side condition on `β`. This
 declaration mentions `d2At` and hence `readYMAt`, so its axiom footprint differs from the clamped
 route's; nothing below uses it.
@@ -154,7 +154,7 @@ theorem substrate_at_nonneg_of_contact_relative_decay_nonneg (m₀ : ℕ) (C : �
     fun N β hβ =>
       MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) m₀ hC
         (fun d hd => by
-          simpa only [MassGap.ShareEnvelope.readYMAt_rho] using h N β hβ d hd)⟩
+          simpa only [MassGap.ShareEnvelope.readYMAt_rho, max_eq_left hβ] using h N β hβ d hd)⟩
 
 #print axioms substrate_at_nonneg_of_contact_relative_decay_nonneg
 
@@ -390,7 +390,7 @@ section Audit
 end Audit
 
 section AuditBridge
--- Mentions `d2At`/`readYMAt`, so its footprint differs from the clamped route's. Audited separately
+-- Mentions `d2At`/`readYMAt`, so its footprint differs from the `readEven` route's. Audited separately
 -- for that reason; it is not part of the chain above.
 #print axioms substrate_at_nonneg_of_contact_relative_decay_nonneg
 end AuditBridge

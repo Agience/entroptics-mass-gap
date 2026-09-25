@@ -126,7 +126,7 @@ is dividing by `L⁴`.
 `readYMAt`. `readYMAt` is the one declaration in the tree that applies
 `wilson_reflection_positive_at`, and routing through it would put that named axiom on everything
 downstream. `SubstrateArms.lawAbove_of_geometric_tail`, the aperture-uniform twin of this theorem,
-does take it from `readYMAt` and carries the axiom as a result.
+takes it from `corrClay_zero_pos` in the same way.
 
 DERIVED: `0` is the lower bound on the rate and on the contact value; `1` is the upper bound on the
 rate, the lag guard, and the offset in the quartic envelope; `4` is the quartic exponent. -/

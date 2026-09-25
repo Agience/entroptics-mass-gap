@@ -128,15 +128,17 @@ theorem substrate_even_of_clayRemaining_and_ends
 
 /-! ## `d2At` as a ratio of continuous functions with a nonvanishing denominator -/
 
-/-- `d2At N β` as a ratio of two finite sums of `wilsonCorrAt`: the circle-lag second moment of the
-correlation over its total mass. The proof unfolds `Moment.Read.p` on `readYMAt N β` and distributes
-the division across the sum.
+/-- `d2At N β` as a ratio of two finite sums of `wilsonCorrAt` at the clamped coupling `max β 0`: the
+circle-lag second moment of the correlation over its total mass. The proof unfolds `Moment.Read.p` on
+`readYMAt N β`, whose profile is `wilsonCorrAt N (max β 0)`, and distributes the division across the
+sum.
 
-DERIVED: the `2` is the exponent on the circle lag, the moment's own power. -/
+DERIVED: the `2` is the exponent on the circle lag, the moment's own power; `0` is the clamp point in
+`max β 0`. -/
 theorem d2At_eq_div (N : ℕ) (β : ℝ) :
     MassGap.d2At N β
-      = (∑ d, MassGap.wilsonCorrAt N β d * (Moment.circLag d : ℝ) ^ 2)
-          / (∑ d, MassGap.wilsonCorrAt N β d) := by
+      = (∑ d, MassGap.wilsonCorrAt N (max β 0) d * (Moment.circLag d : ℝ) ^ 2)
+          / (∑ d, MassGap.wilsonCorrAt N (max β 0) d) := by
   show ∑ d, (MassGap.readYMAt N β).p d * (Moment.circLag d : ℝ) ^ 2 = _
   rw [Finset.sum_div]
   refine Finset.sum_congr rfl (fun d _ => ?_)
@@ -146,27 +148,30 @@ theorem d2At_eq_div (N : ℕ) (β : ℝ) :
 
 /-- `fun β => d2At N β` is continuous, at every aperture `N`, with no hypothesis.
 
-Numerator and denominator of `d2At_eq_div` are finite sums of `wilsonCorrAt N · d`, each continuous
-in `β` by `ConfinesZero.continuous_wilsonCorrAt`. The denominator is nonzero at every `β` by the
-second clause of `wilson_reflection_positive_at`, which gives `0 < ∑ d, wilsonCorrAt N β d`, so
-`Continuous.div` applies.
+Numerator and denominator of `d2At_eq_div` are finite sums of `wilsonCorrAt N (max · 0) d`, each
+continuous in `β` by `ConfinesZero.continuous_wilsonCorrAt` composed with the continuity of
+`fun β => max β 0`. The denominator is nonzero at every `β` by `(readYMAt N β).hpos`, the second
+clause of `wilson_reflection_positive_at` at the nonnegative coupling `max β 0`, which gives
+`0 < ∑ d, wilsonCorrAt N (max β 0) d`, so `Continuous.div` applies.
 
 `N` is fixed in the statement, so this yields no Lipschitz constant and nothing uniform across
 apertures; `ClayRemaining.I2_clustering` asks for one constant covering all of them.
 
 DERIVED: no numeral appears in the statement. -/
 theorem continuous_d2At (N : ℕ) : Continuous (fun β : ℝ => MassGap.d2At N β) := by
+  have hmax : Continuous (fun β : ℝ => max β 0) := continuous_id.max continuous_const
   have hnum : Continuous
-      (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt N β d * (Moment.circLag d : ℝ) ^ 2) :=
+      (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt N (max β 0) d * (Moment.circLag d : ℝ) ^ 2) :=
     continuous_finset_sum _ (fun d _ =>
-      (MassGap.ConfinesZero.continuous_wilsonCorrAt N d).mul continuous_const)
-  have hden : Continuous (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt N β d) :=
-    continuous_finset_sum _ (fun d _ => MassGap.ConfinesZero.continuous_wilsonCorrAt N d)
-  have hne : ∀ β : ℝ, (∑ d, MassGap.wilsonCorrAt N β d) ≠ 0 :=
-    fun β => ne_of_gt (MassGap.wilson_reflection_positive_at N β).2
+      ((MassGap.ConfinesZero.continuous_wilsonCorrAt N d).comp hmax).mul continuous_const)
+  have hden : Continuous (fun β : ℝ => ∑ d, MassGap.wilsonCorrAt N (max β 0) d) :=
+    continuous_finset_sum _ (fun d _ =>
+      (MassGap.ConfinesZero.continuous_wilsonCorrAt N d).comp hmax)
+  have hne : ∀ β : ℝ, (∑ d, MassGap.wilsonCorrAt N (max β 0) d) ≠ 0 :=
+    fun β => ne_of_gt (MassGap.readYMAt N β).hpos
   have heq : (fun β : ℝ => MassGap.d2At N β)
-      = fun β : ℝ => (∑ d, MassGap.wilsonCorrAt N β d * (Moment.circLag d : ℝ) ^ 2)
-          / (∑ d, MassGap.wilsonCorrAt N β d) := funext (fun β => d2At_eq_div N β)
+      = fun β : ℝ => (∑ d, MassGap.wilsonCorrAt N (max β 0) d * (Moment.circLag d : ℝ) ^ 2)
+          / (∑ d, MassGap.wilsonCorrAt N (max β 0) d) := funext (fun β => d2At_eq_div N β)
   rw [heq]
   exact hnum.div hden hne
 
@@ -211,7 +216,8 @@ theorem d2At_bounded_on_strong_arm :
     fun N β hβ => ?_⟩
   exact MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1 hC
     (fun d hd => by
-      simpa only [MassGap.ShareEnvelope.readYMAt_rho] using h N β d hβ.1 hβ.2 hd)
+      simpa only [MassGap.ShareEnvelope.readYMAt_rho, max_eq_left hβ.1] using
+        h N β d hβ.1 hβ.2 hd)
 
 #print axioms d2At_bounded_on_strong_arm
 
@@ -229,7 +235,8 @@ theorem d2At_bounded_of_lawBelow {b : ℝ} (hb : MassGap.NonnegArm.LawBelow b) :
     fun N β hβ =>
       MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1 hC
         (fun d hd => by
-          simpa only [MassGap.ShareEnvelope.readYMAt_rho] using h N β d hβ.1 hβ.2 hd)⟩
+          simpa only [MassGap.ShareEnvelope.readYMAt_rho, max_eq_left hβ.1] using
+            h N β d hβ.1 hβ.2 hd)⟩
 
 #print axioms d2At_bounded_of_lawBelow
 
@@ -251,7 +258,7 @@ theorem d2At_bounded_of_lawAbove {b B : ℝ} (hbB : b < B) (ha : MassGap.NonnegA
       MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1 hC
         (fun d hd => by
           simpa only [MassGap.ShareEnvelope.readYMAt_rho] using
-            h N β d (lt_of_lt_of_le hbB hβ) hd)⟩
+            h N (max β 0) d (lt_of_lt_of_le (lt_of_lt_of_le hbB hβ) (le_max_left β 0)) hd)⟩
 
 #print axioms d2At_bounded_of_lawAbove
 
@@ -600,14 +607,22 @@ theorem exists_lipschitz_lag_moment {a b : ℝ} (ha : 0 ≤ a) (N : ℕ) :
   have hw0 : ∀ d : Fin (N + 1), (0 : ℝ) ≤ ((d : ℝ)) ^ 2 := fun d => by positivity
   refine ⟨2 * ((N : ℝ) + 1) * K * W / m, div_nonneg (by positivity) hm.le, ?_⟩
   intro x hx y hy
-  have hden : m ≤ ∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d := hfloor N x hx
+  -- `0 ≤ a` puts both couplings on the nonnegative range, where the read's clamp is inert.
+  have hρx : (MassGap.readYMAt N x).ρ = MassGap.wilsonCorrAt N x := by
+    rw [MassGap.readYMAt_rho_max, max_eq_left (le_trans ha hx.1)]
+  have hρy : (MassGap.readYMAt N y).ρ = MassGap.wilsonCorrAt N y := by
+    rw [MassGap.readYMAt_rho_max, max_eq_left (le_trans ha hy.1)]
+  have hden : m ≤ ∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d := by
+    rw [hρx]; exact hfloor N x hx
   have hdenpos : (0 : ℝ) < ∑ d : Fin (N + 1), (MassGap.readYMAt N x).ρ d :=
     lt_of_lt_of_le hm hden
   have hxy : (0 : ℝ) ≤ |x - y| := abs_nonneg _
   -- each profile difference
   have hdiffle : ∀ d : Fin (N + 1),
-      |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| ≤ K * |x - y| :=
-    fun d => MassGap.ConfinesZero.lipschitz_wilsonCorrAt N d x y
+      |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| ≤ K * |x - y| := by
+    intro d
+    rw [hρx, hρy]
+    exact MassGap.ConfinesZero.lipschitz_wilsonCorrAt N d x y
   -- the weighted sum of differences
   have hnum1 : (∑ d : Fin (N + 1),
       |(MassGap.readYMAt N x).ρ d - (MassGap.readYMAt N y).ρ d| * (d : ℝ) ^ 2)
@@ -1383,7 +1398,7 @@ theorem d2At_bounded_of_lawAboveAt {N : ℕ} {b B : ℝ} (hbB : b < B) (ha : Law
       MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1 hC
         (fun d hd => by
           simpa only [MassGap.ShareEnvelope.readYMAt_rho] using
-            h β d (lt_of_lt_of_le hbB hβ) hd)⟩
+            h (max β 0) d (lt_of_lt_of_le (lt_of_lt_of_le hbB hβ) (le_max_left β 0)) hd)⟩
 
 #print axioms d2At_bounded_of_lawAboveAt
 
@@ -1501,8 +1516,8 @@ theorem substrate_bounded_of_two_arms {b : ℝ}
   refine MassGap.ShareEnvelope.circ_moment_le_of_contact_relative (MassGap.readYMAt N β) 1
     (le_trans hC₁ (le_max_left _ _)) ?_
   intro d hd
-  rw [MassGap.ShareEnvelope.readYMAt_rho]
-  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.readYMAt N β).hρ 0
+  simp only [MassGap.ShareEnvelope.readYMAt_rho, max_eq_left hβ0]
+  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.PlaqVariance.corrClay_zero_pos N β).le
   have hL1 : (1 : ℝ) ≤ (Moment.circLag d : ℝ) := by exact_mod_cast hd
   have hL : (0 : ℝ) < (Moment.circLag d : ℝ) ^ 4 := by positivity
   have hstep : ∀ C : ℝ, C ≤ max C₁ C₂ →
@@ -2059,7 +2074,11 @@ theorem spectral_rate_representation_at_zero_coupling (N : ℕ) :
       = ∑ _k ∈ ({0} : Finset (Fin 1)), (1 : ℝ)
         * (((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ))) := by
   intro d
-  have hpos : 0 < MassGap.wilsonCorrAt N 0 0 := MassGap.PowerTail.contact_value_pos_at_zero_coupling N
+  -- At `β = 0` the read's clamp is inert (`Complete.readYMAt_rho_of_nonneg`).
+  have hρ : ∀ e : Fin (N + 1), (MassGap.readYMAt N 0).ρ e = MassGap.wilsonCorrAt N 0 e :=
+    MassGap.readYMAt_rho_of_nonneg N le_rfl
+  have hpos : 0 < (MassGap.readYMAt N 0).ρ 0 := by
+    rw [hρ]; exact MassGap.PowerTail.contact_value_pos_at_zero_coupling N
   have hsum : ∑ _k ∈ ({0} : Finset (Fin 1)), (1 : ℝ)
       * (((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ)))
       = ((0 : ℝ)) ^ ((d : ℕ)) + ((0 : ℝ)) ^ (N + 1 - (d : ℕ)) := by
@@ -2081,6 +2100,7 @@ theorem spectral_rate_representation_at_zero_coupling (N : ℕ) :
         have hlt := e.isLt
         simp only [Moment.circLag]
         omega
+      rw [hρ]
       exact MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N e h1
     have htot : (∑ e, (MassGap.readYMAt N 0).ρ e) = (MassGap.readYMAt N 0).ρ 0 := by
       refine Finset.sum_eq_single (0 : Fin (N + 1)) (fun e _ he => hz e he) (fun h => absurd
@@ -2101,10 +2121,9 @@ theorem spectral_rate_representation_at_zero_coupling (N : ℕ) :
       rw [h1, h2]; ring
     rw [hrhs]
     show (MassGap.readYMAt N 0).ρ d / (∑ e, (MassGap.readYMAt N 0).ρ e) = 0
-    -- `rw` is syntactic and `(readYMAt N 0).ρ d` only REDUCES to `wilsonCorrAt N 0 d`; build the
-    -- equation by `exact`, which works up to defeq, then rewrite with it.
-    have hzd : (MassGap.readYMAt N 0).ρ d = 0 :=
-      MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d hd1
+    have hzd : (MassGap.readYMAt N 0).ρ d = 0 := by
+      rw [hρ]
+      exact MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d hd1
     rw [hzd]
     simp
 
@@ -2150,8 +2169,9 @@ theorem substrate_bound_of_periodic_spectral_rate {r W : ℝ}
   · exact fun k _ => hlam k
   · rw [← Finset.sum_div]; exact hwt
   · intro d
-    -- `(readYMAt N β).ρ d` REDUCES to `wilsonCorrAt N β d`; `rw` needs the equation, not the defeq.
-    have hrho : (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N β d := rfl
+    -- at `0 ≤ β` the read's clamp is inert (`Complete.readYMAt_rho_of_nonneg`).
+    have hrho : (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N β d :=
+      MassGap.readYMAt_rho_of_nonneg N hβ d
     show (MassGap.readYMAt N β).ρ d / (∑ e, (MassGap.readYMAt N β).ρ e) = _
     rw [hrho, F.hrep d, Finset.sum_div]
     refine Finset.sum_congr rfl (fun k _ => ?_)
@@ -2225,7 +2245,7 @@ theorem substrate_bounded_of_below_arm_and_spectral_rate {b r W : ℝ}
       refine MassGap.ShareEnvelope.circ_moment_le_of_contact_relative
         (MassGap.readYMAt N β) 1 hC₁ ?_
       intro d hd
-      rw [MassGap.ShareEnvelope.readYMAt_rho]
+      simp only [MassGap.ShareEnvelope.readYMAt_rho, max_eq_left hβ0]
       exact h₁ N β d hβ0 hle hd
     exact le_trans hb (le_max_left _ _)
   · -- above the cut: the spectral rate
@@ -2414,7 +2434,8 @@ theorem lawAbove_of_geometric_tail {b r : ℝ} (hr0 : 0 ≤ r) (hr1 : r < 1)
   set L : ℕ := Moment.circLag d with hLdef
   have hL1 : (1 : ℝ) ≤ (L : ℝ) := by exact_mod_cast hd
   have hLpos : (0 : ℝ) < (L : ℝ) ^ 4 := by positivity
-  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.readYMAt N β).hρ 0
+  -- the contact value is the plaquette-energy variance, positive at every coupling
+  have hρ0 : 0 ≤ MassGap.wilsonCorrAt N β 0 := (MassGap.PlaqVariance.corrClay_zero_pos N β).le
   have hrL : (0 : ℝ) ≤ r ^ L := pow_nonneg hr0 L
   -- `L⁴·r^L ≤ (L+1)⁴·r^L ≤ S`
   have hmono : ((L : ℝ)) ^ 4 * r ^ L ≤ (((L : ℝ)) + 1) ^ 4 * r ^ L := by

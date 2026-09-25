@@ -23,7 +23,9 @@ conclusions below carry no `A1`/`A2` hypothesis.
 ## The one named axiom
 
 The only `axiom` declared in this file is `wilson_reflection_positive_at` — reflection positivity of
-the Wilson ensemble at every aperture (Osterwalder–Seiler, cited). Every other declaration here is a
+the Wilson ensemble at every aperture and every nonnegative coupling (Osterwalder–Seiler, cited). The
+read `readYMAt N β` applies it at the clamped coupling `max β 0`, so at `β < 0` every object built
+from the read states its `β = 0` content. Every other declaration here is a
 definition or a theorem, and each reports the three foundational axioms plus that one.
 
 Confinement is reached in one direction: a bound on the substrate puts the tension below the entropy
@@ -120,36 +122,42 @@ noncomputable def wilsonCorr : ℝ → (Fin (nCorrYM + 1) → ℝ) := wilsonCorr
 
 /-- Reflection positivity of the Wilson ensemble — cited (K. Osterwalder, E. Seiler, *Gauge field
 theories on a lattice*, Ann. Phys. **110** (1978) 440). The whitened `:F²:` correlation is nonnegative
-at every lag — the transfer-matrix spectral form `ρ(d) = Σ_n w_n e^{-E_n d}` with `w_n ≥ 0` — with
+at every lag — on the periodic extent `n = N + 1` it is `Tr(P ψ T^d ψ T^{n−d}) / Z` with `T` the positive
+self-adjoint transfer matrix along the lag direction, a Hilbert–Schmidt square — with
 positive total mass. This is the read-side physical input, a named axiom that `#print axioms`
 reports. With reading-A concrete (below) the model identification `readYM_is_wilson` is a `rfl`
 theorem.
 
-It is stated at every aperture, because that is what the cited result says: reflection positivity of
-the Wilson measure is a property of the ensemble, not of the window a reader chooses. Stating it only
-at `nCorrYM` would put the pinned window inside the physical input.
+It is stated at every aperture. Osterwalder–Seiler prove reflection positivity at `β ≥ 0` and from it
+a positive self-adjoint transfer matrix `T` (also Lüscher, Commun. Math. Phys. **54** (1977) 283). At
+periodic extent `n` the connected correlation at lag `d` is
+`Tr(P ψ T^d ψ T^{n−d}) / Z = ‖T^{(n−d)/2} ψ T^{d/2} P‖²_HS / Z`, a square at every `n ≥ 1` and every `d`,
+odd extents and extent two included. Stating it only at `nCorrYM` would put the pinned window inside
+the physical input.
 
-DERIVED: the only numeral in the statement is the `0` of `0 ≤ ρ d` and `0 < Σ ρ`, which is
-nonnegativity and positive total mass — the content of the cited result, not a magnitude. The
-`110`, `1978` and `440` above are the journal citation.
+It is stated at nonnegative coupling only, because that is where the cited result holds: the Wilson
+Boltzmann weight's cross kernel is positive-semidefinite exactly when `0 ≤ β`
+(`CharacterExpansion.NegControl.su3_kernel_nonneg_iff`, an iff on two explicit `SU(3)` elements), and
+at `β < 0` the object the odd-lag argument is about is itself negative on this group. At even extent
+the even lags carry no `β` hypothesis (`ActionSplit.plaqReflPositive_of_even_lag`), because that
+argument is a conditional square against a positive Boltzmann weight; the odd lags do. At odd extent
+every reflection of the lag circle fixes one site plane and one link plane, so every lag crosses a link
+plane and uses `0 ≤ β`.
+
+DERIVED: the numerals in the statement are the `0` of `0 ≤ β`, the sign of the coupling, and the `0`
+of `0 ≤ ρ d` and `0 < Σ ρ`, which is nonnegativity and positive total mass — the content of the cited
+result, not a magnitude. The `110`, `1978` and `440` above are the journal citation.
 
 Scope against the theorem below. `wilson_reflection_positive_at_even` proves the same conjunction, at
-the same `wilsonCorrAt`, whenever the extent is even and at least `4` and the coupling is
-nonnegative. This axiom quantifies over every aperture and every real `β`, so it also covers odd
-extents, extent two, and negative coupling.
+the same `wilsonCorrAt` and on the same coupling range `0 ≤ β`, whenever the extent is even and at
+least `4`. This axiom quantifies over every aperture, so beyond that theorem it covers odd extents and
+extent two.
 
-The coupling restriction tracks the sign of the coupling.
-`CharacterExpansion.NegControl.su3_kernel_nonneg_iff` proves an iff on two explicit `SU(3)` elements:
-the Wilson cross kernel is positive-semidefinite exactly when the coupling is nonnegative. At `β < 0`
-the object the odd-lag argument is about is itself negative on this group. The even lags carry no `β`
-hypothesis (`ActionSplit.plaqReflPositive_of_even_lag`), because that argument is a conditional
-square against a positive Boltzmann weight; the odd lags do.
-
-The extent restriction is load-bearing: at `m = 1` levels `1` and `m` coincide, so two distinct
+The theorem's extent restriction is load-bearing for its proof: at `m = 1` levels `1` and `m` coincide, so two distinct
 straddling plaquettes share a half-link while having different plane links, and the group action
 cannot be defined coordinatewise (`OddLagSplit.negctl_plane_assignment_collides_at_m_one`). -/
 axiom wilson_reflection_positive_at :
-    ∀ (N : ℕ) (β : ℝ), (∀ d, 0 ≤ wilsonCorrAt N β d) ∧ 0 < ∑ d, wilsonCorrAt N β d
+    ∀ (N : ℕ) (β : ℝ), 0 ≤ β → (∀ d, 0 ≤ wilsonCorrAt N β d) ∧ 0 < ∑ d, wilsonCorrAt N β d
 
 /-- The body of `wilson_reflection_positive_at`, proved at even extent and nonnegative coupling.
 
@@ -199,9 +207,33 @@ how the margin moves as the window widens relative to the substrate.
 `wilson_reflection_positive_at`; everything reporting that axiom reports it through this one
 definition. -/
 
-/-- Reading-A at an arbitrary aperture. -/
+/-- Reading-A at an arbitrary aperture, read at the clamped coupling `max β 0`: its correlation is
+`wilsonCorrAt N (max β 0)` (`readYMAt_rho_max`), which is `wilsonCorrAt N β` at `0 ≤ β`
+(`readYMAt_rho_of_nonneg`) and `wilsonCorrAt N 0` at `β ≤ 0`. The clamp makes the read a total
+function of `β`, as `Apriori.A1` and `LatticeYM.μ : ℝ → ℝ` require, while the axiom is applied only
+on its own domain. So every statement about `readYMAt`, `μYMAt`, `d2At`, `substrateRatio`,
+`cosAvgYMAt` or `ymModelAt` at a negative coupling is its statement at `β = 0`.
+
+DERIVED: the one numeral is `0`, the clamp point in `max β 0` and the lower end of the axiom's
+coupling domain; `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is what puts the boundary
+there. It sets no scale. -/
 noncomputable def readYMAt (N : ℕ) (β : ℝ) : Moment.Read N :=
-  readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)
+  readA (wilsonCorrAt N (max β 0)) (wilson_reflection_positive_at N (max β 0) (le_max_right β 0))
+
+/-- `(readYMAt N β).ρ = wilsonCorrAt N (max β 0)`, by `rfl`: the read's unnormalised profile is the
+constructed correlation at the clamped coupling.
+
+DERIVED: the one numeral is `0`, the clamp point in `max β 0`. -/
+theorem readYMAt_rho_max (N : ℕ) (β : ℝ) : (readYMAt N β).ρ = wilsonCorrAt N (max β 0) := rfl
+
+/-- `(readYMAt N β).ρ d = wilsonCorrAt N β d` whenever `0 ≤ β`: on the nonnegative coupling range the
+clamp is inert, and the read's unnormalised profile is the constructed correlation at `β` itself.
+
+DERIVED: `0` is the lower bound on `β` at which `max β 0` reduces to `β`; `1` in `N + 1` is the
+successor writing the aperture. -/
+theorem readYMAt_rho_of_nonneg (N : ℕ) {β : ℝ} (hβ : 0 ≤ β) (d : Fin (N + 1)) :
+    (readYMAt N β).ρ d = wilsonCorrAt N β d := by
+  rw [readYMAt_rho_max, max_eq_left hβ]
 
 /-- Reading-A of the Wilson ensemble (§2–§3), at the pinned aperture. It is the `nCorrYM` instance of
 `readYMAt`, so the axiom is applied at exactly one place in the development — `readYMAt`'s
@@ -255,7 +287,8 @@ noncomputable def cosAvgYMAt (N : ℕ) (β : ℝ) : ℝ :=
   ∑ d, (readYMAt N β).p d * Real.cos ((readYMAt N β).θ d)
 
 /-- The C-3 model identification, by `rfl`: the read the file reasons about is reading-A of the
-Wilson ensemble, since both sides are `readA (wilsonCorr β) _`. Reading-A is a concrete function and
+Wilson ensemble, since both sides are `readA (wilsonCorr (max β 0)) _`, the correlation at the clamped
+coupling (`readYMAt`). Reading-A is a concrete function and
 both reads are built from the same ensemble correlation, so the identification holds definitionally.
 The physical input is the named `wilson_reflection_positive_at`. -/
 theorem readYM_is_wilson : readYM = readingA_wilson := rfl
@@ -789,6 +822,11 @@ theorem confinement_of_periodic_spectral_form {C r : ℝ}
     ∀ᶠ N : ℕ in Filter.atTop, ∀ β : ℝ, μYMAt N β < κ₀YM := by
   refine confinement_of_geometric_decay hC hr0 hr1 ?_
   intro N β d
+  -- The read sits at the clamped coupling `max β 0`; every hypothesis quantifies over all `β`, so
+  -- it is instantiated there.
+  show wilsonCorrAt N (max β 0) d / (∑ d', wilsonCorrAt N (max β 0) d')
+      ≤ C * r ^ (Moment.circLag d)
+  generalize max β 0 = β
   -- The total mass is positive without the reflection-positivity axiom: the hypothesis `S` already
   -- carries nonnegative transfer weights, so `Spectral.rho_nonneg` gives every lag, and
   -- `PlaqVariance.corrClay_zero_pos` — the plaquette-energy variance, foundational-only — gives the

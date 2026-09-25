@@ -335,23 +335,28 @@ theorem differentiable_wilsonCorrAt (N : ℕ) (d : Fin (N + 1)) :
 
 #print axioms differentiable_wilsonCorrAt
 
-/-- `Differentiable ℝ (d2At N)` at every aperture, on all of `ℝ`. This is the shape
+/-- `d2At N` is differentiable at every positive coupling, at every aperture. This is the shape
 `Interior.d2_lipschitz_of_deriv_bound` and `Interior.d2_le_of_analytic_grid` take as their `hdiff`
-hypothesis.
+hypothesis on an interval `Set.Icc a b` with `0 < a`.
 
-`d2At N β` is `∑ d, (readYMAt N β).p d * (circLag d) ^ 2`, where `p d` is
-`wilsonCorrAt N β d / ∑ d', wilsonCorrAt N β d'` and `circLag d` is a natural number not depending
-on `β`. Numerator and denominator are finite sums of `differentiable_wilsonCorrAt`, and the
-denominator is nonzero by `Moment.Read.hpos`.
+On a neighbourhood of `β > 0` the clamp in `readYMAt` is inert, so `d2At N x` is
+`∑ d, (wilsonCorrAt N x d / ∑ d', wilsonCorrAt N x d') * (circLag d) ^ 2` there, with `circLag d` a
+natural number not depending on `x`. Numerator and denominator are finite sums of
+`differentiable_wilsonCorrAt`, and the denominator is nonzero at `β` by `(readYMAt N β).hpos`.
+
+Scope: the statement is at `0 < β`, where `Interior`'s grids on `Set.Icc a b` with `0 < a` use it.
+Below zero `d2At N` is constant (the `β = 0` read), so its left derivative at `0` is `0`; its right
+derivative at `0` is the unclamped ratio's.
 
 The proof uses `(readYMAt N β).hpos`, so this declaration carries
 `wilson_reflection_positive_at`, which `readYMAt` is the entry point for;
 `differentiable_wilsonCorrConn` and `differentiable_wilsonCorrAt` do not.
 
-DERIVED: no numeral appears in the statement. The `2` inside `d2At` is the exponent of the circle
-distance, the second moment, fixed by that definition. -/
-theorem differentiable_d2At (N : ℕ) : Differentiable ℝ (MassGap.d2At N) := by
-  intro β
+DERIVED: the `0` in `0 < β` is the clamp point of `readYMAt`, strictly excluded so that a
+neighbourhood of `β` lies on the nonnegative range. The `2` inside `d2At` is the exponent of the
+circle distance, the second moment, fixed by that definition. -/
+theorem differentiable_d2At (N : ℕ) {β : ℝ} (hβ : 0 < β) :
+    DifferentiableAt ℝ (MassGap.d2At N) β := by
   have hden : DifferentiableAt ℝ
       (fun x : ℝ => ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d') β := by
     have hfn : (fun x : ℝ => ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d')
@@ -360,26 +365,29 @@ theorem differentiable_d2At (N : ℕ) : Differentiable ℝ (MassGap.d2At N) := b
       simp only [Finset.sum_apply]
     rw [hfn]
     exact DifferentiableAt.sum (fun d' _ => differentiable_wilsonCorrAt N d' β)
-  have hne : (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N β d') ≠ 0 :=
-    ne_of_gt (MassGap.readYMAt N β).hpos
-  have hterm : ∀ d : Fin (N + 1),
-      DifferentiableAt ℝ (fun x : ℝ => (MassGap.readYMAt N x).p d) β := by
-    intro d
-    show DifferentiableAt ℝ
-      (fun x : ℝ =>
-        MassGap.wilsonCorrAt N x d / ∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d') β
-    exact (differentiable_wilsonCorrAt N d β).div hden hne
-  show DifferentiableAt ℝ
-    (fun x : ℝ =>
-      ∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2) β
-  have hfn : (fun x : ℝ =>
-        ∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2)
-      = ∑ d : Fin (N + 1),
-        (fun x : ℝ => (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2) := by
-    funext x
-    simp only [Finset.sum_apply]
-  rw [hfn]
-  exact DifferentiableAt.sum (fun d _ => (hterm d).mul_const _)
+  have hne : (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N β d') ≠ 0 := by
+    have h := (MassGap.readYMAt N β).hpos
+    simp only [MassGap.readYMAt_rho_of_nonneg N hβ.le] at h
+    exact ne_of_gt h
+  have hg : DifferentiableAt ℝ
+      (fun x : ℝ => ∑ d : Fin (N + 1),
+        MassGap.wilsonCorrAt N x d / (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d')
+          * (Moment.circLag d : ℝ) ^ 2) β := by
+    have hfn : (fun x : ℝ => ∑ d : Fin (N + 1),
+          MassGap.wilsonCorrAt N x d / (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d')
+            * (Moment.circLag d : ℝ) ^ 2)
+        = ∑ d : Fin (N + 1), (fun x : ℝ =>
+          MassGap.wilsonCorrAt N x d / (∑ d' : Fin (N + 1), MassGap.wilsonCorrAt N x d')
+            * (Moment.circLag d : ℝ) ^ 2) := by
+      funext x
+      simp only [Finset.sum_apply]
+    rw [hfn]
+    exact DifferentiableAt.sum
+      (fun d _ => ((differentiable_wilsonCorrAt N d β).div hden hne).mul_const _)
+  refine hg.congr_of_eventuallyEq ?_
+  filter_upwards [lt_mem_nhds hβ] with x hx
+  show ∑ d : Fin (N + 1), (MassGap.readYMAt N x).p d * (Moment.circLag d : ℝ) ^ 2 = _
+  simp only [Moment.Read.p, MassGap.readYMAt_rho_of_nonneg N hx.le]
 
 #print axioms differentiable_d2At
 
@@ -552,7 +560,8 @@ theorem exists_profile_sum_floor {a b : ℝ} (ha : 0 ≤ a) :
   refine Finset.single_le_sum (f := fun d : Fin (N + 1) => MassGap.wilsonCorrAt N β d) ?_
     (Finset.mem_univ (0 : Fin (N + 1)))
   intro d _
-  exact (MassGap.readYMAt N β).hρ d
+  have h := (MassGap.readYMAt N β).hρ d
+  rwa [MassGap.readYMAt_rho_of_nonneg N hβ0] at h
 
 #print axioms exists_profile_sum_floor
 
@@ -567,8 +576,9 @@ DERIVED: `0` is the lag the hypothesis excludes, the coupling, and the value the
 `1` is the lag arity offset in `Fin (N + 1)`. In the proof, `1` is also `one_le_circLag`'s
 threshold. Nothing is chosen. -/
 theorem profile_at_zero_coupling_eq_zero (N : ℕ) {d : Fin (N + 1)} (hd : d ≠ 0) :
-    (MassGap.readYMAt N 0).ρ d = 0 :=
-  MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d (one_le_circLag hd)
+    (MassGap.readYMAt N 0).ρ d = 0 := by
+  rw [MassGap.readYMAt_rho_of_nonneg N le_rfl]
+  exact MassGap.PowerTail.wilsonCorrAt_at_zero_coupling N d (one_le_circLag hd)
 
 #print axioms profile_at_zero_coupling_eq_zero
 
@@ -616,7 +626,8 @@ theorem cosAvgYMAt_at_zero_coupling (N : ℕ) : MassGap.cosAvgYMAt N 0 = 1 := by
 puts the floor above zero.
 
 The statement is at the single coupling `0`. `A1_YM ymModel` quantifies over all of `ℝ`, `ymModel.μ`
-being `μYM` with no clamp.
+being `μYM`, which reads the clamped coupling `max β 0`; so at `β < 0` it is this statement, and on
+`0 < β` it is supplied through `Complete.confinement_of_bounded_substrate`'s route.
 
 DERIVED: `0` is the coupling and the resulting tension. In the proof, `1` is the cosine average it
 comes from. Nothing is chosen. -/

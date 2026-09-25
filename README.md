@@ -79,12 +79,12 @@ bilinear Schwinger form on a normed test space, with a reflection and an $\mathb
 action — to `WightmanQFTData`.
 
 **What the build carries.** Two named axioms beyond Lean's three foundational ones, counted by machine
-([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 4505 printed declarations,
-4313 of them foundational-only):
+([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 4726 printed declarations,
+4535 of them foundational-only):
 
 | named axiom | declarations carrying it | status |
 |---|---|---|
-| `wilson_reflection_positive_at` | 181 | **proved** at even lattice extent $\ge4$ and $\beta\ge0$ (`OddLagSplit.corrClay_reflection_positive`); cited to Osterwalder–Seiler outside that domain |
+| `wilson_reflection_positive_at` | 180 | stated at every extent and $\beta\ge0$; **proved** at even lattice extent $\ge4$ (`OddLagSplit.corrClay_reflection_positive`); cited at odd extent and extent two to the positive transfer matrix (Osterwalder–Seiler 1978; Lüscher 1977) |
 | `os_reconstruction_wightman` | 11 | cited (Osterwalder–Schrader reconstruction), from `OSData` to `WightmanQFTData` |
 
 The periodic-state chain above — the state, the transfer, the one-lag reduction and the Clay lattice gap —
@@ -126,8 +126,8 @@ import MassGap
 -- extent >= 4 and beta >= 0, rather than cited. This is the strongest statement in the development.
 
 #print axioms MassGap.ym_mass_gap_of_substrate
--- the three foundational + wilson_reflection_positive_at  (the same conclusion on the unrestricted
--- aperture and the total coupling field, where the certificate is still cited)
+-- the three foundational + wilson_reflection_positive_at  (the same conclusion at every aperture, odd
+-- extents included, where reflection positivity is still cited; below beta = 0 the read is the beta = 0 read)
 
 #print axioms MassGap.ym_mass_gap_certified
 -- the three foundational + wilson_reflection_positive_at  (conditioned on the confinement read)

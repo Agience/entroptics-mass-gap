@@ -762,13 +762,14 @@ theorem farShare_doubling_iff_tail_mass {N : ℕ} (R : Moment.Read N) (m : ℕ) 
 
 #print axioms farShare_doubling_iff_tail_mass
 
-/-- `(readYMAt N β).ρ d = wilsonCorrAt N β d`, by `rfl`: the read's unnormalised profile is the
-constructed correlation.
+/-- `(readYMAt N β).ρ d = wilsonCorrAt N (max β 0) d`, by `rfl`: the read's unnormalised profile is
+the constructed correlation at the clamped coupling. At `0 ≤ β` the clamp is inert
+(`Complete.readYMAt_rho_of_nonneg`).
 
 DERIVED: `1` is the `+ 1` in the lag index type `Fin (N + 1)`, one index per lag including
-contact. -/
+contact; `0` is the clamp point in `max β 0`. -/
 theorem readYMAt_rho (N : ℕ) (β : ℝ) (d : Fin (N + 1)) :
-    (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N β d := rfl
+    (MassGap.readYMAt N β).ρ d = MassGap.wilsonCorrAt N (max β 0) d := rfl
 
 /-- `∃ B, ∀ N β, d2At N β ≤ B` from a contraction on the unnormalised tail masses:
 `∑ d ∈ farSet N (2 * m + 1), wilsonCorrAt N β d ≤ θ * ∑ d ∈ farSet N m, wilsonCorrAt N β d` at every
@@ -790,7 +791,7 @@ theorem substrate_of_tail_mass_doubling (m₀ : ℕ) (θ : ℝ) (hθ0 : 0 ≤ θ
   refine substrate_of_share_doubling m₀ θ hθ0 hθ ?_
   intro N β m hm
   refine (farShare_doubling_iff_tail_mass (MassGap.readYMAt N β) m θ).mpr ?_
-  simpa only [readYMAt_rho] using h N β m hm
+  simpa only [readYMAt_rho] using h N (max β 0) m hm
 
 #print axioms substrate_of_tail_mass_doubling
 
@@ -1315,7 +1316,7 @@ theorem substrate_of_contact_relative_decay (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C
     ∃ B : ℝ, ∀ N β, MassGap.d2At N β ≤ B :=
   ⟨2 * ∑' k : ℕ, (k : ℝ) ^ 2 * quarticWeight m₀ C k, fun N β =>
     circ_moment_le_of_contact_relative (MassGap.readYMAt N β) m₀ hC
-      (fun d hd => by simpa only [readYMAt_rho] using h N β d hd)⟩
+      (fun d hd => by simpa only [readYMAt_rho] using h N (max β 0) d hd)⟩
 
 #print axioms substrate_of_contact_relative_decay
 
@@ -1640,7 +1641,7 @@ theorem substrate_of_contact_relative_share (m₀ : ℕ) (C : ℝ) (hC : 0 ≤ C
     (cubicShare_summable hC)
     (fun N β m hm =>
       farShare_le_of_contact_relative (MassGap.readYMAt N β) m₀ hC
-        (fun d hd => by simpa only [readYMAt_rho] using h N β d hd) m
+        (fun d hd => by simpa only [readYMAt_rho] using h N (max β 0) d hd) m
         (le_trans (le_max_left m₀ 1) hm) (le_trans (le_max_right m₀ 1) hm))
 
 #print axioms substrate_of_contact_relative_share

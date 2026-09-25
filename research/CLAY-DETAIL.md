@@ -307,17 +307,20 @@ giving `PeriodicStrongCoupling.periodic_gapAt_strong_coupling` on `(0, β₀)`, 
 `PeriodicStrongCoupling.periodic_tower_base` carries it by `GapStep.gapAt_mono` to the tower's base rate
 `e^{−M·aRun N β}` for every `M ≤ −log(coreRate 64 β) / aRun N β`.
 
-**The interval, sharpened.** The cluster bound's prefactor `4(K + 1)²` per plaquette had two sources: a
-lazy walk with `K + 1` choices and two steps per plaquette, and `4^m` ordered splits of a span. A tour — a
-depth-first traversal of a spanning tree (`StrongCouplingSharp.IsTour`) — covers every touch-connected set
-(`StrongCouplingSharp.exists_tour_cover`), and there are at most `Kᵉ·catalan e ≤ (4K)ᵉ` of them
-(`StrongCouplingSharp.card_tourSet_le`, `StrongCouplingSharp.card_connSets_le_four`); the splits sum
-exactly to `((1 + q)² − 1)` per covered plaquette, `q = e^{2β} − 1` (`StrongCouplingSharp.pairCover_insert`,
-`StrongCouplingSharp.pairCover_le`). The rate becomes
+**The interval, sharpened.** The per-plaquette count `4(K + 1)²` in `StrongCoupling.coreRate` has two
+sources: a lazy walk with `K + 1` choices and two steps per plaquette (`StrongCoupling.card_connSets_le`),
+and `4^m` ordered splits of a span. A tour — a depth-first traversal of a spanning tree
+(`StrongCouplingSharp.IsTour`) — covers every touch-connected set (`StrongCouplingSharp.exists_tour_cover`);
+there are at most `Kᵉ·catalan e ≤ (4K)ᵉ` tours with `e` branches (`StrongCouplingSharp.card_tourSet_le`),
+so at most `(4K)^(m−1)` touch-connected sets of `m` plaquettes (`StrongCouplingSharp.card_connSets_le_four`).
+The pair weights are summed rather than counted: at most `(1 + q)² − 1 = e^{4β} − 1` per non-anchor
+plaquette of the span and `(1 + q)² = e^{4β}` per anchor plaquette, `q = e^{2β} − 1`
+(`StrongCouplingSharp.pairCover_insert`, `StrongCouplingSharp.pairCover_le`). The resulting rate is
 `StrongCouplingSharp.coreRate' K β = 4K(e^{4β} − 1)e^{4βK}`, the cluster bound
-`StrongCouplingSharp.wilsonCorrConnObs_abs_le_of_not_mem_ball'` holds on it, and the periodic chain
-re-runs to `StrongCouplingSharp.periodic_gapAt_of_coreRate'` and
-`StrongCouplingSharp.periodic_gapAt_strong_coupling'`, with the interval more than twenty times the old
+`StrongCouplingSharp.wilsonCorrConnObs_abs_le_of_not_mem_ball'` holds on it, and the periodic chain re-runs
+to `StrongCouplingSharp.periodic_gapAt_of_coreRate'` and `StrongCouplingSharp.periodic_gapAt_strong_coupling'`,
+at every `0 < β ≤ 1/1400`, where `coreRate' 64 β < 1` (`StrongCouplingSharp.coreRate'_lt_one_of_le`); that
+interval is more than twenty times every interval on which `coreRate 64 β < 1`
 (`StrongCouplingSharp.periodic_gap_interval_exceeds_old`).
 
 **The step between couplings.** The algebra and the shift are the same at every coupling; only
@@ -367,6 +370,21 @@ carries IR content only with `βUV` past the strong-coupling region. Balaban (Co
 the number of steps at small running coupling and proves no correlation bound. Open: the UV step on
 correlations in infinite volume with summable losses, and a gap at any single coupling outside strong
 coupling.
+
+**The finite-size criterion.** With cover weight `a₁ = Σₖ cₖᵢ`, squared weight `a₂`, pair weights
+`KnabeCriterion.pairWeight` at most `b` on commuting pairs and within `w` of `b` otherwise, and `w` of row
+and column sums at most `e`, a patch gap `γ·B(Aₖx, x) ≤ B(Aₖx, Aₖx)` gives
+`(γa₁ − a₂ + b − e)·B(Hx, x) ≤ b·B(Hx, Hx)` (`KnabeCriterion.knabe_bound`); commuting projections give the
+gap one outright (`KnabeCriterion.knabe_commuting`). On the periodic lattices `KnabeCriterion.torusForm`
+is the torus state's pairing on the periodic gauge-invariant observables
+(`KnabeCriterion.periodicGaugeInvSubmodule`), `KnabeCriterion.WilsonHeatBath` carries the link conditional
+expectations with the patch data, and `KnabeCriterion.WilsonHeatBath.toPatchSystem` its patch system.
+`KnabeCriterion.gapAt_of_patchGapCheck`, `KnabeCriterion.periodicClayGapAt_of_patchGapCheck` and
+`KnabeCriterion.irGapAt_of_patchGapCheck` give the gap at one coupling from `KnabeCriterion.HeatBathDecay`
+and `KnabeCriterion.PatchGapCheck`, and `KnabeCriterion.fixedWindowDecay_of_patchGapCheck` joins it to the
+UV step from that coupling on. At a one-patch witness `PatchGapCheck` is a uniform heat-bath gap; its
+finite-size content is a box-patch witness, whose multiplicities in four dimensions put the needed patch
+gap at `γ > (40n − 36)/n²` for boxes of side `n`.
 
 **Flux sectors.** A neutral projection `P` (idempotent, form-symmetric, commuting with `T`, fixing the
 vacuum) splits every lag profile, `form x (Tᵐ x) = form (Px) (Tᵐ Px) + form (x − Px) (Tᵐ (x − Px))`
@@ -424,6 +442,36 @@ vector a per-vector form decay (`ContinuumSep.form_pow_le_of_cluster_sep`), henc
 `ContinuumSep.continuum_gap_sep` assembles the spectral gap at every dyadic step, the vacuum complement contracted
 by `e^{−(c/L)·tₘ}` with `c/L` fixed: a physical gap of at least `c/L`. `ContinuumSep.exists_orth_ne_zero` and `ContinuumSep.exists_orth_ne_zero_sep` turn a
 non-zero connected two-point function into a vacuum-orthogonal vector outside the span of the vacuum.
+
+**Non-triviality from Y.** For a one-factor monomial the reflected pair is a Riemann double sum of the
+lattice kernel against the reflected and the plain test function
+(`ContinuumNontrivial.latSkR_mono1_pair`); at the connected renormalisation the kernel is `Z²` times the
+connected two-point function (`ContinuumNontrivial.latKernel_connected`), at `ContinuumNontrivial.rhoA`
+that function over `a⁸` (`ContinuumNontrivial.latKernel_rhoA`), and the vacuum term vanishes
+(`ContinuumNontrivial.kern_empty_mono1`). With the cube test function the Riemann sums are at least
+`(ℓ/2)⁴` (`ContinuumNontrivial.riemann_cube_ge`), the pair region sits at separation at least `2t`
+(`ContinuumNontrivial.pairRegion_subset`), and a kernel limit bounded below there bounds the pair below
+by `g₀/2·(ℓ/2)⁸` (`ContinuumNontrivial.kern_mono1_ge`). `ShortDistanceY.AFShortDistance` bounds `G` below on a
+short interval (`ContinuumNontrivial.af_bounds_on_interval`), and
+`ContinuumNontrivial.connectedTwoPointNonzero_of_af` assembles `ContinuumSep.ConnectedTwoPointNonzero`
+from `ContinuumNontrivial.KernelConvergesSep` and Y (at `ContinuumNontrivial.rhoA`,
+`ContinuumNontrivial.connectedTwoPointNonzero_rhoA`), and `ContinuumNontrivial.exists_orth_ne_zero_of_af`
+gives the vacuum-orthogonal vector under `ContinuumSep.UniformBoundSep`. `ContinuumClay.continuum_gap_nontrivial`
+joins it to `ContinuumSep.continuum_gap_sep` on one reconstructed space.
+
+**Hypercubic and ℝ⁴ invariance.** Axis permutations of `ℤ⁴` act on links, configurations and
+observables (`ContinuumHypercubic.iaxisObs`), commute with translation
+(`ContinuumHypercubic.iaxisObs_transObs`) and preserve gauge invariance
+(`ContinuumHypercubic.isIGaugeInvariant_iaxisObs`); every periodic-lattice Wilson state is invariant
+(`ContinuumHypercubic.torusState_axis`), hence the periodic state (`ContinuumHypercubic.periodicState_axis`),
+and with the reflections the continuum Schwinger functions are invariant under every signed permutation
+of the test functions at hypercubic-scalar fields (`ContinuumHypercubic.contS_signed`). The smeared field is
+Lipschitz in the test function uniformly in the spacing (`ContinuumHypercubic.norm_smear_sub_le`); under
+`ContinuumHypercubic.SupContinuousSep` translation invariance extends from the dyadic subgroup to all of
+`ℝ⁴` for uniformly continuous test functions (`ContinuumHypercubic.contS_translate_real`). The rotations off
+the hypercubic group are `ContinuumHypercubic.RotationOpen`. At `N = 1` the configuration space is a point
+and every connected statistic vanishes (`NOneVacuity.not_wilsonLatticeAF_one`,
+`NOneVacuity.not_wilsonThreePointSeparation_one`).
 
 **Y.** `ShortDistanceY.AFShortDistance G` asks `r⁸·G(r)·(log r)² → C > 0` as `r → 0⁺`; `8` is twice the
 canonical dimension of `tr F²` and the square of the log is two insertions of `ḡ²(r) ∼ 1/(2b₀ log(1/r))`.

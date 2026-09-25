@@ -1030,7 +1030,7 @@ theorem coreRate'_lt_one_of_le {β : ℝ} (hβ0 : 0 ≤ β) (hβ : β ≤ 1 / 14
 
 #print axioms coreRate'_lt_one_of_le
 
-/-- **The old rate reaches one by `β = 1/33800`.** `coreRate 64 β ≥ 16900 · (e^{2β} − 1) ≥ 33800 β`,
+/-- **The old rate is at least one at every `β ≥ 1/33800`.** `coreRate 64 β ≥ 16900 · (e^{2β} − 1) ≥ 33800 β`,
 from `e^x ≥ 1 + x` and `e^{256β} ≥ 1`.
 
 DERIVED: `33800 = 2 · 16900 = 2 · 4 · 65²` is `coreRate`'s count `4 (K + 1)²` at `K = 64` times the
@@ -1087,7 +1087,7 @@ to `U`.
 
 DERIVED: `16 * 4` is the periodic touch-degree bound (`StrongCoupling.touchDeg_bd_le` at dimension
 `4`), and the `4` in `Fin 4` is that dimension; `32 = 2 · 16` is two cubes of at most `16 (R + 1)⁴`
-plaquettes (`card_torusCube_le`); the `2` in `2 ‖f‖ ‖g‖` is `pairTermObs_abs_le`'s two products; the
+plaquettes (`card_torusCube_le`), with the exponent `4` the dimension; the `2` in `2 ‖f‖ ‖g‖` is `pairTermObs_abs_le`'s two products; the
 `2` in `k + 2` is the two base plaquettes; the `2` in `2 * (y₀ τ − x₀ τ)` is the two ways round the
 circle; `0` is the excluded rank and the sign of `β`; `1` is the geometric threshold, the strict-inside
 margin, the successor writing the extent, and in `R + 1` the offset zero. -/

@@ -5,8 +5,9 @@ import MassGap.WilsonModel
 /-!
 # MassGap.EvenAperture — the model chain rebuilt on even apertures and clamped coupling
 
-`Complete.readYMAt N β` is defined as `readA (wilsonCorrAt N β) (wilson_reflection_positive_at N β)`,
-so it mentions the named axiom `Complete.wilson_reflection_positive_at`, and every object defined
+`Complete.readYMAt N β` is defined as
+`readA (wilsonCorrAt N (max β 0)) (wilson_reflection_positive_at N (max β 0) _)`, so it mentions the
+named axiom `Complete.wilson_reflection_positive_at`, and every object defined
 from it — `μYMAt`, `d2At`, `ymModelAt`, `WilsonModel.fullModelOfSubstrate`,
 `WilsonModel.existence_and_gap_of_substrate` — reports that axiom.
 `Complete.wilson_reflection_positive_at_even` proves the same conjunction about the same
@@ -44,9 +45,10 @@ Scope.
   So at negative coupling the model states its `β = 0` content.
   `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an iff placing the boundary at `0`.
 * The substrate hypothesis `∃ B, ∀ (a : EvenAp) β, d2Even a β ≤ B` is `d2Even_eq`'s restriction of
-  `∃ B, ∀ N β, d2At N β ≤ B` to even extents at least four and clamped coupling.
+  `∃ B, ∀ N β, d2At N β ≤ B` to even extents at least four.
   `substrate_even_of_substrate` derives the restricted form from the original; the converse is not
-  proved here, and nothing in this module constrains `d2At` at an odd extent or a negative coupling.
+  proved here, and nothing in this module constrains `d2At` at an odd extent. At a negative coupling
+  `d2At` is its `β = 0` value, because `readYMAt` clamps at `max β 0` as `readEven` does.
 * `readEven_eq_readYMAt`, `d2Even_eq`, `μEven_eq` and `substrate_even_of_substrate` mention the
   axiom-carrying objects and so report the named axiom; the other declarations do not.
 -/
@@ -151,8 +153,8 @@ everything below is the existing chain rebuilt on it. -/
 /-- Reading-A of the Wilson correlation at an even aperture: `readA (wilsonCorrAt a.1 (max β 0))`,
 with the positivity certificate supplied by the theorem
 `Complete.wilson_reflection_positive_at_even` at `a.2.choose` rather than by the axiom
-`Complete.wilson_reflection_positive_at`. The shape is `Complete.readYMAt`'s, and at `0 ≤ β` the two
-are the same object (`readEven_eq_readYMAt`).
+`Complete.wilson_reflection_positive_at`. The shape is `Complete.readYMAt`'s, clamp included, so the
+two are the same object (`readEven_eq_readYMAt_max`, `readEven_eq_readYMAt`).
 
 DERIVED: the `0` is the lower end of the physical coupling domain — the clamp `max β 0` is what makes
 this a total function `ℝ → Moment.Read` so the `A1` field can be populated, and
@@ -175,16 +177,19 @@ theorem readA_congr {N : ℕ} {ρ ρ' : Fin (N + 1) → ℝ}
     (e : ρ = ρ') : MassGap.readA ρ h = MassGap.readA ρ' h' := by
   subst e; rfl
 
-/-- `readEven a β = readYMAt a.1 (max β 0)`, by `readA_congr rfl`. A bridge lemma: it mentions
-`readYMAt` and therefore reports the named axiom, which is why it is stated separately from the
-chain.
+/-- `readEven a β = readYMAt a.1 (max β 0)`: both reads take the correlation at the clamped
+coupling, and clamping twice is clamping once (`max (max β 0) 0 = max β 0`). A bridge lemma: it
+mentions `readYMAt` and therefore reports the named axiom, which is why it is stated separately from
+the chain.
 
 DERIVED: the one numeral is `0`, the clamp point in `max β 0`. -/
 theorem readEven_eq_readYMAt_max (a : EvenAp) (β : ℝ) :
-    readEven a β = MassGap.readYMAt a.1 (max β 0) := readA_congr rfl
+    readEven a β = MassGap.readYMAt a.1 (max β 0) :=
+  readA_congr (by rw [max_eq_left (le_max_right β 0)])
 
 /-- `readEven a β = readYMAt a.1 β` whenever `0 ≤ β`: on the nonnegative coupling range the clamp is
-inert, so the two reads are the same object and the same Wilson correlation.
+inert, so the two reads are the same object and the same Wilson correlation. (Below zero both
+reads are the `β = 0` read: `readEven_eq_readYMAt_max` with `max (max β 0) 0 = max β 0`.)
 
 DERIVED: the one numeral is `0`, the lower bound on `β` at which `max β 0` reduces to `β`. -/
 theorem readEven_eq_readYMAt (a : EvenAp) {β : ℝ} (hβ : 0 ≤ β) :

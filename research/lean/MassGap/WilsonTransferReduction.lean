@@ -60,10 +60,11 @@ Scope.
   `ReflectionShift.reflection_invariant_succ_iff_nu_T` relates `hnu` to reflection invariance at the
   adjacent constant.
 * `hposOdd` in `positiveTransfer_of_state_facts` is reflection positivity at an odd constant, the
-  link reflection. `ReflectionHalfSpace`'s positivity chain is stated at `2 * p` throughout and its
-  analogue of `boxR_ne_tau` hardwires that constant, so it has no odd instantiation. At an even
-  constant the shared block is the transverse links on the plane with the dagger trivial; at an odd
-  one it is the axis links with the dagger inverting.
+  link reflection. It is supplied at `β ≥ 0` for a limit of the odd free cube family
+  (`ReflectionHalfSpace.wilson_reflPositive_odd_of_tendsto`) and for the periodic limit
+  (`PeriodicState.periodicState_reflPositive_odd`). At an even constant the shared block is the
+  transverse links on the plane with the dagger trivial; at an odd one it is the axis links with the
+  dagger inverting.
   `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an iff on the cross kernel, so the route
   through that kernel is refuted below `β = 0`.
 * Nothing here proves a gap. `OpTBridge.reconstruct_from_opT` takes two spectral hypotheses beyond
@@ -258,11 +259,9 @@ addition `hposOdd : ReflPositiveOn (latticeReflection τ (2 * p - 1)) (halfSpace
 `assembleTransferData` sets `form := stateFormFun` and `T := restrictT`, so `D.form x (D.T x)` is
 `ν (θ_{2p} x · T x)`, which `positiveTransfer_pairing_nonneg` bounds below by `0`.
 
-Scope. `hposOdd` is a hypothesis at an odd reflection constant, the link reflection, and is not
-supplied here; `ReflectionHalfSpace`'s positivity chain is stated at `2 * p` and its analogue of
-`boxR_ne_tau` hardwires that constant, so it has no odd instantiation. The blocks differ: at an even
-constant the shared block is the transverse links on the plane with the dagger trivial, at an odd
-one the axis links with the dagger inverting, which is `OddLagSplit`'s subject.
+Scope. `hposOdd` is a hypothesis at an odd reflection constant, the link reflection;
+`ReflectionHalfSpace.wilson_reflPositive_odd_of_tendsto` and
+`PeriodicState.periodicState_reflPositive_odd` supply it at `β ≥ 0`.
 `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` consumes `PositiveTransfer` together with a
 Rayleigh bound `⟨T y, y⟩ ≤ Λ ‖y‖ ^ 2` on the vacuum complement; only the first is supplied here.
 

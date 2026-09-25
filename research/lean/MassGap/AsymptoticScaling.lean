@@ -14,23 +14,27 @@ whatever `m` is.
 
 ## The spacing this file fixes instead
 
-`aRun N β = ((3β)/(22N²))^{51/121} · exp(−3β/(44N²))`, the two-loop running spacing with the overall
-scale `Λ` set to `1`. The exponent is POSITIVE on this base: the two-loop formula carries
-`(b₀g²)^{−b₁/(2b₀²)}` and `b₀g² = 22N²/(3β)` (`b0_g_sq`), whose reciprocal is the base written here,
-so inverting the base flips the sign. The exponents come from `Running`'s coefficients `b₀ = 11N/3`
-and `b₁ = 34N²/3`
-via
+`aRun N β = ((24π²β)/(11N²))^{51/121} · exp(−(12π²β)/(11N²))`, the two-loop running spacing of
+`SU(N)` at the Wilson coupling `β = 2N/g²`, with the scale `Λ` set to `1`. `N` is the colour count,
+not a lattice extent: it enters only through `b₀`, `b₁` and `g² = 2N/β`. It is
 
     a(β)·Λ  =  (b₀ g²)^{−b₁/(2b₀²)} · exp(−1/(2b₀ g²)),        g² = 2N/β
 
-and the three identities `b1_over_two_b0_sq`, `one_over_four_N_b0` and `b0_g_sq` check the numerals in
-`aRun` against those coefficients. The colour count cancels from `b₁/(2b₀²) = 51/121`, so that
-exponent is the same for every `SU(N)`. `aRun_pos` gives positivity for `1 ≤ N` and `0 < β`.
+at `b₀ = 11N/(3·16π²)` and `b₁ = 34N²/(3·(16π²)²)`, the coefficients of `μ dg/dμ = −b₀g³ − b₁g⁵`.
+`Running` states the same coefficients as `11N/3` and `34N²/3`, the `SU(N)` values in the form
+`μ dg/dμ = −(11N/3)g³/(16π²) − (34N²/3)g⁵/(16π²)²`; the `1/(16π²)` is part of the beta function, and
+`aRun` carries it. The exponent is POSITIVE on the base written here: the formula carries
+`(b₀g²)^{−b₁/(2b₀²)}`, and `b₀g² = 11N²/(24π²β)` (`b0_g_sq`) is the reciprocal of that base, so
+inverting it flips the sign. The three identities `b1_over_two_b0_sq`, `one_over_four_N_b0` and
+`b0_g_sq` evaluate `b₁/(2b₀²)`, `1/(4N b₀)` and `b₀g²` from those coefficients to the numerals `aRun`
+carries. The colour count and `π` cancel from `b₁/(2b₀²) = 51/121`, so that exponent is the same for
+every `SU(N)`. `aRun_pos` gives positivity for `1 ≤ N` and `0 < β`.
 
 ## The predicates
 
-`AsymptoticScalingAt N m` says `m β / aRun N β` converges to a positive limit. With `aRun` fixed
-rather than existential the predicate is a constraint on `m` alone:
+`AsymptoticScalingAt N m` says `m β / aRun N β` converges to a positive limit, `aRun N` being the
+`SU(N)` spacing at colour count `N`. With `aRun` fixed rather than existential the predicate is a
+constraint on `m` alone:
 `asymptotic_scaling_is_satisfiable` gives `m = c · aRun N` as a witness, and
 `asymptotic_scaling_has_content` shows `m = aRun N · exp(−β)` refutes it;
 `asymptotic_scaling_is_a_real_constraint` states both together.
@@ -40,17 +44,25 @@ rather than existential the predicate is a constraint on `m` alone:
 with `ρ(1) = 0` at zero coupling, so statements about `mLatAt` are guarded by `0 < decayAt`.
 `mLatAt_nonneg` gives `0 ≤ mLatAt N β` at even extent `N + 1 = 2m` with `3 ≤ m`.
 
-`fixed_extent_pins_the_spacing`: if `AsymptoticScalingAt N m` holds and `m` is eventually at least a
-positive constant, then `aRun N` is eventually at least a positive constant, so the spacing does not
-approach zero along that sequence. `AsymptoticScalingJoint Nof` is the corresponding statement with
-the extent a function of the coupling; it is a definition, and nothing in this file proves it.
+`fixed_colours_pins_the_spacing`: at one fixed colour count `N`, if `AsymptoticScalingAt N m` holds
+and `m` is eventually at least a positive constant, then the `SU(N)` spacing `aRun N` is eventually at
+least a positive constant. `aRun N` falls below every positive level arbitrarily far out
+(`exists_beta_aRun_lt`), so `bounded_mass_fails_scaling` concludes that no `m` bounded below by a
+positive constant satisfies `AsymptoticScalingAt N`.
 
-No declaration here supplies a lattice mass as a function of the coupling.
+`AsymptoticScalingJoint Nof` reads the lattice mass `mLatAt (Nof β) β` at an extent `Nof β` that
+grows with the coupling, against `aRun 3`, the two-loop spacing of `SU(3)` at the Wilson coupling:
+`mLatAt` reads `wilsonCorrAt`, whose ensemble `WilsonBridge.corrClay` is taken at colour count `3`. It
+is a definition, and nothing in this file proves it.
 
-DERIVED: every numeral in `aRun` traces to `Running`. `51/121` is `b₁/(2b₀²)`, `3/44` is `1/(4N b₀)`
-with the `N²` carried separately, `22` and `3` are `b₀ g²` multiplied out, and `2N/β` is the `SU(N)`
-relation between the lattice coupling and `g²`. `0` is positivity, and the lags `1` and `0` in
-`decayAt` are the nearest-neighbour and contact separations.
+No declaration here proves `AsymptoticScalingAt` or `AsymptoticScalingJoint` for `mLatAt`.
+
+DERIVED: every numeral in `aRun` is evaluated from `b₀ = 11N/(3·16π²)`, `b₁ = 34N²/(3·(16π²)²)` and
+`g² = 2N/β`. `51/121` is `b₁/(2b₀²)`; `24π²/11` in the base is `(b₀g²)⁻¹` per unit `β/N²`; `12π²/11`
+in the exponential is `1/(4N b₀)` per `1/N²`, half the base constant; `2N/β` is the `SU(N)` relation
+between the Wilson coupling and `g²`. CHOSEN: `Λ = 1`. The `3` in `AsymptoticScalingJoint`'s
+`aRun 3` is the colour count of `WilsonBridge.corrClay`'s ensemble, `SU(3)`. `0` is positivity, and
+the lags `1` and `0` in `decayAt` are the nearest-neighbour and contact separations.
 -/
 
 namespace MassGap.AsymptoticScaling
@@ -81,79 +93,104 @@ theorem free_spacing_scaling_is_also_vacuous (m : ℝ → ℝ) (hm : ∀ β, 0 <
 
 /-! ## 2. The running spacing, from the beta function -/
 
-/-- The two-loop running lattice spacing at extent `N` and coupling `β`, with `Λ` set to one:
-`((3β)/(22N²))^(51/121) · exp(−(3β)/(44N²))`. An `rpow` times an exponential; no hypothesis on `N` or
-`β`, so the base may be zero or negative and `aRun_pos` is stated separately.
+/-- The two-loop running lattice spacing of `SU(N)` at colour count `N` and Wilson coupling `β`, with
+`Λ` set to one: `((24π²β)/(11N²))^(51/121) · exp(−(12π²β)/(11N²))`. It is
 
-DERIVED: `51/121` is `b₁/(2b₀²)`, checked by `b1_over_two_b0_sq`; `3` and `44` are `1/(4N b₀)` with
-the `N²` carried separately, checked by `one_over_four_N_b0`; `3` and `22` are `b₀ g²` at `g² = 2N/β`
-multiplied out, checked by `b0_g_sq`; both `2`s are the `N²` those identities produce. All at
-`b₀ = 11N/3` and `b₁ = 34N²/3`, the coefficients `Running.b0_pos` and `Running.b1_pos` are stated
-for. CHOSEN: `Λ = 1`, a unit, which cancels from every ratio this file forms. -/
+    a(β)·Λ  =  (b₀ g²)^{−b₁/(2b₀²)} · exp(−1/(2b₀ g²))
+
+at `b₀ = 11N/(3·16π²)`, `b₁ = 34N²/(3·(16π²)²)` (the coefficients of `μ dg/dμ = −b₀g³ − b₁g⁵`) and
+`g² = 2N/β`, the relation between `g²` and the coupling of the Wilson action
+`β · Σ wilsonDensity`, `wilsonDensity = 1 − Re tr/N`. `N` enters only through `b₀`, `b₁` and `g²`, so
+it is the number of colours and never a lattice extent. An `rpow` times an exponential; no hypothesis
+on `N` or `β`, so the base may be zero or negative and `aRun_pos` is stated separately.
+
+Against the lattice: `aRun 2 2.30 / aRun 2 2.40 ≈ 1.2856` and `aRun 2 2.40 / aRun 2 2.50 ≈ 1.2866`,
+the two-loop ratios PAPER §8's `SU(2)` scaling test quotes as `1.286` and `1.287`; `Λ` cancels from
+both.
+
+With `u = 24π²β/(11N²)`, `aRun N β = u^{51/121} · exp(−u/2)`, which rises for `u < 102/121` and falls
+beyond it. So at fixed `N` the spacing is largest, about `0.6105`, at `β = 17N²/(44π²) ≈ 0.0391·N²`,
+and falls toward zero past it.
+
+DERIVED: `51/121` is `b₁/(2b₀²)`, `b1_over_two_b0_sq`; `24`, `11` and the `2` of `π²` in the base are
+`(b₀g²)⁻¹` at `g² = 2N/β`, the reciprocal of `b0_g_sq`'s right side; `12`, `11` and the `2` of `π²` in
+the exponential are `1/(4N b₀)` times `β`, which is `1/(2b₀g²)`, `one_over_four_N_b0`; the `2` of each
+`N²` comes from the same identities. `11N/3` and `34N²/3` are the coefficients `Running.b0_pos` and
+`Running.b1_pos` are stated for; `16π²` is the normalisation of the beta function they sit in. The
+figures above are `aRun` evaluated at the couplings named; `102/121 = 2 · 51/121` is where the
+derivative `51/(121u) − 1/2` of the logarithm vanishes, and `17/44 = (102/121)·(11/24)` is that `u`
+solved for `β/N²` up to the `π²`. CHOSEN: `Λ = 1`, a unit, which cancels from every ratio this file
+forms. -/
 noncomputable def aRun (N : ℕ) (β : ℝ) : ℝ :=
-  ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ) * Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2))
+  ((24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ)
+    * Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2))
 
 #print axioms aRun
 
-/-! ### The exponents, derived from `Running`'s coefficients rather than retyped
+/-! ### The numerals of `aRun`, evaluated from the normalised coefficients
 
-`aRun`'s `51/121` and `3/(44N²)` were written out by hand above. That is a second source of truth for
-numbers `Running` already determines, which is the defect `FreeFieldLagTwoSix`'s value theorems exist
-to prevent on the free-field side. The three identities below close it: each states that the numeral
-in `aRun` IS the corresponding expression in `b₀ = 11N/3` and `b₁ = 34N²/3`, so the definition is
-checked against `Running` and not merely consistent with it.
+`aRun`'s `51/121`, `24π²/11` and `12π²/11` are written out in the definition. Each identity below
+states that one of them IS the corresponding expression in `b₀ = 11N/(3·16π²)`,
+`b₁ = 34N²/(3·(16π²)²)` and `g² = 2N/β`, with the right-hand side written in `aRun`'s own numerals, so
+the definition is checked against the two-loop formula and not merely consistent with it. `Running`
+defines no constants for `b₀` and `b₁`; the coefficients are written out here in the normalisation of
+`μ dg/dμ = −b₀g³ − b₁g⁵`.
 -/
 
-/-- `(34N²/3) / (2·(11N/3)²) = 51/121` for `N ≠ 0`, by `field_simp; ring`. The colour count cancels,
-so the value is independent of `N`. This checks `aRun`'s rpow exponent against `Running`'s
-coefficients.
+/-- `(34N²/(3·(16π²)²)) / (2·(11N/(3·16π²))²) = 51/121` for `N ≠ 0`, by `field_simp; ring`. The
+colour count and `π` cancel, so the value is independent of both. This is `aRun`'s rpow exponent.
 
-DERIVED: `0` in `hN` is what `field_simp` needs to clear `N` from the denominators; `34`, `2` and `3`
-are `b₁ = 34N²/3`; `11`, `3` and `2` are `b₀ = 11N/3` squared and doubled; `51/121` is
-`306/726` in lowest terms, which is `aRun`'s exponent. -/
+DERIVED: `0` in `hN` is what `field_simp` needs to clear `N` from the denominators; `34`, the `2` of
+`N ^ 2` and `3` are `b₁`'s numerator `34N²/3`; `16` and the `2` of `π ^ 2` are the `16π²` of the
+normalisation, and the outer `2` on `(16π²)²` is its square at two loops; `11` and `3` are `b₀`'s
+numerator `11N/3`; `2 *` and the `2` squaring `b₀` are the doubling and square in `b₁/(2b₀²)`;
+`51/121` is `306/726` in lowest terms, which is `aRun`'s exponent. -/
 theorem b1_over_two_b0_sq {N : ℝ} (hN : N ≠ 0) :
-    (34 * N ^ 2 / 3) / (2 * (11 * N / 3) ^ 2) = 51 / 121 := by
+    (34 * N ^ 2 / (3 * (16 * Real.pi ^ 2) ^ 2)) / (2 * (11 * N / (3 * (16 * Real.pi ^ 2))) ^ 2)
+      = 51 / 121 := by
   field_simp
   ring
 
 #print axioms b1_over_two_b0_sq
 
-/-- `1/(4N·(11N/3)) = 3/(44N²)` for `N ≠ 0`, by `field_simp; ring`. This checks the argument of
-`aRun`'s exponential factor against `Running`'s `b₀`.
+/-- `1/(4N·(11N/(3·16π²))) = 12π²/(11N²)` for `N ≠ 0`, by `field_simp; ring`. Times `β` this is
+`1/(2b₀g²)` at `g² = 2N/β`, the argument of `aRun`'s exponential factor `exp(−(12π²β)/(11N²))`.
 
 DERIVED: `0` in `hN` is what `field_simp` needs to clear `N`; `1` and `4` are `1/(4N b₀)`, the
-two-loop exponent at `g² = 2N/β`; `11` and `3` are `b₀ = 11N/3`; `3`, `44` and `2` are the same
-quantity multiplied out, which is what `aRun` carries. -/
+two-loop exponent `1/(2b₀g²)` at `g² = 2N/β` divided by `β`; `11`, `3`, `16` and the `2` of `π ^ 2`
+are `b₀ = 11N/(3·16π²)`; `12`, `11` and the `2`s on the right are the same quantity multiplied out,
+`3·16/(4·11) = 12/11`, which is what `aRun` carries. -/
 theorem one_over_four_N_b0 {N : ℝ} (hN : N ≠ 0) :
-    1 / (4 * N * (11 * N / 3)) = 3 / (44 * N ^ 2) := by
+    1 / (4 * N * (11 * N / (3 * (16 * Real.pi ^ 2)))) = 12 * Real.pi ^ 2 / (11 * N ^ 2) := by
   field_simp
   ring
 
 #print axioms one_over_four_N_b0
 
-/-- `(11N/3)·(2N/β) = 22N²/(3β)` for `β ≠ 0`, by `field_simp; ring`. This checks `aRun`'s rpow base
-against `b₀ g²` at the `SU(N)` relation `g² = 2N/β`.
+/-- `(11N/(3·16π²))·(2N/β) = 11N²/(24π²β)` for `β ≠ 0`, by `field_simp; ring`. This is `b₀ g²` at
+the `SU(N)` relation `g² = 2N/β`, the reciprocal of `aRun`'s rpow base `(24π²β)/(11N²)`.
 
-DERIVED: `0` in `hβ` is what `field_simp` needs to clear `β`; `11` and `3` are `b₀ = 11N/3`; `2` is
-the `SU(N)` relation `g² = 2N/β`; `22`, `2` and `3` are the product multiplied out, the reciprocal of
-`aRun`'s base. -/
+DERIVED: `0` in `hβ` is what `field_simp` needs to clear `β`; `11`, `3`, `16` and the `2` of `π ^ 2`
+are `b₀ = 11N/(3·16π²)`; `2` in `2 * N` is the `SU(N)` relation `g² = 2N/β`; `11`, `24` and the `2`s
+on the right are the product multiplied out, `22/48 = 11/24` in lowest terms. -/
 theorem b0_g_sq {N β : ℝ} (hβ : β ≠ 0) :
-    (11 * N / 3) * (2 * N / β) = 22 * N ^ 2 / (3 * β) := by
+    (11 * N / (3 * (16 * Real.pi ^ 2))) * (2 * N / β) = 11 * N ^ 2 / (24 * Real.pi ^ 2 * β) := by
   field_simp
   ring
 
 #print axioms b0_g_sq
 
 
-/-- `0 < aRun N β` for `1 ≤ N` and `0 < β`. The rpow base `(3β)/(22N²)` is positive by `positivity`
-under both hypotheses, so `Real.rpow_pos_of_pos` applies, and the exponential factor is positive
-unconditionally. `1 ≤ N` is what keeps `(N : ℝ)` away from zero.
+/-- `0 < aRun N β` for `1 ≤ N` and `0 < β`. The rpow base `(24π²β)/(11N²)` is positive by
+`positivity` under both hypotheses (`π > 0` is `positivity`'s own), so `Real.rpow_pos_of_pos`
+applies, and the exponential factor is positive unconditionally. `1 ≤ N` is what keeps `(N : ℝ)` away
+from zero.
 
-DERIVED: `1` in `hN` is the least extent at which `N²` is nonzero, so the rpow base is defined and
-positive; the `0`s are the positivity of `β` and the positivity concluded of `aRun`. -/
+DERIVED: `1` in `hN` is the least colour count at which `N²` is nonzero, so the rpow base is defined
+and positive; the `0`s are the positivity of `β` and the positivity concluded of `aRun`. -/
 theorem aRun_pos {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β) : 0 < aRun N β := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
-  have hbase : (0 : ℝ) < (3 * β) / (22 * (N : ℝ) ^ 2) := by positivity
+  have hbase : (0 : ℝ) < (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by positivity
   exact mul_pos (Real.rpow_pos_of_pos hbase _) (Real.exp_pos _)
 
 #print axioms aRun_pos
@@ -196,78 +233,82 @@ theorem exp_neg_le_four_div_sq {t : ℝ} (ht : 0 < t) :
 #print axioms exp_neg_le_four_div_sq
 
 /-- `aRun N` decays at least like `1 / β` once the base has passed `1`: for `N ≥ 1` and
-`(3 * β) / (22 * N²) ≥ 1`,
+`(24π²β) / (11N²) ≥ 1`,
 
-    aRun N β ≤ ((3 * β) / (22 * N²)) * (4 / ((3 * β) / (44 * N²)) ^ 2).
+    aRun N β ≤ ((24π²β) / (11N²)) * (4 / ((12π²β) / (11N²)) ^ 2).
 
 The power factor is bounded by its base because the exponent `51/121` is at most `1`
 (`Real.rpow_le_rpow_of_exponent_le`, then `Real.rpow_one`), and the exponential by
-`exp_neg_le_four_div_sq`.
+`exp_neg_le_four_div_sq`, after `neg_div` moves the sign outside the quotient.
 
-DERIVED: `3`, `22` and `44` are `aRun`'s own constants, which `Running`'s coefficients fix; `4` is
-`exp_neg_le_four_div_sq`'s. Every `2` is a square — the `N²` of `aRun`'s two denominators, and the
-square in `exp_neg_le_four_div_sq`'s `4 / t²`. `1` is the least extent in `hN` and the threshold the
-base must pass for `x ^ p ≤ x`. `0` is the sign of the coupling. The exponent `51/121` is `aRun`'s
-and appears in the PROOF, where the bound `x ^ p ≤ x ^ 1` is applied; the statement does not
-mention it. -/
+DERIVED: `24`, `12` and `11` are `aRun`'s own constants, which the normalised coefficients fix
+(`b0_g_sq`, `one_over_four_N_b0`); `4` is `exp_neg_le_four_div_sq`'s. Every `2` is a square — the
+`π²` and `N²` of `aRun`'s constants, and the square in `exp_neg_le_four_div_sq`'s `4 / t²`. `1` is the
+least colour count in `hN` and the threshold the base must pass for `x ^ p ≤ x`. `0` is the sign of
+the coupling. The exponent `51/121` is `aRun`'s and appears in the PROOF, where the bound
+`x ^ p ≤ x ^ 1` is applied; the statement does not mention it. -/
 theorem aRun_le_of_base_ge_one {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β)
-    (hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2)) :
-    aRun N β ≤ ((3 * β) / (22 * (N : ℝ) ^ 2)) * (4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2) := by
+    (hbase : (1 : ℝ) ≤ (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) :
+    aRun N β ≤ ((24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2))
+      * (4 / ((12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) ^ 2) := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
-  have hb : (0 : ℝ) < (3 * β) / (22 * (N : ℝ) ^ 2) := by positivity
-  have hc : (0 : ℝ) < (3 * β) / (44 * (N : ℝ) ^ 2) := by positivity
+  have hb : (0 : ℝ) < (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by positivity
+  have hc : (0 : ℝ) < (12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by positivity
   -- the power factor is at most its base
-  have hpow : ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ)
-      ≤ (3 * β) / (22 * (N : ℝ) ^ 2) := by
+  have hpow : ((24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ)
+      ≤ (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by
     have h := Real.rpow_le_rpow_of_exponent_le hbase (by norm_num : (51 / 121 : ℝ) ≤ 1)
     rwa [Real.rpow_one] at h
-  -- the exponential factor
-  have hexp : Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2))
-      ≤ 4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2 := by
-    have hrw : -(3 * β) / (44 * (N : ℝ) ^ 2) = -((3 * β) / (44 * (N : ℝ) ^ 2)) := by
-      field_simp
+  -- the exponential factor; `neg_div` is `-b / a = -(b / a)`
+  have hexp : Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2))
+      ≤ 4 / ((12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) ^ 2 := by
+    have hrw : -(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)
+        = -((12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) := neg_div _ _
     rw [hrw]
     exact exp_neg_le_four_div_sq hc
-  have hepos : (0 : ℝ) < Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2)) := Real.exp_pos _
-  have hrpos : (0 : ℝ) ≤ ((3 * β) / (22 * (N : ℝ) ^ 2)) ^ (51 / 121 : ℝ) :=
-    le_of_lt (Real.rpow_pos_of_pos hb _)
+  have hepos : (0 : ℝ) < Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) :=
+    Real.exp_pos _
   unfold aRun
   exact mul_le_mul hpow hexp (le_of_lt hepos) (le_of_lt hb)
 
 #print axioms aRun_le_of_base_ge_one
 
-/-- The previous bound, collapsed: `aRun N β ≤ 352·N² / (3β)` once the base has passed `1`.
+/-- The previous bound, collapsed: `aRun N β ≤ 22·N² / (3π²β)` once the base has passed `1`.
 
-With `u = 3β/(22N²)` the exponential's base is `u/2`, so the bound reads `u · 4/(u/2)² = 16/u`,
-and `16 · 22 = 352`. A plain `1/β` decay at fixed aperture.
+With `u = 24π²β/(11N²)` the exponential's argument is `u/2`, so the bound reads
+`u · 4/(u/2)² = 16/u = 16·11N²/(24π²β)`, and `16·11/24 = 22/3`. A plain `1/β` decay at fixed colour
+count.
 
-DERIVED: `352 = 16 · 22` where `16 = 4 · 2²` comes from `exp_neg_le_four_div_sq`'s `4` and the
-halving between `aRun`'s two denominators, and `22` is `aRun`'s own. `3` is `aRun`'s numerator
-constant. `1` is the threshold the base passes. `0` is a sign condition. Nothing chosen. -/
+DERIVED: `22/3 = 16 · 11/24`, where `16 = 4 · 2²` comes from `exp_neg_le_four_div_sq`'s `4` and the
+halving between `aRun`'s base constant `24π²/11` and its exponential constant `12π²/11`, and `11/24`
+is the reciprocal of the base constant; the `2`s of `N²` and `π²` are `aRun`'s. `24` and `11` in
+`hbase` are `aRun`'s base. `1` is the threshold the base passes. `0` is a sign condition. Nothing
+chosen. -/
 theorem aRun_le_inv_of_base_ge_one {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β)
-    (hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2)) :
-    aRun N β ≤ 352 * (N : ℝ) ^ 2 / (3 * β) := by
+    (hbase : (1 : ℝ) ≤ (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) :
+    aRun N β ≤ 22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * β) := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
   have h := aRun_le_of_base_ge_one hN hβ hbase
-  have hcol : ((3 * β) / (22 * (N : ℝ) ^ 2)) * (4 / ((3 * β) / (44 * (N : ℝ) ^ 2)) ^ 2)
-      = 352 * (N : ℝ) ^ 2 / (3 * β) := by
+  have hcol : ((24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2))
+        * (4 / ((12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) ^ 2)
+      = 22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * β) := by
     field_simp
     ring
   rwa [hcol] at h
 
 #print axioms aRun_le_inv_of_base_ge_one
 
-/-- `aRun N` is continuous: a rpow with nonnegative exponent composed with an affine map, times an
+/-- `aRun N` is continuous: a rpow with nonnegative exponent composed with a linear map, times an
 exponential composed with another.
 
 `Real.continuous_rpow_const` needs the exponent nonnegative, which `51/121` is.
 
-DERIVED: `51/121`, `3`, `22` and `44` are `aRun`'s own constants. `0` is the nonnegativity of the
-exponent that `Real.continuous_rpow_const` requires. -/
+DERIVED: `51/121`, `24`, `12`, `11` and the `2`s of `π²` and `N²` are `aRun`'s own constants. `0` is
+the nonnegativity of the exponent that `Real.continuous_rpow_const` requires. -/
 theorem continuous_aRun (N : ℕ) : Continuous (aRun N) := by
-  have h1 : Continuous fun β : ℝ => (3 * β) / (22 * (N : ℝ) ^ 2) :=
+  have h1 : Continuous fun β : ℝ => (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) :=
     (continuous_const.mul continuous_id).div_const _
-  have h2 : Continuous fun β : ℝ => -(3 * β) / (44 * (N : ℝ) ^ 2) :=
+  have h2 : Continuous fun β : ℝ => -(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) :=
     ((continuous_const.mul continuous_id).neg).div_const _
   exact ((Real.continuous_rpow_const (by norm_num : (0 : ℝ) ≤ 51 / 121)).comp h1).mul
     (Real.continuous_exp.comp h2)
@@ -277,40 +318,49 @@ theorem continuous_aRun (N : ℕ) : Continuous (aRun N) := by
 /-- Past any coupling, and below any positive target, there is a coupling at which `aRun N` is
 smaller: `∃ β > β₀, aRun N β < ε`.
 
-The witness clears three conditions at once — past `β₀`, past the base threshold `22N²/3`, and past
-`352N²/(3ε)` — by taking a maximum and adding one.
+The witness clears three conditions at once — past `β₀`, past the base threshold `11N²/(24π²)`, and
+past `22N²/(3π²ε)` — by taking a maximum and adding one.
 
-DERIVED: `352`, `22` and `3` are `aRun_le_inv_of_base_ge_one`'s. `1` is added to a maximum to make
-each inequality strict, which is the standard witness for "past every one of these" and is not a
-magnitude. `0` is the sign condition on `ε` and on the coupling. -/
+DERIVED: `11` and `24` in the base threshold are where `aRun`'s base `(24π²β)/(11N²)` reaches `1`;
+`22` and `3` are `aRun_le_inv_of_base_ge_one`'s; every `2` is the square of `N` or `π`. `1` is added
+to a maximum to make each inequality strict, which is the standard witness for "past every one of
+these" and is not a magnitude; `1` in `hN` is the least colour count. `0` is the sign condition on
+`ε` and on the coupling. -/
 theorem exists_beta_aRun_lt {N : ℕ} (hN : 1 ≤ N) {ε : ℝ} (hε : 0 < ε) (β₀ : ℝ) :
     ∃ β : ℝ, β₀ < β ∧ 0 < β ∧ aRun N β < ε := by
   have hN0 : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
-  set β : ℝ := max (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε)) + 1 with hβdef
+  set β : ℝ := max (max β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2)))
+    (22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * ε)) + 1 with hβdef
   have hgt0 : β₀ < β := by
-    have := le_max_left β₀ (22 * (N : ℝ) ^ 2 / 3)
-    have h2 := le_max_left (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+    have := le_max_left β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2))
+    have h2 := le_max_left (max β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2)))
+      (22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * ε))
     rw [hβdef]; linarith
-  have hbaseth : 22 * (N : ℝ) ^ 2 / 3 < β := by
-    have := le_max_right β₀ (22 * (N : ℝ) ^ 2 / 3)
-    have h2 := le_max_left (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+  have hbaseth : 11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2) < β := by
+    have := le_max_right β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2))
+    have h2 := le_max_left (max β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2)))
+      (22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * ε))
     rw [hβdef]; linarith
-  have hepsth : 352 * (N : ℝ) ^ 2 / (3 * ε) < β := by
-    have := le_max_right (max β₀ (22 * (N : ℝ) ^ 2 / 3)) (352 * (N : ℝ) ^ 2 / (3 * ε))
+  have hepsth : 22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * ε) < β := by
+    have := le_max_right (max β₀ (11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2)))
+      (22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * ε))
     rw [hβdef]; linarith
   have hpos : 0 < β := by
-    have h22 : (0 : ℝ) < 22 * (N : ℝ) ^ 2 / 3 := by positivity
+    have h11 : (0 : ℝ) < 11 * (N : ℝ) ^ 2 / (24 * Real.pi ^ 2) := by positivity
     linarith
   refine ⟨β, hgt0, hpos, ?_⟩
-  have hbase : (1 : ℝ) ≤ (3 * β) / (22 * (N : ℝ) ^ 2) := by
-    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 22 * (N : ℝ) ^ 2)]
+  -- `div_lt_iff₀` clears the `π²` denominators, leaving inequalities linear in the monomials
+  -- `N²` and `π²·β` (resp. `π²·β·ε`), which `linarith` identifies up to ring normalisation.
+  have hbase : (1 : ℝ) ≤ (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2) := by
+    rw [le_div_iff₀ (by positivity : (0 : ℝ) < 11 * (N : ℝ) ^ 2)]
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 24 * Real.pi ^ 2)] at hbaseth
     linarith
   have hb := aRun_le_inv_of_base_ge_one hN hpos hbase
-  have hlt : 352 * (N : ℝ) ^ 2 / (3 * β) < ε := by
-    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * β)]
-    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * ε)] at hepsth
-    nlinarith [hepsth, hε, hpos]
-  linarith
+  have hlt : 22 * (N : ℝ) ^ 2 / (3 * Real.pi ^ 2 * β) < ε := by
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * Real.pi ^ 2 * β)]
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 3 * Real.pi ^ 2 * ε)] at hepsth
+    linarith
+  exact lt_of_le_of_lt hb hlt
 
 #print axioms exists_beta_aRun_lt
 
@@ -322,11 +372,12 @@ theorem exists_beta_aRun_lt {N : ℕ} (hN : 1 ≤ N) {ε : ℝ} (hε : 0 < ε) (
 coupling — the idiom `ConfinesZero.confinesAtAnAperture_of_missesTheFloor` uses.
 
 This is the branch asymptotic freedom lives on: `β₁` is arbitrary, so the coupling can be demanded
-as large as one likes. `fixed_extent_pins_the_spacing` is the reason the aperture must also grow for
-a continuum reading, and it is about a FIXED `N`, which this is not.
+as large as one likes. `N` is the colour count and is held fixed;
+`SubstrateArms.physical_gap_at_the_running_spacing` uses this at `N = 3`, the `SU(3)` of the Wilson
+ensemble.
 
-DERIVED: `1` is the least extent in `hN`, which is what keeps `(N : ℝ)` away from zero so `aRun`'s
-base is defined; `0` is the target's sign in `ha`. `a`, `β₁` and `N` are the caller's. -/
+DERIVED: `1` is the least colour count in `hN`, which is what keeps `(N : ℝ)` away from zero so
+`aRun`'s base is defined; `0` is the target's sign in `ha`. `a`, `β₁` and `N` are the caller's. -/
 theorem exists_beta_aRun_eq {N : ℕ} (hN : 1 ≤ N) {a β₁ : ℝ} (ha : 0 < a)
     (hlt : a < aRun N β₁) :
     ∃ β : ℝ, β₁ ≤ β ∧ aRun N β = a := by
@@ -347,7 +398,8 @@ theorem exists_beta_aRun_eq {N : ℕ} (hN : 1 ≤ N) {a β₁ : ℝ} (ha : 0 < a
 /-! ## 3. The statement -/
 
 /-- The predicate `∃ mphys, 0 < mphys ∧ Tendsto (fun β => m β / aRun N β) atTop (nhds mphys)`: the
-ratio of `m` to the running spacing converges to a finite positive limit as `β → ∞`.
+ratio of `m` to the running spacing of `SU(N)`, `N` the colour count, converges to a finite positive
+limit as `β → ∞`.
 
 `aRun N` is a fixed function, not an existential, so the predicate constrains `m`:
 `asymptotic_scaling_is_satisfiable` and `asymptotic_scaling_has_content` exhibit an `m` on each side.
@@ -364,8 +416,8 @@ def AsymptoticScalingAt (N : ℕ) (m : ℝ → ℝ) : Prop :=
 ratio is eventually constantly `c`, by `field_simp` against `aRun_pos`, which needs `β > 0` — hence
 the `eventually_gt_atTop` filter.
 
-DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis; `0` in `hc` is what makes `c` a legal value
-for the predicate's `mphys`. -/
+DERIVED: `1` in `hN` is `aRun_pos`'s colour-count hypothesis; `0` in `hc` is what makes `c` a legal
+value for the predicate's `mphys`. -/
 theorem asymptotic_scaling_is_satisfiable {N : ℕ} (hN : 1 ≤ N) {c : ℝ} (hc : 0 < c) :
     AsymptoticScalingAt N (fun β => c * aRun N β) := by
   refine ⟨c, hc, ?_⟩
@@ -381,7 +433,7 @@ eventually `exp(−β)`, which tends to `0`, and `tendsto_nhds_unique` against a
 contradiction. So the predicate is refutable, by a lattice mass that decays faster than the running
 spacing by the factor `exp(−β)`.
 
-DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis, needed to divide by `aRun N β`. -/
+DERIVED: `1` in `hN` is `aRun_pos`'s colour-count hypothesis, needed to divide by `aRun N β`. -/
 theorem asymptotic_scaling_has_content {N : ℕ} (hN : 1 ≤ N) :
     ¬ AsymptoticScalingAt N (fun β => aRun N β * Real.exp (-β)) := by
   rintro ⟨mphys, hpos, hlim⟩
@@ -400,7 +452,7 @@ theorem asymptotic_scaling_has_content {N : ℕ} (hN : 1 ≤ N) :
 not. The witnesses are `fun β => 1 * aRun N β` (via `asymptotic_scaling_is_satisfiable`) and
 `fun β => aRun N β * Real.exp (-β)` (via `asymptotic_scaling_has_content`).
 
-DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis, inherited from both witnesses. -/
+DERIVED: `1` in `hN` is `aRun_pos`'s colour-count hypothesis, inherited from both witnesses. -/
 theorem asymptotic_scaling_is_a_real_constraint {N : ℕ} (hN : 1 ≤ N) :
     (∃ m : ℝ → ℝ, AsymptoticScalingAt N m) ∧ (∃ m : ℝ → ℝ, ¬ AsymptoticScalingAt N m) :=
   ⟨⟨fun β => 1 * aRun N β, asymptotic_scaling_is_satisfiable hN one_pos⟩,
@@ -408,7 +460,7 @@ theorem asymptotic_scaling_is_a_real_constraint {N : ℕ} (hN : 1 ≤ N) :
 
 #print axioms asymptotic_scaling_is_a_real_constraint
 
-/-! ## 4. The lattice mass, and why the extent must grow with the coupling -/
+/-! ## 4. The lattice mass, and the joint limit in extent and coupling -/
 
 /-- The lag-one decay ratio `wilsonCorrAt N β 1 / wilsonCorrAt N β 0` at extent `N` and coupling
 `β`. A quotient of two correlation values at fixed separations; no hypothesis guards the denominator,
@@ -473,20 +525,22 @@ theorem mLatAt_nonneg {N m : ℕ} (hm : N + 1 = 2 * m) (hm3 : 3 ≤ m) {β : ℝ
 
 #print axioms mLatAt_nonneg
 
-/-! ### Fixed extent cannot carry the continuum limit -/
+/-! ### A mass bounded below pins the `SU(N)` spacing, and so fails the predicate -/
 
-/-- At a fixed extent `N` with `1 ≤ N`: if `AsymptoticScalingAt N m` holds and `c ≤ m β` eventually
-for some `c > 0`, then there is a `c' > 0` with `c' ≤ aRun N β` eventually. The witness is
-`c' = c / (mphys + 1)`, obtained by bounding the ratio `m β / aRun N β` above near its limit.
+/-- At one fixed colour count `N` with `1 ≤ N`: if `AsymptoticScalingAt N m` holds and `c ≤ m β`
+eventually for some `c > 0`, then there is a `c' > 0` with `c' ≤ aRun N β` eventually. The witness
+is `c' = c / (mphys + 1)`, obtained by bounding the ratio `m β / aRun N β` above near its limit.
 
-So a lattice mass that stays away from zero forces the spacing to stay away from zero along the same
-filter. The statement is about `aRun N` at a single fixed `N`.
+So a mass `m` that stays away from zero, read against the `SU(N)` running spacing `aRun N`, forces
+that spacing to stay away from zero along the same filter. `N` is `aRun`'s colour count and is the
+same fixed `N` throughout; the statement involves no lattice extent, and `m` is any function of the
+coupling. `bounded_mass_fails_scaling` combines this with `exists_beta_aRun_lt`.
 
-DERIVED: `1` in `hN` is `aRun_pos`'s extent hypothesis; `0` in `hc` is the positivity of the assumed
-lower bound on `m`, and `0` in the conclusion is the positivity of the produced bound on `aRun N`.
-The `mphys + 1` used to turn convergence into an eventual upper bound occurs in the proof, not in the
-statement. -/
-theorem fixed_extent_pins_the_spacing {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ} {c : ℝ} (hc : 0 < c)
+DERIVED: `1` in `hN` is `aRun_pos`'s colour-count hypothesis; `0` in `hc` is the positivity of the
+assumed lower bound on `m`, and `0` in the conclusion is the positivity of the produced bound on
+`aRun N`. The `mphys + 1` used to turn convergence into an eventual upper bound occurs in the proof,
+not in the statement. -/
+theorem fixed_colours_pins_the_spacing {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ} {c : ℝ} (hc : 0 < c)
     (hbdd : ∀ᶠ β in atTop, c ≤ m β)
     (hscal : AsymptoticScalingAt N m) :
     ∃ c' : ℝ, 0 < c' ∧ ∀ᶠ β in atTop, c' ≤ aRun N β := by
@@ -501,56 +555,98 @@ theorem fixed_extent_pins_the_spacing {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ}
   rw [div_le_iff₀ hmpos]
   nlinarith [hb, hu]
 
-#print axioms fixed_extent_pins_the_spacing
+#print axioms fixed_colours_pins_the_spacing
 
-/-- The joint-limit predicate, for a trajectory `Nof : ℝ → ℕ`: `Nof β → ∞` as `β → ∞`, and
-`mLatAt (Nof β) β / aRun (Nof β) β` converges to a positive limit. The extent moves with the coupling,
-so the lattice mass and the spacing are both read at the growing extent.
+/-- `¬ AsymptoticScalingAt N m` for `1 ≤ N` whenever `c ≤ m β` eventually for some `c > 0`: a mass
+bounded below by a positive constant does not scale with the `SU(N)` spacing.
+`fixed_colours_pins_the_spacing` would give `c' > 0` with `c' ≤ aRun N β` eventually, from some `β₀`
+on (`Filter.eventually_atTop`), and `exists_beta_aRun_lt` gives a coupling past `β₀` with
+`aRun N β < c'`.
+
+So a lattice-unit mass that stays away from zero, such as a margin bounded below uniformly in the
+coupling, is not a continuum mass in the sense of `AsymptoticScalingAt`.
+
+DERIVED: `1` in `hN` is `aRun_pos`'s colour-count hypothesis, carried from both lemmas composed;
+`0` in `hc` is the positivity of the assumed lower bound on `m`. -/
+theorem bounded_mass_fails_scaling {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ} {c : ℝ} (hc : 0 < c)
+    (hbdd : ∀ᶠ β in atTop, c ≤ m β) :
+    ¬ AsymptoticScalingAt N m := by
+  intro hscal
+  obtain ⟨c', hc', hev⟩ := fixed_colours_pins_the_spacing hN hc hbdd hscal
+  obtain ⟨β₀, hβ₀⟩ := Filter.eventually_atTop.mp hev
+  obtain ⟨β, hβ, _, hlt⟩ := exists_beta_aRun_lt hN hc' β₀
+  exact absurd (hβ₀ β (le_of_lt hβ)) (not_le.mpr hlt)
+
+#print axioms bounded_mass_fails_scaling
+
+/-- The joint-limit predicate, for a trajectory of lattice extents `Nof : ℝ → ℕ`: `Nof β → ∞` as
+`β → ∞`, and `mLatAt (Nof β) β / aRun 3 β` converges to a positive limit. The lattice mass is read at
+the extent `Nof β`, which moves with the coupling. The spacing is `aRun 3`, the two-loop running
+spacing of `SU(3)` at the Wilson coupling `β = 6/g²`, which depends on the coupling alone: `mLatAt`
+reads `wilsonCorrAt N β = WilsonBridge.corrClay (N + 1) β`, and `corrClay` is `corrHyper` at colour
+count `3`, so `SU(3)` is the gauge group whose spacing the mass is divided by. The second conjunct is
+`AsymptoticScalingAt 3 (fun β => mLatAt (Nof β) β)`, so `bounded_mass_fails_scaling` refutes it for
+any `Nof` along which the lattice mass stays above a positive constant.
 
 `Nof` is a parameter rather than existentially quantified; `∃ Nof, AsymptoticScalingJoint Nof` would
 admit the same kind of witness `free_spacing_scaling_is_also_vacuous` supplies for the spacing. This
-is a definition, and nothing in this file proves or refutes it for any `Nof`.
+is a definition; nothing in this file proves it for any `Nof`, and the refutation above takes the
+lower bound on the lattice mass as a hypothesis.
 
-DERIVED: `0` is the strict positivity demanded of the limit. `Nof` and the limit are variables. -/
+DERIVED: `3` in `aRun 3` is the colour count of `WilsonBridge.corrClay`'s ensemble, `SU(3)`, the
+gauge group whose correlation `mLatAt` reads; `6` in `β = 6/g²` is `2N` at that `N`. `0` is the
+strict positivity demanded of the limit. `Nof` and the limit are variables. -/
 def AsymptoticScalingJoint (Nof : ℝ → ℕ) : Prop :=
   Tendsto (fun β => (Nof β : ℝ)) atTop atTop ∧
     ∃ mphys : ℝ, 0 < mphys ∧
-      Tendsto (fun β => mLatAt (Nof β) β / aRun (Nof β) β) atTop (nhds mphys)
+      Tendsto (fun β => mLatAt (Nof β) β / aRun 3 β) atTop (nhds mphys)
 
 #print axioms AsymptoticScalingJoint
 
-/-! ### How `aRun` depends on the extent
+/-! ### How `aRun` depends on the colour count
 
-`aRun N β` increases with `N` at fixed positive `β`: the rpow base `(3β)/(22N²)` falls while its
-exponent `51/121` is applied to a reciprocal, and the exponential's argument `−3β/(44N²)` rises
-toward zero. Both factors move the same way. At `β = 1` the spacing evaluates to
-`2.163, 4.084, 8.969, 16.12, 62.65` across `N = 1, 2, 5, 10, 50`, a factor of about `29` over that
-range. `aRun_exp_factor_increasing_in_extent` proves the monotonicity of the exponential factor; the
-rpow factor's monotonicity is not proved here.
+At fixed positive `β` the two factors of `aRun N β` move in opposite directions as the colour count
+`N` grows. The rpow base `(24π²β)/(11N²)` falls and its exponent `51/121` is positive, so the rpow
+factor falls; the exponential's argument `−(12π²β)/(11N²)` rises toward zero, so the exponential
+factor rises. With `u = 24π²β/(11N²)` the product is `u^{51/121} · exp(−u/2)`, which rises in `u` for
+`u < 102/121` and falls beyond it, so at fixed `β` the spacing rises with `N` while
+`N² < 44π²β/17 ≈ 25.54·β` and falls once `N² > 44π²β/17`. At `β = 1` the turn lies between `N = 5`
+and `N = 6`: the spacing evaluates to `7.690·10⁻⁵, 0.1378, 0.4367, 0.6104, 0.5971, 0.4701, 0.1342`
+across `N = 1, 2, 3, 5, 6, 10, 50`.
 
-DERIVED: the figures are `aRun` evaluated at `β = 1` and those five extents. -/
+`aRun_exp_factor_increasing_in_colours` proves that the exponential factor increases with `N`. The
+monotonicity of the rpow factor and of the product is not proved here.
 
-/-- `exp(−(3β)/(44M²)) < exp(−(3β)/(44N²))` for `0 < β`, `0 < M` and `M < N`: the exponential factor
-of `aRun` is strictly increasing in the extent at fixed positive coupling. By `Real.exp_lt_exp` and
-`div_lt_div_iff₀` on the two positive denominators. Only this factor of `aRun` is covered; the rpow
-factor is not.
+DERIVED: `102/121` is `2 · 51/121`, where the derivative `51/(121u) − 1/2` of
+`log (u^{51/121} · exp(−u/2))` vanishes; `44/17` is `u = 102/121` solved for `N²/(π²β)` through
+`u = 24π²β/(11N²)`, since `24 · 121 / (11 · 102) = 44/17`, and `25.54` is `44π²/17` evaluated. The
+figures are `aRun` evaluated at `β = 1` and those seven colour counts. -/
+
+/-- `exp(−(12π²β)/(11M²)) < exp(−(12π²β)/(11N²))` for `0 < β`, `0 < M` and `M < N`: the exponential
+factor of `aRun` is strictly increasing in the colour count at fixed positive coupling. By
+`Real.exp_lt_exp` and `div_lt_div_iff₀` on the two positive denominators, then
+`mul_lt_mul_of_pos_left` against the positive numerator `12π²β`. Only this factor of `aRun` is
+covered; the rpow factor, which decreases in the colour count, is not.
 
 DERIVED: `0` in `hβ` and `0` in `hM` are what make both denominators and the numerator positive, so
-the quotient comparison is in the stated direction; `3`, `44` and `2` are `aRun`'s own exponential
-argument `−3β/(44N²)`, from `one_over_four_N_b0`. -/
-theorem aRun_exp_factor_increasing_in_extent {β : ℝ} (hβ : 0 < β) {M N : ℕ}
+the quotient comparison is in the stated direction; `12`, `11` and the `2`s of `π²`, `M²` and `N²`
+are `aRun`'s own exponential argument `−(12π²β)/(11N²)`, from `one_over_four_N_b0`. -/
+theorem aRun_exp_factor_increasing_in_colours {β : ℝ} (hβ : 0 < β) {M N : ℕ}
     (hM : 0 < M) (h : M < N) :
-    Real.exp (-(3 * β) / (44 * (M : ℝ) ^ 2)) < Real.exp (-(3 * β) / (44 * (N : ℝ) ^ 2)) := by
+    Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (M : ℝ) ^ 2))
+      < Real.exp (-(12 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) := by
   have hMr : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM
   have hNr : (M : ℝ) < (N : ℝ) := by exact_mod_cast h
-  have hM2 : (0 : ℝ) < 44 * (M : ℝ) ^ 2 := by positivity
-  have hN2 : (0 : ℝ) < 44 * (N : ℝ) ^ 2 := by nlinarith
-  have hlt : 44 * (M : ℝ) ^ 2 < 44 * (N : ℝ) ^ 2 := by nlinarith
+  have hM2 : (0 : ℝ) < 11 * (M : ℝ) ^ 2 := by positivity
+  have hN2 : (0 : ℝ) < 11 * (N : ℝ) ^ 2 := by nlinarith
+  have hlt : 11 * (M : ℝ) ^ 2 < 11 * (N : ℝ) ^ 2 := by nlinarith
+  have hP : (0 : ℝ) < 12 * Real.pi ^ 2 * β := by positivity
   refine Real.exp_lt_exp.mpr ?_
   rw [div_lt_div_iff₀ hM2 hN2]
-  nlinarith [hβ, hlt, hM2, hN2]
+  -- goal: `-(12π²β) * (11N²) < -(12π²β) * (11M²)`, linear in the monomials `π²βN²` and `π²βM²`
+  linarith [mul_lt_mul_of_pos_left hlt hP]
 
-#print axioms aRun_exp_factor_increasing_in_extent
+#print axioms aRun_exp_factor_increasing_in_colours
 
 
 end MassGap.AsymptoticScaling

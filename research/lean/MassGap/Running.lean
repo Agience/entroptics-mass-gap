@@ -10,6 +10,13 @@ Two of them fix the sign of the pure-`SU(N)` coefficients at `N ≥ 1`: `11N/3 >
 Two are stated for abstract positive `b₀`, `b₁`: at any `g > 0` the two-term expression is strictly
 negative, hence nonzero. The remaining two instantiate the abstract pair at the `SU(N)` coefficients.
 
+Normalisation. `11N/3` and `34N²/3` are the `SU(N)` coefficients of
+`μ dg/dμ = −(11N/3) g³/(16π²) − (34N²/3) g⁵/(16π²)²`. In the variable `x = g/(4π)` that is
+`μ dx/dμ = −(11N/3) x³ − (34N²/3) x⁵`, so in the `SU(N)` instances below the variable `g` stands for
+the coupling divided by `4π`; written in the gauge coupling itself the coefficients are
+`11N/(3·16π²)` and `34N²/(3·(16π²)²)`, which is how `AsymptoticScaling.aRun` uses them. A positive
+rescaling of the coupling or of the coefficients preserves every sign stated here.
+
 Scope: these are inequalities over `ℝ`. Nothing here defines a renormalisation-group flow, a
 coupling, or a gauge theory; that `11N/3` and `34N²/3` are the beta-function coefficients of pure
 `SU(N)` is the cited perturbative computation (Gross-Wilczek, Politzer) and is not formalised. The
@@ -66,7 +73,8 @@ theorem no_interior_fixed_point {b₀ b₁ g : ℝ} (hb0 : 0 < b₀) (hb1 : 0 < 
 
 /-- `beta_neg` instantiated at the pure-`SU(N)` coefficients (PAPER §5-6): for `1 ≤ N` and `g > 0`,
 `-((11 * N / 3) * g ^ 3) - (34 * N ^ 2 / 3) * g ^ 5 < 0`. The positivity of the two coefficients
-comes from `b0_pos` and `b1_pos`.
+comes from `b0_pos` and `b1_pos`. With these coefficients `g` is the coupling divided by `4π` (module
+header).
 
 DERIVED: `1` is the lower bound on `N`; `11`, `3`, `34`, the exponent `2` and the second `3` are the
 `SU(N)` coefficients quoted from the cited computation; the exponents `3` and `5` are the two terms'
@@ -78,6 +86,8 @@ theorem sun_beta_neg {N : ℕ} (hN : 1 ≤ N) {g : ℝ} (hg : 0 < g) :
 /-- `no_interior_fixed_point` instantiated at the pure-`SU(N)` coefficients (PAPER §6, §12): for
 `1 ≤ N` and `g > 0`, `-((11 * N / 3) * g ^ 3) - (34 * N ^ 2 / 3) * g ^ 5 ≠ 0`. Scope: the two-term
 polynomial has no zero in the open half-line `g > 0`; the endpoint `g = 0` is outside the statement.
+With these coefficients `g` is the coupling divided by `4π` (module header), and a zero-free
+half-line in that variable is a zero-free half-line in the coupling.
 
 DERIVED: `1` is the lower bound on `N`; `11`, `3`, `34`, the exponent `2` and the second `3` are the
 `SU(N)` coefficients quoted from the cited computation; the exponents `3` and `5` are the two terms'

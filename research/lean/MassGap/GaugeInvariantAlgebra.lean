@@ -314,6 +314,46 @@ theorem iplaqObs_mem_gaugeInvHalfSpaceAlg (q : MassGap.GibbsSpec.IPlaq) (τ : Fi
 
 #print axioms iplaqObs_mem_gaugeInvHalfSpaceAlg
 
+/-- A lattice step never lowers a coordinate: `ishift μ` raises the `μ`-th by one and fixes the rest.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. -/
+theorem le_ishift_apply (μ τ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    x τ ≤ MassGap.GibbsSpec.ishift μ x τ := by
+  unfold MassGap.GibbsSpec.ishift
+  by_cases h : τ = μ
+  · subst h; simp
+  · rw [Function.update_of_ne h]
+
+#print axioms le_ishift_apply
+
+/-- **A plaquette based at or above the plane lies in the positive half.** Its four links sit at its
+base site or one step up from it (`GibbsSpec.ilinks_eq`), and a step never lowers the `τ`-coordinate.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. -/
+theorem ilinks_mem_posHalf_of_le {τ : Fin 4} {p : ℤ} (q : MassGap.GibbsSpec.IPlaq)
+    (hq : p ≤ q.2 τ) :
+    ∀ l ∈ MassGap.GibbsSpec.ilinks q, l ∈ MassGap.HalfSpaceAlgebra.posHalf τ p := by
+  intro l hl
+  rw [MassGap.GibbsSpec.ilinks_eq] at hl
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
+  have h1 := le_ishift_apply q.1.1 τ q.2
+  have h2 := le_ishift_apply q.1.2 τ q.2
+  rcases hl with rfl | rfl | rfl | rfl <;>
+    simp only [MassGap.HalfSpaceAlgebra.posHalf, Set.mem_setOf_eq] <;> omega
+
+#print axioms ilinks_mem_posHalf_of_le
+
+/-- The plaquette observable of a plaquette based at or above the plane is in the gauge-invariant
+half-space algebra. `iplaqObs_mem_gaugeInvHalfSpaceAlg` with its link hypothesis discharged.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. -/
+theorem iplaqObs_mem_gaugeInvHalfSpaceAlg_of_le (q : MassGap.GibbsSpec.IPlaq) (τ : Fin 4) (p : ℤ)
+    (hq : p ≤ q.2 τ) :
+    iplaqObs (N := N) q ∈ gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ p :=
+  iplaqObs_mem_gaugeInvHalfSpaceAlg q τ p (ilinks_mem_posHalf_of_le q hq)
+
+#print axioms iplaqObs_mem_gaugeInvHalfSpaceAlg_of_le
+
 /-- **The reflection carries a plaquette observable to the observable at the reflected plaquette.**
 
 `LatticeReflection.ihol_ireflConf` says the holonomy of a plaquette in the reflected configuration is
@@ -1107,6 +1147,66 @@ theorem stateFree_pairing_shiftObs_abs_le (hN : N ≠ 0)
 
 #print axioms stateFree_pairing_shiftObs_abs_le
 
+/-- **The connected reflected-shifted plaquette pairing in the infinite-volume state decays at rate
+`coreRate`.**
+
+`ν` is the `atTop` limit of the free box states along `ReflectionHalfSpace.mixCube`. Along its even
+members — the reflection-symmetric boxes `ReflectionHalfSpace.symCube` — the box states are reflection
+invariant (`ReflectionHalfSpace.stateFree_symCube_reflection_invariant` at the identity boundary,
+fixed by `ReflectionHalfSpace.ireflConf_one`), and a plaquette, its mirror and its `m`-th translate
+all lie in the box eventually (`ReflectionHalfSpace.eventually_mem_iplqAll_refl_shift`). There
+`stateFree_pairing_shiftObs_abs_le` bounds the box pairing, and `nu_pairing_abs_le_of_eventually`
+carries the bound to `ν`, where the mean subtraction becomes the connected form.
+
+The bound is `coreConst · coreRateᵏ` for every `k < m`, uniform in the volume: the touch degree
+`16 · 4` is the only lattice quantity in it.
+
+DERIVED: `16 * 4` is the touch degree of the four-dimensional box, `16` plaquettes per link per
+dimension; `2` is the doubling of the reflection plane and of the even box index; `1` is the identity
+boundary configuration; `0` is the lower bound on `β` and the excluded rank in `hN`. -/
+theorem nu_connected_shift_abs_le (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) (τ : Fin 4) (p : ℤ)
+    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
+    (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
+      Filter.Tendsto (fun n => MassGap.ReflectionHalfSpace.stateFree
+          (φ := MassGap.WilsonAction.wilsonDensity)
+          MassGap.WilsonAction.measurable_wilsonDensity
+          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+          (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+          (MassGap.ReflectionHalfSpace.mixCube τ p n) 1 f)
+        Filter.atTop (nhds (ν f)))
+    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
+    (q : MassGap.GibbsSpec.IPlaq) (hqd : q.1.1 ≠ q.1.2) (hq : p ≤ q.2 τ) (m k : ℕ) (hk : k < m) :
+    |ν (MassGap.LatticeReflection.ireflObs τ (2 * p) (iplaqObs (N := N) q)
+          * (⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q))
+      - ν (MassGap.LatticeReflection.ireflObs τ (2 * p) (iplaqObs (N := N) q))
+          * ν ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q))|
+      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
+        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k := by
+  have htendS := MassGap.ReflectionHalfSpace.tendsto_symCube_even_of_mixCube τ p hN β ν htend
+  refine nu_pairing_abs_le_of_eventually (l := Filter.atTop)
+    (fun n => MassGap.ReflectionHalfSpace.stateFree (φ := MassGap.WilsonAction.wilsonDensity)
+      MassGap.WilsonAction.measurable_wilsonDensity
+      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
+      (MassGap.ReflectionHalfSpace.symCube τ (2 * p) n) 1)
+    ν htendS τ (2 * p) (iplaqObs (N := N) q)
+    ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q)) _ ?_
+  have hdouble : Filter.Tendsto (fun j : ℕ => 2 * j) Filter.atTop Filter.atTop :=
+    Filter.tendsto_atTop_atTop.2 (fun b => ⟨b, fun a ha => by omega⟩)
+  have hev := hdouble.eventually
+    (MassGap.ReflectionHalfSpace.eventually_mem_iplqAll_refl_shift τ p q hqd m)
+  filter_upwards [hev] with n hn
+  simp only [MassGap.ReflectionHalfSpace.mixCube_even] at hn
+  obtain ⟨h1, h2, h3⟩ := hn
+  exact stateFree_pairing_shiftObs_abs_le hN (MassGap.WilsonAction.wilsonDensity_nonneg hN)
+    (MassGap.WilsonAction.wilsonDensity_le_two hN) hβ
+    (MassGap.ReflectionHalfSpace.symCube τ (2 * p) n) 1 τ p
+    (fun f => MassGap.ReflectionHalfSpace.stateFree_symCube_reflection_invariant hN τ (2 * p) n β
+      (MassGap.ReflectionHalfSpace.ireflConf_one τ (2 * p)) f)
+    ⟨q, h1⟩ hq h2 m h3 hr k hk
+
+#print axioms nu_connected_shift_abs_le
+
 /-! ### The pairing as a connected correlator
 
 `pairing_iplaqObs_eq_connected` states the identity for single plaquettes and
@@ -1162,6 +1262,35 @@ noncomputable def gaugeInvTransferData (τ : Fin 4) (p : ℤ)
     (MassGap.WilsonTransferReduction.norm_ireflObs_le τ (2 * p))
 
 #print axioms gaugeInvTransferData
+
+/-- **Shift invariance iterates.** A state invariant under one step is invariant under `n`.
+
+DERIVED: `4` is the spacetime dimension, the range of the direction index. -/
+theorem state_iterate_shift_eq (ν : MassGap.DLRLimit.State (IConf G)) (τ : Fin 4)
+    (hnu : ∀ f : C(IConf G, ℝ), ν (MassGap.ReflectionShift.ishiftObsL τ f) = ν f) (n : ℕ)
+    (f : C(IConf G, ℝ)) :
+    ν ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[n] f) = ν f := by
+  induction n generalizing f with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply, ih, hnu]
+
+#print axioms state_iterate_shift_eq
+
+/-- **The shift commutes with mean subtraction**: it is linear and fixes the constant `1`
+(`WilsonTransferReduction.ishiftObsL_one`).
+
+DERIVED: `1` is the constant observable; `4` is the spacetime dimension, the range of the direction
+index. -/
+theorem iterate_shift_sub_smul_one (τ : Fin 4) (n : ℕ) (f : C(IConf G, ℝ)) (c : ℝ) :
+    (⇑(MassGap.ReflectionShift.ishiftObsL (G := G) τ))^[n] (f - c • 1)
+      = (⇑(MassGap.ReflectionShift.ishiftObsL (G := G) τ))^[n] f - c • 1 := by
+  induction n generalizing f with
+  | zero => rfl
+  | succ n ih =>
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply, map_sub, map_smul,
+      MassGap.WilsonTransferReduction.ishiftObsL_one, ih]
+
+#print axioms iterate_shift_sub_smul_one
 
 /-- **The gauge-invariant transfer form at a translated observable, as a state pairing.**
 

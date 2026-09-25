@@ -29,68 +29,68 @@ Review, feedback and fixes are welcome.
 
 ## What it establishes
 
-At **every physical coupling $\beta \ge 0$**, pure $SU(N)$ has a positive mass gap, non-triviality (the area law),
-and Euclidean $SO(4)$ invariance. The gap is bounded below by the entropy margin, $\Delta(\beta) \ge \kappa_0 - \mu(\beta) > 0$:
-the centre-vortex tension $\mu$ stays below the counting floor $\kappa_0 = \tfrac14\ln 3$ at every coupling, and
-$\|C(\tau)\| \le M\,e^{-\Delta\tau}$.
+Everything below is a Lean statement that compiles, axiom footprint included; the live account, theorem by
+theorem, is [`research/CLAY-CHECKLIST.md`](research/CLAY-CHECKLIST.md) with its companion
+[`research/CLAY-DETAIL.md`](research/CLAY-DETAIL.md).
 
-**The floor takes no input.** Both of $\kappa_0$'s factors are theorems, not constants written down:
-the $\ln 3$ is the branching of a directed cube-path (`Floor.directed_paths_card`) and the $\tfrac14$
-is the reciprocal area per step — `CubeArea.boundary_card_eq`, that the surface bounding a $k$-step
-path has exactly $4k+6$ faces — with `VortexCount.kappa0_is_the_surface_entropy_density` assembling
-the two into $\log(\#\text{surfaces})/\text{area}\to\tfrac14\ln3$. Those surfaces are also closed
-(`CubeClosed.edge_parity_all`, $\partial\partial=0$ over $Z_2$ at every interior edge), all pass through
-one fixed face, and distinct paths bound distinct ones. Since pure Yang–Mills carries no dimensionful
-parameter, a fitted constant anywhere below the gap would be a smuggled scale; $\kappa_0$ being a
-counting number is what makes the transmutation legitimate, and it is now counted rather than quoted.
+**The lattice gap at every coupling, from one clustering inequality.** `PeriodicState.periodicState` is an
+infinite-volume $SU(N)$ Wilson state at every coupling, built as a limit of periodic-lattice states,
+reflection positive with a positive transfer operator at every $\beta \ge 0$
+(`PeriodicState.periodic_positiveTransfer`). On it, for $2 \le N$ and every $\beta > 0$, one inequality per
+gauge-invariant local observable — the connected reflected pairing at one lag $m$ at most $r^m$ times its
+lag-zero value — gives the Clay lattice gap at rate $r$: the transfer operator self-adjoint, spectrum in
+$\{1\} \cup [0, r]$, the vacuum complement contracted by $r < 1$ and non-zero
+(`ChessboardRead.periodic_clayGapAt_of_torusLag`, `PeriodicContent.wilson_gaugeInv_mass_gap_every_coupling_periodic`).
+At strong coupling the gap is proved outright, at the free-boundary limit state, for
+`coreRate 64 β < 1` (`StrongCouplingGap.wilson_gaugeInv_clay_gap_strong_coupling`).
 
-**What the build actually carries.** The development declares exactly **two** named axioms beyond Lean's
-three foundational ones, and the count is machine-generated rather than asserted
-([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv), 1349 printed declarations,
-1247 of them foundational-only):
+**The open input, in physical units.** `WeakCouplingWindow.FixedWindowDecay`: one factor $q < 1$, independent
+of $\beta$, by which every gauge-invariant local observable's connected reflected pairing drops across a
+fixed physical distance at every large $\beta$, with the spacing running as the two-loop
+`AsymptoticScaling.aRun N`. It gives the Clay gap with a physical rate bounded below at every large
+$\beta$, and holds exactly when that uniform physical gap does (`WeakCouplingWindow.fixedWindowDecay_iff`).
+Its non-abelian content is neutral: every gauge-invariant observable is fixed by the centre twists
+(`CentreTwist.centre_invisible_SU`), and a bound on the charged flux sectors fixes no neutral rate
+(`CentreSector.charged_rate_does_not_reach_neutral`).
+
+**The entropy floor and the reads.** $\kappa_0 = \tfrac14\ln 3$ is counted: the $\ln 3$ is the branching of
+a directed cube-path (`Floor.directed_paths_card`) and the $\tfrac14$ the reciprocal area per step —
+`CubeArea.boundary_card_eq`, the surface bounding a $k$-step path has exactly $4k+6$ faces — with
+`VortexCount.kappa0_is_the_surface_entropy_density` assembling the two into
+$\log(\#\text{surfaces})/\text{area}\to\tfrac14\ln3$; those surfaces are closed
+(`CubeClosed.edge_parity_all`). The reads clear the floor at a window of physical extent $L$ and bracket
+the physical gap there: the reads give at least $2.04/L$, and a gap of $20/L$ gives the reads
+(`ReadConverse.readsClear_brackets_physical_gap`). So the reads at a fixed physical window are the uniform
+physical gap in entroptic form.
+
+**Non-triviality.** N is the connected three-point function of three separated gauge-invariant composites,
+normalised by their two-point functions (`ThreePointN.sepRatio`): renormalisation-invariant, and $0$ in the
+free theory. `ThreePointN.WilsonThreePointSeparation` — that ratio bounded below at the periodic state
+along $\beta \to \infty$ — gives a non-zero continuum three-point function under every renormalisation
+(`ThreePointN.wilson_continuum_threePoint`); it is the open input for N. On the lattice the plaquette's law
+is non-Gaussian (`NonGaussian.nu_iplaqObs_law_not_gaussian`).
+
+**Existence.** The continuum Schwinger functions along $\beta \to \infty$, their Osterwalder–Schrader axioms
+and reconstruction are the open part of E. `Measure.continuum_of_family` is a bounded, nonnegative,
+subsequential pointwise limit over a countable index set, by a diagonal Bolzano–Weierstrass argument; its
+Wilson instances index the lattice extent at fixed $\beta$. The Osterwalder–Schrader → Wightman
+reconstruction is stated in `WightmanData` as `os_reconstruction_wightman`, from `OSData` — a continuous
+bilinear Schwinger form on a normed test space, with a reflection and an $\mathbb{R}^4$ translation
+action — to `WightmanQFTData`.
+
+**What the build carries.** Two named axioms beyond Lean's three foundational ones, counted by machine
+([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 4505 printed declarations,
+4313 of them foundational-only):
 
 | named axiom | declarations carrying it | status |
 |---|---|---|
-| `wilson_reflection_positive_at` | 102 | **proved** at even lattice extent $\ge4$ and $\beta\ge0$ (`OddLagSplit.corrClay_reflection_positive`); cited to Osterwalder–Seiler only outside that domain |
-| `os_reconstruction_wightman` | 3 | cited (Osterwalder–Schrader reconstruction), stated from `OSData` — a continuous bilinear Schwinger form on a normed test space — to `WightmanQFTData` |
+| `wilson_reflection_positive_at` | 181 | **proved** at even lattice extent $\ge4$ and $\beta\ge0$ (`OddLagSplit.corrClay_reflection_positive`); cited to Osterwalder–Seiler outside that domain |
+| `os_reconstruction_wightman` | 11 | cited (Osterwalder–Schrader reconstruction), from `OSData` to `WightmanQFTData` |
 
-The strong-coupling character bound and asymptotic freedom are consumed as *hypotheses of theorems*, not
-as axioms. Separately, one input is neither proved nor cited: the substrate hypothesis. It has been reduced twice.
-First to a contact-relative power law on the plaquette correlation, which `ContactFloor.contact_relative_unconditional`
-then proves OUTRIGHT on a derived strong-coupling interval, carrying nothing. Second, and further: the flagship
-consumes that hypothesis only through `Classical.choose`, to pick ONE aperture and discard the rest, so the
-aperture quantifier drops entirely (`ApertureRoute.flagship_of_confinement_at_an_aperture`). The open problem is
-therefore confinement at a **single finite extent** — `∃ a : EvenAp, ∀ β, 3^{-1/4} < ⟨cos θ⟩`, stated on the
-cosine average rather than the tension because `Real.log` is even and the tension form admits a read with no
-decay at all. That is the thesis of the title, and it is stated as open.
-
-The confinement read is measured on lattice ensembles and certified at **99.9999%** per coupling (a rigorous empirical-Bernstein
-bound). The paper ([`research/PAPER.pdf`](research/PAPER.pdf)) develops the theorem and the method; the reads run through the Entroptics
-reader (`research/code/`); the Lean 4 / Mathlib development (`research/lean/`) is the verification — `sorry`-free.
-
-**Existence and the gap, on a constructed object.** Beyond the gap, the finite-spacing Osterwalder–Schrader data is
-instantiated for a constructed $SU(N)$ Wilson realisation (`WilsonGauge.ym_wilson_gauge`). Read the two sides at their real strengths,
-which are not the same:
-
-* **Gap side** — `ym_existence_and_gap_of_junction` states it over an *arbitrary* mode family, gated on the two named
-  open residuals (`hfe`, `hgap`). `WilsonGauge.ym_existence_and_gap_gauge_wilson` is its instance on the
-  constructed realisation, and `ZeroMode.Witness.chain_hypotheses_satisfiable` is the collapsed one at the definitional single mode
-  $m := e^{-(\kappa_0-\mu)}$, whose decay conjunct is therefore arithmetic; it witnesses that the hypotheses are
-  satisfiable and is not evidence about the Wilson transfer operator.
-* **Measure side** — what `Measure.continuum_of_family` proves is a bounded, nonnegative, invariance-preserving
-  **subsequential pointwise limit** $q : J \to \mathbb{R}$ over a countable index set, by a diagonal
-  Bolzano–Weierstrass argument. It is not a measure, not on $\mathbb{R}^4$, and not OS0–OS4: there is no Schwinger
-  function, no reflection positivity of the limit as a quadratic form, no clustering and no regularity. Its
-  invariance is inherited because it was built in — `ymFamily.os_euc` is `rfl`, since `QYM` reads only a label the
-  $\mathrm{Perm}(\mathbb{F}_4)$ actions leave fixed. `ymFamily` is a minimal interface witness.
-
-The Osterwalder–Schrader → Wightman reconstruction is NOT composed with that limit. It is stated in
-`WightmanData` as `os_reconstruction_wightman`, from `OSData` to `WightmanQFTData`. `OSData` asks for a
-continuous bilinear Schwinger form on a NORMED test space, with a reflection and an $\mathbb{R}^4$
-translation action; the limit $q$ is a real-valued function on a bare index set, which supplies none of
-those. The development *consumes* the cited results rather than re-deriving them, and the $SU(N)$ ensemble enters
-through the entropy-matched reads and the cited §2–§3 modelling identification. The exact axiom footprint of every theorem is stated in the
-paper (§13).
+The periodic-state chain above — the state, the transfer, the one-lag reduction and the Clay lattice gap —
+carries the three foundational axioms only. The paper ([`research/PAPER.pdf`](research/PAPER.pdf)) develops
+the reading and the method; the reads run through the Entroptics reader (`research/code/`); the Lean 4 /
+Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
 ## Layout
 

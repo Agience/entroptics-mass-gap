@@ -917,10 +917,10 @@ The content is `exists_uniform_margin_of_substrate`, which this is proved from. 
 from the margin to this form is one application of monotonicity. The form is here because it is what
 `Complete.ym_physical_gap_uniform_exact` and `ScreenedGap.uniform_physical_gap` are stated in.
 
-The screen spacing `L/(N₀+i+1)` is a convention fixing a physical extent and refining it. Reading
-the same bound against the renormalisation-group spacing is `AsymptoticScaling.aRun`'s question, and
-`AsymptoticScaling.fixed_extent_pins_the_spacing` is why the aperture has to grow for that reading
-to be available at all.
+The screen spacing `L/(N₀+i+1)` is a convention fixing a physical extent and refining it.
+`physical_gap_at_the_running_spacing` reads the lattice margin against the renormalisation-group
+spacing instead: `AsymptoticScaling.aRun 3`, the two-loop running spacing of `SU(3)` at the Wilson
+coupling `β = 6/g²`, with `Λ = 1`.
 
 This is `Complete.ym_physical_gap_uniform_exact` relativised to `Set.Ici 0`, which is the half-line
 the substrate bound is available on and the one `WilsonInstance.gapModelOf_A1` reads; the surplus
@@ -1728,49 +1728,53 @@ theorem capstone_data_exists (N : ℕ) :
 
 #print axioms capstone_data_exists
 
-/-- **THE MARGIN AT THE RUNNING SPACING.** One positive `c` and one aperture `N₀ ≥ 1` such that at
-every refinement index `i`, every nonnegative `β₁` and every target `a` strictly between `0` and
-`AsymptoticScaling.aRun (N₀+i) β₁`, there is a coupling `β ≥ β₁` with
+/-- **THE MARGIN AT THE RUNNING SPACING.** One positive `c` and one aperture `N₀` such that at every
+refinement index `i`, every nonnegative `β₁` and every target `a` strictly between `0` and
+`AsymptoticScaling.aRun 3 β₁`, there is a coupling `β ≥ β₁` with
 
-    aRun (N₀+i) β = a    and    c ≤ κ₀YM − μYMAt (N₀+i) β.
+    aRun 3 β = a    and    c ≤ κ₀YM − μYMAt (N₀+i) β.
+
+`aRun 3` is the two-loop running spacing of `SU(3)` at the Wilson coupling `β = 6/g²`, with
+`Λ = 1`; `SU(3)` is the gauge group of the ensemble `μYMAt` reads
+(`wilsonCorrAt N β = WilsonBridge.corrClay (N + 1) β`, and `corrClay` is taken at colour count `3`).
+`aRun`'s first argument is the colour count, so the spacing depends on the coupling alone; the
+aperture `N₀+i` enters only through `μYMAt`.
 
 `exists_physical_gap_uniform_of_lawAbove` reads the margin against the screen spacing `L/(N+1)`,
 which is a convention fixing a physical extent and refining it. This reads it against the
 two-loop running spacing instead: `AsymptoticScaling.exists_beta_aRun_eq` supplies a coupling at
-which `aRun` equals the chosen target, and `β₁` is arbitrary, so that coupling can be demanded as
+which `aRun 3` equals the chosen target, and `β₁` is arbitrary, so that coupling can be demanded as
 large as wanted — the branch asymptotic freedom lives on.
 
-`c` depends on none of `i`, `a` or `β`. So shrinking the spacing does not erode the margin, which is
-what a continuum reading needs from the lattice side.
+`c` depends on none of `i`, `a` or `β`. Because the margin holds at every `β ≥ 0`, the conjunct
+`aRun 3 β = a` does not constrain it; the spacing only selects which coupling is quoted. Read as a
+lattice-unit mass, a bound uniform in `β` is not a continuum statement: a mass bounded below cannot
+satisfy `AsymptoticScalingAt` (`AsymptoticScaling.fixed_colours_pins_the_spacing`, and
+`AsymptoticScaling.bounded_mass_fails_scaling`, which composes it with
+`AsymptoticScaling.exists_beta_aRun_lt`).
 
 DERIVED: `0` is the sign of `c`, the lower end of the coupling half-line in `hβ₁`, and the target's
-sign in `ha`. `1` is the least aperture `exists_beta_aRun_eq` requires, which is what keeps `aRun`'s
-base defined; `N₀` is raised to meet it by a maximum, which changes no constant. Both are carried
-from the two theorems composed here. -/
+sign in `ha`, carried from the two theorems composed here. `3` in `aRun 3` is the colour count of
+`WilsonBridge.corrClay`'s ensemble, `SU(3)`, the gauge group whose correlation `μYMAt` reads; `6` in
+`β = 6/g²` is `2N` at that `N`. -/
 theorem physical_gap_at_the_running_spacing
     (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b) :
-    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧ 1 ≤ N₀ ∧
+    ∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
       ∀ (i : ℕ) (a β₁ : ℝ), 0 ≤ β₁ → 0 < a →
-        a < MassGap.AsymptoticScaling.aRun (N₀ + i) β₁ →
-        ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun (N₀ + i) β = a ∧
+        a < MassGap.AsymptoticScaling.aRun 3 β₁ →
+        ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun 3 β = a ∧
           c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β := by
   obtain ⟨c, M, hc, hmargin⟩ := exists_uniform_margin_of_lawAbove habove
-  refine ⟨c, max M 1, hc, le_max_right _ _, ?_⟩
+  refine ⟨c, M, hc, ?_⟩
   intro i a β₁ hβ₁ ha hlt
-  have hN1 : 1 ≤ max M 1 + i := le_trans (le_max_right M 1) (Nat.le_add_right _ _)
   obtain ⟨β, hβge, hβeq⟩ :=
-    MassGap.AsymptoticScaling.exists_beta_aRun_eq (N := max M 1 + i) hN1 ha hlt
-  refine ⟨β, hβge, hβeq, ?_⟩
-  have hβ0 : 0 ≤ β := le_trans hβ₁ hβge
-  -- the margin is stated at `M + j`; the aperture here is `max M 1 + i`, which is such a `M + j`
-  have hsplit : max M 1 + i = M + ((max M 1 - M) + i) := by omega
-  rw [hsplit]
-  exact hmargin ((max M 1 - M) + i) β hβ0
+    MassGap.AsymptoticScaling.exists_beta_aRun_eq (N := 3) (by norm_num) ha hlt
+  exact ⟨β, hβge, hβeq, hmargin i β (le_trans hβ₁ hβge)⟩
 
 #print axioms physical_gap_at_the_running_spacing
 
-/-- **THE ASSEMBLY, WITH THE CONTINUUM CONJUNCT.** Parts I and II from one hypothesis, now including
-the reading against the renormalisation-group spacing.
+/-- **THE ASSEMBLY, WITH THE RUNNING-SPACING CONJUNCT.** Parts I and II from one hypothesis,
+including the reading against the renormalisation-group spacing.
 
 Three conjuncts, one `habove`:
 
@@ -1779,8 +1783,10 @@ Three conjuncts, one `habove`:
    independent of direction (`exists_aperture_mass_gap_of_lawAbove`);
 2. one positive `c` below the surplus `κ₀YM − μYMAt` at every aperture past `N₀` and every
    nonnegative coupling (`exists_uniform_margin_of_lawAbove`);
-3. that same margin at a coupling realising any target the running spacing reaches, arbitrarily far
-   out (`physical_gap_at_the_running_spacing`).
+3. that same margin at a coupling realising any target the `SU(3)` two-loop spacing `aRun 3` (at the
+   Wilson coupling, `Λ = 1`) reaches, arbitrarily far out (`physical_gap_at_the_running_spacing`).
+   The margin already holds at every nonnegative coupling, so the spacing condition only selects
+   which coupling is quoted.
 
 `lattice_gap_and_margin_of_lawAbove` is this without the third conjunct; both are kept because the
 two-conjunct form needs no `AsymptoticScaling` import to state.
@@ -1795,8 +1801,8 @@ exist.
 
 DERIVED: every numeral is carried in from the three conjuncts unchanged — `0` as the strict bound
 the tension is compared against, the limit of the mode sum, the sign of `c` and the lower end of the
-coupling half-line; `1` as the least aperture `AsymptoticScaling.exists_beta_aRun_eq` requires. This
-declaration introduces none. -/
+coupling half-line; `3` in `aRun 3` as the colour count of `WilsonBridge.corrClay`'s ensemble,
+`SU(3)`, carried from `physical_gap_at_the_running_spacing`. This declaration introduces none. -/
 theorem clay_assembly_of_lawAbove {Idx : Type}
     (habove : ∀ b : ℝ, MassGap.NonnegArm.LawBelow b → MassGap.NonnegArm.LawAbove b)
     (s : ℝ → Finset Idx) (Pw m : ℝ → Idx → ℂ) (Δ cf : ℝ → ℝ)
@@ -1815,10 +1821,10 @@ theorem clay_assembly_of_lawAbove {Idx : Type}
               = (MassGap.gapModelOf N s Pw m Δ cf hdom hfe hgap).R d'))
     ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
         ∀ (i : ℕ) (β : ℝ), 0 ≤ β → c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β)
-    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧ 1 ≤ N₀ ∧
+    ∧ (∃ (c : ℝ) (N₀ : ℕ), 0 < c ∧
         ∀ (i : ℕ) (a β₁ : ℝ), 0 ≤ β₁ → 0 < a →
-          a < MassGap.AsymptoticScaling.aRun (N₀ + i) β₁ →
-          ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun (N₀ + i) β = a ∧
+          a < MassGap.AsymptoticScaling.aRun 3 β₁ →
+          ∃ β : ℝ, β₁ ≤ β ∧ MassGap.AsymptoticScaling.aRun 3 β = a ∧
             c ≤ MassGap.κ₀YM - MassGap.μYMAt (N₀ + i) β) :=
   ⟨exists_aperture_mass_gap_of_lawAbove habove s Pw m Δ cf hdom,
     exists_uniform_margin_of_lawAbove habove,

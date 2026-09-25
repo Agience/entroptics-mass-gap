@@ -249,8 +249,8 @@ and without it `hlam` would constrain nothing.
 
 **So the remaining obligation has the shape of a number.** To finish the chain it is enough to
 exhibit a `V` containing the vacuum complement on which the transfer form's Rayleigh supremum is
-bounded and below one. Nothing in this tree does that, and the measured grid under `research/data`
-is a failure to refute it rather than a proof of it.
+bounded and below one. `StrongCouplingGap.wilson_gaugeInv_clay_gap_strong_coupling` does that at
+strong coupling, on the vacuum complement, through per-vector decay.
 
 DERIVED: `1` is the vacuum eigenvalue and the contraction constant; `0` is the bottom of the
 spectrum and the lower end of `hΛ`; `2` is the Rayleigh quotient's exponent. All are
@@ -352,9 +352,8 @@ constant `C` by Archimedean descent; `clay_gap_of_lambdaTwo` closes.
 and diagonal-dominance route, where the strictly positive diagonal is a demand of the reduction
 rather than of the obligation, and where the reflected-pairing no-go applies.
 
-What is still open is `hdec`. `StrongCoupling` bounds connected correlators at growing separation,
-which is the same physical content, but no declaration identifies
-`D.form ((D.T ^ n) x) ((D.T ^ n) x)` with any correlator it bounds.
+`GaugeInvariantAlgebra.gaugeInv_form_pow` identifies the form with the reflected-shifted pairing in
+the state, and `StrongCouplingGap.decay_of_orth` supplies `hdec`'s content at strong coupling.
 
 DERIVED: `0` is the strict lower bound on `C` and `ρ` and the bottom of the spectrum; `1` is the
 vacuum eigenvalue and the contraction threshold; `2` is the square in the decay hypothesis, matching
@@ -889,11 +888,9 @@ The only declaration relating the two, `WilsonState.stateFree_eq_spec_at_zero_co
 coupling zero — which is why `wilson_htend_at_zero_coupling` above has no analogue elsewhere. This
 gives a DLR state on the free side directly, at every real coupling.
 
-**What it does not give.** The limit is subsequential and may depend on the boundary configuration
-`ω` and on the ultrafilter. `DLRLimit.limits_eq_of_unique_dlr` needs uniqueness of the DLR state to
-identify two such limits, `WilsonDLR.dlr_unique_at_zero_eq` supplies uniqueness only at coupling
-zero, and no Dobrushin-style machinery exists in the tree. That is the open input, and it is what
-fails at a phase transition.
+The limit here is along an ultrafilter. At strong coupling it is the full `atTop` limit:
+`FreeLimit.exists_tendsto_stateFree` shows the free box states are Cauchy on every observable, so the
+ultrafilter limit is their `atTop` limit.
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank in `hN` and the lower end of
 the bound on an observable; `1` is the identity at which the Wilson density vanishes; `2` is the

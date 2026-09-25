@@ -1,8 +1,9 @@
 """The entropy floor, certified by EXACT RATIONAL arithmetic: kappa_0 >= 0.455483.
 
 WHAT THIS CERTIFIES, and it is the same kappa_0 the Lean tree uses.
-`Floor.lean` proves kappa_0 >= (1/4) log 3 = 0.274653 by counting DIRECTED CUBE-PATHS -- three
-choices of axis at each of k steps, boundary area 4k+6. That is one subfamily of the closed connected
+`Floor.lean` counts DIRECTED CUBE-PATHS exactly -- three choices of axis at each of k steps
+(`directed_paths_card`), boundary area 4k+6 -- so that subfamily has density (1/4) log 3 = 0.274653
+(`floor_density_limit`). That is one subfamily of the closed connected
 vortex surfaces kappa_0 = limsup_A (ln N(A))/A is defined over. Counting a RICHER subfamily gives a
 LARGER lower bound on the same quantity, and that is what this does.
 

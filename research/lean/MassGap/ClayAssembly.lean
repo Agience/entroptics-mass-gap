@@ -337,14 +337,19 @@ such field.
 `MassGap.AsymptoticScaling` states the version that ties `a(β)` to the theory, requiring the ratio
 `m_lat(β)/a(β)` to converge to a finite nonzero limit; its
 `free_spacing_scaling_is_also_vacuous` shows that leaving the spacing existential is satisfied by
-taking `a := m_lat`, at ratio identically `1`, and `Running`'s `b₀ = 11N/3` and `b₁ = 34N²/3` pin the
-spacing in `aRun`. `mLatAt` supplies the lattice mass, its value at zero coupling being `0` because
-`Real.log 0 = 0`. `fixed_extent_pins_the_spacing` shows a lattice mass bounded away from zero
-forbids a vanishing spacing. `Complete.ym_physical_gap_uniform` and its siblings take the spacing as
-a parameter and relate it to no coupling.
+taking `a := m_lat`, at ratio identically `1`, and `aRun` pins the spacing to the `SU(N)` two-loop
+spacing at the Wilson coupling `β = 2N/g²` (`Λ = 1`), from `Running`'s `11N/3` and `34N²/3` in the
+normalisation `μ dg/dμ = −(11N/3)g³/(16π²) − (34N²/3)g⁵/(16π²)²`. `mLatAt` supplies the lattice
+mass, its value at zero coupling being `0` because `Real.log 0 = 0`.
+`fixed_colours_pins_the_spacing` shows that a mass bounded away from zero, read against the `SU(N)`
+spacing at one fixed colour count, keeps that spacing bounded below, and
+`bounded_mass_fails_scaling` concludes that such a mass does not satisfy the ratio condition.
+`Complete.ym_physical_gap_uniform` and its siblings take the spacing as a parameter and relate it to
+no coupling.
 
-DERIVED: `0` is the strict lower bound asserted of `a` and the limit point; it is the only numeral.
-`exp(−β)` is a witness rather than a magnitude, and any positive null function does the same. -/
+DERIVED: `0` is the strict lower bound asserted of `a` and the limit point; it is the only numeral
+in the statement. `exp(−β)` is a witness rather than a magnitude, and any positive null function
+does the same. -/
 theorem scaling_as_stated_is_vacuous :
     ∃ a : ℝ → ℝ, (∀ β, 0 < a β) ∧ Tendsto a atTop (nhds 0) := by
   refine ⟨fun β => Real.exp (-β), fun β => Real.exp_pos _, ?_⟩

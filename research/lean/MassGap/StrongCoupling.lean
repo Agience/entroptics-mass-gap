@@ -2248,30 +2248,26 @@ theorem exchangeObs_exchangeObs (bd : Pq → List (Lk × Bool)) (Sa : Finset Lk)
 #print axioms exchangeObs_exchangeObs
 
 open scoped Classical in
-/-- **The non-bridging sum vanishes, at two arbitrary observables.** For `O₁` local on `Sa`, `O₂`
-local on `Sb` and `Disjoint Sa Sb`, the sum of `pairTermObs bd O₁ O₂ β q` over the pairs `q` in which
-no plaquette of `(q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa` carries a link of `Sb` is zero, at every
-`β`.
+/-- **The non-bridging pairs cancel on every family fixed by the pair's union.** For any predicate `Q`
+on plaquette sets, the pairs `q` with `Q (q.1 ∪ q.2)` in which no plaquette of the separator grown
+from `Sa` carries a link of `Sb` sum to zero. The exchange `exchangeObs bd Sa` preserves `q.1 ∪ q.2`
+(`exchangeObs_union`), so it maps the family to itself, and each pair cancels its image
+(`pairTermObs_add_flip_of_no_bridge`). `nonbridging_sum_eq_zeroObs` is this at `Q` constantly true.
 
-`nonbridging_sum_eq_zeroF` with the two plaquette finsets replaced by two observables. The filter is
-at the level of links: where the plaquette version asks that no plaquette of `Ao` reach one of `Bo`,
-this asks that no plaquette of the separator grown from `Sa` carry a link of `Sb`.
-`exchangeObs_exchangeObs` makes the flip an involution on that filtered set and
-`pairTermObs_add_flip_of_no_bridge` negates the summand, so the sum equals its own negation.
-
-DERIVED: the `0` is the value of the filtered sum. -/
-theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
+DERIVED: the `0` is the value of the cancelled sum. -/
+theorem nonbridging_sum_eq_zeroObs_of (bd : Pq → List (Lk × Bool)) (β : ℝ)
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
     (hab : Disjoint Sa Sb)
-    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) :
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    (Q : Finset Pq → Prop) :
     ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
-        (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+        (fun q => Q (q.1 ∪ q.2) ∧ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
           ∀ l ∈ linkSupp bd p, l ∉ Sb),
       pairTermObs (Nc := Nc) bd O₁ O₂ β q = 0 := by
   classical
   set s : Finset (Finset Pq × Finset Pq) :=
     (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
-      (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+      (fun q => Q (q.1 ∪ q.2) ∧ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
         ∀ l ∈ linkSupp bd p, l ∉ Sb) with hs
   have hmem : ∀ q ∈ s, exchangeObs bd Sa q ∈ s := by
     intro q hq
@@ -2283,7 +2279,7 @@ theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
       + pairTermObs (Nc := Nc) bd O₁ O₂ β (exchangeObs bd Sa q) = 0 := by
     intro q hq
     rw [hs, Finset.mem_filter] at hq
-    have h := pairTermObs_add_flip_of_no_bridge (Nc := Nc) bd β O₁ O₂ q.1 q.2 Sa Sb hab h₁ h₂ hq.2
+    have h := pairTermObs_add_flip_of_no_bridge (Nc := Nc) bd β O₁ O₂ q.1 q.2 Sa Sb hab h₁ h₂ hq.2.2
     simpa [exchangeObs] using h
   have hinj : ∀ x ∈ s, ∀ y ∈ s, exchangeObs bd Sa x = exchangeObs bd Sa y → x = y := by
     intro x _ y _ hxy
@@ -2307,7 +2303,197 @@ theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
       _ = - ∑ q ∈ s, pairTermObs (Nc := Nc) bd O₁ O₂ β q := by simp
   linarith
 
+#print axioms nonbridging_sum_eq_zeroObs_of
+
+open scoped Classical in
+/-- **The non-bridging sum vanishes, at two arbitrary observables.** For `O₁` local on `Sa`, `O₂`
+local on `Sb` and `Disjoint Sa Sb`, the sum of `pairTermObs bd O₁ O₂ β q` over the pairs `q` in which
+no plaquette of `(q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa` carries a link of `Sb` is zero, at every
+`β`.
+
+`nonbridging_sum_eq_zeroF` with the two plaquette finsets replaced by two observables. The filter is
+at the level of links: where the plaquette version asks that no plaquette of `Ao` reach one of `Bo`,
+this asks that no plaquette of the separator grown from `Sa` carry a link of `Sb`.
+`exchangeObs_exchangeObs` makes the flip an involution on that filtered set and
+`pairTermObs_add_flip_of_no_bridge` negates the summand, so the sum equals its own negation.
+
+DERIVED: the `0` is the value of the filtered sum. -/
+theorem nonbridging_sum_eq_zeroObs (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
+    (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+          ∀ l ∈ linkSupp bd p, l ∉ Sb),
+      pairTermObs (Nc := Nc) bd O₁ O₂ β q = 0 := by
+  have h := nonbridging_sum_eq_zeroObs_of (Nc := Nc) bd β O₁ O₂ Sa Sb hab h₁ h₂ (fun _ => True)
+  simpa only [true_and] using h
+
 #print axioms nonbridging_sum_eq_zeroObs
+
+/-! #### Bounded local observables -/
+
+/-- **A product of local observables is local on the union of their supports.** The witness
+restricts to each support and multiplies.
+
+DERIVED: no numeral. -/
+theorem localOnLinks_mul {S T : Finset Lk} {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ}
+    (h₁ : LocalOnLinks (Nc := Nc) S O₁) (h₂ : LocalOnLinks (Nc := Nc) T O₂) :
+    LocalOnLinks (Nc := Nc) (S ∪ T) (fun U => O₁ U * O₂ U) := by
+  obtain ⟨A, hA, eA⟩ := h₁
+  obtain ⟨B, hB, eB⟩ := h₂
+  refine ⟨fun V => A (fun i : S => V ⟨i.val, Finset.mem_union_left T i.property⟩)
+      * B (fun i : T => V ⟨i.val, Finset.mem_union_right S i.property⟩), ?_, fun U => ?_⟩
+  · have hA' : Measurable (fun V : (S ∪ T : Finset Lk) → MassGap.SUN.SU Nc =>
+        A (fun i : S => V ⟨i.val, Finset.mem_union_left T i.property⟩)) :=
+      hA.comp (measurable_pi_lambda _ (fun i => measurable_pi_apply _))
+    have hB' : Measurable (fun V : (S ∪ T : Finset Lk) → MassGap.SUN.SU Nc =>
+        B (fun i : T => V ⟨i.val, Finset.mem_union_right S i.property⟩)) :=
+      hB.comp (measurable_pi_lambda _ (fun i => measurable_pi_apply _))
+    exact hA'.mul hB'
+  · simp only [eA U, eB U]
+
+#print axioms localOnLinks_mul
+
+/-- **A local observable is measurable**: it is its measurable witness composed with the restriction.
+
+DERIVED: no numeral. -/
+theorem measurable_of_localOnLinks {S : Finset Lk} {O : (Lk → MassGap.SUN.SU Nc) → ℝ}
+    (h : LocalOnLinks (Nc := Nc) S O) : Measurable O := by
+  obtain ⟨Ô, hÔ, hO⟩ := h
+  have he : O = fun U => Ô (fun i : S => U i.val) := funext hO
+  rw [he]
+  exact hÔ.comp (measurable_pi_lambda _ (fun i => measurable_pi_apply _))
+
+#print axioms measurable_of_localOnLinks
+
+/-- **A continuous observable that reads only the links of `S` is local on `S`.** The witness extends a
+configuration on `S` by the identity off `S` and evaluates; it is continuous, hence measurable.
+
+DERIVED: no numeral. -/
+theorem localOnLinks_of_continuous {S : Finset Lk} {O : (Lk → MassGap.SUN.SU Nc) → ℝ}
+    (hc : Continuous O)
+    (hloc : ∀ U V : Lk → MassGap.SUN.SU Nc, (∀ i ∈ S, U i = V i) → O U = O V) :
+    LocalOnLinks (Nc := Nc) S O := by
+  classical
+  refine ⟨fun w => O (fun i => if h : i ∈ S then w ⟨i, h⟩ else 1), ?_, fun U => ?_⟩
+  · refine (hc.comp (continuous_pi (fun i => ?_))).measurable
+    by_cases h : i ∈ S
+    · have he : (fun w : S → MassGap.SUN.SU Nc => if h' : i ∈ S then w ⟨i, h'⟩ else 1)
+          = fun w => w ⟨i, h⟩ := funext fun w => dif_pos h
+      rw [he]; exact continuous_apply _
+    · have he : (fun w : S → MassGap.SUN.SU Nc => if h' : i ∈ S then w ⟨i, h'⟩ else 1)
+          = fun _ => 1 := funext fun w => dif_neg h
+      rw [he]; exact continuous_const
+  · exact hloc _ _ (fun i hi => by simp [hi])
+
+#print axioms localOnLinks_of_continuous
+
+open scoped Classical in
+/-- **A pair term of two local observables is its restriction to `A` times the two outside
+weights.** With `LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂`, no touch across `A` inside `E ∪ F`, and
+no plaquette of `(E ∪ F) \ A` meeting `Sa ∪ Sb`,
+
+    pairTermObs (E, F) = pairTermObs (E ∩ A, F ∩ A) · (zwFull 1 (E \ A) · zwFull 1 (F \ A)).
+
+`pairTermF_eq_core_mul_outside` with the plaquette products replaced by observables: the inside link
+block is the boundary union of `(E ∪ F) ∩ A` together with `Sa ∪ Sb`, the outside block the boundary
+union of `(E ∪ F) \ A`, and each of the four terms splits by `zwFull_split` against the constant
+observable on the outside block.
+
+DERIVED: the `1` is the constant observable of `pairTermObs`. -/
+theorem pairTermObs_eq_core_mul_outside (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk}
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    (E F A : Finset Pq)
+    (hclosed : ∀ p ∈ (E ∪ F) ∩ A, ∀ r ∈ (E ∪ F) \ A, ¬ Touch bd p r)
+    (hobs : ∀ r ∈ (E ∪ F) \ A, ∀ l ∈ linkSupp bd r, l ∉ Sa ∪ Sb) :
+    pairTermObs (Nc := Nc) bd O₁ O₂ β (E, F)
+      = pairTermObs (Nc := Nc) bd O₁ O₂ β (E ∩ A, F ∩ A)
+        * (zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) (E \ A)
+          * zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) (F \ A)) := by
+  classical
+  set S : Finset Lk := ((E ∪ F) ∩ A).biUnion (linkSupp bd) ∪ (Sa ∪ Sb) with hS
+  set T : Finset Lk := ((E ∪ F) \ A).biUnion (linkSupp bd) with hT
+  have hST : Disjoint S T := by
+    rw [hS, hT, Finset.disjoint_left]
+    intro l hl hl'
+    obtain ⟨r, hr, hlr⟩ := Finset.mem_biUnion.mp hl'
+    rcases Finset.mem_union.mp hl with hl | hl
+    · obtain ⟨p, hp, hlp⟩ := Finset.mem_biUnion.mp hl
+      exact hclosed p hp r hr ⟨l, hlp, hlr⟩
+    · exact hobs r hr l hlr hl
+  have hsp : ∀ X : (Lk → MassGap.SUN.SU Nc) → ℝ, LocalOnLinks (Nc := Nc) S X →
+      ∀ W : Finset Pq, W ⊆ E ∪ F →
+      zwFull (Nc := Nc) bd β X W
+        = zwFull (Nc := Nc) bd β X (W ∩ A) * zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) (W \ A) := by
+    intro X hX W hW
+    have hEu : W = (W ∩ A) ∪ (W \ A) := by
+      ext x; by_cases hx : x ∈ A <;> simp [hx]
+    have hEd : Disjoint (W ∩ A) (W \ A) := by
+      rw [Finset.disjoint_left]
+      intro x hx hx'
+      exact (Finset.mem_sdiff.mp hx').2 (Finset.mem_inter.mp hx).2
+    have hE₁ : ∀ p ∈ W ∩ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ S := by
+      intro p hp l hl
+      have hp' : p ∈ (E ∪ F) ∩ A :=
+        Finset.mem_inter.mpr ⟨hW (Finset.mem_inter.mp hp).1, (Finset.mem_inter.mp hp).2⟩
+      rw [hS]
+      exact Finset.mem_union_left _ (supp_subset_biUnion bd _ p hp' l hl)
+    have hE₂ : ∀ p ∈ W \ A, ∀ l ∈ (bd p).map Prod.fst, l ∈ T := by
+      intro p hp l hl
+      have hp' : p ∈ (E ∪ F) \ A :=
+        Finset.mem_sdiff.mpr ⟨hW (Finset.mem_sdiff.mp hp).1, (Finset.mem_sdiff.mp hp).2⟩
+      rw [hT]
+      exact supp_subset_biUnion bd _ p hp' l hl
+    rw [zwFull_congr (Nc := Nc) bd β
+      (O' := fun U => X U * (fun _ : Lk → MassGap.SUN.SU Nc => (1 : ℝ)) U)
+      (fun U => (mul_one (X U)).symm) W]
+    exact zwFull_split (Nc := Nc) bd β W (W ∩ A) (W \ A) S T hST hX (localOnLinks_one T)
+      hEu hEd hE₁ hE₂
+  have hSab : Sa ∪ Sb ⊆ S := by rw [hS]; exact Finset.subset_union_right
+  have l12 : LocalOnLinks (Nc := Nc) S (fun U => O₁ U * O₂ U) :=
+    localOnLinks_mono bd hSab (localOnLinks_mul h₁ h₂)
+  have l1 : LocalOnLinks (Nc := Nc) S O₁ :=
+    localOnLinks_mono bd (Finset.subset_union_left.trans hSab) h₁
+  have l2 : LocalOnLinks (Nc := Nc) S O₂ :=
+    localOnLinks_mono bd (Finset.subset_union_right.trans hSab) h₂
+  have hE : E ⊆ E ∪ F := Finset.subset_union_left
+  have hF : F ⊆ E ∪ F := Finset.subset_union_right
+  have e1 := hsp _ l12 E hE
+  have e2 := hsp _ (localOnLinks_one S) F hF
+  have e3 := hsp _ l1 E hE
+  have e4 := hsp _ l2 F hF
+  simp only [pairTermObs]
+  rw [e1, e2, e3, e4]
+  ring
+
+#print axioms pairTermObs_eq_core_mul_outside
+
+/-- **A bounded measurable observable times a product of activated weights is integrable** against
+product Haar, at every `β` and every `E`, given `Nc ≠ 0`. The observable's bound `c` and
+`subset_weight_bound` bound the integrand by a constant against a probability measure. This is the
+integrability `corrNum_eq_subset_sum` consumes, for one observable.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `1` subtracted from the exponential is
+`boltz_eq_subset_sum`'s activated weight. -/
+theorem integrable_obsFull_mul_wprod (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O : (Lk → MassGap.SUN.SU Nc) → ℝ} (hm : Measurable O) {c : ℝ} (hc : ∀ U, |O U| ≤ c)
+    (E : Finset Pq) :
+    Integrable (fun U => O U * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
+      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) := by
+  classical
+  have hmw : Measurable (fun U : Lk → MassGap.SUN.SU Nc =>
+      ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))) :=
+    Finset.measurable_prod _ (fun p _ => (measurable_wfun β).comp
+      (measurable_wilsonDensity.comp (measurable_wilsonHol (G := MassGap.SUN.SU Nc) bd p)))
+  refine (integrable_const (c * (Real.exp (2 * |β|) - 1) ^ E.card)).mono'
+    (hm.mul hmw).aestronglyMeasurable (Filter.Eventually.of_forall (fun U => ?_))
+  rw [Real.norm_eq_abs, abs_mul]
+  exact mul_le_mul (hc U) (subset_weight_bound hN bd β U E) (abs_nonneg _)
+    ((abs_nonneg _).trans (hc U))
+
+#print axioms integrable_obsFull_mul_wprod
 
 open scoped Classical in
 /-- The connected correlator of two arbitrary observables:
@@ -2324,8 +2510,8 @@ noncomputable def wilsonCorrConnObs (bd : Pq → List (Lk × Bool))
 
 open scoped Classical in
 /-- **The connected correlator of two observables on disjoint link supports is the bridging sum over
-`Z²`.** With `Nc ≠ 0`, `Disjoint Sa Sb`, `LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂` and the
-integrability side condition `hint`,
+`Z²`.** With `Nc ≠ 0`, `Disjoint Sa Sb`, `LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂` and the bounds
+`|O₁| ≤ c₁`, `|O₂| ≤ c₂`,
 
     wilsonCorrConnObs bd O₁ O₂ β = (∑ over bridging q, pairTermObs bd O₁ O₂ β q) / Z ^ 2,
 
@@ -2334,22 +2520,20 @@ the separator grown from `Sa` carries a link of `Sb`.
 
 The observable counterpart of `wilsonCorrConnF_eq_bridging_sumF`. `corrNum_eq_subset_sum` is already
 general in the observable, so the subset expansion is reused with the four specialisations `O₁·O₂`,
-`O₁`, `O₂` and the constant `1`; `nonbridging_sum_eq_zeroObs` removes the complementary pairs.
-`hint` is required for every observable and every subset, not only the four used.
+`O₁`, `O₂` and the constant `1`, each integrable against every activated product by
+`integrable_obsFull_mul_wprod` — locality gives measurability (`measurable_of_localOnLinks`) and the
+bounds give the rest; `nonbridging_sum_eq_zeroObs` removes the complementary pairs.
 
 DERIVED: the `2` in `Z ^ 2` is the number of independent subset sums, one per component of the pair
 — `hprod` turns two sums over `Finset Pq` into one over `Finset Pq × Finset Pq`, so each of the two
 Gibbs numerators carries its own partition function. The `0` is `hN : Nc ≠ 0`, which makes the
-partition function positive so the division is meaningful. The `1` in `hint`'s
-`Real.exp (-(β * φ_p)) - 1` is the activated weight of `boltz_eq_subset_sum`. The `1` and `2` in
+partition function positive so the division is meaningful. The `1` and `2` in
 `q.1` and `q.2` are projections, not numerals. -/
 theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     (O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ) (Sa Sb : Finset Lk)
     (hab : Disjoint Sa Sb)
-    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂) (β : ℝ)
-    (hint : ∀ (O : (Lk → MassGap.SUN.SU Nc) → ℝ) (E : Finset Pq), Integrable
-      (fun U => O U * ∏ p ∈ E, (Real.exp (-(β * wilsonDensity (N := Nc) (wilsonHol bd p U))) - 1))
-      (Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))) :
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {c₁ c₂ : ℝ} (hc₁ : ∀ U, |O₁ U| ≤ c₁) (hc₂ : ∀ U, |O₂ U| ≤ c₂) (β : ℝ) :
     wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β
       = (∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
             (fun q => ¬ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
@@ -2360,12 +2544,13 @@ theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (
   classical
   have hZpos : 0 < (wilsonSystem bd (wilsonDensity (N := Nc))).partition
       (probHaar (MassGap.SUN.SU Nc)) β := wilsonSystem_partition_pos hN bd β
-  have hz : ∀ O : (Lk → MassGap.SUN.SU Nc) → ℝ,
+  have hz : ∀ O : (Lk → MassGap.SUN.SU Nc) → ℝ, Measurable O → ∀ c : ℝ, (∀ U, |O U| ≤ c) →
       (∫ U, O U * (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
           ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
         = ∑ E : Finset Pq, zwFull (Nc := Nc) bd β O E := by
-    intro O
-    have h := corrNum_eq_subset_sum (Nc := Nc) bd β O (fun E _ => hint O E)
+    intro O hm c hc
+    have h := corrNum_eq_subset_sum (Nc := Nc) bd β O
+      (fun E _ => integrable_obsFull_mul_wprod hN bd β hm hc E)
     rw [Finset.powerset_univ] at h
     exact h
   have hprod : ∀ f g : Finset Pq → ℝ,
@@ -2400,7 +2585,7 @@ theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (
   have hZ : (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
         ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
       = ∑ E : Finset Pq, zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E := by
-    refine Eq.trans ?_ (hz (fun _ => (1 : ℝ)))
+    refine Eq.trans ?_ (hz (fun _ => (1 : ℝ)) measurable_const 1 (fun _ => by simp))
     refine integral_congr_ae (Filter.Eventually.of_forall (fun U => ?_))
     simp only [one_mul]
   have hne0 : (∑ E : Finset Pq, zwFull (Nc := Nc) bd β (fun _ => (1 : ℝ)) E) ≠ 0 := by
@@ -2420,7 +2605,12 @@ theorem wilsonCorrConnObs_eq_bridging_sumObs (hN : Nc ≠ 0) (bd : Pq → List (
               ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))
             / (∫ U, (wilsonSystem bd (wilsonDensity (N := Nc))).boltz β U
               ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))))) := rfl
-  rw [hconnEq, hpart, hz (fun U => O₁ U * O₂ U), hz O₁, hz O₂, hZ, ← hnum]
+  have hm₁ := measurable_of_localOnLinks h₁
+  have hm₂ := measurable_of_localOnLinks h₂
+  have h0₁ : 0 ≤ c₁ := (abs_nonneg _).trans (hc₁ (fun _ => 1))
+  rw [hconnEq, hpart, hz (fun U => O₁ U * O₂ U) (hm₁.mul hm₂) (c₁ * c₂)
+      (fun U => by rw [abs_mul]; exact mul_le_mul (hc₁ U) (hc₂ U) (abs_nonneg _) h0₁),
+    hz O₁ hm₁ c₁ hc₁, hz O₂ hm₂ c₂ hc₂, hZ, ← hnum]
   field_simp
 
 #print axioms wilsonCorrConnObs_eq_bridging_sumObs
@@ -5110,6 +5300,74 @@ theorem abs_sub_mul_le_crs {a b c d A B C D : ℝ} (ha : |a| ≤ A) (hb : |b| �
   rw [abs_le]
   constructor <;> linarith
 
+/-- **`|zwFull bd β O E| ≤ c · (e^{2|β|} − 1)^|E|`** for an observable bounded by `c`, at every `β`.
+`zw_abs_le` with the plaquette product's `2 ^ D.card` replaced by the observable's bound. The measure
+is a probability measure, so no volume factor appears.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The `2` in `2 * |β|` and the `1` subtracted from the
+exponential are `subset_weight_bound`'s, one factor per member of `E`. -/
+theorem zwFull_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O : (Lk → MassGap.SUN.SU Nc) → ℝ} {c : ℝ} (hc : ∀ U, |O U| ≤ c) (E : Finset Pq) :
+    |zwFull (Nc := Nc) bd β O E| ≤ c * (Real.exp (2 * |β|) - 1) ^ E.card := by
+  have hbound : ∀ U : Lk → MassGap.SUN.SU Nc,
+      ‖O U * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))‖
+      ≤ c * (Real.exp (2 * |β|) - 1) ^ E.card := by
+    intro U
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_mul (hc U) (subset_weight_bound hN bd β U E) (abs_nonneg _)
+      ((abs_nonneg _).trans (hc U))
+  have hfin : ‖∫ U, O U * ∏ p ∈ E, wfun β (wilsonDensity (N := Nc) (wilsonHol bd p U))
+      ∂(Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc)))‖
+      ≤ (c * (Real.exp (2 * |β|) - 1) ^ E.card)
+        * ((Measure.pi (fun _ : Lk => probHaar (MassGap.SUN.SU Nc))) Set.univ).toReal :=
+    norm_integral_le_of_norm_le_const (Filter.Eventually.of_forall hbound)
+  rw [measure_univ, ENNReal.toReal_one, mul_one, Real.norm_eq_abs] at hfin
+  unfold zwFull
+  exact hfin
+
+#print axioms zwFull_abs_le
+
+/-- **`|pairTermObs bd O₁ O₂ β q| ≤ 2 · c₁ c₂ · (e^{2|β|} − 1)^(|q.1| + |q.2|)`** for observables
+bounded by `c₁` and `c₂`. `pairTermF_abs_le` with the plaquette products' `2 ^ card` replaced by the
+observables' bounds: `zwFull_abs_le` on each of the four terms and the triangle inequality
+`abs_sub_mul_le_crs`.
+
+DERIVED: the `0` is the hypothesis `Nc ≠ 0`. The leading `2` counts the two products the triangle
+inequality adds. The `2` in `2 * |β|` and the `1` subtracted from the exponential are
+`subset_weight_bound`'s, through `zwFull_abs_le`. The `1` in `fun _ => 1` is the constant observable
+of `pairTermObs`. The `1` and `2` in `q.1` and `q.2` are projections. -/
+theorem pairTermObs_abs_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {c₁ c₂ : ℝ}
+    (hc₁ : ∀ U, |O₁ U| ≤ c₁) (hc₂ : ∀ U, |O₂ U| ≤ c₂) (β : ℝ)
+    (q : Finset Pq × Finset Pq) :
+    |pairTermObs (Nc := Nc) bd O₁ O₂ β q|
+      ≤ 2 * (c₁ * c₂) * (Real.exp (2 * |β|) - 1) ^ (q.1.card + q.2.card) := by
+  have h0₁ : 0 ≤ c₁ := (abs_nonneg _).trans (hc₁ (fun _ => 1))
+  have h0₂ : 0 ≤ c₂ := (abs_nonneg _).trans (hc₂ (fun _ => 1))
+  have hq0 : (0 : ℝ) ≤ Real.exp (2 * |β|) - 1 := by
+    have h := Real.one_le_exp (x := 2 * |β|) (by positivity)
+    linarith
+  have hp1 : (0 : ℝ) ≤ (Real.exp (2 * |β|) - 1) ^ q.1.card := pow_nonneg hq0 _
+  have hp2 : (0 : ℝ) ≤ (Real.exp (2 * |β|) - 1) ^ q.2.card := pow_nonneg hq0 _
+  have e1 := zwFull_abs_le hN bd β (O := fun U => O₁ U * O₂ U) (c := c₁ * c₂)
+    (fun U => by
+      rw [abs_mul]
+      exact mul_le_mul (hc₁ U) (hc₂ U) (abs_nonneg _) h0₁) q.1
+  have e2 := zwFull_abs_le hN bd β (O := fun _ => (1 : ℝ)) (c := 1) (fun U => by simp) q.2
+  have e3 := zwFull_abs_le hN bd β hc₁ q.1
+  have e4 := zwFull_abs_le hN bd β hc₂ q.2
+  have key := abs_sub_mul_le_crs e1 e2 e3 e4 (mul_nonneg (mul_nonneg h0₁ h0₂) hp1)
+    (mul_nonneg h0₁ hp1)
+  unfold pairTermObs
+  calc _ ≤ c₁ * c₂ * (Real.exp (2 * |β|) - 1) ^ q.1.card
+          * (1 * (Real.exp (2 * |β|) - 1) ^ q.2.card)
+        + c₁ * (Real.exp (2 * |β|) - 1) ^ q.1.card
+          * (c₂ * (Real.exp (2 * |β|) - 1) ^ q.2.card) := key
+    _ = 2 * (c₁ * c₂) * (Real.exp (2 * |β|) - 1) ^ (q.1.card + q.2.card) := by
+        rw [pow_add]; ring
+
+#print axioms pairTermObs_abs_le
+
 /-- **`|pairTerm bd p₀ pd β q| ≤ 8 * (e^{2|β|} − 1) ^ (q.1.card + q.2.card)`**, at every coupling, on
 any lattice, with no separation required between `p₀` and `pd`. Requires `Nc ≠ 0`.
 
@@ -6000,39 +6258,53 @@ theorem wilsonCorrConnF_eq_bridging_sumF (hN : Nc ≠ 0) (bd : Pq → List (Lk �
 
 #print axioms wilsonCorrConnF_eq_bridging_sumF
 
+/-- **A product of two sums over one index set is the sum over the product set.**
+`T · ((∑ w₁) · (∑ w₂)) = ∑ over P ×ˢ P of T · (w₁ x.1 · w₂ x.2)`. `mul_sq_sum_eq_sum_product_crs`
+with the two factors allowed to differ.
+
+DERIVED: no numeral. -/
+theorem mul_sum_sum_eq_sum_product {ι : Type*} (T : ℝ) (P : Finset ι) (w₁ w₂ : ι → ℝ) :
+    T * ((∑ E ∈ P, w₁ E) * ∑ F ∈ P, w₂ F) = ∑ x ∈ P ×ˢ P, T * (w₁ x.1 * w₂ x.2) := by
+  rw [Finset.sum_product]
+  dsimp only
+  rw [Finset.sum_mul, Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun E _ => ?_)
+  rw [Finset.mul_sum, Finset.mul_sum]
+
+#print axioms mul_sum_sum_eq_sum_product
+
 open scoped Classical in
-/-- **The bridging sum regroups by core, for finset anchors.** With `a ∈ Ao`, `b ∈ Bo` and `a ≠ b`,
-the sum of `pairTermF` over the pairs in which `a` reaches every plaquette of `Ao ∪ Bo` inside
-`q.1 ∪ q.2 ∪ (Ao ∪ Bo)` equals the sum over `corePairsF bd a Ao Bo` of the core term times its two
-constrained outside sums. `bridging_sum_eq_core_sum` with the anchors replaced by finsets, by the
-same fibration and `Finset.sum_nbij'`.
+/-- **The resummation identity for any summand that factors through its core.** For `g` on pairs of
+plaquette sets satisfying the core/outside factorisation
 
-The filter here is not the complement of `nonbridging_sum_eq_zeroF`'s. This one asks one component
-to contain all of `Ao ∪ Bo`; that one excludes only the pairs in which no component meets both `Ao`
-and `Bo`, and the set between the two is non-empty — for instance `Ao = {x, y}`, `Bo = {z}` with
-components `{x, z}` and `{y}`. So the two do not compose into a numerator identity as they stand.
-For `Ao` and `Bo` each connected in the pair's union the two filters agree, since then a component
-meeting both contains both.
+    g (E, F) = g (E ∩ A, F ∩ A) · (w₁ (E \ A) · w₂ (F \ A))
 
-`compsMeet` is the separator for the wider filter: touch-closed (`compsMeet_closed`), containing `Ao`
-(`subset_compsMeet`), smallest such (`compsMeet_minimal`), and missing `Bo` exactly when no component
-meets both (`disjoint_compsMeet_iff`), which is the shape `pairTermF_add_pairFlip`'s `hclosed` takes
-at `V = coreSpanF Ao Bo (E, F)`. Under that wider filter `IsCorePairF` has no witnesses when the
-support is split across components, since `coreSpanF Ao Bo c` then contains components `a` never
-reaches, and `card_corePairsF_span_le` counts through `connSets`, whose members are touch-connected
-sets rooted at one plaquette; `card_rooted_pairs_ge` is the control on that connectedness.
-`coreSpanF_eq_of_mem`'s `hobs : Ao ∪ Bo ⊆ A` and the involution's `Disjoint Bo A` agree only at
-`Bo = ∅`, and `coreSpanF` contains `Ao ∪ Bo` by definition.
+whenever `A ⊇ Ao ∪ Bo` and nothing touches across `A` inside `E ∪ F ∪ (Ao ∪ Bo)`, the sum of `g`
+over the pairs in which every plaquette of `Ao ∪ Bo` is reachable from `a` regroups by core:
 
-DERIVED: the `∅`s are the empty observable set, the outside sums carrying no plaquette observable. -/
-theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
-    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b) (β : ℝ) :
+    ∑ g q = ∑ c ∈ corePairsF bd a Ao Bo, g c · (∑ w₁ over the outside) · (∑ w₂ over the outside).
+
+The reindexing `q ↦ ((q.1 ∩ A, q.2 ∩ A), (q.1 \ A, q.2 \ A))` with `A` the component of `a` is
+the whole content; `g`, `w₁` and `w₂` enter only through the factorisation. The two outside weights
+may differ: the plaquette-family and observable routes take `w₁ = w₂ = zw ∅`, and the box comparison
+takes both restricted to plaquette subsets (`BoxCompare.meanR_sub_abs_le`). `bridging_sum_eq_core_sumF` is this at
+`pairTermF` (`pairTermF_eq_core_mul_outside`); `wilsonCorrConnObs_abs_le_core_sum` uses it at
+`pairTermObs` through `pairTermObs_fac_halo`.
+
+DERIVED: no numeral. -/
+theorem bridging_sum_eq_core_sum_of_fac (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b)
+    (w₁ w₂ : Finset Pq → ℝ) (g : Finset Pq × Finset Pq → ℝ)
+    (hg : ∀ E F A : Finset Pq,
+      (∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A, ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A, ¬ Touch bd p r) →
+      Ao ∪ Bo ⊆ A →
+      g (E, F) = g (E ∩ A, F ∩ A) * (w₁ (E \ A) * w₂ (F \ A))) :
     ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
         (fun q => ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p),
-      pairTermF (Nc := Nc) bd Ao Bo β q
-    = ∑ c ∈ corePairsF bd a Ao Bo, pairTermF (Nc := Nc) bd Ao Bo β c
-        * ((∑ E ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ E)
-          * ∑ F ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ F) := by
+      g q
+    = ∑ c ∈ corePairsF bd a Ao Bo, g c
+        * ((∑ E ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, w₁ E)
+          * ∑ F ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, w₂ F) := by
   refine Eq.trans (Finset.sum_fiberwise_of_maps_to (t := corePairsF bd a Ao Bo)
       (g := fun q : Finset Pq × Finset Pq =>
         (q.1 ∩ compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a,
@@ -6043,7 +6315,7 @@ theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finse
   · refine Finset.sum_congr rfl ?_
     intro c hc
     have hcore : IsCorePairF bd a Ao Bo c := mem_corePairsF.mp hc
-    rw [mul_sq_sum_eq_sum_product_crs]
+    rw [mul_sum_sum_eq_sum_product]
     refine Finset.sum_nbij'
       (i := fun q : Finset Pq × Finset Pq =>
         (q.1 \ coreSpanF Ao Bo c, q.2 \ coreSpanF Ao Bo c))
@@ -6127,17 +6399,58 @@ theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finse
       simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
       have hspan : coreSpanF Ao Bo c = compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a := by
         rw [← hq.2]; exact coreSpanF_core_eq bd Ao Bo a q.1 q.2 hq.1
-      have hfac := pairTermF_eq_core_mul_outside (Nc := Nc) bd Ao Bo β q.1 q.2
+      have hfac := hg q.1 q.2
         (compOf bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)
         (compOf_closed bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a)
         (fun p hp => mem_compOf.mpr ⟨Finset.mem_union_right _ hp, hq.1 p hp⟩)
       rw [hq.2] at hfac
-      show pairTermF (Nc := Nc) bd Ao Bo β q
-        = pairTermF (Nc := Nc) bd Ao Bo β c
-          * (zw (Nc := Nc) bd β ∅ (q.1 \ coreSpanF Ao Bo c)
-            * zw (Nc := Nc) bd β ∅ (q.2 \ coreSpanF Ao Bo c))
+      show g q
+        = g c
+          * (w₁ (q.1 \ coreSpanF Ao Bo c)
+            * w₂ (q.2 \ coreSpanF Ao Bo c))
       rw [hspan]
       exact hfac
+
+#print axioms bridging_sum_eq_core_sum_of_fac
+
+open scoped Classical in
+/-- **The bridging sum regroups by core, for finset anchors.** With `a ∈ Ao`, `b ∈ Bo` and `a ≠ b`,
+the sum of `pairTermF` over the pairs in which `a` reaches every plaquette of `Ao ∪ Bo` inside
+`q.1 ∪ q.2 ∪ (Ao ∪ Bo)` equals the sum over `corePairsF bd a Ao Bo` of the core term times its two
+constrained outside sums. `bridging_sum_eq_core_sum_of_fac` at `pairTermF`, whose factorisation is
+`pairTermF_eq_core_mul_outside`.
+
+The filter here is not the complement of `nonbridging_sum_eq_zeroF`'s. This one asks one component
+to contain all of `Ao ∪ Bo`; that one excludes only the pairs in which no component meets both `Ao`
+and `Bo`, and the set between the two is non-empty — for instance `Ao = {x, y}`, `Bo = {z}` with
+components `{x, z}` and `{y}`. So the two do not compose into a numerator identity as they stand.
+For `Ao` and `Bo` each connected in the pair's union the two filters agree, since then a component
+meeting both contains both.
+
+`compsMeet` is the separator for the wider filter: touch-closed (`compsMeet_closed`), containing `Ao`
+(`subset_compsMeet`), smallest such (`compsMeet_minimal`), and missing `Bo` exactly when no component
+meets both (`disjoint_compsMeet_iff`), which is the shape `pairTermF_add_pairFlip`'s `hclosed` takes
+at `V = coreSpanF Ao Bo (E, F)`. Under that wider filter `IsCorePairF` has no witnesses when the
+support is split across components, since `coreSpanF Ao Bo c` then contains components `a` never
+reaches, and `card_corePairsF_span_le` counts through `connSets`, whose members are touch-connected
+sets rooted at one plaquette; `card_rooted_pairs_ge` is the control on that connectedness.
+`coreSpanF_eq_of_mem`'s `hobs : Ao ∪ Bo ⊆ A` and the involution's `Disjoint Bo A` agree only at
+`Bo = ∅`, and `coreSpanF` contains `Ao ∪ Bo` by definition.
+
+DERIVED: the `∅`s are the empty observable set, the outside sums carrying no plaquette observable. -/
+theorem bridging_sum_eq_core_sumF (bd : Pq → List (Lk × Bool)) (Ao Bo : Finset Pq)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b) (β : ℝ) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ Ao ∪ Bo, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p),
+      pairTermF (Nc := Nc) bd Ao Bo β q
+    = ∑ c ∈ corePairsF bd a Ao Bo, pairTermF (Nc := Nc) bd Ao Bo β c
+        * ((∑ E ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ E)
+          * ∑ F ∈ (outsideOf bd (coreSpanF Ao Bo c)).powerset, zw (Nc := Nc) bd β ∅ F) :=
+  bridging_sum_eq_core_sum_of_fac bd Ao Bo ha hb hne (zw (Nc := Nc) bd β ∅) (zw (Nc := Nc) bd β ∅)
+    (pairTermF (Nc := Nc) bd Ao Bo β)
+    (fun E F A h1 h2 => pairTermF_eq_core_mul_outside (Nc := Nc) bd Ao Bo β E F A h1 h2)
+
+#print axioms bridging_sum_eq_core_sumF
 
 /-- **The resummation holds for a pair of plaquette families.** One line over
 `bridging_sum_eq_core_sumF`, exactly as `coreResummation_holds` is over `bridging_sum_eq_core_sum`.
@@ -6152,8 +6465,6 @@ theorem coreResummationF_holds (bd : Pq → List (Lk × Bool)) {a b : Pq} {Ao Bo
   bridging_sum_eq_core_sumF bd Ao Bo ha hb hne β
 
 #print axioms coreResummationF_holds
-
-#print axioms bridging_sum_eq_core_sumF
 
 open scoped Classical in
 /-- **A bound on the cores alone bounds the connected correlation of two plaquette FAMILIES.**
@@ -6173,8 +6484,8 @@ With `coreResummationF_holds` for `hres` and `corePairsF_sum_le` for `hM`, this 
 `Finset` bound: products of plaquette observables decay in the separation, not only single ones.
 
 DERIVED: `0` is the coupling's lower end, where `hard_core_outside_sq_div_partition_sq_le` needs
-`β` non-negative; `4` is the exponent's constant, transcribed from that lemma, and is the number of
-links on a plaquette, each counted at both ends of the bound; the `1` subtracted in `hint` is the
+`β` non-negative; `4` is the exponent's constant, transcribed from that lemma, where it is
+`hard_core_ratio_le`'s `2` doubled by squaring the ratio; the `1` subtracted in `hint` is the
 Mayer link `e^(-βS) - 1`, which vanishes at zero coupling and is what makes the expansion connected.
 -/
 theorem wilsonCorrConnF_abs_le_of_coreResummationF (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
@@ -6674,6 +6985,23 @@ theorem corePairs_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (
 
 #print axioms corePairs_fiber_sum_le
 
+/-- The prefactor of the core sum at a per-term constant `C`:
+`corePrefactorG C K β u = C · (4 (K + 1)²)^u · e^{4βK u}`. `corePrefactorF` is this at
+`C = 2 ^ (na + nb + 1)`, `pairTermF_abs_le`'s constant.
+
+DERIVED: the `4 (K + 1)²` is `card_corePairsF_span_le`'s count per core plaquette; the `4` in
+`e^{4βK}` is `hard_core_outside_sq_div_partition_sq_le`'s, the Wilson density's `2` doubled by the two
+outside sums; the `1` is `stepSet`'s stay-put step. -/
+noncomputable def corePrefactorG (C : ℝ) (K : ℕ) (β : ℝ) (u : ℕ) : ℝ :=
+  C * (4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u
+
+/-- The constant of the core sum at a per-term constant `C`: the prefactor over `1 − coreRate K β`,
+the geometric sum over core sizes. `coreConstF` is this at `C = 2 ^ (na + nb + 1)`.
+
+DERIVED: the `1` is the geometric series' leading term. -/
+noncomputable def coreConstG (C : ℝ) (K : ℕ) (β : ℝ) (u : ℕ) : ℝ :=
+  corePrefactorG C K β u / (1 - coreRate K β)
+
 /-- The prefactor for finset anchors:
 `corePrefactorF K β na nb u = 2^(na + nb + 1) · (4 (K+1)²)^u · (e^{4βK})^u`. `corePrefactor` with its
 two fixed numbers made parameters: the per-pair constant becomes `pairTermF_abs_le`'s
@@ -6689,26 +7017,23 @@ noncomputable def corePrefactorF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
   2 ^ (na + nb + 1) * (4 * ((K : ℝ) + 1) ^ 2) ^ u * Real.exp (4 * β * (K : ℝ)) ^ u
 
 open scoped Classical in
-/-- **One fibre of the core sum, for finset anchors.** Given `Nc ≠ 0`, `a ∈ Ao`, `0 ≤ β` and
-`e^{2β} − 1 ≤ 1`, the cores whose span has exactly `n + (Ao ∪ Bo).card` plaquettes contribute at most
-`corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card * coreRate (touchDeg bd) β ^ n`.
+/-- **The core sum at one core size, for any summand with a per-term bound.** Given `a ∈ Ao`,
+`0 ≤ β`, `e^{2β} − 1 ≤ 1` and `0 ≤ C`, if `|g c| ≤ C · (e^{2β} − 1)^(|c.1| + |c.2|)` for every pair,
+then the cores of span size `n + |Ao ∪ Bo|` contribute at most `corePrefactorG C (touchDeg bd) β |Ao ∪ Bo| · coreRate (touchDeg bd) β ^ n`.
+`corePairsF_fiber_sum_le` is this at `pairTermF` and `C = 2 ^ (|Ao| + |Bo| + 1)`.
 
-The same argument as `corePairs_fiber_sum_le`, with `(Ao ∪ Bo).card` in place of the two anchors and
-`pairTermF_abs_le` and `card_corePairsF_span_le` in place of their singleton counterparts. The fibre
-is indexed by an equation rather than a subtraction, so no lower bound on the span is needed.
-
-DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `2` in `e^{2β}` and
-the `1`s are `exp_sub_one_le_one_of_coreRate`'s. The `4` in the hard-core exponent is
-`hard_core_outside_sq_div_partition_sq_le`'s. -/
-theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+DERIVED: the `2` in `e^{2β}` and the `1` subtracted are `subset_weight_bound`'s; the `1` bounding
+`e^{2β} − 1` is the geometric threshold; the `4` in `4β` is
+`hard_core_outside_sq_div_partition_sq_le`'s; the `0` is the sign hypothesis on `β` and on `C`. -/
+theorem corePairsF_fiber_sum_le_of_bound (bd : Pq → List (Lk × Bool))
     {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
-    {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) (n : ℕ) :
+    {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) {C : ℝ} (hC : 0 ≤ C)
+    (g : Finset Pq × Finset Pq → ℝ)
+    (hg : ∀ c, |g c| ≤ C * (Real.exp (2 * β) - 1) ^ (c.1.card + c.2.card)) (n : ℕ) :
     ∑ c ∈ (corePairsF bd a Ao Bo).filter
         (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
-      |pairTermF (Nc := Nc) bd Ao Bo β c|
-        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
-      ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-        * coreRate (touchDeg bd) β ^ n := by
+      |g c| * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card * coreRate (touchDeg bd) β ^ n := by
   classical
   have hq0 : (0 : ℝ) ≤ Real.exp (2 * β) - 1 := by
     have := Real.one_le_exp (x := 2 * β) (by linarith)
@@ -6720,9 +7045,9 @@ theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     fun c hc => (Finset.mem_filter.mp hc).2
   have hpt : ∀ c ∈ (corePairsF bd a Ao Bo).filter
       (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
-      |pairTermF (Nc := Nc) bd Ao Bo β c|
+      |g c|
         * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
-      ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+      ≤ C * (Real.exp (2 * β) - 1) ^ n
           * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card) := by
     intro c hc
     have hm := hcard c hc
@@ -6731,14 +7056,13 @@ theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
       exact Finset.card_union_le _ _
     have h1 := Finset.card_union_le c.1 c.2
     have hle : n ≤ c.1.card + c.2.card := by omega
-    have hpair := pairTermF_abs_le (Nc := Nc) hN bd Ao Bo β c
-    rw [abs_of_nonneg hβ] at hpair
+    have hpair := hg c
     have hw : (Real.exp (2 * β) - 1) ^ (c.1.card + c.2.card)
         ≤ (Real.exp (2 * β) - 1) ^ n := pow_le_pow_of_le_one_asm hq0 hq1 hle
-    have hpair' : |pairTermF (Nc := Nc) bd Ao Bo β c|
-        ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n := by
+    have hpair' : |g c|
+        ≤ C * (Real.exp (2 * β) - 1) ^ n := by
       refine le_trans hpair ?_
-      exact mul_le_mul_of_nonneg_left hw (by positivity)
+      exact mul_le_mul_of_nonneg_left hw hC
     rw [exp_touchDeg_pow bd β ((coreSpanF Ao Bo c).card), hm]
     exact mul_le_mul_of_nonneg_right hpair' (pow_nonneg hWpos.le _)
   have hcount : (((corePairsF bd a Ao Bo).filter
@@ -6750,33 +7074,63 @@ theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
         ≤ (((4 * (touchDeg bd + 1) ^ 2) ^ (n + (Ao ∪ Bo).card) : ℕ) : ℝ) :=
           Nat.cast_le.mpr hnat
       _ = ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) ^ (n + (Ao ∪ Bo).card) := by push_cast; ring
-  have hnn : (0 : ℝ) ≤ 2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
-      * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card) := by positivity
+  have hnn : (0 : ℝ) ≤ C * (Real.exp (2 * β) - 1) ^ n
+      * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card) :=
+    mul_nonneg (mul_nonneg hC (pow_nonneg hq0 _)) (pow_nonneg hWpos.le _)
   have hL : ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) = 4 * ((touchDeg bd : ℝ) + 1) ^ 2 := by
     push_cast; ring
   calc ∑ c ∈ (corePairsF bd a Ao Bo).filter
         (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
-        |pairTermF (Nc := Nc) bd Ao Bo β c|
+        |g c|
           * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
       ≤ ∑ _c ∈ (corePairsF bd a Ao Bo).filter
           (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
-          (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+          (C * (Real.exp (2 * β) - 1) ^ n
             * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) :=
         Finset.sum_le_sum hpt
     _ = (((corePairsF bd a Ao Bo).filter
           (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card)).card : ℝ)
-          * (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+          * (C * (Real.exp (2 * β) - 1) ^ n
             * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) := by
         rw [Finset.sum_const, nsmul_eq_mul]
     _ ≤ ((4 * (touchDeg bd + 1) ^ 2 : ℕ) : ℝ) ^ (n + (Ao ∪ Bo).card)
-          * (2 ^ (Ao.card + Bo.card + 1) * (Real.exp (2 * β) - 1) ^ n
+          * (C * (Real.exp (2 * β) - 1) ^ n
             * Real.exp (4 * β * (touchDeg bd : ℝ)) ^ (n + (Ao ∪ Bo).card)) :=
         mul_le_mul_of_nonneg_right hcount hnn
-    _ = corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+    _ = corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
           * coreRate (touchDeg bd) β ^ n := by
         rw [hL]
-        unfold corePrefactorF coreRate
+        unfold corePrefactorG coreRate
         exact assembly_arith_gen _ _ _ _ _ _
+
+#print axioms corePairsF_fiber_sum_le_of_bound
+
+open scoped Classical in
+/-- **One fibre of the core sum, for finset anchors.** Given `Nc ≠ 0`, `a ∈ Ao`, `0 ≤ β` and
+`e^{2β} − 1 ≤ 1`, the cores whose span has exactly `n + (Ao ∪ Bo).card` plaquettes contribute at most
+`corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card * coreRate (touchDeg bd) β ^ n`.
+
+The same argument as `corePairs_fiber_sum_le`, with `(Ao ∪ Bo).card` in place of the two anchors and
+`pairTermF_abs_le` and `card_corePairsF_span_le` in place of their singleton counterparts. The fibre
+is indexed by an equation rather than a subtraction, so no lower bound on the span is needed.
+
+DERIVED: the first `0` is `Nc ≠ 0`, the second the sign hypothesis `0 ≤ β`. The `2` in `e^{2β}` and
+the `1`s in `hq1` are `subset_weight_bound`'s activated weight and its bound at the geometric
+threshold, supplied by `exp_sub_one_le_one_of_coreRate` at the callers. The `4` in the hard-core
+exponent is `hard_core_outside_sq_div_partition_sq_le`'s. -/
+theorem corePairsF_fiber_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
+    {β : ℝ} (hβ : 0 ≤ β) (hq1 : Real.exp (2 * β) - 1 ≤ 1) (n : ℕ) :
+    ∑ c ∈ (corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card = n + (Ao ∪ Bo).card),
+      |pairTermF (Nc := Nc) bd Ao Bo β c|
+        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ n :=
+  corePairsF_fiber_sum_le_of_bound bd ha hβ hq1 (by positivity) (pairTermF (Nc := Nc) bd Ao Bo β)
+    (fun c => by
+      have h := pairTermF_abs_le (Nc := Nc) hN bd Ao Bo β c
+      rwa [abs_of_nonneg hβ] at h) n
 
 #print axioms corePairsF_fiber_sum_le
 
@@ -6815,6 +7169,122 @@ noncomputable def coreConstF (K : ℕ) (β : ℝ) (na nb u : ℕ) : ℝ :=
   corePrefactorF K β na nb u / (1 - coreRate K β)
 
 open scoped Classical in
+/-- **The core sum for any summand with a per-term bound.** Given `a ∈ Ao`, `0 ≤ β`, `0 ≤ C`,
+`|g c| ≤ C · (e^{2β} − 1)^(|c.1| + |c.2|)` for every pair, `coreRate (touchDeg bd) β < 1`,
+`|Ao ∪ Bo| ≤ k + 2`, and every core with `g c ≠ 0` spanning at least `k + 2` plaquettes,
+
+    ∑ c ∈ corePairsF bd a Ao Bo, |g c| · e^{4β · touchDeg · |span c|}
+      ≤ coreConstG C (touchDeg bd) β |Ao ∪ Bo| · coreRate (touchDeg bd) β ^ (k + 2 − |Ao ∪ Bo|).
+
+`corePairsF_sum_le` is this at `pairTermF`; `wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow` uses it
+at `pairTermObs` with `C = 2 c₁ c₂`.
+
+DERIVED: the `2` in `k + 2` is the two anchors every core contains; the `2` in `e^{2β}` and the `1`
+subtracted in `hg` are `subset_weight_bound`'s; the `4` in `4β` is
+`hard_core_outside_sq_div_partition_sq_le`'s; the `0` is the sign hypothesis on `β` and on `C`; the
+`1` in `< 1` is the geometric ratio's bound. -/
+theorem corePairsF_sum_le_of_bound (bd : Pq → List (Lk × Bool))
+    {a : Pq} {Ao Bo : Finset Pq} (ha : a ∈ Ao)
+    {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (touchDeg bd) β < 1) {C : ℝ} (hC : 0 ≤ C)
+    (g : Finset Pq × Finset Pq → ℝ)
+    (hg : ∀ c, |g c| ≤ C * (Real.exp (2 * β) - 1) ^ (c.1.card + c.2.card)) (k : ℕ)
+    (hu : (Ao ∪ Bo).card ≤ k + 2)
+    (hlow : ∀ c ∈ corePairsF bd a Ao Bo, g c ≠ 0 → k + 2 ≤ (coreSpanF Ao Bo c).card) :
+    ∑ c ∈ corePairsF bd a Ao Bo, |g c|
+        * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ coreConstG C (touchDeg bd) β (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+  classical
+  have hq1 := exp_sub_one_le_one_of_coreRate (touchDeg bd) hβ hr
+  have hr0 : 0 ≤ coreRate (touchDeg bd) β := coreRate_nonneg _ hβ
+  have hmaps : ∀ c ∈ corePairsF bd a Ao Bo,
+      (coreSpanF Ao Bo c).card - (k + 2) ∈ Finset.range (Fintype.card Pq + 1) := by
+    intro c _
+    rw [Finset.mem_range]
+    have h : (coreSpanF Ao Bo c).card ≤ (Finset.univ : Finset Pq).card :=
+      Finset.card_le_card (Finset.subset_univ _)
+    rw [Finset.card_univ] at h
+    omega
+  have hfib := (Finset.sum_fiberwise_of_maps_to hmaps
+    (fun c => |g c|
+      * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)))).symm
+  rw [hfib]
+  have hstep : ∀ j ∈ Finset.range (Fintype.card Pq + 1),
+      ∑ c ∈ (corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+        |g c|
+          * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+      ≤ (corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+          * coreRate (touchDeg bd) β ^ j := by
+    intro j _
+    have hsub : (((corePairsF bd a Ao Bo).filter
+        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j)).filter (fun c => g c ≠ 0))
+        ⊆ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card
+            = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card) := by
+      intro c hc
+      simp only [Finset.mem_filter] at hc ⊢
+      refine ⟨hc.1.1, ?_⟩
+      have h1 := hlow c hc.1.1 hc.2
+      have h2 := hc.1.2
+      -- `hu` is spent here: without `(Ao ∪ Bo).card ≤ k + 2` the truncated subtraction
+      -- `k + 2 - (Ao ∪ Bo).card` collapses to `0` and this equation is false. `omega` reads it
+      -- from the context, so no name appears.
+      omega
+    have hmono : ∑ c ∈ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+          |g c|
+            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
+            (fun c => (coreSpanF Ao Bo c).card
+              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
+            |g c|
+              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) := by
+      rw [← Finset.sum_filter_of_ne (p := fun c => g c ≠ 0) (fun c _ hf hg0 => hf (by
+        rw [hg0, abs_zero, zero_mul]))]
+      exact Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (fun c _ _ => mul_nonneg (abs_nonneg _) (Real.exp_pos _).le)
+    have h := corePairsF_fiber_sum_le_of_bound (Bo := Bo) bd ha hβ hq1 hC g hg
+      (k + 2 - (Ao ∪ Bo).card + j)
+    rw [pow_add] at h
+    calc ∑ c ∈ (corePairsF bd a Ao Bo).filter
+          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
+          |g c|
+            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
+        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
+            (fun c => (coreSpanF Ao Bo c).card
+              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
+            |g c|
+              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) := hmono
+      _ ≤ corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+            * (coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card)
+              * coreRate (touchDeg bd) β ^ j) := h
+      _ = (corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+            * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+            * coreRate (touchDeg bd) β ^ j := by ring
+  refine le_trans (Finset.sum_le_sum hstep) ?_
+  rw [← Finset.mul_sum]
+  have hpre : 0 ≤ corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+      * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) :=
+    mul_nonneg (by unfold corePrefactorG; exact mul_nonneg (mul_nonneg hC (by positivity)) (by positivity))
+      (pow_nonneg hr0 _)
+  have hgeom := geom_sum_le_inv_one_sub_asm hr0 hr (Fintype.card Pq + 1)
+  calc (corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+        * ∑ j ∈ Finset.range (Fintype.card Pq + 1), coreRate (touchDeg bd) β ^ j
+      ≤ (corePrefactorG C (touchDeg bd) β (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
+          * (1 - coreRate (touchDeg bd) β)⁻¹ := mul_le_mul_of_nonneg_left hgeom hpre
+    _ = coreConstG C (touchDeg bd) β (Ao ∪ Bo).card
+          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+        unfold coreConstG
+        rw [div_eq_mul_inv]
+        ring
+
+#print axioms corePairsF_sum_le_of_bound
+
+open scoped Classical in
 /-- **The core sum, resummed, for finset anchors.** Given `Nc ≠ 0`, `a ∈ Ao`, `0 ≤ β`,
 `coreRate (touchDeg bd) β < 1`, `(Ao ∪ Bo).card ≤ k + 2`, and `hlow` placing every core's span above
 `k + 2`,
@@ -6845,93 +7315,271 @@ theorem corePairsF_sum_le (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
     ∑ c ∈ corePairsF bd a Ao Bo, |pairTermF (Nc := Nc) bd Ao Bo β c|
         * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
       ≤ coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
-  classical
-  have hq1 := exp_sub_one_le_one_of_coreRate (touchDeg bd) hβ hr
-  have hr0 : 0 ≤ coreRate (touchDeg bd) β := coreRate_nonneg _ hβ
-  have hmaps : ∀ c ∈ corePairsF bd a Ao Bo,
-      (coreSpanF Ao Bo c).card - (k + 2) ∈ Finset.range (Fintype.card Pq + 1) := by
-    intro c _
-    rw [Finset.mem_range]
-    have h : (coreSpanF Ao Bo c).card ≤ (Finset.univ : Finset Pq).card :=
-      Finset.card_le_card (Finset.subset_univ _)
-    rw [Finset.card_univ] at h
-    omega
-  have hfib := (Finset.sum_fiberwise_of_maps_to hmaps
-    (fun c => |pairTermF (Nc := Nc) bd Ao Bo β c|
-      * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)))).symm
-  rw [hfib]
-  have hstep : ∀ j ∈ Finset.range (Fintype.card Pq + 1),
-      ∑ c ∈ (corePairsF bd a Ao Bo).filter
-        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
-        |pairTermF (Nc := Nc) bd Ao Bo β c|
-          * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
-      ≤ (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
-          * coreRate (touchDeg bd) β ^ j := by
-    intro j _
-    have hsub : ((corePairsF bd a Ao Bo).filter
-        (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j))
-        ⊆ (corePairsF bd a Ao Bo).filter
-          (fun c => (coreSpanF Ao Bo c).card
-            = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card) := by
-      intro c hc
-      rw [Finset.mem_filter] at hc ⊢
-      refine ⟨hc.1, ?_⟩
-      have h1 := hlow c hc.1
-      have h2 := hc.2
-      -- `hu` is spent here: without `(Ao ∪ Bo).card ≤ k + 2` the truncated subtraction
-      -- `k + 2 - (Ao ∪ Bo).card` collapses to `0` and this equation is false. `omega` reads it
-      -- from the context, so no name appears.
-      omega
-    have hmono : ∑ c ∈ (corePairsF bd a Ao Bo).filter
-          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
-          |pairTermF (Nc := Nc) bd Ao Bo β c|
-            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
-        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
-            (fun c => (coreSpanF Ao Bo c).card
-              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
-            |pairTermF (Nc := Nc) bd Ao Bo β c|
-              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) :=
-      Finset.sum_le_sum_of_subset_of_nonneg hsub
-        (fun c _ _ => mul_nonneg (abs_nonneg _) (Real.exp_pos _).le)
-    have h := corePairsF_fiber_sum_le (Nc := Nc) (Bo := Bo) hN bd ha hβ hq1
-      (k + 2 - (Ao ∪ Bo).card + j)
-    rw [pow_add] at h
-    calc ∑ c ∈ (corePairsF bd a Ao Bo).filter
-          (fun c => (coreSpanF Ao Bo c).card - (k + 2) = j),
-          |pairTermF (Nc := Nc) bd Ao Bo β c|
-            * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ))
-        ≤ ∑ c ∈ (corePairsF bd a Ao Bo).filter
-            (fun c => (coreSpanF Ao Bo c).card
-              = (k + 2 - (Ao ∪ Bo).card + j) + (Ao ∪ Bo).card),
-            |pairTermF (Nc := Nc) bd Ao Bo β c|
-              * Real.exp (4 * β * ((touchDeg bd * (coreSpanF Ao Bo c).card : ℕ) : ℝ)) := hmono
-      _ ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-            * (coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card)
-              * coreRate (touchDeg bd) β ^ j) := h
-      _ = (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-            * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
-            * coreRate (touchDeg bd) β ^ j := by ring
-  refine le_trans (Finset.sum_le_sum hstep) ?_
-  rw [← Finset.mul_sum]
-  have hpre : 0 ≤ corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-      * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) :=
-    mul_nonneg (le_trans zero_le_one (one_le_corePrefactorF _ hβ _ _ _)) (pow_nonneg hr0 _)
-  have hgeom := geom_sum_le_inv_one_sub_asm hr0 hr (Fintype.card Pq + 1)
-  calc (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
-        * ∑ j ∈ Finset.range (Fintype.card Pq + 1), coreRate (touchDeg bd) β ^ j
-      ≤ (corePrefactorF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card))
-          * (1 - coreRate (touchDeg bd) β)⁻¹ := mul_le_mul_of_nonneg_left hgeom hpre
-    _ = coreConstF (touchDeg bd) β Ao.card Bo.card (Ao ∪ Bo).card
-          * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
-        unfold coreConstF
-        rw [div_eq_mul_inv]
-        ring
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) :=
+  corePairsF_sum_le_of_bound bd ha hβ hr (by positivity) (pairTermF (Nc := Nc) bd Ao Bo β)
+    (fun c => by
+      have h := pairTermF_abs_le (Nc := Nc) hN bd Ao Bo β c
+      rwa [abs_of_nonneg hβ] at h) k hu (fun c hc _ => hlow c hc)
 
 #print axioms corePairsF_sum_le
+
+/-! #### The cluster bound for bounded local observables
+
+A local observable enters the family resummation through an anchor set `Ao` containing its halo,
+the plaquettes whose boundary meets its link support. Every plaquette outside a core that contains
+both anchor sets avoids both supports, so `pairTermObs` factors through that core exactly as
+`pairTermF` does, and the family counting applies unchanged with the per-term constant `2 c₁ c₂`.
+The anchors are free beyond containing the halos and being touch-connected; `BoxCube.cubePlaq` is the
+choice in a `ℤ⁴` box. -/
+
+open scoped Classical in
+/-- The halo of a link set: the plaquettes whose boundary word uses one of its links.
+
+DERIVED: no numeral. -/
+noncomputable def linkHalo (bd : Pq → List (Lk × Bool)) (S : Finset Lk) : Finset Pq :=
+  Finset.univ.filter (fun p => ∃ l ∈ linkSupp bd p, l ∈ S)
+
+open scoped Classical in
+/-- **`p ∈ linkHalo bd S ↔ ∃ l ∈ linkSupp bd p, l ∈ S`**, the defining filter unfolded.
+
+DERIVED: no numeral. -/
+theorem mem_linkHalo {bd : Pq → List (Lk × Bool)} {S : Finset Lk} {p : Pq} :
+    p ∈ linkHalo bd S ↔ ∃ l ∈ linkSupp bd p, l ∈ S := by
+  unfold linkHalo; simp
+
+#print axioms mem_linkHalo
+
+open scoped Classical in
+/-- **A pair term of two local observables factors through any core containing both halos.** With
+`linkHalo Sa ⊆ Ao`, `linkHalo Sb ⊆ Bo`, `A ⊇ Ao ∪ Bo` and no touch across `A` inside
+`E ∪ F ∪ (Ao ∪ Bo)`,
+
+    pairTermObs (E, F) = pairTermObs (E ∩ A, F ∩ A) · (zw ∅ (E \ A) · zw ∅ (F \ A)).
+
+A plaquette outside `A` is outside both halos, so it uses no link of `Sa ∪ Sb`; that is the support
+condition of `pairTermObs_eq_core_mul_outside`, and `zwFull_one_eq_zw_empty` rewrites the outside
+weights. This is the factorisation `bridging_sum_eq_core_sum_of_fac` takes.
+
+DERIVED: no numeral. -/
+theorem pairTermObs_fac_halo (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk}
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo)
+    (E F A : Finset Pq)
+    (hclosed : ∀ p ∈ (E ∪ F ∪ (Ao ∪ Bo)) ∩ A,
+      ∀ r ∈ (E ∪ F ∪ (Ao ∪ Bo)) \ A, ¬ Touch bd p r)
+    (hA : Ao ∪ Bo ⊆ A) :
+    pairTermObs (Nc := Nc) bd O₁ O₂ β (E, F)
+      = pairTermObs (Nc := Nc) bd O₁ O₂ β (E ∩ A, F ∩ A)
+        * (zw (Nc := Nc) bd β ∅ (E \ A) * zw (Nc := Nc) bd β ∅ (F \ A)) := by
+  rw [← zwFull_one_eq_zw_empty, ← zwFull_one_eq_zw_empty]
+  refine pairTermObs_eq_core_mul_outside (Nc := Nc) bd β h₁ h₂ E F A
+    (fun p hp r hr => hclosed p ?_ r ?_) (fun r hr l hl hlS => ?_)
+  · simp only [Finset.mem_inter, Finset.mem_union] at hp ⊢
+    tauto
+  · simp only [Finset.mem_sdiff, Finset.mem_union] at hr ⊢
+    tauto
+  · have hrA : r ∉ A := (Finset.mem_sdiff.mp hr).2
+    apply hrA
+    rcases Finset.mem_union.mp hlS with h | h
+    · exact hA (Finset.mem_union_left _ (hAo (mem_linkHalo.mpr ⟨l, hl, h⟩)))
+    · exact hA (Finset.mem_union_right _ (hBo (mem_linkHalo.mpr ⟨l, hl, h⟩)))
+
+#print axioms pairTermObs_fac_halo
+
+open scoped Classical in
+/-- **A bridging configuration connects the two anchor sets.** Let `Ao ⊇ linkHalo Sa` and
+`Bo ⊇ linkHalo Sb` be touch-connected from `a` and `b`. If some plaquette of the separator grown from
+`Sa` in `V` carries a link of `Sb`, then every plaquette of `Ao ∪ Bo` is reachable from `a` inside
+`V ∪ Ao ∪ Bo`: `a` reaches the separator's seed through `Ao`, the seed reaches the bridging
+plaquette inside `V`, and that plaquette reaches every plaquette of `Bo` through `b`.
+
+DERIVED: no numeral. -/
+theorem reach_halos_of_bridging (bd : Pq → List (Lk × Bool)) {Sa Sb : Finset Lk}
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo) {a b : Pq}
+    (hconnA : ∀ p ∈ Ao, Reach bd (Ao) a p)
+    (hconnB : ∀ p ∈ Bo, Reach bd (Bo) b p) (V : Finset Pq)
+    (hbr : ¬ ∀ p ∈ V ∩ sepOfLinks bd V Sa, ∀ l ∈ linkSupp bd p, l ∉ Sb) :
+    ∀ p ∈ Ao ∪ Bo,
+      Reach bd (V ∪ (Ao ∪ Bo)) a p := by
+  classical
+  push_neg at hbr
+  obtain ⟨p, hp, l, hl, hlb⟩ := hbr
+  have hpsep := (Finset.mem_inter.mp hp).2
+  unfold sepOfLinks at hpsep
+  obtain ⟨-, p', hp', hreach⟩ := mem_compsMeet.mp hpsep
+  obtain ⟨-, l', hl', hl'a⟩ := mem_plaqsMeetingLinks.mp hp'
+  have hW : ∀ X : Finset Pq, X ⊆ V → X ⊆ V ∪ (Ao ∪ Bo) :=
+    fun X hX => hX.trans Finset.subset_union_left
+  have hHa : Ao ⊆ V ∪ (Ao ∪ Bo) :=
+    fun x hx => Finset.mem_union_right _ (Finset.mem_union_left _ hx)
+  have hHb : Bo ⊆ V ∪ (Ao ∪ Bo) :=
+    fun x hx => Finset.mem_union_right _ (Finset.mem_union_right _ hx)
+  have hp'H : p' ∈ Ao := hAo (mem_linkHalo.mpr ⟨l', hl', hl'a⟩)
+  have hpH : p ∈ Bo := hBo (mem_linkHalo.mpr ⟨l, hl, hlb⟩)
+  have r1 := reach_mono_crs bd hHa (hconnA p' hp'H)
+  have r2 := reach_mono_crs bd (hW V (Finset.Subset.refl V)) hreach
+  have r3 := reach_symm (reach_mono_crs bd hHb (hconnB p hpH))
+  have hab : Reach bd (V ∪ (Ao ∪ Bo)) a b :=
+    Relation.ReflTransGen.trans (Relation.ReflTransGen.trans r1 r2) r3
+  intro x hx
+  rcases Finset.mem_union.mp hx with hx | hx
+  · exact reach_mono_crs bd hHa (hconnA x hx)
+  · exact Relation.ReflTransGen.trans hab (reach_mono_crs bd hHb (hconnB x hx))
+
+#print axioms reach_halos_of_bridging
+
+open scoped Classical in
+/-- **The bridging sum is the sum over configurations connecting the anchors.** Given `Disjoint Sa Sb`,
+`LocalOnLinks Sa O₁`, `LocalOnLinks Sb O₂`, and anchor sets `Ao ⊇ linkHalo Sa`, `Bo ⊇ linkHalo Sb`
+touch-connected from `a` and `b`,
+the sum of `pairTermObs` over the bridging pairs of `wilsonCorrConnObs_eq_bridging_sumObs` equals its
+sum over the pairs in which every plaquette of `Ao ∪ Bo` is reachable from `a`, the filter
+`bridging_sum_eq_core_sum_of_fac` resums. Every bridging pair lies in the second family
+(`reach_halos_of_bridging`); the rest of the second family is non-bridging and fixed by the pair's
+union, so it cancels (`nonbridging_sum_eq_zeroObs_of`).
+
+DERIVED: no numeral. -/
+theorem bridging_sumObs_eq_reach_sum (bd : Pq → List (Lk × Bool)) (β : ℝ)
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo) {a b : Pq}
+    (hconnA : ∀ p ∈ Ao, Reach bd (Ao) a p)
+    (hconnB : ∀ p ∈ Bo, Reach bd (Bo) b p) :
+    ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ¬ ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa,
+          ∀ l ∈ linkSupp bd p, l ∉ Sb),
+      pairTermObs (Nc := Nc) bd O₁ O₂ β q
+    = ∑ q ∈ (Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+        (fun q => ∀ p ∈ Ao ∪ Bo,
+          Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p),
+      pairTermObs (Nc := Nc) bd O₁ O₂ β q := by
+  classical
+  have hz := nonbridging_sum_eq_zeroObs_of (Nc := Nc) bd β O₁ O₂ Sa Sb hab h₁ h₂
+    (fun V => ∀ p ∈ Ao ∪ Bo,
+      Reach bd (V ∪ (Ao ∪ Bo)) a p)
+  rw [← Finset.sum_filter_add_sum_filter_not ((Finset.univ : Finset (Finset Pq × Finset Pq)).filter
+      (fun q => ∀ p ∈ Ao ∪ Bo,
+        Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a p))
+    (fun q => ∀ p ∈ (q.1 ∪ q.2) ∩ sepOfLinks bd (q.1 ∪ q.2) Sa, ∀ l ∈ linkSupp bd p, l ∉ Sb),
+    Finset.filter_filter, Finset.filter_filter]
+  have e : ∀ {X x y : ℝ}, x = 0 → X = y → X = x + y := fun hx hy => by rw [hx, hy, zero_add]
+  -- `convert`: the two filters agree up to their `Decidable` instances
+  refine e (by convert hz) ?_
+  refine Finset.sum_congr (Finset.filter_congr (fun q _ => ?_)) (fun _ _ => rfl)
+  exact ⟨fun h => ⟨reach_halos_of_bridging bd hAo hBo hconnA hconnB (q.1 ∪ q.2) h, h⟩, fun h => h.2⟩
+
+#print axioms bridging_sumObs_eq_reach_sum
+
+open scoped Classical in
+/-- **The connected correlation of two bounded local observables is bounded by their core sum.**
+With `Nc ≠ 0`, `0 ≤ β`, disjoint supports `Sa`, `Sb`, bounds `c₁`, `c₂`, and anchor sets
+`Ao ⊇ linkHalo Sa`, `Bo ⊇ linkHalo Sb` touch-connected from distinct base points `a ∈ Ao`, `b ∈ Bo`,
+
+    |wilsonCorrConnObs bd O₁ O₂ β|  ≤  ∑ c ∈ corePairsF bd a Ao Bo,
+                                      |pairTermObs c| · e^{4β · touchDeg · |span c|}.
+
+`wilsonCorrConnObs_eq_bridging_sumObs` expands, `bridging_sumObs_eq_reach_sum` changes the filter,
+`bridging_sum_eq_core_sum_of_fac` regroups by core through `pairTermObs_fac_halo`, and
+`hard_core_outside_sq_div_partition_sq_le` cancels `Z²` against each core's outside sums.
+
+DERIVED: the `0`s are `Nc ≠ 0` and `0 ≤ β`. The `4` is
+`hard_core_outside_sq_div_partition_sq_le`'s, the Wilson density's `2` doubled by the two outside
+sums. -/
+theorem wilsonCorrConnObs_abs_le_core_sum (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {c₁ c₂ : ℝ} (hc₁ : ∀ U, |O₁ U| ≤ c₁) (hc₂ : ∀ U, |O₂ U| ≤ c₂)
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b)
+    (hconnA : ∀ p ∈ Ao, Reach bd (Ao) a p)
+    (hconnB : ∀ p ∈ Bo, Reach bd (Bo) b p)
+    {β : ℝ} (hβ : 0 ≤ β) :
+    |wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β|
+      ≤ ∑ c ∈ corePairsF bd a (Ao) (Bo),
+          |pairTermObs (Nc := Nc) bd O₁ O₂ β c|
+            * Real.exp (4 * β * ((touchDeg bd
+                * (coreSpanF (Ao) (Bo) c).card : ℕ) : ℝ)) := by
+  classical
+  have hZpos : 0 < (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+      (probHaar (MassGap.SUN.SU Nc)) β := wilsonSystem_partition_pos hN bd β
+  rw [wilsonCorrConnObs_eq_bridging_sumObs hN bd O₁ O₂ Sa Sb hab h₁ h₂ hc₁ hc₂ β,
+    bridging_sumObs_eq_reach_sum bd β hab h₁ h₂ hAo hBo hconnA hconnB,
+    bridging_sum_eq_core_sum_of_fac bd Ao Bo ha
+      hb hne (zw (Nc := Nc) bd β ∅) (zw (Nc := Nc) bd β ∅) (pairTermObs (Nc := Nc) bd O₁ O₂ β)
+      (fun E F A h1 h2 => pairTermObs_fac_halo bd β h₁ h₂ hAo hBo E F A h1 h2),
+    Finset.sum_div]
+  refine le_trans (Finset.abs_sum_le_sum_abs _ _) (Finset.sum_le_sum ?_)
+  intro c _
+  set S := ∑ E ∈ (outsideOf bd (coreSpanF (Ao) (Bo) c)).powerset,
+    zw (Nc := Nc) bd β ∅ E with hSdef
+  set Z := (wilsonSystem bd (wilsonDensity (N := Nc))).partition
+    (probHaar (MassGap.SUN.SU Nc)) β with hZdef
+  have hsq := hard_core_outside_sq_div_partition_sq_le hN bd hβ
+    (coreSpanF (Ao) (Bo) c)
+  have hone := one_le_outside_sum_div_partition hN bd hβ
+    (outsideOf bd (coreSpanF (Ao) (Bo) c))
+  have hSpos : 0 < S := by
+    have h1 : 1 * Z ≤ S := (le_div_iff₀ hZpos).mp hone
+    rw [one_mul] at h1
+    exact lt_of_lt_of_le hZpos h1
+  have hrnn : 0 ≤ S * S / Z ^ 2 := div_nonneg (by positivity) (by positivity)
+  calc |pairTermObs (Nc := Nc) bd O₁ O₂ β c * (S * S) / Z ^ 2|
+      = |pairTermObs (Nc := Nc) bd O₁ O₂ β c| * (S * S / Z ^ 2) := by
+        rw [mul_div_assoc, abs_mul, abs_of_nonneg hrnn]
+    _ ≤ |pairTermObs (Nc := Nc) bd O₁ O₂ β c|
+          * Real.exp (4 * β * ((touchDeg bd
+              * (coreSpanF (Ao) (Bo) c).card : ℕ) : ℝ)) :=
+        mul_le_mul_of_nonneg_left hsq (abs_nonneg _)
+
+#print axioms wilsonCorrConnObs_abs_le_core_sum
+
+open scoped Classical in
+/-- **L2: the cluster bound for two bounded local observables.** Under the hypotheses of
+`wilsonCorrConnObs_abs_le_core_sum`, with `coreRate (touchDeg bd) β < 1`, anchors of total size
+`|Ao ∪ Bo| ≤ k + 2`, and every core spanning at least `k + 2` plaquettes,
+
+    |wilsonCorrConnObs bd O₁ O₂ β|
+      ≤ coreConstG (2 c₁ c₂) (touchDeg bd) β |Ao ∪ Bo| · coreRate (touchDeg bd) β ^ (k + 2 − |Ao ∪ Bo|).
+
+The rate is the plaquette-family rate; the observable enters through its sup-norm bound and the size
+of its anchor, which is the per-vector constant the gap capstone takes. `pairTermObs_abs_le` supplies
+the per-term bound and `corePairsF_sum_le_of_bound` the count.
+
+DERIVED: the `2` in `2 c₁ c₂` is `pairTermObs_abs_le`'s two products; the `2` in `k + 2` is the two
+anchors every core contains; the `0`s are `Nc ≠ 0` and `0 ≤ β`; the `1` is the geometric ratio's
+bound. -/
+theorem wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {c₁ c₂ : ℝ} (hc₁ : ∀ U, |O₁ U| ≤ c₁) (hc₂ : ∀ U, |O₂ U| ≤ c₂)
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo) (hne : a ≠ b)
+    (hconnA : ∀ p ∈ Ao, Reach bd (Ao) a p)
+    (hconnB : ∀ p ∈ Bo, Reach bd (Bo) b p)
+    {β : ℝ} (hβ : 0 ≤ β) (hr : coreRate (touchDeg bd) β < 1) (k : ℕ)
+    (hu : (Ao ∪ Bo).card ≤ k + 2)
+    (hlow : ∀ c ∈ corePairsF bd a (Ao) (Bo),
+      k + 2 ≤ (coreSpanF (Ao) (Bo) c).card) :
+    |wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β|
+      ≤ coreConstG (2 * (c₁ * c₂)) (touchDeg bd) β (Ao ∪ Bo).card
+        * coreRate (touchDeg bd) β ^ (k + 2 - (Ao ∪ Bo).card) := by
+  have h0₁ : 0 ≤ c₁ := (abs_nonneg _).trans (hc₁ (fun _ => 1))
+  have h0₂ : 0 ≤ c₂ := (abs_nonneg _).trans (hc₂ (fun _ => 1))
+  refine le_trans (wilsonCorrConnObs_abs_le_core_sum hN bd hab h₁ h₂ hc₁ hc₂ hAo hBo ha hb hne
+    hconnA hconnB hβ) ?_
+  exact corePairsF_sum_le_of_bound bd ha hβ hr (mul_nonneg zero_le_two (mul_nonneg h0₁ h0₂))
+    (pairTermObs (Nc := Nc) bd O₁ O₂ β)
+    (fun c => by
+      have h := pairTermObs_abs_le hN bd hc₁ hc₂ β c
+      rwa [abs_of_nonneg hβ] at h) k hu (fun c hc _ => hlow c hc)
+
+#print axioms wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow
 
 open scoped Classical in
 /-- **The connected correlation of two plaquette FAMILIES decays geometrically.** The `Finset` route,
@@ -7335,6 +7983,93 @@ theorem wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le (hN : Nc ≠ 0)
   exact mul_le_mul hCC hpow (pow_nonneg (coreRate_nonneg _ hβ) k) hCK
 
 #print axioms wilsonCorrConn_abs_le_coreConst_mul_rate_pow_of_le
+
+/-- **`corePrefactorG` is monotone in the touch degree**, at `0 ≤ C` and `0 ≤ β`: both the branching
+factor `4 (K + 1)²` and the hard-core factor `e^{4βK}` grow with `K`.
+
+DERIVED: the `4`, `1` and `2` are `corePrefactorG`'s; the `0`s are the sign hypotheses. -/
+theorem corePrefactorG_mono {C : ℝ} (hC : 0 ≤ C) {β : ℝ} (hβ : 0 ≤ β) {K K' : ℕ}
+    (hK : K ≤ K') (u : ℕ) : corePrefactorG C K β u ≤ corePrefactorG C K' β u := by
+  have hc : (K : ℝ) ≤ (K' : ℝ) := Nat.cast_le.mpr hK
+  have hKnn : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+  have hA : 4 * ((K : ℝ) + 1) ^ 2 ≤ 4 * ((K' : ℝ) + 1) ^ 2 := by nlinarith
+  have hE : Real.exp (4 * β * (K : ℝ)) ≤ Real.exp (4 * β * (K' : ℝ)) :=
+    Real.exp_le_exp.mpr (by nlinarith)
+  unfold corePrefactorG
+  have h1 := pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ 4 * ((K : ℝ) + 1) ^ 2) hA u
+  have h2 := pow_le_pow_left₀ (Real.exp_pos _).le hE u
+  exact mul_le_mul (mul_le_mul_of_nonneg_left h1 hC) h2 (by positivity)
+    (mul_nonneg hC (by positivity))
+
+#print axioms corePrefactorG_mono
+
+/-- **`coreConstG` is monotone in the touch degree** below the geometric threshold: the prefactor grows
+(`corePrefactorG_mono`) and `1 − coreRate` shrinks (`coreRate_mono`).
+
+DERIVED: the `0`s are the sign hypotheses; the `1` is the geometric threshold. -/
+theorem coreConstG_mono {C : ℝ} (hC : 0 ≤ C) {β : ℝ} (hβ : 0 ≤ β) {K K' : ℕ} (hK : K ≤ K')
+    (hr' : coreRate K' β < 1) (u : ℕ) : coreConstG C K β u ≤ coreConstG C K' β u := by
+  have hrle := coreRate_mono hβ hK
+  have h1 : (0 : ℝ) < 1 - coreRate K' β := by linarith
+  have h2 : (0 : ℝ) < 1 - coreRate K β := by linarith
+  have hple := corePrefactorG_mono hC hβ hK u
+  have hP' : (0 : ℝ) ≤ corePrefactorG C K' β u := by
+    unfold corePrefactorG; exact mul_nonneg (mul_nonneg hC (by positivity)) (by positivity)
+  have hinv : (1 - coreRate K β)⁻¹ ≤ (1 - coreRate K' β)⁻¹ := inv_le_inv_asm h1 (by linarith)
+  unfold coreConstG
+  rw [div_eq_mul_inv, div_eq_mul_inv]
+  exact mul_le_mul hple hinv (inv_nonneg.mpr h2.le) hP'
+
+#print axioms coreConstG_mono
+
+open scoped Classical in
+/-- **L2 at separation `k`, for any touch-degree bound `K`.** Two bounded local observables on
+disjoint supports, with anchor sets `Ao ⊇ linkHalo Sa`, `Bo ⊇ linkHalo Sb` touch-connected from base
+points `a`, `b`, `b` outside the `k`-ball of `a`, and anchors of total size `u ≤ k + 2`, satisfy
+
+    |wilsonCorrConnObs bd O₁ O₂ β| ≤ coreConstG (2 c₁ c₂) K β u · coreRate K β ^ (k + 2 − u),
+
+`u = |Ao ∪ Bo|`, for every `K ≥ touchDeg bd` with `coreRate K β < 1`. Every
+core contains `a` and `b`, so it spans at least `k + 2` plaquettes
+(`coreSpanF_card_ge_of_not_mem_ball`); `coreRate_mono` and `coreConstG_mono` carry the bound to `K`.
+
+DERIVED: the `2` in `2 c₁ c₂` is `pairTermObs_abs_le`'s two products; the `2` in `k + 2` is the two
+base points; the `0`s are `Nc ≠ 0` and `0 ≤ β`; the `1` is the geometric threshold. -/
+theorem wilsonCorrConnObs_abs_le_of_not_mem_ball (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool))
+    {O₁ O₂ : (Lk → MassGap.SUN.SU Nc) → ℝ} {Sa Sb : Finset Lk} (hab : Disjoint Sa Sb)
+    (h₁ : LocalOnLinks (Nc := Nc) Sa O₁) (h₂ : LocalOnLinks (Nc := Nc) Sb O₂)
+    {c₁ c₂ : ℝ} (hc₁ : ∀ U, |O₁ U| ≤ c₁) (hc₂ : ∀ U, |O₂ U| ≤ c₂)
+    {Ao Bo : Finset Pq} (hAo : linkHalo bd Sa ⊆ Ao)
+    (hBo : linkHalo bd Sb ⊆ Bo)
+    {a b : Pq} (ha : a ∈ Ao) (hb : b ∈ Bo)
+    (hconnA : ∀ p ∈ Ao, Reach bd (Ao) a p)
+    (hconnB : ∀ p ∈ Bo, Reach bd (Bo) b p)
+    {β : ℝ} (hβ : 0 ≤ β) (K : ℕ) (hK : touchDeg bd ≤ K) (hr : coreRate K β < 1) (k : ℕ)
+    (hk : b ∉ ball bd a k) (hu : (Ao ∪ Bo).card ≤ k + 2) :
+    |wilsonCorrConnObs (Nc := Nc) bd O₁ O₂ β|
+      ≤ coreConstG (2 * (c₁ * c₂)) K β (Ao ∪ Bo).card
+        * coreRate K β ^ (k + 2 - (Ao ∪ Bo).card) := by
+  classical
+  have hne : a ≠ b := fun h => hk (h ▸ self_mem_ball bd a k)
+  have h0₁ : 0 ≤ c₁ := (abs_nonneg _).trans (hc₁ (fun _ => 1))
+  have h0₂ : 0 ≤ c₂ := (abs_nonneg _).trans (hc₂ (fun _ => 1))
+  have hC : (0 : ℝ) ≤ 2 * (c₁ * c₂) := mul_nonneg zero_le_two (mul_nonneg h0₁ h0₂)
+  have hrle := coreRate_mono hβ hK
+  have hrlt : coreRate (touchDeg bd) β < 1 := lt_of_le_of_lt hrle hr
+  have hbase := wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow hN bd hab h₁ h₂ hc₁ hc₂ hAo hBo ha hb hne
+    hconnA hconnB hβ hrlt k hu
+    (fun c hc => coreSpanF_card_ge_of_not_mem_ball bd ha hb hne k hk (mem_corePairsF.mp hc))
+  refine le_trans hbase ?_
+  have hCC := coreConstG_mono hC hβ hK hr (Ao ∪ Bo).card
+  have hpow := pow_le_pow_left₀ (coreRate_nonneg _ hβ) hrle
+    (k + 2 - (Ao ∪ Bo).card)
+  have hCK : (0 : ℝ) ≤ coreConstG (2 * (c₁ * c₂)) K β (Ao ∪ Bo).card := by
+    unfold coreConstG corePrefactorG
+    have : (0 : ℝ) < 1 - coreRate K β := by linarith
+    exact div_nonneg (mul_nonneg (mul_nonneg hC (by positivity)) (by positivity)) this.le
+  exact mul_le_mul hCC hpow (pow_nonneg (coreRate_nonneg _ hβ) _) hCK
+
+#print axioms wilsonCorrConnObs_abs_le_of_not_mem_ball
 
 end CoreAssembly
 

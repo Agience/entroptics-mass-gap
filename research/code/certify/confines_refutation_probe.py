@@ -42,16 +42,14 @@ negative at some lag is NOT an instance of the object the Lean statement is abou
 reports nonnegativity per point and never silently clips. A point with a negative lag is reported
 as INADMISSIBLE, which is a statement about the sample, not about the hypothesis.
 
-## WHY THE READ IS NOT TAKEN FROM THE LIBRARY HERE
+## Which part is the library's
 
-Entroptics is the method and a hand-rolled correlation normally reintroduces every choice the
-library exists to remove -- which distance, which normalisation, which window, which floor. None of
-those is free here. `cosAvgEven` is a FIXED FUNCTIONAL written down in Lean: the distance is the
-lattice lag, the normalisation is `sum_d rho(d)` (that is `readA`'s `p`), the window is the whole
-period `T`, and there is no floor in it at all. Evaluating a named Lean definition on a stored
-ensemble is not a read whose method is up for choice, and the library exposes no per-lag `rho(d)`
-primitive to take it from -- `entroptics.reads` is spectral- and aperture-valued. If any of those
-four ever becomes a choice, this file must move to the library.
+`rho(d)` is: it is the library's periodic lag profile, `entroptics_adapter.decay(phi.T,
+periodic=True, disconnected=<grand mean>)`, the same read `lattice_generator.connected_correlator`
+takes. What stays here is `cosAvgEven` itself, a FIXED FUNCTIONAL written down in Lean: the distance
+is the lattice lag, the normalisation is `sum_d rho(d)` (that is `readA`'s `p`), the window is the
+whole period `T`, and there is no floor in it at all. Evaluating a named Lean definition on a
+library-read profile leaves no method up for choice.
 """
 import io
 import json
@@ -68,6 +66,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import store_path                                        # noqa: E402  (needs the path above first)
+import entroptics_adapter as W                           # noqa: E402  THE WRAPPER: the lag read
 
 COLLECTION = "configs_paper83"
 #: DERIVED: the entropy floor itself, `exp(-kappa_0)` with `kappa_0 = (1/4) log 3` -- the constant
@@ -88,14 +87,16 @@ def lag_correlation(phi):
     The mean subtracted is the GRAND mean over configurations and timeslices: phi(t) has no
     preferred origin on a periodic lattice, so a per-configuration mean would remove the zero mode
     the denominator of cosAvg is built from.
+
+    The profile is the library's. `phi.T` because `decay` reads its FIRST axis as the ordered one,
+    so the configurations are its exchangeable channels; `periodic=True` because the lattice IS
+    periodic in t, so the wanted object is the CIRCULAR autocorrelation; `disconnected=` the grand
+    mean, for the reason above; and `/ n` because `decay` SUMS its channels, where rho is their mean.
     """
-    n, T = phi.shape
-    c = phi - phi.mean()
-    # The lattice IS periodic in t, so the wanted object is the CIRCULAR autocorrelation, which is
-    # the unpadded power spectrum transformed back. Zero-padding would give the linear one.
-    f = np.fft.rfft(c, n=T, axis=1)
-    per = np.fft.irfft((f * np.conj(f)).real, n=T, axis=1) / T
-    return per.mean(axis=0)
+    phi = np.asarray(phi, dtype=np.float64)
+    n = int(phi.shape[0])
+    prof = np.asarray(W.decay(phi.T, periodic=True, disconnected=float(phi.mean())))
+    return prof / n
 
 
 def cos_avg(rho):
@@ -178,10 +179,7 @@ def main():
         rho = lag_correlation(phi)
         val = cos_avg(rho)
 
-        boot = np.empty(BOOT)
-        for b in range(BOOT):
-            idx = RNG.integers(0, n, n)
-            boot[b] = cos_avg(lag_correlation(phi[idx]))
+        boot = W.bootstrap(phi, lambda s: cos_avg(lag_correlation(s)), draws=BOOT, rng=RNG)
         lo, hi = np.percentile(boot, [2.5, 97.5])
 
         # DERIVED: `readA` consumes `forall d, 0 <= rho d`; a negative lag makes the sample not

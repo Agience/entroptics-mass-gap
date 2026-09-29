@@ -116,27 +116,20 @@ def free_field(L):
                 M2=float((rho * np.minimum(d, L - d) ** 2).sum() / rho.sum()))
 
 
-def _profiles(arr, maxlag):
-    """The canonical direct-lag whitened profile of `ym_crossover_confinement_of_grid`, at this L."""
-    a = arr - arr.mean()
-    P = np.zeros((arr.shape[0], maxlag + 1))
-    P[:, 0] = (a * a).mean(axis=(1, 2, 3, 4))
-    for ax in (1, 2, 3):
-        for lag in range(1, maxlag + 1):
-            P[:, lag] += (a * np.roll(a, -lag, axis=ax)).mean(axis=(1, 2, 3, 4))
-    P[:, 1:] /= 3.0
-    return P
-
-
 def measured(base, group, L, beta):
-    """log(S(0)/S(2 pi / L)) on a released ensemble, the same functional as the exact half."""
+    """log(S(0)/S(2 pi / L)) on a released ensemble, the same functional as the exact half.
+
+    The profile is the canonical one, `ym_crossover_confinement_of_grid.per_config_profiles`, whose
+    lag read is the library's. It is imported here rather than at module scope so the exact half
+    above -- the half the paper's constants come from -- runs without the read layer installed."""
+    import ym_crossover_confinement_of_grid as CG
     files = []
     for hop in HOPS:
         files += glob.glob(f"{base}/{hop}/{group}_L{L}_b{beta:.2f}.s*.npy")
     if not files:
         return None
     arr = np.concatenate([np.load(f) for f in files], 0)[:NCAP]
-    rho_half = _profiles(arr, L // 2).mean(0)
+    rho_half = CG.per_config_profiles(arr).mean(0)
     rho_half = rho_half / rho_half[0]
     ring = np.array([rho_half[lag] if lag <= L // 2 else rho_half[L - lag] for lag in range(L)])
     d = np.arange(L)

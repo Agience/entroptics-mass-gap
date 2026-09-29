@@ -129,6 +129,28 @@ def LossStep (D : ℝ → Transfer.TransferData A) (a : ℝ → ℝ) (βUV : ℝ
     ∀ M : ℝ, TransferGap.GapAt (D β) (Real.exp (-(M * a β))) →
       TransferGap.GapAt (D β') (Real.exp (-((M - ε (a β)) * a β')))
 
+/-- **The block step clipped at a rate.** `LossStep` asked only at rates `M ≤ M₀`: from the gap at rate
+`e^{−M·a β}` at `β` to the gap at rate `e^{−(M − ε(a β))·a β'}` at `β'`, for every `M ≤ M₀`. The composition
+`gapAt_eventually_of_uv_ir_below` calls the step only at rates `M₀ − Σ ε ≤ M₀`, so this is all it consumes.
+`LossStep` at every rate forces `ε` to cover every fall of the true rate between the two couplings;
+the clipped step asks only that the rates up to `M₀` be carried.
+
+DERIVED: `2` is the block factor. CHOSEN: spacing ratios in `[1/2, 1]`, as in `LossStep`. -/
+def LossStepBelow (D : ℝ → Transfer.TransferData A) (a : ℝ → ℝ) (βUV : ℝ) (ε : ℝ → ℝ) (M₀ : ℝ) :
+    Prop :=
+  ∀ β β' : ℝ, βUV ≤ β → βUV ≤ β' → a β / 2 ≤ a β' → a β' ≤ a β →
+    ∀ M : ℝ, M ≤ M₀ → TransferGap.GapAt (D β) (Real.exp (-(M * a β))) →
+      TransferGap.GapAt (D β') (Real.exp (-((M - ε (a β)) * a β')))
+
+/-- `LossStep` gives the clipped step at every rate.
+
+DERIVED: no numeral. -/
+theorem lossStepBelow_of_lossStep (D : ℝ → Transfer.TransferData A) (a : ℝ → ℝ) (βUV : ℝ)
+    (ε : ℝ → ℝ) (h : LossStep D a βUV ε) (M₀ : ℝ) : LossStepBelow D a βUV ε M₀ :=
+  fun β β' h1 h2 h3 h4 M _ hg => h β β' h1 h2 h3 h4 M hg
+
+#print axioms lossStepBelow_of_lossStep
+
 /-- **The loss budget from a spacing.** The losses `ε` at the dyadic spacings `a₀, a₀/2, a₀/4, …` sum,
 over every initial segment, to at most `E`.
 
@@ -169,6 +191,33 @@ theorem gapAt_chain (D : ℕ → Transfer.TransferData A) (a e : ℕ → ℝ) (M
     exact h
 
 #print axioms gapAt_chain
+
+/-- **The chain of clipped lossy steps.** As `gapAt_chain`, with the step asked only at rates `M ≤ M₀` and
+non-negative losses: the rates `M₀ − Σ_{i<j} e i` the induction passes through are at most `M₀`.
+
+DERIVED: `0` is the base index and the sign of the losses; `1` is the step to the next index. -/
+theorem gapAt_chain_below (D : ℕ → Transfer.TransferData A) (a e : ℕ → ℝ) (M₀ : ℝ) (K : ℕ)
+    (he : ∀ j : ℕ, 0 ≤ e j)
+    (hbase : TransferGap.GapAt (D 0) (Real.exp (-(M₀ * a 0))))
+    (hstep : ∀ j : ℕ, j < K → ∀ M : ℝ, M ≤ M₀ → TransferGap.GapAt (D j) (Real.exp (-(M * a j))) →
+      TransferGap.GapAt (D (j + 1)) (Real.exp (-((M - e j) * a (j + 1))))) :
+    ∀ j : ℕ, j ≤ K →
+      TransferGap.GapAt (D j) (Real.exp (-((M₀ - ∑ i ∈ Finset.range j, e i) * a j))) := by
+  intro j
+  induction j with
+  | zero =>
+    intro _
+    rw [Finset.sum_range_zero, sub_zero]
+    exact hbase
+  | succ j ih =>
+    intro hj
+    have hle : M₀ - ∑ i ∈ Finset.range j, e i ≤ M₀ :=
+      sub_le_self _ (Finset.sum_nonneg (fun i _ => he i))
+    have h := hstep j (by omega) _ hle (ih (by omega))
+    rw [Finset.sum_range_succ, ← sub_sub]
+    exact h
+
+#print axioms gapAt_chain_below
 
 /-- **A step out of a gapless coupling holds with any non-negative loss.** If no `D β` with
 `β ≥ βUV` has `GapAt` at any rate `r` with `r² < 1`, the spacing is positive above `βUV`, and
@@ -298,6 +347,21 @@ largest physical rate attainable at spacing `a`, every conclusion is a rate at l
 DERIVED: `4` is the spacetime dimension; `0` is the excluded rank. The `2` is `LossStep`'s. -/
 def UVLossStep (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (βUV : ℝ) (ε : ℝ → ℝ) : Prop :=
   LossStep (fun β => periodicGaugeInvData τ p hN β) (aRun N) βUV ε
+
+/-- **The block step at the periodic data, clipped at `M₀`** (`LossStepBelow`).
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded rank. -/
+def UVLossStepBelow (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (βUV : ℝ) (ε : ℝ → ℝ) (M₀ : ℝ) : Prop :=
+  LossStepBelow (fun β => periodicGaugeInvData τ p hN β) (aRun N) βUV ε M₀
+
+/-- `UVLossStep` gives the clipped step at every rate (`lossStepBelow_of_lossStep`).
+
+DERIVED: `4` is the spacetime dimension; `0` is the excluded rank. -/
+theorem uvLossStepBelow_of_uvLossStep (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {βUV : ℝ} {ε : ℝ → ℝ}
+    (h : UVLossStep τ p hN βUV ε) (M₀ : ℝ) : UVLossStepBelow τ p hN βUV ε M₀ :=
+  lossStepBelow_of_lossStep _ _ _ _ h M₀
+
+#print axioms uvLossStepBelow_of_uvLossStep
 
 /-- **The UV input with vanishing losses.** Some threshold `βUV` and loss function `ε` have
 `VanishingLoss ε` and `UVLossStep τ p hN βUV ε`.
@@ -531,6 +595,124 @@ theorem gapAt_eventually_of_uv_ir (τ : Fin 4) (p : ℤ) (hN1 : 1 ≤ N) (hN : N
 
 #print axioms gapAt_eventually_of_uv_ir
 
+/-- **The composition from the clipped step.** As `gapAt_eventually_of_uv_ir`, with `UVLossStepBelow` at
+`M₀` and non-negative losses in place of `UVLossStep`: every rate the chain passes through is at most `M₀`.
+At `1 ≤ N`, a coupling `0 < β₀` with `βUV ≤ β₀`, a loss budget `E` for the dyadic tower below
+`aRun N β₀`, non-negative losses, `UVLossStepBelow τ p hN βUV ε M₀` and `IRGapAt τ p hN β₀ M₀`: at every
+large `β`, the periodic data has `GapAt` at rate `e^{−(M₀ − E)·aRun N β}`.
+
+The proof: couplings `γ i ≥ β₀` with `aRun N (γ i) = aRun N β₀ / 2ⁱ`, `γ 0 = β₀`
+(`AsymptoticScaling.exists_beta_aRun_eq`); a large `β` has `aRun N β ≤ aRun N β₀`
+(`WeakCouplingWindow.eventually_aRun_le`), so its octave `n` has
+`aRun N β₀ / 2ⁿ⁺¹ < aRun N β ≤ aRun N β₀ / 2ⁿ` (`pow_unbounded_of_one_lt`, `Nat.find`); the chain
+`γ 0 → … → γ n` of exact halvings (`gapAt_chain_below`) and one last step `γ n → β` lose
+`Σ_{i ≤ n} ε(aRun N β₀ / 2ⁱ) ≤ E`, and `GapStep.gapAt_mono` moves the rate to `e^{−(M₀ − E)·aRun N β}`.
+
+DERIVED: `4` is the spacetime dimension; `1` is the least colour count, for `aRun_pos`; `0` is the
+excluded rank and the sign of `β₀`; the `2` of the dyadic spacings is `LossStep`'s block factor. -/
+theorem gapAt_eventually_of_uv_ir_below (τ : Fin 4) (p : ℤ) (hN1 : 1 ≤ N) (hN : N ≠ 0)
+    {βUV β₀ M₀ E : ℝ} {ε : ℝ → ℝ} (hβ₀ : 0 < β₀) (hUVβ₀ : βUV ≤ β₀)
+    (hbudget : LossBudget ε (aRun N β₀) E) (hε : ∀ s : ℝ, 0 ≤ ε s)
+    (huv : UVLossStepBelow τ p hN βUV ε M₀)
+    (hir : IRGapAt τ p hN β₀ M₀) :
+    ∀ᶠ β in Filter.atTop, TransferGap.GapAt (periodicGaugeInvData τ p hN β)
+      (Real.exp (-((M₀ - E) * aRun N β))) := by
+  have ha₀ : 0 < aRun N β₀ := aRun_pos hN1 hβ₀
+  -- couplings at the dyadic spacings below `aRun N β₀`
+  have hgex : ∀ i : ℕ, ∃ g : ℝ, β₀ ≤ g ∧ aRun N g = aRun N β₀ / 2 ^ (i + 1) := by
+    intro i
+    have hlt : aRun N β₀ / 2 ^ (i + 1) < aRun N β₀ :=
+      div_lt_self ha₀ (one_lt_pow₀ (by norm_num : (1 : ℝ) < 2) (Nat.succ_ne_zero i))
+    exact exists_beta_aRun_eq hN1 (div_pos ha₀ (by positivity)) hlt
+  choose g hgβ hg using hgex
+  obtain ⟨γ, hγ0, hγβ, hγ⟩ : ∃ γ : ℕ → ℝ, γ 0 = β₀ ∧ (∀ i : ℕ, β₀ ≤ γ i) ∧
+      ∀ i : ℕ, aRun N (γ i) = aRun N β₀ / 2 ^ i :=
+    ⟨(fun i => match i with | 0 => β₀ | k + 1 => g k),
+     rfl,
+     fun i => by
+      cases i with
+      | zero => exact le_rfl
+      | succ k => exact hgβ k,
+     fun i => by
+      cases i with
+      | zero =>
+        show aRun N β₀ = aRun N β₀ / 2 ^ 0
+        rw [pow_zero, div_one]
+      | succ k =>
+        show aRun N (g k) = aRun N β₀ / 2 ^ (k + 1)
+        exact hg k⟩
+  -- one exact halving, with its loss
+  have hstep : ∀ j : ℕ, ∀ M : ℝ, M ≤ M₀ →
+      TransferGap.GapAt (periodicGaugeInvData τ p hN (γ j)) (Real.exp (-(M * aRun N (γ j)))) →
+      TransferGap.GapAt (periodicGaugeInvData τ p hN (γ (j + 1)))
+        (Real.exp (-((M - ε (aRun N β₀ / 2 ^ j)) * aRun N (γ (j + 1))))) := by
+    intro j M hM hgj
+    have h := huv (γ j) (γ (j + 1)) (hUVβ₀.trans (hγβ j)) (hUVβ₀.trans (hγβ (j + 1)))
+      (le_of_eq (by rw [hγ j, hγ (j + 1), pow_succ, div_div]))
+      (by
+        rw [hγ j, hγ (j + 1), pow_succ, ← div_div]
+        have hnn : 0 ≤ aRun N β₀ / 2 ^ j := div_nonneg ha₀.le (by positivity)
+        linarith)
+      M hM hgj
+    rw [hγ j] at h
+    exact h
+  have hbase0 : TransferGap.GapAt (periodicGaugeInvData τ p hN (γ 0))
+      (Real.exp (-(M₀ * aRun N (γ 0)))) := by
+    rw [hγ0]
+    exact hir
+  filter_upwards [WeakCouplingWindow.eventually_aRun_le hN1 ha₀,
+    Filter.eventually_ge_atTop βUV, Filter.eventually_gt_atTop (0 : ℝ)] with β hβa hβUV hβ0
+  have ha : 0 < aRun N β := aRun_pos hN1 hβ0
+  -- the octave of `β`
+  have hex : ∃ n : ℕ, aRun N β₀ / 2 ^ (n + 1) < aRun N β := by
+    obtain ⟨n, hn⟩ := pow_unbounded_of_one_lt (aRun N β₀ / aRun N β) (by norm_num : (1 : ℝ) < 2)
+    refine ⟨n, ?_⟩
+    rw [div_lt_iff₀ ha] at hn
+    rw [div_lt_iff₀ (by positivity : (0 : ℝ) < 2 ^ (n + 1)), pow_succ]
+    have h2n : (0 : ℝ) < 2 ^ n := by positivity
+    nlinarith [hn, mul_pos h2n ha]
+  obtain ⟨n, hn, hmin⟩ : ∃ n : ℕ, aRun N β₀ / 2 ^ (n + 1) < aRun N β ∧
+      ∀ k : ℕ, k < n → ¬ (aRun N β₀ / 2 ^ (k + 1) < aRun N β) :=
+    ⟨Nat.find hex, Nat.find_spec hex, fun k hk => Nat.find_min hex hk⟩
+  have hle : aRun N β ≤ aRun N β₀ / 2 ^ n := by
+    cases n with
+    | zero =>
+      rw [pow_zero, div_one]
+      exact hβa
+    | succ k => exact not_lt.mp (hmin k (Nat.lt_succ_self k))
+  -- the chain of exact halvings to `γ n`
+  have hchain : TransferGap.GapAt (periodicGaugeInvData τ p hN (γ n))
+      (Real.exp (-((M₀ - ∑ i ∈ Finset.range n, ε (aRun N β₀ / 2 ^ i)) * aRun N (γ n)))) :=
+    gapAt_chain_below (fun i => periodicGaugeInvData τ p hN (γ i)) (fun i => aRun N (γ i))
+      (fun i => ε (aRun N β₀ / 2 ^ i)) M₀ n (fun i => hε _) hbase0
+      (fun j _ M hM hgj => hstep j M hM hgj) n le_rfl
+  -- the last step, from `γ n` to `β`
+  have hlast := huv (γ n) β (hUVβ₀.trans (hγβ n)) hβUV
+    (by
+      rw [hγ n, div_div, ← pow_succ]
+      exact hn.le)
+    (by
+      rw [hγ n]
+      exact hle)
+    (M₀ - ∑ i ∈ Finset.range n, ε (aRun N β₀ / 2 ^ i))
+    (sub_le_self _ (Finset.sum_nonneg (fun i _ => hε _))) hchain
+  rw [hγ n] at hlast
+  have hS : ∑ i ∈ Finset.range n, ε (aRun N β₀ / 2 ^ i) + ε (aRun N β₀ / 2 ^ n) ≤ E := by
+    have hb := hbudget (n + 1)
+    rw [Finset.sum_range_succ] at hb
+    exact hb
+  have hmono : Real.exp (-((M₀ - ∑ i ∈ Finset.range n, ε (aRun N β₀ / 2 ^ i)
+        - ε (aRun N β₀ / 2 ^ n)) * aRun N β))
+      ≤ Real.exp (-((M₀ - E) * aRun N β)) := by
+    rw [Real.exp_le_exp]
+    have hm := mul_le_mul_of_nonneg_right
+      (show M₀ - E ≤ M₀ - ∑ i ∈ Finset.range n, ε (aRun N β₀ / 2 ^ i)
+        - ε (aRun N β₀ / 2 ^ n) by linarith) ha.le
+    linarith
+  exact GapStep.gapAt_mono _ (Real.exp_pos _).le hmono hlast
+
+#print axioms gapAt_eventually_of_uv_ir_below
+
 /-- **THE UV/IR SPLIT: `FixedWindowDecay` from the UV step and the gap at one coupling.** At `2 ≤ N`,
 a window `0 < L`, a coupling `0 < β₀` with `βUV ≤ β₀`, a loss budget `E` for the dyadic tower below
 `aRun N β₀` with `E < M₀`, `UVLossStep τ p hN βUV ε` and `IRGapAt τ p hN β₀ M₀`:
@@ -565,6 +747,44 @@ theorem fixedWindowDecay_of_uv_ir (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (hN : N
   exact le_of_eq (by rw [e1, e2])
 
 #print axioms fixedWindowDecay_of_uv_ir
+
+/-- **The UV/IR split from the clipped step.** `fixedWindowDecay_of_uv_ir` with `UVLossStepBelow` at `M₀` and
+non-negative losses (`gapAt_eventually_of_uv_ir_below`). At `2 ≤ N`,
+a window `0 < L`, a coupling `0 < β₀` with `βUV ≤ β₀`, a loss budget `E` for the dyadic tower below
+`aRun N β₀` with `E < M₀`, non-negative losses, `UVLossStepBelow τ p hN βUV ε M₀` and
+`IRGapAt τ p hN β₀ M₀`:
+`WeakCouplingWindow.FixedWindowDecay τ p hN L`.
+
+`gapAt_eventually_of_uv_ir_below` gives `GapAt` at `r = e^{−(M₀ − E)·aRun N β}` at every large `β`;
+`GapStep.periodic_clayGapAt_of_gapAt` gives `PeriodicClayGapAt` at `r`, whose physical rate
+`−log r / aRun N β` is `M₀ − E = c/L` with `c = (M₀ − E)·L > 0`; and
+`WeakCouplingWindow.fixedWindowDecay_of_physical_gap` returns `FixedWindowDecay`.
+
+DERIVED: `4` is the spacetime dimension; `2` is the least rank with a non-zero Haar variance of the
+real trace; `0` is the excluded rank and the sign of `L` and `β₀`. -/
+theorem fixedWindowDecay_of_uv_ir_below (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (hN : N ≠ 0) {L : ℝ}
+    (hL : 0 < L) {βUV β₀ M₀ E : ℝ} {ε : ℝ → ℝ} (hβ₀ : 0 < β₀) (hUVβ₀ : βUV ≤ β₀)
+    (hbudget : LossBudget ε (aRun N β₀) E) (hEM : E < M₀)
+    (hε : ∀ s : ℝ, 0 ≤ ε s) (huv : UVLossStepBelow τ p hN βUV ε M₀)
+    (hir : IRGapAt τ p hN β₀ M₀) :
+    WeakCouplingWindow.FixedWindowDecay τ p hN L := by
+  have hN1 : 1 ≤ N := by omega
+  have hev := gapAt_eventually_of_uv_ir_below τ p hN1 hN hβ₀ hUVβ₀ hbudget hε huv hir
+  refine WeakCouplingWindow.fixedWindowDecay_of_physical_gap τ p hN1 hN hL
+    ⟨(M₀ - E) * L, mul_pos (sub_pos.mpr hEM) hL, ?_⟩
+  filter_upwards [hev, Filter.eventually_gt_atTop (0 : ℝ)] with β hg hβ0
+  have ha : 0 < aRun N β := aRun_pos hN1 hβ0
+  have hr0 : 0 < Real.exp (-((M₀ - E) * aRun N β)) := Real.exp_pos _
+  have hr1 : Real.exp (-((M₀ - E) * aRun N β)) < 1 :=
+    Real.exp_lt_one_iff.mpr (neg_lt_zero.mpr (mul_pos (sub_pos.mpr hEM) ha))
+  refine ⟨_, GapStep.periodic_clayGapAt_of_gapAt τ p hN2 hN hβ0.le hr0 hr1 hg, ?_⟩
+  have e1 : (M₀ - E) * L / L = M₀ - E := mul_div_cancel_right₀ _ hL.ne'
+  have e2 : -Real.log (Real.exp (-((M₀ - E) * aRun N β))) / aRun N β = M₀ - E := by
+    rw [Real.log_exp, neg_neg]
+    exact mul_div_cancel_right₀ _ ha.ne'
+  exact le_of_eq (by rw [e1, e2])
+
+#print axioms fixedWindowDecay_of_uv_ir_below
 
 /-- **`FixedWindowDecay` gives the IR input at every large coupling.** At `2 ≤ N` and `0 < L`,
 `FixedWindowDecay τ p hN L` gives some `M > 0` with `IRGapAt τ p hN β₀ M` at every large `β₀`:

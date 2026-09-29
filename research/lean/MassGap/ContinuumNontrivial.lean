@@ -1037,7 +1037,7 @@ theorem connectedTwoPointNonzero_rhoA (hN : N ≠ 0) (τ : Fin 4) (O : LField (M
 
 #print axioms connectedTwoPointNonzero_rhoA
 
-/-- **The reconstructed space is not spanned by the vacuum.** Under `UniformBoundSep`, the kernel
+/-- **The reconstructed space is not spanned by the vacuum.** Under `ContinuumSep.PairBoundSep`, the kernel
 limit `KernelConvergesSep` towards `G(|p − q|)` and `ShortDistanceY.AFShortDistance G`, at every dyadic
 step `m` the Hilbert space of `ContinuumSep.continuum_reconstruction_sep` for
 `Renorm.connected hN Z` has a non-zero vector orthogonal to the vacuum and not a complex multiple of
@@ -1047,7 +1047,7 @@ DERIVED: `0` is the excluded colour count, the vanishing vacuum pairing and the 
 `Fin 4` is the spacetime dimension. -/
 theorem exists_orth_ne_zero_of_af (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
     (τ : Fin 4) (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
-    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)) (m : ℕ)
+    (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) (m : ℕ)
     (O : LField (MassGap.SUN.SU N)) (G : ℝ → ℝ)
     (hconv : KernelConvergesSep hN (Renorm.connected hN Z) τ O (fun p q => G (eDist p q)))
     (hY : ShortDistanceY.AFShortDistance G) :

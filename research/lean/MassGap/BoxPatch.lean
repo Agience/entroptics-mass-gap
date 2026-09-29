@@ -445,6 +445,10 @@ DERIVED: `4` is the spacetime dimension; `1` is the unit step and the successor 
 def UnitStep (δ : WilsonHypercubic.Site 4 (M + 1)) : Prop :=
   ∃ i, (∀ k, k ≠ i → δ k = 0) ∧ (δ i = 1 ∨ δ i = -1)
 
+/-- `UnitStep` is decidable: its body, restated so instance search finds the `Fintype` and
+`DecidableEq` instances of the sites.
+
+DERIVED: `0` is the unmoved coordinate and `1` the unit step, the literals of `UnitStep` itself. -/
 instance instDecidableUnitStep : DecidablePred (UnitStep (M := M)) := fun δ =>
   inferInstanceAs (Decidable (∃ i, (∀ k, k ≠ i → δ k = 0) ∧ (δ i = 1 ∨ δ i = -1)))
 

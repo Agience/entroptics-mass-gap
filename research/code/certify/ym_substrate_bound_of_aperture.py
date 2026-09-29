@@ -51,6 +51,7 @@ import store_path
 import aperture_ceiling as AC        # the ceiling, derived in ONE place
 import ym_confinement_of_cos_average as COS
 import ym_crossover_confinement_of_grid as CG
+import entroptics_adapter as W       # THE WRAPPER: the bootstrap is the library's
 
 KAPPA0 = 0.25 * math.log(3.0)
 BASE = store_path.store_root(required=False)
@@ -160,8 +161,7 @@ def scan(group, beta, ncap=256):
         # it "growth 1.08x" and "growth 25x" are both uninterpretable -- a ratio of two numbers with
         # no scale attached. The spread across apertures is only evidence against the hypothesis if
         # it is larger than the spread within one.
-        rng = np.random.default_rng(0)
-        boot = np.array([CG.d2_from_profiles(P[rng.integers(0, n, n)]) for _ in range(200)])
+        boot = W.bootstrap(P, CG.d2_from_profiles, draws=200, rng=0)   # seed 0 at every aperture
         rows.append({
             "L": L, "T": T, "n": n,
             "d2_circle": CG.d2_from_profiles(P),

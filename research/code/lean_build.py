@@ -11,8 +11,8 @@ researcher who clones this repository must be able to reproduce every artifact w
 particular machine. A remote builder is an optimisation for whoever has one, declared in the same
 machine-local, git-ignored file that already carries the store root:
 
-    LEAN_BUILD_HOST=builder@192.168.4.45          # ssh destination
-    LEAN_BUILD_PORT=2222                          # optional, default 22
+    LEAN_BUILD_HOST=user@host                     # ssh destination
+    LEAN_BUILD_PORT=22                            # optional, default 22
     LEAN_BUILD_KEY=~/.ssh/some_key                # optional
     LEAN_BUILD_DIR=massgap-lean                   # remote checkout, relative to $HOME
     LEAN_BUILD_PATH=$HOME/.elan/bin               # optional, prepended to remote PATH

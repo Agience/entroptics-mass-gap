@@ -58,7 +58,9 @@ def statement_of(text: str, start: int) -> str:
     """The signature only: from the declaration keyword to the token that opens the proof.
 
     `:=` and `by` both occur inside statements -- in named arguments (`(N := N)`) and in tactic
-    blocks within a `have` -- so track bracket depth and take the first at depth zero.
+    blocks within a `have` -- so track bracket depth and take the first at depth zero. A definition by
+    pattern-matching equations has no `:=`: its body opens at the first top-level line beginning with
+    `|`, which ends the signature the same way.
     """
     depth = 0
     i = start
@@ -73,6 +75,8 @@ def statement_of(text: str, start: int) -> str:
         # declaration rather than to a nested binder or tactic block.
         elif depth == 0:
             if text.startswith(":=", i):
+                return text[start:i]
+            if ch == "\n" and text[i + 1:].lstrip(" ").startswith("|"):
                 return text[start:i]
             if text.startswith(" by\n", i) or text.startswith(" by ", i):
                 return text[start:i]

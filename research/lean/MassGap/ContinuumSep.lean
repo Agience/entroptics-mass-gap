@@ -26,10 +26,31 @@ pairwise `d`-separated (`FamSep d`). `uniformBoundSep_of_uniformBound`: `Uniform
 `SepMono N τ` is the positive-time monomials whose factors are, for one `d > 0`, supported in
 `y_τ ≥ d` and pairwise `d`-separated (`sepPos τ d`). For two of them, `θP ∪ Q` is `d`-separated
 (`famSep_pairFam`), and the dyadic time step keeps them in `SepMono` (`sepPos_shift`). So every
-family the reconstruction and clustering consume is separated, and the chain runs on
-`UniformBoundSep`:
+family the reconstruction and clustering consume is a separated reflected pair `θP' ∪ Q'` at a common
+dyadic time shift of two separated monomials.
 
-* existence `tendsto_contS_sep`, OS0 `exists_abs_contS_le_sep`, both for separated families;
+## E on reflected pairs
+
+`PairBoundSep hN ρ τ` asks for the bound only on those families: each pair `P, Q` of separated
+positive-time monomials has one constant bounding `|latSkR(θP' ∪ Q')|` eventually in the step, at every
+common dyadic time shift `P', Q'`. `DiagBoundSep hN ρ τ` asks it only on the reflection diagonal
+`θP ∪ P`, unshifted.
+
+* `sq_latSkR_pairFam_le`, `abs_latSkR_pairFam_le_sqrt`: Cauchy–Schwarz for the reflected lattice
+  pairing at each step (`Transfer.ReflForm.cauchy_schwarz` on `ContinuumCluster.Dk`).
+* `latSkR_pairFam_shift_self_le`: the reflected diagonal of a monomial shifted forward in time is at
+  most the unshifted diagonal at each step (`TransferData.T_contract`, iterated).
+* `diagBoundSep_of_uniformBoundSep`, `pairBoundSep_of_diagBoundSep` (under `ReflCompat τ`),
+  `pairBoundSep_of_uniformBoundSep`: `UniformBoundSep → DiagBoundSep → PairBoundSep`.
+* `tendsto_pair_sep_of_pairBound`, `kernSep_iterate_bound_of_pairBound`: existence of the limit on
+  every separated reflected pair, and OS0 along the shifts, on `PairBoundSep`.
+
+The chain runs on `PairBoundSep`:
+
+* existence `tendsto_contS_sep`, OS0 `exists_abs_contS_le_sep`, both for separated families under
+  `UniformBoundSep`; `tendsto_pair_sep`, `kernSep_iterate_bound` their reflected-pair forms under
+  `UniformBoundSep`, and `tendsto_pair_sep_of_pairBound`, `kernSep_iterate_bound_of_pairBound` under
+  `PairBoundSep`;
 * OS2 `contS_gram_nonneg_sep` on `SepMono`;
 * the reconstruction `continuum_reconstruction_sep`: Hilbert space, unit vacuum, self-adjoint
   transfer operator at each dyadic step with spectrum in `[0, 1]`, `⟪vecOfSep P, vecOfSep Q⟫ = S(θP ∪ Q)`;
@@ -37,7 +58,7 @@ family the reconstruction and clustering consume is separated, and the chain run
 
 ## The gap
 
-`continuum_gap_sep`: at `2 ≤ N`, a window `L > 0`, `FixedWindowDecay τ 0 hN L`, `UniformBoundSep` and `ReflCompat τ`,
+`continuum_gap_sep`: at `2 ≤ N`, a window `L > 0`, `FixedWindowDecay τ 0 hN L`, `PairBoundSep` and `ReflCompat τ`,
 there is `c > 0` such that for every dyadic step `m` the reconstructed transfer data satisfy
 `TransferGap.GapAt` at `r_m = exp(−(c/L)·dySpacing N m)`, the operator `opT` contracts the vacuum
 complement by `r_m`, and `spectrum ℝ opT ⊆ {1} ∪ [0, r_m]` with `1` the greatest element. The rate
@@ -59,10 +80,13 @@ not a multiple of it. Without that the gap statement holds on a space that may b
 
 ## Scope
 
-`UniformBoundSep`, `FixedWindowDecay` and `ConnectedTwoPointNonzero` are hypotheses. `UniformBoundSep`
-holds at bounded renormalisation (`uniformBoundSep_of_uniformBound`,
-`ContinuumSchwinger.uniformBound_of_bounded`), where the limit is degenerate; at a growing `Z` none of
-the three is proved here. The transfer operators are given at the dyadic steps; no Hamiltonian is constructed.
+`PairBoundSep` (or `DiagBoundSep`, or `UniformBoundSep`), `FixedWindowDecay` and
+`ConnectedTwoPointNonzero` are hypotheses. `UniformBoundSep` holds at bounded renormalisation
+(`uniformBoundSep_of_uniformBound`, `ContinuumSchwinger.uniformBound_of_bounded`), where the limit is
+degenerate; at a growing `Z` none of them is proved here. The reconstructed transfer data
+`contTransferSep hN ρ τ hB hR m` takes the witness `hB : PairBoundSep hN ρ τ` only inside its proof
+fields, so any two witnesses give definitionally equal data. The transfer operators are given at the
+dyadic steps; no Hamiltonian is constructed.
 -/
 
 namespace MassGap.ContinuumSep
@@ -360,12 +384,258 @@ theorem shift_emptySep (hN : N ≠ 0) (τ : Fin 4) (m : ℕ) :
 
 end Monomials
 
-/-! ## 3. Existence and OS2 on separated monomials -/
+/-! ## 3. E on reflected pairs -/
+
+section Pairs
+
+/-- A separated positive-time monomial is, eventually in the step, a vector of the lattice transfer
+data `Dk` (`ContinuumCluster.Yv_mem`).
+
+DERIVED: `0` is the excluded colour count and the plane; `1` is the least colour count; `4` in
+`Fin 4` is the spacetime dimension. -/
+theorem eventually_Yv_mem_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (P : SepMono N τ) :
+    ∀ᶠ k in atTop,
+      Yv ρ k P.1 ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0 := by
+  have hmem : ∀ᶠ k in atTop, ∀ i : Fin P.1.1, ∀ r : ℝ,
+      smear (dySpacing N k) ((P.1.2 i).1.sub r).1 (P.1.2 i).2
+        ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
+    Filter.eventually_all.mpr (fun i => eventually_smear_sub_mem (one_le_of_ne_zero hN) τ _ _
+      (sepMono_posTime P i))
+  filter_upwards [hmem] with k hk
+  exact Yv_mem hN ρ τ k P.1 hk
+
+#print axioms eventually_Yv_mem_sep
+
+/-- **Cauchy–Schwarz for the reflected lattice pairing at step `k`.** For monomials whose renormalised
+observables lie in the gauge-invariant half-space algebra,
+`latSkR(θP ∪ Q)² ≤ latSkR(θP ∪ P) · latSkR(θQ ∪ Q)`: `Transfer.ReflForm.cauchy_schwarz` for the
+form of `ContinuumCluster.Dk`, which is the reflected pairing of the step-`k` state
+(`ContinuumCluster.latSkR_pairFam_eq`).
+
+DERIVED: `0` is the excluded colour count and the plane; `2` is the square; `4` in `Fin 4` is the
+spacetime dimension. -/
+theorem sq_latSkR_pairFam_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
+    (P Q : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkR hN ρ k (pairFam τ P Q) ^ 2
+      ≤ latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q) := by
+  have h := (Dk hN τ k).toReflForm.cauchy_schwarz ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩
+  have e1 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ = latSkR hN ρ k (pairFam τ P Q) := by
+    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P Q]
+  have e2 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkR hN ρ k (pairFam τ P P) := by
+    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
+  have e3 : (Dk hN τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ = latSkR hN ρ k (pairFam τ Q Q) := by
+    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k Q Q]
+  calc latSkR hN ρ k (pairFam τ P Q) ^ 2
+      = (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ ^ 2 := by rw [e1]
+    _ ≤ (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩
+          * (Dk hN τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ := h
+    _ = latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q) := by rw [e2, e3]
+
+#print axioms sq_latSkR_pairFam_le
+
+/-- **The square-root form**: `|latSkR(θP ∪ Q)| ≤ √(latSkR(θP ∪ P) · latSkR(θQ ∪ Q))`
+(`Real.abs_le_sqrt`).
+
+DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem abs_latSkR_pairFam_le_sqrt (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (k : ℕ) (P Q : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    |latSkR hN ρ k (pairFam τ P Q)|
+      ≤ Real.sqrt (latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q)) :=
+  Real.abs_le_sqrt (sq_latSkR_pairFam_le hN ρ τ hR k P Q hP hQ)
+
+#print axioms abs_latSkR_pairFam_le_sqrt
+
+/-- The reflected diagonal is non-negative at each step (`form_nonneg` of `ContinuumCluster.Dk`).
+
+DERIVED: `0` is the excluded colour count, the plane and the sign; `4` in `Fin 4` is the spacetime
+dimension. -/
+theorem latSkR_pairFam_self_nonneg (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (k : ℕ) (P : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    0 ≤ latSkR hN ρ k (pairFam τ P P) := by
+  have h := (Dk hN τ k).form_nonneg ⟨Yv ρ k P, hP⟩
+  have e : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkR hN ρ k (pairFam τ P P) := by
+    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
+  exact le_of_le_of_eq h e
+
+#print axioms latSkR_pairFam_self_nonneg
+
+/-- The form along the powers of `T` does not exceed its value at the start (`T_contract`, iterated).
+
+DERIVED: `0` is the base case of the induction; `1` the step. -/
+theorem form_T_pow_self_le {A : Type*} [AddCommGroup A] [Module ℝ A] (D : Transfer.TransferData A)
+    (x : A) (j : ℕ) : D.form ((D.T ^ j) x) ((D.T ^ j) x) ≤ D.form x x := by
+  induction j with
+  | zero => exact le_of_eq (by rw [pow_zero, Module.End.one_apply])
+  | succ j ih =>
+    rw [pow_succ', Module.End.mul_apply]
+    exact (D.T_contract _).trans ih
+
+#print axioms form_T_pow_self_le
+
+/-- **The reflected diagonal of a forward-shifted monomial is a form value along `T`.** At step
+`k ≥ m`, the dyadic time `timeVec N m τ n` is `2^{k−m} n` lattice steps, and
+`latSkR(θP' ∪ P') = ⟨T^{2^{k−m} n} Y_P, T^{2^{k−m} n} Y_P⟩` for `P' = P` shifted by it
+(`ContinuumCluster.Dk_T_pow`, `ContinuumCluster.Yv_shift`).
+
+DERIVED: `0` is the excluded colour count and the plane; `2` is the halving of the dyadic spacing,
+`2^{k−m}` lattice steps per step of `dySpacing N m` (`ContinuumSchwinger.site_dySpacing`); `4` in
+`Fin 4` is the spacetime dimension. -/
+theorem latSkR_pairFam_shift_eq_form (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
+    (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkR hN ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
+      = (Dk hN τ k).form (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩)
+          (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩) := by
+  have ha := dySpacing_pos (one_le_of_ne_zero hN) k
+  have hvec : site (dySpacing N k) (axisVec τ ((2 ^ (k - m) * n : ℕ) : ℤ))
+      = timeVec N m τ n := by
+    unfold timeVec
+    rw [site_dySpacing N hk, scaleSite_axisVec]
+    congr 2
+  rw [Dk_form, Dk_T_pow, ishiftObsL_iterate, Yv_shift ρ k ha _ P, hvec,
+    latSkR_pairFam_eq hN ρ τ hR k]
+
+#print axioms latSkR_pairFam_shift_eq_form
+
+/-- **Shifting forward in time does not raise the reflected diagonal at a step**: at `k ≥ m`,
+`latSkR(θP' ∪ P') ≤ latSkR(θP ∪ P)` for `P' = P` shifted by `timeVec N m τ n`
+(`latSkR_pairFam_shift_eq_form`, `form_T_pow_self_le`).
+
+DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem latSkR_pairFam_shift_self_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
+    (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkR hN ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
+      ≤ latSkR hN ρ k (pairFam τ P P) := by
+  rw [latSkR_pairFam_shift_eq_form hN ρ τ hR hk n P hY]
+  have e : (Dk hN τ k).form ⟨Yv ρ k P, hY⟩ ⟨Yv ρ k P, hY⟩ = latSkR hN ρ k (pairFam τ P P) := by
+    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
+  exact le_of_le_of_eq (form_T_pow_self_le (Dk hN τ k) ⟨Yv ρ k P, hY⟩ (2 ^ (k - m) * n)) e
+
+#print axioms latSkR_pairFam_shift_self_le
+
+/-- The same on separated monomials, with the shift as the iterate `SepMono.shift^[n]`.
+
+DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem latSkR_iterate_self_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : SepMono N τ)
+    (hY : Yv ρ k P.1 ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkR hN ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] P).1)
+      ≤ latSkR hN ρ k (pairFam τ P.1 P.1) := by
+  rw [SepMono.shift_iterate]
+  exact latSkR_pairFam_shift_self_le hN ρ τ hR hk n P.1 hY
+
+#print axioms latSkR_iterate_self_le
+
+/-- **E on reflection-diagonal pairs (stated, not proved).** Every separated positive-time monomial
+`P` has one constant bounding the reflected second moment `latSkR(θP ∪ P)` eventually in the step.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+def DiagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+  ∀ P : SepMono N τ, ∃ C : ℝ, ∀ᶠ k in atTop, latSkR hN ρ k (pairFam τ P.1 P.1) ≤ C
+
+/-- **E on reflected pairs (stated, not proved).** Every pair of separated positive-time monomials
+`P, Q` has one constant bounding `|latSkR(θP' ∪ Q')|` eventually in the step, at every common dyadic
+time shift `P' = SepMono.shift^[n] P`, `Q' = SepMono.shift^[n] Q`: the families the chain reads E on
+(`tendsto_pair_sep_of_pairBound` at `n = 0`, `kernSep_iterate_bound_of_pairBound`).
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+def PairBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+  ∀ P Q : SepMono N τ, ∃ C : ℝ, ∀ m n : ℕ, ∀ᶠ k in atTop,
+    |latSkR hN ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] Q).1)|
+      ≤ C
+
+/-- **The diagonal bound gives the pair bound.** At a step past `m` where `P`, `Q` and their shifts are
+vectors of `Dk`: Cauchy–Schwarz (`sq_latSkR_pairFam_le`), the shifted diagonals at most the unshifted
+ones (`latSkR_iterate_self_le`), and those at most `C_P`, `C_Q`; the constant is `√(C_P C_Q)`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem pairBoundSep_of_diagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (hD : DiagBoundSep hN ρ τ) : PairBoundSep hN ρ τ := by
+  intro P Q
+  obtain ⟨CP, hCP⟩ := hD P
+  obtain ⟨CQ, hCQ⟩ := hD Q
+  refine ⟨Real.sqrt (CP * CQ), fun m n => ?_⟩
+  filter_upwards [Filter.eventually_ge_atTop m, hCP, hCQ, eventually_Yv_mem_sep hN ρ τ P,
+    eventually_Yv_mem_sep hN ρ τ Q,
+    eventually_Yv_mem_sep hN ρ τ ((SepMono.shift hN τ m)^[n] P),
+    eventually_Yv_mem_sep hN ρ τ ((SepMono.shift hN τ m)^[n] Q)]
+    with k hk hkP hkQ hYP hYQ hYP' hYQ'
+  have hcs := sq_latSkR_pairFam_le hN ρ τ hR k _ _ hYP' hYQ'
+  have h0P := latSkR_pairFam_self_nonneg hN ρ τ hR k _ hYP'
+  have h0Q := latSkR_pairFam_self_nonneg hN ρ τ hR k _ hYQ'
+  have hPP := (latSkR_iterate_self_le hN ρ τ hR hk n P hYP).trans hkP
+  have hQQ := (latSkR_iterate_self_le hN ρ τ hR hk n Q hYQ).trans hkQ
+  exact Real.abs_le_sqrt (hcs.trans (mul_le_mul hPP hQQ h0Q (h0P.trans hPP)))
+
+#print axioms pairBoundSep_of_diagBoundSep
+
+/-- **`UniformBoundSep` gives the diagonal bound**: its constant for the family `θP ∪ P`, which is
+separated (`famSep_pairFam_exists`), at the zero translation.
+
+DERIVED: `0` is the excluded colour count, the sign of the separation, the zero translation and the
+dyadic level of it; `4` in `Fin 4` is the spacetime dimension. -/
+theorem diagBoundSep_of_uniformBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+    (hB : UniformBoundSep hN ρ) : DiagBoundSep hN ρ τ := by
+  intro P
+  obtain ⟨d, hd, hF⟩ := famSep_pairFam_exists P.2 P.2
+  obtain ⟨C, hC⟩ := hB _ (pairFam τ P.1 P.1) d hd
+  have hF0 : FamSep d (fun i => ((pairFam τ P.1 P.1 i).1,
+      (pairFam τ P.1 P.1 i).2.translate
+        (site (dySpacing N 0) ((fun _ : Fin P.1.1 ⊕ Fin P.1.1 => (0 : ISite)) i)))) := by
+    simp only [site_zero, TestFn.translate_zero, Prod.mk.eta]
+    exact hF
+  have h0 := hC 0 (fun _ => 0) hF0
+  simp only [site_zero, TestFn.translate_zero, Prod.mk.eta] at h0
+  exact ⟨C, h0.mono (fun _ hk => (le_abs_self _).trans hk)⟩
+
+#print axioms diagBoundSep_of_uniformBoundSep
+
+/-- **`UniformBoundSep` gives the pair bound** under reflection compatibility
+(`diagBoundSep_of_uniformBoundSep`, `pairBoundSep_of_diagBoundSep`).
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem pairBoundSep_of_uniformBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+    (hR : ρ.ReflCompat τ) (hB : UniformBoundSep hN ρ) : PairBoundSep hN ρ τ :=
+  pairBoundSep_of_diagBoundSep hN ρ τ hR (diagBoundSep_of_uniformBoundSep hN ρ τ hB)
+
+#print axioms pairBoundSep_of_uniformBoundSep
+
+/-- **Existence of every limit the chain consumes, on `PairBoundSep`**: for two separated
+positive-time monomials, `latSkR hN ρ k (θP ∪ Q) → kern hN ρ τ P Q` along `ultra`. The bound at
+`m = n = 0` is eventual, so the sequence converges along `ultra` (`exists_tendsto_ultra`). The same
+conclusion as `tendsto_pair_sep`, which reads `UniformBoundSep`.
+
+DERIVED: `0` is the excluded colour count, the sign of the margins, the dyadic level and the number of
+shifts; `4` in `Fin 4` is the spacetime dimension. -/
+theorem tendsto_pair_sep_of_pairBound (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSep hN ρ τ) {P Q : Mono N}
+    (hP : ∃ d : ℝ, 0 < d ∧ sepPos τ d P) (hQ : ∃ d : ℝ, 0 < d ∧ sepPos τ d Q) :
+    Tendsto (fun k => latSkR hN ρ k (pairFam τ P Q)) (ultra : Filter ℕ)
+      (𝓝 (kern hN ρ τ P Q)) := by
+  obtain ⟨C, hC⟩ := hB ⟨P, hP⟩ ⟨Q, hQ⟩
+  have h0 : ∀ᶠ k in atTop, |latSkR hN ρ k (pairFam τ P Q)| ≤ C := by
+    have h := hC 0 0
+    rwa [Function.iterate_zero_apply, Function.iterate_zero_apply] at h
+  obtain ⟨x, hx⟩ := exists_tendsto_ultra _ _ h0
+  exact tendsto_nhds_limUnder ⟨x, hx⟩
+
+#print axioms tendsto_pair_sep_of_pairBound
+
+end Pairs
+
+/-! ## 4. Existence and OS2 on separated monomials -/
 
 section Positivity
 
-/-- **Existence of every limit the chain consumes**: for two separated positive-time monomials,
-`latSkR hN ρ k (pairFam τ P Q) → kern hN ρ τ P Q` along `ultra`, under `UniformBoundSep`.
+/-- **Existence of every limit the chain consumes, under `UniformBoundSep`**: for two separated
+positive-time monomials, `latSkR hN ρ k (pairFam τ P Q) → kern hN ρ τ P Q` along `ultra`. The chain
+reads the same conclusion from `PairBoundSep` (`tendsto_pair_sep_of_pairBound`).
 
 DERIVED: `0` is the excluded colour count and the sign of the margins; `4` in `Fin 4` is the
 spacetime dimension. -/
@@ -378,13 +648,13 @@ theorem tendsto_pair_sep (hN : N ≠ 0) (ρ : Renorm N) (hB : UniformBoundSep hN
 
 #print axioms tendsto_pair_sep
 
-/-- **OS2 on separated monomials.** Under `UniformBoundSep` and reflection-compatible data, for every
+/-- **OS2 on separated monomials.** Under `PairBoundSep` and reflection-compatible data, for every
 finite set of separated positive-time monomials and real coefficients,
 `0 ≤ ∑_{P,Q} c_P c_Q S(θP ∪ Q)`.
 
 DERIVED: `0` is the excluded colour count and the sign concluded; `4` in `Fin 4` is the spacetime
 dimension. -/
-theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (hB : UniformBoundSep hN ρ) (τ : Fin 4)
+theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : PairBoundSep hN ρ τ)
     (hR : ρ.ReflCompat τ) (s : Finset (SepMono N τ)) (c : SepMono N τ → ℝ) :
     0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kern hN ρ τ P.1 Q.1 := by
   haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
@@ -392,7 +662,7 @@ theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (hB : UniformBoundS
       (fun k => ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkR hN ρ k (pairFam τ P.1 Q.1))
       (ultra : Filter ℕ) (𝓝 (∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kern hN ρ τ P.1 Q.1)) :=
     tendsto_finset_sum _ (fun P _ => tendsto_finset_sum _
-      (fun Q _ => (tendsto_pair_sep hN ρ hB τ P.2 Q.2).const_mul (c P * c Q)))
+      (fun Q _ => (tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 Q.2).const_mul (c P * c Q)))
   refine ge_of_tendsto htend ?_
   have hmem : ∀ᶠ k in atTop, ∀ P ∈ s, ∀ i : Fin P.1.1, ∀ r : ℝ,
       smear (dySpacing N k) ((P.1.2 i).1.sub r).1 (P.1.2 i).2
@@ -426,7 +696,7 @@ theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (hB : UniformBoundS
 
 end Positivity
 
-/-! ## 4. The reflection form and the transfer operators on separated monomials -/
+/-! ## 5. The reflection form and the transfer operators on separated monomials -/
 
 section Form
 
@@ -507,10 +777,10 @@ theorem formSep_symm (hR : ρ.ReflCompat τ) (c d : AmodSep N τ) :
 /-- **Positivity of the form** is `contS_gram_nonneg_sep`.
 
 DERIVED: `0` is the sign. -/
-theorem formSep_nonneg (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (c : AmodSep N τ) :
+theorem formSep_nonneg (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (c : AmodSep N τ) :
     0 ≤ formSep hN ρ τ c c := by
   show 0 ≤ ∑ P ∈ c.support, ∑ Q ∈ c.support, c P * c Q * kern hN ρ τ P.1 Q.1
-  exact contS_gram_nonneg_sep hN ρ hB τ hR c.support (fun P => c P)
+  exact contS_gram_nonneg_sep hN ρ τ hB hR c.support (fun P => c P)
 
 #print axioms formSep_nonneg
 
@@ -539,7 +809,7 @@ theorem formSep_single (P Q : SepMono N τ) (a b : ℝ) :
 /-- **The continuum reflection form on separated monomials**, a `Transfer.ReflForm`.
 
 DERIVED: no numeral. -/
-noncomputable def contReflFormSep (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) :
+noncomputable def contReflFormSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) :
     Transfer.ReflForm (AmodSep N τ) where
   form := formSep hN ρ τ
   form_symm := formSep_symm hN ρ τ hR
@@ -624,9 +894,10 @@ theorem TmSep_half (m : ℕ) (c : AmodSep N τ) :
 
 #print axioms TmSep_half
 
-/-- **OS0 as the reconstruction consumes it**: the kernel of iterated shifts of two separated
-monomials is bounded uniformly in the number of shifts, under `UniformBoundSep`. The shifted pair is
-separated at the smaller of the two margins, for every number of shifts.
+/-- **OS0 along the shifts, under `UniformBoundSep`**: the kernel of iterated shifts of two separated
+monomials is bounded uniformly in the number of shifts. The shifted pair is separated at the smaller of
+the two margins, for every number of shifts. The reconstruction reads the same conclusion from
+`PairBoundSep` (`kernSep_iterate_bound_of_pairBound`).
 
 DERIVED: `0` is the sign of the margins. -/
 theorem kernSep_iterate_bound (hB : UniformBoundSep hN ρ) (m : ℕ) (P Q : SepMono N τ) :
@@ -648,13 +919,30 @@ theorem kernSep_iterate_bound (hB : UniformBoundSep hN ρ) (m : ℕ) (P Q : SepM
 
 #print axioms kernSep_iterate_bound
 
+/-- **`kernSep_iterate_bound` on `PairBoundSep`**, with the same conclusion: the kernel of iterated
+shifts of two separated monomials is bounded uniformly in the number of shifts. The pair bound at
+`(m, n)` passes to the limit along `ultra` (`tendsto_pair_sep_of_pairBound`).
+
+DERIVED: no numeral. -/
+theorem kernSep_iterate_bound_of_pairBound (hB : PairBoundSep hN ρ τ) (m : ℕ) (P Q : SepMono N τ) :
+    ∃ C : ℝ, ∀ n : ℕ,
+      |kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)| ≤ C := by
+  haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
+  obtain ⟨C, hC⟩ := hB P Q
+  exact ⟨C, fun n => le_of_tendsto
+    (tendsto_pair_sep_of_pairBound hN ρ τ hB ((SepMono.shift hN τ m)^[n] P).2
+      ((SepMono.shift hN τ m)^[n] Q).2).abs
+    ((hC m n).filter_mono ultra_le)⟩
+
+#print axioms kernSep_iterate_bound_of_pairBound
+
 /-- The form of iterated shifts is bounded uniformly in the number of shifts.
 
 DERIVED: no numeral. -/
-theorem formSep_iterate_le (hB : UniformBoundSep hN ρ) (m : ℕ) (c : AmodSep N τ) :
+theorem formSep_iterate_le (hB : PairBoundSep hN ρ τ) (m : ℕ) (c : AmodSep N τ) :
     ∃ B : ℝ, ∀ n : ℕ,
       formSep hN ρ τ ((⇑(TmSep hN τ m))^[n] c) ((⇑(TmSep hN τ m))^[n] c) ≤ B := by
-  choose C hC using kernSep_iterate_bound hN ρ τ hB m
+  choose C hC using kernSep_iterate_bound_of_pairBound hN ρ τ hB m
   refine ⟨∑ P ∈ c.support, ∑ Q ∈ c.support, |c P| * |c Q| * C P Q, fun n => ?_⟩
   rw [TmSep_iterate, formSep_mapDomain]
   show ∑ P ∈ c.support, ∑ Q ∈ c.support, c P * c Q
@@ -671,10 +959,10 @@ theorem formSep_iterate_le (hB : UniformBoundSep hN ρ) (m : ℕ) (c : AmodSep N
 #print axioms formSep_iterate_le
 
 /-- **The time step contracts the form**, by iterated Schwarz with the bound of
-`kernSep_iterate_bound`.
+`kernSep_iterate_bound_of_pairBound`.
 
 DERIVED: no numeral. -/
-theorem TmSep_contract (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m : ℕ)
+theorem TmSep_contract (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
     (c : AmodSep N τ) :
     formSep hN ρ τ (TmSep hN τ m c) (TmSep hN τ m c) ≤ formSep hN ρ τ c c := by
   obtain ⟨B, hB'⟩ := formSep_iterate_le hN ρ τ hB m c
@@ -683,10 +971,12 @@ theorem TmSep_contract (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m :
 
 #print axioms TmSep_contract
 
-/-- **The continuum transfer data on separated monomials at the dyadic step `dySpacing N m`.**
+/-- **The continuum transfer data on separated monomials at the dyadic step `dySpacing N m`.** The
+witness `hB` enters only the proof fields `form_nonneg` and `T_contract`, so the data does not depend on
+which witness is given.
 
 DERIVED: `1` is the coefficient of the vacuum. -/
-noncomputable def contTransferSep (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+noncomputable def contTransferSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
     Transfer.TransferData (AmodSep N τ) where
   toReflForm := contReflFormSep hN ρ τ hB hR
   T := TmSep hN τ m
@@ -705,7 +995,7 @@ noncomputable def contTransferSep (hB : UniformBoundSep hN ρ) (hR : ρ.ReflComp
 /-- **Positivity of the transfer operator**: `⟨c, T_m c⟩ = ⟨T_{m+1} c, T_{m+1} c⟩ ≥ 0`.
 
 DERIVED: `1` is the half-step offset. -/
-theorem positiveTransfer_sep (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+theorem positiveTransfer_sep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
     GNSHilbert.PositiveTransfer (contTransferSep hN ρ τ hB hR m) := by
   intro c
   show 0 ≤ formSep hN ρ τ c (TmSep hN τ m c)
@@ -716,11 +1006,11 @@ theorem positiveTransfer_sep (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ
 
 end Form
 
-/-! ## 5. The reconstruction on separated monomials -/
+/-! ## 6. The reconstruction on separated monomials -/
 
 section Reconstruction
 
-variable (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : UniformBoundSep hN ρ)
+variable (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : PairBoundSep hN ρ τ)
   (hR : ρ.ReflCompat τ)
 
 /-- The vector of the separated monomial `P` in the reconstructed Hilbert space.
@@ -752,8 +1042,8 @@ theorem inner_vecOfSep (m : ℕ) (P Q : SepMono N τ) :
 
 #print axioms inner_vecOfSep
 
-/-- **Requirement E on `UniformBoundSep`.** At every `SU(N)`, `N ≠ 0`, every renormalisation `ρ`
-with `UniformBoundSep` and reflection compatibility, every time direction `τ` and every dyadic time
+/-- **Requirement E on `PairBoundSep`.** At every `SU(N)`, `N ≠ 0`, every renormalisation `ρ`
+with `PairBoundSep` and reflection compatibility, every time direction `τ` and every dyadic time
 step `dySpacing N m`: a complete complex Hilbert space, a unit vacuum, a self-adjoint transfer
 operator fixing it with spectrum in `[0, 1]`, and `⟪vecOfSep P, vecOfSep Q⟫ = S(θP ∪ Q)` for every
 pair of separated positive-time monomials.
@@ -783,12 +1073,12 @@ theorem continuum_reconstruction_sep (m : ℕ) :
 
 end Reconstruction
 
-/-! ## 6. Clustering on separated monomials -/
+/-! ## 7. Clustering on separated monomials -/
 
 section Cluster
 
 /-- **OS4 for the limit on separated monomials, from `FixedWindowDecay`.** At `2 ≤ N`, a window
-`L > 0`, `FixedWindowDecay τ 0 hN L`, `UniformBoundSep` and reflection-compatible data, there is
+`L > 0`, `FixedWindowDecay τ 0 hN L`, `PairBoundSep` and reflection-compatible data, there is
 `c > 0` such that for all separated positive-time monomials `P`, `Q` and every dyadic time
 `t = dySpacing N m · n`, `n ∈ ℕ`, along `τ`,
 
@@ -798,7 +1088,7 @@ DERIVED: `2 ≤ N` is `gapAt_physical_of_fixedWindowDecay`'s; `2` is also the sq
 excluded colour count, the plane of `FixedWindowDecay τ 0`, and the sign of `c` and of `L`; `4` in
 `Fin 4` is the spacetime dimension. -/
 theorem contS_cluster_of_fixedWindowDecay_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N)
-    (hB : UniformBoundSep hN ρ) (τ : Fin 4) (hR : ρ.ReflCompat τ) {L : ℝ} (hL : 0 < L)
+    (τ : Fin 4) (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) {L : ℝ} (hL : 0 < L)
     (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L) :
     ∃ c : ℝ, 0 < c ∧ ∀ (P Q : SepMono N τ) (m n : ℕ),
       (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
@@ -831,17 +1121,18 @@ theorem contS_cluster_of_fixedWindowDecay_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ
           * latSkR hN ρ k (pairFam τ (emptyMono N) Q.1)) ^ 2) (ultra : Filter ℕ)
       (𝓝 ((kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
           - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2)) :=
-    ((tendsto_pair_sep hN ρ hB τ P.2 hQn).sub
-      ((tendsto_pair_sep hN ρ hB τ P.2 hE).mul (tendsto_pair_sep hN ρ hB τ hE Q.2))).pow 2
+    ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 hQn).sub
+      ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 hE).mul
+        (tendsto_pair_sep_of_pairBound hN ρ τ hB hE Q.2))).pow 2
   have hg : Tendsto (fun k => Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
         * (latSkR hN ρ k (pairFam τ P.1 P.1)
           * (latSkR hN ρ k (pairFam τ Q.1 Q.1)
             - latSkR hN ρ k (pairFam τ (emptyMono N) Q.1) ^ 2))) (ultra : Filter ℕ)
       (𝓝 (Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
         * (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)))) :=
-    ((tendsto_pair_sep hN ρ hB τ P.2 P.2).mul
-      ((tendsto_pair_sep hN ρ hB τ Q.2 Q.2).sub
-        ((tendsto_pair_sep hN ρ hB τ hE Q.2).pow 2))).const_mul _
+    ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 P.2).mul
+      ((tendsto_pair_sep_of_pairBound hN ρ τ hB Q.2 Q.2).sub
+        ((tendsto_pair_sep_of_pairBound hN ρ τ hB hE Q.2).pow 2))).const_mul _
   refine le_of_tendsto_of_tendsto hf hg ?_
   have hevLE : ∀ᶠ k in atTop,
       (latSkR hN ρ k (pairFam τ P.1 (Mono.shift (timeVec N m τ n) Q.1))
@@ -888,7 +1179,7 @@ theorem contS_cluster_of_fixedWindowDecay_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ
 
 end Cluster
 
-/-! ## 7. From clustering to the gap -/
+/-! ## 8. From clustering to the gap -/
 
 section Gap
 
@@ -1064,7 +1355,7 @@ theorem form_pow_le_of_cluster_sep (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
 
 DERIVED: `2` is the doubling in the clustering rate and the separation `2n` fed to
 `gapAt_of_per_vector_form_decay`; `0` the sign of the exponential. -/
-theorem gapAt_sep_of_cluster (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
+theorem gapAt_sep_of_cluster (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
     (hcl : ∀ (P Q : SepMono N τ) (n : ℕ),
       (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
           - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2
@@ -1079,12 +1370,12 @@ theorem gapAt_sep_of_cluster (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ
 
 end Gap
 
-/-! ## 8. The continuum gap -/
+/-! ## 9. The continuum gap -/
 
 section Headline
 
-/-- **M in the continuum, on `UniformBoundSep`.** At `2 ≤ N`, a window `L > 0`,
-`FixedWindowDecay τ 0 hN L`, `UniformBoundSep` and reflection-compatible data, there is `c > 0`
+/-- **M in the continuum, on `PairBoundSep`.** At `2 ≤ N`, a window `L > 0`,
+`FixedWindowDecay τ 0 hN L`, `PairBoundSep` and reflection-compatible data, there is `c > 0`
 such that at every dyadic step `m`, with `r_m = exp(−(c/L) · dySpacing N m)`:
 
 1. `0 < r_m < 1`;
@@ -1101,8 +1392,8 @@ DERIVED: `2 ≤ N` is `gapAt_physical_of_fixedWindowDecay`'s; `0` is the exclude
 plane of `FixedWindowDecay τ 0`, the sign of `c`, `L` and `r_m`, the vanishing vacuum pairing and the
 bottom of the spectrum; `1` is the vacuum eigenvalue and the contraction threshold; `4` in `Fin 4` is
 the spacetime dimension. -/
-theorem continuum_gap_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N) (hB : UniformBoundSep hN ρ)
-    (τ : Fin 4) (hR : ρ.ReflCompat τ) {L : ℝ} (hL : 0 < L)
+theorem continuum_gap_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) {L : ℝ} (hL : 0 < L)
     (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L) :
     ∃ c : ℝ, 0 < c ∧ ∀ m : ℕ,
       0 < Real.exp (-(c / L) * dySpacing N m) ∧ Real.exp (-(c / L) * dySpacing N m) < 1
@@ -1115,7 +1406,7 @@ theorem continuum_gap_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N) (hB : U
       ∧ spectrum ℝ (GNSHilbert.opT (contTransferSep hN ρ τ hB hR m))
           ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(c / L) * dySpacing N m))
       ∧ IsGreatest (spectrum ℝ (GNSHilbert.opT (contTransferSep hN ρ τ hB hR m))) 1 := by
-  obtain ⟨c, hc, hcl⟩ := contS_cluster_of_fixedWindowDecay_sep hN2 hN ρ hB τ hR hL hW
+  obtain ⟨c, hc, hcl⟩ := contS_cluster_of_fixedWindowDecay_sep hN2 hN ρ τ hB hR hL hW
   refine ⟨c, hc, fun m => ?_⟩
   have hr0 : 0 < Real.exp (-(c / L) * dySpacing N m) := Real.exp_pos _
   have hr1 : Real.exp (-(c / L) * dySpacing N m) < 1 := by
@@ -1135,7 +1426,7 @@ theorem continuum_gap_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N) (hB : U
 #print axioms continuum_gap_sep
 
 /-- **The headline from `UniformBound`**: `continuum_gap_sep` through
-`uniformBoundSep_of_uniformBound`.
+`uniformBoundSep_of_uniformBound` and `pairBoundSep_of_uniformBoundSep`.
 
 DERIVED: `2` is the least rank with a non-zero Haar variance (`gapAt_physical_of_fixedWindowDecay`'s);
 `0` is the excluded colour count, the lower end of `L`, `c` and the spectral interval; `1` is the
@@ -1145,17 +1436,18 @@ theorem continuum_gap_of_uniformBound (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renor
     (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L) :
     ∃ c : ℝ, 0 < c ∧ ∀ m : ℕ,
       spectrum ℝ (GNSHilbert.opT
-          (contTransferSep hN ρ τ (uniformBoundSep_of_uniformBound hN ρ hB) hR m))
+          (contTransferSep hN ρ τ (pairBoundSep_of_uniformBoundSep hN ρ τ hR
+            (uniformBoundSep_of_uniformBound hN ρ hB)) hR m))
         ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(c / L) * dySpacing N m)) := by
-  obtain ⟨c, hc, h⟩ :=
-    continuum_gap_sep hN2 hN ρ (uniformBoundSep_of_uniformBound hN ρ hB) τ hR hL hW
+  obtain ⟨c, hc, h⟩ := continuum_gap_sep hN2 hN ρ τ
+    (pairBoundSep_of_uniformBoundSep hN ρ τ hR (uniformBoundSep_of_uniformBound hN ρ hB)) hR hL hW
   exact ⟨c, hc, fun m => (h m).2.2.2.2.1⟩
 
 #print axioms continuum_gap_of_uniformBound
 
 end Headline
 
-/-! ## 9. Non-triviality from a non-zero connected two-point function -/
+/-! ## 10. Non-triviality from a non-zero connected two-point function -/
 
 section Nontrivial
 
@@ -1211,7 +1503,7 @@ it: its dimension exceeds one.
 DERIVED: `0` is the vanishing vacuum pairing, the zero vector and the excluded colour count; `1` the
 vacuum coefficient; `2` the square; `4` in `Fin 4` is the spacetime dimension. -/
 theorem exists_orth_ne_zero_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
-    (hB : UniformBoundSep hN ρ) (hR : ρ.ReflCompat τ) (m : ℕ)
+    (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
     (h : ConnectedTwoPointNonzero hN ρ τ) :
     ∃ u : GNSHilbert.H (contTransferSep hN ρ τ hB hR m).toReflForm,
       inner ℂ (GNSHilbert.Omega (contTransferSep hN ρ τ hB hR m).toReflForm

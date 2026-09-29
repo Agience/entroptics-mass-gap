@@ -71,6 +71,11 @@ import time
 import numpy as np
 from scipy.special import ive
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # research/code
+import entroptics_adapter as W  # noqa: E402  THE WRAPPER: the bootstrap is the library's
+
+# DERIVED: the spacetime dimension of the torus `BoxPatch` is stated on (four-dimensional SU(2)
+# lattice gauge theory). It shapes every array below; it is not a size that was tuned.
 D = 4
 EYE = np.eye(D, dtype=np.int64)
 CONJ = np.array([1.0, -1.0, -1.0, -1.0])
@@ -154,6 +159,7 @@ class BoxGeom:
                     ls = [(a, y), (b_, y + EYE[a]), (a, y + EYE[b_]), (b_, y)]
                     kinds = [kind(o) for _, o in ls]
                     nbox = kinds.count("in")
+                    # DERIVED: no box link means the plaquette is outside the patch -- A acts only through box links.
                     if nbox == 0:
                         continue
                     key = (a, b_, tuple(np.mod(y, L)))
@@ -163,6 +169,8 @@ class BoxGeom:
                     plq_dir.append([d_ for d_, _ in ls])
                     plq_off.append([o for _, o in ls])
                     depth = -1
+                    # DERIVED: 4 is a plaquette's link count; all four in the box is an interior plaquette, the only
+                    # kind with a depth.
                     if nbox == 4:
                         depth = int(min(min(int(c), n - 1 - int(c))
                                         for _, o in ls for c in np.mod(o, L)))
@@ -207,6 +215,8 @@ class BoxGeom:
         L, n = self.L, self.n
         classes = {}
         for p, inf in enumerate(self.plq_info):
+            # DERIVED: fewer than a plaquette's 4 links in the box is a boundary class, named by its link kinds;
+            # all 4 is interior, named by depth.
             if inf["nbox"] < 4:
                 name = f"c{inf['nbox']}s{inf['nsafe']}u{inf['nunsafe']}"
             else:
@@ -220,6 +230,8 @@ class BoxGeom:
 
         for name in sorted(classes):
             members = classes[name]
+            # DERIVED: `transferable` is defined (module docstring, TRANSFER IN n) as reading no unsafe link;
+            # 0 is that count.
             tr = all(self.plq_info[p]["nunsafe"] == 0 for p in members)
             w = np.zeros(self.P)
             w[members] = 1.0 / len(members)
@@ -229,6 +241,12 @@ class BoxGeom:
             # the same class weighted by the lowest box mode: a slower combination than the flat mean
             ws = np.zeros(self.P)
             ws[members] = [smooth(p) for p in members]
+            # DERIVED (the 0): a division guard -- the weights are normalised by their sum below.
+            # CHOSEN (the 1e-9): the relative spread above which the mode-weighted class is a DIFFERENT
+            # observable from the flat class mean rather than a round-off copy of it. Measured on BoxGeom at
+            # (L, n) = (4,2), (8,2), (8,3), (8,4), (10,4), (12,5): identical classes spread <= 1.3e-17 and
+            # distinct ones >= 7.3e-4, so any cut in [1e-15, 1e-4] keeps the same observables. It adds or
+            # omits one Ritz direction; every observable gives a valid upper bound, so it decides no bound.
             if ws.sum() > 0 and np.ptp(ws[members]) > 1e-9 * ws.sum():
                 names.append(name + "~s")
                 rows.append(ws / ws.sum())
@@ -236,8 +254,10 @@ class BoxGeom:
         # lowest Dirichlet-like profile over all the interior plaquettes
         w = np.zeros(self.P)
         for p, inf in enumerate(self.plq_info):
+            # DERIVED: the profile runs over interior plaquettes, those with all 4 links in the box.
             if inf["nbox"] == 4:
                 w[p] = smooth(p)
+        # DERIVED: a division guard -- the profile is normalised by its sum.
         if w.sum() > 0:
             names.append("prof")
             rows.append(w / w.sum())
@@ -245,6 +265,8 @@ class BoxGeom:
         # the corner probe: plaquette (0,1) based at -e_1, reading only the box link (0, origin)
         key = (0, 1, (0, L - 1, 0, 0))
         pid = [p for p, inf in enumerate(self.plq_info) if inf["key"] == key]
+        # DERIVED: the key names exactly one plaquette on the torus, and the corner probe is by
+        # construction the plaquette reading ONE box link (module docstring, THE ANALYTIC CEILING).
         assert len(pid) == 1 and self.plq_info[pid[0]]["nbox"] == 1
         w = np.zeros(self.P)
         w[pid[0]] = 1.0
@@ -258,7 +280,11 @@ class BoxGeom:
 
 
 def box_corners(L, n, per_axis):
+    # DERIVED: 0 is the CLI's sentinel for `auto` (--boxes-per-axis: "0 = as many as fit"), not a
+    # magnitude.
     if per_axis == 0:            # auto: the most boxes whose staples and records cannot meet
+        # DERIVED: b must divide L so the corners tile the torus evenly; the same two conditions are
+        # checked on the next line for a per-axis count the caller supplies.
         per_axis = max(b for b in range(1, L + 1) if L % b == 0 and L // b >= n + 1)
     if L % per_axis or L // per_axis < n + 1:
         raise ValueError(f"boxes-per-axis {per_axis}: need L % b == 0 and L/b >= n + 1")
@@ -306,6 +332,11 @@ def hb_moments(alpha):
     """Heat-bath law of q . e = a0 with density sqrt(1-a0^2) exp(alpha a0):
     m = E a0 = I2/I1, s_perp = (1 - E a0^2)/3 = I2/(alpha I1), s_e = Var a0 = 1 - 3 s_perp - m^2."""
     alpha = np.asarray(alpha, dtype=float)
+    # CHOSEN: 1e-6 is where the heat-bath moments switch to their small-alpha series (m = alpha/4,
+    # s_perp = 1/4), which exists to avoid 0/0 at alpha = 0 (beta = 0, or an empty staple). The
+    # series error is alpha^2/24 relative: against the Bessel ratio it is 4e-14 at 1e-6, 4e-12 at
+    # 1e-5 and 4e-10 at 1e-4, and the Bessel ratio itself is accurate down to 1e-12. Any switch in
+    # (0, 1e-5] changes the moments by less than 5e-12 relative.
     small = alpha < 1e-6
     a = np.where(small, 1.0, alpha)
     r = ive(2, a) / ive(1, a)
@@ -386,9 +417,13 @@ def theta(n):
 
 def n_min_implied(U):
     """Least integer side n' >= 2 with (40n' - 36)/n'^2 < U, i.e. the least side a gap <= U allows."""
+    # DERIVED: a non-positive or non-finite upper limit bounds no gap, and the quadratic below
+    # divides by U; no side is implied.
     if not np.isfinite(U) or U <= 0:
         return ""
     disc = 1600.0 - 144.0 * U
+    # DERIVED: the sign of the discriminant of U n^2 - 40 n + 36 = 0. Negative means theta(n) < U at
+    # every n, so the least side is the smallest one considered, 2.
     if disc < 0:
         return 2
     n0 = max(2, int(math.floor((40.0 + math.sqrt(disc)) / (2.0 * U))) - 1)
@@ -397,14 +432,28 @@ def n_min_implied(U):
     return n0
 
 
+# CHOSEN: rtol=1e-10, the relative floor below which a direction of `den` (the fibre covariance)
+# is dropped before whitening, since dividing by the root of a near-zero eigenvalue amplifies
+# noise. It decides WHICH trial direction is used and nothing else: the reported bound is
+# v'num v / v'den v re-evaluated on the held-out half, which is >= lambda_1 at population level
+# for ANY v, so every rtol in (0, 1) gives a valid bound. The library's own pencil whitening
+# (`entroptics.hankel_spectrum`) uses a 1e-6 floor for the same step.
 def ritz_vector(num, den, idx, largest, rtol=1e-10):
     """v (zero off idx) extremising v'num v / v'den v over span(idx), den positive semidefinite."""
     Gs = den[np.ix_(idx, idx)]
     Gs = 0.5 * (Gs + Gs.T)
+    # NOT A READ: whitens the measured fibre covariance of the observables in order to choose a trial
+    # DIRECTION v; the eigenvalues are discarded. What is reported is v'num v / v'den v re-evaluated
+    # on the OTHER half of the boundaries (`analyse.crossfit`), which is >= lambda_1 at population
+    # level for any v, so no spectrum is read here and the choice cannot bias the bound low. No
+    # library read returns a pencil eigenvector: `hankel_spectrum` pencils a scalar correlation
+    # sequence and returns eigenvalues only, so it cannot supply v.
     w, U = np.linalg.eigh(Gs)
     keep = w > rtol * max(w.max(), 1e-300)
     T = U[:, keep] / np.sqrt(w[keep])
     H = T.T @ (0.5 * (num[np.ix_(idx, idx)] + num[np.ix_(idx, idx)].T)) @ T
+    # NOT A READ: the second half of the same direction search -- the extremal eigenvector of the
+    # whitened pencil is the trial v; its eigenvalue `ev` is never used (see the note above).
     ev, V = np.linalg.eigh(0.5 * (H + H.T))
     v = np.zeros(den.shape[0])
     v[idx] = T @ V[:, -1 if largest else 0]
@@ -413,13 +462,21 @@ def ritz_vector(num, den, idx, largest, rtol=1e-10):
 
 def rate_from(kind, vnum, vden, nB, K):
     if kind == "rq":
+        # DERIVED: a division guard -- an observable with no fibre variance does not move in the fibre
+        # and bounds nothing (inf is no bound).
         return vnum / vden if vden > 0 else np.inf
+    # DERIVED: the same division guard; -1 routes an empty fibre to the no-bound branch below.
     rho = vnum / vden if vden > 0 else -1.0
+    # DERIVED: rho^(1/K) is a real rate only for rho > 0. At population level rho_K >= 0 because
+    # P >= 0, so a non-positive estimate carries no rate and is reported as no bound (inf).
     if rho <= 0:
         return np.inf
     return nB * (1.0 - rho ** (1.0 / K))
 
 
+# CHOSEN: the central 95% percentile interval. The verdict (`refutes_at_n`) reads only `hi`, a
+# one-sided 97.5% upper confidence limit. Any level is valid as a statement of its own coverage;
+# a different one changes the stated confidence and nothing else.
 def percentile_ci(x, lo=2.5, hi=97.5):
     x = np.asarray(x, dtype=float)
     return (float(np.percentile(x, lo, method="lower")), float(np.percentile(x, hi, method="higher")))
@@ -437,7 +494,8 @@ def analyse(Cs, Ms, lags_sw, nB, obs_names, transf, n_boot, rng, primary_lag):
     def fixed(kind, num_k, K, o):
         f = lambda sel: rate_from(kind, num_k[sel][:, o, o].mean(), G[sel][:, o, o].mean(), nB, K)
         val = f(slice(None))
-        return val, percentile_ci([f(s) for s in boots])
+        # One set of boundary draws (`boots`) shared by every fixed read, so each is resampled alike.
+        return val, percentile_ci(W.bootstrap(np.arange(Ks), f, indices=boots))
 
     # fixed observables: no selection, no fitting
     for o, name in enumerate(obs_names):
@@ -450,6 +508,8 @@ def analyse(Cs, Ms, lags_sw, nB, obs_names, transf, n_boot, rng, primary_lag):
 
     # cross-fitted Ritz: fit on one half of the boundaries, evaluate on the other
     halves = (np.arange(0, Ks, 2), np.arange(1, Ks, 2))
+    # DERIVED: two boundaries per half is the least that can be resampled -- a one-boundary half
+    # bootstraps to itself, so its percentile interval would collapse to a point.
     if min(len(h) for h in halves) >= 2:
         def crossfit(kind, num_k, K, idx):
             vs = []
@@ -477,6 +537,9 @@ def analyse(Cs, Ms, lags_sw, nB, obs_names, transf, n_boot, rng, primary_lag):
             for li in range(1, nl):
                 K = int(round(lags_sw[li] * nB))
                 val, (lo, hi) = crossfit("ac", Cs[:, li], K, idx)
+                # CHOSEN: a float-equality tolerance for "this is the pre-registered lag". Both sides are parsed
+                # from decimal strings, so equal lags agree to round-off (~1e-15); any tolerance between that and
+                # half the finest lag spacing (0.125 for the default lags) marks the same lag.
                 prim = (fam == "F" and abs(lags_sw[li] - primary_lag) < 1e-9)
                 rows.append(("ac_ritz", fam, "", lags_sw[li], val, lo, hi, False, prim))
     return rows
@@ -500,6 +563,9 @@ def run_point(LG, args, beta, n, L, log):
     delta = nB // r
     lags_sw = [0.0] + [float(s) for s in args.lags.split(",")]
     lag_rec = [int(round(s * r)) for s in lags_sw]
+    # CHOSEN: an integrality tolerance for lag * records-per-sweep. A lag written to at most two
+    # decimals times an integer is either an integer to round-off (~1e-14 here) or off one by a
+    # multiple of 0.01, so any tolerance in [1e-12, 0.01) returns the same verdict.
     if any(abs(lr - s * r) > 1e-9 for lr, s in zip(lag_rec, lags_sw)):
         raise ValueError("every lag times records-per-sweep must be an integer")
     T = args.inner_sweeps * r
@@ -550,6 +616,7 @@ def run_point(LG, args, beta, n, L, log):
             X[:, t] = plaquettes(LG, b, Qf, placed.plq_flat) @ geom.Wobs.T
             tc = time.time()
             t_rec += tc - tb
+            # DERIVED: divisibility -- a Rayleigh numerator at every `rq_every`-th record.
             if t % args.rq_every == 0:
                 Macc += rq_numerator(LG, b, Qf, placed, beta)
                 nM += 1
@@ -559,6 +626,8 @@ def run_point(LG, args, beta, n, L, log):
         for li, lr in enumerate(lag_rec):
             c = np.einsum("btm,btp->mp", Xc[:, :T + 1 - lr], Xc[:, lr:]) / (nb * (T + 1 - lr))
             Cs[k, li] = 0.5 * (c + c.T)
+        # DERIVED: divisibility for a progress line. The 10 is about ten progress lines per point; it
+        # decides only when the log prints.
         if (k + 1) % max(1, Ks // 10) == 0 or k == Ks - 1:
             log(f"  beta={beta:g} n={n} L={L}: sample {k + 1}/{Ks}  plaq={plaq[:k + 1].mean():.5f}  "
                 f"elapsed={time.time() - t0:.1f}s")
@@ -569,6 +638,7 @@ def run_point(LG, args, beta, n, L, log):
                   sec_per_inner_sweep_per_box=(t_inner + t_rec + t_rq) / max(1, Ks * args.inner_sweeps * nb))
     rows = analyse(Cs, Ms, lags_sw, nB, geom.obs_names, geom.obs_transferable,
                    args.n_boot, boot_rng, args.primary_lag)
+    # DERIVED: a sample standard deviation (ddof=1) needs two samples; with one the error is nan.
     pl_err = float(plaq.std(ddof=1) / math.sqrt(Ks)) if Ks > 1 else float("nan")
     rows.insert(0, ("plaquette", "", "", 0.0, float(plaq.mean()),
                     float(plaq.mean() - 1.96 * pl_err), float(plaq.mean() + 1.96 * pl_err), False, False))
@@ -602,6 +672,9 @@ def selftest(LG, log):
     ref = np.stack([LG._su2_staple(b, q, mu) for mu in range(D)], axis=-2).reshape(-1, 4)
     err = np.abs(A - ref[placed.box_flat_all]).max()
     log(f"[selftest] staple vs generator: max|diff| = {err:.2e}")
+    # CHOSEN: 1e-12 for an identity that holds exactly in real arithmetic and is computed by two
+    # float64 routes. Measured residuals are <= 3.3e-16 (three generator seeds); any tolerance
+    # from 1e-15 up to well below the negative control's 1.3 gives the same verdict.
     ok &= err < 1e-12
 
     # 2. sdot(q_l, W_j) == the plaquette the staple closes
@@ -610,6 +683,9 @@ def selftest(LG, log):
     sd = LG._sdot(ql[:, :, None, :], W)                                # (nb, nB, 6)
     err = np.abs(sd - P[:, geom.stp_pid]).max()
     log(f"[selftest] staple closes its plaquette: max|diff| = {err:.2e}")
+    # CHOSEN: 1e-12 for an identity that holds exactly in real arithmetic and is computed by two
+    # float64 routes. Measured residuals are <= 3.3e-16 (three generator seeds); any tolerance
+    # from 1e-15 up to well below the negative control's 1.3 gives the same verdict.
     ok &= err < 1e-12
 
     # 3. closed-form conditional covariance vs Monte Carlo heat-bath draws
@@ -642,17 +718,26 @@ def selftest(LG, log):
         Q2[fl] = LG._su2_overrelax_link(b, Q2[fl], A1)
     err = np.abs(Q1 - Q2).max()
     log(f"[selftest] layered == sequential (over-relaxation): max|diff| = {err:.2e}")
+    # CHOSEN: 1e-12 for an identity that holds exactly in real arithmetic and is computed by two
+    # float64 routes. Measured residuals are <= 3.3e-16 (three generator seeds); any tolerance
+    # from 1e-15 up to well below the negative control's 1.3 gives the same verdict.
     ok &= err < 1e-12
     # and the test can fail: a wrong schedule (no layering: all at once) must differ
     Q3 = Qf.copy()
     run_layers(LG, b, Q3, placed, [sorted(set(seq))], beta, update="or")
     bad = np.abs(Q3 - Q2).max()
     log(f"[selftest] negative control (unlayered): max|diff| = {bad:.2e} (must be large)")
+    # CHOSEN: the negative control must differ by far more than round-off. The unlayered schedule
+    # measured 1.34, 1.53 and 1.43 (generator seeds 12345, 1, 2) against <= 3.3e-16 for the correct
+    # one, so any threshold between the positive-control tolerance (1e-12) and ~1 gives this verdict.
     ok &= bad > 1e-3
 
     # 5. the analytic facts the README quotes
     log(f"[selftest] theta(39) = {theta(39):.5f} >= 1, theta(40) = {theta(40):.5f} < 1; "
         f"n_min_implied(1.0) = {n_min_implied(1.0)}, n_min_implied(0.5) = {n_min_implied(0.5)}")
+    # DERIVED: the analytic ceiling of the module docstring -- theta(n) >= 1 exactly for n <= 39
+    # (theta(39) = 1.0020, theta(40) = 0.9775), so 1, 39 and 40 are the statement tested, not
+    # tolerances.
     ok &= theta(39) >= 1 > theta(40) and n_min_implied(1.0) == 40
     log(f"[selftest] observables (m={len(geom.obs_names)}): "
         + ", ".join(f"{nm}{'*' if t else ''}" for nm, t in zip(geom.obs_names, geom.obs_transferable))

@@ -12,7 +12,7 @@ noncomputable section
 ## What it gives
 
 The finite-size route (`ClayRoutes.clay_continuum_of_boxPatchGap`) carries the ultraviolet input as
-`ClayRoutes.UVBelowIR`, a `UVIRSplit.UVLossStep`: a statement about `TransferGap.GapAt` of the periodic
+`ClayRoutes.UVBelowIR`, the block step `UVIRSplit.UVLossStepBelow` clipped at the IR rate: a statement about `TransferGap.GapAt` of the periodic
 transfer data, carried from a coupling `β` to a finer `β'` with a summable loss of physical rate. This
 module states the same step as a `χ²` bound between observer laws and proves where it leads.
 
@@ -57,10 +57,10 @@ module states the same step as a `χ²` bound between observer laws and proves w
 `UVIRSplit.UVLossStep` concludes `GapAt` at `β'`, a bound on every vector of the periodic transfer
 data, the whole lattice-scale class `gaugeInvHalfSpaceAlg`; an observer law at a fixed physical
 resolution reads functions of the block field only, so `UVEntropyStep` bounds pairings of that class
-only. And `UVLossStep` asks one loss `ε(a)` for every rate `M`, while the `χ²` step moves the window
+only. And the block step asks one loss `ε(a)` for the rates it carries, while the `χ²` step moves the window
 factor additively, `q ↦ q + 4κε` (`factor_step`): at the factor `q = e^{−Mℓ}` of a window of physical
 length `ℓ` the rate loss is at most `4κε/(q ℓ) = 4κε e^{Mℓ}/ℓ` (`neg_log_add_ge`), a loss that grows
-with `M`. So the proved link is the composition into `FixedWindowDecay`, where the factor is compared
+with `M`; clipped at the IR rate `M₀` it is at most `4κε e^{M₀ℓ}/ℓ`. So the proved link is the composition into `FixedWindowDecay`, where the factor is compared
 with `1` at one window, and the lattice-scale class enters through two named carrier Props:
 `ObsReadback` at the one coupling `β₀` and `UVEntropyBridge` at every large coupling.
 

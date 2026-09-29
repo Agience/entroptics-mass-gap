@@ -108,10 +108,7 @@ def main():
     corr_rows, pen_rows = [], []
     for ns in SMEARS:
         O = operator_Ot(b, G.ape_smear(q0, ns, alpha=ALPHA, device=DEV))
-        C = connected_C(O, NLAG)
-        Nc = O.shape[0]; bins = np.array_split(np.arange(Nc), NBIN)
-        jkC = np.array([connected_C(O[np.setdiff1d(np.arange(Nc), bn)], NLAG) for bn in bins])
-        errC = np.sqrt((NBIN - 1) * np.mean((jkC - jkC.mean(0)) ** 2, axis=0))
+        C, errC = W.jackknife(O, lambda sub: connected_C(sub, NLAG), n_bins=NBIN)   # one SE per lag
         for tau in range(NLAG + 1):
             corr_rows.append([ns, tau, round(float(C[tau]), 4), round(float(errC[tau]), 4)])
         for n in MOMENT_ORDERS:

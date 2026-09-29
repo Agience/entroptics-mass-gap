@@ -1,6 +1,6 @@
 # Box local gap: an upper read of `BoxPatch.BoxLocalGap`, SU(2)
 
-Files: `box_gap_calib.py` (the read), `run_node45.sh` (the launcher for the compute node).
+Files: `box_gap_calib.py` (the read), `box_gap_calib_node45.sh` (the launcher for the compute node).
 Nothing here has run beyond the self-test and toy runs of a few seconds on the workstation.
 
 ## What the Lean constant is
@@ -139,20 +139,20 @@ only approximates. A faithful version would do one of two things:
 
 ## The commands
 
-Run these from Git Bash on the workstation. Set `KEY` from `COMPUTE_KEY` in `research.local.env`.
+Run these from the repository root in a POSIX shell. The host, port and key are read from the
+git-ignored `research.local.env` (`COMPUTE_HOST`, `COMPUTE_PORT`, `COMPUTE_KEY`).
 
 ```sh
-KEY=...   # COMPUTE_KEY from research.local.env
-H=builder@192.168.4.45
-CALIB="C:/Users/john/AppData/Local/Temp/claude/c--Users-john-Workspace-Ikailo-Repos-agience-agience-build/7238a859-210c-4b21-95c6-77dc37099908/scratchpad/agents/calib"
-LG="C:/Users/john/Workspace/Ikailo/Repos/agience/entroptics-mass-gap/research/code/lattice_generator.py"
-ssh -p 2222 -i "$KEY" $H 'mkdir -p ~/calib'
-scp -P 2222 -i "$KEY" "$CALIB/box_gap_calib.py" "$CALIB/run_node45.sh" "$LG" $H:calib/
-ssh -p 2222 -i "$KEY" $H 'cd ~/calib && nohup sh run_node45.sh pilot > pilot.log 2>&1 &'
+val() { grep "^$1=" research.local.env | cut -d= -f2- | tr -d '\r"'; }
+H=$(val COMPUTE_HOST); PORT=$(val COMPUTE_PORT); PORT=${PORT:-22}; KEY=$(val COMPUTE_KEY)
+C=research/code/certify
+ssh -p "$PORT" -i "$KEY" "$H" 'mkdir -p ~/calib'
+scp -P "$PORT" -i "$KEY" "$C/box_gap_calib.py" "$C/box_gap_calib_node45.sh" research/code/lattice_generator.py "$H":calib/
+ssh -p "$PORT" -i "$KEY" "$H" 'cd ~/calib && nohup sh box_gap_calib_node45.sh pilot > pilot.log 2>&1 &'
 # after the pilot: read pilot.log (selftest PASS, beta=0 rq = 1,2,3,4, hot/cold plaquettes agree), then
-ssh -p 2222 -i "$KEY" $H 'cd ~/calib && nohup sh run_node45.sh core > core.log 2>&1 &'
+ssh -p "$PORT" -i "$KEY" "$H" 'cd ~/calib && nohup sh box_gap_calib_node45.sh core > core.log 2>&1 &'
 # watch it take two cores at nice 19 and no more:
-ssh -p 2222 -i "$KEY" $H 'ps -eo pid,user,ni,pcpu,rss,etimes,args --sort=-pcpu | head; free -g'
+ssh -p "$PORT" -i "$KEY" "$H" 'ps -eo pid,user,ni,pcpu,rss,etimes,args --sort=-pcpu | head; free -g'
 ```
 
 The logged `lattice_generator` sha256 should read `d0eef5da…fde003`, the workstation copy at `8247cda`.

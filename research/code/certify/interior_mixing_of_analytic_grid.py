@@ -136,7 +136,7 @@ def main():
         err = 0.0
         # CHOSEN: minimum points for a degree-3 interpolant residual to mean anything.
         if NB > 0 and n > 4:
-            bs = [rho1(arr[rng.integers(0, n, n)]) for _ in range(NB)]
+            bs = W.bootstrap(arr, rho1, draws=NB, rng=rng)   # continues the module `rng`
             err = float(np.std(bs))
         xs.append(b); ys.append(pt); es.append(err); ns.append(n)
         dlt = -math.log(pt) if pt > 0 else float("inf")

@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import math
 import os
 import sys
 from dataclasses import dataclass, fields
@@ -53,47 +52,72 @@ from typing import Callable, Iterable
 _lib = importlib.import_module("entroptics")          # the installed public PyPI entroptics package
 _lib_nulls = importlib.import_module("entroptics.null_providers")   # caller-suppliable floor nulls
 
-# The reader version is set in one place -- the ``entroptics==`` line of research/requirements.txt,
-# the file pip actually installs from -- and carries from there: this import check reads it, and so
-# does the test suite (conftest imports REQUIRED_VERSION rather than writing the number again).
-# The check is ">=", because what the pin protects is the CALL SURFACE: 0.2.1 renamed the per-frame
-# projection (Screen -> Projection, Aperture.screen() -> Aperture.projection(), the "screen" floor
-# cut -> "projection"), so an older reader has no Aperture.projection() at all and must fail here,
-# at import and with a reason, rather than mid-read with a bare AttributeError. Read VALUES are
-# unchanged across that rename; the suite warns separately when the installed version is not the
-# pinned one, since that is the version the committed numbers were verified against.
+# The reader is pinned in one place -- the ``entroptics`` line of research/requirements.txt, the file
+# pip actually installs from -- and carries from there: this import check reads it, and so does the
+# test suite (conftest imports REQUIRED_VERSION rather than writing the pin again). The pin is either
+# a release (``entroptics==X.Y.Z`` or ``>=``) or an exact commit (``entroptics @ git+<repo>@<sha>``).
+# What the import check protects is the CALL SURFACE: 0.2.1 renamed the per-frame projection
+# (Screen -> Projection, Aperture.screen() -> Aperture.projection(), the "screen" floor cut ->
+# "projection"), so an older reader has no Aperture.projection() at all and must fail here, at import
+# and with a reason, rather than mid-read with a bare AttributeError. A release pin is checked as a
+# version floor; a commit pin carries no version, so the check reads the surface itself. The suite
+# warns separately when the installed reader is not the pinned one, since that is what the committed
+# numbers were verified against.
 _REQUIREMENTS = Path(__file__).resolve().parent.parent / "requirements.txt"
 
 
 def _pinned_version() -> str:
-    """The entroptics floor from research/requirements.txt -- the single source.
+    """The entroptics pin from research/requirements.txt -- the single source.
 
-    Accepts ``==`` or ``>=``. What this number is used for below is a MINIMUM on the call surface,
-    so both spellings answer the same question: the version at or above which the reader has the
-    entry points this adapter calls. The requirement was written ``==`` while the check was ``>=``,
-    and reading only ``==`` meant relaxing the requirement raised "no pin found" at import -- the
-    adapter refusing to load because the file it reads had been made less strict.
+    Accepts ``==`` or ``>=`` (a release: returns the version) and ``entroptics @ <vcs url>@<commit>``
+    (an exact commit: returns the commit). For a release, what the number is used for below is a
+    MINIMUM on the call surface, so ``==`` and ``>=`` answer the same question. The requirement was
+    written ``==`` while the check was ``>=``, and reading only ``==`` meant relaxing the requirement
+    raised "no pin found" at import -- the adapter refusing to load because the file it reads had
+    been made less strict.
     """
     for line in _REQUIREMENTS.read_text(encoding="utf-8").splitlines():
         stmt = line.split("#", 1)[0].strip()
         for op in ("==", ">="):
             if stmt.startswith("entroptics" + op):
                 return stmt[len("entroptics" + op):].strip()
-    raise ImportError(f"no 'entroptics==' or 'entroptics>=' requirement found in {_REQUIREMENTS}")
+        name, sep, url = stmt.partition("@")
+        if sep and name.strip() == "entroptics":
+            return url.strip().rsplit("@", 1)[-1]
+    raise ImportError(f"no 'entroptics==', 'entroptics>=' or 'entroptics @ <url>@<commit>' "
+                      f"requirement found in {_REQUIREMENTS}")
 
 
 def _version_tuple(v: str) -> tuple:
     return tuple(int(x) for x in v.split(".")[:3])
 
 
-REQUIRED_VERSION = _pinned_version()        # e.g. "0.2.1" -- set in requirements.txt, not here
+REQUIRED_VERSION = _pinned_version()        # "0.2.1" or a commit -- set in requirements.txt, not here
+#: True when the pin names a commit rather than a release: hex digits only, where a version has dots.
+#: DERIVED: 7 is git's default abbreviation length; a shorter all-digit pin is read as a version.
+PIN_IS_COMMIT = (len(REQUIRED_VERSION) >= 7
+                 and all(c in "0123456789abcdef" for c in REQUIRED_VERSION.lower()))
 
-if _version_tuple(_lib.__version__) < _version_tuple(REQUIRED_VERSION):
+if (not hasattr(_lib.Aperture, "projection") if PIN_IS_COMMIT
+        else _version_tuple(_lib.__version__) < _version_tuple(REQUIRED_VERSION)):
     raise ImportError(
-        f"entroptics {_lib.__version__} installed; this adapter needs >= {REQUIRED_VERSION} "
+        f"entroptics {_lib.__version__} installed; this adapter needs "
+        f"{'commit ' if PIN_IS_COMMIT else '>= '}{REQUIRED_VERSION} "
         f"(pinned in research/requirements.txt). The 0.2.1 release renamed Screen -> "
         "Projection: an older reader has no Aperture.projection() and no 'projection' floor "
         "cut.")
+
+def _absent(name: str):
+    """The binding for a library read the loaded copy does not have: calling it raises, naming the
+    copy that answered. The adapter still imports, so every read the copy DOES have keeps working."""
+    def refuse(*_args, **_kwargs):
+        raise ImportError(
+            f"entroptics.{name} is not in the entroptics loaded from {_lib.__file__} (reporting "
+            f"version {_lib.__version__}): that reader predates it. The version string does not "
+            "separate the copies; check which one is first on sys.path.")
+    refuse.__name__ = name
+    return refuse
+
 
 null_providers = _lib_nulls           # mp (default) / robust / reference_null / permutation() + plumbing
 reference_null = _lib_nulls.reference_null                 # O(1) closed-form null from a signal-free reference
@@ -111,6 +135,14 @@ attenuation_interval = _lib.attenuation_interval          # certified attenuatio
 concentration_band = _lib.concentration_band              # Vershynin sample band for the interval
 hankel_spectrum = _lib.hankel_spectrum    # reflection-positive MOMENT PENCIL: transfer spectrum of a corr. sequence
 jackknife = _lib.jackknife                # generic delete-one(-bin) jackknife SE for reads w/o a closed-form interval
+#: resampling with replacement: per replicate `idx = rng.integers(0, N, N)`, then `read(samples[idx])`;
+#: a passed Generator continues its stream, and a replicate whose read raises propagates.
+bootstrap = getattr(_lib, "bootstrap", None) or _absent("bootstrap")
+#: Maurer-Pontil empirical-Bernstein interval on a bounded mean: `(samples, delta, *, span)` ->
+#: `.mean`, `.radius`, `.lo`, `.hi`; each endpoint one-sided at 1 - delta, `span` the support width.
+empirical_bernstein = getattr(_lib, "empirical_bernstein", None) or _absent("empirical_bernstein")
+#: the lag-local decay rate log(c[t]/c[t+1]) of a profile; NaN where either lag is not positive.
+effective_rates = getattr(_lib, "effective_rates", None) or _absent("effective_rates")
 HankelSpectrum = _lib.HankelSpectrum      # the pencil result: .evals/.isolation/.psd/.leading/.rate
 _reads = _lib.reads                   # the correlation reads, reached through `decay` below
 
@@ -222,18 +254,21 @@ class ConfinementCertificate:
 
 @dataclass(frozen=True)
 class KSignalCertificate:
-    """Concentration-certified ensemble mean of the confinement order parameter K_signal
-    ([E, Def 8.2]), the read that separates the phases (confined low, Coulomb high). The
-    per-config plane-averaged K_signal values are the independent samples; the certified
-    interval is an empirical-Bernstein bound (Maurer-Pontil) on the ensemble mean, so its
-    width shrinks as 1/sqrt(n_configs). A certified phase SEPARATION is two such intervals
-    (confined vs a reference) that do not overlap; that is the ensemble-size-limited step."""
+    """Empirical-Bernstein interval on the ensemble mean of the confinement order parameter
+    K_signal ([E, Def 8.2]), the read that separates the phases (confined low, Coulomb high). The
+    per-config plane-averaged K_signal values are the samples, treated as i.i.d.; the interval
+    is an empirical-Bernstein bound (Maurer-Pontil 2009, Thm 4) on the ensemble mean, so its
+    width shrinks as 1/sqrt(n_configs). Each endpoint is one-sided at 1 - delta; the two-sided
+    interval [lo, hi] holds at 1 - 2*delta. The confidence is NOMINAL: the theorem needs an
+    a-priori support width and the sample range is used in its place (see
+    `Reads.k_signal_certificate`). A phase SEPARATION is two such intervals (confined vs a
+    reference) that do not overlap; that is the ensemble-size-limited step."""
     mean:   float   # ensemble-mean K_signal over configs
     std:    float   # sample standard deviation across configs
-    n:      int     # number of independent configs
-    lo:     float   # certified lower endpoint (1 - delta)
-    hi:     float   # certified upper endpoint
-    delta:  float   # failure probability
+    n:      int     # number of configs
+    lo:     float   # one-sided lower endpoint (nominal 1 - delta)
+    hi:     float   # one-sided upper endpoint (nominal 1 - delta); [lo, hi] jointly at 1 - 2*delta
+    delta:  float   # per-side failure probability
 
 
 # The optics fields grouped by which reduction reads them correctly. Ordered/decay
@@ -385,13 +420,13 @@ def pin_reference(confined_configs: "Iterable | None" = None, *,
     projection_svs = np.asarray([float(Aperture(p).projection().S[0]) for p in planes], dtype=float)
     corr_vals = np.asarray([null_providers.top_spectrum_value(p, "spectral") for p in planes], dtype=float)
     # bulk cut: the POOLED top eigenvalue's SAMPLING band -- bootstrap over the reference planes
-    rng = np.random.default_rng(seed); n = len(planes)
-    bulk_tops = np.empty(int(kboot), dtype=float)
-    for b in range(int(kboot)):
+    def pooled_top(resample):
         acc = SpectralAccumulator(F)
-        for i in rng.choice(n, size=n, replace=True):
-            acc.add(planes[i])
-        bulk_tops[b] = float(np.asarray(acc.spectral().eigenvalues)[0])
+        for p in resample:
+            acc.add(p)
+        return float(np.asarray(acc.spectral().eigenvalues)[0])
+
+    bulk_tops = np.asarray(bootstrap(planes, pooled_top, draws=int(kboot), rng=seed), dtype=float)
     _PINNED_REFERENCE = planes
     _PINNED_PROVIDER = by_kind(
         projection=confined_reference_null(projection_svs, far=far),
@@ -625,26 +660,33 @@ class Reads:
             resolved_lo=int(k.resolved_lo), resolved_hi=int(k.resolved_hi),
             band=float(band), n_samples=int(acc.T), n_features=int(acc.F))
 
-    # CHOSEN, AND IT IS THE CALLER'S TO SET: `delta` is the confidence level of the
-    # empirical-Bernstein interval, not a cut on any measurement. The default is the
-    # conventional 95%; every caller may pass its own, and no committed artifact producer calls
+    # CHOSEN, AND IT IS THE CALLER'S TO SET: `delta` is the per-side failure probability of the
+    # empirical-Bernstein interval, not a cut on any measurement. The default 0.05 gives each
+    # endpoint a nominal one-sided 95% and the two-sided interval a nominal 90% (1 - 2*delta);
+    # every caller may pass its own, and no committed artifact producer calls
     # this -- it is read-API surface, exercised only by the test suite.
     def k_signal_certificate(self, delta: float = 0.05) -> KSignalCertificate:
-        """Concentration-certified ensemble mean of the confinement order parameter K_signal
-        ([E, Def 8.2]), the read that discriminates the phase. The per-config plane-averaged
-        K_signal values are the independent samples; the interval is an empirical-Bernstein
-        bound on the ensemble mean at confidence 1 - ``delta``. Its width scales as
-        1/sqrt(n_configs), so a certified phase separation is an ensemble-size question."""
+        """Empirical-Bernstein interval on the ensemble mean of the confinement order parameter
+        K_signal ([E, Def 8.2]), the read that discriminates the phase. The per-config
+        plane-averaged K_signal values are the samples. Each endpoint is the one-sided
+        Maurer-Pontil (2009, Thm 4) bound at 1 - ``delta``; the two-sided interval [lo, hi]
+        holds at 1 - 2*``delta`` by the union bound, not at 1 - ``delta``.
+
+        The confidence is NOMINAL. Thm 4 holds for i.i.d. samples with a support width fixed in
+        advance; this uses the sample range max - min in its place, which understates the
+        support whenever the extremes were not sampled, and the configurations are i.i.d. only
+        as far as the generating chain decorrelated them. So the guarantee does not strictly
+        apply. Its width scales as 1/sqrt(n_configs), so a phase separation is an ensemble-size
+        question."""
         vals = [confinement(f, self._ta) for f in self._cfgs]
         n = len(vals)
         m = float(np.mean(vals))
         if n < 2:
             return KSignalCertificate(m, 0.0, n, m, m, float(delta))
-        v = float(np.var(vals, ddof=1))
-        rng = float(max(vals) - min(vals))
-        L = math.log(2.0 / float(delta))
-        t = math.sqrt(2.0 * v * L / n) + 7.0 * rng * L / (3.0 * (n - 1))   # empirical Bernstein
-        return KSignalCertificate(m, float(np.std(vals, ddof=1)), n, m - t, m + t, float(delta))
+        # The library's interval, with the sample range passed as its `span`: the plug-in that
+        # makes the confidence nominal (see above), stated here rather than hidden in a copy.
+        eb = empirical_bernstein(vals, float(delta), span=float(max(vals) - min(vals)))
+        return KSignalCertificate(m, float(np.std(vals, ddof=1)), n, eb.lo, eb.hi, float(delta))
 
     # ---- ORDERED decay aperture ----
     @property
@@ -780,122 +822,54 @@ def confined_top_singular_values(confined_configs, time_axis: int = -1) -> np.nd
     return np.asarray(svs, dtype=float)
 
 
-def _norm_ppf(p: float) -> float:
-    """Inverse standard-normal CDF (Acklam rational approximation): O(1), deterministic,
-    |abs error| < 1.2e-9. Returns z with P(Z <= z) = p."""
-    if p <= 0.0:
-        return -math.inf
-    if p >= 1.0:
-        return math.inf
-    a = (-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
-         1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00)
-    b = (-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
-         6.680131188771972e+01, -1.328068155288572e+01)
-    c = (-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
-         -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00)
-    d = (7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
-         3.754408661907416e+00)
-    plow, phigh = 0.02425, 1.0 - 0.02425
-    if p < plow:
-        q = math.sqrt(-2.0 * math.log(p))
-        return ((((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])
-                / (((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)))
-    if p > phigh:
-        q = math.sqrt(-2.0 * math.log(1.0 - p))
-        return -((((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])
-                 / (((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)))
-    q = p - 0.5; r = q * q
-    return ((((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q
-            / ((((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0)))
-
-
-def _norm_isf(p: float) -> float:
-    """Inverse survival: z with P(Z > z) = p (= -_norm_ppf(p)). O(1), deterministic."""
-    return -_norm_ppf(p)
-
-
 def confined_reference_null(confined_top_svs, *, far: float | None = None):
     """DETERMINISTIC O(1) confined-reference null: the physics null the mass-gap read OWNS
-    ([E] Def 8.2, 'prewhiten from a signal-free window'). The confined vacuum's
-    top-singular-value distribution is moment-matched to a closed form, so the floor is
+    ([E] Def 8.2, 'prewhiten from a signal-free window'), built by the library's
+    ``null_providers.reference_null`` from the confined vacuum's top singular values. The floor is
     ``center + z(far)*scale`` -- a pure O(1) function of ``ctx.far`` with NO stored samples and
     NO resampling, sharpening ANALYTICALLY to any far (the normal quantile inverts to 1e-5+;
     no 1/far sample requirement). ``(center, scale)`` = mean/std of
     ``confined_top_singular_values(confined_ensemble)`` at the target (N,F) shape, calibrated
     ONCE offline. Detection null = the confined phase, so deconfinement reads as the coherent
     mode standing above it. The confined analogue of the ``mp`` edge (same closed form, the
-    noise model calibrated on the confined vacuum instead of an i.i.d. bulk)."""
-    sv = np.asarray(confined_top_svs, dtype=float)
-    center = float(sv.mean()); scale = float(sv.std() + 1e-30)
+    noise model calibrated on the confined vacuum instead of an i.i.d. bulk).
 
-    def _provider(ctx) -> float:
-        f = ctx.far if far is None else far
-        return center + _norm_isf(f) * scale
-    _provider.__name__ = "confined_reference_null"
-    _provider.center = center
-    _provider.scale = scale
-    return _provider
+    What this adds to the library call is only the NAME: the provider reports itself as
+    ``confined_reference_null``, so a floor read against it says which reference it came from."""
+    provider = _lib_nulls.reference_null(confined_top_svs, far=far)
+    provider.__name__ = "confined_reference_null"
+    return provider
 
 
-class ConfinedReferenceNull:
-    """Stateful DETERMINISTIC O(1) sharpening confined-reference null. Maintains the running
-    mean/variance of the confined vacuum's top singular value by Welford (O(1) per update),
-    and floors at ``mean + z(far)*std`` (O(1) per call), sharpening ANALYTICALLY to any far via
-    the normal quantile -- no 1/far sample-size requirement, unlike an empirical quantile.
-    ``update(*confined_configs)`` grows the estimate in the dynamical (the streaming aperture
-    calls it per frame, so the null tracks a drifting confined level online); ``far=None`` uses
-    the read's ``ctx.far``, a value pins a target level. Memory and per-call cost are O(1)
-    regardless of how much reference has been accumulated.
+class ConfinedReferenceNull(_lib_nulls.ReferenceNull):
+    """The library's stateful O(1) sharpening reference null (``null_providers.ReferenceNull``),
+    fed from confined CONFIGURATIONS rather than from top values: ``update(*confined_configs)``
+    pushes each configuration's per-plane top singular values (``confined_top_singular_values``),
+    so the streaming aperture can call it per frame and the null tracks a drifting confined level
+    online. The running mean/variance (fading-memory Welford), the floor ``mean + z(far)*std`` and
+    ``forgetting`` are all the library's; ``far=None`` uses the read's ``ctx.far``.
 
-    ``forgetting`` (in (0, 1], default 1.0 = perfect memory / stationary) gives the reference a
-    FADING memory: each update decays the accumulated weight first, so the floor tracks a DRIFTING
-    confined level (effective sample ~1/(1-forgetting) recent values). Keep 1.0 for a globally
-    homogeneous vacuum (the maximally-stable, most-sensitive floor -- the mass-gap regime); use
-    < 1 to follow a slow drift. Mirrors the library's ``ReferenceNull(forgetting=...)``."""
+    One thing is the wrapper's: with fewer than two reference values there is no spread to read a
+    floor from, and this null then returns an infinite floor -- it resolves nothing -- rather than
+    the library's ``center + z*scale`` evaluated on a spread of zero."""
 
     def __init__(self, confined_configs=None, *, far: float | None = None, time_axis: int = -1,
                  forgetting: float = 1.0):
-        if not (0.0 < forgetting <= 1.0):
-            raise ValueError(f"forgetting must be in (0, 1]; got {forgetting}")
+        super().__init__(None, far=far, forgetting=forgetting)
         self._ta = time_axis
-        self._far = far
-        self._forget = float(forgetting)
-        self._n = 0.0                                 # float: effective (possibly faded) sample weight
-        self._mean = 0.0
-        self._M2 = 0.0
         if confined_configs is not None:
             self.update(*confined_configs)
 
-    def _push(self, x: float) -> None:                # fading-memory Welford, O(1) per sample + memory
-        f = self._forget
-        self._n = f * self._n + 1.0
-        d = x - self._mean
-        self._mean += d / self._n
-        self._M2 = f * self._M2 + d * (x - self._mean)
-
     def update(self, *confined_configs) -> "ConfinedReferenceNull":
         for c in confined_configs:
-            for s in confined_top_singular_values([c], self._ta):
-                self._push(float(s))
+            self.push(*confined_top_singular_values([c], self._ta))
         return self
 
-    @property
-    def n_reference(self) -> float:
-        return self._n
-
-    @property
-    def center(self) -> float:
-        return self._mean
-
-    @property
-    def scale(self) -> float:
-        return (self._M2 / (self._n - 1.0)) ** 0.5 if self._n > 1.0 else float("inf")
-
     def __call__(self, ctx) -> float:
-        if self._n < 2:
+        # DERIVED: two is where a spread exists at all; below it the floor is not defined.
+        if self.n_reference < 2:
             return float("inf")                       # not enough reference yet -> resolve nothing
-        f = ctx.far if self._far is None else self._far
-        return self._mean + _norm_isf(f) * self.scale
+        return super().__call__(ctx)
 
 
 def marginal_entropy(field: np.ndarray, time_axis: int = -1) -> float:

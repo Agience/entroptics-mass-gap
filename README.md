@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/entroptics?logo=pypi&logoColor=white&label=entroptics)](https://pypi.org/project/entroptics/)
 [![Verified](https://img.shields.io/badge/verified-Lean%204%20%2F%20Mathlib-4B0082)](research/lean)
-[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](research/PAPER.pdf)
+[![Paper](https://img.shields.io/badge/paper-Markdown-b31b1b)](research/PAPER.md)
 [![DOI](https://zenodo.org/badge/1342269699.svg)](https://zenodo.org/badge/latestdoi/1342269699)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Agience-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Agience)
 
@@ -79,16 +79,16 @@ bilinear Schwinger form on a normed test space, with a reflection and an $\mathb
 action — to `WightmanQFTData`.
 
 **What the build carries.** Two named axioms beyond Lean's three foundational ones, counted by machine
-([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 4726 printed declarations,
-4535 of them foundational-only):
+([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 5661 printed declarations,
+5467 of them foundational-only):
 
 | named axiom | declarations carrying it | status |
 |---|---|---|
-| `wilson_reflection_positive_at` | 180 | stated at every extent and $\beta\ge0$; **proved** at even lattice extent $\ge4$ (`OddLagSplit.corrClay_reflection_positive`); cited at odd extent and extent two to the positive transfer matrix (Osterwalder–Seiler 1978; Lüscher 1977) |
+| `wilson_reflection_positive_at` | 183 | stated at every extent and $\beta\ge0$; **proved** at even lattice extent $\ge4$ (`OddLagSplit.corrClay_reflection_positive`); cited at odd extent and extent two to the positive transfer matrix (Osterwalder–Seiler 1978; Lüscher 1977) |
 | `os_reconstruction_wightman` | 11 | cited (Osterwalder–Schrader reconstruction), from `OSData` to `WightmanQFTData` |
 
 The periodic-state chain above — the state, the transfer, the one-lag reduction and the Clay lattice gap —
-carries the three foundational axioms only. The paper ([`research/PAPER.pdf`](research/PAPER.pdf)) develops
+carries the three foundational axioms only. The paper ([`research/PAPER.md`](research/PAPER.md)) develops
 the reading and the method; the reads run through the Entroptics reader (`research/code/`); the Lean 4 /
 Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
@@ -96,8 +96,7 @@ Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
 | path | what |
 |---|---|
-| [`research/PAPER.pdf`](research/PAPER.pdf) | the paper, typeset |
-| [`research/PAPER.md`](research/PAPER.md) | the same text in markdown |
+| [`research/PAPER.md`](research/PAPER.md) | the paper |
 | [`research/lean/`](research/lean) | the Lean 4 / Mathlib development (`MassGap.*`), `sorry`-free |
 | [`research/data/`](research/data) | analysis and figure scripts that read the frozen ensembles, and `regen_all.py`, which drives them |
 | [`research/code/`](research/code) | the Entroptics wrapper + certification code |
@@ -171,8 +170,8 @@ The empirical reads run on frozen Monte-Carlo action-density ensembles for compa
 manifest. Every figure and certificate in §8–§9 regenerates from them by the named script in `research/data/`.
 
 The ensembles are a **separate multi-gigabyte data release**, *Entroptics lattice gauge-theory action-density
-ensembles (U(1), SU(2), SU(3))* — DOI [10.5281/zenodo.22650079](https://doi.org/10.5281/zenodo.22650079), with
-its own citation. The record and its metadata are public; the files are access-by-request. They are not in this
+ensembles (U(1), SU(2), SU(3))* — DOI [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110) (v0.2.0), with
+its own citation. The record and its files are open access. They are not in this
 repository and no script here downloads them. Once you have them, point the code at the store — either per run,
 
 ```bash

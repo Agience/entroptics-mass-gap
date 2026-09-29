@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "code", "certify"))
 import store_path                              # the ONE place the ensemble store is located
 import su2_l16_scan                            # the ONE place this scan's population is named
 import ym_crossover_confinement_of_grid as CG  # canonical direct-lag read
+import entroptics_adapter as W                # THE WRAPPER: the bootstrap is the library's
 
 # The store root, from `store_path`: `CONFIGS`, then the git-ignored local config file, then a
 # refusal. This was a HARDCODED path with no override, and the store has since moved -- so every
@@ -50,7 +51,7 @@ for b in BETAS:
         continue
     P = CG.per_config_profiles(a)
     n = a.shape[0]
-    boot = np.array([CG.d2_from_profiles(P[rng.integers(0, n, n)]) for _ in range(NBOOT)])
+    boot = W.bootstrap(P, CG.d2_from_profiles, draws=NBOOT, rng=rng)   # continues `rng`
     B.append(b); M.append(CG.d2_from_profiles(P)); S.append(float(boot.std())); N.append(n)
 
 if not B:
@@ -74,14 +75,17 @@ with open(os.path.join(HERE, "9_1_dat_d2_bound.csv"), "w", newline="") as f:
 wt = 1.0 / np.maximum(S, 1e-3) ** 2
 xx = np.linspace(B.min(), B.max(), 300)
 fit = np.poly1d(np.polyfit(B, M, 2, w=np.sqrt(wt)))
-fb = []
-for _ in range(1000):
-    i = rng.integers(0, len(B), len(B))
-    try:
-        fb.append(np.poly1d(np.polyfit(B[i], M[i], 2, w=np.sqrt(wt[i])))(xx))
-    except Exception:
-        pass
-lo, hi = np.percentile(np.array(fb), [2.5, 97.5], 0)
+
+
+def band_fit(i):
+    """The descriptive quadratic refit on one resample of the beta points, `i` indexing B, M, wt."""
+    return np.poly1d(np.polyfit(B[i], M[i], 2, w=np.sqrt(wt[i])))(xx)
+
+
+# Resamples of the beta POINTS, on the same `rng` stream the per-beta errors above left off at. A
+# refit that raises stops the run: no replicate is dropped from the band.
+fb = W.bootstrap(np.arange(len(B)), band_fit, draws=1000, rng=rng)
+lo, hi = np.percentile(fb, [2.5, 97.5], 0)
 peak = M.max(); pk_b = B[np.argmax(M)]
 
 # ---- figure (measured crossover shape; the bound/certificate live in 9_1_fig_d2_certified.png) ----

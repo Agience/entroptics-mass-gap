@@ -180,17 +180,6 @@ theorem integral_wilsonDensity_centred_ge (hN : N ≠ 0) (c : ℝ) :
 
 /-! ## The floor in a free box -/
 
-/-- A lattice step moves the site: `ishift μ x ≠ x`. The plaquette's first link and its other three
-are distinct because of it.
-
-DERIVED: the `4` is the dimension. -/
-theorem ishift_ne (μ : Fin 4) (x : MassGap.GibbsSpec.ISite) : MassGap.GibbsSpec.ishift μ x ≠ x := by
-  intro h
-  have := congrFun h μ
-  simp [MassGap.GibbsSpec.ishift] at this
-
-#print axioms ishift_ne
-
 /-- **A plaquette's holonomy is its first link times the product of the other three.**
 
 DERIVED: no numeral. -/
@@ -299,7 +288,7 @@ theorem stateFree_var_iplaqObs_ge (hN2 : 2 ≤ N) (hN : N ≠ 0) {β : ℝ} (hβ
   have hne1 : ((q.1.2, MassGap.GibbsSpec.ishift q.1.1 q.2) : MassGap.InfiniteLattice.ILink)
       ≠ (q.1.1, q.2) := fun h => hqnd (congrArg Prod.fst h).symm
   have hne2 : ((q.1.1, MassGap.GibbsSpec.ishift q.1.2 q.2) : MassGap.InfiniteLattice.ILink)
-      ≠ (q.1.1, q.2) := fun h => ishift_ne q.1.2 q.2 (congrArg Prod.snd h)
+      ≠ (q.1.1, q.2) := fun h => MassGap.ReflectionHalfSpace.ishift_ne_self q.1.2 q.2 (congrArg Prod.snd h)
   have hne3 : ((q.1.2, q.2) : MassGap.InfiniteLattice.ILink) ≠ (q.1.1, q.2) :=
     fun h => hqnd (congrArg Prod.fst h).symm
   have hWi : ∀ u g, W (Function.update u l₀ g) = W u := by

@@ -155,8 +155,9 @@ def test_the_crossover_grid_actually_writes_its_artifact(tmp_path):
     """Run ym_crossover_confinement_of_grid end to end on a synthetic store and read the CSV back.
 
     The emission paths added to the certifications have never executed: the programs they live in
-    read real ensembles and are bigmem or gpu. This one's read is a direct roll-and-mean over lags
-    -- no covariance -- so it runs in a moment on a small lattice, which makes the whole path
+    read real ensembles and are bigmem or gpu. This one's read is the library's periodic lag
+    profile, one small ordered Gram per configuration and axis -- no feature covariance -- so it
+    runs in a moment on a small lattice, which makes the whole path
     exercisable: load, per-config profiles, bootstrap, the empirical-Bernstein upper, the verdict,
     and the write.
 

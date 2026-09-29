@@ -1,6 +1,6 @@
 group,collection,smear,L,T,n_configs,blocks,resolved,usable_lag,decay_rate,needs_lag,needs_configs,pencil_order,pencil_dim,samples,delta,spread,xi_over_a,decay_sampled,L_times_delta,kappa0,box_stable,block_values
 su2,configs_b25_su2,0,8,32,384,4,no,1,,5,,,,12288,,,,no,,0.274653,,
-su2,configs_b25_su2,0,12,32,384,4,no,2,1.256924,5,47500,,,12288,,,,no,,0.274653,,
+su2,configs_b25_su2,0,12,32,384,4,yes,2,1.256924,7,,3,4,12288,2.433066,1.363865,0.4110,no,29.1968,0.274653,,2.5517 3.0526 2.4392 1.6887
 su2,configs_b25_su2,0,16,32,384,4,no,1,,5,,,,12288,,,,no,,0.274653,,
 su2,configs_b25_su2,0,20,32,384,4,no,1,,5,,,,12288,,,,no,,0.274653,,
 su2,configs_b25_su2,4,8,32,384,4,no,3,1.066335,5,16016,,,12288,,,,no,,0.274653,,

@@ -12,8 +12,8 @@ researcher who clones this repository must be able to reproduce every artifact w
 particular machine. A compute host is an optimisation for whoever has one, declared in the same
 machine-local, git-ignored file that already carries the store root and the Lean builder:
 
-    COMPUTE_HOST=builder@192.168.4.45          # ssh destination
-    COMPUTE_PORT=2222                          # optional, default 22
+    COMPUTE_HOST=user@host                     # ssh destination
+    COMPUTE_PORT=22                            # optional, default 22
     COMPUTE_KEY=~/.ssh/some_key                # optional
     COMPUTE_DIR=research                       # remote working tree, relative to $HOME
     COMPUTE_PY=$HOME/research-venv/bin/python  # the interpreter there

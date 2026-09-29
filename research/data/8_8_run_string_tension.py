@@ -41,6 +41,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(_HERE, "..", "code")))   # rese
 
 import lattice_generator as G
 from lattice_generator import _Backend, _qmul, _qconj, _sax
+import entroptics_adapter as EA         # THE WRAPPER: the jackknife is the library's
 import store_path                       # the ONE place the ensemble store is located
 import table
 
@@ -95,21 +96,26 @@ def wilson_matrix(b, q, rmax, tmax):
     tax = G.D - 1                                                     # the temporal direction
     tline, P, sh = {}, q[..., tax, :], q[..., tax, :]
     tline[1] = P
+    # NOT A READ: each roll is the link shift U_t(x + k t); the loop builds the temporal Wilson line of length T
     for T in range(2, tmax + 1):
         sh = b.roll(sh, -1, _sax(tax, 1))
         P = _qmul(b, P, sh)
         tline[T] = P
     W = np.zeros((rmax, tmax))
+    # NOT A READ: the loops over mu, R and T assemble the R x T Wilson loop from shifted link products
     for mu in range(G.D - 1):                                         # spatial mu only
         S = q[..., mu, :]
         shs = S
         sline = {1: S}
+        # NOT A READ: each roll is the link shift U_mu(x + k mu); the loop builds the spatial Wilson line
         for R in range(2, rmax + 1):
             shs = b.roll(shs, -1, _sax(mu, 1))
             S = _qmul(b, S, shs)
             sline[R] = S
+        # NOT A READ: pairs each spatial line with each temporal line; the rolls below close the loop
         for R in range(1, rmax + 1):
             bottom = sline[R]
+            # NOT A READ: the rolls translate the two lines to the far corners of the R x T loop
             for T in range(1, tmax + 1):
                 left = tline[T]
                 right = b.roll(left, -R, _sax(mu, 1))
@@ -178,10 +184,9 @@ def creutz_sigma(Ws, Wm, rmax):
     chis = {R: creutz(Wm, R, R) for R in rs}
     errs = {}
     for R in rs:
-        jk = [creutz(np.delete(Ws, k, axis=0).mean(0), R, R) for k in range(len(Ws))]
-        jk = np.array([v for v in jk if np.isfinite(v)])
-        errs[R] = (float(np.sqrt((len(jk) - 1) / len(jk) * np.sum((jk - jk.mean()) ** 2)))
-                   if len(jk) == len(Ws) else float("nan"))
+        # Delete-one-block jackknife, the library's. A block whose deletion leaves chi non-finite
+        # makes the error non-finite, and the point then fails the resolution cut below.
+        _, errs[R] = EA.jackknife(Ws, lambda sub, _R=R: creutz(sub.mean(0), _R, _R))
     used = [R for R in rs
             if np.isfinite(chis[R]) and np.isfinite(errs[R]) and errs[R] > 0
             and chis[R] / errs[R] >= NSIG_RESOLVED]
@@ -282,19 +287,14 @@ def main():
                 s_all, e_all = fit_sigma(v_eff(Wm, T), rs)
             except ValueError:
                 continue                                   # this T has no finite V(R); later T are worse
-            jk = []
-            for k in range(len(Ws)):
-                Wk = np.delete(Ws, k, axis=0).mean(0)
-                try:
-                    jk.append(fit_sigma(v_eff(Wk, T), rs)[0])
-                except ValueError:
-                    jk = []
-                    break
-            if not jk:
+            # Delete-one-block jackknife, the library's. A deletion that leaves V(R) non-finite
+            # raises out of `fit_sigma`, and this T is then skipped whole, as the full fit is.
+            try:
+                _, err_T = EA.jackknife(Ws, lambda sub, _T=T: fit_sigma(v_eff(sub.mean(0), _T), rs)[0])
+            except ValueError:
                 continue
-            jk = np.array(jk)
             sig[T], evals[T] = s_all, e_all
-            err[T] = float(np.sqrt((len(jk) - 1) / len(jk) * np.sum((jk - jk.mean()) ** 2)))
+            err[T] = float(err_T)
 
         if not sig:
             raise SystemExit(f"beta={beta}: no T gave a finite V(R) over R={list(rs)}")

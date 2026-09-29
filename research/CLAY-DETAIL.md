@@ -445,6 +445,21 @@ exactly one box link; every other box heat bath fixes it up to null vectors, so 
 `2 ≤ N`). So `BoxCeiling.boxLocalGap_le_one`, and with the threshold `(40n − 36)/n² < γ ≤ 1`,
 `BoxCeiling.boxPatchGap_side_ge_forty`: the box check needs side at least `40` at every coupling.
 
+**The box at the floor.** Fix two links `l ≠ m` and freeze every other link. In the unit features
+`X = U/√N ∈ ℝ^{2N²}` (`PairInterface.realFeature`) each ordered plaquette through both links contributes an
+isometric coupling `β⟨X, KY⟩` and each through one link a tilt `β⟨X, v⟩`, so the fibre weight is
+`const · exp(⟨X,TY⟩ + α·X + γ·Y)` with `‖T‖ ≤ βn₂`, `|α|, |γ| ≤ β(12 − n₂)` (`PairWeight.wt_fibre_eq`); `n₂ ∈ {0, 2, 4}`,
+with `n₂ = 4` only on the side-2 torus, and in-line partners share only diagonal plaquettes (`PairCount`). Expanding
+`e^{⟨X,TY⟩} = 1 + ⟨X,TY⟩ + R` with `0 ≤ R ≤ c₂⟨X,TY⟩²` and bounding second moments and means of linear functions
+under the tilted single-link laws (`TiltedHaar.tiltBounds_of_haarConsts`, from the Haar constants `D`, `q4`, `t3`
+of `HaarMomentsSU2` and `HaarMomentsSU3`; the `SU(3)` third moment is `E tr(UA)³ = det A` with the adjugate
+bound `1/108`) gives the correlation bound `dstar` uniformly in the boundary
+(`PairFibreAbstract.fibreBound_of_tiltBounds`). The defect row sums are at most `max(18δ₁, 12δ₁ + 3δ₂)`
+(`PairCorrSharp.pairDeltaSharp_row`); rational certificates at the floor give `9693/10000` for `SU(2)` and
+`2133/2500` for `SU(3)`, hence `PairCorrSharp.boxPatchGap_floor_su2` (side `2606`, gap `307/10000`) and
+`PairCorrSharp.boxPatchGap_floor_su3` (side `545`, gap `367/2500`), each at a side where the threshold is about
+half the gap.
+
 **The box check at small coupling.** For two links `l ≠ m` sharing a plaquette, the conditional expectation
 given every other link (`PairCorr.twoCondExp`, built from the two-link heat bath `PairCorr.heatAvg2`) is fixed by
 both single-link heat baths. On the `(l, m)` fibre the weight of the at most `512` plaquettes visiting `l` or `m`
@@ -454,6 +469,16 @@ comparison bounds the correlation of `E_l f` and `E_m f` by `(κ² − 1)κ ≤ 
 neighbours the defect matrix has sums `120960β` (`PairCorr.pairDelta_defect`), so
 `PairCorr.pairCorrLinear_holds`, `PairCorr.boxPatchGap_at` (`BoxPatchGap` at `β = 1/241920`, side `80`, gap `1/2`)
 and `PairCorr.irGapAt_small` (the IR gap there at `boxRate`). The constants are not optimised.
+
+**The UV step clipped at the rate.** The composition from `β₀` (`UVIRSplit.gapAt_eventually_of_uv_ir_below`,
+`UVIRSplit.gapAt_chain_below`) calls the block step only at the rates `M₀ − Σ ε ≤ M₀` it carries, so the UV input
+is the step clipped at `M₀`, `UVIRSplit.UVLossStepBelow`; the unclipped `UVIRSplit.UVLossStep` implies it
+(`UVIRSplit.uvLossStepBelow_of_uvLossStep`). Asked at every rate, a step's loss would have to cover every fall of
+the true rate between the two couplings. With zero losses the clipped step at `M₀` follows from the lattice gap at
+the fixed rate `M₀` at every coupling from `βUV` on (`ClayRoutes.uvBelowIR_of_uniform_gap`): a lower bound
+`M₀ · aRun N β` on the lattice gap from the floor on suffices, with `M₀ · aRun N β₀ ≈ 3.0·10⁻⁵` (SU(2)) and
+`1.45·10⁻⁴` (SU(3)). The step with `IRGapAt` at `β₀` gives the gap at `M₀ − E` at every large coupling, so the
+two statements bracket the same content.
 
 **The UV step at the box's rate.** `UVIRSplit.IRGapAt` is monotone in the rate (`TransferGap.gapAt_mono`): a
 gap at `M₀` is a gap at every smaller positive rate, so a UV target is only usable at a named rate. The heat-bath
@@ -477,6 +502,26 @@ the `2` being the link's neighbours along its own direction, which share a diago
 (`bdT` includes the diagonal; `HeatBathLocal.card_nbT_le`). `y = 3` is the least integer sweep parameter above
 `e`. A diagonal plaquette's holonomy is the identity, so its two links' conditional laws do not couple; a
 commutation lemma that skips the diagonal would give `z = 19` and the constant `4(6 · 19 + 1) = 460`.
+
+**The UV step on the correlation length.** `EdgeStep.EdgeStepAbove D a βUV δ ξ₀` states the block step on
+the physical correlation length: for couplings `β, β' ≥ βUV` one block step apart and every `ξ ≥ ξ₀`, the gap at
+`e^{−a β/ξ}` at `β` gives the gap at `e^{−a β'/(ξ + δ(a β))}` at `β'`; `EdgeStep.UVEdgeStepAbove` is the same at
+the periodic data along `aRun N`. `ξ₀` carries no sign condition: at `ξ₀ ≤ 0` and `0 ≤ a β` the premise holds
+at every `ξ ∈ [ξ₀, 0]`, so the step asserts the gap at `β'` outright at every correlation length `ξ + δ(a β)`
+there, the shortest being `ξ₀ + δ(a β)`. At `ξ₀ ≤ M₁⁻¹` with non-negative `δ` the edge step gives the
+clipped rate step at `M₁` with loss `M₁² δ` (`EdgeStep.lossStepBelow_of_edgeStepAbove`, `EdgeStep.rate_loss_le`).
+At `2 ≤ N`, with `IRGapAt` at `β₀` at a rate `M₀ > 0`, `ξ₀ ≤ M₀⁻¹`, `0 < βUV ≤ β₀` and any finite budget `E` for `δ` along
+the dyadic tower below `aRun N β₀`, it gives `IRGapAt` and `ClayRoutes.UVBelowIR` at the lowered rate
+`M₁ = M₀/(1 + 2M₀E)`, not at `M₀` (`EdgeStep.uvBelowIR_of_edgeStep`), and so `FixedWindowDecay` at every `L > 0`
+(`EdgeStep.fixedWindowDecay_of_edgeStep`); no relation between `E` and `M₀` is assumed. At SU(2) the IR input is
+the floor box, and the edge step from `floorBeta 2` above the inverse box rate, with a finite budget and
+non-negative `δ`, are the only hypotheses (`EdgeStep.fixedWindowDecay_floor_su2_of_edgeStep`). Conversely `FixedWindowDecay` gives an IR gap at
+some `M > 0` and the edge step above `M⁻¹` at zero loss (`EdgeStep.edgeStep_of_fixedWindowDecay`), and the two
+directions are one iff (`EdgeStep.fixedWindowDecay_iff_edgeStep`): the edge step with a finite budget and one IR
+gap is `FixedWindowDecay` restated scale by scale, not weakened. `UVBelowIR` at a free rate with `IRGapAt` at the
+same rate restates it too: one direction is `UVIRSplit.fixedWindowDecay_of_uv_ir_below`, the other composes
+`UVIRSplit.irGapAt_of_fixedWindowDecay` with `ClayRoutes.uvBelowIR_of_uniform_gap` at zero loss, and no single
+theorem states that iff; both directions are at a rate the proof chooses, not at the box rate.
 
 **The UV step in entropy form.** For observer laws `obs β` (image measures of the periodic states under block
 maps, `UVEntropy.PeriodicObserverLaws`), a χ² bound `√χ²(obs β' ‖ obs β) ≤ ε` moves a connected pairing by at
@@ -630,8 +675,29 @@ short interval (`ContinuumNontrivial.af_bounds_on_interval`), and
 `ContinuumNontrivial.connectedTwoPointNonzero_of_af` assembles `ContinuumSep.ConnectedTwoPointNonzero`
 from `ContinuumNontrivial.KernelConvergesSep` and Y (at `ContinuumNontrivial.rhoA`,
 `ContinuumNontrivial.connectedTwoPointNonzero_rhoA`), and `ContinuumNontrivial.exists_orth_ne_zero_of_af`
-gives the vacuum-orthogonal vector under `ContinuumSep.UniformBoundSep`. `ContinuumClay.continuum_gap_nontrivial`
+gives the vacuum-orthogonal vector under `ContinuumSep.PairBoundSep`. `ContinuumClay.continuum_gap_nontrivial`
 joins it to `ContinuumSep.continuum_gap_sep` on one reconstructed space.
+
+**The inputs at the strength the capstone reads.** `ContinuumClay.continuum_gap_nontrivial` reads N and Y only as a
+positive lower bound, eventually in the step, on the reflected pair of one cube monomial: `ClayReduce.PairLowerBound`,
+which N and Y give (`ClayReduce.pairLowerBound_of_af`). A negative side gives the empty cube and a constant field has
+zero connected part, both with value `0`, which the positive bound excludes. Under `UniformBoundSep` the pair
+converges and the vacuum term vanishes (`ClayReduce.connectedTwoPointNonzero_of_pairLowerBound`), so
+`ClayReduce.clay_continuum_of_pairLowerBound` concludes `ClayRoutes.ClayContinuum` from E, M and `PairLowerBound`. At
+a free factor `Z` the bound constrains only the normalisation of `O`; `ClayReduce.zA N = a⁻⁴` is the same for every
+field (`ClayReduce.zA_refl`, `ClayReduce.rhoA_eq`), and `ClayReduce.clay_continuum_floor_su2_rhoA`,
+`ClayReduce.clay_continuum_floor_su3_rhoA` are the floor capstones there. E is read only on reflected pairs of
+separated positive-time monomials (`ContinuumSep.tendsto_pair_sep`, `ContinuumSep.kernSep_iterate_bound`); these are
+eventually vectors of the half-space algebra of the step-`k` reflected pairing (`ContinuumSep.eventually_Yv_mem_sep`),
+so Cauchy–Schwarz bounds each pair by its diagonals (`ContinuumSep.sq_latSkR_pairFam_le`) and the transfer contraction
+bounds a forward-shifted diagonal by the unshifted one (`ContinuumSep.latSkR_pairFam_shift_self_le`). Hence
+`ContinuumSep.DiagBoundSep` gives `ContinuumSep.PairBoundSep` (`ContinuumSep.pairBoundSep_of_diagBoundSep`), and both
+lemmas through which `ContinuumSep` reads E hold on it (`ContinuumSep.tendsto_pair_sep_of_pairBound`,
+`ContinuumSep.kernSep_iterate_bound_of_pairBound`), and the whole continuum chain runs on it
+(`ContinuumSep.contTransferSep`, `ContinuumClay.contD`): `ClayRoutes.ClayContinuumPair` is the conclusion at
+a `PairBoundSep` witness, `ClayRoutes.ClayContinuum` its instance at `UniformBoundSep`
+(`ClayRoutes.clayContinuum_iff_pair`), and `ClayReduce.clay_continuum_of_diagBoundSep` and
+`ClayReduce.clay_continuum_floor_su2_rhoA_diagBoundSep` take E as `ContinuumSep.DiagBoundSep`.
 
 **Hypercubic and ℝ⁴ invariance.** Axis permutations of `ℤ⁴` act on links, configurations and
 observables (`ContinuumHypercubic.iaxisObs`), commute with translation

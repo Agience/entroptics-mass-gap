@@ -131,8 +131,7 @@ def correlator(O, nlag):
     mee = np.full(nlag, np.nan)
     for t in range(nlag):
         def _meff(sub, _t=t):
-            c = cbar(sub, nlag)
-            return float(np.log(c[_t] / c[_t + 1])) if c[_t] > 0 and c[_t + 1] > 0 else float("nan")
+            return float(W.effective_rates(cbar(sub, nlag))[_t])      # NaN unless both lags > 0
         v, e = W.jackknife(O, _meff, n_bins=NBIN)
         if np.isfinite(v) and np.isfinite(e):
             me[t], mee[t] = v, e

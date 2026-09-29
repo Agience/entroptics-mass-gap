@@ -55,20 +55,13 @@ research/code/certify/small_volume_enclosure.py|jmax=30|def certified_gap
 research/code/certify/small_volume_enclosure.py|jmax=60|def float_gap
 research/code/certify/string_tension_eq_centre.py|compared against 0|return math.exp(-d) if d > 0 else 1.0
 research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|+ (f"  ({B16/umax:.0f}x margin)" if umax > 0 else ""))
-research/code/certify/ym_crossover_confinement_of_grid.py|compared against 0|if lo0 <= 0:
 research/code/certify/ym_crossover_confinement_of_grid.py|compared against 4|if len(xs) < 4:
 research/code/certify/ym_crossover_confinement_of_grid.py|named constant L = 16|L = 16
 research/code/certify/ym_crossover_confinement_of_grid.py|ncap=256|def load
-research/code/entroptics_adapter.py|compared against 0.0|if not (0.0 < forgetting <= 1.0):
-research/code/entroptics_adapter.py|compared against 0.0|if p <= 0.0:
 research/code/entroptics_adapter.py|compared against 0|out["shape_factor"] = (out["a_delta"] / out["phi_F"]) if out["phi_F"] > 0 else f
-research/code/entroptics_adapter.py|compared against 1.0|if not (0.0 < forgetting <= 1.0):
-research/code/entroptics_adapter.py|compared against 1.0|if p >= 1.0:
-research/code/entroptics_adapter.py|compared against 1.0|return (self._M2 / (self._n - 1.0)) ** 0.5 if self._n > 1.0 else float("inf")
 research/code/entroptics_adapter.py|compared against 2|if n < 2:
 research/code/entroptics_adapter.py|compared against 2|if p.ndim != 2 or int(p.shape[1]) < 2:
 research/code/entroptics_adapter.py|compared against 2|if p.ndim == 2 and int(p.shape[1]) >= 2:
-research/code/entroptics_adapter.py|compared against 2|if self._n < 2:
 research/code/entroptics_adapter.py|compared against 2|planes = [p for p in planes if p.ndim == 2 and int(p.shape[1]) >= 2]
 research/code/entroptics_adapter.py|compared against 2|return (spatial[0], spatial[1]) if len(spatial) >= 2 else None
 research/code/entroptics_adapter.py|compared against 3|if acc is None or acc.T < 3:

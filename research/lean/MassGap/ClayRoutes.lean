@@ -12,11 +12,17 @@ noncomputable section
 
 `ContinuumClay.continuum_gap_nontrivial` concludes, at every dyadic step `m`, that the reconstructed
 continuum transfer data `ContinuumClay.contD hN Z τ hZ hB m` is `ContinuumClay.GappedAt` a rate of
-physical mass at least `c/L` and is `ContinuumClay.NontrivialVacuum`. `ClayContinuum hN Z τ hZ hB L`
-names that conclusion. Its requirement M input is `WeakCouplingWindow.FixedWindowDecay τ 0 hN L`;
-this module reaches it by two routes and assembles each into `ClayContinuum`.
+physical mass at least `c/L` and is `ContinuumClay.NontrivialVacuum`. `ClayContinuumPair hN Z τ hZ hB L`
+names that conclusion at a witness `hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ`;
+`ClayContinuum hN Z τ hZ hB L`, at `hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)`, is
+`ClayContinuumPair` at the witness `ContinuumSep.pairBoundSep_of_uniformBoundSep`. The witness enters
+only proof fields, so `ClayContinuum` and `ClayContinuumPair` at any witnesses are the same
+proposition (`clayContinuum_iff_pair`). Its requirement M input is
+`WeakCouplingWindow.FixedWindowDecay τ 0 hN L`; this module reaches it by two routes and assembles each
+into `ClayContinuum`.
 
-* `clay_continuum_of_fixedWindowDecay`: the capstone with M as the single Prop `FixedWindowDecay`.
+* `clay_continuum_pair_of_fixedWindowDecay`: the capstone with E as `PairBoundSep` and M as the single
+  Prop `FixedWindowDecay`; `clay_continuum_of_fixedWindowDecay`, the same with E as `UniformBoundSep`.
 * `clay_continuum_of_irGap`: the IR gap at `β₀` at a named rate `M₀` and the UV step below `M₀`.
   `UVBelowIR τ p hN β₀ βUV M₀` states the UV step against one rate: a non-negative loss function with a
   budget below `M₀` along the dyadic tower from `β₀`, and the UV step from `βUV` on.
@@ -44,7 +50,11 @@ Fixed data: a colour count `2 ≤ N`, a field-strength factor `Z` with its refle
 
 * **E** — `ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)`: for every family and every
   `d > 0`, one constant bounding, eventually in the step, the renormalised lattice Schwinger function
-  of every dyadic translate of the family whose supports are pairwise `d`-separated.
+  of every dyadic translate of the family whose supports are pairwise `d`-separated. The capstone reads
+  it only as `ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ` (`ClayContinuumPair`): for each
+  pair of separated positive-time monomials, one constant bounding the reflected pair at every common
+  dyadic time shift. `ClayReduce.clay_continuum_of_diagBoundSep` takes it as
+  `ContinuumSep.DiagBoundSep`, the bound on the unshifted reflection diagonal `θP ∪ P` alone.
 * **N** — `ContinuumNontrivial.KernelConvergesSep hN (Renorm.connected hN Z) τ O
   (fun p q => G (ContinuumNontrivial.eDist p q))`: the renormalised lattice kernel of `O` converging
   to `G(|p − q|)` uniformly on every separated box `ContinuumNontrivial.sepBoxSet d R`, `d > 0`.
@@ -57,7 +67,7 @@ Fixed data: a colour count `2 ≤ N`, a field-strength factor `Z` with its refle
   every coupling (`HeatBathLocal.heatBathLocality_holds`), so `clay_continuum_of_boxPatchGap`
   carries `BoxPatchGap` alone.
 * **M-UV**, finite-size route — `UVBelowIR τ 0 hN β₀ βUV (HeatBathLocal.boxRate N β₀ n γ)` at some
-  `βUV ≤ β₀`: the block step `UVIRSplit.UVLossStep τ 0 hN βUV ε` with non-negative losses and a budget
+  `βUV ≤ β₀`: the block step clipped at the box's rate, `UVIRSplit.UVLossStepBelow`, with non-negative losses and a budget
   `UVIRSplit.LossBudget ε (aRun N β₀) E` below the box's rate
   `min(boxKnabe n γ, 1)/(508 · aRun N β₀)` (`HeatBathLocal.boxRate_eq`).
 * **M**, `χ²` route, middle and UV together — the producer `ChiForest.ChiForest m δ` of the
@@ -84,25 +94,74 @@ section Capstone
 
 open MassGap MassGap.ContinuumField MassGap.ContinuumSchwinger
 
-/-- **The Clay continuum conclusion at window `L`.** Some `c > 0` has, at every dyadic step `m`, the
-reconstructed transfer data `ContinuumClay.contD hN Z τ hZ hB m` `ContinuumClay.GappedAt` the rate
-`e^{−(c/L)·dySpacing N m}` and `ContinuumClay.NontrivialVacuum` — the conclusion of
-`ContinuumClay.continuum_gap_nontrivial`.
+/-- **The Clay continuum conclusion at window `L`, at a pair-bound witness.** Some `c > 0` has, at
+every dyadic step `m`, the reconstructed transfer data `ContinuumClay.contD hN Z τ hZ hB m`
+`ContinuumClay.GappedAt` the rate `e^{−(c/L)·dySpacing N m}` and `ContinuumClay.NontrivialVacuum` — the
+conclusion of `ContinuumClay.continuum_gap_nontrivial`. `hB` enters only proof fields of `contD`.
 
 DERIVED: `0` is the excluded colour count and the lower end of `c`; `4` in `Fin 4` is the spacetime
 dimension. -/
-def ClayContinuum (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+def ClayContinuumPair (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
     (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
-    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)) (L : ℝ) : Prop :=
+    (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) (L : ℝ) : Prop :=
   ∃ c : ℝ, 0 < c ∧ ∀ m : ℕ,
     ContinuumClay.GappedAt (ContinuumClay.contD hN Z τ hZ hB m) (Real.exp (-(c / L) * dySpacing N m))
       ∧ ContinuumClay.NontrivialVacuum (ContinuumClay.contD hN Z τ hZ hB m)
+
+/-- **The Clay continuum conclusion at window `L`.** `ClayContinuumPair` at the pair-bound witness
+that `ContinuumSep.pairBoundSep_of_uniformBoundSep` gives from `hB` and the reflection compatibility
+`Renorm.connected_reflCompat hN Z τ hZ`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+def ClayContinuum (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+    (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
+    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)) (L : ℝ) : Prop :=
+  ClayContinuumPair hN Z τ hZ
+    (ContinuumSep.pairBoundSep_of_uniformBoundSep hN (Renorm.connected hN Z) τ
+      (Renorm.connected_reflCompat hN Z τ hZ) hB) L
+
+/-- **The witness is immaterial**: `ClayContinuum` at any `UniformBoundSep` witness and
+`ClayContinuumPair` at any `PairBoundSep` witness are the same proposition. Both witnesses are proofs,
+and `contD` reads them only in proof fields, so the two sides are definitionally equal by proof
+irrelevance.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem clayContinuum_iff_pair (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+    (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
+    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z))
+    (hB' : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) (L : ℝ) :
+    ClayContinuum hN Z τ hZ hB L ↔ ClayContinuumPair hN Z τ hZ hB' L :=
+  Iff.rfl
+
+#print axioms clayContinuum_iff_pair
+
+/-- **The capstone with E as the pair bound and requirement M as one Prop.** At `2 ≤ N`, a
+reflection-invariant `Z`, `ContinuumSep.PairBoundSep` at `Renorm.connected hN Z` (E), a window `L > 0`,
+`WeakCouplingWindow.FixedWindowDecay τ 0 hN L` (M), `ContinuumNontrivial.KernelConvergesSep` towards a
+radial `G` (N) and `ShortDistanceY.AFShortDistance G` (Y): `ClayContinuumPair hN Z τ hZ hB L`
+(`ContinuumClay.continuum_gap_nontrivial`).
+
+DERIVED: `2` is the least rank with a non-zero Haar variance; `0` is the excluded colour count, the
+lower end of `L`, and the reflection plane offset `p = 0` that `continuum_gap_nontrivial` reads
+`FixedWindowDecay` at; `4` in `Fin 4` is the spacetime dimension. -/
+theorem clay_continuum_pair_of_fixedWindowDecay (hN2 : 2 ≤ N) (hN : N ≠ 0)
+    (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4) (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
+    (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) {L : ℝ} (hL : 0 < L)
+    (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L)
+    (O : LField (MassGap.SUN.SU N)) (G : ℝ → ℝ)
+    (hconv : ContinuumNontrivial.KernelConvergesSep hN (Renorm.connected hN Z) τ O
+      (fun p q => G (ContinuumNontrivial.eDist p q)))
+    (hY : ShortDistanceY.AFShortDistance G) :
+    ClayContinuumPair hN Z τ hZ hB L :=
+  ContinuumClay.continuum_gap_nontrivial hN2 hN Z τ hZ hB hL hW O G hconv hY
+
+#print axioms clay_continuum_pair_of_fixedWindowDecay
 
 /-- **The capstone with requirement M as one Prop.** At `2 ≤ N`, a reflection-invariant `Z`, the
 separated uniform bound `hB` (E), a window `L > 0`, `WeakCouplingWindow.FixedWindowDecay τ 0 hN L`
 (M), `ContinuumNontrivial.KernelConvergesSep` towards a radial `G` (N) and
 `ShortDistanceY.AFShortDistance G` (Y): `ClayContinuum hN Z τ hZ hB L`
-(`ContinuumClay.continuum_gap_nontrivial`).
+(`clay_continuum_pair_of_fixedWindowDecay` at `ContinuumSep.pairBoundSep_of_uniformBoundSep`).
 
 DERIVED: `2` is the least rank with a non-zero Haar variance; `0` is the excluded colour count, the
 lower end of `L`, and the reflection plane offset `p = 0` that `continuum_gap_nontrivial` reads
@@ -116,7 +175,9 @@ theorem clay_continuum_of_fixedWindowDecay (hN2 : 2 ≤ N) (hN : N ≠ 0)
       (fun p q => G (ContinuumNontrivial.eDist p q)))
     (hY : ShortDistanceY.AFShortDistance G) :
     ClayContinuum hN Z τ hZ hB L :=
-  ContinuumClay.continuum_gap_nontrivial hN2 hN Z τ hZ hB hL hW O G hconv hY
+  clay_continuum_pair_of_fixedWindowDecay hN2 hN Z τ hZ
+    (ContinuumSep.pairBoundSep_of_uniformBoundSep hN (Renorm.connected hN Z) τ
+      (Renorm.connected_reflCompat hN Z τ hZ) hB) hL hW O G hconv hY
 
 #print axioms clay_continuum_of_fixedWindowDecay
 
@@ -129,17 +190,19 @@ section FiniteSize
 open MassGap
 
 /-- **The UV step below the rate `M₀`.** Some non-negative loss function `ε` and budget `E` have
-`UVIRSplit.LossBudget ε (aRun N β₀) E`, `E < M₀` and `UVIRSplit.UVLossStep τ p hN βUV ε`: the losses of the
-dyadic tower from `β₀` sum below `M₀`. The losses are non-negative: a negative loss would assert a gap
+`UVIRSplit.LossBudget ε (aRun N β₀) E`, `E < M₀` and the step clipped at `M₀`,
+`UVIRSplit.UVLossStepBelow τ p hN βUV ε M₀`: the losses of the dyadic tower from `β₀` sum below `M₀`, and
+the rates up to `M₀` are carried from `βUV` on. The step is asked only at rates `M ≤ M₀`, which is all the
+composition consumes (`UVIRSplit.gapAt_eventually_of_uv_ir_below`); asked at every rate it would have to
+cover every fall of the true rate between two couplings. The losses are non-negative: a negative loss would assert a gap
 outright, and with `0 ≤ ε` the step holds on gapless families (`UVIRSplit.lossStep_of_no_gap`), so it
-carries no IR content. This is the UV hypothesis of `KnabeCriterion.fixedWindowDecay_of_patchGapCheck`
-at its IR rate `M₀`.
+carries no IR content. `UVIRSplit.fixedWindowDecay_of_uv_ir_below` consumes it at the IR rate `M₀`.
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded rank and the sign of the losses. -/
 def UVBelowIR (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β₀ βUV M₀ : ℝ) : Prop :=
   ∃ (ε : ℝ → ℝ) (E : ℝ), (∀ s, 0 ≤ ε s) ∧
     UVIRSplit.LossBudget ε (MassGap.AsymptoticScaling.aRun N β₀) E ∧
-    E < M₀ ∧ UVIRSplit.UVLossStep τ p hN βUV ε
+    E < M₀ ∧ UVIRSplit.UVLossStepBelow τ p hN βUV ε M₀
 
 /-- **A UV step at zero budget is below every positive rate.** A non-negative loss function `ε`,
 `UVIRSplit.UVLossStep τ p hN βUV ε` and `UVIRSplit.LossBudget ε (aRun N β₀) E` with `E ≤ 0` give
@@ -153,9 +216,33 @@ theorem uvBelowIR_of_nonpos_budget (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β₀ 
     (hbud : UVIRSplit.LossBudget ε (MassGap.AsymptoticScaling.aRun N β₀) E) (hE : E ≤ 0)
     (hM₀ : 0 < M₀) :
     UVBelowIR τ p hN β₀ βUV M₀ :=
-  ⟨ε, E, hε, hbud, lt_of_le_of_lt hE hM₀, hstep⟩
+  ⟨ε, E, hε, hbud, lt_of_le_of_lt hE hM₀, UVIRSplit.uvLossStepBelow_of_uvLossStep τ p hN hstep M₀⟩
 
 #print axioms uvBelowIR_of_nonpos_budget
+
+/-- **The UV input from a uniform gap at the rate.** If the periodic data has the gap at rate
+`e^{−M₀·aRun N β}` at every `β ≥ βUV`, `0 < βUV` and `0 < M₀`, then `UVBelowIR τ p hN β₀ βUV M₀` with zero
+losses: every rate `M ≤ M₀` is carried from any coupling to any other by `GapStep.gapAt_mono`. With the
+clipped step, the UV input at `M₀` asks no more than the lattice gap at the fixed physical rate `M₀` from
+`βUV` on.
+
+DERIVED: `4` is the spacetime dimension; `1` is the least colour count; `0` is the excluded rank, the
+sign of `βUV` and `M₀`, and the zero loss. -/
+theorem uvBelowIR_of_uniform_gap (τ : Fin 4) (p : ℤ) (hN1 : 1 ≤ N) (hN : N ≠ 0) {β₀ βUV M₀ : ℝ}
+    (hUV : 0 < βUV) (hM₀ : 0 < M₀)
+    (hgap : ∀ β : ℝ, βUV ≤ β → UVIRSplit.IRGapAt τ p hN β M₀) :
+    UVBelowIR τ p hN β₀ βUV M₀ := by
+  refine ⟨fun _ => 0, 0, fun _ => le_rfl, fun n => by simp, hM₀, ?_⟩
+  intro β β' _ hβ' _ _ M hM _
+  have ha : 0 < MassGap.AsymptoticScaling.aRun N β' :=
+    MassGap.AsymptoticScaling.aRun_pos hN1 (lt_of_lt_of_le hUV hβ')
+  have h := hgap β' hβ'
+  unfold UVIRSplit.IRGapAt at h
+  refine GapStep.gapAt_mono _ (Real.exp_pos _).le ?_ h
+  simp only [sub_zero, Real.exp_le_exp]
+  linarith [mul_le_mul_of_nonneg_right hM ha.le]
+
+#print axioms uvBelowIR_of_uniform_gap
 
 end FiniteSize
 
@@ -166,7 +253,7 @@ open MassGap MassGap.ContinuumField MassGap.ContinuumSchwinger
 /-- **The continuum Clay statement from an IR gap and the UV step below it.** At `2 ≤ N`, `0 < L`,
 `0 < β₀`, `βUV ≤ β₀`, the IR gap `UVIRSplit.IRGapAt τ 0 hN β₀ M₀` at a rate `M₀`, the UV step below it
 (`UVBelowIR τ 0 hN β₀ βUV M₀`), and E, N, Y: `ClayContinuum hN Z τ hZ hB L`
-(`UVIRSplit.fixedWindowDecay_of_uv_ir`, `clay_continuum_of_fixedWindowDecay`).
+(`UVIRSplit.fixedWindowDecay_of_uv_ir_below`, `clay_continuum_of_fixedWindowDecay`).
 
 DERIVED: `2` is the least rank with a non-zero Haar variance; `0` is the excluded colour count, the
 reflection plane and the lower end of `L` and `β₀`; `4` in `Fin 4` is the spacetime dimension. -/
@@ -180,9 +267,9 @@ theorem clay_continuum_of_irGap (hN2 : 2 ≤ N) (hN : N ≠ 0)
       (fun p q => G (ContinuumNontrivial.eDist p q)))
     (hY : ShortDistanceY.AFShortDistance G) :
     ClayContinuum hN Z τ hZ hB L := by
-  obtain ⟨ε, E, -, hbud, hEM, hstep⟩ := huv
+  obtain ⟨ε, E, hε, hbud, hEM, hstep⟩ := huv
   exact clay_continuum_of_fixedWindowDecay hN2 hN Z τ hZ hB hL
-    (UVIRSplit.fixedWindowDecay_of_uv_ir τ 0 hN2 hN hL hβ₀ hUVβ₀ hbud hEM hstep hir) O G hconv hY
+    (UVIRSplit.fixedWindowDecay_of_uv_ir_below τ 0 hN2 hN hL hβ₀ hUVβ₀ hbud hEM hε hstep hir) O G hconv hY
 
 #print axioms clay_continuum_of_irGap
 

@@ -312,7 +312,7 @@ def test_committed_pdf_is_not_older_than_the_paper():
         `git log -- <path>` answers for a DELETED file too: it returns the commit that removed it.
         So testing `last_commit(...)` for emptiness does not detect a file that is gone, and this
         guard spent its time comparing a deletion commit against the paper's and reporting a file
-        that does not exist as a stale one. `research/PAPER.pdf` was deleted in `ea74447`.
+        that does not exist as a stale one. `research/PAPER.pdf` is not tracked (removed in `200ddd0`).
         """
         r = subprocess.run(["git", "cat-file", "-e", f"HEAD:{path}"], cwd=REPO,
                            capture_output=True, text=True)
@@ -919,11 +919,23 @@ def test_the_paper_cites_the_software_version_the_code_pins():
     import re
 
     req = (REPO / "research" / "requirements.txt").read_text(encoding="utf-8")
+    text = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
+
+    # A commit pin (`entroptics @ git+<repo>@<sha>`) carries no version; the paper must name the
+    # commit instead. DERIVED: 7 is git's default abbreviation length, the form a reader copies;
+    # 40 is a full SHA-1.
+    c = re.search(r"^entroptics\s*@\s*\S+@([0-9a-f]{7,40})\s*$", req, re.M)
+    if c:
+        short = c.group(1)[:7]
+        assert short in text, (
+            f"research/requirements.txt pins Entroptics at commit {c.group(1)}, and the paper does "
+            f"not name {short}; a reader cannot tell which reader produced the numbers")
+        return
+
     m = re.search(r"^entroptics==([0-9]+\.[0-9]+\.[0-9]+)", req, re.M)
-    assert m, "requirements.txt has no entroptics== pin"
+    assert m, "requirements.txt has no entroptics== pin and no entroptics @ <url>@<commit> pin"
     pinned = m.group(1)
 
-    text = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
     cited = re.findall(r"software v([0-9]+\.[0-9]+\.[0-9]+)", text)
     assert cited, "the paper cites no Entroptics software version"
     wrong = [v for v in cited if v != pinned]
@@ -963,7 +975,7 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip().startswith("#"):
                 continue
-            m = re.search(r"doi:\s*\"?10\.5281/zenodo\.(\d+)", line)
+            m = re.search(r"(?:doi|value):\s*\"?10\.5281/zenodo\.(\d+)", line)
             if m:
                 return m.group(1)
         pytest.fail(f"{label} names no Zenodo DOI, so the paper's citation has nothing to check")

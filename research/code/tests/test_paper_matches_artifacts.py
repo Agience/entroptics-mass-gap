@@ -853,12 +853,12 @@ def test_aperture_numbers_match_the_margin_artifact():
 def test_d2_certificate_claims_match_the_artifact():
     """The d^2 finite-sample certificate: every number the paper states, from 9_1_dat_d2_certified.csv.
 
-    This artifact carries the empirical-Bernstein uppers that discharge the grid interior, and the
+    This artifact carries the empirical-Bernstein uppers read against the grid interior, and the
     paper leans on it in four places -- the summary, Sec 9, the Figure 11 caption and the Sec 13
     ledger. Nothing pinned it. The joint confidence in particular is a derived quantity
-    (0.999^n over the grid), so it moves silently if the grid gains or loses a coupling.
+    (confidence^n over the grid), so it moves silently if the grid gains or loses a coupling.
 
-    The verdict column is against the DERIVED aperture ceiling B_16 = (1 - 3^{-1/4}) 2 L^2/(2 pi)^2,
+    The verdict column is against the DERIVED aperture ceiling B_16 = arccos(3^{-1/4})^2 L^2/(2 pi)^2,
     not against a pinned proof bound -- that pin was retired along with the ceiling that justified
     it. The column name carries the ceiling, so re-deriving it at a different extent moves this test
     with the artifact rather than against it.
@@ -886,8 +886,8 @@ def test_d2_certificate_claims_match_the_artifact():
     assert not failed, f"couplings not certified under the aperture ceiling {ceiling}: {failed}"
 
     # and that the paper states that ceiling, rather than one derived at the wrong lag arity
-    assert f"B_{{16}}={ceiling:.2f}" in text.replace(" ", ""), \
-        f"the paper does not state the derived aperture ceiling as B_16 = {ceiling:.2f}"
+    assert f"B_{{16}}={ceiling:.4f}" in text.replace(" ", ""), \
+        f"the paper does not state the derived aperture ceiling as B_16 = {ceiling:.4f}"
 
     # the largest cap, at whatever confidence the artifact was produced at
     caps = _passage(text, "caps at most")
@@ -2011,50 +2011,216 @@ def test_the_correlator_positive_range_is_the_artifact_s():
         f"Figure 7 caption should both say so, and one of them does not")
 
 
-def test_the_aperture_ceiling_margin_matches_the_artifact():
-    """Sec 9's tightest-delta uppers against the derived aperture ceiling, from the CSV.
+def _aperture_ceiling():
+    """`certify/aperture_ceiling.py`, loaded by path: the ONE place the ceiling is derived. It imports
+    only `math`, so loading it touches no ensemble and no library."""
+    import importlib.util
+    path = REPO / "research" / "code" / "certify" / "aperture_ceiling.py"
+    spec = importlib.util.spec_from_file_location("aperture_ceiling_for_paper_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
-    This enforces DISCLOSURE rather than a verdict. It used to assert that every coupling clears the
-    ceiling; when the moment was corrected to the circle distance the uppers grew and four couplings
-    stopped clearing. A test shaped that way can only be satisfied by suppressing the negative
-    result, so it checks instead that whatever the artifact says, the paper says the same: the
-    largest upper is quoted, the delta it belongs to is named, and any couplings over the ceiling are
-    reported with their count.
 
-    The delta is read from the column name, so re-running the certificate at a different one moves
-    this test WITH the artifact rather than against it.
-    """
-    text = PAPER.read_text(encoding="utf-8")
-    rows = _artifact("9_1_dat_d2_certified.csv")
+def _quoted_upper_matches(value: float, quoted: str) -> bool:
+    """`quoted` is `value` rounded UP at the precision it is written with.
+
+    An upper bound stands behind a claim that something is UNDER a ceiling, so a quote may only
+    round away from that claim: one written below the artifact's value understates the bound. Equal
+    at the precision written, or up by less than one unit in the last place written."""
+    dp = len(quoted.split(".")[1])
+    return f"{math.ceil(value * 10 ** dp - 1e-9) / 10 ** dp:.{dp}f}" == quoted
+
+
+def _check_ceiling_margin(text: str, rows: list[dict]) -> None:
+    """Every number the tightest-delta passage quotes is the artifact's, and it names every coupling
+    over the ceiling and no other. Split out of the test so a mutated artifact can be run through
+    the SAME check (`test_the_ceiling_margin_check_can_fail`)."""
     col = next((c for c in rows[0] if c.startswith("ceiling_upper_delta_")), None)
     assert col, "the certificate carries no ceiling_upper_delta_* column"
     delta_exp = col.rsplit("_", 1)[1]                       # e.g. 1e-30
     _, exponent = delta_exp.split("e")
-    uppers = [float(r[col]) for r in rows]
+    uppers = {r["beta"]: float(r[col]) for r in rows}
 
-    # the ceiling as the paper states it, which a sibling test ties to the derived value
-    ceiling = float(re.search(r"B_\{16\}=([\d.]+)", text).group(1))
-    over = [(r["beta"], u) for r, u in zip(rows, uppers) if u >= ceiling]
+    # A non-finite upper cannot be quoted as a number, and "inf" is a substring of prose ("infinite",
+    # "information"), so a presence check would pass an all-inf artifact.
+    nonfinite = [b for b, u in uppers.items() if not math.isfinite(u)]
+    assert not nonfinite, (
+        f"the {col} column is not finite at beta {nonfinite}; the paper must state that those "
+        "couplings have no finite upper, and this check does not accept 'inf' as a quoted number")
 
-    # the largest upper at this delta must appear, wherever the paper states it
-    assert f"{max(uppers):.3f}" in text, (
-        f"the paper does not quote the largest {delta_exp} upper, {max(uppers):.3f}; the artifact "
-        f"carries the {col} column, so the paper should state it")
+    # The ceiling at full precision, derived at the extent the paper names: B_{L}. The paper writes
+    # it rounded DOWN to four decimals (3.2480, against the derived 3.24805...); the comparison uses the
+    # full-precision value, so the written rounding cannot move a coupling across it. A sibling test
+    # ties the written value to this one.
+    m = re.search(r"B_\{(\d+)\}=", text)
+    assert m, "the paper does not name the aperture ceiling as B_{L}="
+    ceiling = _aperture_ceiling().d2_ceiling(int(m.group(1)))
+    over = {b for b, u in uppers.items() if u >= ceiling}
+    under = [u for u in uppers.values() if u < ceiling]
 
-    # beside a naming of the delta it belongs to
-    assert (BS + "delta=10^{" + exponent + "}") in text, (
-        f"the paper quotes an upper but does not name delta=10^{{{exponent}}} as the confidence it "
-        f"was certified at")
+    # The passage that makes the tightest-delta claim, found by the delta it names.
+    block = _passage(text, "Demanding $" + BS + "delta=10^{" + exponent + "}$")
+    pat = (re.escape("$" + BS + "beta=") + r"(\d+\.\d+)" + re.escape("$ at $") + r"(\d+\.\d+)"
+           + re.escape("$"))
+    pairs = re.findall(pat, block)
 
-    # and if any coupling exceeds the ceiling, how many
+    # every coupling the passage quotes, at the value the artifact carries
+    for b, v in pairs:
+        assert b in uppers, f"the passage quotes beta={b}, which the artifact does not carry"
+        assert _quoted_upper_matches(uppers[b], v), (
+            f"the passage quotes the {delta_exp} upper at beta={b} as {v}; the artifact carries "
+            f"{uppers[b]!r}, which rounds up to a different value at that precision")
+    # and the couplings it quotes are exactly those over the derived ceiling
+    assert {b for b, _ in pairs} == over, (
+        f"over the ceiling {ceiling:.4f} at {delta_exp} the artifact has {sorted(over)}; the "
+        f"passage quotes {sorted(b for b, _ in pairs)}")
+
+    # the count, wherever the paper states one -- in words or digits
+    words = {0: "no", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+             7: "seven", 8: "eight", 9: "nine"}
+    flat = " ".join(text.split())
+    counts = re.findall(r"(\w+) couplings? (?:exceed|above) the ceiling", flat)
     if over:
-        words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
-                 7: "seven", 8: "eight", 9: "nine"}
-        n = len(over)
-        spellings = {str(n), words.get(n, str(n))}
-        assert any(w + " couplings" in text or w + " coupling" in text for w in spellings), (
-            f"{n} couplings exceed the aperture ceiling {ceiling} at {delta_exp} "
-            f"({[b for b, _ in over]}), and the paper does not disclose that")
+        assert counts, (f"{len(over)} couplings exceed the ceiling at {delta_exp} and the paper "
+                        "states no count")
+    for c in counts:
+        assert c in (str(len(over)), words.get(len(over), "")), (
+            f"the paper says {c} couplings exceed the ceiling; the artifact has {len(over)}")
+
+    # the largest upper under the ceiling -- the margin the grid keeps at this delta. With couplings
+    # over the ceiling it is "the next"; with none, it is the largest upper, quoted in the passage.
+    if under:
+        nx = re.search(r"the next is \$(\d+\.\d+)\$", block)
+        largest = max(under)
+        if over:
+            assert nx, f"the passage does not state the largest upper under the ceiling, {largest!r}"
+            assert _quoted_upper_matches(largest, nx.group(1)), (
+                f"the passage gives the next upper as {nx.group(1)}; the artifact's largest under "
+                f"the ceiling is {largest!r}")
+        else:
+            quoted = [v for v in re.findall(r"\$(\d+\.\d+)\$", block)
+                      if _quoted_upper_matches(largest, v)]
+            assert quoted, (f"every coupling clears the ceiling at {delta_exp}, and the passage does "
+                            f"not quote the largest upper, {largest!r}, rounded up")
+
+
+def test_the_aperture_ceiling_margin_matches_the_artifact():
+    """Sec 9's tightest-delta uppers against the derived aperture ceiling, from the CSV.
+
+    This enforces DISCLOSURE rather than a verdict: whatever the artifact says, the paper says the
+    same. The passage naming the tightest delta must quote each coupling over the ceiling with the
+    artifact's value, name no coupling that is under it, give the largest upper still under it, and
+    every stated count must agree. The ceiling is the DERIVED value at full precision, not the
+    two-decimal figure the paper writes.
+
+    Every number is read from ONE passage and compared structurally. A presence check against the
+    whole paper would pass an all-inf artifact on the "inf" inside "information", and a count on
+    "13 couplings" from an unrelated sentence.
+
+    The delta is read from the column name, so re-running the certificate at a different one moves
+    this test WITH the artifact rather than against it.
+    """
+    _check_ceiling_margin(PAPER.read_text(encoding="utf-8"), _artifact("9_1_dat_d2_certified.csv"))
+
+
+def test_the_ceiling_margin_check_can_fail(tmp_path):
+    """NEGATIVE CONTROL for the check above, independent of the paper's current state.
+
+    A passage is written FROM the artifact (so the check must pass on it), then the artifact is
+    copied to a temporary file and one value is moved, and the same check must reject it. The
+    mutations: an over-ceiling value moved; the next-under value moved; a value moved ACROSS the
+    ceiling in each direction; the stated count changed; and every value replaced by inf in a text
+    that contains "information", "infinite" and "13 couplings". One positive case more: a value
+    between the derived ceiling and a two-decimal written 3.25 must count as OVER, so a check comparing
+    against the written figure fails it.
+    """
+    rows = _artifact("9_1_dat_d2_certified.csv")
+    col = next(c for c in rows[0] if c.startswith("ceiling_upper_delta_"))
+    exponent = col.rsplit("_", 1)[1].split("e")[1]
+    # DERIVED: the extent the certificate reads at (the column heading names only the delta).
+    L = 16
+    ceiling = _aperture_ceiling().d2_ceiling(L)
+    vals = {r["beta"]: float(r[col]) for r in rows}
+    if not all(math.isfinite(v) for v in vals.values()):
+        pytest.skip("the committed artifact is itself non-finite; the control needs a finite one")
+    over = [b for b, v in vals.items() if v >= ceiling]
+    under = [v for v in vals.values() if v < ceiling]
+
+    def up(v):
+        # DERIVED: three decimals, the precision the passage quotes uppers at, rounded UP.
+        return f"{math.ceil(v * 10 ** 3 - 1e-9) / 10 ** 3:.3f}"
+
+    def passage(values):
+        ov = [b for b, v in values.items() if v >= ceiling]
+        un = [v for v in values.values() if v < ceiling]
+        quoted = " and ".join(f"${BS}beta={b}$ at ${up(values[b])}$" for b in ov)
+        nxt = f"; the next is ${up(max(un))}$" if un else ""
+        return (f"the aperture ceiling $B_{{{L}}}=3.25$ is derived; information and infinite; "
+                f"13 couplings are on the grid.\n\nDemanding ${BS}delta=10^{{{exponent}}}$ the "
+                f"moment route stops clearing -- {len(ov)} couplings exceed the ceiling "
+                f"({quoted}{nxt}).\n\n")
+
+    def reread(values):
+        p = tmp_path / "9_1_dat_d2_certified.csv"
+        with open(p, "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+            w.writeheader()
+            for r in rows:
+                w.writerow({**r, col: repr(values[r["beta"]])})
+        with open(p, newline="") as fh:
+            return list(csv.DictReader(fh))
+
+    text = passage(vals)
+    _check_ceiling_margin(text, reread(vals))                   # the control passes unmutated
+
+    # DERIVED: 0.01 is ten units in the quoted third decimal, so the moved value rounds differently.
+    if over:
+        with pytest.raises(AssertionError):
+            _check_ceiling_margin(text, reread({**vals, over[0]: vals[over[0]] + 0.01}))
+    if under:
+        b = max((b for b in vals if vals[b] < ceiling), key=vals.get)
+        # DERIVED: 0.01 as above, taken DOWN so the moved value stays under the ceiling.
+        with pytest.raises(AssertionError):
+            _check_ceiling_margin(text, reread({**vals, b: vals[b] - 0.01}))
+    with pytest.raises(AssertionError):
+        _check_ceiling_margin(text, reread({b: math.inf for b in vals}))
+
+    # across the ceiling, each way, against the unmutated passage
+    below = sorted(vals, key=vals.get)
+    # DERIVED: 0.01 past the ceiling on either side, so the moved value is unambiguously across it.
+    with pytest.raises(AssertionError):
+        _check_ceiling_margin(text, reread({**vals, below[0]: ceiling + 0.01}))
+    if over:
+        with pytest.raises(AssertionError):
+            _check_ceiling_margin(text, reread({**vals, over[0]: ceiling - 0.01}))
+    # an under-ceiling coupling quoted, at its right value, in place of an over-ceiling one: the
+    # count and every quoted value still agree, so only the set comparison can reject it
+    if over and under:
+        b_un = max((b for b in vals if vals[b] < ceiling), key=vals.get)
+        swapped = text.replace(f"${BS}beta={over[0]}$ at ${up(vals[over[0]])}$",
+                               f"${BS}beta={b_un}$ at ${up(vals[b_un])}$")
+        assert swapped != text
+        with pytest.raises(AssertionError):
+            _check_ceiling_margin(swapped, reread(vals))
+    # the stated count, changed in the text alone
+    n_over = len(over)
+    wrong = text.replace(f"-- {n_over} couplings exceed", f"-- {n_over + 1} couplings exceed")
+    assert wrong != text
+    with pytest.raises(AssertionError):
+        _check_ceiling_margin(wrong, reread(vals))
+    # and removed: couplings over the ceiling with no count stated anywhere
+    if over:
+        silent = text.replace(f"{n_over} couplings exceed the ceiling", "some couplings do not clear")
+        assert silent != text
+        with pytest.raises(AssertionError):
+            _check_ceiling_margin(silent, reread(vals))
+    # a value just over the DERIVED ceiling but under a two-decimal written 3.25 is over: a passage written
+    # that way passes, which a check against the written figure would not
+    # DERIVED: the midpoint of the derived ceiling and its two-decimal written value.
+    between = {**vals, below[0]: (ceiling + float(f"{ceiling:.2f}")) / 2}
+    assert ceiling < between[below[0]] < float(f"{ceiling:.2f}")
+    _check_ceiling_margin(passage(between), reread(between))
 
 
 def test_substrate_aperture_claims_match_the_artifact():

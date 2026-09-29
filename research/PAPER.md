@@ -1,6 +1,6 @@
 # The Mass Gap of Pure $SU(N)$ Gauge Theory as a Finite-Aperture Effect
 
-### Existence and the mass gap from a finite extraction screen
+### The mass gap from a finite extraction screen, and the continuum statement reduced to named inputs
 
 **Ikailo John Sessford**, Ikailo Inc., `john@ikailo.com`, ORCID [0009-0002-0150-4027](https://orcid.org/0009-0002-0150-4027)
 
@@ -8,8 +8,10 @@
 
 > **A note on measurement.** Every empirical quantity in this paper — the confinement order parameter
 > $K_{\mathrm{signal}}$, the aperture margin, the mass-gap rate — is a deterministic read of a raw lattice
-> configuration by the open-source *Entroptics* instrument,
-> [github.com/Agience/entroptics](https://github.com/Agience/entroptics). Each read fixes its own
+> configuration by the open-source *Entroptics* instrument, v0.2.5 at commit `1d1d00b` [S],
+> [github.com/Agience/entroptics](https://github.com/Agience/entroptics); the resampling, the
+> empirical-Bernstein intervals and the lag-ratio rates are the library's too, and only the elementary
+> statistics (standard errors, descriptive fits) are local, as the data-availability statement sets out. Each read fixes its own
 > resolution from the configuration's own Shannon entropy and returns the same number on the same input, bit-for-bit;
 > the read layer is developed in [E]. The reads are reported in §8 and carry the argument forward to the classical
 > results they meet.
@@ -17,7 +19,7 @@
 > **A note on verification.** The argument is a derivation in mathematics and physics; it stands on the reasoning in
 > the text and is self-contained. Two independent checks accompany it. The empirical reads are
 > deterministic: every number in §8 reproduces by rerunning the named script on the archived ensembles. The formal
-> reduction of the mass gap and the existence of the continuum theory to the named classical results is
+> reduction of the continuum statement for $SU(N)$ to named inputs — some classical results, some open (§12) — is
 > machine-checked in Lean 4 / Mathlib, `sorry`-free, its exact axiom footprint printed in §13. A reader follows the
 > text itself as the proof; the machine-check is a fact-check on the reduction, read with the same care as the rest.
 
@@ -25,7 +27,7 @@
 
 ## Abstract
 
-This paper derives the mass gap of pure $SU(N)$ gauge theory from a single fact about observation: a local
+This paper reads the mass gap of pure $SU(N)$ gauge theory from a single fact about observation: a local
 observer reads the vacuum's gauge-invariant content through a boundary of finite information capacity — a finite
 aperture, which band-limits. A finite aperture has a
 diffraction limit, and the limit cannot host the infinitely-extended massless mode a gapless theory requires, so the
@@ -40,24 +42,25 @@ meeting the established results at junctions.
 
 At finite spacing the lattice regularisation is the finite-cell screen: for every $a$ there is a Hilbert space, a
 Hamiltonian bounded below, a unique vacuum, and the full Osterwalder–Schrader (OS) structure. Reflection positivity
-is inherited by the continuum limit as a closed condition, the gap supplying the uniform bound that makes the
-Schwinger functions tight. The mass gap, non-triviality, and the read-level axis-permutation form of
+is inherited by the continuum limit as a closed condition; the uniform bound that makes the Schwinger
+functions tight is the open input E (§12). For the finite-aperture model `ymModel` — whose conclusion is
+carried by the scalar $\mu$ alone (§13) — the mass gap, non-triviality, and the read-level axis-permutation form of
 Euclidean $SO(4)$ follow from the band-limit together with two reads: **A1**, the centre-vortex tension stays below the floor at every coupling and
 uniformly as $a\to0$; and **A2**, the continuum read is direction-independent. A1 meets the classical results at
 both ends (the Osterwalder–Seiler character bound at strong coupling, the asymptotic-freedom free-field plateau
 $\mu_\infty(8)=0.0326<\kappa_0$ at weak coupling) and its interior is a theorem on every compact interval,
 $\mu=-\log\langle\cos\theta\rangle_\rho<\kappa_0$ following from a finite correlation length $\langle d^2\rangle\le B$
 through the analytic step $\cos x\ge1-x^2/2$ and the $1/L^2$ aperture scaling
-$\langle\theta^2\rangle=(2\pi/L)^2\langle d^2\rangle$, so the margin grows $\propto L^2$. The single input is a
-uniform bound $\langle d^2\rangle\le B_{16}=3.25$ (the derived aperture ceiling, nothing pinned), measured $\langle d^2\rangle\in[0.021,0.192]$ and certified STATISTICALLY at $99.9999\%$
-per coupling (joint $\approx99.9987\%$ over the grid, empirical-Bernstein) -- a finite-sample confidence bound, not a rigorous enclosure. **A second route certifies the same input more strongly and is the one to read first.** Because $\mu$ is DEFINED as $-\log\langle\cos\theta\rangle$, the condition $\mu<\kappa_0$ is *equivalent* to $\langle\cos\theta\rangle>3^{-1/4}$ rather than merely implied by it, and both directions are proved; so a certificate on the cosine average certifies confinement itself and not a sufficient proxy for it. On that route every coupling on the grid is confined at $\delta=10^{-30}$, the worst certified tension $\mu\le0.1767$ against $\kappa_0=0.2747$ (§9) -- where the moment route at that same $\delta$ leaves two couplings above the ceiling. The moment route is kept because it is the one the formal development consumes. A2 is a Nyquist–Shannon sampling isometry: 
+$\langle\theta^2\rangle=(2\pi/L)^2\langle d^2\rangle$, so the margin grows $\propto L^2$. The single input to A1's interior is a
+uniform bound $\langle d^2\rangle\le B_{16}=3.2480$ (the derived sharp aperture ceiling of `Complete.confinement_at_of_d2_sharp`, nothing pinned), measured $\langle d^2\rangle\in[0.021,0.192]$ and bounded STATISTICALLY at nominal $99.9999\%$
+per coupling (largest upper $1.372$; nominal joint $\approx99.9987\%$ over the grid, empirical-Bernstein) -- a finite-sample confidence bound, not a rigorous enclosure, and nominal: it treats the configurations as independent and takes the sample range in place of an a-priori support width, so the Maurer–Pontil guarantee does not strictly apply. The reads are of $SU(2)$ ensembles: they are evidence for the Lean hypothesis, which is stated on the $SU(3)$ correlation `d2At 15`, and do not discharge it (§9). **A second route certifies the same input more strongly and is the one to read first.** Because $\mu$ is DEFINED as $-\log\langle\cos\theta\rangle$, the condition $\mu<\kappa_0$ is *equivalent* to $\langle\cos\theta\rangle>3^{-1/4}$ rather than merely implied by it, and both directions are proved; so a certificate on the cosine average certifies confinement itself and not a sufficient proxy for it. On that route every coupling on the grid is confined at nominal $\delta=10^{-30}$ (the same empirical-Bernstein bound, whose confidence is nominal because it treats the configurations as independent and takes the sample range in place of an a-priori support width), the worst certified tension $\mu\le0.1767$ against $\kappa_0=0.2747$ (§9) -- where the moment route at that same $\delta$ leaves two couplings above the ceiling. The moment route is kept because it is the one the formal development consumes. A2 is a Nyquist–Shannon sampling isometry: 
 the transport is valued in $O(4)$, so a spectral read of the correlation Gram is the same in every orientation.
 
 A deterministic runtime read on gauge configurations measures the deciding quantity, deriving its resolution from
 each configuration's own Shannon entropy with no external scale. The confinement order parameter
 $K_{\mathrm{signal}}$, the resolved-mode count above the confined-vacuum reference null, stays low across the
 coupling range for $SU(2)$ and $SU(3)$ and rises sharply across the compact $U(1)$ transition; the phase separation
-is certified at $95\%$. Given A1 and A2, the mass gap, non-triviality, and the read-level form of $SO(4)$ follow as a single reduction,
+holds at $95\%$ in the normal approximation on the standard errors. Given A1 and A2, the mass gap, non-triviality, and the read-level form of $SO(4)$ follow for `ymModel` as a single reduction,
 its inputs the classical results it names: the three foundational axioms, reflection positivity (now PROVED at even extent $\ge4$ and nonnegative coupling on the torus, §11.1b, and for a limit state on $\mathbb{Z}^4$ at free boundary conditions, on the observables of a fixed finite region, §11.1c, and cited only outside those domains — on that domain the gap side carries **no named axiom at all**, `EvenAperture.existence_and_gap_of_substrate_even` — an axiom-footprint claim, not a strength claim about the conclusion, whose scope is set out in §13 and machine-checked in `FlagshipScope`), the two cited
 coupling ends, and the crossover correlation length. Finite-spacing existence holds at every spacing; the
 limit over extents follows from the finite-spacing Osterwalder–Schrader data; the cited constructive
@@ -678,13 +681,13 @@ read is anti-correlated with it. It is the confinement order parameter, low prec
 "cannot spill out" mechanism read from the screen (confined = forced into the bore = disorder; deconfined = free
 radiation = the coherent mode that resolves).
 
-**The separation is certified.** Read as an ensemble, the per-configuration $K_{\mathrm{signal}}$ values are
-draws decorrelated by a fixed sweep gap, and an empirical-Bernstein bound over the ensemble gives an interval on the ensemble mean whose width shrinks as $1/\sqrt{n_{\mathrm{configs}}}$. Across the $U(1)$
+**The separation is measured.** Read as an ensemble, the per-configuration $K_{\mathrm{signal}}$ values are
+draws decorrelated by a fixed sweep gap, and the standard error of the ensemble mean shrinks as $1/\sqrt{n_{\mathrm{configs}}}$. Across the $U(1)$
 transition $\beta_c\approx1.011$ the pinned order parameter steps up sharply (confined-phase
 $K_{\mathrm{signal}}\lesssim0.103$, Coulomb-phase $0.193$–$0.250$) with the confined ceiling $0.103\pm0.004$
-($\beta=1.0$) below the Coulomb floor $0.193\pm0.006$ ($\beta=1.05$) at $95\%$, so the phases are
-distinct; pure $SU(2)$ and $SU(3)$ stay flat. The interval machinery is the read layer's, pooled over the
-ensemble on intact spatial planes; the enclosure is sound under the Marchenko–Pastur/Weyl band. The discriminating
+($\beta=1.0$) below the Coulomb floor $0.193\pm0.006$ ($\beta=1.05$), each $\pm$ one standard error of the mean, at $95\%$ in the normal approximation (the ceiling plus $1.96$ standard errors below the floor minus $1.96$), so the phases are
+distinct; pure $SU(2)$ and $SU(3)$ stay flat. The read is the library's, per configuration on intact spatial planes, averaged over the
+ensemble. The discriminating
 read is $K_{\mathrm{signal}}$; the attenuation $\alpha$ is the complementary coherence contrast (§9), which reads
 long-range order and moves opposite the gap.
 
@@ -696,8 +699,8 @@ gentle response for $SU(2)$ across its crossover. The peak $-dH/d\beta$ is $\app
 $\beta\approx0.97$) against $\approx0.05$ for $SU(2)$, a $\approx20\times$ separation, a direct entropy read with no
 histogram or bins. This curvature is the **Shannon disorder susceptibility** $\chi_v=-dH/d\beta$: one-signed
 ($\chi_v\ge0$) and bounded for $SU(N)$ across the crossover, the $U(1)$ spike the control: the
-**no-bulk-transition** statement (a finite specific heat, no divergence). It is measured nonnegative and
-empirical-Bernstein certified, and established: since $H$ is the marginal Shannon entropy of the
+**no-bulk-transition** statement (a finite specific heat, no divergence). It is measured nonnegative, with standard errors of the ensemble mean
+(`8_4_run_disorder_response.py`), and established: since $H$ is the marginal Shannon entropy of the
 read's power spectrum, $\chi_v\ge0$ is that $H$ falls as the spectrum concentrates along the ordering flow.
 
 **The Rényi relation.** $\chi_v$ is the curvature of the *Shannon* (Rényi-1) free energy, a scalar energy variance.
@@ -1011,10 +1014,7 @@ which is why each is bound to its own artifact row and checked there.
 Both $7.115/L$ and $11.176/L$ are statements about the same quantity — the structure-factor mass this
 read inverts — so nothing distinguishes their status, and **the caveat above attaches to both
 equally**: reflection positivity gives $m_{\mathrm{eff}}\ge\Delta$, one-sided, so a lower bound on the
-inverted mass is not by itself a lower bound on the lowest mass in the spectrum. That is why the
-refined limit was previously withheld while the finite-aperture figure was quoted; the distinction was
-not real, and quoting one while withholding the other implied a difference between them that does not
-exist.
+inverted mass is not by itself a lower bound on the lowest mass in the spectrum.
 
 **And the aperture differential is what stops it eroding.** Read window by window the bound decays,
 because $\hat k_1\to0$. But a mass is not supposed to depend on the window it is read through — that
@@ -1092,10 +1092,11 @@ discriminator of §5 and $K_{\mathrm{signal}}$ (§8.3), not by this inequality. 
 confinement through the bore $\Delta\propto\sqrt\sigma$ (§6); the entropy-matched DMD/Koopman rate is that gap
 instrument, calibrated on the free scalar (§8.5).
 
-**The chain from the read to the gap.** An upper bound below the floor (the $\alpha_{\mathrm{hi}}<\kappa_0$ or the disjoint $K_{\mathrm{signal}}$ intervals of §8.3) gives
-$\mu<\kappa_0$; at a finite aperture that yields $C(\tau)\to0$ and $\Delta\ge\kappa_0-\mu>0$. The ensemble certificate
-establishes $\mu<\kappa_0$ **at fixed spacing** to any confidence, its interval narrowing as
-$1/\sqrt{n_{\mathrm{configs}}}$. The continuum uniformity of $\mu<\kappa_0$ as $a\to0$ is carried by the
+**The chain from the read to the gap.** An upper bound below the floor (the $\alpha_{\mathrm{hi}}<\kappa_0$, or the $K_{\mathrm{signal}}$ ranges of §8.3 separated at $95\%$ in the normal approximation) gives
+$\mu<\kappa_0$; at a finite aperture that yields $C(\tau)\to0$ and $\Delta\ge\kappa_0-\mu>0$. The ensemble read
+bounds $\mu$ **at fixed spacing** to a precision set by the ensemble size, its band narrowing as
+$\sqrt{F/T}$ in the pooled sample count $T$ at feature dimension $F$, so as $1/\sqrt{n_{\mathrm{configs}}}$ — a
+high-probability matrix-concentration band at a chosen constant, with no stated confidence level. The continuum uniformity of $\mu<\kappa_0$ as $a\to0$ is carried by the
 scale-covariance of the read (§8.5) and the uniform gap (§11); it is part of A1.
 
 **The reduction to two a priori.** In the framework's own objects the whole construction reduces to **two** a priori
@@ -1125,7 +1126,7 @@ The following table gives, for each part, the established content and the named 
 |---|---|---|
 | A1 strong end | $\beta<\beta_\star\Rightarrow\mu<\kappa_0$ (character bound below the floor); the threshold is the derived $\beta^2<\tfrac12\ln3$ | the bound $\mu\le2\beta I_2/I_1$ (Osterwalder–Seiler) |
 | A1 weak end / $\beta\to\infty$ | the tension converges to the free-field plateau and that plateau sits below the floor; the below-floor value $\mu_\infty(8)=0.0326<\kappa_0$ holds (Wick) | the *convergence* $\mu_{YM}\to0.0326$ (asymptotic freedom) |
-| A1 interior | $\mu=-\log\langle\cos\theta\rangle_\rho<\kappa_0$ from a bounded correlation moment: the analytic step ($\cos x\ge1-x^2/2$ + reflection positivity), the $1/L^2$ aperture scaling $\langle\theta^2\rangle=(2\pi/L)^2\langle d^2\rangle$, the interior theorem $\mu(\beta)<\kappa_0$, and the finite-aperture condition all theorems, on every compact interval | the single **uniform bound** $\langle d^2\rangle\le B_{16}$ at the derived aperture ceiling, a **finite correlation length** (measured $\langle d^2\rangle\in[0.021,0.192]$) |
+| A1 interior | $\mu=-\log\langle\cos\theta\rangle_\rho<\kappa_0$ from a bounded correlation moment: the analytic step ($\cos x\ge1-x^2/2$, or sharply the tangent at the threshold, + reflection positivity), the $1/L^2$ aperture scaling $\langle\theta^2\rangle=(2\pi/L)^2\langle d^2\rangle$, the interior theorem $\mu(\beta)<\kappa_0$, and the finite-aperture condition all theorems, on every compact interval | the single **uniform bound** $\langle d^2\rangle\le B_{16}=3.2480$ at the derived sharp aperture ceiling (`Complete.confinement_at_of_d2_sharp`), a **finite correlation length** (measured $\langle d^2\rangle\in[0.021,0.192]$ on $SU(2)$ ensembles, which do not discharge the Lean hypothesis on `d2At 15`, §9) |
 | A2 discrete | a spectral read is invariant under the axis-permutation group and any orthogonal congruence $C\mapsto PCP^{\mathsf\top}$ | (none) |
 | A2 spatial (feature rotations) | a Gram spectral read is invariant under a rotation of the **feature** coordinates by construction, the congruence exhibited ($P=Q^{\mathsf\top}$) | (none) |
 | A2 axis-role ($T \leftrightarrow F$) | a symmetric read ($\prod_i a_\delta^{(i)}$) is invariant under the $T \leftrightarrow F$ axis swap by construction; cross-axis agreement $0.64\%$ ($\varphi$) and $0.72\%$ ($\sigma$) on a controlled isotropic input sampled just above the threshold, residual anisotropy vanishing to machine zero below the Nyquist threshold ($a_\star k_0=0.364$, §8.6) | a single Nyquist–Shannon sampling isometry (the net transport is orthogonal); the continuous rotation-composition is a **theorem** |
@@ -1141,23 +1142,37 @@ continuum gap is carried by refinement-invariance of the physical rate (§8.5), 
 $a\to0$. The single A1 input is a **uniform bound**
 $\langle d^2\rangle\le B_{16}$ at the derived aperture ceiling (a finite correlation length; measured
 $\langle d^2\rangle\in[0.021,0.192]$ across the crossover, peaking near $\beta=2.20$), asserted on the crossover onset
-$\beta\ge\beta_\star$; below $\beta_\star$ the character bound already gives $\mu<\kappa_0$. It is discharged by the
-deterministic Entroptics read: the read returns $\langle d^2\rangle(\beta)$ as a function of the configuration,
-and the read-based capstone consumes finitely many such reads as hypotheses to establish the full gap, its axiom
-footprint the three foundational axioms $+$ reflection positivity. The read is
+$\beta\ge\beta_\star$; below $\beta_\star$ the character bound already gives $\mu<\kappa_0$. In Lean the input is the
+hypothesis `d2At N β ≤ B` of `Complete.confinement_at_of_d2_sharp`, with $B$ under the sharp ceiling
+$\arccos(3^{-1/4})^2(N{+}1)^2/(2\pi)^2$ (below); `Interior.ym_crossover_confinement_of_grid_sharp` states it on a
+finite grid, and `Interior.ym_mass_gap_grid_certified_sharp` assembles from that grid and the two ends, taken as the bare hypotheses *hstrong* and *hweak*, the gap for
+`ymModelAt 15`, the model on the periodic extent $16$, its axiom footprint the three foundational axioms $+$
+reflection positivity. **The data do not discharge that hypothesis.** `d2At 15` is the circle-distance moment of the
+Lean correlation `WilsonBridge.corrClay` — one $(0,1)$ plaquette against its translates along a transverse axis, in
+four-dimensional $SU(3)$ Wilson theory on the periodic $16^4$ lattice — while the read below is an empirical,
+nominal-confidence statement about $SU(2)$ on $16^3\times32$: the action density summed over the planes at each
+site, its lag profile averaged over the three spatial axes and connected against the grand mean and clipped at zero. The grid capstone
+needs in addition *hcover*, which the 13-point grid meets only with a Lipschitz constant $\lesssim12.5$, against
+a finite-volume constant of order $10^7$ ($\approx2.5\times10^7$ at $16^3\times32$, below); *hdiff* and *hbnd*, which no theorem in
+the development supplies for `d2At 15`; and grid values that hold deterministically, where the read gives
+confidence bounds. The read is
 finite-sample certified: an empirical-Bernstein bound over the topped-up $SU(2)$ $L{=}16$ grid puts
-$\langle d^2\rangle(\beta)$ under the aperture ceiling $B_{16}=3.25$ at $99.9999\%$ per $\beta$ (largest
-$1.368$), a joint confidence of $\approx99.9987\%$ over the 13-point grid. The confidence is a choice, not a
+$\langle d^2\rangle(\beta)$ under the aperture ceiling $B_{16}=3.2480$ at nominal $99.9999\%$ per $\beta$ (largest
+$1.372$), a nominal joint confidence of $\approx99.9987\%$ over the 13-point grid. The
+confidence is nominal: the bound treats the configurations as independent and takes the sample range in place
+of an a-priori support width, so the Maurer–Pontil guarantee does not strictly apply. The confidence is a choice, not a
 limit of the data: the bound enters only through $\log(2/\delta')$, so asking for more widens the upper rather
 than invalidating it. Demanding $\delta=10^{-30}$ the moment route stops clearing — two couplings exceed the
-ceiling ($\beta=0.50$ at $4.635$ and $\beta=0.80$ at $4.228$; the next is $3.080$) — and the reason is statistical rather than physical, which the next paragraph
+ceiling ($\beta=0.50$ at $4.741$ and $\beta=0.80$ at $4.327$; the next is $3.246$) — and the reason is statistical rather than physical, which the next paragraph
 makes precise. **No proof bound is pinned.** The quantity is compared to its derived ceiling and to nothing
 else.
 
 **The ceiling is derived from the lag arity.** $\texttt{Moment.Read }N$ indexes lags by $\mathrm{Fin}(N{+}1)$
 and sets $\theta_d=2\pi d/(N{+}1)$, so a periodic extent of $L$ sites — lags $d=0\ldots L{-}1$ — has
-$N{+}1=L$. With $(2\pi/(N{+}1))^2B/2<1-3^{-1/4}$ this gives
-$B_{16}=\arccos(3^{-1/4})^2L^2/(2\pi)^2=3.25$, a factor $\approx17$ above the measured peak $0.192$.
+$N{+}1=L$. With the sharp tangent condition $\langle d^2\rangle/L^2<\arccos(3^{-1/4})^2/(2\pi)^2$
+(`Complete.confinement_at_of_d2_sharp`, on `d2At`, $N{+}1=L$) this gives
+$B_{16}=\arccos(3^{-1/4})^2L^2/(2\pi)^2=3.2480$, a factor $\approx16.9$ above the measured peak $0.192$; the
+origin-tangent condition $(2\pi/L)^2B/2<1-3^{-1/4}$ gives the weaker $3.1147$.
 
 **A route that does not pass through the moment.** The tension is *defined* as
 $\mu=-\log\langle\cos\theta\rangle_p$, so $\mu<\kappa_0$ is **equivalent** to
@@ -1172,10 +1187,14 @@ cosine average is a single ratio of two linear functionals of the profile, needi
 one per lag.
 
 Certified on that route ([9_2_dat_confinement_cos.csv](data/9_2_dat_confinement_cos.csv)), **every coupling is
-confined at $\delta=10^{-30}$**: the worst certified tension is $\mu\le0.1767$ against
+confined at nominal $\delta=10^{-30}$** — nominal because the empirical-Bernstein bound treats the
+configurations as independent and takes the sample range in place of an a-priori support width, so the
+Maurer–Pontil guarantee does not strictly apply: the worst certified tension is $\mu\le0.1767$ against
 $\kappa_0=0.2747$, a $1.55\times$ margin, tightening to $4.99\times$ at $\delta=10^{-6}$. Measured centrally
 the margin is far wider still — $\mu$ runs from below zero to $0.0138$, a factor $20$ to several hundred under
-the floor. This is confinement certified **at the measured aperture and coupling**; the continuum statement
+the floor. This is confinement of the $SU(2)$ read certified **at the measured aperture and coupling** — like the moment
+route, evidence for and not a discharge of the Lean statement, which `confinement_at_iff_cosAvg` makes about
+`cosAvgYMAt 15`, the $SU(3)$ correlation; the continuum statement
 remains the substrate hypothesis of `confinement_of_bounded_substrate`, which no single-aperture measurement
 can supply.
 
@@ -1279,8 +1298,8 @@ cut escaping to infinity. The cut is derived by that trade-off rather than chose
 development currently aims at this weaker target; the contact-relative power law above is aimed at
 the stronger one, because that is what the continuum half also needs.
 
-**The substrate hypothesis, across apertures.** That hypothesis is the one input the development does
-not prove. Its general form is not a bound but a growth condition —
+**The substrate hypothesis, across apertures.** That hypothesis is the one input the finite-aperture route
+does not prove; the continuum capstone's open inputs are stated in §12. Its general form is not a bound but a growth condition —
 $\langle d^2\rangle\le c\,(N{+}1)^2$ with $(2\pi)^2c/2<1-3^{-1/4}$ — because the aperture condition's own
 ceiling grows like $(N{+}1)^2$ (§13). The aperture-independent bound
 $\exists B,\ \forall N\,\beta.\ \langle d^2\rangle\le B$ is the special case of it, and the one a
@@ -1332,15 +1351,17 @@ binding constraint is the **smallest** window rather than the largest — across
 with signal, one coefficient $c=6.40\times10^{-3}$ suffices, set by $SU(3)$ $L{=}6$, and it sits
 $2.0\times$ under the ceiling.
 
-**What a measured row discharges.** The confinement statement is stated POINTWISE as well as in the
+**What a measured row reads.** The confinement statement is stated POINTWISE as well as in the
 limit: `confinement_at_of_substrate_sharp` takes `substrateRatio N \beta < substrateThreshold` at ONE
 aperture and ONE coupling and returns `\mu < \kappa_0` there, with no filter in it. Its threshold is
 the SHARP one, `\arccos(3^{-1/4})^2/(2\pi)^2`, attained by the point mass at $\theta=\arccos(3^{-1/4})$,
 so no argument reading the correlation only through its second moment can ask for less. That is the shape of a measurement -- an
-ensemble exists at one $L$ and one $\beta$ -- so a measured row is not merely evidence *for* the
-hypothesis, it discharges an instance *of* the theorem. Of the $43$ rows in the aperture scan, $39$
+ensemble exists at one $L$ and one $\beta$ -- so a measured row reads the hypothesis at one aperture and one
+coupling. It is evidence for an instance of the theorem, not a discharge of it: `substrateRatio N β` is a
+moment of the Lean correlation `WilsonBridge.corrClay`, one plaquette of four-dimensional $SU(3)$ on the periodic
+$(N{+}1)^4$ lattice, while the rows read the action-density ensembles of §8. Of the $43$ rows in the aperture scan, $39$
 carry a tension to read, and **all $39$ clear the ceiling**; the single coefficient
-$c=6.395\times10^{-3}$ discharges all $39$ instances at once. `confinement_at_coupling_of_ratio` is
+$c=6.395\times10^{-3}$ covers all $39$ rows at once. `confinement_at_coupling_of_ratio` is
 the same statement at a fixed coupling over apertures, which is how a scan is actually run.
 
 The flagship takes that weaker input directly: `ym_mass_gap_of_ratio` gives the gap, non-triviality
@@ -1431,16 +1452,22 @@ both machine-checked on the three foundational axioms. A reader who grants only 
 fixed-spacing correlation bound is granting strictly less than the mass gap, and the reduction is the account
 of what must be added.
 
-**The interior closes by finite-volume analyticity.** $\langle d^2\rangle(\beta)$ is a finite-volume thermal
-expectation $\langle O\rangle_\beta$ of the bounded observable $O=\sum_d p_d\,d^2$ ($0\le O\le(L/2)^2$), so its
-coupling derivative is a connected correlator, $\tfrac{d}{d\beta}\langle O\rangle_\beta=-\operatorname{Cov}_\beta(O,S)$
+**The interior by finite-volume analyticity, and what it needs.** Were $\langle d^2\rangle(\beta)$ a single finite-volume thermal
+expectation $\langle O\rangle_\beta$ of the bounded observable $O=\sum_d p_d\,d^2$ ($0\le O\le(L/2)^2$), its
+coupling derivative would be a connected correlator, $\tfrac{d}{d\beta}\langle O\rangle_\beta=-\operatorname{Cov}_\beta(O,S)$
 with $S$ the Wilson action; Cauchy–Schwarz and the Popoviciu range bound give
 $\lvert d\langle d^2\rangle/d\beta\rvert\le\tfrac14(L/2)^2\cdot2N_p$, an explicit finite-volume Lipschitz constant
-($N_p$ the plaquette count). A finite deterministic grid of reads carrying that modulus of continuity then puts
-$\langle d^2\rangle\le1$, hence the tension below the floor, on the whole compact interior by the grid
-lemma. So the $\forall\beta$ interior bound is carried by **finite-volume analyticity** (the derivative is a bounded
-connected correlator, an established fact) together with a finite grid, not postulated; the measured
-$\langle d^2\rangle\in[0.021,0.192]$ and its $99.9999\%$ upper bound are its grid values. **The scope of that route, stated with it.** The Lipschitz constant above is proportional to the
+($N_p$ the plaquette count). A finite grid of reads carrying that modulus of continuity then puts
+$\langle d^2\rangle\le B$, hence the tension below the floor, on the whole compact interior by the grid
+lemma (`Interior.d2_le_of_analytic_grid`, fed to the sharp criterion by `Interior.ym_crossover_confinement_of_grid_sharp`). So in Lean the $\forall\beta$ interior bound is reduced to **finite-volume analyticity** (*hdiff*, *hbnd*) together with a finite grid whose spacing $\delta$ keeps
+$\langle d^2\rangle\le B-L_{\mathrm{Lip}}\delta$ at the grid points (*hcover*). The measured
+$\langle d^2\rangle\in[0.021,0.192]$ and its nominal-$99.9\%$ upper bounds (at most $0.867$) are its grid values; at nominal $99.9999\%$ the uppers reach $1.372$, above $1$ and under the aperture ceiling $B_{16}=3.2480$.
+**That grid does not close the interior in Lean.** At $L=16$, $T=32$ the constant is
+$L_{\mathrm{Lip}}=\tfrac14(L/2)^2\cdot2N_p=32N_p\approx2.5\times10^7$ ($N_p=786{,}432$), while the 13-point grid,
+with gaps up to $0.3$ in $\beta$ and uppers up to $1.372$, meets *hcover* under $B_{16}$ only for
+$L_{\mathrm{Lip}}\lesssim12.5$; *hdiff* and *hbnd*, differentiability and a derivative bound for `d2At 15` — a
+ratio of connected correlators rather than one expectation — are proved nowhere in the development; and the grid
+values are nominal-confidence reads of $SU(2)$ ensembles rather than values of `d2At 15` (§9, A1). **The scope of that route, stated with it.** The Lipschitz constant above is proportional to the
 plaquette count $N_p$, and that is not an artefact of the estimate: `CompactBeta.clay_covariance_constant_not_aperture_uniform` proves that at the Clay geometry a
 constant of exactly this shape, $4M\cdot\#\mathrm{Plaq}$, exceeds any bound $B$ at some aperture — since
 $\#\mathrm{Plaq}(4,N{+}1)=16(N{+}1)^4$. So the grid route closes each aperture SEPARATELY, at its own
@@ -1468,7 +1495,7 @@ $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ is $0.31$–$0.37$ across the scaling window $L
 
 ![](data/9_1_fig_d2_certified.png)
 
-**Figure 12.** The finite-sample certificate. On the same reads, an empirical-Bernstein (Maurer–Pontil 2009, one-sided sample-variance form) upper confidence bound per lag, union-bounded over the nine independent lags $d=0..L/2$ and propagated through the read functional at its monotone worst-case corner, gives an upper bound on $\langle d^2\rangle(\beta)$ (blue triangles) that sits under the derived aperture ceiling $B_{16}=3.25$ (grey, $L{=}16$) at every $\beta$. Measured central values (black) $\approx0.021$–$0.192$; $99.9999\%$ caps at most $\approx1.37$ (joint $\approx99.9987\%$ over the 13-point grid). No proof bound is pinned between the certified upper and the ceiling.
+**Figure 12.** The finite-sample certificate. On the same reads, an empirical-Bernstein (Maurer–Pontil 2009, one-sided sample-variance form) upper confidence bound per lag, union-bounded over the nine independent lags $d=0..L/2$ and propagated through the read functional by its exact maximum over the box the per-lag bounds license, gives an upper bound on $\langle d^2\rangle(\beta)$ (blue triangles) that sits under the derived sharp aperture ceiling $B_{16}=3.2480$ (grey, $L{=}16$; `Complete.confinement_at_of_d2_sharp`) at every $\beta$. Measured central values (black) $\approx0.021$–$0.192$; nominal-$99.9999\%$ caps at most $1.372$ (nominal joint $\approx99.9987\%$ over the 13-point grid; nominal because the bound treats the configurations as independent and takes the sample range in place of an a-priori support width). The reads are of $SU(2)$ ensembles: evidence for the Lean hypothesis on `d2At 15`, not a discharge of it (§9). No proof bound is pinned between the certified upper and the ceiling.
 
 ![](data/9_1_fig_d2_su3.png)
 
@@ -1698,8 +1725,7 @@ the group action cannot be defined coordinatewise.
 What remains cited to Osterwalder–Seiler is therefore strictly smaller than the statement itself: odd
 extents and extent two, at $\beta\ge0$.
 
-**Theorem 11.1d (The correlation is symmetric on the lag circle — PROVED, and it was previously
-assumed).** For the $SU(3)$ Wilson ensemble at **every** extent and **every real** coupling, with no
+**Theorem 11.1d (The correlation is symmetric on the lag circle — PROVED).** For the $SU(3)$ Wilson ensemble at **every** extent and **every real** coupling, with no
 hypothesis whatever,
 $$\rho(d)=\rho(n-d),$$
 and consequently the correlation reads the lag *only* through the circle distance: $\operatorname{circLag}
@@ -1754,7 +1780,7 @@ eventually (`StrongArm.exists_geom_quartic_bound`), so nothing but the contact t
 
 **How the aperture leaves, which is the whole difficulty.** The estimate bounds $|\rho(d)|$
 *absolutely*; the target is a *ratio*; the bridge is a lower bound on $\rho(0)$ uniform in the
-aperture. Every quantitative Gibbs-versus-Haar bound previously in the development carried an
+aperture. The other quantitative Gibbs-versus-Haar bounds in the development carry an
 exponent proportional to the **plaquette count**, which grows like $16(N{+}1)^4$ and is useless here.
 Two observations remove it:
 
@@ -1938,11 +1964,12 @@ and a positive *mass gap*.
 
 | requirement | status here |
 |---|---|
-| mass gap $\Delta>0$ | $C(\tau)\to0$ at every coupling from A1 (the flagship, foundational axioms + the four cited inputs) — **read the scope with it (§13): that conclusion is carried by the scalar $\mu$ alone.** `ymModel`'s single mode is DEFINED as $e^{-(\kappa_0-\mu)}$, so $C(\tau)\to0$ restates $\mu<\kappa_0$; and `FlagshipScope.flagship_for_bogus` machine-checks that the whole conjunction — gap, $\mu-\kappa<0$, $SO(4)$ and the OS0–OS3 continuum existential — holds for a model whose tension is the constant $0$, with no read, no correlation, no lattice and no gauge group, the $SU(3)$ parameter record intact. Zero tension is the NON-confining case. What ties the conclusion to $SU(3)$ Yang–Mills is `WilsonSpectral` (§13), open above $\beta=0$ and now reduced to two polynomial inequalities on $(\rho_0,\rho_1,\rho_2)$ by `SpectralFour`. The HYPOTHESIS side is not affected: `ConfinesAtAnAperture` unfolds to `corrClay`, a genuine $SU(3)$ Haar Gibbs expectation on the 4-D periodic lattice; the quantitative rate $\Delta(\beta)\ge\kappa_0-\mu(\beta)>0$ with $\|C(\tau)\|\le(\sum\|P_k\|)\,e^{-\Delta\tau}$ is certified for the finite-aperture witness; reflection positivity gives $\rho'(n)\le\rho'(1)^n$, and the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$) with the read $m_{\mathrm{hi}}(L)=\rho'(1)(L)\approx0.33$ carries it to the physical modes; the decay reconstructs to $\operatorname{spec}\subseteq\{0\}\cup[\Delta,\infty)$ through the moment-support bridge. The margin $\mu<\kappa_0$ holds at both coupling ends (character bound below $\beta_\star\approx0.75$; asymptotic freedom above) and closes across the interior by finite-volume analyticity on a finite grid (§7–§9); the margin is intensive (it carries no lattice scale), the property the continuum limit uses (§11). |
+| the Clay statement for $SU(N)$, $N\ge2$ | **reduced to named inputs, not proved.** `ClayRoutes.clay_continuum_of_boxPatchGap` proves `ClayRoutes.ClayContinuum` — on one reconstructed Hilbert space, at every dyadic step $m$, a transfer gap at rate $e^{-(c/L)\,a_m}$ (`ContinuumClay.GappedAt`) and a non-zero vector orthogonal to the vacuum (`ContinuumClay.NontrivialVacuum`) — from the box `BoxPatch.BoxPatchGap` at one coupling $\beta_0$, the UV step `ClayRoutes.UVBelowIR` below the box's rate `HeatBathLocal.boxRate`, E (`ContinuumSep.UniformBoundSep`), the kernel convergence `ContinuumNontrivial.KernelConvergesSep` and Y (`ShortDistanceY.AFShortDistance`). The box is proved for $SU(2)$ and $SU(3)$ at $\beta_0=17N^2/(88\pi^2)$ (`PairCorrSharp.boxPatchGap_floor_su2`, `boxPatchGap_floor_su3`), so `PairCorrSharp.clay_continuum_floor_su2` and `clay_continuum_floor_su3` carry E, the kernel convergence, Y and the UV step, on the three foundational axioms. E is read only on reflected pairs, where it reduces to `ContinuumSep.DiagBoundSep` (`ClayReduce.clay_continuum_of_diagBoundSep`); the kernel convergence with Y gives `ClayReduce.PairLowerBound`, which `ClayReduce.clay_continuum_floor_su2_rhoA` and `_su3_rhoA` take in place of both, at the field-independent factor `ClayReduce.zA N`. Open: E, the kernel convergence, Y where it is a hypothesis, the UV step, and the box for $SU(N\ge4)$. Outside `ClayContinuum`: non-triviality in the Clay sense (`ThreePointN.WilsonThreePointSeparation`) and rotation invariance off the hypercubic group (`ContinuumHypercubic.RotationOpen`). |
+| mass gap $\Delta>0$ | $C(\tau)\to0$ at every coupling from A1 (the flagship, foundational axioms + the four cited inputs) — **read the scope with it (§13): that conclusion is carried by the scalar $\mu$ alone.** `ymModel`'s single mode is DEFINED as $e^{-(\kappa_0-\mu)}$, so $C(\tau)\to0$ restates $\mu<\kappa_0$; and `FlagshipScope.flagship_for_bogus` machine-checks that the whole conjunction — gap, $\mu-\kappa<0$, $SO(4)$ and the OS0–OS3 continuum existential — holds for a model whose tension is the constant $0$, with no read, no correlation, no lattice and no gauge group, the $SU(3)$ parameter record intact. Zero tension is the NON-confining case. What ties the conclusion to $SU(3)$ Yang–Mills is `WilsonSpectral` (§13), open above $\beta=0$ and now reduced to two polynomial inequalities on $(\rho_0,\rho_1,\rho_2)$ by `SpectralFour`. The HYPOTHESIS side is not affected: `ConfinesAtAnAperture` unfolds to `corrClay`, a genuine $SU(3)$ Haar Gibbs expectation on the 4-D periodic lattice; the quantitative rate $\Delta(\beta)\ge\kappa_0-\mu(\beta)>0$ with $\|C(\tau)\|\le(\sum\|P_k\|)\,e^{-\Delta\tau}$ is certified for the finite-aperture witness; reflection positivity gives $\rho'(n)\le\rho'(1)^n$, and the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$) with the read $m_{\mathrm{hi}}(L)=\rho'(1)(L)\approx0.33$ carries it to the physical modes; the decay reconstructs to $\operatorname{spec}\subseteq\{0\}\cup[\Delta,\infty)$ through the moment-support bridge. The margin $\mu<\kappa_0$ holds at both coupling ends (character bound below $\beta_\star\approx0.75$; asymptotic freedom above) and across the interior reduces, in Lean, to finite-volume analyticity (*hdiff*, *hbnd*) and a grid cover (*hcover*) on `d2At 15`, none of which the measured grid supplies (§9); the margin is intensive (it carries no lattice scale), the property the continuum limit uses (§11). |
 | gap uniform in volume | **read the conflation out of this row first.** Reflection positivity makes the transfer operator self-adjoint, giving $\rho'(n)\le\rho'(1)^n$ — but that is a statement about $n$ TIME-CUTS, and `Mixing.lean`, where it lives, carries no volume index at all. A single cut $\rho'(1)<1$ therefore gives the gap at every SEPARATION, not at every VOLUME. Carrying it across volumes is the separate intensive premise $\forall F,\ m_{\mathrm{hi}}(F)\le r$, which `Certify.gap_uniform_in_volume_of_intensive` TAKES as a hypothesis and which nothing in the tree supplies unconditionally — it is machine-checked for the DECOUPLED product transfer and measured for the interacting one (§13). Reflection positivity buys the time direction; the spatial direction is untouched by it. With that premise: the single-plaquette gap $\ge\kappa_0$ ($\rho'(1)=m_{\mathrm{cell}}\le3^{-1/4}$) is machine-checked at $V{=}1$; the forward read $m_{\mathrm{hi}}(L)=\rho'(1)(L)$ is $0.31$–$0.37$ across the scaling window $L=12$–$28$ (mean $\approx0.33$), the $L=8$ and $L=32$ endpoints outside that window |
 | OS0–OS3 survive a tight subsequential limit over EXTENTS; existence on $\mathbb{R}^4$ NOT delivered | the tight limit over extents (§11): from the finite-spacing Osterwalder–Schrader data (reflection positivity, the infrared mode-count bound, Euclidean and permutation invariance), the reflected forms are uniformly bounded and the full Schwinger vector is jointly tight, and every closed OS condition (OS0 bound, OS1 Euclidean, OS2 RP, OS3 symmetry) survives the limit; the compactness assembly carries the three foundational axioms only. Cited inputs: the §2–§3 modelling identification (the $SU(N)$ Wilson ensemble is such a family, instantiated in §13), Bałaban's uniform effective-action bounds for the continuum limit, and the OS→Wightman reconstruction, which is stated as a named axiom and is **not** applied to the tight limit: it consumes an `OSData` whose `transl` acts by $\mathbb{R}^4$, which is divisible, and `LatticeTranslNoGo` closes both horns by proof — at finite periodic extent the translations have finite order and collide with divisibility (`transl_eq_id_of_finite_order`), while on $\mathbb{Z}^4$ they are torsion-free but $\mathbb{Z}$ is not divisible (`addHom_to_int_lattice_eq_zero`). Once `transl` is the identity, OS1 holds of an ARBITRARY bilinear form (`os1_holds_of_everything_when_transl_trivial`), so such an `OSData` would carry no invariance content. The only `OSData` in the tree is the trivial one. |
 | local fields, short-distance $=$ asymptotic freedom, operator product expansion | **not addressed.** No stress tensor and no operator product expansion appears anywhere in the development, and the measure they would be built on is not constructed (§11, §13). What IS here is the running side: `Running.lean` proves $b_0,b_1>0$ and no interior fixed point, and `AsymptoticScaling.lean` makes asymptotic scaling a real constraint — `AsymptoticScalingAt` is proved satisfiable AND refutable — with **no producer for it on the Wilson theory**. Standard *given* a constructed continuum measure, which is not what is proved here. |
-| any compact simple $G$ | the construction is polymorphic: `CompactGauge` runs over an arbitrary compact group, the non-triviality lemma `clay_nontriviality_of_wilson_variance` is stated for an arbitrary compact $G$ with no `SU` and no $3$, and $SU(3)$ enters at exactly ONE numeral — `WilsonBridge.corrClay := corrHyper (d := 4) 3 n 0 1 2 \beta\ lag`, where `corrHyper` is general in $N_c$. The floor, RP, asymptotic freedom and the band-limit lemma are $N$-general and the centre twist is $Z_N$. Two things are absent and neither is a write-up: **Lie-algebra simplicity cannot be stated against Mathlib v4.31 at all** — `SimpleGroup.lean` settles only the abstract-group reading, where $SU(N)$ is provably NOT simple because it has a centre — and the per-$N$ Haar evaluations, which `ColourGeneral.lean` reduces to per-$N$ arithmetic rather than missing machinery. |
+| any compact simple $G$ | **not delivered.** The continuum capstone `ClayRoutes.clay_continuum_of_boxPatchGap` is stated for $SU(N)$, $N\ge2$, and its box input is proved for $SU(2)$ and $SU(3)$ only (`PairCorrSharp.boxPatchGap_floor_su2`, `boxPatchGap_floor_su3`); for $SU(N\ge4)$ `BoxPatch.BoxPatchGap` is open, and no other compact simple group is treated. Parts of the finite-spacing construction are general — `CompactGauge` runs over an arbitrary compact group, `clay_nontriviality_of_wilson_variance` is stated for an arbitrary compact $G$, and the floor, reflection positivity, asymptotic freedom and the band-limit lemma are $N$-general with centre twist $Z_N$ — but none of these reaches the continuum statement. **Lie-algebra simplicity cannot be stated against Mathlib v4.31** — `SimpleGroup.lean` settles only the abstract-group reading, where $SU(N)$ is not simple because it has a centre. |
 | clustering | follows from $\Delta>0$ |
 
 **The load-bearing read.** The tension bound $\mu<\kappa_0$ is *soft*: on the action-density read it holds with
@@ -2053,12 +2080,12 @@ development). The read layer and its certification are the companion paper [E].
   measure (`OddLagSplit.corrClay_reflection_positive`, recorded in `Complete` as
   `wilson_reflection_positive_at_even`). This is the axiom's own body, proved on that domain (§11.1b).
 
-On these, the gap flagship reduces to four established inputs, **one of which is no longer merely cited**:
+On these, the gap flagship reduces to four inputs, **one of which is no longer merely cited**:
 reflection positivity — now proved outright for the whitened correlation at even extent $\ge4$ and
 $\beta\ge0$ (§11.1b), and cited to Osterwalder–Seiler only outside that domain (odd extents and extent two,
 at $\beta\ge0$) — and the strong-coupling character bound (Osterwalder–Seiler), the asymptotic-freedom plateau $\mu_\infty<\kappa_0$
 (Gross–Wilczek–Politzer, the below-floor value proved by Wick), and the finite interior correlation length
-$\langle d^2\rangle\le1$ (a finite-sample statistical certificate at 99.9999%, not an enclosure). The single-plaquette aperture margin $\Delta\ge\kappa_0$ is a
+$\langle d^2\rangle\le1$ (a finite-sample statistical bound at nominal 99.9% per coupling, largest upper $0.867$, not an enclosure; at nominal 99.9999% the largest upper is $1.372$, which clears the aperture ceiling $B_{16}=3.2480$ but not $1$; the bound reads $SU(2)$ ensembles and does not discharge the Lean hypothesis, which is stated on `d2At 15`, §9). The single-plaquette aperture margin $\Delta\ge\kappa_0$ is a
 deterministic certificate; its spatial-volume carry to $V\to\infty$ is the open intensive bound, which
 the forward read of §8.5 is evidence for and does not close (§8.7b sets out what that read reports).
 
@@ -2101,11 +2128,12 @@ extent $\ge4$, drawn from the same eventual set the original draws from, which i
 **The theorem.** The top-level theorem is the reduction with A1 and A2 discharged to the named inputs below: for the
 lattice $SU(N)$ witness at every physical coupling $\beta\ge0$ it establishes clustering,
 $\|\sum_k P_k\,m_k^{\tau}\|\to0$ (the gap in the form $C(\tau)\to0$); non-triviality, $\mu-\kappa<0$ (the area law);
-and $R(d)=R(d')$ (Euclidean $SO(4)$), carrying no A1/A2 hypothesis. **Both results — existence and the mass gap —
-now hold for a constructed $SU(N)$ object.** A constructed $SU(N)$ realisation (`ym_wilson_of`) instantiates the
+and $R(d)=R(d')$ (Euclidean $SO(4)$), carrying no A1/A2 hypothesis. **Both conclusions — the finite-spacing Osterwalder–Schrader
+data and the gap in the form $C(\tau)\to0$ — hold for a constructed $SU(N)$ object;** the gap conclusion
+is about `ymModel`, carried by $\mu$ alone (§13), and existence on $\mathbb{R}^4$ is not among them (§12 table). A constructed $SU(N)$ realisation (`ym_wilson_of`) instantiates the
 finite-spacing Osterwalder–Schrader data family, its reflected forms built from the same `wilsonCorr` as the gap
-side (so `os_rp` is the reflection-positivity axiom and the two are one physical model), with its Euclidean and permutation clauses holding STRUCTURALLY rather than by an invariance of the measure: `QYM` reads `j` only through the label `j.2.2`, while `actEYM` and `actPYM` move `j.1` and `j.2.1`, so `os_euc` and `os_perm` close by `rfl` over actions on components the form never reads. The invariance that is DERIVED is `ymFamilyGauge`'s, where `WilsonGauge.QG_eq` obtains it from `Symmetry.expect_invariant` on an $SU(3)$ Haar expectation. `ym_existence_and_gap_of_junction` then delivers the mass gap AND the OS0–OS3 continuum
-measure, on that constructed realisation.
+side (so `os_rp` is the reflection-positivity axiom and the two are one physical model), with its Euclidean and permutation clauses holding STRUCTURALLY rather than by an invariance of the measure: `QYM` reads `j` only through the label `j.2.2`, while `actEYM` and `actPYM` move `j.1` and `j.2.1`, so `os_euc` and `os_perm` close by `rfl` over actions on components the form never reads. The invariance that is DERIVED is `ymFamilyGauge`'s, where `WilsonGauge.QG_eq` obtains it from `Symmetry.expect_invariant` on an $SU(3)$ Haar expectation. `ym_existence_and_gap_of_junction` then delivers the mass gap AND the OS0–OS3 limit over
+extents (§12 table), on that constructed realisation.
 `ym_existence_and_gap_of_junction` (gap and OS0–OS3 measure together) carries the one named axiom
 (`wilson_reflection_positive_at`). No new axiom, no `sorry`. The quantitative strengthening
 $\|C(\tau)\|\le M\,e^{-\Delta\tau}$ with $\Delta=\kappa_0-\mu>0$ is a separate certified theorem carrying the same
@@ -2683,8 +2711,8 @@ difference:
 | generality | the $YM$ model, mode index `Unit` | abstract in the mode index and direction |
 | the evidence here | §9's measured residuals, on both groups | the count is machine-checked; `hdual` is cited |
 
-The second is the stronger theorem: fewer axioms, more general, and one of the two open inputs
-replaced by the entropy floor's own count (§7, now constant-free in both factors). The first is the
+The second is the stronger theorem: fewer axioms, more general, and one of the two inputs the table lists
+for `ym_mass_gap_of_junction`, `hfe`, replaced by the entropy floor's own count (§7, now constant-free in both factors). The first is the
 one whose two sides have been held against each other in measurement. Neither is load-bearing for
 anything else in the development — both are terminal — so this paper quotes the measured route for
 the empirical claim and names the count-injection route as the stronger formal statement, rather than
@@ -2734,7 +2762,9 @@ foundational axioms **plus `wilson_reflection_positive_at` alone**. The developm
 the conclusion is about `ymModel`'s defined mode, so it converts $\mu<\kappa_0$ rather than deriving
 decay of the Wilson correlation.
 
-**The gap side has one open input.** `Complete.ym_mass_gap_of_lag_decay` delivers the whole
+**`Complete.ym_mass_gap_of_lag_decay` has one open input.** Its conclusion is about `ymModelAt N` (the scope
+stated above), so this is not the input list of the Clay statement, which §12 states with the capstone.
+`Complete.ym_mass_gap_of_lag_decay` delivers the whole
 conjunction — $C(\tau)\to0$, $\mu-\kappa<0$ and $SO(4)$ — at every large enough aperture and every
 coupling, from the single hypothesis that the read's correlation decays geometrically in the lag,
 $(\mathrm{readYMAt}\,N\,\beta).p\,d\le C r^{d}$ with $r<1$ uniform in $N$ and $\beta$, on the three
@@ -2772,7 +2802,9 @@ hypothesis now has a measured value and a falsified alternative, which is the di
 assumption and an open question.
 
 **Correspondence and reproducibility.** Status labels are by provenance: *proved* (analytic or Lean), *certified*
-(rigorous computation — deterministic/exact-rational unless marked *statistical*), *verified* (measured, reproducible).
+(rigorous computation — deterministic/exact-rational unless marked *statistical*; a *statistical* certificate
+is a finite-sample empirical-Bernstein bound whose confidence is nominal, because it treats the configurations
+as independent and takes the sample range in place of an a-priori support width), *verified* (measured, reproducible).
 
 | claim (section) | Lean / code | status |
 |---|---|---|
@@ -2782,7 +2814,7 @@ assumption and an open question.
 | forgetting property: margin $\Rightarrow$ decay $\wedge$ summable $\wedge\ \Lambda_{\mathrm{Ces}}$ (§4, 6) | `Forgetting.lean` | proved |
 | $A1\wedge A2\Rightarrow$ gap $+$ non-triviality $+$ $SO(4)$; A1 ends; A2 isotropy (§9) | `Apriori.lean` | proved |
 | the reduction: A1, A2 as theorems $\Rightarrow$ gap with no A1/A2 hypothesis (§9) | `Complete.lean` | proved (footprint: three foundational $+$ `wilson_reflection_positive_at`); **A1 is replaced by a substrate or grid input rather than removed, and the conclusion is the three clauses about `ymModel`, whose single mode is defined as $e^{-(\kappa_0-\mu)}$ — scope in §13** |
-| A1 interior: analytic step $\cos x\ge1-x^2/2\Rightarrow\mu<\kappa_0$, the $1/L^2$ aperture scaling, and the grid route (§9) | `Moment.lean`, `Complete.lean`, `Interior.lean` | proved; the named input is a bound on the aperture-free ratio $\langle d^2\rangle/(N{+}1)^2$ (`substrateRatio`, via `confinement_of_growth_ratio`), or, dropping it, finite-volume analyticity (a bounded $\beta$-derivative) plus a finite grid (`ym_crossover_confinement_of_grid`, `d2_le_of_analytic_grid`); the measured grids they are read against are produced by `certify/ym_crossover_confinement_of_grid.py` (the $\langle d^2\rangle$ grid) and `certify/interior_mixing_of_analytic_grid.py` (the $\rho'(1)$ grid) **Where the measured grid ends, and what carries the rest.** The interior grid is $SU(2)$ at $L=16$ and runs to $\beta=2.60$ (`9_4_dat_interior_mixing_grid.csv`); the certificate refuses a partial grid rather than quietly shortening one. Above $\beta=2.60$ coverage is NOT measured: it rests on $\langle d^2\rangle$ staying under its crossover peak, which is exactly the aperture-independent hypothesis of `Complete.confinement_of_bounded_substrate` and is an input there rather than a reading. That is the same named open input seen from another side, not a separate gap — and the join is stated here so a reader is not left to infer it. Extending the grid would need new $L=16$ ensembles at $\beta=2.7$ and above: the release carries $\beta=2.7$ only at $L=12$ and $\beta=2.8$ only at $L=8$, and mixing volumes into a $\rho'(1)$ grid would move the box and the coupling together. |
+| A1 interior: analytic step $\cos x\ge1-x^2/2\Rightarrow\mu<\kappa_0$, the $1/L^2$ aperture scaling, and the grid route (§9) | `Moment.lean`, `Complete.lean`, `Interior.lean` | proved; the named input is a bound on the aperture-free ratio $\langle d^2\rangle/(N{+}1)^2$ (`substrateRatio`, via `confinement_of_growth_ratio`), or, dropping it, finite-volume analyticity (a bounded $\beta$-derivative) plus a finite grid under the sharp ceiling (`Interior.ym_crossover_confinement_of_grid_sharp`, `d2_le_of_analytic_grid`; the gap for `ymModelAt 15` from it and the two ends is `Interior.ym_mass_gap_grid_certified_sharp`); the measured grids they are read against, which do not discharge those hypotheses (they read $SU(2)$ ensembles rather than `d2At 15`, at nominal confidence, and leave *hcover*, *hdiff* and *hbnd* open, §9), are produced by `certify/ym_crossover_confinement_of_grid.py` (the $\langle d^2\rangle$ grid) and `certify/interior_mixing_of_analytic_grid.py` (the $\rho'(1)$ grid) **Where the measured grid ends, and what carries the rest.** The interior grid is $SU(2)$ at $L=16$ and runs to $\beta=2.60$ (`9_4_dat_interior_mixing_grid.csv`); the certificate refuses a partial grid rather than quietly shortening one. Above $\beta=2.60$ coverage is NOT measured: it rests on $\langle d^2\rangle$ staying under its crossover peak, which is exactly the aperture-independent hypothesis of `Complete.confinement_of_bounded_substrate` and is an input there rather than a reading. That is the same named open input seen from another side, not a separate gap — and the join is stated here so a reader is not left to infer it. Extending the grid would need new $L=16$ ensembles at $\beta=2.7$ and above: the release carries $\beta=2.7$ only at $L=12$ and $\beta=2.8$ only at $L=8$, and mixing volumes into a $\rho'(1)$ grid would move the box and the coupling together. |
 | modified Bessel $I_n(x)>0$ $\Rightarrow I_2/I_1>0$ (§8.2) | `Bessel.lean` | proved |
 | $\Delta=\kappa_0-\mu\Rightarrow\|C(\tau)\|\le M e^{-\Delta\tau}$ (§6, §12) | `GapRate.lean` | proved |
 | RP survives the continuum limit (§11) | `Existence.lean` | proved |
@@ -2814,23 +2846,69 @@ assumption and an open question.
 | weak-coupling limit: free-field plateau $\mu_\infty(8)=0.0326<\kappa_0$ (Wick, §8.6) | `certify/free_field_muinf.py`; `FreeField.lean` | certified (exact Wick circulant on the $L^4$ free propagator, no Monte Carlo: $\mu_\infty(L)L^2=2.09$ at $L=8$ rising to $2.18$ by $L=32$, $M_2=0.111$, lattice axes identical to $4\times10^{-17}$, $\lambda_2$ a doublet to $3\times10^{-16}$) **and Lean-proved** (`muInf_lt_floor`) |
 | interior read $\langle d^2\rangle(\beta)$ across the crossover, peak $0.192$ (§9) | `9_1_run_d2_bound.py` | verified (circle-distance read over the full periodic extent, $\pm2\sigma$ bootstrap, $SU(2)$ $L{=}16$, $n\ge96$) |
 | interior read $\langle d^2\rangle(\beta)$ for $SU(3)$ across $\beta=5.0$–$7.0$, below the aperture ceiling (§9) | `9_1_run_d2_su3.py` | verified (same direct-lag read, $\pm2\sigma$ bootstrap, $SU(3)$ $L{=}6,8$; $\langle d^2\rangle\le0.231$ vs ceiling $0.457$/$0.812$) |
-| $\langle d^2\rangle$ under the derived aperture ceiling $B_{16}=3.25$ at $99.9999\%$, nothing pinned (§9) | `9_1_run_d2_certify.py` | certified *statistical* (finite-sample empirical-Bernstein; largest $99.9999\%$ upper $1.368$, clearing the ceiling by $2.4\times$; joint $\approx99.9987\%$). **Superseded for the confinement claim** by the row below, which certifies $\mu<\kappa_0$ itself rather than a sufficient condition for it |
-| confinement itself, $\mu<\kappa_0$, from the read's own cosine average (§9) | `ym_confinement_of_cos_average.py` | certified *statistical* (every coupling confined at $\delta=10^{-30}$; worst $\mu\le0.1767$ against $\kappa_0=0.2747$) |
+| $\langle d^2\rangle$ under the derived sharp aperture ceiling $B_{16}=3.2480$ (`Complete.confinement_at_of_d2_sharp`) at nominal $99.9999\%$, nothing pinned (§9) | `9_1_run_d2_certify.py` | certified *statistical*, nominal (finite-sample empirical-Bernstein treating the configurations as independent, with the sample range in place of an a-priori support width; largest nominal-$99.9999\%$ upper $1.372$, clearing the ceiling by $2.3\times$; nominal joint $\approx99.9987\%$; $SU(2)$ reads, evidence for and not a discharge of the Lean hypothesis on `d2At 15`). **Superseded for the confinement claim** by the row below, which certifies $\mu<\kappa_0$ itself for the $SU(2)$ read rather than a sufficient condition for it |
+| confinement itself, $\mu<\kappa_0$, from the read's own cosine average (§9) | `ym_confinement_of_cos_average.py` | certified *statistical*, nominal (every coupling confined at nominal $\delta=10^{-30}$; worst $\mu\le0.1767$ against $\kappa_0=0.2747$) |
 | the substrate ratio across apertures $L=6\ldots32$ (§9) | `ym_substrate_bound_of_aperture.py` | verified (13 couplings at more than one aperture; one $c=6.40\times10^{-3}$ covers all, $2.0\times$ under the ceiling) |
 | the read layer | [E] | companion paper, own Lean/Mathlib certification |
 
 **Data and code availability.** The empirical reads run on a frozen release of Monte-Carlo ensembles of the
 gauge-invariant local action density
 $\phi(x)=\sum_{\mu<\nu}\!\big(1-\tfrac1N\operatorname{Re}\operatorname{tr}U_{\mu\nu}(x)\big)$ for compact $U(1)$,
-$SU(2)$, and $SU(3)$ in four Euclidean dimensions: **81 ensembles in $(\text{group}{,}L{,}\beta)$ across 229 density shards{,} 20{,}668 configurations, 6.13 GiB**, each a
+$SU(2)$, and $SU(3)$ in four Euclidean dimensions: **81 ensembles in $(\text{group}{,}L{,}\beta)$ across 229 density shards (187 action-density fields, 42 operator-reduced histories){,} 20{,}668 configurations, 6.13 GiB** (stored records: a configuration kept at several smearing levels counts once per level), each a
 `float32` array of shape $(n,L,L,L,T)$ with $T=2L$, except where an experiment holds the time extent FIXED on purpose: the fixed-aperture box series scans $L=8,12,16,20,24$ at $T=32$ throughout, because moving the box while moving the aperture would not separate them, and its 12 operator-reduced shards carry shape $(n,T)$ rather than the field (the zero-momentum projection is taken before the links are discarded, which is what makes a shard kilobytes instead of gigabytes). The §8.7 transfer-gap read uses a separate archived raw-link
 ensemble, `configs_links_su2`, at $L=8,12,16,20$ -- $16^3\times28$ at $\beta=2.30,2.40,2.50$, the other three at $\beta=2.30$ with $T=2L$. Coverage: $SU(2)$ at $L=8$–$32$ (including the $\beta=2.30$ volume
 tower $L=8,12,16,20,24,28,32$), $SU(3)$ at $L=6$–$12$ across $\beta=5.0$–$7.0$, and $U(1)$ at $L=8$ across its
 deconfinement transition, $\beta=0.4$–$2.5$. Generation is deterministic in $(\text{group},L,T,\beta,\text{seed},\text{therm},\text{method})$:
 every field regenerates from the seed manifest. The release ships a data card, the per-campaign generation record and
-seed map, a NumPy reader, a manifest generator, `manifest.csv` (per-shard SHA-256, carrying the channel and smearing level of each operator-reduced shard), and `SHA256SUMS` (all 265 shards verified: the 229 density shards and the 36 raw-link shards, 16.14 GiB, of `configs_links_su2`). Dataset: CC-BY-4.0, on Zenodo, DOI [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110) (the record and its metadata are public, the files access-by-request), derived from the Entroptics software release [S]
-(Zenodo `10.5281/zenodo.22687899`). Every figure and certificate in §8–§9 regenerates from the frozen ensembles by the named
-script.
+seed map, a NumPy reader, a manifest generator, `manifest.csv` (per-shard SHA-256, carrying the channel and smearing level of each operator-reduced shard), and `SHA256SUMS` (all 265 shards verified: the 229 density shards and the 36 raw-link shards, 16.14 GiB, of `configs_links_su2`). Dataset: CC-BY-4.0, on Zenodo, DOI [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110) (v0.2.0, open access), derived from the Entroptics software (the dataset record names its concept DOI,
+`10.5281/zenodo.21273400`). Every figure and certificate in §8–§9 regenerates from the frozen ensembles by the named
+script, reading them with Entroptics v0.2.5, source at commit `1d1d00b` [S].
+
+**What runs through the library.** Every read in §8–§9 goes through the Entroptics library [S], and only
+through the wrapper `research/code/entroptics_adapter.py`; no other file imports the library
+(`test_provenance.py::test_nothing_reaches_the_entroptics_library_except_the_adapter`). That includes
+the resampling — `bootstrap` (e.g. `certify/ym_crossover_confinement_of_grid.py`,
+`data/9_1_run_d2_bound.py`) and the delete-one-bin `jackknife` (e.g. `data/8_7_run_transfer_gap.py`,
+`data/8_7_run_mhi_lscan.py`); the empirical-Bernstein interval, `empirical_bernstein` (called by `eb`
+in `certify/ym_crossover_confinement_of_grid.py`, which `d2_upper` and
+`certify/ym_confinement_of_cos_average.py` use, and by `Reads.k_signal_certificate` in the wrapper;
+both pass the sample range as the support width, which is why those confidences are nominal); and
+the lag-local decay rate $\log(C(t)/C(t{+}1))$, `effective_rates` (in `data/8_7_run_gap_correlator.py`,
+and averaged over lags by `lag_budget` in `code/aperture_reads.py`). The standard errors of ensemble
+means and the descriptive fits the scripts report are elementary statistics, computed where they are
+reported.
+Lattice physics — configuration generation, plaquettes and the action density, smearing, Wilson loops, and
+the matrices the theory defines — is computed in the repository and is not a read.
+
+---
+
+## What is proved of the Clay statement
+
+The Clay problem asks, for every compact simple $G$, for a
+non-trivial Yang–Mills theory on $\mathbb{R}^4$ satisfying the Wightman (equivalently Osterwalder–Schrader)
+axioms, with a mass gap. For $G=SU(N)$, $N\ge2$, the capstone `ClayRoutes.clay_continuum_of_boxPatchGap`
+proves the gapped part of that statement, `ClayRoutes.ClayContinuum` — on one reconstructed Hilbert space,
+at every dyadic step of the continuum tower, a transfer gap of physical rate at least $c/L$ and a non-zero
+vector orthogonal to the vacuum — from named inputs, each a Lean proposition. For $SU(2)$ and $SU(3)$ the
+box input is a theorem at the floor coupling $\beta_0=17N^2/(88\pi^2)$
+(`PairCorrSharp.boxPatchGap_floor_su2`, side $2606$, gap $307/10000$;
+`PairCorrSharp.boxPatchGap_floor_su3`, side $545$, gap $367/2500$), and
+`PairCorrSharp.clay_continuum_floor_su2` and `clay_continuum_floor_su3` carry the remaining inputs on the
+three foundational axioms. Those inputs are open: **E**, the uniform bound on separated renormalised
+Schwinger functions `ContinuumSep.UniformBoundSep`, which the proof reads only on reflected pairs, where it
+reduces to the reflection-diagonal bound `ContinuumSep.DiagBoundSep`; **the non-zero vector**, from the
+kernel convergence `ContinuumNontrivial.KernelConvergesSep`, which with Y gives
+`ClayReduce.PairLowerBound`, all the capstone reads of either; **Y**, the asymptotic-freedom short-distance
+law `ShortDistanceY.AFShortDistance`, a hypothesis of the floor capstones and absent from
+`ClayReduce.clay_continuum_floor_su2_rhoA` and `_su3_rhoA`, which, at the field-independent factor
+`ClayReduce.zA N` $=a^{-4}$, take `PairLowerBound` in its place; and
+**the UV step** `ClayRoutes.UVBelowIR` below the box's rate
+$\min(\mathrm{boxKnabe}\,n\,\gamma,1)/(508\,a_{\mathrm{run}}(\beta_0))$, which with the box gives
+`WeakCouplingWindow.FixedWindowDecay`. For $SU(N\ge4)$ the box `BoxPatch.BoxPatchGap` is open as well, and
+no compact simple group other than $SU(N)$ is treated. Non-triviality in the Clay sense — a connected
+function of order three or more away from zero (`ThreePointN.WilsonThreePointSeparation`) — and rotation
+invariance beyond the hypercubic group (`ContinuumHypercubic.RotationOpen`) lie outside `ClayContinuum`.
+The development does not assert the Clay statement.
 
 ---
 
@@ -2846,12 +2924,12 @@ edited all output and takes full responsibility for the content of this publicat
 ## References
 
 - **[E]** J. Sessford, *Entroptics: reading a 2-D signal as a finite optical aperture at its own entropy-matched
-  resolution*, pre-print (2026), `research/PAPER.pdf` in the archived release [S].
-- **[S]** J. Sessford, *Entroptics*, software v0.2.3, Zenodo (2026),
-  DOI: [10.5281/zenodo.22687899](https://doi.org/10.5281/zenodo.22687899);
-  source: https://github.com/Agience/entroptics.
+  resolution*, pre-print (2026), `research/PAPER.md` at the source commit [S].
+- **[S]** J. Sessford, *Entroptics*, software v0.2.5 (PyPI `entroptics==0.2.5`), source at commit `1d1d00bfdaed5e0e450357c8c3ba7f1bd1f479dc`
+  (2026): https://github.com/Agience/entroptics/tree/1d1d00bfdaed5e0e450357c8c3ba7f1bd1f479dc;
+  concept DOI (all versions; it resolves to the newest release) [10.5281/zenodo.21273400](https://doi.org/10.5281/zenodo.21273400).
 - **[D]** J. Sessford, *Entroptics lattice gauge-theory action-density ensembles ($U(1)$, $SU(2)$, $SU(3)$)*,
-  Zenodo dataset, v0.2.0, CC-BY-4.0 (2026), DOI: [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110), 229 shards, 20{,}668 configurations.
+  Zenodo dataset, v0.2.0, CC-BY-4.0 (2026), DOI: [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110), 265 shards, 22{,}972 configurations (stored records; a configuration kept at several smearing levels counts once per level).
 - G. 't Hooft, Nucl. Phys. B **138**, 1 (1978).
 - D. J. Gross, F. Wilczek, Phys. Rev. Lett. **30**, 1343 (1973); H. D. Politzer, *ibid.* **30**, 1346 (1973).
 - Z. Komargodski, A. Schwimmer, JHEP **12**, 099 (2011).

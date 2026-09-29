@@ -1,8 +1,9 @@
 """9_1_run_d2_su3.py -- the SU(3) analog of 9_1_run_d2_bound.py (SU(2) L16).
 
 Whitened :F^2: second moment <d^2>(beta) = sum_d p_d d^2 (squared correlation length in lattice units)
-read on the pure-SU(3) beta-sweep from the store. Same read functional as the SU(2) figure: per-config
-grand-mean-connected spatial autocorrelation by DIRECT roll+mean (no FFT), lags d=0..L/2, normalized to
+read on the pure-SU(3) beta-sweep from the store. Same read functional as the SU(2) figure, imported from it
+(`ym_crossover_confinement_of_grid.per_config_profiles`): per-config grand-mean-connected spatial
+autocorrelation, read by the library's periodic lag profile, lags d=0..L/2, normalized to
 p_d = clip(rho_d/rho_0, 0)/sum, then the second moment. Bootstrap +/-2sigma over configs. Deterministic,
 cheap (L=6/8). Emits 9_1_dat_d2_su3.csv and 9_1_fig_d2_su3.png.
 """
@@ -16,6 +17,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "code"))   # research/code -- store_
 sys.path.insert(0, os.path.join(HERE, "..", "code", "certify"))
 import store_path                                      # the ONE place the store is located
 import ym_crossover_confinement_of_grid as CG  # the canonical lag-moment read
+import entroptics_adapter as W                # THE WRAPPER: the bootstrap is the library's
 
 # The store root, from `store_path`: `CONFIGS`, then the git-ignored local config file, then a
 # refusal. No default: a literal path names one machine, and everywhere else every load returns
@@ -36,18 +38,6 @@ def load(L, b, ncap=128):
         if fs:
             return np.asarray(np.concatenate([np.load(f) for f in fs], 0)[:ncap], dtype=np.float64)
     return None
-
-
-def profiles(arr, maxlag):
-    a = arr - arr.mean()
-    n = arr.shape[0]
-    P = np.zeros((n, maxlag + 1))
-    P[:, 0] = (a * a).mean(axis=(1, 2, 3, 4))
-    for ax in (1, 2, 3):
-        for d in range(1, maxlag + 1):
-            P[:, d] += (a * np.roll(a, -d, axis=ax)).mean(axis=(1, 2, 3, 4))
-    P[:, 1:] /= 3.0
-    return P
 
 
 def d2(P, maxlag):
@@ -74,10 +64,10 @@ for L, betas in SERIES:
         arr = load(L, b)
         if arr is None:
             continue
-        P = profiles(arr, maxlag)
+        P = CG.per_config_profiles(arr)          # the canonical lag profile, read by the library
         n = P.shape[0]
         c = d2(P, maxlag)
-        boot = [d2(P[rng.integers(0, n, n)], maxlag) for _ in range(400)]
+        boot = W.bootstrap(P, lambda s: d2(s, maxlag), draws=400, rng=rng)   # continues `rng`
         rows.append((b, c, float(np.std(boot)), n))
         print(f"su3 L{L} b{b:.2f}: <d^2>={c:.4f} +/- {float(np.std(boot)):.4f}  n={n}")
     out[L] = (rows, ceil)

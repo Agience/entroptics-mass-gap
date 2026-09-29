@@ -39,18 +39,26 @@ a non-zero vector orthogonal to the vacuum (`ContinuumClay.NontrivialVacuum`). N
 function of order three or more away from zero (`ThreePointN.WilsonThreePointSeparation`), and rotation
 invariance off the hypercubic group sit outside it. `ClayRoutes.clay_continuum_of_fixedWindowDecay`,
 `ClayRoutes.clay_continuum_of_boxPatchGap`, `ClayRoutes.clay_continuum_of_irGap` and
-`ClayRoutes.clay_continuum_of_chiForest` prove it from the open inputs, each a named proposition. On the
+`ClayRoutes.clay_continuum_of_chiForest` prove it from the open inputs, each a named proposition; for `SU(2)`
+and `SU(3)` `PairCorrSharp.clay_continuum_floor_su2` and `PairCorrSharp.clay_continuum_floor_su3` discharge the
+middle, leaving E, the non-zero vector, Y and the UV step. `ClayReduce.clay_continuum_of_pairLowerBound` and
+`ClayReduce.clay_continuum_of_boxPatchGap_pairLowerBound` prove it with `ClayReduce.PairLowerBound` in place of N
+and Y: a positive lower bound, eventually in the step, on the reflected two-point function of one cube-smeared
+connected field, which is all the proof reads of N and Y and which they give (`ClayReduce.pairLowerBound_of_af`).
+`ClayReduce.clay_continuum_floor_su2_rhoA` and `ClayReduce.clay_continuum_floor_su3_rhoA` are the floor capstones
+at the field-independent factor `ClayReduce.zA N = a⁻⁴` (`ClayReduce.rhoA_eq`), carrying E, the UV step and
+`PairLowerBound`; the short-distance form of Y is not among their inputs. On the
 finite-size route the box gives the IR gap at `β₀` at the explicit rate
 `HeatBathLocal.boxRate N β₀ n γ = min(boxKnabe n γ, 1)/(508 · aRun N β₀)` (`HeatBathLocal.irGapAt_boxRate`,
 `HeatBathLocal.boxRate_eq`), and the UV step is asked below that rate:
 
 | requirement | open input |
 |---|---|
-| E | `ContinuumSep.UniformBoundSep` at the connected renormalisation |
-| N | `ContinuumNontrivial.KernelConvergesSep` for a field `O` with limit `G` (the non-zero vector) |
-| Y | `ShortDistanceY.AFShortDistance G` |
-| M, the middle | `BoxPatch.BoxPatchGap` at one coupling `β₀` (`ClayRoutes.clay_continuum_of_boxPatchGap`; `HeatBathLocal.heatBathDecay_holds` proves the gap-to-decay step at every coupling). Localised form: `BoxGap.BoxFibreGap` at `β₀`, one box of links under every frozen boundary, with `γ > (40n − 36)/n²` (`BoxGap.boxPatchGap_of_fibreGap`) |
-| M, the UV step | `ClayRoutes.UVBelowIR` at `HeatBathLocal.boxRate N β₀ n γ`: `UVIRSplit.UVLossStep` from `βUV` on, `βUV` past the peak `17N²/(88π²)` of `aRun N`, with non-negative losses, the losses of the dyadic tower summing below `min(boxKnabe n γ, 1)/(508 · aRun N β₀)`. Entropy form: `UVEntropy.EntropyBelowIR` at `boxRate`, `(e^{−boxRate · aRun N β₀})^{m₀} + 4κE < 1`, with `UVEntropy.PeriodicObserverLaws`, `UVEntropy.ClassKappaUV`, `UVEntropy.ObsReadback` and `UVEntropy.UVEntropyBridge` (`UVEntropy.clay_continuum_of_boxPatchGap_entropy`) |
+| E | `ContinuumSep.UniformBoundSep` at the connected renormalisation. The proof reads it only on reflected pairs of separated positive-time monomials, where it reduces to the reflection-diagonal bound `ContinuumSep.DiagBoundSep` (`ContinuumSep.pairBoundSep_of_diagBoundSep`); `ClayReduce.clay_continuum_of_diagBoundSep` takes E as `ContinuumSep.DiagBoundSep`, concluding `ClayRoutes.ClayContinuumPair`, of which `ClayRoutes.ClayContinuum` is the `UniformBoundSep` instance (`ClayRoutes.clayContinuum_iff_pair`) |
+| N | `ContinuumNontrivial.KernelConvergesSep` for a field `O` with limit `G` (the non-zero vector); with Y it implies `ClayReduce.PairLowerBound` (`ClayReduce.pairLowerBound_of_af`), which is all the capstone reads |
+| Y | `ShortDistanceY.AFShortDistance G`; the `PairLowerBound` capstones do not assert it |
+| M, the middle | Proved for `SU(2)` and `SU(3)` at the floor `β₀ = 17N²/(88π²)`: `PairCorrSharp.boxPatchGap_floor_su2` (side `2606`, gap `307/10000`) and `PairCorrSharp.boxPatchGap_floor_su3` (side `545`, gap `367/2500`). Open for `SU(N ≥ 4)` and the other groups: `BoxPatch.BoxPatchGap` at one coupling `β₀` (`ClayRoutes.clay_continuum_of_boxPatchGap`; `HeatBathLocal.heatBathDecay_holds` proves the gap-to-decay step at every coupling). Localised form: `BoxGap.BoxFibreGap` at `β₀`, one box of links under every frozen boundary, with `γ > (40n − 36)/n²` (`BoxGap.boxPatchGap_of_fibreGap`) |
+| M, the UV step | `ClayRoutes.UVBelowIR` at `HeatBathLocal.boxRate N β₀ n γ`: the step clipped at that rate, `UVIRSplit.UVLossStepBelow` (asked only at rates `M ≤ M₀`, all `UVIRSplit.gapAt_eventually_of_uv_ir_below` consumes), from `βUV` on; it holds with zero losses when the lattice gap at the fixed rate `M₀` holds at every coupling from `βUV` on (`ClayRoutes.uvBelowIR_of_uniform_gap`, a sufficient condition). The heat-bath chain (`HeatBathLocal.boxRate`) cannot supply it: its lattice rate is linear in the heat-bath gap, which at weak coupling is of order `(m·a)²`, so the rate it delivers vanishes relative to `M₀ · aRun N β`; `βUV` past the peak `17N²/(88π²)` of `aRun N`, with non-negative losses, the losses of the dyadic tower summing below `min(boxKnabe n γ, 1)/(508 · aRun N β₀)`. Entropy form: `UVEntropy.EntropyBelowIR` at `boxRate`, `(e^{−boxRate · aRun N β₀})^{m₀} + 4κE < 1`, with `UVEntropy.PeriodicObserverLaws`, `UVEntropy.ClassKappaUV`, `UVEntropy.ObsReadback` and `UVEntropy.UVEntropyBridge` (`UVEntropy.clay_continuum_of_boxPatchGap_entropy`). Correlation-length form: `EdgeStep.EdgeStepAbove`, a block step that lengthens the physical correlation length by at most `δ(a)` with a finite budget; `EdgeStep.fixedWindowDecay_iff_edgeStep` proves it equivalent to `WeakCouplingWindow.FixedWindowDecay`, and `EdgeStep.uvBelowIR_of_edgeStep` gives `ClayRoutes.UVBelowIR` at the lowered rate `M₀/(1+2M₀E)` |
 | M, as one proposition | `WeakCouplingWindow.FixedWindowDecay` (equivalently `ZoomStep.LeftoverInvariant`, and `ConstantPhysics.MassDominates` under `ConstantPhysics.MovesComplement` at large `β`) |
 
 The χ² route replaces the M rows by `ChiForest.ChiForest`, `ClayRoutes.ClassKappa`, `ClayRoutes.LimitFactor` and
@@ -315,8 +323,21 @@ from it.
    `PairCorrLinear hN 120960 (1/5760)` through the two-link conditional expectation `PairCorr.twoCondExp`, two
    links sharing a plaquette correlating by at most `5760β` for `0 ≤ β ≤ 1/5760`, uniformly in the volume. So `BoxPatchGap` holds at
    `β₀ = 1/241920`, side `80`, gap `1/2` (`PairCorr.boxPatchGap_at`), and the finite-size route gives the IR gap
-   there (`PairCorr.irGapAt_small`). The capstone takes the UV step from past the peak `17N²/(88π²)` of
-   `aRun N` (about `0.078` at `N = 2`), so the box is still asked at a larger coupling.
+   there (`PairCorr.irGapAt_small`).
+   **The box at the floor, proved for `SU(2)` and `SU(3)`.** For two links with every other link frozen, the
+   fibre law is `exp(⟨X,TY⟩ + α·X + γ·Y)` against Haar in the unit features `X = U/√N`
+   (`PairWeight.wt_fibre_eq`), with `‖T‖ ≤ βn₂` and tilts `≤ β(12 − n₂)`, `n₂` the ordered plaquettes containing
+   both links (`PairCount`). Its correlation is at most `dstar` for every boundary
+   (`PairFibreAbstract.fibreBound_of_tiltBounds`), from tilted-Haar bounds (`TiltedHaar.tiltBounds_of_haarConsts`)
+   built on the exact Haar moments (`HaarMomentsSU2.haarConsts_su2`; `HaarMomentsSU3.haarConsts_su3`, with the
+   third moment `E tr(UA)³ = det A`). The refined defect matrix has sums `9693/10000` (`SU(2)`) and `2133/2500`
+   (`SU(3)`) at the floor, so `PairCorrSharp.boxPatchGap_floor_su2`, `PairCorrSharp.boxPatchGap_floor_su3`, and
+   the capstone with its middle discharged, `PairCorrSharp.clay_continuum_floor_su2`,
+   `PairCorrSharp.clay_continuum_floor_su3`. For `SU(N ≥ 4)` the defect sum reads `0.35–0.46` numerically; a
+   proof rests on a single-link variance bound under an external field, `sup Var Re tr(yM) ≤ (1+ε_N)/(2N)` for
+   fields of operator norm at most `6` at the floor coupling. At `N = 4` a ball-arithmetic branch-and-bound
+   certificate gives `ε_4 ≤ 0.175` against the threshold `0.182` (computer-assisted, not in Lean, and not yet in
+   the repository); `N = 5` and the `N ≥ 6` proof are open.
    **Heat-bath decay, proved.** `HeatBathLocal.heatBathLocality_holds` and
    `HeatBathLocal.heatBathDecay_holds`: at every coupling a volume-uniform heat-bath gap gives decay of the
    connected reflected pairings at the periodic state. The analytic core is a fixed-volume Poincaré

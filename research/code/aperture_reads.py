@@ -180,7 +180,9 @@ def lag_budget(O, blocks, nlag=12):
     # DERIVED: 2 lags is the arity of a decay RATE -- one lag is a value, not a slope.
     if last < 2:
         return last, float("nan"), float("nan"), C, sigma
-    rate = math.log(abs(C[1]) / abs(C[last])) / (last - 1)
+    # The mean lag-local rate over lags 1..last, the library's `effective_rates` (the walk above
+    # guarantees every one of those lags is positive, so none is NaN).
+    rate = float(np.mean(W.effective_rates(C[1:last + 1])))
     return last, rate, float(sigma[last]), C, sigma
 
 

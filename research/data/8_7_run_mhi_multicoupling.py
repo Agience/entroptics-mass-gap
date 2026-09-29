@@ -17,7 +17,6 @@ L^3 x L^3 covariance (peak ~L^6); L<=16 here is light (<1 GB).
 """
 from __future__ import annotations
 import glob, math, os, sys
-import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(_HERE, "..", "code")))
@@ -61,10 +60,7 @@ def main():
             if field is None:
                 continue
             n = field.shape[0]
-            D = delta(field)
-            nb = min(NBIN, n); bins = np.array_split(np.arange(n), nb)
-            jk = np.array([delta(field[np.setdiff1d(np.arange(n), b)]) for b in bins])
-            D_se = float(np.sqrt((nb - 1) / nb * np.sum((jk - jk.mean()) ** 2)))
+            D, D_se = W.jackknife(field, delta, n_bins=NBIN)      # delete-one-bin, the library's
             mhi = math.exp(-D)
             rows.append(dict(beta=round(beta, 2), L=L, dims=f"{L}x{L}x{L}x{2 * L}", nconfigs=n,
                              Delta=round(D, 6), Delta_err=round(D_se, 6),

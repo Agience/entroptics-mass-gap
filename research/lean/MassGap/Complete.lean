@@ -57,8 +57,10 @@ moves as the window widens relative to the substrate.
   out-of-Lean single-plaquette enclosure (`certify/small_volume_enclosure.py`).
 * `ym_reconstructed_gap` — `H = -log T` is self-adjoint, `H ≥ 0`, with `0` in its spectrum and
   `spectrum H ⊆ {0} ∪ [κ₀, ∞)`. Foundational axioms only.
-* `ym_mass_gap_grid_certified` — the alternative interior: a finite grid plus a measured modulus of
-  continuity, taking the two ends as hypotheses.
+* `ym_mass_gap_grid_certified` — the pinned model (extent `17`) with the strong end, the interior
+  and the weak end all taken as hypotheses on the tension. The grid-consuming form, stated on the
+  circle moment at extent `16` under the sharp ceiling, is `ym_mass_gap_grid_certified_sharp` in
+  `Interior`.
 
 `Otr_iso` (the `A2` isometry), `readYM_is_wilson` (the C-3 identification, by `rfl`),
 `wilson_reflection_positive_at_even`, `ym_finite_aperture`, `rArgYM_pos`, `ym_ratio_pos` and
@@ -83,14 +85,17 @@ open scoped Matrix
 identification is discharged by `rfl` (`readYM_is_wilson`). The read-side physical input is
 reflection positivity (Osterwalder–Seiler), the named axiom `wilson_reflection_positive_at`. -/
 
-/-- The correlation dimension of the entropy-matched read — the number of resolved lags, pinned to
-the read aperture `L = 16` (the SU(2) `L16` configurations the certificate reads,
-`certify/ym_crossover_confinement_of_grid.py`). Fixing it to a concrete value makes the
+/-- The aperture index of the pinned read: `Fin (nCorrYM + 1)` indexes lags `0 … 16`, so the pinned
+objects (`readYM`, `μYM`, `ymModel`) live on the periodic extent `nCorrYM + 1 = 17`. That is one site
+more than the spatial extent `16` of the `SU(2)` `L16` configurations the certificate reads
+(`certify/ym_crossover_confinement_of_grid.py`); the read at that extent is the `N = 15` instance
+(`d2At 15`, `ymModelAt 15`, `ym_mass_gap_grid_certified_sharp`). Fixing it to a concrete value makes the
 finite-aperture premise `ym_finite_aperture` a theorem discharged by `norm_num` rather than an
 axiom; that premise holds for every `N ≥ 9`. Independence of the conclusion from `L` is the separate
 `gap_uniform_in_volume_of_intensive`.
 
-CHOSEN: `16` is the read aperture the shipped ensembles carry (`L16`). Every theorem in this file is
+CHOSEN: `16` is the spatial extent the shipped ensembles carry (`L16`), used here as the aperture
+index, so the pinned extent is `17`. Every theorem in this file is
 stated at a variable aperture `N` (`wilsonCorrAt`, `readYMAt`, `μYMAt`, `d2At`, `ymModelAt`), and the
 pinned objects are the `nCorrYM` instance by `rfl` (`readYM_is_readYMAt`, `μYM_is_μYMAt`,
 `ymModel_is_ymModelAt`). The `2` and `9` above are a citation and a remark, not inputs. -/
@@ -492,6 +497,35 @@ theorem confinement_at_of_substrate_sharp {N : ℕ} {β : ℝ}
 
 #print axioms confinement_at_of_substrate_sharp
 
+/-- The sharp criterion stated on the moment itself, at one aperture and one coupling:
+
+    d2At N β ≤ B   and   B < substrateThreshold · (N+1)²   ⟹   μYMAt N β < κ₀YM
+
+This is the form a measured upper bound on the circle-distance moment at one coupling discharges.
+`d2At N β` is the moment of `readYMAt N β` about `Moment.circLag` on the periodic extent `N + 1`;
+`B` is any number above it (a measured upper bound, say); and the ceiling
+`substrateThreshold · (N+1)² = arccos(3^{−1/4})² (N+1)² / (2π)²` is `confinement_at_of_substrate_sharp`'s
+threshold with the aperture factor multiplied back in. At `N = 15`, the extent-`16` read, the ceiling
+is `arccos(3^{−1/4})² · 16² / (2π)² = 3.2480…`.
+
+No Taylor step enters: the condition is the sharp one, not the origin tangent
+`(2π/(N+1))² B / 2 < 1 − 3^{−1/4}` of `Moment.Read.tension_lt_floor_of_circ_moment`, which
+`taylor_le_substrateThreshold` shows is the stronger of the two.
+
+DERIVED: `((N : ℝ) + 1) ^ 2` is the periodic extent squared — the aperture factor `substrateRatio`
+divides out, from `Moment.Read.thetaMoment_eq`; the `1` is the lag arity's successor and the `2` the
+second moment's exponent. `B` is a variable. -/
+theorem confinement_at_of_d2_sharp {N : ℕ} {β B : ℝ}
+    (haperture : B < substrateThreshold * ((N : ℝ) + 1) ^ 2) (hd2 : d2At N β ≤ B) :
+    μYMAt N β < κ₀YM := by
+  apply confinement_at_of_substrate_sharp
+  have hN : (0 : ℝ) < ((N : ℝ) + 1) ^ 2 := by positivity
+  unfold substrateRatio
+  rw [div_lt_iff₀ hN]
+  linarith
+
+#print axioms confinement_at_of_d2_sharp
+
 /-- The origin-tangent threshold never exceeds the sharp one:
 
     2(1 − 3^{−1/4}) / (2π)²  ≤  substrateThreshold
@@ -711,9 +745,10 @@ theorem confinement_on_of_geometric_decay {C r : ℝ} {S : Set ℝ} (hC : 0 ≤ 
 Scope: the conclusion is `∀ᶠ N in atTop`, at all sufficiently large apertures, so it does not supply
 `ym_A1_of_grid`'s `hinterior`, which is `∀ β ∈ Icc βloYM bhi, μYM β < κ₀YM` at the single pinned
 aperture — `μYM_is_μYMAt` gives `μYM = μYMAt nCorrYM` by `rfl` with `nCorrYM = 16`, and an eventual
-statement does not deliver that one value. `hinterior` is supplied by
-`ym_crossover_confinement_of_grid`, from a Lipschitz constant, the aperture condition at `nCorrYM`,
-and a finite grid of measured moments.
+statement does not deliver that one value. `hinterior` is a bare hypothesis of `ym_A1_of_grid`;
+`ym_crossover_confinement_of_grid` concludes a statement of its shape from a Lipschitz constant, the
+origin-tangent condition at `nCorrYM` and a grid of raw-index moments at extent `17`, none of which
+the grid data measures.
 
 DERIVED: no numeral of its own. `1` is the contraction threshold `r` must sit below, which
 `Moment.circ_decay_of_lag_decay` requires; the `1` in `Fin (N + 1)` is the aperture's offset, since
@@ -1932,27 +1967,32 @@ The interior input is a bound on the correlation's lag second moment `⟨d²⟩ 
 correlation length: `⟨d²⟩(β) ≤ 1` uniformly for `β ≥ βcYM`. The `1/L²` aperture scaling is proved
 (`Moment.Read.tension_lt_floor_of_circ_moment`, reached from a raw-index bound by
 `circ_moment_le_lag_moment`): the θ-moment factors as `⟨θ²⟩ = (2π/(L+1))² ⟨d²⟩`, so the fixed bound
-`B = 1` puts `μ` under the floor at every large `L`, with margin ∝ L², and `1` sits `3.52×` under the
-aperture threshold `B₁₆ ≈ 3.52` (`ym_finite_aperture`). Measured, `⟨d²⟩` stays under `1` across the
-crossover (figures in PAPER §9), with the free-field weak-coupling limit `⟨d²⟩ → ~0.12`
-(`FreeField`). The bound is consistent with the provable `⟨d²⟩ ≥ 0` and holds on the whole half-line
-`β ≥ βcYM`. It is the spatial correlation moment, distinct from the energy susceptibility `χ_v`
+`B = 1` puts `μ` under the floor at every large `L`, with margin ∝ L², and `1` sits `3.5×` under the
+threshold `ym_finite_aperture` checks, `2(1 − 3^{−1/4})·17²/(2π)² ≈ 3.516` at `nCorrYM + 1 = 17` lags.
+Measured — the circle-distance moment of the `SU(2)` `L16` ensembles, not the raw-index moment
+above — it stays under `1` at the `13` grid couplings at nominal `99.9%` (figures in PAPER §9), with the free-field weak-coupling limit `⟨d²⟩ → ~0.12`
+(`FreeField`). The bound is consistent with the provable `⟨d²⟩ ≥ 0`; on the half-line `β ≥ βcYM` it
+is a hypothesis, not a measurement. It is the spatial correlation moment, distinct from the energy susceptibility `χ_v`
 (Shannon/specific-heat), the Rényi relation of PAPER §8.4.
 
 A flat `0 ≤ ⟨d²⟩ ≤ 1`, consistent with `pcorr_nonneg` and `sq_nonneg`, is what
-`tension_lt_floor_of_circ_moment` consumes through `circ_moment_le_lag_moment`; any `B < 3.52`, the
-aperture ceiling at `N = 16`, suffices, and `1` is the certified value (`99.9%`
-empirical-Bernstein). The closed-form envelope and its Lipschitz regularity come from the grid route
-`ym_crossover_confinement_of_grid`, a measured modulus of continuity. -/
+`tension_lt_floor_of_circ_moment` consumes through `circ_moment_le_lag_moment`; any `B < 3.516`, the
+origin-tangent ceiling at `N = 16` (periodic extent `17`), suffices there, and `1` is the nominal-`99.9%`
+empirical-Bernstein value (largest upper `0.867` on `data/9_1_dat_d2_certified.csv`, `0.936` on the grid
+route's `data/9_3_dat_crossover_grid.csv`; nominal because the configurations are treated as independent
+and the sample range stands in for an a-priori support width). The measured functional is the circle-distance moment on
+extent `16`, the functional of `d2At 15` (evaluated on the `SU(2)` ensembles, not on `wilsonCorrAt`); its ceiling is the sharp `arccos(3^{−1/4})²·16²/(2π)² = 3.2480…`
+(`confinement_at_of_d2_sharp`), and the grid route stated on it is
+`ym_crossover_confinement_of_grid_sharp`. -/
 
-/-- The finite-aperture premise, proved. With the certified bound `B = 1`, the aperture condition
+/-- The finite-aperture premise, proved. With the moment bound `B = 1`, the aperture condition
 `(2π/(N+1))² · B / 2 < 1 − 3^{-1/4}` is a numeric inequality about the aperture
 `N = nCorrYM = 16`, discharged by `norm_num` from `π < 3.15` (upper-bounding the `(2π/17)²` factor)
 and `3^{-1/4} ≤ 4/5` (from `(5/4)⁴ = 625/256 ≤ 3`, lower-bounding the floor gap by `1/5`):
 `(2π/17)²/2 ≈ 0.068 < 1/5 ≤ 1 − 3^{-1/4}`. The same inequality holds for every `N ≥ 9`. Independence
 of the conclusion from `L` is the separate `Certify.gap_uniform_in_volume_of_intensive`.
 
-DERIVED: `2 * Real.pi / (nCorrYM + 1)` is the aperture's own window, the `* 1` is the certified
+DERIVED: `2 * Real.pi / (nCorrYM + 1)` is the aperture's own window, the `* 1` is the
 moment bound `B = 1` carried explicitly, the division by `2` is the denominator of `1 − x²/2 ≤ cos x`,
 and `3 ^ (-(1 : ℝ) / 4)` is `e^{−κ₀}` at the floor `κ₀ = ¼log3`. -/
 theorem ym_finite_aperture :
@@ -1977,10 +2017,13 @@ theorem ym_finite_aperture :
   rw [hN]
   nlinarith [hpi, hpi0, h45, sq_nonneg Real.pi]
 
-/-- The circle moment is under the raw lag moment, so a bound read off the raw index — which is what
-the grid certificates measure — feeds the circle-moment route. The inequality is
-`min d (N+1−d) ≤ d` weighted by a probability vector, and it runs one way only. A raw bound is the
-stronger of the two, which is why `d2At` is stated about the circle.
+/-- The circle moment is under the raw lag moment, so a bound on the raw-index moment feeds the
+circle-moment route. The inequality is `min d (N+1−d) ≤ d` weighted by a probability vector, and it
+runs one way only. A raw bound is the stronger of the two, which is why `d2At` is stated about the
+circle. The grid certificates (`certify/ym_crossover_confinement_of_grid.py`, `d2_from_profiles`)
+compute the circle moment, not the raw one, so the Lean statement matching their functional is
+`confinement_at_of_d2_sharp` and this inequality is not on their path (the object they evaluate it
+on is listed in `ym_crossover_confinement_of_grid_sharp`).
 
 DERIVED: the exponent `2` on both sides is the second moment's own. -/
 theorem circ_moment_le_lag_moment {N : ℕ} (R : Moment.Read N) :
@@ -1994,14 +2037,21 @@ theorem circ_moment_le_lag_moment {N : ℕ} (R : Moment.Read N) :
 -- `ym_crossover_confinement_of_grid` is the deterministic-read alternative to the substrate route:
 -- a finite grid plus a measured modulus of continuity, with no bound asserted on the substrate.
 
-/-- A1's interior confinement from a finite grid certificate. On the compact interval `[a,b]`: if
-the whitened lag second moment `⟨d²⟩(β) = ∑_d pcorrYM β d · d²` is `L`-Lipschitz there (`hlip`, a
-measured modulus of continuity) and a `δ`-net certifies `⟨d²⟩ ≤ B - L·δ` (`hcover`, finitely many
-deterministic reads with the margin absorbed), then under the aperture condition
-`(2π/(nCorrYM+1))²·B/2 < 1 - 3^{-1/4}` the tension stays below the floor on all of `[a,b]`. The `∀β`
-content is a finite grid plus the Lipschitz constant `L` (`Certify.le_of_lipschitz_grid` and the
-proved aperture scaling), foundational axioms only. `L` is the measured input: a smoothness of the
-read between grid points, a spike in which would be a critical point.
+/-- A1's interior confinement from a finite grid certificate, at the pinned aperture
+`nCorrYM = 16`, i.e. on the periodic extent `nCorrYM + 1 = 17`. On the compact interval `[a,b]`: if
+the RAW-index lag second moment `∑_d pcorrYM β d · d²` (lags `d = 0 … 16` weighted by `d²`, not by
+the circle distance) is `L`-Lipschitz there (`hlip`) and a `δ`-net certifies it `≤ B - L·δ`
+(`hcover`), then under the ORIGIN-TANGENT aperture condition `(2π/(nCorrYM+1))²·B/2 < 1 - 3^{-1/4}`
+— which at extent `17` is `B < 3.5162…` — the pinned tension `μYM` stays below the floor on all of
+`[a,b]`. The proof bounds the circle moment by the raw one (`circ_moment_le_lag_moment`) and applies
+`Moment.Read.tension_lt_floor_of_circ_moment`.
+
+Scope against the data. The grid certificates measure the CIRCLE-distance moment on extent `16`
+(`certify/ym_crossover_confinement_of_grid.py`, `d2_from_profiles`), which is neither this raw
+moment nor this extent. The theorem whose hypotheses are stated on that functional, with the sharp
+ceiling `arccos(3^{−1/4})²·16²/(2π)² = 3.2480…`, is `ym_crossover_confinement_of_grid_sharp`
+(`Interior`). `#print axioms` reports the three foundational axioms and
+`wilson_reflection_positive_at` (through `readYM`).
 
 DERIVED: `0 ≤ L` is a sign condition; `2 * Real.pi / (nCorrYM + 1)`, the exponent `2`, the division
 by `2` and `3 ^ (-(1 : ℝ) / 4)` are the aperture condition's own, as in `ym_finite_aperture`; and the
@@ -2755,9 +2805,11 @@ theorem ym_reconstructed_gap {A : Type*} [CStarAlgebra A] [PartialOrder A] [Star
 
 /-- `A1_YM ymModel`, i.e. `∀ β, μYM β < κ₀YM`, by case analysis on three pieces supplied by the
 caller: the strong end `β < βloYM` (`hstrong`, reachable from `apriori_A1_strong` and a cited
-character bound), the compact interior `β ∈ [βloYM, bhi]` (`hinterior`, supplied by
-`ym_crossover_confinement_of_grid`), and the weak end `β ≥ bhi` (`hweak`, reachable from a cited
-asymptotic-freedom convergence). All three are hypotheses, so no axiom is added here. -/
+character bound), the compact interior `β ∈ [βloYM, bhi]` (`hinterior`), and the weak end
+`β ≥ bhi` (`hweak`, reachable from a cited asymptotic-freedom convergence). All three are bare
+hypotheses on the pinned tension `μYM = μYMAt nCorrYM` (extent `17`), so no axiom is added here and
+nothing here produces `hinterior`; `ym_crossover_confinement_of_grid` is one theorem whose conclusion
+has its shape. -/
 theorem ym_A1_of_grid {bhi : ℝ}
     (hstrong : ∀ β, β < βloYM → μYM β < κ₀YM)
     (hinterior : ∀ β ∈ Set.Icc βloYM bhi, μYM β < κ₀YM)
@@ -2771,13 +2823,16 @@ theorem ym_A1_of_grid {bhi : ℝ}
     · exact hinterior β ⟨h, h2⟩
     · exact hweak β (le_of_lt h2)
 
-/-- Gap, non-triviality and `SO(4)` for `ymModel` from the two ends (`hstrong`, `hweak`) and the
-interior (`hinterior`). No bound on the substrate is asserted: the interior
-`∀ β ∈ [βloYM, bhi], μYM β < κ₀YM` is supplied by `ym_crossover_confinement_of_grid`, a finite grid
-of deterministic `⟨d²⟩` reads plus a modulus-of-continuity bound `L`, backed by the dense-β data
-(`certify/ym_crossover_confinement_of_grid.py`), continuity being a finite-volume analyticity
-theorem. Where the substrate route takes a property of the correlation, this one takes a finite
-measured grid.
+/-- Gap, non-triviality and `SO(4)` for the pinned `ymModel` (aperture `nCorrYM = 16`, periodic
+extent `17`) from three bare hypotheses on its tension `μYM`: the strong end (`hstrong`), the
+interior `∀ β ∈ [βloYM, bhi], μYM β < κ₀YM` (`hinterior`) and the weak end (`hweak`). The statement
+takes the interior as a hypothesis and consumes no grid: `ym_crossover_confinement_of_grid` has a
+conclusion of `hinterior`'s shape, but it is stated on the raw-index moment at extent `17` with the
+origin-tangent ceiling, which the grid data (circle moment, extent `16`) does not measure.
+
+The capstone that consumes the grid, stated on the functional the data computes — the circle-distance
+moment `d2At 15` at extent `16`, under the sharp ceiling — is `ym_mass_gap_grid_certified_sharp`
+(`Interior`).
 
 DERIVED: `0` is the limit `nhds 0` the mode sum tends to and the sign in
 `ymModel.μ β - ymModel.κ < 0`. -/

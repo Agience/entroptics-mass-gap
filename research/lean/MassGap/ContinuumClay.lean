@@ -17,7 +17,9 @@ any transfer data, and `contD` names the reconstructed transfer data at a dyadic
 ## Scope
 
 The hypotheses are the open inputs of E, M, N and Y at the continuum level:
-`ContinuumSep.UniformBoundSep` (E, a uniform bound on separated families at a growing `Z`),
+`ContinuumSep.PairBoundSep` (E, a bound on the separated reflected pairs at a growing `Z`, implied by
+`ContinuumSep.UniformBoundSep` through `ContinuumSep.pairBoundSep_of_uniformBoundSep` and by
+`ContinuumSep.DiagBoundSep` through `ContinuumSep.pairBoundSep_of_diagBoundSep`),
 `WeakCouplingWindow.FixedWindowDecay` (M, the uniform physical gap), `ContinuumNontrivial.KernelConvergesSep`
 (the renormalised kernel of the field `O` converging to a radial `G` on separated points) and
 `ShortDistanceY.AFShortDistance G` (Y). Rotation invariance off the hypercubic group is
@@ -60,17 +62,19 @@ end Predicates
 variable {N : ℕ}
 
 /-- **The reconstructed continuum transfer data at dyadic step `m`**, at the connected renormalisation
-`Renorm.connected hN Z` with its reflection compatibility.
+`Renorm.connected hN Z` with its reflection compatibility. The witness `hB` enters only proof fields
+(`ContinuumSep.contTransferSep`), so any two witnesses give definitionally equal data.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
 def contD (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
     (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
-    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)) (m : ℕ) :
+    (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) (m : ℕ) :
     Transfer.TransferData (ContinuumSep.AmodSep N τ) :=
   ContinuumSep.contTransferSep hN (Renorm.connected hN Z) τ hB (Renorm.connected_reflCompat hN Z τ hZ) m
 
 /-- **The continuum gap on a non-trivial space.** At `2 ≤ N`, a reflection-invariant field-strength
-factor `Z`, the separated uniform bound at `Renorm.connected hN Z`, `FixedWindowDecay` at a window
+factor `Z`, the bound on separated reflected pairs `ContinuumSep.PairBoundSep` at
+`Renorm.connected hN Z`, `FixedWindowDecay` at a window
 `L > 0`, and a field `O` whose renormalised kernel converges to a radial `G` of asymptotic-freedom
 short-distance form: there is `c > 0` such that at every dyadic step `m` the reconstructed transfer
 data `contD` is `GappedAt` the rate `e^{−(c/L)·dySpacing N m}` — a physical gap of at least `c/L` — and
@@ -82,7 +86,7 @@ DERIVED: `2` is the least rank with a non-zero Haar variance
 lower end of `L` and `c`; `4` in `Fin 4` is the spacetime dimension. -/
 theorem continuum_gap_nontrivial (hN2 : 2 ≤ N) (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
     (τ : Fin 4) (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
-    (hB : ContinuumSep.UniformBoundSep hN (Renorm.connected hN Z)) {L : ℝ} (hL : 0 < L)
+    (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) {L : ℝ} (hL : 0 < L)
     (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L)
     (O : LField (MassGap.SUN.SU N)) (G : ℝ → ℝ)
     (hconv : ContinuumNontrivial.KernelConvergesSep hN (Renorm.connected hN Z) τ O
@@ -91,7 +95,7 @@ theorem continuum_gap_nontrivial (hN2 : 2 ≤ N) (hN : N ≠ 0) (Z : ℕ → LFi
     ∃ c : ℝ, 0 < c ∧ ∀ m : ℕ,
       GappedAt (contD hN Z τ hZ hB m) (Real.exp (-(c / L) * dySpacing N m))
         ∧ NontrivialVacuum (contD hN Z τ hZ hB m) := by
-  obtain ⟨c, hc, hgap⟩ := ContinuumSep.continuum_gap_sep hN2 hN (Renorm.connected hN Z) hB τ
+  obtain ⟨c, hc, hgap⟩ := ContinuumSep.continuum_gap_sep hN2 hN (Renorm.connected hN Z) τ hB
     (Renorm.connected_reflCompat hN Z τ hZ) hL hW
   exact ⟨c, hc, fun m =>
     ⟨hgap m, ContinuumNontrivial.exists_orth_ne_zero_of_af hN Z τ hZ hB m O G hconv hY⟩⟩

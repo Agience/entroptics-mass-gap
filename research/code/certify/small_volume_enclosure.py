@@ -84,6 +84,7 @@ def float_gap(lam, jmax=60):
     js = np.arange(0.0, jmax + 0.5, 0.5)
     d = js * (js + 1.0)
     off = np.full(len(js) - 1, -float(lam))
+    # NOT A READ: diagonalises the DEFINED single-plaquette Hamiltonian j(j+1) - lam*adjacency, the float cross-check on the exact-rational bracket above; no measured field enters
     w = np.linalg.eigvalsh(np.diag(d) + np.diag(off, 1) + np.diag(off, -1))
     return float(w[1] - w[0])
 

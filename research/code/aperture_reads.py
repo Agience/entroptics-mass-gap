@@ -214,12 +214,16 @@ def pencil_rate(O, order):
       * `rate` is `nan` unless the leading transfer eigenvalue lies in `(0, 1)`. A transfer operator
         cannot grow a correlation, so a value outside that range is not a rate at all -- a spectral
         fact, not a tolerance.
-      * `isolation` is infinite exactly when the pencil separates a single mode. Where it is finite
-        the modes crowd and the leading eigenvalue is a mixture; calibration found a 66% error in one
+      * `isolation` is infinite when the pencil has no positive second eigenvalue: it kept a single
+        direction of `H0`, or the second eigenvalue it kept is not positive. The library cuts `H0`
+        where the record's own noise shows, so a single kept direction can be one mode at the
+        resolution a noisy record has rather than a separated one. Where `isolation` is finite the
+        modes crowd and the leading eigenvalue is a mixture; calibration found a 66% error in one
         such case.
 
-    Calibrated in `certify/gap_of_maximal_correlation.test_pencil_planted`: on planted rates 0.30,
-    0.50 and 0.80 the usable orders land within 0.11-0.51 of their own reseeding spread, and order 4
+    Calibrated in `certify/gap_of_maximal_correlation.test_pencil_planted` against a pencil cut at
+    a fixed `rcond=1e-6`, not the noise-set cut this read uses: on planted rates 0.30, 0.50 and
+    0.80 the usable orders land within 0.11-0.51 of their own reseeding spread, and order 4
     invalidates itself rather than answering.
 
     DERIVED: `2*order + 1` lags is the pencil's ARITY, not a window. The order-`n` pencil is

@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it."
 title: "The Mass Gap of Pure SU(N) Gauge Theory as a Finite-Aperture Effect"
-abstract: "The paper reads the mass gap of pure SU(N) Yang-Mills as a finite-aperture effect: the vacuum is read through a finite aperture, which band-limits, and the gap is the entropy margin below the counting floor kappa_0 = (1/4) ln 3, counted from directed cube paths rather than fitted. Reflection positivity is proved rather than cited at even extent at least four and nonnegative coupling. The repository holds the paper, the Lean development, and the Entroptics analysis code."
+abstract: "The paper reads the mass gap of pure SU(N) Yang-Mills as a finite-aperture effect: the vacuum is read through a finite aperture, which band-limits, and the gap is the entropy margin below the counting floor kappa_0 = (1/4) ln 3, counted from directed cube paths with no fitted constant. Reflection positivity is proved at even extent at least four and nonnegative coupling, and cited outside that domain. The repository holds the paper, the Lean development, and the Entroptics analysis code."
 type: software
 authors:
   - given-names: Ikailo John
@@ -13,7 +13,7 @@ repository-code: "https://github.com/Agience/entroptics-mass-gap"
 url: "https://github.com/Agience/entroptics-mass-gap"
 license: Apache-2.0
 version: 0.2.2
-date-released: "2026-09-19"
+date-released: "2026-09-29"
 keywords:
   - Yang-Mills
   - mass gap
@@ -29,13 +29,17 @@ references:
       - given-names: Ikailo John
         family-names: Sessford
         affiliation: Ikailo Inc.
-    version: "0.2.5"
-    commit: "1d1d00bfdaed5e0e450357c8c3ba7f1bd1f479dc"
-    url: "https://github.com/Agience/entroptics/tree/1d1d00bfdaed5e0e450357c8c3ba7f1bd1f479dc"
+    version: "0.2.6"
+    commit: "cf9edee49a9cee80893769a9e4affde8e0a82aa7"
+    url: "https://github.com/Agience/entroptics/tree/cf9edee49a9cee80893769a9e4affde8e0a82aa7"
+    doi: "10.5281/zenodo.23045719"
     identifiers:
       - type: doi
+        value: "10.5281/zenodo.23045719"
+        description: "Entroptics v0.2.6 version DOI"
+      - type: doi
         value: "10.5281/zenodo.21273400"
-        description: "Entroptics concept DOI (all versions); it resolves to the newest release"
+        description: "Entroptics concept DOI (all versions)"
     repository-code: "https://github.com/Agience/entroptics"
     license: Apache-2.0
     date-released: "2026-09-29"

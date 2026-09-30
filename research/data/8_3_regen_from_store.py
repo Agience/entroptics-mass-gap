@@ -1,14 +1,17 @@
-"""8_3_regen_from_store.py -- regenerate the Sec 8.3 no-bump CSV and figure from the config
-store, deterministic, through the WRAPPER.
+"""8_3_regen_from_store.py -- regenerate the Sec 8.3 U(1) and SU(2) K_signal sweeps (CSV and
+figure) from the config store, deterministic, through the WRAPPER.
 
-Pins the confined-vacuum null (su2 b0.50), then reads confinement per config for the U(1) and
-SU(2) sweeps (L8, 8^3x16). U(1) steps up across beta_c ~ 1.01 (deconfinement); SU(2) stays
-flat and low (the no-bump). Writes 8_3_dat_nobump.csv and 8_3_fig_nobump.png here.
+Pins the confined-vacuum null (su2 b0.50) at the plane shape it reads (8x8, from L=8), then reads
+K_signal (the ``confinement`` column) per config for the compact-U(1) and SU(2) sweeps (L8,
+8^3x16). Each value is written with its same-marginal control: the same configurations read with
+every plane's values permuted within the plane (``confinement(..., shuffle=i)``, config i seeded
+by its index) against the same floor, and the per-configuration difference with its paired
+standard error. Writes 8_3_dat_nobump.csv and 8_3_fig_nobump.png here.
 
     CONFIGS=/path/to/entroptics-lattice python 8_3_regen_from_store.py
 (or set CONFIGS once for the machine in the git-ignored local config file at the repository root)
 
-SU(3) has a single beta (6.0) in the store, so its sweep figure is not regenerated here.
+The SU(3) 6^3x12 sweep is 8_3_regen_su3_from_store.py's.
 """
 from __future__ import annotations
 import glob, math, os, sys
@@ -33,7 +36,9 @@ ROOT = store_path.store_root(required=False)
 HOPS = store_path.collections("configs_paper83", "configs_phase1", "configs_links_su2_density")
 DAT = os.path.join(_HERE, "8_3_dat_nobump.csv")
 FIG = os.path.join(_HERE, "8_3_fig_nobump.png")
-COLS = ["group", "beta", "dims", "confinement", "confinement_err", "mu", "n"]
+COLS = ["group", "beta", "dims", "confinement", "confinement_err", "mu", "n",
+        "confinement_shuffled", "confinement_shuffled_err", "confinement_minus_shuffled",
+        "confinement_minus_shuffled_err"]
 BETA_C = 1.01       # U(1) deconfinement (sharp)
 BETA_X_SU2 = 2.2    # SU(2) bulk crossover (broad; NO deconfinement -- K stays flat through it)
 
@@ -50,15 +55,14 @@ def load(group, L, beta, ncap=128):
 
 
 def pin():
-    ref = []
-    for L in (8, 12, 16):
-        a = load("su2", L, 0.50, ncap=48)
-        if a is not None:
-            ref += list(a)
-    if not ref:
-        raise SystemExit(f"no su2 b0.50 reference under {ROOT or '<no store configured>'}\n"
+    """Pin the su2 b0.50 confined vacuum at the one plane shape these sweeps read (8x8, from L=8).
+    The pin is calibrated per plane shape, so a reference at another L would calibrate a shape
+    these sweeps never read."""
+    ref = load("su2", 8, 0.50, ncap=48)
+    if ref is None:
+        raise SystemExit(f"no su2 L8 b0.50 reference under {ROOT or '<no store configured>'}\n"
                          f"{store_path.hint()}")
-    W.pin_reference(ref)
+    W.pin_reference(list(ref))
     return len(ref)
 
 
@@ -68,21 +72,31 @@ def sweep(group, L, betas):
         arr = load(group, L, beta)
         if arr is None:
             continue
-        ks = np.array([float(W.confinement(arr[i], -1)) for i in range(arr.shape[0])], float)
+        n = arr.shape[0]
+        ks = np.array([float(W.confinement(arr[i], -1)) for i in range(n)], float)
+        sh = np.array([float(W.confinement(arr[i], -1, shuffle=i)) for i in range(n)], float)
+        d = ks - sh                                   # paired per configuration
+        se = lambda v: round(float(v.std() / np.sqrt(n)), 4)   # the estimator confinement_err uses
         r = W.run(list(arr), time_axis=-1)
         rows.append(dict(group=group, beta=round(beta, 2), dims=f"{L}x{L}x{L}x16",
-                         confinement=round(float(ks.mean()), 4),
-                         confinement_err=round(float(ks.std() / np.sqrt(len(ks))), 4),
-                         mu=round(float(r.attenuation), 4), n=int(arr.shape[0])))
+                         confinement=round(float(ks.mean()), 4), confinement_err=se(ks),
+                         mu=round(float(r.attenuation), 4), n=int(n),
+                         confinement_shuffled=round(float(sh.mean()), 4),
+                         confinement_shuffled_err=se(sh),
+                         confinement_minus_shuffled=round(float(d.mean()), 4),
+                         confinement_minus_shuffled_err=se(d)))
     return rows
 
 
 def main():
     n = pin()
-    print(f"pinned confined-vacuum null: {n} su2 b0.50 configs")
+    print(f"pinned confined-vacuum null: {n} su2 L8 b0.50 configs, plane shapes {W.pinned_shapes()}")
     rows = sweep("u1", 8, U1) + sweep("su2", 8, SU2)
     for r in rows:
-        print(f"  {r['group']:>3} b{r['beta']:5.2f}  confinement={r['confinement']:.3f} +/- {r['confinement_err']:.3f}  n={r['n']}")
+        print(f"  {r['group']:>3} b{r['beta']:5.2f}  confinement={r['confinement']:.4f} +/- "
+              f"{r['confinement_err']:.4f}  shuffled={r['confinement_shuffled']:.4f}  "
+              f"real-shuffled={r['confinement_minus_shuffled']:+.4f} +/- "
+              f"{r['confinement_minus_shuffled_err']:.4f}  n={r['n']}")
     # Refuse BEFORE writing. These read the frozen store and simply skip any coupling
     # they cannot find, so a store that is incomplete (or pointed at the wrong root)
     # produced a HEADER-only csv over the committed artifact and still exited 0 --
@@ -95,20 +109,34 @@ def main():
 
     table.write(DAT, rows, COLS)
 
-    fig, ax = plt.subplots(figsize=(6.4, 4.2))
-    ax.axvline(BETA_C, color="#888", ls="--", lw=1, label=r"U(1) $\beta_c\approx1.01$ (deconfinement)")
-    ax.axvline(BETA_X_SU2, color="#1f4e8c", ls=":", lw=1.2, alpha=0.7,
-               label=r"SU(2) bulk crossover $\approx2.2$ (no deconfinement)")
-    for group, color, label in (("u1", "#b03030", "compact U(1) (foil): deconfines"),
-                                ("su2", "#1f4e8c", "SU(2): stays confined (no-bump)")):
+    fig, (ax, axd) = plt.subplots(1, 2, figsize=(12.0, 4.4))
+    for a in (ax, axd):
+        a.axvline(BETA_C, color="#888", ls="--", lw=1,
+                  label=r"compact U(1) $\beta_c\approx1.01$ (literature)")
+        a.axvline(BETA_X_SU2, color="#1f4e8c", ls=":", lw=1.2, alpha=0.7,
+                  label=r"SU(2) bulk crossover $\approx2.2$ (literature)")
+    for group, color, name in (("u1", "#b03030", "compact U(1)"), ("su2", "#1f4e8c", "SU(2)")):
         g = [r for r in rows if r["group"] == group]
-        ax.errorbar([r["beta"] for r in g], [r["confinement"] for r in g],
-                    yerr=[r["confinement_err"] for r in g], marker="o", color=color, lw=1.8,
-                    capsize=3, label=label)
+        b = [r["beta"] for r in g]
+        ax.errorbar(b, [r["confinement"] for r in g], yerr=[r["confinement_err"] for r in g],
+                    marker="o", color=color, lw=1.8, capsize=3, label=f"{name}: $K_{{\\mathrm{{signal}}}}$")
+        ax.errorbar(b, [r["confinement_shuffled"] for r in g],
+                    yerr=[r["confinement_shuffled_err"] for r in g], marker="o", mfc="none",
+                    ls="--", color=color, lw=1.2, capsize=2, label=f"{name}: within-plane shuffled")
+        axd.errorbar(b, [r["confinement_minus_shuffled"] for r in g],
+                     yerr=[r["confinement_minus_shuffled_err"] for r in g], marker="o", color=color,
+                     lw=1.8, capsize=3, label=f"{name}: real $-$ shuffled (paired)")
+    axd.axhline(0.0, color="#444", lw=0.8)
     ax.set_xlabel(r"$\beta$")
-    ax.set_ylabel(r"confinement  $K_{\mathrm{signal}}$")
-    ax.set_title(r"Sec 8.3: the no-bump -- U(1) deconfines, SU(2) stays confined")
-    ax.legend(loc="best", fontsize=8)
+    ax.set_ylabel(r"$K_{\mathrm{signal}}$ (plane mean)")
+    ax.set_title(r"$K_{\mathrm{signal}}$ vs $\beta$, $8^3\times16$, 8$\times$8 planes, su2 $\beta$=0.50 floor",
+                 fontsize=10)
+    ax.legend(loc="best", fontsize=7)
+    axd.set_xlabel(r"$\beta$")
+    axd.set_ylabel(r"$K_{\mathrm{signal}} - K_{\mathrm{signal}}^{\mathrm{shuffled}}$")
+    axd.set_title(r"$K_{\mathrm{signal}}$ minus its within-plane-shuffled read (same configurations)",
+                  fontsize=10)
+    axd.legend(loc="best", fontsize=7)
     fig.tight_layout()
     fig.savefig(FIG, dpi=150)
     plt.close(fig)

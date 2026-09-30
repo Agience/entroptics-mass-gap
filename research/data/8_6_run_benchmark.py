@@ -17,15 +17,18 @@ the established value it is measured against:
      constant against a cited one and could not test anything. The framework's own gap statement is
      Delta >= kappa_0 - mu, kappa_0 = (1/4)ln3 from the counting floor and mu read from the
      configuration; it needs no bore.)
-  B  U(1) DECONFINEMENT (read vs established beta_c).  K_signal(beta) on 8^3x16 rises through the
-     established compact-U(1) Wilson-action transition beta_c ~ 1.011 (lattice).
-  C  N-INVARIANT NO-BUMP (Entroptics discrimination, matching the established picture).  SU(2) and
-     SU(3) K_signal stay flat at every coupling (no deconfinement) while the U(1) foil rises: the
-     established fact is that pure SU(N) confines at all beta and compact U(1) deconfines (Greensite
-     2003). All three curves are Entroptics reads; the cited content is the confinement fact.
+  B  compact-U(1) K_signal(beta) on 8^3x16 (8x8 planes, su2 b0.50 floor pinned at 8x8), with its
+     within-plane-shuffled control on the same configurations, beside the literature Wilson-action
+     transition beta_c ~ 1.011.
+  C  K_signal minus its within-plane-shuffled read (paired per configuration) for compact U(1) and
+     SU(2) on 8^3x16, beside the literature confinement picture (pure SU(N) confines at every
+     coupling, compact U(1) deconfines; Greensite 2003). The shuffle keeps each plane's one-point
+     marginal and removes its arrangement, so this panel is the part of K_signal carried by spatial
+     arrangement. SU(3) is not drawn: its planes are 6x6 and the store holds no confined-vacuum
+     reference at that shape (see 8_3_regen_su3_from_store.py).
 
-Loads the regenerated Sec 8.3 CSVs (gauge K_signal), the cited glueball values, and generates the
-free-scalar calibration itself.
+Loads the regenerated Sec 8.3 CSV 8_3_dat_nobump.csv and the free-scalar calibration artifact
+8_5_dat_gap_calibration.csv; it computes no read itself.
 
     python 8_6_run_benchmark.py
 """
@@ -105,8 +108,9 @@ def main():
         return
 
     fs = free_scalar_gap()
-    nb = _load("8_3_dat_nobump.csv", ["beta", "confinement", "confinement_err"])
-    su3 = _load("8_3_dat_su3_nobump.csv", ["beta", "confinement", "confinement_err"])
+    nb = _load("8_3_dat_nobump.csv", ["beta", "confinement", "confinement_err",
+                                      "confinement_shuffled", "confinement_shuffled_err",
+                                      "confinement_minus_shuffled", "confinement_minus_shuffled_err"])
 
     fig, (aA, aC, aD) = plt.subplots(1, 3, figsize=(17.0, 5.0))
     ENT, EST = "#1f4e8c", "#7a3a8a"     # Entroptics blue, Established purple
@@ -127,46 +131,42 @@ def main():
     aA.set_title(r"A  free-scalar gap: read vs exact $E_0$  ($8^2\times64$)")
     aA.legend(fontsize=9, loc="upper left")
 
-    # -- C: U(1) deconfinement, Entroptics read vs established beta_c --------------------
+    # -- B: compact-U(1) K_signal and its within-plane-shuffled control, beside beta_c ---------
     if "u1" in nb:
         u = nb["u1"]
-        aC.axvspan(float(u["beta"].min()) - 0.05, BETA_C, color="#eef3fb", zorder=0)
         aC.errorbar(u["beta"], u["confinement"], yerr=u["confinement_err"], marker="o",
-                    color="#b03030", lw=1.8, capsize=3, label=r"Entroptics: U(1) $K_{\mathrm{signal}}(\beta)$")
+                    color="#b03030", lw=1.8, capsize=3, label=r"U(1) $K_{\mathrm{signal}}$")
+        aC.errorbar(u["beta"], u["confinement_shuffled"], yerr=u["confinement_shuffled_err"],
+                    marker="o", mfc="none", ls="--", color="#b03030", lw=1.2, capsize=2,
+                    label=r"U(1) $K_{\mathrm{signal}}$, within-plane shuffled")
         aC.axvline(BETA_C, color="#555", ls="--", lw=1.3,
-                   label=rf"Established: $\beta_c\approx{BETA_C:.3f}$ (lattice)")
-        aC.legend(fontsize=9, loc="upper left")
-    aC.set_xlabel(r"$\beta$"); aC.set_ylabel(r"$K_{\mathrm{signal}}$")
-    aC.set_title(r"B  U(1) deconfinement: read locates $\beta_c$  ($8^3\times16$)")
+                   label=rf"literature: $\beta_c\approx{BETA_C:.3f}$")
+        aC.legend(fontsize=9, loc="best")
+    aC.set_xlabel(r"$\beta$"); aC.set_ylabel(r"$K_{\mathrm{signal}}$ (plane mean)")
+    aC.set_title(r"B  compact U(1) $K_{\mathrm{signal}}$ and shuffled control ($8^3\times16$, 8$\times$8 planes)",
+                 fontsize=10)
 
-    # -- D: N-invariant no-bump. SU(N) flat (confined) vs the U(1) foil, ALL Entroptics reads ---
-    if "u1" in nb:
-        u = nb["u1"]
-        aD.errorbar(u["beta"], u["confinement"], yerr=u["confinement_err"], marker="s", ms=4,
-                    color="#b03030", lw=1.3, alpha=0.75, capsize=2,
-                    label=r"Entroptics: U(1) foil ($8^3\times16$, deconfines)")
-    if "su2" in nb:
-        s = nb["su2"]
-        aD.errorbar(s["beta"], s["confinement"], yerr=s["confinement_err"], marker="o",
-                    color=ENT, lw=1.8, capsize=3, label=r"Entroptics: SU(2) ($8^3\times16$, flat)")
-    if "su3" in su3:
-        s = su3["su3"]
-        aD.errorbar(s["beta"], s["confinement"], yerr=s["confinement_err"], marker="^",
-                    color="#2e7d32", lw=1.8, capsize=3, label=r"Entroptics: SU(3) ($6^3\times12$, flat)")
-    # each theory's transition/crossover on its own coupling scale: U(1) deconfines (sharp), SU(N) crossover (no bump)
-    aD.axvline(BETA_C, color="#888", ls="--", lw=1.1, alpha=0.7)
-    aD.axvline(2.2, color=ENT, ls=":", lw=1.1, alpha=0.7)
-    aD.axvline(5.7, color="#2e7d32", ls=":", lw=1.1, alpha=0.7)
-    aD.text(BETA_C, 0.37, r"U(1) $\beta_c$", color="#666", fontsize=7, ha="center")
-    aD.text(2.2, 0.37, r"SU(2) $\times$", color=ENT, fontsize=7, ha="center")
-    aD.text(5.7, 0.37, r"SU(3) $\times$", color="#2e7d32", fontsize=7, ha="center")
-    aD.set_ylim(0.0, 0.40)
-    aD.set_xlabel(r"$\beta$"); aD.set_ylabel(r"$K_{\mathrm{signal}}$")
-    aD.set_title(r"C  no-bump: SU(N) flat vs the deconfining U(1) foil")
-    aD.legend(fontsize=8.5, loc="upper right")
+    # -- C: K_signal minus its shuffled read, compact U(1) and SU(2) ---------------------------
+    for g, color, marker, name in (("u1", "#b03030", "s", "compact U(1)"),
+                                   ("su2", ENT, "o", "SU(2)")):
+        if g in nb:
+            s = nb[g]
+            aD.errorbar(s["beta"], s["confinement_minus_shuffled"],
+                        yerr=s["confinement_minus_shuffled_err"], marker=marker, color=color,
+                        lw=1.6, capsize=3, label=rf"{name} ($8^3\times16$)")
+    aD.axhline(0.0, color="#444", lw=0.8)
+    aD.axvline(BETA_C, color="#888", ls="--", lw=1.1, alpha=0.7,
+               label=r"literature: U(1) $\beta_c$")
+    aD.axvline(2.2, color=ENT, ls=":", lw=1.1, alpha=0.7,
+               label=r"literature: SU(2) bulk crossover $\approx2.2$")
+    aD.set_xlabel(r"$\beta$")
+    aD.set_ylabel(r"$K_{\mathrm{signal}} - K_{\mathrm{signal}}^{\mathrm{shuffled}}$ (paired)")
+    aD.set_title(r"C  $K_{\mathrm{signal}}$ minus within-plane-shuffled read, U(1) and SU(2)",
+                 fontsize=10)
+    aD.legend(fontsize=8.5, loc="best")
 
-    fig.suptitle("Deterministic Entroptics reads against the established lattice picture "
-                 "(one bounded read per configuration, no fit)", fontsize=12.5, y=0.995)
+    fig.suptitle("Entroptics reads beside literature values: free-scalar gap (A); K_signal and its "
+                 "same-marginal control on $8^3\\times16$ (B, C)", fontsize=12.5, y=0.995)
     # sources footnote (cited ON the figure)
     src = ("Sources:  "
            f"B  {BETA_C_SRC}.   "
@@ -185,10 +185,12 @@ def main():
             # panel reads the artifact rather than recomputing it.
             w.writerow(["A", f"free-scalar gap m={mi}", f"{rdi:.4f}", f"{e0i:.4f}", f"{spi:.4f}",
                         "exact E0=arccosh(1+m^2/2)"])
-        w.writerow(["B", "U(1) transition beta_c", "K_signal rise through beta_c",
+        w.writerow(["B", "U(1) transition beta_c",
+                    "K_signal(beta) and within-plane-shuffled control, 8x8 planes (8_3_dat_nobump.csv)",
                     f"{BETA_C}", "-", BETA_C_SRC])
-        w.writerow(["C", "SU(N) confinement (no-bump)", "K_signal flat at all beta",
-                    "confined at all beta", "-", CONFINE_SRC])
+        w.writerow(["C", "U(1) and SU(2) K_signal minus shuffled",
+                    "paired difference per coupling, 8x8 planes (8_3_dat_nobump.csv)",
+                    "SU(N) confined at all beta; U(1) deconfines above beta_c", "-", CONFINE_SRC])
     print(f"wrote {FIG}\nwrote {DAT}")
 
 

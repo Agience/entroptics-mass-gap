@@ -1,12 +1,14 @@
 """
-8_3_run_su3_nobump.py -- N-invariance: SU(3) also stays confined (no-bump).
+8_3_run_su3_nobump.py -- SU(3) K_signal across beta 5.0-7.0 on FRESH Monte-Carlo configurations
+(an exploratory path; 8_3_regen_su3_from_store.py is the store-reading sweep).
 
-SU(3) confines at every beta, with a bulk crossover near beta ~ 5.7 but NO
-deconfinement. Across its range (beta 5.0-7.0) the confinement order parameter
-(K_signal, the entroptics resolved-mode read on raw configs) stays flat and
-bounded -- the same no-bump SU(2) shows across 1-5. Together (with the U(1) foil
-that crosses) this is the N-invariance leg: SU(2) and SU(3) give the same untuned
-picture.
+K_signal (the entroptics resolved-mode read on raw configs) is read at each coupling with its
+same-marginal control: the same configurations with every plane's values permuted within the plane
+(config i seeded by its index), and the paired difference.
+
+K_signal needs a reference null pinned at the plane shape it reads, and this script pins none: run
+as it stands, the first read raises. Pin a confined reference at the lattice's plane shape
+(entroptics_adapter.pin_reference) before calling main().
 
 Reads through the single typed wrapper on RAW configs. Writes 8_3_dat_su3_nobump.csv
 and 8_3_fig_su3_nobump.png here.
@@ -32,7 +34,9 @@ import plot
 
 DAT = os.path.join(_HERE, "8_3_dat_su3_nobump.csv")
 FIG = os.path.join(_HERE, "8_3_fig_su3_nobump.png")
-COLS = ["group", "beta", "dims", "confinement", "confinement_err", "n"]
+COLS = ["group", "beta", "dims", "confinement", "confinement_err", "n",
+        "confinement_shuffled", "confinement_shuffled_err", "confinement_minus_shuffled",
+        "confinement_minus_shuffled_err"]
 
 
 def measure(beta, dims, *, seed, therm, gap, n, device=None):
@@ -43,9 +47,14 @@ def measure(beta, dims, *, seed, therm, gap, n, device=None):
     else:
         cfgs = list(generator.stream(dims, beta, group="su3", seed=seed, therm=therm, gap=gap, n=n))
     ks = np.array([entroptics.confinement(c) for c in cfgs], float)
+    # the same-marginal control: every plane's values permuted within the plane, config i seeded i
+    sh = np.array([entroptics.confinement(c, shuffle=i) for i, c in enumerate(cfgs)], float)
+    d = ks - sh                                           # paired per configuration
+    se = lambda v: float(v.std() / np.sqrt(len(v)))       # the estimator confinement_err uses
     return dict(group="su3", beta=round(beta, 2), dims="x".join(map(str, dims)),
-                confinement=float(ks.mean()),
-                confinement_err=float(ks.std() / np.sqrt(len(ks))), n=len(cfgs))
+                confinement=float(ks.mean()), confinement_err=se(ks), n=len(cfgs),
+                confinement_shuffled=float(sh.mean()), confinement_shuffled_err=se(sh),
+                confinement_minus_shuffled=float(d.mean()), confinement_minus_shuffled_err=se(d))
 
 
 def main():
@@ -80,9 +89,9 @@ def main():
     table.write(DAT, rows, COLS)
     plot.line(FIG, [r["beta"] for r in rows],
               [{"y": [r["confinement"] for r in rows], "yerr": [r["confinement_err"] for r in rows],
-                "label": r"SU(3) confinement $K_{\mathrm{signal}}$", "color": "#2e7d32"}],
-              xlabel=r"$\beta$", ylabel=r"confinement  $K_{\mathrm{signal}}$",
-              title=r"Sec 8.3: SU(3) no-bump -- stays confined across the crossover (N-invariance)")
+                "label": r"SU(3) $K_{\mathrm{signal}}$", "color": "#2e7d32"}],
+              xlabel=r"$\beta$", ylabel=r"$K_{\mathrm{signal}}$ (plane mean)",
+              title=r"SU(3) $K_{\mathrm{signal}}$ vs $\beta$, " + "x".join(map(str, dims)))
     print("wrote", DAT, "and", FIG)
 
 

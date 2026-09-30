@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/entroptics?logo=pypi&logoColor=white&label=entroptics)](https://pypi.org/project/entroptics/)
 [![Verified](https://img.shields.io/badge/verified-Lean%204%20%2F%20Mathlib-4B0082)](research/lean)
-[![Paper](https://img.shields.io/badge/paper-Markdown-b31b1b)](research/PAPER.md)
+[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](research/PAPER.pdf)
 [![DOI](https://zenodo.org/badge/1342269699.svg)](https://zenodo.org/badge/latestdoi/1342269699)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Agience-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Agience)
 
@@ -79,8 +79,8 @@ bilinear Schwinger form on a normed test space, with a reflection and an $\mathb
 action — to `WightmanQFTData`.
 
 **What the build carries.** Two named axioms beyond Lean's three foundational ones, counted by machine
-([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 5661 printed declarations,
-5467 of them foundational-only):
+([`13_dat_axiom_footprints.csv`](research/data/13_dat_axiom_footprints.csv): 5678 printed declarations,
+5484 of them foundational-only):
 
 | named axiom | declarations carrying it | status |
 |---|---|---|
@@ -88,7 +88,7 @@ action — to `WightmanQFTData`.
 | `os_reconstruction_wightman` | 11 | cited (Osterwalder–Schrader reconstruction), from `OSData` to `WightmanQFTData` |
 
 The periodic-state chain above — the state, the transfer, the one-lag reduction and the Clay lattice gap —
-carries the three foundational axioms only. The paper ([`research/PAPER.md`](research/PAPER.md)) develops
+carries the three foundational axioms only. The paper ([`research/PAPER.pdf`](research/PAPER.pdf); also [HTML](research/PAPER.html) and [Markdown source](research/PAPER.md)) develops
 the reading and the method; the reads run through the Entroptics reader (`research/code/`); the Lean 4 /
 Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
@@ -96,7 +96,7 @@ Mathlib development (`research/lean/`) is the verification — `sorry`-free.
 
 | path | what |
 |---|---|
-| [`research/PAPER.md`](research/PAPER.md) | the paper |
+| [`research/PAPER.pdf`](research/PAPER.pdf), [`PAPER.html`](research/PAPER.html) | the paper, built from [`PAPER.md`](research/PAPER.md) |
 | [`research/lean/`](research/lean) | the Lean 4 / Mathlib development (`MassGap.*`), `sorry`-free |
 | [`research/data/`](research/data) | analysis and figure scripts that read the frozen ensembles, and `regen_all.py`, which drives them |
 | [`research/code/`](research/code) | the Entroptics wrapper + certification code |

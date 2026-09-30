@@ -103,15 +103,18 @@ def test_no_script_cites_a_file_that_does_not_exist():
     # The ensemble store is a second real tree, and prose here cites tools that live in it --
     # `make_manifest.py` rebuilds the manifest FROM the store root, by discovery, so it belongs
     # beside the data rather than beside the code that reads it. Its top-level names count as
-    # resolving. When no store is configured the set is empty and this adds nothing, which is
-    # correct: a clone without the store cannot check a reference into it either way.
-    try:
-        import store_path
-        sr = store_path.store_root(required=False)
-        if sr and os.path.isdir(sr):
-            have |= {e.name for e in os.scandir(sr) if e.is_file()}
-    except Exception:
-        pass
+    # resolving. A clone without the store (CI) still resolves the tools the data release ships at
+    # its root: they are named here, and wherever a store IS configured each of them must exist at
+    # its root, so the list stays true to the release.
+    release_root_tools = {"make_manifest.py", "read_example.py"}
+    have |= release_root_tools
+    import store_path
+    sr = store_path.store_root(required=False)
+    if sr and os.path.isdir(sr):
+        at_root = {e.name for e in os.scandir(sr) if e.is_file()}
+        missing = release_root_tools - at_root
+        assert not missing, f"release root {sr} lacks {sorted(missing)}, which this test treats as shipped"
+        have |= at_root
     pat = re.compile(r"[`\s(]([A-Za-z0-9_./]+\.(?:py|csv|png|lean|md|txt))")
     unresolved = {}
     # A name a program declares in code -- its own output path -- is not a dead reference, even
@@ -287,17 +290,15 @@ def test_no_function_is_implemented_twice():
         "remove the entry so the list keeps meaning something")
 
 
-def test_committed_pdf_is_not_older_than_the_paper():
-    """PAPER.pdf was rebuilt in the last commit that changed PAPER.md.
+def test_committed_builds_are_not_older_than_the_paper():
+    """PAPER.pdf and PAPER.html were rebuilt in the last commit that changed PAPER.md.
 
-    The PDF is the form the paper is read in, so a correction that lands in the markdown and not in
-    the PDF leaves the stale text in circulation. A correction to Sec 13's
-    statement that the empirical-Bernstein uppers clear the aperture threshold "threefold" -- the
-    factor belongs to the pinned proof bound, not the uppers -- and the committed PDF, last rebuilt
-    in `315400a`, still carries the old wording.
+    The PDF and the HTML are the forms the paper is read in, so a change that lands in the markdown and
+    not in a built form leaves stale text in circulation.
 
     Compares committed state only, so work in progress does not trip it: it goes red when a commit
-    changes the paper and leaves the PDF behind, and green again when the PDF is rebuilt.
+    changes the paper and leaves a built form behind, and green again when that form is rebuilt. A
+    built form that is not tracked in HEAD is skipped.
     """
     import subprocess
 
@@ -309,10 +310,8 @@ def test_committed_pdf_is_not_older_than_the_paper():
     def is_tracked(path):
         """Present in HEAD right now -- NOT merely mentioned somewhere in history.
 
-        `git log -- <path>` answers for a DELETED file too: it returns the commit that removed it.
-        So testing `last_commit(...)` for emptiness does not detect a file that is gone, and this
-        guard spent its time comparing a deletion commit against the paper's and reporting a file
-        that does not exist as a stale one. `research/PAPER.pdf` is not tracked (removed in `200ddd0`).
+        `git log -- <path>` answers for a DELETED file too: it returns the commit that removed it, so
+        an empty `last_commit(...)` does not detect a file that is gone. `git cat-file -e` does.
         """
         r = subprocess.run(["git", "cat-file", "-e", f"HEAD:{path}"], cwd=REPO,
                            capture_output=True, text=True)
@@ -321,24 +320,27 @@ def test_committed_pdf_is_not_older_than_the_paper():
         # be to parse stderr, which is less stable than the exit status.
         return r.returncode == 0
 
-    if not is_tracked("research/PAPER.pdf") or not is_tracked("research/PAPER.md"):
-        pytest.skip("PAPER.md or PAPER.pdf is not tracked in HEAD")
-
-    md, pdf = last_commit("research/PAPER.md"), last_commit("research/PAPER.pdf")
-    if not md or not pdf:
-        pytest.skip("PAPER.md or PAPER.pdf has no commit history")
-    if md == pdf:
-        return                                        # rebuilt in the same commit
-
-    # is the PDF's commit an ancestor of the paper's? then the paper moved afterwards
-    r = subprocess.run(["git", "merge-base", "--is-ancestor", pdf, md], cwd=REPO)
-    stale = r.returncode == 0
+    if not is_tracked("research/PAPER.md"):
+        pytest.skip("PAPER.md is not tracked in HEAD")
+    md = last_commit("research/PAPER.md")
+    built = [f for f in ("research/PAPER.pdf", "research/PAPER.html") if is_tracked(f)]
+    if not md or not built:
+        pytest.skip("no built form of the paper is tracked in HEAD")
     subj = subprocess.run(["git", "log", "-1", "--format=%h %s", md], cwd=REPO,
                           capture_output=True, text=True).stdout.strip()
+    stale = []
+    for f in built:
+        c = last_commit(f)
+        if c == md:
+            continue                                  # rebuilt in the same commit
+        # is the build's commit an ancestor of the paper's? then the paper moved afterwards
+        r = subprocess.run(["git", "merge-base", "--is-ancestor", c, md], cwd=REPO)
+        # DERIVED: 0 is the POSIX success code `git merge-base --is-ancestor` returns when c IS an ancestor.
+        if r.returncode == 0:
+            stale.append(f"{f} (last rebuilt in {c[:7]})")
     assert not stale, (
-        f"PAPER.pdf was last rebuilt in {pdf[:7]}, but PAPER.md changed afterwards in {subj}. "
-        "The PDF is what the paper is read in, so it still shows the pre-correction text; rebuild "
-        "and commit it with the paper.")
+        f"PAPER.md changed in {subj} after: {', '.join(stale)}. The built forms are what the paper is "
+        "read in; rebuild them and commit them with the paper.")
 
 
 def test_release_figures_match_the_shipped_manifest():

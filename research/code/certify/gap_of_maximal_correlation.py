@@ -339,29 +339,17 @@ def test_phase_separation(hop, ncap=192, volumes=(8, 12, 16, 24, 32)):
     rather than asserting that it does.
 
     The verdict is threshold-free: at each shared volume, the Coulomb K_signal must exceed the
-    confined one. No cut is chosen, so none can be tuned. The comparison is per volume because
-    K_signal counts resolved modes and so scales with the lattice in both phases -- pooling the
-    volumes would put Coulomb at a small L against confined at a large one and call the volume
-    dependence a phase failure. K_signal needs the pinned reference (`pin_reference`), the same
+    confined one. No cut is chosen, so none can be tuned. The comparison is per volume because the
+    floor is calibrated per plane shape: each volume's K_signal is read against the su2 b0.50
+    reference at that volume's plane shape (`pin_reference`, loaded at every L in `volumes`), so a
+    level at one L is not in the units of another. K_signal needs that pinned reference, the same
     confined-vacuum null `apriori_A1` pins.
 
-    `volumes` spans the whole tower the store carries, and deliberately so: the separation NARROWS
-    monotonically with volume, measured 2026-08-23 at beta 2.30 (confined) against 2.50 (Coulomb),
-
-        L=8   0.076 vs 0.319   4.18x        L=24  3.125 vs 4.849   1.55x
-        L=12  0.191 vs 0.790   4.13x        L=32  6.723 vs 8.823   1.31x
-        L=16  0.670 vs 1.764   2.63x
-
-    because confined K_signal grows faster with L (2.51x, 3.50x, 4.67x, 2.15x per step) than Coulomb
-    does (2.47x, 2.23x, 2.75x, 1.82x). Restricting this check to L <= 16 would test only the region
-    where the property holds comfortably and pass regardless of what happens above it -- a check that
-    cannot fail is not evidence. The tightest point, L=32 at 1.31x, is the one worth having. Reading
-    K_signal per intact spatial plane over the full tower costs roughly an hour and 25 GB, against
-    a minute and 1.2 GB for L <= 16.
-
-    PAPER Sec 8.3 says K_signal is "a phase discriminator at fixed lattice size" and does not claim
-    more; this measures how much room that statement has, and finds it holds to L=32 with the margin
-    shrinking threefold across the tower.
+    `volumes` spans the whole tower the store carries, so the check can fail at any volume rather
+    than only where it holds comfortably. The per-L levels this prints are the measurement; levels
+    quoted from runs that applied one 8x8 floor to every L measured the plane shape, not the phase.
+    Reading K_signal per intact spatial plane over the full tower costs roughly an hour and 25 GB,
+    against a minute and 1.2 GB for L <= 16.
     """
     print("\n===  C. PHASE SEPARATION  (real configs: K_signal carries the phase, the gap does not)  ===")
 
@@ -372,9 +360,10 @@ def test_phase_separation(hop, ncap=192, volumes=(8, 12, 16, 24, 32)):
         return np.asarray(np.concatenate([np.load(f) for f in fs], 0)[:cap], dtype=np.float64)
 
     # K_signal is read against the pinned confined-vacuum null (su2 beta=0.50), never the library's
-    # i.i.d. edge; with nothing pinned the read raises rather than inventing a floor.
+    # i.i.d. edge; with nothing pinned the read raises rather than inventing a floor. The pin is
+    # calibrated per plane shape, so the reference is loaded at every volume read below.
     ref = []
-    for L in (8, 12, 16):
+    for L in volumes:
         a = load("su2", L, 0.50, cap=48)
         if a is not None:
             ref += list(a)
@@ -404,12 +393,9 @@ def test_phase_separation(hop, ncap=192, volumes=(8, 12, 16, 24, 32)):
         print("  (insufficient configs for both phases; skipping the verdict)")
         return None
 
-    # K_signal counts resolved spatial modes, so it grows with the volume in BOTH phases (confined
-    # reads 0.076, 0.191, 0.67 at L = 8, 12, 16). Pooling the volumes and asking whether every
-    # Coulomb reading beats every confined one therefore tests volume against phase: Coulomb at L=8
-    # (0.319) loses to confined at L=16 (0.67) while saying nothing about either phase. The
-    # comparison that means something is at MATCHED volume -- same lattice, same mode budget, one
-    # phase against the other -- and it stays threshold-free.
+    # Each volume's K_signal is read against the floor calibrated at its own plane shape, so levels
+    # at two volumes are not in common units. The comparison that means something is at MATCHED
+    # volume -- same lattice, same floor, one phase against the other -- and it stays threshold-free.
     shared = [L for L in volumes if ("su2", L) in got and ("u1", L) in got]
     pairs = [(L, got[("su2", L)][0], got[("u1", L)][0]) for L in shared]
     separated = bool(pairs) and all(u > c for _, c, u in pairs)

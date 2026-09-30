@@ -115,16 +115,17 @@ def main():
             hs = W.hankel_spectrum(C, n)                       # viewer moment pencil (relocated read)
             l1, iso, psd = hs.leading, hs.isolation, hs.psd
             _, err = W.jackknife(O, lambda sub, n=n: W.hankel_spectrum(connected_C(sub, NLAG), n).leading, n_bins=NBIN)
-            am = -math.log(l1) if 0 < l1 < 1 else float('nan')
+            am = hs.rate                                       # -log lambda_1, NaN outside (0, 1)
             isor = round(iso, 1) if math.isfinite(iso) else float('nan')
-            pen_rows.append([ns, n, round(l1, 4), round(err, 4), isor, round(psd, 3), round(am, 4)])
+            # kept: how many of H0's n+1 directions the cut kept -- the order the read actually has
+            pen_rows.append([ns, n, round(l1, 4), round(err, 4), isor, round(psd, 3), round(am, 4), hs.kept])
         print(f"APE {ns}: lambda1(n=3) = {pen_rows[-2][2]} +/- {pen_rows[-2][3]}", flush=True)
     here = os.path.dirname(__file__)
     T = int(O.shape[1])                                       # time extent of the last-smeared operator
     with open(os.path.join(here, '8_7_dat_transfer_gap.csv'), 'w', newline='') as fh:
         w = csv.writer(fh); w.writerow(['smearing', 'tau', 'C_over_C0', 'err']); w.writerows(corr_rows)
     with open(os.path.join(here, '8_7_dat_transfer_pencil.csv'), 'w', newline='') as fh:
-        w = csv.writer(fh); w.writerow(['smearing', 'n_moment', 'lambda1', 'lambda1_err', 'isolation', 'H0_psd', 'a_m0pp']); w.writerows(pen_rows)
+        w = csv.writer(fh); w.writerow(['smearing', 'n_moment', 'lambda1', 'lambda1_err', 'isolation', 'H0_psd', 'a_m0pp', 'kept']); w.writerows(pen_rows)
     with open(os.path.join(here, '8_7_dat_meta.csv'), 'w', newline='') as fh:            # geometry/count for the figure caption (not hand-typed)
         wm = csv.writer(fh); wm.writerow(['L', 'T', 'beta', 'nconfigs', 'smears', 'nlag', 'nbin'])
         wm.writerow([L, T, BETA, int(arr.shape[0]), '|'.join(map(str, SMEARS)), NLAG, NBIN])

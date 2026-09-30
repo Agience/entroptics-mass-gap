@@ -1,7 +1,7 @@
 # Pinned dependencies for reproducible mass-gap reads, tests, and figures.
-# Entroptics v0.2.5 from PyPI: the release of commit 1d1d00b (tag v0.2.5); its modules are
+# Entroptics v0.2.6 from PyPI: the release of commit cf9edee (tag v0.2.6); its modules are
 # byte-identical to that commit's.
-entroptics==0.2.5
+entroptics==0.2.6
 
 # Runtime + tooling.
 numpy>=1.24

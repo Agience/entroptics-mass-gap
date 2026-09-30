@@ -202,6 +202,11 @@ def eb(x, delta, side, span=None):
     This is the tree's only copy: data/9_1_run_d2_certify.py imports it rather than restating it, so
     the certificate behind Sec 9 cannot be corrected in one place and left stale in the other."""
     x = np.asarray(x, dtype=float)
+    # DERIVED: 2 is where a sample variance exists. The library refuses fewer samples, and a
+    # non-finite one; this function's answer there is a NaN bound, which `d2_upper` reads as "no
+    # enclosure" rather than letting it fall through as a bound of 0.
+    if x.size < 2 or not np.all(np.isfinite(x)):
+        return math.nan
     r = W.empirical_bernstein(x, delta, span=float(x.max() - x.min()) if span is None else span)
     return r.mean + side * r.radius
 

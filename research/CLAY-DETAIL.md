@@ -523,6 +523,25 @@ same rate restates it too: one direction is `UVIRSplit.fixedWindowDecay_of_uv_ir
 `UVIRSplit.irGapAt_of_fixedWindowDecay` with `ClayRoutes.uvBelowIR_of_uniform_gap` at zero loss, and no single
 theorem states that iff; both directions are at a rate the proof chooses, not at the box rate.
 
+**The UV input as an exponential-moment tower.** At a positive transfer the reflected connected correlator
+of an observable is the moment sequence of a positive finite measure on `[0, 1]`, `C(t) = ∫ λᵗ dν`
+(`MomentTower.lagProfile_eq_moment`, `ν` the spectral measure `ZoomStep.specMeasure` of the observable).
+`MomentTower.ExpMomentTower C μ` asks `∑ₜ C(t) e^{σt}` to converge at every `σ < μ`. For any such measure and
+`r > 0`, no weight above `r`, the tower at `−log r`, and `C(t) ≤ rᵗ C(0)` at every `t` are equivalent
+(`MomentTower.null_above_iff_expMomentTower`, `MomentTower.null_above_iff_decay`); positivity of `ν` carries
+both non-trivial steps. On the vacuum complement of a `TransferData` under `PositiveTransfer`, `GapAt D r` is
+the tower at `−log r` for every orthogonal observable (`MomentTower.gapAt_iff_expMomentTower`). At the periodic
+Wilson state, `MomentTower.periodicConn` is the state's connected reflected-shifted pairing (the limit of
+`PeriodicReduce.torusConn`); each gauge-invariant half-space observable has the three-way equivalence
+(`MomentTower.periodicConn_moment_equivalences`), and `GapAt (periodicGaugeInvData τ p hN β) r` is the tower
+of every observable at `−log r` (`MomentTower.periodic_gapAt_iff_expMomentTower`). In physical units,
+`MomentTower.fixedWindowDecay_iff_momentTower`: at `2 ≤ N` and `0 < L`, `FixedWindowDecay` holds exactly when
+some `M > 0` has, at every large `β`, the tower of every observable at `M · aRun N β`
+(`MomentTower.AlgebraTower`). The tower carries no constant, so no normalisation of `C(0)` enters; a bound
+with a constant could not be uniform over the algebra, since `x ↦ c·x` scales `C` by `c²`. It is
+`FixedWindowDecay` restated on the exponential moments of the correlators, not a weaker input; a constant
+correlator `C ≡ c ≠ 0` has the tower at no `μ > 0` (`MomentTower.not_expMomentTower_const`).
+
 **The UV step in entropy form.** For observer laws `obs β` (image measures of the periodic states under block
 maps, `UVEntropy.PeriodicObserverLaws`), a χ² bound `√χ²(obs β' ‖ obs β) ≤ ε` moves a connected pairing by at
 most `ε` times a variance coefficient (`UVEntropy.abs_obsConn_sub_le`), and a window factor `q` becomes `q + 4η`

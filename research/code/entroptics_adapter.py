@@ -89,7 +89,24 @@ def _pinned_version() -> str:
 
 
 def _version_tuple(v: str) -> tuple:
-    return tuple(int(x) for x in v.split(".")[:3])
+    """The release numbers of a version string, for the floor check below. A local label
+    (`0.0.0+source`, what an uninstalled source checkout reports) is dropped, so that copy is
+    refused by number instead of failing to parse; a pre-release (`0.2.5rc1`, `0.2.5.dev0`) reads
+    just below its release, as it orders."""
+    def lead(part: str) -> int:
+        digits = ""
+        for ch in part:
+            if not ch.isdigit():
+                break
+            digits += ch
+        return int(digits or 0)
+    public = v.split("+")[0]
+    nums = [lead(x) for x in public.split(".")[:3]]
+    # DERIVED: a pre-release or dev tag orders below its release, so it is read a half step below
+    # the last number it carries; 0.5 is any value strictly between two consecutive integers.
+    if any(ch.isalpha() for ch in public):
+        nums[-1] -= 0.5
+    return tuple(nums)
 
 
 REQUIRED_VERSION = _pinned_version()        # "0.2.1" or a commit -- set in requirements.txt, not here
@@ -342,23 +359,28 @@ from entroptics.aperture import MIN_WINDOW as _APERTURE_WINDOW  # noqa: E402
 # read_batch(full plane) == Aperture(p).projection().
 
 
-def _plane_mean_batched(f, ta, *, batched_read, pick, orig) -> float:
-    """Plane-mean of a 2-D read done in one batched pass over the intact spatial planes --
-    BIT-IDENTICAL to ``_plane_mean(f, ta, orig)`` whenever each plane fits the Aperture window
-    (no truncation).  ``batched_read(planes) -> per-plane records``; ``pick`` pulls the scalar
-    (e.g. ``r.K_signal`` for ``read_batch``, ``r.contrast`` for ``spectral_batch``).  Falls back
-    to the exact per-plane ``orig`` read for a single plane or tall planes (which ``Aperture``
-    would window), so it can never diverge from the un-batched read."""
+def _plane_mean_batched(f, ta, *, null, batched_read, pick, orig) -> float:
+    """Plane-mean of a 2-D floor read done in one batched pass over the intact spatial planes --
+    BIT-IDENTICAL to the per-plane ``orig`` read whenever each plane fits the Aperture window
+    (no truncation).  ``batched_read(planes, provider) -> per-plane records``; ``pick`` pulls the
+    scalar (e.g. ``r.K_signal`` for ``read_batch``, ``r.contrast`` for ``spectral_batch``);
+    ``orig(plane, provider)`` is the exact per-plane read.  The provider is the floor for the
+    planes' SHAPE (``_provider_or_raise(null, shape)``), resolved before any read so an
+    uncalibrated shape raises instead of reading.  Falls back to ``orig`` for a single plane or
+    tall planes (which ``Aperture`` would window), so it can never diverge from the un-batched
+    read."""
     f = _asfloat(f)
     pa = _plane_axes(f.ndim, ta)
     if pa is None:
-        return float(orig(_movedim(f, ta % f.ndim, 0)))          # single plane -> keep windowed read
+        p = _movedim(f, ta % f.ndim, 0)
+        return float(orig(p, _provider_or_raise(null, p.shape)))  # single plane -> windowed read
     planes = [np.asarray(_to_np(p), dtype=float) for p in slabs(f, pa)]
     if not planes:
         return float("nan")
+    prov = _provider_or_raise(null, planes[0].shape)   # slabs of one array: every plane one shape
     if any(int(p.shape[0]) > _APERTURE_WINDOW for p in planes):  # tall -> Aperture windows -> per-plane
-        return float(over_planes(f, pa, read=orig, reduce="mean"))
-    return float(np.mean([float(pick(r)) for r in batched_read(planes)]))
+        return float(over_planes(f, pa, read=lambda p: orig(p, prov), reduce="mean"))
+    return float(np.mean([float(pick(r)) for r in batched_read(planes, prov)]))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -373,17 +395,32 @@ def _plane_mean_batched(f, ta, *, batched_read, pick, orig) -> float:
 #
 # Pin once with ``pin_reference(confined_ensemble)``. A floor read with nothing pinned and no
 # explicit ``null=`` raises at the point of measurement.
-_PINNED_REFERENCE = None       # the signal-free reference planes (introspection)
-_PINNED_PROVIDER = None        # the cached by_kind reference-null provider (projection+spectral+bulk)
+#
+# THE PIN IS KEYED BY PLANE SHAPE. ``reference_null`` returns an absolute top-mode level and keeps
+# no record of the (N, F) it was calibrated at, and under the 0.2.5 whitening every screen's energy
+# is fixed at N*F, so the level a signal-free plane reaches is set by the plane's shape. One floor
+# calibrated on 8x8 planes and applied to other shapes reads the shape, not the field: a 6x6
+# correlation screen reaches the 8x8 floor only when most of its energy is in one mode (SU(3) 6x6
+# read 0.0000 at every coupling), and a 16x16 screen's whole noise bulk lies above it (SU(2) 16x16
+# read 3.59, the same with the plane's values shuffled). So every plane shape found in the
+# reference is calibrated on its own planes, and a read of a plane shape the reference does not
+# contain RAISES (``UncalibratedShape``) instead of borrowing another shape's floor.
+_PINNED_REFERENCE = None       # {plane shape: the signal-free reference planes of that shape}
+_PINNED_PROVIDER = None        # {plane shape: the by_kind reference-null provider for that shape}
 
 
-def pin_reference(confined_configs: "Iterable | None" = None, *,
-                  realisations: "Iterable | None" = None, far: float | None = None,
-                  time_axis: int = -1, kboot: int = 40, seed: int = 0):
-    """PIN the calibrated null-reference for every floor read of this wrapper (K_signal,
-    contrast, resolved modes, the certified mu), from a deeply-confined reference ensemble
-    ([E] Def 8.2). The reference is calibrated PER CUT POINT at the SAME granularity as the read
-    it thresholds -- this is what makes the floor correct:
+class UncalibratedShape(ValueError):
+    """A floor read was asked for a plane shape the pinned reference holds no planes of."""
+
+
+def _shape_key(shape) -> tuple:
+    return tuple(int(n) for n in shape)
+
+
+def _calibrate_shape(planes, *, far, kboot, seed):
+    """The ``by_kind`` reference-null provider calibrated on reference planes of ONE shape.
+
+    Calibrated PER CUT POINT at the SAME granularity as the read it thresholds:
 
       * projection (per-plane K_signal): the whitened-projection top singular value of each
                    reference plane -> ``confined_reference_null`` (per-plane distribution).
@@ -394,32 +431,12 @@ def pin_reference(confined_configs: "Iterable | None" = None, *,
                    top eigenvalue (``kboot`` draws) -> ``reference_null``. A per-plane value here
                    would inflate the floor (per-plane variance >> pooled variance) and bury every
                    signal; the pooled bootstrap is the matched detection floor (the certificate
-                   read itself pools over the ensemble).
-
-    All are the analytic O(1) reference null (``center + z(far)*scale``), sharpening to any ``far``.
-    After this the wrapper uses only the reference null -- never the i.i.d.-Gaussian ``mp`` edge.
-    Returns the pinned ``by_kind`` provider. ``seed`` makes the bulk bootstrap deterministic."""
-    global _PINNED_REFERENCE, _PINNED_PROVIDER
-    if realisations is not None:
-        planes = [np.asarray(_to_np(r), dtype=float) for r in realisations]
-        planes = [p for p in planes if p.ndim == 2 and int(p.shape[1]) >= 2]
-    elif confined_configs is not None:
-        planes = []
-        for c in confined_configs:
-            for p in _spatial_planes(_asfloat(c), time_axis):
-                p = np.asarray(_to_np(p), dtype=float)
-                if p.ndim == 2 and int(p.shape[1]) >= 2:
-                    planes.append(p)
-    else:
-        raise ValueError("pin_reference needs confined_configs=... or realisations=...")
-    if not planes:
-        raise ValueError("pin_reference: no 2-D reference planes found in the reference ensemble")
-    F = int(planes[0].shape[1])
-    planes = [p for p in planes if int(p.shape[1]) == F]        # one feature count for the pooled bulk
-    # projection + spectral cuts: PER-PLANE reference (the read is per-plane)
+                   read itself pools over the ensemble)."""
+    shape = _shape_key(planes[0].shape)
+    F = shape[1]
     projection_svs = np.asarray([float(Aperture(p).projection().S[0]) for p in planes], dtype=float)
     corr_vals = np.asarray([null_providers.top_spectrum_value(p, "spectral") for p in planes], dtype=float)
-    # bulk cut: the POOLED top eigenvalue's SAMPLING band -- bootstrap over the reference planes
+
     def pooled_top(resample):
         acc = SpectralAccumulator(F)
         for p in resample:
@@ -427,12 +444,58 @@ def pin_reference(confined_configs: "Iterable | None" = None, *,
         return float(np.asarray(acc.spectral().eigenvalues)[0])
 
     bulk_tops = np.asarray(bootstrap(planes, pooled_top, draws=int(kboot), rng=seed), dtype=float)
-    _PINNED_REFERENCE = planes
-    _PINNED_PROVIDER = by_kind(
-        projection=confined_reference_null(projection_svs, far=far),
+    provider = by_kind(
+        projection=confined_reference_null(projection_svs, far=far, plane_shape=shape),
         spectral=null_providers.reference_null(corr_vals, far=far),
         bulk=null_providers.reference_null(bulk_tops, far=far))
-    return _PINNED_PROVIDER
+    provider.plane_shape = shape
+    provider.n_reference = len(planes)
+    return provider
+
+
+# CHOSEN: kboot = 40 bootstrap draws for the pooled (bulk) floor and seed 0 are the defaults this
+# pin has always used; they set the resolution of the bulk band and make it deterministic. Neither
+# enters the K_signal floor, which is the per-plane projection cut.
+def pin_reference(confined_configs: "Iterable | None" = None, *,
+                  realisations: "Iterable | None" = None, far: float | None = None,
+                  time_axis: int = -1, kboot: int = 40, seed: int = 0):
+    """PIN the calibrated null-reference for every floor read of this wrapper (K_signal,
+    contrast, resolved modes, the certified mu), from a deeply-confined reference ensemble
+    ([E] Def 8.2), ONE CALIBRATION PER PLANE SHAPE.
+
+    ``confined_configs`` are raw N-D configurations, cut into their intact spatial planes exactly
+    as the reads cut them; ``realisations`` are 2-D frames taken as they are. Both may be given, and
+    their frames are pooled. The frames are grouped by shape (rows, columns), and each group is
+    calibrated on its own planes (``_calibrate_shape``: projection, spectral and bulk cut points).
+    A later floor read of a plane uses the calibration of that plane's shape and raises
+    ``UncalibratedShape`` for a shape the reference did not contain: a confined reference must be
+    supplied at every plane shape that will be read.
+
+    All are the analytic O(1) reference null (``center + z(far)*scale``), sharpening to any ``far``.
+    After this the wrapper uses only the reference null -- never the i.i.d.-Gaussian ``mp`` edge.
+    Returns ``{plane shape: by_kind provider}``. ``seed`` makes each bulk bootstrap deterministic."""
+    global _PINNED_REFERENCE, _PINNED_PROVIDER
+    if confined_configs is None and realisations is None:
+        raise ValueError("pin_reference needs confined_configs=... or realisations=...")
+    planes = []
+    if confined_configs is not None:
+        for c in confined_configs:
+            for p in _spatial_planes(_asfloat(c), time_axis):
+                planes.append(np.asarray(_to_np(p), dtype=float))
+    if realisations is not None:
+        planes += [np.asarray(_to_np(r), dtype=float) for r in realisations]
+    # DERIVED: a plane is a 2-D frame with at least two channels -- one channel has no correlation.
+    planes = [p for p in planes if p.ndim == 2 and int(p.shape[1]) >= 2]
+    if not planes:
+        raise ValueError("pin_reference: no 2-D reference planes found in the reference ensemble")
+    by_shape: dict = {}
+    for p in planes:                         # insertion order: each shape keeps its planes' order
+        by_shape.setdefault(_shape_key(p.shape), []).append(p)
+    providers = {shape: _calibrate_shape(ps, far=far, kboot=kboot, seed=seed)
+                 for shape, ps in by_shape.items()}
+    _PINNED_REFERENCE = by_shape
+    _PINNED_PROVIDER = providers
+    return dict(providers)
 
 
 def unpin_reference() -> None:
@@ -443,23 +506,46 @@ def unpin_reference() -> None:
 
 
 def pinned_reference():
-    """The currently pinned reference planes, or ``None``."""
+    """The currently pinned reference planes as ``{plane shape: [planes]}``, or ``None``."""
     return _PINNED_REFERENCE
 
 
-def _provider_or_raise(null):
-    """The provider to hand a FLOOR read: an explicit ``null`` overrides; else the pinned
-    reference null; else RAISE -- this wrapper never silently falls back to the library's
-    i.i.d.-Gaussian ``mp`` floor."""
+def pinned_shapes() -> tuple:
+    """The plane shapes the pinned reference is calibrated at (empty when nothing is pinned)."""
+    return tuple(sorted(_PINNED_PROVIDER)) if _PINNED_PROVIDER else ()
+
+
+def _provider_or_raise(null, shape):
+    """The provider to hand a FLOOR read of a plane (or frame) of ``shape``.
+
+    An explicit ``null`` overrides the pin; if it records the plane shape it was calibrated at
+    (``plane_shape``, as ``confined_reference_null(..., plane_shape=...)`` does), a read of another
+    shape raises. Otherwise the pinned calibration FOR THIS SHAPE; a shape the pin does not hold
+    raises ``UncalibratedShape``; nothing pinned raises -- this wrapper never silently falls back
+    to the library's i.i.d.-Gaussian ``mp`` floor, and never to another shape's floor."""
+    key = _shape_key(shape)
     if null is not None:
+        cal = getattr(null, "plane_shape", None)
+        if cal is not None and _shape_key(cal) != key:
+            raise UncalibratedShape(
+                f"the supplied null was calibrated on {cal[0]}x{cal[1]} planes and is being asked "
+                f"to floor a {key[0]}x{key[1]} plane; calibrate it on planes of that shape.")
         return null
-    if _PINNED_PROVIDER is not None:
-        return _PINNED_PROVIDER
-    raise RuntimeError(
-        "entroptics wrapper: no null-reference pinned. This wrapper NEVER defaults to the "
-        "library's i.i.d.-Gaussian 'mp' floor for a physics read. Call "
-        "entroptics.pin_reference(confined_ensemble) once (or pass an explicit null=) before "
-        "any confinement / K_signal / contrast / optics read.")
+    if _PINNED_PROVIDER is None:
+        raise RuntimeError(
+            "entroptics wrapper: no null-reference pinned. This wrapper NEVER defaults to the "
+            "library's i.i.d.-Gaussian 'mp' floor for a physics read. Call "
+            "entroptics.pin_reference(confined_ensemble) once (or pass an explicit null=) before "
+            "any confinement / K_signal / contrast / optics read.")
+    try:
+        return _PINNED_PROVIDER[key]
+    except KeyError:
+        held = ", ".join(f"{s[0]}x{s[1]}" for s in pinned_shapes())
+        raise UncalibratedShape(
+            f"no confined reference is pinned at plane shape {key[0]}x{key[1]} (pinned: {held}). "
+            "A reference-null floor is an absolute level whose value is set by the plane shape, so "
+            "another shape's floor would read the shape rather than the field. Pin a confined "
+            "reference whose planes have this shape.") from None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -481,13 +567,13 @@ class Reads:
         # nothing that pins today changes behaviour; supplying one gives a caller a floor scoped
         # to a single read, which `Reads` previously offered no channel for.
         #
-        # A floor derived from the ensemble under test -- permuting its sites to destroy the
-        # structure being measured -- was tried here and is NOT a substitute for the pinned
-        # reference. It is self-normalising: it adapts to each ensemble's own distribution, which
-        # cancels exactly the difference K_signal exists to detect. Measured, it collapsed the
-        # U(1) phase separation from 7.4x to 1.2x. The pinned reference is a DETECTION null, an
-        # absolute floor from a physical reference state, and that is what makes deconfinement
-        # read as modes standing above the confined vacuum.
+        # A floor derived from the ensemble under test -- permuting its own sites -- is not used
+        # as the floor: it adapts to each ensemble's one-point marginal, so it cancels any
+        # difference between ensembles that lives in the marginal. The pinned reference is an
+        # absolute floor from one physical reference state, so a K_signal read against it carries
+        # both the marginal and the spatial arrangement. They are separated by the same-marginal
+        # control, `confinement(..., shuffle=seed)`: the same planes with their values permuted
+        # within each plane, against the same pinned floor.
         self._null = null
 
     # ---- internals ----
@@ -586,12 +672,11 @@ class Reads:
         then averaged over configs.  Floor = the PINNED reference null (never mp); raises if
         nothing is pinned.  The one place the correlation eigenspectrum is formed, shared by
         ``contrast`` / ``resolved_modes`` / ``attenuation`` / ``top_share`` / ``dispersion``."""
-        prov = _provider_or_raise(self._null)
         return float(np.mean([_plane_mean_batched(
-            f, self._ta,
-            batched_read=lambda planes: spectral_batch(planes, null=prov),
+            f, self._ta, null=self._null,
+            batched_read=lambda planes, prov: spectral_batch(planes, null=prov),
             pick=lambda r: getattr(r, attr),
-            orig=lambda p: getattr(Aperture(p, null=prov), attr)) for f in self._cfgs]))
+            orig=lambda p, prov: getattr(Aperture(p, null=prov), attr)) for f in self._cfgs]))
 
     @property
     def contrast(self) -> float:
@@ -638,19 +723,27 @@ class Reads:
         ``fields.slabs``, no flatten). Confinement mu < kappa_0 is certified when
         ``attenuation_hi < kappa_0 = (1/4)ln3`` (the caller does the kappa_0 comparison). The
         pooling is the ensemble-level Aperture bound: the band shrinks as the ensemble grows."""
-        prov = _provider_or_raise(self._null)
         acc = None
+        shape = None
         for f in self._cfgs:
             for p in _spatial_planes(f, self._ta):
                 p = np.asarray(_to_np(p), dtype=float)
+                # DERIVED: a plane is a 2-D frame with at least two channels (see pin_reference).
                 if p.ndim != 2 or int(p.shape[1]) < 2:
                     continue
                 if acc is None:
+                    shape = _shape_key(p.shape)
+                    _provider_or_raise(self._null, shape)       # refuse an uncalibrated shape first
                     acc = SpectralAccumulator(int(p.shape[1]))
+                elif _shape_key(p.shape) != shape:
+                    raise ValueError(
+                        f"confinement_certificate pools planes of one shape (its floor is calibrated "
+                        f"at one); got {shape} and {_shape_key(p.shape)}")
                 acc.add(p)
+        # DERIVED: three rows is the fewest for which a pooled correlation has a sampling band.
         if acc is None or acc.T < 3:
             raise ValueError("confinement_certificate needs at least one 2-D plane with >= 3 rows")
-        sg = acc.spectral(null=prov)
+        sg = acc.spectral(null=_provider_or_raise(self._null, shape))
         band = concentration_band(acc.T, acc.F)
         a = attenuation_interval(None, band=band, sg=sg)
         k = resolved_dimension_interval(None, band=band, sg=sg)
@@ -678,11 +771,14 @@ class Reads:
         as far as the generating chain decorrelated them. So the guarantee does not strictly
         apply. Its width scales as 1/sqrt(n_configs), so a phase separation is an ensemble-size
         question."""
-        vals = [confinement(f, self._ta) for f in self._cfgs]
+        vals = [confinement(f, self._ta, null=self._null) for f in self._cfgs]
         n = len(vals)
         m = float(np.mean(vals))
         if n < 2:
             return KSignalCertificate(m, 0.0, n, m, m, float(delta))
+        if not np.all(np.isfinite(vals)):         # the library refuses it; the interval is undefined
+            return KSignalCertificate(m, float(np.std(vals, ddof=1)), n, float("nan"), float("nan"),
+                                      float(delta))
         # The library's interval, with the sample range passed as its `span`: the plug-in that
         # makes the confidence nominal (see above), stated here rather than hidden in a copy.
         eb = empirical_bernstein(vals, float(delta), span=float(max(vals) - min(vals)))
@@ -725,9 +821,12 @@ class Reads:
         ordered/decay fields from the time-pooled projection, the feature/spectral/
         concentration fields plane-averaged over intact spatial planes, and the two
         cross-axis areas (etendue, space-bandwidth) plus shape_factor recomposed."""
-        prov = _provider_or_raise(self._null)
-        ordered = Aperture(_ordered(f, self._ta), null=prov).optics()
-        planes = [Aperture(pl, null=prov).optics() for pl in _spatial_planes(f, self._ta)]
+        # Each frame is floored by the calibration of ITS shape: the time-pooled ordered frame
+        # (T x sites) and the spatial planes are different shapes, and each must be pinned.
+        frame = _ordered(f, self._ta)
+        ordered = Aperture(frame, null=_provider_or_raise(self._null, frame.shape)).optics()
+        planes = [Aperture(pl, null=_provider_or_raise(self._null, pl.shape)).optics()
+                  for pl in _spatial_planes(f, self._ta)]
 
         def pmean(k):
             return float(np.mean([p[k] for p in planes])) if planes else float(ordered[k])
@@ -790,54 +889,102 @@ def decay(record, mask=None, *, periodic: bool = False, disconnected=_DISCONNECT
     return _reads.decay(record, mask, periodic=periodic, **extra)
 
 
-def confinement(field: np.ndarray, time_axis: int = -1, *, null=None, seed: int = 0) -> float:
+def shuffle_within_planes(field: np.ndarray, time_axis: int = -1, *, seed: int) -> np.ndarray:
+    """The same-marginal negative control for a spatial read: a copy of ``field`` in which the
+    values of every intact spatial plane (the planes ``confinement`` reads) are permuted
+    independently, by a generator seeded with ``seed``.
+
+    Each plane keeps exactly its own multiset of values -- its one-point marginal -- and loses its
+    spatial arrangement. A read that moves under this permutation is reading spatial structure; a
+    read that does not is reading the marginal. The reference a floor was calibrated on is never
+    shuffled: the control asks what the SAME floor makes of the same values without their
+    arrangement. A field with fewer than two non-time axes is its own single plane."""
+    f = np.array(_to_np(_asfloat(field)), dtype=float, copy=True)
+    rng = np.random.default_rng(seed)
+    pa = _plane_axes(f.ndim, time_axis)
+    if pa is None:
+        return rng.permutation(f.ravel()).reshape(f.shape)
+    g = np.moveaxis(f, pa, (0, 1))
+    cols = g.reshape(g.shape[0] * g.shape[1], -1)             # one column per plane
+    order = np.argsort(rng.random(cols.shape), axis=0)       # an independent permutation per column
+    return np.moveaxis(np.take_along_axis(cols, order, axis=0).reshape(g.shape), (0, 1), pa)
+
+
+def confinement(field: np.ndarray, time_axis: int = -1, *, null=None, seed: int = 0,
+                shuffle: int | None = None) -> float:
     """Plane-averaged K_signal of one raw config: the resolved-mode count read on each
     INTACT 2-D spatial plane (entroptics.fields.slabs) and averaged over planes ([E Sec 8],
     PAPER Sec 8.1). The geometry-preserving spatial order parameter -- a bare flatten of
     the spatial volume would destroy the within-plane correlation and invert it.
 
     ``null`` overrides the floor provider for this read. With ``null=None`` the wrapper uses
-    the PINNED reference null (``pin_reference(...)``): the confined-vacuum detection null
-    ([E] Def 8.2), so deconfinement reads as the coherent mode above the confined floor. The
-    wrapper does not fall back to the library's i.i.d.-Gaussian ``mp`` edge: a read with
-    nothing pinned and ``null=None`` raises. Resampling nulls are deterministic per ``seed``."""
-    prov = _provider_or_raise(null)
+    the PINNED reference null (``pin_reference(...)``) calibrated at the planes' shape: the
+    confined-vacuum detection null ([E] Def 8.2). A plane shape the pin holds no calibration for
+    raises ``UncalibratedShape``. The wrapper does not fall back to the library's i.i.d.-Gaussian
+    ``mp`` edge: a read with nothing pinned and ``null=None`` raises. Resampling nulls are
+    deterministic per ``seed``.
+
+    ``shuffle`` (an integer seed) reads the same-marginal control instead: the same planes with
+    their values permuted within each plane (``shuffle_within_planes``), against the same floor.
+    The difference between the two reads is the part of K_signal carried by spatial arrangement
+    rather than by each plane's one-point marginal."""
+    f = _asfloat(field)
+    if shuffle is not None:
+        f = shuffle_within_planes(f, time_axis, seed=int(shuffle))
     return _plane_mean_batched(
-        _asfloat(field), time_axis,
-        batched_read=lambda planes: read_batch(planes, null=prov, seed=seed),
+        f, time_axis, null=null,
+        batched_read=lambda planes, prov: read_batch(planes, null=prov, seed=seed),
         pick=lambda r: r.K_signal,
-        orig=lambda p: Aperture(p).projection(null=prov, seed=seed).K_signal)
+        orig=lambda p, prov: Aperture(p).projection(null=prov, seed=seed).K_signal)
 
 
 def confined_top_singular_values(confined_configs, time_axis: int = -1) -> np.ndarray:
     """The top singular value of each confined-phase spatial-plane projection: the reference
     distribution the confined-reference null thresholds against. Same projection construction
-    (whiten + fold) as the confinement read, so the floor is in the read's own units."""
-    svs = []
+    (whiten + fold) as the confinement read, so the floor is in the read's own units.
+
+    Every plane must have one shape: the values are the calibration of a floor for that shape
+    (see ``pin_reference``), and pooling two shapes would calibrate a floor for neither."""
+    return _top_svs_and_shape(confined_configs, time_axis)[0]
+
+
+def _top_svs_and_shape(confined_configs, time_axis: int):
+    """``confined_top_singular_values`` together with the one plane shape they were read at
+    (``None`` when there were no planes); raises when the planes have more than one shape."""
+    svs, shapes = [], set()
     for c in confined_configs:
         for p in _spatial_planes(_asfloat(c), time_axis):
             p = np.asarray(_to_np(p), dtype=float)
+            # DERIVED: a plane is a 2-D frame with at least two channels (see pin_reference).
             if p.ndim == 2 and int(p.shape[1]) >= 2:
+                shapes.add(_shape_key(p.shape))
                 svs.append(float(Aperture(p).projection().S[0]))
-    return np.asarray(svs, dtype=float)
+    # DERIVED: one shape is the only count at which the values calibrate a single floor.
+    if len(shapes) > 1:
+        raise ValueError(f"confined_top_singular_values: planes of several shapes {sorted(shapes)}; "
+                         "calibrate one floor per plane shape")
+    return np.asarray(svs, dtype=float), (shapes.pop() if shapes else None)
 
 
-def confined_reference_null(confined_top_svs, *, far: float | None = None):
+def confined_reference_null(confined_top_svs, *, far: float | None = None,
+                            plane_shape: tuple | None = None):
     """DETERMINISTIC O(1) confined-reference null: the physics null the mass-gap read OWNS
     ([E] Def 8.2, 'prewhiten from a signal-free window'), built by the library's
     ``null_providers.reference_null`` from the confined vacuum's top singular values. The floor is
     ``center + z(far)*scale`` -- a pure O(1) function of ``ctx.far`` with NO stored samples and
     NO resampling, sharpening ANALYTICALLY to any far (the normal quantile inverts to 1e-5+;
     no 1/far sample requirement). ``(center, scale)`` = mean/std of
-    ``confined_top_singular_values(confined_ensemble)`` at the target (N,F) shape, calibrated
-    ONCE offline. Detection null = the confined phase, so deconfinement reads as the coherent
-    mode standing above it. The confined analogue of the ``mp`` edge (same closed form, the
+    ``confined_top_singular_values(confined_ensemble)`` at the target (N,F) shape. Detection
+    null = the confined phase. The confined analogue of the ``mp`` edge (same closed form, the
     noise model calibrated on the confined vacuum instead of an i.i.d. bulk).
 
-    What this adds to the library call is only the NAME: the provider reports itself as
-    ``confined_reference_null``, so a floor read against it says which reference it came from."""
+    What this adds to the library call is the NAME -- the provider reports itself as
+    ``confined_reference_null`` -- and, when ``plane_shape`` is given, the plane shape it was
+    calibrated at, which the wrapper's reads check: the library's floor is an absolute level with
+    no record of its shape, and a read of a plane of another shape raises ``UncalibratedShape``."""
     provider = _lib_nulls.reference_null(confined_top_svs, far=far)
     provider.__name__ = "confined_reference_null"
+    provider.plane_shape = None if plane_shape is None else _shape_key(plane_shape)
     return provider
 
 
@@ -849,20 +996,30 @@ class ConfinedReferenceNull(_lib_nulls.ReferenceNull):
     online. The running mean/variance (fading-memory Welford), the floor ``mean + z(far)*std`` and
     ``forgetting`` are all the library's; ``far=None`` uses the read's ``ctx.far``.
 
-    One thing is the wrapper's: with fewer than two reference values there is no spread to read a
+    Two things are the wrapper's. With fewer than two reference values there is no spread to read a
     floor from, and this null then returns an infinite floor -- it resolves nothing -- rather than
-    the library's ``center + z*scale`` evaluated on a spread of zero."""
+    the library's ``center + z*scale`` evaluated on a spread of zero. And it records the plane
+    shape its reference was read at (``plane_shape``): a configuration whose planes have another
+    shape is refused by ``update``, and the wrapper's reads refuse to floor another shape with it."""
 
     def __init__(self, confined_configs=None, *, far: float | None = None, time_axis: int = -1,
                  forgetting: float = 1.0):
         super().__init__(None, far=far, forgetting=forgetting)
         self._ta = time_axis
+        self.plane_shape = None
         if confined_configs is not None:
             self.update(*confined_configs)
 
     def update(self, *confined_configs) -> "ConfinedReferenceNull":
         for c in confined_configs:
-            self.push(*confined_top_singular_values([c], self._ta))
+            svs, shape = _top_svs_and_shape([c], self._ta)
+            if shape is not None and self.plane_shape is not None and shape != self.plane_shape:
+                raise UncalibratedShape(
+                    f"ConfinedReferenceNull is calibrated on {self.plane_shape} planes; this "
+                    f"configuration's planes are {shape}")
+            if shape is not None:
+                self.plane_shape = shape
+            self.push(*svs)
         return self
 
     def __call__(self, ctx) -> float:

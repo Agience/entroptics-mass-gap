@@ -118,9 +118,11 @@ def load(group: str, L: int, beta: float, ncap: int = 128):
 
 def pin_confined_vacuum():
     """Pin the caller-supplied null to the deep-confinement su2 beta=0.50 vacuum (the disorder floor).
-    The wrapper never falls back to the library's i.i.d.-Gaussian 'mp' floor for a physics read."""
+    The wrapper never falls back to the library's i.i.d.-Gaussian 'mp' floor for a physics read.
+    The pin is calibrated per plane shape, so the reference is loaded at every L the ENSEMBLES
+    below are read at (8, 12, 16, 24): a shape with no reference would raise at its read."""
     ref = []
-    for L in (8, 12, 16):
+    for L in sorted({e[2] for e in ENSEMBLES}):
         a = load("su2", L, 0.50, ncap=48)
         if a is not None:
             ref += list(a)

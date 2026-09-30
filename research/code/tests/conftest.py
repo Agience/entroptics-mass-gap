@@ -70,7 +70,11 @@ def pin_su2():
 
 @pytest.fixture
 def pin_free():
-    """Pin a separate free-scalar reference (matching the (8,8,49) free configs' F=8 planes)."""
-    entroptics.pin_reference([generator.free_scalar((8, 8, 49), 0.6, seed=100 + s) for s in range(6)])
+    """Pin a separate free-scalar reference at both frame shapes the (8,8,49) free configs are read
+    at: their 8x8 spatial planes, and the 49x64 time-pooled frame the ordered optics fields are read
+    on. The pin is calibrated per shape, so each shape a read floors needs its own reference."""
+    refs = [generator.free_scalar((8, 8, 49), 0.6, seed=100 + s) for s in range(6)]
+    entroptics.pin_reference(refs, realisations=[entroptics.pool(entroptics._asfloat(r), -1)
+                                                 for r in refs])
     yield
     entroptics.unpin_reference()

@@ -8,7 +8,7 @@ derived one. This test makes the rule executable.
 WHAT IT CATCHES, and why each of these was worth catching:
 
   * `8_7_fig_mhi_lscan.variational_lscan(tol=0.25)` -- a relative-error cut deciding which `m_eff`
-    values enter the variational read. Figure 14's "constant at chi2/dof = 0.04" holds ONLY for
+    values enter the variational read. Figure 13's "constant at chi2/dof = 0.04" holds ONLY for
     tol in [0.20, 0.30]; at 0.15 the constant fit is rejected at 3.7, at 0.40 at 2.1, and Delta
     itself moves 43% (1.49 -> 1.04) across the range. The cut decides the result.
   * `8_7_fig_gap_correlator.py` uses `m_eff_err < 0.6` for the SAME resolution question, off the

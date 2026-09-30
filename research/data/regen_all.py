@@ -40,8 +40,7 @@ Two facts about the artifacts that the table cannot carry
   ``[:ncap]`` slice. That cap is REPORTED, in the per-row ``n``: it is the shard count available at
   freeze, not a post-hoc selection of "the configs that worked."
 * ``mu`` is all-zero in ``8_3_dat_nobump.csv`` because the measured maximal-correlation tension is
-  ``mu ~ 0`` in BOTH phases -- the order parameter is ``K_signal``, not ``mu``. That column is a
-  genuine read of zero, not a missing one.
+  ``mu ~ 0`` in BOTH phases. That column is a genuine read of zero, not a missing one.
 """
 from __future__ import annotations
 
@@ -70,8 +69,6 @@ OWNERS = [
     (["8_3_dat_ksignal_planescale.csv"],         "8_3_run_ksignal_planescale.py",          DATA, "data",    "cpu"),
     (["8_3_dat_nobump.csv", "8_3_fig_nobump.png"],
                                                  "8_3_regen_from_store.py",                DATA, "data",    "cpu"),
-    (["8_3_dat_su3_nobump.csv", "8_3_fig_su3_nobump.png"],
-                                                 "8_3_regen_su3_from_store.py",            DATA, "data",    "cpu"),
     (["8_3_dat_confinement_order_parameter.csv"],
                                                  "8_3_run_confinement_order_parameter.py", DATA, "data",    "cpu"),
     (["8_4_dat_disorder_response.csv", "8_4_fig_disorder_response.png"],

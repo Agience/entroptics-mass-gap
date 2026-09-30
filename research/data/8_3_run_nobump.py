@@ -1,12 +1,14 @@
 """
-8_3_run_nobump.py -- the no-bump: compact U(1) deconfines, SU(2) stays confined.
+8_3_run_nobump.py -- K_signal across beta 0..5 for compact U(1) and SU(2) on FRESH Monte-Carlo
+configurations (an exploratory path; the committed 8_3_dat_nobump.csv is 8_3_regen_from_store.py's).
 
-The confinement order parameter (K_signal, the entroptics resolved-mode read on
-raw configs) is read across beta 0..5 for BOTH gauge groups:
-  * compact U(1) (foil): flat and low in the confined phase, then DIVERGES upward
-    across the deconfinement transition (beta_c ~ 1.01). It crosses.
-  * SU(2): stays flat and bounded across the whole range. No deconfinement -- the
-    NO-BUMP. This is the discriminator that separates the two theories, untuned.
+K_signal (the entroptics resolved-mode read on raw configs) is read for both gauge groups, each
+value with its same-marginal control: the same configurations with every plane's values permuted
+within the plane (config i seeded by its index), and the paired difference.
+
+K_signal needs a reference null pinned at the plane shape it reads, and this script pins none: run
+as it stands, the first read raises. Pin a confined reference at the lattice's plane shape
+(entroptics_adapter.pin_reference) before calling main().
 
 Reads come through the single typed wrapper on RAW configs (no preprocessing).
 Writes 8_3_dat_nobump.csv and 8_3_fig_nobump.png here.
@@ -34,9 +36,11 @@ import plot
 DAT = os.path.join(_HERE, "8_3_dat_nobump.csv")
 FIG = os.path.join(_HERE, "8_3_fig_nobump.png")
 BETA_C = 1.01
-COLS = ["group", "beta", "dims", "confinement", "confinement_err", "temporal_attenuation", "n"]
-STYLE = {"u1": ("#b03030", "compact U(1) (foil): deconfines"),
-         "su2": ("#1f4e8c", "SU(2): stays confined (no-bump)")}
+COLS = ["group", "beta", "dims", "confinement", "confinement_err", "temporal_attenuation", "n",
+        "confinement_shuffled", "confinement_shuffled_err", "confinement_minus_shuffled",
+        "confinement_minus_shuffled_err"]
+STYLE = {"u1": ("#b03030", r"compact U(1) $K_{\mathrm{signal}}$"),
+         "su2": ("#1f4e8c", r"SU(2) $K_{\mathrm{signal}}$")}
 
 
 def measure(group, beta, dims, *, seed, therm, gap, n, device=None):
@@ -47,10 +51,16 @@ def measure(group, beta, dims, *, seed, therm, gap, n, device=None):
     else:
         cfgs = list(generator.stream(dims, beta, group=group, seed=seed, therm=therm, gap=gap, n=n))
     ks = np.array([entroptics.confinement(c) for c in cfgs], float)
+    # the same-marginal control: every plane's values permuted within the plane, config i seeded i
+    sh = np.array([entroptics.confinement(c, shuffle=i) for i, c in enumerate(cfgs)], float)
+    d = ks - sh                                           # paired per configuration
+    se = lambda v: float(v.std() / np.sqrt(len(v)))       # the estimator confinement_err uses
     r = entroptics.run(cfgs)
     return dict(group=group, beta=round(beta, 2), dims="x".join(map(str, dims)),
-                confinement=float(ks.mean()), confinement_err=float(ks.std() / np.sqrt(len(ks))),
-                temporal_attenuation=r.temporal_attenuation, n=len(cfgs))
+                confinement=float(ks.mean()), confinement_err=se(ks),
+                temporal_attenuation=r.temporal_attenuation, n=len(cfgs),
+                confinement_shuffled=float(sh.mean()), confinement_shuffled_err=se(sh),
+                confinement_minus_shuffled=float(d.mean()), confinement_minus_shuffled_err=se(d))
 
 
 def _measure_star(item):
@@ -103,8 +113,8 @@ def main():
                        "label": label, "color": color})
     plot.line(FIG, betas, series,
               xlabel=r"$\beta$", ylabel=r"confinement  $K_{\mathrm{signal}}$",
-              title=r"Sec 8.3: the no-bump -- U(1) deconfines, SU(2) stays confined",
-              vline=BETA_C, vline_label=r"U(1) $\beta_c\approx1.01$")
+              title=r"$K_{\mathrm{signal}}$ vs $\beta$, compact U(1) and SU(2), " + "x".join(map(str, dims)),
+              vline=BETA_C, vline_label=r"compact U(1) $\beta_c\approx1.01$ (literature)")
     print("wrote", DAT, "and", FIG)
 
 

@@ -60,11 +60,7 @@ research/code/certify/ym_crossover_confinement_of_grid.py|named constant L = 16|
 research/code/certify/ym_crossover_confinement_of_grid.py|ncap=256|def load
 research/code/entroptics_adapter.py|compared against 0|out["shape_factor"] = (out["a_delta"] / out["phi_F"]) if out["phi_F"] > 0 else f
 research/code/entroptics_adapter.py|compared against 2|if n < 2:
-research/code/entroptics_adapter.py|compared against 2|if p.ndim != 2 or int(p.shape[1]) < 2:
-research/code/entroptics_adapter.py|compared against 2|if p.ndim == 2 and int(p.shape[1]) >= 2:
-research/code/entroptics_adapter.py|compared against 2|planes = [p for p in planes if p.ndim == 2 and int(p.shape[1]) >= 2]
 research/code/entroptics_adapter.py|compared against 2|return (spatial[0], spatial[1]) if len(spatial) >= 2 else None
-research/code/entroptics_adapter.py|compared against 3|if acc is None or acc.T < 3:
 research/code/lattice_generator.py|beta=1.0|def config
 research/code/lattice_generator.py|beta=1.0|def config_batch
 research/code/lattice_generator.py|beta=1.0|def gauge_field
@@ -197,7 +193,6 @@ research/code/tests/test_paper_matches_artifacts.py|compared against 5|assert n 
 research/code/tests/test_paper_matches_artifacts.py|compared against 5|if len(cells) < 5:
 research/code/tests/test_paper_matches_artifacts.py|compared against 6.0|if r["group"] == "su3" and int(r["L"]) == 8 and float(r["beta"]) >= 6.0]
 research/code/tests/test_paper_matches_artifacts.py|compared against 6|assert len(checked) >= 6, (
-research/code/tests/test_paper_matches_artifacts.py|compared against 6|assert seen >= 6, f"expected at least six rows, matched {seen}"
 research/code/tests/test_paper_matches_artifacts.py|compared against 7.0|assert float(r["beta"]) <= 7.0, f"the comparison reads beta={r['beta']}, outside
 research/code/tests/test_paper_matches_artifacts.py|compared against 8|assert 8 in rows and 32 in rows, "the free-field table does not cover the L the
 research/code/tests/test_paper_matches_artifacts.py|compared against 8|assert seen >= 8, f"expected at least eight lambda_1 entries, matched {seen}"
@@ -213,7 +208,6 @@ research/code/tests/test_paper_matches_lean.py|compared against 5e-05|assert abs
 research/code/tests/test_provenance.py|compared against 0.05|assert abs(float(head.group(4)) - gb) < 0.05, (
 research/code/tests/test_provenance.py|compared against 0|if not isinstance(v, (int, float)) or v <= 0}
 research/code/tests/test_provenance.py|compared against 0|if r.returncode != 0:
-research/code/tests/test_provenance.py|compared against 0|stale = r.returncode == 0
 research/code/tests/test_provenance.py|compared against 120000000|sample = [r for r in per_coll.values() if int(r["bytes"]) < 120_000_000]
 research/code/tests/test_provenance.py|compared against 1|dupes = {name: sorted(files) for (name, _), files in seen.items() if len(files)
 research/code/tests/test_provenance.py|compared against 1|duplicated = {a: n for a, n in owned.items() if n > 1}
@@ -290,7 +284,6 @@ research/data/8_7_fig_mhi_lscan.py|compared against 1e-09|if abs(float(r['beta']
 research/data/8_7_fig_transfer_gap.py|compared against 1|rows = [r for r in corr if int(r['smearing']) == s and int(r['tau']) >= 1]
 research/data/8_7_fig_transfer_gap.py|named constant YMAX = 1.28|YMAX = 1.28
 research/data/8_7_run_gap_correlator.py|compared against 0|qc = qc if ns == 0 else G.ape_smear(qc, ns, alpha=ALPHA, device=DEVICE)
-research/data/8_7_run_gap_correlator.py|compared against 0|return float(np.log(c[_t] / c[_t + 1])) if c[_t] > 0 and c[_t + 1] > 0 else floa
 research/data/8_7_run_gap_correlator.py|compared against 1e-09|pairs = [(L, b) for L, b in pairs if any(abs(b - float(x)) < 1e-9 for x in only_
 research/data/8_7_run_gap_correlator.py|named constant ALPHA = 0.5|ALPHA = 0.5
 research/data/8_7_run_gap_correlator.py|named constant M0_OVER_SQRT_SIGMA = 3.59|M0_OVER_SQRT_SIGMA = 3.59                          # Lucini-Teper-Wenger 2004, S
@@ -300,8 +293,6 @@ research/data/8_7_run_mhi_lscan.py|named constant BETA = 2.3|BETA = 2.30
 research/data/8_7_run_mhi_lscan.py|named constant LS = 8,12,16,20,24,28...|LS = (8, 12, 16, 20, 24, 28, 32)
 research/data/8_7_run_mhi_multicoupling.py|named constant BETAS = 2.0,2.3,2.5|BETAS = (2.00, 2.30, 2.50)
 research/data/8_7_run_mhi_multicoupling.py|named constant LS = 8,12,16|LS = (8, 12, 16)
-research/data/8_7_run_transfer_gap.py|compared against 0|am = -math.log(l1) if 0 < l1 < 1 else float('nan')
-research/data/8_7_run_transfer_gap.py|compared against 1|am = -math.log(l1) if 0 < l1 < 1 else float('nan')
 research/data/8_7_run_transfer_gap.py|named constant ALPHA = 0.5|ALPHA = 0.5
 research/data/8_7_run_transfer_gap.py|named constant MOMENT_ORDERS = 2,3,4|MOMENT_ORDERS = (2, 3, 4)      # pencil orders read from the correlator
 research/data/8_7_run_transfer_gap.py|named constant SMEARS = 8,16,24,32|SMEARS = (8, 16, 24, 32)

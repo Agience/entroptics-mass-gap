@@ -446,16 +446,24 @@ def test_transfer_pencil_table_matches_artifact():
 
 
 def test_ksignal_table_matches_artifacts():
-    """Sec 8.3's K_signal table is 8_3_dat_nobump.csv plus 8_3_dat_su3_nobump.csv.
+    """Sec 8.3's K_signal table is 8_3_dat_nobump.csv.
 
-    The paper quotes two decimals against four in the artifacts, so the comparison is at the printed
-    precision. Each row must also find its (group, beta) in an artifact: a row for an ensemble that
-    was never measured is the failure this catches.
+    The K_signal column is compared at two decimals, and again, below, at the precision it is
+    written. Each row
+    must also find its (group, beta) in the artifact: a row for an ensemble that was never measured
+    is the failure this catches. SU(3) has no row in the artifact -- the ensembles carry no
+    confined-vacuum reference at the 6x6 plane shape -- so an SU(3) row in the table fails here.
+
+    The same-marginal control columns (within-plane shuffled, and the paired difference) are held
+    to the artifact at the precision each is written, value and standard error both.
     """
-    art = {}
-    for name in ("8_3_dat_nobump.csv", "8_3_dat_su3_nobump.csv"):
-        for r in _artifact(name):
-            art[(r["group"], round(float(r["beta"]), 2))] = float(r["confinement"])
+    art, full = {}, {}
+    for r in _artifact("8_3_dat_nobump.csv"):
+        key = (r["group"], round(float(r["beta"]), 2))
+        art[key] = float(r["confinement"])
+        full[key] = r
+    u1_edge = max(float(r["beta"]) for r in _artifact("8_3_dat_confinement_order_parameter.csv")
+                  if r["phase"] == "confined")
     table = _table_after(["group", "lattice", "phase"])
     assert table, "Sec 8.3 K_signal table not found in PAPER.md"
     seen = 0
@@ -472,8 +480,35 @@ def test_ksignal_table_matches_artifacts():
         assert quoted, f"{key}: no K_signal parsed from {cells[3]!r}"
         assert abs(quoted[0] - round(art[key], 2)) < 5e-3, \
             f"{key} K_signal: paper {quoted[0]} vs artifact {art[key]:.4f}"
+        cols = ((3, "confinement"), (4, "confinement_shuffled"), (5, "confinement_minus_shuffled"))
+        # DERIVED: group, beta, lattice, the three read columns above, and the phase.
+        assert len(cells) == 4 + len(cols), f"{key}: the table row has {len(cells)} cells: {cells}"
+        for idx, col in cols:
+            written = _nums_written(cells[idx])
+            pair = (col, col + "_err")
+            assert len(written) == len(pair), \
+                f"{key}: {col} cell {cells[idx]!r} is not 'value +- error'"
+            for w, c in zip(written, pair):
+                v = float(w)                      # the sign is kept: `_nums_written` strips only "+"
+                assert abs(v - float(full[key][c])) <= _half_ulp(w), \
+                    f"{key} {c}: paper {v} vs artifact {full[key][c]}"
+        # The phase column: SU(2) is confined at every coupling; a U(1) coupling is confined up to
+        # the largest coupling the crossing artifact labels confined, and Coulomb above it.
+        expected = ("confined" if group != "u1" or betas[0] <= u1_edge else "Coulomb")
+        assert cells[-1] == expected, f"{key}: the table says {cells[-1]!r}, the artifact {expected!r}"
         seen += 1
-    assert seen >= 6, f"expected at least six rows, matched {seen}"
+    assert seen == len(table), f"matched {seen} of the {len(table)} table rows"
+    # The rows the Sec 8.3 prose names must be in the table: the reference ensemble (SU(2) at the
+    # sweep's strongest coupling), the plane-shape ensemble, and the U(1) ceiling and floor couplings.
+    op = _artifact("8_3_dat_confinement_order_parameter.csv")
+    named = {("su2", round(min(b for g, b in art if g == "su2"), 2)),
+             ("su2", round(float(_artifact("8_3_dat_ksignal_planescale.csv")[0]["beta"]), 2)),
+             ("u1", round(float(max((r for r in op if r["phase"] == "confined"),
+                                    key=lambda r: float(r["K_signal"]))["beta"]), 2)),
+             ("u1", round(float(min((r for r in op if r["phase"] != "confined"),
+                                    key=lambda r: float(r["K_signal"]))["beta"]), 2))}
+    rows_in_table = {(("su2" if "SU(2)" in c[0] else "u1"), round(_nums(c[1])[0], 2)) for c in table}
+    assert named <= rows_in_table, f"the table lacks the rows the prose names: {named - rows_in_table}"
 
 
 def _a_lambda(beta, N=2):
@@ -640,7 +675,7 @@ def test_lscan_plateau_claim_matches_artifact():
     """EVERY statement of the m_hi(L) plateau agrees with 8_7_dat_mhi_lscan.csv.
 
     The paper repeats this claim in its abstract, its summary sections, Sec 8.7 where it is derived,
-    the Figure 14 caption and the Sec 13 ledger, so one artifact number backs six sentences. The
+    the Figure 13 caption and the Sec 13 ledger, so one artifact number backs six sentences. The
     failure that matters is one of them being updated and the rest left behind, so it is not enough
     to find the value somewhere: every place the range is stated is located and checked. The band
     endpoints are two-decimal values that occur 8-12 times each in PAPER.md, so an unscoped match
@@ -672,7 +707,7 @@ def test_lscan_plateau_claim_matches_artifact():
         assert abs(got[0] - lo) < 5e-3 and abs(got[1] - hi) < 5e-3,             f"PAPER.md line {line} states the m_hi plateau as {got[0]}-{got[1]}, "             f"but 8_7_dat_mhi_lscan.csv gives {lo:.2f}-{hi:.2f}"
     assert found >= 5,         f"the m_hi plateau range is restated in {found} places; the paper carries it in at least 5, "         "so this check is not seeing them all"
 
-    # The mean, wherever it is restated alongside the window. Sec 8.7, the Figure 14 caption and the
+    # The mean, wherever it is restated alongside the window. Sec 8.7, the Figure 13 caption and the
     # Sec 12 ledger row all carry it, and the ledger row carries the range and mean but not the edges,
     # so the claims are checked one by one rather than passage by passage.
     # Matched on how the mean is written -- "mean $\approx" / "plateau $\approx" -- rather than on
@@ -687,7 +722,7 @@ def test_lscan_plateau_claim_matches_artifact():
     # The two resolution edges, in the two passages that give their values.
     edges = {int(r["L"]): float(r["m_hi"]) for r in rows if int(r["L"]) in (8, 32)}
     for name, anchor in (("Sec 8.7", "excluded from the plateau"),
-                         ("the Figure 14 caption", "**Figure 14.**")):
+                         ("the Figure 13 caption", "**Figure 13.**")):
         blk = _passage(text, anchor)
         for L, v in edges.items():
             assert f"{v:.2f}" in blk, f"{name} does not quote the L={L} resolution edge as {v:.2f}"
@@ -751,11 +786,11 @@ def test_two_read_agreement_claim_matches_the_artifacts():
     assert window == [12, 16, 20], f"the L=12-20 window is not populated: {window}"
 
     prose = _passage(text, "Both reads are drawn on the same axes")
-    caption = _passage(text, "**Figure 14.**")
+    caption = _passage(text, "**Figure 13.**")
 
     # the window each passage states is the window the artifacts populate
     assert "$L=" + ",".join(str(L) for L in window) + "$" in prose,         f"Sec 8.7 does not list the volumes it compares as L={window}"
-    assert f"$L={window[0]}$--${window[-1]}$" in caption,         f"the Figure 14 caption does not state the compared range as L={window[0]}-{window[-1]}"
+    assert f"$L={window[0]}$--${window[-1]}$" in caption,         f"the Figure 13 caption does not state the compared range as L={window[0]}-{window[-1]}"
 
     diffs = {L: abs(math.exp(-var[L][0]) - fwd[L][0]) for L in window}
     # The per-volume list is read POSITIONALLY. Checking that each value appears in the passage is
@@ -769,7 +804,7 @@ def test_two_read_agreement_claim_matches_the_artifacts():
         f"Sec 8.7 lists the per-volume differences as {listed.groups()}, but the artifacts give "
         f"{want} at L={window}")
     worst = max(diffs.values())
-    for where, blk in (("Sec 8.7", prose), ("the Figure 14 caption", caption)):
+    for where, blk in (("Sec 8.7", prose), ("the Figure 13 caption", caption)):
         assert (BS + "le" + f"{worst:.3f}") in blk, \
             f"{where} does not state the worst-case agreement as le{worst:.3f}"
 
@@ -786,7 +821,7 @@ def test_two_read_agreement_claim_matches_the_artifacts():
     e8 = fwd[8][1]
     assert e8 > fwd[8][0], "the L=8 forward read is no longer unresolved; the paper says it is"
     m8 = math.exp(-var[8][0])
-    for where, blk in (("Sec 8.7", prose), ("the Figure 14 caption", caption)):
+    for where, blk in (("Sec 8.7", prose), ("the Figure 13 caption", caption)):
         assert f"{e8:.2f}" in blk, f"{where} does not quote the L=8 forward error {e8:.2f}"
         assert f"{m8:.3f}" in blk, f"{where} does not quote the L=8 variational value {m8:.3f}"
 
@@ -831,7 +866,7 @@ def test_aperture_numbers_match_the_margin_artifact():
         return float(hit[0]["m_hi"])
 
     # The U(1) rows are read at L=8, the volume the released U(1) ensembles are held at and the one
-    # Sec 8.3 measures the K_signal transition on. The volume is part of each key so that a row
+    # Sec 8.3 reads K_signal on. The volume is part of each key so that a row
     # measured on a different one fails here rather than matching by (group, beta) alone.
     for label, (group, beta, L) in (
             ("Coulomb U(1) at beta=1.70", ("u1", 1.70, 8)),
@@ -1022,53 +1057,354 @@ def test_figures_are_numbered_sequentially_in_document_order():
             f"Figure {n}'s caption at line {i+1} does not follow an image embed"
 
 
-def test_phase_separation_claim_matches_the_order_parameter_artifact():
-    """Sec 8.3's certified phase separation, re-derived from 8_3_dat_confinement_order_parameter.csv.
+U1_BANDS = "**The $U(1)$ bands, read by $K_{" + BS + "mathrm{signal}}$.**"
 
-    the confined ceiling, the Coulomb floor, and the range each phase occupies. The Coulomb range
-    is the range over that phase's rows, which is not the value at the last coupling: K_signal is
-    non-monotonic there and peaks at beta=1.6, so the largest value sits inside the sweep rather
-    than at its end.
+# A sentence that names K_signal (or the resolved-mode count) and any of these words asserts that
+# K_signal tells the phases apart. Matched per SENTENCE, and per whole TABLE ROW, anywhere in the
+# paper, so a rewording of one phrase is still caught: "the phases are separated by ... and
+# K_signal", "K_signal, which separates them", "K_signal distinguishes the phases", "the order
+# parameter K_signal", "K_signal steps up across the transition", "confined low, Coulomb high".
+K_TOKEN = "K_{" + BS + "mathrm{signal}}"
+K_NAMES = re.compile(re.escape(K_TOKEN) + r"|resolved-mode count", re.I)
+SEPARATION_WORDS = re.compile(
+    r"separat|distinct|distinguish|discriminat|order parameter|no-bump|deconfinement step"
+    r"|rises sharply|steps? (?:sharply )?up|at \$95|below the Coulomb floor|carried by \$K_"
+    r"|rises across|tells? .{0,40}\bapart|\blow\b.{0,80}\bhigh\b", re.I)
 
-    The separation itself is checked, not just quoted: ceiling + 1.96 sigma must sit below
-    floor - 1.96 sigma for "at 95%" to mean anything.
+
+def _separation_claims(text: str) -> list[str]:
+    """The sentences and table rows of `text` that name K_signal and claim it separates the phases.
+    A table row is one unit (it carries no full stop, and its claim may sit in a different cell from
+    the K_signal it is about); prose is joined per paragraph and split at sentence ends."""
+    units, para = [], []
+    for line in text.split(chr(10)) + [""]:
+        if line.startswith("|"):
+            units.append(line)
+        elif line.strip():
+            para.append(line.strip())
+            continue
+        if para:
+            units += re.split(r"(?<=[.;])\s+", " ".join(para))
+            para = []
+    return [u for u in units if K_NAMES.search(u) and SEPARATION_WORDS.search(u)]
+
+
+def _check_u1_bands(text: str, rows: list[dict]) -> None:
+    """What the paper states about the compact-U(1) K_signal bands, held to the artifact.
+
+    The bands are the ranges of K_signal over each phase's rows: the confined ceiling is the largest
+    confined read, the Coulomb floor the smallest Coulomb read. The paper states ONE relation
+    between them -- the bands overlap, or they are separated -- and whichever it states is checked
+    against the artifact before any number is: an overlap claim needs ceiling >= floor, a separation
+    claim needs ceiling + z*se below floor - z*se at 95% in the normal approximation. A paper that
+    states both, or neither, fails, so the check cannot pass by the claim going missing.
     """
-    import math
+    from statistics import NormalDist
 
-    rows = _artifact("8_3_dat_confinement_order_parameter.csv")
     conf = [r for r in rows if r["phase"] == "confined"]
     coul = [r for r in rows if r["phase"] != "confined"]
     assert conf and coul, "the artifact no longer carries both phases"
-
-    text = PAPER.read_text(encoding="utf-8")
-    flat = " ".join(text.split())
-
     ceiling = max(conf, key=lambda r: float(r["K_signal"]))
     floor = min(coul, key=lambda r: float(r["K_signal"]))
     c, ce = float(ceiling["K_signal"]), float(ceiling["K_signal_err"])
     f, fe = float(floor["K_signal"]), float(floor["K_signal_err"])
 
-    assert c + 1.96 * ce < f - 1.96 * fe, (
-        f"the confined ceiling {c:.3f}+-{ce:.3f} and the Coulomb floor {f:.3f}+-{fe:.3f} overlap at "
-        "95%; the paper says the phases are distinct at that level")
+    passage = _passage(text, U1_BANDS)
+    flat = " ".join(text.split())
+    says_overlap = "bands overlap" in passage
+    says_separated = _separation_claims(text)
+    assert says_overlap != bool(says_separated), (
+        "the paper must state exactly one relation between the U(1) bands; it states "
+        + ("both an overlap and a separation " + repr(says_separated) if says_overlap
+           else "neither an overlap nor a separation"))
 
-    # Anchored on the word, not the digits: "0.096" also appears in the confined-phase bound
-    # immediately before, and "0.153" in the Coulomb range, so a bare substring check passes when
-    # the ceiling or floor alone has drifted.
-    for word, value in (("ceiling", c), ("floor", f)):
-        assert f"{word} ${value:.3f}" in flat,             f"the paper does not quote the {word} as {value:.3f}"
+    if says_overlap:
+        assert c >= f, (
+            f"the paper says the U(1) bands overlap, but the artifact separates them: confined "
+            f"ceiling {c:.4f}+-{ce:.4f} (beta={ceiling['beta']}) sits below the Coulomb floor "
+            f"{f:.4f}+-{fe:.4f} (beta={floor['beta']})")
+        assert "lies above" not in passage or c > f, \
+            "the paper says the confined ceiling lies above the Coulomb floor; the artifact does not"
+    else:
+        # DERIVED: the two-sided 95% point of the normal distribution, the level the claim names.
+        z = NormalDist().inv_cdf(0.975)
+        assert c + z * ce < f - z * fe, (
+            f"the paper claims the U(1) phases are separated ({says_separated}), but the confined "
+            f"ceiling {c:.4f}+-{ce:.4f} and the Coulomb floor {f:.4f}+-{fe:.4f} overlap at 95%")
+
+    # Anchored on the word, not the digits: the ceiling's value also bounds the confined range in
+    # the same passage, so a bare substring check passes when the ceiling alone has drifted.
+    for word, value, err in (("ceiling", c, ce), ("floor", f, fe)):
+        quoted = f"{word} ${value:.4f}{BS}pm{err:.4f}$"
+        assert quoted in passage, f"the passage does not quote the {word} as {quoted!r}"
 
     lo, hi = min(float(r["K_signal"]) for r in coul), max(float(r["K_signal"]) for r in coul)
-    assert f"Coulomb-phase ${lo:.3f}$" in flat and f"${hi:.3f}$" in flat, (
-        f"the paper does not state the Coulomb range as {lo:.3f}-{hi:.3f}; the maximum is at "
-        f"beta={max(coul, key=lambda r: float(r['K_signal']))['beta']}, not the last coupling")
+    assert f"Coulomb phase ${lo:.4f}$–${hi:.4f}$" in passage, (
+        f"the passage does not state the Coulomb range as {lo:.4f}-{hi:.4f}; the maximum is at "
+        f"beta={max(coul, key=lambda r: float(r['K_signal']))['beta']}")
+    clo, chi = min(float(r["K_signal"]) for r in conf), max(float(r["K_signal"]) for r in conf)
+    assert f"confined phase occupies ${clo:.4f}$–${chi:.4f}$" in passage, \
+        f"the passage does not state the confined range as {clo:.4f}-{chi:.4f}"
 
 
-    conf_hi = max(float(r["K_signal"]) for r in conf)
-    # anchored on the spelling: "0.096" also appears as the ceiling value in the same sentence,
-    # so a bare match cannot tell the range bound from the ceiling
-    assert f"{BS}lesssim{conf_hi:.3f}" in flat, \
-        f"the paper does not state the confined range as reaching {conf_hi:.3f}"
+def test_phase_separation_claim_matches_the_order_parameter_artifact():
+    """Sec 8.3's statement about the compact-U(1) K_signal bands, re-derived from
+    8_3_dat_confinement_order_parameter.csv: the relation it states between the confined ceiling and
+    the Coulomb floor, their values with standard errors, and the range each phase occupies."""
+    _check_u1_bands(PAPER.read_text(encoding="utf-8"),
+                    _artifact("8_3_dat_confinement_order_parameter.csv"))
+
+
+def _out3(lo: float, hi: float) -> tuple[str, str]:
+    """A range quoted to three decimals, rounded OUTWARD so the quoted range contains the data."""
+    down = math.floor(round(lo * 1000, 6)) / 1000
+    up = math.ceil(round(hi * 1000, 6)) / 1000
+    return f"{down:+.3f}", f"{up:+.3f}"
+
+
+def test_ksignal_prose_matches_the_artifacts():
+    """Every number Sec 8.3's prose, Figures 1 and 4, the abstract, Sec 3 and the Sec 14 band row
+    state about K_signal, recomputed from 8_3_dat_nobump.csv and 8_3_dat_confinement_order_parameter.csv.
+
+    Ranges quoted to four decimals are the data's own minimum and maximum; ranges quoted to three are
+    rounded outward. Every range and every rise is read TOGETHER with the group and the coupling split
+    the prose writes beside it, and recomputed at that split, so moving a split or swapping a group
+    name fails. A rise is the difference of inverse-variance-weighted means between the two coupling
+    ranges; "comparable" is held to agreement at 95% in the normal approximation.
+    """
+    from statistics import NormalDist
+
+    nb = _artifact("8_3_dat_nobump.csv")
+    op = _artifact("8_3_dat_confinement_order_parameter.csv")
+    text = PAPER.read_text(encoding="utf-8")
+    flat = " ".join(text.split())
+
+    def sel(rows, group, lo=-math.inf, hi=math.inf):
+        return [r for r in rows if r.get("group", "u1") == group and lo <= float(r["beta"]) <= hi]
+
+    def rng(vals):
+        return f"${min(vals):.4f}$–${max(vals):.4f}$"
+
+    k = lambda rs: [float(r["confinement"]) for r in rs]
+    # The U(1) rows of both artifacts: the crossing artifact adds beta = 1.40 and 1.60.
+    u1 = {round(float(r["beta"]), 2): (float(r["confinement"]), float(r["confinement_shuffled"]),
+                                         float(r["confinement_minus_shuffled"]),
+                                         float(r["confinement_minus_shuffled_err"]),
+                                         float(r["confinement_err"]))
+          for r in sel(nb, "u1")}
+    for r in op:
+        u1.setdefault(round(float(r["beta"]), 2), (
+            float(r["K_signal"]), float(r["K_signal_shuffled"]),
+            float(r["K_signal_minus_shuffled"]), float(r["K_signal_minus_shuffled_err"]),
+            float(r["K_signal_err"])))
+
+    su2 = sel(nb, "su2")
+    u1rows = [dict(beta=b, k=v[0], e=v[4], d=v[2], de=v[3]) for b, v in u1.items()]
+    su2rows = [dict(beta=float(r["beta"]), k=float(r["confinement"]), e=float(r["confinement_err"]),
+                    d=float(r["confinement_minus_shuffled"]),
+                    de=float(r["confinement_minus_shuffled_err"])) for r in su2]
+    rows_of = {"SU(2)": su2rows, "U(1)": u1rows}
+
+    def within(rows, lo=-math.inf, hi=math.inf):
+        return [r for r in rows if lo <= r["beta"] <= hi]
+
+    def wmean(rows, v, e):
+        w = [1 / r[e] ** 2 for r in rows]
+        return sum(wi * r[v] for wi, r in zip(w, rows)) / sum(w), math.sqrt(1 / sum(w))
+
+    def step(rows, lo_split, hi_split, v, e):
+        (a, ea) = wmean(within(rows, hi=lo_split), v, e)
+        (b, eb) = wmean(within(rows, lo=hi_split), v, e)
+        return b - a, math.hypot(ea, eb)
+
+    # DERIVED: the two-sided 95% point of the normal distribution, for "comparable".
+    z = NormalDist().inv_cdf(0.975)
+    num = r"([+-]?\d+\.\d+)"
+    pm = num + re.escape(BS + "pm") + num
+    le = re.escape(BS + "beta" + BS + "le")
+    ge = re.escape(BS + "beta" + BS + "ge")
+
+    # the reference ensemble is SU(2) at the strongest coupling of the sweep, beta = 0.50
+    ref = min(su2, key=lambda r: float(r["beta"]))
+    p = _passage(text, "The reference ensemble itself")
+    assert (f"{BS}beta={float(ref['beta']):.2f}$, reads "
+            f"${float(ref['confinement']):.4f}{BS}pm{float(ref['confinement_err']):.4f}$") in p
+    # each range is tied to the group and the coupling split written beside it
+    ranges = re.findall(r"\$(SU\(2\)|U\(1\))\$ reads \$" + num + r"\$–\$" + num + r"\$ at \$" + le + num
+                        + r"\$ and \$" + num + r"\$–\$" + num + r"\$ at \$" + ge + num + r"\$", p)
+    assert sorted(g for g, *_ in ranges) == ["SU(2)", "U(1)"], f"the ranges sentence parsed as {ranges}"
+    splits = {}
+    for g, lo1, hi1, s1, lo2, hi2, s2 in ranges:
+        a = [r["k"] for r in within(rows_of[g], hi=float(s1))]
+        b = [r["k"] for r in within(rows_of[g], lo=float(s2))]
+        assert (lo1, hi1) == (f"{min(a):.4f}", f"{max(a):.4f}"), f"{g} beta<={s1}: {min(a):.4f}-{max(a):.4f}"
+        assert (lo2, hi2) == (f"{min(b):.4f}", f"{max(b):.4f}"), f"{g} beta>={s2}: {min(b):.4f}-{max(b):.4f}"
+        splits[g] = (float(s1), float(s2))
+    m = re.search(r"rises by \$" + pm + r"\$ inside the confined phase of \$SU\(2\)\$, comparable to the \$"
+                  + pm + r"\$ across the \$U\(1\)\$ transition", p)
+    assert m, "the ranges passage does not state the two K_signal rises as comparable"
+    s_su2 = step(su2rows, *splits["SU(2)"], "k", "e")
+    s_u1 = step(u1rows, *splits["U(1)"], "k", "e")
+    for (qv, qe), (v, e), g in (((m[1], m[2]), s_su2, "SU(2)"), ((m[3], m[4]), s_u1, "U(1)")):
+        assert (qv, qe) == (f"{v:+.4f}", f"{e:.4f}"), f"the {g} K_signal rise is {v:+.4f}+-{e:.4f}"
+    assert abs(s_su2[0] - s_u1[0]) <= z * math.hypot(s_su2[1], s_u1[1]), \
+        "the paper calls the two K_signal rises comparable; they differ at 95%"
+    abstract = _passage(text, "the number of spatial modes of the action density standing above")
+    assert (f"by ${s_su2[0]:+.4f}{BS}pm{s_su2[1]:.4f}$, comparable to the "
+            f"${s_u1[0]:+.4f}{BS}pm{s_u1[1]:.4f}$ across") in abstract, "the abstract's two rises"
+
+    # the spatial part, each bound tied to the coupling range written beside it
+    p = _passage(text, "**The spatial part.**")
+    m = re.search(r"within \$" + re.escape(BS + "pm") + num + r"\$ of zero at every \$" + le + num
+                  + r"\$ \(at most \$" + num + r"\$ standard errors\)", p)
+    assert m, "the U(1) confined difference bound is not stated with its coupling range"
+    conf = within(u1rows, hi=float(m[2]))
+    assert m[1] == _out3(0, max(abs(r["d"]) for r in conf))[1][1:], "the U(1) confined difference bound"
+    ratio = max(abs(r["d"]) / r["de"] for r in conf)
+    assert m[3] == f"{math.ceil(round(ratio * 10, 6)) / 10:.1f}", f"the largest |d|/se is {ratio:.3f}"
+    for b in (1.00, 1.05):
+        d, e = u1[b][2], u1[b][3]
+        assert f"${d:+.4f}{BS}pm{e:.4f}$" in p, f"the U(1) beta={b} difference"
+    m = re.search(r"\$" + num + r"\$ to \$" + num + r"\$ across \$" + re.escape(BS + "beta") + "=" + num
+                  + r"\$–\$" + num + r"\$", p)
+    assert m, "the U(1) Coulomb difference range is not stated with its coupling range"
+    ds = [r["d"] for r in within(u1rows, float(m[3]), float(m[4]))]
+    assert (m[1], m[2]) == _out3(min(ds), max(ds)), f"the U(1) difference over beta {m[3]}-{m[4]}"
+    m = re.search(r"For \$SU\(2\)\$ it is \$" + num + r"\$ to \$" + num + r"\$ at \$" + le + num
+                  + r"\$ and \$" + num + r"\$ to \$" + num + r"\$ at \$" + ge + num + r"\$", p)
+    assert m, "the SU(2) difference ranges are not stated with their coupling ranges"
+    for lo, hi, rs in ((m[1], m[2], within(su2rows, hi=float(m[3]))),
+                       (m[4], m[5], within(su2rows, lo=float(m[6])))):
+        ds = [r["d"] for r in rs]
+        assert (lo, hi) == _out3(min(ds), max(ds)), f"an SU(2) difference range: {_out3(min(ds), max(ds))}"
+    su2_d_split = (float(m[3]), float(m[6]))
+    m = re.search(r"rises by \$" + pm + r"\$ between those \$SU\(2\)\$ ranges, comparable to the \$" + pm
+                  + r"\$ across the \$U\(1\)\$ transition \(\$" + le + num + r"\$ to \$" + ge + num + r"\$\)", p)
+    assert m, "the spatial part does not state the two difference rises as comparable"
+    d_su2 = step(su2rows, *su2_d_split, "d", "de")
+    d_u1 = step(u1rows, float(m[5]), float(m[6]), "d", "de")
+    for (qv, qe), (v, e), g in (((m[1], m[2]), d_su2, "SU(2)"), ((m[3], m[4]), d_u1, "U(1)")):
+        assert (qv, qe) == (f"{v:+.4f}", f"{e:.4f}"), f"the {g} difference rise is {v:+.4f}+-{e:.4f}"
+    assert abs(d_su2[0] - d_u1[0]) <= z * math.hypot(d_su2[1], d_u1[1]), \
+        "the paper calls the two difference rises comparable; they differ at 95%"
+
+    # the shuffled U(1) reads, in Sec 8.3 and in Figure 4
+    sh = rng([v[1] for v in u1.values()])
+    assert sh in _passage(text, "**What changes across the $U(1)$ transition.**"), sh
+    fig4 = _passage(text, "**Figure 4.**")
+    u1nb = sel(nb, "u1")
+    # the sides of the transition as the crossing artifact labels them (beta = 1.00 is confined)
+    edge = max(float(r["beta"]) for r in op if r["phase"] == "confined")
+    for vals in (k([r for r in u1nb if float(r["beta"]) <= edge]),
+                 k([r for r in u1nb if float(r["beta"]) > edge]),
+                 [float(r["confinement_shuffled"]) for r in u1nb]):
+        assert rng(vals) in fig4, f"the Figure 4 caption does not state {rng(vals)}"
+
+    # Figure 1: every read, real and shuffled, both groups; and the difference away from beta 1.00-1.05
+    fig1 = _passage(text, "**Figure 1.**")
+    allv = k(nb) + [float(r["confinement_shuffled"]) for r in nb]
+    lo, hi = _out3(min(allv), max(allv))
+    assert f"${lo[1:]}$–${hi[1:]}$" in fig1, f"the Figure 1 caption does not state {lo[1:]}-{hi[1:]}"
+    rest = [float(r["confinement_minus_shuffled"]) for r in nb
+            if not (r["group"] == "u1" and round(float(r["beta"]), 2) in (1.00, 1.05))]
+    lo, hi = _out3(min(rest), max(rest))
+    assert f"${lo}$ to ${hi}$" in fig1, f"the Figure 1 caption does not state {lo} to {hi}"
+    for b in (1.00, 1.05):
+        d, e = u1[b][2], u1[b][3]
+        assert f"${d:+.4f}{BS}pm{e:.4f}$" in fig1, f"Figure 1: the U(1) beta={b} difference"
+
+    # the abstract and Sec 3 quote the range of every real read
+    whole = rng(k(nb))
+    for marker in ("the number of spatial modes of the action density standing above",
+                   "counts the SVD modes standing above"):
+        assert whole in _passage(text, marker), f"{marker!r}: the range {whole} is not stated"
+
+    # the Sec 14 band row
+    row = [l for l in text.split(chr(10)) if l.startswith("|") and "8_3_run_confinement_order_parameter.py" in l]
+    # DERIVED: the Sec 14 ledger carries one row per claim.
+    assert len(row) == 1, f"expected one Sec 14 row for the U(1) bands, found {len(row)}"
+    conf_rows = [r for r in op if r["phase"] == "confined"]
+    coul_rows = [r for r in op if r["phase"] != "confined"]
+    ceiling = max(float(r["K_signal"]) for r in conf_rows)
+    floor = min(float(r["K_signal"]) for r in coul_rows)
+    assert f"confined ceiling ${ceiling:.4f}$ above Coulomb floor ${floor:.4f}$" in row[0], \
+        f"the Sec 14 band row does not carry ceiling {ceiling:.4f} and floor {floor:.4f}"
+    assert ceiling >= floor, "the Sec 14 row says the ceiling is above the floor"
+    assert not _separation_claims(text), _separation_claims(text)
+
+
+def test_the_u1_band_check_can_fail(tmp_path):
+    """NEGATIVE CONTROL for the check above, independent of the paper's current state.
+
+    A passage is written FROM an artifact, so its numbers always match; only the stated relation can
+    then disagree. Four cases: the committed artifact with an overlap passage (passes); a mutated
+    artifact whose Coulomb rows are lifted clear of the confined ceiling, with the same overlap
+    wording (must fail); that mutated artifact with a separation passage (passes, the other branch
+    reached); and the committed artifact with a separation passage (must fail whenever the committed
+    bands are not separated at 95%).
+    """
+    from statistics import NormalDist
+
+    rows = _artifact("8_3_dat_confinement_order_parameter.csv")
+
+    def passage(rs, relation):
+        conf = [r for r in rs if r["phase"] == "confined"]
+        coul = [r for r in rs if r["phase"] != "confined"]
+        cr = max(conf, key=lambda r: float(r["K_signal"]))
+        fr = min(coul, key=lambda r: float(r["K_signal"]))
+        lo = min(float(r["K_signal"]) for r in coul)
+        hi = max(float(r["K_signal"]) for r in coul)
+        pm = lambda r: f"${float(r['K_signal']):.4f}{BS}pm{float(r['K_signal_err']):.4f}$"
+        clo = min(float(r["K_signal"]) for r in conf)
+        rel = ("so the two bands overlap" if relation == "overlap"
+               else f"so ${K_TOKEN}$ separates the phases")
+        return (f"Preamble.\n\n{U1_BANDS} The confined phase occupies "
+                f"${clo:.4f}$–${float(cr['K_signal']):.4f}$ and the Coulomb phase "
+                f"${lo:.4f}$–${hi:.4f}$: the confined ceiling {pm(cr)} and the Coulomb "
+                f"floor {pm(fr)}, {rel}.\n\nAfter.\n")
+
+    def reread(rs):
+        p = tmp_path / "8_3_dat_confinement_order_parameter.csv"
+        with open(p, "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rs[0]))
+            w.writeheader()
+            w.writerows(rs)
+        with open(p, newline="") as fh:
+            return list(csv.DictReader(fh))
+
+    conf = [r for r in rows if r["phase"] == "confined"]
+    coul = [r for r in rows if r["phase"] != "confined"]
+    c = max(float(r["K_signal"]) for r in conf)
+    ce = max(float(r["K_signal_err"]) for r in rows)
+    f = min(float(r["K_signal"]) for r in coul)
+    # The lift is the ceiling-floor gap plus ten of the largest standard errors, so the mutated bands
+    # are separated at 95% by a wide margin whatever the committed ones are.
+    # DERIVED: ten standard errors exceed the 1.96 + 1.96 = 3.92 the 95% separation needs.
+    lift = max(c - f, 0.0) + 10 * ce
+    lifted = reread([{**r, "K_signal": f"{float(r['K_signal']) + lift:.4f}"}
+                     if r["phase"] != "confined" else r for r in rows])
+
+    committed = reread(rows)
+    if c >= f:                                   # the committed bands overlap, as the paper states
+        _check_u1_bands(passage(committed, "overlap"), committed)
+    with pytest.raises(AssertionError, match="overlap, but the artifact separates"):
+        _check_u1_bands(passage(lifted, "overlap"), lifted)
+    _check_u1_bands(passage(lifted, "separated"), lifted)
+    # DERIVED: the same two-sided 95% point the check applies.
+    z = NormalDist().inv_cdf(0.975)
+    cr = max(conf, key=lambda r: float(r["K_signal"]))
+    fr = min(coul, key=lambda r: float(r["K_signal"]))
+    if float(cr["K_signal"]) + z * float(cr["K_signal_err"]) >= \
+            float(fr["K_signal"]) - z * float(fr["K_signal_err"]):
+        with pytest.raises(AssertionError, match="overlap at 95%"):
+            _check_u1_bands(passage(committed, "separated"), committed)
+    # and a passage that states both relations, or neither, is refused
+    with pytest.raises(AssertionError, match="exactly one relation"):
+        _check_u1_bands(passage(committed, "overlap").replace(
+            "overlap.", f"overlap. What separates the phases is ${K_TOKEN}$."), committed)
+    with pytest.raises(AssertionError, match="exactly one relation"):
+        _check_u1_bands(passage(committed, "overlap").replace("bands overlap", "bands meet"),
+                        committed)
 
 
 def test_su3_second_moment_claims_match_the_artifact():
@@ -1143,7 +1479,7 @@ def test_disorder_response_separation_matches_the_artifact():
     chi_v = -dH/dbeta, so this DERIVES the peaks rather than matching a stored column -- the failure
     it guards against is a regenerated H moving the peak while the prose keeps the old factor.
 
-    Three passages depend on it: Sec 8.4's numbers, the Figure 3 caption, and the Sec 13 ledger row.
+    Three passages depend on it: Sec 8.4's numbers, the Figure 2 caption, and the Sec 13 ledger row.
     Nothing named this artifact before.
     """
     import collections
@@ -1193,7 +1529,7 @@ def test_disorder_response_separation_matches_the_artifact():
 
 
 def test_gap_calibration_states_both_ends():
-    """Sec 8.5 and the Figure 4/5 captions quote the free-scalar calibration at BOTH ends.
+    """Sec 8.5 and the Figure 3/4 captions quote the free-scalar calibration at BOTH ends.
 
     8_5_dat_gap_calibration.csv reads each mass from four disjoint seed blocks and records the
     block mean, the SPREAD across blocks, and the deviation from the exact E_0 in units of that
@@ -1309,7 +1645,7 @@ def test_gap_identity_residual_matches_the_probe_artifact():
     n = flat.count(stated)
     assert n >= 3, (
         f"the gap-identity bound {stated} appears {n} times; the paper states it in Sec 8.6, the "
-        "Figure 6 caption and the Sec 13 ledger")
+        "Figure 5 caption and the Sec 13 ledger")
 
     # nothing may still quote a bound the artifact does not support
     assert f"{BS}sim6{BS}times10^{{-11}}" not in flat, \
@@ -1360,35 +1696,18 @@ def test_the_benchmark_reproduces_the_calibration_it_summarises():
 
 
 def test_plane_scale_caveat_matches_its_artifact():
-    """Sec 8.3's plane-size caveat carries the numbers 8_3_dat_ksignal_planescale.csv measured.
+    """Sec 8.3's plane-shape passage carries the numbers 8_3_dat_ksignal_planescale.csv measured.
 
-    K_signal is a per-plane resolved-mode count, so its absolute level depends on the plane: the same
-    SU(2) beta=2.3 ensemble reads 0.08 on 8^3 and 0.67 on 16^3. That caveat is what keeps the Sec 8.3
-    thresholds meaningful -- the confined ceiling of 0.096 and the Coulomb floor of 0.153 are 8^3
-    numbers, and without the caveat a reader would take them as absolute and find the 16^3 value
-    sitting far above the "Coulomb" range for a confined ensemble.
-
-    So the caveat is load-bearing prose, and this holds its numbers to the artifact.
+    The reference null is a level for the top singular value of a plane of one shape, so it is
+    pinned per shape. Read that way, the same SU(2) beta=2.30 ensemble reads K_signal on 8x8 and on
+    16x16 planes, and the passage quotes both reads with their standard errors and calls them the
+    same level. This holds each quoted read to its artifact row at the precision it is written, the
+    "same level" to the artifact (the two reads agree at 95% in the normal approximation), and the
+    Sec 14 ledger row to the same two values.
     """
     rows = _artifact("8_3_dat_ksignal_planescale.csv")
     assert len(rows) >= 2, "the plane-scale artifact needs at least two plane sizes"
-    by_plane = {r["plane"]: float(r["K_signal"]) for r in rows}
-    flat = " ".join(PAPER.read_text(encoding="utf-8").split())
-
-    small = min(by_plane.items(), key=lambda kv: kv[1])
-    large = max(by_plane.items(), key=lambda kv: kv[1])
-    # inside the caveat sentence: "0.08" occurs three times in the paper and "0.67" elsewhere too,
-    # so the reads are located by the sentence that compares them rather than by their digits
-    cav = flat.find("scales with the plane size")
-    assert cav != -1, "the plane-size caveat is gone; the Sec 8.3 thresholds would read as absolute"
-    sent = flat[cav:cav + 220]
-    for label, (plane, value) in (("small-plane", small), ("large-plane", large)):
-        assert f"{value:.2f}" in sent, (
-            f"the caveat sentence does not carry the {label} read ({plane}) as {value:.2f}")
-
-    # the caveat itself must still be there
-    assert "scales with the plane size" in flat, \
-        "the plane-size caveat is gone; the Sec 8.3 thresholds would read as absolute"
+    _check_plane_shape(PAPER.read_text(encoding="utf-8"), rows)
 
     # and the two reads must be the same ensemble, or the comparison says nothing
     groups = {r["group"] for r in rows}
@@ -1396,6 +1715,77 @@ def test_plane_scale_caveat_matches_its_artifact():
     assert len(groups) == 1 and len(betas) == 1, (
         f"the plane-scale rows span {groups} and {betas}; the caveat compares one ensemble at two "
         "plane sizes")
+
+
+PLANE_SHAPE = "**The plane shape.**"
+
+
+def _check_plane_shape(text: str, rows: list[dict]) -> None:
+    """The plane-shape passage quotes each read, states the relation between them, and the Sec 14
+    row carries the same values. The relation is REQUIRED: the passage says the reads are "the same
+    level" (they must agree at 95% in the normal approximation) or "different levels" (they must
+    not), so a passage that drops or flips the relation fails rather than skipping the check."""
+    from statistics import NormalDist
+
+    passage = _passage(text, PLANE_SHAPE)
+    for r in rows:
+        n = r["plane"].split("x")[0]
+        quoted = (f"${float(r['K_signal']):.4f}{BS}pm{float(r['K_signal_err']):.4f}$ on "
+                  f"${n}{BS}times{n}$ planes")
+        assert quoted in passage, f"the plane-shape passage does not quote the {r['plane']} read as {quoted!r}"
+    assert f"{BS}beta={float(rows[0]['beta']):.2f}$ ensemble" in passage, \
+        f"the plane-shape passage does not name the beta={rows[0]['beta']} ensemble"
+
+    same, different = "the same level" in passage, "different levels" in passage
+    assert same != different, "the plane-shape passage must state whether the reads are the same level"
+    a, b = rows[0], rows[1]
+    diff = abs(float(a["K_signal"]) - float(b["K_signal"]))
+    se = math.hypot(float(a["K_signal_err"]), float(b["K_signal_err"]))
+    # DERIVED: the two-sided 95% point of the normal distribution.
+    z = NormalDist().inv_cdf(0.975)
+    agree = diff <= z * se
+    assert agree == same, (
+        f"the passage calls the {a['plane']} and {b['plane']} reads "
+        f"{'the same level' if same else 'different levels'}, but they differ by {diff:.4f} "
+        f"against {z:.2f} x {se:.4f}")
+
+    ledger = [l for l in text.split(chr(10)) if l.startswith("|") and "8_3_run_ksignal_planescale.py" in l]
+    # DERIVED: the Sec 14 ledger carries one row per claim.
+    assert len(ledger) == 1, f"expected one Sec 14 row for the plane-shape read, found {len(ledger)}"
+    for r in rows:
+        assert f"${float(r['K_signal']):.4f}$" in ledger[0], \
+            f"the Sec 14 row does not carry the {r['plane']} read {float(r['K_signal']):.4f}"
+
+
+def test_the_plane_shape_check_can_fail():
+    """NEGATIVE CONTROL for the plane-shape check: a passage and ledger row written FROM the rows,
+    so every number matches, and only the stated relation can disagree. The committed rows with
+    "the same level" pass; the 16x16 read moved far from the 8x8 read, with the numbers rewritten
+    to match, fails under "the same level" and passes under "different levels"; a passage with no
+    relation fails."""
+    rows = _artifact("8_3_dat_ksignal_planescale.csv")
+
+    def text(rs, relation):
+        reads = " and ".join(
+            f"${float(r['K_signal']):.4f}{BS}pm{float(r['K_signal_err']):.4f}$ on "
+            f"${r['plane'].split('x')[0]}{BS}times{r['plane'].split('x')[0]}$ planes" for r in rs)
+        vals = ", ".join(f"${float(r['K_signal']):.4f}$" for r in rs)
+        return (f"Intro.\n\n{PLANE_SHAPE} The same $SU(2)$ ${BS}beta={float(rs[0]['beta']):.2f}$ "
+                f"ensemble reads {reads}: {relation}.\n\n| row ({vals}) | "
+                f"`8_3_run_ksignal_planescale.py` | verified |\n")
+
+    _check_plane_shape(text(rows, "the same level"), rows)
+    big = max(float(r["K_signal_err"]) for r in rows)
+    # DERIVED: ten of the larger standard error, well past the 1.96 x sqrt(2) the 95% test needs.
+    moved = [{**r, "K_signal": f"{float(r['K_signal']) + 10 * big:.4f}"} if r is rows[-1] else r
+             for r in rows]
+    with pytest.raises(AssertionError, match="calls the"):
+        _check_plane_shape(text(moved, "the same level"), moved)
+    _check_plane_shape(text(moved, "different levels"), moved)
+    with pytest.raises(AssertionError, match="calls the"):
+        _check_plane_shape(text(rows, "different levels"), rows)
+    with pytest.raises(AssertionError, match="must state whether"):
+        _check_plane_shape(text(rows, "as read"), rows)
 
 
 def test_the_string_tension_table_is_the_curve_at_its_read_window():
@@ -1470,7 +1860,7 @@ def test_the_gap_scale_quotes_no_imported_coefficient():
 def test_every_panel_a_figure_draws_is_described_in_its_caption():
     """A caption names every panel its script draws.
 
-    Figure 8's script draws four panels and its caption described three: panel D, the volume scan
+    Figure 7's script draws four panels and its caption described three: panel D, the volume scan
     carrying the L-independence the uniform-in-volume argument rests on, had no caption text at all.
     A reader reaching it finds an undescribed panel, and nothing else notices -- the figure exists,
     the embed resolves, and the caption reads as complete.
@@ -1506,7 +1896,7 @@ def test_every_panel_a_figure_draws_is_described_in_its_caption():
 def test_stated_ensemble_sizes_match_their_artifacts():
     """Every ensemble size a caption or ledger row states is the one its artifact records.
 
-    Four claims, three artifacts: Figure 7 and Figure 9 each say 512 configurations, and the Figure
+    Four claims, three artifacts: Figure 6 and Figure 8 each say 512 configurations, and the Figure
     10 caption and the Sec 13 ledger row both say n >= 96. A configuration count is the first thing
     a reader weighs a measurement by, and it is the number most likely to survive a regeneration
     unchanged in the prose -- the artifacts carry it per row, the paper carries it once.
@@ -2008,7 +2398,7 @@ def test_the_correlator_positive_range_is_the_artifact_s():
         last_positive = first_neg - 1 if last_positive is None else min(last_positive, first_neg - 1)
     assert text.count(f"$" + BS + "tau=" + str(last_positive) + "$") >= 2, (
         f"the correlator is positive out to tau={last_positive} at every smearing; Sec 8.7 and the "
-        f"Figure 7 caption should both say so, and one of them does not")
+        f"Figure 6 caption should both say so, and one of them does not")
 
 
 def _aperture_ceiling():
@@ -2438,7 +2828,7 @@ def test_every_aperture_table_cell_matches_the_artifact():
 
     wanted = {
         r'$\langle d^2\rangle$ circle': lambda r: '%.3f' % r['d2_circle'],
-        r'$\langle d^2\rangle$ raw (retired)': lambda r: '%.1f' % r['d2_raw'],
+        r'$\langle d^2\rangle$ raw index': lambda r: '%.1f' % r['d2_raw'],
         r'$\mu L^2$': lambda r: '%.2f' % (r['mu'] * r['L'] ** 2),
         r'$c$ required': lambda r: sci(r['d2_circle'] / r['L'] ** 2),
         r'margin to $c_{\max}$': lambda r: '%.1f' % (c_max / (r['d2_circle'] / r['L'] ** 2)),
@@ -2580,7 +2970,7 @@ def test_u1_discriminator_claims_match_the_artifact():
     # is the unit `_passage` returns, and searching the wrong one would be the document-wide
     # search again under another name.
     peak = max(rows, key=lambda r: float(r['mu']))
-    nearby = _passage(text, 'not blind to the physics').replace(' ', '')
+    nearby = _passage(text, 'The read responds to the transition').replace(' ', '')
     assert ('%.2f' % float(peak['beta'])) in nearby, (
         'the paper does not state that the tension peaks at beta=%.2f' % float(peak['beta']))
 

@@ -51,9 +51,10 @@ import sys
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean", "MassGap")
-#: Where a document may live. The working files are in the repo; `_scratch/CURRENT` is kept in the
-#: search path because a thread may still be parked there.
+#: Where a document may live: the repository root, `research/`, and `_scratch/CURRENT` beside the
+#: repository, where the Clay working documents are kept outside the published tree.
 DOC_DIRS = [
+    REPO,
     os.path.join(REPO, "research"),
     os.path.join(os.path.dirname(REPO), "_scratch", "CURRENT"),
 ]
@@ -61,10 +62,11 @@ DOC_DIRS = [
 #: Documents whose citations must resolve. A name here that is NOT found in any of `DOC_DIRS` FAILS
 #: rather than being skipped: these are tracked files, so an absent one means a move left the gate
 #: reading nothing, which is the one outcome a citation gate must not report as clean.
-DOCS = ["CLAY-CHECKLIST.md", "CLAY-DETAIL.md"]
+DOCS = ["README.md"]
 
-#: Documents to check if present and to pass over if not. A parked thread is allowed to disappear.
-OPTIONAL_DOCS = ["CLAY-GOAL.md"]
+#: Documents to check if present and to pass over if not: the Clay working documents live outside the
+#: repository, so a clone or a CI runner does not have them.
+OPTIONAL_DOCS = ["CLAY-CHECKLIST.md", "CLAY-DETAIL.md", "CLAY-GOAL.md"]
 
 
 def _locate(name: str) -> str | None:

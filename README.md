@@ -29,9 +29,8 @@ Review, feedback and fixes are welcome.
 
 ## What it establishes
 
-Everything below is a Lean statement that compiles, axiom footprint included; the live account, theorem by
-theorem, is [`research/CLAY-CHECKLIST.md`](research/CLAY-CHECKLIST.md) with its companion
-[`research/CLAY-DETAIL.md`](research/CLAY-DETAIL.md).
+Everything below is a Lean statement that compiles, axiom footprint included; the account, theorem by
+theorem, is §13 of the paper ([`research/PAPER.md`](research/PAPER.md)).
 
 **The lattice gap at every coupling, from one clustering inequality.** `PeriodicState.periodicState` is an
 infinite-volume $SU(N)$ Wilson state at every coupling, built as a limit of periodic-lattice states,

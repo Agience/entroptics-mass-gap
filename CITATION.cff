@@ -43,3 +43,11 @@ references:
     repository-code: "https://github.com/Agience/entroptics"
     license: Apache-2.0
     date-released: "2026-09-29"
+doi: "10.5281/zenodo.23051385"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23051385"
+    description: "This work, v0.2.2 version DOI"
+  - type: doi
+    value: "10.5281/zenodo.22652660"
+    description: "This work, concept DOI (all versions)"

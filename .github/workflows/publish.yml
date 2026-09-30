@@ -144,8 +144,9 @@
 #   3. publish the DATA record by hand in the Zenodo UI; note the minted DOI;
 #   4. write that DOI into the store's CITATION / `.zenodo.json`, and into this repository's
 #      `.zenodo.json` `related_identifiers` (see OPERATOR PLACEHOLDERS);
-#   5. `readiness` now passes; cut the GitHub release, which is what Zenodo's GitHub integration
-#      archives as the software record.
+#   5. push a `v*` tag: `readiness` runs, and when it passes `github-release` creates the GitHub
+#      Release, which is what Zenodo's GitHub integration archives as the software record. For a
+#      tag already pushed, run this workflow by hand with `release_tag` set to it.
 #
 # --------------------------------------------------------------------------------------------------
 # OPERATOR PLACEHOLDERS -- every one of these must be filled in by a human. None is invented here.
@@ -174,14 +175,22 @@
 name: publish
 
 on:
-  # The software half. Zenodo's GitHub integration is what actually archives the tag; this run is
-  # the gate that says whether the metadata going with it is complete.
-  release:
-    types: [published]
+  # The software half, as in the Entroptics repository: pushing a `v*` tag runs the readiness gate,
+  # and when it passes the `github-release` job creates the GitHub Release. Zenodo's GitHub
+  # integration archives that release and mints the version DOI, so the gate always runs before a
+  # DOI exists.
+  push:
+    tags: ["v*"]
 
-  # The data half. Manual, on purpose: it moves ~25 GB and it touches a public archive.
+  # Two manual uses. With `release_tag` set: the software half for a tag that is already pushed
+  # (readiness, then the release). With `release_tag` empty: the data half, which moves ~25 GB and
+  # touches a public archive, so it is manual on purpose.
   workflow_dispatch:
     inputs:
+      release_tag:
+        description: "Software half for an already-pushed tag (e.g. v0.2.2): readiness, then create its GitHub Release. Leave empty to run the data half."
+        type: string
+        default: ""
       mode:
         description: "verify = checksums only (safe, read-only). stage = verify, then upload to a Zenodo DRAFT (never publishes)."
         type: choice
@@ -287,7 +296,10 @@ jobs:
           # the owner's call, not a workflow's, so this is surfaced so that it gets DECIDED -- it
           # is never silently rewritten, and (below) a disagreement with the repository the run is
           # happening in is a warning, not a failure.
-          homes = {str(r.get("identifier", "")) for r in rel if "github.com" in str(r.get("identifier", ""))}
+          # Only the links that name THIS repository (`isSupplementTo`) are its home; a `references`
+          # link to another repository (the Entroptics source the reads run on) is a citation.
+          homes = {str(r.get("identifier", "")) for r in rel
+                   if "github.com" in str(r.get("identifier", "")) and r.get("relation") == "isSupplementTo"}
           homes |= {str(c.get("repository-code", "")), str(c.get("url", ""))}
           homes = {h for h in homes if h}
           if len({h.rstrip("/").lower() for h in homes}) > 1:
@@ -320,11 +332,49 @@ jobs:
           PY
 
   # ================================================================================================
+  # github-release -- create the GitHub Release once the gate passes. Zenodo archives the release.
+  # ================================================================================================
+  github-release:
+    name: create the GitHub Release
+    needs: readiness
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # create the GitHub Release
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # A re-fired workflow (a moved tag looks like a new push) must not create a second release:
+      # the Zenodo webhook treats every release as a new version.
+      - name: Is this version already released?
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null \
+            || { echo "::error::tag $TAG is not on the remote"; exit 1; }
+          if gh release view "$TAG" --json tagName >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG is already released; not re-creating it"
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        if: steps.existing.outputs.already == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.TAG }}
+          generate_release_notes: true
+
+  # ================================================================================================
   # data-verify -- the checksum gate. Self-hosted, because the bytes are only ever there.
   # ================================================================================================
   data-verify:
     name: data checksums verify against the shipped lists
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag == ''
     # If no runner carries this label, this job does not run -- and the data half of the release
     # has NOT happened. That is the honest cost of the choice in DECISION 2; it is not a pass.
     runs-on: [self-hosted, lattice-store]
@@ -422,7 +472,7 @@ jobs:
   data-stage:
     name: upload verified tarballs to a Zenodo draft
     needs: data-verify
-    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'stage'
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag == '' && inputs.mode == 'stage'
     runs-on: [self-hosted, lattice-store]
     environment: zenodo          # a protected environment, so a human approves the 25 GB push
     steps:
@@ -477,7 +527,7 @@ jobs:
   # ================================================================================================
   data-half-report:
     name: did the data half actually happen
-    if: always() && github.event_name == 'workflow_dispatch'
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.release_tag == ''
     needs: [data-verify, data-stage]
     runs-on: ubuntu-latest
     steps:

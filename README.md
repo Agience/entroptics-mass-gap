@@ -57,7 +57,7 @@ Its non-abelian content is neutral: every gauge-invariant observable is fixed by
 a directed cube-path (`Floor.directed_paths_card`) and the $\tfrac14$ the reciprocal area per step —
 `CubeArea.boundary_card_eq`, the surface bounding a $k$-step path has exactly $4k+6$ faces — with
 `VortexCount.kappa0_is_the_surface_entropy_density` assembling the two into
-$\log(\#\text{surfaces})/\text{area}\to\tfrac14\ln3$; those surfaces are closed
+$\log(\text{number of surfaces})/\text{area}\to\tfrac14\ln3$; those surfaces are closed
 (`CubeClosed.edge_parity_all`). The reads clear the floor at a window of physical extent $L$ and bracket
 the physical gap there: the reads give at least $2.04/L$, and a gap of $20/L$ gives the reads
 (`ReadConverse.readsClear_brackets_physical_gap`). So the reads at a fixed physical window are the uniform

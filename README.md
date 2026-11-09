@@ -25,7 +25,7 @@ Every recorded declaration depends on a subset of `propext`, `Classical.choice` 
 
 Licences: code Apache-2.0 ([`LICENSE`](LICENSE), [`NOTICE`](NOTICE)); paper text under `research/paper/` CC BY 4.0; the lattice ensembles (a separate record, DOI [10.5281/zenodo.22850110](https://doi.org/10.5281/zenodo.22850110)) CC BY 4.0.
 
-How to cite: Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.3.0, 2026, Zenodo, DOI [10.5281/zenodo.22652660](https://doi.org/10.5281/zenodo.22652660) (all versions; it resolves to the newest). [`CITATION.cff`](CITATION.cff) carries the same entry.
+How to cite: Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.3.0, 2026, Zenodo, version DOI [10.5281/zenodo.24065397](https://doi.org/10.5281/zenodo.24065397) (all versions: [10.5281/zenodo.22652660](https://doi.org/10.5281/zenodo.22652660)). [`CITATION.cff`](CITATION.cff) carries the same entry.
 
 ---
 

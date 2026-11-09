@@ -9,4 +9,3 @@ pytest>=7            # research/code/tests
 pyyaml>=6            # research/code/tests/test_provenance.py (reads CITATION.cff as YAML)
 scipy>=1.10          # research/code/tests/test_generator_physics.py (scipy.stats)
 markdown>=3.5        # research/paper/build_paper.py
-pypdf>=4             # research/paper/build_paper.py (PDF metadata)

@@ -11,7 +11,7 @@ Material that is neither needed by a reader nor used by the maintainer is not in
 | `README.md`, `LICENSE`, `NOTICE`, `CITATION.cff`, `.zenodo.json`, `CONTRIBUTING.md` | identity, licence (Apache 2.0) and citation of the record |
 | `research.local.env.example` | documents the environment variables the scripts read; holds no machine path |
 | `research/lean/` (sources, `lean-toolchain`, `lakefile.lean`, `lake-manifest.json`) | the formal development that carries every theorem; every module under `MassGap/` is imported by `MassGap.lean`; not `.lake/` |
-| `research/paper/` (`mass-gap.md`, `.html`, `.pdf`, `build_paper.py`, `v3/`, `figures/`) | the paper, one file per section, with its `*.lean-map.md` declaration tables, and the figures with their script |
+| `research/paper/` (`mass-gap.md`, `.html`, `.tex`, `.pdf`, `build_paper.py`, `typeset/`, `v3/`, `figures/`) | the paper, one file per section, with its `*.lean-map.md` declaration tables; the two-column `.tex` and `.pdf` typeset by `typeset/` (a byte-identical copy of the shared pipeline in the Entroptics repository's `tools/typeset/`); the figures with their script |
 | `research/FORMALIZATION.md` | the map from the paper's statements to Lean declarations |
 | `research/requirements.txt`, `research/requirements-release.txt` | dependencies; the second is the exact pin set |
 | `research/code/lattice_generator.py`, `entroptics_adapter.py`, `store_path.py`, `table.py`, `check_driver.py` | the generator every ensemble comes from, and the modules the scripts share |

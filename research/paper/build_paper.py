@@ -1,18 +1,23 @@
-"""Assemble the mass-gap paper into one Markdown file, an HTML page and a PDF.
+"""Assemble the mass-gap paper into one Markdown file, an HTML page, and a two-column LaTeX source and PDF.
 
-    python research/paper/build_paper.py            # mass-gap.md, mass-gap.html, mass-gap.pdf, from research/paper/v3/
+    python research/paper/build_paper.py            # mass-gap.md, .html, .tex and .pdf, from research/paper/v3/
     python research/paper/build_paper.py v3         # the same, naming the source directory
     python research/paper/build_paper.py --no-pdf   # Markdown and HTML only
-    python research/paper/build_paper.py --check    # also dump the rendered DOM and report math errors
+    python research/paper/build_paper.py --check    # also dump the rendered HTML DOM and report math errors
 
 The sections are `SRC/NN-name.md` (two digits, one dot), concatenated in order,
 where SRC is the source directory given as the first argument (relative to
 research/paper/ or absolute; default `v3`); companion files such as `NN-name.lean-map.md` are not part of the paper.
 LaTeX math (`$...$`, `$$...$$`) is replaced by placeholders before the Markdown
 conversion and restored afterwards, so Markdown never sees it; KaTeX 0.16.9
-renders it in the browser (loaded from its CDN, so the build needs a network connection). The PDF is
-printed by a headless Chromium-family browser: Edge, Chrome or Chromium, found on PATH or at Edge's
-Windows location; set EDGE to the browser's executable to choose one.
+renders it in the HTML page (loaded from its CDN). `--check` loads the page in a headless
+Chromium-family browser (Edge, Chrome or Chromium, found on PATH or at Edge's Windows location; set
+EDGE to choose one) and reports any formula KaTeX could not render.
+
+The two-column `mass-gap.tex` and `mass-gap.pdf` are typeset from `mass-gap.md` by the shared
+pipeline in `typeset/` (pandoc 3.x and tectonic; see `typeset/build_paper.py` for how to point at
+them). The three files there are byte-identical copies of the canonical ones in the Entroptics
+repository's `tools/typeset/`; change them there, not here.
 """
 
 from __future__ import annotations
@@ -33,9 +38,9 @@ HERE = Path(__file__).resolve().parent
 SECTIONS = HERE / "v3"
 OUT_MD = HERE / "mass-gap.md"
 OUT_HTML = HERE / "mass-gap.html"
-OUT_PDF = HERE / "mass-gap.pdf"
-# Edge: the EDGE environment variable, then msedge on PATH, then the default Windows install
-# under %ProgramFiles(x86)%.
+TYPESET = HERE / "typeset" / "build_paper.py"
+# The browser for --check: the EDGE environment variable, then a Chromium-family browser on PATH,
+# then the default Windows install of Edge under %ProgramFiles(x86)%.
 EDGE = Path(os.environ.get("EDGE")
             or next((p for p in map(shutil.which, ("msedge", "microsoft-edge", "google-chrome",
                                                   "chromium", "chromium-browser")) if p), None)
@@ -426,31 +431,9 @@ def edge(args: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
                               encoding="utf-8", errors="replace")
 
 
-def print_pdf() -> None:
-    if OUT_PDF.exists():
-        OUT_PDF.unlink()
-    r = edge([f"--print-to-pdf={OUT_PDF}"])
-    # DERIVED: `0` bytes is an empty file, the form a failed print leaves.
-    if not OUT_PDF.exists() or OUT_PDF.stat().st_size == 0:
-        sys.exit(f"Edge did not write the PDF (exit {r.returncode}):\n{r.stderr[-2000:]}")
-    print(f"wrote {OUT_PDF.name} ({OUT_PDF.stat().st_size:,} bytes)")
-
-
-def set_pdf_metadata(front: dict) -> None:
-    """Edge's print drops the HTML author; write author, title and subject into the PDF."""
-    try:
-        from pypdf import PdfReader, PdfWriter
-    except ImportError:
-        print("note: pypdf not installed; PDF metadata left as Edge wrote it")
-        return
-    plain = lambda s: re.sub(r"\$([^$]*)\$", r"\1", s).strip()
-    writer = PdfWriter(clone_from=PdfReader(OUT_PDF))
-    writer.add_metadata({"/Author": "Ikailo John Sessford",
-                         "/Title": plain(front["title"]),
-                         "/Subject": plain(front["subtitle"] or "")})
-    with open(OUT_PDF, "wb") as f:
-        writer.write(f)
-    print("set PDF metadata (author, title, subject)")
+def typeset() -> int:
+    """mass-gap.tex and mass-gap.pdf from mass-gap.md, by the shared two-column pipeline."""
+    return subprocess.run([sys.executable, str(TYPESET), str(OUT_MD)]).returncode
 
 
 def check_render() -> int:
@@ -479,7 +462,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("src", nargs="?", default="v3",
                     help="source directory of NN-name.md files, relative to research/paper/ (default: v3)")
-    ap.add_argument("--no-pdf", action="store_true", help="write the Markdown and HTML only")
+    ap.add_argument("--no-pdf", action="store_true", help="write the Markdown and HTML only (no .tex or .pdf)")
     ap.add_argument("--check", action="store_true", help="dump the rendered DOM and report math errors")
     a = ap.parse_args()
     src = Path(a.src)
@@ -491,8 +474,7 @@ def main() -> int:
     print(f"wrote {OUT_MD.name}, {OUT_HTML.name}")
     rc = check_render() if a.check else 0
     if not a.no_pdf:
-        print_pdf()
-        set_pdf_metadata(parse_front(read(files[0])))
+        rc = typeset() or rc
     return rc
 
 

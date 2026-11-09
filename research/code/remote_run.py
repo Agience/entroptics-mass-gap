@@ -56,7 +56,8 @@ RESEARCH = os.path.dirname(HERE)
 #: The sources a run needs, relative to `RESEARCH`. Data artifacts are not shipped: a run either
 #: produces them or reads the store, and the store does not travel.
 SOURCE_GLOBS = ("requirements.txt", "code/*.py", "code/certify/*.py", "code/tests/*.py",
-                "code/observer/*.py", "code/lab/*.py", "data/*.py", "paper/*.py", "paper/figures/*.py")
+                "code/observer/*.py", "code/lab/*.py", "data/*.py", "paper/*.py", "paper/figures/*.py",
+                "paper/typeset/*.py")
 
 
 def _cfg(key, default=None):

@@ -15,6 +15,9 @@
 *.json  text eol=lf
 *.cff   text eol=lf
 *.yml   text eol=lf
+*.tex   text eol=lf
+*.latex text eol=lf
+*.lua   text eol=lf
 
 # Figures and archives are binary -- never touch them.
 *.png   binary

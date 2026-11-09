@@ -82,9 +82,9 @@ direct sum of those, `planeA` and `planeB` run the assignment backwards from a h
 plaquette's plane links, and `sum_re_tr_oplqCross` presents the whole straddling factor as one cross
 form.
 
-`corrClay_reflection_positive` is the file's conclusion: the body of
-`Complete.wilson_reflection_positive_at` at aperture `Nap`, with no hypothesis about the lattice. It
-carries `2 ≤ m` — extent at least four, because the backward plane assignment collides at extent two
+`corrClay_reflection_positive` is the file's conclusion: nonnegativity of `WilsonBridge.corrClay
+(Nap + 1) β` at every lag and strict positivity of its total at aperture `Nap`, with no hypothesis
+about the lattice. It carries `2 ≤ m` — extent at least four, because the backward plane assignment collides at extent two
 (`negctl_plane_assignment_collides_at_m_one`) — and `0 ≤ β`, because the Wilson cross kernel is
 positive-semidefinite exactly there (`negctl_odd_discharge_needs_nonneg_coupling`).
 
@@ -2358,9 +2358,7 @@ open MassGap.ReflectPositive
 /-- At even extent, `PlaqReflPositive` at the odd lags alone gives nonnegativity of
 `WilsonBridge.corrClay (Nap + 1) β` at every lag together with strict positivity of its total.
 
-The conclusion is the conjunction `Complete.wilson_reflection_positive_at` asserts at aperture `Nap`,
-since `Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition. The extent
-`Nap + 1` is required even by `hm`; `ActionSplit.exists_even_extent_aperture` shows even extents are
+The extent `Nap + 1` is required even by `hm`; `ActionSplit.exists_even_extent_aperture` shows even extents are
 available at every aperture bound.
 
 The even lags come from `ActionSplit.plaqReflPositive_of_even_lag` and lag-zero positivity from
@@ -2698,7 +2696,7 @@ theorem measurePreserving_join3 :
       (cvol (↥R ⊕ (↥S ⊕ ↥T)) μ) (cvol ι μ) := by
     simpa using measurePreserving_piCongrLeft (μ := fun _ : ι => μ) e
   have hcomp := hD.comp (hC.comp hB)
-  -- the composite IS `join3`
+  -- the composite is `join3`
   have hps : ∀ (W : ι → Ω) (k : ↥R ⊕ (↥S ⊕ ↥T)),
       (MeasurableEquiv.piCongrLeft (fun _ : ι => Ω) e).symm W k = W (e k) := fun _ _ => rfl
   have hkey : ∀ (g : ↥R → Ω) (x : ↥S → Ω) (y : ↥T → Ω),
@@ -4580,8 +4578,7 @@ conditions `odd_crossing_integral_nonneg` carries:
 * `0 ≤ β`. `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` computes the Wilson cross kernel's
   quadratic form on two explicit `SU(3)` elements and finds it nonnegative if and only if `β ≥ 0`.
 
-Scope: `Complete.wilson_reflection_positive_at` is stated on the same coupling range `0 ≤ β` and at
-every aperture; the composite below states the conclusion at even extent at least four only. -/
+Scope: the composite below states the conclusion at even extent at least four only. -/
 
 section Discharge
 
@@ -4605,9 +4602,7 @@ theorem plaqReflPositive_odd {d n : ℕ} [NeZero n] {N : ℕ} (τ : Fin d) (a : 
 /-- `WilsonBridge.corrClay (Nap + 1) β` is nonnegative at every lag and its total is strictly
 positive, whenever the extent `Nap + 1` is `2 * m` with `2 ≤ m` and the coupling is nonnegative.
 
-This is the body of `Complete.wilson_reflection_positive_at` at aperture `Nap`, since
-`Complete.wilsonCorrAt Nap β` is `WilsonBridge.corrClay (Nap + 1) β` by definition. The three inputs
-are supplied rather than assumed: the even lags by `ActionSplit.plaqReflPositive_of_even_lag`, lag
+The three inputs are supplied rather than assumed: the even lags by `ActionSplit.plaqReflPositive_of_even_lag`, lag
 zero by `PlaqVariance.corrClay_zero_pos`, and the odd lags by `plaqReflPositive_odd`, which applies
 the crossing integration to the three-block factorisation of Part E, the mirror transport of Part F
 and the word of Part J.

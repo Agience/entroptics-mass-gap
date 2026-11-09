@@ -48,23 +48,10 @@ open MassGap.InfiniteLattice MassGap.LatticeReflection MassGap.InfiniteShift
 
 /-! ## 1. Sites: a step along the axis moves the reflection constant by one -/
 
-/-- `ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x`. Checked coordinatewise: at the axis `τ`
-both sides reduce to `c - (x τ + 1) = (c - 1) - x τ`, and every other coordinate is untouched by both
-maps.
-
-This is `Reflect.reflSite_shift_axis` over `ℤ` rather than `Fin n`; the coordinates being integers,
-no modular subtraction is involved.
-
-DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the step, `ishift`'s own, and
-the amount the reflection constant moves. -/
-theorem ireflSite_ishift (τ : Fin 4) (c : ℤ) (x : ISite) :
-    ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x := by
-  funext j
-  by_cases h : j = τ
-  · subst h
-    simp only [ireflSite, ishift, Function.update_self]
-    ring_nf
-  · simp [ireflSite, ishift, Function.update_of_ne h]
+/-- `ireflSite τ c (ishift τ x) = ireflSite τ (c - 1) x`: a step along the axis moves the reflection
+constant by one. This is `Reflect.reflSite_shift_axis` over `ℤ` rather than `Fin n`. An alias of
+`LatticeReflection.ireflSite_ishift_axis`. -/
+alias ireflSite_ishift := MassGap.LatticeReflection.ireflSite_ishift_axis
 
 #print axioms ireflSite_ishift
 
@@ -517,12 +504,6 @@ the translation invariance, and finishes with the invariance at `a`.
 
 So the two formulations carry the same content: supplying either gives the other, and neither is
 supplied here.
-
-Scope: `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows a finite box stable under the
-reflections at both `a` and `a + 1` is empty, since the two compose to one link shift by
-`ireflLink_comp_succ` and a `Finset` cannot contain an orbit of it. That rules out one finite-volume
-box family serving both invariances; it says nothing about routes to the second invariance that are
-not box statements.
 
 DERIVED: `4` is the spacetime dimension, the axis type of `τ`; `1` is the separation of the two
 reflection constants. -/

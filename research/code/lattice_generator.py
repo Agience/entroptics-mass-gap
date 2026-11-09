@@ -1,7 +1,7 @@
 """
-lattice_generator.py -- config generator (research/code/), backend-agnostic (numpy | torch/GPU), BATCHED.
+lattice_generator.py -- config generator (research/code/), backend-agnostic (numpy | torch/GPU), batched.
 
-This module GENERATES configurations for the entroptics read to consume. ``config`` hands back a
+This module generates configurations for the entroptics read to consume. ``config`` hands back a
 ready-to-read scalar field (the gauge-invariant local action density phi(x) = sum_{mu<nu}(1 - (1/N) Re tr U_p)).
 
 The Monte Carlo is one vectorised checkerboard Metropolis. It runs on numpy (default) or, by passing
@@ -16,11 +16,11 @@ dimension, so a batched run and an unbatched one at the same seed agree on the n
 path carries its own deterministic generator.
 
 Gauge groups (one vectorised checkerboard Metropolis) plus a free scalar particle:
-  * ``group="u1"``  -- compact U(1), the abelian FOIL: confines at small beta,
-    deconfines to a Coulomb phase near beta_c ~ 1.01 (it CROSSES).
-  * ``group="su2"`` -- SU(2), non-abelian: confines at every beta, a smooth crossover (the NO-BUMP).
+  * ``group="u1"``  -- compact U(1), the abelian foil: confines at small beta,
+    deconfines to a Coulomb phase near beta_c ~ 1.01 (it crosses).
+  * ``group="su2"`` -- SU(2), non-abelian: confines at every beta, a smooth crossover (the no-bump).
   * ``group="su3"``, ``"su4"``, ... -- SU(N) via Cabibbo-Marinari SU(2)-subgroup rotations (any N>=3).
-  * ``free_scalar`` -- a free scalar of mass m with KNOWN gap E0 = arccosh(1 + m^2/2); the calibration.
+  * ``free_scalar`` -- a free scalar of mass m with known gap E0 = arccosh(1 + m^2/2); the calibration.
 
     from lattice_generator import config, config_batch, stream
     field  = config((8,8,8,16), 2.3, group="su2", seed=0)                       # 1 config, numpy (CPU)
@@ -49,9 +49,9 @@ class _Backend:
             # Precision. fp32 is fine for producing thermalised configs -- links reunitarise every
             # sweep and outputs are stored fp32 -- and it unlocks cheap consumer GPUs (4090 etc.)
             # whose fp64 FLOP rate is ~64x slower than fp32 (though this kernel is bandwidth-bound,
-            # where the measured figure is nearer 2x; `code/gpu_bench.py` measures which applies).
+            # where the measured figure is nearer 2x).
             #
-            # `fp` is an ARGUMENT, defaulting to the GEN_FP environment variable. It was only ever
+            # `fp` is an argument, defaulting to the GEN_FP environment variable. It was only ever
             # the variable, which meant comparing two precisions inside one process required mutating
             # global state around every call -- so the comparison that decides whether fp32 is sound
             # could not be written without a workaround. Passing 32 or 64 here needs no such thing.
@@ -177,7 +177,7 @@ class _Backend:
         return a.detach().cpu().numpy() if (self.torch and hasattr(a, "detach")) else np.asarray(a)
 
 
-# The spacetime roll axis for direction k, as a NEGATIVE index into a link slice whose spacetime axes
+# The spacetime roll axis for direction k, as a negative index into a link slice whose spacetime axes
 # are its last D axes followed by ``tr`` group-structure axes.  Negative indexing skips any leading
 # batch dims; with no batch it equals the original positive axis k (so the numpy path is unchanged).
 def _sax(k, tr):
@@ -194,7 +194,7 @@ def _u1_init(b, dims, batch):
 def _u1_staple(b, U, mu):
     S = b.zeros_like(U[..., 0])
     Umu = U[..., mu]
-    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS and the rolls are the neighbour shifts theta(x+mu), theta(x+nu)
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu orientations and the rolls are the neighbour shifts theta(x+mu), theta(x+nu)
         if nu == mu:
             continue
         Unu = U[..., nu]
@@ -219,7 +219,7 @@ def _u1_sweep(b, theta, sdims, beta, step):
 
 def _u1_action(b, theta):
     phi = b.zeros(theta.shape[:-1])
-    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette planes; the rolls close the plaquette
         for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             P = (theta[..., mu] + b.roll(theta[..., nu], -1, _sax(mu, 0))
                  - b.roll(theta[..., mu], -1, _sax(nu, 0)) - theta[..., nu])
@@ -258,7 +258,7 @@ def _su2_init(b, dims, batch):
 def _su2_staple(b, q, mu):
     A = b.zeros((*q.shape[:-2], 4))
     qmu = q[..., mu, :]
-    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS; the rolls are the forward and backward neighbour shifts of the links
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu orientations; the rolls are the forward and backward neighbour shifts of the links
         if nu == mu:
             continue
         qnu = q[..., nu, :]
@@ -305,7 +305,7 @@ def _su2_a0(b, betak):
 
     Every site returns an accepted draw from its own density.  There is no iteration budget that
     can expire and no fallback value: the loop ends when the last site accepts.  ``_A0_ITMAX``
-    exists only so that a corrupted ``betak`` (NaN, inf) cannot spin forever -- it RAISES rather
+    exists only so that a corrupted ``betak`` (NaN, inf) cannot spin forever -- it raises rather
     than returning a partly-sampled array: the accept-reject loop either samples the distribution
     or reports that it could not.
 
@@ -379,30 +379,35 @@ def _su2_overrelax_link(b, q, A):
     return 2.0 * _qdot4(q, e)[..., None] * e - q
 
 
-def _su2_hb_sweep(b, q, sdims, beta, step, n_or=None):
+def _su2_hb_sweep(b, q, sdims, beta, step, n_or=None, frozen=None):
     """One SU(2) update: a heat-bath checkerboard sweep + n_or over-relaxation sweeps (each
     recomputes staples, so the reflections are non-trivial decorrelating moves). ``step`` unused.
-    Over-relaxation is microcanonical (preserves the equilibrium distribution) -- it DECORRELATES,
+    ``frozen`` (boolean, shape ``(*sdims, D)``) marks links held fixed: a boundary condition. A frozen
+    link is excluded from every sub-update, so the staples of its neighbours always see its value;
+    with ``frozen=None`` the sweep is the unconstrained one, bit for bit.
+    Over-relaxation is microcanonical (preserves the equilibrium distribution) -- it decorrelates,
     it is not needed to reach equilibrium -- so ``GEN_NOR=0`` skips it for a ~5x-faster thermalisation
     (default 4 for well-decorrelated draws)."""
     if n_or is None:
         n_or = int(os.environ.get("GEN_NOR", "4"))
     for mu in range(D):
         for mask in b.parity(sdims):
+            m = mask if frozen is None else (mask & ~frozen[..., mu])
             A = _su2_staple(b, q, mu)
             qn = _su2_heatbath_link(b, A, beta)
-            q[..., mu, :] = b.where(mask[..., None], qn, q[..., mu, :])
+            q[..., mu, :] = b.where(m[..., None], qn, q[..., mu, :])
     for _ in range(int(n_or)):
         for mu in range(D):
             for mask in b.parity(sdims):
+                m = mask if frozen is None else (mask & ~frozen[..., mu])
                 A = _su2_staple(b, q, mu)
                 qn = _su2_overrelax_link(b, q[..., mu, :], A)
-                q[..., mu, :] = b.where(mask[..., None], qn, q[..., mu, :])
+                q[..., mu, :] = b.where(m[..., None], qn, q[..., mu, :])
 
 
 def _su2_action(b, q):
     phi = b.zeros(q.shape[:-2])
-    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette planes; the rolls close the plaquette
         for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             Up = _qmul(b, _qmul(b, _qmul(b, q[..., mu, :], b.roll(q[..., nu, :], -1, _sax(mu, 1))),
                                 _qconj(b, b.roll(q[..., mu, :], -1, _sax(nu, 1)))), _qconj(b, q[..., nu, :]))
@@ -422,7 +427,7 @@ def _su2_action_centre(b, q):
     z_p = -1). The rolls carry no quaternion axis (tr=0), as for the U(1) phase field."""
     z = _su2_sign(b, q)                                     # (..., D)  +-1 per link
     phi = b.zeros(q.shape[:-2])
-    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls shift the link SIGNS to the sites that close the Z2 plaquette
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette planes; the rolls shift the link signs to the sites that close the Z2 plaquette
         for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same Z2 plaquette
             zp = (z[..., mu] * b.roll(z[..., nu], -1, _sax(mu, 0))
                   * b.roll(z[..., mu], -1, _sax(nu, 0)) * z[..., nu])
@@ -443,7 +448,7 @@ def _su2_line(b, q, mu, R):
     P(x) = U_mu(x) U_mu(x+mu) ... U_mu(x+(R-1)mu), as a quaternion field."""
     P = q[..., mu, :]
     sh = P
-    for _ in range(1, R):  # NOT A READ: the roll advances one site ALONG the line; the product is a parallel transport
+    for _ in range(1, R):  # NOT A READ: the roll advances one site along the line; the product is a parallel transport
         sh = b.roll(sh, -1, _sax(mu, 1))
         P = _qmul(b, P, sh)
     return P
@@ -463,18 +468,16 @@ def _su2_wilson(b, q, R, T, planes="all"):
     else:
         raise ValueError(f"unknown planes='{planes}' (all | rt)")
     tot, cnt = 0.0, 0
-    # NOT A READ: and the reason is NOT that `R` and `T` are neighbour shifts -- they are
-    # separations, and `W(R,T)` is a two-point function. It is that the Wilson loop is DEFINED, not
+    # NOT A READ: and the reason is not that `R` and `T` are neighbour shifts -- they are
+    # separations, and `W(R,T)` is a two-point function. It is that the Wilson loop is defined, not
     # estimated: the ordered group product of the links round one closed rectangle, gauge-invariant
     # by construction. There is no distance to choose (the rectangle is the lattice's), no
     # normalisation beyond `(1/N) Re tr`, no window and no floor -- so nothing here is a read choice
-    # the library exists to remove, and no Entroptics read produces a holonomy. The same argument
-    # `cell_gap_budget.py` is exempted by: this repo WRITES the object down.
+    # the library exists to remove, and no Entroptics read produces a holonomy: this repo writes the
+    # object down.
     #
-    # What is read OFF these loops is a different question, and `creutz_sigma` below takes the ratio
-    # that gives `sigma`. `research/data/8_8_run_string_tension.py` carries the same construction and
-    # sits in `hand_rolled_reads_baseline.txt` as debt; that entry is about its own lag loop, not
-    # about the holonomy, and this waiver does not discharge it.
+    # What is read off these loops is a different question, and `creutz_sigma` below takes the ratio
+    # that gives `sigma`.
     for mu, nu in pairs:
         bottom = _su2_line(b, q, mu, R)                # mu edge at x
         left = _su2_line(b, q, nu, T)                  # nu edge at x
@@ -491,17 +494,17 @@ def _su2_wilson_centre(b, q, R, T):
     z = _su2_sign(b, q)                                    # (..., D)  +-1 per link
     tot, cnt = 0.0, 0
     # NOT A READ: `R` and `T` are separations, as in `_su2_wilson`, and the waiver rests on the same
-    # ground: the centre-projected loop is the DEFINED product of the boundary link signs round one
+    # ground: the centre-projected loop is the defined product of the boundary link signs round one
     # closed rectangle. No distance, normalisation, window or floor is chosen here.
     for mu in range(D):
         for nu in range(D):  # NOT A READ: the second plane index of the same defined Z2 loop
             if nu == mu:
                 continue
             bottom, sh = z[..., mu], z[..., mu]
-            for _ in range(1, R):  # NOT A READ: the roll advances one site along the mu edge being multiplied out; R is an edge LENGTH, not a lag
+            for _ in range(1, R):  # NOT A READ: the roll advances one site along the mu edge being multiplied out; R is an edge length, not a lag
                 sh = b.roll(sh, -1, _sax(mu, 0)); bottom = bottom * sh
             left, sh = z[..., nu], z[..., nu]
-            for _ in range(1, T):  # NOT A READ: the roll advances one site along the nu edge being multiplied out; T is an edge LENGTH, not a lag
+            for _ in range(1, T):  # NOT A READ: the roll advances one site along the nu edge being multiplied out; T is an edge length, not a lag
                 sh = b.roll(sh, -1, _sax(nu, 0)); left = left * sh
             right = b.roll(left, -R, _sax(mu, 0))
             top = b.roll(bottom, -T, _sax(nu, 0))
@@ -511,11 +514,11 @@ def _su2_wilson_centre(b, q, R, T):
 
 
 def _su2_spatial_staple(b, q, mu):
-    """Sum of the four SPATIAL staples around link mu (mu spatial): the smearing kernel.  Only spatial
+    """Sum of the four spatial staples around link mu (mu spatial): the smearing kernel.  Only spatial
     nu contribute, so the time direction is left untouched and the transfer matrix is unchanged."""
     A = b.zeros((*q.shape[:-2], 4))
     qmu = q[..., mu, :]
-    for nu in range(D - 1):  # NOT A READ: the loop is over the SPATIAL staple orientations of the smearing kernel; the rolls are neighbour shifts
+    for nu in range(D - 1):  # NOT A READ: the loop is over the spatial staple orientations of the smearing kernel; the rolls are neighbour shifts
         if nu == mu:
             continue
         qnu = q[..., nu, :]
@@ -527,15 +530,15 @@ def _su2_spatial_staple(b, q, mu):
 
 
 def _u1_spatial_staple(b, theta, mu):
-    """Sum of the four SPATIAL staples around link mu (mu spatial), as complex numbers: the smearing
+    """Sum of the four spatial staples around link mu (mu spatial), as complex numbers: the smearing
     kernel.  Only spatial nu contribute, so the time direction is left untouched and the transfer
     matrix is unchanged.  The two staple expressions are `_u1_staple`'s, restricted to spatial nu --
-    written once there and reused here, because a staple ORIENTATION restated by hand is how smearing
+    written once there and reused here, because a staple orientation restated by hand is how smearing
     silently turns into roughening."""
     U = b.expi(theta)
     S = b.zeros_like(U[..., 0])
     Umu = U[..., mu]
-    for nu in range(D - 1):  # NOT A READ: the loop is over the SPATIAL staple orientations of the smearing kernel; the rolls are neighbour shifts
+    for nu in range(D - 1):  # NOT A READ: the loop is over the spatial staple orientations of the smearing kernel; the rolls are neighbour shifts
         if nu == mu:
             continue
         Unu = U[..., nu]
@@ -549,7 +552,7 @@ def _u1_spatial_staple(b, theta, mu):
 def _parse_smear(spec):
     """`"4,8,16,32"` -> `[4, 8, 16, 32]`; `"0"` -> `[0]`. Sorted, de-duplicated.
 
-    A tower is emitted from ONE Monte Carlo pass and one smearing run, because APE smearing is
+    A tower is emitted from one Monte Carlo pass and one smearing run, because APE smearing is
     iterative and each level is a deterministic function of the one below it. `0` in the list is the
     unsmeared operator, which is a legitimate member of a variational basis and carries no `.apeN`
     tag, exactly as an unsmeared run always has.
@@ -583,14 +586,14 @@ SMEAR_CHUNK_ELEMENTS = 1 << 26
 
 
 def ape_smear(link, nsweep, *, alpha=0.5, group="su2", device=None):
-    """APE-smear the SPATIAL links: U_mu <- Proj_G[ (1-alpha) U_mu + (alpha/4) sum(spatial staples) ],
+    """APE-smear the spatial links: U_mu <- Proj_G[ (1-alpha) U_mu + (alpha/4) sum(spatial staples) ],
     ``nsweep`` times.  Suppresses the excited-state overlap of spatial operators (Wilson-loop ends,
     plaquette operators) while leaving the temporal links -- and so the transfer matrix and every
     energy it carries -- untouched.  For SU(2) the projection is quaternion normalisation; for
     compact U(1) the links are phases and the projection is ``z -> z/|z|``, i.e. keep the argument.
 
     Both groups are here because a smeared spatial plaquette is the only operator the gap read has
-    that carries a physical scale, and a negative control is worth nothing unless the SAME operator
+    that carries a physical scale, and a negative control is worth nothing unless the same operator
     can be built on the control theory."""
     if group not in ("su2", "u1"):
         raise ValueError(f"ape_smear supports group='su2' or 'u1'; got '{group}'")
@@ -600,9 +603,9 @@ def ape_smear(link, nsweep, *, alpha=0.5, group="su2", device=None):
         for _ in range(int(nsweep)):
             tn = th.clone() if hasattr(th, "clone") else np.copy(th)
             for mu in range(D - 1):
-                # CONJUGATED, as the SU(2) path conjugates its staple. `_u1_sweep` writes the action
+                # Conjugated, as the SU(2) path conjugates its staple. `_u1_sweep` writes the action
                 # as -beta*Re(U_mu * S), so the action falls when U_mu aligns with conj(S); smearing
-                # towards S itself drives the links to random and the density UP, which is what the
+                # towards S itself drives the links to random and the density up, which is what the
                 # unconjugated form measured (3.18 -> 5.90, the random-link value).
                 V = ((1 - alpha) * b.expi(th[..., mu])
                      + (alpha / 4.0) * b.conj(_u1_spatial_staple(b, th, mu)))
@@ -619,7 +622,7 @@ def ape_smear(link, nsweep, *, alpha=0.5, group="su2", device=None):
             xn[..., mu, :] = V / (b.norm(V, -1, True) + 1e-12)
         return xn
 
-    # CHUNKED OVER CONFIGURATIONS, because the staple's temporaries are several times the field and
+    # Chunked over configurations, because the staple's temporaries are several times the field and
     # the peak is what fails. Smearing is per configuration -- the staple of configuration k reads
     # only configuration k -- so slicing the batch changes nothing and divides the peak.
     #
@@ -646,7 +649,7 @@ def ape_smear(link, nsweep, *, alpha=0.5, group="su2", device=None):
 def connected_correlator(O, nlag):
     """`C(tau)/C(0)` from per-configuration operator histories `O` of shape `(nconf, T)`.
 
-    The vacuum subtracted is the ENSEMBLE mean over every configuration and time slice, not a
+    The vacuum subtracted is the ensemble mean over every configuration and time slice, not a
     per-configuration time mean. That distinction is not cosmetic: subtracting each configuration's
     own time mean removes part of the signal along with the vacuum and biases `C(tau)` toward zero at
     large `tau`, which is exactly where the gap is read.
@@ -656,33 +659,33 @@ def connected_correlator(O, nlag):
     change to the vacuum convention in one of them would have silently left the other reading a
     different quantity while both still produced plausible numbers.
 
-    THE LAG PROFILE IS THE LIBRARY'S: `entroptics_adapter.decay(..., periodic=True)`. Everything this
+    The lag profile is the library's: `entroptics_adapter.decay(..., periodic=True)`. Everything this
     function states is therefore a convention, not an implementation, and each one is forced:
 
-      * `O.T` because `decay` wants the ORDERED axis first. `O` is `(nconf, T)` with time on axis 1,
+      * `O.T` because `decay` wants the ordered axis first. `O` is `(nconf, T)` with time on axis 1,
         so the configurations are the exchangeable feature channels of one ordered process.
-      * `periodic=True` because the lattice time axis CLOSES. The lag is taken modulo `T`, every lag
+      * `periodic=True` because the lattice time axis closes. The lag is taken modulo `T`, every lag
         is averaged over all `T` pairs, and `C(tau) == C(T - tau)` holds exactly -- no taper and no
         `1/(T - tau)`. On a torus that equality is a property of the target, not an estimate.
-      * `/ nconf` because `decay` returns `sum_f C_f`, a SUM over channels. The ensemble mean over
+      * `/ nconf` because `decay` returns `sum_f C_f`, a sum over channels. The ensemble mean over
         configurations is this function's return value, so the channel count is divided out.
-      * `disconnected=level`, the ENSEMBLE mean, because that is the vacuum named above. Omitting it
-        would take the library's default, each channel's OWN mean, which is the per-configuration
+      * `disconnected=level`, the ensemble mean, because that is the vacuum named above. Omitting it
+        would take the library's default, each channel's own mean, which is the per-configuration
         time mean this function exists not to subtract, and `c / c[0]` does not put that choice back.
         Write the record as `O[t,f] = u[t,f] + m_f` with `u` carrying each channel's own mean
         removed, so `sum_t u[t,f] = 0`. Against the ensemble level the two cross terms are
-        `delta_f sum_t u[t,f]` and `delta_f sum_t u[t+tau,f]`, and BOTH are that same full sum --
-        the second one only because the read is PERIODIC, which is what makes the wrapped sum run
+        `delta_f sum_t u[t,f]` and `delta_f sum_t u[t+tau,f]`, and both are that same full sum --
+        the second one only because the read is periodic, which is what makes the wrapped sum run
         over every `t`. So they vanish and
 
             C_ensemble(tau) = C_per_channel(tau) + K,   K = var_f(mean_t O),
 
-        a constant added at every lag INCLUDING lag 0. `(C + K) / (C(0) + K)` is a different
+        a constant added at every lag including lag 0. `(C + K) / (C(0) + K)` is a different
         profile, not a rescaled one; on a record whose configurations carry their own offsets `K`
         dominates and the normalised profile is pulled toward 1, and on a short record the two
-        disagree in SIGN. `tests/test_connected_correlator.py` measures both statements.
+        disagree in sign. `tests/test_connected_correlator.py` measures both statements.
 
-    On the LINEAR read the second cross term runs over `T - tau` terms rather than `T`, does not
+    On the linear read the second cross term runs over `T - tau` terms rather than `T`, does not
     vanish, and `K` is not constant -- so the two conventions above are joined, and changing
     `periodic` would invalidate the level argument rather than merely widen the profile.
 
@@ -691,26 +694,26 @@ def connected_correlator(O, nlag):
     resolution -- a constant history -- yields an all-zero profile and therefore `nan` after the
     normalisation, rather than the round-off it would otherwise be divided by.
 
-    AN INPUT THAT IS NOT AN ENSEMBLE RAISES, rather than returning a number. Each of these produced
+    An input that is not an ensemble raises, rather than returning a number. Each of these produced
     a plausible-looking array before it produced an answer, and the arrays are the dangerous part:
 
       * a NaN or an infinity anywhere. A gauge ensemble that produced one is broken, and an
         all-`nan` correlator is indistinguishable downstream from a correlator that decayed into
         noise -- `lag_budget` reads it as zero usable lags, `pencil_rate` as an invalid pencil.
       * an empty time axis or an empty ensemble. `T = 0` in particular has no lags to average, and
-        the profile it would otherwise produce is all ones: PERFECT correlation at every lag, the
+        the profile it would otherwise produce is all ones: perfect correlation at every lag, the
         strongest possible claim, read off no data at all.
       * a complex record. Every caller here hands over a real zero-momentum operator history, and
         the level of a complex one would go through `float()`, which discards the imaginary part of
         the vacuum behind a warning a test run may well be filtering out.
     """
-    # The read layer is imported HERE rather than at module scope: this module generates
-    # configurations, and callers that only generate (`gpu_bench`, `8_8_run_string_tension`,
-    # `store_check_u1_reference_bracket`, the generator tests) would otherwise be made to load the
+    # The read layer is imported here rather than at module scope: this module generates
+    # configurations, and callers that only generate (the campaign scripts and
+    # the generator tests) would otherwise be made to load the
     # reader. An `ast` walk still sees the import, which is what the load-bearing gate reads.
     from entroptics_adapter import decay as _decay
     O = np.asarray(O)
-    # DERIVED: the RANK of the documented argument. `(nconf, T)` is two axes, so on anything else
+    # DERIVED: the rank of the documented argument. `(nconf, T)` is two axes, so on anything else
     # the axis handed to the read as the ordered one would not be time. Not a magnitude.
     if O.ndim != 2:
         raise ValueError(f"connected_correlator wants operator histories of shape (nconf, T); "
@@ -747,13 +750,13 @@ def plaquette_0pp_Ot(link, *, device=None, spatial=(0, 1, 2)):
 
     A different channel from `density_Ot`, not a different implementation of it: this sums the real
     part of the spatial plaquette over the `i<j` planes, where the action density sums the full
-    action. Sec 8.7b reads the two against each other and they disagree about the continuum limit, so
+    action. The two are read against each other and they disagree about the continuum limit, so
     keeping them distinct is the point.
     """
     b = _Backend(device)
     q = link
     O = None
-    for i in spatial:  # NOT A READ: the loops are over the three spatial PLANES and the rolls are the plaquette shifts U_j(x+i), U_i(x+j); what is built is the operator O(t), the INPUT to connected_correlator
+    for i in spatial:  # NOT A READ: the loops are over the three spatial planes and the rolls are the plaquette shifts U_j(x+i), U_i(x+j); what is built is the operator O(t), the input to connected_correlator
         for j in spatial:  # NOT A READ: the second plane index of the same plaquette shift
             if j <= i:
                 continue
@@ -783,7 +786,7 @@ def wilson_loop(link, R, T, *, group="su2", project="full", planes="all", device
 
 def creutz_sigma(link, R, T, *, group="su2", project="full", device=None):
     """The Creutz ratio chi(R,T) = -log[ W(R,T) W(R-1,T-1) / ( W(R,T-1) W(R-1,T) ) ], the string-tension
-    estimate from the R x T Wilson loops of a raw LINK field (R, T >= 2)."""
+    estimate from the R x T Wilson loops of a raw link field (R, T >= 2)."""
     def w(r, t):
         return wilson_loop(link, r, t, group=group, project=project, device=device)
     ratio = (w(R, T) * w(R - 1, T - 1)) / (w(R, T - 1) * w(R - 1, T))
@@ -794,14 +797,14 @@ def _su2_mcg(b, q, sdims, iters):
     """Maximal centre gauge: maximize F = sum_{x,mu} (tr U_mu(x))^2 by iterated local gauge updates
     U_mu(x) -> g(x) U_mu(x) g(x+mu)^dag.  With every other site fixed, F is quadratic in g(x):
     F_local = 4 g^T M(x) g with M(x) = sum_mu [ conj(U_mu(x)) conj(U_mu(x))^T + U_mu(x-mu) U_mu(x-mu)^T ],
-    so the optimal g(x) is the leading eigenvector of the 4x4 M(x).  Checkerboard sweeps; returns a COPY."""
+    so the optimal g(x) is the leading eigenvector of the 4x4 M(x).  Checkerboard sweeps; returns a copy."""
     q = b.clone(q)
     qid = b.const([1.0, 0.0, 0.0, 0.0])
     full = tuple(q.shape[:-2])
-    for _ in range(int(iters)):  # NOT A READ: gauge FIXING: the rolls are U_mu(x-mu) in the local quadratic form and g(x+mu) in the gauge transform of each link
+    for _ in range(int(iters)):  # NOT A READ: gauge fixing: the rolls are U_mu(x-mu) in the local quadratic form and g(x+mu) in the gauge transform of each link
         for mask in b.parity(sdims):  # NOT A READ: the checkerboard parity of the same gauge-fixing sweep
             M = b.zeros((*full, 4, 4))
-            for mu in range(D):  # NOT A READ: the loop is over DIRECTIONS; the roll is the backward neighbour U_mu(x-mu) entering the local quadratic form
+            for mu in range(D):  # NOT A READ: the loop is over directions; the roll is the backward neighbour U_mu(x-mu) entering the local quadratic form
                 cf = _qconj(b, q[..., mu, :])                     # conj(U_mu(x))
                 bk = b.roll(q[..., mu, :], 1, _sax(mu, 1))        # U_mu(x-mu)
                 M = M + cf[..., :, None] * cf[..., None, :]
@@ -812,14 +815,14 @@ def _su2_mcg(b, q, sdims, iters):
                 v = v / (b.norm(v, -1, True) + 1e-30)
             g = v                                                 # (*full, 4) unit quaternion
             g = b.where(mask[..., None], g, qid)                  # update this parity only
-            for mu in range(D):  # NOT A READ: the loop is over DIRECTIONS; the roll is g(x+mu) in the gauge transform of each link
+            for mu in range(D):  # NOT A READ: the loop is over directions; the roll is g(x+mu) in the gauge transform of each link
                 q[..., mu, :] = _qmul(b, g, q[..., mu, :])                                   # left: g(x)
                 q[..., mu, :] = _qmul(b, q[..., mu, :], _qconj(b, b.roll(g, -1, _sax(mu, 1))))  # right: g(x+mu)^dag
     return q
 
 
 def maximal_centre_gauge(link, *, group="su2", iters=60, device=None):
-    """Gauge-fix a raw SU(2) LINK field to maximal centre gauge (maximize sum_{x,mu} (tr U_mu(x))^2),
+    """Gauge-fix a raw SU(2) link field to maximal centre gauge (maximize sum_{x,mu} (tr U_mu(x))^2),
     the gauge in which the Z2 centre projection exposes the confining P-vortices.  Returns fixed links."""
     if group != "su2":
         raise ValueError(f"maximal_centre_gauge supports group='su2'; got '{group}'")
@@ -847,7 +850,7 @@ def _sun_init(b, dims, batch, N):
 def _sun_staple(b, U, mu):
     A = b.zeros_like(U[..., mu, :, :])
     Umu = U[..., mu, :, :]
-    for nu in range(D):  # NOT A READ: the loop is over the staple's nu ORIENTATIONS; the rolls are the forward and backward neighbour shifts of the links
+    for nu in range(D):  # NOT A READ: the loop is over the staple's nu orientations; the rolls are the forward and backward neighbour shifts of the links
         if nu == mu:
             continue
         Unu = U[..., nu, :, :]
@@ -888,11 +891,11 @@ def _sun_sweep(b, U, sdims, N, beta, step):
 
 def _sun_cm_pass(b, U, sdims, N, beta, *, overrelax):
     """One Cabibbo-Marinari checkerboard pass over U: heat-bath (``overrelax=False``) or micro-canonical
-    OVER-RELAXATION (``overrelax=True``) of each SU(2) subgroup. For the 2x2 block m of M=Umu@A the effective
+    over-relaxation (``overrelax=True``) of each SU(2) subgroup. For the 2x2 block m of M=Umu@A the effective
     quaternion is c=(Re m00+Re m11, -(Im m01+Im m10), Re m10-Re m01, -(Im m00-Im m11)) with
     Re tr(su2(q)@m)=qdot4(q,c); it is fed to the SU(2) heat-bath as conj(c) at beta/N. The over-relaxation
-    reflects the TRIVIAL rotation about the effective staple, q=2<I,e>e-I with e=conj(Asub)/|Asub|=c/|c|:
-    this gives S(R)=qdot4(2 e0 e - I, c)=2 e0|c|-c0=c0=S(I), so it PRESERVES Re tr(R Umu A) exactly
+    reflects the trivial rotation about the effective staple, q=2<I,e>e-I with e=conj(Asub)/|Asub|=c/|c|:
+    this gives S(R)=qdot4(2 e0 e - I, c)=2 e0|c|-c0=c0=S(I), so it preserves Re tr(R Umu A) exactly
     (micro-canonical) while moving the link -- the SU(N) analog of the SU(2) over-relaxation."""
     full = U.shape[:-3]
     eyeN = b.broadcast_eye(N, full)
@@ -925,9 +928,9 @@ def _sun_cm_pass(b, U, sdims, N, beta, *, overrelax):
 
 
 def _sun_hb_sweep(b, U, sdims, N, beta, step, n_or=4):
-    """One SU(N) update: a Cabibbo-Marinari HEAT-BATH pass + ``n_or`` micro-canonical OVER-RELAXATION passes
+    """One SU(N) update: a Cabibbo-Marinari heat-bath pass + ``n_or`` micro-canonical over-relaxation passes
     (each recomputes staples, so the reflections are non-trivial decorrelating moves). The over-relaxation is
-    action-preserving (see ``_sun_cm_pass``), so heat-bath + over-relaxation samples the SAME equilibrium as
+    action-preserving (see ``_sun_cm_pass``), so heat-bath + over-relaxation samples the same equilibrium as
     the heat-bath alone but decorrelates far faster -- the SU(N) analog of ``_su2_hb_sweep``. ``step`` unused."""
     _sun_cm_pass(b, U, sdims, N, beta, overrelax=False)
     for _ in range(int(n_or)):
@@ -936,12 +939,195 @@ def _sun_hb_sweep(b, U, sdims, N, beta, step, n_or=4):
 
 def _sun_action(b, U, N):
     phi = b.zeros(U.shape[:-3])
-    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette PLANES; the rolls close the plaquette
+    for mu in range(D):  # NOT A READ: the loops are over the mu<nu plaquette planes; the rolls close the plaquette
         for nu in range(mu + 1, D):  # NOT A READ: the second plane index of the same plaquette shift
             Up = (U[..., mu, :, :] @ b.roll(U[..., nu, :, :], -1, _sax(mu, 2))
                   @ _dag(b, b.roll(U[..., mu, :, :], -1, _sax(nu, 2))) @ _dag(b, U[..., nu, :, :]))
             phi = phi + (1.0 - b.real(b.trace(Up)) / N)
     return phi
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SU(2) with a unit-length adjoint Higgs (Georgi-Glashow): the massless control with SU(2) links.
+#
+#   S = beta * sum_p (1 - (1/2) Re tr U_p)  -  kappa * sum_{x,mu} phi(x) . R(U_mu(x)) phi(x+mu)
+#
+# phi(x) is a unit 3-vector (Phi = phi . sigma, so (1/2) tr(Phi U Phi' U^dag) = phi . R(U) phi'), and R(U)
+# the adjoint rotation. A gauge transformation g rotates phi(x) by R(g(x)) and leaves S unchanged. The
+# Higgs is centre-neutral, so the model keeps the Z_2 centre, the SU(2) links, one-loop asymptotic
+# freedom and the instantons; at large beta and kappa it has a Coulomb phase with a massless photon. At
+# kappa -> infinity the links are confined to the stabiliser of phi and the model is compact U(1) at the
+# same beta. It is the control that reads every link-level and one-loop SU(2) fact as gap-blind.
+#
+# The link update is `_su2_sweep` with the hopping term added to dS, drawing its random numbers in the
+# same order, so at kappa = 0 it is the pure SU(2) chain exactly. The Higgs update is the exact heat bath:
+# phi(x) enters S linearly, through phi(x) . h(x), so its conditional law is von Mises-Fisher on S^2.
+# ══════════════════════════════════════════════════════════════════════════════
+def _qrot(b, q, v):
+    """The adjoint rotation of the unit quaternion ``q`` applied to the 3-vector ``v``: the vector part
+    of ``q v q*``. This module's quaternion product is associative and conjugation reverses it, so
+    ``_qrot(q1 q2, v) = _qrot(q1, _qrot(q2, v))`` and a link rotates the Higgs the way its gauge
+    transformation does."""
+    p = b.cat([b.zeros((*v.shape[:-1], 1)), v], -1)
+    return _qmul(b, _qmul(b, q, p), _qconj(b, q))[..., 1:]
+
+
+def gg_init(b, dims, batch):
+    """Hot start: Haar links and uniform unit Higgs vectors."""
+    q = _su2_init(b, dims, batch)
+    phi = b.randn((*batch, *dims, 3))
+    return q, phi / b.norm(phi, -1, True)
+
+
+def gg_cold_init(b, dims, batch):
+    """Ordered start: identity links and one Higgs direction everywhere, the minimum of S.
+
+    DERIVED: ``(1, 0, 0, 0)`` is the identity quaternion and ``(0, 0, 1)`` a unit vector; the direction
+    is arbitrary because S is invariant under a global rotation."""
+    q = cold_init(b, "su2", dims, batch)
+    phi = b.zeros((*batch, *dims, 3))
+    phi[..., 2] = 1.0
+    return q, phi
+
+
+def _gg_link_sweep(b, q, phi, sdims, beta, kappa, step):
+    full = q.shape[:-2]
+    for mu in range(D):  # NOT A READ: the loop is over link directions; the roll is the neighbour shift phi(x+mu) of the hopping term
+        phi_f = b.roll(phi, -1, _sax(mu, 1))               # phi(x + mu), fixed during the link update
+        for mask in b.parity(sdims):
+            A = _su2_staple(b, q, mu)
+            qmu = q[..., mu, :]
+            r = b.cat([b.ones((*full, 1)), step * b.randn((*full, 3))], -1)
+            r = r / b.norm(r, -1, True)
+            qp = _qmul(b, r, qmu)
+            dS = -beta * (_sdot(qp, A) - _sdot(qmu, A))
+            dS = dS - kappa * (phi * (_qrot(b, qp, phi_f) - _qrot(b, qmu, phi_f))).sum(-1)
+            acc = (b.rand(full) < b.exp(-dS)) & mask
+            q[..., mu, :] = b.where(acc[..., None], qp, qmu)
+
+
+def _gg_higgs_field(b, q, phi):
+    """h(x) = sum_mu [R(U_mu(x)) phi(x+mu) + R(U_mu(x-mu))^T phi(x-mu)], so S_H's dependence on phi(x) is
+    -kappa phi(x) . h(x)."""
+    h = b.zeros_like(phi)
+    for mu in range(D):  # NOT A READ: the loop is over link directions; the rolls are the neighbour shifts phi(x+mu), phi(x-mu), U(x-mu) of the Higgs field h(x)
+        qmu = q[..., mu, :]
+        h = h + _qrot(b, qmu, b.roll(phi, -1, _sax(mu, 1)))
+        h = h + _qrot(b, _qconj(b, b.roll(qmu, 1, _sax(mu, 1))), b.roll(phi, 1, _sax(mu, 1)))
+    return h
+
+
+def _gg_frame(b, h):
+    """The unit vector along ``h`` and two unit vectors completing it to a right-handed frame.
+
+    DERIVED: a zero ``h`` (every direction has the same energy) takes the third axis, any axis serving.
+    CHOSEN: the helper axis is the first unless ``n`` lies within ``acos(0.9)`` of it, which keeps the
+    Gram-Schmidt step well conditioned; any threshold below one does."""
+    hn = b.norm(h, -1, True)
+    e3 = b.zeros(h.shape)
+    e3[..., 2] = 1.0
+    # DERIVED: a zero h has no direction; the third axis stands in, every direction costing the same.
+    n = b.where(hn > 0, h / b.where(hn > 0, hn, b.ones(hn.shape)), e3)
+    ex = b.zeros(h.shape)
+    ex[..., 0] = 1.0
+    ey = b.zeros(h.shape)
+    ey[..., 1] = 1.0
+    # CHOSEN: 0.9 keeps the Gram-Schmidt step well conditioned; any threshold below one does.
+    t = b.where(b.norm(n[..., :1], -1, True) < 0.9, ex, ey)
+    e1 = t - (t * n).sum(-1)[..., None] * n
+    e1 = e1 / b.norm(e1, -1, True)
+    e2 = b.stack([n[..., 1] * e1[..., 2] - n[..., 2] * e1[..., 1],
+                  n[..., 2] * e1[..., 0] - n[..., 0] * e1[..., 2],
+                  n[..., 0] * e1[..., 1] - n[..., 1] * e1[..., 0]], -1)
+    return n, e1, e2, hn[..., 0]
+
+
+def vmf_cos(b, k, u):
+    """The cosine to the mean direction of a von Mises-Fisher draw on S^2 with concentration ``k``,
+    by inverting its CDF: density proportional to exp(k w) on [-1, 1].
+
+    DERIVED: below ``k = 1e-6`` the law is uniform to that relative order and the inversion is
+    ``2u - 1`` exactly; the closed form there would lose every digit to cancellation."""
+    # DERIVED: below 1e-6 the law is uniform to that relative order (see the docstring).
+    small = k < 1e-6
+    ks = b.where(small, b.ones(k.shape), k)
+    w = 1.0 + b.log(u + (1.0 - u) * b.exp(-2.0 * ks)) / ks
+    return b.where(small, 2.0 * u - 1.0, w)
+
+
+def _gg_higgs_heatbath(b, q, phi, sdims, kappa):
+    full = phi.shape[:-1]
+    for mask in b.parity(sdims):
+        n, e1, e2, hn = _gg_frame(b, _gg_higgs_field(b, q, phi))
+        w = vmf_cos(b, kappa * hn, b.rand(full))
+        s2 = 1.0 - w * w
+        # DERIVED: 0 clips round-off past |w| = 1.
+        s = b.sqrt(b.where(s2 > 0, s2, b.zeros(s2.shape)))
+        psi = b.uniform(0.0, 2 * np.pi, full)
+        new = (w[..., None] * n
+               + (s * b.cos(psi))[..., None] * e1 + (s * b.sin(psi))[..., None] * e2)
+        phi[...] = b.where(mask[..., None], new, phi)
+
+
+def _gg_higgs_overrelax(b, q, phi, sdims):
+    """Reflect phi(x) through the axis of h(x): phi . h is unchanged, so the move is microcanonical, and
+    it is its own inverse, so it satisfies detailed balance. It decorrelates the Higgs at no cost in S."""
+    for mask in b.parity(sdims):
+        n, _e1, _e2, _hn = _gg_frame(b, _gg_higgs_field(b, q, phi))
+        new = 2.0 * (phi * n).sum(-1)[..., None] * n - phi
+        phi[...] = b.where(mask[..., None], new, phi)
+
+
+# CHOSEN: one Higgs overrelaxation per heat bath by default; it costs one pass and changes no law.
+def gg_sweep(b, q, phi, sdims, beta, kappa, step, n_or=1):
+    """One sweep: every link by Metropolis, every Higgs by heat bath, then ``n_or`` overrelaxations."""
+    _gg_link_sweep(b, q, phi, sdims, beta, kappa, step)
+    _gg_higgs_heatbath(b, q, phi, sdims, kappa)
+    for _ in range(n_or):
+        _gg_higgs_overrelax(b, q, phi, sdims)
+
+
+def gg_hopping(b, q, phi):
+    """Per site, sum_mu phi(x) . R(U_mu(x)) phi(x+mu): the gauge-invariant Higgs link energy."""
+    out = b.zeros(phi.shape[:-1])
+    for mu in range(D):  # NOT A READ: the loop is over link directions; the roll is the neighbour shift phi(x+mu) of the hopping term
+        out = out + (phi * _qrot(b, q[..., mu, :], b.roll(phi, -1, _sax(mu, 1)))).sum(-1)
+    return out
+
+
+def gg_action(b, q, phi, beta, kappa):
+    """The total action S of the module banner, summed over the lattice (and over any batch)."""
+    return beta * _su2_action(b, q).sum() - kappa * gg_hopping(b, q, phi).sum()
+
+
+def gg_field(dims, beta, kappa, *, seed=0, therm=250, step=None, device=None,
+             batch=0, n_or=1, start="hot"):
+    """Thermalise the Georgi-Glashow model and return ``(links, higgs)``: unit quaternions of shape
+    ``(*batch, *dims, D, 4)`` and unit vectors of shape ``(*batch, *dims, 3)``. ``start`` is ``"hot"`` or
+    ``"cold"``; a thermalisation reference needs both (see `cold_init`)."""
+    b = _Backend(device).seed(seed)
+    step = _ops("su2")[3] if step is None else step
+    bt, sdims = _batch_tuple(batch), tuple(dims)
+    q, phi = (gg_init if start == "hot" else gg_cold_init)(b, sdims, bt)
+    for _ in range(therm):
+        gg_sweep(b, q, phi, sdims, beta, kappa, step, n_or)
+    return q, phi
+
+
+def gg_stream(dims, beta, kappa, *, seed=0, therm=250, gap=10, n=1, step=None,
+              device=None, n_or=1, start="hot"):
+    """Yield ``n`` copies of ``(links, higgs)`` from one chain, one every ``gap`` sweeps after
+    ``therm``. Each yield is a copy, so a consumer may keep it while the chain moves on."""
+    b = _Backend(device).seed(seed)
+    step = _ops("su2")[3] if step is None else step
+    sdims = tuple(dims)
+    q, phi = (gg_init if start == "hot" else gg_cold_init)(b, sdims, ())
+    for _ in range(therm):
+        gg_sweep(b, q, phi, sdims, beta, kappa, step, n_or)
+    for _ in range(n):
+        for _ in range(gap):
+            gg_sweep(b, q, phi, sdims, beta, kappa, step, n_or)
+        yield b.clone(q), b.clone(phi)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -971,15 +1157,14 @@ def _ops(group: str, method: str = "metropolis"):
 
 
 def cold_init(b, group: str, dims, batch):
-    """The ORDERED start: every link the group identity.
+    """The ordered start: every link the group identity.
 
-    The dual of the `_*_init` functions above, which are all RANDOM (hot). It exists because a
+    The dual of the `_*_init` functions above, which are all random (hot). It exists because a
     thermalisation reference measured from one start is not a bracket: a hot configuration relaxes
     toward equilibrium from above and a cold one from below, so running only the first gives an
     estimate biased in a known direction, by an amount no property of that single chain reveals.
     Measured for `U(1)` at `beta = 1.6` and `2.5`: the two starts are still 3.2 and 5.9 sigma apart
-    after 20000 sweeps, and the shipped ensembles sit inside the interval between them
-    (`data/store_check_u1_reference_bracket.py`).
+    after 20000 sweeps, and the shipped ensembles sit inside the interval between them.
 
     DERIVED: the identity is the group's own, not a small number -- `0` for the `U(1)` angle,
     `(1,0,0,0)` for the `SU(2)` unit quaternion, `I` for `SU(N)`. The action is minimised there by
@@ -1007,7 +1192,7 @@ def _batch_tuple(batch):
 
 
 def _require_even_for_heatbath(method, sdims):
-    """The checkerboard heat-bath colours sites by coordinate parity; an ODD extent makes a site and its
+    """The checkerboard heat-bath colours sites by coordinate parity; an odd extent makes a site and its
     periodic neighbour share a colour, so they update simultaneously -- detailed balance breaks and the
     field silently stays disordered (mean plaquette ~ 0 at any beta). Fail loud rather than return
     garbage. Metropolis is unaffected (it accepts/rejects per site, no two-colour sublattice)."""
@@ -1021,7 +1206,7 @@ def _require_even_for_heatbath(method, sdims):
 def config(dims=(8, 8, 8, 16), beta=1.0, *, group="u1", seed=0, therm=250, step=None,
            device=None, batch=0, method="metropolis", fp=None):
     """Thermalise and return the action-density field phi(x). ``device=None`` runs on numpy (CPU); a
-    torch device (e.g. ``"cuda"``) runs on the GPU. ``batch=n`` evolves ``n`` INDEPENDENT chains at once
+    torch device (e.g. ``"cuda"``) runs on the GPU. ``batch=n`` evolves ``n`` independent chains at once
     and returns a leading batch axis of size ``n`` (the GPU fast path for an ensemble)."""
     b = _Backend(device, fp=fp).seed(seed)
     init, sweep, action, dstep = _ops(group, method)
@@ -1058,7 +1243,7 @@ def gauge_field(dims=(8, 8, 8, 16), beta=1.0, *, group="u1", seed=0, therm=250, 
 
 
 def action_density(link, *, group="u1", dims=None, device=None, project="full"):
-    """The gauge-invariant action density phi(x) from a raw LINK field. ``dims`` is unused (kept for
+    """The gauge-invariant action density phi(x) from a raw link field. ``dims`` is unused (kept for
     call-compat); the reduction is intrinsic. ``device`` selects the backend the link lives on.
     ``project`` (SU(2)): ``"full"`` the SU(2) action; ``"centre"`` the Z2 centre-projected field
     (z = sign(q0)); ``"coset"`` the centre-removed SU(2)/Z2 field (sign(q0)*q)."""
@@ -1094,7 +1279,7 @@ def stream(dims=(8, 8, 8, 16), beta=1.0, *, group="u1", seed=0, therm=250, gap=5
 
 def free_scalar(dims=(8, 8, 64), m=0.5, *, seed=0, device=None, fp=None):
     """A free scalar field of mass m, sampled in momentum space with the lattice propagator
-    G(p) = 1/(phat^2 + m^2). Its time-correlation has an EXACT gap E0 = arccosh(1 + m^2/2). ``device``
+    G(p) = 1/(phat^2 + m^2). Its time-correlation has an exact gap E0 = arccosh(1 + m^2/2). ``device``
     selects the backend; use a long time axis (last) for the DMD."""
     b = _Backend(device, fp=fp).seed(seed)
     ks = [b.fftfreq(L) * 2 * np.pi for L in dims]
@@ -1129,7 +1314,7 @@ def sha256_file(path, chunk=1 << 20):
     """Streaming SHA-256 of a file, matching the data release's own indexer byte for byte.
 
     Same algorithm and chunking, so a digest written here and one written by the release indexer are
-    comparable without re-reading the file. That indexer lives at the STORE root, not in this
+    comparable without re-reading the file. That indexer lives at the store root, not in this
     repository, and is named there in `GENERATION.md` -- referenced by role rather than by path
     because the store is machine-local and this module must not assume where it is mounted.
     """
@@ -1144,7 +1329,7 @@ def sha256_file(path, chunk=1 << 20):
 def campaign_seed(seed0, beta, shard):
     """Index -> RNG seed for a sharded campaign: seed0 + 1000*round(100*beta) + shard.
 
-    A dataset is reproducible only if the seed of every shard can be recovered from its FILENAME,
+    A dataset is reproducible only if the seed of every shard can be recovered from its filename,
     which carries just (group, L, beta, shard index). Published alongside the data, this is the
     'seed map' half of the (group, L, T, beta, seed, therm, method) tuple."""
     return int(seed0) + 1000 * int(round(100 * float(beta))) + int(shard)
@@ -1167,23 +1352,23 @@ def _cli():
     ap.add_argument("--device", default="cuda", help="cuda | cpu | numpy")
     ap.add_argument("--method", default="heatbath", help="heatbath (su2/su3) | metropolis")
     ap.add_argument("--out", default=".", help="output directory")
-    # The action density is an intrinsic REDUCTION of the links: one gauge-invariant scalar per site,
+    # The action density is an intrinsic reduction of the links: one gauge-invariant scalar per site,
     # with the direction and group axes summed away. Wilson loops are ordered products of link
     # matrices around a contour, so they cannot be rebuilt from it -- which is why a links campaign
     # is a distinct product and not a post-processing step.
     ap.add_argument("--field", default="density", choices=("density", "links", "operator"),
                     help="density: phi(x), (n,L,L,L,T)  |  links: raw U_mu(x), (n,L,L,L,T,4,4)  |  "
                          "operator: zero-momentum O(t), (n,T) -- generated, reduced, DISCARDED")
-    # Which operator `--field operator` reduces to. The two are different CHANNELS, not two
-    # implementations of one thing, and Sec 8.7b reads them against each other precisely because they
+    # Which operator `--field operator` reduces to. The two are different channels, not two
+    # implementations of one thing, and they are read against each other precisely because they
     # disagree about the continuum limit -- so the choice is recorded in the filename, never defaulted
     # silently.
     ap.add_argument("--channel", default="density", choices=("density", "plaquette"),
                     help="operator channel: density (full action) | plaquette (spatial 0++, SU(2))")
-    # APE smearing of the SPATIAL links before the operator reduction. Zero by default, so a run
+    # APE smearing of the spatial links before the operator reduction. Zero by default, so a run
     # that does not ask for it reduces the raw links exactly as before.
     #
-    # WHY IT IS AN OPTION AND NOT A DEFAULT. Smearing changes the operator, not the ensemble: the
+    # Why it is an option and not a default. Smearing changes the operator, not the ensemble: the
     # gauge configurations are the same, and what moves is which correlation length the read sees.
     # A reduction that smeared silently would report a different observable under the same name.
     ap.add_argument("--smear", type=str, default="0",
@@ -1192,7 +1377,7 @@ def _cli():
                          "from a single Monte Carlo pass -- '4,8,16,32' is a four-operator "
                          "variational basis for the cost of the 32-sweep run alone.")
     # DERIVED-as-recorded: 0.5 is `ape_smear`'s own default and the standard APE weight. Exposed so
-    # that a run RECORDS the value it used rather than inheriting a library default silently; the
+    # that a run records the value it used rather than inheriting a library default silently; the
     # filename carries the sweep count, and this is written into the run header.
     ap.add_argument("--smear-alpha", type=float, default=0.5,
                     help="APE weight (default 0.5, the function's own default)")
@@ -1243,13 +1428,13 @@ def _cli():
 
     for beta in betas:
         for k in range(a.shards):
-            # The channel goes in the NAME. Without it a density run and a plaquette run at the
+            # The channel goes in the name. Without it a density run and a plaquette run at the
             # same (group, L, beta, shard) write the same file, and the resume check below would
             # then skip the second as "already done" -- silently returning the wrong channel.
             tag = f".{a.channel}" if a.field == "operator" else ""
 
             def shard_path(smear):
-                """Where one level lands. The sweep count joins the channel in the NAME, so a smeared
+                """Where one level lands. The sweep count joins the channel in the name, so a smeared
                 and an unsmeared run at the same (group, L, beta, shard, channel) cannot collide and
                 the resume check cannot mistake one for the other."""
                 s = f"{tag}.ape{smear}" if (a.field == "operator" and smear) else tag
@@ -1261,7 +1446,7 @@ def _cli():
                 if s not in wanted:
                     print(f"  {os.path.basename(shard_path(s))} exists -- skipping", flush=True)
             # Every level already present means there is no Monte Carlo to run. That check is over the
-            # WHOLE tower, not one level: generating the configurations is the expensive part, and one
+            # whole tower, not one level: generating the configurations is the expensive part, and one
             # missing level is reason enough to pay for it -- but zero missing levels is not.
             if not wanted:
                 continue
@@ -1285,11 +1470,11 @@ def _cli():
                         return plaquette_0pp_Ot(link, device=dev)
                     return density_Ot(link, group=a.group, device=dev)
 
-                # THE TOWER, FROM ONE SET OF LINKS. Smear the SPATIAL links only -- the temporal
+                # The tower, from one set of links. Smear the spatial links only -- the temporal
                 # direction is the one the read runs along, and smearing it would blur the very decay
                 # being measured; `ape_smear` enforces that and this is the call site that asks.
                 #
-                # Levels are ascending and each is reached from the one below by the DIFFERENCE in
+                # Levels are ascending and each is reached from the one below by the difference in
                 # sweeps, because an APE sweep is a deterministic function of the current links:
                 # smearing 8 and then 8 more is smearing 16. So the whole basis costs one Monte Carlo
                 # pass and one smearing run to the top level, which is what makes a variational basis
@@ -1330,7 +1515,7 @@ def resolve_device(requested=None):
         return None
 
 
-# The entry point is LAST. It used to sit above `resolve_device`, which worked only because `_cli`
+# The entry point is last. It used to sit above `resolve_device`, which worked only because `_cli`
 # happened not to call it -- any future use would have raised NameError at run time, on the GPU, an
 # hour into a campaign. A module's entry point runs after every definition it could ever reach.
 if __name__ == "__main__":

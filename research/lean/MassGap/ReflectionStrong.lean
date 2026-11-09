@@ -61,8 +61,7 @@ continuum measure:
 
 ## The coupling's sign
 
-`Complete.wilson_reflection_positive_at_even` carries `0 ≤ β`, and that hypothesis is about the odd
-lags. `corrClay_nonneg_even_lag` below is the even-lag half at every real `β`, and
+The hypothesis `0 ≤ β` is about the odd lags. `corrClay_nonneg_even_lag` below is the even-lag half at every real `β`, and
 `corrClay_even_sum_pos` its positive-mass companion, also at every real `β`. The odd lags go through
 `OddLagSplit.odd_crossing_integral_nonneg`, whose integrand is the cross kernel
 `exp(β · hsRe A B)`, and `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` proves that kernel
@@ -680,8 +679,7 @@ section Clay
 
 /-- The Clay correlation is nonnegative at every even lag, at every real coupling.
 
-`Complete.wilson_reflection_positive_at_even` carries `0 ≤ β`; on the even lags that hypothesis is
-not needed and this is the statement without it. What still needs it is the odd lags — see the module
+On the even lags the hypothesis `0 ≤ β` is not needed. What needs it is the odd lags — see the module
 docstring.
 
 DERIVED: `1` is the `+ 1` of the extent `Nap + 1` and of the lag index type; `2` is the doubling in
@@ -717,9 +715,8 @@ theorem corrClay_even_sum_pos (Nap m : ℕ) (hm : Nap + 1 = 2 * m) (hm0 : 0 < m)
 
 /-- Row A4, with its even half supplied by the module statement.
 
-The same conjunction as `OddLagSplit.corrClay_reflection_positive` and
-`Complete.wilson_reflection_positive_at_even`, on the same domain, assembled so that the even lags
-come from `plaqReflPositive_even_lag_of_module` — the half-space algebra statement at every real
+The same conjunction as `OddLagSplit.corrClay_reflection_positive`, on the same domain, assembled so
+that the even lags come from `plaqReflPositive_even_lag_of_module` — the half-space algebra statement at every real
 coupling — and only the odd lags from `OddLagSplit.plaqReflPositive_odd`, which is where `0 ≤ β`
 enters and cannot be removed.
 

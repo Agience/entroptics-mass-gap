@@ -1,0 +1,22 @@
+{
+  "group": "su3",
+  "update": "heatbath (lattice_generator._sun_hb_sweep: Cabibbo-Marinari heat bath + 4 over-relaxation)",
+  "dims": [16, 16, 16, 16],
+  "beta": 6.00,
+  "chains": 4,
+  "starts": "chain k hot (k even, _sun_init) or cold (k odd, cold_init)",
+  "therm": 150,
+  "nmeas": 6,
+  "gap": 20,
+  "seed0": 7000,
+  "seed_map": "lattice_generator.campaign_seed(seed0, beta, chain)",
+  "backend": "numpy",
+  "fp": "64 (generation), stored complex64",
+  "layout": "links_c{k}_m{j}.npy: (1, x, y, z, t, direction, 3, 3) complex64",
+  "generator": "sun/code/lattice_generator.py",
+  "generator_sha256": "c1c0b1659c89135fc76bf4fe1a34f8dca6365fa606f3009d41f6360e4cf6ecff",
+  "campaign_script_sha256": "4f51ca28c852b3f29e9054a017540ce9d2b726cf653cd49eb8af334f0367d881",
+  "numpy": "2.5.3",
+  "host": "JOHN-LT2",
+  "started_utc": "2026-10-04T03:37:46Z"
+}

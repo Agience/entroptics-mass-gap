@@ -1,5 +1,6 @@
 import Mathlib
 import MassGap.HeatBath
+import MassGap.RestoreShims
 
 noncomputable section
 

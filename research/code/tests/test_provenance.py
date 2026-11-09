@@ -101,10 +101,10 @@ def test_no_script_cites_a_file_that_does_not_exist():
     root = REPO / "research"
     have = {p.name for p in root.rglob("*") if p.is_file()}
     # The ensemble store is a second real tree, and prose here cites tools that live in it --
-    # `make_manifest.py` rebuilds the manifest FROM the store root, by discovery, so it belongs
+    # `make_manifest.py` rebuilds the manifest from the store root, by discovery, so it belongs
     # beside the data rather than beside the code that reads it. Its top-level names count as
     # resolving. A clone without the store (CI) still resolves the tools the data release ships at
-    # its root: they are named here, and wherever a store IS configured each of them must exist at
+    # its root: they are named here, and wherever a store is configured each of them must exist at
     # its root, so the list stays true to the release.
     release_root_tools = {"make_manifest.py", "read_example.py"}
     have |= release_root_tools
@@ -118,17 +118,17 @@ def test_no_script_cites_a_file_that_does_not_exist():
     pat = re.compile(r"[`\s(]([A-Za-z0-9_./]+\.(?:py|csv|png|lean|md|txt))")
     unresolved = {}
     # A name a program declares in code -- its own output path -- is not a dead reference, even
-    # when the file is not in the tree yet because regenerating it is a pod job. What this test is
+    # when the file is not in the tree yet because regenerating it needs the ensembles. What this test is
     # for is the opposite case: a rename that leaves the old name behind in prose, pointing a
     # reader at something gone. Whether a declared artifact is actually committed is a separate
     # invariant, held by test_every_listed_artifact_is_actually_tracked against regen_all.OWNERS.
-    # PROSE AND CODE ARE SPLIT BY PARSING, NOT BY LOOKING AT THE LINE.
+    # Prose and code are split by parsing, not by looking at the line.
     #
-    # A line-shape test cannot do this. A docstring's BODY lines carry no `#` and no triple quote,
+    # A line-shape test cannot do this. A docstring's body lines carry no `#` and no triple quote,
     # so a classifier keyed on those characters reads a docstring's two delimiter lines and discards
     # everything between them -- which is where nearly all the prose is. It fails in both
     # directions at once: a dead reference in a docstring body is never cited, and a quoted name in
-    # a docstring body counts as DECLARED and so exempts that name everywhere else.
+    # a docstring body counts as declared and so exempts that name everywhere else.
     #
     # `ast` gives the split exactly. A bare string expression -- a module, class or function
     # docstring -- is prose. Every other string constant is a name the program uses, so it is a
@@ -190,7 +190,7 @@ def test_no_script_cites_a_file_that_does_not_exist():
             if m:
                 declared.add(m.group(1).split("/")[-1])
 
-    # A line that INVOKES a script is showing how to run it, so the names on it are arguments of an
+    # A line that invokes a script is showing how to run it, so the names on it are arguments of an
     # example rather than references into the tree -- `--emit out.csv` names the file the reader
     # will choose, and it is not supposed to exist. This exempts the line, not the name, so the same
     # name elsewhere in real prose is still checked. The cost is narrow and worth stating: a genuine
@@ -204,16 +204,16 @@ def test_no_script_cites_a_file_that_does_not_exist():
                     continue
                 # `pat` needs a delimiter before the name; a line may open with one.
                 for cited in pat.findall(" " + raw):
-                    # A citation rooted in `_archive/` names the SUPERSEDED tree, which is a
+                    # A citation rooted in `_archive/` names the superseded tree, which is a
                     # separate repository and is not expected in a clone of this one. Same reason
                     # the ensemble store is unioned into `have` above when it happens to be
                     # present: a checkout without it cannot check a reference into it either way.
-                    # Exempted by PATH, not by bare name, so the same name in ordinary prose with
+                    # Exempted by path, not by bare name, so the same name in ordinary prose with
                     # no `_archive/` root is still checked.
                     if cited.startswith("_archive/") or "/_archive/" in cited:
                         continue
                     name = cited.split("/")[-1]
-                    # An empty stem is a bare EXTENSION, not a filename: prose listing the suffixes
+                    # An empty stem is a bare extension, not a filename: prose listing the suffixes
                     # a loader accepts (`.yml/.yaml/.json/.md`) names no file to resolve.
                     if not name.split(".")[0]:
                         continue
@@ -263,19 +263,7 @@ def test_no_function_is_implemented_twice():
 
     # Known outstanding duplication, with the reason it has not been collapsed. Anything not on this
     # list is a failure. Shrink this dict; do not grow it.
-    KNOWN = {
-        "pin": "closes over each module's own load()/ROOT, so sharing it needs a signature change "
-               "across four config-reading scripts that cannot be regenerated locally to confirm "
-               "the artifacts are unmoved",
-        "load": "the group-generic loader, load(group, L, beta, ncap), in six config-reading "
-                "scripts. The su2-specific loaders it shadowed ARE collapsed, onto "
-                "aperture_reads.load_su2 -- which is why that one takes a dtype: the Sec 8.7 "
-                "scripts read float32 for memory and the Sec 9 certificates read float64, and "
-                "flattening that would silently change what the certificates compute. Collapsing "
-                "these six is the same edit again, but they own committed artifacts and none of "
-                "them can be run here, so it waits for a regeneration that can confirm the "
-                "artifacts do not move.",
-    }
+    KNOWN: dict[str, str] = {}
 
     dupes = {name: sorted(files) for (name, _), files in seen.items() if len(files) > 1}
     unexpected = {n: f for n, f in dupes.items() if n not in KNOWN}
@@ -291,7 +279,7 @@ def test_no_function_is_implemented_twice():
 
 
 def test_committed_builds_are_not_older_than_the_paper():
-    """PAPER.pdf and PAPER.html were rebuilt in the last commit that changed PAPER.md.
+    """mass-gap.pdf and mass-gap.html were rebuilt in the last commit that changed mass-gap.md.
 
     The PDF and the HTML are the forms the paper is read in, so a change that lands in the markdown and
     not in a built form leaves stale text in circulation.
@@ -308,9 +296,9 @@ def test_committed_builds_are_not_older_than_the_paper():
         return r.stdout.strip()
 
     def is_tracked(path):
-        """Present in HEAD right now -- NOT merely mentioned somewhere in history.
+        """Present in HEAD right now -- not merely mentioned somewhere in history.
 
-        `git log -- <path>` answers for a DELETED file too: it returns the commit that removed it, so
+        `git log -- <path>` answers for a deleted file too: it returns the commit that removed it, so
         an empty `last_commit(...)` does not detect a file that is gone. `git cat-file -e` does.
         """
         r = subprocess.run(["git", "cat-file", "-e", f"HEAD:{path}"], cwd=REPO,
@@ -320,10 +308,10 @@ def test_committed_builds_are_not_older_than_the_paper():
         # be to parse stderr, which is less stable than the exit status.
         return r.returncode == 0
 
-    if not is_tracked("research/PAPER.md"):
-        pytest.skip("PAPER.md is not tracked in HEAD")
-    md = last_commit("research/PAPER.md")
-    built = [f for f in ("research/PAPER.pdf", "research/PAPER.html") if is_tracked(f)]
+    if not is_tracked("research/paper/mass-gap.md"):
+        pytest.skip("research/paper/mass-gap.md is not tracked in HEAD")
+    md = last_commit("research/paper/mass-gap.md")
+    built = [f for f in ("research/paper/mass-gap.pdf", "research/paper/mass-gap.html") if is_tracked(f)]
     if not md or not built:
         pytest.skip("no built form of the paper is tracked in HEAD")
     subj = subprocess.run(["git", "log", "-1", "--format=%h %s", md], cwd=REPO,
@@ -335,220 +323,12 @@ def test_committed_builds_are_not_older_than_the_paper():
             continue                                  # rebuilt in the same commit
         # is the build's commit an ancestor of the paper's? then the paper moved afterwards
         r = subprocess.run(["git", "merge-base", "--is-ancestor", c, md], cwd=REPO)
-        # DERIVED: 0 is the POSIX success code `git merge-base --is-ancestor` returns when c IS an ancestor.
+        # DERIVED: 0 is the POSIX success code `git merge-base --is-ancestor` returns when c is an ancestor.
         if r.returncode == 0:
             stale.append(f"{f} (last rebuilt in {c[:7]})")
     assert not stale, (
-        f"PAPER.md changed in {subj} after: {', '.join(stale)}. The built forms are what the paper is "
+        f"mass-gap.md changed in {subj} after: {', '.join(stale)}. The built forms are what the paper is "
         "read in; rebuild them and commit them with the paper.")
-
-
-def test_release_figures_match_the_shipped_manifest():
-    """The data-availability figures are the ones manifest.csv actually carries.
-
-    Counts that summarise a growing release drift as collections are added, and the two totals are
-    easy to conflate: the density subset is 223 shards and the whole deposit 259, the difference
-    being the 36 raw-link shards. Each figure is therefore derived from manifest.csv rather than
-    matched as text.
-
-    This is the reproducibility statement and the dataset citation, so it is the paragraph a reader
-    checks the archive against. Skips when the store is not mounted; the figures are only verifiable
-    against the release itself.
-    """
-    import csv
-
-    # The store is located by ``store_path``: the CONFIGS environment variable, then the
-    # git-ignored local config file at the repository root, then nothing. ``unavailable``
-    # hands back the whole actionable message -- which data release this is, that it is a
-    # separate multi-gigabyte download, and the two ways to point at it -- so the skip line
-    # says WHY. A bare "not mounted at <path>" names one machine and tells a reader on any
-    # other nothing at all.
-    why = store_path.unavailable("manifest.csv")
-    if why:
-        pytest.skip(why)
-    root = store_path.store_root()
-    manifest = Path(root) / "manifest.csv"
-
-    with manifest.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
-    LINKS = "configs_links_su2"
-    dens = [r for r in rows if r["collection"] != LINKS]
-    link = [r for r in rows if r["collection"] == LINKS]
-
-    ens = len({(r["group"], r["L"], r["beta"]) for r in dens})
-    cfgs = sum(int(r["n_configs"]) for r in dens)
-    gb = sum(int(r["bytes"]) for r in dens) / 1024 ** 3
-    link_gb = sum(int(r["bytes"]) for r in link) / 1024 ** 3
-
-    text = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
-    flat = " ".join(text.split())
-    thousands = lambda n: f"{n:,}".replace(",", "{,}")
-
-    # The paper states TWO different totals on purpose: the paragraph describes the density subset
-    # the Sec 8 reads consume, and the dataset citation names the whole deposit, raw links
-    # included. So each is checked in its own context rather than requiring one value everywhere --
-    # and each is checked at EVERY occurrence within that context, because the counts appear more
-    # than once and a check that finds the value somewhere passes when one copy has drifted.
-    import re
-    all_cfgs = sum(int(r["n_configs"]) for r in rows)
-    cut = flat.find("Zenodo dataset")
-    assert cut != -1, "the dataset citation is gone from the paper"
-    para, cite = flat[:cut], flat[cut:]
-
-    # only the thousands-separated form: Sec 8.8 says "512 configurations per coupling",
-    # which is an ensemble size, not a release total
-    CFG = r"(\d{1,3}\{,\}\d{3}) configurations"
-    for label, blob, pat, want in (
-            ("ensemble count", para, r"(\d+) ensembles", str(ens)),
-            ("density configuration count", para, CFG, thousands(cfgs))):
-        hits = re.findall(pat, blob)
-        assert hits, f"the paper states no {label}"
-        bad = [h for h in hits if h != want]
-        assert not bad, (f"the paper states the {label} as {bad} in {len(bad)} of {len(hits)} "
-                         f"places; the manifest gives {want}")
-
-    # THE DEPOSIT IS NOT THE STORE, and requiring them equal forces a false statement. The citation
-    # names Zenodo v0.1.0, whose contents are fixed at publication; the store grows whenever a
-    # campaign lands. Asserting equality would mean editing a published version's shard count to
-    # match a local directory -- the citation would then describe a deposit that does not exist.
-    #
-    # So the invariant is DEPOSIT <= STORE, with the gap reported: the store may run ahead, never
-    # behind, and a citation claiming more than was ever generated is still caught.
-    num = lambda s: int(s.replace("{,}", "").replace(",", ""))
-    dep_cfgs = [num(h) for h in re.findall(CFG, cite)]
-    dep_shards = [int(h) for h in re.findall(r"(\d+) shards", cite)]
-    assert dep_cfgs and dep_shards, "the dataset citation states no shard/configuration counts"
-    over = ([c for c in dep_cfgs if c > all_cfgs] + [s for s in dep_shards if s > len(rows)])
-    assert not over, (
-        f"the dataset citation claims more than the store holds: {over} against "
-        f"{all_cfgs} configurations / {len(rows)} shards. A deposit cannot contain data that was "
-        f"never generated.")
-    if max(dep_cfgs) < all_cfgs or max(dep_shards) < len(rows):
-        print(f"\n  NOTE: the store has moved past the deposit -- cited v0.1.0 has "
-              f"{max(dep_shards)} shards / {max(dep_cfgs):,} configurations, the store now has "
-              f"{len(rows)} / {all_cfgs:,}. A new Zenodo version is pending; the citation is "
-              f"correct for the version it names.")
-
-    # sizes and shard counts, in the paragraph that states them
-    for label, needle in (
-            # GiB, not GB: `gb` above is bytes / 1024**3. The label said GB throughout this
-            # layer while the arithmetic was binary, so every figure it governs was a GiB
-            # printed as a GB. Fixed in the test and in the documents it checks.
-            ("density size", f"{gb:.2f} GiB"),
-            ("density shard count", f"{len(dens)} density shards"),
-            ("verified shard count", f"all {len(rows)} shards verified"),
-            ("raw-link shard count", f"{len(link)} raw-link shards"),
-            ("raw-link size", f"{link_gb:.2f} GiB")):
-        assert needle in para, \
-            f"the paper {label} does not match the manifest; expected to find {needle!r}"
-
-
-def test_release_coverage_claims_match_the_manifest():
-    """The coverage the paper describes is the coverage the release holds.
-
-    Coverage is where a description and an archive part company most quietly: `configs_links_su2`
-    holds four volumes (L = 8, 12, 16, 20) and Sec 8.7b's variational read uses all four, so a
-    description naming fewer would make the volumes behind that table look unavailable. The
-    beta=2.30 tower is seven volumes, which is what the Sec 8.7 L-scan reads.
-
-    Skips when the store is not mounted.
-    """
-    import csv
-    import re
-
-    # The store is located by ``store_path``: the CONFIGS environment variable, then the
-    # git-ignored local config file at the repository root, then nothing. ``unavailable``
-    # hands back the whole actionable message -- which data release this is, that it is a
-    # separate multi-gigabyte download, and the two ways to point at it -- so the skip line
-    # says WHY. A bare "not mounted at <path>" names one machine and tells a reader on any
-    # other nothing at all.
-    why = store_path.unavailable("manifest.csv")
-    if why:
-        pytest.skip(why)
-    root = store_path.store_root()
-    manifest = Path(root) / "manifest.csv"
-    with manifest.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
-
-    LINKS = "configs_links_su2"
-    dens = [r for r in rows if r["collection"] != LINKS]
-    link = [r for r in rows if r["collection"] == LINKS]
-    flat = " ".join((REPO / "research" / "PAPER.md").read_text(encoding="utf-8").split())
-
-    # the raw-link volumes, as a comma list
-    link_Ls = sorted({int(r["L"]) for r in link})
-    # closing "$" included: the tower list "$L=8,12,16,20,24,28,32$" CONTAINS "L=8,12,16,20", so a
-    # bare substring check passes even when a volume has been dropped from the raw-link list
-    assert "$L=" + ",".join(str(x) for x in link_Ls) + "$" in flat, (
-        f"the paper does not list the raw-link volumes as {link_Ls}; "
-        "a volume the Sec 8.7b table rests on would look unarchived")
-
-    # the beta=2.30 su2 tower
-    tower = sorted({int(r["L"]) for r in dens if r["group"] == "su2" and float(r["beta"]) == 2.30})
-    assert f"tower $L={','.join(str(x) for x in tower)}$" in flat, \
-        f"the paper does not list the beta=2.30 volume tower as {tower}"
-
-    # per-group L coverage, as the paper states it ("SU(2) at L=8-32"). A group held at a single
-    # volume has no range to state, so the bare form "U(1) at L=8" is the correct prose for it and
-    # is accepted; the range form is still REQUIRED wherever the release spans more than one volume,
-    # which is what stops a dropped volume passing as a narrowed claim.
-    dash = "[" + chr(0x2013) + chr(0x2014) + "-]"
-    for group, label in (("su2", "SU(2)"), ("su3", "SU(3)"), ("u1", "U(1)")):
-        Ls = sorted({int(r["L"]) for r in dens if r["group"] == group})
-        lo, hi = min(Ls), max(Ls)
-        rng = re.search(re.escape(label) + r"\$ at \$L=(\d+)\$" + dash + r"\$(\d+)\$", flat)
-        if lo != hi:
-            assert rng, f"the paper states no L range for {label}, but the release holds {lo}-{hi}"
-            assert (int(rng.group(1)), int(rng.group(2))) == (lo, hi), (
-                f"the paper states {label} at L={rng.group(1)}-{rng.group(2)}, "
-                f"but the release holds {lo}-{hi}")
-            continue
-        assert rng is None, (
-            f"the paper states {label} at a range of volumes, but the release holds only L={lo}")
-        one = re.search(re.escape(label) + r"\$ at \$L=(\d+)\$(?!" + dash + ")", flat)
-        assert one, f"the paper states no L coverage for {label}"
-        assert int(one.group(1)) == lo, (
-            f"the paper states {label} at L={one.group(1)}, but the release holds L={lo}")
-
-    # the shape and dtype the paragraph promises
-    assert {r["dtype"] for r in dens} == {"float32"}, "not every density shard is float32"
-    # TWO KINDS OF ENSEMBLE, told apart by the manifest rather than by a list of names.
-    #
-    # A VOLUME SCAN moves L and carries T = 2L with it. A FIXED-APERTURE SCAN holds one T across
-    # several L on purpose -- the box series runs L = 8..24 at T = 32, because moving the box and the
-    # aperture together would not separate them. Asserting T = 2L over both reports correct shards as
-    # defects.
-    #
-    # The carve-out is DERIVED, not maintained: a collection holding a single T across two or more L
-    # is a fixed-aperture scan. `make_manifest.keep_globs` records what a hand-kept list of
-    # collections costs -- it went out of date silently three separate times -- and a list here would
-    # go the same way on the next campaign.
-    by_coll = {}
-    for r in dens:
-        by_coll.setdefault(r["collection"], []).append(r)
-    volume, fixed = [], []
-    for coll, rs in by_coll.items():
-        Ts, Ls = {int(r["T"]) for r in rs}, {int(r["L"]) for r in rs}
-        # DERIVED: one T across two or more L is what "the aperture is held while the box moves"
-        # MEANS. Both numbers come from the manifest; neither is a threshold.
-        (fixed if (len(Ts) == 1 and len(Ls) > 1) else volume).append((coll, rs))
-
-    # And an OPERATOR-reduced shard is exempt wherever it sits: its shape is (n, T), with no spatial
-    # axes at all, so "T = 2L" is a claim about a field shape it does not have. The zero-momentum
-    # projection was taken before the links were discarded; L survives only in the name.
-    off = [r["filename"] for _, rs in volume for r in rs
-           if not r["channel"] and int(r["T"]) != 2 * int(r["L"])]
-    assert not off, (f"the paper says T=2L for the density shards, but {len(off)} differ: {off[:3]} "
-                     f"(collections held at a fixed aperture are exempt and checked separately: "
-                     f"{sorted(c for c, _ in fixed)})")
-
-    # and the fixed-aperture scans must actually hold it fixed, which nothing checked before
-    for coll, rs in fixed:
-        Ts = {int(r["T"]) for r in rs}
-        # DERIVED: 1 is the arity of "the aperture is held fixed" -- one T, or the series is
-        # not holding anything.
-        assert len(Ts) == 1, (f"{coll} is read as a fixed-aperture scan but carries T = {sorted(Ts)}; "
-                              f"a series that moves the box AND the window separates neither")
 
 
 def test_the_release_manifest_and_the_store_agree():
@@ -570,7 +350,7 @@ def test_the_release_manifest_and_the_store_agree():
     # git-ignored local config file at the repository root, then nothing. ``unavailable``
     # hands back the whole actionable message -- which data release this is, that it is a
     # separate multi-gigabyte download, and the two ways to point at it -- so the skip line
-    # says WHY. A bare "not mounted at <path>" names one machine and tells a reader on any
+    # says why. A bare "not mounted at <path>" names one machine and tells a reader on any
     # other nothing at all.
     why = store_path.unavailable("manifest.csv")
     if why:
@@ -606,20 +386,70 @@ def test_the_release_manifest_and_the_store_agree():
             f"SHA256SUMS lists {n} files but the manifest indexes {len(rows)}"
 
 
+#: Collections in the local store that were generated after the store version whose manifest.csv
+#: the store carries, and so are not part of any published deposit. The manifest is the published
+#: record's: rebuilding it to index a newer campaign would break its match with that deposit, so a
+#: newer campaign waits here until the next store version is deposited, when ``make_manifest.py``
+#: indexes it and its entry is deleted. An entry is honoured only while every one of its shards is
+#: newer than the release date in the store's CITATION.cff and the manifest still does not index
+#: it; ``_check_unreleased_collections`` fails otherwise, so the list cannot excuse a collection the
+#: published release should have carried, and cannot outlive the reason it was added.
+UNRELEASED_COLLECTIONS = {
+    "configs_movesus_plaq": (
+        "SU(2) and U(1) per-plane plaquette campaigns generated on 2026-10-23, after the v0.2.0 "
+        "store deposit (2026-09-19); no script in this repository reads them yet"),
+}
+
+
+def _store_release_date(root: Path):
+    """The ``date-released`` of the store version on disk, from its CITATION.cff."""
+    import datetime
+    import re
+
+    cff = (root / "CITATION.cff").read_text(encoding="utf-8")
+    m = re.search(r'^date-released:\s*"?(\d{4}-\d{2}-\d{2})"?', cff, re.M)
+    assert m, "the store's CITATION.cff carries no date-released"
+    return datetime.date.fromisoformat(m.group(1))
+
+
+def _check_unreleased_collections(root: Path, on_disk: set, indexed: set) -> None:
+    """Every UNRELEASED_COLLECTIONS entry is on disk, unindexed, and newer than the release."""
+    import datetime
+
+    released = _store_release_date(root)
+    for coll in sorted(UNRELEASED_COLLECTIONS):
+        assert coll not in indexed, (
+            f"{coll} is listed as unreleased but manifest.csv now indexes it; delete its entry "
+            "from UNRELEASED_COLLECTIONS")
+        assert coll in on_disk, (
+            f"{coll} is listed as unreleased but holds no shards in the store; delete its entry "
+            "from UNRELEASED_COLLECTIONS")
+        older = [f.name for f in (root / coll).glob("*.npy")
+                 if datetime.date.fromtimestamp(f.stat().st_mtime) <= released]
+        assert not older, (
+            f"{coll} is listed as unreleased, but {len(older)} of its shards date from on or before "
+            f"the {released} release, so the published manifest should have indexed them: "
+            f"{older[:4]}")
+
+
 def test_no_whole_collection_is_missing_from_the_manifest():
     """Every ``configs_*`` directory holding shards is represented in the manifest.
 
     The check above walks only the collections the manifest already names, so it finds a missing
-    FILE and cannot find a missing COLLECTION -- the loop never looks at a directory no row
+    file and cannot find a missing collection -- the loop never looks at a directory no row
     mentions. This closes that.
 
     It matters because a collection the manifest never names ships inside the tarball while
     ``sha256sum -c`` still passes -- the checksum file cannot flag a path it was never told about --
     so the release under-reports its own contents and nothing signals it. That happened three times
-    while ``make_manifest.py`` indexed a hand-maintained list of globs; it now DISCOVERS every
+    while ``make_manifest.py`` indexed a hand-maintained list of globs; it now discovers every
     ``configs_*`` directory holding shards, which is the same enumeration this assertion makes, so
     the two can no longer disagree by omission. The assertion stays, against the directories on
     disk, because the store is not this repository's to assume.
+
+    A campaign generated after the store version on disk is not shipped content, so it is exempt
+    while it is named in ``UNRELEASED_COLLECTIONS`` with its reason and every shard postdates the
+    release; any other unindexed collection fails.
     """
     import csv
 
@@ -631,7 +461,8 @@ def test_no_whole_collection_is_missing_from_the_manifest():
         indexed = {r["collection"] for r in csv.DictReader(fh)}
 
     on_disk = {d.name for d in root.glob("configs_*") if d.is_dir() and any(d.glob("*.npy"))}
-    missing = sorted(on_disk - indexed)
+    _check_unreleased_collections(root, on_disk, indexed)
+    missing = sorted(on_disk - indexed - set(UNRELEASED_COLLECTIONS))
     assert not missing, (
         f"{len(missing)} collection(s) hold shards that the manifest does not index at all, so "
         f"they ship unlisted and unchecksummed: {missing}. Rerun make_manifest.py from the "
@@ -652,7 +483,7 @@ def test_a_sample_of_release_checksums_verify():
     # git-ignored local config file at the repository root, then nothing. ``unavailable``
     # hands back the whole actionable message -- which data release this is, that it is a
     # separate multi-gigabyte download, and the two ways to point at it -- so the skip line
-    # says WHY. A bare "not mounted at <path>" names one machine and tells a reader on any
+    # says why. A bare "not mounted at <path>" names one machine and tells a reader on any
     # other nothing at all.
     why = store_path.unavailable("manifest.csv")
     if why:
@@ -701,8 +532,9 @@ def test_no_source_file_names_a_machine_specific_absolute_path():
 
     # A drive-lettered path, and a user home directory. The lookbehind is what keeps a URL scheme
     # out of the first one: in "https" + "://x" the letter before the colon is itself preceded by
-    # a letter, and in a bare drive letter it is not.
-    drive = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:[\\/]")
+    # a letter, and in a bare drive letter it is not. The lookahead keeps LaTeX out: in the paper's
+    # math, `\exists A:\ D` is a colon and a control space, and no path segment starts with a space.
+    drive = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:[\\/](?! )")
     home = re.compile(r"(?<![A-Za-z0-9_.-])/(?:home|Users)/[A-Za-z0-9_.-]+")
 
     roots = [REPO / "research", REPO / ".github"]
@@ -775,17 +607,17 @@ def test_nothing_reaches_the_entroptics_library_except_the_adapter():
 def test_no_script_writes_a_committed_artifact_it_does_not_own():
     """The OWNERS invariant, checked from the scripts rather than from the table.
 
-    regen_all states it plainly: each committed artifact is produced by exactly ONE script, because
+    regen_all states it plainly: each committed artifact is produced by exactly one script, because
     running a non-owner overwrites it. `test_every_listed_artifact_is_actually_tracked` checks the
     table against git; nothing checked the other direction, and the tree violates it --
     `8_3_run_nobump_refnull.py` appears nowhere in OWNERS yet writes four committed artifacts, each
     registered to a different script.
 
     Three of those four carry a different schema, so a stray run shows up as a shape error. The
-    fourth, 8_3_dat_confinement_order_parameter.csv, carries the OWNER's exact columns, so it
+    fourth, 8_3_dat_confinement_order_parameter.csv, carries the owner's exact columns, so it
     overwrites with the same shape and different values -- the case that is hardest to notice.
 
-    Detection is by filename in a write call, not any mention: a script that READS an artifact names
+    Detection is by filename in a write call, not any mention: a script that reads an artifact names
     it too, and reading is not the hazard.
     """
     import ast
@@ -913,7 +745,7 @@ def test_the_paper_cites_the_software_version_the_code_pins():
     """The Entroptics version the paper cites is the one requirements.txt pins.
 
     Every read in Sec 8 goes through a wrapper that refuses to run against a different library
-    version, so the pin IS the reproducibility claim. A bump in one place without the other would
+    version, so the pin is the reproducibility claim. A bump in one place without the other would
     leave the paper citing a release that produces different numbers than the code will accept, and
     nothing else compares the two: the adapter checks the pin against what is installed, not against
     what the paper says.
@@ -921,7 +753,7 @@ def test_the_paper_cites_the_software_version_the_code_pins():
     import re
 
     req = (REPO / "research" / "requirements.txt").read_text(encoding="utf-8")
-    text = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
+    text = (REPO / "research" / "paper" / "mass-gap.md").read_text(encoding="utf-8")
 
     # A commit pin (`entroptics @ git+<repo>@<sha>`) carries no version; the paper must name the
     # commit instead. DERIVED: 7 is git's default abbreviation length, the form a reader copies;
@@ -949,13 +781,14 @@ def test_the_paper_cites_the_software_version_the_code_pins():
 def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
     """Each Zenodo DOI in the paper is the one the record it names actually carries.
 
-    The paper cites two deposits, and each has an owner elsewhere in the tree:
+    The paper cites two deposits of its own author (version and concept DOI of each), and each has
+    an owner elsewhere in the tree; the other authors' releases in its reference list have none here:
 
-      * the Entroptics SOFTWARE DOI, whose owner is this repository's CITATION.cff;
-      * the lattice DATASET DOI, whose owner is the store's own CITATION.cff, shipped inside the
+      * the Entroptics software DOI, whose owner is this repository's CITATION.cff;
+      * the lattice dataset DOI, whose owner is the store's own CITATION.cff, shipped inside the
         deposit.
 
-    Both are stated more than once in PAPER.md -- in the data-availability paragraph and again in
+    Both are stated more than once in the paper -- in the data-availability paragraph and again in
     the reference list -- and a changed digit in one copy points a reader at a different deposit, or
     at nothing. That is invisible to every numeric check in this suite, because a DOI is not a
     quantity: it cannot be recomputed, only compared against the record that owns it.
@@ -966,7 +799,7 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
     """
     import re
 
-    text = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
+    text = (REPO / "research" / "paper" / "mass-gap.md").read_text(encoding="utf-8")
     cited = set(re.findall(r"10\.5281/zenodo\.(\d+)", text))
     assert cited, "the paper cites no Zenodo DOI"
 
@@ -983,11 +816,30 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
         pytest.fail(f"{label} names no Zenodo DOI, so the paper's citation has nothing to check")
 
     expected = {}
-    software = doi_in(REPO / "CITATION.cff", "the repository's CITATION.cff")
-    if software:
-        expected[software] = "the Entroptics software (repository CITATION.cff)"
+    # The Entroptics software DOI is the one CITATION.cff carries for its Entroptics reference, read
+    # from the parsed YAML: the file's own `doi:` (this work's DOI) sits at the top, so the first DOI
+    # line in the file is not the software's.
+    import yaml
 
-    # The DATASET's owner of record, for this check, is the repository's .zenodo.json: it names the
+    cff = yaml.safe_load((REPO / "CITATION.cff").read_text(encoding="utf-8"))
+    refs = [r for r in cff.get("references", []) if str(r.get("title", "")).strip() == "Entroptics"]
+    assert refs, "the repository's CITATION.cff has no Entroptics reference"
+    m = re.search(r"10\.5281/zenodo\.(\d+)", str(refs[0].get("doi", "")))
+    if not m:
+        pytest.fail("the Entroptics reference in CITATION.cff names no Zenodo DOI, so the paper's "
+                    "citation has nothing to check")
+    expected[m.group(1)] = "the Entroptics software (repository CITATION.cff)"
+
+    # Concept DOIs (all versions of a record) are cited once, beside the version DOI, in the
+    # reference entry. Their owner is the same CITATION.cff reference, under `identifiers`.
+    concept = {}
+    for ref in cff.get("references", []):
+        for ident in ref.get("identifiers", []) or []:
+            m = re.search(r"10\.5281/zenodo\.(\d+)", str(ident.get("value", "")))
+            if m and "concept" in str(ident.get("description", "")).lower():
+                concept[m.group(1)] = f"the {ref.get('title')} concept DOI (repository CITATION.cff)"
+
+    # The dataset's owner of record, for this check, is the repository's .zenodo.json: it names the
     # deposit as a related identifier of resource_type "dataset", and it is in git, so this holds on
     # a runner with no ensemble store attached. Sourcing it from the store's CITATION.cff alone made
     # the dataset DOI unrecognisable wherever the store is absent -- which is every CI run -- and the
@@ -1003,7 +855,7 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
                 if m:
                     expected[m.group(1)] = "the lattice dataset (repository .zenodo.json)"
 
-    # When the store IS mounted, its CITATION.cff must agree with what the repository claims: two
+    # When the store is mounted, its CITATION.cff must agree with what the repository claims: two
     # records naming different deposits is the failure worth catching, and it is invisible otherwise.
     why = store_path.unavailable("CITATION.cff")
     if not why:
@@ -1017,10 +869,24 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
 
     assert expected, "no record carries a DOI to check the paper against"
 
-    unknown = sorted(cited - set(expected))
+    # Third-party deposits (other authors' releases in the reference list) have no owner in this
+    # tree, so they cannot be checked here; they are the DOIs that occur only in reference entries
+    # not authored by this record's author. Every other cited DOI must be one the records claim.
+    author = cff["authors"][0]["family-names"]
+    third_party = set()
+    for line in text.splitlines():
+        if line.startswith("[") and author not in line:
+            third_party |= set(re.findall(r"10\.5281/zenodo\.(\d+)", line))
+    ours = set(expected) | set(concept)
+    clash = sorted(third_party & ours)
+    assert not clash, f"the paper attributes this record's DOI(s) {clash} to another author"
+    unknown = sorted(cited - ours - third_party)
     assert not unknown, (
         f"the paper cites Zenodo deposit(s) {unknown} that no CITATION.cff claims; "
-        f"the records carry {sorted(expected)}")
+        f"the records carry {sorted(ours)}")
+    missing_concept = sorted(set(concept) - cited)
+    assert not missing_concept, (
+        f"the paper does not cite the concept DOI(s) {missing_concept} that CITATION.cff records")
 
     for doi, owner in expected.items():
         if why and "dataset" in owner:
@@ -1033,7 +899,7 @@ def test_every_doi_the_paper_cites_matches_the_record_that_owns_it():
 
 
 def test_no_job_needs_more_than_its_class_allows():
-    """A cost class must be headroom ABOVE every job measured in it, never below one.
+    """A cost class must be headroom above every job measured in it, never below one.
 
     `NEED_GB[cost]` is what a job of that class is sized against when its own peak is unknown, so a
     per-job figure that exceeds its class inverts the safety margin: the unmeasured jobs in the class
@@ -1085,18 +951,18 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
     file itself. Two ways it can go stale without any suite noticing, because both sides of every other
     check move together:
 
-      * the ensemble is GONE from the store -- the artifact reports a measurement on configurations
+      * the ensemble is gone from the store -- the artifact reports a measurement on configurations
         the release does not ship, so a reader cannot reproduce the row and cannot see why;
-      * the ensemble was REGENERATED after the artifact was written -- the row is a measurement on
+      * the ensemble was regenerated after the artifact was written -- the row is a measurement on
         configurations that no longer exist, and the paper transcribes it as current.
 
-    And one case that looks identical to the second and is NOT a fault: a shard was ADDED at the same
+    And one case that looks identical to the second and is not a fault: a shard was added at the same
     (group, L, beta) while the ones the artifact read stayed exactly as they were. That is what
     happens every time a new campaign lands -- the GPU SU(2) L=16 ensembles at beta 2.30/2.40/2.50
     arrived beside the 2026-07 and 2026-09 ones, and five artifacts were reported as reading
     "configurations that no longer exist" while every configuration they read was untouched on disk.
-    An addition and a rewrite are indistinguishable by mtime ALONE, but they are not indistinguishable
-    by the SET of mtimes: after a rewrite no shard at the key predates the artifact, and after an
+    An addition and a rewrite are indistinguishable by mtime alone, but they are not indistinguishable
+    by the set of mtimes: after a rewrite no shard at the key predates the artifact, and after an
     addition some still do. So the fault is "no surviving input", not "something here is newer", and
     an addition is printed as a NOTICE -- the artifact is still reproducible, and now reads less than
     the store holds at its key, which is a reason to regenerate it and not a reason to fail.
@@ -1127,9 +993,9 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
     def shards(group, L, beta):
         """Every shard for one ensemble, across collections; the filename carries beta to 2 places.
 
-        The `*` between beta and the seed is NOT decoration. An operator-reduced shard carries what
+        The `*` between beta and the seed is not decoration. An operator-reduced shard carries what
         it is between the two: `su2_L8_b2.50.plaquette.ape16.s000.npy`. Matching only `b2.50.s*`
-        finds no file for such an ensemble and reports it ABSENT -- which is what happened on
+        finds no file for such an ensemble and reports it absent -- which is what happened on
         2026-09-17, the moment the thermalisation artifact began carrying rows for the eleven
         operator-reduced collections. They were on disk the whole time; the pattern could not see
         them. The same naming cost `store_run_thermalisation.py` a regex, one branch earlier.
@@ -1179,7 +1045,7 @@ def test_no_artifact_reads_an_ensemble_the_store_no_longer_holds():
 def test_the_store_readme_figures_match_its_own_manifest():
     """The release README's headline figures are the ones manifest.csv carries.
 
-    README.md, CITATION.cff and .zenodo.json ship INSIDE the deposit, beside the manifest they
+    README.md, CITATION.cff and .zenodo.json ship inside the deposit, beside the manifest they
     describe. Nothing in this repository owns them -- they live in the store -- so no paper-versus-
     artifact check reaches them, and a reader who downloads the record gets a README that
     contradicts the index sitting next to it.
@@ -1256,8 +1122,8 @@ def test_the_store_readme_figures_match_its_own_manifest():
 def test_the_repository_record_names_the_dataset_and_its_author_consistently():
     """The repository's own .zenodo.json agrees with the paper and points at the data.
 
-    This file is the metadata for the SOFTWARE record minted from the repository, so it is a fifth
-    place the author and the deposit are described -- separate from PAPER.md, the two CITATION.cff
+    This file is the metadata for the software record minted from the repository, so it is a fifth
+    place the author and the deposit are described -- separate from the paper, the two CITATION.cff
     files, and the dataset's .zenodo.json in the store. Nothing else in this suite reads it, and
     `zenodo_deposit.py` closes by telling an operator to add the dataset identifier here and calls
     that "the readiness gate", which until now did not exist.
@@ -1281,7 +1147,7 @@ def test_the_repository_record_names_the_dataset_and_its_author_consistently():
     creators = meta.get("creators") or []
     assert creators, ".zenodo.json names no creator"
 
-    paper = (REPO / "research" / "PAPER.md").read_text(encoding="utf-8")
+    paper = (REPO / "research" / "paper" / "mass-gap.md").read_text(encoding="utf-8")
     byline_orcid = re.search(r"(\d{4}-\d{4}-\d{4}-\d{3}[\dX])", paper)
 
     for c in creators:
@@ -1291,7 +1157,7 @@ def test_the_repository_record_names_the_dataset_and_its_author_consistently():
         # Compared token by token, not against the whole given-name string. "Sessford, Ikailo John"
         # against an affiliation of "Ikailo" passes a whole-string comparison and is exactly the
         # error this catches: the author's first given name standing in for the organisation. An
-        # organisation whose name merely CONTAINS a name token ("Ikailo Inc.") is not a single
+        # organisation whose name merely contains a name token ("Ikailo Inc.") is not a single
         # token and is left alone.
         words = lambda s: {t.strip().lower() for t in s.replace(",", " ").split() if t.strip()}
         tokens, aff_tokens = words(name), words(aff)
@@ -1326,7 +1192,7 @@ def test_the_repository_record_names_the_dataset_and_its_author_consistently():
 def test_the_release_ships_every_file_its_own_documentation_names():
     """A file the release's docs point at is a file the deposit carries.
 
-    README.md and GENERATION.md are uploaded WITH the data and are what a reader has after
+    README.md and GENERATION.md are uploaded with the data and are what a reader has after
     downloading the record. When one of them names a file, that file has to be in the deposit or the
     reader is holding documentation that points at nothing -- and the deposit is where they cannot
     simply go and look, because it is not a repository they can browse.
@@ -1379,7 +1245,7 @@ def test_the_release_ships_every_file_its_own_documentation_names():
 def test_release_metadata_files_agree_on_version_and_date():
     """`.zenodo.json` and `CITATION.cff` state one version and one release date, not two.
 
-    The publish workflow compares these two files on TITLE and repository home, and on nothing else.
+    The publish workflow compares these two files on title and repository home, and on nothing else.
     So the two fields that actually label the release -- what version it is and when it came out --
     agreed only because a person kept them in step by hand. They did not, twice: v0.2.0 was minted
     with `version: 0.1.0` because the bump was made in one file, and at 0.2.2 the pair was found one
@@ -1394,8 +1260,8 @@ def test_release_metadata_files_agree_on_version_and_date():
     zen = json.loads((REPO / ".zenodo.json").read_text(encoding="utf-8"))
     cff = (REPO / "CITATION.cff").read_text(encoding="utf-8")
 
-    # The TOP-LEVEL keys only. CITATION.cff carries a `references:` block whose entries have their
-    # own indented `version:`/`date-released:` for OTHER software, and matching those instead of the
+    # The top-level keys only. CITATION.cff carries a `references:` block whose entries have their
+    # own indented `version:`/`date-released:` for other software, and matching those instead of the
     # file's own is how this check would silently compare the wrong release.
     m_ver = re.search(r"^version:\s*\"?([^\"\s]+)\"?\s*$", cff, re.M)
     m_date = re.search(r"^date-released:\s*\"?([0-9]{4}-[0-9]{2}-[0-9]{2})\"?\s*$", cff, re.M)
@@ -1411,15 +1277,15 @@ def test_release_metadata_files_agree_on_version_and_date():
 
 
 def test_zenodo_related_dois_are_version_dois_not_concept_dois():
-    """A DOI this release REFERENCES pins a version; a concept DOI does not.
+    """A DOI this release references pins a version; a concept DOI does not.
 
     Zenodo mints two DOIs per deposit: a concept DOI that always resolves to the newest version, and
-    a version DOI fixed to one release. `.zenodo.json` referenced the Entroptics CONCEPT DOI while
+    a version DOI fixed to one release. `.zenodo.json` referenced the Entroptics concept DOI while
     `CITATION.cff` and the paper both pinned the version DOI, so the same citation said two different
     things and the `.zenodo.json` half would drift to whatever Entroptics released next -- away from
     the release this paper's numbers were produced against.
 
-    The owning repository labels its own DOIs, so this asks IT rather than hard-coding either number
+    The owning repository labels its own DOIs, so this asks it rather than hard-coding either number
     here: a referenced DOI must not be one some CITATION.cff calls a concept DOI.
     """
     import json

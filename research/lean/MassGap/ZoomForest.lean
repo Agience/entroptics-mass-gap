@@ -852,7 +852,7 @@ theorem tendsto_latSkR_of_sameForestAt {N : ℕ} (hN : N ≠ 0) (ρ : Renorm N) 
 
 #print axioms tendsto_latSkR_of_sameForestAt
 
-/-- **THE OPEN DYNAMICAL INPUT (stated).** For observer maps `φ k : Cfg N → β` at a fixed physical
+/-- **The open dynamical input (stated).** For observer maps `φ k : Cfg N → β` at a fixed physical
 resolution and region, the Wilson states `stateK hN k` at the dyadic couplings are represented by
 probability measures `μ k` (`∫ f dμ_k = stateK hN k f` on continuous observables), and the
 successive views satisfy `ZoomGeometric μ φ`: log-likelihood ratios bounded by `C θ^{2k}`.
@@ -1106,7 +1106,7 @@ def GibbsObserverSpeed : Prop :=
         SpeedBound (fun b => (gibbsFamily ρ S b).map φ)
           (fun b => Real.sqrt (observerFisher (gibbsFamily ρ S) S φ b))
 
-/-- **THE OPEN QUANTITATIVE INPUT of the continuous zoom (stated): the coarse view becomes deaf to
+/-- **The open quantitative input of the continuous zoom (stated): the coarse view becomes deaf to
 the ultraviolet.** Along a coupling path `b(t)` with derivative `b'(t)` (for the lattice,
 `t = log (a₀ / a)` and `b = β(a)`), the Fisher–Rao speed per unit log-spacing
 `√(Var_{μ_{b(t)}}(E[S | φ])) · |b'(t)|` has a remaining length `Λ` tending to `0`:

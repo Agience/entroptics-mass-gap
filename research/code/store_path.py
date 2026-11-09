@@ -1,6 +1,6 @@
 """Where the lattice ensemble store is -- resolved from configuration, never named in the source.
 
-Every read in ``research/`` runs on a store of frozen Monte-Carlo ensembles that is NOT part of this
+Every read in ``research/`` runs on a store of frozen Monte-Carlo ensembles that is not part of this
 repository: it is a separate, multi-gigabyte data release with its own DOI, its own licence and its
 own citation. This module is the single place that resolves where it is.
 
@@ -12,11 +12,11 @@ local file -- and everything else asks here.
 
 Resolution order, most specific first:
 
-  1. the ``CONFIGS`` environment variable -- a one-off override for a single run, and what CI, a pod
-     or a batch job sets;
+  1. the ``CONFIGS`` environment variable -- a one-off override for a single run, and what CI, a
+     container or a batch job sets;
   2. ``research.local.env`` at the repository root -- git-ignored, written once per machine, so a
      researcher does not have to remember an environment variable on every invocation;
-  3. nothing. There is deliberately NO built-in default. A default would have to name somebody's
+  3. nothing. There is deliberately no built-in default. A default would have to name somebody's
      filesystem, and being wrong quietly is precisely the failure being removed here.
 
 Nothing resolves at import. Every caller reads the store inside a function, and the certification
@@ -31,7 +31,7 @@ import os
 from pathlib import Path
 
 #: The environment variable every script in the tree already took; kept, so nothing about how a
-#: pod or a CI job is driven changes.
+#: container or a CI job is driven changes.
 ENV_VAR = "CONFIGS"
 
 #: Machine-local, git-ignored, at the repository root. One line: ``CONFIGS=<store root>``.
@@ -61,7 +61,7 @@ def repo_root() -> Path:
     root, ``research/data``, and ``research/code/certify`` -- ``regen_all`` chdirs into each owner's
     directory), so anything cwd-relative would resolve differently depending on the caller.
 
-    The two config files sit at the repository ROOT, not under ``research/``, and that placement is
+    The two config files sit at the repository root, not under ``research/``, and that placement is
     load-bearing. ``test_no_source_file_names_a_machine_specific_absolute_path`` scans ``research/``
     recursively including ``.env`` files, and scans the root only for
     ``.yml/.yaml/.cff/.json/.md/.example`` -- deliberately not ``.env``. The research tree is
@@ -155,7 +155,7 @@ def collection(name: str, required: bool = True) -> str | None:
 
 
 def collections(*names: str) -> list[str]:
-    """The named collection directories, or an EMPTY LIST when the store is not configured.
+    """The named collection directories, or an empty list when the store is not configured.
 
     Empty rather than absent-and-raising, because this is what the module-level ``HOPS`` in the
     reading scripts is built from: with no hops every loader reports the ensemble as absent, which
@@ -198,7 +198,7 @@ def help_text() -> str:
 
 
 def hint() -> str:
-    """One paragraph to append to a script's own refusal -- adapted to WHICH thing is wrong.
+    """One paragraph to append to a script's own refusal -- adapted to which thing is wrong.
 
     Two very different failures reach the same ``raise`` in the reading scripts: no store at all,
     and a store that is configured but does not hold what was asked for. Printing the same sentence
@@ -241,7 +241,7 @@ def unavailable(*relparts: str) -> str | None:
 
 if __name__ == "__main__":                                   # pragma: no cover -- a shell entry point
     # `python research/code/store_path.py` prints the store root, so a shell script -- the publish
-    # workflow's runner, a batch job -- locates it by the SAME rule the Python readers use instead
+    # workflow's runner, a batch job -- locates it by the same rule the Python readers use instead
     # of re-implementing the lookup in bash and drifting from it.
     import sys as _sys
 

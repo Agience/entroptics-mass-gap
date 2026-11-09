@@ -234,8 +234,8 @@ theorem bd_axis [NeZero n] (e : Equiv.Perm (Fin d)) (q : Plaq d n) :
 /-- The `Symmetry (sysWilson N d n)` carried by an axis permutation `e`, built by
 `WilsonLattice.wilsonSymmetry` from `axisLink e`, `axisPlaq e` and the compatibility `bd_axis e`.
 
-Because it is a `Symmetry`, `WilsonLattice.wilson_expect_invariant` applies to it, which is what an
-`os_euc` or `os_perm` field of a `LatticeYMFamily` can be discharged from.
+Because it is a `Symmetry`, `WilsonLattice.wilson_expect_invariant` applies to it: the Gibbs
+expectation is invariant under the axis permutations.
 
 Scope: this covers axis permutations only — the discrete hypercubic group. Reflections, translations
 and continuous rotations are not constructed here.

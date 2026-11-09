@@ -1,10 +1,9 @@
 /-
-# MassGap.WilsonBridge — plaquette correlations of the constructed Wilson ensemble, as `Moment.Read`s
+# MassGap.WilsonBridge — plaquette correlations of the constructed Wilson ensemble
 
-`Complete.wilsonCorrAt` is `opaque`, so theorems about it quantify over an arbitrary nonnegative
-sequence. This module defines constructed correlations instead, from `WilsonReal`'s ingredients —
-`SU(Nc)` as Mathlib's `specialUnitaryGroup`, the Wilson density `wilsonDensity`, the product Haar
-measure over links, and the ordered-loop holonomy — and packages them as `Moment.Read`s.
+This module defines constructed correlations from `WilsonReal`'s ingredients — `SU(Nc)` as Mathlib's
+`specialUnitaryGroup`, the Wilson density `wilsonDensity`, the product Haar measure over links, and
+the ordered-loop holonomy.
 
 ## The correlations
 
@@ -19,8 +18,8 @@ measure over links, and the ordered-loop holonomy — and packages them as `Mome
 ## The geometries
 
 * `bdChain` — a periodic ladder of `N + 1` plaquettes with three link roles per rung.
-  `bdChain_shares_link` shows consecutive plaquettes share a vertical link. `chainCorr`,
-  `chainCorrConn` and `chainRead` are its correlations and read.
+  `bdChain_shares_link` shows consecutive plaquettes share a vertical link. `chainCorr` and
+  `chainCorrConn` are its correlations.
 * `Site3`, `Link3`, `Plaq3`, `shift`, `bd3` — a periodic cubic lattice in three dimensions,
   plaquettes indexed by their normal. `bd3_link_not_private` shows the first link of a plaquette also
   occurs in the plaquette of normal `k + 2` at the same site. `corr3` is its connected correlation.
@@ -28,26 +27,13 @@ measure over links, and the ordered-loop holonomy — and packages them as `Mome
   plaquettes carry both spanning directions and therefore exist in any dimension; `corrClay` is the
   instance at `d = 4`, `Nc = 3`, plane `(0, 1)`, lag along `2`.
 
-## The reads and the chain
-
-`wilsonRead` packages a `Fin (N+1)`-indexed `wilsonCorr` as a `Moment.Read N`, taking positivity of
-the total weight as a hypothesis `hpos` rather than proving it.
-`tension_lt_floor_of_cosAvg_wilson`, `wilson_correlation_decays` and `wilson_correlation_gap` are
-`Moment.Read.tension_lt_floor_of_cosAvg`, `ZeroMode.correlation_decays_of_tension` and
-`ZeroMode.correlation_gap_of_tension` at that read.
-
 ## Scope
 
-The three chain theorems carry their inputs as hypotheses: the spectral form `hspec`, the positivity
-`hcpos`, and the tension bound `htens`. None of the three is established here for any ensemble, and
-their conclusions are about the mode family `∑ₖ wₖ λₖ^d` that `hspec` supplies, not about
-`wilsonCorr` directly.
+No spectral form, positivity of the total weight or tension bound is established here for any
+ensemble.
 -/
 import Mathlib
-import MassGap.Moment
-import MassGap.ZeroMode
 import MassGap.WilsonReal
-import MassGap.WilsonRead
 import MassGap.WilsonHypercubic
 
 namespace MassGap.WilsonBridge
@@ -62,7 +48,7 @@ variable {Nc : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
 the product Haar measure with the Wilson Boltzmann weight at coupling `β`.
 
 `bd`, `Lk`, `Pq`, `Nc` and `β` are all arbitrary, subject only to `Lk` and `Pq` being finite, so no
-geometry is built into the definition. `WilsonRead.wilsonCorrReal` is the two-plaquette instance.
+geometry is built into the definition.
 
 Unconnected: the disconnected part is not subtracted. `wilsonCorrConn` is the connected form.
 
@@ -110,80 +96,10 @@ theorem wilsonCorr_le_four (hN : Nc ≠ 0) (bd : Pq → List (Lk × Bool)) (p₀
         _ = 4 := by norm_num)
   exact le_trans (le_abs_self _) habs
 
-/-! ### The correlation as a `Moment.Read`
+/-! ### The correlation as a nonnegative sequence
 
-`Moment.Read N` carries a nonnegative `Fin (N+1)`-indexed sequence of positive total weight.
-`wilsonCorr_nonneg` supplies the first; the second is carried as the hypothesis `hpos`, which
-`WilsonRead.sum_wilsonCorrReal_pos_of_haar` reduces to one Haar fact on the two-plaquette instance
-and which no theorem here discharges. -/
-
-/-- `wilsonCorr bd p₀ β` packaged as a `Moment.Read N`: the `ρ` field is that correlation, `hρ` is
-`wilsonCorr_nonneg`, and `hpos` is the caller's.
-
-The plaquette type is `Fin (N + 1)` here, so the lag index is a plaquette label; whether it is a
-spatial separation depends on the `bd` supplied — `bdChain` and `bd3` are two choices, with
-different answers.
-
-DERIVED: `0` is the value `Nc` is required to differ from in `hN` and the strict lower bound on the
-total weight in `hpos`. `1` in `Fin (N + 1)` is the number of plaquettes indexed, which
-`Moment.Read N` fixes. The `Bool` in the boundary word's type carries orientation flags, not
-numerals. The base point `p₀` is an argument, not a literal. -/
-noncomputable def wilsonRead (hN : Nc ≠ 0) {N : ℕ} (bd : Fin (N + 1) → List (Lk × Bool))
-    (p₀ : Fin (N + 1)) (β : ℝ)
-    (hpos : 0 < ∑ p, wilsonCorr (Nc := Nc) bd p₀ β p) : Moment.Read N where
-  ρ := fun p => wilsonCorr (Nc := Nc) bd p₀ β p
-  hρ := fun p => wilsonCorr_nonneg hN bd p₀ β p
-  hpos := hpos
-
-@[simp] theorem wilsonRead_rho (hN : Nc ≠ 0) {N : ℕ} (bd : Fin (N + 1) → List (Lk × Bool))
-    (p₀ : Fin (N + 1)) (β : ℝ) (hpos : 0 < ∑ p, wilsonCorr (Nc := Nc) bd p₀ β p) :
-    (wilsonRead hN bd p₀ β hpos).ρ = fun p => wilsonCorr (Nc := Nc) bd p₀ β p := rfl
-
-/-- If the cosine average of the read `wilsonRead hN bd p₀ β hpos` exceeds `3^{-1/4}`, then its
-tension is below `(1/4) log 3`. The body is `Moment.Read.tension_lt_floor_of_cosAvg` at that read.
-
-The hypothesis `hc` is about the read's own `p` and `θ` fields. Nothing here establishes it for any
-`bd`, `β` or `Nc`; it is supplied by the caller.
-
-DERIVED: `0` is the value `Nc` is required to differ from and the strict lower bound in `hpos`. `1`
-in `Fin (N + 1)` is the number of plaquettes. `3` and the exponent `-(1)/4` spell the constant
-`3^{-1/4}`, and `(1/4) * log 3` is its negated logarithm, so the `1`, `4` and `3` of the conclusion
-are the same three numerals as in `hc`. All are `Moment.Read.tension_lt_floor_of_cosAvg`'s. -/
-theorem tension_lt_floor_of_cosAvg_wilson (hN : Nc ≠ 0) {N : ℕ}
-    (bd : Fin (N + 1) → List (Lk × Bool)) (p₀ : Fin (N + 1)) (β : ℝ)
-    (hpos : 0 < ∑ p, wilsonCorr (Nc := Nc) bd p₀ β p)
-    (hc : (3 : ℝ) ^ (-(1 : ℝ) / 4) <
-      ∑ d, (wilsonRead hN bd p₀ β hpos).p d * Real.cos ((wilsonRead hN bd p₀ β hpos).θ d)) :
-    (wilsonRead hN bd p₀ β hpos).tension < (1 / 4) * Real.log 3 :=
-  Moment.Read.tension_lt_floor_of_cosAvg _ hc
-
-/-- Given a finite mode family `w`, `lam` with `0 ≤ w k`, `0 ≤ lam k ≤ 1` on `s`, a spectral form
-`hspec` writing `wilsonCorr (bd N) (p₀ N) β d` as `∑ₖ wₖ λₖ^d` at every aperture, and the two
-eventual hypotheses `hcpos` and `htens` on the corresponding reads, the sequence
-`d ↦ ∑ₖ wₖ λₖ^d` tends to `0`. The body is `ZeroMode.correlation_decays_of_tension`.
-
-The conclusion is about the mode family, not about `wilsonCorr`: `hspec` is what connects them, and
-it is a hypothesis. `hcpos` and `htens` hold eventually in `N`, not at every `N`.
-
-DERIVED: `0` is the value `Nc` is required to differ from, the lower bound on each `w k` and each
-`lam k`, the strict lower bound in `hpos` and `hcpos`, and the limit point. `1` is the upper bound on
-each `lam k` — below it the powers decay, at it they do not — and the `+1` of `Fin (N + 1)`.
-`(1/4) * log 3` in `htens` is the floor constant, `ZeroMode`'s. -/
-theorem wilson_correlation_decays (hN : Nc ≠ 0)
-    {ι : Type*} [DecidableEq ι] (s : Finset ι) (w lam : ι → ℝ)
-    (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hle : ∀ k ∈ s, lam k ≤ 1)
-    (bd : (N : ℕ) → Fin (N + 1) → List (Lk × Bool)) (p₀ : (N : ℕ) → Fin (N + 1)) (β : ℝ)
-    (hpos : ∀ N, 0 < ∑ p, wilsonCorr (Nc := Nc) (bd N) (p₀ N) β p)
-    (hspec : ∀ (N : ℕ) (d : Fin (N + 1)),
-      wilsonCorr (Nc := Nc) (bd N) (p₀ N) β d = ∑ k ∈ s, w k * lam k ^ (d : ℕ))
-    (hcpos : ∀ᶠ N in Filter.atTop, 0 < ∑ d,
-      (wilsonRead hN (bd N) (p₀ N) β (hpos N)).p d * Real.cos ((wilsonRead hN (bd N) (p₀ N) β (hpos N)).θ d))
-    (htens : ∀ᶠ N in Filter.atTop,
-      (wilsonRead hN (bd N) (p₀ N) β (hpos N)).tension < (1 / 4) * Real.log 3) :
-    Filter.Tendsto (fun d : ℕ => ∑ k ∈ s, w k * lam k ^ d) Filter.atTop (nhds 0) :=
-  ZeroMode.correlation_decays_of_tension s w lam hw hlam hle
-    (fun N => wilsonRead hN (bd N) (p₀ N) β (hpos N))
-    (fun N => by funext d; exact hspec N d) hcpos htens
+`wilsonCorr_nonneg` shows the correlation is nonnegative, so a `Fin (N+1)`-indexed family of
+correlations is a nonnegative sequence. Positivity of its total weight is not established here. -/
 
 /-! ### A periodic ladder
 
@@ -255,8 +171,8 @@ theorem chainCorr_nonneg (hN : Nc ≠ 0) (N : ℕ) (β : ℝ) (d : Fin (N + 1)) 
 
 `wilsonCorr` is `⟨φ_{p₀}·φ_p⟩`, and its nonnegativity follows pointwise because it is a product of
 two nonnegative densities. That leaves the disconnected part `⟨φ_{p₀}⟩⟨φ_p⟩` in it, which does not
-decay with the lag: at `β = 0` each factor is `1` by `WilsonRead.integral_plaqObs_eq_one`, so the
-correlation is bounded below by a constant in the lag.
+decay with the lag: at `β = 0` each factor is `1`, so the correlation is bounded below by a constant
+in the lag.
 
 `wilsonCorrConn` subtracts that part. Its sign is not available from the pointwise argument, and no
  theorem here establishes it. -/
@@ -448,7 +364,7 @@ noncomputable def corr3 (Nc N : ℕ) (β : ℝ) (d : Fin (N + 1)) : ℝ :=
 
 `corr3` lives on `Site3`, whose plaquettes are indexed by a normal, which determines a plane only in
 three dimensions. `WilsonHypercubic.sysWilson`'s plaquettes carry both spanning directions and so
-exist in any dimension, and it is the lattice `WilsonGauge`'s measure is built on.
+exist in any dimension.
 
 `corrHyper` is the same connected correlation there: `wilsonCorrConn` is already general in the
 boundary-word map, so this is that map instantiated at `WilsonHypercubic.bd` rather than at `bd3`.
@@ -500,8 +416,8 @@ theorem corrHyper_unconnected_nonneg {d : ℕ} (hN : Nc ≠ 0) (n : ℕ) [NeZero
 #print axioms corrHyper_unconnected_nonneg
 
 /-- `corrHyper` at `d = 4`, `Nc = 3`, plane `(0, 1)` and lag direction `2`: the connected plaquette
-correlation of four-dimensional `SU(3)` Wilson theory at extent `n`, on the lattice `WilsonGauge`'s
-measure is built on.
+correlation of four-dimensional `SU(3)` Wilson theory at extent `n`, on the periodic lattice of
+`WilsonHypercubic.sysWilson`.
 
 The lag direction `2` differs from both plane directions, so here the lag is transverse to the
 plane; `corrHyper` leaves that to the caller and this instance settles it.
@@ -515,61 +431,11 @@ noncomputable def corrClay (n : ℕ) [NeZero n] (β : ℝ) (lag : Fin n) : ℝ :
 
 #print axioms corrClay
 
-/-- `wilsonRead` at the ladder's boundary word and base plaquette `0`: `chainCorr Nc N β` as a
-`Moment.Read N`. Positivity of the total weight is the carried hypothesis `hpos`.
-
-Built from the unconnected `chainCorr`, since `Moment.Read` requires a nonnegative sequence and
-`chainCorrConn` has no proved sign.
-
-DERIVED: `0` is the value `Nc` is required to differ from, the base plaquette of the periodic ladder
-— immaterial by its periodicity, as in `chainCorr` — and the strict lower bound in `hpos`. `1` in
-`Fin (N + 1)` is the number of plaquettes. -/
-noncomputable def chainRead (hN : Nc ≠ 0) (N : ℕ) (β : ℝ)
-    (hpos : 0 < ∑ d, chainCorr Nc N β d) : Moment.Read N :=
-  wilsonRead hN (bdChain N) 0 β hpos
-
-/-- The same hypotheses as `wilson_correlation_decays`, with a stronger conclusion: there is a
-`ρ ∈ [0, 1)` with `∑ₖ wₖ λₖ^d ≤ (∑ₖ wₖ) · ρ^d` for every `d : ℕ`. The body is
-`ZeroMode.correlation_gap_of_tension`.
-
-A geometric envelope with a positive rate `−log ρ`, where `wilson_correlation_decays` gives only
-convergence to `0`, which a power law also satisfies.
-
-What supplies the rate is the finiteness of the mode family `s` in `hspec`: `ρ` is bounded away from
-`1` because finitely many `λₖ` below `1` have a largest. The bound is over the mode family, and
-`hspec` is what ties it to `wilsonCorr`.
-
-DERIVED: `0` is the value `Nc` is required to differ from, the lower bound on each `w k` and each
-`lam k`, the strict lower bounds in `hpos` and `hcpos`, and the lower bound on `ρ`. `1` is the upper
-bound on each `lam k`, the strict upper bound on `ρ` that makes the envelope decay, and the `+1` of
-`Fin (N + 1)`. `(1/4) * log 3` in `htens` is the floor constant, `ZeroMode`'s. -/
-theorem wilson_correlation_gap (hN : Nc ≠ 0)
-    {ι : Type*} [DecidableEq ι] (s : Finset ι) (w lam : ι → ℝ)
-    (hw : ∀ k ∈ s, 0 ≤ w k) (hlam : ∀ k ∈ s, 0 ≤ lam k) (hle : ∀ k ∈ s, lam k ≤ 1)
-    (bd : (N : ℕ) → Fin (N + 1) → List (Lk × Bool)) (p₀ : (N : ℕ) → Fin (N + 1)) (β : ℝ)
-    (hpos : ∀ N, 0 < ∑ p, wilsonCorr (Nc := Nc) (bd N) (p₀ N) β p)
-    (hspec : ∀ (N : ℕ) (d : Fin (N + 1)),
-      wilsonCorr (Nc := Nc) (bd N) (p₀ N) β d = ∑ k ∈ s, w k * lam k ^ (d : ℕ))
-    (hcpos : ∀ᶠ N in Filter.atTop, 0 < ∑ d,
-      (wilsonRead hN (bd N) (p₀ N) β (hpos N)).p d * Real.cos ((wilsonRead hN (bd N) (p₀ N) β (hpos N)).θ d))
-    (htens : ∀ᶠ N in Filter.atTop,
-      (wilsonRead hN (bd N) (p₀ N) β (hpos N)).tension < (1 / 4) * Real.log 3) :
-    ∃ ρ : ℝ, 0 ≤ ρ ∧ ρ < 1 ∧
-      ∀ d : ℕ, ∑ k ∈ s, w k * lam k ^ d ≤ (∑ k ∈ s, w k) * ρ ^ d :=
-  ZeroMode.correlation_gap_of_tension s w lam hw hlam hle
-    (fun N => wilsonRead hN (bd N) (p₀ N) β (hpos N))
-    (fun N => by funext d; exact hspec N d) hcpos htens
-
 section Audit
-#print axioms wilson_correlation_gap
 #print axioms bdChain_shares_link
 #print axioms bd3_link_not_private
 #print axioms chainCorr_nonneg
-#print axioms chainRead
 #print axioms wilsonCorr_nonneg
-#print axioms wilsonRead
-#print axioms tension_lt_floor_of_cosAvg_wilson
-#print axioms wilson_correlation_decays
 end Audit
 
 end MassGap.WilsonBridge

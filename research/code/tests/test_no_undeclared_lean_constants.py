@@ -1,10 +1,10 @@
-"""Every numeric literal in a Lean DEFINITION or AXIOM must be declared DERIVED or CHOSEN.
+"""Every numeric literal in a Lean definition or axiom must be declared DERIVED or CHOSEN.
 
 The companion `test_no_undeclared_constants.py` makes the canon executable for the Python. This does
 it for the Lean, which is where the modelling commitments live: a chosen number in a definition looks
 exactly like a derived one, and the Lean carried several that nothing in the tree objected to.
 
-WHAT IT FOUND, AND WHAT HAPPENED TO THEM. The aperture was `def nCorrYM : Nat := 16`, so the whole
+What it found, and what happened to them. The aperture was `def nCorrYM : Nat := 16`, so the whole
 theory was stated at one window -- `wilsonCorr` itself was typed `Fin (nCorrYM + 1)`, and the tension
 took no aperture argument at all. `d2_le_bound` asserted the lag moment below a chosen `B = 1` over a
 chosen lag range, and its companion `ym_finite_aperture` was a `norm_num` check on those same two
@@ -13,43 +13,52 @@ retired: the aperture is a variable (`wilsonCorrAt`, `readYMAt`, `mu YMAt`, `d2A
 bound is existential (`confinement_of_bounded_substrate`), and the non-vacuity witnesses quantify
 their magnitude below the derived ceiling instead of naming one.
 
-SCOPE. Every `.lean` under `research/lean`, excluding `.lake` build output. Within a file, only `def`,
+Scope. Every `.lean` under `research/lean`, excluding `.lake` build output. Within a file, only `def`,
 `abbrev`, `axiom` and `instance` blocks are scanned -- never theorem or lemma proofs. A numeral inside
 a proof term is almost always structural (an index, an arity, a `norm_num` witness) and carries no
-modelling commitment; a numeral in a DEFINITION or an AXIOM STATEMENT is the model. Scanning proofs
+modelling commitment; a numeral in a definition or an axiom statement is the model. Scanning proofs
 would bury the real findings in thousands of indices, which is how a guard stops being read.
 
-NO EXEMPTION LIST, AND NO DIRECTORY LIST. There is no set of "structural" values, because such a list
-is itself a constant chosen to decide which constants matter. There is no curated set of files either,
-for the same reason -- this scanned one directory and missed the tree root until the scope was widened.
-Every literal in scope is reported, and the known ones live in a BASELINE of debt that may only shrink.
+One exemption: the structural numerals. The rule is that every number is measured or structural, and
+only a measured number needs a label. `0`, `1`, `2` and `4` -- the index origin and additive unit, the
+multiplicative unit and successor step, the square and the arity of a pair, and the spacetime
+dimension `Fin 4` -- are fixed by the shape of the object being stated, not by a reading or a choice.
+A declaration whose only numerals are these four needs no note, and a reported finding lists only its
+other numerals. The set and its reason live once, in `research/code/certify/structural_numerals.py`,
+which `lean_derived_literals.py` also reads, so the two gates cannot disagree on what is structural.
+Every other numeral is reported. There is no directory list: this scanned one directory and missed
+the tree root until the scope was widened. The known findings live in a BASELINE of debt that may
+only shrink.
 
-HOW TO SATISFY IT. Put `DERIVED:` or `CHOSEN:` in the declaration's doc comment (`/-- ... -/`) or in a
+How to satisfy it. Put `DERIVED:` or `CHOSEN:` in the declaration's doc comment (`/-- ... -/`) or in a
 `--` comment immediately above it, saying what derives the number or what choosing it costs. Naming a
 number as chosen is an acceptable outcome; hiding it is not.
 
-GRANULARITY, STATED SO IT IS NOT OVERREAD. This guard is per-DECLARATION, where the Python one is
+Granularity, stated so it is not overread. This guard is per-DECLARATION, where the Python one is
 per-literal: a declaration whose doc comment carries a marker passes for every literal in it. So it
-catches a declaration that justifies NOTHING, not one that justifies a number and quietly introduces a
+catches a declaration that justifies nothing, not one that justifies a number and quietly introduces a
 second. Narrowing it further would need Lean's own elaborator to enumerate the numerals, which is the
 right eventual fix; until then this is the weaker claim, and it is the claim being made.
 
-VERIFIED TO FIRE. Probes run against a real module and reverted: an undeclared
+Verified to fire. Probes run against a real module and reverted: an undeclared
 `noncomputable def probeThreshold : Real := 0.37` is caught; the same definition with `CHOSEN:` in its
 doc comment passes; a numeral inside a `theorem` is correctly out of scope; and prose inside a doc
-comment beginning with a Lean keyword is NOT mistaken for a declaration. A guard that has never been
+comment beginning with a Lean keyword is not mistaken for a declaration. A guard that has never been
 shown to fire is unverified however green it reads.
 """
 from __future__ import annotations
 
 import re
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-# EVERY Lean source in the tree, not one directory. `MassGap.lean` (the aggregate) and
+sys.path.insert(0, str(REPO / "research" / "code" / "certify"))
+from structural_numerals import STRUCTURAL_NUMERALS  # noqa: E402
+# Every Lean source in the tree, not one directory. `MassGap.lean` (the aggregate) and
 # `lakefile.lean` sit at the root and were never scanned; a directory list is the same chosen
 # scope the Python guard just shed. `.lake` is dependency build output, not source.
 LEAN = REPO / "research" / "lean"
@@ -66,9 +75,9 @@ _ENDS = re.compile(r"^(?:@\[|/--|/-!|/-|--|noncomputable\s|private\s|protected\s
 # A numeric literal as a standalone token: not part of an identifier (`G2`, `SU3`, `Fin`), not part of
 # a name like `su2`. Lean numerals may be decimal or have a decimal point.
 #
-# `\w` rather than `A-Za-z0-9_` in the lookaround: IDENTIFIERS HERE CONTAIN GREEK LETTERS, and an
+# `\w` rather than `A-Za-z0-9_` in the lookaround: identifiers here contain Greek letters, and an
 # ASCII-only class does not recognise one as the character before a digit. So `κ0` had its `0` read
-# as the constant zero -- a literal that is part of the declaration's own NAME -- and the gate asked
+# as the constant zero -- a literal that is part of the declaration's own name -- and the gate asked
 # for a `DERIVED:` note about a number nothing decides. `σL2` escaped only because its digit happens
 # to follow an ASCII `L`. Widening strictly reduces what counts as a literal, so it can remove a
 # false positive and cannot hide a real one: a genuine numeral adjacent to a letter with no
@@ -76,12 +85,12 @@ _ENDS = re.compile(r"^(?:@\[|/--|/-!|/-|--|noncomputable\s|private\s|protected\s
 _NUM = re.compile(r"(?<![\w'.])(\d+(?:\.\d+)?)(?![\w'])")
 _MARK = re.compile(r"\b(DERIVED|CHOSEN)\b")
 
-# An ANONYMOUS declaration -- `instance : Nonempty (SU n) := ⟨1⟩` -- has no name of its own, and
+# An anonymous declaration -- `instance : Nonempty (SU n) := ⟨1⟩` -- has no name of its own, and
 # `_IN_SCOPE` captures the `:` as one. Every anonymous instance in a file therefore produced the
-# SAME `_key`, so one baseline line pre-forgave all of them. This tree has eleven such instances,
+# same `_key`, so one baseline line pre-forgave all of them. This tree has eleven such instances,
 # nine of them in `SUN.lean`: planting a second `instance : Subsingleton (Fin 1)` beside the
 # baselined `instance : Nonempty (SU n)` gave two findings that both keyed to
-# `SUN.lean|instance : uses 1`, and the gate reported nothing new. The TYPE is what names an
+# `SUN.lean|instance : uses 1`, and the gate reported nothing new. The type is what names an
 # anonymous instance, so the type goes in the key. Strictly narrows what a baseline line forgives.
 _ANON = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+|private\s+|protected\s+|scoped\s+)*"
                    r"instance\s*:\s*(.+?)\s*(?::=|where\b|$)")
@@ -99,7 +108,7 @@ def _name_of(line: str, name: str) -> str:
 def _comment_mask(lines: list[str]) -> list[bool]:
     """True where a line is inside a block comment (`/-- … -/`, `/-! … -/`, `/- … -/`).
 
-    WHY THIS IS NEEDED. Lean's declaration keywords are ordinary English words, so a line of PROSE
+    Why this is needed. Lean's declaration keywords are ordinary English words, so a line of prose
     inside a doc comment can begin with `instance`, `def` or `axiom` and be matched as a declaration.
     That is not hypothetical: a docstring sentence beginning "instance cannot express the thing the
     read is about" was reported as an `instance` declaration carrying the numerals in the rest of the
@@ -159,7 +168,7 @@ def _undeclared(path: Path) -> list[tuple[int, str, str]]:
     for lineno, kind, name, text in _declarations(path):
         if _MARK.search(text):
             continue
-        nums = sorted(set(_NUM.findall(text)))
+        nums = sorted(set(_NUM.findall(text)) - STRUCTURAL_NUMERALS)
         if nums:
             first = next(ln.strip() for ln in text.split("\n") if _IN_SCOPE.match(ln))
             hits.append((lineno, f"{kind} {name} uses {','.join(nums)}", first[:90]))
@@ -199,11 +208,11 @@ def test_no_undeclared_lean_constants():
 
 
 def test_the_baseline_carries_no_retired_debt():
-    """A baseline line that no longer describes an undeclared literal must be DELETED.
+    """A baseline line that no longer describes an undeclared literal must be deleted.
 
     The file says it "may only shrink". Nothing made that true: the guard reads the baseline purely
     as a set of things to forgive, so a declaration that later gained its DERIVED/CHOSEN note left
-    its line behind forever. A stale line is not inert -- it silently pre-forgives the NEXT
+    its line behind forever. A stale line is not inert -- it silently pre-forgives the next
     undeclared literal to appear in a declaration of that name, which is exactly the case the guard
     exists to catch. It also makes the count of remaining debt wrong, and that count is the only
     thing anyone reads to know whether the work is progressing.
@@ -225,7 +234,7 @@ def test_the_baseline_carries_no_retired_debt():
 
 
 def test_two_anonymous_instances_do_not_share_one_key():
-    """POSITIVE CONTROL for the key. A second anonymous instance must be reported, not forgiven.
+    """Positive control for the key. A second anonymous instance must be reported, not forgiven.
 
     `instance : Nonempty (SU n) := <1>` has no name, and the scan captured the `:` as one. Every
     anonymous instance in a file then produced the same `_key`, so the single baseline line for
@@ -234,12 +243,13 @@ def test_two_anonymous_instances_do_not_share_one_key():
     guard exists for.
 
     The fixture plants two anonymous instances carrying the same literal and asserts the gate
-    distinguishes them, and that the OLD key would not have.
+    distinguishes them, and that the old key would not have. The literal is `3`, not a structural
+    numeral, so the exemption does not hide the findings the control needs.
     """
     src = "\n".join([
         "namespace Probe",
-        "instance : Nonempty (Fin 1) := ⟨0⟩",
-        "instance : Subsingleton (Fin 1) := ⟨by decide⟩",
+        "instance : Nonempty (Fin 3) := ⟨0⟩",
+        "instance : Subsingleton (Fin 3) := ⟨by decide⟩",
         "end Probe",
         "",
     ])
@@ -255,9 +265,9 @@ def test_two_anonymous_instances_do_not_share_one_key():
     assert len(keys) == planted, (
         f"both anonymous instances key to the same string {keys}, so one baseline line forgives "
         "the other")
-    assert keys == {"instance : Nonempty (Fin 1) uses 0,1",
-                    "instance : Subsingleton (Fin 1) uses 1"}
-    # THE DEFECT, exhibited: both lines capture `:` as their name, so under the old key the two
+    assert keys == {"instance : Nonempty (Fin 3) uses 3",
+                    "instance : Subsingleton (Fin 3) uses 3"}
+    # The defect, exhibited: both lines capture `:` as their name, so under the old key the two
     # findings are one string and a single baseline line covers both.
     old = {f"instance {_IN_SCOPE.match(ln).group(2)}"
            for ln in src.splitlines() if _IN_SCOPE.match(ln)}
@@ -270,3 +280,26 @@ def test_a_named_declaration_keeps_its_own_name():
     """NEGATIVE CONTROL: the type is used only when there is no name to use."""
     assert _name_of("instance foo : Nonempty (Fin 1) := x", "foo") == "foo"
     assert _name_of("noncomputable def bar : Real := 1", "bar") == "bar"
+
+
+def test_structural_numerals_are_exempt_and_nothing_else_is():
+    """The exemption covers exactly `0`, `1`, `2`, `4`, and a mixed declaration still reports.
+
+    A declaration carrying only structural numerals needs no note. One that also carries a real
+    constant is reported, and the finding names only the constant -- so the exemption removes the
+    indices and cannot hide a number that was measured or chosen.
+    """
+    assert STRUCTURAL_NUMERALS == frozenset({"0", "1", "2", "4"})
+    src = "\n".join([
+        "def structuralOnly (x : Fin 4 → ℝ) : ℝ := x 0 ^ 2 + 1",
+        "",
+        "def mixed (x : Fin 4 → ℝ) : ℝ := x 0 ^ 2 + 73 / 100",
+        "",
+        "noncomputable def decimal : ℝ := 0.37",
+        "",
+    ])
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "Exempt.lean"
+        path.write_bytes(src.encode("utf-8"))
+        whats = {h[1].strip() for h in _undeclared(path)}
+    assert whats == {"def mixed uses 100,73", "def decimal uses 0.37"}, whats

@@ -1,0 +1,105 @@
+{
+ "producer": "research/code/observer/aggregate_u1_joint.py",
+ "inputs": [
+  "a_b0.8_b4.json",
+  "a_b0.8_b6.json",
+  "a_b0.8_b8.json",
+  "a_b1.2_b4.json",
+  "a_b1.2_b6.json",
+  "a_b1.2_b8.json",
+  "d_b0.8_b4.json",
+  "d_b0.8_b6.json",
+  "d_b0.8_b8.json",
+  "d_b1.2_b4.json",
+  "d_b1.2_b6.json",
+  "d_b1.2_b8.json",
+  "x_b0.8_b4.json",
+  "x_b0.8_b6.json",
+  "x_b0.8_b8.json",
+  "x_b1.2_b4.json",
+  "x_b1.2_b6.json",
+  "x_b1.2_b8.json"
+ ],
+ "rows": [
+  {
+   "beta": 0.8,
+   "side": 4,
+   "links_on_links": 0.11607080077540602,
+   "links_from_energies": 0.00042309710461998286,
+   "energies_from_links": 0.050347408334847965,
+   "energies_on_energies": 0.2109031501509898,
+   "rho": 0.21112724692248735,
+   "links_on_links_sup": 0.17189067710540912,
+   "energies_on_energies_sup": 0.21176075409087486,
+   "rho_sup": 0.21228806156331265
+  },
+  {
+   "beta": 0.8,
+   "side": 6,
+   "links_on_links": 0.281082649638634,
+   "links_from_energies": 0.00047686555549744956,
+   "energies_from_links": 27.088357803989158,
+   "energies_on_energies": 0.12330903489782208,
+   "rho": 0.34054551942292366,
+   "links_on_links_sup": 0.43804059272621904,
+   "energies_on_energies_sup": 0.1584853400970206,
+   "rho_sup": 0.47841648319621305
+  },
+  {
+   "beta": 0.8,
+   "side": 8,
+   "links_on_links": 0.5369704273393663,
+   "links_from_energies": 0.00032363980331651245,
+   "energies_from_links": 92.96405154766524,
+   "energies_on_energies": 0.03900527294474955,
+   "rho": 0.5914333824970527,
+   "links_on_links_sup": 0.7195669301261559,
+   "energies_on_energies_sup": 0.14214313114173538,
+   "rho_sup": 0.7676657018823381
+  },
+  {
+   "beta": 1.2,
+   "side": 4,
+   "links_on_links": 9.42652233288566,
+   "links_from_energies": 0.09211133073348991,
+   "energies_from_links": 36.78299778401665,
+   "energies_on_energies": 0.6934680616260473,
+   "rho": 9.798633197825664,
+   "links_on_links_sup": 9.426460091113684,
+   "energies_on_energies_sup": 0.6936774984851047,
+   "rho_sup": 9.798581623396776
+  },
+  {
+   "beta": 1.2,
+   "side": 6,
+   "links_on_links": 9.84792117293403,
+   "links_from_energies": 0.026232507836829327,
+   "energies_from_links": 24.372274725148493,
+   "energies_on_energies": 0.5135238006052769,
+   "rho": 9.91591936376044,
+   "links_on_links_sup": 9.870415613224903,
+   "energies_on_energies_sup": 0.5220765096120258,
+   "rho_sup": 9.938313847391502
+  },
+  {
+   "beta": 1.2,
+   "side": 8,
+   "links_on_links": 15.677225374643909,
+   "links_from_energies": 0.0157579792069512,
+   "energies_from_links": 14.738283291962412,
+   "energies_on_energies": 0.24842137314997298,
+   "rho": 15.692263443577907,
+   "links_on_links_sup": 15.67659227197784,
+   "energies_on_energies_sup": 0.3282692230482167,
+   "rho_sup": 15.69170904038532
+  }
+ ],
+ "rho_max_by_beta": {
+  "0.8": 0.5914333824970527,
+  "1.2": 15.692263443577907
+ },
+ "rho_min_by_beta": {
+  "0.8": 0.21112724692248735,
+  "1.2": 9.798633197825664
+ }
+}

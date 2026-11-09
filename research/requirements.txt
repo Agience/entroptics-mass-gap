@@ -1,11 +1,12 @@
 # Pinned dependencies for reproducible mass-gap reads, tests, and figures.
-# Entroptics v0.2.6 from PyPI: the release of commit cf9edee (tag v0.2.6); its modules are
-# byte-identical to that commit's.
-entroptics==0.2.6
+# Entroptics v0.2.10 from PyPI (tag v0.2.10).
+entroptics==0.2.10
 
 # Runtime + tooling.
 numpy>=1.24
 matplotlib>=3.6      # figure regeneration (research/data/regen_all.py --phase figures)
 pytest>=7            # research/code/tests
+pyyaml>=6            # research/code/tests/test_provenance.py (reads CITATION.cff as YAML)
 scipy>=1.10          # research/code/tests/test_generator_physics.py (scipy.stats)
-mpmath==1.3.0        # research/code/certify/aperture_cap_of_floor.py (the cap at 50 digits)
+markdown>=3.5        # research/paper/build_paper.py
+pypdf>=4             # research/paper/build_paper.py (PDF metadata)

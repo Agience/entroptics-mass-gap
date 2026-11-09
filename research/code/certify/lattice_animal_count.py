@@ -1,6 +1,6 @@
 """How many touch-connected plaquette sets of a given size hold a fixed plaquette.
 
-WHAT THIS MEASURES. `MassGap.StrongCoupling.card_connected_rooted_le` proves
+What this measures. `MassGap.StrongCoupling.card_connected_rooted_le` proves
 
     number of touch-connected S with p0 in S and |S| = m, at most ((touchDeg bd + 1)^2)^m
 
@@ -9,17 +9,17 @@ script enumerates the left-hand side by brute force on the same `bd` the Lean de
 the periodic hypercubic word `U_mu(x) U_nu(x+mu) U_mu(x+nu)^-1 U_nu(x)^-1`, degenerate planes
 `mu = nu` included, exactly as `WilsonHypercubic.bd` carries them -- and prints it beside the bound.
 
-WHAT IT IS FOR. Three separate questions, and the table answers all three at once.
+What it is for. Three separate questions, and the table answers all three at once.
 
   * Is the bound true? The enumerated count must sit under it at every `m`.
   * Is it vacuous? A bound that over-counts by a hundred orders of magnitude proves nothing useful,
     so the ratio is printed rather than a pass mark.
   * Is it volume-free? The count is measured at `n = 3, 4, 5`. Once `n` exceeds the diameter a
-    size-`m` set can reach, the count MUST stop moving; the same table prints the count with
+    size-`m` set can reach, the count must stop moving; the same table prints the count with
     connectedness dropped, which is `C(P-1, m-1)` and grows without limit in `n`. That contrast is
     the whole content of the connectedness hypothesis.
 
-THE ENUMERATOR IS ITSELF CHECKED. `_selfcheck` runs the extension-and-forbidden enumeration against
+The enumerator is itself checked. `_selfcheck` runs the extension-and-forbidden enumeration against
 an exhaustive pass over all 2^V subsets on small graphs -- a path, a cycle, a grid and random
 graphs -- and a disagreement stops the run. An enumerator validated only against its own output
 would answer its own design.
@@ -172,7 +172,7 @@ def _selfcheck():
             for j in range(i, v):
                 # CHOSEN: 0.35 is the edge probability of the random self-check graphs. It buys
                 # graphs that are neither trees nor complete, which is where a counting bug
-                # hides; the self-check compares against exhaustive enumeration, so ANY value
+                # hides; the self-check compares against exhaustive enumeration, so any value
                 # gives a valid check and this one only affects how searching it is.
                 if rng.random() < 0.35:
                     adj[i].add(j)
@@ -227,7 +227,7 @@ def main() -> int:
 
     for d in a.dims:
         # DERIVED: 4 is the dimension the Clay problem is stated in, and the only one whose
-        # enumeration is cut short; the cut is a RUNTIME budget on the control, not a
+        # enumeration is cut short; the cut is a runtime budget on the control, not a
         # parameter of the bound, and the bound is checked at every dim in a.dims.
         mmax = a.mmax_dim4 if d >= 4 else a.mmax
         print(f"================ dim = {d} ================")
@@ -264,7 +264,7 @@ def main() -> int:
                           f"   K^m = {K ** m}")
         print(f"\n  touchDeg by extent: "
               + ", ".join(f"n={n}: {deg_by_n[n]}" for n in sorted(deg_by_n))
-        # DERIVED: 1 is the number of DISTINCT values a constant takes. The claim being checked
+        # DERIVED: 1 is the number of distinct values a constant takes. The claim being checked
         # is that touchDeg does not move with the extent, so the test is that the set of
         # measured degrees is a singleton -- a property of the data, not a tolerance.
               + ("  -- constant in n" if len(set(deg_by_n.values())) == 1 else "  -- MOVES IN n"))

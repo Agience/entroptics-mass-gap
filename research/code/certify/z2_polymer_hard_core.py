@@ -1,7 +1,7 @@
 """Exact finite-group negative control for the polymer hard core.
 
 Z_2 replaces SU(N).  A link carries U_l in {+1,-1}; the product uniform measure over
-{+1,-1}^L IS the product Haar measure of Z_2, and observables reading disjoint link
+{+1,-1}^L is the product Haar measure of Z_2, and observables reading disjoint link
 blocks are independent under it, verbatim as in WilsonReal.block_integral_factor.
 
 The plaquette holonomy is the product of its boundary links, and the Wilson density
@@ -34,12 +34,12 @@ def sheet(n):
 
 
 def ring(n):
-    """n plaquettes in a CYCLE; plaquette i has links {i, (i+1) mod n}.
+    """n plaquettes in a cycle; plaquette i has links {i, (i+1) mod n}.
 
-    Unlike chain(), the boundary vectors are linearly DEPENDENT over F_2 -- their sum
+    Unlike chain(), the boundary vectors are linearly dependent over F_2 -- their sum
     is zero, so prod_i h_i = 1 identically.  That is the Z_2 analogue of the Bianchi
     identity on a closed surface, and it is what makes the connected correlation
-    NONZERO.  On chain() the h_i are independent and every connected correlator
+    nonzero.  On chain() the h_i are independent and every connected correlator
     vanishes, which would make the reorganisation test vacuous.
     """
     return n, [frozenset({i, (i + 1) % n}) for i in range(n)]
@@ -123,7 +123,7 @@ class Model:
 
     # ------------------------------------------------------------ combinatorics
     def touch(self, p, q):
-        # DERIVED: 0 is the empty intersection. Two plaquettes TOUCH exactly when they share at
+        # DERIVED: 0 is the empty intersection. Two plaquettes touch exactly when they share at
         # least one link, so the test is non-emptiness of the shared-link set, not a cutoff.
         return len(self.bd[p] & self.bd[q]) > 0
 
@@ -213,7 +213,7 @@ def check_core_factorisation(m, p0, pd):
 def check_reorganisation(m, p0, pd):
     """The whole claim:
          D = N({p0,pd})Z - N({p0})N({pd})
-           = sum over CORES (X,Y) of pairTerm(X,Y) * Z_{Omega(A)}^2 ,
+           = sum over cores (X,Y) of pairTerm(X,Y) * Z_{Omega(A)}^2 ,
        so   corrConn = D/Z^2 = sum_cores pairTerm(X,Y) * (Z_Omega/Z)^2 .
     """
     allP = frozenset(range(m.P))

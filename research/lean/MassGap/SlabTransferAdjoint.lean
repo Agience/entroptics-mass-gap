@@ -4,10 +4,9 @@ import MassGap.SlabKernelOperator
 /-!
 # MassGap.SlabTransferAdjoint — the adjoint of a kernel operator, and the quadratic form
 
-`SlabKernelOperator` builds `slabTransfer`, a bounded map `L²(slab t+1) →L[ℝ] L²(slab t)` from the
-kernel `slabKernel`. This module computes the adjoint of a kernel operator, gives a symmetry
-criterion for self-adjointness, reduces operator positivity to a Gram condition, and evaluates the
-quadratic form at a constant kernel.
+`SlabKernelOperator` builds the bounded kernel operator `kernelCLM`. This module computes the
+adjoint of a kernel operator, gives a symmetry criterion for self-adjointness, reduces operator
+positivity to a Gram condition, and evaluates the quadratic form at a constant kernel.
 
 ## Part 1 — the adjoint is the transposed kernel
 
@@ -17,11 +16,6 @@ probability measures and `K` is bounded, so the integrand is dominated by `C · 
 integrable because an `L²` function on a probability space is `L¹`.
 
 `isSelfAdjoint_kernelCLM_of_symm` is the consequence for a symmetric kernel on one space.
-`adjoint_slabTransfer` is the adjoint identity at the Wilson slab kernel. The self-adjointness
-criterion is not instantiated there: `slabTransfer` is not an endomorphism at `n ≥ 2`, and no
-statement in the tree decides whether `slabKernel` is symmetric.
-`MassGap.SliceTransferSelfAdjoint` carries the criterion to `SliceTransfer.transferKernel`, which is
-proved symmetric.
 
 ## Part 2 — `T† ∘ T`
 
@@ -35,19 +29,10 @@ satisfies both, so a self-adjoint positive operator obtained this way carries no
 
 `FiniteGram K` is the finite square `K x y = ∑ᵢ Aᵢ x · Aᵢ y`.
 
-* `FiniteGram.symm` — a Gram kernel is symmetric, so symmetry is necessary. `slabKernel` carries the
-  whole intra-slice weight of slice `t` and none of slice `t+1`
-  (`slabKernel_eq_intra_mul_inter` exhibits a factor not mentioning the second argument) and its
-  temporal plaquette sum reads the axis links, which belong to slab `t` alone. Removing that
-  asymmetry is temporal gauge, which is `SliceTransfer`'s hypothesis `hg` and is discharged nowhere.
+* `FiniteGram.symm` — a Gram kernel is symmetric, so symmetry is necessary.
 * `inner_kernelCLM_self_eq_sum_sq_of_gram` — on a Gram kernel the quadratic form is `∑ᵢ (∫ Aᵢ f)²`,
   hence `inner_kernelCLM_self_nonneg_of_gram`. The Gram index is finite, so the interchange is
   `integral_finsetSum` and no Fubini is needed.
-
-`SlabGramVia` states the same condition at the Wilson slab, through an explicit measurable
-identification `e` of the two slab configuration spaces, since the tree has no canonical one.
-`slabGramVia_symm` and `inner_slabPulled_self_nonneg_of_gram` are its necessary and sufficient
-halves. No statement here or in the tree establishes `SlabGramVia`.
 
 ## Part 4 — a uniform lower bound on the kernel
 
@@ -64,13 +49,8 @@ mean-zero vector into `0 ∈ spectrum`.
 So a uniform positive lower bound on the kernel does not by itself place `0` outside the spectrum.
 The proved instance is at the constant `1`; no declaration covers other constants.
 
-At the Wilson slab this is conditional. `slabCap_beta_zero` gives pointwise lower bound `1` at
-`β = 0`, and `zero_mem_spectrum_slabNormal_of_beta_zero` places `0` in the spectrum of `slabNormal`
-on the hypothesis that a nonzero mean-zero `L²` vector exists. That hypothesis fails when
-`L²(slabHaar)` is at most one-dimensional, which `N = 1` or an empty slab would give; no statement
-here says those are the only ways it fails, and no nonconstant slab observable is exhibited. The
-abstract half (`kernelCLM_apply_eq_zero_of_const` with `zero_mem_spectrum_of_apply_eq_zero`) needs
-no such hypothesis on any probability space carrying such a vector.
+The abstract statement (`kernelCLM_apply_eq_zero_of_const` with
+`zero_mem_spectrum_of_apply_eq_zero`) takes a nonzero mean-zero vector as a hypothesis.
 
 ## Part 5 — the constant observable
 
@@ -79,37 +59,14 @@ no such hypothesis on any probability space carrying such a vector.
 constrains the row integral at almost every `x` rather than at every `x`. `coeFn_kernelCLM_oneLp`
 computes `T 1` as the row integral.
 
-At the Wilson slab kernel the row integral is at most `1` for `0 ≤ β` (`slabTransfer_oneLp_le_one`)
-and at least `slabCap⁻¹` (`SlabKernelOperator.le_kernelCLM_one`), so `T 1` lies in
-`[slabCap⁻¹, 1]`. That interval contains `1`, so those two bounds do not determine whether the
-constant is an eigenvector, and no statement here determines it at any `β > 0`.
-`slabKernelStochastic_beta_zero` proves the eigenvector equality at `β = 0`.
-
-## The degenerate regimes
-
-`SlabKernelOperator` names three regimes where `slabKernel ≡ 1` and `slabTransfer` is the rank-one
-averaging map: `slabPlaqCount = 0` (that is, `d ≤ 1`), `β = 0`, and `N = 1`. The statements here
-behave differently across them:
-
-* Part 1's adjoint identity and Part 2's `T†T` results hold there and everywhere else, being true
-  for every bounded kernel and every bounded operator.
-* Part 3's Gram sufficiency holds there and is not vacuous: `finiteGram_one` proves `K ≡ 1` is the
-  rank-one Gram at `A₀ ≡ 1`. `finiteGram_zero` is the matching control — `FiniteGram` admits
-  `k = 0`, whose empty sum is the zero kernel — so `FiniteGram` alone is satisfied by an operator
-  that moves nothing.
-* Part 4's evaluation is about the degenerate regime and is sharpest there.
-* Part 5's eigenvector equality is proved only there.
-* `slabKernel_eq_intra_mul_inter` and its two supporting lemmas hold there, where the kernel is
-  constant and the factorisation reads `1 = 1 * 1`.
+`kernelCLM_oneLp_le_one` bounds `T 1` above by `1` when `K ≤ 1`.
 
 ## Scope
 
-`slabTransfer` has no spectrum at `n ≥ 2`, where it is not an endomorphism; the spectral statements
-here are about `slabNormal = T† ∘ T`, which is one. No statement connects any of this to
-`GNSHilbert.ymH`, no statement proves `slabKernel` asymmetric —
-`slabKernel_eq_intra_mul_inter` exhibits a factor independent of the second argument, and whether
-the kernel depends on either argument is `SliceTrace`'s open coupling question — and no Hamiltonian
-`-log T` is built.
+`finiteGram_one` proves `K ≡ 1` is the rank-one Gram at `A₀ ≡ 1`. `finiteGram_zero` is the matching
+control — `FiniteGram` admits `k = 0`, whose empty sum is the zero kernel — so `FiniteGram` alone
+is satisfied by an operator that moves nothing. No statement connects any of this to
+`GNSHilbert.ymH`, and no Hamiltonian `-log T` is built.
 
 The names used here that appear nowhere else in the tree are `ContinuousLinearMap.adjoint`,
 `adjoint_inner_left`, `adjoint_inner_right`, `star_eq_adjoint`, `ext_inner_left`,
@@ -127,7 +84,7 @@ namespace MassGap.SlabTransferAdjoint
 open MeasureTheory
 open MassGap MassGap.SliceTrace MassGap.SlabKernelOperator
 open MassGap.WilsonAction MassGap.WilsonHypercubic MassGap.CompactGauge
-open MassGap.SliceTransfer MassGap.WilsonLattice
+open MassGap.WilsonLattice
 
 /-! ## Part 0 — the real `L²` pairing as an integral
 
@@ -453,9 +410,8 @@ theorem finiteGram_zero : FiniteGram (fun _ _ : X => (0 : ℝ)) :=
   ⟨0, fun _ _ => 0, 0, fun i => measurable_const, fun i x => by simp, fun x y => by simp⟩
 
 /-- The constant kernel is a gram kernel, with the single factor `A₀ ≡ 1`. This is the second
-control: the one kernel `SlabKernelOperator` proves the Wilson slab kernel equals in its three
-degenerate regimes is already Gram, so Part 3's sufficiency is nonvacuous exactly where it says
-nothing about the dynamics.
+control: Part 3's sufficiency is nonvacuous at the constant kernel, where it says nothing about
+dynamics.
 
 DERIVED: the `1`s are the kernel's constant value, the single Gram factor and the Gram index's
 cardinality; the `0` is the sign in the bound. -/
@@ -626,8 +582,7 @@ section Vacuum
 
 variable {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
 
-/-- The stochastic condition — every row of the kernel integrates to one. This is exactly the
-normalisation `SliceTrace` records the slab kernel as not having.
+/-- The stochastic condition — every row of the kernel integrates to one.
 
 DERIVED: the `1` is the total mass a stochastic row must carry. -/
 def KernelStochastic (K : X → Y → ℝ) (ν : Measure Y) : Prop := ∀ x, (∫ y, K x y ∂ν) = 1
@@ -681,392 +636,6 @@ theorem kernelCLM_oneLp_le_one (K : X → Y → ℝ) (C : ℝ) (hK : Measurable 
 
 end Vacuum
 
-/-! ## Part 6 — at the Wilson slab kernel
-
-Everything below is an instantiation, plus two facts about `slabKernel` itself: the factor that does
-not mention the second argument, and the exact value of the cap at zero coupling. -/
-
-section Wilson
-
-variable {d n N : ℕ} [NeZero n]
-
-/-- The adjoint of the slab transfer operator, identified concretely: it is the kernel operator
-of the transposed slab kernel, mapping `L²(slab t)` back to `L²(slab t+1)`.
-
-DERIVED: the `1` in `t + 1` is `SliceTrace.slabKernel`'s time step; the `2`s are the `L²` exponent;
-the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis. -/
-theorem adjoint_slabTransfer (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
-    ContinuousLinearMap.adjoint (slabTransfer (d := d) (n := n) hN τ β t)
-      = kernelCLM (kernelTranspose (slabKernel (N := N) τ β t))
-          (slabCap (d := d) (n := n) τ β t)
-          (measurable_kernelTranspose (measurable_slabKernel_uncurry τ β t))
-          (le_of_lt (slabCap_pos τ β t))
-          (abs_kernelTranspose_le (abs_slabKernel_le hN τ β t))
-          (slabHaar (N := N) τ (t + 1)) (slabHaar (N := N) τ t) :=
-  adjoint_kernelCLM _ _ _ _ _ _ _
-
-/-- The endomorphism `T† ∘ T`, on `L²` of the slab at `t+1`. `slabTransfer` is not an endomorphism
-at `n ≥ 2` and has no spectrum; this does.
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent; the `0` is
-the value `N` is required to differ from in `hN`. -/
-noncomputable def slabNormal (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
-    Lp ℝ 2 (slabHaar (N := N) τ (t + 1)) →L[ℝ] Lp ℝ 2 (slabHaar (N := N) τ (t + 1)) :=
-  (ContinuousLinearMap.adjoint (slabTransfer (d := d) (n := n) hN τ β t)).comp
-    (slabTransfer (d := d) (n := n) hN τ β t)
-
-/-- `slabNormal` is self-adjoint. `isSelfAdjoint_adjointComp` at `slabTransfer`; that lemma has no
-premise, so the conclusion holds for every bounded operator, and `adjointComp_zero_eq_zero` is the
-control showing the zero operator satisfies it too.
-
-DERIVED: as `slabNormal`'s — the `1` in `t + 1` is `slabKernel`'s time step, the `2`s are the `L²`
-exponent, and the `0` is the value `N` is required to differ from in `hN`. -/
-theorem isSelfAdjoint_slabNormal (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
-    IsSelfAdjoint (slabNormal (d := d) (n := n) hN τ β t) :=
-  isSelfAdjoint_adjointComp _
-
-/-- The quadratic form of `slabNormal` is the squared norm of the image.
-
-DERIVED: the `2` in `^ 2` is the square of a norm and the `2`s in `Lp ℝ 2` are the `L²` exponent;
-the `1` in `t + 1` is `slabKernel`'s time step; the `0` is the value `N` is required to differ from
-in `hN`. -/
-theorem inner_slabNormal_self (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
-    (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ)
-      = ‖slabTransfer (d := d) (n := n) hN τ β t f‖ ^ 2 :=
-  inner_adjointComp_self _ f
-
-/-- `slabNormal` is a positive operator.
-
-DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
-in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent. -/
-theorem inner_slabNormal_self_nonneg (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
-    0 ≤ (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ) :=
-  inner_adjointComp_self_nonneg _ f
-
-/-- At nonnegative coupling the form of `slabNormal` is bounded by the squared norm. With the
-previous theorem this places the form in `[0, ‖f‖²]`, which is the interval a contraction's
-spectrum would have to live in. It is still not a spectral statement: no eigenvalue, no gap, and
-Part 4 shows `0` can be in the spectrum with all of this holding.
-
-DERIVED: the `2` in `^ 2` is a squared norm and the `2`s in `Lp ℝ 2` are the `L²` exponent; the `0`
-of `hβ` is the sign of the coupling and is also the value `N` is required to differ from in `hN`;
-the `1` in `t + 1` is `slabKernel`'s time step. -/
-theorem inner_slabNormal_self_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
-    (inner ℝ f (slabNormal (d := d) (n := n) hN τ β t f) : ℝ) ≤ ‖f‖ ^ 2 := by
-  rw [inner_slabNormal_self]
-  have h1 : ‖slabTransfer (d := d) (n := n) hN τ β t f‖ ≤ ‖f‖ := by
-    calc ‖slabTransfer (d := d) (n := n) hN τ β t f‖
-        ≤ ‖slabTransfer (d := d) (n := n) hN τ β t‖ * ‖f‖ :=
-          ContinuousLinearMap.le_opNorm _ _
-      _ ≤ 1 * ‖f‖ :=
-          mul_le_mul_of_nonneg_right (norm_slabTransfer_le_one hN τ β hβ t) (norm_nonneg f)
-      _ = ‖f‖ := one_mul _
-  have h0 : 0 ≤ ‖slabTransfer (d := d) (n := n) hN τ β t f‖ := norm_nonneg _
-  nlinarith [h1, h0]
-
-/-! ### The slab kernel's own asymmetry, exhibited
-
-`SliceTrace`'s second difference between `slabKernel` and `SliceTransfer.transferKernel` is that the
-former carries the whole intra-slice weight of slice `t` and the latter half at each argument. The
-two lemmas below turn that into a theorem: the intra-slice factor does not read the second argument
-at all. With `FiniteGram.symm` — a Gram kernel is symmetric — this is why the Osterwalder–Seiler
-square cannot be pointed at `slabKernel` as it stands. -/
-
-/-- A spatial plaquette of slice `t` reads only the spatial links at time `t`.
-`SliceTransfer.intra_links_mem` in the shape `action_on_congr_of_support` consumes — the sharper
-support than `SliceTrace.intra_support`, which allows time `t+1` as well.
-
-Vacuous when `intraPlaq τ t = ∅`, which is the intra-slice half of `SlabKernelOperator`'s
-`slabPlaqCount τ t = 0` regime (`d ≤ 1`).
-
-DERIVED: no numeral. -/
-theorem intra_support_slice (τ : Fin d) (t : Fin n) :
-    ∀ q ∈ intraPlaq (d := d) (n := n) τ t, ∀ l ∈ (bd q).map Prod.fst,
-      l ∈ sliceLinks (d := d) (n := n) τ t := by
-  intro q hq l hl
-  obtain ⟨lo, hlo, rfl⟩ := List.mem_map.mp hl
-  exact intra_links_mem hq lo hlo
-
-/-- The intra-slice action of a patched configuration does not read the second slab.
-
-Two mechanisms give it. At `n ≥ 2` it is the intra-slice restriction: `intra_support_slice` confines
-the plaquettes to time `t`. At `n = 1`, `t + 1 = t` and `SliceTrace.patch` resolves `s = t` first, so
-`B` is never consulted for any link, and the statement carries nothing about the intra-slice cut.
-Both sides are the empty sum when `intraPlaq τ t = ∅`.
-
-DERIVED: the `1` in `t + 1` is `SliceTrace.patch`'s time step. -/
-theorem intraSliceAction_patch_indep (τ : Fin d) (t : Fin n)
-    (A : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-    (B B' : SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N) :
-    intraSliceAction τ t (regroup (timeOf τ) (patch (N := N) τ A B))
-      = intraSliceAction τ t (regroup (timeOf τ) (patch (N := N) τ A B')) := by
-  unfold intraSliceAction
-  refine MassGap.ReflectionPositivity.action_on_congr_of_support
-    (bd (d := d) (n := n)) (wilsonDensity (N := N)) (intraPlaq τ t)
-    (sliceLinks (d := d) (n := n) τ t) (intra_support_slice τ t) _ _ (fun l hl => ?_)
-  have ht : timeOf τ l = t := (mem_sliceLinks.mp hl).2
-  rw [regroup_apply (timeOf τ) (patch (N := N) τ A B) l ht,
-    regroup_apply (timeOf τ) (patch (N := N) τ A B') l ht]
-  simp [patch]
-
-/-- The slab kernel factors, with one factor blind to the second argument. The first factor is
-the intra-slice weight of slice `t`; it is written at the filler configuration and does not mention
-`B` at all. The second factor is the temporal coupling.
-
-An identity, not a refutation of symmetry. In all three degenerate regimes it carries nothing: at
-`β = 0`, at `slabPlaqCount τ t = 0` (that is, `d ≤ 1`) and at `N = 1` the kernel is constantly `1`
-(`SlabKernelOperator.slabKernel_beta_zero`, `slabKernel_eq_one_of_plaqCount_zero`), so this reads
-`1 = 1 * 1`, both factors are constant, and the kernel is symmetric. A factor blind to the second
-argument is consistent with a constant kernel; whether the kernel depends on either argument is
-`SliceTrace`'s coupling question.
-
-DERIVED: the `1` written as the filler value is `SliceTrace.patch`'s group identity, never read
-(`slabWeight_local` is what says so); the `1` in `t + 1` is `slabKernel`'s time step. -/
-theorem slabKernel_eq_intra_mul_inter (τ : Fin d) (β : ℝ) (t : Fin n)
-    (A : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-    (B : SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N) :
-    slabKernel (N := N) τ β t A B
-      = Real.exp (-β * intraSliceAction τ t
-            (regroup (timeOf τ) (patch (N := N) τ A (fun _ => 1))))
-        * Real.exp (-β * ∑ q ∈ (interPlaq (d := d) (n := n) τ t).filter
-              (fun q => q.1.1 ≠ q.1.2),
-            wilsonDensity (wilsonHol (bd (d := d) (n := n)) q
-              (regroup (timeOf τ) (patch (N := N) τ A B)))) := by
-  unfold slabKernel slabWeight
-  rw [intraSliceAction_patch_indep τ t A B (fun _ => 1)]
-
-/-! ### The reduction for operator positivity, at Yang–Mills
-
-`slabTransfer` is not an endomorphism at `n ≥ 2`, so `0 ≤ ⟨f, T f⟩` is not even a statement about
-it. The condition below is the statement it becomes once an identification `e` of the two slab
-configuration spaces is supplied — and the tree supplies none, which is itself part of the gap. -/
-
-/-- The slab kernel pulled back to one space along a map `e` of the slab at `t` to the slab at
-`t+1`.
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
-noncomputable def slabKernelPulled (τ : Fin d) (β : ℝ) (t : Fin n)
-    (e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)) :
-    (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-      → (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N) → ℝ :=
-  fun A A' => slabKernel (N := N) τ β t A (e A')
-
-/-- The pulled-back kernel is jointly measurable when `e` is.
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
-theorem measurable_slabKernelPulled (τ : Fin d) (β : ℝ) (t : Fin n)
-    {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)} (he : Measurable e) :
-    Measurable (Function.uncurry (slabKernelPulled (N := N) τ β t e)) := by
-  have h2 : Measurable (fun p : ((SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-      × (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)) =>
-      ((p.1, e p.2) : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        × (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N))) :=
-    measurable_fst.prodMk (he.comp measurable_snd)
-  have h1 := (measurable_slabKernel_uncurry (N := N) τ β t).comp h2
-  exact h1
-
-/-- The pulled-back kernel keeps the slab cap as a uniform bound.
-
-DERIVED: the `0` of `hN : N ≠ 0` is `wilsonDensity_nonneg`'s own hypothesis; the `1` in `t + 1` is
-`slabKernel`'s time step. -/
-theorem abs_slabKernelPulled_le (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
-    (e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)) :
-    ∀ A A', |slabKernelPulled (N := N) τ β t e A A'| ≤ slabCap (d := d) (n := n) τ β t :=
-  fun A A' => abs_slabKernel_le hN τ β t A (e A')
-
-/-- The Osterwalder–Seiler square condition at the Wilson slab kernel, read through an
-identification `e` of the two slab configuration spaces, as a `Prop`.
-
-No statement in this file or in the tree establishes it. The tree's reflection results —
-`ReflectionStrong.wilsonGibbsReflForm`'s `form_nonneg` and
-`Complete.wilson_reflection_positive_at_even` — are nonnegativity of a Gibbs pairing of observables
-on the full link configuration space, with the reflection `Θ` acting there and the Boltzmann weight
-and partition function included. Neither is a Gram representation of `slabKernel`, which is a bare
-Haar-measure kernel between two single slabs; `SlabKernelOperator` states the mismatch.
-
-`FiniteGram.symm` adds a condition about `slabKernel` alone: a Gram kernel is symmetric, so this
-`Prop` entails `slabGramVia_symm`, and no statement in the tree decides `slabKernel`'s symmetry. In
-the three degenerate regimes the kernel is constant, hence symmetric, and this `Prop` holds there
-(`finiteGram_one`).
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
-def SlabGramVia (τ : Fin d) (β : ℝ) (t : Fin n)
-    (e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)) : Prop :=
-  FiniteGram (slabKernelPulled (N := N) τ β t e)
-
-/-- The necessary half of the reduction. If the square condition holds, the pulled-back kernel
-is symmetric. Contrapositively, exhibiting an asymmetry refutes it.
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step. -/
-theorem slabGramVia_symm {τ : Fin d} {β : ℝ} {t : Fin n}
-    {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)}
-    (h : SlabGramVia (N := N) τ β t e) (A A' : SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N) :
-    slabKernelPulled (N := N) τ β t e A A' = slabKernelPulled (N := N) τ β t e A' A :=
-  FiniteGram.symm h A A'
-
-/-- The sufficient half of the reduction, proved. The square condition gives operator positivity
-of the pulled-back slab transfer operator on one space.
-
-DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
-in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent; `CA` is the caller's bound
-on the square's factors. -/
-theorem inner_slabPulled_self_nonneg_of_gram (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
-    {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)} (he : Measurable e)
-    {k : ℕ} (A : Fin k → (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N) → ℝ) (CA : ℝ)
-    (hAm : ∀ i, Measurable (A i)) (hAb : ∀ i x, |A i x| ≤ CA)
-    (hKA : ∀ x y, slabKernelPulled (N := N) τ β t e x y = ∑ i, A i x * A i y)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ t)) :
-    0 ≤ (inner ℝ f (kernelCLM (slabKernelPulled (N := N) τ β t e)
-        (slabCap (d := d) (n := n) τ β t) (measurable_slabKernelPulled τ β t he)
-        (le_of_lt (slabCap_pos τ β t)) (abs_slabKernelPulled_le hN τ β t e)
-        (slabHaar (N := N) τ t) (slabHaar (N := N) τ t) f) : ℝ) :=
-  inner_kernelCLM_self_nonneg_of_gram _ _ _ _ _ _ A CA hAm hAb hKA f
-
-/-- The sufficient half, consuming `SlabGramVia` itself. This is the declaration that closes the
-reduction: whoever proves the open `Prop` gets operator positivity of the pulled-back slab transfer
-operator with nothing further to supply.
-
-DERIVED: the `0` is the sign asserted and the value `N` is required to differ from in `hN`; the `1`
-in `t + 1` is `slabKernel`'s time step; the `2`s are the `L²` exponent. -/
-theorem inner_slabPulled_self_nonneg_of_slabGramVia (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n)
-    {e : (SlabIdx (d := d) (n := n) τ t → MassGap.SUN.SU N)
-        → (SlabIdx (d := d) (n := n) τ (t + 1) → MassGap.SUN.SU N)} (he : Measurable e)
-    (h : SlabGramVia (N := N) τ β t e) (f : Lp ℝ 2 (slabHaar (N := N) τ t)) :
-    0 ≤ (inner ℝ f (kernelCLM (slabKernelPulled (N := N) τ β t e)
-        (slabCap (d := d) (n := n) τ β t) (measurable_slabKernelPulled τ β t he)
-        (le_of_lt (slabCap_pos τ β t)) (abs_slabKernelPulled_le hN τ β t e)
-        (slabHaar (N := N) τ t) (slabHaar (N := N) τ t) f) : ℝ) :=
-  inner_kernelCLM_self_nonneg_of_finiteGram _ _ _ _ _ _ h f
-
-/-! ### The degenerate regime, and what it refutes
-
-At `β = 0` the slab kernel is constantly `1` (`SliceTrace`'s `slabKernel_beta_zero`, carried by
-`SlabKernelOperator`), the slab cap is exactly `1`, and the Doeblin constant `slabCap⁻¹` is
-therefore `1` — the largest value it can take for a kernel bounded by one. The operator is
-nonetheless rank one and annihilates every mean-zero vector. -/
-
-omit [NeZero n] in
-/-- The slab cap is exactly one at zero coupling, so the Doeblin constant there is `1`.
-
-DERIVED: the `0` is the coupling being set; the `1` is `Real.exp 0`. Neither is chosen. -/
-theorem slabCap_beta_zero (τ : Fin d) (t : Fin n) :
-    slabCap (d := d) (n := n) τ 0 t = 1 := by
-  simp [slabCap]
-
-/-- At zero coupling the slab transfer operator is the rank-one averaging map.
-
-DERIVED: the `0` is the coupling; the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the
-`L²` exponent. -/
-theorem slabTransfer_apply_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1))) :
-    slabTransfer (d := d) (n := n) hN τ 0 t f
-      = (∫ B, (f : _ → ℝ) B ∂(slabHaar (N := N) τ (t + 1))) • oneLp (slabHaar (N := N) τ t) :=
-  kernelCLM_apply_of_const _ _ _ _ _ _ _ (fun A B => slabKernel_beta_zero τ t A B) f
-
-/-- At zero coupling `slabNormal` annihilates every mean-zero vector.
-
-DERIVED: the `0`s are the coupling, the vanishing mass, the zero vector and the value `N` is
-required to differ from in `hN`; the `1` in `t + 1` is `slabKernel`'s time step; the `2`s are the
-`L²` exponent. -/
-theorem slabNormal_apply_eq_zero_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
-    (f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1)))
-    (hf0 : (∫ B, (f : _ → ℝ) B ∂(slabHaar (N := N) τ (t + 1))) = 0) :
-    slabNormal (d := d) (n := n) hN τ 0 t f = 0 := by
-  unfold slabNormal
-  rw [ContinuousLinearMap.comp_apply, slabTransfer_apply_of_beta_zero hN τ t f, hf0, zero_smul,
-    map_zero]
-
-/-- The refutation. At zero coupling, with the Doeblin constant equal to `1` and `slabNormal`
-self-adjoint, positive and a contraction, `0` is still in the spectrum as soon as a nonzero
-mean-zero `L²` vector exists. A uniform positive lower bound on the kernel therefore does not
-deliver `0 ∉ spectrum`, and `H = -log T` does not follow from it.
-
-The hypothesis `h` is the only thing standing between this and an unconditional statement, and it
-fails exactly when the slab configuration space carries no nonconstant `L²` function — which is the
-`N = 1` regime `SlabKernelOperator`'s header names, where `SU N` is trivial and `L²` is one
-dimensional. **It is not discharged here and the tree does not discharge it**: exhibiting a
-nonconstant slab observable is the same open question `GNSHilbert`'s header records.
-
-DERIVED: the `0`s are the coupling, the spectral point, the vanishing mass in `h` and the value `N`
-is required to differ from in `hN`; the `2` is the `L²` exponent; the `1` in `t + 1` is
-`slabKernel`'s time step. -/
-theorem zero_mem_spectrum_slabNormal_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n)
-    (h : ∃ f : Lp ℝ 2 (slabHaar (N := N) τ (t + 1)), f ≠ 0
-        ∧ (∫ B, (f : _ → ℝ) B ∂(slabHaar (N := N) τ (t + 1))) = 0) :
-    (0 : ℝ) ∈ spectrum ℝ (slabNormal (d := d) (n := n) hN τ 0 t) := by
-  obtain ⟨f, hf, hf0⟩ := h
-  exact zero_mem_spectrum_of_apply_eq_zero _ f hf
-    (slabNormal_apply_eq_zero_of_beta_zero hN τ t f hf0)
-
-/-! ### The vacuum at the Wilson slab kernel -/
-
-/-- At nonnegative coupling the constant observable is a supersolution. `T 1 ≤ 1` almost
-everywhere. With `slabCap_inv_le_slabTransfer_oneLp`, which bounds the same image below by
-`slabCap⁻¹ > 0`, the constant is moved into `[slabCap⁻¹, 1]`. That interval contains `1`, so these
-two bounds leave open whether the constant is an eigenvector, and this file settles that at no
-`β > 0`. What settles it is `KernelStochastic`, proved here only at `β = 0`.
-
-DERIVED: the `1`s are the kernel's cap at `0 ≤ β`, the bound asserted and the time step in `t + 1`;
-the `0` of `hβ` is the sign of the coupling and the value `N` is required to differ from in `hN`;
-the `2` is the `L²` exponent. -/
-theorem slabTransfer_oneLp_le_one (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (hβ : 0 ≤ β) (t : Fin n) :
-    ∀ᵐ A ∂(slabHaar (N := N) τ t),
-      ((slabTransfer (d := d) (n := n) hN τ β t (oneLp (slabHaar (N := N) τ (t + 1)))
-        : Lp ℝ 2 (slabHaar (N := N) τ t)) : _ → ℝ) A ≤ 1 :=
-  kernelCLM_oneLp_le_one _ _ _ _ _ _ _
-    (fun A B => le_trans (le_abs_self _) (abs_slabKernel_le_one hN τ β hβ t A B))
-
-/-- The constant observable is moved off zero, uniformly. The Wilson instance of
-`SlabKernelOperator.le_kernelCLM_one` at the slab kernel's own Doeblin constant. With
-`slabTransfer_oneLp_le_one` this places `T 1` in `[slabCap⁻¹, 1]` at `0 ≤ β`. That interval contains
-`1`, so it leaves open whether the constant is an eigenvector; what settles that is
-`KernelStochastic`, which is proved only at `β = 0`.
-
-DERIVED: the `1` in `t + 1` is `slabKernel`'s time step; the `0` is the value `N` is required to
-differ from in `hN`; the `2` is the `L²` exponent; `slabCap⁻¹` is `slabWeight_bounds`'s own lower
-bound, not a chosen level. -/
-theorem slabCap_inv_le_slabTransfer_oneLp (hN : N ≠ 0) (τ : Fin d) (β : ℝ) (t : Fin n) :
-    ∀ᵐ A ∂(slabHaar (N := N) τ t),
-      (slabCap (d := d) (n := n) τ β t)⁻¹
-        ≤ ((slabTransfer (d := d) (n := n) hN τ β t (oneLp (slabHaar (N := N) τ (t + 1)))
-          : Lp ℝ 2 (slabHaar (N := N) τ t)) : _ → ℝ) A :=
-  le_kernelCLM_one _ _ _ _ _ _ _ (slabCap_inv_le_slabKernel hN τ β t)
-
-/-- At zero coupling the slab kernel is stochastic — the degenerate positive control for the
-normalisation `SliceTrace` records as absent.
-
-DERIVED: the `0` is the coupling; the `1` is the total mass of a probability measure. -/
-theorem slabKernelStochastic_beta_zero (τ : Fin d) (t : Fin n) :
-    KernelStochastic (slabKernel (N := N) τ 0 t) (slabHaar (N := N) τ (t + 1)) := by
-  intro A
-  rw [integral_congr_ae (Filter.Eventually.of_forall (fun B => slabKernel_beta_zero τ t A B))]
-  simp
-
-/-- At zero coupling the constant observable is an eigenvector with eigenvalue one. This is the
-only regime in which the tree proves `T Ω = Ω`, and it is a degenerate one: the operator there is
-the rank-one averaging map (`slabTransfer_apply_of_beta_zero`), and the one endomorphism in sight,
-`slabNormal`, then has `0` in its spectrum as soon as a nonzero mean-zero vector exists
-(`zero_mem_spectrum_slabNormal_of_beta_zero`). No spectrum of `slabTransfer` itself is computed or
-claimed: at `n ≥ 2` it is not an endomorphism and has none, and no multiplicity is claimed for
-`slabNormal`'s `0` either.
-
-DERIVED: the `0` is the coupling; the `1`s are `oneLp`'s value and the eigenvalue. -/
-theorem slabTransfer_oneLp_of_beta_zero (hN : N ≠ 0) (τ : Fin d) (t : Fin n) :
-    slabTransfer (d := d) (n := n) hN τ 0 t (oneLp (slabHaar (N := N) τ (t + 1)))
-      = oneLp (slabHaar (N := N) τ t) :=
-  kernelCLM_oneLp_eq_oneLp _ _ _ _ _ _ _ (slabKernelStochastic_beta_zero τ t)
-
-end Wilson
-
 /-! ## Axiom footprints -/
 
 #print axioms real_inner_Lp
@@ -1099,29 +668,5 @@ end Wilson
 #print axioms coeFn_kernelCLM_oneLp
 #print axioms kernelCLM_oneLp_eq_oneLp
 #print axioms kernelCLM_oneLp_le_one
-#print axioms adjoint_slabTransfer
-#print axioms slabNormal
-#print axioms isSelfAdjoint_slabNormal
-#print axioms inner_slabNormal_self
-#print axioms inner_slabNormal_self_nonneg
-#print axioms inner_slabNormal_self_le
-#print axioms intra_support_slice
-#print axioms intraSliceAction_patch_indep
-#print axioms slabKernel_eq_intra_mul_inter
-#print axioms slabKernelPulled
-#print axioms measurable_slabKernelPulled
-#print axioms abs_slabKernelPulled_le
-#print axioms SlabGramVia
-#print axioms slabGramVia_symm
-#print axioms inner_slabPulled_self_nonneg_of_gram
-#print axioms inner_slabPulled_self_nonneg_of_slabGramVia
-#print axioms slabCap_beta_zero
-#print axioms slabTransfer_apply_of_beta_zero
-#print axioms slabNormal_apply_eq_zero_of_beta_zero
-#print axioms zero_mem_spectrum_slabNormal_of_beta_zero
-#print axioms slabTransfer_oneLp_le_one
-#print axioms slabCap_inv_le_slabTransfer_oneLp
-#print axioms slabKernelStochastic_beta_zero
-#print axioms slabTransfer_oneLp_of_beta_zero
 
 end MassGap.SlabTransferAdjoint

@@ -1,13 +1,13 @@
 """The one place that knows where heavy Python runs.
 
-WHY A WRAPPER. `lean_build.py` already holds this decision for Lean: which machine compiles belongs
+Why a wrapper. `lean_build.py` already holds this decision for Lean: which machine compiles belongs
 to the person running the program, not to the source. The same is true of the reads. A certificate
 that reseeds a 4-block ensemble, or a mass sweep across three window widths, is minutes of CPU, and
 minutes of CPU on the workstation is minutes the workstation is not usable. Every caller that spelled
 out `python some_certificate.py` was hard-coding one answer to that question. This module holds it
 once; callers ask for a run and read the output.
 
-CONFIGURATION, and the default is deliberate. With nothing configured this runs LOCALLY, because a
+Configuration, and the default is deliberate. With nothing configured this runs locally, because a
 researcher who clones this repository must be able to reproduce every artifact without access to any
 particular machine. A compute host is an optimisation for whoever has one, declared in the same
 machine-local, git-ignored file that already carries the store root and the Lean builder:
@@ -18,23 +18,23 @@ machine-local, git-ignored file that already carries the store root and the Lean
     COMPUTE_DIR=research                       # remote working tree, relative to $HOME
     COMPUTE_PY=$HOME/research-venv/bin/python  # the interpreter there
 
-ITS OWN KEYS, not the Lean builder's. The two roles happen to be the same machine here, and reading
+Its own keys, not the Lean builder's. The two roles happen to be the same machine here, and reading
 one set of keys for both would bake that coincidence into the source: moving the reads to a bigger
 box would then move the Lean build with them. They are separate questions and get separate answers.
 There is no fallback from one to the other, for the same reason.
 
-WHAT A REMOTE RUN DOES. It ships the Python SOURCES and runs them there, so what runs is what is on
-this machine, not whatever the remote checkout drifted to. It does NOT ship the ensemble store: the
+What a remote run does. It ships the Python sources and runs them there, so what runs is what is on
+this machine, not whatever the remote checkout drifted to. It does not ship the ensemble store: the
 store is tens of gigabytes and lives where `store_path` says it lives. So a script that reads the
 store runs locally and a script that generates its own data runs anywhere -- `needs_store` is the
 caller's declaration of which it is, and asking for a remote run of a store-reading script fails
 loudly rather than producing a read of an empty directory.
 
-WHAT IT DOES NOT DO. It does not decide what to run, parse output, or write artifacts. Callers do
+What it does not do. It does not decide what to run, parse output, or write artifacts. Callers do
 that; this returns the completed process.
 
     python remote_run.py --describe
-    python remote_run.py certify/gap_of_maximal_correlation.py
+    python remote_run.py certify/small_volume_enclosure.py
 """
 from __future__ import annotations
 
@@ -53,10 +53,10 @@ import store_path  # noqa: E402  (needs HERE on sys.path first)
 #: The research tree root -- the parent of `code/`.
 RESEARCH = os.path.dirname(HERE)
 
-#: The sources a run needs, relative to `RESEARCH`. Data artifacts are NOT shipped: a run either
+#: The sources a run needs, relative to `RESEARCH`. Data artifacts are not shipped: a run either
 #: produces them or reads the store, and the store does not travel.
 SOURCE_GLOBS = ("requirements.txt", "code/*.py", "code/certify/*.py", "code/tests/*.py",
-                "data/*.py")
+                "code/observer/*.py", "code/lab/*.py", "data/*.py", "paper/*.py", "paper/figures/*.py")
 
 
 def _cfg(key, default=None):
@@ -152,7 +152,7 @@ def sources_only_on_remote():
 def run(script, args=(), *, needs_store=False, timeout=3600, push=True, unbuffered=True):
     """Run `python <script> <args>` where heavy work belongs; return the CompletedProcess.
 
-    `script` is relative to the research tree (e.g. `certify/gap_of_maximal_correlation.py` or
+    `script` is relative to the research tree (e.g. `certify/small_volume_enclosure.py` or
     `code/certify/...`; both spellings resolve, since certificates live under `code/` and figure
     scripts under `data/`).
 

@@ -1214,7 +1214,7 @@ theorem Z_lower (hX : Continuous X) (hX1 : ∀ g, ‖X g‖ ≤ 1) {τ κ M₂ m
 
 #print axioms Z_lower
 
-/-- **THE PAIR FIBRE BOUND** ((A)–(D) and the assembly (E) of the module docstring).
+/-- **The pair fibre bound** ((A)–(D) and the assembly (E) of the module docstring).
 
 DERIVED: `0` is the lower end of `τ`, `M₂`, `mb`, `c₂`, `σ` and of `Z₀`, `den`; `1` is the norm
 bound of the feature; `2` is the square. -/

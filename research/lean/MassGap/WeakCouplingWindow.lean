@@ -19,15 +19,14 @@ into that statement from one input, `FixedWindowDecay τ p hN L`, and proves the
 2. `torusLag_le_of_gapAt`, `torusLagClear_of_gapAt`, `torusLagClear_iff_gapAt`: at `0 ≤ r`, `GapAt` at
    rate `r` gives
    the single-lag inequality on the periodic lattices at every lag `m`, with any factor `q ≥ rᵐ`. Each
-   observable is centred at its reflected mean, as in `PeriodicReduce.periodic_torusReads_of_localReads`;
+   observable is centred at its reflected mean;
    the centred observable is orthogonal to the vacuum, `ChessboardRead.lag_of_gapAt` bounds its profile,
    and `PeriodicReduce.slack_of_nonneg_filter` returns the state inequality to the lattices with slack.
    With `ChessboardRead.gapAt_of_lag`, at `0 ≤ β`, `m ≠ 0`, `0 ≤ r`:
    `ChessboardRead.TorusLagClear τ p hN β m r ↔ GapAt … r`.
 3. `stepRate q m = q^{1/m}`: a factor `q` at lag `m` is the rate `q^{1/m}` per lattice step
    (`stepRate_pow`), and at `0 < q < 1`, `m ≠ 0`, `0 < a`, `0 < L` and `m · a ≤ L` its physical rate is
-   at least `−log q / L` (`physical_rate_ge`); the spacing cancels as in
-   `ZeroMode.gap_phys_of_fixed_screen`.
+   at least `−log q / L` (`physical_rate_ge`); the spacing cancels.
 4. `gapAt_physical_of_fixedWindowDecay`: at `2 ≤ N` and `0 < L`, from `FixedWindowDecay τ p hN L` there
    is `c > 0` such that at every large `β`, `GapAt` and `PeriodicClayGapAt` hold at a rate `r` with
    `c / L ≤ −log r / aRun N β` (the proof takes `c = −log q`).
@@ -47,26 +46,11 @@ of physical length `m · aRun N β ≤ L` at which, for every gauge-invariant ha
 connected reflected pairing on the periodic lattices at lag `m` is at most `q` times its lag-zero value,
 with every slack, along `periodicUltra hN β`.
 
-The tree bounds `PeriodicReduce.torusConn` at `β > 0` only on the strong-coupling interval
-(`PeriodicStrongCoupling.torusState_connected_abs_le_of_cubes`); outside this module and that one,
-`torusConn`, `torusState` and `periodicState` occur in code only in `PeriodicState`, `PeriodicReduce`,
-`PeriodicContent`, `ChessboardRead` and `ThreePointN` (the last under `WilsonThreePointSeparation`, a
-hypothesis), this module bounds `torusConn` only under `GapAt` taken as a
-hypothesis, and `GapStep` takes `ChessboardRead.TorusLagClear` and its step between couplings
-(`GapStep.PhysStep`) as hypotheses; none of these bounds a connected pairing from above. The cluster
-expansion (`StrongCoupling`, `StrongCouplingGap.norm_Tq_le_of_orth`) needs `coreRate 64 β < 1`, an
-interval `(0, b)` of couplings (`FreeLimit.exists_strong_coupling_region`), at the free-boundary limit
-state and at the periodic state (`PeriodicStrongCoupling.periodic_gapAt_strong_coupling`). `CosAvgStability` moves a read between two couplings only under a
-multiplicative or `L¹` control of the profile that it takes as a hypothesis. `RefinementLaw` relates an
-operator to its own functional-calculus root and never identifies the Wilson transfer operator at one
-coupling with a root of the one at another. The block-repeat identities of `Entroptics.Diffraction` take
-the repetition as a hypothesis. `AsymptoticScaling` and `Running` fix the spacing function and carry no
-dynamics. `ArmAtEachCoupling`, `NonnegArm`, `SubstrateArms`, `ApertureRoute`, `ApertureFamily`,
-`ClayFromConfinement` and `Complete` hold under `NonnegArm.LawAbove`,
-`ArmAtEachCoupling.LawAboveAtCoupling`, `SubstrateArms.LawAboveAt` or
-`ApertureRoute.ConfinesAtAnAperture`, taken as hypotheses, about the `wilsonCorrAt` ensemble, not the
-periodic state. `Capacity`, `Condensation`, `Margin` and `Apriori` hold under inequalities with no Wilson
-producer.
+This module bounds `torusConn` only under `GapAt` taken as a hypothesis, and `GapStep` takes
+`ChessboardRead.TorusLagClear` and its step between couplings (`GapStep.PhysStep`) as hypotheses;
+neither bounds a connected pairing from above. The cluster expansion (`StrongCoupling`) needs
+`coreRate 64 β < 1`, an interval `(0, b)` of couplings. `AsymptoticScaling` fixes the spacing function
+and carries no dynamics.
 
 ## Scope
 
@@ -120,8 +104,7 @@ At rate `0 ≤ r`, lag `m` and `rᵐ ≤ q`: for every gauge-invariant half-spac
 `y = x − ν(θx)·1` (`ν = periodicState hN β`) lies in the algebra and is orthogonal to the vacuum
 (`PeriodicReduce.periodic_form_vac`); its profile `D.form y (Tᶜ y)` is the connected pairing of `x` at
 lag `c` (`PeriodicReduce.periodic_form_pow`, `GaugeInvariantAlgebra.iterate_shift_sub_smul_one`,
-`PeriodicReduce.state_centred_mul`), the construction of
-`PeriodicReduce.periodic_torusReads_of_localReads`. `ChessboardRead.lag_of_gapAt` bounds the lag-`m`
+`PeriodicReduce.state_centred_mul`). `ChessboardRead.lag_of_gapAt` bounds the lag-`m`
 pairing by `rᵐ` times the lag-zero one, which is `D.form y y ≥ 0`, so by `q` times it; the lattice
 pairings converge to the state's (`PeriodicReduce.tendsto_torusConn`), and
 `PeriodicReduce.slack_of_nonneg_filter` gives the slack form.
@@ -282,7 +265,7 @@ theorem neg_log_stepRate {q : ℝ} (hq : 0 < q) (m : ℕ) :
 /-- **The physical rate of a factor at a fixed window.** At `0 < q < 1`, `m ≠ 0`, spacing `a > 0` and a
 window `L > 0` with `m · a ≤ L`: `−log q / L ≤ −log q^{1/m} / a`. The rate per step is `−log q / m`
 (`neg_log_stepRate`), so its physical value is `−log q / (m · a)`, at least `−log q / L`. The spacing
-cancels, as in `ZeroMode.gap_phys_of_fixed_screen`.
+cancels.
 
 DERIVED: `0` is the lower end of `q`, `a`, `L`, and the excluded lag; `1` is the upper end of `q`. -/
 theorem physical_rate_ge {q a L : ℝ} (hq0 : 0 < q) (hq1 : q < 1) {m : ℕ} (hm : m ≠ 0)
@@ -320,7 +303,7 @@ end Rate
 
 section Window
 
-/-- **THE INPUT: decay by a fixed factor across a fixed physical window, at every large coupling.**
+/-- **The input: decay by a fixed factor across a fixed physical window, at every large coupling.**
 There is one factor `q ∈ (0, 1)` such that for all large `β` there is a lag `m ≥ 1` of physical length
 `m · aRun N β` at most `L` at which, for every gauge-invariant half-space observable `x` and every slack
 `ε > 0`, eventually along `periodicUltra hN β`,
@@ -346,7 +329,7 @@ def FixedWindowDecay (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (L : ℝ) : Prop :=
           MassGap.PeriodicReduce.torusConn τ p hN β j x m
             ≤ q * MassGap.PeriodicReduce.torusConn τ p hN β j x 0 + ε
 
-/-- **THE WEAK-COUPLING GAP FROM THE INPUT.** At `2 ≤ N`, a window `L > 0` and
+/-- **The weak-coupling gap from the input.** At `2 ≤ N`, a window `L > 0` and
 `FixedWindowDecay τ p hN L`: there is `c > 0` such that at every large `β`
 some rate `r` has `TransferGap.GapAt (periodicGaugeInvData τ p hN β) r`,
 `PeriodicContent.PeriodicClayGapAt τ p hN β r` (spectrum in `{1} ∪ [0, r]`, the vacuum complement

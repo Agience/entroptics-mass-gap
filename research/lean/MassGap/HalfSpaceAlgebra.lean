@@ -41,8 +41,6 @@ Scope.
   `F` with `ishiftObsCM τ F ≠ F` can still have `T F - F` in the null space of a form.
 * It requires a function on the group separating two elements. At `SU 0` and `SU 1` the group is a
   singleton and none exists; `CrossingIntegration.trace_gNeg` supplies one at `SU 3`.
-  `ReflectionHalfSpace.halfSpaceAlg_has_nonconstant` is a different statement — it separates two
-  configurations by an observable, not two group elements by a function.
 * `ishiftObsCM` puts the shift on `C(IConf G, ℝ)`, the carrier `InfiniteReflection.stateReflForm`
   works over. Nothing here proves that `ireflObs` preserves a counterpart of `halfSpaceAlg`.
 -/
@@ -400,20 +398,17 @@ theorem shift_iterate_moves_halfLinkObs (τ : Fin 4) {k : ℕ} (hk : 0 < k) (l :
 witness is `halfLinkObs ((0 : Fin 4), fun _ => p) f`, which lies in the algebra by
 `halfLinkObs_mem` at `le_refl p`, and is moved by `shift_iterate_moves_halfLinkObs`.
 
-The hypothesis of `ClayAssembly.finite_order_contraction_is_isometry` — that `T ^ n = id` for some
-`n ≥ 1` — is therefore not available for this shift, whereas on the periodic lattice
-`HalfLineTransfer.shiftObs_pow_period` does supply it.
+The hypothesis `T ^ n = id` for some `n ≥ 1` is therefore not available for this shift, whereas on
+the periodic lattice `HalfLineTransfer.shiftObs_pow_period` does supply it.
 
 Scope.
 * The witness is exhibited inside `halfSpaceAlg τ p`, not merely in the quasi-local algebra; a
   submodule could otherwise contain only observables the shift fixes.
 * This is motion in the algebra, not in a GNS quotient: `opT [F] = [F]` whenever `T F - F` lies in
-  the null space of the form, so `ClayAssembly.TransferMovesSomething` does not follow.
+  the null space of the form, so the transfer operator need not move the class.
 * The separating hypothesis is required. At `SU 0` and `SU 1` the group is a singleton and no such
   `f` exists; `CrossingIntegration.trace_gNeg` supplies one at `SU 3`, where `Re tr` separates
-  `gNeg` from the identity. `ReflectionHalfSpace.halfSpaceAlg_has_nonconstant` does not serve here:
-  it separates two configurations by an observable, where a function on the group separating two
-  group elements is what is needed.
+  `gNeg` from the identity.
 
 DERIVED: `4` is the spacetime dimension `τ` indexes, and also the direction index `0` of the
 witness link; `0` is additionally the excluded step count in `0 < k`. `g₀`, `g₁` and `f` are the

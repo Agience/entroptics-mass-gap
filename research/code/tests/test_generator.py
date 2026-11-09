@@ -56,10 +56,10 @@ def test_su1_rejected():
 
 
 # ── method= threading (heatbath vs metropolis) ───────────────────────────────────────────
-# Regression guard: `config_batch`/`gauge_field`/`stream` must PASS `method=` down to `config`/`_ops`.
+# Regression guard: `config_batch`/`gauge_field`/`stream` must pass `method=` down to `config`/`_ops`.
 # The batched fast path once accepted `method=` but silently dropped it, so `method="heatbath"` ran
-# Metropolis for SU(2)/SU(N).  Heatbath and Metropolis are DIFFERENT updates, so for the same seed and
-# init they produce DIFFERENT configs -- if `method` were dropped, both would be Metropolis and IDENTICAL.
+# Metropolis for SU(2)/SU(N).  Heatbath and Metropolis are different updates, so for the same seed and
+# init they produce different configs -- if `method` were dropped, both would be Metropolis and identical.
 
 @pytest.mark.parametrize("group", ["su2", "su3"])
 def test_config_batch_threads_method(group):
@@ -92,8 +92,8 @@ def test_stream_threads_method():
 
 
 def test_su3_overrelax_is_microcanonical():
-    """The SU(N) Cabibbo-Marinari over-relaxation must PRESERVE the plaquette action exactly
-    (micro-canonical), so heat-bath + over-relaxation samples the SAME equilibrium as heat-bath
+    """The SU(N) Cabibbo-Marinari over-relaxation must preserve the plaquette action exactly
+    (micro-canonical), so heat-bath + over-relaxation samples the same equilibrium as heat-bath
     alone -- just faster to thermalise. If the reflection formula were wrong, the action would drift."""
     b = generator._Backend(None).seed(0)
     dims, N = (4, 4, 4, 6), 3
@@ -101,7 +101,7 @@ def test_su3_overrelax_is_microcanonical():
     for _ in range(8):                                   # thermalise a bit (heat-bath + OR)
         generator._sun_hb_sweep(b, link, dims, N, 6.0, None, n_or=2)
     phi0 = float(generator._sun_action(b, link, N).mean())
-    for _ in range(10):                                  # OR-ONLY passes must not change the action
+    for _ in range(10):                                  # Or-only passes must not change the action
         generator._sun_cm_pass(b, link, dims, N, 6.0, overrelax=True)
     phi1 = float(generator._sun_action(b, link, N).mean())
     assert abs(phi1 - phi0) < 1e-8, \

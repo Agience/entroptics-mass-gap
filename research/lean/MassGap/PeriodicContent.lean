@@ -2,16 +2,15 @@ import Mathlib
 import MassGap.PeriodicState
 import MassGap.PeriodicReduce
 import MassGap.ContactFloor
+import MassGap.PlaneVariance
 
 /-!
-# MassGap.PeriodicContent — a non-zero vacuum complement at the periodic state, and the Clay statement from the reads alone
+# MassGap.PeriodicContent — a non-zero vacuum complement at the periodic state
 
-`PeriodicState.periodic_clay_gap_of_reads` gives the Clay spectral statement at
-`periodicGaugeInvData τ p hN β` from the reads, at every `β ≥ 0`, without saying that the vacuum
-complement of the GNS space is non-zero. This module supplies that conjunct at `2 ≤ N`, `0 ≤ β`, and
-assembles `PeriodicClayGapAt`, the periodic analogue of `ReadRoute.ClayGapAt`: the spectral
-statement, the contraction of the vacuum complement by `ρ` that the reads give
-(`GNSCompare.gapAt_iff_opT_contracts`), and the non-zero vector.
+This module supplies a non-zero vector of the GNS space orthogonal to the vacuum at
+`periodicGaugeInvData τ p hN β`, at `2 ≤ N`, `0 ≤ β`, and defines `PeriodicClayGapAt`: the spectral
+statement, the contraction of the vacuum complement by `ρ` (`GNSCompare.gapAt_iff_opT_contracts`), and
+the non-zero vector.
 
 ## The floor on every periodic lattice
 
@@ -45,26 +44,20 @@ the reflection plane `x_τ = p` with neither direction `τ`, so `ireflObs τ (2p
 (`PlaneVariance.ireflPlaq_plane`); `periodic_exists_ne_zero_orth_vacuum` is the vector at
 `periodicGaugeInvData`.
 
-## What it gives
+## The statement
 
-`periodic_clayGapAt_of_reads` and the headline `wilson_gaugeInv_mass_gap_every_coupling_periodic`:
-at `2 ≤ N`, if at every `β > 0` some aperture's reads clear at `periodicGaugeInvData τ p hN β`, then
-at every `β > 0` there is `ρ` with `PeriodicClayGapAt τ p hN β ρ`. The reads are the only hypothesis
-besides the rank; the state is `periodicState hN β`, defined in `PeriodicState` (a limit along an
-ultrafilter fixed by `Classical.choose`), not a hypothesis. `periodic_clayGapAt_of_torusReads` takes
-the reads in the form `PeriodicReduce.TorusReadsClearWith`, one inequality per observable on the
-periodic lattices.
+`PeriodicClayGapAt τ p hN β ρ` is the conjunction of the spectral statement for
+`opT (periodicGaugeInvData τ p hN β)`, the contraction of the vacuum complement by `ρ`, and the
+non-zero vector. The state is `periodicState hN β`, defined in `PeriodicState` (a limit along an
+ultrafilter fixed by `Classical.choose`), not a hypothesis.
 
 ## Scope
 
 The floor makes the vacuum complement of the GNS space at `periodicState hN β` non-zero, which is the
 last conjunct of `PeriodicClayGapAt` and nothing more. Nothing here shows that `periodicState hN β`
 at `β > 0` differs from the `β = 0` state — the same floor holds at `β = 0`, with factor `1` — so it
-is not a statement that the theory is non-trivial. Nothing here proves the reads, or
-`TorusReadsClearWith`, at any `β > 0`. Nothing here shows the reads can hold at every `β > 0`: at a
-coupling where `opT` at `periodicState hN β` has `1` as a degenerate eigenvalue, as a limit mixing
-two phases would give, `ReadsClear` fails, since it implies the contraction of
-`PeriodicState.periodic_gap_of_reads`.
+is not a statement that the theory is non-trivial. Nothing here proves the contraction conjunct of
+`PeriodicClayGapAt` at any `β > 0`.
 -/
 
 namespace MassGap.PeriodicContent
@@ -306,8 +299,7 @@ plaquette density is the `2`; `2` is also the least rank with a non-zero Haar va
 trace (`PlaneVariance.varReTr_pos`) and the square; `0` is the excluded rank in `hN` and the sign of
 `β`; `1` is the successor writing the extent and the least `M` at which it is at least `2`; `4` is
 the spacetime dimension. `64` bounds the number of plaquettes touching one of `q`'s four links, the
-route `ContactFloor` takes; `PlaneVariance.stateFree_var_iplaqObs_ge` conditions on the first link
-only and carries `32 = 2 · 16` in the free boxes. Only the sign of the floor is used downstream.
+route `ContactFloor` takes. Only the sign of the floor is used downstream.
 `2 ≤ N` enters through `0 ≤ varReTr N / N²` (`PlaneVariance.varReTr_pos`). -/
 theorem torusState_var_iplaqObs_ge (hN2 : 2 ≤ N) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) (M : ℕ)
     (hM : 1 ≤ M) (q : MassGap.GibbsSpec.IPlaq) (hq : q.1.1 ≠ q.1.2) :
@@ -406,8 +398,7 @@ to the vacuum.
 
 Its squared norm is `ν(θx · x)` (`GaugeInvariantAlgebra.gaugeInv_form_pow` at `0`), which is the
 variance of `φ` since `θx = x`; its pairing with the vacuum is `ν(x) = 0`
-(`StrongCouplingGap.inner_vacGNS_mk_gaugeInv`). `PlaneVariance.exists_ne_zero_orth_vacuum` is the
-same argument at the free-boundary limit state.
+(`StrongCouplingGap.inner_vacGNS_mk_gaugeInv`).
 
 DERIVED: `4` is the spacetime dimension; `2` in `2 * p` is the plane-to-constant doubling and `2` is
 the square; `0` is the strict floor on the variance, the zero vector and the vacuum pairing. -/
@@ -579,8 +570,7 @@ section Clay
 completion orthogonal to the vacuum by `ρ`, and a non-zero vector of the GNS space orthogonal to the
 vacuum. The contraction makes `1` a simple eigenvalue; the spectral conjuncts alone hold for the
 identity on any space of dimension at least `2`. The non-zero vector makes the contraction act on a
-non-zero space. `ReadRoute.ClayGapAt` with the state `periodicState hN β` in place of a
-free-boundary limit state.
+non-zero space. The state is `periodicState hN β`.
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded rank, the lower end of `ρ` and of the
 spectrum, the zero vector, and the vacuum pairing, both in the contraction's orthogonality and in the
@@ -597,74 +587,6 @@ def PeriodicClayGapAt (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ) (ρ : ℝ
         ‖opT (periodicGaugeInvData τ p hN β) u‖ ≤ ρ * ‖u‖)
     ∧ ∃ y : MassGap.Transfer.GNS (periodicGaugeInvData τ p hN β).toReflForm,
         y ≠ 0 ∧ (inner ℝ (periodicGaugeInvData τ p hN β).vacGNS y : ℝ) = 0
-
-/-- **The reads give `PeriodicClayGapAt`, at every `β ≥ 0`.** At `2 ≤ N`, `0 ≤ β` and
-`ReadsClear` at aperture `2k + 1` for `opT (periodicGaugeInvData τ p hN β)`, there is `ρ` with
-`PeriodicClayGapAt τ p hN β ρ`. `ReadRoute.gapAt_of_reads` gives `GapAt`;
-`ClayCapstone.clay_gap_of_gapAt` takes it to the spectrum, `GNSCompare.gapAt_iff_opT_contracts` to
-the contraction, and `periodic_exists_ne_zero_orth_vacuum` gives the non-zero vector.
-
-DERIVED: `2` is the least rank with a non-zero Haar variance of the real trace; `0` is the excluded
-rank and the lower end of `β`; `4` is the spacetime dimension. -/
-theorem periodic_clayGapAt_of_reads (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (hN : N ≠ 0) {β : ℝ}
-    (hβ : 0 ≤ β) (k : ℕ)
-    (hread : MassGap.SpectralGap.ReadsClear (opT (periodicGaugeInvData τ p hN β))
-      (Omega (periodicGaugeInvData τ p hN β).toReflForm (periodicGaugeInvData τ p hN β).vac) k) :
-    ∃ ρ : ℝ, PeriodicClayGapAt τ p hN β ρ := by
-  obtain ⟨ρ, hρ0, hρ1, _, hg⟩ := MassGap.ReadRoute.gapAt_of_reads
-    (periodicGaugeInvData τ p hN β) (periodic_positiveTransfer τ p hN hβ) k hread
-  obtain ⟨hsa, _, hspec, hgreat⟩ := MassGap.ClayCapstone.clay_gap_of_gapAt
-    (periodicGaugeInvData τ p hN β) hρ0 hρ1 (periodic_positiveTransfer τ p hN hβ) hg
-  exact ⟨ρ, hρ0, hρ1, hsa, hspec, hgreat,
-    (MassGap.GNSCompare.gapAt_iff_opT_contracts (periodicGaugeInvData τ p hN β) hρ0.le).mp hg,
-    periodic_exists_ne_zero_orth_vacuum τ p hN2 hN hβ⟩
-
-#print axioms periodic_clayGapAt_of_reads
-
-/-- **The transfer gap at every `β > 0` at the periodic state, from the reads.** For `SU(N)`,
-`2 ≤ N`: if at every `β > 0` there is an aperture `2k + 1` at which every vector of the completed
-gauge-invariant GNS space at `periodicGaugeInvData τ p hN β` orthogonal to the vacuum reads below the
-floor (`SpectralGap.ReadsClear`), then at every `β > 0` there is `ρ` with
-`PeriodicClayGapAt τ p hN β ρ`: `0 < ρ < 1`, the transfer operator self-adjoint with spectrum in
-`{1} ∪ [0, exp(−(−log ρ))]` and greatest element `1`, the vacuum complement contracted by `ρ`, and
-that complement non-zero. The reads are the only hypothesis besides the rank. They are the gap stated
-as a read (`SpectralGap`); `ReadConverse.readsClear_brackets_physical_gap` brackets them between two
-physical gaps. They are asked at every `β > 0`; below the cluster-expansion cut the gap at `periodicState` is
-proved outright (`PeriodicStrongCoupling.periodic_clayGapAt_strong_coupling`). The
-state is `periodicState hN β`, defined in `PeriodicState` as a limit along an ultrafilter fixed by
-`Classical.choose`, not a hypothesis. The non-zero vector comes from a variance floor that holds at
-`β = 0` as well, so the statement does not say the theory at `β > 0` differs from the `β = 0` one.
-
-DERIVED: `2` is the least rank with a non-zero Haar variance of the real trace; `0` is the excluded
-rank in `hN` and the lower end of `β`; `4` is the spacetime dimension. -/
-theorem wilson_gaugeInv_mass_gap_every_coupling_periodic (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N)
-    (hN : N ≠ 0)
-    (hreads : ∀ β : ℝ, 0 < β → ∃ k : ℕ,
-      MassGap.SpectralGap.ReadsClear (opT (periodicGaugeInvData τ p hN β))
-        (Omega (periodicGaugeInvData τ p hN β).toReflForm (periodicGaugeInvData τ p hN β).vac) k) :
-    ∀ β : ℝ, 0 < β → ∃ ρ : ℝ, PeriodicClayGapAt τ p hN β ρ := by
-  intro β hβ
-  obtain ⟨k, hread⟩ := hreads β hβ
-  exact periodic_clayGapAt_of_reads τ p hN2 hN hβ.le k hread
-
-#print axioms wilson_gaugeInv_mass_gap_every_coupling_periodic
-
-/-- **The torus input gives `PeriodicClayGapAt`, at every `β ≥ 0`.** At `2 ≤ N`, `0 ≤ β`, a margin
-`γ > 3^{−1/4}` and `PeriodicReduce.TorusReadsClearWith τ p hN β k γ`, there is `ρ` with
-`PeriodicClayGapAt τ p hN β ρ`. `PeriodicReduce.periodic_readsClear_of_torusReads` and
-`periodic_clayGapAt_of_reads`.
-
-DERIVED: `2` is the least rank with a non-zero Haar variance of the real trace; `0` is the excluded
-rank and the lower end of `β`; `3`, `1` and `4` spell the floor `3^{−1/4}`; `4` is also the spacetime
-dimension. -/
-theorem periodic_clayGapAt_of_torusReads (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (hN : N ≠ 0)
-    {β : ℝ} (hβ : 0 ≤ β) (k : ℕ) {γ : ℝ} (hγ : (3 : ℝ) ^ (-(1 : ℝ) / 4) < γ)
-    (htorus : MassGap.PeriodicReduce.TorusReadsClearWith τ p hN β k γ) :
-    ∃ ρ : ℝ, PeriodicClayGapAt τ p hN β ρ :=
-  periodic_clayGapAt_of_reads τ p hN2 hN hβ k
-    (MassGap.PeriodicReduce.periodic_readsClear_of_torusReads τ p hN β k hγ htorus)
-
-#print axioms periodic_clayGapAt_of_torusReads
 
 end Clay
 

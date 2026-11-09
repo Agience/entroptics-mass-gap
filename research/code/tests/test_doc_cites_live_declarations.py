@@ -6,7 +6,7 @@ Five dead citations were found in `CLAY-GOAL.md` on 2026-09-21 — `su3_transfer
 declaration leaves the chain of record pointing at nothing, and unlike a stale claim a dead citation
 cannot even be argued with.
 
-⛔ THIS DOES NOT CHECK THAT ANY CLAIM IS TRUE. It checks that the names resolve. The declaration a
+⛔ This does not check that any claim is true. It checks that the names resolve. The declaration a
 live citation points at may say something entirely different from what the document says it says.
 """
 from __future__ import annotations
@@ -35,6 +35,8 @@ def _dead_for(text: str, words: set[str], modules: set[str]) -> list[str]:
                 continue
             if tok.endswith(".lean"):
                 continue
+            if gate.not_a_citation(tok):
+                continue
             last = tok.rsplit(".", 1)[-1]
             if last in modules:
                 continue
@@ -56,9 +58,9 @@ def corpus():
 def test_every_cited_name_resolves(corpus):
     """No document may name a declaration the repo does not define.
 
-    THE DOCUMENTS ARE THE POPULATION, so reading none of them is not a clean bill: the verdict on an
+    The documents are the population, so reading none of them is not a clean bill: the verdict on an
     empty corpus is the same word as the verdict on a clean one. Every `gate.DOCS` entry is a tracked
-    file of THIS repository, so a missing one is a failure rather than a skip — a rename or a move
+    file of this repository, so a missing one is a failure rather than a skip — a rename or a move
     that leaves the gate scanning nothing is exactly what this asserts against. `gate._locate`
     searches every directory in `gate.DOC_DIRS`.
     """
@@ -83,18 +85,18 @@ def test_every_cited_name_resolves(corpus):
 
 
 def test_the_gate_can_actually_fail(corpus):
-    """PROOF the check is not vacuous: a name nothing defines must be reported dead.
+    """Proof the check is not vacuous: a name nothing defines must be reported dead.
 
-    ⛔ THE INVENTED NAME IS ASSEMBLED AT RUNTIME, AND IT HAS TO BE. The corpus includes
-    `research/code`, so THIS FILE is part of it — a negative control written as a literal defines
+    ⛔ The invented name is assembled at runtime, and it has to be. The corpus includes
+    `research/code`, so this file is part of it — a negative control written as a literal defines
     the very name it claims nothing defines, and the control passes vacuously. That is not
     hypothetical: the literal form of this test failed on its first run, which is the only reason
     the self-reference was noticed.
     """
     words, modules = corpus
     invented = "_".join(["no", "such", "declaration", "anywhere", "in", "this", "repo"])
-    assert _dead_for(f"`ReflectionHalfSpace.{invented}`", words, modules) == [
-        f"ReflectionHalfSpace.{invented}"]
+    assert _dead_for(f"`GNSHilbert.{invented}`", words, modules) == [
+        f"GNSHilbert.{invented}"]
 
 
 def test_a_live_name_is_not_reported(corpus):
@@ -107,7 +109,7 @@ def test_a_live_name_is_not_reported(corpus):
 
 
 def test_scanning_no_document_is_not_a_pass(corpus, tmp_path, monkeypatch):
-    """POSITIVE CONTROL for the population, not for the classifier.
+    """Positive control for the population, not for the classifier.
 
     Every other control here plants a name and checks the verdict. None of them could tell that the
     gate had read zero documents, because the verdict on an empty corpus is the same word as the
@@ -129,25 +131,24 @@ def test_scanning_no_document_is_not_a_pass(corpus, tmp_path, monkeypatch):
 def test_a_file_name_is_not_a_citation(corpus):
     """`Foo.lean` is a file, not a declaration, and reporting it would drown the real hits."""
     words, modules = corpus
-    assert _dead_for("`ReflectionHalfSpace.lean`", words, modules) == []
+    assert _dead_for("`GNSHilbert.lean`", words, modules) == []
 
 
 def test_a_name_that_lives_only_in_prose_is_not_live():
-    """PROOF of tier two, on the exact name that got past tier one.
+    """Proof of tier two, on a word-order swap of a real name.
 
-    `RefinementLaw.refined_isGreatest` does not exist -- the declaration is `isGreatest_refined` --
-    and it passed this gate because the docstring citing it put the word into the source blob, and
-    the blob was the live set. A word-order swap is the commonest way to get a Lean name wrong, so
-    that blind spot covered the likeliest failure.
+    A docstring citing `GNSHilbert.refined_isGreatest` beside a declaration `isGreatest_refined`
+    puts the swapped word into the source blob; tier two must still see it as absent from the code.
+    A word-order swap is the commonest way to get a Lean name wrong.
 
-    BOTH directions are asserted. A name planted in a comment must be absent from the code set, AND
+    Both directions are asserted. A name planted in a comment must be absent from the code set, and
     the real declaration must be present in it: either assertion alone passes vacuously, the first if
     the stripper ate everything and the second if it stripped nothing.
     """
     if not os.path.isdir(gate.LEAN):
         pytest.skip("Lean sources absent")
     planted = gate.strip_lean_comments(
-        "/-- see `RefinementLaw." + "refined_isGreatest" + "` for the consumer. -/\n"
+        "/-- see `GNSHilbert." + "refined_isGreatest" + "` for the consumer. -/\n"
         "theorem isGreatest_refined : True := trivial\n")
     words = gate.live_words(planted)
     assert "refined_isGreatest" not in words, (
@@ -158,7 +159,7 @@ def test_a_name_that_lives_only_in_prose_is_not_live():
 
 
 def test_the_stripper_handles_nested_block_comments():
-    """Lean block comments NEST, and `/--` opens one.
+    """Lean block comments nest, and `/--` opens one.
 
     A non-nesting `/-.*?-/` stops at the first `-/` and leaves the tail of the outer comment in the
     code set -- the direction that hides a dead name, so it would not be caught by the test above.
@@ -170,7 +171,7 @@ def test_the_stripper_handles_nested_block_comments():
 
 
 def test_code_blob_is_smaller_than_source_blob():
-    """POSITIVE CONTROL for the corpus, not the classifier.
+    """Positive control for the corpus, not the classifier.
 
     Every assertion above is on a planted string, so all of them would pass if `code_blob` read no
     files at all -- an empty code set reports every name prose-only, and the verdict on an empty

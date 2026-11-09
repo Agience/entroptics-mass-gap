@@ -1,5 +1,8 @@
-import MassGap.WilsonRead
-import MassGap.Certify
+import MassGap.CompactGauge
+import MassGap.SUN
+import MassGap.WilsonAction
+import MassGap.WilsonLattice
+import MassGap.WilsonReal
 
 /-!
 # MassGap.WilsonAnalytic — differentiability in `β`, and the covariance identity
@@ -19,7 +22,7 @@ takes values in `[0, 4]` (`sysReal_action_nonneg`, `sysReal_action_le`).
   dominating function is a constant, integrable because the link measure is a probability measure.
 * `expect_hasDerivAt` — `d⟨O⟩_β/dβ = -(⟨O·S⟩_β - ⟨O⟩_β⟨S⟩_β)`, by the quotient rule on
   `⟨O⟩ = corrNum / partition`, with `partition > 0` from `sysReal_partition_pos`.
-* `expect_differentiable`, `wilsonCorrReal_differentiable`, `expect_lipschitz`.
+* `expect_differentiable`, `expect_lipschitz`.
 
 ## The same chain at arbitrary volume
 
@@ -37,13 +40,12 @@ plaquette count `Fintype.card Pq` appears explicitly in every bound. The action 
 * `cov_sum_bound_of_local` and `cov_bound_local` replace the plaquette count by `supp.card`, the size
   of a set off which the summands are assumed to vanish; `cov_sum_bound_of_summable` and
   `cov_bound_summable` replace it by the total `K` of an assumed dominating profile.
-* `expect_lipschitz_local`, `expect_lipschitz_summable`, `wilson_le_of_clustering_grid`,
-  `wilson_le_uniform_in_volume` and `wilson_le_uniform_of_clustering_total` carry those constants
-  through the mean-value theorem and `MassGap.le_of_lipschitz_grid`.
+* `expect_lipschitz_local` and `expect_lipschitz_summable` carry those constants through the
+  mean-value theorem.
 
-The vanishing (`hclust`) or domination (`hdom`) of the connected plaquette correlator is a
-hypothesis of every theorem in that last group, and is proved nowhere in this file. Every statement
-here is at a fixed finite lattice; no thermodynamic limit is taken anywhere.
+The vanishing or domination of the connected plaquette correlator is a hypothesis of every theorem
+in that last group, and is proved nowhere in this file. Every statement here is at a fixed finite
+lattice; no thermodynamic limit is taken anywhere.
 
 The `4` in the covariance bounds is `2 + 2` from `wilsonPlaqObs_le_two`, and the radius `1` in the
 domination lemmas names the neighbourhood `hasDerivAt_integral_of_dominated_loc_of_deriv_le` works on.
@@ -229,22 +231,6 @@ theorem expect_differentiable (O : sysReal.Config → ℝ) (hmeas : Measurable O
     Differentiable ℝ (fun x : ℝ => sysReal.expect (probHaar G2) x O) :=
   fun β => (expect_hasDerivAt β O hmeas M hbound).differentiableAt
 
-/-- `MassGap.WilsonRead.wilsonCorrReal β d` is differentiable in `β` on all of `ℝ`. It is
-`expect_differentiable` applied to the product `plaqObs 0 · plaqObs d`, which is measurable and
-bounded by `4` since each factor lies in `[0, 2]`.
-
-The lag `d` ranges over `Fin 2`, the two plaquettes of `sysReal` — not over arbitrary separations.
-DERIVED: the `2` in `Fin 2` is `sysReal`'s plaquette count, and the bound `4` used in the proof is `2 · 2` from `plaqObs_le_two` on each factor. -/
-theorem wilsonCorrReal_differentiable (d : Fin 2) :
-    Differentiable ℝ (fun β : ℝ => MassGap.WilsonRead.wilsonCorrReal β d) :=
-  expect_differentiable _ ((measurable_plaqObs 0).mul (measurable_plaqObs d)) 4
-    (fun U => by
-      rw [abs_of_nonneg (mul_nonneg (plaqObs_nonneg 0 U) (plaqObs_nonneg d U))]
-      calc plaqObs 0 U * plaqObs d U
-          ≤ 2 * 2 := mul_le_mul (plaqObs_le_two 0 U) (plaqObs_le_two d U)
-              (plaqObs_nonneg d U) (by norm_num)
-        _ = 4 := by norm_num)
-
 /-! ### The covariance bound with no locality hypothesis
 
 `expect_hasDerivAt` makes the `β`-derivative a covariance, so a Lipschitz constant for `β ↦ ⟨O⟩_β` is
@@ -253,8 +239,8 @@ observable, and its constant is proportional to `Fintype.card Pq`: the action is
 plaquettes (`wilsonSystem_action_le : S ≤ 2 · Fintype.card Pq`), so any bound routed through the
 action's range carries that factor.
 
-`MassGap.le_of_lipschitz_grid` consumes a Lipschitz constant, so a constant proportional to the
-plaquette count yields an interval statement whose strength depends on the lattice size. The lemmas
+A Lipschitz constant proportional to the plaquette count yields an interval statement whose
+strength depends on the lattice size. The lemmas
 after it replace that factor, under a hypothesis about where the connected correlator lives. -/
 
 /-- For any `SU(N)` Wilson system with `N ≠ 0`, any coupling `β`, and any measurable observable
@@ -348,8 +334,7 @@ names.
 
 The hypothesis is satisfiable: `WilsonReal.expect_plaqObs_factor` gives
 `⟨φ₀φ₁⟩_β = ⟨φ₀⟩_β·⟨φ₁⟩_β` at every `β` for the two link-disjoint plaquettes of `sysReal`, so their
-connected correlator is identically zero, while `InteractingTwoPoint` exhibits a shared-link pair
-whose connected correlator is not. Whether the vanishing holds outside a bounded neighbourhood on a
+connected correlator is identically zero. Whether the vanishing holds outside a bounded neighbourhood on a
 larger lattice is not addressed here; it enters every theorem below as `hclust`. -/
 
 /-- A finite sum of reals whose terms vanish off a `Finset supp` and are each bounded by `C` in
@@ -553,7 +538,6 @@ theorem cov_bound_local {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fintype Lk] [Fi
 #print axioms integral_deriv_eq_neg_corrNum
 #print axioms expect_hasDerivAt
 #print axioms expect_differentiable
-#print axioms wilsonCorrReal_differentiable
 #print axioms boltz_hasDerivAt
 #print axioms corrNum_hasDerivAt
 #print axioms partition_hasDerivAt
@@ -788,95 +772,6 @@ theorem expect_lipschitz_local {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fintype 
 #print axioms expect_lipschitz_local
 
 
-/-! ## Interval statements from a Lipschitz constant and a grid
-
-`MassGap.le_of_lipschitz_grid` turns a Lipschitz constant plus a `δ`-grid of values into a bound at
-every point of an interval. The two theorems below feed it the constants derived above, for an
-observable of an `SU(N)` Wilson Gibbs measure, so the Lipschitz hypothesis is discharged rather than
-assumed — the clustering hypothesis `hclust` remains. -/
-
-/-- `⟨O⟩_β ≤ B` for every `β` in `Set.Icc a b`, on an `SU(N)` Wilson system with `N ≠ 0`, given a
-measurable `O` bounded by a nonnegative `M`, a clustering set `supp` with `hclust` at every real
-coupling, and `hcover`: every `β` in the interval has a `γ` in it within `δ` whose expectation is at
-most `B - (4 * M * supp.card) * δ`.
-
-`expect_lipschitz_local` supplies the Lipschitz hypothesis of `MassGap.le_of_lipschitz_grid`;
-`hcover` supplies the grid. `a`, `b`, `B` and `δ` are implicit and unconstrained apart from what
-`hcover` asserts — in particular `δ` is not required to be nonnegative here, unlike in
-`wilson_le_uniform_in_volume`.
-DERIVED: the `0`s are the `N ≠ 0`, the `0 ≤ M`, and the exact vanishing `hclust` asserts; the `4` is `expect_lipschitz_local`'s. -/
-theorem wilson_le_of_clustering_grid {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
-    [DecidableEq Pq] (bd : Pq → List (Lk × Bool))
-    (O : (wilsonSystem bd (wilsonDensity (N := N))).Config → ℝ)
-    (hmeas : Measurable O) (M : ℝ) (hM : 0 ≤ M) (hbound : ∀ U, |O U| ≤ M)
-    (supp : Finset Pq)
-    (hclust : ∀ z : ℝ, ∀ p, p ∉ supp →
-      (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-          (fun U => O U * wilsonPlaqObs bd p U)
-        - (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z O
-          * (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-              (wilsonPlaqObs bd p) = 0)
-    {a b B δ : ℝ}
-    (hcover : ∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧
-      (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) γ O
-        ≤ B - (4 * M * (supp.card : ℝ)) * δ) :
-    ∀ β ∈ Set.Icc a b,
-      (wilsonSystem bd (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) β O ≤ B := by
-  refine MassGap.le_of_lipschitz_grid (by positivity) ?_ hcover
-  intro x _ y _
-  exact expect_lipschitz_local hN bd O hmeas M hbound supp hclust x y
-
-/-- The same conclusion for a family of `SU(N)` Wilson systems indexed by a natural number `V`, each
-with its own link type, plaquette type and boundary map. Given
-
-  * one bound `M` on the observable at every index,
-  * `hclust` at every index and every real coupling, with supports whose cards share the bound `R`,
-  * one `δ`-grid clearing `B - (4 * M * R) * δ` at every index,
-
-it concludes `⟨O V⟩_β ≤ B` on `Set.Icc a b`, for every `V`. `Fintype.card (Pq V)` appears in neither
-the hypotheses nor the conclusion; the constant is `4 * M * R`, and `hR` is what keeps it fixed as
-`V` varies.
-
-The proof weakens `expect_lipschitz_local`'s `4 * M * (supp V).card` to `4 * M * R` using `hR V`, then
-applies `MassGap.le_of_lipschitz_grid` at each `V`. The index `V` is a bare natural number: nothing in
-the statement makes the lattices grow with it, and no limit is taken.
-
-`hclust` and `hR` are hypotheses. Whether a real lattice family satisfies them is not addressed.
-DERIVED: the `0`s are the `N ≠ 0`, the `0 ≤ M`, the `0 ≤ δ` and the exact vanishing `hclust` asserts; the `4` is `expect_lipschitz_local`'s, itself `2 + 2` from `wilsonPlaqObs_le_two`. -/
-theorem wilson_le_uniform_in_volume {N : ℕ} (hN : N ≠ 0)
-    {Lk Pq : ℕ → Type} [∀ V, Fintype (Lk V)] [∀ V, Fintype (Pq V)] [∀ V, DecidableEq (Pq V)]
-    (bd : ∀ V, Pq V → List (Lk V × Bool))
-    (O : ∀ V, (wilsonSystem (bd V) (wilsonDensity (N := N))).Config → ℝ)
-    (hmeas : ∀ V, Measurable (O V)) (M : ℝ) (hM : 0 ≤ M)
-    (hbound : ∀ V U, |O V U| ≤ M)
-    (supp : ∀ V, Finset (Pq V)) (R : ℝ) (hR : ∀ V, ((supp V).card : ℝ) ≤ R)
-    (hclust : ∀ V, ∀ z : ℝ, ∀ p, p ∉ supp V →
-      (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-          (fun U => O V U * wilsonPlaqObs (bd V) p U)
-        - (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z (O V)
-          * (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-              (wilsonPlaqObs (bd V) p) = 0)
-    {a b B δ : ℝ} (hδ : 0 ≤ δ)
-    (hcover : ∀ V, ∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧
-      (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) γ (O V)
-        ≤ B - (4 * M * R) * δ) :
-    ∀ V, ∀ β ∈ Set.Icc a b,
-      (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) β (O V)
-        ≤ B := by
-  intro V
-  have hRnn : (0 : ℝ) ≤ R := le_trans (Nat.cast_nonneg _) (hR V)
-  refine MassGap.le_of_lipschitz_grid (L := 4 * M * R) (by positivity) ?_ (hcover V)
-  intro x _ y _
-  refine le_trans (expect_lipschitz_local hN (bd V) (O V) (hmeas V) M (hbound V) (supp V)
-    (hclust V) x y) ?_
-  have : 4 * M * ((supp V).card : ℝ) ≤ 4 * M * R :=
-    mul_le_mul_of_nonneg_left (hR V) (by positivity)
-  exact mul_le_mul_of_nonneg_right this (abs_nonneg _)
-
-#print axioms wilson_le_of_clustering_grid
-#print axioms wilson_le_uniform_in_volume
-
-
 /-! ## The summable form of the locality hypothesis
 
 `cov_bound_local` asks the connected correlator to be exactly `0` outside a finite set. The theorems
@@ -961,47 +856,7 @@ theorem expect_lipschitz_summable {N : ℕ} (hN : N ≠ 0) {Lk Pq : Type} [Finty
   rw [Real.norm_eq_abs, Real.norm_eq_abs] at h
   exact h
 
-/-- The summable counterpart of `wilson_le_uniform_in_volume`. For a family of `SU(N)` Wilson systems
-indexed by a natural number `V`, given one bound `M` on the observable at every index, a dominating
-profile `c V z` at every index and coupling, one nonnegative total `K` bounding every
-`∑ p, c V z p`, and one `δ`-grid clearing `B - K * δ` at every index, the conclusion is
-`⟨O V⟩_β ≤ B` on `Set.Icc a b` for every `V`.
-
-`expect_lipschitz_summable` supplies the Lipschitz constant `K` and `MassGap.le_of_lipschitz_grid`
-does the rest. The hypothesis is domination rather than exact vanishing, so the correlator is never
-required to be zero anywhere.
-
-`hdom` and `hsum` are hypotheses, and `K`'s independence of `V` is asserted by `hsum`, not derived.
-`Fintype.card (Pq V)` appears nowhere, and no limit in `V` is taken.
-DERIVED: the `0`s are the `N ≠ 0` and the `0 ≤ K` that `le_of_lipschitz_grid` requires of its constant; the statement carries no other numeral. -/
-theorem wilson_le_uniform_of_clustering_total {N : ℕ} (hN : N ≠ 0)
-    {Lk Pq : ℕ → Type} [∀ V, Fintype (Lk V)] [∀ V, Fintype (Pq V)] [∀ V, DecidableEq (Pq V)]
-    (bd : ∀ V, Pq V → List (Lk V × Bool))
-    (O : ∀ V, (wilsonSystem (bd V) (wilsonDensity (N := N))).Config → ℝ)
-    (hmeas : ∀ V, Measurable (O V)) (M : ℝ) (hbound : ∀ V U, |O V U| ≤ M)
-    (c : ∀ V, ℝ → Pq V → ℝ) (K : ℝ) (hK : 0 ≤ K)
-    (hdom : ∀ V, ∀ z : ℝ, ∀ p,
-      |(wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-          (fun U => O V U * wilsonPlaqObs (bd V) p U)
-        - (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z (O V)
-          * (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) z
-              (wilsonPlaqObs (bd V) p)| ≤ c V z p)
-    (hsum : ∀ V, ∀ z : ℝ, ∑ p, c V z p ≤ K)
-    {a b B δ : ℝ}
-    (hcover : ∀ V, ∀ β ∈ Set.Icc a b, ∃ γ ∈ Set.Icc a b, |β - γ| ≤ δ ∧
-      (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) γ (O V)
-        ≤ B - K * δ) :
-    ∀ V, ∀ β ∈ Set.Icc a b,
-      (wilsonSystem (bd V) (wilsonDensity (N := N))).expect (probHaar (MassGap.SUN.SU N)) β (O V)
-        ≤ B := by
-  intro V
-  refine MassGap.le_of_lipschitz_grid (L := K) hK ?_ (hcover V)
-  intro x _ y _
-  exact expect_lipschitz_summable hN (bd V) (O V) (hmeas V) M (hbound V) (c V) K (hdom V)
-    (hsum V) x y
-
 #print axioms cov_bound_summable
 #print axioms expect_lipschitz_summable
-#print axioms wilson_le_uniform_of_clustering_total
 
 end MassGap.WilsonAnalytic

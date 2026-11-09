@@ -23,11 +23,11 @@ noncomputable section
    `l.1` and `ν`, at most `6`, and at most `3` at `ν = l.1` (`nbPlane_self_sub`). `card_nbT_le`: at
    most `21 = 3 + 3 · 6` of them at every extent.
    `condExp_comm_null`, `localCommute_wilson`: `LocalCommute (S.toPatchSystem) (nbT j) 21` for every
-   heat-bath system `S` (`HeatBath.torusCondExp_comm`).
+   heat-bath system `S` (`RestoreShims.torusCondExp_comm`).
 4. **Ergodicity at every extent.** `torus_poincare`: a Poincaré inequality for `torusForm` against the
    concrete heat baths (`HeatBathErgodic.heat_poincare`), its constant depending on the extent;
    `dirichlet_wilson` moves it to every heat-bath system; `ergodicLimit_wilson`: `ErgodicLimit S.toPatchSystem f g (μⱼ(f) μⱼ(g))`
-   (`HeatBathErgodic.ergodicLimit_of_poincare`).
+   (`RestoreShims.ergodicLimit_of_poincare`).
 5. **Supports and separation.** `readsNot_of_isLocalOn`: an observable local on a finite set does not
    read the torus links off its image. `isLocalOn_ireflObs`, `isLocalOn_iterate_shift`: the reflected
    and shifted observables are local on the reflected and shifted sets. `far_of_potential`: a
@@ -239,7 +239,7 @@ theorem wilson_h_null' (hN : N ≠ 0) (β : ℝ) {j : ℕ} (S : WilsonHeatBath h
 #print axioms wilson_h_null'
 
 /-- **Every heat-bath system is the concrete heat bath up to null vectors**: both `S.condExp l` and
-`HeatBath.torusCondExp` are `torusForm`-self-adjoint, take values not reading `l`, and fix every
+`RestoreShims.torusCondExp` are `torusForm`-self-adjoint, take values not reading `l`, and fix every
 observable not reading `l` up to a null vector (`form_proj_unique`).
 
 DERIVED: `4` is the spacetime dimension; `2 * j + 1` is the index of the even-extent family and the
@@ -260,7 +260,7 @@ theorem condExp_sub_null (hN : N ≠ 0) (β : ℝ) {j : ℕ} (S : WilsonHeatBath
 
 /-- **Heat baths at links sharing no plaquette commute up to null vectors**: the commutator
 `h_{l'}(hₗu) − hₗ(h_{l'}u)` of any heat-bath system is null (`condExp_sub_null`, `fnull_proj`,
-`HeatBath.torusCondExp_comm`).
+`RestoreShims.torusCondExp_comm`).
 
 DERIVED: `4` is the spacetime dimension; `2 * j + 1` is the index of the even-extent family and the
 `+ 1` its successor writing the extent; `0` is the excluded rank in `hN` and the null value. -/
@@ -340,7 +340,7 @@ theorem readsNot_one (j : ℕ) (l : WilsonHypercubic.Link 4 (2 * j + 1 + 1)) :
 
 #print axioms readsNot_one
 
-/-- **THE POINCARÉ INEQUALITY ON THE PERIODIC LATTICE.** At every extent index `j`, some `C ≥ 0` has
+/-- **The Poincaré inequality on the periodic lattice.** At every extent index `j`, some `C ≥ 0` has
 `torusForm(v, v) − torusForm(v, 1)² ≤ C Σ_l torusForm(v − Eₗv, v − Eₗv)` for every periodic
 gauge-invariant `v`, with `Eₗ = HeatBath.torusCondExp` (`HeatBathErgodic.heat_poincare` at the
 torus reading of `v`, `HeatBath.torusObs_heatLift`). `C` depends on `j`; `ergodicLimit_wilson` uses it
@@ -401,7 +401,7 @@ theorem torus_poincare (hN : N ≠ 0) (β : ℝ) (j : ℕ) :
 #print axioms torus_poincare
 
 /-- **The Dirichlet form of any heat-bath system is the concrete one**:
-`B(Hv, v) = Σ_l torusForm(v − Eₗv, v − Eₗv)` (`HeatBathErgodic.form_H_eq_sum`, `condExp_sub_null`,
+`B(Hv, v) = Σ_l torusForm(v − Eₗv, v − Eₗv)` (`RestoreShims.form_H_eq_sum`, `condExp_sub_null`,
 `form_sub_null`).
 
 DERIVED: `2 * j + 1` is the index of the even-extent family; `0` is the excluded rank in `hN`. -/
@@ -421,9 +421,9 @@ theorem dirichlet_wilson (hN : N ≠ 0) (β : ℝ) {j : ℕ} (S : WilsonHeatBath
 
 #print axioms dirichlet_wilson
 
-/-- **THE ERGODIC LIMIT AT EVERY EXTENT.** For every heat-bath system `S` at `β` and extent index
+/-- **The ergodic limit at every extent.** For every heat-bath system `S` at `β` and extent index
 `j` and all periodic gauge-invariant `f`, `g`: `B(Tᴹ f, g) → μⱼ(f) μⱼ(g)` for the lazy heat bath at
-`K = |ι| + 1` (`HeatBathErgodic.ergodicLimit_of_poincare` with `u = 1`, `torus_poincare`,
+`K = |ι| + 1` (`RestoreShims.ergodicLimit_of_poincare` with `u = 1`, `torus_poincare`,
 `dirichlet_wilson`, `wilson_h_null` at `1`).
 
 DERIVED: `2 * j + 1` is the index of the even-extent family; `0` is the excluded rank in `hN`. -/
@@ -550,7 +550,7 @@ theorem card_nbT_le (j : ℕ) (l : WilsonHypercubic.Link 4 (2 * j + 1 + 1)) :
 
 variable {N : ℕ}
 
-/-- **LOCALITY OF EVERY HEAT-BATH SYSTEM**: `LocalCommute S.toPatchSystem (nbT j) 21`
+/-- **Locality of every heat-bath system**: `LocalCommute S.toPatchSystem (nbT j) 21`
 (`card_nbT_le`, `condExp_comm_null`).
 
 DERIVED: `21` is `card_nbT_le`'s bound; `2 * j + 1` is the index of the even-extent family; `0` is
@@ -850,7 +850,7 @@ section Wilson
 
 variable {N : ℕ}
 
-/-- **THE HEAT-BATH LOCALITY HOLDS AT `z = 21`.** At every `τ`, `p`, `N ≠ 0`, real `β` and family
+/-- **The heat-bath locality holds at `z = 21`.** At every `τ`, `p`, `N ≠ 0`, real `β` and family
 `S` of heat-bath systems, `HeatBathGapDecay.LocalityAt τ p hN β S 21` (`localCommute_wilson`). For `x` local on `T` inside the half-space `x_τ ≥ p`, with `T`
 of `τ`-depth `R`: `a = b = |T|`, `M = ‖x‖²`, and for `j ≥ 3n + 2R + 3` the neighbour map `nbT j`,
 `f = θx`, `g = S^{2n}x`, `L = μⱼ(θx) μⱼ(S^{2n}x)`: the supports are the images of `T`
@@ -962,7 +962,7 @@ theorem localityAt_holds (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
 
 #print axioms localityAt_holds
 
-/-- **THE HEAT-BATH LOCALITY HYPOTHESIS HOLDS.** At every `τ`, `p`, `N ≠ 0` and real `β`,
+/-- **The heat-bath locality hypothesis holds.** At every `τ`, `p`, `N ≠ 0` and real `β`,
 `HeatBathGapDecay.HeatBathLocality τ p hN β`, at `z = 21` (`localityAt_holds`).
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded rank in `hN`; `21` is
@@ -973,7 +973,7 @@ theorem heatBathLocality_holds (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ) 
 
 #print axioms heatBathLocality_holds
 
-/-- **`KnabeCriterion.HeatBathDecay` HOLDS** at every `τ`, `p`, `N ≠ 0` and real `β`: a uniform
+/-- **`KnabeCriterion.HeatBathDecay` holds** at every `τ`, `p`, `N ≠ 0` and real `β`: a uniform
 heat-bath gap gives the single-lag input `ChessboardRead.TorusLagClear`
 (`HeatBathGapDecay.heatBathDecay_of_locality`, `heatBathLocality_holds`). The gap is the hypothesis
 `HeatBathDecay` quantifies over (`c > 0` with `GlobalGap c` for all large `j`); on the finite-size

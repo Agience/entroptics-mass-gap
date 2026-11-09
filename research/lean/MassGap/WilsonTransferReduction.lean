@@ -30,7 +30,7 @@ The three that remain are properties of the state:
 
 `halfSpaceAlg` is indexed by the plane and `latticeReflection` by the reflection constant, whose
 plane sits at half of it, so the reflection exchanging the halves at plane `p` is the one at
-constant `2 * p` (`ReflectionHalfSpace.reflection_exchanges_halves`). Pairing `c` with `c` is the
+constant `2 * p`. Pairing `c` with `c` is the
 reflection pairing only at `c = 0`.
 
 `transferData_of_state_facts` assembles a `Transfer.TransferData` on the half-space algebra from
@@ -54,22 +54,16 @@ pairings of the state:
 Scope.
 * None of `hinv`, `hpos`, `hnu` is supplied here. `WilsonDLR` builds an infinite-volume Gibbs
   measure, not a `DLRLimit.State` carrying them.
-  `ReflectionHalfSpace.wilson_reflPositive_limit_exists` gives `ReflPositiveOn` at `2 * p` on
-  `halfSpaceAlg τ p` for a Wilson limit state at every real `β`, and
-  `reflection_facts_on_halfSpaceAlg` adds `IsReflectionInvariant`;
   `ReflectionShift.reflection_invariant_succ_iff_nu_T` relates `hnu` to reflection invariance at the
   adjacent constant.
 * `hposOdd` in `positiveTransfer_of_state_facts` is reflection positivity at an odd constant, the
-  link reflection. It is supplied at `β ≥ 0` for a limit of the odd free cube family
-  (`ReflectionHalfSpace.wilson_reflPositive_odd_of_tendsto`) and for the periodic limit
+  link reflection. It is supplied at `β ≥ 0` for the periodic limit
   (`PeriodicState.periodicState_reflPositive_odd`). At an even constant the shared block is the
   transverse links on the plane with the dagger trivial; at an odd one it is the axis links with the
   dagger inverting.
   `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` is an iff on the cross kernel, so the route
   through that kernel is refuted below `β = 0`.
-* Nothing here proves a gap. `OpTBridge.reconstruct_from_opT` takes two spectral hypotheses beyond
-  the assembled data, and `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` takes a Rayleigh bound
-  on a completion; neither is supplied.
+* Nothing here proves a gap.
 -/
 
 namespace MassGap.WilsonTransferReduction
@@ -260,10 +254,7 @@ addition `hposOdd : ReflPositiveOn (latticeReflection τ (2 * p - 1)) (halfSpace
 `ν (θ_{2p} x · T x)`, which `positiveTransfer_pairing_nonneg` bounds below by `0`.
 
 Scope. `hposOdd` is a hypothesis at an odd reflection constant, the link reflection;
-`ReflectionHalfSpace.wilson_reflPositive_odd_of_tendsto` and
-`PeriodicState.periodicState_reflPositive_odd` supply it at `β ≥ 0`.
-`GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` consumes `PositiveTransfer` together with a
-Rayleigh bound `⟨T y, y⟩ ≤ Λ ‖y‖ ^ 2` on the vacuum complement; only the first is supplied here.
+`PeriodicState.periodicState_reflPositive_odd` supplies it at `β ≥ 0`.
 
 DERIVED: the `2` is the plane-to-constant conversion `c = 2p`, the `1` is the half-step; `4` is the
 dimension. -/
@@ -315,10 +306,8 @@ Both directions rewrite by `gapAt_pairing_eq` at `c = 2 * p`.
 
 Scope. This is a statement on the algebra, before any completion; it mentions no spectrum, no
 operator norm and no Hilbert space, only the state and two reflections. It is about a particular
-state `ν`, not about a profile, so the flat-profile results such as `FlatProfileAllApertures` are
-different statements. The carrier is `ℤ⁴`, where
-`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` gives the shift infinite order, so the
-periodic-shift obstruction `HalfLineTransfer.no_rate_of_shift_transfer` does not apply. The
+state `ν`, not about a profile. The carrier is `ℤ⁴`, where
+`HalfSpaceAlgebra.shift_no_finite_order_on_halfSpaceAlg` gives the shift infinite order. The
 equivalence gives no bound on `r`; nothing here proves either side.
 
 DERIVED: `4` is the spacetime dimension `τ` indexes; `2` appears three times — as the plane-to-constant
@@ -426,8 +415,7 @@ every `r`.
 
 Scope. The content at a non-degenerate observable is unchanged, and the reverse implication is
 immediate, so this weakens a hypothesis rather than establishing a bound. The observables removed
-are those the form annihilates, the same null space that separates `D.T ≠ 1` from
-`ClayAssembly.TransferMovesSomething`. The argument is `TransferGap.gapAt_of_nondegenerate`'s,
+are those the form annihilates. The argument is `TransferGap.gapAt_of_nondegenerate`'s,
 repeated in these coordinates rather than invoked, because the translation between a carrier element
 and a mean-subtracted observable is what `gapAt_iff_subtracted_pairing` performs.
 

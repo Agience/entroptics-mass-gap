@@ -1,6 +1,5 @@
 import Mathlib
 import MassGap.Reflect
-import MassGap.Spectral
 
 /-!
 # MassGap.Transfer — the reflection form, its GNS quotient, and a transfer operator on it
@@ -24,36 +23,27 @@ Four layers, each abstract over a real module `A`:
    `Tq` descends `T` to the quotient, `Tq_isSymmetric`, `Tq_vacGNS`, `norm_vacGNS` and
    `norm_TqL_le_one` follow, and in finite dimension `inner_pow_expand` gives
    `⟨v, T^k v⟩ = ∑ᵢ ⟨eᵢ, v⟩ ^ 2 * λᵢ ^ k`. `periodicCorr` symmetrises that into
-   `⟨v, T^d v⟩ + ⟨v, T^(per-d) v⟩`, and `periodicSpectralForm_of_transfer` presents it as a
-   `Spectral.PeriodicSpectralForm`.
+   `⟨v, T^d v⟩ + ⟨v, T^(per-d) v⟩`.
 
 ## Scope
 
 * No `ReflForm` is constructed from `reflForm` in this module; `form_nonneg` is a field, so a
   caller supplies it. Two `ReflForm`s built from the Wilson measure do exist elsewhere and are
   foundational-only: `ReflectionStrong.wilsonGibbsReflForm` and `LogConvex.wilsonReflForm`, each on
-  the finite periodic torus at one plane. `Complete.wilson_reflection_positive_at` is a different
-  statement — componentwise nonnegativity of a lag-correlation vector together with a positive sum,
-  naming no plane, reflection or form — whose body is proved at even extent at least four and
-  `0 ≤ β` by `Complete.wilson_reflection_positive_at_even`. A `ReflForm` at a family of planes for
-  one state is not in this tree, and `ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows no
-  finite region is stable under two mirrors of such a family.
+  the finite periodic torus at one plane. A `ReflForm` at a family of planes for one state is not in
+  this tree.
 * Positivity of the transfer operator, `0 ≤ form x (T x)`, is not a field of `TransferData` and
   does not follow from its fields: `T_contract` bounds `|λ|` and says nothing about the sign of
-  `λ`. It is carried as a named hypothesis of `eigenvalue_nonneg` and
-  `periodicSpectralForm_of_transfer`.
+  `λ`. It is carried as a named hypothesis of `eigenvalue_nonneg`.
 * `T_vac`, `vac_norm`, `Tq_vacGNS`, `norm_vacGNS` and `norm_TqL_le_one` are normalisation: the
   Gibbs state is a probability state, so the vacuum has norm one and `T` is an expectation. None of
   them is a gap statement, and nothing here proves a bound on the spectrum.
 * `one_le_of_eigenvalues_le` states that `∀ i, λ i ≤ r` forces `1 ≤ r`, because the vacuum is a unit
-  eigenvector at eigenvalue one. So a hypothesis of the form `∀ k, lam k ≤ r` with `r < 1` — as in
-  `Complete.ym_mass_gap_at_floor`'s `hdecay` and `Spectral.periodic_decay_le` — has no instance when
-  read over the full transfer spectrum. `Spectral.PeriodicSpectralForm` carries no field excluding
-  the vacuum mode, so every form produced by `periodicSpectralForm_of_transfer` contains it;
+  eigenvector at eigenvalue one. So a hypothesis of the form `∀ k, lam k ≤ r` with `r < 1` has no instance when
+  read over the full transfer spectrum, which contains the vacuum mode;
   `periodicCorr_vac` computes the vacuum's own correlator as the constant `2`. The proof of
   `one_le_of_eigenvalues_le` uses neither positivity of `T` nor any gap.
-* `periodicCorr` is `⟨v, T^d v⟩ + ⟨v, T^(per-d) v⟩`, the ground-state periodic shape, which is what
-  `PeriodicSpectralForm`'s one-index form has room for. The finite-`per` thermal correlator
+* `periodicCorr` is `⟨v, T^d v⟩ + ⟨v, T^(per-d) v⟩`, the ground-state periodic shape. The finite-`per` thermal correlator
   `Tr (A T^d A T^(per-d)) / Tr (T^per)` is a double spectral sum
   `∑_{i,j} |A_{ij}| ^ 2 * λ i ^ d * λ j ^ (per - d)` and is not of that shape; `periodicCorr` is
   its `j = vacuum` row, symmetrised.
@@ -158,7 +148,7 @@ structure PreForm (A : Type*) [AddCommGroup A] [Module ℝ A] where
 /-- A `PreForm` together with one further field, `form_nonneg : ∀ x, 0 ≤ form x x`. Every theorem
 below that uses positivity takes a `ReflForm`, so the property cannot enter without being named.
 
-Scope: nothing in this module constructs a `ReflForm` from `reflForm`. Three producers elsewhere do.
+Scope: nothing in this module constructs a `ReflForm` from `reflForm`. Producers elsewhere do.
 
 `ReflectionStrong.wilsonGibbsReflForm` and `LogConvex.wilsonReflForm` build one from the Wilson
 measure, each on the finite periodic torus at one plane, and both are foundational-only.
@@ -166,16 +156,10 @@ measure, each on the finite periodic torus at one plane, and both are foundation
 `InfiniteReflection.stateReflForm R ν A hinv hpos` builds one for a state `ν` on any
 `A : Submodule ℝ C(X, ℝ)`, with `form_nonneg` supplied by `hpos : ReflPositiveOn R A ν`. Taken at
 `A := HalfSpaceAlgebra.halfSpaceAlg τ p`, this is a `ReflForm` on the infinite-volume `ℤ⁴`
-half-space algebra, and `ReflectionHalfSpace.wilson_reflPositive_even_of_tendsto` discharges its
-`hpos` for a limit of Wilson box states at every real coupling. `WilsonTransferReduction.transferData_of_state_facts`
-carries it to a full `TransferData` there.
+half-space algebra. `WilsonTransferReduction.transferData_of_state_facts` carries it to a full
+`TransferData` there.
 
-`Complete.wilson_reflection_positive_at` is a different statement, about a lag-correlation vector
-rather than a form.
-
-A `ReflForm` at a family of planes for one state is not in this tree, and
-`ReflectionHalfSpace.eq_empty_of_stable_two_mirrors` shows no finite region is stable under two
-mirrors of such a family. That is a statement about a family; the single-plane forms above exist.
+A `ReflForm` at a family of planes for one state is not in this tree.
 
 DERIVED: the one numeral is the `0` of `form_nonneg`, the lower bound on the diagonal. -/
 structure ReflForm (A : Type*) [AddCommGroup A] [Module ℝ A] extends PreForm A where
@@ -692,8 +676,7 @@ theorem Tq_pow_eigenvectorBasis (hm : Module.finrank ℝ (GNS D.toReflForm) = m)
 are the eigenvector basis and eigenvalues of `Tq_isSymmetric D`. Expands `v` in the orthonormal
 eigenbasis and applies `Tq_pow_eigenvectorBasis`.
 
-Scope: this is the half-line shape. `Spectral.flat_of_aperiodic` is why it is not a finite-volume
-correlator on its own.
+Scope: this is the half-line shape, not a finite-volume correlator on its own.
 
 DERIVED: the one numeral is the exponent `2` on the inner product, which is what makes the weights
 nonnegative. -/
@@ -747,19 +730,14 @@ theorem eigenvalue_nonneg (hm : Module.finrank ℝ (GNS D.toReflForm) = m)
 
 end TransferData
 
-/-! ## Part 6 — the periodic spectral form
-
-`Spectral.PeriodicSpectralForm` is the object the flagship's `hdecay` would have to be a statement
-about. This section builds one out of a transfer operator, which is what was missing.
--/
+/-! ## Part 6 — the periodic correlator of a transfer operator -/
 
 namespace TransferData
 
 variable (D : TransferData A) [FiniteDimensional ℝ (GNS D.toReflForm)] {m : ℕ}
 
 /-- `periodicCorr D v per d = ⟨v, (Tq D) ^ d v⟩ + ⟨v, (Tq D) ^ (per - d) v⟩`, the half-line
-correlator symmetrised under `d ↦ per - d`. That symmetry is the property
-`Spectral.flat_of_aperiodic` shows the half-line shape cannot have on its own without going flat.
+correlator symmetrised under `d ↦ per - d`.
 
 Scope: this is not the finite-`per` thermal correlator, which is
 `Tr (A T^d A T^(per-d)) / Tr (T^per)` and in the eigenbasis is a double sum
@@ -771,31 +749,6 @@ circle. -/
 noncomputable def periodicCorr (D : TransferData A) (v : GNS D.toReflForm) (per : ℕ)
     (d : Fin per) : ℝ :=
   inner ℝ v (((Tq D) ^ (d : ℕ)) v) + inner ℝ v (((Tq D) ^ (per - (d : ℕ))) v)
-
-/-- A `Spectral.PeriodicSpectralForm per (periodicCorr D v per)` built from the transfer operator:
-`Idx := Fin m`, `w i := ⟨eᵢ, v⟩ ^ 2`, `lam i := λᵢ`, with `hw` from `sq_nonneg`, `hlam0` from
-`eigenvalue_nonneg` and `hlam1` from `abs_eigenvalue_le_one`, and `hrep` from `inner_pow_expand` at
-both lags.
-
-Scope: takes finite dimension of the GNS space and `hpos : ∀ x, 0 ≤ D.form x (D.T x)`, the latter
-not following from contractivity. It proves no bound on `lam`.
-
-DERIVED: the one numeral in the statement is the `0` of `hpos`, positivity of the transfer operator.
-Every field is read off the spectral decomposition. -/
-noncomputable def periodicSpectralForm_of_transfer
-    (hm : Module.finrank ℝ (GNS D.toReflForm) = m)
-    (hpos : ∀ x : A, 0 ≤ D.form x (D.T x)) (per : ℕ) (v : GNS D.toReflForm) :
-    Spectral.PeriodicSpectralForm per (periodicCorr D v per) where
-  Idx := Fin m
-  w i := (inner ℝ ((Tq_isSymmetric D).eigenvectorBasis hm i) v) ^ 2
-  lam i := (Tq_isSymmetric D).eigenvalues hm i
-  hw i := sq_nonneg _
-  hlam0 i := eigenvalue_nonneg D hm hpos i
-  hlam1 i := le_of_abs_le (abs_eigenvalue_le_one D hm i)
-  hrep d := by
-    rw [periodicCorr, inner_pow_expand D hm v (d : ℕ), inner_pow_expand D hm v (per - (d : ℕ)),
-      ← Finset.sum_add_distrib]
-    exact Finset.sum_congr rfl (fun i _ => by ring)
 
 /-- `∑ i, ⟨eᵢ, v⟩ ^ 2 = ‖v‖ * ‖v‖`: the spectral weights of `v` sum to its squared norm.
 `inner_pow_expand` at `k = 0`, where every `λᵢ ^ 0` is one, followed by
@@ -814,8 +767,7 @@ omit [FiniteDimensional ℝ (GNS D.toReflForm)] in
 /-- `periodicCorr D (vacGNS D) per d = 2` at every lag. `Tq_vacGNS` makes every power fix the
 vacuum and `norm_vacGNS` makes each inner product one, so both terms of the periodic shape are one.
 
-Scope: this is a correlator with a `PeriodicSpectralForm` and no decay, so that structure alone
-carries no gap.
+Scope: this correlator has no decay, so it carries no gap.
 
 DERIVED: the `2` is the two terms of the periodic shape, each equal to `⟨Ω,Ω⟩ = 1`. -/
 theorem periodicCorr_vac (per : ℕ) (d : Fin per) :
@@ -837,11 +789,8 @@ theorem periodicCorr_vac (per : ℕ) (d : Fin per) :
 an eigenvector at eigenvalue one (`Tq_vacGNS`) and a unit vector (`norm_vacGNS`), so
 `inner_pow_expand` at `k = 1` puts `1 = ∑ wᵢ λᵢ ≤ r * ∑ wᵢ = r`.
 
-Scope: a hypothesis `∀ k, lam k ≤ r` with `r < 1` — the shape of
-`Complete.ym_mass_gap_at_floor`'s `hdecay` and of `Spectral.periodic_decay_le` — therefore has no
- instance when read over the full transfer spectrum. `Spectral.PeriodicSpectralForm` carries no field
-excluding the vacuum mode, so every form built by `periodicSpectralForm_of_transfer` contains it.
-The proof uses neither positivity of `T` nor any gap, only normalisation.
+Scope: a hypothesis `∀ k, lam k ≤ r` with `r < 1` therefore has no instance when read over the full
+transfer spectrum, which contains the vacuum mode. The proof uses neither positivity of `T` nor any gap, only normalisation.
 
 DERIVED: the `1` is the vacuum eigenvalue, which is the total mass of a probability measure. -/
 theorem one_le_of_eigenvalues_le (hm : Module.finrank ℝ (GNS D.toReflForm) = m) {r : ℝ}
@@ -863,31 +812,6 @@ theorem one_le_of_eigenvalues_le (hm : Module.finrank ℝ (GNS D.toReflForm) = m
         nlinarith
     _ = r := by rw [← Finset.sum_mul, hsum, one_mul]
 
-/-- Given `0 ≤ r` and `∀ i, λᵢ ≤ r`, and a lag `d` with `2 * d ≤ per`,
-`periodicCorr D v per d ≤ 2 * (∑ i, ⟨eᵢ, v⟩ ^ 2) * r ^ d`. `Spectral.periodic_decay_le` applied to
-`periodicSpectralForm_of_transfer`.
-
-Scope: `hgap` here is the hypothesis of `one_le_of_eigenvalues_le`, which concludes `1 ≤ r`, so in
-every instance `r ^ d` is non-decreasing in `d` and this is a bound rather than a decay statement.
-Nothing here proves `hgap`.
-
-DERIVED: `0` is the lower bound on `r`; `2` is the two terms of the periodic shape, inherited from
-`Spectral.periodic_decay_le`, and the doubling in `2 * d ≤ per`, which restricts the lag to the
-half-period where a torus correlator has not yet turned back up; the exponent `2` is the weight's
-degree. -/
-theorem periodic_decay_of_transfer
-    (hm : Module.finrank ℝ (GNS D.toReflForm) = m)
-    (hpos : ∀ x : A, 0 ≤ D.form x (D.T x)) (per : ℕ) (v : GNS D.toReflForm)
-    {r : ℝ} (hr : 0 ≤ r) (hgap : ∀ i : Fin m, (Tq_isSymmetric D).eigenvalues hm i ≤ r)
-    (d : Fin per) (hhalf : 2 * (d : ℕ) ≤ per) :
-    periodicCorr D v per d
-      ≤ 2 * (∑ i : Fin m, (inner ℝ ((Tq_isSymmetric D).eigenvectorBasis hm i) v) ^ 2)
-          * r ^ (d : ℕ) :=
-  -- the gap is now required only on modes that contribute (a zero-weight vacuum mode is harmless),
-  -- so a bound on every eigenvalue is more than enough
-  Spectral.periodic_decay_le (periodicSpectralForm_of_transfer D hm hpos per v)
-    (fun k _ => hgap k) hr d hhalf
-
 end TransferData
 
 #print axioms reflForm_symm
@@ -908,7 +832,5 @@ end TransferData
 #print axioms TransferData.sum_weights
 #print axioms TransferData.periodicCorr_vac
 #print axioms TransferData.one_le_of_eigenvalues_le
-#print axioms TransferData.periodicSpectralForm_of_transfer
-#print axioms TransferData.periodic_decay_of_transfer
 
 end MassGap.Transfer

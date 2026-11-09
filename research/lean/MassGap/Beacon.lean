@@ -460,8 +460,8 @@ variable {N : ℕ}
 Stated, not proved: it is the convergence of the periodic states along the extent, at the probes
 of `A`.
 
-DERIVED: `2 * k + 1` is `PeriodicState`'s extent index, the family `exists_periodic_limit` takes its
-limit of; `0` is the excluded rank in `hN`. -/
+DERIVED: `2 * k + 1` is `PeriodicState`'s extent index, the family `exists_periodic_limit_dvd` takes
+its limit of; `0` is the excluded rank in `hN`. -/
 def VolumeBeacon (hN : N ≠ 0) (β : ℝ)
     (A : Subalgebra ℝ C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) : Prop :=
   BeaconConverges A atTop (fun k : ℕ => PeriodicState.torusState hN (2 * k + 1) β)
@@ -470,7 +470,8 @@ def VolumeBeacon (hN : N ≠ 0) (β : ℝ)
 
 /-- `∃ u : Ultrafilter ℕ, u ≤ atTop ∧ ∀ f, torusState hN (2k + 1) β f → ν f along u`: `ν` is a limit
 of the periodic Wilson states along some ultrafilter finer than `atTop` — one of the states
-`PeriodicState.exists_periodic_limit` could have returned.
+`PeriodicState.exists_periodic_limit` could have returned. `periodicState` is one: its ultrafilter, from
+`PeriodicState.exists_periodic_limit_dvd`, is finer than the dyadic filter, which is finer than `atTop`.
 
 DERIVED: `2 * k + 1` is `PeriodicState`'s extent index; `0` is the excluded rank in `hN`. -/
 def IsPeriodicLimit (hN : N ≠ 0) (β : ℝ)
@@ -791,8 +792,8 @@ theorem tendsto_contS_atTop_of_schwingerBeacon (hN : N ≠ 0) (ρ : ContinuumSch
 
 /-- **Both ultrafilter choices drop out: the same forest.** Suppose the volume beacon holds at every
 step's coupling `dyBeta k` for a point-separating `A`, and `latSkR hN ρ k F → L` along `atTop`. Then
-for ANY choice `σ k` of periodic limit at each step (`IsPeriodicLimit`, a limit along any ultrafilter
-finer than `atTop` in the extent) and ANY ultrafilter `u ≤ atTop` in the step,
+for any choice `σ k` of periodic limit at each step (`IsPeriodicLimit`, a limit along any ultrafilter
+finer than `atTop` in the extent) and any ultrafilter `u ≤ atTop` in the step,
 `contSAlong σ ρ u F = L`. Each `σ k` is `stateK hN k` by `eq_periodicState_of_volumeBeacon`, and
 `contSAlong_eq_of_tendsto` finishes.
 

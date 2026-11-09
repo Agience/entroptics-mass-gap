@@ -1,22 +1,20 @@
 import Mathlib
 import MassGap.StrongCouplingGap
 import MassGap.WeakCouplingWindow
+import MassGap.GeneralDecay
 
 /-!
 # MassGap.PeriodicStrongCoupling — the transfer gap at the periodic state at strong coupling
 
-`StrongCouplingGap.norm_Tq_le_of_orth` contracts the vacuum complement at rate `coreRate 64 β` at
-the free-boundary `mixCube` limit state. `StrongCouplingGap.decay_of_orth`, the per-vector decay
-behind it, takes reflection invariance, reflection positivity and shift invariance of the state as
-hypotheses, which `PeriodicState` supplies at `periodicState`; the one step that reads the `mixCube`
-convergence is `GeneralDecay.nu_connected_shift_abs_le_obs`, and inside it the one finite-volume input is
-`BoxCube.stateFree_connected_abs_le_of_cubes`: the cluster bound
-`StrongCoupling.wilsonCorrConnObs_abs_le_of_not_mem_ball` read on a free box. That cluster bound is
-stated for an arbitrary finite carrier `bd`, so it reads on the periodic lattice
-`WilsonHypercubic.bd (d := 4) (n := M + 1)` too, with touch degree at most `16 * 4`
-(`StrongCoupling.touchDeg_bd_le`), whatever the extent.
+At `0 < β` with `coreRate 64 β < 1`, every vector orthogonal to the vacuum of the gauge-invariant
+transfer data at `PeriodicState.periodicState hN β` decays at rate `coreRate 64 β`, so one transfer
+step contracts the vacuum complement by that rate and `TransferGap.GapAt` holds.
 
-This file supplies the periodic reading and passes it to `PeriodicState.periodicState`:
+The one finite-volume input is the cluster bound `StrongCoupling.wilsonCorrConnObs_abs_le_of_not_mem_ball`.
+It is stated for an arbitrary finite carrier `bd`, so it reads on the periodic lattice
+`WilsonHypercubic.bd (d := 4) (n := M + 1)`, with touch degree at most `16 * 4`
+(`StrongCoupling.touchDeg_bd_le`), whatever the extent. This file supplies the periodic reading and
+passes it to `PeriodicState.periodicState`:
 
 * `torusCube b R` — the periodic plaquettes whose base site sits at forward offset at most `R` from
   `b` on every axis. It holds the halo of every link strictly inside the cube of side `R` at a lift
@@ -24,13 +22,14 @@ This file supplies the periodic reading and passes it to `PeriodicState.periodic
   (`torus_reach_from_base`), and has at most `16 (R + 1)⁴` plaquettes (`card_torusCube_le`).
 * `torus_not_mem_ball` — two base plaquettes whose sites differ by `D > k` along `τ`, on a circle of
   `M + 1 ≥ 2D` sites, are more than `k` touch-steps apart.
-* `torusState_connected_abs_le_of_cubes` — the periodic counterpart of
-  `BoxCube.stateFree_connected_abs_le_of_cubes`, with the same right side.
-* `periodic_connected_shift_abs_le_obs` — the counterpart of
-  `GeneralDecay.nu_connected_shift_abs_le_obs` at `periodicState hN β`: the torus bound holds for all
-  large extents, and `PeriodicReduce.tendsto_torusConn` carries it along `periodicUltra hN β`.
-* `decay_of_orth_of_conn` — `StrongCouplingGap.decay_of_orth` with the pairing bound as a
-  hypothesis on the state rather than derived from `mixCube` convergence.
+* `torusState_connected_abs_le_of_cubes` — the cluster bound for two local observables anchored on
+  cubes, in the periodic Wilson state of any extent at least twice their separation, with a right
+  side independent of the extent.
+* `periodic_connected_shift_abs_le_obs` — the connected reflected-shifted pairing of a local
+  observable decays in `periodicState hN β`: the torus bound holds for all large extents, and
+  `PeriodicReduce.tendsto_torusConn` carries it along `periodicUltra hN β`.
+* `decay_of_orth_of_conn` — per-vector decay on the vacuum complement for any state that is
+  reflection invariant, reflection positive, shift invariant and carries the pairing bound.
 
 `periodic_gapAt_strong_coupling` is the result: there is `β₀ > 0` such that at every `0 < β < β₀`,
 `TransferGap.GapAt (periodicGaugeInvData τ p hN β) (coreRate 64 β)` with `0 < coreRate 64 β < 1`.
@@ -80,6 +79,7 @@ noncomputable def torusCube (b : WilsonHypercubic.Site 4 n) (R : ℕ) :
     Finset (WilsonHypercubic.Plaq 4 n) :=
   Finset.univ.filter (fun q => TInCube b R q.2)
 
+omit [NeZero n] in
 open scoped Classical in
 /-- Membership in `torusCube`, unfolded.
 
@@ -171,7 +171,7 @@ theorem torus_reach_from_base (b : WilsonHypercubic.Site 4 n) (R : ℕ) (e : Fin
     have hd' : ∑ j : Fin 4, ((s j - b j : Fin n) : ℕ) = D + 1 := hd
     obtain ⟨i, hi⟩ : ∃ i : Fin 4, 0 < ((s i - b i : Fin n) : ℕ) := by
       by_contra hcon
-      push_neg at hcon
+      push Not at hcon
       have h0 : ∑ j : Fin 4, ((s j - b j : Fin n) : ℕ) = 0 :=
         Finset.sum_eq_zero (fun j _ => by have := hcon j; omega)
       omega
@@ -409,7 +409,7 @@ with `coreRate 64 β < 1`, in the periodic Wilson state of extent `M + 1`,
     |⟨f g⟩ − ⟨f⟩⟨g⟩|  ≤  coreConstG (2 ‖f‖ ‖g‖) 64 β U · coreRate 64 β ^ (k + 2 − U),
     U = 32 (R + 1)⁴,
 
-the right side of `BoxCube.stateFree_connected_abs_le_of_cubes`, independent of `M`.
+a right side independent of `M`.
 `StrongCoupling.wilsonCorrConnObs_abs_le_of_not_mem_ball` at the periodic carrier with anchors
 `torusCube (siteMod M x₀) R` and `torusCube (siteMod M y₀) R`.
 
@@ -491,7 +491,7 @@ theorem torusState_connected_abs_le_of_cubes (hN : N ≠ 0) {β : ℝ} (hβ : 0 
   refine le_trans hbase ?_
   have hC : (0 : ℝ) ≤ 2 * (‖f‖ * ‖g‖) := by positivity
   have hr0 : 0 ≤ StrongCoupling.coreRate (16 * 4) β := StrongCoupling.coreRate_nonneg _ hβ
-  have hCC := BoxCube.coreConstG_le_of_le hC hβ hr hcard
+  have hCC := GeneralDecay.coreConstG_le_of_le hC hβ hr hcard
   have hpow' := StrongCoupling.pow_le_pow_of_le_one_asm hr0 hr.le
     (Nat.sub_le_sub_left hcard (k + 2))
   have hCK : (0 : ℝ) ≤ StrongCoupling.coreConstG (2 * (‖f‖ * ‖g‖)) (16 * 4) β
@@ -518,9 +518,9 @@ depending on `S` alone such that for every `m` with `U ≤ m + 2`, at `0 ≤ β`
 
     |ν(θx · Sᵐx) − ν(θx) ν(Sᵐx)|  ≤  coreConstG (2 ‖x‖²) 64 β U · coreRate 64 β ^ (m + 2 − U),
 
-`ν = periodicState hN β`: the conclusion of `GeneralDecay.nu_connected_shift_abs_le_obs` with the
-periodic state in place of the `mixCube` limit. The cubes are those of that proof
-(`GeneralDecay.exists_cube_posHalf`); `torusState_connected_abs_le_of_cubes` bounds
+`ν = periodicState hN β`. The support lies strictly inside a cube of side `R`
+(`GeneralDecay.exists_cube_posHalf`); its reflection and its `m`-th translate lie strictly inside two
+cubes of side `R + 1` whose bases are `m + R` apart along `τ`; `torusState_connected_abs_le_of_cubes` bounds
 `PeriodicReduce.torusConn τ p hN β j x m` once `j ≥ m + R`, and `PeriodicReduce.tendsto_torusConn`
 with `PeriodicState.periodicUltra_le` carries the bound to the limit.
 
@@ -617,9 +617,12 @@ open MassGap.Transfer MassGap.GNSHilbert
 variable {N : ℕ}
 
 /-- **Every vector orthogonal to the vacuum decays at rate `coreRate 64 β`, for any state carrying the
-pairing bound.** `StrongCouplingGap.decay_of_orth` with its one state-specific input,
-`GeneralDecay.nu_connected_shift_abs_le_obs`, replaced by the hypothesis `hconn` of the same form; the
-proof is that one's.
+pairing bound `hconn`.** A vector orthogonal to the vacuum is the class of an invariant observable `a`
+with `ν(a) = 0` (`GNS.mk` is onto; `StrongCouplingGap.inner_vacGNS_mk_gaugeInv`). Its form against the
+`2n`-th transfer power is the reflected-shifted pairing (`GaugeInvariantAlgebra.gaugeInv_form_pow`),
+which is the connected pairing since `ν(S²ⁿ a) = 0`; `hconn` bounds it beyond its `U`, the sup norm
+below it, and `StrongCouplingGap.le_div_pow_mul_pow` joins the two into `(C / ρᵁ) ρ²ⁿ`.
+`ClayCapstone.absolute_decay_of_form_decay` gives the norm decay.
 
 DERIVED: `16 * 4` is the touch-degree bound; the `4` in `Fin 4` is the spacetime dimension; `2` is
 the reflection plane's doubling in `2 * p`, the doubling in `2 ‖x‖²` and the `2` of `m + 2`; `0` is

@@ -1,0 +1,22 @@
+# Exact pins of the v0.3.0 release; research/requirements.txt gives the ranges.
+#
+# Python 3.12. Confirmed on 2026-11-08 from a clean copy of the release tree (git archive) in a fresh
+# Python 3.12 virtual environment built from this file: the test suite and the paper build pass.
+#
+# Install:  pip install -r research/requirements-release.txt
+# CUDA:     the torch wheel on PyPI for Linux is a CUDA build; on Windows install from
+#           https://download.pytorch.org/whl/cu128 for a CUDA build. The GPU campaigns ran on
+#           torch 2.11.0+cu128.
+
+entroptics==0.2.10   # enforced at run time by research/code/entroptics_adapter.py; requires numpy only
+numpy==2.4.4         # every script
+scipy==1.17.1        # exact checks (*_checks.py), several observer reads, tests/test_generator_physics.py
+matplotlib==3.10.6   # research/code/observer/plot_observer.py (figures)
+torch==2.11.0        # lattice_generator.py torch backend, the observer *_gpu.py reads;
+                     # optional: OBS_DEVICE=numpy runs the reads on the CPU without it.
+                     # Version read from a CPU-only local build; CUDA variant: 2.11.0+cu128 (see above).
+pytest==8.2.2        # research/code/tests
+PyYAML==6.0.3        # reads CITATION.cff: the tag check of .github/workflows/publish.yml
+Markdown==3.10       # research/paper/build_paper.py
+pypdf==6.3.0         # research/paper/build_paper.py (PDF metadata)
+

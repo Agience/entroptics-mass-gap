@@ -37,7 +37,7 @@ integrability hypotheses of `WilsonReal.wilsonSystem_expect_add` from the module
 measurability. `localObsC S R` is the set of complex observables whose real and imaginary parts lie
 in `localObs S R`; `osPairing_re_pointwise` and `osPairing_im_pointwise` expand the integrand
 `conj (F ∘ Θ) * G` pointwise, and `wilson_osC_re`, `wilson_osC_im` and `cform_eq_osPairing` show
-`cform` at the pair of parts IS that expectation, component by component.
+`cform` at the pair of parts is that expectation, component by component.
 
 ## Part 4 The positivity statements at the Wilson state
 
@@ -59,9 +59,8 @@ other field being a theorem already available.
 ## Scope
 
 * Every statement is at a fixed even extent `n = 2 * m` and a fixed spacing, on the periodic
-  `sysWilson` measure. No infinite-volume or continuum measure appears in the import closure —
-  `InfiniteVolume` takes subsequential limits of finite-volume numbers — so nothing here is
-  quantified over one. Universal quantification over `τ`, `a`, `m` and `β` is uniformity in the
+  `sysWilson` measure. No infinite-volume or continuum measure appears in the import closure, so
+  nothing here is quantified over one. Universal quantification over `τ`, `a`, `m` and `β` is uniformity in the
   extent, not a limit.
 * `blkS τ a m` is a slab, bounded above by the second reflection plane as well as below by the
   first; a periodic lattice has no half-space. `WilsonTransfer.shift_not_stable_on_slab` exhibits a

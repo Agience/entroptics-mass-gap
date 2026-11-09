@@ -1,5 +1,4 @@
 import Mathlib
-import MassGap.ThreePointN
 import MassGap.WeakCouplingWindow
 
 /-!
@@ -20,7 +19,7 @@ invariant composite is the trace anomaly `(β(g)/2g)·F^aF^a`, which at leading 
 `−(b₀/2)·g²F^aF^a`, so each insertion carries one running coupling `ḡ²(r)`, and the Callan–Symanzik
 equation gives
 `r⁸ G(r) = Φ(ḡ(r))` with `Φ(g) = C₀ g⁴ (1 + O(g²))`. At one loop `ḡ²(r) ∼ 1/(2 b₀ log(1/r))`: the
-power `1` of the logarithm is the one-loop start `β(g) ∼ −b₀ g³` of the beta function (its sign: `beta_neg` in `Running`),
+power `1` of the logarithm is the one-loop start `β(g) ∼ −b₀ g³` of the beta function,
 and two insertions square it, which is the exponent `2`. The two-loop coefficient `b₁` changes `ḡ²` by a
 factor `1 + O(log log(1/r) / log(1/r)) → 1` and leaves the exponent and the existence of `C` alone:
 `coupling_mul_neg_log_aRun_tendsto` proves this for the tree's two-loop spacing `aRun N`, whose `b₁`
@@ -36,7 +35,6 @@ The exponent `2` holds for every normalisation of the composite that is a fixed 
 anomalous dimension of the canonically normalised `F^aF^a` is what turns its tree-level `r⁻⁸` into
 `r⁻⁸ ḡ⁴(r)/g⁴(μ)`. A normalisation tied to the separation itself (`μ = 1/r`) has no logarithm, and the
 bare canonical `F^aF^a` on the lattice has no continuum limit; neither is a fixed operator.
-`latticeTwoPoint` uses the bare `g₀²·tr F²`, a fixed multiple of the invariant composite in the limit.
 
 `af_along_aRun`: along the two-loop spacing, `AFShortDistance G` gives
 `a⁸ G(a) / (g²)² → C·(2b₀)² > 0` at `a = aRun N β`, `g² = N/β` at the Lean coupling — the square of the running coupling at
@@ -66,32 +64,18 @@ the scale of the separation.
 
 ## On the lattice family
 
-`latticeTwoPoint N hN β r` is the connected two-point function, under
-`PeriodicState.periodicState hN β`, of the lattice `tr F²` density at the origin and at
-`⌈r / aRun N β⌉·e₀` (`ThreePointN.blockObs` with side `1`, summed over the six planes), divided by
-`aRun N β ⁸`: the separation is held at physical length `r` while the spacing runs with the two-loop
-`SU(N)` law. `ContinuumTwoPoint L G` says the family converges to `G(r)` at every fixed `r > 0`;
-`FamilyAF L` is the asymptotic-freedom form with one constant `C`: for every `ε > 0` a `δ > 0` such that at
-each separation `0 < r < δ` the family lies within `ε` of the form at every large `β`, the threshold in `β`
-depending on `r` — the analogue of `WeakCouplingWindow.FixedWindowDecay` at a fixed physical separation. Under `ContinuumTwoPoint L G`,
+A family `L β r` of lattice two-point functions at coupling `β` and separation `r`, with the
+separation held at physical length `r` while the spacing runs. `ContinuumTwoPoint L G` says the family
+converges to `G(r)` at every fixed `r > 0`; `FamilyAF L` is the asymptotic-freedom form with one
+constant `C`: for every `ε > 0` a `δ > 0` such that at each separation `0 < r < δ` the family lies
+within `ε` of the form at every large `β`, the threshold in `β` depending on `r` — the analogue of
+`WeakCouplingWindow.FixedWindowDecay` at a fixed physical separation. Under `ContinuumTwoPoint L G`,
 `FamilyAF L ↔ AFShortDistance G` (`familyAF_iff`): the lattice form is the continuum statement, neither
 weaker nor stronger.
 
-`wilson_yang_mills_separated`: from `WilsonContinuumTwoPoint N hN G`, `WilsonLatticeAF N hN` and
-`ThreePointN.WilsonThreePointSeparation N hN`, the continuum two-point function satisfies Y, it is not the
-two-point function of any free composite (massless or massive), it is no pure power law, it falls like
-the square of the running coupling along `aRun N`, and along every `β → ∞` the normalised three-point
-statistic `ThreePointN.sepRatio` of the lattice block composites is eventually at least a fixed `c > 0`,
-where `0` is the value of every Gaussian law and of the free massless gauge field. Y separates the
-continuum two-point function from every free composite, massless or massive; N separates the lattice
-family's block composites from Gaussian laws and from the free massless value. At `N = 1` the group
-`SU(1)` is trivial, `latticeTwoPoint` is `0` and `WilsonLatticeAF` fails, so the theorem carries its
-content at `2 ≤ N`.
-
 ## Open
 
-`WilsonContinuumTwoPoint N hN G` (for some `G`), `WilsonLatticeAF N hN` and
-`ThreePointN.WilsonThreePointSeparation N hN` are not proved at any `β`. The converse of
+The converse of
 `af_along_aRun` (from the `aRun` form back to `AFShortDistance`) is not built. The requirement that every
 local field be a gauge-invariant polynomial in the curvature is not addressed beyond the choice of the
 composite.
@@ -705,107 +689,5 @@ theorem familyAF_iff {L : ℝ → ℝ → ℝ} {G : ℝ → ℝ} (hconv : Contin
   ⟨af_of_familyAF hconv, familyAF_of_af hconv⟩
 
 #print axioms familyAF_iff
-
-/-- **The lattice `tr F²` density at a site.** `ThreePointN.blockObs` with side `1` at
-`ThreePointN.tripleBase n 1 = n·e₀`: the plaquette energies of the six planes `μ < ν` based at `n·e₀`.
-
-DERIVED: the side `1` is one lattice site; the block index `1` selects the base `n·e₀` among
-`tripleBase`'s three. -/
-noncomputable def siteObs (N n : ℕ) : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ) :=
-  MassGap.ThreePointN.blockObs N (MassGap.ThreePointN.tripleBase n 1) 1
-
-#print axioms siteObs
-
-/-- **The lattice two-point function at physical separation `r`.** The connected two-point function,
-under `PeriodicState.periodicState hN β`, of `siteObs N 0` (the origin) and
-`siteObs N ⌈r / aRun N β⌉₊` (at `⌈r / aRun N β⌉₊·e₀`), divided by `aRun N β ⁸`.
-
-At weak coupling each plaquette energy is `a⁴·g₀²·tr F²/(2N)` plus operators of higher dimension
-(`ThreePointN.blockObs`), so `aRun N β ⁻⁴ · siteObs` is the lattice form of the bare `g₀²·tr F²/(2N)`.
-The renormalisation-group invariant composite is `(β(g₀)/2g₀)·F^aF^a = −(b₀/2)·g₀²F^aF^a·(1 + O(g₀²))`;
-the constant is absorbed by `af_of_const_mul`, and the factor `1 + O(g₀²)` tends to `1` as `β → ∞` at
-fixed `r`. The limit `G`, where it exists, is therefore a constant multiple of the invariant composite's
-two-point function, the normalisation in which `AFShortDistance` carries `(log r)²`. The identity
-mixing drops out of `cov2`.
-
-DERIVED: `8 = 2·4`: each of the two insertions carries `a⁴`; `0` is the origin. -/
-noncomputable def latticeTwoPoint (N : ℕ) (hN : N ≠ 0) (β r : ℝ) : ℝ :=
-  MassGap.ThreePointN.cov2 (MassGap.PeriodicState.periodicState hN β) (siteObs N 0)
-      (siteObs N (MassGap.ThreePointN.latUnits r (aRun N β)))
-    / aRun N β ^ 8
-
-#print axioms latticeTwoPoint
-
-/-- **The continuum two-point function of the Wilson family (part of E).** `latticeTwoPoint N hN β r`
-converges to `G r` as `β → ∞` at every fixed physical separation `r > 0`. Open.
-
-DERIVED: `0` is the excluded rank in `hN`. -/
-def WilsonContinuumTwoPoint (N : ℕ) (hN : N ≠ 0) (G : ℝ → ℝ) : Prop :=
-  ContinuumTwoPoint (latticeTwoPoint N hN) G
-
-#print axioms WilsonContinuumTwoPoint
-
-/-- **Requirement Y on the Wilson family.** `FamilyAF` of `latticeTwoPoint N hN`. Open.
-
-DERIVED: `0` is the excluded rank in `hN`. -/
-def WilsonLatticeAF (N : ℕ) (hN : N ≠ 0) : Prop :=
-  FamilyAF (latticeTwoPoint N hN)
-
-#print axioms WilsonLatticeAF
-
-/-- **On the Wilson family, the lattice form is the continuum statement.** Under
-`WilsonContinuumTwoPoint N hN G`, `WilsonLatticeAF N hN ↔ AFShortDistance G`.
-
-DERIVED: `0` is the excluded rank in `hN`. -/
-theorem wilson_af_iff {N : ℕ} (hN : N ≠ 0) {G : ℝ → ℝ} (hconv : WilsonContinuumTwoPoint N hN G) :
-    WilsonLatticeAF N hN ↔ AFShortDistance G :=
-  familyAF_iff hconv
-
-#print axioms wilson_af_iff
-
-/-- **N and Y on the Wilson family.** Y separates the continuum two-point function from every free
-composite, massless or massive; N separates the lattice block composites from Gaussian laws and from
-the free massless value. At `N ≠ 0`, from `WilsonContinuumTwoPoint N hN G`, `WilsonLatticeAF N hN` and
-`ThreePointN.WilsonThreePointSeparation N hN`:
-
-1. `G` satisfies Y;
-2. `G` is not in the free class (`r⁸G → C > 0`);
-3. `G` has no free scaling form `Φ(m r)/r⁸`, massless or massive;
-4. `G` is no pure power law `K r^{−2Δ}`, `K ≠ 0`, on `r > 0`;
-5. along `aRun N`, `a⁸G(a)/(N/β)² → C' > 0`;
-6. there are `0 < ℓ < D` such that along every `β i → ∞` the three block composites of physical size
-   `ℓ` and separation `D` are `ThreePointN.ThreePointSeparated` under the periodic state — the
-   normalised statistic `ThreePointN.sepRatio = cum3²/|cov2·cov2·cov2|` is eventually at least one
-   `c > 0`, so the connected three-point function is eventually non-zero, and `0` is the statistic's
-   value for every Gaussian law and for the free massless gauge field in the duality matrix model
-   (`ThreePointN.freeSepRatio_of_duality`).
-
-At `N = 1` the group is trivial, `latticeTwoPoint` is `0` and `WilsonLatticeAF` fails, so the
-hypotheses carry content at `2 ≤ N`.
-
-DERIVED: `8` and the square on the logarithm as in `AFShortDistance`; `2` in `2Δ` is the two
-insertions of a field of dimension `Δ` (`not_af_of_conformal`); `N/β` is `g²` at the Lean coupling and the
-square on it is `af_along_aRun`'s; `0` is the excluded amplitude, colour count and sign; `0`, `1`, `2`
-index the three blocks; `1` is the least colour count, from `hN`. -/
-theorem wilson_yang_mills_separated {N : ℕ} (hN : N ≠ 0) {G : ℝ → ℝ}
-    (hconv : WilsonContinuumTwoPoint N hN G) (hY : WilsonLatticeAF N hN)
-    (hsep : MassGap.ThreePointN.WilsonThreePointSeparation N hN) :
-    AFShortDistance G ∧ ¬ FreeShortDistance G ∧ ¬ FreeScalingForm G ∧
-      (∀ K Δ : ℝ, K ≠ 0 → ¬ ∀ r : ℝ, 0 < r → G r = K * r ^ (-(2 * Δ))) ∧
-      (∃ C' : ℝ, 0 < C' ∧ Tendsto (fun β : ℝ => aRun N β ^ 8 * G (aRun N β) / ((N : ℝ) / β) ^ 2)
-        atTop (𝓝 C')) ∧
-      ∃ ℓ D : ℝ, 0 < ℓ ∧ ℓ < D ∧ ∀ β : ℕ → ℝ, Tendsto β atTop atTop →
-        MassGap.ThreePointN.ThreePointSeparated
-          (fun i => MassGap.PeriodicState.periodicState hN (β i))
-          (fun i => MassGap.ThreePointN.tripleObs N ℓ D (β i) 0)
-          (fun i => MassGap.ThreePointN.tripleObs N ℓ D (β i) 1)
-          (fun i => MassGap.ThreePointN.tripleObs N ℓ D (β i) 2) := by
-  have hAF : AFShortDistance G := (wilson_af_iff hN hconv).mp hY
-  refine ⟨hAF, fun hf => not_af_of_free hf hAF, fun hs => not_af_of_scalingForm hs hAF,
-    fun K Δ hK hG => not_af_of_conformal hK Δ hG hAF,
-    af_along_aRun (Nat.one_le_iff_ne_zero.mpr hN) hAF,
-    MassGap.ThreePointN.wilson_threePointSeparated hN hsep⟩
-
-#print axioms wilson_yang_mills_separated
 
 end MassGap.ShortDistanceY

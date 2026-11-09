@@ -1,18 +1,18 @@
 """small_volume_enclosure.py -- the interior rigorous-enclosure attack, upgrade U1.
 
 rho'(1) = exp(-gap) of the SU(2) Kogut-Susskind Hamiltonian on a small spatial volume. In the SU(2) character
-basis |j> (j = 0, 1/2, 1, ...), the minimal gauge cell (single plaquette) is the symmetric TRIDIAGONAL
+basis |j> (j = 0, 1/2, 1, ...), the minimal gauge cell (single plaquette) is the symmetric tridiagonal
 
     H(lambda) = diag(j(j+1)) - lambda * (off-diagonal 1's, j <-> j+-1/2),
 
-exact at ANY coupling (no strong-coupling convergence radius, unlike interval_enclosure.py's beta_KP ~ 0.97).
-U1 encloses the gap E1 - E0 RIGOROUSLY, in exact rationals (no floating point):
+exact at any coupling (no strong-coupling convergence radius, unlike a cluster-expansion enclosure's beta_KP ~ 0.97).
+U1 encloses the gap E1 - E0 rigorously, in exact rationals (no floating point):
 
   * Sturm sequences.  For a symmetric tridiagonal, #{eigenvalues < x} = #{negative pivots} of the LDL^T recurrence
-    t_0 = d_0 - x,  t_i = (d_i - x) - e_i^2 / t_{i-1}  (Sylvester inertia).  EXACT with fractions.Fraction; bisection
+    t_0 = d_0 - x,  t_i = (d_i - x) - e_i^2 / t_{i-1}  (Sylvester inertia).  Exact with fractions.Fraction; bisection
     on x brackets E0 (k=0) and E1 (k=1) of the truncated matrix in a certified rational interval.
   * Truncation tail (Schur / Feshbach).  The kept (j <= jmax) sector couples to the discarded (j > jmax) sector
-    ONLY through the single element -lambda, at energy >= D_min = (jmax+1/2)(jmax+3/2).  Variational (E_i^true <=
+    only through the single element -lambda, at energy >= D_min = (jmax+1/2)(jmax+3/2).  Variational (E_i^true <=
     E_i^trunc) plus the resolvent bound |E_i^true - E_i^trunc| <= lambda^2 / (D_min - E_i^trunc) put
     E_i^true in [E_i^trunc - delta, E_i^trunc],  delta = lambda^2 / (D_min - E1) -- rigorous, finite.
 
@@ -23,7 +23,7 @@ No Entroptics read; no GPU: exact arithmetic on a small tridiagonal operator.
 """
 from fractions import Fraction as Q
 
-try:                       # numpy is used ONLY for the float cross-check column; the certified enclosure is pure `fractions`
+try:                       # numpy is used only for the float cross-check column; the certified enclosure is pure `fractions`
     import numpy as np
 except ImportError:        # so a referee can reproduce the rigorous bracket with the standard library alone
     np = None
@@ -57,8 +57,8 @@ def bracket(diag, offsq, k, lo, hi, tol):
     return lo, hi
 
 
-K0_HI = Q(2747, 10000)     # rational UPPER bound on kappa0 = (1/4)ln3 = 0.2746530...  (gap_lo >= K0_HI => gap >= kappa0)
-LN5_HI = Q(16095, 10000)   # rational UPPER bound on ln5 = 1.6094379...                (gap_lo >= LN5_HI => m_hi <= 1/5)
+K0_HI = Q(2747, 10000)     # rational upper bound on kappa0 = (1/4)ln3 = 0.2746530...  (gap_lo >= K0_HI => gap >= kappa0)
+LN5_HI = Q(16095, 10000)   # rational upper bound on ln5 = 1.6094379...                (gap_lo >= LN5_HI => m_hi <= 1/5)
 
 
 def certified_gap(lam, jmax=30, tol=Q(1, 10 ** 7)):
@@ -84,7 +84,7 @@ def float_gap(lam, jmax=60):
     js = np.arange(0.0, jmax + 0.5, 0.5)
     d = js * (js + 1.0)
     off = np.full(len(js) - 1, -float(lam))
-    # NOT A READ: diagonalises the DEFINED single-plaquette Hamiltonian j(j+1) - lam*adjacency, the float cross-check on the exact-rational bracket above; no measured field enters
+    # NOT A READ: diagonalises the defined single-plaquette Hamiltonian j(j+1) - lam*adjacency, the float cross-check on the exact-rational bracket above; no measured field enters
     w = np.linalg.eigvalsh(np.diag(d) + np.diag(off, 1) + np.diag(off, -1))
     return float(w[1] - w[0])
 

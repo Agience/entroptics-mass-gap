@@ -5,7 +5,7 @@ numbers on every run -- and it costs 6^4 x n x therm sweeps to produce them each
 in `test_generator_physics.py` were 98% of a 50-minute suite for that reason alone.  Nothing about
 those numbers changes between runs, so they are computed once and kept.
 
-What makes this safe to cache is the KEY, which covers everything the numbers depend on:
+What makes this safe to cache is the key, which covers everything the numbers depend on:
 
   * every generation argument (dims, beta, group, n, therm, seed, method), and
   * a fingerprint of `lattice_generator.py` itself, so any edit to the generator misses the cache
@@ -67,7 +67,7 @@ def cached(name: str, params: dict, produce):
     out = np.asarray(produce())
     d.mkdir(parents=True, exist_ok=True)
     # Write-then-rename, so a killed run leaves no half-written entry for the next one to load.
-    # np.save is handed an open FILE, not a path: given a path not ending in .npy it appends the
+    # np.save is handed an open file, not a path: given a path not ending in .npy it appends the
     # extension itself, which silently wrote the temp file to a different name than the one being
     # renamed. A file object bypasses that entirely.
     tmp = path.with_name(path.name + ".tmp")

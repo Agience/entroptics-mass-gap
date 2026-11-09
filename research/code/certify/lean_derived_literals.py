@@ -1,29 +1,36 @@
-"""Compare a Lean declaration's DERIVED/CHOSEN note against the literals in its STATEMENT.
+"""Compare a Lean declaration's DERIVED/CHOSEN note against the literals in its statement.
 
-WHY THIS EXISTS. Six consecutive adversarial audits of the odd-constant chain found the same defect,
+Why this exists. Six consecutive adversarial audits of the odd-constant chain found the same defect,
 and it was never in the terms -- it was in the note. Two shapes recur:
 
-  * the note justifies a numeral that occurs only in the PROOF (`2 * p - 1` reached the lemma through
+  * the note justifies a numeral that occurs only in the proof (`2 * p - 1` reached the lemma through
     a called definition, not through its own statement);
-  * the note omits a numeral that IS in the statement (`hN : N != 0` and `hbeta : 0 <= beta` each
+  * the note omits a numeral that is in the statement (`hN : N != 0` and `hbeta : 0 <= beta` each
     carry a `0`, and sibling lemmas in the same file cite them).
 
-Both are invisible to the existing gates. `test_no_undeclared_constants.py` checks that a literal HAS
-a note; nothing checked that the note and the literal AGREE.
+Both are invisible to the existing gates. `test_no_undeclared_constants.py` checks that a literal has
+a note; nothing checked that the note and the literal agree.
 
-WHAT IT DOES NOT DO. It compares multisets of digit-runs, not meanings. A note saying "the `2` is the
+What it does not do. It compares multisets of digit-runs, not meanings. A note saying "the `2` is the
 dimension" when the `2` is a plane conversion passes here and only a reader catches it. This gate
 closes the mechanical half.
 
-ONLY THE `missing` DIRECTION IS A FAILURE. A numeral cited but absent from the statement has benign
+Only the `missing` direction is a failure. A numeral cited but absent from the statement has benign
 causes -- a note may name `2p` as a concept, or say outright that a numeral lives in the proof rather
 than the statement, and saying so puts the numeral in backticks. That is the same trap as explaining
 a deletion: the prose about an absence reintroduces the string. So `cited-but-absent` is reported for
 a reader and never fails the gate; `in-the-statement-but-unmentioned` is the half no benign cause
 explains.
 
-    python research/code/certify/lean_derived_literals.py scan [MODULE ...]
-    python research/code/certify/lean_derived_literals.py check NAME ...
+Structural numerals are exempt. `0`, `1`, `2` and `4` (index and unit, unit and successor, square
+and arity, and the spacetime dimension `Fin 4`) are fixed by the shape of the statement, not by a
+reading or a choice, so a note need not cite them. The set and its reason live in
+`structural_numerals.py`, which `tests/test_no_undeclared_lean_constants.py` reads too. The exemption
+only removes those four from the "in the statement, unmentioned" side; every other numeral in a
+statement must still be cited, and a cited numeral is still compared against the statement.
+
+    python research/code/certify/lean_derived_literals.py scan [module ...]
+    python research/code/certify/lean_derived_literals.py check name ...
 """
 from __future__ import annotations
 
@@ -31,10 +38,13 @@ import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from structural_numerals import STRUCTURAL_NUMERALS  # noqa: E402
+
 REPO = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 LEAN = REPO / "research" / "lean" / "MassGap"
 
-# `[^\W\d]` rather than `[A-Za-z_]` for the NAME's first character. LEAN IDENTIFIERS ARE UNICODE,
+# `[^\W\d]` rather than `[A-Za-z_]` for the name's first character. Lean identifiers are Unicode,
 # and the declarations this development is most about begin with a Greek letter -- `ΔYM` the mass
 # gap, `κ₀YM` the entropy floor, `μYM` and `μYMAt` the tension, `μClampAt`, `βloYM`. An ASCII-only
 # start class matched none of them, so 29 declarations were never scanned at all and their
@@ -121,7 +131,7 @@ def analyse(path: pathlib.Path):
         stmt = strip_comments(statement_of(text, m.start()))
         present = set(LITERAL.findall(stmt))
         cited = cited_literals(doc)
-        missing = sorted(present - cited, key=int)
+        missing = sorted(present - cited - STRUCTURAL_NUMERALS, key=int)
         spurious = sorted(cited - present, key=int)
         if missing or spurious:
             yield name, path.name, m.start(), missing, spurious, sorted(present, key=int)

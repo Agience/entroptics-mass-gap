@@ -17,7 +17,7 @@ import entroptics_adapter as entroptics   # noqa: E402  -- the wrapper (research
 
 # Verifiability: the reads are pinned to one Entroptics release or commit. The pin is set once, in
 # research/requirements.txt, and reaches here through the wrapper that already enforces the call
-# surface at import -- no second copy of it. That check is a floor; this one warns on ANY mismatch,
+# surface at import -- no second copy of it. That check is a floor; this one warns on any mismatch,
 # because the committed reads were verified against exactly the pin. A commit pin is compared with
 # the commit pip recorded for the install (direct_url.json); an install from a directory or a wheel
 # records none, and is reported as unconfirmed rather than passed.
@@ -53,10 +53,10 @@ def su2_configs():
     return list(generator.stream((5, 5, 5, 16), 2.0, group="su2", n=3, therm=20, gap=3))
 
 
-# ── pinned null-reference: the wrapper REQUIRES one for every floor read (K_signal / contrast /
+# ── pinned null-reference: the wrapper requires one for every floor read (K_signal / contrast /
 #    certificate) -- it never falls back to the library's i.i.d. mp edge (see pin_reference).  A
 #    certificate test must therefore pin a signal-free reference whose planes have the same
-#    feature-count as the configs it reads.  These fixtures pin a SEPARATE same-type, same-shape
+#    feature-count as the configs it reads.  These fixtures pin a separate same-type, same-shape
 #    ensemble and unpin afterward. ──
 
 @pytest.fixture

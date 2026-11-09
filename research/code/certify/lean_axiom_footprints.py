@@ -1,23 +1,23 @@
 """Capture the axiom footprint of every `#print axioms` in MassGap as a committed artifact.
 
-PAPER Sec 13 states the footprint of the flagship theorems -- "the three foundational axioms plus
-`wilson_reflection_positive`", "foundation-only", "the four named axioms". Lean already checks those
-claims: the sources carry `#print axioms` commands, and every build prints what each declaration
-really depends on. But that output lives in the build log and nothing keeps it, so the paper's
-footprint table can only be compared against a build someone happens to have run. This writes it
+Section 11 of the paper states that every declaration whose footprint is recorded depends on a
+subset of `propext`, `Classical.choice` and `Quot.sound`. Lean already checks that claim: the sources
+carry `#print axioms` commands, and every build prints what each declaration really depends on. But
+that output lives in the build log and nothing keeps it, so the claim can only be compared against a
+build someone happens to have run. This writes it
 down, and `test_paper_matches_lean.py` compares the table to the paper.
 
 Runs `lake build` in research/lean and parses the info messages, which take the two forms
 
-    'MassGap.CellEnclosure.gap_uniform_of_cell' depends on axioms: [propext, Classical.choice]
-    'MassGap.FreeField.muInf_lt_floor' does not depend on any axioms
+    'MassGap.GapToOperator.norm_opT_le_of_orth' depends on axioms: [propext, Classical.choice]
+    'MassGap.GNSHilbert.complete_H' does not depend on any axioms
 
 Emits 13_dat_axiom_footprints.csv (declaration, axioms, n_axioms), sorted, one row per printed
 declaration. Refuses to write a partial table: a build that fails, or that surfaces fewer
 declarations than the sources ask to print, leaves the committed artifact alone.
 
-This is a BUILD, not a read: it needs the Lean toolchain and a warm .lake. It builds WARM --
-Lean caches each module's `#print axioms` output and replays it, MEASURED 2026-09-19 -- so a run
+This is a build, not a read: it needs the Lean toolchain and a warm .lake. It builds warm --
+Lean caches each module's `#print axioms` output and replays it, measured 2026-09-19 -- so a run
 costs minutes rather than the fifty-five a cold re-elaboration took. If the shortfall guard fires,
 it clears and re-elaborates cold once, automatically.
 Builds run on a dedicated node rather than the workstation, so `--from-log PATH` parses a log
@@ -44,11 +44,11 @@ OUT_CSV = os.path.join(REPO, "research", "data", "13_dat_axiom_footprints.csv")
 
 # 'name' depends on axioms: [a, b, c]   |   'name' does not depend on any axioms
 #
-# GREEDY, and that is the whole point. Lean wraps the name in single quotes, so a declaration whose
-# name ENDS IN A PRIME prints as `'MassGap.HaarVariance.haar_variance_reTr_pos'' depends on ...` --
+# Greedy, and that is the whole point. Lean wraps the name in single quotes, so a declaration whose
+# name ends in a prime prints as `'MassGap.HaarVariance.haar_variance_reTr_pos'' depends on ...` --
 # two quotes in a row. A `'([^']+)'` pattern cannot cross that prime: it matches up to `...pos`, then
 # needs ` depends` and finds `' depends`, and no backtracking rescues it because the class excludes
-# the quote. The line is dropped SILENTLY, and a primed declaration vanishes from the table.
+# the quote. The line is dropped silently, and a primed declaration vanishes from the table.
 # `.+` backtracks to the last `' depends on axioms:` instead, which captures the prime.
 # Caught 2026-09-19 by this script's own shortfall guard refusing to write a partial table.
 _DEPENDS = re.compile(r"'(.+)' depends on axioms: \[([^\]]*)\]")
@@ -65,9 +65,35 @@ def parse(text: str) -> dict[str, list[str]]:
     return out
 
 
+_IMPORT = re.compile(r"^import MassGap\.([A-Za-z0-9_.]+)", re.M)
+
+
+def built_modules() -> set[str]:
+    """The MassGap modules `lake build` elaborates: the import closure of MassGap.lean.
+
+    The lakefile's default target is `lean_lib MassGap` with no globs, so a module the root does not
+    reach is never compiled and its `#print axioms` never runs. Counting its requests would make the
+    shortfall guard refuse every table while a new module is being written beside the tree. Whether
+    every module is reachable is a separate invariant, held by
+    test_provenance.test_every_lean_module_is_reachable_from_the_root.
+    """
+    src = os.path.join(LEAN, "MassGap")
+    with open(os.path.join(LEAN, "MassGap.lean"), encoding="utf-8", errors="replace") as fh:
+        stack = _IMPORT.findall(fh.read())
+    seen: set[str] = set()
+    while stack:
+        m = stack.pop()
+        path = os.path.join(src, *m.split(".")) + ".lean"
+        if m in seen or not os.path.exists(path):
+            continue
+        seen.add(m)
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            stack += _IMPORT.findall(fh.read())
+    return seen
+
+
 def requested() -> set[str]:
-    """Every declaration the sources ask to print, so a short build cannot pass as a full one."""
-    want = set()
+    """Every declaration the built sources ask to print, so a short build cannot pass as a full one."""
     src = os.path.join(LEAN, "MassGap")
     if not os.path.isdir(src):
         raise SystemExit(
@@ -75,38 +101,45 @@ def requested() -> set[str]:
             "  this tree, so there is nothing to capture -- refusing rather than writing an\n"
             "  empty table. Builds run on the Lean node; bring its log back and pass\n"
             "  --from-log <log>.")
-    for fn in sorted(os.listdir(src)):
-        if not fn.endswith(".lean"):
-            continue
-        with open(os.path.join(src, fn), encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                # Lean identifiers are UNICODE. An ASCII-only class silently truncates a name at its
-                # first non-ASCII character -- `exp_κ₀YM` was read as `exp_`, which then matched
-                # nothing in the build output and made a complete table look like a partial one.
-                # The shortfall guard refused to write, correctly, for a reason that was not the real
-                # one. Anything that is not whitespace is part of the name.
-                m = re.match(r"\s*#print axioms\s+(\S+)", line)
-                if m:
-                    want.add(m.group(1).split(".")[-1])
+    want: set[str] = set()
+    for names in requested_by_module().values():
+        want |= names
     return want
 
 
+def unbuilt_requests() -> list[str]:
+    """Modules that ask for footprints but sit outside the root's import closure, by name."""
+    src = os.path.join(LEAN, "MassGap")
+    built = built_modules()
+    out = []
+    for fn in sorted(os.listdir(src)):
+        if fn.endswith(".lean") and fn[:-len(".lean")] not in built:
+            with open(os.path.join(src, fn), encoding="utf-8", errors="replace") as fh:
+                if re.search(r"^\s*#print axioms\s", fh.read(), re.M):
+                    out.append(fn[:-len(".lean")])
+    return out
+
 
 def requested_by_module() -> dict:
-    """{module basename: {declaration basenames it asks to print}}.
+    """{module basename: {declaration basenames it asks to print}}, over the modules a build elaborates.
 
     Separate from `requested()` because the guard below asks a different question: not "is this name
-    anywhere in the build" but "did THIS module contribute anything at all". A module that asks for
+    anywhere in the build" but "did this module contribute anything at all". A module that asks for
     footprints and yields none was never elaborated, and its declarations' axiom claims are unchecked.
     """
     out: dict = {}
     src = os.path.join(LEAN, "MassGap")
+    built = built_modules()
     for fn in sorted(os.listdir(src)):
-        if not fn.endswith(".lean"):
+        if not fn.endswith(".lean") or fn[:-len(".lean")] not in built:
             continue
         names = set()
         with open(os.path.join(src, fn), encoding="utf-8", errors="replace") as fh:
             for line in fh:
+                # Lean identifiers are Unicode. An ASCII-only class silently truncates a name at its
+                # first non-ASCII character -- `exp_κ₀YM` was read as `exp_`, which then matched
+                # nothing in the build output and made a complete table look like a partial one.
+                # Anything that is not whitespace is part of the name.
                 m = re.match(r"\s*#print axioms\s+(\S+)", line)
                 if m:
                     names.add(m.group(1).split(".")[-1])
@@ -118,14 +151,14 @@ def build_here(*, cold: bool = False) -> str:
     """Re-elaborate MassGap where builds belong, and return the build output.
 
     "Here" is whatever `lean_build` resolves to: local by default, or a configured build host. The
-    footprint table is a property of the SOURCES, not of the machine that compiled them, so a build
+    footprint table is a property of the sources, not of the machine that compiled them, so a build
     host changes how long this takes and nothing else -- and the sources are pushed before the build,
     so a remote host cannot report footprints for a tree other than this one.
     """
     print(LB.describe())
     orphans = LB.sources_only_on_remote()
     if orphans:
-        # A remote build compiles what is THERE. A source that exists only on the build host is
+        # A remote build compiles what is there. A source that exists only on the build host is
         # still elaborated, so its declarations would enter this artifact while nothing in this
         # repository defines them -- a footprint for a theorem the paper cannot cite.
         raise SystemExit(
@@ -138,9 +171,8 @@ def build_here(*, cold: bool = False) -> str:
 def _build(*, cold: bool) -> str:
     """One build, warm by default.
 
-    MEASURED 2026-09-19: a warm build replays the `#print axioms` output. `lean_build.py build
-    MassGap.Floor` on a fully warm tree prints `Replayed MassGap.Floor` and both of that module's
-    footprint lines. Lean caches info messages alongside the module. The cold path cost fifty
+    A warm build replays the `#print axioms` output: `lean_build.py build MassGap.<Module>` on a
+    fully warm tree prints `Replayed MassGap.<Module>` and that module's footprint lines. Lean caches info messages alongside the module. The cold path cost fifty
     minutes a run and bought nothing the shortfall guard does not already check.
     """
     if cold:
@@ -179,17 +211,20 @@ def main(argv=None) -> int:
     if not want:
         raise SystemExit("no `#print axioms` found in MassGap: refusing to write an empty table")
     print(f"MassGap asks to print {len(want)} footprints.")
+    outside = unbuilt_requests()
+    if outside:
+        print(f"  not counted: {len(outside)} module(s) outside MassGap.lean's import closure, which "
+              f"`lake build` does not elaborate: {', '.join(outside)}")
     blob = read_log(log_path) if log_path else build_here()
 
     found = parse(blob)
     short = sorted(n for n in want if not any(k.split(".")[-1] == n for k in found))
 
-    # A module that asks for footprints and contributes NONE was never elaborated. The basename
+    # A module that asks for footprints and contributes none was never elaborated. The basename
     # check above cannot see this: a name satisfied from any module satisfies a request from every
-    # module, which is how eight whole namespaces -- 203 `#print axioms`, the entire live front --
-    # went missing from this artifact on 2026-09-19 while the gate stayed green. Matching is by the
-    # names a module asks for rather than by its file name, because several files here declare a
-    # namespace that differs from the file (CellCouple.lean declares MassGap.CellEnclosure).
+    # module, so whole namespaces could go missing from this artifact while the gate stayed green.
+    # Matching is by the names a module asks for rather than by its file name, because a file may
+    # declare a namespace that differs from the file name.
     found_bases = {k.split(".")[-1] for k in found}
     silent = sorted(mod for mod, names in requested_by_module().items()
                     if not (names & found_bases))
@@ -197,7 +232,7 @@ def main(argv=None) -> int:
         short = ["<module %s contributed no footprint>" % m for m in silent]
 
     if short and log_path is None:
-        # The warm build did not surface everything. Clear and re-elaborate ONCE, automatically:
+        # The warm build did not surface everything. Clear and re-elaborate once, automatically:
         # one route, no operator flag, and the slow path is spent only when it is actually needed.
         print(f"{len(short)} requested footprint(s) missing from the warm build; "
               "clearing and re-elaborating cold.")

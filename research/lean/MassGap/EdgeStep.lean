@@ -24,8 +24,8 @@ length `ℓ`: `ξ` is a physical correlation length, and the length at which the
    `0 < M ≤ M₁` loses at most `M² δ/(1 + M δ) ≤ M₁² δ`.
 3. `uvBelowIR_of_edgeStep`: `IRGapAt` at `β₀` at a rate `M₀ > 0`, the edge step above `M₀⁻¹` from
    `βUV > 0`, and a finite budget `E` for `δ` along the dyadic tower below `aRun N β₀`, give at the
-   LOWERED rate `M₁ = M₀/(1 + 2 M₀ E)`: `0 < M₁`, `IRGapAt` at `β₀` at `M₁`, and
-   `ClayRoutes.UVBelowIR` at `M₁` (losses `M₁² δ`, budget `M₁² E`, which `2 M₁ E ≤ 1` puts below `M₁`).
+   lowered rate `M₁ = M₀/(1 + 2 M₀ E)`: `0 < M₁`, `IRGapAt` at `β₀` at `M₁`, and
+   `RestoreShimsClay.UVBelowIR` at `M₁` (losses `M₁² δ`, budget `M₁² E`, which `2 M₁ E ≤ 1` puts below `M₁`).
 4. `fixedWindowDecay_of_edgeStep`: the same inputs give `WeakCouplingWindow.FixedWindowDecay τ p hN L`
    at every `L > 0`, through item 3 and `UVIRSplit.fixedWindowDecay_of_uv_ir_below` at `M₁`. No
    condition relates `E` to `M₀`.
@@ -33,7 +33,7 @@ length `ℓ`: `ξ` is a physical correlation length, and the length at which the
    (`PairCorrSharp.boxPatchGap_floor_su2`, `HeatBathLocal.irGapAt_boxRate`); the edge step above the
    inverse box rate, with a finite budget and non-negative `δ`, are the only hypotheses.
 6. `edgeStep_of_fixedWindowDecay`: the converse. `FixedWindowDecay` gives a rate `M > 0`, a coupling
-   `βUV > 0`, `IRGapAt` at `βUV` at `M` and the edge step above `M⁻¹` from `βUV` at ZERO loss.
+   `βUV > 0`, `IRGapAt` at `βUV` at `M` and the edge step above `M⁻¹` from `βUV` at zero loss.
 7. `fixedWindowDecay_iff_edgeStep`: items 4 and 6 as one iff. At `2 ≤ N` and `0 < L`,
    `FixedWindowDecay τ p hN L` holds iff there are `βUV, β₀, M₀, E, ξ₀, δ` meeting the hypotheses of
    item 4. The edge step with a finite budget and one IR gap restates the uniform physical gap scale
@@ -45,13 +45,13 @@ length `ℓ`: `ξ` is a physical correlation length, and the length at which the
 the true correlation lengths, when that supremum is finite, holds trivially (`GapStep.gapAt_mono`;
 `edgeStep_of_fixedWindowDecay` is this case), so the clipped step carries content only where the true
 correlation length exceeds `ξ₀`; a finite supremum is itself the uniform-gap question.
-`ClayRoutes.UVBelowIR` at a rate `M₀` asks the summed losses to stay below `M₀` itself; at the floor
+`RestoreShimsClay.UVBelowIR` at a rate `M₀` asks the summed losses to stay below `M₀` itself; at the floor
 `M₀` is the box rate, about `3.0·10⁻⁵/aRun 2 β₀` at `SU(2)` and `1.45·10⁻⁴/aRun 3 β₀` at `SU(3)`. The
 edge step with any finite budget `E` gives `UVBelowIR` at the lowered rate `M₁ = M₀/(1 + 2 M₀ E)`, not
 at `M₀` (item 3): the comparison is met by lowering the rate, which `IRGapAt` at `M₀` permits.
 `UVBelowIR` at a free rate with `IRGapAt` at the same rate is also `FixedWindowDecay` restated: one
 direction is `UVIRSplit.fixedWindowDecay_of_uv_ir_below`, the other composes
-`UVIRSplit.irGapAt_of_fixedWindowDecay` with `ClayRoutes.uvBelowIR_of_uniform_gap` at zero loss; no
+`UVIRSplit.irGapAt_of_fixedWindowDecay` with `RestoreShimsClay.uvBelowIR_of_uniform_gap` at zero loss; no
 single theorem states that iff, and both directions are at a rate the proof chooses, not at the box
 rate.
 
@@ -163,7 +163,7 @@ def UVEdgeStepAbove (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (βUV : ℝ) (δ : ℝ
 `ξ₀ ≤ M₀⁻¹`, non-negative `δ` with `UVIRSplit.LossBudget δ (aRun N β₀) E`,
 `UVEdgeStepAbove τ p hN βUV δ ξ₀` and `UVIRSplit.IRGapAt τ p hN β₀ M₀`: at
 `M₁ = M₀/(1 + 2 M₀ E)`, `0 < M₁`, `IRGapAt τ p hN β₀ M₁` and
-`ClayRoutes.UVBelowIR τ p hN β₀ βUV M₁`. `IRGapAt` passes from `M₀` to `M₁ ≤ M₀` by
+`RestoreShimsClay.UVBelowIR τ p hN β₀ βUV M₁`. `IRGapAt` passes from `M₀` to `M₁ ≤ M₀` by
 `GapStep.gapAt_mono`; the clipped rate step at `M₁` with loss `M₁² δ` is
 `lossStepBelow_of_edgeStepAbove` (`ξ₀ ≤ M₀⁻¹ ≤ M₁⁻¹`); its budget `M₁² E` is below `M₁` because
 `2 M₁ E ≤ 1`. The conclusion is at `M₁`, not at `M₀`.
@@ -216,7 +216,7 @@ theorem uvBelowIR_of_edgeStep (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {βUV β₀ 
 `2 ≤ N`, `0 < L`, `0 < βUV ≤ β₀`, `0 < M₀`, `ξ₀ ≤ M₀⁻¹`, non-negative `δ` with
 `UVIRSplit.LossBudget δ (aRun N β₀) E`, `UVEdgeStepAbove τ p hN βUV δ ξ₀` and
 `UVIRSplit.IRGapAt τ p hN β₀ M₀`: `WeakCouplingWindow.FixedWindowDecay τ p hN L`. No relation between
-`E` and `M₀` is assumed. `uvBelowIR_of_edgeStep` gives `IRGapAt` and `ClayRoutes.UVBelowIR` at
+`E` and `M₀` is assumed. `uvBelowIR_of_edgeStep` gives `IRGapAt` and `RestoreShimsClay.UVBelowIR` at
 `M₁ = M₀/(1 + 2 M₀ E)`, and `UVIRSplit.fixedWindowDecay_of_uv_ir_below` consumes them at `M₁`.
 
 DERIVED: `4` is the spacetime dimension; `2` is the least rank with a non-zero Haar variance; `0` is

@@ -1,6 +1,5 @@
 import Mathlib
-import MassGap.VolumeRate
-import MassGap.SpectralBound
+import MassGap.Transfer
 
 /-!
 # MassGap.SecondEigenvalue — an operator bound on an invariant subspace from a Rayleigh bound
@@ -26,25 +25,18 @@ theorem. `lambdaTwo` is a definition, not an assertion that the supremum is atta
 that use it carry `BddAbove (rayleighSet T V)` or `(rayleighSet T V).Nonempty`, since `sSup` is a
 junk value otherwise.
 
-The discriminant step repeats what `Reconstruction.gns_cauchy_schwarz` and
-`Transfer.ReflForm.cauchy_schwarz` do, with the same `discrim_le_zero` proof. It is separate because
-both of those require the form to be nonnegative on the whole module, while `B (u, v) = ⟪T u, v⟫` is
-assumed nonnegative on `V` alone.
+The discriminant step is the argument of `Transfer.ReflForm.cauchy_schwarz`, with the same
+`discrim_le_zero` proof. It is separate because that lemma requires the form to be nonnegative on the
+whole module, while `B (u, v) = ⟪T u, v⟫` is assumed nonnegative on `V` alone.
 
 ## §2 At a `Transfer.TransferData`
 
 `vacPerp D` is `{y | ⟪Ω, y⟫ = 0}` as a submodule, equal to `(Submodule.span ℝ {Ω})ᗮ`
-(`vacPerp_eq_orthogonal`) but spelled so that `mem_vacPerp` is `Iff.rfl`. `vacPerp_invariant` is
-`VolumeRate.inner_vac_Tq` in submodule form. `norm_Tq_le_of_rayleigh` produces `‖Tq y‖ ≤ Λ ‖y‖` on
-the complement, which is the hypothesis `VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut`
-and `HalfLineTransfer` take; `Tq_pow_norm_le_of_rayleigh` and `tendsto_zero_of_rayleigh` are those
-two consumers with it supplied.
+(`vacPerp_eq_orthogonal`) but spelled so that `mem_vacPerp` is `Iff.rfl`.
 
 ## §3 Lag two
 
-`inner_Tq_two_eq` is `⟪x, Tq² x⟫ = ‖Tq x‖²`, from symmetry alone; `inner_Tq_two_le_of_rayleigh`
-bounds it by `Λ² ‖x‖²`. `lag_two_ratio_of_vacuum_rayleigh` and `spectralAt_of_vacuum_rayleigh` carry
-that to `wilsonCorrAt 3 β 2 ≤ Λ² wilsonCorrAt 3 β 0` and to `SpectralBound.SpectralAt β Λ`.
+`inner_Tq_two_eq` is `⟪x, Tq² x⟫ = ‖Tq x‖²`, from symmetry alone.
 
 ## Scope
 
@@ -52,15 +44,6 @@ that to `wilsonCorrAt 3 β 2 ≤ Λ² wilsonCorrAt 3 β 0` and to `SpectralBound
 * `hpos`, nonnegativity of `⟪Tq y, y⟫` on the complement, is a hypothesis of every theorem that uses
   it and is not a field of `TransferData`. `T_contract` bounds the magnitude of the form, not its
   sign.
-* §3's `h0 : wilsonCorrAt 3 β 0 = ‖x‖²` and `h2 : wilsonCorrAt 3 β 2 = ⟪x, Tq² x⟫` are equations
-  between real numbers, supplied by the caller. Nothing in them ties `D` to the Wilson measure, and
-  together with `hx` they assert that the whole contact value is carried by a vacuum-orthogonal
-  vector.
-* `SpectralBound.LagSpectralBound` requires one `Λ` below `SpectralBound.lambdaThreshold` at every
-  `β ≥ 0`; a single coupling is not enough for it.
-* `SpectralBound.spectralAt_iff` shows `SpectralAt β Λ` is the lag-two ratio statement, with no
-  operator in it. The identification of that statement with an operator's subdominant bound is `h0`
-  and `h2`, not a theorem.
 
 Foundational footprint only (`#print axioms` throughout).
 Build: `python code/lean_build.py build MassGap.SecondEigenvalue`.
@@ -109,8 +92,8 @@ theorem inner_map_quad (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (u v : E) (t :
 because `t • u + v` lies in `V`, so `discrim_le_zero` applies to the expansion `inner_map_quad`.
 
 Scope: nonnegativity is required on `V` only, so `T` may be indefinite elsewhere.
-`Transfer.ReflForm.cauchy_schwarz` and `Reconstruction.gns_cauchy_schwarz` are the same argument, but
-both require the form to be nonnegative on the whole module, so neither is reused here.
+`Transfer.ReflForm.cauchy_schwarz` is the same argument, but requires the form to be nonnegative on the
+whole module, so it is not reused here.
 
 DERIVED: `0` is the lower bound in the nonnegativity hypothesis; the exponent `2` is the square on
 the left, the degree of the quadratic the discriminant is taken of. The `4` of `b ^ 2 - 4 * a * c`
@@ -176,7 +159,7 @@ theorem norm_le_of_rayleigh_le (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V : S
 
 /-- **An operator norm bound gives a Rayleigh bound**, the converse of `norm_le_of_rayleigh_le`.
 
-Ordinary Cauchy–Schwarz: `⟪T y, y⟫ ≤ ‖T y‖ · ‖y‖ ≤ Λ ‖y‖ ^ 2`. Note what is NOT needed — no
+Ordinary Cauchy–Schwarz: `⟪T y, y⟫ ≤ ‖T y‖ · ‖y‖ ≤ Λ ‖y‖ ^ 2`. Note what is not needed — no
 symmetry, no invariance of `V`, no non-negativity of the form. Together with
 `norm_le_of_rayleigh_le` this makes the two bounds interchangeable on a submodule where those
 hypotheses do hold, so an estimate may be produced in whichever of the two shapes is convenient.
@@ -244,7 +227,7 @@ applying the squaring inequality at `m = 2 ^ k` advances the exponent from `2 ^ 
 `2 ^ k`-step norm decays, `‖T ^ n y‖ ≤ C ρ ^ n ‖y‖` — the shape a geometric correlation estimate
 gives, since `n` is the separation. Then `‖T y‖ ^ (2 ^ k) ≤ C ρ ^ (2 ^ k) ‖y‖ ^ (2 ^ k)`, so
 `‖T y‖ ≤ C ^ (1 / 2 ^ k) ρ ‖y‖`, and letting `k` grow drives the constant to one. `lambdaTwo` is
-then below `ρ` by `lambdaTwo_le_of_norm_le`, and `ClayCapstone.clay_gap_of_lambdaTwo` closes.
+then below `ρ` by `lambdaTwo_le_of_norm_le`.
 
 Everything in that chain is an upper bound. No absolute lower bound on the form appears, which is
 what distinguishes this route from the Gram and diagonal-dominance one — there the positive diagonal
@@ -383,7 +366,7 @@ theorem le_mul_pow_of_shifted {K B r C : ℝ} (hr : r ≠ 0) (hr0 : 0 ≤ r)
 
 /-- **The same bound, in the obligation's squared shape.**
 
-`ClayCapstone.clay_gap_of_two_point_decay` asks for a bound by `(C · ρ ^ n) ^ 2`. Taking `ρ` to be
+The squared shape is a bound by `(C · ρ ^ n) ^ 2`. Taking `ρ` to be
 the rate itself, that is `C ^ 2 · ρ ^ (2 * n)`, so the leading constant is the square root of the one
 `le_mul_pow_of_shifted` produces.
 
@@ -411,9 +394,8 @@ theorem le_sq_mul_pow_of_shifted {K B r C : ℝ} (hr : r ≠ 0) (hr0 : 0 ≤ r) 
 `le_of_pow_two_pow_le` washes out `C`.
 
 **This closes the relative route's chain, up to the estimate itself.** A geometric decay bound on the
-iterates — which is what a correlation estimate at growing separation supplies, and it is an UPPER
-bound throughout — now gives `lambdaTwo … ≤ ρ` through `lambdaTwo_le_of_norm_le`, and
-`ClayCapstone.clay_gap_of_lambdaTwo` turns `ρ < 1` into the Clay spectral statement. At no point is a
+iterates — which is what a correlation estimate at growing separation supplies, and it is an upper
+bound throughout — now gives `lambdaTwo … ≤ ρ` through `lambdaTwo_le_of_norm_le`. At no point is a
 lower bound on the form required.
 
 What is not supplied here is `hdec`. The strong-coupling estimates in `StrongCoupling` bound
@@ -450,13 +432,13 @@ If `‖T y‖ ≤ C` for every `y` in a submodule `V`, with `C` not scaled by `�
 once, and a nonzero value could be scaled past `C`.
 
 **Why this is worth stating.** Every hypothesis on the route to the Clay spectral conclusion is a
-RATIO — `norm_le_of_iterate_bound` asks `‖(T ^ n) y‖ ≤ C * ρ ^ n * ‖y‖`,
-`ClayCapstone.clay_gap_of_form_decay` asks `form ((T ^ n) x) ((T ^ n) x) ≤ (C * ρ ^ n) ^ 2 * form x x`,
+ratio — `norm_le_of_iterate_bound` asks `‖(T ^ n) y‖ ≤ C * ρ ^ n * ‖y‖`,
+the form-decay shape is `form ((T ^ n) x) ((T ^ n) x) ≤ (C * ρ ^ n) ^ 2 * form x x`,
 and `TransferGap.GapAt` is relative by definition. It would be natural to hope the factor of `‖y‖`
 could be dropped, since the strong-coupling arm produces bounds with no such factor. This says it
 cannot: the absolute form is not a weaker decay hypothesis but a vacuous one.
 
-The collapse is for ONE constant serving the whole submodule. With the constant allowed per vector,
+The collapse is for one constant serving the whole submodule. With the constant allowed per vector,
 an absolute bound at a fixed `y ≠ 0` is the ratio form at `C = K / ‖y‖`, and
 `norm_le_of_absolute_iterate_bound` records that: per-vector absolute decay gives the rate.
 
@@ -483,10 +465,6 @@ theorem eq_zero_of_norm_le_const {V : Submodule ℝ E} {T : E →ₗ[ℝ] E} {C 
 factor of `‖y‖` removed, and removing it collapses the operator to zero on `V` rather than giving a
 rate — so the contraction that `lambdaTwo_le_of_iterate_bound` extracts from the ratio form has no
 counterpart here.
-
-Read together with `HalfLineTransfer.no_rate_of_shift_transfer`, which shows a contraction rate on the
-vacuum complement at finite periodic extent forces that complement to be zero: both are collapses,
-and both say the content of a decay hypothesis lives entirely in what it is measured AGAINST.
 
 DERIVED: `0` is the value each iterate takes on `V`. -/
 theorem eq_zero_of_iterate_norm_le {V : Submodule ℝ E} {T : E →ₗ[ℝ] E} {C ρ : ℝ}
@@ -574,7 +552,7 @@ Cauchy–Schwarz gives `⟪T y, y⟫ ≤ ‖T y‖ · ‖y‖`, and a norm-contr
 every quotient is at most one.
 
 This matters because `BddAbove (rayleighSet …)` is carried as a hypothesis by
-`lambdaTwo_le_of_rayleigh_le`'s consumers and by `ClayCapstone.clay_gap_of_lambdaTwo`. For a transfer
+`lambdaTwo_le_of_rayleigh_le`'s consumers. For a transfer
 operator it is not an assumption: `Transfer.TransferData`'s `T_contract` field already makes the
 operator a contraction, so the hypothesis is discharged rather than assumed.
 
@@ -609,10 +587,9 @@ theorem rayleighSet_nonempty (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 /-- **An operator norm bound bounds `lambdaTwo`.** `rayleigh_le_of_norm_le` then
 `lambdaTwo_le_of_rayleigh_le`.
 
-This is the form in which the relative route would consume a strong-coupling estimate:
-`ClayCapstone.clay_gap_of_lambdaTwo` takes exactly a `lambdaTwo … ≤ Λ` with `Λ < 1`, and this
-supplies it from a bound on how far the transfer operator contracts, with no absolute lower bound on
-the form anywhere.
+This is the form in which the relative route would consume a strong-coupling estimate: it supplies a
+`lambdaTwo … ≤ Λ` from a bound on how far the transfer operator contracts, with no absolute lower bound
+on the form anywhere.
 
 DERIVED: no numeral occurs; `Λ` and `V` are the caller's. -/
 theorem lambdaTwo_le_of_norm_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
@@ -683,9 +660,7 @@ theorem lambdaTwo_le_of_span_decay (T : E →ₗ[ℝ] E) (hT : T.IsSymmetric) (V
 
 `norm_le_of_iterate_bound` at each `y ∈ V`, then `lambdaTwo_le_of_norm_le`.
 
-This is the interface `ClayCapstone.clay_gap_of_lambdaTwo` consumes: with `ρ < 1` it yields the Clay
-spectral statement. The whole chain from here to the gap is built and axiom-clean, and every step in
-it is an UPPER bound — no lower bound on the reflection form appears anywhere, which is what
+Every step is an upper bound — no lower bound on the reflection form appears anywhere, which is what
 separates this route from the Gram and diagonal-dominance one.
 
 The remaining obligation is `hdec` itself: geometric decay of `‖T ^ n y‖` in the GNS space. The
@@ -729,15 +704,14 @@ theorem rayleigh_le_of_lambdaTwo_le (T : E →ₗ[ℝ] E) (V : Submodule ℝ E)
 /-- **Two forms close at every vector have close subdominant suprema.**
 If `|⟪T₁ y, y⟫ - ⟪T₂ y, y⟫| ≤ d‖y‖²` on `V`, then `|lambdaTwo T₁ V - lambdaTwo T₂ V| ≤ d`.
 
-This is how a bound on a subdominant eigenvalue becomes reachable: the eigenvalue is a SUPREMUM,
+This is how a bound on a subdominant eigenvalue becomes reachable: the eigenvalue is a supremum,
 which is hard to bound directly and easy to bound pointwise. `csSup_le` on one side, `le_csSup` on
 the other, and the pointwise hypothesis between them. Nothing here is about transfer operators — it
 is a statement about two suprema of quotients over one index set.
 
-⛔ BOTH OPERATORS ACT ON THE SAME SPACE, and that is a real limit on where this applies. A family of
+⛔ Both operators act on the same space, and that is a real limit on where this applies. A family of
 `TransferData` indexed by a coupling has a GNS space that varies with the coupling, so the Rayleigh
-suprema at two couplings are suprema over different types and this lemma does not compare them. See
-`ClayCapstone.clay_gap_on_interval`, whose `hlip` is exactly that comparison.
+suprema at two couplings are suprema over different types and this lemma does not compare them.
 
 Nonemptiness is stated as `∃ y ∈ V, y ≠ 0` rather than on either `rayleighSet`, because one witness
 serves both: the two sets share `V`, and the quotient is defined at every nonzero vector of it. Both
@@ -823,7 +797,7 @@ end Generic
 
 `Transfer.TransferData` carries `Tq_isSymmetric` and `Tq_vacGNS`: the operator is symmetric for the
 reflection form and fixes the vacuum. Those two facts make the vacuum complement invariant
-(`VolumeRate.inner_vac_Tq`), which is the hypothesis §1's lemma needs. -/
+which is the hypothesis §1's lemma needs. -/
 
 section Transfer
 
@@ -832,7 +806,7 @@ variable {A : Type*} [AddCommGroup A] [Module ℝ A]
 /-- The submodule `{y | ⟪D.vacGNS, y⟫ = 0}` of `GNS D.toReflForm`, with the three closure fields
 proved from additivity and homogeneity of the inner product in its right argument. Membership is the
 equation `⟪Ω, y⟫ = 0` definitionally (`mem_vacPerp` is `Iff.rfl`), which is the form
-`VolumeRate.rp_sub_geometric` and `HalfLineTransfer` state their hypotheses in.
+the §1 lemmas state their hypotheses in.
 
 `vacPerp_eq_orthogonal` identifies it with `(Submodule.span ℝ {D.vacGNS})ᗮ`, so this is a spelling
 rather than a second notion.
@@ -876,88 +850,7 @@ theorem vacPerp_eq_orthogonal (D : TransferData A) :
 
 #print axioms vacPerp_eq_orthogonal
 
-/-- `∀ y ∈ vacPerp D, D.Tq y ∈ vacPerp D`: the vacuum complement is invariant under the transfer
-operator, in submodule form. It is `VolumeRate.inner_vac_Tq`, which moves `Tq` across the inner
-product by `Tq_isSymmetric` and uses `Tq_vacGNS` to return to the hypothesis.
-
-This is the `hinv` hypothesis of `norm_le_of_rayleigh_le`.
-
-DERIVED: no numeral appears in the statement. -/
-theorem vacPerp_invariant (D : TransferData A) :
-    ∀ y ∈ vacPerp D, D.Tq y ∈ vacPerp D :=
-  fun _ hy => MassGap.VolumeRate.inner_vac_Tq D hy
-
-#print axioms vacPerp_invariant
-
-/-- From `0 ≤ Λ`, nonnegativity of `⟪Tq y, y⟫` on the vacuum complement (`hpos`), and the Rayleigh
-bound `⟪Tq y, y⟫ ≤ Λ * ‖y‖ ^ 2` there (`hray`), every vacuum-orthogonal `y` satisfies
-`‖D.Tq y‖ ≤ Λ * ‖y‖`. It is `norm_le_of_rayleigh_le` at `T := D.Tq`, `V := vacPerp D`, with symmetry
-from `TransferData.Tq_isSymmetric` and invariance from `vacPerp_invariant`.
-
-This is the hypothesis `VolumeRate.rp_sub_geometric`, `VolumeRate.rp_gap_of_one_cut` and
-`HalfLineTransfer` take.
-
-Scope: `hpos` is a separate hypothesis, not a consequence of `TransferData.T_contract`, which bounds
-the magnitude of the form and not its sign. It is not a field of `TransferData`.
-
-DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
-lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
-`y`. The exponent `2` is the degree of the norm in the Rayleigh bound. -/
-theorem norm_Tq_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {y : GNS D.toReflForm} (hy : (inner ℝ D.vacGNS y : ℝ) = 0) :
-    ‖D.Tq y‖ ≤ Λ * ‖y‖ :=
-  norm_le_of_rayleigh_le D.Tq (TransferData.Tq_isSymmetric D) (vacPerp D)
-    (vacPerp_invariant D) (fun z hz => hpos z hz) hΛ (fun z hz => hray z hz) hy
-
-#print axioms norm_Tq_le_of_rayleigh
-
-/-- `‖(D.Tq ^ n) x‖ ≤ Λ ^ n * ‖x‖` at every `n`, for vacuum-orthogonal `x`, from `0 ≤ Λ` and the same
-nonnegativity and Rayleigh hypotheses as `norm_Tq_le_of_rayleigh`. It is `VolumeRate.norm_Tq_pow_le`
-with its per-step hypothesis supplied by that theorem.
-
-DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
-lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
-`x`. The exponent `2` is the degree of the norm in the Rayleigh bound. -/
-theorem Tq_pow_norm_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {x : GNS D.toReflForm} (hx : (inner ℝ D.vacGNS x : ℝ) = 0) (n : ℕ) :
-    ‖(D.Tq ^ n) x‖ ≤ Λ ^ n * ‖x‖ :=
-  MassGap.VolumeRate.norm_Tq_pow_le D hΛ
-    (fun _ hz => norm_Tq_le_of_rayleigh D hΛ hpos hray hz) hx n
-
-#print axioms Tq_pow_norm_le_of_rayleigh
-
-/-- With `0 ≤ Λ < 1` and the same nonnegativity and Rayleigh hypotheses,
-`Tendsto (fun n => ‖(D.Tq ^ n) x‖) atTop (nhds 0)` for vacuum-orthogonal `x`. It is
-`VolumeRate.rp_gap_of_one_cut` with its per-step hypothesis supplied by `norm_Tq_le_of_rayleigh`.
-
-Scope: `n` counts applications of `Tq`, not a volume.
-
-DERIVED: `0` occurs six times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
-lower bound of the form in `hpos`, the orthogonality condition in `hray`, the orthogonality of `x`,
-and the limit point `nhds 0`. `1` is the upper bound on `Λ`, the value the vacuum's own Rayleigh
-quotient takes and which the powers must sit below to vanish. The exponent `2` is the degree of the
-norm in the Rayleigh bound. -/
-theorem tendsto_zero_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ) (hΛ1 : Λ < 1)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {x : GNS D.toReflForm} (hx : (inner ℝ D.vacGNS x : ℝ) = 0) :
-    Filter.Tendsto (fun n => ‖(D.Tq ^ n) x‖) Filter.atTop (nhds 0) :=
-  MassGap.VolumeRate.rp_gap_of_one_cut D hΛ hΛ1
-    (fun _ hz => norm_Tq_le_of_rayleigh D hΛ hpos hray hz) hx
-
-#print axioms tendsto_zero_of_rayleigh
-
-/-! ## §3 Lag two, and the shape `SpectralBound` consumes
+/-! ## §3 Lag two
 
 At lag two symmetry turns `⟪x, Tq ^ 2 x⟫` into `‖Tq x‖ ^ 2` exactly, so the bound is the operator
 bound squared and no second Cauchy–Schwarz on the correlator is needed. -/
@@ -979,96 +872,6 @@ theorem inner_Tq_two_eq (D : TransferData A) (x : GNS D.toReflForm) :
     real_inner_self_eq_norm_mul_norm]
 
 #print axioms inner_Tq_two_eq
-
-/-- For vacuum-orthogonal `x` and the same hypotheses as `norm_Tq_le_of_rayleigh`,
-`⟪x, (D.Tq ^ 2) x⟫ ≤ Λ ^ 2 * ‖x‖ ^ 2`. `inner_Tq_two_eq` rewrites the left side as `‖D.Tq x‖ ^ 2`
-and `norm_Tq_le_of_rayleigh` bounds `‖D.Tq x‖` by `Λ * ‖x‖`.
-
-DERIVED: `0` occurs five times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the
-lower bound of the form in `hpos`, the orthogonality condition in `hray`, and the orthogonality of
-`x`. `2` occurs four times — the exponent in the Rayleigh bound, the power of `Tq` (the lag index),
-and the two squares in the conclusion, both forced by that lag. -/
-theorem inner_Tq_two_le_of_rayleigh (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {x : GNS D.toReflForm} (hx : (inner ℝ D.vacGNS x : ℝ) = 0) :
-    (inner ℝ x ((D.Tq ^ 2) x) : ℝ) ≤ Λ ^ 2 * ‖x‖ ^ 2 := by
-  have hstep : ‖D.Tq x‖ ≤ Λ * ‖x‖ := norm_Tq_le_of_rayleigh D hΛ hpos hray hx
-  have hnn : (0 : ℝ) ≤ ‖D.Tq x‖ := norm_nonneg _
-  rw [inner_Tq_two_eq]
-  nlinarith [hstep, hnn, mul_nonneg hΛ (norm_nonneg x)]
-
-#print axioms inner_Tq_two_le_of_rayleigh
-
-/-- `MassGap.wilsonCorrAt 3 β 2 ≤ Λ ^ 2 * MassGap.wilsonCorrAt 3 β 0`, from the Rayleigh hypotheses
-together with two identifications supplied by the caller:
-
-* `h0 : wilsonCorrAt 3 β 0 = ‖x‖ ^ 2` — the contact value is the trial vector's squared norm;
-* `h2 : wilsonCorrAt 3 β 2 = ⟪x, (D.Tq ^ 2) x⟫` — the lag-two value is its two-step two-point
-  function.
-
-The proof rewrites by both and applies `inner_Tq_two_le_of_rayleigh`.
-
-Scope: `h0` and `h2` are equations between real numbers and are hypotheses; nothing in them relates
-`D` to the Wilson measure, so a `D` chosen to match the numbers satisfies them. Together with
-`hx : ⟪Ω, x⟫ = 0`, `h0` asserts that the whole contact value is carried by a vacuum-orthogonal
-vector. The conclusion is the shape `LagTwoBound.confines_of_lag_two_ratio` consumes, at `K = Λ ^ 2`;
-that consumer requires one `Λ` serving every `β ≥ 0`.
-
-DERIVED: `3` occurs four times, as the aperture argument of each `wilsonCorrAt` — once in `h0`, once
-in `h2`, and twice in the conclusion. `0` occurs seven times — the lower bound on `Λ`, the
-orthogonality condition in `hpos`, the lower bound of the form in `hpos`, the orthogonality condition
-in `hray`, the orthogonality of `x`, and the contact lag index in `h0` and in the conclusion. `2`
-occurs six times — the exponent in the Rayleigh bound, the exponent in `h0`, the lag index and the
-power of `Tq` in `h2`, and the lag index and the exponent on `Λ` in the conclusion; every one of them
-is the second lag or the square that lag forces. -/
-theorem lag_two_ratio_of_vacuum_rayleigh {β : ℝ} (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {x : GNS D.toReflForm} (hx : (inner ℝ D.vacGNS x : ℝ) = 0)
-    (h0 : MassGap.wilsonCorrAt 3 β 0 = ‖x‖ ^ 2)
-    (h2 : MassGap.wilsonCorrAt 3 β 2 = (inner ℝ x ((D.Tq ^ 2) x) : ℝ)) :
-    MassGap.wilsonCorrAt 3 β 2 ≤ Λ ^ 2 * MassGap.wilsonCorrAt 3 β 0 := by
-  rw [h0, h2]
-  exact inner_Tq_two_le_of_rayleigh D hΛ hpos hray hx
-
-#print axioms lag_two_ratio_of_vacuum_rayleigh
-
-/-- `MassGap.SpectralBound.SpectralAt β Λ`, from the same hypotheses as
-`lag_two_ratio_of_vacuum_rayleigh`. `SpectralBound.spectralAt_iff` unfolds that proposition to
-`0 ≤ Λ ∧ wilsonCorrAt 3 β 2 ≤ Λ ^ 2 * wilsonCorrAt 3 β 0`, whose two halves are `hΛ` and the previous
-theorem.
-
-Scope: this is one coupling. `SpectralBound.confines_of_subdominant_bound` consumes
-`SpectralBound.LagSpectralBound Λ`, which requires a single `Λ` serving every `β ≥ 0`, together with
-a strict comparison `Λ < SpectralBound.lambdaThreshold`. That threshold is the closed form
-`(1 - 3 ^ (-1/4)) / (1 + 3 ^ (-1/4))`, whose square is `LagTwoBound.lagTwoThreshold` by
-`SpectralBound.lambdaThreshold_sq`; `SpectralBound.lambdaThreshold_lt` and `lambdaThreshold_gt`
-bracket it strictly between `0.136469` and `0.13647`, and
-`SpectralBound.confines_of_subdominant_le` takes the lower bracket.
-
-DERIVED: `3` occurs twice, as the aperture argument of `wilsonCorrAt` in `h0` and in `h2`. `0`
-occurs six times — the lower bound on `Λ`, the orthogonality condition in `hpos`, the lower bound of
-the form in `hpos`, the orthogonality condition in `hray`, the orthogonality of `x`, and the contact
-lag index in `h0`. `2` occurs four times — the exponent in the Rayleigh bound, the exponent in `h0`,
-and the lag index and power of `Tq` in `h2`. -/
-theorem spectralAt_of_vacuum_rayleigh {β : ℝ} (D : TransferData A) {Λ : ℝ} (hΛ : 0 ≤ Λ)
-    (hpos : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (0 : ℝ) ≤ (inner ℝ (D.Tq y) y : ℝ))
-    (hray : ∀ y : GNS D.toReflForm, (inner ℝ D.vacGNS y : ℝ) = 0 →
-      (inner ℝ (D.Tq y) y : ℝ) ≤ Λ * ‖y‖ ^ 2)
-    {x : GNS D.toReflForm} (hx : (inner ℝ D.vacGNS x : ℝ) = 0)
-    (h0 : MassGap.wilsonCorrAt 3 β 0 = ‖x‖ ^ 2)
-    (h2 : MassGap.wilsonCorrAt 3 β 2 = (inner ℝ x ((D.Tq ^ 2) x) : ℝ)) :
-    MassGap.SpectralBound.SpectralAt β Λ := by
-  rw [MassGap.SpectralBound.spectralAt_iff]
-  exact ⟨hΛ, lag_two_ratio_of_vacuum_rayleigh D hΛ hpos hray hx h0 h2⟩
-
-#print axioms spectralAt_of_vacuum_rayleigh
 
 end Transfer
 

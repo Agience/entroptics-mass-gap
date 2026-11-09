@@ -1,18 +1,17 @@
 import Mathlib
-import MassGap.StrongArm
 import MassGap.PlaqVariance
+import MassGap.ReflectionPositivity
+import MassGap.StrongCoupling
 
 /-!
 # MassGap.ContactFloor — an aperture-uniform floor on the contact term
 
-`StrongArm.contact_relative_on_strong_arm` takes one hypothesis, `StrongArm.ContactFloor b`: a
-single positive number below `wilsonCorrAt N β 0` at every aperture `N` and every coupling in
-`[0, b]`. `contactFloor_holds` proves that statement at every real `b`, and
-`contact_relative_unconditional` restates the strong-arm conclusion with the hypothesis discharged.
+This module bounds the contact term `corrClay (N+1) β 0` below by a positive number that is the same at
+every aperture `N` and every coupling in `[0, b]`.
 
 ## The quantity
 
-`wilsonCorrAt N β 0 = corrClay (N+1) β 0` is the connected correlation at zero lag, which is the
+`corrClay (N+1) β 0` is the connected correlation at zero lag, which is the
 variance of the plaquette-energy observable `φ_p` under the `SU(3)` Wilson Gibbs measure on the
 periodic four-dimensional lattice. The target is therefore `Var_β(φ_p) ≥ δ > 0`, uniform in the
 extent.
@@ -36,8 +35,8 @@ which is legitimate because a plaquette that does not touch `p` reads none of `p
   the Gibbs mean — a function of both the coupling and the aperture — be discarded.
 
 `StrongCoupling.touchDeg_bd_le` bounds `|touchNbrs|` by `16·dim`, a quantity with no extent in it,
-and that is what makes the factor aperture-free. `WilsonReal.wilsonSystem_partition_pos` and
-`WilsonRead.expect_ge_haar_of_nonneg` carry exponents proportional to the plaquette count instead.
+and that is what makes the factor aperture-free; an exponent proportional to the plaquette count would
+not be.
 
 ## The Haar variance
 
@@ -64,9 +63,8 @@ The step reduces an `(N, β)`-uniform floor to an `N`-uniform floor on the pure 
   non-constructive (`PlaqVariance.corrClay_zero_pos` runs `Continuous.ae_eq_iff_eq` against an
   `IsOpenPosMeasure` and yields no rate), so no numerical value for either appears anywhere in this
   file. Each is a single universal number with no aperture and no coupling in it.
-* The floor shrinks as `b` grows, by the factor `e^{−128b}`. `contactFloor_holds` and
-  `contact_relative_unconditional` are statements about a bounded coupling interval `[0, b]`; they
-  quantify over no coupling above `b`.
+* The floor shrinks as `b` grows, by the factor `e^{−128b}`. It is a statement about a bounded
+  coupling interval `[0, b]`; it quantifies over no coupling above `b`.
 
 Foundational footprint only (`#print axioms` after every declaration).
 Build: `python code/lean_build.py build MassGap.ContactFloor`.
@@ -583,8 +581,7 @@ theorem block_factor (bd : Pq → List (Lk × Bool)) (p : Pq) (β c : ℝ) :
 `exp (-(2 * β * (touchNbrs bd p).card))` times the one at coupling `0`, at every geometry, every
 `SU(Nc)` with `Nc ≠ 0` and every `β ≥ 0`. The exponent counts the plaquettes sharing a link with
 `p`, not the plaquettes of the lattice; `StrongCoupling.touchDeg_bd_le` bounds that card by `16·dim`
-with no extent in it, whereas `WilsonReal.wilsonSystem_partition_pos` and
-`WilsonRead.expect_ge_haar_of_nonneg` carry exponents proportional to the plaquette count.
+with no extent in it; an exponent proportional to the plaquette count would not be extent-free.
 
 DERIVED: `0` is the `Nc ≠ 0` of `hN`, the `0 ≤ β` of `hβ`, and the coupling on the left-hand side.
 `2` is the factor in the exponent, one per unit of `WilsonAction.wilsonDensity_le_two`'s cap `[0, 2]`
@@ -723,9 +720,8 @@ end General
 
 /-! ### The single-link translation, on an arbitrary link set
 
-`WilsonRead`'s `linkTranslate` is typed on `Fin 8` for the two-plaquette system. The same three
-lemmas are restated here at an arbitrary finite link type, which is what the hypercubic argument
-below consumes. -/
+The three single-link translation lemmas are stated here at an arbitrary finite link type, which is
+what the hypercubic argument below consumes. -/
 
 section Translate
 
@@ -1109,91 +1105,5 @@ theorem corrClay_zero_ge (N : ℕ) {β : ℝ} (hβ : 0 ≤ β) :
     _ ≤ _ := hbase
 
 #print axioms corrClay_zero_ge
-
-/-- `StrongArm.ContactFloor b` holds at every real `b`. No sign condition on `b` is needed, since
-a negative `b` makes the inner quantifier over `β ∈ [0, b]` empty. The witness is `e^{−128b}` times
-`exists_haar_floor`'s extent-free constant, where `128 = 2 · 16 · 4` comes from
-`StrongCoupling.touchDeg_bd_le` at `dim = 4` against `WilsonAction.wilsonDensity_le_two`.
-
-DERIVED: the statement carries no numeral; `b : ℝ` is the only argument and `ContactFloor` is a
-named predicate. The constants quoted above sit in the proof and in `corrClay_zero_ge`. -/
-theorem contactFloor_holds (b : ℝ) : MassGap.StrongArm.ContactFloor b := by
-  obtain ⟨δ₀, hδ₀, hfloor⟩ := exists_haar_floor
-  refine ⟨Real.exp (-(128 * b)) * δ₀, by positivity, fun N β hβ0 hβb => ?_⟩
-  have hstep := corrClay_zero_ge N hβ0
-  have hmono : Real.exp (-(128 * b)) ≤ Real.exp (-(128 * β)) := by
-    rw [Real.exp_le_exp]; linarith
-  have hδ : δ₀ ≤ corrClay (N + 1) 0 0 := hfloor N
-  rw [MassGap.StrongArm.wilsonCorrAt_eq_corrClay]
-  calc Real.exp (-(128 * b)) * δ₀
-      ≤ Real.exp (-(128 * β)) * δ₀ := mul_le_mul_of_nonneg_right hmono hδ₀.le
-    _ ≤ Real.exp (-(128 * β)) * corrClay (N + 1) 0 0 :=
-        mul_le_mul_of_nonneg_left hδ (Real.exp_pos _).le
-    _ ≤ corrClay (N + 1) β 0 := hstep
-
-#print axioms contactFloor_holds
-
-/-- `StrongArm.contact_relative_on_strong_arm` with its `ContactFloor` hypothesis discharged: there
-is a `b > 0` with `StrongCoupling.coreRate (16 * 4) b < 1` and a single `C ≥ 0` such that
-`wilsonCorrAt N β d ≤ C * wilsonCorrAt N β 0 / (circLag d) ^ 4` at every aperture `N`, every
-coupling `β ∈ [0, b]` and every lag `d` with `circLag d ≥ 1`. The `b` is the one
-`contact_relative_on_strong_arm` produces; the statement quantifies over no coupling above it.
-
-DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le`'s bound `16 * dim` at `dim = 4`, inherited from
-`contact_relative_on_strong_arm` and not chosen here. `4` is also the exponent on `circLag d`, that
-theorem's own decay power. `0` is the strict bound in `0 < b`, the sign condition `0 ≤ C` and
-`0 ≤ β`, and the contact lag in `wilsonCorrAt N β 0`. `1` is the floor on `circLag d` and the bound
-`coreRate … b < 1`. -/
-theorem contact_relative_unconditional :
-    ∃ b : ℝ, 0 < b ∧ MassGap.StrongCoupling.coreRate (16 * 4) b < 1 ∧
-      ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (β : ℝ) (d : Fin (N + 1)), 0 ≤ β → β ≤ b →
-        1 ≤ Moment.circLag d →
-          MassGap.wilsonCorrAt N β d
-            ≤ C * MassGap.wilsonCorrAt N β 0 / (Moment.circLag d : ℝ) ^ 4 := by
-  obtain ⟨b, hb, hrb, himp⟩ := MassGap.StrongArm.contact_relative_on_strong_arm
-  exact ⟨b, hb, hrb, himp (contactFloor_holds b)⟩
-
-#print axioms contact_relative_unconditional
-
-/-- The Entroptics read's weight bound with its constant uniform in the aperture: one `δ > 0`
-such that for every aperture `N`, every read `R` whose `ρ` is `corrClay (N + 1) β`, and every
-coupling `β ∈ (0, b]` with `StrongCoupling.coreRate (16 * 4) β < 1`,
-
-    R.p d ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * δ) + 1) * coreRate (16 * 4) β ^ circLag d
-
-at every lag `d`. The `∃ δ` binds outside the `∀ N`, so one `δ` serves every aperture.
-
-`StrongCoupling.read_p_le_of_corrClay` supplies the bound at a per-read lower bound on `∑ρ`; here
-that bound is `contactFloor_holds`, whose `δ` does not depend on `N`. The read's `ρ` is nonnegative,
-so `∑ρ ≥ ρ 0`, and `ρ 0` is the contact term `wilsonCorrAt N β 0`.
-
-Scope. `coreConst` and `coreRate` both depend on `β`, and the hypothesis `coreRate (16 * 4) β < 1`
-is an assumption of this statement rather than a consequence; it is available near zero coupling by
-`StrongCoupling.core_rate_lt_one_of_small_hypercubic`. The conclusion is quantified over
-`β ∈ (0, b]` only.
-
-DERIVED: `16 * 4` is `StrongCoupling.touchDeg_bd_le`'s `16 * dim` at `dim = 4`, inherited from
-`read_p_le_of_corrClay`. The `+ 1` in the constant and the division by `coreRate` are that
-theorem's own. `0` is the strict bound in `0 < δ` and `0 < β`, and the contact lag in `R.ρ 0` and
-`wilsonCorrAt N β 0`, where the two plaquettes coincide. `1` is the successor in `corrClay (N + 1)`
-and in `Fin (N + 1)`, the `+ 1` of the constant, and the bound in `coreRate … β < 1`. -/
-theorem read_p_le_aperture_uniform (b : ℝ) :
-    ∃ δ : ℝ, 0 < δ ∧ ∀ (N : ℕ) (R : Moment.Read N) (β : ℝ),
-      (∀ d : Fin (N + 1), R.ρ d = MassGap.WilsonBridge.corrClay (N + 1) β d) →
-      0 < β → β ≤ b → MassGap.StrongCoupling.coreRate (16 * 4) β < 1 →
-      ∀ d : Fin (N + 1),
-        R.p d ≤ (MassGap.StrongCoupling.coreConst (16 * 4) β
-            / (MassGap.StrongCoupling.coreRate (16 * 4) β * δ) + 1)
-          * MassGap.StrongCoupling.coreRate (16 * 4) β ^ (Moment.circLag d) := by
-  obtain ⟨δ, hδ, hfloor⟩ := contactFloor_holds b
-  refine ⟨δ, hδ, fun N R β hρ hβ hb hr d => ?_⟩
-  refine MassGap.StrongCoupling.read_p_le_of_corrClay R hρ hδ ?_ hβ hr d
-  -- the contact term is the read's lag-zero weight, and the sum dominates that one term.
-  have h0 : δ ≤ R.ρ 0 := by
-    rw [hρ 0, ← MassGap.StrongArm.wilsonCorrAt_eq_corrClay N β 0]
-    exact hfloor N β hβ.le hb
-  exact le_trans h0 (Finset.single_le_sum (fun i _ => R.hρ i) (Finset.mem_univ (0 : Fin (N + 1))))
-
-#print axioms read_p_le_aperture_uniform
 
 end MassGap.ContactFloor

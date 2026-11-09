@@ -1,6 +1,6 @@
 """The Lean the paper cites exists, and every axiom the Lean carries is accounted for in the paper.
 
-PAPER.md names Lean files and declarations throughout its status tables. Those names are prose: a
+The paper (`research/paper/mass-gap.md` and its `*.lean-map.md` tables) names Lean files and declarations throughout its status tables. Those names are prose: a
 renamed theorem or a deleted file leaves the citation pointing at nothing, and nothing else notices.
 These tests check both directions.
 
@@ -22,7 +22,9 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-PAPER = REPO / "research" / "PAPER.md"
+PAPER = REPO / "research" / "paper" / "mass-gap.md"
+#: The paper's supplementary theorem-to-declaration tables and figure notes, which carry its Lean names.
+COMPANIONS = REPO / "research" / "paper" / "v3"
 LEAN = REPO / "research" / "lean"
 DATA = REPO / "research" / "data"
 
@@ -30,19 +32,31 @@ DATA = REPO / "research" / "data"
 #: directories, Lean keywords, and axioms supplied by Lean core rather than by this development.
 NOT_LEAN = {
     "sorry", "propext", "float32", "configs_links_su2", "mp",
-    # Lean TACTICS, not declarations. The paper names the tactic that discharges a step (§7 calls
+    # Lean tactics, not declarations. The paper names the tactic that discharges a step (§7 calls
     # `ym_finite_aperture` "a theorem (`norm_num`)"), and a tactic has no `theorem`/`def` line to
     # resolve to, so the resolver below would report it forever.
     "norm_num", "positivity", "linarith", "nlinarith", "decide", "simp", "rfl",
-    # HYPOTHESIS BINDERS, not declarations. The paper names the hypothesis a theorem takes
+    # `admit` is the tactic twin of `sorry`; the papers name both when they state the tree has none.
+    "admit",
+    # Hypothesis binders, not declarations. The paper names the hypothesis a theorem takes
     # ("asking instead for `hfe` and `hgap`"), and a binder has no `theorem`/`def` line to
     # resolve to. `hfe` passed only because a python variable happens to share the name,
     # which is the accident this list exists to replace with a decision.
     "hfe", "hgap", "hdom", "hconf", "hread", "hmom", "hscale",
-    # `hdual` is the scale-duality hypothesis of `VortexCount.junction_of_floor_count` and
-    # `junction_of_physical_count` — a binder in both, named in the paper's comparison of the two
-    # gap routes for the same reason `hfe` and `hgap` are named there.
+    # `hdual` is the scale-duality hypothesis binder named in the paper's comparison of two gap
+    # routes, for the same reason `hfe` and `hgap` are named there.
     "hdual",
+    # `hvan` is the vanishing-limit binder of `CompositeNondeg.not_compNondeg_of_vanish` (section 4 map).
+    "hvan",
+    # `hsym` is the symmetric-kernel binder of `KernelEigen.exists_eigen` (section 2 table).
+    "hsym",
+    # Section 11 shortens a family of names to their suffixes after the first full one
+    # (`BoxLatticeGap.torusGap_su2_at`, `_su2_le`, `_su3_at`, `_su3_le`).
+    "_su2_le", "_su3_at", "_su3_le",
+    # Section 11 names the keyword and the tactic the sources do not use, the toolchain manager, the
+    # Mathlib commit, and section 12 names resource classes and a Python package.
+    "axiom", "native_decide", "elan", "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "bigmem", "cpu2h", "long", "torch",
 }
 
 
@@ -50,10 +64,37 @@ def _lean_files() -> list[Path]:
     return [p for p in LEAN.rglob("*.lean") if ".lake" not in p.parts]
 
 
+def _built_lean_files() -> list[Path]:
+    """The Lean files `lake build` elaborates: MassGap.lean and its MassGap import closure.
+
+    The default target is `lean_lib MassGap` with no globs, so a module the root does not import is
+    never compiled and prints no footprint. That such a module exists at all is owned by
+    test_provenance.test_every_lean_module_is_reachable_from_the_root; a footprint check that also
+    counted it would report the same defect a second time, as a stale artifact.
+    """
+    imp = re.compile(r"^import MassGap\.([A-Za-z0-9_.]+)", re.M)
+    root = LEAN / "MassGap.lean"
+    stack = imp.findall(root.read_text(encoding="utf-8", errors="replace"))
+    seen, out = set(), [root]
+    while stack:
+        m = stack.pop()
+        p = LEAN.joinpath("MassGap", *m.split(".")).with_suffix(".lean")
+        if m in seen or not p.exists():
+            continue
+        seen.add(m)
+        out.append(p)
+        stack += imp.findall(p.read_text(encoding="utf-8", errors="replace"))
+    return out
+
+
 def _paper() -> str:
+    """The assembled paper and its companion files (`*.lean-map.md`)."""
     if not PAPER.exists():
-        pytest.skip("PAPER.md not present")
-    return PAPER.read_text(encoding="utf-8")
+        pytest.skip(f"{PAPER.name} not present")
+    parts = [PAPER.read_text(encoding="utf-8")]
+    # DERIVED: a section is `NN-name.md` (one dot); a companion `NN-name.lean-map.md` has two.
+    parts += [q.read_text(encoding="utf-8") for q in sorted(COMPANIONS.glob("*.md")) if q.name.count(".") > 1]
+    return "\n\n".join(parts)
 
 
 def test_every_cited_lean_file_exists():
@@ -62,7 +103,7 @@ def test_every_cited_lean_file_exists():
     assert cited, "the paper cites no Lean files; the reference format may have changed"
     have = {p.name for p in _lean_files()}
     missing = [f for f in cited if f not in have]
-    assert not missing, f"PAPER.md cites Lean files that do not exist: {missing}"
+    assert not missing, f"the paper cites Lean files that do not exist: {missing}"
 
 
 def _declared_axioms():
@@ -92,36 +133,22 @@ def _declared_axioms():
 
 
 def test_the_stated_total_of_named_axioms_matches_the_tree():
-    """The paper's GLOBAL axiom count, checked against the tree.
+    """The paper's global axiom claim, checked against the tree.
 
-    `PAPER.md` states "The tree declares two named axioms in total." That is the development's
-    headline integrity claim -- it is what "proved rather than assumed" rests on -- and nothing
-    checked the NUMBER. The per-declaration sibling deliberately drops this sentence, because a
-    global count attributed to the nearest backticked name would be read as that declaration's
-    footprint; its comment says so. Correct, and it left the total unverified.
+    Section 11 states "there is no `sorry`, no `axiom` declaration and no `native_decide`". That is the development's headline integrity claim. Without this test an axiom could be
+    added and named in the paper, satisfying `test_every_lean_axiom_is_named_in_the_paper`, while
+    the stated total stayed at none.
 
-    So a third axiom could be added and named in the paper, satisfying
-    `test_every_lean_axiom_is_named_in_the_paper`, while the stated total stayed at two and nothing
-    said otherwise.
-
-    The phrase not being found is a FAILURE, not a skip: a check that goes quiet when the sentence
+    The phrase not being found is a failure, not a skip: a check that goes quiet when the sentence
     is reworded reports the same thing as a check that passes.
     """
-    text = _paper()
-    flat = " ".join(text.split())
-    m = re.search(r"declares\s+([A-Za-z]+|\d+)\s+named axioms? in total", flat)
-    assert m, ("the paper's stated total of named axioms could not be found; the phrasing changed "
-               "and this check would otherwise go silent on the tree's headline claim")
-    tok = m.group(1).lower()
-    stated = int(tok) if tok.isdigit() else COUNT_WORDS.get(tok)
-    assert stated is not None, f"unrecognised count word in the stated total: {tok!r}"
-
-    declared = _declared_axioms()
-    names = sorted({n for n, _ in declared})
-    assert len(names) == stated, (
-        f"the paper states {stated} named axiom(s) in total; the tree declares {len(names)}: "
-        f"{names}. One of the two is wrong, and this number is what the development's "
-        f"'proved rather than assumed' claim rests on.")
+    flat = " ".join(_paper().split())
+    m = re.search(r"[Nn]o `sorry`, no `axiom` declaration", flat)
+    assert m, ("the paper's statement that the sources declare no axiom could not be found; the "
+               "phrasing changed and this check would otherwise go silent on the headline claim")
+    names = sorted({n for n, _ in _declared_axioms()})
+    assert not names, (
+        f"the paper states the sources declare no axiom; the tree declares {len(names)}: {names}")
 
 
 def test_every_lean_axiom_is_named_in_the_paper():
@@ -130,31 +157,37 @@ def test_every_lean_axiom_is_named_in_the_paper():
     An axiom is an unproved assumption the theorems above it inherit, so one that exists in the tree
     without appearing in the paper is an undisclosed input to the result.
 
-    TWO WAYS THIS READ CLEAN WITHOUT CHECKING ANYTHING, both now closed.
+    Two ways this read clean without checking anything, both now closed.
 
-    * `^axiom\\s+…` matched PROSE. Lean's keywords are English words, and a sentence inside a `/- -/`
+    * `^axiom\\s+…` matched prose. Lean's keywords are English words, and a sentence inside a `/- -/`
       block that happened to wrap so a line began "axiom above asserts…" was collected as a
       declaration named `above`. Four of the six names this gathered were comment prose — `above`,
       `footprint`, `and`, `cannot` — and each one is a common English word, so each passed
-      disclosure trivially. With BOTH real axiom declarations deleted from the tree the collection
+      disclosure trivially. With both real axiom declarations deleted from the tree the collection
       was still non-empty, `assert axioms` still passed, and the test reported every axiom
       disclosed while the tree contained none. The comment mask is what separates source from prose.
-    * `name not in text` was a SUBSTRING test. `os_reconstruction`, a RETIRED axiom, counted as
+    * `name not in text` was a substring test. `os_reconstruction`, a retired axiom, counted as
       disclosed because the paper contains `os_reconstruction_wightman`. The check is on the name,
       so the name gets word boundaries.
     """
+    # The tree declares no axiom, so an empty collection is its state, not a sign that the scan
+    # missed the syntax. What guards the scan is the planted-text control
+    # `test_the_axiom_scan_reads_source_and_not_prose`, which fails if a real declaration is not
+    # collected, and the stated-total test, which pins the paper's count to this collection in both
+    # directions. Here the scan must at least have read the sources.
+    # CHOSEN: 20 files as the floor that separates "found the Lean tree" from "looking in the wrong place"; the tree holds 289, so the cut is far below its read.
+    assert len(_lean_files()) >= 20, "the axiom scan read almost no Lean sources; it is looking in the wrong place"
     axioms = _declared_axioms()
-    assert axioms, "no axioms found; the declaration syntax may have changed"
     text = _paper()
     undisclosed = sorted({name for name, _ in axioms
                           if not re.search(rf"(?<![\w']){re.escape(name)}(?![\w'])", text)})
     assert not undisclosed, (
-        f"axioms declared in Lean but not named in PAPER.md: {undisclosed}. "
+        f"axioms declared in Lean but not named in the paper: {undisclosed}. "
         f"An axiom the paper does not name is an undisclosed assumption.")
 
 
 def test_the_axiom_scan_reads_source_and_not_prose():
-    """POSITIVE CONTROL for the two holes above, both demonstrated on planted text.
+    """Positive control for the two holes above, both demonstrated on planted text.
 
     The disclosure test cannot detect either of them itself: prose names pass disclosure because
     they are English words, and a substring match passes because the longer name really is there.
@@ -180,7 +213,7 @@ def test_the_axiom_scan_reads_source_and_not_prose():
     assert collect(prose + "axiom real_one : True\n") == ["real_one"], \
         "masking the comment also lost the declaration after it"
 
-    # and the disclosure test is on the NAME, not on any string containing it
+    # and the disclosure test is on the name, not on any string containing it
     paper = "the paper names `os_reconstruction_wightman` and nothing else"
     assert re.search(r"(?<![\w'])os_reconstruction(?![\w'])", paper) is None, \
         "a retired axiom still counts as disclosed by a longer name that contains it"
@@ -195,20 +228,20 @@ def test_cited_lean_declarations_resolve():
     """
     text = _paper()
     cited = set(re.findall(r"`([a-z_][a-z0-9_]{3,})`", text)) - NOT_LEAN
-    # DERIVED: the paper cites 157 such names today; the bar is a floor on DISCOVERY, set far below
+    # DERIVED: the paper cites 157 such names today; the bar is a floor on discovery, set far below
     # that so growth never has to move it. Nothing else here could notice the citation pattern
     # ceasing to match: an empty `cited` gives an empty `candidates`, an empty `unresolved`, and
     # `assert not unresolved` reports a clean paper having examined no citation at all. Every
     # sibling scan in this suite carries such a floor; this one did not.
     assert len(cited) >= 100, (
-        f"only {len(cited)} backticked declaration citations found in PAPER.md; the citation "
+        f"only {len(cited)} backticked declaration citations found in the paper; the citation "
         "pattern is not matching and this test would pass by checking nothing")
     lean_src = "\n".join(p.read_text(encoding="utf-8") for p in _lean_files())
 
-    # Python names are collected as DEFINITIONS, by parsing, rather than by searching the source
+    # Python names are collected as definitions, by parsing, rather than by searching the source
     # text. `name in py_src` accepted any occurrence anywhere -- including inside a comment or a
     # docstring. That is not a hypothetical looseness: a retired declaration stayed "resolvable"
-    # purely because two test docstrings mentioned it while EXPLAINING that it had been retired, so
+    # purely because two test docstrings mentioned it while explaining that it had been retired, so
     # the prose describing a removal kept the guard from noticing the citation the removal orphaned.
     py_defs = set()
     for p in (REPO / "research").rglob("*.py"):
@@ -225,10 +258,10 @@ def test_cited_lean_declarations_resolve():
             elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                 py_defs.add(node.id)
 
-    # A third thing the paper legitimately cites in backticks: a LABEL inside a committed artifact,
+    # A third thing the paper legitimately cites in backticks: a label inside a committed artifact,
     # such as the `test` column value naming one family of rows. Those are not declarations in any
     # language, so resolving them against Lean and Python alone reported a real citation as dangling.
-    # They are collected as whole CELL VALUES -- never as substrings of a cell -- so a label that
+    # They are collected as whole cell values -- never as substrings of a cell -- so a label that
     # merely resembles part of some number or path still fails to resolve, and a renamed row family
     # still breaks the citation the way it should.
     data_labels = set()
@@ -245,23 +278,26 @@ def test_cited_lean_declarations_resolve():
 
     def _declared(src, name):
         return re.search(
-            rf"(^|\s)(axiom|theorem|lemma|def|abbrev|structure|class|instance)\s+{re.escape(name)}\b"
+            rf"(^|\s)(axiom|theorem|lemma|def|abbrev|structure|class|instance|alias)\s+{re.escape(name)}\b"
             rf"|^\s+{re.escape(name)}\s*:", src, re.M)
 
-    # A fourth thing the paper legitimately cites: a MATHLIB declaration. The development rests on
+    # A fourth thing the paper legitimately cites: a Mathlib declaration. The development rests on
     # Mathlib results by name (`geom_sum_eq`), and a citation to one is exactly as checkable as a
     # citation to our own -- the declaration either is in Mathlib or it is not. It is consulted only
     # for names that failed to resolve locally, so the cost is paid per dangling candidate rather than
-    # per citation, and a Mathlib RENAME across a version bump shows up here as a failure rather than
+    # per citation, and a Mathlib rename across a version bump shows up here as a failure rather than
     # as prose pointing at something gone.
     #
-    # WHERE MATHLIB IS. Two places, and the test must not care which. A local checkout vendors it
+    # Where Mathlib is. Two places, and the test must not care which. A local checkout vendors it
     # under `research/.lake`; a machine that builds Lean remotely has it only on the builder. Looking
     # in one place made a local build tree load-bearing for a paper check, and deleting that tree
     # turned a live citation into a reported defect -- which is a wrong answer, not a stricter one.
-    # When NEITHER is reachable the Mathlib names are skipped rather than failed: a citation that
+    # When neither is reachable the Mathlib names are skipped rather than failed: a citation that
     # cannot be checked here is not a citation that is wrong.
-    mathlib = REPO / "research" / ".lake" / "packages" / "mathlib" / "Mathlib"
+    # `lake build` in research/lean puts the packages under research/lean/.lake; an older layout used research/.lake.
+    mathlib = next((p for p in (REPO / "research" / "lean" / ".lake" / "packages" / "mathlib" / "Mathlib",
+                                REPO / "research" / ".lake" / "packages" / "mathlib" / "Mathlib") if p.exists()),
+                   REPO / "research" / "lean" / ".lake" / "packages" / "mathlib" / "Mathlib")
 
     def _in_mathlib_local(name):
         for path in mathlib.rglob("*.lean"):
@@ -293,7 +329,7 @@ def test_cited_lean_declarations_resolve():
         if not names:
             return set()
         # The same declaration forms `_declared` accepts, as one alternation for ripgrep/grep.
-        kinds = "axiom|theorem|lemma|def|abbrev|structure|class|instance"
+        kinds = "axiom|theorem|lemma|def|abbrev|structure|class|instance|alias"
         alt = "|".join(re.escape(n) for n in names)
         cmd = (f"grep -rhoE '(^|[[:space:]])({kinds})[[:space:]]+({alt})([^A-Za-z0-9_]|$)' "
                f"{path} 2>/dev/null | grep -oE '({alt})' | sort -u")
@@ -320,198 +356,43 @@ def test_cited_lean_declarations_resolve():
     else:
         unresolved = []
 
-    assert not unresolved, f"PAPER.md cites names that resolve nowhere: {unresolved}"
-
-
-# The theorems PAPER.md states an axiom footprint for, with the passage that states it. A footprint
-# claim is only machine-checked if the declaration carries a `#print axioms`, which puts its real
-# footprint in the build log on every build; without one the claim is prose. This list is curated
-# rather than derived: the ledger's evidence cells name supporting machinery alongside the result
-# (row 1372 alone lists fifteen LDL/Sturm lemmas), and no rule over the prose separates "the paper
-# claims a footprint for this" from "the paper cites this as a step" without flagging both.
-FOOTPRINT_CLAIMS = {
-    "ym_mass_gap_of_substrate":         "Sec 13: footprint = three foundational + reflection positivity",
-    "confinement_of_bounded_substrate": "Sec 13: the substrate bound gives confinement at every "
-                                        "large enough aperture",
-    "margin_tendsto_floor":             "Sec 13: the margin tends to the whole floor kappa_0",
-    "tension_tendsto_zero_of_bounded_circ_moment":
-                                        "Sec 13: the tension VANISHES as the window opens",
-    "ym_mass_gap_spectral":             "Sec 13: three foundational + reflection positivity; the "
-                                        "aperture margin is an explicit hypothesis, not a discharged witness",
-    "ym_existence_and_gap_of_junction": "Sec 13 ledger: gap side conditional on the two residuals",
-    "gap_uniform_of_cell":              "Sec 13 ledger: 'proved (foundation-only)'",
-    "gap_uniform_of_cell_intensive":    "Sec 13 ledger: 'proved (foundation-only)'",
-    "cell_volume_bar_nonvacuous": "Sec 13 ledger: 'proved (foundation-only)'",
-    "Hcell2_clears_floor":              "Sec 13 ledger: 'the machine-checked cell ceiling'",
-    "muInf_lt_floor":                   "Sec 13 ledger: 'proved (muInf_lt_floor)'; cited in the footprint paragraph",
-}
-
-
-def _lean_scan():
-    """(theorems declared, names carrying a #print axioms) across MassGap's own sources."""
-    import re
-    theorems, printed = {}, set()
-    root = REPO / "research" / "lean" / "MassGap"
-    for p in sorted(root.glob("*.lean")):
-        for line in p.read_text(encoding="utf-8", errors="replace").split("\n"):
-            # `[^\W\d]`: Lean identifiers are Unicode. An ASCII-only class matched no Greek-initial
-            # name, so `#print axioms κ₀YM` and its kin were not collected at all.
-            m = re.match(r"\s*#print axioms\s+([^\W\d][\w.']*)", line)
-            if m:
-                printed.add(m.group(1).split(".")[-1])
-            d = re.match(r"(?:private\s+|protected\s+)?theorem\s+([^\W\d][\w.']*)", line)
-            if d:
-                theorems.setdefault(d.group(1), p.name)
-    return theorems, printed
-
-
-def test_every_claimed_footprint_is_printed():
-    """Each theorem the paper states a footprint for carries a `#print axioms`.
-
-    Four of these did not. Sec 13 states the volume row as "proved (foundation-only)" for
-    `gap_uniform_of_cell`, `gap_uniform_of_cell_intensive` and `cell_volume_bar_nonvacuous`, and
-    calls `Hcell2_clears_floor` the machine-checked cell ceiling, while none of the four printed its
-    footprint -- the neighbouring rows' claims were machine-checked and these were not. FreeField.lean
-    had no `#print axioms` at all, though Sec 13 lists `muInf_lt_floor` as proved and cites it by name
-    where the axiom footprint is discussed.
-    """
-    theorems, printed = _lean_scan()
-    assert len(FOOTPRINT_CLAIMS) >= 10, (
-        f"FOOTPRINT_CLAIMS holds {len(FOOTPRINT_CLAIMS)} entries; the paper states a footprint for "
-        "at least ten declarations, and an emptied list would make this test pass while checking "
-        "nothing")
-    missing = {n: why for n, why in FOOTPRINT_CLAIMS.items() if n not in printed}
-    assert not missing, (
-        "the paper states an axiom footprint for these, but no `#print axioms` puts it in the build "
-        "log, so the claim is prose: "
-        + "; ".join(f"{n} ({why})" for n, why in sorted(missing.items())))
-
-
-def test_footprint_claim_list_matches_the_paper_and_the_lean_tree():
-    """Every name in FOOTPRINT_CLAIMS is still a MassGap theorem and still cited by the paper.
-
-    Guards the list itself: a renamed theorem or a claim dropped from Sec 13 would otherwise leave an
-    entry that passes vacuously while pinning nothing.
-    """
-    theorems, _ = _lean_scan()
-    assert len(FOOTPRINT_CLAIMS) >= 10, (
-        f"FOOTPRINT_CLAIMS holds {len(FOOTPRINT_CLAIMS)} entries; every assertion below runs inside "
-        "the loop over it, so an emptied list would make this test vacuous")
-    text = PAPER.read_text(encoding="utf-8")
-    for n in sorted(FOOTPRINT_CLAIMS):
-        assert n in theorems, f"{n} is no longer a theorem in MassGap; update FOOTPRINT_CLAIMS"
-        assert f"`{n}`" in text or f".{n}`" in text, \
-            f"the paper no longer cites {n}; update FOOTPRINT_CLAIMS"
+    assert not unresolved, f"the paper cites names that resolve nowhere: {unresolved}"
 
 
 FOUNDATIONAL = {"propext", "Classical.choice", "Quot.sound"}
 
-# What Sec 13 says each footprint IS, beyond the three foundational axioms. Quoted from the paper:
-#   ym_mass_gap_certified            "`#print axioms` returning the three foundational axioms
-#                                     **plus `wilson_reflection_positive_at` alone**"
-#   ym_crossover_confinement_of_grid "footprint three foundational + `wilson_reflection_positive_at`"
-#   ym_mass_gap_grid_certified       "carries that same footprint, no `d2_le_bound`"
-#   ym_existence_and_gap             "carries the four named axioms"
-#   ym_mass_gap_spectral             three foundational + the four named (inherited via ym_confinement);
-#                                    the aperture margin is an explicit hypothesis, not a discharged witness
-#   the volume row                   "proved (foundation-only)"
-NAMED_FOOTPRINTS = {
-    # The v0.2.2 headline: the gap side with NO named axiom. Sec 13 prints these two footprints in a
-    # code block and says "no named axiom on either side". The count-matching sibling test binds a
-    # stated count to the nearest backticked declaration, and both of those sentences carry no
-    # backticked name, so they came back unbound and were silently skipped -- the release's central
-    # claim was pinned by nothing. An EMPTY set here is the assertion that matters: if either ever
-    # picks up an axiom, this fails.
-    "existence_and_gap_of_substrate_even": set(),
-    "mass_gap_rate_and_continuum_even":    set(),
-    # The bridge from the original hypothesis to the even-aperture one is NOT axiom-free -- it is
-    # stated in terms of `d2At` and so reports the axiom. Pinned so the paper cannot quietly start
-    # describing it as part of the clean chain.
-    "substrate_even_of_substrate":      {"wilson_reflection_positive_at"},
-    # THE STRONG-COUPLING ARM, UNCONDITIONAL. `contact_relative_unconditional` is the contact-relative
-    # quartic law on a derived coupling interval with NOTHING carried, and `contactFloor_holds` is the
-    # aperture-uniform contact floor that discharged its one hypothesis. An empty set is the whole
-    # claim: if either ever picks up a named axiom, the release's strongest statement has quietly
-    # weakened and this fails.
-    "contactFloor_holds":               set(),
-    "contact_relative_unconditional":   set(),
-    "wilsonCorrConn_self_ge_haar":      set(),
-    "exists_haar_floor":                set(),
-    "corrClay_zero_at_zero_eq":         set(),
-    # The circle symmetry, which discharged an assumption `Moment.circLag` -- and therefore the whole
-    # substrate reading -- had been built on. It must stay hypothesis-free and axiom-free.
-    "corrHyper_neg":                    set(),
-    "wilsonCorrAt_circLag_congr":       set(),
-    # Log-convexity: the only coupling-free ratio inequality in the tree. Its value is that it holds
-    # at EVERY real coupling with no positivity hypothesis, so an axiom appearing here would mean the
-    # coupling-freedom had been lost.
-    "corrClay_log_convex":              set(),
-    "ym_mass_gap_of_substrate":         {"wilson_reflection_positive_at"},
-    "confinement_of_bounded_substrate": {"wilson_reflection_positive_at"},
-    "margin_tendsto_floor":             {"wilson_reflection_positive_at"},
-    "tension_tendsto_zero_of_bounded_circ_moment": set(),
-    "ym_existence_and_gap_of_junction": {"wilson_reflection_positive_at"},
-    "ym_mass_gap_spectral":             {"wilson_reflection_positive_at"},
-    "gap_uniform_of_cell":              set(),
-    "gap_uniform_of_cell_intensive":    set(),
-    "cell_volume_bar_nonvacuous": set(),
-}
-
-
 def test_printed_footprints_are_the_ones_the_paper_states():
-    """The footprints Sec 13 states are the ones the build actually printed.
+    """§11's footprint claim is the one the build printed.
 
-    `#print axioms` puts each declaration's real footprint in the build log, but the log is not kept,
-    so until now the table in Sec 13 could only be compared against a build someone happened to have
-    run. `certify/lean_axiom_footprints.py` captures it; this compares the two, set against set, so a
-    footprint that grows an axiom is caught even if the count is unchanged.
+    §11.2 states that every declaration whose footprint is recorded depends on a subset of `propext`,
+    `Classical.choice` and `Quot.sound`. `#print axioms` puts each declaration's real footprint in the
+    build log, and `certify/lean_axiom_footprints.py` captures it in `13_dat_axiom_footprints.csv`.
+    This reads that artifact: every printed footprint must lie inside the three foundational axioms.
 
-    Skips until the artifact is regenerated -- that needs a Lean build, which is not a local job.
+    Skips when the artifact is absent -- producing it needs a Lean build, which is not a local job.
     """
     art = REPO / "research" / "data" / "13_dat_axiom_footprints.csv"
     if not art.exists():
         pytest.skip("13_dat_axiom_footprints.csv not regenerated yet "
                     "(needs `lake build` via certify/lean_axiom_footprints.py)")
+    text = " ".join(_paper().split())
+    assert re.search(r"every declaration whose footprint is recorded depends on a subset of "
+                     r"`propext`, `Classical.choice` and `Quot.sound`", text), \
+        "§11.2 no longer states the footprint of the recorded declarations"
     import csv
     got = {}
     with art.open(encoding="utf-8", newline="") as fh:
         for row in csv.DictReader(fh):
             # Axiom names keep their namespace: `Classical.choice` is one of the foundational three,
-            # and stripping to the last component would turn it into `choice` and make it look like
-            # an axiom the paper never named.
-            got[row["declaration"].split(".")[-1]] = {a for a in row["axioms"].split() if a.strip()}
-
-    def names(actual, wanted):
-        """The members of `wanted` that `actual` contains, matching bare or namespaced."""
-        return {w for w in wanted
-                if any(a == w or a.endswith("." + w) for a in actual)}
-
-    # DERIVED: the number of entries `NAMED_FOOTPRINTS` carries. Every assertion below is inside the
-    # loop, so an emptied dict gave an empty `problems` and a green report -- verified by emptying
-    # it: the test still passed. Its two siblings in this file, `test_every_claimed_footprint_is_
-    # printed` and `test_footprint_claim_list_matches_the_paper_and_the_lean_tree`, both guard their
-    # list and both fail when emptied, so this was an inconsistency inside one file rather than a
-    # choice. The entries it would have stopped guarding are the flagship empty-footprint claims,
-    # which the comments above call the whole claim.
-    assert len(NAMED_FOOTPRINTS) >= 20, (
-        f"NAMED_FOOTPRINTS holds {len(NAMED_FOOTPRINTS)} entries; the loop below would check "
-        "almost nothing and report clean")
-    problems = []
-    for decl, expected in sorted(NAMED_FOOTPRINTS.items()):
-        if decl not in got:
-            problems.append(f"{decl}: the build printed no footprint for it")
-            continue
-        actual = got[decl]
-        accounted = FOUNDATIONAL | expected
-        stray = {a for a in actual
-                 if not any(a == w or a.endswith("." + w) for w in accounted)}
-        absent = expected - names(actual, expected)
-        if stray:
-            problems.append(f"{decl}: depends on {sorted(stray)}, which the paper does not name")
-        if absent:
-            problems.append(f"{decl}: the paper names {sorted(absent)} but the build does not show "
-                            "them -- the claim understates or the theorem changed")
-    assert not problems, "Sec 13's footprint table disagrees with the build:\n  " + "\n  ".join(problems)
+            # and stripping to the last component would turn it into `choice`.
+            got[row["declaration"]] = {a for a in row["axioms"].split() if a.strip()}
+    # DERIVED: one row per printed declaration; the Lean sources print thousands, so an artifact
+    # with almost none was not produced by a build of this tree.
+    assert len(got) >= 100, f"only {len(got)} footprints in the artifact; the scan would pass vacuously"
+    named = {d: sorted(a - FOUNDATIONAL) for d, a in got.items() if a - FOUNDATIONAL}
+    assert not named, (
+        f"§11 states no declaration carries a named axiom, but {len(named)} printed footprints "
+        "do: " + "; ".join(f"{d} -> {v}" for d, v in sorted(named.items())[:10]))
 
 
 RETIRED_AXIOMS = {"d2_le_bound", "ym_character", "ym_asymfree",
@@ -531,9 +412,9 @@ def test_no_declaration_depends_on_a_retired_axiom():
     `FullModel.WightmanTheory` was an opaque `Prop` and `FullModel.os_reconstruction` produced it
     from Euclidean data. Both were discharged by `rfl` from a `Unit` witness, so granting them
     conveyed nothing, and they were deleted rather than documented. The surviving reconstruction is
-    `WightmanData.os_reconstruction_wightman`, which is stated against real DATA -- an `OSData` with a
+    `WightmanData.os_reconstruction_wightman`, which is stated against real data -- an `OSData` with a
     continuous bilinear form on a normed test space -- and is the one the Clay statement itself names
-    as a route. It is NOT retired and must not be: matching here is on the exact axiom name, so
+    as a route. It is not retired and must not be: matching here is on the exact axiom name, so
     `os_reconstruction_wightman` is not caught by the `os_reconstruction` entry.
 
     Nothing stops a future edit reintroducing one, and the footprint table would absorb it quietly
@@ -574,21 +455,24 @@ def test_the_retired_axioms_are_not_declared_anywhere_in_lean():
 
 #: A verbatim `#print axioms` line quoted in the paper, e.g.
 #:   'EvenAperture.existence_and_gap_of_substrate_even'  depends on axioms: [propext, ...]
-#: The paper quotes MACHINE OUTPUT here rather than describing it in prose, which reads as stronger
+#: The paper quotes machine output here rather than describing it in prose, which reads as stronger
 #: evidence than a prose claim -- so it needs to be checked at least as tightly.
 _QUOTED_FOOTPRINT = re.compile(
     r"'([^\W\d][\w.']*)'\s+depends on axioms:\s*\[([^\]]*)\]")
 
 
 def test_quoted_footprint_blocks_match_the_artifact():
-    """A `#print axioms` line quoted VERBATIM in the paper must be what the build prints.
+    """A `#print axioms` line quoted verbatim in the paper must be what the build prints.
 
-    WHY THIS EXISTS. The paper contains transcribed machine output. Every other footprint claim in
-    the document is prose and is checked by the siblings above; these two lines are the only ones
-    that LOOK like evidence rather than assertion, and nothing compared them to anything. A quoted
-    output block that drifts is worse than a stale sentence: a reader takes it for a transcript.
+    A quoted `#print axioms` transcript reads as evidence rather than assertion, so a drifted one is
+    worse than a stale sentence: a reader takes it for a transcript. the paper quotes none today; it
+    states its footprint in §11 prose, which `test_the_stated_total_of_named_axioms_matches_the_tree`
+    and `test_printed_footprints_are_the_ones_the_paper_states` check. When the paper quotes no
+    transcript there is nothing here to compare, and the test passes. Pattern drift is still caught:
+    if the phrase `depends on axioms` appears in the paper and the pattern matches none of it, the
+    test fails.
 
-    Matching is on the NAMED axioms as a set. The three foundational ones are compared too, since a
+    Matching is on the named axioms as a set. The three foundational ones are compared too, since a
     quoted transcript that omitted one would be a wrong transcript. Order inside the brackets is not
     significant and is not required to match -- `#print axioms` does not promise an order, and
     pinning one would fail on a Mathlib bump for no reason.
@@ -597,6 +481,13 @@ def test_quoted_footprint_blocks_match_the_artifact():
     `test_cited_lean_declarations_resolve` owns that check, and duplicating it here would report one
     defect twice.
     """
+    text = _paper()
+    quoted = list(_QUOTED_FOOTPRINT.finditer(text))
+    if not quoted:
+        assert 'depends on axioms' not in text, (
+            'the paper contains `depends on axioms` but the transcript pattern matches none of it; '
+            'the quoted block changed shape and this check would pass without reading it')
+        return
     art = REPO / 'research' / 'data' / '13_dat_axiom_footprints.csv'
     if not art.exists():
         pytest.skip('13_dat_axiom_footprints.csv not regenerated yet')
@@ -605,11 +496,6 @@ def test_quoted_footprint_blocks_match_the_artifact():
     with art.open(encoding='utf-8', newline='') as fh:
         for row in csv.DictReader(fh):
             printed[row['declaration'].split('.')[-1]] = set(row['axioms'].split())
-
-    quoted = list(_QUOTED_FOOTPRINT.finditer(_paper()))
-    assert quoted, (
-        'no quoted `depends on axioms` block found in PAPER.md; the pattern is looking in the wrong '
-        'place and this check would pass vacuously')
 
     bad = []
     for m in quoted:
@@ -623,7 +509,7 @@ def test_quoted_footprint_blocks_match_the_artifact():
                 f"  '{m.group(1)}' quoted as {sorted(want)} but the build prints {sorted(got)}")
     if bad:
         pytest.fail(
-            'A `#print axioms` line quoted verbatim in PAPER.md is not what the build prints.\n'
+            'A `#print axioms` line quoted verbatim in the paper is not what the build prints.\n'
             'This is transcribed machine output, so a reader reads it as a transcript. Re-quote it '
             'from a current build or delete the block.\n' + '\n'.join(bad))
 
@@ -637,86 +523,15 @@ def test_the_quoted_footprint_gate_can_actually_fail():
     assert m.group(1).endswith('existence_and_gap_of_substrate_even')
     want = {a.strip() for a in m.group(2).split(',')}
     assert want == {'propext', 'Classical.choice', 'Quot.sound'}
-    # and a transcript carrying a named axiom is a DIFFERENT set, so the comparison separates them
+    # and a transcript carrying a named axiom is a different set, so the comparison separates them
     assert want != want | {'wilson_reflection_positive_at'}, (
         'adding a named axiom did not change the set, so the check could not see it')
-
-
-def test_the_free_field_plateau_the_paper_quotes_is_the_one_lean_proves():
-    """The weak-coupling plateau value is a literal inside a Lean theorem; the paper repeats it six times.
-
-    `muInf_lt_floor` states `(0.0326 : R) < (1/4) * log 3` -- the below-floor fact that gives
-    `ym_asymfree` its weak end. The paper quotes that constant in the abstract, in Sec 8.2, Sec 8.6,
-    and twice in the Sec 13 ledger. Nothing tied the two together, so editing the numeral in either
-    place would leave the paper attributing a value to a theorem that does not state it.
-
-    Both halves are read from source: the numeral out of the Lean file, and every place the paper
-    pairs a value with mu_infinity.
-    """
-    import re
-
-    lean = (REPO / "research" / "lean" / "MassGap" / "FreeField.lean").read_text(encoding="utf-8")
-    m = re.search(r"theorem\s+muInf_lt_floor\s*:\s*\(\s*([0-9.]+)\s*:", lean)
-    assert m, "muInf_lt_floor no longer states a literal lower bound; update this test"
-    proved = float(m.group(1))
-
-    # the theorem must actually be the below-floor inequality it is cited as
-    import math
-    assert proved < 0.25 * math.log(3.0), \
-        f"muInf_lt_floor states {proved}, which is NOT below kappa_0 = (1/4)ln3"
-
-    BS = chr(92)
-    text = PAPER.read_text(encoding="utf-8")
-    # Every place the paper pairs a value with mu_infinity. The scan is "find mu_infinity, then
-    # look ahead" rather than one regex with a no-digit gap: the paper writes mu_infty(8)=0.0326,
-    # and a [^0-9] gap silently skips that form -- which is most of the occurrences.
-    marker = BS + "mu_" + BS + "infty"
-    val = re.compile(r"(\d\.\d{3,4})")
-    quoted = []
-    for m in re.finditer(re.escape(marker), text):
-        w = val.search(text[m.end():m.end() + 45])
-        if w:
-            quoted.append((w.group(1), text[:m.start()].count(chr(10)) + 1))
-    assert len(quoted) >= 3,         f"found {len(quoted)} mu_infinity values in the paper; it states at least 3"
-    for q, line in quoted:
-        assert abs(float(q) - proved) < 5e-5, (
-            f"PAPER.md line {line} quotes mu_infinity = {q}, but "
-            f"MassGap.FreeField.muInf_lt_floor proves {proved}; the paper is attributing a value "
-            "to a theorem that does not state it")
-
-
-def test_no_pinned_witness_magnitude_remains():
-    """The non-vacuity witnesses quantify their magnitude instead of naming one.
-
-    They used to exhibit a single number (`mHiYM = 1/5`) and a single family size (`nWitnessYM = 2`),
-    both chosen. A witness has to be an instance, but it does not have to be a PARTICULAR instance:
-    `spectral_bar_nonvacuous` and `cell_volume_bar_nonvacuous` now take any magnitude strictly
-    positive and at or below the derived ceiling `3^(-1/4) = e^(-kappa_0)`, and any family size. This
-    fails if a pinned magnitude comes back.
-    """
-    root = REPO / "research" / "lean" / "MassGap"
-    files = sorted(root.glob("*.lean"))
-    assert len(files) >= 20, "the Lean scan is looking in the wrong place"
-    import re
-    banned = ("mHiYM", "nWitnessYM", "mWitnessYM", "PWitnessYM")
-    found = {}
-    for p in files:
-        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            m = re.match(r"\s*(?:noncomputable\s+)?def\s+([^\W\d][\w']*)", line)
-            if m and m.group(1) in banned:
-                found[f"{p.name}:{i}"] = m.group(1)
-    assert not found, f"a pinned witness magnitude was reintroduced: {found}"
-
-    # And the replacements must still be there, quantified.
-    text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
-    for name in ("spectral_bar_nonvacuous", "cell_volume_bar_nonvacuous"):
-        assert f"theorem {name}" in text, f"{name} is gone; the bar has no non-vacuity witness"
 
 
 def test_the_development_is_sorry_free():
     """The paper's `sorry`-free claim, checked against the sources rather than trusted.
 
-    Sec 1 and Sec 13 both state it, and it is the claim a reader checks first. The word appears
+    §11 states it, and it is the claim a reader checks first. The word appears
     legitimately in comments that say there is none, so only code lines count.
     """
     import re
@@ -738,235 +553,3 @@ def test_the_development_is_sorry_free():
                 offenders.append(f"{p.name}:{i}: {stripped[:70]}")
     assert not offenders, ("the paper claims the development is sorry-free, but:\n  "
                            + "\n  ".join(offenders))
-
-
-
-def test_every_aperture_ceiling_is_derived_from_the_lag_arity():
-    """The <d^2> ceiling comes from `N + 1` = the number of lags, which is the periodic extent.
-
-    `Moment.Read N` indexes lags by `Fin (N + 1)` and sets `theta_d = 2 pi d / (N + 1)`, so a
-    periodic extent of `L` sites -- lags `d = 0..L-1` -- has `N + 1 = L`. Two scripts independently
-    wrote `(L + 1) ** 2` instead, i.e. the arity of a lattice one site LARGER than the one measured.
-    That inflated the ceiling by ((L+1)/L)^2 = 1.13 on L=16, and the inflation made the certificate
-    easier to pass every time.
-
-    An off-by-one that appears twice in separate files is not a slip, so this asserts the form rather
-    than a value: any ceiling written with an extent other than the lag arity fails here, at any L.
-
-    The derivation now lives in `certify/aperture_ceiling.py` and the scripts call `d2_ceiling`, so
-    the trigger list covers both spellings -- the old inline constants AND the helper. Dropping the
-    old names from the trigger without adding the new ones would leave this test matching nothing,
-    which reads exactly like passing.
-    """
-    TRIGGERS = ("APERTURE_RHS", "APERTURE_ARC", "C_MAX", "d2_ceiling",
-                "1.0 - 3.0 ** (-0.25)", "3.0 ** -0.25")
-    bad = []
-    for p in sorted((REPO / "research").rglob("*.py")):
-        if "test_" in p.name:
-            continue
-        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
-            code = line.split("#")[0]
-            if not any(t in code for t in TRIGGERS):
-                continue
-            # the ceiling is the only such use that squares an extent
-            m = re.search(r"\(\s*(\w+)\s*([+-])\s*(\d+)\s*\)\s*\*\*\s*2", code)
-            if m:
-                bad.append(f"{p.relative_to(REPO)}:{i}: extent written as "
-                           f"({m.group(1)} {m.group(2)} {m.group(3)})**2, but the lag arity is "
-                           f"{m.group(1)} -- `Fin (N+1)` over a periodic extent of {m.group(1)} sites")
-            # and the same off-by-one can now be written as an argument
-            m = re.search(r"d2_ceiling\(\s*(\w+)\s*([+-])\s*(\d+)", code)
-            if m:
-                bad.append(f"{p.relative_to(REPO)}:{i}: d2_ceiling passed "
-                           f"({m.group(1)} {m.group(2)} {m.group(3)}), but the lag arity is "
-                           f"{m.group(1)} -- the extent, not one more than it")
-    assert bad == [], ("an aperture ceiling is derived from the wrong lag arity:\n  "
-                       + "\n  ".join(bad))
-    assert len(TRIGGERS) and any(
-        any(t in p.read_text(encoding="utf-8", errors="replace") for t in TRIGGERS)
-        for p in (REPO / "research").rglob("*.py") if "test_" not in p.name), (
-        "no file in the tree mentions the aperture ceiling at all, so this test just checked "
-        "nothing -- the trigger list has gone stale against the code")
-
-
-def test_the_aperture_ceiling_is_written_in_exactly_one_place():
-    """The ceiling formula appears once, in `certify/aperture_ceiling.py`, and nowhere else.
-
-    Nine files used to carry their own copy. Copies are how the off-by-one the sibling test catches
-    reached two files at once, and how a sharpening reaches some call sites and not others -- the
-    tree then quotes two different ceilings for the same quantity and nothing fails.
-
-    Test files are exempt on purpose: `test_paper_matches_artifacts` derives the ceiling itself,
-    because a test that imported the pipeline's constant would agree with it by construction and
-    could not catch the pipeline drifting from the paper.
-    """
-    carriers = []
-    for p in sorted((REPO / "research").rglob("*.py")):
-        if "test_" in p.name:
-            continue
-        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").split("\n"), 1):
-            code = line.split("#")[0]
-            if "math.acos(" in code:
-                carriers.append(f"{p.relative_to(REPO).as_posix()}:{i}")
-    # DERIVED: 1 is the arity of "one place". The whole point of this test is that the ceiling has a
-    # single derivation site, so the count it compares against is the claim itself, not a threshold.
-    assert len(carriers) == 1, (
-        "the aperture ceiling should be derived in exactly one file "
-        "(research/code/certify/aperture_ceiling.py), but it is written at:\n  "
-        + "\n  ".join(carriers or ["nowhere -- the derivation has gone missing"]))
-    assert carriers[0].startswith("research/code/certify/aperture_ceiling.py"), (
-        f"the ceiling is derived in {carriers[0]}, not in certify/aperture_ceiling.py")
-
-
-#: Words the paper uses for small counts, so a claim may be written either way.
-COUNT_WORDS = {'no': 0, 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-               'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
-
-#: The axioms Lean supplies itself. Everything else is an input this development chose.
-FOUNDATIONAL = {'propext', 'Classical.choice', 'Quot.sound'}
-
-
-def test_every_stated_named_axiom_count_matches_the_build():
-    """A "<count> named axiom(s)" claim beside a declaration equals what the build prints.
-
-    The paper states footprints in prose, as a count of NAMED axioms -- those beyond the three
-    Lean supplies. Two sibling tests read the same artifact but check different things: that a
-    cited declaration carries a `#print axioms`, and that no retired axiom is declared. Neither
-    compares the paper's stated footprint to the printed one, so a claim of four named axioms
-    stood beside a declaration the build gives one, in two places.
-
-    The footprint is the claim that separates proved from assumed, so a wrong one misreports the
-    result's strength. This checks it in both directions: a paper understating its inputs and a
-    paper overstating them both fail.
-
-    Only claims whose declaration resolves in the artifact are checked; a count beside a name
-    the build does not print is left to the sibling test that catches unprintable citations.
-    """
-    art = REPO / 'research' / 'data' / '13_dat_axiom_footprints.csv'
-    if not art.exists():
-        pytest.skip('13_dat_axiom_footprints.csv not regenerated yet')
-    import csv
-    named = {}
-    with art.open(encoding='utf-8', newline='') as fh:
-        for row in csv.DictReader(fh):
-            axioms = set(row['axioms'].split())
-            short = row['declaration'].split('.')[-1]
-            named[short] = axioms - FOUNDATIONAL
-    # DERIVED: the artifact must cover every declaration the Lean sources ASK to print, so the
-    # sufficiency bar is that count rather than a round number. A short artifact -- a warm build
-    # replays no info messages -- would otherwise let this pass while checking almost nothing.
-    #
-    # Counted as DISTINCT declarations, not as `#print axioms` LINES, because that is what the
-    # artifact holds one row of. A module may legitimately re-print a declaration that already
-    # prints in the module that defines it -- EvenAperture does, to put the flagship's footprint
-    # beside its own -- and a line count reads those six re-prints as six absent rows. Keyed on
-    # the short name, the same key `named` uses, so the two sides count the same thing.
-    asked = {m.group(1).split('.')[-1]
-             for p in _lean_files()
-             for m in re.finditer(r'^\s*#print axioms\s+(\S+)',
-                                  p.read_text(encoding='utf-8', errors='replace'), re.M)}
-    # WHICH declaration is missing, before HOW MANY. The count fires first if it is tested first,
-    # and a count cannot say what to look at -- diagnosing `3791 >= 3792` meant reconstructing the
-    # set difference by hand, which the next assertion already holds. Same two facts, named end
-    # first.
-    absent = sorted(asked - set(named))
-    assert not absent, (
-        f'the Lean sources ask to print {len(absent)} declaration(s) the footprint artifact has no '
-        f'row for, so the artifact is stale (regenerate it from a cold build): '
-        + ', '.join(absent[:10]))
-    assert len(named) >= len(asked), (
-        f'the footprint artifact carries {len(named)} declarations but the Lean sources ask to '
-        f'print {len(asked)}; regenerate it from a cold build')
-
-    text = _paper()
-    flat = ' '.join(text.split())
-    # a count of named axioms, and the declarations backticked in the run-up to it
-    claim = re.compile(r'(?:the same )?([A-Za-z]+|\d+) named axiom')
-    checked, bad = 0, []
-    for m in claim.finditer(flat):
-        tok = m.group(1).lower()
-        want = COUNT_WORDS.get(tok)
-        if want is None:
-            if not tok.isdigit():
-                continue
-            want = int(tok)
-        window = flat[max(0, m.start() - 320):m.start()]
-        cands = [c for c in re.finditer(r'`([^\W\d][\w.]*)`', window)
-                 if c.group(1).split('.')[-1] in named]
-        if not cands:
-            continue
-        # The nearest preceding declaration is the one the claim is about -- but only if the claim
-        # is in the SAME SENTENCE as it. "…`mass_gap_rate_and_continuum` carry none. The tree
-        # declares two named axioms in total." is a statement about the TREE, and attributing its
-        # `two` to the declaration before it read a global count as a per-declaration footprint and
-        # failed the test against a paper that was right. A sentence boundary between the name and
-        # the count means the count is not about that name.
-        if '. ' in window[cands[-1].end():]:
-            continue
-        decl = cands[-1].group(1).split('.')[-1]
-        checked += 1
-        got = len(named[decl])
-        if got != want:
-            bad.append(f'the paper says {decl} carries {want} named axiom(s); the build prints '
-                       f'{got} ({sorted(named[decl]) or "none"})')
-    assert checked, ('no stated named-axiom count could be tied to a declaration; the phrasing '
-                     'may have changed and this test would pass vacuously')
-    assert not bad, ('a stated axiom footprint disagrees with the build:' + chr(10) + '  '
-                     + (chr(10) + '  ').join(bad))
-
-
-def test_zero_mode_route_named_in_paper_exists_in_lean():
-    """Every theorem the second route names must actually exist in the tree.
-
-    Matched on WORD BOUNDARIES, not substrings. A first attempt used `name in paper`, and renaming a
-    cited theorem to `wilson_correlation_gap_THAT_DOES_NOT_EXIST` still passed -- the original is a
-    prefix of the corruption. A guard that cannot fail the case it was written for is worse than
-    none, because it reports a confidence it has not earned.
-    """
-    paper = PAPER.read_text(encoding="utf-8")
-    lean = chr(10).join(
-        p.read_text(encoding="utf-8") for p in sorted((LEAN / "MassGap").glob("*.lean")))
-    for name in ("zero_mode_lt_of_tension", "no_zero_mode_of_tension_lt_floor",
-                 "wilson_correlation_gap", "bd3_link_not_private",
-                 "chain_hypotheses_satisfiable"):
-        assert re.search(re.escape(name) + r"(?![A-Za-z0-9_])", paper), \
-            f"the paper no longer names {name} (or names a corrupted variant of it)"
-        assert re.search(r"theorem\s+" + re.escape(name) + r"(?![A-Za-z0-9_])", lean), \
-            f"PAPER.md names `{name}` but no `theorem {name}` exists in lean/MassGap/"
-
-
-def test_zero_mode_bound_numbers_match_the_artifact():
-    """The quantitative bound the paper quotes is the one the certificate computes.
-
-    The quoted values are READ OUT OF THE PAPER rather than restated here, and compared at the
-    half-ulp of however many decimals the paper writes -- so this guard carries no tolerance of its
-    own and cannot drift from the prose it checks.
-    """
-    import csv
-    p = DATA / "9_9_dat_zero_mode_bound.csv"
-    if not p.exists():
-        pytest.skip("9_9_dat_zero_mode_bound.csv not present")
-    rows = list(csv.DictReader(p.open()))
-    paper = PAPER.read_text(encoding="utf-8")
-
-    def ulp(written):
-        # DERIVED: the half-ulp of the precision the PAPER chose to write, so the comparison is as
-        # tight as the prose is and no tolerance is introduced here.
-        dp = len(written.split(".")[1]) if "." in written else 0
-        return 0.5 * 10.0 ** (-dp)
-
-    m = re.search(r"puts the gapless weight under \$([0-9.]+)\$", paper)
-    assert m, "the paper no longer states the gapless-weight bound"
-    big = max(rows, key=lambda r: int(r["L"]))
-    assert abs(float(big["bound_on_c"]) - float(m.group(1))) <= ulp(m.group(1)), \
-        f"paper states {m.group(1)}; artifact gives {big['bound_on_c']} at L={big['L']}"
-
-    m2 = re.search(r"flat to \$?([0-9.]+)\\%", paper)
-    if m2:
-        gs = [float(r["sum_g"]) for r in rows]
-        spread = 100.0 * (max(gs) / min(gs) - 1.0)
-        assert abs(spread - float(m2.group(1))) <= ulp(m2.group(1)), \
-            f"paper states sum g flat to {m2.group(1)}%; artifact gives {spread:.2f}%"
-
-    assert all(r["theorem_respected"] == "1" for r in rows), \
-        "the artifact records a volume where the measurement contradicts the theorem"

@@ -1,33 +1,33 @@
 """
 entroptics_adapter.py -- the reader: a strongly-typed domain adapter over the entroptics library.
 
-The library does ALL the processing. You feed it RAW N-D configurations and read a
-named, typed value. The ONE job of this wrapper is to hand each library read the
-reduction that PRESERVES the structure that read needs, so nothing is destroyed by a
+The library does all the processing. You feed it raw N-D configurations and read a
+named, typed value. The one job of this wrapper is to hand each library read the
+reduction that preserves the structure that read needs, so nothing is destroyed by a
 bare reshape. The library is strictly 2-D, so an N-D field must be reduced first; the
-reduction is chosen PER READ (entroptics.fields):
+reduction is chosen per read (entroptics.fields):
 
-  * ORDERED reads (the gap Delta, decay a_delta, the DMD rates, phi_T, Strehl): the
-    ordered axis is time and every off-axis site is POOLED as the feature/state vector
-    of the one ordered process (fields.pool). The spatial field IS the DMD state, so
+  * Ordered reads (the gap Delta, decay a_delta, the DMD rates, phi_T, Strehl): the
+    ordered axis is time and every off-axis site is pooled as the feature/state vector
+    of the one ordered process (fields.pool). The spatial field is the DMD state, so
     pooling it is correct, not destructive.
-  * TEMPORAL-SPECTRUM read (the leading temporal mode's coherence / attenuation,
-    [E Sec 6]): time is the FEATURE axis and spatial sites are exchangeable SAMPLES of
+  * Temporal-spectrum read (the leading temporal mode's coherence / attenuation,
+    [E Sec 6]): time is the feature axis and spatial sites are exchangeable samples of
     the time vector.
-  * SPATIAL / FEATURE reads (the confinement K_signal, contrast, phi_F, focus): each
-    2-D spatial plane is kept INTACT (fields.slabs) and the read is averaged over
-    planes ([E Sec 8], PAPER Sec 8.1). A bare flatten of the spatial volume into one
+  * Spatial / feature reads (the confinement K_signal, contrast, phi_F, focus): each
+    2-D spatial plane is kept intact (fields.slabs) and the read is averaged over
+    planes ([E Sec 8], long record Sec 8.1). A bare flatten of the spatial volume into one
     feature axis destroys the within-plane correlation and inverts the order
     parameter, so it is never used for a spatial read.
 
     from entroptics_adapter import run, confinement, aperture
     r = run(configs)             # configs: an iterable of raw N-D fields, last axis = time
-    r.mass_gap                   # ORDERED: the gap = dominant Koopman/DMD mode rate -log|mu_1| (forward operator read)
-    r.temporal.attenuation_lo    # TEMPORAL: certified lower bound on the leading temporal mode
-    confinement(config)          # SPATIAL: plane-averaged K_signal of one raw config
+    r.mass_gap                   # ordered: the gap = dominant Koopman/DMD mode rate -log|mu_1| (forward operator read)
+    r.temporal.attenuation_lo    # temporal: certified lower bound on the leading temporal mode
+    confinement(config)          # spatial: plane-averaged K_signal of one raw config
 
 Optics-to-gap dictionary (each wrapper read maps to a named library read [E] and the
-gap quantity it carries in PAPER Sec 3):
+gap quantity it carries in long record Sec 3):
     r.mass_gap             <- Aperture.connected_decay_rate    [E Sec 9]  = Delta = -log|mu_1|, connected (forward operator read)
     r.temporal.attenuation <- attenuation_interval.attenuation[E Sec 6]  = leading-temporal-mode coherence
     r.temporal.*_lo/_hi    <- attenuation_interval (Weyl)     [E Lem 6.2]= certified coherence interval
@@ -56,7 +56,7 @@ _lib_nulls = importlib.import_module("entroptics.null_providers")   # caller-sup
 # pip actually installs from -- and carries from there: this import check reads it, and so does the
 # test suite (conftest imports REQUIRED_VERSION rather than writing the pin again). The pin is either
 # a release (``entroptics==X.Y.Z`` or ``>=``) or an exact commit (``entroptics @ git+<repo>@<sha>``).
-# What the import check protects is the CALL SURFACE: 0.2.1 renamed the per-frame projection
+# What the import check protects is the call surface: 0.2.1 renamed the per-frame projection
 # (Screen -> Projection, Aperture.screen() -> Aperture.projection(), the "screen" floor cut ->
 # "projection"), so an older reader has no Aperture.projection() at all and must fail here, at import
 # and with a reason, rather than mid-read with a bare AttributeError. A release pin is checked as a
@@ -71,7 +71,7 @@ def _pinned_version() -> str:
 
     Accepts ``==`` or ``>=`` (a release: returns the version) and ``entroptics @ <vcs url>@<commit>``
     (an exact commit: returns the commit). For a release, what the number is used for below is a
-    MINIMUM on the call surface, so ``==`` and ``>=`` answer the same question. The requirement was
+    minimum on the call surface, so ``==`` and ``>=`` answer the same question. The requirement was
     written ``==`` while the check was ``>=``, and reading only ``==`` meant relaxing the requirement
     raised "no pin found" at import -- the adapter refusing to load because the file it reads had
     been made less strict.
@@ -109,7 +109,7 @@ def _version_tuple(v: str) -> tuple:
     return tuple(nums)
 
 
-REQUIRED_VERSION = _pinned_version()        # "0.2.1" or a commit -- set in requirements.txt, not here
+REQUIRED_VERSION = _pinned_version()        # "0.2.10" or a commit -- set in requirements.txt, not here
 #: True when the pin names a commit rather than a release: hex digits only, where a version has dots.
 #: DERIVED: 7 is git's default abbreviation length; a shorter all-digit pin is read as a version.
 PIN_IS_COMMIT = (len(REQUIRED_VERSION) >= 7
@@ -126,7 +126,7 @@ if (not hasattr(_lib.Aperture, "projection") if PIN_IS_COMMIT
 
 def _absent(name: str):
     """The binding for a library read the loaded copy does not have: calling it raises, naming the
-    copy that answered. The adapter still imports, so every read the copy DOES have keeps working."""
+    copy that answered. The adapter still imports, so every read the copy does have keeps working."""
     def refuse(*_args, **_kwargs):
         raise ImportError(
             f"entroptics.{name} is not in the entroptics loaded from {_lib.__file__} (reporting "
@@ -138,20 +138,27 @@ def _absent(name: str):
 
 null_providers = _lib_nulls           # mp (default) / robust / reference_null / permutation() + plumbing
 reference_null = _lib_nulls.reference_null                 # O(1) closed-form null from a signal-free reference
-self_calibrating_null = _lib_nulls.self_calibrating_null   # reference_null calibrated LOCALLY on a region's own noise
+self_calibrating_null = _lib_nulls.self_calibrating_null   # reference_null calibrated locally on a region's own noise
 by_kind = _lib.by_kind                # per-cut-point null routing: {projection|spectral|bulk: provider}
 Aperture = _lib.Aperture              # the single front door: every read goes through it
 slabs = _lib.slabs                    # geometry-preserving N-D reduction: keep each plane intact
 over_planes = _lib.over_planes        # library-side fold of a 2-D read over intact planes
-read_batch = _lib.read_batch          # batched monitor: fold+svdvals+floor over a plane STACK (bit-identical)
-spectral_batch = _lib.spectral_batch  # batched correlation-eigvalsh over a plane STACK (bit-identical)
+read_batch = _lib.read_batch          # batched monitor: fold+svdvals+floor over a plane stack (bit-identical)
+spectral_batch = _lib.spectral_batch  # batched correlation-eigvalsh over a plane stack (bit-identical)
 pool = _lib.pool                      # ordered reduction: off-axis sites as feature samples
 SpectralAccumulator = _lib.SpectralAccumulator            # pool the feature correlation over planes
 resolved_dimension_interval = _lib.resolved_dimension_interval  # certified resolved-mode count
 attenuation_interval = _lib.attenuation_interval          # certified attenuation interval (Lem 6.2)
 concentration_band = _lib.concentration_band              # Vershynin sample band for the interval
-hankel_spectrum = _lib.hankel_spectrum    # reflection-positive MOMENT PENCIL: transfer spectrum of a corr. sequence
+hankel_spectrum = _lib.hankel_spectrum    # reflection-positive moment pencil: transfer spectrum of a corr. sequence
 jackknife = _lib.jackknife                # generic delete-one(-bin) jackknife SE for reads w/o a closed-form interval
+matrix_pencil = _lib.matrix_pencil        # matrix-pencil decay rates of a sequence; the exact checks' rate read
+#: the library's default false-alarm level, read from the signature of its resolved-mode read so a
+#: caller holding a family of comparisons to the library's level carries no copy of it.
+DEFAULT_FAR = float(inspect.signature(_lib.resolved_batch).parameters["far"].default)
+#: the library's release gate: a candidate metric set against a baseline, worse beyond the two
+#: measurements' combined noise at z(far / M) fails, and so does a missing metric ([E] 0.2.7).
+gate_compare = importlib.import_module("entroptics.gate").compare
 #: resampling with replacement: per replicate `idx = rng.integers(0, N, N)`, then `read(samples[idx])`;
 #: a passed Generator continues its stream, and a replicate whose read raises propagates.
 bootstrap = getattr(_lib, "bootstrap", None) or _absent("bootstrap")
@@ -162,8 +169,13 @@ empirical_bernstein = getattr(_lib, "empirical_bernstein", None) or _absent("emp
 effective_rates = getattr(_lib, "effective_rates", None) or _absent("effective_rates")
 HankelSpectrum = _lib.HankelSpectrum      # the pencil result: .evals/.isolation/.psd/.leading/.rate
 _reads = _lib.reads                   # the correlation reads, reached through `decay` below
+#: the lagged covariance of two records along their ordered axis, summed over channels, with `decay`'s
+#: conventions (biased 1/T, `periodic`, `disconnected`): `cross_covariance(X, X, range(T)) == decay(X)`.
+cross_covariance = getattr(_lib, "cross_covariance", None) or _absent("cross_covariance")
+#: the signed coupling of two frames on a shared basis; at D = 1 its `z` is r sqrt(T - 1), never zeroed.
+coupling = getattr(_reads, "coupling", None) or _absent("coupling")
 
-#: WHICH COPY answered, which is the question a version string does not settle: a working tree and
+#: Which copy answered, which is the question a version string does not settle: a working tree and
 #: an installed wheel have reported the same string here, and this tree has been caught testing one
 #: while reading the other. Surfaced so a run can print its own provenance instead of asserting it.
 LIBRARY_FILE = _lib.__file__
@@ -173,7 +185,7 @@ LIBRARY_VERSION = _lib.__version__
 #: inferred from `LIBRARY_VERSION`. `decay` below tests membership; see its docstring.
 _DECAY_KEYWORDS = frozenset(inspect.signature(_reads.decay).parameters)
 
-#: `decay`'s `disconnected` has THREE states -- omitted, `None`, and a level -- which mean three
+#: `decay`'s `disconnected` has three states -- omitted, `None`, and a level -- which mean three
 #: different things, so this wrapper's default has to be distinguishable from `None` as well. Its
 #: own sentinel rather than the library's: reaching for `reads._DISCONNECTED_UNSET` would tie the
 #: adapter to a name the library never published.
@@ -182,7 +194,7 @@ _DISCONNECTED_UNSET = object()
 import numpy as np                                     # noqa: E402``
 
 
-# ── backend helpers: a torch config stays ON its device (GPU) through the reductions;
+# ── backend helpers: a torch config stays on its device (GPU) through the reductions;
 # only the numpy-only certified accumulator materialises to numpy ─────────────────────
 def _is_torch(x) -> bool:
     return type(x).__module__.split(".", 1)[0] == "torch"
@@ -209,7 +221,7 @@ def _to_np(f):
 @dataclass(frozen=True)
 class Optics:
     """The full intrinsic optical read of one config (the library's canonical schema),
-    averaged over configs. Each field is read through its CORRECT reduction: the
+    averaged over configs. Each field is read through its correct reduction: the
     ordered/decay fields (T axis) from the time-pooled projection, the feature/spectral/
     concentration fields (F axis) plane-averaged over intact spatial planes."""
     H_T: float; n_T: float; delta_T: float; phi_T: float; sigma_T: float
@@ -224,22 +236,22 @@ class Optics:
 @dataclass(frozen=True)
 class Dynamics:
     """Decay rates from the DMD/Koopman operator (spliced over all raw configs).
-    ``mass_gap`` is read on the CONNECTED (mean-subtracted) spectrum: the slowest
-    FLUCTUATION mode (the gap) of field data with a nonzero mean. ``decay_rates`` /
-    ``frequencies`` are the full RAW operator spectrum (dominant-first)."""
-    mass_gap: float                       # -log|mu_1| of the dominant (slowest) CONNECTED mode = the gap
-    fast_rate: float                      # short_range: the fastest RAW decay rate
-    decay_rates: tuple[float, ...]        # RAW spectrum: every alpha_k = -log|mu_k| (dominant-first)
-    frequencies: tuple[float, ...]        # RAW spectrum: every beta_k = arg(mu_k)
+    ``mass_gap`` is read on the connected (mean-subtracted) spectrum: the slowest
+    fluctuation mode (the gap) of field data with a nonzero mean. ``decay_rates`` /
+    ``frequencies`` are the full raw operator spectrum (dominant-first)."""
+    mass_gap: float                       # -log|mu_1| of the dominant (slowest) connected mode = the gap
+    fast_rate: float                      # short_range: the fastest raw decay rate
+    decay_rates: tuple[float, ...]        # Raw spectrum: every alpha_k = -log|mu_k| (dominant-first)
+    frequencies: tuple[float, ...]        # Raw spectrum: every beta_k = arg(mu_k)
 
 
 @dataclass(frozen=True)
 class Temporal:
-    """The leading temporal mode's ATTENUATION alpha ([E Sec 6], Def 6.1), read with
+    """The leading temporal mode's attenuation alpha ([E Sec 6], Def 6.1), read with
     time as the feature axis and spatial sites as samples. It is the mass-gap paper's
-    "coherence (leading temporal mode)" and moves OPPOSITE the gap (high when
+    "coherence (leading temporal mode)" and moves opposite the gap (high when
     coherent/gapless, low when gapped). Fields mirror the library CertifiedInterval;
-    this is the ATTENUATION, not the [E] SpectralOptics.dominance (lambda1-1)/(N-1)."""
+    this is the attenuation, not the [E] SpectralOptics.dominance (lambda1-1)/(N-1)."""
     attenuation: float                    # attenuation alpha ([E, Sec 6])
     attenuation_lo: float                 # Weyl-certified lower bound ([E, Lem 6.2])
     attenuation_hi: float                 # Weyl-certified upper bound
@@ -248,16 +260,16 @@ class Temporal:
 
 @dataclass(frozen=True)
 class ConfinementCertificate:
-    """The pooled, Weyl-certified DISORDER read over the whole configuration ensemble (the
+    """The pooled, Weyl-certified disorder read over the whole configuration ensemble (the
     confinement side; the ensemble-level Aperture bound). Built by pooling the feature
-    correlation over INTACT spatial planes (``SpectralAccumulator`` fed by ``fields.slabs``,
+    correlation over intact spatial planes (``SpectralAccumulator`` fed by ``fields.slabs``,
     never a flatten), so the certified band tightens with the ensemble.
 
-    ``attenuation`` is the mass-gap paper's vortex tension mu ([E, Sec 6], PAPER Sec 12): its
-    Weyl-certified UPPER endpoint below the floor kappa_0 = (1/4)ln3 is the certified
+    ``attenuation`` is the mass-gap paper's vortex tension mu ([E, Sec 6], long record Sec 12): its
+    Weyl-certified upper endpoint below the floor kappa_0 = (1/4)ln3 is the certified
     confinement inequality mu < kappa_0. The resolved-mode interval is the phase discriminator
-    ([E, Def 8.2] analogue). Both read off ONE pooled spectrum. The kappa_0 comparison is
-    PHYSICS, done by the caller (the run script), not by the read layer."""
+    ([E, Def 8.2] analogue). Both read off one pooled spectrum. The kappa_0 comparison is
+    physics, done by the caller (the run script), not by the read layer."""
     attenuation:    float   # mu = disorder attenuation alpha, nats (point read)
     attenuation_lo: float   # Weyl-certified lower endpoint
     attenuation_hi: float   # Weyl-certified upper endpoint (mu < kappa_0  <=>  this < kappa_0)
@@ -276,9 +288,9 @@ class KSignalCertificate:
     per-config plane-averaged K_signal values are the samples, treated as i.i.d.; the interval
     is an empirical-Bernstein bound (Maurer-Pontil 2009, Thm 4) on the ensemble mean, so its
     width shrinks as 1/sqrt(n_configs). Each endpoint is one-sided at 1 - delta; the two-sided
-    interval [lo, hi] holds at 1 - 2*delta. The confidence is NOMINAL: the theorem needs an
+    interval [lo, hi] holds at 1 - 2*delta. The confidence is nominal: the theorem needs an
     a-priori support width and the sample range is used in its place (see
-    `Reads.k_signal_certificate`). A phase SEPARATION is two such intervals (confined vs a
+    `Reads.k_signal_certificate`). A phase separation is two such intervals (confined vs a
     reference) that do not overlap; that is the ensemble-size-limited step."""
     mean:   float   # ensemble-mean K_signal over configs
     std:    float   # sample standard deviation across configs
@@ -291,7 +303,7 @@ class KSignalCertificate:
 # The optics fields grouped by which reduction reads them correctly. Ordered/decay
 # fields are read on the time-pooled projection; feature/spectral/concentration fields are
 # plane-averaged over intact spatial planes. etendue / space_bandwidth / shape_factor
-# CROSS the two axes and are recomposed from the correctly-reduced pieces.
+# cross the two axes and are recomposed from the correctly-reduced pieces.
 _ORDERED_FIELDS = ("H_T", "n_T", "delta_T", "phi_T", "sigma_T", "phi", "magnification",
                    "strehl", "a_delta", "a_delta_abbe", "correlation_length",
                    "decay_entropy", "rayleigh_shape_factor", "at_diffraction_limit")
@@ -305,20 +317,20 @@ _FEATURE_FIELDS = ("H_F", "n_F", "delta_F", "phi_F", "sigma_F", "contrast", "top
 # 2-D; each read gets the reduction that keeps its own structure intact)
 # ══════════════════════════════════════════════════════════════════════════════
 def _ordered(f: np.ndarray, ta: int) -> np.ndarray:
-    """ORDERED reads (dynamics / decay / gap): time first, every off-axis site pooled
+    """Ordered reads (dynamics / decay / gap): time first, every off-axis site pooled
     as the feature/state vector of the one ordered process (== entroptics.fields.pool)."""
     return pool(_asfloat(f), ta)
 
 
 def _temporal(f: np.ndarray, ta: int) -> np.ndarray:
-    """TEMPORAL-SPECTRUM read: time as the FEATURE axis, off-axis sites as SAMPLES of
+    """Temporal-spectrum read: time as the feature axis, off-axis sites as samples of
     the time vector (the leading temporal mode's coherence, [E Sec 6])."""
     f = _asfloat(f)
     return _movedim(f, ta, -1).reshape(-1, f.shape[ta])
 
 
 def _plane_axes(ndim: int, ta: int):
-    """The two axes that form each intact SPATIAL plane: the first two non-time axes
+    """The two axes that form each intact spatial plane: the first two non-time axes
     (None if fewer than two exist, e.g. an already-2-D field)."""
     t = ta % ndim
     spatial = [ax for ax in range(ndim) if ax != t]
@@ -340,8 +352,8 @@ def _spatial_planes(f: np.ndarray, ta: int):
 
 def _plane_mean(f: np.ndarray, ta: int, read: Callable) -> float:
     """A scalar 2-D ``read`` folded over the intact spatial planes of ``f`` by the
-    LIBRARY's geometry-preserving reduction (entroptics.fields.over_planes; [E Sec 8],
-    PAPER Sec 8.1). The library keeps each plane intact and reduces -- we build no
+    library's geometry-preserving reduction (entroptics.fields.over_planes; [E Sec 8],
+    long record Sec 8.1). The library keeps each plane intact and reduces -- we build no
     aggregation by hand. For an already-2-D field the field itself is the single plane."""
     f = _asfloat(f)
     pa = _plane_axes(f.ndim, ta)
@@ -350,25 +362,14 @@ def _plane_mean(f: np.ndarray, ta: int, read: Callable) -> float:
     return float(over_planes(f, pa, read=read, reduce="mean"))
 
 
-# DERIVED: read from the library rather than mirrored. This was a hard-coded 128 duplicating
-# `entroptics.aperture.MIN_WINDOW`; a copy of an upstream value desyncs silently the moment
-# upstream changes it, and the branch it guards decides whether a plane is read whole or
-# per-plane. Importing by name makes a restructure fail loudly instead.
-from entroptics.aperture import MIN_WINDOW as _APERTURE_WINDOW  # noqa: E402
-# A plane with <= MIN_WINDOW rows is never window-truncated, so
-# read_batch(full plane) == Aperture(p).projection().
-
-
 def _plane_mean_batched(f, ta, *, null, batched_read, pick, orig) -> float:
     """Plane-mean of a 2-D floor read done in one batched pass over the intact spatial planes --
-    BIT-IDENTICAL to the per-plane ``orig`` read whenever each plane fits the Aperture window
-    (no truncation).  ``batched_read(planes, provider) -> per-plane records``; ``pick`` pulls the
+    bit-identical to the per-plane ``orig`` read, because a batch ``Aperture`` reads every plane
+    whole (it never windows, [E] 0.2.7).  ``batched_read(planes, provider) -> per-plane records``; ``pick`` pulls the
     scalar (e.g. ``r.K_signal`` for ``read_batch``, ``r.contrast`` for ``spectral_batch``);
-    ``orig(plane, provider)`` is the exact per-plane read.  The provider is the floor for the
-    planes' SHAPE (``_provider_or_raise(null, shape)``), resolved before any read so an
-    uncalibrated shape raises instead of reading.  Falls back to ``orig`` for a single plane or
-    tall planes (which ``Aperture`` would window), so it can never diverge from the un-batched
-    read."""
+    ``orig(plane, provider)`` is the exact per-plane read, used for a single plane.  The provider
+    is the floor for the planes' shape (``_provider_or_raise(null, shape)``), resolved before any
+    read so an uncalibrated shape raises instead of reading."""
     f = _asfloat(f)
     pa = _plane_axes(f.ndim, ta)
     if pa is None:
@@ -378,8 +379,6 @@ def _plane_mean_batched(f, ta, *, null, batched_read, pick, orig) -> float:
     if not planes:
         return float("nan")
     prov = _provider_or_raise(null, planes[0].shape)   # slabs of one array: every plane one shape
-    if any(int(p.shape[0]) > _APERTURE_WINDOW for p in planes):  # tall -> Aperture windows -> per-plane
-        return float(over_planes(f, pa, read=lambda p: orig(p, prov), reduce="mean"))
     return float(np.mean([float(pick(r)) for r in batched_read(planes, prov)]))
 
 
@@ -396,7 +395,7 @@ def _plane_mean_batched(f, ta, *, null, batched_read, pick, orig) -> float:
 # Pin once with ``pin_reference(confined_ensemble)``. A floor read with nothing pinned and no
 # explicit ``null=`` raises at the point of measurement.
 #
-# THE PIN IS KEYED BY PLANE SHAPE. ``reference_null`` returns an absolute top-mode level and keeps
+# The pin is keyed by plane shape. ``reference_null`` returns an absolute top-mode level and keeps
 # no record of the (N, F) it was calibrated at, and under the 0.2.5 whitening every screen's energy
 # is fixed at N*F, so the level a signal-free plane reaches is set by the plane's shape. One floor
 # calibrated on 8x8 planes and applied to other shapes reads the shape, not the field: a 6x6
@@ -404,7 +403,7 @@ def _plane_mean_batched(f, ta, *, null, batched_read, pick, orig) -> float:
 # read 0.0000 at every coupling), and a 16x16 screen's whole noise bulk lies above it (SU(2) 16x16
 # read 3.59, the same with the plane's values shuffled). So every plane shape found in the
 # reference is calibrated on its own planes, and a read of a plane shape the reference does not
-# contain RAISES (``UncalibratedShape``) instead of borrowing another shape's floor.
+# contain raises (``UncalibratedShape``) instead of borrowing another shape's floor.
 _PINNED_REFERENCE = None       # {plane shape: the signal-free reference planes of that shape}
 _PINNED_PROVIDER = None        # {plane shape: the by_kind reference-null provider for that shape}
 
@@ -418,16 +417,16 @@ def _shape_key(shape) -> tuple:
 
 
 def _calibrate_shape(planes, *, far, kboot, seed):
-    """The ``by_kind`` reference-null provider calibrated on reference planes of ONE shape.
+    """The ``by_kind`` reference-null provider calibrated on reference planes of one shape.
 
-    Calibrated PER CUT POINT at the SAME granularity as the read it thresholds:
+    Calibrated per cut point at the same granularity as the read it thresholds:
 
       * projection (per-plane K_signal): the whitened-projection top singular value of each
                    reference plane -> ``confined_reference_null`` (per-plane distribution).
       * spectral   (per-plane contrast / resolved_modes): each plane's top correlation eigenvalue
                    -> ``reference_null`` (per-plane distribution).
-      * bulk       (the POOLED ensemble certificate): the POOLED top correlation eigenvalue's
-                   SAMPLING band -> bootstrap-resample the reference planes, pool, take the pooled
+      * bulk       (the pooled ensemble certificate): the pooled top correlation eigenvalue's
+                   sampling band -> bootstrap-resample the reference planes, pool, take the pooled
                    top eigenvalue (``kboot`` draws) -> ``reference_null``. A per-plane value here
                    would inflate the floor (per-plane variance >> pooled variance) and bury every
                    signal; the pooled bootstrap is the matched detection floor (the certificate
@@ -459,9 +458,9 @@ def _calibrate_shape(planes, *, far, kboot, seed):
 def pin_reference(confined_configs: "Iterable | None" = None, *,
                   realisations: "Iterable | None" = None, far: float | None = None,
                   time_axis: int = -1, kboot: int = 40, seed: int = 0):
-    """PIN the calibrated null-reference for every floor read of this wrapper (K_signal,
+    """Pin the calibrated null-reference for every floor read of this wrapper (K_signal,
     contrast, resolved modes, the certified mu), from a deeply-confined reference ensemble
-    ([E] Def 8.2), ONE CALIBRATION PER PLANE SHAPE.
+    ([E] Def 8.2), one calibration per plane shape.
 
     ``confined_configs`` are raw N-D configurations, cut into their intact spatial planes exactly
     as the reads cut them; ``realisations`` are 2-D frames taken as they are. Both may be given, and
@@ -516,11 +515,11 @@ def pinned_shapes() -> tuple:
 
 
 def _provider_or_raise(null, shape):
-    """The provider to hand a FLOOR read of a plane (or frame) of ``shape``.
+    """The provider to hand a floor read of a plane (or frame) of ``shape``.
 
     An explicit ``null`` overrides the pin; if it records the plane shape it was calibrated at
     (``plane_shape``, as ``confined_reference_null(..., plane_shape=...)`` does), a read of another
-    shape raises. Otherwise the pinned calibration FOR THIS SHAPE; a shape the pin does not hold
+    shape raises. Otherwise the pinned calibration for this shape; a shape the pin does not hold
     raises ``UncalibratedShape``; nothing pinned raises -- this wrapper never silently falls back
     to the library's i.i.d.-Gaussian ``mp`` floor, and never to another shape's floor."""
     key = _shape_key(shape)
@@ -563,7 +562,7 @@ class Reads:
             raise ValueError("run() needs at least one configuration")
         self._ta: int = time_axis
         self._dyn = None
-        # The floor for THIS read. With `null=None` the global pinned reference is used, so
+        # The floor for this read. With `null=None` the global pinned reference is used, so
         # nothing that pins today changes behaviour; supplying one gives a caller a floor scoped
         # to a single read, which `Reads` previously offered no channel for.
         #
@@ -578,8 +577,8 @@ class Reads:
 
     # ---- internals ----
     def _spliced(self):
-        """The DMD/Koopman operator accumulated over ALL raw configs (time-ordered;
-        the spatial field is the state vector, pooled -- NOT flattened away).
+        """The DMD/Koopman operator accumulated over all raw configs (time-ordered;
+        the spatial field is the state vector, pooled -- not flattened away).
 
         The ensemble is streamed into one accumulator, each configuration ingested as its own run
         (``adjacent=False``: no transition pair spans two configurations, because the system never
@@ -618,7 +617,7 @@ class Reads:
         band = concentration_band(n, F)                  # Vershynin sample-count band (library primitive, no inline copy)
         return a.attenuation_interval(band)
 
-    # ---- DYNAMICS (ORDERED; moves WITH the gap) ----
+    # ---- Dynamics (ordered; moves with the gap) ----
     @property
     def dynamics(self) -> Dynamics:
         sp = self._spliced()
@@ -629,16 +628,16 @@ class Reads:
 
     @property
     def mass_gap(self) -> float:
-        """Delta = the mass gap (PAPER Sec 3): the decay rate of the DOMINANT (slowest) mode of
+        """Delta = the mass gap (long record Sec 3): the decay rate of the dominant (slowest) mode of
         the ordered-axis Koopman/DMD operator, -log|mu_1|, spliced over all configs and read on
-        the CONNECTED (mean-subtracted) dynamics -- the slowest FLUCTUATION mode about the vacuum.
-        The FORWARD operator read -- identify the linear propagator from the trajectory and read
+        the connected (mean-subtracted) dynamics -- the slowest fluctuation mode about the vacuum.
+        The forward operator read -- identify the linear propagator from the trajectory and read
         its dominant rate, borrowing the classical dynamical-systems machinery and walking it
         forward, isolating the gap of a multi-mode signal. Deterministic in the operator
         eigenvalues. See [E] Sec 9, library ``Aperture.connected_decay_rate``."""
         return float(self._spliced().connected_decay_rate)
 
-    # ---- TEMPORAL SPECTRUM (moves OPPOSITE the gap) ----
+    # ---- Temporal spectrum (moves opposite the gap) ----
     @property
     def temporal(self) -> Temporal:
         cis = [self._temporal_ci(f) for f in self._cfgs]
@@ -665,11 +664,11 @@ class Reads:
 
     def _spectral_mean(self, attr: str) -> float:
         """Plane- and ensemble-mean of one feature-correlation-spectrum field (any
-        ``SpectralOptics`` attribute).  Each config's intact spatial planes are read in a SINGLE
-        batched ``spectral_batch`` pass -- BIT-IDENTICAL to the per-plane
+        ``SpectralOptics`` attribute).  Each config's intact spatial planes are read in a single
+        batched ``spectral_batch`` pass -- bit-identical to the per-plane
         ``Aperture(p, null=prov).<attr>`` (``spectral_batch`` reuses the library's
         ``_spectral_from_cov``, so every field matches, not just ``contrast``) -- plane-averaged,
-        then averaged over configs.  Floor = the PINNED reference null (never mp); raises if
+        then averaged over configs.  Floor = the pinned reference null (never mp); raises if
         nothing is pinned.  The one place the correlation eigenspectrum is formed, shared by
         ``contrast`` / ``resolved_modes`` / ``attenuation`` / ``top_share`` / ``dispersion``."""
         return float(np.mean([_plane_mean_batched(
@@ -680,18 +679,18 @@ class Reads:
 
     @property
     def contrast(self) -> float:
-        """Dominant feature-mode COHERENCE lambda_1 / reference-null floor (>1 => structure
-        above the confined vacuum). A coherence / correlation read, NOT the string tension:
+        """Dominant feature-mode coherence lambda_1 / reference-null floor (>1 => structure
+        above the confined vacuum). A coherence / correlation read, not the string tension:
         sigma is a nonlocal Wilson-loop quantity, absent from the local action-density
-        spectrum. Use it for the confinement PATTERN, not as sqrt(sigma). Plane-averaged
-        (feature read), then averaged over configs. Floor = the PINNED reference null (never
+        spectrum. Use it for the confinement pattern, not as sqrt(sigma). Plane-averaged
+        (feature read), then averaged over configs. Floor = the pinned reference null (never
         mp); raises if no reference is pinned."""
         return self._spectral_mean("contrast")
 
     @property
     def resolved_modes(self) -> float:
         """Feature-correlation modes above the reference-null floor, plane- and ensemble-averaged
-        -- the spatial resolved count from the CORRELATION spectrum (companion to ``confinement``,
+        -- the spatial resolved count from the correlation spectrum (companion to ``confinement``,
         the K_signal from the projection SVD).  Free from the same batched spectral pass as ``contrast``."""
         return self._spectral_mean("resolved_modes")
 
@@ -715,11 +714,11 @@ class Reads:
         ensemble-averaged -- how the propagation constant varies mode-to-mode."""
         return self._spectral_mean("dispersion")
 
-    # ---- SPATIAL SCREEN, certified over the ensemble (confinement) ----
+    # ---- Spatial screen, certified over the ensemble (confinement) ----
     @property
     def confinement_certificate(self) -> ConfinementCertificate:
         """The disorder attenuation mu and the resolved count, with Weyl-certified intervals,
-        POOLED over the whole ensemble on INTACT spatial planes (``SpectralAccumulator`` +
+        pooled over the whole ensemble on intact spatial planes (``SpectralAccumulator`` +
         ``fields.slabs``, no flatten). Confinement mu < kappa_0 is certified when
         ``attenuation_hi < kappa_0 = (1/4)ln3`` (the caller does the kappa_0 comparison). The
         pooling is the ensemble-level Aperture bound: the band shrinks as the ensemble grows."""
@@ -753,7 +752,7 @@ class Reads:
             resolved_lo=int(k.resolved_lo), resolved_hi=int(k.resolved_hi),
             band=float(band), n_samples=int(acc.T), n_features=int(acc.F))
 
-    # CHOSEN, AND IT IS THE CALLER'S TO SET: `delta` is the per-side failure probability of the
+    # CHOSEN, and it is the caller's to set: `delta` is the per-side failure probability of the
     # empirical-Bernstein interval, not a cut on any measurement. The default 0.05 gives each
     # endpoint a nominal one-sided 95% and the two-sided interval a nominal 90% (1 - 2*delta);
     # every caller may pass its own, and no committed artifact producer calls
@@ -765,7 +764,7 @@ class Reads:
         Maurer-Pontil (2009, Thm 4) bound at 1 - ``delta``; the two-sided interval [lo, hi]
         holds at 1 - 2*``delta`` by the union bound, not at 1 - ``delta``.
 
-        The confidence is NOMINAL. Thm 4 holds for i.i.d. samples with a support width fixed in
+        The confidence is nominal. Thm 4 holds for i.i.d. samples with a support width fixed in
         advance; this uses the sample range max - min in its place, which understates the
         support whenever the extremes were not sampled, and the configurations are i.i.d. only
         as far as the generating chain decorrelated them. So the guarantee does not strictly
@@ -784,27 +783,27 @@ class Reads:
         eb = empirical_bernstein(vals, float(delta), span=float(max(vals) - min(vals)))
         return KSignalCertificate(m, float(np.std(vals, ddof=1)), n, eb.lo, eb.hi, float(delta))
 
-    # ---- ORDERED decay aperture ----
+    # ---- Ordered decay aperture ----
     @property
     def a_delta(self) -> float:
-        """The diffraction-limit APERTURE the paper aligns the gap to ([E, Def 4.4],
-        PAPER Sec 4): a_delta = 2^{-H} of the signal's own decay, the reciprocal
-        aperture width, so Delta ~ a_delta. Read along the ORDERED axis (time pooled),
-        so run(cfgs, time_axis=k) reads the aperture ACROSS axis k -- a spatial axis
-        gives the TRANSVERSE (bore) aperture. Recovers the free-scalar gap (moves with
+        """The diffraction-limit aperture the paper aligns the gap to ([E, Def 4.4],
+        long record Sec 4): a_delta = 2^{-H} of the signal's own decay, the reciprocal
+        aperture width, so Delta ~ a_delta. Read along the ordered axis (time pooled),
+        so run(cfgs, time_axis=k) reads the aperture across axis k -- a spatial axis
+        gives the transverse (bore) aperture. Recovers the free-scalar gap (moves with
         mass); on the vacuum gauge action density it sits at the white value (the
         confinement aperture is not locally exposed; the gauge gap is the bore).
         Averaged over configs."""
         return float(np.mean([Aperture(_ordered(f, self._ta)).a_delta for f in self._cfgs]))
 
-    # ---- ORDERED coherence (is there ordered structure along the time axis?) ----
+    # ---- Ordered coherence (is there ordered structure along the time axis?) ----
     @property
     def coherence(self) -> float:
         """Ordered-axis (time) coherence z-score (closed-form permutation null, [E Sec 5])."""
         return float(np.mean([Aperture(_ordered(f, self._ta)).projection().coherence
                              for f in self._cfgs]))
 
-    # ---- full intrinsic optics (EACH field via its correct reduction) ----
+    # ---- full intrinsic optics (each field via its correct reduction) ----
     @property
     def optics(self) -> Optics:
         names = [fld.name for fld in fields(Optics)]
@@ -821,7 +820,7 @@ class Reads:
         ordered/decay fields from the time-pooled projection, the feature/spectral/
         concentration fields plane-averaged over intact spatial planes, and the two
         cross-axis areas (etendue, space-bandwidth) plus shape_factor recomposed."""
-        # Each frame is floored by the calibration of ITS shape: the time-pooled ordered frame
+        # Each frame is floored by the calibration of its shape: the time-pooled ordered frame
         # (T x sites) and the spatial planes are different shapes, and each must be pinned.
         frame = _ordered(f, self._ta)
         ordered = Aperture(frame, null=_provider_or_raise(self._null, frame.shape)).optics()
@@ -846,9 +845,9 @@ def run(configs: Iterable[np.ndarray], *, time_axis: int = -1) -> Reads:
 
 
 def aperture(field: np.ndarray, time_axis: int = -1):
-    """The ORDERED (time-pooled) Aperture of one raw config -- for ordered / decay /
+    """The ordered (time-pooled) Aperture of one raw config -- for ordered / decay /
     dynamics reads (a_delta, rates, strehl, phi_T), where the spatial field is the
-    state vector. For SPATIAL / feature reads (K_signal, contrast, phi_F) use
+    state vector. For spatial / feature reads (K_signal, contrast, phi_F) use
     confinement() / run(), which keep each spatial plane intact. Low-level; prefer run()."""
     return Aperture(_ordered(field, time_axis))
 
@@ -856,26 +855,26 @@ def aperture(field: np.ndarray, time_axis: int = -1):
 def decay(record, mask=None, *, periodic: bool = False, disconnected=_DISCONNECTED_UNSET):
     """The ordered-axis autocorrelation `C(tau)` of a 2-D record -- `entroptics.reads.decay`.
 
-    `record` is `(T, F)`: `T` the ORDERED axis, `F` exchangeable feature channels. The profile
-    returned is `sum_f C_f`, a SUM over channels and not a mean, so a caller who wants the
+    `record` is `(T, F)`: `T` the ordered axis, `F` exchangeable feature channels. The profile
+    returned is `sum_f C_f`, a sum over channels and not a mean, so a caller who wants the
     per-channel average divides by the channel count. That is the library's convention and this
     wrapper does not change it.
 
-    `periodic=True` reads the ordered axis as a RING: the lag is taken modulo `T`, every lag is
+    `periodic=True` reads the ordered axis as a ring: the lag is taken modulo `T`, every lag is
     averaged over all `T` pairs, and `C(tau) == C(T - tau)` holds exactly rather than to within
     round-off. It is the read for an axis that really closes -- a lattice on a torus -- and the
     wrong one for a window cut out of a longer record, where it wraps the far end onto the near
-    end. It REFUSES a record with a fully missing row, which would shorten the ring in silence.
+    end. It refuses a record with a fully missing row, which would shorten the ring in silence.
 
-    `disconnected` says WHOSE level is removed before the pairs are formed, and its three states
+    `disconnected` says whose level is removed before the pairs are formed, and its three states
     differ: omitted removes the record's own per-channel mean; `None` removes nothing, for a caller
     that subtracts an ensemble disconnected term itself; a scalar or one value per live channel
     removes that.
 
-    WHY THE SIGNATURE IS CHECKED HERE. `periodic` and `disconnected` landed in the library after
+    Why the signature is checked here. `periodic` and `disconnected` landed in the library after
     the version in `research/requirements.txt` was cut, so no version string separates a copy that
     has them from one that does not -- and this tree has read `src/` while testing a wheel. The
-    capability is therefore read off the loaded function, and a copy without it is refused by PATH,
+    capability is therefore read off the loaded function, and a copy without it is refused by path,
     which is the thing that actually differs."""
     missing = sorted({"periodic", "disconnected"} - _DECAY_KEYWORDS)
     if missing:
@@ -889,6 +888,42 @@ def decay(record, mask=None, *, periodic: bool = False, disconnected=_DISCONNECT
     return _reads.decay(record, mask, periodic=periodic, **extra)
 
 
+def correlation(a, b) -> float:
+    """Pearson's r of two paired 1-D samples, read as the library's signed coupling at one shared coordinate
+    (`reads.coupling`). There the coupling's `z` is exactly `r * sqrt(T - 1)` and is never zeroed (its `strength`
+    is, below the library's level), so `r = z / sqrt(T - 1)`. The library returns `z = 0` for a sample with no
+    variance and for fewer than three pairs; a caller that must tell those apart from r = 0 tests for them."""
+    a = np.asarray(_to_np(a), dtype=float).ravel()
+    b = np.asarray(_to_np(b), dtype=float).ravel()
+    if a.shape != b.shape:
+        raise ValueError(f"correlation pairs two samples of one length; got {a.size} and {b.size}")
+    c = coupling(a[:, None], b[:, None])
+    # DERIVED: T - 1 is the permutation variance's denominator in the coupling's z (r = z / sqrt(T - 1)), so a
+    # single pair (T - 1 = 0) has no r and reads 0, as the library's own empty coupling does.
+    return float(c.z / np.sqrt(c.n - 1)) if c.n > 1 else 0.0
+
+
+def torus_product(field, shift) -> float:
+    """The site average of `field(x) field(x + shift)` on a periodic array, `shift` one integer per axis, the raw
+    (disconnected) product: `reads.cross_covariance` with `periodic=True, disconnected=None` along the first
+    displaced axis, every other site a channel. A displacement off that axis is carried by shifting the partner
+    field before the read, so the lag sum itself is the library's. The library's profile is a sum over channels
+    divided by the axis length; dividing once more by the channel count makes it the mean over sites."""
+    f = np.asarray(_to_np(_asfloat(field)), dtype=float)
+    shift = tuple(int(s) for s in shift)
+    if len(shift) != f.ndim:
+        raise ValueError(f"shift has {len(shift)} components for a {f.ndim}-axis field")
+    ax = next((i for i, s in enumerate(shift) if s), 0)
+    rest = [(i, s) for i, s in enumerate(shift) if s and i != ax]
+    # NOT A READ: the off-axis part of the displacement builds the partner field; the lag sum is the library's
+    g = np.roll(f, [-s for _, s in rest], axis=[i for i, _ in rest]) if rest else f
+    n = int(f.shape[ax])
+    X = np.moveaxis(f, ax, 0).reshape(n, -1)
+    Y = np.moveaxis(g, ax, 0).reshape(n, -1)
+    c = cross_covariance(X, Y, [shift[ax] % n], periodic=True, disconnected=None)[0]
+    return float(c) / X.shape[1]
+
+
 def shuffle_within_planes(field: np.ndarray, time_axis: int = -1, *, seed: int) -> np.ndarray:
     """The same-marginal negative control for a spatial read: a copy of ``field`` in which the
     values of every intact spatial plane (the planes ``confinement`` reads) are permuted
@@ -897,7 +932,7 @@ def shuffle_within_planes(field: np.ndarray, time_axis: int = -1, *, seed: int) 
     Each plane keeps exactly its own multiset of values -- its one-point marginal -- and loses its
     spatial arrangement. A read that moves under this permutation is reading spatial structure; a
     read that does not is reading the marginal. The reference a floor was calibrated on is never
-    shuffled: the control asks what the SAME floor makes of the same values without their
+    shuffled: the control asks what the same floor makes of the same values without their
     arrangement. A field with fewer than two non-time axes is its own single plane."""
     f = np.array(_to_np(_asfloat(field)), dtype=float, copy=True)
     rng = np.random.default_rng(seed)
@@ -913,12 +948,12 @@ def shuffle_within_planes(field: np.ndarray, time_axis: int = -1, *, seed: int) 
 def confinement(field: np.ndarray, time_axis: int = -1, *, null=None, seed: int = 0,
                 shuffle: int | None = None) -> float:
     """Plane-averaged K_signal of one raw config: the resolved-mode count read on each
-    INTACT 2-D spatial plane (entroptics.fields.slabs) and averaged over planes ([E Sec 8],
-    PAPER Sec 8.1). The geometry-preserving spatial order parameter -- a bare flatten of
+    intact 2-D spatial plane (entroptics.fields.slabs) and averaged over planes ([E Sec 8],
+    long record Sec 8.1). The geometry-preserving spatial order parameter -- a bare flatten of
     the spatial volume would destroy the within-plane correlation and invert it.
 
     ``null`` overrides the floor provider for this read. With ``null=None`` the wrapper uses
-    the PINNED reference null (``pin_reference(...)``) calibrated at the planes' shape: the
+    the pinned reference null (``pin_reference(...)``) calibrated at the planes' shape: the
     confined-vacuum detection null ([E] Def 8.2). A plane shape the pin holds no calibration for
     raises ``UncalibratedShape``. The wrapper does not fall back to the library's i.i.d.-Gaussian
     ``mp`` edge: a read with nothing pinned and ``null=None`` raises. Resampling nulls are
@@ -968,17 +1003,17 @@ def _top_svs_and_shape(confined_configs, time_axis: int):
 
 def confined_reference_null(confined_top_svs, *, far: float | None = None,
                             plane_shape: tuple | None = None):
-    """DETERMINISTIC O(1) confined-reference null: the physics null the mass-gap read OWNS
+    """Deterministic O(1) confined-reference null: the physics null the mass-gap read owns
     ([E] Def 8.2, 'prewhiten from a signal-free window'), built by the library's
     ``null_providers.reference_null`` from the confined vacuum's top singular values. The floor is
-    ``center + z(far)*scale`` -- a pure O(1) function of ``ctx.far`` with NO stored samples and
-    NO resampling, sharpening ANALYTICALLY to any far (the normal quantile inverts to 1e-5+;
+    ``center + z(far)*scale`` -- a pure O(1) function of ``ctx.far`` with no stored samples and
+    no resampling, sharpening analytically to any far (the normal quantile inverts to 1e-5+;
     no 1/far sample requirement). ``(center, scale)`` = mean/std of
     ``confined_top_singular_values(confined_ensemble)`` at the target (N,F) shape. Detection
     null = the confined phase. The confined analogue of the ``mp`` edge (same closed form, the
     noise model calibrated on the confined vacuum instead of an i.i.d. bulk).
 
-    What this adds to the library call is the NAME -- the provider reports itself as
+    What this adds to the library call is the name -- the provider reports itself as
     ``confined_reference_null`` -- and, when ``plane_shape`` is given, the plane shape it was
     calibrated at, which the wrapper's reads check: the library's floor is an absolute level with
     no record of its shape, and a read of a plane of another shape raises ``UncalibratedShape``."""
@@ -990,7 +1025,7 @@ def confined_reference_null(confined_top_svs, *, far: float | None = None,
 
 class ConfinedReferenceNull(_lib_nulls.ReferenceNull):
     """The library's stateful O(1) sharpening reference null (``null_providers.ReferenceNull``),
-    fed from confined CONFIGURATIONS rather than from top values: ``update(*confined_configs)``
+    fed from confined configurations rather than from top values: ``update(*confined_configs)``
     pushes each configuration's per-plane top singular values (``confined_top_singular_values``),
     so the streaming aperture can call it per frame and the null tracks a drifting confined level
     online. The running mean/variance (fading-memory Welford), the floor ``mean + z(far)*std`` and
@@ -1032,7 +1067,7 @@ class ConfinedReferenceNull(_lib_nulls.ReferenceNull):
 def marginal_entropy(field: np.ndarray, time_axis: int = -1) -> float:
     """Plane-averaged Shannon entropy H = H_T + H_F of one raw config's power marginals
     ([E Sec 2]), read on each intact spatial plane and averaged. Its coupling derivative
-    -dH/dbeta is the disorder response (free-energy curvature; PAPER Sec 8.4): the
+    -dH/dbeta is the disorder response (free-energy curvature; long record Sec 8.4): the
     marginals concentrate as a coherent mode orders the field, so H drops sharply at a
     deconfinement transition and stays flat across a smooth crossover."""
     return _plane_mean(_asfloat(field), time_axis,

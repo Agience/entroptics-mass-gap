@@ -15,7 +15,19 @@ coupling, and their limit
 `AsymptoticScaling.exists_beta_aRun_eq`), with `dyBeta hN k → ∞` (`tendsto_dyBeta`). At step `k` the
 state is `stateK hN k = PeriodicState.periodicState hN (dyBeta hN k)` — the periodic infinite-volume
 Wilson state, reflection invariant at every constant, shift invariant in all four directions,
-reflection positive — and the spacing is `aRun N (dyBeta hN k)`: the coupling runs with the spacing.
+reflection positive — and the spacing is `dySpacing N k = aRun N (dyBeta hN k)`: the coupling runs
+with the spacing.
+
+## Along any coupling tower
+
+Every step-`k` object is also stated at an arbitrary coupling sequence `βs : ℕ → ℝ`, at the same
+dyadic spacing `dySpacing N k`: `stateAlong`, `latSkAlong`, `latSkRAlong`, `contSAlong`, `kernAlong`,
+`Renorm.connectedAlong`. At `βs = dyBeta` they are the objects above, by `rfl`
+(`stateK_eq_stateAlong`, `latSk_eq_latSkAlong`, `latSkR_eq_latSkRAlong`, `contS_eq_contSAlong`,
+`kern_eq_kernAlong`, `Renorm.connected_eq_connectedAlong`), and the identities proved along `βs`
+(`contSAlong_translate`, `contSAlong_reflect`, `kernAlong_symm`, `latSkRAlong_pairFam`,
+`stateAlong_rp`) give the ones at `dyBeta`. None of them uses a property of the couplings: the periodic
+state is translation and reflection invariant and reflection positive at every `β`.
 
 ## Schwinger functions
 
@@ -215,17 +227,55 @@ DERIVED: `0` is the excluded colour count. -/
 noncomputable def stateK (hN : N ≠ 0) (k : ℕ) : MassGap.DLRLimit.State (Cfg N) :=
   PeriodicState.periodicState hN (dyBeta (one_le_of_ne_zero hN) k)
 
-/-- **The Schwinger function of step `k`**: `stateK hN k` at spacing `aRun N (dyBeta k)`.
+/-- **The Schwinger function of step `k`**: `stateK hN k` at spacing `dySpacing N k`, which is
+`aRun N (dyBeta k)` (`aRun_dyBeta`).
 
 DERIVED: `0` is the excluded colour count. -/
 noncomputable def latSk (hN : N ≠ 0) (k : ℕ) {ι : Type} [Fintype ι] (F : ι → SField N) : ℝ :=
-  latS (stateK hN k) (AsymptoticScaling.aRun N (dyBeta (one_le_of_ne_zero hN) k)) F
+  latS (stateK hN k) (dySpacing N k) F
 
 /-- DERIVED: `0` is the excluded colour count. -/
 theorem latSk_eq (hN : N ≠ 0) (k : ℕ) {ι : Type} [Fintype ι] (F : ι → SField N) :
-    latSk hN k F = latS (stateK hN k) (dySpacing N k) F := by
-  unfold latSk
-  rw [aRun_dyBeta]
+    latSk hN k F = latS (stateK hN k) (dySpacing N k) F :=
+  rfl
+
+/-- The step-`k` spacing is the running spacing at the step-`k` coupling.
+
+DERIVED: `0` is the excluded colour count. -/
+theorem latSk_eq_aRun (hN : N ≠ 0) (k : ℕ) {ι : Type} [Fintype ι] (F : ι → SField N) :
+    latSk hN k F
+      = latS (stateK hN k) (AsymptoticScaling.aRun N (dyBeta (one_le_of_ne_zero hN) k)) F :=
+  (congrArg (fun a => latS (stateK hN k) a F) (aRun_dyBeta (one_le_of_ne_zero hN) k)).symm
+
+/-! ### Along a coupling tower
+
+The step-`k` objects above sit at the coupling `dyBeta k`. The same objects at any coupling sequence
+`βs : ℕ → ℝ`, at the same dyadic spacing `dySpacing N k`, carry the suffix `Along`. At
+`βs = dyBeta` they are the objects above, by `rfl`. -/
+
+/-- **The state of step `k` along the coupling tower `βs`**: the periodic Wilson state at `βs k`.
+
+DERIVED: `0` is the excluded colour count. -/
+noncomputable def stateAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) : MassGap.DLRLimit.State (Cfg N) :=
+  PeriodicState.periodicState hN (βs k)
+
+/-- **The Schwinger function of step `k` along `βs`**: `stateAlong hN βs k` at spacing
+`dySpacing N k`.
+
+DERIVED: `0` is the excluded colour count. -/
+noncomputable def latSkAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) {ι : Type} [Fintype ι]
+    (F : ι → SField N) : ℝ :=
+  latS (stateAlong hN βs k) (dySpacing N k) F
+
+/-- DERIVED: `0` is the excluded colour count. -/
+theorem stateK_eq_stateAlong (hN : N ≠ 0) (k : ℕ) :
+    stateK hN k = stateAlong hN (dyBeta (one_le_of_ne_zero hN)) k :=
+  rfl
+
+/-- DERIVED: `0` is the excluded colour count. -/
+theorem latSk_eq_latSkAlong (hN : N ≠ 0) (k : ℕ) {ι : Type} [Fintype ι] (F : ι → SField N) :
+    latSk hN k F = latSkAlong hN (dyBeta (one_le_of_ne_zero hN)) k F :=
+  rfl
 
 /-- `‖∏ Pᵢ‖ ≤ ∏ ‖Pᵢ‖` in `C(X, ℝ)`.
 
@@ -328,15 +378,35 @@ noncomputable def Renorm.connected (hN : N ≠ 0) (Z : ℕ → LField (MassGap.S
 theorem Renorm.bare_reflCompat (τ : Fin 4) : (Renorm.bare N).ReflCompat τ :=
   fun _ _ => ⟨rfl, rfl⟩
 
-/-- The subtraction `ν_k(O)` is reflection compatible because the periodic state is reflection
-invariant.
+/-- **The connected composites along `βs`**: `Z k O · (O − ν_k(O))`, `ν_k = stateAlong hN βs k`.
+
+DERIVED: `0` is the excluded colour count. -/
+noncomputable def Renorm.connectedAlong (hN : N ≠ 0) (βs : ℕ → ℝ)
+    (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) : Renorm N :=
+  ⟨Z, fun k O => stateAlong hN βs k O.1⟩
+
+/-- DERIVED: `0` is the excluded colour count. -/
+theorem Renorm.connected_eq_connectedAlong (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) :
+    Renorm.connected hN Z = Renorm.connectedAlong hN (dyBeta (one_le_of_ne_zero hN)) Z :=
+  rfl
+
+/-- The subtraction `ν_k(O)` along `βs` is reflection compatible because the periodic state is
+reflection invariant at every coupling.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. The reflection
 constant enters in the proof, through `PeriodicState.periodicState_reflInvariant`. -/
+theorem Renorm.connectedAlong_reflCompat (hN : N ≠ 0) (βs : ℕ → ℝ)
+    (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
+    (τ : Fin 4) (hZ : ∀ k O, Z k (O.refl τ) = Z k O) : (Renorm.connectedAlong hN βs Z).ReflCompat τ :=
+  fun k O => ⟨hZ k O, PeriodicState.periodicState_reflInvariant hN (βs k) τ 0 O.1⟩
+
+/-- The subtraction `ν_k(O)` is reflection compatible because the periodic state is reflection
+invariant.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
 theorem Renorm.connected_reflCompat (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
     (τ : Fin 4) (hZ : ∀ k O, Z k (O.refl τ) = Z k O) : (Renorm.connected hN Z).ReflCompat τ :=
-  fun k O => ⟨hZ k O,
-    PeriodicState.periodicState_reflInvariant hN (dyBeta (one_le_of_ne_zero hN) k) τ 0 O.1⟩
+  Renorm.connectedAlong_reflCompat hN (dyBeta (one_le_of_ne_zero hN)) Z τ hZ
 
 /-- The renormalised field datum of step `k`.
 
@@ -357,6 +427,20 @@ DERIVED: `0` is the excluded colour count. -/
 noncomputable def latSkR (hN : N ≠ 0) (ρ : Renorm N) (k : ℕ) {ι : Type} [Fintype ι]
     (F : ι → SField N) : ℝ :=
   ρ.pref k F * latSk hN k (fun i => ρ.field k (F i))
+
+/-- **The renormalised lattice Schwinger function of step `k` along `βs`**:
+`∏ᵢ Z k Oᵢ · ν_k (∏ᵢ smear aₖ (Oᵢ − c k Oᵢ) fᵢ)`, `ν_k = stateAlong hN βs k`.
+
+DERIVED: `0` is the excluded colour count. -/
+noncomputable def latSkRAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (k : ℕ) {ι : Type}
+    [Fintype ι] (F : ι → SField N) : ℝ :=
+  ρ.pref k F * latSkAlong hN βs k (fun i => ρ.field k (F i))
+
+/-- DERIVED: `0` is the excluded colour count. -/
+theorem latSkR_eq_latSkRAlong (hN : N ≠ 0) (ρ : Renorm N) (k : ℕ) {ι : Type} [Fintype ι]
+    (F : ι → SField N) :
+    latSkR hN ρ k F = latSkRAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ k F :=
+  rfl
 
 /-- **The uniform bound (stated; proved at bounded data).** For every family one constant bounds
 the renormalised lattice Schwinger functions eventually in the step, whatever dyadic translation is
@@ -509,6 +593,19 @@ noncomputable def contS (hN : N ≠ 0) (ρ : Renorm N) {ι : Type} [Fintype ι] 
     ℝ :=
   limUnder (ultra : Filter ℕ) (fun k => latSkR hN ρ k F)
 
+/-- **The continuum Schwinger function along `βs`**: `limUnder` along `ultra` of
+`k ↦ latSkRAlong hN βs ρ k F`.
+
+DERIVED: `0` is the excluded colour count. -/
+noncomputable def contSAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) {ι : Type} [Fintype ι]
+    (F : ι → SField N) : ℝ :=
+  limUnder (ultra : Filter ℕ) (fun k => latSkRAlong hN βs ρ k F)
+
+/-- DERIVED: `0` is the excluded colour count. -/
+theorem contS_eq_contSAlong (hN : N ≠ 0) (ρ : Renorm N) {ι : Type} [Fintype ι] (F : ι → SField N) :
+    contS hN ρ F = contSAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ F :=
+  rfl
+
 /-- **Existence of the limit**: under `UniformBound`, `latSkR hN ρ k F → contS hN ρ F` along
 `ultra`, for every finite family.
 
@@ -559,18 +656,26 @@ theorem abs_contS_le_of_bounded (hN : N ≠ 0) (ρ : Renorm N)
 
 #print axioms abs_contS_le_of_bounded
 
+/-- Reindexing a family does not change the renormalised lattice Schwinger function along `βs`.
+
+DERIVED: `0` is the excluded colour count. -/
+theorem latSkRAlong_comp_equiv (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (k : ℕ) {ι ι' : Type}
+    [Fintype ι] [Fintype ι'] (e : ι' ≃ ι) (F : ι → SField N) :
+    latSkRAlong hN βs ρ k (F ∘ e) = latSkRAlong hN βs ρ k F := by
+  have h1 : ρ.pref k (F ∘ e) = ρ.pref k F := Equiv.prod_comp e (fun i => ρ.Z k (F i).1)
+  have h2 : latSkAlong hN βs k (fun i => ρ.field k ((F ∘ e) i))
+      = latSkAlong hN βs k (fun i => ρ.field k (F i)) :=
+    latS_comp_equiv _ _ e (fun i => ρ.field k (F i))
+  show ρ.pref k (F ∘ e) * latSkAlong hN βs k (fun i => ρ.field k ((F ∘ e) i))
+    = ρ.pref k F * latSkAlong hN βs k (fun i => ρ.field k (F i))
+  rw [h1, h2]
+
 /-- Reindexing a family does not change the renormalised lattice Schwinger function.
 
 DERIVED: `0` is the excluded colour count. -/
 theorem latSkR_comp_equiv (hN : N ≠ 0) (ρ : Renorm N) (k : ℕ) {ι ι' : Type} [Fintype ι]
-    [Fintype ι'] (e : ι' ≃ ι) (F : ι → SField N) : latSkR hN ρ k (F ∘ e) = latSkR hN ρ k F := by
-  have h1 : ρ.pref k (F ∘ e) = ρ.pref k F := Equiv.prod_comp e (fun i => ρ.Z k (F i).1)
-  have h2 : latSk hN k (fun i => ρ.field k ((F ∘ e) i)) = latSk hN k (fun i => ρ.field k (F i)) := by
-    rw [latSk_eq, latSk_eq]
-    exact latS_comp_equiv _ _ e (fun i => ρ.field k (F i))
-  show ρ.pref k (F ∘ e) * latSk hN k (fun i => ρ.field k ((F ∘ e) i))
-    = ρ.pref k F * latSk hN k (fun i => ρ.field k (F i))
-  rw [h1, h2]
+    [Fintype ι'] (e : ι' ≃ ι) (F : ι → SField N) : latSkR hN ρ k (F ∘ e) = latSkR hN ρ k F :=
+  latSkRAlong_comp_equiv hN (dyBeta (one_le_of_ne_zero hN)) ρ k e F
 
 /-- **OS3, symmetry**: reindexing a family does not change its continuum Schwinger function. The
 reindexed sequences agree term by term, so the identity needs no hypothesis.
@@ -592,20 +697,31 @@ hypothesis: it equates `limUnder` values of sequences that agree from step `m` o
 
 DERIVED: `0` is the excluded colour count. The halving enters in the proof, through
 `site_dySpacing`. -/
-theorem contS_translate (hN : N ≠ 0) (ρ : Renorm N) {ι : Type} [Fintype ι] (F : ι → SField N)
-    (m : ℕ) (n : ISite) :
-    contS hN ρ (fun i => ((F i).1, (F i).2.translate (site (dySpacing N m) n)))
-      = contS hN ρ F := by
-  unfold contS
+theorem contSAlong_translate (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) {ι : Type} [Fintype ι]
+    (F : ι → SField N) (m : ℕ) (n : ISite) :
+    contSAlong hN βs ρ (fun i => ((F i).1, (F i).2.translate (site (dySpacing N m) n)))
+      = contSAlong hN βs ρ F := by
+  unfold contSAlong
   refine limUnder_congr_ultra ?_
   filter_upwards [Filter.eventually_ge_atTop m] with k hk
-  show ρ.pref k F * latSk hN k (fun i => ((ρ.field k (F i)).1,
+  show ρ.pref k F * latS (stateAlong hN βs k) (dySpacing N k) (fun i => ((ρ.field k (F i)).1,
       (ρ.field k (F i)).2.translate (site (dySpacing N m) n)))
-    = ρ.pref k F * latSk hN k (fun i => ρ.field k (F i))
-  rw [latSk_eq, latSk_eq, site_dySpacing N hk n]
+    = ρ.pref k F * latS (stateAlong hN βs k) (dySpacing N k) (fun i => ρ.field k (F i))
+  rw [site_dySpacing N hk n]
   congr 1
   exact latS_translate _ (fun τ => PeriodicState.periodicState_shift hN _ τ)
     (dySpacing_pos (one_le_of_ne_zero hN) k) _ _
+
+#print axioms contSAlong_translate
+
+/-- **OS1, dyadic translations**, at the couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count. -/
+theorem contS_translate (hN : N ≠ 0) (ρ : Renorm N) {ι : Type} [Fintype ι] (F : ι → SField N)
+    (m : ℕ) (n : ISite) :
+    contS hN ρ (fun i => ((F i).1, (F i).2.translate (site (dySpacing N m) n)))
+      = contS hN ρ F :=
+  contSAlong_translate hN (dyBeta (one_le_of_ne_zero hN)) ρ F m n
 
 #print axioms contS_translate
 
@@ -668,6 +784,18 @@ DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimen
 noncomputable def kern (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (P Q : Mono N) : ℝ :=
   contS hN ρ (pairFam τ P Q)
 
+/-- **The reflection kernel along `βs`**, `S(θP ∪ Q)` read through `contSAlong hN βs ρ`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+noncomputable def kernAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (P Q : Mono N) :
+    ℝ :=
+  contSAlong hN βs ρ (pairFam τ P Q)
+
+/-- DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem kern_eq_kernAlong (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (P Q : Mono N) :
+    kern hN ρ τ P Q = kernAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ P Q :=
+  rfl
+
 /-- At the lattice, `S(θP ∪ Q) = ν (θ(∏P) · ∏Q)`, `θ = ireflObs τ 0`.
 
 DERIVED: `4` in `Fin 4` is the spacetime dimension; `0` is the reflection constant and the sign of
@@ -696,10 +824,10 @@ theorem latS_pairFam (ν : MassGap.DLRLimit.State (Cfg N)) {a : ℝ} (ha : 0 < a
 `S_k(θP ∪ Q) = Z_P Z_Q · S_k^{bare}(θ P_k ∪ Q_k)`, `P_k` the renormalised monomial.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
-theorem latSkR_pairFam (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
-    (P Q : Mono N) :
-    latSkR hN ρ k (pairFam τ P Q)
-      = ρ.zmono k P * ρ.zmono k Q * latSk hN k (pairFam τ (ρ.mono k P) (ρ.mono k Q)) := by
+theorem latSkRAlong_pairFam (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hR : ρ.ReflCompat τ) (k : ℕ) (P Q : Mono N) :
+    latSkRAlong hN βs ρ k (pairFam τ P Q)
+      = ρ.zmono k P * ρ.zmono k Q * latSkAlong hN βs k (pairFam τ (ρ.mono k P) (ρ.mono k Q)) := by
   have hfam : (fun x => ρ.field k (pairFam τ P Q x)) = pairFam τ (ρ.mono k P) (ρ.mono k Q) := by
     funext x
     cases x with
@@ -715,8 +843,19 @@ theorem latSkR_pairFam (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.Refl
     have h1 : (∏ i, ρ.Z k (pairFam τ P Q (Sum.inl i)).1) = ∏ i, ρ.Z k (P.2 i).1 :=
       Finset.prod_congr rfl (fun i _ => (hR k (P.2 i).1).1)
     exact congrArg (fun t => t * ∏ j, ρ.Z k (Q.2 j).1) h1
-  show ρ.pref k (pairFam τ P Q) * latSk hN k (fun x => ρ.field k (pairFam τ P Q x)) = _
+  show ρ.pref k (pairFam τ P Q) * latSkAlong hN βs k (fun x => ρ.field k (pairFam τ P Q x)) = _
   rw [hpref, hfam]
+
+#print axioms latSkRAlong_pairFam
+
+/-- The renormalised pairing factorises at the couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem latSkR_pairFam (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
+    (P Q : Mono N) :
+    latSkR hN ρ k (pairFam τ P Q)
+      = ρ.zmono k P * ρ.zmono k Q * latSk hN k (pairFam τ (ρ.mono k P) (ρ.mono k Q)) :=
+  latSkRAlong_pairFam hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k P Q
 
 #print axioms latSkR_pairFam
 
@@ -739,12 +878,21 @@ theorem gram_expand {X : Type*} [TopologicalSpace X] [CompactSpace X]
 DERIVED: `0` is the excluded colour count, the plane `x_τ = 0`, the reflection constant and the sign
 concluded; `4` in `Fin 4` is the spacetime dimension. The proof reads the reflection constant off
 `periodicState_reflPositive` as a product with zero. -/
-theorem stateK_rp (hN : N ≠ 0) (k : ℕ) (τ : Fin 4) (X : C(Cfg N, ℝ))
+theorem stateAlong_rp (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) (τ : Fin 4) (X : C(Cfg N, ℝ))
     (hX : X ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
-    0 ≤ stateK hN k (LatticeReflection.ireflObs τ 0 X * X) := by
-  have h := PeriodicState.periodicState_reflPositive hN (dyBeta (one_le_of_ne_zero hN) k) τ 0
+    0 ≤ stateAlong hN βs k (LatticeReflection.ireflObs τ 0 X * X) := by
+  have h := PeriodicState.periodicState_reflPositive hN (βs k) τ 0
   rw [mul_zero] at h
   exact h X hX
+
+/-- Reflection positivity of the state of step `k` on the half-space algebra of `x_τ = 0`.
+
+DERIVED: `0` is the excluded colour count, the plane `x_τ = 0` and the sign concluded; `4` in
+`Fin 4` is the spacetime dimension. -/
+theorem stateK_rp (hN : N ≠ 0) (k : ℕ) (τ : Fin 4) (X : C(Cfg N, ℝ))
+    (hX : X ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    0 ≤ stateK hN k (LatticeReflection.ireflObs τ 0 X * X) :=
+  stateAlong_rp hN (dyBeta (one_le_of_ne_zero hN)) k τ X hX
 
 /-- A positive-time smeared field, with any constant subtracted, is eventually in the half-space
 algebra.
@@ -859,10 +1007,10 @@ data, for each of the four axes.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. The reflection
 constant enters through `SField.refl`. -/
-theorem contS_reflect (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) {ι : Type}
-    [Fintype ι] (F : ι → SField N) :
-    contS hN ρ (fun i => SField.refl τ (F i)) = contS hN ρ F := by
-  unfold contS
+theorem contSAlong_reflect (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hR : ρ.ReflCompat τ) {ι : Type} [Fintype ι] (F : ι → SField N) :
+    contSAlong hN βs ρ (fun i => SField.refl τ (F i)) = contSAlong hN βs ρ F := by
+  unfold contSAlong
   congr 1
   funext k
   have hpref : ρ.pref k (fun i => SField.refl τ (F i)) = ρ.pref k F :=
@@ -873,32 +1021,54 @@ theorem contS_reflect (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflC
     show (((F i).1.refl τ).sub (ρ.c k ((F i).1.refl τ)), (F i).2.reflect τ)
       = (((F i).1.sub (ρ.c k (F i).1)).refl τ, (F i).2.reflect τ)
     rw [(hR k (F i).1).2, LField.refl_sub]
-  show ρ.pref k (fun i => SField.refl τ (F i)) * latSk hN k (fun i => ρ.field k (SField.refl τ (F i)))
-    = ρ.pref k F * latSk hN k (fun i => ρ.field k (F i))
-  rw [hpref, hfam, latSk_eq, latSk_eq,
-    latS_refl (stateK hN k) τ
-      (PeriodicState.periodicState_reflInvariant hN (dyBeta (one_le_of_ne_zero hN) k) τ 0)
+  show ρ.pref k (fun i => SField.refl τ (F i))
+      * latSkAlong hN βs k (fun i => ρ.field k (SField.refl τ (F i)))
+    = ρ.pref k F * latSkAlong hN βs k (fun i => ρ.field k (F i))
+  rw [hpref, hfam]
+  unfold latSkAlong
+  rw [latS_refl (stateAlong hN βs k) τ
+      (PeriodicState.periodicState_reflInvariant hN (βs k) τ 0)
       (dySpacing_pos (one_le_of_ne_zero hN) k) (fun i => ρ.field k (F i))]
+
+#print axioms contSAlong_reflect
+
+/-- **OS1, the axis reflections**, at the couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem contS_reflect (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) {ι : Type}
+    [Fintype ι] (F : ι → SField N) :
+    contS hN ρ (fun i => SField.refl τ (F i)) = contS hN ρ F :=
+  contSAlong_reflect hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR F
 
 #print axioms contS_reflect
 
-/-- **The reflection kernel is symmetric**: `S(θP ∪ Q) = S(θQ ∪ P)`, from the reflection invariance
-of the periodic states, at reflection-compatible data.
+/-- **The reflection kernel along `βs` is symmetric**: `S(θP ∪ Q) = S(θQ ∪ P)`, from the reflection
+invariance of the periodic states, at reflection-compatible data.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. The reflection
-constant enters through `kern`. -/
-theorem kern_symm (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (P Q : Mono N) :
-    kern hN ρ τ P Q = kern hN ρ τ Q P := by
-  unfold kern contS
+constant enters through `kernAlong`. -/
+theorem kernAlong_symm (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (P Q : Mono N) : kernAlong hN βs ρ τ P Q = kernAlong hN βs ρ τ Q P := by
+  unfold kernAlong contSAlong
   congr 1
   funext k
   have ha := dySpacing_pos (one_le_of_ne_zero hN) k
-  rw [latSkR_pairFam hN ρ τ hR, latSkR_pairFam hN ρ τ hR, latSk_eq, latSk_eq,
-    latS_pairFam _ ha, latS_pairFam _ ha,
-    refl_pair_symm (stateK hN k) τ
-      (PeriodicState.periodicState_reflInvariant hN (dyBeta (one_le_of_ne_zero hN) k) τ 0)
+  rw [latSkRAlong_pairFam hN βs ρ τ hR, latSkRAlong_pairFam hN βs ρ τ hR]
+  unfold latSkAlong
+  rw [latS_pairFam _ ha, latS_pairFam _ ha,
+    refl_pair_symm (stateAlong hN βs k) τ
+      (PeriodicState.periodicState_reflInvariant hN (βs k) τ 0)
       (prodSmear (dySpacing N k) (ρ.mono k P)) (prodSmear (dySpacing N k) (ρ.mono k Q))]
   ring
+
+#print axioms kernAlong_symm
+
+/-- **The reflection kernel is symmetric**, at the couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem kern_symm (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (P Q : Mono N) :
+    kern hN ρ τ P Q = kern hN ρ τ Q P :=
+  kernAlong_symm hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR P Q
 
 #print axioms kern_symm
 

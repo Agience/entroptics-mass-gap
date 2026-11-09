@@ -1,25 +1,23 @@
 """`lattice_generator.connected_correlator` is the object every gap in this program is read from.
 
-Sec 8.7's `C(tau)/C(0)` table, its `m_eff`, the transfer pencil of Table 1 and every `pencil_rate`
-and `lag_budget` in the certificates all descend from this one function, and until these tests it
-had no direct coverage at all -- it was exercised only through `aperture_reads.pencil_rate`, which
-reports `nan` for a broad class of inputs and so cannot distinguish a wrong profile from a
-correlator that decayed into noise.
+Every `C(tau)/C(0)` profile and effective mass read from the generator's ensembles descends from
+this one function. These tests cover it directly: a caller that reports `nan` for a broad class of
+inputs cannot distinguish a wrong profile from a correlator that decayed into noise.
 
-WHAT IS PINNED, and why each one is a thing that has been gettable wrong:
+What is pinned, and why each one is a thing that has been gettable wrong:
 
-  * THE VALUES. The profile is compared against the arithmetic it states -- the periodic lag
-    average about the ENSEMBLE mean, written out here directly. That reference is a definition, not
-    a golden file: it is what the docstring says the quantity IS, so a rewrite of the body is
+  * The values. The profile is compared against the arithmetic it states -- the periodic lag
+    average about the ensemble mean, written out here directly. That reference is a definition, not
+    a golden file: it is what the docstring says the quantity is, so a rewrite of the body is
     measured against the claim rather than against the last run's numbers.
-  * THE LEVEL. `reads.decay`'s default subtracts each channel's OWN mean. This function subtracts
+  * The level. `reads.decay`'s default subtracts each channel's own mean. This function subtracts
     the ensemble mean, and `c / c[0]` does not put the difference back -- the two profiles differ by
     a constant at every lag, which the normalisation does not cancel. That is asserted with its own
     algebra, because it is the single change that would leave every number plausible and every
     number wrong.
-  * THE RING. `C(tau) == C(T - tau)` exactly, and `nlag` past `T - 1` aliases rather than running
+  * The ring. `C(tau) == C(T - tau)` exactly, and `nlag` past `T - 1` aliases rather than running
     off the end.
-  * THE REFUSALS. Empty, complex and non-finite records raise. `T = 0` in particular would
+  * The refusals. Empty, complex and non-finite records raise. `T = 0` in particular would
     otherwise return an all-ones profile: perfect correlation at every lag, read off no data.
 """
 from __future__ import annotations
@@ -72,7 +70,7 @@ def ensemble(rng, n=48, T=12, rho=0.7, offset=0.0, level=5.0):
     (64, 16, 13, 2.0),         # nlag past T - 1: the profile aliases
     (96, 8, 13, 0.0),
     (2, 16, 6, 1.0),           # the smallest ensemble a connected correlator exists on
-    (1, 16, 6, 0.0),           # one configuration: every channel mean IS the ensemble mean
+    (1, 16, 6, 0.0),           # one configuration: every channel mean is the ensemble mean
     (32, 3, 4, 2.0),           # short records, where the two levels disagree in sign
     (32, 2, 4, 2.0),
 ])
@@ -113,7 +111,7 @@ def test_lags_past_the_time_extent_alias_rather_than_run_off_the_end():
 
 
 def test_the_level_is_the_ensemble_mean_and_the_normalisation_does_not_restore_the_choice():
-    """The per-channel level gives a DIFFERENT profile, offset by a constant the ratio keeps.
+    """The per-channel level gives a different profile, offset by a constant the ratio keeps.
 
     With `u` the record with each channel's own mean removed, the ensemble-level profile is
     `C_per_channel(tau) + K` with `K = var_f(mean_t O)` -- the same constant at every lag, lag 0
@@ -124,12 +122,12 @@ def test_the_level_is_the_ensemble_mean_and_the_normalisation_does_not_restore_t
 
     O = ensemble(np.random.default_rng(3), n=64, T=16, offset=3.0)
     n, T = O.shape
-    per_channel = np.asarray(decay(O.T, periodic=True)) / n            # the library's DEFAULT level
+    per_channel = np.asarray(decay(O.T, periodic=True)) / n            # the library's default level
     ensemble_lvl = np.asarray(decay(O.T, periodic=True, disconnected=float(O.mean()))) / n
 
     K = float(np.mean((O.mean(axis=1) - O.mean()) ** 2))
     # DERIVED: `K` is a variance, so zero is where the configurations share one mean exactly and the
-    # two conventions coincide. A positive-control on the FIXTURE, not a threshold on the result:
+    # two conventions coincide. A positive-control on the fixture, not a threshold on the result:
     # without offsets this test would pass by having nothing to detect.
     assert K > 0, "the fixture must carry per-configuration offsets or there is nothing to test"
     tol = 64 * n * T * np.finfo(float).eps * max(1.0, abs(ensemble_lvl[0]))

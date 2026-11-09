@@ -1,28 +1,39 @@
 import Mathlib
-import MassGap.BoxCube
+import MassGap.StrongCoupling
 import MassGap.GaugeInvariantAlgebra
 
 /-!
-# The connected pairing of a general local observable decays in the infinite-volume state
+# Coordinates, locality and constants for the strong-coupling pairing bound
 
-`GaugeInvariantAlgebra.nu_connected_shift_abs_le` bounds the connected reflected-shifted pairing of a
-plaquette in `ν`. This file proves the same for every continuous observable `x` local on a finite set
-`S` of links in the positive half `HalfSpaceAlgebra.posHalf τ p`:
+The pairing bound of a local observable `x` against its reflection and its `m`-th translate along `τ`
+(`PeriodicStrongCoupling.periodic_connected_shift_abs_le_obs`) places `θx` and `Sᵐx` in two cubes of
+plaquettes and reads the cluster bound `StrongCoupling.wilsonCorrConnObs_abs_le_of_not_mem_ball` on
+them. This module holds the pieces of that placement that do not depend on the lattice carrying the
+state:
 
-    |ν(θx · Sᵐx) − ν(θx) ν(Sᵐx)|  ≤  coreConstG (2 ‖x‖²) 64 β U · coreRate 64 β ^ (m + 2 − U)
-
-for every `m` with `U ≤ m + 2`, where `U` depends on `S` alone (`nu_connected_shift_abs_le_obs`).
-
-The support sits strictly inside a cube based one step below the plane (`exists_cube_posHalf`); its
-reflection and its `m`-th translate sit strictly inside two cubes of one larger side whose bases are
-`m + R` apart along `τ` (`ireflLink_coord`, `iterate_ishiftLink_coord`), so the two are disjoint and
-`BoxCube.stateFree_connected_abs_le_of_cubes` bounds the box pairing once the box holds both cubes,
-which happens eventually along `mixCube` (`eventually_cube_mem_iplqAll`).
+* `iterate_ishiftLink_coord`, `ireflLink_coord` — the coordinates of a link under the `m`-fold shift
+  and under the reflection at `c`;
+* `isLocalOn_iterate_ishiftObsL`, `norm_iterate_ishiftObsL_le` — the `m`-th translate of an
+  observable local on `S` is local on the shifted `S` and has no larger sup norm;
+* `exists_cube_posHalf` — a finite link set in the positive half `HalfSpaceAlgebra.posHalf τ p` lies
+  strictly inside a cube based one step below the plane;
+* `coreConstG_mono_C`, `coreConstG_le_of_le` — the cluster constant
+  `StrongCoupling.coreConstG C K β u` is monotone in `C` and in the anchor size `u`, below the
+  geometric threshold `coreRate K β < 1`.
 -/
 
 namespace MassGap.GeneralDecay
 
-open MassGap.ReflectionHalfSpace MassGap.BoxCube
+/-- The `τ` coordinate of `GibbsSpec.ishift μ x`: `x τ + 1` when `μ = τ`, and `x τ` otherwise.
+
+DERIVED: the `1` is `ishift`'s lattice step; `4` is the dimension. -/
+theorem ishift_coord (μ τ : Fin 4) (x : MassGap.GibbsSpec.ISite) :
+    (MassGap.GibbsSpec.ishift μ x) τ = if μ = τ then x τ + 1 else x τ := by
+  by_cases h : μ = τ
+  · subst h; simp [MassGap.GibbsSpec.ishift]
+  · simp [MassGap.GibbsSpec.ishift, Ne.symm h, h]
+
+#print axioms ishift_coord
 
 /-! ## Coordinates under the shift and the reflection -/
 
@@ -59,7 +70,7 @@ theorem ireflLink_coord (τ : Fin 4) (c : ℤ) (l : MassGap.InfiniteLattice.ILin
   unfold MassGap.LatticeReflection.ireflLink MassGap.LatticeReflection.ireflSite
   by_cases hi : i = τ
   · subst hi; by_cases hl : l.1 = i <;> simp [hl]
-  · by_cases hl : l.1 = τ <;> simp [hl, hi, Function.update_of_ne hi]
+  · by_cases hl : l.1 = τ <;> simp [hl, hi]
 
 #print axioms ireflLink_coord
 
@@ -131,34 +142,6 @@ theorem exists_cube_posHalf (τ : Fin 4) (p : ℤ) (S : Finset MassGap.InfiniteL
 
 #print axioms exists_cube_posHalf
 
-/-! ## The box holds a whole cube eventually -/
-
-open scoped Classical in
-/-- The plaquettes of `ℤ⁴` based in the cube of side `R` at `x₀`, as a finite set.
-
-DERIVED: the `4` is the dimension. -/
-noncomputable def cubeIPlaq (x₀ : MassGap.GibbsSpec.ISite) (R : ℕ) : Finset MassGap.GibbsSpec.IPlaq :=
-  (Finset.univ : Finset (Fin 4 × Fin 4)) ×ˢ
-    Fintype.piFinset (fun i : Fin 4 => Finset.Icc (x₀ i) (x₀ i + R))
-
-open scoped Classical in
-/-- **Along `mixCube` the box eventually holds every non-degenerate plaquette based in a given cube.**
-`ReflectionHalfSpace.mixCube_exhausts` at the finite set of all their links.
-
-DERIVED: the `4` is the dimension. -/
-theorem eventually_cube_mem_iplqAll (τ : Fin 4) (p : ℤ) (x₀ : MassGap.GibbsSpec.ISite) (R : ℕ) :
-    ∀ᶠ n : ℕ in Filter.atTop, ∀ q : MassGap.GibbsSpec.IPlaq, q.1.1 ≠ q.1.2 → InCube x₀ R q.2 →
-      q ∈ iplqAll (mixCube τ p n) := by
-  classical
-  filter_upwards [mixCube_exhausts τ p
-    ((cubeIPlaq x₀ R).biUnion (fun q => (MassGap.GibbsSpec.ilinks q).toFinset))] with n hn q hq hin
-  refine mem_iplqAll.mpr ⟨MassGap.GibbsSpec.mem_plaqsIn.mpr (fun l hl => hn ?_), hq⟩
-  refine Finset.mem_biUnion.mpr ⟨q, ?_, List.mem_toFinset.mpr hl⟩
-  exact Finset.mem_product.mpr ⟨Finset.mem_univ _,
-    Fintype.mem_piFinset.mpr (fun i => Finset.mem_Icc.mpr (hin i))⟩
-
-#print axioms eventually_cube_mem_iplqAll
-
 /-- **`coreConstG` is monotone in its per-term constant**, below the geometric threshold.
 
 DERIVED: the `0` is the sign of the prefactor's other factors; the `1` is the geometric threshold. -/
@@ -173,140 +156,26 @@ theorem coreConstG_mono_C {C C' : ℝ} (h : C ≤ C') {K : ℕ} {β : ℝ}
 
 #print axioms coreConstG_mono_C
 
-/-! ## The pairing bound in the infinite-volume state -/
+/-! ## The cluster constant grows with the anchor size -/
 
-variable {N : ℕ}
+/-- **`coreConstG` grows with the anchor size `u`**, below the geometric threshold: the prefactor is
+`C · Aᵘ · Eᵘ` with `A = 4 (K + 1)² ≥ 1` and `E = e^{4βK} ≥ 1`.
 
-/-- **The connected reflected-shifted pairing of a general local observable decays in `ν`.** Let `ν`
-be the `atTop` limit of the free box states along `mixCube`, and `x` continuous and local on a finite
-set `S` of links in `posHalf τ p`. There is a `U` depending on `S` alone such that for every `m` with
-`U ≤ m + 2`, at `0 ≤ β` with `coreRate 64 β < 1`,
+DERIVED: the `4`, `1` and `2` are `corePrefactorG`'s; the `0`s are the sign hypotheses; the `1` in
+`< 1` is the geometric threshold. -/
+theorem coreConstG_le_of_le {C : ℝ} (hC : 0 ≤ C) {β : ℝ} (hβ : 0 ≤ β) {K : ℕ}
+    (hr : MassGap.StrongCoupling.coreRate K β < 1) {u U : ℕ} (h : u ≤ U) :
+    MassGap.StrongCoupling.coreConstG C K β u ≤ MassGap.StrongCoupling.coreConstG C K β U := by
+  unfold MassGap.StrongCoupling.coreConstG MassGap.StrongCoupling.corePrefactorG
+  have hK : (0 : ℝ) ≤ (K : ℝ) := Nat.cast_nonneg K
+  have hA : (1 : ℝ) ≤ 4 * ((K : ℝ) + 1) ^ 2 := by nlinarith
+  have hE : (1 : ℝ) ≤ Real.exp (4 * β * (K : ℝ)) := Real.one_le_exp (by positivity)
+  have hd : (0 : ℝ) ≤ (1 - MassGap.StrongCoupling.coreRate K β)⁻¹ := inv_nonneg.mpr (by linarith)
+  rw [div_eq_mul_inv, div_eq_mul_inv]
+  refine mul_le_mul_of_nonneg_right ?_ hd
+  exact mul_le_mul (mul_le_mul_of_nonneg_left (pow_le_pow_right₀ hA h) hC)
+    (pow_le_pow_right₀ hE h) (by positivity) (mul_nonneg hC (by positivity))
 
-    |ν(θx · Sᵐx) − ν(θx) ν(Sᵐx)|  ≤  coreConstG (2 ‖x‖²) 64 β U · coreRate 64 β ^ (m + 2 − U).
-
-The support lies strictly inside a cube of side `R` based at `p − 1` along `τ`
-(`exists_cube_posHalf`). Its reflection at `2p` has `τ`-coordinates in `[p − R, p]` and its `m`-th
-translate in `[p + m, p + m + R − 1]` (`ireflLink_coord`, `iterate_ishiftLink_coord`), so both lie
-strictly inside cubes of side `R + 1` whose bases are `m + R` apart along `τ`, and the two are disjoint
-for `m ≥ 1`. The box state bound is `BoxCube.stateFree_connected_abs_le_of_cubes` at `f = θx`,
-`g = Sᵐx`, once the box holds both supports and both cubes, which it does eventually
-(`mixCube_exhausts`, `eventually_cube_mem_iplqAll`); along the even boxes it reads as the pairing
-`GaugeInvariantAlgebra.pairing_eq_connected`, and `GaugeInvariantAlgebra.nu_pairing_abs_le_of_eventually`
-carries it to `ν`. The norms of `θx` and `Sᵐx` are at most `‖x‖`.
-
-DERIVED: `16 * 4` is the box touch-degree bound; `2` in `2 * p` is the reflection plane's doubling and
-in `2 ‖x‖²` the two products of `pairTermObs_abs_le`; the `2` in `m + 2` is the two base plaquettes;
-`0` is the sign hypotheses and the excluded rank; `1` is the geometric threshold and the identity
-boundary configuration. -/
-theorem nu_connected_shift_abs_le_obs (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) (τ : Fin 4) (p : ℤ)
-    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
-    (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
-      Filter.Tendsto (fun n => MassGap.ReflectionHalfSpace.stateFree
-          (φ := MassGap.WilsonAction.wilsonDensity)
-          MassGap.WilsonAction.measurable_wilsonDensity
-          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
-          (MassGap.WilsonAction.wilsonDensity_le_two hN) β
-          (MassGap.ReflectionHalfSpace.mixCube τ p n) 1 f)
-        Filter.atTop (nhds (ν f)))
-    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
-    (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) {S : Finset MassGap.InfiniteLattice.ILink}
-    (hS : (S : Set MassGap.InfiniteLattice.ILink) ⊆ MassGap.HalfSpaceAlgebra.posHalf τ p)
-    (hx : MassGap.InfiniteLattice.IsLocalOn S (x : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N) → ℝ)) :
-    ∃ U : ℕ, ∀ m : ℕ, U ≤ m + 2 →
-      |ν (MassGap.LatticeReflection.ireflObs τ (2 * p) x
-            * (⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] x)
-        - ν (MassGap.LatticeReflection.ireflObs τ (2 * p) x)
-          * ν ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] x)|
-        ≤ MassGap.StrongCoupling.coreConstG (2 * (‖x‖ * ‖x‖)) (16 * 4) β U
-          * MassGap.StrongCoupling.coreRate (16 * 4) β ^ (m + 2 - U) := by
-  classical
-  obtain ⟨x₀, R, hx₀τ, hR, hin⟩ := exists_cube_posHalf τ p S hS
-  refine ⟨32 * (R + 1 + 1) ^ 4, fun m hm => ?_⟩
-  -- the two supports and their cubes
-  set Sf := S.image (MassGap.LatticeReflection.ireflLink τ (2 * p)) with hSfdef
-  set Sg := S.image (MassGap.InfiniteShift.ishiftLink τ)^[m] with hSgdef
-  let xr : MassGap.GibbsSpec.ISite := Function.update x₀ τ (p - 1 - R)
-  let yr : MassGap.GibbsSpec.ISite := Function.update x₀ τ (p - 1 + m)
-  have hpow : 1 ≤ (R + 1 + 1) ^ 4 := Nat.one_le_pow _ _ (by omega)
-  have hm1 : 1 ≤ m := by omega
-  have hcf : ∀ l ∈ Sf, ∀ i : Fin 4, xr i + 1 ≤ l.2 i ∧ l.2 i ≤ xr i + (R + 1 : ℕ) := by
-    intro l hl i
-    obtain ⟨l₀, hl₀, rfl⟩ := Finset.mem_image.mp hl
-    have hc := (ireflLink_coord τ (2 * p) l₀).2 i
-    have hb := hin l₀ hl₀ i
-    have hbτ := hin l₀ hl₀ τ
-    rw [hc]
-    by_cases hi : i = τ
-    · subst hi
-      simp only [xr, Function.update_self, if_true]
-      split <;> push_cast <;> constructor <;> omega
-    · simp only [xr, Function.update_of_ne hi, hi, if_false]
-      push_cast; constructor <;> omega
-  have hcg : ∀ l ∈ Sg, ∀ i : Fin 4, yr i + 1 ≤ l.2 i ∧ l.2 i ≤ yr i + (R + 1 : ℕ) := by
-    intro l hl i
-    obtain ⟨l₀, hl₀, rfl⟩ := Finset.mem_image.mp hl
-    have hc := (iterate_ishiftLink_coord τ m l₀).2 i
-    have hb := hin l₀ hl₀ i
-    rw [hc]
-    by_cases hi : i = τ
-    · subst hi
-      simp only [yr, Function.update_self, if_true]
-      push_cast; constructor <;> omega
-    · simp only [yr, Function.update_of_ne hi, hi, if_false]
-      push_cast; constructor <;> omega
-  have hdis : Disjoint Sf Sg := by
-    rw [Finset.disjoint_left]
-    intro l hlf hlg
-    have h1 := (hcf l hlf τ).2
-    have h2 := (hcg l hlg τ).1
-    simp only [xr, yr, Function.update_self] at h1 h2
-    push_cast at h1 h2
-    omega
-  have hk : m < (yr τ - xr τ).natAbs := by
-    simp only [xr, yr, Function.update_self]; omega
-  -- locality
-  have hfl : MassGap.InfiniteLattice.IsLocalOn Sf
-      (MassGap.LatticeReflection.ireflObs τ (2 * p) x : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N) → ℝ) :=
-    MassGap.HalfSpaceAlgebra.isLocalOn_ireflObs τ (2 * p) hx
-  have hgl := isLocalOn_iterate_ishiftObsL τ x hx m
-  -- the box bound, eventually along the even boxes
-  have htendS := MassGap.ReflectionHalfSpace.tendsto_symCube_even_of_mixCube τ p hN β ν htend
-  have hdouble : Filter.Tendsto (fun j : ℕ => 2 * j) Filter.atTop Filter.atTop :=
-    Filter.tendsto_atTop_atTop.2 (fun b => ⟨b, fun a ha => by omega⟩)
-  have hev : ∀ᶠ n : ℕ in Filter.atTop,
-      Sf ⊆ mixCube τ p n ∧ Sg ⊆ mixCube τ p n
-      ∧ (∀ q : MassGap.GibbsSpec.IPlaq, q.1.1 ≠ q.1.2 → InCube xr (R + 1) q.2 →
-          q ∈ iplqAll (mixCube τ p n))
-      ∧ (∀ q : MassGap.GibbsSpec.IPlaq, q.1.1 ≠ q.1.2 → InCube yr (R + 1) q.2 →
-          q ∈ iplqAll (mixCube τ p n)) :=
-    (mixCube_exhausts τ p Sf).and ((mixCube_exhausts τ p Sg).and
-      ((eventually_cube_mem_iplqAll τ p xr (R + 1)).and (eventually_cube_mem_iplqAll τ p yr (R + 1))))
-  have hr0 : 0 ≤ MassGap.StrongCoupling.coreRate (16 * 4) β :=
-    MassGap.StrongCoupling.coreRate_nonneg _ hβ
-  refine MassGap.GaugeInvariantAlgebra.nu_pairing_abs_le_of_eventually (l := Filter.atTop)
-    (fun n => MassGap.ReflectionHalfSpace.stateFree (φ := MassGap.WilsonAction.wilsonDensity)
-      MassGap.WilsonAction.measurable_wilsonDensity
-      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
-      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
-      (MassGap.ReflectionHalfSpace.symCube τ (2 * p) n) 1)
-    ν htendS τ (2 * p) x ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] x) _ ?_
-  filter_upwards [hdouble.eventually hev] with n hn
-  simp only [mixCube_even] at hn
-  obtain ⟨h1, h2, h3, h4⟩ := hn
-  rw [MassGap.GaugeInvariantAlgebra.pairing_eq_connected]
-  have hbox := stateFree_connected_abs_le_of_cubes hN
-    (MassGap.WilsonAction.wilsonDensity_nonneg hN) (MassGap.WilsonAction.wilsonDensity_le_two hN) hβ
-    (symCube τ (2 * p) n) 1
-    (MassGap.LatticeReflection.ireflObs τ (2 * p) x) ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] x)
-    h1 h2 hfl hgl hdis hcf hcg h3 h4 hr τ m hk hm
-  refine le_trans hbox (mul_le_mul_of_nonneg_right ?_ (pow_nonneg hr0 _))
-  refine coreConstG_mono_C ?_ hr _
-  have hf := MassGap.WilsonTransferReduction.norm_ireflObs_le τ (2 * p) x
-  have hg := norm_iterate_ishiftObsL_le τ x m
-  have hx0 : 0 ≤ ‖x‖ := norm_nonneg _
-  have := mul_le_mul hf hg (norm_nonneg _) hx0
-  linarith
-
-#print axioms nu_connected_shift_abs_le_obs
+#print axioms coreConstG_le_of_le
 
 end MassGap.GeneralDecay

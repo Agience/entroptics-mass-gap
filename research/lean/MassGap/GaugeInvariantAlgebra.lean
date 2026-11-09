@@ -3,16 +3,13 @@ import MassGap.HalfSpaceAlgebra
 import MassGap.InfiniteShift
 import MassGap.GibbsSpec
 import MassGap.WilsonDLR
-import MassGap.ReflectionHalfSpace
 import MassGap.WilsonTransferReduction
 
 /-!
 # MassGap.GaugeInvariantAlgebra — the local gauge action on `ℤ⁴`, and the invariant subalgebra
 
-`LocalGauge` defines a genuine local gauge action and proves invariance of `plaqObs`,
-`wilsonAction` and `corrClay` — all on the **periodic** lattice `Site d n`. Nothing carries it to
-`ℤ⁴`, so no statement about the infinite-volume theory can mention gauge invariance. This module is
-that carry, and the subalgebra it makes available.
+This module defines a genuine local gauge action on the infinite lattice `ℤ⁴`, so that statements
+about the infinite-volume theory can mention gauge invariance, and the subalgebra it makes available.
 
 ## Why it matters for the gap
 
@@ -61,9 +58,8 @@ variable {G : Type} [Group G] [TopologicalSpace G] [ContinuousInv G] [CompactSpa
 /-- **The local gauge action on `ℤ⁴`.** A gauge function `g : ISite → G` acts on a configuration by
 `g` at the link's source site and `g⁻¹` at its target, the target being `ishift l.1 l.2`.
 
-This is `LocalGauge.gaugeTransform` with the periodic `Site d n` replaced by `ISite` and the periodic
-`shift` by `InfiniteShift.ishift`. The genuine local group, not the constant/centre subgroup that
-`CompactGauge.confConj` conjugates by.
+It is the genuine local group, not the constant/centre subgroup that `CompactGauge.confConj`
+conjugates by.
 
 DERIVED: `4` is the spacetime dimension, the `Fin 4` a direction ranges over and the `Fin 4 → ℤ`
 a site is; no other numeral occurs. `l.1` and `l.2` are the link's direction and base site. -/
@@ -83,8 +79,7 @@ configuration is the same as gauge-transforming the translated one, with the gau
 translated.
 
 The mathematical content is `InfiniteShift.ishift_comm` — the two unit translations commute, so the
-target site of a translated link is the translation of the target site. That is the same fact
-`LocalGauge.hol_gaugeTransform` turns on, at the infinite lattice.
+target site of a translated link is the translation of the target site.
 
 DERIVED: `4` is the spacetime dimension, the `Fin 4` a direction ranges over and the `Fin 4 → ℤ`
 a site is. No other numeral occurs. -/
@@ -168,7 +163,7 @@ theorem isIGaugeInvariant_of_classFun {φ : G → ℝ}
 #print axioms isIGaugeInvariant_of_classFun
 
 /-- **The gauge-invariant observables form a submodule.** The gauge action is applied to the
-ARGUMENT, so linearity passes straight through: a sum of invariant observables is invariant at the
+argument, so linearity passes straight through: a sum of invariant observables is invariant at the
 same gauge function, and so is a scalar multiple.
 
 DERIVED: `4` is the spacetime dimension; `0` is the zero observable. No other numeral occurs. -/
@@ -363,9 +358,7 @@ agree only up to a conjugating element, which is existential and depends on the 
 
 **This is what makes the reflected pairing a correlator at a separation.** The pairing
 `ν (ireflObs τ c (iplaqObs q) * iplaqObs q')` becomes a correlator of two plaquette observables, one
-of them at `ireflPlaq τ c q`; and `ReflectionHalfSpace.ireflPlaq_maps_plus_to_minus` sends the
-positive half to the negative one, so their separation grows with the reflection depth. That is the
-geometric structure `ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounds.
+of them at `ireflPlaq τ c q`.
 
 DERIVED: `4` is the spacetime dimension, the `Fin 4` the reflection axis `τ` ranges over. No other
 numeral occurs; `c` is the reflection constant. -/
@@ -389,9 +382,8 @@ the holonomy of a translated plaquette on a configuration is the holonomy of the
 translated configuration, and `ishiftObsL` is precomposition by that translation — so the two agree
 with no conjugation step, unlike the reflection, where the holonomy moves only up to conjugacy.
 
-`ishiftObsL` is the translation `gaugeInvTransferData` is assembled from, so this is what turns the
-shift appearing in `ClayCapstone.gaugeInv_clay_gap_of_state_decay`'s hypothesis into a plaquette
-observable at a translated plaquette.
+`ishiftObsL` is the translation `gaugeInvTransferData` is assembled from, so this turns the shift on a
+plaquette observable into a plaquette observable at a translated plaquette.
 
 DERIVED: `4` is the spacetime dimension, indexing the translation's direction. -/
 theorem ishiftObsL_iplaqObs (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) :
@@ -409,10 +401,8 @@ theorem ishiftObsL_iplaqObs (τ : Fin 4) (q : MassGap.GibbsSpec.IPlaq) :
 /-- **Iterated**: `m` translations of a plaquette observable is the observable of the `m`-fold
 translated plaquette.
 
-This is the form the obligation consumes. `ClayCapstone.gaugeInv_clay_gap_of_state_decay` asks about
-`(ishiftObsL τ)^[2 * n] x`; at `x = iplaqObs q` that is `iplaqObs` of the `2 * n`-translate of `q`,
-and `ReflectionHalfSpace.axis_sep_irefl_shift` bounds that plaquette's separation from
-`ireflPlaq τ (2 * p) q` below by `2 * n`.
+At `m = 2 * n` and `x = iplaqObs q`, `(ishiftObsL τ)^[2 * n] x` is `iplaqObs` of the
+`2 * n`-translate of `q`.
 
 DERIVED: `4` is the spacetime dimension; `m` is the caller's. -/
 theorem ishiftObsL_iterate_iplaqObs (τ : Fin 4) (m : ℕ) (q : MassGap.GibbsSpec.IPlaq) :
@@ -425,230 +415,6 @@ theorem ishiftObsL_iterate_iplaqObs (τ : Fin 4) (m : ℕ) (q : MassGap.GibbsSpe
       exact ishiftObsL_iplaqObs τ _
 
 #print axioms ishiftObsL_iterate_iplaqObs
-
-/-- **The box-carrier plaquette observable is the infinite-lattice one, read through `splice`.**
-
-`WilsonReal.wilsonPlaqObs bd p` is `wilsonDensity ∘ wilsonHol bd p`, and
-`ReflectionHalfSpace.wilsonHol_boxBd` identifies the box holonomy with `GibbsSpec.ihol` at the
-spliced configuration. So the two observables agree, for any plaquette of the box.
-
-**This is the join.** `ReflectionHalfSpace.stateFree_eq_expect_boxBd` expects exactly
-`fun u => f (splice Λ u ω)`, so `stateFree`'s expectation of `iplaqObs q` is the box system's
-expectation of `wilsonPlaqObs (boxBd Λ) q`, and its connected correlator of two of them is
-`WilsonBridge.wilsonCorrConn (boxBd Λ)` — the object
-`ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounds geometrically and uniformly in the box.
-
-DERIVED: no numeral occurs; `Λ`, `q`, `u` and `ω` are the caller's. -/
-theorem iplaqObs_splice_eq_wilsonPlaqObs (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (u : MassGap.GibbsSpec.VConf (MassGap.SUN.SU N) Λ)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) :
-    iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq) (MassGap.GibbsSpec.splice Λ u ω)
-      = MassGap.WilsonReal.wilsonPlaqObs (N := N) (MassGap.ReflectionHalfSpace.boxBd Λ) q u := by
-  show MassGap.WilsonAction.wilsonDensity
-      (MassGap.GibbsSpec.ihol (q : MassGap.GibbsSpec.IPlaq)
-        (MassGap.GibbsSpec.splice Λ u ω)) = _
-  rw [← MassGap.ReflectionHalfSpace.wilsonHol_boxBd Λ q u ω]
-  rfl
-
-#print axioms iplaqObs_splice_eq_wilsonPlaqObs
-
-/-- **`stateFree`'s expectation of a plaquette observable is the box system's.**
-
-`ReflectionHalfSpace.stateFree_eq_expect_boxBd` sends `stateFree … f` to the box system's
-expectation of `fun u => f (splice Λ u ω)`, and `iplaqObs_splice_eq_wilsonPlaqObs` identifies that
-function with `WilsonReal.wilsonPlaqObs (boxBd Λ) q`.
-
-This is the half of the composition that lives at the box.
-`pairing_iplaqObs_eq_connected` states the reflected pairing as a connected correlator at any state;
-`ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounds it at the box system; and this is what lets
-a statement about `stateFree` be read as one about that system — which
-`InfiniteReflection.connected_pairing_le_of_eventually` then carries to the limiting state.
-
-The density is instantiated at `WilsonAction.wilsonDensity`, since `wilsonPlaqObs` is the matching
-observable only for that one.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range, carried in exactly as `stateFree` takes them;
-`β`, `Λ`, `ω` and `q` are the caller's. -/
-theorem stateFree_iplaqObs (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      = (MassGap.WilsonLattice.wilsonSystem (MassGap.ReflectionHalfSpace.boxBd Λ)
-          MassGap.WilsonAction.wilsonDensity).expect
-          (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) β
-          (MassGap.WilsonReal.wilsonPlaqObs (N := N)
-            (MassGap.ReflectionHalfSpace.boxBd Λ) q) := by
-  rw [MassGap.ReflectionHalfSpace.stateFree_eq_expect_boxBd]
-  congr 1
-  funext u
-  exact iplaqObs_splice_eq_wilsonPlaqObs Λ q u ω
-
-#print axioms stateFree_iplaqObs
-
-/-- The product case of `stateFree_iplaqObs`: `stateFree`'s expectation of a product of two plaquette
-observables is `WilsonBridge.wilsonCorr` at the box carrier.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range, as `stateFree` takes them. -/
-theorem stateFree_iplaqObs_mul
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (q q' : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
-          * iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq))
-      = MassGap.WilsonBridge.wilsonCorr (Nc := N)
-          (MassGap.ReflectionHalfSpace.boxBd Λ) q β q' := by
-  rw [MassGap.ReflectionHalfSpace.stateFree_eq_expect_boxBd]
-  congr 1
-  funext u
-  show iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq) (MassGap.GibbsSpec.splice Λ u ω)
-      * iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq) (MassGap.GibbsSpec.splice Λ u ω) = _
-  rw [iplaqObs_splice_eq_wilsonPlaqObs Λ q u ω, iplaqObs_splice_eq_wilsonPlaqObs Λ q' u ω]
-
-#print axioms stateFree_iplaqObs_mul
-
-/-- **`stateFree`'s connected correlator of two plaquette observables is `wilsonCorrConn` at the box
-carrier.**
-
-`WilsonBridge.wilsonCorrConn` is `wilsonCorr` minus the product of the one-point expectations;
-`stateFree_iplaqObs_mul` gives the first and `stateFree_iplaqObs` the other two.
-
-**This completes the identification.** `ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounds the
-right-hand side geometrically and uniformly in the box, and
-`pairing_iplaqObs_eq_connected` says the reflected pairing the gap obligation is stated on is exactly
-a connected correlator of this shape — with the reflected plaquette in the opposite half by
-`ReflectionHalfSpace.ireflPlaq_maps_plus_to_minus`, so the separation grows with the reflection depth.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range, as `stateFree` takes them. -/
-theorem stateFree_connected_eq_wilsonCorrConn
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (q q' : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
-          * iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq))
-      - MassGap.ReflectionHalfSpace.stateFree
-          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-          (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-        * MassGap.ReflectionHalfSpace.stateFree
-            MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-            (iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq))
-      = MassGap.WilsonBridge.wilsonCorrConn (Nc := N)
-          (MassGap.ReflectionHalfSpace.boxBd Λ) q β q' := by
-  rw [stateFree_iplaqObs_mul hφ0 hφ2 β Λ ω q q',
-    stateFree_iplaqObs hφ0 hφ2 β Λ ω q, stateFree_iplaqObs hφ0 hφ2 β Λ ω q']
-  rfl
-
-#print axioms stateFree_connected_eq_wilsonCorrConn
-
-/-- **`stateFree`'s expectation of a PRODUCT of plaquette observables is the box system's.**
-
-The family counterpart of `stateFree_iplaqObs`. `ReflectionHalfSpace.stateFree_eq_expect_boxBd`
-moves to the box, `ContinuousMap.prod_apply` evaluates the product of continuous maps pointwise, and
-`iplaqObs_splice_eq_wilsonPlaqObs` identifies each factor.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range, carried in exactly as `stateFree` takes them. -/
-theorem stateFree_iplaqObsF
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (Ao : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      = (MassGap.WilsonLattice.wilsonSystem (MassGap.ReflectionHalfSpace.boxBd Λ)
-          MassGap.WilsonAction.wilsonDensity).expect
-          (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) β
-          (fun u => ∏ p ∈ Ao, MassGap.WilsonReal.wilsonPlaqObs (N := N)
-            (MassGap.ReflectionHalfSpace.boxBd Λ) p u) := by
-  rw [MassGap.ReflectionHalfSpace.stateFree_eq_expect_boxBd]
-  congr 1
-  funext u
-  have h : ∀ q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ),
-      iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq) (MassGap.GibbsSpec.splice Λ u ω)
-        = MassGap.WilsonReal.wilsonPlaqObs (N := N)
-            (MassGap.ReflectionHalfSpace.boxBd Λ) q u :=
-    fun q => iplaqObs_splice_eq_wilsonPlaqObs Λ q u ω
-  simp only [ContinuousMap.prod_apply, h]
-
-#print axioms stateFree_iplaqObsF
-
-/-- **`stateFree`'s joint expectation of two PRODUCTS of plaquette observables is `wilsonCorrF` at
-the box carrier.** The family counterpart of `stateFree_iplaqObs_mul`.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range. -/
-theorem stateFree_iplaqObsF_mul
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (Ao Bo : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        ((∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-          * ∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      = MassGap.WilsonBridge.wilsonCorrF (Nc := N)
-          (MassGap.ReflectionHalfSpace.boxBd Λ) Ao β Bo := by
-  rw [MassGap.ReflectionHalfSpace.stateFree_eq_expect_boxBd]
-  unfold MassGap.WilsonBridge.wilsonCorrF
-  congr 1
-  funext u
-  have h : ∀ q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ),
-      iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq) (MassGap.GibbsSpec.splice Λ u ω)
-        = MassGap.WilsonReal.wilsonPlaqObs (N := N)
-            (MassGap.ReflectionHalfSpace.boxBd Λ) q u :=
-    fun q => iplaqObs_splice_eq_wilsonPlaqObs Λ q u ω
-  simp only [ContinuousMap.mul_apply, ContinuousMap.prod_apply, h]
-
-#print axioms stateFree_iplaqObsF_mul
-
-/-- **`stateFree`'s connected correlator of two PRODUCTS of plaquette observables is
-`wilsonCorrConnF` at the box carrier.**
-
-The family counterpart of `stateFree_connected_eq_wilsonCorrConn`, and the identification that was
-standing between the strong-coupling family estimate and the gap obligation.
-`StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow` bounds the right-hand side
-geometrically, so the left-hand side — a connected correlator of arbitrary products of plaquette
-observables, which is what a gauge-invariant observable of any extent is built from — now inherits
-that bound.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range. -/
-theorem stateFree_connectedF_eq_wilsonCorrConnF
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (Ao Bo : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        ((∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-          * ∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      - MassGap.ReflectionHalfSpace.stateFree
-          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-          (∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-        * MassGap.ReflectionHalfSpace.stateFree
-            MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-            (∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      = MassGap.WilsonBridge.wilsonCorrConnF (Nc := N)
-          (MassGap.ReflectionHalfSpace.boxBd Λ) Ao β Bo := by
-  rw [stateFree_iplaqObsF_mul hφ0 hφ2 β Λ ω Ao Bo,
-    stateFree_iplaqObsF hφ0 hφ2 β Λ ω Ao, stateFree_iplaqObsF hφ0 hφ2 β Λ ω Bo]
-  rfl
-
-#print axioms stateFree_connectedF_eq_wilsonCorrConnF
-
 
 /-- The reflection fixes the unit observable: precomposition does not move a constant.
 
@@ -665,12 +431,7 @@ alone, so the pairing is a product of two mean-subtracted plaquette observables.
 invariance of the state identifies `ν (iplaqObs (ireflPlaq τ c q))` with `ν (iplaqObs q)`, and the
 four cross terms collapse to `ν (A * B) - ν A * ν B`.
 
-**That is `WilsonBridge.wilsonCorrConn`.** With `iplaqObs_splice_eq_wilsonPlaqObs` identifying the
-observables at the box carrier and `ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounding it
-geometrically and uniformly in the box, this puts the strong-coupling estimate on the gap
-obligation's own expression. `ReflectionHalfSpace.ireflPlaq_maps_plus_to_minus` is what gives the
-bound its force: the reflected plaquette sits in the opposite half, so the separation the geometric factor
-is raised to grows with the reflection depth.
+**That is `WilsonBridge.wilsonCorrConn`**, once the observables are identified at the box carrier.
 
 The product expansion is not a `module` identity — it multiplies two ring elements — so moving the
 scalars past the product is `smul_mul_assoc` and `mul_smul_comm`, with `smul_smul` collapsing the
@@ -712,7 +473,7 @@ theorem pairing_iplaqObs_eq_connected (τ : Fin 4) (c : ℤ)
 
 #print axioms pairing_iplaqObs_eq_connected
 
-/-- **The reflected, mean-subtracted pairing is a connected correlator — for ANY observable.**
+/-- **The reflected, mean-subtracted pairing is a connected correlator — for any observable.**
 
 `pairing_iplaqObs_eq_connected` is this statement for two single plaquette observables. Reading its
 proof, only one step mentions plaquettes at all: rewriting `ireflObs τ c (iplaqObs q)`. Everything
@@ -755,13 +516,13 @@ theorem pairing_eq_connected (τ : Fin 4) (c : ℤ)
 This closes the box-to-limit step. The obstacle was that the mean-subtracted observable is not
 fixed: its means are taken in the finite-volume state, so it moves with the box and no bound on it
 is a bound on a fixed observable. `pairing_eq_connected` removes that — it rewrites the pairing at
-ANY state into the connected form `state (θ x · y) − state (θ x) · state y`, whose value is a
+any state into the connected form `state (θ x · y) − state (θ x) · state y`, whose value is a
 convergent combination of one- and two-point functions — and
 `DLRLimit.abs_connected_le_of_eventually` transports exactly that shape.
 
-Stated over an arbitrary family of states along an arbitrary filter, so the `stateFree` family over
-an exhausting sequence of boxes instantiates it; the bound `C` must not depend on the index, which is
-the volume-uniformity `coreConst` and `coreRate` already have.
+Stated over an arbitrary family of states along an arbitrary filter, so a family over an exhausting
+sequence of boxes instantiates it; the bound `C` must not depend on the index, which is the
+volume-uniformity `coreConst` and `coreRate` have.
 
 DERIVED: `4` is the spacetime dimension, indexing the reflection's direction; `1` is the unit
 observable carrying the subtracted means. -/
@@ -801,17 +562,15 @@ theorem ireflObs_prod_iplaqObs (τ : Fin 4) (c : ℤ) (A : Finset MassGap.GibbsS
 
 #print axioms ireflObs_prod_iplaqObs
 
-/-- **The reflected pairing of two PRODUCTS of plaquette observables is a connected correlator.**
+/-- **The reflected pairing of two products of plaquette observables is a connected correlator.**
 
 The family counterpart of `pairing_iplaqObs_eq_connected`, and one of the two halves the family
 route needed. `pairing_eq_connected` does the algebra and `ireflObs_prod_iplaqObs` identifies the
 reflected product; neither step knows anything about the box.
 
-The other half is `stateFree_connectedF_eq_wilsonCorrConnF`, which identifies the right-hand side
-with `WilsonBridge.wilsonCorrConnF` at the box carrier —
-`StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow` then bounds it geometrically. Joining
-the two at a box needs the reflected plaquettes to lie in that box, which is a hypothesis about the
-box's symmetry and is not discharged here.
+Identifying the right-hand side with `WilsonBridge.wilsonCorrConnF` at a box carrier needs the
+reflected plaquettes to lie in that box, which is a hypothesis about the box's symmetry and is not
+discharged here.
 
 DERIVED: `4` is the spacetime dimension; `1` is the unit observable carrying the subtracted means. -/
 theorem pairing_iplaqObsF_eq_connected (τ : Fin 4) (c : ℤ)
@@ -828,397 +587,11 @@ theorem pairing_iplaqObsF_eq_connected (τ : Fin 4) (c : ℤ)
 
 #print axioms pairing_iplaqObsF_eq_connected
 
-/-- **The reflection of a box family's product, as a product over a box family.**
-
-`ireflObs_prod_iplaqObs` sends a product over plaquettes to the product over their reflections, but
-leaves the index type as bare plaquettes. To meet `stateFree_connectedF_eq_wilsonCorrConnF`, whose
-families are drawn from the box, the reflected family must itself be a box family.
-
-`ρ` carries exactly that: a map of the box's plaquettes to itself which `hρ` proves is the
-reflection. A symmetric box supplies one; nothing here assumes the box is symmetric, it just names
-what is needed. `hinj` is injectivity, which `ireflPlaq` being involutive gives.
-
-DERIVED: `4` is the spacetime dimension, indexing the reflection's direction. -/
-theorem ireflObs_prod_iplaqObs_box (τ : Fin 4) (c : ℤ)
-    (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ρ : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ) → ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hρ : ∀ q, (ρ q : MassGap.GibbsSpec.IPlaq)
-      = MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq))
-    (hinj : Function.Injective ρ)
-    (Ao : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.LatticeReflection.ireflObs τ c
-        (∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-      = ∏ q ∈ Ao.image ρ, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq) := by
-  rw [Finset.prod_image (fun x _ y _ h => hinj h)]
-  ext U
-  simp only [MassGap.LatticeReflection.ireflObs_apply, ContinuousMap.prod_apply]
-  refine Finset.prod_congr rfl fun q _ => ?_
-  rw [hρ q]
-  exact DFunLike.congr_fun (ireflObs_iplaqObs (N := N) τ c (q : MassGap.GibbsSpec.IPlaq)) U
-
-#print axioms ireflObs_prod_iplaqObs_box
-
-/-- **The reflected pairing of two box families IS `wilsonCorrConnF` at the box carrier.**
-
-The join. `pairing_eq_connected` does the algebra with no plaquette structure and no reflection
-invariance; `ireflObs_prod_iplaqObs_box` moves the reflection onto the index family; and
-`stateFree_connectedF_eq_wilsonCorrConnF` identifies the result at the box.
-
-**This is the gap obligation's own expression, at families, equal to the object strong coupling
-bounds.** `StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow` applies to the right-hand
-side directly.
-
-DERIVED: `0` and `2` are `wilsonDensity`'s range, carried as `stateFree` takes them; `4` is the
-spacetime dimension; `1` is the unit observable carrying the subtracted means. -/
-theorem stateFree_pairingF_eq_wilsonCorrConnF
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    (β : ℝ) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (c : ℤ)
-    (ρ : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ) → ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hρ : ∀ q, (ρ q : MassGap.GibbsSpec.IPlaq)
-      = MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq))
-    (hinj : Function.Injective ρ)
-    (Ao Bo : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)) :
-    MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ c
-            ((∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
-          * ((∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1))
-      = MassGap.WilsonBridge.wilsonCorrConnF (Nc := N)
-          (MassGap.ReflectionHalfSpace.boxBd Λ) (Ao.image ρ) β Bo := by
-  rw [pairing_eq_connected τ c _, ireflObs_prod_iplaqObs_box τ c Λ ρ hρ hinj Ao,
-    stateFree_connectedF_eq_wilsonCorrConnF hφ0 hφ2 β Λ ω (Ao.image ρ) Bo]
-
-#print axioms stateFree_pairingF_eq_wilsonCorrConnF
-
-/-- **The reflected pairing of two plaquette FAMILIES decays geometrically.**
-
-The family counterpart of `stateFree_pairing_abs_le`, and the completion of the family route.
-`stateFree_pairingF_eq_wilsonCorrConnF` rewrites the gap obligation's own expression as
-`WilsonBridge.wilsonCorrConnF` at the box carrier;
-`StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow` bounds that geometrically. Nothing
-else happens here — the content is in those two.
-
-The advance over `stateFree_pairing_abs_le` is that `Ao` and `Bo` are families rather than single
-plaquettes, so the estimate reaches products of plaquette observables, which is what a
-gauge-invariant observable of any extent is built from. `GaugeInvariantAlgebra.gapEntry` is stated
-over such a family, so this is the shape its off-diagonal entries need.
-
-`ρ` is the reflection acting on the box's own plaquettes, which a box symmetric about the plane
-supplies. `hconnA` and `hconnB` ask each family to be internally touch-connected, which is what a
-Wilson loop is. `hr` is the strong-coupling condition, and it is the one place a coupling
-restriction enters this chain.
-
-DERIVED: `0` is the coupling's lower end and `2` is `wilsonDensity`'s upper one, both carried as
-`stateFree` takes them; `2` is also the two anchor plaquettes, the smallest separation a core can
-span; `1` is `coreRate`'s convergence threshold and the unit observable carrying the subtracted
-means; `4` is the spacetime dimension, indexing the reflection's direction. -/
-theorem stateFree_pairingF_abs_le (hN : N ≠ 0)
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (c : ℤ)
-    (ρ : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ) → ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hρ : ∀ q, (ρ q : MassGap.GibbsSpec.IPlaq)
-      = MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq))
-    (hinj : Function.Injective ρ)
-    (Ao Bo : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hod : Disjoint (Ao.image ρ) Bo)
-    {a b : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ)} (ha : a ∈ Ao.image ρ) (hb : b ∈ Bo)
-    (hconnA : ∀ p ∈ Ao.image ρ,
-      MassGap.StrongCoupling.Reach (MassGap.ReflectionHalfSpace.boxBd Λ) (Ao.image ρ) a p)
-    (hconnB : ∀ p ∈ Bo,
-      MassGap.StrongCoupling.Reach (MassGap.ReflectionHalfSpace.boxBd Λ) Bo b p)
-    (hint : ∀ D E : Finset ↥(MassGap.ReflectionHalfSpace.iplqAll Λ), MeasureTheory.Integrable
-      (fun U => (∏ p ∈ D, MassGap.WilsonReal.wilsonPlaqObs (N := N)
-            (MassGap.ReflectionHalfSpace.boxBd Λ) p U)
-        * ∏ p ∈ E, (Real.exp (-(β * MassGap.WilsonAction.wilsonDensity
-            (MassGap.WilsonLattice.wilsonHol (MassGap.ReflectionHalfSpace.boxBd Λ) p U))) - 1))
-      (MeasureTheory.Measure.pi fun _ => MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)))
-    (hr : MassGap.StrongCoupling.coreRate
-      (MassGap.StrongCoupling.touchDeg (MassGap.ReflectionHalfSpace.boxBd Λ)) β < 1)
-    (k : ℕ) (hu : ((Ao.image ρ) ∪ Bo).card ≤ k + 2)
-    (hlow : ∀ x ∈ MassGap.StrongCoupling.corePairsF
-        (MassGap.ReflectionHalfSpace.boxBd Λ) a (Ao.image ρ) Bo,
-      k + 2 ≤ (MassGap.StrongCoupling.coreSpanF (Ao.image ρ) Bo x).card) :
-    |MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ c
-            ((∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (∏ q ∈ Ao, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
-          * ((∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (∏ q ∈ Bo, iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1))|
-      ≤ MassGap.StrongCoupling.coreConstF
-          (MassGap.StrongCoupling.touchDeg (MassGap.ReflectionHalfSpace.boxBd Λ)) β
-          (Ao.image ρ).card Bo.card ((Ao.image ρ) ∪ Bo).card
-        * MassGap.StrongCoupling.coreRate
-            (MassGap.StrongCoupling.touchDeg (MassGap.ReflectionHalfSpace.boxBd Λ)) β
-            ^ (k + 2 - ((Ao.image ρ) ∪ Bo).card) := by
-  rw [stateFree_pairingF_eq_wilsonCorrConnF hφ0 hφ2 β Λ ω τ c ρ hρ hinj Ao Bo]
-  exact MassGap.StrongCoupling.wilsonCorrConnF_abs_le_coreConstF_mul_rate_pow hN
-    (MassGap.ReflectionHalfSpace.boxBd Λ) (Ao.image ρ) Bo hod ha hb hconnA hconnB hβ hint hr k
-    hu hlow
-
-#print axioms stateFree_pairingF_abs_le
-
-/-- **The reflected pairing of two plaquette observables decays geometrically.**
-
-This composes the three links: `pairing_iplaqObs_eq_connected` makes the reflected, mean-subtracted
-pairing a connected correlator; `stateFree_connected_eq_wilsonCorrConn` identifies that with
-`WilsonBridge.wilsonCorrConn` at the box carrier; and
-`ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le` bounds it by `coreConst · coreRate ^ k`, uniformly
-in the box since `touchDeg_boxBd_le` carries no box dependence.
-
-**This is the gap obligation's own expression with a strong-coupling bound on it.**
-`ReflectionHalfSpace.ireflPlaq_maps_plus_to_minus` is why the bound has force: the reflected plaquette
-sits in the opposite half, so the boundary-word separation `k` grows with the reflection depth, and
-the factor is raised to it.
-
-`hinv` is reflection invariance of the box state — a real hypothesis, true when the box is symmetric
-about the plane, which is what the `symCube` families are built to be. `hrefl` asks the reflected
-plaquette to lie in the box, which `ireflPlaq_mem_plaqsIn` supplies for a symmetric one.
-
-Scope: two SINGLE plaquettes. `GaugeInvariantAlgebra.gapEntry` is stated over a spanning family, and
-`WilsonBridge.wilsonCorrConnF` — the `Finset` version, products of plaquettes — has no geometric bound
-yet. That is the cluster expansion, and it is not this.
-
-DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound, transcribed; `0` and `2` are `wilsonDensity`'s
-range and the coupling's lower end; `1` is `coreRate`'s convergence threshold; `4` is the spacetime
-dimension. -/
-theorem stateFree_pairing_abs_le (hN : N ≠ 0)
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (c : ℤ)
-    (hinv : ∀ f, MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ c f)
-      = MassGap.ReflectionHalfSpace.stateFree
-          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω f)
-    (q q' : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hrefl : MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq)
-      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
-    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
-    (k : ℕ)
-    (hk : q' ∉ MassGap.StrongCoupling.ball (MassGap.ReflectionHalfSpace.boxBd Λ)
-      ⟨MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq), hrefl⟩ k) :
-    |MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ c
-            (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
-          * (iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq)
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (iplaqObs (N := N) (q' : MassGap.GibbsSpec.IPlaq)) • 1))|
-      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
-        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k := by
-  rw [pairing_iplaqObs_eq_connected τ c _ hinv (q : MassGap.GibbsSpec.IPlaq)
-      (q' : MassGap.GibbsSpec.IPlaq),
-    stateFree_connected_eq_wilsonCorrConn hφ0 hφ2 β Λ ω
-      ⟨MassGap.LatticeReflection.ireflPlaq τ c (q : MassGap.GibbsSpec.IPlaq), hrefl⟩ q']
-  exact MassGap.ReflectionHalfSpace.wilsonCorrConn_boxBd_abs_le hN Λ _ q' hβ hr k hk
-
-#print axioms stateFree_pairing_abs_le
-
-/-- **The reflected pairing of a plaquette observable with its own TRANSLATE decays geometrically in
-the translation.**
-
-`stateFree_pairing_abs_le` places no relation between its two plaquettes, so the second may be the
-`m`-fold translate of the first; `ReflectionHalfSpace.not_mem_ball_of_irefl_shift` then discharges
-its separation hypothesis, because a plaquette at `τ`-height at or above the plane reflects to `2p −
-h` and translates to `h + m`, putting the two at axis distance at least `m`.
-
-`hq` is that height condition, and it is what `p` is for: the plaquette must lie in the positive
-half, which is where the half-space algebra's members live.
-
-DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound on the box word's touch degree, transcribed; `2` is
-the reflection plane's spacing in lattice units; `4` is the spacetime dimension; `0` is the
-coupling's lower end; `1` is the unit observable and `coreRate`'s convergence threshold. -/
-theorem stateFree_pairing_shift_abs_le (hN : N ≠ 0)
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (p : ℤ)
-    (hinv : ∀ f, MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ (2 * p) f)
-      = MassGap.ReflectionHalfSpace.stateFree
-          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω f)
-    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hq : p ≤ (q : MassGap.GibbsSpec.IPlaq).2 τ)
-    (hrefl : MassGap.LatticeReflection.ireflPlaq τ (2 * p) (q : MassGap.GibbsSpec.IPlaq)
-      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
-    (m : ℕ)
-    (hshift : (MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq)
-      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
-    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
-    (k : ℕ) (hk : k < m) :
-    |MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ (2 * p)
-            (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
-          * (iplaqObs (N := N)
-                ((MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (iplaqObs (N := N)
-                    ((MassGap.InfiniteShift.ishiftPlaq τ)^[m]
-                      (q : MassGap.GibbsSpec.IPlaq))) • 1))|
-      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
-        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k :=
-  stateFree_pairing_abs_le hN hφ0 hφ2 hβ Λ ω τ (2 * p) hinv q
-    ⟨(MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq), hshift⟩
-    hrefl hr k
-    (MassGap.ReflectionHalfSpace.not_mem_ball_of_irefl_shift Λ τ p
-      (q : MassGap.GibbsSpec.IPlaq) hq m k hk hrefl hshift)
-
-#print axioms stateFree_pairing_shift_abs_le
-
-/-- **The same bound, with the translate written as an iterated shift observable.**
-
-`ishiftObsL_iterate_iplaqObs` rewrites the translated plaquette's observable as the shift applied
-`m` times to the original's. **This is the shape the obligation has**:
-`ClayCapstone.gaugeInv_clay_gap_of_state_decay` asks for a bound on
-`ν (ireflObs τ (2 * p) x · (ishiftObsL τ)^[2 * n] x)`, and at `x` a plaquette observable this is
-that quantity, at `stateFree` on a box and with the means subtracted.
-
-Two differences from the obligation remain, and neither is closed here: this is at `stateFree` on a
-finite box rather than at the limiting state `ν`, and it carries the means subtracted explicitly
-where the obligation gets them from the vacuum complement.
-`DLRLimit.abs_le_of_eventually_abs_le` is the tool for the first.
-
-DERIVED: `16 * 4` is `touchDeg_boxBd_le`'s bound on the box word's touch degree, transcribed; `2` is
-the reflection plane's spacing in lattice units; `4` is the spacetime dimension; `0` is the
-coupling's lower end; `1` is the unit observable and `coreRate`'s convergence threshold. All are
-`stateFree_pairing_shift_abs_le`'s, unchanged. -/
-theorem stateFree_pairing_shiftObs_abs_le (hN : N ≠ 0)
-    (hφ0 : ∀ g : MassGap.SUN.SU N, 0 ≤ MassGap.WilsonAction.wilsonDensity g)
-    (hφ2 : ∀ g : MassGap.SUN.SU N, MassGap.WilsonAction.wilsonDensity g ≤ 2)
-    {β : ℝ} (hβ : 0 ≤ β) (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)) (τ : Fin 4) (p : ℤ)
-    (hinv : ∀ f, MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ (2 * p) f)
-      = MassGap.ReflectionHalfSpace.stateFree
-          MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω f)
-    (q : ↥(MassGap.ReflectionHalfSpace.iplqAll Λ))
-    (hq : p ≤ (q : MassGap.GibbsSpec.IPlaq).2 τ)
-    (hrefl : MassGap.LatticeReflection.ireflPlaq τ (2 * p) (q : MassGap.GibbsSpec.IPlaq)
-      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
-    (m : ℕ)
-    (hshift : (MassGap.InfiniteShift.ishiftPlaq τ)^[m] (q : MassGap.GibbsSpec.IPlaq)
-      ∈ MassGap.ReflectionHalfSpace.iplqAll Λ)
-    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
-    (k : ℕ) (hk : k < m) :
-    |MassGap.ReflectionHalfSpace.stateFree
-        MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-        (MassGap.LatticeReflection.ireflObs τ (2 * p)
-            (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq)) • 1)
-          * ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m]
-                (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))
-              - MassGap.ReflectionHalfSpace.stateFree
-                  MassGap.WilsonAction.measurable_wilsonDensity hφ0 hφ2 β Λ ω
-                  ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m]
-                    (iplaqObs (N := N) (q : MassGap.GibbsSpec.IPlaq))) • 1))|
-      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
-        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k := by
-  rw [ishiftObsL_iterate_iplaqObs τ m (q : MassGap.GibbsSpec.IPlaq)]
-  exact stateFree_pairing_shift_abs_le hN hφ0 hφ2 hβ Λ ω τ p hinv q hq hrefl m hshift hr k hk
-
-#print axioms stateFree_pairing_shiftObs_abs_le
-
-/-- **The connected reflected-shifted plaquette pairing in the infinite-volume state decays at rate
-`coreRate`.**
-
-`ν` is the `atTop` limit of the free box states along `ReflectionHalfSpace.mixCube`. Along its even
-members — the reflection-symmetric boxes `ReflectionHalfSpace.symCube` — the box states are reflection
-invariant (`ReflectionHalfSpace.stateFree_symCube_reflection_invariant` at the identity boundary,
-fixed by `ReflectionHalfSpace.ireflConf_one`), and a plaquette, its mirror and its `m`-th translate
-all lie in the box eventually (`ReflectionHalfSpace.eventually_mem_iplqAll_refl_shift`). There
-`stateFree_pairing_shiftObs_abs_le` bounds the box pairing, and `nu_pairing_abs_le_of_eventually`
-carries the bound to `ν`, where the mean subtraction becomes the connected form.
-
-The bound is `coreConst · coreRateᵏ` for every `k < m`, uniform in the volume: the touch degree
-`16 · 4` is the only lattice quantity in it.
-
-DERIVED: `16 * 4` is the touch degree of the four-dimensional box, `16` plaquettes per link per
-dimension; `2` is the doubling of the reflection plane and of the even box index; `1` is the identity
-boundary configuration; `0` is the lower bound on `β` and the excluded rank in `hN`. -/
-theorem nu_connected_shift_abs_le (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) (τ : Fin 4) (p : ℤ)
-    (ν : MassGap.DLRLimit.State (MassGap.GibbsSpec.IConf (MassGap.SUN.SU N)))
-    (htend : ∀ f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ),
-      Filter.Tendsto (fun n => MassGap.ReflectionHalfSpace.stateFree
-          (φ := MassGap.WilsonAction.wilsonDensity)
-          MassGap.WilsonAction.measurable_wilsonDensity
-          (MassGap.WilsonAction.wilsonDensity_nonneg hN)
-          (MassGap.WilsonAction.wilsonDensity_le_two hN) β
-          (MassGap.ReflectionHalfSpace.mixCube τ p n) 1 f)
-        Filter.atTop (nhds (ν f)))
-    (hr : MassGap.StrongCoupling.coreRate (16 * 4) β < 1)
-    (q : MassGap.GibbsSpec.IPlaq) (hqd : q.1.1 ≠ q.1.2) (hq : p ≤ q.2 τ) (m k : ℕ) (hk : k < m) :
-    |ν (MassGap.LatticeReflection.ireflObs τ (2 * p) (iplaqObs (N := N) q)
-          * (⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q))
-      - ν (MassGap.LatticeReflection.ireflObs τ (2 * p) (iplaqObs (N := N) q))
-          * ν ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q))|
-      ≤ MassGap.StrongCoupling.coreConst (16 * 4) β
-        * MassGap.StrongCoupling.coreRate (16 * 4) β ^ k := by
-  have htendS := MassGap.ReflectionHalfSpace.tendsto_symCube_even_of_mixCube τ p hN β ν htend
-  refine nu_pairing_abs_le_of_eventually (l := Filter.atTop)
-    (fun n => MassGap.ReflectionHalfSpace.stateFree (φ := MassGap.WilsonAction.wilsonDensity)
-      MassGap.WilsonAction.measurable_wilsonDensity
-      (MassGap.WilsonAction.wilsonDensity_nonneg hN)
-      (MassGap.WilsonAction.wilsonDensity_le_two hN) β
-      (MassGap.ReflectionHalfSpace.symCube τ (2 * p) n) 1)
-    ν htendS τ (2 * p) (iplaqObs (N := N) q)
-    ((⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m] (iplaqObs (N := N) q)) _ ?_
-  have hdouble : Filter.Tendsto (fun j : ℕ => 2 * j) Filter.atTop Filter.atTop :=
-    Filter.tendsto_atTop_atTop.2 (fun b => ⟨b, fun a ha => by omega⟩)
-  have hev := hdouble.eventually
-    (MassGap.ReflectionHalfSpace.eventually_mem_iplqAll_refl_shift τ p q hqd m)
-  filter_upwards [hev] with n hn
-  simp only [MassGap.ReflectionHalfSpace.mixCube_even] at hn
-  obtain ⟨h1, h2, h3⟩ := hn
-  exact stateFree_pairing_shiftObs_abs_le hN (MassGap.WilsonAction.wilsonDensity_nonneg hN)
-    (MassGap.WilsonAction.wilsonDensity_le_two hN) hβ
-    (MassGap.ReflectionHalfSpace.symCube τ (2 * p) n) 1 τ p
-    (fun f => MassGap.ReflectionHalfSpace.stateFree_symCube_reflection_invariant hN τ (2 * p) n β
-      (MassGap.ReflectionHalfSpace.ireflConf_one τ (2 * p)) f)
-    ⟨q, h1⟩ hq h2 m h3 hr k hk
-
-#print axioms nu_connected_shift_abs_le
-
 /-! ### The pairing as a connected correlator
 
 `pairing_iplaqObs_eq_connected` states the identity for single plaquettes and
 `pairing_iplaqObsF_eq_connected` for families, both over the observable-generic
-`pairing_eq_connected`. `stateFree_connected_eq_wilsonCorrConn` and
-`stateFree_connectedF_eq_wilsonCorrConnF` identify the result with `WilsonBridge.wilsonCorrConn`
-and `wilsonCorrConnF` at the box carrier, and `stateFree_pairing_abs_le` and
-`stateFree_pairingF_abs_le` compose those with the strong-coupling estimates.
-
-`ReflectionHalfSpace.ireflPlaq_maps_plus_to_minus` is why the bound has force: the reflected
-plaquette sits in the opposite half, so the separation the geometric factor is raised to grows with
-the reflection depth. -/
+`pairing_eq_connected`. -/
 
 
 end Constructed
@@ -1229,7 +602,7 @@ end Constructed
 construction has to be rewritten. Six of its nine inputs are shared with
 `WilsonTransferReduction.transferData_of_state_facts` and carry over unchanged — the shift
 compatibility, the unit's image, and the two norm bounds. The algebra-specific three are
-`reflPositiveOn_gaugeInv`, which RESTRICTS reflection positivity from `halfSpaceAlg` rather than
+`reflPositiveOn_gaugeInv`, which restricts reflection positivity from `halfSpaceAlg` rather than
 re-proving it, `gaugeInvHalfSpaceAlg_shift_stable`, and `one_mem_gaugeInvHalfSpaceAlg`.
 
 **Why this data and not the other.** `transferData_of_state_facts` builds on `halfSpaceAlg`, a
@@ -1238,10 +611,9 @@ function of a single link variable. A `GapAt` bound there must hold for observab
 gauge invariant, while `StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds a
 plaquette-pair correlator. On this algebra that mismatch is gone.
 
-The hypothesis is `hpos` on the LARGER algebra, since that is the form the tree produces.
+The hypothesis is `hpos` on the larger algebra, since that is the form the tree produces.
 
-DERIVED: `4` is the spacetime dimension; `2` is the plane-to-constant doubling in `2 * p`,
-`ReflectionHalfSpace`'s own index convention. -/
+DERIVED: `4` is the spacetime dimension; `2` is the plane-to-constant doubling in `2 * p`. -/
 noncomputable def gaugeInvTransferData (τ : Fin 4) (p : ℤ)
     (ν : MassGap.DLRLimit.State (IConf G))
     (hinv : MassGap.InfiniteReflection.IsReflectionInvariant
@@ -1453,7 +825,7 @@ theorem gaugeInv_gapAt_iff_subtracted_pairing (τ : Fin 4) (p : ℤ)
 
 /-- **A property of every finite combination of a spanning set holds on the whole span.**
 
-This is the shape the remaining obligation has to be attacked in. `TransferGap.GapAt` is QUADRATIC in
+This is the shape the remaining obligation has to be attacked in. `TransferGap.GapAt` is quadratic in
 the observable, so a bound proved for plaquette observables does **not** extend to their span by
 linearity — which is exactly what stopped
 `StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, a plaquette-pair bound, from reaching
@@ -1675,7 +1047,7 @@ diagonal rescaling `M ↦ D M D`, so dominance may be tested after any such resc
 entries decay geometrically in a separation, write `d i` for member `i`'s height above the
 reflection plane. The depth-`2p` diagonal entry sits at separation `2 · d i`, while the off-diagonal
 entry against the member `j` nearest the plane sits at `d i + d j`. On saturated bounds the
-off-diagonal is then LARGER than the whole diagonal excess by a factor geometric in `d i - d j`, at
+off-diagonal is then larger than the whole diagonal excess by a factor geometric in `d i - d j`, at
 every member above the family's minimum height. A spanning family of the half-space algebra contains
 members at different heights, so unweighted dominance is not something such a family can be expected
 to satisfy, and it is not provable from the upper bounds strong coupling supplies.
@@ -1745,39 +1117,20 @@ dominate the sum of the off-diagonal entries. Those off-diagonal entries are two
 connected pairings at separation, which
 `StrongCoupling.wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds geometrically.
 
-⛔ THE DIAGONAL HAS NO PROVED LOWER BOUND, and it is not a contact term. Writing `d` for a member's
+⛔ The diagonal has no proved lower bound, and it is not a contact term. Writing `d` for a member's
 height above the reflection plane, the depth-`2p` diagonal pairing is a correlator between a
 plaquette and its mirror, at separation `2d` — the two arguments coincide only for a member lying in
-the plane. `ContactFloor` bounds `wilsonCorrConn bd p β p`, the SAME plaquette twice, at lag zero;
-that is a different quantity and does not apply here. Every strictly positive floor in the
-development is likewise a contact value — `ReflectionHalfSpace.irefl_box_pairing_pos_witness` and
-`BoxNumericFloor.box_reflection_form_ge_number` are both stated at a link of `boxR`, the links the
-reflection FIXES, hence at separation zero.
-
-⛔ AND THE OBVIOUS REPAIR IS CLOSED. `ReflectionHalfSpace.irefl_box_pairing_ge_variance` does bound a
-reflected box pairing below, by a uniform weight floor times a free-measure variance, and its floor
-carries `(iplqZero τ p Λ).card` — the whole plane — so it decays as the box grows. That factor is a
-crude sup bound on the plane Boltzmann weight and could be localized. Localizing it does not help:
-`ActionSplit.pairing_eq_zero_of_indep_R` proves the subtracted reflection pairing is IDENTICALLY
-ZERO, at every coupling, whenever the observable reads the open half alone and the weight reads the
-plane alone — and `iplaneWeight_local` and `iplaneWeight_nonneg` give the weight side. Under the
-product Haar measure the two open halves are independent, so a weight-floor-times-free-variance
-argument can only ever return `0 ≤`, which is already
-`ReflectionHalfSpace.irefl_box_pairing_nonneg`.
-
-The escape named by that theorem's own hypotheses: the observable it closes on must read the open
-half alone. The observable that actually appears is dressed — `ReflectionHalfSpace.idressed`, the
-observable times `ihalfBoltz`, which reads every plaquette of the positive half — so it fails that
-hypothesis, and the entire nonzero value of the pairing is carried by the dressing.
+the plane. `ContactFloor` bounds `wilsonCorrConn bd p β p`, the same plaquette twice, at lag zero;
+that is a different quantity and does not apply here.
 
 A volume-uniform positive lower bound on the reflected connected two-point function at separation
 `2d` is the open estimate this route rests on. It cannot come from monotonicity of `exp` against
-`0 ≤ φ ≤ 2`; it needs an expansion that keeps the leading connected term WITH ITS SIGN. Strong
+`0 ≤ φ ≤ 2`; it needs an expansion that keeps the leading connected term with its sign. Strong
 coupling supplies bounds on the modulus only, and a modulus bound cannot be turned around.
 
 What it does not do is prove that hypothesis, and two things stand between: the invariant algebra is
 not shown to be spanned by plaquette observables, and the strong-coupling bounds are stated for
-plaquette PAIRS on the periodic lattice rather than for pairings of general invariant observables in
+plaquette pairs on the periodic lattice rather than for pairings of general invariant observables in
 the infinite-volume state.
 
 DERIVED: `4` is the spacetime dimension; `2` is the plane-to-constant doubling, the planes'
@@ -1850,15 +1203,9 @@ theorem gaugeInv_pairing_of_weighted_diagDominant (τ : Fin 4) (p : ℤ)
 /-- **An off-diagonal `gapEntry` is bounded by its two constituent pairings.**
 
 `gapEntry τ p ν r F i j` is `r² · (pairing at 2p) − (pairing at 2p − 2)`, and both pairings are the
-reflected, mean-subtracted two-observable pairing of `stateFree_pairing_abs_le` — which bounds them
-by `coreConst · coreRate ^ k`, geometrically in the separation. A triangle inequality is the whole
-content of this lemma.
-
-Its point is joinery. `gaugeInv_pairing_of_diagDominant`'s `hdom` asks that the diagonal excess
-dominate the sum of the off-diagonal moduli, and until now nothing in the development produced an
-off-diagonal modulus in a form that hypothesis could consume. This does: with
-`stateFree_pairing_abs_le` at each of the two reflection depths, an entry of the Gram matrix is
-bounded by a strong-coupling quantity.
+reflected, mean-subtracted two-observable pairing. A triangle inequality is the whole content of this
+lemma: given a bound on each pairing, an entry of the Gram matrix is bounded in the form
+`gaugeInv_pairing_of_diagDominant`'s `hdom` consumes for the off-diagonal moduli.
 
 The two depths differ by one lattice step, so at fixed separation the two bounds differ only in
 which reflection plane they are taken about, and `M` and `M'` are kept separate rather than merged

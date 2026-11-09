@@ -2,7 +2,6 @@ import Mathlib
 import MassGap.WilsonDLR
 import MassGap.WilsonTransferReduction
 import MassGap.HalfSpaceAlgebra
-import MassGap.ReflectionHalfSpace
 
 /-!
 # MassGap.WilsonState — a probability measure as a `DLRLimit.State`, and what follows at zero coupling
@@ -36,7 +35,7 @@ typechecking of that declaration is what records it.
 
 ## At zero coupling
 
-Four results hold at the zero-coupling specification `WilsonDLR.specCM … 0 μ`:
+Three results hold at the zero-coupling specification `WilsonDLR.specCM … 0 μ`:
 
 * `refl_pairing_at_zero_eq_zero` — for every observable `F` of the half-space algebra, the pairing
   `ν (ireflObs τ (2 * p - 2) (F - ν F • 1) * (F - ν F • 1))` is exactly `0`. The reflection at
@@ -48,15 +47,12 @@ Four results hold at the zero-coupling specification `WilsonDLR.specCM … 0 μ`
 * `hnu_at_zero` — the third state fact is a theorem here: the shift is a bijection of the links
   (`shiftLinkEquiv`) and `WilsonDLR.dlr_permCM_at_zero` makes the zero-coupling state invariant under
   every relabelling.
-* `hinv_at_zero` — the first state fact is a theorem here: the lattice reflection is a twisted
-  relabelling (`ireflConf_eq_twistConf`), and `WilsonDLR.dlr_twistCM_at_zero` applies once the
-  single-link measure is inversion-invariant.
 
 ## Scope
 
 `gapAt_zero_at_zero_coupling` takes `hinv`, `hpos` and `hnu` as hypotheses, because
-`transferData_of_state_facts` needs them to build the data it is stated about; `hnu_at_zero` and
-`hinv_at_zero` establish two of the three at this coupling but are not composed into it.
+`transferData_of_state_facts` needs them to build the data it is stated about; `hnu_at_zero`
+establishes one of the three at this coupling but is not composed into it.
 `ReflPositiveOn` at `2 * p` concerns supports that meet on the reflection plane, so the factorisation
 behind `refl_pairing_at_zero_eq_zero` does not apply to it.
 
@@ -65,9 +61,8 @@ the net converges or that the result is independent of the frozen boundary, so
 `exists_wilson_infinite_volume_state` asserts the existence of a state satisfying the DLR equation,
 not the uniqueness of one.
 
-`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces;
-`ReflectionHalfSpace.gibbs_iunshift_eq` proves them equal by `rfl`, and a lemma about one does not
-apply to the other. `shiftLinkEquiv`'s two inverse laws are taken one from each namespace.
+`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces, and
+a lemma about one does not apply to the other. `shiftLinkEquiv`'s two inverse laws are taken one from each namespace.
 -/
 
 namespace MassGap.WilsonState
@@ -249,36 +244,6 @@ theorem refl_pairing_at_zero_eq_zero {G : Type} [Group G] [TopologicalSpace G]
 
 #print axioms refl_pairing_at_zero_eq_zero
 
-/-- **The two measures agree at zero coupling.** `stateFree` sums the action over `iplqAll Λ` — the
-plaquettes with every link inside the box — and `GibbsSpec.spec` sums it over `boundaryPlaqs Λ`,
-those with at least one link inside. `GibbsSpec.boundaryPlaqs_ne_plaqsIn` shows the two sets differ,
-so the measures differ in general and nothing else in the tree relates them. At `β = 0` the action
-drops out of both and each is the same Haar integral over the box.
-
-Why this is the useful direction. `gapAt_of_finite_volume_connected` states its hypothesis with
-`stateFree`, while the DLR machinery is stated with `spec` — including
-`WilsonDLR.dlr_unique_at_zero`, the tree's only uniqueness result, and
-`WilsonDLR.tendsto_specState_at_zero`, its only `atTop` limit. This identification is what lets those
-speak about the free-boundary family, at the one coupling where they exist.
-
-`ActionSplit.cvol ↑Λ μ` and `GibbsSpec.vol μ Λ` are both `Measure.pi (fun _ : ↑Λ => μ)`, and `cvol`
-is a reducible abbreviation, so the two integrals are the same term.
-
-DERIVED: the `0` is the coupling. The `2` is `stateFree`'s own bound on the class function `φ`,
-transcribed from `ReflectionHalfSpace.stateFree`'s signature and consumed by nothing here. `Λ`, `ω`
-and `f` are the caller's. -/
-theorem stateFree_eq_spec_at_zero_coupling {φ : MassGap.SUN.SU N → ℝ} (hφm : Measurable φ)
-    (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
-    (Λ : Finset MassGap.InfiniteLattice.ILink)
-    (ω : MassGap.GibbsSpec.IConf (MassGap.SUN.SU N))
-    (f : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)) :
-    MassGap.ReflectionHalfSpace.stateFree hφm hφ0 hφ2 0 Λ ω f
-      = MassGap.GibbsSpec.spec φ 0 Λ (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) (⇑f) ω := by
-  rw [MassGap.WilsonDLR.spec_at_zero φ Λ (MassGap.CompactGauge.probHaar (MassGap.SUN.SU N)) (⇑f) ω]
-  exact MassGap.ReflectionHalfSpace.specFree_at_zero_coupling (φ := φ) Λ ω _
-
-#print axioms stateFree_eq_spec_at_zero_coupling
-
 /-- `GapAt D 0` for the `TransferData` that `transferData_of_state_facts` builds from a
 zero-coupling DLR state, given the three state facts `hinv`, `hpos` and `hnu`.
 
@@ -288,8 +253,8 @@ that pairing to `0`.
 
 Scope. The data is the one `transferData_of_state_facts` produces at this state, not a constructed
 witness such as `TransferGap.diagTransfer`. `hinv`, `hpos` and `hnu` are hypotheses, since the data
-the conclusion is about cannot be formed without them; `hnu_at_zero` and `hinv_at_zero` below prove
-two of them at this coupling but are not composed into this statement. `hpos` is reflection
+the conclusion is about cannot be formed without them; `hnu_at_zero` below proves
+one of them at this coupling but is not composed into this statement. `hpos` is reflection
 positivity at `2 * p`, where the two supports meet on the reflection plane, so the disjoint-support
 factorisation used above does not apply to it.
 
@@ -326,9 +291,8 @@ The shift is a bijection of the links, and `WilsonDLR.dlr_permCM_at_zero` makes 
 state invariant under every link relabelling, so the third of `transferData_of_state_facts`'s state
 facts holds at this coupling.
 
-`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces;
-`ReflectionHalfSpace.gibbs_iunshift_eq` proves them equal by `rfl`, and a lemma about one does not
-apply to the other. The two inverse laws below are taken one from each namespace. -/
+`GibbsSpec.iunshift` and `ReflectionShift.iunshift` are identical bodies in separate namespaces, and
+a lemma about one does not apply to the other. The two inverse laws below are taken one from each namespace. -/
 
 /-- The link shift as an `Equiv` of `InfiniteLattice.ILink`: `InfiniteShift.ishiftLink τ` forward,
 `ReflectionShift.iunshiftLink τ` back.
@@ -382,13 +346,10 @@ theorem hnu_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGrou
 
 #print axioms hnu_at_zero
 
-/-! ## `hinv` at zero coupling
+/-! ## The reflection's coordinatewise maps
 
-`ireflConf` relabels the links and inverts the group element on the `τ`-links. The relabelling is
-`ReflectionHalfSpace.ireflPerm`, which packages `ireflLink_involutive` as a permutation; the
-inversion is a coordinatewise measure-preserving map once the single-link measure is
-inversion-invariant. `WilsonDLR.dlr_twistCM_at_zero` then applies, giving the first of
-`transferData_of_state_facts`'s state facts at this coupling.
+`ireflConf` relabels the links and inverts the group element on the `τ`-links. The inversion is a
+coordinatewise measure-preserving map once the single-link measure is inversion-invariant.
 
 `Reflect.isInvInvariant_probHaar` is an instance, so at Haar measure the `[μ.IsInvInvariant]`
 hypothesis is found by instance search. -/
@@ -403,76 +364,5 @@ def ireflSigma {G : Type} [Group G] [MeasurableSpace G] [MeasurableInv G] (τ : 
   if l.1 = τ then MeasurableEquiv.inv G else MeasurableEquiv.refl G
 
 #print axioms ireflSigma
-
-/-- `ireflConf τ c U = twistConf (ireflPerm τ c) (ireflSigma τ) U`: the lattice reflection is the
-link relabelling `ireflPerm τ c` twisted by the coordinatewise maps `ireflSigma τ`.
-
-Proved by case split on whether the link's direction is `τ`; each branch unfolds to `ireflConf`'s own
-definition. The constant `c` is arbitrary.
-
-DERIVED: `4` is the spacetime dimension, the range of the direction index `τ : Fin 4`. It is the only
-numeral in the statement. -/
-theorem ireflConf_eq_twistConf {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-    [CompactSpace G] [MeasurableSpace G] [MeasurableInv G] (τ : Fin 4) (c : ℤ)
-    (U : MassGap.InfiniteLattice.IConf G) :
-    MassGap.LatticeReflection.ireflConf τ c U
-      = MassGap.WilsonDLR.twistConf (MassGap.ReflectionHalfSpace.ireflPerm τ c)
-          (ireflSigma τ) U := by
-  funext l
-  by_cases h : l.1 = τ
-  · simp [MassGap.LatticeReflection.ireflConf, MassGap.WilsonDLR.twistConf, ireflSigma, h]
-  · simp [MassGap.LatticeReflection.ireflConf, MassGap.WilsonDLR.twistConf, ireflSigma, h]
-
-#print axioms ireflConf_eq_twistConf
-
-/-- `IsReflectionInvariant (latticeReflection τ c) ν` at every constant `c`, when `ν` satisfies the
-DLR equation of the zero-coupling specification and the single-link measure is inversion-invariant.
-
-`ireflConf_eq_twistConf` presents the reflection as a twisted relabelling, the coordinatewise maps
-are continuous and measure-preserving (inversion on the `τ`-links, the identity elsewhere), and
-`WilsonDLR.dlr_twistCM_at_zero` gives the invariance. This is the first of the state facts
-`transferData_of_state_facts` takes.
-
-Scope: at zero coupling only, at every `c` rather than only at the `2 * p` the transfer construction
-uses, and with `[μ.IsInvInvariant]` and `T2Space G` required in addition to the surrounding
-hypotheses.
-
-DERIVED: `0` is the coupling in `specCM … 0 μ` and the lower bound in `hφ0 : 0 ≤ φ g`. `2` is the
-upper end of the plaquette density's range in `hφ2 : φ g ≤ 2`. `4` is the spacetime dimension, the
-range of `τ : Fin 4`. -/
-theorem hinv_at_zero {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-    [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] [SecondCountableTopology G]
-    {φ : G → ℝ} (hφc : Continuous φ) (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g ≤ 2)
-    (μ : Measure G) [IsProbabilityMeasure μ] [μ.IsInvInvariant]
-    {ν : MassGap.DLRLimit.State (MassGap.InfiniteLattice.IConf G)}
-    (hν : MassGap.DLRLimit.IsDLR (MassGap.WilsonDLR.specCM hφc hφ0 hφ2 0 μ) ν) (τ : Fin 4)
-    (c : ℤ) :
-    MassGap.InfiniteReflection.IsReflectionInvariant
-      (MassGap.LatticeReflection.latticeReflection τ c) ν := by
-  have hσc : ∀ l, Continuous (ireflSigma (G := G) τ l) := by
-    intro l
-    by_cases h : l.1 = τ
-    · simpa [ireflSigma, h] using (continuous_inv (G := G))
-    · simp only [ireflSigma, if_neg h]
-      exact continuous_id
-  have hσ : ∀ l, MeasurePreserving (ireflSigma (G := G) τ l) μ μ := by
-    intro l
-    by_cases h : l.1 = τ
-    · simpa [ireflSigma, h] using Measure.measurePreserving_inv μ
-    · simp only [ireflSigma, if_neg h]
-      exact MeasurePreserving.id μ
-  intro f
-  have hcm : MassGap.LatticeReflection.ireflObs τ c f
-      = MassGap.WilsonDLR.twistCM (MassGap.ReflectionHalfSpace.ireflPerm τ c)
-          (ireflSigma τ) hσc f := by
-    ext U
-    show f (MassGap.LatticeReflection.ireflConf τ c U)
-      = f (MassGap.WilsonDLR.twistConf _ _ U)
-    rw [ireflConf_eq_twistConf]
-  show ν (MassGap.LatticeReflection.ireflObs τ c f) = ν f
-  rw [hcm]
-  exact MassGap.WilsonDLR.dlr_twistCM_at_zero hφc hφ0 hφ2 μ _ _ hσc hσ hν f
-
-#print axioms hinv_at_zero
 
 end MassGap.WilsonState

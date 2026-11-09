@@ -1,12 +1,12 @@
 """The one place that knows how to build the Lean development.
 
-WHY A WRAPPER. Building Mathlib is expensive enough that it happens on a machine chosen for it, and
+Why a wrapper. Building Mathlib is expensive enough that it happens on a machine chosen for it, and
 which machine that is belongs to the person running the program, not to the source. Every caller that
 spelled out `subprocess.run(["lake", "build"], cwd=...)` was therefore hard-coding one answer, and a
 second caller with a different answer would have been a second answer rather than a corrected one.
 This module holds the decision once; callers ask for a build and read the output.
 
-CONFIGURATION, and the default is deliberate. With nothing configured this builds LOCALLY, because a
+Configuration, and the default is deliberate. With nothing configured this builds locally, because a
 researcher who clones this repository must be able to reproduce every artifact without access to any
 particular machine. A remote builder is an optimisation for whoever has one, declared in the same
 machine-local, git-ignored file that already carries the store root:
@@ -15,16 +15,16 @@ machine-local, git-ignored file that already carries the store root:
     LEAN_BUILD_PORT=22                            # optional, default 22
     LEAN_BUILD_KEY=~/.ssh/some_key                # optional
     LEAN_BUILD_DIR=massgap-lean                   # remote checkout, relative to $HOME
-    LEAN_BUILD_PATH=$HOME/.elan/bin               # optional, prepended to remote PATH
+    LEAN_BUILD_PATH=$HOME/.elan/bin               # optional, prepended to remote path
 
-WHAT A REMOTE BUILD DOES. It ships the Lean SOURCES and builds them there, so what is built is what is
+What a remote build does. It ships the Lean sources and builds them there, so what is built is what is
 on this machine, not whatever the remote checkout drifted to. It never ships or deletes `.lake`: that
 directory holds the Mathlib build the remote host exists for, and re-transferring or clearing it would
 cost hours. The consequence is worth stating plainly -- a remote build leaves any file that exists only
 on the remote in place, so `sources_only_on_remote` reports them rather than letting them accumulate
 unseen.
 
-WHAT IT DOES NOT DO. It does not decide what to build, parse output, or write artifacts. Callers do
+What it does not do. It does not decide what to build, parse output, or write artifacts. Callers do
 that; this returns the completed process.
 """
 from __future__ import annotations
@@ -98,8 +98,16 @@ def push_sources(timeout=600):
         files += [os.path.relpath(f, LEAN) for f in glob.glob(os.path.join(LEAN, g))]
     if not files:
         raise SystemExit(f"no Lean sources found under {LEAN}; refusing to push an empty tree")
-    tar = subprocess.run(["tar", "czf", "-"] + sorted(files), cwd=LEAN,
-                         capture_output=True, timeout=timeout)
+    # The names go through a list file, not the command line: a tree of a thousand files exceeds the
+    # Windows command-line limit (WinError 206).
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".lst", delete=False, encoding="utf-8", newline="\n") as fl:
+        fl.write("\n".join(f.replace(os.sep, "/") for f in sorted(files)) + "\n")
+    try:
+        tar = subprocess.run(["tar", "czf", "-", "-T", fl.name], cwd=LEAN,
+                             capture_output=True, timeout=timeout)
+    finally:
+        os.unlink(fl.name)
     # DERIVED: zero is the POSIX convention for success, not a threshold.
     if tar.returncode != 0:
         raise SystemExit(f"tar failed: {tar.stderr.decode('utf-8', 'replace')[:400]}")
@@ -129,14 +137,14 @@ def sources_only_on_remote():
     return sorted(remote - here)
 
 
-#: The ONLY directory a clear is ever allowed to touch, relative to the Lean package root. Written
+#: The only directory a clear is ever allowed to touch, relative to the Lean package root. Written
 #: out rather than assembled, so that reading this line tells you the whole blast radius. Mathlib's
 #: build lives under `.lake/packages`, which this path does not contain and cannot reach.
 BUILD_OUTPUT_DIR = ".lake/build/lib/lean"
 
 
 def clear_project_build(dry_run=False):
-    """Remove MassGap's own build products so the next build RE-ELABORATES.
+    """Remove MassGap's own build products so the next build re-elaborates.
 
     `#print axioms` is an info message emitted during elaboration, so a warm build replays nothing
     and reports an empty axiom table. Clearing the project's outputs is what makes the footprints
@@ -210,7 +218,7 @@ def prune_remote_sources(dry_run=False, timeout=120):
     """Delete the Lean sources that exist on the remote checkout and not here.
 
     `sources_only_on_remote` reports that divergence and deliberately does not act on it, because a
-    build wrapper should not remove a file from someone else's machine SILENTLY. This is the
+    build wrapper should not remove a file from someone else's machine silently. This is the
     non-silent version: it is opt-in, it names every file before touching it, and it removes nothing
     else -- the remote command is built from the reported basenames, each under `MassGap/`, and the
     list is recomputed here rather than passed in.

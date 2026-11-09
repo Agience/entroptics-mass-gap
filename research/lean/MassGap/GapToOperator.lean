@@ -24,12 +24,9 @@ of `opT`.
   vector `y ↦ y - ⟪Ω, y⟫ • Ω`, so the inequality is between two continuous functions of `y` and
   extends from the dense range of the coercion by `IsClosed.closure_subset_iff`.
 * `orth_invariant_opT`, `norm_opT_pow_le`, `clustering_opT`, `clustering_opT_general` — invariance
-  of the complement, the `rⁿ` decay of powers on it, and the two clustering forms. The same results
-  on the real GNS quotient are `VolumeRate.inner_vac_Tq`, `SecondEigenvalue.vacPerp_invariant`,
-  `VolumeRate.norm_Tq_pow_le`, `SecondEigenvalue.Tq_pow_norm_le_of_rayleigh` and
-  `PeriodicRayleigh.inner_pow_le_of_rayleigh`; `GNSCompare` relates the two constructions on the
-  real component but does not bundle the map as a `LinearIsometry`, so neither side's theorems apply
-  to the other.
+  of the complement, the `rⁿ` decay of powers on it, and the two clustering forms. `GNSCompare`
+  relates this construction to the real GNS quotient on the real component but does not bundle the
+  map as a `LinearIsometry`, so theorems on one side do not apply to the other.
 * `bound_is_free_of_one_le` — at `1 ≤ r` the contraction bound follows from
   `GNSHilbert.norm_opT_le_one` for every vector, with no `GapAt` and no orthogonality. Every
   conclusion in the file is therefore empty unless `r < 1`.
@@ -52,10 +49,8 @@ of `opT`.
 `GapAt D r` is a hypothesis throughout; nothing here produces one, and `r` is never constrained
 below `1` except where a statement says so.
 
-`spectrum_opT_subset` bounds the real spectrum of a self-adjoint operator and admits `0`. It is not
-`OpTBridge.reconstruct_from_opT`'s `hsp`, which additionally asks for
-`Set.Icc ε (Real.exp (-Δ))` with `0 < ε` — that `0` stay out of the spectrum —
-and which `TransferInvertibility.isUnit_of_spectral_hypothesis` identifies with `IsUnit (opT D)`.
+`spectrum_opT_subset` bounds the real spectrum of a self-adjoint operator and admits `0`; it does
+not ask that `0` stay out of the spectrum, as a bound `Set.Icc ε (Real.exp (-Δ))` with `0 < ε` does.
 No functional calculus and no logarithm of `opT` is built anywhere below; `forgets_at_one_rate`
 takes the logarithm of the real number `r`, not of an operator.
 -/
@@ -259,8 +254,7 @@ theorem norm_opT_pow_le (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg : GapA
         _ = r ^ (k + 1) * ‖x‖ := by ring
 
 /-- Decay of the pairing when the right argument is orthogonal to the vacuum:
-`‖⟪x, (opT D ^ n) y⟫‖ ≤ rⁿ · (‖x‖ · ‖y‖)`. It is `norm_inner_le_norm` on `norm_opT_pow_le`, and it
-is the completion's counterpart of `PeriodicRayleigh.inner_pow_le_of_rayleigh`.
+`‖⟪x, (opT D ^ n) y⟫‖ ≤ rⁿ · (‖x‖ · ‖y‖)`. It is `norm_inner_le_norm` on `norm_opT_pow_le`.
 
 `x` carries no hypothesis. With `y ⊥ Ω` the disconnected term `⟪x, Ω⟫⟪Ω, y⟫` vanishes, so the left
 side is already the connected pairing; `clustering_opT_general` is the form with neither argument
@@ -340,8 +334,7 @@ theorem clustering_opT_general (D : TransferData A) {r : ℝ} (hr : 0 ≤ r) (hg
 /-- The negative control. At `1 ≤ r`, `‖opT D x‖ ≤ r * ‖x‖` holds for every vector of `H`, with no
 `GapAt` hypothesis and no orthogonality, because `GNSHilbert.norm_opT_le_one` already bounds the
 operator norm by `1`. The conclusions above are therefore empty unless `r < 1`, which none of them
-assumes. It is the counterpart of `TransferGap.identity_fails_gap` and
-`OpTBridge.spectral_hypothesis_fails_at_identity`.
+assumes. It is the counterpart of `TransferGap.identity_fails_gap`.
 
 DERIVED: the `1` is `norm_opT_le_one`'s contraction constant, not a level chosen here. -/
 theorem bound_is_free_of_one_le (D : TransferData A) {r : ℝ} (hr : 1 ≤ r)
@@ -368,9 +361,6 @@ introduced; `∃κ ∀F` and `∀F ∃κ` have the same proof here. `ι` carries
 extent, no dimension, no inclusions — and every `D F` lives on one fixed algebra `A`, where the
 tree's Wilson transfer data `OSPositivity.wilsonSlabTransfer` has a type that varies with the slab
 geometry, so a volume family cannot be substituted for `ι`.
-`CellSpectrum.cell_volume_bar_nonvacuous` and `VolumeRate`'s header record the same about their own
-statements. `VolumeRate.gap_rate_uniform_in_volume_of_intensive` has the same hypotheses and the
-same rate-form conclusion on the mode family.
 
 `hg` is a hypothesis; this theorem consumes it and produces nothing of the kind.
 
@@ -501,13 +491,8 @@ DERIVED: no numeral. -/
 each vector's orthogonality.
 
 This is a bound on an operator on a submodule; it is not a statement about `spectrum ℝ (opT D)`,
-which `spectrum_opT_subset` below reaches by a different route. It is also not
-`OpTBridge.reconstruct_from_opT`'s `hsp`, which asks for `Set.Icc ε (exp (-Δ))` with `ε > 0`, that
-is, for `0` to stay out of the spectrum;
-`TransferInvertibility.isUnit_of_spectral_hypothesis` identifies that with `IsUnit T`,
-`spectral_hypothesis_fails_for_compact` shows it unsatisfiable for a compact operator in infinite
-dimensions, and `energies_bounded_of_spectral_hypothesis` shows it bounds every energy above by
-`max 0 (-log ε)`.
+which `spectrum_opT_subset` below reaches by a different route. It is also not a bound
+`Set.Icc ε (exp (-Δ))` with `ε > 0`, which would ask for `0` to stay out of the spectrum.
 
 DERIVED: the `0` is the sign tested in `hr : 0 ≤ r`, which `ContinuousLinearMap.opNorm_le_bound`
 requires of any bound on an operator norm; `r` is `GapAt`'s rate and is the caller's. -/
@@ -732,10 +717,8 @@ the second by `isUnit_one_sub_smul_vacProjH` (idempotent, on `μ ≠ 1`). `spect
 into non-membership.
 
 Scope. The conclusion is about `spectrum ℝ`, the real spectrum of a self-adjoint operator, which is
-what `isSelfAdjoint_opT` supports. It permits `0`, so it is not
-`OpTBridge.reconstruct_from_opT`'s `hsp`, which additionally asks for `Set.Icc ε (exp (-Δ))` with
-`0 < ε`; `TransferInvertibility.isUnit_of_spectral_hypothesis` identifies that with
-`IsUnit (opT D)`. `GapAt D r` is a hypothesis, and at `1 ≤ r` the right-hand side already contains
+what `isSelfAdjoint_opT` supports. It permits `0`, so it is not a bound `Set.Icc ε (exp (-Δ))` with
+`0 < ε`. `GapAt D r` is a hypothesis, and at `1 ≤ r` the right-hand side already contains
 every value `norm_opT_le_one` allows, so the statement is empty unless `r < 1`, which it does not
 assume — the same caveat `bound_is_free_of_one_le` records for the norm bounds.
 

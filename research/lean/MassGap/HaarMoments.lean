@@ -1208,12 +1208,10 @@ theorem transferOp_pow_annihilates (X : Matrix (Fin 2) (Fin 2) ℂ) (hX : Matrix
     (transferOp^[n + 1]) X = 0 := by
   rw [transferOp_pow X n, transferOp_annihilates X hX]
 
-/-- The closed form again: `transferOp X = (½·tr X)·I`. The statement is identical to `transferOp_apply`
-above and its proof is likewise `rfl`; the name points at the reading that every value lies on the line
-`ℂ·I`, but what is stated is the defining formula, not a claim about the range as a submodule.
-DERIVED: the `2`s are the size of the fundamental; the `1 / 2` is the normalization in `transferOp`'s own definition. -/
-theorem transferOp_range (X : Matrix (Fin 2) (Fin 2) ℂ) :
-    transferOp X = ((1 / 2 : ℂ) * Matrix.trace X) • (1 : Matrix (Fin 2) (Fin 2) ℂ) := rfl
+/-- The closed form again, `transferOp X = (½·tr X)·I`: an alias of `transferOp_apply`. The name points at
+the reading that every value lies on the line `ℂ·I`; what is stated is the defining formula, not a claim
+about the range as a submodule. -/
+alias transferOp_range := transferOp_apply
 
 #print axioms haar_su2_transfer
 #print axioms haar_su2_transfer_annihilates

@@ -1,16 +1,16 @@
 """A function must not be shadowed by a local of the same name in a function that calls it.
 
-WHAT THIS CATCHES, and it is not hypothetical. `certify/string_tension_eq_centre.py` defined a
+What this catches, and it is not hypothetical. `certify/string_tension_eq_centre.py` defined a
 module-level predicate `resolved(mean, spread)` -- the resolution guard -- and later, inside `main()`,
 bound a list to the same name:
 
     resolved = [r for r in rows if r["Z_over_full"] != ""]
 
-Python decides scope per function at compile time, so binding the name ANYWHERE in `main()` made it
+Python decides scope per function at compile time, so binding the name anywhere in `main()` made it
 local throughout `main()`, and the earlier call `ok = resolved(sf, sf_spread)` became an
 `UnboundLocalError`. The guard could not run at all.
 
-WHY NOTHING ELSE SAW IT. The module imports cleanly, every test passes, and the script's own docstring
+Why nothing else saw it. The module imports cleanly, every test passes, and the script's own docstring
 describes the guard correctly. The failure appears only when execution reaches the call -- on a GPU
 host, minutes into a run, after the ensemble has been generated. It cost a full launch to discover.
 
@@ -30,7 +30,7 @@ CODE = REPO / "research" / "code"
 def _assigned_names(fn: ast.AST) -> set[str]:
     """Every name this function binds -- assignment, for-target, with-target, comprehension, etc.
 
-    Nested function and class definitions are NOT descended into: they have their own scope, and a
+    Nested function and class definitions are not descended into: they have their own scope, and a
     name bound inside one does not make the outer function's name local.
     """
     out: set[str] = set()
@@ -40,7 +40,7 @@ def _assigned_names(fn: ast.AST) -> set[str]:
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 if not top:
                     continue
-                out.add(child.name)          # a nested def DOES bind its own name in this scope
+                out.add(child.name)          # a nested def does bind its own name in this scope
                 continue
             if isinstance(child, ast.Lambda):
                 continue
@@ -91,7 +91,7 @@ def test_no_local_shadows_a_module_function_it_calls():
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             bound = _assigned_names(node) - _declared_global(node)
-            # a name it CALLS, that the module defines, and that it also binds locally
+            # a name it calls, that the module defines, and that it also binds locally
             clash = (bound & module_fns & _called_names(node)) - {node.name}
             for name in sorted(clash):
                 offenders.append(

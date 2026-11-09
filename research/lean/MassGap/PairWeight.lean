@@ -373,7 +373,7 @@ theorem reTr_hol_pair (hN : N ≠ 0) {M : ℕ} (hM : 1 ≤ M) (p : WilsonHypercu
 
 /-! ## 4. The fibre weight -/
 
-/-- **THE FIBRE WEIGHT OF TWO LINKS.**
+/-- **The fibre weight of two links.**
 
 DERIVED: `4` is the spacetime dimension; `1` is the least `M` (extent `2`) and the successor writing
 the extent; `0` is the excluded rank, the lower end of `β` and the sign of `K`; `12` is

@@ -1,5 +1,6 @@
 import Mathlib
 import MassGap.WilsonBridge
+import MassGap.GibbsPositive
 
 /-!
 # MassGap.PlaqVariance — strict positivity of the plaquette variance
@@ -65,66 +66,31 @@ open MeasureTheory
 
 `WilsonReal` proves measurability of the holonomy, the action and the Boltzmann weight; the argument
 below needs the stronger continuity, because the step that converts "integrates to zero" into
-"vanishes at every configuration" is `Continuous.ae_eq_iff_eq`. The proofs mirror the measurability
-ones line for line. -/
+"vanishes at every configuration" is `Continuous.ae_eq_iff_eq`. The continuity facts are proved once,
+in `GibbsPositive`; the names below are aliases of them. -/
 
 /-- The ordered product of link-dependent step factors is continuous in the configuration, for any
-list of link-orientation pairs. By induction on the list, splitting on the orientation flag. The
-continuity counterpart of `WilsonLattice.measurable_stepListProd`.
-
-DERIVED: no numeral occurs in the statement. -/
-theorem continuous_stepListProd {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-    {L : Type} (l : List (L × Bool)) :
-    Continuous (fun U : L → G => (l.map (fun lo => if lo.2 then U lo.1 else (U lo.1)⁻¹)).prod) := by
-  induction l with
-  | nil => simp only [List.map_nil, List.prod_nil]; exact continuous_const
-  | cons a t ih =>
-    simp only [List.map_cons, List.prod_cons]
-    refine Continuous.mul ?_ ih
-    by_cases ha : a.2 = true
-    · have he : (fun U : L → G => if a.2 then U a.1 else (U a.1)⁻¹) = fun U => U a.1 :=
-        funext fun U => if_pos ha
-      rw [he]; exact continuous_apply a.1
-    · have he : (fun U : L → G => if a.2 then U a.1 else (U a.1)⁻¹) = fun U => (U a.1)⁻¹ :=
-        funext fun U => if_neg ha
-      rw [he]; exact (continuous_apply a.1).inv
+list of link-orientation pairs. The continuity counterpart of `WilsonLattice.measurable_stepListProd`.
+An alias of `GibbsPositive.continuous_stepProd`. -/
+alias continuous_stepListProd := MassGap.GibbsPositive.continuous_stepProd
 
 /-- `Continuous (wilsonHol bd p)`: the Wilson plaquette holonomy is continuous in the
-configuration, being `continuous_stepListProd` at the boundary word `bd p`.
-
-DERIVED: no numeral occurs in the statement. -/
-theorem continuous_wilsonHol {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-    {L P : Type} (bd : P → List (L × Bool)) (p : P) :
-    Continuous (wilsonHol (G := G) bd p) := by
-  exact continuous_stepListProd (bd p)
+configuration. An alias of `GibbsPositive.continuous_hol`. -/
+alias continuous_wilsonHol := MassGap.GibbsPositive.continuous_hol
 
 variable {N : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq]
 
-/-- `Continuous (wilsonPlaqObs bd p)`: the plaquette-energy observable is continuous, as
-`continuous_wilsonDensity` composed with `continuous_wilsonHol`.
+/-- `Continuous (wilsonPlaqObs bd p)`: the plaquette-energy observable is continuous. An alias of
+`GibbsPositive.continuous_plaqObs`. -/
+alias continuous_wilsonPlaqObs := MassGap.GibbsPositive.continuous_plaqObs
 
-DERIVED: no numeral occurs in the statement. -/
-theorem continuous_wilsonPlaqObs (bd : Pq → List (Lk × Bool)) (p : Pq) :
-    Continuous (wilsonPlaqObs (N := N) bd p) := by
-  exact continuous_wilsonDensity.comp (continuous_wilsonHol bd p)
+/-- The Wilson action `fun U => ∑ p, wilsonDensity (wilsonHol bd p U)` is continuous. An alias of
+`GibbsPositive.continuous_action`. -/
+alias continuous_wilsonSystem_action := MassGap.GibbsPositive.continuous_action
 
-/-- The Wilson action `fun U => ∑ p, wilsonDensity (wilsonHol bd p U)` is continuous, as a finite
-sum of continuous terms.
-
-DERIVED: no numeral occurs in the statement. -/
-theorem continuous_wilsonSystem_action (bd : Pq → List (Lk × Bool)) :
-    Continuous (wilsonSystem bd (wilsonDensity (N := N))).action := by
-  show Continuous fun U => ∑ p : Pq, wilsonDensity (wilsonHol bd p U)
-  exact continuous_finsetSum _ (fun p _ => continuous_wilsonDensity.comp (continuous_wilsonHol bd p))
-
-/-- The Boltzmann weight `fun U => Real.exp (-β * action U)` is continuous, as `Real.exp` composed
-with a continuous function.
-
-DERIVED: no numeral occurs in the statement. -/
-theorem continuous_wilsonSystem_boltz (bd : Pq → List (Lk × Bool)) (β : ℝ) :
-    Continuous ((wilsonSystem bd (wilsonDensity (N := N))).boltz β) := by
-  show Continuous fun U => Real.exp (-β * (wilsonSystem bd (wilsonDensity (N := N))).action U)
-  exact Real.continuous_exp.comp (continuous_const.mul (continuous_wilsonSystem_action bd))
+/-- The Boltzmann weight `fun U => Real.exp (-β * action U)` is continuous. An alias of
+`GibbsPositive.continuous_boltz`. -/
+alias continuous_wilsonSystem_boltz := MassGap.GibbsPositive.continuous_boltz
 
 /-! ### The variance is strictly positive as soon as the observable moves at all -/
 

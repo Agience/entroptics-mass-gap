@@ -1,6 +1,6 @@
 import Mathlib
 import MassGap.PairCorr
-import MassGap.ClayRoutes
+import MassGap.RestoreShimsClay
 import MassGap.PairInterface
 import MassGap.HaarMomentsSU2
 import MassGap.HaarMomentsSU3
@@ -29,7 +29,7 @@ noncomputable section
 5. The floor `floorBeta N = 17N²/(88π²)`, the numeric checks (`PairCheck`, `norm_num` on rationals),
    `boxPatchGap_floor_su2 : BoxPatchGap (floorBeta 2) 2606 (307/10000)` and
    `boxPatchGap_floor_su3 : BoxPatchGap (floorBeta 3) 545 (367/2500)`.
-6. `clay_continuum_floor_su2`, `clay_continuum_floor_su3`: `ClayRoutes.clay_continuum_of_boxPatchGap`
+6. `clay_continuum_floor_su2`, `clay_continuum_floor_su3`: `RestoreShimsClay.clay_continuum_of_boxPatchGap`
    at `β₀ = βUV = floorBeta N`, where `_hpeak` holds by `le_rfl`. The open inputs E, N, Y and the UV
    step below the box's rate are hypotheses.
 -/
@@ -51,7 +51,7 @@ section Gibbs
 
 variable {N : ℕ} {Lk Pq : Type} [Fintype Lk] [Fintype Pq] [DecidableEq Lk]
 
-/-- **THE GIBBS CORRELATION BOUND FROM A FIBRE BOUND.** As `PairCorr.gibbs_corr_le`, with the
+/-- **The Gibbs correlation bound from a fibre bound.** As `PairCorr.gibbs_corr_le`, with the
 hypothesis "the fibre weight lies in `[m₀, κ m₀]`" replaced by the fibre covariance bound at every
 frozen `W`.
 
@@ -266,7 +266,7 @@ theorem hfib_of_fibreBound (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) {M : ℕ} 
 
 #print axioms hfib_of_fibreBound
 
-/-- **THE TWO-LINK CORRELATION AT CONSTANT `c`**, the proof of `PairCorr.pairCorr_twoCond` with
+/-- **The two-link correlation at constant `c`**, the proof of `PairCorr.pairCorr_twoCond` with
 `gibbs_corr_le_of_fibre` and `hfib_of_fibreBound` in place of `gibbs_corr_le` and its weight range.
 No smallness of `β` is assumed.
 
@@ -542,9 +542,9 @@ end Sharp
 section Floor
 
 /-- **The capstone floor** `17N²/(88π²)`, the peak of `AsymptoticScaling.aRun N` and the least
-`βUV` that `ClayRoutes.clay_continuum_of_boxPatchGap` admits (`_hpeak`).
+`βUV` that `RestoreShimsClay.clay_continuum_of_boxPatchGap` admits (`_hpeak`).
 
-DERIVED: `17`, `88`, `2` are the peak's constants as `ClayRoutes.clay_continuum_of_boxPatchGap`
+DERIVED: `17`, `88`, `2` are the peak's constants as `RestoreShimsClay.clay_continuum_of_boxPatchGap`
 states them (`17N²/(44π²)` of `aRunStd` at `β_std = 2β`). -/
 def floorBeta (N : ℕ) : ℝ := 17 * (N : ℝ) ^ 2 / (88 * Real.pi ^ 2)
 
@@ -735,7 +735,7 @@ theorem boxPairCorr_floor_su3 (h3 : (3 : ℕ) ≠ 0) :
 
 #print axioms boxPairCorr_floor_su3
 
-/-- **THE `SU(2)` BOX CHECK AT THE FLOOR**: side `2606`, gap `307/10000`
+/-- **The `SU(2)` box check at the floor**: side `2606`, gap `307/10000`
 (`BoxGap.boxPairDefect_of_pairCorr`, `BoxGap.boxLocalGap_of_pairDefect`, which holds at every side).
 At this side the threshold `(40n − 36)/n² ≈ 0.01534` is about half the gap, so the box's Knabe constant,
 and with it the IR rate `HeatBathLocal.boxRate` the UV step must beat, is about half the gap.
@@ -753,7 +753,7 @@ theorem boxPatchGap_floor_su2 (h2 : (2 : ℕ) ≠ 0) :
 
 #print axioms boxPatchGap_floor_su2
 
-/-- **THE `SU(3)` BOX CHECK AT THE FLOOR**: side `545`, gap `367/2500`
+/-- **The `SU(3)` box check at the floor**: side `545`, gap `367/2500`
 (`BoxGap.boxLocalGap_of_pairDefect`); the threshold `(40n − 36)/n² ≈ 0.07327` is about half the gap.
 
 DERIVED: `3` is the rank and `0` in `3 ≠ 0` its non-vanishing; `367/2500 = 1 − 2133/2500`;
@@ -777,7 +777,7 @@ section Capstone
 
 open MassGap MassGap.ContinuumField MassGap.ContinuumSchwinger
 
-/-- **THE CONTINUUM CLAY STATEMENT AT THE FLOOR, `SU(2)`.** `ClayRoutes.clay_continuum_of_boxPatchGap`
+/-- **The continuum Clay statement at the floor, `SU(2)`.** `RestoreShimsClay.clay_continuum_of_boxPatchGap`
 at `β₀ = βUV = floorBeta 2` (`_hpeak` by `le_rfl`, `floorBeta_pos`), `boxPatchGap_floor_su2`; the open
 inputs E (`hB`), N (`hconv`), Y (`hY`) and the UV step below the box's rate (`huv`) are carried.
 
@@ -799,7 +799,7 @@ theorem clay_continuum_floor_su2 (h2 : (2 : ℕ) ≠ 0)
 
 #print axioms clay_continuum_floor_su2
 
-/-- **THE CONTINUUM CLAY STATEMENT AT THE FLOOR, `SU(3)`.**
+/-- **The continuum Clay statement at the floor, `SU(3)`.**
 
 DERIVED: `3` is the rank; `0` is the reflection plane and the lower end of `L`; `4` in `Fin 4` is
 the spacetime dimension; `545`, `367/2500` are `boxPatchGap_floor_su3`'s side and gap. -/

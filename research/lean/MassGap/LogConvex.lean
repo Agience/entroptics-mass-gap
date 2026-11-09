@@ -712,7 +712,7 @@ theorem corrHyper_log_convex (hN : N ≠ 0) (τ : Fin d) (m : ℕ)
   rwa [hshift e₁ e₂, hshift e₁ e₁, hshift e₂ e₂] at h
 
 /-- **Log-convexity of the Clay correlation.** `corrClay` is `corrHyper` at `SU(3)` in four
-dimensions, on the lattice `WilsonGauge`'s Osterwalder–Schrader measure is built on:
+dimensions, on the periodic lattice of `WilsonHypercubic.sysWilson`:
 
     corrClay (e₁ + e₂)²  ≤  corrClay (e₁ + e₁) · corrClay (e₂ + e₂)
 

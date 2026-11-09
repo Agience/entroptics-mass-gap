@@ -29,9 +29,7 @@ its boundary word from `S`, then `A`'s contribution is unchanged by configuratio
 Scope: the hypothesis of `pairing_with_reflection_nonneg` is that the integrand is already written in
 the paired form `h(U|_S) · h((U ∘ θ)|_S)`; no statement here puts a Wilson Boltzmann weight into that
 form, and no coupling `β` appears anywhere in this file. `reflection_positive_of_expansion` is stated
-for a `Fintype` index `K`, so it covers finite sums only. `Complete.wilson_reflection_positive_at`,
-the axiom cited to Osterwalder–Seiler (Ann. Phys. 110 (1978) 440), is not used or discharged here.
-Axiom footprint is recorded by the `#print axioms` line after each declaration.
+for a `Fintype` index `K`, so it covers finite sums only. Axiom footprint is recorded by the `#print axioms` line after each declaration.
 -/
 
 namespace MassGap.ReflectionPositivity

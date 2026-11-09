@@ -1083,7 +1083,7 @@ theorem boxOp_apply (β : ℝ) (n j : ℕ) (k : WilsonHypercubic.Site 4 (2 * j +
 
 #print axioms boxOp_apply
 
-/-- **THE BOX CHECK AS ONE BOX UNDER EVERY BOUNDARY.** At every extent index `j` with `n ≤ j + 1`,
+/-- **The box check as one box under every boundary.** At every extent index `j` with `n ≤ j + 1`,
 every corner `k`, every periodic gauge-invariant `x` and every boundary configuration `W`: with `V`
 running over the configurations of the box's links (the rest frozen at `W`) and the weight of the
 plaquettes meeting the box,

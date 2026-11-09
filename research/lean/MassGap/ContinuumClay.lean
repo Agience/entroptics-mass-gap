@@ -61,16 +61,30 @@ end Predicates
 
 variable {N : ℕ}
 
+/-- **The reconstructed continuum transfer data at dyadic step `m` along the coupling tower `βs`**, at
+the connected renormalisation `Renorm.connectedAlong hN βs Z` with its reflection compatibility. The
+witness `hB` enters only proof fields (`ContinuumSep.contTransferSepAlong`), so any two witnesses give
+definitionally equal data.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+def contDAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+    (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
+    (hB : ContinuumSep.PairBoundSepAlong hN βs (Renorm.connectedAlong hN βs Z) τ) (m : ℕ) :
+    Transfer.TransferData (ContinuumSep.AmodSep N τ) :=
+  ContinuumSep.contTransferSepAlong hN βs (Renorm.connectedAlong hN βs Z) τ hB
+    (Renorm.connectedAlong_reflCompat hN βs Z τ hZ) m
+
 /-- **The reconstructed continuum transfer data at dyadic step `m`**, at the connected renormalisation
-`Renorm.connected hN Z` with its reflection compatibility. The witness `hB` enters only proof fields
-(`ContinuumSep.contTransferSep`), so any two witnesses give definitionally equal data.
+`Renorm.connected hN Z` with its reflection compatibility: `contDAlong` at `βs = dyBeta`. The witness
+`hB` enters only proof fields (`ContinuumSep.contTransferSep`), so any two witnesses give
+definitionally equal data.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
 def contD (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
     (hZ : ∀ k O, Z k (O.refl τ) = Z k O)
     (hB : ContinuumSep.PairBoundSep hN (Renorm.connected hN Z) τ) (m : ℕ) :
     Transfer.TransferData (ContinuumSep.AmodSep N τ) :=
-  ContinuumSep.contTransferSep hN (Renorm.connected hN Z) τ hB (Renorm.connected_reflCompat hN Z τ hZ) m
+  contDAlong hN (dyBeta (one_le_of_ne_zero hN)) Z τ hZ hB m
 
 /-- **The continuum gap on a non-trivial space.** At `2 ≤ N`, a reflection-invariant field-strength
 factor `Z`, the bound on separated reflected pairs `ContinuumSep.PairBoundSep` at

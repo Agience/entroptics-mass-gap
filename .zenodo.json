@@ -1,9 +1,11 @@
 {
-  "title": "The Mass Gap of Pure SU(N) Gauge Theory as a Finite-Aperture Effect",
-  "description": "The paper reads the mass gap of pure SU(N) Yang-Mills as a finite-aperture effect: the vacuum is read through a finite aperture, which band-limits, and the gap is the entropy margin Delta = kappa_0 - mu > 0 below the counting floor kappa_0 = (1/4) ln 3 -- a number COUNTED from directed cube paths, with no fitted constant. Pure Yang-Mills carries no dimensionful parameter, so a fitted constant anywhere below the gap would be a smuggled scale; the counted floor is what makes the transmutation legitimate.\n\nTHE FORMAL STATUS. Every theorem of the formal development is complete, and the axiom footprint of every theorem is machine-printed, so the line between what is proved and what is assumed can be read off the record.\n\nTHE RESULTS. Reflection positivity is PROVED at even lattice extent at least four and nonnegative coupling, by an action split and a three-block Haar factorisation with no representation theory, and cited outside that domain; on that domain the gap side of the finite-aperture model carries NO named axiom. The correlation's symmetry on the lag circle is proved, which grounds the circle-distance reading of the correlation. The substrate input of the finite-aperture route is reduced to a contact-relative power law on the plaquette correlation, and that law is proved OUTRIGHT on a derived strong-coupling interval, carrying no hypothesis; the weak-coupling remainder is open.\n\nThe repository holds the paper, the Lean 4 / Mathlib development, and the Entroptics analysis code.",
+  "title": "The Mass Gap of SU(N) Gauge Theory Seen by an Observer of Fixed Physical Resolution",
+  "description": "<p>We take the frame of the Entroptics paper, an observer as a finite aperture whose mode count is read from the signal's spectrum, as the method for the continuum limit of four-dimensional SU(N) Wilson lattice gauge theory, and use it in two places. On the gap side the theory is read at a window it sets: the doubling defect D_β(w) = 16 log Z_β(2^w) − log Z_β(2^(w+1)) of the periodic torus, a finite-size free energy with the bulk cancelled exactly (read, as an argued interpretation, as a weighted sum of Rényi-2 entropies of transfer operators), is held at a fixed value u_0 along a coupling tower while the window doubles. On the existence side the observer's screen in a box of fixed physical side is a finite family of modes, and one variance bound with per-mode hypercontractivity gives every even moment through the Rényi count of order 1/2, with constants free of the box and the zoom; for the single-reading closure, 1/2 is the sharp order; for the Wilson field itself the count bound is reduced to one fine-scale inequality, which is open.</p><p>For N ≥ 2 we prove that the formalized target CS(N), an Osterwalder–Schrader form of the existence-and-gap statement (separated test functions, a limit along a fixed ultrafilter, no Wightman reconstruction), follows from three open statements: (S), that the defect tends to 0 along the windows at arbitrarily large β; (M), that at window couplings arbitrarily close to 0, along every coupling tower, the measured tensor mass stays in a band of ratio 2 at a level chosen per tower; and (E), the existence clauses restated along towers. A fixed-level form of (M) is refuted under (S). Without hypotheses we prove the doubling bootstrap, in which one window with D ≤ 1/1000 forces D(w+1) ≤ 250 D(w)² and a transfer gap uniform in the torus size (a four-dimensional form of the purity bootstrap of OpenAI's O(3) work, of OpenAI's proof of the Haldane gap and of Grover's extensions of it); vanishing on an interval of small β, at the decoupled end of the anisotropic family and on an explicit strip of mixed couplings that shrinks with β; box gaps for SU(2) and SU(3) at small coupling; and a list of properties that do not separate SU(N) from U(1). The theorems are formalized in Lean 4. The mass gap is not proved.</p><p>The Lean 4 / Mathlib development depends only on the axioms propext, Classical.choice and Quot.sound. Monte Carlo data are validation only. </p><p>The record holds the paper (research/paper/mass-gap.pdf and its sources), the Lean development, the exact checks and the analysis code. Code: Apache-2.0. Paper text: CC BY 4.0. The lattice ensembles are a separate dataset record, DOI 10.5281/zenodo.22850110.</p>",
   "upload_type": "software",
   "license": "Apache-2.0",
-  "version": "0.2.2",
+  "notes": "Code is licensed under Apache-2.0 (LICENSE, NOTICE). The paper text under research/paper/ is licensed under CC BY 4.0. Unrefereed preprint.",
+  "version": "0.3.0",
+  "publication_date": "2026-11-08",
   "creators": [
     {
       "name": "Sessford, Ikailo John",
@@ -12,16 +14,22 @@
     }
   ],
   "keywords": [
-    "Yang-Mills",
-    "mass gap",
     "lattice gauge theory",
-    "confinement",
-    "entropy",
-    "aperture",
-    "formal verification",
-    "Lean 4",
+    "Wilson action",
+    "Yang-Mills mass gap",
+    "finite aperture",
+    "Entroptics",
+    "Rényi entropy",
+    "effective mode count",
+    "hypercontractivity",
+    "doubling defect",
+    "purity bootstrap",
+    "transfer operator",
     "reflection positivity",
-    "Osterwalder-Schrader"
+    "anisotropic lattice",
+    "Osterwalder-Schrader axioms",
+    "formal verification",
+    "Lean"
   ],
   "related_identifiers": [
     {
@@ -30,28 +38,51 @@
       "scheme": "url"
     },
     {
-      "identifier": "https://github.com/Agience/entroptics/tree/cf9edee49a9cee80893769a9e4affde8e0a82aa7",
-      "relation": "references",
-      "resource_type": "software",
-      "scheme": "url"
-    },
-    {
-      "identifier": "10.5281/zenodo.23045719",
-      "relation": "references",
-      "resource_type": "software",
-      "scheme": "doi"
-    },
-    {
       "identifier": "10.5281/zenodo.22850110",
       "relation": "isSupplementedBy",
       "resource_type": "dataset",
       "scheme": "doi"
     },
     {
+      "identifier": "10.5281/zenodo.24063501",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "https://github.com/Agience/entroptics/tree/6bc2047877ee98a14115eb020bc3313a24ebd242",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/creelie/4Y-M",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.5281/zenodo.23444339",
+      "relation": "references",
+      "resource_type": "software",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.24055064",
+      "relation": "references",
+      "resource_type": "publication-preprint",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "https://github.com/openai/math/tree/adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "relation": "references",
+      "resource_type": "publication-preprint",
+      "scheme": "url"
+    },
+    {
       "identifier": "https://agience.ai",
       "relation": "isSupplementTo",
       "scheme": "url"
     }
-  ],
-  "publication_date": "2026-09-29"
+  ]
 }

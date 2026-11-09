@@ -72,6 +72,15 @@ after the vector; `ClayCapstone.absolute_decay_of_form_decay` and
 (`gapAt_of_per_vector_form_decay`), with no density argument: every class of the real quotient is a
 module vector. `GapToOperator` carries `GapAt` to the completion.
 
+## Along any coupling tower
+
+Every object and statement on reflected pairs, the reconstruction's form and transfer data, clustering
+and the gap is also stated along a coupling sequence `βs` (suffix `Along` on objects, `_along` on
+statements); the ones above are their instances at `dyBeta`. The gap input along `βs` is
+`ContinuumCluster.TowerGapAt hN τ βs M` (`contS_cluster_sep_of_towerGapAt`,
+`continuum_gap_sep_of_towerGapAt`); `FixedWindowDecay` gives it at `dyBeta`
+(`ContinuumCluster.towerGapAt_dyBeta_of_fixedWindowDecay`).
+
 ## Non-triviality
 
 `exists_orth_ne_zero_sep`: if `S(θQ ∪ Q) − S(Q)² ≠ 0` for one separated monomial `Q`
@@ -414,24 +423,37 @@ form of `ContinuumCluster.Dk`, which is the reflected pairing of the step-`k` st
 
 DERIVED: `0` is the excluded colour count and the plane; `2` is the square; `4` in `Fin 4` is the
 spacetime dimension. -/
+theorem sq_latSkR_pairFam_le_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
+    (P Q : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkRAlong hN βs ρ k (pairFam τ P Q) ^ 2
+      ≤ latSkRAlong hN βs ρ k (pairFam τ P P) * latSkRAlong hN βs ρ k (pairFam τ Q Q) := by
+  have h := (DkAlong hN βs τ k).toReflForm.cauchy_schwarz ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩
+  have e1 : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ = latSkRAlong hN βs ρ k (pairFam τ P Q) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k P Q]
+  have e2 : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkRAlong hN βs ρ k (pairFam τ P P) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k P P]
+  have e3 : (DkAlong hN βs τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ = latSkRAlong hN βs ρ k (pairFam τ Q Q) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k Q Q]
+  calc latSkRAlong hN βs ρ k (pairFam τ P Q) ^ 2
+      = (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ ^ 2 := by rw [e1]
+    _ ≤ (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩
+          * (DkAlong hN βs τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ := h
+    _ = latSkRAlong hN βs ρ k (pairFam τ P P) * latSkRAlong hN βs ρ k (pairFam τ Q Q) := by rw [e2, e3]
+
+#print axioms sq_latSkR_pairFam_le_along
+
+/-- `sq_latSkR_pairFam_le` at the couplings `dyBeta`: `sq_latSkR_pairFam_le_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem sq_latSkR_pairFam_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
     (P Q : Mono N)
     (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
     (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
     latSkR hN ρ k (pairFam τ P Q) ^ 2
-      ≤ latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q) := by
-  have h := (Dk hN τ k).toReflForm.cauchy_schwarz ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩
-  have e1 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ = latSkR hN ρ k (pairFam τ P Q) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P Q]
-  have e2 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkR hN ρ k (pairFam τ P P) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
-  have e3 : (Dk hN τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ = latSkR hN ρ k (pairFam τ Q Q) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k Q Q]
-  calc latSkR hN ρ k (pairFam τ P Q) ^ 2
-      = (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k Q, hQ⟩ ^ 2 := by rw [e1]
-    _ ≤ (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩
-          * (Dk hN τ k).form ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k Q, hQ⟩ := h
-    _ = latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q) := by rw [e2, e3]
+      ≤ latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q) :=
+  sq_latSkR_pairFam_le_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k P Q hP hQ
 
 #print axioms sq_latSkR_pairFam_le
 
@@ -439,13 +461,26 @@ theorem sq_latSkR_pairFam_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : �
 (`Real.abs_le_sqrt`).
 
 DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem abs_latSkR_pairFam_le_sqrt_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (k : ℕ) (P Q : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    |latSkRAlong hN βs ρ k (pairFam τ P Q)|
+      ≤ Real.sqrt (latSkRAlong hN βs ρ k (pairFam τ P P) * latSkRAlong hN βs ρ k (pairFam τ Q Q)) :=
+  Real.abs_le_sqrt (sq_latSkR_pairFam_le_along hN βs ρ τ hR k P Q hP hQ)
+
+#print axioms abs_latSkR_pairFam_le_sqrt_along
+
+/-- `abs_latSkR_pairFam_le_sqrt` at the couplings `dyBeta`: `abs_latSkR_pairFam_le_sqrt_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem abs_latSkR_pairFam_le_sqrt (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
     (k : ℕ) (P Q : Mono N)
     (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
     (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
     |latSkR hN ρ k (pairFam τ P Q)|
       ≤ Real.sqrt (latSkR hN ρ k (pairFam τ P P) * latSkR hN ρ k (pairFam τ Q Q)) :=
-  Real.abs_le_sqrt (sq_latSkR_pairFam_le hN ρ τ hR k P Q hP hQ)
+  abs_latSkR_pairFam_le_sqrt_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k P Q hP hQ
 
 #print axioms abs_latSkR_pairFam_le_sqrt
 
@@ -453,14 +488,25 @@ theorem abs_latSkR_pairFam_le_sqrt (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (
 
 DERIVED: `0` is the excluded colour count, the plane and the sign; `4` in `Fin 4` is the spacetime
 dimension. -/
+theorem latSkR_pairFam_self_nonneg_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (k : ℕ) (P : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    0 ≤ latSkRAlong hN βs ρ k (pairFam τ P P) := by
+  have h := (DkAlong hN βs τ k).form_nonneg ⟨Yv ρ k P, hP⟩
+  have e : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkRAlong hN βs ρ k (pairFam τ P P) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k P P]
+  exact le_of_le_of_eq h e
+
+#print axioms latSkR_pairFam_self_nonneg_along
+
+/-- `latSkR_pairFam_self_nonneg` at the couplings `dyBeta`: `latSkR_pairFam_self_nonneg_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem latSkR_pairFam_self_nonneg (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
     (k : ℕ) (P : Mono N)
     (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
-    0 ≤ latSkR hN ρ k (pairFam τ P P) := by
-  have h := (Dk hN τ k).form_nonneg ⟨Yv ρ k P, hP⟩
-  have e : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkR hN ρ k (pairFam τ P P) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
-  exact le_of_le_of_eq h e
+    0 ≤ latSkR hN ρ k (pairFam τ P P) :=
+  latSkR_pairFam_self_nonneg_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k P hP
 
 #print axioms latSkR_pairFam_self_nonneg
 
@@ -485,20 +531,33 @@ theorem form_T_pow_self_le {A : Type*} [AddCommGroup A] [Module ℝ A] (D : Tran
 DERIVED: `0` is the excluded colour count and the plane; `2` is the halving of the dyadic spacing,
 `2^{k−m}` lattice steps per step of `dySpacing N m` (`ContinuumSchwinger.site_dySpacing`); `4` in
 `Fin 4` is the spacetime dimension. -/
-theorem latSkR_pairFam_shift_eq_form (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+theorem latSkR_pairFam_shift_eq_form_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
     {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
     (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
-    latSkR hN ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
-      = (Dk hN τ k).form (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩)
-          (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩) := by
+    latSkRAlong hN βs ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
+      = (DkAlong hN βs τ k).form (((DkAlong hN βs τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩)
+          (((DkAlong hN βs τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩) := by
   have ha := dySpacing_pos (one_le_of_ne_zero hN) k
   have hvec : site (dySpacing N k) (axisVec τ ((2 ^ (k - m) * n : ℕ) : ℤ))
       = timeVec N m τ n := by
     unfold timeVec
     rw [site_dySpacing N hk, scaleSite_axisVec]
     congr 2
-  rw [Dk_form, Dk_T_pow, ishiftObsL_iterate, Yv_shift ρ k ha _ P, hvec,
-    latSkR_pairFam_eq hN ρ τ hR k]
+  rw [DkAlong_form, DkAlong_T_pow, ishiftObsL_iterate, Yv_shift ρ k ha _ P, hvec,
+    latSkRAlong_pairFam_eq hN βs ρ τ hR k]
+
+#print axioms latSkR_pairFam_shift_eq_form_along
+
+/-- `latSkR_pairFam_shift_eq_form` at the couplings `dyBeta`: `latSkR_pairFam_shift_eq_form_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem latSkR_pairFam_shift_eq_form (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
+    (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkR hN ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
+      = (Dk hN τ k).form (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩)
+          (((Dk hN τ k).T ^ (2 ^ (k - m) * n)) ⟨Yv ρ k P, hY⟩) :=
+  latSkR_pairFam_shift_eq_form_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR hk n P hY
 
 #print axioms latSkR_pairFam_shift_eq_form
 
@@ -507,28 +566,52 @@ theorem latSkR_pairFam_shift_eq_form (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
 (`latSkR_pairFam_shift_eq_form`, `form_T_pow_self_le`).
 
 DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem latSkR_pairFam_shift_self_le_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
+    (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkRAlong hN βs ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
+      ≤ latSkRAlong hN βs ρ k (pairFam τ P P) := by
+  rw [latSkR_pairFam_shift_eq_form_along hN βs ρ τ hR hk n P hY]
+  have e : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hY⟩ ⟨Yv ρ k P, hY⟩ = latSkRAlong hN βs ρ k (pairFam τ P P) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k P P]
+  exact le_of_le_of_eq (form_T_pow_self_le (DkAlong hN βs τ k) ⟨Yv ρ k P, hY⟩ (2 ^ (k - m) * n)) e
+
+#print axioms latSkR_pairFam_shift_self_le_along
+
+/-- `latSkR_pairFam_shift_self_le` at the couplings `dyBeta`: `latSkR_pairFam_shift_self_le_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem latSkR_pairFam_shift_self_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
     {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : Mono N)
     (hY : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
     latSkR hN ρ k (pairFam τ (Mono.shift (timeVec N m τ n) P) (Mono.shift (timeVec N m τ n) P))
-      ≤ latSkR hN ρ k (pairFam τ P P) := by
-  rw [latSkR_pairFam_shift_eq_form hN ρ τ hR hk n P hY]
-  have e : (Dk hN τ k).form ⟨Yv ρ k P, hY⟩ ⟨Yv ρ k P, hY⟩ = latSkR hN ρ k (pairFam τ P P) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
-  exact le_of_le_of_eq (form_T_pow_self_le (Dk hN τ k) ⟨Yv ρ k P, hY⟩ (2 ^ (k - m) * n)) e
+      ≤ latSkR hN ρ k (pairFam τ P P) :=
+  latSkR_pairFam_shift_self_le_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR hk n P hY
 
 #print axioms latSkR_pairFam_shift_self_le
 
 /-- The same on separated monomials, with the shift as the iterate `SepMono.shift^[n]`.
 
 DERIVED: `0` is the excluded colour count and the plane; `4` in `Fin 4` is the spacetime dimension. -/
+theorem latSkR_iterate_self_le_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : SepMono N τ)
+    (hY : Yv ρ k P.1 ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
+    latSkRAlong hN βs ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] P).1)
+      ≤ latSkRAlong hN βs ρ k (pairFam τ P.1 P.1) := by
+  rw [SepMono.shift_iterate]
+  exact latSkR_pairFam_shift_self_le_along hN βs ρ τ hR hk n P.1 hY
+
+#print axioms latSkR_iterate_self_le_along
+
+/-- `latSkR_iterate_self_le` at the couplings `dyBeta`: `latSkR_iterate_self_le_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem latSkR_iterate_self_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
     {k m : ℕ} (hk : m ≤ k) (n : ℕ) (P : SepMono N τ)
     (hY : Yv ρ k P.1 ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :
     latSkR hN ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] P).1)
-      ≤ latSkR hN ρ k (pairFam τ P.1 P.1) := by
-  rw [SepMono.shift_iterate]
-  exact latSkR_pairFam_shift_self_le hN ρ τ hR hk n P.1 hY
+      ≤ latSkR hN ρ k (pairFam τ P.1 P.1) :=
+  latSkR_iterate_self_le_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR hk n P hY
 
 #print axioms latSkR_iterate_self_le
 
@@ -536,8 +619,15 @@ theorem latSkR_iterate_self_le (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR :
 `P` has one constant bounding the reflected second moment `latSkR(θP ∪ P)` eventually in the step.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+def DiagBoundSepAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+  ∀ P : SepMono N τ, ∃ C : ℝ, ∀ᶠ k in atTop, latSkRAlong hN βs ρ k (pairFam τ P.1 P.1) ≤ C
+
+/-- `DiagBoundSep` at the couplings `dyBeta`: `DiagBoundSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 def DiagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
-  ∀ P : SepMono N τ, ∃ C : ℝ, ∀ᶠ k in atTop, latSkR hN ρ k (pairFam τ P.1 P.1) ≤ C
+  DiagBoundSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ
+
 
 /-- **E on reflected pairs (stated, not proved).** Every pair of separated positive-time monomials
 `P, Q` has one constant bounding `|latSkR(θP' ∪ Q')|` eventually in the step, at every common dyadic
@@ -545,18 +635,25 @@ time shift `P' = SepMono.shift^[n] P`, `Q' = SepMono.shift^[n] Q`: the families 
 (`tendsto_pair_sep_of_pairBound` at `n = 0`, `kernSep_iterate_bound_of_pairBound`).
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
-def PairBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+def PairBoundSepAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) : Prop :=
   ∀ P Q : SepMono N τ, ∃ C : ℝ, ∀ m n : ℕ, ∀ᶠ k in atTop,
-    |latSkR hN ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] Q).1)|
+    |latSkRAlong hN βs ρ k (pairFam τ ((SepMono.shift hN τ m)^[n] P).1 ((SepMono.shift hN τ m)^[n] Q).1)|
       ≤ C
+
+/-- `PairBoundSep` at the couplings `dyBeta`: `PairBoundSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+def PairBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+  PairBoundSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ
+
 
 /-- **The diagonal bound gives the pair bound.** At a step past `m` where `P`, `Q` and their shifts are
 vectors of `Dk`: Cauchy–Schwarz (`sq_latSkR_pairFam_le`), the shifted diagonals at most the unshifted
 ones (`latSkR_iterate_self_le`), and those at most `C_P`, `C_Q`; the constant is `√(C_P C_Q)`.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
-theorem pairBoundSep_of_diagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
-    (hD : DiagBoundSep hN ρ τ) : PairBoundSep hN ρ τ := by
+theorem pairBoundSep_of_diagBoundSep_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (hD : DiagBoundSepAlong hN βs ρ τ) : PairBoundSepAlong hN βs ρ τ := by
   intro P Q
   obtain ⟨CP, hCP⟩ := hD P
   obtain ⟨CQ, hCQ⟩ := hD Q
@@ -566,12 +663,21 @@ theorem pairBoundSep_of_diagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
     eventually_Yv_mem_sep hN ρ τ ((SepMono.shift hN τ m)^[n] P),
     eventually_Yv_mem_sep hN ρ τ ((SepMono.shift hN τ m)^[n] Q)]
     with k hk hkP hkQ hYP hYQ hYP' hYQ'
-  have hcs := sq_latSkR_pairFam_le hN ρ τ hR k _ _ hYP' hYQ'
-  have h0P := latSkR_pairFam_self_nonneg hN ρ τ hR k _ hYP'
-  have h0Q := latSkR_pairFam_self_nonneg hN ρ τ hR k _ hYQ'
-  have hPP := (latSkR_iterate_self_le hN ρ τ hR hk n P hYP).trans hkP
-  have hQQ := (latSkR_iterate_self_le hN ρ τ hR hk n Q hYQ).trans hkQ
+  have hcs := sq_latSkR_pairFam_le_along hN βs ρ τ hR k _ _ hYP' hYQ'
+  have h0P := latSkR_pairFam_self_nonneg_along hN βs ρ τ hR k _ hYP'
+  have h0Q := latSkR_pairFam_self_nonneg_along hN βs ρ τ hR k _ hYQ'
+  have hPP := (latSkR_iterate_self_le_along hN βs ρ τ hR hk n P hYP).trans hkP
+  have hQQ := (latSkR_iterate_self_le_along hN βs ρ τ hR hk n Q hYQ).trans hkQ
   exact Real.abs_le_sqrt (hcs.trans (mul_le_mul hPP hQQ h0Q (h0P.trans hPP)))
+
+#print axioms pairBoundSep_of_diagBoundSep_along
+
+/-- `pairBoundSep_of_diagBoundSep` at the couplings `dyBeta`: `pairBoundSep_of_diagBoundSep_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem pairBoundSep_of_diagBoundSep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ)
+    (hD : DiagBoundSep hN ρ τ) : PairBoundSep hN ρ τ :=
+  pairBoundSep_of_diagBoundSep_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR hD
 
 #print axioms pairBoundSep_of_diagBoundSep
 
@@ -613,17 +719,29 @@ conclusion as `tendsto_pair_sep`, which reads `UniformBoundSep`.
 
 DERIVED: `0` is the excluded colour count, the sign of the margins, the dyadic level and the number of
 shifts; `4` in `Fin 4` is the spacetime dimension. -/
-theorem tendsto_pair_sep_of_pairBound (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
-    (hB : PairBoundSep hN ρ τ) {P Q : Mono N}
+theorem tendsto_pair_sep_of_pairBound_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSepAlong hN βs ρ τ) {P Q : Mono N}
     (hP : ∃ d : ℝ, 0 < d ∧ sepPos τ d P) (hQ : ∃ d : ℝ, 0 < d ∧ sepPos τ d Q) :
-    Tendsto (fun k => latSkR hN ρ k (pairFam τ P Q)) (ultra : Filter ℕ)
-      (𝓝 (kern hN ρ τ P Q)) := by
+    Tendsto (fun k => latSkRAlong hN βs ρ k (pairFam τ P Q)) (ultra : Filter ℕ)
+      (𝓝 (kernAlong hN βs ρ τ P Q)) := by
   obtain ⟨C, hC⟩ := hB ⟨P, hP⟩ ⟨Q, hQ⟩
-  have h0 : ∀ᶠ k in atTop, |latSkR hN ρ k (pairFam τ P Q)| ≤ C := by
+  have h0 : ∀ᶠ k in atTop, |latSkRAlong hN βs ρ k (pairFam τ P Q)| ≤ C := by
     have h := hC 0 0
     rwa [Function.iterate_zero_apply, Function.iterate_zero_apply] at h
   obtain ⟨x, hx⟩ := exists_tendsto_ultra _ _ h0
   exact tendsto_nhds_limUnder ⟨x, hx⟩
+
+#print axioms tendsto_pair_sep_of_pairBound_along
+
+/-- `tendsto_pair_sep_of_pairBound` at the couplings `dyBeta`: `tendsto_pair_sep_of_pairBound_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem tendsto_pair_sep_of_pairBound (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSep hN ρ τ) {P Q : Mono N}
+    (hP : ∃ d : ℝ, 0 < d ∧ sepPos τ d P) (hQ : ∃ d : ℝ, 0 < d ∧ sepPos τ d Q) :
+    Tendsto (fun k => latSkR hN ρ k (pairFam τ P Q)) (ultra : Filter ℕ)
+      (𝓝 (kern hN ρ τ P Q)) :=
+  tendsto_pair_sep_of_pairBound_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hP hQ
 
 #print axioms tendsto_pair_sep_of_pairBound
 
@@ -654,15 +772,15 @@ finite set of separated positive-time monomials and real coefficients,
 
 DERIVED: `0` is the excluded colour count and the sign concluded; `4` in `Fin 4` is the spacetime
 dimension. -/
-theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : PairBoundSep hN ρ τ)
+theorem contS_gram_nonneg_sep_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) (hB : PairBoundSepAlong hN βs ρ τ)
     (hR : ρ.ReflCompat τ) (s : Finset (SepMono N τ)) (c : SepMono N τ → ℝ) :
-    0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kern hN ρ τ P.1 Q.1 := by
+    0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kernAlong hN βs ρ τ P.1 Q.1 := by
   haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
   have htend : Tendsto
-      (fun k => ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkR hN ρ k (pairFam τ P.1 Q.1))
-      (ultra : Filter ℕ) (𝓝 (∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kern hN ρ τ P.1 Q.1)) :=
+      (fun k => ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkRAlong hN βs ρ k (pairFam τ P.1 Q.1))
+      (ultra : Filter ℕ) (𝓝 (∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kernAlong hN βs ρ τ P.1 Q.1)) :=
     tendsto_finset_sum _ (fun P _ => tendsto_finset_sum _
-      (fun Q _ => (tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 Q.2).const_mul (c P * c Q)))
+      (fun Q _ => (tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB P.2 Q.2).const_mul (c P * c Q)))
   refine ge_of_tendsto htend ?_
   have hmem : ∀ᶠ k in atTop, ∀ P ∈ s, ∀ i : Fin P.1.1, ∀ r : ℝ,
       smear (dySpacing N k) ((P.1.2 i).1.sub r).1 (P.1.2 i).2
@@ -671,15 +789,15 @@ theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : 
       Filter.eventually_all.mpr
         (fun i => eventually_smear_sub_mem (one_le_of_ne_zero hN) τ _ _ (sepMono_posTime P i)))
   have hev : ∀ᶠ k in atTop,
-      0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkR hN ρ k (pairFam τ P.1 Q.1) := by
+      0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkRAlong hN βs ρ k (pairFam τ P.1 Q.1) := by
     filter_upwards [hmem] with k hk
     have ha := dySpacing_pos (one_le_of_ne_zero hN) k
-    have hsum : ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkR hN ρ k (pairFam τ P.1 Q.1)
-        = ∑ P ∈ s, ∑ Q ∈ s, (c P * ρ.zmono k P.1) * (c Q * ρ.zmono k Q.1) * stateK hN k
+    have hsum : ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * latSkRAlong hN βs ρ k (pairFam τ P.1 Q.1)
+        = ∑ P ∈ s, ∑ Q ∈ s, (c P * ρ.zmono k P.1) * (c Q * ρ.zmono k Q.1) * stateAlong hN βs k
             (LatticeReflection.ireflObs τ 0 (prodSmear (dySpacing N k) (ρ.mono k P.1))
               * prodSmear (dySpacing N k) (ρ.mono k Q.1)) := by
       refine Finset.sum_congr rfl (fun P _ => Finset.sum_congr rfl (fun Q _ => ?_))
-      rw [latSkR_pairFam hN ρ τ hR, latSk_eq, latS_pairFam _ ha]
+      rw [latSkRAlong_pairFam hN βs ρ τ hR, latSkAlong, latS_pairFam _ ha]
       ring
     have hX : (∑ P ∈ s, (c P * ρ.zmono k P.1) • prodSmear (dySpacing N k) (ρ.mono k P.1))
         ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
@@ -687,10 +805,20 @@ theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : 
         (HalfSpaceAlgebra.halfSpaceAlg_prod_mem τ 0 Finset.univ _
           (fun i _ => hk P hP i (ρ.c k (P.1.2 i).1))))
     rw [hsum]
-    exact le_of_le_of_eq (stateK_rp hN k τ _ hX)
-      (gram_expand (stateK hN k) (LatticeReflection.ireflObs τ 0) s
+    exact le_of_le_of_eq (stateAlong_rp hN βs k τ _ hX)
+      (gram_expand (stateAlong hN βs k) (LatticeReflection.ireflObs τ 0) s
         (fun P => c P * ρ.zmono k P.1) (fun P => prodSmear (dySpacing N k) (ρ.mono k P.1)))
   exact hev.filter_mono ultra_le
+
+#print axioms contS_gram_nonneg_sep_along
+
+/-- `contS_gram_nonneg_sep` at the couplings `dyBeta`: `contS_gram_nonneg_sep_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem contS_gram_nonneg_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hB : PairBoundSep hN ρ τ)
+    (hR : ρ.ReflCompat τ) (s : Finset (SepMono N τ)) (c : SepMono N τ → ℝ) :
+    0 ≤ ∑ P ∈ s, ∑ Q ∈ s, c P * c Q * kern hN ρ τ P.1 Q.1 :=
+  contS_gram_nonneg_sep_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR s c
 
 #print axioms contS_gram_nonneg_sep
 
@@ -700,7 +828,7 @@ end Positivity
 
 section Form
 
-variable (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+variable (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
 
 /-- Finite real combinations of separated positive-time monomials.
 
@@ -710,49 +838,90 @@ abbrev AmodSep (N : ℕ) (τ : Fin 4) : Type := SepMono N τ →₀ ℝ
 /-- The kernel on separated monomials.
 
 DERIVED: no numeral. -/
-noncomputable def kernSep (P Q : SepMono N τ) : ℝ := kern hN ρ τ P.1 Q.1
+noncomputable def kernSepAlong (P Q : SepMono N τ) : ℝ := kernAlong hN βs ρ τ P.1 Q.1
+
+/-- `kernSep` at the couplings `dyBeta`: `kernSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+noncomputable def kernSep (P Q : SepMono N τ) : ℝ :=
+  kernSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ P Q
+
 
 /-- DERIVED: no numeral. -/
+theorem kernSep_symm_along (hR : ρ.ReflCompat τ) (P Q : SepMono N τ) :
+    kernSepAlong hN βs ρ τ P Q = kernSepAlong hN βs ρ τ Q P :=
+  kernAlong_symm hN βs ρ τ hR P.1 Q.1
+
+#print axioms kernSep_symm_along
+
+/-- `kernSep_symm` at the couplings `dyBeta`: `kernSep_symm_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem kernSep_symm (hR : ρ.ReflCompat τ) (P Q : SepMono N τ) :
     kernSep hN ρ τ P Q = kernSep hN ρ τ Q P :=
-  kern_symm hN ρ τ hR P.1 Q.1
+  kernSep_symm_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR P Q
 
 #print axioms kernSep_symm
 
 /-- `S(θ(TP) ∪ Q) = S(θP ∪ TQ)`, by dyadic translation invariance of the limit.
 
 DERIVED: `1` is the unit step. -/
-theorem kernSep_shift (m : ℕ) (P Q : SepMono N τ) :
-    kernSep hN ρ τ (SepMono.shift hN τ m P) Q = kernSep hN ρ τ P (SepMono.shift hN τ m Q) := by
-  show kern hN ρ τ (Mono.shift (timeVec N m τ 1) P.1) Q.1
-    = kern hN ρ τ P.1 (Mono.shift (timeVec N m τ 1) Q.1)
-  unfold kern
+theorem kernSep_shift_along (m : ℕ) (P Q : SepMono N τ) :
+    kernSepAlong hN βs ρ τ (SepMono.shift hN τ m P) Q = kernSepAlong hN βs ρ τ P (SepMono.shift hN τ m Q) := by
+  show kernAlong hN βs ρ τ (Mono.shift (timeVec N m τ 1) P.1) Q.1
+    = kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ 1) Q.1)
+  unfold kernAlong
   rw [pairFam_shift]
-  exact contS_translate hN ρ _ m (axisVec τ (-1))
+  exact contSAlong_translate hN βs ρ _ m (axisVec τ (-1))
+
+#print axioms kernSep_shift_along
+
+/-- `kernSep_shift` at the couplings `dyBeta`: `kernSep_shift_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem kernSep_shift (m : ℕ) (P Q : SepMono N τ) :
+    kernSep hN ρ τ (SepMono.shift hN τ m P) Q = kernSep hN ρ τ P (SepMono.shift hN τ m Q) :=
+  kernSep_shift_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ m P Q
 
 #print axioms kernSep_shift
 
 /-- **The reflection form** `⟨c, d⟩ = ∑_{P,Q} c_P d_Q S(θP ∪ Q)` on separated monomials.
 
 DERIVED: no numeral. -/
+noncomputable def formSepAlong (c d : AmodSep N τ) : ℝ :=
+  c.sum (fun P a => d.sum (fun Q b => a * b * kernSepAlong hN βs ρ τ P Q))
+
+/-- `formSep` at the couplings `dyBeta`: `formSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 noncomputable def formSep (c d : AmodSep N τ) : ℝ :=
-  c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ P Q))
+  formSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ c d
+
 
 /-- DERIVED: no numeral. -/
-theorem formSep_add_left (c c' d : AmodSep N τ) :
-    formSep hN ρ τ (c + c') d = formSep hN ρ τ c d + formSep hN ρ τ c' d := by
-  unfold formSep
+theorem formSep_add_left_along (c c' d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (c + c') d = formSepAlong hN βs ρ τ c d + formSepAlong hN βs ρ τ c' d := by
+  unfold formSepAlong
   exact Finsupp.sum_add_index' (fun P => by simp)
     (fun P a₁ a₂ => by simp only [add_mul, Finsupp.sum_add])
+
+#print axioms formSep_add_left_along
+
+/-- `formSep_add_left` at the couplings `dyBeta`: `formSep_add_left_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_add_left (c c' d : AmodSep N τ) :
+    formSep hN ρ τ (c + c') d = formSep hN ρ τ c d + formSep hN ρ τ c' d :=
+  formSep_add_left_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ c c' d
 
 #print axioms formSep_add_left
 
 /-- DERIVED: no numeral. -/
-theorem formSep_smul_left (r : ℝ) (c d : AmodSep N τ) :
-    formSep hN ρ τ (r • c) d = r * formSep hN ρ τ c d := by
-  unfold formSep
-  have h1 : (r • c).sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ P Q))
-      = c.sum (fun P a => d.sum (fun Q b => (r • a) * b * kernSep hN ρ τ P Q)) :=
+theorem formSep_smul_left_along (r : ℝ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (r • c) d = r * formSepAlong hN βs ρ τ c d := by
+  unfold formSepAlong
+  have h1 : (r • c).sum (fun P a => d.sum (fun Q b => a * b * kernSepAlong hN βs ρ τ P Q))
+      = c.sum (fun P a => d.sum (fun Q b => (r • a) * b * kernSepAlong hN βs ρ τ P Q)) :=
     Finsupp.sum_smul_index' (fun P => by simp)
   rw [h1, Finsupp.mul_sum]
   refine Finsupp.sum_congr (fun P _ => ?_)
@@ -761,91 +930,181 @@ theorem formSep_smul_left (r : ℝ) (c d : AmodSep N τ) :
   rw [smul_eq_mul]
   ring
 
+#print axioms formSep_smul_left_along
+
+/-- `formSep_smul_left` at the couplings `dyBeta`: `formSep_smul_left_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_smul_left (r : ℝ) (c d : AmodSep N τ) :
+    formSep hN ρ τ (r • c) d = r * formSep hN ρ τ c d :=
+  formSep_smul_left_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ r c d
+
 #print axioms formSep_smul_left
 
 /-- DERIVED: no numeral. -/
-theorem formSep_symm (hR : ρ.ReflCompat τ) (c d : AmodSep N τ) :
-    formSep hN ρ τ c d = formSep hN ρ τ d c := by
-  unfold formSep
-  rw [Finsupp.sum_comm c d (fun P a Q b => a * b * kernSep hN ρ τ P Q)]
+theorem formSep_symm_along (hR : ρ.ReflCompat τ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ c d = formSepAlong hN βs ρ τ d c := by
+  unfold formSepAlong
+  rw [Finsupp.sum_comm c d (fun P a Q b => a * b * kernSepAlong hN βs ρ τ P Q)]
   refine Finsupp.sum_congr (fun Q _ => Finsupp.sum_congr (fun P _ => ?_))
-  simp only [kernSep_symm hN ρ τ hR P Q]
+  simp only [kernSep_symm_along hN βs ρ τ hR P Q]
   ring
+
+#print axioms formSep_symm_along
+
+/-- `formSep_symm` at the couplings `dyBeta`: `formSep_symm_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_symm (hR : ρ.ReflCompat τ) (c d : AmodSep N τ) :
+    formSep hN ρ τ c d = formSep hN ρ τ d c :=
+  formSep_symm_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR c d
 
 #print axioms formSep_symm
 
 /-- **Positivity of the form** is `contS_gram_nonneg_sep`.
 
 DERIVED: `0` is the sign. -/
+theorem formSep_nonneg_along (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (c : AmodSep N τ) :
+    0 ≤ formSepAlong hN βs ρ τ c c := by
+  show 0 ≤ ∑ P ∈ c.support, ∑ Q ∈ c.support, c P * c Q * kernAlong hN βs ρ τ P.1 Q.1
+  exact contS_gram_nonneg_sep_along hN βs ρ τ hB hR c.support (fun P => c P)
+
+#print axioms formSep_nonneg_along
+
+/-- `formSep_nonneg` at the couplings `dyBeta`: `formSep_nonneg_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem formSep_nonneg (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (c : AmodSep N τ) :
-    0 ≤ formSep hN ρ τ c c := by
-  show 0 ≤ ∑ P ∈ c.support, ∑ Q ∈ c.support, c P * c Q * kern hN ρ τ P.1 Q.1
-  exact contS_gram_nonneg_sep hN ρ τ hB hR c.support (fun P => c P)
+    0 ≤ formSep hN ρ τ c c :=
+  formSep_nonneg_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR c
 
 #print axioms formSep_nonneg
 
 /-- DERIVED: `0` is the zero combination. -/
-theorem formSep_zero_left (d : AmodSep N τ) : formSep hN ρ τ 0 d = 0 := by
-  unfold formSep
+theorem formSep_zero_left_along (d : AmodSep N τ) : formSepAlong hN βs ρ τ 0 d = 0 := by
+  unfold formSepAlong
   exact Finsupp.sum_zero_index
+
+#print axioms formSep_zero_left_along
+
+/-- `formSep_zero_left` at the couplings `dyBeta`: `formSep_zero_left_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_zero_left (d : AmodSep N τ) : formSep hN ρ τ 0 d = 0 :=
+  formSep_zero_left_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ d
 
 #print axioms formSep_zero_left
 
 /-- DERIVED: `0` is the zero combination. -/
-theorem formSep_zero_right (c : AmodSep N τ) : formSep hN ρ τ c 0 = 0 := by
-  simp [formSep]
+theorem formSep_zero_right_along (c : AmodSep N τ) : formSepAlong hN βs ρ τ c 0 = 0 := by
+  simp [formSepAlong]
+
+#print axioms formSep_zero_right_along
+
+/-- `formSep_zero_right` at the couplings `dyBeta`: `formSep_zero_right_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_zero_right (c : AmodSep N τ) : formSep hN ρ τ c 0 = 0 :=
+  formSep_zero_right_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ c
 
 #print axioms formSep_zero_right
 
 /-- DERIVED: no numeral. -/
-theorem formSep_single (P Q : SepMono N τ) (a b : ℝ) :
-    formSep hN ρ τ (Finsupp.single P a) (Finsupp.single Q b) = a * b * kernSep hN ρ τ P Q := by
-  unfold formSep
+theorem formSep_single_along (P Q : SepMono N τ) (a b : ℝ) :
+    formSepAlong hN βs ρ τ (Finsupp.single P a) (Finsupp.single Q b) = a * b * kernSepAlong hN βs ρ τ P Q := by
+  unfold formSepAlong
   rw [Finsupp.sum_single_index, Finsupp.sum_single_index]
   all_goals simp
+
+#print axioms formSep_single_along
+
+/-- `formSep_single` at the couplings `dyBeta`: `formSep_single_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_single (P Q : SepMono N τ) (a b : ℝ) :
+    formSep hN ρ τ (Finsupp.single P a) (Finsupp.single Q b) = a * b * kernSep hN ρ τ P Q :=
+  formSep_single_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ P Q a b
 
 #print axioms formSep_single
 
 /-- **The continuum reflection form on separated monomials**, a `Transfer.ReflForm`.
 
 DERIVED: no numeral. -/
-noncomputable def contReflFormSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) :
+noncomputable def contReflFormSepAlong (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) :
     Transfer.ReflForm (AmodSep N τ) where
-  form := formSep hN ρ τ
-  form_symm := formSep_symm hN ρ τ hR
-  form_add_left := formSep_add_left hN ρ τ
-  form_smul_left := formSep_smul_left hN ρ τ
-  form_nonneg := formSep_nonneg hN ρ τ hB hR
+  form := formSepAlong hN βs ρ τ
+  form_symm := formSep_symm_along hN βs ρ τ hR
+  form_add_left := formSep_add_left_along hN βs ρ τ
+  form_smul_left := formSep_smul_left_along hN βs ρ τ
+  form_nonneg := formSep_nonneg_along hN βs ρ τ hB hR
+
+/-- `contReflFormSep` at the couplings `dyBeta`: `contReflFormSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+noncomputable def contReflFormSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) :
+    Transfer.ReflForm (AmodSep N τ) :=
+  contReflFormSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR
+
 
 /-- DERIVED: no numeral. -/
-theorem formSep_mapDomain_left (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
-    formSep hN ρ τ (Finsupp.mapDomain g c) d
-      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ (g P) Q)) := by
-  unfold formSep
+theorem formSep_mapDomain_left_along (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (Finsupp.mapDomain g c) d
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSepAlong hN βs ρ τ (g P) Q)) := by
+  unfold formSepAlong
   exact Finsupp.sum_mapDomain_index (fun P => by simp)
     (fun P a₁ a₂ => by simp only [add_mul, Finsupp.sum_add])
+
+#print axioms formSep_mapDomain_left_along
+
+/-- `formSep_mapDomain_left` at the couplings `dyBeta`: `formSep_mapDomain_left_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_mapDomain_left (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSep hN ρ τ (Finsupp.mapDomain g c) d
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ (g P) Q)) :=
+  formSep_mapDomain_left_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ g c d
 
 #print axioms formSep_mapDomain_left
 
 /-- DERIVED: no numeral. -/
-theorem formSep_mapDomain_right (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
-    formSep hN ρ τ c (Finsupp.mapDomain g d)
-      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ P (g Q))) := by
-  unfold formSep
+theorem formSep_mapDomain_right_along (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ c (Finsupp.mapDomain g d)
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSepAlong hN βs ρ τ P (g Q))) := by
+  unfold formSepAlong
   refine Finsupp.sum_congr (fun P _ => ?_)
   exact Finsupp.sum_mapDomain_index (fun Q => by simp)
     (fun Q b₁ b₂ => by simp only [mul_add, add_mul])
+
+#print axioms formSep_mapDomain_right_along
+
+/-- `formSep_mapDomain_right` at the couplings `dyBeta`: `formSep_mapDomain_right_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_mapDomain_right (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSep hN ρ τ c (Finsupp.mapDomain g d)
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ P (g Q))) :=
+  formSep_mapDomain_right_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ g c d
 
 #print axioms formSep_mapDomain_right
 
 /-- DERIVED: no numeral. -/
-theorem formSep_mapDomain (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
-    formSep hN ρ τ (Finsupp.mapDomain g c) (Finsupp.mapDomain g d)
-      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ (g P) (g Q))) := by
-  rw [formSep_mapDomain_left]
+theorem formSep_mapDomain_along (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (Finsupp.mapDomain g c) (Finsupp.mapDomain g d)
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSepAlong hN βs ρ τ (g P) (g Q))) := by
+  rw [formSep_mapDomain_left_along]
   refine Finsupp.sum_congr (fun P _ => ?_)
   exact Finsupp.sum_mapDomain_index (fun Q => by simp)
     (fun Q b₁ b₂ => by simp only [mul_add, add_mul])
+
+#print axioms formSep_mapDomain_along
+
+/-- `formSep_mapDomain` at the couplings `dyBeta`: `formSep_mapDomain_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_mapDomain (g : SepMono N τ → SepMono N τ) (c d : AmodSep N τ) :
+    formSep hN ρ τ (Finsupp.mapDomain g c) (Finsupp.mapDomain g d)
+      = c.sum (fun P a => d.sum (fun Q b => a * b * kernSep hN ρ τ (g P) (g Q))) :=
+  formSep_mapDomain_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ g c d
 
 #print axioms formSep_mapDomain
 
@@ -856,13 +1115,22 @@ noncomputable def TmSep (m : ℕ) : AmodSep N τ →ₗ[ℝ] AmodSep N τ :=
   Finsupp.lmapDomain ℝ ℝ (SepMono.shift hN τ m)
 
 /-- DERIVED: no numeral. -/
-theorem TmSep_symm (m : ℕ) (c d : AmodSep N τ) :
-    formSep hN ρ τ (TmSep hN τ m c) d = formSep hN ρ τ c (TmSep hN τ m d) := by
-  show formSep hN ρ τ (Finsupp.mapDomain (SepMono.shift hN τ m) c) d
-    = formSep hN ρ τ c (Finsupp.mapDomain (SepMono.shift hN τ m) d)
-  rw [formSep_mapDomain_left, formSep_mapDomain_right]
+theorem TmSep_symm_along (m : ℕ) (c d : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (TmSep hN τ m c) d = formSepAlong hN βs ρ τ c (TmSep hN τ m d) := by
+  show formSepAlong hN βs ρ τ (Finsupp.mapDomain (SepMono.shift hN τ m) c) d
+    = formSepAlong hN βs ρ τ c (Finsupp.mapDomain (SepMono.shift hN τ m) d)
+  rw [formSep_mapDomain_left_along, formSep_mapDomain_right_along]
   refine Finsupp.sum_congr (fun P _ => Finsupp.sum_congr (fun Q _ => ?_))
-  simp only [kernSep_shift]
+  simp only [kernSep_shift_along]
+
+#print axioms TmSep_symm_along
+
+/-- `TmSep_symm` at the couplings `dyBeta`: `TmSep_symm_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem TmSep_symm (m : ℕ) (c d : AmodSep N τ) :
+    formSep hN ρ τ (TmSep hN τ m c) d = formSep hN ρ τ c (TmSep hN τ m d) :=
+  TmSep_symm_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ m c d
 
 #print axioms TmSep_symm
 
@@ -913,7 +1181,7 @@ theorem kernSep_iterate_bound (hB : UniformBoundSep hN ρ) (m : ℕ) (P Q : SepM
     famSep_pairFam hd.le (sepPos_shift (sepPos_mono h₁ (min_le_left _ _)) (timeVec_nonneg hN m τ n))
       (sepPos_shift (sepPos_mono h₂ (min_le_right _ _)) (timeVec_nonneg hN m τ n))
   rw [pairFam_shiftN] at hsep
-  unfold kernSep kern
+  unfold kernSep kernSepAlong kernAlong
   rw [SepMono.shift_iterate, SepMono.shift_iterate, pairFam_shiftN]
   exact hC m _ hsep
 
@@ -924,37 +1192,57 @@ shifts of two separated monomials is bounded uniformly in the number of shifts. 
 `(m, n)` passes to the limit along `ultra` (`tendsto_pair_sep_of_pairBound`).
 
 DERIVED: no numeral. -/
-theorem kernSep_iterate_bound_of_pairBound (hB : PairBoundSep hN ρ τ) (m : ℕ) (P Q : SepMono N τ) :
+theorem kernSep_iterate_bound_of_pairBound_along (hB : PairBoundSepAlong hN βs ρ τ) (m : ℕ) (P Q : SepMono N τ) :
     ∃ C : ℝ, ∀ n : ℕ,
-      |kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)| ≤ C := by
+      |kernSepAlong hN βs ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)| ≤ C := by
   haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
   obtain ⟨C, hC⟩ := hB P Q
   exact ⟨C, fun n => le_of_tendsto
-    (tendsto_pair_sep_of_pairBound hN ρ τ hB ((SepMono.shift hN τ m)^[n] P).2
+    (tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB ((SepMono.shift hN τ m)^[n] P).2
       ((SepMono.shift hN τ m)^[n] Q).2).abs
     ((hC m n).filter_mono ultra_le)⟩
+
+#print axioms kernSep_iterate_bound_of_pairBound_along
+
+/-- `kernSep_iterate_bound_of_pairBound` at the couplings `dyBeta`: `kernSep_iterate_bound_of_pairBound_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem kernSep_iterate_bound_of_pairBound (hB : PairBoundSep hN ρ τ) (m : ℕ) (P Q : SepMono N τ) :
+    ∃ C : ℝ, ∀ n : ℕ,
+      |kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)| ≤ C :=
+  kernSep_iterate_bound_of_pairBound_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB m P Q
 
 #print axioms kernSep_iterate_bound_of_pairBound
 
 /-- The form of iterated shifts is bounded uniformly in the number of shifts.
 
 DERIVED: no numeral. -/
-theorem formSep_iterate_le (hB : PairBoundSep hN ρ τ) (m : ℕ) (c : AmodSep N τ) :
+theorem formSep_iterate_le_along (hB : PairBoundSepAlong hN βs ρ τ) (m : ℕ) (c : AmodSep N τ) :
     ∃ B : ℝ, ∀ n : ℕ,
-      formSep hN ρ τ ((⇑(TmSep hN τ m))^[n] c) ((⇑(TmSep hN τ m))^[n] c) ≤ B := by
-  choose C hC using kernSep_iterate_bound_of_pairBound hN ρ τ hB m
+      formSepAlong hN βs ρ τ ((⇑(TmSep hN τ m))^[n] c) ((⇑(TmSep hN τ m))^[n] c) ≤ B := by
+  choose C hC using kernSep_iterate_bound_of_pairBound_along hN βs ρ τ hB m
   refine ⟨∑ P ∈ c.support, ∑ Q ∈ c.support, |c P| * |c Q| * C P Q, fun n => ?_⟩
-  rw [TmSep_iterate, formSep_mapDomain]
+  rw [TmSep_iterate, formSep_mapDomain_along]
   show ∑ P ∈ c.support, ∑ Q ∈ c.support, c P * c Q
-      * kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q) ≤ _
+      * kernSepAlong hN βs ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q) ≤ _
   refine Finset.sum_le_sum (fun P _ => Finset.sum_le_sum (fun Q _ => ?_))
-  calc c P * c Q * kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)
-      ≤ |c P * c Q * kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P)
+  calc c P * c Q * kernSepAlong hN βs ρ τ ((SepMono.shift hN τ m)^[n] P) ((SepMono.shift hN τ m)^[n] Q)
+      ≤ |c P * c Q * kernSepAlong hN βs ρ τ ((SepMono.shift hN τ m)^[n] P)
           ((SepMono.shift hN τ m)^[n] Q)| := le_abs_self _
-    _ = |c P| * |c Q| * |kernSep hN ρ τ ((SepMono.shift hN τ m)^[n] P)
+    _ = |c P| * |c Q| * |kernSepAlong hN βs ρ τ ((SepMono.shift hN τ m)^[n] P)
           ((SepMono.shift hN τ m)^[n] Q)| := by rw [abs_mul, abs_mul]
     _ ≤ |c P| * |c Q| * C P Q :=
         mul_le_mul_of_nonneg_left (hC P Q n) (mul_nonneg (abs_nonneg _) (abs_nonneg _))
+
+#print axioms formSep_iterate_le_along
+
+/-- `formSep_iterate_le` at the couplings `dyBeta`: `formSep_iterate_le_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_iterate_le (hB : PairBoundSep hN ρ τ) (m : ℕ) (c : AmodSep N τ) :
+    ∃ B : ℝ, ∀ n : ℕ,
+      formSep hN ρ τ ((⇑(TmSep hN τ m))^[n] c) ((⇑(TmSep hN τ m))^[n] c) ≤ B :=
+  formSep_iterate_le_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB m c
 
 #print axioms formSep_iterate_le
 
@@ -962,12 +1250,22 @@ theorem formSep_iterate_le (hB : PairBoundSep hN ρ τ) (m : ℕ) (c : AmodSep N
 `kernSep_iterate_bound_of_pairBound`.
 
 DERIVED: no numeral. -/
+theorem TmSep_contract_along (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
+    (c : AmodSep N τ) :
+    formSepAlong hN βs ρ τ (TmSep hN τ m c) (TmSep hN τ m c) ≤ formSepAlong hN βs ρ τ c c := by
+  obtain ⟨B, hB'⟩ := formSep_iterate_le_along hN βs ρ τ hB m c
+  exact SchwarzIteration.contract_of_bounded_orbit (contReflFormSepAlong hN βs ρ τ hB hR)
+    (⇑(TmSep hN τ m)) (TmSep_symm_along hN βs ρ τ m) c B hB'
+
+#print axioms TmSep_contract_along
+
+/-- `TmSep_contract` at the couplings `dyBeta`: `TmSep_contract_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem TmSep_contract (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
     (c : AmodSep N τ) :
-    formSep hN ρ τ (TmSep hN τ m c) (TmSep hN τ m c) ≤ formSep hN ρ τ c c := by
-  obtain ⟨B, hB'⟩ := formSep_iterate_le hN ρ τ hB m c
-  exact SchwarzIteration.contract_of_bounded_orbit (contReflFormSep hN ρ τ hB hR)
-    (⇑(TmSep hN τ m)) (TmSep_symm hN ρ τ m) c B hB'
+    formSep hN ρ τ (TmSep hN τ m c) (TmSep hN τ m c) ≤ formSep hN ρ τ c c :=
+  TmSep_contract_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR m c
 
 #print axioms TmSep_contract
 
@@ -976,31 +1274,48 @@ witness `hB` enters only the proof fields `form_nonneg` and `T_contract`, so the
 which witness is given.
 
 DERIVED: `1` is the coefficient of the vacuum. -/
-noncomputable def contTransferSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+noncomputable def contTransferSepAlong (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
     Transfer.TransferData (AmodSep N τ) where
-  toReflForm := contReflFormSep hN ρ τ hB hR
+  toReflForm := contReflFormSepAlong hN βs ρ τ hB hR
   T := TmSep hN τ m
   vac := Finsupp.single (emptySep N τ) 1
-  T_symm := TmSep_symm hN ρ τ m
-  T_contract := TmSep_contract hN ρ τ hB hR m
+  T_symm := TmSep_symm_along hN βs ρ τ m
+  T_contract := TmSep_contract_along hN βs ρ τ hB hR m
   T_vac := by
     show Finsupp.mapDomain (SepMono.shift hN τ m) (Finsupp.single (emptySep N τ) 1)
       = Finsupp.single (emptySep N τ) 1
     rw [Finsupp.mapDomain_single, shift_emptySep]
   vac_norm := by
-    show formSep hN ρ τ (Finsupp.single (emptySep N τ) 1) (Finsupp.single (emptySep N τ) 1) = 1
-    rw [formSep_single, one_mul, one_mul]
-    exact kern_empty hN ρ τ
+    show formSepAlong hN βs ρ τ (Finsupp.single (emptySep N τ) 1) (Finsupp.single (emptySep N τ) 1) = 1
+    rw [formSep_single_along, one_mul, one_mul]
+    exact kernAlong_empty hN ρ τ βs
+
+/-- `contTransferSep` at the couplings `dyBeta`: `contTransferSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+noncomputable def contTransferSep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+    Transfer.TransferData (AmodSep N τ) :=
+  contTransferSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR m
+
 
 /-- **Positivity of the transfer operator**: `⟨c, T_m c⟩ = ⟨T_{m+1} c, T_{m+1} c⟩ ≥ 0`.
 
 DERIVED: `1` is the half-step offset. -/
-theorem positiveTransfer_sep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
-    GNSHilbert.PositiveTransfer (contTransferSep hN ρ τ hB hR m) := by
+theorem positiveTransfer_sep_along (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+    GNSHilbert.PositiveTransfer (contTransferSepAlong hN βs ρ τ hB hR m) := by
   intro c
-  show 0 ≤ formSep hN ρ τ c (TmSep hN τ m c)
-  rw [TmSep_half, ← TmSep_symm hN ρ τ (m + 1)]
-  exact formSep_nonneg hN ρ τ hB hR _
+  show 0 ≤ formSepAlong hN βs ρ τ c (TmSep hN τ m c)
+  rw [TmSep_half, ← TmSep_symm_along hN βs ρ τ (m + 1)]
+  exact formSep_nonneg_along hN βs ρ τ hB hR _
+
+#print axioms positiveTransfer_sep_along
+
+/-- `positiveTransfer_sep` at the couplings `dyBeta`: `positiveTransfer_sep_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem positiveTransfer_sep (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) :
+    GNSHilbert.PositiveTransfer (contTransferSep hN ρ τ hB hR m) :=
+  positiveTransfer_sep_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR m
 
 #print axioms positiveTransfer_sep
 
@@ -1077,12 +1392,111 @@ end Reconstruction
 
 section Cluster
 
+/-- **OS4 for the limit on separated monomials, along a coupling tower with a uniform physical gap.**
+Under `PairBoundSepAlong`, reflection-compatible data and `ContinuumCluster.TowerGapAt hN τ βs M`,
+for all separated positive-time monomials `P`, `Q` and every dyadic time `t = dySpacing N m · n`,
+`n ∈ ℕ`, along `τ`,
+
+    (S(θP ∪ T_t Q) − S(θP) S(Q))² ≤ exp(−2 M t) · S(θP ∪ P) · (S(θQ ∪ Q) − S(Q)²).
+
+At a step `k ≥ m` the time `t` is `2^{k−m} n` lattice steps, and the rate `r ≤ exp(−M · dySpacing N k)`
+of the gap raised to twice that power is `exp(−2 M t)`.
+
+DERIVED: `2` is the square and the doubling; `0` is the excluded colour count and the plane; `4` in
+`Fin 4` is the spacetime dimension. -/
+theorem contS_cluster_sep_of_towerGapAt (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N)
+    (τ : Fin 4) (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) {M : ℝ}
+    (hG : TowerGapAt hN τ βs M) :
+    ∀ (P Q : SepMono N τ) (m n : ℕ),
+      (kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
+          - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) ^ 2
+        ≤ Real.exp (-(2 * M) * (dySpacing N m * n))
+          * (kernAlong hN βs ρ τ P.1 P.1
+            * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)) := by
+  haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
+  have hN1 := one_le_of_ne_zero hN
+  intro P Q m n
+  have hmemP : ∀ᶠ k in atTop, ∀ i : Fin P.1.1, ∀ r : ℝ,
+      smear (dySpacing N k) ((P.1.2 i).1.sub r).1 (P.1.2 i).2
+        ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
+    Filter.eventually_all.mpr (fun i => eventually_smear_sub_mem hN1 τ _ _ (sepMono_posTime P i))
+  have hmemQ : ∀ᶠ k in atTop, ∀ i : Fin Q.1.1, ∀ r : ℝ,
+      smear (dySpacing N k) ((Q.1.2 i).1.sub r).1 (Q.1.2 i).2
+        ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
+    Filter.eventually_all.mpr (fun i => eventually_smear_sub_mem hN1 τ _ _ (sepMono_posTime Q i))
+  have hQn : ∃ d : ℝ, 0 < d ∧ sepPos τ d (Mono.shift (timeVec N m τ n) Q.1) := by
+    obtain ⟨d, hd, hQ'⟩ := Q.2
+    exact ⟨d, hd, sepPos_shift hQ' (timeVec_nonneg hN m τ n)⟩
+  have hE : ∃ d : ℝ, 0 < d ∧ sepPos τ d (emptyMono N) := emptyMono_sep τ
+  have hf : Tendsto (fun k =>
+        (latSkRAlong hN βs ρ k (pairFam τ P.1 (Mono.shift (timeVec N m τ n) Q.1))
+          - latSkRAlong hN βs ρ k (pairFam τ P.1 (emptyMono N))
+            * latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q.1)) ^ 2) (ultra : Filter ℕ)
+      (𝓝 ((kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
+          - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) ^ 2)) :=
+    ((tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB P.2 hQn).sub
+      ((tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB P.2 hE).mul
+        (tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB hE Q.2))).pow 2
+  have hg : Tendsto (fun k => Real.exp (-(2 * M) * (dySpacing N m * n))
+        * (latSkRAlong hN βs ρ k (pairFam τ P.1 P.1)
+          * (latSkRAlong hN βs ρ k (pairFam τ Q.1 Q.1)
+            - latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q.1) ^ 2))) (ultra : Filter ℕ)
+      (𝓝 (Real.exp (-(2 * M) * (dySpacing N m * n))
+        * (kernAlong hN βs ρ τ P.1 P.1
+          * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)))) :=
+    ((tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB P.2 P.2).mul
+      ((tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB Q.2 Q.2).sub
+        ((tendsto_pair_sep_of_pairBound_along hN βs ρ τ hB hE Q.2).pow 2))).const_mul _
+  refine le_of_tendsto_of_tendsto hf hg ?_
+  have hevLE : ∀ᶠ k in atTop,
+      (latSkRAlong hN βs ρ k (pairFam τ P.1 (Mono.shift (timeVec N m τ n) Q.1))
+        - latSkRAlong hN βs ρ k (pairFam τ P.1 (emptyMono N))
+          * latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q.1)) ^ 2
+      ≤ Real.exp (-(2 * M) * (dySpacing N m * n))
+        * (latSkRAlong hN βs ρ k (pairFam τ P.1 P.1)
+          * (latSkRAlong hN βs ρ k (pairFam τ Q.1 Q.1)
+            - latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q.1) ^ 2)) := by
+    filter_upwards [Filter.eventually_ge_atTop m, hG, hmemP, hmemQ] with k hk hkr hkP hkQ
+    obtain ⟨r, hr0, hg, hrate⟩ := hkr
+    have hvec : site (dySpacing N k) (axisVec τ ((2 ^ (k - m) * n : ℕ) : ℤ))
+        = timeVec N m τ n := by
+      unfold timeVec
+      rw [site_dySpacing N hk, scaleSite_axisVec]
+      congr 2
+    obtain ⟨hcl, hY⟩ := lattice_cluster_along hN βs ρ τ hR k hr0.le hg P.1 Q.1
+      (Yv_mem hN ρ τ k P.1 hkP) (Yv_mem hN ρ τ k Q.1 hkQ) (2 ^ (k - m) * n)
+    rw [hvec] at hcl
+    have hlog : Real.log r ≤ -M * dySpacing N k := by
+      rw [neg_mul]
+      linarith
+    have hr_le : r ≤ Real.exp (-M * dySpacing N k) := by
+      rw [← Real.exp_log hr0]
+      exact Real.exp_le_exp.mpr hlog
+    have hpow : r ^ (2 * (2 ^ (k - m) * n)) ≤ Real.exp (-(2 * M) * (dySpacing N m * n)) := by
+      calc r ^ (2 * (2 ^ (k - m) * n))
+          ≤ Real.exp (-M * dySpacing N k) ^ (2 * (2 ^ (k - m) * n)) :=
+            pow_le_pow_left₀ hr0.le hr_le _
+        _ = Real.exp (((2 * (2 ^ (k - m) * n) : ℕ) : ℝ) * (-M * dySpacing N k)) :=
+            (Real.exp_nat_mul _ _).symm
+        _ = Real.exp (-(2 * M) * (dySpacing N m * n)) := by
+            rw [← dySpacing_mul_pow N hk]
+            push_cast
+            congr 1
+            ring
+    exact hcl.trans (mul_le_mul_of_nonneg_right hpow hY)
+  exact hevLE.filter_mono ultra_le
+
+#print axioms contS_cluster_sep_of_towerGapAt
+
 /-- **OS4 for the limit on separated monomials, from `FixedWindowDecay`.** At `2 ≤ N`, a window
 `L > 0`, `FixedWindowDecay τ 0 hN L`, `PairBoundSep` and reflection-compatible data, there is
 `c > 0` such that for all separated positive-time monomials `P`, `Q` and every dyadic time
 `t = dySpacing N m · n`, `n ∈ ℕ`, along `τ`,
 
     (S(θP ∪ T_t Q) − S(θP) S(Q))² ≤ exp(−2 (c/L) t) · S(θP ∪ P) · (S(θQ ∪ Q) − S(Q)²).
+
+`ContinuumCluster.towerGapAt_dyBeta_of_fixedWindowDecay` and `contS_cluster_sep_of_towerGapAt` at
+`βs = dyBeta`.
 
 DERIVED: `2 ≤ N` is `gapAt_physical_of_fixedWindowDecay`'s; `2` is also the square; `0` is the
 excluded colour count, the plane of `FixedWindowDecay τ 0`, and the sign of `c` and of `L`; `4` in
@@ -1096,84 +1510,8 @@ theorem contS_cluster_of_fixedWindowDecay_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ
         ≤ Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
           * (kern hN ρ τ P.1 P.1
             * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)) := by
-  haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
-  have hN1 := one_le_of_ne_zero hN
-  obtain ⟨c, hc, hev⟩ := WeakCouplingWindow.gapAt_physical_of_fixedWindowDecay τ 0 hN2 hN hL hW
-  have hevk : ∀ᶠ k in atTop, ∃ r : ℝ, TransferGap.GapAt (Dk hN τ k) r
-      ∧ PeriodicContent.PeriodicClayGapAt τ 0 hN (dyBeta hN1 k) r
-      ∧ c / L ≤ -Real.log r / AsymptoticScaling.aRun N (dyBeta hN1 k) :=
-    (tendsto_dyBeta hN1).eventually hev
-  refine ⟨c, hc, fun P Q m n => ?_⟩
-  have hmemP : ∀ᶠ k in atTop, ∀ i : Fin P.1.1, ∀ r : ℝ,
-      smear (dySpacing N k) ((P.1.2 i).1.sub r).1 (P.1.2 i).2
-        ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
-    Filter.eventually_all.mpr (fun i => eventually_smear_sub_mem hN1 τ _ _ (sepMono_posTime P i))
-  have hmemQ : ∀ᶠ k in atTop, ∀ i : Fin Q.1.1, ∀ r : ℝ,
-      smear (dySpacing N k) ((Q.1.2 i).1.sub r).1 (Q.1.2 i).2
-        ∈ HalfSpaceAlgebra.halfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
-    Filter.eventually_all.mpr (fun i => eventually_smear_sub_mem hN1 τ _ _ (sepMono_posTime Q i))
-  have hQn : ∃ d : ℝ, 0 < d ∧ sepPos τ d (Mono.shift (timeVec N m τ n) Q.1) := by
-    obtain ⟨d, hd, hQ'⟩ := Q.2
-    exact ⟨d, hd, sepPos_shift hQ' (timeVec_nonneg hN m τ n)⟩
-  have hE : ∃ d : ℝ, 0 < d ∧ sepPos τ d (emptyMono N) := emptyMono_sep τ
-  have hf : Tendsto (fun k => (latSkR hN ρ k (pairFam τ P.1 (Mono.shift (timeVec N m τ n) Q.1))
-        - latSkR hN ρ k (pairFam τ P.1 (emptyMono N))
-          * latSkR hN ρ k (pairFam τ (emptyMono N) Q.1)) ^ 2) (ultra : Filter ℕ)
-      (𝓝 ((kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
-          - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2)) :=
-    ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 hQn).sub
-      ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 hE).mul
-        (tendsto_pair_sep_of_pairBound hN ρ τ hB hE Q.2))).pow 2
-  have hg : Tendsto (fun k => Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
-        * (latSkR hN ρ k (pairFam τ P.1 P.1)
-          * (latSkR hN ρ k (pairFam τ Q.1 Q.1)
-            - latSkR hN ρ k (pairFam τ (emptyMono N) Q.1) ^ 2))) (ultra : Filter ℕ)
-      (𝓝 (Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
-        * (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)))) :=
-    ((tendsto_pair_sep_of_pairBound hN ρ τ hB P.2 P.2).mul
-      ((tendsto_pair_sep_of_pairBound hN ρ τ hB Q.2 Q.2).sub
-        ((tendsto_pair_sep_of_pairBound hN ρ τ hB hE Q.2).pow 2))).const_mul _
-  refine le_of_tendsto_of_tendsto hf hg ?_
-  have hevLE : ∀ᶠ k in atTop,
-      (latSkR hN ρ k (pairFam τ P.1 (Mono.shift (timeVec N m τ n) Q.1))
-        - latSkR hN ρ k (pairFam τ P.1 (emptyMono N))
-          * latSkR hN ρ k (pairFam τ (emptyMono N) Q.1)) ^ 2
-      ≤ Real.exp (-(2 * (c / L)) * (dySpacing N m * n))
-        * (latSkR hN ρ k (pairFam τ P.1 P.1)
-          * (latSkR hN ρ k (pairFam τ Q.1 Q.1)
-            - latSkR hN ρ k (pairFam τ (emptyMono N) Q.1) ^ 2)) := by
-    filter_upwards [Filter.eventually_ge_atTop m, hevk, hmemP, hmemQ] with k hk hkr hkP hkQ
-    obtain ⟨r, hg, hclay, hrate⟩ := hkr
-    have ha := dySpacing_pos hN1 k
-    have hr0 : 0 < r := hclay.1
-    have hvec : site (dySpacing N k) (axisVec τ ((2 ^ (k - m) * n : ℕ) : ℤ))
-        = timeVec N m τ n := by
-      unfold timeVec
-      rw [site_dySpacing N hk, scaleSite_axisVec]
-      congr 2
-    obtain ⟨hcl, hY⟩ := lattice_cluster hN ρ τ hR k hr0.le hg P.1 Q.1
-      (Yv_mem hN ρ τ k P.1 hkP) (Yv_mem hN ρ τ k Q.1 hkQ) (2 ^ (k - m) * n)
-    rw [hvec] at hcl
-    have hlog : Real.log r ≤ -(c / L) * dySpacing N k := by
-      have h1 := hrate
-      rw [aRun_dyBeta, le_div_iff₀ ha] at h1
-      linarith
-    have hr_le : r ≤ Real.exp (-(c / L) * dySpacing N k) := by
-      rw [← Real.exp_log hr0]
-      exact Real.exp_le_exp.mpr hlog
-    have hpow : r ^ (2 * (2 ^ (k - m) * n)) ≤ Real.exp (-(2 * (c / L)) * (dySpacing N m * n)) := by
-      calc r ^ (2 * (2 ^ (k - m) * n))
-          ≤ Real.exp (-(c / L) * dySpacing N k) ^ (2 * (2 ^ (k - m) * n)) :=
-            pow_le_pow_left₀ hr0.le hr_le _
-        _ = Real.exp (((2 * (2 ^ (k - m) * n) : ℕ) : ℝ) * (-(c / L) * dySpacing N k)) :=
-            (Real.exp_nat_mul _ _).symm
-        _ = Real.exp (-(2 * (c / L)) * (dySpacing N m * n)) := by
-            rw [← dySpacing_mul_pow N hk]
-            push_cast
-            congr 1
-            ring
-    exact hcl.trans (mul_le_mul_of_nonneg_right hpow hY)
-  exact hevLE.filter_mono ultra_le
+  obtain ⟨c, hc, hG⟩ := towerGapAt_dyBeta_of_fixedWindowDecay hN2 hN τ hL hW
+  exact ⟨c, hc, contS_cluster_sep_of_towerGapAt hN _ ρ τ hB hR hG⟩
 
 #print axioms contS_cluster_of_fixedWindowDecay_sep
 
@@ -1223,37 +1561,58 @@ theorem gapAt_of_per_vector_form_decay {A : Type*} [AddCommGroup A] [Module ℝ 
 
 #print axioms gapAt_of_per_vector_form_decay
 
-variable (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
+variable (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
 
 /-- The form of a combination against a translate of itself, as a double sum of Schwinger functions.
 
 DERIVED: no numeral. -/
+theorem formSep_pow_along (m j : ℕ) (x : AmodSep N τ) :
+    formSepAlong hN βs ρ τ x ((TmSep hN τ m ^ j) x)
+      = ∑ P ∈ x.support, ∑ Q ∈ x.support,
+          x P * x Q * kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1) := by
+  rw [Module.End.pow_apply, TmSep_iterate, formSep_mapDomain_right_along]
+  show ∑ P ∈ x.support, ∑ Q ∈ x.support,
+      x P * x Q * kernSepAlong hN βs ρ τ P ((SepMono.shift hN τ m)^[j] Q) = _
+  refine Finset.sum_congr rfl (fun P _ => Finset.sum_congr rfl (fun Q _ => ?_))
+  show x P * x Q * kernAlong hN βs ρ τ P.1 ((SepMono.shift hN τ m)^[j] Q).1 = _
+  rw [SepMono.shift_iterate]
+
+#print axioms formSep_pow_along
+
+/-- `formSep_pow` at the couplings `dyBeta`: `formSep_pow_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem formSep_pow (m j : ℕ) (x : AmodSep N τ) :
     formSep hN ρ τ x ((TmSep hN τ m ^ j) x)
       = ∑ P ∈ x.support, ∑ Q ∈ x.support,
-          x P * x Q * kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1) := by
-  rw [Module.End.pow_apply, TmSep_iterate, formSep_mapDomain_right]
-  show ∑ P ∈ x.support, ∑ Q ∈ x.support,
-      x P * x Q * kernSep hN ρ τ P ((SepMono.shift hN τ m)^[j] Q) = _
-  refine Finset.sum_congr rfl (fun P _ => Finset.sum_congr rfl (fun Q _ => ?_))
-  show x P * x Q * kern hN ρ τ P.1 ((SepMono.shift hN τ m)^[j] Q).1 = _
-  rw [SepMono.shift_iterate]
+          x P * x Q * kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1) :=
+  formSep_pow_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ m j x
 
 #print axioms formSep_pow
 
 /-- The form of a combination against the vacuum.
 
 DERIVED: `1` is the coefficient of the vacuum. -/
-theorem formSep_vac_right (x : AmodSep N τ) :
-    formSep hN ρ τ x (Finsupp.single (emptySep N τ) 1)
-      = ∑ P ∈ x.support, x P * kern hN ρ τ P.1 (emptyMono N) := by
+theorem formSep_vac_right_along (x : AmodSep N τ) :
+    formSepAlong hN βs ρ τ x (Finsupp.single (emptySep N τ) 1)
+      = ∑ P ∈ x.support, x P * kernAlong hN βs ρ τ P.1 (emptyMono N) := by
   show ∑ P ∈ x.support, (Finsupp.single (emptySep N τ) (1 : ℝ)).sum
-      (fun Q b => x P * b * kernSep hN ρ τ P Q) = _
+      (fun Q b => x P * b * kernSepAlong hN βs ρ τ P Q) = _
   refine Finset.sum_congr rfl (fun P _ => ?_)
   rw [Finsupp.sum_single_index]
-  · show x P * 1 * kern hN ρ τ P.1 (emptyMono N) = x P * kern hN ρ τ P.1 (emptyMono N)
+  · show x P * 1 * kernAlong hN βs ρ τ P.1 (emptyMono N) = x P * kernAlong hN βs ρ τ P.1 (emptyMono N)
     rw [mul_one]
   · simp
+
+#print axioms formSep_vac_right_along
+
+/-- `formSep_vac_right` at the couplings `dyBeta`: `formSep_vac_right_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem formSep_vac_right (x : AmodSep N τ) :
+    formSep hN ρ τ x (Finsupp.single (emptySep N τ) 1)
+      = ∑ P ∈ x.support, x P * kern hN ρ τ P.1 (emptyMono N) :=
+  formSep_vac_right_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ x
 
 #print axioms formSep_vac_right
 
@@ -1265,15 +1624,15 @@ clustering hypothesis by `exp(−γ · dySpacing N m)ʲ · √(S(θP ∪ P)(S(θ
 
 DERIVED: `2` is the square and the doubling in the clustering rate; `1` the vacuum coefficient; `0`
 the vanishing pairing with the vacuum. -/
-theorem form_pow_le_of_cluster_sep (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
+theorem form_pow_le_of_cluster_sep_along (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
     (hcl : ∀ (P Q : SepMono N τ) (n : ℕ),
-      (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
-          - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2
+      (kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
+          - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) ^ 2
         ≤ Real.exp (-(2 * γ) * (dySpacing N m * n))
-          * (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)))
-    (x : AmodSep N τ) (hx : formSep hN ρ τ x (Finsupp.single (emptySep N τ) 1) = 0) :
+          * (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)))
+    (x : AmodSep N τ) (hx : formSepAlong hN βs ρ τ x (Finsupp.single (emptySep N τ) 1) = 0) :
     ∃ K : ℝ, ∀ j : ℕ,
-      formSep hN ρ τ x ((TmSep hN τ m ^ j) x) ≤ K * Real.exp (-γ * dySpacing N m) ^ j := by
+      formSepAlong hN βs ρ τ x ((TmSep hN τ m ^ j) x) ≤ K * Real.exp (-γ * dySpacing N m) ^ j := by
   have hr0 : 0 ≤ Real.exp (-γ * dySpacing N m) := (Real.exp_pos _).le
   have hexp : ∀ j : ℕ, Real.exp (-(2 * γ) * (dySpacing N m * j))
       = (Real.exp (-γ * dySpacing N m) ^ j) ^ 2 := by
@@ -1282,71 +1641,87 @@ theorem form_pow_le_of_cluster_sep (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
     congr 1
     push_cast
     ring
-  have hvacR : ∑ P ∈ x.support, x P * kern hN ρ τ P.1 (emptyMono N) = 0 := by
-    rw [← formSep_vac_right hN ρ τ x]
+  have hvacR : ∑ P ∈ x.support, x P * kernAlong hN βs ρ τ P.1 (emptyMono N) = 0 := by
+    rw [← formSep_vac_right_along hN βs ρ τ x]
     exact hx
-  have hvacL : ∑ Q ∈ x.support, x Q * kern hN ρ τ (emptyMono N) Q.1 = 0 := by
-    have h : ∀ Q ∈ x.support, x Q * kern hN ρ τ (emptyMono N) Q.1
-        = x Q * kern hN ρ τ Q.1 (emptyMono N) :=
-      fun Q _ => by rw [kern_symm hN ρ τ hR (emptyMono N) Q.1]
+  have hvacL : ∑ Q ∈ x.support, x Q * kernAlong hN βs ρ τ (emptyMono N) Q.1 = 0 := by
+    have h : ∀ Q ∈ x.support, x Q * kernAlong hN βs ρ τ (emptyMono N) Q.1
+        = x Q * kernAlong hN βs ρ τ Q.1 (emptyMono N) :=
+      fun Q _ => by rw [kernAlong_symm hN βs ρ τ hR (emptyMono N) Q.1]
     rw [Finset.sum_congr rfl h]
     exact hvacR
   refine ⟨∑ P ∈ x.support, ∑ Q ∈ x.support, |x P| * |x Q| * Real.sqrt
-      (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)),
+      (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)),
     fun j => ?_⟩
   have hconn : ∀ P Q : SepMono N τ,
-      |kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
-          - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1|
+      |kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
+          - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1|
         ≤ Real.exp (-γ * dySpacing N m) ^ j * Real.sqrt
-          (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)) := by
+          (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)) := by
     intro P Q
     have h := hcl P Q j
     rw [hexp j] at h
     exact abs_le_mul_sqrt_of_sq_le_sep (pow_nonneg hr0 j) h
   have hsplit : ∑ P ∈ x.support, ∑ Q ∈ x.support,
-        x P * x Q * kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
+        x P * x Q * kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
       = ∑ P ∈ x.support, ∑ Q ∈ x.support, x P * x Q
-          * (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
-            - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1)
+          * (kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
+            - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1)
         + ∑ P ∈ x.support, ∑ Q ∈ x.support, x P * x Q
-          * (kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) := by
+          * (kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) := by
     rw [← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl (fun P _ => ?_)
     rw [← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl (fun Q _ => ?_)
     ring
   have hzero : ∑ P ∈ x.support, ∑ Q ∈ x.support, x P * x Q
-      * (kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) = 0 := by
+      * (kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) = 0 := by
     have h : ∀ P ∈ x.support, ∑ Q ∈ x.support, x P * x Q
-        * (kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1)
-        = x P * kern hN ρ τ P.1 (emptyMono N)
-          * ∑ Q ∈ x.support, x Q * kern hN ρ τ (emptyMono N) Q.1 := by
+        * (kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1)
+        = x P * kernAlong hN βs ρ τ P.1 (emptyMono N)
+          * ∑ Q ∈ x.support, x Q * kernAlong hN βs ρ τ (emptyMono N) Q.1 := by
       intro P _
       rw [Finset.mul_sum]
       refine Finset.sum_congr rfl (fun Q _ => ?_)
       ring
     rw [Finset.sum_congr rfl h, hvacL]
     simp
-  rw [formSep_pow, hsplit, hzero, add_zero]
+  rw [formSep_pow_along, hsplit, hzero, add_zero]
   calc ∑ P ∈ x.support, ∑ Q ∈ x.support, x P * x Q
-          * (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
-            - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1)
+          * (kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ j) Q.1)
+            - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1)
       ≤ ∑ P ∈ x.support, ∑ Q ∈ x.support, |x P| * |x Q|
           * (Real.exp (-γ * dySpacing N m) ^ j * Real.sqrt
-            (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1
-              - kern hN ρ τ (emptyMono N) Q.1 ^ 2))) := by
+            (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1
+              - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2))) := by
         refine Finset.sum_le_sum (fun P _ => Finset.sum_le_sum (fun Q _ => ?_))
         refine le_trans (le_abs_self _) ?_
         rw [abs_mul, abs_mul]
         exact mul_le_mul_of_nonneg_left (hconn P Q) (mul_nonneg (abs_nonneg _) (abs_nonneg _))
     _ = (∑ P ∈ x.support, ∑ Q ∈ x.support, |x P| * |x Q| * Real.sqrt
-          (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)))
+          (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2)))
           * Real.exp (-γ * dySpacing N m) ^ j := by
         rw [Finset.sum_mul]
         refine Finset.sum_congr rfl (fun P _ => ?_)
         rw [Finset.sum_mul]
         refine Finset.sum_congr rfl (fun Q _ => ?_)
         ring
+
+#print axioms form_pow_le_of_cluster_sep_along
+
+/-- `form_pow_le_of_cluster_sep` at the couplings `dyBeta`: `form_pow_le_of_cluster_sep_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem form_pow_le_of_cluster_sep (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
+    (hcl : ∀ (P Q : SepMono N τ) (n : ℕ),
+      (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
+          - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2
+        ≤ Real.exp (-(2 * γ) * (dySpacing N m * n))
+          * (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2)))
+    (x : AmodSep N τ) (hx : formSep hN ρ τ x (Finsupp.single (emptySep N τ) 1) = 0) :
+    ∃ K : ℝ, ∀ j : ℕ,
+      formSep hN ρ τ x ((TmSep hN τ m ^ j) x) ≤ K * Real.exp (-γ * dySpacing N m) ^ j :=
+  form_pow_le_of_cluster_sep_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR m hcl x hx
 
 #print axioms form_pow_le_of_cluster_sep
 
@@ -1355,16 +1730,30 @@ theorem form_pow_le_of_cluster_sep (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
 
 DERIVED: `2` is the doubling in the clustering rate and the separation `2n` fed to
 `gapAt_of_per_vector_form_decay`; `0` the sign of the exponential. -/
+theorem gapAt_sep_of_cluster_along (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
+    (hcl : ∀ (P Q : SepMono N τ) (n : ℕ),
+      (kernAlong hN βs ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
+          - kernAlong hN βs ρ τ P.1 (emptyMono N) * kernAlong hN βs ρ τ (emptyMono N) Q.1) ^ 2
+        ≤ Real.exp (-(2 * γ) * (dySpacing N m * n))
+          * (kernAlong hN βs ρ τ P.1 P.1 * (kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2))) :
+    TransferGap.GapAt (contTransferSepAlong hN βs ρ τ hB hR m) (Real.exp (-γ * dySpacing N m)) := by
+  refine gapAt_of_per_vector_form_decay _ (Real.exp_pos _).le (fun x hx => ?_)
+  obtain ⟨K, hK⟩ := form_pow_le_of_cluster_sep_along hN βs ρ τ hR m hcl x hx
+  exact ⟨K, fun n => hK (2 * n)⟩
+
+#print axioms gapAt_sep_of_cluster_along
+
+/-- `gapAt_sep_of_cluster` at the couplings `dyBeta`: `gapAt_sep_of_cluster_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem gapAt_sep_of_cluster (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ) {γ : ℝ}
     (hcl : ∀ (P Q : SepMono N τ) (n : ℕ),
       (kern hN ρ τ P.1 (Mono.shift (timeVec N m τ n) Q.1)
           - kern hN ρ τ P.1 (emptyMono N) * kern hN ρ τ (emptyMono N) Q.1) ^ 2
         ≤ Real.exp (-(2 * γ) * (dySpacing N m * n))
           * (kern hN ρ τ P.1 P.1 * (kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2))) :
-    TransferGap.GapAt (contTransferSep hN ρ τ hB hR m) (Real.exp (-γ * dySpacing N m)) := by
-  refine gapAt_of_per_vector_form_decay _ (Real.exp_pos _).le (fun x hx => ?_)
-  obtain ⟨K, hK⟩ := form_pow_le_of_cluster_sep hN ρ τ hR m hcl x hx
-  exact ⟨K, fun n => hK (2 * n)⟩
+    TransferGap.GapAt (contTransferSep hN ρ τ hB hR m) (Real.exp (-γ * dySpacing N m)) :=
+  gapAt_sep_of_cluster_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR m hcl
 
 #print axioms gapAt_sep_of_cluster
 
@@ -1373,6 +1762,53 @@ end Gap
 /-! ## 9. The continuum gap -/
 
 section Headline
+
+/-- **M in the continuum along a coupling tower, on `PairBoundSepAlong`.** Under
+`ContinuumCluster.TowerGapAt hN τ βs M` with `M > 0`, `PairBoundSepAlong` and reflection-compatible
+data, at every dyadic step `m`, with `r_m = exp(−M · dySpacing N m)`:
+
+1. `0 < r_m < 1`;
+2. `GapAt` of the reconstructed transfer data at `r_m`;
+3. `‖opT u‖ ≤ r_m ‖u‖` for every `u` orthogonal to the vacuum in the completed Hilbert space;
+4. `spectrum ℝ opT ⊆ {1} ∪ [0, r_m]`;
+5. `1` is the greatest element of the spectrum.
+
+The physical gap is at least `M` at every `m`.
+
+DERIVED: `0` is the excluded colour count, the plane, the sign of `M` and `r_m`, the vanishing vacuum
+pairing and the bottom of the spectrum; `1` is the vacuum eigenvalue and the contraction threshold;
+`4` in `Fin 4` is the spacetime dimension. -/
+theorem continuum_gap_sep_of_towerGapAt (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) {M : ℝ} (hM : 0 < M)
+    (hG : TowerGapAt hN τ βs M) (m : ℕ) :
+    0 < Real.exp (-M * dySpacing N m) ∧ Real.exp (-M * dySpacing N m) < 1
+      ∧ TransferGap.GapAt (contTransferSepAlong hN βs ρ τ hB hR m)
+          (Real.exp (-M * dySpacing N m))
+      ∧ (∀ u : GNSHilbert.H (contTransferSepAlong hN βs ρ τ hB hR m).toReflForm,
+          inner ℂ (GNSHilbert.Omega (contTransferSepAlong hN βs ρ τ hB hR m).toReflForm
+            (contTransferSepAlong hN βs ρ τ hB hR m).vac) u = (0 : ℂ) →
+          ‖GNSHilbert.opT (contTransferSepAlong hN βs ρ τ hB hR m) u‖
+            ≤ Real.exp (-M * dySpacing N m) * ‖u‖)
+      ∧ spectrum ℝ (GNSHilbert.opT (contTransferSepAlong hN βs ρ τ hB hR m))
+          ⊆ {1} ∪ Set.Icc 0 (Real.exp (-M * dySpacing N m))
+      ∧ IsGreatest (spectrum ℝ (GNSHilbert.opT (contTransferSepAlong hN βs ρ τ hB hR m))) 1 := by
+  have hcl := contS_cluster_sep_of_towerGapAt hN βs ρ τ hB hR hG
+  have hr0 : 0 < Real.exp (-M * dySpacing N m) := Real.exp_pos _
+  have hr1 : Real.exp (-M * dySpacing N m) < 1 := by
+    rw [Real.exp_lt_one_iff, neg_mul]
+    exact neg_lt_zero.mpr (mul_pos hM (dySpacing_pos (one_le_of_ne_zero hN) m))
+  have hg : TransferGap.GapAt (contTransferSepAlong hN βs ρ τ hB hR m)
+      (Real.exp (-M * dySpacing N m)) :=
+    gapAt_sep_of_cluster_along hN βs ρ τ hB hR m (γ := M) (fun P Q n => hcl P Q m n)
+  refine ⟨hr0, hr1, hg, fun u hu => GapToOperator.norm_opT_le_of_orth _ hr0.le hg u hu, ?_,
+    GNSHilbert.isGreatest_one_spectrum_opT _⟩
+  intro x hx
+  rcases GapToOperator.spectrum_opT_subset _ hr0.le hg hx with h | h
+  · exact Or.inl h
+  · exact Or.inr ⟨Set.mem_Ici.mp
+      (GNSHilbert.spectrum_opT_nonneg _ (positiveTransfer_sep_along hN βs ρ τ hB hR m) hx), h.2⟩
+
+#print axioms continuum_gap_sep_of_towerGapAt
 
 /-- **M in the continuum, on `PairBoundSep`.** At `2 ≤ N`, a window `L > 0`,
 `FixedWindowDecay τ 0 hN L`, `PairBoundSep` and reflection-compatible data, there is `c > 0`
@@ -1406,22 +1842,8 @@ theorem continuum_gap_sep (hN2 : 2 ≤ N) (hN : N ≠ 0) (ρ : Renorm N) (τ : F
       ∧ spectrum ℝ (GNSHilbert.opT (contTransferSep hN ρ τ hB hR m))
           ⊆ {1} ∪ Set.Icc 0 (Real.exp (-(c / L) * dySpacing N m))
       ∧ IsGreatest (spectrum ℝ (GNSHilbert.opT (contTransferSep hN ρ τ hB hR m))) 1 := by
-  obtain ⟨c, hc, hcl⟩ := contS_cluster_of_fixedWindowDecay_sep hN2 hN ρ τ hB hR hL hW
-  refine ⟨c, hc, fun m => ?_⟩
-  have hr0 : 0 < Real.exp (-(c / L) * dySpacing N m) := Real.exp_pos _
-  have hr1 : Real.exp (-(c / L) * dySpacing N m) < 1 := by
-    rw [Real.exp_lt_one_iff, neg_mul]
-    exact neg_lt_zero.mpr (mul_pos (div_pos hc hL) (dySpacing_pos (one_le_of_ne_zero hN) m))
-  have hg : TransferGap.GapAt (contTransferSep hN ρ τ hB hR m)
-      (Real.exp (-(c / L) * dySpacing N m)) :=
-    gapAt_sep_of_cluster hN ρ τ hB hR m (γ := c / L) (fun P Q n => hcl P Q m n)
-  refine ⟨hr0, hr1, hg, fun u hu => GapToOperator.norm_opT_le_of_orth _ hr0.le hg u hu, ?_,
-    GNSHilbert.isGreatest_one_spectrum_opT _⟩
-  intro x hx
-  rcases GapToOperator.spectrum_opT_subset _ hr0.le hg hx with h | h
-  · exact Or.inl h
-  · exact Or.inr ⟨Set.mem_Ici.mp
-      (GNSHilbert.spectrum_opT_nonneg _ (positiveTransfer_sep hN ρ τ hB hR m) hx), h.2⟩
+  obtain ⟨c, hc, hG⟩ := ContinuumCluster.towerGapAt_dyBeta_of_fixedWindowDecay hN2 hN τ hL hW
+  exact ⟨c, hc, continuum_gap_sep_of_towerGapAt hN _ ρ τ hB hR (div_pos hc hL) hG⟩
 
 #print axioms continuum_gap_sep
 
@@ -1493,8 +1915,15 @@ positive-time monomial `Q` has `S(θQ ∪ Q) − S(Q)² ≠ 0`, with `S(Q) = S(�
 
 DERIVED: `0` is the excluded colour count and the value excluded; `2` the square; `4` in `Fin 4` is
 the spacetime dimension. -/
+def ConnectedTwoPointNonzeroAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4) : Prop :=
+  ∃ Q : SepMono N τ, kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ (emptyMono N) Q.1 ^ 2 ≠ 0
+
+/-- `ConnectedTwoPointNonzero` at the couplings `dyBeta`: `ConnectedTwoPointNonzeroAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 def ConnectedTwoPointNonzero (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) : Prop :=
-  ∃ Q : SepMono N τ, kern hN ρ τ Q.1 Q.1 - kern hN ρ τ (emptyMono N) Q.1 ^ 2 ≠ 0
+  ConnectedTwoPointNonzeroAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ τ
+
 
 /-- **Non-triviality of the reconstructed space.** Under `ConnectedTwoPointNonzero`, at every dyadic
 step the Hilbert space has a non-zero vector orthogonal to the vacuum and not a complex multiple of
@@ -1502,6 +1931,33 @@ it: its dimension exceeds one.
 
 DERIVED: `0` is the vanishing vacuum pairing, the zero vector and the excluded colour count; `1` the
 vacuum coefficient; `2` the square; `4` in `Fin 4` is the spacetime dimension. -/
+theorem exists_orth_ne_zero_sep_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hB : PairBoundSepAlong hN βs ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
+    (h : ConnectedTwoPointNonzeroAlong hN βs ρ τ) :
+    ∃ u : GNSHilbert.H (contTransferSepAlong hN βs ρ τ hB hR m).toReflForm,
+      inner ℂ (GNSHilbert.Omega (contTransferSepAlong hN βs ρ τ hB hR m).toReflForm
+        (contTransferSepAlong hN βs ρ τ hB hR m).vac) u = (0 : ℂ) ∧ u ≠ 0
+      ∧ ∀ a : ℂ, u ≠ a • GNSHilbert.Omega (contTransferSepAlong hN βs ρ τ hB hR m).toReflForm
+        (contTransferSepAlong hN βs ρ τ hB hR m).vac := by
+  obtain ⟨Q, hQ⟩ := h
+  have hx : (contTransferSepAlong hN βs ρ τ hB hR m).form (Finsupp.single Q 1) (Finsupp.single Q 1)
+      - (contTransferSepAlong hN βs ρ τ hB hR m).form (Finsupp.single Q 1)
+          (contTransferSepAlong hN βs ρ τ hB hR m).vac ^ 2 ≠ 0 := by
+    show formSepAlong hN βs ρ τ (Finsupp.single Q 1) (Finsupp.single Q 1)
+      - formSepAlong hN βs ρ τ (Finsupp.single Q 1) (Finsupp.single (emptySep N τ) 1) ^ 2 ≠ 0
+    rw [formSep_single_along, formSep_single_along]
+    simp only [one_mul]
+    show kernAlong hN βs ρ τ Q.1 Q.1 - kernAlong hN βs ρ τ Q.1 (emptyMono N) ^ 2 ≠ 0
+    rw [← kernAlong_symm hN βs ρ τ hR (emptyMono N) Q.1]
+    exact hQ
+  obtain ⟨u, hu, hu0⟩ := exists_orth_ne_zero (contTransferSepAlong hN βs ρ τ hB hR m) _ hx
+  exact ⟨u, hu, hu0, not_mem_span_vac _ hu hu0⟩
+
+#print axioms exists_orth_ne_zero_sep_along
+
+/-- `exists_orth_ne_zero_sep` at the couplings `dyBeta`: `exists_orth_ne_zero_sep_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem exists_orth_ne_zero_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
     (hB : PairBoundSep hN ρ τ) (hR : ρ.ReflCompat τ) (m : ℕ)
     (h : ConnectedTwoPointNonzero hN ρ τ) :
@@ -1509,20 +1965,8 @@ theorem exists_orth_ne_zero_sep (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4)
       inner ℂ (GNSHilbert.Omega (contTransferSep hN ρ τ hB hR m).toReflForm
         (contTransferSep hN ρ τ hB hR m).vac) u = (0 : ℂ) ∧ u ≠ 0
       ∧ ∀ a : ℂ, u ≠ a • GNSHilbert.Omega (contTransferSep hN ρ τ hB hR m).toReflForm
-        (contTransferSep hN ρ τ hB hR m).vac := by
-  obtain ⟨Q, hQ⟩ := h
-  have hx : (contTransferSep hN ρ τ hB hR m).form (Finsupp.single Q 1) (Finsupp.single Q 1)
-      - (contTransferSep hN ρ τ hB hR m).form (Finsupp.single Q 1)
-          (contTransferSep hN ρ τ hB hR m).vac ^ 2 ≠ 0 := by
-    show formSep hN ρ τ (Finsupp.single Q 1) (Finsupp.single Q 1)
-      - formSep hN ρ τ (Finsupp.single Q 1) (Finsupp.single (emptySep N τ) 1) ^ 2 ≠ 0
-    rw [formSep_single, formSep_single]
-    simp only [one_mul]
-    show kern hN ρ τ Q.1 Q.1 - kern hN ρ τ Q.1 (emptyMono N) ^ 2 ≠ 0
-    rw [← kern_symm hN ρ τ hR (emptyMono N) Q.1]
-    exact hQ
-  obtain ⟨u, hu, hu0⟩ := exists_orth_ne_zero (contTransferSep hN ρ τ hB hR m) _ hx
-  exact ⟨u, hu, hu0, not_mem_span_vac _ hu hu0⟩
+        (contTransferSep hN ρ τ hB hR m).vac :=
+  exists_orth_ne_zero_sep_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hB hR m h
 
 #print axioms exists_orth_ne_zero_sep
 

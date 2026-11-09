@@ -135,3 +135,11 @@ dmypy.json
 # names one machine's filesystem, which is the thing a published research repo must not carry.
 research.local.env
 staged.json
+
+# The release-day command sheet names the maintainer's remotes; it stays on the maintainer's machine.
+research/RELEASE-STEPS.md
+
+# Local crash dumps and run logs; never part of the record.
+*.stackdump
+logs/
+research/code/pytest.out

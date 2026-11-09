@@ -1,5 +1,4 @@
 import Mathlib
-import MassGap.Moment
 import MassGap.WilsonBridge
 import MassGap.ReflectionPositivity
 
@@ -7,8 +6,7 @@ import MassGap.ReflectionPositivity
 # MassGap.StrongCoupling — geometric clustering at small coupling
 
 This file bounds the connected Wilson plaquette correlation on a finite lattice by a constant times
-a geometric factor in the touch-distance between the two plaquettes, and carries that bound to the
-weights of a `Moment.Read`. Both the constant and the rate are read off the plaquette-graph degree
+a geometric factor in the touch-distance between the two plaquettes. Both the constant and the rate are read off the plaquette-graph degree
 `touchDeg bd` and the coupling `β`; the lattice extent appears in neither.
 
 ## The expansion
@@ -43,15 +41,13 @@ lie beyond a separator. It uses no expansion in `β` and no bound on the lattice
   boundary word names; every restriction lemma here goes through it.
 * `MassGap.WilsonReal.block_integral_factor` — product Haar factorises across disjoint link blocks;
   every splitting lemma here goes through it.
-* `MassGap.Moment` — `Read`, `Read.p` and `circLag`, the weights the final bound lands on.
 
 ## Scope
 
 `wilsonCorrConn_abs_le_coreConst_mul_rate_pow` bounds the connected Wilson correlation by
 `coreConst · coreRate ^ k` whenever `pd ∉ ball bd p₀ k`. `siteAtHyper_not_mem_ball` converts that
-touch-ball index into the lag `Moment.Read` carries, at the circle distance the periodic torus
-imposes rather than the raw lag, and `read_p_le_of_corrClay` carries the bound to the read's
-weights. The constant and the rate both depend on `β`, and the rate is below one only for `β` near
+touch-ball index into a lag on the periodic torus, at the circle distance the torus imposes rather
+than the raw lag. The constant and the rate both depend on `β`, and the rate is below one only for `β` near
 `0`. Everything here is stated on a finite lattice at a fixed coupling; the hypercubic sections fix
 the periodic torus `Site dim n`.
 -/
@@ -92,37 +88,6 @@ theorem boltz_factor_bound {β φ : ℝ} (h0 : 0 ≤ φ) (h2 : φ ≤ 2) :
   constructor <;> linarith
 
 #print axioms boltz_factor_bound
-
-/-! ### From the correlation to the read's weights -/
-
-/-- **A geometric bound on the unnormalised weights is a geometric bound on the normalised ones.**
-Given `0 < m`, `m ≤ ∑ d, R.ρ d`, `0 ≤ C`, `0 ≤ q` and `R.ρ d ≤ C * q ^ (d : ℕ)` at every lag, the
-normalised weight obeys `R.p d ≤ (C / m) * q ^ (d : ℕ)` at every lag.
-
-`Moment.Read.p` is `ρ` divided by the total mass, so the lower bound `m` on that mass is what turns
-a bound on the numerator into one on the quotient. `m` is a hypothesis: it is bound outside the
-quantifier over `d`, and nothing in this theorem produces one.
-
-DERIVED: the three `0`s are the sign hypotheses on `m`, `C` and `q`; the `1` in `Fin (N + 1)` is
-`Moment.Read N`'s index type, which carries the `N + 1` lags `0` through `N`. -/
-theorem read_decay_of_correlation_decay {N : ℕ} (R : Moment.Read N) {C q m : ℝ}
-    (hm : 0 < m) (hmass : m ≤ ∑ d, R.ρ d) (hC : 0 ≤ C) (hq0 : 0 ≤ q)
-    (hdecay : ∀ d : Fin (N + 1), R.ρ d ≤ C * q ^ (d : ℕ)) :
-    ∀ d : Fin (N + 1), R.p d ≤ (C / m) * q ^ (d : ℕ) := by
-  intro d
-  have hsum : 0 < ∑ d', R.ρ d' := lt_of_lt_of_le hm hmass
-  have hpd : R.p d = R.ρ d / ∑ d', R.ρ d' := rfl
-  rw [hpd, div_le_iff₀ hsum]
-  have hqd : 0 ≤ q ^ (d : ℕ) := pow_nonneg hq0 _
-  have hstep : R.ρ d ≤ C * q ^ (d : ℕ) := hdecay d
-  have hmul : (C / m) * q ^ (d : ℕ) * m = C * q ^ (d : ℕ) := by field_simp
-  calc R.ρ d ≤ C * q ^ (d : ℕ) := hstep
-    _ = (C / m) * q ^ (d : ℕ) * m := hmul.symm
-    _ ≤ (C / m) * q ^ (d : ℕ) * (∑ d', R.ρ d') := by
-        refine mul_le_mul_of_nonneg_left hmass ?_
-        exact mul_nonneg (div_nonneg hC hm.le) hqd
-
-#print axioms read_decay_of_correlation_decay
 
 /-! ### A tail series with Cauchy-bounded coefficients
 
@@ -183,10 +148,9 @@ Wilson correlation is at most `coreConst · coreRate ^ k` whenever `pd ∉ ball 
 * the weight — `pairTerm_abs_le` for the per-pair factor, with `hard_core_ratio_le` bounding the
   `Z²` denominator on `0 ≤ β`.
 
-The index throughout is the touch-ball `ball bd p₀ k`, while a `Moment.Read` is indexed by a lag.
-`siteAtHyper_not_mem_ball` converts between them on the periodic hypercubic lattice, at the circle
-distance the torus imposes rather than the raw lag, and `read_p_le_of_corrClay` carries the result
-to the read's weights. -/
+The index throughout is the touch-ball `ball bd p₀ k`.
+`siteAtHyper_not_mem_ball` converts it to a lag on the periodic hypercubic lattice, at the circle
+distance the torus imposes rather than the raw lag. -/
 
 /-! ### Zero coupling
 
@@ -3976,7 +3940,7 @@ def CoreResummation (bd : Pq → List (Lk × Bool)) (p₀ pd : Pq) (β : ℝ)
         * ∑ F ∈ (outsideOf bd (core c)).powerset, zw (Nc := Nc) bd β ∅ F)
 
 open scoped Classical in
-/-- **The resummation identity for a pair of plaquette FAMILIES.**
+/-- **The resummation identity for a pair of plaquette families.**
 
 `CoreResummation` is the same statement for two single plaquettes: the reach-filtered sum of
 `pairTerm` equals a sum over cores of `pairTerm` times the outside partition functions squared. This
@@ -3985,8 +3949,8 @@ replaces `pairTerm` by `pairTermF` and the two-point reach condition by the one
 base point `a`, within the configuration together with `Ao ∪ Bo`.
 
 That is not the condition `wilsonCorrConnF_eq_bridging_sumF` produces. That one filters on
-`∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b` — SOME plaquette of `Bo` reachable
-from SOME plaquette of `Ao`, not every plaquette reachable from one base point. The two coincide for
+`∃ b ∈ Bo, ∃ a' ∈ Ao, Reach bd (q.1 ∪ q.2 ∪ (Ao ∪ Bo)) a' b` — Some plaquette of `Bo` reachable
+from some plaquette of `Ao`, not every plaquette reachable from one base point. The two coincide for
 single plaquettes, where `Ao ∪ Bo` is two points, which is why `coreResummation_holds` composes
 directly and this one does not. `reach_filter_iff_of_connected` supplies the join: the filters are
 equal whenever each anchor family is internally touch-connected, which is the hypothesis
@@ -4090,7 +4054,7 @@ end HardCore
 
 end MassGap.StrongCoupling
 
--- ==== BEGIN connected-set count (lattice animal) ====
+-- ==== begin connected-set count (lattice animal) ====
 
 /-! ### Counting connected plaquette sets
 
@@ -4721,9 +4685,9 @@ theorem card_connSets_le_steps_hypercubic (p₀ : Plaq dim n) (m : ℕ) :
 end AnimalHypercubic
 
 end MassGap.StrongCoupling
--- ==== END connected-set count (lattice animal) ====
+-- ==== end connected-set count (lattice animal) ====
 
--- ==== BEGIN core resummation ====
+-- ==== begin core resummation ====
 
 /-! ### The core resummation, and the per-pair magnitude bound
 
@@ -5514,9 +5478,9 @@ theorem wilsonCorrConn_abs_le_core_sum (hN : Nc ≠ 0) (bd : Pq → List (Lk × 
 end CoreResum
 
 end MassGap.StrongCoupling
--- ==== END core resummation ====
+-- ==== end core resummation ====
 
--- ==== BEGIN assembled core sum ====
+-- ==== begin assembled core sum ====
 
 /-! ### The assembly: the core sum resummed, and the separation put in the exponent
 
@@ -5558,8 +5522,7 @@ The index `k` is a parameter of `wilsonCorrConn_abs_le_coreConst_mul_rate_pow`, 
 `pd ∉ ball bd p₀ k`. A family demanding such a plaquette at every `d : ℕ` cannot exist here:
 `no_sep_family_of_reachable` rules it out once the plaquettes named are reachable from `p₀`, and
 `wilsonCorrConn_eq_zero_of_no_ball` gives the correlation exactly zero where they are not.
-`siteAtHyper_not_mem_ball` and `read_p_le_of_corrClay` carry the fixed-`k` form to a lag indexed by
-`Fin (N + 1)`. -/
+`siteAtHyper_not_mem_ball` carries the fixed-`k` form to a lag indexed by `Fin (N + 1)`. -/
 
 namespace MassGap.StrongCoupling
 
@@ -6287,7 +6250,7 @@ over the pairs in which every plaquette of `Ao ∪ Bo` is reachable from `a` reg
 The reindexing `q ↦ ((q.1 ∩ A, q.2 ∩ A), (q.1 \ A, q.2 \ A))` with `A` the component of `a` is
 the whole content; `g`, `w₁` and `w₂` enter only through the factorisation. The two outside weights
 may differ: the plaquette-family and observable routes take `w₁ = w₂ = zw ∅`, and the box comparison
-takes both restricted to plaquette subsets (`BoxCompare.meanR_sub_abs_le`). `bridging_sum_eq_core_sumF` is this at
+takes both restricted to plaquette subsets. `bridging_sum_eq_core_sumF` is this at
 `pairTermF` (`pairTermF_eq_core_mul_outside`); `wilsonCorrConnObs_abs_le_core_sum` uses it at
 `pairTermObs` through `pairTermObs_fac_halo`.
 
@@ -6467,7 +6430,7 @@ theorem coreResummationF_holds (bd : Pq → List (Lk × Bool)) {a b : Pq} {Ao Bo
 #print axioms coreResummationF_holds
 
 open scoped Classical in
-/-- **A bound on the cores alone bounds the connected correlation of two plaquette FAMILIES.**
+/-- **A bound on the cores alone bounds the connected correlation of two plaquette families.**
 
 The family counterpart of `wilsonCorrConn_abs_le_of_coreResummation`, and the step that closes the
 `Finset` route. Composing `wilsonCorrConnF_eq_bridging_sumF` with a `CoreResummationF` witness needed
@@ -6744,7 +6707,7 @@ open scoped Classical in
 /-- **A geometric factor summed over a family, indexed by touch distance.**
 
 The counting step the diagonal-dominance route needs. Bounding an off-diagonal entry gives a factor
-geometric in the separation; to compare the SUM of those against a diagonal, the number of family
+geometric in the separation; to compare the sum of those against a diagonal, the number of family
 members at each separation has to be controlled, and that is what this does.
 
 Fibre `S` over its touch distance to `p₀`. The fibre at distance `m` sits inside `ball bd p₀ m` by
@@ -7329,8 +7292,7 @@ A local observable enters the family resummation through an anchor set `Ao` cont
 the plaquettes whose boundary meets its link support. Every plaquette outside a core that contains
 both anchor sets avoids both supports, so `pairTermObs` factors through that core exactly as
 `pairTermF` does, and the family counting applies unchanged with the per-term constant `2 c₁ c₂`.
-The anchors are free beyond containing the halos and being touch-connected; `BoxCube.cubePlaq` is the
-choice in a `ℤ⁴` box. -/
+The anchors are free beyond containing the halos and being touch-connected. -/
 
 open scoped Classical in
 /-- The halo of a link set: the plaquettes whose boundary word uses one of its links.
@@ -7582,7 +7544,7 @@ theorem wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow (hN : Nc ≠ 0) (bd : P
 #print axioms wilsonCorrConnObs_abs_le_coreConstG_mul_rate_pow
 
 open scoped Classical in
-/-- **The connected correlation of two plaquette FAMILIES decays geometrically.** The `Finset` route,
+/-- **The connected correlation of two plaquette families decays geometrically.** The `Finset` route,
 closed.
 
 Three proved pieces meet here and nothing else is needed. `coreResummationF_holds` witnesses the
@@ -8118,17 +8080,17 @@ theorem core_rate_lt_one_of_small_hypercubic (dim : ℕ) :
 end AssemblyHypercubic
 
 end MassGap.StrongCoupling
--- ==== END assembled core sum ====
+-- ==== end assembled core sum ====
 
--- ==== BEGIN lag-to-ball bridge ====
+-- ==== begin lag-to-ball bridge ====
 
 namespace MassGap.StrongCoupling
 
 /-! ## From a lag on the periodic lattice to a touch-ball radius
 
 `wilsonCorrConn_abs_le_coreConst_mul_rate_pow` decays in `k` whenever `pd ∉ ball bd p₀ k`, a
-touch-distance. A `Moment.Read` is indexed by a lag `d : Fin (N+1)`, carried to a plaquette by
-`WilsonBridge.siteAtHyper`. This section relates the two indices.
+touch-distance. A lag `d : Fin (N+1)` is carried to a plaquette by `WilsonBridge.siteAtHyper`. This
+section relates the two indices.
 
 The conversion factor is read off `bd`. Two plaquettes touch when they share a link, so the question
 is how far one shared link moves a coordinate. Every link of the plaquette `((a,b), x)` sits at one
@@ -8138,8 +8100,7 @@ two plaquettes' `τ` coordinates to within one lattice step. The constant is `1`
 most one lattice step along any axis, and `touch_advances_one` exhibits a touch that attains it.
 
 The lattice is a torus, which caps the radius. The `τ` coordinate lives in `Fin n`, so the distance
-to be crossed is the circle distance `circDist a = min a (n − a)` and not the raw lag. At `n = N + 1`
-that is `Moment.circLag` definitionally (`circDist_eq_circLag`). `lag_last_mem_ball_two` shows the
+to be crossed is the circle distance `circDist a = min a (n − a)` and not the raw lag. `lag_last_mem_ball_two` shows the
 cap is not a conservatism: the plaquette at raw lag `N` is two touch-steps from the origin, so a
 bridge stated in the raw lag would be false, which `raw_lag_radius_refuted` records.
 -/
@@ -8147,17 +8108,11 @@ bridge stated in the raw lag would be false, which `raw_lag_radius_refuted` reco
 section CircleDistance
 
 /-- The number of lattice steps from the origin to `a` on the circle of `n` sites:
-`min a (n - a)`, the distance the periodic lattice carries and the one `Moment.circLag` measures.
+`min a (n - a)`, the distance the periodic lattice carries.
 
 DERIVED: no numeral. The `min` is the two ways round the circle and `n - a` is the way that wraps,
 both forced by the identification `a ∼ a + n` that `Fin n` carries. -/
 def circDist {n : ℕ} (a : Fin n) : ℕ := min (a : ℕ) (n - (a : ℕ))
-
-/-- **`circDist d = Moment.circLag d` on `Fin (N + 1)`**, by `rfl`: the two definitions agree, and
-nothing is converted.
-
-DERIVED: the `1` in `Fin (N + 1)` is `Moment.circLag`'s index type, whose extent is `N + 1`. -/
-theorem circDist_eq_circLag {N : ℕ} (d : Fin (N + 1)) : circDist d = Moment.circLag d := rfl
 
 theorem circDist_zero {n : ℕ} [NeZero n] : circDist (0 : Fin n) = 0 := by
   simp [circDist]
@@ -8421,23 +8376,11 @@ theorem lag_last_mem_ball_two (μ ν τ : Fin dim) :
 
 #print axioms lag_last_mem_ball_two
 
-/-- **`Moment.circLag (Fin.last (N + 1)) = 1`.** The circle distance at the largest raw lag is one,
-whatever `N`, against a raw lag that grows without bound. This is the quantity
-`siteAtHyper_not_mem_ball` is indexed by.
-
-DERIVED: the `1` in `N + 1` makes `Fin.last` the top of `Fin (N + 2)`; the `1` on the right is the
-circle distance `min (N + 1) ((N + 2) - (N + 1))`. -/
-theorem circLag_last (N : ℕ) : Moment.circLag (Fin.last (N + 1)) = 1 := by
-  unfold Moment.circLag
-  simp [Fin.val_last]
-
-#print axioms circLag_last
-
 /-- **On `N + 4` sites the plaquette at raw lag `N + 3` lies inside the ball of radius `N + 2`.**
 That is the radius a bridge indexed by the raw lag would have placed it outside of;
 `lag_last_mem_ball_two` puts it two touch-steps from the origin and `ball_mono` widens to `N + 2`.
 
-Its circle distance is `1` (`circLag_last`), so `siteAtHyper_not_mem_ball` claims only
+Its circle distance is `1`, so `siteAtHyper_not_mem_ball` claims only
 `∉ ball p₀ 0` there, and the two statements agree.
 
 DERIVED: the `3` and the `4` are the smallest extent at which the raw-lag radius `N + 2` exceeds the
@@ -8456,127 +8399,6 @@ section LagDecay
 
 open MassGap.WilsonHypercubic
 
-/-- **`|corrClay (N + 1) β d| ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ k`** for every
-`k < Moment.circLag d`, given `0 ≤ β` and `coreRate (16 * 4) β < 1`.
-
-`WilsonBridge.corrClay` is the four-dimensional `SU(3)` connected plaquette correlation at lag `d`.
-This is `wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic` composed with
-`siteAtHyper_not_mem_ball`, which converts the touch-ball index into the lag. The extent `N + 1`
-appears in neither the constant nor the rate.
-
-DERIVED: the `0` is the sign hypothesis on `β` and the `1` bounds the rate at the geometric
-threshold. The `16 * 4` is `touchDeg_bd_le` at `dim = 4`, the dimension `corrClay` fixes. The `1`s
-in `Fin (N + 1)` and `corrClay (N + 1)` are the lattice extent, one more than the largest lag. -/
-theorem corrClay_abs_le_coreConst_mul_rate_pow (N : ℕ) {β : ℝ} (hβ : 0 ≤ β)
-    (hr : coreRate (16 * 4) β < 1) (d : Fin (N + 1)) (k : ℕ) (hk : k < Moment.circLag d) :
-    |MassGap.WilsonBridge.corrClay (N + 1) β d|
-      ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ k := by
-  have hball : (((0, 1), MassGap.WilsonBridge.siteAtHyper 2 d) : Plaq 4 (N + 1))
-      ∉ ball (bd (d := 4) (n := N + 1)) ((0, 1), fun _ => 0) k :=
-    siteAtHyper_not_mem_ball 0 1 2 d k hk
-  exact wilsonCorrConn_abs_le_coreConst_mul_rate_pow_hypercubic (Nc := 3) (dim := 4) (n := N + 1)
-    (by norm_num) ((0, 1), fun _ => 0) ((0, 1), MassGap.WilsonBridge.siteAtHyper 2 d) hβ hr k hball
-
-#print axioms corrClay_abs_le_coreConst_mul_rate_pow
-
-/-- **A read whose `ρ` is `corrClay` has weights decaying in `Moment.circLag`.** For `R : Moment.Read
-N` with `R.ρ d = corrClay (N + 1) β d` at every lag, `0 < m ≤ ∑ d', R.ρ d'`, `0 < β` and
-`coreRate (16 * 4) β < 1`,
-
-    R.p d ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
-              * coreRate (16 * 4) β ^ Moment.circLag d.
-
-`corrClay_abs_le_coreConst_mul_rate_pow` at exponent `circLag d - 1`, divided by the total mass. The
-`circLag d = 0` case is separate: there the estimate says nothing and the read's own normalisation
-`∑ p = 1` gives `R.p d ≤ 1`.
-
-`read_decay_of_correlation_decay` above is the same normalisation step in the raw lag; the two are
-not interchangeable, since at `r < 1` the smaller exponent is the weaker bound.
-
-Scope, all of it visible in the statement:
-
-* `m` is a hypothesis and is bound outside nothing — it may depend on `N`. `Moment.Read.p` is
-  `ρ/∑ρ`, so the constant carries `1/m` for a lower bound `m ≤ ∑ρ`. A bound giving `0 < ∑ρ` at each
-  `N` separately does not supply one `m` good for every `N`.
-* `C` and `r` both depend on `β`. `coreRate (16 * 4) β < 1` holds only near `β = 0`
-  (`core_rate_lt_one_of_small_hypercubic`) and the rate grows without bound as `β` does, so the
-  statement is at a fixed `N` and a fixed small `β`.
-* `hρ` is carried rather than discharged: the statement is about an arbitrary `Moment.Read N` whose
-  `ρ` agrees with `corrClay`, and this file names no particular such read.
-
-DERIVED: the `0`s are the strict positivity of `m` and of `β`; the `1` bounding `coreRate` is the
-geometric threshold; the `1`s in `Fin (N + 1)` and `corrClay (N + 1)` are the lattice extent. The
-`16 * 4` is `touchDeg_bd_le` at `dim = 4`. The `+ 1` in the constant covers the lag-zero term, where
-the estimate is silent and `∑ p = 1` gives `p 0 ≤ 1` instead. The division by `coreRate` is the one
-step of exponent the ball bound loses, being indexed by `circLag d - 1` with `r^{L−1} = r^L/r`; it is
-why `0 < β` is needed, `coreRate` vanishing at `β = 0`. -/
-theorem read_p_le_of_corrClay {N : ℕ} (R : Moment.Read N) {β m : ℝ}
-    (hρ : ∀ d : Fin (N + 1), R.ρ d = MassGap.WilsonBridge.corrClay (N + 1) β d)
-    (hm : 0 < m) (hmass : m ≤ ∑ d', R.ρ d')
-    (hβ : 0 < β) (hr : coreRate (16 * 4) β < 1) (d : Fin (N + 1)) :
-    R.p d ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
-      * coreRate (16 * 4) β ^ (Moment.circLag d) := by
-  have hq : (0 : ℝ) < Real.exp (2 * β) - 1 := by
-    have h : Real.exp 0 < Real.exp (2 * β) := Real.exp_lt_exp.mpr (by linarith)
-    rw [Real.exp_zero] at h; linarith
-  have hrpos : (0 : ℝ) < coreRate (16 * 4) β := by
-    unfold coreRate
-    exact mul_pos (mul_pos (by positivity) hq) (Real.exp_pos _)
-  have hP := le_corePrefactor (16 * 4) (β := β) hβ.le
-  have hCpos : (0 : ℝ) < coreConst (16 * 4) β := by
-    unfold coreConst
-    exact div_pos (by linarith) (by linarith)
-  have hpownn : (0 : ℝ) ≤ coreRate (16 * 4) β ^ (Moment.circLag d) := pow_nonneg hrpos.le _
-  have hfrac : (0 : ℝ) ≤ coreConst (16 * 4) β / (coreRate (16 * 4) β * m) :=
-    (div_pos hCpos (mul_pos hrpos hm)).le
-  have hsum : (0 : ℝ) < ∑ d', R.ρ d' := lt_of_lt_of_le hm hmass
-  rcases Nat.eq_zero_or_pos (Moment.circLag d) with h0 | hpos
-  · rw [h0, pow_zero, mul_one]
-    have h1 : R.p d ≤ 1 := by
-      rw [← R.p_sum]
-      exact Finset.single_le_sum (fun i _ => R.p_nonneg i) (Finset.mem_univ d)
-    linarith
-  · have hk : Moment.circLag d - 1 < Moment.circLag d := by omega
-    have hbound := corrClay_abs_le_coreConst_mul_rate_pow N hβ.le hr d (Moment.circLag d - 1) hk
-    have hrho : R.ρ d
-        ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ (Moment.circLag d - 1) := by
-      rw [hρ d]
-      exact le_trans (le_abs_self _) hbound
-    have hL : Moment.circLag d - 1 + 1 = Moment.circLag d := by omega
-    have hsplit : coreRate (16 * 4) β ^ (Moment.circLag d - 1) * coreRate (16 * 4) β
-        = coreRate (16 * 4) β ^ (Moment.circLag d) := by
-      rw [← pow_succ, hL]
-    have hrm : coreRate (16 * 4) β * m ≠ 0 := ne_of_gt (mul_pos hrpos hm)
-    have hdiv : coreConst (16 * 4) β / (coreRate (16 * 4) β * m) * (coreRate (16 * 4) β * m)
-        = coreConst (16 * 4) β := by field_simp
-    have hA : coreConst (16 * 4) β / (coreRate (16 * 4) β * m)
-          * coreRate (16 * 4) β ^ (Moment.circLag d) * m
-        = coreConst (16 * 4) β * coreRate (16 * 4) β ^ (Moment.circLag d - 1) := by
-      rw [← hsplit]
-      calc coreConst (16 * 4) β / (coreRate (16 * 4) β * m)
-            * (coreRate (16 * 4) β ^ (Moment.circLag d - 1) * coreRate (16 * 4) β) * m
-          = coreConst (16 * 4) β / (coreRate (16 * 4) β * m) * (coreRate (16 * 4) β * m)
-            * coreRate (16 * 4) β ^ (Moment.circLag d - 1) := by ring
-        _ = coreConst (16 * 4) β * coreRate (16 * 4) β ^ (Moment.circLag d - 1) := by rw [hdiv]
-    have hXnn : (0 : ℝ) ≤ coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1 := by linarith
-    have hprodnn : (0 : ℝ) ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
-        * coreRate (16 * 4) β ^ (Moment.circLag d) := mul_nonneg hXnn hpownn
-    have hpd : R.p d = R.ρ d / ∑ d', R.ρ d' := rfl
-    rw [hpd, div_le_iff₀ hsum]
-    calc R.ρ d
-        ≤ coreConst (16 * 4) β * coreRate (16 * 4) β ^ (Moment.circLag d - 1) := hrho
-      _ = coreConst (16 * 4) β / (coreRate (16 * 4) β * m)
-            * coreRate (16 * 4) β ^ (Moment.circLag d) * m := hA.symm
-      _ ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
-            * coreRate (16 * 4) β ^ (Moment.circLag d) * m := by
-          have : (0 : ℝ) ≤ coreRate (16 * 4) β ^ (Moment.circLag d) * m := mul_nonneg hpownn hm.le
-          nlinarith
-      _ ≤ (coreConst (16 * 4) β / (coreRate (16 * 4) β * m) + 1)
-            * coreRate (16 * 4) β ^ (Moment.circLag d) * (∑ d', R.ρ d') :=
-          mul_le_mul_of_nonneg_left hmass hprodnn
-
-#print axioms read_p_le_of_corrClay
-
 /-- **`0 ≤ coreRate (16 * 4) β` for `0 ≤ β`.** `coreRate_nonneg` at `K = 16 * 4`. The companion
 upper bound `coreRate (16 * 4) β < 1` is `core_rate_lt_one_of_small_hypercubic` at `dim = 4`, and
 holds only near `β = 0`.
@@ -8592,4 +8414,4 @@ end LagDecay
 
 end MassGap.StrongCoupling
 
--- ==== END lag-to-ball bridge ====
+-- ==== end lag-to-ball bridge ====

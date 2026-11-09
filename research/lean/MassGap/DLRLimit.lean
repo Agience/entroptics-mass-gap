@@ -55,11 +55,8 @@ representation, and `instIsProbabilityMeasure` the total mass.
   functional and nothing else. A limit of point masses is a point mass, so ruling one out needs more
   input: `not_isPointMass_of_uniform_variance` takes a variance floor `c ≤ μ i (f * f) - (μ i f) ^ 2`
   holding uniformly in the index, and that floor is a hypothesis here.
-  `InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0` with
-  `exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
-  `PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
-  `ClayNontriviality.clay_nontriviality_of_wilson_variance` composes the two. What is not supplied
-  is the bridge between that aperture indexing and the `Finset ILink` indexing used here.
+  `PlaqVariance.corrClay_zero_eq` makes the contact value of the plaquette correlation a plaquette
+  variance.
 * `gibbsMeasure` needs the Borel structure of `IConf G` to be its product σ-algebra, which over an
   infinite index requires a countable index and a second-countable factor. `ILink` is countable, so
   `SecondCountableTopology G` is a hypothesis of the measure statements and not of the state ones
@@ -481,11 +478,9 @@ end LocalObservables
 
 /-! ## Part 2 — the limit state
 
-The ultrafilter-and-compactness move of `InfiniteVolume.exists_filter_tendsto_all_lags`, one level
-up: there the coordinates are lags and the compact set is `Set.Icc (-4) 4`; here the coordinates are
-observables and the compact set is `Set.Icc (-‖f‖) ‖f‖`. The limit functional is assembled
-coordinate by coordinate, each of its four defining properties transported by uniqueness of
-limits. -/
+The ultrafilter-and-compactness move: the coordinates are observables and the compact set is
+`Set.Icc (-‖f‖) ‖f‖`. The limit functional is assembled coordinate by coordinate, each of its four
+defining properties transported by uniqueness of limits. -/
 
 /-- For any `NeBot` filter `l` on any index type `ι` and any family `μ : ι → State X`, there are an
 ultrafilter `u` with `(u : Filter ι) ≤ l` and a state `ν` such that `μ i f → ν f` along `u`,
@@ -633,11 +628,8 @@ theorem tendsto_of_unique_dlr {ι κ : Type*} {l : Filter ι} [l.NeBot]
 identifies them. The two families may have different index types and converge along different
 filters; nothing relates them but the specification `γ`.
 
-**This is the reduction the Wilson route needs.**
-`ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit` takes as a hypothesis
-that the even and odd cube families reach the SAME state, and its own docstring records that nothing
-identifies them: compactness gives each family its own subsequential limit, by `exists_limit_state`,
-and no more. This says what closes that gap — uniqueness of the DLR state for the specification —
+Compactness gives each family its own subsequential limit, by `exists_limit_state`, and no more.
+What identifies the limits of two families is uniqueness of the DLR state for the specification,
 which is the standard condition and is what `WilsonDLR.dlr_unique_at_zero_eq` supplies at coupling
 zero.
 
@@ -670,7 +662,7 @@ a constant within `ε` of that constant, so the two values differ by at most `2 
 **Why this is worth having.** Uniqueness is the one open input on the transfer route:
 `tendsto_of_unique_dlr` and `limits_eq_of_unique_dlr` both take it, `WilsonDLR.dlr_unique_at_zero_eq`
 supplies it only at coupling zero, and no Dobrushin-style machinery exists here. This replaces it by
-an ESTIMATE about the kernel — decay of the boundary's influence as the region grows — which is the
+an estimate about the kernel — decay of the boundary's influence as the region grows — which is the
 shape a strong-coupling argument produces, rather than an abstract hypothesis with no supplier.
 
 It does not prove that estimate for the Wilson specification, and at coupling zero the estimate is
@@ -745,7 +737,7 @@ that into equality of the two states, which is the shape `tendsto_of_unique_dlr`
 uniformly close to a constant — is enough on its own, with no uniqueness hypothesis anywhere
 downstream.
 
-⚠ `unique_dlr_of_local_kernel_near_const` below needs the estimate only for the LOCAL observables and
+⚠ `unique_dlr_of_local_kernel_near_const` below needs the estimate only for the local observables and
 is the one to reach for; this version is the special case where it is assumed for all of them.
 
 **What this changes and what it does not.** It changes the open input on the transfer route from an
@@ -754,9 +746,9 @@ which is the shape a strong-coupling argument produces. It does not prove that e
 Wilson specification, which is the actual remaining mathematics, and the estimate is exactly what
 fails at a phase transition.
 
-⚠ It is NOT immediate at coupling zero in this form. There the kernel is an integral of the
+⚠ It is not immediate at coupling zero in this form. There the kernel is an integral of the
 observable over the inner links with the outer ones frozen at the boundary configuration, so a
-general observable still reads them. What holds at coupling zero is the LOCAL statement, which is
+general observable still reads them. What holds at coupling zero is the local statement, which is
 `WilsonDLR.local_kernel_near_const_at_zero`. -/
 theorem unique_dlr_of_kernel_near_const {κ : Type*} {γ : κ → C(X, ℝ) → C(X, ℝ)}
     (hnear : ∀ (f : C(X, ℝ)) (ε : ℝ), 0 < ε → ∃ (k : κ) (c : ℝ), ∀ x, |γ k f x - c| ≤ ε)
@@ -766,16 +758,16 @@ theorem unique_dlr_of_kernel_near_const {κ : Type*} {γ : κ → C(X, ℝ) → 
 
 #print axioms unique_dlr_of_kernel_near_const
 
-/-- **Uniqueness from the estimate on the LOCAL observables alone.**
+/-- **Uniqueness from the estimate on the local observables alone.**
 
 `State.eq_of_eqOn_localObs` reduces agreement of two states to agreement on `localObsAlg G`, the
 observables unchanged by the links outside some finite set, by Stone–Weierstrass: those observables
 separate the points of `IConf G` when the gauge group is compact Hausdorff. So the near-constant
-estimate is only ever needed for a LOCAL observable, and `dlr_eq_at_of_kernel_near_const` is stated
+estimate is only ever needed for a local observable, and `dlr_eq_at_of_kernel_near_const` is stated
 per observable so that it can be applied exactly there.
 
-**Why that matters.** The estimate quantified over ALL continuous observables is not the statement a
-cluster expansion produces. What such an argument gives is that a FIXED local observable stops
+**Why that matters.** The estimate quantified over all continuous observables is not the statement a
+cluster expansion produces. What such an argument gives is that a fixed local observable stops
 reading the boundary condition once the region separates its support from the boundary — which is
 this hypothesis and not the stronger one. Passing from local observables to all of them is
 Stone–Weierstrass, and it is already done here.
@@ -805,19 +797,11 @@ filter hypothesis at all.
 
 A generic fact about states, with no Gibbs content.
 
-⛔ IT IS NOT THE RIGHT TOOL FOR THE FREE-VERSUS-FIXED BOUNDARY GAP, and it is recorded here so that
+⛔ It is not the right tool for the free-versus-fixed boundary gap, and it is recorded here so that
 it is not reached for. Applying it there would mean showing the free- and fixed-boundary families
-have a vanishing difference, and that is a boundary-effect estimate which is FALSE in general:
+have a vanishing difference, and that is a boundary-effect estimate which is false in general:
 distinct boundary conditions give distinct limits exactly when there is a phase transition, which is
 the regime at issue.
-
-What is true, and is the target instead: `ReflectionHalfSpace.wtFree` sums the action over
-`iplqAll Λ`, the plaquettes with ALL links in the box, while `GibbsSpec.spec` sums over
-`boundaryPlaqs Λ`, those with SOME link in the box. Conditioning the free state on the configuration
-outside a region `V` therefore returns the ordinary fixed-boundary kernel at `V`, provided every
-plaquette touching `V` lies inside the box. So the free family is DLR-consistent for interior
-regions against the ordinary kernel, and no comparison between the two families is needed at all.
-That statement is not in the tree.
 
 DERIVED: `0` is the limit of the difference, which is what makes the two families agree. -/
 theorem tendsto_of_sub_tendsto_zero {ι : Type*} {l : Filter ι}
@@ -868,12 +852,8 @@ functional and nothing else. A limit of point masses is a point mass, so excludi
 input. What the theorems below take is a variance floor at a single observable, holding uniformly in
 the index.
 
-`InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0`, fixed before the aperture, with
-`exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
-`PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
-`ClayNontriviality.clay_nontriviality_of_wilson_variance` composes it with
-`not_isPointMass_of_uniform_variance`. The bridge between that aperture indexing and the
-`Finset ILink` indexing used here is not in this file. -/
+`PlaqVariance.corrClay_zero_eq` makes the contact value of the plaquette correlation a plaquette
+variance, which `not_isPointMass_of_uniform_variance` can consume. -/
 
 /-- `∃ x : X, ∀ f : C(X, ℝ), ν f = f x`: the state is evaluation at a single point.
 
@@ -993,7 +973,7 @@ theorem abs_connected_le_of_eventually {ι : Type*} {l : Filter ι} [l.NeBot]
 limit.**
 
 `InfiniteReflection.isReflectionInvariant_of_tendsto` transports reflection invariance because that
-invariance holds EXACTLY at each box. Translation invariance is not like that: the finite-volume free
+invariance holds exactly at each box. Translation invariance is not like that: the finite-volume free
 state is not translation invariant, so there is nothing to transport box by box. What survives
 instead is a defect that vanishes — and that suffices, because `μ i (T f) − μ i f` converges both to
 `ν (T f) − ν f` and, by hypothesis, to zero, and a limit in `ℝ` is unique.
@@ -1056,8 +1036,7 @@ theorem not_isPointMass_of_uniform_variance {ι : Type*} {l : Filter ι} [l.NeBo
 
 /-! ## Part 5 — the state as a measure
 
-Riesz–Markov–Kakutani, following `MomentMeasure.stateCc` and `MomentMeasure.spectralMeasure`: on a
-compact space every continuous function is compactly supported, so a state is a positive linear map
+Riesz–Markov–Kakutani: on a compact space every continuous function is compactly supported, so a state is a positive linear map
 on `C_c(X, ℝ)` and `RealRMK.rieszMeasure` represents it. The measure is a probability measure because
 the state is normalised, which is the `f = 1` case of the representation. -/
 

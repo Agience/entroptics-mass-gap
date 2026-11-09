@@ -1,4 +1,4 @@
-"""Verify the lattice store and put it into a Zenodo DRAFT deposition. Never publishes.
+"""Verify the lattice store and put it into a Zenodo draft deposition. Never publishes.
 
 The data release --
 
@@ -15,7 +15,7 @@ What it enforces, in order:
   2. the tarballs between them contain exactly the shards ``SHA256SUMS`` lists -- a tarball can
      verify as a blob and still be missing files inside it;
   3. the store's own README, licence, generation notes, manifest and reader are present and go up
-     WITH the data. They are in neither checksum list and inside none of the tarballs, so staging
+     with the data. They are in neither checksum list and inside none of the tarballs, so staging
      the tarballs alone published seven opaque 1-11 GB blobs that nobody could read or cite;
   4. the staged total fits the record quota, stated rather than assumed.
 
@@ -141,7 +141,7 @@ def load_manifest(path: pathlib.Path, root: pathlib.Path) -> list[dict]:
             drift.append(f"{e['name']}: {size:,} B on disk, {e['bytes']:,} B in the manifest -- a "
                          f"tarball changed, so SHA256SUMS.tarballs no longer describes the store")
             continue
-        # Metadata is in no checksum list, and is EXPECTED to change right up to deposit time and
+        # Metadata is in no checksum list, and is expected to change right up to deposit time and
         # again afterwards, when the minted DOI is written back into CITATION.cff and .zenodo.json.
         # Re-hash the few kilobytes that moved rather than the 24.7 GB that did not.
         e["bytes"], e["sha256"] = size, digest(p)
@@ -283,7 +283,7 @@ def token() -> str:
 class _Progress:
     """A file wrapper that reports as it is read.
 
-    ``urllib`` streams the file object straight to the socket, so without this an 11 GB PUT is a
+    ``urllib`` streams the file object straight to the socket, so without this an 11 GB put is a
     silent hour with no way to tell a slow upload from a hung one.
     """
 

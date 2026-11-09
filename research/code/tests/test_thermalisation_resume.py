@@ -1,20 +1,20 @@
-"""The thermalisation resume reuses a reference chain only when it is the SAME chain.
+"""The thermalisation resume reuses a reference chain only when it is the same chain.
 
 `store_run_thermalisation.py --reuse` skips re-measuring an equilibrium reference whose
 `(group, L, T, beta)` is already in the committed artifact. That is sound because the reference is a
-deterministic function of the key AND the chain settings -- and it is sound ONLY then. A resume that
+deterministic function of the key and the chain settings -- and it is sound only then. A resume that
 reused a row measured with different sweeps, a different method, or a different number of parallel
 chains would silently mix two quantities under one column, and every downstream verdict would inherit
 the mixture with nothing to show for it.
 
-So the interesting test is not that reuse works. It is that reuse REFUSES: each of the three settings
+So the interesting test is not that reuse works. It is that reuse refuses: each of the three settings
 is perturbed in turn and the row must stop being offered. A resume that cannot be made to refuse is
 not a resume, it is a cache.
 
 The same script also caches each shard's per-configuration means, keyed by `(path, size, mtime)`,
 because reconstructing the action density of a 17 GB raw-link collection is the expensive half of the
 run and the shards do not change. That cache is tested the same way: a shard that has been rewritten
-must MISS. A cache that returns a stale mean is worse than no cache, because the verdict it feeds is
+must miss. A cache that returns a stale mean is worse than no cache, because the verdict it feeds is
 a comparison against an independently measured equilibrium and would simply come out wrong.
 """
 from __future__ import annotations
@@ -62,7 +62,7 @@ def _row(mod, **over):
     return r
 
 
-# DERIVED: not a threshold -- the fixture's identity. These four values ARE the key
+# DERIVED: not a threshold -- the fixture's identity. These four values are the key
 # (group, L, T, beta) that `_row` writes, so the assertions below look up the row they wrote.
 # Nothing compares against them; changing them changes which synthetic row is used and nothing else.
 KEY = ("su2", 16, 32, 2.4)
@@ -76,7 +76,7 @@ def test_a_matching_row_is_offered(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "DAT", str(art))
     refs = mod.previous_references()
     assert KEY in refs, f"a row with this module's own settings was not offered: {refs}"
-    # The fourth element is HOW the reference was measured and the fifth is the bracket's half-gap.
+    # The fourth element is how the reference was measured and the fifth is the bracket's half-gap.
     # A row written before the hot/cold bracket existed carries neither column: `hot_only` is what
     # its absence means -- a statement about the data, not a filler -- and the half-gap is NaN
     # because a single chain has no bracket, which is not the same as a bracket of width zero.
@@ -144,7 +144,7 @@ def test_the_u1_branch_uses_the_u1_sweep_count(tmp_path, monkeypatch):
 # the per-shard means cache
 # ---------------------------------------------------------------------------------------------
 
-# DERIVED: fixture SHAPE, not a threshold. `n` and `T` are the synthetic shard's dimensions and
+# DERIVED: fixture shape, not a threshold. `n` and `T` are the synthetic shard's dimensions and
 # nothing compares against them; they are small so the test is fast.
 def _shard(path, n=3, T=4):
     """A tiny density shard of shape (n, 2, 2, 2, T), whose per-config means are 0, 1, 2, ..."""
@@ -186,7 +186,7 @@ def test_a_rewritten_shard_misses_the_cache(tmp_path):
 
     before = mod.stored_means(str(tmp_path))
     (k,) = list(before)
-    # DERIVED: the fixture's own mean. `_shard` writes configurations 0, 1, 2, so their mean IS 1.
+    # DERIVED: the fixture's own mean. `_shard` writes configurations 0, 1, 2, so their mean is 1.
     assert float(np.mean(before[k][0])) == 1.0, before[k][0]
 
     # rewrite it with different content, and move the mtime so the key changes as it would in life
@@ -222,7 +222,7 @@ def test_the_cache_is_invisible_to_the_manifest(tmp_path):
     """The cache must not enter a release.
 
     `make_manifest.py` indexes every `configs_*` directory holding shards; the cache sits at the
-    store ROOT and is dot-prefixed, so it is outside that enumeration. Asserted rather than assumed,
+    store root and is dot-prefixed, so it is outside that enumeration. Asserted rather than assumed,
     because "it is not in a configs_ directory" is a property of the name and names get changed.
     """
     mod = _module()

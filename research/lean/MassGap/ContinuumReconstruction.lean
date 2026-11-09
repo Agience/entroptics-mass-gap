@@ -10,8 +10,7 @@ noncomputable section
 Schwinger functions
 
 The Osterwalder–Schrader reconstruction, run on the continuum Schwinger functions
-`ContinuumSchwinger.contS hN ρ` through the axiom-free GNS construction of `GNSHilbert` (not through
-`WightmanData.os_reconstruction_wightman`). The inputs are the renormalisation data `ρ`, the uniform
+`ContinuumSchwinger.contS hN ρ` through the axiom-free GNS construction of `GNSHilbert`. The inputs are the renormalisation data `ρ`, the uniform
 bound `hB : UniformBound hN ρ` (proved at bounded data, in particular for the bare fields, where the
 limit is expected to be degenerate: `continuum_reconstruction_bare`) and the reflection
 compatibility `hR : ρ.ReflCompat τ`.
@@ -414,22 +413,30 @@ def emptyPos (N : ℕ) (τ : Fin 4) : PosMono N τ := ⟨⟨0, Fin.elim0⟩, fun
 theorem shift_emptyPos (m : ℕ) : PosMono.shift hN τ m (emptyPos N τ) = emptyPos N τ :=
   Subtype.ext (congrArg (Sigma.mk 0) (funext fun i => i.elim0))
 
-/-- `S(∅) = 1`: the empty Schwinger function is the constant sequence `1 · ν(1) = 1`.
+/-- `S(∅) = 1` along any coupling tower: the empty Schwinger function is the constant sequence
+`1 · ν(1) = 1`.
 
 DERIVED: `1` is the normalisation of a state. -/
-theorem kern_empty : kern hN ρ τ (emptyPos N τ).1 (emptyPos N τ).1 = 1 := by
+theorem kernAlong_empty (βs : ℕ → ℝ) :
+    kernAlong hN βs ρ τ (emptyPos N τ).1 (emptyPos N τ).1 = 1 := by
   haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
-  have hconst : ∀ k, latSkR hN ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1) = 1 := by
+  have hconst : ∀ k, latSkRAlong hN βs ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1) = 1 := by
     intro k
-    show (∏ x : Fin 0 ⊕ Fin 0, _) * stateK hN k (∏ x : Fin 0 ⊕ Fin 0, _) = 1
+    show (∏ x : Fin 0 ⊕ Fin 0, _) * stateAlong hN βs k (∏ x : Fin 0 ⊕ Fin 0, _) = 1
     rw [Fintype.prod_empty, Fintype.prod_empty, one_mul]
-    exact (stateK hN k).map_one
-  have hfun : (fun k => latSkR hN ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1))
+    exact (stateAlong hN βs k).map_one
+  have hfun : (fun k => latSkRAlong hN βs ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1))
       = fun _ => (1 : ℝ) := funext hconst
   show limUnder (ultra : Filter ℕ)
-      (fun k => latSkR hN ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1)) = 1
+      (fun k => latSkRAlong hN βs ρ k (pairFam τ (emptyPos N τ).1 (emptyPos N τ).1)) = 1
   rw [hfun]
   exact tendsto_nhds_unique (tendsto_nhds_limUnder ⟨1, tendsto_const_nhds⟩) tendsto_const_nhds
+
+/-- `S(∅) = 1` at the couplings `dyBeta`.
+
+DERIVED: `1` is the normalisation of a state. -/
+theorem kern_empty : kern hN ρ τ (emptyPos N τ).1 (emptyPos N τ).1 = 1 :=
+  kernAlong_empty hN ρ τ (dyBeta (one_le_of_ne_zero hN))
 
 /-- **The continuum transfer data at the dyadic step `dySpacing N m`.**
 

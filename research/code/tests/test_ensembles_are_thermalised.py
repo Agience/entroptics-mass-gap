@@ -48,7 +48,7 @@ def test_no_shipped_ensemble_is_under_thermalised():
             f"{ARTIFACT.name}.")
 
 
-#: The only two verdicts that mean "this ensemble may ship". Everything else fails, INCLUDING a
+#: The only two verdicts that mean "this ensemble may ship". Everything else fails, including a
 #: verdict this file has never heard of -- the gate is written as a whitelist precisely so that
 #: adding a verdict to the producer cannot quietly add a passing case here. The two are not the same
 #: evidence: `at_equilibrium` compares the level against an independently measured equilibrium, and

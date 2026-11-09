@@ -7,8 +7,7 @@ import MassGap.SchwarzIteration
 ## What this is
 
 `Transfer.TransferData` is the object `GNSHilbert` turns into a Hilbert space with a bounded
-self-adjoint transfer operator fixing the vacuum, and `Reconstruction` turns into `H = −log T`. It has
-six fields. `assembleTransferData` constructs one, discharging every field from these inputs:
+self-adjoint transfer operator fixing the vacuum. It has six fields. `assembleTransferData` constructs one, discharging every field from these inputs:
 
 | input | what it is |
 |---|---|
@@ -31,7 +30,7 @@ particular — reflection positivity of the state on `A` — is supplied by the 
 reflection-positivity results are of a different shape: as `LatticeReflection`'s header records, they
 are about a correlation sequence, on a slab, of a periodic lattice, at the even reflection constant,
 and under `0 ≤ β`. Given all the inputs, the output is a `Transfer.TransferData`, and `GNSHilbert`
-and `Reconstruction` apply to it.
+applies to it.
 
 ## `ShiftCompat` forces the shift to be invertible
 
@@ -140,8 +139,7 @@ The fields are filled as follows. `toReflForm` and `vac_norm` are `stateReflForm
 `stateReflForm_vac_norm`; `T` is `restrictT C A hstable`; `vac` is the constant function `1`, in `A`
 by `hone`; `T_vac` is `hTone`; `T_symm` is `form_shift_symm`; and `T_contract` is
 `contract_of_bounded_orbit`, whose orbit bound is supplied by `orbit_bounded_of_state` through
-`restrictT_iterate`. Since the result is a `TransferData`, `GNSHilbert` and `Reconstruction` apply
-to it.
+`restrictT_iterate`. Since the result is a `TransferData`, `GNSHilbert` applies to it.
 
 Every item in the argument list is a hypothesis; none is constructed here, `hpos` included.
 
@@ -174,7 +172,7 @@ noncomputable def assembleTransferData (R : Reflection X) (ν : State X)
 
 #print axioms assembleTransferData
 
-/-- **The assembled form at a translated observable IS the state's reflected two-point function.**
+/-- **The assembled form at a translated observable is the state's reflected two-point function.**
 
 `assembleTransferData`'s form is `ν (R.θ F * H)` and its `T` is `restrictT C A hstable`, so
 
@@ -183,17 +181,10 @@ noncomputable def assembleTransferData (R : Reflection X) (ν : State X)
 with both sides read on the underlying continuous functions. `Module.End.pow_apply` moves from the
 operator power to the function iterate and `restrictT_iterate` strips the submodule coercion.
 
-**This is the identification the relative route needed.**
-`ClayCapstone.clay_gap_of_two_point_decay` reduces the Clay spectral statement to decay of
-`D.form x ((D.T ^ (2 * n)) x)` against `D.form x x`; this says that quantity is the state's pairing
-of `R.θ x` with `x` translated `2 * n` steps — a two-point function at a separation growing with
-`n`, compared against the same pairing at separation zero. Both sides are now objects a correlation
-estimate speaks about, rather than objects of the GNS construction.
-
-What remains is to put a strong-coupling bound on the right-hand side at the Wilson data.
-`GaugeInvariantAlgebra.stateFree_pairing_abs_le` bounds a pairing of exactly this shape for plaquette
-observables, but it is stated at `stateFree` on a box rather than at the limiting state `ν`, and for
-the reflected plaquette rather than for a translate — so the two are not yet the same statement.
+This says that `D.form x ((D.T ^ (2 * n)) x)` is the state's pairing of `R.θ x` with `x` translated
+`2 * n` steps — a two-point function at a separation growing with `n`, compared against the same
+pairing at separation zero. Both sides are objects a correlation estimate speaks about, rather than
+objects of the GNS construction.
 
 DERIVED: `1` is the unit observable, carried in unchanged from `assembleTransferData`'s own `hone`
 and `hTone` — the algebra contains the constants and the translation fixes them. `n` is the
@@ -213,7 +204,7 @@ theorem assembleTransferData_form_pow (R : Reflection X) (ν : State X)
 
 #print axioms assembleTransferData_form_pow
 
-/-- **The inner product against the vacuum vector IS the state's one-point function.**
+/-- **The inner product against the vacuum vector is the state's one-point function.**
 
 `vacGNS` is the class of the constant `1`, so the inner product against it is the form at `1`, which
 is `ν (R.θ 1 * x)`; `Reflection.θ_one` fixes the constant and the product collapses.
@@ -262,9 +253,8 @@ theorem nu_eq_zero_of_vac_orth (R : Reflection X) (ν : State X) (A : Submodule 
 /-- **On the vacuum complement, subtracting the mean does nothing.**
 
 This is what reconciles the two shapes. The strong-coupling estimates are stated on
-`f - ⟨f⟩ • 1`, with the mean subtracted explicitly; the obligation in
-`ClayCapstone.gaugeInv_clay_gap_of_state_decay` instead restricts to observables whose class lies in
-the vacuum complement. `nu_eq_zero_of_vac_orth` says the mean is already zero there, so the two
+`f - ⟨f⟩ • 1`, with the mean subtracted explicitly; a decay obligation can instead restrict to
+observables whose class lies in the vacuum complement. `nu_eq_zero_of_vac_orth` says the mean is already zero there, so the two
 statements are about the same observable.
 
 DERIVED: `0` is the vanishing one-point function; `1` is the unit observable carrying the

@@ -319,9 +319,18 @@ theorem periodicState_axis (hN : N ≠ 0) (β : ℝ) (e : Equiv.Perm (Fin 4))
 /-- The state of step `k` is invariant under the axis permutations.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem stateAlong_axis (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) (e : Equiv.Perm (Fin 4)) (F : C(Cfg N, ℝ)) :
+    stateAlong hN βs k (iaxisObs e F) = stateAlong hN βs k F :=
+  periodicState_axis hN _ e F
+
+#print axioms stateAlong_axis
+
+/-- `stateK_axis` at the couplings `dyBeta`: `stateAlong_axis` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem stateK_axis (hN : N ≠ 0) (k : ℕ) (e : Equiv.Perm (Fin 4)) (F : C(Cfg N, ℝ)) :
     stateK hN k (iaxisObs e F) = stateK hN k F :=
-  periodicState_axis hN _ e F
+  stateAlong_axis hN (dyBeta (one_le_of_ne_zero hN)) k e F
 
 #print axioms stateK_axis
 
@@ -458,10 +467,20 @@ theorem bare_axisCompat (e : Equiv.Perm (Fin 4)) : axisCompat (Renorm.bare N) e 
 periodic state is relabelling invariant (`stateK_axis`).
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
+theorem connectedAlong_axisCompat (hN : N ≠ 0) (βs : ℕ → ℝ) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
+    (e : Equiv.Perm (Fin 4)) (hZ : ∀ k O, Z k (lfieldAxis e O) = Z k O) :
+    axisCompat (Renorm.connectedAlong hN βs Z) e :=
+  fun k O => ⟨hZ k O, stateAlong_axis hN βs k e O.1⟩
+
+#print axioms connectedAlong_axisCompat
+
+/-- `connected_axisCompat` at the couplings `dyBeta`: `connectedAlong_axisCompat` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem connected_axisCompat (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ)
     (e : Equiv.Perm (Fin 4)) (hZ : ∀ k O, Z k (lfieldAxis e O) = Z k O) :
     axisCompat (Renorm.connected hN Z) e :=
-  fun k O => ⟨hZ k O, stateK_axis hN k e O.1⟩
+  connectedAlong_axisCompat hN (dyBeta (one_le_of_ne_zero hN)) Z e hZ
 
 #print axioms connected_axisCompat
 
@@ -470,10 +489,10 @@ theorem connected_axisCompat (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU 
 identity equates `limUnder` values of sequences that agree term by term, and needs no bound.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
-theorem contS_axis (hN : N ≠ 0) (ρ : Renorm N) (e : Equiv.Perm (Fin 4)) (hR : axisCompat ρ e)
+theorem contSAlong_axis (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (e : Equiv.Perm (Fin 4)) (hR : axisCompat ρ e)
     {ι : Type} [Fintype ι] (F : ι → SField N) :
-    contS hN ρ (fun i => sfieldAxis e (F i)) = contS hN ρ F := by
-  unfold contS
+    contSAlong hN βs ρ (fun i => sfieldAxis e (F i)) = contSAlong hN βs ρ F := by
+  unfold contSAlong
   congr 1
   funext k
   have hpref : ρ.pref k (fun i => sfieldAxis e (F i)) = ρ.pref k F :=
@@ -484,11 +503,21 @@ theorem contS_axis (hN : N ≠ 0) (ρ : Renorm N) (e : Equiv.Perm (Fin 4)) (hR :
     show ((lfieldAxis e (F i).1).sub (ρ.c k (lfieldAxis e (F i).1)), testPermute e (F i).2)
       = (lfieldAxis e ((F i).1.sub (ρ.c k (F i).1)), testPermute e (F i).2)
     rw [(hR k (F i).1).2, lfieldAxis_sub]
-  show ρ.pref k (fun i => sfieldAxis e (F i)) * latSk hN k (fun i => ρ.field k (sfieldAxis e (F i)))
-    = ρ.pref k F * latSk hN k (fun i => ρ.field k (F i))
-  rw [hpref, hfam, latSk_eq, latSk_eq,
-    latS_axis (stateK hN k) e (stateK_axis hN k e) (dySpacing_pos (one_le_of_ne_zero hN) k)
+  show ρ.pref k (fun i => sfieldAxis e (F i)) * latSkAlong hN βs k (fun i => ρ.field k (sfieldAxis e (F i)))
+    = ρ.pref k F * latSkAlong hN βs k (fun i => ρ.field k (F i))
+  rw [hpref, hfam, latSkAlong, latSkAlong,
+    latS_axis (stateAlong hN βs k) e (stateAlong_axis hN βs k e) (dySpacing_pos (one_le_of_ne_zero hN) k)
       (fun i => ρ.field k (F i))]
+
+#print axioms contSAlong_axis
+
+/-- `contS_axis` at the couplings `dyBeta`: `contSAlong_axis` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem contS_axis (hN : N ≠ 0) (ρ : Renorm N) (e : Equiv.Perm (Fin 4)) (hR : axisCompat ρ e)
+    {ι : Type} [Fintype ι] (F : ι → SField N) :
+    contS hN ρ (fun i => sfieldAxis e (F i)) = contS hN ρ F :=
+  contSAlong_axis hN (dyBeta (one_le_of_ne_zero hN)) ρ e hR F
 
 #print axioms contS_axis
 
@@ -511,16 +540,27 @@ def hypField : List (Equiv.Perm (Fin 4) ⊕ Fin 4) → SField N → SField N
 the continuum Schwinger function unchanged, at data compatible with every generator.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
-theorem contS_hyp (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
+theorem contSAlong_hyp (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
     (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (w : List (Equiv.Perm (Fin 4) ⊕ Fin 4))
     {ι : Type} [Fintype ι] (F : ι → SField N) :
-    contS hN ρ (fun i => hypField w (F i)) = contS hN ρ F := by
+    contSAlong hN βs ρ (fun i => hypField w (F i)) = contSAlong hN βs ρ F := by
   induction w with
   | nil => rfl
   | cons g w ih =>
     cases g with
-    | inl e => exact (contS_axis hN ρ e (hAxis e) (fun i => hypField w (F i))).trans ih
-    | inr τ => exact (contS_reflect hN ρ τ (hRefl τ) (fun i => hypField w (F i))).trans ih
+    | inl e => exact (contSAlong_axis hN βs ρ e (hAxis e) (fun i => hypField w (F i))).trans ih
+    | inr τ => exact (contSAlong_reflect hN βs ρ τ (hRefl τ) (fun i => hypField w (F i))).trans ih
+
+#print axioms contSAlong_hyp
+
+/-- `contS_hyp` at the couplings `dyBeta`: `contSAlong_hyp` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem contS_hyp (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
+    (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (w : List (Equiv.Perm (Fin 4) ⊕ Fin 4))
+    {ι : Type} [Fintype ι] (F : ι → SField N) :
+    contS hN ρ (fun i => hypField w (F i)) = contS hN ρ F :=
+  contSAlong_hyp hN (dyBeta (one_le_of_ne_zero hN)) ρ hRefl hAxis w F
 
 #print axioms contS_hyp
 
@@ -687,12 +727,12 @@ every generator.
 
 DERIVED: `0` is the excluded colour count; `1` and `-1` are the signs; `4` in `Fin 4` is the
 spacetime dimension. -/
-theorem contS_signed (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
+theorem contSAlong_signed (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
     (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ)
     (hs : ∀ i, s i = 1 ∨ s i = -1) {ι : Type} [Fintype ι] (F F' : ι → SField N)
     (hΦ : ∀ i, HypScalar (F i).1) (hfield : ∀ i, (F' i).1 = (F i).1)
     (htest : ∀ i y, (F' i).2.1 y = (F i).2.1 (fun j => s j * y (σ j))) :
-    contS hN ρ F' = contS hN ρ F := by
+    contSAlong hN βs ρ F' = contSAlong hN βs ρ F := by
   obtain ⟨w, hw⟩ := exists_word_signed σ s hs
   have hF' : F' = fun i => hypField w (F i) := by
     funext i
@@ -701,7 +741,20 @@ theorem contS_signed (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.
     · rw [htest i y, hypField_test w (F i) y]
       exact congrArg (F i).2.1 (funext fun j => (hw y j).symm)
   rw [hF']
-  exact contS_hyp hN ρ hRefl hAxis w F
+  exact contSAlong_hyp hN βs ρ hRefl hAxis w F
+
+#print axioms contSAlong_signed
+
+/-- `contS_signed` at the couplings `dyBeta`: `contSAlong_signed` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem contS_signed (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
+    (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ)
+    (hs : ∀ i, s i = 1 ∨ s i = -1) {ι : Type} [Fintype ι] (F F' : ι → SField N)
+    (hΦ : ∀ i, HypScalar (F i).1) (hfield : ∀ i, (F' i).1 = (F i).1)
+    (htest : ∀ i y, (F' i).2.1 y = (F i).2.1 (fun j => s j * y (σ j))) :
+    contS hN ρ F' = contS hN ρ F :=
+  contSAlong_signed hN (dyBeta (one_le_of_ne_zero hN)) ρ hRefl hAxis σ s hs F F' hΦ hfield htest
 
 #print axioms contS_signed
 
@@ -901,13 +954,20 @@ such that every `F'` with the fields of `F` and test functions within `δ` of th
 norm, both families supported in `[-R, R]⁴` and `d`-separated, has `|contS F' − contS F| ≤ ε`.
 
 DERIVED: `0` is the excluded colour count and the sign of `d`, `ε`, `δ` and the support value. -/
-def SupContinuousSep (hN : N ≠ 0) (ρ : Renorm N) : Prop :=
+def SupContinuousSepAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) : Prop :=
   ∀ (ι : Type) [Fintype ι] (F : ι → SField N) (R d ε : ℝ), 0 < d → 0 < ε → ∃ δ : ℝ, 0 < δ ∧
     ∀ F' : ι → SField N, (∀ i, (F' i).1 = (F i).1) →
       (∀ i y, |(F' i).2.1 y - (F i).2.1 y| ≤ δ) →
       (∀ i y, (F i).2.1 y ≠ 0 → ∀ j, |y j| ≤ R) → (∀ i y, (F' i).2.1 y ≠ 0 → ∀ j, |y j| ≤ R) →
       ContinuumSep.FamSep d F → ContinuumSep.FamSep d F' →
-      |contS hN ρ F' - contS hN ρ F| ≤ ε
+      |contSAlong hN βs ρ F' - contSAlong hN βs ρ F| ≤ ε
+
+/-- `SupContinuousSep` at the couplings `dyBeta`: `SupContinuousSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+def SupContinuousSep (hN : N ≠ 0) (ρ : Renorm N) : Prop :=
+  SupContinuousSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ
+
 
 /-- **Equicontinuity of the lattice functions gives continuity of the limit**, under
 `UniformBoundSep`: both separated families converge along `ultra` (`tendsto_contS_sep`) and the
@@ -1091,7 +1151,7 @@ theorem contS_translate_real (hN : N ≠ 0) (ρ : Renorm N) (hC : SupContinuousS
       rw [Real.dist_eq] at h
       exact h.le)
     (hbox v (by rw [dist_self]; exact one_pos)) (hbox _ hw1) hsepv hsepw
-  rw [contS_translate hN ρ F m n, abs_sub_comm] at hk
+  rw [contSAlong_translate hN (dyBeta (one_le_of_ne_zero hN)) ρ F m n, abs_sub_comm] at hk
   exact hk
 
 #print axioms contS_translate_real
@@ -1126,14 +1186,22 @@ It is `ContinuumSchwinger.RotationInvariant` with two hypotheses added
 (`rotation_hypercubic`); the rotations of `SO(4)` that are not signed permutations are open.
 
 DERIVED: `0` is the excluded colour count and the sign of `d`; `4` is the dimension, of `SO(4)`. -/
-def RotationInvariantSep (hN : N ≠ 0) (ρ : Renorm N) (Φ : Set (LField (MassGap.SUN.SU N))) :
+def RotationInvariantSepAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (Φ : Set (LField (MassGap.SUN.SU N))) :
     Prop :=
   ∀ Rot : Matrix (Fin 4) (Fin 4) ℝ, Rot ∈ Matrix.specialOrthogonalGroup (Fin 4) ℝ →
     ∀ (ι : Type) [Fintype ι] (F F' : ι → SField N), (∀ i, (F i).1 ∈ Φ) →
       (∀ i, UniformContinuous (F i).2.1) →
       (∃ d : ℝ, 0 < d ∧ ContinuumSep.FamSep d F ∧ ContinuumSep.FamSep d F') →
       (∀ i, (F' i).1 = (F i).1) → (∀ i y, (F' i).2.1 y = (F i).2.1 (Rot.mulVec y)) →
-      contS hN ρ F' = contS hN ρ F
+      contSAlong hN βs ρ F' = contSAlong hN βs ρ F
+
+/-- `RotationInvariantSep` at the couplings `dyBeta`: `RotationInvariantSepAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+def RotationInvariantSep (hN : N ≠ 0) (ρ : Renorm N) (Φ : Set (LField (MassGap.SUN.SU N))) :
+    Prop :=
+  RotationInvariantSepAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ Φ
+
 
 /-- **`RotationInvariantSep` is weaker than `RotationInvariant`.**
 
@@ -1153,17 +1221,31 @@ compatible with every generator. No continuity or separation is used. This is th
 `RotationInvariantSep` on the signed permutation matrices of `SO(4)`, and of `O(4)`.
 
 DERIVED: `0` is the excluded colour count; `1` and `-1` are the signs; `4` is the dimension. -/
+theorem rotation_hypercubic_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
+    (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (Rot : Matrix (Fin 4) (Fin 4) ℝ)
+    (hRot : ∃ (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ), (∀ i, s i = 1 ∨ s i = -1) ∧
+      ∀ y i, Rot.mulVec y i = s i * y (σ i))
+    {ι : Type} [Fintype ι] (F F' : ι → SField N) (hΦ : ∀ i, HypScalar (F i).1)
+    (hfield : ∀ i, (F' i).1 = (F i).1) (htest : ∀ i y, (F' i).2.1 y = (F i).2.1 (Rot.mulVec y)) :
+    contSAlong hN βs ρ F' = contSAlong hN βs ρ F := by
+  obtain ⟨σ, s, hs, hR⟩ := hRot
+  refine contSAlong_signed hN βs ρ hRefl hAxis σ s hs F F' hΦ hfield (fun i y => ?_)
+  rw [htest i y]
+  exact congrArg (F i).2.1 (funext fun j => hR y j)
+
+#print axioms rotation_hypercubic_along
+
+/-- `rotation_hypercubic` at the couplings `dyBeta`: `rotation_hypercubic_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem rotation_hypercubic (hN : N ≠ 0) (ρ : Renorm N) (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ)
     (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e) (Rot : Matrix (Fin 4) (Fin 4) ℝ)
     (hRot : ∃ (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ), (∀ i, s i = 1 ∨ s i = -1) ∧
       ∀ y i, Rot.mulVec y i = s i * y (σ i))
     {ι : Type} [Fintype ι] (F F' : ι → SField N) (hΦ : ∀ i, HypScalar (F i).1)
     (hfield : ∀ i, (F' i).1 = (F i).1) (htest : ∀ i y, (F' i).2.1 y = (F i).2.1 (Rot.mulVec y)) :
-    contS hN ρ F' = contS hN ρ F := by
-  obtain ⟨σ, s, hs, hR⟩ := hRot
-  refine contS_signed hN ρ hRefl hAxis σ s hs F F' hΦ hfield (fun i y => ?_)
-  rw [htest i y]
-  exact congrArg (F i).2.1 (funext fun j => hR y j)
+    contS hN ρ F' = contS hN ρ F :=
+  rotation_hypercubic_along hN (dyBeta (one_le_of_ne_zero hN)) ρ hRefl hAxis Rot hRot F F' hΦ hfield htest
 
 #print axioms rotation_hypercubic
 
@@ -1173,7 +1255,7 @@ fields, for the rotations that do not act as signed permutations: the hypercubic
 
 DERIVED: `0` is the excluded colour count and the sign of `d`; `1` and `-1` are the signs; `4` is the
 dimension, of `SO(4)`. -/
-def RotationOpen (hN : N ≠ 0) (ρ : Renorm N) : Prop :=
+def RotationOpenAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) : Prop :=
   ∀ Rot : Matrix (Fin 4) (Fin 4) ℝ, Rot ∈ Matrix.specialOrthogonalGroup (Fin 4) ℝ →
     (¬ ∃ (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ), (∀ i, s i = 1 ∨ s i = -1) ∧
       ∀ y i, Rot.mulVec y i = s i * y (σ i)) →
@@ -1181,20 +1263,37 @@ def RotationOpen (hN : N ≠ 0) (ρ : Renorm N) : Prop :=
       (∀ i, UniformContinuous (F i).2.1) →
       (∃ d : ℝ, 0 < d ∧ ContinuumSep.FamSep d F ∧ ContinuumSep.FamSep d F') →
       (∀ i, (F' i).1 = (F i).1) → (∀ i y, (F' i).2.1 y = (F i).2.1 (Rot.mulVec y)) →
-      contS hN ρ F' = contS hN ρ F
+      contSAlong hN βs ρ F' = contSAlong hN βs ρ F
+
+/-- `RotationOpen` at the couplings `dyBeta`: `RotationOpenAlong` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+def RotationOpen (hN : N ≠ 0) (ρ : Renorm N) : Prop :=
+  RotationOpenAlong hN (dyBeta (one_le_of_ne_zero hN)) ρ
+
 
 /-- **The open part is all that is missing**: at data compatible with every generator,
 `RotationOpen` gives `RotationInvariantSep` at the `HypScalar` fields.
 
 DERIVED: `0` is the excluded colour count; `4` is the dimension, of `SO(4)`. -/
-theorem rotationInvariantSep_of_open (hN : N ≠ 0) (ρ : Renorm N)
+theorem rotationInvariantSep_of_open_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N)
     (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ) (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e)
-    (hO : RotationOpen hN ρ) : RotationInvariantSep hN ρ {O | HypScalar O} := by
+    (hO : RotationOpenAlong hN βs ρ) : RotationInvariantSepAlong hN βs ρ {O | HypScalar O} := by
   intro Rot hRot ι _ F F' hΦ hU hsep hf ht
   by_cases hsgn : ∃ (σ : Equiv.Perm (Fin 4)) (s : Fin 4 → ℝ), (∀ i, s i = 1 ∨ s i = -1) ∧
       ∀ y i, Rot.mulVec y i = s i * y (σ i)
-  · exact rotation_hypercubic hN ρ hRefl hAxis Rot hsgn F F' hΦ hf ht
+  · exact rotation_hypercubic_along hN βs ρ hRefl hAxis Rot hsgn F F' hΦ hf ht
   · exact hO Rot hRot hsgn ι F F' hΦ hU hsep hf ht
+
+#print axioms rotationInvariantSep_of_open_along
+
+/-- `rotationInvariantSep_of_open` at the couplings `dyBeta`: `rotationInvariantSep_of_open_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem rotationInvariantSep_of_open (hN : N ≠ 0) (ρ : Renorm N)
+    (hRefl : ∀ τ : Fin 4, ρ.ReflCompat τ) (hAxis : ∀ e : Equiv.Perm (Fin 4), axisCompat ρ e)
+    (hO : RotationOpen hN ρ) : RotationInvariantSep hN ρ {O | HypScalar O} :=
+  rotationInvariantSep_of_open_along hN (dyBeta (one_le_of_ne_zero hN)) ρ hRefl hAxis hO
 
 #print axioms rotationInvariantSep_of_open
 

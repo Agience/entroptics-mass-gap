@@ -79,8 +79,7 @@ supports included. Under it:
   `latKernelF` converges to `G₂` uniformly on `sepBoxSet 0 R`, coincident points included;
   `flowKernelLimitOn_sep` restricts it to the separated sets of `ContinuumNontrivial.KernelConvergesSep`.
   At zero flow time with the connected subtraction it is that kernel extended to separation `0`.
-  With `z = canonZ` the kernel carries `a⁻⁸`, the normalisation of `ShortDistanceY.latticeTwoPoint`;
-  requirement Y describes the flowed profile `G_t(r)` in the window `√(8t) ≪ r`, where the flow
+  With `z = canonZ` the kernel carries `a⁻⁸`; requirement Y describes the flowed profile `G_t(r)` in the window `√(8t) ≪ r`, where the flow
   changes the two-point function by terms of relative order `t/r²`.
 
 ## Scope
@@ -1303,8 +1302,8 @@ sequence in the step: every zoom level reads the same flowed signal, up to an er
 both spacings shrink. Its quantifier includes coincident supports. For `Flow.ofConfScaled W_t canonZ c`,
 `W_t` the localised gradient flow at a fixed physical time `t > 0`, it is expected over all families:
 the flowed composite is smooth at the scale `√(8t)`, so overlapping test functions integrate a bounded
-flowed correlator. At zero flow time it is, through `latSF_zeroFlow`, the Cauchy form of
-`Beacon.SchwingerBeacon` for `Renorm ⟨z, c⟩`, expected to fail at coincident supports under the
+flowed correlator. At zero flow time it is, through `latSF_zeroFlow`, the Cauchy form of the
+statement for `Renorm ⟨z, c⟩`, expected to fail at coincident supports under the
 canonical factor.
 
 DERIVED: `0` is the excluded colour count. -/

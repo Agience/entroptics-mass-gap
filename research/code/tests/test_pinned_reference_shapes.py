@@ -1,14 +1,14 @@
 """The pinned reference null is calibrated per plane shape (research/code/entroptics_adapter.py).
 
-WHY. The library's ``reference_null`` is an absolute top-singular-value level with no record of the
+Why. The library's ``reference_null`` is an absolute top-singular-value level with no record of the
 (N, F) it was calibrated at, and under the 0.2.5 whitening a screen's energy is fixed at N*F, so the
 level a signal-free plane reaches is set by the plane's shape. One floor calibrated on 8x8 planes and
 applied to 6x6 and 16x16 planes read the shape, not the field: SU(3) 6x6 read 0.0000 at every
 coupling, SU(2) 16x16 read 3.59, and both read the same with each plane's values shuffled.
 
-WHAT IS PINNED HERE, at each plane shape the Sec 8.3 producers read (6x6, 8x8, 16x16):
+What is pinned here, at each plane shape the Sec 8.3 producers read (6x6, 8x8, 16x16):
 
-  * the pin REFUSES a plane shape it holds no calibration for, and a caller-supplied null that
+  * the pin refuses a plane shape it holds no calibration for, and a caller-supplied null that
     records its shape refuses another shape;
   * a planted rank-1 structure (one mode shared by every channel) is detected above the false-alarm
     level measured at the same shape through the same pin (positive control);

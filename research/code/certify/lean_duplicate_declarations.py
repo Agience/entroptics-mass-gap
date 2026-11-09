@@ -1,17 +1,17 @@
 """Find declarations the tree already proves, before another one is written.
 
 The repeated failure this exists to stop is not a missing instruction. Prior-art sweeps get run when
-a task looks big; they get skipped when a lemma looks small -- and a four-line helper is the MOST
+a task looks big; they get skipped when a lemma looks small -- and a four-line helper is the most
 likely thing to already exist, because it is what anyone would have needed. `State.map_sub` was
 written twice for that reason, and `iunshift_ishift` lives in two import-isolated namespaces.
 
 Two modes.
 
 `check NAME...` is the pre-write query: given the names about to be added, report every existing
-declaration with that name, in any namespace, plus near-misses on the same stem. Run it BEFORE
+declaration with that name, in any namespace, plus near-misses on the same stem. Run it before
 writing, which is the only time it is cheap.
 
-`scan` is the gate: normalise every declaration's STATEMENT -- the text between the binders' colon
+`scan` is the gate: normalise every declaration's statement -- the text between the binders' colon
 and the `:=` or `by` -- and report distinct names sharing one. Lean catches an exact clash inside a
 namespace; it says nothing when the same fact is proved twice under two names, or once per
 import-isolated copy of the lattice skeleton. That is the case this catches and the compiler cannot.
@@ -42,7 +42,7 @@ _DECL = re.compile(
     r"([^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*)",
     re.M)
 # A declaration may be written dotted -- `theorem State.map_sub` -- so a query for `map_sub` has to
-# match the LAST component too. Missing that is what let `State.map_sub` be written twice while a
+# match the last component too. Missing that is what let `State.map_sub` be written twice while a
 # name-only search reported nothing.
 
 
@@ -51,7 +51,7 @@ _CLOSE = ")]}⟩"
 
 
 def _statement(tail: str) -> str:
-    """The declaration's statement: everything up to the `:=` or `by` that starts its PROOF.
+    """The declaration's statement: everything up to the `:=` or `by` that starts its proof.
 
     ⛔ The first `:=` is the wrong place to stop. Lean writes named arguments the same way, so
     `(O : (wilsonSystem bd (wilsonDensity (N := N))).Config → ℝ)` truncates the statement mid-binder
@@ -122,7 +122,7 @@ def check(names: list[str]) -> int:
     hits = 0
     for want in names:
         tail = _last(want)
-        # match the full name OR the last component, so a query for `map_sub` finds `State.map_sub`
+        # match the full name or the last component, so a query for `map_sub` finds `State.map_sub`
         exact = sorted({(f, ln, n) for n, v in by_name.items()
                         if n == want or _last(n) == tail
                         for f, ln in v})
@@ -158,10 +158,10 @@ def check(names: list[str]) -> int:
     return 0
 
 
-# CHOSEN: 40 groups printed. A display cap; the COUNT on the first line is what the gate reads, and
+# CHOSEN: 40 groups printed. A display cap; the count on the first line is what the gate reads, and
 # it is not truncated.
 def scan(limit: int = 40) -> int:
-    # THEOREMS ONLY. For a theorem the signature IS the proposition, so two names sharing one are
+    # Theorems only. For a theorem the signature is the proposition, so two names sharing one are
     # proving the same fact. For a `def` the signature is only its type, and many distinct
     # definitions share a type -- `blkR`, `blkS`, `blkT` are all `(τ) (a) (m) : Finset (Link d n)`
     # and are three different sets. Including defs produced 117 hits that were almost all noise,
@@ -187,7 +187,7 @@ def scan(limit: int = 40) -> int:
     # DERIVED: `1` is "one name" -- a statement proved under more than one name is the thing being
     # detected. Not a threshold.
     dupes = {s: v for s, v in by_stmt.items()
-             # DERIVED: 1 is one name; more than one name on a statement IS
+             # DERIVED: 1 is one name; more than one name on a statement is
              # the detection.
              if len({n for _f, n, _l in v}) > 1}
     if not dupes:
@@ -196,7 +196,7 @@ def scan(limit: int = 40) -> int:
     print(f"{len(dupes)} statement(s) proved under more than one name:\n")
     for stmt, v in sorted(dupes.items(), key=lambda kv: -len(kv[1]))[:limit]:
         # CHOSEN: 110 characters of the statement per line, so a group fits a terminal. Display
-        # only; the grouping key is the FULL statement.
+        # only; the grouping key is the full statement.
         print("  " + (stmt[:110] + ("..." if len(stmt) > 110 else "")))
         for f, n, ln in sorted(v):
             print(f"      {f}:{ln}  {n}")
@@ -205,10 +205,10 @@ def scan(limit: int = 40) -> int:
 
 
 def where(names: list[str]) -> int:
-    """Where each name is declared, and the LAST of them.
+    """Where each name is declared, and the last of them.
 
     A Lean declaration must come after everything it names. Inserting a block anchored on the
-    declaration it is ABOUT, rather than on the last one it USES, puts it before something it needs;
+    declaration it is about, rather than on the last one it uses, puts it before something it needs;
     Lean then reports an unknown identifier, or autoImplicit invents a variable and the error blames
     a missing import. Four builds were spent that way before this existed. Take the `LAST` line
     printed here and anchor below it.

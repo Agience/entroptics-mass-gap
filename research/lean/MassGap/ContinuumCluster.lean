@@ -124,14 +124,25 @@ noncomputable def Yv (ρ : Renorm N) (k : ℕ) (P : Mono N) : C(Cfg N, ℝ) :=
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension; `0` is the
 reflection constant. -/
+theorem latSkRAlong_pairFam_eq (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hR : ρ.ReflCompat τ) (k : ℕ) (P Q : Mono N) :
+    latSkRAlong hN βs ρ k (pairFam τ P Q)
+      = stateAlong hN βs k (LatticeReflection.ireflObs τ 0 (Yv ρ k P) * Yv ρ k Q) := by
+  rw [latSkRAlong_pairFam hN βs ρ τ hR]
+  unfold latSkAlong
+  rw [latS_pairFam _ (dySpacing_pos (one_le_of_ne_zero hN) k)]
+  unfold Yv
+  rw [map_smul, smul_mul_smul_comm, (stateAlong hN βs k).map_smul]
+
+/-- **Every renormalised reflected Schwinger function is a reflected pairing of vectors**, at the
+couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
 theorem latSkR_pairFam_eq (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
     (P Q : Mono N) :
     latSkR hN ρ k (pairFam τ P Q)
-      = stateK hN k (LatticeReflection.ireflObs τ 0 (Yv ρ k P) * Yv ρ k Q) := by
-  rw [latSkR_pairFam hN ρ τ hR, latSk_eq,
-    latS_pairFam _ (dySpacing_pos (one_le_of_ne_zero hN) k)]
-  unfold Yv
-  rw [map_smul, smul_mul_smul_comm, (stateK hN k).map_smul]
+      = stateK hN k (LatticeReflection.ireflObs τ 0 (Yv ρ k P) * Yv ρ k Q) :=
+  latSkRAlong_pairFam_eq hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k P Q
 
 /-- DERIVED: `1` is the empty product. -/
 theorem Yv_empty (ρ : Renorm N) (k : ℕ) : Yv ρ k (emptyMono N) = 1 := by
@@ -180,6 +191,51 @@ theorem Yv_mem (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (k : ℕ) (P : Mono N
       ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0 :=
     Submodule.mem_inf.mpr ⟨h1, h2⟩
   exact Submodule.smul_mem _ _ h3
+
+/-- **The transfer data of step `k` along `βs`**: the gauge-invariant transfer data at the periodic
+state of the coupling `βs k`, for the plane `x_τ = 0`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension; `0` is the
+plane. -/
+noncomputable def DkAlong (hN : N ≠ 0) (βs : ℕ → ℝ) (τ : Fin 4) (k : ℕ) :
+    Transfer.TransferData
+      ↥(GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0) :=
+  PeriodicState.periodicGaugeInvData τ 0 hN (βs k)
+
+/-- The form of `DkAlong` is the reflected pairing in the state of step `k` along `βs`.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension; `0` is the
+plane and the reflection constant. -/
+theorem DkAlong_form (hN : N ≠ 0) (βs : ℕ → ℝ) (τ : Fin 4) (k : ℕ)
+    (y x : ↥(GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)) :
+    (DkAlong hN βs τ k).form y x
+      = stateAlong hN βs k
+          (LatticeReflection.ireflObs τ 0 (y : C(Cfg N, ℝ)) * (x : C(Cfg N, ℝ))) :=
+  rfl
+
+/-- DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension; `0` is the
+plane; `1` is the unit observable. -/
+theorem DkAlong_vac (hN : N ≠ 0) (βs : ℕ → ℝ) (τ : Fin 4) (k : ℕ) :
+    (((DkAlong hN βs τ k).vac
+      : ↥(GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0))
+      : C(Cfg N, ℝ)) = 1 :=
+  rfl
+
+/-- The `n`-th power of the transfer operator along `βs` is the `n`-fold unit shift.
+
+DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension; `0` is the
+plane. -/
+theorem DkAlong_T_pow (hN : N ≠ 0) (βs : ℕ → ℝ) (τ : Fin 4) (k n : ℕ)
+    (x : ↥(GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)) :
+    ((((DkAlong hN βs τ k).T ^ n) x
+        : ↥(GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0))
+        : C(Cfg N, ℝ))
+      = (⇑(MassGap.ReflectionShift.ishiftObsL τ))^[n] (x : C(Cfg N, ℝ)) := by
+  induction n generalizing x with
+  | zero => simp
+  | succ n ih =>
+    rw [pow_succ, Module.End.mul_apply, ih, Function.iterate_succ_apply]
+    rfl
 
 /-- The transfer data of step `k`: the gauge-invariant transfer data at the periodic state of the
 coupling `dyBeta k`, for the plane `x_τ = 0`.
@@ -252,6 +308,50 @@ renormalised Schwinger functions): with `S_k = latSkR hN ρ k`,
 
 DERIVED: `0` is the excluded colour count, the plane and the sign of `r` and of `Y`; `4` in `Fin 4`
 is the spacetime dimension; `2` is the square. -/
+theorem lattice_cluster_along (hN : N ≠ 0) (βs : ℕ → ℝ) (ρ : Renorm N) (τ : Fin 4)
+    (hR : ρ.ReflCompat τ) (k : ℕ)
+    {r : ℝ} (hr : 0 ≤ r) (hg : TransferGap.GapAt (DkAlong hN βs τ k) r) (P Q : Mono N)
+    (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (hQ : Yv ρ k Q ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
+    (n : ℕ) :
+    (latSkRAlong hN βs ρ k (pairFam τ P (Mono.shift (site (dySpacing N k) (axisVec τ n)) Q))
+        - latSkRAlong hN βs ρ k (pairFam τ P (emptyMono N)) * latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q))
+          ^ 2
+      ≤ r ^ (2 * n) * (latSkRAlong hN βs ρ k (pairFam τ P P)
+          * (latSkRAlong hN βs ρ k (pairFam τ Q Q) - latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q) ^ 2))
+    ∧ 0 ≤ latSkRAlong hN βs ρ k (pairFam τ P P)
+          * (latSkRAlong hN βs ρ k (pairFam τ Q Q) - latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q) ^ 2) := by
+  have ha := dySpacing_pos (one_le_of_ne_zero hN) k
+  have h := TransferGap.clustering_sq (DkAlong hN βs τ k) hr hg n ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k P, hP⟩
+  have hY := mul_nonneg ((DkAlong hN βs τ k).form_nonneg ⟨Yv ρ k P, hP⟩)
+    ((DkAlong hN βs τ k).form_nonneg (TransferGap.vacProj (DkAlong hN βs τ k) ⟨Yv ρ k Q, hQ⟩))
+  have e1 : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ (((DkAlong hN βs τ k).T ^ n) ⟨Yv ρ k Q, hQ⟩)
+      = latSkRAlong hN βs ρ k (pairFam τ P (Mono.shift (site (dySpacing N k) (axisVec τ n)) Q)) := by
+    rw [DkAlong_form, DkAlong_T_pow, ishiftObsL_iterate, Yv_shift ρ k ha _ Q,
+      latSkRAlong_pairFam_eq hN βs ρ τ hR k P (Mono.shift (site (dySpacing N k) (axisVec τ n)) Q)]
+  have e2 : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ (DkAlong hN βs τ k).vac
+      = latSkRAlong hN βs ρ k (pairFam τ P (emptyMono N)) := by
+    rw [DkAlong_form, DkAlong_vac, latSkRAlong_pairFam_eq hN βs ρ τ hR k P (emptyMono N), Yv_empty]
+  have e3 : (DkAlong hN βs τ k).form (DkAlong hN βs τ k).vac ⟨Yv ρ k Q, hQ⟩
+      = latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q) := by
+    rw [DkAlong_form, DkAlong_vac, latSkRAlong_pairFam_eq hN βs ρ τ hR k (emptyMono N) Q, Yv_empty]
+  have e4 : (DkAlong hN βs τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkRAlong hN βs ρ k (pairFam τ P P) := by
+    rw [DkAlong_form, latSkRAlong_pairFam_eq hN βs ρ τ hR k P P]
+  have e5 : (DkAlong hN βs τ k).form (TransferGap.vacProj (DkAlong hN βs τ k) ⟨Yv ρ k Q, hQ⟩)
+        (TransferGap.vacProj (DkAlong hN βs τ k) ⟨Yv ρ k Q, hQ⟩)
+      = latSkRAlong hN βs ρ k (pairFam τ Q Q) - latSkRAlong hN βs ρ k (pairFam τ (emptyMono N) Q) ^ 2 := by
+    rw [form_vacProj, (DkAlong hN βs τ k).toPreForm.form_symm _ (DkAlong hN βs τ k).vac, e3, DkAlong_form,
+      latSkRAlong_pairFam_eq hN βs ρ τ hR k Q Q]
+  rw [e1, e2, e3, e4, e5] at h
+  rw [e4, e5] at hY
+  exact ⟨h, hY⟩
+
+#print axioms lattice_cluster_along
+
+/-- **Clustering at step `k` from a `GapAt` rate**, at the couplings `dyBeta`.
+
+DERIVED: `0` is the excluded colour count, the plane and the sign of `r`; `4` in `Fin 4` is the
+spacetime dimension; `2` is the square. -/
 theorem lattice_cluster (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.ReflCompat τ) (k : ℕ)
     {r : ℝ} (hr : 0 ≤ r) (hg : TransferGap.GapAt (Dk hN τ k) r) (P Q : Mono N)
     (hP : Yv ρ k P ∈ GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ 0)
@@ -263,33 +363,42 @@ theorem lattice_cluster (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.Ref
       ≤ r ^ (2 * n) * (latSkR hN ρ k (pairFam τ P P)
           * (latSkR hN ρ k (pairFam τ Q Q) - latSkR hN ρ k (pairFam τ (emptyMono N) Q) ^ 2))
     ∧ 0 ≤ latSkR hN ρ k (pairFam τ P P)
-          * (latSkR hN ρ k (pairFam τ Q Q) - latSkR hN ρ k (pairFam τ (emptyMono N) Q) ^ 2) := by
-  have ha := dySpacing_pos (one_le_of_ne_zero hN) k
-  have h := TransferGap.clustering_sq (Dk hN τ k) hr hg n ⟨Yv ρ k Q, hQ⟩ ⟨Yv ρ k P, hP⟩
-  have hY := mul_nonneg ((Dk hN τ k).form_nonneg ⟨Yv ρ k P, hP⟩)
-    ((Dk hN τ k).form_nonneg (TransferGap.vacProj (Dk hN τ k) ⟨Yv ρ k Q, hQ⟩))
-  have e1 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ (((Dk hN τ k).T ^ n) ⟨Yv ρ k Q, hQ⟩)
-      = latSkR hN ρ k (pairFam τ P (Mono.shift (site (dySpacing N k) (axisVec τ n)) Q)) := by
-    rw [Dk_form, Dk_T_pow, ishiftObsL_iterate, Yv_shift ρ k ha _ Q,
-      latSkR_pairFam_eq hN ρ τ hR k P (Mono.shift (site (dySpacing N k) (axisVec τ n)) Q)]
-  have e2 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ (Dk hN τ k).vac
-      = latSkR hN ρ k (pairFam τ P (emptyMono N)) := by
-    rw [Dk_form, Dk_vac, latSkR_pairFam_eq hN ρ τ hR k P (emptyMono N), Yv_empty]
-  have e3 : (Dk hN τ k).form (Dk hN τ k).vac ⟨Yv ρ k Q, hQ⟩
-      = latSkR hN ρ k (pairFam τ (emptyMono N) Q) := by
-    rw [Dk_form, Dk_vac, latSkR_pairFam_eq hN ρ τ hR k (emptyMono N) Q, Yv_empty]
-  have e4 : (Dk hN τ k).form ⟨Yv ρ k P, hP⟩ ⟨Yv ρ k P, hP⟩ = latSkR hN ρ k (pairFam τ P P) := by
-    rw [Dk_form, latSkR_pairFam_eq hN ρ τ hR k P P]
-  have e5 : (Dk hN τ k).form (TransferGap.vacProj (Dk hN τ k) ⟨Yv ρ k Q, hQ⟩)
-        (TransferGap.vacProj (Dk hN τ k) ⟨Yv ρ k Q, hQ⟩)
-      = latSkR hN ρ k (pairFam τ Q Q) - latSkR hN ρ k (pairFam τ (emptyMono N) Q) ^ 2 := by
-    rw [form_vacProj, (Dk hN τ k).toPreForm.form_symm _ (Dk hN τ k).vac, e3, Dk_form,
-      latSkR_pairFam_eq hN ρ τ hR k Q Q]
-  rw [e1, e2, e3, e4, e5] at h
-  rw [e4, e5] at hY
-  exact ⟨h, hY⟩
+          * (latSkR hN ρ k (pairFam τ Q Q) - latSkR hN ρ k (pairFam τ (emptyMono N) Q) ^ 2) :=
+  lattice_cluster_along hN (dyBeta (one_le_of_ne_zero hN)) ρ τ hR k hr hg P Q hP hQ n
 
 #print axioms lattice_cluster
+
+/-- **The uniform physical gap along a coupling tower, at physical rate `M`.** Eventually in the step
+`k`, the gauge-invariant transfer data at the coupling `βs k` has `GapAt` at a rate `r > 0` with
+`−log r ≥ M · dySpacing N k`: a lattice mass of at least `M` in the units of the dyadic spacing.
+
+DERIVED: `0` is the excluded colour count, the plane and the sign of `r`; `4` in `Fin 4` is the
+spacetime dimension. -/
+def TowerGapAt (hN : N ≠ 0) (τ : Fin 4) (βs : ℕ → ℝ) (M : ℝ) : Prop :=
+  ∀ᶠ k in atTop, ∃ r : ℝ, 0 < r ∧ TransferGap.GapAt (DkAlong hN βs τ k) r
+    ∧ M * dySpacing N k ≤ -Real.log r
+
+/-- **`FixedWindowDecay` gives the tower gap along `dyBeta`.** At `2 ≤ N` and a window `L > 0`,
+`WeakCouplingWindow.gapAt_physical_of_fixedWindowDecay` gives a rate at every large coupling with
+`c/L ≤ −log r / aRun N β`; along `dyBeta k → ∞` the spacing `aRun N (dyBeta k)` is `dySpacing N k`
+(`aRun_dyBeta`).
+
+DERIVED: `2 ≤ N` is `gapAt_physical_of_fixedWindowDecay`'s; `0` is the excluded colour count, the
+plane of `FixedWindowDecay τ 0` and the sign of `c` and `L`; `4` in `Fin 4` is the spacetime
+dimension. -/
+theorem towerGapAt_dyBeta_of_fixedWindowDecay (hN2 : 2 ≤ N) (hN : N ≠ 0) (τ : Fin 4) {L : ℝ}
+    (hL : 0 < L) (hW : WeakCouplingWindow.FixedWindowDecay τ 0 hN L) :
+    ∃ c : ℝ, 0 < c ∧ TowerGapAt hN τ (dyBeta (one_le_of_ne_zero hN)) (c / L) := by
+  have hN1 := one_le_of_ne_zero hN
+  obtain ⟨c, hc, hev⟩ := WeakCouplingWindow.gapAt_physical_of_fixedWindowDecay τ 0 hN2 hN hL hW
+  refine ⟨c, hc, ?_⟩
+  filter_upwards [(tendsto_dyBeta hN1).eventually hev] with k hk
+  obtain ⟨r, hg, hclay, hrate⟩ := hk
+  refine ⟨r, hclay.1, hg, ?_⟩
+  rw [aRun_dyBeta, le_div_iff₀ (dySpacing_pos hN1 k)] at hrate
+  exact hrate
+
+#print axioms towerGapAt_dyBeta_of_fixedWindowDecay
 
 /-- **OS4 for the limit, derived from `FixedWindowDecay`.** At `2 ≤ N`, a window `L > 0`,
 `FixedWindowDecay τ 0 hN L`, `UniformBound` and reflection-compatible data, there is `c > 0` such that

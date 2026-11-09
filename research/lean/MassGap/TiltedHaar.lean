@@ -445,7 +445,7 @@ theorem tilt_mean_le (H : HaarConsts P X) (hX : Continuous X) (hX1 : ∀ g, ‖X
 
 #print axioms tilt_mean_le
 
-/-- **THE TILTED CONSTANTS FROM THE HAAR CONSTANTS** (`tilt_second_le`, `tilt_mean_le`).
+/-- **The tilted constants from the Haar constants** (`tilt_second_le`, `tilt_mean_le`).
 
 DERIVED: `0` is the lower end of `κ` and `s`; `3` is the range of the `exp` bounds; `1` is the norm
 bound of the feature; `2` is the square in `s²`. -/

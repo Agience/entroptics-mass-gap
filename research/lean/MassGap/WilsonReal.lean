@@ -1139,6 +1139,8 @@ theorem sysInt_gauge_invariant (g : G2) (β : ℝ) (O : sysInt.Config → ℝ) :
 DERIVED: `7` is the link count; the two index lists are the links `bdInt 0` and `bdInt 1` traverse,
 which overlap at `3`. -/
 def blockIntA : Finset (Fin 7) := {0, 1, 2, 3}
+/-- The link block `{3, 4, 5, 6}` of `sysInt`'s second plaquette. DERIVED: `7` is the link count; `3`, `4`,
+`5`, `6` the links `bdInt 1` traverses, `3` the link shared with `blockIntA`. -/
 def blockIntB : Finset (Fin 7) := {3, 4, 5, 6}
 
 /-- `(3 : Fin 7) ∈ blockIntA ∧ (3 : Fin 7) ∈ blockIntB`, by `decide`: link `3` belongs to both

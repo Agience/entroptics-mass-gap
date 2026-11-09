@@ -1,18 +1,18 @@
 """regen_all.py -- the one entry point that regenerates every committed artifact.
 
-    python research/regen_all.py --list              # what exists, what owns it, what it costs
-    python research/regen_all.py                     # regenerate everything runnable here
-    python research/regen_all.py --phase data        # data | figures | certify
-    python research/regen_all.py --only 8_7          # substring match on the owner script
-    python research/regen_all.py --verify            # regenerate nothing; compare artifacts to git HEAD
-    python research/regen_all.py --include-heavy     # also run the jobs flagged bigmem/gpu
+    python research/data/regen_all.py --list          # what exists, what owns it, what it costs
+    python research/data/regen_all.py                 # regenerate everything runnable here
+    python research/data/regen_all.py --phase data    # data | figures | certify
+    python research/data/regen_all.py --only plot      # substring match on the owner script
+    python research/data/regen_all.py --verify        # regenerate nothing; compare artifacts to git HEAD
+    python research/data/regen_all.py --include-heavy # also run the jobs flagged bigmem/gpu
 
 Why this file exists
 --------------------
-Each committed ``*_dat_*.csv`` is produced by exactly ONE script (its OWNER). Several observables are
+Each committed ``*_dat_*.csv`` is produced by exactly one script (its owner). Several observables are
 written by more than one script at different schemas, so running a NON-owner overwrites the artifact
 with a different shape -- which is why the mapping matters, and why it lives here, in code, instead
-of in prose that cannot be executed. ``OWNERS`` below IS the provenance table.
+of in prose that cannot be executed. ``OWNERS`` below is the provenance table.
 
 Resource classes
 ----------------
@@ -22,25 +22,18 @@ Resource classes
             reads as "needs more time" rather than as a fault.
 ``bigmem``  needs a large-memory host. The Koopman splice carries a dense F x F operator; at L=16,
             F = 13824, about 1.4 GiB per array with three live at once. Reducing the config count
-            does NOT help -- F is fixed by the lattice size, not by how many configs are read.
+            does not help -- F is fixed by the lattice size, not by how many configs are read.
 ``gpu``     wants CUDA to be practical. Runs on CPU, slowly.
 ``build``   not a measurement at all: it elaborates the Lean tree on the build host. Its cost is the
             build's, not this machine's, and it is the one class here that cannot be timed locally.
 
-Classes are set from MEASUREMENT, not from reading the code: every one of them has been corrected
+Classes are set from measurement, not from reading the code: every one of them has been corrected
 at least once by a job being killed or timed out. When a job dies for want of a resource, move it
 to the class that matches what it actually took, and say so in a comment beside it.
 
 ``--include-heavy`` is required for ``bigmem``/``gpu``, so a default run cannot silently skip them
 without saying so, and cannot silently spend hours either. Skips are always reported.
 
-Two facts about the artifacts that the table cannot carry
----------------------------------------------------------
-* The ``*_regen_*`` owners read the frozen link store and take a deterministic first-``N``
-  ``[:ncap]`` slice. That cap is REPORTED, in the per-row ``n``: it is the shard count available at
-  freeze, not a post-hoc selection of "the configs that worked."
-* ``mu`` is all-zero in ``8_3_dat_nobump.csv`` because the measured maximal-correlation tension is
-  ``mu ~ 0`` in BOTH phases. That column is a genuine read of zero, not a missing one.
 """
 from __future__ import annotations
 
@@ -63,163 +56,35 @@ REPO = RESEARCH.parent
 sys.path.insert(0, str(RESEARCH / "code"))
 import store_path                                 # noqa: E402  -- needs the path above
 DATA, CERT = HERE, RESEARCH / "code" / "certify"
+OBSERVER = RESEARCH / "code" / "observer"
+FIGURES = RESEARCH / "paper" / "figures"
 
 # artifact(s)                                    owner script                              dir   phase      cost
 OWNERS = [
-    (["8_3_dat_ksignal_planescale.csv"],         "8_3_run_ksignal_planescale.py",          DATA, "data",    "cpu"),
-    (["8_3_dat_nobump.csv", "8_3_fig_nobump.png"],
-                                                 "8_3_regen_from_store.py",                DATA, "data",    "cpu"),
-    (["8_3_dat_confinement_order_parameter.csv"],
-                                                 "8_3_run_confinement_order_parameter.py", DATA, "data",    "cpu"),
-    (["8_4_dat_disorder_response.csv", "8_4_fig_disorder_response.png"],
-                                                 "8_4_regen_from_store.py",                DATA, "data",    "cpu"),
-    # `--mode full` is the configuration the committed table was measured at (six masses, 8x8x64,
-    # n=40); the script's own default is the coarse `quick` run.  The reproduction recipe is part
-    # of the provenance, so it is recorded here rather than left to whoever types the command.
-    (["8_5_dat_gap_calibration.csv", "8_5_fig_gap_calibration.png"],
-                                                 "8_5_run_gap_calibration.py --mode full",  DATA, "data",   "cpu"),
-    (["8_6_dat_benchmark.csv", "8_6_fig_benchmark.png"],
-                                                 "8_6_run_benchmark.py",                   DATA, "data",    "cpu"),
-    (["8_6_dat_probe.csv"],                      "8_6_run_probe.py",                       DATA, "data",    "cpu"),
-    # APE-smears 512 SU(2) link configurations through the generator backend (`_Backend(DEV)`),
-    # four smearing levels deep. It was written for CUDA and its DEV default said so. On the
-    # CPU it took 40 min to finish one of the four levels, and they get heavier: this is a gpu
-    # job, and calling it cpu2h sent it to a host that could only crawl through it.
-    (["8_7_dat_transfer_gap.csv", "8_7_dat_transfer_pencil.csv", "8_7_dat_meta.csv"],
-                                                 "8_7_run_transfer_gap.py",                DATA, "data",    "gpu"),
-    (["8_7_dat_mhi_lscan.csv"],                  "8_7_run_mhi_lscan.py",                   DATA, "data",    "long"),
-    (["8_7_dat_mhi_multicoupling.csv"],          "8_7_run_mhi_multicoupling.py",           DATA, "data",    "cpu2h"),
-    (["9_1_dat_d2_bound.csv", "9_1_fig_d2_bound.png"],
-                                                 "9_1_run_d2_bound.py",                    DATA, "data",    "cpu2h"),
-    (["9_1_dat_d2_certified.csv", "9_1_fig_d2_certified.png"],
-                                                 "9_1_run_d2_certify.py",                  DATA, "data",    "cpu2h"),
-    (["9_1_dat_d2_su3.csv", "9_1_fig_d2_su3.png"],
-                                                 "9_1_run_d2_su3.py",                      DATA, "data",    "cpu2h"),
-
-    # Figures drawn FROM the CSVs above, so they run after the data phase.
-    (["8_6_fig_probe.png"],                      "8_6_fig_probe.py",                       DATA, "figures", "cpu"),
-    (["8_7_fig_mhi_lscan.png"],                  "8_7_fig_mhi_lscan.py",                   DATA, "figures", "cpu"),
-    (["8_7_fig_transfer_gap.png"],               "8_7_fig_transfer_gap.py",                DATA, "figures", "cpu"),
-
-    # Certifications print a verdict; none of them writes a committed artifact. The string tension
-    # did, so it moved to research/data as 8_8_run_string_tension.py -- a measurement that emits
-    # tables belongs with the other 8_x producers, not among the verdict printers.
-    # Re-reads 8_7_dat_gap_correlator.csv and 8_8_dat_string_tension.csv and asks Sec 8.7b's two
-    # questions at FIXED (operator, smearing, tau) -- taking no minimum, so no admissibility
-    # tolerance exists to choose. Pure post-processing of committed tables: seconds, no ensembles.
-    (["9_8_dat_fixed_selection.csv"],            "fixed_selection_of_scaling.py",          CERT, "certify", "cpu"),
-    # Evaluates `ZeroMode.zero_mode_lt_of_tension` on the ensemble: the machine-checked theorem
-    # turns one measured aperture into a ceiling on the gapless weight, and the antipodal lag
-    # measures that weight independently. REFUSES if the two ever contradict.
-    (["9_9_dat_zero_mode_bound.csv"],            "zero_mode_bound_of_measurement.py",      CERT, "certify", "bigmem"),
-    # How large a gap the aperture criterion can certify at aperture n, derived from kappa_0 and the
-    # circle geometry alone -- no ensemble is read. The cosine average of a single transfer mode is
-    # geometric, hence exact in closed form, and the certified rate is capped at C/n with
-    # C = 10.9887. The cap is on the APERTURE and not on the box: `ScreenedGap.gap_bound_box_
-    # independent` carries the box as a parameter and never uses it, so this is not a no-go for the
-    # thermodynamic limit. Seconds, arbitrary precision.
-    (["9_10_dat_aperture_cap.csv"],              "aperture_cap_of_floor.py",               CERT, "certify", "cpu"),
-    # The measurement that cap leaves open: does the read still deliver a gap when a FIXED window
-    # looks into an ever-larger system? Reads configs_box_su2_b2.40 -- one beta, one T, four boxes --
-    # and compares the box-to-box variation of Delta against its within-box reseeding spread. On the
-    # action density it returns NO VERDICT rather than a number: the correlation length is the
-    # gluelump scale, about one lattice spacing, so the read sits at its own Nyquist limit. The
-    # series it needs is a smeared operator, which the generator now supports (--smear).
-    (["9_12_dat_gap_of_box.csv"],                "gap_of_box_at_fixed_aperture.py",        CERT, "certify", "bigmem"),
-    # The same question through the OPERATOR read, which is the one that can answer it. The
-    # aperture splice forms an L^3 x L^3 covariance against a fixed sample count, so growing
-    # the box degrades its estimator and the series cannot separate box from conditioning.
-    # The zero-momentum operator's moment pencil has dimension = ORDER, flat in L, and a
-    # bigger box makes O(t) quieter rather than noisier. Reads smeared operator shards.
-    (["9_13_dat_gap_of_box_operator.csv"],       "gap_of_box_operator.py",                 CERT, "certify", "cpu"),
-    # The exact-rational pivot certificate for the SU(2) cell across the crossover coupling range,
-    # and the generator of `lean/MassGap/CellPivot.lean` (--emit-lean). One computation feeds
-    # both, which is why the artifact and the Lean statement cannot disagree. Pure arithmetic:
-    # no store, no GPU, no measurement.
-    (["9_14_dat_cell_pivot_certificate.csv"],    "cell_pivot_certificate.py",              CERT, "certify", "cpu"),
-    ([],                                         "interval_enclosure.py",                  CERT, "certify", "cpu"),
+    # The small-volume enclosure prints a verdict and writes no committed artifact.
     ([],                                         "small_volume_enclosure.py",              CERT, "certify", "cpu"),
-    (["7_dat_floor_ladder_exact.csv"],           "floor_ladder_exact.py",                  CERT, "certify", "cpu"),
-    ([],                                         "beta_star_enclosure.py",                 CERT, "certify", "cpu"),
-    # Writes BOTH 8_6 free-field tables. It was absent from this list while both files were
-    # committed, so nothing recorded how to regenerate either -- exactly what
-    # test_every_committed_artifact_has_exactly_one_owner exists to catch. `cpu`: the exact half is
-    # Wick contraction on an L^4 torus, no Monte Carlo and no RNG. The measured half reads the
-    # ensemble store when it is configured and skips with a message when it is not, so the row runs
-    # either way; the paper's weak-end constants come from the exact half.
-    (["8_6_dat_free_field_muinf.csv", "8_6_dat_free_field_measured.csv"],
-                                                 "free_field_muinf.py",                    CERT, "certify", "cpu"),
-    # gap_of_margin and gap_of_maximal_correlation were SIGKILLed (rc=-9, cgroup oom_kill) at the
-    # cpu2h envelope of 8 GB; they are Koopman-splice readers like the two below, so they are bigmem.
-    # gap_of_margin.py now writes data/9_2_dat_margin_aperture.csv (the table it has always printed;
-    # Sec 12 transcribes it by hand and nothing could check that). Add it to this row's artifact list
-    # once the first regenerated copy is committed -- listing it before then breaks the invariant that
-    # OWNERS never promises an artifact git does not carry (test_every_listed_artifact_is_actually_tracked).
-    (["9_2_dat_margin_aperture.csv"],            "gap_of_margin.py",                       CERT, "certify", "bigmem"),    # lean_axiom_footprints.py runs `lake build` and writes data/13_dat_axiom_footprints.csv --
-    # the footprint table Sec 13 states, captured from the build instead of left in its log. Add
-    # the artifact to this row once the first generated copy is committed (listing it earlier
-    # breaks test_every_listed_artifact_is_actually_tracked).
-    (["13_dat_axiom_footprints.csv"],            "lean_axiom_footprints.py",               CERT, "certify", "build"),    ([],                                         "gap_of_maximal_correlation.py",          CERT, "certify", "bigmem"),
-    # Writes data/9_3_dat_crossover_grid.csv (the dense-beta <d^2> grid and its 99.9% empirical-
-    # Bernstein uppers). Add it to this row once the first generated copy is committed.
-    (["9_3_dat_crossover_grid.csv"],             "ym_crossover_confinement_of_grid.py",    CERT, "certify", "cpu"),    # timed out at 7200s with work still to do -- it is a long job, not an 8 GB one.
-    # Writes data/9_4_dat_interior_mixing_grid.csv (the dense-beta rho'(1) grid and its one-sided
-    # 99.9% uppers). Add it to this row once the first generated copy is committed.
-    (["9_4_dat_interior_mixing_grid.csv"],       "interior_mixing_of_analytic_grid.py",    CERT, "certify", "long"),    # Writes data/9_6_dat_gap_refinement.csv (Delta and a_delta per group/beta/L, with the
-    # resolved|weak|gapless|unresolved tag). Add it once the first copy is committed.
-    ([],                                         "gap_refinement_invariant.py",            CERT, "certify", "bigmem"),
-    # Writes data/9_5_dat_apriori_a1.csv (the A1 conjunction table: Delta(L) per ensemble, and
-    # mu / contrast / K_signal at L=16). Add it to this row once the first copy is committed.
-    ([],                                         "apriori_A1.py",                          CERT, "certify", "bigmem"),
-    # that WilsonAnalytic.wilson_le_uniform_of_clustering_total consumes: the Lean interior needs
-    # ONE K covering every volume and coupling, and this measures whether the data offers one.
-    # Add it to this row once the first generated copy is committed.
-    # Writes data/9_7_dat_centre_dominance.csv (Inputs 3 and 4: rho'_coset(1) and sigma_Z/sigma
-    # per beta). Add it to this row once the first generated copy is committed.
-    (["9_7_dat_centre_dominance.csv"],           "string_tension_eq_centre.py",            CERT, "certify", "gpu"),    # Reads the archived L=16 SU(2) links (configs_links_su2, dataset [D]); it does not generate its
-    # own L=8 ensemble. L=8 caps R at L/2=4, leaving three points for the three-parameter potential
-    # fit V0 + sigma R - e/R -- an exactly-determined system whose slope carries no information, and
-    # the script refuses it outright. Defaults ARE the committed configuration (source=links,
-    # beta=2.30, NSMEAR=24), so a bare run reproduces both tables.
-    # The raw correlator every Sec 8.6-8.7 gap number is extracted from, measured with no read on
-    # top of it. Owned because the finding that it carries no plateau is a MEASUREMENT, and a
-    # measurement that lives only in prose is not reproducible.
-    (["8_7_dat_gap_correlator.csv"],             "8_7_run_gap_correlator.py",              DATA, "data",    "gpu"),
-    (["8_7_fig_gap_correlator.png"],             "8_7_fig_gap_correlator.py",              DATA, "figures", "cpu"),
-    (["8_8_dat_string_tension.csv", "8_8_dat_string_tension_curves.csv"],
-                                                 "8_8_run_string_tension.py",              DATA, "data",    "gpu"),
-    (["8_8_fig_string_tension.png"],             "8_8_fig_string_tension.py",              DATA, "figures", "cpu"),
+    # lean_axiom_footprints.py runs `lake build` and writes data/13_dat_axiom_footprints.csv --
+    # the footprint table section 11 of the paper states, captured from the build instead of left in its log.
+    (["13_dat_axiom_footprints.csv"],            "lean_axiom_footprints.py",               CERT, "certify", "build"),
 
-    # Not a paper section: this one measures the DATA RELEASE. For every ensemble it differences
+    # Not a paper section: this one measures the data release. For every ensemble it differences
     # the mean action density the shards ship against an equilibrium measured here, so that
     # "these are equilibrium samples" is an executable claim rather than a statement in prose.
     # `therm` records the sweeps a campaign ran; the sweeps required grow with beta and volume, so
     # adequacy is established per ensemble by this measurement.
     (["store_dat_thermalisation.csv"],           "store_run_thermalisation.py",            DATA, "data",    "gpu"),
-    # Whether the equilibrium reference BRACKETS the value it is compared against: the same chain
-    # from a hot start and from a cold one. `gpu` because it is four 20000-sweep U(1) chains and
-    # touches no store -- it generates its own configurations, like the reference it audits.
-    (["store_dat_u1_reference_bracket.csv"],     "store_check_u1_reference_bracket.py",    DATA, "data",    "gpu"),
-    # --- seven artifacts that had no owner until 2026-09-16 -------------------------------------
-    # Each producer was established by reading which script WRITES the file, not which mentions it:
-    # `junction_residuals_of_measurement.py` READS 8_7_dat_gap_su3 and 9_3_dat_substrate_of_aperture
-    # and writes neither, which is why a grep for the filename names the wrong owner twice.
-    #
-    # Every class below is MEASURED, per this module's own rule, with threads capped and one run at a
-    # time. Reading the ensemble store does NOT by itself imply a long job, and that is the
-    # distinction these rows record: `8_7_run_gap_su3` (122 s) and `ym_confinement_of_cos_average`
-    # (101 s) both read the store and are still `cpu`, because the first resolves to 5 SU(3) points at
-    # L = 6, 8, 12 and the second to L=16 profiles with no dense operator. Only
-    # `ym_substrate_bound_of_aperture` is `cpu2h`: it scans every aperture the store holds at every
-    # coupling, and exceeded ten minutes even after its shard-header lookup was memoised.
-    # The two CSV-only jobs are 2.93 s and 0.26 s.
-    (["8_7_dat_gap_su3.csv"],                    "8_7_run_gap_su3.py",                     DATA, "data",    "cpu"),
-    (["9_2_dat_confinement_cos.csv"],            "ym_confinement_of_cos_average.py",       CERT, "certify", "cpu"),
-    (["9_3_dat_substrate_of_aperture.csv"],      "ym_substrate_bound_of_aperture.py",      CERT, "certify", "cpu2h"),
-    (["9_3_fig_substrate_of_aperture.png"],      "9_3_fig_substrate_of_aperture.py",       DATA, "figures", "cpu"),
-    (["9_5_dat_u1_discriminator.csv"],           "u1_discriminator_of_read.py",            CERT, "certify", "cpu"),
-    (["9_6_dat_junction_residuals.csv"],         "junction_residuals_of_measurement.py",   CERT, "certify", "cpu"),
-    (["9_7_dat_smeared_channel.csv"],            "smeared_channel_of_spacing.py",          CERT, "certify", "cpu"),
+
+    # The paper's figures. Each plotted number is read from research/data/observer/; the two
+    # diagrams are drawn from the paper's definitions. No store, no GPU.
+    (["obs_fig_observer.png", "obs_fig_correlator.png", "obs_fig_cube_moments.png",
+      "obs_fig_influence_row.png", "obs_fig_step.png", "obs_fig_bore.png"],
+                                                 "plot_observer.py",                       OBSERVER, "figures", "cpu"),
+
+    # The four figures embedded in the paper, from closed forms transcribed from the Lean
+    # definitions: no data, no store, no GPU. They are written beside the script, in
+    # research/paper/figures/ (fig_*.pdf and fig_*.png), not in research/data, so the artifact list
+    # here -- which names research/data artifacts only -- is empty.
+    ([],                                         "make_figures.py",                        FIGURES, "figures", "cpu"),
 ]
 
 # `build` is a Lean/Mathlib compile, not a read: it needs the toolchain and a warm .lake, and it
@@ -230,44 +95,13 @@ BUDGET = {"cpu": 1800, "cpu2h": 7200, "long": 28800, "bigmem": 28800, "gpu": 144
 PHASES = ("data", "figures", "certify")
 
 # Peak resident memory a job in each class needs, in GB. Measured (VmHWM) rather than estimated:
-# a value that is too low here takes the host down rather than failing a job.
-# The Koopman splice carries a dense F x F operator, F = 13824 at L=16, with several live at once
-# over the whole ensemble, and that is what makes `bigmem` what it is.
-#
-# Peaks observed on 2026-08-22, the first runs instrumented to record them, on a 108 GB host where
-# every one of these jobs could reach the end of its work:
-#
-#     gap_of_margin              60.2 GB   exit 0
-#     gap_of_maximal_correlation 62.2 GB   ran all four checks, exit 1 on the verdict
-#     apriori_A1                 64.2 GB   read every ensemble, then refused a partial table
-#
-# The last two exit non-zero but did their whole computation first and refused at the write, so the
-# figures are real measurements of what the job holds, not the ~1 GB a job shows when it refuses
-# early (gap_refinement_invariant does exactly that, and its number must never be used for sizing).
-#
-# All three are above the 56.0 this class carried before, and the largest is above the 64.0 it
-# carried for a few hours after the first correction. A host sized by 56 + 6 reserve = 62 GB would
-# have admitted every one of them and been OOM-killed by two -- which is precisely what happened to
-# apriori_A1 on a 57 GB pod. 72 sits above every observation with room; it is a ceiling to raise
-# again the moment a run exceeds it, not a number to trust because it is written down.
-#
-# For scale: a workstation with ~18 GB free cannot run `bigmem`, and the refusal says so before the
-# job starts rather than after the kernel intervenes.
+# a value that is too low here takes the host down rather than failing a job. `bigmem` is sized for
+# dense Koopman operators (measured peaks 62.2 and 64.2 GB); no shipped job is in that class.
 NEED_GB = {"cpu": 2.0, "cpu2h": 8.0, "long": 8.0, "bigmem": 72.0, "gpu": 8.0, "build": 16.0}
 
-# Per-job peaks, and ONLY ones this repo has watched a job reach. A job absent here falls back to
-# its class and is refused more readily, not less, which is the safe direction.
-#
-# The figures that used to live in the comment above -- apriori_A1 25.0, gap_refinement_invariant
-# 49.3 -- are not in this table, because instrumenting the runs disproved them. On 2026-08-22
-# apriori_A1 was admitted to a 57 GB host on the strength of the 25.0 figure and was OOM-killed at
-# 57.6 GB, and gap_of_margin, sized by the class at 56, peaked at 60.2. Both prose numbers were low,
-# one of them by more than a factor of two. Sizing against an unverified number is how a preflight
-# admits a job it should refuse, so the rule here is: measured by `_run_with_peak` on a run that
-# COMPLETED, or absent.
-#
-NEED_GB_JOB = {"gap_of_margin.py": 60.2, "gap_of_maximal_correlation.py": 62.2,
-               "apriori_A1.py": 64.2}
+# Per-job peaks, measured by `_run_with_peak` on a run that completed, or absent. A job absent here
+# falls back to its class and is refused more readily, not less, which is the safe direction.
+NEED_GB_JOB: dict[str, float] = {}
 
 # Left for the operating system and everything else on the box. A regeneration that takes the
 # machine down has not regenerated anything.
@@ -316,7 +150,7 @@ def _reclaimable(stat: "Path", key: str) -> int:
     """Page cache in this cgroup the kernel can evict on demand, in bytes; 0 when unreadable.
 
     A cgroup's usage counts page cache, which is not memory a job is denied: under pressure the
-    kernel drops it. A pod holding 12 GB of cache under a 57 GB limit has 57 GB available, not 45,
+    kernel drops it. A container holding 12 GB of cache under a 57 GB limit has 57 GB available, not 45,
     and sizing against the smaller figure refuses jobs that would run. Inactive file pages are the
     conservative part of that -- the same quantity /proc/meminfo's MemAvailable credits in full.
     """
@@ -331,9 +165,9 @@ def _reclaimable(stat: "Path", key: str) -> int:
 
 
 def _cgroup_available_gb() -> float | None:
-    """Memory this CONTAINER may still use, in GB, or None when not containerised.
+    """Memory this container may still use, in GB, or None when not containerised.
 
-    Inside a container `/proc/meminfo` reports the host, so a pod advertising 251 GB may be limited
+    Inside a container `/proc/meminfo` reports the host, so a container advertising 251 GB may be limited
     to 57 GB by its cgroup. Sizing a job against the host figure gets it OOM-killed, so the cgroup
     limit is the one read here: v2 first, then v1. A limit at or above the host's total is not a
     limit, and is reported as not containerised."""
@@ -392,7 +226,7 @@ def _available_gb() -> float | None:
 def _usable_cpus() -> int:
     """Cores this container may actually use -- the cgroup CPU quota where there is one.
 
-    `os.cpu_count()` reports the HOST: a pod showing 48 cores can be quota'd to 10. Sizing a BLAS
+    `os.cpu_count()` reports the host: a container showing 48 cores can be quota'd to 10. Sizing a BLAS
     pool from the host count oversubscribes by 5x and every thread then fights for the same slice."""
     for quota, period in ((Path("/sys/fs/cgroup/cpu.max"), None),
                           (Path("/sys/fs/cgroup/cpu/cpu.cfs_quota_us"),
@@ -409,7 +243,7 @@ def _usable_cpus() -> int:
         except (OSError, ValueError):
             continue
     # No quota. `os.cpu_count()` is still the wrong number: it counts every CPU on the machine,
-    # ignoring the affinity mask this process is confined to -- a pod allocated 16 of 128 cores
+    # ignoring the affinity mask this process is confined to -- a container allocated 16 of 128 cores
     # reports 128, and a BLAS pool sized from it oversubscribes 8x. `sched_getaffinity` is what
     # `nproc` reads, and it is the count that is actually schedulable here.
     try:
@@ -426,7 +260,7 @@ def _env(threads: int) -> dict:
     allocate, is how a regeneration takes a workstation down instead of finishing on it. All four
     common vendor variables are set, because which one is honoured depends on the wheel."""
     e = dict(os.environ)
-    # The store root is resolved ONCE here, by store_path (CONFIGS, then the git-ignored local
+    # The store root is resolved once here, by store_path (CONFIGS, then the git-ignored local
     # config file, then nothing), and handed to every child so the whole regeneration reads one
     # store even where the child would have resolved it itself. Nothing is set when nothing is
     # configured: the child then refuses with the resolver's own message, which names the data
@@ -445,7 +279,7 @@ def _key_columns(header, rows):
     """The shortest leading run of columns that identifies a row uniquely, or None.
 
     Rows are matched on this rather than on position, because comparing the Nth row of one file
-    against the Nth of another turns a REORDER into a screenful of enormous bogus deltas -- which
+    against the Nth of another turns a reorder into a screenful of enormous bogus deltas -- which
     is exactly what a positional compare reported here once (a 12x "change" that was really 0.2)."""
     for k in range(1, len(header) + 1):
         keys = [tuple(r[:k]) for r in rows]
@@ -455,7 +289,7 @@ def _key_columns(header, rows):
 
 
 def _cells_moved(head_bytes: bytes, live_bytes: bytes):
-    """(cells changed, worst relative change) between two CSVs, compared BY VALUE.
+    """(cells changed, worst relative change) between two CSVs, compared by value.
 
     Line endings and float formatting are not results; a moved number is. A byte comparison reports
     every file whose writer disagrees about newlines, which buries the one row that actually moved --
@@ -569,10 +403,11 @@ def main() -> int:
 
     if args.list:
         # An empty artifact list means "nothing committed for this owner yet", which is not the
-        # same as "writes nothing": gap_of_margin.py and lean_axiom_footprints.py both emit a
-        # table whose first generated copy has not been committed, so it cannot be listed here
-        # without breaking test_every_listed_artifact_is_actually_tracked.
-        blank = {"certify": "(no committed artifact; prints its verdict)"}
+        # same as "writes nothing": an owner may emit a table whose first generated copy has not
+        # been committed, so it cannot be listed here without breaking
+        # test_every_listed_artifact_is_actually_tracked.
+        blank = {"certify": "(no committed artifact; prints its verdict)",
+                 "figures": "(research/paper/figures/fig_*.pdf, fig_*.png)"}
         print("  %-40s %-8s %-7s %s" % ("owner", "phase", "cost", "artifacts"))
         for arts, owner, _d, phase, cost in OWNERS:
             print("  %-40s %-8s %-7s %s" % (owner, phase, cost,
@@ -598,7 +433,7 @@ def main() -> int:
         need = NEED_GB_JOB.get(script, NEED_GB[cost])
         avail = _available_gb()
         if avail is not None and avail < need + args.reserve_gb:
-            # Refuse BEFORE starting. A job that exhausts the host does not fail cleanly -- it takes
+            # Refuse before starting. A job that exhausts the host does not fail cleanly -- it takes
             # the machine with it, and nothing that was running gets to report anything.
             skipped.append((job, "needs ~%.0f GB + %.0f GB reserve, only %.1f GB free"
                             % (need, args.reserve_gb, avail)))
@@ -607,7 +442,7 @@ def main() -> int:
             continue
         st = time.time()
         # Stream to a per-job file rather than capturing in memory. A job killed by the OOM killer
-        # takes its buffered output with it, so `capture_output` leaves nothing to say WHERE it
+        # takes its buffered output with it, so `capture_output` leaves nothing to say where it
         # died, and that is the run whose output matters most. `-u` for the same reason:
         # a job that dies mid-sweep should still have told you which row it reached.
         logdir = REPO / "logs"

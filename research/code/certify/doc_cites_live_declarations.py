@@ -6,37 +6,37 @@ argued with, a dead citation cannot be checked at all. Three such names sat in `
 (`su3_transferData_T_ne_id`, `su3ReTr`, `su3ReTr_separating`) and two more in rows 12 and 17c
 (`gapAt_of_finite_volume_pairing`), and every one was found by accident rather than by a check.
 
-WHAT COUNTS AS A CITATION. A backticked token that looks like a Lean identifier -- it contains `_`
-or a `.`, and is not a file name. That deliberately includes BARE names: the dead name in row 17c was
+What counts as a CITATION. A backticked token that looks like a Lean identifier -- it contains `_`
+or a `.`, and is not a file name. That deliberately includes bare names: the dead name in row 17c was
 written without its module prefix, so a dotted-only filter would have missed it, which is exactly how
 it survived the first sweep.
 
-WHAT COUNTS AS DEAD, in two tiers. Tier one: the name's last component appears NOWHERE in the repo's
+What counts as dead, in two tiers. Tier one: the name's last component appears nowhere in the repo's
 Lean sources or in `research/code`, as a whole word, in any position. Not "is not a declaration" --
 structure fields, instance names, constructors and local abbreviations are all legitimately cited and
 none of them parse as top-level declarations, so matching on presence is the right shape.
 
-Tier two exists because presence alone was NOT enough. `RefinementLaw.refined_isGreatest` -- a
+Tier two exists because presence alone was not enough. `RefinementLaw.refined_isGreatest` -- a
 word-order swap of the real `isGreatest_refined` -- passed tier one, made live by the very docstring
-that cited it. So a name present in the blob but absent once Lean COMMENTS ARE STRIPPED is reported
-PROSE-ONLY: the repo talks about it and defines nothing by that name. A swapped, misremembered or
+that cited it. So a name present in the blob but absent once Lean comments are stripped is reported
+prose-only: the repo talks about it and defines nothing by that name. A swapped, misremembered or
 half-renamed Lean name lands here, and that is the commonest way to get one wrong.
 
 Tier two is fatal for `DOCS` and advisory for `OPTIONAL_DOCS`. The working documents are held to
 citing this repo, and a genuine external reference belongs in them as a path, not as a backticked
 name; a parked thread is not held to that.
 
-SCOPE LIMIT, stated so it is not mistaken for coverage: only LEAN comments are stripped. A Python
+Scope limit, stated so it is not mistaken for coverage: only Lean comments are stripped. A Python
 name occurring solely in a Python docstring still reads live, because stripping Python prose needs
 `tokenize` and is a separate change with its own controls.
 
-⛔ IT CANNOT TELL YOU A CLAIM IS TRUE. A live name proves the citation resolves, nothing more. The
+⛔ It cannot tell you a claim is true. A live name proves the citation resolves, nothing more. The
 declaration may say something else entirely than the document says it says.
 
-⛔ AND IT CANNOT SEE MATHLIB, OR ANY DEPENDENCY. The corpus is this repo. A document may legitimately
+⛔ And it cannot see Mathlib, or any dependency. The corpus is this repo. A document may legitimately
 cite a Mathlib lemma, and this reports it dead unless the tree happens to use it too — which is why
 `CLAY-HANDOVER.md` reports `tendsto_pow_mul_geometric_of_norm_lt_one`, a real Mathlib lemma that no
-proof here calls. So a hit means "this repo does not define the name", NOT "the name does not exist".
+proof here calls. So a hit means "this repo does not define the name", not "the name does not exist".
 Triage before repairing; a `DOCS` entry that cites external results heavily will need a different
 check, not an allowlist, because an allowlist is where dead names go to be forgotten.
 
@@ -51,22 +51,34 @@ import sys
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 LEAN = os.path.join(REPO, "research", "lean", "MassGap")
-#: Where a document may live: the repository root, `research/`, and `_scratch/CURRENT` beside the
-#: repository, where the Clay working documents are kept outside the published tree.
+#: Where a document may live: the repository root and `research/`.
 DOC_DIRS = [
     REPO,
     os.path.join(REPO, "research"),
-    os.path.join(os.path.dirname(REPO), "_scratch", "CURRENT"),
 ]
 
-#: Documents whose citations must resolve. A name here that is NOT found in any of `DOC_DIRS` FAILS
+#: Documents whose citations must resolve. A name here that is not found in any of `DOC_DIRS` fails
 #: rather than being skipped: these are tracked files, so an absent one means a move left the gate
 #: reading nothing, which is the one outcome a citation gate must not report as clean.
-DOCS = ["README.md"]
+#:
+#: The paper is one file per section, in its source directory `research/paper/v3/`. It is read by glob
+#: so a section added or renamed is checked without editing this list. The theorem-to-declaration
+#: tables (`*.lean-map.md`) are plain Markdown and are read too. If the directory holds no section, its glob pattern itself is listed, `_locate` cannot
+#: find it, and the gate fails as "scanning nothing" instead of passing on a smaller corpus.
+_PAPER_DIRS = ("v3",)
 
-#: Documents to check if present and to pass over if not: the Clay working documents live outside the
-#: repository, so a clone or a CI runner does not have them.
-OPTIONAL_DOCS = ["CLAY-CHECKLIST.md", "CLAY-DETAIL.md", "CLAY-GOAL.md"]
+
+def _section_docs(sub: str) -> list[str]:
+    d = os.path.join(REPO, "research", "paper", sub)
+    found = sorted("/".join(("paper", sub, fn))
+                   for fn in (os.listdir(d) if os.path.isdir(d) else []) if fn.endswith(".md"))
+    return found or [f"paper/{sub}/*.md"]
+
+
+DOCS = ["README.md", "FORMALIZATION.md"] + [doc for sub in _PAPER_DIRS for doc in _section_docs(sub)]
+
+#: Documents to check if present and to pass over if not. None is registered.
+OPTIONAL_DOCS: list[str] = []
 
 
 def _locate(name: str) -> str | None:
@@ -80,8 +92,8 @@ def _locate(name: str) -> str | None:
 # A backticked token that could be a Lean name. Tactics and prose words are excluded by the
 # `_`-or-`.` requirement below, not here.
 #
-# `[^\W\d]` rather than `[A-Za-z_]`: LEAN IDENTIFIERS ARE UNICODE and many here begin with a Greek
-# letter -- `κ₀YM`, `μYMAt_nonneg`, `θ`. An ASCII-only start class DROPPED every such citation
+# `[^\W\d]` rather than `[A-Za-z_]`: Lean identifiers are Unicode and many here begin with a Greek
+# letter -- `κ₀YM`, `μYMAt_nonneg`, `θ`. An ASCII-only start class dropped every such citation
 # before it was ever checked, so a document could cite a Greek name that does not exist and this
 # gate would report it clean. `\d` is excluded so a bare numeral is not read as a name.
 TOKEN = re.compile(r"`([^\W\d][\w.']*)`")
@@ -90,8 +102,33 @@ TOKEN = re.compile(r"`([^\W\d][\w.']*)`")
 NOT_A_NAME = {"a.e", "i.e", "e.g", "w.r.t"}
 
 
+_FILE_EXT = re.compile(r"[\w.-]+\.(json|jsonl|csv|txt|npy|npz|png|pdf|md|py|lean|yaml|yml|toml)")
+_REPO_FILES: set[str] | None = None
+
+
+def _repo_file_names() -> set[str]:
+    """Base names of the files under `research/`, built once."""
+    global _REPO_FILES
+    if _REPO_FILES is None:
+        names: set[str] = set()
+        for dirpath, dirnames, filenames in os.walk(os.path.join(REPO, "research")):
+            dirnames[:] = [d for d in dirnames if d not in (".lake", "__pycache__", ".git")]
+            names.update(filenames)
+        _REPO_FILES = names
+    return _REPO_FILES
+
+
+def not_a_citation(tok: str) -> bool:
+    """A prefix or suffix written as such (`MassGap.`, `clay_`, `_le`), a version string (`v4.31.0`), or the name
+    of a file that exists under `research/` (`tail_anatomy.jsonl`) names no declaration. A file name that exists
+    nowhere is still reported."""
+    if tok.endswith((".", "_")) or tok.startswith("_") or re.fullmatch(r"v\d+(\.\d+)*", tok) is not None:
+        return True
+    return _FILE_EXT.fullmatch(tok) is not None and tok in _repo_file_names()
+
+
 def source_blob() -> str:
-    """Lean sources AND `research/code`.
+    """Lean sources and `research/code`.
 
     The documents cite pytest names and certify scripts as well as Lean declarations —
     `test_every_stated_named_axiom_count_matches_the_build` is a real citation and a real thing, and
@@ -116,7 +153,7 @@ def source_blob() -> str:
                 with open(os.path.join(dirpath, fn), encoding="utf-8",
                           errors="replace") as fh:
                     parts.append(fh.read())
-                # A document may cite a test or script by its MODULE name, which never
+                # A document may cite a test or script by its module name, which never
                 # appears inside the file. `test_docstring_names_resolve` is such a
                 # citation, and reading contents alone reports it dead.
                 parts.append(fn[:-3])
@@ -126,7 +163,7 @@ def source_blob() -> str:
 def strip_lean_comments(src: str) -> str:
     """`src` with Lean block and line comments removed.
 
-    Lean 4 block comments NEST and `/--` opens one, so this scans with a depth counter rather than
+    Lean 4 block comments nest and `/--` opens one, so this scans with a depth counter rather than
     regexing: a non-nesting `/-.*?-/` would stop at the first `-/` and leave the tail of an outer
     comment in the code set, which is the direction that hides a dead name.
     """
@@ -148,7 +185,7 @@ def strip_lean_comments(src: str) -> str:
 
 
 def code_blob() -> str:
-    """`source_blob()` with Lean comments stripped -- what the repo DEFINES, not what it discusses.
+    """`source_blob()` with Lean comments stripped -- what the repo defines, not what it discusses.
 
     Python is passed through unchanged; see the module docstring's scope limit.
     """
@@ -180,7 +217,7 @@ def live_words(blob: str) -> set[str]:
     The ASCII-only start class this used to carry truncated `κ₀YM_pos` to `YM_pos` -- the scan
     began at the first ASCII letter and dropped everything before it. So a Greek-named declaration
     was never in the live set, and a citation of one was reported dead however real it was, while a
-    BARE Greek citation was dropped by `TOKEN` and never checked at all. The two blind spots hid
+    bare Greek citation was dropped by `TOKEN` and never checked at all. The two blind spots hid
     each other: the false negative was invisible because the false positive never fired.
     """
     return set(re.findall(r"[^\W\d][\w']*", blob))
@@ -226,6 +263,8 @@ def main() -> int:
                 if "_" not in tok and "." not in tok:
                     continue
                 if tok.endswith(".lean"):
+                    continue
+                if not_a_citation(tok):
                     continue
                 last = tok.rsplit(".", 1)[-1]
                 # a bare module name is a file, not a declaration

@@ -17,7 +17,7 @@ type, which this module does.
 
 No quotient is taken. `PreInnerProductSpace.Core` asks only for semidefiniteness, and
 `UniformSpace.Completion` Hausdorffifies and completes in one step, so the null space is collapsed
-there. `MomentMeasure` uses the same pattern.
+there.
 
 ## Contents
 
@@ -54,41 +54,30 @@ there. `MomentMeasure` uses the same pattern.
   stand.
 * `nontrivial_ymH` says the space is nonzero. It does not say the dimension exceeds one, and no
   such statement is made here; nothing in the tree exhibits a non-constant slab observable. At
-  `N = 1` the gauge group is trivial (`SimpleGroup.subsingleton_SU_one`), every observable is
+  `N = 1` the gauge group is trivial, every observable is
   constant, and both `SlabShiftStable` and `SlabShiftContractive` hold, so Part 6's theorems have a
   model. At `N ≥ 2` neither premise is decided in this tree.
 * `ym_target_discharged_trivially` shows the five clauses "unit vacuum, self-adjoint, contraction,
   vacuum fixed, positive" are satisfied by `T = LinearMap.id` on the Wilson slab algebra, so they do
   not by themselves pin `T` to a time translation. `shift_descends_to_id` shows that pinning `T` to
   the slab shift, on its own stability premise and at this geometry, gives the identity operator on
-  `H`; if the premise fails there is no descended operator. `PeriodicRayleigh.const_of_slabShiftStable`
-  is the module-level form of the same statement, and `HalfLineTransfer.shiftObs_pow_period` an
-  independent one.
+  `H`; if the premise fails there is no descended operator. `HalfLineTransfer.shiftObs_pow_period`
+  is an independent statement about the shift.
 * `PositiveTransfer` does not follow from contractivity, which bounds `|λ|` and says nothing about
   the sign of `λ`. It is reflection positivity about a half-integer time plane.
   `WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive` makes it equivalent to reflection
-  positivity at the odd constant `2 * p - 1` on the half-space algebra, and
-  `ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit` supplies that side
-  from `N ≠ 0`, `0 ≤ β`, two filters refining `atTop`, and the two cube families converging along
-  them to one state at the all-identity boundary condition. `0 ≤ β` is load-bearing:
-  `CharacterExpansion.NegControl.su3_kernel_nonneg_iff` refutes the cross kernel's positive
-  semidefiniteness below zero. `N ≠ 0` does not exclude `N = 1`, where `SU 1` is a singleton and
-  `halfSpaceAlg` is the constants.
-* `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves `T ≠ 1` on the half-space
-  carrier, given a function on the group separating two elements;
-  `HaarVariance.reTr_flipEl_ne_reTr_one` supplies one at `SU (m + 2)`, `Re tr` reading `m + 2` at
-  the identity against `m - 2` at `flipEl m`. At `SU 0` and `SU 1` no such function exists.
-  `ReflectionHalfSpace.halfSpaceAlg_has_nonconstant` separates configurations by an observable and
-  has a different type.
+  positivity at the odd constant `2 * p - 1` on the half-space algebra.
+* `HaarVariance.reTr_flipEl_ne_reTr_one` separates two group elements by a function at `SU (m + 2)`,
+  `Re tr` reading `m + 2` at the identity against `m - 2` at `flipEl m`. At `SU 0` and `SU 1` no such
+  function exists.
 * Motion in the algebra is not motion in the completion: `opT [F] = [F]` whenever `T F - F` lies in
-  the null space of the form, so `T ≠ 1` does not give `ClayAssembly.TransferMovesSomething`.
+  the null space of the form, so `T ≠ 1` on the algebra does not give motion on the completion.
 * `WilsonTransferReduction.transferData_of_state_facts` is a `def` parameterised by three unproved
-  facts about a state. `ReflectionHalfSpace.reflection_facts_on_halfSpaceAlg` supplies two of them
-  for one state; `WilsonState` records that `wilsonStateAt` is not shown to satisfy any.
-* No Hamiltonian is constructed here. `Reconstruction.hamiltonian` uses Mathlib's `cfc` and needs
-  `-Real.log` continuous on `spectrum ℝ T`, that is `0 ∉ spectrum T`; positivity and injectivity of
-  `T` do not give that, and a contraction on an infinite-dimensional space can be injective with `0`
-  in its spectrum, as multiplication by `x` on `L²[0, 1]` is.
+  facts about a state.
+* No Hamiltonian is constructed here. A Hamiltonian from Mathlib's `cfc` needs `-Real.log` continuous
+  on `spectrum ℝ T`, that is `0 ∉ spectrum T`; positivity and injectivity of `T` do not give that,
+  and a contraction on an infinite-dimensional space can be injective with `0` in its spectrum, as
+  multiplication by `x` on `L²[0, 1]` is.
 -/
 
 namespace MassGap.GNSHilbert
@@ -101,8 +90,7 @@ open MassGap.ActionSplit
 
 `OSPositivity.cscal` is the complex scalar action on a pair of real vectors, defined there without a
 `Module ℂ` instance. Here it becomes one, on a type synonym carrying the form as a parameter, so the
-seminorm attaches to a type remembering which form produced it — the same device as
-`MomentMeasure.Pre`.
+seminorm attaches to a type remembering which form produced it.
 -/
 
 section Abstract
@@ -441,13 +429,9 @@ theorem norm_Omega_vac : ‖Omega D.toReflForm D.vac‖ = 1 :=
 /-- **`(1 : ℝ) ∈ spectrum ℝ (opT D)`** — the vacuum is an eigenvector at eigenvalue one, so one lies
 in the real spectrum of the transfer operator.
 
-This is the premise `h1` of `OpTBridge.reconstruct_from_opT`, and both of its inputs are fields of
-this module: `opT_Omega` fixes the vacuum and `Omega_ne_zero` keeps it off the zero vector.
-
-`SlabTransferAdjoint.zero_mem_spectrum_of_apply_eq_zero` performs the same eigenvector-to-spectrum
-step at eigenvalue zero for a real continuous linear map. This is the eigenvalue-one case on the
-complex completion, with the algebra `H →L[ℂ] H` read as an `ℝ`-algebra, which is the spectrum
-`reconstruct_from_opT` asks about.
+Both inputs are fields of this module: `opT_Omega` fixes the vacuum and `Omega_ne_zero` keeps it off
+the zero vector. This is the eigenvalue-one case on the complex completion, with the algebra
+`H →L[ℂ] H` read as an `ℝ`-algebra.
 
 The argument: if `algebraMap ℝ _ 1 - opT D` were a unit `u`, then applying `u.inv_mul` to the vacuum
 gives `u.inv 0 = Ω`, so `Ω = 0`.
@@ -475,10 +459,6 @@ hypothesis anywhere. Contractivity is the whole input: `norm_opT_le_one` bounds 
 `GapToOperator.spectrum_opT_subset` says more — `{1} ∪ Icc (−r) r` — but only under `GapAt D r`, which
 is the open half of the chain. This one holds always, so it is what bounds the spectrum before any
 Rayleigh ceiling is in hand.
-
-`MomentMeasure.spectrum_opX_subset` is the same two steps for `opX D`, with `D.R` in place of the
-contraction constant; that is where this proof comes from and why the Mathlib name is known-good at
-this pin.
 
 DERIVED: the `1`s are `norm_opT_le_one`'s contraction constant, which is `TransferData.T_contract`'s.
 The bound on the identity's norm is in the proof. -/
@@ -508,14 +488,11 @@ on any `TransferData`, with no gap hypothesis.
 Both halves are unconditional: `one_mem_spectrum_opT` puts `1` in the spectrum, and
 `spectrum_opT_subset_unit_interval` puts everything in the spectrum at or below it. Together they say
 the transfer operator's top is the vacuum and nothing else — which is the statement a gap refines:
-the gap asks how far below `1` the REST of the spectrum sits, and this fixes what it sits below.
+the gap asks how far below `1` the rest of the spectrum sits, and this fixes what it sits below.
 
-`RefinementLaw.isGreatest_refined` is the tree's only hypothesis-position consumer of
-`IsGreatest (spectrum ℝ T) m`, and it is not reachable from here: it also takes
-`hpos : ∀ x ∈ spectrum ℝ T, 0 < x`, where `Set.Icc (-1) 1` admits `0`. Strict positivity of
-`spectrum ℝ (opT D)` is `0 ∉ spectrum ℝ (opT D)`, which
-`TransferInvertibility.isUnit_of_spectral_hypothesis` ties to `IsUnit (opT D)` — the open half of the
-chain. So this states the ceiling; it does not reach past it.
+`Set.Icc (-1) 1` admits `0`. Strict positivity of `spectrum ℝ (opT D)` is
+`0 ∉ spectrum ℝ (opT D)`, which is `IsUnit (opT D)` and is not proved here. So this states the
+ceiling; it does not reach past it.
 
 DERIVED: the `1` is the eigenvalue at the vacuum, carried from `TransferData.vac_norm` through
 `one_mem_spectrum_opT`; it coincides with the contraction constant, which is why the containment is
@@ -543,9 +520,8 @@ says nothing about the sign of `λ`. It is reflection positivity about a half-in
 `re_inner_opT_nonneg` carries it from the module to the whole completion.
 
 It holds whenever `T` is the identity (`positiveTransfer_of_T_eq_id`), which covers Part 6's slab
-carrier on its own premise and Part 7's `trivialTransfer`. It does not cover the half-space carrier,
-where `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves `T ≠ 1` given a separating
-function on the group; see the module header for how `PositiveTransfer` is obtained there.
+carrier on its own premise and Part 7's `trivialTransfer`. It does not cover a half-space carrier
+where `T ≠ 1`; see the module header for `PositiveTransfer` there.
 -/
 
 /-- `PositiveTransfer D`: the proposition `∀ x : A, 0 ≤ D.form x (D.T x)`, positivity of the
@@ -595,9 +571,7 @@ theorem isPositive_opT (h : PositiveTransfer D) : (opT D).IsPositive := by
 
 /-- **`spectrum ℝ (opT D) ⊆ Set.Ici 0`** — the transfer operator's spectrum is nonnegative.
 
-This was an open input of the R2 chain and it is closed here. No declaration in this tree, for any
-operator, previously went from a nonnegative quadratic form to spectral nonnegativity; every
-consumer that wanted it took it as a binder, `RefinementLaw` five times over.
+It goes from a nonnegative quadratic form to spectral nonnegativity.
 
 The route is `ContinuousLinearMap.IsPositive.spectrumRestricts`, which needs completeness of the
 space — `complete_H` — followed by `SpectrumRestricts.nnreal_iff`, whose right-hand side is
@@ -620,20 +594,16 @@ theorem spectrum_opT_nonneg (h : PositiveTransfer D) :
 
 `spectrum.isCompact` and `spectrum.isClosed` both exist at this pin, but instance search for
 `NormedAlgebra ℝ (H D.toReflForm →L[ℂ] H D.toReflForm)` does not terminate here: it times out at
-`isDefEq` past a million heartbeats, with `OpTBridge.cstar_of_gns` reducible in the path. So
-`TransferInvertibility.spectral_hypothesis_of_band` keeps compactness of the spectrum as a
-hypothesis; it is the one side condition of the ε step that is a library matter rather than a fact
-about Yang-Mills. -/
+`isDefEq` past a million heartbeats. So a statement that needs compactness of this spectrum has to
+carry it as a hypothesis; it is a library matter rather than a fact about Yang-Mills. -/
 
 
 /-- `(∀ x, D.T x = x) → PositiveTransfer D`, since the conclusion is then `D.form_nonneg`, which is
 the structure's reflection positivity.
 
 Scope: this covers the carriers where `T` is the identity — Part 6's slab `TransferData` on its own
-premise, and Part 7's `trivialTransfer` unconditionally. It does not cover the half-space carrier,
-where `ReflectionHalfSpace.transferData_of_state_facts_T_ne_id` proves `T ≠ 1` given a separating
-function on the group; there `PositiveTransfer` is obtained instead from
-`ReflectionHalfSpace.wilson_positiveTransfer_of_common_subsequential_limit` through
+premise, and Part 7's `trivialTransfer` unconditionally. It does not cover a half-space carrier where
+`T ≠ 1`; there `PositiveTransfer` is equivalent to odd reflection positivity by
 `WilsonTransferReduction.positiveTransfer_iff_odd_reflPositive`.
 
 DERIVED: no numeral occurs in the statement; the `0` is inside `PositiveTransfer`. -/
@@ -649,9 +619,7 @@ at every `x`: the conclusion is then `D.form_nonneg (S x)`.
 
 Scope. Linearity of `S` is load-bearing: with an arbitrary function the equation could be solved
 pointwise wherever the form takes the required value, and the hypothesis would restate the
-conclusion. The same content on the `L²` slab carrier is `SlabTransferAdjoint.SlabGramVia`, a
-`FiniteGram` condition on the kernel whose sufficient half is proved there and which that module
-reports as open.
+conclusion.
 
 DERIVED: no numeral occurs in the statement; the `0` is inside `PositiveTransfer`. -/
 theorem positiveTransfer_of_gram (S : A →ₗ[ℝ] A)
@@ -773,8 +741,7 @@ applied to `shiftSlab_eq_id`.
 Scope: `OSPositivity.wilsonSlabTransfer` is the only `TransferData` on the Wilson slab algebra in
 this tree and its `T` is the slab shift, so on its own stability premise the descended operator is
 the identity. `HalfLineTransfer.shiftObs_pow_period` — the shift has order `n`, hence is an isometry
-on every quotient — is a separate statement of the same kind, and
-`PeriodicRayleigh.const_of_slabShiftStable` is its module-level form.
+on every quotient — is a separate statement of the same kind.
 
 DERIVED: `2 ≤ m` and the `2` in `n = 2 * m` are `shiftSlab_eq_id`'s; the `0` in `0 < m` is
 nonemptiness of the slab. -/

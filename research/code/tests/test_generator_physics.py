@@ -1,6 +1,6 @@
 """Physics certification of the lattice-gauge Monte-Carlo generator (``lattice_generator``).
 
-Every check below compares a MEASURED observable against a value KNOWN from analytic lattice gauge
+Every check below compares a measured observable against a value known from analytic lattice gauge
 theory (cited inline), with a tolerance taken from Monte-Carlo statistics (a stated number of standard
 errors) plus, where relevant, an explicit truncation/systematic allowance.  Nothing here is fit to the
 generator's own output: the reference numbers are external.  Small CPU lattices, fixed seeds, short but
@@ -20,8 +20,8 @@ References
 ----------
 * M. Creutz, "Monte Carlo study of quantized SU(2) gauge theory", Phys. Rev. D 21 (1980) 2308
   -- SU(2): strong coupling <P> -> beta/4; weak coupling <P> -> 1 - 3/(4 beta).
-* M. Creutz, "Quarks, Gluons and Lattices" (CUP 1983), ch. on strong/weak coupling expansions.
-* I. Montvay & G. Munster, "Quantum Fields on a Lattice" (CUP 1994), sec. 5 -- SU(N) character
+* M. Creutz, "Quarks, Gluons and Lattices" (cup 1983), ch. on strong/weak coupling expansions.
+* I. Montvay & G. Munster, "Quantum Fields on a Lattice" (cup 1994), sec. 5 -- SU(N) character
   expansion: <P> -> beta/(2 N^2) leading (N>=3); U(1): <cos theta_p> = I1(beta)/I0(beta) -> beta/2.
 * Standard quenched SU(3) Wilson plaquette values (large-volume): <P>(5.7) ~ 0.5498, <P>(6.0) ~ 0.5937
   (e.g. tabulated in the scale-setting / string-tension literature; the plaquette is UV-dominated and
@@ -43,7 +43,7 @@ NP = D * (D - 1) // 2                 # 6 planes on a 4D lattice
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def plaquette_per_config(dims, beta, *, group, n, therm, seed, method="heatbath"):
-    """Return the length-``n`` array of per-config mean plaquettes <P>_i from ``n`` INDEPENDENT chains
+    """Return the length-``n`` array of per-config mean plaquettes <P>_i from ``n`` independent chains
     (``config_batch`` runs independent batched chains, each its own RNG stream), giving a genuinely i.i.d.
     error bar.  <P>_i = 1 - mean_x phi_i(x)/NP.
 
@@ -128,7 +128,7 @@ def test_strong_coupling_leading_plaquette(group, ref):
 #    Equivalently, with g^2 = 2N/beta,  <1-P> = (N^2-1)/(8N) * g^2 + ...  (coefficient 3/16 for SU(2),
 #    1/3 for SU(3)).  In the uniform C/beta form C = (N^2-1)/4:  SU(2) C=3/4 (Creutz 1980), SU(3) C=2.
 #    (The "1/3" sometimes quoted for SU(3) is the g^2 coefficient (N^2-1)/(8N), not the 1/beta one.)
-#    The series approaches from ABOVE (positive higher-order terms), so beta*<1-P> DECREASES toward C.
+#    The series approaches from above (positive higher-order terms), so beta*<1-P> decreases toward C.
 # ══════════════════════════════════════════════════════════════════════════════
 
 def test_weak_coupling_su2_slope_three_quarters():
@@ -150,7 +150,7 @@ def test_weak_coupling_su2_slope_three_quarters():
 def test_weak_coupling_su3_coefficient_is_two():
     C = 2.0                                              # (N^2-1)/4 for N=3
     beta = 12.0                                          # SU(3) perturbation theory converges slowly
-    # EVEN lattice required: the checkerboard heat-bath disorders on odd extents (guarded in the generator).
+    # even lattice required: the checkerboard heat-bath disorders on odd extents (guarded in the generator).
     per = plaquette_per_config((6, 6, 6, 6), beta, group="su3", n=8, therm=90, seed=22)
     m, se = mean_se(1.0 - per)
     val, err = beta * m, beta * se

@@ -841,7 +841,7 @@ theorem crossing_gauge_integral_eq
     rw [abs_mul]
     exact mul_le_mul (hab _) (hQb p) (abs_nonneg _) hCa
   rw [integral_integral_swap hint1]
-  -- Step 3: the inner plane integral IS the gauge average
+  -- Step 3: the inner plane integral is the gauge average
   have hA : ∀ x : Ω, (∫ g, a x * (∫ y, a (act g y) * K x y ∂nu) ∂lam)
       = a x * ∫ y, gaugeAvg lam act a y * K x y ∂nu := by
     intro x

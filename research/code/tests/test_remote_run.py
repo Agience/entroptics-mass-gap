@@ -5,7 +5,7 @@ Two failure modes, both silent:
   * a Python file under ``research/`` that `SOURCE_GLOBS` does not cover is never pushed, so a remote
     run imports whatever stale copy the host happens to hold -- and the output looks exactly like a
     correct run of a tree that does not exist here;
-  * a script that READS the ensemble store, dispatched to a host that does not have it, reads an empty
+  * a script that reads the ensemble store, dispatched to a host that does not have it, reads an empty
     directory. `store_path` refuses when the store is absent, but a refusal on a compute host arrives
     as a failed run with a confusing message rather than as "this one runs locally".
 
@@ -97,8 +97,8 @@ def test_a_missing_script_is_refused_rather_than_dispatched(monkeypatch):
     assert "no such script" in str(exc.value).lower()
 
 
-@pytest.mark.parametrize("spelling", ["certify/gap_of_maximal_correlation.py",
-                                      "code/certify/gap_of_maximal_correlation.py"])
+@pytest.mark.parametrize("spelling", ["certify/small_volume_enclosure.py",
+                                      "code/certify/small_volume_enclosure.py"])
 def test_both_spellings_of_a_certificate_resolve(spelling, monkeypatch):
     """Certificates live under `code/` and figure scripts under `data/`, so callers spell both ways."""
     monkeypatch.setattr(RR, "target", lambda: None)
@@ -115,7 +115,7 @@ def test_both_spellings_of_a_certificate_resolve(spelling, monkeypatch):
 
     monkeypatch.setattr(RR.subprocess, "run", _fake_run)
     RR.run(spelling)
-    assert "code/certify/gap_of_maximal_correlation.py" in seen["argv"]
+    assert "code/certify/small_volume_enclosure.py" in seen["argv"]
 
 
 def test_describe_names_the_target_without_running_anything(monkeypatch):

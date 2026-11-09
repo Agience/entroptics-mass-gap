@@ -519,7 +519,7 @@ theorem gapAt_aPhys (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {mphys : ℝ} (hm : mp
 
 #print axioms gapAt_aPhys
 
-/-- **THE CONSTANT-PHYSICS GAP.** At `2 ≤ N`, `0 < mphys`, `0 ≤ β` and `0 < latMassP τ p hN β`:
+/-- **The constant-physics gap.** At `2 ≤ N`, `0 < mphys`, `0 ≤ β` and `0 < latMassP τ p hN β`:
 the periodic Clay gap holds at `r = e^{−mphys·aPhys β}`; its physical rate `−log r / aPhys β` is
 `mphys`; and every `0 < r' < 1` with `GapAt` at `β` has `−log r' / aPhys β ≤ mphys`. The physical gap
 along `aPhys` is `mphys`, attained and best, at every coupling where the lattice mass is positive.
@@ -959,7 +959,7 @@ theorem latMassVanishes_of_asymptoticScaling (τ : Fin 4) (p : ℤ) (hN : N ≠ 
 
 #print axioms latMassVanishes_of_asymptoticScaling
 
-/-- **THE SPLIT OF THE M INPUT.** At `2 ≤ N`, `LatticeGapEvery τ p hN` and
+/-- **The split of the M input.** At `2 ≤ N`, `LatticeGapEvery τ p hN` and
 `AsymptoticScalingAt N (latMassP τ p hN)` give the periodic Clay gap at every `β > 0` and
 `WeakCouplingWindow.FixedWindowDecay τ p hN L` at every `L > 0`.
 

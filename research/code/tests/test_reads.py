@@ -21,7 +21,7 @@ def test_mass_gap_recovers_free_scalar_gap(free_configs):
     """The forward operator read (dominant Koopman/DMD mode rate -log|mu_1|) recovers the exact
     free-scalar gap E0 = arccosh(1 + m^2/2), to within the read's own reproducibility.
 
-    DERIVED TOLERANCE. This asserted `rel=0.15` -- a chosen 15%. The tolerance now comes from the
+    DERIVED tolerance. This asserted `rel=0.15` -- a chosen 15%. The tolerance now comes from the
     measurement: split the same configurations into independent seed blocks, read the gap on each,
     and require the distance from the exact value to be no larger than the distance the read moves
     when only the sample changes. Both sides are measured here; nothing is supplied. If the read were
@@ -39,7 +39,7 @@ def test_mass_gap_recovers_free_scalar_gap(free_configs):
 
 def test_mass_gap_recovers_gap_across_Lt_and_is_deterministic():
     """The forward operator gap read recovers E0 within ensemble statistics at every time extent
-    Lt, and is DETERMINISTIC in the operator eigenvalues: a repeated read of the same configs is
+    Lt, and is deterministic in the operator eigenvalues: a repeated read of the same configs is
     bit-identical."""
     e0 = math.acosh(1 + 0.5 ** 2 / 2)
     gaps, per_Lt_configs = [], []
@@ -50,7 +50,7 @@ def test_mass_gap_recovers_gap_across_Lt_and_is_deterministic():
         gaps.append(g)
         per_Lt_configs.append(cfgs)
     # DERIVED: the tolerance is the read's own reproducibility across independent seed blocks of the
-    # SAME configurations, not a supplied fraction. The comment on the old `< 0.20` claimed "within
+    # same configurations, not a supplied fraction. The comment on the old `< 0.20` claimed "within
     # statistics" while the number was hand-set; this measures the statistics it was claiming.
     for Lt, g, cfgs in zip((16, 32, 64), gaps, per_Lt_configs):
         blocks = [entroptics.run(cfgs[i::3]).mass_gap for i in range(3)]

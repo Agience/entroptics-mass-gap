@@ -40,7 +40,7 @@ noncomputable section
 6. **The result.** `pairDelta β j l m = 5760 β` on the neighbours `HeatBathLocal.nbT j l` (at most
    `21`), `0` off them; it is a defect matrix of row and column sums at most `120960 β`
    (`pairDelta_defect`). Pairs sharing no plaquette take `y = E_l E_m x` and have correlation `0`
-   (`BoxGap.corr_zero_of_comm`, `HeatBath.torusCondExp_comm`). `pairCorrLinear_holds`:
+   (`BoxGap.corr_zero_of_comm`, `RestoreShims.torusCondExp_comm`). `pairCorrLinear_holds`:
    `BoxGap.PairCorrLinear hN 120960 (1/5760)` for every `N ≠ 0`. `boxPatchGap_small`:
    `BoxPatch.BoxPatchGap hN β 80 (1 − 120960 β)` for `0 ≤ β ≤ 1/241920`, and `boxPatchGap_at`:
    `BoxPatch.BoxPatchGap hN (1/241920) 80 (1/2)`.
@@ -212,7 +212,7 @@ theorem corr_pt (a b : ℝ) {w p q Z m₀ κ : ℝ} (hm₀ : 0 < m₀) (hκ : 1 
 
 #print axioms corr_pt
 
-/-- **THE FIBRE CORRELATION BOUND.** On `SU(N) × SU(N)` with the product Haar measure, let `w` be
+/-- **The fibre correlation bound.** On `SU(N) × SU(N)` with the product Haar measure, let `w` be
 jointly continuous with `m₀ ≤ w ≤ κ m₀` (`0 < m₀`, `1 ≤ κ`), and `p`, `q` continuous in the same
 range (the marginals of `w` in the application), `a`, `b` continuous with `∫ a q = 0`. Then
 
@@ -843,7 +843,7 @@ theorem fibre_corr_config (bd : Pq → List (Lk × Bool)) (β : ℝ) {l m : Lk} 
 
 #print axioms fibre_corr_config
 
-/-- **THE GIBBS CORRELATION BOUND.** For `l ≠ m`, continuous `f` with vanishing two-link numerator
+/-- **The Gibbs correlation bound.** For `l ≠ m`, continuous `f` with vanishing two-link numerator
 everywhere, `1 ≤ κ`, `(κ² − 1) κ ≤ c`, and at every `W` a positive `m₀` with the weight on the fibre
 of `(l, m)` over `W` in `[m₀, κ m₀]`:
 
@@ -1134,7 +1134,7 @@ theorem torusObs_condExp (β : ℝ) (M : ℕ) (l : WilsonHypercubic.Link 4 (M + 
 
 #print axioms torusObs_condExp
 
-/-- **THE TWO-LINK CORRELATION AT SMALL COUPLING.** For `N ≠ 0`, `0 ≤ β`, `3072 β ≤ 1`, every
+/-- **The two-link correlation at small coupling.** For `N ≠ 0`, `0 ≤ β`, `3072 β ≤ 1`, every
 extent index `j`, every two distinct links `l`, `m` and every periodic gauge-invariant `x`, with
 `y = twoCondExp x` (the conditional expectation given every link but `l` and `m`):
 
@@ -1334,7 +1334,7 @@ theorem pairDelta_defect {β : ℝ} (hβ : 0 ≤ β) (j : ℕ) :
 /-- **The two-link correlation bound at every extent** for `0 ≤ β` and `5760 β ≤ 1`:
 `BoxGap.PairCorrAt hN β j (pairDelta β j)`. A pair sharing a plaquette takes `y = twoCondExp x`
 (`pairCorr_twoCond`; `3072 β ≤ 5760 β ≤ 1`); a pair sharing none takes `y = E_l E_m x`, where the
-correlation is `0` (`BoxGap.corr_zero_of_comm`, `HeatBath.torusCondExp_comm`).
+correlation is `0` (`BoxGap.corr_zero_of_comm`, `RestoreShims.torusCondExp_comm`).
 
 DERIVED: `5760` is `pairDelta`'s constant; `1` is the entry bound; `0` is the lower end of `β` and
 the excluded rank in `hN`. -/
@@ -1375,7 +1375,7 @@ theorem boxPairCorr_small (hN : N ≠ 0) {β : ℝ} (hβ0 : 0 ≤ β) (hβ1 : 57
 
 #print axioms boxPairCorr_small
 
-/-- **THE TWO-LINK CORRELATION IS LINEAR IN THE COUPLING.** `BoxGap.PairCorrLinear hN 120960
+/-- **The two-link correlation is linear in the coupling.** `BoxGap.PairCorrLinear hN 120960
 (1/5760)` for every `N ≠ 0`: `BoxPairCorr hN β (120960 β)` for every `0 ≤ β ≤ 1/5760`, at every
 extent index.
 
@@ -1388,7 +1388,7 @@ theorem pairCorrLinear_holds (hN : N ≠ 0) : PairCorrLinear hN 120960 (1 / 5760
 
 #print axioms pairCorrLinear_holds
 
-/-- **THE BOX CHECK AT SMALL COUPLING.** `BoxPatch.BoxPatchGap hN β 80 (1 − 120960 β)` for
+/-- **The box check at small coupling.** `BoxPatch.BoxPatchGap hN β 80 (1 − 120960 β)` for
 `0 ≤ β ≤ 1/241920` (`BoxGap.boxPatchGap_of_pairCorrLinear`, `pairCorrLinear_holds`).
 
 DERIVED: `80` is the side at defect at most `1/2` (`BoxGap.boxPatchGap_of_pairDefect_half`);

@@ -333,7 +333,7 @@ section Wilson
 
 variable {N : ℕ}
 
-/-- **THE UV INPUT: the block step at the periodic state, with a loss.** `LossStep` for the periodic
+/-- **The UV input: the block step at the periodic state, with a loss.** `LossStep` for the periodic
 gauge-invariant transfer data `periodicGaugeInvData τ p hN β` at the two-loop spacing `aRun N`: for
 every two couplings `β, β' ≥ βUV` with `aRun N β / 2 ≤ aRun N β' ≤ aRun N β` and every `M`, the gap
 at rate `e^{−M·aRun N β}` at `β` gives the gap at rate `e^{−(M − ε(aRun N β))·aRun N β'}` at `β'`.
@@ -370,7 +370,7 @@ DERIVED: `4` is the spacetime dimension; `0` is the excluded rank. -/
 def UVInput (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) : Prop :=
   ∃ βUV : ℝ, ∃ ε : ℝ → ℝ, VanishingLoss ε ∧ UVLossStep τ p hN βUV ε
 
-/-- **THE IR INPUT: the gap at one coupling, in physical units.** At the coupling `β₀`, the periodic
+/-- **The IR input: the gap at one coupling, in physical units.** At the coupling `β₀`, the periodic
 gauge-invariant transfer data has `GapAt` at rate `e^{−M₀·aRun N β₀}`: physical rate `M₀` at spacing
 `aRun N β₀` (`GapStep.phys_rate_le_iff`). One coupling, one lattice spacing, infinite volume.
 `aRun N β₀` reads as a lattice spacing only past its peak at `β = 17N²/(88π²)`
@@ -713,7 +713,7 @@ theorem gapAt_eventually_of_uv_ir_below (τ : Fin 4) (p : ℤ) (hN1 : 1 ≤ N) (
 
 #print axioms gapAt_eventually_of_uv_ir_below
 
-/-- **THE UV/IR SPLIT: `FixedWindowDecay` from the UV step and the gap at one coupling.** At `2 ≤ N`,
+/-- **The UV/IR split: `FixedWindowDecay` from the UV step and the gap at one coupling.** At `2 ≤ N`,
 a window `0 < L`, a coupling `0 < β₀` with `βUV ≤ β₀`, a loss budget `E` for the dyadic tower below
 `aRun N β₀` with `E < M₀`, `UVLossStep τ p hN βUV ε` and `IRGapAt τ p hN β₀ M₀`:
 `WeakCouplingWindow.FixedWindowDecay τ p hN L`.

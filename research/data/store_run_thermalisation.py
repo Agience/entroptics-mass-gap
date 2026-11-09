@@ -14,7 +14,7 @@ Reading the store, once per shard that changed
 ----------------------------------------------
 The stored mean is a per-shard number and the shards do not change: a release is fixed. But computing
 them is the expensive half of this script -- the raw-link collection is 17 GB and its action density
-has to be RECONSTRUCTED from the links, because phi is an intrinsic reduction of them. Doing that
+has to be reconstructed from the links, because phi is an intrinsic reduction of them. Doing that
 from scratch on every run cost hours and produced the same numbers each time.
 
 So each shard's per-configuration means are cached in a dot-file at the store root -- not under a
@@ -31,7 +31,7 @@ The reference chain is a deterministic function of `(group, L, T, beta)` and the
 (`--reuse` below states the whole key). The store grows one campaign at a time, and a new campaign
 is usually at couplings and volumes already measured -- so recomputing all 80 reference chains to
 record three new shards is waste, and waste on a GPU. `--reuse` reads the committed artifact and
-skips the chains whose key AND chain settings both already match, running only genuinely new keys.
+skips the chains whose key and chain settings both already match, running only genuinely new keys.
 
 It is a resume, not a cache of convenience: a row is reused only when `eq_method`, `eq_sweeps` and
 `eq_n` in it equal the settings this run would use. Change any of those and every row is remeasured,
@@ -39,9 +39,9 @@ because the value would no longer be the one this script computes.
 
 Why the mean action density
 ---------------------------
-It is the observable these ensembles are FOR; it is intensive, so equilibrium does not drift
+It is the observable these ensembles are for; it is intensive, so equilibrium does not drift
 with volume and a flat-in-L reference is meaningful; and departure from equilibrium is one-sided
--- a chain sits ABOVE equilibrium, never below -- so an offset carries a direction that
+-- a chain sits above equilibrium, never below -- so an offset carries a direction that
 distinguishes it from noise.
 
 Heat-bath is used for the reference wherever the group offers it (SU(N)), because it reaches the
@@ -77,7 +77,7 @@ COLS = ["group", "L", "T", "beta", "collection", "field", "test", "reference", "
         "verdict", "eq_method", "eq_sweeps", "eq_n"]
 
 # The device decision is `lattice_generator.resolve_device`, one copy shared with
-# `string_tension_eq_centre` and `8_7_run_transfer_gap`: an unset request PROBES for CUDA and
+# `string_tension_eq_centre` and `8_7_run_transfer_gap`: an unset request probes for CUDA and
 # falls back to numpy, an explicit one is honoured and raises if the hardware is absent. This
 # line used to read `os.environ.get("DEVICE", "cuda")` -- a third copy of the decision that
 # disagreed with the other two, and that read the whole store before dying at the first
@@ -136,7 +136,7 @@ def _save_cache(root, cache):
 def stored_means(root):
     """Per (group, L, T, beta, collection): the mean action density the release ships.
 
-    Density shards are read; raw-link shards are REDUCED, because phi is an intrinsic reduction of
+    Density shards are read; raw-link shards are reduced, because phi is an intrinsic reduction of
     the links and cannot be read off them. Each shard's per-configuration means are cached against
     its `(path, size, mtime)`, so a re-run recomputes only what changed -- see the module docstring.
     """
@@ -145,20 +145,20 @@ def stored_means(root):
     acc = collections.defaultdict(list)
     for path in sorted(glob.glob(os.path.join(root, "configs_*", "*.npy"))):
         coll = os.path.basename(os.path.dirname(path))
-        # The OPERATOR-REDUCED shards carry a channel and a smearing level between the coupling and
+        # The operator-reduced shards carry a channel and a smearing level between the coupling and
         # the shard index -- `su2_L12_b2.40.plaquette.ape16.s000.npy` -- which the original pattern,
         # expecting `.s000` directly after the coupling, did not admit. It matched none of the 42
         # such shards across `configs_b25_su2`, `configs_boxsm_su2`, `configs_pilot_su2` and
-        # `configs_smear_su2_L12`, and dropped every one through the `continue` below WITHOUT SAYING
-        # SO -- which is exactly the failure the shape branch further down warns about, one branch
+        # `configs_smear_su2_L12`, and dropped every one through the `continue` below without saying
+        # so -- which is exactly the failure the shape branch further down warns about, one branch
         # earlier and unguarded. Eleven ensembles shipped with no thermalisation measurement.
         #
-        # The middle segments are CAPTURED, not discarded: `ape16` and `ape32` are different
+        # The middle segments are captured, not discarded: `ape16` and `ape32` are different
         # operators, and averaging them into one mean would make the drift test meaningless.
         m = re.match(r"(u1|su2|su3)_L(\d+)_b([0-9.]+)((?:\.[A-Za-z][A-Za-z0-9_]*)*)\.s(\d+)\.npy$",
                      os.path.basename(path))
         if not m:
-            # A name that matches nothing is SKIPPED, and a silent skip here is how an ensemble ends
+            # A name that matches nothing is skipped, and a silent skip here is how an ensemble ends
             # up shipping with no thermalisation measurement while the suite stays green. Say which,
             # and say it where it is read.
             print(f"  SKIP (name matches no known layout) {coll}/{os.path.basename(path)}",
@@ -177,7 +177,7 @@ def stored_means(root):
             note = "cached"
         else:
             a = np.load(path, mmap_mode="r")
-            # DERIVED: the number of AXES says which object a shard is, as it does in
+            # DERIVED: the number of axes says which object a shard is, as it does in
             # `aperture_reads.operator_history` -- 2 is the zero-momentum operator history `(n, T)`,
             # 5 the density field `(n, L, L, L, T)`, 7 the raw links. Arity, not a threshold.
             #
@@ -186,14 +186,14 @@ def stored_means(root):
             # the time mean of `O(t)`, which `_per_config_mean` already computes -- it flattens
             # everything after the configuration axis, and for `(n, T)` that is the time axis.
             if a.ndim == 2:
-                # An OPERATOR-REDUCED shard `(n, T)` is a smeared-plaquette amplitude history, not
-                # the action density, and this file's verdict is an ABSOLUTE comparison against an
+                # An operator-reduced shard `(n, T)` is a smeared-plaquette amplitude history, not
+                # the action density, and this file's verdict is an absolute comparison against an
                 # action-density equilibrium reference. Measured: `configs_boxsm_su2` L=8 T=32
                 # beta=2.40 has per-configuration mean 1534.4 against a reference of 2.2159, i.e.
                 # 57726 sigma "under-thermalised" -- which says only that the two are different
                 # observables.
                 #
-                # So these shards do NOT go through the level comparison. They go through the DRIFT
+                # So these shards do not go through the level comparison. They go through the drift
                 # test instead (`drift_sigma` below), which asks the thermalisation question without
                 # a reference at all: does the first half of the chain sit where the second half
                 # does? That is weaker evidence than the level test -- a chain stuck in the wrong
@@ -212,7 +212,7 @@ def stored_means(root):
                         G.action_density(q, group=group, device=None))))
                 per = np.concatenate(parts)
             else:
-                # A shard whose shape matches nothing is SKIPPED, and a silent skip here is how an
+                # A shard whose shape matches nothing is skipped, and a silent skip here is how an
                 # ensemble ends up shipping with no thermalisation measurement while the suite stays
                 # green. Say which, and say it where it is read.
                 print(f"  SKIP (shape {a.shape} matches no known layout) "
@@ -231,32 +231,32 @@ def stored_means(root):
 
 
 def equilibrium(group, L, T, beta):
-    """(mean, sem, usable, bracket half-gap) BRACKETED between a hot start and a cold one.
+    """(mean, sem, usable, bracket half-gap) bracketed between a hot start and a cold one.
 
-    WHY BOTH, and it is not caution. A hot (random) configuration relaxes toward equilibrium FROM
-    ABOVE and a cold (ordered) one FROM BELOW, so a reference measured from one start is biased in a
+    Why both, and it is not caution. A hot (random) configuration relaxes toward equilibrium from
+    above and a cold (ordered) one from below, so a reference measured from one start is biased in a
     known direction by an amount that nothing about that single chain reveals -- its tail looks flat
     either way. This function ran only `_*_init`, which is hot, for the whole life of the artifact,
     while the test that consumes it described the value as "bracketed from both a hot and a cold
     start". It was not.
 
-    WHAT THAT COST, measured rather than supposed. Across the level-tested ensembles the offsets
+    What that cost, measured rather than supposed. Across the level-tested ensembles the offsets
     `stored - reference` are balanced for the heat-bath groups (SU(2) 27 of 58 negative, SU(3) 7 of
     16) and one-sided for U(1) at large beta: 8 of 8 negative for `beta >= 1.4`, sign test
     `p = 0.0039`. The mechanism is in `_ops("u1")`, which returns a Metropolis proposal width of 1.0
-    radians at EVERY beta: acceptance falls as beta rises (0.512 at 1.6, 0.420 at 2.5), the chain
+    radians at every beta: acceptance falls as beta rises (0.512 at 1.6, 0.420 at 2.5), the chain
     decorrelates more slowly, and the hot start is still descending when the tail goes flat. One
-    ensemble carried enough configurations to resolve it alone and read 8.5 sigma BELOW its
+    ensemble carried enough configurations to resolve it alone and read 8.5 sigma below its
     reference -- a direction no relaxing chain can produce, which is what identified the reference
     rather than the data as the suspect.
 
-    HOW THE BRACKET IS REPORTED. The value is the MIDPOINT of the two tails and the uncertainty
+    How the bracket is reported. The value is the midpoint of the two tails and the uncertainty
     carries the half-gap between them, added in quadrature with the tails' own errors. So a bracket
     that has not closed widens the error rather than being averaged away, and an ensemble is
     classified against an interval that is exactly as wide as the two chains disagree. When the
     bracket does close the half-gap is small and this reduces to the old behaviour.
 
-    The third value is USABLE, not "converged" -- see the note at the return. The fourth is the
+    The third value is usable, not "converged" -- see the note at the return. The fourth is the
     half-gap, carried separately so a wide bracket is visible rather than buried in the error.
 
     SU(N) uses heat-bath; U(1) has only Metropolis, which reaches the same distribution over a
@@ -267,9 +267,9 @@ def equilibrium(group, L, T, beta):
     mid = 0.5 * (hot_m + cold_m)
     half = 0.5 * abs(hot_m - cold_m)
     sem = float(np.sqrt((0.5 * (hot_s + cold_s)) ** 2 + half ** 2))
-    # USABLE, and `converged` is no longer the right word for the flag a bracket produces. The
+    # Usable, and `converged` is no longer the right word for the flag a bracket produces. The
     # single-chain rule was "this tail is flat over at least 3 blocks, so the value can be trusted" --
-    # with one chain the tail length is the ONLY evidence, and a short one means you cannot tell
+    # with one chain the tail length is the only evidence, and a short one means you cannot tell
     # whether it is still moving, so the value has to be discarded. A bracket tells you directly, and
     # measures it: the gap between the two starts. Keeping the old rule made adding a cold chain turn
     # a usable reference into an unusable one -- strictly more information, strictly less use -- which
@@ -278,7 +278,7 @@ def equilibrium(group, L, T, beta):
     #
     # `half` is returned so it is not buried inside `sem`: a wide bracket makes every ensemble agree
     # with the reference, which is the correct reading of a weak measurement and is exactly the thing
-    # a reader must be able to SEE rather than infer.
+    # a reader must be able to see rather than infer.
     return mid, sem, True, half
 
 
@@ -319,16 +319,16 @@ def _one_start(group, L, T, beta, start):
 
 
 def drift_sigma(v: np.ndarray) -> tuple[float, float, float, float]:
-    """`(first-half mean, second-half mean, offset, |z|)` for a chain against ITSELF.
+    """`(first-half mean, second-half mean, offset, |z|)` for a chain against itself.
 
-    WHAT THIS ANSWERS, and it is not the same question the level test answers. An operator-reduced
+    What this answers, and it is not the same question the level test answers. An operator-reduced
     shard is a smeared-plaquette amplitude history; the equilibrium reference this file computes is
-    an action density, a different observable, so their LEVELS cannot be compared -- doing so reads
+    an action density, a different observable, so their levels cannot be compared -- doing so reads
     `configs_boxsm_su2` L=8 beta=2.40 as 57726 sigma off, which says only that the two are different
-    quantities. What CAN be asked without a reference is whether the chain is still moving: split it
+    quantities. What can be asked without a reference is whether the chain is still moving: split it
     in half in configuration order and compare the halves by their own standard errors.
 
-    WHAT IT CANNOT SEE, stated where the statistic is: a chain that equilibrated to the WRONG place
+    What it cannot see, stated where the statistic is: a chain that equilibrated to the wrong place
     -- trapped in a metastable state, or generated at the wrong coupling -- does not drift, and this
     returns a small `z` for it. A drift verdict is evidence that the sampling had settled by the time
     the shipped configurations were written, and nothing more. The artifact's `test` column carries
@@ -360,8 +360,8 @@ def drift_sigma(v: np.ndarray) -> tuple[float, float, float, float]:
 def tolerance_sigma(n_ensembles: int) -> float:
     """The largest |z| a set of `n_ensembles` at-equilibrium ensembles is expected to produce.
 
-    DERIVED, NOT CHOSEN. Each ensemble contributes one standardised offset. If every one of them
-    really is at equilibrium, those offsets are standard normal, and the EXPECTED LARGEST of `n`
+    DERIVED, not CHOSEN. Each ensemble contributes one standardised offset. If every one of them
+    really is at equilibrium, those offsets are standard normal, and the expected largest of `n`
     such draws is `sqrt(2 ln n)`. So an ensemble exceeding this is not explained by the fact that we
     looked at `n` of them, which is exactly the question the verdict asks.
 
@@ -379,7 +379,7 @@ def tolerance_sigma(n_ensembles: int) -> float:
 def previous_references():
     """Reference values from the committed artifact, keyed by `(group, L, T, beta)`.
 
-    Only rows whose chain settings match the ones THIS run would use are offered: the reference is
+    Only rows whose chain settings match the ones this run would use are offered: the reference is
     a function of the key and those settings, so a row measured under different ones is a different
     quantity and must not stand in for this one. Rows that did not converge are not offered either
     -- there is nothing to reuse.
@@ -413,7 +413,7 @@ def _refkey(group, L, T, beta) -> str:
 
 
 def write_keys(path, acc, eq_cache):
-    """Phase 1 (LOCAL, cheap): which reference chains are still missing.
+    """Phase 1 (local, cheap): which reference chains are still missing.
 
     Reads the store, so it runs where the store is. It does no Monte Carlo -- it only names the work.
     """
@@ -425,9 +425,9 @@ def write_keys(path, acc, eq_cache):
 
 
 def run_references(keys_path, out_path):
-    """Phase 2 (ANYWHERE): compute the reference chains named in `keys_path`.
+    """Phase 2 (anywhere): compute the reference chains named in `keys_path`.
 
-    THIS IS THE PHASE THAT DOES NOT TOUCH THE STORE. `equilibrium` generates its own configurations,
+    This is the phase that does not touch the store. `equilibrium` generates its own configurations,
     so by `remote_run`'s own rule it can be placed on a compute host or a GPU. Keeping it in the same
     pass as the store comparison is what pinned hours of single-core Monte Carlo to whichever machine
     happens to hold the ensembles.
@@ -444,11 +444,11 @@ def run_references(keys_path, out_path):
         t0 = time.time()
         print(f"  chain {name} ...", flush=True)
         mu, sem, conv, half = equilibrium(k["group"], k["L"], k["T"], k["beta"])
-        # The fourth element is HOW this was measured, not decoration: `equilibrium` brackets a hot
+        # The fourth element is how this was measured, not decoration: `equilibrium` brackets a hot
         # and a cold start, and a file that did not say so would load as `hot_only` (the default for
         # any legacy file) and be recorded in the artifact as the weaker kind of reference.
         out[name] = [mu, sem, bool(conv), "bracketed", half]
-        # WRITTEN AFTER EVERY CHAIN, not at the end. A run that writes only on completion cannot be
+        # Written after every chain, not at the end. A run that writes only on completion cannot be
         # observed, cannot be resumed, and discards everything if it is interrupted -- which is
         # exactly what made the previous seven-hour pass impossible to reason about.
         with open(out_path, "w", encoding="utf-8") as fh:
@@ -461,7 +461,7 @@ def run_references(keys_path, out_path):
 def load_references(path):
     """Phase 3's input: references computed elsewhere, keyed as `previous_references` keys them.
 
-    A value is `[mean, sem, converged]` or `[mean, sem, converged, kind]`. `kind` says HOW the
+    A value is `[mean, sem, converged]` or `[mean, sem, converged, kind]`. `kind` says how the
     reference was measured — `"bracketed"` for the hot/cold pair `equilibrium` now produces,
     `"hot_only"` for anything written before that, which is every legacy file. It is carried into the
     artifact's `reference` column rather than discarded, because the two are not the same evidence: a
@@ -473,10 +473,10 @@ def load_references(path):
     out = {}
     for name, v in raw.items():
         mu, sem, conv = v[0], v[1], v[2]
-        # DERIVED: `3` and `4` are POSITIONS in the record, not magnitudes -- a legacy file stops
+        # DERIVED: `3` and `4` are positions in the record, not magnitudes -- a legacy file stops
         # at three elements, and what is absent is what its absence means.
         kind = v[3] if len(v) > 3 else "hot_only"
-        # DERIVED: `4` is the half-gap's POSITION in the record, as `3` above is the kind's. A file
+        # DERIVED: `4` is the half-gap's position in the record, as `3` above is the kind's. A file
         # written before the bracket existed is shorter, and `nan` is what "this reference had no
         # bracket" means -- not a bracket of width zero, which would be a claim.
         half = float(v[4]) if len(v) > 4 else float("nan")
@@ -501,7 +501,7 @@ def main():
                     help="PHASE 3: use reference chains from this JSON instead of computing them")
     args = ap.parse_args()
 
-    # PHASE 2 first: it needs neither the store nor anything else in this function.
+    # Phase 2 first: it needs neither the store nor anything else in this function.
     if args.references:
         if not args.refs_out:
             raise SystemExit("--references needs --refs-out to say where the chains go")
@@ -526,8 +526,8 @@ def main():
     rows = []
     # DERIVED: the tolerance is the expected largest |z| across the ensembles being classified,
     # so it widens as the store grows rather than staying at a number picked once.
-    # DERIVED: the multiple-comparison penalty counts the TESTS, not the ensembles. A level test
-    # produces one standardised offset per ensemble; a drift test produces one per SHARD, because
+    # DERIVED: the multiple-comparison penalty counts the tests, not the ensembles. A level test
+    # produces one standardised offset per ensemble; a drift test produces one per shard, because
     # each shard is its own chain and the worst of them decides the verdict. Counting ensembles here
     # would understate the number of draws the maximum is taken over, which is the one thing this
     # tolerance exists to correct for.
@@ -544,14 +544,14 @@ def main():
             # A smeared-plaquette amplitude has no action-density reference to be level-compared
             # against, so it is asked the drift question instead.
             #
-            # PER SHARD, NOT PER KEY, and that distinction is the whole measurement. These
-            # collections ship SEVERAL SMEARING LEVELS under one `(group, L, T, beta, collection)`
+            # Per shard, not per key, and that distinction is the whole measurement. These
+            # collections ship several smearing levels under one `(group, L, T, beta, collection)`
             # -- `ape16`, `ape24`, `ape32` -- and the accumulator key does not carry the smearing.
             # Concatenating them and splitting the result in half compares one smearing level
             # against another: measured, that reads `configs_b25_su2` as "drifting" at 25.8 sigma at
-            # EVERY L, the same number four times over, because it is the amplitude step between
-            # levels and not a property of any chain. A shard IS a chain; each is tested on its own
-            # and the WORST is reported, so one moving chain cannot hide behind the others.
+            # every L, the same number four times over, because it is the amplitude step between
+            # levels and not a property of any chain. A shard is a chain; each is tested on its own
+            # and the worst is reported, so one moving chain cannot hide behind the others.
             zs = [drift_sigma(np.asarray(c)) for c in chunks]
             finite = [z for z in zs if math.isfinite(z[3])]
             if not finite:

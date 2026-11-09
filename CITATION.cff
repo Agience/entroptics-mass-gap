@@ -1,7 +1,7 @@
 cff-version: 1.2.0
-message: "If you use this work, please cite it."
-title: "The Mass Gap of Pure SU(N) Gauge Theory as a Finite-Aperture Effect"
-abstract: "The paper reads the mass gap of pure SU(N) Yang-Mills as a finite-aperture effect: the vacuum is read through a finite aperture, which band-limits, and the gap is the entropy margin below the counting floor kappa_0 = (1/4) ln 3, counted from directed cube paths with no fitted constant. Reflection positivity is proved at even extent at least four and nonnegative coupling, and cited outside that domain. The repository holds the paper, the Lean development, and the Entroptics analysis code."
+message: "If you use this work, please cite the paper (preferred-citation) and the software record by its DOI. The code is licensed under Apache-2.0; the paper text (research/paper/) is licensed under CC BY 4.0."
+title: "The Mass Gap of SU(N) Gauge Theory Seen by an Observer of Fixed Physical Resolution"
+abstract: "We take the frame of the Entroptics paper, an observer as a finite aperture whose mode count is read from the signal's spectrum, as the method for the continuum limit of four-dimensional SU(N) Wilson lattice gauge theory, and use it in two places. On the gap side the theory is read at a window it sets: the doubling defect D_β(w) = 16 log Z_β(2^w) − log Z_β(2^(w+1)) of the periodic torus, a finite-size free energy with the bulk cancelled exactly (read, as an argued interpretation, as a weighted sum of Rényi-2 entropies of transfer operators), is held at a fixed value u_0 along a coupling tower while the window doubles. On the existence side the observer's screen in a box of fixed physical side is a finite family of modes, and one variance bound with per-mode hypercontractivity gives every even moment through the Rényi count of order 1/2, with constants free of the box and the zoom; for the single-reading closure, 1/2 is the sharp order; for the Wilson field itself the count bound is reduced to one fine-scale inequality, which is open. For N ≥ 2 we prove that the formalized target CS(N), an Osterwalder–Schrader form of the existence-and-gap statement (separated test functions, a limit along a fixed ultrafilter, no Wightman reconstruction), follows from three open statements: (S), that the defect tends to 0 along the windows at arbitrarily large β; (M), that at window couplings arbitrarily close to 0, along every coupling tower, the measured tensor mass stays in a band of ratio 2 at a level chosen per tower; and (E), the existence clauses restated along towers. A fixed-level form of (M) is refuted under (S). Without hypotheses we prove the doubling bootstrap, in which one window with D ≤ 1/1000 forces D(w+1) ≤ 250 D(w)² and a transfer gap uniform in the torus size (a four-dimensional form of the purity bootstrap of OpenAI's O(3) work, of OpenAI's proof of the Haldane gap and of Grover's extensions of it); vanishing on an interval of small β, at the decoupled end of the anisotropic family and on an explicit strip of mixed couplings that shrinks with β; box gaps for SU(2) and SU(3) at small coupling; and a list of properties that do not separate SU(N) from U(1). The theorems are formalized in Lean 4. The mass gap is not proved. The Lean 4 / Mathlib development depends only on the axioms propext, Classical.choice and Quot.sound. Monte Carlo data are validation only. The record holds the paper (research/paper/mass-gap.pdf and its sources), the Lean development, the exact checks and the analysis code."
 type: software
 authors:
   - given-names: Ikailo John
@@ -11,16 +11,49 @@ authors:
     affiliation: Ikailo Inc.
 repository-code: "https://github.com/Agience/entroptics-mass-gap"
 url: "https://github.com/Agience/entroptics-mass-gap"
+# Code: Apache-2.0 (LICENSE, NOTICE). Paper text under research/paper/: CC BY 4.0 (see preferred-citation).
 license: Apache-2.0
-version: 0.2.2
-date-released: "2026-09-29"
+version: 0.3.0
+date-released: "2026-11-08"
+doi: "10.5281/zenodo.22652660"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22652660"
+    description: "Concept DOI - all versions of this work; resolves to the newest release."
 keywords:
-  - Yang-Mills
-  - mass gap
   - lattice gauge theory
-  - confinement
+  - Wilson action
+  - Yang-Mills mass gap
+  - finite aperture
+  - Entroptics
+  - Rényi entropy
+  - effective mode count
+  - hypercontractivity
+  - doubling defect
+  - purity bootstrap
+  - transfer operator
+  - reflection positivity
+  - anisotropic lattice
+  - Osterwalder-Schrader axioms
   - formal verification
-  - Lean 4
+  - Lean
+preferred-citation:
+  type: article
+  status: preprint
+  title: "The Mass Gap of SU(N) Gauge Theory Seen by an Observer of Fixed Physical Resolution"
+  authors:
+    - given-names: Ikailo John
+      family-names: Sessford
+      orcid: "https://orcid.org/0009-0002-0150-4027"
+      affiliation: Ikailo Inc.
+  year: 2026
+  month: 11
+  date-published: "2026-11-08"
+  license: CC-BY-4.0
+  doi: "10.5281/zenodo.22652660"
+  url: "https://github.com/Agience/entroptics-mass-gap/blob/v0.3.0/research/paper/mass-gap.pdf"
+  repository-code: "https://github.com/Agience/entroptics-mass-gap"
+  notes: "Unrefereed preprint. Paper text CC BY 4.0; accompanying code Apache-2.0."
 references:
   - type: software
     title: "Entroptics"
@@ -29,25 +62,33 @@ references:
       - given-names: Ikailo John
         family-names: Sessford
         affiliation: Ikailo Inc.
-    version: "0.2.6"
-    commit: "cf9edee49a9cee80893769a9e4affde8e0a82aa7"
-    url: "https://github.com/Agience/entroptics/tree/cf9edee49a9cee80893769a9e4affde8e0a82aa7"
-    doi: "10.5281/zenodo.23045719"
+    version: "0.2.10"
+    url: "https://github.com/Agience/entroptics/tree/v0.2.10"
+    doi: "10.5281/zenodo.24063501"
     identifiers:
       - type: doi
-        value: "10.5281/zenodo.23045719"
-        description: "Entroptics v0.2.6 version DOI"
+        value: "10.5281/zenodo.24063501"
+        description: "Entroptics v0.2.10 version DOI"
       - type: doi
         value: "10.5281/zenodo.21273400"
         description: "Entroptics concept DOI (all versions)"
     repository-code: "https://github.com/Agience/entroptics"
     license: Apache-2.0
-    date-released: "2026-09-29"
-doi: "10.5281/zenodo.23051385"
-identifiers:
-  - type: doi
-    value: "10.5281/zenodo.23051385"
-    description: "This work, v0.2.2 version DOI"
-  - type: doi
-    value: "10.5281/zenodo.22652660"
-    description: "This work, concept DOI (all versions)"
+    date-released: "2026-11-08"
+  - type: data
+    title: "Entroptics lattice gauge-theory action-density ensembles (U(1), SU(2), SU(3))"
+    authors:
+      - given-names: Ikailo John
+        family-names: Sessford
+        affiliation: Ikailo Inc.
+    version: "0.2.0"
+    doi: "10.5281/zenodo.22850110"
+    identifiers:
+      - type: doi
+        value: "10.5281/zenodo.22850110"
+        description: "Dataset v0.2.0 version DOI"
+      - type: doi
+        value: "10.5281/zenodo.22650078"
+        description: "Dataset concept DOI (all versions)"
+    license: CC-BY-4.0
+    date-released: "2026-09-19"

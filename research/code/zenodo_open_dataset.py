@@ -1,9 +1,9 @@
 """Flip the published lattice dataset record from `restricted` to `open`, and fix its source.
 
-WHY THIS EXISTS. v0.2.0 of the action-density ensembles (record 22850110, DOI
+Why this exists. v0.2.0 of the action-density ensembles (record 22850110, DOI
 10.5281/zenodo.22850110) was published carrying `access_right: "restricted"`, so the public record
-serves ZERO of its 25 files while the paper, CITATION.cff and the repository's .zenodo.json all cite
-it. v0.1.0 (22650079) is `open` with its 19 files public, so v0.2.0 was a REGRESSION -- and the
+serves zero of its 25 files while the paper, CITATION.cff and the repository's .zenodo.json all cite
+it. v0.1.0 (22650079) is `open` with its 19 files public, so v0.2.0 was a regression -- and the
 record ships CC-BY-4.0, which grants redistribution over files the record refuses to hand out. The
 two cannot both be intended.
 
@@ -13,7 +13,7 @@ version, so this changes the source first and the record second.
 
 Authorised by John, 2026-09-19, in answer to a direct question about this record.
 
-WHAT THIS DOES NOT DO. It does not touch the files, the DOI, the version or any other field, and it
+What this does not do. It does not touch the files, the DOI, the version or any other field, and it
 publishes no new version -- the cited DOI keeps resolving to the same 25 files. It edits one
 metadata key on an already-published record and submits that edit.
 """
@@ -59,7 +59,7 @@ def call(url, tok, method="GET", body=None):
 def main():
     tok = token()
 
-    # 1. The SOURCE, so the next version does not reintroduce it.
+    # 1. The source, so the next version does not reintroduce it.
     src = os.path.join(store_path.store_root(), ".zenodo.json")
     meta = json.load(io.open(src, encoding="utf-8"))
     if meta.get("access_right") != "open":
@@ -70,7 +70,7 @@ def main():
     else:
         print("store .zenodo.json: already open")
 
-    # 2. The RECORD. Read what is live before writing, and change exactly one key.
+    # 2. The record. Read what is live before writing, and change exactly one key.
     dep = call(API, tok)
     live = dict(dep["metadata"])
     print("record %d: state=%s submitted=%s access_right=%s files=%d"
@@ -93,14 +93,14 @@ def main():
     pub = call(API + "/actions/publish", tok, method="POST")
     print("PUBLISHED  state=%s  doi=%s" % (pub.get("state"), pub.get("doi")))
 
-    # 3. Verify against the PUBLIC record, not against our own request.
+    # 3. Verify against the public record, not against our own request.
     with urllib.request.urlopen("https://zenodo.org/api/records/%d" % DEPOSITION) as fh:
         rec = json.load(fh)
     n = len(rec.get("files", []))
     print("public record: access_right=%s  files served=%d"
           % (rec.get("metadata", {}).get("access_right"), n))
     # DERIVED: the file count is the deposit's own, read back from the API rather than written here,
-    # so this checks the PUBLIC record against what the deposit holds instead of against a numeral.
+    # so this checks the public record against what the deposit holds instead of against a numeral.
     assert rec.get("metadata", {}).get("access_right") == "open", "the public record is still closed"
     held = len(dep.get("files", []))
     assert n == held, "public record serves %d of the deposit's %d files" % (n, held)

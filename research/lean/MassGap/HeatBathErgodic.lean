@@ -1,11 +1,10 @@
 import Mathlib
-import MassGap.HeatBathGapDecay
 import MassGap.HeatBath
 
 noncomputable section
 
 /-!
-# MassGap.HeatBathErgodic — the lazy heat bath is ergodic at every finite volume
+# MassGap.HeatBathErgodic — the Poincaré inequality of a finite Wilson system
 
 ## What it gives
 
@@ -27,11 +26,8 @@ noncomputable section
    measure with the product Haar measure, whose density lies between `e^{∓2|β||P|}`
    (`wt_bounds`), bounds the Haar variance by the sweep, and each Haar-average defect by the
    heat-bath defect (`havg_integral_min`).
-5. **Ergodicity of the lazy heat bath.** `ergodicLimit_of_poincare`: on a patch system with a unit
-   vector `u` (`B(u, u) = 1`, `B(Hv, u) = 0`) and a Poincaré inequality
-   `B(v, v) − B(v, u)² ≤ C B(Hv, v)`, the lazy heat bath at `K = |ι| + 1` has
-   `B(Tᴹ f, g) → B(f, u) B(g, u)`. The variance of `Tᴹ f` contracts by `1 − (K(C + 1))⁻¹` per step
-   (`Tstep_form`), and `tendsto_of_sq_le` turns the geometric bound into the limit.
+5. **A geometric bound gives a limit.** `tendsto_of_sq_le` turns a geometric bound on the square of a
+   sequence into convergence.
 
 ## The literature
 
@@ -45,7 +41,7 @@ which is all the ergodic limit asks.
 namespace MassGap.HeatBathErgodic
 
 open MeasureTheory Filter
-open MassGap.HeatBath MassGap.KnabeCriterion MassGap.HeatBathGapDecay
+open MassGap.HeatBath
 open MassGap.WilsonLattice (wilsonSystem)
 open MassGap.WilsonAction (wilsonDensity)
 open MassGap.CompactGauge (probHaar)
@@ -466,7 +462,7 @@ theorem chain_le {Var Ic Z whi J K2 D Ee wlo X : ℝ} (hZ : 0 < Z) (hwhi : 0 ≤
 
 #print axioms chain_le
 
-/-- **THE POINCARÉ INEQUALITY OF A FINITE WILSON SYSTEM.** For every finite Wilson system
+/-- **The Poincaré inequality of a finite Wilson system.** For every finite Wilson system
 `wilsonSystem bd wilsonDensity` over `SU(N)`, `N ≠ 0`, at every real `β`, some `C ≥ 0` has, for
 every continuous `φ`,
 
@@ -479,8 +475,7 @@ is the constant `c` (`sweep_readsNot`, `eq_of_readsNot_all`, `integral_sweep`), 
 the heat-bath defect (`havg_integral_min`, `HeatBath.heatAvg_update`), and
 `w₋ ∫ (φ − heatAvg l φ)² dν ≤ Z ⟨(φ − heatAvg l φ)²⟩`. The constant is
 `2^{|L|+1} w₊/w₋`, with `|L|` the number of links. It depends on the volume through `|L|` and the
-plaquette count `|P|` (`w₊/w₋ = e^{4|β||P|}`); `ergodicLimit_of_poincare` uses it at one fixed
-volume, where no uniformity is asked.
+plaquette count `|P|` (`w₊/w₋ = e^{4|β||P|}`); no uniformity in the volume is asked.
 
 DERIVED: `0` is the excluded rank in `hN` and the sign of `C`; `2` is the square. -/
 theorem heat_poincare (hN : N ≠ 0) {Pq : Type} [Fintype Pq] (bd : Pq → List (Lk × Bool))
@@ -646,145 +641,6 @@ theorem tendsto_of_sq_le {a : ℕ → ℝ} {L q Y : ℝ} (h0 : 0 ≤ q) (h1 : q 
     linarith [h4.2]
 
 #print axioms tendsto_of_sq_le
-
-/-- `B(Hv, v) = Σᵢ B(hᵢv, hᵢv)` on a patch system (`KnabeCriterion.form_proj_self`).
-
-DERIVED: no numeral. -/
-theorem form_H_eq_sum (S : PatchSystem) (v : S.E) :
-    S.B (S.H v) v = ∑ i, S.B (S.h i v) (S.h i v) := by
-  show S.B (totalOp S.h v) v = _
-  rw [totalOp_apply, map_sum, LinearMap.sum_apply]
-  exact Finset.sum_congr rfl (fun i _ => form_proj_self S.B (S.h i) (S.selfAdj i) (S.idem i) v)
-
-#print axioms form_H_eq_sum
-
-/-- **`H` pairs to zero with a vector every `hᵢ` sends to a null vector**: `B(Hv, u) = 0` when
-`B(hᵢu, hᵢu) = 0` for every `i` (`HeatBathGapDecay.form_eq_zero_of_null`).
-
-DERIVED: `0` is the null value. -/
-theorem form_H_left_zero (S : PatchSystem) (u : S.E) (hu : ∀ i, S.B (S.h i u) (S.h i u) = 0)
-    (v : S.E) : S.B (S.H v) u = 0 := by
-  show S.B (totalOp S.h v) u = 0
-  rw [totalOp_apply, map_sum, LinearMap.sum_apply]
-  exact Finset.sum_eq_zero (fun i _ => by
-    rw [S.selfAdj i v u]
-    exact form_eq_zero_of_null S (hu i) v)
-
-#print axioms form_H_left_zero
-
-/-- **THE ERGODIC LIMIT FROM A POINCARÉ INEQUALITY.** On a patch system with a vector `u`,
-`B(u, u) = 1`, `B(Hv, u) = 0` for every `v`, and `B(v, v) − B(v, u)² ≤ C B(Hv, v)` at some `C ≥ 0`:
-for all `f`, `g` and `L = B(f, u) B(g, u)`, `ErgodicLimit S f g L`. The lazy step keeps `B(·, u)`
-(`step_diff`) and lowers the variance `B(v, v) − B(v, u)²` by `K⁻¹ B(Hv, v)` (`Tstep_form`), so by
-the factor `q = 1 − (K(C + 1))⁻¹`; Cauchy–Schwarz bounds
-`(B(Tᴹf, g) − L)² ≤ qᴹ (B(f, f) − B(f, u)²) B(g, g)` (`form_sq_le_mul`), and `tendsto_of_sq_le`
-closes it.
-
-DERIVED: `0` is the sign of `C` and the null pairing; `1` is the normalisation of `u` and the shift
-`C + 1`; `2` is the square. -/
-theorem ergodicLimit_of_poincare (S : PatchSystem) (u : S.E) (hu : S.B u u = 1)
-    (hHu : ∀ v, S.B (S.H v) u = 0) {C : ℝ} (hC : 0 ≤ C)
-    (hP : ∀ v, S.B v v - S.B v u ^ 2 ≤ C * S.B (S.H v) v) (f g : S.E) {L : ℝ}
-    (hL : S.B f u * S.B g u = L) : ErgodicLimit S f g L := by
-  unfold ErgodicLimit
-  rw [← hL]
-  have hKc : ((Kc S : ℕ) : ℝ) = (Fintype.card S.ι : ℝ) + 1 := by
-    unfold Kc
-    exact Nat.cast_succ _
-  have hK1 : (1 : ℝ) ≤ ((Kc S : ℕ) : ℝ) := by
-    rw [hKc]
-    have := Nat.cast_nonneg (α := ℝ) (Fintype.card S.ι)
-    linarith
-  have hK0 : (0 : ℝ) < ((Kc S : ℕ) : ℝ) := by linarith
-  have hK : ∀ v : S.E, S.B (S.H v) (S.H v) ≤ ((Kc S : ℕ) : ℝ) * S.B (S.H v) v := by
-    intro v
-    rw [hKc]
-    have h1 := H_form_le_card S v
-    have h2 := S.H_form_nonneg v
-    nlinarith
-  have hmv : ∀ v : S.E, S.B (Tstep S ((Kc S : ℕ) : ℝ) v) u = S.B v u := by
-    intro v
-    have h := step_diff S ((Kc S : ℕ) : ℝ) v u
-    rw [hHu, mul_zero, sub_eq_zero] at h
-    exact h.symm
-  have hmean : ∀ M, S.B (Titer S ((Kc S : ℕ) : ℝ) M f) u = S.B f u := by
-    intro M
-    induction M with
-    | zero => rfl
-    | succ M ih => rw [Titer_succ, hmv, ih]
-  obtain ⟨q, hq⟩ : ∃ q : ℝ, q = 1 - (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ := ⟨_, rfl⟩
-  have hKC : 1 ≤ ((Kc S : ℕ) : ℝ) * (C + 1) := by
-    nlinarith [mul_nonneg hK0.le hC]
-  have hinv0 : 0 < (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ := inv_pos.mpr (by linarith)
-  have hinv1 : (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ ≤ 1 := inv_le_one_of_one_le₀ hKC
-  have hq0 : 0 ≤ q := by
-    rw [hq]
-    linarith
-  have hq1 : q < 1 := by
-    rw [hq]
-    linarith
-  have hC1 : C + 1 ≠ 0 := (by linarith : (0 : ℝ) < C + 1).ne'
-  have hstep : ∀ v : S.E,
-      S.B (Tstep S ((Kc S : ℕ) : ℝ) v) (Tstep S ((Kc S : ℕ) : ℝ) v) - S.B v u ^ 2
-        ≤ q * (S.B v v - S.B v u ^ 2) := by
-    intro v
-    have hT := Tstep_form S hK0 hK v
-    have hPv := hP v
-    have hD := S.H_form_nonneg v
-    have h1 : S.B v v - S.B v u ^ 2 ≤ (C + 1) * S.B (S.H v) v := by nlinarith
-    have h2 : (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ * (S.B v v - S.B v u ^ 2)
-        ≤ (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ * ((C + 1) * S.B (S.H v) v) :=
-      mul_le_mul_of_nonneg_left h1 hinv0.le
-    have h3 : (((Kc S : ℕ) : ℝ) * (C + 1))⁻¹ * ((C + 1) * S.B (S.H v) v)
-        = (((Kc S : ℕ) : ℝ))⁻¹ * S.B (S.H v) v := by
-      rw [mul_inv]
-      calc (((Kc S : ℕ) : ℝ))⁻¹ * (C + 1)⁻¹ * ((C + 1) * S.B (S.H v) v)
-          = (((Kc S : ℕ) : ℝ))⁻¹ * ((C + 1)⁻¹ * (C + 1)) * S.B (S.H v) v := by ring
-        _ = (((Kc S : ℕ) : ℝ))⁻¹ * S.B (S.H v) v := by rw [inv_mul_cancel₀ hC1, mul_one]
-    rw [hq]
-    linarith [hT, h2, h3]
-  have hdecay : ∀ M : ℕ,
-      S.B (Titer S ((Kc S : ℕ) : ℝ) M f) (Titer S ((Kc S : ℕ) : ℝ) M f) - S.B f u ^ 2
-        ≤ q ^ M * (S.B f f - S.B f u ^ 2) := by
-    intro M
-    induction M with
-    | zero => simp only [Titer_zero, pow_zero, one_mul, le_refl]
-    | succ M ih =>
-      rw [Titer_succ, pow_succ q M]
-      have h := hstep (Titer S ((Kc S : ℕ) : ℝ) M f)
-      rw [hmean M] at h
-      calc S.B (Tstep S ((Kc S : ℕ) : ℝ) (Titer S ((Kc S : ℕ) : ℝ) M f))
-            (Tstep S ((Kc S : ℕ) : ℝ) (Titer S ((Kc S : ℕ) : ℝ) M f)) - S.B f u ^ 2
-          ≤ q * (S.B (Titer S ((Kc S : ℕ) : ℝ) M f) (Titer S ((Kc S : ℕ) : ℝ) M f)
-              - S.B f u ^ 2) := h
-        _ ≤ q * (q ^ M * (S.B f f - S.B f u ^ 2)) := mul_le_mul_of_nonneg_left ih hq0
-        _ = q ^ M * q * (S.B f f - S.B f u ^ 2) := by ring
-  have hbound : ∀ M : ℕ, (S.B (Titer S ((Kc S : ℕ) : ℝ) M f) g - S.B f u * S.B g u) ^ 2
-      ≤ q ^ M * ((S.B f f - S.B f u ^ 2) * S.B g g) := by
-    intro M
-    obtain ⟨w, hw⟩ : ∃ w : S.E, w = Titer S ((Kc S : ℕ) : ℝ) M f - S.B f u • u := ⟨_, rfl⟩
-    have e1 : S.B w g = S.B (Titer S ((Kc S : ℕ) : ℝ) M f) g - S.B f u * S.B g u := by
-      rw [hw]
-      simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
-      linear_combination (-(S.B f u)) * S.symm u g
-    have e2 : S.B w w = S.B (Titer S ((Kc S : ℕ) : ℝ) M f) (Titer S ((Kc S : ℕ) : ℝ) M f)
-        - S.B f u ^ 2 := by
-      rw [hw]
-      simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
-      linear_combination (-(S.B f u)) * S.symm u (Titer S ((Kc S : ℕ) : ℝ) M f)
-        + (-2 * S.B f u) * hmean M + (S.B f u) ^ 2 * hu
-    have hcs := form_sq_le_mul S.B S.symm S.nonneg w g
-    rw [e1, e2] at hcs
-    have hgg := S.nonneg g
-    calc (S.B (Titer S ((Kc S : ℕ) : ℝ) M f) g - S.B f u * S.B g u) ^ 2
-        ≤ (S.B (Titer S ((Kc S : ℕ) : ℝ) M f) (Titer S ((Kc S : ℕ) : ℝ) M f) - S.B f u ^ 2)
-          * S.B g g := hcs
-      _ ≤ (q ^ M * (S.B f f - S.B f u ^ 2)) * S.B g g :=
-          mul_le_mul_of_nonneg_right (hdecay M) hgg
-      _ = q ^ M * ((S.B f f - S.B f u ^ 2) * S.B g g) := by ring
-  exact tendsto_of_sq_le hq0 hq1 hbound
-
-#print axioms ergodicLimit_of_poincare
 
 end Ergodic
 

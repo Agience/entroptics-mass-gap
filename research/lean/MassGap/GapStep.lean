@@ -47,9 +47,7 @@ rate.
 `PhysStep`, the lattice step and the base are hypotheses. Given the base, `gapAt_tower` turns
 `PhysStep` at every level into the gap at rate `M` at every level, and the gap at every level makes
 every `PhysStep` true, since its conclusion holds: the step carries the whole content of the gap, one
-coupling at a time. At strong coupling the base holds at `periodicState`:
-`PeriodicStrongCoupling.periodic_tower_base` gives `GapAt` at `e^{−M·aRun N β_0}` at every small
-`β_0 > 0` for every `M ≤ −log(coreRate 64 β_0) / aRun N β_0`.
+coupling at a time.
 -/
 
 namespace MassGap.GapStep

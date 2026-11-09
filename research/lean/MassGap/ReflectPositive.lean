@@ -544,9 +544,8 @@ theorem corrHyper_rp_of (hNc : Nc ≠ 0) {m : ℕ} {μ ν τ : Fin d} (hμ : μ 
 
 /-! ### The same statement at `corrClay`'s parameters
 
-`WilsonBridge.corrClay` is `corrHyper` at `Nc = 3`, `d = 4`, plane `(0, 1)`, lag axis `2`, and
-`Complete.wilsonCorrAt N β` is `corrClay (N + 1) β` by definition. The theorem below is
-`corrHyper_rp_of` instantiated there.
+`WilsonBridge.corrClay` is `corrHyper` at `Nc = 3`, `d = 4`, plane `(0, 1)`, lag axis `2`. The
+theorem below is `corrHyper_rp_of` instantiated there.
 -/
 
 /-- `corrHyper_rp_of` at `Nc := 3`, `d := 4`, `μ := 0`, `ν := 1`, `τ := 2`, `m := N`, which are the
@@ -557,8 +556,7 @@ is
     (∀ lag, 0 ≤ corrClay (N + 1) β lag) ∧ 0 < ∑ lag, corrClay (N + 1) β lag.
 
 The two distinctness side conditions `0 ≠ 2` and `1 ≠ 2` in `Fin 4` are discharged by `decide`, and
-`3 ≠ 0` by `norm_num`. Since `Complete.wilsonCorrAt N β` is `corrClay (N + 1) β` by definition, the
-same statement reads for that function.
+`3 ≠ 0` by `norm_num`.
 
 Scope: `h0` is a hypothesis, independent of `hRP`. `β` is an arbitrary real.
 

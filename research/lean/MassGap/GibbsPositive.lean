@@ -1,15 +1,14 @@
-import MassGap.WilsonGauge
+import MassGap.CompactGauge
+import MassGap.SUN
+import MassGap.WilsonAction
+import MassGap.WilsonLattice
+import MassGap.WilsonReal
 
 /-!
 # MassGap.GibbsPositive — strict positivity of the Gibbs expectation of the plaquette energy
 
-`WilsonGauge.QG` is the clamp
-
-    QG j a = min (max (sysYM.expect (probHaar G3) a O0) 0) 1,
-
-with `sysYM` the four-dimensional periodic `SU(3)` Wilson system and `O0` the plaquette energy of the
-plane-`(0,1)` plaquette at the origin. This module proves `0 < QG j a` at every `j` and every `a`, so
-the lower clamp never fires and `QG` is nowhere zero.
+This module proves `0 < expect φ_p` for the Wilson system at every coupling `β`, given a single
+configuration at which the plaquette energy is positive.
 
 ## The chain
 
@@ -23,31 +22,17 @@ the lower clamp never fires and `QG` is nowhere zero.
   on nonempty opens, so `Continuous.ae_eq_iff_eq` upgrades a vanishing integral to vanishing at every
   configuration, which the supplied configuration contradicts.
 
-The configuration is `confD`: the identity on every link except those in direction `0` whose site has
-axis-`1` coordinate `0`, which carry `gD = diag(1, −1, −1) ∈ SU(3)`. Of the four boundary links of the
-plaquette `((0,1), origin)` only `(0, origin)` meets that description, so `hol_confD` reads the
-boundary word as `gD · 1 · 1⁻¹ · 1⁻¹ = gD` and `plaqObs_confD` evaluates its Wilson density to `4/3`.
-
-`expect_O0_pos`, `QG_pos`, `QG_ne_zero`, `ymFamilyGauge_Q_pos` and `ymFamilyGaugeCounted_Q_pos` are
-the consequences. `QYM_pos_of` is the corresponding statement for `MassGap.QYM`, conditional on a
-supplied positivity of `wilsonCorrAt` at one lag.
+The witnessing configuration for `SU(3)` uses `gD = diag(1, −1, −1) ∈ SU(3)`, whose Wilson density is
+`4/3` (`wilsonDensity_gD`).
 
 ## Scope
 
-Each statement is at a fixed coupling. `QG j a` is the expectation at `β = a`, and no statement here
-bounds `QG j a` from below uniformly in `a`, so nothing here is about a limit in `a` or about the
-limit `q` that `Measure.continuum_of_family` produces.
+Each statement is at a fixed coupling, and no statement here bounds the expectation from below
+uniformly in `β`.
 
-`ymFamilyGaugeCounted` and `ymFamilyGauge` carry `QG` as their reflected form, which is why the
-positivity covers them. `WilsonInstance.ymFamily` does not: its form is `QYM N`, and no statement
-here equates the two, so `QYM_pos_of` takes the positivity of the correlation as a hypothesis.
+## Controls
 
-## Negative controls
-
-* `expect_centred_eq_zero` — on the same system, at the same coupling and against the same measure,
-  the centred plaquette energy `O0 − ⟨O0⟩` has expectation exactly `0`, while
-  `centred_ne_zero_at_identity` shows it is not the zero function. The nonnegativity of the observable
-  is therefore load-bearing.
+* `wilsonSystem_expect_sub_const` — the expectation of an observable shifted by a constant.
 * `expect_plaqObs_su_one_eq_zero` — for `SU(1)` the plaquette energy is identically zero and the
   expectation is exactly `0`, at every coupling and every geometry. The existence of a group element
   whose real trace falls below `N` is therefore load-bearing too.
@@ -246,163 +231,12 @@ theorem wilsonDensity_gD : wilsonDensity (N := 3) gD = 4 / 3 := by
   rw [gD_coe]
   norm_num [matD, Matrix.trace_fin_three_of, Complex.add_re, Complex.neg_re, Complex.one_re]
 
-/-- The configuration on `Link 4 WilsonGauge.nYM` carrying `gD` on every link whose direction is `0`
-and whose site has axis-`1` coordinate `0`, and the group identity on every other link.
-
-Of the four boundary links of the plaquette `((0,1), origin)`, only `(0, origin)` meets that
-description: the other direction-`0` link sits at `origin + 1̂`, whose axis-`1` coordinate is `1`.
-`hol_confD` is that computation.
-
-DERIVED: `4` is the spatial dimension, fixing the link type. `0` is the direction the configuration
-acts in and the axis-`1` coordinate it selects; the `1` in `l.2 1` is the axis whose coordinate is
-read, chosen as the plaquette's second direction so that the two direction-`0` links of the boundary
-word are distinguished. `1` is the group identity carried on every other link. -/
-noncomputable def confD : MassGap.WilsonHypercubic.Link 4 WilsonGauge.nYM → WilsonGauge.G3 :=
-  fun l => if l.1 = 0 then (if l.2 1 = 0 then gD else 1) else 1
-
-/-- The holonomy of the plaquette `((0, 1), origin)` at the configuration `confD` is `gD`. The four
-boundary factors evaluate to `gD`, `1`, `1⁻¹` and `1⁻¹`, so the ordered product collapses to `gD`;
-the three auxiliary equations identify each link's value.
-
-DERIVED: `4` is the spatial dimension. `0` and `1` are the two directions of the plaquette's plane,
-and `fun _ => 0` is the origin site, every coordinate zero. -/
-theorem hol_confD :
-    wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) confD = gD := by
-  have h1 : confD ((0 : Fin 4),
-      (fun _ => 0 : MassGap.WilsonHypercubic.Site 4 WilsonGauge.nYM)) = gD := by
-    simp [confD]
-  have h2 : ∀ x : MassGap.WilsonHypercubic.Site 4 WilsonGauge.nYM,
-      confD ((1 : Fin 4), x) = 1 := by
-    intro x; simp [confD]
-  have h3 : confD ((0 : Fin 4),
-      MassGap.WilsonHypercubic.shift (d := 4) (n := WilsonGauge.nYM) 1 (fun _ => 0)) = 1 := by
-    simp [confD, MassGap.WilsonHypercubic.shift]
-  simp [wilsonHol, MassGap.WilsonHypercubic.bd, h1, h2, h3]
-
-/-- `wilsonPlaqObs bd ((0,1), origin) confD = 4 / 3` at `N = 3`, `d = 4`. The observable unfolds to
-`wilsonDensity` of the holonomy, which `hol_confD` identifies as `gD` and `wilsonDensity_gD`
-evaluates.
-
-The configuration `corrNum_plaqObs_pos` requires; what it supplies is a positive value, and `4 / 3`
-is positive.
-
-DERIVED: `3` is the colour rank and `4` the spatial dimension. `0` and `1` are the plaquette's plane
-and `fun _ => 0` its base site. The value `4 / 3` is `wilsonDensity_gD`'s, forced by `matD`'s
-trace. -/
-theorem plaqObs_confD :
-    wilsonPlaqObs (N := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) confD = 4 / 3 := by
-  show wilsonDensity (N := 3)
-    (wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) confD) = 4 / 3
-  rw [hol_confD]
-  exact wilsonDensity_gD
-
 /-! ### The reflected Schwinger form of the gauge families is strictly positive -/
 
-/-- `0 < WilsonGauge.sysYM.expect (probHaar G3) β WilsonGauge.O0`, at every real `β`.
-`expect_plaqObs_pos` with `confD` as the witnessing configuration and `plaqObs_confD` as the
-positivity at it.
+/-! ### Shifting an observable by a constant
 
-`β` is unrestricted: negative couplings are included, since nothing in `expect_plaqObs_pos`
-constrains the sign.
-
-DERIVED: `0` is the strict lower bound concluded; it is the only numeral in the statement. The rank
-`3`, the dimension `4` and the plane `(0, 1)` are `WilsonGauge.sysYM`'s and `WilsonGauge.O0`'s. -/
-theorem expect_O0_pos (β : ℝ) :
-    0 < WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β WilsonGauge.O0 := by
-  have hobs : 0 < wilsonPlaqObs (N := 3)
-      (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) confD := by
-    rw [plaqObs_confD]; norm_num
-  exact expect_plaqObs_pos (N := 3) (by norm_num)
-    (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-    (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) β confD hobs
-
-/-- `0 < WilsonGauge.QG j a`, at every `j` and every `a`. `QG_eq` unfolds the clamp; `expect_O0_pos`
-at the coupling `(a : ℝ)` makes `max_eq_left` applicable, so the lower clamp is inert, and `lt_min`
-then compares the positive expectation with `1`.
-
-So the lower clamp `max · 0` never fires, and the upper clamp `min · 1` cannot produce `0` because
-both of its arguments are positive.
-
-DERIVED: `4` is the spatial dimension, in the two permutation groups `Equiv.Perm (Fin 4)` of the
-index type. `0` is the strict lower bound concluded. The clamp bounds `0` and `1` are
-`WilsonGauge.QG`'s own. -/
-theorem QG_pos (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) (a : ℕ) :
-    0 < WilsonGauge.QG j a := by
-  rw [WilsonGauge.QG_eq]
-  have h := expect_O0_pos (a : ℝ)
-  rw [max_eq_left h.le]
-  exact lt_min h one_pos
-
-/-- `WilsonGauge.QG j a ≠ 0` at every `j` and `a`, from `QG_pos`. So `QG` is not the identically-zero
-form.
-
-DERIVED: `4` is the spatial dimension in the index type; `0` is the value denied. Both are
-`QG_pos`'s. -/
-theorem QG_ne_zero (j : Equiv.Perm (Fin 4) × Equiv.Perm (Fin 4) × ℕ) (a : ℕ) :
-    WilsonGauge.QG j a ≠ 0 := (QG_pos j a).ne'
-
-/-- `0 < (WilsonGauge.ymFamilyGaugeCounted ev edge c hsorted hcount hres).Q j a`, for every choice of
-spectral data `ev`, `edge`, `c` and the three hypotheses about them. The body is `QG_pos`: that
-family's `Q` field is `QG` whatever spectrum it is built from, so the positivity does not depend on
-the spectral arguments at all.
-
-`WilsonModel.ymFamilyTension` is one instantiation.
-
-DERIVED: `0` is the strict lower bound concluded, carried from `QG_pos`. `1` in `hres` is the least
-resolved dimension the family's construction requires, a hypothesis passed through untouched; `ev`,
-`edge` and `c` are the caller's. -/
-theorem ymFamilyGaugeCounted_Q_pos
-    (ev : ℕ → ℕ → ℝ) (edge c : ℝ)
-    (hsorted : ∀ a, ∀ m n : ℕ, m ≤ n → ev a n ≤ ev a m)
-    (hcount : ∀ a, ((MassGap.Measure.resolvedDim (Finset.range (WilsonGauge.NaG a))
-      (ev a) edge : ℕ) : ℝ) ≤ c)
-    (hres : ∀ a, 1 ≤ MassGap.Measure.resolvedDim (Finset.range (WilsonGauge.NaG a)) (ev a) edge)
-    (j : (WilsonGauge.ymFamilyGaugeCounted ev edge c hsorted hcount hres).J) (a : ℕ) :
-    0 < (WilsonGauge.ymFamilyGaugeCounted ev edge c hsorted hcount hres).Q j a :=
-  QG_pos j a
-
-/-- `0 < WilsonGauge.ymFamilyGauge.Q j a` at every `j` and `a`. That family's `Q` field is `QG`, so
-the body is `QG_pos`.
-
-Its reflected form is therefore nowhere zero, and the family is not the one that satisfies the
-`LatticeYMFamily` inequalities by being identically zero.
-
-DERIVED: `0` is the strict lower bound concluded, carried from `QG_pos`. -/
-theorem ymFamilyGauge_Q_pos (j : WilsonGauge.ymFamilyGauge.J) (a : ℕ) :
-    0 < WilsonGauge.ymFamilyGauge.Q j a := QG_pos j a
-
-theorem ymFamilyGauge_Q_ne_zero (j : WilsonGauge.ymFamilyGauge.J) (a : ℕ) :
-    WilsonGauge.ymFamilyGauge.Q j a ≠ 0 := (QG_pos j a).ne'
-
-/-- `0 < MassGap.QYM N j a`, given `0 < wilsonCorrAt N a` at the lag `j.2.2 % (N + 1)`. `QYM` is a
-`min` against `1`, so `lt_min` applied to the hypothesis and `one_pos` closes it.
-
-`QYM N` is the reflected form of `WilsonInstance.ymFamily`, and it is not `QG`; no statement here
-equates the two, which is why the correlation's positivity is a hypothesis rather than a conclusion.
-
-Stated about `QYM` directly rather than about `(ymFamily N).Q`, which it equals definitionally:
-`ymFamily` carries an even-extent hypothesis that this statement does not need, since it concerns one
-lag at any extent.
-
-DERIVED: `0` is the strict lower bound assumed of the correlation and concluded of `QYM`. `1` in
-`N + 1` is the number of lags, the size of the index type `Fin (N + 1)` that the modulus lands in;
-the clamp's own `1` is `QYM`'s. The `2`s in `j.2.2` are structure projections selecting the third
-component of the index `j`, not numbers. -/
-theorem QYM_pos_of (N a : ℕ) (j : MassGap.JYM)
-    (hd : 0 < MassGap.wilsonCorrAt N (a : ℝ)
-            ⟨j.2.2 % (N + 1), Nat.mod_lt _ (Nat.succ_pos N)⟩) :
-    0 < MassGap.QYM N j a :=
-  lt_min hd one_pos
-
-/-! ### Negative control 1: an observable on the same system whose expectation is zero
-
-`corrNum_plaqObs_pos` consumes the nonnegativity of the plaquette energy. Without it the conclusion
-fails on the same system, at the same coupling and against the same measure: the centred plaquette
-energy integrates to exactly zero while being nonzero at an explicit configuration. -/
+`corrNum_plaqObs_pos` consumes the nonnegativity of the plaquette energy. The shift of an observable
+by a constant shifts its expectation by that constant. -/
 
 /-- Shifting an observable by a constant `c` shifts its Gibbs expectation by `c`:
 `expect (fun U => O U - c) = expect O - c`, for `N ≠ 0`, any real `β`, and any measurable `O`
@@ -442,77 +276,6 @@ theorem wilsonSystem_expect_sub_const (hN : N ≠ 0) (bd : Pq → List (Lk × Bo
           (probHaar (MassGap.SUN.SU N)) β from rfl,
     add_div, mul_div_assoc, div_self hZne, mul_one]
   ring
-
-/-- The centred plaquette energy `O0 − ⟨O0⟩` has Gibbs expectation exactly `0`, at every real `β`, on
-the same system and against the same measure as `expect_O0_pos`.
-`wilsonSystem_expect_sub_const` at `c = ⟨O0⟩` and the bound `2`, followed by `sub_self`.
-
-So `expect_O0_pos` is not a property of every observable on this system; it holds of the plaquette
-energy because that observable is nonnegative, and the centred one is not.
-
-DERIVED: `0` is the value concluded of the expectation. `3` and `4` are the rank and dimension of
-`sysYM`, `(0, 1)` the plaquette's plane and `fun _ => 0` its base site, all carried from
-`WilsonGauge.O0`; `2` is the bound on the plaquette energy passed to
-`wilsonSystem_expect_sub_const`, which is `wilsonPlaqObs_le_two`'s. -/
-theorem expect_centred_eq_zero (β : ℝ) :
-    WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β
-        (fun U => WilsonGauge.O0 U
-          - WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β WilsonGauge.O0) = 0 := by
-  have hEq : WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β WilsonGauge.O0
-      = (wilsonSystem (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-            (wilsonDensity (N := 3))).expect (probHaar (MassGap.SUN.SU 3)) β
-          (wilsonPlaqObs (N := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-            (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM)) := rfl
-  have h := wilsonSystem_expect_sub_const (N := 3) (by norm_num)
-    (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM)) β
-    (wilsonPlaqObs (N := 3) (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM))
-    (measurable_wilsonPlaqObs _ _) 2
-    (fun U => abs_le.mpr ⟨by
-        linarith [wilsonPlaqObs_nonneg (N := 3) (by norm_num)
-          (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-          (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) U],
-      wilsonPlaqObs_le_two (N := 3) (by norm_num)
-        (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-        (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM) U⟩)
-    (WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β WilsonGauge.O0)
-  refine h.trans ?_
-  rw [← hEq]
-  exact sub_self _
-
-/-- `WilsonGauge.O0 (fun _ => 1) = 0`: at the all-identity configuration the boundary word multiplies
-to the identity, and `wilsonDensity_one` evaluates the density there.
-
-`N ≠ 0` is what makes the density at the identity `0` rather than undefined, and is discharged by
-`norm_num` at `N = 3`.
-
-DERIVED: `1` is the group identity carried on every link; `0` is the value of the plaquette energy
-there. `3` and `4` are the rank and dimension of `sysYM`, and `(0, 1)` the plaquette's plane. -/
-theorem O0_confOne : WilsonGauge.O0 (fun _ => 1) = 0 := by
-  have hhol : WilsonGauge.sysYM.hol
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM)
-      (fun _ => (1 : WilsonGauge.G3)) = 1 := by
-    show wilsonHol (MassGap.WilsonHypercubic.bd (d := 4) (n := WilsonGauge.nYM))
-      (((0, 1), fun _ => 0) : MassGap.WilsonHypercubic.Plaq 4 WilsonGauge.nYM)
-      (fun _ => (1 : WilsonGauge.G3)) = 1
-    simp [wilsonHol, MassGap.WilsonHypercubic.bd]
-  unfold WilsonGauge.O0
-  rw [hhol]
-  exact wilsonDensity_one (N := 3) (by norm_num)
-
-/-- The centred plaquette energy is nonzero at the all-identity configuration, at every real `β`:
-`O0 (fun _ => 1) − ⟨O0⟩ ≠ 0`. `O0_confOne` makes it `−⟨O0⟩`, which `expect_O0_pos` makes nonzero.
-
-Together with `expect_centred_eq_zero` this shows that an observable can have expectation `0` without
-being the zero function, so the nonnegativity hypothesis in `corrNum_plaqObs_pos` cannot be dropped.
-
-DERIVED: `1` is the group identity carried on every link; `0` is the value denied of the centred
-observable. -/
-theorem centred_ne_zero_at_identity (β : ℝ) :
-    WilsonGauge.O0 (fun _ => 1)
-      - WilsonGauge.sysYM.expect (probHaar WilsonGauge.G3) β WilsonGauge.O0 ≠ 0 := by
-  rw [O0_confOne, zero_sub, neg_ne_zero]
-  exact (expect_O0_pos β).ne'
 
 /-! ### Negative control 2: the trivial gauge group
 
@@ -556,14 +319,6 @@ theorem expect_plaqObs_su_one_eq_zero (bd : Pq → List (Lk × Bool)) (p : Pq) (
 #print axioms corrNum_plaqObs_pos
 #print axioms expect_plaqObs_pos
 #print axioms wilsonDensity_gD
-#print axioms plaqObs_confD
-#print axioms expect_O0_pos
-#print axioms QG_pos
-#print axioms ymFamilyGauge_Q_pos
-#print axioms ymFamilyGaugeCounted_Q_pos
-#print axioms QYM_pos_of
-#print axioms expect_centred_eq_zero
-#print axioms centred_ne_zero_at_identity
 #print axioms expect_plaqObs_su_one_eq_zero
 
 end MassGap.GibbsPositive

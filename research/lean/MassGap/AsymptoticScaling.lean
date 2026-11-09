@@ -1,6 +1,4 @@
 import Mathlib
-import MassGap.ClayAssembly
-import MassGap.Running
 
 /-!
 # MassGap.AsymptoticScaling — a fixed two-loop running spacing, and the predicates built on it
@@ -17,16 +15,15 @@ whatever `m` is.
 `aRunStd N β = ((24π²β)/(11N²))^{51/121} · exp(−(12π²β)/(11N²))`, the two-loop running spacing of
 `SU(N)` at the standard Wilson coupling `β = 2N/g²` (each plane counted once), with the scale `Λ` set to
 `1`. The Wilson systems of this development count every plane twice, so their coupling `β` is the
-standard `2β` (`PlaqCount.boltz_eq_std`), and their spacing is `aRun N β = aRunStd N (2β)`, at
+standard `2β`, and their spacing is `aRun N β = aRunStd N (2β)`, at
 `g² = N/β`, largest at `β = 17N²/(88π²)`. `N` is the colour count,
 not a lattice extent: it enters only through `b₀`, `b₁` and `g² = 2N/β`. It is
 
     a(β)·Λ  =  (b₀ g²)^{−b₁/(2b₀²)} · exp(−1/(2b₀ g²)),        g² = 2N/β
 
 at `b₀ = 11N/(3·16π²)` and `b₁ = 34N²/(3·(16π²)²)`, the coefficients of `μ dg/dμ = −b₀g³ − b₁g⁵`.
-`Running` states the same coefficients as `11N/3` and `34N²/3`, the `SU(N)` values in the form
-`μ dg/dμ = −(11N/3)g³/(16π²) − (34N²/3)g⁵/(16π²)²`; the `1/(16π²)` is part of the beta function, and
-`aRunStd` carries it. The exponent is POSITIVE on the base written here: the formula carries
+In the form `μ dg/dμ = −(11N/3)g³/(16π²) − (34N²/3)g⁵/(16π²)²` the `SU(N)` coefficients are `11N/3` and
+`34N²/3`; the `1/(16π²)` is part of the beta function, and `aRunStd` carries it. The exponent is positive on the base written here: the formula carries
 `(b₀g²)^{−b₁/(2b₀²)}`, and `b₀g² = 11N²/(24π²β)` (`b0_g_sq`) is the reciprocal of that base, so
 inverting it flips the sign. The three identities `b1_over_two_b0_sq`, `one_over_four_N_b0` and
 `b0_g_sq` evaluate `b₁/(2b₀²)`, `1/(4N b₀)` and `b₀g²` from those coefficients to the numerals `aRun`
@@ -42,30 +39,18 @@ constraint on `m` alone:
 `asymptotic_scaling_has_content` shows `m = aRun N · exp(−β)` refutes it;
 `asymptotic_scaling_is_a_real_constraint` states both together.
 
-`decayAt` and `mLatAt` are the lag-one decay ratio `ρ(1)/ρ(0)` and `−log` of it.
-`mLatAt_at_zero_coupling_is_junk` records `mLatAt 5 0 = 0`, a consequence of `Real.log 0 = 0` together
-with `ρ(1) = 0` at zero coupling, so statements about `mLatAt` are guarded by `0 < decayAt`.
-`mLatAt_nonneg` gives `0 ≤ mLatAt N β` at even extent `N + 1 = 2m` with `3 ≤ m`.
-
 `fixed_colours_pins_the_spacing`: at one fixed colour count `N`, if `AsymptoticScalingAt N m` holds
 and `m` is eventually at least a positive constant, then the `SU(N)` spacing `aRun N` is eventually at
 least a positive constant. `aRun N` falls below every positive level arbitrarily far out
 (`exists_beta_aRun_lt`), so `bounded_mass_fails_scaling` concludes that no `m` bounded below by a
 positive constant satisfies `AsymptoticScalingAt N`.
 
-`AsymptoticScalingJoint Nof` reads the lattice mass `mLatAt (Nof β) β` at an extent `Nof β` that
-grows with the coupling, against `aRun 3`, the two-loop spacing of `SU(3)` at the Wilson coupling:
-`mLatAt` reads `wilsonCorrAt`, whose ensemble `WilsonBridge.corrClay` is taken at colour count `3`. It
-is a definition, and nothing in this file proves it.
-
-No declaration here proves `AsymptoticScalingAt` or `AsymptoticScalingJoint` for `mLatAt`.
+No declaration here proves `AsymptoticScalingAt` for a particular lattice mass.
 
 DERIVED: every numeral in `aRun` is evaluated from `b₀ = 11N/(3·16π²)`, `b₁ = 34N²/(3·(16π²)²)` and
 `g² = 2N/β`. `51/121` is `b₁/(2b₀²)`; `24π²/11` in the base is `(b₀g²)⁻¹` per unit `β/N²`; `12π²/11`
 in the exponential is `1/(4N b₀)` per `1/N²`, half the base constant; `2N/β` is the `SU(N)` relation
-between the Wilson coupling and `g²`. CHOSEN: `Λ = 1`. The `3` in `AsymptoticScalingJoint`'s
-`aRun 3` is the colour count of `WilsonBridge.corrClay`'s ensemble, `SU(3)`. `0` is positivity, and
-the lags `1` and `0` in `decayAt` are the nearest-neighbour and contact separations.
+between the Wilson coupling and `g²`. CHOSEN: `Λ = 1`. `0` is positivity.
 -/
 
 namespace MassGap.AsymptoticScaling
@@ -119,8 +104,8 @@ and falls toward zero past it.
 DERIVED: `51/121` is `b₁/(2b₀²)`, `b1_over_two_b0_sq`; `24`, `11` and the `2` of `π²` in the base are
 `(b₀g²)⁻¹` at `g² = 2N/β`, the reciprocal of `b0_g_sq`'s right side; `12`, `11` and the `2` of `π²` in
 the exponential are `1/(4N b₀)` times `β`, which is `1/(2b₀g²)`, `one_over_four_N_b0`; the `2` of each
-`N²` comes from the same identities. `11N/3` and `34N²/3` are the coefficients `Running.b0_pos` and
-`Running.b1_pos` are stated for; `16π²` is the normalisation of the beta function they sit in. The
+`N²` comes from the same identities. `11N/3` and `34N²/3` are the coefficients of the beta function and
+`16π²` is its normalisation. The
 figures above are `aRunStd` evaluated at the couplings named; `102/121 = 2 · 51/121` is where the
 derivative `51/(121u) − 1/2` of the logarithm vanishes, and `17/44 = (102/121)·(11/24)` is that `u`
 solved for `β/N²` up to the `π²`. CHOSEN: `Λ = 1`, a unit, which cancels from every ratio this file
@@ -134,10 +119,10 @@ noncomputable def aRunStd (N : ℕ) (β : ℝ) : ℝ :=
 /-! ### The numerals of `aRunStd`, evaluated from the normalised coefficients
 
 `aRunStd`'s `51/121`, `24π²/11` and `12π²/11` are written out in the definition. Each identity below
-states that one of them IS the corresponding expression in `b₀ = 11N/(3·16π²)`,
+states that one of them is the corresponding expression in `b₀ = 11N/(3·16π²)`,
 `b₁ = 34N²/(3·(16π²)²)` and `g² = 2N/β`, with the right-hand side written in `aRunStd`'s own numerals, so
-the definition is checked against the two-loop formula and not merely consistent with it. `Running`
-defines no constants for `b₀` and `b₁`; the coefficients are written out here in the normalisation of
+the definition is checked against the two-loop formula and not merely consistent with it. No constants
+are defined for `b₀` and `b₁`; the coefficients are written out here in the normalisation of
 `μ dg/dμ = −b₀g³ − b₁g⁵`.
 -/
 
@@ -249,7 +234,7 @@ DERIVED: `24`, `12` and `11` are `aRunStd`'s own constants, which the normalised
 (`b0_g_sq`, `one_over_four_N_b0`); `4` is `exp_neg_le_four_div_sq`'s. Every `2` is a square — the
 `π²` and `N²` of `aRunStd`'s constants, and the square in `exp_neg_le_four_div_sq`'s `4 / t²`. `1` is the
 least colour count in `hN` and the threshold the base must pass for `x ^ p ≤ x`. `0` is the sign of
-the coupling. The exponent `51/121` is `aRunStd`'s and appears in the PROOF, where the bound
+the coupling. The exponent `51/121` is `aRunStd`'s and appears in the proof, where the bound
 `x ^ p ≤ x ^ 1` is applied; the statement does not mention it. -/
 theorem aRunStd_le_of_base_ge_one {N : ℕ} (hN : 1 ≤ N) {β : ℝ} (hβ : 0 < β)
     (hbase : (1 : ℝ) ≤ (24 * Real.pi ^ 2 * β) / (11 * (N : ℝ) ^ 2)) :
@@ -373,12 +358,10 @@ theorem exists_beta_aRunStd_lt {N : ℕ} (hN : 1 ≤ N) {ε : ℝ} (hε : 0 < ε
 
 `exists_beta_aRunStd_lt` puts a coupling past `β₁` where `aRunStd` is below the target,
 `continuous_aRunStd` makes the map continuous between, and `intermediate_value_uIcc` produces the
-coupling — the idiom `ConfinesZero.confinesAtAnAperture_of_missesTheFloor` uses.
+coupling.
 
 This is the branch asymptotic freedom lives on: `β₁` is arbitrary, so the coupling can be demanded
-as large as one likes. `N` is the colour count and is held fixed;
-`SubstrateArms.physical_gap_at_the_running_spacing` uses this at `N = 3`, the `SU(3)` of the Wilson
-ensemble.
+as large as one likes. `N` is the colour count and is held fixed.
 
 DERIVED: `1` is the least colour count in `hN`, which is what keeps `(N : ℝ)` away from zero so
 `aRunStd`'s base is defined; `0` is the target's sign in `ha`. `a`, `β₁` and `N` are the caller's. -/
@@ -402,16 +385,16 @@ theorem exists_beta_aRunStd_eq {N : ℕ} (hN : 1 ≤ N) {a β₁ : ℝ} (ha : 0 
 /-! ### The spacing at the Lean coupling
 
 The Wilson systems of this development index a plaquette by an ordered pair of directions, so every
-plane is counted twice, and the Boltzmann weight at coupling `β` is the standard Wilson weight at `2β`
-(`PlaqCount.boltz_eq_std`). The spacing of the Lean Wilson family at its coupling `β` is therefore
+plane is counted twice, and the Boltzmann weight at coupling `β` is the standard Wilson weight at `2β`.
+The spacing of the Lean Wilson family at its coupling `β` is therefore
 `aRunStd N (2β)`.
 -/
 
 /-- **The two-loop spacing at the Lean coupling.** `aRun N β = aRunStd N (2β)`: the standard two-loop
-spacing at `β_std = 2β` (`PlaqCount.boltz_eq_std`), so the gauge coupling is `g² = N/β`. With
+spacing at `β_std = 2β`, so the gauge coupling is `g² = N/β`. With
 `u = 48π²β/(11N²)`, `aRun N β = u^{51/121} · exp(−u/2)`, largest at `β = 17N²/(88π²)`.
 
-DERIVED: `2` is the number of orderings of a plane, `PlaqCount.boltz_eq_std`'s factor. -/
+DERIVED: `2` is the number of orderings of a plane. -/
 noncomputable def aRun (N : ℕ) (β : ℝ) : ℝ := aRunStd N (2 * β)
 
 #print axioms aRun
@@ -531,70 +514,7 @@ theorem asymptotic_scaling_is_a_real_constraint {N : ℕ} (hN : 1 ≤ N) :
 
 #print axioms asymptotic_scaling_is_a_real_constraint
 
-/-! ## 4. The lattice mass, and the joint limit in extent and coupling -/
-
-/-- The lag-one decay ratio `wilsonCorrAt N β 1 / wilsonCorrAt N β 0` at extent `N` and coupling
-`β`. A quotient of two correlation values at fixed separations; no hypothesis guards the denominator,
-so `Real.div` returns `0` where `ρ(0) = 0`.
-
-DERIVED: `1` and `0` are the two LAGS the ratio relates, the nearest neighbour against the contact
-value; neither is a magnitude. CHOSEN: lag one among the available lags, because it is the only odd
-lag the tree bounds (`WeakArm.wilsonCorrAt_le_at_zero_at_extent_six`), every right-hand lag
-`LogConvex.corrClay_log_convex` produces being even. The ratio is then an effective mass at one
-separation rather than an asymptotic decay rate. -/
-noncomputable def decayAt (N : ℕ) (β : ℝ) : ℝ :=
-  MassGap.wilsonCorrAt N β 1 / MassGap.wilsonCorrAt N β 0
-
-#print axioms decayAt
-
-/-- `- Real.log (decayAt N β)`, the lattice mass read at lag one.
-
-Mathlib's `Real.log 0 = 0`, and `PowerTail.wilsonCorrAt_at_zero_coupling` puts `ρ(1) = 0` at zero
-coupling, so `mLatAt N 0 = 0` — the value recorded by `mLatAt_at_zero_coupling_is_junk`. The
-statements below are therefore guarded by `0 < decayAt N β`, which fails there.
-
-DERIVED: no numeral. The lags `1` and `0` sit inside `decayAt`, not in this definition. -/
-noncomputable def mLatAt (N : ℕ) (β : ℝ) : ℝ := - Real.log (decayAt N β)
-
-#print axioms mLatAt
-
-/-- `mLatAt 5 0 = 0`: at extent five (period six) and zero coupling, the lattice mass evaluates to
-zero, because `ρ(1) = 0` there (`PowerTail.wilsonCorrAt_at_zero_coupling`, whose hypothesis
-`1 ≤ circLag 1` is checked by `decide`) and `Real.log 0 = 0`. Recorded so the value is not mistaken
-for a vanishing mass; the same computation applies at every extent whose period is at least two.
-
-DERIVED: `5` is the extent `N`, chosen so `Fin 6` makes `circLag 1 = 1` decidable; the first `0` is
-the coupling at which `ρ(1)` vanishes, and the second is the resulting value of `mLatAt`, which comes
-from `Real.log 0 = 0` rather than from any decay. -/
-theorem mLatAt_at_zero_coupling_is_junk : mLatAt 5 0 = 0 := by
-  have hc : Moment.circLag (1 : Fin 6) = 1 := by decide
-  have hz : MassGap.wilsonCorrAt 5 0 1 = 0 :=
-    MassGap.PowerTail.wilsonCorrAt_at_zero_coupling 5 1 (by rw [hc])
-  simp [mLatAt, decayAt, hz]
-
-#print axioms mLatAt_at_zero_coupling_is_junk
-
-/-- `0 ≤ mLatAt N β` at even extent `N + 1 = 2m` with `3 ≤ m`, for `0 ≤ β` and where the decay ratio
-is positive. `WeakArm.wilsonCorrAt_le_at_zero` bounds `ρ(1) ≤ ρ(0)` and
-`PlaqVariance.corrClay_zero_pos` makes `ρ(0)` positive, so `decayAt N β ≤ 1` and `Real.log_nonpos`
-applies. Stated at even extent only, and at nonnegative coupling only.
-
-DERIVED: `1` in `hm` and `2` in `2 * m` are the even-extent condition `N + 1 = 2m` that
-`WeakArm.wilsonCorrAt_le_at_zero` requires; `3` in `hm3` is that lemma's own least half-extent; `0` in
-`hβ` is the nonnegative coupling it is stated on; `0` in `hpos` is what `Real.log_nonpos` needs of the
-ratio, and `0` in the conclusion is the resulting lower bound on `−log`. -/
-theorem mLatAt_nonneg {N m : ℕ} (hm : N + 1 = 2 * m) (hm3 : 3 ≤ m) {β : ℝ} (hβ : 0 ≤ β)
-    (hpos : 0 < decayAt N β) : 0 ≤ mLatAt N β := by
-  have hle := MassGap.WeakArm.wilsonCorrAt_le_at_zero N m hm hm3 hβ 1
-  have h0 : 0 < MassGap.wilsonCorrAt N β 0 := MassGap.PlaqVariance.corrClay_zero_pos N β
-  have hratio : decayAt N β ≤ 1 := by
-    rw [decayAt, div_le_one h0]
-    exact hle
-  have := Real.log_nonpos (le_of_lt hpos) hratio
-  simp only [mLatAt]
-  linarith
-
-#print axioms mLatAt_nonneg
+/-! ## 4. A mass bounded below fails the predicate -/
 
 /-! ### A mass bounded below pins the `SU(N)` spacing, and so fails the predicate -/
 
@@ -649,31 +569,6 @@ theorem bounded_mass_fails_scaling {N : ℕ} (hN : 1 ≤ N) {m : ℝ → ℝ} {c
   exact absurd (hβ₀ β (le_of_lt hβ)) (not_le.mpr hlt)
 
 #print axioms bounded_mass_fails_scaling
-
-/-- The joint-limit predicate, for a trajectory of lattice extents `Nof : ℝ → ℕ`: `Nof β → ∞` as
-`β → ∞`, and `mLatAt (Nof β) β / aRun 3 β` converges to a positive limit. The lattice mass is read at
-the extent `Nof β`, which moves with the coupling. The spacing is `aRun 3`, the two-loop running
-spacing of `SU(3)` at the Lean Wilson coupling `β = 3/g²`, which depends on the coupling alone: `mLatAt`
-reads `wilsonCorrAt N β = WilsonBridge.corrClay (N + 1) β`, and `corrClay` is `corrHyper` at colour
-count `3`, so `SU(3)` is the gauge group whose spacing the mass is divided by. The second conjunct is
-`AsymptoticScalingAt 3 (fun β => mLatAt (Nof β) β)`, so `bounded_mass_fails_scaling` refutes it for
-any `Nof` along which the lattice mass stays above a positive constant.
-
-`Nof` is a parameter rather than existentially quantified; `∃ Nof, AsymptoticScalingJoint Nof` would
-admit the same kind of witness `free_spacing_scaling_is_also_vacuous` supplies for the spacing. This
-is a definition; nothing in this file proves it for any `Nof`, and the refutation above takes the
-lower bound on the lattice mass as a hypothesis.
-
-DERIVED: `3` in `aRun 3` is the colour count of `WilsonBridge.corrClay`'s ensemble, `SU(3)`, the
-gauge group whose correlation `mLatAt` reads; `3` in `β = 3/g²` is `N` at that `N`, `g² = N/β` at the
-Lean coupling. `0` is the
-strict positivity demanded of the limit. `Nof` and the limit are variables. -/
-def AsymptoticScalingJoint (Nof : ℝ → ℕ) : Prop :=
-  Tendsto (fun β => (Nof β : ℝ)) atTop atTop ∧
-    ∃ mphys : ℝ, 0 < mphys ∧
-      Tendsto (fun β => mLatAt (Nof β) β / aRun 3 β) atTop (nhds mphys)
-
-#print axioms AsymptoticScalingJoint
 
 /-! ### How `aRunStd` depends on the colour count
 

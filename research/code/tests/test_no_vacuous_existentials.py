@@ -1,22 +1,16 @@
 """A conclusion may not bind a rate it never uses, beyond the ones already recorded.
 
-`VolumeRate.exists_pos_and_iff` machine-checks that `∃ κ : ℝ, 0 < κ ∧ Q` is equivalent to `Q`. A
-bound variable absent from the body it binds carries no content, so such a conclusion states nothing
-about a RATE however the docstring reads. `VolumeRate.lean`'s header gives the test in one line --
-*check that deleting `∃ κ, 0 < κ ∧` changes the statement* -- and then says DO NOT REINTRODUCE THE
-PATTERN.
+`∃ κ : ℝ, 0 < κ ∧ Q` is equivalent to `Q` when `κ` does not occur in `Q`. A bound variable absent
+from the body it binds carries no content, so such a conclusion states nothing about a rate however
+the docstring reads. The test is one line: check that deleting `∃ κ, 0 < κ ∧` changes the
+statement. This gate makes that rule mechanical, so the shape cannot come back unremarked.
 
-THAT RULE WAS PROSE, AND PROSE DOES NOT RUN. A sweep on 2026-09-22 found six docstrings claiming
-"a single rate `κ > 0`" over conclusions of exactly this shape, two of them contradicting their own
-file headers, and the same claim had reached PAPER.md. The repair fixed the sentences; this gate
-stops the shape coming back unremarked.
-
-WHAT A FAILURE MEANS. Not that the theorem is wrong -- the statement is whatever it is. It means a
+What a failure means. Not that the theorem is wrong -- the statement is whatever it is. It means a
 new conclusion has been written that appears to supply a rate and does not, so nothing downstream
 may cite it for one. Either give the constant a role in the body, or add the line to the baseline
 with the reason it is empty on purpose.
 
-THE BASELINE RECORDS DEBT AND MAY ONLY SHRINK, the same contract `hand_rolled_reads_baseline.txt`
+The baseline records debt and may only shrink, the same contract `hand_rolled_reads_baseline.txt`
 carries.
 """
 from __future__ import annotations
@@ -44,8 +38,7 @@ def test_no_new_vacuous_existential_conclusions():
     assert not new, (
         f"{len(new)} conclusion(s) bind a positive real they never use, and are not in the "
         f"baseline:\n  " + "\n  ".join(new) + "\n\n"
-        "`VolumeRate.exists_pos_and_iff` proves this shape equivalent to dropping the existential, "
-        "so the conclusion supplies no rate. Give the constant a role in the body, or record it in "
+        "This shape is equivalent to dropping the existential, so the conclusion supplies no rate. Give the constant a role in the body, or record it in "
         "`vacuous_existentials_baseline.txt` with the reason it is empty on purpose."
     )
 
@@ -62,17 +55,33 @@ def test_the_baseline_only_shrinks():
     )
 
 
-def test_the_scanner_sees_the_shape_it_is_for():
-    """Positive control: `VolumeRate.exists_pos_and_iff` IS the shape, so it must be found.
+#: Live declarations whose conclusions bind a positive real with `∃ … 0 < … ∧` and use it.
+_LIVE_SHAPE = [("ApertureFixed.lean", "reading_cluster"),
+               ("ApertureFixed.lean", "gapAt_of_readingRep"),
+               ("ApertureInvariance.lean", "gapAt_of_apertureInvariant")]
 
-    A scanner that reported nothing would pass the ratchet forever. This pins it to the one
-    declaration in the tree written to exhibit the pattern.
+
+def _live_statement(fn: str, name: str) -> str:
+    with open(os.path.join(V.LEAN, fn), encoding="utf-8") as fh:
+        text = fh.read()
+    for n, _ln, stmt in V._statements(text):
+        if n == name:
+            return stmt
+    return ""
+
+
+@pytest.mark.parametrize("fn,name", _LIVE_SHAPE, ids=[n for _f, n in _LIVE_SHAPE])
+def test_the_scanner_sees_the_shape_it_is_for(fn, name):
+    """Positive control on the tree: a live declaration carrying the shape is read and matched.
+
+    A scanner that read no declaration would pass the ratchet forever. This pins it to live
+    declarations whose conclusions bind a positive real, so the scan is shown to reach them.
     """
-    found = _keys()
-    assert "VolumeRate.lean|exists_pos_and_iff" in found, (
-        "the scanner no longer finds `exists_pos_and_iff`, which is the tree's own statement OF the "
-        "vacuous shape. The scanner is broken, not the tree."
-    )
+    stmt = _live_statement(fn, name)
+    assert stmt, f"the scan did not read `{name}` in {fn}; it is not reaching the tree"
+    assert V._EX.search(stmt) is not None, (
+        f"`{name}` binds a positive real, but the shape pattern does not match its statement. "
+        "The scanner is broken, not the tree.")
 
 
 #: Every spelling Lean gives the shape `∃ k, 0 < k ∧ …`, with a vacuous body. The scanner saw only
@@ -92,10 +101,10 @@ _SPELLINGS = [
 
 @pytest.mark.parametrize("label,src", _SPELLINGS, ids=[s[0] for s in _SPELLINGS])
 def test_every_spelling_of_the_shape_is_seen(label, src):
-    """POSITIVE CONTROL on the PATTERN, not on the tree.
+    """Positive control on the pattern, not on the tree.
 
     The controls below pin that the scanner still finds one named declaration. None of them could
-    tell that a whole SPELLING had gone unscanned, because a spelling the pattern cannot see
+    tell that a whole spelling had gone unscanned, because a spelling the pattern cannot see
     contributes nothing to the count either way.
     """
     hits = []
@@ -120,7 +129,7 @@ _PREFIXES = ["", "private ", "protected ", "scoped ", "@[simp] ", "noncomputable
 
 @pytest.mark.parametrize("prefix", _PREFIXES, ids=[p.strip() or "bare" for p in _PREFIXES])
 def test_a_prefixed_declaration_is_still_a_declaration(prefix):
-    """POSITIVE CONTROL on the declaration scan, the half the shape controls cannot reach.
+    """Positive control on the declaration scan, the half the shape controls cannot reach.
 
     A pattern that matched no declaration at all would leave `scan()` empty, and an empty scan
     satisfies the ratchet — it is `test_the_baseline_only_shrinks` that would fire, which names the
@@ -138,9 +147,9 @@ def test_a_prefixed_declaration_is_still_a_declaration(prefix):
     ("theorem probe : ∃ κ : ℝ, 0 < κ ∧ κ < 1 := sorry", True),    # a real, and the binder is used
 ])
 def test_the_widened_pattern_does_not_over_report(src, matches):
-    """NEGATIVE CONTROL. Widening the spellings must not widen what counts as vacuous.
+    """Negative control. Widening the spellings must not widen what counts as vacuous.
 
-    Each case states whether the pattern is expected to match AT ALL, because "no match" and "matched
+    Each case states whether the pattern is expected to match at all, because "no match" and "matched
     and found the binder used" are different outcomes and a loop that simply skipped a non-match
     would report both as a pass without distinguishing them.
     """
@@ -158,16 +167,10 @@ def test_the_widened_pattern_does_not_over_report(src, matches):
         f"`{src}` was classified as binding a constant it never uses")
 
 
-@pytest.mark.parametrize("name", ["gap_rate_uniform_in_volume",
-                                  "gap_rate_at_floor_uniform_in_volume",
-                                  "product_volume_gap_rate"])
-def test_the_rate_bearing_replacements_are_not_vacuous(name):
-    """Negative control: the declarations that DO state a rate must not be flagged.
-
-    If these ever appear, the replacement is no better than what it replaced.
-    """
+@pytest.mark.parametrize("fn,name", _LIVE_SHAPE, ids=[n for _f, n in _LIVE_SHAPE])
+def test_the_rate_bearing_declarations_are_not_vacuous(fn, name):
+    """Negative control: live declarations that do use the bound real must not be flagged."""
     found = _keys()
-    assert f"VolumeRate.lean|{name}" not in found, (
-        f"`{name}` is cited as the rate-bearing form, but its conclusion binds a constant it never "
-        "uses. Then it states no rate either."
+    assert f"{fn}|{name}" not in found, (
+        f"`{name}` binds a positive real and uses it, but the scanner flags it as vacuous."
     )

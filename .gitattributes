@@ -20,3 +20,23 @@
 *.png   binary
 *.tar   binary
 *.gz    binary
+*.pdf   binary
+
+# Paths kept out of the release archive. GitHub's source archive, which Zenodo's GitHub integration
+# deposits as the software record, is built by `git archive` and leaves out every path marked
+# `export-ignore`; the files stay in the repository. The list is the "Excluded" table of
+# research/RELEASE-MANIFEST.md.
+research.local.env                              export-ignore
+staged.json                                     export-ignore
+research/code/staged.json                       export-ignore
+**/__pycache__/**                               export-ignore
+**/.pytest_cache/**                             export-ignore
+research/code/tests/.ensemble-cache/**          export-ignore
+research/lean/.lake/**                          export-ignore
+research/code/remote_run.py                     export-ignore
+research/code/tests/test_remote_run.py          export-ignore
+research/code/zenodo_deposit.py                 export-ignore
+research/code/zenodo_open_dataset.py            export-ignore
+research/code/tests/test_provenance.py          export-ignore
+.github/workflows/publish.yml                   export-ignore
+research/RELEASE-MANIFEST.md                    export-ignore

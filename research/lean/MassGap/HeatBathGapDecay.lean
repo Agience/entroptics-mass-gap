@@ -52,8 +52,8 @@ noncomputable section
 Its fields are of two kinds. Bookkeeping: `θx` and `S^{2n}x` are periodic gauge-invariant
 observables, each reading at most as many torus links as `x` reads; `hₗ f` null off the torus links
 `θx` reads (`WilsonHeatBath.keeps`); commutation up to null vectors off `SharePlaq` (any `condExp` agrees with
-`HeatBath.torusCondExp` up to `torusForm`-null vectors, both being `torusForm`-orthogonal projections
-onto the same subspace, and `HeatBath.torusCondExp_comm`); a neighbour count uniform in the extent;
+`RestoreShims.torusCondExp` up to `torusForm`-null vectors, both being `torusForm`-orthogonal projections
+onto the same subspace, and `RestoreShims.torusCondExp_comm`); a neighbour count uniform in the extent;
 the level-`n` separation of `θx` from `S^{2n}x` along `SharePlaq` steps, for torus extents large
 against `n`; `B(θx, θx) ≤ ‖x‖²_∞`. Analytic: the fixed-volume ergodic limit
 `B(Tᴺ θx, S^{2n}x) → μⱼ(θx) μⱼ(S^{2n}x)` of the lazy random-scan heat bath. The rate of that limit
@@ -579,7 +579,7 @@ theorem nrm_h_Tstep (S : PatchSystem) {K : ℝ} (hK0 : 0 < K)
 
 #print axioms nrm_h_Tstep
 
-/-- **THE LIEB–ROBINSON BOUND FOR THE LAZY HEAT BATH.** With `|nb l| ≤ z`, commutation up to null
+/-- **The Lieb–Robinson bound for the lazy heat bath.** With `|nb l| ≤ z`, commutation up to null
 vectors off `nb`, `y ≥ 1`, and `hₗ f` null for every `l ∉ A`: at every link `l` with
 `Far nb A k l`, `‖hₗ Tᵐ f‖ ≤ ‖f‖ · y⁻ᵏ · lrRate z y Kᵐ`. Induction on `m`: the base is `hₗ f` null
 off `A` and `nrm_h_le`; the step is `nrm_h_Tstep`, where the level-`(k + 1)` link keeps its
@@ -845,7 +845,7 @@ theorem far_part (S : PatchSystem) {K c : ℝ} (hK0 : 0 < K)
 
 #print axioms far_part
 
-/-- **THE CLUSTERING BOUND.** On a patch system with `B(Hv, Hv) ≤ K·B(Hv, v)`, `GlobalGap c`,
+/-- **The clustering bound.** On a patch system with `B(Hv, Hv) ≤ K·B(Hv, v)`, `GlobalGap c`,
 `0 < c ≤ K`; a neighbour map `nb` with `|nb l| ≤ z` and commutation up to null vectors off `nb`;
 `y ≥ 1`; `hₗ f` null off `A`, `hₗ g` null off `C`, every link of `C` at level `k` from `A`; and
 `B(Tᴺf, g) → L`: for every `n`,
@@ -892,7 +892,7 @@ theorem pow_le_exp_mul {a : ℝ} (ha : 0 ≤ 1 + a) (N : ℕ) : (1 + a) ^ N ≤ 
 
 #print axioms pow_le_exp_mul
 
-/-- **THE CLUSTERING BOUND AT `n = sK`, FREE OF THE VOLUME.** With `K = Kn` a positive integer and
+/-- **The clustering bound at `n = sK`, free of the volume.** With `K = Kn` a positive integer and
 `n = s·Kn` lazy steps:
 
     |B(f, g) − L| ≤ s |C| ‖f‖ y⁻ᵏ e^{2zys} ‖g‖ + (2/c) e^{−cs/2} |A| ‖f‖ ‖g‖
@@ -1104,7 +1104,7 @@ sweep. -/
 def clusterRate (z : ℕ) (c : ℝ) : ℝ :=
   Real.sqrt (max (Real.exp 1 / 3) (Real.exp (-(min c 1 / (2 * ((6 * z + 1 : ℕ) : ℝ))))))
 
-/-- **THE WILSON INSTANTIATION.** For every family `S j` of heat-bath systems at `β`: a neighbour
+/-- **The Wilson instantiation.** For every family `S j` of heat-bath systems at `β`: a neighbour
 bound `z`, and for every gauge-invariant half-space observable `x` support bounds `a`, `b` and a
 norm bound `M`, such that at every `n`, for all large `j`, some neighbour map `nb` has
 `LocalCommute _ nb z`, and some `f`, `g` in the periodic gauge-invariant observables and `L` have:

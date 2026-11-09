@@ -193,14 +193,13 @@ theorem form_pow_symm (D : Transfer.TransferData A) : ∀ (i : ℕ) (x y : A),
 
 #print axioms form_pow_symm
 
-/-- **The diagonal at the `n`-th iterate IS the two-point function at separation `2 * n`.**
+/-- **The diagonal at the `n`-th iterate is the two-point function at separation `2 * n`.**
 
 `form_pow_symm` at `y = (D.T ^ n) x` moves all `n` translations from the left slot to the right,
 leaving `x` against `x` translated `2 * n` steps.
 
-**This is the identification the relative route was missing.** `ClayCapstone.clay_gap_of_form_decay`
-asks for decay of `D.form ((D.T ^ n) x) ((D.T ^ n) x)`, which is a diagonal and so looks like a
-quantity needing a lower bound to compare against. It is not: it equals a reflected two-point
+**This identifies a diagonal with a two-point function.** `D.form ((D.T ^ n) x) ((D.T ^ n) x)` is a
+diagonal and so looks like a quantity needing a lower bound to compare against. It is not: it equals a reflected two-point
 function at a separation that grows with `n`, which is exactly what a connected-correlation estimate
 bounds, and the comparison is against `D.form x x`, the same observable at separation zero — the
 contact value. That is the shape of a contact-relative decay law.
@@ -321,9 +320,7 @@ theorem identity_fails_gap (D : Transfer.TransferData A) (hT : ∀ z : A, D.T z 
 the vacuum has `D.form x x = 0`. The proof applies `gap_pow` at `n = m`, rewrites the iterate back
 to `x` by `hper`, and uses `r ^ (2 * m) < 1`.
 
-Scope: no operator positivity is assumed. `FiniteOrderTransfer.positive_finite_order_transfer_is_identity`
-reaches a comparable conclusion instead through `0 ≤ D.form (D.T z) z`; the two hypotheses are
-independent.
+Scope: no operator positivity is assumed.
 
 DERIVED: `1` is the least order that involves at least one step, `1 ≤ m`, and the strict upper bound
 on `r`; `0` is the lower bound on `r`, the value of the form against the vacuum, and the value of
@@ -348,9 +345,6 @@ theorem finite_order_fails_gap (D : Transfer.TransferData A) (m : ℕ) (hm : 1 �
 assumes the displacement null, derives from Cauchy–Schwarz that it is form-orthogonal to everything,
 concludes `D.form (D.T x) (D.T x) = D.form x x`, and contradicts the gap inequality with
 `r ^ 2 < 1`.
-
-This is the shape of `ClayAssembly.TransferMovesSomething`, expressed through the form, so that
-predicate follows from a gap rather than standing beside it.
 
 DERIVED: `0` is the lower bound on `r` and the value of the form against the vacuum; the two `≠ 0`s
 are the non-degeneracy hypothesis and the conclusion. `1` is the strict upper bound on `r`. -/
@@ -385,7 +379,7 @@ theorem gap_moves_something (D : Transfer.TransferData A) {r : ℝ} (hr0 : 0 ≤
 `GapAt` is a hypothesis wherever it appears, and above rate one it follows from the structure fields
 (`gapAt_of_one_le_sq`). This section builds a two-dimensional `TransferData` satisfying it at any
 `lam` with `lam ^ 2 ≤ 1`, including `lam < 1`, so the predicate and the theorems that consume it —
-`GNSCompare`, `GapToOperator`, `B2Locality` — are about something inhabited.
+`GNSCompare`, `GapToOperator` — are about something inhabited.
 
 The model is finite-dimensional and carries no gauge field; it settles satisfiability and nothing
 about the Wilson transfer. -/

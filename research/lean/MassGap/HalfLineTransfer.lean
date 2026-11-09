@@ -1,6 +1,5 @@
 import Mathlib
 import MassGap.WilsonTransfer
-import MassGap.VolumeRate
 
 /-!
 # MassGap.HalfLineTransfer — the lattice shift as a transfer operator on a periodic lattice
@@ -10,19 +9,13 @@ import MassGap.VolumeRate
 three of them: `shiftObs` as `T`, `reflForm_shiftObs_symm` as `T_symm`, and `shiftObs_one` with
 `expect_shift_invariant` toward `T_vac`. It assembles no `TransferData`, and
 `shift_not_stable_on_slab` exhibits one link whose image under the lattice shift leaves the slab.
-This file proves two further statements about that shift.
+This file proves two statements about that shift.
 
 ## 1. `n` steps of the shift is the identity
 
 `shiftObs_pow_period`: `(shiftObs τ)^n F = F` for every observable `F` of the lattice of extent `n`,
 because `n` steps along `τ` is the identity on sites. There is no hypothesis on the module, the
 coupling or the reflection.
-
-`no_rate_below_one_of_finite_order` takes a `Transfer.TransferData` whose `T` satisfies `T^p = id` for
-some `p > 0` and a per-step contraction factor `ρ₁ < 1` on the vacuum complement, and concludes that
-the complement is zero: `VolumeRate.norm_Tq_pow_le` gives `‖T^p x‖ ≤ ρ₁^p‖x‖` while `T^p = id` gives
-`‖T^p x‖ = ‖x‖`. `no_rate_of_shift_transfer` is the same statement for any `TransferData` on a
-submodule of Wilson observables whose `T` is the one-step shift, at any extent and on any module.
 
 ## 2. Shift-stable submodules of the slab algebra
 
@@ -46,8 +39,8 @@ applies at that extent. Extent four has `m = 2` and is covered by `const_of_shif
 
 Scope. Every statement is at an arbitrary reflection constant, arbitrary `β` and arbitrary module, on
 a lattice periodic in `τ` of extent `n`. Nothing here is stated for an infinite `τ`-direction, and
-nothing in this development carries an infinite-volume Gibbs measure: `InfiniteVolume` takes
-subsequential limits of finite-volume numbers, not of measures.
+no infinite-volume measure is in this module's import closure; the infinite-volume states are built
+in `WilsonDLR` and `PeriodicState`.
 
 Foundational footprint only (`#print axioms` at the end).
 Build: `python research/code/lean_build.py build MassGap.HalfLineTransfer`.
@@ -242,33 +235,6 @@ theorem Tq_pow_mk (D : TransferData A) (k : ℕ) (x : A) :
         rw [pow_succ']; rfl
       rw [h1, ih, h2, TransferData.Tq_mk]
 
-/-- For a `TransferData` whose `T` satisfies `T^p = id` at some `p > 0`, a per-step contraction
-`‖Tq y‖ ≤ ρ₁‖y‖` on the vacuum complement with `0 ≤ ρ₁ < 1` forces every vector of that complement to
-be zero. `VolumeRate.norm_Tq_pow_le` iterates the per-step bound to `‖Tq^p x‖ ≤ ρ₁^p‖x‖`, and
-`Tq_pow_mk` with `hper` makes the left-hand side `‖x‖`.
-
-The module `A` is an arbitrary real vector space. The proof uses `T_symm` through `norm_Tq_pow_le` and
-nothing else about the form.
-
-DERIVED: the `0` in `0 < p` is what makes `ρ₁^p` strictly below one; the `0` in `0 ≤ ρ₁` is the sign of
-a norm ratio; the `1` in `ρ₁ < 1` is the vacuum's own eigenvalue, the value a contraction must beat;
-the `0`s in `inner ℝ D.vacGNS y = 0` and `x = 0` are the orthogonality to the vacuum and the
-conclusion. -/
-theorem no_rate_below_one_of_finite_order (D : TransferData A) {p : ℕ} (hp : 0 < p)
-    (hper : ∀ x : A, (D.T ^ p) x = x)
-    {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1)
-    (hρ : ∀ y : GNS D.toReflForm, inner ℝ D.vacGNS y = (0 : ℝ) → ‖TransferData.Tq D y‖ ≤ ρ₁ * ‖y‖)
-    {x : GNS D.toReflForm} (hx : inner ℝ D.vacGNS x = (0 : ℝ)) : x = 0 := by
-  obtain ⟨y, rfl⟩ := GNS.exists_mk x
-  have hfix : ((TransferData.Tq D) ^ p) (GNS.mk D.toReflForm y) = GNS.mk D.toReflForm y := by
-    rw [Tq_pow_mk, hper]
-  have hgeo := MassGap.VolumeRate.norm_Tq_pow_le D hρ0 hρ hx p
-  rw [hfix] at hgeo
-  have hlt : ρ₁ ^ p < 1 := pow_lt_one₀ hρ0 hρ1 (by omega)
-  have hnn : (0 : ℝ) ≤ ‖GNS.mk D.toReflForm y‖ := norm_nonneg _
-  have hzero : ‖GNS.mk D.toReflForm y‖ = 0 := by nlinarith
-  exact norm_eq_zero.mp hzero
-
 end FiniteOrder
 
 /-! ## Part 3 — the same, for the concrete lattice shift -/
@@ -298,30 +264,6 @@ theorem T_pow_coe_of_shift
           = shiftObs τ (((shiftObs τ) ^ k) ((F : ↥M) : (Link d n → MassGap.SUN.SU N) → ℝ)) := by
         rw [pow_succ']; rfl
       rw [h1, hT, ih, h2]
-
-/-- For any submodule `M` of the Wilson observables at extent `n`, any `TransferData` on `M` whose `T`
-acts as the one-step shift on representatives, and any per-step contraction factor `ρ₁ < 1` on the
-vacuum complement, that complement is zero. `shiftObs_pow_period` supplies `T^n = id` through
-`T_pow_coe_of_shift`, and `no_rate_below_one_of_finite_order` does the rest.
-
-`M` is arbitrary, so the statement is not about shift-stability on one block; it holds at every extent
-`n` with `NeZero n`.
-
-DERIVED: the `0` in `0 ≤ ρ₁` is the sign of a norm ratio; the `1` in `ρ₁ < 1` is the vacuum's own
-eigenvalue; the `0`s in `inner ℝ D.vacGNS y = 0` and `x = 0` are the orthogonality to the vacuum and
-the conclusion. -/
-theorem no_rate_of_shift_transfer
-    {M : Submodule ℝ ((Link d n → MassGap.SUN.SU N) → ℝ)}
-    (D : TransferData ↥M) (τ : Fin d)
-    (hT : ∀ F : ↥M, ((D.T F : ↥M) : (Link d n → MassGap.SUN.SU N) → ℝ)
-      = shiftObs τ ((F : ↥M) : (Link d n → MassGap.SUN.SU N) → ℝ))
-    {ρ₁ : ℝ} (hρ0 : 0 ≤ ρ₁) (hρ1 : ρ₁ < 1)
-    (hρ : ∀ y : GNS D.toReflForm, inner ℝ D.vacGNS y = (0 : ℝ) → ‖TransferData.Tq D y‖ ≤ ρ₁ * ‖y‖)
-    {x : GNS D.toReflForm} (hx : inner ℝ D.vacGNS x = (0 : ℝ)) : x = 0 := by
-  refine no_rate_below_one_of_finite_order D (NeZero.pos n) ?_ hρ0 hρ1 hρ hx
-  intro F
-  refine Subtype.ext ?_
-  rw [T_pow_coe_of_shift D τ hT n F, shiftObs_pow_period]
 
 end ShiftTransfer
 
@@ -606,9 +548,7 @@ end Sharp
 #print axioms shiftObs_pow_apply
 #print axioms shiftObs_pow_period
 #print axioms Tq_pow_mk
-#print axioms no_rate_below_one_of_finite_order
 #print axioms T_pow_coe_of_shift
-#print axioms no_rate_of_shift_transfer
 #print axioms DetBy
 #print axioms detBy_inter
 #print axioms const_of_detBy_empty

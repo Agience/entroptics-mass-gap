@@ -1,6 +1,6 @@
 """Every reader that harvests Lean declaration names must see the Unicode ones.
 
-WHAT THIS IS FOR. Lean identifiers are Unicode, and the declarations this development is ABOUT
+What this is for. Lean identifiers are Unicode, and the declarations this development is about
 begin with a Greek letter: `ΔYM` the mass gap, `κ₀YM` the entropy floor, `μYM` and `μYMAt` the
 tension, `μClampAt`, `βloYM`. Twenty-nine declarations in `research/lean/MassGap` start with a
 character outside `[A-Za-z_]`.
@@ -8,9 +8,9 @@ character outside `[A-Za-z_]`.
 A reader whose name class is ASCII-only fails on them in one of two ways, and the two hide each
 other:
 
-  * it DROPS the name -- a gate reports "every cited name resolves" having never checked any Greek
+  * it drops the name -- a gate reports "every cited name resolves" having never checked any Greek
     citation;
-  * it TRUNCATES the name -- a bare word scan begins at the first ASCII letter inside the name, so
+  * it truncates the name -- a bare word scan begins at the first ASCII letter inside the name, so
     `κ₀YM_pos` is harvested as `YM_pos`, and a citation of the real name is reported dead. Worse,
     `ΔYM`, `κ₀YM` and `μYM` all truncate to `YM`, so three distinct declarations collide on one
     token.
@@ -106,7 +106,7 @@ def test_the_docstring_name_gate_sees_them():
 def test_the_paper_footprint_parser_sees_them():
     """`tests/test_paper_matches_lean.py` reads quoted `#print axioms` output from the paper.
 
-    That output is MACHINE output, quoted as stronger evidence than prose, so a line the parser
+    That output is machine output, quoted as stronger evidence than prose, so a line the parser
     silently skips is the worst case: the paper's strongest-looking claim, unchecked.
     """
     mod = _load(TESTS / "test_paper_matches_lean.py", "tpml_u")
@@ -119,7 +119,7 @@ def test_the_paper_footprint_parser_sees_them():
 
 @pytest.mark.parametrize("name", GREEK_DECLS)
 def test_the_check_is_not_vacuous(name):
-    """POSITIVE CONTROL. The OLD class must genuinely fail on each of these names.
+    """Positive control. The old class must genuinely fail on each of these names.
 
     Without this the tests above would pass against a name class that happens to be ASCII-only but
     is never exercised, and they would report the same thing whatever the readers did.

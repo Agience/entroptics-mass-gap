@@ -1,5 +1,4 @@
 import Mathlib
-import MassGap.ReadConverse
 import MassGap.GNSCompare
 import MassGap.PeriodicContent
 
@@ -19,42 +18,25 @@ of steps does not reach the rate.
 ## What it gives
 
 1. `gapAt_iff_lag`: under `PositiveTransfer D` and `0 ≤ r`, `TransferGap.GapAt D r` holds exactly
-   when, at ONE lag `m ≠ 0`, every observable orthogonal to the vacuum has
+   when, at one lag `m ≠ 0`, every observable orthogonal to the vacuum has
    `D.form x (Tᵐ x) ≤ rᵐ · D.form x x`. The rate is the same on both sides and the lag is
    immaterial: the single-lag inequality at any one lag `m ≠ 0` and rate `r` is `GapAt D r`
    restated, not a weaker input.
-2. `readsClear_of_lag`: at `m = k + 1` — the antipode of the aperture circle of `2k + 2` lags — that
-   one inequality, at a rate `r` whose single-mode read clears (`3^{−1/4} < modeCosAvg k r`), gives
-   `SpectralGap.ReadsClear` at aperture `2k + 1`. `lag_of_readsClear` is the converse at the reads'
-   own rate `ρ`, `ρ^{k+1} = 12(1 − 3^{−1/4})/8`; `readsClear_bracket_by_lag` states both.
-3. `readsClearWith_of_gapAt`: a contraction at rate `r` gives the margin form
-   `ReadReduce.ReadsClearWith` at every `γ ≤ modeCosAvg k r` (`cosAvg_ge_of_contraction`, the
-   Chebyshev mixture of `ReadConverse.readsClear_of_contraction` with the margin kept);
-   `localMargin_of_readsClearWith` reads it on each observable.
-4. On the periodic lattices: `TorusLagClear τ p hN β m r` is the single-lag inequality for the
+2. `opT_contracts_of_lag`: the same single-lag inequality contracts the vacuum complement of the
+   completion by `r`.
+3. On the periodic lattices: `TorusLagClear τ p hN β m r` is the single-lag inequality for the
    connected reflected-shifted pairing `PeriodicReduce.torusConn`, with slack, along
    `periodicUltra hN β`. On the lattices only the direction from `TorusLagClear` to `GapAt` at the
    periodic data is proved (`periodic_form_lag_of_torusLagClear`, then `gapAt_of_lag`).
    `periodic_clayGapAt_of_torusLag` gives, at `2 ≤ N`, `0 ≤ β`, a lag `m ≠ 0` and `0 < r < 1`,
-   `PeriodicContent.PeriodicClayGapAt τ p hN β r` at the lag's own rate, with no read.
-   `periodic_torusReads_of_torusLag` gives, at `0 ≤ β`,
-   `PeriodicReduce.TorusReadsClearWith τ p hN β k γ` for every `γ ≤ modeCosAvg k r`;
-   `periodic_readsClear_of_torus_antipodal` gives `SpectralGap.ReadsClear` at aperture `2k + 1` from
-   `r = e^{−20/(2(k + 1))}`, at which the antipodal ratio `r^{k+1}` is `e^{−10}`
-   (`antipodal_rate_pow`).
+   `PeriodicContent.PeriodicClayGapAt τ p hN β r` at the lag's own rate.
+   `antipodal_rate_pow` computes that `r = e^{−20/(2(k + 1))}` has antipodal ratio `r^{k+1} = e^{−10}`.
 
 ## Scope
 
 On the transfer form the single-lag inequality is `GapAt` at the same rate (`gapAt_iff_lag`): the
 gap restated, not a weaker input, at any one lag. On the periodic lattices only
-`TorusLagClear ⇒ GapAt` is proved. Nothing here proves either at any positive coupling. What the
-Hankel step removes is the other `2k + 1` lags of the margin sum. What it cannot remove is the
-quantifier over every observable: per observable, a bound at one lag does not clear that
-observable's read uniformly in the aperture. A spectral measure with weight `1 − δ` at `0` and `δ`
-near `1` has antipodal ratio about `δ` and cosine average about `(1 − δ)/(1 + (2k + 1)δ)`, below `3^{−1/4}` once `δ` exceeds
-`(1 − 3^{−1/4})/(1 + 3^{−1/4}(2k + 1))`, about `0.158/(k + 1)` at large `k` (computed, not proved).
-The reads need the bound on the whole algebra because the vectors isolating spectral weight near `1`
-are functions of `T` applied to observables, not observables.
+`TorusLagClear ⇒ GapAt` is proved. Nothing here proves either at any positive coupling.
 
 The inputs the step consumes are positivity of the reflection form and `PositiveTransfer`. The
 identity transfer has both and every profile log-convex, and there the single-lag bound at a rate
@@ -299,8 +281,7 @@ theorem rayleigh_of_lag (D : TransferData A) (hP : PositiveTransfer D) (x : A) {
 /-- **The gap from one lag.** Under `PositiveTransfer D`, `m ≠ 0` and `0 ≤ r`: if every `x` with
 `D.form x D.vac = 0` has `D.form x (Tᵐ x) ≤ rᵐ · D.form x x`, then `TransferGap.GapAt D r`.
 `rayleigh_of_lag` brings the lag down to one, `D.form x (T x) ≤ r · D.form x x`. From lag one to
-`GapAt` is the step `GNSCompare.gapAt_of_positiveTransfer_of_rayleigh` takes on the quotient `GNS`,
-taken here on the module: at `x`, `rayleigh_of_lag` at `x` and at `T x` (also orthogonal to the
+`GapAt` is taken on the module: at `x`, `rayleigh_of_lag` at `x` and at `T x` (also orthogonal to the
 vacuum, `TransferGap.orth_invariant`) give `⟨x, Tx⟩ ≤ r⟨x, x⟩` and `⟨Tx, T²x⟩ ≤ r⟨Tx, Tx⟩`;
 Cauchy–Schwarz for `tForm` at `(x, T x)` is `⟨Tx, Tx⟩² ≤ ⟨x, Tx⟩ · ⟨Tx, T²x⟩`, so
 `⟨Tx, Tx⟩ ≤ r⟨x, Tx⟩ ≤ r²⟨x, x⟩`.
@@ -408,80 +389,15 @@ theorem lag_forces_null_of_T_eq_id (D : TransferData A) (hT : ∀ z : A, D.T z =
 
 end Profile
 
-/-! ## 3. The mixture bound with the margin kept -/
-
 section Mixture
 
-open MeasureTheory MassGap.SpectralRep
+open MeasureTheory
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E] [CompleteSpace E]
 
-/-- **A contraction puts every read at or above the single-mode read at its rate.** For `a`
-self-adjoint with spectrum in `[0, 1]`, `a Ω = Ω`, `0 ≤ r`, and `‖a u‖ ≤ r ‖u‖` for every `u`
-orthogonal to `Ω`: every read `R` at aperture `2k + 1` of a `v` orthogonal to `Ω` has cosine average at
-least `ReadConverse.modeCosAvg k r`. The proof of `ReadConverse.readsClear_of_contraction` up to its
-Chebyshev comparison, which is the whole content: `ReadConverse.ae_le_of_contraction` puts the
-spectral measure of `v` on `[0, r]`, and `ReadConverse.modeCos_mul_modeMass_le` integrated over it.
-
-DERIVED: `0` and `1` are the interval's ends; `0` is also the lower end of `r` and the orthogonality;
-`2` and `1` spell the aperture `2k + 1`. -/
-theorem cosAvg_ge_of_contraction (a : E →L[ℂ] E) (ha : IsSelfAdjoint a)
-    (hspec : spectrum ℝ a ⊆ Set.Icc 0 1) (Ω : E) (hΩ : a Ω = Ω) (k : ℕ) (r : ℝ) (hr0 : 0 ≤ r)
-    (hcon : ∀ u : E, inner ℂ Ω u = 0 → ‖a u‖ ≤ r * ‖u‖) (v : E) (hv : inner ℂ Ω v = 0)
-    (R : Moment.Read (2 * k + 1))
-    (hR : ∀ d, R.ρ d = RCLike.re (inner ℂ v ((a ^ Moment.circLag d) v))) :
-    MassGap.ReadConverse.modeCosAvg k r ≤ ∑ d, R.p d * Real.cos (R.θ d) := by
-  obtain ⟨w, hwfin, hw⟩ := exists_spectral_measure a ha hspec v
-  have hsupp := MassGap.ReadConverse.ae_le_of_contraction a ha hspec Ω hΩ r hr0 hcon v hv w hw
-  have hmom : ∀ c : ℕ, RCLike.re (inner ℂ v ((a ^ c) v)) = ∫ t, (t : ℝ) ^ c ∂w := by
-    intro c
-    have h : RCLike.re (inner ℂ v (cfc (fun x : ℝ => x ^ c) a v)) = ∫ t, (t : ℝ) ^ c ∂w :=
-      hw (fun x : ℝ => x ^ c) (continuous_pow c)
-    rw [cfc_pow_id (R := ℝ) a c ha] at h
-    exact h
-  have hρ : ∀ d, R.ρ d = ∫ t, (t : ℝ) ^ Moment.circLag d ∂w := fun d => (hR d).trans (hmom _)
-  have hD : ∑ d, R.ρ d = ∫ t, MassGap.ReadConverse.modeMass k (t : ℝ) ∂w := by
-    unfold MassGap.ReadConverse.modeMass
-    rw [integral_finsetSum]
-    · exact Finset.sum_congr rfl (fun d _ => hρ d)
-    · intro d _
-      exact integrable_of_continuous w (continuous_subtype_val.pow _)
-  have hN : ∑ d, R.ρ d * Real.cos (R.θ d) = ∫ t, MassGap.ReadConverse.modeCos k (t : ℝ) ∂w := by
-    unfold MassGap.ReadConverse.modeCos
-    rw [integral_finsetSum]
-    · refine Finset.sum_congr rfl (fun d _ => ?_)
-      rw [hρ d, R.cos_theta_circ d, integral_mul_const]
-    · intro d _
-      exact (integrable_of_continuous w (continuous_subtype_val.pow _)).mul_const _
-  have hS : 0 < ∑ d, R.ρ d := R.hpos
-  have hDr : 0 < MassGap.ReadConverse.modeMass k r := MassGap.ReadConverse.modeMass_pos k hr0
-  have hcmp : MassGap.ReadConverse.modeCos k r * ∑ d, R.ρ d
-      ≤ MassGap.ReadConverse.modeMass k r * ∑ d, R.ρ d * Real.cos (R.θ d) := by
-    rw [hD, hN, ← integral_const_mul, ← integral_const_mul]
-    refine integral_mono_ae ?_ ?_ ?_
-    · exact (integrable_of_continuous w
-        ((MassGap.ReadConverse.continuous_modeMass k).comp continuous_subtype_val)).const_mul _
-    · exact (integrable_of_continuous w
-        ((MassGap.ReadConverse.continuous_modeCos k).comp continuous_subtype_val)).const_mul _
-    · filter_upwards [hsupp] with t ht
-      have h := MassGap.ReadConverse.modeCos_mul_modeMass_le k t.2.1 ht
-      linarith
-  have havg : ∑ d, R.p d * Real.cos (R.θ d)
-      = (∑ d, R.ρ d * Real.cos (R.θ d)) / ∑ d, R.ρ d := by
-    rw [Finset.sum_div]
-    refine Finset.sum_congr rfl (fun d _ => ?_)
-    unfold Moment.Read.p
-    ring
-  rw [havg]
-  unfold MassGap.ReadConverse.modeCosAvg
-  rw [div_le_div_iff₀ hDr hS]
-  linarith [hcmp]
-
-#print axioms cosAvg_ge_of_contraction
-
 end Mixture
 
-/-! ## 4. The reads from one lag, and back -/
+/-! ## 3. The vacuum complement contracts from one lag -/
 
 section Reads
 
@@ -501,113 +417,9 @@ theorem opT_contracts_of_lag (D : TransferData A) (hP : PositiveTransfer D) {m :
 
 #print axioms opT_contracts_of_lag
 
-/-- **The reads from the antipodal lag.** Under `PositiveTransfer D`, `0 ≤ r` with
-`3^{−1/4} < ReadConverse.modeCosAvg k r`: if every `x` orthogonal to the vacuum has
-`D.form x (T^{k+1} x) ≤ r^{k+1} · D.form x x`, then `SpectralGap.ReadsClear` at aperture `2k + 1`.
-`k + 1` is the antipode of the circle of `2k + 2` lags the read is taken on. `opT_contracts_of_lag`,
-then `ReadConverse.readsClear_of_contraction`. The lag hypothesis is `GapAt D r` restated
-(`gapAt_iff_lag`), and any lag `m ≠ 0` at rate `r` is the same hypothesis; the single-mode condition
-on `r` is what the reads add, since the Clay gap itself needs only `0 < r < 1`
-(`ClayCapstone.clay_gap_of_gapAt`).
-
-DERIVED: `3`, `1` and `4` spell the floor `3^{−1/4}`; `1` is also the `+ 1` of the antipodal lag
-`k + 1`; `0` is the lower bound on `r` and the vacuum pairing. -/
-theorem readsClear_of_lag (D : TransferData A) (hP : PositiveTransfer D) (k : ℕ) {r : ℝ}
-    (hr : 0 ≤ r) (hmode : (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.ReadConverse.modeCosAvg k r)
-    (hlag : ∀ x : A, D.form x D.vac = 0 →
-      D.form x ((D.T ^ (k + 1)) x) ≤ r ^ (k + 1) * D.form x x) :
-    MassGap.SpectralGap.ReadsClear (opT D) (Omega D.toReflForm D.vac) k :=
-  MassGap.ReadConverse.readsClear_of_contraction (opT D) (isSelfAdjoint_opT D)
-    (fun _ hx => ⟨spectrum_opT_nonneg D hP hx, (spectrum_opT_subset_unit_interval D hx).2⟩)
-    (Omega D.toReflForm D.vac) (opT_Omega D) k r hr
-    (opT_contracts_of_lag D hP (Nat.succ_ne_zero k) hr hlag) hmode
-
-#print axioms readsClear_of_lag
-
-/-- **The reads give every lag at their own rate.** Under `PositiveTransfer D` and
-`SpectralGap.ReadsClear` at aperture `2k + 1`: there is `ρ` with `0 < ρ < 1`,
-`ρ^{k+1} = 12(1 − 3^{−1/4})/8`, and `D.form x (Tᵐ x) ≤ ρᵐ · D.form x x` for every `m` and every `x`
-orthogonal to the vacuum. `ReadRoute.gapAt_of_reads`, then `lag_of_gapAt`.
-
-DERIVED: `12`, `8`, `3`, `1` and `4` spell the cap `12(1 − 3^{−1/4})/8`; `1` is also the upper bound
-on `ρ` and the `+ 1` of `k + 1`; `0` is the lower bound on `ρ` and the vacuum pairing. -/
-theorem lag_of_readsClear (D : TransferData A) (hP : PositiveTransfer D) (k : ℕ)
-    (hread : MassGap.SpectralGap.ReadsClear (opT D) (Omega D.toReflForm D.vac) k) :
-    ∃ ρ : ℝ, 0 < ρ ∧ ρ < 1 ∧ ρ ^ (k + 1) = 12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) ∧
-      ∀ (m : ℕ) (x : A), D.form x D.vac = 0 → D.form x ((D.T ^ m) x) ≤ ρ ^ m * D.form x x := by
-  obtain ⟨ρ, hρ0, hρ1, hρk, hg⟩ := MassGap.ReadRoute.gapAt_of_reads D hP k hread
-  exact ⟨ρ, hρ0, hρ1, hρk, fun m x hx => lag_of_gapAt D hρ0.le hg m x hx⟩
-
-#print axioms lag_of_readsClear
-
-/-- **The antipodal lag brackets the reads.** Under `PositiveTransfer D`, at aperture `2k + 1`:
-
-* the reads force `D.form x (T^{k+1} x) ≤ 12(1 − 3^{−1/4})/8 · D.form x x` for every `x` orthogonal to
-  the vacuum (`lag_of_readsClear` at `m = k + 1`);
-* `D.form x (T^{k+1} x) ≤ r^{k+1} · D.form x x` for every such `x`, at any `r ≥ 0` with
-  `3^{−1/4} < modeCosAvg k r`, gives the reads (`readsClear_of_lag`).
-
-Between the two antipodal ratios the reads are not decided by this bracket.
-
-DERIVED: `12`, `8`, `3`, `1` and `4` spell the cap `12(1 − 3^{−1/4})/8`; `3`, `1` and `4` also spell
-the floor `3^{−1/4}`; `1` is the `+ 1` of the antipodal lag `k + 1`; `0` is the lower bound on `r`
-and the vacuum pairing. -/
-theorem readsClear_bracket_by_lag (D : TransferData A) (hP : PositiveTransfer D) (k : ℕ) :
-    (MassGap.SpectralGap.ReadsClear (opT D) (Omega D.toReflForm D.vac) k →
-      ∀ x : A, D.form x D.vac = 0 →
-        D.form x ((D.T ^ (k + 1)) x) ≤ 12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) * D.form x x) ∧
-    (∀ r : ℝ, 0 ≤ r → (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.ReadConverse.modeCosAvg k r →
-      (∀ x : A, D.form x D.vac = 0 →
-        D.form x ((D.T ^ (k + 1)) x) ≤ r ^ (k + 1) * D.form x x) →
-      MassGap.SpectralGap.ReadsClear (opT D) (Omega D.toReflForm D.vac) k) := by
-  refine ⟨fun hread x hx => ?_, fun r hr hmode hlag => readsClear_of_lag D hP k hr hmode hlag⟩
-  obtain ⟨ρ, _, _, hρk, hlag⟩ := lag_of_readsClear D hP k hread
-  have h := hlag (k + 1) x hx
-  rwa [hρk] at h
-
-#print axioms readsClear_bracket_by_lag
-
-/-- **The margin form from a contraction.** Under `PositiveTransfer D`, `0 ≤ r`, `γ ≤ modeCosAvg k r`
-and `TransferGap.GapAt D r`: `ReadReduce.ReadsClearWith (opT D) Ω k γ`. Every non-zero `v` orthogonal
-to the vacuum has its read `ContinuumE.transferRead` at cosine average at least `modeCosAvg k r`
-(`cosAvg_ge_of_contraction`), which `ReadReduce.readsClearWith_iff_cosAvg` turns into the margin
-inequality.
-
-DERIVED: `0` is the lower bound on `r`. -/
-theorem readsClearWith_of_gapAt (D : TransferData A) (hP : PositiveTransfer D) (k : ℕ)
-    {r γ : ℝ} (hr : 0 ≤ r) (hγ : γ ≤ MassGap.ReadConverse.modeCosAvg k r)
-    (hg : MassGap.TransferGap.GapAt D r) :
-    MassGap.ReadReduce.ReadsClearWith (opT D) (Omega D.toReflForm D.vac) k γ := by
-  refine (MassGap.ReadReduce.readsClearWith_iff_cosAvg D hP k γ).mpr (fun v hv hΩv => ?_)
-  exact le_trans hγ (cosAvg_ge_of_contraction (opT D) (isSelfAdjoint_opT D)
-    (fun _ hx => ⟨spectrum_opT_nonneg D hP hx, (spectrum_opT_subset_unit_interval D hx).2⟩)
-    (Omega D.toReflForm D.vac) (opT_Omega D) k r hr
-    ((MassGap.GNSCompare.gapAt_iff_opT_contracts D hr).mp hg) v hΩv
-    (MassGap.ContinuumE.transferRead D hP v hv k) (fun _ => rfl))
-
-#print axioms readsClearWith_of_gapAt
-
-/-- **The margin form, read on one observable.** `ReadReduce.ReadsClearWith (opT D) Ω k γ` gives,
-at every `x` with `D.form x D.vac = 0`, `0 ≤ marginSum k γ (c ↦ D.form x (Tᶜ x))`: the class
-`GNSCompare.toH D.toReflForm x` is orthogonal to the vacuum (`GNSCompare.inner_vac_toH_eq_zero_iff`)
-and its complex profile is the real one (`ReadReduce.re_inner_opT_pow_coe` at the pair `(x, 0)`).
-
-DERIVED: `0` is the vacuum pairing and the sign of the sum. -/
-theorem localMargin_of_readsClearWith (D : TransferData A) (k : ℕ) (γ : ℝ)
-    (h : MassGap.ReadReduce.ReadsClearWith (opT D) (Omega D.toReflForm D.vac) k γ)
-    (x : A) (hx : D.form x D.vac = 0) :
-    0 ≤ MassGap.ReadReduce.marginSum k γ (fun c => D.form x ((D.T ^ c) x)) := by
-  have horth : inner ℂ (Omega D.toReflForm D.vac) (MassGap.GNSCompare.toH D.toReflForm x)
-      = (0 : ℂ) := (MassGap.GNSCompare.inner_vac_toH_eq_zero_iff D.toReflForm D.vac x).2 hx
-  refine le_of_le_of_eq (h _ horth) (MassGap.ReadReduce.marginSum_congr k γ (fun c => ?_))
-  rw [MassGap.GNSCompare.toH_def, MassGap.ReadReduce.re_inner_opT_pow_coe]
-  simp only [Pre.ofPair_fst, Pre.ofPair_snd, map_zero, PreForm.form_zero_left, add_zero]
-
-#print axioms localMargin_of_readsClearWith
-
 end Reads
 
-/-! ## 5. On the periodic lattices -/
+/-! ## 4. On the periodic lattices -/
 
 section Periodic
 
@@ -628,7 +440,7 @@ theorem periodic_form_diag (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) (β : ℝ)
 
 #print axioms periodic_form_diag
 
-/-- **THE SINGLE-LAG INPUT, on the periodic lattices.** At coupling `β`, lag `m` and rate `r`: for
+/-- **The single-lag input, on the periodic lattices.** At coupling `β`, lag `m` and rate `r`: for
 every gauge-invariant half-space observable `x` and every slack `ε > 0`, the set of `j` with
 
     torusConn τ p hN β j x m  ≤  rᵐ · torusConn τ p hN β j x 0 + ε
@@ -641,7 +453,6 @@ then `gapAt_of_lag`); the converse on the lattices is
 `WeakCouplingWindow.torusLagClear_of_gapAt`, and `WeakCouplingWindow.torusLagClear_iff_gapAt` states both. On the
 transfer form the single-lag inequality is `GapAt` at the same rate (`gapAt_iff_lag`), so this is the gap
 restated on the lattices, and every lag `m ≠ 0` at rate `r` gives the same conclusion. At
-`m = k + 1` it is the antipode of the aperture circle of `PeriodicReduce.TorusReadsClearWith`.
 `torusLagClear_of_atTop` derives it from the same inequality for all large `j`.
 
 DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank, the sign of the slack, and
@@ -723,53 +534,6 @@ theorem periodic_form_lag_of_torusLagClear (τ : Fin 4) (p : ℤ) (hN : N ≠ 0)
 
 #print axioms periodic_form_lag_of_torusLagClear
 
-/-- **The reads at the periodic state from the antipodal lag.** At `0 ≤ β`, `0 ≤ r` with
-`3^{−1/4} < modeCosAvg k r`, and `TorusLagClear τ p hN β (k + 1) r`: `SpectralGap.ReadsClear` at
-aperture `2k + 1` for the gauge-invariant transfer operator at `periodicGaugeInvData τ p hN β`.
-`periodic_form_lag_of_torusLagClear`, then `readsClear_of_lag` with
-`PeriodicState.periodic_positiveTransfer`.
-
-DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank and the lower end of `β` and
-`r`; `3`, `1` and `4` spell the floor `3^{−1/4}`; `1` is also the `+ 1` of the antipodal lag
-`k + 1`. -/
-theorem periodic_readsClear_of_torusLag (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β)
-    (k : ℕ) {r : ℝ} (hr : 0 ≤ r)
-    (hmode : (3 : ℝ) ^ (-(1 : ℝ) / 4) < MassGap.ReadConverse.modeCosAvg k r)
-    (h : TorusLagClear τ p hN β (k + 1) r) :
-    MassGap.SpectralGap.ReadsClear (opT (MassGap.PeriodicState.periodicGaugeInvData τ p hN β))
-      (Omega (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).toReflForm
-        (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).vac) k :=
-  readsClear_of_lag (MassGap.PeriodicState.periodicGaugeInvData τ p hN β)
-    (MassGap.PeriodicState.periodic_positiveTransfer τ p hN hβ) k hr hmode
-    (fun x hx => periodic_form_lag_of_torusLagClear τ p hN β (k + 1) r h x hx)
-
-#print axioms periodic_readsClear_of_torusLag
-
-/-- **The coordinator's torus input from the antipodal lag.** At `0 ≤ β`, `0 ≤ r`,
-`TorusLagClear τ p hN β (k + 1) r` and any `γ ≤ modeCosAvg k r`:
-`PeriodicReduce.TorusReadsClearWith τ p hN β k γ`. The single lag gives `TransferGap.GapAt` at the
-periodic data (`gapAt_of_lag`), the contraction gives the margin form (`readsClearWith_of_gapAt`), it
-reads on each observable (`localMargin_of_readsClearWith`), and
-`PeriodicReduce.periodic_torusReads_of_localReads` returns it to the periodic lattices.
-
-DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank and the lower end of `β` and
-`r`; `1` is the `+ 1` of the antipodal lag `k + 1`. -/
-theorem periodic_torusReads_of_torusLag (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β)
-    (k : ℕ) {r : ℝ} (hr : 0 ≤ r) (h : TorusLagClear τ p hN β (k + 1) r) {γ : ℝ}
-    (hγ : γ ≤ MassGap.ReadConverse.modeCosAvg k r) :
-    MassGap.PeriodicReduce.TorusReadsClearWith τ p hN β k γ := by
-  have hP := MassGap.PeriodicState.periodic_positiveTransfer τ p hN hβ
-  have hg : MassGap.TransferGap.GapAt (MassGap.PeriodicState.periodicGaugeInvData τ p hN β) r :=
-    gapAt_of_lag (MassGap.PeriodicState.periodicGaugeInvData τ p hN β) hP (Nat.succ_ne_zero k) hr
-      (fun x hx => periodic_form_lag_of_torusLagClear τ p hN β (k + 1) r h x hx)
-  have hW := readsClearWith_of_gapAt (MassGap.PeriodicState.periodicGaugeInvData τ p hN β) hP k
-    hr hγ hg
-  exact MassGap.PeriodicReduce.periodic_torusReads_of_localReads τ p hN β k γ
-    (fun x hx => localMargin_of_readsClearWith
-      (MassGap.PeriodicState.periodicGaugeInvData τ p hN β) k γ hW x hx)
-
-#print axioms periodic_torusReads_of_torusLag
-
 /-- **The Clay statement at the periodic state from one lag, at the lag's own rate.** At `2 ≤ N`,
 `0 ≤ β`, a lag `m ≠ 0`, `0 < r < 1` and `TorusLagClear τ p hN β m r`:
 `PeriodicContent.PeriodicClayGapAt τ p hN β r`. `periodic_form_lag_of_torusLagClear` puts the
@@ -803,7 +567,7 @@ theorem periodic_clayGapAt_of_torusLag (τ : Fin 4) (p : ℤ) (hN2 : 2 ≤ N) (h
 /-- The rate `e^{−20/(2(k + 1))}` puts the antipodal ratio at `e^{−10}`:
 `(e^{−20/(2(k + 1))})^{k+1} = e^{−20/2}`.
 
-DERIVED: `20` is `ReadConverse.twenty_clears`'s window rate; `2` and `1` in `2 * (k + 1)` are the
+DERIVED: `20` is the window rate; `2` and `1` in `2 * (k + 1)` are the
 number of lags of the aperture `2k + 1`, and `2` in `20 / 2` is the antipode at half of them; `1` is
 also the `+ 1` of `k + 1`. -/
 theorem antipodal_rate_pow (k : ℕ) :
@@ -815,70 +579,6 @@ theorem antipodal_rate_pow (k : ℕ) :
   rw [← Real.exp_nat_mul, Nat.cast_add_one, mul_neg, key]
 
 #print axioms antipodal_rate_pow
-
-/-- **The reads at the periodic state from an antipodal ratio of `e^{−10}`.** At `0 ≤ β` and
-`TorusLagClear τ p hN β (k + 1) r` at `r = e^{−20/(2(k + 1))}` — whose antipodal ratio `r^{k+1}` is
-`e^{−10}` (`antipodal_rate_pow`): `SpectralGap.ReadsClear` at aperture `2k + 1` for the
-gauge-invariant transfer operator at `periodicGaugeInvData τ p hN β`. The single-mode read at `r`
-clears by `ReadConverse.cond_of_rate` at `X = 20` (`ReadConverse.twenty_clears`) and
-`ReadConverse.modeCosAvg_gt_of_bound`, and `periodic_readsClear_of_torusLag` closes it. The ratio
-`e^{−10}` is what the reads consume; the gap needs only a ratio below one at some lag
-(`periodic_clayGapAt_of_torusLag`).
-
-DERIVED: `4` is the spacetime dimension; `2` in `2 * (k + 1)` with its `1` is the lag count of the
-aperture `2k + 1`; `0` is the excluded rank and the lower end of `β`; `1` is also the `+ 1` of the
-antipodal lag `k + 1`. CHOSEN: `20`, the window rate of `ReadConverse.twenty_clears`, a round value
-above the root of its aperture-free condition. -/
-theorem periodic_readsClear_of_torus_antipodal (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ}
-    (hβ : 0 ≤ β) (k : ℕ)
-    (h : TorusLagClear τ p hN β (k + 1) (Real.exp (-((20 : ℝ) / (2 * ((k : ℝ) + 1)))))) :
-    MassGap.SpectralGap.ReadsClear (opT (MassGap.PeriodicState.periodicGaugeInvData τ p hN β))
-      (Omega (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).toReflForm
-        (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).vac) k := by
-  have hr0 : (0 : ℝ) ≤ Real.exp (-((20 : ℝ) / (2 * ((k : ℝ) + 1)))) := (Real.exp_pos _).le
-  exact periodic_readsClear_of_torusLag τ p hN hβ k hr0
-    (MassGap.ReadConverse.modeCosAvg_gt_of_bound k hr0
-      (MassGap.ReadConverse.cond_of_rate k (X := 20) (by norm_num) hr0 le_rfl
-        MassGap.ReadConverse.twenty_clears)) h
-
-#print axioms periodic_readsClear_of_torus_antipodal
-
-/-- **What the reads force at the periodic state, lag by lag.** At `0 ≤ β` and
-`SpectralGap.ReadsClear` at aperture `2k + 1` for `periodicGaugeInvData τ p hN β`: there is `ρ` with
-`0 < ρ < 1` and `ρ^{k+1} = 12(1 − 3^{−1/4})/8` such that every gauge-invariant half-space observable
-`x` with `ν(θx) = 0`, `ν = periodicState hN β`, has `ν(θx · Sᵐx) ≤ ρᵐ · ν(θx · x)` at every lag `m`.
-`lag_of_readsClear` at the periodic data.
-
-DERIVED: `4` is the spacetime dimension; `0` is the excluded gauge rank, the lower end of `β` and of
-`ρ`, and the vacuum pairing; `2` is the doubling of the reflection plane; `12`, `8`, `3`, `1` and `4`
-spell the cap `12(1 − 3^{−1/4})/8`; `1` is also the upper bound on `ρ` and the `+ 1` of `k + 1`. -/
-theorem periodic_lag_of_readsClear (τ : Fin 4) (p : ℤ) (hN : N ≠ 0) {β : ℝ} (hβ : 0 ≤ β) (k : ℕ)
-    (hread : MassGap.SpectralGap.ReadsClear
-      (opT (MassGap.PeriodicState.periodicGaugeInvData τ p hN β))
-      (Omega (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).toReflForm
-        (MassGap.PeriodicState.periodicGaugeInvData τ p hN β).vac) k) :
-    ∃ ρ : ℝ, 0 < ρ ∧ ρ < 1 ∧ ρ ^ (k + 1) = 12 * ((1 - (3 : ℝ) ^ (-(1 : ℝ) / 4)) / 8) ∧
-      ∀ (m : ℕ)
-        (x : ↥(MassGap.GaugeInvariantAlgebra.gaugeInvHalfSpaceAlg (G := MassGap.SUN.SU N) τ p)),
-        MassGap.PeriodicState.periodicState hN β (MassGap.LatticeReflection.ireflObs τ (2 * p)
-            (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))) = 0 →
-        MassGap.PeriodicState.periodicState hN β (MassGap.LatticeReflection.ireflObs τ (2 * p)
-              (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))
-            * (⇑(MassGap.ReflectionShift.ishiftObsL τ))^[m]
-              (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ)))
-          ≤ ρ ^ m * MassGap.PeriodicState.periodicState hN β
-              (MassGap.LatticeReflection.ireflObs τ (2 * p)
-                (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))
-                * (x : C(MassGap.GibbsSpec.IConf (MassGap.SUN.SU N), ℝ))) := by
-  obtain ⟨ρ, hρ0, hρ1, hρk, hlag⟩ := lag_of_readsClear
-    (MassGap.PeriodicState.periodicGaugeInvData τ p hN β)
-    (MassGap.PeriodicState.periodic_positiveTransfer τ p hN hβ) k hread
-  refine ⟨ρ, hρ0, hρ1, hρk, fun m x hθ => ?_⟩
-  have h := hlag m x ((MassGap.PeriodicReduce.periodic_form_vac τ p hN β x).trans hθ)
-  rw [MassGap.PeriodicReduce.periodic_form_pow τ p hN β x m, periodic_form_diag τ p hN β x] at h
-  exact h
-
-#print axioms periodic_lag_of_readsClear
 
 end Periodic
 

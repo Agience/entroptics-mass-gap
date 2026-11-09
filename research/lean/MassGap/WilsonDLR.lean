@@ -74,19 +74,15 @@ boundary configuration anchored at the identity.
   and its argument runs through `spec_at_zero_const`, which holds only at zero coupling.
 * Uniqueness, translation invariance and non-degeneracy are not proved at general coupling.
   `DLRLimit.not_isPointMass_of_uniform_variance` needs a variance floor uniform in the volume.
-  `InfiniteVolume.exists_uniform_contact_floor` supplies one `δ₀ > 0` with
-  `exp (-128 * β) * δ₀ ≤ wilsonCorrAt N β 0` at every aperture and every `β ≥ 0`, and
-  `PlaqVariance.corrClay_zero_eq` makes that contact value a plaquette variance;
-  `ClayNontriviality.clay_nontriviality_of_wilson_variance` composes the two. That floor is stated
-  for `wilsonCorrAt N β 0` on a finite periodic lattice indexed by an aperture, while `specState` is
+  `PlaqVariance.corrClay_zero_eq` makes the contact value `corrClay (N + 1) β 0` a plaquette variance,
+  which is stated on a finite periodic lattice indexed by an aperture, while `specState` is
   indexed by a `Finset ILink` of `ℤ⁴` with a frozen boundary; relating a variance in one indexing to
   a variance in the other is not done here.
 * The DLR equation delivered here is tested against continuous observables, so
   `GibbsSpec.IsGibbsMeasure` — which asks for it against every bounded measurable observable — is not
-  claimed. `MassGap.WilsonGibbs.exists_wilson_isGibbsMeasure` carries it there, by exhibiting the
-  kernel applied to `P` as a measure and using that two finite Borel measures agreeing on continuous
-  observables are equal; an `L¹` approximation would not pass under the kernel, which is bounded in
-  the sup norm rather than the `L¹(P)` norm.
+  claimed. Passing from continuous to bounded measurable observables would use that two finite Borel
+  measures agreeing on continuous observables are equal; an `L¹` approximation would not pass under
+  the kernel, which is bounded in the sup norm rather than the `L¹(P)` norm.
 * `φ` is a general density with `0 ≤ φ ≤ 2` throughout. `WilsonAction.wilsonDensity_nonneg` and
   `wilsonDensity_le_two` discharge those two at the Wilson instance; the upper bound `2` is proved,
   not attained — at `SU 3` the supremum of `1 - Re tr g / 3` is `3 / 2`.
@@ -446,7 +442,7 @@ theorem spec_add {φ : G → ℝ} (hφ : Measurable φ) (hφ0 : ∀ g, 0 ≤ φ 
 `GibbsSpec.spec_one` — the kernel is a state, so the computation is the usual one.
 
 **Why the centred form is the one to work with.** A lower bound on `∫ (f - c)²` against a reference
-measure holds for EVERY centre `c`, since the two differ by `(mean - c)² ≥ 0`. So a floor proved in
+measure holds for every centre `c`, since the two differ by `(mean - c)² ≥ 0`. So a floor proved in
 this form never has to evaluate `m`, which depends on the coupling, the region and the boundary
 condition. That is what `ContactFloor.haar_centred_le` does on the torus, and it is the step that lets
 a region-free floor bound a region-dependent variance.
@@ -1128,12 +1124,12 @@ theorem dlr_unique_at_zero_eq [T2Space G] {φ : G → ℝ} (hφc : Continuous φ
 `DLRLimit.unique_dlr_of_local_kernel_near_const`'s hypothesis is satisfiable.
 
 For an observable local on `S`, take the region `S` itself: `spec_at_zero_const` says the kernel is
-then literally CONSTANT in the boundary configuration, so the difference is `0` and any `ε` will do.
+then literally constant in the boundary configuration, so the difference is `0` and any `ε` will do.
 
-⚠ The corresponding statement for an ARBITRARY continuous observable is false, and the difference is
+⚠ The corresponding statement for an arbitrary continuous observable is false, and the difference is
 not a technicality. At coupling zero the kernel is `∫ F (splice Λ u ω) ∂(vol μ Λ)`: the links outside
 `Λ` are still frozen at `ω`, and a general `F` reads them. What stops being read is the boundary's
-influence on a LOCAL observable once the region covers its support. That is why `dlr_unique_at_zero`
+influence on a local observable once the region covers its support. That is why `dlr_unique_at_zero`
 routes through `DLRLimit.State.eq_of_eqOn_localObs` rather than concluding directly, and it is why
 the estimate is stated over `localObsAlg`.
 

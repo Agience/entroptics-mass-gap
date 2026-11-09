@@ -46,8 +46,7 @@ three ways:
 * `n` even, `c` odd — no fixed site, and fixed axis links, which `reflConf` inverts. The shared block
   is acted on nontrivially, so `hσR` fails. This is a link reflection.
 * `n` odd — `2` is a unit, so every `c` has both a fixed site and a fixed axis link. Stated here at
-  extent `17` only, by evaluation: `Complete.wilsonCorr` runs the lag over `Fin (nCorrYM + 1)` with
-  `nCorrYM = 16`, so `n = 17`, and `pinned_exists_half`, `pinned_exists_half_sub_one`,
+  extent `17` only, by evaluation: `pinned_exists_half`, `pinned_exists_half_sub_one`,
   `pinned_half_unique` and `exists_fixed_axis_link_pinned` settle that extent.
   `reflConf_inverts_fixed_axis_link` is what fails there.
 
@@ -73,9 +72,8 @@ and `corrHyper_nonneg_even_lag` gives `0 ≤ corrHyper` there.
 
 ## Choosing the aperture
 
-`Complete.confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop`, and
-`exists_even_extent_aperture` intersects that cofinal set with the cofinal set of `N` whose extent
-`N + 1` is even, so the even case is reached without changing a pinned constant.
+`exists_even_extent_aperture` intersects a cofinal set `∀ᶠ N in atTop` with the cofinal set of `N`
+whose extent `N + 1` is even, so the even case is reached without changing a pinned constant.
 
 ## Scope
 
@@ -171,15 +169,14 @@ noncomputable abbrev cvol (ι : Type) [Fintype ι] {Ω : Type} [MeasurableSpace 
 
 /-- **An integral over a product measure splits at a predicate on the index.**
 
-`block_factor` cannot do this: it factors the integral of a PRODUCT of block functions, whereas here
+`block_factor` cannot do this: it factors the integral of a product of block functions, whereas here
 the integrand is arbitrary. What does it is Mathlib's measure-preserving equivalence between a
 product over the index and the product of the two sub-products, transported by
 `MeasurePreserving.integral_comp'`.
 
-Wanted for the free-boundary DLR consistency: with the free weight factored at a region — by
-`ReflectionHalfSpace.wtFree_factor`, whose outer factor does not read that region's links
-(`wtFree_outer_congr`) — this turns the integral over a box's links into an integral over the pair
-of blocks, after which Fubini leaves the inner integral as the numerator of the ordinary kernel.
+With a weight factored at a region, so that its outer factor does not read that region's links,
+this turns the integral over a box's links into an integral over the pair of blocks, after which
+Fubini leaves the inner integral as the numerator of the ordinary kernel.
 
 Every binder is explicit rather than inherited from a section, since the file's variable block
 recurs.
@@ -203,7 +200,7 @@ theorem integral_cvol_split {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpac
 first block if the predicate holds there and the second block otherwise.
 
 `Equiv.piEquivPiSubtypeProd` carries an `@[simps]` rule for this, but the split lemmas here use the
-MEASURABLE version, whose `symm` is not itself a simp lemma. Without this the assembly cannot see
+measurable version, whose `symm` is not itself a simp lemma. Without this the assembly cannot see
 through the reassembly and every step stalls on an opaque equivalence.
 
 DERIVED: no numeral occurs; `p`, `z` and `i` are the caller's. -/
@@ -217,8 +214,8 @@ DERIVED: no numeral occurs; `p`, `z` and `i` are the caller's. -/
 
 /-- **The split, as an iterated integral.** `integral_cvol_split` followed by Fubini.
 
-⚠ NOTE THE ORDER. The `p`-block is the FIRST component of the pair, so Fubini puts it on the
-OUTSIDE. A caller who wants a region `V` integrated on the INSIDE — which is what conditioning on
+⚠ Note the order. The `p`-block is the first component of the pair, so Fubini puts it on the
+outside. A caller who wants a region `V` integrated on the inside — which is what conditioning on
 the configuration outside `V` means — takes the predicate to be "not in `V`", not "in `V`".
 
 `hg` is integrability of the reindexed integrand against the product measure. It is a genuine
@@ -243,7 +240,7 @@ theorem integral_cvol_split_iterated {ι : Type} [Fintype ι] {Ω : Type} [Measu
 
 #print axioms integral_cvol_split_iterated
 
-/-- **The split with the predicate's block on the INSIDE.**
+/-- **The split with the predicate's block on the inside.**
 
 `integral_cvol_split_iterated` puts the predicate's block on the outside, so a caller wanting a
 region integrated out had to pass "not in the region" — a double negation that is awkward once the
@@ -279,14 +276,13 @@ theorem integral_cvol_split_iterated_symm {ι : Type} [Fintype ι] {Ω : Type} [
 /-- **The split's integrability hypothesis, for a bounded measurable integrand.**
 
 `integral_cvol_split_iterated` and `integral_cvol_split_iterated_symm` both carry `hg`:
-integrability of the REINDEXED integrand against the product measure. For a bounded measurable
+integrability of the reindexed integrand against the product measure. For a bounded measurable
 integrand it is automatic — the reindexing is a measurable equivalence, so the composite is
 measurable and carries the same bound, and the product of two `Measure.pi`s over a probability
 measure is finite.
 
-This is what discharges `hg` in the free-boundary DLR consistency: the integrand there is an
-observable times `ReflectionHalfSpace.wtFree`, and `wtFree_le` bounds the weight while the observable
-is bounded by hypothesis.
+This discharges `hg` for an integrand that is an observable times a weight, when the weight and
+the observable are both bounded.
 
 DERIVED: no numeral occurs; `C` is the caller's bound. -/
 theorem integrable_split_of_bounded {ι : Type} [Fintype ι] {Ω : Type} [MeasurableSpace Ω]
@@ -306,7 +302,7 @@ theorem integrable_split_of_bounded {ι : Type} [Fintype ι] {Ω : Type} [Measur
 /-- **Reindexing an integral over a product measure along an equivalence of index types.**
 
 Needed by the free-boundary DLR consistency: after `integral_cvol_split_iterated` cuts the box's
-links at a region, the inner block is indexed by a SUBTYPE of the box's links — those lying in the
+links at a region, the inner block is indexed by a subtype of the box's links — those lying in the
 region — while the ordinary kernel's numerator integrates over the region's own links. The two index
 types are equivalent and the product measure does not notice, which is Mathlib's
 `measurePreserving_piCongrLeft`.
@@ -555,8 +551,7 @@ noncomputable def halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
 reads it only through the shared block.
 
 Used by `pairing_eq_weighted_square`, `integrable_weighted_halfIntegral_sq`,
-`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag` here, and by
-`BoxNumericFloor.variance_halfIntegral_traceDressed_ge`.
+`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag`.
 
 DERIVED: no numeral. -/
 theorem measurable_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
@@ -580,9 +575,7 @@ theorem measurable_halfIntegral (S R : Finset ι) (hSR : Disjoint S R)
 so the integral cannot amplify it.
 
 Used by `pairing_eq_weighted_square`, `integrable_weighted_halfIntegral_sq`,
-`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag` here, and by
-`BoxNumericFloor.variance_halfIntegral_traceDressed_ge` and
-`ReflectionHalfSpace.irefl_box_pairing_ge_variance_pos`.
+`pairing_ge_weight_min_mul_variance` and `corrHyper_nonneg_even_lag`.
 
 DERIVED: no numeral. -/
 theorem abs_halfIntegral_le (S R : Finset ι) (hSR : Disjoint S R)
@@ -805,9 +798,8 @@ moment: correlating `f` against `g` bounds `f`'s variance below.
 
 When `g`'s moments are known and `∫ f·g` has a floor, the left-hand side is a number.
 
-Proved by instantiating `0 ≤ ∫ ((f - ∫ f) - λ·g)²` at `λ = ∫ f·g / ∫ g²` rather than through a
-discriminant lemma: `Schwinger.sq_le_of_quad_nonneg` is this tree's discriminant lemma and
-`ActionSplit` does not import `Schwinger`.
+Proved by instantiating `0 ≤ ∫ ((f - ∫ f) - λ·g)²` at `λ = ∫ f·g / ∫ g²`, with no discriminant
+lemma.
 
 DERIVED: the `2`s are the squares — the two second moments, the square of the mean, and the square of
 the correlation. `0` is `g`'s mean in `hg0` and the strict lower bound on its second moment in
@@ -1549,11 +1541,7 @@ but the glued observable's value does not depend on it, by `glue_base_congr` und
 
 Two bounds are needed, `Ch` on the observable and `Cw` on the weight, because the half-integral is
 bounded before it is squared; `pairing_nonneg_of_local` takes one bound on the product.
-`wilson_pairing_nonneg_even` and `ReflectionHalfSpace.irefl_box_wilson_pairing_nonneg` both hold the
-separate bounds and build the product bound from them.
-
-`ReflectionHalfSpace.irefl_box_pairing_eq_zero_iff` instantiates this at the box's three blocks with
-`base` the all-identity configuration.
+`wilson_pairing_nonneg_even` holds the separate bounds and builds the product bound from them.
 
 `pairing_pos_iff_half_ne_const` below is this statement with a constant subtracted and the weight
 strictly positive, adding `halfIntegral_sub_const` and the sign.
@@ -1830,10 +1818,7 @@ a.e. zero and `pairing_eq_zero_iff_local` gives the vanishing. The condition is 
 than assumed, for the class of observables `hOS` names.
 
 `hOS` is a hypothesis about the observable this theorem is applied to. The Wilson instantiation
-applies it to the dressed observable `ReflectionHalfSpace.idressed = F · e^{-βA₊}`, not to `F`, and
-`ReflectionHalfSpace.idressed_depends_on_boxR` refutes `hOS` for the dressed observable on a
-one-plaquette carrier at every `β ≠ 0`, with the bare observable constant. That carrier is not
-reflection-closed.
+applies it to a dressed observable `F · e^{-βA₊}`, not to `F`.
 
 Observables that read `R` are outside the statement: their half-integral may or may not be constant.
 
@@ -2009,7 +1994,7 @@ If `δ * ∫ g ∂Q ≤ ∫ g ∂P` for every nonnegative integrable `g`, then `
 
 The proof is two moves. `P`'s variance is `∫ (f - m)² ∂P` at `P`'s own mean `m`, because the measure
 has mass one; the domination applied to `(f - m)²` turns that into `δ * ∫ (f - m)² ∂Q`; and `Q`'s
-variance is the MINIMUM over centres of `∫ (f - c)² ∂Q`, so centring at `m` rather than at `Q`'s own
+variance is the minimum over centres of `∫ (f - c)² ∂Q`, so centring at `m` rather than at `Q`'s own
 mean only increases it. The two means never have to be compared.
 
 **Why this shape.** The hypothesis is stated on integrals rather than as a density bound, so a caller
@@ -2094,7 +2079,7 @@ theorem integral_centred_eq {X : Type*} [MeasurableSpace X]
 mean only costs. Stated as the inequality because that is the direction every caller needs.
 
 **Why it is the load-bearing step in a variance floor.** A floor proved against a reference measure
-is centred at the REFERENCE's mean, while the quantity to be bounded is centred at the Gibbs mean —
+is centred at the reference's mean, while the quantity to be bounded is centred at the Gibbs mean —
 which depends on the coupling, the region and the boundary condition and is not computable. This
 lemma discards that dependence in one move, and is what `ContactFloor.haar_centred_le` does on the
 torus.
@@ -2432,8 +2417,7 @@ theorem exists_fixed_transverse_link [NeZero n] {τ ν : Fin d} (hν : ν ≠ τ
 
 /-! ### case 3 — the pinned extent is odd, and then every constant has a cross term
 
-`Complete.wilsonCorr` runs the lag over `Fin (nCorrYM + 1)` and `nCorrYM = 16`, so the reflection
-acts on `Fin 17`. Two is a unit there, so `2x = c` and `2x = c − 1` are both solvable, for every `c`:
+At extent `17` the reflection acts on `Fin 17`. Two is a unit there, so `2x = c` and `2x = c − 1` are both solvable, for every `c`:
 one site-plane and one link-plane. The link-plane is the cross term. -/
 
 /-- At extent `17`, every `c : Fin 17` has an `x` with `x + x = c`, by `decide`. So a fixed
@@ -2565,8 +2549,7 @@ end Wilson
 
 /-! ## Choosing an aperture with even extent
 
-`Complete.confinement_of_bounded_substrate` concludes `∀ᶠ N in atTop, …`, and `WilsonModel.apertureOf`
-picks a witness from it. An `∀ᶠ … atTop` set is cofinal, and so is the set of `N` with `N + 1` even, so
+A hypothesis `∀ᶠ N in atTop, …` gives a witness `N`. An `∀ᶠ … atTop` set is cofinal, and so is the set of `N` with `N + 1` even, so
 the two meet: the aperture may be chosen with even extent without changing any constant and without
 weakening the eventual statement. That lands in the favourable reflection case below.
 
@@ -3830,8 +3813,8 @@ theorem plaqReflPositive_of_even_lag (hN : N ≠ 0) (hm : n = 2 * m) (hm0 : 0 < 
 `plaqReflPositive_of_even_lag` discharges the reflection positivity hypothesis and
 `ReflectPositive.corrHyper_nonneg_of_reflPositive` converts it to the correlation.
 
-This is the first conjunct of `Complete.wilson_reflection_positive_at`, stated on the even lags; the
-odd ones are outside the geometry `odd_lag_has_no_plane` describes.
+It is stated on the even lags; the odd ones are outside the geometry `odd_lag_has_no_plane`
+describes.
 
 DERIVED: `0` is the value `N` is required to differ from in `hN`, the strict lower bound on `m` in
 `hm0`, and the lower bound concluded of the correlation. `2` in `hm : n = 2 * m` is the reflection

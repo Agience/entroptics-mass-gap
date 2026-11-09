@@ -26,9 +26,8 @@ separated positive-time monomial at margin `t` (`sepPos_mono1`).
 
 a finite double sum over the box of `ContinuumField.smear_eq_sum`, where
 `latKernel k x y = Z_k(O)² · ν_k(T_x θ(O − c) · T_y (O − c))`. For the connected composites
-(`c = ν_k(O)`) the kernel is `Z_k(O)²` times the connected two-point function
-`ThreePointN.cov2 ν_k (T_x θO) (T_y O)` (`latKernel_connected`); at `Z_k = a⁻⁴` (`rhoA`) it is that
-function divided by `a⁸` (`latKernel_rhoA`), the normalisation of `ShortDistanceY.latticeTwoPoint`.
+(`c = ν_k(O)`) the kernel is `Z_k(O)²` times the connected two-point function of `T_x θO` and `T_y O`
+under `ν_k`; at `Z_k = a⁻⁴` (`rhoA`) it is that function divided by `a⁸`.
 
 ## The vacuum term
 
@@ -237,17 +236,35 @@ section StateK
 
 /-- DERIVED: `0` is the excluded colour count. The four unit shifts enter through
 `PeriodicState.periodicState_shift`. -/
+theorem stateAlong_transObs (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) (x : ISite) (F : C(Cfg N, ℝ)) :
+    stateAlong hN βs k (transObs x F) = stateAlong hN βs k F :=
+  state_transObs (ν := stateAlong hN βs k) (fun τ => PeriodicState.periodicState_shift hN _ τ) x F
+
+#print axioms stateAlong_transObs
+
+/-- `stateK_transObs` at the couplings `dyBeta`: `stateAlong_transObs` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem stateK_transObs (hN : N ≠ 0) (k : ℕ) (x : ISite) (F : C(Cfg N, ℝ)) :
     stateK hN k (transObs x F) = stateK hN k F :=
-  state_transObs (ν := stateK hN k) (fun τ => PeriodicState.periodicState_shift hN _ τ) x F
+  stateAlong_transObs hN (dyBeta (one_le_of_ne_zero hN)) k x F
 
 #print axioms stateK_transObs
 
 /-- DERIVED: `0` is the excluded colour count and the reflection constant, the plane `x_τ = 0`;
 `4` in `Fin 4` is the spacetime dimension. -/
+theorem stateAlong_refl (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) (τ : Fin 4) (F : C(Cfg N, ℝ)) :
+    stateAlong hN βs k (LatticeReflection.ireflObs τ 0 F) = stateAlong hN βs k F :=
+  PeriodicState.periodicState_reflInvariant hN (βs k) τ 0 F
+
+#print axioms stateAlong_refl
+
+/-- `stateK_refl` at the couplings `dyBeta`: `stateAlong_refl` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem stateK_refl (hN : N ≠ 0) (k : ℕ) (τ : Fin 4) (F : C(Cfg N, ℝ)) :
     stateK hN k (LatticeReflection.ireflObs τ 0 F) = stateK hN k F :=
-  PeriodicState.periodicState_reflInvariant hN (dyBeta (one_le_of_ne_zero hN) k) τ 0 F
+  stateAlong_refl hN (dyBeta (one_le_of_ne_zero hN)) k τ F
 
 #print axioms stateK_refl
 
@@ -255,16 +272,25 @@ theorem stateK_refl (hN : N ≠ 0) (k : ℕ) (τ : Fin 4) (F : C(Cfg N, ℝ)) :
 by term by translation invariance.
 
 DERIVED: `0` is the excluded colour count and the value. -/
-theorem stateK_smear_connected (hN : N ≠ 0) (k : ℕ) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
-    stateK hN k (smear (dySpacing N k) (O.sub (stateK hN k O.1)).1 f) = 0 := by
+theorem stateAlong_smear_connected (hN : N ≠ 0) (βs : ℕ → ℝ) (k : ℕ) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
+    stateAlong hN βs k (smear (dySpacing N k) (O.sub (stateAlong hN βs k O.1)).1 f) = 0 := by
   obtain ⟨R, M, hf⟩ := f.2
   rw [smear_eq_sum (dySpacing_pos (one_le_of_ne_zero hN) k) _ f hf (Finset.Subset.refl _),
-    (stateK hN k).map_sum]
+    (stateAlong hN βs k).map_sum]
   refine Finset.sum_eq_zero (fun x _ => ?_)
-  rw [(stateK hN k).map_smul, stateK_transObs]
-  show _ * stateK hN k (O.1 - stateK hN k O.1 • (1 : C(Cfg N, ℝ))) = 0
-  rw [(stateK hN k).map_sub, (stateK hN k).map_smul, (stateK hN k).map_one, mul_one, sub_self,
+  rw [(stateAlong hN βs k).map_smul, stateAlong_transObs]
+  show _ * stateAlong hN βs k (O.1 - stateAlong hN βs k O.1 • (1 : C(Cfg N, ℝ))) = 0
+  rw [(stateAlong hN βs k).map_sub, (stateAlong hN βs k).map_smul, (stateAlong hN βs k).map_one, mul_one, sub_self,
     mul_zero]
+
+#print axioms stateAlong_smear_connected
+
+/-- `stateK_smear_connected` at the couplings `dyBeta`: `stateAlong_smear_connected` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem stateK_smear_connected (hN : N ≠ 0) (k : ℕ) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
+    stateK hN k (smear (dySpacing N k) (O.sub (stateK hN k O.1)).1 f) = 0 :=
+  stateAlong_smear_connected hN (dyBeta (one_le_of_ne_zero hN)) k O f
 
 #print axioms stateK_smear_connected
 
@@ -312,38 +338,6 @@ theorem latSkR_mono1_pair (hN : N ≠ 0) (ρ : Renorm N) (τ : Fin 4) (hR : ρ.R
 
 #print axioms latSkR_mono1_pair
 
-/-- **For the connected composites the kernel is the connected two-point function**:
-`latKernel k x y = Z_k(O)² · cov2 ν_k (T_x θO) (T_y O)`.
-
-DERIVED: `2` is `latKernel`'s; `0` is the excluded colour count and the reflection constant; `4` in
-`Fin 4` is the spacetime dimension. -/
-theorem latKernel_connected (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
-    (O : LField (MassGap.SUN.SU N)) (k : ℕ) (x y : ISite) :
-    latKernel hN (Renorm.connected hN Z) τ O k x y
-      = Z k O ^ 2 * ThreePointN.cov2 (stateK hN k)
-          (transObs x (LatticeReflection.ireflObs τ 0 O.1)) (transObs y O.1) := by
-  have e1 : LatticeReflection.ireflObs τ 0 (1 : C(Cfg N, ℝ)) = 1 := rfl
-  have hA : transObs x (LatticeReflection.ireflObs τ 0 (O.sub (stateK hN k O.1)).1)
-      = ThreePointN.cen (stateK hN k) (transObs x (LatticeReflection.ireflObs τ 0 O.1)) := by
-    rw [ThreePointN.cen, stateK_transObs, stateK_refl]
-    show transObs x (LatticeReflection.ireflObs τ 0 (O.1 - stateK hN k O.1 • (1 : C(Cfg N, ℝ))))
-      = _
-    simp only [map_sub, map_smul]
-    rw [e1, transObs_one]
-  have hB : transObs y (O.sub (stateK hN k O.1)).1
-      = ThreePointN.cen (stateK hN k) (transObs y O.1) := by
-    rw [ThreePointN.cen, stateK_transObs]
-    show transObs y (O.1 - stateK hN k O.1 • (1 : C(Cfg N, ℝ))) = _
-    simp only [map_sub, map_smul]
-    rw [transObs_one]
-  show Z k O ^ 2 * stateK hN k
-      (transObs x (LatticeReflection.ireflObs τ 0 (O.sub (stateK hN k O.1)).1)
-        * transObs y (O.sub (stateK hN k O.1)).1) = _
-  rw [hA, hB]
-  rfl
-
-#print axioms latKernel_connected
-
 /-- **The explicit renormalisation**: the connected composites `a⁻⁴ (O − ν_k O)` at
 `a = dySpacing N k`, for every field.
 
@@ -353,26 +347,6 @@ CHOSEN: the constant `1` in front of `a⁻⁴`; a coupling normalisation rescale
 square and is absorbed into the limit `G₂`. -/
 noncomputable def rhoA (hN : N ≠ 0) : Renorm N :=
   Renorm.connected hN (fun j _ => (dySpacing N j ^ 4)⁻¹)
-
-/-- **At `rhoA` the kernel is the lattice connected two-point function divided by `a⁸`**, the
-normalisation of `ShortDistanceY.latticeTwoPoint`.
-
-DERIVED: `8 = 2·4`, one `a⁻⁴` per insertion; `0` is the excluded colour count and the reflection
-constant; `4` in `Fin 4` is the spacetime dimension. -/
-theorem latKernel_rhoA (hN : N ≠ 0) (τ : Fin 4) (O : LField (MassGap.SUN.SU N)) (k : ℕ)
-    (x y : ISite) :
-    latKernel hN (rhoA hN) τ O k x y
-      = ThreePointN.cov2 (stateK hN k)
-          (transObs x (LatticeReflection.ireflObs τ 0 O.1)) (transObs y O.1) / dySpacing N k ^ 8 := by
-  have h := latKernel_connected hN (fun j _ => (dySpacing N j ^ 4)⁻¹) τ O k x y
-  have e : latKernel hN (rhoA hN) τ O k x y
-      = latKernel hN (Renorm.connected hN (fun j _ => (dySpacing N j ^ 4)⁻¹)) τ O k x y := rfl
-  rw [e, h]
-  show (dySpacing N k ^ 4)⁻¹ ^ 2 * ThreePointN.cov2 (stateK hN k)
-      (transObs x (LatticeReflection.ireflObs τ 0 O.1)) (transObs y O.1) = _
-  ring
-
-#print axioms latKernel_rhoA
 
 end Kernel
 
@@ -385,14 +359,24 @@ step.
 
 DERIVED: `0` is the excluded colour count, the reflection constant and the value; `4` in `Fin 4` is
 the spacetime dimension. -/
+theorem latSkR_empty_mono1_along (hN : N ≠ 0) (βs : ℕ → ℝ) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+    (hZ : ∀ k O, Z k (O.refl τ) = Z k O) (k : ℕ) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
+    latSkRAlong hN βs (Renorm.connectedAlong hN βs Z) k (pairFam τ (emptyMono N) (mono1 (O, f))) = 0 := by
+  have e1 : LatticeReflection.ireflObs τ 0 (1 : C(Cfg N, ℝ)) = 1 := rfl
+  rw [latSkRAlong_pairFam_eq hN βs _ τ (Renorm.connectedAlong_reflCompat hN βs Z τ hZ) k, Yv_empty, Yv_mono1, e1,
+    one_mul, (stateAlong hN βs k).map_smul]
+  show Z k O * stateAlong hN βs k (smear (dySpacing N k) (O.sub (stateAlong hN βs k O.1)).1 f) = 0
+  rw [stateAlong_smear_connected, mul_zero]
+
+#print axioms latSkR_empty_mono1_along
+
+/-- `latSkR_empty_mono1` at the couplings `dyBeta`: `latSkR_empty_mono1_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
 theorem latSkR_empty_mono1 (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
     (hZ : ∀ k O, Z k (O.refl τ) = Z k O) (k : ℕ) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
-    latSkR hN (Renorm.connected hN Z) k (pairFam τ (emptyMono N) (mono1 (O, f))) = 0 := by
-  have e1 : LatticeReflection.ireflObs τ 0 (1 : C(Cfg N, ℝ)) = 1 := rfl
-  rw [latSkR_pairFam_eq hN _ τ (Renorm.connected_reflCompat hN Z τ hZ) k, Yv_empty, Yv_mono1, e1,
-    one_mul, (stateK hN k).map_smul]
-  show Z k O * stateK hN k (smear (dySpacing N k) (O.sub (stateK hN k O.1)).1 f) = 0
-  rw [stateK_smear_connected, mul_zero]
+    latSkR hN (Renorm.connected hN Z) k (pairFam τ (emptyMono N) (mono1 (O, f))) = 0 :=
+  latSkR_empty_mono1_along hN (dyBeta (one_le_of_ne_zero hN)) Z τ hZ k O f
 
 #print axioms latSkR_empty_mono1
 
@@ -400,16 +384,26 @@ theorem latSkR_empty_mono1 (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N)
 `ultra` limit of the identically zero sequence.
 
 DERIVED: `0` is the excluded colour count and the value; `4` in `Fin 4` is the spacetime dimension. -/
-theorem kern_empty_mono1 (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+theorem kern_empty_mono1_along (hN : N ≠ 0) (βs : ℕ → ℝ) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
     (hZ : ∀ k O, Z k (O.refl τ) = Z k O) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
-    kern hN (Renorm.connected hN Z) τ (emptyMono N) (mono1 (O, f)) = 0 := by
+    kernAlong hN βs (Renorm.connectedAlong hN βs Z) τ (emptyMono N) (mono1 (O, f)) = 0 := by
   haveI : ((ultra : Ultrafilter ℕ) : Filter ℕ).NeBot := ultra.neBot'
-  have hfun : (fun k => latSkR hN (Renorm.connected hN Z) k (pairFam τ (emptyMono N) (mono1 (O, f))))
-      = fun _ => (0 : ℝ) := funext (fun k => latSkR_empty_mono1 hN Z τ hZ k O f)
+  have hfun : (fun k => latSkRAlong hN βs (Renorm.connectedAlong hN βs Z) k (pairFam τ (emptyMono N) (mono1 (O, f))))
+      = fun _ => (0 : ℝ) := funext (fun k => latSkR_empty_mono1_along hN βs Z τ hZ k O f)
   show limUnder (ultra : Filter ℕ)
-      (fun k => latSkR hN (Renorm.connected hN Z) k (pairFam τ (emptyMono N) (mono1 (O, f)))) = 0
+      (fun k => latSkRAlong hN βs (Renorm.connectedAlong hN βs Z) k (pairFam τ (emptyMono N) (mono1 (O, f)))) = 0
   rw [hfun]
   exact tendsto_nhds_unique (tendsto_nhds_limUnder ⟨0, tendsto_const_nhds⟩) tendsto_const_nhds
+
+#print axioms kern_empty_mono1_along
+
+/-- `kern_empty_mono1` at the couplings `dyBeta`: `kern_empty_mono1_along` at `βs = dyBeta`.
+
+DERIVED: no numeral beyond those of the statement. -/
+theorem kern_empty_mono1 (hN : N ≠ 0) (Z : ℕ → LField (MassGap.SUN.SU N) → ℝ) (τ : Fin 4)
+    (hZ : ∀ k O, Z k (O.refl τ) = Z k O) (O : LField (MassGap.SUN.SU N)) (f : TestFn) :
+    kern hN (Renorm.connected hN Z) τ (emptyMono N) (mono1 (O, f)) = 0 :=
+  kern_empty_mono1_along hN (dyBeta (one_le_of_ne_zero hN)) Z τ hZ O f
 
 #print axioms kern_empty_mono1
 
@@ -1025,7 +1019,7 @@ theorem connectedTwoPointNonzero_of_af (hN : N ≠ 0) (Z : ℕ → LField (MassG
 #print axioms connectedTwoPointNonzero_of_af
 
 /-- **Headline at the explicit renormalisation `rhoA`** (`Z_k = a⁻⁴`, connected subtraction), where
-the kernel is the lattice connected two-point function over `a⁸` (`latKernel_rhoA`).
+the kernel is the lattice connected two-point function over `a⁸`.
 
 DERIVED: `0` is the excluded colour count; `4` in `Fin 4` is the spacetime dimension. -/
 theorem connectedTwoPointNonzero_rhoA (hN : N ≠ 0) (τ : Fin 4) (O : LField (MassGap.SUN.SU N))

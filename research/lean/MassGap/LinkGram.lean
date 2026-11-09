@@ -1,6 +1,5 @@
 import Mathlib
 import MassGap.OddLagSplit
-import MassGap.LagOneDominates
 
 /-!
 # MassGap.LinkGram — link-reflection positivity for a general half-local observable
@@ -19,13 +18,6 @@ This file carries the three properties as hypotheses on a parameter `F` and re-r
 `0 ≤ ReflectPositive.EW N β (fun U => F U * F (reflConf τ (a + a + 1) U))`, for every measurable `F`
 bounded by some `MF` that reads `oblkS τ a m` alone, at `N ≠ 0`, at even extent `n = 2 * m` with
 `2 ≤ m`, and at `0 ≤ β`.
-
-Section 4 instantiates that at `d = 4`, `n = 4`, `N = 3`, `τ = 2`, `a = 0`, `m = 2` with the
-two-term observable `LagOneDominates.gapObs`. `pairReflPositive` discharges
-`LagOneDominates.PairReflPositive β`; `LagOneDominates.lag_two_le_lag_one` turns that into
-`wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1` (`wilson_lag_two_le_lag_one`); and
-`wilsonSpectral_of_quadratic` takes the quadratic as a further hypothesis and concludes
-`WilsonSpectral 3 β`.
 
 Build: `python research/code/lean_build.py build MassGap.LinkGram`.
 -/
@@ -410,150 +402,6 @@ theorem gram_refl_positive (F : (Link d n → MassGap.SUN.SU N) → ℝ)
   unfold MassGap.ReflectPositive.EW System.expect System.corrNum
   exact div_nonneg (le_of_le_of_eq hcross hEq) hZ.le
 
-/-! ## 4. The instance — the two-plaquette observable of `LagOneDominates`
-
-DERIVED throughout this section: `4` is the dimension and the extent, in `Link 4 4` and `Fin 4`;
-`3` is the rank, in `SU 3`; `(0, 1)` is the plaquette plane, `2` the lag axis — all
-`WilsonBridge.corrClay`'s own. The half-extent `m = 2` is `4 = 2 · 2`, and the reflection base
-`a = 0` is the origin of the level count. No magnitude is chosen. -/
-
-/-- Both plaquettes lie in the positive half. Every link of the `(0, 1)` plaquette based at lag site
-`s` runs transverse to the lag axis (`bd_link_dir_ne`) and sits at lag coordinate `s`
-(`bd_link_tau_coord`), so membership in `oblkS 2 0 2` reduces to its transverse condition
-`0 < lv ∧ lv ≤ m`, which the hypotheses `0 < s` and `s ≤ 2` give.
-
-DERIVED: `4` is the dimension and the extent, from `Link 4 4` and the index type `Fin 4`. `0 < s`
-and `s ≤ 2` are `oblkS`'s own transverse condition read at `a = 0`, `m = 2`; the `2` in
-`oblkS (2 : Fin 4) (0 : Fin 4) 2` is the lag axis in one place and the half-extent in the
-other. -/
-theorem pl_local {s : Fin 4} (h0 : 0 < (s : ℕ)) (h2 : (s : ℕ) ≤ 2)
-    (l : Link 4 4) (hl : l ∈ (bd (MassGap.LagOneDominates.pl s)).map Prod.fst) :
-    l ∈ oblkS (2 : Fin 4) (0 : Fin 4) 2 := by
-  simp only [MassGap.LagOneDominates.pl] at hl
-  have hdir : l.1 ≠ (2 : Fin 4) :=
-    MassGap.ReflectPositive.bd_link_dir_ne (n := 4)
-      MassGap.LagOneDominates.plane_ne.1 MassGap.LagOneDominates.plane_ne.2 _ l hl
-  have hco : l.2 (2 : Fin 4) = siteAtHyper (d := 4) (n := 4) (2 : Fin 4) s (2 : Fin 4) :=
-    MassGap.ReflectPositive.bd_link_tau_coord (n := 4)
-      MassGap.LagOneDominates.plane_ne.1 MassGap.LagOneDominates.plane_ne.2 _ l hl
-  rw [mem_oblkS, if_neg hdir]
-  have hval : lv (0 : Fin 4) (l.2 (2 : Fin 4)) = (s : ℕ) := by
-    rw [hco]
-    simp [lv, siteAtHyper]
-  rw [hval]
-  exact ⟨h0, h2⟩
-
-/-- The two-term observable reads the positive half alone: if `U` and `V` agree on
-`oblkS (2 : Fin 4) (0 : Fin 4) 2` then `LagOneDominates.gapObs U = LagOneDominates.gapObs V`. Each
-plaquette's holonomy depends only on its own links
-(`ReflectionPositivity.hol_congr_on_support`), and `pl_local` puts those links in `oblkS`.
-
-DERIVED: `4` is the dimension and the extent, from `Link 4 4` and `Fin 4`; `3` is the rank, from
-`SU 3`. In `oblkS (2 : Fin 4) (0 : Fin 4) 2` the first `2` is the lag axis, the `0` the reflection
-base and the last `2` the half-extent. The lag sites `1` and `2` the observable reads appear in the
-proof, not in the statement. -/
-theorem gapObs_local (U V : Link 4 4 → MassGap.SUN.SU 3)
-    (hS : ∀ l ∈ oblkS (2 : Fin 4) (0 : Fin 4) 2, U l = V l) :
-    MassGap.LagOneDominates.gapObs U = MassGap.LagOneDominates.gapObs V := by
-  have h1 : MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 1) U
-      = MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 1) V := by
-    show wilsonDensity (wilsonHol (bd (d := 4) (n := 4)) (MassGap.LagOneDominates.pl 1) U)
-      = wilsonDensity (wilsonHol (bd (d := 4) (n := 4)) (MassGap.LagOneDominates.pl 1) V)
-    rw [MassGap.ReflectionPositivity.hol_congr_on_support (bd (d := 4) (n := 4))
-      (MassGap.LagOneDominates.pl 1) U V
-      (fun l hl => hS l (pl_local (by norm_num) (by norm_num) l hl))]
-  have h2 : MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 2) U
-      = MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 2) V := by
-    show wilsonDensity (wilsonHol (bd (d := 4) (n := 4)) (MassGap.LagOneDominates.pl 2) U)
-      = wilsonDensity (wilsonHol (bd (d := 4) (n := 4)) (MassGap.LagOneDominates.pl 2) V)
-    rw [MassGap.ReflectionPositivity.hol_congr_on_support (bd (d := 4) (n := 4))
-      (MassGap.LagOneDominates.pl 2) U V
-      (fun l hl => hS l (pl_local (by norm_num) (by norm_num) l hl))]
-  show MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 1) U
-      - MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 2) U = _
-  rw [h1, h2]
-  rfl
-
-/-- `LagOneDominates.gapObs` is measurable, being a difference of two plaquette energies.
-
-DERIVED: no numeral appears in this statement. -/
-theorem measurable_gapObs : Measurable MassGap.LagOneDominates.gapObs :=
-  (MassGap.ReflectPositive.measurable_plaqE _).sub (MassGap.ReflectPositive.measurable_plaqE _)
-
-/-- `|LagOneDominates.gapObs U| ≤ 2`.
-
-DERIVED: `4` is the dimension and the extent, from `Link 4 4`; `3` is the rank, from `SU 3`, and is
-what `plaqE_nonneg` and `plaqE_le_two` are read at. The bound `2` is
-`WilsonAction.wilsonDensity`'s own range bound: each plaquette energy lies in `[0, 2]`, so their
-difference lies in `[−2, 2]`. It is carried, not chosen. -/
-theorem abs_gapObs_le (U : Link 4 4 → MassGap.SUN.SU 3) :
-    |MassGap.LagOneDominates.gapObs U| ≤ 2 := by
-  have h1 := MassGap.ReflectPositive.plaqE_nonneg (Nc := 3) (by norm_num)
-    (MassGap.LagOneDominates.pl 1) U
-  have h2 := MassGap.ReflectPositive.plaqE_le_two (Nc := 3) (by norm_num)
-    (MassGap.LagOneDominates.pl 1) U
-  have h3 := MassGap.ReflectPositive.plaqE_nonneg (Nc := 3) (by norm_num)
-    (MassGap.LagOneDominates.pl 2) U
-  have h4 := MassGap.ReflectPositive.plaqE_le_two (Nc := 3) (by norm_num)
-    (MassGap.LagOneDominates.pl 2) U
-  show |MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 1) U
-      - MassGap.ReflectPositive.plaqE 3 (MassGap.LagOneDominates.pl 2) U| ≤ 2
-  rw [abs_le]
-  exact ⟨by linarith, by linarith⟩
-
-/-- `LagOneDominates.PairReflPositive β` at every `0 ≤ β`.
-
-This is `gram_refl_positive` at `d = 4`, `n = 4`, `N = 3`, `τ = 2`, `a = 0`, `m = 2`, with `F` the
-two-term observable `LagOneDominates.gapObs`, whose three hypotheses are `measurable_gapObs`,
-`abs_gapObs_le` and `gapObs_local`. The reflection constant `a + a + 1` evaluates to `1` in
-`Fin 4`, the link reflection whose positive half is the pair of lag sites `1` and `2`.
-
-DERIVED: `0 ≤ β` is the cross kernel's sign condition and the only numeral in the statement. The
- instance values are `4 = 2 · 2`, the extent and its half, and `2 ≤ 2`, `OddLagSplit`'s
-plane-assignment bound met at the smallest extent that meets it. -/
-theorem pairReflPositive {β : ℝ} (hβ : 0 ≤ β) : MassGap.LagOneDominates.PairReflPositive β := by
-  have h := gram_refl_positive (2 : Fin 4) (0 : Fin 4) 2 MassGap.LagOneDominates.gapObs
-    measurable_gapObs abs_gapObs_le gapObs_local (by norm_num) (by norm_num) (by norm_num)
-    (by norm_num) hβ
-  have hc : ((0 : Fin 4) + 0 + 1) = (1 : Fin 4) := by decide
-  rw [hc] at h
-  exact le_of_le_of_eq h
-    (congrArg (MassGap.ReflectPositive.EW 3 β) (funext fun U => mul_comm _ _))
-
-/-- `wilsonCorrAt 3 β 2 ≤ wilsonCorrAt 3 β 1` at every `0 ≤ β`.
-
-It is proved here as reflection positivity at a link plane for a two-term half-space observable:
-`pairReflPositive` supplies `LagOneDominates.PairReflPositive β`, and
-`LagOneDominates.lag_two_le_lag_one` converts it. The link-reflection positivity itself is
-`gram_refl_positive`, which is `OddLagSplit`'s crossing integration run with the observable left as
-a parameter. This inequality is the ordering conjunct of `SpectralFour.FourRepresentable`.
-
-DERIVED: `3` is the first argument of `wilsonCorrAt`, carried unchanged from `pairReflPositive`,
-where it is the rank in `SU 3`; `1` and `2` are the two lags being compared; `0 ≤ β` is the cross
-kernel's own sign condition, carried from `OddLagSplit`. -/
-theorem wilson_lag_two_le_lag_one {β : ℝ} (hβ : 0 ≤ β) :
-    MassGap.wilsonCorrAt 3 β 2 ≤ MassGap.wilsonCorrAt 3 β 1 :=
-  MassGap.LagOneDominates.lag_two_le_lag_one (pairReflPositive hβ)
-
-/-- `WilsonSpectral 3 β`, from `0 ≤ β` and the quadratic
-`2 * ρ(1)² ≤ ρ(2)² + ρ(0) * ρ(2)` taken as a hypothesis, where `ρ(l)` is `wilsonCorrAt 3 β l`.
-
-The other conjuncts of `SpectralFour.FourRepresentable` are supplied inside
-`LagOneDominates.wilsonSpectral_of_pair_and_quadratic`: nonnegativity of `ρ(0)` and `ρ(2)` from
-`TailRatio.triple_wilsonCorrAt`, and the ordering from `pairReflPositive`. The quadratic is not
-proved here; it is a hypothesis of this statement.
-
-DERIVED: `3` is the first argument of `wilsonCorrAt` and of `WilsonSpectral`, carried from
-`pairReflPositive`, where it is the rank in `SU 3`; `0`, `1` and `2` are lag indices; the `2` in
-`2 * ρ(1)²` and the exponents `2` are `SpectralFour.FourRepresentable`'s own coefficient and
-powers; `0 ≤ β` is the cross kernel's sign condition. -/
-theorem wilsonSpectral_of_quadratic {β : ℝ} (hβ : 0 ≤ β)
-    (hquad : 2 * MassGap.wilsonCorrAt 3 β 1 ^ 2
-      ≤ MassGap.wilsonCorrAt 3 β 2 ^ 2
-        + MassGap.wilsonCorrAt 3 β 0 * MassGap.wilsonCorrAt 3 β 2) :
-    MassGap.WilsonSpectral 3 β :=
-  MassGap.LagOneDominates.wilsonSpectral_of_pair_and_quadratic hβ (pairReflPositive hβ) hquad
-
 section Audit
 #print axioms gObs
 #print axioms gHalf
@@ -569,13 +417,6 @@ section Audit
 #print axioms gIntegrand_join
 #print axioms g_crossing_integral_nonneg
 #print axioms gram_refl_positive
-#print axioms pl_local
-#print axioms gapObs_local
-#print axioms measurable_gapObs
-#print axioms abs_gapObs_le
-#print axioms pairReflPositive
-#print axioms wilson_lag_two_le_lag_one
-#print axioms wilsonSpectral_of_quadratic
 end Audit
 
 end MassGap.LinkGram

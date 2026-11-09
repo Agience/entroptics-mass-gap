@@ -65,19 +65,16 @@ open MassGap.LatticeGauge MassGap.WilsonLattice
 Duplicated from the shared skeleton so this file stands alone; identical names and types.
 `MassGap.InfiniteLattice` exports the same four declarations with the same bodies, and all of them
 are `abbrev`s, so the two copies are reducibly defeq and interchangeable wherever both are in scope.
-`MassGap.WilsonGibbs` states this file's conclusions against `DLRLimit`'s measure on that footing,
-and `WilsonGibbs.ibd_eq` records that the boundary words agree by `rfl`.
 
 `plaqsIn` is the one pair that is not interchangeable by unfolding: this file's filters
 `boundaryPlaqs Λ` by a `List.all` over `ilinks`, `InfiniteLattice`'s filters a site-image candidate
-set by `linksOf q ⊆ Λ`, and the two are equal only extensionally.
-`MassGap.WilsonGibbs.gibbsSpec_plaqsIn_eq` is that equality. -/
+set by `linksOf q ⊆ Λ`, and the two are equal only extensionally. -/
 
 /-- A site of the infinite four-dimensional lattice: one integer coordinate per direction.
 
 DERIVED: the declaration's type carries no numeral; the `4` in the body is the number of spacetime
 directions, the dimension of the Clay statement and the same `d` that `WilsonHypercubic` is
-instantiated at for the Clay instance (`bd (d := 4)` in `AreaLaw`). It is an index range, not an
+instantiated at for the Clay instance (`bd (d := 4)`). It is an index range, not an
 extent: each of the four coordinates runs over all of `ℤ`. -/
 abbrev ISite : Type := Fin 4 → ℤ
 
@@ -416,8 +413,7 @@ theorem actionOn_split (φ : G → ℝ) {Λ Λ' : Finset ILink} (hsub : Λ ⊆ �
   exact (Finset.sum_sdiff (boundaryPlaqs_mono hsub)).symm
 
 /-- **The action splits at any subset of the plaquette set.** `actionOn_split` is this for two
-`boundaryPlaqs` sets; the free-boundary family needs it for `boundaryPlaqs V` inside `iplqAll Λ`,
-which those do not cover.
+`boundaryPlaqs` sets; this form takes any `T ⊆ S`.
 
 DERIVED: no numeral occurs; `S` and `T` are the caller's. -/
 theorem actionOn_sdiff (φ : G → ℝ) {S T : Finset IPlaq} (hTS : T ⊆ S) (U : IConf G) :
@@ -429,10 +425,9 @@ theorem actionOn_sdiff (φ : G → ℝ) {S T : Finset IPlaq} (hTS : T ⊆ S) (U 
 `mem_boundaryPlaqs`.
 
 `links_not_mem_of_mem_sdiff` is this with the plaquette additionally required to lie in a larger
-`boundaryPlaqs`, which its proof does not use. The free-boundary family needs the version without
-that requirement, since there the outer set is `iplqAll`, not a `boundaryPlaqs`.
+`boundaryPlaqs`, which its proof does not use; this is the version without that requirement.
 
-This is also where `plaqsIn_split_not_local` does NOT apply, and the contrast is the reason the
+This is also where `plaqsIn_split_not_local` does not apply, and the contrast is the reason the
 split below works: that refutation is about `plaqsIn` as the inner set — "all links in" — whose
 complement does not give "no link in". `boundaryPlaqs` is "some link in", and its complement does.
 
@@ -444,13 +439,10 @@ theorem not_mem_boundaryPlaqs_links (V : Finset ILink) {q : IPlaq}
 
 /-- **The action over plaquettes avoiding `V` does not read the `V`-links.**
 
-This is the locality step the free-boundary consistency turns on: after `actionOn_sdiff` splits the
-free action at `boundaryPlaqs V`, the remaining plaquettes all lie outside it, so by
-`not_mem_boundaryPlaqs_links` none of their links is in `V` and `actionOn_congr` applies.
-
-Together with the split, this is what makes the free weight factor into a part depending on the
-`V`-links and a part that does not — which is what turns the conditional into the ordinary
-fixed-boundary kernel at `V`.
+This is a locality step: after `actionOn_sdiff` splits an action at `boundaryPlaqs V`, the remaining
+plaquettes all lie outside it, so by `not_mem_boundaryPlaqs_links` none of their links is in `V` and
+`actionOn_congr` applies. Together with the split, it makes a weight factor into a part depending on
+the `V`-links and a part that does not.
 
 DERIVED: no numeral occurs; `S` and `V` are the caller's. -/
 theorem actionOn_indep_of_avoid (φ : G → ℝ) (S : Finset IPlaq) (V : Finset ILink)
@@ -476,10 +468,7 @@ theorem ihol_degenerate (q : IPlaq) (h : q.1.1 = q.1.2) (U : IConf G) : ihol q U
 /-- **Dropping degenerate plaquettes does not change the action**, for a density vanishing at the
 identity.
 
-This is what reconciles `boundaryPlaqs V` with `iplqAll Λ ∩ boundaryPlaqs V`. The free weight factors
-at the latter, while the ordinary kernel's numerator is built from the former, and the two differ by
-degenerate plaquettes — excluded from `iplqAll` by construction — together with any plaquette
-touching `V` but not lying inside `Λ`, which the caller excludes by keeping `V` well inside.
+Two plaquette sets that differ only by degenerate plaquettes give the same action.
 
 `WilsonAction.wilsonDensity_one` supplies `hφ1` for the Wilson density, at every `N ≠ 0`.
 
@@ -584,8 +573,8 @@ theorem wt_le {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) (hφ2 : ∀ g, φ g �
 `boundaryPlaqs {l₀}` is exactly the set of plaquettes having `l₀` among their links, so `actionOn_split`
 at `{l₀} ⊆ Λ` cuts the action into the part that reads `l₀` and a remainder that does not.
 
-**Why split HERE and not at a sub-region.** Every split indexed by a region — `iplqZero`, `iplqPlus`,
-or `boundaryPlaqs` of a smaller box — leaves a factor whose plaquette count grows with the region, and
+**Why split here and not at a sub-region.** Every split indexed by a region — such as
+`boundaryPlaqs` of a smaller box — leaves a factor whose plaquette count grows with the region, and
 a bound on such a factor decays as the region grows. The set `boundaryPlaqs {l₀}` does not depend on
 `Λ` at all once `l₀ ∈ Λ`, so a bound written in its cardinality is uniform in the volume. That is the
 whole point of cutting at a single link.
@@ -617,9 +606,6 @@ theorem actionOn_sdiff_singleton_indep (φ : G → ℝ) (Λ : Finset ILink) (l�
 
 /-- **The weight factor of any plaquette set is at most one**, at nonnegative coupling, since the
 density is nonnegative.
-
-The matching floor is `ReflectionHalfSpace.exp_neg_actionOn_ge`, which holds at every real `β` with
-`|β|` in the exponent and so is the more general statement; it is not restated here.
 
 DERIVED: `0` is the lower bound on `β` and on the density; `1` is the concluded upper bound. -/
 theorem exp_neg_actionOn_le_one {φ : G → ℝ} (hφ0 : ∀ g, 0 ≤ φ g) {β : ℝ} (hβ : 0 ≤ β)
@@ -758,7 +744,7 @@ noncomputable def spec (φ : G → ℝ) (β : ℝ) (Λ : Finset ILink) (μ : Mea
 /-- **The box's links that lie in a region, reindexed to the region's own links.**
 
 `ActionSplit.integral_cvol_split_iterated` cuts a box's links by a predicate, so the block for a
-region `V` is indexed by `{x : ↥Λ // (x : ILink) ∈ V}` — a subtype of the BOX's links. The ordinary
+region `V` is indexed by `{x : ↥Λ // (x : ILink) ∈ V}` — a subtype of the box's links. The ordinary
 kernel at `V` integrates over `↥V`. This is the equivalence between the two index types, which
 `ActionSplit.integral_cvol_reindex` transports across the product measure.
 

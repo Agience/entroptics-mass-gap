@@ -13,16 +13,13 @@ repository-code: "https://github.com/Agience/entroptics-mass-gap"
 url: "https://github.com/Agience/entroptics-mass-gap"
 # Code: Apache-2.0 (LICENSE, NOTICE). Paper text under research/paper/: CC BY 4.0 (see preferred-citation).
 license: Apache-2.0
-version: 0.3.1
-date-released: "2026-11-08"
+version: 0.3.2
+date-released: "2026-11-10"
 doi: "10.5281/zenodo.22652660"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.22652660"
     description: "Concept DOI - all versions of this work; resolves to the newest release."
-  - type: doi
-    value: "10.5281/zenodo.24073388"
-    description: "Version DOI - v0.3.1."
 keywords:
   - lattice gauge theory
   - Wilson action
@@ -51,10 +48,10 @@ preferred-citation:
       affiliation: Ikailo Inc.
   year: 2026
   month: 11
-  date-published: "2026-11-08"
+  date-published: "2026-11-10"
   license: CC-BY-4.0
-  doi: "10.5281/zenodo.24073388"
-  url: "https://github.com/Agience/entroptics-mass-gap/blob/v0.3.1/research/paper/mass-gap.pdf"
+  doi: "10.5281/zenodo.22652660"
+  url: "https://github.com/Agience/entroptics-mass-gap/blob/v0.3.2/research/paper/mass-gap.pdf"
   repository-code: "https://github.com/Agience/entroptics-mass-gap"
   notes: "Unrefereed preprint. Paper text CC BY 4.0; accompanying code Apache-2.0."
 references:

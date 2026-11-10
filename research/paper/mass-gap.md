@@ -5,7 +5,7 @@
 Ikailo John Sessford, Ikailo Inc., `john@ikailo.com`
 ORCID [0009-0002-0150-4027](https://orcid.org/0009-0002-0150-4027)
 
-*Pre-print. 2026-11-08.*
+*Pre-print. 2026-11-10.*
 
 Text CC BY 4.0; code Apache-2.0.
 
@@ -97,7 +97,7 @@ Every open statement of the paper is listed here once; the sections point back t
 
 ## 1.6 Prior work
 
-Reflection positivity and the strong-coupling gap go back to Osterwalder and Seiler [OsterwalderSeiler] and [FILS1], [FILS2]; Seiler's monograph [Seiler82] collects the constructive results. Bałaban's program [Balaban84a]–[Balaban89b] controls the weak-coupling renormalization group in finite volume; this paper does not use it, Theorem 6.15 takes a hypothesis of its type, and section 3.7 names it as what the fine scales of the count need. Chatterjee and coauthors develop lattice Yang–Mills by probabilistic methods [Chatterjee16], [ChatterjeeJafarov], [Chatterjee19], [ChatterjeeIsing], [Cao20], [ChatterjeeConf], [ChatterjeeYMH], [CaoChatterjee] (overview [ChatterjeeYM4P]); Shen, Zhu and Zhu [ShenZhuZhu], Adhikari and Cao [AdhikariCao] and Cao, Nissim and Sheffield [CaoNissimSheffield] work in regimes or with groups that do not reach (S).
+Reflection positivity and the strong-coupling gap go back to Osterwalder and Seiler [OsterwalderSeiler] and [FILS1], [FILS2]; Seiler's monograph [Seiler82] collects the constructive results. Bałaban's program [Balaban84a]–[Balaban89b] controls the weak-coupling renormalization group in finite volume; this paper does not use it, Theorem 6.15 takes a hypothesis of its type, and section 3.7 names it as what the fine scales of the count need. Chatterjee and coauthors develop lattice Yang–Mills by probabilistic methods [Chatterjee16], [ChatterjeeJafarov], [Chatterjee19], [ChatterjeeIsing], [Cao20], [ChatterjeeConf], [ChatterjeeYMH], [CaoChatterjee] (overview [ChatterjeeYM4P]). Douglas's Lean 4 library [DouglasLGT] formalizes, by Dobrushin uniqueness, exponential decay of plaquette correlations for $U(n)$ Wilson theory on periodic tori of every dimension $d\ge2$ at $\beta<1/(32n(d-1))$ in its normalization; the strong-coupling gap here is a spectral gap of the transfer operator in the infinite-volume periodic state (Theorem 5.15), reached by a different route. Shen, Zhu and Zhu [ShenZhuZhu], Adhikari and Cao [AdhikariCao] and Cao, Nissim and Sheffield [CaoNissimSheffield] work in regimes or with groups that do not reach (S).
 
 The squaring of a Rényi-2 entropy under doubling is the purity bootstrap. It is known from OpenAI's two-dimensional $O(3)$ and $O(4)$ work [OAI-O3], [OAI-O4], whose doubling argument is the template of section 5 and whose normalization by the theory's own correlation length the window imitates, from OpenAI's proof of the periodic spin-one Haldane gap [OAI-Haldane] and from Grover's extensions of that proof [Grover] (all unrefereed); we do not claim it. Section 5 supplies the four-dimensional bookkeeping with the constants $250$ and $1/1000$, the trace facts at kernel level without trace-class theory, the passage to the infinite-volume periodic gap, the fork and the formalization. The reduction of the ultraviolet step to one cube of fixed physical size is due to Bhattacharjee, Bhattacharya, Lockwood and Romanov [BBLR-v442] (unrefereed); Theorem 8.10 formalizes its lattice step (section 8). The cumulant bound of section 7 is a real-variable form of [Janson], [FMN]; the polymer criterion is of Kotecký–Preiss type [KoteckyPreiss]; the finite-size criterion of section 8 is Knabe's [Knabe]; the twisted boundary conditions are 't Hooft's [tHooft]; the per-mode bound on the spin cube is Bonami's inequality [Bonami].
 
@@ -837,6 +837,8 @@ Entries are sorted by citation key. Preprints, software releases and datasets th
 [Dobrushin70] R. L. Dobrushin, *Prescribing a system of random variables by conditional distributions*, Theory Probab. Appl. 15, 458–486 (1970). <https://doi.org/10.1137/1115049>.
 
 [DobrushinShlosman85] R. L. Dobrushin, S. B. Shlosman, *Completely analytical Gibbs fields*, in J. Fritz, A. Jaffe, D. Szász (eds.), *Statistical Physics and Dynamical Systems: Rigorous Results* (Birkhäuser, Boston, 1985), pp. 371–403. <https://doi.org/10.1007/978-1-4899-6653-7_21>.
+
+[DouglasLGT] M. R. Douglas, *lgt: Lattice Gauge Theory in Lean 4*, <https://github.com/mrdouglasny/lgt>, commit b8793ccf6a51e00e9e2b1685ba191b8626e37137 (Lean 4 toolchain leanprover/lean4:v4.30.0), 22 July 2026, headline theorems in the module LGT/MassGap/StrongCoupling.lean, Apache-2.0. Software; unrefereed; no DOI.
 
 [Entroptics] I. J. Sessford, *Entroptics: reading a 2-D signal as a finite optical aperture at its own entropy-matched resolution*, preprint, October 2026, in the repository <https://github.com/Agience/entroptics>. Unrefereed preprint; no DOI. Software release cited separately as [S].
 

@@ -54,6 +54,8 @@ Entries are sorted by citation key. Preprints, software releases and datasets th
 
 [DobrushinShlosman85] R. L. Dobrushin, S. B. Shlosman, *Completely analytical Gibbs fields*, in J. Fritz, A. Jaffe, D. Szász (eds.), *Statistical Physics and Dynamical Systems: Rigorous Results* (Birkhäuser, Boston, 1985), pp. 371–403. <https://doi.org/10.1007/978-1-4899-6653-7_21>.
 
+[DouglasLGT] M. R. Douglas, *lgt: Lattice Gauge Theory in Lean 4*, <https://github.com/mrdouglasny/lgt>, commit b8793ccf6a51e00e9e2b1685ba191b8626e37137 (Lean 4 toolchain leanprover/lean4:v4.30.0), 22 July 2026, headline theorems in the module LGT/MassGap/StrongCoupling.lean, Apache-2.0. Software; unrefereed; no DOI.
+
 [Entroptics] I. J. Sessford, *Entroptics: reading a 2-D signal as a finite optical aperture at its own entropy-matched resolution*, preprint, October 2026, in the repository <https://github.com/Agience/entroptics>. Unrefereed preprint; no DOI. Software release cited separately as [S].
 
 [FILS1] J. Fröhlich, R. Israel, E. H. Lieb, B. Simon, *Phase transitions and reflection positivity. I. General theory and long range lattice models*, Commun. Math. Phys. 62, 1–34 (1978). <https://doi.org/10.1007/BF01940327>.

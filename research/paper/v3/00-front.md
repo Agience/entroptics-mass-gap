@@ -5,7 +5,7 @@
 Ikailo John Sessford, Ikailo Inc., `john@ikailo.com`
 ORCID [0009-0002-0150-4027](https://orcid.org/0009-0002-0150-4027)
 
-*Pre-print. 2026-11-08.*
+*Pre-print. 2026-11-10.*
 
 Text CC BY 4.0; code Apache-2.0.
 

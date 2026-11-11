@@ -118,6 +118,8 @@ Entries are sorted by citation key. Preprints, software releases and datasets th
 
 [OAI-O4] OpenAI, *Sharp mass bounds for the two-dimensional O(4) model*, preprint, 23 September 2026, <https://github.com/openai/math>, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a, file preprints/Sharp-mass-bounds-for-the-two-dimensional-O4-model-September-23-2026/paper.pdf. Unrefereed preprint; no DOI.
 
+[OpenAIYM] OpenAI, *Wilson Yang–Mills construction*, Lean 4 development submitted to the Yang–Mills group on 28 October 2026, <https://github.com/yang-mills-group/OpenAI-YM-20261028>, commit 3456e5e75cf8d4cd558955a5c7638fba2d68f464 (Lean 4 toolchain leanprover/lean4:v4.32.0), headline theorem in the module Solution.lean, Apache-2.0. Software; unrefereed; no DOI.
+
 [OS1] K. Osterwalder, R. Schrader, *Axioms for Euclidean Green's functions*, Commun. Math. Phys. 31, 83–112 (1973). <https://doi.org/10.1007/BF01645738>.
 
 [OS2] K. Osterwalder, R. Schrader, *Axioms for Euclidean Green's functions II*, Commun. Math. Phys. 42, 281–305 (1975). <https://doi.org/10.1007/BF01608978>.
@@ -145,5 +147,7 @@ Entries are sorted by citation key. Preprints, software releases and datasets th
 [TomboulisYaffe] E. T. Tomboulis, L. G. Yaffe, *Finite temperature SU(2) lattice gauge theory*, Commun. Math. Phys. 100, 313–341 (1985). <https://doi.org/10.1007/BF01206134>.
 
 [Wilson] K. G. Wilson, *Confinement of quarks*, Phys. Rev. D 10, 2445–2459 (1974). <https://doi.org/10.1103/PhysRevD.10.2445>.
+
+[YMGAssess1] Yang–Mills group, *Validation of the OpenAI Yang–Mills construction*, assessment 1, 10 November 2026, <https://github.com/yang-mills-group/YM>, commit 55ba9fc36293b3f4d52c6b1f813169a0be76ee98, file docs/assessment-1.pdf (SHA-256 8e658c00900bf723cbe90436eb1f78fca4f287e008a85c21fdceaf59e61db219). Unrefereed.
 
 [Young] A. Young, *On a bulk gap strategy for quantum lattice models*, Rev. Math. Phys. 36, 2460007 (2024). <https://doi.org/10.1142/S0129055X24600079>; arXiv:2308.01405, <https://arxiv.org/abs/2308.01405>.

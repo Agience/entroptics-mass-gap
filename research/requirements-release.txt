@@ -1,4 +1,4 @@
-# Exact pins of the v0.3.2 release; research/requirements.txt gives the ranges.
+# Exact pins of the v0.4.0 release; research/requirements.txt gives the ranges.
 #
 # Python 3.12. Confirmed on 2026-11-08 from a clean copy of the release tree (git archive) in a fresh
 # Python 3.12 virtual environment built from this file: the test suite and the paper build pass.

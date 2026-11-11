@@ -702,3 +702,8 @@ import MassGap.GaugeWilson -- generic compact gauge group: Wilson measure, SU(N)
 import MassGap.GaugeRunning -- generic running coupling b₀ = 11h^∨/(48π²)
 import MassGap.GaugeGroup
 import MassGap.GaugeInstances
+import MassGap.OpenAIDictionary -- dictionary to the OpenAI YM construction (3456e5e): action = 2 × their unordered-plane energy, so β_sub = 2β; afConstG = (2/b₀)² · 3 dim 𝔤/π⁴ and their trace law read as AFCoefficientG
+import MassGap.OpenAIBridgeLimits -- the OpenAI bridge: the components equal the mixture under clustering; bounds pass through iterated limits
+import MassGap.OpenAIBridgeGap -- the OpenAI bridge: exponential clustering at rate m gives the transfer and Hamiltonian gap at least m and a unique vacuum
+import MassGap.OpenAIConfig -- the OpenAI bridge: their configuration type, plaquettes and Wilson laws matched to ours by a measure-preserving equivalence
+import MassGap.OpenAIBridgeCluster -- the OpenAI bridge: the torus gap gives clustering at every lag and every even seed side, uniform in the torus size

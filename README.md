@@ -69,7 +69,7 @@ The lattice ensembles are a separate record, DOI [10.5281/zenodo.22850110](https
 
 ## Cite and licence
 
-Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.4.0, 2026, Zenodo, DOI [10.5281/zenodo.22652660](https://doi.org/10.5281/zenodo.22652660). See [`CITATION.cff`](CITATION.cff).
+Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.4.0, 2026, Zenodo, DOI [10.5281/zenodo.24127643](https://doi.org/10.5281/zenodo.24127643). See [`CITATION.cff`](CITATION.cff).
 
 Code is licensed Apache-2.0 ([`LICENSE`](LICENSE)); the paper text is CC BY 4.0.
 

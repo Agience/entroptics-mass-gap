@@ -14,7 +14,7 @@ Entries are sorted by citation key. Preprints, software releases and datasets th
 
 [Balaban89b] T. Bałaban, *Large field renormalization. II. Localization, exponentiation, and bounds for the R operation*, Commun. Math. Phys. 122, 355–392 (1989). <https://doi.org/10.1007/BF01238433>.
 
-[BBLR-v442] D. Bhattacharjee, U. Bhattacharya, J. M. Lockwood, T. Romanov, *Lattice Mass Gaps and Continuum Criteria for Four-Dimensional Yang–Mills Theory*, release v4.42.0 of <https://github.com/creelie/4Y-M>, commit d509ce3db34f7c2287c74b09d95ef4ee70ebc771 (Lean 4 toolchain leanprover/lean4:v4.33.0), 8 November 2026, source `strong-coupling/forest/main.tex`. Zenodo version DOI <https://doi.org/10.5281/zenodo.24055064>; concept DOI of all 4Y-M releases <https://doi.org/10.5281/zenodo.23444338>. Unrefereed preprint with software.
+[BBLRS-v444] D. Bhattacharjee, U. Bhattacharya, J. M. Lockwood, T. Romanov, S. Singha Roy, *Yang–Mills Theory and the Mass Gap*, release v4.44.0 of <https://github.com/creelie/4Y-M>, commit 7fb0b108f729f1f7db9897e4bd353bca5f8dca46 (Lean 4 toolchain leanprover/lean4:v4.33.0), 9 November 2026, source `strong-coupling/forest/main.tex`. Zenodo version DOI <https://doi.org/10.5281/zenodo.24085959>; concept DOI of all 4Y-M releases <https://doi.org/10.5281/zenodo.23444338>. Unrefereed preprint with software.
 
 [BB] D. Bhattacharjee, U. Bhattacharya, *Spacing-Uniform Lattice Inequalities Cannot Produce the Yang–Mills Mass Gap: paper, audit and Lean certificate*, release v1.0.0, 18 October 2026. Zenodo version DOI <https://doi.org/10.5281/zenodo.23444339>. Unrefereed preprint with software.
 

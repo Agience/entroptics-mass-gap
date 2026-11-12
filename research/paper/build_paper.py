@@ -4,6 +4,7 @@
     python research/paper/build_paper.py v3         # the same, naming the source directory
     python research/paper/build_paper.py --no-pdf   # Markdown and HTML only
     python research/paper/build_paper.py --check    # also dump the rendered HTML DOM and report math errors
+    python research/paper/build_paper.py companion --name openai-route   # the companion paper
 
 The sections are `SRC/NN-name.md` (two digits, one dot), concatenated in order,
 where SRC is the source directory given as the first argument (relative to
@@ -464,7 +465,11 @@ def main() -> int:
                     help="source directory of NN-name.md files, relative to research/paper/ (default: v3)")
     ap.add_argument("--no-pdf", action="store_true", help="write the Markdown and HTML only (no .tex or .pdf)")
     ap.add_argument("--check", action="store_true", help="dump the rendered DOM and report math errors")
+    ap.add_argument("--name", default="mass-gap",
+                    help="output stem under research/paper/ (default: mass-gap; the companion uses openai-route)")
     a = ap.parse_args()
+    global OUT_MD, OUT_HTML
+    OUT_MD, OUT_HTML = HERE / f"{a.name}.md", HERE / f"{a.name}.html"
     src = Path(a.src)
     files = section_files(src if src.is_absolute() else HERE / src)
     doc_md, doc_html = build_html(files)

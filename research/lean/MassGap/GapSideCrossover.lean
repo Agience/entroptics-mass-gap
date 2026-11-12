@@ -55,3 +55,7 @@ end Assembly
 end MassGap.GapSideCrossover
 
 end
+
+#print axioms MassGap.GapSideCrossover.continuous_fAct_of
+#print axioms MassGap.GapSideCrossover.side_eq
+#print axioms MassGap.GapSideCrossover.side_even

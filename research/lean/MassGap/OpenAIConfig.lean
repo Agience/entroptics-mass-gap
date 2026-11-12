@@ -885,3 +885,31 @@ theorem familyGap_on_openAI_SU (r : ℕ) (μ : Measure (suGauge r).image)
 end SUImage
 
 end MassGap.OpenAIConfig
+
+#print axioms MassGap.OpenAIConfig.wilsonLaw_eq
+#print axioms MassGap.OpenAIConfig.wilsonDensityG_image
+#print axioms MassGap.OpenAIConfig.siteEquiv_apply
+#print axioms MassGap.OpenAIConfig.siteEquiv_shift
+#print axioms MassGap.OpenAIConfig.configEquiv_apply
+#print axioms MassGap.OpenAIConfig.plaquette_eq
+#print axioms MassGap.OpenAIConfig.wilsonEnergy_configEquiv
+#print axioms MassGap.OpenAIConfig.measurePreserving_pi
+#print axioms MassGap.OpenAIConfig.measurePreserving_wilsonLaw
+#print axioms MassGap.OpenAIConfig.map_wilsonLaw
+#print axioms MassGap.OpenAIConfig.integrable_iff
+#print axioms MassGap.OpenAIConfig.expect_eq_integral_openAILaw
+#print axioms MassGap.OpenAIConfig.wilsonDensityG_SU_eq
+#print axioms MassGap.OpenAIConfig.wilsonDensityG_image_eq_SU
+#print axioms MassGap.OpenAIConfig.measurePreserving_gibbs
+#print axioms MassGap.OpenAIConfig.wilsonHol_map
+#print axioms MassGap.OpenAIConfig.wilsonEnergy_image_SU
+#print axioms MassGap.OpenAIConfig.measurePreserving_suToOpenAI
+#print axioms MassGap.OpenAIConfig.familyGap_on_openAI_laws
+#print axioms MassGap.OpenAIConfig.map_imageEquivSU_eq_probHaar
+#print axioms MassGap.OpenAIConfig.familyGap_on_openAI_laws'
+#print axioms MassGap.OpenAIConfig.isClosed_suImage
+#print axioms MassGap.OpenAIConfig.det_exp_of_skew
+#print axioms MassGap.OpenAIConfig.generates_su
+#print axioms MassGap.OpenAIConfig.imageIsSU_suGauge
+#print axioms MassGap.OpenAIConfig.eq_suGauge
+#print axioms MassGap.OpenAIConfig.familyGap_on_openAI_SU

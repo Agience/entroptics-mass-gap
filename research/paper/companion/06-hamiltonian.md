@@ -1,0 +1,7 @@
+# 6. Their Euclidean semigroup and the gap
+
+> Theorem H ([MG, Theorems 4.49, 4.51]). For a Wightman theory with the fields of the public statement of [OpenAIYM] (spectral representation, positive energy, unique vacuum, normalized and cyclic vacuum, dense domain, vacuum invariance), $S(t)=\int e^{-tp_0}\,dE(p)$, $t\ge0$, over its energy-momentum spectral measure $E$ is a family of bounded self-adjoint operators with $S(0)=1$, $S(s+t)=S(s)S(t)$, $\lVert S(t)\rVert\le1$ and $S(t)\Omega=\Omega$, and the span of its field vectors is dense. The zero-energy subspace $E\{p_0\le0\}$ is the line of $\Omega$. If every pair of field vectors $v,w$ has $\lvert\langle v,S(t)w\rangle-\langle v,\Omega\rangle\langle\Omega,w\rangle\rvert\le C_{v,w}e^{-mt}$ with $m>0$, then $\lVert S(t)u\rVert\le e^{-mt}\lVert u\rVert$ for $u\perp\Omega$, $E\{0<p_0<m\}=0$, the generator $H$ has $\langle u,Hu\rangle\ge m\lVert u\rVert^2$ on its domain orthogonal to $\Omega$, and its kernel is the line of $\Omega$.
+
+Mathlib has no integral against a projection-valued measure; the functional calculus used is built for bounded measurable weights from the spectral representation of [OpenAIYM], through simple-function approximation and the Riesz representation.
+
+The clustering hypothesis is stated on their Minkowski-smeared field vectors, the only dense set their public statement provides. That these readings are the Euclidean values of their selected correlations is their Osterwalder–Schrader reconstruction; it is not restated here, and the clustering of those values is an input.

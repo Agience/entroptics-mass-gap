@@ -707,3 +707,13 @@ import MassGap.OpenAIBridgeLimits -- the OpenAI bridge: the components equal the
 import MassGap.OpenAIBridgeGap -- the OpenAI bridge: exponential clustering at rate m gives the transfer and Hamiltonian gap at least m and a unique vacuum
 import MassGap.OpenAIConfig -- the OpenAI bridge: their configuration type, plaquettes and Wilson laws matched to ours by a measure-preserving equivalence
 import MassGap.OpenAIBridgeCluster -- the OpenAI bridge: the torus gap gives clustering at every lag and every even seed side, uniform in the torus size
+import MassGap.OpenAIBridgeSides -- the OpenAI bridge: the gap and clustering on every even torus side at least twice the seed side; no condition on their periods
+import MassGap.OpenAIBridgeUniform -- the OpenAI bridge: the connected slab correlation of the Wilson torus decays with a constant 6, uniform in the torus size
+import MassGap.OpenAIBridgeGroups -- the OpenAI bridge over every compact gauge group: the gap and the uniform connected-correlation bound on their laws
+import MassGap.OpenAILink -- the OpenAI bridge: the open link split into named inputs; uniform smeared decay passes to their mixed correlation, and with the component inputs the components equal the mixture
+import MassGap.OpenAISemigroup -- the OpenAI bridge: their Euclidean semigroup e^{-tH} from their public spectral fields; clustering gives the spectral gap
+import MassGap.OpenAIBridgeSlab -- the OpenAI bridge: the uniform connected bound for slab (kernel) insertions over several slices
+import MassGap.OpenAIBridgeRP -- the OpenAI bridge: the separated terms of the slab connected correlation in reflection-positivity form, without sup bounds
+import MassGap.OpenAIBridgeCubic -- the OpenAI bridge: the reflection-positivity bound with every constant a cubic-torus Wilson moment, and the thermal remainder named
+import MassGap.OpenAIBridgeCompose -- the OpenAI bridge: (U) at the seed rate log 2/l from the per-torus cubic bound on their smeared insertions
+import MassGap.OpenAIBridgeGlue -- the OpenAI bridge: their law read on our transfer axis, translation invariance, tensor-test factorization, window-local observables and their reflection

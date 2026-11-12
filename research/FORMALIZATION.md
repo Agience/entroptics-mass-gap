@@ -12,7 +12,7 @@ This is the map of the Lean library in `research/lean/` for readers of the Lean.
 
 ## Trust base and build
 
-Lean `v4.31.0`, Mathlib tag `v4.31.0` (commit `fabf563a7c95a166b8d7b6efca11c8b4dc9d911f`), pinned in `research/lean/lake-manifest.json`. 702 modules, about 408,000 lines. No `sorry`, no `axiom` declaration, no `native_decide`. Every declaration with a recorded footprint depends on a subset of `propext`, `Classical.choice`, `Quot.sound`; the footprints are produced by `research/code/certify/lean_axiom_footprints.py` into `research/data/13_dat_axiom_footprints.csv` (13,060 rows, no other axiom). Build:
+Lean `v4.31.0`, Mathlib tag `v4.31.0` (commit `fabf563a7c95a166b8d7b6efca11c8b4dc9d911f`), pinned in `research/lean/lake-manifest.json`. 702 modules, about 408,000 lines. No `sorry`, no `axiom` declaration, no `native_decide`. Every declaration with a recorded footprint depends on a subset of `propext`, `Classical.choice`, `Quot.sound`; the footprints are produced by `research/code/certify/lean_axiom_footprints.py` into `research/data/13_dat_axiom_footprints.csv` (13,700 rows, no other axiom). Build:
 
 ```
 cd research/lean
@@ -427,10 +427,13 @@ The numbered theorems of the paper (the v3 sources under `research/paper/v3/`) a
 | 4.43 | the seed over $G$ gives the observer's gap | `RectTransferG.ZRG_eq_traceSeq`, `TorusDecayG.dyadic_torus_decayG`, `PeriodicReduceG.gapAt_of_even_lag`, `FlowClusterG.observerGapG_of_runSeedG`, `WindowG.runSeedG_SU` | `WindowG.RunSeedG G` |
 | 4.44 | the action dictionary | `OpenAIConfig.measurePreserving_wilsonLaw`, `OpenAIConfig.suGauge`, `OpenAIConfig.map_imageEquivSU_eq_probHaar`, `OpenAIDictionary.action_eq_two_mul_wilsonEnergy`, `OpenAIDictionary.wilsonLaw_two_mul`, `OpenAIDictionary.expect_eq_integral_wilsonLaw` | none |
 | 4.45 | the asymptotic-freedom dictionary | `OpenAIDictionary.afConstG_eq`, `OpenAIDictionary.afCoefficientG_of_traceLaw`, `OpenAIDictionary.afCoefficientG_of_shortDistance` | none |
-| 4.46 | a uniform gap on their tori from the seed | `OpenAIConfig.familyGap_on_openAI_SU`, `OpenAIConfig.familyGap_on_openAI_laws`, `OpenAIDictionary.familyGap_of_seed`, `OpenAIDictionary.physRate_le`, `OpenAIDictionary.sysR_ext_corner` | the seed along the family |
-| 4.47 | clustering on their tori from the seed | `OpenAIBridgeCluster.familyCluster_of_seed`, `OpenAIBridgeCluster.wilson_cluster_uniform`, `OpenAIBridgeCluster.wilson_connTorus_decay` | the seed along the family |
+| 4.46 | a uniform gap on their tori from the seed | `OpenAIBridgeGroups.familyGap_on_openAI_lawsG`, `OpenAIBridgeSides.familyGap_sides`, `OpenAIBridgeSides.gap_even_side`, `OpenAIConfig.familyGap_on_openAI_SU`, `OpenAIConfig.familyGap_on_openAI_laws`, `OpenAIDictionary.familyGap_of_seed`, `OpenAIDictionary.physRate_le`, `OpenAIDictionary.sysR_ext_corner` | the seed along the family |
+| 4.47 | clustering on their tori from the seed | `OpenAIBridgeCubic.wilson_slab_conn_cubicG`, `OpenAIBridgeRP.wilson_slab_conn_rp_fullG`, `OpenAIBridgeSlab.wilson_slab_connG`, `OpenAIBridgeGroups.familyConn_on_openAI_lawsG`, `OpenAIBridgeUniform.wilson_conn_even_side`, `OpenAIBridgeUniform.connTorus_even_side_uniform`, `OpenAIBridgeSides.familyCluster_sides`, `OpenAIBridgeSides.scheduleCluster`, `OpenAIBridgeCluster.familyCluster_of_seed`, `OpenAIBridgeCluster.wilson_cluster_uniform`, `OpenAIBridgeCluster.wilson_connTorus_decay` | the seed along the family |
 | 4.48 | the components and the limits | `OpenAIBridgeLimits.component_eq_mixture_of_clusters`, `OpenAIBridgeLimits.norm_le_exp_of_iterated_limits` | none |
 | 4.49 | clustering gives the gap | `OpenAIBridgeGap.gap_of_cluster_time`, `OpenAIBridgeGap.hamiltonian_gap_of_cluster`, `OpenAIBridgeGap.hamiltonian_ker_of_cluster` | none |
+| 4.50 | the link, stated on their public objects | `OpenAILink.unfloored_contradicts_shortDistance`, `OpenAILink.connected_le_of_uniform`, `OpenAILink.component_eq_mixture_of_uniform` | the named inputs of the link |
+| 4.51 | their Euclidean semigroup | `OpenAISemigroup.WightmanFields.spectralGap_of_clustering`, `OpenAISemigroup.WightmanFields.zeroEnergy`, `OpenAISemigroup.euclid_add` | `EuclideanClustering` |
+| 4.52 | the rate of (U) from the seed | `OpenAIBridgeGlue.uniformDecayFrom_of_seed''`, `OpenAIBridgeGlue.uniformDecayFrom_of_seed'`, `OpenAIBridgeGlue.uniformDecayFrom_of_seed`, `OpenAIBridgeCompose.uniformDecayFrom_of_cubicForm`, `OpenAIBridgeCompose.openAI_slab_conn_cubic` | `CubicForm` |
 | 5.1 | trace identity | `RectTransfer.ZR_eq_traceSeq`, `RectTransferG.ZRG_eq_traceSeq`, `RectTransfer.ZR_eq_cyc`, `CyclicKernel.cyc_even` | none |
 | 5.2 | the trace facts | `DoublingWilson.facts`, `DoublingWilson.factRep`, `DoublingWilsonG.factsG`, `KernelEigen.exists_eigen`, `DoublingPower.PowerFacts` | none |
 | 5.3 | positivity and regularity of the defect | `DoublingWilson.positive`, `DoublingRecursion.p_le_Δ`, `CouplingTower.windowCoupling_nonneg`, `continuous_windowCoupling` | none |

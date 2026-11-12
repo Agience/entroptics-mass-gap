@@ -431,3 +431,16 @@ theorem zoom_root {a b : Fin 4} (hab : a ≠ b) (o : RSite L) {m n p q : ℕ}
 end Zoom
 
 end MassGap.LoopZoom
+
+#print axioms MassGap.LoopZoom.inner_T_vac
+#print axioms MassGap.LoopZoom.norm_sq_centred
+#print axioms MassGap.LoopZoom.norm_sq_T_centred
+#print axioms MassGap.LoopZoom.centred_le_raw
+#print axioms MassGap.LoopZoom.vev_sq_le_of_raw
+#print axioms MassGap.LoopZoom.loopTransfer_centred
+#print axioms MassGap.LoopZoom.block_rayleigh
+#print axioms MassGap.LoopZoom.bound_on_diagShells
+#print axioms MassGap.LoopZoom.zeroFluxGap_of_shellDiag
+#print axioms MassGap.LoopZoom.diagRate_pos
+#print axioms MassGap.LoopZoom.zeroFluxGap_of_electricDiag
+#print axioms MassGap.LoopZoom.zoom_root

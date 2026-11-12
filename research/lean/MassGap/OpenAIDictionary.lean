@@ -435,3 +435,19 @@ theorem physRate_le {n : ℕ} {a ℓ : ℝ} (hn : 1 ≤ n) (ha : 0 < a)
   exact div_le_div_of_nonneg_left (Real.log_nonneg (by norm_num)) (mul_pos hn' ha) hle
 
 end MassGap.OpenAIDictionary
+
+#print axioms MassGap.OpenAIDictionary.sum_pairs_eq_two_mul
+#print axioms MassGap.OpenAIDictionary.wilsonHol_swap
+#print axioms MassGap.OpenAIDictionary.wilsonHol_diag
+#print axioms MassGap.OpenAIDictionary.density_swap
+#print axioms MassGap.OpenAIDictionary.density_diag
+#print axioms MassGap.OpenAIDictionary.action_eq_two_mul_wilsonEnergy
+#print axioms MassGap.OpenAIDictionary.boltz_eq_exp_wilsonEnergy
+#print axioms MassGap.OpenAIDictionary.wilsonLaw_two_mul
+#print axioms MassGap.OpenAIDictionary.expect_eq_integral_wilsonLaw
+#print axioms MassGap.OpenAIDictionary.afConstG_eq
+#print axioms MassGap.OpenAIDictionary.afCoefficientG_of_traceLaw
+#print axioms MassGap.OpenAIDictionary.afCoefficientG_of_shortDistance
+#print axioms MassGap.OpenAIDictionary.familyGap_of_seed
+#print axioms MassGap.OpenAIDictionary.sysR_ext_corner
+#print axioms MassGap.OpenAIDictionary.physRate_le

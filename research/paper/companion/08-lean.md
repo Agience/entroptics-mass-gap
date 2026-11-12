@@ -1,0 +1,5 @@
+# 8. Lean
+
+Every theorem of this paper is a numbered theorem of [MG]: A–H are [MG, Theorems 4.44–4.52] as cited. The declarations, their open hypotheses and the modules are listed in the rows 4.44–4.52 of the theorem-to-Lean map of [MG] (`research/paper/v3/04-reduction.lean-map.md`) and in `research/FORMALIZATION.md`. The modules of this route are `OpenAIDictionary`, `OpenAIConfig`, `OpenAIBridgeSides`, `OpenAIBridgeCluster`, `OpenAIBridgeUniform`, `OpenAIBridgeGroups`, `OpenAIBridgeSlab`, `OpenAIBridgeRP`, `OpenAIBridgeCubic`, `OpenAIBridgeCompose`, `OpenAIBridgeGlue`, `OpenAIBridgeLimits`, `OpenAILink`, `OpenAIBridgeGap` and `OpenAISemigroup`, under `research/lean/MassGap/`.
+
+The library builds on Lean 4.31.0 with the pinned Mathlib; it has no `sorry`, and its theorems depend only on `propext`, `Classical.choice` and `Quot.sound`. The definitions of [OpenAIYM] that are used are restated in these modules with file and line citations of its public statement, since its development (Lean 4.32.0) cannot be imported. Build instructions are in the repository README, section "Lean".

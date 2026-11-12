@@ -494,3 +494,23 @@ theorem hamiltonian_ker_of_cluster {S : ℝ → E →L[ℂ] E} (h0 : S 0 = 1)
     (fun w hw => hamiltonian_gap_of_cluster h0 hadd hsa hΩn hΩ hD hm.le hcl w hw) u hHu
 
 end MassGap.OpenAIBridgeGap
+
+#print axioms MassGap.OpenAIBridgeGap.norm_pow_logConvex
+#print axioms MassGap.OpenAIBridgeGap.norm_apply_le_of_pow_decay
+#print axioms MassGap.OpenAIBridgeGap.conn_add_left
+#print axioms MassGap.OpenAIBridgeGap.conn_smul_left
+#print axioms MassGap.OpenAIBridgeGap.conn_add_right
+#print axioms MassGap.OpenAIBridgeGap.conn_smul_right
+#print axioms MassGap.OpenAIBridgeGap.conn_zero_left
+#print axioms MassGap.OpenAIBridgeGap.conn_zero_right
+#print axioms MassGap.OpenAIBridgeGap.clusters_span_left
+#print axioms MassGap.OpenAIBridgeGap.clusters_span_right
+#print axioms MassGap.OpenAIBridgeGap.conn_span
+#print axioms MassGap.OpenAIBridgeGap.conn_vac
+#print axioms MassGap.OpenAIBridgeGap.norm_pow_compl_sq
+#print axioms MassGap.OpenAIBridgeGap.gap_of_cluster
+#print axioms MassGap.OpenAIBridgeGap.gap_of_cluster_pow
+#print axioms MassGap.OpenAIBridgeGap.semigroup_pow
+#print axioms MassGap.OpenAIBridgeGap.gap_of_cluster_time
+#print axioms MassGap.OpenAIBridgeGap.hamiltonian_gap_of_cluster
+#print axioms MassGap.OpenAIBridgeGap.hamiltonian_ker_of_cluster

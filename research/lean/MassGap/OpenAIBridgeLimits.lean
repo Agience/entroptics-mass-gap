@@ -299,3 +299,15 @@ theorem norm_le_exp_of_iterated_subsequences {c : ℕ → ℕ → ℝ → E} {L 
 end Limits
 
 end MassGap.OpenAIBridgeLimits
+
+#print axioms MassGap.OpenAIBridgeLimits.integrable_of_continuous
+#print axioms MassGap.OpenAIBridgeLimits.eq_of_integral_norm_sub_sq_eq_zero
+#print axioms MassGap.OpenAIBridgeLimits.eq_of_integral_mul_conj
+#print axioms MassGap.OpenAIBridgeLimits.eq_of_integral_sq
+#print axioms MassGap.OpenAIBridgeLimits.integral_mul_eq_of_clusters
+#print axioms MassGap.OpenAIBridgeLimits.component_eq_mixture
+#print axioms MassGap.OpenAIBridgeLimits.component_eq_mixture_of_clusters
+#print axioms MassGap.OpenAIBridgeLimits.norm_le_of_iterated_limits
+#print axioms MassGap.OpenAIBridgeLimits.norm_le_of_iterated_subsequences
+#print axioms MassGap.OpenAIBridgeLimits.norm_le_exp_of_iterated_limits
+#print axioms MassGap.OpenAIBridgeLimits.norm_le_exp_of_iterated_subsequences

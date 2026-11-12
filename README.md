@@ -1,8 +1,10 @@
 # The Mass Gap of SU(N) Gauge Theory Seen by an Observer of Fixed Physical Resolution
 
-Release v0.4.0 (2026-11-11) · Ikailo John Sessford (Ikailo Inc.)
+Release v0.4.1 (2026-11-12) · Ikailo John Sessford (Ikailo Inc.)
 
 Paper: [PDF](research/paper/mass-gap.pdf) (two-column) · [LaTeX source](research/paper/mass-gap.tex) · [HTML](research/paper/mass-gap.html)
+
+Companion paper, on the route to the mass gap of the OpenAI Yang–Mills construction: [PDF](research/paper/openai-route.pdf) · [LaTeX source](research/paper/openai-route.tex) · [HTML](research/paper/openai-route.html)
 
 The paper applies the frame of [Entroptics](https://github.com/Agience/entroptics) to the continuum limit of four-dimensional $SU(N)$ Wilson lattice gauge theory. In that frame, an observer is a finite aperture whose mode count is read from the signal's spectrum. For $N\ge2$ it proves, in Lean, that an Osterwalder–Schrader form of the $SU(N)$ existence-and-gap statement follows from three open statements:
 
@@ -49,7 +51,7 @@ The development is free of `sorry` and uses only `propext`, `Classical.choice` a
 
 | path | what |
 |---|---|
-| [`research/paper/`](research/paper) | the paper, built by `build_paper.py` from `v3/` (one file per section); `typeset/` sets the two-column PDF |
+| [`research/paper/`](research/paper) | the paper, built by `build_paper.py` from `v3/` (one file per section), and the companion paper from `companion/` (`build_paper.py companion --name openai-route`); `typeset/` sets the two-column PDFs |
 | [`research/lean/`](research/lean) | the Lean 4 / Mathlib development |
 | [`research/code/`](research/code) | generator, exact checks, Monte Carlo reads, certification scripts and tests |
 | [`research/data/`](research/data) | committed tables, figures and aggregates; `regen_all.py` regenerates them |
@@ -69,7 +71,7 @@ The lattice ensembles are a separate record, DOI [10.5281/zenodo.22850110](https
 
 ## Cite and licence
 
-Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.4.0, 2026, Zenodo, DOI [10.5281/zenodo.24127643](https://doi.org/10.5281/zenodo.24127643). See [`CITATION.cff`](CITATION.cff).
+Sessford, Ikailo John, *The Mass Gap of $SU(N)$ Gauge Theory Seen by an Observer of Fixed Physical Resolution*, v0.4.1, 2026, Zenodo, DOI [10.5281/zenodo.22652660](https://doi.org/10.5281/zenodo.22652660). See [`CITATION.cff`](CITATION.cff).
 
 Code is licensed Apache-2.0 ([`LICENSE`](LICENSE)); the paper text is CC BY 4.0.
 

@@ -1,0 +1,453 @@
+% arxiv-twocolumn.latex: the shared pandoc template for a two-column arXiv-style preprint.
+% Built by build_paper.py (pandoc, then tectonic or any XeLaTeX); arxiv-twocolumn.lua is its filter.
+% Engine: XeTeX (fontspec, unicode-math). Fonts: Latin Modern text and math, DejaVu Sans Mono for code;
+% a character the current font lacks falls back to Latin Modern Math, then to DejaVu Sans.
+\documentclass[10pt,letterpaper,twocolumn]{article}
+\usepackage[letterpaper,top=0.75in,bottom=0.9in,left=0.7in,right=0.7in,columnsep=0.25in]{geometry}
+\usepackage{amsmath}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{lmroman10}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setsansfont{lmsans10}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-oblique,BoldItalicFont=*-boldoblique]
+\setmonofont{DejaVuSansMono}[Extension=.ttf,UprightFont=*,BoldFont=*-Bold,ItalicFont=*-Oblique,BoldItalicFont=*-BoldOblique,Scale=MatchLowercase]
+\setmathfont{latinmodern-math.otf}
+\newfontfamily\typesetfallbackmath{latinmodern-math.otf}
+\newfontfamily\typesetfallbacksans{DejaVuSans}[Extension=.ttf,UprightFont=*,BoldFont=*-Bold,ItalicFont=*-Oblique,BoldItalicFont=*-BoldOblique]
+% \typesetmap{"XXXX} (build_paper.py writes one for each character outside Latin-1 and Latin
+% Extended-A that the paper uses) makes the character active at the start of the document: in text it
+% comes from the current font when that has it, else from the first fallback that does; in math it
+% keeps whatever unicode-math gave it (a prime stays a prime).
+\makeatletter
+\protected\def\typesetglyph#1{%
+  \iffontchar\font#1\relax\char#1\relax
+  \else{\typesetfallbackmath\iffontchar\font#1\relax\char#1\relax\else\typesetfallbacksans\char#1\relax\fi}%
+  \fi}
+\def\typeset@math#1{%
+  \ifcsname typeset@m@#1\endcsname\csname typeset@m@#1\expandafter\endcsname\else\Uchar#1 \fi}
+\protected\def\typesetchar#1{\ifmmode\expandafter\typeset@math\else\expandafter\typesetglyph\fi{#1}}
+\def\typesetmap#1{%
+  \edef\typeset@n{\number#1}% outside \lowercase, which would lowercase the hex digits A-F
+  \begingroup\lccode`\~=\typeset@n\relax
+  \lowercase{\endgroup
+    \ifdefined~\expandafter\let\csname typeset@m@\typeset@n\endcsname~\fi
+    \edef~{\noexpand\typesetchar{\typeset@n}}}%
+  \catcode\typeset@n=13\relax}
+\makeatother
+% amssymb names that unicode-math spells differently.
+\AtBeginDocument{%
+  \providecommand{\square}{\mdlgwhtsquare}\providecommand{\Box}{\mdlgwhtsquare}%
+  \providecommand{\blacksquare}{\mdlgblksquare}\providecommand{\lozenge}{\mdlgwhtlozenge}%
+  \providecommand{\blacklozenge}{\mdlgblklozenge}}
+% Legacy two-letter font commands (\rm, \bf, \it, ...), in text and in math.
+\providecommand{\rm}{}\DeclareOldFontCommand{\rm}{\normalfont\rmfamily}{\mathrm}
+\providecommand{\bf}{}\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
+\providecommand{\it}{}\DeclareOldFontCommand{\it}{\normalfont\itshape}{\mathit}
+\providecommand{\sf}{}\DeclareOldFontCommand{\sf}{\normalfont\sffamily}{\mathsf}
+\providecommand{\tt}{}\DeclareOldFontCommand{\tt}{\normalfont\ttfamily}{\mathtt}
+\usepackage{microtype}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{xtab}
+\usepackage{cuted}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf,skip=4pt}
+\captionsetup[table]{position=top}
+\usepackage{fvextra}
+\usepackage{xurl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{footmisc}
+\usepackage{enumitem}
+\setlist{itemsep=1pt,topsep=3pt,parsep=0pt}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue,filecolor=MidnightBlue,
+  pdftitle={A Finite-Volume Route to the Mass Gap of the OpenAI Yang--Mills Construction},pdfauthor={Ikailo John Sessford},pdfcreator={pandoc + XeTeX},bookmarksnumbered=true}
+\pdfstringdefDisableCommands{\def\typesetchar#1{\Uchar#1 }}
+
+% Paragraphs: indented, no extra space, ragged bottom so columns do not stretch.
+\setlength{\parskip}{0pt}
+\raggedbottom
+\emergencystretch=1.5em
+\tolerance=1000
+\hbadness=10000
+\clubpenalty=10000
+\widowpenalty=10000
+
+% Section headings. Numbered only when the paper's own headings carry no numbers (build_paper.py decides).
+\setcounter{secnumdepth}{-\maxdimen}
+\titleformat*{\section}{\normalfont\large\bfseries\raggedright}
+\titleformat*{\subsection}{\normalfont\normalsize\bfseries\raggedright}
+\titleformat*{\subsubsection}{\normalfont\normalsize\bfseries\itshape\raggedright}
+\titleformat*{\paragraph}{\normalfont\normalsize\itshape}
+\titlespacing*{\section}{0pt}{2.0ex plus 1ex minus .2ex}{1.0ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.6ex plus 1ex minus .2ex}{0.6ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{1.4ex plus 1ex minus .2ex}{0.5ex plus .2ex}
+\titlespacing*{\paragraph}{0pt}{1.0ex plus .5ex}{0.6em}
+
+% Code: monospaced at the floor size, wrapped at the column edge and never scaled.
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\footnotesize,breaklines=true,breakanywhere=true,breaksymbolleft={},
+  xleftmargin=0.5em,frame=leftline,framerule=0.4pt,rulecolor=\color{Gray},framesep=0.5em}
+
+% Tables: small type, tight columns. Long tables break across columns (xtabular); wide ones float full width.
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\RaggedLeft\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\Centering\arraybackslash}p{#1}}
+% Scaling has a floor: nothing is set smaller than \typesetfloor.
+% DERIVED: 8 pt is \footnotesize of this 10 pt class, the smallest running text the template sets
+% (tables, code), so a scaled display is never smaller than the smallest text already on the page.
+\newdimen\typesetfloor \typesetfloor=8pt
+\newsavebox{\typesetfitbox}
+\newif\iftypesetfitok
+\makeatletter
+% \typeset@try{width}{base size}: does \typesetfitbox fit in width, scaled no smaller than the floor?
+% Sets \iftypesetfitok, and logs the scale it would apply ("typeset-scale: <scale x 1000>").
+\def\typeset@try#1#2{%
+  \ifdim\wd\typesetfitbox>#1\relax
+    \edef\typeset@scale{\the\numexpr\number\dimexpr#1\relax*1000/\number\wd\typesetfitbox\relax}%
+    % the effective size, base size x scale, against the floor
+    \ifdim\dimexpr#2*\typeset@scale/1000\relax<\typesetfloor
+      \typesetfitokfalse
+    \else
+      \typesetfitoktrue\typeout{typeset-scale: \typeset@scale}%
+    \fi
+  \else
+    \typesetfitoktrue
+  \fi}
+% \typesetfit{width}{content}: the content at natural size, scaled down only when wider than width,
+% and never below the floor; content too wide even at the floor is set at the floor and overflows,
+% which the build reports ("typeset-overflow").
+\newcommand{\typesetfit}[2]{\sbox{\typesetfitbox}{#2}\typeset@place{#1}{\f@size pt}}
+\def\typeset@place#1#2{%
+  \typeset@try{#1}{#2}%
+  \iftypesetfitok
+    \ifdim\wd\typesetfitbox>#1\relax\resizebox{#1}{!}{\usebox{\typesetfitbox}}\else\usebox{\typesetfitbox}\fi
+  \else
+    \edef\typeset@floorscale{\the\numexpr\number\typesetfloor*1000/\number\dimexpr#2\relax\relax}%
+    \ifnum\typeset@floorscale<1000
+      \typeout{typeset-scale: \typeset@floorscale}%
+      \scalebox{\strip@pt\dimexpr\typeset@floorscale pt/1000\relax}{\usebox{\typesetfitbox}}%
+    \else
+      \usebox{\typesetfitbox}%
+    \fi
+    \typeout{typeset-overflow: \the\wd\typesetfitbox\space into \the\dimexpr#1\relax}%
+  \fi}
+% \typesetdisplay{math}{split}: a display equation, and the same equation broken into lines at its
+% top-level \qquad separators (empty when it has none). The first of these that fits, never below the
+% floor, is used: the equation in the column; the split form in the column; the equation across both
+% columns (a strip at this point of the text); the split form across both columns.
+\def\typeset@show{%
+  \[\ifdim\wd\typesetfitbox>\linewidth\resizebox{\linewidth}{!}{\usebox{\typesetfitbox}}\else\usebox{\typesetfitbox}\fi\]}
+\def\typeset@strip{%
+  \typeout{typeset-strip: display}%
+  \par\begin{strip}\vspace{-\abovedisplayskip}\[\typeset@place{\textwidth}{\f@size pt}\]\vspace{-\belowdisplayskip}\end{strip}%
+  \noindent\ignorespaces}
+\long\def\typesetdisplay#1#2{%
+  \sbox{\typesetfitbox}{\(\displaystyle #1\)}%
+  \typeset@try{\linewidth}{\f@size pt}%
+  \iftypesetfitok\typeset@show\else
+    \long\def\typeset@alt{#2}%
+    \ifx\typeset@alt\@empty\typeset@strip\else
+      \sbox{\typesetfitbox}{\(\displaystyle #2\)}%
+      \typeset@try{\linewidth}{\f@size pt}%
+      \iftypesetfitok\typeset@show\else
+        \sbox{\typesetfitbox}{\(\displaystyle #1\)}%
+        \typeset@try{\textwidth}{\f@size pt}%
+        \iftypesetfitok\else\sbox{\typesetfitbox}{\(\displaystyle #2\)}\fi
+        \typeset@strip
+      \fi
+    \fi
+  \fi}
+% \typesetcolumntable{tabular}: an in-column table at natural size, in the column if it fits there
+% (tables are already at the floor size, so they are never scaled), otherwise across both columns.
+\long\def\typesetcolumntable#1{%
+  \sbox{\typesetfitbox}{\footnotesize #1}%
+  \ifdim\wd\typesetfitbox>\linewidth
+    \typeout{typeset-strip: table}%
+    \begin{strip}\centering\typeset@place{\textwidth}{\typesetfloor}\par\end{strip}%
+  \else
+    \begin{center}\usebox{\typesetfitbox}\end{center}%
+  \fi}
+\makeatother
+
+% For the build's report: how full each column is when it is made ("typeset-column: page columns
+% text floats height", lengths in sp). Float-only pages are made elsewhere and are not logged.
+\usepackage{etoolbox}
+\makeatletter
+\def\typeset@colfill{%
+  \setbox\z@\vbox{\unvcopy\@cclv}%
+  \typeout{typeset-column: \number\c@page\space\if@twocolumn 2\else 1\fi\space
+    \number\dimexpr\ht\z@+\dp\z@+\ht\footins+\dp\footins\relax\space
+    \number\dimexpr\textheight-\@colroom\relax\space\number\textheight}}
+\pretocmd{\@makecol}{\typeset@colfill}{}{\typeout{typeset-column: unavailable}}
+% A heading above the paper's section level (a part of the paper) is set as a centred divider.
+\newcounter{typesetpart}
+\newcommand{\typesetpart}[2]{\par\vspace{2.5ex plus 1ex}\stepcounter{typesetpart}%
+  \pdfbookmark[0]{#2}{typesetpart.\arabic{typesetpart}}%
+  {\centering\large\bfseries #1\par}\vspace{1.5ex plus .5ex}}
+\makeatother
+
+% Floats: allow full-width floats to take most of a page, and many to queue.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{3}
+\setcounter{totalnumber}{5}
+\extrafloats{200}
+\setkeys{Gin}{width=\linewidth,height=0.8\textheight,keepaspectratio}
+
+% Pandoc helpers.
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\pandocbounded}[1]{#1}
+\newcommand{\passthrough}[1]{#1}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\small\thepage}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{\small\thepage}}
+
+
+
+\begin{document}
+
+% Title block across both columns, with the abstract under it when the two leave room for the body to
+% start on page 1; otherwise the abstract opens the two-column body, so no page is left near-empty.
+\makeatletter
+\newsavebox{\typesettitle}
+\newsavebox{\typesetfront}
+\setbox\typesettitle=\vbox{%
+  \hsize=\textwidth \linewidth=\textwidth \columnwidth=\textwidth
+  \begingroup\centering
+  {\LARGE\bfseries A Finite-Volume Route to the Mass Gap of the OpenAI Yang--Mills Construction\par}
+  \vspace{0.8ex}{\large Reflection-positive clustering on its lattice tori, its passage to the continuum, and the inputs that remain\par}
+  \vspace{1.8ex}
+  {\normalsize Ikailo John Sessford\par}
+  \vspace{0.3ex}
+  {\small\itshape Ikailo Inc.\par}
+  {\small \href{mailto:john@ikailo.com}{\texttt{john@ikailo.com}}\quad ORCID \href{https://orcid.org/0009-0002-0150-4027}{0009-0002-0150-4027}\par}
+  \vspace{0.6ex}{\small Pre-print. 2026-11-12.\par}
+  \endgroup
+}
+\long\def\typesetrule{\vspace{1.6ex}\noindent\rule{\linewidth}{0.4pt}\par\vspace{1.5ex}}
+\long\def\typesetabstract{%
+OpenAI's construction of pure Yang--Mills theory {[}OpenAIYM{]}, assessed by the Yang--Mills group {[}YMGAssess1{]}, gives a Wightman theory as a subsequential scaling limit of four-dimensional Wilson lattice gauge theory and leaves a uniform mass gap (their open question 3) and the uniqueness of its vacuum open. We give a formalized route from one finite-volume inequality on its own lattice family to those questions. We prove that its Wilson laws, gauge groups and Haar measures are those of {[}MG{]} at twice the coupling. We prove that a seed, a bound on the doubling defect \(16\log Z(n)-\log Z(2n)\) of the torus at a side \(n\) of bounded physical size, gives every torus of its family, at every gauge group, a transfer gap and a reflection-positive clustering bound uniform in the spacing and the volume, for observables of the shape of its insertions. We prove that, given the seed, a reflection of its tokens with reflected tests, a bound on its smeared reflected correlations and vanishing thermal remainders, its lattice correlations satisfy a floored uniform decay at rate \(\log2/\ell\); that this decay passes through its limits and, with stated inputs on its phase decomposition, identifies its components; and that its Euclidean semigroup, built from its public spectral fields, has a gap at least the rate at which its field vectors cluster. A version of the decay without floors is refuted by its own short-distance law. The seed, the moment bound, the thermal remainder and the clustering of its selected phase are open.
+}
+\setbox\typesetfront=\vbox{%
+  \hsize=\textwidth \linewidth=\textwidth \columnwidth=\textwidth
+  \unvcopy\typesettitle
+  \vspace{2ex}
+  {\centering\small\bfseries Abstract\par}
+  \vspace{0.6ex}
+  \begin{list}{}{\setlength{\leftmargin}{0.06\textwidth}\setlength{\rightmargin}{0.06\textwidth}%
+    \setlength{\listparindent}{1.2em}\setlength{\itemindent}{0pt}\setlength{\parsep}{0.5ex}\setlength{\topsep}{0pt}}
+  \small\item\relax\typesetabstract
+  \end{list}
+  \typesetrule
+}
+% CHOSEN: the title block and abstract go across both columns only if they leave ten lines of each
+% column for the body on page 1. Ten lines is about a sixth of the page: enough that page 1 reads as
+% the start of the paper, small enough that only a long abstract moves into the columns.
+\ifdim\dimexpr\ht\typesetfront+\dp\typesetfront+10\baselineskip\relax<\textheight
+  \twocolumn[\unvbox\typesetfront]
+\else
+  \twocolumn[\unvbox\typesettitle\typesetrule]
+  {\centering\small\bfseries Abstract\par}\vspace{0.6ex}
+  {\small\setlength{\parskip}{0.5ex}\noindent\typesetabstract\par}
+  \typesetrule
+\fi
+\makeatother
+
+Text CC BY 4.0; code Apache-2.0.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{quote}
+Companion paper to \emph{The Mass Gap of \(SU(N)\) Gauge Theory Seen by an Observer of Fixed Physical Resolution} {[}MG{]}, in the same repository and release; it uses the Lean library \texttt{MassGap} of {[}MG{]}, and each theorem here is a numbered theorem of {[}MG{]}, section 4.8. It addresses the open questions of the Yang--Mills group's assessment {[}YMGAssess1{]} of the OpenAI construction {[}OpenAIYM{]}. Every theorem is formalized; what is not proved is stated as a named hypothesis. The mass gap is not proved.
+\end{quote}
+
+\subsection{Keywords}\label{keywords}
+
+Yang--Mills theory; mass gap; lattice gauge theory; reflection positivity; transfer operator; Osterwalder--Schrader reconstruction; Lean 4.
+
+\subsection{Mathematics Subject Classification (2020)}\label{mathematics-subject-classification-2020}
+
+81T13, 81T25, 82B20, 03B35.
+
+\section{1. Introduction}\label{1-introduction}
+
+\subsection{1.1 The construction and its open questions}\label{11-the-construction-and-its-open-questions}
+
+The construction of {[}OpenAIYM{]} chooses, for every closed matrix group with simple non-abelian Lie algebra, one Wilson lattice family whose bare coupling runs with \(\beta/\log(1/a)\) tending to a positive slope. Along a subsequence of torus sizes its renormalized correlations converge, first in the spacing at fixed physical volume and then in the volume; the limit decomposes into component theories, each satisfying the Osterwalder--Schrader axioms with clustering and reconstructing to a Wightman theory. The assessment {[}YMGAssess1{]} lists as open, among others: convergence and uniqueness of the infinite-volume limit (question 1) and a uniform mass gap, with exponential decay of correlations and a spectral gap of the Hamiltonian (question 3); in its §6.2 it notes that clustering of the undecomposed limit would identify the components and make the vacuum unique.
+
+\subsection{1.2 What this paper proves}\label{12-what-this-paper-proves}
+
+All statements are theorems of the Lean library of {[}MG{]}; section 8 maps them to declarations. Open inputs appear as named hypotheses.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The shared object (Theorem A). The Wilson laws of {[}OpenAIYM{]} are the laws of {[}MG{]} at twice the coupling, by a measure-preserving equivalence of configuration types; \(SU(N)\) is one of its gauge groups and its Haar measure is that of {[}MG{]}. Its proved trace law gives a kernel satisfying the asymptotic-freedom clause of the target of {[}MG{]} (Theorem B).
+\item
+  The seed and the torus gap (Theorem C). A seed at an even side \(n\) gives the transfer operator of every torus of its family of even side at least \(2n\), at every gauge group, a gap of at least \(\log2/n\) per step; on its schedule the seed side \(2\,\mathrm{den}_m\) has physical size \(2\).
+\item
+  Clustering (Theorem D). From the seed, the connected correlation of observables of slabs of slices with the time links between them, the shape of its insertions, decays at rate \(\log2/\ell\) uniformly in the torus, with constants that are reflected Wilson moments of the observables themselves and no bound on their size, except one thermal-remainder term.
+\item
+  The rate of the decay (Theorem E). From the seed, a reflection of its tokens with reflected tests, a bound on its smeared reflected correlations and vanishing thermal remainders, its lattice correlations satisfy a floored uniform decay (U) at rate \(\log2/\ell\).
+\item
+  The passage to the continuum (Theorems F, G). (U) passes through its limits; with stated inputs on its components, the components equal the mixture. A version of (U) without floors contradicts its short-distance law.
+\item
+  The Hamiltonian (Theorem H). Its Euclidean semigroup \(e^{-tH}\), built from its public spectral fields, satisfies every hypothesis of a clustering-to-gap theorem except clustering; its zero-energy subspace is the vacuum line; clustering of its field vectors at rate \(m\) gives \(E\{0<p_0<m\}=0\).
+\end{enumerate}
+
+\subsection{1.3 What is open}\label{13-what-is-open}
+
+\begin{itemize}
+\tightlist
+\item
+  The seed along its couplings: the doubling defect at a side of bounded physical size at most \(1/1000\), at every large cutoff. It is a variant of the open statement (S) of {[}MG{]} and is not proved at any large coupling.
+\item
+  The bound \(K_0\) on its smeared reflected correlations, uniform over the reflection planes that the construction fixes, with the reflection of its tokens and tests stated as named hypotheses.
+\item
+  The vanishing of the thermal remainders along its order of limits.
+\item
+  The inputs on its phase decomposition of Theorem G, and the clustering of the Euclidean readings of its selected phase in Theorem H.
+\end{itemize}
+
+Independence of the subsequence is not reached.
+
+\subsection{1.4 Relation to {[}MG{]}}\label{14-relation-to-mg}
+
+{[}MG{]} reduces a formalized existence-and-gap target to three open statements (S), (M), (E) about its own continuum construction. On the route of this paper existence is the construction of {[}OpenAIYM{]}, and neither (E) nor (M) is used.
+
+\section{2. The shared object}\label{2-the-shared-object}
+
+The construction of {[}OpenAIYM{]} and the development of {[}MG{]} share one object, the periodic Wilson law on a finite cubic torus. Write \(\beta\) for the coupling of {[}MG{]}, whose action sums \(1-\operatorname{Re}\operatorname{tr}\rho(U_p)/d\) over ordered plaquettes.
+
+\begin{quote}
+Theorem A ({[}MG, Theorem 4.44{]}). On every periodic lattice the action of {[}MG{]} is twice the sum over unordered planes used in {[}OpenAIYM{]}; the normalized Wilson laws agree at \(\beta_{\rm OAI}=2\beta\), and every expectation of {[}MG{]} at \(\beta\) is the integral against their law at \(2\beta\). A measurable equivalence of the configuration types carries plaquettes to plaquettes and the law of {[}MG{]} at \(\beta\) to the law of {[}OpenAIYM{]} at \(2\beta\) on their own configuration type, for every \(\sigma\)-finite single-link measure. \(SU(N)\) is one of their gauge groups, with Lie algebra \(\mathfrak{su}(N)\), and their Haar probability measure is carried to the Haar probability measure of {[}MG{]}.
+\end{quote}
+
+With the conversion \(\beta_{\rm OAI}=d\,\beta_{\rm lgt}\) of {[}YMGAssess1{]} this reads \(\beta_{\rm lgt}=2\beta/d\) in the normalization of {[}DouglasLGT{]}.
+
+\begin{quote}
+Theorem B ({[}MG, Theorem 4.45{]}). For every compact simple group, \(c_{\rm AF}=12\dim\mathfrak g/(\pi^4b_0^2)=(2/b_0)^2\cdot3\dim\mathfrak g/\pi^4\), \(b_0=11h^\vee/(48\pi^2)\). A complex kernel \(S\) with \(r^8\log^2(1/r)\,S(r)\to3\dim\mathfrak g/\pi^4\) as \(r\to0^+\), the form of the trace law of {[}OpenAIYM{]}, gives the kernel \(c^2\operatorname{Re}S\), \(c=\pm2/b_0\), that satisfies the asymptotic-freedom clause of the target of {[}MG{]}.
+\end{quote}
+
+The constant \(c_{\rm AF}\) of {[}MG{]} was fixed from perturbation theory, independently of {[}OpenAIYM{]}; that the target's kernel is their trace kernel at the normalization \(\operatorname{tr}F^2\leftrightarrow\pm(2/b_0)\Theta\) is not formalized.
+
+\section{3. The seed and the torus gap}\label{3-the-seed-and-the-torus-gap}
+
+The doubling defect of the cubic torus at side \(n\) and coupling \(\beta\) is \(D_\beta[n]=16\log Z_\beta(n)-\log Z_\beta(2n)\), a finite-size free energy with the bulk cancelled. The seed at side \(n\) is \(D_\beta[n]\le1/1000\). In {[}MG{]} the seed squares under doubling (\(D(2n)\le250\,D(n)^2\)) and, through the trace facts of the transfer kernel, gives a gap of the transfer operator on every torus of side \(2^kn\) {[}MG, Theorems 5.6, 5.7, 4.43{]}; one further step of real ratio between \(1\) and \(4\) after the dyadic climb reaches every even side at least \(2n\).
+
+\begin{quote}
+Theorem C ({[}MG, Theorem 4.46{]}). Let \(\ell>0\), let \(G\) be a gauge group of {[}MG, section 4.7{]} (in {[}OpenAIYM{]}, every closed subgroup of \(U(n+1)\), with their Haar measure), and let a \(G\) lattice family have spacings \(a_m\), couplings \(\beta_{m,p}\) in the normalization of {[}OpenAIYM{]} and cubic tori of even sides \(L_{m,p}\ge2n_m\), with \(n_m\ge2\) even and \(n_ma_m\le\ell\). If \(\beta_{m,p}\ge0\) and \(D_{\beta_{m,p}/2}[n_m]\le1/1000\) for all large \(m\) and all \(p\), then for all large \(m\) and all \(p\) the law of {[}OpenAIYM{]} on the torus at \((m,p)\) is the image of the law of {[}MG{]} at \(\beta_{m,p}/2\), whose transfer operator, on all of \(L^2\) of the slice and in every sector, has a unit top eigenvector \(\psi\) and satisfies \(\|K^{n_m}f\|\le\tfrac12\|K\|^{n_m}\|f\|\) for \(f\perp\psi\): a gap of at least \(\log2/\ell\) in physical units, uniform in the spacing and the volume.
+\end{quote}
+
+In the schedule of {[}OpenAIYM{]} the spacing is \(1/\mathrm{den}_m\) with \(\mathrm{den}_m\) odd and the side is a multiple of \(4\,\mathrm{den}_m\), so \(n_m=2\,\mathrm{den}_m\) meets the side hypothesis with \(\ell=2\) on every torus of their family. The seed itself, along their couplings, is open: it is not proved at any large coupling.
+
+\section{4. Clustering on their tori}\label{4-clustering-on-their-tori}
+
+\begin{quote}
+Theorem D ({[}MG, Theorem 4.47{]}). Under the hypotheses of Theorem C, for all large \(m\) and all \(p\):
+
+(i) on the torus of side \(L_{m,p}\) the transfer \(K\) has a unit eigenvector \(\psi\) with eigenvalue \(c\), \(\lvert c\rvert=\lVert K\rVert\ne0\), with \(\lvert\langle u,K^tw\rangle/c^t-\langle u,\psi\rangle\langle w,\psi\rangle\rvert\le2e^{-(\log2/\ell)\,t\,a_m}\lVert u\rVert\lVert w\rVert\) for every lag \(t\);
+
+(ii) for bounded measurable functions \(a,b\) of the spatial links of one time slice, with bounds \(A,B\), \(\lvert\langle a_0b_t\rangle-\langle a_0\rangle\langle b_t\rangle\rvert\le6AB\,(2^{-\lfloor t/n_m\rfloor}+2^{-\lfloor(L_{m,p}-t)/n_m\rfloor})\); the same bound, with \(L_{m,p}-t\) replaced by \(L_{m,p}-w-w'-t\), holds for bounded measurable functions of slabs of \(w+1\) and \(w'+1\) consecutive slices with the time links between them (\(w,w'\) even and positive), with both separations counted from the slab edges, when \(4(w+w')+8n_m\le L_{m,p}\);
+
+(iii) in reflection-positivity form, the two separated terms of that correlation are at most \(2^{-\lfloor (j+1)/n_m\rfloor}\sqrt{R_f R_{\theta g}}\) and \(2^{-\lfloor (j'+1)/n_m\rfloor}\sqrt{R_{\theta f}R_g}\), where \(R_f\) is the reflected reading of \(f\) at a separation \(s\) fixed in lattice units, \(t=s+j+1\), \(L_{m,p}-w-w'-t=s+j'+1\), and \(\theta f\) is \(f\) read on the time-reflected slab; the wrap-around term is at most \(2^{-\lfloor (j+1)/n_m\rfloor-\lfloor (j'+1)/n_m\rfloor}\sqrt{H_fH_g}+(\lvert\alpha_f\rvert+\sqrt{H_f})(\lvert\alpha_g\rvert+\sqrt{H_g})\,2^{-\lfloor L'/n_m\rfloor/2}\), \(L'=(L_{m,p}-w-w')/2\), with \(H_f\) the Hilbert--Schmidt reflected reading and \(\alpha_f\) the vacuum one-point reading;
+
+(iv) on the cubic torus of side \(L_{m,p}\ge8n_m\) every reading in (iii) is bounded by a Wilson moment \(\langle f_0\,(\theta f)_s\rangle\) of \(f\) with its reflection on the same torus, times \(1+\sigma_0\), \(\sigma_0\le2^{-\lfloor L_{m,p}/(2n_m)\rfloor}\), except the term \(\sqrt{D_L(f)D_L(g)}\), where the thermal remainder \(D_L(f)\ge0\) is the part of the reflected moment of \(f\) that the vacuum does not carry.
+\end{quote}
+
+No bound on the size of \(f\) or \(g\) enters the constants of (iii) and (iv), which is what the renormalized insertions of {[}OpenAIYM{]} require: their size grows as the spacing decreases, while their reflected moments at a fixed physical separation are separated two-point quantities. The slabs of (ii)--(iv) have the shape of their insertions, which read the links of a finite stencil. That \(D_L\) vanishes along their order of limits is not proved.
+
+The proof works at the level of the transfer kernel. A slab observable is a kernel insertion; time reflection of the slab is the transpose of its kernel, by inversion invariance of the Haar measure; a Hölder inequality for traces of kernel products, proved directly at kernel level, controls the wrap-around; and the trace identity of the torus turns kernel traces into Wilson correlations.
+
+\section{5. From the tori to their continuum theory}\label{5-from-the-tori-to-their-continuum-theory}
+
+The objects of {[}OpenAIYM{]} used here are restated in Lean from its public statement, line for line: the Wilson family, its finite moments, smearing and convergence clause, its regularity clause, and the fields of its hierarchy and reconstruction that are read.
+
+\subsection{5.1 The floored uniform decay}\label{51-the-floored-uniform-decay}
+
+\begin{quote}
+Theorem E ({[}MG, Theorem 4.52{]}). Let \(\ell>0\), and let their family satisfy their regularity and convergence clauses, with at least one insertion in the first group. Suppose that every torus side of their family is even, as on their schedule, and, eventually along their order of limits: \(\beta\ge0\) and the seed holds at their couplings on even sides \(n\ge2\) with \(na\le\ell\); for every \(\delta,\varepsilon>0\) a constant \(K_0\) bounds the reflected moments of the slab observables built from their smeared insertions by \(K_0\lVert t\rVert_1^2\); and their thermal remainders are at most \(\eta\lVert t_1\rVert_1\lVert t_2\rVert_1\) for every \(\eta>0\). Then for every pair of groups of insertions, every \(\delta,\varepsilon>0\) and tests whose second group lies at least \(\tau\ge\delta\) later in time than the first, with points within each group at least \(\varepsilon\) apart, the smeared connected lattice correlation is at most \(K\lVert t_1\rVert_1\lVert t_2\rVert_1e^{-\mu\tau}\) eventually along their order of limits, with \(\mu=\log2/\ell\) and \(K=4(8K_0(e^{\mu\delta/2}+1)+1)\): the floored uniform decay (U).
+\end{quote}
+
+The proof places two slabs of slices around the supports of the two tests on each torus; moves their time axis to the transfer axis and their first slab to slice \(0\) by invariance of their law; reads their smeared insertions as window-local observables from their stencils; factorizes the tensor test; splits the complex correlation into four real ones; applies Theorem D(iv) to each; and converts lattice gaps to physical time. Under a reflection of their tokens, stated as a named hypothesis, and given reflected tests at the reflection planes the placement fixes, whose existence is an input, the reflected moments are smeared moments of their insertions paired with the reflected insertions under their law; so the hypothesis on \(K_0\) is a bound on their own smeared correlations, uniform over those planes. These moments are nonnegative by reflection positivity on each torus, and their order of volumes tends to infinity by their convergence clause; both are proved. The hypothesis on \(K_0\) asks for a bound, uniform in the test, on their reflected correlations at configurations whose groups may spread arbitrarily far; their public statement bounds their correlations only on compact sets of separated configurations, so the hypothesis is not supplied by it. It asks for boundedness, and Theorem E returns exponential decay at the rate of the seed.
+
+\subsection{5.2 Through their limits and their phases}\label{52-through-their-limits-and-their-phases}
+
+\begin{quote}
+Theorem F ({[}MG, Theorems 4.48, 4.50 (i){]}). A bound \(\lvert c_{m,p}(\tau)\rvert\le Ce^{-\mu\tau}\) holding for all large \(m\) and all \(p\) holds for every limit taken first in \(m\), along any filter tending to infinity, possibly depending on \(p\), and then in \(p\). Consequently, for a hierarchy of {[}OpenAIYM{]} satisfying its lattice convergence, representation, mixture, continuity, full-support, normalization and smoothness clauses, (U) gives, for every \(\delta,\varepsilon>0\), a bound \(Ke^{-\mu\tau}\) on the connected mixed correlation of {[}OpenAIYM{]} at separated points whose groups keep their points \(\varepsilon\) apart, with the second group at least \(\tau\ge\delta\) later than the first.
+\end{quote}
+
+\begin{quote}
+Theorem G ({[}MG, Theorems 4.48 (i), 4.50 (ii), (iii){]}). (i) For such a hierarchy, if (U) holds for every pair of groups of insertions with \(\mu>0\), the components of {[}OpenAIYM{]} cluster in time, observables carry a conjugation, the component correlations are uniformly bounded and the mixed correlation is invariant under time translation, then every component correlation equals the mixed correlation at every separated configuration: the identification of {[}YMGAssess1, §6.2{]}. (ii) The floors of (U) are necessary: a bound with one constant at every gap, including \(\tau=0\), together with the identification of (i), contradicts their short-distance law for the trace, whose amplitude is positive.
+\end{quote}
+
+Part (ii) is why (U) is stated with constants depending on a minimum gap and a minimum separation: a connected two-point function bounded at coincident points is excluded for a field of positive dimension, and their trace law exhibits one.
+
+\section{6. Their Euclidean semigroup and the gap}\label{6-their-euclidean-semigroup-and-the-gap}
+
+\begin{quote}
+Theorem H ({[}MG, Theorems 4.49, 4.51{]}). For a Wightman theory with the fields of the public statement of {[}OpenAIYM{]} (spectral representation, positive energy, unique vacuum, normalized and cyclic vacuum, dense domain, vacuum invariance), \(S(t)=\int e^{-tp_0}\,dE(p)\), \(t\ge0\), over its energy-momentum spectral measure \(E\) is a family of bounded self-adjoint operators with \(S(0)=1\), \(S(s+t)=S(s)S(t)\), \(\lVert S(t)\rVert\le1\) and \(S(t)\Omega=\Omega\), and the span of its field vectors is dense. The zero-energy subspace \(E\{p_0\le0\}\) is the line of \(\Omega\). If every pair of field vectors \(v,w\) has \(\lvert\langle v,S(t)w\rangle-\langle v,\Omega\rangle\langle\Omega,w\rangle\rvert\le C_{v,w}e^{-mt}\) with \(m>0\), then \(\lVert S(t)u\rVert\le e^{-mt}\lVert u\rVert\) for \(u\perp\Omega\), \(E\{0<p_0<m\}=0\), the generator \(H\) has \(\langle u,Hu\rangle\ge m\lVert u\rVert^2\) on its domain orthogonal to \(\Omega\), and its kernel is the line of \(\Omega\).
+\end{quote}
+
+Mathlib has no integral against a projection-valued measure; the functional calculus used is built for bounded measurable weights from the spectral representation of {[}OpenAIYM{]}, through simple-function approximation and the Riesz representation.
+
+The clustering hypothesis is stated on their Minkowski-smeared field vectors, the only dense set their public statement provides. That these readings are the Euclidean values of their selected correlations is their Osterwalder--Schrader reconstruction; it is not restated here, and the clustering of those values is an input.
+
+\section{7. Against their open questions}\label{7-against-their-open-questions}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\begin{tabular}{L{0.125\textwidth}L{0.404\textwidth}L{0.291\textwidth}L{0.114\textwidth}}
+\toprule
+Question of {[}YMGAssess1, §8{]} & Proved here & Named input & Not addressed \\
+\midrule
+1. Convergence and uniqueness of the infinite-volume limit & Under (U) and the component inputs, every component equals the mixture
+(Theorem G), the identification of their §6.2 & (U) via Theorem E; component clustering, conjugation, uniform bound,
+time invariance & Independence of the subsequence \\
+2. A probability measure for the continuum theory & --- & --- & Not addressed \\
+3. A uniform mass gap & On each torus of their family, from the seed: a transfer gap and
+clustering at rate \(\log2/\ell\), uniform in the spacing and the volume
+(Theorems C, D); (U) at that rate (Theorem E); passage through their
+limits (Theorem F); a spectral gap from clustering of their Euclidean
+semigroup (Theorem H) & The seed along their couplings; the reflection of their tokens and
+tests; the bound \(K_0\) on their smeared reflected correlations;
+vanishing thermal remainders; clustering of their selected Euclidean
+readings & Carrying the rate of (U) to their selected phase without the clustering
+input \\
+4. Wilson loops and the area law & --- & --- & Not addressed \\
+5. Single-particle states & --- & --- & Not addressed \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{8. Lean}\label{8-lean}
+
+Every theorem of this paper is a numbered theorem of {[}MG{]}: A--H are {[}MG, Theorems 4.44--4.52{]} as cited. The declarations, their open hypotheses and the modules are listed in the rows 4.44--4.52 of the theorem-to-Lean map of {[}MG{]} (\texttt{research/\allowbreak{}paper/\allowbreak{}v3/\allowbreak{}04-{}\allowbreak{}reduction.\allowbreak{}lean-{}\allowbreak{}map.\allowbreak{}md}) and in \texttt{research/\allowbreak{}FORMALIZATION.\allowbreak{}md}. The modules of this route are \texttt{OpenAIDictionary}, \texttt{OpenAIConfig}, \texttt{OpenAIBridgeSides}, \texttt{OpenAIBridgeCluster}, \texttt{OpenAIBridgeUniform}, \texttt{OpenAIBridgeGroups}, \texttt{OpenAIBridgeSlab}, \texttt{OpenAIBridgeRP}, \texttt{OpenAIBridgeCubic}, \texttt{OpenAIBridgeCompose}, \texttt{OpenAIBridgeGlue}, \texttt{OpenAIBridgeLimits}, \texttt{OpenAILink}, \texttt{OpenAIBridgeGap} and \texttt{OpenAISemigroup}, under \texttt{research/\allowbreak{}lean/\allowbreak{}MassGap/\allowbreak{}}.
+
+The library builds on Lean 4.31.0 with the pinned Mathlib; it has no \texttt{sorry}, and its theorems depend only on \texttt{propext}, \texttt{Classical.\allowbreak{}choice} and \texttt{Quot.\allowbreak{}sound}. The definitions of {[}OpenAIYM{]} that are used are restated in these modules with file and line citations of its public statement, since its development (Lean 4.32.0) cannot be imported. Build instructions are in the repository README, section ``Lean''.
+
+\section{9. References}\label{9-references}
+
+{[}DouglasLGT{]} M. R. Douglas, \emph{lgt: Lattice Gauge Theory in Lean 4}, \href{https://github.com/mrdouglasny/lgt}{https:\allowbreak{}/\allowbreak{}/\allowbreak{}github.\allowbreak{}com/\allowbreak{}mrdougla\allowbreak{}sny/\allowbreak{}lgt}, commit b8793ccf\allowbreak{}6a51e00e\allowbreak{}9e2b1685\allowbreak{}ba191b86\allowbreak{}26e37137 (Lean 4 toolchain leanprov\allowbreak{}er/\allowbreak{}lean4:\allowbreak{}v4.\allowbreak{}30.\allowbreak{}0)\allowbreak{}, 22 July 2026, headline theorems in the module LGT/\allowbreak{}MassGap/\allowbreak{}StrongCo\allowbreak{}upling.\allowbreak{}lean, Apache-2.0. Software; unrefereed; no DOI.
+
+{[}MG{]} I. J. Sessford, \emph{The Mass Gap of \(SU(N)\) Gauge Theory Seen by an Observer of Fixed Physical Resolution}, release v0.4.1 of \href{https://github.com/Agience/entroptics-mass-gap}{https:\allowbreak{}/\allowbreak{}/\allowbreak{}github.\allowbreak{}com/\allowbreak{}Agience/\allowbreak{}entropti\allowbreak{}cs-\allowbreak{}mass-\allowbreak{}gap}, Zenodo concept DOI \href{https://doi.org/10.5281/zenodo.22652660}{https:\allowbreak{}/\allowbreak{}/\allowbreak{}doi.\allowbreak{}org/\allowbreak{}10.\allowbreak{}5281/\allowbreak{}zenodo.\allowbreak{}22652660}, 2026. The main paper of this repository; its Lean library \texttt{MassGap} carries the theorems of this paper. Unrefereed preprint with software.
+
+{[}OpenAIYM{]} OpenAI, \emph{Wilson Yang--Mills construction}, Lean 4 development submitted to the Yang--Mills group on 28 October 2026, \href{https://github.com/yang-mills-group/OpenAI-YM-20261028}{https:\allowbreak{}/\allowbreak{}/\allowbreak{}github.\allowbreak{}com/\allowbreak{}yang-\allowbreak{}mills-\allowbreak{}group/\allowbreak{}OpenAI-\allowbreak{}YM-\allowbreak{}20261028}, commit 3456e5e7\allowbreak{}5cf8d4cd\allowbreak{}558955a5\allowbreak{}c7638fba\allowbreak{}2d68f464 (Lean 4 toolchain leanprov\allowbreak{}er/\allowbreak{}lean4:\allowbreak{}v4.\allowbreak{}32.\allowbreak{}0)\allowbreak{}, headline theorem in the module Solution.lean, Apache-2.0. Software; unrefereed; no DOI.
+
+{[}YMGAssess1{]} Yang--Mills group, \emph{Validation of the OpenAI Yang--Mills construction}, assessment 1, 10 November 2026, \href{https://github.com/yang-mills-group/YM}{https:\allowbreak{}/\allowbreak{}/\allowbreak{}github.\allowbreak{}com/\allowbreak{}yang-\allowbreak{}mills-\allowbreak{}group/\allowbreak{}YM}, commit 55ba9fc3\allowbreak{}6293b3f4\allowbreak{}d52c6b1f\allowbreak{}813169a0\allowbreak{}be76ee98\allowbreak{}, file docs/assessment-1.pdf (SHA-256 8e658c00\allowbreak{}900bf723\allowbreak{}cbe90436\allowbreak{}eb1f78fc\allowbreak{}a4f287e0\allowbreak{}08a85c21\allowbreak{}fdceaf59\allowbreak{}e61db219\allowbreak{})\allowbreak{}. Unrefereed.
+
+\end{document}

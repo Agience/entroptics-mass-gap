@@ -1327,3 +1327,34 @@ theorem familyCluster_of_seed {N : ℕ} (hN : N ≠ 0) (β : ℕ → ℕ → ℝ
 end Wilson
 
 end MassGap.OpenAIBridgeCluster
+
+#print axioms MassGap.OpenAIBridgeCluster.pow_mul_orth_le
+#print axioms MassGap.OpenAIBridgeCluster.pow_orth_decay
+#print axioms MassGap.OpenAIBridgeCluster.pow_sub_vac_le
+#print axioms MassGap.OpenAIBridgeCluster.inner_pow_sub_le
+#print axioms MassGap.OpenAIBridgeCluster.inner_pow_div_sub_le
+#print axioms MassGap.OpenAIBridgeCluster.half_pow_div_le_exp
+#print axioms MassGap.OpenAIBridgeCluster.trPow_eq_cyc
+#print axioms MassGap.OpenAIBridgeCluster.bdd_left
+#print axioms MassGap.OpenAIBridgeCluster.bdd_right
+#print axioms MassGap.OpenAIBridgeCluster.bdd_const
+#print axioms MassGap.OpenAIBridgeCluster.iint_add
+#print axioms MassGap.OpenAIBridgeCluster.abs_iint_le
+#print axioms MassGap.OpenAIBridgeCluster.abs_mul_le_amgm
+#print axioms MassGap.OpenAIBridgeCluster.conn_alg
+#print axioms MassGap.OpenAIBridgeCluster.exists_eigenfun
+#print axioms MassGap.OpenAIBridgeCluster.rem_symm
+#print axioms MassGap.OpenAIBridgeCluster.iter_rem_diag
+#print axioms MassGap.OpenAIBridgeCluster.abs_integral_remFun_le
+#print axioms MassGap.OpenAIBridgeCluster.connTorus_le
+#print axioms MassGap.OpenAIBridgeCluster.sq_integral_remFun_le
+#print axioms MassGap.OpenAIBridgeCluster.hs_iter_rem_le
+#print axioms MassGap.OpenAIBridgeCluster.half_pow_div_le
+#print axioms MassGap.OpenAIBridgeCluster.excited_succ_le
+#print axioms MassGap.OpenAIBridgeCluster.connTorus_decay
+#print axioms MassGap.OpenAIBridgeCluster.ZR_eq_trPow
+#print axioms MassGap.OpenAIBridgeCluster.wilson_decay_sharp
+#print axioms MassGap.OpenAIBridgeCluster.wilson_connTorus_le
+#print axioms MassGap.OpenAIBridgeCluster.wilson_connTorus_decay
+#print axioms MassGap.OpenAIBridgeCluster.wilson_cluster_uniform
+#print axioms MassGap.OpenAIBridgeCluster.familyCluster_of_seed

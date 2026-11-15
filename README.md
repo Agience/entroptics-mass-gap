@@ -1,6 +1,6 @@
 # The Mass Gap of SU(N) Gauge Theory Seen by an Observer of Fixed Physical Resolution
 
-Release v0.4.1 (2026-11-12) · Ikailo John Sessford (Ikailo Inc.)
+Release v0.4.2 (2026-11-15) · Ikailo John Sessford (Ikailo Inc.)
 
 Paper: [PDF](research/paper/mass-gap.pdf) (two-column) · [LaTeX source](research/paper/mass-gap.tex) · [HTML](research/paper/mass-gap.html)
 
@@ -31,6 +31,8 @@ QCD data is when I realized Entroptics could read the substrate the universe is 
 what came of that.
 
 ## Lean
+
+The library also formalizes Sections 2–4 of the 4Y-M paper *Thermal Purity Bounds for Yang–Mills Theory at Weak Coupling* (modules `PurityBound`, `PurityStability`, `PurityGap`; see [`research/FORMALIZATION.md`](research/FORMALIZATION.md)).
 
 Toolchain `leanprover/lean4:v4.31.0`, Mathlib `v4.31.0`; install [`elan`](https://github.com/leanprover/elan) first.
 

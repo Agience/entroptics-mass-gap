@@ -717,3 +717,6 @@ import MassGap.OpenAIBridgeRP -- the OpenAI bridge: the separated terms of the s
 import MassGap.OpenAIBridgeCubic -- the OpenAI bridge: the reflection-positivity bound with every constant a cubic-torus Wilson moment, and the thermal remainder named
 import MassGap.OpenAIBridgeCompose -- the OpenAI bridge: (U) at the seed rate log 2/l from the per-torus cubic bound on their smeared insertions
 import MassGap.OpenAIBridgeGlue -- the OpenAI bridge: their law read on our transfer axis, translation invariance, tensor-test factorization, window-local observables and their reflection
+import MassGap.PurityBound -- 4Y-M Paper 2, Sections 2-4: the sharp purity-to-excited-weight conversion, its chord and the 1/161 one-scale datum, on the trace facts and on the Wilson transfer kernel of every gauge group
+import MassGap.PurityStability -- 4Y-M Paper 2, Propositions 3.1 and 3.2 on finite-dimensional spaces: trace-norm stability of the purity and the truncation bound 2 sqrt q + q, by a sign operator and trace duality
+import MassGap.PurityGap -- 4Y-M Paper 2, Theorem 2.2 (2.3): the sharp purity bound as an operator gap on the vacuum complement of a symmetric kernel operator

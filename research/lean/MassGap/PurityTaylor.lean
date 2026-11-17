@@ -72,10 +72,12 @@ theorem gap_log_sharp {p T : ℝ} (hp : 1 / 2 < p) (hp1 : p < 1) (hT : 0 < T) :
 /-- `s ε = √(2e^{−ε} − 1)`. -/
 noncomputable def s (ε : ℝ) : ℝ := √(2 * exp (-ε) - 1)
 
-/-- The paper's pressure form `F ε = −log ((√(2e^{−ε} − 1) + 1)/2)`, (2.5). -/
+/-- The paper's pressure form `F ε = −log ((√(2e^{−ε} − 1) + 1)/2)`, (2.5). DERIVED: `2.5` is
+the paper's equation number; `2`, `1` are the paper's constants in (2.5). -/
 noncomputable def F (ε : ℝ) : ℝ := -log ((√(2 * exp (-ε) - 1) + 1) / 2)
 
-/-- The paper's `B ε = e^{F ε} − 1`, (2.5). -/
+/-- The paper's `B ε = e^{F ε} − 1`, (2.5). DERIVED: `2.5` is the paper's equation number; `1`
+the paper's constant in (2.5). -/
 noncomputable def B (ε : ℝ) : ℝ := exp (F ε) - 1
 
 theorem s_nonneg (ε : ℝ) : 0 ≤ s ε := Real.sqrt_nonneg _

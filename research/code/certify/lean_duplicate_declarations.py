@@ -77,9 +77,11 @@ def _statement(tail: str) -> str:
         # DERIVED: 0 is the bracket level a declaration opens at; a proof can
         # only start there.
         elif depth == 0:
+            # DERIVED: `0` is the start of the text; a keyword there has no preceding character.
             if tail.startswith("let ", i) and (i == 0 or not (tail[i - 1].isalnum() or tail[i - 1] in "_.'")):
                 lets += 1
             elif tail.startswith(":=", i):
+                # DERIVED: `0` open `let`s; this `:=` is the declaration's own.
                 if lets == 0:
                     break
                 lets -= 1

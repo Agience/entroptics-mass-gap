@@ -350,11 +350,17 @@ jobs:
           PY
 
   # ================================================================================================
-  # github-release -- create the GitHub Release once the gate passes. Zenodo archives the release.
+  # tests -- the full consistency suite on the exact sha being released. No release without it.
+  # ================================================================================================
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  # ================================================================================================
+  # github-release -- create the GitHub Release once both gates pass. Zenodo archives the release.
   # ================================================================================================
   github-release:
     name: create the GitHub Release
-    needs: readiness
+    needs: [readiness, tests]
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
     permissions:

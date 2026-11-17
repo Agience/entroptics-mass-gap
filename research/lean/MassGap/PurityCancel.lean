@@ -194,7 +194,8 @@ theorem mem_slitPlane_of_near_one {Z : ℂ} (h : ‖Z - 1‖ ≤ 1 / 2) : Z ∈ 
   simp only [Complex.sub_re, Complex.one_re] at this
   linarith
 
-/-- `R = log(3/2)/(12VT)`. -/
+/-- `R = log(3/2)/(12VT)`. DERIVED: `12VT` the bound `|A_{2T}| ≤ 12VT` (six plaquettes per site
+on `V · 2T` sites); `3/2 = 1 + 1/2`, so `|w| A ≤ log(3/2)` gives `|e^{wA}| ≤ 3/2`. -/
 noncomputable def radius (V : ℝ) (T : ℕ) : ℝ := Real.log (3 / 2) / (12 * V * T)
 
 theorem radius_pos {V : ℝ} {T : ℕ} (hV : 0 < V) (hT : 0 < T) : 0 < radius V T := by

@@ -25,7 +25,8 @@ namespace MassGap.PuritySU2Bessel
 open MeasureTheory Polynomial Polynomial.Chebyshev Real MassGap.PuritySU2Character
 
 /-- The modified Bessel function of the first kind of order `n ∈ ℕ` (DLMF 10.32.3),
-`I_n(b) = (1/π) ∫₀^π e^{b cos θ} cos (nθ) dθ`. -/
+`I_n(b) = (1/π) ∫₀^π e^{b cos θ} cos (nθ) dθ`. DERIVED: `10.32.3` is the DLMF equation
+number; `1/π` and `0` the normalization and lower end of that integral. -/
 noncomputable def besselI (n : ℕ) (b : ℝ) : ℝ :=
   1 / π * ∫ θ in (0 : ℝ)..π, exp (b * cos θ) * cos (n * θ)
 

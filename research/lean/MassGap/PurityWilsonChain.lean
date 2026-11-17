@@ -55,7 +55,9 @@ def ax (V : TT μ T ⊕ SpT μ T → SUN.SU N) : TT μ T → SUN.SU N := fun y =
 noncomputable def sliceAct (V V' : TT μ T ⊕ SpT μ T → SUN.SU N) : ℝ :=
   spT μ T (sl μ T V) + 2 * tpT μ T (ax μ T V) (sl μ T V) (sl μ T V')
 
-/-- The plaquette action of a slice and of the temporal plaquettes to the next slice. -/
+/-- The plaquette action of a slice and of the temporal plaquettes to the next slice. DERIVED:
+`6 = C(4,2)` the unoriented plaquettes per site in four dimensions; `2` because `spT` sums ordered
+pairs `(ν, ν')` and counts each spatial plaquette twice, as in `PurityPlaqCount.action_eq`. -/
 noncomputable def bondW (V V' : TT μ T ⊕ SpT μ T → SUN.SU N) : ℝ :=
   6 * ∏ j, (T j : ℝ) - sliceAct μ T V V' / 2
 

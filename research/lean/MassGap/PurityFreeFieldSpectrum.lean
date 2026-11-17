@@ -34,7 +34,8 @@ namespace MassGap.PurityFreeFieldSpectrum
 open Real MeasureTheory Set Metric
 open MassGap.PurityFreeFieldLimit (rho one_le_log)
 
-/-- The mass-momentum space `(s, p)`, `s` the squared mass, `p ∈ ℝ³`. -/
+/-- The mass-momentum space `(s, p)`, `s` the squared mass, `p ∈ ℝ³`. DERIVED: `3` the spatial
+dimension. -/
 abbrev P := ℝ × EuclideanSpace ℝ (Fin 3)
 
 /-- `E(s, p) = √(|p|² + s)`. -/
@@ -43,7 +44,8 @@ noncomputable def energy (x : P) : ℝ := sqrt (‖x.2‖ ^ 2 + x.1)
 /-- `ρ(s)/(2E)`. -/
 noncomputable def density (c : ℝ) (x : P) : ℝ := rho c x.1 / (2 * energy x)
 
-/-- The base measure `ds|_{(0,∞)} ⊗ d³p`. -/
+/-- The base measure `ds|_{(0,∞)} ⊗ d³p`. DERIVED: `3` the spatial dimension; `0` the lower end
+of the squared-mass range. -/
 noncomputable def base : Measure P :=
   (volume.restrict (Ioi (0 : ℝ))).prod (volume : Measure (EuclideanSpace ℝ (Fin 3)))
 

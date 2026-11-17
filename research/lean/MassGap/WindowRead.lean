@@ -263,17 +263,13 @@ theorem var_double_sub (hN : N ≠ 0) (β : ℝ) (n : ℕ) :
 
 /-! ## 3. The ultralocal point: the cut energy vanishes -/
 
-theorem finRotate_ne {m : ℕ} (hm : 2 ≤ m) (i : Fin m) : finRotate m i ≠ i := by
-  obtain ⟨n, rfl⟩ : ∃ n, m = n + 2 := ⟨m - 2, by omega⟩
-  exact Equiv.Perm.mem_support.1 (by rw [support_finRotate]; exact Finset.mem_univ i)
-
 /-- A step along an extent `≥ 2` moves every site. DERIVED: `2` the least extent with two sites. -/
 theorem rshift_ne (L : Fin 4 → ℕ) {i : Fin 4} (hL : 2 ≤ L i) (x : RectWilson.RSite L) :
     RectWilson.rshift L i x ≠ x := by
   intro h
   have h1 := congrFun h i
   simp only [RectWilson.rshift, Function.update_self] at h1
-  exact finRotate_ne hL (x i) h1
+  exact RectWilson.finRotate_ne hL (x i) h1
 
 /-- **A holonomy right-covariant under one link's translation pushes product Haar to Haar.** The proof of
 `ContactFloor.integral_hol_clay`, at an arbitrary finite link set, `SU(N)` and holonomy. -/
@@ -480,7 +476,6 @@ end MassGap.WindowRead
 #print axioms MassGap.WindowRead.blockAction_abs_le
 #print axioms MassGap.WindowRead.varAction_eq_sum_cov
 #print axioms MassGap.WindowRead.var_double_sub
-#print axioms MassGap.WindowRead.finRotate_ne
 #print axioms MassGap.WindowRead.rshift_ne
 #print axioms MassGap.WindowRead.integral_comp_hol
 #print axioms MassGap.WindowRead.hol_translate

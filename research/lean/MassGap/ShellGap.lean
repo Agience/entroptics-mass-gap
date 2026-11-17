@@ -142,14 +142,7 @@ and the spectral measure's total mass is `Re ⟪u, u⟫`. DERIVED: `1` the const
 square. -/
 theorem rateMeasure_real_univ_le (ha : IsSelfAdjoint a) (hsp : spectrum ℝ a ⊆ Icc 0 1) (u : E) :
     (rateMeasure a u).real univ ≤ ‖u‖ ^ 2 := by
-  have hv : (vecMeasure a u).real univ = ‖u‖ ^ 2 := by
-    have h := re_inner_cfc_eq_integral hsp u (continuous_const (y := (1 : ℝ)))
-    beta_reduce at h
-    rw [cfc_const_one ℝ a ha, ContinuousLinearMap.one_apply, integral_const, smul_eq_mul,
-      mul_one] at h
-    rw [← h]
-    exact inner_self_eq_norm_sq (𝕜 := ℂ) u
-  rw [← hv]
+  rw [← MassGap.ShellMeasure.vecMeasure_real_univ ha hsp u]
   refine ENNReal.toReal_mono (measure_ne_top _ _) ?_
   unfold rateMeasure
   rw [Measure.map_apply measurable_rate MeasurableSet.univ, preimage_univ,

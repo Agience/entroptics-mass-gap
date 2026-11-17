@@ -131,13 +131,6 @@ theorem integrable_sq_of_bdd {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hC :
   integrable_of_bdd (hf.pow_const 2) (C := C ^ 2) (fun x => by
     rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC x) 2)
 
-theorem integrable_rowsq {F : X → X → ℝ} (hF : Bdd F) :
-    Integrable (fun x => ∫ z, F x z ^ 2 ∂μ) μ := by
-  obtain ⟨C, hC⟩ := hF.bdd
-  exact integrable_of_bdd (measurable_integral_right (hF.meas.pow_const 2)) (C := C ^ 2)
-    (fun x => abs_integral_le fun z => by
-      rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC x z) 2)
-
 theorem measurable_kapply (ha : Bdd a) (hφm : Measurable φ) : Measurable (kapply μ a φ) :=
   measurable_integral_right (F := fun y z => a y z * φ z) (ha.meas.mul (hφm.comp measurable_snd))
 
@@ -292,16 +285,8 @@ theorem exists_reading (ha : Bdd a) {c : ℝ} (hc : 0 < c)
     rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCc y x₀) 2
   have hGb : ∀ x₀, |G x₀| ≤ C ^ 2 := fun x₀ => abs_integral_le fun x => by
     rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC x x₀) 2
-  have hFint : ∫ x₀, F x₀ ∂μ = hs μ (conv μ a a) := by
-    unfold hs
-    refine (swap_bdd (μ := μ) (F := fun y x₀ => conv μ a a y x₀ ^ 2) (hcc.meas.pow_const 2)
-      (C := Cc ^ 2) (fun y x₀ => ?_)).symm
-    rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCc y x₀) 2
-  have hGint : ∫ x₀, G x₀ ∂μ = hs μ a := by
-    unfold hs
-    refine (swap_bdd (μ := μ) (F := fun x x₀ => a x x₀ ^ 2) (ha.meas.pow_const 2)
-      (C := C ^ 2) (fun x x₀ => ?_)).symm
-    rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC x x₀) 2
+  have hFint : ∫ x₀, F x₀ ∂μ = hs μ (conv μ a a) := hs_swap hcc
+  have hGint : ∫ x₀, G x₀ ∂μ = hs μ a := hs_swap ha
   have hGlow : ∀ x₀, c ^ 2 ≤ G x₀ := by
     intro x₀
     have hm := integral_mono (μ := μ) (integrable_const (c ^ 2))

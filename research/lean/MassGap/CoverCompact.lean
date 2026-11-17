@@ -75,7 +75,7 @@ necessary nor sufficient for a stall. Argued: the conjunction "connected and no 
 Ricci curvature (Milnor, cited), the floor of `CurveFloor`.
 
 DERIVED (module-wide): `2π` the period of the circle; `π/3 = 2π/6` the charge quantum over the six faces of a cube; `2` the
-least side on which the links of a cube are distinct (`CubeFlux.finRotate_ne_self`); `3` the dimension of `SO(3)`'s
+least side on which the links of a cube are distinct (`RectWilson.finRotate_ne`); `3` the dimension of `SO(3)`'s
 matrices and the three directions of a cube; `5` the letters of `A₅`, the least `n` at which `A_n` is perfect and the
 dimension of its permutation representation; `−1` the cosine of the half-turn; `0`, `1` the signs, the units and the charge
 floor. CHOSEN: the witness angles `wθ`, `wa`, on `d = 2`, side `2`; the corner configuration `corner`; the regular unit in
@@ -404,11 +404,11 @@ theorem corner_off (i j k : Fin d) (x : TSite d L) (a b c : G) (e : Fin d) {y : 
   simp [h]
 
 theorem shift_ne (hL : 2 ≤ L) (a : Fin d) (x : TSite d L) : tshift a x ≠ x :=
-  site_ne a (by rw [tshift_self']; exact finRotate_ne_self hL _)
+  site_ne a (by rw [tshift_self']; exact RectWilson.finRotate_ne hL _)
 
 theorem shift2_ne (hL : 2 ≤ L) {a b : Fin d} (h : a ≠ b) (x : TSite d L) :
     tshift a (tshift b x) ≠ x :=
-  site_ne b (by rw [tshift_apply_ne (Ne.symm h), tshift_self']; exact finRotate_ne_self hL _)
+  site_ne b (by rw [tshift_apply_ne (Ne.symm h), tshift_self']; exact RectWilson.finRotate_ne hL _)
 
 /-- The corner relation forced by exact conservation. -/
 theorem corner_relation (Q : G → A) (hL : 2 ≤ L) {i j k : Fin d} (hij : i ≠ j) (hjk : j ≠ k)

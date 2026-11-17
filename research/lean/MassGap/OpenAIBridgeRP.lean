@@ -944,12 +944,8 @@ theorem hs_conv_rem_le {P : X → X → ℝ} (hP : Bdd P) (m : ℕ) :
   unfold hs
   rw [← integral_const_mul]
   refine integral_mono ?_ ?_ hrow
-  · exact integrable_of_bdd (measurable_integral_right (hPJ.meas.pow_const 2)) (C := CPJ ^ 2)
-      (fun x => abs_integral_le fun y => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCPJ x y) 2)
-  · exact (integrable_of_bdd (measurable_integral_right (hP.meas.pow_const 2)) (C := CP ^ 2)
-      (fun x => abs_integral_le fun y => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCP x y) 2)).const_mul _
+  · exact integrable_rowsq hPJ
+  · exact (integrable_rowsq hP).const_mul _
 
 include hφm hφb hφ1 hkm hC0 hkb hsym heig hnorm hgap in
 /-- **The excited–excited trace in reflection form**: if `L = (j+1) + (j'+1) + W + W'` with

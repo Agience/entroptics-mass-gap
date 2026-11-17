@@ -86,7 +86,7 @@ DERIVED (module-wide): `0` the curvature of the circle, the signs and the bounds
 group, the circle gap `1²` and the unit in `1 + x ≤ eˣ`; `2` the doubling of `zoomTime` and the matrix
 size of `SU(2)`; `3 = 2² − 1` the first Laplacian eigenvalue on the unit `S³`; `4` in `N/4` the Ricci
 constant of `SU(N)` (inherited from `CondGap`); `2` in `N ≥ 2` the least torus side on which the cube's
-faces are distinct (`CubeFlux.finRotate_ne_self`). CHOSEN: the triple `iσ₃`, `iσ₂`, `sigC`
+faces are distinct (`RectWilson.finRotate_ne`). CHOSEN: the triple `iσ₃`, `iσ₂`, `sigC`
 (`GapSideTwistFlat.sigA`, `sigB` and their product's inverse).
 -/
 
@@ -280,7 +280,7 @@ theorem single_not_closed (hN : 2 ≤ N) {i j k : Fin d} (hij : i ≠ j) (hki : 
   have h1 : cubeFlux (Pi.mulSingle ((i, j), x) g) i j k x = 1 :=
     (show ∀ a b c y, cubeFlux (Pi.mulSingle ((i, j), x) g) a b c y = 1 from h) i j k x
   have s : tshift k x ≠ x :=
-    site_ne k (by simp only [tshift_self']; exact finRotate_ne_self hN _)
+    site_ne k (by simp only [tshift_self']; exact RectWilson.finRotate_ne hN _)
   apply hg
   rw [← h1]
   unfold cubeFlux

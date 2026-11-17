@@ -56,9 +56,12 @@ def _statement(tail: str) -> str:
     ⛔ The first `:=` is the wrong place to stop. Lean writes named arguments the same way, so
     `(O : (wilsonSystem bd (wilsonDensity (N := N))).Config → ℝ)` truncates the statement mid-binder
     and every theorem in that family collapses to one key. That produced 54 false duplicates and
-    nothing else. Only a `:=` at bracket depth zero begins a proof.
+    nothing else. Only a `:=` at bracket depth zero begins a proof, and not one that closes a
+    `let` in the statement: `: let τ := t; P τ` binds `τ`, and stopping there keeps only the binder
+    list, so every theorem with the same arguments collapses to one key.
     """
     depth = 0
+    lets = 0
     i = 0
     n = len(tail)
     while i < n:
@@ -74,8 +77,14 @@ def _statement(tail: str) -> str:
         # DERIVED: 0 is the bracket level a declaration opens at; a proof can
         # only start there.
         elif depth == 0:
-            if tail.startswith(":=", i):
-                break
+            if tail.startswith("let ", i) and (i == 0 or not (tail[i - 1].isalnum() or tail[i - 1] in "_.'")):
+                lets += 1
+            elif tail.startswith(":=", i):
+                if lets == 0:
+                    break
+                lets -= 1
+                i += 2
+                continue
             if tail.startswith(" by", i) and (i + 3 == n or tail[i + 3] in " \n"):
                 break
         i += 1

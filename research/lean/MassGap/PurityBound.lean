@@ -20,10 +20,12 @@ sharp bound.
   `purity_two_level`: the two-level spectrum `(1, d p)` has purity `p`, so the bound is attained.
   `d_antitoneOn`, `excited_le_of_purity_ge`: a certified bound `P ≥ p > 1/2` gives `s ≤ d p`.
 * `twoLevel u = −log (e^{−2u} + (1 − e^{−u})²)`, the defect of the two-level spectrum with
-  `log (1 + s) = u`; on `[0, log 2]` it is the inverse of the paper's `F`.
+  `log (1 + s) = u`; on `[0, log 2]` it is the inverse of the paper's `F` (`PurityTaylor.twoLevel_F`,
+  `PurityTaylor.F_twoLevel`).
   `twoLevel_le_defect`: `twoLevel (log (1 + s)) ≤ defect a m`.
 * `twoLevel_strictMonoOn`, `twoLevel_concaveOn`, `twoLevel_chord` on `[0, log 2]`
-  (paper, Lemma 2.4: `F` increasing and convex, with the chord bound).
+  (the inverse side of Lemma 2.4; `PurityTaylor.F_strictMonoOn`, `F_convexOn`, `F_chord` transfer
+  them to `F`).
 * `purity_mem_of_intervals`, `defect_le_of_approx`: certified intervals (paper, Proposition 3.3).
 * `pressure_le`: paper, Theorem 4.1, with `u_m = F (ε_m)`. `inv161_le_twoLevel`: `1/161 ≤ twoLevel (1/320)`.
   `window_datum`: paper, Corollary 4.2.
@@ -208,7 +210,7 @@ theorem hasDerivAt_twoLevel (u : ℝ) :
     have h := (he.pow 2).add (((hasDerivAt_const u (1:ℝ)).sub he).pow 2)
     have hf : pur = fun x => exp (-x) ^ 2 + (1 - exp (-x)) ^ 2 := rfl
     rw [hf]
-    exact h.congr_deriv (by norm_num <;> ring)
+    exact h.congr_deriv (by norm_num; ring)
   have h := (hp.log (pur_pos u).ne').neg
   have hf : twoLevel = fun y => -log (pur y) := rfl
   rw [hf]

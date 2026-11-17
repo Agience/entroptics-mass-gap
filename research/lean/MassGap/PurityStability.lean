@@ -46,6 +46,7 @@ theorem abs_re_trace_mul_le {D : E →ₗ[𝕜] E} (hD : D.IsSymmetric) (X : E �
   rw [abs_mul]
   exact mul_le_of_le_one_right (abs_nonneg _) (hX i)
 
+omit [FiniteDimensional 𝕜 E] in
 /-- The diagonal entries of a density operator in any orthonormal basis lie in `[0, 1]`. -/
 theorem diag_mem {ρ : E →ₗ[𝕜] E} (hρ : ρ.IsPositive) (hρ1 : trace 𝕜 E ρ = 1)
     {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι 𝕜 E) (i : ι) :
@@ -112,7 +113,7 @@ theorem sgnOp_basis (j : Fin n) :
       ((sgn hn hD j : ℝ) : 𝕜) • hD.eigenvectorBasis hn j := by
   rw [sgnOp_apply]
   have h := orthonormal_iff_ite.mp (hD.eigenvectorBasis hn).orthonormal
-  simp [h, ite_smul, smul_ite, Finset.sum_ite_eq, Finset.sum_ite_eq']
+  simp [h, ite_smul, smul_ite, Finset.sum_ite_eq']
 
 theorem abs_sgn (i : Fin n) : |sgn hn hD i| = 1 := by
   unfold sgn; split_ifs <;> simp
@@ -148,12 +149,14 @@ end Sign
 
 section Truncation
 
+omit [FiniteDimensional 𝕜 E] in
 /-- A symmetric idempotent `P` has `‖P x‖² = re⟪x, P x⟫`. -/
 theorem norm_sq_proj {P : E →ₗ[𝕜] E} (hPs : P.IsSymmetric) (hPP : P * P = P) (x : E) :
     ‖P x‖ ^ 2 = re ⟪x, P x⟫_𝕜 := by
   have hpp : P (P x) = P x := by rw [← Module.End.mul_apply, hPP]
   rw [← inner_self_eq_norm_sq (𝕜 := 𝕜), hPs x (P x), hpp]
 
+omit [FiniteDimensional 𝕜 E] in
 theorem norm_proj_le {P : E →ₗ[𝕜] E} (hPs : P.IsSymmetric) (hPP : P * P = P) (x : E) :
     ‖P x‖ ≤ ‖x‖ := by
   have h1 := norm_sq_proj hPs hPP x
@@ -163,11 +166,13 @@ theorem norm_proj_le {P : E →ₗ[𝕜] E} (hPs : P.IsSymmetric) (hPP : P * P =
   nlinarith [norm_nonneg x, norm_nonneg (P x), mul_lt_mul_of_pos_right hc'
     (lt_of_le_of_lt (norm_nonneg x) hc')]
 
+omit [FiniteDimensional 𝕜 E] in
 theorem compl_sym {P : E →ₗ[𝕜] E} (hPs : P.IsSymmetric) : (1 - P).IsSymmetric := by
   intro x y
   rw [LinearMap.sub_apply, LinearMap.sub_apply, Module.End.one_apply, Module.End.one_apply,
     inner_sub_left, inner_sub_right, hPs x y]
 
+omit [FiniteDimensional 𝕜 E] in
 theorem compl_idem {P : E →ₗ[𝕜] E} (hPP : P * P = P) : (1 - P) * (1 - P) = 1 - P := by
   calc (1 - P) * (1 - P) = 1 - P - P + P * P := by noncomm_ring
     _ = 1 - P := by rw [hPP]; abel
@@ -176,6 +181,7 @@ theorem compl_idem {P : E →ₗ[𝕜] E} (hPP : P * P = P) : (1 - P) * (1 - P) 
 noncomputable def trunc (ρ P : E →ₗ[𝕜] E) : E →ₗ[𝕜] E :=
   (((1 - re (trace 𝕜 E ((1 - P) * ρ)))⁻¹ : ℝ) : 𝕜) • (P * ρ * P)
 
+omit [FiniteDimensional 𝕜 E] in
 theorem trunc_sym {ρ P : E →ₗ[𝕜] E} (hρ : ρ.IsSymmetric) (hPs : P.IsSymmetric) :
     (ρ - trunc ρ P).IsSymmetric := by
   intro x y

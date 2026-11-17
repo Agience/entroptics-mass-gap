@@ -162,7 +162,7 @@ theorem integral_kernelFun_sq_le {h : X → X → ℝ} (hh : Bdd h) (f : Lp ℝ 
   have hCh0 : ∀ x y, |h x y| ^ 2 ≤ Ch ^ 2 := fun x y => pow_le_pow_left₀ (abs_nonneg _) (hCh x y) 2
   have hf2 : Integrable (fun y => (f : X → ℝ) y ^ 2) μ := (Lp.memLp f).integrable_sq
   have hf1 : Integrable (f : X → ℝ) μ := (Lp.memLp f).integrable one_le_two
-  have hnf : ‖f‖ ^ 2 = ∫ y, (f : X → ℝ) y ^ 2 ∂μ := norm_sq_eq_integral f
+  have hnf : ‖f‖ ^ 2 = ∫ y, (f : X → ℝ) y ^ 2 ∂μ := SlabTransferAdjoint.norm_sq_eq_integral f
   have hpt : ∀ x, kernelFun h μ (f : X → ℝ) x ^ 2 ≤ (∫ y, h x y ^ 2 ∂μ) * ‖f‖ ^ 2 := by
     intro x
     rw [hnf]
@@ -172,8 +172,7 @@ theorem integral_kernelFun_sq_le {h : X → X → ℝ} (hh : Bdd h) (f : Lp ℝ 
   rw [hs, ← integral_mul_const]
   refine integral_mono_of_nonneg (Filter.Eventually.of_forall fun x => sq_nonneg _) ?_
     (Filter.Eventually.of_forall hpt)
-  exact (integrable_of_bdd (measurable_integral_right (hh.meas.pow_const 2)) (C := Ch ^ 2)
-    (fun x => abs_integral_le fun y => by rw [abs_pow]; exact hCh0 x y)).mul_const _
+  exact (integrable_rowsq hh).mul_const _
 
 end Kernel
 
@@ -195,7 +194,7 @@ noncomputable def vac (hφm : Measurable φ) (hφb : ∀ x, |φ x| ≤ B) : Lp �
 
 include hφ1 in
 theorem norm_vac : ‖vac (μ := μ) hφm hφb‖ = 1 := by
-  have h := norm_sq_eq_integral (vac (μ := μ) hφm hφb)
+  have h := SlabTransferAdjoint.norm_sq_eq_integral (vac (μ := μ) hφm hφb)
   have : ∫ x, ((vac (μ := μ) hφm hφb : Lp ℝ 2 μ) : X → ℝ) x ^ 2 ∂μ = 1 := by
     rw [← hφ1]
     refine integral_congr_ae ?_
@@ -254,7 +253,7 @@ theorem norm_opPow_sq_le (j : ℕ) (hj : 1 ≤ j) (f : Lp ℝ 2 μ)
     have j1 : Integrable (fun y => (c ^ (j - 1 + 1) * φ x) * (φ y * (f : X → ℝ) y)) μ :=
       i1.const_mul _
     rw [e, integral_add j1 i2, integral_const_mul, hf0, mul_zero, zero_add]
-  rw [norm_sq_eq_integral]
+  rw [SlabTransferAdjoint.norm_sq_eq_integral]
   calc ∫ x, ((((kernelCLM k C hkm hC0 hkb μ μ) ^ j) f : Lp ℝ 2 μ) : X → ℝ) x ^ 2 ∂μ
       = ∫ x, kernelFun (iter μ (rem k c φ) (j - 1)) μ (f : X → ℝ) x ^ 2 ∂μ := by
         refine integral_congr_ae ?_

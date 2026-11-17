@@ -52,18 +52,22 @@ control `n_N · a_N ≤ ℓ`, from the reflection-positivity bound of
 
 ## Scope
 
-`CubicForm` is not proved for their family. What it packages beyond `openAI_slab_conn_cubic` is
-glue on their objects that no module builds: the smeared insertion of a time-spread test, split
-into real and imaginary parts, as a bounded measurable slab observable of their configuration read
-through `configEquiv⁻¹` (stencil locality of their insertions); the transfer direction: their time
-axis is `OpenAILink.timeAxis = 3` while the slabs of `wilson_slab_conn_cubicG` are cut along axis
-`0`, and `OpenAIConfig.linkEquiv` keeps axes, so an axis permutation symmetry of their law (or the
-cubic bound along axis `3`) is needed; time-translation invariance of their law, to place the first
-slab at slice `0`; the reflection closure of their tokens, so that the
-reflected moments are smeared moments of their family; a bound on those moments at physical
-separation at least a floor, uniform over the lattice reflection planes; and the vanishing thermal
-remainder. The seed along their couplings with scale control and even sides are inputs of
-`openAI_slab_conn_cubic`.
+`CubicForm` follows from its inputs by `OpenAIBridgeGlue.cubicForm_of_inputs`: a valid placement of
+the reflection planes, a bound `K₀ ≥ 0` on the nonnegative reflected moments, and the relative
+vanishing of the excited–excited terms. The glue on their objects is built in `OpenAIBridgeGlue`: the smeared
+insertion as a slab-local observable (`OpenAIBridgeGlue.timeWindowLocal_smearIns`), the exchange of
+their time axis `3` with the transfer direction `0` (`OpenAIBridgeGlue.integral_pull_axis`) and the
+shift invariance of their action (`OpenAIBridgeGlue.action_shiftLinkPerm`). The open inputs are the
+seed along their couplings with even sides, the reflection of their tokens
+(`OpenAIBridgeGlue.TokenReflection`), the existence of reflected tests
+(`OpenAIBridgeGlue.ReflectedTest`), the bound on the reflected moments
+(`OpenAIBridgeK0.ReflectedMomentBound`) and the thermal-remainder bound.
+Downstream: `OpenAIBridgeK0.placement_clear` and `OpenAIBridgeGlue.placement_exists` place the
+reflection planes, `OpenAIBridgeK0.hK0_of_reflectedMomentBound` gives `K₀` from a bound on the
+reflected moments, `OpenAIBridgeShift.mixedTimeInvariance_of_covariance` gives the time invariance
+from covariance of their insertions, `OpenAIBridgeSeed.seedClause_of_runSeed` gives the seed on the
+running schedule, and `OpenAIBridgeThermal.thermalRemainderVanishes_of_bound` reduces the thermal
+remainder to a bound on reflected moments on tori shortened in time.
 -/
 
 namespace MassGap.OpenAIBridgeCompose

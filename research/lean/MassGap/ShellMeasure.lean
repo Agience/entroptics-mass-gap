@@ -36,6 +36,7 @@ self-adjoint `cfc` is `0` and both sides are `0`.
 
 * `re_inner_cfc_eq_integral`: `Re ⟪u, g(a) u⟫ = ∫ g dμ_u` for every continuous `g : ℝ → ℝ`. This is the
   spectral theorem for one vector, proved from the continuous functional calculus and RMK.
+* `vecMeasure_real_univ`: `σ_u([0, 1]) = ‖u‖²` for self-adjoint `a`, from `g = 1`.
 
 ## 2. The Laplace form of the time correlator (proved)
 
@@ -169,6 +170,17 @@ theorem re_inner_cfc_eq_integral {a : E →L[ℂ] E} (hsp : spectrum ℝ a ⊆ I
     _ = stateMap a u G := rfl
     _ = ∫ x, G x ∂(vecMeasure a u) := h1.symm
     _ = ∫ x, g x.1 ∂(vecMeasure a u) := rfl
+
+/-- **The spectral measure has mass `‖u‖²`**: the constant function `1`. DERIVED: `1` the constant
+function; `2` the square. -/
+theorem vecMeasure_real_univ {a : E →L[ℂ] E} (ha : IsSelfAdjoint a) (hsp : spectrum ℝ a ⊆ Icc 0 1)
+    (u : E) : (vecMeasure a u).real univ = ‖u‖ ^ 2 := by
+  have h := re_inner_cfc_eq_integral hsp u (continuous_const (y := (1 : ℝ)))
+  beta_reduce at h
+  rw [cfc_const_one ℝ a ha, ContinuousLinearMap.one_apply, integral_const, smul_eq_mul,
+    mul_one] at h
+  rw [← h]
+  exact inner_self_eq_norm_sq (𝕜 := ℂ) u
 
 /-! ## 2. The Laplace form of the time correlator -/
 
@@ -455,6 +467,7 @@ end
 end MassGap.ShellMeasure
 
 #print axioms MassGap.ShellMeasure.re_inner_cfc_eq_integral
+#print axioms MassGap.ShellMeasure.vecMeasure_real_univ
 #print axioms MassGap.ShellMeasure.rateMeasure_Iio
 #print axioms MassGap.ShellMeasure.re_inner_powT_eq_laplace
 #print axioms MassGap.ShellMeasure.powT_laplaceRep

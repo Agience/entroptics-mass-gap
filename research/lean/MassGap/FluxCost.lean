@@ -202,22 +202,16 @@ def VortexCostAt (σ A ℓ : ℝ) : Prop :=
     ∀ i : Fin 4, ∀ ν : {j : Fin 4 // j ≠ i},
       1 - zR (Lc n i) i ν.1 β ≤ A * Real.exp (-(σ * ((n : ℝ) * AsymptoticScaling.aRun 2 β)))
 
-theorem even_of_pow2 {n : ℕ} (hn : PeriodicState.IsPow2 n) (h2 : 2 ≤ n) : Even n := by
-  obtain ⟨b, rfl⟩ := hn
-  rcases Nat.eq_zero_or_pos b with h0 | h0
-  · subst h0; norm_num at h2
-  · exact DeltaLengthTower.even_two_pow h0
-
 /-- **At `SU(2)` the single-plane form is the vortex form.** -/
 theorem planeCostAt_two_iff {σ A ℓ : ℝ} : PlaneCostAt 2 σ A ℓ ↔ VortexCostAt σ A ℓ := by
   constructor
   · intro h
     filter_upwards [h, eventually_ge_atTop (0 : ℝ)] with β hβ hβ0 n hn h2 hlo hup i ν
-    rw [← twistRatioN_eq_zR hβ0 h2 (even_of_pow2 hn h2) i ν]
+    rw [← twistRatioN_eq_zR hβ0 h2 (hn.even h2) i ν]
     exact hβ n hn h2 hlo hup i ν
   · intro h
     filter_upwards [h, eventually_ge_atTop (0 : ℝ)] with β hβ hβ0 n hn h2 hlo hup i ν
-    rw [twistRatioN_eq_zR hβ0 h2 (even_of_pow2 hn h2) i ν]
+    rw [twistRatioN_eq_zR hβ0 h2 (hn.even h2) i ν]
     exact hβ n hn h2 hlo hup i ν
 
 /-- **At `SU(2)` the flux half is the vortex form**, up to the constant. -/

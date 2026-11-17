@@ -53,19 +53,10 @@ variable {N n : ℕ}
 
 /-! ## 1. The torus shifts -/
 
-/-- `finRotate` moves every point once the side is at least `2`. DERIVED: `2` the least side with two
-distinct sites. -/
-theorem finRotate_ne (hn : 2 ≤ n) (a : Fin n) : finRotate n a ≠ a := by
-  obtain ⟨m, rfl⟩ : ∃ m, n = m + 2 := ⟨n - 2, by omega⟩
-  intro h
-  rw [finRotate_apply] at h
-  have h1 : (1 : Fin (m + 2)) = 0 := by simpa using congrArg (fun z => z - a) h
-  exact absurd (congrArg Fin.val h1) (by simp)
-
 /-- `finRotate` reaches every point from every point. DERIVED: `2` the least side. -/
 theorem reach (hn : 2 ≤ n) (a b : Fin n) : ∃ k : ℕ, (finRotate n)^[k] a = b := by
   obtain ⟨m, rfl⟩ : ∃ m, n = m + 2 := ⟨n - 2, by omega⟩
-  obtain ⟨k, hk⟩ := (isCycle_finRotate (n := m)).exists_pow_eq (finRotate_ne hn a) (finRotate_ne hn b)
+  obtain ⟨k, hk⟩ := (isCycle_finRotate (n := m)).exists_pow_eq (RectWilson.finRotate_ne hn a) (RectWilson.finRotate_ne hn b)
   exact ⟨k, by rw [Equiv.Perm.iterate_eq_pow]; exact hk⟩
 
 theorem tshift_injective (i : Fin 2) : Function.Injective (tshift (d := 2) (n := n) i) := by
@@ -84,7 +75,7 @@ theorem tshift_ne (hn : 2 ≤ n) (i : Fin 2) (x : TSite 2 n) : tshift i x ≠ x 
   intro h
   have := congrFun h i
   simp only [tshift, Function.update_self] at this
-  exact finRotate_ne hn _ this
+  exact RectWilson.finRotate_ne hn _ this
 
 theorem tshift_iter (i : Fin 2) (x : TSite 2 n) (k : ℕ) :
     (tshift i)^[k] x = Function.update x i ((finRotate n)^[k] (x i)) := by
@@ -567,7 +558,6 @@ theorem strongEnd_of_aniso (hN : N ≠ 0) (h : ∃ᶠ β in atTop, AnisoTorus.An
 
 end MassGap.TwoDVanish
 
-#print axioms MassGap.TwoDVanish.finRotate_ne
 #print axioms MassGap.TwoDVanish.reach
 #print axioms MassGap.TwoDVanish.tshift_injective
 #print axioms MassGap.TwoDVanish.tshift_ne

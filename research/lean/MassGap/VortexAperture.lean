@@ -632,7 +632,7 @@ def ElecCostAt (σ A ℓ : ℝ) : Prop :=
 theorem elecCostAt_of_vortexCostAt {σ A ℓ : ℝ} (h : FluxCost.VortexCostAt σ A ℓ) :
     ElecCostAt σ A ℓ := by
   filter_upwards [h, eventually_ge_atTop (0 : ℝ)] with β hβ hβ0 n hn h2 hlo hup i ν
-  have he := FluxCost.even_of_pow2 hn h2
+  have he := hn.even h2
   have hz1 := VortexCondense.zR_Lc_le_one hβ0 h2 he i ν
   have hz0 := (zR_pos (Lc n i) i ν.1 β).le
   rw [elecRatio_eq hβ0 h2 he i ν]
@@ -642,7 +642,7 @@ theorem elecCostAt_of_vortexCostAt {σ A ℓ : ℝ} (h : FluxCost.VortexCostAt �
 theorem vortexCostAt_of_elecCostAt {σ A ℓ : ℝ} (h : ElecCostAt σ A ℓ) :
     FluxCost.VortexCostAt σ (2 * A) ℓ := by
   filter_upwards [h, eventually_ge_atTop (0 : ℝ)] with β hβ hβ0 n hn h2 hlo hup i ν
-  have he := FluxCost.even_of_pow2 hn h2
+  have he := hn.even h2
   have hz1 := VortexCondense.zR_Lc_le_one hβ0 h2 he i ν
   have hz0 := (zR_pos (Lc n i) i ν.1 β).le
   have hE := hβ n hn h2 hlo hup i ν
@@ -1180,7 +1180,7 @@ theorem effCondensationAt_of_elec {κ r ℓ : ℝ} (hr : 0 ≤ r)
     EffCondensationAt κ r ℓ := by
   filter_upwards [h, eventually_ge_atTop (0 : ℝ)] with β hβ hβ0 n hn h2 hlo hup i ν
   obtain ⟨m, hm1, hκm, hE⟩ := hβ n hn h2 hlo hup i ν
-  have he := FluxCost.even_of_pow2 hn h2
+  have he := hn.even h2
   have hz1 := VortexCondense.zR_Lc_le_one hβ0 h2 he i ν
   have hz0 := zR_pos (Lc n i) i ν.1 β
   rw [elecRatio_eq hβ0 h2 he i ν] at hE

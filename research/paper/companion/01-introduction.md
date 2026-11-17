@@ -17,10 +17,10 @@ All statements are theorems of the Lean library of [MG]; section 8 maps them to 
 
 ## 1.3 What is open
 
-- The seed along its couplings: the doubling defect at a side of bounded physical size at most $1/1000$, at every large cutoff. It is a variant of the open statement (S) of [MG] and is not proved at any large coupling.
-- The bound $K_0$ on its smeared reflected correlations, uniform over the reflection planes that the construction fixes, with the reflection of its tokens and tests stated as named hypotheses.
-- The vanishing of the thermal remainders along its order of limits.
-- The inputs on its phase decomposition of Theorem G, and the clustering of the Euclidean readings of its selected phase in Theorem H.
+- The seed at the running spacing: the doubling defect of $SU(N)$ at a side of bounded physical size at most $1/1000$, at every large coupling. When the image of its gauge group is $SU(N)$ and its couplings follow the running schedule, which exists for every family's spacing, it gives the seed along its couplings (Theorem E). For $SU(2)$ it is equivalent to a bound on the doubling defect at one physical length: a bound on the doubling defect of the torus of one physical side, uniform as the coupling grows. It is a variant of the open statement (S) of [MG] and is not proved at any large coupling.
+- The bound on its finite lattice moments of an insertion list followed by its reflection, at separated configurations in the box of the volume, uniform in the spacing, the volume, the reflection plane and the spread of the points, which gives the bound $K_0$ on its smeared reflected correlations; the placement of the reflection planes clear of the supports of its tests is proved. The reflection of its tokens and tests is stated as named hypotheses.
+- The vanishing of the thermal remainders along its order of limits. Each remainder is at most the gap contraction over part of its separations times a reflected moment at the shorter separations on a torus shortened in time ([MG, Theorem 4.56]), with no bound on the supremum of its insertions. Shortening by $q'+1=nj$ steps with $j=\lfloor\sqrt{\lfloor h/n\rfloor}\rfloor$ and $h$ the half-side, so that $q'+1$ is at most the fraction $1/j$ of $h$, the contraction $(1/2)^{2j}$ tends to zero as the period grows ([MG, Theorem 4.57]); the excited weight there is at most $1$ and the input is a bound on the reflected moments on those shortened tori, uniform along its order of limits, which holds with the bound $B^2$ when its insertions are at most $B$ times the transfer power over their steps, with $B$ uniform along its order of limits. Its law is stated on cubic tori and does not give it.
+- The inputs on its phase decomposition of Theorem G (component clustering, conjugation, the uniform component bound and covariance of the insertions), and the clustering of the Euclidean readings of its selected phase in Theorem H.
 
 Independence of the subsequence is not reached.
 

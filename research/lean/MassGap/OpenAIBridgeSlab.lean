@@ -145,13 +145,7 @@ theorem tp_iter {r : X → X → ℝ} (hr : Bdd r) (hrs : ∀ x y, r x y = r y x
 /-- Transposing keeps the Hilbert–Schmidt norm: `hs(Pᵀ) = hs(P)`, one Fubini swap.
 
 DERIVED: `2` is the square of the Hilbert–Schmidt norm. -/
-theorem hs_tp {P : X → X → ℝ} (hP : Bdd P) : hs μ (tp P) = hs μ P := by
-  obtain ⟨C, hC⟩ := hP.bdd
-  have hm : Measurable (Function.uncurry (fun x y => P y x ^ 2)) :=
-    (hP.meas.comp measurable_swap).pow_const 2
-  simp only [hs, tp]
-  exact swap_bdd hm (C := C ^ 2) (fun x y => by
-    rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC y x) 2)
+theorem hs_tp {P : X → X → ℝ} (hP : Bdd P) : hs μ (tp P) = hs μ P := hs_swap hP
 
 /-- **The trace is cyclic**: `trc(P ∗ Q) = trc(Q ∗ P)` (`OpenAIBridgeUniform.diag_conv_comm`).
 
@@ -234,10 +228,7 @@ theorem hs_le_of_abs_le {P Q : X → X → ℝ} (hP : Bdd P) (hQ : Bdd Q)
     rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCQ x z) 2
   unfold hs
   refine integral_mono
-    (integrable_of_bdd (measurable_integral_right (hP.meas.pow_const 2)) (C := CP ^ 2)
-      (fun x => abs_integral_le fun z => bP x z))
-    (integrable_of_bdd (measurable_integral_right (hQ.meas.pow_const 2)) (C := CQ ^ 2)
-      (fun x => abs_integral_le fun z => bQ x z)) (fun x => ?_)
+    (integrable_rowsq hP) (integrable_rowsq hQ) (fun x => ?_)
   refine integral_mono (integrable_of_bdd ((hP.row x).pow_const 2) (bP x))
     (integrable_of_bdd ((hQ.row x).pow_const 2) (bQ x)) (fun z => ?_)
   show P x z ^ 2 ≤ Q x z ^ 2
@@ -941,10 +932,7 @@ theorem trPow_even (i : ℕ) :
     rw [iter_decomp hk hsym hφm hφb hφ1 heig (i + i + 1) x x,
       iter_rem_diag hkm hkb hsym hφm hφb i x]
     ring
-  have hD : Integrable (fun x => ∫ y, iter μ (rem k c φ) i x y ^ 2 ∂μ) μ :=
-    integrable_of_bdd (measurable_integral_right (hRi.meas.pow_const 2)) (C := Ci ^ 2)
-      (fun x => abs_integral_le fun y => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCi x y) 2)
+  have hD : Integrable (fun x => ∫ y, iter μ (rem k c φ) i x y ^ 2 ∂μ) μ := integrable_rowsq hRi
   have hφ1' : ∫ x, φ x * φ x ∂μ = 1 := by simpa [sq] using hφ1
   unfold trPow
   simp_rw [hpt]

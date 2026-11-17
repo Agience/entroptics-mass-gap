@@ -382,7 +382,7 @@ theorem onset_of_sectorSeedMeasured (hN : N ≠ 0) (h : SectorSeedMeasured hN) :
   refine ⟨2 ^ k * C, by positivity, ?_⟩
   filter_upwards [hev, eventually_ge_atTop (0 : ℝ)] with β hβS hβ
   obtain ⟨hm, n, hp, hn2, hnm, hs⟩ := hβS
-  have he : Even n := FluxDuality.even_of_pow2 hp hn2
+  have he : Even n := hp.even hn2
   have hd := defectW_le_of_sectorsN hβ hn2 he hs
   have hsh := defectW_sharp hβ hn2 he hd k
   have hk1 : 1 ≤ 2 ^ k := Nat.one_le_two_pow
@@ -426,7 +426,7 @@ theorem climb_of_onset (hN : N ≠ 0) (h : SectorOnset N hN) :
   filter_upwards [hev, eventually_ge_atTop (0 : ℝ)] with β hβS hβ
   obtain ⟨hm, n, hp, hn2, hnm, hs⟩ := hβS
   exact ⟨hm, n, hp, hn2, hnm,
-    sectors_pow hβ hn2 (FluxDuality.even_of_pow2 hp hn2) (eps0_pos N).le le_rfl hs⟩
+    sectors_pow hβ hn2 (hp.even hn2) (eps0_pos N).le le_rfl hs⟩
 
 end Wilson
 

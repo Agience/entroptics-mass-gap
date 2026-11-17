@@ -265,7 +265,7 @@ theorem rshift2_ne {i j : Fin 4} (hij : i ≠ j) (hL : 2 ≤ L i) (x : RSite L) 
   intro h
   have h1 := congrFun h i
   simp only [rshift, Function.update_self, Function.update_of_ne hij] at h1
-  exact WindowRead.finRotate_ne hL (x i) h1
+  exact RectWilson.finRotate_ne hL (x i) h1
 
 /-- **The gauge rotation of the links of directions `0` and `1`** by a site function `h`:
 `U(l) ↦ h(x) U(l) h(x + l)⁻¹` on those links, the identity on the links of directions `2` and `3`.

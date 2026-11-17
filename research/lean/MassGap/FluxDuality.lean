@@ -671,13 +671,6 @@ capture at step `i` has the two-slice law of the corner torus. DERIVED: `0`, `2`
 def CapturesReadTorus (cap : ℝ → ℕ → Fin 4 → State (Cfg N)) : Prop :=
   ∀ β : ℝ, 0 ≤ β → ∀ n : ℕ, 2 ≤ n → Even n → ∀ i : Fin 4, TwoSliceLaw (cap β n i) β n i
 
-omit [NeZero N] in
-/-- DERIVED: `2`. -/
-theorem even_of_pow2 {n : ℕ} (hp : PeriodicState.IsPow2 n) (hn2 : 2 ≤ n) : Even n := by
-  obtain ⟨b, hb⟩ := hp
-  have hb0 : b ≠ 0 := by rintro rfl; rw [hb] at hn2; norm_num at hn2
-  rw [hb]; exact Nat.even_pow.mpr ⟨even_two, hb0⟩
-
 /-- **The read seed gives the measured seed.** DERIVED: `0`. -/
 theorem sectorSeedMeasured_of_read (hN : N ≠ 0) {cap : ℝ → ℕ → Fin 4 → State (Cfg N)}
     (hcap : CapturesReadTorus cap) (h : SectorSeedRead hN cap) : SectorSeedMeasured hN := by
@@ -685,7 +678,7 @@ theorem sectorSeedMeasured_of_read (hN : N ≠ 0) {cap : ℝ → ℕ → Fin 4 �
   refine ⟨C, hC, ?_⟩
   filter_upwards [hev, eventually_ge_atTop (0 : ℝ)] with β hβS hβ
   obtain ⟨hm, n, hp, hn2, hnm, -, hcl⟩ := hβS
-  have he := even_of_pow2 hp hn2
+  have he := hp.even hn2
   exact ⟨hm, n, hp, hn2, hnm, fun i =>
     ⟨(fluxReadOf_iff hβ (hcap β hβ n hn2 he i)).mp (hcl i).1,
       (defectReadOf_iff hβ (hcap β hβ n hn2 he i)).mp (hcl i).2⟩⟩
@@ -698,7 +691,7 @@ theorem sectorSeedRead_of_measured (hN : N ≠ 0) {cap : ℝ → ℕ → Fin 4 �
   refine ⟨C, hC, ?_⟩
   filter_upwards [hev, eventually_ge_atTop (0 : ℝ)] with β hβS hβ
   obtain ⟨hm, n, hp, hn2, hnm, hcl⟩ := hβS
-  have he := even_of_pow2 hp hn2
+  have he := hp.even hn2
   exact ⟨hm, n, hp, hn2, hnm, hper β n, fun i =>
     ⟨(fluxReadOf_iff hβ (hcap β hβ n hn2 he i)).mpr (hcl i).1,
       (defectReadOf_iff hβ (hcap β hβ n hn2 he i)).mpr (hcl i).2⟩⟩

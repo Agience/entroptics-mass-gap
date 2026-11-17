@@ -761,11 +761,7 @@ theorem Zh_close_rel (m : ℕ) {F : (ℕ → X) → (ℕ → Y) → ℝ} {B : �
     mul_nonneg (iter_kern_nonneg hS m x z) (abs_nonneg _)
   have hK2 := iter_abs_sq_le (μ := μ) (ν := ν) hS m hri.meas hCr
   have hswap : ∫ x, ∫ z, iter μ (rem (kern ν w) c φ) m z x ^ 2 ∂μ ∂μ
-      = hs μ (iter μ (rem (kern ν w) c φ) m) := by
-    unfold hs
-    exact (swap_bdd (F := fun x z => iter μ (rem (kern ν w) c φ) m z x ^ 2)
-      ((hri.meas.comp measurable_swap).pow_const 2) (C := Cr ^ 2) (fun x z => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCr _ _) 2))
+      = hs μ (iter μ (rem (kern ν w) c φ) m) := hs_swap hri
   rw [hswap] at hK2
   set e := Zh μ ν w (m + 1 + m) F - c ^ (m + 1) * Ih μ ν w φ m F
   have h1 : (e ^ 2) ^ 2 ≤ (M * K) ^ 2 := pow_le_pow_left₀ (sq_nonneg e) he 2

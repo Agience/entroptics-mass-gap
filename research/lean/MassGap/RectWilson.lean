@@ -19,6 +19,8 @@ link configuration is a cyclic sequence of slice configurations `W : Fin (L μ) 
 — axis links (direction `μ`) and spatial links of each time slice — through `Φ` (`eLink`).
 
 * `measurePreserving_Φ` — `Φ` carries `∏_t ∏ Haar` to the link Haar measure.
+* `finRotate_ne`, `tsh_ne_self` — on a side `≥ 2` the unit rotation, and the transverse step `tsh`,
+  move every point.
 * `action_Φ` — `S(Φ W) = Σ_t [sp(V_t) + 2 tp(A_t, V_t, V_{t+1})]` (`N ≠ 0`), with `A_t, V_t` the axis
   and spatial parts of `W t`, `sp` the spatial plaquettes and `tp` the temporal ones.
 * `ZR_eq_integral` — `ZR L N β = ∫ ∏_t exp(−β(sp V_t + 2 tp(A_t,V_t,V_{t+1}))) dW`.
@@ -27,6 +29,12 @@ link configuration is a cyclic sequence of slice configurations `W : Fin (L μ) 
 namespace MassGap.RectWilson
 
 open MeasureTheory MassGap MassGap.LatticeGauge MassGap.WilsonLattice MassGap.CompactGauge
+
+/-- `finRotate` moves every point once the side is at least `2`. DERIVED: `2` the least side with
+two distinct sites. -/
+theorem finRotate_ne {m : ℕ} (hm : 2 ≤ m) (i : Fin m) : finRotate m i ≠ i := by
+  obtain ⟨n, rfl⟩ : ∃ n, m = n + 2 := ⟨m - 2, by omega⟩
+  exact Equiv.Perm.mem_support.1 (by rw [support_finRotate]; exact Finset.mem_univ i)
 
 /-! ## Transverse geometry, as a function of the transverse extents alone -/
 
@@ -48,6 +56,14 @@ noncomputable def spT {N : ℕ} (V : SpT μ T → SUN.SU N) : ℝ :=
   ∑ ν : {j : Fin 4 // j ≠ μ}, ∑ ν' : {j : Fin 4 // j ≠ μ}, ∑ y : TT μ T,
     WilsonAction.wilsonDensity (V (ν, y) * V (ν', tsh μ T ν y) * (V (ν, tsh μ T ν' y))⁻¹
       * (V (ν', y))⁻¹)
+
+variable {μ T} in
+/-- A transverse step along an extent `≥ 2` moves every site. -/
+theorem tsh_ne_self {ν : {j : Fin 4 // j ≠ μ}} (hν : 2 ≤ T ν) (y : TT μ T) : tsh μ T ν y ≠ y := by
+  intro h
+  have h1 := congrFun h ν
+  simp only [tsh, Function.update_self] at h1
+  exact finRotate_ne hν (y ν) h1
 
 /-- Temporal plaquette action between two slices, at axis configuration `A`. -/
 noncomputable def tpT {N : ℕ} (A : TT μ T → SUN.SU N) (V V' : SpT μ T → SUN.SU N) : ℝ :=
@@ -320,7 +336,22 @@ theorem ZR_eq_integral {N : ℕ} (hN : N ≠ 0) (β : ℝ) :
   unfold System.boltz
   rw [action_Φ hN W, Finset.mul_sum, Real.exp_sum]
 
+#print axioms finRotate_ne
+#print axioms tsh_ne_self
+#print axioms hol_eq
+#print axioms join_perp
+#print axioms rshift_join_self
+#print axioms rshift_join_ne
+#print axioms Φ_axis
+#print axioms Φ_sp
 #print axioms measurePreserving_Φ
+#print axioms wilsonDensity_inv
+#print axioms hol_μμ
+#print axioms hol_μν
+#print axioms hol_νμ
+#print axioms hol_νν
+#print axioms slice_sum
+#print axioms measurable_boltzR
 #print axioms action_Φ
 #print axioms ZR_eq_integral
 

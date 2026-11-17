@@ -15,7 +15,7 @@ import MassGap.ShiftInvG
 * `integral_pull_axis` — invariance under every axis permutation (`AxisInvG.axisSymmetryG`); at the
   transposition of axes `0` and `3` it moves their time axis `OpenAILink.timeAxis = 3` to the
   transfer direction `0` of `OpenAIBridgeCubic.wilson_slab_conn_cubicG`;
-* `integral_pull_shift`, `integral_pull_shift_iter` — invariance under the one-step lattice shift
+* `action_shiftLinkPerm`, `integral_pull_shift`, `integral_pull_shift_iter` — invariance under the one-step lattice shift
   along any axis (`ShiftInvG.shiftLinkPerm`) and under its iterates, which places a first slab at
   slice `0`.
 
@@ -249,6 +249,18 @@ theorem integral_pull_axis (μ : Measure g.image) [IsProbabilityMeasure μ] (β 
     (fun U => MassGap.LatticeGauge.Symmetry.action_invariant
       (MassGap.AxisInvG.axisSymmetryG g.image (d := 4) (n := L) e) U) O
 
+/-- **The Wilson action is invariant under the one-step shift along any axis** `τ`
+(`ShiftInvG.shift_action_invariantG` read through `ShiftInvG.shiftLinkPerm τ`).
+
+DERIVED: `4` is the spacetime dimension. -/
+theorem action_shiftLinkPerm [NeZero (L : ℕ)] (τ : Fin 4)
+    (U : WilsonHypercubic.Link 4 L → g.image) :
+    (GaugeWilson.sysWilsonG g.image 4 L).action (fun l => U (MassGap.ShiftInvG.shiftLinkPerm τ l))
+      = (GaugeWilson.sysWilsonG g.image 4 L).action U := by
+  have h2 := MassGap.ShiftInvG.shift_action_invariantG (G := g.image) τ U
+  rw [← MassGap.ShiftInvG.reindex_shiftLinkPerm] at h2
+  exact h2
+
 /-- **Their law is invariant under the one-step shift along any axis** `τ`: `pull` by
 `ShiftInvG.shiftLinkPerm τ` (`(a, x) ↦ (a, x + τ̂)`).
 
@@ -257,11 +269,7 @@ theorem integral_pull_shift [NeZero (L : ℕ)] (μ : Measure g.image) [IsProbabi
     (β : ℝ) (τ : Fin 4) (O : OpenAIConfig.Configuration g L → ℝ) :
     ∫ V, O (pull L (MassGap.ShiftInvG.shiftLinkPerm τ) V) ∂(OpenAIConfig.wilsonLaw g L β μ)
       = ∫ V, O V ∂(OpenAIConfig.wilsonLaw g L β μ) :=
-  integral_pull g L μ β _
-    (fun U => by
-      have h2 := MassGap.ShiftInvG.shift_action_invariantG (G := g.image) τ U
-      rw [← MassGap.ShiftInvG.reindex_shiftLinkPerm] at h2
-      exact h2) O
+  integral_pull g L μ β _ (action_shiftLinkPerm g L τ) O
 
 /-- **Their law is invariant under every iterate of the one-step shift**: `k` steps along `τ`.
 
@@ -1373,32 +1381,21 @@ theorem smearIns_eq_sumIns {C : WilsonFamily g} (N p : ℕ) {n : ℕ} (w : Fin n
       ((C.mesh N : ℂ) ^ (4 * n)) w (fun x => t (WithLp.toLp 2 fun i => C.place N p (x i))) :=
   rfl
 
-/-- **The window of their transported smeared insertion.** With their regularity `R`, a stencil
-time radius `r` for the tokens of `w`, and a test whose support lies, up to multiples of the
-period, in the time slab `[T₀, T₁]`: for integers `lo ≤ T₀/mesh − r` and `hi ≥ T₁/mesh + r`, `k ≡ K` with `lo + K ≥ 0`, and
-`(lo + K) + (hi − lo) + 1 < L`, the smeared insertion read through `transport k` is local in the
-slices `lo + K, …, hi + K` of the transfer direction. A site `x` in the support has
-`time (place x) + e · period = mesh · (valMinAbs x₃ + e L) ∈ [T₀, T₁]`, so each stencil point lies
-at transported time `valMinAbs x₃ + d₃ + K + e L ∈ [lo + K, hi + K]` (`timeWindowLocal_sumIns`).
+/-- **The time of a site in the support of a test.** With a test whose support lies, up to multiples
+of the period, in the time slab `[T₀, T₁]`, and integers `lo ≤ T₀/mesh − r`, `hi ≥ T₁/mesh + r`: at
+a tuple of sites `x` with `t(place x) ≠ 0`, each `valMinAbs (x_i)₃` lies in `[lo + r, hi − r]` up to a
+multiple of the side `L`, since `time (place x) + e · period = mesh · (valMinAbs x₃ + e L)`.
 
-DERIVED: `0` is the transfer direction; `3` their time axis; `1` the margin of the side. -/
-theorem timeWindowLocal_smearIns {C : WilsonFamily g} (R : WilsonRegularity C) (N p : ℕ)
-    [NeZero ((C.period p * C.denominator N : ℕ+) : ℕ)] {n : ℕ} (w : Fin n → C.Token)
-    (t : WilsonFamily.SeparatedTest n) (r : ℤ) (hr : ∀ i, ∀ d ∈ stencilOf R (w i), |d 3| ≤ r)
-    (T₀ T₁ : ℝ) (ht : ∀ y ∈ tsupport t, ∀ i, ∃ e : ℤ, T₀ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧
-      time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ T₁)
+DERIVED: `3` is their time axis; `2` the `L²` exponent. -/
+theorem time_of_support {C : WilsonFamily g} (N p : ℕ) {n : ℕ} (t : WilsonFamily.SeparatedTest n)
+    (r : ℤ) (T₀ T₁ : ℝ) (ht : ∀ y ∈ tsupport t, ∀ i, ∃ e : ℤ,
+      T₀ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧ time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ T₁)
     (lo hi : ℤ) (hlo : (lo : ℝ) + r ≤ T₀ * (C.denominator N : ℝ))
-    (hhi : T₁ * (C.denominator N : ℝ) ≤ (hi : ℝ) - r) (k : ℕ) (K : ℤ) (hK : 0 ≤ lo + K)
-    (hk : ((k : ℕ) : ZMod (C.period p * C.denominator N : ℕ+).val) = (K : ZMod _))
-    (hm : (lo + K).toNat + (hi - lo).toNat + 1 < (C.period p * C.denominator N : ℕ+).val) :
-    TimeWindowLocal g (C.period p * C.denominator N) (lo + K).toNat (hi - lo).toNat
-      (fun V => smearIns C N p w t (transport g (C.period p * C.denominator N) k V)) := by
-  rw [show (fun V => smearIns C N p w t (transport g (C.period p * C.denominator N) k V))
-      = fun V => sumIns g (C.period p * C.denominator N) (C.insertion N p)
-          ((C.mesh N : ℂ) ^ (4 * n)) w (fun x => t (WithLp.toLp 2 fun i => C.place N p (x i)))
-          (transport g (C.period p * C.denominator N) k V) from rfl]
-  refine timeWindowLocal_sumIns g _ (stencilLocal_of_regularity R N p) _ w _ k K hk _ _ hm ?_
-  intro x hx i d hd
+    (hhi : T₁ * (C.denominator N : ℝ) ≤ (hi : ℝ) - r)
+    (x : Fin n → OpenAIConfig.Site (C.period p * C.denominator N))
+    (hx : t (WithLp.toLp 2 fun i => C.place N p (x i)) ≠ 0) (i : Fin n) :
+    ∃ e : ℤ, lo + r ≤ (x i 3).valMinAbs + e * (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ) ∧
+      (x i 3).valMinAbs + e * (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ) ≤ hi - r := by
   have hmem := subset_tsupport (⇑t) (Function.mem_support.2 hx)
   obtain ⟨e, h0, h1⟩ := ht _ hmem i
   have hD : (0 : ℝ) < (C.denominator N : ℝ) := by exact_mod_cast (C.denominator N).pos
@@ -1425,6 +1422,66 @@ theorem timeWindowLocal_smearIns {C : WilsonFamily g} (R : WilsonRegularity C) (
     exact_mod_cast b0
   have c1 : (x i 3).valMinAbs + e * (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ)
       ≤ hi - r := by exact_mod_cast b1
+  exact ⟨e, c0, c1⟩
+
+/-- **The slice of a site in the support of a test after the transport.** Under the hypotheses of
+`time_of_support`, with `k ≡ K`, `lo + K + r ≥ 0` and `hi + K − r < L`: at a tuple of sites `x` with
+`t(place x) ≠ 0`, each `(x_i)₃ + k` has representative in `[lo + K + r, hi + K − r]`.
+
+DERIVED: `3` is their time axis; `2` the `L²` exponent. -/
+theorem slice_of_support {C : WilsonFamily g} (N p : ℕ) {n : ℕ} (t : WilsonFamily.SeparatedTest n)
+    (r : ℤ) (T₀ T₁ : ℝ) (ht : ∀ y ∈ tsupport t, ∀ i, ∃ e : ℤ,
+      T₀ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧ time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ T₁)
+    (lo hi : ℤ) (hlo : (lo : ℝ) + r ≤ T₀ * (C.denominator N : ℝ))
+    (hhi : T₁ * (C.denominator N : ℝ) ≤ (hi : ℝ) - r) (k : ℕ) (K : ℤ) (hK : 0 ≤ lo + K + r)
+    (hk : ((k : ℕ) : ZMod (C.period p * C.denominator N : ℕ+).val) = (K : ZMod _))
+    (hm : hi + K - r < (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ))
+    (x : Fin n → OpenAIConfig.Site (C.period p * C.denominator N))
+    (hx : t (WithLp.toLp 2 fun i => C.place N p (x i)) ≠ 0) (i : Fin n) :
+    lo + K + r ≤ (((x i 3 + (k : ZMod (C.period p * C.denominator N : ℕ+).val)).val : ℕ) : ℤ) ∧
+      (((x i 3 + (k : ZMod (C.period p * C.denominator N : ℕ+).val)).val : ℕ) : ℤ)
+        ≤ hi + K - r := by
+  obtain ⟨e, c0, c1⟩ := time_of_support g N p t r T₀ T₁ ht lo hi hlo hhi x hx i
+  have hL0 : ((((C.period p * C.denominator N : ℕ+).val : ℕ)) :
+      ZMod (C.period p * C.denominator N : ℕ+).val) = 0 := ZMod.natCast_self _
+  have hy : x i 3 + (k : ZMod (C.period p * C.denominator N : ℕ+).val)
+      = (((x i 3).valMinAbs + K + e * (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ) : ℤ)
+        : ZMod (C.period p * C.denominator N : ℕ+).val) := by
+    rw [hk, Int.cast_add, Int.cast_add, Int.cast_mul, ZMod.coe_valMinAbs, Int.cast_natCast, hL0,
+      mul_zero, add_zero]
+  rw [hy]
+  generalize e * (((C.period p * C.denominator N : ℕ+).val : ℕ) : ℤ) = E at c0 c1 ⊢
+  have hval := val_intCast_of_nonneg (C.period p * C.denominator N)
+    (u := (x i 3).valMinAbs + K + E) (by omega) (by omega)
+  omega
+
+/-- **The window of their transported smeared insertion.** With their regularity `R`, a stencil
+time radius `r` for the tokens of `w`, and a test whose support lies, up to multiples of the
+period, in the time slab `[T₀, T₁]`: for integers `lo ≤ T₀/mesh − r` and `hi ≥ T₁/mesh + r`, `k ≡ K` with `lo + K ≥ 0`, and
+`(lo + K) + (hi − lo) + 1 < L`, the smeared insertion read through `transport k` is local in the
+slices `lo + K, …, hi + K` of the transfer direction. A site `x` in the support has
+`time (place x) + e · period = mesh · (valMinAbs x₃ + e L) ∈ [T₀, T₁]`, so each stencil point lies
+at transported time `valMinAbs x₃ + d₃ + K + e L ∈ [lo + K, hi + K]` (`timeWindowLocal_sumIns`).
+
+DERIVED: `0` is the transfer direction; `3` their time axis; `1` the margin of the side. -/
+theorem timeWindowLocal_smearIns {C : WilsonFamily g} (R : WilsonRegularity C) (N p : ℕ)
+    [NeZero ((C.period p * C.denominator N : ℕ+) : ℕ)] {n : ℕ} (w : Fin n → C.Token)
+    (t : WilsonFamily.SeparatedTest n) (r : ℤ) (hr : ∀ i, ∀ d ∈ stencilOf R (w i), |d 3| ≤ r)
+    (T₀ T₁ : ℝ) (ht : ∀ y ∈ tsupport t, ∀ i, ∃ e : ℤ, T₀ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧
+      time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ T₁)
+    (lo hi : ℤ) (hlo : (lo : ℝ) + r ≤ T₀ * (C.denominator N : ℝ))
+    (hhi : T₁ * (C.denominator N : ℝ) ≤ (hi : ℝ) - r) (k : ℕ) (K : ℤ) (hK : 0 ≤ lo + K)
+    (hk : ((k : ℕ) : ZMod (C.period p * C.denominator N : ℕ+).val) = (K : ZMod _))
+    (hm : (lo + K).toNat + (hi - lo).toNat + 1 < (C.period p * C.denominator N : ℕ+).val) :
+    TimeWindowLocal g (C.period p * C.denominator N) (lo + K).toNat (hi - lo).toNat
+      (fun V => smearIns C N p w t (transport g (C.period p * C.denominator N) k V)) := by
+  rw [show (fun V => smearIns C N p w t (transport g (C.period p * C.denominator N) k V))
+      = fun V => sumIns g (C.period p * C.denominator N) (C.insertion N p)
+          ((C.mesh N : ℂ) ^ (4 * n)) w (fun x => t (WithLp.toLp 2 fun i => C.place N p (x i)))
+          (transport g (C.period p * C.denominator N) k V) from rfl]
+  refine timeWindowLocal_sumIns g _ (stencilLocal_of_regularity R N p) _ w _ k K hk _ _ hm ?_
+  intro x hx i d hd
+  obtain ⟨e, c0, c1⟩ := time_of_support g N p t r T₀ T₁ ht lo hi hlo hhi x hx i
   have hd3 := abs_le.1 (hr i d hd)
   have := Int.self_le_toNat (hi - lo)
   have := Int.toNat_of_nonneg hK
@@ -2042,7 +2099,9 @@ side is the cubic side `2l + 2`; their coupling is nonnegative; the seed holds o
 `n ≥ 2` at half their coupling with `n · mesh ≤ ℓ` and `8n ≤ 2l + 2`; the slabs fit
 (`slab_split`); the two transported smeared insertions are local in the slices `0, …, 2v + 2` and
 from `start`; the gap and the wrap gap are at least `τ − δ/2` in physical time; the separation of
-the reflected moments is at least `δ/4`.
+the reflected moments is at least `δ/4`; every site of a configuration in the support of `t₁` lies
+after the transport in the slices `0, …, 2v + 2`, and of `t₂` in `start, …, start + 2v' + 2`; and
+the reflected slabs have room on the torus (`room₁`, `room₂`).
 
 DERIVED: `16` and `1000` are the seed; `8` the side condition; `2` doubles the widths and halves
 the coupling and the floor; `4` quarters the floor and is `2 · 2`; `1` the offsets. -/
@@ -2067,6 +2126,16 @@ structure Valid (C : WilsonFamily g) (N p : ℕ) {n₁ n₂ : ℕ} (w₁ : Fin n
   gap : τ - δ / 2 ≤ ((P.j : ℝ) + 1) * C.mesh N
   gap' : τ - δ / 2 ≤ ((P.j' : ℝ) + 1) * C.mesh N
   sep : δ / 4 ≤ ((P.a : ℝ) + P.a + 2) * C.mesh N
+  supp₁ : ∀ x : Fin n₁ → OpenAIConfig.Site (C.period p * C.denominator N),
+    t₁ (WithLp.toLp 2 fun i => C.place N p (x i)) ≠ 0 → ∀ i,
+      (x i 3 + (P.k : ZMod (C.period p * C.denominator N : ℕ+).val)).val ≤ P.v + P.v + 2
+  supp₂ : ∀ x : Fin n₂ → OpenAIConfig.Site (C.period p * C.denominator N),
+    t₂ (WithLp.toLp 2 fun i => C.place N p (x i)) ≠ 0 → ∀ i,
+      P.start ≤ (x i 3 + (P.k : ZMod (C.period p * C.denominator N : ℕ+).val)).val ∧
+        (x i 3 + (P.k : ZMod (C.period p * C.denominator N : ℕ+).val)).val
+          ≤ P.start + (P.v' + P.v' + 2)
+  room₁ : P.v + P.v + P.a + P.a + 3 ≤ P.l
+  room₂ : P.v' + P.v' + P.a + P.a + P.j + 4 ≤ P.l
 
 end SlabPlacement
 
@@ -2453,22 +2522,26 @@ theorem placement_exists (C : WilsonFamily g) (R : WilsonRegularity C) (order : 
   have hLeq : ((C.period p * C.denominator N : ℕ+) : ℕ) = l + l + 2 := by
     rw [hLv]; omega
   -- the two windows
-  have hw₁ := timeWindowLocal_smearIns g R N p w₁ t₁ r hr₁ x₁ T
-    (fun y hy i => ⟨0, by
+  have ht₁ : ∀ y ∈ tsupport t₁, ∀ i, ∃ e : ℤ,
+      x₁ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧ time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ T :=
+    fun y hy i => ⟨0, by
       have := hR₁ y hy i
       have := hT₁ y hy i
       simp only [Int.cast_zero, zero_mul, add_zero]
-      exact ⟨(min_le_left _ _).trans (by linarith [neg_abs_le (time (y i))]), this⟩⟩)
+      exact ⟨(min_le_left _ _).trans (by linarith [neg_abs_le (time (y i))]), this⟩⟩
+  have ht₂ : ∀ y ∈ tsupport t₂, ∀ i, ∃ e : ℤ,
+      T + τ ≤ time (y i) + e * ((C.period p : ℕ) : ℝ) ∧ time (y i) + e * ((C.period p : ℕ) : ℝ) ≤ X₂ :=
+    fun z hz j' => ⟨0, by
+      have := hR₂ z hz j'
+      have := hT₂ z hz j'
+      simp only [Int.cast_zero, zero_mul, add_zero]
+      exact ⟨this, (le_abs_self _).trans (by linarith [le_max_left R₂ (T + τ)])⟩⟩
+  have hw₁ := timeWindowLocal_smearIns g R N p w₁ t₁ r hr₁ x₁ T ht₁
     lo₁ hi₁ (by rw [hlo₁]; push_cast; linarith) (by rw [hhi₁]; push_cast; linarith) k K
     (by omega) hkK (by
       have : (lo₁ + K).toNat = 0 := by rw [hK]; simp
       rw [this, hLeq]; omega)
-  have hw₂ := timeWindowLocal_smearIns g R N p w₂ t₂ r hr₂ (T + τ) X₂
-    (fun z hz j' => ⟨0, by
-      have := hR₂ z hz j'
-      have := hT₂ z hz j'
-      simp only [Int.cast_zero, zero_mul, add_zero]
-      exact ⟨this, (le_abs_self _).trans (by linarith [le_max_left R₂ (T + τ)])⟩⟩)
+  have hw₂ := timeWindowLocal_smearIns g R N p w₂ t₂ r hr₂ (T + τ) X₂ ht₂
     lo₂ hi₂ (by rw [hlo₂]; push_cast; linarith) (by rw [hhi₂]; push_cast; linarith) k K
     (by omega) hkK (by rw [hLeq]; omega)
   refine ⟨⟨n, k, l, v, v', a, j⟩, ?_⟩
@@ -2492,7 +2565,22 @@ theorem placement_exists (C : WilsonFamily g) (R : WilsonRegularity C) (order : 
       win₂ := ?_
       gap := ?_
       gap' := ?_
-      sep := ?_ }
+      sep := ?_
+      supp₁ := fun x hx i => by
+        have := slice_of_support g N p t₁ r x₁ T ht₁ lo₁ hi₁ (by rw [hlo₁]; push_cast; linarith)
+          (by rw [hhi₁]; push_cast; linarith) k K (by omega) hkK
+          (by rw [hLeq]; push_cast; omega) x hx i
+        dsimp only
+        omega
+      supp₂ := fun x hx i => by
+        have := slice_of_support g N p t₂ r (T + τ) X₂ ht₂ lo₂ hi₂
+          (by rw [hlo₂]; push_cast; linarith) (by rw [hhi₂]; push_cast; linarith) k K (by omega)
+          hkK (by rw [hLeq]; push_cast; omega) x hx i
+        unfold SlabPlacement.start
+        dsimp only
+        omega
+      room₁ := by dsimp only; omega
+      room₂ := by dsimp only; omega }
   · dsimp only
     have h8 : (8 * (n : ℝ)) ≤ ((C.period p : ℕ) : ℝ) * D := by
       have hn' : (n : ℝ) ≤ ℓ * D := by
@@ -3389,6 +3477,7 @@ end MassGap.OpenAIBridgeGlue
 #print axioms MassGap.OpenAIBridgeGlue.pull_configEquiv
 #print axioms MassGap.OpenAIBridgeGlue.integral_pull
 #print axioms MassGap.OpenAIBridgeGlue.integral_pull_axis
+#print axioms MassGap.OpenAIBridgeGlue.action_shiftLinkPerm
 #print axioms MassGap.OpenAIBridgeGlue.integral_pull_shift
 #print axioms MassGap.OpenAIBridgeGlue.integral_pull_shift_iter
 #print axioms MassGap.OpenAIBridgeGlue.isProbabilityMeasure_wilsonLaw
@@ -3427,6 +3516,8 @@ end MassGap.OpenAIBridgeGlue
 #print axioms MassGap.OpenAIBridgeGlue.val_finEquiv
 #print axioms MassGap.OpenAIBridgeGlue.windowLocal_of_timeWindowLocal
 #print axioms MassGap.OpenAIBridgeGlue.timeWindowLocal_sumIns
+#print axioms MassGap.OpenAIBridgeGlue.time_of_support
+#print axioms MassGap.OpenAIBridgeGlue.slice_of_support
 #print axioms MassGap.OpenAIBridgeGlue.smearIns_eq_sumIns
 #print axioms MassGap.OpenAIBridgeGlue.timeWindowLocal_smearIns
 #print axioms MassGap.OpenAIBridgeGlue.timeWindowLocal_mono

@@ -4,8 +4,8 @@
   "upload_type": "software",
   "license": "Apache-2.0",
   "notes": "Code is licensed under Apache-2.0 (LICENSE, NOTICE). The paper text under research/paper/ is licensed under CC BY 4.0. Unrefereed preprint.",
-  "version": "0.4.2",
-  "publication_date": "2026-11-15",
+  "version": "0.4.3",
+  "publication_date": "2026-11-16",
   "creators": [
     {
       "name": "Sessford, Ikailo John",

@@ -44,7 +44,7 @@ relative to the reading, which a constant `C` absorbs.
 * `cyc(kT, 4j) = hs(kT^{∗2j}) = hs(kT^{∗j} ∗ kT^{∗j})` (`KernelPower.iter_add`) `≤ hs(kT^{∗j})²`
   (`KernelPower.hs_conv_le_mul`);
 * `cyc(kT, 4j) > 0`: `kT ≥ kTmin > 0` (`kT_lower`, `kTmin_pos`) gives `kT^{∗i} ≥ kTminⁱ` pointwise
-  (`iter_ge`), so `hs ≥ kTmin^{4j} > 0` (`hs_ge`).
+  (`SectorDefect.iter_low`), so `hs ≥ kTmin^{4j} > 0` (`hs_ge`).
 
 So `stepD_nonneg`: `0 ≤ stepD (2j) s β`; `stepD_phys_nonneg` at the physical side `n = 2^{kPhys L β + 2}`;
 `defectW_nonneg`: `0 ≤ defectW 2 β (2^{kPhys L β + 2})` (`ApertureNearAll.defectW_eq`). The converse of
@@ -148,27 +148,6 @@ open MeasureTheory MassGap.KernelPower
 
 variable {X : Type*} [MeasurableSpace X] {μ : Measure X} [IsProbabilityMeasure μ]
 
-/-- **A kernel bounded below by `c ≥ 0` has its `(i+1)`-fold power bounded below by `c^{i+1}`.** -/
-theorem iter_ge {k : X → X → ℝ} (hk : Bdd k) {c : ℝ} (hc : 0 ≤ c) (hkc : ∀ x y, c ≤ k x y) :
-    ∀ i x z, c ^ (i + 1) ≤ iter μ k i x z
-  | 0, x, z => by simpa [iter] using hkc x z
-  | i + 1, x, z => by
-    obtain ⟨Ck, hCk⟩ := hk.bdd
-    obtain ⟨Ci, hCi⟩ := (hk.iter (μ := μ) i).bdd
-    have hg : Integrable (fun y => k x y * iter μ k i y z) μ := by
-      refine integrable_of_bdd ((hk.row x).mul ((hk.iter (μ := μ) i).col z)) (C := Ck * Ci) (fun y => ?_)
-      rw [abs_mul]
-      exact mul_le_mul (hCk x y) (hCi y z) (abs_nonneg _) ((abs_nonneg _).trans (hCk x y))
-    have hm : (fun _ : X => c ^ (i + 1 + 1)) ≤ fun y => k x y * iter μ k i y z := fun y => by
-      have h1 := hkc x y
-      have h2 := iter_ge hk hc hkc i y z
-      calc c ^ (i + 1 + 1) = c * c ^ (i + 1) := by ring
-        _ ≤ k x y * iter μ k i y z := mul_le_mul h1 h2 (by positivity) (hc.trans h1)
-    have hint := integral_mono (integrable_const (c ^ (i + 1 + 1))) hg hm
-    have hconst : ∫ _ : X, c ^ (i + 1 + 1) ∂μ = c ^ (i + 1 + 1) := by simp
-    rw [hconst] at hint
-    exact hint
-
 /-- **A kernel bounded below by `c ≥ 0` has squared Hilbert–Schmidt norm at least `c²`.** -/
 theorem hs_ge {h : X → X → ℝ} (hh : Bdd h) {c : ℝ} (hc : 0 ≤ c) (hhc : ∀ x z, c ≤ h x z) :
     c ^ 2 ≤ hs μ h := by
@@ -210,7 +189,7 @@ theorem cycT_pos_le (s : Fin 4) (T : {j : Fin 4 // j ≠ s} → ℕ) {β : ℝ} 
   have hc := RectTransfer.kTmin_pos (μ := s) (T := T) β
   refine ⟨?_, ?_⟩
   · have hge := hs_ge (μ := RectTransfer.hS s T 2) (hk.iter (μ := RectTransfer.hS s T 2) _) (pow_nonneg hc.le _)
-      (iter_ge hk hc.le (RectTransfer.kT_lower hN hβ) ((j - 1) + (j - 1) + 1))
+      (SectorDefect.iter_low hk hc.le (RectTransfer.kT_lower hN hβ) ((j - 1) + (j - 1) + 1))
     exact lt_of_lt_of_le (by positivity) hge
   · rw [iter_add hk, sq]
     exact hs_conv_le_mul (hk.iter _) (hk.iter _)
@@ -268,7 +247,6 @@ end
 #print axioms MassGap.ApertureWindow.window_eventually
 #print axioms MassGap.ApertureWindow.nearOwn_of_nearAllW
 #print axioms MassGap.ApertureWindow.nearAllW_stateT
-#print axioms MassGap.ApertureWindow.iter_ge
 #print axioms MassGap.ApertureWindow.hs_ge
 #print axioms MassGap.ApertureWindow.cycT_pos_le
 #print axioms MassGap.ApertureWindow.stepD_nonneg

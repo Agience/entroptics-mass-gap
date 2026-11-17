@@ -426,13 +426,7 @@ theorem hs_conv_le_sum_sq (ha : Bdd a) (hsym : ∀ x y, a x y = a y x) (hA : Cen
       fun z => norm_gramC_sq_le ha hA ψ x z
   have iR : Integrable (fun x => ∑ ψ, secDiag μ a act ψ x * sectorTrace μ a act ψ) μ :=
     integrable_finsetSum _ fun ψ _ => (int_secDiag ha hA hC ψ).mul_const _
-  have iL : Integrable (fun x => ∫ z, conv μ a a x z ^ 2 ∂μ) μ := by
-    refine rint (measurable_integral_right (hcb.meas.pow_const 2)) (C := Cb * Cb) fun x => ?_
-    rw [Real.norm_eq_abs]
-    refine abs_integral_le fun z => ?_
-    rw [abs_of_nonneg (sq_nonneg _), sq]
-    have := hCb x z
-    nlinarith [abs_nonneg (conv μ a a x z), sq_abs (conv μ a a x z)]
+  have iL : Integrable (fun x => ∫ z, conv μ a a x z ^ 2 ∂μ) μ := integrable_rowsq hcb
   unfold hs
   calc ∫ x, ∫ z, conv μ a a x z ^ 2 ∂μ ∂μ
       ≤ ∫ x, ∑ ψ, secDiag μ a act ψ x * sectorTrace μ a act ψ ∂μ := integral_mono iL iR hin
@@ -627,10 +621,7 @@ theorem twist_sum_le (ha : Bdd a) (hA : CentreAction μ act) {χ : G → X → �
       _ = Fintype.card G * ε + ∑ g, ∫ y, χ g y * a x y ^ 2 ∂μ := by
           rw [Finset.sum_add_distrib]; simp [Finset.sum_const, nsmul_eq_mul]
       _ ≤ _ := by linarith
-  have i0 : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ) μ :=
-    rint (measurable_integral_right bsq.meas) (C := C * C) fun x => by
-      refine norm_integral_le_const fun y => ?_
-      rw [norm_pow, sq]; exact mul_le_mul (hC x y) (hC x y) (norm_nonneg _) hC0
+  have i0 : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ) μ := integrable_rowsq ha
   have iL : Integrable (fun x => ∑ g, r g x) μ :=
     integrable_finsetSum _ fun g _ => rint (hrm g) (hrb g)
   have iA : Integrable (fun x => Fintype.card G * ε + (Fintype.card G : ℝ) / 2

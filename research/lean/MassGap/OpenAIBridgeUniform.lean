@@ -797,12 +797,7 @@ theorem hs_iter_rem_add_le (i m : ℕ) :
       ≤ ∫ x, ((1 / 2) ^ ((m + 1) / n) * |c| ^ (m + 1)) ^ 2
           * ∫ z, iter μ (rem k c φ) i x z ^ 2 ∂μ ∂μ := by
         refine integral_mono
-          (integrable_of_bdd (measurable_integral_right (hrm.meas.pow_const 2)) (C := Cm ^ 2)
-            (fun x => abs_integral_le fun z => by
-              rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCm x z) 2))
-          ((integrable_of_bdd (measurable_integral_right (hri.meas.pow_const 2)) (C := Ci ^ 2)
-            (fun x => abs_integral_le fun z => by
-              rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCi x z) 2)).const_mul _)
+          (integrable_rowsq hrm) ((integrable_rowsq hri).const_mul _)
           (fun x => ?_)
         simp only [hrow x]
         exact sq_integral_remFun_le hkm hC0 hkb hsym hφm hφb hφ1 heig hnorm hgap m (hri.row x)

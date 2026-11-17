@@ -636,6 +636,18 @@ theorem kernelCLM_oneLp_le_one (K : X → Y → ℝ) (C : ℝ) (hK : Measurable 
 
 end Vacuum
 
+section L2
+
+variable {X : Type*} [MeasurableSpace X] {μ : Measure X}
+
+/-- `‖g‖² = ∫ g²` in `L²`. -/
+theorem norm_sq_eq_integral (g : Lp ℝ 2 μ) : ‖g‖ ^ 2 = ∫ x, (g : X → ℝ) x ^ 2 ∂μ := by
+  rw [← real_inner_self_eq_norm_sq, L2.inner_def]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
+  simp [sq]
+
+end L2
+
 /-! ## Axiom footprints -/
 
 #print axioms real_inner_Lp
@@ -668,5 +680,6 @@ end Vacuum
 #print axioms coeFn_kernelCLM_oneLp
 #print axioms kernelCLM_oneLp_eq_oneLp
 #print axioms kernelCLM_oneLp_le_one
+#print axioms norm_sq_eq_integral
 
 end MassGap.SlabTransferAdjoint

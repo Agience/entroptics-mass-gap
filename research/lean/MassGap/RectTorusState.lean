@@ -869,7 +869,7 @@ theorem sectorSeedRead_capR_iff [NeZero N] (hN : N ≠ 0) (hN2 : 2 ≤ N) :
   refine ⟨C, hC, ?_⟩
   filter_upwards [hev, eventually_ge_atTop (0 : ℝ)] with β hβS hβ
   obtain ⟨hm, n, hp, hn2, hnm, hcl⟩ := hβS
-  have he := FluxDuality.even_of_pow2 hp hn2
+  have he := hp.even hn2
   exact ⟨hm, n, hp, hn2, hnm, measPeriod_capR hN hN2 β (by omega), fun i =>
     ⟨(fluxReadOf_iff hβ (capturesReadTorus_capR hN β hβ n hn2 he i)).mpr (hcl i).1,
       (defectReadOf_iff hβ (capturesReadTorus_capR hN β hβ n hn2 he i)).mpr (hcl i).2⟩⟩

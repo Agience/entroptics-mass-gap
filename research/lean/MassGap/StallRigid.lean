@@ -625,12 +625,12 @@ theorem schur_gap {k : X → X → ℝ} (hk : Bdd k) (hsym : ∀ x y, k x y = k 
     ring
   have hnorm : ‖kernelCLM (KernelPower.rem k c φ) C' hm h0 hb ν ν f‖ ^ 2
       = ∫ x, (∫ y, s x y * g y ∂ν) ^ 2 ∂ν := by
-    rw [norm_sq_eq_integral]
+    rw [SlabTransferAdjoint.norm_sq_eq_integral]
     refine integral_congr_ae ?_
     filter_upwards [coeFn_kernelCLM (KernelPower.rem k c φ) C' hm h0 hb ν ν f] with x hx
     rw [hx, hact x]
   have hg2 : ∫ y, g y ^ 2 ∂ν ≤ ‖f‖ ^ 2 := by
-    rw [norm_sq_eq_integral]
+    rw [SlabTransferAdjoint.norm_sq_eq_integral]
     have e : (fun y => g y ^ 2) = fun y => (f : X → ℝ) y ^ 2
         - (2 * A) * ((f : X → ℝ) y * φ y) + A ^ 2 * φ y ^ 2 := by
       funext y; simp only [hg]; ring
@@ -678,7 +678,7 @@ theorem IsTop.ratio_le_excited (h : IsTop ν k C hkm hC0 hkb c φ ρ) (hsym : �
   have hle : ‖R ^ 2 ^ a‖ ≤ Real.sqrt H := by
     refine ContinuousLinearMap.opNorm_le_bound _ (Real.sqrt_nonneg _) fun f => ?_
     have h2 : ‖(R ^ 2 ^ a) f‖ ^ 2 ≤ H * ‖f‖ ^ 2 := by
-      rw [norm_sq_eq_integral]
+      rw [SlabTransferAdjoint.norm_sq_eq_integral]
       have hae := KernelGap.opPow_coe hm h0 hb f (2 ^ a - 1)
       rw [hj] at hae
       have e2 : ∫ x, (((R ^ 2 ^ a) f : Lp ℝ 2 ν) : X → ℝ) x ^ 2 ∂ν

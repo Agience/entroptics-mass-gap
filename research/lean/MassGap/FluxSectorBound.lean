@@ -390,12 +390,7 @@ theorem twist_add_le (ha : Bdd a) {σ₁ σ₂ : X → X} (hf₁ : Flip μ σ₁
     apply abs_integral_le
     intro y; rw [abs_mul]
     exact mul_le_mul (hC x y) (hC x (σ₂ y)) (abs_nonneg _) ((abs_nonneg _).trans (hC x y))
-  have i0 : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ) μ := by
-    refine integrable_of_bdd (measurable_integral_right bsq.meas) (C := C * C) (fun x => ?_)
-    apply abs_integral_le
-    intro y; rw [abs_of_nonneg (sq_nonneg _), sq]
-    have := hC x y
-    nlinarith [abs_nonneg (a x y), sq_abs (a x y)]
+  have i0 : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ) μ := integrable_rowsq ha
   have i0e : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ + 2 * ε) μ := i0.add (integrable_const _)
   have m3 : Integrable (fun x => ∫ y, a x y ^ 2 ∂μ + 2 * ε + η) μ := i0e.add (integrable_const _)
   have m12 : Integrable (fun x => ∫ y, a x y * a x (σ₁ y) ∂μ + ∫ y, a x y * a x (σ₂ y) ∂μ) μ :=

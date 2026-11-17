@@ -228,7 +228,7 @@ theorem vortexCostAt_of_runAt {c c' σ δ α V D B t₀ Cc m Co ℓ : ℝ}
     FluxCost.VortexCostAt m (2 * Co * Real.exp (m * t₀)) ℓ := by
   filter_upwards [h.slices, eventually_ge_atTop (0 : ℝ)] with β hS hβ0 n hn h2 hlo hhi i ν
   obtain ⟨R⟩ := hS n hn h2 hlo hhi i
-  exact one_sub_zR_le_of_oddLevels hβ0 h2 (FluxCost.even_of_pow2 hn h2) i ν R.ctl.levels (R.odd ν)
+  exact one_sub_zR_le_of_oddLevels hβ0 h2 (hn.even h2) i ν R.ctl.levels (R.odd ν)
     (h.t₀_le.trans hlo)
 
 /-- **The run**: constants fixed once, with a positive (T) rate at `ℓ₀ > 0` and a positive odd gap `m`, and

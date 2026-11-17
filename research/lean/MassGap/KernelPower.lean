@@ -18,6 +18,8 @@ Proved here, with no trace-class or spectral theory:
 * `iter_decomp`, `hs_iter_decomp` — given a normalised eigenfunction `φ` of a symmetric `k` with
   eigenvalue `c`, and `r = k − c φ⊗φ`: `k^{∗(i+1)} = c^{i+1} φ⊗φ + r^{∗(i+1)}` pointwise, and
   `hs(k^{∗(i+1)}) = c^{2(i+1)} + hs(r^{∗(i+1)})`.
+* `rem_cont`, `rem_symm` — `r = rem k c φ` is continuous for continuous `k`, `φ`, and symmetric
+  for symmetric `k`.
 * `powerFacts` — with `|c| = ‖K‖ > 0` and `a m = hs(k^{∗(m/2)})`, the four trace facts
   `DoublingPower.PowerFacts a |c| s m` hold at every even `m ≥ 2`.
 * `opPow_coe`, `norm_opPow_sq_le` — `(K^(i+1) f)` is `k^{∗(i+1)}` applied to `f`, and for `f ⊥ φ`,
@@ -105,6 +107,21 @@ theorem swap_bdd {F : X → X → ℝ} (hF : Measurable (Function.uncurry F)) {C
     (hb : ∀ x y, |F x y| ≤ C) :
     ∫ x, ∫ y, F x y ∂μ ∂μ = ∫ y, ∫ x, F x y ∂μ ∂μ :=
   integral_integral_swap (Bdd.mul_swap_integrable hF hb)
+
+/-- `x ↦ ∫ F(x,·)²` is integrable for a bounded measurable kernel. -/
+theorem integrable_rowsq {F : X → X → ℝ} (hF : Bdd F) :
+    Integrable (fun x => ∫ z, F x z ^ 2 ∂μ) μ := by
+  obtain ⟨C, hC⟩ := hF.bdd
+  exact integrable_of_bdd (measurable_integral_right (hF.meas.pow_const 2)) (C := C ^ 2)
+    (fun x => abs_integral_le fun z => by
+      rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hC x z) 2)
+
+/-- `‖Kᵀ‖²_HS = ‖K‖²_HS`. -/
+theorem hs_swap {F : X → X → ℝ} (hF : Bdd F) : hs μ (fun x z => F z x) = hs μ F := by
+  obtain ⟨D, hD⟩ := hF.bdd
+  exact swap_bdd (μ := μ) (F := fun x z => F z x ^ 2) ((hF.meas.comp measurable_swap).pow_const 2)
+    (C := D ^ 2) (fun x z => by
+      rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hD z x) 2)
 
 /-! ## Associativity and powers -/
 
@@ -205,10 +222,7 @@ theorem hs_conv_le_mul {a c : X → X → ℝ} (ha : Bdd a) (hc : Bdd c) :
     exact integrable_of_bdd (measurable_const.mul hBm) (C := Ca ^ 2 * Cc ^ 2) (fun z => by
       rw [abs_mul]; exact mul_le_mul (hAb x) (hBb z) (abs_nonneg _) (by positivity))
   have hB_int : ∫ z, B z ∂μ = hs μ c := by
-    have hm : Measurable (Function.uncurry (fun z y => c y z ^ 2)) :=
-      (hc.meas.comp measurable_swap).pow_const 2
-    rw [hB, swap_bdd hm (C := Cc ^ 2) (fun z y => by rw [abs_pow]; exact hCc0 y z)]
-    rfl
+    rw [hB]; exact hs_swap hc
   calc hs μ (conv μ a c) = ∫ x, ∫ z, conv μ a c x z ^ 2 ∂μ ∂μ := rfl
     _ ≤ ∫ x, ∫ z, A x * B z ∂μ ∂μ := by
         refine integral_mono_of_nonneg
@@ -221,13 +235,6 @@ theorem hs_conv_le_mul {a c : X → X → ℝ} (ha : Bdd a) (hc : Bdd c) :
     _ = (∫ x, A x ∂μ) * ∫ z, B z ∂μ := by
         simp_rw [integral_const_mul]; rw [integral_mul_const]
     _ = hs μ a * hs μ c := by rw [hB_int]; rfl
-
-omit [IsProbabilityMeasure μ] in
-/-- `‖g‖² = ∫ g²` in `L²`. -/
-theorem norm_sq_eq_integral (g : Lp ℝ 2 μ) : ‖g‖ ^ 2 = ∫ x, (g : X → ℝ) x ^ 2 ∂μ := by
-  rw [← real_inner_self_eq_norm_sq, L2.inner_def]
-  refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
-  simp [sq]
 
 section Operator
 
@@ -257,13 +264,13 @@ theorem hs_conv_le_norm {c : X → X → ℝ} (hc : Bdd c) :
     set g : Lp ℝ 2 μ := (hcol z).toLp _
     have hgc : (g : X → ℝ) =ᵐ[μ] fun y => c y z := (hcol z).coeFn_toLp
     have h1 : ‖K g‖ ^ 2 = ∫ x, conv μ k c x z ^ 2 ∂μ := by
-      rw [norm_sq_eq_integral]
+      rw [SlabTransferAdjoint.norm_sq_eq_integral]
       refine integral_congr_ae ?_
       filter_upwards [coeFn_kernelCLM k C hkm hC0 hkb μ μ g] with x hx
       rw [hx, kernelFun_congr hgc x]
       rfl
     have h2 : ‖g‖ ^ 2 = ∫ y, c y z ^ 2 ∂μ := by
-      rw [norm_sq_eq_integral]
+      rw [SlabTransferAdjoint.norm_sq_eq_integral]
       refine integral_congr_ae ?_
       filter_upwards [hgc] with y hy
       rw [hy]
@@ -290,10 +297,7 @@ theorem hs_conv_le_norm {c : X → X → ℝ} (hc : Bdd c) :
         exact mul_le_mul_of_nonneg_left (abs_integral_le fun y => by
           rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCc y z) 2) (by positivity)
     _ = ‖K‖ ^ 2 * ∫ z, ∫ y, c y z ^ 2 ∂μ ∂μ := integral_const_mul _ _
-    _ = ‖K‖ ^ 2 * hs μ c := by
-        rw [swap_bdd hm2 (C := Cc ^ 2) (fun z y => by
-          rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCc y z) 2)]
-        rfl
+    _ = ‖K‖ ^ 2 * hs μ c := congrArg (‖K‖ ^ 2 * ·) (hs_swap hc)
 
 include hkm hC0 hkb in
 /-- `hs(k^{∗(i+l+1)}) ≤ ‖K‖^{2l} hs(k^{∗(i+1)})`. -/
@@ -326,6 +330,20 @@ variable {k : X → X → ℝ} (hk : Bdd k) (hsym : ∀ x y, k x y = k y x)
 
 /-- The remainder kernel `k − c φ⊗φ`. -/
 def rem (k : X → X → ℝ) (c : ℝ) (φ : X → ℝ) : X → X → ℝ := fun x y => k x y - c * φ x * φ y
+
+omit [MeasurableSpace X] in
+/-- The remainder of a continuous kernel and a continuous `φ` is continuous. -/
+theorem rem_cont [TopologicalSpace X] (hkc : Continuous (Function.uncurry k))
+    (hφc : Continuous φ) : Continuous (Function.uncurry (rem k c φ)) := by
+  have e : Function.uncurry (rem k c φ) = fun p : X × X => k p.1 p.2 - c * φ p.1 * φ p.2 := rfl
+  rw [e]
+  exact hkc.sub ((continuous_const.mul (hφc.comp continuous_fst)).mul (hφc.comp continuous_snd))
+
+omit [MeasurableSpace X] in
+include hsym in
+/-- The remainder of a symmetric kernel is symmetric. -/
+theorem rem_symm (x y : X) : rem k c φ x y = rem k c φ y x := by
+  unfold MassGap.KernelPower.rem; rw [hsym]; ring
 
 include hk hφm hφb in
 theorem Bdd.rem : Bdd (rem k c φ) := by
@@ -487,10 +505,7 @@ theorem hs_iter_decomp (i : ℕ) :
     ring
   unfold hs
   simp_rw [hpt]
-  have i4 : Integrable (fun x => ∫ z, iter μ (rem k c φ) i x z ^ 2 ∂μ) μ :=
-    integrable_of_bdd (measurable_integral_right (hri.meas.pow_const 2)) (C := Ci ^ 2)
-      (fun x => abs_integral_le fun z => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCi x z) 2)
+  have i4 : Integrable (fun x => ∫ z, iter μ (rem k c φ) i x z ^ 2 ∂μ) μ := integrable_rowsq hri
   have j1 : Integrable (fun x => c ^ (2 * (i + 1)) * φ x ^ 2) μ := hφ2.const_mul _
   rw [integral_add j1 i4, integral_const_mul, hφ1, mul_one]
 
@@ -567,10 +582,14 @@ theorem powerFacts (j : ℕ) (hj : 1 ≤ j) :
 
 end Facts
 
+#print axioms integrable_rowsq
+#print axioms hs_swap
 #print axioms iter_add
 #print axioms hs_conv_le_mul
 #print axioms hs_conv_le_norm
 #print axioms hs_iter_decomp
 #print axioms powerFacts
+#print axioms rem_cont
+#print axioms rem_symm
 
 end MassGap.KernelPower

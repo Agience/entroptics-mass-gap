@@ -730,6 +730,15 @@ def IsPow2 (q : ℕ) : Prop := ∃ b : ℕ, q = 2 ^ b
 theorem IsPow2.pos {q : ℕ} (h : IsPow2 q) : 0 < q := by
   obtain ⟨b, rfl⟩ := h; exact Nat.two_pow_pos b
 
+/-- A power of two that is at least `2` is even.
+
+DERIVED: `2` is the base and the floor. -/
+theorem IsPow2.even {q : ℕ} (h : IsPow2 q) (h2 : 2 ≤ q) : Even q := by
+  obtain ⟨b, rfl⟩ := h
+  refine Nat.even_pow.mpr ⟨even_two, fun hb => ?_⟩
+  subst hb
+  norm_num at h2
+
 /-- Indices whose extent `2j + 2` is a power of two.
 
 DERIVED: `2j + 2` the extent of index `j`; `2` the base of the powers. -/

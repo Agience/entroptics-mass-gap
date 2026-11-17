@@ -289,11 +289,7 @@ theorem Zh_decomp (m : ℕ) {L : ℕ} (hL : L = m + 1 + m) {F : (ℕ → X) → 
   rw [hZ, add_sub_cancel_left]
   have hb := insert_sq_le (μ := μ) (ν := ν) hS m hF (g := iter μ (rem (kern ν w) c φ) m) hri.meas hCr
   have hswap : ∫ x, ∫ z, iter μ (rem (kern ν w) c φ) m z x ^ 2 ∂μ ∂μ
-      = hs μ (iter μ (rem (kern ν w) c φ) m) := by
-    unfold hs
-    exact (swap_bdd (F := fun x z => iter μ (rem (kern ν w) c φ) m z x ^ 2)
-      ((hri.meas.comp measurable_swap).pow_const 2) (C := Cr ^ 2) (fun x z => by
-        rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCr _ _) 2))
+      = hs μ (iter μ (rem (kern ν w) c φ) m) := hs_swap hri
   rw [hswap] at hb
   exact hb
 

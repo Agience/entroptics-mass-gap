@@ -717,6 +717,70 @@ import MassGap.OpenAIBridgeRP -- the OpenAI bridge: the separated terms of the s
 import MassGap.OpenAIBridgeCubic -- the OpenAI bridge: the reflection-positivity bound with every constant a cubic-torus Wilson moment, and the thermal remainder named
 import MassGap.OpenAIBridgeCompose -- the OpenAI bridge: (U) at the seed rate log 2/l from the per-torus cubic bound on their smeared insertions
 import MassGap.OpenAIBridgeGlue -- the OpenAI bridge: their law read on our transfer axis, translation invariance, tensor-test factorization, window-local observables and their reflection
+import MassGap.OpenAIBridgeK0 -- the OpenAI bridge: the reflected-moment input (K0) from bounds on their finite lattice moments, with the reflection planes placed clear of the tests
+import MassGap.OpenAIBridgeShift -- the OpenAI bridge: mixed-time invariance of the limit from covariance of their insertions under the lattice time step
+import MassGap.OpenAIBridgeSeed -- the OpenAI bridge: their seed clause from the run seed; their partition function is ZR on SU(n+1)
+import MassGap.OpenAIBridgeThermal -- the OpenAI bridge: the thermal remainder below the gap contraction times the reflected moment at shorter separations
+import MassGap.OpenAIBridgeNearCubic -- the OpenAI bridge: the thermal remainder on near-cubic tori, the shortening a vanishing fraction of the side
+import MassGap.OpenAIBridgeShortMom -- the OpenAI bridge: the reflected moment of an insertion dominated by a transfer power is at most B^2
 import MassGap.PurityBound -- 4Y-M Paper 2, Sections 2-4: the sharp purity-to-excited-weight conversion, its chord and the 1/161 one-scale datum, on the trace facts and on the Wilson transfer kernel of every gauge group
 import MassGap.PurityStability -- 4Y-M Paper 2, Propositions 3.1 and 3.2 on finite-dimensional spaces: trace-norm stability of the purity and the truncation bound 2 sqrt q + q, by a sign operator and trace duality
 import MassGap.PurityGap -- 4Y-M Paper 2, Theorem 2.2 (2.3): the sharp purity bound as an operator gap on the vacuum complement of a symmetric kernel operator
+import MassGap.PurityRow -- 4Y-M Paper 2, Lemma 5.1: normalized rows of densities in [a, b] differ in total variation by at most (b − a)/(b + a), sharp
+import MassGap.PurityContraction -- 4Y-M Paper 2, Theorem 5.2: eigenvalue ratio of a D A D kernel with a ≤ A ≤ b is at most (b − a)/(b + a), independent of D; top eigenvalue simple
+import MassGap.PurityWilson -- 4Y-M Paper 2, Lemma 5.3 (5.5) and Theorem 5.4: kernel bounds by Jensen, (b − a)/(b + a) = tanh(½ log(b/a)), ratio ≤ tanh(3βL³/2), gap −log tanh(3βL³/2) > 0
+import MassGap.PurityLaplace -- 4Y-M Paper 2, Proposition A.1: a Laplace floor R(t) ≥ c gives spectral weight ≥ c/(2 − c) on [0, t⁻¹ log(2/c)]; converse
+import MassGap.PurityFiniteRank -- 4Y-M Paper 2, Theorem D.1 scalar core: (D.1) excited trace ≤ d_T (finite or tsum tail), ψ_T ≤ 2 log(1 + d_T), simplicity when d_T < 1
+import MassGap.PurityKyFan -- 4Y-M Paper 2, Appendix D variational bound in finite dimension: Tr(P K²) ≤ Σ_{j<m} λ_j² for an orthogonal projection P with Tr P ≤ m and K ≥ 0
+import MassGap.PuritySpectralTrace -- 4Y-M Paper 2, spectral expansion in finite dimension: Tr K^T = Σ λ_i^T, Tr R^T = 1 + Σ_{i≠i₀} (λ_i/λ_{i₀})^T, Tr R^{2T} ≥ 1, Tr R^T ≥ 1 for K ≥ 0
+import MassGap.PurityWeyl -- 4Y-M Paper 2, Appendix D min–max in finite dimension: Weyl's inequality λ_j ≤ μ_j + ε for sorted eigenvalues, |λ_j − μ_j| ≤ ε from ‖(K − B)x‖ ≤ ε‖x‖
+import MassGap.PurityTemporalOperator -- 4Y-M Paper 2, Proposition C.1 operator steps in finite dimension: Tr (XY)^T = Tr (YX)^T, square root of C P, trace monotonicity, Tr (K/l)^T ≤ (cJ)^T Tr (C/A)^T for K = D C P D, Tr (K/l)^T ≤ (cJ)^T (Σ_ι (a/a₀)^T)^M for C diagonal in a label basis
+import MassGap.PuritySpectralMeasure -- 4Y-M Paper 2, Proposition A.1 spectral measure in finite dimension: μ_v = Σ ‖⟪e_i, v⟫‖² δ_{−log λ_i}, re ⟪K^T v, v⟫ = ∫ e^{−TE} dμ_v, weight ≥ c/(2 − c) on λ_i ≥ e^{−Λ}
+import MassGap.PurityShellFloor -- 4Y-M Paper 2, Proposition A.1 on a Hilbert space: μ_u = E_* σ_u on [0, ∞] carrying λ = 0, Re ⟪u, a^t u⟫ = ∫ e^{−tE} dμ_u for real t > 0, σ_u([e^{−Λ}, 1]) ≥ c/(2 − c)
+import MassGap.PurityCharacter -- 4Y-M Paper 2, Proposition C.1 scalar core: temporal character comparison (C.1), tensor character sum, Jensen J_s ≥ 1, lower bound bPT
+import MassGap.PurityBesselK -- 4Y-M Paper 2, Appendix B: K₁(u) = ∫₀^∞ e^{−u cosh v} cosh v dv = ∫₀^∞ e^{−u√(1+q²)} dq ≤ 1/u; ∫₀^∞ u⁶ K₁ = 384
+import MassGap.PurityFreeField -- 4Y-M Paper 2, Proposition B.1 scalar steps: energy in (0, ε), log quotient → 1/4, ∫₀¹(1 − z²)² = 8/15, 6!·8/15 = 384, 48c/π² = 3d∗/π⁴ arithmetic
+import MassGap.PurityFreeFieldLimit -- 4Y-M Paper 2, (B.1): ∫₀^∞ u⁶ K₁(u) log²(1/r)/log²(e + u²/r²) du → 96 as r → 0⁺ (dominated convergence); C(r) integrable and by u = r√s, r⁸ log²(1/r) C(r) → 3d∗/π⁴
+import MassGap.PurityFreeFieldSpectrum -- 4Y-M Paper 2, Prop. B.1: at c > 0 the one-particle measure ρ(s) ds d³p/(2E) of the generalized free field gives positive measure to energies in (0, ε) for every ε > 0, E > 0 a.e., and no m > 0 has E ≥ m a.e. (no mass gap)
+import MassGap.PurityCancel -- 4Y-M Paper 2, Theorem 8.1 remainder (8.2) from (8.1) by Cauchy estimates, Corollary 8.2 window bound V/(161(48T)³), Ψ_T ≥ 0 from Σλ^{2T} ≤ (Σλ^T)²
+import MassGap.PurityMomentMatch -- 4Y-M Paper 2, (8.1) from moment matching: ord_0(2 log Z_T − log Z_{2T}) ≥ ord_0(Z_{2T} − Z_T²), and (Z_{2T} − Z_T²)^{(n)}(0) = E_{2T}[A^n] − Σ C(n,i) E_T[A^i] E_T[A^{n−i}]
+import MassGap.PurityTwoLift -- 4Y-M Paper 2, §8 two-lift: on a cycle of circumference T, E_{2T}[A^n] = Σ C(n,i) E_T[A^i] E_T[A^{n−i}] for n < T (double cover cut at a missed bond)
+import MassGap.PurityPlaqCount -- 4Y-M Paper 2, §8 at G = SU(N): A_t = (1/N) Σ_{i<j} Re Tr U_p on the 4-torus, 6∏L_i plaquettes, |A_t| ≤ 6Vt, S = 12∏L_i − 2A, Ψ_T(2β) = 2 log Z_T − log Z_{2T}, Corollary 8.2's bound |Ψ_T| ≤ V/(161(48T)³) with product Haar given (8.1), Ψ_T(2β) ≥ 0 at even T
+import MassGap.PurityWilsonChain -- 4Y-M Paper 2, (8.1) for the Wilson plaquette action with product Haar: the 4-torus as a cycle of time slices, the plaquette action as Σ_t bondW(V_t, V_{t+1}), circumference 2T as the connected double cover; Corollary 8.2 window bound with (8.1) discharged
+import MassGap.PurityTaylor -- 4Y-M Paper 2, Theorem 2.2 (2.4) and Lemma 2.4 expansions of F, B
+import MassGap.PurityRayleigh -- 4Y-M Paper 2, Proposition 6.1 trace-ratio bound for a DAD kernel
+import MassGap.PurityThermal -- 4Y-M Paper 2, (6.2) and (6.3) for kernels at even times
+import MassGap.PurityThermalCompact -- 4Y-M Paper 2, Theorem 5.2 as an operator bound; (6.2), (6.3) on a compact space
+import MassGap.PurityWilsonCompact -- 4Y-M Paper 2, Theorem 5.4 composed: Wilson kernel bounds into Theorem 5.2 and (6.2), (6.3) on a compact space
+import MassGap.PurityDegenerate -- 4Y-M Paper 2, §6.3: (6.4) 2e^{−X} ≤ −log tanh(X/2) ≤ 2e^{−X}/(1 − e^{−2X}) and its degeneration a⁻¹·gap → 0; the two-point family K_a = [[a⁻², 1], [1, a⁻²]]: contraction bound attained, −a⁻¹ log r_a ∼ 2a, thermal purity → 1/2
+import MassGap.PurityRectWilson -- 4Y-M Paper 2, Theorem 5.2 and (6.2), (6.3) for the Wilson transfer kernel and partition function
+import MassGap.PurityTrace -- 4Y-M Paper 2, Proposition 6.1: Var(A)/Ā² ≤ (b − a)²/(4ab) = τ²/(1 − τ²) from Bhatia–Davis, Σ r_j^T ≤ τ^{T−2} Σ r_j², ψ_T ≤ 2 log(1 + τ^T/(1 − τ²))
+import MassGap.PurityResponse -- 4Y-M Paper 2, Proposition 6.4: (log Z)' = −⟨S⟩ by differentiation under the integral, dψ/db = 12VT(e_{2T} − e_T), ψ = 12VT ∫₀^b (e_{2T} − e_T), |Δψ| ≤ 24VT|Δb|, certified radius 1/(7728·48³T⁴)
+import MassGap.PurityResponseWilson -- 4Y-M Paper 2, Proposition 6.4 for the Wilson partition function: SW = action/2 ≤ 12VT, Z_b = ZRG(b/2), (6.6)–(6.9)
+import MassGap.PurityResponseSmooth -- 4Y-M Paper 2, Proposition 6.4: ∫ g e^{−bS} is C^∞ for bounded measurable g, S by induction on the order, so log Z, ⟨S⟩, e and ψ are C^∞; Wilson ZRG and ψ are C^∞ for every L, L'
+import MassGap.PurityHaarProjection -- 4Y-M Paper 2, Lemma 5.3: P = ∫ ρ(g) dg is the projection onto the fixed subspace, Tr P = q; distinct-endpoint edge mean 1 − q/d; ∫ tp = (tpMax/2)(1 − q/d); Jensen gives kTminFixed ≤ kTG
+import MassGap.PurityRectWilsonFixed -- 4Y-M Paper 2, Theorem 5.2 for kTG at the ratio of Theorem 5.4: ‖R‖ ≤ tanh(β tpMax (1 − q/d)/2)‖K‖, (6.2), (6.3) and the ZRG defect at the q-improved ratio
+import MassGap.PurityKernelPositive -- 4Y-M Paper 2, K ≥ 0 for the step to Δ_lat: the form of kTG over any gauge group is nonnegative on every integrable u at β ≥ 0 (averaged crossing kernels, truncated exponential + dominated convergence)
+import MassGap.PurityLatticeGap -- 4Y-M Paper 2, Theorems 5.2/5.4 lattice energy gap for kTG: every excited eigenfunction has 0 < σ ≤ τ λ₀, energy −log(σ/λ₀) ≥ −log τ ≥ −log tanh(β tpMax/2) > 0, τ = tanh(β tpMax (1 − q/d)/2)
+import MassGap.PurityOddTime -- 4Y-M Paper 2, Proposition 6.1 (6.2)/(6.3) at odd T = 2j+1: |tr r^{∗T}| ≤ ‖R‖^{T−2} ‖r‖²_HS for the deflated kernel r = k − c φ⊗φ (Cauchy–Schwarz), cyc(T) = c^T + tr r^{∗T}, cyc(T)/‖K‖^T − 1 ≤ τ^T/(1 − τ²) and ψ_T ≤ 2 log(1 + τ^T/(1 − τ²)) for kTG and ZRG
+import MassGap.PurityOddTimeLower -- 4Y-M Paper 2, Proposition 6.1 lower bound ψ_T ≥ 0 at odd T = 2j+1 for a positive semidefinite kernel operator with ‖R‖ ≤ c: R = K − c φ⊗φ is positive semidefinite, ⟪R^n v, v⟫ ≥ 0 and ⟪R^{n+l} v, v⟫ ≤ ‖R‖^l ⟪R^n v, v⟫, so tr r^{∗T} ≥ 0 and ‖r^{∗T}‖²_HS ≤ c^T tr r^{∗T}; for kTG and ZRG, log Z(L') ≤ 2 log Z(L)
+import MassGap.PurityOddTimeWilson -- 4Y-M Paper 2, Corollary 8.2 lower bound Ψ_T(2β) ≥ 0 at odd T = 2j+1, j ≥ 1, on the SU(N) Wilson lattice, N ≥ 2, β > 0, spatial extents ≥ 2: ZRG over SU(N) is ZR, then ZRG_defect_odd_nonneg and psi_eq_log_ZR
+import MassGap.PurityExcitedTop -- 4Y-M Paper 2, Theorem 5.4 largest excited eigenvalue: every excited eigenvalue has |σ| ≤ λ₁ = ‖R‖ for the deflated operator R, λ₁ > 0 is attained by an excited eigenfunction, and for kTG 0 ≤ λ₁ ≤ τ λ₀
+import MassGap.PurityTailIdentity -- 4Y-M Paper 2, (D.2) matrix certificate hs(k - P K P) = hs k - sum G_ij^2 for a finite orthonormal family, Bessel, the tail identity hs((I - P) K) = hs k - sum |K phi_i|^2 for symmetric k, and the (D.3) window test
+import MassGap.PurityScalar -- 4Y-M Paper 2, Sections 6-7, scalar content: the error-stable quadratic ascent (Lemma 7.2) and its A = 1683/100 instance, bulk cancellation and the multiscale telescope (Proposition 7.1), the Gaussian-mode defect above 2/81 (Proposition 6.3), the kernel bound above 44 (Proposition 6.2)
+import MassGap.PurityVacuumMean -- 4Y-M Paper 2, Appendix C spatial vacuum: one Haar link integrated out gives 1 − q/d, ∫ sp = n(1 − q/d) at periods ≥ 2, q = 0 for SU(N), so ∫ V_s = 0, J_s ≥ 1, and max V_s = b|P_s| attained at V = 1
+import MassGap.PurityCharCoeff -- 4Y-M Paper 2, Appendix C character coefficients: nonnegative moments ∫ gⁿ χ ≥ 0 (from fusion positivity, or PurityRepCharacter) give a_π = (1/d_π) ∫ e^{bg} Re χ_π ≥ 0 for b ≥ 0 (truncated exponential + dominated convergence), |a_π| ≤ a₀ from |χ_π| ≤ d_π, a₀ > 0
+import MassGap.PurityRepCharacter -- 4Y-M Paper 2, Appendix C for every compact gauge group: ∫σ is an idempotent, so ∫ Tr σ = rank ≥ 0; (2 Re Tr ρ_F) Tr σ = Tr(ρ_F ⊗ σ) + Tr(ρ̄_F ⊗ σ) gives ∫ gⁿ Re Tr σ ≥ 0 by induction, hence ∫ e^{bg} Re Tr σ ≥ 0 and a_σ ≥ 0 with no fusion rule
+import MassGap.SliceKernelDefiniteG -- slice transfer kernel kTG definite on gauge-invariant continuous functions, every compact gauge group (input to λ₁ > 0 in 4Y-M Paper 2 Theorem 5.2)
+import MassGap.PurityLam1Pos -- λ₁ > 0 for the Wilson slice transfer kernel kTG, every nontrivial compact gauge group (4Y-M Paper 2 Theorems 5.2, 5.4)
+import MassGap.PurityConvEigen -- Schur's lemma, Schur orthogonality, convolution eigenvalue a_π with d_π² independent eigenfunctions (4Y-M Paper 2 Appendix C)
+import MassGap.PurityPeterWeyl -- coefficients of continuous unitary representations are dense in C(G) by Stone–Weierstrass (4Y-M Paper 2 Appendix C)
+import MassGap.PurityReducible -- coefficients of continuous unitary representations lie in the span of irreducible coefficients (4Y-M Paper 2 Appendix C)
+import MassGap.PurityL2 -- irreducible coefficients are dense in L²(G); orthogonal to all of them is zero (4Y-M Paper 2 Appendix C)
+import MassGap.PuritySchurCross -- orthogonality of inequivalent irreducibles; character orthonormality (4Y-M Paper 2 Appendix C)
+import MassGap.PurityCharDecomp -- character decomposition into irreducibles; Σ d·mult = dim (4Y-M Paper 2 Appendix C)
+import MassGap.PurityEigenspace -- the a-eigenspace of convolution by a class function lies in the closed span of the irreducible coefficients with a_π = a (4Y-M Paper 2 Appendix C)
+import MassGap.PurityKernelSeries -- Wilson kernel eigenvalues: Σ d² a = k(1) = e^b (4Y-M Paper 2 Appendix C)
+import MassGap.PuritySU2Character -- 4Y-M Paper 2, Appendix C at G = SU(2) in the Weyl variable x = cos θ: χ_n = U_n, d_n = n+1, Haar = (2/π)(1−x²) dmeasureT; ∫ χ_n = δ_{n0}, x U_n = ½U_{n+1} + ½U_{n−1}, |U_n| ≤ n+1 on [−1,1], so a_n ≥ 0 (b ≥ 0), |a_n| ≤ a₀, a₀ > 0; Weyl formula ∫ f(½Re Tr g) dg = (2/π)∫ f(t)√(1−t²) dt, a_n = (1/(n+1)) ∫ e^{bτ} U_n(τ) dg; U_n(τ g) = Σ_k z^{n−2k} at an eigenvalue z of g
+import MassGap.PuritySU2SymPower -- 4Y-M Paper 2, Appendix C at G = SU(2): Sym^n ℂ² under substitution (right action), trace = Σ_k T₀₀^{n−k} T₁₁^k on triangular T, so tr(g | Sym^n ℂ²) = U_n(τ g)
+import MassGap.PuritySU2Bessel -- 4Y-M Paper 2, Appendix C at G = SU(2): I_n(b) = (1/π)∫₀^π e^{b cos θ} cos nθ, (n+1)a_n = I_n − I_{n+2} = 2(n+1)I_{n+1}/b, a_n/a₀ = I_{n+1}/I₁

@@ -295,7 +295,7 @@ theorem ne_of_rot {n : ℕ} (hn : 2 ≤ n) {x y : RSite (fun _ : Fin 4 => n)} {k
     (h : x k = finRotate n (y k)) : x ≠ y := by
   intro hxy
   rw [hxy] at h
-  exact WindowRead.finRotate_ne hn (y k) h.symm
+  exact RectWilson.finRotate_ne hn (y k) h.symm
 
 /-- **Two steps never return** along an extent `≥ 3`. DERIVED: `3` the least extent on which two steps move;
 `2` the steps; `1` the step. -/
@@ -340,7 +340,7 @@ theorem not_corner {n : ℕ} (hn : 2 ≤ n) {i j k : Fin 4} (hki : k ≠ i) (hkj
   have e : c k = y k := by
     rcases h with rfl | rfl | rfl | rfl <;> simp [rshift_apply, hki, hkj]
   rw [e] at hc
-  exact WindowRead.finRotate_ne hn (y k) hc.symm
+  exact RectWilson.finRotate_ne hn (y k) hc.symm
 
 /-- **Distinct bases separate** on extent `≥ 3`: for plaquettes based at `y ≠ y'`, either `y'` is not a corner of
 the first or `y` is not a corner of the second. DERIVED: `3` the least extent on which two steps move. -/
@@ -356,7 +356,7 @@ theorem base_sep {n : ℕ} (hn : 3 ≤ n) {i j i' j' : Fin 4} (hij : i ≠ j) (h
     exact hyy (funext fun k => ((corner_comp hij h1 k).resolve_right (hk k)).symm)
   obtain ⟨k, hk⟩ := hk
   rcases corner_comp hij' h2 k with h | h
-  · rw [hk] at h; exact WindowRead.finRotate_ne (show 2 ≤ n by omega) (y k) h.symm
+  · rw [hk] at h; exact RectWilson.finRotate_ne (show 2 ≤ n by omega) (y k) h.symm
   · rw [hk] at h; exact finRotate2_ne hn (y k) h.symm
 
 /-! ### The layer rotation at the corners of a mixed plaquette -/

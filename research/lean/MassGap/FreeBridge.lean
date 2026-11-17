@@ -58,8 +58,9 @@ degree `3`. A word of length `L ≥ 2` reads with degree `L` or `L + 1`. Proved 
 * `FreeSpecAt λ τ κ δ`: `λ` is in `SpecClause` with a relabelled free box heat spectrum `w e^{−2tμ}` of the
   Dirichlet box in `d = 4` with `2t/L² ≥ τ` and local weight ratio `κ`, exactly the data of
   `FreeLevels.FreeScreenSpectrum`. A two-sided comparison of the Gram forms, `e^{−δ} G₀ ≤ G ≤ e^δ G₀`, gives
-  it by Courant–Fischer (cited: no min-max theorem for matrices is in Mathlib at this pin or in the
-  repository).
+  it by Courant–Fischer; for sorted eigenvalues of symmetric operators on a finite-dimensional space the
+  two directions are `PurityWeyl.eigenvalues_le_mul_add` at `ε = 0`, and their transfer to the eigenvalues
+  of `gram ν F` is not formalized here.
 * `FreeComparable Wf b`: one `δ ≥ 0`, `τ > 0`, `κ ≥ 0` with, at every aperture `s ∈ (0, b]`, eventually in
   the step, for every channel `j`, `LawClause` of the screen at `q_j = chaosOrd j` and `FreeSpecAt` of its
   spectrum (`BridgeAt`). The quantifier shape is H1's and H3's in `ApertureCountAt`. It is one structure

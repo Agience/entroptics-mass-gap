@@ -821,7 +821,7 @@ def vecOf {X : Type*} [MeasurableSpace X] {ν : Measure X} {φ : X → ℝ} (hm 
 /-- `‖φ‖ = 1` in `L²`. -/
 theorem norm_vecOf {X : Type*} [MeasurableSpace X] {ν : Measure X} {φ : X → ℝ} (hm : Measurable φ)
     (h1 : ∫ x, φ x * φ x ∂ν = 1) : ‖vecOf hm h1‖ = 1 := by
-  have h := KernelPower.norm_sq_eq_integral (vecOf hm h1)
+  have h := SlabTransferAdjoint.norm_sq_eq_integral (vecOf hm h1)
   have : ∫ x, ((vecOf hm h1 : Lp ℝ 2 ν) : X → ℝ) x ^ 2 ∂ν = 1 := by
     rw [← h1]
     refine integral_congr_ae ?_
@@ -1062,9 +1062,7 @@ theorem sector_bound {ψ : AddChar G ℂ} (hψ : ∀ g, (ψ g).im = 0) (hA : Cen
   rw [hs, ← integral_mul_const]
   refine integral_mono_of_nonneg (Filter.Eventually.of_forall fun x => sq_nonneg _) ?_
     (Filter.Eventually.of_forall hpt)
-  exact (integrable_of_bdd (measurable_integral_right (hr.meas.pow_const 2)) (C := Cr ^ 2)
-    (fun x => abs_integral_le fun y => by
-      rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCr x y) 2)).mul_const _
+  exact (MassGap.KernelPower.integrable_rowsq hr).mul_const _
 
 /-- **The zero-flux kernel annihilates a state of a nontrivial sector.** -/
 theorem zk_sector_eq_zero {ψ : AddChar G ℂ} (hψ : ∀ g, (ψ g).im = 0) (hψ1 : ψ ≠ 1)
@@ -1371,7 +1369,7 @@ theorem windingCost_of_vortexCostAt {σ A ℓ : ℝ} (hV : FluxCost.VortexCostAt
           * ∫ V, windState ν y Ω V ^ 2 ∂(hSN 2 n i) := by
   filter_upwards [VortexAperture.elecCostAt_of_vortexCostAt hV, eventually_ge_atTop (0 : ℝ)]
     with β hE hβ0 n hp h2 hlo hup i ν y hy Ω hΩm B hΩb hΩc
-  exact winding_cost_of_elec hβ0 h2 (FluxCost.even_of_pow2 hp h2) i ν y hy hΩm hΩb hΩc
+  exact winding_cost_of_elec hβ0 h2 (hp.even h2) i ν y hy hΩm hΩb hΩc
     (hE n hp h2 hlo hup i ν)
 
 end Winding

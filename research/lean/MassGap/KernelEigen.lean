@@ -28,12 +28,6 @@ variable {X : Type*} [TopologicalSpace X] [CompactSpace X] [SecondCountableTopol
   {k : X → X → ℝ} (hkc : Continuous (Function.uncurry k)) {C : ℝ} (hC0 : 0 ≤ C)
   (hkb : ∀ x y, |k x y| ≤ C)
 
-omit [TopologicalSpace X] [CompactSpace X] [SecondCountableTopology X] [BorelSpace X] in
-theorem norm_sq_integral (g : Lp ℝ 2 μ) : ‖g‖ ^ 2 = ∫ x, (g : X → ℝ) x ^ 2 ∂μ := by
-  rw [← real_inner_self_eq_norm_sq, L2.inner_def]
-  refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
-  simp [sq]
-
 include hkc in
 theorem kmeas : Measurable (Function.uncurry k) := hkc.measurable
 
@@ -283,7 +277,7 @@ theorem exists_eigen (hsym : ∀ x y, k x y = k y x)
   · have : ∫ x, φ x ^ 2 ∂μ = ∫ x, (ψ : X → ℝ) x ^ 2 ∂μ := by
       refine integral_congr_ae ?_
       filter_upwards [hφψ] with x hx; rw [hx]
-    rw [this, ← MassGap.KernelEigen.norm_sq_integral, hψ1, one_pow]
+    rw [this, ← SlabTransferAdjoint.norm_sq_eq_integral, hψ1, one_pow]
   · have h1 : ∫ y, k z y * φ y ∂μ = kernelFun k μ (ψ : X → ℝ) z := by
       unfold kernelFun
       refine integral_congr_ae ?_

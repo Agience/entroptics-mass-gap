@@ -99,7 +99,7 @@ theorem inner_kernelCLM_eq (f g : Lp ℝ 2 μ) :
 /-- `‖|f|‖ = ‖f‖` in `L²`. -/
 theorem norm_abs_Lp (f : Lp ℝ 2 μ) : ‖(|f| : Lp ℝ 2 μ)‖ = ‖f‖ := by
   have h : ‖(|f| : Lp ℝ 2 μ)‖ ^ 2 = ‖f‖ ^ 2 := by
-    rw [MassGap.KernelEigen.norm_sq_integral, MassGap.KernelEigen.norm_sq_integral]
+    rw [SlabTransferAdjoint.norm_sq_eq_integral, SlabTransferAdjoint.norm_sq_eq_integral]
     refine integral_congr_ae ?_
     filter_upwards [Lp.coeFn_abs f] with x hx
     rw [hx, sq_abs]
@@ -285,7 +285,7 @@ theorem exists_pos_eigen (hsym : ∀ x y, k x y = k y x) {c₀ : ℝ} (hc₀ : 0
     refine lt_of_le_of_ne (integral_nonneg_of_ae hψnn) (fun h0 => ?_)
     have hz : (ψ : X → ℝ) =ᵐ[μ] 0 := (integral_eq_zero_iff_of_nonneg_ae hψnn hψi).1 h0.symm
     have hn : ‖ψ‖ ^ 2 = 0 := by
-      rw [norm_sq_integral]
+      rw [SlabTransferAdjoint.norm_sq_eq_integral]
       have : ∫ x, (ψ : X → ℝ) x ^ 2 ∂μ = ∫ _x, (0 : ℝ) ∂μ := by
         refine integral_congr_ae ?_
         filter_upwards [hz] with x hx
@@ -312,7 +312,7 @@ theorem exists_pos_eigen (hsym : ∀ x y, k x y = k y x) {c₀ : ℝ} (hc₀ : 0
   · have : ∫ x, φ x ^ 2 ∂μ = ∫ x, (ψ : X → ℝ) x ^ 2 ∂μ := by
       refine integral_congr_ae ?_
       filter_upwards [hφψ] with x hx; rw [hx]
-    rw [this, ← norm_sq_integral, hψ1, one_pow]
+    rw [this, ← SlabTransferAdjoint.norm_sq_eq_integral, hψ1, one_pow]
   · have h1 : ∫ y, k z y * φ y ∂μ = kernelFun k μ (ψ : X → ℝ) z := by
       unfold kernelFun
       refine integral_congr_ae ?_

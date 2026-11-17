@@ -288,7 +288,7 @@ theorem edge_inj {n : ℕ} (hn : 3 ≤ n) {X : Type*} (P : St n → X) (cl : X �
     have a2 := hPi _ _ h2
     rw [rshift_apply, if_pos rfl, rshift_apply, if_neg hii] at a2
     rw [← a1] at a2
-    exact WindowRead.finRotate_ne hn2 _ a2
+    exact RectWilson.finRotate_ne hn2 _ a2
   · have hc' : cl (P y') = !cl (P y) := bool_of_ne _ _ hc
     rw [if_neg hc] at h1
     rw [if_pos hc'] at h2
@@ -302,7 +302,7 @@ theorem edge_inj {n : ℕ} (hn : 3 ≤ n) {X : Type*} (P : St n → X) (cl : X �
       exact finRotate2_ne hn _ b2
     · rw [rshift_apply, if_neg hii] at b2
       rw [b2] at b1
-      exact WindowRead.finRotate_ne hn2 _ b1.symm
+      exact RectWilson.finRotate_ne hn2 _ b1.symm
 
 /-- **Different normal mixed plaquettes have different edge data** on extent `≥ 3`. DERIVED: `3` as in
 `edge_inj`. -/

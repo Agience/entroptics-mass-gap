@@ -656,7 +656,7 @@ theorem rshift_ne_rshift (hn : 2 ≤ n) {i j : Fin 4} (hij : i ≠ j) (x : St n)
   intro h
   have := congrFun h i
   simp only [rshift, Function.update_self, Function.update_of_ne hij] at this
-  exact TwoDVanish.finRotate_ne hn _ this
+  exact RectWilson.finRotate_ne hn _ this
 
 /-- A word in four distinct site variables has Haar mean zero in each of them. DERIVED: `0` the mean. -/
 theorem cent_word {F : SU N → ℝ} (hF0 : ∫ g, F g ∂(probHaar (SU N)) = 0) (a : St n → SUN.SU N)

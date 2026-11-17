@@ -795,17 +795,6 @@ theorem ratio_pos_wilson_of (hN : N ≠ 0) {β : ℝ} (hβ : 0 < β)
 
 /-! ### A nonconstant gauge-invariant function on one slice -/
 
-theorem finRotate_ne {m : ℕ} (hm : 2 ≤ m) (i : Fin m) : finRotate m i ≠ i := by
-  obtain ⟨n, rfl⟩ : ∃ n, m = n + 2 := ⟨m - 2, by omega⟩
-  exact Equiv.Perm.mem_support.1 (by rw [support_finRotate]; exact Finset.mem_univ i)
-
-/-- A transverse step along an extent `≥ 2` moves every site. -/
-theorem tsh_ne_self {ν : {j : Fin 4 // j ≠ μ}} (hν : 2 ≤ T ν) (y : TT μ T) : tsh μ T ν y ≠ y := by
-  intro h
-  have h1 := congrFun h ν
-  simp only [tsh, Function.update_self] at h1
-  exact finRotate_ne hν (y ν) h1
-
 /-- A transverse step along an extent `1` fixes every site. -/
 theorem tsh_eq_self {ν : {j : Fin 4 // j ≠ μ}} (hν : T ν = 1) (y : TT μ T) : tsh μ T ν y = y := by
   have h : finRotate (T ν) (y ν) = y ν := by

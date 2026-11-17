@@ -54,8 +54,7 @@ base-point artefact, not a gauge-invariant leak. The gauge-invariant cube constr
 `SU(N)` from `U(1)`; for `U(1)` it is in addition linear in the plaquette angles.
 
 DERIVED (module-wide): `1` the group unit; `2` the matrix size of `SU(2)` and the least side on which the
-twelve links of a cube are pairwise distinct (`finRotate_ne_self`); `0`, `1` in `finRotate_ne_self` the
-`Fin` arithmetic of that side. CHOSEN: `iσ₃`, `iσ₂` (`GapSideTwistFlat.sigA`, `sigB`), the anticommuting pair
+twelve links of a cube are pairwise distinct (`RectWilson.finRotate_ne`). CHOSEN: `iσ₃`, `iσ₂` (`GapSideTwistFlat.sigA`, `sigB`), the anticommuting pair
 already in the tree, and the two links `(i, x+k)`, `(j, x+k)` of the far `(i,j)` face. No inherited constants.
 
 ## What does not follow
@@ -197,19 +196,6 @@ open MassGap.GapSideTwistFlat (sigA sigB comm_sigB_sigA negOne_inv)
 
 variable {d N : ℕ}
 
-/-- On a side `N ≥ 2` the unit rotation moves every point. DERIVED: `2` the least such side. -/
-theorem finRotate_ne_self (hN : 2 ≤ N) (v : Fin N) : finRotate N v ≠ v := by
-  obtain ⟨n, rfl⟩ : ∃ n, N = n + 2 := ⟨N - 2, by omega⟩
-  rw [finRotate_succ_apply]
-  intro h
-  have h2 := congrArg Fin.val h
-  rw [Fin.val_add, Fin.val_one] at h2
-  have hv := v.isLt
-  rcases Nat.lt_or_ge (v.val + 1) (n + 2) with hlt | hge
-  · rw [Nat.mod_eq_of_lt hlt] at h2; omega
-  · have e : v.val + 1 = n + 2 := by omega
-    rw [e, Nat.mod_self] at h2; omega
-
 theorem tshift_self' (a : Fin d) (y : TSite d N) : tshift a y a = finRotate N (y a) := by
   unfold tshift; exact Function.update_self _ _ _
 
@@ -224,7 +210,7 @@ def su2Cfg (i j k : Fin d) (x : TSite d N) (l : TLink d N) : SUN.SU 2 :=
 theorem cubeFlux_su2 (hN : 2 ≤ N) {i j k : Fin d} (hij : i ≠ j) (hjk : j ≠ k) (hki : k ≠ i)
     (x : TSite d N) :
     cubeFlux (fun q => thol q (su2Cfg i j k x)) i j k x = negOne⁻¹ := by
-  have r : ∀ v : Fin N, finRotate N v ≠ v := finRotate_ne_self hN
+  have r : ∀ v : Fin N, finRotate N v ≠ v := RectWilson.finRotate_ne hN
   have s1 : x ≠ tshift k x := site_ne k (by simp only [tshift_self']; exact (r _).symm)
   have s2 : tshift i x ≠ tshift k x :=
     site_ne i (by simp only [tshift_self', tshift_apply_ne (Ne.symm hki)]; exact r _)
@@ -268,7 +254,6 @@ end MassGap.CubeFlux
 #print axioms MassGap.CubeFlux.six_inv
 #print axioms MassGap.CubeFlux.conj_inv_central
 #print axioms MassGap.CubeFlux.not_flat_of_central_charge
-#print axioms MassGap.CubeFlux.finRotate_ne_self
 #print axioms MassGap.CubeFlux.tshift_self'
 #print axioms MassGap.CubeFlux.site_ne
 #print axioms MassGap.CubeFlux.cubeFlux_su2

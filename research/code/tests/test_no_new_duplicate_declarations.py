@@ -27,16 +27,18 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
 TOOL = os.path.join(REPO, "research", "code", "certify",
                     "lean_duplicate_declarations.py")
 
-# DERIVED: measured on 2026-11-07 by running the tool over research/lean/MassGap. Not a chosen
+# DERIVED: measured on 2026-11-15 by running the tool over research/lean/MassGap. Not a chosen
 # tolerance -- it is the count the tree carries, and the only sanctioned direction is down. Copies
 # whose elaborated statements are equal are aliases (`alias b := A.a`), which the scan does not
-# count. The 16 left, each checked by comparing the two constants' elaborated types in Lean:
+# count. The 17 left, each checked by comparing the two constants' elaborated types in Lean:
 #
 #   Different elaborated statements, the same text (the scan cannot tell them apart):
 #     ApertureModes.clayStatementOf_of_apertureModes / ExpandMatch.clayStatementOf_of_apertureMatch
 #     FlowClusterG.prodSmearG_mono_empty / MeasuredSpacing.prodSmearG_empty
 #     FlowClusterG.transObs_prodSmearG / MeasuredSpacing.transObs_prodSmearG'
-#     KernelEigen.norm_sq_integral / KernelPower.norm_sq_eq_integral
+#     PurityThermal.trace_excess_dad / PurityThermalCompact.trace_excess_compact
+#     PurityThermal.defect_dad / PurityThermalCompact.defect_compact
+#       (the hypotheses enter through `include`, which the scan does not read)
 #   Private to their modules, so neither can alias the other:
 #     BoxGapHS.abs_ip_le / TiltedHaar.abs_inner_le
 #   The same statement by a second, independent proof route, kept as a check that the route
@@ -47,7 +49,7 @@ TOOL = os.path.join(REPO, "research", "code", "certify",
 #     ClayWiringG.clayStatementAt_of_inputs_viaG / SymPlaqG.clayStatementAt_of_inputs_viaG'''
 #     ConstantPhysicsLine.clayStatementOf_of_reads / OneInput.clayStatementOf_of_reads'
 #     OddLagSplit.corrClay_reflection_positive / ReflectionStrong.corrClay_reflection_positive_via_module
-BASELINE = 16
+BASELINE = 17
 
 
 def _scan_count() -> int:

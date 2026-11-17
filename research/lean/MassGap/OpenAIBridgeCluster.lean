@@ -429,7 +429,7 @@ theorem exists_eigenfun {k : X → X → ℝ} {C : ℝ} (hkm : Measurable (Funct
   · have : ∫ x, φ x ^ 2 ∂μ = ∫ x, (ψ : X → ℝ) x ^ 2 ∂μ := by
       refine integral_congr_ae ?_
       filter_upwards [hφψ] with x hx; rw [hx]
-    rw [this, ← KernelPower.norm_sq_eq_integral, hψ1, one_pow]
+    rw [this, ← SlabTransferAdjoint.norm_sq_eq_integral, hψ1, one_pow]
   · have h1 : ∫ y, k z y * φ y ∂μ = kernelFun k μ (ψ : X → ℝ) z := by
       unfold kernelFun
       refine integral_congr_ae ?_
@@ -450,14 +450,6 @@ variable {k : X → X → ℝ} {C : ℝ} (hkm : Measurable (Function.uncurry k))
   (hgap : ∀ f : Lp ℝ 2 μ, inner ℝ f (KernelGap.vac (μ := μ) hφm hφb) = 0 →
     ‖((kernelCLM k C hkm hC0 hkb μ μ) ^ n) f‖
       ≤ 1 / 2 * ‖kernelCLM k C hkm hC0 hkb μ μ‖ ^ n * ‖f‖)
-
-omit [MeasurableSpace X] in
-include hsym in
-/-- The remainder `r = k − c φ⊗φ` of a symmetric kernel is symmetric.
-
-DERIVED: no numeral appears in the statement. -/
-theorem rem_symm (x y : X) : rem k c φ x y = rem k c φ y x := by
-  unfold MassGap.KernelPower.rem; rw [hsym]; ring
 
 include hkm hkb hsym hφm hφb in
 /-- The diagonal of an even power of the remainder is a square integral:
@@ -548,7 +540,7 @@ theorem abs_integral_remFun_le (m : ℕ) {u g : X → ℝ} (hum : Measurable u) 
   have hnorm2 : ∀ (F : Lp ℝ 2 μ) (f : X → ℝ) (W : ℝ), 0 ≤ W → (F : X → ℝ) =ᵐ[μ] f →
       ∫ x, f x ^ 2 ∂μ ≤ W ^ 2 → ‖F‖ ≤ W := by
     intro F f W hW hF hf
-    have h := KernelPower.norm_sq_eq_integral F
+    have h := SlabTransferAdjoint.norm_sq_eq_integral F
     have h' : ∫ x, (F : X → ℝ) x ^ 2 ∂μ = ∫ x, f x ^ 2 ∂μ :=
       integral_congr_ae (by filter_upwards [hF] with x hx; rw [hx])
     exact (pow_le_pow_iff_left₀ (norm_nonneg _) hW two_ne_zero).mp (by rw [h, h']; exact hf)
@@ -899,10 +891,10 @@ theorem sq_integral_remFun_le (m : ℕ) {g : X → ℝ} (hgm : Measurable g) {Cg
   set w := (kernelCLM k C hkm hC0 hkb μ μ ^ (m + 1)) gL
       - (inner ℝ gL (KernelGap.vac (μ := μ) hφm hφb) * c ^ (m + 1))
         • KernelGap.vac (μ := μ) hφm hφb with hwdef
-  have h1 := KernelPower.norm_sq_eq_integral w
+  have h1 := SlabTransferAdjoint.norm_sq_eq_integral w
   have h2 : ∫ x, (w : X → ℝ) x ^ 2 ∂μ = ∫ x, kernelFun (iter μ (rem k c φ) m) μ g x ^ 2 ∂μ :=
     integral_congr_ae (by filter_upwards [hwae] with x hx; rw [hx])
-  have h3 := KernelPower.norm_sq_eq_integral gL
+  have h3 := SlabTransferAdjoint.norm_sq_eq_integral gL
   have h4 : ∫ x, (gL : X → ℝ) x ^ 2 ∂μ = ∫ x, g x ^ 2 ∂μ :=
     integral_congr_ae (by filter_upwards [hgLe] with x hx; rw [hx])
   rw [← h2, ← h1, ← h4, ← h3]
@@ -937,12 +929,7 @@ theorem hs_iter_rem_le (m : ℕ) :
     calc ∫ x, ∫ z, iter μ (rem k c φ) (m + 1) x z ^ 2 ∂μ ∂μ
         ≤ ∫ x, ((1 / 2) ^ ((m + 1) / n) * |c| ^ (m + 1)) ^ 2 * ∫ z, rem k c φ x z ^ 2 ∂μ ∂μ := by
           refine integral_mono
-            (integrable_of_bdd (measurable_integral_right (hrm.meas.pow_const 2)) (C := Cm ^ 2)
-              (fun x => abs_integral_le fun z => by
-                rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCm x z) 2))
-            ((integrable_of_bdd (measurable_integral_right (hr.meas.pow_const 2)) (C := Cr ^ 2)
-              (fun x => abs_integral_le fun z => by
-                rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hCr x z) 2)).const_mul _)
+            (integrable_rowsq hrm) ((integrable_rowsq hr).const_mul _)
             (fun x => ?_)
           simp only [hrow x]
           exact sq_integral_remFun_le hkm hC0 hkb hsym hφm hφb hφ1 heig hnorm hgap m (hr.row x)
@@ -1343,7 +1330,6 @@ end MassGap.OpenAIBridgeCluster
 #print axioms MassGap.OpenAIBridgeCluster.abs_mul_le_amgm
 #print axioms MassGap.OpenAIBridgeCluster.conn_alg
 #print axioms MassGap.OpenAIBridgeCluster.exists_eigenfun
-#print axioms MassGap.OpenAIBridgeCluster.rem_symm
 #print axioms MassGap.OpenAIBridgeCluster.iter_rem_diag
 #print axioms MassGap.OpenAIBridgeCluster.abs_integral_remFun_le
 #print axioms MassGap.OpenAIBridgeCluster.connTorus_le
